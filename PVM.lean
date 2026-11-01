@@ -6,10 +6,12 @@ import PVM.Memory
 import PVM.Exec
 import PVM.Gas
 import PVM.Machine
+import PVM.Invocation
 import PVM.Theorems.Blob
 import PVM.Theorems.Decode
 import PVM.Theorems.Host
 import PVM.Theorems.Termination
+import PVM.Theorems.Invocation
 
 /-!
 # An executable model of the JAM PVM (Gray Paper v0.8.0, Appendix A)
@@ -20,6 +22,7 @@ import PVM.Theorems.Termination
 * `PVM.Memory`   — RAM and ε^μ (eq. `pvmmemory`, §A.4)
 * `PVM.Gas`      — the gas cost model ϱ^Δ (§A.9–A.10)
 * `PVM.Machine`  — Ψ₁ and Ψ (§A.1, §A.4)
+* `PVM.Invocation` — Ψ_H, Y and Ψ_M (§A.6–A.8)
 * `PVM.Tables`   — generated from the paper's LaTeX: opcodes, T, the gas cost table
-* `PVM.Theorems` — host calls, termination and Ψ's equation, decoding, blobs
+* `PVM.Theorems` — host calls, termination and Ψ's and Ψ_H's equations, decoding, blobs
 -/

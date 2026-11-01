@@ -36,6 +36,9 @@ jobs:
       - name: Build the model and its theorems
         run: lake build
 
+      - name: Kernel-checked Ψ_H, Y and Ψ_M examples
+        run: lake build Tests.Invocation
+
       - name: Theorems use only propext, Classical.choice and Quot.sound
         run: lake env lean scripts/CheckAxioms.lean
 

@@ -45,9 +45,10 @@ fails the build. `lake exe pvmtrace <vector.json> [steps]` prints a step-by-step
 | `PVM/Memory.lean` | RAM as `Std.ExtTreeMap`s, read-after-write lemmas, ε^μ | §4.7 eq. `pvmmemory`, §A.4 |
 | `PVM/Gas.lean` | š, ř, 𝔓, 𝔓_S, 𝔪, 𝔟 and the simulation 𝔛 (𝔛', 𝔛^mov, 𝔛^dec, 𝔛'', 𝔖, 𝔛''') | §A.9–A.10, eq. `gascostforblock` |
 | `PVM/Machine.lean` | Ψ₁ (`Program.step`) and Ψ (`psi`) | §A.1, §A.4 |
+| `PVM/Invocation.lean` | host-call handlers 𝔉_X, Ψ_H (`psiH`, `psiHStar`), Y (`standardInit`), Ψ_M (`psiM`) | §A.6–A.8, eqs. `conditions`, `memlayout`, `registers` |
 | `PVM/Tables.lean` | **generated**: opcode enumerations per argument format, U, T, 𝔪, the gas cost table | §A.3, §A.5, §A.10 |
 | `PVM/Theorems/*.lean` | the theorems below | |
-| `Tests/` | vector runner, gas checker, tracer | |
+| `Tests/` | vector runner, gas checker, tracer, kernel-checked invocation examples | |
 | `scripts/gen_tables.py` | LaTeX → `PVM/Tables.lean` | |
 
 ### The generated table
@@ -75,6 +76,12 @@ the build of the semantics rather than drifting silently.
   n = |**c**| + 1: a charge costs at least one gas, a terminator clears ϱ̃, and any other
   instruction moves ı forward (`exec_pc_of_not_terminator`). `psi_status_ne_cont`: Ψ never
   returns ▸.
+* **Ψ_H is the paper's Ψ_H\*** (`PVM/Theorems/Invocation.lean`). For any handler that never
+  returns more gas than it was given (`HostFn.GasNonIncreasing`, true of every host function in
+  the paper), `psiHStar_eq` shows `psiHStar` satisfies GP §A.6's recursive definition, and
+  `psiHFuel_stable` that its fuel never runs out. The key fact, `psi_host_measure`: resuming after
+  a host call is strictly lower in `runMeasure` than where the run started, because `ecalli` is
+  not a terminator, so the flag stays set and ı moves forward.
 * **Memory** (`PVM/Memory.lean`). `read_write`, `read_write_self`, `read_write_of_ne`,
   `read_writeN_at`, `readN_writeN` (read after a multi-octet write of at most 2^32 octets), and
   that writes leave page access unchanged.
@@ -83,6 +90,11 @@ the build of the semantics rather than drifting silently.
 * **Blobs and blocks** (`PVM/Theorems/Blob.lean`). `skip_le` (skip ≤ 24); `isBlockStart_iff` and
   `followsTerminator_iff`: the bounded search used for ϖ is exactly the paper's set
   comprehension; `vBlobAux_fuel`, `vBlob_eq`: 𝔳_blob's fuel is sufficient.
+
+`Tests/Invocation.lean` checks hand-assembled programs through Y, Ψ_H and Ψ_M (echo, host calls
+that change registers and context, out-of-gas, traps, invalid blobs, unreadable output, Y's
+memory layout and registers) by `decide +kernel`: the Lean kernel evaluates the whole model
+itself. No test vectors cover these layers at the pinned commit.
 
 `scripts/CheckAxioms.lean` collects the axioms of every declaration in the `PVM` namespace and
 fails on anything but `propext`, `Classical.choice` and `Quot.sound` (so on `sorryAx`, and on
@@ -122,6 +134,17 @@ noted here and in a comment at the definition.
 10. **ε^μ takes min(**x**) before reducing mod 2^32**, as written; this only matters for accesses
     that wrap around 2^32.
 11. **Coverage gap.** No vector contains `cmov_nz_imm` (opcode 148).
+12. **Gas types in Ψ_H.** The handler type 𝔉_X returns gas in ℕ_G, but Ψ_H's result is typed
+    ℤ_G and the host functions compute ϱ − g, which is negative when they run out. We follow 𝔉_X
+    (gas in ℕ_G); Ψ_M only uses max(ϱ', 0), so nothing downstream sees the difference yet.
+13. **Ψ_H need not terminate.** The paper's Ψ_H* recurses after every host call; a handler that
+    returns more gas than it was given can keep it running forever. We prove termination (and the
+    paper's equation) for handlers that do not add gas; for others `psiHStar` stops with ☇ after
+    its fuel.
+14. **Y's fit condition is vacuous.** With 3-, 3-, 2- and 3-octet length fields, |**o**|, |**w**|,
+    z𝖹_P and s are bounded so that 5𝖹_Z + Q(|**o**|) + Q(|**w**| + z𝖹_P) + Q(s) + 𝖹_I is at most
+    about 2^28.3 < 2^32. We check it anyway.
+15. **Y's argument bound.** The paper types **a** ∈ 𝔹_{:𝖹_I}; for longer arguments we return ∅.
 
 ## Caveats
 
@@ -132,6 +155,11 @@ noted here and in a comment at the definition.
 * **Totality fallbacks that valid programs never reach**: Ψ₁ reads an undecodable octet as
   `trap` (Ψ only calls Ψ₁ where 𝔳_inst holds), and ϱ^Δ evaluates to 1 if 𝔛 meets an opcode
   outside U.
+* **Kernel evaluation is slow.** Concrete runs can be checked by the kernel, but the model
+  follows the paper literally: it re-deblobs the program on every step and re-runs the gas
+  simulation on every block charge. A 200-iteration two-instruction loop takes about 45 s of
+  kernel time. Proved-equivalent fast paths (parse once, cache block costs) are the obvious next
+  step before checking real services this way.
 * **Types.** ı is a `Nat` rather than ℕ_R; gas is a `UInt64` (ℕ_G). Immediates are stored
   sign-extended as `UInt64`, offsets as `Int`.
 * **Test harness.** The vectors' `map`, `write` and `set-reg` steps and the resumption rule

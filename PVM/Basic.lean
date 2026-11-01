@@ -11,7 +11,7 @@ All arithmetic here is on `Nat` and `Int`, mirroring the paper's definitions ove
 
 namespace PVM
 
-/-- A register value, ℕ_R ≡ ℕ_{2^64} (GP eq. `gasregentry`). -/
+/-- A register value, ℕ_R ≡ ℕ_{2^64} (GP §4.7, eq. `gasregentry`). -/
 abbrev RegVal := UInt64
 
 /-- A register index, ℕ_13. -/

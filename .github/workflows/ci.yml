@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install elan
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh \
+            | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Cache .lake
+        uses: actions/cache@v4
+        with:
+          path: .lake
+          key: lake-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lakefile.lean', 'lake-manifest.json') }}-${{ hashFiles('PVM/**', 'Tests/**', 'PVM.lean') }}
+          restore-keys: lake-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lakefile.lean', 'lake-manifest.json') }}-
+
+      - name: Generated gas cost table matches the pinned paper
+        run: scripts/check-tables.sh
+
+      - name: No forbidden constructs
+        run: |
+          if grep -rnE '\bsorry\b|partial def|implemented_by|native_decide|bv_decide' PVM Tests PVM.lean; then
+            echo "forbidden construct found" >&2; exit 1
+          fi
+
+      - name: Build the model and its theorems
+        run: lake build
+
+      - name: Theorems use only propext, Classical.choice and Quot.sound
+        run: lake env lean scripts/CheckAxioms.lean
+
+      - name: Fetch the pinned test vectors
+        run: scripts/fetch-vectors.sh
+
+      - name: Vector runner (programs/)
+        run: lake build pvmtest
+
+      - name: Block gas checker (programs/ and gas-tests/)
+        run: lake build gascheck

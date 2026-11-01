@@ -152,6 +152,7 @@ def decode (P : Program) (i : Nat) : Option Instr :=
       .twoRegTwoImm o lo hi (P.immAt (i + 3) lX) (P.immAt (i + 3 + lX) lY)
   | some .threeReg =>
     -- r_A = min(12, ζ_{ı+1} mod 16), r_B = min(12, ⌊ζ_{ı+1} ÷ 16⌋), r_D = min(12, ζ_{ı+2})
+    -- (the paper does not reduce ζ_{ı+2} mod 16 here; README, note 4)
     (ThreeRegOp.ofOpcode? op).map fun o => .threeReg o lo hi (regIdx (P.zeta (i + 2)))
 
 end Program

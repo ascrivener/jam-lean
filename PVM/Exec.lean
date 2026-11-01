@@ -96,6 +96,7 @@ def twoRegImmAlu : TwoRegImmOp → Nat → Nat → Nat → Option Nat
   | .shloLImm32, _, b, x => some <| sext 4 ((b * 2 ^ (x % 32)) % two32)
   | .shloRImm32, _, b, x => some <| sext 4 (b % two32 / 2 ^ (x % 32))
   | .sharRImm32, _, b, x => some <| u64 (floorShift (signed 4 (b % two32)) (x % 32))
+  -- over ℤ: ω_B may exceed 2^32, making the intermediate negative (README, note 9)
   | .negAddImm32, _, b, x => some <| sext 4 (((x : Int) + two32 - b) % (two32 : Int)).toNat
   | .setGtUImm, _, b, x => some <| ofBool (b > x)
   | .setGtSImm, _, b, x => some <| ofBool (s64 b > s64 x)

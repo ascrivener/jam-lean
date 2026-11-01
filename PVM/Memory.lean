@@ -2,7 +2,7 @@ import Std.Data.ExtTreeMap
 import PVM.Basic
 
 /-!
-# RAM (GP v0.8.0 eq. `pvmmemory`) and the memory-access exception ε^μ (§A.4)
+# RAM (GP v0.8.0 §4.7, eq. `pvmmemory`) and the memory-access exception ε^μ (§A.4)
 
 𝕄 ≡ (**v** ∈ 𝔹_{2^32}, **a** ∈ ⟦{W, R, ∅}⟧_p), p = 2^32 / 𝖹_P, 𝖹_P = 2^12.
 
@@ -18,7 +18,7 @@ Subscripts are cyclic (μ^↺, GP §3 notation): the octet at index `i` is **v**
 
 namespace PVM
 
-/-- 𝖹_P, the PVM page size (GP §I.4, eq. `pvmmemory`). -/
+/-- 𝖹_P = 2^12, the PVM page size (GP §4.7 `sec:virtualmachineandgas`, eq. `pvmmemory`). -/
 def pageSize : Nat := 2 ^ 12
 
 /-- A page's access mode: R (read-only) or W (read-write); ∅ is absence from the map. -/
@@ -162,7 +162,11 @@ end Memory
     ε^μ = ▸ if **x** = ∅; ☇ if min(**x**) mod 2^32 < 2^16; F × 𝖹_P⌊min(**x**) mod 2^32 ÷ 𝖹_P⌋ otherwise,
     where **x** = {x | x ∈ **r** ∧ x mod 2^32 ∉ 𝕍_μ ∨ x ∈ **w** ∧ x mod 2^32 ∉ 𝕍*_μ}.
 
-    `none` is ▸, `some none` is ☇ (panic), and `some (some a)` is a fault at page address `a`. -/
+    `none` is ▸, `some none` is ☇ (panic), and `some (some a)` is a fault at page address `a`.
+
+    The prose of §A.4 says an index below 2^16 always panics "regardless of the apparent
+    (in)accessibility"; the formula, which we follow, only considers inaccessible indices
+    (README, note 3). -/
 def memoryException (μ : Memory) (r w : List Nat) : Option (Option Nat) :=
   let x := r.filter (fun i => !μ.readable (i % two32)) ++ w.filter (fun i => !μ.writable (i % two32))
   match x.min? with

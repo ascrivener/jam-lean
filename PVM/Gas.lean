@@ -146,10 +146,13 @@ def evalCost (P : Program) (i : Nat) (ins : Instr) : CostExpr → Nat
   | .const n => n
   | .overlap a b => if ins.src.meets ins.dst then a else b
   | .overlapShift a b =>
+    -- The paper writes ω_A = ω_D; the gas model has no register values, so we compare the
+    -- register indices r_A = r_D (README, note 1).
     match ins.regsAD? with
     | some (ra, rd) => if ra = rd then a else b
     | none => b
   | .memory => memoryCost
+  -- Only branches have a 𝔟 cell; the fallback target is never used.
   | .branch => P.branchCost i ((ins.branchTarget?).getD (-1))
 
 /-- (č, ď, x̌) of the instruction at `ı` (GP §A.10), if ζ_ı ∈ U. -/
@@ -295,11 +298,13 @@ def run (P : Program) : Nat → SimState → Option SimState
     | some (.inr x') => some x'
     | none => none
 
-/-- The fuel given to 𝔛: an upper bound on the number of transitions. Each instruction of a
-    block is decoded once, started once, and occupies the pipeline for at most
-    max č + 4 = 64 cycles after the previous one retires, so `256 · (n + 1)` transitions, with
-    `n` the octets from ı to the end of **c** (an upper bound on the block's length), always
-    suffice. This bound is argued, not proved; `PVM.Program.blockCost?` reports exhaustion. -/
+/-- The fuel given to 𝔛: `256 · (|**c**| − ı + 2)` transitions, at least 256 per instruction of
+    the block. Each instruction is decoded once and started once, and the longest single
+    instruction (č = 60 for the divisions) keeps the pipeline busy for about 64 cycles, so the
+    simulation should always finish well within this. **This bound is argued, not proved.**
+    Over every block of the test vectors the simulation uses at most 54 transitions per
+    instruction and under 5% of this fuel; `PVM.Program.blockCost?` returns `none` if the fuel
+    is ever exhausted, and the gas checker reports it. -/
 def fuel (P : Program) (i : Nat) : Nat := 256 * (P.code.size - i + 2)
 
 end Sim

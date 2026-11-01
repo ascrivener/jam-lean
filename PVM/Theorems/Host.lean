@@ -75,7 +75,7 @@ end Program
 theorem runFuel_host {p : ByteArray} {n i : Nat} {gas : UInt64} {ch : Bool} {ω : Regs}
     {μ : Memory} {r : Result} {h : UInt64}
     (hr : runFuel p n i gas ch ω μ = some r) (hs : r.status = .host h) :
-    ∃ P, deblob p r.exitPc = some P ∧ P.decode r.exitPc = some (.oneImm .ecalli h) := by
+    ∃ P, deblob p r.pc = some P ∧ P.decode r.pc = some (.oneImm .ecalli h) := by
   induction n generalizing i gas ch ω μ with
   | zero => simp [runFuel] at hr
   | succ n ih =>
@@ -92,12 +92,13 @@ theorem runFuel_host {p : ByteArray} {n i : Nat} {gas : UInt64} {ch : Bool} {ω 
       · cases hr
         exact ⟨P, hP, Program.step_host hs⟩
 
-/-- **Only `ecalli` exits with a host call.** If Ψ exits with h̵ × h, then the instruction
-    that caused the exit decodes to `ecalli` and h is its immediate. -/
+/-- **Only `ecalli` exits with a host call.** If Ψ exits with h̵ × h, then the instruction at the
+    ı it returns (on h̵, the instruction that caused the exit) decodes to `ecalli`, and h is its
+    immediate. -/
 theorem psi_host {p : ByteArray} {i : Nat} {gas : UInt64} {ch : Bool} {ω : Regs} {μ : Memory}
     {h : UInt64} (hs : (psi p i gas ch ω μ).status = .host h) :
-    ∃ P, deblob p (psi p i gas ch ω μ).exitPc = some P ∧
-      P.decode (psi p i gas ch ω μ).exitPc = some (.oneImm .ecalli h) := by
+    ∃ P, deblob p (psi p i gas ch ω μ).pc = some P ∧
+      P.decode (psi p i gas ch ω μ).pc = some (.oneImm .ecalli h) := by
   unfold psi at hs ⊢
   cases hr : runFuel p (stepBound p i gas ch) i gas ch ω μ with
   | none => rw [hr] at hs; simp at hs

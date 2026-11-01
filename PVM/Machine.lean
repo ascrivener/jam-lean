@@ -64,15 +64,12 @@ def step (P : Program) (i : Nat) (gas : UInt64) (charged : Bool) (ω : Regs) (μ
 
 end Program
 
-/-- The result of Ψ (GP §A.1): (ε, ı, ϱ, ϱ̃, ω, μ), plus `exitPc`, the index of the instruction
-    that caused the exit. Ψ itself returns ı = 0 on ∎ and ☇; the test vectors report `exitPc`. -/
+/-- The result of Ψ (GP §A.1): (ε, ı, ϱ, ϱ̃, ω, μ). -/
 structure Result where
   /-- ε ∈ {∎, ☇, ∞} ∪ {F, h̵} × ℕ_R -/
   status : Status
-  /-- ı as returned by Ψ: 0 on ∎ and ☇, otherwise the exiting instruction. -/
+  /-- ı: 0 on ∎ and ☇, otherwise the instruction that caused the exit. -/
   pc : Nat
-  /-- The opcode index of the instruction whose step ended the run. -/
-  exitPc : Nat
   /-- ϱ -/
   gas : UInt64
   /-- ϱ̃ -/
@@ -91,16 +88,16 @@ def runFuel (p : ByteArray) : Nat → Nat → UInt64 → Bool → Regs → Memor
     match deblob p i with
     | none =>
       -- ⟨☇, ı, ϱ, ϱ̃, ω, μ⟩ from the `where` clause, then the ☇ case of Ψ.
-      some { status := .panic, pc := 0, exitPc := i, gas, charged, regs := ω, mem := μ }
+      some { status := .panic, pc := 0, gas, charged, regs := ω, mem := μ }
     | some P =>
       let r := P.step i gas charged ω μ
       match r.status with
       | .cont => runFuel p fuel r.pc r.gas r.charged r.regs r.mem
       | .halt | .panic =>
-        some { status := r.status, pc := 0, exitPc := i, gas := r.gas, charged := r.charged,
+        some { status := r.status, pc := 0, gas := r.gas, charged := r.charged,
                regs := r.regs, mem := r.mem }
       | _ =>
-        some { status := r.status, pc := i, exitPc := i, gas := r.gas, charged := r.charged,
+        some { status := r.status, pc := i, gas := r.gas, charged := r.charged,
                regs := ω, mem := μ }
 
 /-- A termination measure for Ψ from (ı, ϱ, ϱ̃): every block charge costs at least 1 gas, and
@@ -122,6 +119,6 @@ def stepBound (p : ByteArray) (i : Nat) (gas : UInt64) (charged : Bool) : Nat :=
     (`PVM.runFuel_stepBound_isSome` in `PVM.Theorems.Termination`). -/
 def psi (p : ByteArray) (i : Nat) (gas : UInt64) (charged : Bool) (ω : Regs) (μ : Memory) : Result :=
   (runFuel p (stepBound p i gas charged) i gas charged ω μ).getD
-    { status := .panic, pc := 0, exitPc := i, gas, charged, regs := ω, mem := μ }
+    { status := .panic, pc := 0, gas, charged, regs := ω, mem := μ }
 
 end PVM

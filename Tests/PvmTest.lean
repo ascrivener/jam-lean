@@ -11,7 +11,8 @@ Resuming follows the paper: after h̵ the next run starts at ı + 1 + skip(ı) (
 §A.6); after F or ∞ it restarts at ı. The charged flag ϱ̃ returned by Ψ is carried over.
 
 The vectors report as `pc` the instruction that caused the exit, also on ∎ and ☇ where Ψ
-itself returns 0; we compare it against `Result.exitPc` and keep Ψ's own value in `Result.pc`.
+itself returns 0. Ψ's result is exactly the paper's tuple, so the harness recomputes that index
+(`exitIndex`) and compares it against the vector.
 -/
 
 namespace PVM.Tests
@@ -26,6 +27,8 @@ structure VmState where
   regs : Regs := Vector.replicate 13 0
   mem : Memory := .empty
   last : Option Result := none
+  /-- The instruction that caused the last exit. -/
+  lastExit : Nat := 0
 
 /-- The vector's name for an exit status. -/
 def statusName : Status → String
@@ -59,7 +62,7 @@ def checkAssert (s : VmState) (a : Json) : Except String Unit := do
   for k in [0:13] do
     if (r.regs[k]!).toNat != regs[k]! then die s!"ω[{k}] = {r.regs[k]!}, expected {regs[k]!}"
   let pc ← natField a "pc"
-  if r.exitPc != pc then die s!"pc {r.exitPc}, expected {pc}"
+  if s.lastExit != pc then die s!"pc {s.lastExit}, expected {pc}"
   let gas ← intField a "gas"
   if (r.gas.toNat : Int) != gas then die s!"gas {r.gas}, expected {gas}"
   if let .ok pf := natField a "page-fault-address" then
@@ -82,10 +85,12 @@ def runVector (j : Json) : Except String Unit := do
     match kind with
     | "run" =>
       let r := psi p s.pc s.gas s.charged s.regs s.mem
+      let e := exitIndex p s.pc s.gas s.charged s.regs s.mem
       let pc := match r.status with
-        | .host _ => ((Blob.parse? p).map (·.next r.exitPc)).getD r.exitPc
-        | _ => r.exitPc
-      s := { s with pc, gas := r.gas, charged := r.charged, regs := r.regs, mem := r.mem, last := some r }
+        | .host _ => blobNext p e
+        | _ => e
+      s := { s with pc, gas := r.gas, charged := r.charged, regs := r.regs, mem := r.mem,
+                    last := some r, lastExit := e }
     | "assert" => checkAssert s body
     | "map" =>
       let a ← natField body "address"

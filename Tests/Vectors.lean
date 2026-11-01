@@ -1,5 +1,5 @@
 import Lean.Data.Json
-import PVM.Machine
+import PVM
 
 /-!
 # Reading the test vectors (koute/jamtestvectors `pvm/`, schema in `pvm/schema.asn`)
@@ -61,5 +61,22 @@ def jsonFiles (dir : System.FilePath) : IO (Array System.FilePath) := do
   let entries ← dir.readDir
   let files := entries.filter (·.fileName.endsWith ".json") |>.map (·.path)
   return files.qsort (·.toString < ·.toString)
+
+/-- The opcode index of the instruction whose step ended a run of Ψ.
+
+    The test vectors report this as `pc`, also on ∎ and ☇, where Ψ itself returns ı = 0. It is not
+    part of Ψ's result, so the harness recomputes it by following the same steps as `PVM.runFuel`. -/
+def exitIndexFuel (p : ByteArray) : Nat → Nat → UInt64 → Bool → Regs → Memory → Nat
+  | 0, i, _, _, _, _ => i
+  | fuel + 1, i, gas, ch, ω, μ =>
+    match deblob p i with
+    | none => i
+    | some P =>
+      let r := P.step i gas ch ω μ
+      if r.status = .cont then exitIndexFuel p fuel r.pc r.gas r.charged r.regs r.mem else i
+
+/-- `exitIndexFuel` with Ψ's own fuel bound. -/
+def exitIndex (p : ByteArray) (i : Nat) (gas : UInt64) (ch : Bool) (ω : Regs) (μ : Memory) : Nat :=
+  exitIndexFuel p (stepBound p i gas ch) i gas ch ω μ
 
 end PVM.Tests

@@ -11,6 +11,17 @@ execution, memory is an extensional finite map, and the theorems use only `prope
 `Classical.choice` and `Quot.sound`. The model depends only on Lean core and `Std` (toolchain
 `v4.36.0-rc1`).
 
+## Scope
+
+The boundary is **Appendix A of the Gray Paper, all of it and nothing more**: §A.1–A.5 (deblob,
+decoding, instruction semantics, memory, Ψ₁, Ψ), §A.6–A.8 (Ψ_H, Y, Ψ_M) and §A.9–A.10 (the gas
+model). Results are exactly the paper's tuples. From outside Appendix A the model uses only what
+Appendix A itself references: the integer and bit-sequence encodings of Appendix C, the RAM and
+register definitions of §4.7, and constants. Host functions, service accounts and the refine,
+accumulate and is-authorized invocations (Appendix B) belong in a separate package that depends on
+this one. Test-vector conventions (`map`/`write`/`set-reg` steps, how runs resume, the exit index
+the vectors call `pc`) live in `Tests/`, not in the model.
+
 ## Results
 
 | Check | Result |
@@ -118,7 +129,8 @@ noted here and in a comment at the definition.
    below 2^16, so the two readings are not distinguished.
 4. **Three-register r_D = min(12, ζ_{ı+2})**, not mod 16. No vector has ζ_{ı+2} ≥ 16.
 5. **The exit pc.** Ψ returns ı = 0 on ∎ and ☇; the vectors report the exiting instruction.
-   `Result` keeps both (`pc` is Ψ's value, `exitPc` the exiting instruction).
+   `Result` is exactly Ψ's tuple, so the test harness recomputes the exiting instruction
+   (`Tests.exitIndex`).
 6. **Register writes on halt and panic.** Ψ returns ω' on ∎ and ☇, so `load_imm_jump` and
    `load_imm_jump_ind` set ω_A even when their jump halts or panics. The vectors agree (6 vectors
    fail without it).

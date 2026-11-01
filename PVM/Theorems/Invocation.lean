@@ -150,9 +150,9 @@ theorem psiHStar_eq (p : ByteArray) (i : Nat) (gas : UInt64) (ch : Bool) (ω : R
         let y := f h.toNat r.gas r.regs r.mem x
         match y.status with
         | .cont => psiHStar p (blobNext p r.pc) y.gas r.charged y.regs y.mem f y.ctx
-        | s => { status := s.toStatus, pc := r.pc, exitPc := r.exitPc, gas := y.gas,
+        | s => { status := s.toStatus, pc := r.pc, gas := y.gas,
                  charged := r.charged, regs := y.regs, mem := y.mem, ctx := y.ctx }
-      | _ => { status := r.status, pc := r.pc, exitPc := r.exitPc, gas := r.gas,
+      | _ => { status := r.status, pc := r.pc, gas := r.gas,
                charged := r.charged, regs := r.regs, mem := r.mem, ctx := x } := by
   -- `psiHFuel` with any fuel above the measure agrees with `psiHStar`.
   have agree : ∀ n i gas ch ω μ x, runMeasure p i gas ch < n →

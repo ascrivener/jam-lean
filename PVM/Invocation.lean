@@ -46,14 +46,12 @@ abbrev HostFn (X : Type) := Nat → UInt64 → Regs → Memory → X → HostRes
 def HostFn.GasNonIncreasing {X : Type} (f : HostFn X) : Prop :=
   ∀ h g ω μ x, (f h g ω μ x).gas.toNat ≤ g.toNat
 
-/-- The result of Ψ_H: (ε, ı, ϱ, ϱ̃, ω, μ, x), plus the index of the exiting instruction. -/
+/-- The result of Ψ_H*: (ε, ı, ϱ, ϱ̃, ω, μ, x) (GP §A.6). -/
 structure HostRunResult (X : Type) where
   /-- ε ∈ {☇, ∞, ∎} ∪ {F} × ℕ_R -/
   status : Status
   /-- ı as Ψ returns it (0 on ∎ and ☇ from the machine). -/
   pc : Nat
-  /-- The opcode index of the instruction whose step ended the run. -/
-  exitPc : Nat
   gas : UInt64
   charged : Bool
   regs : Regs
@@ -78,9 +76,9 @@ def psiHFuel {X : Type} (p : ByteArray) (f : HostFn X) :
       let y := f h.toNat r.gas r.regs r.mem x
       match y.status with
       | .cont => psiHFuel p f fuel (blobNext p r.pc) y.gas r.charged y.regs y.mem y.ctx
-      | s => some { status := s.toStatus, pc := r.pc, exitPc := r.exitPc, gas := y.gas,
+      | s => some { status := s.toStatus, pc := r.pc, gas := y.gas,
                     charged := r.charged, regs := y.regs, mem := y.mem, ctx := y.ctx }
-    | _ => some { status := r.status, pc := r.pc, exitPc := r.exitPc, gas := r.gas,
+    | _ => some { status := r.status, pc := r.pc, gas := r.gas,
                   charged := r.charged, regs := r.regs, mem := r.mem, ctx := x }
 
 /-- Ψ_H*(p, ı, ϱ, ϱ̃, ω, μ, f, x) (GP §A.6). Every host call that continues happens at a lower
@@ -90,7 +88,7 @@ def psiHFuel {X : Type} (p : ByteArray) (f : HostFn X) :
 def psiHStar {X : Type} (p : ByteArray) (i : Nat) (gas : UInt64) (ch : Bool) (ω : Regs)
     (μ : Memory) (f : HostFn X) (x : X) : HostRunResult X :=
   (psiHFuel p f (runMeasure p i gas ch + 1) i gas ch ω μ x).getD
-    { status := .panic, pc := 0, exitPc := i, gas, charged := ch, regs := ω, mem := μ, ctx := x }
+    { status := .panic, pc := 0, gas, charged := ch, regs := ω, mem := μ, ctx := x }
 
 /-- Ψ_H(p, ı, ϱ, ω, μ, f, x) ≡ Ψ_H*(p, ı, ϱ, ⊥, ω, μ, f, x) (GP §A.6). -/
 def psiH {X : Type} (p : ByteArray) (i : Nat) (gas : UInt64) (ω : Regs) (μ : Memory)

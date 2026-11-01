@@ -37,25 +37,30 @@ def Status.continuesOrHost : Status → Bool
   | .cont | .host _ => true
   | _ => false
 
+/-- (ε*, ı*, ω*, μ*) (GP §A.4): (ε^ϱ, ı, ω, μ) if ε^ϱ ≠ ▸; else (ε^μ, ı, ω, μ) if ε^μ ≠ ▸;
+    else (ε, ı', ω', μ') from the regular execution `m`. -/
+def finalState (εg : Status) (i : Nat) (ω : Regs) (μ : Memory) (m : Mutation)
+    (εμ : Option (Option Nat)) : Status × Nat × Regs × Memory :=
+  if εg ≠ .cont then (εg, i, ω, μ)
+  else match εμ with
+    | some none => (.panic, i, ω, μ)
+    | some (some a) => (.fault (UInt64.ofNat a), i, ω, μ)
+    | none => (m.status, m.pc, m.regs, m.mem)
+
 /-- Ψ₁(**c**, **k**, **j**, ı, ϱ, ϱ̃, ω, μ) (GP §A.4).
 
     Ψ only calls Ψ₁ when 𝔳_inst(**c**, **k**, ı) holds, so ζ_ı ∈ U and the instruction decodes;
     to keep Ψ₁ total we read an undecodable octet as `trap`. -/
 def step (P : Program) (i : Nat) (gas : UInt64) (charged : Bool) (ω : Regs) (μ : Memory) :
     StepResult :=
-  let (εg, gas', charged') := P.chargeGas i gas charged
-  let ins := (P.decode i).getD (.noArgs .trap)
-  let m := P.exec i ins ω μ
-  -- (ε*, ı*, ω*, μ*): the gas exception, else ε^μ, else the regular execution.
-  let (ε, i', ω', μ') : Status × Nat × Regs × Memory :=
-    if εg ≠ .cont then (εg, i, ω, μ)
-    else match memoryException μ m.reads m.writes with
-      | some none => (.panic, i, ω, μ)
-      | some (some a) => (.fault (UInt64.ofNat a), i, ω, μ)
-      | none => (m.status, m.pc, m.regs, m.mem)
-  -- ϱ̃* = ⊥ if ϱ̃' = ⊥ ∨ (**c**_ı ∈ T ∧ ε* ∈ {▸} ∪ {h̵} × ℕ_R), otherwise ⊤.
-  let charged'' := !(!charged' || (isTerminator (P.zeta i) && Status.continuesOrHost ε))
-  { status := ε, pc := i', gas := gas', charged := charged'', regs := ω', mem := μ' }
+  -- (ε^ϱ, ϱ*, ϱ̃')
+  let g := P.chargeGas i gas charged
+  -- the regular execution (ε, ı', ω', μ') with its **r** and **w**
+  let m := P.exec i ((P.decode i).getD (.noArgs .trap)) ω μ
+  let out := finalState g.1 i ω μ m (memoryException μ m.reads m.writes)
+  { status := out.1, pc := out.2.1, gas := g.2.1, regs := out.2.2.1, mem := out.2.2.2
+    -- ϱ̃* = ⊥ if ϱ̃' = ⊥ ∨ (**c**_ı ∈ T ∧ ε* ∈ {▸} ∪ {h̵} × ℕ_R), otherwise ⊤.
+    charged := !(!g.2.2 || (isTerminator (P.zeta i) && Status.continuesOrHost out.1)) }
 
 end Program
 
@@ -98,19 +103,23 @@ def runFuel (p : ByteArray) : Nat → Nat → UInt64 → Bool → Regs → Memor
         some { status := r.status, pc := i, exitPc := i, gas := r.gas, charged := r.charged,
                regs := ω, mem := μ }
 
-/-- A bound on the number of steps of Ψ from (ı, ϱ, ϱ̃): every block charge costs at least 1 gas,
-    and between charges ı strictly increases within **c** (non-terminators) or a terminator
-    clears ϱ̃. With n = |**c**| + 1 the measure 2n·ϱ + (if ϱ̃ then n + |**c**| − ı else 0) strictly
-    decreases on every continuing step (see `PVM.Theorems.Termination`). -/
-def stepBound (p : ByteArray) (i : Nat) (gas : UInt64) (charged : Bool) : Nat :=
+/-- A termination measure for Ψ from (ı, ϱ, ϱ̃): every block charge costs at least 1 gas, and
+    between charges ı strictly increases within **c** (non-terminators) or a terminator clears
+    ϱ̃. With n = |**c**| + 1, the measure 2n·ϱ + (if ϱ̃ then n + |**c**| − ı else 0) strictly
+    decreases on every continuing step (`PVM.step_measure_lt` in `PVM.Theorems.Termination`). -/
+def runMeasure (p : ByteArray) (i : Nat) (gas : UInt64) (charged : Bool) : Nat :=
   match Blob.parse? p with
-  | none => 1
+  | none => 0
   | some P =>
     let n := P.code.size + 1
-    2 * n * gas.toNat + (if charged then n + P.code.size - i else 0) + 1
+    2 * n * gas.toNat + (if charged then n + P.code.size - i else 0)
+
+/-- The number of steps after which Ψ has certainly exited. -/
+def stepBound (p : ByteArray) (i : Nat) (gas : UInt64) (charged : Bool) : Nat :=
+  runMeasure p i gas charged + 1
 
 /-- Ψ(p, ı, ϱ, ϱ̃, ω, μ) (GP §A.1). The fallback after `stepBound` steps is unreachable
-    (`PVM.psi_runFuel` in `PVM.Theorems.Termination`). -/
+    (`PVM.runFuel_stepBound_isSome` in `PVM.Theorems.Termination`). -/
 def psi (p : ByteArray) (i : Nat) (gas : UInt64) (charged : Bool) (ω : Regs) (μ : Memory) : Result :=
   (runFuel p (stepBound p i gas charged) i gas charged ω μ).getD
     { status := .panic, pc := 0, exitPc := i, gas, charged, regs := ω, mem := μ }

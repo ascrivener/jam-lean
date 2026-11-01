@@ -7,6 +7,7 @@ open Lake DSL System
 * `lake build pvmtest`   builds and runs the vector runner over `vendor/jamtestvectors/pvm/programs`.
 * `lake build gascheck`  builds and runs the block gas checker over `programs/` and `gas-tests/`.
 * `lake build Tests.Invocation`  kernel-checks the Ψ_H / Y / Ψ_M examples.
+* `lake build Tests.LogicExample`  the worked for-all-inputs proof.
 
 The vectors are fetched at the pinned commit by `scripts/fetch-vectors.sh`. -/
 
@@ -18,7 +19,7 @@ lean_lib PVM
 
 /-- Shared helpers of the test executables. -/
 lean_lib Tests where
-  globs := #[.one `Tests.Vectors, .one `Tests.Invocation]
+  globs := #[.one `Tests.Vectors, .one `Tests.Invocation, .one `Tests.LogicExample]
 
 lean_exe «pvmtest-exe» where
   root := `Tests.PvmTest

@@ -39,6 +39,9 @@ jobs:
       - name: Kernel-checked Ψ_H, Y and Ψ_M examples
         run: lake build Tests.Invocation
 
+      - name: Worked proof with the gas-free logic
+        run: lake build Tests.LogicExample
+
       - name: Theorems use only propext, Classical.choice and Quot.sound
         run: lake env lean scripts/CheckAxioms.lean
 

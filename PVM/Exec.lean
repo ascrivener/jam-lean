@@ -118,7 +118,12 @@ def twoRegImmAlu : TwoRegImmOp → Nat → Nat → Nat → Option Nat
   | .rotR64ImmAlt, _, b, x => some <| rotr 64 x b
   | .rotR32Imm, _, b, x => some <| sext 4 (rotr 32 b x)
   | .rotR32ImmAlt, _, b, x => some <| sext 4 (rotr 32 x b)
-  | _, _, _, _ => none
+  -- the loads and stores are handled in `Program.exec`; listed explicitly (rather than with a
+  -- wildcard) so that unfolding this function in proofs stays cheap
+  | .storeIndU8, _, _, _ | .storeIndU16, _, _, _ | .storeIndU32, _, _, _
+  | .storeIndU64, _, _, _ | .loadIndU8, _, _, _ | .loadIndI8, _, _, _ | .loadIndU16, _, _, _
+  | .loadIndI16, _, _, _ | .loadIndU32, _, _, _ | .loadIndI32, _, _, _
+  | .loadIndU64, _, _, _ => none
 
 /-- Three-register operations, §A.5.13: ω'_D as a function of ω_A, ω_B and ω_D (the latter
     used only by `cmov_iz` and `cmov_nz`). -/

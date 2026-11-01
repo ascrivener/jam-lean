@@ -118,6 +118,28 @@ fails on anything but `propext`, `Classical.choice` and `Quot.sound` (so on `sor
 the axioms `native_decide` and `bv_decide` introduce). CI also greps for `sorry`, `partial def`,
 `implemented_by`, `native_decide` and `bv_decide`.
 
+## Reasoning about programs (`PVM/Logic/`)
+
+Theorems and proof rules about the Appendix A model; nothing here adds semantics.
+
+* **Gas abstraction** (`Logic/Free.lean`). `Program.freeStep` is Ψ₁ without its gas stage, and
+  `FreeRun` the big-step runs of that gas-free machine. `psi_freeRun`: every Ψ run that does not end
+  in ∞ is a `FreeRun` with the same exit reason, registers and memory. Gas only ever stops a run
+  early, so properties of the form "if it finishes, then …" can ignore gas, basic blocks and the
+  cost model entirely.
+* **Abstract hosts** (`Logic/Host.lean`). A host contract `HostRel` says what a host call may do;
+  `FreeRunH` is gas-free Ψ_H under a contract. `psiHStar_freeRunH` and `psiM_free`: every Ψ_H / Ψ_M
+  run, under any handler that respects the contract and does not add gas, that does not end in ∞
+  is such a run. Proofs therefore hold for every handler meeting the contract.
+* **Invariant rules** (`Logic/Invariant.lean`). `FreeRun.of_invariant` and `FreeRunH.of_invariant`:
+  an invariant that holds initially and is preserved by each step (and by each host call the
+  contract allows) constrains every way the run can end.
+* **Worked example** (`Tests/LogicExample.lean`). A three-instruction countdown loop.
+  `countdown_spec`: for every initial register file with ω₀ = 2^32 − 2^16, every memory and every
+  amount of gas, Ψ either runs out of gas or halts with ω₈ = 0. The proof uses `psi_freeRun`, a
+  program-counter invariant, and one lemma per instruction. Each lemma unfolds `exec` on the
+  decoded instruction and is checked in about a second.
+
 ## Notes on the paper and the vectors
 
 Where the paper is ambiguous, the model follows the paper's formal definition and the choice is

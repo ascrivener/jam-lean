@@ -13,6 +13,9 @@ import PVM.Theorems.Host
 import PVM.Theorems.Termination
 import PVM.Theorems.Invocation
 import PVM.Theorems.HostIds
+import PVM.Logic.Free
+import PVM.Logic.Host
+import PVM.Logic.Invariant
 
 /-!
 # An executable model of the JAM PVM (Gray Paper v0.8.0, Appendix A)

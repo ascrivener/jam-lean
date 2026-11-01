@@ -80,6 +80,12 @@ the build of the semantics rather than drifting silently.
   yields h̵ × h iff it is `ecalli` with immediate h. `step_host` lifts this to Ψ₁ and `psi_host`
   to Ψ: if Ψ exits with h̵ × h, the program deblobs at the exit index and the instruction there
   decodes to `ecalli` with immediate h.
+* **A program's host calls are bounded by its own `ecalli` immediates**
+  (`PVM/Theorems/HostIds.lean`). `hostCallIdsOf` scans a blob without running it.
+  `psi_hostId_mem`: every h̵ × h Ψ returns has h in that set. `psiHStar_congr` and `psiM_congr`:
+  running a program under two host handlers that agree on those ids gives the same result, so a
+  service's behaviour cannot depend on, and it can never invoke, any host function it does not
+  name. For a concrete blob the set is checked by `decide +kernel` without executing anything.
 * **Ψ is the paper's Ψ** (`PVM/Theorems/Termination.lean`). `psi` runs with fuel `stepBound`;
   `runFuel_stepBound_isSome` shows the fuel never runs out, and `psi_eq` shows `psi` satisfies
   the paper's recursive definition of Ψ (deblob, Ψ₁, then the case split on ε) exactly. The

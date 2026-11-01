@@ -96,4 +96,28 @@ example : ((standardInit echo ⟨#[5, 6]⟩).map fun r => r.2.1.toList) =
 -- A JAM blob with trailing octets is not a valid encoding.
 example : (standardInit (echo.push 0) ⟨#[]⟩).isNone := by decide +kernel
 
+/-! ### Host-call ids (`PVM.Theorems.HostIds`)
+
+`jamHostCallIdsOf` is a syntactic scan, so these are cheap to check; with `psiM_congr` they say
+what a service can ever ask of its host. -/
+
+example : jamHostCallIdsOf callThenHalt = [7] := by decide +kernel
+example : jamHostCallIdsOf echo = [] := by decide +kernel
+
+/-- The echo service behaves identically under every pair of host handlers: it names no host
+    calls, so no handler can affect it. -/
+example (f f' : HostFn Nat) (gas : UInt64) (a : ByteArray) (x : Nat) :
+    psiM echo 0 gas a f x = psiM echo 0 gas a f' x :=
+  psiM_congr echo 0 gas a x (by
+    intro h hh; rw [show jamHostCallIdsOf echo = [] by decide +kernel] at hh; cases hh)
+
+/-- `callThenHalt` can only ever make host call 7: handlers that agree on 7 give the same result. -/
+example (f f' : HostFn Nat) (h7 : ∀ g ω μ x, f 7 g ω μ x = f' 7 g ω μ x) (gas : UInt64)
+    (a : ByteArray) (x : Nat) : psiM callThenHalt 0 gas a f x = psiM callThenHalt 0 gas a f' x :=
+  psiM_congr callThenHalt 0 gas a x (by
+    intro h hh
+    rw [show jamHostCallIdsOf callThenHalt = [7] by decide +kernel] at hh
+    simp only [List.mem_singleton] at hh
+    subst hh; exact h7)
+
 end PVM.Tests.Invocation

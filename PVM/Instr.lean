@@ -158,3 +158,25 @@ def decode (P : Program) (i : Nat) : Option Instr :=
 end Program
 
 end PVM
+
+namespace PVM
+
+/-- The host-call ids a program can ever request: the immediate ν_X of every `ecalli` at an
+    opcode index where 𝔳_inst holds (GP §A.1, §A.5.2). Ψ only steps at such indices, so this
+    syntactic scan bounds every host call (`PVM.psi_hostId_mem` in `PVM.Theorems.HostIds`). -/
+def Program.hostCallIds (P : Program) : List Nat :=
+  (List.range P.code.size).filterMap fun i =>
+    if P.vInst i then
+      match P.decode i with
+      | some (.oneImm .ecalli x) => some x.toNat
+      | _ => none
+    else none
+
+/-- `Program.hostCallIds` of a blob's program; empty if the blob does not parse (then Ψ panics
+    on its first step and makes no host call). -/
+def hostCallIdsOf (p : ByteArray) : List Nat :=
+  match Blob.parse? p with
+  | some P => P.hostCallIds
+  | none => []
+
+end PVM

@@ -175,17 +175,21 @@ def initialRegs (a : ByteArray) : Regs :=
     |>.set 7 (UInt64.ofNat argStart)
     |>.set 8 (UInt64.ofNat a.size)
 
+/-- The decoded JAM blob, if it is a valid encoding, the sections fit
+    (5𝖹_Z + Q(|**o**|) + Q(|**w**| + z𝖹_P) + Q(s) + 𝖹_I ≤ 2^32) and |**a**| ≤ 𝖹_I. -/
+def validJamBlob? (b : ByteArray) (a : ByteArray) : Option JamBlob :=
+  if a.size > inputSize then none
+  else (JamBlob.parse? b).bind fun jb =>
+    if 5 * zoneSize + roundZone jb.ro.size + roundZone (jb.rw.size + jb.heapPages * pageSize) +
+        roundZone jb.stackSize + inputSize > 2 ^ 32 then none
+    else some jb
+
 /-- Y(**p**, **a**) (GP §A.7): the PVM blob, registers and RAM for JAM blob `b` and arguments
-    `a`, or ∅ if `b` is not a valid encoding or the sections do not fit:
-    5𝖹_Z + Q(|**o**|) + Q(|**w**| + z𝖹_P) + Q(s) + 𝖹_I ≤ 2^32.
+    `a`, or ∅ if `b` is not a valid encoding or the sections do not fit.
 
     The paper types **a** ∈ 𝔹_{:𝖹_I}; we return ∅ for longer arguments. -/
-def standardInit (b : ByteArray) (a : ByteArray) : Option (ByteArray × Regs × Memory) := do
-  if a.size > inputSize then none
-  let jb ← JamBlob.parse? b
-  if 5 * zoneSize + roundZone jb.ro.size + roundZone (jb.rw.size + jb.heapPages * pageSize) +
-      roundZone jb.stackSize + inputSize > 2 ^ 32 then none
-  some (jb.code, initialRegs a, initialMemory jb a)
+def standardInit (b : ByteArray) (a : ByteArray) : Option (ByteArray × Regs × Memory) :=
+  (validJamBlob? b a).map fun jb => (jb.code, initialRegs a, initialMemory jb a)
 
 /-! ## Argument invocation Ψ_M (GP §A.8) -/
 

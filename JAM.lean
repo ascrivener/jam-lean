@@ -13,6 +13,7 @@ import JAM.Refine
 import JAM.Theorems.HostGas
 import JAM.Theorems.Confinement
 import JAM.Theorems.RefineContract
+import JAM.Theorems.GrowHeap
 
 /-!
 # Gray Paper v0.8.0, Appendix B and the protocol terms it needs

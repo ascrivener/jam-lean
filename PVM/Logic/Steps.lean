@@ -142,6 +142,32 @@ dsimproc reduceBitwise (PVM.Exec.bitwise _ _ _) := fun e => do
   return .done (toExpr r)
 
 
+open Lean Meta Simp in
+/-- Evaluate a PVM bit helper on literal arguments by calling the model's own definition; the
+    kernel re-checks the literal by evaluating the definition. -/
+def evalNatFn2 (f : Nat → Nat → Nat) (e : Expr) : SimpM DStep := do
+  let args := e.getAppArgs
+  if args.size != 2 then return .continue
+  let some a ← Nat.fromExpr? args[0]! | return .continue
+  let some b ← Nat.fromExpr? args[1]! | return .continue
+  return .done (toExpr (f a b))
+
+open Lean Meta Simp in
+def evalNatFn3 (f : Nat → Nat → Nat → Nat) (e : Expr) : SimpM DStep := do
+  let args := e.getAppArgs
+  if args.size != 3 then return .continue
+  let some a ← Nat.fromExpr? args[0]! | return .continue
+  let some b ← Nat.fromExpr? args[1]! | return .continue
+  let some c ← Nat.fromExpr? args[2]! | return .continue
+  return .done (toExpr (f a b c))
+
+dsimproc reduceTrailingZeros (PVM.Num.trailingZeros _ _) := evalNatFn2 PVM.Num.trailingZeros
+dsimproc reduceLeadingZeros (PVM.Num.leadingZeros _ _) := evalNatFn2 PVM.Num.leadingZeros
+dsimproc reducePopcount (PVM.Num.popcount _ _) := evalNatFn2 PVM.Num.popcount
+dsimproc reduceRotl (PVM.Num.rotl _ _ _) := evalNatFn3 PVM.Num.rotl
+dsimproc reduceRotr (PVM.Num.rotr _ _ _) := evalNatFn3 PVM.Num.rotr
+
+
 /-! ## The step tactic -/
 
 /-- Compute one gas-free step's effect: unfold Ψ₁'s mutation for the (known) instruction, reduce
@@ -170,7 +196,15 @@ macro_rules
       PVM.RegTwoImmOp.width, PVM.TwoImmOp.width, PVM.Memory.readN_writeN_same,
       PVM.Memory.readN_writeN_disjoint, PVM.Num.length_encodeLE, PVM.Num.decodeLE_encodeLE,
       or_true, true_or, or_false, false_or, id_eq, Int.toNat_natCast, PVM.natCast_lt_zero,
-      PVM.reduceBitwise, List.length_cons, List.length_nil, $hs,*]
+      PVM.reduceBitwise, List.length_cons, List.length_nil, PVM.Memory.read_setPages,
+      PVM.Memory.readN_setPages, PVM.Memory.writable_setPages, PVM.Memory.readable_setPages,
+      Option.isSome_some, PVM.Exec.threeRegAlu, PVM.Exec.regImmBranchCond,
+      PVM.Exec.twoRegBranchCond, PVM.Exec.u64, PVM.Exec.s64, PVM.Num.sext, PVM.Num.signed,
+      PVM.Num.unsigned, PVM.Num.floorShift, PVM.Program.djump, UInt8.reduceToNat, Int.reduceAdd,
+      Int.reduceSub, Int.reduceMul, Int.reduceMod, Int.reduceFDiv, Int.reducePow,
+      Int.reduceToNat, Int.reduceNeg, Int.reduceLE, Int.reduceOfNat, PVM.Exec.ofBool,
+      PVM.reduceTrailingZeros, PVM.reduceLeadingZeros, PVM.reducePopcount, PVM.reduceRotl,
+      PVM.reduceRotr, $hs,*]
     first
       | rfl
       | (simp only [PVM.Memory.readN, List.range_succ, List.range_zero, List.map_cons,
@@ -179,7 +213,33 @@ macro_rules
           List.getElem!_cons_zero, List.getElem!_cons_succ, PVM.Num.decodeLE, UInt8.toNat_ofNat',
           Nat.reduceMod, Nat.reduceAdd, Nat.reduceSub, Nat.reduceMul, Nat.reducePow,
           Nat.reduceDiv, Nat.reduceLT, Nat.reduceLeDiff, Nat.lt_irrefl, PVM.two32, and_true,
-          true_and, and_false, false_and, ↓reduceIte, ite_true, ite_false, id_eq, $hs,*]
+          true_and, and_false, false_and, ↓reduceIte, ite_true, ite_false, id_eq, PVM.Program.exec, PVM.Program.sjump, PVM.Program.branch, PVM.Program.isBlockStartInt,
+      PVM.Program.finalState, PVM.memoryException, pvm_code, PVM.Exec.twoRegImmAlu,
+      PVM.Exec.twoRegAlu, PVM.Exec.indices, PVM.Regs.get, Fin.getElem_fin, PVM.regIdx_val_0,
+      PVM.regIdx_val_1, PVM.regIdx_val_2, PVM.regIdx_val_3, PVM.regIdx_val_4, PVM.regIdx_val_5,
+      PVM.regIdx_val_6, PVM.regIdx_val_7, PVM.regIdx_val_8, PVM.regIdx_val_9, PVM.regIdx_val_10,
+      PVM.regIdx_val_11, PVM.regIdx_val_12, Option.getD_some, Vector.getElem_ofFn,
+      Vector.getElem_set, PVM.two32, PVM.two64, PVM.pageSize, UInt64.toNat_ofNat',
+      UInt64.toNat_ofNat, UInt64.reduceToNat, ne_eq, not_true_eq_false, ↓reduceIte,
+      List.append_nil, List.nil_append, List.getD_cons_zero, List.getD_cons_succ, Fin.isValue,
+      Fin.val_ofNat, decide_false, decide_true, Bool.not_false, Bool.not_true, Bool.false_eq_true,
+      ite_true, ite_false, List.filter_nil, List.filter_cons, List.min?_nil, List.map_cons,
+      List.map_nil, List.range_succ, List.range_zero, List.map_append, List.filter_append,
+      Int.reduceLT, Int.reduceToNat, Int.reduceNeg, Nat.reduceMod, Nat.reduceAdd, Nat.reduceSub,
+      Nat.reduceMul, Nat.reducePow, Nat.reduceDiv, Nat.reduceEqDiff, Nat.reduceLeDiff,
+      Nat.reduceLT, Nat.lt_irrefl, PVM.Memory.writable_writeN, PVM.Memory.readable_writeN,
+      PVM.RegTwoImmOp.width, PVM.TwoImmOp.width, PVM.Memory.readN_writeN_same,
+      PVM.Memory.readN_writeN_disjoint, PVM.Num.length_encodeLE, PVM.Num.decodeLE_encodeLE,
+      or_true, true_or, or_false, false_or, id_eq, Int.toNat_natCast, PVM.natCast_lt_zero,
+      PVM.reduceBitwise, List.length_cons, List.length_nil, PVM.Memory.read_setPages,
+      PVM.Memory.readN_setPages, PVM.Memory.writable_setPages, PVM.Memory.readable_setPages,
+      Option.isSome_some, PVM.Exec.threeRegAlu, PVM.Exec.regImmBranchCond,
+      PVM.Exec.twoRegBranchCond, PVM.Exec.u64, PVM.Exec.s64, PVM.Num.sext, PVM.Num.signed,
+      PVM.Num.unsigned, PVM.Num.floorShift, PVM.Program.djump, UInt8.reduceToNat, Int.reduceAdd,
+      Int.reduceSub, Int.reduceMul, Int.reduceMod, Int.reduceFDiv, Int.reducePow,
+      Int.reduceToNat, Int.reduceNeg, Int.reduceLE, Int.reduceOfNat, PVM.Exec.ofBool,
+      PVM.reduceTrailingZeros, PVM.reduceLeadingZeros, PVM.reducePopcount, PVM.reduceRotl,
+      PVM.reduceRotr, $hs,*]
          rfl)))
 
 end PVM

@@ -96,16 +96,21 @@ def hostGas {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (x : X) : HostOut X
 
 /-! ## Ω_♊, `grow_heap` = 1 -/
 
-/-- The gas-free part of Ω_♊: the first heap page a, the page bound b, the current heap top
-    h = a + c (c the writable pages in ℕ_{a…b}) and the requested top w = ω_7. -/
-def growHeapCore (ω : Regs) (μ : Memory) (jam : ByteArray) : Nat × Nat × Nat × Nat :=
+/-- The heap's page bounds for a standard program (eq. `conditions`): the first heap page
+    a = (2𝖹_Z + Q(|**o**|)) / 𝖹_P and the bound b below the stack. -/
+def heapBounds (jam : ByteArray) : Nat × Nat :=
   let (roLen, stack) := match JamBlob.parse? jam with
     | some jb => (jb.ro.size, jb.stackSize)
     | none => (0, 0)
-  let a := (2 * zoneSize + roundZone roLen) / pageSize
-  let b := (2 ^ 32 - 3 * zoneSize - inputSize - roundPage stack) / pageSize
-  -- c = |{p ∈ ℕ_{a…b} | (μ_**a**)[p] = W}|, read off the page map's entries
-  let c := (μ.pages.toList.filter fun (p, acc) => a ≤ p ∧ p < b ∧ acc = .write).length
+  ((2 * zoneSize + roundZone roLen) / pageSize,
+   (2 ^ 32 - 3 * zoneSize - inputSize - roundPage stack) / pageSize)
+
+/-- The gas-free part of Ω_♊: the heap bounds a and b, the current heap top h = a + c (c the
+    writable pages in ℕ_{a…b}) and the requested top w = ω_7. -/
+def growHeapCore (ω : Regs) (μ : Memory) (jam : ByteArray) : Nat × Nat × Nat × Nat :=
+  let (a, b) := heapBounds jam
+  -- c = |{p ∈ ℕ_{a…b} | (μ_**a**)[p] = W}|
+  let c := (List.range (b - a)).countP fun k => μ.pages.get? (a + k) == some .write
   (a, b, a + c, reg ω 7)
 
 /-- Ω_♊(ϱ, ω, μ, **p**): grow the read-write region of a standard program (eq. `conditions`) to

@@ -1,5 +1,6 @@
 import PVM.Logic.Code
 import PVM.Logic.Attr
+import PVM.Theorems.InitMem
 
 /-!
 # Chains of gas-free steps
@@ -169,7 +170,16 @@ macro_rules
       PVM.RegTwoImmOp.width, PVM.TwoImmOp.width, PVM.Memory.readN_writeN_same,
       PVM.Memory.readN_writeN_disjoint, PVM.Num.length_encodeLE, PVM.Num.decodeLE_encodeLE,
       or_true, true_or, or_false, false_or, id_eq, Int.toNat_natCast, PVM.natCast_lt_zero,
-      PVM.reduceBitwise, $hs,*]
-    rfl))
+      PVM.reduceBitwise, List.length_cons, List.length_nil, $hs,*]
+    first
+      | rfl
+      | (simp only [PVM.Memory.readN, List.range_succ, List.range_zero, List.map_cons,
+          List.map_nil, List.map_append, List.nil_append, List.cons_append,
+          PVM.Memory.read_writeN, PVM.Num.length_encodeLE, PVM.Num.encodeLE,
+          List.getElem!_cons_zero, List.getElem!_cons_succ, PVM.Num.decodeLE, UInt8.toNat_ofNat',
+          Nat.reduceMod, Nat.reduceAdd, Nat.reduceSub, Nat.reduceMul, Nat.reducePow,
+          Nat.reduceDiv, Nat.reduceLT, Nat.reduceLeDiff, Nat.lt_irrefl, PVM.two32, and_true,
+          true_and, and_false, false_and, ↓reduceIte, ite_true, ite_false, id_eq, $hs,*]
+         rfl)))
 
 end PVM

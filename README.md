@@ -13,14 +13,20 @@ execution, memory is an extensional finite map, and the theorems use only `prope
 
 ## Scope
 
-The boundary is **Appendix A of the Gray Paper, all of it and nothing more**: §A.1–A.5 (deblob,
-decoding, instruction semantics, memory, Ψ₁, Ψ), §A.6–A.8 (Ψ_H, Y, Ψ_M) and §A.9–A.10 (the gas
-model). Results are exactly the paper's tuples. From outside Appendix A the model uses only what
-Appendix A itself references: the integer and bit-sequence encodings of Appendix C, the RAM and
-register definitions of §4.7, and constants. Host functions, service accounts and the refine,
-accumulate and is-authorized invocations (Appendix B) belong in a separate package that depends on
-this one. Test-vector conventions (`map`/`write`/`set-reg` steps, how runs resume, the exit index
-the vectors call `pc`) live in `Tests/`, not in the model.
+Two libraries, each bounded by the Gray Paper (v0.8.0):
+
+* **`PVM`: exactly Appendix A**, all of it and nothing more: §A.1–A.5 (deblob, decoding,
+  instruction semantics, memory, Ψ₁, Ψ), §A.6–A.8 (Ψ_H, Y, Ψ_M) and §A.9–A.10 (the gas model).
+  Results are exactly the paper's tuples. From outside Appendix A it uses only what Appendix A
+  references: the integer and bit-sequence encodings of Appendix C, the RAM and register
+  definitions of §4.7, and constants. `PVM/Logic/` holds proof rules about this model; it adds no
+  semantics.
+* **`JAM`: Appendix B (in progress)**, built on `PVM`, with the protocol terms Appendix B needs:
+  the codec (Appendix C), ℋ = Blake2b-256 (§3.8), and work packages, items, digests and reports
+  (§11, §14). A proof about pure PVM programs imports only `PVM` and trusts nothing from `JAM`.
+
+Test-vector conventions (`map`/`write`/`set-reg` steps, how runs resume, the exit index the vectors
+call `pc`) live in `Tests/`, not in the model.
 
 ## Results
 
@@ -30,6 +36,8 @@ the vectors call `pc`) live in `Tests/`, not in the model.
 | Block costs in `programs/` | **5,123 / 5,123** correct |
 | Block costs in `gas-tests/` (doom, pinky, prime-sieve) | **39,737 / 39,737** correct |
 | Model's ϖ against the blocks the vectors list | identical in all 367 programs |
+| `JAM` codec: work-package family vs. GP v0.8.0 codec vectors | **6 / 6** match |
+| `JAM` Blake2b-256 vs. `hashlib` and RFC 7693 | **13 / 13** match |
 
 ## Building and running
 
@@ -117,6 +125,28 @@ itself. No test vectors cover these layers at the pinned commit.
 fails on anything but `propext`, `Classical.choice` and `Quot.sound` (so on `sorryAx`, and on
 the axioms `native_decide` and `bv_decide` introduce). CI also greps for `sorry`, `partial def`,
 `implemented_by`, `native_decide` and `bv_decide`.
+
+## Reasoning about programs (`PVM/Logic/`)
+
+Theorems and proof rules about the Appendix A model; nothing here adds semantics.
+
+* **Gas abstraction** (`Logic/Free.lean`). `Program.freeStep` is Ψ₁ without its gas stage, and
+  `FreeRun` the big-step runs of that gas-free machine. `psi_freeRun`: every Ψ run that does not end
+  in ∞ is a `FreeRun` with the same exit reason, registers and memory. Gas only ever stops a run
+  early, so properties of the form "if it finishes, then …" can ignore gas, basic blocks and the
+  cost model entirely.
+* **Abstract hosts** (`Logic/Host.lean`). A host contract `HostRel` says what a host call may do;
+  `FreeRunH` is gas-free Ψ_H under a contract. `psiHStar_freeRunH` and `psiM_free`: every Ψ_H / Ψ_M
+  run, under any handler that respects the contract and does not add gas, that does not end in ∞
+  is such a run. Proofs therefore hold for every handler meeting the contract.
+* **Invariant rules** (`Logic/Invariant.lean`). `FreeRun.of_invariant` and `FreeRunH.of_invariant`:
+  an invariant that holds initially and is preserved by each step (and by each host call the
+  contract allows) constrains every way the run can end.
+* **Worked example** (`Tests/LogicExample.lean`). A three-instruction countdown loop.
+  `countdown_spec`: for every initial register file with ω₀ = 2^32 − 2^16, every memory and every
+  amount of gas, Ψ either runs out of gas or halts with ω₈ = 0. The proof uses `psi_freeRun`, a
+  program-counter invariant, and one lemma per instruction. Each lemma unfolds `exec` on the
+  decoded instruction and is checked in about a second.
 
 ## Notes on the paper and the vectors
 

@@ -7,6 +7,7 @@ open Lake DSL System
 * `lake build pvmtest`   builds and runs the vector runner over `vendor/jamtestvectors/pvm/programs`.
 * `lake build gascheck`  builds and runs the block gas checker over `programs/` and `gas-tests/`.
 * `lake build Tests.Invocation`  kernel-checks the Ψ_H / Y / Ψ_M examples.
+* `lake build Tests.LogicExample`  the worked for-all-inputs proof.
 
 The vectors are fetched at the pinned commit by `scripts/fetch-vectors.sh`. -/
 
@@ -16,13 +17,22 @@ package «pvm-lean» where
 @[default_target]
 lean_lib PVM
 
+/-- Appendix B and the protocol terms it needs, built on `PVM`. -/
+@[default_target]
+lean_lib JAM
+
 /-- Shared helpers of the test executables. -/
 lean_lib Tests where
-  globs := #[.one `Tests.Vectors, .one `Tests.Invocation]
+  globs := #[.one `Tests.Vectors, .one `Tests.Invocation, .one `Tests.LogicExample,
+    .one `Tests.Blake2bTest]
 
 lean_exe «pvmtest-exe» where
   root := `Tests.PvmTest
   exeName := "pvmtest"
+
+lean_exe «codectest-exe» where
+  root := `Tests.CodecTest
+  exeName := "codectest"
 
 lean_exe «gascheck-exe» where
   root := `Tests.GasCheck
@@ -45,6 +55,14 @@ def runOnVectors (exeName : Lean.Name) (args : Array String) : FetchM (Job Unit)
 /-- Run every vector in `programs/` (status, registers, pc, gas, page-fault address, memory). -/
 target pvmtest pkg : Unit := do
   runOnVectors `«pvmtest-exe» #[(vectorDir pkg / "programs").toString]
+
+/-- The Gray Paper v0.8.0 JAM vectors (davxy/jam-test-vectors `v0.8.0`), fetched by
+    `scripts/fetch-jam-vectors.sh`. -/
+def jamVectorDir (pkg : Package) : FilePath := pkg.dir / "vendor" / "jam-test-vectors"
+
+/-- Encode the work-package family and compare with the codec vectors. -/
+target codectest pkg : Unit := do
+  runOnVectors `«codectest-exe» #[(jamVectorDir pkg / "codec" / "tiny").toString]
 
 /-- Compare the model's ϖ^Δ against every block cost in `programs/` and `gas-tests/`. -/
 target gascheck pkg : Unit := do

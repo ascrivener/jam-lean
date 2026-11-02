@@ -60,6 +60,9 @@ jobs:
       - name: General host functions
         run: lake build Tests.HostGeneralTest
 
+      - name: Keccak and SHA3 vectors
+        run: lake build Tests.KeccakTest
+
       - name: Fetch the Gray Paper v0.8.0 JAM vectors
         run: scripts/fetch-jam-vectors.sh
 

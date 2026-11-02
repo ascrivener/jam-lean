@@ -2,9 +2,13 @@ import JAM.Codec
 import JAM.Constants
 import JAM.Account
 import JAM.Blake2b
+import JAM.Keccak
 import JAM.Work
 import JAM.Params
 import JAM.Host.General
+import JAM.Merkle
+import JAM.Accumulate
+import JAM.Accumulation
 
 /-!
 # Gray Paper v0.8.0, Appendix B and the protocol terms it needs

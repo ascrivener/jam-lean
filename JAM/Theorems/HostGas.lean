@@ -52,9 +52,13 @@ theorem hostGas_gas {X} (gas : Nat) (ω : Regs) (μ : Memory) (x : X) :
 theorem hostGrowHeap_gas {X} (gas : Nat) (ω : Regs) (μ : Memory) (jam : ByteArray) (x : X) :
     (hostGrowHeap gas ω μ jam x).gas ≤ gas := by
   unfold hostGrowHeap
+  generalize growHeapCore ω μ jam = q
+  obtain ⟨a, b, hp, w⟩ := q
   dsimp only
-  repeat' split
-  all_goals (rename_i h; simp only at h; omega)
+  by_cases hc : w ≤ hp ∨ w > b
+  · simp only [hc, ↓reduceIte]; omega
+  · simp only [hc, ↓reduceIte]
+    split <;> (dsimp only; omega)
 
 theorem hostFetch_gas {X} (gas : Nat) (ω : Regs) (μ : Memory) (cx : FetchContext) (x : X) :
     (hostFetch gas ω μ cx x).gas ≤ gas :=

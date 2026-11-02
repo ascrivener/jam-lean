@@ -113,6 +113,34 @@ theorem Memory.readN_writeN_disjoint (μ : Memory) (a : Nat) (bs : List UInt8) (
 @[simp] theorem regIdx_val_12 : (((12 : Fin 13) : Nat)) = 12 := rfl
 
 
+/-! ## Evaluating closed terms the stepper meets -/
+
+@[simp] theorem natCast_lt_zero (n : Nat) : ((n : Int) < 0) = False := by
+  simp only [eq_iff_iff, iff_false, Int.not_lt]; exact Int.natCast_nonneg n
+
+open Lean Meta Simp in
+/-- `Exec.bitwise f a b` for literals `a`, `b` and a closed `f`: evaluated bit by bit, as its
+    definition does. The result is a literal; the kernel checks it by evaluating the definition. -/
+dsimproc reduceBitwise (PVM.Exec.bitwise _ _ _) := fun e => do
+  let_expr PVM.Exec.bitwise f a b ← e | return .continue
+  let some a ← Nat.fromExpr? a | return .continue
+  let some b ← Nat.fromExpr? b | return .continue
+  let evalF (x y : Bool) : MetaM (Option Bool) := do
+    let r ← whnfD (mkApp2 f (toExpr x) (toExpr y))
+    if r.isConstOf ``Bool.true then return some true
+    else if r.isConstOf ``Bool.false then return some false
+    else return none
+  let some ff ← evalF false false | return .continue
+  let some ft ← evalF false true | return .continue
+  let some tf ← evalF true false | return .continue
+  let some tt ← evalF true true | return .continue
+  let tbl (x y : Bool) : Bool := match x, y with
+    | false, false => ff | false, true => ft | true, false => tf | true, true => tt
+  let bitOf (x i : Nat) : Bool := x / 2 ^ i % 2 = 1
+  let r := (List.range 64).foldr (fun i acc => acc + (if tbl (bitOf a i) (bitOf b i) then 2 ^ i else 0)) 0
+  return .done (toExpr r)
+
+
 /-! ## The step tactic -/
 
 /-- Compute one gas-free step's effect: unfold Ψ₁'s mutation for the (known) instruction, reduce
@@ -140,7 +168,8 @@ macro_rules
       Nat.reduceLT, Nat.lt_irrefl, PVM.Memory.writable_writeN, PVM.Memory.readable_writeN,
       PVM.RegTwoImmOp.width, PVM.TwoImmOp.width, PVM.Memory.readN_writeN_same,
       PVM.Memory.readN_writeN_disjoint, PVM.Num.length_encodeLE, PVM.Num.decodeLE_encodeLE,
-      or_true, true_or, or_false, false_or, $hs,*]
+      or_true, true_or, or_false, false_or, id_eq, Int.toNat_natCast, PVM.natCast_lt_zero,
+      PVM.reduceBitwise, $hs,*]
     rfl))
 
 end PVM

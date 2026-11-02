@@ -70,7 +70,7 @@ jobs:
         run: lake build witnesscheck
 
       - name: Services/Witness/Prefix.lean is what its generator produces
-        run: lake exe genwitnesssteps 39 | diff - Services/Witness/Prefix.lean
+        run: lake exe genwitnesssteps 51 | diff - Services/Witness/Prefix.lean
 
       - name: The real witness binary rejects malformed payloads (a test, not a proof)
         run: lake build witnessrun

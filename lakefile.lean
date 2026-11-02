@@ -1,7 +1,7 @@
 import Lake
 open Lake DSL System
 
-/-! Build configuration for the executable Lean model of the JAM PVM (Gray Paper v0.8.0).
+/-! Build configuration for the Lean model of the JAM PVM and Appendix B (Gray Paper v0.8.0).
 
 * `lake build`           builds the model (`PVM`) and its theorems.
 * `lake build pvmtest`   builds and runs the vector runner over `vendor/jamtestvectors/pvm/programs`.
@@ -11,7 +11,7 @@ open Lake DSL System
 
 The vectors are fetched at the pinned commit by `scripts/fetch-vectors.sh`. -/
 
-package «pvm-lean» where
+package «jam-lean» where
   leanOptions := #[⟨`autoImplicit, false⟩]
 
 @[default_target]

@@ -1,10 +1,12 @@
-# pvm-lean
+# jam-lean
 
-An executable Lean 4 model of the JAM Polkadot Virtual Machine, written from the
-[Gray Paper](https://github.com/gavofyork/graypaper) **v0.8.0** (Appendix A, `text/pvm.tex`) and
-checked against the PVM test vectors of
+An executable Lean 4 model of JAM from the
+[Gray Paper](https://github.com/gavofyork/graypaper) **v0.8.0**: the Polkadot Virtual Machine
+(Appendix A, library `PVM`), and Appendix B with the protocol terms it needs (library `JAM`, in
+progress). The PVM is checked against the PVM test vectors of
 [koute/jamtestvectors](https://github.com/koute/jamtestvectors) (branch `master_pvm_initial`,
-commit `6bf3768e5b37bbe4ca5d6e1306284ecb27c0198f`, directory `pvm/`).
+commit `6bf3768e5b37bbe4ca5d6e1306284ecb27c0198f`, directory `pvm/`); `JAM` against
+[davxy/jam-test-vectors](https://github.com/davxy/jam-test-vectors) `v0.8.0`.
 
 It is meant for proofs as well as evaluation: everything is total, decoding is kept separate from
 execution, memory is an extensional finite map, and the theorems use only `propext`,

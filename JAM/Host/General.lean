@@ -96,11 +96,9 @@ def hostGas {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (x : X) : HostOut X
 
 /-! ## Ω_♊, `grow_heap` = 1 -/
 
-/-- Ω_♊(ϱ, ω, μ, **p**): grow the read-write region of a standard program (eq. `conditions`) to
-    page ω_7, charging 𝖬_{♊,c} + (ω_7 − h)·𝖬_{♊,p}. The function defines (ε', ϱ', ω'_7) itself, and
-    then (μ'_**a**)_{a…ω'_7} = [W, …]. -/
-def hostGrowHeap {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (jam : ByteArray) (x : X) :
-    HostOut X :=
+/-- The gas-free part of Ω_♊: the first heap page a, the page bound b, the current heap top
+    h = a + c (c the writable pages in ℕ_{a…b}) and the requested top w = ω_7. -/
+def growHeapCore (ω : Regs) (μ : Memory) (jam : ByteArray) : Nat × Nat × Nat × Nat :=
   let (roLen, stack) := match JamBlob.parse? jam with
     | some jb => (jb.ro.size, jb.stackSize)
     | none => (0, 0)
@@ -108,8 +106,14 @@ def hostGrowHeap {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (jam : ByteArr
   let b := (2 ^ 32 - 3 * zoneSize - inputSize - roundPage stack) / pageSize
   -- c = |{p ∈ ℕ_{a…b} | (μ_**a**)[p] = W}|, read off the page map's entries
   let c := (μ.pages.toList.filter fun (p, acc) => a ≤ p ∧ p < b ∧ acc = .write).length
-  let h := a + c
-  let w := reg ω 7
+  (a, b, a + c, reg ω 7)
+
+/-- Ω_♊(ϱ, ω, μ, **p**): grow the read-write region of a standard program (eq. `conditions`) to
+    page ω_7, charging 𝖬_{♊,c} + (ω_7 − h)·𝖬_{♊,p}. The function defines (ε', ϱ', ω'_7) itself, and
+    then (μ'_**a**)_{a…ω'_7} = [W, …]. -/
+def hostGrowHeap {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (jam : ByteArray) (x : X) :
+    HostOut X :=
+  let (a, b, h, w) := growHeapCore ω μ jam
   let g := Constants.CgasGeminiconst + (w - h) * Constants.CgasGeminilinear
   let (st, gas', r7) : HostStatus × Int × Nat :=
     if w ≤ h ∨ w > b then (.cont, (gas : Int) - Constants.CgasGeminiconst, h)

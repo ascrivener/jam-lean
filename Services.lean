@@ -1,4 +1,6 @@
 import Services.Witness
+import Services.Witness.Code
+import Services.Witness.Memcpy
 import Services.Witness.Prefix
 
 /-!
@@ -8,6 +10,10 @@ Built on `JAM`; nothing in `PVM` or `JAM` depends on this library.
 
 * `Services.Witness` — the witness bounty-market service: its accumulate is confined to its own
   account, and its refine exports nothing.
-* `Services.Witness.Prefix` — generated: the first 39 steps of witness's refine, proved
-  symbolically from code facts that `checkCode` checks against the blob.
+* `Services.Witness.Code` — generated: the code facts the witness proofs use, which `checkCode`
+  checks against the blob (`lake build witnesscheck`).
+* `Services.Witness.Memcpy` — the compiler's `memcpy` in witness, summarized for fewer than 16
+  octets: `memcpy_loop` (the byte loop, by induction) and `memcpy_small` (the whole call).
+* `Services.Witness.Prefix` — generated: the first 702 steps of witness's refine, proved
+  symbolically from those code facts.
 -/

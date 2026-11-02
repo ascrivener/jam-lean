@@ -1,0 +1,242 @@
+import Services.Witness.Code
+
+/-!
+# `memcpy` in witness, summarized
+
+The compiler's `memcpy(dst = ω₇, src = ω₈, n = ω₉)` at 186740 in witness's code. For n < 16 it
+copies byte by byte (186843 … 186865); this file proves that loop's effect by induction on the
+count, from the code facts alone (`Services.Witness.Code.HasCode`).
+-/
+
+namespace Services.Witness
+
+open PVM Services.Witness.Code
+
+set_option maxHeartbeats 4000000
+
+variable {X : Type} {R : HostRel X}
+
+/-- One iteration of the byte loop at 186851: copy the octet at `s` to `d`, count down. -/
+theorem memcpy_iter {p : ByteArray} {P : Program} [HasCode p P] (ω : Regs) (μ : Memory) (x : X)
+    (k s d : Nat) (h9 : ω[9] = UInt64.ofNat (k + 1)) (h8 : ω[8] = UInt64.ofNat s)
+    (h10 : ω[10] = UInt64.ofNat d) (hk : k + 1 < 16) (hs : s + k + 1 < 4294967296)
+    (hd : d + k + 1 < 4294967296) (hr : μ.readable s = true) (hw : μ.writable d = true) :
+    ∃ ω', FreeStepsH p R 186851 ω μ x 186865 ω' (μ.writeN d [μ.read s]) x ∧
+      ω'[9] = UInt64.ofNat k ∧ ω'[8] = UInt64.ofNat (s + 1) ∧ ω'[10] = UInt64.ofNat (d + 1) ∧
+      ∀ j : Fin 13, j.val ∉ [8, 9, 10, 11] → ω'[j] = ω[j] := by
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?run, ?post⟩
+  case run =>
+      apply FreeStepsH.step_decode (d_186851 (p := p) (P := P))
+      · pvm_simp []
+      apply FreeStepsH.step_decode (d_186852 (p := p) (P := P))
+      · pvm_simp [h8, hr]
+      apply FreeStepsH.step_decode (d_186854 (p := p) (P := P))
+      · pvm_simp [h9]
+      apply FreeStepsH.step_decode (d_186857 (p := p) (P := P))
+      · pvm_simp [h10, hw]
+      apply FreeStepsH.step_decode (d_186859 (p := p) (P := P))
+      · pvm_simp [h10]
+      apply FreeStepsH.step_decode (d_186862 (p := p) (P := P))
+      · pvm_simp [h8]
+      exact FreeStepsH.refl
+  case post =>
+    refine ⟨?r9, ?r8, ?r10, fun j hj => ?rest⟩
+    case rest =>
+      simp only [List.mem_cons, List.not_mem_nil, or_false, not_or] at hj
+      obtain ⟨h1, h2, h3, h4⟩ := hj
+      simp only [Fin.getElem_fin]
+      rw [PVM.getElem_regsNF _ _ _ j.isLt, PVM.getElem_regsNF _ _ _ j.isLt]
+      simp [PVM.lookup_cons_nat, h1, h2, h3, h4]
+    all_goals simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,
+      PVM.getD_some']
+
+theorem readN_succ (μ : Memory) (a n : Nat) : μ.readN a (n + 1) = μ.read a :: μ.readN (a + 1) n := by
+  simp only [Memory.readN, List.range_succ_eq_map, List.map_cons, List.map_map, Nat.add_zero]
+  congr 1
+  apply List.map_congr_left
+  intro j _
+  simp [Function.comp, Nat.add_assoc, Nat.add_comm 1 j]
+
+/-- **The byte loop of `memcpy`** (186851 … 186865): with ω₉ = k + 1 > 0 octets left, ω₈ = s and
+    ω₁₀ = d, it copies the k + 1 octets at `s` to `d` (the ranges disjoint) and leaves for 186868,
+    changing only ω₈ … ω₁₁. -/
+theorem memcpy_loop {p : ByteArray} {P : Program} [HasCode p P] (x : X) : ∀ (k : Nat) (ω : Regs)
+    (μ : Memory) (s d : Nat), ω[9] = UInt64.ofNat (k + 1) → ω[8] = UInt64.ofNat s →
+    ω[10] = UInt64.ofNat d → k + 1 < 16 → s + k + 1 < 4294967296 → d + k + 1 < 4294967296 →
+    (d + k + 1 ≤ s ∨ s + k + 1 ≤ d) → (∀ a, s ≤ a → a ≤ s + k → μ.readable a = true) →
+    (∀ a, d ≤ a → a ≤ d + k → μ.writable a = true) →
+    ∃ ω', FreeStepsH p R 186851 ω μ x 186868 ω' (μ.writeN d (μ.readN s (k + 1))) x ∧
+      ∀ j : Fin 13, j.val ∉ [8, 9, 10, 11] → ω'[j] = ω[j] := by
+  intro k
+  induction k with
+  | zero =>
+    intro ω μ s d h9 h8 h10 hk hs hd _ hr hw
+    obtain ⟨ω₁, hrun, h9', _, _, hfr⟩ := memcpy_iter (p := p) (P := P) (R := R) ω μ x 0 s d h9 h8 h10 hk hs hd
+      (hr s (by omega) (by omega)) (hw d (by omega) (by omega))
+    refine ⟨regsNF ω₁ [], ?_, hfr⟩
+    rw [show μ.readN s (0 + 1) = [μ.read s] by simp [Memory.readN]]
+    refine hrun.trans ?_
+    rw [show ω₁ = regsNF ω₁ [] from rfl]
+    apply FreeStepsH.step_decode (d_186865 (p := p) (P := P))
+    · pvm_simp [h9']
+    exact FreeStepsH.refl
+  | succ k ih =>
+    intro ω μ s d h9 h8 h10 hk hs hd hdj hr hw
+    obtain ⟨ω₁, hrun, h9', h8', h10', hfr⟩ := memcpy_iter (p := p) (P := P) (R := R) ω μ x (k + 1) s d h9 h8 h10 hk
+      hs hd (hr s (by omega) (by omega)) (hw d (by omega) (by omega))
+    obtain ⟨ω₂, hrun₂, hfr₂⟩ := ih (regsNF ω₁ []) (μ.writeN d [μ.read s]) (s + 1) (d + 1) h9' h8'
+      h10' (by omega) (by omega) (by omega) (by omega)
+      (fun a h1 h2 => by rw [Memory.readable_writeN]; exact hr a (by omega) (by omega))
+      (fun a h1 h2 => by rw [Memory.writable_writeN]; exact hw a (by omega) (by omega))
+    refine ⟨ω₂, ?_, fun j hj => (hfr₂ j hj).trans (hfr j hj)⟩
+    have hmem : μ.writeN d (μ.readN s (k + 1 + 1)) =
+        (μ.writeN d [μ.read s]).writeN (d + 1) ((μ.writeN d [μ.read s]).readN (s + 1) (k + 1)) := by
+      rw [Memory.readN_writeN_disjoint _ _ _ _ _ (by simp; omega) (by simp [two32]; omega)
+        (by simp [two32]; omega), readN_succ]
+      rfl
+    rw [hmem]
+    refine hrun.trans ?_
+    rw [show ω₁ = regsNF ω₁ [] from rfl]
+    apply FreeStepsH.step_decode (d_186865 (p := p) (P := P))
+    · pvm_simp [h9']
+    exact hrun₂
+
+/-- The stack frame `memcpy`'s prologue writes: ω₀, ω₅, ω₆ below the stack pointer `sp`. -/
+def memcpyFrame (μ : Memory) (ω : Regs) (sp : Nat) : Memory :=
+  ((μ.writeN (sp - 48 + 40) (Num.encodeLE 8 ω[0].toNat)).writeN (sp - 48 + 32)
+    (Num.encodeLE 8 ω[5].toNat)).writeN (sp - 48 + 24) (Num.encodeLE 8 ω[6].toNat)
+
+/-- **`memcpy` of fewer than 16 octets** (186740, the byte-loop path): from ω₇ = dst, ω₈ = src,
+    ω₉ = n < 16, ω₁ = sp and a return address ω₀ that `djump` resolves to `t`, it writes its stack
+    frame below sp, copies the n octets at src to dst, and returns to `t` with ω₀, ω₁, ω₅, ω₆
+    and ω₇ as they were. The frame, src and dst ranges are disjoint. -/
+theorem memcpy_small {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (ret t sp dst src n : Nat) (h0 : ω[0] = UInt64.ofNat ret) (h1 : ω[1] = UInt64.ofNat sp)
+    (h7 : ω[7] = UInt64.ofNat dst) (h8 : ω[8] = UInt64.ofNat src) (h9 : ω[9] = UInt64.ofNat n)
+    (hn : n < 16) (hret : 0 < ret ∧ ret ≤ 3426 ∧ ret % 2 = 0)
+    (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t) (hbt : P.isBlockStart t = true)
+    (hsp : 65536 + 48 ≤ sp ∧ sp < 4294967296) (hdst : 65536 ≤ dst ∧ dst + 16 < 4294967296)
+    (hsrc : 65536 ≤ src ∧ src + 16 < 4294967296)
+    (hdj : dst + n ≤ src ∨ src + n ≤ dst) (hfd : dst + n ≤ sp - 48 ∨ sp ≤ dst)
+    (hfs : src + n ≤ sp - 48 ∨ sp ≤ src)
+    (hwf : ∀ a, sp - 48 ≤ a → a < sp → μ.writable a = true)
+    (hr : ∀ a, src ≤ a → a < src + n → μ.readable a = true)
+    (hw : ∀ a, dst ≤ a → a < dst + n → μ.writable a = true) :
+    ∃ ω', FreeStepsH p R 186740 ω μ x t ω' ((memcpyFrame μ ω sp).writeN dst (μ.readN src n)) x ∧
+      ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ ω'[7] = ω[7] := by
+  have hrf : ∀ a, sp - 48 ≤ a → a < sp → μ.readable a = true :=
+    fun a h1 h2 => Memory.readable_of_writable (hwf a h1 h2)
+  have hret0 : ω[0].toNat = ret := by
+    rw [h0]; exact UInt64.toNat_ofNat_of_lt (Nat.lt_of_le_of_lt hret.2.1 (by decide))
+  simp only [memcpyFrame, hret0]
+  rw [show ω = regsNF ω [] from rfl]
+  rcases Nat.eq_zero_or_pos n with hn0 | hnp
+  · subst hn0
+    simp only [Memory.readN, List.range_zero, List.map_nil, Memory.writeN_nil]
+    refine ⟨?ω', ?run, ?post⟩
+    case run =>
+      apply FreeStepsH.step_decode (d_186740 (p := p) (P := P))
+      · pvm_simp [h1]
+      apply FreeStepsH.step_decode (d_186743 (p := p) (P := P))
+      · pvm_simp [h1, hwf]
+      apply FreeStepsH.step_decode (d_186746 (p := p) (P := P))
+      · pvm_simp [h1, hwf]
+      apply FreeStepsH.step_decode (d_186749 (p := p) (P := P))
+      · pvm_simp [h1, hwf]
+      apply FreeStepsH.step_decode (d_186752 (p := p) (P := P))
+      · pvm_simp [h9]
+      apply FreeStepsH.step_decode (d_186843 (p := p) (P := P))
+      · pvm_simp [h7]
+      apply FreeStepsH.step_decode (d_186845 (p := p) (P := P))
+      · pvm_simp [h7, h9]
+      apply FreeStepsH.step_decode (d_186848 (p := p) (P := P))
+      · pvm_simp [h7]
+      apply FreeStepsH.step_decode (d_186868 (p := p) (P := P))
+      · pvm_simp []
+      apply FreeStepsH.step_decode (d_186869 (p := p) (P := P))
+      · pvm_simp [hrf]
+      apply FreeStepsH.step_decode (d_186872 (p := p) (P := P))
+      · pvm_simp [hrf]
+      apply FreeStepsH.step_decode (d_186875 (p := p) (P := P))
+      · pvm_simp [hrf]
+      apply FreeStepsH.step_decode (d_186878 (p := p) (P := P))
+      · pvm_simp []
+      apply FreeStepsH.step_decode (d_186881 (p := p) (P := P))
+      · pvm_simp [h0, hret, hjt, hbt]
+      exact FreeStepsH.refl
+    case post =>
+      simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,
+        PVM.getD_some', List.lookup_nil, Option.getD_none, h0, h1, and_self]
+  · obtain ⟨k, rfl⟩ : ∃ k, n = k + 1 := ⟨n - 1, by omega⟩
+    have hsf : (((μ.writeN (sp - 48 + 40) (Num.encodeLE 8 ret)).writeN (sp - 48 + 32)
+        (Num.encodeLE 8 (regsNF ω [])[5].toNat)).writeN (sp - 48 + 24)
+        (Num.encodeLE 8 (regsNF ω [])[6].toNat)).readN src (k + 1) = μ.readN src (k + 1) := by
+      rw [Memory.readN_writeN_disjoint _ _ _ _ _ (by simp; omega) (by simp [two32]; omega)
+          (by simp [two32]; omega),
+        Memory.readN_writeN_disjoint _ _ _ _ _ (by simp; omega) (by simp [two32]; omega)
+          (by simp [two32]; omega),
+        Memory.readN_writeN_disjoint _ _ _ _ _ (by simp; omega) (by simp [two32]; omega)
+          (by simp [two32]; omega)]
+    rw [← hsf]
+    obtain ⟨ω₂, hl, hfr⟩ := memcpy_loop (p := p) (P := P) (R := R) x k
+      (regsNF ω [(1, UInt64.ofNat (sp - 48)), (10, UInt64.ofNat dst),
+        (11, UInt64.ofNat (dst + (k + 1)))])
+      (((μ.writeN (sp - 48 + 40) (Num.encodeLE 8 ret)).writeN (sp - 48 + 32)
+        (Num.encodeLE 8 (regsNF ω [])[5].toNat)).writeN (sp - 48 + 24)
+        (Num.encodeLE 8 (regsNF ω [])[6].toNat)) src dst
+      (by simpa [PVM.getElem_regsNF, PVM.lookup_cons_nat] using h9)
+      (by simpa [PVM.getElem_regsNF, PVM.lookup_cons_nat] using h8)
+      (by simp [PVM.getElem_regsNF, PVM.lookup_cons_nat])
+      (by omega) (by omega) (by omega) (by omega)
+      (fun a h1 h2 => by simp only [Memory.readable_writeN]; exact hr a h1 (by omega))
+      (fun a h1 h2 => by simp only [Memory.writable_writeN]; exact hw a h1 (by omega))
+    have g0 := hfr 0 (by decide)
+    have g1 := hfr 1 (by decide)
+    have g5 := hfr 5 (by decide)
+    have g6 := hfr 6 (by decide)
+    have g7 := hfr 7 (by decide)
+    simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,
+      PVM.getD_some', List.lookup_nil, Option.getD_none, Fin.isValue, Fin.getElem_fin,
+      PVM.regIdx_val_0, PVM.regIdx_val_1, PVM.regIdx_val_5, PVM.regIdx_val_6,
+      PVM.regIdx_val_7] at g0 g1 g5 g6 g7
+    refine ⟨?ω₃, ?run₂, ?post₂⟩
+    case run₂ =>
+      apply FreeStepsH.step_decode (d_186740 (p := p) (P := P))
+      · pvm_simp [h1]
+      apply FreeStepsH.step_decode (d_186743 (p := p) (P := P))
+      · pvm_simp [h1, hwf, hret0]
+      apply FreeStepsH.step_decode (d_186746 (p := p) (P := P))
+      · pvm_simp [h1, hwf]
+      apply FreeStepsH.step_decode (d_186749 (p := p) (P := P))
+      · pvm_simp [h1, hwf]
+      apply FreeStepsH.step_decode (d_186752 (p := p) (P := P))
+      · pvm_simp [h9]
+      apply FreeStepsH.step_decode (d_186843 (p := p) (P := P))
+      · pvm_simp [h7]
+      apply FreeStepsH.step_decode (d_186845 (p := p) (P := P))
+      · pvm_simp [h7, h9]
+      apply FreeStepsH.step_decode (d_186848 (p := p) (P := P))
+      · pvm_simp [h7]
+      refine hl.trans ?_
+      rw [show ω₂ = regsNF ω₂ [] from rfl]
+      apply FreeStepsH.step_decode (d_186868 (p := p) (P := P))
+      · pvm_simp []
+      apply FreeStepsH.step_decode (d_186869 (p := p) (P := P))
+      · pvm_simp [hrf, g1]
+      apply FreeStepsH.step_decode (d_186872 (p := p) (P := P))
+      · pvm_simp [hrf, g1]
+      apply FreeStepsH.step_decode (d_186875 (p := p) (P := P))
+      · pvm_simp [hrf, g1]
+      apply FreeStepsH.step_decode (d_186878 (p := p) (P := P))
+      · pvm_simp [g1]
+      apply FreeStepsH.step_decode (d_186881 (p := p) (P := P))
+      · pvm_simp [g0, h0, hret, hjt, hbt]
+      rw [hsf]
+      simp only [Memory.readN, List.range_succ, List.map_append, List.map_cons, List.map_nil]
+      exact FreeStepsH.refl
+    case post₂ =>
+      simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,
+        PVM.getD_some', List.lookup_nil, Option.getD_none, h0, h1, g7, and_self]
+
+end Services.Witness

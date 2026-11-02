@@ -10,6 +10,7 @@ import JAM.Merkle
 import JAM.Accumulate
 import JAM.Accumulation
 import JAM.Refine
+import JAM.Theorems.HostGas
 
 /-!
 # Gray Paper v0.8.0, Appendix B and the protocol terms it needs
@@ -24,4 +25,5 @@ Built on `PVM` (Appendix A).
 * `JAM.Host.General` — the general host functions: gas, grow_heap, fetch, lookup, read, write, info
 * `JAM.Work`  — work packages, items, digests and reports (§11, §14)
 * `JAM.Refine` — the refine and is-authorized invocations Ψ_R and Ψ_I, with the refine host functions
+* `JAM.Theorems.HostGas` — the dispatchers of Ψ_A, Ψ_R and Ψ_I never add gas
 -/

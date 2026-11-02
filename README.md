@@ -120,6 +120,15 @@ the build of the semantics rather than drifting silently.
   `psiHFuel_stable` that its fuel never runs out. The key fact, `psi_host_measure`: resuming after
   a host call is strictly lower in `runMeasure` than where the run started, because `ecalli` is
   not a terminator, so the flag stays set and ı moves forward.
+* **Ψ never adds gas** (`PVM/Theorems/Termination.lean`). `psi_gas_le`: the gas Ψ returns is at
+  most the gas it was given (`Program.step_gas_le` for one step).
+* **The protocol's host functions never add gas** (`JAM/Theorems/HostGas.lean`).
+  `accHostFn_gasNonIncreasing`, `refineHostFn_gasNonIncreasing` and
+  `isAuthHostFn_gasNonIncreasing`: the dispatchers of Ψ_A, Ψ_R and Ψ_I are
+  `HostFn.GasNonIncreasing`, so `psiHStar_eq` applies to all three invocations: their Ψ_H runs
+  never exhaust the fuel and are the paper's Ψ_H exactly. Each host function charges g ≥ 0 by the
+  common rules (`charged_gas_le`); `invoke`, the one that hands gas back, returns only what the
+  inner Ψ left of the g_R it charged (`invoke_gas`, from `psi_gas_le`).
 * **A fast Ψ that is the paper's Ψ** (`PVM/Fast.lean`). `psi` re-deblobs the program on every step
   and re-simulates gas on every block charge, as the paper writes it. `psiFast` parses once and
   memoizes block costs. `psi_eq_psiFast : psi = psiFast` is registered with `@[csimp]`, so compiled
@@ -205,8 +214,8 @@ noted here and in a comment at the definition.
     (gas in ℕ_G); Ψ_M only uses max(ϱ', 0), so nothing downstream sees the difference yet.
 13. **Ψ_H need not terminate.** The paper's Ψ_H* recurses after every host call; a handler that
     returns more gas than it was given can keep it running forever. We prove termination (and the
-    paper's equation) for handlers that do not add gas; for others `psiHStar` stops with ☇ after
-    its fuel.
+    paper's equation) for handlers that do not add gas, which includes the dispatchers of Ψ_A, Ψ_R
+    and Ψ_I (`JAM/Theorems/HostGas.lean`); for others `psiHStar` stops with ☇ after its fuel.
 14. **Y's fit condition is vacuous.** With 3-, 3-, 2- and 3-octet length fields, |**o**|, |**w**|,
     z𝖹_P and s are bounded so that 5𝖹_Z + Q(|**o**|) + Q(|**w**| + z𝖹_P) + Q(s) + 𝖹_I is at most
     about 2^28.3 < 2^32. We check it anyway.

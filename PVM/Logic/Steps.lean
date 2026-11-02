@@ -236,6 +236,40 @@ dsimproc reduceRotl (PVM.Num.rotl _ _ _) := evalNatFn3 PVM.Num.rotl
 dsimproc reduceRotr (PVM.Num.rotr _ _ _) := evalNatFn3 PVM.Num.rotr
 
 
+/-! ## Symbolic arithmetic
+
+When a value depends on an unknown (the argument length `L`), the concrete simprocs stop. These
+lemmas, used with `omega` as discharger, finish such terms from linear facts in context. -/
+
+/-- One octet of a little-endian read folds into the rest: read back octet by octet, from the
+    innermost, `Num.decodeLE` of `Num.encodeLE` gives `x mod 2^(8n)` (cf. `Nat.mod_mul`). -/
+theorem le_byte (x k : Nat) : x % 256 + 256 * (x / 256 % k) = x % (256 * k) :=
+  Nat.mod_mul.symm
+
+/-- `Option.getD_some` with a propositional proof. As an `rfl` lemma `simp` uses it by `dsimp`,
+    leaving the kernel to check `(some a).getD b ≡ a` by reduction; when `a` is arithmetic over an
+    unknown, the kernel may unfold `a` instead (e.g. `x * 2^32` by `Nat.rec`, 2^32 times). -/
+theorem getD_some' {α : Type _} (a b : α) : (some a).getD b = a := by
+  simp only [Option.getD]
+
+/-! Propositional copies of `rfl` lemmas for the symbolic stages: `simp` applies an `rfl` lemma
+by `dsimp`, and the kernel's check of that step may evaluate a product of the unknown with a
+large literal by `Nat.rec`. -/
+
+theorem add_zero' (n : Nat) : n + 0 = n := by omega
+theorem zero_add' (n : Nat) : 0 + n = n := by omega
+theorem mul_zero' (n : Nat) : n * 0 = 0 := by omega
+theorem zero_mul' (n : Nat) : 0 * n = 0 := by omega
+theorem zero_div' (n : Nat) : 0 / n = 0 := by rw [Nat.zero_div]
+theorem div_zero' (n : Nat) : n / 0 = 0 := by rw [Nat.div_zero]
+theorem mod_zero' (n : Nat) : n % 0 = n := by rw [Nat.mod_zero]
+
+theorem ite_of_pos {α : Sort _} {c : Prop} [Decidable c] (h : c) (a b : α) : ite c a b = a :=
+  ite_eq_left h
+
+theorem ite_of_neg {α : Sort _} {c : Prop} [Decidable c] (h : ¬c) (a b : α) : ite c a b = b :=
+  ite_eq_right h
+
 /-! ## The step tactic -/
 
 /-- Compute one gas-free step's effect: unfold Ψ₁'s mutation for the (known) instruction, reduce
@@ -251,7 +285,7 @@ macro_rules
       PVM.Exec.twoRegAlu, PVM.Exec.indices, PVM.Regs.get, Fin.getElem_fin, PVM.regIdx_val_0,
       PVM.regIdx_val_1, PVM.regIdx_val_2, PVM.regIdx_val_3, PVM.regIdx_val_4, PVM.regIdx_val_5,
       PVM.regIdx_val_6, PVM.regIdx_val_7, PVM.regIdx_val_8, PVM.regIdx_val_9, PVM.regIdx_val_10,
-      PVM.regIdx_val_11, PVM.regIdx_val_12, Option.getD_some, Vector.getElem_ofFn,
+      PVM.regIdx_val_11, PVM.regIdx_val_12, PVM.getD_some', Vector.getElem_ofFn,
       Vector.getElem_set, PVM.set_regsNF, PVM.getElem_regsNF, PVM.insertReg, PVM.lookup_cons_nat,
       PVM.Num.decodeLE, UInt8.toNat_ofNat',
       List.lookup_nil, Option.getD_none, PVM.two32, PVM.two64, PVM.pageSize, UInt64.toNat_ofNat',
@@ -275,7 +309,9 @@ macro_rules
       Int.reduceToNat, Int.reduceNeg, Int.reduceLE, Int.reduceOfNat, Int.cast_ofNat_Int,
       Int.add_emod_left, Nat.min_def, Nat.max_def, PVM.Exec.ofBool,
       PVM.reduceTrailingZeros, PVM.reduceLeadingZeros, PVM.reducePopcount, PVM.reduceRotl,
-      PVM.reduceRotr, $hs,*]
+      PVM.reduceRotr, decide_eq_true_eq, decide_eq_false_iff_not, Nat.reduceGT, Nat.reduceBEq,
+      Nat.reduceBNe, Bool.false_or, Bool.or_false, Bool.true_or, Bool.or_true, Bool.false_and,
+      Bool.and_false, Bool.true_and, Bool.and_true, $hs,*]
     try simp only [PVM.Memory.readN, List.range_succ, List.range_zero, List.map_cons,
           List.map_nil, List.map_append, List.nil_append, List.cons_append,
           PVM.Memory.read_writeN, PVM.Num.length_encodeLE, PVM.Num.encodeLE,
@@ -287,7 +323,7 @@ macro_rules
       PVM.Exec.twoRegAlu, PVM.Exec.indices, PVM.Regs.get, Fin.getElem_fin, PVM.regIdx_val_0,
       PVM.regIdx_val_1, PVM.regIdx_val_2, PVM.regIdx_val_3, PVM.regIdx_val_4, PVM.regIdx_val_5,
       PVM.regIdx_val_6, PVM.regIdx_val_7, PVM.regIdx_val_8, PVM.regIdx_val_9, PVM.regIdx_val_10,
-      PVM.regIdx_val_11, PVM.regIdx_val_12, Option.getD_some, Vector.getElem_ofFn,
+      PVM.regIdx_val_11, PVM.regIdx_val_12, PVM.getD_some', Vector.getElem_ofFn,
       Vector.getElem_set, PVM.two32, PVM.two64, PVM.pageSize, UInt64.toNat_ofNat',
       UInt64.toNat_ofNat, UInt64.reduceToNat, ne_eq, not_true_eq_false, ↓reduceIte,
       List.append_nil, List.nil_append, List.getD_cons_zero, List.getD_cons_succ, Fin.isValue,
@@ -309,7 +345,15 @@ macro_rules
       Int.reduceToNat, Int.reduceNeg, Int.reduceLE, Int.reduceOfNat, Int.cast_ofNat_Int,
       Int.add_emod_left, Nat.min_def, Nat.max_def, PVM.Exec.ofBool,
       PVM.reduceTrailingZeros, PVM.reduceLeadingZeros, PVM.reducePopcount, PVM.reduceRotl,
-      PVM.reduceRotr, $hs,*]
-    rfl))
+      PVM.reduceRotr, decide_eq_true_eq, decide_eq_false_iff_not, Nat.reduceGT, Nat.reduceBEq,
+      Nat.reduceBNe, Bool.false_or, Bool.or_false, Bool.true_or, Bool.or_true, Bool.false_and,
+      Bool.and_false, Bool.true_and, Bool.and_true, $hs,*]
+    try simp only [Nat.mod_mod, PVM.add_zero', PVM.zero_add', PVM.mul_zero', PVM.zero_mul',
+      PVM.zero_div', PVM.div_zero', PVM.mod_zero', PVM.le_byte, Nat.reduceMul]
+    try simp (disch := omega) only [Nat.mod_mod, PVM.add_zero', PVM.zero_add', PVM.mul_zero',
+      PVM.zero_mul', PVM.zero_div', PVM.div_zero', PVM.mod_zero', Nat.mod_eq_of_lt, Nat.mul_div_cancel, PVM.ite_of_pos, PVM.ite_of_neg,
+      Bool.not_eq_true', beq_eq_false_iff_ne, beq_iff_eq, ne_eq, decide_eq_true_eq,
+      decide_eq_false_iff_not, Nat.reduceMod, Nat.reduceAdd, Nat.reduceMul, Nat.reduceDiv]
+    try rfl))
 
 end PVM

@@ -49,5 +49,5 @@ def main (args : List String) : IO UInt32 := do
     if !Services.Witness.Prefix.layoutOk jb then
       IO.eprintln "the section sizes differ from Services.Witness.Prefix.layoutOk"
       return 1
-    IO.println s!"witnesscheck: the blob passes 𝔳_blob, the {n} code facts and the section sizes of Services.Witness.Prefix, so `prefix_from_Y` applies"
+    IO.println s!"witnesscheck: the blob passes 𝔳_blob, the {n} code facts and the section sizes and data octets of Services.Witness.Prefix, so `prefix_from_Y` applies"
     return 0

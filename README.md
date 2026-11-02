@@ -1,10 +1,12 @@
-# pvm-lean
+# jam-lean
 
-An executable Lean 4 model of the JAM Polkadot Virtual Machine, written from the
-[Gray Paper](https://github.com/gavofyork/graypaper) **v0.8.0** (Appendix A, `text/pvm.tex`) and
-checked against the PVM test vectors of
+An executable Lean 4 model of JAM from the
+[Gray Paper](https://github.com/gavofyork/graypaper) **v0.8.0**: the Polkadot Virtual Machine
+(Appendix A, library `PVM`), and Appendix B with the protocol terms it needs (library `JAM`, in
+progress). The PVM is checked against the PVM test vectors of
 [koute/jamtestvectors](https://github.com/koute/jamtestvectors) (branch `master_pvm_initial`,
-commit `6bf3768e5b37bbe4ca5d6e1306284ecb27c0198f`, directory `pvm/`).
+commit `6bf3768e5b37bbe4ca5d6e1306284ecb27c0198f`, directory `pvm/`); `JAM` against
+[davxy/jam-test-vectors](https://github.com/davxy/jam-test-vectors) `v0.8.0`.
 
 It is meant for proofs as well as evaluation: everything is total, decoding is kept separate from
 execution, memory is an extensional finite map, and the theorems use only `propext`,
@@ -22,8 +24,13 @@ Two libraries, each bounded by the Gray Paper (v0.8.0):
   definitions of §4.7, and constants. `PVM/Logic/` holds proof rules about this model; it adds no
   semantics.
 * **`JAM`: Appendix B (in progress)**, built on `PVM`, with the protocol terms Appendix B needs:
-  the codec (Appendix C), ℋ = Blake2b-256 (§3.8), and work packages, items, digests and reports
-  (§11, §14). A proof about pure PVM programs imports only `PVM` and trusts nothing from `JAM`.
+  the codec (Appendix C), ℋ = Blake2b-256 (§3.8), work packages, items, digests and reports
+  (§11, §14), service accounts (§9), ℋ_K = Keccak-256 and the binary Merkle root (Appendix E).
+  It has the general host functions (`gas`, `grow_heap`, `fetch`, `lookup`, `read`, `write`,
+  `info`), the 13 accumulate host functions, Ψ_A, and the accumulation state transition of §12
+  (Δ_1, Δ_*, Δ_+, the ready queue and history, statistics, and the output root). Protocol and gas
+  constants are generated from `definitions.tex` (`scripts/gen_constants.py`, drift-checked in CI);
+  the test vectors' tiny chain is `Params.tiny`. A proof about pure PVM programs imports only `PVM` and trusts nothing from `JAM`.
 
 Test-vector conventions (`map`/`write`/`set-reg` steps, how runs resume, the exit index the vectors
 call `pc`) live in `Tests/`, not in the model.
@@ -38,6 +45,9 @@ call `pc`) live in `Tests/`, not in the model.
 | Model's ϖ against the blocks the vectors list | identical in all 367 programs |
 | `JAM` codec: work-package family vs. GP v0.8.0 codec vectors | **6 / 6** match |
 | `JAM` Blake2b-256 vs. `hashlib` and RFC 7693 | **13 / 13** match |
+| `JAM` general host functions, hand-written cases | **30 / 30** pass |
+| `JAM` Keccak-256 / SHA3-256 vs. `hashlib` and standard vectors | **15 / 15** match |
+| Accumulation STF (§12) vs. GP v0.8.0 accumulate vectors (tiny) | **61 / 63** pass; the 2 others are `bless_from_non_manager`, which the vectors' changelog lists as departing from GP 0.8.0 |
 
 ## Building and running
 
@@ -107,6 +117,11 @@ the build of the semantics rather than drifting silently.
   `psiHFuel_stable` that its fuel never runs out. The key fact, `psi_host_measure`: resuming after
   a host call is strictly lower in `runMeasure` than where the run started, because `ecalli` is
   not a terminator, so the flag stays set and ı moves forward.
+* **A fast Ψ that is the paper's Ψ** (`PVM/Fast.lean`). `psi` re-deblobs the program on every step
+  and re-simulates gas on every block charge, as the paper writes it. `psiFast` parses once and
+  memoizes block costs. `psi_eq_psiFast : psi = psiFast` is registered with `@[csimp]`, so compiled
+  code (including every test runner) executes `psiFast`, while the kernel and every theorem see
+  `psi`.
 * **Memory** (`PVM/Memory.lean`). `read_write`, `read_write_self`, `read_write_of_ne`,
   `read_writeN_at`, `readN_writeN` (read after a multi-octet write of at most 2^32 octets), and
   that writes leave page access unchanged.
@@ -192,7 +207,16 @@ noted here and in a comment at the definition.
 14. **Y's fit condition is vacuous.** With 3-, 3-, 2- and 3-octet length fields, |**o**|, |**w**|,
     z𝖹_P and s are bounded so that 5𝖹_Z + Q(|**o**|) + Q(|**w**| + z𝖹_P) + Q(s) + 𝖹_I is at most
     about 2^28.3 < 2^32. We check it anyway.
-15. **Y's argument bound.** The paper types **a** ∈ 𝔹_{:𝖹_I}; for longer arguments we return ∅.
+15. **Accumulate vectors and GP 0.8.0.** The vectors' CHANGELOG lists behaviour that departs from
+    GP 0.8.0, following later Gray Paper PRs. We follow the paper and list the affected vectors in
+    `Tests/AccumulateTest.lean` (`knownDeviations`); CI fails if any other vector fails or if a
+    listed one starts to pass. Currently: `bless_from_non_manager-1` and `-2` (`bless` from a
+    non-manager: GP 0.8.0 answers `HUH`, the vectors accept it). The other listed departures
+    (`grow_heap` running out of gas, its address limit, program size limits) are not exercised by
+    any vector. The `log` host call (JIP-1, not in the paper) is an unknown host call, 1000 gas.
+16. **Sets are kept sorted.** The accumulated history ξ and dependency sets are sets of hashes; we
+    keep them in ascending order, as they are encoded.
+17. **Y's argument bound.** The paper types **a** ∈ 𝔹_{:𝖹_I}; for longer arguments we return ∅.
 
 ## Caveats
 

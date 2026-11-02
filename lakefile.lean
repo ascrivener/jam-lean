@@ -1,7 +1,7 @@
 import Lake
 open Lake DSL System
 
-/-! Build configuration for the executable Lean model of the JAM PVM (Gray Paper v0.8.0).
+/-! Build configuration for the Lean model of the JAM PVM and Appendix B (Gray Paper v0.8.0).
 
 * `lake build`           builds the model (`PVM`) and its theorems.
 * `lake build pvmtest`   builds and runs the vector runner over `vendor/jamtestvectors/pvm/programs`.
@@ -11,7 +11,7 @@ open Lake DSL System
 
 The vectors are fetched at the pinned commit by `scripts/fetch-vectors.sh`. -/
 
-package «pvm-lean» where
+package «jam-lean» where
   leanOptions := #[⟨`autoImplicit, false⟩]
 
 @[default_target]
@@ -24,7 +24,8 @@ lean_lib JAM
 /-- Shared helpers of the test executables. -/
 lean_lib Tests where
   globs := #[.one `Tests.Vectors, .one `Tests.Invocation, .one `Tests.LogicExample,
-    .one `Tests.Blake2bTest]
+    .one `Tests.Blake2bTest, .one `Tests.HostGeneralTest, .one `Tests.JamJson,
+    .one `Tests.KeccakTest]
 
 lean_exe «pvmtest-exe» where
   root := `Tests.PvmTest
@@ -33,6 +34,10 @@ lean_exe «pvmtest-exe» where
 lean_exe «codectest-exe» where
   root := `Tests.CodecTest
   exeName := "codectest"
+
+lean_exe «acctest-exe» where
+  root := `Tests.AccumulateTest
+  exeName := "acctest"
 
 lean_exe «gascheck-exe» where
   root := `Tests.GasCheck
@@ -63,6 +68,10 @@ def jamVectorDir (pkg : Package) : FilePath := pkg.dir / "vendor" / "jam-test-ve
 /-- Encode the work-package family and compare with the codec vectors. -/
 target codectest pkg : Unit := do
   runOnVectors `«codectest-exe» #[(jamVectorDir pkg / "codec" / "tiny").toString]
+
+/-- Run the accumulation STF on every accumulate vector (tiny). -/
+target acctest pkg : Unit := do
+  runOnVectors `«acctest-exe» #[(jamVectorDir pkg / "stf" / "accumulate" / "tiny").toString]
 
 /-- Compare the model's ϖ^Δ against every block cost in `programs/` and `gas-tests/`. -/
 target gascheck pkg : Unit := do

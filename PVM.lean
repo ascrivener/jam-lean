@@ -6,6 +6,7 @@ import PVM.Memory
 import PVM.Exec
 import PVM.Gas
 import PVM.Machine
+import PVM.Fast
 import PVM.Invocation
 import PVM.Theorems.Blob
 import PVM.Theorems.Decode

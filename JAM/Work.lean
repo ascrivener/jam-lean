@@ -188,3 +188,54 @@ def WorkReport.encode (r : WorkReport) : List UInt8 :=
     var r.authTrace ++ varHashDict r.segmentRootLookup ++ varSeq WorkDigest.encode r.digests
 
 end JAM
+
+namespace JAM
+
+open Codec
+
+/-- An operand tuple 𝕌, the accumulation input from one work item (GP eq. `operandtuple`). -/
+structure OperandTuple where
+  /-- p, the work-package hash -/
+  packageHash : Hash
+  /-- e, the segment root -/
+  segmentRoot : Hash
+  /-- a, the authorizer hash -/
+  authorizer : Hash
+  /-- y, the payload hash -/
+  payloadHash : Hash
+  /-- g, the accumulate gas limit -/
+  gasLimit : Nat
+  /-- t, the authorizer trace -/
+  authTrace : Blob
+  /-- l, the work result -/
+  result : WorkResult
+
+/-- ℰ(o ∈ 𝕌) = ℰ(0, p, e, a, y, g, O(l), ↕t) (GP Appendix C). -/
+def OperandTuple.encode (o : OperandTuple) : List UInt8 :=
+  nat 0 ++ blob o.packageHash ++ blob o.segmentRoot ++ blob o.authorizer ++ blob o.payloadHash ++
+    nat o.gasLimit ++ o.result.encode ++ var o.authTrace
+
+/-- A deferred transfer 𝕏 (GP eq. `defxfer`). -/
+structure DeferredTransfer where
+  source : ServiceId
+  dest : ServiceId
+  amount : Nat
+  /-- the 𝖶_T-octet memo -/
+  memo : Blob
+  gas : Nat
+
+/-- ℰ(x ∈ 𝕏) = ℰ(1, ℰ_4(s), ℰ_4(d), ℰ_8(a), m, ℰ_8(g)) (GP Appendix C). -/
+def DeferredTransfer.encode (x : DeferredTransfer) : List UInt8 :=
+  nat 1 ++ fixed 4 x.source ++ fixed 4 x.dest ++ fixed 8 x.amount ++ blob x.memo ++ fixed 8 x.gas
+
+/-- An accumulation input: an operand tuple or a deferred transfer (GP §12, the union 𝕌 ∪ 𝕏). -/
+inductive AccumulateInput where
+  | operand (o : OperandTuple)
+  | transfer (x : DeferredTransfer)
+
+/-- ℰ of an accumulation input. -/
+def AccumulateInput.encode : AccumulateInput → List UInt8
+  | .operand o => o.encode
+  | .transfer x => x.encode
+
+end JAM

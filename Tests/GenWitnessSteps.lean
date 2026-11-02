@@ -121,9 +121,18 @@ def main (args : List String) : IO Unit := do
   -- the octets the path reads before anything writes them, with their initial values
   let mut written : Std.HashSet Nat := {}
   let mut baseBytes : Array (Nat × Nat) := #[]
+  let mut baseLoads : Array (Nat × Nat) := #[]
   for (pc, regs, mem) in tr.toList.take n do
     let some ins := P.decode pc | continue
     let m := P.exec pc ins regs mem
+    -- a load none of whose octets the path wrote before: one fact for the whole read
+    match m.reads.head? with
+    | some r0 =>
+      let a0 := r0 % 2 ^ 32
+      if a0 < argStart && a0 + m.reads.length ≤ 2 ^ 32 && m.reads.all (fun r => !written.contains (r % 2 ^ 32)) &&
+          !(baseLoads.contains (a0, m.reads.length)) then
+        baseLoads := baseLoads.push (a0, m.reads.length)
+    | none => pure ()
     for r in m.reads do
       let a := r % 2 ^ 32
       if a < argStart && !written.contains a && !(baseBytes.any (·.1 == a)) then
@@ -184,6 +193,10 @@ theorem prefix_run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost
     fun a h1 h2 => Memory.readable_of_writable (hwh a h1 h2)"
   for (a, b) in baseBytes do
     IO.println s!"  have hb_{a} : μ.read {a} = {b} := hμ.bytes {a} {b} (by decide)"
+  for (a, k) in baseLoads do
+    let bytes := (List.range k).map fun j => (μ.read (a + j)).toNat
+    let hbs := ", ".intercalate ((List.range k).map fun j => s!"hb_{a + j}")
+    IO.println s!"  have hbn_{a}_{k} : μ.readN {a} {k} = {bytes} := by\n    simp only [Memory.readN, List.range_succ, List.range_zero, List.nil_append, List.cons_append, List.map_cons, List.map_nil, List.map_append, Nat.reduceAdd, Nat.add_zero, {hbs}]"
   IO.println s!"
   refine ⟨?ω, ?μ, ?x, ?h⟩
   case h =>"
@@ -192,7 +205,7 @@ theorem prefix_run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost
     | some (.oneImm .ecalli _) =>
       IO.println s!"    apply FreeStepsH.host_decode (d_{pc} (p := p) (P := P))\n    · pvm_host [initRegs, List.set_cons_succ, List.set_cons_zero]"
     | _ =>
-      IO.println s!"    apply FreeStepsH.step_decode (d_{pc} (p := p) (P := P))\n    · pvm_simp [hw, hr, hwh, hrh, {", ".intercalate (baseBytes.toList.map fun (a, _) => s!"hb_{a}")}{if baseBytes.isEmpty then "" else ", "}initRegs, List.set_cons_succ, List.set_cons_zero]"
+      IO.println s!"    apply FreeStepsH.step_decode (d_{pc} (p := p) (P := P))\n    · pvm_simp [hw, hr, hwh, hrh, {", ".intercalate (baseLoads.toList.map fun (a, k) => s!"hbn_{a}_{k}")}{if baseLoads.isEmpty then "" else ", "}{", ".intercalate (baseBytes.toList.map fun (a, _) => s!"hb_{a}")}{if baseBytes.isEmpty then "" else ", "}initRegs, List.set_cons_succ, List.set_cons_zero]"
   IO.println s!"    exact FreeStepsH.refl
 
 /-! ## From Y's starting state -/

@@ -34,6 +34,9 @@ Two libraries, each bounded by the Gray Paper (v0.8.0):
   constants are generated from `definitions.tex` (`scripts/gen_constants.py`, drift-checked in CI);
   the test vectors' tiny chain is `Params.tiny`. A proof about pure PVM programs imports only `PVM` and trusts nothing from `JAM`.
 
+A third library, **`Services`**, holds results about specific services' deployed code, built on
+`JAM`; nothing in `PVM` or `JAM` depends on it.
+
 Test-vector conventions (`map`/`write`/`set-reg` steps, how runs resume, the exit index the vectors
 call `pc`) live in `Tests/`, not in the model.
 
@@ -50,6 +53,7 @@ call `pc`) live in `Tests/`, not in the model.
 | `JAM` general host functions, hand-written cases | **30 / 30** pass |
 | `JAM` Keccak-256 / SHA3-256 vs. `hashlib` and standard vectors | **15 / 15** match |
 | `JAM` refine host functions, Ψ_R and Ψ_I, hand-written cases (no vectors exist) | **59 / 59** pass, 2 more kernel-checked |
+| `witness-service.jam`'s host-call ids within those `Services.Witness` assumes (`lake build witnesscheck`) | **pass** |
 | Accumulation STF (§12) vs. GP v0.8.0 accumulate vectors (tiny) | **61 / 63** pass; the 2 others are `bless_from_non_manager`, which the vectors' changelog lists as departing from GP 0.8.0 |
 
 ## Building and running
@@ -129,6 +133,21 @@ the build of the semantics rather than drifting silently.
   never exhaust the fuel and are the paper's Ψ_H exactly. Each host function charges g ≥ 0 by the
   common rules (`charged_gas_le`); `invoke`, the one that hands gas back, returns only what the
   inner Ψ left of the g_R it charged (`invoke_gas`, from `psi_gas_le`).
+* **Context invariants** (`PVM/Theorems/HostIds.lean`). `psiM_ctx_inv`: if every host call a
+  blob names preserves a property of the context, Ψ_M's final context has it. Only the blob's own
+  `ecalli` ids matter.
+* **Confinement** (`JAM/Theorems/Confinement.lean`). `psiA_confined`: if a service's code names
+  none of `bless`, `assign`, `designate`, `new`, `eject`, `provide`, Ψ_A for it leaves every other
+  account, the staging set, the authorizer queue and the privileged services as they were, and
+  provides nothing. `psiR_noExports`: code that does not name `export` exports no segments.
+* **The witness service** (`Services/Witness.lean`). The witness bounty market
+  (ascrivener/witness at 71e585a), built with `cargo jam-build` 0.1.29, is vendored as
+  `services/witness/witness-service.jam`. Its code names host calls 0–6, 9, 11–14, 18, 20, 21, 24
+  and 100 only. `accumulate_confined`: accumulating witness changes nothing outside its own account,
+  for every state, input and gas. `refine_noExports`: its refine exports nothing. The theorems are
+  kernel-checked for any code naming only those ids; that the vendored blob names only those ids is
+  checked by compiled code (`lake build witnesscheck`), since kernel evaluation over a 223 kB blob is
+  out of reach for now.
 * **A fast Ψ that is the paper's Ψ** (`PVM/Fast.lean`). `psi` re-deblobs the program on every step
   and re-simulates gas on every block charge, as the paper writes it. `psiFast` parses once and
   memoizes block costs. `psi_eq_psiFast : psi = psiFast` is registered with `@[csimp]`, so compiled

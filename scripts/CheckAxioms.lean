@@ -1,9 +1,10 @@
 import Lean
 import PVM
 import JAM
+import Services
 
 /-!
-Fails unless every declaration in the `PVM` and `JAM` namespaces depends only on `propext`,
+Fails unless every declaration in the `PVM`, `JAM` and `Services` namespaces depends only on `propext`,
 `Classical.choice` and `Quot.sound` (so in particular on no `sorryAx` and no
 `Lean.ofReduceBool`/`Lean.trustCompiler`, which `native_decide` and `bv_decide` introduce).
 
@@ -17,7 +18,8 @@ elab "#check_pvm_axioms" : command => do
   let mut bad : Array String := #[]
   let mut n : Nat := 0
   for (name, _) in env.constants.toList do
-    if ((`PVM).isPrefixOf name || (`JAM).isPrefixOf name) && !name.isInternal then
+    if ((`PVM).isPrefixOf name || (`JAM).isPrefixOf name || (`Services).isPrefixOf name) &&
+        !name.isInternal then
       n := n + 1
       let axs ← Lean.collectAxioms name
       for ax in axs do

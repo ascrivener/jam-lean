@@ -391,14 +391,10 @@ def initImplications (e : PartialState) (s slot : Nat) (entropy : List UInt8) : 
   let i := Num.decodeLE (h.toList.take 4) % (2 ^ 32 - S - 2 ^ 8) + S
   { id := s, state := e, nextFree := checkId e.accounts (e.accounts.size + 1) i }
 
-/-- Ψ_A(**e**, t, s, g, **i**) (GP eq. `accinvocation`). -/
-def psiA (params : Params) (entropy : List UInt8) (e : PartialState) (t s g : Nat)
+/-- Ψ_A from the state **e**' with the incoming transfers already credited: look up s's code and run
+    it (GP eq. `accinvocation`, the cases after **e**' is formed). -/
+def psiARun (params : Params) (entropy : List UInt8) (st : PartialState) (t s g : Nat)
     (inputs : List AccumulateInput) : AccOut :=
-  let incoming := (inputs.filterMap fun | .transfer x => some x.amount | _ => none).sum
-  let st : PartialState :=
-    match e.accounts.get? s with
-    | some a => { e with accounts := e.accounts.insert s { a with balance := a.balance + incoming } }
-    | none => e
   let code := (st.accounts.get? s).bind (·.code)
   match code with
   | none => ⟨st, [], none, 0, ∅⟩
@@ -414,5 +410,16 @@ def psiA (params : Params) (entropy : List UInt8) (e : PartialState) (t s g : Na
       | .ok out =>
         if out.size = 32 then ⟨x.state, x.xfers, some out.toList, u, x.provisions⟩
         else ⟨x.state, x.xfers, x.yield, u, x.provisions⟩
+
+/-- Ψ_A(**e**, t, s, g, **i**) (GP eq. `accinvocation`): credit the incoming transfers to s, then
+    run s's code (`psiARun`). -/
+def psiA (params : Params) (entropy : List UInt8) (e : PartialState) (t s g : Nat)
+    (inputs : List AccumulateInput) : AccOut :=
+  let incoming := (inputs.filterMap fun | .transfer x => some x.amount | _ => none).sum
+  let st : PartialState :=
+    match e.accounts.get? s with
+    | some a => { e with accounts := e.accounts.insert s { a with balance := a.balance + incoming } }
+    | none => e
+  psiARun params entropy st t s g inputs
 
 end JAM

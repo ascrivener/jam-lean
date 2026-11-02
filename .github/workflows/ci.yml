@@ -29,7 +29,7 @@ jobs:
 
       - name: No forbidden constructs
         run: |
-          if grep -rnE '\bsorry\b|partial def|implemented_by|native_decide|bv_decide' PVM JAM Tests PVM.lean JAM.lean; then
+          if grep -rnE '\bsorry\b|partial def|implemented_by|native_decide|bv_decide' PVM JAM Services Tests PVM.lean JAM.lean Services.lean; then
             echo "forbidden construct found" >&2; exit 1
           fi
 
@@ -65,6 +65,9 @@ jobs:
 
       - name: Refine host functions, Ψ_R and Ψ_I (hand-written; no vectors exist)
         run: lake build Tests.RefineTest
+
+      - name: The vendored witness blob names only the host calls its theorems assume
+        run: lake build witnesscheck
 
       - name: Fetch the Gray Paper v0.8.0 JAM vectors
         run: scripts/fetch-jam-vectors.sh

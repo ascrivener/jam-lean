@@ -189,6 +189,16 @@ Theorems and proof rules about the Appendix A model; nothing here adds semantics
 * **Invariant rules** (`Logic/Invariant.lean`). `FreeRun.of_invariant` and `FreeRunH.of_invariant`:
   an invariant that holds initially and is preserved by each step (and by each host call the
   contract allows) constrains every way the run can end.
+* **Determinism** (`Logic/Det.lean`). `FreeRun.det`, `FreeRunH.det`: gas-free runs from one
+  state end the same way (under contracts where one pins down the other). `psiM_of_freeRunH`:
+  exhibiting *one* gas-free run from Y's initial state determines Ψ_M's result: it is that run's
+  output, or ∞. A proof about what a service computes can therefore construct a single run and
+  leave gas to a separate bound.
+* **Code facts** (`Logic/Code.lean`). `checkCode p fs` checks, in one `Bool`, that a blob passes
+  𝔳_blob and a list of facts about it: the decoded instruction and ı + 1 + skip(ı) at given
+  indices, block starts, jump-table entries. `checkCode_sound` turns it into those facts, with
+  `deblob p i = some P`. A theorem about a large program takes `checkCode p fs = true` as its one
+  hypothesis about the bytes, whatever evaluates it.
 * **Worked example** (`Tests/LogicExample.lean`). A three-instruction countdown loop.
   `countdown_spec`: for every initial register file with ω₀ = 2^32 − 2^16, every memory and every
   amount of gas, Ψ either runs out of gas or halts with ω₈ = 0. The proof uses `psi_freeRun`, a
@@ -210,17 +220,24 @@ checks this on fixed inputs. Tracing those runs shows what a proof for all input
   c, i and s, and the payload length, which drives a copy loop (43,349 steps for 20,000 octets)
   and extra `grow_heap` calls.
 
-The plan:
+The plan (`Logic/Det.lean` and `Logic/Code.lean` are its first pieces):
 
 1. **Program access the kernel can afford.** The kernel cannot evaluate over a 217 kB `ByteArray`.
-   Establish 𝔳_blob and the decoded instructions at the visited addresses once, by a check over a
-   representation the kernel evaluates quickly (GMP-backed `Nat`s), proved equal to `deblob`.
+   For now the facts the proof uses are one hypothesis, `checkCode p fs = true`, evaluated by
+   compiled code in CI (as `witnesscheck` does for the host-call ids). A kernel check over a
+   representation it evaluates quickly (GMP-backed `Nat`s) can discharge the same hypothesis
+   later without changing the theorem.
 2. **Symbolic execution**, proved sound against Ψ₁: registers and memory as terms over the
    inputs, a path condition, case splits at the input-dependent branches.
 3. **Summaries** for loops and library code (the copy loop first), proved once by induction and
    used in place of their code.
-4. The theorem, as a `FreeRunH` (gas-free) result lifted to Ψ_R with `psiM_free`, plus a gas
-   bound.
+4. The theorem, as one gas-free run lifted to Ψ_R with `psiM_of_freeRunH` ("[12, 0] or ∞"),
+   then a gas bound.
+
+Staging: the first statement fixes a one-octet payload with first octet ≥ 12, leaving c, i, s and
+ℋ(p) arbitrary. The traced path shows those only reach the SDK's varint decoder and are then
+stored, while the payload length also sets the sizes the heap allocator works with; a one-octet
+payload keeps the allocator's state concrete. Empty and longer payloads follow.
 
 ## Notes on the paper and the vectors
 

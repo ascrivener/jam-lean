@@ -146,4 +146,22 @@ theorem countdown_spec (ω : Regs) (μ : Memory) (gas : UInt64) (ch : Bool) (h0 
   exact FreeRun.of_invariant Inv (fun ε ω' _ => ε = .halt ∧ ω'[8] = 0) inv_step inv_exit
     ⟨h0, Or.inl rfl⟩ hrun
 
+/-! ### Code facts (`PVM.Logic.Code`) for the same blob, checked by the kernel -/
+
+def facts : List CodeFact :=
+  [.instr 0 (.twoRegImm .addImm64 8 8 (UInt64.ofNat (2 ^ 64 - 1))) 3,
+   .instr 3 (.regImmOffset .branchNeImm 8 0 0) 6,
+   .instr 6 (.regImm .jumpInd 0 0) 8,
+   .blockStart 0 true, .blockStart 3 false, .jumpTableSize 0]
+
+example : checkCode blob facts = true := by decide +kernel
+-- A wrong fact is rejected: the instruction at 3 does not continue at 5.
+example : checkCode blob [.instr 3 (.regImmOffset .branchNeImm 8 0 0) 5] = false := by decide +kernel
+-- From the check: deblob succeeds at 3 and decodes the branch there.
+example : ∃ P, deblob blob 3 = some P ∧ P.decode 3 = some (.regImmOffset .branchNeImm 8 0 0) := by
+  obtain ⟨P, hP⟩ := checkCode_sound (show checkCode blob facts = true by decide +kernel)
+  obtain ⟨h1, h2, _⟩ := hP.instr (i := 3) (ins := .regImmOffset .branchNeImm 8 0 0) (n := 6)
+    (by simp [facts])
+  exact ⟨P, h1, h2⟩
+
 end PVM.Tests.Countdown

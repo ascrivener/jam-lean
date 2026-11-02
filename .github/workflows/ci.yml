@@ -66,8 +66,11 @@ jobs:
       - name: Refine host functions, Ψ_R and Ψ_I (hand-written; no vectors exist)
         run: lake build Tests.RefineTest
 
-      - name: The vendored witness blob names only the host calls its theorems assume
+      - name: The vendored witness blob names only the host calls, and has the code facts, its theorems assume
         run: lake build witnesscheck
+
+      - name: Services/Witness/Prefix.lean is what its generator produces
+        run: lake exe genwitnesssteps 39 | diff - Services/Witness/Prefix.lean
 
       - name: The real witness binary rejects malformed payloads (a test, not a proof)
         run: lake build witnessrun

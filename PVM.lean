@@ -19,6 +19,8 @@ import PVM.Logic.Host
 import PVM.Logic.Invariant
 import PVM.Logic.Det
 import PVM.Logic.Code
+import PVM.Logic.Attr
+import PVM.Logic.Steps
 
 /-!
 # An executable model of the JAM PVM (Gray Paper v0.8.0, Appendix A)

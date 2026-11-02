@@ -1,4 +1,5 @@
 import Services.Witness
+import Services.Witness.Prefix
 
 /-!
 # `lake build witnesscheck`: the vendored witness blob names only `Services.Witness.ids`
@@ -9,7 +10,10 @@ its Blake2b-256 hash, as on chain), takes the account's code by the paper's rule
 `jamHostCallIdsOf`, the same function the confinement theorems quantify over. Fails unless every
 id is in `Services.Witness.ids`.
 
-This is the one step not checked by the kernel: it runs compiled code over the 223 kB blob.
+It also checks `checkCode` of the PVM code against `Services.Witness.Prefix.facts`, the one
+hypothesis `Services.Witness.Prefix.prefix_of_checkCode` makes about the bytes.
+
+These are the steps not checked by the kernel: they run compiled code over the 223 kB blob.
 -/
 
 open JAM PVM
@@ -36,4 +40,11 @@ def main (args : List String) : IO UInt32 := do
       IO.eprintln s!"ids not in Services.Witness.ids: {extra}"
       return 1
     IO.println "witnesscheck: every id is in Services.Witness.ids, so `accumulate_confined` and `refine_noExports` apply"
+    let some jb := JamBlob.parse? code
+      | IO.eprintln "not a standard program blob"; return 1
+    let n := Services.Witness.Prefix.facts.length
+    if !checkCode jb.code Services.Witness.Prefix.facts then
+      IO.eprintln s!"checkCode fails for the {n} facts of Services.Witness.Prefix"
+      return 1
+    IO.println s!"witnesscheck: the blob passes 𝔳_blob and the {n} code facts of Services.Witness.Prefix, so `prefix_of_checkCode` applies"
     return 0

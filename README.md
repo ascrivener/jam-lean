@@ -54,6 +54,7 @@ call `pc`) live in `Tests/`, not in the model.
 | `JAM` Keccak-256 / SHA3-256 vs. `hashlib` and standard vectors | **15 / 15** match |
 | `JAM` refine host functions, Ψ_R and Ψ_I, hand-written cases (no vectors exist) | **59 / 59** pass, 2 more kernel-checked |
 | `witness-service.jam`'s host-call ids within those `Services.Witness` assumes (`lake build witnesscheck`) | **pass** |
+| The real witness binary's refine on 7 malformed payloads gives `Rejected(BadPayload)` (`lake build witnessrun`; a test, not a proof) | **7 / 7** |
 | Accumulation STF (§12) vs. GP v0.8.0 accumulate vectors (tiny) | **61 / 63** pass; the 2 others are `bless_from_non_manager`, which the vectors' changelog lists as departing from GP 0.8.0 |
 
 ## Building and running
@@ -193,6 +194,33 @@ Theorems and proof rules about the Appendix A model; nothing here adds semantics
   amount of gas, Ψ either runs out of gas or halts with ω₈ = 0. The proof uses `psi_freeRun`, a
   program-counter invariant, and one lemma per instruction. Each lemma unfolds `exec` on the
   decoded instruction and is checked in about a second.
+
+## Toward proofs about what services compute
+
+The confinement theorems use only *which* host calls a service's code can make. Proving what it
+*computes* means following its code. The first target is witness's refine on a malformed payload:
+for every core, item index, service id and work package whose item payload does not decode as an
+`Op` (empty, or a first octet ≥ 12), Ψ_R outputs ℰ(`Rejected(BadPayload)`) = [12, 0]. `witnessrun`
+checks this on fixed inputs. Tracing those runs shows what a proof for all inputs involves:
+
+* **The path is short**: about 2,400–2,900 instructions (1,500–1,600 distinct) for short payloads,
+  with host calls `fetch`, `grow_heap`, `grow_heap`, `fetch`, `log`. The SDK reads the payload
+  through `fetch`, so the proof goes through Ω_Y.
+* **It depends on the inputs only through a few branches**: the lengths of the varint encodings of
+  c, i and s, and the payload length, which drives a copy loop (43,349 steps for 20,000 octets)
+  and extra `grow_heap` calls.
+
+The plan:
+
+1. **Program access the kernel can afford.** The kernel cannot evaluate over a 217 kB `ByteArray`.
+   Establish 𝔳_blob and the decoded instructions at the visited addresses once, by a check over a
+   representation the kernel evaluates quickly (GMP-backed `Nat`s), proved equal to `deblob`.
+2. **Symbolic execution**, proved sound against Ψ₁: registers and memory as terms over the
+   inputs, a path condition, case splits at the input-dependent branches.
+3. **Summaries** for loops and library code (the copy loop first), proved once by induction and
+   used in place of their code.
+4. The theorem, as a `FreeRunH` (gas-free) result lifted to Ψ_R with `psiM_free`, plus a gas
+   bound.
 
 ## Notes on the paper and the vectors
 

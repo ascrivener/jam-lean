@@ -243,4 +243,35 @@ theorem psi_status_ne_cont (p : ByteArray) (i : Nat) (gas : UInt64) (ch : Bool) 
         all_goals (cases hr; simp_all)
   exact key _ i gas ch ω μ _ (psi_eq_runFuel p (runMeasure p i gas ch + 1) i gas ch ω μ (by omega))
 
+/-- A step of Ψ₁ never adds gas: ϱ' is ϱ less the block cost, or ϱ itself. -/
+theorem Program.step_gas_le (P : Program) (i : Nat) (gas : UInt64) (ch : Bool) (ω : Regs)
+    (μ : Memory) : (P.step i gas ch ω μ).gas.toNat ≤ gas.toNat := by
+  have hcg := P.chargeGas_cases i gas ch
+  simp only [Program.step]
+  cases ch
+  · rcases hcg.1 rfl with ⟨g', h, hlt⟩ | h <;> rw [h]
+    · exact Nat.le_of_lt hlt
+    · exact Nat.le_refl _
+  · rw [hcg.2 rfl]; exact Nat.le_refl _
+
+/-- **Ψ never adds gas**: the gas Ψ returns is at most the gas it was given. -/
+theorem psi_gas_le (p : ByteArray) (i : Nat) (gas : UInt64) (ch : Bool) (ω : Regs) (μ : Memory) :
+    (psi p i gas ch ω μ).gas.toNat ≤ gas.toNat := by
+  have key : ∀ n i gas ch ω μ r, runFuel p n i gas ch ω μ = some r → r.gas.toNat ≤ gas.toNat := by
+    intro n
+    induction n with
+    | zero => intros; simp_all [runFuel]
+    | succ n ih =>
+      intro i gas ch ω μ r hr
+      unfold runFuel at hr
+      split at hr
+      · cases hr; exact Nat.le_refl _
+      · rename_i P _
+        have hs := P.step_gas_le i gas ch ω μ
+        dsimp only at hr
+        split at hr
+        · exact Nat.le_trans (ih _ _ _ _ _ _ hr) hs
+        all_goals (cases hr; exact hs)
+  exact key _ i gas ch ω μ _ (psi_eq_runFuel p (runMeasure p i gas ch + 1) i gas ch ω μ (by omega))
+
 end PVM

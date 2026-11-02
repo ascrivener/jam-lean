@@ -1,4 +1,6 @@
 import PVM.Blob
+import Std.Data.ExtTreeSet
+import Std.Data.ExtTreeMap
 
 /-!
 # The serialization codec ℰ (GP v0.8.0 Appendix C)
@@ -19,6 +21,15 @@ abbrev Blob := ByteArray
 
 /-- A 32-octet hash ℍ. Kept as an octet sequence; the type does not enforce the length. -/
 abbrev Hash := ByteArray
+
+/-- A set of octet sequences, such as a set of hashes ⟦ℍ⟧. Extensional: two sets with the same
+    members are equal, so no order or multiplicity is observable. Iteration (`toList`) is in
+    ascending lexicographic order, the order of set encoding. -/
+abbrev OctetSet := Std.ExtTreeSet (List UInt8)
+
+/-- A dictionary from octet sequences to octet sequences, such as ℍ → ℍ. Extensional, like
+    `OctetSet`; `toList` is in ascending key order. -/
+abbrev OctetDict := Std.ExtTreeMap (List UInt8) (List UInt8)
 
 namespace Codec
 
@@ -51,14 +62,15 @@ def opt {α : Type} (e : α → List UInt8) : Option α → List UInt8
 def bytesLt (a b : ByteArray) : Bool := decide (a.toList < b.toList)
 
 /-- ℰ of a set of hashes: its elements in ascending order (GP (C) "Set Encoding"), with a length
-    prefix where the term is variable-length (↕). -/
-def varHashSet (s : List Hash) : List UInt8 :=
-  varSeq blob (s.mergeSort fun a b => !bytesLt b a)
+    prefix where the term is variable-length (↕). The set's own order is ascending (`bytesLt`
+    is the same lexicographic order), so no sort is needed. -/
+def varHashSet (s : OctetSet) : List UInt8 :=
+  varSeq id s.toList
 
 /-- ℰ(↕d) for a dictionary of hashes: ascending key order, each pair ℰ(k) ⌢ ℰ(d[k])
     (GP (C) "Dictionary Encoding"). -/
-def varHashDict (d : List (Hash × Hash)) : List UInt8 :=
-  varSeq (fun (k, v) => blob k ++ blob v) (d.mergeSort fun a b => !bytesLt b.1 a.1)
+def varHashDict (d : OctetDict) : List UInt8 :=
+  varSeq (fun (k, v) => k ++ v) d.toList
 
 end Codec
 

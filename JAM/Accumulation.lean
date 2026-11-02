@@ -18,16 +18,16 @@ abbrev PkgHash := List UInt8
 /-- The package hash of a report. -/
 def WorkReport.pkg (r : WorkReport) : PkgHash := r.spec.packageHash.toList
 
-/-- A ready-queue entry: a report and its unaccumulated dependencies. -/
-abbrev ReadyEntry := WorkReport × List PkgHash
+/-- A ready-queue entry: a report and the set of its unaccumulated dependencies. -/
+abbrev ReadyEntry := WorkReport × OctetSet
 
 /-- E(**r**, **x**) (GP §12.1): drop entries whose package is in **x**, and remove **x** from the
     remaining dependencies. -/
-def editQueue (r : List ReadyEntry) (x : List PkgHash) : List ReadyEntry :=
-  (r.filter fun (w, _) => !x.contains w.pkg).map fun (w, d) => (w, d.filter (!x.contains ·))
+def editQueue (r : List ReadyEntry) (x : OctetSet) : List ReadyEntry :=
+  (r.filter fun (w, _) => !x.contains w.pkg).map fun (w, d) => (w, d.diff x)
 
-/-- P(**r**): the package hashes of a set of reports. -/
-def pkgs (r : List WorkReport) : List PkgHash := r.map (·.pkg)
+/-- P(**r**): the set of package hashes of a set of reports. -/
+def pkgs (r : List WorkReport) : OctetSet := .ofList (r.map (·.pkg))
 
 /-- Q(**r**) (GP §12.1): reports whose dependencies are all met, repeatedly. Each round removes at
     least one entry, so |**r**| + 1 rounds suffice. -/
@@ -39,7 +39,7 @@ def readyOrder : Nat → List ReadyEntry → List WorkReport
 
 /-- D(r) = (r, {prerequisites} ∪ K(segment-root lookup)). -/
 def deps (r : WorkReport) : ReadyEntry :=
-  (r, (r.context.prerequisites.map (·.toList) ++ r.segmentRootLookup.map (·.1.toList)).eraseDups)
+  (r, r.context.prerequisites.insertMany r.segmentRootLookup.keys)
 
 /-- The accumulation statistics of one service: (N, T, G). -/
 abbrev AccStat := Nat × Nat × Nat
@@ -49,7 +49,7 @@ structure AccState where
   slot : Nat
   entropy : List UInt8
   ready : List (List ReadyEntry)
-  accumulated : List (List PkgHash)
+  accumulated : List OctetSet
   pstate : PartialState
 
 /-- The result of the accumulation STF: the posterior state, the output root, and the statistics. -/
@@ -78,7 +78,7 @@ def accOne (e : PartialState) (t : List DeferredTransfer) (r : List WorkReport)
 def pick (o a b : Nat) : Nat := if a = o then b else a
 
 /-- I(**d**, **p**) (GP §12.2): integrate the provisions whose request is still `[]`. -/
-def integrateProvisions (d : Accounts) (p : List (Nat × List UInt8)) : Accounts :=
+def integrateProvisions (d : Accounts) (p : Provisions) : Accounts :=
   p.foldl (fun d (s, i) =>
     let h := (Blake2b.hash256 ⟨i.toArray⟩).toList
     match d.get? s with
@@ -98,7 +98,7 @@ def accPar (e : PartialState) (t : List DeferredTransfer) (r : List WorkReport)
   -- every service whose result is used, each accumulated once
   let needed := (ss ++ [e.manager, e.delegator, e.registrar] ++ e.assigners).eraseDups
   let results : List (Nat × AccOut) := needed.map fun s => (s, accOne params entropy slot e t r f s)
-  let acc (s : Nat) : AccOut := (results.lookup s).getD ⟨e, [], none, 0, []⟩
+  let acc (s : Nat) : AccOut := (results.lookup s).getD ⟨e, [], none, 0, ∅⟩
   let u := ss.map fun s => (s, (acc s).gasUsed)
   let b := ss.filterMap fun s => (acc s).yield.map (s, ·)
   let t' := ss.flatMap fun s => (acc s).xfers
@@ -110,7 +110,7 @@ def accPar (e : PartialState) (t : List DeferredTransfer) (r : List WorkReport)
   let m := ss.flatMap fun s => d.keys.filter fun k => !(acc s).state.accounts.contains k
   let merged := (n.foldl (fun d k a => d.insert k a) d)
   let merged := m.foldl (fun d k => d.erase k) merged
-  let accounts := integrateProvisions slot merged (ss.flatMap fun s => (acc s).provisions)
+  let accounts := integrateProvisions slot merged (ss.foldl (fun p s => p.union (acc s).provisions) ∅)
   let eStar := (acc e.manager).state
   let assigners := (List.range e.assigners.length).map fun c =>
     let o := e.assigners.getD c 0
@@ -150,7 +150,7 @@ end
 def accumulate (params : Params) (pre : AccState) (slot : Nat) (reports : List WorkReport) : AccResult :=
   let E := params.epochLen
   let m := slot % E
-  let accumulatedAll := pre.accumulated.flatten
+  let accumulatedAll : OctetSet := pre.accumulated.foldl .union ∅
   let rBang := reports.filter fun r => r.context.prerequisites.isEmpty ∧ r.segmentRootLookup.isEmpty
   let rQ := editQueue ((reports.filter fun r => !(r.context.prerequisites.isEmpty ∧ r.segmentRootLookup.isEmpty)).map deps)
     accumulatedAll
@@ -172,8 +172,8 @@ def accumulate (params : Params) (pre : AccState) (slot : Nat) (reports : List W
     match d.get? s with
     | some a => d.insert s { a with lastAcc := slot }
     | none => d) e'.accounts
-  -- ξ'_{E−1} = P(**R***_{…n}) is a set ⟦ℍ⟧; we keep sets in ascending order, as they are encoded
-  let newAcc := (pkgs accounted).eraseDups.mergeSort fun a b => decide (a ≤ b)
+  -- ξ'_{E−1} = P(**R***_{…n}), a set ⟦ℍ⟧
+  let newAcc := pkgs accounted
   let accumulated := pre.accumulated.drop 1 ++ [newAcc]
   let ready := (List.range E).map fun idx =>
     -- idx = (m − i) mod E

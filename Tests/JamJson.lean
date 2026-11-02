@@ -38,7 +38,7 @@ def context (j : Json) : Except String RefineContext := do
            lookupAnchorHash := ← hexField j "lookup_anchor",
            lookupAnchorSlot := ← natField j "lookup_anchor_slot",
            lookupAnchorStateRoot := ← hexField j "lookup_anchor_state_root",
-           prerequisites := (← (← arr j "prerequisites").mapM hex).toList }
+           prerequisites := Std.ExtTreeSet.ofList ((← (← arr j "prerequisites").mapM hex).toList.map (·.toList)) }
 
 def workItem (j : Json) : Except String WorkItem := do
   let imports ← (← arr j "import_segments").mapM fun s => do
@@ -85,10 +85,10 @@ def availSpec (j : Json) : Except String AvailabilitySpec := do
 
 def workReport (j : Json) : Except String WorkReport := do
   let lookup ← (← arr j "segment_root_lookup").mapM fun e => do
-    return (← hexField e "work_package_hash", ← hexField e "segment_tree_root")
+    return ((← hexField e "work_package_hash").toList, (← hexField e "segment_tree_root").toList)
   return { spec := ← availSpec (← field j "package_spec"), context := ← context (← field j "context"),
            core := ← natField j "core_index", authorizerHash := ← hexField j "authorizer_hash",
-           authTrace := ← hexField j "auth_output", segmentRootLookup := lookup.toList,
+           authTrace := ← hexField j "auth_output", segmentRootLookup := Std.ExtTreeMap.ofList lookup.toList,
            digests := (← (← arr j "results").mapM workDigest).toList,
            authGasUsed := ← natField j "auth_gas_used" }
 

@@ -214,8 +214,11 @@ noted here and in a comment at the definition.
     non-manager: GP 0.8.0 answers `HUH`, the vectors accept it). The other listed departures
     (`grow_heap` running out of gas, its address limit, program size limits) are not exercised by
     any vector. The `log` host call (JIP-1, not in the paper) is an unknown host call, 1000 gas.
-16. **Sets are kept sorted.** The accumulated history ξ and dependency sets are sets of hashes; we
-    keep them in ascending order, as they are encoded.
+16. **Sets are sets.** Terms the paper types as sets or dictionaries use extensional types, so no
+    order or multiplicity is observable: `OctetSet` (`Std.ExtTreeSet`) for the prerequisites p, the
+    ready-queue dependency sets, P(**r**) and each entry of the accumulated history ξ; `OctetDict`
+    (`Std.ExtTreeMap`) for the segment-root lookup l; `Provisions` for the provisions **p** of 𝕃.
+    Iteration is in ascending order, which is the order set and dictionary encodings use.
 17. **Y's argument bound.** The paper types **a** ∈ 𝔹_{:𝖹_I}; for longer arguments we return ∅.
 
 ## Caveats

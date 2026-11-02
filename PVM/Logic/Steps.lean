@@ -352,7 +352,8 @@ macro_rules
       PVM.zero_div', PVM.div_zero', PVM.mod_zero', PVM.le_byte, Nat.reduceMul]
     try simp (disch := omega) only [Nat.mod_mod, PVM.add_zero', PVM.zero_add', PVM.mul_zero',
       PVM.zero_mul', PVM.zero_div', PVM.div_zero', PVM.mod_zero', Nat.mod_eq_of_lt, Nat.mul_div_cancel, PVM.ite_of_pos, PVM.ite_of_neg,
-      Bool.not_eq_true', beq_eq_false_iff_ne, beq_iff_eq, ne_eq, decide_eq_true_eq,
+      Bool.not_eq_true', Bool.not_eq_false', beq_eq_false_iff_ne, beq_iff_eq, bne_eq_false_iff_eq,
+      bne_iff_ne, ne_eq, decide_eq_true_eq,
       decide_eq_false_iff_not, Nat.reduceMod, Nat.reduceAdd, Nat.reduceMul, Nat.reduceDiv]
     try rfl))
 

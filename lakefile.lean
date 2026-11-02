@@ -21,6 +21,10 @@ lean_lib PVM
 @[default_target]
 lean_lib JAM
 
+/-- Results about specific services' deployed code, built on `JAM`. -/
+@[default_target]
+lean_lib Services
+
 /-- Shared helpers of the test executables. -/
 lean_lib Tests where
   globs := #[.one `Tests.Vectors, .one `Tests.Invocation, .one `Tests.LogicExample,
@@ -77,6 +81,14 @@ target acctest pkg : Unit := do
 target gascheck pkg : Unit := do
   runOnVectors `«gascheck-exe»
     #[(vectorDir pkg / "programs").toString, (vectorDir pkg / "gas-tests").toString]
+
+lean_exe «witnesscheck-exe» where
+  root := `Tests.WitnessCheck
+  exeName := "witnesscheck"
+
+/-- Check that the vendored witness blob names only `Services.Witness.ids`. -/
+target witnesscheck pkg : Unit := do
+  runOnVectors `«witnesscheck-exe» #[(pkg.dir / "services" / "witness" / "witness-service.jam").toString]
 
 /-- Development aid: `lake exe pvmtrace <vector.json> [steps]`. -/
 lean_exe pvmtrace where

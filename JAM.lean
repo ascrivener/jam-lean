@@ -11,6 +11,7 @@ import JAM.Accumulate
 import JAM.Accumulation
 import JAM.Refine
 import JAM.Theorems.HostGas
+import JAM.Theorems.Confinement
 
 /-!
 # Gray Paper v0.8.0, Appendix B and the protocol terms it needs

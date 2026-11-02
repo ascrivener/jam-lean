@@ -25,7 +25,7 @@ lean_lib JAM
 lean_lib Tests where
   globs := #[.one `Tests.Vectors, .one `Tests.Invocation, .one `Tests.LogicExample,
     .one `Tests.Blake2bTest, .one `Tests.HostGeneralTest, .one `Tests.JamJson,
-    .one `Tests.KeccakTest]
+    .one `Tests.KeccakTest, .one `Tests.RefineTest]
 
 lean_exe «pvmtest-exe» where
   root := `Tests.PvmTest

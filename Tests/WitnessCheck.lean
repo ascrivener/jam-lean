@@ -11,7 +11,7 @@ its Blake2b-256 hash, as on chain), takes the account's code by the paper's rule
 id is in `Services.Witness.ids`.
 
 It also checks `checkCode` of the PVM code against `Services.Witness.Prefix.facts`, the one
-hypothesis `Services.Witness.Prefix.prefix_of_checkCode` makes about the bytes.
+hypotheses `Services.Witness.Prefix.prefix_from_Y` makes about the bytes, with `layoutOk`.
 
 These are the steps not checked by the kernel: they run compiled code over the 223 kB blob.
 -/
@@ -46,5 +46,8 @@ def main (args : List String) : IO UInt32 := do
     if !checkCode jb.code Services.Witness.Prefix.facts then
       IO.eprintln s!"checkCode fails for the {n} facts of Services.Witness.Prefix"
       return 1
-    IO.println s!"witnesscheck: the blob passes 𝔳_blob and the {n} code facts of Services.Witness.Prefix, so `prefix_of_checkCode` applies"
+    if !Services.Witness.Prefix.layoutOk jb then
+      IO.eprintln "the section sizes differ from Services.Witness.Prefix.layoutOk"
+      return 1
+    IO.println s!"witnesscheck: the blob passes 𝔳_blob, the {n} code facts and the section sizes of Services.Witness.Prefix, so `prefix_from_Y` applies"
     return 0

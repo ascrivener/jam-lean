@@ -90,6 +90,14 @@ lean_exe «witnesscheck-exe» where
 target witnesscheck pkg : Unit := do
   runOnVectors `«witnesscheck-exe» #[(pkg.dir / "services" / "witness" / "witness-service.jam").toString]
 
+lean_exe «witnessrun-exe» where
+  root := `Tests.WitnessRun
+  exeName := "witnessrun"
+
+/-- Run the real witness binary's refine on malformed payloads (a test, not a proof). -/
+target witnessrun pkg : Unit := do
+  runOnVectors `«witnessrun-exe» #[(pkg.dir / "services" / "witness" / "witness-service.jam").toString]
+
 /-- Development aid: `lake exe pvmtrace <vector.json> [steps]`. -/
 lean_exe pvmtrace where
   root := `Tests.Trace

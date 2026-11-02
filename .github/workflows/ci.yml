@@ -63,6 +63,9 @@ jobs:
       - name: Keccak and SHA3 vectors
         run: lake build Tests.KeccakTest
 
+      - name: Refine host functions, Ψ_R and Ψ_I (hand-written; no vectors exist)
+        run: lake build Tests.RefineTest
+
       - name: Fetch the Gray Paper v0.8.0 JAM vectors
         run: scripts/fetch-jam-vectors.sh
 

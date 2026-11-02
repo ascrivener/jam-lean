@@ -28,7 +28,9 @@ Two libraries, each bounded by the Gray Paper (v0.8.0):
   (§11, §14), service accounts (§9), ℋ_K = Keccak-256 and the binary Merkle root (Appendix E).
   It has the general host functions (`gas`, `grow_heap`, `fetch`, `lookup`, `read`, `write`,
   `info`), the 13 accumulate host functions, Ψ_A, and the accumulation state transition of §12
-  (Δ_1, Δ_*, Δ_+, the ready queue and history, statistics, and the output root). Protocol and gas
+  (Δ_1, Δ_*, Δ_+, the ready queue and history, statistics, and the output root); and the refine
+  host functions (`historical_lookup`, `export`, `machine`, `peek`, `poke`, `pages`, `invoke`,
+  `expunge`), Ψ_R and Ψ_I. Protocol and gas
   constants are generated from `definitions.tex` (`scripts/gen_constants.py`, drift-checked in CI);
   the test vectors' tiny chain is `Params.tiny`. A proof about pure PVM programs imports only `PVM` and trusts nothing from `JAM`.
 
@@ -47,6 +49,7 @@ call `pc`) live in `Tests/`, not in the model.
 | `JAM` Blake2b-256 vs. `hashlib` and RFC 7693 | **13 / 13** match |
 | `JAM` general host functions, hand-written cases | **30 / 30** pass |
 | `JAM` Keccak-256 / SHA3-256 vs. `hashlib` and standard vectors | **15 / 15** match |
+| `JAM` refine host functions, Ψ_R and Ψ_I, hand-written cases (no vectors exist) | **59 / 59** pass, 2 more kernel-checked |
 | Accumulation STF (§12) vs. GP v0.8.0 accumulate vectors (tiny) | **61 / 63** pass; the 2 others are `bless_from_non_manager`, which the vectors' changelog lists as departing from GP 0.8.0 |
 
 ## Building and running
@@ -220,6 +223,15 @@ noted here and in a comment at the definition.
     (`Std.ExtTreeMap`) for the segment-root lookup l; `Provisions` for the provisions **p** of 𝕃.
     Iteration is in ascending order, which is the order set and dictionary encodings use.
 17. **Y's argument bound.** The paper types **a** ∈ 𝔹_{:𝖹_I}; for longer arguments we return ∅.
+18. **Ψ_R's extrinsics.** The refine dispatcher passes x̄ to `fetch`, built from the **x** with
+    (ℋ(**x**), |**x**|) ∈ w_x, but Ψ_R's arguments do not include that data. `psiR` takes x̄ as an
+    argument. Likewise Ψ_R and Ψ_I draw on an account state **d** the paper leaves implicit; both
+    take it as an argument.
+19. **Code that is not ℰ(↕**m**, **c**).** Ψ_R and **p**_c (§14.3) split the looked-up preimage as
+    ℰ(↕**m**, **c**) without saying what happens if it does not have that form. We treat it like a
+    missing preimage: BAD. Likewise an item index i ≥ |p_w| gives BAD.
+20. **`pages` gives no ε'.** Ω_Z's row defines only (ω'_7, **m**'); with the common rules it
+    continues (▸) in every case, including WHO and HUH.
 
 ## Caveats
 

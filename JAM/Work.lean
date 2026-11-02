@@ -30,8 +30,8 @@ structure RefineContext where
   lookupAnchorSlot : Nat
   /-- s, the lookup-anchor posterior state root -/
   lookupAnchorStateRoot : Hash
-  /-- p, the prerequisite work-package hashes (a set) -/
-  prerequisites : List Hash
+  /-- p, the prerequisite work-package hashes, a set ⟦ℍ⟧ -/
+  prerequisites : OctetSet := ∅
 
 /-- ℰ(x ∈ 𝕏) (GP Appendix C). -/
 def RefineContext.encode (x : RefineContext) : List UInt8 :=
@@ -175,8 +175,8 @@ structure WorkReport where
   authorizerHash : Hash
   /-- t, the authorizer trace -/
   authTrace : Blob
-  /-- l, the segment-root lookup dictionary -/
-  segmentRootLookup : List (Hash × Hash)
+  /-- l, the segment-root lookup dictionary ℍ → ℍ -/
+  segmentRootLookup : OctetDict := ∅
   /-- d, the work digests -/
   digests : List WorkDigest
   /-- g, gas used by is-authorized -/

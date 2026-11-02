@@ -29,6 +29,13 @@ structure PartialState where
   registrar : Nat
   alwaysAcc : Std.ExtTreeMap Nat Nat
 
+/-- (service, blob) pairs, ordered lexicographically. -/
+instance : Ord (Nat × List UInt8) := lexOrd
+
+/-- A set of provisions ⟦(ℕ_S, 𝔹)⟧ (GP eq. `implications`). Extensional, so the order in which
+    `provide` calls are made is unobservable. -/
+abbrev Provisions := Std.ExtTreeSet (Nat × List UInt8)
+
 /-- The implications 𝕃 (GP eq. `implications`): service s, state **e**, next free id i, transfers
     **t**, yield y and provisions **p**. -/
 structure Implications where
@@ -37,7 +44,7 @@ structure Implications where
   nextFree : Nat
   xfers : List DeferredTransfer := []
   yield : Option (List UInt8) := none
-  provisions : List (Nat × List UInt8) := []
+  provisions : Provisions := ∅
 
 namespace Implications
 /-- x_s ≡ (x_e)_d[x_s], the accumulating service's account. -/
@@ -316,7 +323,7 @@ def provide (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx 
         | some a =>
           if a.requests.get? ((Blake2b.hash256 ⟨i.toArray⟩).toList, z) ≠ some [] then r7 out HUH
           else if x.provisions.contains (s, i) then r7 out HUH
-          else r7 (updX out { x with provisions := x.provisions ++ [(s, i)] }) OK
+          else r7 (updX out { x with provisions := x.provisions.insert (s, i) }) OK
 
 /-- G: run a general function on x_s and write the account back into x (GP eq. `accinvocation`). -/
 def onSelf (out : HostOut ServiceAccount) (c : AccCtx) : HostOut AccCtx :=
@@ -374,7 +381,7 @@ structure AccOut where
   xfers : List DeferredTransfer
   yield : Option (List UInt8)
   gasUsed : Nat
-  provisions : List (Nat × List UInt8)
+  provisions : Provisions
 
 /-- I(**e**, s) (GP eq. `accinvocation`): the initial implications, with the next free id
     check((ℰ_4⁻¹(ℋ(ℰ(s, η'_0, H_t))) mod (2^32 − 𝖲 − 2^8)) + 𝖲). -/
@@ -394,9 +401,9 @@ def psiA (params : Params) (entropy : List UInt8) (e : PartialState) (t s g : Na
     | none => e
   let code := (st.accounts.get? s).bind (·.code)
   match code with
-  | none => ⟨st, [], none, 0, []⟩
+  | none => ⟨st, [], none, 0, ∅⟩
   | some c =>
-    if c.size > Constants.Cmaxservicecodesize then ⟨st, [], none, 0, []⟩
+    if c.size > Constants.Cmaxservicecodesize then ⟨st, [], none, 0, ∅⟩
     else
       let env : AccEnv := { params, slot := t, entropy, inputs, code := c }
       let x := initImplications st s t entropy

@@ -48,12 +48,13 @@ def state (params : Params) (j : Json) : Except String AccState := do
   let ready ← (← arrF j "ready_queue").mapM fun slotQ => do
     (← slotQ.getArr?).mapM fun e => do
       let deps ← (← arrF e "dependencies").mapM fun h => do return (← hex h).toList
-      return ((← workReport (← field e "report")), deps.toList)
+      return ((← workReport (← field e "report")), Std.ExtTreeSet.ofList deps.toList)
   let accumulated ← (← arrF j "accumulated").mapM fun slotA => do
-    (← slotA.getArr?).mapM fun h => do return (← hex h).toList
+    let hs ← (← slotA.getArr?).mapM fun h => do return (← hex h).toList
+    return (Std.ExtTreeSet.ofList hs.toList : OctetSet)
   let assigners ← (← arrF p "assign").mapM (·.getNat?)
   return { slot := ← natField j "slot", entropy := (← hexField j "entropy").toList,
-           ready := (ready.map (·.toList)).toList, accumulated := (accumulated.map (·.toList)).toList,
+           ready := (ready.map (·.toList)).toList, accumulated := accumulated.toList,
            pstate := { accounts := Std.ExtTreeMap.ofList accounts.toList, staging := [],
                        authQueue := List.replicate params.coreCount (List.replicate params.authQueueSize (List.replicate 32 0)),
                        manager := ← natField p "bless", assigners := assigners.toList,
@@ -77,9 +78,9 @@ def compare (params : Params) (j : Json) (res : AccResult) : Except String (List
   if let .ok h := hexField out "ok" then
     if h.toList != res.root then diffs := diffs ++ [s!"output root {hexS res.root} ≠ {hexS h.toList}"]
   let got := res.state
-  let rq (q : List (List ReadyEntry)) := q.map fun l => l.map fun (w, d) => (hexS w.pkg, d.map hexS)
+  let rq (q : List (List ReadyEntry)) := q.map fun l => l.map fun (w, d) => (hexS w.pkg, d.toList.map hexS)
   if rq got.ready != rq post.ready then diffs := diffs ++ ["ready queue differs"]
-  if (got.accumulated.map (·.map hexS)) != (post.accumulated.map (·.map hexS)) then
+  if (got.accumulated.map (·.toList)) != (post.accumulated.map (·.toList)) then
     diffs := diffs ++ ["accumulated history differs"]
   let pr (e : PartialState) := (e.manager, e.assigners, e.delegator, e.registrar, e.alwaysAcc.toList)
   if pr got.pstate != pr post.pstate then diffs := diffs ++ [s!"privileges {repr (pr got.pstate)} ≠ {repr (pr post.pstate)}"]

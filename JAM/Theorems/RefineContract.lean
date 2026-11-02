@@ -59,6 +59,11 @@ def GasFreeId (h : Nat) : Prop := h = 1 ∨ h = 2 ∨ 14 < h
   unfold Params.encode
   simp only [Codec.fixed, List.length_append, PVM.Num.length_encodeLE]
 
+/-- ℰ of the Gray Paper's full-chain parameters, as `fetch` case 0 returns them (GP Appendix B,
+    Ω_Y; the constants of `JAM.Constants`). -/
+theorem Params.full_encode : Params.full.encode = [10, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 85, 1, 0, 75, 0, 0, 88, 2, 0, 0, 128, 150, 152, 0, 0, 0, 0, 0, 128, 240, 250, 2, 0, 0, 0, 0, 0, 242, 5, 42, 1, 0, 0, 0, 0, 195, 157, 208, 0, 0, 0, 0, 8, 0, 16, 0, 8, 0, 16, 0, 64, 56, 0, 0, 8, 0, 6, 0, 80, 0, 10, 0, 128, 0, 5, 0, 0, 250, 0, 0, 128, 112, 210, 0, 0, 9, 61, 0, 0, 12, 0, 0, 0, 192, 0, 0, 128, 0, 0, 0, 0, 12, 0, 0, 244, 1, 0, 0] := by
+  decide
+
 namespace RefineHost
 
 theorem dispatch_sameButGas (env : Env) {h : Nat} (hh : GasFreeId h) (ω : Regs) (μ : Memory)
@@ -128,11 +133,13 @@ macro_rules
       PVM.regIdx_val_5, PVM.regIdx_val_6, PVM.regIdx_val_7, PVM.regIdx_val_8, PVM.regIdx_val_9,
       PVM.regIdx_val_10, PVM.regIdx_val_11, PVM.regIdx_val_12, Vector.getElem_ofFn,
       Vector.getElem_set, UInt64.toNat_ofNat', UInt64.toNat_ofNat, UInt64.reduceToNat,
-      Option.getD_some, List.getD_cons_zero, List.getD_cons_succ, Fin.isValue, ↓reduceIte,
+      PVM.getD_some', List.getD_cons_zero, List.getD_cons_succ, Fin.isValue, ↓reduceIte,
       Nat.reduceMod, Nat.reduceAdd, Nat.reduceSub, Nat.reduceMul, Nat.reducePow, Nat.reduceDiv,
       Nat.reduceLT, Nat.reduceEqDiff, Nat.reduceLeDiff, Int.reduceLT, Int.reduceSub, Int.reduceNeg,
       Nat.min_def, List.take_zero, List.drop_zero, PVM.Memory.writeN_nil, beq_self_eq_true,
-      Bool.true_or, Bool.or_true, decide_true, decide_false, Bool.not_true, Bool.not_false,
+      List.take_of_length_le, Nat.le_refl, Nat.reduceBEq, Nat.reduceBNe, decide_eq_true_eq,
+      Bool.true_or, Bool.or_true, Bool.false_or, Bool.or_false, Bool.true_and, Bool.and_true,
+      Bool.false_and, Bool.and_false, decide_true, decide_false, Bool.not_true, Bool.not_false,
       Bool.false_eq_true, ite_true, ite_false, Nat.lt_irrefl, Nat.zero_le, Nat.sub_self,
       PVM.two32, PVM.two64, PVM.pageSize, JAM.Constants.CgasY, id_eq, PVM.getElem_regsNF,
       PVM.lookup_cons_nat, List.lookup_nil, Option.getD_none, PVM.set_regsNF, PVM.insertReg, $hs,*]

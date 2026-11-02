@@ -53,16 +53,18 @@ theorem growHeapCore_eq (ω : Regs) (μ : Memory) (jam : ByteArray) {a b h : Nat
 def growTop (w h b : Nat) : Nat := if w ≤ h ∨ w > b then h else w
 
 /-- **A `grow_heap` step**, under `refineContract`: from a memory whose heap is described by
-    `HeapPages`, the call continues with ω'_7 = the new top and pages a … top made writable. -/
+    `HeapPages`, the call continues with ω'_7 = the new top `t` and pages a … t made writable.
+    The new top is named by `t` so that the memory term stays concrete. -/
 theorem FreeStepsH.growHeap (env : RefineHost.Env) {p : ByteArray} {P : Program} {i n : Nat}
-    {ω : Regs} {μ : Memory} {x : RefineCtx} {a b h : Nat}
+    {ω : Regs} {μ : Memory} {x : RefineCtx} {a b h : Nat} (t : Nat)
     {i'' : Nat} {ω'' : Regs} {μ'' : Memory} {x'' : RefineCtx}
     (hd : deblob p i = some P ∧ P.decode i = some (.oneImm .ecalli 1) ∧ P.next i = n)
     (hb : heapBounds env.code = (a, b)) (hp : HeapPages μ a b h) (hah : a ≤ h) (hhb : h ≤ b)
-    (hbs : b < 2 ^ 32)
-    (rest : FreeStepsH p (refineContract env) n (setR7 ω (growTop (reg ω 7) h b))
-      (μ.setPages a (growTop (reg ω 7) h b - a) (some .write)) x i'' ω'' μ'' x'') :
+    (hbs : b < 2 ^ 32) (ht : growTop (reg ω 7) h b = t)
+    (rest : FreeStepsH p (refineContract env) n (setR7 ω t)
+      (μ.setPages a (t - a) (some .write)) x i'' ω'' μ'' x'') :
     FreeStepsH p (refineContract env) i ω μ x i'' ω'' μ'' x'' := by
+  subst ht
   apply FreeStepsH.host_decode hd _ rest
   refine ⟨by unfold GasFreeId; decide, by decide, UInt64.ofNat (2 ^ 64 - 1), ?_⟩
   simp only [toHostFn, RefineHost.dispatch, hostGrowHeap, growHeapCore_eq ω μ env.code hb hp hah hhb,

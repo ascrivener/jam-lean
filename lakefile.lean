@@ -24,7 +24,7 @@ lean_lib JAM
 /-- Shared helpers of the test executables. -/
 lean_lib Tests where
   globs := #[.one `Tests.Vectors, .one `Tests.Invocation, .one `Tests.LogicExample,
-    .one `Tests.Blake2bTest]
+    .one `Tests.Blake2bTest, .one `Tests.HostGeneralTest]
 
 lean_exe «pvmtest-exe» where
   root := `Tests.PvmTest

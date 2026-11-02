@@ -24,7 +24,7 @@ jobs:
           key: lake-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lakefile.lean', 'lake-manifest.json') }}-${{ hashFiles('PVM/**', 'Tests/**', 'PVM.lean') }}
           restore-keys: lake-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lakefile.lean', 'lake-manifest.json') }}-
 
-      - name: Generated gas cost table matches the pinned paper
+      - name: Generated tables and constants match the pinned paper
         run: scripts/check-tables.sh
 
       - name: No forbidden constructs
@@ -56,6 +56,9 @@ jobs:
 
       - name: Blake2b vectors
         run: lake build Tests.Blake2bTest
+
+      - name: General host functions
+        run: lake build Tests.HostGeneralTest
 
       - name: Fetch the Gray Paper v0.8.0 JAM vectors
         run: scripts/fetch-jam-vectors.sh

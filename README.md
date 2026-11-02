@@ -22,8 +22,11 @@ Two libraries, each bounded by the Gray Paper (v0.8.0):
   definitions of §4.7, and constants. `PVM/Logic/` holds proof rules about this model; it adds no
   semantics.
 * **`JAM`: Appendix B (in progress)**, built on `PVM`, with the protocol terms Appendix B needs:
-  the codec (Appendix C), ℋ = Blake2b-256 (§3.8), and work packages, items, digests and reports
-  (§11, §14). A proof about pure PVM programs imports only `PVM` and trusts nothing from `JAM`.
+  the codec (Appendix C), ℋ = Blake2b-256 (§3.8), work packages, items, digests and reports
+  (§11, §14), service accounts (§9) and accumulation inputs (§12). So far: the general host
+  functions `gas`, `grow_heap`, `fetch`, `lookup`, `read`, `write` and `info`. Protocol and gas
+  constants are generated from `definitions.tex` (`scripts/gen_constants.py`, drift-checked in CI);
+  the test vectors' tiny chain is `Params.tiny`. A proof about pure PVM programs imports only `PVM` and trusts nothing from `JAM`.
 
 Test-vector conventions (`map`/`write`/`set-reg` steps, how runs resume, the exit index the vectors
 call `pc`) live in `Tests/`, not in the model.
@@ -38,6 +41,7 @@ call `pc`) live in `Tests/`, not in the model.
 | Model's ϖ against the blocks the vectors list | identical in all 367 programs |
 | `JAM` codec: work-package family vs. GP v0.8.0 codec vectors | **6 / 6** match |
 | `JAM` Blake2b-256 vs. `hashlib` and RFC 7693 | **13 / 13** match |
+| `JAM` general host functions, hand-written cases | **30 / 30** pass |
 
 ## Building and running
 

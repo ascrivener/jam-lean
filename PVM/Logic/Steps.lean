@@ -114,6 +114,74 @@ theorem Memory.readN_writeN_disjoint (μ : Memory) (a : Nat) (bs : List UInt8) (
 @[simp] theorem regIdx_val_12 : (((12 : Fin 13) : Nat)) = 12 := rfl
 
 
+/-! ## Keeping the register file small
+
+Every instruction that writes a register adds a `Vector.set` to the register file's term, so a
+long path builds a long chain. The stepper keeps the file as `regsNF base L` instead: the
+starting file `base` with the overrides `L`, at most one per register, sorted by index. A write
+inserts into `L` (`set_regsNF`, computed by `insertReg` on literal indices) and a read looks it
+up (`getElem_regsNF`). -/
+
+/-- `base` with the overrides `L` (the first entry for an index wins). -/
+def regsNF (base : Regs) (L : List (Nat × UInt64)) : Regs :=
+  L.foldr (fun q ω => ω.setIfInBounds q.1 q.2) base
+
+/-- Insert the override (k, v), keeping `L` sorted with one entry per index. -/
+def insertReg (k : Nat) (v : UInt64) : List (Nat × UInt64) → List (Nat × UInt64)
+  | [] => [(k, v)]
+  | (i, x) :: rest =>
+    if k < i then (k, v) :: (i, x) :: rest
+    else if k = i then (k, v) :: rest
+    else (i, x) :: insertReg k v rest
+
+theorem lookup_cons_nat {β : Type} (k a : Nat) (v : β) (l : List (Nat × β)) :
+    ((k, v) :: l).lookup a = if a = k then some v else l.lookup a := by
+  simp only [List.lookup_cons]
+  cases hb : a == k
+  · have : a ≠ k := by simpa using hb
+    simp [this]
+  · have : a = k := by simpa using hb
+    simp [this]
+
+theorem lookup_insertReg (k j : Nat) (v : UInt64) (L : List (Nat × UInt64)) :
+    (insertReg k v L).lookup j = if j = k then some v else L.lookup j := by
+  induction L with
+  | nil => simp only [insertReg, lookup_cons_nat, List.lookup_nil]
+  | cons q rest ih =>
+    obtain ⟨i, x⟩ := q
+    simp only [insertReg]
+    by_cases hki : k < i
+    · simp only [hki, ↓reduceIte, lookup_cons_nat]
+    · by_cases hke : k = i
+      · subst hke; simp only [hki, ↓reduceIte, lookup_cons_nat]
+        by_cases hjk : j = k <;> simp [hjk]
+      · simp only [hki, hke, ↓reduceIte, lookup_cons_nat, ih]
+        by_cases hji : j = i
+        · subst hji; simp [Ne.symm hke]
+        · simp [hji]
+
+theorem getElem_regsNF (base : Regs) (L : List (Nat × UInt64)) (j : Nat) (hj : j < 13) :
+    (regsNF base L)[j] = (L.lookup j).getD base[j] := by
+  induction L with
+  | nil => rfl
+  | cons q rest ih =>
+    obtain ⟨i, x⟩ := q
+    simp only [regsNF, List.foldr_cons] at ih ⊢
+    rw [Vector.getElem_setIfInBounds]
+    simp only [lookup_cons_nat]
+    by_cases hij : i = j
+    · subst hij; simp
+    · rw [ite_eq_right hij, ih]; simp [Ne.symm hij]
+
+theorem set_regsNF (base : Regs) (L : List (Nat × UInt64)) (k : Nat) (v : UInt64) (h : k < 13) :
+    (regsNF base L).set k v h = regsNF base (insertReg k v L) := by
+  apply Vector.ext; intro j hj
+  rw [Vector.getElem_set, getElem_regsNF _ _ _ hj, getElem_regsNF _ _ _ hj, lookup_insertReg]
+  by_cases hjk : k = j
+  · subst hjk; simp
+  · simp [hjk, Ne.symm hjk]
+
+
 /-! ## Evaluating closed terms the stepper meets -/
 
 @[simp] theorem natCast_lt_zero (n : Nat) : ((n : Int) < 0) = False := by
@@ -184,7 +252,9 @@ macro_rules
       PVM.regIdx_val_1, PVM.regIdx_val_2, PVM.regIdx_val_3, PVM.regIdx_val_4, PVM.regIdx_val_5,
       PVM.regIdx_val_6, PVM.regIdx_val_7, PVM.regIdx_val_8, PVM.regIdx_val_9, PVM.regIdx_val_10,
       PVM.regIdx_val_11, PVM.regIdx_val_12, Option.getD_some, Vector.getElem_ofFn,
-      Vector.getElem_set, PVM.two32, PVM.two64, PVM.pageSize, UInt64.toNat_ofNat',
+      Vector.getElem_set, PVM.set_regsNF, PVM.getElem_regsNF, PVM.insertReg, PVM.lookup_cons_nat,
+      PVM.Num.decodeLE, UInt8.toNat_ofNat',
+      List.lookup_nil, Option.getD_none, PVM.two32, PVM.two64, PVM.pageSize, UInt64.toNat_ofNat',
       UInt64.toNat_ofNat, UInt64.reduceToNat, ne_eq, not_true_eq_false, ↓reduceIte,
       List.append_nil, List.nil_append, List.getD_cons_zero, List.getD_cons_succ, Fin.isValue,
       Fin.val_ofNat, decide_false, decide_true, Bool.not_false, Bool.not_true, Bool.false_eq_true,
@@ -202,12 +272,11 @@ macro_rules
       PVM.Exec.twoRegBranchCond, PVM.Exec.u64, PVM.Exec.s64, PVM.Num.sext, PVM.Num.signed,
       PVM.Num.unsigned, PVM.Num.floorShift, PVM.Program.djump, UInt8.reduceToNat, Int.reduceAdd,
       Int.reduceSub, Int.reduceMul, Int.reduceMod, Int.reduceFDiv, Int.reducePow,
-      Int.reduceToNat, Int.reduceNeg, Int.reduceLE, Int.reduceOfNat, PVM.Exec.ofBool,
+      Int.reduceToNat, Int.reduceNeg, Int.reduceLE, Int.reduceOfNat, Int.cast_ofNat_Int,
+      Int.add_emod_left, Nat.min_def, Nat.max_def, PVM.Exec.ofBool,
       PVM.reduceTrailingZeros, PVM.reduceLeadingZeros, PVM.reducePopcount, PVM.reduceRotl,
       PVM.reduceRotr, $hs,*]
-    first
-      | rfl
-      | (simp only [PVM.Memory.readN, List.range_succ, List.range_zero, List.map_cons,
+    try simp only [PVM.Memory.readN, List.range_succ, List.range_zero, List.map_cons,
           List.map_nil, List.map_append, List.nil_append, List.cons_append,
           PVM.Memory.read_writeN, PVM.Num.length_encodeLE, PVM.Num.encodeLE,
           List.getElem!_cons_zero, List.getElem!_cons_succ, PVM.Num.decodeLE, UInt8.toNat_ofNat',
@@ -237,9 +306,10 @@ macro_rules
       PVM.Exec.twoRegBranchCond, PVM.Exec.u64, PVM.Exec.s64, PVM.Num.sext, PVM.Num.signed,
       PVM.Num.unsigned, PVM.Num.floorShift, PVM.Program.djump, UInt8.reduceToNat, Int.reduceAdd,
       Int.reduceSub, Int.reduceMul, Int.reduceMod, Int.reduceFDiv, Int.reducePow,
-      Int.reduceToNat, Int.reduceNeg, Int.reduceLE, Int.reduceOfNat, PVM.Exec.ofBool,
+      Int.reduceToNat, Int.reduceNeg, Int.reduceLE, Int.reduceOfNat, Int.cast_ofNat_Int,
+      Int.add_emod_left, Nat.min_def, Nat.max_def, PVM.Exec.ofBool,
       PVM.reduceTrailingZeros, PVM.reduceLeadingZeros, PVM.reducePopcount, PVM.reduceRotl,
       PVM.reduceRotr, $hs,*]
-         rfl)))
+    rfl))
 
 end PVM

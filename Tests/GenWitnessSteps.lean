@@ -185,7 +185,7 @@ namespace Services.Witness.Prefix
 open PVM JAM
 
 set_option maxRecDepth 20000
-set_option maxHeartbeats 2000000
+set_option maxHeartbeats 10000000
 "
   IO.println ("/-- The code facts these steps use. -/\ndef facts : List CodeFact := [\n  " ++ ",\n  ".intercalate factsL ++ "]\n")
   IO.println "/-- The blob `p` deblobs to `P`, and `facts` hold of it. -/\nclass HasCode (p : outParam ByteArray) (P : Program) : Prop where\n  ok : CodeOk p facts P\n"
@@ -220,6 +220,7 @@ theorem prefix_run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost
     let hbs := ", ".intercalate ((List.range k).map fun j => s!"hb_{a + j}")
     IO.println s!"  have hbn_{a}_{k} : μ.readN {a} {k} = {bytes} := by\n    simp only [Memory.readN, List.range_succ, List.range_zero, List.nil_append, List.cons_append, List.map_cons, List.map_nil, List.map_append, Nat.reduceAdd, Nat.add_zero, {hbs}]"
   IO.println s!"
+  rw [show initRegs L = regsNF (initRegs L) [] from rfl]
   refine ⟨?ω, ?μ, ?x, ?h⟩
   case h =>"
   for pc in path do

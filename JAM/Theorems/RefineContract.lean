@@ -134,7 +134,8 @@ macro_rules
       Nat.min_def, List.take_zero, List.drop_zero, PVM.Memory.writeN_nil, beq_self_eq_true,
       Bool.true_or, Bool.or_true, decide_true, decide_false, Bool.not_true, Bool.not_false,
       Bool.false_eq_true, ite_true, ite_false, Nat.lt_irrefl, Nat.zero_le, Nat.sub_self,
-      PVM.two32, PVM.two64, PVM.pageSize, JAM.Constants.CgasY, id_eq, $hs,*]
+      PVM.two32, PVM.two64, PVM.pageSize, JAM.Constants.CgasY, id_eq, PVM.getElem_regsNF,
+      PVM.lookup_cons_nat, List.lookup_nil, Option.getD_none, PVM.set_regsNF, PVM.insertReg, $hs,*]
     rfl))
 
 end JAM

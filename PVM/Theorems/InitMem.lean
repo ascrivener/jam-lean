@@ -68,6 +68,24 @@ theorem read_writeN (μ : Memory) (a : Nat) (bs : List UInt8) (j : Nat)
     rw [Nat.mod_eq_of_lt (by omega), Nat.mod_eq_of_lt hj]
     omega
 
+@[simp] theorem read_setPages (μ : Memory) (f c : Nat) (acc : Option Access) (i : Nat) :
+    (μ.setPages f c acc).read i = μ.read i := rfl
+
+@[simp] theorem readN_setPages (μ : Memory) (f c : Nat) (acc : Option Access) (a n : Nat) :
+    (μ.setPages f c acc).readN a n = μ.readN a n := rfl
+
+theorem writable_setPages (μ : Memory) (f c : Nat) (acc : Option Access) (i : Nat) :
+    (μ.setPages f c acc).writable i =
+      if f ≤ i / pageSize ∧ i / pageSize < f + c then acc == some .write else μ.writable i := by
+  simp only [writable, setPages_get?]
+  split <;> rfl
+
+theorem readable_setPages (μ : Memory) (f c : Nat) (acc : Option Access) (i : Nat) :
+    (μ.setPages f c acc).readable i =
+      if f ≤ i / pageSize ∧ i / pageSize < f + c then acc.isSome else μ.readable i := by
+  simp only [readable, setPages_get?]
+  split <;> rfl
+
 end Memory
 
 /-- **Page access of Y's RAM**, section by section (later sections take precedence where the

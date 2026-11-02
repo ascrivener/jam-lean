@@ -1,0 +1,88 @@
+import JAM.Theorems.RefineContract
+
+/-!
+# `grow_heap` in gas-free runs
+
+Ω_♊ counts the writable pages in ℕ_{a…b} to find the heap's top h. In a symbolic run the memory
+is not a concrete page map, so we describe its heap pages instead: `HeapPages μ a b h` says the
+writable pages in ℕ_{a…b} are exactly those below h. From it `growHeapCore_eq` gives Ω_♊'s top
+without counting, and `FreeStepsH.growHeap` takes a whole `grow_heap` step under
+`refineContract`.
+-/
+
+namespace JAM
+
+open PVM
+
+/-- In ℕ_{a…b}, the writable pages of μ are exactly those below h. -/
+def HeapPages (μ : Memory) (a b h : Nat) : Prop :=
+  ∀ p, a ≤ p → p < b → (μ.pages.get? p == some .write) = decide (p < h)
+
+theorem countP_range_lt (n m : Nat) :
+    (List.range n).countP (fun k => decide (k < m)) = min m n := by
+  induction n with
+  | zero => simp
+  | succ n ih =>
+    rw [List.range_succ, List.countP_append, ih]
+    by_cases h : n < m
+    · simp [h]; omega
+    · simp [h]; omega
+
+/-- **The heap top from `HeapPages`.** -/
+theorem growHeapCore_eq (ω : Regs) (μ : Memory) (jam : ByteArray) {a b h : Nat}
+    (hb : heapBounds jam = (a, b)) (hp : HeapPages μ a b h) (hah : a ≤ h) (hhb : h ≤ b) :
+    growHeapCore ω μ jam = (a, b, h, reg ω 7) := by
+  unfold growHeapCore
+  rw [hb]
+  dsimp only
+  have : (List.range (b - a)).countP (fun k => μ.pages.get? (a + k) == some .write) =
+      (List.range (b - a)).countP (fun k => decide (k < h - a)) := by
+    apply List.countP_congr
+    intro k hk
+    simp only [List.mem_range] at hk
+    rw [hp (a + k) (by omega) (by omega)]
+    simp only [decide_eq_true_eq]
+    omega
+  rw [this]
+  have hc := countP_range_lt (b - a) (h - a)
+  rw [hc]
+  simp only [Prod.mk.injEq, and_true, true_and]
+  omega
+
+/-- The new top Ω_♊ sets: h if ω_7 ≤ h or ω_7 > b, else ω_7. -/
+def growTop (w h b : Nat) : Nat := if w ≤ h ∨ w > b then h else w
+
+/-- **A `grow_heap` step**, under `refineContract`: from a memory whose heap is described by
+    `HeapPages`, the call continues with ω'_7 = the new top and pages a … top made writable. -/
+theorem FreeStepsH.growHeap (env : RefineHost.Env) {p : ByteArray} {P : Program} {i n : Nat}
+    {ω : Regs} {μ : Memory} {x : RefineCtx} {a b h : Nat}
+    {i'' : Nat} {ω'' : Regs} {μ'' : Memory} {x'' : RefineCtx}
+    (hd : deblob p i = some P ∧ P.decode i = some (.oneImm .ecalli 1) ∧ P.next i = n)
+    (hb : heapBounds env.code = (a, b)) (hp : HeapPages μ a b h) (hah : a ≤ h) (hhb : h ≤ b)
+    (hbs : b < 2 ^ 32)
+    (rest : FreeStepsH p (refineContract env) n (setR7 ω (growTop (reg ω 7) h b))
+      (μ.setPages a (growTop (reg ω 7) h b - a) (some .write)) x i'' ω'' μ'' x'') :
+    FreeStepsH p (refineContract env) i ω μ x i'' ω'' μ'' x'' := by
+  apply FreeStepsH.host_decode hd _ rest
+  refine ⟨by unfold GasFreeId; decide, by decide, UInt64.ofNat (2 ^ 64 - 1), ?_⟩
+  simp only [toHostFn, RefineHost.dispatch, hostGrowHeap, growHeapCore_eq ω μ env.code hb hp hah hhb,
+    growTop]
+  have hw := (ω.get 7).toNat_lt
+  simp only [reg] at hw ⊢
+  by_cases hc : (ω.get 7).toNat ≤ h ∨ (ω.get 7).toNat > b
+  · simp [hc]
+  · have : ¬ 18446744073709551615 < Constants.CgasGeminiconst + ((ω.get 7).toNat - h) * Constants.CgasGeminilinear := by
+      simp only [Constants.CgasGeminiconst, Constants.CgasGeminilinear]
+      omega
+    simp [hc, this]
+
+/-- Prove `HeapPages` of a memory built from a starting memory by writes and `setPages`, given
+    the starting memory's `HeapPages` fact `h`. -/
+macro "heap_pages" h:term : tactic => `(tactic| (
+  intro q h1 h2
+  have hq := $h q h1 h2
+  simp only [PVM.Memory.writeN_pages, PVM.Memory.setPages_get?]
+  repeat' split
+  all_goals (try simp only [hq]) <;> simp <;> omega))
+
+end JAM

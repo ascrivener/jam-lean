@@ -172,7 +172,8 @@ def accumulate (params : Params) (pre : AccState) (slot : Nat) (reports : List W
     match d.get? s with
     | some a => d.insert s { a with lastAcc := slot }
     | none => d) e'.accounts
-  let newAcc := pkgs accounted
+  -- ξ'_{E−1} = P(**R***_{…n}) is a set ⟦ℍ⟧; we keep sets in ascending order, as they are encoded
+  let newAcc := (pkgs accounted).eraseDups.mergeSort fun a b => decide (a ≤ b)
   let accumulated := pre.accumulated.drop 1 ++ [newAcc]
   let ready := (List.range E).map fun idx =>
     -- idx = (m − i) mod E

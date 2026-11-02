@@ -138,7 +138,8 @@ def decodeNat? (bs : ByteArray) (pos : Nat) : Option (Nat × Nat) := do
 def decodeBits? (bs : List UInt8) (n : Nat) : Option (Array Bool) :=
   if bs.length ≠ (n + 7) / 8 then none
   else
-    let bits := (List.range (8 * bs.length)).map fun i => Num.bit (bs.getD (i / 8) 0).toNat (i % 8)
+    let ba := bs.toArray
+    let bits := (List.range (8 * bs.length)).map fun i => Num.bit (ba.getD (i / 8) 0).toNat (i % 8)
     if (bits.drop n).all (· == false) then some (bits.take n).toArray else none
 
 /-- The unique (**c**, **k**, **j**) with

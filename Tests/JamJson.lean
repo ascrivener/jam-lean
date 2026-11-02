@@ -23,9 +23,10 @@ def hex (j : Json) : Except String ByteArray := do
     else if 'A' ≤ c ∧ c ≤ 'F' then pure (c.toNat - 'A'.toNat + 10)
     else die s!"bad hex digit {c}"
   if cs.length % 2 ≠ 0 then die "odd-length hex"
+  let ca := cs.toArray
   let mut out : ByteArray := .empty
-  for k in [0:cs.length / 2] do
-    out := out.push (UInt8.ofNat (16 * (← digit cs[2 * k]!) + (← digit cs[2 * k + 1]!)))
+  for k in [0:ca.size / 2] do
+    out := out.push (UInt8.ofNat (16 * (← digit ca[2 * k]!) + (← digit ca[2 * k + 1]!)))
   return out
 
 def hexField (j : Json) (k : String) : Except String ByteArray := do hex (← field j k)

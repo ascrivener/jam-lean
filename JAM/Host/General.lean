@@ -106,7 +106,8 @@ def hostGrowHeap {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (jam : ByteArr
     | none => (0, 0)
   let a := (2 * zoneSize + roundZone roLen) / pageSize
   let b := (2 ^ 32 - 3 * zoneSize - inputSize - roundPage stack) / pageSize
-  let c := ((List.range (b - a)).filter fun k => μ.writable ((a + k) * pageSize)).length
+  -- c = |{p ∈ ℕ_{a…b} | (μ_**a**)[p] = W}|, read off the page map's entries
+  let c := (μ.pages.toList.filter fun (p, acc) => a ≤ p ∧ p < b ∧ acc = .write).length
   let h := a + c
   let w := reg ω 7
   let g := Constants.CgasGeminiconst + (w - h) * Constants.CgasGeminilinear

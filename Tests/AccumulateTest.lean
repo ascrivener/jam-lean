@@ -109,6 +109,15 @@ def runVector (params : Params) (j : Json) : Except String (List String) := do
   let res := accumulate params pre (← natField input "slot") reports.toList
   compare params j res
 
+/-- Vectors that follow behaviour the vectors' CHANGELOG lists as departing from GP v0.8.0. The
+    model follows the paper, so these are expected to fail, and the runner fails if any other
+    vector fails or if one of these starts to pass. -/
+def knownDeviations : List (String × String) :=
+  [("bless_from_non_manager-1.json",
+    "`bless` from a non-manager: GP 0.8.0 answers HUH; the vectors accept it (GP #519/#558)"),
+   ("bless_from_non_manager-2.json",
+    "`bless` from a non-manager: GP 0.8.0 answers HUH; the vectors accept it (GP #519/#558)")]
+
 end JAM.Tests.Accumulate
 
 open JAM.Tests.Accumulate in
@@ -119,7 +128,12 @@ def main (args : List String) : IO UInt32 := do
   let mut failed : Array String := #[]
   for f in files do
     let name := f.fileName.getD ""
-    match runVector JAM.Params.tiny (← PVM.Tests.readJson f) with
+    let t0 ← IO.monoMsNow
+    let r := runVector JAM.Params.tiny (← PVM.Tests.readJson f)
+    let ok := match r with | .ok [] => "ok" | _ => "FAIL"
+    IO.println s!"{name}: {ok} ({(← IO.monoMsNow) - t0} ms)"
+    (← IO.getStdout).flush
+    match r with
     | .ok [] => pass := pass + 1
     | .ok diffs =>
       failed := failed.push name
@@ -129,4 +143,11 @@ def main (args : List String) : IO UInt32 := do
       failed := failed.push name
       IO.eprintln s!"ERROR {name}: {e}"
   IO.println s!"acctest: {pass} of {files.size} accumulate vectors pass"
-  return if failed.isEmpty then 0 else 1
+  let known := knownDeviations.map (·.1)
+  for (n, why) in knownDeviations do
+    IO.println s!"  expected deviation from GP 0.8.0: {n}: {why}"
+  let unexpected := failed.toList.filter (!known.contains ·)
+  let nowPassing := known.filter (!failed.contains ·)
+  for n in unexpected do IO.eprintln s!"unexpected failure: {n}"
+  for n in nowPassing do IO.eprintln s!"listed deviation now passes: {n}"
+  return if unexpected.isEmpty && nowPassing.isEmpty then 0 else 1

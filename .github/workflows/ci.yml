@@ -68,3 +68,6 @@ jobs:
 
       - name: Codec vectors (work-package family)
         run: lake build codectest
+
+      - name: Accumulate vectors (all but the listed deviations from GP 0.8.0)
+        run: lake build acctest

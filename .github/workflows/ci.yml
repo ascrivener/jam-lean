@@ -75,7 +75,7 @@ jobs:
       - name: the generated bootstrap files are what their generator produces
         run: |
           lake exe genwitnesssteps --service bootstrap code 7463 | diff - Services/Bootstrap/Code.lean
-          lake exe genwitnesssteps --service bootstrap run 402 | diff - Services/Bootstrap/Prefix.lean
+          lake exe genwitnesssteps --service bootstrap run 600 | diff - Services/Bootstrap/Prefix.lean
           lake exe genwitnesssteps --service bootstrap memcpy | diff - Services/Bootstrap/Memcpy.lean
 
       - name: the generated witness files are what their generator produces

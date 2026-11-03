@@ -51,7 +51,7 @@ Built on `JAM`; nothing in `PVM` or `JAM` depends on this library.
   symbolically from those code facts.
 * `Services.Bootstrap.Code`, `.Prefix`, `.Memcpy` — the same tooling on a second service, Parity's
   bootstrap service (`services/bootstrap`): its code facts (`lake build bootstrapcheck`), the
-  first 402 steps of its refine with what they leave (`prefix_from_Y`, `PrefixPost`), and
+  first 600 steps of its refine with what they leave (`prefix_from_Y`, `PrefixPost`), and
   `memcpy_small`. The bootstrap blob has witness's `memcpy` at another address, so this is
   witness's proof with the pcs moved (`genwitnesssteps --service bootstrap memcpy`).
 -/

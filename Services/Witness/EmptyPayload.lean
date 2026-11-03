@@ -190,7 +190,13 @@ theorem run_empty (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.
         simpa [Nat.add_assoc] using sY)
   have w7a := d7_r0
   have w7b := d7_r8
-  chase_prep at w7a w7b
+  have hrem : μ7.readN 4278058840 8 = [32, 0, 0, 0, 0, 0, 0, 0] := by
+    have h := d7_r8
+    rw [show L - (Blob.encodeNat C).length - (Blob.encodeNat I).length - (Blob.encodeNat S).length -
+      (Blob.encodeNat y.length).length = 32 by omega] at h
+    simpa using h
+  have hrem' := hrem
+  chase_prep at w7a w7b hrem'
   -- the 60 steps to Op::decode's error jump
   refine (fun h8 => ?_) (EFront3.run p P env ω7 μ7 ((∅, []) : RefineCtx) S hS I hI L (by omega) ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_)
   · obtain ⟨ω8, μ8, run8, g8, m8, s8, f8, rd8, wr8⟩ := h8

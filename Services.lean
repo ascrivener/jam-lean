@@ -13,7 +13,6 @@ import Services.Witness.ErrTail2
 import Services.Witness.ErrTail3
 import Services.Witness.ErrTail4
 import Services.Witness.ErrTail5
-import Services.Witness.ErrTail
 import Services.Witness.EmptyTail0
 import Services.Witness.EmptyTail1
 import Services.Witness.EmptyTail2
@@ -25,6 +24,8 @@ import Services.Witness.Front1
 import Services.Witness.Front2
 import Services.Witness.Front3
 import Services.Witness.Front4
+import Services.Witness.Args
+import Services.Witness.BadPayload
 
 /-!
 # Results about specific services' deployed code
@@ -45,9 +46,10 @@ Built on `JAM`; nothing in `PVM` or `JAM` depends on this library.
 * `Services.Witness.ErrTail0` … `ErrTail5` — generated segment theorems: the 1542 steps
   of the path witness's refine takes after a bad payload (pc 74620, reached for an empty payload
   or a tag ≥ 12), each from the facts it reads to the facts it leaves, for every payload of 1 to
-  15 octets (`lake exe genwitnesssteps seg 74620 a b ErrTailk`).
-* `Services.Witness.ErrTail` — generated: the segments composed (`ErrTail.run`), from pc 74620 to
-  the halting step, ending with ω₇ = 206816, ω₈ = 2 and the octets [12, 0] there.
+  15 octets (`lake exe genwitnesssteps segx 74620 a b ErrTailk`).
+* `Services.Witness.BadPayload` — witness's refine on a payload with a bad tag, end to end
+  (`run_badTag`): the prefix, the decodes, the front segments, the payload copy and the error
+  tail chained with `chase`, from Y's registers to the halt with [12, 0], for every input width.
 * `Services.Witness.EmptyTail0` … `EmptyTail5`, `Services.Witness.EmptyTail` — the same for the
   empty payload, whose path from pc 74620 differs: 1445 steps to the same halting step and
   output [12, 0], here at ω₇ = 206752 (`genwitnesssteps seg0` / `chain0`).

@@ -13,11 +13,13 @@ import Services.Witness.ErrTail5
 import Services.Witness.Args
 
 /-!
-# Witness's refine on a payload with a bad tag, composed
+# Witness's refine on a payload with a bad tag, end to end
 
-From the prefix's end state, the core-index decode, the `u32` decodes of i, s and |y|, the front
-segments, the payload copy and the error tail, chained: every piece's hypotheses proved by `chase`
-from the pieces before it and the start.
+The prefix (`Prefix.prefix_run`), the core-index decode (`decodeC`), the `u32` decodes of i, s and
+|y| (`decodeU32`), the front segments (`Front1` … `Front4`), the payload copy
+(`memcpy_small_regs`) and the error tail (`ErrTail0` … `ErrTail5`), chained. Each piece's
+hypotheses are proved by `chase` from what the pieces before it guarantee and from the start:
+the prefix's post-state and frame, the starting octets (`StartMem`), and the arguments in memory.
 -/
 
 namespace Services.Witness.BadPayload
@@ -51,7 +53,13 @@ theorem encodeNat_length_le5 (n : Nat) (h : n < 4294967296) : (Blob.encodeNat n)
   · rw [encodeNat_len4 n ⟨h3, h4⟩]; simp
   · rw [encodeNat_len5 n ⟨h4, by omega⟩]; simp
 
-theorem stageA (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
+/-- **Witness's refine rejects a payload with a bad tag.** From any starting memory that meets the
+    prefix's needs (`StartMem`; Y's RAM does, `startMem_initial`) and holds the arguments
+    ℰ(c) ⌢ ℰ(i) ⌢ ℰ(s) ⌢ ↕y ⌢ h at `argStart`, readable, for every core index c < 2^16, item index
+    i < 2^16, service id s < 2^32, payload y of 1 to 15 octets whose first octet (the `Op` tag) is
+    at least 12, and 32-octet h: the gas-free machine runs from Y's registers to the halting step at
+    43609 with ω₇ = 206816, ω₈ = 2 and the octets [12, 0] there, `Rejected(BadPayload)`. -/
+theorem run_badTag (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
     (henv : heapBounds env.code = (48, 1044368)) (hpar : env.fetch.params = Params.full) (μ : Memory)
     (hμ : StartMem μ) (C I S : Nat) (y h : List UInt8) (hC : C < 65536) (hI : I < 65536)
     (hS : S < 4294967296) (hy : 1 ≤ y.length ∧ y.length ≤ 15) (htag : 12 ≤ (y.headD 0).toNat)

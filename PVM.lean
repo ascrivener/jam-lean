@@ -23,6 +23,7 @@ import PVM.Logic.Code
 import PVM.Logic.Attr
 import PVM.Logic.Bits
 import PVM.Logic.Steps
+import PVM.Logic.Chase
 import PVM.Logic.StepsH
 
 /-!

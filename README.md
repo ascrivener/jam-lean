@@ -176,6 +176,15 @@ the build of the semantics rather than drifting silently.
   theorem per class, with `memcpy_small` for the copy; the leading-ones count of the symbolic
   prefix octet uses bit lemmas (`PVM/Logic/Bits.lean`), and sign-extended octets are kept folded
   (`sx8`) so no 2^64-size constant sits next to a symbolic value in a checked term.
+* **What the first 702 steps leave** (`Services/Witness/Prefix.lean`, `PrefixPost`). The generated
+  prefix theorem now also states the state at pc 43276:
+  - registers: ω₆ = ω₇ = L (the argument length), the rest concrete;
+  - the octets later steps read (`postBytes`), and the words holding L (`lenAt`);
+  - the arguments and their read access unchanged;
+  - the stack and heap writable;
+  - the refine context unchanged.
+  The facts come from the segment analysis over inputs of every width, including a 300-octet
+  payload so that L's octets are not mistaken for constants.
 * **The core-index decode** (`Services/Witness/DecodeC.lean`). From pc 43276 (step 702 of
   refine), witness decodes the core index c from its arguments with the SDK's natural-number
   decoder inlined, checks c < 2^16 and calls the `u32` decoder for the next argument.

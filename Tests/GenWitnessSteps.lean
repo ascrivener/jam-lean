@@ -88,6 +88,24 @@ def main (args : List String) : IO Unit := do
   let env := mkEnv code sid i (Std.ExtTreeMap.ofList [(sid, acct)]) pkg
   let (tr, _, _, _, _) := go Q (toHostFn (RefineHost.dispatch env)) 0 1000000000 false ω μ (∅, []) #[] #[] 3000000
   let path := (tr.toList.take n).map (·.1)
+  if mode == "calls" then
+    -- the path's calls, returns and host calls from step n on, with the depth of the call stack
+    let mut depth := 0
+    let mut k := 0
+    for (pc, regs, _) in tr.toList do
+      if k ≥ n then
+        match P.decode pc with
+        | some (.regImmOffset .loadImmJump 0 _ y) =>
+          IO.println s!"{k} {String.mk (List.replicate (2 * depth) ' ')}call {P.sjump pc y |>.2} from {pc}  r7={(regs.get 7).toNat} r8={(regs.get 8).toNat} r9={(regs.get 9).toNat}"
+          depth := depth + 1
+        | some (.regImm .jumpInd 0 0) =>
+          depth := depth - 1
+          IO.println s!"{k} {String.mk (List.replicate (2 * depth) ' ')}ret"
+        | some (.oneImm .ecalli h) => IO.println s!"{k} {String.mk (List.replicate (2 * depth) ' ')}host {h.toNat}"
+        | _ => pure ()
+      k := k + 1
+    IO.println s!"{tr.size} end"
+    return
   let mut facts : Array String := #[]
   let mut lemmas : Array String := #[]
   let mut seen : List Nat := []

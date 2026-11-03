@@ -37,6 +37,7 @@ theorem psiR_badTag (params : Params) (hpar : params = Params.full) (d : Account
     (psiR params d c i p r imports extrinsics off).result = .ok ⟨#[12, 0]⟩ ∨
       (psiR params d c i p r imports extrinsics off).result = .err .outOfGas := by
   refine psiR_of_run params d c i p r imports extrinsics off w hw l hl hsize code hcode jb hjb hlay hcc
+    206816 (by decide)
     (fun P _ env hcodeE hparE => ?_)
   intro a
   have hlist : a.toList = Blob.encodeNat c ++ Blob.encodeNat i ++ Blob.encodeNat w.service ++

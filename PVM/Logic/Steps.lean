@@ -305,6 +305,14 @@ theorem Memory.writeN_wrap (μ : Memory) (a : Nat) (bs : List UInt8) (h : two32 
     μ.writeN a bs = μ.writeN (a % two32) bs :=
   Memory.writeN_congr μ a _ bs (by rw [Nat.mod_mod])
 
+/-- Two memories that agree on each octet of a range agree on reading it. -/
+theorem Memory.readN_congr {μ μ' : Memory} {a n : Nat} (h : ∀ j, j < n → μ'.read (a + j) = μ.read (a + j)) :
+    μ'.readN a n = μ.readN a n := by
+  simp only [Memory.readN]
+  apply List.map_congr_left
+  intro j hj
+  exact h j (List.mem_range.1 hj)
+
 /-- A one-octet `ℰ₁(v)` is the octet `v`. -/
 theorem Num.encodeLE_one (v : Nat) : Num.encodeLE 1 v = [UInt8.ofNat v] := by
   simp only [Num.encodeLE, List.cons.injEq, and_true]

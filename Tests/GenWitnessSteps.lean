@@ -982,7 +982,7 @@ namespace Services.{NS}.Prefix
 open PVM JAM Services.{NS}.Code
 
 set_option maxRecDepth 20000
-set_option maxHeartbeats 10000000
+set_option maxHeartbeats 40000000
 "
   IO.println ("/-- The octets the path reads from the starting memory before writing them. -/\ndef baseBytes : List (Nat × UInt8) := [" ++ ", ".intercalate (baseBytes.toList.map fun (a, b) => s!"({a}, {b})") ++ "]\n")
   let inRw := fun (a : Nat) => decide (rwLo ≤ a ∧ a < rwLo + jb.rw.size)

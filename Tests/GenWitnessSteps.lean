@@ -396,7 +396,7 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
       while q > 0 do
         q := q - 1
         let L := regList q
-        let some i := L.idxOf? j | return s!"sorry /- register {j} missing after segment {q} -/"
+        let some i := L.idxOf? j | return s!"missingFact /- register {j} missing after segment {q} -/"
         let step := s!"regs{q + 1}{proj i L.length}"
         pf := if pf == "" then step else s!"(Eq.trans {pf} {step})"
         if infos[q]!.wregs.contains j then return pf
@@ -411,7 +411,7 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
         q := q - 1
         if inWr q a then
           let L := infos[q]!.memPost.map (·.1)
-          let some i := L.idxOf? a | return s!"sorry /- octet {a} missing after segment {q} -/"
+          let some i := L.idxOf? a | return s!"missingFact /- octet {a} missing after segment {q} -/"
           let step := s!"mem{q + 1}{proj i L.length}"
           return if pf == "" then step else s!"(Eq.trans {pf} {step})"
         let step := s!"(frame{q + 1} {a} rfl)"

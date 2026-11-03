@@ -93,6 +93,8 @@ structure Svc where
   segFacts : List (List String × String) := []
   /-- `segx0` / `chainx0`: more inputs for the class of empty payloads. -/
   emptyExtra : List (Nat × Nat × Nat × List UInt8) := []
+  /-- `code`: also the instructions on the run of `emptyBase`. -/
+  emptyCode : Bool := false
 
 /-- Witness (`services/witness`). -/
 def witnessSvc : Svc where
@@ -110,6 +112,7 @@ def witnessSvc : Svc where
   segxExtra := [(3, 0, 2147483653, [200]), (3, 1, 7, [255]), (20000, 300, 4000000000, List.replicate 3 77)]
   segFacts := [(["Y"], "(Y + 31) / 32 = 1")]
   emptyExtra := [(3, 0, 2147483653, []), (3, 1, 7, []), (20000, 300, 4000000000, [])]
+  emptyCode := true
 
 /-- Parity's bootstrap service (`services/bootstrap`): the payload is an encoded `Instructions`,
     the instruction list then a 32-octet salt; the base input has no instructions. -/
@@ -946,7 +949,12 @@ def mode_codeRun (cx : Cx) : IO Unit := do
   let mut facts : Array String := #[]
   let mut lemmas : Array String := #[]
   let mut seen : List Nat := []
-  for (pc, regs, _) in tr.toList.take n do
+  -- `code`: the instructions on the base run's first n steps, and on the empty payload's whole run
+  let (ec, ei, es, ey) := cx.svc.emptyBase
+  let emptyRun : List (Nat × Regs × Memory) :=
+    if mode == "code" && cx.svc.emptyCode then ((traceFor code h acct Q ec ei es ey).map (·.toList)).getD [] else []
+  let codePath := tr.toList.take n ++ emptyRun
+  for (pc, regs, _) in codePath do
     if seen.contains pc then continue
     seen := pc :: seen
     let some ins := P.decode pc | continue
@@ -984,7 +992,7 @@ def mode_codeRun (cx : Cx) : IO Unit := do
             facts := facts.push s!".blockStart {t} {P.isBlockStart t}"
       pc := P.next pc
   -- jump-table facts: every jump_ind visit, since a return jumps to different callers
-  for (pc, regs, _) in tr.toList.take n do
+  for (pc, regs, _) in codePath do
     match P.decode pc with
     | some (.regImm .jumpInd ra x) =>
       let addr := ((regs.get ra).toNat + x.toNat) % 2 ^ 32
@@ -1087,7 +1095,7 @@ import JAM.Theorems.GrowHeap
 # Code facts of {LBL}
 
 The code facts the proofs about {LBL} use: every instruction on the first {n} steps of its
-refine path and every instruction of the summarized functions (`fnRanges`), with the block
+refine path{if cx.svc.emptyCode then " and on the empty payload's refine path," else ""} and every instruction of the summarized functions (`fnRanges`), with the block
 starts and jump-table entries they need. `checkCode` checks them against the blob
 (`lake build {LBL}check`); `HasCode p P` assumes them.
 -/

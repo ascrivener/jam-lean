@@ -31,6 +31,9 @@ import Services.Witness.Halt
 import Services.Witness.Lift
 import Services.Witness.PsiRLift
 import Services.Witness.PsiR
+import Services.Witness.EFront3
+import Services.Witness.EmptyPayload
+import Services.Witness.PsiREmpty
 
 /-!
 # Results about specific services' deployed code

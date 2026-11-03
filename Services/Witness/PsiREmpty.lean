@@ -1,4 +1,5 @@
 import Services.Witness.EmptyPayload
+import Services.Witness.PsiR
 import Services.Witness.PsiRLift
 
 /-!
@@ -17,7 +18,8 @@ open PVM JAM Services.Witness Services.Witness.Code Services.Witness.Prefix
     item whose service's code, looked up historically, is a blob with the deployed layout that
     passes `checkCode` for witness's code facts (`lake build witnesscheck` checks both of the
     vendored blob) and the deployed heap bounds, refined with the full-chain parameters: for every
-    core index c < 2^16, item index i < 2^16 and service id < 2^32, with an empty payload, Ψ_R's result is ℰ(`Rejected(BadPayload)`) = [12, 0], or ∞. -/
+    core index c < 2^16, item index i < 2^16 and service id < 2^32, with an empty payload,
+    Ψ_R's result is ℰ(`Rejected(BadPayload)`) = [12, 0], or ∞. -/
 theorem psiR_empty (params : Params) (hpar : params = Params.full) (d : Accounts) (c i : Nat)
     (p : WorkPackage) (r : List UInt8) (imports extrinsics : List (List (List UInt8))) (off : Nat)
     (w : WorkItem) (hw : p.items[i]? = some w) (l : List UInt8)
@@ -68,5 +70,32 @@ theorem psiR_empty (params : Params) (hpar : params = Params.full) (d : Accounts
   refine ⟨ω', μ', x', ?_, h0, h7, h8, hb0, hb1, hr0, hr1⟩
   rw [initRegs_eq, hasize]
   exact hrun
+
+/-- **Milestone A′: witness's refine rejects every malformed short payload** (GP eq.
+    `refinvocation`). Under the hypotheses of `psiR_badTag`, for a payload that is empty or of 1 to
+    15 octets with first octet (the `Op` tag) at least 12, Ψ_R's result is
+    ℰ(`Rejected(BadPayload)`) = [12, 0], or ∞. -/
+theorem psiR_rejects (params : Params) (hpar : params = Params.full) (d : Accounts) (c i : Nat)
+    (p : WorkPackage) (r : List UInt8) (imports extrinsics : List (List (List UInt8))) (off : Nat)
+    (w : WorkItem) (hw : p.items[i]? = some w) (l : List UInt8)
+    (hl : (d.get? w.service).bind (fun a => a.historicalLookup p.context.lookupAnchorSlot
+      w.codeHash.toList) = some l)
+    (hsize : l.length ≤ Constants.Cmaxservicecodesize) (code : ByteArray)
+    (hcode : splitMetadata l = some code) (jb : JamBlob) (hjb : JamBlob.parse? code = some jb)
+    (hlay : layoutOk jb = true) (hcc : checkCode jb.code facts = true)
+    (hheap : heapBounds code = (48, 1044368)) (hc : c < 65536) (hi : i < 65536)
+    (hs : w.service < 4294967296)
+    (hy : w.payload.size = 0 ∨
+      (w.payload.size ≤ 15 ∧ 12 ≤ (w.payload.toList.headD 0).toNat)) :
+    (psiR params d c i p r imports extrinsics off).result = .ok ⟨#[12, 0]⟩ ∨
+      (psiR params d c i p r imports extrinsics off).result = .err .outOfGas := by
+  rcases hy with h0 | ⟨hle, htag⟩
+  · exact psiR_empty params hpar d c i p r imports extrinsics off w hw l hl hsize code hcode jb hjb
+      hlay hcc hheap hc hi hs h0
+  · rcases Nat.eq_zero_or_pos w.payload.size with h0 | hpos
+    · exact psiR_empty params hpar d c i p r imports extrinsics off w hw l hl hsize code hcode jb
+        hjb hlay hcc hheap hc hi hs h0
+    · exact psiR_badTag params hpar d c i p r imports extrinsics off w hw l hl hsize code hcode jb
+        hjb hlay hcc hheap hc hi hs ⟨hpos, hle⟩ htag
 
 end Services.Witness.PsiREmpty

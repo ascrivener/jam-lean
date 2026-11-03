@@ -38,6 +38,8 @@ jobs:
           lake build Services.Witness.Prefix
           lake build Services.Witness.ErrTail
           lake build Services.Witness.BadPayload
+          lake build Services.Witness.EmptyTail
+          lake build Services.Witness.EmptyPayload
 
       - name: Build the model and its theorems
         run: lake build

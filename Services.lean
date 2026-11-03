@@ -67,7 +67,13 @@ Built on `JAM`; nothing in `PVM` or `JAM` depends on this library.
   tail chained with `chase`, from Y's registers to the halt with [12, 0], for every input width.
 * `Services.Witness.EmptyTail0` … `EmptyTail5`, `Services.Witness.EmptyTail` — the same for the
   empty payload, whose path from pc 74620 differs: 1445 steps to the same halting step and
-  output [12, 0], here at ω₇ = 206752 (`genwitnesssteps seg0` / `chain0`).
+  output [12, 0], here at ω₇ = 206752 (`genwitnesssteps segx0` / `chainx0`).
+* `Services.Witness.EFront3`, `Services.Witness.EmptyPayload` — the empty payload's front end
+  (after the `u32` decode of |y| = 0, to `Op::decode`'s error jump) and its run end to end
+  (`run_empty`), from Y's registers to the halt with [12, 0] at ω₇ = 206752.
+* `Services.Witness.PsiREmpty` — **witness's Ψ_R rejects the empty payload** (`psiR_empty`), and
+  **milestone A′** (`psiR_rejects`): for every c < 2^16, i < 2^16, service id < 2^32 and payload
+  that is empty or of 1 to 15 octets with first octet ≥ 12, Ψ_R's result is [12, 0] or ∞.
 * `Services.Witness.Prefix` — generated: the first 702 steps of witness's refine, proved
   symbolically from those code facts.
 * `Services.Witness.Front1` … `Front4` — generated segment theorems for the code between the

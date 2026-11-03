@@ -10,6 +10,13 @@ import Services.Witness.ErrTail3
 import Services.Witness.ErrTail4
 import Services.Witness.ErrTail5
 import Services.Witness.ErrTail
+import Services.Witness.EmptyTail0
+import Services.Witness.EmptyTail1
+import Services.Witness.EmptyTail2
+import Services.Witness.EmptyTail3
+import Services.Witness.EmptyTail4
+import Services.Witness.EmptyTail5
+import Services.Witness.EmptyTail
 
 /-!
 # Results about specific services' deployed code
@@ -30,6 +37,9 @@ Built on `JAM`; nothing in `PVM` or `JAM` depends on this library.
   15 octets (`lake exe genwitnesssteps seg 74620 a b ErrTailk`).
 * `Services.Witness.ErrTail` — generated: the segments composed (`ErrTail.run`), from pc 74620 to
   the halting step, ending with ω₇ = 206816, ω₈ = 2 and the octets [12, 0] there.
+* `Services.Witness.EmptyTail0` … `EmptyTail5`, `Services.Witness.EmptyTail` — the same for the
+  empty payload, whose path from pc 74620 differs: 1445 steps to the same halting step and
+  output [12, 0], here at ω₇ = 206752 (`genwitnesssteps seg0` / `chain0`).
 * `Services.Witness.Prefix` — generated: the first 702 steps of witness's refine, proved
   symbolically from those code facts.
 -/

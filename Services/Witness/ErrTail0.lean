@@ -3,6 +3,7 @@
   Do not edit by hand.
 -/
 import Services.Witness.Code
+import PVM.Logic.Chase
 
 namespace Services.Witness.ErrTail0
 
@@ -667,10 +668,11 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
       simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,
         PVM.getD_some', List.lookup_nil, Option.getD_none, and_self, and_true, true_and, hreg1, hreg2, hreg3, hreg4, hreg5, hreg6, hreg8, hreg11, hreg10, hreg9, hreg7, hreg0]
     case mem =>
-      simp (disch := pvm_arith) only [PVM.Memory.read_writeN, PVM.reduceEncodeLE, PVM.Num.length_encodeLE,
+      try and_intros
+      all_goals simp (disch := pvm_arith) only [PVM.Memory.read_writeN, PVM.reduceEncodeLE, PVM.Num.length_encodeLE,
         List.length_cons, List.length_nil, PVM.two32, Nat.reduceAdd, Nat.reduceSub, Nat.reduceLeDiff,
         Nat.reduceLT, and_true, true_and, and_false, false_and, ↓reduceIte, List.getElem!_cons_zero,
-        List.getElem!_cons_succ, UInt8.reduceOfNat, and_self]
+        List.getElem!_cons_succ, UInt8.reduceOfNat, and_self, PVM.Num.encodeLE] <;> chase_octet
     case frame =>
       intro a ha
       simp only [Bool.and_eq_true, decide_eq_true_eq, Bool.not_eq_true', decide_eq_false_iff_not,

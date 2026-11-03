@@ -3,6 +3,7 @@
   Do not edit by hand.
 -/
 import Services.Witness.Code
+import PVM.Logic.Chase
 
 namespace Services.Witness.Front4
 
@@ -120,7 +121,7 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
     (hb_4278058815 : μ.read 4278058815 = 0)
     : ∃ ω' μ', FreeStepsH p (refineContract env) 23918 ω μ x 74620 ω' μ' x ∧
       (ω'[1] = UInt64.ofNat 4278057120 ∧ ω'[2] = ω[2] ∧ ω'[3] = ω[3] ∧ ω'[4] = ω[4] ∧ ω'[5] = UInt64.ofNat 4278058816 ∧ ω'[6] = UInt64.ofNat 206752 ∧ ω'[8] = UInt64.ofNat 206753 ∧ ω'[11] = UInt64.ofNat 11 ∧ ω'[10] = UInt64.ofNat T ∧ ω'[9] = UInt64.ofNat (Y - 1) ∧ ω'[7] = UInt64.ofNat Y ∧ ω'[0] = UInt64.ofNat I) ∧
-      (μ'.read 4278057400 = 160 ∧ μ'.read 4278057401 = 39 ∧ μ'.read 4278057402 = 3 ∧ μ'.read 4278057403 = 0 ∧ μ'.read 4278057404 = 0 ∧ μ'.read 4278057405 = 0 ∧ μ'.read 4278057406 = 0 ∧ μ'.read 4278057407 = 0 ∧ μ'.read 4278057416 = 104 ∧ μ'.read 4278057417 = 255 ∧ μ'.read 4278057418 = 253 ∧ μ'.read 4278057419 = 254 ∧ μ'.read 4278057420 = 0 ∧ μ'.read 4278057421 = 0 ∧ μ'.read 4278057422 = 0 ∧ μ'.read 4278057423 = 0 ∧ μ'.read 4278057424 = 80 ∧ μ'.read 4278057425 = 255 ∧ μ'.read 4278057426 = 253 ∧ μ'.read 4278057427 = 254 ∧ μ'.read 4278057428 = 0 ∧ μ'.read 4278057429 = 0 ∧ μ'.read 4278057430 = 0 ∧ μ'.read 4278057431 = 0 ∧ μ'.read 4278057432 = 0 ∧ μ'.read 4278057433 = 0 ∧ μ'.read 4278057434 = 0 ∧ μ'.read 4278057435 = 0 ∧ μ'.read 4278057436 = 0 ∧ μ'.read 4278057437 = 0 ∧ μ'.read 4278057438 = 0 ∧ μ'.read 4278057439 = 128 ∧ μ'.read 4278058808 = 80 ∧ μ'.read 4278058809 = 3 ∧ μ'.read 4278058810 = 0 ∧ μ'.read 4278058811 = 0 ∧ μ'.read 4278058812 = 0 ∧ μ'.read 4278058813 = 0 ∧ μ'.read 4278058814 = 0 ∧ μ'.read 4278058815 = 0) ∧
+      (μ'.read 4278057400 = 160 ∧ μ'.read 4278057401 = 39 ∧ μ'.read 4278057402 = 3 ∧ μ'.read 4278057403 = 0 ∧ μ'.read 4278057404 = 0 ∧ μ'.read 4278057405 = 0 ∧ μ'.read 4278057406 = 0 ∧ μ'.read 4278057407 = 0 ∧ μ'.read 4278057416 = 104 ∧ μ'.read 4278057417 = 255 ∧ μ'.read 4278057418 = 253 ∧ μ'.read 4278057419 = 254 ∧ μ'.read 4278057420 = 0 ∧ μ'.read 4278057421 = 0 ∧ μ'.read 4278057422 = 0 ∧ μ'.read 4278057423 = 0 ∧ μ'.read 4278057424 = 80 ∧ μ'.read 4278057425 = 255 ∧ μ'.read 4278057426 = 253 ∧ μ'.read 4278057427 = 254 ∧ μ'.read 4278057428 = 0 ∧ μ'.read 4278057429 = 0 ∧ μ'.read 4278057430 = 0 ∧ μ'.read 4278057431 = 0 ∧ μ'.read 4278057432 = 0 ∧ μ'.read 4278057433 = 0 ∧ μ'.read 4278057434 = 0 ∧ μ'.read 4278057435 = 0 ∧ μ'.read 4278057436 = 0 ∧ μ'.read 4278057437 = 0 ∧ μ'.read 4278057438 = 0 ∧ μ'.read 4278057439 = 128 ∧ μ'.read 4278058800 = 0 ∧ μ'.read 4278058801 = 0 ∧ μ'.read 4278058802 = 0 ∧ μ'.read 4278058803 = 0 ∧ μ'.read 4278058806 = 0 ∧ μ'.read 4278058807 = 0 ∧ μ'.read 4278058808 = 80 ∧ μ'.read 4278058809 = 3 ∧ μ'.read 4278058810 = 0 ∧ μ'.read 4278058811 = 0 ∧ μ'.read 4278058812 = 0 ∧ μ'.read 4278058813 = 0 ∧ μ'.read 4278058814 = 0 ∧ μ'.read 4278058815 = 0) ∧
       (μ'.readN 4278058792 8 = Num.encodeLE 8 S ∧ μ'.readN 4278058832 8 = Num.encodeLE 8 Y) ∧
       (∀ a, (decide (a < 4294967296) && !(decide (4278057400 ≤ a ∧ a < 4278057408)) && !(decide (4278057416 ≤ a ∧ a < 4278057440)) && !(decide (4278057808 ≤ a ∧ a < 4278057824)) && !(decide (4278058792 ≤ a ∧ a < 4278058816)) && !(decide (4278058832 ≤ a ∧ a < 4278058880))) = true → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
@@ -280,10 +281,11 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
       simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,
         PVM.getD_some', List.lookup_nil, Option.getD_none, and_self, and_true, true_and, hreg0, hreg1, hreg2, hreg3, hreg4, hreg6, hreg7, hreg12, hreg5]
     case mem =>
-      simp (disch := pvm_arith) only [PVM.Memory.read_writeN, PVM.reduceEncodeLE, PVM.Num.length_encodeLE,
+      try and_intros
+      all_goals simp (disch := pvm_arith) only [PVM.Memory.read_writeN, PVM.reduceEncodeLE, PVM.Num.length_encodeLE,
         List.length_cons, List.length_nil, PVM.two32, Nat.reduceAdd, Nat.reduceSub, Nat.reduceLeDiff,
         Nat.reduceLT, and_true, true_and, and_false, false_and, ↓reduceIte, List.getElem!_cons_zero,
-        List.getElem!_cons_succ, UInt8.reduceOfNat, and_self]
+        List.getElem!_cons_succ, UInt8.reduceOfNat, and_self, PVM.Num.encodeLE] <;> chase_octet
     case frame =>
       intro a ha
       simp only [Bool.and_eq_true, decide_eq_true_eq, Bool.not_eq_true', decide_eq_false_iff_not,

@@ -2,6 +2,7 @@ import Services.Witness
 import Services.Witness.Code
 import Services.Witness.Memcpy
 import Services.Witness.DecodeU32
+import Services.Witness.DecodeC
 import Services.Witness.Prefix
 import Services.Witness.ErrTail0
 import Services.Witness.ErrTail1
@@ -31,6 +32,9 @@ Built on `JAM`; nothing in `PVM` or `JAM` depends on this library.
   octets: `memcpy_loop` (the byte loop, by induction) and `memcpy_small` (the whole call).
 * `Services.Witness.DecodeU32` — the SDK's `u32` decoder in witness, summarized for every
   encoding ℰ(n) of every n < 2^32 (`decodeU32`): ω₈ = n, the reader advanced past ℰ(n).
+* `Services.Witness.DecodeC` — witness's inline decode of the core index c (from pc 43276, step
+  702), summarized for every c < 2^16 (`decodeC`): the reader advanced past ℰ(c) at ω₁ + 16 and
+  the call to the `u32` decoder. (Witness rejects c ≥ 2^16, which no refine call passes.)
 * `Services.Witness.ErrTail0` … `ErrTail5` — generated segment theorems: the 1542 steps
   of the path witness's refine takes after a bad payload (pc 74620, reached for an empty payload
   or a tag ≥ 12), each from the facts it reads to the facts it leaves, for every payload of 1 to

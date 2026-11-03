@@ -35,6 +35,25 @@ def rwBytes : List (Nat × UInt8) := [(196632, 8), (196633, 0), (196634, 0), (19
 /-- The octets of `baseBytes` in the read-only data section. -/
 def roBytes : List (Nat × UInt8) := []
 
+/-- The octets the path writes that later steps read, with the values it leaves there. -/
+def postBytes : List (Nat × UInt8) := [(206368, 0), (206369, 0), (206370, 0), (206371, 0), (206372, 128), (206373, 39), (206374, 3), (206375, 0), (206376, 128), (206377, 39), (206378, 3), (206379, 0), (206380, 0), (206381, 0), (206382, 0), (206383, 0), (206680, 0), (206681, 0), (206682, 0), (206683, 0), (206684, 0), (206685, 0), (206686, 0), (206687, 128), (206688, 0), (206689, 0), (206690, 0), (206691, 0), (206692, 32), (206693, 0), (206694, 0), (206695, 0), (206696, 6), (206697, 0), (206698, 0), (206699, 0), (206704, 0), (206705, 0), (206706, 0), (206707, 0), (206720, 0), (206721, 0), (206722, 0), (206723, 0), (206724, 0), (206725, 0), (206726, 0), (206727, 4), (206728, 0), (206729, 0), (206730, 0), (206731, 0), (4278058984, 0), (4278058985, 0), (4278058986, 0), (4278058987, 0), (4278058988, 0), (4278058989, 0), (4278058990, 0), (4278058991, 0), (4278058992, 0), (4278058993, 0), (4278058994, 0), (4278058995, 0), (4278058996, 0), (4278058997, 0), (4278058998, 0), (4278058999, 0), (4278059000, 0), (4278059001, 0), (4278059002, 255), (4278059003, 255), (4278059004, 0), (4278059005, 0), (4278059006, 0), (4278059007, 0)]
+
+/-- The 8-octet words the path leaves holding the argument length. -/
+def lenAt : List Nat := [4278058792]
+
+/-- **What the path leaves**, for an argument of length `L` at 4278124544: the registers, the
+    octets of `postBytes`, the arguments and their access unchanged, the stack and the read-write
+    data and heap writable, and the refine context unchanged. -/
+structure PrefixPost (L : Nat) (μ : Memory) (ω' : Regs) (μ' : Memory) (x' : RefineCtx) : Prop where
+  regs : ω'[0] = UInt64.ofNat 838 ∧ ω'[1] = UInt64.ofNat 4278058816 ∧ ω'[2] = UInt64.ofNat 5 ∧ ω'[3] = UInt64.ofNat 6 ∧ ω'[4] = UInt64.ofNat 80 ∧ ω'[5] = UInt64.ofNat 4278124544 ∧ ω'[6] = UInt64.ofNat L ∧ ω'[7] = UInt64.ofNat L ∧ ω'[8] = UInt64.ofNat 4278124544 ∧ ω'[9] = UInt64.ofNat 3072 ∧ ω'[10] = UInt64.ofNat 16 ∧ ω'[11] = UInt64.ofNat 64000 ∧ ω'[12] = UInt64.ofNat 204840
+  bytes : ∀ q ∈ postBytes, μ'.read q.1 = q.2
+  args : ∀ a, 4278124544 ≤ a → a < 4278124544 + L → μ'.read a = μ.read a
+  argsRd : ∀ a, 4278124544 ≤ a → a < 4278124544 + L → μ'.readable a = μ.readable a
+  stack : ∀ a, 4278059008 - 262144 ≤ a → a < 4278059008 → μ'.writable a = true
+  heap : ∀ a, 196608 ≤ a → a < 208896 → μ'.writable a = true
+  ctx : x' = ((∅, []) : RefineCtx)
+  lenWords : ∀ a ∈ lenAt, μ'.readN a 8 = Num.encodeLE 8 L
+
 
 /-- Y's registers (GP eq. `registers`) for an argument of length `L`. -/
 def initRegs (L : Nat) : Regs :=
@@ -51,7 +70,8 @@ structure StartMem (μ : Memory) : Prop where
 theorem prefix_run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
     (henv : heapBounds env.code = (48, 1044368)) (hpar : env.fetch.params = Params.full) (μ : Memory)
     (L : Nat) (hL : 0 < L ∧ L ≤ 16777216) (hμ : StartMem μ) :
-    ∃ ω' μ' x', FreeStepsH p (refineContract env) 0 (initRegs L) μ ((∅, []) : RefineCtx) 43276 ω' μ' x' := by
+    ∃ ω' μ' x', FreeStepsH p (refineContract env) 0 (initRegs L) μ ((∅, []) : RefineCtx) 43276 ω' μ' x' ∧
+      PrefixPost L μ ω' μ' x' := by
   obtain ⟨hL0, hLI⟩ := hL
   have hw := hμ.stack
   have hwh := hμ.heap
@@ -309,7 +329,7 @@ theorem prefix_run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost
     simp only [Memory.readN, List.range_succ, List.range_zero, List.nil_append, List.cons_append, List.map_cons, List.map_nil, List.map_append, Nat.reduceAdd, Nat.add_zero, hb_196632, hb_196633, hb_196634, hb_196635]
 
   rw [show initRegs L = regsNF (initRegs L) [] from rfl]
-  refine ⟨?ω, ?μ, ?x, ?h⟩
+  refine ⟨?ω, ?μ, ?x, ?h, ?post⟩
   case h =>
     apply FreeStepsH.step_decode (d_0 (p := p) (P := P))
     · set_option maxHeartbeats 1000000 in pvm_simp [hpar, Params.full_encode, hw, hr, hwh, hrh, hbn_4278058752_8, hbn_4278058760_8, hbn_206704_4, hbn_206376_8, hbn_206680_8, hbn_206688_8, hbn_206368_4, hbn_206752_8, hbn_206760_8, hbn_206768_8, hbn_206776_2, hbn_206778_4, hbn_206782_4, hbn_206786_8, hbn_206794_8, hbn_206802_8, hbn_206810_8, hbn_206818_2, hbn_206820_2, hbn_206822_2, hbn_206824_2, hbn_206826_4, hbn_206830_2, hbn_206832_2, hbn_206834_2, hbn_206836_2, hbn_206838_2, hbn_206840_2, hbn_206842_4, hbn_206846_4, hbn_206850_4, hbn_206854_4, hbn_206858_4, hbn_206862_4, hbn_206866_4, hbn_206870_4, hbn_196632_4, hb_4278058752, hb_4278058753, hb_4278058754, hb_4278058755, hb_4278058756, hb_4278058757, hb_4278058758, hb_4278058759, hb_4278058760, hb_4278058761, hb_4278058762, hb_4278058763, hb_4278058764, hb_4278058765, hb_4278058766, hb_4278058767, hb_206704, hb_206705, hb_206706, hb_206707, hb_206376, hb_206377, hb_206378, hb_206379, hb_206380, hb_206381, hb_206382, hb_206383, hb_206680, hb_206681, hb_206682, hb_206683, hb_206684, hb_206685, hb_206686, hb_206687, hb_206688, hb_206689, hb_206690, hb_206691, hb_206692, hb_206693, hb_206694, hb_206695, hb_206368, hb_206369, hb_206370, hb_206371, hb_206752, hb_206753, hb_206754, hb_206755, hb_206756, hb_206757, hb_206758, hb_206759, hb_206760, hb_206761, hb_206762, hb_206763, hb_206764, hb_206765, hb_206766, hb_206767, hb_206768, hb_206769, hb_206770, hb_206771, hb_206772, hb_206773, hb_206774, hb_206775, hb_206776, hb_206777, hb_206778, hb_206779, hb_206780, hb_206781, hb_206782, hb_206783, hb_206784, hb_206785, hb_206786, hb_206787, hb_206788, hb_206789, hb_206790, hb_206791, hb_206792, hb_206793, hb_206794, hb_206795, hb_206796, hb_206797, hb_206798, hb_206799, hb_206800, hb_206801, hb_206802, hb_206803, hb_206804, hb_206805, hb_206806, hb_206807, hb_206808, hb_206809, hb_206810, hb_206811, hb_206812, hb_206813, hb_206814, hb_206815, hb_206816, hb_206817, hb_206818, hb_206819, hb_206820, hb_206821, hb_206822, hb_206823, hb_206824, hb_206825, hb_206826, hb_206827, hb_206828, hb_206829, hb_206830, hb_206831, hb_206832, hb_206833, hb_206834, hb_206835, hb_206836, hb_206837, hb_206838, hb_206839, hb_206840, hb_206841, hb_206842, hb_206843, hb_206844, hb_206845, hb_206846, hb_206847, hb_206848, hb_206849, hb_206850, hb_206851, hb_206852, hb_206853, hb_206854, hb_206855, hb_206856, hb_206857, hb_206858, hb_206859, hb_206860, hb_206861, hb_206862, hb_206863, hb_206864, hb_206865, hb_206866, hb_206867, hb_206868, hb_206869, hb_206870, hb_206871, hb_206872, hb_206873, hb_196632, hb_196633, hb_196634, hb_196635, initRegs, List.set_cons_succ, List.set_cons_zero, growTop, setR7, reg]
@@ -1718,6 +1738,43 @@ theorem prefix_run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost
     apply FreeStepsH.step_decode (d_43273 (p := p) (P := P))
     · set_option maxHeartbeats 1000000 in pvm_simp [hpar, Params.full_encode, hw, hr, hwh, hrh, hbn_4278058752_8, hbn_4278058760_8, hbn_206704_4, hbn_206376_8, hbn_206680_8, hbn_206688_8, hbn_206368_4, hbn_206752_8, hbn_206760_8, hbn_206768_8, hbn_206776_2, hbn_206778_4, hbn_206782_4, hbn_206786_8, hbn_206794_8, hbn_206802_8, hbn_206810_8, hbn_206818_2, hbn_206820_2, hbn_206822_2, hbn_206824_2, hbn_206826_4, hbn_206830_2, hbn_206832_2, hbn_206834_2, hbn_206836_2, hbn_206838_2, hbn_206840_2, hbn_206842_4, hbn_206846_4, hbn_206850_4, hbn_206854_4, hbn_206858_4, hbn_206862_4, hbn_206866_4, hbn_206870_4, hbn_196632_4, hb_4278058752, hb_4278058753, hb_4278058754, hb_4278058755, hb_4278058756, hb_4278058757, hb_4278058758, hb_4278058759, hb_4278058760, hb_4278058761, hb_4278058762, hb_4278058763, hb_4278058764, hb_4278058765, hb_4278058766, hb_4278058767, hb_206704, hb_206705, hb_206706, hb_206707, hb_206376, hb_206377, hb_206378, hb_206379, hb_206380, hb_206381, hb_206382, hb_206383, hb_206680, hb_206681, hb_206682, hb_206683, hb_206684, hb_206685, hb_206686, hb_206687, hb_206688, hb_206689, hb_206690, hb_206691, hb_206692, hb_206693, hb_206694, hb_206695, hb_206368, hb_206369, hb_206370, hb_206371, hb_206752, hb_206753, hb_206754, hb_206755, hb_206756, hb_206757, hb_206758, hb_206759, hb_206760, hb_206761, hb_206762, hb_206763, hb_206764, hb_206765, hb_206766, hb_206767, hb_206768, hb_206769, hb_206770, hb_206771, hb_206772, hb_206773, hb_206774, hb_206775, hb_206776, hb_206777, hb_206778, hb_206779, hb_206780, hb_206781, hb_206782, hb_206783, hb_206784, hb_206785, hb_206786, hb_206787, hb_206788, hb_206789, hb_206790, hb_206791, hb_206792, hb_206793, hb_206794, hb_206795, hb_206796, hb_206797, hb_206798, hb_206799, hb_206800, hb_206801, hb_206802, hb_206803, hb_206804, hb_206805, hb_206806, hb_206807, hb_206808, hb_206809, hb_206810, hb_206811, hb_206812, hb_206813, hb_206814, hb_206815, hb_206816, hb_206817, hb_206818, hb_206819, hb_206820, hb_206821, hb_206822, hb_206823, hb_206824, hb_206825, hb_206826, hb_206827, hb_206828, hb_206829, hb_206830, hb_206831, hb_206832, hb_206833, hb_206834, hb_206835, hb_206836, hb_206837, hb_206838, hb_206839, hb_206840, hb_206841, hb_206842, hb_206843, hb_206844, hb_206845, hb_206846, hb_206847, hb_206848, hb_206849, hb_206850, hb_206851, hb_206852, hb_206853, hb_206854, hb_206855, hb_206856, hb_206857, hb_206858, hb_206859, hb_206860, hb_206861, hb_206862, hb_206863, hb_206864, hb_206865, hb_206866, hb_206867, hb_206868, hb_206869, hb_206870, hb_206871, hb_206872, hb_206873, hb_196632, hb_196633, hb_196634, hb_196635, initRegs, List.set_cons_succ, List.set_cons_zero, growTop, setR7, reg]
     exact FreeStepsH.refl
+  case post =>
+    refine ⟨?regs, ?bytes, ?args, ?argsRd, ?stk, ?hp, rfl, ?lw⟩
+    case lw =>
+      simp only [lenAt, List.forall_mem_cons, List.not_mem_nil, false_imp_iff, implies_true, and_true]
+      and_intros
+      all_goals simp (disch := pvm_arith) only [PVM.Memory.readN_writeN_same,
+        PVM.Memory.readN_writeN_disjoint, PVM.Memory.readN_setPages, PVM.Num.length_encodeLE,
+        List.length_cons, List.length_nil, PVM.two32]
+    case regs =>
+      simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,
+        PVM.getD_some', List.lookup_nil, Option.getD_none, and_self, and_true, true_and]
+    case bytes =>
+      simp only [postBytes, List.forall_mem_cons, List.not_mem_nil, false_imp_iff, implies_true, and_true]
+      and_intros
+      all_goals simp (disch := pvm_arith) only [PVM.Memory.read_writeN, PVM.Memory.read_setPages, PVM.reduceEncodeLE, PVM.Num.length_encodeLE,
+        List.length_cons, List.length_nil, PVM.two32, Nat.reduceAdd, Nat.reduceSub, Nat.reduceLeDiff,
+        Nat.reduceLT, and_false, false_and, ↓reduceIte, List.getElem!_cons_zero,
+        List.getElem!_cons_succ, UInt8.reduceOfNat, and_self]
+    case args =>
+      intro a h1 h2
+      simp (disch := pvm_arith) only [PVM.Memory.read_writeN_disjoint, PVM.Memory.read_setPages,
+        PVM.Num.length_encodeLE, List.length_cons, List.length_nil, PVM.two32]
+    case argsRd =>
+      intro a h1 h2
+      simp only [PVM.Memory.readable_writeN, PVM.Memory.readable_setPages, pageSize]
+      repeat' split
+      all_goals first | rfl | omega
+    case stk =>
+      intro a h1 h2
+      simp only [PVM.Memory.writable_writeN, PVM.Memory.writable_setPages, pageSize]
+      repeat' split
+      all_goals first | rfl | exact hw a h1 h2 | omega
+    case hp =>
+      intro a h1 h2
+      simp only [PVM.Memory.writable_writeN, PVM.Memory.writable_setPages, pageSize]
+      repeat' split
+      all_goals first | rfl | exact hwh a h1 h2 | omega
 
 /-! ## From Y's starting state -/
 
@@ -1803,7 +1860,8 @@ theorem prefix_from_Y (b a : ByteArray) (jb : JamBlob) (hjb : JamBlob.parse? b =
     (μ : Memory) (hY : standardInit b a = some (p, ω, μ)) (env : RefineHost.Env)
     (henv : heapBounds env.code = (48, 1044368)) (hpar : env.fetch.params = Params.full)
     (ha0 : 0 < a.size) :
-    ∃ ω' μ' x', FreeStepsH p (refineContract env) 0 ω μ ((∅, []) : RefineCtx) 43276 ω' μ' x' := by
+    ∃ ω' μ' x', FreeStepsH p (refineContract env) 0 ω μ ((∅, []) : RefineCtx) 43276 ω' μ' x' ∧
+      PrefixPost a.size μ ω' μ' x' := by
   obtain ⟨jb', hv, he⟩ := Option.map_eq_some_iff.1 hY
   have hjb' : jb' = jb ∧ a.size ≤ inputSize := by
     unfold validJamBlob? at hv

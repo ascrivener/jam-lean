@@ -165,9 +165,13 @@ def analyzeSeg (P : Program) (tr : Array (Nat × Regs × Memory))
   -- values equal to an input parameter in every run become a symbolic variable
   let baseP : Nat × Nat × Nat × Nat := (3, 0, 7, 1)
   let pick (q : Nat × Nat × Nat × Nat) (v : String) : Nat :=
-    match v with | "C" => q.1 | "I" => q.2.1 | "S" => q.2.2.1 | _ => q.2.2.2
+    match v with
+    | "C" => q.1 | "I" => q.2.1 | "S" => q.2.2.1
+    | "L" => (Codec.nat q.1).length + (Codec.nat q.2.1).length + (Codec.nat q.2.2.1).length +
+        (Codec.nat q.2.2.2).length + q.2.2.2 + 32
+    | _ => q.2.2.2
   let matchVar (valBase : Nat) (valsOther : List Nat) : Option String :=
-    ["Y", "S", "C", "I"].find? fun v =>
+    ["Y", "S", "C", "I", "L"].find? fun v =>
       valBase == pick baseP v && (valsOther.zip otherPs.toList).all fun (x, q) => x == pick q v
   let mut symLoads : List (Nat × Nat × String) := []
   for (a, k) in loads.toList do
@@ -640,6 +644,23 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
     return
 
 set_option maxHeartbeats 2000000 in
+/-- The segment analysis of steps 0 … N − 1 over a class of inputs of every width (the prefix's
+    path does not depend on the input). -/
+def prefixInfo (cx : Cx) : IO (SegInfo × Array (Array (Nat × Regs × Memory) × Nat) × Array (Nat × Nat × Nat × Nat)) := do
+  let classInputs : List (Nat × Nat × Nat × List UInt8) :=
+    [(5, 0, 9, [200]), (3, 0, 7, List.replicate 15 255), (200, 1, 70000, [12]), (20000, 300, 3, []),
+     (3, 0, 7, List.replicate 300 255)]
+  let mut others : Array (Array (Nat × Regs × Memory) × Nat) := #[]
+  let mut otherPs : Array (Nat × Nat × Nat × Nat) := #[]
+  for (c2, i2, s2, y2) in classInputs do
+    let some t2 := traceFor cx.code cx.h cx.acct cx.Q c2 i2 s2 y2 | continue
+    for j in [0:cx.n+1] do
+      if (cx.tr[j]?.map (·.1)) != (t2[j]?.map (·.1)) then
+        throw (IO.userError s!"paths differ at {j} for c={c2}")
+    others := others.push (t2, 0)
+    otherPs := otherPs.push (c2, i2, s2, y2.length)
+  return (← analyzeSeg cx.P cx.tr others otherPs 0 0 cx.n false, others, otherPs)
+
 set_option linter.unusedVariables false in
 def mode_codeRun (cx : Cx) : IO Unit := do
   let args := cx.args; let mode0 := cx.mode0; let empty := cx.empty; let mode := cx.mode; let n := cx.n; let bytes := cx.bytes
@@ -825,6 +846,34 @@ set_option maxHeartbeats 10000000
   let roBytes := baseBytes.filter (inRo ·.1)
   IO.println ("/-- The octets of `baseBytes` in the read-write data section. -/\ndef rwBytes : List (Nat × UInt8) := [" ++ ", ".intercalate (rwBytes.toList.map fun (a, b) => s!"({a}, {b})") ++ "]\n")
   IO.println ("/-- The octets of `baseBytes` in the read-only data section. -/\ndef roBytes : List (Nat × UInt8) := [" ++ ", ".intercalate (roBytes.toList.map fun (a, b) => s!"({a}, {b})") ++ "]\n")
+  let (info0, others, otherPs) ← prefixInfo cx
+  let argLo := ω[7]!.toNat
+  -- 8-octet words the path writes with the argument length L, in every run of the class
+  let lenAt := (info0.wr.foldr (fun (lo, hi) acc => (List.range ((hi - lo) / 8)).map (lo + 8 * ·) ++ acc) []).filter
+    fun a => Num.decodeLE (((tr[n]?).map (fun x => x.2.2.readN a 8)).getD []) == ω[8]!.toNat &&
+      (others.toList.zip otherPs.toList).all fun ((t2, _), q) =>
+        Num.decodeLE (((t2[n]?).map (fun x => x.2.2.readN a 8)).getD []) ==
+          (Codec.nat q.1).length + (Codec.nat q.2.1).length + (Codec.nat q.2.2.1).length +
+            (Codec.nat q.2.2.2).length + q.2.2.2 + 32
+  let info := { info0 with memPost := info0.memPost.filter fun (b, _) => !lenAt.any fun a => a ≤ b && b < a + 8 }
+  let regStr (j : Nat) : String := match info.symPost.lookup j with
+    | some v => s!"ω'[{j}] = UInt64.ofNat {v}"
+    | none => s!"ω'[{j}] = UInt64.ofNat {((info.regPost.lookup j).join).getD 0}"
+  IO.println ("/-- The octets the path writes that later steps read, with the values it leaves there. -/\ndef postBytes : List (Nat × UInt8) := [" ++ ", ".intercalate (info.memPost.map fun (a, b) => s!"({a}, {b})") ++ "]\n")
+  IO.println ("/-- The 8-octet words the path leaves holding the argument length. -/\ndef lenAt : List Nat := [" ++ ", ".intercalate (lenAt.map toString) ++ "]\n")
+  IO.println s!"/-- **What the path leaves**, for an argument of length `L` at {argLo}: the registers, the
+    octets of `postBytes`, the arguments and their access unchanged, the stack and the read-write
+    data and heap writable, and the refine context unchanged. -/
+structure PrefixPost (L : Nat) (μ : Memory) (ω' : Regs) (μ' : Memory) (x' : RefineCtx) : Prop where
+  regs : {" ∧ ".intercalate ((List.range 13).map regStr)}
+  bytes : ∀ q ∈ postBytes, μ'.read q.1 = q.2
+  args : ∀ a, {argLo} ≤ a → a < {argLo} + L → μ'.read a = μ.read a
+  argsRd : ∀ a, {argLo} ≤ a → a < {argLo} + L → μ'.readable a = μ.readable a
+  stack : ∀ a, {ω[1]!.toNat} - {jb.stackSize} ≤ a → a < {ω[1]!.toNat} → μ'.writable a = true
+  heap : ∀ a, {rwLo} ≤ a → a < {rwHi} → μ'.writable a = true
+  ctx : x' = ((∅, []) : RefineCtx)
+  lenWords : ∀ a ∈ lenAt, μ'.readN a 8 = Num.encodeLE 8 L
+"
   IO.println s!"
 /-- Y's registers (GP eq. `registers`) for an argument of length `L`. -/
 def initRegs (L : Nat) : Regs :=
@@ -841,7 +890,8 @@ structure StartMem (μ : Memory) : Prop where
 theorem prefix_run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
     (henv : heapBounds env.code = ({hA}, {hB})) (hpar : env.fetch.params = Params.full) (μ : Memory)
     (L : Nat) (hL : 0 < L ∧ L ≤ 16777216) (hμ : StartMem μ) :
-    ∃ ω' μ' x', FreeStepsH p (refineContract env) 0 (initRegs L) μ ((∅, []) : RefineCtx) {endPc} ω' μ' x' := by
+    ∃ ω' μ' x', FreeStepsH p (refineContract env) 0 (initRegs L) μ ((∅, []) : RefineCtx) {endPc} ω' μ' x' ∧
+      PrefixPost L μ ω' μ' x' := by
   obtain ⟨hL0, hLI⟩ := hL
   have hw := hμ.stack
   have hwh := hμ.heap
@@ -857,7 +907,7 @@ theorem prefix_run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost
     IO.println s!"  have hbn_{a}_{k} : μ.readN {a} {k} = {bytes} := by\n    simp only [Memory.readN, List.range_succ, List.range_zero, List.nil_append, List.cons_append, List.map_cons, List.map_nil, List.map_append, Nat.reduceAdd, Nat.add_zero, {hbs}]"
   IO.println s!"
   rw [show initRegs L = regsNF (initRegs L) [] from rfl]
-  refine ⟨?ω, ?μ, ?x, ?h⟩
+  refine ⟨?ω, ?μ, ?x, ?h, ?post⟩
   case h =>"
   for pc in path do
     match P.decode pc with
@@ -871,6 +921,43 @@ theorem prefix_run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost
     | _ =>
       IO.println s!"    apply FreeStepsH.step_decode (d_{pc} (p := p) (P := P))\n    · set_option maxHeartbeats 1000000 in pvm_simp [hpar, Params.full_encode, hw, hr, hwh, hrh, {", ".intercalate (baseLoads.toList.map fun (a, k) => s!"hbn_{a}_{k}")}{if baseLoads.isEmpty then "" else ", "}{", ".intercalate (baseBytes.toList.map fun (a, _) => s!"hb_{a}")}{if baseBytes.isEmpty then "" else ", "}initRegs, List.set_cons_succ, List.set_cons_zero, growTop, setR7, reg]"
   IO.println s!"    exact FreeStepsH.refl
+  case post =>
+    refine ⟨?regs, ?bytes, ?args, ?argsRd, ?stk, ?hp, rfl, ?lw⟩
+    case lw =>
+      simp only [lenAt, List.forall_mem_cons, List.not_mem_nil, false_imp_iff, implies_true, and_true]
+      and_intros
+      all_goals simp (disch := pvm_arith) only [PVM.Memory.readN_writeN_same,
+        PVM.Memory.readN_writeN_disjoint, PVM.Memory.readN_setPages, PVM.Num.length_encodeLE,
+        List.length_cons, List.length_nil, PVM.two32]
+    case regs =>
+      simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,
+        PVM.getD_some', List.lookup_nil, Option.getD_none, and_self, and_true, true_and]
+    case bytes =>
+      simp only [postBytes, List.forall_mem_cons, List.not_mem_nil, false_imp_iff, implies_true, and_true]
+      and_intros
+      all_goals simp (disch := pvm_arith) only [PVM.Memory.read_writeN, PVM.Memory.read_setPages, PVM.reduceEncodeLE, PVM.Num.length_encodeLE,
+        List.length_cons, List.length_nil, PVM.two32, Nat.reduceAdd, Nat.reduceSub, Nat.reduceLeDiff,
+        Nat.reduceLT, and_false, false_and, ↓reduceIte, List.getElem!_cons_zero,
+        List.getElem!_cons_succ, UInt8.reduceOfNat, and_self]
+    case args =>
+      intro a h1 h2
+      simp (disch := pvm_arith) only [PVM.Memory.read_writeN_disjoint, PVM.Memory.read_setPages,
+        PVM.Num.length_encodeLE, List.length_cons, List.length_nil, PVM.two32]
+    case argsRd =>
+      intro a h1 h2
+      simp only [PVM.Memory.readable_writeN, PVM.Memory.readable_setPages, pageSize]
+      repeat' split
+      all_goals first | rfl | omega
+    case stk =>
+      intro a h1 h2
+      simp only [PVM.Memory.writable_writeN, PVM.Memory.writable_setPages, pageSize]
+      repeat' split
+      all_goals first | rfl | exact hw a h1 h2 | omega
+    case hp =>
+      intro a h1 h2
+      simp only [PVM.Memory.writable_writeN, PVM.Memory.writable_setPages, pageSize]
+      repeat' split
+      all_goals first | rfl | exact hwh a h1 h2 | omega
 
 /-! ## From Y's starting state -/
 
@@ -956,7 +1043,8 @@ theorem prefix_from_Y (b a : ByteArray) (jb : JamBlob) (hjb : JamBlob.parse? b =
     (μ : Memory) (hY : standardInit b a = some (p, ω, μ)) (env : RefineHost.Env)
     (henv : heapBounds env.code = ({hA}, {hB})) (hpar : env.fetch.params = Params.full)
     (ha0 : 0 < a.size) :
-    ∃ ω' μ' x', FreeStepsH p (refineContract env) 0 ω μ ((∅, []) : RefineCtx) {endPc} ω' μ' x' := by
+    ∃ ω' μ' x', FreeStepsH p (refineContract env) 0 ω μ ((∅, []) : RefineCtx) {endPc} ω' μ' x' ∧
+      PrefixPost a.size μ ω' μ' x' := by
   obtain ⟨jb', hv, he⟩ := Option.map_eq_some_iff.1 hY
   have hjb' : jb' = jb ∧ a.size ≤ inputSize := by
     unfold validJamBlob? at hv
@@ -986,6 +1074,18 @@ def mode_steps (cx : Cx) : IO Unit := do
       let some (_, r2, _) := cx.tr[k + 1]? | break
       let ch := (List.range 13).filter fun j => r[j]! != r2[j]!
       IO.println s!"{k} {pc} {(cx.P.decode pc).map leanInstr |>.getD "?"}  {ch.map fun j => s!"r{j}={r2[j]!.toNat}"}"
+
+set_option linter.unusedVariables false in
+def mode_post (cx : Cx) : IO Unit := do
+    -- `post N`: what steps 0 … N − 1 leave, by the segment analysis over a class of inputs
+    let (info, _, _) ← prefixInfo cx
+    IO.println s!"vars {info.vars}"
+    IO.println s!"regs at start {info.regFacts} sym {info.symRegs}"
+    IO.println s!"wregs {info.wregs}"
+    IO.println s!"regPost {info.regPost}"
+    IO.println s!"symPost {info.symPost}"
+    IO.println s!"written {info.wr}"
+    IO.println s!"memPost ({info.memPost.length}) {info.memPost}"
 
 set_option maxHeartbeats 2000000 in
 def main (args : List String) : IO Unit := do
@@ -1018,6 +1118,7 @@ def main (args : List String) : IO Unit := do
   | "div" => mode_div cx
   | "cmp" => mode_cmp cx
   | "vals" => mode_vals cx
+  | "post" => mode_post cx
   | "steps" => mode_steps cx
   | "reads" => mode_reads cx
   | "chain" => mode_chain cx

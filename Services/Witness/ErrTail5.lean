@@ -268,7 +268,7 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
     : ∃ ω' μ', FreeStepsH p (refineContract env) 124258 ω μ x 43609 ω' μ' x ∧
       (ω'[0] = UInt64.ofNat 4294901760 ∧ ω'[1] = UInt64.ofNat 4278059008 ∧ ω'[2] = UInt64.ofNat 2 ∧ ω'[3] = UInt64.ofNat 0 ∧ ω'[4] = UInt64.ofNat 196648 ∧ ω'[5] = UInt64.ofNat 0 ∧ ω'[6] = UInt64.ofNat 0 ∧ ω'[7] = UInt64.ofNat 206816 ∧ ω'[8] = UInt64.ofNat 2 ∧ ω'[9] = UInt64.ofNat 1 ∧ ω'[10] = UInt64.ofNat 2 ∧ ω'[11] = UInt64.ofNat 1073948544 ∧ ω'[12] = UInt64.ofNat 204840) ∧
       (μ'.read 206816 = 12 ∧ μ'.read 206817 = 0) ∧
-      (∀ a, a < 4294967296 → (a < 196608 ∨ 196616 ≤ a) → (a < 196652 ∨ 196656 ≤ a) → (a < 206384 ∨ 206392 ≤ a) → (a < 206688 ∨ 206696 ≤ a) → (a < 206704 ∨ 206708 ≤ a) → (a < 206720 ∨ 206736 ≤ a) → (a < 206784 ∨ 206788 ≤ a) → (a < 206816 ∨ 206818 ≤ a) → (a < 4278057064 ∨ 4278057120 ≤ a) → (a < 4278057824 ∨ 4278057848 ≤ a) → (a < 4278058096 ∨ 4278058097 ≤ a) → (a < 4278058856 ∨ 4278058880 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, (decide (a < 4294967296) && !(decide (196608 ≤ a ∧ a < 196616)) && !(decide (196652 ≤ a ∧ a < 196656)) && !(decide (206384 ≤ a ∧ a < 206392)) && !(decide (206688 ≤ a ∧ a < 206696)) && !(decide (206704 ≤ a ∧ a < 206708)) && !(decide (206720 ≤ a ∧ a < 206736)) && !(decide (206784 ≤ a ∧ a < 206788)) && !(decide (206816 ≤ a ∧ a < 206818)) && !(decide (4278057064 ≤ a ∧ a < 4278057120)) && !(decide (4278057824 ≤ a ∧ a < 4278057848)) && !(decide (4278058096 ≤ a ∧ a < 4278058097)) && !(decide (4278058856 ≤ a ∧ a < 4278058880))) = true → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
   have hr0 := fun a h1 h2 => Memory.readable_of_writable (hw0 a h1 h2)
   have hr1 := fun a h1 h2 => Memory.readable_of_writable (hw1 a h1 h2)
@@ -781,7 +781,9 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
         Nat.reduceLT, and_true, true_and, and_false, false_and, ↓reduceIte, List.getElem!_cons_zero,
         List.getElem!_cons_succ, UInt8.reduceOfNat, and_self]
     case frame =>
-      intro a ha hx0 hx1 hx2 hx3 hx4 hx5 hx6 hx7 hx8 hx9 hx10 hx11
+      intro a ha
+      simp only [Bool.and_eq_true, decide_eq_true_eq, Bool.not_eq_true', decide_eq_false_iff_not,
+        not_and, Nat.not_lt] at ha
       simp (disch := pvm_arith) only [PVM.Memory.read_writeN_disjoint, PVM.Num.length_encodeLE,
         List.length_cons, List.length_nil, PVM.two32]
     case rd => intro a; simp only [PVM.Memory.readable_writeN]

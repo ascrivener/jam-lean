@@ -355,7 +355,7 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
     : ∃ ω' μ', FreeStepsH p (refineContract env) 186859 ω μ x 125049 ω' μ' x ∧
       (ω'[0] = UInt64.ofNat 33554428 ∧ ω'[1] = UInt64.ofNat 4278057096 ∧ ω'[2] = UInt64.ofNat 2 ∧ ω'[3] = UInt64.ofNat 2 ∧ ω'[4] = UInt64.ofNat 196648 ∧ ω'[5] = UInt64.ofNat 0 ∧ ω'[6] = UInt64.ofNat 13835058055282163711 ∧ ω'[7] = UInt64.ofNat 206784 ∧ ω'[8] = UInt64.ofNat 137438953472 ∧ ω'[9] = UInt64.ofNat 18446744073709551614 ∧ ω'[10] = UInt64.ofNat 37 ∧ ω'[11] = UInt64.ofNat 1073948544 ∧ ω'[12] = UInt64.ofNat 204840) ∧
       (μ'.read 206368 = 0 ∧ μ'.read 206369 = 0 ∧ μ'.read 206370 = 0 ∧ μ'.read 206371 = 0 ∧ μ'.read 206680 = 0 ∧ μ'.read 206681 = 0 ∧ μ'.read 206682 = 0 ∧ μ'.read 206683 = 0 ∧ μ'.read 206684 = 0 ∧ μ'.read 206685 = 0 ∧ μ'.read 206686 = 0 ∧ μ'.read 206687 = 0 ∧ μ'.read 206705 = 0 ∧ μ'.read 206706 = 0 ∧ μ'.read 206707 = 0 ∧ μ'.read 4278057096 = 40 ∧ μ'.read 4278057097 = 0 ∧ μ'.read 4278057098 = 3 ∧ μ'.read 4278057099 = 0 ∧ μ'.read 4278057100 = 0 ∧ μ'.read 4278057101 = 0 ∧ μ'.read 4278057102 = 0 ∧ μ'.read 4278057103 = 0 ∧ μ'.read 4278057104 = 64 ∧ μ'.read 4278057105 = 255 ∧ μ'.read 4278057106 = 253 ∧ μ'.read 4278057107 = 254 ∧ μ'.read 4278057108 = 0 ∧ μ'.read 4278057109 = 0 ∧ μ'.read 4278057110 = 0 ∧ μ'.read 4278057111 = 0 ∧ μ'.read 4278057112 = 214 ∧ μ'.read 4278057113 = 5 ∧ μ'.read 4278057114 = 0 ∧ μ'.read 4278057115 = 0 ∧ μ'.read 4278057116 = 0 ∧ μ'.read 4278057117 = 0 ∧ μ'.read 4278057118 = 0 ∧ μ'.read 4278057119 = 0) ∧
-      (∀ a, a < 4294967296 → (a < 196608 ∨ 196616 ≤ a) → (a < 206368 ∨ 206372 ≤ a) → (a < 206680 ∨ 206688 ≤ a) → (a < 206704 ∨ 206708 ≤ a) → (a < 206836 ∨ 206844 ≤ a) → (a < 4278056520 ∨ 4278056576 ≤ a) → (a < 4278056968 ∨ 4278056976 ≤ a) → (a < 4278057088 ∨ 4278057120 ≤ a) → (a < 4278057408 ∨ 4278057416 ≤ a) → (a < 4278057824 ∨ 4278057848 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, (decide (a < 4294967296) && !(decide (196608 ≤ a ∧ a < 196616)) && !(decide (206368 ≤ a ∧ a < 206372)) && !(decide (206680 ≤ a ∧ a < 206688)) && !(decide (206704 ≤ a ∧ a < 206708)) && !(decide (206836 ≤ a ∧ a < 206844)) && !(decide (4278056520 ≤ a ∧ a < 4278056576)) && !(decide (4278056968 ≤ a ∧ a < 4278056976)) && !(decide (4278057088 ≤ a ∧ a < 4278057120)) && !(decide (4278057408 ≤ a ∧ a < 4278057416)) && !(decide (4278057824 ≤ a ∧ a < 4278057848))) = true → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
   have hr0 := fun a h1 h2 => Memory.readable_of_writable (hw0 a h1 h2)
   have hr1 := fun a h1 h2 => Memory.readable_of_writable (hw1 a h1 h2)
@@ -902,7 +902,9 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
         Nat.reduceLT, and_true, true_and, and_false, false_and, ↓reduceIte, List.getElem!_cons_zero,
         List.getElem!_cons_succ, UInt8.reduceOfNat, and_self]
     case frame =>
-      intro a ha hx0 hx1 hx2 hx3 hx4 hx5 hx6 hx7 hx8 hx9
+      intro a ha
+      simp only [Bool.and_eq_true, decide_eq_true_eq, Bool.not_eq_true', decide_eq_false_iff_not,
+        not_and, Nat.not_lt] at ha
       simp (disch := pvm_arith) only [PVM.Memory.read_writeN_disjoint, PVM.Num.length_encodeLE,
         List.length_cons, List.length_nil, PVM.two32]
     case rd => intro a; simp only [PVM.Memory.readable_writeN]

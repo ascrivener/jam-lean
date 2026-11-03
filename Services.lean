@@ -9,6 +9,7 @@ import Services.Witness.ErrTail2
 import Services.Witness.ErrTail3
 import Services.Witness.ErrTail4
 import Services.Witness.ErrTail5
+import Services.Witness.ErrTail
 
 /-!
 # Results about specific services' deployed code
@@ -27,6 +28,8 @@ Built on `JAM`; nothing in `PVM` or `JAM` depends on this library.
   of the path witness's refine takes after a bad payload (pc 74620, reached for an empty payload
   or a tag ≥ 12), each from the facts it reads to the facts it leaves, for every payload of 1 to
   15 octets (`lake exe genwitnesssteps seg 74620 a b ErrTailk`).
+* `Services.Witness.ErrTail` — generated: the segments composed (`ErrTail.run`), from pc 74620 to
+  the halting step, ending with ω₇ = 206816, ω₈ = 2 and the octets [12, 0] there.
 * `Services.Witness.Prefix` — generated: the first 702 steps of witness's refine, proved
   symbolically from those code facts.
 -/

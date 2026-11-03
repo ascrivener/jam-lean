@@ -384,43 +384,76 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
       let l := (tr[k0 + bs[nseg]!]?.map (·.2.1[8]!.toNat)).getD 0
       o ≤ a && a < o + l
     IO.println ("      " ++ " ∧ ".intercalate (outFacts.map fun (a, v) => s!"μ'.read {a} = {v}") ++ " := by")
-    -- compose
-    let mut regEqs : List String := iregs.map (fun (j, _) => s!"hreg{j}")
-    let mut frames : List String := []
-    let mut memEqs : List String := ibytes.map (fun (a, _) => s!"hb_{a}")
-    let mut wrs : List String := []
-    let mut rds : List String := []
+    -- compose, with an explicit proof of each segment hypothesis from where its fact comes from
+    let proj (i len : Nat) : String :=
+      if len == 1 then "" else String.join (List.replicate i ".2") ++ (if i + 1 == len then "" else ".1")
+    let regList (q : Nat) : List Nat := (infos[q]!.regPost.map (·.1)) ++ (infos[q]!.symPost.map (·.1))
+    let inWr (q a : Nat) : Bool := infos[q]!.wr.any fun (lo, hi) => lo ≤ a && a < hi
+    -- ω_k[j] = value: back through the segments to the last one that set it, or to the start
+    let regProof (k j : Nat) : String := Id.run do
+      let mut pf := ""
+      let mut q := k
+      while q > 0 do
+        q := q - 1
+        let L := regList q
+        let some i := L.idxOf? j | return s!"sorry /- register {j} missing after segment {q} -/"
+        let step := s!"regs{q + 1}{proj i L.length}"
+        pf := if pf == "" then step else s!"(Eq.trans {pf} {step})"
+        if infos[q]!.wregs.contains j then return pf
+      return if pf == "" then s!"hreg{j}" else s!"(Eq.trans {pf} hreg{j})"
+    let frameArgs (q a : Nat) : String :=
+      " ".intercalate ((infos[q]!.wr.map fun _ => "(by decide)"))
+    -- μ_k.read a = value
+    let byteProof (k a : Nat) : String := Id.run do
+      let mut pf := ""
+      let mut q := k
+      while q > 0 do
+        q := q - 1
+        if inWr q a then
+          let L := infos[q]!.memPost.map (·.1)
+          let some i := L.idxOf? a | return s!"sorry /- octet {a} missing after segment {q} -/"
+          let step := s!"mem{q + 1}{proj i L.length}"
+          return if pf == "" then step else s!"(Eq.trans {pf} {step})"
+        let step := s!"(frame{q + 1} {a} rfl)"
+        pf := if pf == "" then step else s!"(Eq.trans {pf} {step})"
+      return if pf == "" then s!"hb_{a}" else s!"(Eq.trans {pf} hb_{a})"
     let mut prevω := "ω"; let mut prevμ := "μ"
     for k in [0:nseg] do
       let info := infos[k]!
-      let regArgs := (info.regFacts.map (·.1) ++ info.symRegs.map (·.1)).map fun j =>
-        if k == 0 then s!"hreg{j}" else s!"(by simp only [{", ".intercalate regEqs}])"
-      let rw1 := ", ".intercalate (wrs.map (s!"{·} a"))
-      let rd1 := ", ".intercalate (rds.map (s!"{·} a"))
+      -- the octet facts this segment needs, as `have`s
+      let mut need : List Nat := []
+      for (a, kk, _) in info.loads do
+        for q in [0:kk] do if !need.contains (a + q) then need := need ++ [a + q]
+      for (a, _) in info.byteFacts do if !need.contains a then need := need ++ [a]
+      for a in need do
+        IO.println s!"  have b{k}_{a} : {prevμ}.read {a} = {(tr[k0 + info.A - k0]?.map (fun x => (x.2.2.read a).toNat)).getD 0} := {byteProof k a}"
+      let regArgs := (info.regFacts.map (·.1) ++ info.symRegs.map (·.1)).map fun j => s!"({regProof k j})"
+      let rw1 := ", ".intercalate ((List.range k).reverse.map (s!"wr{· + 1} a"))
+      let rd1 := ", ".intercalate ((List.range k).reverse.map (s!"rd{· + 1} a"))
       let wArgs := (List.range info.wr.length).map fun q =>
         if k == 0 then s!"hw{k}_{q}" else s!"(fun a h1 h2 => by rw [{rw1}]; exact hw{k}_{q} a h1 h2)"
       let rArgs := (List.range info.rr.length).map fun q =>
         if k == 0 then s!"hrd{k}_{q}" else s!"(fun a h1 h2 => by rw [{rd1}]; exact hrd{k}_{q} a h1 h2)"
-      let memTac := s!"(by simp (disch := pvm_arith) only [Memory.readN, List.range_succ, List.range_zero, List.map_cons, List.map_nil, List.map_append, List.nil_append, List.cons_append, Nat.add_zero, {", ".intercalate (frames ++ memEqs)}])"
       let loadArgs := info.loads.map fun (a, kk, _) =>
-        if k == 0 then (if (List.range kk).all (fun q => ibytes.any (·.1 == a + q)) then memTac else memTac) else memTac
-      let byteArgs := info.byteFacts.map fun _ => memTac
+        let bs := ", ".intercalate ((List.range kk).map (s!"b{k}_{a + ·}"))
+        s!"(by simp only [Memory.readN, List.range_succ, List.range_zero, List.map_cons, List.map_nil, List.map_append, List.nil_append, List.cons_append, Nat.add_zero, Nat.reduceAdd, {bs}])"
+      let byteArgs := info.byteFacts.map fun (a, _) => s!"b{k}_{a}"
       let symArgs := info.symLoads.map fun (a, kk, _) =>
         if k == 0 then s!"hsym_{a}" else
-        s!"(by rw [Memory.readN_congr (μ := μ) (fun j hj => by simp (disch := pvm_arith) only [{", ".intercalate frames}])]; exact hsym_{a})"
+        let frames := (List.range k).reverse.map fun q =>
+          s!"(frame{q + 1} ({a} + j) (by simp only [Bool.and_eq_true, decide_eq_true_eq, Bool.not_eq_true', decide_eq_false_iff_not, not_and, Nat.not_lt]; omega))"
+        let fr := frames.tail.foldl (fun acc f => s!"(Eq.trans {acc} {f})") frames.head!
+        s!"(Eq.trans (Memory.readN_congr (fun j hj => {fr})) hsym_{a})"
       let varArgs := info.vars.map fun v => s!"{v} h{v}"
       let allArgs := " ".intercalate (varArgs ++ regArgs ++ symArgs ++ wArgs ++ rArgs ++ loadArgs ++ byteArgs)
       IO.println s!"  obtain ⟨ω{k+1}, μ{k+1}, run{k+1}, regs{k+1}, mem{k+1}, frame{k+1}, rd{k+1}, wr{k+1}⟩ :=\n    {name}{k}.run p P env {prevω} {prevμ} x {allArgs}"
-      regEqs := regEqs ++ [s!"regs{k+1}"]
-      frames := [s!"frame{k+1}"] ++ frames
-      memEqs := memEqs ++ [s!"mem{k+1}"]
-      wrs := [s!"wr{k+1}"] ++ wrs
-      rds := [s!"rd{k+1}"] ++ rds
       prevω := s!"ω{k+1}"; prevμ := s!"μ{k+1}"
     let runs := (List.range nseg).map (fun k => s!"run{k+1}")
     let trans := runs.dropLast.foldr (fun r acc => s!"({r}.trans {acc})") runs.getLast!
-    IO.println s!"  refine ⟨{prevω}, {prevμ}, {trans}, ?_⟩"
-    IO.println s!"  simp (disch := pvm_arith) only [{", ".intercalate (regEqs ++ memEqs ++ frames)}, and_self]"
+    let outA := outFacts.map fun (a, _) =>
+      let L := last.memPost.map (·.1)
+      s!"mem{nseg}{proj (L.idxOf a) L.length}"
+    IO.println s!"  exact ⟨{prevω}, {prevμ}, {trans}, {regProof nseg 0}, {regProof nseg 7}, {regProof nseg 8}, {", ".intercalate outA}⟩"
     IO.println s!"\nend Services.Witness.{name}"
     return
   if mode == "seg" then
@@ -494,8 +527,8 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
     IO.println ("      (" ++ " ∧ ".intercalate regC ++ ") ∧")
     let memC := info.memPost.map fun (a, v) => s!"μ'.read {a} = {v}"
     IO.println ("      (" ++ (if memC.isEmpty then "True" else " ∧ ".intercalate memC) ++ ") ∧")
-    let outW := " → ".intercalate (wr.map fun (lo, hi) => s!"(a < {lo} ∨ {hi} ≤ a)")
-    IO.println s!"      (∀ a, a < 4294967296 → {outW} → μ'.read a = μ.read a) ∧"
+    let outW := " && ".intercalate (wr.map fun (lo, hi) => s!"!(decide ({lo} ≤ a ∧ a < {hi}))")
+    IO.println s!"      (∀ a, (decide (a < 4294967296) && {outW}) = true → μ'.read a = μ.read a) ∧"
     IO.println "      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by"
     let hws := ", ".intercalate ((List.range wr.length).map (s!"hw{·}"))
     let hrs := ", ".intercalate ((List.range wr.length).map (s!"hr{·}") ++ (List.range rr.length).map (s!"hrd{·}"))
@@ -517,7 +550,7 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
     IO.println "    case mem =>\n      simp (disch := pvm_arith) only [PVM.Memory.read_writeN, PVM.reduceEncodeLE, PVM.Num.length_encodeLE,\n        List.length_cons, List.length_nil, PVM.two32, Nat.reduceAdd, Nat.reduceSub, Nat.reduceLeDiff,\n        Nat.reduceLT, and_true, true_and, and_false, false_and, ↓reduceIte, List.getElem!_cons_zero,\n        List.getElem!_cons_succ, UInt8.reduceOfNat, and_self]"
     let nW := wr.length
     let names := " ".intercalate ((List.range nW).map (s!"hx{·}"))
-    IO.println s!"    case frame =>\n      intro a ha {names}\n      simp (disch := pvm_arith) only [PVM.Memory.read_writeN_disjoint, PVM.Num.length_encodeLE,\n        List.length_cons, List.length_nil, PVM.two32]"
+    IO.println s!"    case frame =>\n      intro a ha\n      simp only [Bool.and_eq_true, decide_eq_true_eq, Bool.not_eq_true', decide_eq_false_iff_not,\n        not_and, Nat.not_lt] at ha\n      simp (disch := pvm_arith) only [PVM.Memory.read_writeN_disjoint, PVM.Num.length_encodeLE,\n        List.length_cons, List.length_nil, PVM.two32]"
     IO.println "    case rd => intro a; simp only [PVM.Memory.readable_writeN]\n    case wr => intro a; simp only [PVM.Memory.writable_writeN]\n"
     IO.println s!"end Services.Witness.{name}"
     return

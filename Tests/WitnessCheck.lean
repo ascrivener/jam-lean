@@ -10,7 +10,7 @@ its Blake2b-256 hash, as on chain), takes the account's code by the paper's rule
 `jamHostCallIdsOf`, the same function the confinement theorems quantify over. Fails unless every
 id is in `Services.Witness.ids`.
 
-It also checks `checkCode` of the PVM code against `Services.Witness.Prefix.facts`, the one
+It also checks `checkCode` of the PVM code against `Services.Witness.Code.facts`, the one
 hypotheses `Services.Witness.Prefix.prefix_from_Y` makes about the bytes, with `layoutOk`.
 
 These are the steps not checked by the kernel: they run compiled code over the 223 kB blob.
@@ -42,9 +42,9 @@ def main (args : List String) : IO UInt32 := do
     IO.println "witnesscheck: every id is in Services.Witness.ids, so `accumulate_confined` and `refine_noExports` apply"
     let some jb := JamBlob.parse? code
       | IO.eprintln "not a standard program blob"; return 1
-    let n := Services.Witness.Prefix.facts.length
-    if !checkCode jb.code Services.Witness.Prefix.facts then
-      IO.eprintln s!"checkCode fails for the {n} facts of Services.Witness.Prefix"
+    let n := Services.Witness.Code.facts.length
+    if !checkCode jb.code Services.Witness.Code.facts then
+      IO.eprintln s!"checkCode fails for the {n} facts of Services.Witness.Code"
       return 1
     if !Services.Witness.Prefix.layoutOk jb then
       IO.eprintln "the section sizes differ from Services.Witness.Prefix.layoutOk"

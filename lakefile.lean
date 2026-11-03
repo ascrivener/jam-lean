@@ -98,7 +98,8 @@ lean_exe «witnessrun-exe» where
 target witnessrun pkg : Unit := do
   runOnVectors `«witnessrun-exe» #[(pkg.dir / "services" / "witness" / "witness-service.jam").toString]
 
-/-- Generates `Services/Witness/Prefix.lean`: `lake exe genwitnesssteps <steps>`. -/
+/-- Generates `Services/Witness/Code.lean` (`lake exe genwitnesssteps code <steps>`) and
+    `Services/Witness/Prefix.lean` (`lake exe genwitnesssteps run <steps>`). -/
 lean_exe genwitnesssteps where
   root := `Tests.GenWitnessSteps
 

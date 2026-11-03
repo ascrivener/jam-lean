@@ -278,6 +278,33 @@ theorem Memory.read_writeN_disjoint (μ : Memory) (a : Nat) (bs : List UInt8) (b
   have := Memory.readN_writeN_disjoint μ a bs b 1 h ha hb
   simpa [Memory.readN] using this
 
+/-! Addresses at or above 2^32 (a load or store with a negative offset) denote `a mod 2^32`. -/
+
+theorem Memory.read_wrap (μ : Memory) (a : Nat) (h : two32 ≤ a) : μ.read a = μ.read (a % two32) := by
+  simp [Memory.read, Nat.mod_mod]
+
+theorem Memory.readN_wrap (μ : Memory) (a n : Nat) (h : two32 ≤ a) :
+    μ.readN a n = μ.readN (a % two32) n := by
+  simp only [Memory.readN]
+  apply List.map_congr_left
+  intro k _
+  simp only [Memory.read, two32]
+  rw [Nat.add_mod a k, Nat.add_mod (a % _) k, Nat.mod_mod]
+
+theorem Memory.writeN_congr (μ : Memory) (a a' : Nat) (bs : List UInt8) (h : a % two32 = a' % two32) :
+    μ.writeN a bs = μ.writeN a' bs := by
+  induction bs generalizing μ a a' with
+  | nil => rfl
+  | cons b bs ih =>
+    simp only [Memory.writeN_cons]
+    rw [show μ.write a b = μ.write a' b by simp [Memory.write, h]]
+    apply ih
+    rw [Nat.add_mod a 1, Nat.add_mod a' 1, h]
+
+theorem Memory.writeN_wrap (μ : Memory) (a : Nat) (bs : List UInt8) (h : two32 ≤ a) :
+    μ.writeN a bs = μ.writeN (a % two32) bs :=
+  Memory.writeN_congr μ a _ bs (by rw [Nat.mod_mod])
+
 /-- A one-octet `ℰ₁(v)` is the octet `v`. -/
 theorem Num.encodeLE_one (v : Nat) : Num.encodeLE 1 v = [UInt8.ofNat v] := by
   simp only [Num.encodeLE, List.cons.injEq, and_true]
@@ -419,14 +446,14 @@ macro_rules
   | `(tactic| pvm_core [$hs,*]) => `(tactic| (
     simp only [PVM.Program.exec, PVM.Program.sjump, PVM.Program.branch, PVM.Program.isBlockStartInt,
       PVM.Program.finalState, PVM.memoryException, pvm_code, PVM.Exec.twoRegImmAlu,
-      ↓PVM.twoRegAlu_signExtend8, PVM.reduceSx8, PVM.Exec.twoRegAlu, PVM.Exec.indices, PVM.Regs.get, Fin.getElem_fin, PVM.regIdx_val_0,
+      ↓PVM.twoRegAlu_signExtend8, PVM.reduceSx8, PVM.Exec.twoRegAlu, PVM.Exec.indices, List.reverse_cons, List.reverse_nil, List.singleton_append, PVM.Memory.read_wrap, PVM.Memory.readN_wrap, PVM.Memory.writeN_wrap, PVM.Regs.get, Fin.getElem_fin, PVM.regIdx_val_0,
       PVM.regIdx_val_1, PVM.regIdx_val_2, PVM.regIdx_val_3, PVM.regIdx_val_4, PVM.regIdx_val_5,
       PVM.regIdx_val_6, PVM.regIdx_val_7, PVM.regIdx_val_8, PVM.regIdx_val_9, PVM.regIdx_val_10,
       PVM.regIdx_val_11, PVM.regIdx_val_12, PVM.getD_some', Vector.getElem_ofFn,
       Vector.getElem_set, PVM.set_regsNF, PVM.getElem_regsNF, PVM.insertReg, PVM.lookup_cons_nat,
       PVM.Num.decodeLE, UInt8.toNat_ofNat',
       List.lookup_nil, Option.getD_none, PVM.two32, PVM.two64, PVM.pageSize, UInt64.toNat_ofNat',
-      UInt64.toNat_ofNat, UInt64.reduceToNat, ne_eq, not_true_eq_false, ↓reduceIte,
+      UInt64.toNat_ofNat, UInt64.reduceToNat, ne_eq, not_true_eq_false, not_false_eq_true, ↓reduceIte,
       List.append_nil, List.nil_append, List.getD_cons_zero, List.getD_cons_succ, Fin.isValue,
       Fin.val_ofNat, decide_false, decide_true, Bool.not_false, Bool.not_true, Bool.false_eq_true,
       ite_true, ite_false, List.filter_nil, List.filter_cons, List.min?_nil, List.map_cons,
@@ -477,12 +504,12 @@ macro_rules
               Nat.reduceDiv, Nat.reduceLT, Nat.reduceLeDiff, Nat.lt_irrefl, PVM.two32, and_true,
               true_and, and_false, false_and, ↓reduceIte, ite_true, ite_false, id_eq, PVM.Program.exec, PVM.Program.sjump, PVM.Program.branch, PVM.Program.isBlockStartInt,
           PVM.Program.finalState, PVM.memoryException, pvm_code, PVM.Exec.twoRegImmAlu,
-          ↓PVM.twoRegAlu_signExtend8, PVM.reduceSx8, PVM.Exec.twoRegAlu, PVM.Exec.indices, PVM.Regs.get, Fin.getElem_fin, PVM.regIdx_val_0,
+          ↓PVM.twoRegAlu_signExtend8, PVM.reduceSx8, PVM.Exec.twoRegAlu, PVM.Exec.indices, List.reverse_cons, List.reverse_nil, List.singleton_append, PVM.Memory.read_wrap, PVM.Memory.readN_wrap, PVM.Memory.writeN_wrap, PVM.Regs.get, Fin.getElem_fin, PVM.regIdx_val_0,
           PVM.regIdx_val_1, PVM.regIdx_val_2, PVM.regIdx_val_3, PVM.regIdx_val_4, PVM.regIdx_val_5,
           PVM.regIdx_val_6, PVM.regIdx_val_7, PVM.regIdx_val_8, PVM.regIdx_val_9, PVM.regIdx_val_10,
           PVM.regIdx_val_11, PVM.regIdx_val_12, PVM.getD_some', Vector.getElem_ofFn,
           Vector.getElem_set, PVM.two32, PVM.two64, PVM.pageSize, UInt64.toNat_ofNat',
-          UInt64.toNat_ofNat, UInt64.reduceToNat, ne_eq, not_true_eq_false, ↓reduceIte,
+          UInt64.toNat_ofNat, UInt64.reduceToNat, ne_eq, not_true_eq_false, not_false_eq_true, ↓reduceIte,
           List.append_nil, List.nil_append, List.getD_cons_zero, List.getD_cons_succ, Fin.isValue,
           Fin.val_ofNat, decide_false, decide_true, Bool.not_false, Bool.not_true, Bool.false_eq_true,
           ite_true, ite_false, List.filter_nil, List.filter_cons, List.min?_nil, List.map_cons,

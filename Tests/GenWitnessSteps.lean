@@ -67,6 +67,23 @@ def leanInstr (ins : Instr) : String :=
    |>.replace "PVM.RegImmOffsetOp." "." |>.replace "PVM.TwoRegOp." "." |>.replace "PVM.TwoRegImmOp." "." |>.replace "PVM.TwoRegOffsetOp." "."
    |>.replace "PVM.TwoRegTwoImmOp." "." |>.replace "PVM.ThreeRegOp." "."
 
+/-- The traced refine of witness for arguments `c`, `i`, `sid`, payload `y`. -/
+def traceFor (code : ByteArray) (h : List UInt8) (acct : ServiceAccount) (Q : Prepared)
+    (c i sid : Nat) (y : List UInt8) : Option (Array (Nat × Regs × Memory)) := do
+  let pkg := mkPkg h sid (i + 1) (mkItem h sid y)
+  let a : ByteArray := ⟨(Codec.nat c ++ Codec.nat i ++ Codec.nat sid ++ Codec.var ⟨y.toArray⟩ ++
+    (Blake2b.hash256 ⟨pkg.encode.toArray⟩).toList).toArray⟩
+  let (_, ω, μ) ← standardInit code a
+  let env := mkEnv code sid i (Std.ExtTreeMap.ofList [(sid, acct)]) pkg
+  let (tr, _, _, _, _) := go Q (toHostFn (RefineHost.dispatch env)) 0 1000000000 false ω μ (∅, []) #[] #[] 300000
+  return tr
+
+/-- Maximal runs of consecutive naturals in a sorted list, as [lo, hi). -/
+def ranges (xs : List Nat) : List (Nat × Nat) :=
+  xs.foldl (fun acc x => match acc with
+    | (lo, hi) :: rest => if x == hi then (lo, hi + 1) :: rest else (x, x + 1) :: acc
+    | [] => [(x, x + 1)]) [] |>.reverse
+
 /-- Function bodies whose code facts are emitted in full, for summaries: `memcpy` and the SDK's
     `u32` decoder. -/
 def fnRanges : List (Nat × Nat) := [(186740, 187150), (184570, 184870)]
@@ -88,6 +105,198 @@ def main (args : List String) : IO Unit := do
   let env := mkEnv code sid i (Std.ExtTreeMap.ofList [(sid, acct)]) pkg
   let (tr, _, _, _, _) := go Q (toHostFn (RefineHost.dispatch env)) 0 1000000000 false ω μ (∅, []) #[] #[] 3000000
   let path := (tr.toList.take n).map (·.1)
+  if mode == "calls" then
+    -- the path's calls, returns and host calls from step n on, with the depth of the call stack
+    let mut depth := 0
+    let mut k := 0
+    for (pc, regs, _) in tr.toList do
+      if k ≥ n then
+        match P.decode pc with
+        | some (.regImmOffset .loadImmJump 0 _ y) =>
+          IO.println s!"{k} {String.mk (List.replicate (2 * depth) ' ')}call {P.sjump pc y |>.2} from {pc}  r7={(regs.get 7).toNat} r8={(regs.get 8).toNat} r9={(regs.get 9).toNat}"
+          depth := depth + 1
+        | some (.regImm .jumpInd 0 0) =>
+          depth := depth - 1
+          IO.println s!"{k} {String.mk (List.replicate (2 * depth) ' ')}ret"
+        | some (.oneImm .ecalli h) => IO.println s!"{k} {String.mk (List.replicate (2 * depth) ' ')}host {h.toNat}"
+        | _ => pure ()
+      k := k + 1
+    IO.println s!"{tr.size} end"
+    return
+  if mode == "cmp" then
+    -- `cmp PC`: where each test input first reaches PC, and the first later difference from the base run
+    let inputs : List (Nat × Nat × Nat × List UInt8) :=
+      [(5, 0, 9, [200]), (3, 0, 7, List.replicate 15 255), (3, 0, 7, []), (3, 0, 7, List.replicate 8 13)]
+    let some k0 := (List.range tr.size).find? (fun k => (tr[k]?.map (·.1)) == some n) | IO.println "pc not reached"; return
+    IO.println s!"base: pc {n} at step {k0}, ends at {tr.size}"
+    for (c2, i2, s2, y2) in inputs do
+      let some t2 := traceFor code h acct Q c2 i2 s2 y2 | continue
+      let some k2 := (List.range t2.size).find? (fun k => (t2[k]?.map (·.1)) == some n) | IO.println s!"{y2.length}: pc not reached"; continue
+      -- first step after the join where the pcs, registers or memory reads differ
+      let mut diff := "none"
+      for j in [0:tr.size - k0] do
+        let some (pa, ra, _) := tr[k0 + j]? | break
+        let some (pb, rb, _) := t2[k2 + j]? | diff := s!"shorter at +{j}"; break
+        if pa != pb then diff := s!"pc at +{j}: {pa} vs {pb}"; break
+        if ra != rb then
+          let js := (List.range 13).filter fun r => ra[r]! != rb[r]!
+          diff := s!"registers {js} at +{j} (pc {pa})"; break
+      IO.println s!"input c={c2} i={i2} s={s2} |y|={y2.length}: reaches at {k2}, ends at {t2.size}; first difference: {diff}"
+    return
+  if mode == "reads" then
+    -- `reads ADDR`: the steps that read or write octet ADDR
+    let addr := n
+    let mut k := 0
+    for (pc, regs, mem) in tr.toList do
+      if let some ins := P.decode pc then
+        let m := P.exec pc ins regs mem
+        if m.reads.any (· % 2 ^ 32 == addr) then IO.println s!"{k} read  pc {pc} {repr ins}"
+        if m.writes.any (· % 2 ^ 32 == addr) then IO.println s!"{k} write pc {pc} {repr ins}"
+      k := k + 1
+    return
+  if mode == "seg" then
+    -- `seg PC a b name`: a standalone theorem for steps a … b − 1 after the path first reaches PC,
+    -- stating only the values on which every input of the class agrees
+    let joinPc := n
+    let a := (args.getD 2 "0").toNat!; let b := (args.getD 3 "0").toNat!; let name := args.getD 4 "seg"
+    let classInputs : List (Nat × Nat × Nat × List UInt8) :=
+      [(5, 0, 9, [200]), (3, 0, 7, List.replicate 15 255), (3, 0, 7, List.replicate 8 13), (200, 0, 70000, [12])]
+    let align (t : Array (Nat × Regs × Memory)) : Option Nat :=
+      (List.range t.size).find? (fun k => (t[k]?.map (·.1)) == some joinPc)
+    let some k0 := align tr | IO.eprintln "join not reached"; return
+    let mut others : Array (Array (Nat × Regs × Memory) × Nat) := #[]
+    for (c2, i2, s2, y2) in classInputs do
+      let some t2 := traceFor code h acct Q c2 i2 s2 y2 | continue
+      let some k2 := align t2 | IO.eprintln s!"join not reached for |y| = {y2.length}"; return
+      for j in [a:b+1] do
+        if (tr[k0 + j]?.map (·.1)) != (t2[k2 + j]?.map (·.1)) then
+          IO.eprintln s!"paths differ at +{j} for c={c2} s={s2} |y|={y2.length}"; return
+      others := others.push (t2, k2)
+    let A := k0 + a; let B := k0 + b
+    let some (pcA, rA, mA) := tr[A]? | return
+    let some (pcB, rB, mB) := tr[B]? | return
+    let agreeReg (k : Nat) (j : Nat) : Bool :=
+      others.all fun (t2, k2) => (t2[k2 + (k - k0)]?.map (fun x => x.2.1[j]!)) == (tr[k]?.map (fun x => x.2.1[j]!))
+    let agreeMem (k : Nat) (addr : Nat) : Bool :=
+      others.all fun (t2, k2) => (t2[k2 + (k - k0)]?.map (fun x => x.2.2.read addr)) == (tr[k]?.map (fun x => x.2.2.read addr))
+    -- registers written in the slice
+    let mut wregs : List Nat := []
+    for k in [A:B] do
+      let some (_, r0, _) := tr[k]? | continue
+      let some (_, r1, _) := tr[k+1]? | continue
+      for j in [0:13] do
+        if r0[j]! != r1[j]! && !wregs.contains j then wregs := j :: wregs
+    -- memory: loads before writes, written and read addresses
+    let mut written : Std.HashSet Nat := {}
+    let mut wlist : List Nat := []
+    let mut rlist : List Nat := []
+    let mut loads : Array (Nat × Nat) := #[]
+    for k in [A:B] do
+      let some (pc, regs, mem) := tr[k]? | continue
+      let some ins := P.decode pc | continue
+      let m := P.exec pc ins regs mem
+      match m.reads.head? with
+      | some r0 =>
+        let a0 := r0 % 2 ^ 32
+        if m.reads.all (fun r => !written.contains (r % 2 ^ 32)) && !(loads.contains (a0, m.reads.length)) then
+          loads := loads.push (a0, m.reads.length)
+      | none => pure ()
+      for r in m.reads do
+        let a := r % 2 ^ 32
+        if !written.contains a && !rlist.contains a then rlist := a :: rlist
+      for w in m.writes do
+        let a := w % 2 ^ 32
+        if !written.contains a then wlist := a :: wlist
+        written := written.insert a
+    -- live written octets: read after B before being overwritten
+    let mut live : List Nat := []
+    let mut over : Std.HashSet Nat := {}
+    for k in [B:tr.size] do
+      let some (pc, regs, mem) := tr[k]? | continue
+      let some ins := P.decode pc | continue
+      let m := P.exec pc ins regs mem
+      for r in m.reads do
+        let a := r % 2 ^ 32
+        if written.contains a && !over.contains a && !live.contains a then live := a :: live
+      for w in m.writes do over := over.insert (w % 2 ^ 32)
+    let wr := ranges (wlist.mergeSort)
+    let rr := ranges (rlist.mergeSort)
+    let regFacts := (List.range 13).filter (agreeReg A)
+    let goodLoads := loads.toList.filter fun (a, k) =>
+      (List.range k).all fun j => agreeMem A (a + j)
+    for (a, k) in loads.toList do
+      if !goodLoads.contains (a, k) then IO.eprintln s!"input-dependent load at {a} ({k} octets)"
+    let regPost := (List.range 13).filter fun j => !wregs.contains j || agreeReg B j
+    for j in wregs do
+      if !agreeReg B j then IO.eprintln s!"input-dependent register {j} at the end"
+    let livePost := (live.mergeSort).filter (agreeMem B)
+    IO.println s!"/-
+  GENERATED by `lake exe genwitnesssteps seg {joinPc} {a} {b} {name}` from services/witness/witness-service.jam.
+  Do not edit by hand.
+-/
+import Services.Witness.Code
+
+namespace Services.Witness.{name}
+
+open PVM JAM Services.Witness.Code
+
+set_option maxRecDepth 20000
+set_option maxHeartbeats 10000000
+
+/-- **Steps {A} … {B - 1} of witness's refine** (pc {pcA} to pc {pcB}), from any state with the
+    register values and memory octets they read, to a state with the values they leave. -/
+theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
+    (x : RefineCtx)"
+    for j in regFacts do
+      IO.println s!"    (hreg{j} : ω[{j}] = UInt64.ofNat {rA[j]!.toNat})"
+    let mut i := 0
+    for (lo, hi) in wr do
+      IO.println s!"    (hw{i} : ∀ a, {lo} ≤ a → a < {hi} → μ.writable a = true)"
+      i := i + 1
+    let mut i2 := 0
+    for (lo, hi) in rr do
+      IO.println s!"    (hrd{i2} : ∀ a, {lo} ≤ a → a < {hi} → μ.readable a = true)"
+      i2 := i2 + 1
+    for (a, k) in goodLoads do
+      let bytes := (List.range k).map fun j => (mA.read (a + j)).toNat
+      IO.println s!"    (hbn_{a}_{k} : μ.readN {a} {k} = {bytes})"
+    -- each octet read before written, for loads that straddle earlier writes
+    let byteFacts := (rlist.mergeSort).filter (agreeMem A)
+    for a in byteFacts do
+      IO.println s!"    (hb_{a} : μ.read {a} = {(mA.read a).toNat})"
+    IO.println s!"    : ∃ ω' μ', FreeStepsH p (refineContract env) {pcA} ω μ x {pcB} ω' μ' x ∧"
+    let regC := regPost.map fun j =>
+      if wregs.contains j then s!"ω'[{j}] = UInt64.ofNat {rB[j]!.toNat}" else s!"ω'[{j}] = ω[{j}]"
+    IO.println ("      (" ++ " ∧ ".intercalate regC ++ ") ∧")
+    let memC := livePost.map fun a => s!"μ'.read {a} = {(mB.read a).toNat}"
+    IO.println ("      (" ++ (if memC.isEmpty then "True" else " ∧ ".intercalate memC) ++ ") ∧")
+    let outW := " → ".intercalate (wr.map fun (lo, hi) => s!"(a < {lo} ∨ {hi} ≤ a)")
+    IO.println s!"      (∀ a, a < 4294967296 → {outW} → μ'.read a = μ.read a) ∧"
+    IO.println "      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by"
+    let hws := ", ".intercalate ((List.range wr.length).map (s!"hw{·}"))
+    let hrs := ", ".intercalate ((List.range wr.length).map (s!"hr{·}") ++ (List.range rr.length).map (s!"hrd{·}"))
+    for k in [0:wr.length] do
+      IO.println s!"  have hr{k} := fun a h1 h2 => Memory.readable_of_writable (hw{k} a h1 h2)"
+    let regA := ", ".intercalate (regFacts.map (s!"hreg{·}"))
+    let loadA := ", ".intercalate (goodLoads.map (fun (a, k) => s!"hbn_{a}_{k}") ++ byteFacts.map (s!"hb_{·}"))
+    let simpArgs := ", ".intercalate ([regA, loadA, hws, hrs].filter (· != ""))
+    IO.println "  rw [show ω = regsNF ω [] from rfl]\n  refine ⟨?ω', ?μ', ?run, ?post⟩\n  case run =>"
+    for k in [A:B] do
+      let some (pc, _, _) := tr[k]? | continue
+      match P.decode pc with
+      | some (.oneImm .ecalli _) =>
+        IO.println s!"    apply FreeStepsH.host_decode (d_{pc} (p := p) (P := P))\n    · set_option maxHeartbeats 1000000 in pvm_host [{simpArgs}, PVM.Memory.writable_writeN, PVM.Memory.writable_setPages, List.range_succ, List.range_zero, List.nil_append, List.all_cons, List.all_nil, List.all_append, Bool.and_true, Bool.true_and, Nat.reduceDiv, PVM.Memory.writeN_nil, Num.length_encodeLE]"
+      | _ =>
+        IO.println s!"    apply FreeStepsH.step_decode (d_{pc} (p := p) (P := P))\n    · set_option maxHeartbeats 1000000 in pvm_simp [{simpArgs}]"
+    IO.println "    exact FreeStepsH.refl\n  case post =>\n    refine ⟨?regs, ?mem, ?frame, ?rd, ?wr⟩"
+    IO.println s!"    case regs =>\n      simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,\n        PVM.getD_some', List.lookup_nil, Option.getD_none, and_self, and_true, true_and{if regA == "" then "" else ", " ++ regA}]"
+    IO.println "    case mem =>\n      simp (disch := pvm_arith) only [PVM.Memory.read_writeN, PVM.reduceEncodeLE, PVM.Num.length_encodeLE,\n        List.length_cons, List.length_nil, PVM.two32, Nat.reduceAdd, Nat.reduceSub, Nat.reduceLeDiff,\n        Nat.reduceLT, and_true, true_and, and_false, false_and, ↓reduceIte, List.getElem!_cons_zero,\n        List.getElem!_cons_succ, UInt8.reduceOfNat, and_self]"
+    let nW := wr.length
+    let names := " ".intercalate ((List.range nW).map (s!"hx{·}"))
+    IO.println s!"    case frame =>\n      intro a ha {names}\n      simp (disch := pvm_arith) only [PVM.Memory.read_writeN_disjoint, PVM.Num.length_encodeLE,\n        List.length_cons, List.length_nil, PVM.two32]"
+    IO.println "    case rd => intro a; simp only [PVM.Memory.readable_writeN]\n    case wr => intro a; simp only [PVM.Memory.writable_writeN]\n"
+    IO.println s!"end Services.Witness.{name}"
+    return
   let mut facts : Array String := #[]
   let mut lemmas : Array String := #[]
   let mut seen : List Nat := []
@@ -133,6 +342,14 @@ def main (args : List String) : IO Unit := do
     match P.decode pc with
     | some (.regImm .jumpInd ra x) =>
       let addr := ((regs.get ra).toNat + x.toNat) % 2 ^ 32
+      if addr ≠ 2 ^ 32 - 2 ^ 16 ∧ addr ≥ 2 then
+        let k := addr / 2 - 1
+        let t := P.jumpTable.getD k 0
+        facts := facts.push s!".jumpTableSize {P.jumpTable.size}"
+        facts := facts.push s!".jumpEntry {k} {t}"
+        facts := facts.push s!".blockStart {t} {P.isBlockStart t}"
+    | some (.twoRegTwoImm .loadImmJumpInd _ rb _ y) =>
+      let addr := ((regs.get rb).toNat + y.toNat) % 2 ^ 32
       if addr ≠ 2 ^ 32 - 2 ^ 16 ∧ addr ≥ 2 then
         let k := addr / 2 - 1
         let t := P.jumpTable.getD k 0

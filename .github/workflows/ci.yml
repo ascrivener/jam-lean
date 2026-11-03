@@ -69,10 +69,15 @@ jobs:
       - name: The vendored witness blob names only the host calls, and has the code facts, its theorems assume
         run: lake build witnesscheck
 
-      - name: Services/Witness/Code.lean and Prefix.lean are what their generator produces
+      - name: the generated witness files are what their generator produces
         run: |
-          lake exe genwitnesssteps code 702 | diff - Services/Witness/Code.lean
+          lake exe genwitnesssteps code 2835 | diff - Services/Witness/Code.lean
           lake exe genwitnesssteps run 702 | diff - Services/Witness/Prefix.lean
+          lake exe genwitnesssteps seg 74620 0 260 ErrTail0 | diff - Services/Witness/ErrTail0.lean
+          lake exe genwitnesssteps seg 74620 260 520 ErrTail1 | diff - Services/Witness/ErrTail1.lean
+          lake exe genwitnesssteps seg 74620 520 780 ErrTail2 | diff - Services/Witness/ErrTail2.lean
+          lake exe genwitnesssteps seg 74620 780 1040 ErrTail3 | diff - Services/Witness/ErrTail3.lean
+          lake exe genwitnesssteps seg 74620 1040 1300 ErrTail4 | diff - Services/Witness/ErrTail4.lean
 
       - name: The real witness binary rejects malformed payloads (a test, not a proof)
         run: lake build witnessrun

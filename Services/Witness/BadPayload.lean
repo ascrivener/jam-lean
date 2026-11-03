@@ -253,27 +253,7 @@ theorem run_badTag (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost
       all_goals (try simp only [memcpyFrame])
       all_goals chase
     all_goals (try simp only [memcpyFrame])
-                all_goals chase_prep
-                all_goals chase
-              all_goals (try simp only [memcpyFrame])
-              all_goals chase_prep
-              all_goals chase
-            all_goals (try simp only [memcpyFrame])
-            all_goals chase_prep
-            all_goals chase
-          all_goals (try simp only [memcpyFrame])
-          all_goals chase_prep
-          all_goals chase
-        all_goals (try simp only [memcpyFrame])
-        all_goals chase_prep
-        all_goals chase
-      all_goals (try simp only [memcpyFrame])
-      all_goals chase_prep
-      all_goals chase
-    all_goals (try simp only [memcpyFrame])
-    all_goals chase_prep
     all_goals chase
-  all_goals chase_prep
   all_goals chase
 
 end Services.Witness.BadPayload

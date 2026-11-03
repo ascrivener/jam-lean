@@ -208,28 +208,58 @@ def analyzeSeg (P : Program) (tr : Array (Nat × Regs × Memory))
     `u32` decoder. -/
 def fnRanges : List (Nat × Nat) := [(186740, 187150), (184570, 184870)]
 
+/-- Where path `pb` leaves and rejoins path `pa`, from step `n` on. -/
+def divReport (pa pb : Array Nat) (n : Nat) : IO Unit := do
+  let ok (x y : Nat) : Bool := (List.range 8).all fun d => pa[x + d]? == pb[y + d]?
+  let rejoin (x y : Nat) : Option (Nat × Nat) :=
+    (List.range 4000).findSome? fun d =>
+      (List.range (d + 1)).findSome? fun a => if ok (x + a) (y + d - a) then some (a, d - a) else none
+  let mut x := n; let mut y := n
+  for _ in [0:100000] do
+    if x ≥ pa.size || y ≥ pb.size then break
+    if pa[x]! == pb[y]! then
+      x := x + 1; y := y + 1
+    else
+      match rejoin x y with
+      | some (a, b) =>
+        IO.println s!"diverge at base {x} (pc {pa[x]!}) / other {y}: base +{a}, other +{b}, rejoin pc {pa[x + a]!}"
+        x := x + a; y := y + b
+      | none => IO.println s!"no rejoin after base {x} / other {y}"; return
+  IO.println s!"ends: base {pa.size}, other {pb.size}"
+
+/-- What every mode of the generator shares: the arguments, the blob and the base run. -/
+structure Cx where
+  args : List String
+  mode0 : String
+  empty : Bool
+  mode : String
+  n : Nat
+  bytes : ByteArray
+  code : ByteArray
+  h : List UInt8
+  acct : ServiceAccount
+  jb : JamBlob
+  P : Program
+  Q : Prepared
+  c : Nat
+  i : Nat
+  sid : Nat
+  y : List UInt8
+  pkg : WorkPackage
+  a : ByteArray
+  ω : Regs
+  μ : Memory
+  env : RefineHost.Env
+  tr : Array (Nat × Regs × Memory)
+  path : List Nat
+
 set_option maxHeartbeats 2000000 in
-def main (args : List String) : IO Unit := do
-  -- `seg0` / `chain0`: as `seg` / `chain`, for the class of empty payloads
-  let mode0 := args.headD "run"
-  let empty := mode0 == "seg0" || mode0 == "chain0"
-  let mode := if empty then (mode0.toList.dropLast).asString else mode0
-  let n := (args.getD 1 "39").toNat!
-  let bytes ← IO.FS.readBinFile "services/witness/witness-service.jam"
-  let some code := splitMetadata bytes.toList | return
-  let h := (Blake2b.hash256 bytes).toList
-  let acct : ServiceAccount := { codeHash := h, balance := 0, minAccGas := 0, minMemoGas := 0 }
-  let some jb := JamBlob.parse? code | return
-  let some P := Blob.parse? jb.code | return
-  let Q := P.prepare
-  let (c, i, sid, y) := (3, 0, 7, if empty then [] else [255])
-  let pkg := mkPkg h sid (i + 1) (mkItem h sid y)
-  let a : ByteArray := ⟨(Codec.nat c ++ Codec.nat i ++ Codec.nat sid ++ Codec.var ⟨y.toArray⟩ ++ (Blake2b.hash256 ⟨pkg.encode.toArray⟩).toList).toArray⟩
-  let some (_, ω, μ) := standardInit code a | return
-  let env := mkEnv code sid i (Std.ExtTreeMap.ofList [(sid, acct)]) pkg
-  let (tr, _, _, _, _) := go Q (toHostFn (RefineHost.dispatch env)) 0 1000000000 false ω μ (∅, []) #[] #[] 3000000
-  let path := (tr.toList.take n).map (·.1)
-  if mode == "calls" then
+set_option linter.unusedVariables false in
+def mode_calls (cx : Cx) : IO Unit := do
+    let args := cx.args; let mode0 := cx.mode0; let empty := cx.empty; let mode := cx.mode; let n := cx.n; let bytes := cx.bytes
+    let code := cx.code; let h := cx.h; let acct := cx.acct; let jb := cx.jb; let P := cx.P; let Q := cx.Q
+    let c := cx.c; let i := cx.i; let sid := cx.sid; let y := cx.y; let pkg := cx.pkg; let a := cx.a
+    let ω := cx.ω; let μ := cx.μ; let env := cx.env; let tr := cx.tr; let path := cx.path
     -- the path's calls, returns and host calls from step n on, with the depth of the call stack
     let mut depth := 0
     let mut k := 0
@@ -247,7 +277,28 @@ def main (args : List String) : IO Unit := do
       k := k + 1
     IO.println s!"{tr.size} end"
     return
-  if mode == "cmp" then
+
+set_option maxHeartbeats 2000000 in
+set_option linter.unusedVariables false in
+def mode_div (cx : Cx) : IO Unit := do
+    let args := cx.args; let mode0 := cx.mode0; let empty := cx.empty; let mode := cx.mode; let n := cx.n; let bytes := cx.bytes
+    let code := cx.code; let h := cx.h; let acct := cx.acct; let jb := cx.jb; let P := cx.P; let Q := cx.Q
+    let c := cx.c; let i := cx.i; let sid := cx.sid; let y := cx.y; let pkg := cx.pkg; let a := cx.a
+    let ω := cx.ω; let μ := cx.μ; let env := cx.env; let tr := cx.tr; let path := cx.path
+    -- `div N c i s k`: where the path for (c, i, s, payload of k octets 255) leaves and rejoins the
+    -- base path, from step N on
+    let some t2 := traceFor code h acct Q ((args.getD 2 "3").toNat!) ((args.getD 3 "0").toNat!)
+      ((args.getD 4 "7").toNat!) (List.replicate ((args.getD 5 "1").toNat!) 255) | IO.println "no trace"; return
+    divReport (tr.map (·.1)) (t2.map (·.1)) n
+    return
+
+set_option maxHeartbeats 2000000 in
+set_option linter.unusedVariables false in
+def mode_cmp (cx : Cx) : IO Unit := do
+    let args := cx.args; let mode0 := cx.mode0; let empty := cx.empty; let mode := cx.mode; let n := cx.n; let bytes := cx.bytes
+    let code := cx.code; let h := cx.h; let acct := cx.acct; let jb := cx.jb; let P := cx.P; let Q := cx.Q
+    let c := cx.c; let i := cx.i; let sid := cx.sid; let y := cx.y; let pkg := cx.pkg; let a := cx.a
+    let ω := cx.ω; let μ := cx.μ; let env := cx.env; let tr := cx.tr; let path := cx.path
     -- `cmp PC`: where each test input first reaches PC, and the first later difference from the base run
     let inputs : List (Nat × Nat × Nat × List UInt8) :=
       [(5, 0, 9, [200]), (3, 0, 7, List.replicate 15 255), (3, 0, 7, []), (3, 0, 7, List.replicate 8 13)]
@@ -267,7 +318,14 @@ def main (args : List String) : IO Unit := do
           diff := s!"registers {js} at +{j} (pc {pa})"; break
       IO.println s!"input c={c2} i={i2} s={s2} |y|={y2.length}: reaches at {k2}, ends at {t2.size}; first difference: {diff}"
     return
-  if mode == "vals" then
+
+set_option maxHeartbeats 2000000 in
+set_option linter.unusedVariables false in
+def mode_vals (cx : Cx) : IO Unit := do
+    let args := cx.args; let mode0 := cx.mode0; let empty := cx.empty; let mode := cx.mode; let n := cx.n; let bytes := cx.bytes
+    let code := cx.code; let h := cx.h; let acct := cx.acct; let jb := cx.jb; let P := cx.P; let Q := cx.Q
+    let c := cx.c; let i := cx.i; let sid := cx.sid; let y := cx.y; let pkg := cx.pkg; let a := cx.a
+    let ω := cx.ω; let μ := cx.μ; let env := cx.env; let tr := cx.tr; let path := cx.path
     -- `vals PC off ADDR LEN`: the LEN-octet value at ADDR, `off` steps after reaching PC, for each input
     let off := (args.getD 2 "0").toNat!; let addr := (args.getD 3 "0").toNat!; let len := (args.getD 4 "8").toNat!
     for (c2, i2, s2, y2) in [(3, 0, 7, [255]), (5, 0, 9, [200]), (3, 0, 7, List.replicate 15 255),
@@ -277,7 +335,14 @@ def main (args : List String) : IO Unit := do
       let some (_, rg, mem) := t2[k + off]? | continue
       IO.println s!"|y|={y2.length} c={c2} s={s2}: value {Num.decodeLE (mem.readN addr len)}  regs {(List.range 13).map (fun j => rg[j]!.toNat)}"
     return
-  if mode == "reads" then
+
+set_option maxHeartbeats 2000000 in
+set_option linter.unusedVariables false in
+def mode_reads (cx : Cx) : IO Unit := do
+    let args := cx.args; let mode0 := cx.mode0; let empty := cx.empty; let mode := cx.mode; let n := cx.n; let bytes := cx.bytes
+    let code := cx.code; let h := cx.h; let acct := cx.acct; let jb := cx.jb; let P := cx.P; let Q := cx.Q
+    let c := cx.c; let i := cx.i; let sid := cx.sid; let y := cx.y; let pkg := cx.pkg; let a := cx.a
+    let ω := cx.ω; let μ := cx.μ; let env := cx.env; let tr := cx.tr; let path := cx.path
     -- `reads ADDR`: the steps that read or write octet ADDR
     let addr := n
     let mut k := 0
@@ -288,7 +353,14 @@ def main (args : List String) : IO Unit := do
         if m.writes.any (· % 2 ^ 32 == addr) then IO.println s!"{k} write pc {pc} {repr ins}"
       k := k + 1
     return
-  if mode == "chain" then
+
+set_option maxHeartbeats 2000000 in
+set_option linter.unusedVariables false in
+def mode_chain (cx : Cx) : IO Unit := do
+    let args := cx.args; let mode0 := cx.mode0; let empty := cx.empty; let mode := cx.mode; let n := cx.n; let bytes := cx.bytes
+    let code := cx.code; let h := cx.h; let acct := cx.acct; let jb := cx.jb; let P := cx.P; let Q := cx.Q
+    let c := cx.c; let i := cx.i; let sid := cx.sid; let y := cx.y; let pkg := cx.pkg; let a := cx.a
+    let ω := cx.ω; let μ := cx.μ; let env := cx.env; let tr := cx.tr; let path := cx.path
     -- `chain PC name b₀ b₁ … bₙ`: the theorem from step b₀ to step bₙ after PC, composing the segment
     -- theorems `name0 … name(n-1)` (steps bᵢ … bᵢ₊₁ − 1; the last with `out`)
     let joinPc := n
@@ -460,7 +532,14 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
     IO.println s!"  exact ⟨{prevω}, {prevμ}, {trans}, {regProof nseg 0}, {regProof nseg 7}, {regProof nseg 8}, {", ".intercalate outA}⟩"
     IO.println s!"\nend Services.Witness.{name}"
     return
-  if mode == "seg" then
+
+set_option maxHeartbeats 2000000 in
+set_option linter.unusedVariables false in
+def mode_seg (cx : Cx) : IO Unit := do
+    let args := cx.args; let mode0 := cx.mode0; let empty := cx.empty; let mode := cx.mode; let n := cx.n; let bytes := cx.bytes
+    let code := cx.code; let h := cx.h; let acct := cx.acct; let jb := cx.jb; let P := cx.P; let Q := cx.Q
+    let c := cx.c; let i := cx.i; let sid := cx.sid; let y := cx.y; let pkg := cx.pkg; let a := cx.a
+    let ω := cx.ω; let μ := cx.μ; let env := cx.env; let tr := cx.tr; let path := cx.path
     -- `seg PC a b name`: a standalone theorem for steps a … b − 1 after the path first reaches PC,
     -- stating only the values on which every input of the class agrees
     let joinPc := n
@@ -559,6 +638,14 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
     IO.println "    case rd => intro a; simp only [PVM.Memory.readable_writeN]\n    case wr => intro a; simp only [PVM.Memory.writable_writeN]\n"
     IO.println s!"end Services.Witness.{name}"
     return
+
+set_option maxHeartbeats 2000000 in
+set_option linter.unusedVariables false in
+def mode_codeRun (cx : Cx) : IO Unit := do
+  let args := cx.args; let mode0 := cx.mode0; let empty := cx.empty; let mode := cx.mode; let n := cx.n; let bytes := cx.bytes
+  let code := cx.code; let h := cx.h; let acct := cx.acct; let jb := cx.jb; let P := cx.P; let Q := cx.Q
+  let c := cx.c; let i := cx.i; let sid := cx.sid; let y := cx.y; let pkg := cx.pkg; let a := cx.a
+  let ω := cx.ω; let μ := cx.μ; let env := cx.env; let tr := cx.tr; let path := cx.path
   let mut facts : Array String := #[]
   let mut lemmas : Array String := #[]
   let mut seen : List Nat := []
@@ -889,3 +976,39 @@ theorem prefix_from_Y (b a : ByteArray) (jb : JamBlob) (hjb : JamBlob.parse? b =
     (startMem_initial _ a hl ha)
 
 end Services.Witness.Prefix"
+
+set_option maxHeartbeats 2000000 in
+def main (args : List String) : IO Unit := do
+  -- `seg0` / `chain0`: as `seg` / `chain`, for the class of empty payloads
+  let mode0 := args.headD "run"
+  let empty := mode0 == "seg0" || mode0 == "chain0"
+  let mode := if empty then (mode0.toList.dropLast).asString else mode0
+  let n := (args.getD 1 "39").toNat!
+  let bytes ← IO.FS.readBinFile "services/witness/witness-service.jam"
+  let some code := splitMetadata bytes.toList | return
+  let h := (Blake2b.hash256 bytes).toList
+  let acct : ServiceAccount := { codeHash := h, balance := 0, minAccGas := 0, minMemoGas := 0 }
+  let some jb := JamBlob.parse? code | return
+  let some P := Blob.parse? jb.code | return
+  let Q := P.prepare
+  -- `WITNESS_INPUT=c,i,s,k` replaces the base input (exploration only; generated files use the default)
+  let inp := ((← IO.getEnv "WITNESS_INPUT").getD "").splitOn ","
+  let (c, i, sid, y) : Nat × Nat × Nat × List UInt8 := match inp.filterMap String.toNat? with
+    | [c, i, s, k] => (c, i, s, List.replicate k 255)
+    | _ => (3, 0, 7, if empty then [] else [255])
+  let pkg := mkPkg h sid (i + 1) (mkItem h sid y)
+  let a : ByteArray := ⟨(Codec.nat c ++ Codec.nat i ++ Codec.nat sid ++ Codec.var ⟨y.toArray⟩ ++ (Blake2b.hash256 ⟨pkg.encode.toArray⟩).toList).toArray⟩
+  let some (_, ω, μ) := standardInit code a | return
+  let env := mkEnv code sid i (Std.ExtTreeMap.ofList [(sid, acct)]) pkg
+  let (tr, _, _, _, _) := go Q (toHostFn (RefineHost.dispatch env)) 0 1000000000 false ω μ (∅, []) #[] #[] 3000000
+  let path := (tr.toList.take n).map (·.1)
+  let cx : Cx := { args, mode0, empty, mode, n, bytes, code, h, acct, jb, P, Q, c, i, sid, y, pkg, a, ω, μ, env, tr, path }
+  match mode with
+  | "calls" => mode_calls cx
+  | "div" => mode_div cx
+  | "cmp" => mode_cmp cx
+  | "vals" => mode_vals cx
+  | "reads" => mode_reads cx
+  | "chain" => mode_chain cx
+  | "seg" => mode_seg cx
+  | _ => mode_codeRun cx

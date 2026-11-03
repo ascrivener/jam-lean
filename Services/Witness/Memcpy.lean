@@ -107,11 +107,9 @@ def memcpyFrame (μ : Memory) (ω : Regs) (sp : Nat) : Memory :=
   ((μ.writeN (sp - 48 + 40) (Num.encodeLE 8 ω[0].toNat)).writeN (sp - 48 + 32)
     (Num.encodeLE 8 ω[5].toNat)).writeN (sp - 48 + 24) (Num.encodeLE 8 ω[6].toNat)
 
-/-- **`memcpy` of fewer than 16 octets** (186740, the byte-loop path): from ω₇ = dst, ω₈ = src,
-    ω₉ = n < 16, ω₁ = sp and a return address ω₀ that `djump` resolves to `t`, it writes its stack
-    frame below sp, copies the n octets at src to dst, and returns to `t` with ω₀, ω₁, ω₅, ω₆
-    and ω₇ as they were. The frame, src and dst ranges are disjoint. -/
-theorem memcpy_small {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+/-- **`memcpy` of fewer than 16 octets** (186740, the byte-loop path), with every register it
+    leaves as it found: as `memcpy_small`, and ω₂, ω₃, ω₄ and ω₁₂ too (it changes only ω₈ … ω₁₁). -/
+theorem memcpy_small_regs {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
     (ret t sp dst src n : Nat) (h0 : ω[0] = UInt64.ofNat ret) (h1 : ω[1] = UInt64.ofNat sp)
     (h7 : ω[7] = UInt64.ofNat dst) (h8 : ω[8] = UInt64.ofNat src) (h9 : ω[9] = UInt64.ofNat n)
     (hn : n < 16) (hret : 0 < ret ∧ ret ≤ 3426 ∧ ret % 2 = 0)
@@ -124,7 +122,8 @@ theorem memcpy_small {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
     (hr : ∀ a, src ≤ a → a < src + n → μ.readable a = true)
     (hw : ∀ a, dst ≤ a → a < dst + n → μ.writable a = true) :
     ∃ ω', FreeStepsH p R 186740 ω μ x t ω' ((memcpyFrame μ ω sp).writeN dst (μ.readN src n)) x ∧
-      ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ ω'[7] = ω[7] := by
+      ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[2] = ω[2] ∧ ω'[3] = ω[3] ∧ ω'[4] = ω[4] ∧ ω'[5] = ω[5] ∧
+      ω'[6] = ω[6] ∧ ω'[7] = ω[7] ∧ ω'[12] = ω[12] := by
   have hrf : ∀ a, sp - 48 ≤ a → a < sp → μ.readable a = true :=
     fun a h1 h2 => Memory.readable_of_writable (hwf a h1 h2)
   have hret0 : ω[0].toNat = ret := by
@@ -196,10 +195,14 @@ theorem memcpy_small {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
     have g5 := hfr 5 (by decide)
     have g6 := hfr 6 (by decide)
     have g7 := hfr 7 (by decide)
+    have g2 := hfr 2 (by decide)
+    have g3 := hfr 3 (by decide)
+    have g4 := hfr 4 (by decide)
+    have g12 := hfr 12 (by decide)
     simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,
       PVM.getD_some', List.lookup_nil, Option.getD_none, Fin.isValue, Fin.getElem_fin,
-      PVM.regIdx_val_0, PVM.regIdx_val_1, PVM.regIdx_val_5, PVM.regIdx_val_6,
-      PVM.regIdx_val_7] at g0 g1 g5 g6 g7
+      PVM.regIdx_val_0, PVM.regIdx_val_1, PVM.regIdx_val_2, PVM.regIdx_val_3, PVM.regIdx_val_4,
+      PVM.regIdx_val_5, PVM.regIdx_val_6, PVM.regIdx_val_7, PVM.regIdx_val_12] at g0 g1 g2 g3 g4 g5 g6 g7 g12
     refine ⟨?ω₃, ?run₂, ?post₂⟩
     case run₂ =>
       apply FreeStepsH.step_decode (d_186740 (p := p) (P := P))
@@ -237,6 +240,28 @@ theorem memcpy_small {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
       exact FreeStepsH.refl
     case post₂ =>
       simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,
-        PVM.getD_some', List.lookup_nil, Option.getD_none, h0, h1, g7, and_self]
+        PVM.getD_some', List.lookup_nil, Option.getD_none, h0, h1, g2, g3, g4, g7, g12, and_self]
+
+/-- **`memcpy` of fewer than 16 octets** (186740, the byte-loop path): from ω₇ = dst, ω₈ = src,
+    ω₉ = n < 16, ω₁ = sp and a return address ω₀ that `djump` resolves to `t`, it writes its stack
+    frame below sp, copies the n octets at src to dst, and returns to `t` with ω₀, ω₁, ω₅, ω₆
+    and ω₇ as they were. The frame, src and dst ranges are disjoint. -/
+theorem memcpy_small {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (ret t sp dst src n : Nat) (h0 : ω[0] = UInt64.ofNat ret) (h1 : ω[1] = UInt64.ofNat sp)
+    (h7 : ω[7] = UInt64.ofNat dst) (h8 : ω[8] = UInt64.ofNat src) (h9 : ω[9] = UInt64.ofNat n)
+    (hn : n < 16) (hret : 0 < ret ∧ ret ≤ 3426 ∧ ret % 2 = 0)
+    (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t) (hbt : P.isBlockStart t = true)
+    (hsp : 65536 + 48 ≤ sp ∧ sp < 4294967296) (hdst : 65536 ≤ dst ∧ dst + 16 < 4294967296)
+    (hsrc : 65536 ≤ src ∧ src + 16 < 4294967296)
+    (hdj : dst + n ≤ src ∨ src + n ≤ dst) (hfd : dst + n ≤ sp - 48 ∨ sp ≤ dst)
+    (hfs : src + n ≤ sp - 48 ∨ sp ≤ src)
+    (hwf : ∀ a, sp - 48 ≤ a → a < sp → μ.writable a = true)
+    (hr : ∀ a, src ≤ a → a < src + n → μ.readable a = true)
+    (hw : ∀ a, dst ≤ a → a < dst + n → μ.writable a = true) :
+    ∃ ω', FreeStepsH p R 186740 ω μ x t ω' ((memcpyFrame μ ω sp).writeN dst (μ.readN src n)) x ∧
+      ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ ω'[7] = ω[7] := by
+  obtain ⟨ω', h, g0, g1, _, _, _, g5, g6, g7, _⟩ := memcpy_small_regs (p := p) (P := P) (R := R) x ω μ
+    ret t sp dst src n h0 h1 h7 h8 h9 hn hret hjt hbt hsp hdst hsrc hdj hfd hfs hwf hr hw
+  exact ⟨ω', h, g0, g1, g5, g6, g7⟩
 
 end Services.Witness

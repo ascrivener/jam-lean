@@ -249,14 +249,20 @@ with host calls for storage, service creation and transfers.
   default, and its generated files are unchanged.
 * **Code facts and their check:** `Services/Bootstrap/Code.lean` (the 7,463-step refine of an
   empty instruction list, plus `memcpy`), checked by `lake build bootstrapcheck`.
-* **Prefix:** `Services/Bootstrap/Prefix.lean`, the first 402 steps of its refine (both `fetch`
-  calls and both heap growths) with what they leave, proved from Y's starting state for any
-  argument length, as for witness.
+* **Prefix:** `Services/Bootstrap/Prefix.lean`, the first 600 steps of its refine (both `fetch`
+  calls, both heap growths and two `memcpy` calls) with what they leave, proved from Y's starting
+  state for any argument length, as for witness.
 * **Shared summaries:** `memcpy` is instruction-for-instruction the same code in both blobs
   (at 186740 in witness, 68729 in bootstrap), so `Services/Bootstrap/Memcpy.lean` is witness's
   proof with the pcs moved, checked again by the kernel. The SDK's decoders and the allocator
   are not shared: the compiler specializes them differently in each service, so their summaries
   are per binary.
+* **Summaries used by the generated runs.** For a service with a `memcpy` summary, the generated
+  prefix does not step through `memcpy` calls of fewer than 16 octets whose arguments are the same
+  in every traced run: it splits the run there (`FreeStepsH.ex_trans`), applies
+  `memcpy_small_regs` (`FreeStepsH.bind_ex`), and continues from the return with the registers
+  it guarantees. Bootstrap's prologue makes 31 `memcpy` calls before it reads its arguments
+  (step 3455); 29 of them are under 16 octets.
 
 ## Reasoning about programs (`PVM/Logic/`)
 

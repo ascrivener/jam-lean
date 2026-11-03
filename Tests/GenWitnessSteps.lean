@@ -85,6 +85,12 @@ structure Svc where
   /-- Whether `Services/<name>/Memcpy.lean` exists (`memcpy_small` at the head of `fnRanges`):
       the prefix then calls it for each `memcpy` of fewer than 16 octets instead of stepping. -/
   memcpySummary : Bool := false
+  /-- `segx`: more inputs for the class (values of the widths and ranges that the base classes
+      leave out, so that no value they happen to share is stated). -/
+  segxExtra : List (Nat × Nat × Nat × List UInt8) := []
+  /-- `segx`: facts about the variables that the steps need, each proved by `omega` from the
+      variables' bounds, with the variables they use. -/
+  segFacts : List (List String × String) := []
 
 /-- Witness (`services/witness`). -/
 def witnessSvc : Svc where
@@ -99,6 +105,8 @@ def witnessSvc : Svc where
   postClass := [(5, 0, 9, [200]), (3, 0, 7, List.replicate 15 255), (200, 1, 70000, [12]), (20000, 300, 3, []),
     (3, 0, 7, List.replicate 300 255)]
   fnRanges := [(186740, 187150), (184570, 184870), (43276, 43490)]
+  segxExtra := [(3, 0, 2147483653, [200]), (3, 1, 7, [255]), (20000, 300, 4000000000, List.replicate 3 77)]
+  segFacts := [(["Y"], "(Y + 31) / 32 = 1")]
 
 /-- Parity's bootstrap service (`services/bootstrap`): the payload is an encoded `Instructions`,
     the instruction list then a 32-octet salt; the base input has no instructions. -/
@@ -154,13 +162,16 @@ structure SegInfo where
   symPost : List (Nat × String)
   memPost : List (Nat × Nat)
   pcs : List Nat
+  /-- `segx`: 8-octet words the segment leaves holding a symbolic value. -/
+  symMem : List (Nat × String) := []
   deriving Inhabited
 
 /-- Analyze steps `k0 + a … k0 + b − 1` of trace `tr`, against the other traces of the class
     (aligned at `k0`/their own join index) and their input parameters `(c, i, s, |y|)`. -/
 def analyzeSeg (P : Program) (tr : Array (Nat × Regs × Memory))
-    (others : Array (Array (Nat × Regs × Memory) × Nat)) (otherPs : Array (Nat × Nat × Nat × Nat))
-    (k0 a b : Nat) (out : Bool) (baseP : Nat × Nat × Nat × Nat := (3, 0, 7, 1)) : IO SegInfo := do
+    (others : Array (Array (Nat × Regs × Memory) × Nat)) (otherPs : Array (Nat × Nat × Nat × List UInt8))
+    (k0 a b : Nat) (out : Bool) (baseP : Nat × Nat × Nat × List UInt8 := (3, 0, 7, [255]))
+    (ext : Bool := false) : IO SegInfo := do
   let A := k0 + a; let B := k0 + b
   let some (pcA, rA, mA) := tr[A]? | throw (IO.userError "step out of range")
   let some (pcB, rB, mB) := tr[B]? | throw (IO.userError "step out of range")
@@ -214,15 +225,39 @@ def analyzeSeg (P : Program) (tr : Array (Nat × Regs × Memory))
   let goodLoads := loads.toList.filter fun (a, k) =>
     (List.range k).all fun j => agreeMem A (a + j)
   -- values equal to an input parameter in every run become a symbolic variable
-  let pick (q : Nat × Nat × Nat × Nat) (v : String) : Nat :=
+  let header (q : Nat × Nat × Nat × List UInt8) : Nat :=
+    (Codec.nat q.1).length + (Codec.nat q.2.1).length + (Codec.nat q.2.2.1).length + (Codec.nat q.2.2.2.length).length
+  let pick (q : Nat × Nat × Nat × List UInt8) (v : String) : Nat :=
     match v with
     | "C" => q.1 | "I" => q.2.1 | "S" => q.2.2.1
-    | "L" => (Codec.nat q.1).length + (Codec.nat q.2.1).length + (Codec.nat q.2.2.1).length +
-        (Codec.nat q.2.2.2).length + q.2.2.2 + 32
-    | _ => q.2.2.2
-  let matchVar (valBase : Nat) (valsOther : List Nat) : Option String :=
-    ["Y", "S", "C", "I", "L"].find? fun v =>
-      valBase == pick baseP v && (valsOther.zip otherPs.toList).all fun (x, q) => x == pick q v
+    | "L" => header q + q.2.2.2.length + 32
+    | "T" => (q.2.2.2.headD 0).toNat
+    | "Q" => 2 ^ 32 - 2 ^ 16 - 2 ^ 24 + header q
+    | _ => q.2.2.2.length
+  -- `ext` (`segx`): also the payload's first octet T and the reader position Q after the argument
+  -- header, and sums of a constant and one or two variables
+  let names := if ext then (if baseP.2.2.2.isEmpty then ["Y", "S", "C", "I", "L", "Q"] else ["Y", "S", "C", "I", "L", "T", "Q"])
+    else ["Y", "S", "C", "I", "L"]
+  let allQ := baseP :: otherPs.toList
+  let matchVar (valBase : Nat) (valsOther : List Nat) : Option String := Id.run do
+    let vals := valBase :: valsOther
+    let fits (f : (Nat × Nat × Nat × List UInt8) → Int) : Option Int :=
+      let k := (vals.head! : Int) - f baseP
+      if (vals.zip allQ).all (fun (x, q) => (x : Int) == f q + k) then some k else none
+    let showE (vs : List String) (k : Int) : String :=
+      "(" ++ " + ".intercalate vs ++ (if k == 0 then "" else if k > 0 then s!" + {k}" else s!" - {-k}") ++ ")"
+    for v in names do
+      if let some 0 := fits (fun q => (pick q v : Int)) then return some v
+    if !ext then return none
+    for v in names do
+      if let some k := fits (fun q => (pick q v : Int)) then
+        if k ≥ 0 || (allQ.all fun q => (pick q v : Int) + k ≥ 0) then return some (showE [v] k)
+    for v in names do
+      for u in names do
+        if v < u then
+          if let some k := fits (fun q => (pick q v : Int) + pick q u) then
+            if k ≥ 0 then return some (showE [v, u] k)
+    return none
   let mut symLoads : List (Nat × Nat × String) := []
   for (a, k) in loads.toList do
     if !goodLoads.contains (a, k) then
@@ -242,21 +277,40 @@ def analyzeSeg (P : Program) (tr : Array (Nat × Regs × Memory))
     if !agreeReg B j then
       let vo := (others.toList).map fun (t2, k2) => (t2[k2 + (B - k0)]?.map (fun x => x.2.1[j]!.toNat)).getD 0
       if let some v := matchVar rB[j]!.toNat vo then symPost := (j, v) :: symPost
-  let vars := (symLoads.map (·.2.2) ++ symRegs.map (·.2) ++ symPost.map (·.2)).eraseDups
+  let vars0 := ((symLoads.map (·.2.2) ++ symRegs.map (·.2) ++ symPost.map (·.2)).flatMap
+    (fun e => ((e.replace "(" "").replace ")" "" |>.splitOn " ").filter names.contains)).eraseDups
   let regPost := (List.range 13).filter fun j => !wregs.contains j || agreeReg B j
   for j in wregs do
     if !agreeReg B j then IO.eprintln s!"input-dependent register {j} at the end"
   -- `out`: also the octets of the output, ω₇ … ω₇ + ω₈ at the end (what Ψ_R returns at the halt)
   let outBytes := if out then
       (List.range rB[8]!.toNat).map (rB[7]!.toNat + ·) else []
-  let livePost := ((live ++ outBytes).eraseDups.mergeSort).filter (agreeMem B)
+  -- `ext`: live 8-octet words, all written, that hold the same symbolic value in every run
+  let mut symMem : List (Nat × String) := []
+  if ext then
+    let words := ((live.map (fun a => a - a % 8)).eraseDups.mergeSort).filter fun a =>
+      (List.range 8).all fun j => written.contains (a + j)
+    for a in words do
+      if !((List.range 8).all fun j => agreeMem B (a + j)) then
+        let vb := Num.decodeLE (mB.readN a 8)
+        let vo := (others.toList).map fun (t2, k2) =>
+          (t2[k2 + (B - k0)]?.map (fun x => Num.decodeLE (x.2.2.readN a 8))).getD 0
+        if let some e := matchVar vb vo then symMem := (a, e) :: symMem
+  let inSym (b : Nat) : Bool := symMem.any fun (a, _) => a ≤ b && b < a + 8
+  -- `ext`: an octet of a word with an input-dependent written octet is not stated on its own
+  let mixed (b : Nat) : Bool := ext && (List.range 8).any fun j =>
+    let c := b - b % 8 + j
+    written.contains c && !agreeMem B c
+  let livePost := ((live ++ outBytes).eraseDups.mergeSort).filter fun b => agreeMem B b && !inSym b && !mixed b
+  let vars := (vars0 ++ symMem.flatMap (fun (_, e) =>
+    ((e.replace "(" "").replace ")" "" |>.splitOn " ").filter names.contains)).eraseDups
   let pcs := (List.range (B - A)).filterMap fun j => tr[A + j]?.map (·.1)
   return { A, B, pcA, pcB, vars, regFacts := regFacts.map (fun j => (j, rA[j]!.toNat)), symRegs, symLoads, wr, rr,
            loads := goodLoads.map (fun (a, k) => (a, k, (List.range k).map fun j => (mA.read (a + j)).toNat)),
            byteFacts := ((rlist.mergeSort).filter (agreeMem A)).map (fun a => (a, (mA.read a).toNat)),
            wregs,
            regPost := regPost.map (fun j => (j, if wregs.contains j then some rB[j]!.toNat else none)),
-           symPost, memPost := livePost.map (fun a => (a, (mB.read a).toNat)), pcs }
+           symPost, memPost := livePost.map (fun a => (a, (mB.read a).toNat)), pcs, symMem := symMem.reverse }
 
 
 /-- Where path `pb` leaves and rejoins path `pa`, from step `n` on. -/
@@ -430,16 +484,16 @@ def mode_chain (cx : Cx) : IO Unit := do
       (List.range t.size).find? (fun k => (t[k]?.map (·.1)) == some joinPc)
     let some k0 := align tr | IO.eprintln "join not reached"; return
     let mut others : Array (Array (Nat × Regs × Memory) × Nat) := #[]
-    let mut otherPs : Array (Nat × Nat × Nat × Nat) := #[]
+    let mut otherPs : Array (Nat × Nat × Nat × List UInt8) := #[]
     for (c2, i2, s2, y2) in classInputs do
       let some t2 := traceFor code h acct Q c2 i2 s2 y2 | continue
       let some k2 := align t2 | return
       others := others.push (t2, k2)
-      otherPs := otherPs.push (c2, i2, s2, y2.length)
+      otherPs := otherPs.push (c2, i2, s2, y2)
     let nseg := bs.length - 1
     let mut infos : Array SegInfo := #[]
     for k in [0:nseg] do
-      infos := infos.push (← analyzeSeg P tr others otherPs k0 bs[k]! bs[k+1]! (k + 1 == nseg) (c, i, sid, y.length))
+      infos := infos.push (← analyzeSeg P tr others otherPs k0 bs[k]! bs[k+1]! (k + 1 == nseg) (c, i, sid, y))
     -- what the path writes before each segment: registers and octets
     let writtenBefore (k : Nat) : Std.HashSet Nat × List Nat := Id.run do
       let mut w : Std.HashSet Nat := {}
@@ -493,7 +547,8 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
     (x : RefineCtx)"
     for v in vars do
       let bound := match v with
-        | "Y" => "1 ≤ Y ∧ Y ≤ 15" | "S" => "S < 4294967296" | "C" => "C < 65536" | _ => "I < 65536"
+        | "Y" => "1 ≤ Y ∧ Y ≤ 15" | "S" => "S < 4294967296" | "C" => "C < 65536" | "L" => "L < 4294967296"
+        | "T" => "12 ≤ T ∧ T < 256" | "Q" => "4278124548 ≤ Q ∧ Q ≤ 4278124564" | _ => "I < 65536"
       IO.println s!"    ({v} : Nat) (h{v} : {bound})"
     for (j, v) in iregs do
       IO.println s!"    (hreg{j} : ω[{j}] = UInt64.ofNat {v})"
@@ -603,12 +658,12 @@ def mode_seg (cx : Cx) : IO Unit := do
     let joinPc := n
     let a := (args.getD 2 "0").toNat!; let b := (args.getD 3 "0").toNat!; let name := args.getD 4 "seg"
     let classInputs : List (Nat × Nat × Nat × List UInt8) :=
-      if empty then cx.svc.emptyClass else cx.svc.segClass
+      (if empty then cx.svc.emptyClass else cx.svc.segClass) ++ (if mode0 == "segx" then cx.svc.segxExtra else [])
     let align (t : Array (Nat × Regs × Memory)) : Option Nat :=
       (List.range t.size).find? (fun k => (t[k]?.map (·.1)) == some joinPc)
     let some k0 := align tr | IO.eprintln "join not reached"; return
     let mut others : Array (Array (Nat × Regs × Memory) × Nat) := #[]
-    let mut otherPs : Array (Nat × Nat × Nat × Nat) := #[]
+    let mut otherPs : Array (Nat × Nat × Nat × List UInt8) := #[]
     for (c2, i2, s2, y2) in classInputs do
       let some t2 := traceFor code h acct Q c2 i2 s2 y2 | continue
       let some k2 := align t2 | IO.eprintln s!"join not reached for |y| = {y2.length}"; return
@@ -616,13 +671,19 @@ def mode_seg (cx : Cx) : IO Unit := do
         if (tr[k0 + j]?.map (·.1)) != (t2[k2 + j]?.map (·.1)) then
           IO.eprintln s!"paths differ at +{j} for c={c2} s={s2} |y|={y2.length}"; return
       others := others.push (t2, k2)
-      otherPs := otherPs.push (c2, i2, s2, y2.length)
-    let info ← analyzeSeg P tr others otherPs k0 a b (args.getD 5 "" == "out") (c, i, sid, y.length)
+      otherPs := otherPs.push (c2, i2, s2, y2)
+    let opts := args.drop 5
+    let info0 ← analyzeSeg P tr others otherPs k0 a b (opts.contains "out") (c, i, sid, y) (mode0 == "segx")
+    -- `keep=j,…`: assume only these registers at the start (those the summary before guarantees)
+    let keep : Option (List Nat) := (opts.find? (·.startsWith "keep=")).map fun o =>
+      (((o.drop 5).toString).splitOn ",").map String.toNat!
+    let kept (j : Nat) : Bool := match keep with | some ks => ks.contains j | none => true
+    let info := { info0 with regFacts := info0.regFacts.filter (kept ·.1), symRegs := info0.symRegs.filter (kept ·.1) }
     let A := info.A; let B := info.B; let pcA := info.pcA; let pcB := info.pcB
     let vars := info.vars; let wr := info.wr; let rr := info.rr; let wregs := info.wregs
     let symRegs := info.symRegs; let symLoads := info.symLoads; let symPost := info.symPost
     IO.println s!"/-
-  GENERATED by `lake exe genwitnesssteps {FLAG}{mode0} {joinPc} {a} {b} {name}{if args.getD 5 "" == "out" then " out" else ""}` from {BLOB}.
+  GENERATED by `lake exe genwitnesssteps {FLAG}{mode0} {joinPc} {a} {b} {name}{opts.foldl (fun acc o => acc ++ " " ++ o) ""}` from {BLOB}.
   Do not edit by hand.
 -/
 import Services.{NS}.Code
@@ -640,7 +701,8 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
     (x : RefineCtx)"
     for v in vars do
       let bound := match v with
-        | "Y" => "1 ≤ Y ∧ Y ≤ 15" | "S" => "S < 4294967296" | "C" => "C < 65536" | _ => "I < 65536"
+        | "Y" => "1 ≤ Y ∧ Y ≤ 15" | "S" => "S < 4294967296" | "C" => "C < 65536" | "L" => "L < 4294967296"
+        | "T" => "12 ≤ T ∧ T < 256" | "Q" => "4278124548 ≤ Q ∧ Q ≤ 4278124564" | _ => "I < 65536"
       IO.println s!"    ({v} : Nat) (h{v} : {bound})"
     for (j, v) in info.regFacts do
       IO.println s!"    (hreg{j} : ω[{j}] = UInt64.ofNat {v})"
@@ -668,8 +730,10 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
     IO.println ("      (" ++ " ∧ ".intercalate regC ++ ") ∧")
     let memC := info.memPost.map fun (a, v) => s!"μ'.read {a} = {v}"
     IO.println ("      (" ++ (if memC.isEmpty then "True" else " ∧ ".intercalate memC) ++ ") ∧")
+    if !info.symMem.isEmpty then
+      IO.println ("      (" ++ " ∧ ".intercalate (info.symMem.map fun (a, e) => s!"μ'.readN {a} 8 = Num.encodeLE 8 {e}") ++ ") ∧")
     let outW := " && ".intercalate (wr.map fun (lo, hi) => s!"!(decide ({lo} ≤ a ∧ a < {hi}))")
-    IO.println s!"      (∀ a, (decide (a < 4294967296) && {outW}) = true → μ'.read a = μ.read a) ∧"
+    IO.println s!"      (∀ a, (decide (a < 4294967296){if outW == "" then "" else " && " ++ outW}) = true → μ'.read a = μ.read a) ∧"
     IO.println "      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by"
     let hws := ", ".intercalate ((List.range wr.length).map (s!"hw{·}"))
     let hrs := ", ".intercalate ((List.range wr.length).map (s!"hr{·}") ++ (List.range rr.length).map (s!"hrd{·}"))
@@ -678,7 +742,13 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
     let regA := ", ".intercalate (info.regFacts.map (fun (j, _) => s!"hreg{j}") ++ symRegs.map (fun (j, _) => s!"hreg{j}"))
     let loadA := ", ".intercalate (info.loads.map (fun (a, k, _) => s!"hbn_{a}_{k}") ++ info.byteFacts.map (fun (a, _) => s!"hb_{a}") ++
       symLoads.map (fun (a, k, _) => s!"hbn_{a}_{k}") ++ vars.map (s!"h{·}"))
-    let simpArgs := ", ".intercalate ([regA, loadA, hws, hrs].filter (· != ""))
+    let facts := if mode0 == "segx" then cx.svc.segFacts.filter (fun (vs, _) => vs.all vars.contains) else []
+    let mut fk := 0
+    for (_, f) in facts do
+      IO.println s!"  have hf{fk} : {f} := by omega"
+      fk := fk + 1
+    let factA := ", ".intercalate ((List.range facts.length).map (s!"hf{·}"))
+    let simpArgs := ", ".intercalate ([regA, loadA, hws, hrs, factA].filter (· != ""))
     IO.println "  rw [show ω = regsNF ω [] from rfl]\n  refine ⟨?ω', ?μ', ?run, ?post⟩\n  case run =>"
     for pc in info.pcs do
       match P.decode pc with
@@ -686,7 +756,11 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
         IO.println s!"    apply FreeStepsH.host_decode (d_{pc} (p := p) (P := P))\n    · set_option maxHeartbeats 1000000 in pvm_host [{simpArgs}, PVM.Memory.writable_writeN, PVM.Memory.writable_setPages, List.range_succ, List.range_zero, List.nil_append, List.all_cons, List.all_nil, List.all_append, Bool.and_true, Bool.true_and, Nat.reduceDiv, PVM.Memory.writeN_nil, Num.length_encodeLE]"
       | _ =>
         IO.println s!"    apply FreeStepsH.step_decode (d_{pc} (p := p) (P := P))\n    · set_option maxHeartbeats 1000000 in pvm_simp [{simpArgs}]"
-    IO.println "    exact FreeStepsH.refl\n  case post =>\n    refine ⟨?regs, ?mem, ?frame, ?rd, ?wr⟩"
+    if info.symMem.isEmpty then
+      IO.println "    exact FreeStepsH.refl\n  case post =>\n    refine ⟨?regs, ?mem, ?frame, ?rd, ?wr⟩"
+    else
+      IO.println "    exact FreeStepsH.refl\n  case post =>\n    refine ⟨?regs, ?mem, ?smem, ?frame, ?rd, ?wr⟩"
+      IO.println ("    case smem =>\n      " ++ (if info.symMem.length > 1 then "refine ⟨" ++ ", ".intercalate (info.symMem.map fun _ => "?_") ++ "⟩ <;>\n      " else "") ++ "simp (disch := pvm_arith) only [PVM.Memory.readN_writeN_same, PVM.Memory.readN_writeN_disjoint,\n        PVM.Num.length_encodeLE, List.length_cons, List.length_nil, PVM.two32]")
     IO.println s!"    case regs =>\n      simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,\n        PVM.getD_some', List.lookup_nil, Option.getD_none, and_self, and_true, true_and{if regA == "" then "" else ", " ++ regA}]"
     IO.println "    case mem =>\n      simp (disch := pvm_arith) only [PVM.Memory.read_writeN, PVM.reduceEncodeLE, PVM.Num.length_encodeLE,\n        List.length_cons, List.length_nil, PVM.two32, Nat.reduceAdd, Nat.reduceSub, Nat.reduceLeDiff,\n        Nat.reduceLT, and_true, true_and, and_false, false_and, ↓reduceIte, List.getElem!_cons_zero,\n        List.getElem!_cons_succ, UInt8.reduceOfNat, and_self]"
     let nW := wr.length
@@ -699,18 +773,18 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
 set_option maxHeartbeats 2000000 in
 /-- The segment analysis of steps 0 … N − 1 over a class of inputs of every width (the prefix's
     path does not depend on the input). -/
-def prefixInfo (cx : Cx) : IO (SegInfo × Array (Array (Nat × Regs × Memory) × Nat) × Array (Nat × Nat × Nat × Nat)) := do
+def prefixInfo (cx : Cx) : IO (SegInfo × Array (Array (Nat × Regs × Memory) × Nat) × Array (Nat × Nat × Nat × List UInt8)) := do
   let classInputs : List (Nat × Nat × Nat × List UInt8) := cx.svc.postClass
   let mut others : Array (Array (Nat × Regs × Memory) × Nat) := #[]
-  let mut otherPs : Array (Nat × Nat × Nat × Nat) := #[]
+  let mut otherPs : Array (Nat × Nat × Nat × List UInt8) := #[]
   for (c2, i2, s2, y2) in classInputs do
     let some t2 := traceFor cx.code cx.h cx.acct cx.Q c2 i2 s2 y2 | continue
     for j in [0:cx.n+1] do
       if (cx.tr[j]?.map (·.1)) != (t2[j]?.map (·.1)) then
         throw (IO.userError s!"paths differ at {j} for c={c2}")
     others := others.push (t2, 0)
-    otherPs := otherPs.push (c2, i2, s2, y2.length)
-  return (← analyzeSeg cx.P cx.tr others otherPs 0 0 cx.n false (cx.c, cx.i, cx.sid, cx.y.length), others, otherPs)
+    otherPs := otherPs.push (c2, i2, s2, y2)
+  return (← analyzeSeg cx.P cx.tr others otherPs 0 0 cx.n false (cx.c, cx.i, cx.sid, cx.y), others, otherPs)
 
 set_option linter.unusedVariables false in
 def mode_codeRun (cx : Cx) : IO Unit := do
@@ -929,7 +1003,7 @@ set_option maxHeartbeats 10000000
       (others.toList.zip otherPs.toList).all fun ((t2, _), q) =>
         Num.decodeLE (((t2[n]?).map (fun x => x.2.2.readN a 8)).getD []) ==
           (Codec.nat q.1).length + (Codec.nat q.2.1).length + (Codec.nat q.2.2.1).length +
-            (Codec.nat q.2.2.2).length + q.2.2.2 + 32
+            (Codec.nat q.2.2.2.length).length + q.2.2.2.length + 32
   let info := { info0 with
     memPost := info0.memPost.filter (fun (b, _) => !lenAt.any fun a => a ≤ b && b < a + 8),
     regPost := info0.regPost.filter (fun (j, _) => !scratch.contains j),
@@ -1257,7 +1331,7 @@ def main (args0 : List String) : IO Unit := do
   -- `seg0` / `chain0`: as `seg` / `chain`, for the class of empty payloads
   let mode0 := args.headD "run"
   let empty := mode0 == "seg0" || mode0 == "chain0"
-  let mode := if empty then (mode0.toList.dropLast).asString else mode0
+  let mode := if empty then (mode0.toList.dropLast).asString else if mode0 == "segx" then "seg" else mode0
   let n := (args.getD 1 "39").toNat!
   let bytes ← IO.FS.readBinFile svc.blob
   let some code := splitMetadata bytes.toList | return

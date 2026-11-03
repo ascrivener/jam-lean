@@ -903,6 +903,25 @@ def mode_codeRun (cx : Cx) : IO Unit := do
       if a < argStart && !written.contains a && !(baseBytes.any (·.1 == a)) then
         baseBytes := baseBytes.push (a, (μ.read a).toNat)
     for w in m.writes do written := written.insert (w % 2 ^ 32)
+  -- the octets any traced run reads from the starting memory before writing them, on its whole path
+  -- (the facts the theorems after the prefix chase back to the start)
+  let mut pathAcc : Array (Nat × Nat) := #[]
+  let pathInputs := cx.svc.base :: cx.svc.emptyBase :: (cx.svc.segClass ++ cx.svc.segxExtra ++ cx.svc.emptyClass)
+  for (c2, i2, s2, y2) in pathInputs do
+    let some t2 := traceFor code h acct Q c2 i2 s2 y2 | continue
+    let mut w2 : Std.HashSet Nat := {}
+    for (pc, regs, mem) in t2.toList do
+      let some ins := P.decode pc | continue
+      let m := P.exec pc ins regs mem
+      for r in m.reads do
+        let a := r % 2 ^ 32
+        if a < argStart && !w2.contains a && !(baseBytes.any (·.1 == a)) && !(pathAcc.any (·.1 == a)) then
+          pathAcc := pathAcc.push (a, (μ.read a).toNat)
+      for x in m.writes do w2 := w2.insert (x % 2 ^ 32)
+      -- a host call's writes: `fetch` writes at most ω₉ octets at ω₇
+      if let .oneImm .ecalli 2 := ins then
+        for j in [0:regs[9]!.toNat] do w2 := w2.insert ((regs[7]!.toNat + j) % 2 ^ 32)
+  let pathBytes := pathAcc.qsort (fun x y => x.1 < y.1)
   let (hA, hB) := heapBounds code
   let hTop0 := (growHeapCore ω μ code).2.2.1
   let rwLo := rwStart jb
@@ -968,8 +987,10 @@ set_option maxHeartbeats 10000000
   IO.println ("/-- The octets the path reads from the starting memory before writing them. -/\ndef baseBytes : List (Nat × UInt8) := [" ++ ", ".intercalate (baseBytes.toList.map fun (a, b) => s!"({a}, {b})") ++ "]\n")
   let inRw := fun (a : Nat) => decide (rwLo ≤ a ∧ a < rwLo + jb.rw.size)
   let inRo := fun (a : Nat) => decide (roStart ≤ a ∧ a < roStart + jb.ro.size)
-  let rwBytes := baseBytes.filter (inRw ·.1)
-  let roBytes := baseBytes.filter (inRo ·.1)
+  IO.println ("/-- The octets any traced run reads from the starting memory before writing them, beyond
+    `baseBytes`: what the theorems after the prefix take from the start. -/\ndef pathBytes : List (Nat × UInt8) := [" ++ ", ".intercalate (pathBytes.toList.map fun (a, b) => s!"({a}, {b})") ++ "]\n")
+  let rwBytes := (baseBytes ++ pathBytes).filter (inRw ·.1)
+  let roBytes := (baseBytes ++ pathBytes).filter (inRo ·.1)
   IO.println ("/-- The octets of `baseBytes` in the read-write data section. -/\ndef rwBytes : List (Nat × UInt8) := [" ++ ", ".intercalate (rwBytes.toList.map fun (a, b) => s!"({a}, {b})") ++ "]\n")
   IO.println ("/-- The octets of `baseBytes` in the read-only data section. -/\ndef roBytes : List (Nat × UInt8) := [" ++ ", ".intercalate (roBytes.toList.map fun (a, b) => s!"({a}, {b})") ++ "]\n")
   let (info0, others, otherPs) ← prefixInfo cx
@@ -1004,6 +1025,13 @@ set_option maxHeartbeats 10000000
         Num.decodeLE (((t2[n]?).map (fun x => x.2.2.readN a 8)).getD []) ==
           (Codec.nat q.1).length + (Codec.nat q.2.1).length + (Codec.nat q.2.2.1).length +
             (Codec.nat q.2.2.2.length).length + q.2.2.2.length + 32
+  -- what the prefix writes: its stores, and at most ω₉ octets at ω₇ for each `fetch`
+  let mut fw : List Nat := info0.wr.flatMap fun (lo, hi) => List.range' lo (hi - lo)
+  for k in [0:n] do
+    let some (pck, r, _) := tr[k]? | break
+    if let some (.oneImm .ecalli 2) := P.decode pck then
+      fw := fw ++ (List.range r[9]!.toNat).map fun j => (r[7]!.toNat + j) % 2 ^ 32
+  let frameR := ranges (fw.eraseDups.mergeSort)
   let info := { info0 with
     memPost := info0.memPost.filter (fun (b, _) => !lenAt.any fun a => a ≤ b && b < a + 8),
     regPost := info0.regPost.filter (fun (j, _) => !scratch.contains j),
@@ -1025,6 +1053,9 @@ structure PrefixPost (L : Nat) (μ : Memory) (ω' : Regs) (μ' : Memory) (x' : R
   heap : ∀ a, {rwLo} ≤ a → a < {rwHi} → μ'.writable a = true
   ctx : x' = ((∅, []) : RefineCtx)
   lenWords : ∀ a ∈ lenAt, μ'.readN a 8 = Num.encodeLE 8 L
+  ro : ∀ a, {roStart} ≤ a → a < {roStart + jb.ro.size} → μ'.readable a = true
+  frame : ∀ a, (decide (a < 4294967296){String.join (frameR.map fun (lo, hi) => s!" && !(decide ({lo} ≤ a ∧ a < {hi}))")}) = true →
+    μ'.read a = μ.read a
 "
   IO.println s!"
 /-- Y's registers (GP eq. `registers`) for an argument of length `L`. -/
@@ -1038,6 +1069,8 @@ structure StartMem (μ : Memory) : Prop where
   heap : ∀ a, {rwLo} ≤ a → a < {rwHi} → μ.writable a = true
   bytes : ∀ a b, (a, b) ∈ baseBytes → μ.read a = b
   heapPages : HeapPages μ {hA} {hB} {hTop0}
+  path : ∀ a b, (a, b) ∈ pathBytes → μ.read a = b
+  ro : ∀ a, {roStart} ≤ a → a < {roStart + jb.ro.size} → μ.readable a = true
 
 theorem prefix_run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
     (henv : heapBounds env.code = ({hA}, {hB})) (hpar : env.fetch.params = Params.full) (μ : Memory)
@@ -1119,7 +1152,18 @@ theorem prefix_run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost
     for j in [k:n] do IO.println (stepLine path[j]! gs)
   IO.println s!"    exact FreeStepsH.refl
   case post =>
-    refine ⟨?regs, ?bytes, ?args, ?argsRd, ?stk, ?hp, rfl, ?lw⟩
+    refine ⟨?regs, ?bytes, ?args, ?argsRd, ?stk, ?hp, rfl, ?lw, ?ro, ?fr⟩
+    case ro =>
+      intro a h1 h2
+      simp only [PVM.Memory.readable_writeN, PVM.Memory.readable_setPages, pageSize]
+      repeat' split
+      all_goals first | rfl | exact hμ.ro a h1 h2 | omega
+    case fr =>
+      intro a ha
+      simp only [Bool.and_eq_true, decide_eq_true_eq, Bool.not_eq_true', decide_eq_false_iff_not,
+        not_and, Nat.not_lt] at ha
+      simp (disch := pvm_arith) only [PVM.Memory.read_writeN_disjoint, PVM.Memory.read_setPages,
+        PVM.Num.length_encodeLE, PVM.Memory.length_readN, List.length_cons, List.length_nil, PVM.two32]
     case lw =>
       simp only [lenAt, List.forall_mem_cons, List.not_mem_nil, false_imp_iff, implies_true, and_true]
       and_intros
@@ -1168,7 +1212,7 @@ def layoutOk (jb : JamBlob) : Bool :=
 
 /-- Every starting octet the path reads is a zero of the stack or of the heap beyond the
     read-write data, or a data octet listed in `rwBytes` or `roBytes`. -/
-theorem baseBytes_cases : ∀ q ∈ baseBytes, (q.2 = 0 ∧
+theorem baseBytes_cases : ∀ q ∈ baseBytes ++ pathBytes, (q.2 = 0 ∧
     (({ω[1]!.toNat} - {jb.stackSize} ≤ q.1 ∧ q.1 < {ω[1]!.toNat}) ∨ ({rwLo + jb.rw.size} ≤ q.1 ∧ q.1 < {rwHi}))) ∨
     (q ∈ rwBytes ∧ {rwLo} ≤ q.1 ∧ q.1 < {rwLo + jb.rw.size}) ∨
     (q ∈ roBytes ∧ {roStart} ≤ q.1 ∧ q.1 < {roStart + jb.ro.size}) := by
@@ -1181,7 +1225,8 @@ theorem startMem_initial (jb : JamBlob) (a : ByteArray) (hl : layoutOk jb = true
   simp only [layoutOk, Bool.and_eq_true, beq_iff_eq] at hl
   obtain ⟨⟨⟨⟨⟨hro, hrw⟩, hheap⟩, hstack⟩, hrwb⟩, hrob⟩ := hl
   have hrs : rwStart jb = {rwLo} := by simp [rwStart, hro, roundZone, zoneSize]
-  refine ⟨fun x h1 h2 => ?_, fun x h1 h2 => ?_, fun x b hm => ?_, fun q h1 h2 => ?_⟩
+  refine ⟨fun x h1 h2 => ?_, fun x h1 h2 => ?_, fun x b hm => ?_, fun q h1 h2 => ?_, fun x b hm => ?_,
+    fun x h1 h2 => ?_⟩
   · simp only [Memory.writable, initialMemory_pages, hstack, hrs, hrw, hro, hheap, argStart, stackEnd,
       roundPage, pageSize, zoneSize, inputSize, roStart]
     split
@@ -1195,7 +1240,7 @@ theorem startMem_initial (jb : JamBlob) (a : ByteArray) (hl : layoutOk jb = true
       · omega
       · rw [ite_eq_left (by omega)]; rfl
   · have hrd := initialMemory_read jb a x
-    rcases baseBytes_cases (x, b) hm with ⟨hb, hx⟩ | ⟨hq, hx1, hx2⟩ | ⟨hq, hx1, hx2⟩
+    rcases baseBytes_cases (x, b) (List.mem_append_left _ hm) with ⟨hb, hx⟩ | ⟨hq, hx1, hx2⟩ | ⟨hq, hx1, hx2⟩
     · simp only at hb hx
       subst hb
       rw [hrd (by simp [two32]; omega) (by simp [hro, roStart, zoneSize, two32])
@@ -1221,6 +1266,31 @@ theorem startMem_initial (jb : JamBlob) (a : ByteArray) (hl : layoutOk jb = true
     by_cases hq : q < {hTop0}
     · rw [ite_eq_left (by omega)]; simp [hq]
     · rw [ite_eq_right (by omega), ite_eq_right (by omega)]; simp [hq]
+  · have hrd := initialMemory_read jb a x
+    rcases baseBytes_cases (x, b) (List.mem_append_right _ hm) with ⟨hb, hx⟩ | ⟨hq, hx1, hx2⟩ | ⟨hq, hx1, hx2⟩
+    · simp only at hb hx
+      subst hb
+      rw [hrd (by simp [two32]; omega) (by simp [hro, roStart, zoneSize, two32])
+        (by simp [hrs, hrw, two32]) (by simp [argStart, zoneSize, inputSize, two32] at ha ⊢; omega)]
+      rw [ite_eq_right (by simp only [argStart, zoneSize, inputSize]; omega),
+        ite_eq_right (by rw [hrs, hrw]; omega), ite_eq_right (by simp only [roStart, zoneSize, hro]; omega)]
+    · have hv := beq_iff_eq.1 (List.all_eq_true.1 hrwb _ hq)
+      simp only at hv hx1 hx2
+      rw [hrd (by simp [two32]; omega) (by simp [hro, roStart, zoneSize, two32])
+        (by simp [hrs, hrw, two32]) (by simp [argStart, zoneSize, inputSize, two32] at ha ⊢; omega)]
+      rw [ite_eq_right (by simp only [argStart, zoneSize, inputSize]; omega),
+        ite_eq_left (by rw [hrs, hrw]; omega), hrs, hv]
+    · have hv := beq_iff_eq.1 (List.all_eq_true.1 hrob _ hq)
+      simp only at hv hx1 hx2
+      rw [hrd (by simp [two32]; omega) (by simp [hro, roStart, zoneSize, two32])
+        (by simp [hrs, hrw, two32]) (by simp [argStart, zoneSize, inputSize, two32] at ha ⊢; omega)]
+      rw [ite_eq_right (by simp only [argStart, zoneSize, inputSize]; omega),
+        ite_eq_right (by rw [hrs]; omega), ite_eq_left (by simp only [roStart, zoneSize, hro]; omega)]
+      simpa only [roStart, zoneSize] using hv
+  · simp only [Memory.readable, initialMemory_pages, hstack, hrs, hrw, hro, hheap, argStart, stackEnd,
+      roundPage, pageSize, zoneSize, inputSize, roStart]
+    repeat' split
+    all_goals first | rfl | omega
 
 /-- Y's registers are `initRegs |a|`. -/
 theorem initRegs_eq (a : ByteArray) : initialRegs a = initRegs a.size := by

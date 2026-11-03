@@ -29,11 +29,15 @@ set_option maxHeartbeats 10000000
 /-- The octets the path reads from the starting memory before writing them. -/
 def baseBytes : List (Nat × UInt8) := [(4278058160, 0), (4278058161, 0), (4278058162, 0), (4278058163, 0), (4278058164, 0), (4278058165, 0), (4278058166, 0), (4278058167, 0), (4278058168, 0), (4278058169, 0), (4278058170, 0), (4278058171, 0), (4278058172, 0), (4278058173, 0), (4278058174, 0), (4278058175, 0), (206848, 0), (206849, 0), (206850, 0), (206851, 0), (206520, 0), (206521, 0), (206522, 0), (206523, 0), (206524, 0), (206525, 0), (206526, 0), (206527, 0), (206824, 0), (206825, 0), (206826, 0), (206827, 0), (206828, 0), (206829, 0), (206830, 0), (206831, 0), (206832, 0), (206833, 0), (206834, 0), (206835, 0), (206836, 0), (206837, 0), (206838, 0), (206839, 0), (206512, 0), (206513, 0), (206514, 0), (206515, 0), (206912, 0), (206913, 0), (206914, 0), (206915, 0), (206916, 0), (206917, 0), (206918, 0), (206919, 0), (206920, 0), (206921, 0), (206922, 0), (206923, 0), (206924, 0), (206925, 0), (206926, 0), (206927, 0)]
 
+/-- The octets any traced run reads from the starting memory before writing them, beyond
+    `baseBytes`: what the theorems after the prefix take from the start. -/
+def pathBytes : List (Nat × UInt8) := [(66099, 10), (66100, 82), (66101, 101), (66102, 116), (66103, 117), (66104, 114), (66105, 110), (66106, 105), (66107, 110), (66108, 103), (66109, 32), (66110, 192), (66111, 16), (66112, 32), (66113, 105), (66114, 110), (66115, 116), (66116, 111), (66117, 32), (66118, 97), (66119, 99), (66120, 99), (66121, 117), (66122, 109), (66123, 117), (66124, 108), (66125, 97), (66126, 116), (66127, 101), (66128, 0), (66657, 26), (66658, 66), (66659, 111), (66660, 111), (66661, 116), (66662, 115), (66663, 116), (66664, 114), (66665, 97), (66666, 112), (66667, 32), (66668, 83), (66669, 101), (66670, 114), (66671, 118), (66672, 105), (66673, 99), (66674, 101), (66675, 32), (66676, 82), (66677, 101), (66678, 102), (66679, 105), (66680, 110), (66681, 101), (66682, 44), (66683, 32), (66684, 192), (66685, 1), (66686, 104), (66687, 0), (71060, 48), (71061, 49), (71067, 55), (71069, 57), (72826, 93), (72829, 91), (77040, 36), (77041, 10), (77042, 0), (77043, 0), (77044, 0), (77045, 0), (77046, 0), (77047, 0), (196636, 8), (196637, 0), (196638, 0), (196639, 0), (196800, 0), (196801, 0), (196802, 0), (196803, 0), (206528, 0), (206529, 0), (206530, 0), (206531, 0), (206532, 0), (206533, 0), (206534, 0), (206535, 0), (4278058330, 0), (4278058331, 0), (4278058332, 0), (4278058333, 0), (4278058334, 0), (4278058335, 0)]
+
 /-- The octets of `baseBytes` in the read-write data section. -/
-def rwBytes : List (Nat × UInt8) := []
+def rwBytes : List (Nat × UInt8) := [(196636, 8), (196637, 0), (196638, 0), (196639, 0)]
 
 /-- The octets of `baseBytes` in the read-only data section. -/
-def roBytes : List (Nat × UInt8) := []
+def roBytes : List (Nat × UInt8) := [(66099, 10), (66100, 82), (66101, 101), (66102, 116), (66103, 117), (66104, 114), (66105, 110), (66106, 105), (66107, 110), (66108, 103), (66109, 32), (66110, 192), (66111, 16), (66112, 32), (66113, 105), (66114, 110), (66115, 116), (66116, 111), (66117, 32), (66118, 97), (66119, 99), (66120, 99), (66121, 117), (66122, 109), (66123, 117), (66124, 108), (66125, 97), (66126, 116), (66127, 101), (66128, 0), (66657, 26), (66658, 66), (66659, 111), (66660, 111), (66661, 116), (66662, 115), (66663, 116), (66664, 114), (66665, 97), (66666, 112), (66667, 32), (66668, 83), (66669, 101), (66670, 114), (66671, 118), (66672, 105), (66673, 99), (66674, 101), (66675, 32), (66676, 82), (66677, 101), (66678, 102), (66679, 105), (66680, 110), (66681, 101), (66682, 44), (66683, 32), (66684, 192), (66685, 1), (66686, 104), (66687, 0), (71060, 48), (71061, 49), (71067, 55), (71069, 57), (72826, 93), (72829, 91), (77040, 36), (77041, 10), (77042, 0), (77043, 0), (77044, 0), (77045, 0), (77046, 0), (77047, 0)]
 
 /-- The octets the path writes that later steps read, with the values it leaves there. -/
 def postBytes : List (Nat × UInt8) := [(206512, 192), (206513, 40), (206514, 3), (206515, 0), (206516, 0), (206517, 0), (206518, 0), (206519, 0), (206520, 32), (206521, 40), (206522, 3), (206523, 0), (206524, 0), (206525, 0), (206526, 0), (206527, 0), (206824, 0), (206825, 0), (206826, 0), (206827, 0), (206828, 0), (206829, 0), (206830, 0), (206831, 64), (206832, 0), (206833, 0), (206834, 0), (206835, 0), (206836, 32), (206837, 0), (206838, 0), (206839, 0), (206840, 6), (206841, 0), (206842, 0), (206843, 0), (206848, 0), (206849, 0), (206850, 0), (206851, 0), (206880, 0), (206881, 0), (206882, 0), (206883, 0), (206884, 11), (206885, 0), (206886, 0), (206887, 0), (207044, 246), (207045, 255), (207046, 255), (207047, 3), (207048, 0), (207049, 0), (207050, 0), (207051, 0), (4278057976, 1), (4278057977, 0), (4278057978, 0), (4278057979, 0), (4278057980, 0), (4278057981, 0), (4278057982, 0), (4278057983, 0), (4278057984, 10), (4278057985, 0), (4278057986, 0), (4278057987, 0), (4278057988, 0), (4278057989, 0), (4278057990, 0), (4278057991, 0), (4278058000, 122), (4278058001, 0), (4278058002, 0), (4278058003, 0), (4278058004, 0), (4278058005, 0), (4278058006, 0), (4278058007, 0), (4278058008, 64), (4278058009, 40), (4278058010, 3), (4278058011, 0), (4278058012, 0), (4278058013, 0), (4278058014, 0), (4278058015, 0), (4278058016, 220), (4278058017, 7), (4278058018, 0), (4278058019, 0), (4278058020, 0), (4278058021, 0), (4278058022, 0), (4278058023, 0), (4278058336, 80), (4278058337, 40), (4278058338, 3), (4278058339, 0), (4278058340, 0), (4278058341, 0), (4278058342, 0), (4278058343, 0), (4278058344, 106), (4278058345, 0), (4278058346, 0), (4278058347, 0), (4278058348, 0), (4278058349, 0), (4278058350, 0), (4278058351, 0), (4278058352, 0), (4278058353, 0), (4278058354, 255), (4278058355, 254), (4278058356, 0), (4278058357, 0), (4278058358, 0), (4278058359, 0), (4278058368, 150), (4278058369, 0), (4278058370, 0), (4278058371, 0), (4278058372, 0), (4278058373, 0), (4278058374, 0), (4278058375, 0), (4278058984, 0), (4278058985, 0), (4278058986, 0), (4278058987, 0), (4278058988, 0), (4278058989, 0), (4278058990, 0), (4278058991, 0), (4278058992, 0), (4278058993, 0), (4278058994, 0), (4278058995, 0), (4278058996, 0), (4278058997, 0), (4278058998, 0), (4278058999, 0), (4278059000, 0), (4278059001, 0), (4278059002, 255), (4278059003, 255), (4278059004, 0), (4278059005, 0), (4278059006, 0), (4278059007, 0)]
@@ -53,6 +57,9 @@ structure PrefixPost (L : Nat) (μ : Memory) (ω' : Regs) (μ' : Memory) (x' : R
   heap : ∀ a, 196608 ≤ a → a < 208896 → μ'.writable a = true
   ctx : x' = ((∅, []) : RefineCtx)
   lenWords : ∀ a ∈ lenAt, μ'.readN a 8 = Num.encodeLE 8 L
+  ro : ∀ a, 65536 ≤ a → a < 77144 → μ'.readable a = true
+  frame : ∀ a, (decide (a < 4294967296) && !(decide (196608 ≤ a ∧ a < 196616)) && !(decide (206512 ≤ a ∧ a < 206528)) && !(decide (206824 ≤ a ∧ a < 206844)) && !(decide (206848 ≤ a ∧ a < 206852)) && !(decide (206880 ≤ a ∧ a < 206896)) && !(decide (206912 ≤ a ∧ a < 207034)) && !(decide (207040 ≤ a ∧ a < 207056)) && !(decide (4278057704 ≤ a ∧ a < 4278057768)) && !(decide (4278057776 ≤ a ∧ a < 4278058024)) && !(decide (4278058152 ≤ a ∧ a < 4278058160)) && !(decide (4278058176 ≤ a ∧ a < 4278058200)) && !(decide (4278058336 ≤ a ∧ a < 4278058376)) && !(decide (4278058984 ≤ a ∧ a < 4278059008))) = true →
+    μ'.read a = μ.read a
 
 
 /-- Y's registers (GP eq. `registers`) for an argument of length `L`. -/
@@ -66,6 +73,8 @@ structure StartMem (μ : Memory) : Prop where
   heap : ∀ a, 196608 ≤ a → a < 208896 → μ.writable a = true
   bytes : ∀ a b, (a, b) ∈ baseBytes → μ.read a = b
   heapPages : HeapPages μ 48 1044430 51
+  path : ∀ a b, (a, b) ∈ pathBytes → μ.read a = b
+  ro : ∀ a, 65536 ≤ a → a < 77144 → μ.readable a = true
 
 theorem prefix_run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
     (henv : heapBounds env.code = (48, 1044430)) (hpar : env.fetch.params = Params.full) (μ : Memory)
@@ -1179,7 +1188,18 @@ theorem prefix_run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost
     · set_option maxHeartbeats 1000000 in pvm_simp [hpar, Params.full_encode, hw, hr, hwh, hrh, hbn_4278058160_8, hbn_4278058168_8, hbn_206848_4, hbn_206520_8, hbn_206824_8, hbn_206832_8, hbn_206512_4, hbn_206912_1, hbn_206913_1, hbn_206914_1, hbn_206915_1, hbn_206916_1, hbn_206917_1, hbn_206918_1, hbn_206919_1, hbn_206920_1, hbn_206921_1, hbn_206922_1, hbn_206923_1, hbn_206924_1, hbn_206925_1, hbn_206926_1, hbn_206927_1, hb_4278058160, hb_4278058161, hb_4278058162, hb_4278058163, hb_4278058164, hb_4278058165, hb_4278058166, hb_4278058167, hb_4278058168, hb_4278058169, hb_4278058170, hb_4278058171, hb_4278058172, hb_4278058173, hb_4278058174, hb_4278058175, hb_206848, hb_206849, hb_206850, hb_206851, hb_206520, hb_206521, hb_206522, hb_206523, hb_206524, hb_206525, hb_206526, hb_206527, hb_206824, hb_206825, hb_206826, hb_206827, hb_206828, hb_206829, hb_206830, hb_206831, hb_206832, hb_206833, hb_206834, hb_206835, hb_206836, hb_206837, hb_206838, hb_206839, hb_206512, hb_206513, hb_206514, hb_206515, hb_206912, hb_206913, hb_206914, hb_206915, hb_206916, hb_206917, hb_206918, hb_206919, hb_206920, hb_206921, hb_206922, hb_206923, hb_206924, hb_206925, hb_206926, hb_206927, initRegs, List.set_cons_succ, List.set_cons_zero, growTop, setR7, reg, g0_0, g0_1, g0_2, g0_3, g0_4, g0_5, g0_6, g0_7, g0_12, g1_0, g1_1, g1_2, g1_3, g1_4, g1_5, g1_6, g1_7, g1_12]
     exact FreeStepsH.refl
   case post =>
-    refine ⟨?regs, ?bytes, ?args, ?argsRd, ?stk, ?hp, rfl, ?lw⟩
+    refine ⟨?regs, ?bytes, ?args, ?argsRd, ?stk, ?hp, rfl, ?lw, ?ro, ?fr⟩
+    case ro =>
+      intro a h1 h2
+      simp only [PVM.Memory.readable_writeN, PVM.Memory.readable_setPages, pageSize]
+      repeat' split
+      all_goals first | rfl | exact hμ.ro a h1 h2 | omega
+    case fr =>
+      intro a ha
+      simp only [Bool.and_eq_true, decide_eq_true_eq, Bool.not_eq_true', decide_eq_false_iff_not,
+        not_and, Nat.not_lt] at ha
+      simp (disch := pvm_arith) only [PVM.Memory.read_writeN_disjoint, PVM.Memory.read_setPages,
+        PVM.Num.length_encodeLE, PVM.Memory.length_readN, List.length_cons, List.length_nil, PVM.two32]
     case lw =>
       simp only [lenAt, List.forall_mem_cons, List.not_mem_nil, false_imp_iff, implies_true, and_true]
       and_intros
@@ -1228,7 +1248,7 @@ def layoutOk (jb : JamBlob) : Bool :=
 
 /-- Every starting octet the path reads is a zero of the stack or of the heap beyond the
     read-write data, or a data octet listed in `rwBytes` or `roBytes`. -/
-theorem baseBytes_cases : ∀ q ∈ baseBytes, (q.2 = 0 ∧
+theorem baseBytes_cases : ∀ q ∈ baseBytes ++ pathBytes, (q.2 = 0 ∧
     ((4278059008 - 8192 ≤ q.1 ∧ q.1 < 4278059008) ∨ (196792 ≤ q.1 ∧ q.1 < 208896))) ∨
     (q ∈ rwBytes ∧ 196608 ≤ q.1 ∧ q.1 < 196792) ∨
     (q ∈ roBytes ∧ 65536 ≤ q.1 ∧ q.1 < 77144) := by
@@ -1241,7 +1261,8 @@ theorem startMem_initial (jb : JamBlob) (a : ByteArray) (hl : layoutOk jb = true
   simp only [layoutOk, Bool.and_eq_true, beq_iff_eq] at hl
   obtain ⟨⟨⟨⟨⟨hro, hrw⟩, hheap⟩, hstack⟩, hrwb⟩, hrob⟩ := hl
   have hrs : rwStart jb = 196608 := by simp [rwStart, hro, roundZone, zoneSize]
-  refine ⟨fun x h1 h2 => ?_, fun x h1 h2 => ?_, fun x b hm => ?_, fun q h1 h2 => ?_⟩
+  refine ⟨fun x h1 h2 => ?_, fun x h1 h2 => ?_, fun x b hm => ?_, fun q h1 h2 => ?_, fun x b hm => ?_,
+    fun x h1 h2 => ?_⟩
   · simp only [Memory.writable, initialMemory_pages, hstack, hrs, hrw, hro, hheap, argStart, stackEnd,
       roundPage, pageSize, zoneSize, inputSize, roStart]
     split
@@ -1255,7 +1276,7 @@ theorem startMem_initial (jb : JamBlob) (a : ByteArray) (hl : layoutOk jb = true
       · omega
       · rw [ite_eq_left (by omega)]; rfl
   · have hrd := initialMemory_read jb a x
-    rcases baseBytes_cases (x, b) hm with ⟨hb, hx⟩ | ⟨hq, hx1, hx2⟩ | ⟨hq, hx1, hx2⟩
+    rcases baseBytes_cases (x, b) (List.mem_append_left _ hm) with ⟨hb, hx⟩ | ⟨hq, hx1, hx2⟩ | ⟨hq, hx1, hx2⟩
     · simp only at hb hx
       subst hb
       rw [hrd (by simp [two32]; omega) (by simp [hro, roStart, zoneSize, two32])
@@ -1281,6 +1302,31 @@ theorem startMem_initial (jb : JamBlob) (a : ByteArray) (hl : layoutOk jb = true
     by_cases hq : q < 51
     · rw [ite_eq_left (by omega)]; simp [hq]
     · rw [ite_eq_right (by omega), ite_eq_right (by omega)]; simp [hq]
+  · have hrd := initialMemory_read jb a x
+    rcases baseBytes_cases (x, b) (List.mem_append_right _ hm) with ⟨hb, hx⟩ | ⟨hq, hx1, hx2⟩ | ⟨hq, hx1, hx2⟩
+    · simp only at hb hx
+      subst hb
+      rw [hrd (by simp [two32]; omega) (by simp [hro, roStart, zoneSize, two32])
+        (by simp [hrs, hrw, two32]) (by simp [argStart, zoneSize, inputSize, two32] at ha ⊢; omega)]
+      rw [ite_eq_right (by simp only [argStart, zoneSize, inputSize]; omega),
+        ite_eq_right (by rw [hrs, hrw]; omega), ite_eq_right (by simp only [roStart, zoneSize, hro]; omega)]
+    · have hv := beq_iff_eq.1 (List.all_eq_true.1 hrwb _ hq)
+      simp only at hv hx1 hx2
+      rw [hrd (by simp [two32]; omega) (by simp [hro, roStart, zoneSize, two32])
+        (by simp [hrs, hrw, two32]) (by simp [argStart, zoneSize, inputSize, two32] at ha ⊢; omega)]
+      rw [ite_eq_right (by simp only [argStart, zoneSize, inputSize]; omega),
+        ite_eq_left (by rw [hrs, hrw]; omega), hrs, hv]
+    · have hv := beq_iff_eq.1 (List.all_eq_true.1 hrob _ hq)
+      simp only at hv hx1 hx2
+      rw [hrd (by simp [two32]; omega) (by simp [hro, roStart, zoneSize, two32])
+        (by simp [hrs, hrw, two32]) (by simp [argStart, zoneSize, inputSize, two32] at ha ⊢; omega)]
+      rw [ite_eq_right (by simp only [argStart, zoneSize, inputSize]; omega),
+        ite_eq_right (by rw [hrs]; omega), ite_eq_left (by simp only [roStart, zoneSize, hro]; omega)]
+      simpa only [roStart, zoneSize] using hv
+  · simp only [Memory.readable, initialMemory_pages, hstack, hrs, hrw, hro, hheap, argStart, stackEnd,
+      roundPage, pageSize, zoneSize, inputSize, roStart]
+    repeat' split
+    all_goals first | rfl | omega
 
 /-- Y's registers are `initRegs |a|`. -/
 theorem initRegs_eq (a : ByteArray) : initialRegs a = initRegs a.size := by

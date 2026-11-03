@@ -47,6 +47,33 @@ theorem trans {i ω μ x i' ω' μ' x' i'' ω'' μ'' x''} (h₁ : FreeStepsH p R
   | next hn _ ih => exact .next hn (ih h₂)
   | host hP hs hR _ ih => exact .host hP hs hR (ih h₂)
 
+/-- **Call a summary**: a summary gives a run to `t` and a fact `Q` about the registers there; the
+    proof continues from `t` for every register file with `Q`. -/
+theorem bind {i ω μ x t μ' i'' ω'' μ'' x''} {Q : Regs → Prop}
+    (h : ∃ ω', FreeStepsH p R i ω μ x t ω' μ' x ∧ Q ω')
+    (k : ∀ ω', Q ω' → FreeStepsH p R t ω' μ' x i'' ω'' μ'' x'') :
+    FreeStepsH p R i ω μ x i'' ω'' μ'' x'' := by
+  obtain ⟨ω', h₁, hq⟩ := h
+  exact h₁.trans (k ω' hq)
+
+/-- A chain, then a summary's existential conclusion from where it ends. -/
+theorem ex_trans {i ω μ x i₁ ω₁ μ₁ t} {Q : Regs → Memory → Prop}
+    (h₁ : FreeStepsH p R i ω μ x i₁ ω₁ μ₁ x)
+    (h₂ : ∃ ω' μ', FreeStepsH p R i₁ ω₁ μ₁ x t ω' μ' x ∧ Q ω' μ') :
+    ∃ ω' μ', FreeStepsH p R i ω μ x t ω' μ' x ∧ Q ω' μ' := by
+  obtain ⟨ω', μ', h, hq⟩ := h₂
+  exact ⟨ω', μ', h₁.trans h, hq⟩
+
+/-- **Call a summary** in an existential goal: the summary's run to `t` with `Q`, then for every
+    register file with `Q` a run from `t` with the goal's property. -/
+theorem bind_ex {i ω μ x t μ₁ t'} {Q : Regs → Prop} {S : Regs → Memory → Prop}
+    (h : ∃ ω₁, FreeStepsH p R i ω μ x t ω₁ μ₁ x ∧ Q ω₁)
+    (k : ∀ ω₁, Q ω₁ → ∃ ω' μ', FreeStepsH p R t ω₁ μ₁ x t' ω' μ' x ∧ S ω' μ') :
+    ∃ ω' μ', FreeStepsH p R i ω μ x t' ω' μ' x ∧ S ω' μ' := by
+  obtain ⟨ω₁, h₁, hq⟩ := h
+  obtain ⟨ω', μ', h₂, hs⟩ := k ω₁ hq
+  exact ⟨ω', μ', h₁.trans h₂, hs⟩
+
 /-- A chain of ordinary steps is a chain. -/
 theorem of_steps {i ω μ i' ω' μ'} (x : X) (h : FreeSteps p i ω μ i' ω' μ') :
     FreeStepsH p R i ω μ x i' ω' μ' x := by

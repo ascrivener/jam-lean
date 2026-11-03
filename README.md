@@ -168,6 +168,14 @@ the build of the semantics rather than drifting silently.
   returns with ω₀, ω₁, ω₅, ω₆, ω₇ unchanged. The byte loop is proved by induction on the count
   (`memcpy_loop`), with symbolic addresses. The code facts, for the path and for whole function
   bodies, are generated into `Services/Witness/Code.lean` (`lake exe genwitnesssteps code 702`).
+* **The SDK's `u32` decoder, summarized** (`Services/Witness/DecodeU32.lean`). `decodeU32`: for
+  a reader `{ptr, len}` whose octets at `ptr` are ℰ(n) (GP (C), the general natural encoding) for
+  any n < 2^32, within `len`, the decoder at 184570 returns ω₇ = 0 and ω₈ = n with the reader
+  advanced past ℰ(n), the callee-saved registers restored, and memory unchanged outside its stack
+  frames and the reader (`DecodeOk`). It covers every encoding width (1 to 5 octets) by one
+  theorem per class, with `memcpy_small` for the copy; the leading-ones count of the symbolic
+  prefix octet uses bit lemmas (`PVM/Logic/Bits.lean`), and sign-extended octets are kept folded
+  (`sx8`) so no 2^64-size constant sits next to a symbolic value in a checked term.
 * **The witness service** (`Services/Witness.lean`). The witness bounty market
   (ascrivener/witness at 71e585a), built with `cargo jam-build` 0.1.29, is vendored as
   `services/witness/witness-service.jam`. Its code names host calls 0–6, 9, 11–14, 18, 20, 21, 24

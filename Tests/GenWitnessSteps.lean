@@ -120,6 +120,13 @@ def main (args : List String) : IO Unit := do
           | .oneOffset _ t | .regImmOffset _ _ _ t | .twoRegOffset _ _ _ t => if t ≥ 0 then ts := t.toNat :: ts
           | _ => pure ()
           for t in ts do facts := facts.push s!".blockStart {t} {P.isBlockStart t}"
+          -- a call: the return address it sets, through the jump table
+          if let .regImmOffset .loadImmJump _ x _ := ins then
+            let k := x.toNat / 2 - 1
+            let t := P.jumpTable.getD k 0
+            facts := facts.push s!".jumpTableSize {P.jumpTable.size}"
+            facts := facts.push s!".jumpEntry {k} {t}"
+            facts := facts.push s!".blockStart {t} {P.isBlockStart t}"
       pc := P.next pc
   -- jump-table facts: every jump_ind visit, since a return jumps to different callers
   for (pc, regs, _) in tr.toList.take n do

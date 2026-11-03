@@ -2028,7 +2028,7 @@ def facts_29 : List CodeFact := [
   .instr 184787 (.twoReg (.moveReg) 8 5) 184789,
   .blockStart 184789 false]
 
-/-- Code facts 1920–1982. -/
+/-- Code facts 1920–1983. -/
 def facts_30 : List CodeFact := [
   .instr 184789 (.twoRegImm (.storeIndU64) 9 1 16) 184792,
   .blockStart 184792 false,
@@ -2039,6 +2039,8 @@ def facts_30 : List CodeFact := [
   .instr 184796 (.regImmOffset (.loadImmJump) 0 3386 186740) 184802,
   .blockStart 186740 true,
   .blockStart 184802 true,
+  .jumpTableSize 1713,
+  .jumpEntry 1692 184802,
   .instr 184802 (.regImm (.loadImm) 9 1) 184805,
   .blockStart 184805 false,
   .instr 184805 (.twoRegImm (.loadIndU64) 7 1 0) 184807,
@@ -2087,7 +2089,6 @@ def facts_30 : List CodeFact := [
   .instr 184867 (.regImm (.jumpInd) 0 0) 184869,
   .instr 184869 (.noArgs (.trap)) 184870,
   .blockStart 184870 true,
-  .jumpTableSize 1713,
   .jumpEntry 1469 124329,
   .jumpEntry 1485 127918,
   .jumpEntry 1482 127025,
@@ -6845,127 +6846,127 @@ theorem d_184796 {p : ByteArray} {P : Program} [h : HasCode p P] : deblob p 1847
 @[pvm_code] theorem nx_184796 {p : ByteArray} {P : Program} [h : HasCode p P] : P.next 184796 = 184802 := (d_184796 (p := p)).2.2
 
 theorem d_184802 {p : ByteArray} {P : Program} [h : HasCode p P] : deblob p 184802 = some P ∧ P.decode 184802 = some (.regImm (.loadImm) 9 1) ∧ P.next 184802 = 184805 :=
-  h.ok.instr (show CodeFact.instr 184802 (.regImm (.loadImm) 9 1) 184805 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 9) (by decide)))
+  h.ok.instr (show CodeFact.instr 184802 (.regImm (.loadImm) 9 1) 184805 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 11) (by decide)))
 
 @[pvm_code] theorem nx_184802 {p : ByteArray} {P : Program} [h : HasCode p P] : P.next 184802 = 184805 := (d_184802 (p := p)).2.2
 
 theorem d_184805 {p : ByteArray} {P : Program} [h : HasCode p P] : deblob p 184805 = some P ∧ P.decode 184805 = some (.twoRegImm (.loadIndU64) 7 1 0) ∧ P.next 184805 = 184807 :=
-  h.ok.instr (show CodeFact.instr 184805 (.twoRegImm (.loadIndU64) 7 1 0) 184807 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 11) (by decide)))
+  h.ok.instr (show CodeFact.instr 184805 (.twoRegImm (.loadIndU64) 7 1 0) 184807 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 13) (by decide)))
 
 @[pvm_code] theorem nx_184805 {p : ByteArray} {P : Program} [h : HasCode p P] : P.next 184805 = 184807 := (d_184805 (p := p)).2.2
 
 theorem d_184807 {p : ByteArray} {P : Program} [h : HasCode p P] : deblob p 184807 = some P ∧ P.decode 184807 = some (.threeReg (.sub64) 7 6 7) ∧ P.next 184807 = 184810 :=
-  h.ok.instr (show CodeFact.instr 184807 (.threeReg (.sub64) 7 6 7) 184810 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 13) (by decide)))
+  h.ok.instr (show CodeFact.instr 184807 (.threeReg (.sub64) 7 6 7) 184810 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 15) (by decide)))
 
 @[pvm_code] theorem nx_184807 {p : ByteArray} {P : Program} [h : HasCode p P] : P.next 184807 = 184810 := (d_184807 (p := p)).2.2
 
 theorem d_184810 {p : ByteArray} {P : Program} [h : HasCode p P] : deblob p 184810 = some P ∧ P.decode 184810 = some (.threeReg (.add64) 5 6 5) ∧ P.next 184810 = 184813 :=
-  h.ok.instr (show CodeFact.instr 184810 (.threeReg (.add64) 5 6 5) 184813 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 15) (by decide)))
+  h.ok.instr (show CodeFact.instr 184810 (.threeReg (.add64) 5 6 5) 184813 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 17) (by decide)))
 
 @[pvm_code] theorem nx_184810 {p : ByteArray} {P : Program} [h : HasCode p P] : P.next 184810 = 184813 := (d_184810 (p := p)).2.2
 
 theorem d_184813 {p : ByteArray} {P : Program} [h : HasCode p P] : deblob p 184813 = some P ∧ P.decode 184813 = some (.twoRegImm (.xorImm) 8 6 7) ∧ P.next 184813 = 184816 :=
-  h.ok.instr (show CodeFact.instr 184813 (.twoRegImm (.xorImm) 8 6 7) 184816 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 17) (by decide)))
+  h.ok.instr (show CodeFact.instr 184813 (.twoRegImm (.xorImm) 8 6 7) 184816 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 19) (by decide)))
 
 @[pvm_code] theorem nx_184813 {p : ByteArray} {P : Program} [h : HasCode p P] : P.next 184813 = 184816 := (d_184813 (p := p)).2.2
 
 theorem d_184816 {p : ByteArray} {P : Program} [h : HasCode p P] : deblob p 184816 = some P ∧ P.decode 184816 = some (.twoRegImm (.loadIndU64) 10 1 8) ∧ P.next 184816 = 184819 :=
-  h.ok.instr (show CodeFact.instr 184816 (.twoRegImm (.loadIndU64) 10 1 8) 184819 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 19) (by decide)))
+  h.ok.instr (show CodeFact.instr 184816 (.twoRegImm (.loadIndU64) 10 1 8) 184819 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 21) (by decide)))
 
 @[pvm_code] theorem nx_184816 {p : ByteArray} {P : Program} [h : HasCode p P] : P.next 184816 = 184819 := (d_184816 (p := p)).2.2
 
 theorem d_184819 {p : ByteArray} {P : Program} [h : HasCode p P] : deblob p 184819 = some P ∧ P.decode 184819 = some (.twoRegImm (.storeIndU64) 5 10 0) ∧ P.next 184819 = 184821 :=
-  h.ok.instr (show CodeFact.instr 184819 (.twoRegImm (.storeIndU64) 5 10 0) 184821 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 21) (by decide)))
+  h.ok.instr (show CodeFact.instr 184819 (.twoRegImm (.storeIndU64) 5 10 0) 184821 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 23) (by decide)))
 
 @[pvm_code] theorem nx_184819 {p : ByteArray} {P : Program} [h : HasCode p P] : P.next 184819 = 184821 := (d_184819 (p := p)).2.2
 
 theorem d_184821 {p : ByteArray} {P : Program} [h : HasCode p P] : deblob p 184821 = some P ∧ P.decode 184821 = some (.twoRegImm (.storeIndU64) 7 10 8) ∧ P.next 184821 = 184824 :=
-  h.ok.instr (show CodeFact.instr 184821 (.twoRegImm (.storeIndU64) 7 10 8) 184824 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 23) (by decide)))
+  h.ok.instr (show CodeFact.instr 184821 (.twoRegImm (.storeIndU64) 7 10 8) 184824 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 25) (by decide)))
 
 @[pvm_code] theorem nx_184821 {p : ByteArray} {P : Program} [h : HasCode p P] : P.next 184821 = 184824 := (d_184821 (p := p)).2.2
 
 theorem d_184824 {p : ByteArray} {P : Program} [h : HasCode p P] : deblob p 184824 = some P ∧ P.decode 184824 = some (.twoRegImm (.loadIndU64) 10 1 24) ∧ P.next 184824 = 184827 :=
-  h.ok.instr (show CodeFact.instr 184824 (.twoRegImm (.loadIndU64) 10 1 24) 184827 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 25) (by decide)))
+  h.ok.instr (show CodeFact.instr 184824 (.twoRegImm (.loadIndU64) 10 1 24) 184827 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 27) (by decide)))
 
 @[pvm_code] theorem nx_184824 {p : ByteArray} {P : Program} [h : HasCode p P] : P.next 184824 = 184827 := (d_184824 (p := p)).2.2
 
 theorem d_184827 {p : ByteArray} {P : Program} [h : HasCode p P] : deblob p 184827 = some P ∧ P.decode 184827 = some (.twoRegImm (.shloLImmAlt64) 7 8 18446744073709551615) ∧ P.next 184827 = 184830 :=
-  h.ok.instr (show CodeFact.instr 184827 (.twoRegImm (.shloLImmAlt64) 7 8 18446744073709551615) 184830 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 27) (by decide)))
+  h.ok.instr (show CodeFact.instr 184827 (.twoRegImm (.shloLImmAlt64) 7 8 18446744073709551615) 184830 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 29) (by decide)))
 
 @[pvm_code] theorem nx_184827 {p : ByteArray} {P : Program} [h : HasCode p P] : P.next 184827 = 184830 := (d_184827 (p := p)).2.2
 
 theorem d_184830 {p : ByteArray} {P : Program} [h : HasCode p P] : deblob p 184830 = some P ∧ P.decode 184830 = some (.twoRegImm (.loadIndU64) 8 1 16) ∧ P.next 184830 = 184833 :=
-  h.ok.instr (show CodeFact.instr 184830 (.twoRegImm (.loadIndU64) 8 1 16) 184833 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 29) (by decide)))
+  h.ok.instr (show CodeFact.instr 184830 (.twoRegImm (.loadIndU64) 8 1 16) 184833 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 31) (by decide)))
 
 @[pvm_code] theorem nx_184830 {p : ByteArray} {P : Program} [h : HasCode p P] : P.next 184830 = 184833 := (d_184830 (p := p)).2.2
 
 theorem d_184833 {p : ByteArray} {P : Program} [h : HasCode p P] : deblob p 184833 = some P ∧ P.decode 184833 = some (.threeReg (.andInv) 8 7 7) ∧ P.next 184833 = 184836 :=
-  h.ok.instr (show CodeFact.instr 184833 (.threeReg (.andInv) 8 7 7) 184836 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 31) (by decide)))
+  h.ok.instr (show CodeFact.instr 184833 (.threeReg (.andInv) 8 7 7) 184836 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 33) (by decide)))
 
 @[pvm_code] theorem nx_184833 {p : ByteArray} {P : Program} [h : HasCode p P] : P.next 184833 = 184836 := (d_184833 (p := p)).2.2
 
 theorem d_184836 {p : ByteArray} {P : Program} [h : HasCode p P] : deblob p 184836 = some P ∧ P.decode 184836 = some (.twoRegImm (.shloLImm64) 6 6 3) ∧ P.next 184836 = 184839 :=
-  h.ok.instr (show CodeFact.instr 184836 (.twoRegImm (.shloLImm64) 6 6 3) 184839 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 33) (by decide)))
+  h.ok.instr (show CodeFact.instr 184836 (.twoRegImm (.shloLImm64) 6 6 3) 184839 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 35) (by decide)))
 
 @[pvm_code] theorem nx_184836 {p : ByteArray} {P : Program} [h : HasCode p P] : P.next 184836 = 184839 := (d_184836 (p := p)).2.2
 
 theorem d_184839 {p : ByteArray} {P : Program} [h : HasCode p P] : deblob p 184839 = some P ∧ P.decode 184839 = some (.threeReg (.shloL64) 7 6 8) ∧ P.next 184839 = 184842 :=
-  h.ok.instr (show CodeFact.instr 184839 (.threeReg (.shloL64) 7 6 8) 184842 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 35) (by decide)))
+  h.ok.instr (show CodeFact.instr 184839 (.threeReg (.shloL64) 7 6 8) 184842 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 37) (by decide)))
 
 @[pvm_code] theorem nx_184839 {p : ByteArray} {P : Program} [h : HasCode p P] : P.next 184839 = 184842 := (d_184839 (p := p)).2.2
 
 theorem d_184842 {p : ByteArray} {P : Program} [h : HasCode p P] : deblob p 184842 = some P ∧ P.decode 184842 = some (.threeReg (.add64) 8 10 8) ∧ P.next 184842 = 184845 :=
-  h.ok.instr (show CodeFact.instr 184842 (.threeReg (.add64) 8 10 8) 184845 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 37) (by decide)))
+  h.ok.instr (show CodeFact.instr 184842 (.threeReg (.add64) 8 10 8) 184845 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 39) (by decide)))
 
 @[pvm_code] theorem nx_184842 {p : ByteArray} {P : Program} [h : HasCode p P] : P.next 184842 = 184845 := (d_184842 (p := p)).2.2
 
 theorem d_184845 {p : ByteArray} {P : Program} [h : HasCode p P] : deblob p 184845 = some P ∧ P.decode 184845 = some (.twoRegImm (.shloRImm64) 7 8 32) ∧ P.next 184845 = 184848 :=
-  h.ok.instr (show CodeFact.instr 184845 (.twoRegImm (.shloRImm64) 7 8 32) 184848 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 39) (by decide)))
+  h.ok.instr (show CodeFact.instr 184845 (.twoRegImm (.shloRImm64) 7 8 32) 184848 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 41) (by decide)))
 
 @[pvm_code] theorem nx_184845 {p : ByteArray} {P : Program} [h : HasCode p P] : P.next 184845 = 184848 := (d_184845 (p := p)).2.2
 
 theorem d_184848 {p : ByteArray} {P : Program} [h : HasCode p P] : deblob p 184848 = some P ∧ P.decode 184848 = some (.regImmOffset (.branchNeImm) 7 0 184648) ∧ P.next 184848 = 184852 :=
-  h.ok.instr (show CodeFact.instr 184848 (.regImmOffset (.branchNeImm) 7 0 184648) 184852 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 41) (by decide)))
+  h.ok.instr (show CodeFact.instr 184848 (.regImmOffset (.branchNeImm) 7 0 184648) 184852 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 43) (by decide)))
 
 @[pvm_code] theorem nx_184848 {p : ByteArray} {P : Program} [h : HasCode p P] : P.next 184848 = 184852 := (d_184848 (p := p)).2.2
 
 theorem d_184852 {p : ByteArray} {P : Program} [h : HasCode p P] : deblob p 184852 = some P ∧ P.decode 184852 = some (.noArgs (.unlikely)) ∧ P.next 184852 = 184853 :=
-  h.ok.instr (show CodeFact.instr 184852 (.noArgs (.unlikely)) 184853 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 42) (by decide)))
+  h.ok.instr (show CodeFact.instr 184852 (.noArgs (.unlikely)) 184853 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 44) (by decide)))
 
 @[pvm_code] theorem nx_184852 {p : ByteArray} {P : Program} [h : HasCode p P] : P.next 184852 = 184853 := (d_184852 (p := p)).2.2
 
 theorem d_184853 {p : ByteArray} {P : Program} [h : HasCode p P] : deblob p 184853 = some P ∧ P.decode 184853 = some (.regImm (.loadImm) 7 0) ∧ P.next 184853 = 184855 :=
-  h.ok.instr (show CodeFact.instr 184853 (.regImm (.loadImm) 7 0) 184855 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 44) (by decide)))
+  h.ok.instr (show CodeFact.instr 184853 (.regImm (.loadImm) 7 0) 184855 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 46) (by decide)))
 
 @[pvm_code] theorem nx_184853 {p : ByteArray} {P : Program} [h : HasCode p P] : P.next 184853 = 184855 := (d_184853 (p := p)).2.2
 
 theorem d_184855 {p : ByteArray} {P : Program} [h : HasCode p P] : deblob p 184855 = some P ∧ P.decode 184855 = some (.twoRegImm (.loadIndU64) 0 1 48) ∧ P.next 184855 = 184858 :=
-  h.ok.instr (show CodeFact.instr 184855 (.twoRegImm (.loadIndU64) 0 1 48) 184858 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 46) (by decide)))
+  h.ok.instr (show CodeFact.instr 184855 (.twoRegImm (.loadIndU64) 0 1 48) 184858 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 48) (by decide)))
 
 @[pvm_code] theorem nx_184855 {p : ByteArray} {P : Program} [h : HasCode p P] : P.next 184855 = 184858 := (d_184855 (p := p)).2.2
 
 theorem d_184858 {p : ByteArray} {P : Program} [h : HasCode p P] : deblob p 184858 = some P ∧ P.decode 184858 = some (.twoRegImm (.loadIndU64) 5 1 40) ∧ P.next 184858 = 184861 :=
-  h.ok.instr (show CodeFact.instr 184858 (.twoRegImm (.loadIndU64) 5 1 40) 184861 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 48) (by decide)))
+  h.ok.instr (show CodeFact.instr 184858 (.twoRegImm (.loadIndU64) 5 1 40) 184861 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 50) (by decide)))
 
 @[pvm_code] theorem nx_184858 {p : ByteArray} {P : Program} [h : HasCode p P] : P.next 184858 = 184861 := (d_184858 (p := p)).2.2
 
 theorem d_184861 {p : ByteArray} {P : Program} [h : HasCode p P] : deblob p 184861 = some P ∧ P.decode 184861 = some (.twoRegImm (.loadIndU64) 6 1 32) ∧ P.next 184861 = 184864 :=
-  h.ok.instr (show CodeFact.instr 184861 (.twoRegImm (.loadIndU64) 6 1 32) 184864 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 50) (by decide)))
+  h.ok.instr (show CodeFact.instr 184861 (.twoRegImm (.loadIndU64) 6 1 32) 184864 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 52) (by decide)))
 
 @[pvm_code] theorem nx_184861 {p : ByteArray} {P : Program} [h : HasCode p P] : P.next 184861 = 184864 := (d_184861 (p := p)).2.2
 
 theorem d_184864 {p : ByteArray} {P : Program} [h : HasCode p P] : deblob p 184864 = some P ∧ P.decode 184864 = some (.twoRegImm (.addImm64) 1 1 56) ∧ P.next 184864 = 184867 :=
-  h.ok.instr (show CodeFact.instr 184864 (.twoRegImm (.addImm64) 1 1 56) 184867 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 52) (by decide)))
+  h.ok.instr (show CodeFact.instr 184864 (.twoRegImm (.addImm64) 1 1 56) 184867 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 54) (by decide)))
 
 @[pvm_code] theorem nx_184864 {p : ByteArray} {P : Program} [h : HasCode p P] : P.next 184864 = 184867 := (d_184864 (p := p)).2.2
 
 theorem d_184867 {p : ByteArray} {P : Program} [h : HasCode p P] : deblob p 184867 = some P ∧ P.decode 184867 = some (.regImm (.jumpInd) 0 0) ∧ P.next 184867 = 184869 :=
-  h.ok.instr (show CodeFact.instr 184867 (.regImm (.jumpInd) 0 0) 184869 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 54) (by decide)))
+  h.ok.instr (show CodeFact.instr 184867 (.regImm (.jumpInd) 0 0) 184869 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 56) (by decide)))
 
 @[pvm_code] theorem nx_184867 {p : ByteArray} {P : Program} [h : HasCode p P] : P.next 184867 = 184869 := (d_184867 (p := p)).2.2
 
 theorem d_184869 {p : ByteArray} {P : Program} [h : HasCode p P] : deblob p 184869 = some P ∧ P.decode 184869 = some (.noArgs (.trap)) ∧ P.next 184869 = 184870 :=
-  h.ok.instr (show CodeFact.instr 184869 (.noArgs (.trap)) 184870 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 55) (by decide)))
+  h.ok.instr (show CodeFact.instr 184869 (.noArgs (.trap)) 184870 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 57) (by decide)))
 
 @[pvm_code] theorem nx_184869 {p : ByteArray} {P : Program} [h : HasCode p P] : P.next 184869 = 184870 := (d_184869 (p := p)).2.2
 
@@ -8931,62 +8932,64 @@ theorem d_184869 {p : ByteArray} {P : Program} [h : HasCode p P] : deblob p 1848
 
 @[pvm_code] theorem bs_184802 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184802 = true := h.ok.blockStart (show CodeFact.blockStart 184802 true ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 8) (by decide)))
 
-@[pvm_code] theorem bs_184805 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184805 = false := h.ok.blockStart (show CodeFact.blockStart 184805 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 10) (by decide)))
+@[pvm_code] theorem jts {p : ByteArray} {P : Program} [h : HasCode p P] : P.jumpTable.size = 1713 := h.ok.jumpTableSize (show CodeFact.jumpTableSize 1713 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 9) (by decide)))
 
-@[pvm_code] theorem bs_184807 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184807 = false := h.ok.blockStart (show CodeFact.blockStart 184807 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 12) (by decide)))
+@[pvm_code] theorem jte_1692 {p : ByteArray} {P : Program} [h : HasCode p P] : P.jumpTable.getD 1692 0 = 184802 := h.ok.jumpEntry (show CodeFact.jumpEntry 1692 184802 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 10) (by decide)))
 
-@[pvm_code] theorem bs_184810 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184810 = false := h.ok.blockStart (show CodeFact.blockStart 184810 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 14) (by decide)))
+@[pvm_code] theorem bs_184805 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184805 = false := h.ok.blockStart (show CodeFact.blockStart 184805 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 12) (by decide)))
 
-@[pvm_code] theorem bs_184813 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184813 = false := h.ok.blockStart (show CodeFact.blockStart 184813 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 16) (by decide)))
+@[pvm_code] theorem bs_184807 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184807 = false := h.ok.blockStart (show CodeFact.blockStart 184807 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 14) (by decide)))
 
-@[pvm_code] theorem bs_184816 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184816 = false := h.ok.blockStart (show CodeFact.blockStart 184816 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 18) (by decide)))
+@[pvm_code] theorem bs_184810 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184810 = false := h.ok.blockStart (show CodeFact.blockStart 184810 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 16) (by decide)))
 
-@[pvm_code] theorem bs_184819 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184819 = false := h.ok.blockStart (show CodeFact.blockStart 184819 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 20) (by decide)))
+@[pvm_code] theorem bs_184813 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184813 = false := h.ok.blockStart (show CodeFact.blockStart 184813 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 18) (by decide)))
 
-@[pvm_code] theorem bs_184821 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184821 = false := h.ok.blockStart (show CodeFact.blockStart 184821 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 22) (by decide)))
+@[pvm_code] theorem bs_184816 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184816 = false := h.ok.blockStart (show CodeFact.blockStart 184816 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 20) (by decide)))
 
-@[pvm_code] theorem bs_184824 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184824 = false := h.ok.blockStart (show CodeFact.blockStart 184824 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 24) (by decide)))
+@[pvm_code] theorem bs_184819 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184819 = false := h.ok.blockStart (show CodeFact.blockStart 184819 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 22) (by decide)))
 
-@[pvm_code] theorem bs_184827 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184827 = false := h.ok.blockStart (show CodeFact.blockStart 184827 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 26) (by decide)))
+@[pvm_code] theorem bs_184821 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184821 = false := h.ok.blockStart (show CodeFact.blockStart 184821 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 24) (by decide)))
 
-@[pvm_code] theorem bs_184830 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184830 = false := h.ok.blockStart (show CodeFact.blockStart 184830 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 28) (by decide)))
+@[pvm_code] theorem bs_184824 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184824 = false := h.ok.blockStart (show CodeFact.blockStart 184824 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 26) (by decide)))
 
-@[pvm_code] theorem bs_184833 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184833 = false := h.ok.blockStart (show CodeFact.blockStart 184833 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 30) (by decide)))
+@[pvm_code] theorem bs_184827 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184827 = false := h.ok.blockStart (show CodeFact.blockStart 184827 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 28) (by decide)))
 
-@[pvm_code] theorem bs_184836 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184836 = false := h.ok.blockStart (show CodeFact.blockStart 184836 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 32) (by decide)))
+@[pvm_code] theorem bs_184830 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184830 = false := h.ok.blockStart (show CodeFact.blockStart 184830 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 30) (by decide)))
 
-@[pvm_code] theorem bs_184839 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184839 = false := h.ok.blockStart (show CodeFact.blockStart 184839 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 34) (by decide)))
+@[pvm_code] theorem bs_184833 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184833 = false := h.ok.blockStart (show CodeFact.blockStart 184833 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 32) (by decide)))
 
-@[pvm_code] theorem bs_184842 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184842 = false := h.ok.blockStart (show CodeFact.blockStart 184842 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 36) (by decide)))
+@[pvm_code] theorem bs_184836 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184836 = false := h.ok.blockStart (show CodeFact.blockStart 184836 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 34) (by decide)))
 
-@[pvm_code] theorem bs_184845 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184845 = false := h.ok.blockStart (show CodeFact.blockStart 184845 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 38) (by decide)))
+@[pvm_code] theorem bs_184839 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184839 = false := h.ok.blockStart (show CodeFact.blockStart 184839 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 36) (by decide)))
 
-@[pvm_code] theorem bs_184848 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184848 = false := h.ok.blockStart (show CodeFact.blockStart 184848 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 40) (by decide)))
+@[pvm_code] theorem bs_184842 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184842 = false := h.ok.blockStart (show CodeFact.blockStart 184842 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 38) (by decide)))
 
-@[pvm_code] theorem bs_184853 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184853 = false := h.ok.blockStart (show CodeFact.blockStart 184853 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 43) (by decide)))
+@[pvm_code] theorem bs_184845 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184845 = false := h.ok.blockStart (show CodeFact.blockStart 184845 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 40) (by decide)))
 
-@[pvm_code] theorem bs_184855 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184855 = false := h.ok.blockStart (show CodeFact.blockStart 184855 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 45) (by decide)))
+@[pvm_code] theorem bs_184848 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184848 = false := h.ok.blockStart (show CodeFact.blockStart 184848 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 42) (by decide)))
 
-@[pvm_code] theorem bs_184858 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184858 = false := h.ok.blockStart (show CodeFact.blockStart 184858 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 47) (by decide)))
+@[pvm_code] theorem bs_184853 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184853 = false := h.ok.blockStart (show CodeFact.blockStart 184853 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 45) (by decide)))
 
-@[pvm_code] theorem bs_184861 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184861 = false := h.ok.blockStart (show CodeFact.blockStart 184861 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 49) (by decide)))
+@[pvm_code] theorem bs_184855 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184855 = false := h.ok.blockStart (show CodeFact.blockStart 184855 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 47) (by decide)))
 
-@[pvm_code] theorem bs_184864 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184864 = false := h.ok.blockStart (show CodeFact.blockStart 184864 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 51) (by decide)))
+@[pvm_code] theorem bs_184858 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184858 = false := h.ok.blockStart (show CodeFact.blockStart 184858 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 49) (by decide)))
 
-@[pvm_code] theorem bs_184867 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184867 = false := h.ok.blockStart (show CodeFact.blockStart 184867 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 53) (by decide)))
+@[pvm_code] theorem bs_184861 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184861 = false := h.ok.blockStart (show CodeFact.blockStart 184861 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 51) (by decide)))
 
-@[pvm_code] theorem bs_184870 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184870 = true := h.ok.blockStart (show CodeFact.blockStart 184870 true ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 56) (by decide)))
+@[pvm_code] theorem bs_184864 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184864 = false := h.ok.blockStart (show CodeFact.blockStart 184864 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 53) (by decide)))
 
-@[pvm_code] theorem jts {p : ByteArray} {P : Program} [h : HasCode p P] : P.jumpTable.size = 1713 := h.ok.jumpTableSize (show CodeFact.jumpTableSize 1713 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 57) (by decide)))
+@[pvm_code] theorem bs_184867 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184867 = false := h.ok.blockStart (show CodeFact.blockStart 184867 false ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 55) (by decide)))
 
-@[pvm_code] theorem jte_1469 {p : ByteArray} {P : Program} [h : HasCode p P] : P.jumpTable.getD 1469 0 = 124329 := h.ok.jumpEntry (show CodeFact.jumpEntry 1469 124329 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 58) (by decide)))
+@[pvm_code] theorem bs_184870 {p : ByteArray} {P : Program} [h : HasCode p P] : P.isBlockStart 184870 = true := h.ok.blockStart (show CodeFact.blockStart 184870 true ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 58) (by decide)))
 
-@[pvm_code] theorem jte_1485 {p : ByteArray} {P : Program} [h : HasCode p P] : P.jumpTable.getD 1485 0 = 127918 := h.ok.jumpEntry (show CodeFact.jumpEntry 1485 127918 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 59) (by decide)))
+@[pvm_code] theorem jte_1469 {p : ByteArray} {P : Program} [h : HasCode p P] : P.jumpTable.getD 1469 0 = 124329 := h.ok.jumpEntry (show CodeFact.jumpEntry 1469 124329 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 59) (by decide)))
 
-@[pvm_code] theorem jte_1482 {p : ByteArray} {P : Program} [h : HasCode p P] : P.jumpTable.getD 1482 0 = 127025 := h.ok.jumpEntry (show CodeFact.jumpEntry 1482 127025 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 60) (by decide)))
+@[pvm_code] theorem jte_1485 {p : ByteArray} {P : Program} [h : HasCode p P] : P.jumpTable.getD 1485 0 = 127918 := h.ok.jumpEntry (show CodeFact.jumpEntry 1485 127918 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 60) (by decide)))
 
-@[pvm_code] theorem jte_1483 {p : ByteArray} {P : Program} [h : HasCode p P] : P.jumpTable.getD 1483 0 = 127494 := h.ok.jumpEntry (show CodeFact.jumpEntry 1483 127494 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 61) (by decide)))
+@[pvm_code] theorem jte_1482 {p : ByteArray} {P : Program} [h : HasCode p P] : P.jumpTable.getD 1482 0 = 127025 := h.ok.jumpEntry (show CodeFact.jumpEntry 1482 127025 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 61) (by decide)))
 
-@[pvm_code] theorem jte_418 {p : ByteArray} {P : Program} [h : HasCode p P] : P.jumpTable.getD 418 0 = 43144 := h.ok.jumpEntry (show CodeFact.jumpEntry 418 43144 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 62) (by decide)))
+@[pvm_code] theorem jte_1483 {p : ByteArray} {P : Program} [h : HasCode p P] : P.jumpTable.getD 1483 0 = 127494 := h.ok.jumpEntry (show CodeFact.jumpEntry 1483 127494 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 62) (by decide)))
+
+@[pvm_code] theorem jte_418 {p : ByteArray} {P : Program} [h : HasCode p P] : P.jumpTable.getD 418 0 = 43144 := h.ok.jumpEntry (show CodeFact.jumpEntry 418 43144 ∈ facts from List.mem_flatten_of_mem (List.getElem_mem (l := factChunks) (n := 30) (by decide)) (List.getElem_mem (l := facts_30) (n := 63) (by decide)))
 
 end Services.Witness.Code

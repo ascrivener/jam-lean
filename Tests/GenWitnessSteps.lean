@@ -206,7 +206,7 @@ def analyzeSeg (P : Program) (tr : Array (Nat × Regs × Memory))
 
 /-- Function bodies whose code facts are emitted in full, for summaries: `memcpy` and the SDK's
     `u32` decoder. -/
-def fnRanges : List (Nat × Nat) := [(186740, 187150), (184570, 184870)]
+def fnRanges : List (Nat × Nat) := [(186740, 187150), (184570, 184870), (43276, 43490)]
 
 /-- Where path `pb` leaves and rejoins path `pa`, from step `n` on. -/
 def divReport (pa pb : Array Nat) (n : Nat) : IO Unit := do
@@ -977,6 +977,16 @@ theorem prefix_from_Y (b a : ByteArray) (jb : JamBlob) (hjb : JamBlob.parse? b =
 
 end Services.Witness.Prefix"
 
+set_option linter.unusedVariables false in
+def mode_steps (cx : Cx) : IO Unit := do
+    -- `steps N M`: steps N … M − 1 of the base run: pc, instruction, the registers it changes
+    let m := (cx.args.getD 2 "0").toNat!
+    for k in [cx.n:m] do
+      let some (pc, r, _) := cx.tr[k]? | break
+      let some (_, r2, _) := cx.tr[k + 1]? | break
+      let ch := (List.range 13).filter fun j => r[j]! != r2[j]!
+      IO.println s!"{k} {pc} {(cx.P.decode pc).map leanInstr |>.getD "?"}  {ch.map fun j => s!"r{j}={r2[j]!.toNat}"}"
+
 set_option maxHeartbeats 2000000 in
 def main (args : List String) : IO Unit := do
   -- `seg0` / `chain0`: as `seg` / `chain`, for the class of empty payloads
@@ -1008,6 +1018,7 @@ def main (args : List String) : IO Unit := do
   | "div" => mode_div cx
   | "cmp" => mode_cmp cx
   | "vals" => mode_vals cx
+  | "steps" => mode_steps cx
   | "reads" => mode_reads cx
   | "chain" => mode_chain cx
   | "seg" => mode_seg cx

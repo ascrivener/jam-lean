@@ -42,10 +42,13 @@ macro "chase_disch" : tactic => `(tactic| first
       List.length_nil, two32] <;> omega)
   | omega)
 
-/-- Split every word fact, and a word goal, into octets. -/
-macro "chase_prep" : tactic => `(tactic|
-  simp only [Memory.readN_succ', Memory.readN_zero', Num.encodeLE, List.cons.injEq, and_true,
-    Nat.reduceAdd, Nat.add_zero] at *)
+/-- Split word facts `μ.readN a n = bs` into octet facts: in the goal, or at the given
+    hypotheses (once, when they are introduced, so later goals find them split). -/
+syntax "chase_prep" (Lean.Parser.Tactic.location)? : tactic
+macro_rules
+  | `(tactic| chase_prep $[$loc]?) => `(tactic|
+      try simp only [Memory.readN_succ', Memory.readN_zero', Num.encodeLE, List.cons.injEq, and_true,
+        Nat.reduceAdd, Nat.add_zero] $[$loc]?)
 
 /-- Close an octet equation `UInt8.ofNat e = c` by arithmetic on `e mod 2^8`. -/
 macro "chase_octet" : tactic => `(tactic| first

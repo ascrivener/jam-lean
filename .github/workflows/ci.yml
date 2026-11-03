@@ -95,13 +95,13 @@ jobs:
           lake exe genwitnesssteps segx 74620 1040 1300 ErrTail4 | diff - Services/Witness/ErrTail4.lean
           lake exe genwitnesssteps segx 74620 1300 1542 ErrTail5 out | diff - Services/Witness/ErrTail5.lean
           lake exe genwitnesssteps chainx 74620 ErrTail 0 260 520 780 1040 1300 1542 | diff - Services/Witness/ErrTail.lean
-          lake exe genwitnesssteps segx0 74620 0 260 EmptyTail0 | diff - Services/Witness/EmptyTail0.lean
+          lake exe genwitnesssteps segx0 74620 0 260 EmptyTail0 keep=0,1,5,6,7,8,9,10,11 | diff - Services/Witness/EmptyTail0.lean
           lake exe genwitnesssteps segx0 74620 260 520 EmptyTail1 | diff - Services/Witness/EmptyTail1.lean
           lake exe genwitnesssteps segx0 74620 520 780 EmptyTail2 | diff - Services/Witness/EmptyTail2.lean
           lake exe genwitnesssteps segx0 74620 780 1040 EmptyTail3 | diff - Services/Witness/EmptyTail3.lean
           lake exe genwitnesssteps segx0 74620 1040 1300 EmptyTail4 | diff - Services/Witness/EmptyTail4.lean
           lake exe genwitnesssteps segx0 74620 1300 1445 EmptyTail5 out | diff - Services/Witness/EmptyTail5.lean
-          lake exe genwitnesssteps chainx0 74620 EmptyTail 0 260 520 780 1040 1300 1445 | diff - Services/Witness/EmptyTail.lean
+          lake exe genwitnesssteps chainx0 74620 EmptyTail 0 260 520 780 1040 1300 1445 keep=0,1,5,6,7,8,9,10,11 | diff - Services/Witness/EmptyTail.lean
           lake exe genwitnesssteps segx0 23809 0 60 EFront3 keep=0,1,5,6,7,8 | diff - Services/Witness/EFront3.lean
           lake exe genwitnesssteps segx 43495 0 5 Front1 keep=0,1,5,6,7,8 | diff - Services/Witness/Front1.lean
           lake exe genwitnesssteps segx 43514 0 14 Front2 keep=0,1,5,6,7,8 | diff - Services/Witness/Front2.lean

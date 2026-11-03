@@ -8,9 +8,9 @@ import JAM.Theorems.GrowHeap
 # Code facts of witness
 
 The code facts the proofs about witness use: every instruction on the first 2835 steps of its
-refine path and every instruction of the summarized functions (`fnRanges`: `memcpy` and the
-SDK's `u32` decoder), with the block starts and jump-table entries they need. `checkCode`
-checks them against the blob (`lake build witnesscheck`); `HasCode p P` assumes them.
+refine path and every instruction of the summarized functions (`fnRanges`), with the block
+starts and jump-table entries they need. `checkCode` checks them against the blob
+(`lake build witnesscheck`); `HasCode p P` assumes them.
 -/
 
 namespace Services.Witness.Code

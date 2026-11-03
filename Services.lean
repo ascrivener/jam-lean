@@ -3,6 +3,9 @@ import Services.Witness.Code
 import Services.Witness.Memcpy
 import Services.Witness.DecodeU32
 import Services.Witness.DecodeC
+import Services.Bootstrap.Code
+import Services.Bootstrap.Memcpy
+import Services.Bootstrap.Prefix
 import Services.Witness.Prefix
 import Services.Witness.ErrTail0
 import Services.Witness.ErrTail1
@@ -46,4 +49,9 @@ Built on `JAM`; nothing in `PVM` or `JAM` depends on this library.
   output [12, 0], here at ω₇ = 206752 (`genwitnesssteps seg0` / `chain0`).
 * `Services.Witness.Prefix` — generated: the first 702 steps of witness's refine, proved
   symbolically from those code facts.
+* `Services.Bootstrap.Code`, `.Prefix`, `.Memcpy` — the same tooling on a second service, Parity's
+  bootstrap service (`services/bootstrap`): its code facts (`lake build bootstrapcheck`), the
+  first 402 steps of its refine with what they leave (`prefix_from_Y`, `PrefixPost`), and
+  `memcpy_small`. The bootstrap blob has witness's `memcpy` at another address, so this is
+  witness's proof with the pcs moved (`genwitnesssteps --service bootstrap memcpy`).
 -/

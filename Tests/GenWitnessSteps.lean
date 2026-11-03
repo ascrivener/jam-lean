@@ -67,7 +67,54 @@ def leanInstr (ins : Instr) : String :=
    |>.replace "PVM.RegImmOffsetOp." "." |>.replace "PVM.TwoRegOp." "." |>.replace "PVM.TwoRegImmOp." "." |>.replace "PVM.TwoRegOffsetOp." "."
    |>.replace "PVM.TwoRegTwoImmOp." "." |>.replace "PVM.ThreeRegOp." "."
 
-/-- The traced refine of witness for arguments `c`, `i`, `sid`, payload `y`. -/
+/-- A service the generator works on: its blob, the Lean namespace and name of its files, the
+    base input of the traced run and the classes of inputs of the segment analysis, and the
+    functions whose code facts are emitted in full for summaries. Inputs are refine's
+    (core index, item index, service id, payload). -/
+structure Svc where
+  name : String
+  label : String
+  blob : String
+  flag : String
+  base : Nat × Nat × Nat × List UInt8
+  emptyBase : Nat × Nat × Nat × List UInt8
+  segClass : List (Nat × Nat × Nat × List UInt8)
+  emptyClass : List (Nat × Nat × Nat × List UInt8)
+  postClass : List (Nat × Nat × Nat × List UInt8)
+  fnRanges : List (Nat × Nat)
+
+/-- Witness (`services/witness`). -/
+def witnessSvc : Svc where
+  name := "Witness"
+  label := "witness"
+  blob := "services/witness/witness-service.jam"
+  flag := ""
+  base := (3, 0, 7, [255])
+  emptyBase := (3, 0, 7, [])
+  segClass := [(5, 0, 9, [200]), (3, 0, 7, List.replicate 15 255), (3, 0, 7, List.replicate 8 13), (200, 0, 70000, [12])]
+  emptyClass := [(5, 0, 9, []), (200, 0, 70000, []), (300, 0, 3, [])]
+  postClass := [(5, 0, 9, [200]), (3, 0, 7, List.replicate 15 255), (200, 1, 70000, [12]), (20000, 300, 3, []),
+    (3, 0, 7, List.replicate 300 255)]
+  fnRanges := [(186740, 187150), (184570, 184870), (43276, 43490)]
+
+/-- Parity's bootstrap service (`services/bootstrap`): the payload is an encoded `Instructions`,
+    the instruction list then a 32-octet salt; the base input has no instructions. -/
+def bootstrapSvc : Svc where
+  name := "Bootstrap"
+  label := "bootstrap"
+  blob := "services/bootstrap/jam-bootstrap-service.jam"
+  flag := "--service bootstrap "
+  base := (3, 0, 7, 0 :: List.replicate 32 0)
+  emptyBase := (3, 0, 7, [])
+  segClass := [(5, 0, 9, 0 :: List.replicate 32 7), (200, 0, 70000, 0 :: List.replicate 32 255)]
+  emptyClass := [(5, 0, 9, []), (200, 0, 70000, [])]
+  postClass := [(5, 0, 9, 0 :: List.replicate 32 7), (200, 1, 70000, 0 :: List.replicate 32 255),
+    (20000, 300, 3, 0 :: List.replicate 32 1)]
+  fnRanges := [(68729, 69139)]
+
+def services : List Svc := [witnessSvc, bootstrapSvc]
+
+/-- The traced refine of a service for arguments `c`, `i`, `sid`, payload `y`. -/
 def traceFor (code : ByteArray) (h : List UInt8) (acct : ServiceAccount) (Q : Prepared)
     (c i sid : Nat) (y : List UInt8) : Option (Array (Nat × Regs × Memory)) := do
   let pkg := mkPkg h sid (i + 1) (mkItem h sid y)
@@ -109,7 +156,7 @@ structure SegInfo where
     (aligned at `k0`/their own join index) and their input parameters `(c, i, s, |y|)`. -/
 def analyzeSeg (P : Program) (tr : Array (Nat × Regs × Memory))
     (others : Array (Array (Nat × Regs × Memory) × Nat)) (otherPs : Array (Nat × Nat × Nat × Nat))
-    (k0 a b : Nat) (out : Bool) : IO SegInfo := do
+    (k0 a b : Nat) (out : Bool) (baseP : Nat × Nat × Nat × Nat := (3, 0, 7, 1)) : IO SegInfo := do
   let A := k0 + a; let B := k0 + b
   let some (pcA, rA, mA) := tr[A]? | throw (IO.userError "step out of range")
   let some (pcB, rB, mB) := tr[B]? | throw (IO.userError "step out of range")
@@ -163,7 +210,6 @@ def analyzeSeg (P : Program) (tr : Array (Nat × Regs × Memory))
   let goodLoads := loads.toList.filter fun (a, k) =>
     (List.range k).all fun j => agreeMem A (a + j)
   -- values equal to an input parameter in every run become a symbolic variable
-  let baseP : Nat × Nat × Nat × Nat := (3, 0, 7, 1)
   let pick (q : Nat × Nat × Nat × Nat) (v : String) : Nat :=
     match v with
     | "C" => q.1 | "I" => q.2.1 | "S" => q.2.2.1
@@ -208,9 +254,6 @@ def analyzeSeg (P : Program) (tr : Array (Nat × Regs × Memory))
            regPost := regPost.map (fun j => (j, if wregs.contains j then some rB[j]!.toNat else none)),
            symPost, memPost := livePost.map (fun a => (a, (mB.read a).toNat)), pcs }
 
-/-- Function bodies whose code facts are emitted in full, for summaries: `memcpy` and the SDK's
-    `u32` decoder. -/
-def fnRanges : List (Nat × Nat) := [(186740, 187150), (184570, 184870), (43276, 43490)]
 
 /-- Where path `pb` leaves and rejoins path `pa`, from step `n` on. -/
 def divReport (pa pb : Array Nat) (n : Nat) : IO Unit := do
@@ -233,6 +276,7 @@ def divReport (pa pb : Array Nat) (n : Nat) : IO Unit := do
 
 /-- What every mode of the generator shares: the arguments, the blob and the base run. -/
 structure Cx where
+  svc : Svc
   args : List String
   mode0 : String
   empty : Bool
@@ -264,6 +308,7 @@ def mode_calls (cx : Cx) : IO Unit := do
     let code := cx.code; let h := cx.h; let acct := cx.acct; let jb := cx.jb; let P := cx.P; let Q := cx.Q
     let c := cx.c; let i := cx.i; let sid := cx.sid; let y := cx.y; let pkg := cx.pkg; let a := cx.a
     let ω := cx.ω; let μ := cx.μ; let env := cx.env; let tr := cx.tr; let path := cx.path
+    let NS := cx.svc.name; let LBL := cx.svc.label; let BLOB := cx.svc.blob; let FLAG := cx.svc.flag
     -- the path's calls, returns and host calls from step n on, with the depth of the call stack
     let mut depth := 0
     let mut k := 0
@@ -289,6 +334,7 @@ def mode_div (cx : Cx) : IO Unit := do
     let code := cx.code; let h := cx.h; let acct := cx.acct; let jb := cx.jb; let P := cx.P; let Q := cx.Q
     let c := cx.c; let i := cx.i; let sid := cx.sid; let y := cx.y; let pkg := cx.pkg; let a := cx.a
     let ω := cx.ω; let μ := cx.μ; let env := cx.env; let tr := cx.tr; let path := cx.path
+    let NS := cx.svc.name; let LBL := cx.svc.label; let BLOB := cx.svc.blob; let FLAG := cx.svc.flag
     -- `div N c i s k`: where the path for (c, i, s, payload of k octets 255) leaves and rejoins the
     -- base path, from step N on
     let some t2 := traceFor code h acct Q ((args.getD 2 "3").toNat!) ((args.getD 3 "0").toNat!)
@@ -303,6 +349,7 @@ def mode_cmp (cx : Cx) : IO Unit := do
     let code := cx.code; let h := cx.h; let acct := cx.acct; let jb := cx.jb; let P := cx.P; let Q := cx.Q
     let c := cx.c; let i := cx.i; let sid := cx.sid; let y := cx.y; let pkg := cx.pkg; let a := cx.a
     let ω := cx.ω; let μ := cx.μ; let env := cx.env; let tr := cx.tr; let path := cx.path
+    let NS := cx.svc.name; let LBL := cx.svc.label; let BLOB := cx.svc.blob; let FLAG := cx.svc.flag
     -- `cmp PC`: where each test input first reaches PC, and the first later difference from the base run
     let inputs : List (Nat × Nat × Nat × List UInt8) :=
       [(5, 0, 9, [200]), (3, 0, 7, List.replicate 15 255), (3, 0, 7, []), (3, 0, 7, List.replicate 8 13)]
@@ -330,6 +377,7 @@ def mode_vals (cx : Cx) : IO Unit := do
     let code := cx.code; let h := cx.h; let acct := cx.acct; let jb := cx.jb; let P := cx.P; let Q := cx.Q
     let c := cx.c; let i := cx.i; let sid := cx.sid; let y := cx.y; let pkg := cx.pkg; let a := cx.a
     let ω := cx.ω; let μ := cx.μ; let env := cx.env; let tr := cx.tr; let path := cx.path
+    let NS := cx.svc.name; let LBL := cx.svc.label; let BLOB := cx.svc.blob; let FLAG := cx.svc.flag
     -- `vals PC off ADDR LEN`: the LEN-octet value at ADDR, `off` steps after reaching PC, for each input
     let off := (args.getD 2 "0").toNat!; let addr := (args.getD 3 "0").toNat!; let len := (args.getD 4 "8").toNat!
     for (c2, i2, s2, y2) in [(3, 0, 7, [255]), (5, 0, 9, [200]), (3, 0, 7, List.replicate 15 255),
@@ -347,6 +395,7 @@ def mode_reads (cx : Cx) : IO Unit := do
     let code := cx.code; let h := cx.h; let acct := cx.acct; let jb := cx.jb; let P := cx.P; let Q := cx.Q
     let c := cx.c; let i := cx.i; let sid := cx.sid; let y := cx.y; let pkg := cx.pkg; let a := cx.a
     let ω := cx.ω; let μ := cx.μ; let env := cx.env; let tr := cx.tr; let path := cx.path
+    let NS := cx.svc.name; let LBL := cx.svc.label; let BLOB := cx.svc.blob; let FLAG := cx.svc.flag
     -- `reads ADDR`: the steps that read or write octet ADDR
     let addr := n
     let mut k := 0
@@ -365,14 +414,14 @@ def mode_chain (cx : Cx) : IO Unit := do
     let code := cx.code; let h := cx.h; let acct := cx.acct; let jb := cx.jb; let P := cx.P; let Q := cx.Q
     let c := cx.c; let i := cx.i; let sid := cx.sid; let y := cx.y; let pkg := cx.pkg; let a := cx.a
     let ω := cx.ω; let μ := cx.μ; let env := cx.env; let tr := cx.tr; let path := cx.path
+    let NS := cx.svc.name; let LBL := cx.svc.label; let BLOB := cx.svc.blob; let FLAG := cx.svc.flag
     -- `chain PC name b₀ b₁ … bₙ`: the theorem from step b₀ to step bₙ after PC, composing the segment
     -- theorems `name0 … name(n-1)` (steps bᵢ … bᵢ₊₁ − 1; the last with `out`)
     let joinPc := n
     let name := args.getD 2 "chain"
     let bs := (args.drop 3).map String.toNat!
     let classInputs : List (Nat × Nat × Nat × List UInt8) :=
-      if empty then [(5, 0, 9, []), (200, 0, 70000, []), (300, 0, 3, [])]
-      else [(5, 0, 9, [200]), (3, 0, 7, List.replicate 15 255), (3, 0, 7, List.replicate 8 13), (200, 0, 70000, [12])]
+      if empty then cx.svc.emptyClass else cx.svc.segClass
     let align (t : Array (Nat × Regs × Memory)) : Option Nat :=
       (List.range t.size).find? (fun k => (t[k]?.map (·.1)) == some joinPc)
     let some k0 := align tr | IO.eprintln "join not reached"; return
@@ -386,7 +435,7 @@ def mode_chain (cx : Cx) : IO Unit := do
     let nseg := bs.length - 1
     let mut infos : Array SegInfo := #[]
     for k in [0:nseg] do
-      infos := infos.push (← analyzeSeg P tr others otherPs k0 bs[k]! bs[k+1]! (k + 1 == nseg))
+      infos := infos.push (← analyzeSeg P tr others otherPs k0 bs[k]! bs[k+1]! (k + 1 == nseg) (c, i, sid, y.length))
     -- what the path writes before each segment: registers and octets
     let writtenBefore (k : Nat) : Std.HashSet Nat × List Nat := Id.run do
       let mut w : Std.HashSet Nat := {}
@@ -422,14 +471,14 @@ def mode_chain (cx : Cx) : IO Unit := do
         if !(isym.any (·.1 == a)) then isym := isym ++ [(a, kk, v)]
     let last := infos[nseg - 1]!
     IO.println s!"/-
-  GENERATED by `lake exe genwitnesssteps {mode0} {joinPc} {name} {" ".intercalate (bs.map toString)}` from services/witness/witness-service.jam.
+  GENERATED by `lake exe genwitnesssteps {FLAG}{mode0} {joinPc} {name} {" ".intercalate (bs.map toString)}` from {BLOB}.
   Do not edit by hand.
 -/
-{"\n".intercalate ((List.range nseg).map (s!"import Services.Witness.{name}{·}"))}
+{"\n".intercalate ((List.range nseg).map (s!"import Services.{NS}.{name}{·}"))}
 
-namespace Services.Witness.{name}
+namespace Services.{NS}.{name}
 
-open PVM JAM Services.Witness.Code
+open PVM JAM Services.{NS}.Code
 
 set_option maxRecDepth 20000
 set_option maxHeartbeats 10000000
@@ -534,7 +583,7 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
       let L := last.memPost.map (·.1)
       s!"mem{nseg}{proj (L.idxOf a) L.length}"
     IO.println s!"  exact ⟨{prevω}, {prevμ}, {trans}, {regProof nseg 0}, {regProof nseg 7}, {regProof nseg 8}, {", ".intercalate outA}⟩"
-    IO.println s!"\nend Services.Witness.{name}"
+    IO.println s!"\nend Services.{NS}.{name}"
     return
 
 set_option maxHeartbeats 2000000 in
@@ -544,13 +593,13 @@ def mode_seg (cx : Cx) : IO Unit := do
     let code := cx.code; let h := cx.h; let acct := cx.acct; let jb := cx.jb; let P := cx.P; let Q := cx.Q
     let c := cx.c; let i := cx.i; let sid := cx.sid; let y := cx.y; let pkg := cx.pkg; let a := cx.a
     let ω := cx.ω; let μ := cx.μ; let env := cx.env; let tr := cx.tr; let path := cx.path
+    let NS := cx.svc.name; let LBL := cx.svc.label; let BLOB := cx.svc.blob; let FLAG := cx.svc.flag
     -- `seg PC a b name`: a standalone theorem for steps a … b − 1 after the path first reaches PC,
     -- stating only the values on which every input of the class agrees
     let joinPc := n
     let a := (args.getD 2 "0").toNat!; let b := (args.getD 3 "0").toNat!; let name := args.getD 4 "seg"
     let classInputs : List (Nat × Nat × Nat × List UInt8) :=
-      if empty then [(5, 0, 9, []), (200, 0, 70000, []), (300, 0, 3, [])]
-      else [(5, 0, 9, [200]), (3, 0, 7, List.replicate 15 255), (3, 0, 7, List.replicate 8 13), (200, 0, 70000, [12])]
+      if empty then cx.svc.emptyClass else cx.svc.segClass
     let align (t : Array (Nat × Regs × Memory)) : Option Nat :=
       (List.range t.size).find? (fun k => (t[k]?.map (·.1)) == some joinPc)
     let some k0 := align tr | IO.eprintln "join not reached"; return
@@ -564,24 +613,24 @@ def mode_seg (cx : Cx) : IO Unit := do
           IO.eprintln s!"paths differ at +{j} for c={c2} s={s2} |y|={y2.length}"; return
       others := others.push (t2, k2)
       otherPs := otherPs.push (c2, i2, s2, y2.length)
-    let info ← analyzeSeg P tr others otherPs k0 a b (args.getD 5 "" == "out")
+    let info ← analyzeSeg P tr others otherPs k0 a b (args.getD 5 "" == "out") (c, i, sid, y.length)
     let A := info.A; let B := info.B; let pcA := info.pcA; let pcB := info.pcB
     let vars := info.vars; let wr := info.wr; let rr := info.rr; let wregs := info.wregs
     let symRegs := info.symRegs; let symLoads := info.symLoads; let symPost := info.symPost
     IO.println s!"/-
-  GENERATED by `lake exe genwitnesssteps {mode0} {joinPc} {a} {b} {name}{if args.getD 5 "" == "out" then " out" else ""}` from services/witness/witness-service.jam.
+  GENERATED by `lake exe genwitnesssteps {FLAG}{mode0} {joinPc} {a} {b} {name}{if args.getD 5 "" == "out" then " out" else ""}` from {BLOB}.
   Do not edit by hand.
 -/
-import Services.Witness.Code
+import Services.{NS}.Code
 
-namespace Services.Witness.{name}
+namespace Services.{NS}.{name}
 
-open PVM JAM Services.Witness.Code
+open PVM JAM Services.{NS}.Code
 
 set_option maxRecDepth 20000
 set_option maxHeartbeats 10000000
 
-/-- **Steps {A} … {B - 1} of witness's refine** (pc {pcA} to pc {pcB}), from any state with the
+/-- **Steps {A} … {B - 1} of {LBL}'s refine** (pc {pcA} to pc {pcB}), from any state with the
     register values and memory octets they read, to a state with the values they leave. -/
 theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
     (x : RefineCtx)"
@@ -640,16 +689,14 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
     let names := " ".intercalate ((List.range nW).map (s!"hx{·}"))
     IO.println s!"    case frame =>\n      intro a ha\n      simp only [Bool.and_eq_true, decide_eq_true_eq, Bool.not_eq_true', decide_eq_false_iff_not,\n        not_and, Nat.not_lt] at ha\n      simp (disch := pvm_arith) only [PVM.Memory.read_writeN_disjoint, PVM.Num.length_encodeLE,\n        List.length_cons, List.length_nil, PVM.two32]"
     IO.println "    case rd => intro a; simp only [PVM.Memory.readable_writeN]\n    case wr => intro a; simp only [PVM.Memory.writable_writeN]\n"
-    IO.println s!"end Services.Witness.{name}"
+    IO.println s!"end Services.{NS}.{name}"
     return
 
 set_option maxHeartbeats 2000000 in
 /-- The segment analysis of steps 0 … N − 1 over a class of inputs of every width (the prefix's
     path does not depend on the input). -/
 def prefixInfo (cx : Cx) : IO (SegInfo × Array (Array (Nat × Regs × Memory) × Nat) × Array (Nat × Nat × Nat × Nat)) := do
-  let classInputs : List (Nat × Nat × Nat × List UInt8) :=
-    [(5, 0, 9, [200]), (3, 0, 7, List.replicate 15 255), (200, 1, 70000, [12]), (20000, 300, 3, []),
-     (3, 0, 7, List.replicate 300 255)]
+  let classInputs : List (Nat × Nat × Nat × List UInt8) := cx.svc.postClass
   let mut others : Array (Array (Nat × Regs × Memory) × Nat) := #[]
   let mut otherPs : Array (Nat × Nat × Nat × Nat) := #[]
   for (c2, i2, s2, y2) in classInputs do
@@ -659,7 +706,7 @@ def prefixInfo (cx : Cx) : IO (SegInfo × Array (Array (Nat × Regs × Memory) �
         throw (IO.userError s!"paths differ at {j} for c={c2}")
     others := others.push (t2, 0)
     otherPs := otherPs.push (c2, i2, s2, y2.length)
-  return (← analyzeSeg cx.P cx.tr others otherPs 0 0 cx.n false, others, otherPs)
+  return (← analyzeSeg cx.P cx.tr others otherPs 0 0 cx.n false (cx.c, cx.i, cx.sid, cx.y.length), others, otherPs)
 
 set_option linter.unusedVariables false in
 def mode_codeRun (cx : Cx) : IO Unit := do
@@ -667,6 +714,7 @@ def mode_codeRun (cx : Cx) : IO Unit := do
   let code := cx.code; let h := cx.h; let acct := cx.acct; let jb := cx.jb; let P := cx.P; let Q := cx.Q
   let c := cx.c; let i := cx.i; let sid := cx.sid; let y := cx.y; let pkg := cx.pkg; let a := cx.a
   let ω := cx.ω; let μ := cx.μ; let env := cx.env; let tr := cx.tr; let path := cx.path
+  let NS := cx.svc.name; let LBL := cx.svc.label; let BLOB := cx.svc.blob; let FLAG := cx.svc.flag
   let mut facts : Array String := #[]
   let mut lemmas : Array String := #[]
   let mut seen : List Nat := []
@@ -687,7 +735,7 @@ def mode_codeRun (cx : Cx) : IO Unit := do
       let (f, l) := bs t
       facts := facts ++ f; lemmas := lemmas ++ l
   -- every instruction of the summarized functions
-  for (lo, hi) in fnRanges do
+  for (lo, hi) in cx.svc.fnRanges do
     let mut pc := lo
     while pc < hi do
       if !seen.contains pc then
@@ -783,21 +831,21 @@ def mode_codeRun (cx : Cx) : IO Unit := do
   let rwHi := rwStart jb + roundPage jb.rw.size + jb.heapPages * pageSize
   if mode == "code" then
     IO.println s!"/-
-  GENERATED by `lake exe genwitnesssteps code {n}` from services/witness/witness-service.jam.
+  GENERATED by `lake exe genwitnesssteps {FLAG}code {n}` from {BLOB}.
   Do not edit by hand.
 -/
 import JAM.Theorems.GrowHeap
 
 /-!
-# Code facts of witness
+# Code facts of {LBL}
 
-The code facts the proofs about witness use: every instruction on the first {n} steps of its
-refine path and every instruction of the summarized functions (`fnRanges`: `memcpy` and the
-SDK's `u32` decoder), with the block starts and jump-table entries they need. `checkCode`
-checks them against the blob (`lake build witnesscheck`); `HasCode p P` assumes them.
+The code facts the proofs about {LBL} use: every instruction on the first {n} steps of its
+refine path and every instruction of the summarized functions (`fnRanges`), with the block
+starts and jump-table entries they need. `checkCode` checks them against the blob
+(`lake build {LBL}check`); `HasCode p P` assumes them.
 -/
 
-namespace Services.Witness.Code
+namespace Services.{NS}.Code
 
 open PVM
 
@@ -806,25 +854,25 @@ open PVM
     for (c, ch) in (List.range chunks.length).zip chunks do
       IO.println (s!"/-- Code facts {64 * c}–{64 * c + ch.length - 1}. -/\ndef facts_{c} : List CodeFact := [\n  " ++ ",\n  ".intercalate ch ++ "]\n")
     IO.println ("/-- The chunks of `facts`. -/\ndef factChunks : List (List CodeFact) := [" ++ ", ".intercalate ((List.range chunks.length).map fun c => s!"facts_{c}") ++ "]\n")
-    IO.println "/-- The code facts the witness proofs use. -/\ndef facts : List CodeFact := factChunks.flatten\n"
+    IO.println s!"/-- The code facts the {LBL} proofs use. -/\ndef facts : List CodeFact := factChunks.flatten\n"
     IO.println "/-- The blob `p` deblobs to `P`, and `facts` hold of it. -/\nclass HasCode (p : outParam ByteArray) (P : Program) : Prop where\n  ok : CodeOk p facts P\n"
     IO.println ("\n\n".intercalate lemmasL.toList)
-    IO.println "\nend Services.Witness.Code"
+    IO.println s!"\nend Services.{NS}.Code"
     return
   IO.println s!"/-
-  GENERATED by `lake exe genwitnesssteps run {n}` from services/witness/witness-service.jam.
+  GENERATED by `lake exe genwitnesssteps {FLAG}run {n}` from {BLOB}.
   Do not edit by hand.
 -/
-import Services.Witness.Code
+import Services.{NS}.Code
 
 /-!
-# The first {n} steps of witness's refine, proved symbolically
+# The first {n} steps of {LBL}'s refine, proved symbolically
 
 From Y's initial registers, with any argument length `L` in 1 … 𝖹_I and memory arbitrary except
-for the facts `StartMem` lists, witness's code runs {n} gas-free steps from its entry point to the
+for the facts `StartMem` lists, {LBL}'s code runs {n} gas-free steps from its entry point to the
 instruction at {endPc}, through its host calls, assuming only the code facts
-`Services.Witness.Code.facts`, which `checkCode` checks against the blob (`lake build
-witnesscheck`). Host calls take the outcome the refine dispatcher gives (`JAM.refineContract`), for
+`Services.{NS}.Code.facts`, which `checkCode` checks against the blob (`lake build
+{LBL}check`). Host calls take the outcome the refine dispatcher gives (`JAM.refineContract`), for
 any refine environment with the full-chain parameters (`Params.full`). Values that depend on `L`
 are kept symbolic and decided by `omega`.
 
@@ -832,9 +880,9 @@ Ordinary steps are proved by `pvm_simp`, host calls by `pvm_host`; nothing here 
 compiled code.
 -/
 
-namespace Services.Witness.Prefix
+namespace Services.{NS}.Prefix
 
-open PVM JAM Services.Witness.Code
+open PVM JAM Services.{NS}.Code
 
 set_option maxRecDepth 20000
 set_option maxHeartbeats 10000000
@@ -963,7 +1011,7 @@ theorem prefix_run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost
 
 /-- The section sizes of the deployed blob (GP eq. `conditions`): read-only data, read-write data,
     heap pages and stack, and the data octets the path reads (`rwBytes`, `roBytes`).
-    `lake build witnesscheck` checks them. -/
+    `lake build {LBL}check` checks them. -/
 def layoutOk (jb : JamBlob) : Bool :=
   jb.ro.size == {jb.ro.size} && jb.rw.size == {jb.rw.size} && jb.heapPages == {jb.heapPages} &&
     jb.stackSize == {jb.stackSize} && rwBytes.all (fun q => jb.rw.toList[q.1 - {rwLo}]! == q.2) &&
@@ -1034,9 +1082,9 @@ theorem initRegs_eq (a : ByteArray) : initialRegs a = initRegs a.size := by
   | 0, _ | 1, _ | 2, _ | 3, _ | 4, _ | 5, _ | 6, _ | 7, _ | 8, _ | 9, _ | 10, _ | 11, _ | 12, _ =>
     simp
 
-/-- **The first {n} steps of witness's refine, from Y.** For a JAM blob with the deployed section
-    sizes whose PVM code passes `checkCode` (the vendored witness blob does both: `lake build
-    witnesscheck`), and any nonempty arguments Y accepts (refine's always are), the gas-free machine runs from Y's starting state
+/-- **The first {n} steps of {LBL}'s refine, from Y.** For a JAM blob with the deployed section
+    sizes whose PVM code passes `checkCode` (the vendored {LBL} blob does both: `lake build
+    {LBL}check`), and any nonempty arguments Y accepts (refine's always are), the gas-free machine runs from Y's starting state
     to the instruction at {endPc}, through its host calls, in every refine environment with the full-chain parameters. -/
 theorem prefix_from_Y (b a : ByteArray) (jb : JamBlob) (hjb : JamBlob.parse? b = some jb)
     (hl : layoutOk jb = true) (hc : checkCode jb.code facts = true) (p : ByteArray) (ω : Regs)
@@ -1063,7 +1111,7 @@ theorem prefix_from_Y (b a : ByteArray) (jb : JamBlob) (hjb : JamBlob.parse? b =
   exact prefix_run _ P env henv hpar _ a.size ⟨ha0, by simpa only [inputSize] using ha⟩
     (startMem_initial _ a hl ha)
 
-end Services.Witness.Prefix"
+end Services.{NS}.Prefix"
 
 set_option linter.unusedVariables false in
 def mode_steps (cx : Cx) : IO Unit := do
@@ -1087,14 +1135,56 @@ def mode_post (cx : Cx) : IO Unit := do
     IO.println s!"written {info.wr}"
     IO.println s!"memPost ({info.memPost.length}) {info.memPost}"
 
+/-- `memcpy` in witness's blob, where `Services/Witness/Memcpy.lean` proves it: the template of
+    the summaries for other blobs. -/
+def memcpyTemplate : Nat × Nat := (186740, 187150)
+
+/-- Shift every number in `[lo, hi)` in `t` by `d` (the pcs of a function moved as a whole). -/
+def shiftPcs (t : String) (lo hi : Nat) (f : Nat → Nat) : String := Id.run do
+  let mut out := ""
+  let mut num := ""
+  for ch in t.toList ++ [' '] do
+    if ch.isDigit then num := num.push ch
+    else
+      if num != "" then
+        let v := num.toNat!
+        out := out ++ (if lo ≤ v && v < hi then toString (f v) else num)
+        num := ""
+      out := out.push ch
+  return (out.toList.dropLast).asString
+
+set_option linter.unusedVariables false in
+def mode_memcpy (cx : Cx) : IO Unit := do
+    -- `memcpy`: the `memcpy` summary of the service, from witness's proof with the pcs moved to
+    -- where the service has the same code (`fnRanges` head), and its jump-table size
+    let some (base, _) := cx.svc.fnRanges.head? | throw (IO.userError "no fnRanges")
+    let t ← IO.FS.readFile "Services/Witness/Memcpy.lean"
+    let (lo, hi) := memcpyTemplate
+    let body := shiftPcs t lo hi (fun v => v + base - lo)
+    let body := body.replace "Services.Witness" s!"Services.{cx.svc.name}"
+    let body := body.replace "in witness's code" s!"in {cx.svc.label}'s code"
+    let body := body.replace "in witness, summarized" s!"in {cx.svc.label}, summarized"
+    let body := body.replace "ret ≤ 3426" s!"ret ≤ {2 * cx.P.jumpTable.size}"
+    IO.println s!"/-
+  GENERATED by `lake exe genwitnesssteps {cx.svc.flag}memcpy` from Services/Witness/Memcpy.lean, with
+  the pcs moved by {base} − {lo} (the blob's `memcpy` is witness's, instruction for instruction,
+  at {base}) and the jump-table bound of {cx.svc.blob}.
+  Do not edit by hand.
+-/"
+    IO.print body
+
 set_option maxHeartbeats 2000000 in
-def main (args : List String) : IO Unit := do
+def main (args0 : List String) : IO Unit := do
+  -- `--service NAME` first selects the service (default witness)
+  let (svc, args) : Svc × List String := match args0 with
+    | "--service" :: nm :: rest => ((services.find? (fun s : Svc => s.label == nm)).getD witnessSvc, rest)
+    | _ => (witnessSvc, args0)
   -- `seg0` / `chain0`: as `seg` / `chain`, for the class of empty payloads
   let mode0 := args.headD "run"
   let empty := mode0 == "seg0" || mode0 == "chain0"
   let mode := if empty then (mode0.toList.dropLast).asString else mode0
   let n := (args.getD 1 "39").toNat!
-  let bytes ← IO.FS.readBinFile "services/witness/witness-service.jam"
+  let bytes ← IO.FS.readBinFile svc.blob
   let some code := splitMetadata bytes.toList | return
   let h := (Blake2b.hash256 bytes).toList
   let acct : ServiceAccount := { codeHash := h, balance := 0, minAccGas := 0, minMemoGas := 0 }
@@ -1105,19 +1195,20 @@ def main (args : List String) : IO Unit := do
   let inp := ((← IO.getEnv "WITNESS_INPUT").getD "").splitOn ","
   let (c, i, sid, y) : Nat × Nat × Nat × List UInt8 := match inp.filterMap String.toNat? with
     | [c, i, s, k] => (c, i, s, List.replicate k 255)
-    | _ => (3, 0, 7, if empty then [] else [255])
+    | _ => if empty then svc.emptyBase else svc.base
   let pkg := mkPkg h sid (i + 1) (mkItem h sid y)
   let a : ByteArray := ⟨(Codec.nat c ++ Codec.nat i ++ Codec.nat sid ++ Codec.var ⟨y.toArray⟩ ++ (Blake2b.hash256 ⟨pkg.encode.toArray⟩).toList).toArray⟩
   let some (_, ω, μ) := standardInit code a | return
   let env := mkEnv code sid i (Std.ExtTreeMap.ofList [(sid, acct)]) pkg
   let (tr, _, _, _, _) := go Q (toHostFn (RefineHost.dispatch env)) 0 1000000000 false ω μ (∅, []) #[] #[] 3000000
   let path := (tr.toList.take n).map (·.1)
-  let cx : Cx := { args, mode0, empty, mode, n, bytes, code, h, acct, jb, P, Q, c, i, sid, y, pkg, a, ω, μ, env, tr, path }
+  let cx : Cx := { svc, args, mode0, empty, mode, n, bytes, code, h, acct, jb, P, Q, c, i, sid, y, pkg, a, ω, μ, env, tr, path }
   match mode with
   | "calls" => mode_calls cx
   | "div" => mode_div cx
   | "cmp" => mode_cmp cx
   | "vals" => mode_vals cx
+  | "memcpy" => mode_memcpy cx
   | "post" => mode_post cx
   | "steps" => mode_steps cx
   | "reads" => mode_reads cx

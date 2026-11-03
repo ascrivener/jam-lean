@@ -1,6 +1,7 @@
 import PVM.Logic.Code
 import PVM.Logic.Attr
 import PVM.Theorems.InitMem
+import PVM.Logic.Bits
 
 /-!
 # Chains of gas-free steps
@@ -236,6 +237,13 @@ dsimproc reduceRotl (PVM.Num.rotl _ _ _) := evalNatFn3 PVM.Num.rotl
 dsimproc reduceRotr (PVM.Num.rotr _ _ _) := evalNatFn3 PVM.Num.rotr
 
 open Lean Meta Simp in
+/-- `sx8` of a literal, evaluated. -/
+dsimproc reduceSx8 (PVM.sx8 _) := fun e => do
+  let some b ← Nat.fromExpr? e.appArg! | return .continue
+  return .done (toExpr (PVM.sx8 b))
+
+
+open Lean Meta Simp in
 /-- `Num.encodeLE l x` for literal `l` and `x`, as the octet list `[UInt8.ofNat b₀, …]` it unfolds
     to. A symbolic `x` is left folded, so a stored register reads back by `readN_writeN_same` and
     `decodeLE_encodeLE`. -/
@@ -262,6 +270,13 @@ theorem Num.getElem_encodeLE (l v k : Nat) (hk : k < (Num.encodeLE l v).length) 
 
 @[simp] theorem Memory.length_readN (μ : Memory) (a n : Nat) : (μ.readN a n).length = n := by
   simp [Memory.readN]
+
+/-- A one-octet read outside a write (neither wrapping past 2^32). -/
+theorem Memory.read_writeN_disjoint (μ : Memory) (a : Nat) (bs : List UInt8) (b : Nat)
+    (h : a + bs.length ≤ b ∨ b + 1 ≤ a) (ha : a + bs.length ≤ two32) (hb : b + 1 ≤ two32) :
+    (μ.writeN a bs).read b = μ.read b := by
+  have := Memory.readN_writeN_disjoint μ a bs b 1 h ha hb
+  simpa [Memory.readN] using this
 
 /-- A one-octet `ℰ₁(v)` is the octet `v`. -/
 theorem Num.encodeLE_one (v : Nat) : Num.encodeLE 1 v = [UInt8.ofNat v] := by
@@ -306,6 +321,13 @@ theorem zero_mul' (n : Nat) : 0 * n = 0 := by omega
 theorem zero_div' (n : Nat) : 0 / n = 0 := by rw [Nat.zero_div]
 theorem div_zero' (n : Nat) : n / 0 = 0 := by rw [Nat.div_zero]
 theorem mod_zero' (n : Nat) : n % 0 = n := by rw [Nat.mod_zero]
+theorem mul_one' (n : Nat) : n * 1 = n := by omega
+theorem sub_zero' (n : Nat) : n - 0 = n := by omega
+theorem one_mul' (n : Nat) : 1 * n = n := by omega
+
+/-- Adding a multiple of the modulus (a literal `c`) leaves the remainder. -/
+theorem add_mod_of_dvd (a c m : Nat) (h : c % m = 0) : (a + c) % m = a % m := by
+  rw [Nat.add_mod, h, Nat.add_zero, Nat.mod_mod]
 
 /-- Adding a "negative" 64-bit immediate `m = 2^64 − c` subtracts `c` when no borrow occurs:
     the wrapped form of `addImm64` with a negative immediate (cf. `Nat.mod_eq_of_lt` when the sum
@@ -322,6 +344,34 @@ theorem u64_toNat_mod (x : UInt64) (m : Nat) (h : 18446744073709551616 ≤ m) : 
 /-- An octet's value is below any modulus of at least 256. -/
 theorem u8_toNat_mod (x : UInt8) (m : Nat) (h : 256 ≤ m) : x.toNat % m = x.toNat :=
   Nat.mod_eq_of_lt (Nat.lt_of_lt_of_le x.toNat_lt h)
+
+/-- `sub64` without borrow: (a + 2^64 − b) mod 2^64 = a − b for b ≤ a < 2^64. -/
+theorem sub_wrap64 (a b : Nat) (h : b ≤ a) (ha : a < 18446744073709551616) :
+    (a + 18446744073709551616 - b) % 18446744073709551616 = a - b := by
+  omega
+
+/-- A small natural through `Int` and back (the non-negative case of `signed`/`u64`). -/
+theorem toNat_natCast_emod (n : Nat) (m : Int) (h : (n : Int) < m) : ((n : Int) % m).toNat = n := by
+  rw [Int.emod_eq_of_lt (by omega) h]; rfl
+
+/-- A negative value through `Int` and back modulo `m` (the negative case of `signed`/`u64`):
+    ((b − c) mod m).toNat = b + m − c for b < c ≤ b + m. -/
+theorem toNat_natCast_sub_emod (b : Nat) (c m : Int) (h1 : (b : Int) < c) (h2 : c ≤ b + m) (h3 : c ≤ m) :
+    (((b : Int) - c) % m).toNat = b + (m - c).toNat := by
+  have h : ((b : Int) - c) % m = ((b : Int) - c + m) % m := by
+    rw [show (b : Int) - c + m = (b : Int) - c + 1 * m by omega, Int.add_mul_emod_self_right]
+  rw [h, Int.emod_eq_of_lt (by omega) (by omega)]
+  omega
+
+/-- `add_mod_of_dvd` with the literal on the left. -/
+theorem add_mod_of_dvd' (a c m : Nat) (h : c % m = 0) : (c + a) % m = a % m := by
+  rw [Nat.add_comm]; exact add_mod_of_dvd a c m h
+
+/-- The first octet of a write. -/
+theorem Memory.read_writeN_head (μ : Memory) (a : Nat) (b : UInt8) (bs : List UInt8)
+    (h : bs.length + 1 ≤ two32) : (μ.writeN a (b :: bs)).read a = b := by
+  have := Memory.read_writeN_at μ a (b :: bs) (by simpa using h) 0 (by simp)
+  simpa using this
 
 theorem ite_of_pos {α : Sort _} {c : Prop} [Decidable c] (h : c) (a b : α) : ite c a b = a :=
   ite_eq_left h
@@ -369,7 +419,7 @@ macro_rules
   | `(tactic| pvm_core [$hs,*]) => `(tactic| (
     simp only [PVM.Program.exec, PVM.Program.sjump, PVM.Program.branch, PVM.Program.isBlockStartInt,
       PVM.Program.finalState, PVM.memoryException, pvm_code, PVM.Exec.twoRegImmAlu,
-      PVM.Exec.twoRegAlu, PVM.Exec.indices, PVM.Regs.get, Fin.getElem_fin, PVM.regIdx_val_0,
+      ↓PVM.twoRegAlu_signExtend8, PVM.reduceSx8, PVM.Exec.twoRegAlu, PVM.Exec.indices, PVM.Regs.get, Fin.getElem_fin, PVM.regIdx_val_0,
       PVM.regIdx_val_1, PVM.regIdx_val_2, PVM.regIdx_val_3, PVM.regIdx_val_4, PVM.regIdx_val_5,
       PVM.regIdx_val_6, PVM.regIdx_val_7, PVM.regIdx_val_8, PVM.regIdx_val_9, PVM.regIdx_val_10,
       PVM.regIdx_val_11, PVM.regIdx_val_12, PVM.getD_some', Vector.getElem_ofFn,
@@ -413,10 +463,10 @@ macro_rules
     first
       | (pvm_finished; rfl)
       | (
-        try simp (disch := pvm_arith) only [Nat.mod_mod, Nat.mod_eq_of_lt, PVM.add_wrap64,
+        try simp (disch := pvm_arith) only [Nat.mod_mod, Nat.mod_eq_of_lt, PVM.add_wrap64, PVM.sub_wrap64, PVM.toNat_natCast_emod, PVM.add_zero',
           Nat.sub_add_cancel, Nat.add_sub_cancel, PVM.Memory.readN_writeN_same,
           PVM.Memory.readN_writeN_encodeLE_low, PVM.Memory.readN_writeN_disjoint,
-          PVM.Memory.writable_writeN, PVM.Memory.readable_writeN, PVM.Num.decodeLE_encodeLE,
+          PVM.Memory.read_writeN_disjoint, PVM.Memory.writable_writeN, PVM.Memory.readable_writeN, PVM.Num.decodeLE_encodeLE,
           PVM.Num.length_encodeLE, PVM.u64_toNat_mod, UInt64.ofNat_toNat, PVM.two32]
         try pvm_core [$hs,*]
         try simp only [PVM.Memory.readN, List.range_succ, List.range_zero, List.map_cons,
@@ -427,7 +477,7 @@ macro_rules
               Nat.reduceDiv, Nat.reduceLT, Nat.reduceLeDiff, Nat.lt_irrefl, PVM.two32, and_true,
               true_and, and_false, false_and, ↓reduceIte, ite_true, ite_false, id_eq, PVM.Program.exec, PVM.Program.sjump, PVM.Program.branch, PVM.Program.isBlockStartInt,
           PVM.Program.finalState, PVM.memoryException, pvm_code, PVM.Exec.twoRegImmAlu,
-          PVM.Exec.twoRegAlu, PVM.Exec.indices, PVM.Regs.get, Fin.getElem_fin, PVM.regIdx_val_0,
+          ↓PVM.twoRegAlu_signExtend8, PVM.reduceSx8, PVM.Exec.twoRegAlu, PVM.Exec.indices, PVM.Regs.get, Fin.getElem_fin, PVM.regIdx_val_0,
           PVM.regIdx_val_1, PVM.regIdx_val_2, PVM.regIdx_val_3, PVM.regIdx_val_4, PVM.regIdx_val_5,
           PVM.regIdx_val_6, PVM.regIdx_val_7, PVM.regIdx_val_8, PVM.regIdx_val_9, PVM.regIdx_val_10,
           PVM.regIdx_val_11, PVM.regIdx_val_12, PVM.getD_some', Vector.getElem_ofFn,
@@ -459,10 +509,19 @@ macro_rules
         try simp only [Nat.mod_mod, PVM.add_zero', PVM.zero_add', PVM.mul_zero', PVM.zero_mul',
           PVM.zero_div', PVM.div_zero', PVM.mod_zero', PVM.le_byte, Nat.reduceMul]
         try simp (disch := pvm_arith) only [Nat.mod_mod, PVM.add_zero', PVM.zero_add', PVM.mul_zero',
-          PVM.zero_mul', PVM.zero_div', PVM.div_zero', PVM.mod_zero', Nat.mod_eq_of_lt, PVM.add_wrap64,
+          PVM.zero_mul', PVM.zero_div', PVM.div_zero', PVM.mod_zero', PVM.mul_one', PVM.one_mul', PVM.sub_zero',
+      Nat.mod_eq_of_lt, PVM.add_mod_of_dvd, PVM.add_mod_of_dvd', Nat.div_eq_of_lt, Nat.mod_add_div',
+      Nat.div_add_mod', Nat.mod_add_div, Nat.sub_sub, Nat.reduceAdd,
+      PVM.toNat_natCast_sub_emod, Int.reduceToNat, PVM.Memory.read_writeN_head, PVM.sx8_mod_two64,
+      PVM.sx8_lt_two63, PVM.sx8_cast_sub_lt, PVM.sx8_of_lt, PVM.sx8_div64_mod2, PVM.sx8_div32_mod2,
+      PVM.sx8_div16_mod2, PVM.sx8_div8_mod2, PVM.sx8_div4_mod2, PVM.sx8_div2_mod2, PVM.sx8_div1_mod2,
+      PVM.sx8_div128_mod2, PVM.sx8_mod128, PVM.sx8_mod64, PVM.sx8_mod32, PVM.sx8_mod16, PVM.sx8_mod8,
+      PVM.sx8_mod4, PVM.sx8_mod2,
+      PVM.Memory.read_writeN_at, List.getElem_cons_zero, List.getElem_cons_succ, PVM.add_wrap64, PVM.sub_wrap64, PVM.toNat_natCast_emod,
           PVM.u8_toNat_mod, UInt8.ofNat_toNat, Nat.add_sub_cancel, Nat.sub_add_cancel, Nat.reduceSub,
           PVM.Memory.writable_writeN, PVM.Memory.readable_writeN, PVM.Memory.readN_writeN_same,
-          PVM.Memory.readN_writeN_encodeLE_low, PVM.Num.encodeLE_one, PVM.Memory.readN_writeN_disjoint, PVM.Num.length_encodeLE,
+          PVM.Memory.readN_writeN_encodeLE_low, PVM.Num.encodeLE_one, PVM.Memory.readN_writeN_disjoint,
+      PVM.Memory.read_writeN_disjoint, PVM.Num.length_encodeLE,
           PVM.Num.decodeLE_encodeLE, List.length_cons, List.length_nil, PVM.two32, PVM.u64_toNat_mod,
           UInt64.ofNat_toNat, Nat.mul_div_cancel, PVM.ite_of_pos, PVM.ite_of_neg,
           Bool.not_eq_true', Bool.not_eq_false', beq_eq_false_iff_ne, beq_iff_eq, bne_eq_false_iff_eq,
@@ -470,10 +529,19 @@ macro_rules
           decide_eq_false_iff_not, Nat.reduceMod, Nat.reduceAdd, Nat.reduceMul, Nat.reduceDiv, $hs,*]
         try pvm_core [$hs,*]
         try simp (disch := pvm_arith) only [Nat.mod_mod, PVM.add_zero', PVM.zero_add', PVM.mul_zero',
-          PVM.zero_mul', PVM.zero_div', PVM.div_zero', PVM.mod_zero', Nat.mod_eq_of_lt, PVM.add_wrap64,
+          PVM.zero_mul', PVM.zero_div', PVM.div_zero', PVM.mod_zero', PVM.mul_one', PVM.one_mul', PVM.sub_zero',
+      Nat.mod_eq_of_lt, PVM.add_mod_of_dvd, PVM.add_mod_of_dvd', Nat.div_eq_of_lt, Nat.mod_add_div',
+      Nat.div_add_mod', Nat.mod_add_div, Nat.sub_sub, Nat.reduceAdd,
+      PVM.toNat_natCast_sub_emod, Int.reduceToNat, PVM.Memory.read_writeN_head, PVM.sx8_mod_two64,
+      PVM.sx8_lt_two63, PVM.sx8_cast_sub_lt, PVM.sx8_of_lt, PVM.sx8_div64_mod2, PVM.sx8_div32_mod2,
+      PVM.sx8_div16_mod2, PVM.sx8_div8_mod2, PVM.sx8_div4_mod2, PVM.sx8_div2_mod2, PVM.sx8_div1_mod2,
+      PVM.sx8_div128_mod2, PVM.sx8_mod128, PVM.sx8_mod64, PVM.sx8_mod32, PVM.sx8_mod16, PVM.sx8_mod8,
+      PVM.sx8_mod4, PVM.sx8_mod2,
+      PVM.Memory.read_writeN_at, List.getElem_cons_zero, List.getElem_cons_succ, PVM.add_wrap64, PVM.sub_wrap64, PVM.toNat_natCast_emod,
           PVM.u8_toNat_mod, UInt8.ofNat_toNat, Nat.add_sub_cancel, Nat.sub_add_cancel, Nat.reduceSub,
           PVM.Memory.writable_writeN, PVM.Memory.readable_writeN, PVM.Memory.readN_writeN_same,
-          PVM.Memory.readN_writeN_encodeLE_low, PVM.Num.encodeLE_one, PVM.Memory.readN_writeN_disjoint, PVM.Num.length_encodeLE,
+          PVM.Memory.readN_writeN_encodeLE_low, PVM.Num.encodeLE_one, PVM.Memory.readN_writeN_disjoint,
+      PVM.Memory.read_writeN_disjoint, PVM.Num.length_encodeLE,
           PVM.Num.decodeLE_encodeLE, List.length_cons, List.length_nil, PVM.two32, PVM.u64_toNat_mod,
           UInt64.ofNat_toNat, Nat.mul_div_cancel, PVM.ite_of_pos, PVM.ite_of_neg,
           Bool.not_eq_true', Bool.not_eq_false', beq_eq_false_iff_ne, beq_iff_eq, bne_eq_false_iff_eq,

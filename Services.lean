@@ -21,6 +21,10 @@ import Services.Witness.EmptyTail3
 import Services.Witness.EmptyTail4
 import Services.Witness.EmptyTail5
 import Services.Witness.EmptyTail
+import Services.Witness.Front1
+import Services.Witness.Front2
+import Services.Witness.Front3
+import Services.Witness.Front4
 
 /-!
 # Results about specific services' deployed code
@@ -49,6 +53,11 @@ Built on `JAM`; nothing in `PVM` or `JAM` depends on this library.
   output [12, 0], here at ω₇ = 206752 (`genwitnesssteps seg0` / `chain0`).
 * `Services.Witness.Prefix` — generated: the first 702 steps of witness's refine, proved
   symbolically from those code facts.
+* `Services.Witness.Front1` … `Front4` — generated segment theorems for the code between the
+  summarized calls of witness's front end (after the `u32` decodes of i, s and |y|, through the
+  allocator, and from the payload copy to `Op::decode`'s error jump at 74620), for every input
+  width, with the payload length Y, the tag T ≥ 12, the service id S and the reader position Q
+  symbolic (`genwitnesssteps segx`).
 * `Services.Bootstrap.Code`, `.Prefix`, `.Memcpy` — the same tooling on a second service, Parity's
   bootstrap service (`services/bootstrap`): its code facts (`lake build bootstrapcheck`), the
   first 600 steps of its refine with what they leave (`prefix_from_Y`, `PrefixPost`), and

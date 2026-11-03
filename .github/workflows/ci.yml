@@ -78,6 +78,7 @@ jobs:
           lake exe genwitnesssteps seg 74620 520 780 ErrTail2 | diff - Services/Witness/ErrTail2.lean
           lake exe genwitnesssteps seg 74620 780 1040 ErrTail3 | diff - Services/Witness/ErrTail3.lean
           lake exe genwitnesssteps seg 74620 1040 1300 ErrTail4 | diff - Services/Witness/ErrTail4.lean
+          lake exe genwitnesssteps seg 74620 1300 1542 ErrTail5 out | diff - Services/Witness/ErrTail5.lean
 
       - name: The real witness binary rejects malformed payloads (a test, not a proof)
         run: lake build witnessrun

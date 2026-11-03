@@ -196,6 +196,10 @@ theorem run_empty (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.
       (Blob.encodeNat y.length).length = 32 by omega] at h
     simpa using h
   have hrem' := hrem
+  have hrem0 : μ7.read 4278058840 = 32 := by
+    have h := hrem
+    rw [show (8 : Nat) = 7 + 1 from rfl, Memory.readN_succ'] at h
+    exact (List.cons.inj h).1
   chase_prep at w7a w7b hrem'
   -- the 60 steps to Op::decode's error jump
   refine (fun h8 => ?_) (EFront3.run p P env ω7 μ7 ((∅, []) : RefineCtx) S hS I hI L (by omega) ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_)

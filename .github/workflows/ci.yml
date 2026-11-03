@@ -69,6 +69,15 @@ jobs:
       - name: The vendored witness blob names only the host calls, and has the code facts, its theorems assume
         run: lake build witnesscheck
 
+      - name: The vendored bootstrap blob has the code facts and layout its theorems assume
+        run: lake build bootstrapcheck
+
+      - name: the generated bootstrap files are what their generator produces
+        run: |
+          lake exe genwitnesssteps --service bootstrap code 7463 | diff - Services/Bootstrap/Code.lean
+          lake exe genwitnesssteps --service bootstrap run 402 | diff - Services/Bootstrap/Prefix.lean
+          lake exe genwitnesssteps --service bootstrap memcpy | diff - Services/Bootstrap/Memcpy.lean
+
       - name: the generated witness files are what their generator produces
         run: |
           lake exe genwitnesssteps code 2835 | diff - Services/Witness/Code.lean

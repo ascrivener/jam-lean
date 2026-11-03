@@ -237,6 +237,27 @@ fails on anything but `propext`, `Classical.choice` and `Quot.sound` (so on `sor
 the axioms `native_decide` and `bv_decide` introduce). CI also greps for `sorry`, `partial def`,
 `implemented_by`, `native_decide` and `bv_decide`.
 
+## A second service: Parity's bootstrap service
+
+To check that the tooling is not witness-specific, it also runs on Parity's JAM bootstrap service
+(`services/bootstrap`, built unmodified from the published crate, with the same SDK version as
+witness). Its refine decodes a list of instructions and returns them; its accumulate runs them
+with host calls for storage, service creation and transfers.
+
+* **One generator, per-service configuration.** `genwitnesssteps --service bootstrap …` takes the
+  blob, the base input and the classes of inputs from a per-service `Svc`. Witness is the
+  default, and its generated files are unchanged.
+* **Code facts and their check:** `Services/Bootstrap/Code.lean` (the 7,463-step refine of an
+  empty instruction list, plus `memcpy`), checked by `lake build bootstrapcheck`.
+* **Prefix:** `Services/Bootstrap/Prefix.lean`, the first 402 steps of its refine (both `fetch`
+  calls and both heap growths) with what they leave, proved from Y's starting state for any
+  argument length, as for witness.
+* **Shared summaries:** `memcpy` is instruction-for-instruction the same code in both blobs
+  (at 186740 in witness, 68729 in bootstrap), so `Services/Bootstrap/Memcpy.lean` is witness's
+  proof with the pcs moved, checked again by the kernel. The SDK's decoders and the allocator
+  are not shared: the compiler specializes them differently in each service, so their summaries
+  are per binary.
+
 ## Reasoning about programs (`PVM/Logic/`)
 
 Theorems and proof rules about the Appendix A model; nothing here adds semantics.

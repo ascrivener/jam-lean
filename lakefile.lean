@@ -98,8 +98,17 @@ lean_exe «witnessrun-exe» where
 target witnessrun pkg : Unit := do
   runOnVectors `«witnessrun-exe» #[(pkg.dir / "services" / "witness" / "witness-service.jam").toString]
 
-/-- Generates `Services/Witness/Code.lean` (`lake exe genwitnesssteps code <steps>`) and
-    `Services/Witness/Prefix.lean` (`lake exe genwitnesssteps run <steps>`). -/
+lean_exe «bootstrapcheck-exe» where
+  root := `Tests.BootstrapCheck
+  exeName := "bootstrapcheck"
+
+/-- Check the vendored bootstrap blob against the code facts and layout its proofs assume. -/
+target bootstrapcheck pkg : Unit := do
+  runOnVectors `«bootstrapcheck-exe» #[(pkg.dir / "services" / "bootstrap" / "jam-bootstrap-service.jam").toString]
+
+/-- Generates the code facts, prefixes, segments and summaries of `Services/Witness` (and, with
+    `--service bootstrap` first, of `Services/Bootstrap`): `lake exe genwitnesssteps code <steps>`,
+    `run <steps>`, `seg …`, `chain …`, `memcpy`. -/
 lean_exe genwitnesssteps where
   root := `Tests.GenWitnessSteps
 

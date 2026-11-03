@@ -14,7 +14,8 @@ open PVM JAM Services.Witness Services.Witness.Code Services.Witness.Prefix
   Services.Witness.BadPayload
 
 theorem hash256_length (m : ByteArray) : (Blake2b.hash256 m).toList.length = 32 := by
-  simp [Blake2b.hash256, Blake2b.hash, ByteArray.length_toList']
+  rw [ByteArray.toList_eq_data]
+  simp [Blake2b.hash256, Blake2b.hash]
 
 /-- **Witness's refine rejects a payload with a bad tag** (GP eq. `refinvocation`). For a work
     item whose service's code, looked up historically, is a blob with the deployed layout that
@@ -41,7 +42,8 @@ theorem psiR_badTag (params : Params) (hpar : params = Params.full) (d : Account
   have hlist : a.toList = Blob.encodeNat c ++ Blob.encodeNat i ++ Blob.encodeNat w.service ++
       Blob.encodeNat w.payload.toList.length ++ w.payload.toList ++
       (Blake2b.hash256 ⟨p.encode.toArray⟩).toList := by
-    simp [a, Codec.var, Codec.nat, ByteArray.length_toList', List.append_assoc]
+    simp only [a, Codec.var, Codec.nat, ← ByteArray.length_toList' w.payload, List.append_assoc]
+    rw [ByteArray.toList_eq_data]
   have hasize : a.size = (Blob.encodeNat c ++ Blob.encodeNat i ++ Blob.encodeNat w.service ++
       Blob.encodeNat w.payload.toList.length ++ w.payload.toList ++
       (Blake2b.hash256 ⟨p.encode.toArray⟩).toList).length := by

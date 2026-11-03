@@ -9,6 +9,26 @@ Reading a slice of an argument string that memory holds: refine's arguments are
 ℰ(c) ⌢ ℰ(i) ⌢ ℰ(s) ⌢ ↕y ⌢ ℋ(p), and each decode reads one piece.
 -/
 
+/-- `ByteArray.toList` lists the underlying array. -/
+theorem ByteArray.toList_eq_data (bs : ByteArray) : bs.toList = bs.data.toList := by
+  suffices h : ∀ i r, ByteArray.toList.loop bs i r = r.reverse ++ bs.data.toList.drop i by
+    simpa [ByteArray.toList] using h 0 []
+  intro i r
+  induction i, r using ByteArray.toList.loop.induct bs with
+  | case1 i r h ih =>
+    rw [ByteArray.toList.loop, ite_eq_left h, ih]
+    have hi : i < bs.data.toList.length := by rw [Array.length_toList]; exact h
+    rw [List.reverse_cons, List.append_assoc, List.drop_eq_getElem_cons hi]
+    rw [List.singleton_append]
+    have hb : bs.get! i = bs.data.toList[i] := by
+      show bs.data[i]! = bs.data.toList[i]
+      simp [Array.getElem!_eq_getD, Array.getD_eq_getD_getElem?, Array.getElem?_eq_getElem h]
+    rw [hb]
+  | case2 i r h =>
+    rw [ByteArray.toList.loop, ite_eq_right h]
+    have : bs.data.toList.length ≤ i := by rw [Array.length_toList]; exact Nat.le_of_not_lt h
+    simp [List.drop_eq_nil_of_le this]
+
 namespace PVM
 
 theorem Memory.readN_add (μ : Memory) (b m n : Nat) :

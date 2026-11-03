@@ -33,6 +33,12 @@ jobs:
             echo "forbidden construct found" >&2; exit 1
           fi
 
+      - name: Build the largest proofs one at a time (each needs most of the runner's memory)
+        run: |
+          lake build Services.Witness.Prefix
+          lake build Services.Witness.ErrTail
+          lake build Services.Witness.BadPayload
+
       - name: Build the model and its theorems
         run: lake build
 
@@ -88,6 +94,7 @@ jobs:
           lake exe genwitnesssteps segx 74620 780 1040 ErrTail3 | diff - Services/Witness/ErrTail3.lean
           lake exe genwitnesssteps segx 74620 1040 1300 ErrTail4 | diff - Services/Witness/ErrTail4.lean
           lake exe genwitnesssteps segx 74620 1300 1542 ErrTail5 out | diff - Services/Witness/ErrTail5.lean
+          lake exe genwitnesssteps chainx 74620 ErrTail 0 260 520 780 1040 1300 1542 | diff - Services/Witness/ErrTail.lean
           lake exe genwitnesssteps seg0 74620 0 260 EmptyTail0 | diff - Services/Witness/EmptyTail0.lean
           lake exe genwitnesssteps seg0 74620 260 520 EmptyTail1 | diff - Services/Witness/EmptyTail1.lean
           lake exe genwitnesssteps seg0 74620 520 780 EmptyTail2 | diff - Services/Witness/EmptyTail2.lean

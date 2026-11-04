@@ -24,11 +24,152 @@ def validOpcodeBits : Nat := 345087317339371424506931176087694348141259785575425
 /-- T, the block-termination opcodes, as a bit mask (`isTerminator_bits`). -/
 def terminatorBits : Nat := 1626779934493380067417503145553173186535055562438082563
 
-theorem isValidOpcode_bits : ∀ n, n < 256 → isValidOpcode n = validOpcodeBits.testBit n := by
+/-- A fact about every octet, from facts about 16 at a time. -/
+theorem forall_octet_of_ranges {Q : Nat → Prop} (h : ∀ k, k < 16 → ∀ m, m < 16 → Q (16 * k + m)) :
+    ∀ n, n < 256 → Q n := by
+  intro n hn
+  have := h (n / 16) (by omega) (n % 16) (Nat.mod_lt _ (by decide))
+  rwa [Nat.div_add_mod] at this
+
+theorem isValidOpcode_bits_0 : ∀ m, m < 16 → isValidOpcode (16 * 0 + m) = validOpcodeBits.testBit (16 * 0 + m) := by
   decide +kernel
 
-theorem isTerminator_bits : ∀ n, n < 256 → isTerminator n = terminatorBits.testBit n := by
+theorem isValidOpcode_bits_1 : ∀ m, m < 16 → isValidOpcode (16 * 1 + m) = validOpcodeBits.testBit (16 * 1 + m) := by
   decide +kernel
+
+theorem isValidOpcode_bits_2 : ∀ m, m < 16 → isValidOpcode (16 * 2 + m) = validOpcodeBits.testBit (16 * 2 + m) := by
+  decide +kernel
+
+theorem isValidOpcode_bits_3 : ∀ m, m < 16 → isValidOpcode (16 * 3 + m) = validOpcodeBits.testBit (16 * 3 + m) := by
+  decide +kernel
+
+theorem isValidOpcode_bits_4 : ∀ m, m < 16 → isValidOpcode (16 * 4 + m) = validOpcodeBits.testBit (16 * 4 + m) := by
+  decide +kernel
+
+theorem isValidOpcode_bits_5 : ∀ m, m < 16 → isValidOpcode (16 * 5 + m) = validOpcodeBits.testBit (16 * 5 + m) := by
+  decide +kernel
+
+theorem isValidOpcode_bits_6 : ∀ m, m < 16 → isValidOpcode (16 * 6 + m) = validOpcodeBits.testBit (16 * 6 + m) := by
+  decide +kernel
+
+theorem isValidOpcode_bits_7 : ∀ m, m < 16 → isValidOpcode (16 * 7 + m) = validOpcodeBits.testBit (16 * 7 + m) := by
+  decide +kernel
+
+theorem isValidOpcode_bits_8 : ∀ m, m < 16 → isValidOpcode (16 * 8 + m) = validOpcodeBits.testBit (16 * 8 + m) := by
+  decide +kernel
+
+theorem isValidOpcode_bits_9 : ∀ m, m < 16 → isValidOpcode (16 * 9 + m) = validOpcodeBits.testBit (16 * 9 + m) := by
+  decide +kernel
+
+theorem isValidOpcode_bits_10 : ∀ m, m < 16 → isValidOpcode (16 * 10 + m) = validOpcodeBits.testBit (16 * 10 + m) := by
+  decide +kernel
+
+theorem isValidOpcode_bits_11 : ∀ m, m < 16 → isValidOpcode (16 * 11 + m) = validOpcodeBits.testBit (16 * 11 + m) := by
+  decide +kernel
+
+theorem isValidOpcode_bits_12 : ∀ m, m < 16 → isValidOpcode (16 * 12 + m) = validOpcodeBits.testBit (16 * 12 + m) := by
+  decide +kernel
+
+theorem isValidOpcode_bits_13 : ∀ m, m < 16 → isValidOpcode (16 * 13 + m) = validOpcodeBits.testBit (16 * 13 + m) := by
+  decide +kernel
+
+theorem isValidOpcode_bits_14 : ∀ m, m < 16 → isValidOpcode (16 * 14 + m) = validOpcodeBits.testBit (16 * 14 + m) := by
+  decide +kernel
+
+theorem isValidOpcode_bits_15 : ∀ m, m < 16 → isValidOpcode (16 * 15 + m) = validOpcodeBits.testBit (16 * 15 + m) := by
+  decide +kernel
+
+/-- U as its bit mask, for every octet (16 octets to a theorem, so that no check is long). -/
+theorem isValidOpcode_bits : ∀ n, n < 256 → isValidOpcode n = validOpcodeBits.testBit n :=
+  forall_octet_of_ranges fun k hk =>
+    match k, hk with
+    | 0, _ => isValidOpcode_bits_0
+    | 1, _ => isValidOpcode_bits_1
+    | 2, _ => isValidOpcode_bits_2
+    | 3, _ => isValidOpcode_bits_3
+    | 4, _ => isValidOpcode_bits_4
+    | 5, _ => isValidOpcode_bits_5
+    | 6, _ => isValidOpcode_bits_6
+    | 7, _ => isValidOpcode_bits_7
+    | 8, _ => isValidOpcode_bits_8
+    | 9, _ => isValidOpcode_bits_9
+    | 10, _ => isValidOpcode_bits_10
+    | 11, _ => isValidOpcode_bits_11
+    | 12, _ => isValidOpcode_bits_12
+    | 13, _ => isValidOpcode_bits_13
+    | 14, _ => isValidOpcode_bits_14
+    | 15, _ => isValidOpcode_bits_15
+    | k + 16, hk => absurd hk (by omega)
+
+theorem isTerminator_bits_0 : ∀ m, m < 16 → isTerminator (16 * 0 + m) = terminatorBits.testBit (16 * 0 + m) := by
+  decide +kernel
+
+theorem isTerminator_bits_1 : ∀ m, m < 16 → isTerminator (16 * 1 + m) = terminatorBits.testBit (16 * 1 + m) := by
+  decide +kernel
+
+theorem isTerminator_bits_2 : ∀ m, m < 16 → isTerminator (16 * 2 + m) = terminatorBits.testBit (16 * 2 + m) := by
+  decide +kernel
+
+theorem isTerminator_bits_3 : ∀ m, m < 16 → isTerminator (16 * 3 + m) = terminatorBits.testBit (16 * 3 + m) := by
+  decide +kernel
+
+theorem isTerminator_bits_4 : ∀ m, m < 16 → isTerminator (16 * 4 + m) = terminatorBits.testBit (16 * 4 + m) := by
+  decide +kernel
+
+theorem isTerminator_bits_5 : ∀ m, m < 16 → isTerminator (16 * 5 + m) = terminatorBits.testBit (16 * 5 + m) := by
+  decide +kernel
+
+theorem isTerminator_bits_6 : ∀ m, m < 16 → isTerminator (16 * 6 + m) = terminatorBits.testBit (16 * 6 + m) := by
+  decide +kernel
+
+theorem isTerminator_bits_7 : ∀ m, m < 16 → isTerminator (16 * 7 + m) = terminatorBits.testBit (16 * 7 + m) := by
+  decide +kernel
+
+theorem isTerminator_bits_8 : ∀ m, m < 16 → isTerminator (16 * 8 + m) = terminatorBits.testBit (16 * 8 + m) := by
+  decide +kernel
+
+theorem isTerminator_bits_9 : ∀ m, m < 16 → isTerminator (16 * 9 + m) = terminatorBits.testBit (16 * 9 + m) := by
+  decide +kernel
+
+theorem isTerminator_bits_10 : ∀ m, m < 16 → isTerminator (16 * 10 + m) = terminatorBits.testBit (16 * 10 + m) := by
+  decide +kernel
+
+theorem isTerminator_bits_11 : ∀ m, m < 16 → isTerminator (16 * 11 + m) = terminatorBits.testBit (16 * 11 + m) := by
+  decide +kernel
+
+theorem isTerminator_bits_12 : ∀ m, m < 16 → isTerminator (16 * 12 + m) = terminatorBits.testBit (16 * 12 + m) := by
+  decide +kernel
+
+theorem isTerminator_bits_13 : ∀ m, m < 16 → isTerminator (16 * 13 + m) = terminatorBits.testBit (16 * 13 + m) := by
+  decide +kernel
+
+theorem isTerminator_bits_14 : ∀ m, m < 16 → isTerminator (16 * 14 + m) = terminatorBits.testBit (16 * 14 + m) := by
+  decide +kernel
+
+theorem isTerminator_bits_15 : ∀ m, m < 16 → isTerminator (16 * 15 + m) = terminatorBits.testBit (16 * 15 + m) := by
+  decide +kernel
+
+/-- T as its bit mask, for every octet (16 octets to a theorem, so that no check is long). -/
+theorem isTerminator_bits : ∀ n, n < 256 → isTerminator n = terminatorBits.testBit n :=
+  forall_octet_of_ranges fun k hk =>
+    match k, hk with
+    | 0, _ => isTerminator_bits_0
+    | 1, _ => isTerminator_bits_1
+    | 2, _ => isTerminator_bits_2
+    | 3, _ => isTerminator_bits_3
+    | 4, _ => isTerminator_bits_4
+    | 5, _ => isTerminator_bits_5
+    | 6, _ => isTerminator_bits_6
+    | 7, _ => isTerminator_bits_7
+    | 8, _ => isTerminator_bits_8
+    | 9, _ => isTerminator_bits_9
+    | 10, _ => isTerminator_bits_10
+    | 11, _ => isTerminator_bits_11
+    | 12, _ => isTerminator_bits_12
+    | 13, _ => isTerminator_bits_13
+    | 14, _ => isTerminator_bits_14
+    | 15, _ => isTerminator_bits_15
+    | k + 16, hk => absurd hk (by omega)
 
 namespace CodeView
 
@@ -275,6 +416,14 @@ theorem cview_eq (cs : List Nat) (h : ∀ c ∈ cs, c < 2 ^ 8192) (oc mb cLen kc
     · rename_i hw; exact (bit_ofChunks_window cs h km mm _ hw.1 hw.2).symm
     · rfl
   simp only [cview, view, hz, hm]
+
+theorem cview_zeta_lt (cs : List Nat) (h : ∀ c ∈ cs, c < 2 ^ 8192) (oc mb cLen kc mc km mm i : Nat) :
+    (cview cs oc mb cLen kc mc km mm).zeta i < 256 := by
+  rw [cview_eq cs h]
+  simp only [view]
+  split
+  · exact byte_lt _ _
+  · decide
 
 theorem view_zeta_lt (N oc mb cLen i : Nat) : (view N oc mb cLen).zeta i < 256 := by
   simp only [view]

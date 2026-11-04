@@ -393,6 +393,48 @@ stored, while the payload length also sets the sizes the heap allocator works wi
 payload keeps the allocator's state concrete. Empty payloads and payloads of up to 15 octets
 follow (milestone A′, `psiR_rejects`).
 
+## Checking on chain: witness-lean
+
+[witness-lean](https://github.com/ascrivener/witness-lean) checks Lean proofs on JAM, in witness's
+refine, with an independent kernel (nanoda), one batch of declarations per refine. To be attested
+there, each declaration has to check within one refine (5×10⁹ gas, about 50–60 ms of native
+nanoda time). Lean's own build times say nothing about this: the tactics never go on chain, only
+the terms they leave.
+
+Two scripts measure it, with a witness-lean checkout (`WITNESS_LEAN`, `cargo build --release -p
+lean-host` and `cargo jam-build --out-dir out` run there), lean4export at its pinned commit for this
+toolchain (`LEAN4EXPORT`), and for gas a witness checkout with witness-sim built (`WITNESS`):
+
+```bash
+scripts/nanoda-profile.sh OUT Services.Witness.PsiREmpty Services.Witness.PsiREmpty.psiR_rejects
+```
+
+```bash
+scripts/nanoda-gas.sh OUT Services.Witness.PsiREmpty.psiR_rejects
+```
+
+The first exports the declarations' closure, converts it to witness-lean's nodes and checks every
+node with nanoda natively, reporting each one's time against a refine. The second plans the
+batches with witness-lean's planner and runs the ones holding the named declarations in
+witness-sim's PolkaVM, which charges PolkaJam's gas.
+
+Measured on `psiR_rejects` (milestone A′), 2026-11-04, nanoda as vendored by witness-lean at
+`a3ef25a`:
+
+| | |
+|---|---|
+| Nodes | 18,571, all accepted by nanoda: an independent kernel agrees with Lean's on all of A′ |
+| Statements, proofs | 16 MB, 115 MB |
+| Checking in all | 101 s natively, about 8×10¹² gas |
+| Over one refine | 36 nodes; the heaviest `run_badTag` (16.7 s, and it overflows a 64 MB stack), `prefix_run` (7.4 s, a 10 MB proof), the 260-step segments (0.75–1.2 s each) |
+| A generated segment of 20 steps | 47 ms natively; attested in witness-sim at 3.4×10⁹ gas, of which about 1×10⁹ loads its 2,136 trusted nodes |
+| 40 / 80 steps | 93 ms / 314 ms |
+
+So each symbolic step costs about 2.3 ms of nanoda time, and a node holds about 20 steps. The
+model, the code facts and core are already small enough. What has to change is the shape of the
+generated proofs: segments of about 20 steps, and compositions that don't re-derive every
+hypothesis with `chase` (`run_badTag` discharges about 400 facts in one term).
+
 ## Notes on the paper and the vectors
 
 Where the paper is ambiguous, the model follows the paper's formal definition and the choice is

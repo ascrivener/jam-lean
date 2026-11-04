@@ -25,6 +25,10 @@ import Services.Witness.CodeCheck.W19
 import Services.Witness.CodeCheck.W20
 import Services.Witness.CodeCheck.W21
 import Services.Witness.CodeCheck.W22
+import Services.Witness.CodeCheck.W23
+import Services.Witness.CodeCheck.W24
+import Services.Witness.CodeCheck.W25
+import Services.Witness.CodeCheck.W26
 import Services.Witness.CodeCheck.G0
 import Services.Witness.CodeCheck.G1
 import Services.Witness.CodeCheck.G2
@@ -84,7 +88,7 @@ open PVM PVM.NatBlob Services.Witness.Blob Services.Witness.Code
 /-- 𝔳_blob(**c**, **k**, 0) (GP §A.1): the walks lead from 0 to the end of the code. -/
 theorem vBlob_ok : prog.vBlob = true := by
   rw [Program.vBlob_view, prog_view, CodeView.vBlob]
-  exact (walks_0.trans (walks_1.trans (walks_2.trans (walks_3.trans (walks_4.trans (walks_5.trans (walks_6.trans (walks_7.trans (walks_8.trans (walks_9.trans (walks_10.trans (walks_11.trans (walks_12.trans (walks_13.trans (walks_14.trans (walks_15.trans (walks_16.trans (walks_17.trans (walks_18.trans (walks_19.trans (walks_20.trans (walks_21.trans (walks_22.trans (CodeView.vBlobAux_end _ 130012 188243 (by decide) (by decide) rfl))))))))))))))))))))))))
+  exact (walks_0.trans (walks_1.trans (walks_2.trans (walks_3.trans (walks_4.trans (walks_5.trans (walks_6.trans (walks_7.trans (walks_8.trans (walks_9.trans (walks_10.trans (walks_11.trans (walks_12.trans (walks_13.trans (walks_14.trans (walks_15.trans (walks_16.trans (walks_17.trans (walks_18.trans (walks_19.trans (walks_20.trans (walks_21.trans (walks_22.trans (walks_23.trans (walks_24.trans (walks_25.trans (walks_26.trans (CodeView.vBlobAux_end _ 130012 188243 (by decide) (by decide) rfl))))))))))))))))))))))))))))
 
 /-- **The blob passes `checkCode` for the code facts**, checked by the kernel. -/
 theorem checkCode_ok : checkCode (ba N 6054 216919) facts = true :=

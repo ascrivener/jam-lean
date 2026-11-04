@@ -1038,7 +1038,15 @@ theorem chunk_ok_{c} : facts_{c}.all (·.holds prog) = true :=
       starts := starts.push pc
       pc := P.next pc
     let K := 40
-    let nseg := (starts.size + K - 1) / K
+    -- segments of at most K instructions and 110 code octets
+    let mut segStarts : Array Nat := #[0]
+    let mut si := 0
+    while si < starts.size do
+      let mut k := 0
+      while k < K && si + k < starts.size && (k == 0 || (starts[si + k]?.getD cLen) - starts[si]! < 110) do k := k + 1
+      si := si + k
+      segStarts := segStarts.push si
+    let nseg := segStarts.size - 1
     let WG := 64
     let nwg := (nseg + WG - 1) / WG
     let mut fuel := cLen + 1
@@ -1051,9 +1059,9 @@ theorem chunk_ok_{c} : facts_{c}.all (·.holds prog) = true :=
       let mut gi0 := 0
       let mut gj := 0
       for sgi in [WG * g:min (WG * (g + 1)) nseg] do
-        let i0 := starts[K * sgi]!
-        let k := min K (starts.size - K * sgi)
-        let j := starts[K * sgi + k]?.getD cLen
+        let i0 := starts[segStarts[sgi]!]!
+        let k := segStarts[sgi + 1]! - segStarts[sgi]!
+        let j := starts[segStarts[sgi + 1]!]?.getD cLen
         if sgi == WG * g then gi0 := i0
         gj := j
         if (cv i0 (j + 64)).walkF k i0 != some j then IO.eprintln s!"codecheck: walk {sgi} does not reach {j}"

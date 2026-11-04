@@ -63,12 +63,10 @@ def jtW : Array Nat :=
   ((List.range 1713).map fun i => Num.decodeLE (bytes (ofChunks ((chunks.drop 5).take 6)) (6054 + 6 + i * 3 - 1024 * 5) 3)).toArray
 
 theorem jt_eq : jt = jtW := by
-  simp only [jt, jtW, N]
-  congr 1
-  apply List.map_congr_left
-  intro i hi
+  unfold jt jtW
+  refine congrArg List.toArray (List.map_congr_left (fun i hi => ?_))
   have := List.mem_range.1 hi
-  rw [bytes_ofChunks_window chunks chunks_lt 5 6 _ _ (by omega) (by omega)]
+  exact congrArg Num.decodeLE (bytes_ofChunks_window chunks chunks_lt 5 6 _ _ (by omega) (by omega))
 
 /-- The program: **c**, **k** and **j** (GP §A.1). -/
 def prog : Program := ⟨ba N 11199 188243, bits N 1595536 188243, jt⟩

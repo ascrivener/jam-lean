@@ -952,12 +952,10 @@ def jtW : Array Nat :=
   ((List.range {hd.jLen}).map fun i => Num.decodeLE (bytes (ofChunks ((chunks.drop {jk}).take {jm})) ({o2} + {hd.p2} + i * {hd.jz} - 1024 * {jk}) {hd.jz})).toArray
 
 theorem jt_eq : jt = jtW := by
-  simp only [jt, jtW, N]
-  congr 1
-  apply List.map_congr_left
-  intro i hi
+  unfold jt jtW
+  refine congrArg List.toArray (List.map_congr_left (fun i hi => ?_))
   have := List.mem_range.1 hi
-  rw [bytes_ofChunks_window chunks chunks_lt {jk} {jm} _ _ (by omega) (by omega)]
+  exact congrArg Num.decodeLE (bytes_ofChunks_window chunks chunks_lt {jk} {jm} _ _ (by omega) (by omega))
 
 /-- The program: **c**, **k** and **j** (GP §A.1). -/
 def prog : Program := ⟨ba N {oc} {cLen}, bits N {mb} {cLen}, jt⟩

@@ -10,7 +10,7 @@ OUT=$1; shift
 WL=${WITNESS_LEAN:?set WITNESS_LEAN}; SIM=${WITNESS:?set WITNESS}/target/release/witness-sim
 # The recompiler needs userfaultfd; the interpreter gives the same gas.
 export POLKAVM_BACKEND=${POLKAVM_BACKEND:-interpreter}
-python3 "$WL/tools/lean/lean_plan.py" "$OUT/pack" --max-proof 100000000 >"$OUT/plan.json" 2>/dev/null
+python3 "$WL/tools/lean/lean_plan.py" "$OUT/pack" --max-proof 1 >"$OUT/plan.json" 2>/dev/null
 python3 - "$OUT" "$@" <<'PY' | while read -r n name; do
 import json, sys
 out, names = sys.argv[1], set(sys.argv[2:])

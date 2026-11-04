@@ -20,7 +20,7 @@ theorem psiR_of_run (params : Params) (d : Accounts) (c i : Nat) (p : WorkPackag
       w.codeHash.toList) = some l)
     (hsize : l.length ≤ Constants.Cmaxservicecodesize) (code : ByteArray)
     (hcode : splitMetadata l = some code) (jb : JamBlob) (hjb : JamBlob.parse? code = some jb)
-    (hlay : layoutOk jb = true) (hcc : checkCode jb.code facts = true)
+    (hlay : layoutOk jb = true) (hcc : checkCode jb.code facts = true) (o : Nat) (ho : o + 2 < 4294967296)
     (hrun : ∀ (P : Program) [HasCode jb.code P] (env : RefineHost.Env), env.code = code →
       env.fetch.params = params →
       let a : ByteArray := ⟨(Codec.nat c ++ Codec.nat i ++ Codec.nat w.service ++ Codec.var w.payload ++
@@ -28,8 +28,8 @@ theorem psiR_of_run (params : Params) (d : Accounts) (c i : Nat) (p : WorkPackag
       a.size ≤ inputSize ∧
       ∃ ω' μ' x', FreeStepsH jb.code (refineContract env) 0 (initialRegs a) (initialMemory jb a)
         ((∅, []) : RefineCtx) 43609 ω' μ' x' ∧ ω'[0] = UInt64.ofNat 4294901760 ∧
-        ω'[7] = UInt64.ofNat 206816 ∧ ω'[8] = UInt64.ofNat 2 ∧ μ'.read 206816 = 12 ∧
-        μ'.read 206817 = 0 ∧ μ'.readable 206816 = true ∧ μ'.readable 206817 = true) :
+        ω'[7] = UInt64.ofNat o ∧ ω'[8] = UInt64.ofNat 2 ∧ μ'.read o = 12 ∧
+        μ'.read (o + 1) = 0 ∧ μ'.readable o = true ∧ μ'.readable (o + 1) = true) :
     (psiR params d c i p r imports extrinsics off).result = .ok ⟨#[12, 0]⟩ ∨
       (psiR params d c i p r imports extrinsics off).result = .err .outOfGas := by
   obtain ⟨P, hP⟩ := checkCode_sound hcc
@@ -53,12 +53,12 @@ theorem psiR_of_run (params : Params) (d : Accounts) (c i : Nat) (p : WorkPackag
     unfold standardInit validJamBlob?
     rw [ite_eq_right (by omega), hjb, Option.bind_some, ite_eq_right hfit]
     rfl
-  have hres := psiM_of_run (P := P) code a (UInt64.ofNat w.refineGasLimit) env hY 206816 [12, 0]
-    ⟨ω', μ', x', hsteps, h0, h7, by simpa using h8, by decide, by decide,
+  have hres := psiM_of_run (P := P) code a (UInt64.ofNat w.refineGasLimit) env hY o [12, 0]
+    ⟨ω', μ', x', hsteps, h0, h7, by simpa using h8, by simp; omega, by decide,
       by simp only [Memory.readN, List.length_cons, List.length_nil, Nat.reduceAdd,
         show List.range 2 = [0, 1] from rfl, List.map_cons, List.map_nil, Nat.add_zero, hb0, hb1],
       fun j h1 h2 => by
-        rcases (show j = 206816 ∨ j = 206817 by simp at h2; omega) with rfl | rfl
+        rcases (show j = o ∨ j = o + 1 by simp at h2; omega) with rfl | rfl
         · exact hr0
         · exact hr1⟩
   rcases hres with h | h

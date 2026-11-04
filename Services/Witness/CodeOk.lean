@@ -13,6 +13,7 @@ import Services.Witness.CodeCheck.G7
 import Services.Witness.CodeCheck.G8
 import Services.Witness.CodeCheck.G9
 import Services.Witness.CodeCheck.G10
+import Services.Witness.CodeCheck.Hosts
 
 /-!
 # witness's code facts hold of the vendored blob, by the kernel
@@ -29,5 +30,18 @@ open PVM PVM.NatBlob Services.Witness.Blob Services.Witness.Code
 theorem checkCode_ok : checkCode (ba N 6054 216919) facts = true :=
   checkCode_of_chunks parse vBlob_ok (by
     simp only [factChunks, List.all_cons, List.all_nil, Bool.and_true, chunk_ok_0, chunk_ok_1, chunk_ok_2, chunk_ok_3, chunk_ok_4, chunk_ok_5, chunk_ok_6, chunk_ok_7, chunk_ok_8, chunk_ok_9, chunk_ok_10, chunk_ok_11, chunk_ok_12, chunk_ok_13, chunk_ok_14, chunk_ok_15, chunk_ok_16, chunk_ok_17, chunk_ok_18, chunk_ok_19, chunk_ok_20, chunk_ok_21, chunk_ok_22, chunk_ok_23, chunk_ok_24, chunk_ok_25, chunk_ok_26, chunk_ok_27, chunk_ok_28, chunk_ok_29, chunk_ok_30, chunk_ok_31, chunk_ok_32, chunk_ok_33, chunk_ok_34, chunk_ok_35, chunk_ok_36, chunk_ok_37, chunk_ok_38, chunk_ok_39, chunk_ok_40, chunk_ok_41, chunk_ok_42, chunk_ok_43, chunk_ok_44, chunk_ok_45, chunk_ok_46, chunk_ok_47, chunk_ok_48, chunk_ok_49, chunk_ok_50, chunk_ok_51, chunk_ok_52, chunk_ok_53, chunk_ok_54, chunk_ok_55, chunk_ok_56, chunk_ok_57, chunk_ok_58, chunk_ok_59, chunk_ok_60, chunk_ok_61, chunk_ok_62, chunk_ok_63, chunk_ok_64, chunk_ok_65])
+
+/-- **The host-call ids the blob names** (`PVM.jamHostCallIdsOf`, GP §A.1, §A.5.2), by the kernel. -/
+theorem hostIds_ok : ∀ n ∈ PVM.jamHostCallIdsOf (ba N 71 222902), n ∈ hostIds := by
+  have hp : PVM.jamHostCallIdsOf (ba N 71 222902) = prog.hostCallIds := by
+    unfold PVM.jamHostCallIdsOf PVM.hostCallIdsOf
+    rw [jam]
+    show (match Blob.parse? (ba N 6054 216919) with | some P => P.hostCallIds | none => []) = _
+    rw [parse]
+  rw [hp]
+  apply prog.hostCallIds_sub
+  intro i hi hm x hd
+  rw [prog_view] at hm hd
+  exact (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover hosts_0 hosts_1) hosts_2) hosts_3) hosts_4) hosts_5) hosts_6) hosts_7) hosts_8) hosts_9) i (Nat.zero_le _) (by simpa [prog] using hi) hm x hd
 
 end Services.Witness.CodeCheck

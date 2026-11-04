@@ -116,6 +116,83 @@ theorem checkCode_of_chunks {p : ByteArray} {P : Program} {cs : List (List CodeF
   simp only [checkCode, hp, hv, Bool.true_and, List.all_flatten]
   exact hc
 
+/-! ## The host-call ids a program names -/
+
+theorem OneImmOp.ofOpcode?_some {n : Nat} {o : OneImmOp} (h : OneImmOp.ofOpcode? n = some o) : n = 10 := by
+  unfold OneImmOp.ofOpcode? at h
+  split at h
+  · rfl
+  · cases h
+
+/-- Only opcode 10 decodes to a one-immediate instruction. -/
+theorem CodeView.zeta_of_decode_oneImm (V : CodeView) {i : Nat} {o : OneImmOp} {x : UInt64}
+    (h : V.decode i = some (.oneImm o x)) : V.zeta i = 10 := by
+  unfold CodeView.decode at h
+  dsimp only at h
+  split at h
+  all_goals first
+    | cases h
+    | (simp only [Option.map_eq_some_iff] at h
+       obtain ⟨a, ha, hb⟩ := h
+       first
+         | exact OneImmOp.ofOpcode?_some ha
+         | cases hb)
+
+/-- k indices from a: every `ecalli` among them names an id in `ids` (only opcode-10 octets at
+    opcode positions are decoded). -/
+def CodeView.hostScan (V : CodeView) (ids : List Nat) : Nat → Nat → Bool
+  | 0, _ => true
+  | k + 1, a =>
+    (!(V.maskAt a && V.zeta a == 10) ||
+      (match V.decode a with
+       | some (.oneImm .ecalli x) => ids.contains x.toNat
+       | _ => true)) && V.hostScan ids k (a + 1)
+
+theorem CodeView.hostScan_sound (V : CodeView) (ids : List Nat) :
+    ∀ k a, V.hostScan ids k a = true → ∀ i, a ≤ i → i < a + k → V.maskAt i = true →
+      ∀ x, V.decode i = some (.oneImm .ecalli x) → x.toNat ∈ ids := by
+  intro k
+  induction k with
+  | zero => intro a _ i h1 h2; omega
+  | succ k ih =>
+    intro a h i h1 h2 hm x hd
+    rw [hostScan, Bool.and_eq_true] at h
+    by_cases hia : i = a
+    · subst hia
+      have hz := V.zeta_of_decode_oneImm hd
+      have := h.1
+      simp only [hm, hz, beq_self_eq_true, Bool.and_true, Bool.not_true, Bool.false_or, hd] at this
+      exact List.elem_iff.1 this
+    · exact ih (a + 1) h.2 i (by omega) (by omega) hm x hd
+
+/-- **The host-call ids a program names**, from what the code says at its opcode positions. -/
+theorem Program.hostCallIds_sub (P : Program) (ids : List Nat)
+    (h : ∀ i, i < P.code.size → P.view.maskAt i = true → ∀ x,
+      P.view.decode i = some (.oneImm .ecalli x) → x.toNat ∈ ids) :
+    ∀ n ∈ P.hostCallIds, n ∈ ids := by
+  intro n hn
+  simp only [Program.hostCallIds, List.mem_filterMap, List.mem_range] at hn
+  obtain ⟨i, hi, hx⟩ := hn
+  split at hx
+  · rename_i hv
+    split at hx
+    · rename_i x hd
+      cases hx
+      have hm : P.view.maskAt i = true := by
+        simp only [Program.vInst, Bool.and_eq_true] at hv
+        exact hv.1.2
+      exact h i hi hm x hd
+    · cases hx
+  · cases hx
+
+/-- Covering a range by two. -/
+theorem range_cover {Q : Nat → Prop} {a b c : Nat} (h1 : ∀ i, a ≤ i → i < b → Q i)
+    (h2 : ∀ i, b ≤ i → i < c → Q i) : ∀ i, a ≤ i → i < c → Q i := by
+  intro i ha hc
+  by_cases hb : i < b
+  · exact h1 i ha hb
+  · exact h2 i (by omega) hc
+
 namespace NatBlob
 
 /-- `view`, reading the stretch of w code octets and w bitmask bits from index a from numbers cut

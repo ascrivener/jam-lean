@@ -37,6 +37,9 @@ theorem bsim_1217_2 : CodeView.Sim.run (view N 11199 1595536 188243) 906224 bst_
   rw [cview2_eq chunks chunks_lt] at h
   exact CodeView.Sim.run_steps _ 6 _ _ 906218 h
 
+theorem bseg_1217_0 : CodeView.Sim.run (view N 11199 1595536 188243) 906240 (Sim.init 184705) = CodeView.Sim.run (view N 11199 1595536 188243) 906218 bst_1217_3 :=
+  (bsim_1217_0.trans (bsim_1217_1.trans bsim_1217_2))
+
 theorem bend_1217 : CodeView.Sim.run (view N 11199 1595536 188243) 906218 bst_1217_3 = some bst_1217_3 := by
   have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 191 1 0 0 217 1) bst_1217_3 = some (.inr bst_1217_3) := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
@@ -44,7 +47,7 @@ theorem bend_1217 : CodeView.Sim.run (view N 11199 1595536 188243) 906218 bst_12
 
 /-- ϱ^Δ of the block at 184705 is 15 (GP eq. `gascostforblock`). -/
 theorem bcost_1217 : (view N 11199 1595536 188243).blockCost 184705 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 184705 bst_1217_3 (bsim_1217_0.trans (bsim_1217_1.trans (bsim_1217_2.trans bend_1217)))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 184705 bst_1217_3 (bseg_1217_0.trans bend_1217)]
   decide
 
 theorem bstart_1217 : (view N 11199 1595536 188243).isBlockStart 184705 = true := by
@@ -101,6 +104,9 @@ theorem bsim_1219_3 : CodeView.Sim.run (view N 11199 1595536 188243) 904936 bst_
   rw [cview2_eq chunks chunks_lt] at h
   exact CodeView.Sim.run_steps _ 4 _ _ 904932 h
 
+theorem bseg_1219_0 : CodeView.Sim.run (view N 11199 1595536 188243) 904960 (Sim.init 184710) = CodeView.Sim.run (view N 11199 1595536 188243) 904932 bst_1219_4 :=
+  (bsim_1219_0.trans (bsim_1219_1.trans (bsim_1219_2.trans bsim_1219_3)))
+
 theorem bend_1219 : CodeView.Sim.run (view N 11199 1595536 188243) 904932 bst_1219_4 = some bst_1219_4 := by
   have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 191 1 0 0 217 1) bst_1219_4 = some (.inr bst_1219_4) := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
@@ -108,7 +114,7 @@ theorem bend_1219 : CodeView.Sim.run (view N 11199 1595536 188243) 904932 bst_12
 
 /-- ϱ^Δ of the block at 184710 is 21 (GP eq. `gascostforblock`). -/
 theorem bcost_1219 : (view N 11199 1595536 188243).blockCost 184710 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 184710 bst_1219_4 (bsim_1219_0.trans (bsim_1219_1.trans (bsim_1219_2.trans (bsim_1219_3.trans bend_1219))))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 184710 bst_1219_4 (bseg_1219_0.trans bend_1219)]
   decide
 
 theorem bstart_1219 : (view N 11199 1595536 188243).isBlockStart 184710 = true := by
@@ -158,6 +164,9 @@ theorem bsim_1221_2 : CodeView.Sim.run (view N 11199 1595536 188243) 903408 bst_
   rw [cview2_eq chunks chunks_lt] at h
   exact CodeView.Sim.run_steps _ 6 _ _ 903402 h
 
+theorem bseg_1221_0 : CodeView.Sim.run (view N 11199 1595536 188243) 903424 (Sim.init 184716) = CodeView.Sim.run (view N 11199 1595536 188243) 903402 bst_1221_3 :=
+  (bsim_1221_0.trans (bsim_1221_1.trans bsim_1221_2))
+
 theorem bend_1221 : CodeView.Sim.run (view N 11199 1595536 188243) 903402 bst_1221_3 = some bst_1221_3 := by
   have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 191 1 0 0 217 1) bst_1221_3 = some (.inr bst_1221_3) := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
@@ -165,7 +174,7 @@ theorem bend_1221 : CodeView.Sim.run (view N 11199 1595536 188243) 903402 bst_12
 
 /-- ϱ^Δ of the block at 184716 is 15 (GP eq. `gascostforblock`). -/
 theorem bcost_1221 : (view N 11199 1595536 188243).blockCost 184716 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 184716 bst_1221_3 (bsim_1221_0.trans (bsim_1221_1.trans (bsim_1221_2.trans bend_1221)))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 184716 bst_1221_3 (bseg_1221_0.trans bend_1221)]
   decide
 
 theorem bstart_1221 : (view N 11199 1595536 188243).isBlockStart 184716 = true := by
@@ -222,6 +231,9 @@ theorem bsim_1223_3 : CodeView.Sim.run (view N 11199 1595536 188243) 902120 bst_
   rw [cview2_eq chunks chunks_lt] at h
   exact CodeView.Sim.run_steps _ 4 _ _ 902116 h
 
+theorem bseg_1223_0 : CodeView.Sim.run (view N 11199 1595536 188243) 902144 (Sim.init 184721) = CodeView.Sim.run (view N 11199 1595536 188243) 902116 bst_1223_4 :=
+  (bsim_1223_0.trans (bsim_1223_1.trans (bsim_1223_2.trans bsim_1223_3)))
+
 theorem bend_1223 : CodeView.Sim.run (view N 11199 1595536 188243) 902116 bst_1223_4 = some bst_1223_4 := by
   have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 191 1 0 0 217 1) bst_1223_4 = some (.inr bst_1223_4) := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
@@ -229,7 +241,7 @@ theorem bend_1223 : CodeView.Sim.run (view N 11199 1595536 188243) 902116 bst_12
 
 /-- ϱ^Δ of the block at 184721 is 21 (GP eq. `gascostforblock`). -/
 theorem bcost_1223 : (view N 11199 1595536 188243).blockCost 184721 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 184721 bst_1223_4 (bsim_1223_0.trans (bsim_1223_1.trans (bsim_1223_2.trans (bsim_1223_3.trans bend_1223))))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 184721 bst_1223_4 (bseg_1223_0.trans bend_1223)]
   decide
 
 theorem bstart_1223 : (view N 11199 1595536 188243).isBlockStart 184721 = true := by
@@ -279,6 +291,9 @@ theorem bsim_1225_2 : CodeView.Sim.run (view N 11199 1595536 188243) 900592 bst_
   rw [cview2_eq chunks chunks_lt] at h
   exact CodeView.Sim.run_steps _ 6 _ _ 900586 h
 
+theorem bseg_1225_0 : CodeView.Sim.run (view N 11199 1595536 188243) 900608 (Sim.init 184727) = CodeView.Sim.run (view N 11199 1595536 188243) 900586 bst_1225_3 :=
+  (bsim_1225_0.trans (bsim_1225_1.trans bsim_1225_2))
+
 theorem bend_1225 : CodeView.Sim.run (view N 11199 1595536 188243) 900586 bst_1225_3 = some bst_1225_3 := by
   have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 191 1 0 0 217 1) bst_1225_3 = some (.inr bst_1225_3) := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
@@ -286,7 +301,7 @@ theorem bend_1225 : CodeView.Sim.run (view N 11199 1595536 188243) 900586 bst_12
 
 /-- ϱ^Δ of the block at 184727 is 15 (GP eq. `gascostforblock`). -/
 theorem bcost_1225 : (view N 11199 1595536 188243).blockCost 184727 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 184727 bst_1225_3 (bsim_1225_0.trans (bsim_1225_1.trans (bsim_1225_2.trans bend_1225)))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 184727 bst_1225_3 (bseg_1225_0.trans bend_1225)]
   decide
 
 theorem bstart_1225 : (view N 11199 1595536 188243).isBlockStart 184727 = true := by
@@ -343,6 +358,9 @@ theorem bsim_1227_3 : CodeView.Sim.run (view N 11199 1595536 188243) 899304 bst_
   rw [cview2_eq chunks chunks_lt] at h
   exact CodeView.Sim.run_steps _ 4 _ _ 899300 h
 
+theorem bseg_1227_0 : CodeView.Sim.run (view N 11199 1595536 188243) 899328 (Sim.init 184732) = CodeView.Sim.run (view N 11199 1595536 188243) 899300 bst_1227_4 :=
+  (bsim_1227_0.trans (bsim_1227_1.trans (bsim_1227_2.trans bsim_1227_3)))
+
 theorem bend_1227 : CodeView.Sim.run (view N 11199 1595536 188243) 899300 bst_1227_4 = some bst_1227_4 := by
   have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 191 1 0 0 217 1) bst_1227_4 = some (.inr bst_1227_4) := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
@@ -350,7 +368,7 @@ theorem bend_1227 : CodeView.Sim.run (view N 11199 1595536 188243) 899300 bst_12
 
 /-- ϱ^Δ of the block at 184732 is 21 (GP eq. `gascostforblock`). -/
 theorem bcost_1227 : (view N 11199 1595536 188243).blockCost 184732 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 184732 bst_1227_4 (bsim_1227_0.trans (bsim_1227_1.trans (bsim_1227_2.trans (bsim_1227_3.trans bend_1227))))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 184732 bst_1227_4 (bseg_1227_0.trans bend_1227)]
   decide
 
 theorem bstart_1227 : (view N 11199 1595536 188243).isBlockStart 184732 = true := by
@@ -400,6 +418,9 @@ theorem bsim_1229_2 : CodeView.Sim.run (view N 11199 1595536 188243) 897776 bst_
   rw [cview2_eq chunks chunks_lt] at h
   exact CodeView.Sim.run_steps _ 6 _ _ 897770 h
 
+theorem bseg_1229_0 : CodeView.Sim.run (view N 11199 1595536 188243) 897792 (Sim.init 184738) = CodeView.Sim.run (view N 11199 1595536 188243) 897770 bst_1229_3 :=
+  (bsim_1229_0.trans (bsim_1229_1.trans bsim_1229_2))
+
 theorem bend_1229 : CodeView.Sim.run (view N 11199 1595536 188243) 897770 bst_1229_3 = some bst_1229_3 := by
   have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 191 1 0 0 217 1) bst_1229_3 = some (.inr bst_1229_3) := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
@@ -407,7 +428,7 @@ theorem bend_1229 : CodeView.Sim.run (view N 11199 1595536 188243) 897770 bst_12
 
 /-- ϱ^Δ of the block at 184738 is 15 (GP eq. `gascostforblock`). -/
 theorem bcost_1229 : (view N 11199 1595536 188243).blockCost 184738 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 184738 bst_1229_3 (bsim_1229_0.trans (bsim_1229_1.trans (bsim_1229_2.trans bend_1229)))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 184738 bst_1229_3 (bseg_1229_0.trans bend_1229)]
   decide
 
 theorem bstart_1229 : (view N 11199 1595536 188243).isBlockStart 184738 = true := by
@@ -450,6 +471,9 @@ theorem bsim_1231_1 : CodeView.Sim.run (view N 11199 1595536 188243) 896504 bst_
   rw [cview2_eq chunks chunks_lt] at h
   exact CodeView.Sim.run_steps _ 1 _ _ 896503 h
 
+theorem bseg_1231_0 : CodeView.Sim.run (view N 11199 1595536 188243) 896512 (Sim.init 184743) = CodeView.Sim.run (view N 11199 1595536 188243) 896503 bst_1231_2 :=
+  (bsim_1231_0.trans bsim_1231_1)
+
 theorem bend_1231 : CodeView.Sim.run (view N 11199 1595536 188243) 896503 bst_1231_2 = some bst_1231_2 := by
   have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 191 1 191 1 217 1) bst_1231_2 = some (.inr bst_1231_2) := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
@@ -457,7 +481,7 @@ theorem bend_1231 : CodeView.Sim.run (view N 11199 1595536 188243) 896503 bst_12
 
 /-- ϱ^Δ of the block at 184743 is 2 (GP eq. `gascostforblock`). -/
 theorem bcost_1231 : (view N 11199 1595536 188243).blockCost 184743 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 184743 bst_1231_2 (bsim_1231_0.trans (bsim_1231_1.trans bend_1231))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 184743 bst_1231_2 (bseg_1231_0.trans bend_1231)]
   decide
 
 theorem bstart_1231 : (view N 11199 1595536 188243).isBlockStart 184743 = true := by
@@ -500,6 +524,9 @@ theorem bsim_1233_1 : CodeView.Sim.run (view N 11199 1595536 188243) 894968 bst_
   rw [cview2_eq chunks chunks_lt] at h
   exact CodeView.Sim.run_steps _ 1 _ _ 894967 h
 
+theorem bseg_1233_0 : CodeView.Sim.run (view N 11199 1595536 188243) 894976 (Sim.init 184749) = CodeView.Sim.run (view N 11199 1595536 188243) 894967 bst_1233_2 :=
+  (bsim_1233_0.trans bsim_1233_1)
+
 theorem bend_1233 : CodeView.Sim.run (view N 11199 1595536 188243) 894967 bst_1233_2 = some bst_1233_2 := by
   have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 191 1 0 0 217 1) bst_1233_2 = some (.inr bst_1233_2) := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
@@ -507,7 +534,7 @@ theorem bend_1233 : CodeView.Sim.run (view N 11199 1595536 188243) 894967 bst_12
 
 /-- ϱ^Δ of the block at 184749 is 2 (GP eq. `gascostforblock`). -/
 theorem bcost_1233 : (view N 11199 1595536 188243).blockCost 184749 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 184749 bst_1233_2 (bsim_1233_0.trans (bsim_1233_1.trans bend_1233))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 184749 bst_1233_2 (bseg_1233_0.trans bend_1233)]
   decide
 
 theorem bstart_1233 : (view N 11199 1595536 188243).isBlockStart 184749 = true := by
@@ -564,6 +591,9 @@ theorem bsim_1235_3 : CodeView.Sim.run (view N 11199 1595536 188243) 893928 bst_
   rw [cview2_eq chunks chunks_lt] at h
   exact CodeView.Sim.run_steps _ 8 _ _ 893920 h
 
+theorem bseg_1235_0 : CodeView.Sim.run (view N 11199 1595536 188243) 893952 (Sim.init 184753) = CodeView.Sim.run (view N 11199 1595536 188243) 893920 bst_1235_4 :=
+  (bsim_1235_0.trans (bsim_1235_1.trans (bsim_1235_2.trans bsim_1235_3)))
+
 theorem bend_1235 : CodeView.Sim.run (view N 11199 1595536 188243) 893920 bst_1235_4 = some bst_1235_4 := by
   have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 191 1 0 0 217 1) bst_1235_4 = some (.inr bst_1235_4) := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
@@ -571,7 +601,7 @@ theorem bend_1235 : CodeView.Sim.run (view N 11199 1595536 188243) 893920 bst_12
 
 /-- ϱ^Δ of the block at 184753 is 25 (GP eq. `gascostforblock`). -/
 theorem bcost_1235 : (view N 11199 1595536 188243).blockCost 184753 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 184753 bst_1235_4 (bsim_1235_0.trans (bsim_1235_1.trans (bsim_1235_2.trans (bsim_1235_3.trans bend_1235))))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 184753 bst_1235_4 (bseg_1235_0.trans bend_1235)]
   decide
 
 theorem bstart_1235 : (view N 11199 1595536 188243).isBlockStart 184753 = true := by
@@ -614,6 +644,9 @@ theorem bsim_1237_1 : CodeView.Sim.run (view N 11199 1595536 188243) 892408 bst_
   rw [cview2_eq chunks chunks_lt] at h
   exact CodeView.Sim.run_steps _ 1 _ _ 892407 h
 
+theorem bseg_1237_0 : CodeView.Sim.run (view N 11199 1595536 188243) 892416 (Sim.init 184759) = CodeView.Sim.run (view N 11199 1595536 188243) 892407 bst_1237_2 :=
+  (bsim_1237_0.trans bsim_1237_1)
+
 theorem bend_1237 : CodeView.Sim.run (view N 11199 1595536 188243) 892407 bst_1237_2 = some bst_1237_2 := by
   have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 191 1 0 0 217 1) bst_1237_2 = some (.inr bst_1237_2) := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
@@ -621,7 +654,7 @@ theorem bend_1237 : CodeView.Sim.run (view N 11199 1595536 188243) 892407 bst_12
 
 /-- ϱ^Δ of the block at 184759 is 2 (GP eq. `gascostforblock`). -/
 theorem bcost_1237 : (view N 11199 1595536 188243).blockCost 184759 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 184759 bst_1237_2 (bsim_1237_0.trans (bsim_1237_1.trans bend_1237))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 184759 bst_1237_2 (bseg_1237_0.trans bend_1237)]
   decide
 
 theorem bstart_1237 : (view N 11199 1595536 188243).isBlockStart 184759 = true := by
@@ -741,6 +774,9 @@ theorem bsim_1239_12 : CodeView.Sim.run (view N 11199 1595536 188243) 891330 bst
   rw [cview2_eq chunks chunks_lt] at h
   exact CodeView.Sim.run_steps _ 2 _ _ 891328 h
 
+theorem bseg_1239_0 : CodeView.Sim.run (view N 11199 1595536 188243) 891392 (Sim.init 184763) = CodeView.Sim.run (view N 11199 1595536 188243) 891328 bst_1239_13 :=
+  (bsim_1239_0.trans (bsim_1239_1.trans (bsim_1239_2.trans (bsim_1239_3.trans (bsim_1239_4.trans (bsim_1239_5.trans (bsim_1239_6.trans (bsim_1239_7.trans (bsim_1239_8.trans (bsim_1239_9.trans (bsim_1239_10.trans (bsim_1239_11.trans bsim_1239_12))))))))))))
+
 theorem bend_1239 : CodeView.Sim.run (view N 11199 1595536 188243) 891328 bst_1239_13 = some bst_1239_13 := by
   have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 191 1 0 0 217 1) bst_1239_13 = some (.inr bst_1239_13) := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
@@ -748,7 +784,7 @@ theorem bend_1239 : CodeView.Sim.run (view N 11199 1595536 188243) 891328 bst_12
 
 /-- ϱ^Δ of the block at 184763 is 47 (GP eq. `gascostforblock`). -/
 theorem bcost_1239 : (view N 11199 1595536 188243).blockCost 184763 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 184763 bst_1239_13 (bsim_1239_0.trans (bsim_1239_1.trans (bsim_1239_2.trans (bsim_1239_3.trans (bsim_1239_4.trans (bsim_1239_5.trans (bsim_1239_6.trans (bsim_1239_7.trans (bsim_1239_8.trans (bsim_1239_9.trans (bsim_1239_10.trans (bsim_1239_11.trans (bsim_1239_12.trans bend_1239)))))))))))))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 184763 bst_1239_13 (bseg_1239_0.trans bend_1239)]
   decide
 
 theorem bstart_1239 : (view N 11199 1595536 188243).isBlockStart 184763 = true := by
@@ -856,6 +892,9 @@ theorem bsim_1244_7 : CodeView.Sim.run (view N 11199 1595536 188243) 886746 bst_
   rw [cview2_eq chunks chunks_lt] at h
   exact CodeView.Sim.run_steps _ 3 _ _ 886743 h
 
+theorem bseg_1244_0 : CodeView.Sim.run (view N 11199 1595536 188243) 886784 (Sim.init 184781) = CodeView.Sim.run (view N 11199 1595536 188243) 886743 bst_1244_8 :=
+  (bsim_1244_0.trans (bsim_1244_1.trans (bsim_1244_2.trans (bsim_1244_3.trans (bsim_1244_4.trans (bsim_1244_5.trans (bsim_1244_6.trans bsim_1244_7)))))))
+
 theorem bend_1244 : CodeView.Sim.run (view N 11199 1595536 188243) 886743 bst_1244_8 = some bst_1244_8 := by
   have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 191 1 193 1 217 1) bst_1244_8 = some (.inr bst_1244_8) := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
@@ -863,7 +902,7 @@ theorem bend_1244 : CodeView.Sim.run (view N 11199 1595536 188243) 886743 bst_12
 
 /-- ϱ^Δ of the block at 184781 is 26 (GP eq. `gascostforblock`). -/
 theorem bcost_1244 : (view N 11199 1595536 188243).blockCost 184781 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 184781 bst_1244_8 (bsim_1244_0.trans (bsim_1244_1.trans (bsim_1244_2.trans (bsim_1244_3.trans (bsim_1244_4.trans (bsim_1244_5.trans (bsim_1244_6.trans (bsim_1244_7.trans bend_1244))))))))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 184781 bst_1244_8 (bseg_1244_0.trans bend_1244)]
   decide
 
 theorem bstart_1244 : (view N 11199 1595536 188243).isBlockStart 184781 = true := by
@@ -1104,6 +1143,9 @@ theorem bsim_1249_26 : CodeView.Sim.run (view N 11199 1595536 188243) 881322 bst
   rw [cview2_eq chunks chunks_lt] at h
   exact CodeView.Sim.run_steps _ 2 _ _ 881320 h
 
+theorem bseg_1249_0 : CodeView.Sim.run (view N 11199 1595536 188243) 881408 (Sim.init 184802) = CodeView.Sim.run (view N 11199 1595536 188243) 881320 bst_1249_27 :=
+  (bsim_1249_0.trans (bsim_1249_1.trans (bsim_1249_2.trans (bsim_1249_3.trans (bsim_1249_4.trans (bsim_1249_5.trans (bsim_1249_6.trans (bsim_1249_7.trans (bsim_1249_8.trans (bsim_1249_9.trans (bsim_1249_10.trans (bsim_1249_11.trans (bsim_1249_12.trans (bsim_1249_13.trans (bsim_1249_14.trans (bsim_1249_15.trans (bsim_1249_16.trans (bsim_1249_17.trans (bsim_1249_18.trans (bsim_1249_19.trans (bsim_1249_20.trans (bsim_1249_21.trans (bsim_1249_22.trans (bsim_1249_23.trans (bsim_1249_24.trans (bsim_1249_25.trans bsim_1249_26))))))))))))))))))))))))))
+
 theorem bend_1249 : CodeView.Sim.run (view N 11199 1595536 188243) 881320 bst_1249_27 = some bst_1249_27 := by
   have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 191 1 191 1 217 1) bst_1249_27 = some (.inr bst_1249_27) := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
@@ -1111,7 +1153,7 @@ theorem bend_1249 : CodeView.Sim.run (view N 11199 1595536 188243) 881320 bst_12
 
 /-- ϱ^Δ of the block at 184802 is 51 (GP eq. `gascostforblock`). -/
 theorem bcost_1249 : (view N 11199 1595536 188243).blockCost 184802 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 184802 bst_1249_27 (bsim_1249_0.trans (bsim_1249_1.trans (bsim_1249_2.trans (bsim_1249_3.trans (bsim_1249_4.trans (bsim_1249_5.trans (bsim_1249_6.trans (bsim_1249_7.trans (bsim_1249_8.trans (bsim_1249_9.trans (bsim_1249_10.trans (bsim_1249_11.trans (bsim_1249_12.trans (bsim_1249_13.trans (bsim_1249_14.trans (bsim_1249_15.trans (bsim_1249_16.trans (bsim_1249_17.trans (bsim_1249_18.trans (bsim_1249_19.trans (bsim_1249_20.trans (bsim_1249_21.trans (bsim_1249_22.trans (bsim_1249_23.trans (bsim_1249_24.trans (bsim_1249_25.trans (bsim_1249_26.trans bend_1249)))))))))))))))))))))))))))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 184802 bst_1249_27 (bseg_1249_0.trans bend_1249)]
   decide
 
 theorem bstart_1249 : (view N 11199 1595536 188243).isBlockStart 184802 = true := by
@@ -1294,6 +1336,9 @@ theorem bsim_1259_12 : CodeView.Sim.run (view N 11199 1595536 188243) 868546 bst
   rw [cview2_eq chunks chunks_lt] at h
   exact CodeView.Sim.run_steps _ 2 _ _ 868544 h
 
+theorem bseg_1259_0 : CodeView.Sim.run (view N 11199 1595536 188243) 868608 (Sim.init 184852) = CodeView.Sim.run (view N 11199 1595536 188243) 868544 bst_1259_13 :=
+  (bsim_1259_0.trans (bsim_1259_1.trans (bsim_1259_2.trans (bsim_1259_3.trans (bsim_1259_4.trans (bsim_1259_5.trans (bsim_1259_6.trans (bsim_1259_7.trans (bsim_1259_8.trans (bsim_1259_9.trans (bsim_1259_10.trans (bsim_1259_11.trans bsim_1259_12))))))))))))
+
 theorem bend_1259 : CodeView.Sim.run (view N 11199 1595536 188243) 868544 bst_1259_13 = some bst_1259_13 := by
   have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 191 1 0 0 217 1) bst_1259_13 = some (.inr bst_1259_13) := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
@@ -1301,7 +1346,7 @@ theorem bend_1259 : CodeView.Sim.run (view N 11199 1595536 188243) 868544 bst_12
 
 /-- ϱ^Δ of the block at 184852 is 47 (GP eq. `gascostforblock`). -/
 theorem bcost_1259 : (view N 11199 1595536 188243).blockCost 184852 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 184852 bst_1259_13 (bsim_1259_0.trans (bsim_1259_1.trans (bsim_1259_2.trans (bsim_1259_3.trans (bsim_1259_4.trans (bsim_1259_5.trans (bsim_1259_6.trans (bsim_1259_7.trans (bsim_1259_8.trans (bsim_1259_9.trans (bsim_1259_10.trans (bsim_1259_11.trans (bsim_1259_12.trans bend_1259)))))))))))))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 184852 bst_1259_13 (bseg_1259_0.trans bend_1259)]
   decide
 
 theorem bstart_1259 : (view N 11199 1595536 188243).isBlockStart 184852 = true := by
@@ -1355,6 +1400,9 @@ theorem bsim_1264_0 : CodeView.Sim.run (view N 11199 1595536 188243) 864256 (Sim
   rw [cview2_eq chunks chunks_lt] at h
   exact CodeView.Sim.run_steps _ 7 _ _ 864249 h
 
+theorem bseg_1264_0 : CodeView.Sim.run (view N 11199 1595536 188243) 864256 (Sim.init 184869) = CodeView.Sim.run (view N 11199 1595536 188243) 864249 bst_1264_1 :=
+  bsim_1264_0
+
 theorem bend_1264 : CodeView.Sim.run (view N 11199 1595536 188243) 864249 bst_1264_1 = some bst_1264_1 := by
   have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 191 1 0 0 217 1) bst_1264_1 = some (.inr bst_1264_1) := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
@@ -1362,7 +1410,7 @@ theorem bend_1264 : CodeView.Sim.run (view N 11199 1595536 188243) 864249 bst_12
 
 /-- ϱ^Δ of the block at 184869 is 2 (GP eq. `gascostforblock`). -/
 theorem bcost_1264 : (view N 11199 1595536 188243).blockCost 184869 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 184869 bst_1264_1 (bsim_1264_0.trans bend_1264)]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 184869 bst_1264_1 (bseg_1264_0.trans bend_1264)]
   decide
 
 theorem bstart_1264 : (view N 11199 1595536 188243).isBlockStart 184869 = true := by
@@ -1448,6 +1496,9 @@ theorem bsim_1267_7 : CodeView.Sim.run (view N 11199 1595536 188243) 385243 bst_
   rw [cview2_eq chunks chunks_lt] at h
   exact CodeView.Sim.run_steps _ 2 _ _ 385241 h
 
+theorem bseg_1267_0 : CodeView.Sim.run (view N 11199 1595536 188243) 385280 (Sim.init 186740) = CodeView.Sim.run (view N 11199 1595536 188243) 385241 bst_1267_8 :=
+  (bsim_1267_0.trans (bsim_1267_1.trans (bsim_1267_2.trans (bsim_1267_3.trans (bsim_1267_4.trans (bsim_1267_5.trans (bsim_1267_6.trans bsim_1267_7)))))))
+
 theorem bend_1267 : CodeView.Sim.run (view N 11199 1595536 188243) 385241 bst_1267_8 = some bst_1267_8 := by
   have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 193 1 193 1 217 1) bst_1267_8 = some (.inr bst_1267_8) := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
@@ -1455,7 +1506,7 @@ theorem bend_1267 : CodeView.Sim.run (view N 11199 1595536 188243) 385241 bst_12
 
 /-- ϱ^Δ of the block at 186740 is 26 (GP eq. `gascostforblock`). -/
 theorem bcost_1267 : (view N 11199 1595536 188243).blockCost 186740 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 186740 bst_1267_8 (bsim_1267_0.trans (bsim_1267_1.trans (bsim_1267_2.trans (bsim_1267_3.trans (bsim_1267_4.trans (bsim_1267_5.trans (bsim_1267_6.trans (bsim_1267_7.trans bend_1267))))))))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 186740 bst_1267_8 (bseg_1267_0.trans bend_1267)]
   decide
 
 theorem bstart_1267 : (view N 11199 1595536 188243).isBlockStart 186740 = true := by
@@ -1538,6 +1589,9 @@ theorem bsim_1271_5 : CodeView.Sim.run (view N 11199 1595536 188243) 381152 bst_
   rw [cview2_eq chunks chunks_lt] at h
   exact CodeView.Sim.run_steps _ 3 _ _ 381149 h
 
+theorem bseg_1271_0 : CodeView.Sim.run (view N 11199 1595536 188243) 381184 (Sim.init 186756) = CodeView.Sim.run (view N 11199 1595536 188243) 381149 bst_1271_6 :=
+  (bsim_1271_0.trans (bsim_1271_1.trans (bsim_1271_2.trans (bsim_1271_3.trans (bsim_1271_4.trans bsim_1271_5)))))
+
 theorem bend_1271 : CodeView.Sim.run (view N 11199 1595536 188243) 381149 bst_1271_6 = some bst_1271_6 := by
   have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 193 1 0 0 217 1) bst_1271_6 = some (.inr bst_1271_6) := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
@@ -1545,7 +1599,7 @@ theorem bend_1271 : CodeView.Sim.run (view N 11199 1595536 188243) 381149 bst_12
 
 /-- ϱ^Δ of the block at 186756 is 24 (GP eq. `gascostforblock`). -/
 theorem bcost_1271 : (view N 11199 1595536 188243).blockCost 186756 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 186756 bst_1271_6 (bsim_1271_0.trans (bsim_1271_1.trans (bsim_1271_2.trans (bsim_1271_3.trans (bsim_1271_4.trans (bsim_1271_5.trans bend_1271))))))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 186756 bst_1271_6 (bseg_1271_0.trans bend_1271)]
   decide
 
 theorem bstart_1271 : (view N 11199 1595536 188243).isBlockStart 186756 = true := by
@@ -1587,6 +1641,9 @@ theorem bsim_1274_0 : CodeView.Sim.run (view N 11199 1595536 188243) 378368 (Sim
   rw [cview2_eq chunks chunks_lt] at h
   exact CodeView.Sim.run_steps _ 10 _ _ 378358 h
 
+theorem bseg_1274_0 : CodeView.Sim.run (view N 11199 1595536 188243) 378368 (Sim.init 186767) = CodeView.Sim.run (view N 11199 1595536 188243) 378358 bst_1274_1 :=
+  bsim_1274_0
+
 theorem bend_1274 : CodeView.Sim.run (view N 11199 1595536 188243) 378358 bst_1274_1 = some bst_1274_1 := by
   have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 193 1 0 0 217 1) bst_1274_1 = some (.inr bst_1274_1) := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
@@ -1594,7 +1651,7 @@ theorem bend_1274 : CodeView.Sim.run (view N 11199 1595536 188243) 378358 bst_12
 
 /-- ϱ^Δ of the block at 186767 is 2 (GP eq. `gascostforblock`). -/
 theorem bcost_1274 : (view N 11199 1595536 188243).blockCost 186767 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 186767 bst_1274_1 (bsim_1274_0.trans bend_1274)]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 186767 bst_1274_1 (bseg_1274_0.trans bend_1274)]
   decide
 
 theorem bstart_1274 : (view N 11199 1595536 188243).isBlockStart 186767 = true := by
@@ -1720,6 +1777,9 @@ theorem bsim_1277_12 : CodeView.Sim.run (view N 11199 1595536 188243) 376514 bst
   rw [cview2_eq chunks chunks_lt] at h
   exact CodeView.Sim.run_steps _ 5 _ _ 376509 h
 
+theorem bseg_1277_0 : CodeView.Sim.run (view N 11199 1595536 188243) 376576 (Sim.init 186774) = CodeView.Sim.run (view N 11199 1595536 188243) 376509 bst_1277_13 :=
+  (bsim_1277_0.trans (bsim_1277_1.trans (bsim_1277_2.trans (bsim_1277_3.trans (bsim_1277_4.trans (bsim_1277_5.trans (bsim_1277_6.trans (bsim_1277_7.trans (bsim_1277_8.trans (bsim_1277_9.trans (bsim_1277_10.trans (bsim_1277_11.trans bsim_1277_12))))))))))))
+
 theorem bend_1277 : CodeView.Sim.run (view N 11199 1595536 188243) 376509 bst_1277_13 = some bst_1277_13 := by
   have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 193 1 0 0 217 1) bst_1277_13 = some (.inr bst_1277_13) := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
@@ -1727,7 +1787,7 @@ theorem bend_1277 : CodeView.Sim.run (view N 11199 1595536 188243) 376509 bst_12
 
 /-- ϱ^Δ of the block at 186774 is 50 (GP eq. `gascostforblock`). -/
 theorem bcost_1277 : (view N 11199 1595536 188243).blockCost 186774 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 186774 bst_1277_13 (bsim_1277_0.trans (bsim_1277_1.trans (bsim_1277_2.trans (bsim_1277_3.trans (bsim_1277_4.trans (bsim_1277_5.trans (bsim_1277_6.trans (bsim_1277_7.trans (bsim_1277_8.trans (bsim_1277_9.trans (bsim_1277_10.trans (bsim_1277_11.trans (bsim_1277_12.trans bend_1277)))))))))))))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 186774 bst_1277_13 (bseg_1277_0.trans bend_1277)]
   decide
 
 theorem bstart_1277 : (view N 11199 1595536 188243).isBlockStart 186774 = true := by

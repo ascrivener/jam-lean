@@ -2809,6 +2809,45 @@ theorem bsim_1089_398 : CodeView.Sim.run (view N 11199 1595536 188243) 15542581 
   rw [cview2_eq chunks chunks_lt] at h
   exact CodeView.Sim.run_steps _ 1 _ _ 15542580 h
 
+theorem bseg_1089_0 : CodeView.Sim.run (view N 11199 1595536 188243) 15543040 (Sim.init 127530) = CodeView.Sim.run (view N 11199 1595536 188243) 15542963 bst_1089_32 :=
+  (bsim_1089_0.trans (bsim_1089_1.trans (bsim_1089_2.trans (bsim_1089_3.trans (bsim_1089_4.trans (bsim_1089_5.trans (bsim_1089_6.trans (bsim_1089_7.trans (bsim_1089_8.trans (bsim_1089_9.trans (bsim_1089_10.trans (bsim_1089_11.trans (bsim_1089_12.trans (bsim_1089_13.trans (bsim_1089_14.trans (bsim_1089_15.trans (bsim_1089_16.trans (bsim_1089_17.trans (bsim_1089_18.trans (bsim_1089_19.trans (bsim_1089_20.trans (bsim_1089_21.trans (bsim_1089_22.trans (bsim_1089_23.trans (bsim_1089_24.trans (bsim_1089_25.trans (bsim_1089_26.trans (bsim_1089_27.trans (bsim_1089_28.trans (bsim_1089_29.trans (bsim_1089_30.trans bsim_1089_31)))))))))))))))))))))))))))))))
+
+theorem bseg_1089_1 : CodeView.Sim.run (view N 11199 1595536 188243) 15542963 bst_1089_32 = CodeView.Sim.run (view N 11199 1595536 188243) 15542915 bst_1089_64 :=
+  (bsim_1089_32.trans (bsim_1089_33.trans (bsim_1089_34.trans (bsim_1089_35.trans (bsim_1089_36.trans (bsim_1089_37.trans (bsim_1089_38.trans (bsim_1089_39.trans (bsim_1089_40.trans (bsim_1089_41.trans (bsim_1089_42.trans (bsim_1089_43.trans (bsim_1089_44.trans (bsim_1089_45.trans (bsim_1089_46.trans (bsim_1089_47.trans (bsim_1089_48.trans (bsim_1089_49.trans (bsim_1089_50.trans (bsim_1089_51.trans (bsim_1089_52.trans (bsim_1089_53.trans (bsim_1089_54.trans (bsim_1089_55.trans (bsim_1089_56.trans (bsim_1089_57.trans (bsim_1089_58.trans (bsim_1089_59.trans (bsim_1089_60.trans (bsim_1089_61.trans (bsim_1089_62.trans bsim_1089_63)))))))))))))))))))))))))))))))
+
+theorem bseg_1089_2 : CodeView.Sim.run (view N 11199 1595536 188243) 15542915 bst_1089_64 = CodeView.Sim.run (view N 11199 1595536 188243) 15542883 bst_1089_96 :=
+  (bsim_1089_64.trans (bsim_1089_65.trans (bsim_1089_66.trans (bsim_1089_67.trans (bsim_1089_68.trans (bsim_1089_69.trans (bsim_1089_70.trans (bsim_1089_71.trans (bsim_1089_72.trans (bsim_1089_73.trans (bsim_1089_74.trans (bsim_1089_75.trans (bsim_1089_76.trans (bsim_1089_77.trans (bsim_1089_78.trans (bsim_1089_79.trans (bsim_1089_80.trans (bsim_1089_81.trans (bsim_1089_82.trans (bsim_1089_83.trans (bsim_1089_84.trans (bsim_1089_85.trans (bsim_1089_86.trans (bsim_1089_87.trans (bsim_1089_88.trans (bsim_1089_89.trans (bsim_1089_90.trans (bsim_1089_91.trans (bsim_1089_92.trans (bsim_1089_93.trans (bsim_1089_94.trans bsim_1089_95)))))))))))))))))))))))))))))))
+
+theorem bseg_1089_3 : CodeView.Sim.run (view N 11199 1595536 188243) 15542883 bst_1089_96 = CodeView.Sim.run (view N 11199 1595536 188243) 15542851 bst_1089_128 :=
+  (bsim_1089_96.trans (bsim_1089_97.trans (bsim_1089_98.trans (bsim_1089_99.trans (bsim_1089_100.trans (bsim_1089_101.trans (bsim_1089_102.trans (bsim_1089_103.trans (bsim_1089_104.trans (bsim_1089_105.trans (bsim_1089_106.trans (bsim_1089_107.trans (bsim_1089_108.trans (bsim_1089_109.trans (bsim_1089_110.trans (bsim_1089_111.trans (bsim_1089_112.trans (bsim_1089_113.trans (bsim_1089_114.trans (bsim_1089_115.trans (bsim_1089_116.trans (bsim_1089_117.trans (bsim_1089_118.trans (bsim_1089_119.trans (bsim_1089_120.trans (bsim_1089_121.trans (bsim_1089_122.trans (bsim_1089_123.trans (bsim_1089_124.trans (bsim_1089_125.trans (bsim_1089_126.trans bsim_1089_127)))))))))))))))))))))))))))))))
+
+theorem bseg_1089_4 : CodeView.Sim.run (view N 11199 1595536 188243) 15542851 bst_1089_128 = CodeView.Sim.run (view N 11199 1595536 188243) 15542819 bst_1089_160 :=
+  (bsim_1089_128.trans (bsim_1089_129.trans (bsim_1089_130.trans (bsim_1089_131.trans (bsim_1089_132.trans (bsim_1089_133.trans (bsim_1089_134.trans (bsim_1089_135.trans (bsim_1089_136.trans (bsim_1089_137.trans (bsim_1089_138.trans (bsim_1089_139.trans (bsim_1089_140.trans (bsim_1089_141.trans (bsim_1089_142.trans (bsim_1089_143.trans (bsim_1089_144.trans (bsim_1089_145.trans (bsim_1089_146.trans (bsim_1089_147.trans (bsim_1089_148.trans (bsim_1089_149.trans (bsim_1089_150.trans (bsim_1089_151.trans (bsim_1089_152.trans (bsim_1089_153.trans (bsim_1089_154.trans (bsim_1089_155.trans (bsim_1089_156.trans (bsim_1089_157.trans (bsim_1089_158.trans bsim_1089_159)))))))))))))))))))))))))))))))
+
+theorem bseg_1089_5 : CodeView.Sim.run (view N 11199 1595536 188243) 15542819 bst_1089_160 = CodeView.Sim.run (view N 11199 1595536 188243) 15542787 bst_1089_192 :=
+  (bsim_1089_160.trans (bsim_1089_161.trans (bsim_1089_162.trans (bsim_1089_163.trans (bsim_1089_164.trans (bsim_1089_165.trans (bsim_1089_166.trans (bsim_1089_167.trans (bsim_1089_168.trans (bsim_1089_169.trans (bsim_1089_170.trans (bsim_1089_171.trans (bsim_1089_172.trans (bsim_1089_173.trans (bsim_1089_174.trans (bsim_1089_175.trans (bsim_1089_176.trans (bsim_1089_177.trans (bsim_1089_178.trans (bsim_1089_179.trans (bsim_1089_180.trans (bsim_1089_181.trans (bsim_1089_182.trans (bsim_1089_183.trans (bsim_1089_184.trans (bsim_1089_185.trans (bsim_1089_186.trans (bsim_1089_187.trans (bsim_1089_188.trans (bsim_1089_189.trans (bsim_1089_190.trans bsim_1089_191)))))))))))))))))))))))))))))))
+
+theorem bseg_1089_6 : CodeView.Sim.run (view N 11199 1595536 188243) 15542787 bst_1089_192 = CodeView.Sim.run (view N 11199 1595536 188243) 15542755 bst_1089_224 :=
+  (bsim_1089_192.trans (bsim_1089_193.trans (bsim_1089_194.trans (bsim_1089_195.trans (bsim_1089_196.trans (bsim_1089_197.trans (bsim_1089_198.trans (bsim_1089_199.trans (bsim_1089_200.trans (bsim_1089_201.trans (bsim_1089_202.trans (bsim_1089_203.trans (bsim_1089_204.trans (bsim_1089_205.trans (bsim_1089_206.trans (bsim_1089_207.trans (bsim_1089_208.trans (bsim_1089_209.trans (bsim_1089_210.trans (bsim_1089_211.trans (bsim_1089_212.trans (bsim_1089_213.trans (bsim_1089_214.trans (bsim_1089_215.trans (bsim_1089_216.trans (bsim_1089_217.trans (bsim_1089_218.trans (bsim_1089_219.trans (bsim_1089_220.trans (bsim_1089_221.trans (bsim_1089_222.trans bsim_1089_223)))))))))))))))))))))))))))))))
+
+theorem bseg_1089_7 : CodeView.Sim.run (view N 11199 1595536 188243) 15542755 bst_1089_224 = CodeView.Sim.run (view N 11199 1595536 188243) 15542723 bst_1089_256 :=
+  (bsim_1089_224.trans (bsim_1089_225.trans (bsim_1089_226.trans (bsim_1089_227.trans (bsim_1089_228.trans (bsim_1089_229.trans (bsim_1089_230.trans (bsim_1089_231.trans (bsim_1089_232.trans (bsim_1089_233.trans (bsim_1089_234.trans (bsim_1089_235.trans (bsim_1089_236.trans (bsim_1089_237.trans (bsim_1089_238.trans (bsim_1089_239.trans (bsim_1089_240.trans (bsim_1089_241.trans (bsim_1089_242.trans (bsim_1089_243.trans (bsim_1089_244.trans (bsim_1089_245.trans (bsim_1089_246.trans (bsim_1089_247.trans (bsim_1089_248.trans (bsim_1089_249.trans (bsim_1089_250.trans (bsim_1089_251.trans (bsim_1089_252.trans (bsim_1089_253.trans (bsim_1089_254.trans bsim_1089_255)))))))))))))))))))))))))))))))
+
+theorem bseg_1089_8 : CodeView.Sim.run (view N 11199 1595536 188243) 15542723 bst_1089_256 = CodeView.Sim.run (view N 11199 1595536 188243) 15542691 bst_1089_288 :=
+  (bsim_1089_256.trans (bsim_1089_257.trans (bsim_1089_258.trans (bsim_1089_259.trans (bsim_1089_260.trans (bsim_1089_261.trans (bsim_1089_262.trans (bsim_1089_263.trans (bsim_1089_264.trans (bsim_1089_265.trans (bsim_1089_266.trans (bsim_1089_267.trans (bsim_1089_268.trans (bsim_1089_269.trans (bsim_1089_270.trans (bsim_1089_271.trans (bsim_1089_272.trans (bsim_1089_273.trans (bsim_1089_274.trans (bsim_1089_275.trans (bsim_1089_276.trans (bsim_1089_277.trans (bsim_1089_278.trans (bsim_1089_279.trans (bsim_1089_280.trans (bsim_1089_281.trans (bsim_1089_282.trans (bsim_1089_283.trans (bsim_1089_284.trans (bsim_1089_285.trans (bsim_1089_286.trans bsim_1089_287)))))))))))))))))))))))))))))))
+
+theorem bseg_1089_9 : CodeView.Sim.run (view N 11199 1595536 188243) 15542691 bst_1089_288 = CodeView.Sim.run (view N 11199 1595536 188243) 15542659 bst_1089_320 :=
+  (bsim_1089_288.trans (bsim_1089_289.trans (bsim_1089_290.trans (bsim_1089_291.trans (bsim_1089_292.trans (bsim_1089_293.trans (bsim_1089_294.trans (bsim_1089_295.trans (bsim_1089_296.trans (bsim_1089_297.trans (bsim_1089_298.trans (bsim_1089_299.trans (bsim_1089_300.trans (bsim_1089_301.trans (bsim_1089_302.trans (bsim_1089_303.trans (bsim_1089_304.trans (bsim_1089_305.trans (bsim_1089_306.trans (bsim_1089_307.trans (bsim_1089_308.trans (bsim_1089_309.trans (bsim_1089_310.trans (bsim_1089_311.trans (bsim_1089_312.trans (bsim_1089_313.trans (bsim_1089_314.trans (bsim_1089_315.trans (bsim_1089_316.trans (bsim_1089_317.trans (bsim_1089_318.trans bsim_1089_319)))))))))))))))))))))))))))))))
+
+theorem bseg_1089_10 : CodeView.Sim.run (view N 11199 1595536 188243) 15542659 bst_1089_320 = CodeView.Sim.run (view N 11199 1595536 188243) 15542627 bst_1089_352 :=
+  (bsim_1089_320.trans (bsim_1089_321.trans (bsim_1089_322.trans (bsim_1089_323.trans (bsim_1089_324.trans (bsim_1089_325.trans (bsim_1089_326.trans (bsim_1089_327.trans (bsim_1089_328.trans (bsim_1089_329.trans (bsim_1089_330.trans (bsim_1089_331.trans (bsim_1089_332.trans (bsim_1089_333.trans (bsim_1089_334.trans (bsim_1089_335.trans (bsim_1089_336.trans (bsim_1089_337.trans (bsim_1089_338.trans (bsim_1089_339.trans (bsim_1089_340.trans (bsim_1089_341.trans (bsim_1089_342.trans (bsim_1089_343.trans (bsim_1089_344.trans (bsim_1089_345.trans (bsim_1089_346.trans (bsim_1089_347.trans (bsim_1089_348.trans (bsim_1089_349.trans (bsim_1089_350.trans bsim_1089_351)))))))))))))))))))))))))))))))
+
+theorem bseg_1089_11 : CodeView.Sim.run (view N 11199 1595536 188243) 15542627 bst_1089_352 = CodeView.Sim.run (view N 11199 1595536 188243) 15542595 bst_1089_384 :=
+  (bsim_1089_352.trans (bsim_1089_353.trans (bsim_1089_354.trans (bsim_1089_355.trans (bsim_1089_356.trans (bsim_1089_357.trans (bsim_1089_358.trans (bsim_1089_359.trans (bsim_1089_360.trans (bsim_1089_361.trans (bsim_1089_362.trans (bsim_1089_363.trans (bsim_1089_364.trans (bsim_1089_365.trans (bsim_1089_366.trans (bsim_1089_367.trans (bsim_1089_368.trans (bsim_1089_369.trans (bsim_1089_370.trans (bsim_1089_371.trans (bsim_1089_372.trans (bsim_1089_373.trans (bsim_1089_374.trans (bsim_1089_375.trans (bsim_1089_376.trans (bsim_1089_377.trans (bsim_1089_378.trans (bsim_1089_379.trans (bsim_1089_380.trans (bsim_1089_381.trans (bsim_1089_382.trans bsim_1089_383)))))))))))))))))))))))))))))))
+
+theorem bseg_1089_12 : CodeView.Sim.run (view N 11199 1595536 188243) 15542595 bst_1089_384 = CodeView.Sim.run (view N 11199 1595536 188243) 15542580 bst_1089_399 :=
+  (bsim_1089_384.trans (bsim_1089_385.trans (bsim_1089_386.trans (bsim_1089_387.trans (bsim_1089_388.trans (bsim_1089_389.trans (bsim_1089_390.trans (bsim_1089_391.trans (bsim_1089_392.trans (bsim_1089_393.trans (bsim_1089_394.trans (bsim_1089_395.trans (bsim_1089_396.trans (bsim_1089_397.trans bsim_1089_398))))))))))))))
+
 theorem bend_1089 : CodeView.Sim.run (view N 11199 1595536 188243) 15542580 bst_1089_399 = some bst_1089_399 := by
   have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 135 1 0 0 210 1) bst_1089_399 = some (.inr bst_1089_399) := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
@@ -2816,7 +2855,7 @@ theorem bend_1089 : CodeView.Sim.run (view N 11199 1595536 188243) 15542580 bst_
 
 /-- ϱ^Δ of the block at 127530 is 347 (GP eq. `gascostforblock`). -/
 theorem bcost_1089 : (view N 11199 1595536 188243).blockCost 127530 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 127530 bst_1089_399 (bsim_1089_0.trans (bsim_1089_1.trans (bsim_1089_2.trans (bsim_1089_3.trans (bsim_1089_4.trans (bsim_1089_5.trans (bsim_1089_6.trans (bsim_1089_7.trans (bsim_1089_8.trans (bsim_1089_9.trans (bsim_1089_10.trans (bsim_1089_11.trans (bsim_1089_12.trans (bsim_1089_13.trans (bsim_1089_14.trans (bsim_1089_15.trans (bsim_1089_16.trans (bsim_1089_17.trans (bsim_1089_18.trans (bsim_1089_19.trans (bsim_1089_20.trans (bsim_1089_21.trans (bsim_1089_22.trans (bsim_1089_23.trans (bsim_1089_24.trans (bsim_1089_25.trans (bsim_1089_26.trans (bsim_1089_27.trans (bsim_1089_28.trans (bsim_1089_29.trans (bsim_1089_30.trans (bsim_1089_31.trans (bsim_1089_32.trans (bsim_1089_33.trans (bsim_1089_34.trans (bsim_1089_35.trans (bsim_1089_36.trans (bsim_1089_37.trans (bsim_1089_38.trans (bsim_1089_39.trans (bsim_1089_40.trans (bsim_1089_41.trans (bsim_1089_42.trans (bsim_1089_43.trans (bsim_1089_44.trans (bsim_1089_45.trans (bsim_1089_46.trans (bsim_1089_47.trans (bsim_1089_48.trans (bsim_1089_49.trans (bsim_1089_50.trans (bsim_1089_51.trans (bsim_1089_52.trans (bsim_1089_53.trans (bsim_1089_54.trans (bsim_1089_55.trans (bsim_1089_56.trans (bsim_1089_57.trans (bsim_1089_58.trans (bsim_1089_59.trans (bsim_1089_60.trans (bsim_1089_61.trans (bsim_1089_62.trans (bsim_1089_63.trans (bsim_1089_64.trans (bsim_1089_65.trans (bsim_1089_66.trans (bsim_1089_67.trans (bsim_1089_68.trans (bsim_1089_69.trans (bsim_1089_70.trans (bsim_1089_71.trans (bsim_1089_72.trans (bsim_1089_73.trans (bsim_1089_74.trans (bsim_1089_75.trans (bsim_1089_76.trans (bsim_1089_77.trans (bsim_1089_78.trans (bsim_1089_79.trans (bsim_1089_80.trans (bsim_1089_81.trans (bsim_1089_82.trans (bsim_1089_83.trans (bsim_1089_84.trans (bsim_1089_85.trans (bsim_1089_86.trans (bsim_1089_87.trans (bsim_1089_88.trans (bsim_1089_89.trans (bsim_1089_90.trans (bsim_1089_91.trans (bsim_1089_92.trans (bsim_1089_93.trans (bsim_1089_94.trans (bsim_1089_95.trans (bsim_1089_96.trans (bsim_1089_97.trans (bsim_1089_98.trans (bsim_1089_99.trans (bsim_1089_100.trans (bsim_1089_101.trans (bsim_1089_102.trans (bsim_1089_103.trans (bsim_1089_104.trans (bsim_1089_105.trans (bsim_1089_106.trans (bsim_1089_107.trans (bsim_1089_108.trans (bsim_1089_109.trans (bsim_1089_110.trans (bsim_1089_111.trans (bsim_1089_112.trans (bsim_1089_113.trans (bsim_1089_114.trans (bsim_1089_115.trans (bsim_1089_116.trans (bsim_1089_117.trans (bsim_1089_118.trans (bsim_1089_119.trans (bsim_1089_120.trans (bsim_1089_121.trans (bsim_1089_122.trans (bsim_1089_123.trans (bsim_1089_124.trans (bsim_1089_125.trans (bsim_1089_126.trans (bsim_1089_127.trans (bsim_1089_128.trans (bsim_1089_129.trans (bsim_1089_130.trans (bsim_1089_131.trans (bsim_1089_132.trans (bsim_1089_133.trans (bsim_1089_134.trans (bsim_1089_135.trans (bsim_1089_136.trans (bsim_1089_137.trans (bsim_1089_138.trans (bsim_1089_139.trans (bsim_1089_140.trans (bsim_1089_141.trans (bsim_1089_142.trans (bsim_1089_143.trans (bsim_1089_144.trans (bsim_1089_145.trans (bsim_1089_146.trans (bsim_1089_147.trans (bsim_1089_148.trans (bsim_1089_149.trans (bsim_1089_150.trans (bsim_1089_151.trans (bsim_1089_152.trans (bsim_1089_153.trans (bsim_1089_154.trans (bsim_1089_155.trans (bsim_1089_156.trans (bsim_1089_157.trans (bsim_1089_158.trans (bsim_1089_159.trans (bsim_1089_160.trans (bsim_1089_161.trans (bsim_1089_162.trans (bsim_1089_163.trans (bsim_1089_164.trans (bsim_1089_165.trans (bsim_1089_166.trans (bsim_1089_167.trans (bsim_1089_168.trans (bsim_1089_169.trans (bsim_1089_170.trans (bsim_1089_171.trans (bsim_1089_172.trans (bsim_1089_173.trans (bsim_1089_174.trans (bsim_1089_175.trans (bsim_1089_176.trans (bsim_1089_177.trans (bsim_1089_178.trans (bsim_1089_179.trans (bsim_1089_180.trans (bsim_1089_181.trans (bsim_1089_182.trans (bsim_1089_183.trans (bsim_1089_184.trans (bsim_1089_185.trans (bsim_1089_186.trans (bsim_1089_187.trans (bsim_1089_188.trans (bsim_1089_189.trans (bsim_1089_190.trans (bsim_1089_191.trans (bsim_1089_192.trans (bsim_1089_193.trans (bsim_1089_194.trans (bsim_1089_195.trans (bsim_1089_196.trans (bsim_1089_197.trans (bsim_1089_198.trans (bsim_1089_199.trans (bsim_1089_200.trans (bsim_1089_201.trans (bsim_1089_202.trans (bsim_1089_203.trans (bsim_1089_204.trans (bsim_1089_205.trans (bsim_1089_206.trans (bsim_1089_207.trans (bsim_1089_208.trans (bsim_1089_209.trans (bsim_1089_210.trans (bsim_1089_211.trans (bsim_1089_212.trans (bsim_1089_213.trans (bsim_1089_214.trans (bsim_1089_215.trans (bsim_1089_216.trans (bsim_1089_217.trans (bsim_1089_218.trans (bsim_1089_219.trans (bsim_1089_220.trans (bsim_1089_221.trans (bsim_1089_222.trans (bsim_1089_223.trans (bsim_1089_224.trans (bsim_1089_225.trans (bsim_1089_226.trans (bsim_1089_227.trans (bsim_1089_228.trans (bsim_1089_229.trans (bsim_1089_230.trans (bsim_1089_231.trans (bsim_1089_232.trans (bsim_1089_233.trans (bsim_1089_234.trans (bsim_1089_235.trans (bsim_1089_236.trans (bsim_1089_237.trans (bsim_1089_238.trans (bsim_1089_239.trans (bsim_1089_240.trans (bsim_1089_241.trans (bsim_1089_242.trans (bsim_1089_243.trans (bsim_1089_244.trans (bsim_1089_245.trans (bsim_1089_246.trans (bsim_1089_247.trans (bsim_1089_248.trans (bsim_1089_249.trans (bsim_1089_250.trans (bsim_1089_251.trans (bsim_1089_252.trans (bsim_1089_253.trans (bsim_1089_254.trans (bsim_1089_255.trans (bsim_1089_256.trans (bsim_1089_257.trans (bsim_1089_258.trans (bsim_1089_259.trans (bsim_1089_260.trans (bsim_1089_261.trans (bsim_1089_262.trans (bsim_1089_263.trans (bsim_1089_264.trans (bsim_1089_265.trans (bsim_1089_266.trans (bsim_1089_267.trans (bsim_1089_268.trans (bsim_1089_269.trans (bsim_1089_270.trans (bsim_1089_271.trans (bsim_1089_272.trans (bsim_1089_273.trans (bsim_1089_274.trans (bsim_1089_275.trans (bsim_1089_276.trans (bsim_1089_277.trans (bsim_1089_278.trans (bsim_1089_279.trans (bsim_1089_280.trans (bsim_1089_281.trans (bsim_1089_282.trans (bsim_1089_283.trans (bsim_1089_284.trans (bsim_1089_285.trans (bsim_1089_286.trans (bsim_1089_287.trans (bsim_1089_288.trans (bsim_1089_289.trans (bsim_1089_290.trans (bsim_1089_291.trans (bsim_1089_292.trans (bsim_1089_293.trans (bsim_1089_294.trans (bsim_1089_295.trans (bsim_1089_296.trans (bsim_1089_297.trans (bsim_1089_298.trans (bsim_1089_299.trans (bsim_1089_300.trans (bsim_1089_301.trans (bsim_1089_302.trans (bsim_1089_303.trans (bsim_1089_304.trans (bsim_1089_305.trans (bsim_1089_306.trans (bsim_1089_307.trans (bsim_1089_308.trans (bsim_1089_309.trans (bsim_1089_310.trans (bsim_1089_311.trans (bsim_1089_312.trans (bsim_1089_313.trans (bsim_1089_314.trans (bsim_1089_315.trans (bsim_1089_316.trans (bsim_1089_317.trans (bsim_1089_318.trans (bsim_1089_319.trans (bsim_1089_320.trans (bsim_1089_321.trans (bsim_1089_322.trans (bsim_1089_323.trans (bsim_1089_324.trans (bsim_1089_325.trans (bsim_1089_326.trans (bsim_1089_327.trans (bsim_1089_328.trans (bsim_1089_329.trans (bsim_1089_330.trans (bsim_1089_331.trans (bsim_1089_332.trans (bsim_1089_333.trans (bsim_1089_334.trans (bsim_1089_335.trans (bsim_1089_336.trans (bsim_1089_337.trans (bsim_1089_338.trans (bsim_1089_339.trans (bsim_1089_340.trans (bsim_1089_341.trans (bsim_1089_342.trans (bsim_1089_343.trans (bsim_1089_344.trans (bsim_1089_345.trans (bsim_1089_346.trans (bsim_1089_347.trans (bsim_1089_348.trans (bsim_1089_349.trans (bsim_1089_350.trans (bsim_1089_351.trans (bsim_1089_352.trans (bsim_1089_353.trans (bsim_1089_354.trans (bsim_1089_355.trans (bsim_1089_356.trans (bsim_1089_357.trans (bsim_1089_358.trans (bsim_1089_359.trans (bsim_1089_360.trans (bsim_1089_361.trans (bsim_1089_362.trans (bsim_1089_363.trans (bsim_1089_364.trans (bsim_1089_365.trans (bsim_1089_366.trans (bsim_1089_367.trans (bsim_1089_368.trans (bsim_1089_369.trans (bsim_1089_370.trans (bsim_1089_371.trans (bsim_1089_372.trans (bsim_1089_373.trans (bsim_1089_374.trans (bsim_1089_375.trans (bsim_1089_376.trans (bsim_1089_377.trans (bsim_1089_378.trans (bsim_1089_379.trans (bsim_1089_380.trans (bsim_1089_381.trans (bsim_1089_382.trans (bsim_1089_383.trans (bsim_1089_384.trans (bsim_1089_385.trans (bsim_1089_386.trans (bsim_1089_387.trans (bsim_1089_388.trans (bsim_1089_389.trans (bsim_1089_390.trans (bsim_1089_391.trans (bsim_1089_392.trans (bsim_1089_393.trans (bsim_1089_394.trans (bsim_1089_395.trans (bsim_1089_396.trans (bsim_1089_397.trans (bsim_1089_398.trans bend_1089)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 127530 bst_1089_399 (bseg_1089_0.trans (bseg_1089_1.trans (bseg_1089_2.trans (bseg_1089_3.trans (bseg_1089_4.trans (bseg_1089_5.trans (bseg_1089_6.trans (bseg_1089_7.trans (bseg_1089_8.trans (bseg_1089_9.trans (bseg_1089_10.trans (bseg_1089_11.trans (bseg_1089_12.trans bend_1089)))))))))))))]
   decide
 
 theorem bstart_1089 : (view N 11199 1595536 188243).isBlockStart 127530 = true := by
@@ -3281,6 +3320,9 @@ theorem bsim_1118_31 : CodeView.Sim.run (view N 11199 1595536 188243) 15497372 b
   rw [cview2_eq chunks chunks_lt] at h
   exact CodeView.Sim.run_steps _ 2 _ _ 15497370 h
 
+theorem bseg_1118_0 : CodeView.Sim.run (view N 11199 1595536 188243) 15497472 (Sim.init 127708) = CodeView.Sim.run (view N 11199 1595536 188243) 15497370 bst_1118_32 :=
+  (bsim_1118_0.trans (bsim_1118_1.trans (bsim_1118_2.trans (bsim_1118_3.trans (bsim_1118_4.trans (bsim_1118_5.trans (bsim_1118_6.trans (bsim_1118_7.trans (bsim_1118_8.trans (bsim_1118_9.trans (bsim_1118_10.trans (bsim_1118_11.trans (bsim_1118_12.trans (bsim_1118_13.trans (bsim_1118_14.trans (bsim_1118_15.trans (bsim_1118_16.trans (bsim_1118_17.trans (bsim_1118_18.trans (bsim_1118_19.trans (bsim_1118_20.trans (bsim_1118_21.trans (bsim_1118_22.trans (bsim_1118_23.trans (bsim_1118_24.trans (bsim_1118_25.trans (bsim_1118_26.trans (bsim_1118_27.trans (bsim_1118_28.trans (bsim_1118_29.trans (bsim_1118_30.trans bsim_1118_31)))))))))))))))))))))))))))))))
+
 theorem bend_1118 : CodeView.Sim.run (view N 11199 1595536 188243) 15497370 bst_1118_32 = some bst_1118_32 := by
   have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 135 1 0 0 210 1) bst_1118_32 = some (.inr bst_1118_32) := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
@@ -3288,7 +3330,7 @@ theorem bend_1118 : CodeView.Sim.run (view N 11199 1595536 188243) 15497370 bst_
 
 /-- ϱ^Δ of the block at 127708 is 73 (GP eq. `gascostforblock`). -/
 theorem bcost_1118 : (view N 11199 1595536 188243).blockCost 127708 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 127708 bst_1118_32 (bsim_1118_0.trans (bsim_1118_1.trans (bsim_1118_2.trans (bsim_1118_3.trans (bsim_1118_4.trans (bsim_1118_5.trans (bsim_1118_6.trans (bsim_1118_7.trans (bsim_1118_8.trans (bsim_1118_9.trans (bsim_1118_10.trans (bsim_1118_11.trans (bsim_1118_12.trans (bsim_1118_13.trans (bsim_1118_14.trans (bsim_1118_15.trans (bsim_1118_16.trans (bsim_1118_17.trans (bsim_1118_18.trans (bsim_1118_19.trans (bsim_1118_20.trans (bsim_1118_21.trans (bsim_1118_22.trans (bsim_1118_23.trans (bsim_1118_24.trans (bsim_1118_25.trans (bsim_1118_26.trans (bsim_1118_27.trans (bsim_1118_28.trans (bsim_1118_29.trans (bsim_1118_30.trans (bsim_1118_31.trans bend_1118))))))))))))))))))))))))))))))))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 127708 bst_1118_32 (bseg_1118_0.trans bend_1118)]
   decide
 
 theorem bstart_1118 : (view N 11199 1595536 188243).isBlockStart 127708 = true := by
@@ -3580,6 +3622,9 @@ theorem bsim_1126_30 : CodeView.Sim.run (view N 11199 1595536 188243) 15482757 b
   rw [cview2_eq chunks chunks_lt] at h
   exact CodeView.Sim.run_steps _ 2 _ _ 15482755 h
 
+theorem bseg_1126_0 : CodeView.Sim.run (view N 11199 1595536 188243) 15482880 (Sim.init 127765) = CodeView.Sim.run (view N 11199 1595536 188243) 15482755 bst_1126_31 :=
+  (bsim_1126_0.trans (bsim_1126_1.trans (bsim_1126_2.trans (bsim_1126_3.trans (bsim_1126_4.trans (bsim_1126_5.trans (bsim_1126_6.trans (bsim_1126_7.trans (bsim_1126_8.trans (bsim_1126_9.trans (bsim_1126_10.trans (bsim_1126_11.trans (bsim_1126_12.trans (bsim_1126_13.trans (bsim_1126_14.trans (bsim_1126_15.trans (bsim_1126_16.trans (bsim_1126_17.trans (bsim_1126_18.trans (bsim_1126_19.trans (bsim_1126_20.trans (bsim_1126_21.trans (bsim_1126_22.trans (bsim_1126_23.trans (bsim_1126_24.trans (bsim_1126_25.trans (bsim_1126_26.trans (bsim_1126_27.trans (bsim_1126_28.trans (bsim_1126_29.trans bsim_1126_30))))))))))))))))))))))))))))))
+
 theorem bend_1126 : CodeView.Sim.run (view N 11199 1595536 188243) 15482755 bst_1126_31 = some bst_1126_31 := by
   have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 135 1 0 0 210 1) bst_1126_31 = some (.inr bst_1126_31) := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
@@ -3587,7 +3632,7 @@ theorem bend_1126 : CodeView.Sim.run (view N 11199 1595536 188243) 15482755 bst_
 
 /-- ϱ^Δ of the block at 127765 is 102 (GP eq. `gascostforblock`). -/
 theorem bcost_1126 : (view N 11199 1595536 188243).blockCost 127765 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 127765 bst_1126_31 (bsim_1126_0.trans (bsim_1126_1.trans (bsim_1126_2.trans (bsim_1126_3.trans (bsim_1126_4.trans (bsim_1126_5.trans (bsim_1126_6.trans (bsim_1126_7.trans (bsim_1126_8.trans (bsim_1126_9.trans (bsim_1126_10.trans (bsim_1126_11.trans (bsim_1126_12.trans (bsim_1126_13.trans (bsim_1126_14.trans (bsim_1126_15.trans (bsim_1126_16.trans (bsim_1126_17.trans (bsim_1126_18.trans (bsim_1126_19.trans (bsim_1126_20.trans (bsim_1126_21.trans (bsim_1126_22.trans (bsim_1126_23.trans (bsim_1126_24.trans (bsim_1126_25.trans (bsim_1126_26.trans (bsim_1126_27.trans (bsim_1126_28.trans (bsim_1126_29.trans (bsim_1126_30.trans bend_1126)))))))))))))))))))))))))))))))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 127765 bst_1126_31 (bseg_1126_0.trans bend_1126)]
   decide
 
 theorem bstart_1126 : (view N 11199 1595536 188243).isBlockStart 127765 = true := by
@@ -3666,6 +3711,9 @@ theorem bsim_1132_2 : CodeView.Sim.run (view N 11199 1595536 188243) 15476461 bs
   rw [cview2_eq chunks chunks_lt] at h
   exact CodeView.Sim.run_steps _ 7 _ _ 15476454 h
 
+theorem bseg_1132_0 : CodeView.Sim.run (view N 11199 1595536 188243) 15476480 (Sim.init 127790) = CodeView.Sim.run (view N 11199 1595536 188243) 15476454 bst_1132_3 :=
+  (bsim_1132_0.trans (bsim_1132_1.trans bsim_1132_2))
+
 theorem bend_1132 : CodeView.Sim.run (view N 11199 1595536 188243) 15476454 bst_1132_3 = some bst_1132_3 := by
   have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 135 1 0 0 210 1) bst_1132_3 = some (.inr bst_1132_3) := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
@@ -3673,7 +3721,7 @@ theorem bend_1132 : CodeView.Sim.run (view N 11199 1595536 188243) 15476454 bst_
 
 /-- ϱ^Δ of the block at 127790 is 20 (GP eq. `gascostforblock`). -/
 theorem bcost_1132 : (view N 11199 1595536 188243).blockCost 127790 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 127790 bst_1132_3 (bsim_1132_0.trans (bsim_1132_1.trans (bsim_1132_2.trans bend_1132)))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 127790 bst_1132_3 (bseg_1132_0.trans bend_1132)]
   decide
 
 theorem bstart_1132 : (view N 11199 1595536 188243).isBlockStart 127790 = true := by
@@ -3730,6 +3778,9 @@ theorem bsim_1134_3 : CodeView.Sim.run (view N 11199 1595536 188243) 15475176 bs
   rw [cview2_eq chunks chunks_lt] at h
   exact CodeView.Sim.run_steps _ 8 _ _ 15475168 h
 
+theorem bseg_1134_0 : CodeView.Sim.run (view N 11199 1595536 188243) 15475200 (Sim.init 127795) = CodeView.Sim.run (view N 11199 1595536 188243) 15475168 bst_1134_4 :=
+  (bsim_1134_0.trans (bsim_1134_1.trans (bsim_1134_2.trans bsim_1134_3)))
+
 theorem bend_1134 : CodeView.Sim.run (view N 11199 1595536 188243) 15475168 bst_1134_4 = some bst_1134_4 := by
   have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 135 1 0 0 210 1) bst_1134_4 = some (.inr bst_1134_4) := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
@@ -3737,7 +3788,7 @@ theorem bend_1134 : CodeView.Sim.run (view N 11199 1595536 188243) 15475168 bst_
 
 /-- ϱ^Δ of the block at 127795 is 25 (GP eq. `gascostforblock`). -/
 theorem bcost_1134 : (view N 11199 1595536 188243).blockCost 127795 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 127795 bst_1134_4 (bsim_1134_0.trans (bsim_1134_1.trans (bsim_1134_2.trans (bsim_1134_3.trans bend_1134))))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 127795 bst_1134_4 (bseg_1134_0.trans bend_1134)]
   decide
 
 theorem bstart_1134 : (view N 11199 1595536 188243).isBlockStart 127795 = true := by
@@ -3787,6 +3838,9 @@ theorem bsim_1136_2 : CodeView.Sim.run (view N 11199 1595536 188243) 15473645 bs
   rw [cview2_eq chunks chunks_lt] at h
   exact CodeView.Sim.run_steps _ 6 _ _ 15473639 h
 
+theorem bseg_1136_0 : CodeView.Sim.run (view N 11199 1595536 188243) 15473664 (Sim.init 127801) = CodeView.Sim.run (view N 11199 1595536 188243) 15473639 bst_1136_3 :=
+  (bsim_1136_0.trans (bsim_1136_1.trans bsim_1136_2))
+
 theorem bend_1136 : CodeView.Sim.run (view N 11199 1595536 188243) 15473639 bst_1136_3 = some bst_1136_3 := by
   have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 135 1 135 1 210 1) bst_1136_3 = some (.inr bst_1136_3) := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
@@ -3794,7 +3848,7 @@ theorem bend_1136 : CodeView.Sim.run (view N 11199 1595536 188243) 15473639 bst_
 
 /-- ϱ^Δ of the block at 127801 is 20 (GP eq. `gascostforblock`). -/
 theorem bcost_1136 : (view N 11199 1595536 188243).blockCost 127801 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 127801 bst_1136_3 (bsim_1136_0.trans (bsim_1136_1.trans (bsim_1136_2.trans bend_1136)))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 127801 bst_1136_3 (bseg_1136_0.trans bend_1136)]
   decide
 
 theorem bstart_1136 : (view N 11199 1595536 188243).isBlockStart 127801 = true := by
@@ -3837,6 +3891,9 @@ theorem bsim_1138_1 : CodeView.Sim.run (view N 11199 1595536 188243) 15472888 bs
   rw [cview2_eq chunks chunks_lt] at h
   exact CodeView.Sim.run_steps _ 3 _ _ 15472885 h
 
+theorem bseg_1138_0 : CodeView.Sim.run (view N 11199 1595536 188243) 15472896 (Sim.init 127804) = CodeView.Sim.run (view N 11199 1595536 188243) 15472885 bst_1138_2 :=
+  (bsim_1138_0.trans bsim_1138_1)
+
 theorem bend_1138 : CodeView.Sim.run (view N 11199 1595536 188243) 15472885 bst_1138_2 = some bst_1138_2 := by
   have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 135 1 0 0 210 1) bst_1138_2 = some (.inr bst_1138_2) := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
@@ -3844,7 +3901,7 @@ theorem bend_1138 : CodeView.Sim.run (view N 11199 1595536 188243) 15472885 bst_
 
 /-- ϱ^Δ of the block at 127804 is 2 (GP eq. `gascostforblock`). -/
 theorem bcost_1138 : (view N 11199 1595536 188243).blockCost 127804 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 127804 bst_1138_2 (bsim_1138_0.trans (bsim_1138_1.trans bend_1138))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 127804 bst_1138_2 (bseg_1138_0.trans bend_1138)]
   decide
 
 theorem bstart_1138 : (view N 11199 1595536 188243).isBlockStart 127804 = true := by
@@ -3906,6 +3963,9 @@ theorem bsim_1142_2 : CodeView.Sim.run (view N 11199 1595536 188243) 15459315 bs
   rw [cview2_eq chunks chunks_lt] at h
   exact CodeView.Sim.run_steps _ 1 _ _ 15459314 h
 
+theorem bseg_1142_0 : CodeView.Sim.run (view N 11199 1595536 188243) 15459328 (Sim.init 127857) = CodeView.Sim.run (view N 11199 1595536 188243) 15459314 bst_1142_3 :=
+  (bsim_1142_0.trans (bsim_1142_1.trans bsim_1142_2))
+
 theorem bend_1142 : CodeView.Sim.run (view N 11199 1595536 188243) 15459314 bst_1142_3 = some bst_1142_3 := by
   have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 135 1 0 0 210 1) bst_1142_3 = some (.inr bst_1142_3) := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
@@ -3913,7 +3973,7 @@ theorem bend_1142 : CodeView.Sim.run (view N 11199 1595536 188243) 15459314 bst_
 
 /-- ϱ^Δ of the block at 127857 is 3 (GP eq. `gascostforblock`). -/
 theorem bcost_1142 : (view N 11199 1595536 188243).blockCost 127857 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 127857 bst_1142_3 (bsim_1142_0.trans (bsim_1142_1.trans (bsim_1142_2.trans bend_1142)))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 127857 bst_1142_3 (bseg_1142_0.trans bend_1142)]
   decide
 
 theorem bstart_1142 : (view N 11199 1595536 188243).isBlockStart 127857 = true := by
@@ -4074,6 +4134,9 @@ theorem bsim_1145_17 : CodeView.Sim.run (view N 11199 1595536 188243) 15455928 b
   rw [cview2_eq chunks chunks_lt] at h
   exact CodeView.Sim.run_steps _ 3 _ _ 15455925 h
 
+theorem bseg_1145_0 : CodeView.Sim.run (view N 11199 1595536 188243) 15456000 (Sim.init 127870) = CodeView.Sim.run (view N 11199 1595536 188243) 15455925 bst_1145_18 :=
+  (bsim_1145_0.trans (bsim_1145_1.trans (bsim_1145_2.trans (bsim_1145_3.trans (bsim_1145_4.trans (bsim_1145_5.trans (bsim_1145_6.trans (bsim_1145_7.trans (bsim_1145_8.trans (bsim_1145_9.trans (bsim_1145_10.trans (bsim_1145_11.trans (bsim_1145_12.trans (bsim_1145_13.trans (bsim_1145_14.trans (bsim_1145_15.trans (bsim_1145_16.trans bsim_1145_17)))))))))))))))))
+
 theorem bend_1145 : CodeView.Sim.run (view N 11199 1595536 188243) 15455925 bst_1145_18 = some bst_1145_18 := by
   have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 135 1 0 0 210 1) bst_1145_18 = some (.inr bst_1145_18) := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
@@ -4081,7 +4144,7 @@ theorem bend_1145 : CodeView.Sim.run (view N 11199 1595536 188243) 15455925 bst_
 
 /-- ϱ^Δ of the block at 127870 is 52 (GP eq. `gascostforblock`). -/
 theorem bcost_1145 : (view N 11199 1595536 188243).blockCost 127870 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 127870 bst_1145_18 (bsim_1145_0.trans (bsim_1145_1.trans (bsim_1145_2.trans (bsim_1145_3.trans (bsim_1145_4.trans (bsim_1145_5.trans (bsim_1145_6.trans (bsim_1145_7.trans (bsim_1145_8.trans (bsim_1145_9.trans (bsim_1145_10.trans (bsim_1145_11.trans (bsim_1145_12.trans (bsim_1145_13.trans (bsim_1145_14.trans (bsim_1145_15.trans (bsim_1145_16.trans (bsim_1145_17.trans bend_1145))))))))))))))))))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 127870 bst_1145_18 (bseg_1145_0.trans bend_1145)]
   decide
 
 theorem bstart_1145 : (view N 11199 1595536 188243).isBlockStart 127870 = true := by
@@ -4181,6 +4244,9 @@ theorem bsim_1151_5 : CodeView.Sim.run (view N 11199 1595536 188243) 15448037 bs
   rw [cview2_eq chunks chunks_lt] at h
   exact CodeView.Sim.run_steps _ 2 _ _ 15448035 h
 
+theorem bseg_1151_0 : CodeView.Sim.run (view N 11199 1595536 188243) 15448064 (Sim.init 127901) = CodeView.Sim.run (view N 11199 1595536 188243) 15448035 bst_1151_6 :=
+  (bsim_1151_0.trans (bsim_1151_1.trans (bsim_1151_2.trans (bsim_1151_3.trans (bsim_1151_4.trans bsim_1151_5)))))
+
 theorem bend_1151 : CodeView.Sim.run (view N 11199 1595536 188243) 15448035 bst_1151_6 = some bst_1151_6 := by
   have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 135 1 131 1 210 1) bst_1151_6 = some (.inr bst_1151_6) := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
@@ -4188,7 +4254,7 @@ theorem bend_1151 : CodeView.Sim.run (view N 11199 1595536 188243) 15448035 bst_
 
 /-- ϱ^Δ of the block at 127901 is 16 (GP eq. `gascostforblock`). -/
 theorem bcost_1151 : (view N 11199 1595536 188243).blockCost 127901 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 127901 bst_1151_6 (bsim_1151_0.trans (bsim_1151_1.trans (bsim_1151_2.trans (bsim_1151_3.trans (bsim_1151_4.trans (bsim_1151_5.trans bend_1151))))))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 127901 bst_1151_6 (bseg_1151_0.trans bend_1151)]
   decide
 
 theorem bstart_1151 : (view N 11199 1595536 188243).isBlockStart 127901 = true := by

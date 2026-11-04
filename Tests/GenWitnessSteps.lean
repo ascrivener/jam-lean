@@ -1122,7 +1122,9 @@ theorem walks_{g} : {V}.vBlobAux {f0} {gi0} = {V}.vBlobAux {fuel} {gj} :=
             let stName (j : Nat) : String := if j == 0 then s!"(Sim.init {bs})" else s!"bst_{c}_{j}"
             let mut bf := fuel0
             let mut lnames : Array String := #[]
+            let mut fuels : Array Nat := #[]
             for j in [0:links.size] do
+              fuels := fuels.push bf
               if j + 1 < states.size then
                 gs := gs ++ s!"
 def bst_{c}_{j + 1} : SimState := {ppSimState states[j + 1]!}
@@ -1135,8 +1137,19 @@ theorem bsim_{c}_{j} : CodeView.Sim.run {V} {bf} {stName j} = CodeView.Sim.run {
 "
               lnames := lnames.push s!"bsim_{c}_{j}"
               bf := bf - links[j]!
+            fuels := fuels.push bf
             let z := stName links.size
             let zs := states[links.size]!
+            -- the links 32 at a time, so no proof term nests too deep
+            let mut segs : Array String := #[]
+            for g in [0:(links.size + 31) / 32] do
+              let a := 32 * g; let b := min (32 * (g + 1)) links.size
+              gs := gs ++ s!"
+theorem bseg_{c}_{g} : CodeView.Sim.run {V} {fuels[a]!} {stName a} = CodeView.Sim.run {V} {fuels[b]!} {stName b} :=
+  {nest ((List.range (b - a)).map fun k => s!"bsim_{c}_{a + k}") none}
+"
+              segs := segs.push s!"bseg_{c}_{g}"
+            lnames := segs
             gs := gs ++ s!"
 theorem bend_{c} : CodeView.Sim.run {V} {bf} {z} = some {z} := by
   have h : CodeView.Sim.transition {VS} {z} = some (.inr {z}) := by decide +kernel

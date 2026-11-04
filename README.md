@@ -474,6 +474,18 @@ model, the code facts and core are already small enough. What has to change is t
 generated proofs: segments of about 20 steps, and compositions that don't re-derive every
 hypothesis with `chase` (`run_badTag` discharges about 400 facts in one term).
 
+The compositions (`run_badTag`, `run_empty`) are written by hand and call the generated chains'
+`run`s with one `?_` per fact, each discharged by `chase`; `scripts/fix_holes.py FILE Name…` sets
+those counts after a chain is regenerated.
+
+**What is not cut.** The hand-written proofs that are still over one refine (the compositions, the
+`decodeU32`/`decodeC`/`memcpy` summaries, `initialMemory_read`, `baseBytes_cases`) are left to
+witness-lean's judgment splitting, which checks one heavy declaration over many refines by
+attesting the kernel's judgments in pieces that cite each other (`lean-host judgments`; see
+witness-lean's `docs/design/heavy-declarations.md`). On `run_badTag` it plans 352 ops of at most
+2.7×10⁹ gas over 151 rounds. Cutting is preferred where a generator can do it: the cut chains
+attest in one round with no extra data, and need nothing beyond the kernel.
+
 ## Notes on the paper and the vectors
 
 Where the paper is ambiguous, the model follows the paper's formal definition and the choice is

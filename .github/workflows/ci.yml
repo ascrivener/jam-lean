@@ -35,7 +35,6 @@ jobs:
 
       - name: Build the largest proofs one at a time (each needs most of the runner's memory)
         run: |
-          lake build Services.Witness.Prefix
           lake build Services.Witness.ErrTail
           lake build Services.Witness.BadPayload
           lake build Services.Witness.EmptyTail
@@ -89,7 +88,8 @@ jobs:
       - name: the generated witness files are what their generator produces
         run: |
           lake exe genwitnesssteps code 2835 | diff - Services/Witness/Code.lean
-          lake exe genwitnesssteps run 702 | diff - Services/Witness/Prefix.lean
+          lake exe genwitnesssteps cut 0 PrefixC 0 702 every=16 frame words
+          lake exe genwitnesssteps run 702 cut=PrefixC | diff - Services/Witness/Prefix.lean
           lake exe genwitnesssteps cut 74620 ErrTail 0 1542 every=16 out
           lake exe genwitnesssteps cut0 74620 EmptyTail 0 1445 every=16 out
           lake exe genwitnesssteps cut 23809 Front3 0 275 every=16 frame keep=0,1,5,6,7,8

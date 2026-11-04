@@ -236,6 +236,46 @@ theorem wview_eq (N oc mb cLen a w : Nat) : wview N oc mb cLen a w = view N oc m
     · rfl
   simp only [wview, view, hz, hm]
 
+/-- `view` of a blob of chunks, reading the code from chunks kc … kc + mc − 1 and the bitmask
+    from chunks km … km + mm − 1 alone, wherever they hold it (`cview_eq`). A check then works
+    on a few small numbers and never builds the whole blob. -/
+def cview (cs : List Nat) (oc mb cLen kc mc km mm : Nat) : CodeView where
+  zeta i := if i < cLen then
+      (if 1024 * kc ≤ oc + i ∧ oc + i < 1024 * (kc + mc) then
+        byte (ofChunks ((cs.drop kc).take mc)) (oc + i - 1024 * kc)
+      else byte (ofChunks cs) (oc + i))
+    else 0
+  maskExt i := if i < cLen then
+      (if 8192 * km ≤ mb + i ∧ mb + i < 8192 * (km + mm) then
+        bit (ofChunks ((cs.drop km).take mm)) (mb + i - 8192 * km)
+      else bit (ofChunks cs) (mb + i))
+    else true
+  maskAt i := if i < cLen then
+      (if 8192 * km ≤ mb + i ∧ mb + i < 8192 * (km + mm) then
+        bit (ofChunks ((cs.drop km).take mm)) (mb + i - 8192 * km)
+      else bit (ofChunks cs) (mb + i))
+    else false
+  codeSize := cLen
+  maskSize := cLen
+
+theorem cview_eq (cs : List Nat) (h : ∀ c ∈ cs, c < 2 ^ 8192) (oc mb cLen kc mc km mm : Nat) :
+    cview cs oc mb cLen kc mc km mm = view (ofChunks cs) oc mb cLen := by
+  have hz : ∀ i, (if 1024 * kc ≤ oc + i ∧ oc + i < 1024 * (kc + mc) then
+      byte (ofChunks ((cs.drop kc).take mc)) (oc + i - 1024 * kc) else byte (ofChunks cs) (oc + i)) =
+      byte (ofChunks cs) (oc + i) := by
+    intro i
+    split
+    · rename_i hw; exact (byte_ofChunks_window cs h kc mc _ hw.1 hw.2).symm
+    · rfl
+  have hm : ∀ i, (if 8192 * km ≤ mb + i ∧ mb + i < 8192 * (km + mm) then
+      bit (ofChunks ((cs.drop km).take mm)) (mb + i - 8192 * km) else bit (ofChunks cs) (mb + i)) =
+      bit (ofChunks cs) (mb + i) := by
+    intro i
+    split
+    · rename_i hw; exact (bit_ofChunks_window cs h km mm _ hw.1 hw.2).symm
+    · rfl
+  simp only [cview, view, hz, hm]
+
 theorem view_zeta_lt (N oc mb cLen i : Nat) : (view N oc mb cLen).zeta i < 256 := by
   simp only [view]
   split

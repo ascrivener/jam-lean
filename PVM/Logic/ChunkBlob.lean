@@ -70,6 +70,79 @@ theorem bit_window (N s w b : Nat) (h1 : s ≤ b) (h2 : b < s + w) :
   rw [show s + (b - s) = b by omega]
   simp [show b - s < w by omega]
 
+/-! ### A blob given as chunks -/
+
+/-- The number whose base-2^w digits are `cs`, least significant first: a blob of chunks of w
+    bits. (Stated for any w, so that no proof here makes the kernel compute 2^w.) -/
+def ofChunksW (w : Nat) : List Nat → Nat
+  | [] => 0
+  | c :: cs => 2 ^ w * ofChunksW w cs + c
+
+theorem testBit_ofChunksW_drop (w : Nat) : ∀ (cs : List Nat) (k t : Nat), (∀ c ∈ cs, c < 2 ^ w) →
+    (ofChunksW w cs).testBit (w * k + t) = (ofChunksW w (cs.drop k)).testBit t := by
+  intro cs k
+  induction k generalizing cs with
+  | zero => intro t _; simp
+  | succ k ih =>
+    intro t h
+    cases cs with
+    | nil => simp [ofChunksW]
+    | cons c cs =>
+      rw [ofChunksW, Nat.testBit_two_pow_mul_add _ (h c (List.mem_cons_self ..)), Nat.mul_succ,
+        ite_eq_right (by omega), show w * k + w + t - w = w * k + t by omega, List.drop_succ_cons,
+        ih cs t (fun x hx => h x (List.mem_cons_of_mem _ hx))]
+
+theorem testBit_ofChunksW_take (w : Nat) : ∀ (cs : List Nat) (m t : Nat), (∀ c ∈ cs, c < 2 ^ w) →
+    t < w * m → (ofChunksW w cs).testBit t = (ofChunksW w (cs.take m)).testBit t := by
+  intro cs m
+  induction m generalizing cs with
+  | zero => intro t _ ht; simp at ht
+  | succ m ih =>
+    intro t h ht
+    cases cs with
+    | nil => simp [ofChunksW]
+    | cons c cs =>
+      have hc := h c (List.mem_cons_self ..)
+      rw [List.take_succ_cons, ofChunksW, ofChunksW, Nat.testBit_two_pow_mul_add _ hc,
+        Nat.testBit_two_pow_mul_add _ hc]
+      split
+      · rfl
+      · rw [Nat.mul_succ] at ht
+        exact ih cs (t - w) (fun x hx => h x (List.mem_cons_of_mem _ hx)) (by omega)
+
+theorem testBit_ofChunksW_window (w : Nat) (cs : List Nat) (h : ∀ c ∈ cs, c < 2 ^ w) (k m b : Nat)
+    (h1 : w * k ≤ b) (h2 : b < w * (k + m)) :
+    (ofChunksW w cs).testBit b = (ofChunksW w ((cs.drop k).take m)).testBit (b - w * k) := by
+  rw [show b = w * k + (b - w * k) by omega, testBit_ofChunksW_drop w cs k _ h,
+    show w * k + (b - w * k) - w * k = b - w * k by omega]
+  rw [Nat.mul_add] at h2
+  exact testBit_ofChunksW_take w _ m _ (fun c hc => h c (List.mem_of_mem_drop hc)) (by omega)
+
+/-- A blob of 1024-octet chunks. -/
+def ofChunks (cs : List Nat) : Nat := ofChunksW 8192 cs
+
+/-- Reading octet j from the chunks k … k + m − 1 alone. -/
+theorem byte_ofChunks_window (cs : List Nat) (h : ∀ c ∈ cs, c < 2 ^ 8192) (k m j : Nat)
+    (h1 : 1024 * k ≤ j) (h2 : j < 1024 * (k + m)) :
+    byte (ofChunks cs) j = byte (ofChunks ((cs.drop k).take m)) (j - 1024 * k) := by
+  simp only [byte, ofChunks]
+  apply Nat.eq_of_testBit_eq
+  intro t
+  have h256 : (256 : Nat) = 2 ^ 8 := rfl
+  rw [h256, Nat.testBit_mod_two_pow, Nat.testBit_mod_two_pow, Nat.testBit_shiftRight,
+    Nat.testBit_shiftRight]
+  by_cases ht : t < 8
+  · simp only [ht, decide_true, Bool.true_and]
+    rw [testBit_ofChunksW_window 8192 cs h k m _ (by omega) (by omega)]
+    congr 1; omega
+  · simp only [ht, decide_false, Bool.false_and]
+
+/-- Reading bit b from the chunks k … k + m − 1 alone. -/
+theorem bit_ofChunks_window (cs : List Nat) (h : ∀ c ∈ cs, c < 2 ^ 8192) (k m b : Nat)
+    (h1 : 8192 * k ≤ b) (h2 : b < 8192 * (k + m)) :
+    bit (ofChunks cs) b = bit (ofChunks ((cs.drop k).take m)) (b - 8192 * k) :=
+  testBit_ofChunksW_window 8192 cs h k m b h1 h2
+
 theorem byte_lt (N j : Nat) : byte N j < 256 := Nat.mod_lt _ (by decide)
 
 /-- Bit k of octet j is bit 8j + k. -/

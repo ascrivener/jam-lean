@@ -1004,7 +1004,7 @@ open PVM PVM.NatBlob Services.{NS}.Blob Services.{NS}.Code
         ws := ws ++ s!"
 theorem walk_{sgi} : {V}.vBlobAux {fuel} {i0} = {V}.vBlobAux {fuel - k} {j} := by
   have h : (cview chunks {oc} {mb} {cLen} {cvS i0 (j + 64)}).walkF {k} {i0} = some {j} := by decide +kernel
-  rw [CodeView.walkF_eq _ (cview_zeta_lt chunks chunks_lt ..), cview_eq chunks chunks_lt] at h
+  rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
   exact CodeView.vBlobAux_walk _ {k} {i0} {j} {fuel} h (by decide)
 "
         names := names.push s!"walk_{sgi}"

@@ -430,6 +430,14 @@ theorem getD_map_range (f : Nat → Nat) (n k : Nat) (hk : k < n) :
 theorem size_map_range (f : Nat → Nat) (n : Nat) : ((List.range n).map f).toArray.size = n := by
   simp
 
+theorem CodeFact.jumpEntry_holds (P : Program) (k t : Nat) (h : P.jumpTable.getD k 0 = t) :
+    (CodeFact.jumpEntry k t).holds P = true := by
+  simp [CodeFact.holds, h]
+
+theorem CodeFact.jumpTableSize_holds (P : Program) (n : Nat) (h : P.jumpTable.size = n) :
+    (CodeFact.jumpTableSize n).holds P = true := by
+  simp [CodeFact.holds, h]
+
 /-- Covering a range by two. -/
 theorem range_cover {Q : Nat → Prop} {a b c : Nat} (h1 : ∀ i, a ≤ i → i < b → Q i)
     (h2 : ∀ i, b ≤ i → i < c → Q i) : ∀ i, a ≤ i → i < c → Q i := by

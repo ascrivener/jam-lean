@@ -1199,16 +1199,17 @@ theorem chunk_ok_{c} : facts_{c}.all (·.holds prog) = true := by
               if f.startsWith ".jumpEntry " then
                 let k := parts[1]!; let t := parts[2]!
                 gs := gs ++ s!"
-theorem jte_{c}_{fi} : (CodeFact.jumpEntry {k} {t}).holds prog = true := by
-  simp only [CodeFact.holds, beq_iff_eq]
-  rw [show prog.jumpTable = jtW from jt_eq, jtW, getD_map_range _ _ _ (by decide)]
+theorem jtw_{c}_{fi} : jtW.getD {k} 0 = {t} := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
+
+theorem jte_{c}_{fi} : (CodeFact.jumpEntry {k} {t}).holds prog = true :=
+  CodeFact.jumpEntry_holds prog {k} {t} ((congrArg (fun a : Array Nat => a.getD {k} 0) jt_eq).trans jtw_{c}_{fi} : jt.getD {k} 0 = {t})
 "
               else
                 gs := gs ++ s!"
-theorem jte_{c}_{fi} : (CodeFact.jumpTableSize {parts[1]!}).holds prog = true := by
-  simp only [CodeFact.holds, beq_iff_eq]
-  rw [show prog.jumpTable = jt from rfl, jt, size_map_range]
+theorem jte_{c}_{fi} : (CodeFact.jumpTableSize {parts[1]!}).holds prog = true :=
+  CodeFact.jumpTableSize_holds prog {parts[1]!} (size_map_range _ _)
 "
               names := names.push s!"jte_{c}_{fi}"
             gs := gs ++ s!"

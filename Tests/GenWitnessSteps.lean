@@ -130,6 +130,7 @@ def bootstrapSvc : Svc where
     (20000, 300, 3, 0 :: List.replicate 32 1)]
   fnRanges := [(68729, 69139)]
   memcpySummary := true
+  emptyCode := true
 
 def services : List Svc := [witnessSvc, bootstrapSvc]
 

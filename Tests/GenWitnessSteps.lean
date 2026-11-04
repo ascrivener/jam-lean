@@ -762,6 +762,16 @@ def groupFacts (fs : List String) : List (List String) := Id.run do
   if cur.size > 0 then out := out.push cur.toList
   return out.toList
 
+/-- Lean syntax for a simulation state. -/
+def ppUnits (u : Units) : String := s!"⟨{u.alu}, {u.load}, {u.store}, {u.mul}, {u.div}⟩"
+def ppRobState : RobState → String
+  | .dec => ".dec" | .wait => ".wait" | .exe => ".exe" | .fin => ".fin" | .none => ".none"
+def ppRobEntry (e : RobEntry) : String :=
+  s!"⟨{ppRobState e.state}, {e.cycles}, {e.deps}, ⟨{e.regs.bits}⟩, {ppUnits e.units}⟩"
+def ppSimState (x : SimState) : String :=
+  let pc := match x.pc with | some i => s!"some {i}" | none => "none"
+  s!"⟨{pc}, {x.cycle}, {x.decodeSlots}, {x.startSlots}, {ppUnits x.units}, [{", ".intercalate (x.rob.map ppRobEntry)}]⟩"
+
 /-- The chunks k … k + m − 1 holding octets [lo, hi) of a blob, and the bits [lo, hi) of it. -/
 def chunkRange (lo hi : Nat) : Nat × Nat := (lo / 1024, (hi + 1023) / 1024 - lo / 1024)
 def bitChunkRange (lo hi : Nat) : Nat × Nat := (lo / 8192, (hi + 8191) / 8192 - lo / 8192)
@@ -975,6 +985,13 @@ open PVM PVM.NatBlob Services.{NS}.Blob Services.{NS}.Code
       match ys.reverse with
       | [] => "rfl"
       | z :: zs => zs.foldl (fun acc x => s!"({x}.trans {acc})") z
+    let chunkPlain (c lo hi : Nat) : String := s!"
+theorem chunk_{c} : facts_{c}.all (CodeFact.holdsV (cview chunks {oc} {mb} {cLen} {cvS lo hi}) jt) = true := by
+  decide +kernel
+
+theorem chunk_ok_{c} : facts_{c}.all (·.holds prog) = true :=
+  CodeFact.all_holds_of_view prog _ (prog_cview {cvS lo hi}) _ chunk_{c}
+"
     -- 𝔳_blob, in walks of 60 instructions, 64 walks to a module
     let mut starts : Array Nat := #[]
     let mut pc := 0
@@ -1038,13 +1055,84 @@ theorem walks_{g} : {V}.vBlobAux {f0} {gi0} = {V}.vBlobAux {fuel} {gj} :=
         let (lo, hi) := match (ks.map (·.1)).min?, (ks.map (·.2)).max? with
           | some lo, some hi => (lo - min lo 32, hi + 40)
           | _, _ => (0, 1)
-        gs := gs ++ s!"
-theorem chunk_{c} : facts_{c}.all (CodeFact.holdsV (cview chunks {oc} {mb} {cLen} {cvS lo hi}) jt) = true := by
+        match ch with
+        | [f] =>
+          if f.startsWith ".block " then
+            -- a block's cost: 𝔛 a few transitions to a theorem, from state to state
+            let (bs, be) := (ks.headD (0, 0))
+            -- its terminator's static target, read from a second stretch of code
+            let mut q := bs
+            while P.next q < be do q := P.next q
+            let tgt : Option Nat := match P.decode q with
+              | some ins => (Instr.branchTarget? ins).bind fun t => if t ≥ 0 then some t.toNat else none
+              | none => none
+            let (kc, mc, km, mm) := cvArgs lo hi
+            let (kc2, mc2) := match tgt with
+              | some t => if t + 40 < lo || t ≥ hi then chunkRange (oc + t) (oc + t + 1) else (0, 0)
+              | none => (0, 0)
+            let V2 := NatBlob.cview2 csN oc mb cLen kc mc kc2 mc2 km mm
+            let VS := s!"(cview2 chunks {oc} {mb} {cLen} {kc} {mc} {kc2} {mc2} {km} {mm})"
+            let mut x := Sim.init bs
+            let mut states : Array SimState := #[x]
+            let mut links : Array Nat := #[]
+            let mut cur := 0
+            let mut budget := 0
+            let mut done := false
+            for _ in [0:100000] do
+              match CodeView.Sim.transition V2 x with
+              | some (.inl y) =>
+                budget := budget + x.rob.length + 4
+                cur := cur + 1
+                x := y
+                if budget ≥ 70 then
+                  states := states.push x; links := links.push cur; cur := 0; budget := 0
+              | some (.inr _) => done := true; break
+              | none => break
+            if !done then IO.eprintln s!"codecheck: block {bs} does not finish"
+            if cur > 0 then states := states.push x; links := links.push cur
+            let fuel0 := 256 * (cLen - bs + 2)
+            let stName (j : Nat) : String := if j == 0 then s!"(Sim.init {bs})" else s!"bst_{c}_{j}"
+            let mut bf := fuel0
+            let mut lnames : Array String := #[]
+            for j in [0:links.size] do
+              if j + 1 < states.size then
+                gs := gs ++ s!"
+def bst_{c}_{j + 1} : SimState := {ppSimState states[j + 1]!}
+"
+              gs := gs ++ s!"
+theorem bsim_{c}_{j} : CodeView.Sim.run {V} {bf} {stName j} = CodeView.Sim.run {V} {bf - links[j]!} {stName (j + 1)} := by
+  have h : CodeView.Sim.steps {VS} {links[j]!} {stName j} = some {stName (j + 1)} := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_steps _ {links[j]!} _ _ {bf - links[j]!} h
+"
+              lnames := lnames.push s!"bsim_{c}_{j}"
+              bf := bf - links[j]!
+            let z := stName links.size
+            let zs := states[links.size]!
+            gs := gs ++ s!"
+theorem bend_{c} : CodeView.Sim.run {V} {bf} {z} = some {z} := by
+  have h : CodeView.Sim.transition {VS} {z} = some (.inr {z}) := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_final _ {z} {bf - 1} h
+
+/-- ϱ^Δ of the block at {bs} is {max (zs.cycle - 3) 1} (GP eq. `gascostforblock`). -/
+theorem bcost_{c} : {V}.blockCost {bs} ≤ stepCostCap := by
+  rw [CodeView.blockCost_of_run {V} {bs} {z} {nest lnames.toList (some s!"bend_{c}")}]
+  decide
+
+theorem bstarts_{c} : CodeFact.blockStartsV (cview chunks {oc} {mb} {cLen} {cvS lo hi}) {bs} {be} = true := by
   decide +kernel
 
-theorem chunk_ok_{c} : facts_{c}.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview {cvS lo hi}) _ chunk_{c}
+theorem chunk_ok_{c} : facts_{c}.all (·.holds prog) = true := by
+  simp only [facts_{c}, List.all_cons, List.all_nil, Bool.and_true, CodeFact.holds_block, Bool.and_eq_true,
+    decide_eq_true_eq]
+  refine ⟨?_, ?_⟩
+  · rw [prog_cview {cvS lo hi}]; exact bstarts_{c}
+  · rw [prog_view]; exact bcost_{c}
 "
+          else
+            gs := gs ++ chunkPlain c lo hi
+        | _ => gs := gs ++ chunkPlain c lo hi
       gs := gs ++ s!"
 theorem chunks_{g} : factGroup_{g}.all (fun c => c.all (·.holds prog)) = true := by
   simp only [factGroup_{g}, List.all_cons, List.all_nil, Bool.and_true, {", ".intercalate (cs.map (s!"chunk_ok_{·}"))}]
@@ -1053,7 +1141,7 @@ theorem chunks_{g} : factGroup_{g}.all (fun c => c.all (·.holds prog)) = true :
       imports := imports.push s!"Services.{NS}.CodeCheck.G{g}"
       factGroupsL := factGroupsL.push (s!"chunks_{g}", cs)
     -- the host-call ids: a scan of the code in stretches of 300 indices, 64 to a module
-    let HS := 300
+    let HS := 250
     let nh := (cLen + HS - 1) / HS
     let HG := 64
     let nhg := (nh + HG - 1) / HG

@@ -50,6 +50,8 @@ import Services.Witness.CodeCheck.H6
 import Services.Witness.CodeCheck.H7
 import Services.Witness.CodeCheck.H8
 import Services.Witness.CodeCheck.H9
+import Services.Witness.CodeCheck.H10
+import Services.Witness.CodeCheck.H11
 
 /-!
 # witness's code facts hold of the vendored blob, by the kernel
@@ -83,6 +85,6 @@ theorem hostIds_ok : ∀ n ∈ PVM.jamHostCallIdsOf (ba N 71 222902), n ∈ host
   apply prog.hostCallIds_sub
   intro i hi hm x hd
   rw [prog_view] at hm hd
-  exact (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover hostsG_0 hostsG_1) hostsG_2) hostsG_3) hostsG_4) hostsG_5) hostsG_6) hostsG_7) hostsG_8) hostsG_9) i (Nat.zero_le _) (by simpa [prog] using hi) hm x hd
+  exact (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover hostsG_0 hostsG_1) hostsG_2) hostsG_3) hostsG_4) hostsG_5) hostsG_6) hostsG_7) hostsG_8) hostsG_9) hostsG_10) hostsG_11) i (Nat.zero_le _) (by simpa [prog] using hi) hm x hd
 
 end Services.Witness.CodeCheck

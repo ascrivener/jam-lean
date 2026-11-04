@@ -183,7 +183,7 @@ structure RobEntry where
   regs : RegSet
   /-- t, the execution units used. -/
   units : Units
-  deriving Repr, Inhabited
+  deriving DecidableEq, Repr, Inhabited
 
 /-- A simulation state 𝕊 = (ı, c, d, e, t, **r**) (GP §A.9). -/
 structure SimState where
@@ -199,7 +199,7 @@ structure SimState where
   units : Units
   /-- **r**, the reorder buffer (a list, which the kernel walks faster than an array). -/
   rob : List RobEntry
-  deriving Repr
+  deriving DecidableEq, Repr, Inhabited
 
 namespace Sim
 

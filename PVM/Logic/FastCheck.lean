@@ -258,6 +258,53 @@ theorem checkCode_of_chunks {p : ByteArray} {P : Program} {cs : List (List CodeF
   simp only [checkCode, hp, hv, Bool.true_and, List.all_flatten]
   exact hc
 
+/-! ## A block's cost, a few transitions at a time -/
+
+namespace CodeView.Sim
+
+/-- k transitions of 𝔛 that each continue (`.inl`), or `none`. -/
+def steps (V : CodeView) : Nat → SimState → Option SimState
+  | 0, x => some x
+  | k + 1, x => match transition V x with
+    | some (.inl y) => steps V k y
+    | _ => none
+
+/-- **𝔛 from x is 𝔛 from where k continuing transitions lead.** -/
+theorem run_steps (V : CodeView) : ∀ k x y f, steps V k x = some y → run V (f + k) x = run V f y := by
+  intro k
+  induction k with
+  | zero => intro x y f h; simp only [steps, Option.some.injEq] at h; subst h; rfl
+  | succ k ih =>
+    intro x y f h
+    rw [steps] at h
+    rw [show f + (k + 1) = (f + k) + 1 by omega, run]
+    split at h
+    · rename_i x' hx
+      rw [hx]
+      exact ih x' y f h
+    · cases h
+
+/-- 𝔛 stops at a final state. -/
+theorem run_final (V : CodeView) (x : SimState) (f : Nat) (h : transition V x = some (.inr x)) :
+    run V (f + 1) x = some x := by
+  rw [run, h]
+
+end CodeView.Sim
+
+theorem CodeView.blockCost_of_run (V : CodeView) (s : Nat) (z : SimState)
+    (h : CodeView.Sim.run V (CodeView.Sim.fuel V s) (Sim.init s) = some z) :
+    V.blockCost s = max (z.cycle - 3) 1 := by
+  simp [CodeView.blockCost, CodeView.blockCost?, h]
+
+/-- The block-start part of a `.block` fact. -/
+def CodeFact.blockStartsV (V : CodeView) (s e : Nat) : Bool :=
+  V.isBlockStart s && ((List.range (e - s - 1)).all fun k => !V.isBlockStart (s + 1 + k))
+
+theorem CodeFact.holds_block (P : Program) (s e : Nat) :
+    (CodeFact.block s e).holds P = (CodeFact.blockStartsV P.view s e && decide (P.view.blockCost s ≤ stepCostCap)) := by
+  simp only [CodeFact.holds, CodeFact.blockStartsV, Program.blockCost_view]
+  rfl
+
 /-! ## The host-call ids a program names -/
 
 theorem OneImmOp.ofOpcode?_some {n : Nat} {o : OneImmOp} (h : OneImmOp.ofOpcode? n = some o) : n = 10 := by
@@ -416,6 +463,32 @@ theorem cview_eq (cs : List Nat) (h : ∀ c ∈ cs, c < 2 ^ 8192) (oc mb cLen kc
     · rename_i hw; exact (bit_ofChunks_window cs h km mm _ hw.1 hw.2).symm
     · rfl
   simp only [cview, view, hz, hm]
+
+/-- `cview` with a second stretch of code, chunks kc₂ … kc₂ + mc₂ − 1: for a block whose branch
+    target lies far from it. -/
+def cview2 (cs : List Nat) (oc mb cLen kc mc kc₂ mc₂ km mm : Nat) : CodeView :=
+  { cview cs oc mb cLen kc mc km mm with
+    zeta := fun i => if i < cLen then
+      (if 1024 * kc ≤ oc + i ∧ oc + i < 1024 * (kc + mc) then
+        byte (ofChunks ((cs.drop kc).take mc)) (oc + i - 1024 * kc)
+      else if 1024 * kc₂ ≤ oc + i ∧ oc + i < 1024 * (kc₂ + mc₂) then
+        byte (ofChunks ((cs.drop kc₂).take mc₂)) (oc + i - 1024 * kc₂)
+      else byte (ofChunks cs) (oc + i))
+    else 0 }
+
+theorem cview2_eq (cs : List Nat) (h : ∀ c ∈ cs, c < 2 ^ 8192) (oc mb cLen kc mc kc₂ mc₂ km mm : Nat) :
+    cview2 cs oc mb cLen kc mc kc₂ mc₂ km mm = view (ofChunks cs) oc mb cLen := by
+  rw [← cview_eq cs h oc mb cLen kc mc km mm]
+  simp only [cview2, cview, CodeView.mk.injEq, and_true]
+  funext i
+  split
+  · split
+    · rfl
+    · split
+      · rename_i _ _ hw
+        exact (byte_ofChunks_window cs h kc₂ mc₂ _ hw.1 hw.2).symm
+      · rfl
+  · rfl
 
 theorem cview_zeta_lt (cs : List Nat) (h : ∀ c ∈ cs, c < 2 ^ 8192) (oc mb cLen kc mc km mm i : Nat) :
     (cview cs oc mb cLen kc mc km mm).zeta i < 256 := by

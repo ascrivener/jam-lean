@@ -99,7 +99,7 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
 
 /-- **Cut 158 to cut 159**: from the state `St158`, the steps reach `St159`. -/
 theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
-    (x : RefineCtx) (L : Nat) (hL : 0 < L ∧ L < 4294967296) (ω₀ : Regs) (μ₀ : Memory) (h : St158 L ω₀ μ₀ ω μ) :
+    (x : RefineCtx) (L : Nat) (hL : 0 < L ∧ L < 16777217) (ω₀ : Regs) (μ₀ : Memory) (h : St158 L ω₀ μ₀ ω μ) :
     ∃ ω' μ', FreeStepsH p (refineContract env) 42783 ω μ x 42838 ω' μ' x 16 ∧ St159 L ω₀ μ₀ ω' μ' := by
   obtain ⟨ω', μ', hrun, ⟨r0, r1, r2, r3, r4, r5, r6, r7, r8, r9⟩, ⟨m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15⟩, hfr, hrd, hwr⟩ :=
     steps p P env ω μ x h.hreg0 h.hreg2 h.hreg4 h.hreg5 h.hreg9 h.hreg10 h.hreg11 h.hw_206824_206840 (fun a h1 h2 => h.hrd_206824_206840 a (Nat.le_trans (by decide) h1) (Nat.lt_of_lt_of_le h2 (by decide))) (Memory.read_of_readN h.hm_206832_8 0 (by decide)) (Memory.read_of_readN h.hm_206832_8 1 (by decide)) (Memory.read_of_readN h.hm_206832_8 2 (by decide)) (Memory.read_of_readN h.hm_206832_8 3 (by decide)) (Memory.read_of_readN h.hm_206832_8 4 (by decide)) (Memory.read_of_readN h.hm_206832_8 5 (by decide)) (Memory.read_of_readN h.hm_206832_8 6 (by decide)) (Memory.read_of_readN h.hm_206832_8 7 (by decide))

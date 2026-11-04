@@ -96,6 +96,8 @@ structure Svc where
   emptyExtra : List (Nat × Nat × Nat × List UInt8) := []
   /-- `code`: also the instructions on the run of `emptyBase`. -/
   emptyCode : Bool := false
+  /-- `cut`: the bound stated for the argument length L (Y's arguments are at most 𝖹_I octets). -/
+  lBound : Nat := 4294967296
 
 /-- Witness (`services/witness`). -/
 def witnessSvc : Svc where
@@ -131,6 +133,7 @@ def bootstrapSvc : Svc where
   fnRanges := [(68729, 69139)]
   memcpySummary := true
   emptyCode := true
+  lBound := 16777217
 
 def services : List Svc := [witnessSvc, bootstrapSvc]
 
@@ -1689,9 +1692,9 @@ def regsWritten (cx : Cx) (A B : Nat) : List Nat := Id.run do
   return out
 
 /-- The Lean binder for a variable and its bound. -/
-def varBinder (v : String) : String :=
+def varBinder (lb : Nat) (v : String) : String :=
   let bound := match v with
-    | "Y" => "1 ≤ Y ∧ Y ≤ 15" | "S" => "S < 4294967296" | "C" => "C < 65536" | "L" => "0 < L ∧ L < 4294967296"
+    | "Y" => "1 ≤ Y ∧ Y ≤ 15" | "S" => "S < 4294967296" | "C" => "C < 65536" | "L" => s!"0 < L ∧ L < {lb}"
     | "T" => "12 ≤ T ∧ T < 256" | "Q" => "4278124548 ≤ Q ∧ Q ≤ 4278124564" | _ => "I < 65536"
   s!"({v} : Nat) (h{v} : {bound})"
 
@@ -1867,7 +1870,7 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
   for info in infos do vars0 := vars0 ++ info.vars
   let vars := names.filter vars0.contains
   let varArgs := " ".intercalate (vars.flatMap fun v => [v, s!"h{v}"])
-  let varBinders := " ".intercalate (vars.map varBinder)
+  let varBinders := " ".intercalate (vars.map (varBinder cx.svc.lBound))
   let segCond (k : Nat) : String :=
     let outW := " && ".intercalate (infos[k]!.wr.map fun (lo, hi) => s!"!(decide ({lo} ≤ a ∧ a < {hi}))")
     s!"decide (a < 4294967296){if outW == "" then "" else " && " ++ outW}"
@@ -1953,7 +1956,7 @@ set_option maxHeartbeats 10000000
 theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
     (x : RefineCtx){envB}"
     if hasGrow then sx := sx ++ s!"\n    (hhp : HeapPages μ {hA} {hB} {topAt bs[k]!})"
-    for v in ivars do sx := sx ++ s!"\n    {varBinder v}"
+    for v in ivars do sx := sx ++ s!"\n    {varBinder cx.svc.lBound v}"
     let regB := rd.map fun j => (s!"hreg{j}", s!"ω[{j}] = UInt64.ofNat {(regAt bs[k]! j).getD "0"}")
     let symB := info.symLoads.map fun (a, n, e) => (s!"hbn_{a}_{n}", s!"μ.readN {a} {n} = Num.encodeLE {n} {e}")
     let wB := (info.wr ++ pageRanges k).eraseDups.map fun (lo, hi) => (s!"hw_{lo}_{hi}", s!"∀ a, {lo} ≤ a → a < {hi} → μ.writable a = true")
@@ -2151,7 +2154,7 @@ theorem chain (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
 /-- **Steps {bs[0]!} … {bs[nseg]! - 1} after pc {joinPc}**, from the facts the path reads before writing them. -/
 theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
     (x : RefineCtx){envB}"
-  for v in vars do ch := ch ++ s!"\n    {varBinder v}"
+  for v in vars do ch := ch ++ s!"\n    {varBinder cx.svc.lBound v}"
   for (n, t) in pre0 do ch := ch ++ s!"\n    ({n} : {t})"
   let startArgs := (if pre0.isEmpty && !frame then ["trivial"] else pre0.map (·.1)) ++
     (if frame then (if hasGrow then ["fun _ _ => rfl", "fun _ _ => rfl", "fun _ h => h", "fun _ h => h"]

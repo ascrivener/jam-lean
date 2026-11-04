@@ -82,7 +82,7 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
 
 /-- **Cut 156 to cut 157**: from the state `St156`, the steps reach `St157`. -/
 theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
-    (x : RefineCtx) (L : Nat) (hL : 0 < L ∧ L < 4294967296) (ω₀ : Regs) (μ₀ : Memory) (h : St156 L ω₀ μ₀ ω μ) :
+    (x : RefineCtx) (L : Nat) (hL : 0 < L ∧ L < 16777217) (ω₀ : Regs) (μ₀ : Memory) (h : St156 L ω₀ μ₀ ω μ) :
     ∃ ω' μ', FreeStepsH p (refineContract env) 42639 ω μ x 42727 ω' μ' x 16 ∧ St157 L ω₀ μ₀ ω' μ' := by
   obtain ⟨ω', μ', hrun, ⟨r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11⟩, -, hfr, hrd, hwr⟩ :=
     steps p P env ω μ x h.hreg0 h.hreg5 h.hreg7

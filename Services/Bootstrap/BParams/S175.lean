@@ -16,7 +16,7 @@ set_option maxHeartbeats 10000000
     registers they read and the octets they read first, to the values they leave. -/
 theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
     (x : RefineCtx)
-    (L : Nat) (hL : 0 < L ∧ L < 4294967296)
+    (L : Nat) (hL : 0 < L ∧ L < 16777217)
     (hreg1 : ω[1] = UInt64.ofNat 4278058024)
     (hreg7 : ω[7] = UInt64.ofNat 0)
     (hreg8 : ω[8] = UInt64.ofNat 4278058200)
@@ -126,7 +126,7 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
 
 /-- **Cut 175 to cut 176**: from the state `St175`, the steps reach `St176`. -/
 theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
-    (x : RefineCtx) (L : Nat) (hL : 0 < L ∧ L < 4294967296) (ω₀ : Regs) (μ₀ : Memory) (h : St175 L ω₀ μ₀ ω μ) :
+    (x : RefineCtx) (L : Nat) (hL : 0 < L ∧ L < 16777217) (ω₀ : Regs) (μ₀ : Memory) (h : St175 L ω₀ μ₀ ω μ) :
     ∃ ω' μ', FreeStepsH p (refineContract env) 56316 ω μ x 4603 ω' μ' x 16 ∧ St176 L ω₀ μ₀ ω' μ' := by
   obtain ⟨ω', μ', hrun, ⟨r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11⟩, -, hfr, hrd, hwr⟩ :=
     steps p P env ω μ x L hL h.hreg1 h.hreg7 h.hreg8 h.hreg9 h.hbn_4278058360_8 h.hw_196620_196624 h.hw_196632_196636 h.hw_196660_196664 h.hrd_4278058284_4278058288 h.hrd_4278058292_4278058296 h.hrd_4278058352_4278058376 (Memory.read_of_readN h.hm_4278058284_4 0 (by decide)) (Memory.read_of_readN h.hm_4278058284_4 1 (by decide)) (Memory.read_of_readN h.hm_4278058284_4 2 (by decide)) (Memory.read_of_readN h.hm_4278058284_4 3 (by decide)) (Memory.read_of_readN h.hm_4278058292_4 0 (by decide)) (Memory.read_of_readN h.hm_4278058292_4 1 (by decide)) (Memory.read_of_readN h.hm_4278058292_4 2 (by decide)) (Memory.read_of_readN h.hm_4278058292_4 3 (by decide)) (Memory.read_of_readN h.hm_4278058352_8 0 (by decide)) (Memory.read_of_readN h.hm_4278058352_8 1 (by decide)) (Memory.read_of_readN h.hm_4278058352_8 2 (by decide)) (Memory.read_of_readN h.hm_4278058352_8 3 (by decide)) (Memory.read_of_readN h.hm_4278058352_8 4 (by decide)) (Memory.read_of_readN h.hm_4278058352_8 5 (by decide)) (Memory.read_of_readN h.hm_4278058352_8 6 (by decide)) (Memory.read_of_readN h.hm_4278058352_8 7 (by decide)) (Memory.read_of_readN h.hm_4278058368_8 0 (by decide)) (Memory.read_of_readN h.hm_4278058368_8 1 (by decide)) (Memory.read_of_readN h.hm_4278058368_8 2 (by decide)) (Memory.read_of_readN h.hm_4278058368_8 3 (by decide)) (Memory.read_of_readN h.hm_4278058368_8 4 (by decide)) (Memory.read_of_readN h.hm_4278058368_8 5 (by decide)) (Memory.read_of_readN h.hm_4278058368_8 6 (by decide)) (Memory.read_of_readN h.hm_4278058368_8 7 (by decide))

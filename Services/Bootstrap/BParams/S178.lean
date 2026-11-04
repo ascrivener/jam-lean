@@ -16,7 +16,7 @@ set_option maxHeartbeats 10000000
     registers they read and the octets they read first, to the values they leave. -/
 theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
     (x : RefineCtx)
-    (L : Nat) (hL : 0 < L ∧ L < 4294967296)
+    (L : Nat) (hL : 0 < L ∧ L < 16777217)
     (hreg1 : ω[1] = UInt64.ofNat 4278058184)
     (hreg5 : ω[5] = UInt64.ofNat 1)
     (hreg7 : ω[7] = UInt64.ofNat 4278058304)
@@ -79,7 +79,7 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
 
 /-- **Cut 178 to cut 179**: from the state `St178`, the steps reach `St179`. -/
 theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
-    (x : RefineCtx) (L : Nat) (hL : 0 < L ∧ L < 4294967296) (ω₀ : Regs) (μ₀ : Memory) (h : St178 L ω₀ μ₀ ω μ) :
+    (x : RefineCtx) (L : Nat) (hL : 0 < L ∧ L < 16777217) (ω₀ : Regs) (μ₀ : Memory) (h : St178 L ω₀ μ₀ ω μ) :
     ∃ ω' μ', FreeStepsH p (refineContract env) 58454 ω μ x 58468 ω' μ' x 7 ∧ St179 L ω₀ μ₀ ω' μ' := by
   obtain ⟨ω', μ', hrun, ⟨r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12⟩, ⟨m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15⟩, hfr, hrd, hwr⟩ :=
     steps p P env ω μ x L hL h.hreg1 h.hreg5 h.hreg7 h.hreg8 h.hw_4278058184_4278058200 h.hrd_4278058304_4278058312 (Memory.read_of_readN h.hm_4278058304_8 0 (by decide)) (Memory.read_of_readN h.hm_4278058304_8 1 (by decide)) (Memory.read_of_readN h.hm_4278058304_8 2 (by decide)) (Memory.read_of_readN h.hm_4278058304_8 3 (by decide)) (Memory.read_of_readN h.hm_4278058304_8 4 (by decide)) (Memory.read_of_readN h.hm_4278058304_8 5 (by decide)) (Memory.read_of_readN h.hm_4278058304_8 6 (by decide)) (Memory.read_of_readN h.hm_4278058304_8 7 (by decide))

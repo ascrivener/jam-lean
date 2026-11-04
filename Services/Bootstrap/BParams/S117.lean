@@ -91,7 +91,7 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
 
 /-- **Cut 117 to cut 118**: from the state `St117`, the steps reach `St118`. -/
 theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
-    (x : RefineCtx) (L : Nat) (hL : 0 < L ∧ L < 4294967296) (ω₀ : Regs) (μ₀ : Memory) (h : St117 L ω₀ μ₀ ω μ) :
+    (x : RefineCtx) (L : Nat) (hL : 0 < L ∧ L < 16777217) (ω₀ : Regs) (μ₀ : Memory) (h : St117 L ω₀ μ₀ ω μ) :
     ∃ ω' μ', FreeStepsH p (refineContract env) 68848 ω μ x 68854 ω' μ' x 16 ∧ St118 L ω₀ μ₀ ω' μ' := by
   obtain ⟨ω', μ', hrun, ⟨r0, r1, r2⟩, ⟨m0, m1⟩, hfr, hrd, hwr⟩ :=
     steps p P env ω μ x h.hreg8 h.hreg9 h.hreg10 (fun a h1 h2 => h.hw_4278057756_4278057800 a (Nat.le_trans (by decide) h1) (Nat.lt_of_lt_of_le h2 (by decide))) (fun a h1 h2 => h.hrd_207016_207034 a (Nat.le_trans (by decide) h1) (Nat.lt_of_lt_of_le h2 (by decide))) (Memory.read_of_readN h.hm_207016_8 0 (by decide)) (Memory.read_of_readN h.hm_207016_8 1 (by decide))

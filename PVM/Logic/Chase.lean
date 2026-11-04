@@ -74,4 +74,27 @@ macro "chase" : tactic => `(tactic| first
       Memory.readable_writeN]
      first | exact Memory.readable_of_writable (by simp (disch := chase_disch) only [*]) | done))
 
+
+/-- A frame carries a word: if every octet of `a … a + n − 1` satisfies the frame's condition
+    (decided for concrete addresses), the word reads the same after as before. -/
+theorem Memory.readN_of_frame {μ μ' : Memory} {P : Nat → Bool}
+    (h : ∀ b, P b = true → μ'.read b = μ.read b) (a n : Nat)
+    (hp : (List.range n).all (fun j => P (a + j)) = true) : μ'.readN a n = μ.readN a n := by
+  simp only [Memory.readN]
+  apply List.map_congr_left
+  intro j hj
+  exact h _ (List.all_eq_true.mp hp j hj)
+
+
+/-- A word from its first octet and the rest. -/
+theorem Memory.readN_cons {μ : Memory} {a n : Nat} {b : UInt8} {l : List UInt8}
+    (h1 : μ.read a = b) (h2 : μ.readN (a + 1) n = l) : μ.readN a (n + 1) = b :: l := by
+  rw [Memory.readN_succ', h1, h2]
+
+/-- An octet of a word. -/
+theorem Memory.read_of_readN {μ : Memory} {a n : Nat} {l : List UInt8} (h : μ.readN a n = l)
+    (j : Nat) (hj : j < n) : μ.read (a + j) = l.getD j 0 := by
+  subst h
+  simp [Memory.readN, hj]
+
 end PVM

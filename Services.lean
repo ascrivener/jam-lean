@@ -7,18 +7,6 @@ import Services.Bootstrap.Code
 import Services.Bootstrap.Memcpy
 import Services.Bootstrap.Prefix
 import Services.Witness.Prefix
-import Services.Witness.ErrTail0
-import Services.Witness.ErrTail1
-import Services.Witness.ErrTail2
-import Services.Witness.ErrTail3
-import Services.Witness.ErrTail4
-import Services.Witness.ErrTail5
-import Services.Witness.EmptyTail0
-import Services.Witness.EmptyTail1
-import Services.Witness.EmptyTail2
-import Services.Witness.EmptyTail3
-import Services.Witness.EmptyTail4
-import Services.Witness.EmptyTail5
 import Services.Witness.EmptyTail
 import Services.Witness.Front1
 import Services.Witness.Front2
@@ -51,23 +39,24 @@ Built on `JAM`; nothing in `PVM` or `JAM` depends on this library.
 * `Services.Witness.DecodeC` — witness's inline decode of the core index c (from pc 43276, step
   702), summarized for every c < 2^16 (`decodeC`): the reader advanced past ℰ(c) at ω₁ + 16 and
   the call to the `u32` decoder. (Witness rejects c ≥ 2^16, which no refine call passes.)
-* `Services.Witness.ErrTail0` … `ErrTail5` — generated segment theorems: the 1542 steps
-  of the path witness's refine takes after a bad payload (pc 74620, reached for an empty payload
-  or a tag ≥ 12), each from the facts it reads to the facts it leaves, for every payload of 1 to
-  15 octets (`lake exe genwitnesssteps segx 74620 a b ErrTailk`).
+* `Services.Witness.ErrTail` — generated (`genwitnesssteps cut 74620 ErrTail 0 1542 every=16
+  out`): the 1542 steps of the path witness's refine takes after a bad payload (pc 74620, reached
+  for an empty payload or a tag ≥ 12), for every payload of 1 to 15 octets, cut into 97 segments of
+  at most 16 steps (`ErrTail/S0` … `S96`). The state at each cut is a structure (`ErrTail/St`:
+  the registers, octets and page access the rest of the path reads), each segment proves
+  `Stₖ → ∃ run, Stₖ₊₁`, and `chain` composes them by transitivity. Each segment's two
+  declarations fit one refine of witness-lean's on-chain check.
 * `Services.Witness.PsiR` — **witness's Ψ_R rejects a payload with a bad tag** (`psiR_badTag`): for
   every core index c < 2^16, item index i < 2^16, service id < 2^32 and payload of 1 to 15 octets
   whose first octet is at least 12, Ψ_R's result is ℰ(`Rejected(BadPayload)`) = [12, 0], or ∞.
   From `BadPayload.run_badTag` through `PsiRLift.psiR_of_run` (Ψ_R's code lookup and arguments,
   Y's start) and `Lift.psiM_of_run` (`psiM_of_freeRunH`, the halting step `Halt.halt_43609`).
-* `Services.Witness.ErrTail` — generated (`genwitnesssteps chainx`): the error tail from 74620 to
-  the halt, its segments chained with `chase`, from the facts it reads at 74620.
 * `Services.Witness.BadPayload` — witness's refine on a payload with a bad tag, end to end
   (`run_badTag`): the prefix, the decodes, the front segments, the payload copy and the error
   tail chained with `chase`, from Y's registers to the halt with [12, 0], for every input width.
-* `Services.Witness.EmptyTail0` … `EmptyTail5`, `Services.Witness.EmptyTail` — the same for the
-  empty payload, whose path from pc 74620 differs: 1445 steps to the same halting step and
-  output [12, 0], here at ω₇ = 206752 (`genwitnesssteps segx0` / `chainx0`).
+* `Services.Witness.EmptyTail` — the same for the empty payload, whose path from pc 74620
+  differs: 1445 steps (91 segments) to the same halting step and output [12, 0], here at
+  ω₇ = 206752 (`genwitnesssteps cut0`).
 * `Services.Witness.EFront3`, `Services.Witness.EmptyPayload` — the empty payload's front end
   (after the `u32` decode of |y| = 0, to `Op::decode`'s error jump) and its run end to end
   (`run_empty`), from Y's registers to the halt with [12, 0] at ω₇ = 206752.

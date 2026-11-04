@@ -15,7 +15,7 @@ set_option maxRecDepth 100000
 
 /-- **Steps 0 … 59 after pc 23809**: the segments `S0` … `S3`, composed. -/
 theorem chain (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
-    (x : RefineCtx) (S : Nat) (hS : S < 4294967296) (I : Nat) (hI : I < 65536) (L : Nat) (hL : L < 4294967296) (ω₀ : Regs) (μ₀ : Memory) (h : St0 S I L ω₀ μ₀ ω μ) :
+    (x : RefineCtx) (S : Nat) (hS : S < 4294967296) (I : Nat) (hI : I < 65536) (L : Nat) (hL : 0 < L ∧ L < 4294967296) (ω₀ : Regs) (μ₀ : Memory) (h : St0 S I L ω₀ μ₀ ω μ) :
     ∃ ω' μ', FreeStepsH p (refineContract env) 23809 ω μ x 74620 ω' μ' x 60 ∧ St4 S I L ω₀ μ₀ ω' μ' := by
   obtain ⟨ω1, μ1, run1, h1⟩ := S0.run p P env ω μ x S hS I hI L hL ω₀ μ₀ h
   obtain ⟨ω2, μ2, run2, h2⟩ := S1.run p P env ω1 μ1 x S hS I hI L hL ω₀ μ₀ h1
@@ -28,7 +28,7 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
     (x : RefineCtx)
     (S : Nat) (hS : S < 4294967296)
     (I : Nat) (hI : I < 65536)
-    (L : Nat) (hL : L < 4294967296)
+    (L : Nat) (hL : 0 < L ∧ L < 4294967296)
     (hreg1 : ω[1] = UInt64.ofNat 4278058712)
     (hreg5 : ω[5] = UInt64.ofNat 4278058856)
     (hreg6 : ω[6] = UInt64.ofNat 4278058832)

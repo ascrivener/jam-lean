@@ -105,7 +105,7 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
 
 /-- **Cut 2 to cut 3**: from the state `St2`, the steps reach `St3`. -/
 theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
-    (x : RefineCtx) (S : Nat) (hS : S < 4294967296) (I : Nat) (hI : I < 65536) (L : Nat) (hL : L < 4294967296) (ω₀ : Regs) (μ₀ : Memory) (h : St2 S I L ω₀ μ₀ ω μ) :
+    (x : RefineCtx) (S : Nat) (hS : S < 4294967296) (I : Nat) (hI : I < 65536) (L : Nat) (hL : 0 < L ∧ L < 4294967296) (ω₀ : Regs) (μ₀ : Memory) (h : St2 S I L ω₀ μ₀ ω μ) :
     ∃ ω' μ', FreeStepsH p (refineContract env) 43555 ω μ x 63444 ω' μ' x 16 ∧ St3 S I L ω₀ μ₀ ω' μ' := by
   obtain ⟨ω', μ', hrun, ⟨r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10⟩, ⟨m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15, m16, m17, m18, m19, m20, m21, m22, m23, m24, m25, m26, m27, m28, m29, m30, m31, m32, m33, m34, m35, m36, m37⟩, s0, hfr, hrd, hwr⟩ :=
     steps p P env ω μ x S hS I hI h.hreg1 h.hreg5 h.hreg6 h.hreg7 h.hreg8 h.hw_4278058792_4278058816 h.hw_4278058832_4278058856 h.hrd_4278058872_4278058880 (Memory.read_of_readN h.hm_4278058872_8 0 (by decide)) (Memory.read_of_readN h.hm_4278058872_8 1 (by decide)) (Memory.read_of_readN h.hm_4278058872_8 2 (by decide)) (Memory.read_of_readN h.hm_4278058872_8 3 (by decide)) (Memory.read_of_readN h.hm_4278058872_8 4 (by decide)) (Memory.read_of_readN h.hm_4278058872_8 5 (by decide)) (Memory.read_of_readN h.hm_4278058872_8 6 (by decide)) (Memory.read_of_readN h.hm_4278058872_8 7 (by decide))

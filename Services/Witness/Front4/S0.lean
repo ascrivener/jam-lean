@@ -17,7 +17,7 @@ set_option maxHeartbeats 10000000
 theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
     (x : RefineCtx)
     (Y : Nat) (hY : 1 ≤ Y ∧ Y ≤ 15)
-    (L : Nat) (hL : L < 4294967296)
+    (L : Nat) (hL : 0 < L ∧ L < 4294967296)
     (T : Nat) (hT : 12 ≤ T ∧ T < 256)
     (Q : Nat) (hQ : 4278124548 ≤ Q ∧ Q ≤ 4278124564)
     (hreg1 : ω[1] = UInt64.ofNat 4278058712)
@@ -112,7 +112,7 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
 
 /-- **Cut 0 to cut 1**: from the state `St0`, the steps reach `St1`. -/
 theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
-    (x : RefineCtx) (Y : Nat) (hY : 1 ≤ Y ∧ Y ≤ 15) (S : Nat) (hS : S < 4294967296) (I : Nat) (hI : I < 65536) (L : Nat) (hL : L < 4294967296) (T : Nat) (hT : 12 ≤ T ∧ T < 256) (Q : Nat) (hQ : 4278124548 ≤ Q ∧ Q ≤ 4278124564) (ω₀ : Regs) (μ₀ : Memory) (h : St0 Y S I L T Q ω₀ μ₀ ω μ) :
+    (x : RefineCtx) (Y : Nat) (hY : 1 ≤ Y ∧ Y ≤ 15) (S : Nat) (hS : S < 4294967296) (I : Nat) (hI : I < 65536) (L : Nat) (hL : 0 < L ∧ L < 4294967296) (T : Nat) (hT : 12 ≤ T ∧ T < 256) (Q : Nat) (hQ : 4278124548 ≤ Q ∧ Q ≤ 4278124564) (ω₀ : Regs) (μ₀ : Memory) (h : St0 Y S I L T Q ω₀ μ₀ ω μ) :
     ∃ ω' μ', FreeStepsH p (refineContract env) 23918 ω μ x 24116 ω' μ' x 16 ∧ St1 Y S I L T Q ω₀ μ₀ ω' μ' := by
   obtain ⟨ω', μ', hrun, ⟨r0, r1, r2, r3, r4, r5⟩, ⟨m0, m1, m2, m3, m4, m5, m6, m7⟩, s0, hfr, hrd, hwr⟩ :=
     steps p P env ω μ x Y hY L hL T hT Q hQ h.hreg1 h.hreg5 h.hreg6 h.hbn_4278058728_8 h.hbn_4278058744_8 h.hbn_4278058736_8 h.hbn_4278058760_8 h.hbn_4278058752_8 (fun a h1 h2 => h.hw_4278058832_4278058880 a (Nat.le_trans (by decide) h1) (Nat.lt_of_lt_of_le h2 (by decide))) (fun a h1 h2 => h.hw_4278058832_4278058880 a (Nat.le_trans (by decide) h1) (Nat.lt_of_lt_of_le h2 (by decide))) (fun a h1 h2 => h.hrd_4278058712_4278058768 a (Nat.le_trans (by decide) h1) (Nat.lt_of_lt_of_le h2 (by decide))) (fun a h1 h2 => h.hrd_4278058712_4278058768 a (Nat.le_trans (by decide) h1) (Nat.lt_of_lt_of_le h2 (by decide))) (Memory.read_of_readN h.hm_4278058712_8 0 (by decide)) (Memory.read_of_readN h.hm_4278058712_8 1 (by decide)) (Memory.read_of_readN h.hm_4278058712_8 2 (by decide)) (Memory.read_of_readN h.hm_4278058712_8 3 (by decide)) (Memory.read_of_readN h.hm_4278058712_8 4 (by decide)) (Memory.read_of_readN h.hm_4278058712_8 5 (by decide)) (Memory.read_of_readN h.hm_4278058712_8 6 (by decide)) (Memory.read_of_readN h.hm_4278058712_8 7 (by decide))

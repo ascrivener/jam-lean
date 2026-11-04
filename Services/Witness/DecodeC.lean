@@ -48,7 +48,7 @@ theorem decodeC_zero {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
     (hwf : ∀ a, sp - 48 ≤ a → a < sp + 48 → μ.writable a = true)
     (hra : ∀ a, ptr ≤ a → a < ptr + 1 → μ.readable a = true) (hL : 1 ≤ L ∧ L < 4294967296)
     (hb : μ.read ptr = 0) :
-    ∃ ω' μ', FreeStepsH p R 43276 ω μ x 184570 ω' μ' x ∧ DecodeCOk ω ω' μ μ' sp ptr L 1 := by
+    ∃ ω' μ', FreeStepsH p R 43276 ω μ x 184570 ω' μ' x 300 ∧ DecodeCOk ω ω' μ μ' sp ptr L 1 := by
   have hrf : ∀ a, sp - 48 ≤ a → a < sp + 48 → μ.readable a = true :=
     fun a h1 h2 => Memory.readable_of_writable (hwf a h1 h2)
   have hra0 : μ.readable ptr = true := hra ptr (by omega) (by omega)
@@ -71,7 +71,7 @@ theorem decodeC_zero {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
     · pvm_simp [h1, h7, h8, hwf, hrf, hra0, hb]
     apply FreeStepsH.step_decode (d_43488 (p := p) (P := P))
     · pvm_simp [h1, h7, h8, hwf, hrf, hra0, hb]
-    exact FreeStepsH.refl
+    exact FreeStepsH.refl.mono (Nat.zero_le _)
   case post => decodec_post [h1]
 
 /-- **The core-index decode of a 1-octet ℰ(C), 0 < C < 128: no further octets are copied.** -/
@@ -83,12 +83,12 @@ theorem decodeC_one {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Re
     (hwf : ∀ a, sp - 48 ≤ a → a < sp + 48 → μ.writable a = true)
     (hra : ∀ a, ptr ≤ a → a < ptr + 1 → μ.readable a = true) (hL : 1 ≤ L ∧ L < 4294967296)
     (C : Nat) (hC : 0 < C ∧ C < 128) (hb : μ.read ptr = UInt8.ofNat C) :
-    ∃ ω' μ', FreeStepsH p R 43276 ω μ x 184570 ω' μ' x ∧ DecodeCOk ω ω' μ μ' sp ptr L 1 := by
+    ∃ ω' μ', FreeStepsH p R 43276 ω μ x 184570 ω' μ' x 300 ∧ DecodeCOk ω ω' μ μ' sp ptr L 1 := by
   have hrf : ∀ a, sp - 48 ≤ a → a < sp + 48 → μ.readable a = true :=
     fun a h1 h2 => Memory.readable_of_writable (hwf a h1 h2)
   have hra0 : μ.readable ptr = true := hra ptr (by omega) (by omega)
   rw [show ω = regsNF ω [] from rfl]
-  refine FreeStepsH.ex_trans (i₁ := 186740) (ω₁ := ?ω₁) (μ₁ := ?μ₁) ?pre ?rest
+  refine FreeStepsH.ex_trans (i₁ := 186740) (ω₁ := ?ω₁) (μ₁ := ?μ₁) (n₁ := 19) (n₂ := 250) ?pre ?rest ?hle
   case pre =>
     apply FreeStepsH.step_decode (d_43276 (p := p) (P := P))
     · pvm_simp [h1, h7, h8, hwf, hrf, hra0, hb]
@@ -132,7 +132,7 @@ theorem decodeC_one {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Re
   case rest =>
     refine FreeStepsH.bind_ex (memcpy_small (p := p) (P := P) (R := R) x _ _ 840 43439 sp
       (sp + 40) (ptr + 1) 0 ?m0 ?m1 ?m7 ?m8 ?m9 (by decide) (by decide) ?mjt ?mbt (by omega)
-      (by omega) (by omega) (by omega) (by omega) (by omega) ?mwf (fun a h1 h2 => by omega) (fun a h1 h2 => by omega)) ?k
+      (by omega) (by omega) (by omega) (by omega) (by omega) ?mwf (fun a h1 h2 => by omega) (fun a h1 h2 => by omega)) ?k ?hle2 (n₂ := 18)
     case m0 | m1 | m7 | m8 | m9 =>
       simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,
         PVM.getD_some', List.lookup_nil, Option.getD_none, h1]
@@ -190,6 +190,8 @@ theorem decodeC_one {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Re
         · pvm_simp [h1, g0, g1, g5, g6, g7, hwf, hrf]
         exact FreeStepsH.refl
       case post₂ => decodec_post [h1, g0, g1, g5, g6]
+    case hle2 => decide
+  case hle => decide
 
 /-- **The core-index decode of a 2-octet ℰ(C), 128 ≤ C < 2^14: the prefix octet 128 + ⌊C / 2^8⌋, then ℰ_1(C mod 2^8).** -/
 theorem decodeC_len2 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
@@ -201,12 +203,12 @@ theorem decodeC_len2 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
     (hra : ∀ a, ptr ≤ a → a < ptr + 2 → μ.readable a = true) (hL : 2 ≤ L ∧ L < 4294967296)
     (C : Nat) (hC : 128 ≤ C ∧ C < 16384) (hb : μ.read ptr = UInt8.ofNat (128 + C / 256))
     (hrest : μ.readN (ptr + 1) 1 = Num.encodeLE 1 (C % 256)) :
-    ∃ ω' μ', FreeStepsH p R 43276 ω μ x 184570 ω' μ' x ∧ DecodeCOk ω ω' μ μ' sp ptr L 2 := by
+    ∃ ω' μ', FreeStepsH p R 43276 ω μ x 184570 ω' μ' x 300 ∧ DecodeCOk ω ω' μ μ' sp ptr L 2 := by
   have hrf : ∀ a, sp - 48 ≤ a → a < sp + 48 → μ.readable a = true :=
     fun a h1 h2 => Memory.readable_of_writable (hwf a h1 h2)
   have hra0 : μ.readable ptr = true := hra ptr (by omega) (by omega)
   rw [show ω = regsNF ω [] from rfl]
-  refine FreeStepsH.ex_trans (i₁ := 186740) (ω₁ := ?ω₁) (μ₁ := ?μ₁) ?pre ?rest
+  refine FreeStepsH.ex_trans (i₁ := 186740) (ω₁ := ?ω₁) (μ₁ := ?μ₁) (n₁ := 22) (n₂ := 250) ?pre ?rest ?hle
   case pre =>
     apply FreeStepsH.step_decode (d_43276 (p := p) (P := P))
     · pvm_simp [h1, h7, h8, hwf, hrf, hra0, hb]
@@ -256,7 +258,7 @@ theorem decodeC_len2 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
   case rest =>
     refine FreeStepsH.bind_ex (memcpy_small (p := p) (P := P) (R := R) x _ _ 840 43439 sp
       (sp + 40) (ptr + 1) 1 ?m0 ?m1 ?m7 ?m8 ?m9 (by decide) (by decide) ?mjt ?mbt (by omega)
-      (by omega) (by omega) (by omega) (by omega) (by omega) ?mwf ?mr ?mw) ?k
+      (by omega) (by omega) (by omega) (by omega) (by omega) ?mwf ?mr ?mw) ?k ?hle2 (n₂ := 18)
     case m0 | m1 | m7 | m8 | m9 =>
       simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,
         PVM.getD_some', List.lookup_nil, Option.getD_none, h1]
@@ -324,6 +326,8 @@ theorem decodeC_len2 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
         · pvm_simp [h1, g0, g1, g5, g6, g7, hwf, hrf]
         exact FreeStepsH.refl
       case post₂ => decodec_post [h1, g0, g1, g5, g6]
+    case hle2 => decide
+  case hle => decide
 
 /-- **The core-index decode of a 3-octet ℰ(C), 2^14 ≤ C < 2^16: the prefix octet 192 + ⌊C / 2^16⌋ = 192, then ℰ_2(C).** -/
 theorem decodeC_len3 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
@@ -335,12 +339,12 @@ theorem decodeC_len3 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
     (hra : ∀ a, ptr ≤ a → a < ptr + 3 → μ.readable a = true) (hL : 3 ≤ L ∧ L < 4294967296)
     (C : Nat) (hC : 16384 ≤ C ∧ C < 65536) (hb : μ.read ptr = UInt8.ofNat (192 + C / 65536))
     (hrest : μ.readN (ptr + 1) 2 = Num.encodeLE 2 (C % 65536)) :
-    ∃ ω' μ', FreeStepsH p R 43276 ω μ x 184570 ω' μ' x ∧ DecodeCOk ω ω' μ μ' sp ptr L 3 := by
+    ∃ ω' μ', FreeStepsH p R 43276 ω μ x 184570 ω' μ' x 300 ∧ DecodeCOk ω ω' μ μ' sp ptr L 3 := by
   have hrf : ∀ a, sp - 48 ≤ a → a < sp + 48 → μ.readable a = true :=
     fun a h1 h2 => Memory.readable_of_writable (hwf a h1 h2)
   have hra0 : μ.readable ptr = true := hra ptr (by omega) (by omega)
   rw [show ω = regsNF ω [] from rfl]
-  refine FreeStepsH.ex_trans (i₁ := 186740) (ω₁ := ?ω₁) (μ₁ := ?μ₁) ?pre ?rest
+  refine FreeStepsH.ex_trans (i₁ := 186740) (ω₁ := ?ω₁) (μ₁ := ?μ₁) (n₁ := 24) (n₂ := 250) ?pre ?rest ?hle
   case pre =>
     apply FreeStepsH.step_decode (d_43276 (p := p) (P := P))
     · pvm_simp [h1, h7, h8, hwf, hrf, hra0, hb]
@@ -394,7 +398,7 @@ theorem decodeC_len3 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
   case rest =>
     refine FreeStepsH.bind_ex (memcpy_small (p := p) (P := P) (R := R) x _ _ 840 43439 sp
       (sp + 40) (ptr + 1) 2 ?m0 ?m1 ?m7 ?m8 ?m9 (by decide) (by decide) ?mjt ?mbt (by omega)
-      (by omega) (by omega) (by omega) (by omega) (by omega) ?mwf ?mr ?mw) ?k
+      (by omega) (by omega) (by omega) (by omega) (by omega) ?mwf ?mr ?mw) ?k ?hle2 (n₂ := 18)
     case m0 | m1 | m7 | m8 | m9 =>
       simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,
         PVM.getD_some', List.lookup_nil, Option.getD_none, h1]
@@ -462,6 +466,8 @@ theorem decodeC_len3 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
         · pvm_simp [h1, g0, g1, g5, g6, g7, hwf, hrf]
         exact FreeStepsH.refl
       case post₂ => decodec_post [h1, g0, g1, g5, g6]
+    case hle2 => decide
+  case hle => decide
 
 /-- **Witness's decode of the core index**, for every c < 2^16: from pc 43276 with the argument
     reader {ptr, L} in ω₈ and ω₇ and ℰ(c) at ptr, the machine reaches the call to the `u32`
@@ -476,7 +482,7 @@ theorem decodeC {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) 
     (hra : ∀ a, ptr ≤ a → a < ptr + (Blob.encodeNat C).length → μ.readable a = true)
     (hL : (Blob.encodeNat C).length ≤ L ∧ L < 4294967296)
     (hbytes : μ.readN ptr (Blob.encodeNat C).length = Blob.encodeNat C) :
-    ∃ ω' μ', FreeStepsH p R 43276 ω μ x 184570 ω' μ' x ∧
+    ∃ ω' μ', FreeStepsH p R 43276 ω μ x 184570 ω' μ' x 300 ∧
       DecodeCOk ω ω' μ μ' sp ptr L (Blob.encodeNat C).length := by
   rcases Nat.eq_zero_or_pos C with h0n | h0n
   · subst h0n

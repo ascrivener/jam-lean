@@ -66,7 +66,7 @@ theorem run_badTag (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost
       Blob.encodeNat S ++ Blob.encodeNat y.length ++ y ++ h).length → μ.readable j = true) :
     ∃ ω' μ' x', FreeStepsH p (refineContract env) 0 (initRegs (Blob.encodeNat C ++ Blob.encodeNat I ++
       Blob.encodeNat S ++ Blob.encodeNat y.length ++ y ++ h).length) μ ((∅, []) : RefineCtx) 43609
-      ω' μ' x' ∧ ω'[0] = UInt64.ofNat 4294901760 ∧ ω'[7] = UInt64.ofNat 206816 ∧
+      ω' μ' x' 4000 ∧ ω'[0] = UInt64.ofNat 4294901760 ∧ ω'[7] = UInt64.ofNat 206816 ∧
       ω'[8] = UInt64.ofNat 2 ∧ μ'.read 206816 = 12 ∧ μ'.read 206817 = 0 ∧
       μ'.readable 206816 = true ∧ μ'.readable 206817 = true := by
   have hwC := encodeNat_length_le3 C hC
@@ -249,7 +249,7 @@ theorem run_badTag (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost
       -- the error tail
       refine (fun hT => ?_) (ErrTail.run p P env ω10 μ10 ((∅, []) : RefineCtx) y.length hy S hS I hI (y.headD 0).toNat ⟨htag, UInt8.toNat_lt _⟩ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_)
       · obtain ⟨ω11, μ11, run11, e0, e7, e8, eb0, eb1, er0, er1⟩ := hT
-        exact ⟨ω11, μ11, _, run1.trans (run2.trans (run3.trans (run4.trans (run5.trans (run6.trans (run7.trans (run8.trans (run9.trans (run10.trans run11))))))))), e0, e7, e8, eb0, eb1, er0, er1⟩
+        exact ⟨ω11, μ11, _, (run1.trans (run2.trans (run3.trans (run4.trans (run5.trans (run6.trans (run7.trans (run8.trans (run9.trans (run10.trans run11)))))))))).mono (by omega), e0, e7, e8, eb0, eb1, er0, er1⟩
       all_goals (try simp only [memcpyFrame])
       all_goals chase
     all_goals (try simp only [memcpyFrame])

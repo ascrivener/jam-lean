@@ -252,6 +252,14 @@ the build of the semantics rather than drifting silently.
   c < 2^16, item index i < 2^16, service id < 2^32 and payload that is empty or of 1 to 15 octets
   whose first octet is at least 12, Ψ_R's result is ℰ(`Rejected(BadPayload)`) = [12, 0], or ∞.
   It depends on propext, Classical.choice and Quot.sound only.
+* **Milestone A′, exactly** (`PsiREmpty.psiR_rejects_exact`, with `psiR_badTag_exact` and
+  `psiR_empty_exact`). With two more hypotheses, the "or ∞" goes: every basic block of the blob
+  costs at most 7761 gas (`checkMaxBlockCost`, checked of the vendored blob by
+  `lake build witnesscheck`, like the code facts), and the work item's refine gas limit is at least
+  `gasBound` = 4001 · (7761 + 2000) = 39,054,761, under 1% of the full chain's 5 · 10⁹. Then Ψ_R's
+  result is exactly ℰ(`Rejected(BadPayload)`) = [12, 0]. The bound is (N + 1)(M + H): the path
+  takes at most N = 4000 steps, each step charges at most one block cost M, and each host call at
+  most H = `hostCostMax` = 2000 (`fetch` of the parameters costs 390, `log` 1000).
 * **The witness service** (`Services/Witness.lean`). The witness bounty market
   (ascrivener/witness at 71e585a), built with `cargo jam-build` 0.1.29, is vendored as
   `services/witness/witness-service.jam`. Its code names host calls 0–6, 9, 11–14, 18, 20, 21, 24
@@ -327,6 +335,17 @@ Theorems and proof rules about the Appendix A model; nothing here adds semantics
 * **Invariant rules** (`Logic/Invariant.lean`). `FreeRun.of_invariant` and `FreeRunH.of_invariant`:
   an invariant that holds initially and is preserved by each step (and by each host call the
   contract allows) constrains every way the run can end.
+* **Enough gas** (`Logic/GasBound.lean`). The converse of `psiM_of_freeRunH`'s "or ∞":
+  `psiM_of_stepsH` says that from Y's state, a chain of at most n steps (`FreeStepsH … n`) to a
+  halting step gives Ψ_M exactly that halt's output, given at least (n + 1)(M + H) gas, every block
+  costing at most M (`MaxBlockCost`, checked by `checkMaxBlockCost`) and every host call the
+  contract allows costing at most H and doing what the contract says with that much gas
+  (`HostCostLe`). Each continuing Ψ₁ step with ϱ ≥ M is the gas-free step (`step_eq_of_gas`), and
+  Ψ_H* then follows the chain step by step (`psiHStar_of_steps`). `FreeStepsH` carries the bound:
+  each step and host call counts one, `pad` and `mono` loosen it, and generated chains state their
+  exact step count. `refineContract` allows a call only as the dispatcher answers it with
+  `hostCostMax` gas, which `refineContract_cost` turns into `HostCostLe`: each gas-independent call
+  charges a fixed cost (`RefineHost.dispatch_cost`).
 * **Determinism** (`Logic/Det.lean`). `FreeRun.det`, `FreeRunH.det`: gas-free runs from one
   state end the same way (under contracts where one pins down the other). `psiM_of_freeRunH`:
   exhibiting *one* gas-free run from Y's initial state determines Ψ_M's result: it is that run's

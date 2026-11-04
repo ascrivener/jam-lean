@@ -25,6 +25,7 @@ import PVM.Logic.Bits
 import PVM.Logic.Steps
 import PVM.Logic.Chase
 import PVM.Logic.StepsH
+import PVM.Logic.GasBound
 
 /-!
 # An executable model of the JAM PVM (Gray Paper v0.8.0, Appendix A)

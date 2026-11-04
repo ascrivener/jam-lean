@@ -79,7 +79,7 @@ structure StartMem (μ : Memory) : Prop where
 theorem prefix_run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
     (henv : heapBounds env.code = (48, 1044430)) (hpar : env.fetch.params = Params.full) (μ : Memory)
     (L : Nat) (hL : 0 < L ∧ L ≤ 16777216) (hμ : StartMem μ) :
-    ∃ ω' μ' x', FreeStepsH p (refineContract env) 0 (initRegs L) μ ((∅, []) : RefineCtx) 38875 ω' μ' x' ∧
+    ∃ ω' μ' x', FreeStepsH p (refineContract env) 0 (initRegs L) μ ((∅, []) : RefineCtx) 38875 ω' μ' x' 600 ∧
       PrefixPost L μ ω' μ' x' := by
   obtain ⟨hL0, hLI⟩ := hL
   have hw := hμ.stack
@@ -200,11 +200,11 @@ theorem prefix_run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost
     simp only [Memory.readN, List.range_succ, List.range_zero, List.nil_append, List.cons_append, List.map_cons, List.map_nil, List.map_append, Nat.reduceAdd, Nat.add_zero, hb_206927]
 
   rw [show initRegs L = regsNF (initRegs L) [] from rfl]
-  suffices hs : ∃ ω' μ', FreeStepsH p (refineContract env) 0 (regsNF (initRegs L) []) μ ((∅, []) : RefineCtx) 38875 ω' μ' ((∅, []) : RefineCtx) ∧
+  suffices hs : ∃ ω' μ', FreeStepsH p (refineContract env) 0 (regsNF (initRegs L) []) μ ((∅, []) : RefineCtx) 38875 ω' μ' ((∅, []) : RefineCtx) 600 ∧
       PrefixPost L μ ω' μ' ((∅, []) : RefineCtx) by
     obtain ⟨ω', μ', h, hp⟩ := hs
     exact ⟨ω', μ', _, h, hp⟩
-  refine FreeStepsH.ex_trans (i₁ := 68729) (ω₁ := ?ω₁_0) (μ₁ := ?μ₁_0) ?pre0 ?rest0
+  refine FreeStepsH.ex_trans (n₁ := 403) (n₂ := 197) (i₁ := 68729) (ω₁ := ?ω₁_0) (μ₁ := ?μ₁_0) ?pre0 ?rest0 (by decide)
   case pre0 =>
     apply FreeStepsH.step_decode (d_0 (p := p) (P := P))
     · set_option maxHeartbeats 1000000 in pvm_simp [hpar, Params.full_encode, hw, hr, hwh, hrh, hbn_4278058160_8, hbn_4278058168_8, hbn_206848_4, hbn_206520_8, hbn_206824_8, hbn_206832_8, hbn_206512_4, hbn_206912_1, hbn_206913_1, hbn_206914_1, hbn_206915_1, hbn_206916_1, hbn_206917_1, hbn_206918_1, hbn_206919_1, hbn_206920_1, hbn_206921_1, hbn_206922_1, hbn_206923_1, hbn_206924_1, hbn_206925_1, hbn_206926_1, hbn_206927_1, hb_4278058160, hb_4278058161, hb_4278058162, hb_4278058163, hb_4278058164, hb_4278058165, hb_4278058166, hb_4278058167, hb_4278058168, hb_4278058169, hb_4278058170, hb_4278058171, hb_4278058172, hb_4278058173, hb_4278058174, hb_4278058175, hb_206848, hb_206849, hb_206850, hb_206851, hb_206520, hb_206521, hb_206522, hb_206523, hb_206524, hb_206525, hb_206526, hb_206527, hb_206824, hb_206825, hb_206826, hb_206827, hb_206828, hb_206829, hb_206830, hb_206831, hb_206832, hb_206833, hb_206834, hb_206835, hb_206836, hb_206837, hb_206838, hb_206839, hb_206512, hb_206513, hb_206514, hb_206515, hb_206912, hb_206913, hb_206914, hb_206915, hb_206916, hb_206917, hb_206918, hb_206919, hb_206920, hb_206921, hb_206922, hb_206923, hb_206924, hb_206925, hb_206926, hb_206927, initRegs, List.set_cons_succ, List.set_cons_zero, growTop, setR7, reg]
@@ -411,6 +411,7 @@ theorem prefix_run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost
     apply FreeStepsH.growHeap env 51 (d_42211 (p := p) (P := P)) henv (h := 51)
       (by heap_pages hμ.heapPages) (by decide) (by decide) (by decide)
       (by pvm_simp [growTop, initRegs, List.set_cons_succ, List.set_cons_zero, reg])
+      (by decide)
     apply FreeStepsH.step_decode (d_42213 (p := p) (P := P))
     · set_option maxHeartbeats 1000000 in pvm_simp [hpar, Params.full_encode, hw, hr, hwh, hrh, hbn_4278058160_8, hbn_4278058168_8, hbn_206848_4, hbn_206520_8, hbn_206824_8, hbn_206832_8, hbn_206512_4, hbn_206912_1, hbn_206913_1, hbn_206914_1, hbn_206915_1, hbn_206916_1, hbn_206917_1, hbn_206918_1, hbn_206919_1, hbn_206920_1, hbn_206921_1, hbn_206922_1, hbn_206923_1, hbn_206924_1, hbn_206925_1, hbn_206926_1, hbn_206927_1, hb_4278058160, hb_4278058161, hb_4278058162, hb_4278058163, hb_4278058164, hb_4278058165, hb_4278058166, hb_4278058167, hb_4278058168, hb_4278058169, hb_4278058170, hb_4278058171, hb_4278058172, hb_4278058173, hb_4278058174, hb_4278058175, hb_206848, hb_206849, hb_206850, hb_206851, hb_206520, hb_206521, hb_206522, hb_206523, hb_206524, hb_206525, hb_206526, hb_206527, hb_206824, hb_206825, hb_206826, hb_206827, hb_206828, hb_206829, hb_206830, hb_206831, hb_206832, hb_206833, hb_206834, hb_206835, hb_206836, hb_206837, hb_206838, hb_206839, hb_206512, hb_206513, hb_206514, hb_206515, hb_206912, hb_206913, hb_206914, hb_206915, hb_206916, hb_206917, hb_206918, hb_206919, hb_206920, hb_206921, hb_206922, hb_206923, hb_206924, hb_206925, hb_206926, hb_206927, initRegs, List.set_cons_succ, List.set_cons_zero, growTop, setR7, reg]
     apply FreeStepsH.step_decode (d_42214 (p := p) (P := P))
@@ -634,6 +635,7 @@ theorem prefix_run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost
     apply FreeStepsH.growHeap env 51 (d_41556 (p := p) (P := P)) henv (h := 51)
       (by heap_pages hμ.heapPages) (by decide) (by decide) (by decide)
       (by pvm_simp [growTop, initRegs, List.set_cons_succ, List.set_cons_zero, reg])
+      (by decide)
     apply FreeStepsH.step_decode (d_41558 (p := p) (P := P))
     · set_option maxHeartbeats 1000000 in pvm_simp [hpar, Params.full_encode, hw, hr, hwh, hrh, hbn_4278058160_8, hbn_4278058168_8, hbn_206848_4, hbn_206520_8, hbn_206824_8, hbn_206832_8, hbn_206512_4, hbn_206912_1, hbn_206913_1, hbn_206914_1, hbn_206915_1, hbn_206916_1, hbn_206917_1, hbn_206918_1, hbn_206919_1, hbn_206920_1, hbn_206921_1, hbn_206922_1, hbn_206923_1, hbn_206924_1, hbn_206925_1, hbn_206926_1, hbn_206927_1, hb_4278058160, hb_4278058161, hb_4278058162, hb_4278058163, hb_4278058164, hb_4278058165, hb_4278058166, hb_4278058167, hb_4278058168, hb_4278058169, hb_4278058170, hb_4278058171, hb_4278058172, hb_4278058173, hb_4278058174, hb_4278058175, hb_206848, hb_206849, hb_206850, hb_206851, hb_206520, hb_206521, hb_206522, hb_206523, hb_206524, hb_206525, hb_206526, hb_206527, hb_206824, hb_206825, hb_206826, hb_206827, hb_206828, hb_206829, hb_206830, hb_206831, hb_206832, hb_206833, hb_206834, hb_206835, hb_206836, hb_206837, hb_206838, hb_206839, hb_206512, hb_206513, hb_206514, hb_206515, hb_206912, hb_206913, hb_206914, hb_206915, hb_206916, hb_206917, hb_206918, hb_206919, hb_206920, hb_206921, hb_206922, hb_206923, hb_206924, hb_206925, hb_206926, hb_206927, initRegs, List.set_cons_succ, List.set_cons_zero, growTop, setR7, reg]
     apply FreeStepsH.step_decode (d_41559 (p := p) (P := P))
@@ -1018,6 +1020,7 @@ theorem prefix_run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost
   refine FreeStepsH.bind_ex (memcpy_small_regs (p := p) (P := P) (R := refineContract env) ((∅, []) : RefineCtx) _ _
     2550 58474 4278057728 4278057992 206912 8 ?m0_0 ?m1_0 ?m7_0 ?m8_0 ?m9_0 (by decide)
     (by decide) ?mjt_0 ?mbt_0 (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) ?mwf_0 ?mr_0 ?mw_0) ?k0
+    (n₂ := 127) (by decide)
   case m0_0 | m1_0 | m7_0 | m8_0 | m9_0 =>
     simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some',
       List.lookup_nil, Option.getD_none, initRegs, List.set_cons_succ, List.set_cons_zero, reg]
@@ -1041,7 +1044,7 @@ theorem prefix_run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost
     Nat.reducePow, Nat.reduceMod, PVM.Memory.readN, List.range_succ, List.range_zero, List.map_cons, List.map_nil,
     List.map_append, List.nil_append, List.cons_append, Nat.reduceAdd, Nat.add_zero]
   rw [show ω0 = regsNF ω0 [] from rfl]
-  refine FreeStepsH.ex_trans (i₁ := 68729) (ω₁ := ?ω₁_1) (μ₁ := ?μ₁_1) ?pre1 ?rest1
+  refine FreeStepsH.ex_trans (n₁ := 38) (n₂ := 89) (i₁ := 68729) (ω₁ := ?ω₁_1) (μ₁ := ?μ₁_1) ?pre1 ?rest1 (by decide)
   case pre1 =>
     apply FreeStepsH.step_decode (d_58474 (p := p) (P := P))
     · set_option maxHeartbeats 1000000 in pvm_simp [hpar, Params.full_encode, hw, hr, hwh, hrh, hbn_4278058160_8, hbn_4278058168_8, hbn_206848_4, hbn_206520_8, hbn_206824_8, hbn_206832_8, hbn_206512_4, hbn_206912_1, hbn_206913_1, hbn_206914_1, hbn_206915_1, hbn_206916_1, hbn_206917_1, hbn_206918_1, hbn_206919_1, hbn_206920_1, hbn_206921_1, hbn_206922_1, hbn_206923_1, hbn_206924_1, hbn_206925_1, hbn_206926_1, hbn_206927_1, hb_4278058160, hb_4278058161, hb_4278058162, hb_4278058163, hb_4278058164, hb_4278058165, hb_4278058166, hb_4278058167, hb_4278058168, hb_4278058169, hb_4278058170, hb_4278058171, hb_4278058172, hb_4278058173, hb_4278058174, hb_4278058175, hb_206848, hb_206849, hb_206850, hb_206851, hb_206520, hb_206521, hb_206522, hb_206523, hb_206524, hb_206525, hb_206526, hb_206527, hb_206824, hb_206825, hb_206826, hb_206827, hb_206828, hb_206829, hb_206830, hb_206831, hb_206832, hb_206833, hb_206834, hb_206835, hb_206836, hb_206837, hb_206838, hb_206839, hb_206512, hb_206513, hb_206514, hb_206515, hb_206912, hb_206913, hb_206914, hb_206915, hb_206916, hb_206917, hb_206918, hb_206919, hb_206920, hb_206921, hb_206922, hb_206923, hb_206924, hb_206925, hb_206926, hb_206927, initRegs, List.set_cons_succ, List.set_cons_zero, growTop, setR7, reg, g0_0, g0_1, g0_2, g0_3, g0_4, g0_5, g0_6, g0_7, g0_12]
@@ -1123,6 +1126,7 @@ theorem prefix_run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost
   refine FreeStepsH.bind_ex (memcpy_small_regs (p := p) (P := P) (R := refineContract env) ((∅, []) : RefineCtx) _ _
     2550 58474 4278057728 4278057992 206920 8 ?m0_1 ?m1_1 ?m7_1 ?m8_1 ?m9_1 (by decide)
     (by decide) ?mjt_1 ?mbt_1 (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) ?mwf_1 ?mr_1 ?mw_1) ?k1
+    (n₂ := 19) (by decide)
   case m0_1 | m1_1 | m7_1 | m8_1 | m9_1 =>
     simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some',
       List.lookup_nil, Option.getD_none, initRegs, List.set_cons_succ, List.set_cons_zero, reg, g0_0, g0_1, g0_2, g0_3, g0_4, g0_5, g0_6, g0_7, g0_12]
@@ -1346,7 +1350,7 @@ theorem prefix_from_Y (b a : ByteArray) (jb : JamBlob) (hjb : JamBlob.parse? b =
     (μ : Memory) (hY : standardInit b a = some (p, ω, μ)) (env : RefineHost.Env)
     (henv : heapBounds env.code = (48, 1044430)) (hpar : env.fetch.params = Params.full)
     (ha0 : 0 < a.size) :
-    ∃ ω' μ' x', FreeStepsH p (refineContract env) 0 ω μ ((∅, []) : RefineCtx) 38875 ω' μ' x' ∧
+    ∃ ω' μ' x', FreeStepsH p (refineContract env) 0 ω μ ((∅, []) : RefineCtx) 38875 ω' μ' x' 600 ∧
       PrefixPost a.size μ ω' μ' x' := by
   obtain ⟨jb', hv, he⟩ := Option.map_eq_some_iff.1 hY
   have hjb' : jb' = jb ∧ a.size ≤ inputSize := by

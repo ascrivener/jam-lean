@@ -16,7 +16,7 @@ set_option maxRecDepth 100000
 /-- **Steps 0 … 59 after pc 23809**: the segments `S0` … `S3`, composed. -/
 theorem chain (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
     (x : RefineCtx) (S : Nat) (hS : S < 4294967296) (I : Nat) (hI : I < 65536) (L : Nat) (hL : L < 4294967296) (ω₀ : Regs) (μ₀ : Memory) (h : St0 S I L ω₀ μ₀ ω μ) :
-    ∃ ω' μ', FreeStepsH p (refineContract env) 23809 ω μ x 74620 ω' μ' x ∧ St4 S I L ω₀ μ₀ ω' μ' := by
+    ∃ ω' μ', FreeStepsH p (refineContract env) 23809 ω μ x 74620 ω' μ' x 60 ∧ St4 S I L ω₀ μ₀ ω' μ' := by
   obtain ⟨ω1, μ1, run1, h1⟩ := S0.run p P env ω μ x S hS I hI L hL ω₀ μ₀ h
   obtain ⟨ω2, μ2, run2, h2⟩ := S1.run p P env ω1 μ1 x S hS I hI L hL ω₀ μ₀ h1
   obtain ⟨ω3, μ3, run3, h3⟩ := S2.run p P env ω2 μ2 x S hS I hI L hL ω₀ μ₀ h2
@@ -48,7 +48,7 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
     (hrd_4278058792_4278058816 : ∀ a, 4278058792 ≤ a → a < 4278058816 → μ.readable a = true)
     (hrd_4278058840_4278058856 : ∀ a, 4278058840 ≤ a → a < 4278058856 → μ.readable a = true)
     (hrd_4278058872_4278058880 : ∀ a, 4278058872 ≤ a → a < 4278058880 → μ.readable a = true)
-    : ∃ ω' μ', FreeStepsH p (refineContract env) 23809 ω μ x 74620 ω' μ' x ∧
+    : ∃ ω' μ', FreeStepsH p (refineContract env) 23809 ω μ x 74620 ω' μ' x 60 ∧
       (ω'[1] = UInt64.ofNat 4278057120 ∧ ω'[2] = ω[2] ∧ ω'[3] = ω[3] ∧ ω'[4] = ω[4] ∧ ω'[5] = UInt64.ofNat 4278058816 ∧ ω'[6] = UInt64.ofNat 1 ∧ ω'[7] = UInt64.ofNat 0 ∧ ω'[8] = UInt64.ofNat 9223372036854775808 ∧ ω'[10] = UInt64.ofNat 4278058832 ∧ ω'[11] = UInt64.ofNat 0 ∧ ω'[12] = ω[12] ∧ ω'[0] = UInt64.ofNat I ∧ ω'[9] = UInt64.ofNat (S + S / 2147483648 * 18446744069414584320)) ∧
       (μ'.read 4278057416 = 104 ∧ μ'.read 4278057417 = 255 ∧ μ'.read 4278057418 = 253 ∧ μ'.read 4278057419 = 254 ∧ μ'.read 4278057420 = 0 ∧ μ'.read 4278057421 = 0 ∧ μ'.read 4278057422 = 0 ∧ μ'.read 4278057423 = 0 ∧ μ'.read 4278057424 = 80 ∧ μ'.read 4278057425 = 255 ∧ μ'.read 4278057426 = 253 ∧ μ'.read 4278057427 = 254 ∧ μ'.read 4278057428 = 0 ∧ μ'.read 4278057429 = 0 ∧ μ'.read 4278057430 = 0 ∧ μ'.read 4278057431 = 0 ∧ μ'.read 4278057432 = 0 ∧ μ'.read 4278057433 = 0 ∧ μ'.read 4278057434 = 0 ∧ μ'.read 4278057435 = 0 ∧ μ'.read 4278057436 = 0 ∧ μ'.read 4278057437 = 0 ∧ μ'.read 4278057438 = 0 ∧ μ'.read 4278057439 = 128 ∧ μ'.read 4278058800 = 0 ∧ μ'.read 4278058801 = 0 ∧ μ'.read 4278058802 = 0 ∧ μ'.read 4278058803 = 0 ∧ μ'.read 4278058806 = 0 ∧ μ'.read 4278058807 = 0 ∧ μ'.read 4278058808 = 80 ∧ μ'.read 4278058809 = 3 ∧ μ'.read 4278058810 = 0 ∧ μ'.read 4278058811 = 0 ∧ μ'.read 4278058812 = 0 ∧ μ'.read 4278058813 = 0 ∧ μ'.read 4278058814 = 0 ∧ μ'.read 4278058815 = 0 ∧ μ'.read 4278058832 = 0 ∧ μ'.read 4278058833 = 0 ∧ μ'.read 4278058834 = 0 ∧ μ'.read 4278058835 = 0 ∧ μ'.read 4278058836 = 0 ∧ μ'.read 4278058837 = 0 ∧ μ'.read 4278058838 = 0 ∧ μ'.read 4278058839 = 0) ∧
       (μ'.readN 4278058792 8 = Num.encodeLE 8 S) ∧

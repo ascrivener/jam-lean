@@ -2,6 +2,7 @@ import JAM.Refine
 import JAM.Theorems.HostGas
 import PVM.Logic.Det
 import PVM.Logic.StepsH
+import PVM.Logic.GasBound
 
 /-!
 # A contract for the refine dispatcher that pins down its outcomes
@@ -99,22 +100,135 @@ theorem dispatch_sameButGas (env : Env) {h : Nat} (hh : GasFreeId h) (ω : Regs)
 
 end RefineHost
 
-/-- The refine dispatcher's outcomes for the gas-independent ids. -/
+/-- The most gas a host call on the paths proved here may charge: `refineContract` allows only
+    calls that do not run out with this much, so a run's host calls each cost at most this
+    (`refineContract_cost`). (`fetch` of the parameters costs 390, an unknown id such as `log`
+    1000, `grow_heap` 275 plus 121 a page.) -/
+def hostCostMax : Nat := 2000
+
+/-- The refine dispatcher's outcomes for the gas-independent ids, for calls that do not run out of
+    gas with `hostCostMax`: the outcome with that much gas. -/
 def refineContract (env : RefineHost.Env) : HostRel RefineCtx := fun h ω μ x s ω' μ' x' =>
-  GasFreeId h ∧ (toHostFn (RefineHost.dispatch env)).graph h ω μ x s ω' μ' x'
+  GasFreeId h ∧ s ≠ .oog ∧
+    toHostFn (RefineHost.dispatch env) h (UInt64.ofNat hostCostMax) ω μ x =
+      ⟨s, (toHostFn (RefineHost.dispatch env) h (UInt64.ofNat hostCostMax) ω μ x).gas, ω', μ', x'⟩
 
 /-- **The contract pins down the dispatcher**: a step allowed by `refineContract` is the only
     non-∞ outcome the real handler has, for any gas. -/
 theorem refineContract_pins (env : RefineHost.Env) :
     (refineContract env).Pins (toHostFn (RefineHost.dispatch env)).graph := by
-  intro h ω μ x s₁ ω₁ μ₁ x₁ s₂ ω₂ μ₂ x₂ ⟨hh, hs₁, g₁, he₁⟩ ⟨hs₂, g₂, he₂⟩
+  intro h ω μ x s₁ ω₁ μ₁ x₁ s₂ ω₂ μ₂ x₂ ⟨hh, hs₁, he₁⟩ ⟨hs₂, g₂, he₂⟩
   simp only [toHostFn, HostResult.mk.injEq] at he₁ he₂
   obtain ⟨e1s, -, e1r, e1m, e1c⟩ := he₁
   obtain ⟨e2s, -, e2r, e2m, e2c⟩ := he₂
-  have n₁ : (RefineHost.dispatch env h g₁.toNat ω μ x).status ≠ .oog := by rw [e1s]; exact hs₁
+  have n₁ : (RefineHost.dispatch env h (UInt64.ofNat hostCostMax).toNat ω μ x).status ≠ .oog := by
+    rw [e1s]; exact hs₁
   have n₂ : (RefineHost.dispatch env h g₂.toNat ω μ x).status ≠ .oog := by rw [e2s]; exact hs₂
   obtain ⟨a, b, c, d⟩ := RefineHost.dispatch_sameButGas env hh ω μ x n₁ n₂
   exact ⟨e1s ▸ e2s ▸ a, e1r ▸ e2r ▸ b, e1m ▸ e2m ▸ c, e1c ▸ e2c ▸ d⟩
+
+namespace RefineHost
+
+theorem writeValue_gas {X : Type} (out : HostOut X) (v : Except Unit (Option (List UInt8)))
+    (o f z : Nat) : (writeValue out v o f z).gas = out.gas := by
+  unfold writeValue; dsimp only; repeat' split
+  all_goals rfl
+
+theorem writeValue_status {X : Type} (out : HostOut X) (v : Except Unit (Option (List UInt8)))
+    (o f z : Nat) (h : out.status = .cont) : (writeValue out v o f z).status ≠ .oog := by
+  unfold writeValue; dsimp only; repeat' split
+  all_goals simp [h]
+
+/-- `charged k`: with a body that keeps the gas and never reports ∞, the call charges exactly k. -/
+theorem charged_cost {X : Type} (k g : Nat) (ω : Regs) (μ : Memory) (x : X)
+    (body : HostOut X → HostOut X)
+    (hb : ∀ a : Int, (body ⟨.cont, a, ω, μ, x⟩).gas = a ∧ (body ⟨.cont, a, ω, μ, x⟩).status ≠ .oog) :
+    ((charged k g ω μ x body).status ≠ .oog → (charged k g ω μ x body).gas = (g : Int) - k) ∧
+      (k ≤ g → (charged k g ω μ x body).status ≠ .oog) ∧
+      ((charged k g ω μ x body).status ≠ .oog → k ≤ g) := by
+  unfold charged
+  by_cases hg : g < k
+  · simp [hg]
+  · simp only [hg, ↓reduceIte]
+    exact ⟨fun _ => (hb _).1, fun _ => (hb _).2, fun _ => by omega⟩
+
+/-- **Each gas-independent call charges a fixed cost k** (at most 275 more than the gas it was
+    given, for `grow_heap`'s no-growth case): the gas left is g − k whenever it does not run out,
+    and it does not run out once g ≥ k. -/
+theorem dispatch_cost (env : Env) {h : Nat} (hh : GasFreeId h) (ω : Regs) (μ : Memory)
+    (c : RefineCtx) : ∃ k : Nat, ∀ g : Nat,
+      ((dispatch env h g ω μ c).status ≠ .oog → (dispatch env h g ω μ c).gas = (g : Int) - k) ∧
+      (k ≤ g → (dispatch env h g ω μ c).status ≠ .oog) ∧
+      ((dispatch env h g ω μ c).status ≠ .oog → k ≤ max g 275) := by
+  rcases hh with rfl | rfl | hlt
+  · -- grow_heap
+    simp only [dispatch]
+    unfold hostGrowHeap
+    generalize growHeapCore ω μ env.code = q
+    obtain ⟨a, b, hp, w⟩ := q
+    dsimp only
+    by_cases hc : w ≤ hp ∨ w > b
+    · refine ⟨Constants.CgasGeminiconst, fun g => ?_⟩
+      simp only [hc, ↓reduceIte]
+      exact ⟨fun _ => trivial, fun _ => by simp, fun _ => by simp [Constants.CgasGeminiconst]; omega⟩
+    · refine ⟨Constants.CgasGeminiconst + (w - hp) * Constants.CgasGeminilinear, fun g => ?_⟩
+      simp only [hc, ↓reduceIte]
+      by_cases hg : g < Constants.CgasGeminiconst + (w - hp) * Constants.CgasGeminilinear
+      · simp [hg]
+      · simp only [hg, ↓reduceIte]
+        refine ⟨fun _ => ?_, fun _ => by simp, fun _ => by omega⟩
+        simp
+  · -- fetch
+    simp only [dispatch, hostFetch]
+    refine ⟨(Constants.CgasY (if reg ω 10 < 16 then some (reg ω 10) else none)).fst +
+      memGas (Constants.CgasY (if reg ω 10 < 16 then some (reg ω 10) else none)).snd (reg ω 9), fun g => ?_⟩
+    have := charged_cost ((Constants.CgasY (if reg ω 10 < 16 then some (reg ω 10) else none)).fst +
+      memGas (Constants.CgasY (if reg ω 10 < 16 then some (reg ω 10) else none)).snd (reg ω 9)) g ω μ c
+      (fun out => writeValue out (Except.ok (fetchValue env.fetch (reg ω 10) (reg ω 11) (reg ω 12)))
+        (reg ω 7) (reg ω 8) (reg ω 9)) fun a =>
+      ⟨writeValue_gas _ _ _ _ _, writeValue_status _ _ _ _ _ rfl⟩
+    exact ⟨this.1, this.2.1, fun h => Nat.le_trans (this.2.2 h) (Nat.le_max_left _ _)⟩
+  · -- an unknown id
+    have hu : ∀ g, dispatch env h g ω μ c = unknown g ω μ c := by
+      intro g; unfold dispatch; split <;> first | omega | rfl
+    refine ⟨Constants.Cgasunknown, fun g => ?_⟩
+    simp only [hu, unknown]
+    by_cases hg : (g : Int) - Constants.Cgasunknown < 0
+    · simp only [hg, ↓reduceIte]
+      refine ⟨fun h => absurd rfl h, fun h => ?_, fun h => absurd rfl h⟩
+      simp only [Constants.Cgasunknown] at hg h; omega
+    · simp only [hg, ↓reduceIte]
+      refine ⟨fun _ => trivial, fun _ => by simp, fun _ => ?_⟩
+      simp only [Constants.Cgasunknown] at hg ⊢; omega
+
+end RefineHost
+
+/-- **The host calls `refineContract` allows each cost at most `hostCostMax`**, and do what the
+    contract says with any gas of at least that. -/
+theorem refineContract_cost (env : RefineHost.Env) :
+    HostCostLe (toHostFn (RefineHost.dispatch env)) (refineContract env) hostCostMax := by
+  intro h ω μ x ω' μ' x' ⟨hh, hs, he⟩ g hg
+  have hmax : (UInt64.ofNat hostCostMax).toNat = hostCostMax := rfl
+  simp only [toHostFn, HostResult.mk.injEq] at he
+  obtain ⟨es, -, er, em, ec⟩ := he
+  rw [hmax] at es er em ec
+  have n₁ : (RefineHost.dispatch env h hostCostMax ω μ x).status ≠ .oog := by rw [es]; exact hs
+  obtain ⟨k, hk⟩ := RefineHost.dispatch_cost env hh ω μ x
+  have hkle : k ≤ hostCostMax := by
+    have := (hk hostCostMax).2.2 n₁; simp only [hostCostMax] at this ⊢; omega
+  have n₂ : (RefineHost.dispatch env h g.toNat ω μ x).status ≠ .oog := (hk g.toNat).2.1 (by omega)
+  have hgas := (hk g.toNat).1 n₂
+  obtain ⟨a, b, c, d⟩ := RefineHost.dispatch_sameButGas env hh ω μ x n₁ n₂
+  simp only [toHostFn]
+  refine ⟨?_, ?_, ?_, ?_, ?_⟩
+  · rw [← a, es]
+  · rw [← b, er]
+  · rw [← c, em]
+  · rw [← d, ec]
+  · have hg64 := g.toNat_lt
+    have hsz : UInt64.size = 2 ^ 64 := rfl
+    rw [hgas, UInt64.toNat_ofNat_of_lt' (by omega)]
+    omega
 
 /-! ## The host-step tactic -/
 
@@ -125,8 +239,8 @@ syntax "pvm_host" "[" Lean.Parser.Tactic.simpLemma,* "]" : tactic
 
 macro_rules
   | `(tactic| pvm_host [$hs,*]) => `(tactic| (
-    refine ⟨by unfold JAM.GasFreeId; decide, by decide, UInt64.ofNat (2 ^ 64 - 1), ?_⟩
-    simp only [JAM.toHostFn, JAM.RefineHost.dispatch, JAM.hostFetch, JAM.hostGrowHeap, JAM.charged,
+    refine ⟨by unfold JAM.GasFreeId; decide, by decide, ?_⟩
+    simp only [JAM.hostCostMax, JAM.toHostFn, JAM.RefineHost.dispatch, JAM.hostFetch, JAM.hostGrowHeap, JAM.charged,
       JAM.fetchValue, JAM.writeValue, JAM.RefineHost.unknown, JAM.memGas, JAM.reg, JAM.setR7,
       JAM.Params.encode_length, PVM.Memory.rangeWritable, PVM.Regs.get, Fin.getElem_fin,
       PVM.regIdx_val_0, PVM.regIdx_val_1, PVM.regIdx_val_2, PVM.regIdx_val_3, PVM.regIdx_val_4,

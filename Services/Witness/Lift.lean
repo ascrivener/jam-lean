@@ -45,8 +45,8 @@ theorem rangeReadable_of {μ : Memory} {a n : Nat} (h : ∀ j, a ≤ j → j < a
 
 theorem psiM_of_run {p : ByteArray} {P : Program} [HasCode p P] (code a : ByteArray) (gas : UInt64)
     (env : RefineHost.Env) {ω₀ : Regs} {μ₀ : Memory}
-    (hY : standardInit code a = some (p, ω₀, μ₀)) (o : Nat) (out : List UInt8)
-    (hrun : ∃ ω' μ' x', FreeStepsH p (refineContract env) 0 ω₀ μ₀ ((∅, []) : RefineCtx) 43609 ω' μ' x' ∧
+    (hY : standardInit code a = some (p, ω₀, μ₀)) (o : Nat) (out : List UInt8) (N : Nat)
+    (hrun : ∃ ω' μ' x', FreeStepsH p (refineContract env) 0 ω₀ μ₀ ((∅, []) : RefineCtx) 43609 ω' μ' x' N ∧
       ω'[0] = UInt64.ofNat 4294901760 ∧ ω'[7] = UInt64.ofNat o ∧ ω'[8] = UInt64.ofNat out.length ∧
       o + out.length < 4294967296 ∧ out.length < 18446744073709551616 ∧
       μ'.readN o out.length = out ∧ (∀ j, o ≤ j → j < o + out.length → μ'.readable j = true)) :
@@ -71,5 +71,31 @@ theorem psiM_of_run {p : ByteArray} {P : Program} [HasCode p P] (code a : ByteAr
       rw [show ω'.get 8 = ω'[8] from rfl, h8]; simp; omega
     have hrr : μ'.rangeReadable o out.length = true := rangeReadable_of hrd (by omega)
     simp [freeOutput, h7', h8', hrr, hmem]
+
+
+/-- **With enough gas, exactly that output.** As `psiM_of_run`, for a run of at most N steps, a
+    program whose blocks each cost at most M gas (`MaxBlockCost`, checked by `checkMaxBlockCost`),
+    and at least (N + 1)(M + `hostCostMax`) gas: Ψ_M's output is `out`. -/
+theorem psiM_exact_of_run {p : ByteArray} {P : Program} [HasCode p P] (code a : ByteArray)
+    (gas : UInt64) (env : RefineHost.Env) {ω₀ : Regs} {μ₀ : Memory}
+    (hY : standardInit code a = some (p, ω₀, μ₀)) (o : Nat) (out : List UInt8) (N M : Nat)
+    (hM : MaxBlockCost p M) (hg : (N + 1) * (M + hostCostMax) ≤ gas.toNat)
+    (hrun : ∃ ω' μ' x', FreeStepsH p (refineContract env) 0 ω₀ μ₀ ((∅, []) : RefineCtx) 43609 ω' μ' x' N ∧
+      ω'[0] = UInt64.ofNat 4294901760 ∧ ω'[7] = UInt64.ofNat o ∧ ω'[8] = UInt64.ofNat out.length ∧
+      o + out.length < 4294967296 ∧ out.length < 18446744073709551616 ∧
+      μ'.readN o out.length = out ∧ (∀ j, o ≤ j → j < o + out.length → μ'.readable j = true)) :
+    (psiM code 0 gas a (toHostFn (RefineHost.dispatch env)) ((∅, []) : RefineCtx)).2.1 =
+      .ok ⟨out.toArray⟩ := by
+  obtain ⟨ω', μ', x', hsteps, h0, h7, h8, hb, hb', hmem, hrd⟩ := hrun
+  have h := psiM_of_stepsH code 0 gas a ((∅, []) : RefineCtx) _ (refineHostFn_gasNonIncreasing env)
+    (refineContract env) hY hM (refineContract_cost env) hsteps (halt_43609 (P := P) ω' μ' h0) hg
+  rw [show (psiM code 0 gas a (toHostFn (RefineHost.dispatch env)) ((∅, []) : RefineCtx)).2.1 =
+    (freeOutput .halt ω' μ') from congrArg Prod.fst h]
+  have h7' : (ω'.get 7).toNat = o := by
+    rw [show ω'.get 7 = ω'[7] from rfl, h7]; simp; omega
+  have h8' : (ω'.get 8).toNat = out.length := by
+    rw [show ω'.get 8 = ω'[8] from rfl, h8]; simp; omega
+  have hrr : μ'.rangeReadable o out.length = true := rangeReadable_of hrd (by omega)
+  simp [freeOutput, h7', h8', hrr, hmem]
 
 end Services.Witness

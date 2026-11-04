@@ -62,7 +62,10 @@ Built on `JAM`; nothing in `PVM` or `JAM` depends on this library.
   (`run_empty`), from Y's registers to the halt with [12, 0] at ω₇ = 206752.
 * `Services.Witness.PsiREmpty` — **witness's Ψ_R rejects the empty payload** (`psiR_empty`), and
   **milestone A′** (`psiR_rejects`): for every c < 2^16, i < 2^16, service id < 2^32 and payload
-  that is empty or of 1 to 15 octets with first octet ≥ 12, Ψ_R's result is [12, 0] or ∞.
+  that is empty or of 1 to 15 octets with first octet ≥ 12, Ψ_R's result is [12, 0] or ∞; and
+  `psiR_rejects_exact`: with a refine gas limit of at least `PsiR.gasBound` (about 3.9 · 10⁷) and
+  every block costing at most 7761 gas (`checkMaxBlockCost`, checked by `witnesscheck`), exactly
+  [12, 0].
 * `Services.Witness.Prefix` — generated: the first 702 steps of witness's refine, proved
   symbolically from those code facts.
 * `Services.Witness.Front1` … `Front4` — generated segment theorems for the code between the

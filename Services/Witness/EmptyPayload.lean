@@ -38,7 +38,7 @@ theorem run_empty (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.
       Blob.encodeNat S ++ Blob.encodeNat y.length ++ y ++ h).length → μ.readable j = true) :
     ∃ ω' μ' x', FreeStepsH p (refineContract env) 0 (initRegs (Blob.encodeNat C ++ Blob.encodeNat I ++
       Blob.encodeNat S ++ Blob.encodeNat y.length ++ y ++ h).length) μ ((∅, []) : RefineCtx) 43609
-      ω' μ' x' ∧ ω'[0] = UInt64.ofNat 4294901760 ∧ ω'[7] = UInt64.ofNat 206752 ∧
+      ω' μ' x' 4000 ∧ ω'[0] = UInt64.ofNat 4294901760 ∧ ω'[7] = UInt64.ofNat 206752 ∧
       ω'[8] = UInt64.ofNat 2 ∧ μ'.read 206752 = 12 ∧ μ'.read 206753 = 0 ∧
       μ'.readable 206752 = true ∧ μ'.readable 206753 = true := by
   have hwC := encodeNat_length_le3 C hC
@@ -208,8 +208,8 @@ theorem run_empty (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.
     -- the empty payload's tail
     refine (fun hT => ?_) (EmptyTail.run p P env ω8 μ8 ((∅, []) : RefineCtx) S hS I hI ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_)
     · obtain ⟨ω9, μ9, run9, e0, e7, e8, eb0, eb1, er0, er1⟩ := hT
-      exact ⟨ω9, μ9, _, run1.trans (run2.trans (run3.trans (run4.trans (run5.trans (run6.trans
-        (run7.trans (run8.trans run9))))))), e0, e7, e8, eb0, eb1, er0, er1⟩
+      exact ⟨ω9, μ9, _, (run1.trans (run2.trans (run3.trans (run4.trans (run5.trans (run6.trans
+        (run7.trans (run8.trans run9)))))))).mono (by omega), e0, e7, e8, eb0, eb1, er0, er1⟩
     all_goals chase
   all_goals chase
 

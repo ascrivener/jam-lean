@@ -89,7 +89,7 @@ theorem psiM_exact_of_run {p : ByteArray} {P : Program} [HasCode p P] (code a : 
   obtain ⟨ω', μ', x', hsteps, h0, h7, h8, hb, hb', hmem, hrd⟩ := hrun
   have h := psiM_of_stepsH code 0 gas a ((∅, []) : RefineCtx) _ (refineHostFn_gasNonIncreasing env)
     (refineContract env) hY (refineContract_cost env) hsteps (halt_43609 (P := P) ω' μ' h0)
-    (CostOk.of (d_43609 (p := p)).1 (d_43609 (p := p)).2.2.2) hg
+    (CostOk.of (d_43609 (p := p) (P := P)).1 (d_43609 (p := p) (P := P)).2.2.2) hg
   rw [show (psiM code 0 gas a (toHostFn (RefineHost.dispatch env)) ((∅, []) : RefineCtx)).2.1 =
     (freeOutput .halt ω' μ') from congrArg Prod.fst h]
   have h7' : (ω'.get 7).toNat = o := by

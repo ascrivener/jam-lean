@@ -222,4 +222,4 @@ theorem vBlob_ok : prog.vBlob = true := by
   rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_29 (by decide)]
   exact CodeView.vBlobAux_end _ _ _ (by decide) (by decide) rfl
 
-end Services.{NS}.CodeCheck
+end Services.Witness.CodeCheck

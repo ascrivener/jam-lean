@@ -922,7 +922,7 @@ theorem vBlob_ok : prog.vBlob = true := by
       out := out ++ "\n" ++ s!"  rw [CodeView.vBlobAux_walk _ _ _ _ _ {nm} (by decide)]"
     out := out ++ "\n" ++ "  exact CodeView.vBlobAux_end _ _ _ (by decide) (by decide) rfl
 "
-    out := out ++ "\nend Services.{NS}.CodeCheck\n"
+    out := out ++ s!"\nend Services.{NS}.CodeCheck\n"
     IO.FS.writeFile s!"Services/{NS}/CodeCheck.lean" ((out.drop 1).toString)
     -- the facts, 64 to a chunk and 6 chunks to a module, so the modules build in parallel
     let chunks := (List.range ((factsL.length + 63) / 64)).map fun c => (factsL.drop (64 * c)).take 64

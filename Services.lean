@@ -23,7 +23,7 @@ import Services.Witness.EFront3
 import Services.Witness.EmptyPayload
 import Services.Witness.PsiREmpty
 import Services.Witness.Blob
-import Services.Witness.CodeCheck
+import Services.Witness.CodeOk
 import Services.Witness.Rejects
 
 /-!

@@ -1,5 +1,5 @@
 import Services.Witness.PsiREmpty
-import Services.Witness.CodeCheck
+import Services.Witness.CodeOk
 
 /-!
 # Witness's refine rejects malformed payloads: the deployed binary, by the kernel alone

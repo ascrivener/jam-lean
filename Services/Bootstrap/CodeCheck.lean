@@ -5,6 +5,7 @@
 import Services.Bootstrap.Code
 import Services.Bootstrap.Blob
 import PVM.Logic.FastCheck
+import PVM.Theorems.HostIds
 
 /-!
 # bootstrap's code facts, checked by the kernel
@@ -16,9 +17,10 @@ fact of `Services.Bootstrap.Code.facts` (`chunk_ok_*` in `Services.Bootstrap.Cod
 facts at a time). So `checkCode_ok` (`Services.Bootstrap.CodeOk`): the blob passes `checkCode` for the
 facts, by the kernel alone.
 
-Every check is `decide +kernel` on arithmetic over `Services.Bootstrap.Blob.N` (`PVM.NatBlob`), each
-reading the stretch of the code its facts are about from a number cut out of `N` once
-(`PVM.NatBlob.wview`).
+Every check is `decide +kernel` on arithmetic over the blob's 1024-octet chunks
+(`Services.Bootstrap.Blob.chunks`), each reading only the chunks that hold the stretch of code it is about
+(`PVM.NatBlob.cview`), and each small enough for one kernel run on chain: the walks, facts and
+scans are in `Services.Bootstrap.CodeCheck.*`, and `Services.Bootstrap.CodeOk` puts them together.
 -/
 
 namespace Services.Bootstrap.CodeCheck
@@ -27,6 +29,7 @@ open PVM PVM.NatBlob Services.Bootstrap.Blob Services.Bootstrap.Code
 
 theorem meta_len : Blob.decodeNat? (ba N 0 size) 0 = some (80, 1) := by
   simp only [Blob.decodeNat?, getElem?_ba, slice?_ba]
+  simp (disch := omega) only [show N = ofChunks chunks from rfl, byte_ofChunks_window chunks chunks_lt 0 1, bytes_ofChunks_window chunks chunks_lt 0 1]
   decide +kernel
 
 /-- The code after the metadata. -/
@@ -41,95 +44,52 @@ def jamBlob : JamBlob :=
 
 theorem jam : JamBlob.parse? (ba N 81 95042) = some jamBlob :=
   jamParse?_ba N 81 95042 (oLen := 11608) (wLen := 184) (z := 2) (s := 8192) (pLen := 83235)
-    (by decide +kernel) (by decide +kernel) (by decide +kernel) (by decide +kernel) (by decide +kernel)
-    (by decide)
+    (by simp (disch := omega) only [show N = ofChunks chunks from rfl, byte_ofChunks_window chunks chunks_lt 0 1, bytes_ofChunks_window chunks chunks_lt 0 1]; decide +kernel) (by simp (disch := omega) only [show N = ofChunks chunks from rfl, byte_ofChunks_window chunks chunks_lt 0 1, bytes_ofChunks_window chunks chunks_lt 0 1]; decide +kernel)
+    (by simp (disch := omega) only [show N = ofChunks chunks from rfl, byte_ofChunks_window chunks chunks_lt 0 1, bytes_ofChunks_window chunks chunks_lt 0 1]; decide +kernel) (by simp (disch := omega) only [show N = ofChunks chunks from rfl, byte_ofChunks_window chunks chunks_lt 0 1, bytes_ofChunks_window chunks chunks_lt 0 1]; decide +kernel)
+    (by simp (disch := omega) only [show N = ofChunks chunks from rfl, byte_ofChunks_window chunks chunks_lt 11 1, bytes_ofChunks_window chunks chunks_lt 11 1]; decide +kernel) (by decide)
 
 theorem jtLen : Blob.decodeNat? (ba N 11888 83235) 0 = some (1403, 2) := by
   simp only [Blob.decodeNat?, getElem?_ba, slice?_ba]
+  simp (disch := omega) only [show N = ofChunks chunks from rfl, byte_ofChunks_window chunks chunks_lt 11 1, bytes_ofChunks_window chunks chunks_lt 11 1]
   decide +kernel
 
 theorem codeLen : Blob.decodeNat? (ba N 11888 83235) 3 = some (70240, 6) := by
   simp only [Blob.decodeNat?, getElem?_ba, slice?_ba]
+  simp (disch := omega) only [show N = ofChunks chunks from rfl, byte_ofChunks_window chunks chunks_lt 11 1, bytes_ofChunks_window chunks chunks_lt 11 1]
+  decide +kernel
+
+theorem jz_ok : byte N (11888 + 2) = 3 := by
+  simp (disch := omega) only [show N = ofChunks chunks from rfl, byte_ofChunks_window chunks chunks_lt 11 1, bytes_ofChunks_window chunks chunks_lt 11 1]
   decide +kernel
 
 /-- **j**, the dynamic jump table. -/
 def jt : Array Nat :=
   ((List.range 1403).map fun i => Num.decodeLE (bytes N (11888 + 6 + i * 3) 3)).toArray
 
+/-- **j**, read from the chunks that hold it. -/
+def jtW : Array Nat :=
+  ((List.range 1403).map fun i => Num.decodeLE (bytes (ofChunks ((chunks.drop 11).take 5)) (11888 + 6 + i * 3 - 1024 * 11) 3)).toArray
+
+theorem jt_eq : jt = jtW := by
+  unfold jt jtW
+  refine congrArg List.toArray (List.map_congr_left (fun i hi => ?_))
+  have := List.mem_range.1 hi
+  exact congrArg Num.decodeLE (bytes_ofChunks_window chunks chunks_lt 11 5 _ _ (by omega) (by omega))
+
 /-- The program: **c**, **k** and **j** (GP §A.1). -/
 def prog : Program := ⟨ba N 16103 70240, bits N 690744 70240, jt⟩
 
 theorem parse : Blob.parse? (ba N 11888 83235) = some prog := by
-  have h := parse?_ba N 11888 83235 jtLen (by decide) (show byte N (11888 + 2) = 3 by decide +kernel)
-    codeLen (by decide) (by decide +kernel)
+  have h := parse?_ba N 11888 83235 jtLen (by decide) jz_ok codeLen (by decide) (by decide +kernel)
   exact h
 
 theorem prog_view : prog.view = view N 16103 690744 70240 := view_eq N 16103 690744 70240 jt
 
-theorem walk_0 : (view N 16103 690744 70240).walk 2000 0 = some 6093 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 16103 690744 70240), ← wview_eq N 16103 690744 70240 0 6157]
-  decide +kernel
+/-- The program's view, read from the chunks kc … kc + mc − 1 and km … km + mm − 1. -/
+theorem prog_cview (kc mc km mm : Nat) : prog.view = cview chunks 16103 690744 70240 kc mc km mm :=
+  prog_view.trans (cview_eq chunks chunks_lt 16103 690744 70240 kc mc km mm).symm
 
-theorem walk_1 : (view N 16103 690744 70240).walk 2000 6093 = some 13325 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 16103 690744 70240), ← wview_eq N 16103 690744 70240 6093 7296]
-  decide +kernel
-
-theorem walk_2 : (view N 16103 690744 70240).walk 2000 13325 = some 20197 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 16103 690744 70240), ← wview_eq N 16103 690744 70240 13325 6936]
-  decide +kernel
-
-theorem walk_3 : (view N 16103 690744 70240).walk 2000 20197 = some 26279 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 16103 690744 70240), ← wview_eq N 16103 690744 70240 20197 6146]
-  decide +kernel
-
-theorem walk_4 : (view N 16103 690744 70240).walk 2000 26279 = some 32585 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 16103 690744 70240), ← wview_eq N 16103 690744 70240 26279 6370]
-  decide +kernel
-
-theorem walk_5 : (view N 16103 690744 70240).walk 2000 32585 = some 38653 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 16103 690744 70240), ← wview_eq N 16103 690744 70240 32585 6132]
-  decide +kernel
-
-theorem walk_6 : (view N 16103 690744 70240).walk 2000 38653 = some 44724 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 16103 690744 70240), ← wview_eq N 16103 690744 70240 38653 6135]
-  decide +kernel
-
-theorem walk_7 : (view N 16103 690744 70240).walk 2000 44724 = some 50777 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 16103 690744 70240), ← wview_eq N 16103 690744 70240 44724 6117]
-  decide +kernel
-
-theorem walk_8 : (view N 16103 690744 70240).walk 2000 50777 = some 57160 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 16103 690744 70240), ← wview_eq N 16103 690744 70240 50777 6447]
-  decide +kernel
-
-theorem walk_9 : (view N 16103 690744 70240).walk 2000 57160 = some 62881 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 16103 690744 70240), ← wview_eq N 16103 690744 70240 57160 5785]
-  decide +kernel
-
-theorem walk_10 : (view N 16103 690744 70240).walk 2000 62881 = some 68662 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 16103 690744 70240), ← wview_eq N 16103 690744 70240 62881 5845]
-  decide +kernel
-
-theorem walk_11 : (view N 16103 690744 70240).walk 593 68662 = some 70240 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 16103 690744 70240), ← wview_eq N 16103 690744 70240 68662 1642]
-  decide +kernel
-
-/-- 𝔳_blob(**c**, **k**, 0) (GP §A.1): the walks lead from 0 to the end of the code. -/
-theorem vBlob_ok : prog.vBlob = true := by
-  rw [Program.vBlob_view, prog_view, CodeView.vBlob]
-  show (view N 16103 690744 70240).vBlobAux (70240 + 1) 0 = true
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_0 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_1 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_2 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_3 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_4 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_5 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_6 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_7 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_8 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_9 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_10 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_11 (by decide)]
-  exact CodeView.vBlobAux_end _ _ _ (by decide) (by decide) rfl
+/-- The ids of every `ecalli` at an opcode position of the code. -/
+def hostIds : List Nat := [0, 1, 2, 3, 4, 5, 6, 7, 8, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 100]
 
 end Services.Bootstrap.CodeCheck

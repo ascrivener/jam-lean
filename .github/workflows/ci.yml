@@ -82,6 +82,9 @@ jobs:
       - name: the generated bootstrap files are what their generator produces
         run: |
           lake exe genwitnesssteps --service bootstrap code 7463 | diff - Services/Bootstrap/Code.lean
+          lake exe genwitnesssteps --service bootstrap blob | diff - Services/Bootstrap/Blob.lean
+          lake exe genwitnesssteps --service bootstrap codecheck 7463
+          lake exe genwitnesssteps --service bootstrap cut0 38875 BParams 0 2855 every=16 frame
           lake exe genwitnesssteps --service bootstrap run 600 | diff - Services/Bootstrap/Prefix.lean
           lake exe genwitnesssteps --service bootstrap memcpy | diff - Services/Bootstrap/Memcpy.lean
 
@@ -97,7 +100,7 @@ jobs:
           lake exe genwitnesssteps cut 23809 Front3 0 275 every=16 frame keep=0,1,5,6,7,8
           lake exe genwitnesssteps cut 23918 Front4 0 68 every=16 frame keep=0,1,2,3,4,5,6,7,12
           lake exe genwitnesssteps cut0 23809 EFront3 0 60 every=16 frame keep=0,1,5,6,7,8
-          test -z "$(git status --porcelain -- Services/Witness)"
+          test -z "$(git status --porcelain -- Services)"
           lake exe genwitnesssteps segx 43495 0 5 Front1 keep=0,1,5,6,7,8 | diff - Services/Witness/Front1.lean
           lake exe genwitnesssteps segx 43514 0 14 Front2 keep=0,1,5,6,7,8 | diff - Services/Witness/Front2.lean
 

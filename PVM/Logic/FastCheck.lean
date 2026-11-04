@@ -1,5 +1,6 @@
 import PVM.Logic.ChunkBlob
 import PVM.Logic.Code
+import PVM.Theorems.HostIds
 
 /-!
 # Checking 𝔳_blob a stretch at a time
@@ -184,6 +185,14 @@ theorem Program.hostCallIds_sub (P : Program) (ids : List Nat)
       exact h i hi hm x hd
     · cases hx
   · cases hx
+
+theorem hostCallIdsOf_of {p : ByteArray} {P : Program} (h : Blob.parse? p = some P) :
+    hostCallIdsOf p = P.hostCallIds := by
+  unfold hostCallIdsOf; rw [h]
+
+theorem jamHostCallIdsOf_of {b : ByteArray} {jb : JamBlob} (h : JamBlob.parse? b = some jb) :
+    jamHostCallIdsOf b = hostCallIdsOf jb.code := by
+  unfold jamHostCallIdsOf; rw [h]
 
 /-- Covering a range by two. -/
 theorem range_cover {Q : Nat → Prop} {a b c : Nat} (h1 : ∀ i, a ≤ i → i < b → Q i)

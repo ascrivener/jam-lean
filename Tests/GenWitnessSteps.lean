@@ -1011,10 +1011,8 @@ theorem checkCode_ok : checkCode (ba N {o2} {hd.pLen}) facts = true :=
 /-- **The host-call ids the blob names** (`PVM.jamHostCallIdsOf`, GP §A.1, §A.5.2), by the kernel. -/
 theorem hostIds_ok : ∀ n ∈ PVM.jamHostCallIdsOf (ba N {o1} {hd.n1}), n ∈ hostIds := by
   have hp : PVM.jamHostCallIdsOf (ba N {o1} {hd.n1}) = prog.hostCallIds := by
-    unfold PVM.jamHostCallIdsOf PVM.hostCallIdsOf
-    rw [jam]
-    show (match Blob.parse? (ba N {o2} {hd.pLen}) with | some P => P.hostCallIds | none => []) = _
-    rw [parse]
+    rw [jamHostCallIdsOf_of jam]
+    exact hostCallIdsOf_of parse
   rw [hp]
   apply prog.hostCallIds_sub
   intro i hi hm x hd

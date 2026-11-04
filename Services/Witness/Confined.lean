@@ -47,10 +47,8 @@ theorem refine_noExports (params : Params) (d : Accounts) (c i : Nat) (p : WorkP
     (psiR params d c i p r imports extrinsics off).exports = [] :=
   Services.Witness.refine_noExports params d c i p r imports extrinsics off
     (fun w hw a ha l hl' code hc h hh => by
-      have hlp := hl w hw a ha l hl'
-      subst hlp
-      rw [split] at hc
-      cases hc
+      rw [Option.mem_def, hl w hw a ha l hl', split, Option.some.injEq] at hc
+      rw [← hc] at hh
       exact deployed_ids h hh)
 
 end Services.Witness.Confined

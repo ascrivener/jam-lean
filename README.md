@@ -276,10 +276,12 @@ the build of the semantics rather than drifting silently.
   (ascrivener/witness at 71e585a), built with `cargo jam-build` 0.1.29, is vendored as
   `services/witness/witness-service.jam`. Its code names host calls 0–6, 9, 11–14, 18, 20, 21, 24
   and 100 only. `accumulate_confined`: accumulating witness changes nothing outside its own account,
-  for every state, input and gas. `refine_noExports`: its refine exports nothing. The theorems are
-  kernel-checked for any code naming only those ids; that the vendored blob names only those ids is
-  checked by compiled code (`lake build witnesscheck`), since kernel evaluation over a 223 kB blob is
-  out of reach for now.
+  for every state, input and gas. `refine_noExports`: its refine exports nothing. Both hold for any
+  code naming only those ids, and `Services/Witness/Confined.lean` states them for the vendored
+  binary itself: the kernel scans every opcode position of its code for `ecalli`
+  (`CodeCheck.hostIds_ok`), so `Confined.accumulate_confined` and `Confined.refine_noExports` have no
+  hypothesis about the code and depend on propext, Classical.choice and Quot.sound only
+  (`lake build witnesscheck` remains as a compiled cross-check).
 * **A fast Ψ that is the paper's Ψ** (`PVM/Fast.lean`). `psi` re-deblobs the program on every step
   and re-simulates gas on every block charge, as the paper writes it. `psiFast` parses once and
   memoizes block costs. `psi_eq_psiFast : psi = psiFast` is registered with `@[csimp]`, so compiled

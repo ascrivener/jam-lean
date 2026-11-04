@@ -567,7 +567,7 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
     -- each octet read before written, for loads that straddle earlier writes
     for (a, v) in info.byteFacts do
       IO.println s!"    (hb_{a} : μ.read {a} = {v})"
-    IO.println s!"    : ∃ ω' μ', FreeStepsH p (refineContract env) {pcA} ω μ x {pcB} ω' μ' x ∧"
+    IO.println s!"    : ∃ ω' μ', FreeStepsH p (refineContract env) {pcA} ω μ x {pcB} ω' μ' x {B - A} ∧"
     let regC := info.regPost.map (fun (j, v) =>
       match v with | some v => s!"ω'[{j}] = UInt64.ofNat {v}" | none => s!"ω'[{j}] = ω[{j}]") ++
       symPost.map fun (j, v) => s!"ω'[{j}] = UInt64.ofNat {v}"
@@ -927,7 +927,7 @@ structure StartMem (μ : Memory) : Prop where
 theorem prefix_run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
     (henv : heapBounds env.code = ({hA}, {hB})) (hpar : env.fetch.params = Params.full) (μ : Memory)
     (L : Nat) (hL : 0 < L ∧ L ≤ 16777216) (hμ : StartMem μ) :
-    ∃ ω' μ' x', FreeStepsH p (refineContract env) 0 (initRegs L) μ ((∅, []) : RefineCtx) {endPc} ω' μ' x' ∧
+    ∃ ω' μ' x', FreeStepsH p (refineContract env) 0 (initRegs L) μ ((∅, []) : RefineCtx) {endPc} ω' μ' x' {n} ∧
       PrefixPost L μ ω' μ' x' := by
   obtain ⟨hL0, hLI⟩ := hL
   have hw := hμ.stack
@@ -947,7 +947,7 @@ theorem prefix_run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost
       let some (_, regsAt, memAt) := tr.find? (·.1 == pc) | return ""
       let top := (growHeapCore regsAt memAt code).2.2.1
       let t := growTop (regsAt[7]!.toNat) top hB
-      return s!"    apply FreeStepsH.growHeap env {t} (d_{pc} (p := p) (P := P)) henv (h := {top})\n      (by heap_pages hμ.heapPages) (by decide) (by decide) (by decide)\n      (by pvm_simp [growTop, initRegs, List.set_cons_succ, List.set_cons_zero, reg{gs}])"
+      return s!"    apply FreeStepsH.growHeap env {t} (d_{pc} (p := p) (P := P)) henv (h := {top})\n      (by heap_pages hμ.heapPages) (by decide) (by decide) (by decide)\n      (by pvm_simp [growTop, initRegs, List.set_cons_succ, List.set_cons_zero, reg{gs}])\n      (by decide)"
     | some (.oneImm .ecalli _) =>
       s!"    apply FreeStepsH.host_decode (d_{pc} (p := p) (P := P))\n    · set_option maxHeartbeats 1000000 in pvm_host [hw, hr, hwh, hrh, PVM.Memory.writable_writeN, PVM.Memory.writable_setPages, List.range_succ, List.range_zero, List.nil_append, List.all_cons, List.all_nil, List.all_append, Bool.and_true, Bool.true_and, Nat.reduceDiv, PVM.Memory.writeN_nil, Num.length_encodeLE, initRegs, List.set_cons_succ, List.set_cons_zero, growTop, setR7, reg{gs}]"
     | _ =>
@@ -959,7 +959,7 @@ theorem prefix_run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost
     IO.println "  refine ⟨?ω, ?μ, ?x, ?h, ?post⟩\n  case h =>"
     for pc in path do IO.println (stepLine pc "")
   else
-    IO.println s!"  suffices hs : ∃ ω' μ', FreeStepsH p (refineContract env) 0 (regsNF (initRegs L) []) μ ((∅, []) : RefineCtx) {endPc} ω' μ' ((∅, []) : RefineCtx) ∧
+    IO.println s!"  suffices hs : ∃ ω' μ', FreeStepsH p (refineContract env) 0 (regsNF (initRegs L) []) μ ((∅, []) : RefineCtx) {endPc} ω' μ' ((∅, []) : RefineCtx) {n} ∧
       PrefixPost L μ ω' μ' ((∅, []) : RefineCtx) by
     obtain ⟨ω', μ', h, hp⟩ := hs
     exact ⟨ω', μ', _, h, hp⟩"
@@ -969,12 +969,13 @@ theorem prefix_run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost
       let some (_, r, _) := tr[ks]? | break
       let ret := r[0]!.toNat
       let t := P.jumpTable.getD (ret / 2 - 1) 0
-      IO.println s!"  refine FreeStepsH.ex_trans (i₁ := {memBase}) (ω₁ := ?ω₁_{s}) (μ₁ := ?μ₁_{s}) ?pre{s} ?rest{s}\n  case pre{s} =>"
+      IO.println s!"  refine FreeStepsH.ex_trans (n₁ := {ks - k}) (n₂ := {n - ks}) (i₁ := {memBase}) (ω₁ := ?ω₁_{s}) (μ₁ := ?μ₁_{s}) ?pre{s} ?rest{s} (by decide)\n  case pre{s} =>"
       for j in [k:ks] do IO.println (stepLine path[j]! gs)
       IO.println s!"    exact FreeStepsH.refl
   refine FreeStepsH.bind_ex (memcpy_small_regs (p := p) (P := P) (R := refineContract env) ((∅, []) : RefineCtx) _ _
     {ret} {t} {r[1]!.toNat} {r[7]!.toNat} {r[8]!.toNat} {r[9]!.toNat} ?m0_{s} ?m1_{s} ?m7_{s} ?m8_{s} ?m9_{s} (by decide)
     (by decide) ?mjt_{s} ?mbt_{s} (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) ?mwf_{s} ?mr_{s} ?mw_{s}) ?k{s}
+    (n₂ := {n - kr}) (by decide)
   case m0_{s} | m1_{s} | m7_{s} | m8_{s} | m9_{s} =>
     simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some',
       List.lookup_nil, Option.getD_none, initRegs, List.set_cons_succ, List.set_cons_zero, reg{gs}]
@@ -1162,7 +1163,7 @@ theorem prefix_from_Y (b a : ByteArray) (jb : JamBlob) (hjb : JamBlob.parse? b =
     (μ : Memory) (hY : standardInit b a = some (p, ω, μ)) (env : RefineHost.Env)
     (henv : heapBounds env.code = ({hA}, {hB})) (hpar : env.fetch.params = Params.full)
     (ha0 : 0 < a.size) :
-    ∃ ω' μ' x', FreeStepsH p (refineContract env) 0 ω μ ((∅, []) : RefineCtx) {endPc} ω' μ' x' ∧
+    ∃ ω' μ' x', FreeStepsH p (refineContract env) 0 ω μ ((∅, []) : RefineCtx) {endPc} ω' μ' x' {n} ∧
       PrefixPost a.size μ ω' μ' x' := by
   obtain ⟨jb', hv, he⟩ := Option.map_eq_some_iff.1 hY
   have hjb' : jb' = jb ∧ a.size ≤ inputSize := by
@@ -1549,7 +1550,7 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
     let bB := info.byteFacts.map fun (a, v) => (s!"hb_{a}", s!"μ.read {a} = {v}")
     let binders := regB ++ symB ++ wB ++ rB ++ bB
     for (n, t) in binders do sx := sx ++ s!"\n    ({n} : {t})"
-    sx := sx ++ s!"\n    : ∃ ω' μ', FreeStepsH p (refineContract env) {info.pcA} ω μ x {info.pcB} ω' μ' x ∧"
+    sx := sx ++ s!"\n    : ∃ ω' μ', FreeStepsH p (refineContract env) {info.pcA} ω μ x {info.pcB} ω' μ' x {info.B - info.A} ∧"
     -- the registers the next cut needs (and, with `frame`, those no segment writes)
     let postR := sts[k + 1]!.1 ++ unch
     let regC0 : List (Nat × String) := info.regPost.map (fun (j, v) =>
@@ -1663,7 +1664,7 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
 /-- **Cut {k} to cut {k + 1}**: from the state `St{k}`, the steps reach `St{k + 1}`. -/
 theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
     (x : RefineCtx) {varBinders}{fpB} (h : St{k} {" ".intercalate vars}{fp} ω μ) :
-    ∃ ω' μ', FreeStepsH p (refineContract env) {info.pcA} ω μ x {info.pcB} ω' μ' x ∧ St{k + 1} {" ".intercalate vars}{fp} ω' μ' := by
+    ∃ ω' μ', FreeStepsH p (refineContract env) {info.pcA} ω μ x {info.pcB} ω' μ' x {info.B - info.A} ∧ St{k + 1} {" ".intercalate vars}{fp} ω' μ' := by
   obtain ⟨ω', μ', hrun, {pat rNames}, {pat mNames}, {if sNames.isEmpty then "" else pat sNames ++ ", "}hfr, hrd, hwr⟩ :=
     steps p P env ω μ x {stepArgs}
   exact ⟨ω', μ', hrun, ⟨{", ".intercalate (if proofs.isEmpty then ["trivial"] else proofs)}⟩⟩
@@ -1685,7 +1686,7 @@ set_option maxRecDepth 100000
 /-- **Steps {bs[0]!} … {bs[nseg]! - 1} after pc {joinPc}**: the segments `S0` … `S{nseg - 1}`, composed. -/
 theorem chain (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
     (x : RefineCtx) {varBinders}{fpB} (h : St0 {" ".intercalate vars}{fp} ω μ) :
-    ∃ ω' μ', FreeStepsH p (refineContract env) {infos[0]!.pcA} ω μ x {infos[nseg - 1]!.pcB} ω' μ' x ∧ St{nseg} {" ".intercalate vars}{fp} ω' μ' := by
+    ∃ ω' μ', FreeStepsH p (refineContract env) {infos[0]!.pcA} ω μ x {infos[nseg - 1]!.pcB} ω' μ' x {bs[nseg]! - bs[0]!} ∧ St{nseg} {" ".intercalate vars}{fp} ω' μ' := by
 "
   let mut cw := "ω"; let mut cm := "μ"; let mut ch' := "h"
   for k in [0:nseg] do
@@ -1715,7 +1716,7 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
   let startArgs := (if pre0.isEmpty && !frame then ["trivial"] else pre0.map (·.1)) ++
     (if frame then ["fun _ _ => rfl", "fun _ => rfl", "fun _ => rfl"] ++ unch.map (fun _ => "rfl") else [])
   if !frame then
-    ch := ch ++ s!"\n    : ∃ ω' μ', FreeStepsH p (refineContract env) {infos[0]!.pcA} ω μ x {infos[nseg - 1]!.pcB} ω' μ' x ∧\n      " ++
+    ch := ch ++ s!"\n    : ∃ ω' μ', FreeStepsH p (refineContract env) {infos[0]!.pcA} ω μ x {infos[nseg - 1]!.pcB} ω' μ' x {bs[nseg]! - bs[0]!} ∧\n      " ++
       (if concl.isEmpty then "True" else " ∧ ".intercalate (concl.map (·.2))) ++ " := by"
     ch := ch ++ s!"\n  obtain ⟨ω', μ', hrun, hN⟩ :=\n    chain p P env ω μ x {varArgs} ⟨{", ".intercalate startArgs}⟩"
     ch := ch ++ s!"\n  exact ⟨ω', μ', hrun, {", ".intercalate (concl.map (·.1))}⟩\n\nend Services.{NS}.{name}\n"
@@ -1753,7 +1754,7 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
     let symPart := if symC.isEmpty then ("", "") else
       let (sT, sP) := grp symC
       (s!"\n      ({sT}) ∧", s!"{sP}, ")
-    ch := ch ++ s!"\n    : ∃ ω' μ', FreeStepsH p (refineContract env) {infos[0]!.pcA} ω μ x {infos[nseg - 1]!.pcB} ω' μ' x ∧"
+    ch := ch ++ s!"\n    : ∃ ω' μ', FreeStepsH p (refineContract env) {infos[0]!.pcA} ω μ x {infos[nseg - 1]!.pcB} ω' μ' x {bs[nseg]! - bs[0]!} ∧"
     ch := ch ++ s!"\n      ({rT}) ∧\n      ({mT}) ∧{symPart.1}"
     ch := ch ++ s!"\n      (∀ a, (decide (a < 4294967296){if outW == "" then "" else " && " ++ outW}) = true → μ'.read a = μ.read a) ∧"
     ch := ch ++ "\n      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by"

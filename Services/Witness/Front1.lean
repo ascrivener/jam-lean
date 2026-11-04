@@ -21,7 +21,7 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
     (hreg1 : ω[1] = UInt64.ofNat 4278058816)
     (hreg7 : ω[7] = UInt64.ofNat 0)
     (hreg8 : ω[8] = UInt64.ofNat I)
-    : ∃ ω' μ', FreeStepsH p (refineContract env) 43495 ω μ x 184570 ω' μ' x ∧
+    : ∃ ω' μ', FreeStepsH p (refineContract env) 43495 ω μ x 184570 ω' μ' x 5 ∧
       (ω'[0] = UInt64.ofNat 844 ∧ ω'[1] = ω[1] ∧ ω'[2] = ω[2] ∧ ω'[3] = ω[3] ∧ ω'[4] = ω[4] ∧ ω'[6] = ω[6] ∧ ω'[7] = UInt64.ofNat 4278058832 ∧ ω'[8] = ω[8] ∧ ω'[9] = ω[9] ∧ ω'[10] = ω[10] ∧ ω'[11] = ω[11] ∧ ω'[12] = ω[12] ∧ ω'[5] = UInt64.ofNat I) ∧
       (True) ∧
       (∀ a, (decide (a < 4294967296)) = true → μ'.read a = μ.read a) ∧

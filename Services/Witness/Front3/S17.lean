@@ -22,7 +22,7 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
     (hreg5 : ω[5] = UInt64.ofNat Y)
     (hreg10 : ω[10] = UInt64.ofNat (Y + 32))
     (hw_4278058752_4278058760 : ∀ a, 4278058752 ≤ a → a < 4278058760 → μ.writable a = true)
-    : ∃ ω' μ', FreeStepsH p (refineContract env) 23906 ω μ x 186740 ω' μ' x ∧
+    : ∃ ω' μ', FreeStepsH p (refineContract env) 23906 ω μ x 186740 ω' μ' x 3 ∧
       (ω'[0] = UInt64.ofNat 492 ∧ ω'[1] = ω[1] ∧ ω'[2] = ω[2] ∧ ω'[3] = ω[3] ∧ ω'[4] = ω[4] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ ω'[7] = ω[7] ∧ ω'[8] = ω[8] ∧ ω'[10] = ω[10] ∧ ω'[11] = ω[11] ∧ ω'[12] = ω[12] ∧ ω'[9] = UInt64.ofNat Y) ∧
       (True) ∧
       (μ'.readN 4278058752 8 = Num.encodeLE 8 (Y + 32)) ∧
@@ -66,7 +66,7 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
 /-- **Cut 17 to cut 18**: from the state `St17`, the steps reach `St18`. -/
 theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
     (x : RefineCtx) (Y : Nat) (hY : 1 ≤ Y ∧ Y ≤ 15) (Q : Nat) (hQ : 4278124548 ≤ Q ∧ Q ≤ 4278124564) (ω₀ : Regs) (μ₀ : Memory) (h : St17 Y Q ω₀ μ₀ ω μ) :
-    ∃ ω' μ', FreeStepsH p (refineContract env) 23906 ω μ x 186740 ω' μ' x ∧ St18 Y Q ω₀ μ₀ ω' μ' := by
+    ∃ ω' μ', FreeStepsH p (refineContract env) 23906 ω μ x 186740 ω' μ' x 3 ∧ St18 Y Q ω₀ μ₀ ω' μ' := by
   obtain ⟨ω', μ', hrun, ⟨r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12⟩, -, s0, hfr, hrd, hwr⟩ :=
     steps p P env ω μ x Y hY Q hQ h.hreg1 h.hreg5 h.hreg10 h.hw_4278058752_4278058760
   exact ⟨ω', μ', hrun, ⟨r0, r1.trans h.hreg1, r2.trans h.hreg2, r3.trans h.hreg3, r4.trans h.hreg4, r6.trans h.hreg6, r7.trans h.hreg7, r10.trans h.hreg11, r11.trans h.hreg12, r5.trans h.hreg5, r8.trans h.hreg8, r12, r9.trans h.hreg10, (Memory.readN_of_frame hfr 206368 4 rfl).trans h.hm_206368_4, (Memory.readN_of_frame hfr 206680 8 rfl).trans h.hm_206680_8, (Memory.readN_of_frame hfr 206688 8 rfl).trans h.hm_206688_8, (Memory.readN_of_frame hfr 206704 4 rfl).trans h.hm_206704_4, (Memory.readN_of_frame hfr 206720 8 rfl).trans h.hm_206720_8, (Memory.readN_of_frame hfr 206784 8 rfl).trans h.hm_206784_8, (Memory.readN_of_frame hfr 206792 4 rfl).trans h.hm_206792_4, (Memory.readN_of_frame hfr 4278058712 8 rfl).trans h.hm_4278058712_8, (Memory.readN_of_frame hfr 4278058720 8 rfl).trans h.hm_4278058720_8, (Memory.readN_of_frame hfr 4278058728 8 rfl).trans h.hbn_4278058728_8, (Memory.readN_of_frame hfr 4278058736 8 rfl).trans h.hbn_4278058736_8, (Memory.readN_of_frame hfr 4278058744 8 rfl).trans h.hbn_4278058744_8, s0, (Memory.readN_of_frame hfr 4278058760 8 rfl).trans h.hbn_4278058760_8, fun a ha => (hfr a (right_of_and ha)).trans (h.fr a (left_of_and ha)), fun a => (hrd a).trans (h.rdq a), fun a => (hwr a).trans (h.wrq a)⟩⟩

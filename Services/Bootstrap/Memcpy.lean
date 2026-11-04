@@ -27,7 +27,7 @@ theorem memcpy_iter {p : ByteArray} {P : Program} [HasCode p P] (ω : Regs) (μ 
     (k s d : Nat) (h9 : ω[9] = UInt64.ofNat (k + 1)) (h8 : ω[8] = UInt64.ofNat s)
     (h10 : ω[10] = UInt64.ofNat d) (hk : k + 1 < 16) (hs : s + k + 1 < 4294967296)
     (hd : d + k + 1 < 4294967296) (hr : μ.readable s = true) (hw : μ.writable d = true) :
-    ∃ ω', FreeStepsH p R 68840 ω μ x 68854 ω' (μ.writeN d [μ.read s]) x ∧
+    ∃ ω', FreeStepsH p R 68840 ω μ x 68854 ω' (μ.writeN d [μ.read s]) x 6 ∧
       ω'[9] = UInt64.ofNat k ∧ ω'[8] = UInt64.ofNat (s + 1) ∧ ω'[10] = UInt64.ofNat (d + 1) ∧
       ∀ j : Fin 13, j.val ∉ [8, 9, 10, 11] → ω'[j] = ω[j] := by
   rw [show ω = regsNF ω [] from rfl]
@@ -72,7 +72,7 @@ theorem memcpy_loop {p : ByteArray} {P : Program} [HasCode p P] (x : X) : ∀ (k
     ω[10] = UInt64.ofNat d → k + 1 < 16 → s + k + 1 < 4294967296 → d + k + 1 < 4294967296 →
     (d + k + 1 ≤ s ∨ s + k + 1 ≤ d) → (∀ a, s ≤ a → a ≤ s + k → μ.readable a = true) →
     (∀ a, d ≤ a → a ≤ d + k → μ.writable a = true) →
-    ∃ ω', FreeStepsH p R 68840 ω μ x 68857 ω' (μ.writeN d (μ.readN s (k + 1))) x ∧
+    ∃ ω', FreeStepsH p R 68840 ω μ x 68857 ω' (μ.writeN d (μ.readN s (k + 1))) x (7 * (k + 1)) ∧
       ∀ j : Fin 13, j.val ∉ [8, 9, 10, 11] → ω'[j] = ω[j] := by
   intro k
   induction k with
@@ -82,7 +82,7 @@ theorem memcpy_loop {p : ByteArray} {P : Program} [HasCode p P] (x : X) : ∀ (k
       (hr s (by omega) (by omega)) (hw d (by omega) (by omega))
     refine ⟨regsNF ω₁ [], ?_, hfr⟩
     rw [show μ.readN s (0 + 1) = [μ.read s] by simp [Memory.readN]]
-    refine hrun.trans ?_
+    refine hrun.trans' ?_
     rw [show ω₁ = regsNF ω₁ [] from rfl]
     apply FreeStepsH.step_decode (d_68854 (p := p) (P := P))
     · pvm_simp [h9']
@@ -102,7 +102,7 @@ theorem memcpy_loop {p : ByteArray} {P : Program} [HasCode p P] (x : X) : ∀ (k
         (by simp [two32]; omega), readN_succ]
       rfl
     rw [hmem]
-    refine hrun.trans ?_
+    refine hrun.trans' ?_
     rw [show ω₁ = regsNF ω₁ [] from rfl]
     apply FreeStepsH.step_decode (d_68854 (p := p) (P := P))
     · pvm_simp [h9']
@@ -127,7 +127,7 @@ theorem memcpy_small_regs {p : ByteArray} {P : Program} [HasCode p P] (x : X) (�
     (hwf : ∀ a, sp - 48 ≤ a → a < sp → μ.writable a = true)
     (hr : ∀ a, src ≤ a → a < src + n → μ.readable a = true)
     (hw : ∀ a, dst ≤ a → a < dst + n → μ.writable a = true) :
-    ∃ ω', FreeStepsH p R 68729 ω μ x t ω' ((memcpyFrame μ ω sp).writeN dst (μ.readN src n)) x ∧
+    ∃ ω', FreeStepsH p R 68729 ω μ x t ω' ((memcpyFrame μ ω sp).writeN dst (μ.readN src n)) x (7 * n + 14) ∧
       ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[2] = ω[2] ∧ ω'[3] = ω[3] ∧ ω'[4] = ω[4] ∧ ω'[5] = ω[5] ∧
       ω'[6] = ω[6] ∧ ω'[7] = ω[7] ∧ ω'[12] = ω[12] := by
   have hrf : ∀ a, sp - 48 ≤ a → a < sp → μ.readable a = true :=
@@ -264,7 +264,7 @@ theorem memcpy_small {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
     (hwf : ∀ a, sp - 48 ≤ a → a < sp → μ.writable a = true)
     (hr : ∀ a, src ≤ a → a < src + n → μ.readable a = true)
     (hw : ∀ a, dst ≤ a → a < dst + n → μ.writable a = true) :
-    ∃ ω', FreeStepsH p R 68729 ω μ x t ω' ((memcpyFrame μ ω sp).writeN dst (μ.readN src n)) x ∧
+    ∃ ω', FreeStepsH p R 68729 ω μ x t ω' ((memcpyFrame μ ω sp).writeN dst (μ.readN src n)) x (7 * n + 14) ∧
       ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ ω'[7] = ω[7] := by
   obtain ⟨ω', h, g0, g1, _, _, _, g5, g6, g7, _⟩ := memcpy_small_regs (p := p) (P := P) (R := R) x ω μ
     ret t sp dst src n h0 h1 h7 h8 h9 hn hret hjt hbt hsp hdst hsrc hdj hfd hfs hwf hr hw

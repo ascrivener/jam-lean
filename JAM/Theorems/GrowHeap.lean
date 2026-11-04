@@ -57,24 +57,27 @@ def growTop (w h b : Nat) : Nat := if w ≤ h ∨ w > b then h else w
     The new top is named by `t` so that the memory term stays concrete. -/
 theorem FreeStepsH.growHeap (env : RefineHost.Env) {p : ByteArray} {P : Program} {i n : Nat}
     {ω : Regs} {μ : Memory} {x : RefineCtx} {a b h : Nat} (t : Nat)
-    {i'' : Nat} {ω'' : Regs} {μ'' : Memory} {x'' : RefineCtx}
+    {i'' : Nat} {ω'' : Regs} {μ'' : Memory} {x'' : RefineCtx} {k : Nat}
     (hd : deblob p i = some P ∧ P.decode i = some (.oneImm .ecalli 1) ∧ P.next i = n)
     (hb : heapBounds env.code = (a, b)) (hp : HeapPages μ a b h) (hah : a ≤ h) (hhb : h ≤ b)
     (hbs : b < 2 ^ 32) (ht : growTop (reg ω 7) h b = t)
+    (hcost : Constants.CgasGeminiconst + (t - h) * Constants.CgasGeminilinear ≤ hostCostMax)
     (rest : FreeStepsH p (refineContract env) n (setR7 ω t)
-      (μ.setPages a (t - a) (some .write)) x i'' ω'' μ'' x'') :
-    FreeStepsH p (refineContract env) i ω μ x i'' ω'' μ'' x'' := by
+      (μ.setPages a (t - a) (some .write)) x i'' ω'' μ'' x'' k) :
+    FreeStepsH p (refineContract env) i ω μ x i'' ω'' μ'' x'' (k + 1) := by
   subst ht
   apply FreeStepsH.host_decode hd _ rest
-  refine ⟨by unfold GasFreeId; decide, by decide, UInt64.ofNat (2 ^ 64 - 1), ?_⟩
+  refine ⟨by unfold GasFreeId; decide, by decide, ?_⟩
   simp only [toHostFn, RefineHost.dispatch, hostGrowHeap, growHeapCore_eq ω μ env.code hb hp hah hhb,
-    growTop]
+    growTop] at hcost ⊢
   have hw := (ω.get 7).toNat_lt
-  simp only [reg] at hw ⊢
+  simp only [reg] at hw hcost ⊢
   by_cases hc : (ω.get 7).toNat ≤ h ∨ (ω.get 7).toNat > b
   · simp [hc]
-  · have : ¬ 18446744073709551615 < Constants.CgasGeminiconst + ((ω.get 7).toNat - h) * Constants.CgasGeminilinear := by
-      simp only [Constants.CgasGeminiconst, Constants.CgasGeminilinear]
+  · simp only [hc, ↓reduceIte] at hcost
+    have : ¬ hostCostMax % 18446744073709551616 <
+        Constants.CgasGeminiconst + ((ω.get 7).toNat - h) * Constants.CgasGeminilinear := by
+      unfold hostCostMax at hcost ⊢
       omega
     simp [hc, this]
 

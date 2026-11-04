@@ -30,7 +30,7 @@ set_option maxRecDepth 100000
 /-- **Steps 0 … 274 after pc 23809**: the segments `S0` … `S17`, composed. -/
 theorem chain (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
     (x : RefineCtx) (Y : Nat) (hY : 1 ≤ Y ∧ Y ≤ 15) (Q : Nat) (hQ : 4278124548 ≤ Q ∧ Q ≤ 4278124564) (ω₀ : Regs) (μ₀ : Memory) (h : St0 Y Q ω₀ μ₀ ω μ) :
-    ∃ ω' μ', FreeStepsH p (refineContract env) 23809 ω μ x 186740 ω' μ' x ∧ St18 Y Q ω₀ μ₀ ω' μ' := by
+    ∃ ω' μ', FreeStepsH p (refineContract env) 23809 ω μ x 186740 ω' μ' x 275 ∧ St18 Y Q ω₀ μ₀ ω' μ' := by
   obtain ⟨ω1, μ1, run1, h1⟩ := S0.run p P env ω μ x Y hY Q hQ ω₀ μ₀ h
   obtain ⟨ω2, μ2, run2, h2⟩ := S1.run p P env ω1 μ1 x Y hY Q hQ ω₀ μ₀ h1
   obtain ⟨ω3, μ3, run3, h3⟩ := S2.run p P env ω2 μ2 x Y hY Q hQ ω₀ μ₀ h2
@@ -87,7 +87,7 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
     (hrd_4278058744_4278058760 : ∀ a, 4278058744 ≤ a → a < 4278058760 → μ.readable a = true)
     (hrd_4278058768_4278058784 : ∀ a, 4278058768 ≤ a → a < 4278058784 → μ.readable a = true)
     (hrd_4278058832_4278058848 : ∀ a, 4278058832 ≤ a → a < 4278058848 → μ.readable a = true)
-    : ∃ ω' μ', FreeStepsH p (refineContract env) 23809 ω μ x 186740 ω' μ' x ∧
+    : ∃ ω' μ', FreeStepsH p (refineContract env) 23809 ω μ x 186740 ω' μ' x 275 ∧
       (ω'[0] = UInt64.ofNat 492 ∧ ω'[1] = UInt64.ofNat 4278058712 ∧ ω'[2] = UInt64.ofNat 0 ∧ ω'[3] = UInt64.ofNat 206752 ∧ ω'[4] = UInt64.ofNat 33554430 ∧ ω'[6] = UInt64.ofNat 4278058832 ∧ ω'[7] = UInt64.ofNat 206752 ∧ ω'[11] = UInt64.ofNat 1 ∧ ω'[12] = UInt64.ofNat 0 ∧ ω'[5] = UInt64.ofNat Y ∧ ω'[8] = UInt64.ofNat Q ∧ ω'[9] = UInt64.ofNat Y ∧ ω'[10] = UInt64.ofNat (Y + 32)) ∧
       (μ'.read 206368 = 192 ∧ μ'.read 206369 = 39 ∧ μ'.read 206370 = 3 ∧ μ'.read 206371 = 0 ∧ μ'.read 206680 = 0 ∧ μ'.read 206681 = 0 ∧ μ'.read 206682 = 0 ∧ μ'.read 206683 = 0 ∧ μ'.read 206684 = 0 ∧ μ'.read 206685 = 0 ∧ μ'.read 206686 = 0 ∧ μ'.read 206687 = 64 ∧ μ'.read 206688 = 0 ∧ μ'.read 206689 = 0 ∧ μ'.read 206690 = 0 ∧ μ'.read 206691 = 0 ∧ μ'.read 206692 = 32 ∧ μ'.read 206693 = 0 ∧ μ'.read 206694 = 0 ∧ μ'.read 206695 = 0 ∧ μ'.read 206704 = 0 ∧ μ'.read 206705 = 0 ∧ μ'.read 206706 = 0 ∧ μ'.read 206707 = 0 ∧ μ'.read 206720 = 0 ∧ μ'.read 206721 = 0 ∧ μ'.read 206722 = 0 ∧ μ'.read 206723 = 0 ∧ μ'.read 206724 = 5 ∧ μ'.read 206725 = 0 ∧ μ'.read 206726 = 0 ∧ μ'.read 206727 = 0 ∧ μ'.read 206784 = 2 ∧ μ'.read 206785 = 0 ∧ μ'.read 206786 = 0 ∧ μ'.read 206787 = 0 ∧ μ'.read 206788 = 252 ∧ μ'.read 206789 = 255 ∧ μ'.read 206790 = 255 ∧ μ'.read 206791 = 3 ∧ μ'.read 206792 = 0 ∧ μ'.read 206793 = 0 ∧ μ'.read 206794 = 0 ∧ μ'.read 206795 = 0 ∧ μ'.read 4278058712 = 104 ∧ μ'.read 4278058713 = 255 ∧ μ'.read 4278058714 = 253 ∧ μ'.read 4278058715 = 254 ∧ μ'.read 4278058716 = 0 ∧ μ'.read 4278058717 = 0 ∧ μ'.read 4278058718 = 0 ∧ μ'.read 4278058719 = 0 ∧ μ'.read 4278058720 = 160 ∧ μ'.read 4278058721 = 39 ∧ μ'.read 4278058722 = 3 ∧ μ'.read 4278058723 = 0 ∧ μ'.read 4278058724 = 0 ∧ μ'.read 4278058725 = 0 ∧ μ'.read 4278058726 = 0 ∧ μ'.read 4278058727 = 0) ∧
       (μ'.readN 4278058728 8 = Num.encodeLE 8 Y ∧ μ'.readN 4278058736 8 = Num.encodeLE 8 Q ∧ μ'.readN 4278058744 8 = Num.encodeLE 8 Y ∧ μ'.readN 4278058752 8 = Num.encodeLE 8 (Y + 32) ∧ μ'.readN 4278058760 8 = Num.encodeLE 8 Y) ∧

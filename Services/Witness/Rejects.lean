@@ -24,9 +24,16 @@ theorem layout_ok : layoutOk jamBlob = true := by
   simp only [layoutOk, jamBlob, size_ba, toList_ba, getElem!_bytes]
   decide +kernel
 
+/-- The heap bounds of a standard program blob, from its sections (GP eq. `conditions`). -/
+theorem heapBounds_of {code : ByteArray} {jb : JamBlob} (h : JamBlob.parse? code = some jb) :
+    heapBounds code = ((2 * zoneSize + roundZone jb.ro.size) / pageSize,
+      (2 ^ 32 - 3 * zoneSize - inputSize - roundPage jb.stackSize) / pageSize) := by
+  unfold heapBounds; rw [h]
+
 /-- The deployed blob's heap bounds: pages 48 … 1044368. -/
 theorem heap_ok : heapBounds (ba N 71 222902) = (48, 1044368) := by
-  simp only [heapBounds, jam, jamBlob, size_ba]
+  rw [heapBounds_of jam]
+  simp only [jamBlob, size_ba]
   decide
 
 /-- **Witness's refine rejects malformed payloads, exactly** (GP eq. `refinvocation`). For a work

@@ -363,6 +363,16 @@ theorem jamParse?_ba (N : Nat) (o n : Nat) {oLen wLen z s pLen : Nat}
   simp only [Option.bind_some, ba]
   rw [show o + 11 + oLen + wLen + 4 = o + 15 + oLen + wLen by omega]
 
+/-- Octets o, …, o + n − 1 read from the chunks k … k + m − 1 alone. -/
+theorem bytes_ofChunks_window (cs : List Nat) (h : ∀ c ∈ cs, c < 2 ^ 8192) (k m o n : Nat)
+    (h1 : 1024 * k ≤ o) (h2 : o + n ≤ 1024 * (k + m)) :
+    bytes (ofChunks cs) o n = bytes (ofChunks ((cs.drop k).take m)) (o - 1024 * k) n := by
+  simp only [bytes]
+  apply List.map_congr_left
+  intro j hj
+  have hj := List.mem_range.1 hj
+  rw [byte_ofChunks_window cs h k m (o + j) (by omega) (by omega), show o + j - 1024 * k = o - 1024 * k + j by omega]
+
 end NatBlob
 
 end PVM

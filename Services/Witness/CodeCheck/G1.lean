@@ -10,1348 +10,1903 @@ namespace Services.Witness.CodeCheck
 
 open PVM PVM.NatBlob Services.Witness.Blob Services.Witness.Code
 
-theorem chunk_64 : facts_64.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 34 1 197 1) jt) = true := by
+theorem chunk_64 : facts_64.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 34 1 197 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_64 : facts_64.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 34 1 197 1) _ chunk_64
+  CodeFact.all_holds_of_view prog _ (prog_cview 34 1 197 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_64)
 
-def bst_65_1 : SimState := ⟨none, 10, 4, 5, ⟨3, 3, 4, 1, 1⟩, [⟨.exe, 16, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [0], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_65_1 : SimState := ⟨none, 5, 4, 5, ⟨3, 3, 4, 1, 1⟩, [⟨.exe, 21, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [0], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_65_0 : CodeView.Sim.run (view N 11199 1595536 188243) 42051072 (Sim.init 23983) = CodeView.Sim.run (view N 11199 1595536 188243) 42051059 bst_65_1 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 34 1 197 1) 13 (Sim.init 23983) = some bst_65_1 := by decide +kernel
+theorem bsim_65_0 : CodeView.Sim.run (view N 11199 1595536 188243) 42051072 (Sim.init 23983) = CodeView.Sim.run (view N 11199 1595536 188243) 42051064 bst_65_1 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 34 1 197 1) 8 (Sim.init 23983) = some bst_65_1 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 13 _ _ 42051059 h
+  exact CodeView.Sim.run_steps _ 8 _ _ 42051064 h
 
-def bst_65_2 : SimState := ⟨none, 22, 4, 5, ⟨3, 3, 4, 1, 1⟩, [⟨.exe, 4, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [0], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_65_2 : SimState := ⟨none, 13, 4, 5, ⟨3, 3, 4, 1, 1⟩, [⟨.exe, 13, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [0], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_65_1 : CodeView.Sim.run (view N 11199 1595536 188243) 42051059 bst_65_1 = CodeView.Sim.run (view N 11199 1595536 188243) 42051047 bst_65_2 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 34 1 197 1) 12 bst_65_1 = some bst_65_2 := by decide +kernel
+theorem bsim_65_1 : CodeView.Sim.run (view N 11199 1595536 188243) 42051064 bst_65_1 = CodeView.Sim.run (view N 11199 1595536 188243) 42051056 bst_65_2 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 34 1 197 1) 8 bst_65_1 = some bst_65_2 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 12 _ _ 42051047 h
+  exact CodeView.Sim.run_steps _ 8 _ _ 42051056 h
 
-def bst_65_3 : SimState := ⟨none, 29, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_65_3 : SimState := ⟨none, 21, 4, 5, ⟨3, 3, 4, 1, 1⟩, [⟨.exe, 5, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [0], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_65_2 : CodeView.Sim.run (view N 11199 1595536 188243) 42051047 bst_65_2 = CodeView.Sim.run (view N 11199 1595536 188243) 42051039 bst_65_3 := by
+theorem bsim_65_2 : CodeView.Sim.run (view N 11199 1595536 188243) 42051056 bst_65_2 = CodeView.Sim.run (view N 11199 1595536 188243) 42051048 bst_65_3 := by
   have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 34 1 197 1) 8 bst_65_2 = some bst_65_3 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 8 _ _ 42051039 h
+  exact CodeView.Sim.run_steps _ 8 _ _ 42051048 h
 
-theorem bend_65 : CodeView.Sim.run (view N 11199 1595536 188243) 42051039 bst_65_3 = some bst_65_3 := by
-  have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 34 1 34 1 197 1) bst_65_3 = some (.inr bst_65_3) := by decide +kernel
+def bst_65_4 : SimState := ⟨none, 28, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [0], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_65_3 : CodeView.Sim.run (view N 11199 1595536 188243) 42051048 bst_65_3 = CodeView.Sim.run (view N 11199 1595536 188243) 42051040 bst_65_4 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 34 1 197 1) 8 bst_65_3 = some bst_65_4 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_final _ bst_65_3 42051038 h
+  exact CodeView.Sim.run_steps _ 8 _ _ 42051040 h
+
+def bst_65_5 : SimState := ⟨none, 29, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_65_4 : CodeView.Sim.run (view N 11199 1595536 188243) 42051040 bst_65_4 = CodeView.Sim.run (view N 11199 1595536 188243) 42051039 bst_65_5 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 34 1 197 1) 1 bst_65_4 = some bst_65_5 := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_steps _ 1 _ _ 42051039 h
+
+theorem bend_65 : CodeView.Sim.run (view N 11199 1595536 188243) 42051039 bst_65_5 = some bst_65_5 := by
+  have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 34 1 34 1 197 1) bst_65_5 = some (.inr bst_65_5) := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_final _ bst_65_5 42051038 h
 
 /-- ϱ^Δ of the block at 23983 is 26 (GP eq. `gascostforblock`). -/
 theorem bcost_65 : (view N 11199 1595536 188243).blockCost 23983 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 23983 bst_65_3 (bsim_65_0.trans (bsim_65_1.trans (bsim_65_2.trans bend_65)))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 23983 bst_65_5 (bsim_65_0.trans (bsim_65_1.trans (bsim_65_2.trans (bsim_65_3.trans (bsim_65_4.trans bend_65)))))]
   decide
 
-theorem bstarts_65 : CodeFact.blockStartsV (cview chunks 11199 1595536 188243 34 1 197 1) 23983 23990 = true := by
-  decide +kernel
+theorem bstart_65 : (view N 11199 1595536 188243).isBlockStart 23983 = true := by
+  have h : (cview chunks 11199 1595536 188243 34 1 197 1).isBlockStartF 23983 = true := by decide +kernel
+  rw [CodeView.isBlockStartF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
+  exact h
+
+theorem bno_65_0 : ∀ k, 23984 ≤ k → k < 23984 + 6 → (view N 11199 1595536 188243).isBlockStart k = false := by
+  have h : (cview chunks 11199 1595536 188243 34 1 197 1).noStartsF 23984 6 = true := by decide +kernel
+  rw [cview_eq chunks chunks_lt] at h
+  exact CodeView.noStartsF_sound _ (fun i => view_zeta_lt _ _ _ _ i) 23984 6 h
+
+theorem bstarts_65 : CodeFact.blockStartsV (view N 11199 1595536 188243) 23983 23990 = true :=
+  CodeFact.blockStartsV_of _ 23983 23990 bstart_65 bno_65_0
 
 theorem chunk_ok_65 : facts_65.all (·.holds prog) = true := by
   simp only [facts_65, List.all_cons, List.all_nil, Bool.and_true, CodeFact.holds_block, Bool.and_eq_true,
     decide_eq_true_eq]
   refine ⟨?_, ?_⟩
-  · rw [prog_cview 34 1 197 1]; exact bstarts_65
+  · rw [prog_view]; exact bstarts_65
   · rw [prog_view]; exact bcost_65
 
-theorem chunk_66 : facts_66.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 34 1 197 1) jt) = true := by
+theorem chunk_66 : facts_66.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 34 1 197 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_66 : facts_66.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 34 1 197 1) _ chunk_66
+  CodeFact.all_holds_of_view prog _ (prog_cview 34 1 197 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_66)
 
-def bst_67_1 : SimState := ⟨none, 1, 1, 3, ⟨2, 2, 4, 1, 1⟩, [⟨.exe, 25, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 25, [], ⟨1024⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.dec, 25, [3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.dec, 25, [], ⟨4096⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.dec, 1, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_67_1 : SimState := ⟨some 24008, 1, 2, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.wait, 25, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨1024⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.dec, 25, [3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.dec, 25, [], ⟨4096⟩, ⟨1, 1, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_67_0 : CodeView.Sim.run (view N 11199 1595536 188243) 42049280 (Sim.init 23990) = CodeView.Sim.run (view N 11199 1595536 188243) 42049270 bst_67_1 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 34 1 197 1) 10 (Sim.init 23990) = some bst_67_1 := by decide +kernel
+theorem bsim_67_0 : CodeView.Sim.run (view N 11199 1595536 188243) 42049280 (Sim.init 23990) = CodeView.Sim.run (view N 11199 1595536 188243) 42049273 bst_67_1 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 34 1 197 1) 7 (Sim.init 23990) = some bst_67_1 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 10 _ _ 42049270 h
+  exact CodeView.Sim.run_steps _ 7 _ _ 42049273 h
 
-def bst_67_2 : SimState := ⟨none, 6, 4, 5, ⟨0, 0, 4, 1, 1⟩, [⟨.exe, 20, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 20, [], ⟨1024⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 20, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 21, [], ⟨4096⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_67_2 : SimState := ⟨none, 2, 4, 5, ⟨1, 1, 4, 1, 1⟩, [⟨.exe, 24, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 24, [], ⟨1024⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 24, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨4096⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_67_1 : CodeView.Sim.run (view N 11199 1595536 188243) 42049270 bst_67_1 = CodeView.Sim.run (view N 11199 1595536 188243) 42049263 bst_67_2 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 34 1 197 1) 7 bst_67_1 = some bst_67_2 := by decide +kernel
+theorem bsim_67_1 : CodeView.Sim.run (view N 11199 1595536 188243) 42049273 bst_67_1 = CodeView.Sim.run (view N 11199 1595536 188243) 42049268 bst_67_2 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 34 1 197 1) 5 bst_67_1 = some bst_67_2 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 7 _ _ 42049263 h
+  exact CodeView.Sim.run_steps _ 5 _ _ 42049268 h
 
-def bst_67_3 : SimState := ⟨none, 13, 4, 5, ⟨0, 0, 4, 1, 1⟩, [⟨.exe, 13, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 13, [], ⟨1024⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 13, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 14, [], ⟨4096⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_67_3 : SimState := ⟨none, 6, 4, 5, ⟨0, 0, 4, 1, 1⟩, [⟨.exe, 20, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 20, [], ⟨1024⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 20, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 21, [], ⟨4096⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_67_2 : CodeView.Sim.run (view N 11199 1595536 188243) 42049263 bst_67_2 = CodeView.Sim.run (view N 11199 1595536 188243) 42049256 bst_67_3 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 34 1 197 1) 7 bst_67_2 = some bst_67_3 := by decide +kernel
+theorem bsim_67_2 : CodeView.Sim.run (view N 11199 1595536 188243) 42049268 bst_67_2 = CodeView.Sim.run (view N 11199 1595536 188243) 42049263 bst_67_3 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 34 1 197 1) 5 bst_67_2 = some bst_67_3 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 7 _ _ 42049256 h
+  exact CodeView.Sim.run_steps _ 5 _ _ 42049263 h
 
-def bst_67_4 : SimState := ⟨none, 20, 4, 5, ⟨0, 0, 4, 1, 1⟩, [⟨.exe, 6, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 6, [], ⟨1024⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 6, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 7, [], ⟨4096⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_67_4 : SimState := ⟨none, 11, 4, 5, ⟨0, 0, 4, 1, 1⟩, [⟨.exe, 15, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 15, [], ⟨1024⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 15, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 16, [], ⟨4096⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_67_3 : CodeView.Sim.run (view N 11199 1595536 188243) 42049256 bst_67_3 = CodeView.Sim.run (view N 11199 1595536 188243) 42049249 bst_67_4 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 34 1 197 1) 7 bst_67_3 = some bst_67_4 := by decide +kernel
+theorem bsim_67_3 : CodeView.Sim.run (view N 11199 1595536 188243) 42049263 bst_67_3 = CodeView.Sim.run (view N 11199 1595536 188243) 42049258 bst_67_4 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 34 1 197 1) 5 bst_67_3 = some bst_67_4 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 7 _ _ 42049249 h
+  exact CodeView.Sim.run_steps _ 5 _ _ 42049258 h
 
-def bst_67_5 : SimState := ⟨none, 26, 4, 4, ⟨2, 3, 3, 1, 1⟩, [⟨.exe, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 0, [], ⟨1024⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 1, [], ⟨4096⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_67_5 : SimState := ⟨none, 16, 4, 5, ⟨0, 0, 4, 1, 1⟩, [⟨.exe, 10, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 10, [], ⟨1024⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 10, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 11, [], ⟨4096⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_67_4 : CodeView.Sim.run (view N 11199 1595536 188243) 42049249 bst_67_4 = CodeView.Sim.run (view N 11199 1595536 188243) 42049242 bst_67_5 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 34 1 197 1) 7 bst_67_4 = some bst_67_5 := by decide +kernel
+theorem bsim_67_4 : CodeView.Sim.run (view N 11199 1595536 188243) 42049258 bst_67_4 = CodeView.Sim.run (view N 11199 1595536 188243) 42049253 bst_67_5 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 34 1 197 1) 5 bst_67_4 = some bst_67_5 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 7 _ _ 42049242 h
+  exact CodeView.Sim.run_steps _ 5 _ _ 42049253 h
 
-def bst_67_6 : SimState := ⟨none, 31, 4, 5, ⟨2, 4, 2, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 20, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨1024⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 20, [3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨4096⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_67_6 : SimState := ⟨none, 21, 4, 5, ⟨0, 0, 4, 1, 1⟩, [⟨.exe, 5, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 5, [], ⟨1024⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 5, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 6, [], ⟨4096⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_67_5 : CodeView.Sim.run (view N 11199 1595536 188243) 42049242 bst_67_5 = CodeView.Sim.run (view N 11199 1595536 188243) 42049235 bst_67_6 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 34 1 197 1) 7 bst_67_5 = some bst_67_6 := by decide +kernel
+theorem bsim_67_5 : CodeView.Sim.run (view N 11199 1595536 188243) 42049253 bst_67_5 = CodeView.Sim.run (view N 11199 1595536 188243) 42049248 bst_67_6 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 34 1 197 1) 5 bst_67_5 = some bst_67_6 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 7 _ _ 42049235 h
+  exact CodeView.Sim.run_steps _ 5 _ _ 42049248 h
 
-def bst_67_7 : SimState := ⟨none, 38, 4, 5, ⟨2, 4, 2, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 13, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨1024⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 13, [3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨4096⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_67_7 : SimState := ⟨none, 26, 4, 5, ⟨3, 3, 4, 1, 1⟩, [⟨.exe, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 0, [], ⟨1024⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 1, [], ⟨4096⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_67_6 : CodeView.Sim.run (view N 11199 1595536 188243) 42049235 bst_67_6 = CodeView.Sim.run (view N 11199 1595536 188243) 42049228 bst_67_7 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 34 1 197 1) 7 bst_67_6 = some bst_67_7 := by decide +kernel
+theorem bsim_67_6 : CodeView.Sim.run (view N 11199 1595536 188243) 42049248 bst_67_6 = CodeView.Sim.run (view N 11199 1595536 188243) 42049243 bst_67_7 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 34 1 197 1) 5 bst_67_6 = some bst_67_7 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 7 _ _ 42049228 h
+  exact CodeView.Sim.run_steps _ 5 _ _ 42049243 h
 
-def bst_67_8 : SimState := ⟨none, 45, 4, 5, ⟨2, 4, 2, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 6, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨1024⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 6, [3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨4096⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_67_8 : SimState := ⟨none, 28, 4, 5, ⟨2, 4, 2, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 23, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨1024⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 23, [3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨4096⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_67_7 : CodeView.Sim.run (view N 11199 1595536 188243) 42049228 bst_67_7 = CodeView.Sim.run (view N 11199 1595536 188243) 42049221 bst_67_8 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 34 1 197 1) 7 bst_67_7 = some bst_67_8 := by decide +kernel
+theorem bsim_67_7 : CodeView.Sim.run (view N 11199 1595536 188243) 42049243 bst_67_7 = CodeView.Sim.run (view N 11199 1595536 188243) 42049238 bst_67_8 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 34 1 197 1) 5 bst_67_7 = some bst_67_8 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 7 _ _ 42049221 h
+  exact CodeView.Sim.run_steps _ 5 _ _ 42049238 h
 
-def bst_67_9 : SimState := ⟨none, 52, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨1024⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨4096⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_67_9 : SimState := ⟨none, 33, 4, 5, ⟨2, 4, 2, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 18, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨1024⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 18, [3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨4096⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_67_8 : CodeView.Sim.run (view N 11199 1595536 188243) 42049221 bst_67_8 = CodeView.Sim.run (view N 11199 1595536 188243) 42049214 bst_67_9 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 34 1 197 1) 7 bst_67_8 = some bst_67_9 := by decide +kernel
+theorem bsim_67_8 : CodeView.Sim.run (view N 11199 1595536 188243) 42049238 bst_67_8 = CodeView.Sim.run (view N 11199 1595536 188243) 42049233 bst_67_9 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 34 1 197 1) 5 bst_67_8 = some bst_67_9 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 7 _ _ 42049214 h
+  exact CodeView.Sim.run_steps _ 5 _ _ 42049233 h
 
-def bst_67_10 : SimState := ⟨none, 53, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨1024⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨4096⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_67_10 : SimState := ⟨none, 38, 4, 5, ⟨2, 4, 2, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 13, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨1024⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 13, [3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨4096⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_67_9 : CodeView.Sim.run (view N 11199 1595536 188243) 42049214 bst_67_9 = CodeView.Sim.run (view N 11199 1595536 188243) 42049213 bst_67_10 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 34 1 197 1) 1 bst_67_9 = some bst_67_10 := by decide +kernel
+theorem bsim_67_9 : CodeView.Sim.run (view N 11199 1595536 188243) 42049233 bst_67_9 = CodeView.Sim.run (view N 11199 1595536 188243) 42049228 bst_67_10 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 34 1 197 1) 5 bst_67_9 = some bst_67_10 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 1 _ _ 42049213 h
+  exact CodeView.Sim.run_steps _ 5 _ _ 42049228 h
 
-theorem bend_67 : CodeView.Sim.run (view N 11199 1595536 188243) 42049213 bst_67_10 = some bst_67_10 := by
-  have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 34 1 34 1 197 1) bst_67_10 = some (.inr bst_67_10) := by decide +kernel
+def bst_67_11 : SimState := ⟨none, 43, 4, 5, ⟨2, 4, 2, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 8, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨1024⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 8, [3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨4096⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_67_10 : CodeView.Sim.run (view N 11199 1595536 188243) 42049228 bst_67_10 = CodeView.Sim.run (view N 11199 1595536 188243) 42049223 bst_67_11 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 34 1 197 1) 5 bst_67_10 = some bst_67_11 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_final _ bst_67_10 42049212 h
+  exact CodeView.Sim.run_steps _ 5 _ _ 42049223 h
+
+def bst_67_12 : SimState := ⟨none, 48, 4, 5, ⟨2, 4, 2, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 3, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨1024⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 3, [3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨4096⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_67_11 : CodeView.Sim.run (view N 11199 1595536 188243) 42049223 bst_67_11 = CodeView.Sim.run (view N 11199 1595536 188243) 42049218 bst_67_12 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 34 1 197 1) 5 bst_67_11 = some bst_67_12 := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_steps _ 5 _ _ 42049218 h
+
+def bst_67_13 : SimState := ⟨none, 53, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨1024⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨4096⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_67_12 : CodeView.Sim.run (view N 11199 1595536 188243) 42049218 bst_67_12 = CodeView.Sim.run (view N 11199 1595536 188243) 42049213 bst_67_13 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 34 1 197 1) 5 bst_67_12 = some bst_67_13 := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_steps _ 5 _ _ 42049213 h
+
+theorem bend_67 : CodeView.Sim.run (view N 11199 1595536 188243) 42049213 bst_67_13 = some bst_67_13 := by
+  have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 34 1 34 1 197 1) bst_67_13 = some (.inr bst_67_13) := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_final _ bst_67_13 42049212 h
 
 /-- ϱ^Δ of the block at 23990 is 50 (GP eq. `gascostforblock`). -/
 theorem bcost_67 : (view N 11199 1595536 188243).blockCost 23990 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 23990 bst_67_10 (bsim_67_0.trans (bsim_67_1.trans (bsim_67_2.trans (bsim_67_3.trans (bsim_67_4.trans (bsim_67_5.trans (bsim_67_6.trans (bsim_67_7.trans (bsim_67_8.trans (bsim_67_9.trans bend_67))))))))))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 23990 bst_67_13 (bsim_67_0.trans (bsim_67_1.trans (bsim_67_2.trans (bsim_67_3.trans (bsim_67_4.trans (bsim_67_5.trans (bsim_67_6.trans (bsim_67_7.trans (bsim_67_8.trans (bsim_67_9.trans (bsim_67_10.trans (bsim_67_11.trans (bsim_67_12.trans bend_67)))))))))))))]
   decide
 
-theorem bstarts_67 : CodeFact.blockStartsV (cview chunks 11199 1595536 188243 34 1 197 1) 23990 24011 = true := by
-  decide +kernel
+theorem bstart_67 : (view N 11199 1595536 188243).isBlockStart 23990 = true := by
+  have h : (cview chunks 11199 1595536 188243 34 1 197 1).isBlockStartF 23990 = true := by decide +kernel
+  rw [CodeView.isBlockStartF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
+  exact h
+
+theorem bno_67_0 : ∀ k, 23991 ≤ k → k < 23991 + 16 → (view N 11199 1595536 188243).isBlockStart k = false := by
+  have h : (cview chunks 11199 1595536 188243 34 1 197 1).noStartsF 23991 16 = true := by decide +kernel
+  rw [cview_eq chunks chunks_lt] at h
+  exact CodeView.noStartsF_sound _ (fun i => view_zeta_lt _ _ _ _ i) 23991 16 h
+
+theorem bno_67_1 : ∀ k, 24007 ≤ k → k < 24007 + 4 → (view N 11199 1595536 188243).isBlockStart k = false := by
+  have h : (cview chunks 11199 1595536 188243 34 1 197 1).noStartsF 24007 4 = true := by decide +kernel
+  rw [cview_eq chunks chunks_lt] at h
+  exact CodeView.noStartsF_sound _ (fun i => view_zeta_lt _ _ _ _ i) 24007 4 h
+
+theorem bstarts_67 : CodeFact.blockStartsV (view N 11199 1595536 188243) 23990 24011 = true :=
+  CodeFact.blockStartsV_of _ 23990 24011 bstart_67 (range_cover bno_67_0 bno_67_1)
 
 theorem chunk_ok_67 : facts_67.all (·.holds prog) = true := by
   simp only [facts_67, List.all_cons, List.all_nil, Bool.and_true, CodeFact.holds_block, Bool.and_eq_true,
     decide_eq_true_eq]
   refine ⟨?_, ?_⟩
-  · rw [prog_cview 34 1 197 1]; exact bstarts_67
+  · rw [prog_view]; exact bstarts_67
   · rw [prog_view]; exact bcost_67
 
-theorem chunk_68 : facts_68.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 34 1 197 1) jt) = true := by
+theorem chunk_68 : facts_68.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 34 1 197 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_68 : facts_68.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 34 1 197 1) _ chunk_68
+  CodeFact.all_holds_of_view prog _ (prog_cview 34 1 197 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_68)
 
-theorem chunk_69 : facts_69.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 34 1 197 1) jt) = true := by
+theorem chunk_69 : facts_69.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 34 1 197 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_69 : facts_69.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 34 1 197 1) _ chunk_69
+  CodeFact.all_holds_of_view prog _ (prog_cview 34 1 197 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_69)
 
-theorem chunk_70 : facts_70.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 34 1 197 1) jt) = true := by
+theorem chunk_70 : facts_70.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 34 1 197 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_70 : facts_70.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 34 1 197 1) _ chunk_70
+  CodeFact.all_holds_of_view prog _ (prog_cview 34 1 197 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_70)
 
-theorem chunk_71 : facts_71.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 34 1 197 1) jt) = true := by
+theorem chunk_71 : facts_71.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 34 1 197 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_71 : facts_71.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 34 1 197 1) _ chunk_71
+  CodeFact.all_holds_of_view prog _ (prog_cview 34 1 197 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_71)
 
-def bst_72_1 : SimState := ⟨none, 2, 4, 5, ⟨2, 4, 2, 1, 1⟩, [⟨.exe, 24, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 0, [], ⟨2048⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 24, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 1, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_72_1 : SimState := ⟨none, 1, 4, 3, ⟨3, 4, 3, 1, 1⟩, [⟨.exe, 25, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 1, [], ⟨2048⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 2, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_72_0 : CodeView.Sim.run (view N 11199 1595536 188243) 42021376 (Sim.init 24099) = CodeView.Sim.run (view N 11199 1595536 188243) 42021366 bst_72_1 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 10 (Sim.init 24099) = some bst_72_1 := by decide +kernel
+theorem bsim_72_0 : CodeView.Sim.run (view N 11199 1595536 188243) 42021376 (Sim.init 24099) = CodeView.Sim.run (view N 11199 1595536 188243) 42021369 bst_72_1 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 7 (Sim.init 24099) = some bst_72_1 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 10 _ _ 42021366 h
+  exact CodeView.Sim.run_steps _ 7 _ _ 42021369 h
 
-def bst_72_2 : SimState := ⟨none, 11, 4, 5, ⟨2, 4, 2, 1, 1⟩, [⟨.exe, 15, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨2048⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 15, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_72_2 : SimState := ⟨none, 5, 4, 5, ⟨2, 4, 2, 1, 1⟩, [⟨.exe, 21, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨2048⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 21, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_72_1 : CodeView.Sim.run (view N 11199 1595536 188243) 42021366 bst_72_1 = CodeView.Sim.run (view N 11199 1595536 188243) 42021357 bst_72_2 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 9 bst_72_1 = some bst_72_2 := by decide +kernel
+theorem bsim_72_1 : CodeView.Sim.run (view N 11199 1595536 188243) 42021369 bst_72_1 = CodeView.Sim.run (view N 11199 1595536 188243) 42021363 bst_72_2 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 6 bst_72_1 = some bst_72_2 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 9 _ _ 42021357 h
+  exact CodeView.Sim.run_steps _ 6 _ _ 42021363 h
 
-def bst_72_3 : SimState := ⟨none, 20, 4, 5, ⟨2, 4, 2, 1, 1⟩, [⟨.exe, 6, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨2048⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 6, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_72_3 : SimState := ⟨none, 11, 4, 5, ⟨2, 4, 2, 1, 1⟩, [⟨.exe, 15, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨2048⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 15, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_72_2 : CodeView.Sim.run (view N 11199 1595536 188243) 42021357 bst_72_2 = CodeView.Sim.run (view N 11199 1595536 188243) 42021348 bst_72_3 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 9 bst_72_2 = some bst_72_3 := by decide +kernel
+theorem bsim_72_2 : CodeView.Sim.run (view N 11199 1595536 188243) 42021363 bst_72_2 = CodeView.Sim.run (view N 11199 1595536 188243) 42021357 bst_72_3 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 6 bst_72_2 = some bst_72_3 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 9 _ _ 42021348 h
+  exact CodeView.Sim.run_steps _ 6 _ _ 42021357 h
 
-def bst_72_4 : SimState := ⟨none, 28, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨2048⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_72_4 : SimState := ⟨none, 17, 4, 5, ⟨2, 4, 2, 1, 1⟩, [⟨.exe, 9, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨2048⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 9, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_72_3 : CodeView.Sim.run (view N 11199 1595536 188243) 42021348 bst_72_3 = CodeView.Sim.run (view N 11199 1595536 188243) 42021340 bst_72_4 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 8 bst_72_3 = some bst_72_4 := by decide +kernel
+theorem bsim_72_3 : CodeView.Sim.run (view N 11199 1595536 188243) 42021357 bst_72_3 = CodeView.Sim.run (view N 11199 1595536 188243) 42021351 bst_72_4 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 6 bst_72_3 = some bst_72_4 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 8 _ _ 42021340 h
+  exact CodeView.Sim.run_steps _ 6 _ _ 42021351 h
 
-theorem bend_72 : CodeView.Sim.run (view N 11199 1595536 188243) 42021340 bst_72_4 = some bst_72_4 := by
-  have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) bst_72_4 = some (.inr bst_72_4) := by decide +kernel
+def bst_72_5 : SimState := ⟨none, 23, 4, 5, ⟨2, 4, 2, 1, 1⟩, [⟨.exe, 3, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨2048⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 3, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_72_4 : CodeView.Sim.run (view N 11199 1595536 188243) 42021351 bst_72_4 = CodeView.Sim.run (view N 11199 1595536 188243) 42021345 bst_72_5 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 6 bst_72_4 = some bst_72_5 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_final _ bst_72_4 42021339 h
+  exact CodeView.Sim.run_steps _ 6 _ _ 42021345 h
+
+def bst_72_6 : SimState := ⟨none, 28, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨2048⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_72_5 : CodeView.Sim.run (view N 11199 1595536 188243) 42021345 bst_72_5 = CodeView.Sim.run (view N 11199 1595536 188243) 42021340 bst_72_6 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 5 bst_72_5 = some bst_72_6 := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_steps _ 5 _ _ 42021340 h
+
+theorem bend_72 : CodeView.Sim.run (view N 11199 1595536 188243) 42021340 bst_72_6 = some bst_72_6 := by
+  have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) bst_72_6 = some (.inr bst_72_6) := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_final _ bst_72_6 42021339 h
 
 /-- ϱ^Δ of the block at 24099 is 25 (GP eq. `gascostforblock`). -/
 theorem bcost_72 : (view N 11199 1595536 188243).blockCost 24099 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 24099 bst_72_4 (bsim_72_0.trans (bsim_72_1.trans (bsim_72_2.trans (bsim_72_3.trans bend_72))))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 24099 bst_72_6 (bsim_72_0.trans (bsim_72_1.trans (bsim_72_2.trans (bsim_72_3.trans (bsim_72_4.trans (bsim_72_5.trans bend_72))))))]
   decide
 
-theorem bstarts_72 : CodeFact.blockStartsV (cview chunks 11199 1595536 188243 34 1 197 1) 24099 24109 = true := by
-  decide +kernel
+theorem bstart_72 : (view N 11199 1595536 188243).isBlockStart 24099 = true := by
+  have h : (cview chunks 11199 1595536 188243 34 1 197 1).isBlockStartF 24099 = true := by decide +kernel
+  rw [CodeView.isBlockStartF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
+  exact h
+
+theorem bno_72_0 : ∀ k, 24100 ≤ k → k < 24100 + 9 → (view N 11199 1595536 188243).isBlockStart k = false := by
+  have h : (cview chunks 11199 1595536 188243 34 1 197 1).noStartsF 24100 9 = true := by decide +kernel
+  rw [cview_eq chunks chunks_lt] at h
+  exact CodeView.noStartsF_sound _ (fun i => view_zeta_lt _ _ _ _ i) 24100 9 h
+
+theorem bstarts_72 : CodeFact.blockStartsV (view N 11199 1595536 188243) 24099 24109 = true :=
+  CodeFact.blockStartsV_of _ 24099 24109 bstart_72 bno_72_0
 
 theorem chunk_ok_72 : facts_72.all (·.holds prog) = true := by
   simp only [facts_72, List.all_cons, List.all_nil, Bool.and_true, CodeFact.holds_block, Bool.and_eq_true,
     decide_eq_true_eq]
   refine ⟨?_, ?_⟩
-  · rw [prog_cview 34 1 197 1]; exact bstarts_72
+  · rw [prog_view]; exact bstarts_72
   · rw [prog_view]; exact bcost_72
 
-theorem chunk_73 : facts_73.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 34 1 197 1) jt) = true := by
+theorem chunk_73 : facts_73.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 34 1 197 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_73 : facts_73.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 34 1 197 1) _ chunk_73
+  CodeFact.all_holds_of_view prog _ (prog_cview 34 1 197 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_73)
 
-theorem chunk_74 : facts_74.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 34 1 197 1) jt) = true := by
+theorem chunk_74 : facts_74.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 34 1 197 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_74 : facts_74.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 34 1 197 1) _ chunk_74
+  CodeFact.all_holds_of_view prog _ (prog_cview 34 1 197 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_74)
 
-def bst_75_1 : SimState := ⟨some 24131, 1, 0, 4, ⟨3, 3, 4, 1, 1⟩, [⟨.exe, 25, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.dec, 25, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.dec, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.dec, 25, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.dec, 25, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩]⟩
+def bst_75_1 : SimState := ⟨some 24125, 1, 2, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.wait, 25, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.dec, 25, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.dec, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩]⟩
 
-theorem bsim_75_0 : CodeView.Sim.run (view N 11199 1595536 188243) 42018816 (Sim.init 24109) = CodeView.Sim.run (view N 11199 1595536 188243) 42018806 bst_75_1 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 10 (Sim.init 24109) = some bst_75_1 := by decide +kernel
+theorem bsim_75_0 : CodeView.Sim.run (view N 11199 1595536 188243) 42018816 (Sim.init 24109) = CodeView.Sim.run (view N 11199 1595536 188243) 42018809 bst_75_1 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 7 (Sim.init 24109) = some bst_75_1 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 10 _ _ 42018806 h
+  exact CodeView.Sim.run_steps _ 7 _ _ 42018809 h
 
-def bst_75_2 : SimState := ⟨none, 2, 1, 5, ⟨1, 1, 4, 1, 1⟩, [⟨.exe, 24, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 24, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 24, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.dec, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.dec, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.dec, 22, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_75_2 : SimState := ⟨some 24131, 1, 0, 3, ⟨2, 2, 4, 1, 1⟩, [⟨.exe, 25, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 25, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.dec, 25, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.dec, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.dec, 25, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.dec, 25, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_75_1 : CodeView.Sim.run (view N 11199 1595536 188243) 42018806 bst_75_1 = CodeView.Sim.run (view N 11199 1595536 188243) 42018800 bst_75_2 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 6 bst_75_1 = some bst_75_2 := by decide +kernel
+theorem bsim_75_1 : CodeView.Sim.run (view N 11199 1595536 188243) 42018809 bst_75_1 = CodeView.Sim.run (view N 11199 1595536 188243) 42018805 bst_75_2 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 4 bst_75_1 = some bst_75_2 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 6 _ _ 42018800 h
+  exact CodeView.Sim.run_steps _ 4 _ _ 42018805 h
 
-def bst_75_3 : SimState := ⟨none, 6, 4, 5, ⟨0, 0, 4, 1, 1⟩, [⟨.exe, 20, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 20, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 20, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 21, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 22, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_75_3 : SimState := ⟨some 24137, 2, 2, 5, ⟨1, 1, 4, 1, 1⟩, [⟨.exe, 24, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 24, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 24, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.dec, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.dec, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_75_2 : CodeView.Sim.run (view N 11199 1595536 188243) 42018800 bst_75_2 = CodeView.Sim.run (view N 11199 1595536 188243) 42018795 bst_75_3 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 5 bst_75_2 = some bst_75_3 := by decide +kernel
+theorem bsim_75_2 : CodeView.Sim.run (view N 11199 1595536 188243) 42018805 bst_75_2 = CodeView.Sim.run (view N 11199 1595536 188243) 42018801 bst_75_3 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 4 bst_75_2 = some bst_75_3 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 5 _ _ 42018795 h
+  exact CodeView.Sim.run_steps _ 4 _ _ 42018801 h
 
-def bst_75_4 : SimState := ⟨none, 11, 4, 5, ⟨0, 0, 4, 1, 1⟩, [⟨.exe, 15, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 15, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 15, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 16, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 22, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_75_4 : SimState := ⟨none, 4, 4, 5, ⟨0, 0, 4, 1, 1⟩, [⟨.exe, 22, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 22, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 22, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 23, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 22, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_75_3 : CodeView.Sim.run (view N 11199 1595536 188243) 42018795 bst_75_3 = CodeView.Sim.run (view N 11199 1595536 188243) 42018790 bst_75_4 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 5 bst_75_3 = some bst_75_4 := by decide +kernel
+theorem bsim_75_3 : CodeView.Sim.run (view N 11199 1595536 188243) 42018801 bst_75_3 = CodeView.Sim.run (view N 11199 1595536 188243) 42018797 bst_75_4 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 4 bst_75_3 = some bst_75_4 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 5 _ _ 42018790 h
+  exact CodeView.Sim.run_steps _ 4 _ _ 42018797 h
 
-def bst_75_5 : SimState := ⟨none, 16, 4, 5, ⟨0, 0, 4, 1, 1⟩, [⟨.exe, 10, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 10, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 10, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 11, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 22, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_75_5 : SimState := ⟨none, 7, 4, 5, ⟨0, 0, 4, 1, 1⟩, [⟨.exe, 19, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 19, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 19, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 20, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 22, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_75_4 : CodeView.Sim.run (view N 11199 1595536 188243) 42018790 bst_75_4 = CodeView.Sim.run (view N 11199 1595536 188243) 42018785 bst_75_5 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 5 bst_75_4 = some bst_75_5 := by decide +kernel
+theorem bsim_75_4 : CodeView.Sim.run (view N 11199 1595536 188243) 42018797 bst_75_4 = CodeView.Sim.run (view N 11199 1595536 188243) 42018794 bst_75_5 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 3 bst_75_4 = some bst_75_5 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 5 _ _ 42018785 h
+  exact CodeView.Sim.run_steps _ 3 _ _ 42018794 h
 
-def bst_75_6 : SimState := ⟨none, 21, 4, 5, ⟨0, 0, 4, 1, 1⟩, [⟨.exe, 5, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 5, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 5, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 6, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 22, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_75_6 : SimState := ⟨none, 10, 4, 5, ⟨0, 0, 4, 1, 1⟩, [⟨.exe, 16, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 16, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 16, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 17, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 22, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_75_5 : CodeView.Sim.run (view N 11199 1595536 188243) 42018785 bst_75_5 = CodeView.Sim.run (view N 11199 1595536 188243) 42018780 bst_75_6 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 5 bst_75_5 = some bst_75_6 := by decide +kernel
+theorem bsim_75_5 : CodeView.Sim.run (view N 11199 1595536 188243) 42018794 bst_75_5 = CodeView.Sim.run (view N 11199 1595536 188243) 42018791 bst_75_6 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 3 bst_75_5 = some bst_75_6 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 5 _ _ 42018780 h
+  exact CodeView.Sim.run_steps _ 3 _ _ 42018791 h
 
-def bst_75_7 : SimState := ⟨none, 26, 4, 5, ⟨3, 3, 4, 1, 1⟩, [⟨.exe, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 0, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 1, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 22, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_75_7 : SimState := ⟨none, 13, 4, 5, ⟨0, 0, 4, 1, 1⟩, [⟨.exe, 13, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 13, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 13, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 14, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 22, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_75_6 : CodeView.Sim.run (view N 11199 1595536 188243) 42018780 bst_75_6 = CodeView.Sim.run (view N 11199 1595536 188243) 42018775 bst_75_7 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 5 bst_75_6 = some bst_75_7 := by decide +kernel
+theorem bsim_75_6 : CodeView.Sim.run (view N 11199 1595536 188243) 42018791 bst_75_6 = CodeView.Sim.run (view N 11199 1595536 188243) 42018788 bst_75_7 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 3 bst_75_6 = some bst_75_7 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 5 _ _ 42018775 h
+  exact CodeView.Sim.run_steps _ 3 _ _ 42018788 h
 
-def bst_75_8 : SimState := ⟨none, 27, 4, 4, ⟨0, 3, 1, 1, 1⟩, [⟨.fin, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 24, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 24, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 24, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 25, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 22, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_75_8 : SimState := ⟨none, 16, 4, 5, ⟨0, 0, 4, 1, 1⟩, [⟨.exe, 10, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 10, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 10, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 11, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 22, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_75_7 : CodeView.Sim.run (view N 11199 1595536 188243) 42018775 bst_75_7 = CodeView.Sim.run (view N 11199 1595536 188243) 42018770 bst_75_8 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 5 bst_75_7 = some bst_75_8 := by decide +kernel
+theorem bsim_75_7 : CodeView.Sim.run (view N 11199 1595536 188243) 42018788 bst_75_7 = CodeView.Sim.run (view N 11199 1595536 188243) 42018785 bst_75_8 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 3 bst_75_7 = some bst_75_8 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 5 _ _ 42018770 h
+  exact CodeView.Sim.run_steps _ 3 _ _ 42018785 h
 
-def bst_75_9 : SimState := ⟨none, 31, 4, 5, ⟨0, 3, 1, 1, 1⟩, [⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 20, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 20, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 20, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 21, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 18, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_75_9 : SimState := ⟨none, 19, 4, 5, ⟨0, 0, 4, 1, 1⟩, [⟨.exe, 7, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 7, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 7, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 8, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 22, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_75_8 : CodeView.Sim.run (view N 11199 1595536 188243) 42018770 bst_75_8 = CodeView.Sim.run (view N 11199 1595536 188243) 42018765 bst_75_9 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 5 bst_75_8 = some bst_75_9 := by decide +kernel
+theorem bsim_75_8 : CodeView.Sim.run (view N 11199 1595536 188243) 42018785 bst_75_8 = CodeView.Sim.run (view N 11199 1595536 188243) 42018782 bst_75_9 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 3 bst_75_8 = some bst_75_9 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 5 _ _ 42018765 h
+  exact CodeView.Sim.run_steps _ 3 _ _ 42018782 h
 
-def bst_75_10 : SimState := ⟨none, 36, 4, 5, ⟨0, 3, 1, 1, 1⟩, [⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 15, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 15, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 15, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 16, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 13, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_75_10 : SimState := ⟨none, 22, 4, 5, ⟨0, 0, 4, 1, 1⟩, [⟨.exe, 4, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 4, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 4, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 5, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 22, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_75_9 : CodeView.Sim.run (view N 11199 1595536 188243) 42018765 bst_75_9 = CodeView.Sim.run (view N 11199 1595536 188243) 42018760 bst_75_10 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 5 bst_75_9 = some bst_75_10 := by decide +kernel
+theorem bsim_75_9 : CodeView.Sim.run (view N 11199 1595536 188243) 42018782 bst_75_9 = CodeView.Sim.run (view N 11199 1595536 188243) 42018779 bst_75_10 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 3 bst_75_9 = some bst_75_10 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 5 _ _ 42018760 h
+  exact CodeView.Sim.run_steps _ 3 _ _ 42018779 h
 
-def bst_75_11 : SimState := ⟨none, 41, 4, 5, ⟨0, 3, 1, 1, 1⟩, [⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 10, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 10, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 10, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 11, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 8, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_75_11 : SimState := ⟨none, 25, 4, 5, ⟨0, 0, 4, 1, 1⟩, [⟨.exe, 1, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 1, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 1, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 2, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 22, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_75_10 : CodeView.Sim.run (view N 11199 1595536 188243) 42018760 bst_75_10 = CodeView.Sim.run (view N 11199 1595536 188243) 42018755 bst_75_11 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 5 bst_75_10 = some bst_75_11 := by decide +kernel
+theorem bsim_75_10 : CodeView.Sim.run (view N 11199 1595536 188243) 42018779 bst_75_10 = CodeView.Sim.run (view N 11199 1595536 188243) 42018776 bst_75_11 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 3 bst_75_10 = some bst_75_11 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 5 _ _ 42018755 h
+  exact CodeView.Sim.run_steps _ 3 _ _ 42018776 h
 
-def bst_75_12 : SimState := ⟨none, 46, 4, 5, ⟨0, 3, 1, 1, 1⟩, [⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 5, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 5, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 5, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 6, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 3, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_75_12 : SimState := ⟨none, 26, 4, 3, ⟨1, 3, 2, 1, 1⟩, [⟨.exe, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 25, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 0, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 25, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 1, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 22, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_75_11 : CodeView.Sim.run (view N 11199 1595536 188243) 42018755 bst_75_11 = CodeView.Sim.run (view N 11199 1595536 188243) 42018750 bst_75_12 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 5 bst_75_11 = some bst_75_12 := by decide +kernel
+theorem bsim_75_11 : CodeView.Sim.run (view N 11199 1595536 188243) 42018776 bst_75_11 = CodeView.Sim.run (view N 11199 1595536 188243) 42018773 bst_75_12 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 3 bst_75_11 = some bst_75_12 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 5 _ _ 42018750 h
+  exact CodeView.Sim.run_steps _ 3 _ _ 42018773 h
 
-def bst_75_13 : SimState := ⟨none, 51, 4, 5, ⟨3, 3, 4, 1, 1⟩, [⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 0, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 0, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 1, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_75_13 : SimState := ⟨none, 27, 4, 4, ⟨0, 3, 1, 1, 1⟩, [⟨.fin, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 24, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 24, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 24, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 25, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 22, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_75_12 : CodeView.Sim.run (view N 11199 1595536 188243) 42018750 bst_75_12 = CodeView.Sim.run (view N 11199 1595536 188243) 42018745 bst_75_13 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 5 bst_75_12 = some bst_75_13 := by decide +kernel
+theorem bsim_75_12 : CodeView.Sim.run (view N 11199 1595536 188243) 42018773 bst_75_12 = CodeView.Sim.run (view N 11199 1595536 188243) 42018770 bst_75_13 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 3 bst_75_12 = some bst_75_13 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 5 _ _ 42018745 h
+  exact CodeView.Sim.run_steps _ 3 _ _ 42018770 h
 
-def bst_75_14 : SimState := ⟨none, 54, 4, 5, ⟨3, 3, 4, 1, 1⟩, [⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 22, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_75_14 : SimState := ⟨none, 29, 4, 5, ⟨0, 3, 1, 1, 1⟩, [⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 22, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 22, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 22, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 23, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 20, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_75_13 : CodeView.Sim.run (view N 11199 1595536 188243) 42018745 bst_75_13 = CodeView.Sim.run (view N 11199 1595536 188243) 42018740 bst_75_14 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 5 bst_75_13 = some bst_75_14 := by decide +kernel
+theorem bsim_75_13 : CodeView.Sim.run (view N 11199 1595536 188243) 42018770 bst_75_13 = CodeView.Sim.run (view N 11199 1595536 188243) 42018767 bst_75_14 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 3 bst_75_13 = some bst_75_14 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 5 _ _ 42018740 h
+  exact CodeView.Sim.run_steps _ 3 _ _ 42018767 h
 
-def bst_75_15 : SimState := ⟨none, 59, 4, 5, ⟨3, 3, 4, 1, 1⟩, [⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 17, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_75_15 : SimState := ⟨none, 32, 4, 5, ⟨0, 3, 1, 1, 1⟩, [⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 19, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 19, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 19, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 20, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 17, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_75_14 : CodeView.Sim.run (view N 11199 1595536 188243) 42018740 bst_75_14 = CodeView.Sim.run (view N 11199 1595536 188243) 42018735 bst_75_15 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 5 bst_75_14 = some bst_75_15 := by decide +kernel
+theorem bsim_75_14 : CodeView.Sim.run (view N 11199 1595536 188243) 42018767 bst_75_14 = CodeView.Sim.run (view N 11199 1595536 188243) 42018764 bst_75_15 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 3 bst_75_14 = some bst_75_15 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 5 _ _ 42018735 h
+  exact CodeView.Sim.run_steps _ 3 _ _ 42018764 h
 
-def bst_75_16 : SimState := ⟨none, 64, 4, 5, ⟨3, 3, 4, 1, 1⟩, [⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 12, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_75_16 : SimState := ⟨none, 35, 4, 5, ⟨0, 3, 1, 1, 1⟩, [⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 16, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 16, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 16, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 17, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 14, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_75_15 : CodeView.Sim.run (view N 11199 1595536 188243) 42018735 bst_75_15 = CodeView.Sim.run (view N 11199 1595536 188243) 42018730 bst_75_16 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 5 bst_75_15 = some bst_75_16 := by decide +kernel
+theorem bsim_75_15 : CodeView.Sim.run (view N 11199 1595536 188243) 42018764 bst_75_15 = CodeView.Sim.run (view N 11199 1595536 188243) 42018761 bst_75_16 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 3 bst_75_15 = some bst_75_16 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 5 _ _ 42018730 h
+  exact CodeView.Sim.run_steps _ 3 _ _ 42018761 h
 
-def bst_75_17 : SimState := ⟨none, 69, 4, 5, ⟨3, 3, 4, 1, 1⟩, [⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 7, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_75_17 : SimState := ⟨none, 38, 4, 5, ⟨0, 3, 1, 1, 1⟩, [⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 13, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 13, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 13, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 14, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 11, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_75_16 : CodeView.Sim.run (view N 11199 1595536 188243) 42018730 bst_75_16 = CodeView.Sim.run (view N 11199 1595536 188243) 42018725 bst_75_17 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 5 bst_75_16 = some bst_75_17 := by decide +kernel
+theorem bsim_75_16 : CodeView.Sim.run (view N 11199 1595536 188243) 42018761 bst_75_16 = CodeView.Sim.run (view N 11199 1595536 188243) 42018758 bst_75_17 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 3 bst_75_16 = some bst_75_17 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 5 _ _ 42018725 h
+  exact CodeView.Sim.run_steps _ 3 _ _ 42018758 h
 
-def bst_75_18 : SimState := ⟨none, 74, 4, 5, ⟨3, 3, 4, 1, 1⟩, [⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 2, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_75_18 : SimState := ⟨none, 41, 4, 5, ⟨0, 3, 1, 1, 1⟩, [⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 10, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 10, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 10, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 11, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 8, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_75_17 : CodeView.Sim.run (view N 11199 1595536 188243) 42018725 bst_75_17 = CodeView.Sim.run (view N 11199 1595536 188243) 42018720 bst_75_18 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 5 bst_75_17 = some bst_75_18 := by decide +kernel
+theorem bsim_75_17 : CodeView.Sim.run (view N 11199 1595536 188243) 42018758 bst_75_17 = CodeView.Sim.run (view N 11199 1595536 188243) 42018755 bst_75_18 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 3 bst_75_17 = some bst_75_18 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 5 _ _ 42018720 h
+  exact CodeView.Sim.run_steps _ 3 _ _ 42018755 h
 
-def bst_75_19 : SimState := ⟨none, 78, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_75_19 : SimState := ⟨none, 44, 4, 5, ⟨0, 3, 1, 1, 1⟩, [⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 7, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 7, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 7, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 8, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 5, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_75_18 : CodeView.Sim.run (view N 11199 1595536 188243) 42018720 bst_75_18 = CodeView.Sim.run (view N 11199 1595536 188243) 42018716 bst_75_19 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 4 bst_75_18 = some bst_75_19 := by decide +kernel
+theorem bsim_75_18 : CodeView.Sim.run (view N 11199 1595536 188243) 42018755 bst_75_18 = CodeView.Sim.run (view N 11199 1595536 188243) 42018752 bst_75_19 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 3 bst_75_18 = some bst_75_19 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 4 _ _ 42018716 h
+  exact CodeView.Sim.run_steps _ 3 _ _ 42018752 h
 
-theorem bend_75 : CodeView.Sim.run (view N 11199 1595536 188243) 42018716 bst_75_19 = some bst_75_19 := by
-  have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) bst_75_19 = some (.inr bst_75_19) := by decide +kernel
+def bst_75_20 : SimState := ⟨none, 47, 4, 5, ⟨0, 3, 1, 1, 1⟩, [⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 4, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 4, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 4, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 5, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 2, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_75_19 : CodeView.Sim.run (view N 11199 1595536 188243) 42018752 bst_75_19 = CodeView.Sim.run (view N 11199 1595536 188243) 42018749 bst_75_20 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 3 bst_75_19 = some bst_75_20 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_final _ bst_75_19 42018715 h
+  exact CodeView.Sim.run_steps _ 3 _ _ 42018749 h
+
+def bst_75_21 : SimState := ⟨none, 50, 4, 5, ⟨0, 3, 1, 1, 1⟩, [⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 1, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 1, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 1, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 2, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_75_20 : CodeView.Sim.run (view N 11199 1595536 188243) 42018749 bst_75_20 = CodeView.Sim.run (view N 11199 1595536 188243) 42018746 bst_75_21 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 3 bst_75_20 = some bst_75_21 := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_steps _ 3 _ _ 42018746 h
+
+def bst_75_22 : SimState := ⟨none, 51, 4, 3, ⟨1, 2, 4, 1, 1⟩, [⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 0, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 0, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 1, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_75_21 : CodeView.Sim.run (view N 11199 1595536 188243) 42018746 bst_75_21 = CodeView.Sim.run (view N 11199 1595536 188243) 42018743 bst_75_22 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 3 bst_75_21 = some bst_75_22 := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_steps _ 3 _ _ 42018743 h
+
+def bst_75_23 : SimState := ⟨none, 54, 4, 5, ⟨3, 3, 4, 1, 1⟩, [⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 22, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_75_22 : CodeView.Sim.run (view N 11199 1595536 188243) 42018743 bst_75_22 = CodeView.Sim.run (view N 11199 1595536 188243) 42018740 bst_75_23 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 3 bst_75_22 = some bst_75_23 := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_steps _ 3 _ _ 42018740 h
+
+def bst_75_24 : SimState := ⟨none, 57, 4, 5, ⟨3, 3, 4, 1, 1⟩, [⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 19, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_75_23 : CodeView.Sim.run (view N 11199 1595536 188243) 42018740 bst_75_23 = CodeView.Sim.run (view N 11199 1595536 188243) 42018737 bst_75_24 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 3 bst_75_23 = some bst_75_24 := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_steps _ 3 _ _ 42018737 h
+
+def bst_75_25 : SimState := ⟨none, 60, 4, 5, ⟨3, 3, 4, 1, 1⟩, [⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 16, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_75_24 : CodeView.Sim.run (view N 11199 1595536 188243) 42018737 bst_75_24 = CodeView.Sim.run (view N 11199 1595536 188243) 42018734 bst_75_25 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 3 bst_75_24 = some bst_75_25 := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_steps _ 3 _ _ 42018734 h
+
+def bst_75_26 : SimState := ⟨none, 63, 4, 5, ⟨3, 3, 4, 1, 1⟩, [⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 13, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_75_25 : CodeView.Sim.run (view N 11199 1595536 188243) 42018734 bst_75_25 = CodeView.Sim.run (view N 11199 1595536 188243) 42018731 bst_75_26 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 3 bst_75_25 = some bst_75_26 := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_steps _ 3 _ _ 42018731 h
+
+def bst_75_27 : SimState := ⟨none, 66, 4, 5, ⟨3, 3, 4, 1, 1⟩, [⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 10, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_75_26 : CodeView.Sim.run (view N 11199 1595536 188243) 42018731 bst_75_26 = CodeView.Sim.run (view N 11199 1595536 188243) 42018728 bst_75_27 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 3 bst_75_26 = some bst_75_27 := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_steps _ 3 _ _ 42018728 h
+
+def bst_75_28 : SimState := ⟨none, 69, 4, 5, ⟨3, 3, 4, 1, 1⟩, [⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 7, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_75_27 : CodeView.Sim.run (view N 11199 1595536 188243) 42018728 bst_75_27 = CodeView.Sim.run (view N 11199 1595536 188243) 42018725 bst_75_28 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 3 bst_75_27 = some bst_75_28 := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_steps _ 3 _ _ 42018725 h
+
+def bst_75_29 : SimState := ⟨none, 72, 4, 5, ⟨3, 3, 4, 1, 1⟩, [⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 4, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_75_28 : CodeView.Sim.run (view N 11199 1595536 188243) 42018725 bst_75_28 = CodeView.Sim.run (view N 11199 1595536 188243) 42018722 bst_75_29 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 3 bst_75_28 = some bst_75_29 := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_steps _ 3 _ _ 42018722 h
+
+def bst_75_30 : SimState := ⟨none, 75, 4, 5, ⟨3, 3, 4, 1, 1⟩, [⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 1, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_75_29 : CodeView.Sim.run (view N 11199 1595536 188243) 42018722 bst_75_29 = CodeView.Sim.run (view N 11199 1595536 188243) 42018719 bst_75_30 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 3 bst_75_29 = some bst_75_30 := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_steps _ 3 _ _ 42018719 h
+
+def bst_75_31 : SimState := ⟨none, 78, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [0, 1], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨256⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [0, 3], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [6], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_75_30 : CodeView.Sim.run (view N 11199 1595536 188243) 42018719 bst_75_30 = CodeView.Sim.run (view N 11199 1595536 188243) 42018716 bst_75_31 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) 3 bst_75_30 = some bst_75_31 := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_steps _ 3 _ _ 42018716 h
+
+theorem bend_75 : CodeView.Sim.run (view N 11199 1595536 188243) 42018716 bst_75_31 = some bst_75_31 := by
+  have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 34 1 0 0 197 1) bst_75_31 = some (.inr bst_75_31) := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_final _ bst_75_31 42018715 h
 
 /-- ϱ^Δ of the block at 24109 is 75 (GP eq. `gascostforblock`). -/
 theorem bcost_75 : (view N 11199 1595536 188243).blockCost 24109 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 24109 bst_75_19 (bsim_75_0.trans (bsim_75_1.trans (bsim_75_2.trans (bsim_75_3.trans (bsim_75_4.trans (bsim_75_5.trans (bsim_75_6.trans (bsim_75_7.trans (bsim_75_8.trans (bsim_75_9.trans (bsim_75_10.trans (bsim_75_11.trans (bsim_75_12.trans (bsim_75_13.trans (bsim_75_14.trans (bsim_75_15.trans (bsim_75_16.trans (bsim_75_17.trans (bsim_75_18.trans bend_75)))))))))))))))))))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 24109 bst_75_31 (bsim_75_0.trans (bsim_75_1.trans (bsim_75_2.trans (bsim_75_3.trans (bsim_75_4.trans (bsim_75_5.trans (bsim_75_6.trans (bsim_75_7.trans (bsim_75_8.trans (bsim_75_9.trans (bsim_75_10.trans (bsim_75_11.trans (bsim_75_12.trans (bsim_75_13.trans (bsim_75_14.trans (bsim_75_15.trans (bsim_75_16.trans (bsim_75_17.trans (bsim_75_18.trans (bsim_75_19.trans (bsim_75_20.trans (bsim_75_21.trans (bsim_75_22.trans (bsim_75_23.trans (bsim_75_24.trans (bsim_75_25.trans (bsim_75_26.trans (bsim_75_27.trans (bsim_75_28.trans (bsim_75_29.trans (bsim_75_30.trans bend_75)))))))))))))))))))))))))))))))]
   decide
 
-theorem bstarts_75 : CodeFact.blockStartsV (cview chunks 11199 1595536 188243 34 1 197 1) 24109 24139 = true := by
-  decide +kernel
+theorem bstart_75 : (view N 11199 1595536 188243).isBlockStart 24109 = true := by
+  have h : (cview chunks 11199 1595536 188243 34 1 197 1).isBlockStartF 24109 = true := by decide +kernel
+  rw [CodeView.isBlockStartF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
+  exact h
+
+theorem bno_75_0 : ∀ k, 24110 ≤ k → k < 24110 + 16 → (view N 11199 1595536 188243).isBlockStart k = false := by
+  have h : (cview chunks 11199 1595536 188243 34 1 197 1).noStartsF 24110 16 = true := by decide +kernel
+  rw [cview_eq chunks chunks_lt] at h
+  exact CodeView.noStartsF_sound _ (fun i => view_zeta_lt _ _ _ _ i) 24110 16 h
+
+theorem bno_75_1 : ∀ k, 24126 ≤ k → k < 24126 + 13 → (view N 11199 1595536 188243).isBlockStart k = false := by
+  have h : (cview chunks 11199 1595536 188243 34 1 197 1).noStartsF 24126 13 = true := by decide +kernel
+  rw [cview_eq chunks chunks_lt] at h
+  exact CodeView.noStartsF_sound _ (fun i => view_zeta_lt _ _ _ _ i) 24126 13 h
+
+theorem bstarts_75 : CodeFact.blockStartsV (view N 11199 1595536 188243) 24109 24139 = true :=
+  CodeFact.blockStartsV_of _ 24109 24139 bstart_75 (range_cover bno_75_0 bno_75_1)
 
 theorem chunk_ok_75 : facts_75.all (·.holds prog) = true := by
   simp only [facts_75, List.all_cons, List.all_nil, Bool.and_true, CodeFact.holds_block, Bool.and_eq_true,
     decide_eq_true_eq]
   refine ⟨?_, ?_⟩
-  · rw [prog_cview 34 1 197 1]; exact bstarts_75
+  · rw [prog_view]; exact bstarts_75
   · rw [prog_view]; exact bcost_75
 
-theorem chunk_76 : facts_76.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 34 1 197 1) jt) = true := by
+theorem chunk_76 : facts_76.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 34 1 197 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_76 : facts_76.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 34 1 197 1) _ chunk_76
+  CodeFact.all_holds_of_view prog _ (prog_cview 34 1 197 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_76)
 
-theorem chunk_77 : facts_77.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 34 1 197 1) jt) = true := by
+theorem chunk_77 : facts_77.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 34 1 197 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_77 : facts_77.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 34 1 197 1) _ chunk_77
+  CodeFact.all_holds_of_view prog _ (prog_cview 34 1 197 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_77)
 
-theorem chunk_78 : facts_78.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 34 1 197 1) jt) = true := by
+theorem chunk_78 : facts_78.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 34 1 197 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_78 : facts_78.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 34 1 197 1) _ chunk_78
+  CodeFact.all_holds_of_view prog _ (prog_cview 34 1 197 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_78)
 
-theorem chunk_79 : facts_79.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 34 1 197 1) jt) = true := by
+theorem chunk_79 : facts_79.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 34 1 197 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_79 : facts_79.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 34 1 197 1) _ chunk_79
+  CodeFact.all_holds_of_view prog _ (prog_cview 34 1 197 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_79)
 
-theorem chunk_80 : facts_80.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 34 1 197 1) jt) = true := by
+theorem chunk_80 : facts_80.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 34 1 197 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_80 : facts_80.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 34 1 197 1) _ chunk_80
+  CodeFact.all_holds_of_view prog _ (prog_cview 34 1 197 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_80)
 
-theorem chunk_81 : facts_81.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 34 1 197 1) jt) = true := by
+theorem chunk_81 : facts_81.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 34 1 197 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_81 : facts_81.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 34 1 197 1) _ chunk_81
+  CodeFact.all_holds_of_view prog _ (prog_cview 34 1 197 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_81)
 
-theorem chunk_82 : facts_82.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jt) = true := by
+theorem chunk_82 : facts_82.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_82 : facts_82.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ chunk_82
+  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_82)
 
-def bst_83_1 : SimState := ⟨some 39793, 2, 2, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.exe, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 4, [], ⟨32⟩, ⟨1, 0, 0, 1, 0⟩⟩, ⟨.dec, 1, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.dec, 1, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_83_1 : SimState := ⟨some 39787, 1, 0, 4, ⟨3, 4, 4, 1, 1⟩, [⟨.exe, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.dec, 4, [], ⟨32⟩, ⟨1, 0, 0, 1, 0⟩⟩]⟩
 
-theorem bsim_83_0 : CodeView.Sim.run (view N 11199 1595536 188243) 38009088 (Sim.init 39772) = CodeView.Sim.run (view N 11199 1595536 188243) 38009078 bst_83_1 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) 10 (Sim.init 39772) = some bst_83_1 := by decide +kernel
+theorem bsim_83_0 : CodeView.Sim.run (view N 11199 1595536 188243) 38009088 (Sim.init 39772) = CodeView.Sim.run (view N 11199 1595536 188243) 38009081 bst_83_1 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) 7 (Sim.init 39772) = some bst_83_1 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 10 _ _ 38009078 h
+  exact CodeView.Sim.run_steps _ 7 _ _ 38009081 h
 
-def bst_83_2 : SimState := ⟨none, 3, 4, 5, ⟨0, 4, 1, 0, 1⟩, [⟨.fin, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 24, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 24, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 24, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 3, [], ⟨32⟩, ⟨1, 0, 0, 1, 0⟩⟩, ⟨.wait, 1, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.wait, 20, [4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_83_2 : SimState := ⟨none, 2, 1, 4, ⟨3, 4, 3, 1, 1⟩, [⟨.exe, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 4, [], ⟨32⟩, ⟨1, 0, 0, 1, 0⟩⟩, ⟨.dec, 1, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.dec, 1, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.dec, 20, [4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_83_1 : CodeView.Sim.run (view N 11199 1595536 188243) 38009078 bst_83_1 = CodeView.Sim.run (view N 11199 1595536 188243) 38009072 bst_83_2 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) 6 bst_83_1 = some bst_83_2 := by decide +kernel
+theorem bsim_83_1 : CodeView.Sim.run (view N 11199 1595536 188243) 38009081 bst_83_1 = CodeView.Sim.run (view N 11199 1595536 188243) 38009076 bst_83_2 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) 5 bst_83_1 = some bst_83_2 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 6 _ _ 38009072 h
+  exact CodeView.Sim.run_steps _ 5 _ _ 38009076 h
 
-def bst_83_3 : SimState := ⟨none, 6, 4, 4, ⟨0, 4, 1, 1, 1⟩, [⟨.none, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 21, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 21, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 21, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 0, [], ⟨32⟩, ⟨1, 0, 0, 1, 0⟩⟩, ⟨.fin, 0, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 20, [4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_83_3 : SimState := ⟨none, 3, 4, 5, ⟨0, 4, 1, 0, 1⟩, [⟨.fin, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 24, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 24, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 24, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 3, [], ⟨32⟩, ⟨1, 0, 0, 1, 0⟩⟩, ⟨.wait, 1, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.wait, 20, [4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_83_2 : CodeView.Sim.run (view N 11199 1595536 188243) 38009072 bst_83_2 = CodeView.Sim.run (view N 11199 1595536 188243) 38009066 bst_83_3 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) 6 bst_83_2 = some bst_83_3 := by decide +kernel
+theorem bsim_83_2 : CodeView.Sim.run (view N 11199 1595536 188243) 38009076 bst_83_2 = CodeView.Sim.run (view N 11199 1595536 188243) 38009072 bst_83_3 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) 4 bst_83_2 = some bst_83_3 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 6 _ _ 38009066 h
+  exact CodeView.Sim.run_steps _ 4 _ _ 38009072 h
 
-def bst_83_4 : SimState := ⟨none, 12, 4, 5, ⟨0, 4, 1, 1, 1⟩, [⟨.none, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 15, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 15, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 15, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨32⟩, ⟨1, 0, 0, 1, 0⟩⟩, ⟨.fin, 0, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 14, [4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_83_4 : SimState := ⟨none, 5, 4, 5, ⟨0, 4, 1, 0, 1⟩, [⟨.none, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 22, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 22, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 22, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 1, [], ⟨32⟩, ⟨1, 0, 0, 1, 0⟩⟩, ⟨.fin, 0, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.wait, 20, [4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_83_3 : CodeView.Sim.run (view N 11199 1595536 188243) 38009066 bst_83_3 = CodeView.Sim.run (view N 11199 1595536 188243) 38009060 bst_83_4 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) 6 bst_83_3 = some bst_83_4 := by decide +kernel
+theorem bsim_83_3 : CodeView.Sim.run (view N 11199 1595536 188243) 38009072 bst_83_3 = CodeView.Sim.run (view N 11199 1595536 188243) 38009068 bst_83_4 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) 4 bst_83_3 = some bst_83_4 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 6 _ _ 38009060 h
+  exact CodeView.Sim.run_steps _ 4 _ _ 38009068 h
 
-def bst_83_5 : SimState := ⟨none, 18, 4, 5, ⟨0, 4, 1, 1, 1⟩, [⟨.none, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 9, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 9, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 9, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨32⟩, ⟨1, 0, 0, 1, 0⟩⟩, ⟨.fin, 0, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 8, [4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_83_5 : SimState := ⟨none, 8, 4, 5, ⟨0, 4, 1, 1, 1⟩, [⟨.none, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 19, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 19, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 19, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨32⟩, ⟨1, 0, 0, 1, 0⟩⟩, ⟨.fin, 0, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 18, [4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_83_4 : CodeView.Sim.run (view N 11199 1595536 188243) 38009060 bst_83_4 = CodeView.Sim.run (view N 11199 1595536 188243) 38009054 bst_83_5 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) 6 bst_83_4 = some bst_83_5 := by decide +kernel
+theorem bsim_83_4 : CodeView.Sim.run (view N 11199 1595536 188243) 38009068 bst_83_4 = CodeView.Sim.run (view N 11199 1595536 188243) 38009064 bst_83_5 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) 4 bst_83_4 = some bst_83_5 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 6 _ _ 38009054 h
+  exact CodeView.Sim.run_steps _ 4 _ _ 38009064 h
 
-def bst_83_6 : SimState := ⟨none, 24, 4, 5, ⟨0, 4, 1, 1, 1⟩, [⟨.none, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 3, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 3, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 3, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨32⟩, ⟨1, 0, 0, 1, 0⟩⟩, ⟨.fin, 0, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 2, [4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_83_6 : SimState := ⟨none, 12, 4, 5, ⟨0, 4, 1, 1, 1⟩, [⟨.none, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 15, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 15, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 15, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨32⟩, ⟨1, 0, 0, 1, 0⟩⟩, ⟨.fin, 0, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 14, [4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_83_5 : CodeView.Sim.run (view N 11199 1595536 188243) 38009054 bst_83_5 = CodeView.Sim.run (view N 11199 1595536 188243) 38009048 bst_83_6 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) 6 bst_83_5 = some bst_83_6 := by decide +kernel
+theorem bsim_83_5 : CodeView.Sim.run (view N 11199 1595536 188243) 38009064 bst_83_5 = CodeView.Sim.run (view N 11199 1595536 188243) 38009060 bst_83_6 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) 4 bst_83_5 = some bst_83_6 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 6 _ _ 38009048 h
+  exact CodeView.Sim.run_steps _ 4 _ _ 38009060 h
 
-def bst_83_7 : SimState := ⟨none, 29, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨32⟩, ⟨1, 0, 0, 1, 0⟩⟩, ⟨.none, 0, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_83_7 : SimState := ⟨none, 16, 4, 5, ⟨0, 4, 1, 1, 1⟩, [⟨.none, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 11, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 11, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 11, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨32⟩, ⟨1, 0, 0, 1, 0⟩⟩, ⟨.fin, 0, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 10, [4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_83_6 : CodeView.Sim.run (view N 11199 1595536 188243) 38009048 bst_83_6 = CodeView.Sim.run (view N 11199 1595536 188243) 38009043 bst_83_7 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) 5 bst_83_6 = some bst_83_7 := by decide +kernel
+theorem bsim_83_6 : CodeView.Sim.run (view N 11199 1595536 188243) 38009060 bst_83_6 = CodeView.Sim.run (view N 11199 1595536 188243) 38009056 bst_83_7 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) 4 bst_83_6 = some bst_83_7 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 5 _ _ 38009043 h
+  exact CodeView.Sim.run_steps _ 4 _ _ 38009056 h
 
-theorem bend_83 : CodeView.Sim.run (view N 11199 1595536 188243) 38009043 bst_83_7 = some bst_83_7 := by
-  have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) bst_83_7 = some (.inr bst_83_7) := by decide +kernel
+def bst_83_8 : SimState := ⟨none, 20, 4, 5, ⟨0, 4, 1, 1, 1⟩, [⟨.none, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 7, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 7, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 7, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨32⟩, ⟨1, 0, 0, 1, 0⟩⟩, ⟨.fin, 0, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 6, [4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_83_7 : CodeView.Sim.run (view N 11199 1595536 188243) 38009056 bst_83_7 = CodeView.Sim.run (view N 11199 1595536 188243) 38009052 bst_83_8 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) 4 bst_83_7 = some bst_83_8 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_final _ bst_83_7 38009042 h
+  exact CodeView.Sim.run_steps _ 4 _ _ 38009052 h
+
+def bst_83_9 : SimState := ⟨none, 24, 4, 5, ⟨0, 4, 1, 1, 1⟩, [⟨.none, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 3, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 3, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 3, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨32⟩, ⟨1, 0, 0, 1, 0⟩⟩, ⟨.fin, 0, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 2, [4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_83_8 : CodeView.Sim.run (view N 11199 1595536 188243) 38009052 bst_83_8 = CodeView.Sim.run (view N 11199 1595536 188243) 38009048 bst_83_9 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) 4 bst_83_8 = some bst_83_9 := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_steps _ 4 _ _ 38009048 h
+
+def bst_83_10 : SimState := ⟨none, 28, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨32⟩, ⟨1, 0, 0, 1, 0⟩⟩, ⟨.fin, 0, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_83_9 : CodeView.Sim.run (view N 11199 1595536 188243) 38009048 bst_83_9 = CodeView.Sim.run (view N 11199 1595536 188243) 38009044 bst_83_10 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) 4 bst_83_9 = some bst_83_10 := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_steps _ 4 _ _ 38009044 h
+
+def bst_83_11 : SimState := ⟨none, 29, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨32⟩, ⟨1, 0, 0, 1, 0⟩⟩, ⟨.none, 0, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_83_10 : CodeView.Sim.run (view N 11199 1595536 188243) 38009044 bst_83_10 = CodeView.Sim.run (view N 11199 1595536 188243) 38009043 bst_83_11 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) 1 bst_83_10 = some bst_83_11 := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_steps _ 1 _ _ 38009043 h
+
+theorem bend_83 : CodeView.Sim.run (view N 11199 1595536 188243) 38009043 bst_83_11 = some bst_83_11 := by
+  have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) bst_83_11 = some (.inr bst_83_11) := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_final _ bst_83_11 38009042 h
 
 /-- ϱ^Δ of the block at 39772 is 26 (GP eq. `gascostforblock`). -/
 theorem bcost_83 : (view N 11199 1595536 188243).blockCost 39772 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 39772 bst_83_7 (bsim_83_0.trans (bsim_83_1.trans (bsim_83_2.trans (bsim_83_3.trans (bsim_83_4.trans (bsim_83_5.trans (bsim_83_6.trans bend_83)))))))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 39772 bst_83_11 (bsim_83_0.trans (bsim_83_1.trans (bsim_83_2.trans (bsim_83_3.trans (bsim_83_4.trans (bsim_83_5.trans (bsim_83_6.trans (bsim_83_7.trans (bsim_83_8.trans (bsim_83_9.trans (bsim_83_10.trans bend_83)))))))))))]
   decide
 
-theorem bstarts_83 : CodeFact.blockStartsV (cview chunks 11199 1595536 188243 49 1 199 1) 39772 39796 = true := by
-  decide +kernel
+theorem bstart_83 : (view N 11199 1595536 188243).isBlockStart 39772 = true := by
+  have h : (cview chunks 11199 1595536 188243 49 1 199 1).isBlockStartF 39772 = true := by decide +kernel
+  rw [CodeView.isBlockStartF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
+  exact h
+
+theorem bno_83_0 : ∀ k, 39773 ≤ k → k < 39773 + 16 → (view N 11199 1595536 188243).isBlockStart k = false := by
+  have h : (cview chunks 11199 1595536 188243 49 1 199 1).noStartsF 39773 16 = true := by decide +kernel
+  rw [cview_eq chunks chunks_lt] at h
+  exact CodeView.noStartsF_sound _ (fun i => view_zeta_lt _ _ _ _ i) 39773 16 h
+
+theorem bno_83_1 : ∀ k, 39789 ≤ k → k < 39789 + 7 → (view N 11199 1595536 188243).isBlockStart k = false := by
+  have h : (cview chunks 11199 1595536 188243 49 1 199 1).noStartsF 39789 7 = true := by decide +kernel
+  rw [cview_eq chunks chunks_lt] at h
+  exact CodeView.noStartsF_sound _ (fun i => view_zeta_lt _ _ _ _ i) 39789 7 h
+
+theorem bstarts_83 : CodeFact.blockStartsV (view N 11199 1595536 188243) 39772 39796 = true :=
+  CodeFact.blockStartsV_of _ 39772 39796 bstart_83 (range_cover bno_83_0 bno_83_1)
 
 theorem chunk_ok_83 : facts_83.all (·.holds prog) = true := by
   simp only [facts_83, List.all_cons, List.all_nil, Bool.and_true, CodeFact.holds_block, Bool.and_eq_true,
     decide_eq_true_eq]
   refine ⟨?_, ?_⟩
-  · rw [prog_cview 49 1 199 1]; exact bstarts_83
+  · rw [prog_view]; exact bstarts_83
   · rw [prog_view]; exact bcost_83
 
-theorem chunk_84 : facts_84.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jt) = true := by
+theorem chunk_84 : facts_84.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_84 : facts_84.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ chunk_84
+  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_84)
 
-theorem chunk_85 : facts_85.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jt) = true := by
+theorem chunk_85 : facts_85.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_85 : facts_85.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ chunk_85
+  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_85)
 
-theorem chunk_86 : facts_86.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jt) = true := by
+theorem chunk_86 : facts_86.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_86 : facts_86.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ chunk_86
+  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_86)
 
-theorem chunk_87 : facts_87.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jt) = true := by
+theorem chunk_87 : facts_87.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_87 : facts_87.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ chunk_87
+  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_87)
 
-def bst_88_1 : SimState := ⟨none, 4, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.exe, 0, [], ⟨32⟩, ⟨1, 0, 0, 1, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [1], ⟨1024⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 20, [0, 2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_88_1 : SimState := ⟨none, 2, 4, 5, ⟨3, 4, 4, 0, 1⟩, [⟨.exe, 2, [], ⟨32⟩, ⟨1, 0, 0, 1, 0⟩⟩, ⟨.exe, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.wait, 1, [1], ⟨1024⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 20, [0, 2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_88_0 : CodeView.Sim.run (view N 11199 1595536 188243) 38002944 (Sim.init 39796) = CodeView.Sim.run (view N 11199 1595536 188243) 38002933 bst_88_1 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 11 (Sim.init 39796) = some bst_88_1 := by decide +kernel
+theorem bsim_88_0 : CodeView.Sim.run (view N 11199 1595536 188243) 38002944 (Sim.init 39796) = CodeView.Sim.run (view N 11199 1595536 188243) 38002936 bst_88_1 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 8 (Sim.init 39796) = some bst_88_1 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 11 _ _ 38002933 h
+  exact CodeView.Sim.run_steps _ 8 _ _ 38002936 h
 
-def bst_88_2 : SimState := ⟨none, 12, 4, 5, ⟨3, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨32⟩, ⟨1, 0, 0, 1, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [1], ⟨1024⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 12, [0, 2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_88_2 : SimState := ⟨none, 6, 4, 5, ⟨3, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨32⟩, ⟨1, 0, 0, 1, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [1], ⟨1024⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 18, [0, 2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_88_1 : CodeView.Sim.run (view N 11199 1595536 188243) 38002933 bst_88_1 = CodeView.Sim.run (view N 11199 1595536 188243) 38002924 bst_88_2 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 9 bst_88_1 = some bst_88_2 := by decide +kernel
+theorem bsim_88_1 : CodeView.Sim.run (view N 11199 1595536 188243) 38002936 bst_88_1 = CodeView.Sim.run (view N 11199 1595536 188243) 38002930 bst_88_2 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 6 bst_88_1 = some bst_88_2 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 9 _ _ 38002924 h
+  exact CodeView.Sim.run_steps _ 6 _ _ 38002930 h
 
-def bst_88_3 : SimState := ⟨none, 21, 4, 5, ⟨3, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨32⟩, ⟨1, 0, 0, 1, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [1], ⟨1024⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 3, [0, 2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_88_3 : SimState := ⟨none, 12, 4, 5, ⟨3, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨32⟩, ⟨1, 0, 0, 1, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [1], ⟨1024⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 12, [0, 2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_88_2 : CodeView.Sim.run (view N 11199 1595536 188243) 38002924 bst_88_2 = CodeView.Sim.run (view N 11199 1595536 188243) 38002915 bst_88_3 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 9 bst_88_2 = some bst_88_3 := by decide +kernel
+theorem bsim_88_2 : CodeView.Sim.run (view N 11199 1595536 188243) 38002930 bst_88_2 = CodeView.Sim.run (view N 11199 1595536 188243) 38002924 bst_88_3 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 6 bst_88_2 = some bst_88_3 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 9 _ _ 38002915 h
+  exact CodeView.Sim.run_steps _ 6 _ _ 38002924 h
 
-def bst_88_4 : SimState := ⟨none, 26, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨32⟩, ⟨1, 0, 0, 1, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [1], ⟨1024⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [0, 2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_88_4 : SimState := ⟨none, 18, 4, 5, ⟨3, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨32⟩, ⟨1, 0, 0, 1, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [1], ⟨1024⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 6, [0, 2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_88_3 : CodeView.Sim.run (view N 11199 1595536 188243) 38002915 bst_88_3 = CodeView.Sim.run (view N 11199 1595536 188243) 38002910 bst_88_4 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 5 bst_88_3 = some bst_88_4 := by decide +kernel
+theorem bsim_88_3 : CodeView.Sim.run (view N 11199 1595536 188243) 38002924 bst_88_3 = CodeView.Sim.run (view N 11199 1595536 188243) 38002918 bst_88_4 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 6 bst_88_3 = some bst_88_4 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 5 _ _ 38002910 h
+  exact CodeView.Sim.run_steps _ 6 _ _ 38002918 h
 
-theorem bend_88 : CodeView.Sim.run (view N 11199 1595536 188243) 38002910 bst_88_4 = some bst_88_4 := by
-  have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) bst_88_4 = some (.inr bst_88_4) := by decide +kernel
+def bst_88_5 : SimState := ⟨none, 24, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨32⟩, ⟨1, 0, 0, 1, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [1], ⟨1024⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 0, [0, 2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_88_4 : CodeView.Sim.run (view N 11199 1595536 188243) 38002918 bst_88_4 = CodeView.Sim.run (view N 11199 1595536 188243) 38002912 bst_88_5 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 6 bst_88_4 = some bst_88_5 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_final _ bst_88_4 38002909 h
+  exact CodeView.Sim.run_steps _ 6 _ _ 38002912 h
+
+def bst_88_6 : SimState := ⟨none, 26, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨32⟩, ⟨1, 0, 0, 1, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [1], ⟨1024⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [0, 2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_88_5 : CodeView.Sim.run (view N 11199 1595536 188243) 38002912 bst_88_5 = CodeView.Sim.run (view N 11199 1595536 188243) 38002910 bst_88_6 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 2 bst_88_5 = some bst_88_6 := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_steps _ 2 _ _ 38002910 h
+
+theorem bend_88 : CodeView.Sim.run (view N 11199 1595536 188243) 38002910 bst_88_6 = some bst_88_6 := by
+  have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) bst_88_6 = some (.inr bst_88_6) := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_final _ bst_88_6 38002909 h
 
 /-- ϱ^Δ of the block at 39796 is 23 (GP eq. `gascostforblock`). -/
 theorem bcost_88 : (view N 11199 1595536 188243).blockCost 39796 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 39796 bst_88_4 (bsim_88_0.trans (bsim_88_1.trans (bsim_88_2.trans (bsim_88_3.trans bend_88))))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 39796 bst_88_6 (bsim_88_0.trans (bsim_88_1.trans (bsim_88_2.trans (bsim_88_3.trans (bsim_88_4.trans (bsim_88_5.trans bend_88))))))]
   decide
 
-theorem bstarts_88 : CodeFact.blockStartsV (cview chunks 11199 1595536 188243 49 1 199 1) 39796 39815 = true := by
-  decide +kernel
+theorem bstart_88 : (view N 11199 1595536 188243).isBlockStart 39796 = true := by
+  have h : (cview chunks 11199 1595536 188243 49 1 199 1).isBlockStartF 39796 = true := by decide +kernel
+  rw [CodeView.isBlockStartF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
+  exact h
+
+theorem bno_88_0 : ∀ k, 39797 ≤ k → k < 39797 + 16 → (view N 11199 1595536 188243).isBlockStart k = false := by
+  have h : (cview chunks 11199 1595536 188243 49 1 199 1).noStartsF 39797 16 = true := by decide +kernel
+  rw [cview_eq chunks chunks_lt] at h
+  exact CodeView.noStartsF_sound _ (fun i => view_zeta_lt _ _ _ _ i) 39797 16 h
+
+theorem bno_88_1 : ∀ k, 39813 ≤ k → k < 39813 + 2 → (view N 11199 1595536 188243).isBlockStart k = false := by
+  have h : (cview chunks 11199 1595536 188243 49 1 199 1).noStartsF 39813 2 = true := by decide +kernel
+  rw [cview_eq chunks chunks_lt] at h
+  exact CodeView.noStartsF_sound _ (fun i => view_zeta_lt _ _ _ _ i) 39813 2 h
+
+theorem bstarts_88 : CodeFact.blockStartsV (view N 11199 1595536 188243) 39796 39815 = true :=
+  CodeFact.blockStartsV_of _ 39796 39815 bstart_88 (range_cover bno_88_0 bno_88_1)
 
 theorem chunk_ok_88 : facts_88.all (·.holds prog) = true := by
   simp only [facts_88, List.all_cons, List.all_nil, Bool.and_true, CodeFact.holds_block, Bool.and_eq_true,
     decide_eq_true_eq]
   refine ⟨?_, ?_⟩
-  · rw [prog_cview 49 1 199 1]; exact bstarts_88
+  · rw [prog_view]; exact bstarts_88
   · rw [prog_view]; exact bcost_88
 
-theorem chunk_89 : facts_89.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jt) = true := by
+theorem chunk_89 : facts_89.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_89 : facts_89.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ chunk_89
+  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_89)
 
-theorem chunk_90 : facts_90.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jt) = true := by
+theorem chunk_90 : facts_90.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_90 : facts_90.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ chunk_90
+  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_90)
 
-def bst_91_1 : SimState := ⟨none, 13, 4, 5, ⟨3, 4, 4, 1, 1⟩, [⟨.exe, 8, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_91_1 : SimState := ⟨none, 8, 4, 5, ⟨3, 4, 4, 1, 1⟩, [⟨.exe, 13, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_91_0 : CodeView.Sim.run (view N 11199 1595536 188243) 37998080 (Sim.init 39815) = CodeView.Sim.run (view N 11199 1595536 188243) 37998065 bst_91_1 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 15 (Sim.init 39815) = some bst_91_1 := by decide +kernel
+theorem bsim_91_0 : CodeView.Sim.run (view N 11199 1595536 188243) 37998080 (Sim.init 39815) = CodeView.Sim.run (view N 11199 1595536 188243) 37998070 bst_91_1 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 10 (Sim.init 39815) = some bst_91_1 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 15 _ _ 37998065 h
+  exact CodeView.Sim.run_steps _ 10 _ _ 37998070 h
 
-def bst_91_2 : SimState := ⟨none, 23, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_91_2 : SimState := ⟨none, 17, 4, 5, ⟨3, 4, 4, 1, 1⟩, [⟨.exe, 4, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_91_1 : CodeView.Sim.run (view N 11199 1595536 188243) 37998065 bst_91_1 = CodeView.Sim.run (view N 11199 1595536 188243) 37998055 bst_91_2 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 10 bst_91_1 = some bst_91_2 := by decide +kernel
+theorem bsim_91_1 : CodeView.Sim.run (view N 11199 1595536 188243) 37998070 bst_91_1 = CodeView.Sim.run (view N 11199 1595536 188243) 37998061 bst_91_2 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 9 bst_91_1 = some bst_91_2 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 10 _ _ 37998055 h
+  exact CodeView.Sim.run_steps _ 9 _ _ 37998061 h
 
-theorem bend_91 : CodeView.Sim.run (view N 11199 1595536 188243) 37998055 bst_91_2 = some bst_91_2 := by
-  have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) bst_91_2 = some (.inr bst_91_2) := by decide +kernel
+def bst_91_3 : SimState := ⟨none, 23, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_91_2 : CodeView.Sim.run (view N 11199 1595536 188243) 37998061 bst_91_2 = CodeView.Sim.run (view N 11199 1595536 188243) 37998055 bst_91_3 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 6 bst_91_2 = some bst_91_3 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_final _ bst_91_2 37998054 h
+  exact CodeView.Sim.run_steps _ 6 _ _ 37998055 h
+
+theorem bend_91 : CodeView.Sim.run (view N 11199 1595536 188243) 37998055 bst_91_3 = some bst_91_3 := by
+  have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) bst_91_3 = some (.inr bst_91_3) := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_final _ bst_91_3 37998054 h
 
 /-- ϱ^Δ of the block at 39815 is 20 (GP eq. `gascostforblock`). -/
 theorem bcost_91 : (view N 11199 1595536 188243).blockCost 39815 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 39815 bst_91_2 (bsim_91_0.trans (bsim_91_1.trans bend_91))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 39815 bst_91_3 (bsim_91_0.trans (bsim_91_1.trans (bsim_91_2.trans bend_91)))]
   decide
 
-theorem bstarts_91 : CodeFact.blockStartsV (cview chunks 11199 1595536 188243 49 1 199 1) 39815 39818 = true := by
-  decide +kernel
+theorem bstart_91 : (view N 11199 1595536 188243).isBlockStart 39815 = true := by
+  have h : (cview chunks 11199 1595536 188243 49 1 199 1).isBlockStartF 39815 = true := by decide +kernel
+  rw [CodeView.isBlockStartF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
+  exact h
+
+theorem bno_91_0 : ∀ k, 39816 ≤ k → k < 39816 + 2 → (view N 11199 1595536 188243).isBlockStart k = false := by
+  have h : (cview chunks 11199 1595536 188243 49 1 199 1).noStartsF 39816 2 = true := by decide +kernel
+  rw [cview_eq chunks chunks_lt] at h
+  exact CodeView.noStartsF_sound _ (fun i => view_zeta_lt _ _ _ _ i) 39816 2 h
+
+theorem bstarts_91 : CodeFact.blockStartsV (view N 11199 1595536 188243) 39815 39818 = true :=
+  CodeFact.blockStartsV_of _ 39815 39818 bstart_91 bno_91_0
 
 theorem chunk_ok_91 : facts_91.all (·.holds prog) = true := by
   simp only [facts_91, List.all_cons, List.all_nil, Bool.and_true, CodeFact.holds_block, Bool.and_eq_true,
     decide_eq_true_eq]
   refine ⟨?_, ?_⟩
-  · rw [prog_cview 49 1 199 1]; exact bstarts_91
+  · rw [prog_view]; exact bstarts_91
   · rw [prog_view]; exact bcost_91
 
-theorem chunk_92 : facts_92.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jt) = true := by
+theorem chunk_92 : facts_92.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_92 : facts_92.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ chunk_92
+  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_92)
 
-def bst_93_1 : SimState := ⟨none, 13, 4, 5, ⟨3, 4, 4, 1, 1⟩, [⟨.exe, 8, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_93_1 : SimState := ⟨none, 8, 4, 5, ⟨3, 4, 4, 1, 1⟩, [⟨.exe, 13, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_93_0 : CodeView.Sim.run (view N 11199 1595536 188243) 37987840 (Sim.init 39855) = CodeView.Sim.run (view N 11199 1595536 188243) 37987825 bst_93_1 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) 15 (Sim.init 39855) = some bst_93_1 := by decide +kernel
+theorem bsim_93_0 : CodeView.Sim.run (view N 11199 1595536 188243) 37987840 (Sim.init 39855) = CodeView.Sim.run (view N 11199 1595536 188243) 37987830 bst_93_1 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) 10 (Sim.init 39855) = some bst_93_1 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 15 _ _ 37987825 h
+  exact CodeView.Sim.run_steps _ 10 _ _ 37987830 h
 
-def bst_93_2 : SimState := ⟨none, 23, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_93_2 : SimState := ⟨none, 17, 4, 5, ⟨3, 4, 4, 1, 1⟩, [⟨.exe, 4, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_93_1 : CodeView.Sim.run (view N 11199 1595536 188243) 37987825 bst_93_1 = CodeView.Sim.run (view N 11199 1595536 188243) 37987815 bst_93_2 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) 10 bst_93_1 = some bst_93_2 := by decide +kernel
+theorem bsim_93_1 : CodeView.Sim.run (view N 11199 1595536 188243) 37987830 bst_93_1 = CodeView.Sim.run (view N 11199 1595536 188243) 37987821 bst_93_2 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) 9 bst_93_1 = some bst_93_2 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 10 _ _ 37987815 h
+  exact CodeView.Sim.run_steps _ 9 _ _ 37987821 h
 
-theorem bend_93 : CodeView.Sim.run (view N 11199 1595536 188243) 37987815 bst_93_2 = some bst_93_2 := by
-  have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) bst_93_2 = some (.inr bst_93_2) := by decide +kernel
+def bst_93_3 : SimState := ⟨none, 23, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_93_2 : CodeView.Sim.run (view N 11199 1595536 188243) 37987821 bst_93_2 = CodeView.Sim.run (view N 11199 1595536 188243) 37987815 bst_93_3 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) 6 bst_93_2 = some bst_93_3 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_final _ bst_93_2 37987814 h
+  exact CodeView.Sim.run_steps _ 6 _ _ 37987815 h
+
+theorem bend_93 : CodeView.Sim.run (view N 11199 1595536 188243) 37987815 bst_93_3 = some bst_93_3 := by
+  have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) bst_93_3 = some (.inr bst_93_3) := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_final _ bst_93_3 37987814 h
 
 /-- ϱ^Δ of the block at 39855 is 20 (GP eq. `gascostforblock`). -/
 theorem bcost_93 : (view N 11199 1595536 188243).blockCost 39855 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 39855 bst_93_2 (bsim_93_0.trans (bsim_93_1.trans bend_93))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 39855 bst_93_3 (bsim_93_0.trans (bsim_93_1.trans (bsim_93_2.trans bend_93)))]
   decide
 
-theorem bstarts_93 : CodeFact.blockStartsV (cview chunks 11199 1595536 188243 49 1 199 1) 39855 39858 = true := by
-  decide +kernel
+theorem bstart_93 : (view N 11199 1595536 188243).isBlockStart 39855 = true := by
+  have h : (cview chunks 11199 1595536 188243 49 1 199 1).isBlockStartF 39855 = true := by decide +kernel
+  rw [CodeView.isBlockStartF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
+  exact h
+
+theorem bno_93_0 : ∀ k, 39856 ≤ k → k < 39856 + 2 → (view N 11199 1595536 188243).isBlockStart k = false := by
+  have h : (cview chunks 11199 1595536 188243 49 1 199 1).noStartsF 39856 2 = true := by decide +kernel
+  rw [cview_eq chunks chunks_lt] at h
+  exact CodeView.noStartsF_sound _ (fun i => view_zeta_lt _ _ _ _ i) 39856 2 h
+
+theorem bstarts_93 : CodeFact.blockStartsV (view N 11199 1595536 188243) 39855 39858 = true :=
+  CodeFact.blockStartsV_of _ 39855 39858 bstart_93 bno_93_0
 
 theorem chunk_ok_93 : facts_93.all (·.holds prog) = true := by
   simp only [facts_93, List.all_cons, List.all_nil, Bool.and_true, CodeFact.holds_block, Bool.and_eq_true,
     decide_eq_true_eq]
   refine ⟨?_, ?_⟩
-  · rw [prog_cview 49 1 199 1]; exact bstarts_93
+  · rw [prog_view]; exact bstarts_93
   · rw [prog_view]; exact bcost_93
 
-theorem chunk_94 : facts_94.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jt) = true := by
+theorem chunk_94 : facts_94.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_94 : facts_94.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ chunk_94
+  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_94)
 
-def bst_95_1 : SimState := ⟨none, 5, 4, 5, ⟨3, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨256⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨512⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 17, [1], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_95_1 : SimState := ⟨none, 2, 4, 4, ⟨3, 4, 4, 1, 1⟩, [⟨.exe, 0, [], ⟨256⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 0, [], ⟨512⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 20, [1], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_95_0 : CodeView.Sim.run (view N 11199 1595536 188243) 37987072 (Sim.init 39858) = CodeView.Sim.run (view N 11199 1595536 188243) 37987061 bst_95_1 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) 11 (Sim.init 39858) = some bst_95_1 := by decide +kernel
+theorem bsim_95_0 : CodeView.Sim.run (view N 11199 1595536 188243) 37987072 (Sim.init 39858) = CodeView.Sim.run (view N 11199 1595536 188243) 37987064 bst_95_1 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) 8 (Sim.init 39858) = some bst_95_1 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 11 _ _ 37987061 h
+  exact CodeView.Sim.run_steps _ 8 _ _ 37987064 h
 
-def bst_95_2 : SimState := ⟨none, 15, 4, 5, ⟨3, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨256⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨512⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 7, [1], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_95_2 : SimState := ⟨none, 9, 4, 5, ⟨3, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨256⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨512⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 13, [1], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_95_1 : CodeView.Sim.run (view N 11199 1595536 188243) 37987061 bst_95_1 = CodeView.Sim.run (view N 11199 1595536 188243) 37987051 bst_95_2 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) 10 bst_95_1 = some bst_95_2 := by decide +kernel
+theorem bsim_95_1 : CodeView.Sim.run (view N 11199 1595536 188243) 37987064 bst_95_1 = CodeView.Sim.run (view N 11199 1595536 188243) 37987057 bst_95_2 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) 7 bst_95_1 = some bst_95_2 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 10 _ _ 37987051 h
+  exact CodeView.Sim.run_steps _ 7 _ _ 37987057 h
 
-def bst_95_3 : SimState := ⟨none, 24, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨256⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨512⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [1], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_95_3 : SimState := ⟨none, 16, 4, 5, ⟨3, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨256⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨512⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 6, [1], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_95_2 : CodeView.Sim.run (view N 11199 1595536 188243) 37987051 bst_95_2 = CodeView.Sim.run (view N 11199 1595536 188243) 37987042 bst_95_3 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) 9 bst_95_2 = some bst_95_3 := by decide +kernel
+theorem bsim_95_2 : CodeView.Sim.run (view N 11199 1595536 188243) 37987057 bst_95_2 = CodeView.Sim.run (view N 11199 1595536 188243) 37987050 bst_95_3 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) 7 bst_95_2 = some bst_95_3 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 9 _ _ 37987042 h
+  exact CodeView.Sim.run_steps _ 7 _ _ 37987050 h
 
-theorem bend_95 : CodeView.Sim.run (view N 11199 1595536 188243) 37987042 bst_95_3 = some bst_95_3 := by
-  have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) bst_95_3 = some (.inr bst_95_3) := by decide +kernel
+def bst_95_4 : SimState := ⟨none, 23, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨256⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨512⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [1], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_95_3 : CodeView.Sim.run (view N 11199 1595536 188243) 37987050 bst_95_3 = CodeView.Sim.run (view N 11199 1595536 188243) 37987043 bst_95_4 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) 7 bst_95_3 = some bst_95_4 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_final _ bst_95_3 37987041 h
+  exact CodeView.Sim.run_steps _ 7 _ _ 37987043 h
+
+def bst_95_5 : SimState := ⟨none, 24, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨256⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨512⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [1], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_95_4 : CodeView.Sim.run (view N 11199 1595536 188243) 37987043 bst_95_4 = CodeView.Sim.run (view N 11199 1595536 188243) 37987042 bst_95_5 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) 1 bst_95_4 = some bst_95_5 := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_steps _ 1 _ _ 37987042 h
+
+theorem bend_95 : CodeView.Sim.run (view N 11199 1595536 188243) 37987042 bst_95_5 = some bst_95_5 := by
+  have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 49 1 49 1 199 1) bst_95_5 = some (.inr bst_95_5) := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_final _ bst_95_5 37987041 h
 
 /-- ϱ^Δ of the block at 39858 is 21 (GP eq. `gascostforblock`). -/
 theorem bcost_95 : (view N 11199 1595536 188243).blockCost 39858 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 39858 bst_95_3 (bsim_95_0.trans (bsim_95_1.trans (bsim_95_2.trans bend_95)))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 39858 bst_95_5 (bsim_95_0.trans (bsim_95_1.trans (bsim_95_2.trans (bsim_95_3.trans (bsim_95_4.trans bend_95)))))]
   decide
 
-theorem bstarts_95 : CodeFact.blockStartsV (cview chunks 11199 1595536 188243 49 1 199 1) 39858 39874 = true := by
-  decide +kernel
+theorem bstart_95 : (view N 11199 1595536 188243).isBlockStart 39858 = true := by
+  have h : (cview chunks 11199 1595536 188243 49 1 199 1).isBlockStartF 39858 = true := by decide +kernel
+  rw [CodeView.isBlockStartF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
+  exact h
+
+theorem bno_95_0 : ∀ k, 39859 ≤ k → k < 39859 + 15 → (view N 11199 1595536 188243).isBlockStart k = false := by
+  have h : (cview chunks 11199 1595536 188243 49 1 199 1).noStartsF 39859 15 = true := by decide +kernel
+  rw [cview_eq chunks chunks_lt] at h
+  exact CodeView.noStartsF_sound _ (fun i => view_zeta_lt _ _ _ _ i) 39859 15 h
+
+theorem bstarts_95 : CodeFact.blockStartsV (view N 11199 1595536 188243) 39858 39874 = true :=
+  CodeFact.blockStartsV_of _ 39858 39874 bstart_95 bno_95_0
 
 theorem chunk_ok_95 : facts_95.all (·.holds prog) = true := by
   simp only [facts_95, List.all_cons, List.all_nil, Bool.and_true, CodeFact.holds_block, Bool.and_eq_true,
     decide_eq_true_eq]
   refine ⟨?_, ?_⟩
-  · rw [prog_cview 49 1 199 1]; exact bstarts_95
+  · rw [prog_view]; exact bstarts_95
   · rw [prog_view]; exact bcost_95
 
-theorem chunk_96 : facts_96.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jt) = true := by
+theorem chunk_96 : facts_96.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_96 : facts_96.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ chunk_96
+  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_96)
 
-theorem chunk_97 : facts_97.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jt) = true := by
+theorem chunk_97 : facts_97.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_97 : facts_97.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ chunk_97
+  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_97)
 
-def bst_98_1 : SimState := ⟨none, 1, 0, 2, ⟨2, 4, 2, 1, 1⟩, [⟨.exe, 25, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 25, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 1, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.dec, 1, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.dec, 1, [3], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.dec, 2, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_98_1 : SimState := ⟨none, 1, 0, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.wait, 25, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.dec, 1, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.dec, 1, [3], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.dec, 2, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_98_0 : CodeView.Sim.run (view N 11199 1595536 188243) 37982976 (Sim.init 39874) = CodeView.Sim.run (view N 11199 1595536 188243) 37982966 bst_98_1 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 10 (Sim.init 39874) = some bst_98_1 := by decide +kernel
+theorem bsim_98_0 : CodeView.Sim.run (view N 11199 1595536 188243) 37982976 (Sim.init 39874) = CodeView.Sim.run (view N 11199 1595536 188243) 37982969 bst_98_1 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 7 (Sim.init 39874) = some bst_98_1 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 10 _ _ 37982966 h
+  exact CodeView.Sim.run_steps _ 7 _ _ 37982969 h
 
-def bst_98_2 : SimState := ⟨none, 5, 4, 5, ⟨2, 4, 2, 1, 1⟩, [⟨.exe, 21, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 21, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [3], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_98_2 : SimState := ⟨none, 2, 4, 4, ⟨1, 4, 2, 1, 1⟩, [⟨.exe, 24, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 24, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 0, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 1, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 1, [3], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 2, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_98_1 : CodeView.Sim.run (view N 11199 1595536 188243) 37982966 bst_98_1 = CodeView.Sim.run (view N 11199 1595536 188243) 37982959 bst_98_2 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 7 bst_98_1 = some bst_98_2 := by decide +kernel
+theorem bsim_98_1 : CodeView.Sim.run (view N 11199 1595536 188243) 37982969 bst_98_1 = CodeView.Sim.run (view N 11199 1595536 188243) 37982964 bst_98_2 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 5 bst_98_1 = some bst_98_2 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 7 _ _ 37982959 h
+  exact CodeView.Sim.run_steps _ 5 _ _ 37982964 h
 
-def bst_98_3 : SimState := ⟨none, 12, 4, 5, ⟨2, 4, 2, 1, 1⟩, [⟨.exe, 14, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 14, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [3], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_98_3 : SimState := ⟨none, 5, 4, 5, ⟨2, 4, 2, 1, 1⟩, [⟨.exe, 21, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 21, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [3], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_98_2 : CodeView.Sim.run (view N 11199 1595536 188243) 37982959 bst_98_2 = CodeView.Sim.run (view N 11199 1595536 188243) 37982952 bst_98_3 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 7 bst_98_2 = some bst_98_3 := by decide +kernel
+theorem bsim_98_2 : CodeView.Sim.run (view N 11199 1595536 188243) 37982964 bst_98_2 = CodeView.Sim.run (view N 11199 1595536 188243) 37982959 bst_98_3 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 5 bst_98_2 = some bst_98_3 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 7 _ _ 37982952 h
+  exact CodeView.Sim.run_steps _ 5 _ _ 37982959 h
 
-def bst_98_4 : SimState := ⟨none, 19, 4, 5, ⟨2, 4, 2, 1, 1⟩, [⟨.exe, 7, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 7, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [3], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_98_4 : SimState := ⟨none, 10, 4, 5, ⟨2, 4, 2, 1, 1⟩, [⟨.exe, 16, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 16, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [3], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_98_3 : CodeView.Sim.run (view N 11199 1595536 188243) 37982952 bst_98_3 = CodeView.Sim.run (view N 11199 1595536 188243) 37982945 bst_98_4 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 7 bst_98_3 = some bst_98_4 := by decide +kernel
+theorem bsim_98_3 : CodeView.Sim.run (view N 11199 1595536 188243) 37982959 bst_98_3 = CodeView.Sim.run (view N 11199 1595536 188243) 37982954 bst_98_4 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 5 bst_98_3 = some bst_98_4 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 7 _ _ 37982945 h
+  exact CodeView.Sim.run_steps _ 5 _ _ 37982954 h
 
-def bst_98_5 : SimState := ⟨none, 26, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.exe, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [3], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_98_5 : SimState := ⟨none, 15, 4, 5, ⟨2, 4, 2, 1, 1⟩, [⟨.exe, 11, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 11, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [3], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_98_4 : CodeView.Sim.run (view N 11199 1595536 188243) 37982945 bst_98_4 = CodeView.Sim.run (view N 11199 1595536 188243) 37982938 bst_98_5 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 7 bst_98_4 = some bst_98_5 := by decide +kernel
+theorem bsim_98_4 : CodeView.Sim.run (view N 11199 1595536 188243) 37982954 bst_98_4 = CodeView.Sim.run (view N 11199 1595536 188243) 37982949 bst_98_5 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 5 bst_98_4 = some bst_98_5 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 7 _ _ 37982938 h
+  exact CodeView.Sim.run_steps _ 5 _ _ 37982949 h
 
-def bst_98_6 : SimState := ⟨none, 28, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [3], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_98_6 : SimState := ⟨none, 20, 4, 5, ⟨2, 4, 2, 1, 1⟩, [⟨.exe, 6, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 6, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [3], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_98_5 : CodeView.Sim.run (view N 11199 1595536 188243) 37982938 bst_98_5 = CodeView.Sim.run (view N 11199 1595536 188243) 37982936 bst_98_6 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 2 bst_98_5 = some bst_98_6 := by decide +kernel
+theorem bsim_98_5 : CodeView.Sim.run (view N 11199 1595536 188243) 37982949 bst_98_5 = CodeView.Sim.run (view N 11199 1595536 188243) 37982944 bst_98_6 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 5 bst_98_5 = some bst_98_6 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 2 _ _ 37982936 h
+  exact CodeView.Sim.run_steps _ 5 _ _ 37982944 h
 
-theorem bend_98 : CodeView.Sim.run (view N 11199 1595536 188243) 37982936 bst_98_6 = some bst_98_6 := by
-  have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) bst_98_6 = some (.inr bst_98_6) := by decide +kernel
+def bst_98_7 : SimState := ⟨none, 25, 4, 5, ⟨2, 4, 2, 1, 1⟩, [⟨.exe, 1, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 1, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [3], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_98_6 : CodeView.Sim.run (view N 11199 1595536 188243) 37982944 bst_98_6 = CodeView.Sim.run (view N 11199 1595536 188243) 37982939 bst_98_7 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 5 bst_98_6 = some bst_98_7 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_final _ bst_98_6 37982935 h
+  exact CodeView.Sim.run_steps _ 5 _ _ 37982939 h
+
+def bst_98_8 : SimState := ⟨none, 28, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [3], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_98_7 : CodeView.Sim.run (view N 11199 1595536 188243) 37982939 bst_98_7 = CodeView.Sim.run (view N 11199 1595536 188243) 37982936 bst_98_8 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 3 bst_98_7 = some bst_98_8 := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_steps _ 3 _ _ 37982936 h
+
+theorem bend_98 : CodeView.Sim.run (view N 11199 1595536 188243) 37982936 bst_98_8 = some bst_98_8 := by
+  have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) bst_98_8 = some (.inr bst_98_8) := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_final _ bst_98_8 37982935 h
 
 /-- ϱ^Δ of the block at 39874 is 25 (GP eq. `gascostforblock`). -/
 theorem bcost_98 : (view N 11199 1595536 188243).blockCost 39874 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 39874 bst_98_6 (bsim_98_0.trans (bsim_98_1.trans (bsim_98_2.trans (bsim_98_3.trans (bsim_98_4.trans (bsim_98_5.trans bend_98))))))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 39874 bst_98_8 (bsim_98_0.trans (bsim_98_1.trans (bsim_98_2.trans (bsim_98_3.trans (bsim_98_4.trans (bsim_98_5.trans (bsim_98_6.trans (bsim_98_7.trans bend_98))))))))]
   decide
 
-theorem bstarts_98 : CodeFact.blockStartsV (cview chunks 11199 1595536 188243 49 1 199 1) 39874 39892 = true := by
-  decide +kernel
+theorem bstart_98 : (view N 11199 1595536 188243).isBlockStart 39874 = true := by
+  have h : (cview chunks 11199 1595536 188243 49 1 199 1).isBlockStartF 39874 = true := by decide +kernel
+  rw [CodeView.isBlockStartF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
+  exact h
+
+theorem bno_98_0 : ∀ k, 39875 ≤ k → k < 39875 + 16 → (view N 11199 1595536 188243).isBlockStart k = false := by
+  have h : (cview chunks 11199 1595536 188243 49 1 199 1).noStartsF 39875 16 = true := by decide +kernel
+  rw [cview_eq chunks chunks_lt] at h
+  exact CodeView.noStartsF_sound _ (fun i => view_zeta_lt _ _ _ _ i) 39875 16 h
+
+theorem bno_98_1 : ∀ k, 39891 ≤ k → k < 39891 + 1 → (view N 11199 1595536 188243).isBlockStart k = false := by
+  have h : (cview chunks 11199 1595536 188243 49 1 199 1).noStartsF 39891 1 = true := by decide +kernel
+  rw [cview_eq chunks chunks_lt] at h
+  exact CodeView.noStartsF_sound _ (fun i => view_zeta_lt _ _ _ _ i) 39891 1 h
+
+theorem bstarts_98 : CodeFact.blockStartsV (view N 11199 1595536 188243) 39874 39892 = true :=
+  CodeFact.blockStartsV_of _ 39874 39892 bstart_98 (range_cover bno_98_0 bno_98_1)
 
 theorem chunk_ok_98 : facts_98.all (·.holds prog) = true := by
   simp only [facts_98, List.all_cons, List.all_nil, Bool.and_true, CodeFact.holds_block, Bool.and_eq_true,
     decide_eq_true_eq]
   refine ⟨?_, ?_⟩
-  · rw [prog_cview 49 1 199 1]; exact bstarts_98
+  · rw [prog_view]; exact bstarts_98
   · rw [prog_view]; exact bcost_98
 
-theorem chunk_99 : facts_99.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jt) = true := by
+theorem chunk_99 : facts_99.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_99 : facts_99.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ chunk_99
+  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_99)
 
-theorem chunk_100 : facts_100.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jt) = true := by
+theorem chunk_100 : facts_100.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_100 : facts_100.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ chunk_100
+  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_100)
 
-theorem chunk_101 : facts_101.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jt) = true := by
+theorem chunk_101 : facts_101.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_101 : facts_101.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ chunk_101
+  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_101)
 
-def bst_102_1 : SimState := ⟨some 39911, 1, 0, 3, ⟨3, 4, 3, 1, 1⟩, [⟨.exe, 40, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 25, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.dec, 1, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.dec, 25, [], ⟨512⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.dec, 1, [3, 4], ⟨16⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.dec, 25, [5], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩]⟩
+def bst_102_1 : SimState := ⟨some 39909, 1, 1, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.wait, 40, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.dec, 1, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.dec, 25, [], ⟨512⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.dec, 1, [3, 4], ⟨16⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_102_0 : CodeView.Sim.run (view N 11199 1595536 188243) 37978368 (Sim.init 39892) = CodeView.Sim.run (view N 11199 1595536 188243) 37978358 bst_102_1 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 10 (Sim.init 39892) = some bst_102_1 := by decide +kernel
+theorem bsim_102_0 : CodeView.Sim.run (view N 11199 1595536 188243) 37978368 (Sim.init 39892) = CodeView.Sim.run (view N 11199 1595536 188243) 37978361 bst_102_1 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 7 (Sim.init 39892) = some bst_102_1 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 10 _ _ 37978358 h
+  exact CodeView.Sim.run_steps _ 7 _ _ 37978361 h
 
-def bst_102_2 : SimState := ⟨none, 2, 1, 4, ⟨2, 4, 3, 1, 1⟩, [⟨.exe, 39, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 24, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 1, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [3, 4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 25, [5], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.dec, 25, [], ⟨16⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.dec, 1, [4], ⟨512⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.dec, 1, [8], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_102_2 : SimState := ⟨some 39911, 2, 4, 5, ⟨3, 4, 3, 1, 1⟩, [⟨.exe, 39, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 24, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 1, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨512⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [3, 4], ⟨16⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 25, [5], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩]⟩
 
-theorem bsim_102_1 : CodeView.Sim.run (view N 11199 1595536 188243) 37978358 bst_102_1 = CodeView.Sim.run (view N 11199 1595536 188243) 37978352 bst_102_2 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 6 bst_102_1 = some bst_102_2 := by decide +kernel
+theorem bsim_102_1 : CodeView.Sim.run (view N 11199 1595536 188243) 37978361 bst_102_1 = CodeView.Sim.run (view N 11199 1595536 188243) 37978356 bst_102_2 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 5 bst_102_1 = some bst_102_2 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 6 _ _ 37978352 h
+  exact CodeView.Sim.run_steps _ 5 _ _ 37978356 h
 
-def bst_102_3 : SimState := ⟨none, 5, 4, 5, ⟨1, 2, 3, 1, 1⟩, [⟨.exe, 36, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 21, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 22, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [3, 4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 25, [5], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 23, [], ⟨16⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [4], ⟨512⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 1, [8], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_102_3 : SimState := ⟨none, 2, 1, 4, ⟨2, 4, 3, 1, 1⟩, [⟨.exe, 39, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 24, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 1, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [3, 4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 25, [5], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.dec, 25, [], ⟨16⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.dec, 1, [4], ⟨512⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.dec, 1, [8], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_102_2 : CodeView.Sim.run (view N 11199 1595536 188243) 37978352 bst_102_2 = CodeView.Sim.run (view N 11199 1595536 188243) 37978347 bst_102_3 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 5 bst_102_2 = some bst_102_3 := by decide +kernel
+theorem bsim_102_2 : CodeView.Sim.run (view N 11199 1595536 188243) 37978356 bst_102_2 = CodeView.Sim.run (view N 11199 1595536 188243) 37978352 bst_102_3 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 4 bst_102_2 = some bst_102_3 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 5 _ _ 37978347 h
+  exact CodeView.Sim.run_steps _ 4 _ _ 37978352 h
 
-def bst_102_4 : SimState := ⟨none, 10, 4, 5, ⟨1, 2, 3, 1, 1⟩, [⟨.exe, 31, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 16, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 17, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [3, 4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 25, [5], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 18, [], ⟨16⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [4], ⟨512⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 1, [8], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_102_4 : SimState := ⟨none, 4, 4, 5, ⟨1, 2, 3, 1, 1⟩, [⟨.exe, 37, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 22, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 23, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [3, 4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 25, [5], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 24, [], ⟨16⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [4], ⟨512⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 1, [8], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_102_3 : CodeView.Sim.run (view N 11199 1595536 188243) 37978347 bst_102_3 = CodeView.Sim.run (view N 11199 1595536 188243) 37978342 bst_102_4 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 5 bst_102_3 = some bst_102_4 := by decide +kernel
+theorem bsim_102_3 : CodeView.Sim.run (view N 11199 1595536 188243) 37978352 bst_102_3 = CodeView.Sim.run (view N 11199 1595536 188243) 37978348 bst_102_4 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 4 bst_102_3 = some bst_102_4 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 5 _ _ 37978342 h
+  exact CodeView.Sim.run_steps _ 4 _ _ 37978348 h
 
-def bst_102_5 : SimState := ⟨none, 15, 4, 5, ⟨1, 2, 3, 1, 1⟩, [⟨.exe, 26, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 11, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 12, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [3, 4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 25, [5], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 13, [], ⟨16⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [4], ⟨512⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 1, [8], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_102_5 : SimState := ⟨none, 8, 4, 5, ⟨1, 2, 3, 1, 1⟩, [⟨.exe, 33, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 18, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 19, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [3, 4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 25, [5], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 20, [], ⟨16⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [4], ⟨512⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 1, [8], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_102_4 : CodeView.Sim.run (view N 11199 1595536 188243) 37978342 bst_102_4 = CodeView.Sim.run (view N 11199 1595536 188243) 37978337 bst_102_5 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 5 bst_102_4 = some bst_102_5 := by decide +kernel
+theorem bsim_102_4 : CodeView.Sim.run (view N 11199 1595536 188243) 37978348 bst_102_4 = CodeView.Sim.run (view N 11199 1595536 188243) 37978344 bst_102_5 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 4 bst_102_4 = some bst_102_5 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 5 _ _ 37978337 h
+  exact CodeView.Sim.run_steps _ 4 _ _ 37978344 h
 
-def bst_102_6 : SimState := ⟨none, 20, 4, 5, ⟨1, 2, 3, 1, 1⟩, [⟨.exe, 21, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 6, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 7, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [3, 4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 25, [5], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 8, [], ⟨16⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [4], ⟨512⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 1, [8], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_102_6 : SimState := ⟨none, 12, 4, 5, ⟨1, 2, 3, 1, 1⟩, [⟨.exe, 29, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 14, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 15, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [3, 4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 25, [5], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 16, [], ⟨16⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [4], ⟨512⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 1, [8], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_102_5 : CodeView.Sim.run (view N 11199 1595536 188243) 37978337 bst_102_5 = CodeView.Sim.run (view N 11199 1595536 188243) 37978332 bst_102_6 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 5 bst_102_5 = some bst_102_6 := by decide +kernel
+theorem bsim_102_5 : CodeView.Sim.run (view N 11199 1595536 188243) 37978344 bst_102_5 = CodeView.Sim.run (view N 11199 1595536 188243) 37978340 bst_102_6 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 4 bst_102_5 = some bst_102_6 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 5 _ _ 37978332 h
+  exact CodeView.Sim.run_steps _ 4 _ _ 37978340 h
 
-def bst_102_7 : SimState := ⟨none, 25, 4, 5, ⟨1, 2, 3, 1, 1⟩, [⟨.exe, 16, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 1, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 2, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [3, 4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 25, [5], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 3, [], ⟨16⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [4], ⟨512⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 1, [8], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_102_7 : SimState := ⟨none, 16, 4, 5, ⟨1, 2, 3, 1, 1⟩, [⟨.exe, 25, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 10, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 11, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [3, 4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 25, [5], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 12, [], ⟨16⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [4], ⟨512⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 1, [8], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_102_6 : CodeView.Sim.run (view N 11199 1595536 188243) 37978332 bst_102_6 = CodeView.Sim.run (view N 11199 1595536 188243) 37978327 bst_102_7 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 5 bst_102_6 = some bst_102_7 := by decide +kernel
+theorem bsim_102_6 : CodeView.Sim.run (view N 11199 1595536 188243) 37978340 bst_102_6 = CodeView.Sim.run (view N 11199 1595536 188243) 37978336 bst_102_7 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 4 bst_102_6 = some bst_102_7 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 5 _ _ 37978327 h
+  exact CodeView.Sim.run_steps _ 4 _ _ 37978336 h
 
-def bst_102_8 : SimState := ⟨none, 28, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.exe, 13, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 0, [3, 4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 25, [5], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 0, [], ⟨16⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 0, [4], ⟨512⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 1, [8], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_102_8 : SimState := ⟨none, 20, 4, 5, ⟨1, 2, 3, 1, 1⟩, [⟨.exe, 21, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 6, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 7, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [3, 4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 25, [5], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 8, [], ⟨16⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [4], ⟨512⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 1, [8], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_102_7 : CodeView.Sim.run (view N 11199 1595536 188243) 37978327 bst_102_7 = CodeView.Sim.run (view N 11199 1595536 188243) 37978322 bst_102_8 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 5 bst_102_7 = some bst_102_8 := by decide +kernel
+theorem bsim_102_7 : CodeView.Sim.run (view N 11199 1595536 188243) 37978336 bst_102_7 = CodeView.Sim.run (view N 11199 1595536 188243) 37978332 bst_102_8 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 4 bst_102_7 = some bst_102_8 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 5 _ _ 37978322 h
+  exact CodeView.Sim.run_steps _ 4 _ _ 37978332 h
 
-def bst_102_9 : SimState := ⟨none, 31, 4, 5, ⟨3, 4, 3, 1, 1⟩, [⟨.exe, 10, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [3, 4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 22, [5], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨16⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [4], ⟨512⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [8], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_102_9 : SimState := ⟨none, 24, 4, 5, ⟨1, 2, 3, 1, 1⟩, [⟨.exe, 17, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 2, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 3, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [3, 4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 25, [5], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 4, [], ⟨16⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [4], ⟨512⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 1, [8], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_102_8 : CodeView.Sim.run (view N 11199 1595536 188243) 37978322 bst_102_8 = CodeView.Sim.run (view N 11199 1595536 188243) 37978317 bst_102_9 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 5 bst_102_8 = some bst_102_9 := by decide +kernel
+theorem bsim_102_8 : CodeView.Sim.run (view N 11199 1595536 188243) 37978332 bst_102_8 = CodeView.Sim.run (view N 11199 1595536 188243) 37978328 bst_102_9 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 4 bst_102_8 = some bst_102_9 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 5 _ _ 37978317 h
+  exact CodeView.Sim.run_steps _ 4 _ _ 37978328 h
 
-def bst_102_10 : SimState := ⟨none, 36, 4, 5, ⟨3, 4, 3, 1, 1⟩, [⟨.exe, 5, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [3, 4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 17, [5], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨16⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [4], ⟨512⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [8], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_102_10 : SimState := ⟨none, 27, 4, 4, ⟨2, 3, 4, 1, 1⟩, [⟨.exe, 14, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 1, [3, 4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 25, [5], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 1, [], ⟨16⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [4], ⟨512⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 1, [8], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_102_9 : CodeView.Sim.run (view N 11199 1595536 188243) 37978317 bst_102_9 = CodeView.Sim.run (view N 11199 1595536 188243) 37978312 bst_102_10 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 5 bst_102_9 = some bst_102_10 := by decide +kernel
+theorem bsim_102_9 : CodeView.Sim.run (view N 11199 1595536 188243) 37978328 bst_102_9 = CodeView.Sim.run (view N 11199 1595536 188243) 37978324 bst_102_10 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 4 bst_102_9 = some bst_102_10 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 5 _ _ 37978312 h
+  exact CodeView.Sim.run_steps _ 4 _ _ 37978324 h
 
-def bst_102_11 : SimState := ⟨none, 41, 4, 5, ⟨3, 4, 3, 1, 1⟩, [⟨.exe, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [3, 4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 12, [5], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨16⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [4], ⟨512⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [8], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_102_11 : SimState := ⟨none, 28, 4, 3, ⟨2, 4, 3, 1, 1⟩, [⟨.exe, 13, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 0, [3, 4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 25, [5], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 0, [], ⟨16⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 0, [4], ⟨512⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 1, [8], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_102_10 : CodeView.Sim.run (view N 11199 1595536 188243) 37978312 bst_102_10 = CodeView.Sim.run (view N 11199 1595536 188243) 37978307 bst_102_11 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 5 bst_102_10 = some bst_102_11 := by decide +kernel
+theorem bsim_102_10 : CodeView.Sim.run (view N 11199 1595536 188243) 37978324 bst_102_10 = CodeView.Sim.run (view N 11199 1595536 188243) 37978320 bst_102_11 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 4 bst_102_10 = some bst_102_11 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 5 _ _ 37978307 h
+  exact CodeView.Sim.run_steps _ 4 _ _ 37978320 h
 
-def bst_102_12 : SimState := ⟨none, 46, 4, 5, ⟨3, 4, 3, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [3, 4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 7, [5], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨16⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [4], ⟨512⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [8], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_102_12 : SimState := ⟨none, 32, 4, 5, ⟨3, 4, 3, 1, 1⟩, [⟨.exe, 9, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [3, 4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 21, [5], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨16⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [4], ⟨512⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [8], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_102_11 : CodeView.Sim.run (view N 11199 1595536 188243) 37978307 bst_102_11 = CodeView.Sim.run (view N 11199 1595536 188243) 37978302 bst_102_12 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 5 bst_102_11 = some bst_102_12 := by decide +kernel
+theorem bsim_102_11 : CodeView.Sim.run (view N 11199 1595536 188243) 37978320 bst_102_11 = CodeView.Sim.run (view N 11199 1595536 188243) 37978316 bst_102_12 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 4 bst_102_11 = some bst_102_12 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 5 _ _ 37978302 h
+  exact CodeView.Sim.run_steps _ 4 _ _ 37978316 h
 
-def bst_102_13 : SimState := ⟨none, 51, 4, 5, ⟨3, 4, 3, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [3, 4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 2, [5], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨16⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [4], ⟨512⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [8], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_102_13 : SimState := ⟨none, 36, 4, 5, ⟨3, 4, 3, 1, 1⟩, [⟨.exe, 5, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [3, 4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 17, [5], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨16⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [4], ⟨512⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [8], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_102_12 : CodeView.Sim.run (view N 11199 1595536 188243) 37978302 bst_102_12 = CodeView.Sim.run (view N 11199 1595536 188243) 37978297 bst_102_13 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 5 bst_102_12 = some bst_102_13 := by decide +kernel
+theorem bsim_102_12 : CodeView.Sim.run (view N 11199 1595536 188243) 37978316 bst_102_12 = CodeView.Sim.run (view N 11199 1595536 188243) 37978312 bst_102_13 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 4 bst_102_12 = some bst_102_13 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 5 _ _ 37978297 h
+  exact CodeView.Sim.run_steps _ 4 _ _ 37978312 h
 
-def bst_102_14 : SimState := ⟨none, 55, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [3, 4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [5], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨16⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [4], ⟨512⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [8], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_102_14 : SimState := ⟨none, 40, 4, 5, ⟨3, 4, 3, 1, 1⟩, [⟨.exe, 1, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [3, 4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 13, [5], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨16⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [4], ⟨512⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [8], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_102_13 : CodeView.Sim.run (view N 11199 1595536 188243) 37978297 bst_102_13 = CodeView.Sim.run (view N 11199 1595536 188243) 37978293 bst_102_14 := by
+theorem bsim_102_13 : CodeView.Sim.run (view N 11199 1595536 188243) 37978312 bst_102_13 = CodeView.Sim.run (view N 11199 1595536 188243) 37978308 bst_102_14 := by
   have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 4 bst_102_13 = some bst_102_14 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 4 _ _ 37978293 h
+  exact CodeView.Sim.run_steps _ 4 _ _ 37978308 h
 
-theorem bend_102 : CodeView.Sim.run (view N 11199 1595536 188243) 37978293 bst_102_14 = some bst_102_14 := by
-  have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) bst_102_14 = some (.inr bst_102_14) := by decide +kernel
+def bst_102_15 : SimState := ⟨none, 44, 4, 5, ⟨3, 4, 3, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [3, 4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 9, [5], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨16⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [4], ⟨512⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [8], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_102_14 : CodeView.Sim.run (view N 11199 1595536 188243) 37978308 bst_102_14 = CodeView.Sim.run (view N 11199 1595536 188243) 37978304 bst_102_15 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 4 bst_102_14 = some bst_102_15 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_final _ bst_102_14 37978292 h
+  exact CodeView.Sim.run_steps _ 4 _ _ 37978304 h
+
+def bst_102_16 : SimState := ⟨none, 48, 4, 5, ⟨3, 4, 3, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [3, 4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 5, [5], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨16⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [4], ⟨512⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [8], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_102_15 : CodeView.Sim.run (view N 11199 1595536 188243) 37978304 bst_102_15 = CodeView.Sim.run (view N 11199 1595536 188243) 37978300 bst_102_16 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 4 bst_102_15 = some bst_102_16 := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_steps _ 4 _ _ 37978300 h
+
+def bst_102_17 : SimState := ⟨none, 52, 4, 5, ⟨3, 4, 3, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [3, 4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 1, [5], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨16⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [4], ⟨512⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [8], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_102_16 : CodeView.Sim.run (view N 11199 1595536 188243) 37978300 bst_102_16 = CodeView.Sim.run (view N 11199 1595536 188243) 37978296 bst_102_17 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 4 bst_102_16 = some bst_102_17 := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_steps _ 4 _ _ 37978296 h
+
+def bst_102_18 : SimState := ⟨none, 55, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [2], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [3, 4], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [5], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨16⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [4], ⟨512⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [8], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_102_17 : CodeView.Sim.run (view N 11199 1595536 188243) 37978296 bst_102_17 = CodeView.Sim.run (view N 11199 1595536 188243) 37978293 bst_102_18 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 3 bst_102_17 = some bst_102_18 := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_steps _ 3 _ _ 37978293 h
+
+theorem bend_102 : CodeView.Sim.run (view N 11199 1595536 188243) 37978293 bst_102_18 = some bst_102_18 := by
+  have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) bst_102_18 = some (.inr bst_102_18) := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_final _ bst_102_18 37978292 h
 
 /-- ϱ^Δ of the block at 39892 is 52 (GP eq. `gascostforblock`). -/
 theorem bcost_102 : (view N 11199 1595536 188243).blockCost 39892 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 39892 bst_102_14 (bsim_102_0.trans (bsim_102_1.trans (bsim_102_2.trans (bsim_102_3.trans (bsim_102_4.trans (bsim_102_5.trans (bsim_102_6.trans (bsim_102_7.trans (bsim_102_8.trans (bsim_102_9.trans (bsim_102_10.trans (bsim_102_11.trans (bsim_102_12.trans (bsim_102_13.trans bend_102))))))))))))))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 39892 bst_102_18 (bsim_102_0.trans (bsim_102_1.trans (bsim_102_2.trans (bsim_102_3.trans (bsim_102_4.trans (bsim_102_5.trans (bsim_102_6.trans (bsim_102_7.trans (bsim_102_8.trans (bsim_102_9.trans (bsim_102_10.trans (bsim_102_11.trans (bsim_102_12.trans (bsim_102_13.trans (bsim_102_14.trans (bsim_102_15.trans (bsim_102_16.trans (bsim_102_17.trans bend_102))))))))))))))))))]
   decide
 
-theorem bstarts_102 : CodeFact.blockStartsV (cview chunks 11199 1595536 188243 49 1 199 1) 39892 39923 = true := by
-  decide +kernel
+theorem bstart_102 : (view N 11199 1595536 188243).isBlockStart 39892 = true := by
+  have h : (cview chunks 11199 1595536 188243 49 1 199 1).isBlockStartF 39892 = true := by decide +kernel
+  rw [CodeView.isBlockStartF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
+  exact h
+
+theorem bno_102_0 : ∀ k, 39893 ≤ k → k < 39893 + 16 → (view N 11199 1595536 188243).isBlockStart k = false := by
+  have h : (cview chunks 11199 1595536 188243 49 1 199 1).noStartsF 39893 16 = true := by decide +kernel
+  rw [cview_eq chunks chunks_lt] at h
+  exact CodeView.noStartsF_sound _ (fun i => view_zeta_lt _ _ _ _ i) 39893 16 h
+
+theorem bno_102_1 : ∀ k, 39909 ≤ k → k < 39909 + 14 → (view N 11199 1595536 188243).isBlockStart k = false := by
+  have h : (cview chunks 11199 1595536 188243 49 1 199 1).noStartsF 39909 14 = true := by decide +kernel
+  rw [cview_eq chunks chunks_lt] at h
+  exact CodeView.noStartsF_sound _ (fun i => view_zeta_lt _ _ _ _ i) 39909 14 h
+
+theorem bstarts_102 : CodeFact.blockStartsV (view N 11199 1595536 188243) 39892 39923 = true :=
+  CodeFact.blockStartsV_of _ 39892 39923 bstart_102 (range_cover bno_102_0 bno_102_1)
 
 theorem chunk_ok_102 : facts_102.all (·.holds prog) = true := by
   simp only [facts_102, List.all_cons, List.all_nil, Bool.and_true, CodeFact.holds_block, Bool.and_eq_true,
     decide_eq_true_eq]
   refine ⟨?_, ?_⟩
-  · rw [prog_cview 49 1 199 1]; exact bstarts_102
+  · rw [prog_view]; exact bstarts_102
   · rw [prog_view]; exact bcost_102
 
-theorem chunk_103 : facts_103.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jt) = true := by
+theorem chunk_103 : facts_103.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_103 : facts_103.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ chunk_103
+  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_103)
 
-theorem chunk_104 : facts_104.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jt) = true := by
+theorem chunk_104 : facts_104.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_104 : facts_104.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ chunk_104
+  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_104)
 
-theorem chunk_105 : facts_105.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jt) = true := by
+theorem chunk_105 : facts_105.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_105 : facts_105.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ chunk_105
+  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_105)
 
-theorem chunk_106 : facts_106.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jt) = true := by
+theorem chunk_106 : facts_106.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_106 : facts_106.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ chunk_106
+  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_106)
 
-theorem chunk_107 : facts_107.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jt) = true := by
+theorem chunk_107 : facts_107.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_107 : facts_107.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ chunk_107
+  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_107)
 
-def bst_108_1 : SimState := ⟨none, 2, 4, 3, ⟨3, 4, 4, 1, 1⟩, [⟨.exe, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 1, [0], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 2, [1], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 1, [], ⟨256⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.wait, 15, [], ⟨1⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_108_1 : SimState := ⟨none, 1, 0, 4, ⟨3, 4, 4, 1, 1⟩, [⟨.exe, 1, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 1, [0], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.dec, 2, [1], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.dec, 1, [], ⟨256⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.dec, 15, [], ⟨1⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_108_0 : CodeView.Sim.run (view N 11199 1595536 188243) 37970432 (Sim.init 39923) = CodeView.Sim.run (view N 11199 1595536 188243) 37970422 bst_108_1 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 131 1 199 1) 10 (Sim.init 39923) = some bst_108_1 := by decide +kernel
+theorem bsim_108_0 : CodeView.Sim.run (view N 11199 1595536 188243) 37970432 (Sim.init 39923) = CodeView.Sim.run (view N 11199 1595536 188243) 37970425 bst_108_1 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 131 1 199 1) 7 (Sim.init 39923) = some bst_108_1 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 10 _ _ 37970422 h
+  exact CodeView.Sim.run_steps _ 7 _ _ 37970425 h
 
-def bst_108_2 : SimState := ⟨none, 8, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [1], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨256⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 9, [], ⟨1⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_108_2 : SimState := ⟨none, 3, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.fin, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 0, [0], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 2, [1], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 0, [], ⟨256⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 14, [], ⟨1⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_108_1 : CodeView.Sim.run (view N 11199 1595536 188243) 37970422 bst_108_1 = CodeView.Sim.run (view N 11199 1595536 188243) 37970414 bst_108_2 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 131 1 199 1) 8 bst_108_1 = some bst_108_2 := by decide +kernel
+theorem bsim_108_1 : CodeView.Sim.run (view N 11199 1595536 188243) 37970425 bst_108_1 = CodeView.Sim.run (view N 11199 1595536 188243) 37970420 bst_108_2 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 131 1 199 1) 5 bst_108_1 = some bst_108_2 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 8 _ _ 37970414 h
+  exact CodeView.Sim.run_steps _ 5 _ _ 37970420 h
 
-def bst_108_3 : SimState := ⟨none, 16, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [1], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨256⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 1, [], ⟨1⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_108_3 : SimState := ⟨none, 7, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [1], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨256⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 10, [], ⟨1⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_108_2 : CodeView.Sim.run (view N 11199 1595536 188243) 37970414 bst_108_2 = CodeView.Sim.run (view N 11199 1595536 188243) 37970406 bst_108_3 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 131 1 199 1) 8 bst_108_2 = some bst_108_3 := by decide +kernel
+theorem bsim_108_2 : CodeView.Sim.run (view N 11199 1595536 188243) 37970420 bst_108_2 = CodeView.Sim.run (view N 11199 1595536 188243) 37970415 bst_108_3 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 131 1 199 1) 5 bst_108_2 = some bst_108_3 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 8 _ _ 37970406 h
+  exact CodeView.Sim.run_steps _ 5 _ _ 37970415 h
 
-def bst_108_4 : SimState := ⟨none, 19, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [1], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨256⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨1⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_108_4 : SimState := ⟨none, 12, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [1], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨256⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 5, [], ⟨1⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_108_3 : CodeView.Sim.run (view N 11199 1595536 188243) 37970406 bst_108_3 = CodeView.Sim.run (view N 11199 1595536 188243) 37970403 bst_108_4 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 131 1 199 1) 3 bst_108_3 = some bst_108_4 := by decide +kernel
+theorem bsim_108_3 : CodeView.Sim.run (view N 11199 1595536 188243) 37970415 bst_108_3 = CodeView.Sim.run (view N 11199 1595536 188243) 37970410 bst_108_4 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 131 1 199 1) 5 bst_108_3 = some bst_108_4 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 3 _ _ 37970403 h
+  exact CodeView.Sim.run_steps _ 5 _ _ 37970410 h
 
-theorem bend_108 : CodeView.Sim.run (view N 11199 1595536 188243) 37970403 bst_108_4 = some bst_108_4 := by
-  have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 49 1 131 1 199 1) bst_108_4 = some (.inr bst_108_4) := by decide +kernel
+def bst_108_5 : SimState := ⟨none, 17, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [1], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨256⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 0, [], ⟨1⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_108_4 : CodeView.Sim.run (view N 11199 1595536 188243) 37970410 bst_108_4 = CodeView.Sim.run (view N 11199 1595536 188243) 37970405 bst_108_5 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 131 1 199 1) 5 bst_108_4 = some bst_108_5 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_final _ bst_108_4 37970402 h
+  exact CodeView.Sim.run_steps _ 5 _ _ 37970405 h
+
+def bst_108_6 : SimState := ⟨none, 19, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [1], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨256⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨1⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_108_5 : CodeView.Sim.run (view N 11199 1595536 188243) 37970405 bst_108_5 = CodeView.Sim.run (view N 11199 1595536 188243) 37970403 bst_108_6 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 131 1 199 1) 2 bst_108_5 = some bst_108_6 := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_steps _ 2 _ _ 37970403 h
+
+theorem bend_108 : CodeView.Sim.run (view N 11199 1595536 188243) 37970403 bst_108_6 = some bst_108_6 := by
+  have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 49 1 131 1 199 1) bst_108_6 = some (.inr bst_108_6) := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_final _ bst_108_6 37970402 h
 
 /-- ϱ^Δ of the block at 39923 is 16 (GP eq. `gascostforblock`). -/
 theorem bcost_108 : (view N 11199 1595536 188243).blockCost 39923 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 39923 bst_108_4 (bsim_108_0.trans (bsim_108_1.trans (bsim_108_2.trans (bsim_108_3.trans bend_108))))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 39923 bst_108_6 (bsim_108_0.trans (bsim_108_1.trans (bsim_108_2.trans (bsim_108_3.trans (bsim_108_4.trans (bsim_108_5.trans bend_108))))))]
   decide
 
-theorem bstarts_108 : CodeFact.blockStartsV (cview chunks 11199 1595536 188243 49 1 199 1) 39923 39940 = true := by
-  decide +kernel
+theorem bstart_108 : (view N 11199 1595536 188243).isBlockStart 39923 = true := by
+  have h : (cview chunks 11199 1595536 188243 49 1 199 1).isBlockStartF 39923 = true := by decide +kernel
+  rw [CodeView.isBlockStartF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
+  exact h
+
+theorem bno_108_0 : ∀ k, 39924 ≤ k → k < 39924 + 16 → (view N 11199 1595536 188243).isBlockStart k = false := by
+  have h : (cview chunks 11199 1595536 188243 49 1 199 1).noStartsF 39924 16 = true := by decide +kernel
+  rw [cview_eq chunks chunks_lt] at h
+  exact CodeView.noStartsF_sound _ (fun i => view_zeta_lt _ _ _ _ i) 39924 16 h
+
+theorem bstarts_108 : CodeFact.blockStartsV (view N 11199 1595536 188243) 39923 39940 = true :=
+  CodeFact.blockStartsV_of _ 39923 39940 bstart_108 bno_108_0
 
 theorem chunk_ok_108 : facts_108.all (·.holds prog) = true := by
   simp only [facts_108, List.all_cons, List.all_nil, Bool.and_true, CodeFact.holds_block, Bool.and_eq_true,
     decide_eq_true_eq]
   refine ⟨?_, ?_⟩
-  · rw [prog_cview 49 1 199 1]; exact bstarts_108
+  · rw [prog_view]; exact bstarts_108
   · rw [prog_view]; exact bcost_108
 
-theorem chunk_109 : facts_109.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jt) = true := by
+theorem chunk_109 : facts_109.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_109 : facts_109.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ chunk_109
+  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_109)
 
-theorem chunk_110 : facts_110.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jt) = true := by
+theorem chunk_110 : facts_110.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_110 : facts_110.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ chunk_110
+  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_110)
 
-theorem chunk_111 : facts_111.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jt) = true := by
+theorem chunk_111 : facts_111.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_111 : facts_111.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ chunk_111
+  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_111)
 
-def bst_112_1 : SimState := ⟨none, 2, 4, 4, ⟨3, 4, 3, 1, 1⟩, [⟨.exe, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨2048⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.wait, 20, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_112_1 : SimState := ⟨none, 1, 0, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.wait, 1, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.dec, 25, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.dec, 25, [], ⟨2048⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.dec, 1, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.dec, 20, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_112_0 : CodeView.Sim.run (view N 11199 1595536 188243) 37966080 (Sim.init 39940) = CodeView.Sim.run (view N 11199 1595536 188243) 37966069 bst_112_1 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 11 (Sim.init 39940) = some bst_112_1 := by decide +kernel
+theorem bsim_112_0 : CodeView.Sim.run (view N 11199 1595536 188243) 37966080 (Sim.init 39940) = CodeView.Sim.run (view N 11199 1595536 188243) 37966072 bst_112_1 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 8 (Sim.init 39940) = some bst_112_1 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 11 _ _ 37966069 h
+  exact CodeView.Sim.run_steps _ 8 _ _ 37966072 h
 
-def bst_112_2 : SimState := ⟨none, 5, 4, 5, ⟨0, 2, 3, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 22, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 22, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 22, [], ⟨2048⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 17, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_112_2 : SimState := ⟨none, 2, 4, 2, ⟨1, 2, 3, 1, 1⟩, [⟨.exe, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 25, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 25, [], ⟨2048⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.wait, 20, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_112_1 : CodeView.Sim.run (view N 11199 1595536 188243) 37966069 bst_112_1 = CodeView.Sim.run (view N 11199 1595536 188243) 37966062 bst_112_2 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 7 bst_112_1 = some bst_112_2 := by decide +kernel
+theorem bsim_112_1 : CodeView.Sim.run (view N 11199 1595536 188243) 37966072 bst_112_1 = CodeView.Sim.run (view N 11199 1595536 188243) 37966067 bst_112_2 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 5 bst_112_1 = some bst_112_2 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 7 _ _ 37966062 h
+  exact CodeView.Sim.run_steps _ 5 _ _ 37966067 h
 
-def bst_112_3 : SimState := ⟨none, 12, 4, 5, ⟨0, 2, 3, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 15, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 15, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 15, [], ⟨2048⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 10, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_112_3 : SimState := ⟨none, 5, 4, 5, ⟨0, 2, 3, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 22, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 22, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 22, [], ⟨2048⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 17, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_112_2 : CodeView.Sim.run (view N 11199 1595536 188243) 37966062 bst_112_2 = CodeView.Sim.run (view N 11199 1595536 188243) 37966055 bst_112_3 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 7 bst_112_2 = some bst_112_3 := by decide +kernel
+theorem bsim_112_2 : CodeView.Sim.run (view N 11199 1595536 188243) 37966067 bst_112_2 = CodeView.Sim.run (view N 11199 1595536 188243) 37966062 bst_112_3 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 5 bst_112_2 = some bst_112_3 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 7 _ _ 37966055 h
+  exact CodeView.Sim.run_steps _ 5 _ _ 37966062 h
 
-def bst_112_4 : SimState := ⟨none, 19, 4, 5, ⟨0, 2, 3, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 8, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 8, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 8, [], ⟨2048⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 3, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_112_4 : SimState := ⟨none, 10, 4, 5, ⟨0, 2, 3, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 17, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 17, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 17, [], ⟨2048⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 12, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_112_3 : CodeView.Sim.run (view N 11199 1595536 188243) 37966055 bst_112_3 = CodeView.Sim.run (view N 11199 1595536 188243) 37966048 bst_112_4 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 7 bst_112_3 = some bst_112_4 := by decide +kernel
+theorem bsim_112_3 : CodeView.Sim.run (view N 11199 1595536 188243) 37966062 bst_112_3 = CodeView.Sim.run (view N 11199 1595536 188243) 37966057 bst_112_4 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 5 bst_112_3 = some bst_112_4 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 7 _ _ 37966048 h
+  exact CodeView.Sim.run_steps _ 5 _ _ 37966057 h
 
-def bst_112_5 : SimState := ⟨none, 26, 4, 5, ⟨1, 2, 3, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 1, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 1, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 1, [], ⟨2048⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_112_5 : SimState := ⟨none, 15, 4, 5, ⟨0, 2, 3, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 12, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 12, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 12, [], ⟨2048⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 7, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_112_4 : CodeView.Sim.run (view N 11199 1595536 188243) 37966048 bst_112_4 = CodeView.Sim.run (view N 11199 1595536 188243) 37966041 bst_112_5 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 7 bst_112_4 = some bst_112_5 := by decide +kernel
+theorem bsim_112_4 : CodeView.Sim.run (view N 11199 1595536 188243) 37966057 bst_112_4 = CodeView.Sim.run (view N 11199 1595536 188243) 37966052 bst_112_5 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 5 bst_112_4 = some bst_112_5 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 7 _ _ 37966041 h
+  exact CodeView.Sim.run_steps _ 5 _ _ 37966052 h
 
-def bst_112_6 : SimState := ⟨none, 29, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨2048⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_112_6 : SimState := ⟨none, 20, 4, 5, ⟨0, 2, 3, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 7, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 7, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 7, [], ⟨2048⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 2, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_112_5 : CodeView.Sim.run (view N 11199 1595536 188243) 37966041 bst_112_5 = CodeView.Sim.run (view N 11199 1595536 188243) 37966038 bst_112_6 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 3 bst_112_5 = some bst_112_6 := by decide +kernel
+theorem bsim_112_5 : CodeView.Sim.run (view N 11199 1595536 188243) 37966052 bst_112_5 = CodeView.Sim.run (view N 11199 1595536 188243) 37966047 bst_112_6 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 5 bst_112_5 = some bst_112_6 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 3 _ _ 37966038 h
+  exact CodeView.Sim.run_steps _ 5 _ _ 37966047 h
 
-theorem bend_112 : CodeView.Sim.run (view N 11199 1595536 188243) 37966038 bst_112_6 = some bst_112_6 := by
-  have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) bst_112_6 = some (.inr bst_112_6) := by decide +kernel
+def bst_112_7 : SimState := ⟨none, 25, 4, 5, ⟨1, 2, 3, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 2, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 2, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 2, [], ⟨2048⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_112_6 : CodeView.Sim.run (view N 11199 1595536 188243) 37966047 bst_112_6 = CodeView.Sim.run (view N 11199 1595536 188243) 37966042 bst_112_7 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 5 bst_112_6 = some bst_112_7 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_final _ bst_112_6 37966037 h
+  exact CodeView.Sim.run_steps _ 5 _ _ 37966042 h
+
+def bst_112_8 : SimState := ⟨none, 29, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨128⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨2048⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_112_7 : CodeView.Sim.run (view N 11199 1595536 188243) 37966042 bst_112_7 = CodeView.Sim.run (view N 11199 1595536 188243) 37966038 bst_112_8 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) 4 bst_112_7 = some bst_112_8 := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_steps _ 4 _ _ 37966038 h
+
+theorem bend_112 : CodeView.Sim.run (view N 11199 1595536 188243) 37966038 bst_112_8 = some bst_112_8 := by
+  have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 49 1 0 0 199 1) bst_112_8 = some (.inr bst_112_8) := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_final _ bst_112_8 37966037 h
 
 /-- ϱ^Δ of the block at 39940 is 26 (GP eq. `gascostforblock`). -/
 theorem bcost_112 : (view N 11199 1595536 188243).blockCost 39940 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 39940 bst_112_6 (bsim_112_0.trans (bsim_112_1.trans (bsim_112_2.trans (bsim_112_3.trans (bsim_112_4.trans (bsim_112_5.trans bend_112))))))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 39940 bst_112_8 (bsim_112_0.trans (bsim_112_1.trans (bsim_112_2.trans (bsim_112_3.trans (bsim_112_4.trans (bsim_112_5.trans (bsim_112_6.trans (bsim_112_7.trans bend_112))))))))]
   decide
 
-theorem bstarts_112 : CodeFact.blockStartsV (cview chunks 11199 1595536 188243 49 1 199 1) 39940 39961 = true := by
-  decide +kernel
+theorem bstart_112 : (view N 11199 1595536 188243).isBlockStart 39940 = true := by
+  have h : (cview chunks 11199 1595536 188243 49 1 199 1).isBlockStartF 39940 = true := by decide +kernel
+  rw [CodeView.isBlockStartF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
+  exact h
+
+theorem bno_112_0 : ∀ k, 39941 ≤ k → k < 39941 + 16 → (view N 11199 1595536 188243).isBlockStart k = false := by
+  have h : (cview chunks 11199 1595536 188243 49 1 199 1).noStartsF 39941 16 = true := by decide +kernel
+  rw [cview_eq chunks chunks_lt] at h
+  exact CodeView.noStartsF_sound _ (fun i => view_zeta_lt _ _ _ _ i) 39941 16 h
+
+theorem bno_112_1 : ∀ k, 39957 ≤ k → k < 39957 + 4 → (view N 11199 1595536 188243).isBlockStart k = false := by
+  have h : (cview chunks 11199 1595536 188243 49 1 199 1).noStartsF 39957 4 = true := by decide +kernel
+  rw [cview_eq chunks chunks_lt] at h
+  exact CodeView.noStartsF_sound _ (fun i => view_zeta_lt _ _ _ _ i) 39957 4 h
+
+theorem bstarts_112 : CodeFact.blockStartsV (view N 11199 1595536 188243) 39940 39961 = true :=
+  CodeFact.blockStartsV_of _ 39940 39961 bstart_112 (range_cover bno_112_0 bno_112_1)
 
 theorem chunk_ok_112 : facts_112.all (·.holds prog) = true := by
   simp only [facts_112, List.all_cons, List.all_nil, Bool.and_true, CodeFact.holds_block, Bool.and_eq_true,
     decide_eq_true_eq]
   refine ⟨?_, ?_⟩
-  · rw [prog_cview 49 1 199 1]; exact bstarts_112
+  · rw [prog_view]; exact bstarts_112
   · rw [prog_view]; exact bcost_112
 
-theorem chunk_113 : facts_113.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jt) = true := by
+theorem chunk_113 : facts_113.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_113 : facts_113.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ chunk_113
+  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_113)
 
-theorem chunk_114 : facts_114.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jt) = true := by
+theorem chunk_114 : facts_114.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_114 : facts_114.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ chunk_114
+  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_114)
 
-theorem chunk_115 : facts_115.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jt) = true := by
+theorem chunk_115 : facts_115.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 1 199 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_115 : facts_115.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ chunk_115
+  CodeFact.all_holds_of_view prog _ (prog_cview 49 1 199 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_115)
 
-theorem chunk_116 : facts_116.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 2 199 1) jt) = true := by
+theorem chunk_116 : facts_116.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 2 199 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_116 : facts_116.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 49 2 199 1) _ chunk_116
+  CodeFact.all_holds_of_view prog _ (prog_cview 49 2 199 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_116)
 
-def bst_117_1 : SimState := ⟨none, 2, 4, 5, ⟨3, 4, 3, 1, 1⟩, [⟨.exe, 0, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 24, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 0, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 1, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_117_1 : SimState := ⟨none, 1, 4, 3, ⟨3, 4, 3, 1, 1⟩, [⟨.exe, 1, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 25, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.wait, 2, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_117_0 : CodeView.Sim.run (view N 11199 1595536 188243) 37955584 (Sim.init 39981) = CodeView.Sim.run (view N 11199 1595536 188243) 37955574 bst_117_1 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 10 (Sim.init 39981) = some bst_117_1 := by decide +kernel
+theorem bsim_117_0 : CodeView.Sim.run (view N 11199 1595536 188243) 37955584 (Sim.init 39981) = CodeView.Sim.run (view N 11199 1595536 188243) 37955577 bst_117_1 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 7 (Sim.init 39981) = some bst_117_1 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 10 _ _ 37955574 h
+  exact CodeView.Sim.run_steps _ 7 _ _ 37955577 h
 
-def bst_117_2 : SimState := ⟨none, 11, 4, 5, ⟨3, 4, 3, 1, 1⟩, [⟨.none, 0, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 15, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_117_2 : SimState := ⟨none, 5, 4, 5, ⟨3, 4, 3, 1, 1⟩, [⟨.none, 0, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 21, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_117_1 : CodeView.Sim.run (view N 11199 1595536 188243) 37955574 bst_117_1 = CodeView.Sim.run (view N 11199 1595536 188243) 37955565 bst_117_2 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 9 bst_117_1 = some bst_117_2 := by decide +kernel
+theorem bsim_117_1 : CodeView.Sim.run (view N 11199 1595536 188243) 37955577 bst_117_1 = CodeView.Sim.run (view N 11199 1595536 188243) 37955571 bst_117_2 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 6 bst_117_1 = some bst_117_2 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 9 _ _ 37955565 h
+  exact CodeView.Sim.run_steps _ 6 _ _ 37955571 h
 
-def bst_117_3 : SimState := ⟨none, 20, 4, 5, ⟨3, 4, 3, 1, 1⟩, [⟨.none, 0, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 6, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_117_3 : SimState := ⟨none, 11, 4, 5, ⟨3, 4, 3, 1, 1⟩, [⟨.none, 0, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 15, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_117_2 : CodeView.Sim.run (view N 11199 1595536 188243) 37955565 bst_117_2 = CodeView.Sim.run (view N 11199 1595536 188243) 37955556 bst_117_3 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 9 bst_117_2 = some bst_117_3 := by decide +kernel
+theorem bsim_117_2 : CodeView.Sim.run (view N 11199 1595536 188243) 37955571 bst_117_2 = CodeView.Sim.run (view N 11199 1595536 188243) 37955565 bst_117_3 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 6 bst_117_2 = some bst_117_3 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 9 _ _ 37955556 h
+  exact CodeView.Sim.run_steps _ 6 _ _ 37955565 h
 
-def bst_117_4 : SimState := ⟨none, 28, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_117_4 : SimState := ⟨none, 17, 4, 5, ⟨3, 4, 3, 1, 1⟩, [⟨.none, 0, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 9, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_117_3 : CodeView.Sim.run (view N 11199 1595536 188243) 37955556 bst_117_3 = CodeView.Sim.run (view N 11199 1595536 188243) 37955548 bst_117_4 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 8 bst_117_3 = some bst_117_4 := by decide +kernel
+theorem bsim_117_3 : CodeView.Sim.run (view N 11199 1595536 188243) 37955565 bst_117_3 = CodeView.Sim.run (view N 11199 1595536 188243) 37955559 bst_117_4 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 6 bst_117_3 = some bst_117_4 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 8 _ _ 37955548 h
+  exact CodeView.Sim.run_steps _ 6 _ _ 37955559 h
 
-theorem bend_117 : CodeView.Sim.run (view N 11199 1595536 188243) 37955548 bst_117_4 = some bst_117_4 := by
-  have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) bst_117_4 = some (.inr bst_117_4) := by decide +kernel
+def bst_117_5 : SimState := ⟨none, 23, 4, 5, ⟨3, 4, 3, 1, 1⟩, [⟨.none, 0, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.exe, 3, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_117_4 : CodeView.Sim.run (view N 11199 1595536 188243) 37955559 bst_117_4 = CodeView.Sim.run (view N 11199 1595536 188243) 37955553 bst_117_5 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 6 bst_117_4 = some bst_117_5 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_final _ bst_117_4 37955547 h
+  exact CodeView.Sim.run_steps _ 6 _ _ 37955553 h
+
+def bst_117_6 : SimState := ⟨none, 28, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨4⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨64⟩, ⟨0, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_117_5 : CodeView.Sim.run (view N 11199 1595536 188243) 37955553 bst_117_5 = CodeView.Sim.run (view N 11199 1595536 188243) 37955548 bst_117_6 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 5 bst_117_5 = some bst_117_6 := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_steps _ 5 _ _ 37955548 h
+
+theorem bend_117 : CodeView.Sim.run (view N 11199 1595536 188243) 37955548 bst_117_6 = some bst_117_6 := by
+  have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) bst_117_6 = some (.inr bst_117_6) := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_final _ bst_117_6 37955547 h
 
 /-- ϱ^Δ of the block at 39981 is 25 (GP eq. `gascostforblock`). -/
 theorem bcost_117 : (view N 11199 1595536 188243).blockCost 39981 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 39981 bst_117_4 (bsim_117_0.trans (bsim_117_1.trans (bsim_117_2.trans (bsim_117_3.trans bend_117))))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 39981 bst_117_6 (bsim_117_0.trans (bsim_117_1.trans (bsim_117_2.trans (bsim_117_3.trans (bsim_117_4.trans (bsim_117_5.trans bend_117))))))]
   decide
 
-theorem bstarts_117 : CodeFact.blockStartsV (cview chunks 11199 1595536 188243 49 2 199 1) 39981 39990 = true := by
-  decide +kernel
+theorem bstart_117 : (view N 11199 1595536 188243).isBlockStart 39981 = true := by
+  have h : (cview chunks 11199 1595536 188243 49 2 199 1).isBlockStartF 39981 = true := by decide +kernel
+  rw [CodeView.isBlockStartF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
+  exact h
+
+theorem bno_117_0 : ∀ k, 39982 ≤ k → k < 39982 + 8 → (view N 11199 1595536 188243).isBlockStart k = false := by
+  have h : (cview chunks 11199 1595536 188243 49 2 199 1).noStartsF 39982 8 = true := by decide +kernel
+  rw [cview_eq chunks chunks_lt] at h
+  exact CodeView.noStartsF_sound _ (fun i => view_zeta_lt _ _ _ _ i) 39982 8 h
+
+theorem bstarts_117 : CodeFact.blockStartsV (view N 11199 1595536 188243) 39981 39990 = true :=
+  CodeFact.blockStartsV_of _ 39981 39990 bstart_117 bno_117_0
 
 theorem chunk_ok_117 : facts_117.all (·.holds prog) = true := by
   simp only [facts_117, List.all_cons, List.all_nil, Bool.and_true, CodeFact.holds_block, Bool.and_eq_true,
     decide_eq_true_eq]
   refine ⟨?_, ?_⟩
-  · rw [prog_cview 49 2 199 1]; exact bstarts_117
+  · rw [prog_view]; exact bstarts_117
   · rw [prog_view]; exact bcost_117
 
-theorem chunk_118 : facts_118.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 2 199 1) jt) = true := by
+theorem chunk_118 : facts_118.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 2 199 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_118 : facts_118.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 49 2 199 1) _ chunk_118
+  CodeFact.all_holds_of_view prog _ (prog_cview 49 2 199 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_118)
 
-theorem chunk_119 : facts_119.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 2 199 1) jt) = true := by
+theorem chunk_119 : facts_119.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 2 199 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_119 : facts_119.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 49 2 199 1) _ chunk_119
+  CodeFact.all_holds_of_view prog _ (prog_cview 49 2 199 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_119)
 
-def bst_120_1 : SimState := ⟨none, 1, 0, 4, ⟨3, 4, 4, 1, 1⟩, [⟨.exe, 1, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.dec, 25, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.dec, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.dec, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.dec, 22, [3], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_120_1 : SimState := ⟨some 40006, 1, 2, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.wait, 1, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.dec, 25, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.dec, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_120_0 : CodeView.Sim.run (view N 11199 1595536 188243) 37953280 (Sim.init 39990) = CodeView.Sim.run (view N 11199 1595536 188243) 37953270 bst_120_1 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 10 (Sim.init 39990) = some bst_120_1 := by decide +kernel
+theorem bsim_120_0 : CodeView.Sim.run (view N 11199 1595536 188243) 37953280 (Sim.init 39990) = CodeView.Sim.run (view N 11199 1595536 188243) 37953273 bst_120_1 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 7 (Sim.init 39990) = some bst_120_1 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 10 _ _ 37953270 h
+  exact CodeView.Sim.run_steps _ 7 _ _ 37953273 h
 
-def bst_120_2 : SimState := ⟨none, 3, 4, 5, ⟨0, 2, 2, 1, 1⟩, [⟨.fin, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 24, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 23, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 23, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 24, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 22, [3], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_120_2 : SimState := ⟨none, 1, 0, 3, ⟨2, 4, 3, 1, 1⟩, [⟨.exe, 1, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 25, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.dec, 25, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.dec, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.dec, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.dec, 22, [3], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_120_1 : CodeView.Sim.run (view N 11199 1595536 188243) 37953270 bst_120_1 = CodeView.Sim.run (view N 11199 1595536 188243) 37953264 bst_120_2 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 6 bst_120_1 = some bst_120_2 := by decide +kernel
+theorem bsim_120_1 : CodeView.Sim.run (view N 11199 1595536 188243) 37953273 bst_120_1 = CodeView.Sim.run (view N 11199 1595536 188243) 37953269 bst_120_2 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 4 bst_120_1 = some bst_120_2 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 6 _ _ 37953264 h
+  exact CodeView.Sim.run_steps _ 4 _ _ 37953269 h
 
-def bst_120_3 : SimState := ⟨none, 9, 4, 5, ⟨0, 2, 2, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 18, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 17, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 17, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 18, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 22, [3], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_120_3 : SimState := ⟨none, 2, 4, 3, ⟨0, 2, 2, 1, 1⟩, [⟨.exe, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 24, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 24, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 25, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 22, [3], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_120_2 : CodeView.Sim.run (view N 11199 1595536 188243) 37953264 bst_120_2 = CodeView.Sim.run (view N 11199 1595536 188243) 37953258 bst_120_3 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 6 bst_120_2 = some bst_120_3 := by decide +kernel
+theorem bsim_120_2 : CodeView.Sim.run (view N 11199 1595536 188243) 37953269 bst_120_2 = CodeView.Sim.run (view N 11199 1595536 188243) 37953265 bst_120_3 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 4 bst_120_2 = some bst_120_3 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 6 _ _ 37953258 h
+  exact CodeView.Sim.run_steps _ 4 _ _ 37953265 h
 
-def bst_120_4 : SimState := ⟨none, 15, 4, 5, ⟨0, 2, 2, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 12, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 11, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 11, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 12, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 22, [3], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_120_4 : SimState := ⟨none, 6, 4, 5, ⟨0, 2, 2, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 21, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 20, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 20, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 21, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 22, [3], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_120_3 : CodeView.Sim.run (view N 11199 1595536 188243) 37953258 bst_120_3 = CodeView.Sim.run (view N 11199 1595536 188243) 37953252 bst_120_4 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 6 bst_120_3 = some bst_120_4 := by decide +kernel
+theorem bsim_120_3 : CodeView.Sim.run (view N 11199 1595536 188243) 37953265 bst_120_3 = CodeView.Sim.run (view N 11199 1595536 188243) 37953261 bst_120_4 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 4 bst_120_3 = some bst_120_4 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 6 _ _ 37953252 h
+  exact CodeView.Sim.run_steps _ 4 _ _ 37953261 h
 
-def bst_120_5 : SimState := ⟨none, 21, 4, 5, ⟨0, 2, 2, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 6, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 5, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 5, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 6, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 22, [3], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_120_5 : SimState := ⟨none, 10, 4, 5, ⟨0, 2, 2, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 17, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 16, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 16, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 17, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 22, [3], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_120_4 : CodeView.Sim.run (view N 11199 1595536 188243) 37953252 bst_120_4 = CodeView.Sim.run (view N 11199 1595536 188243) 37953246 bst_120_5 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 6 bst_120_4 = some bst_120_5 := by decide +kernel
+theorem bsim_120_4 : CodeView.Sim.run (view N 11199 1595536 188243) 37953261 bst_120_4 = CodeView.Sim.run (view N 11199 1595536 188243) 37953257 bst_120_5 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 4 bst_120_4 = some bst_120_5 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 6 _ _ 37953246 h
+  exact CodeView.Sim.run_steps _ 4 _ _ 37953257 h
 
-def bst_120_6 : SimState := ⟨none, 26, 4, 4, ⟨1, 2, 3, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 1, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 1, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 22, [3], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_120_6 : SimState := ⟨none, 14, 4, 5, ⟨0, 2, 2, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 13, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 12, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 12, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 13, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 22, [3], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_120_5 : CodeView.Sim.run (view N 11199 1595536 188243) 37953246 bst_120_5 = CodeView.Sim.run (view N 11199 1595536 188243) 37953240 bst_120_6 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 6 bst_120_5 = some bst_120_6 := by decide +kernel
+theorem bsim_120_5 : CodeView.Sim.run (view N 11199 1595536 188243) 37953257 bst_120_5 = CodeView.Sim.run (view N 11199 1595536 188243) 37953253 bst_120_6 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 4 bst_120_5 = some bst_120_6 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 6 _ _ 37953240 h
+  exact CodeView.Sim.run_steps _ 4 _ _ 37953253 h
 
-def bst_120_7 : SimState := ⟨none, 30, 4, 5, ⟨3, 3, 4, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 21, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 18, [3], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_120_7 : SimState := ⟨none, 18, 4, 5, ⟨0, 2, 2, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 9, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 8, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 8, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 9, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 22, [3], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_120_6 : CodeView.Sim.run (view N 11199 1595536 188243) 37953240 bst_120_6 = CodeView.Sim.run (view N 11199 1595536 188243) 37953234 bst_120_7 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 6 bst_120_6 = some bst_120_7 := by decide +kernel
+theorem bsim_120_6 : CodeView.Sim.run (view N 11199 1595536 188243) 37953253 bst_120_6 = CodeView.Sim.run (view N 11199 1595536 188243) 37953249 bst_120_7 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 4 bst_120_6 = some bst_120_7 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 6 _ _ 37953234 h
+  exact CodeView.Sim.run_steps _ 4 _ _ 37953249 h
 
-def bst_120_8 : SimState := ⟨none, 36, 4, 5, ⟨3, 3, 4, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 15, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 12, [3], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_120_8 : SimState := ⟨none, 22, 4, 5, ⟨0, 2, 2, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 5, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 4, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 4, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 5, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 22, [3], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_120_7 : CodeView.Sim.run (view N 11199 1595536 188243) 37953234 bst_120_7 = CodeView.Sim.run (view N 11199 1595536 188243) 37953228 bst_120_8 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 6 bst_120_7 = some bst_120_8 := by decide +kernel
+theorem bsim_120_7 : CodeView.Sim.run (view N 11199 1595536 188243) 37953249 bst_120_7 = CodeView.Sim.run (view N 11199 1595536 188243) 37953245 bst_120_8 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 4 bst_120_7 = some bst_120_8 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 6 _ _ 37953228 h
+  exact CodeView.Sim.run_steps _ 4 _ _ 37953245 h
 
-def bst_120_9 : SimState := ⟨none, 42, 4, 5, ⟨3, 3, 4, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 9, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 6, [3], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_120_9 : SimState := ⟨none, 26, 4, 5, ⟨2, 3, 3, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 1, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 1, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 25, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 22, [3], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_120_8 : CodeView.Sim.run (view N 11199 1595536 188243) 37953228 bst_120_8 = CodeView.Sim.run (view N 11199 1595536 188243) 37953222 bst_120_9 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 6 bst_120_8 = some bst_120_9 := by decide +kernel
+theorem bsim_120_8 : CodeView.Sim.run (view N 11199 1595536 188243) 37953245 bst_120_8 = CodeView.Sim.run (view N 11199 1595536 188243) 37953241 bst_120_9 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 4 bst_120_8 = some bst_120_9 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 6 _ _ 37953222 h
+  exact CodeView.Sim.run_steps _ 4 _ _ 37953241 h
 
-def bst_120_10 : SimState := ⟨none, 48, 4, 5, ⟨3, 3, 4, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 3, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 0, [3], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_120_10 : SimState := ⟨none, 27, 4, 5, ⟨3, 3, 4, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 0, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 24, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 21, [3], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_120_9 : CodeView.Sim.run (view N 11199 1595536 188243) 37953222 bst_120_9 = CodeView.Sim.run (view N 11199 1595536 188243) 37953216 bst_120_10 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 6 bst_120_9 = some bst_120_10 := by decide +kernel
+theorem bsim_120_9 : CodeView.Sim.run (view N 11199 1595536 188243) 37953241 bst_120_9 = CodeView.Sim.run (view N 11199 1595536 188243) 37953237 bst_120_10 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 4 bst_120_9 = some bst_120_10 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 6 _ _ 37953216 h
+  exact CodeView.Sim.run_steps _ 4 _ _ 37953237 h
 
-def bst_120_11 : SimState := ⟨none, 53, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [3], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_120_11 : SimState := ⟨none, 31, 4, 5, ⟨3, 3, 4, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 20, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 17, [3], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_120_10 : CodeView.Sim.run (view N 11199 1595536 188243) 37953216 bst_120_10 = CodeView.Sim.run (view N 11199 1595536 188243) 37953211 bst_120_11 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 5 bst_120_10 = some bst_120_11 := by decide +kernel
+theorem bsim_120_10 : CodeView.Sim.run (view N 11199 1595536 188243) 37953237 bst_120_10 = CodeView.Sim.run (view N 11199 1595536 188243) 37953233 bst_120_11 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 4 bst_120_10 = some bst_120_11 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 5 _ _ 37953211 h
+  exact CodeView.Sim.run_steps _ 4 _ _ 37953233 h
 
-theorem bend_120 : CodeView.Sim.run (view N 11199 1595536 188243) 37953211 bst_120_11 = some bst_120_11 := by
-  have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) bst_120_11 = some (.inr bst_120_11) := by decide +kernel
+def bst_120_12 : SimState := ⟨none, 35, 4, 5, ⟨3, 3, 4, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 16, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 13, [3], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_120_11 : CodeView.Sim.run (view N 11199 1595536 188243) 37953233 bst_120_11 = CodeView.Sim.run (view N 11199 1595536 188243) 37953229 bst_120_12 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 4 bst_120_11 = some bst_120_12 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_final _ bst_120_11 37953210 h
+  exact CodeView.Sim.run_steps _ 4 _ _ 37953229 h
+
+def bst_120_13 : SimState := ⟨none, 39, 4, 5, ⟨3, 3, 4, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 12, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 9, [3], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_120_12 : CodeView.Sim.run (view N 11199 1595536 188243) 37953229 bst_120_12 = CodeView.Sim.run (view N 11199 1595536 188243) 37953225 bst_120_13 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 4 bst_120_12 = some bst_120_13 := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_steps _ 4 _ _ 37953225 h
+
+def bst_120_14 : SimState := ⟨none, 43, 4, 5, ⟨3, 3, 4, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 8, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 5, [3], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_120_13 : CodeView.Sim.run (view N 11199 1595536 188243) 37953225 bst_120_13 = CodeView.Sim.run (view N 11199 1595536 188243) 37953221 bst_120_14 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 4 bst_120_13 = some bst_120_14 := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_steps _ 4 _ _ 37953221 h
+
+def bst_120_15 : SimState := ⟨none, 47, 4, 5, ⟨3, 3, 4, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 4, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 1, [3], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_120_14 : CodeView.Sim.run (view N 11199 1595536 188243) 37953221 bst_120_14 = CodeView.Sim.run (view N 11199 1595536 188243) 37953217 bst_120_15 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 4 bst_120_14 = some bst_120_15 := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_steps _ 4 _ _ 37953217 h
+
+def bst_120_16 : SimState := ⟨none, 51, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.exe, 0, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [3], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_120_15 : CodeView.Sim.run (view N 11199 1595536 188243) 37953217 bst_120_15 = CodeView.Sim.run (view N 11199 1595536 188243) 37953213 bst_120_16 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 4 bst_120_15 = some bst_120_16 := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_steps _ 4 _ _ 37953213 h
+
+def bst_120_17 : SimState := ⟨none, 53, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [], ⟨1⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨32⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨64⟩, ⟨1, 1, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [3], ⟨0⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_120_16 : CodeView.Sim.run (view N 11199 1595536 188243) 37953213 bst_120_16 = CodeView.Sim.run (view N 11199 1595536 188243) 37953211 bst_120_17 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) 2 bst_120_16 = some bst_120_17 := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_steps _ 2 _ _ 37953211 h
+
+theorem bend_120 : CodeView.Sim.run (view N 11199 1595536 188243) 37953211 bst_120_17 = some bst_120_17 := by
+  have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 49 2 0 0 199 1) bst_120_17 = some (.inr bst_120_17) := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_final _ bst_120_17 37953210 h
 
 /-- ϱ^Δ of the block at 39990 is 50 (GP eq. `gascostforblock`). -/
 theorem bcost_120 : (view N 11199 1595536 188243).blockCost 39990 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 39990 bst_120_11 (bsim_120_0.trans (bsim_120_1.trans (bsim_120_2.trans (bsim_120_3.trans (bsim_120_4.trans (bsim_120_5.trans (bsim_120_6.trans (bsim_120_7.trans (bsim_120_8.trans (bsim_120_9.trans (bsim_120_10.trans bend_120)))))))))))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 39990 bst_120_17 (bsim_120_0.trans (bsim_120_1.trans (bsim_120_2.trans (bsim_120_3.trans (bsim_120_4.trans (bsim_120_5.trans (bsim_120_6.trans (bsim_120_7.trans (bsim_120_8.trans (bsim_120_9.trans (bsim_120_10.trans (bsim_120_11.trans (bsim_120_12.trans (bsim_120_13.trans (bsim_120_14.trans (bsim_120_15.trans (bsim_120_16.trans bend_120)))))))))))))))))]
   decide
 
-theorem bstarts_120 : CodeFact.blockStartsV (cview chunks 11199 1595536 188243 49 2 199 1) 39990 40011 = true := by
-  decide +kernel
+theorem bstart_120 : (view N 11199 1595536 188243).isBlockStart 39990 = true := by
+  have h : (cview chunks 11199 1595536 188243 49 2 199 1).isBlockStartF 39990 = true := by decide +kernel
+  rw [CodeView.isBlockStartF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
+  exact h
+
+theorem bno_120_0 : ∀ k, 39991 ≤ k → k < 39991 + 16 → (view N 11199 1595536 188243).isBlockStart k = false := by
+  have h : (cview chunks 11199 1595536 188243 49 2 199 1).noStartsF 39991 16 = true := by decide +kernel
+  rw [cview_eq chunks chunks_lt] at h
+  exact CodeView.noStartsF_sound _ (fun i => view_zeta_lt _ _ _ _ i) 39991 16 h
+
+theorem bno_120_1 : ∀ k, 40007 ≤ k → k < 40007 + 4 → (view N 11199 1595536 188243).isBlockStart k = false := by
+  have h : (cview chunks 11199 1595536 188243 49 2 199 1).noStartsF 40007 4 = true := by decide +kernel
+  rw [cview_eq chunks chunks_lt] at h
+  exact CodeView.noStartsF_sound _ (fun i => view_zeta_lt _ _ _ _ i) 40007 4 h
+
+theorem bstarts_120 : CodeFact.blockStartsV (view N 11199 1595536 188243) 39990 40011 = true :=
+  CodeFact.blockStartsV_of _ 39990 40011 bstart_120 (range_cover bno_120_0 bno_120_1)
 
 theorem chunk_ok_120 : facts_120.all (·.holds prog) = true := by
   simp only [facts_120, List.all_cons, List.all_nil, Bool.and_true, CodeFact.holds_block, Bool.and_eq_true,
     decide_eq_true_eq]
   refine ⟨?_, ?_⟩
-  · rw [prog_cview 49 2 199 1]; exact bstarts_120
+  · rw [prog_view]; exact bstarts_120
   · rw [prog_view]; exact bcost_120
 
-theorem chunk_121 : facts_121.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 2 199 1) jt) = true := by
+theorem chunk_121 : facts_121.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 2 199 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_121 : facts_121.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 49 2 199 1) _ chunk_121
+  CodeFact.all_holds_of_view prog _ (prog_cview 49 2 199 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_121)
 
-theorem chunk_122 : facts_122.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 2 199 1) jt) = true := by
+theorem chunk_122 : facts_122.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 2 199 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_122 : facts_122.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 49 2 199 1) _ chunk_122
+  CodeFact.all_holds_of_view prog _ (prog_cview 49 2 199 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_122)
 
-theorem chunk_123 : facts_123.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 2 199 1) jt) = true := by
+theorem chunk_123 : facts_123.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 2 199 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_123 : facts_123.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 49 2 199 1) _ chunk_123
+  CodeFact.all_holds_of_view prog _ (prog_cview 49 2 199 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_123)
 
-theorem chunk_124 : facts_124.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 2 199 1) jt) = true := by
+theorem chunk_124 : facts_124.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 49 2 199 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_124 : facts_124.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 49 2 199 1) _ chunk_124
+  CodeFact.all_holds_of_view prog _ (prog_cview 49 2 199 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_124)
 
-theorem chunk_125 : facts_125.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 53 1 200 1) jt) = true := by
+theorem chunk_125 : facts_125.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 53 1 200 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_125 : facts_125.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 53 1 200 1) _ chunk_125
+  CodeFact.all_holds_of_view prog _ (prog_cview 53 1 200 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_125)
 
-def bst_126_1 : SimState := ⟨some 43137, 2, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.exe, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 1, [0], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩]⟩
+def bst_126_1 : SimState := ⟨some 43134, 1, 2, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.wait, 1, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩]⟩
 
-theorem bsim_126_0 : CodeView.Sim.run (view N 11199 1595536 188243) 37153536 (Sim.init 43114) = CodeView.Sim.run (view N 11199 1595536 188243) 37153526 bst_126_1 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 53 1 134 1 200 1) 10 (Sim.init 43114) = some bst_126_1 := by decide +kernel
+theorem bsim_126_0 : CodeView.Sim.run (view N 11199 1595536 188243) 37153536 (Sim.init 43114) = CodeView.Sim.run (view N 11199 1595536 188243) 37153529 bst_126_1 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 53 1 134 1 200 1) 7 (Sim.init 43114) = some bst_126_1 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 10 _ _ 37153526 h
+  exact CodeView.Sim.run_steps _ 7 _ _ 37153529 h
 
-def bst_126_2 : SimState := ⟨none, 4, 4, 5, ⟨1, 4, 1, 1, 1⟩, [⟨.none, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 23, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 23, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 23, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [0], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 14, [], ⟨1⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_126_2 : SimState := ⟨none, 2, 3, 4, ⟨3, 4, 3, 1, 1⟩, [⟨.exe, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 25, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.wait, 1, [0], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.dec, 15, [], ⟨1⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_126_1 : CodeView.Sim.run (view N 11199 1595536 188243) 37153526 bst_126_1 = CodeView.Sim.run (view N 11199 1595536 188243) 37153518 bst_126_2 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 53 1 134 1 200 1) 8 bst_126_1 = some bst_126_2 := by decide +kernel
+theorem bsim_126_1 : CodeView.Sim.run (view N 11199 1595536 188243) 37153529 bst_126_1 = CodeView.Sim.run (view N 11199 1595536 188243) 37153524 bst_126_2 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 53 1 134 1 200 1) 5 bst_126_1 = some bst_126_2 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 8 _ _ 37153518 h
+  exact CodeView.Sim.run_steps _ 5 _ _ 37153524 h
 
-def bst_126_3 : SimState := ⟨none, 11, 4, 5, ⟨1, 4, 1, 1, 1⟩, [⟨.none, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 16, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 16, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 16, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [0], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 7, [], ⟨1⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_126_3 : SimState := ⟨none, 3, 4, 4, ⟨1, 4, 1, 1, 1⟩, [⟨.fin, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 24, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 24, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 24, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 0, [0], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 15, [], ⟨1⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_126_2 : CodeView.Sim.run (view N 11199 1595536 188243) 37153518 bst_126_2 = CodeView.Sim.run (view N 11199 1595536 188243) 37153511 bst_126_3 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 53 1 134 1 200 1) 7 bst_126_2 = some bst_126_3 := by decide +kernel
+theorem bsim_126_2 : CodeView.Sim.run (view N 11199 1595536 188243) 37153524 bst_126_2 = CodeView.Sim.run (view N 11199 1595536 188243) 37153519 bst_126_3 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 53 1 134 1 200 1) 5 bst_126_2 = some bst_126_3 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 7 _ _ 37153511 h
+  exact CodeView.Sim.run_steps _ 5 _ _ 37153519 h
 
-def bst_126_4 : SimState := ⟨none, 18, 4, 5, ⟨1, 4, 1, 1, 1⟩, [⟨.none, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 9, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 9, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 9, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [0], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 0, [], ⟨1⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_126_4 : SimState := ⟨none, 8, 4, 5, ⟨1, 4, 1, 1, 1⟩, [⟨.none, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 19, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 19, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 19, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [0], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 10, [], ⟨1⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_126_3 : CodeView.Sim.run (view N 11199 1595536 188243) 37153511 bst_126_3 = CodeView.Sim.run (view N 11199 1595536 188243) 37153504 bst_126_4 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 53 1 134 1 200 1) 7 bst_126_3 = some bst_126_4 := by decide +kernel
+theorem bsim_126_3 : CodeView.Sim.run (view N 11199 1595536 188243) 37153519 bst_126_3 = CodeView.Sim.run (view N 11199 1595536 188243) 37153514 bst_126_4 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 53 1 134 1 200 1) 5 bst_126_3 = some bst_126_4 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 7 _ _ 37153504 h
+  exact CodeView.Sim.run_steps _ 5 _ _ 37153514 h
 
-def bst_126_5 : SimState := ⟨none, 25, 4, 5, ⟨1, 4, 1, 1, 1⟩, [⟨.none, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 2, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 2, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 2, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [0], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨1⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_126_5 : SimState := ⟨none, 13, 4, 5, ⟨1, 4, 1, 1, 1⟩, [⟨.none, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 14, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 14, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 14, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [0], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 5, [], ⟨1⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_126_4 : CodeView.Sim.run (view N 11199 1595536 188243) 37153504 bst_126_4 = CodeView.Sim.run (view N 11199 1595536 188243) 37153497 bst_126_5 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 53 1 134 1 200 1) 7 bst_126_4 = some bst_126_5 := by decide +kernel
+theorem bsim_126_4 : CodeView.Sim.run (view N 11199 1595536 188243) 37153514 bst_126_4 = CodeView.Sim.run (view N 11199 1595536 188243) 37153509 bst_126_5 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 53 1 134 1 200 1) 5 bst_126_4 = some bst_126_5 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 7 _ _ 37153497 h
+  exact CodeView.Sim.run_steps _ 5 _ _ 37153509 h
 
-def bst_126_6 : SimState := ⟨none, 29, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨1⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+def bst_126_6 : SimState := ⟨none, 18, 4, 5, ⟨1, 4, 1, 1, 1⟩, [⟨.none, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 9, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 9, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 9, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [0], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 0, [], ⟨1⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
 
-theorem bsim_126_5 : CodeView.Sim.run (view N 11199 1595536 188243) 37153497 bst_126_5 = CodeView.Sim.run (view N 11199 1595536 188243) 37153493 bst_126_6 := by
-  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 53 1 134 1 200 1) 4 bst_126_5 = some bst_126_6 := by decide +kernel
+theorem bsim_126_5 : CodeView.Sim.run (view N 11199 1595536 188243) 37153509 bst_126_5 = CodeView.Sim.run (view N 11199 1595536 188243) 37153504 bst_126_6 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 53 1 134 1 200 1) 5 bst_126_5 = some bst_126_6 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_steps _ 4 _ _ 37153493 h
+  exact CodeView.Sim.run_steps _ 5 _ _ 37153504 h
 
-theorem bend_126 : CodeView.Sim.run (view N 11199 1595536 188243) 37153493 bst_126_6 = some bst_126_6 := by
-  have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 53 1 134 1 200 1) bst_126_6 = some (.inr bst_126_6) := by decide +kernel
+def bst_126_7 : SimState := ⟨none, 23, 4, 5, ⟨1, 4, 1, 1, 1⟩, [⟨.none, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.exe, 4, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 4, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.exe, 4, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [0], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨1⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_126_6 : CodeView.Sim.run (view N 11199 1595536 188243) 37153504 bst_126_6 = CodeView.Sim.run (view N 11199 1595536 188243) 37153499 bst_126_7 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 53 1 134 1 200 1) 5 bst_126_6 = some bst_126_7 := by decide +kernel
   rw [cview2_eq chunks chunks_lt] at h
-  exact CodeView.Sim.run_final _ bst_126_6 37153492 h
+  exact CodeView.Sim.run_steps _ 5 _ _ 37153499 h
+
+def bst_126_8 : SimState := ⟨none, 28, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.fin, 0, [0], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.fin, 0, [], ⟨1⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_126_7 : CodeView.Sim.run (view N 11199 1595536 188243) 37153499 bst_126_7 = CodeView.Sim.run (view N 11199 1595536 188243) 37153494 bst_126_8 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 53 1 134 1 200 1) 5 bst_126_7 = some bst_126_8 := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_steps _ 5 _ _ 37153494 h
+
+def bst_126_9 : SimState := ⟨none, 29, 4, 5, ⟨4, 4, 4, 1, 1⟩, [⟨.none, 0, [], ⟨2⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨0⟩, ⟨1, 0, 1, 0, 0⟩⟩, ⟨.none, 0, [0], ⟨128⟩, ⟨1, 0, 0, 0, 0⟩⟩, ⟨.none, 0, [], ⟨1⟩, ⟨0, 0, 0, 0, 0⟩⟩]⟩
+
+theorem bsim_126_8 : CodeView.Sim.run (view N 11199 1595536 188243) 37153494 bst_126_8 = CodeView.Sim.run (view N 11199 1595536 188243) 37153493 bst_126_9 := by
+  have h : CodeView.Sim.steps (cview2 chunks 11199 1595536 188243 53 1 134 1 200 1) 1 bst_126_8 = some bst_126_9 := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_steps _ 1 _ _ 37153493 h
+
+theorem bend_126 : CodeView.Sim.run (view N 11199 1595536 188243) 37153493 bst_126_9 = some bst_126_9 := by
+  have h : CodeView.Sim.transition (cview2 chunks 11199 1595536 188243 53 1 134 1 200 1) bst_126_9 = some (.inr bst_126_9) := by decide +kernel
+  rw [cview2_eq chunks chunks_lt] at h
+  exact CodeView.Sim.run_final _ bst_126_9 37153492 h
 
 /-- ϱ^Δ of the block at 43114 is 26 (GP eq. `gascostforblock`). -/
 theorem bcost_126 : (view N 11199 1595536 188243).blockCost 43114 ≤ stepCostCap := by
-  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 43114 bst_126_6 (bsim_126_0.trans (bsim_126_1.trans (bsim_126_2.trans (bsim_126_3.trans (bsim_126_4.trans (bsim_126_5.trans bend_126))))))]
+  rw [CodeView.blockCost_of_run (view N 11199 1595536 188243) 43114 bst_126_9 (bsim_126_0.trans (bsim_126_1.trans (bsim_126_2.trans (bsim_126_3.trans (bsim_126_4.trans (bsim_126_5.trans (bsim_126_6.trans (bsim_126_7.trans (bsim_126_8.trans bend_126)))))))))]
   decide
 
-theorem bstarts_126 : CodeFact.blockStartsV (cview chunks 11199 1595536 188243 53 1 200 1) 43114 43144 = true := by
-  decide +kernel
+theorem bstart_126 : (view N 11199 1595536 188243).isBlockStart 43114 = true := by
+  have h : (cview chunks 11199 1595536 188243 53 1 200 1).isBlockStartF 43114 = true := by decide +kernel
+  rw [CodeView.isBlockStartF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
+  exact h
+
+theorem bno_126_0 : ∀ k, 43115 ≤ k → k < 43115 + 16 → (view N 11199 1595536 188243).isBlockStart k = false := by
+  have h : (cview chunks 11199 1595536 188243 53 1 200 1).noStartsF 43115 16 = true := by decide +kernel
+  rw [cview_eq chunks chunks_lt] at h
+  exact CodeView.noStartsF_sound _ (fun i => view_zeta_lt _ _ _ _ i) 43115 16 h
+
+theorem bno_126_1 : ∀ k, 43131 ≤ k → k < 43131 + 13 → (view N 11199 1595536 188243).isBlockStart k = false := by
+  have h : (cview chunks 11199 1595536 188243 53 1 200 1).noStartsF 43131 13 = true := by decide +kernel
+  rw [cview_eq chunks chunks_lt] at h
+  exact CodeView.noStartsF_sound _ (fun i => view_zeta_lt _ _ _ _ i) 43131 13 h
+
+theorem bstarts_126 : CodeFact.blockStartsV (view N 11199 1595536 188243) 43114 43144 = true :=
+  CodeFact.blockStartsV_of _ 43114 43144 bstart_126 (range_cover bno_126_0 bno_126_1)
 
 theorem chunk_ok_126 : facts_126.all (·.holds prog) = true := by
   simp only [facts_126, List.all_cons, List.all_nil, Bool.and_true, CodeFact.holds_block, Bool.and_eq_true,
     decide_eq_true_eq]
   refine ⟨?_, ?_⟩
-  · rw [prog_cview 53 1 200 1]; exact bstarts_126
+  · rw [prog_view]; exact bstarts_126
   · rw [prog_view]; exact bcost_126
 
-theorem chunk_127 : facts_127.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 53 1 200 1) jt) = true := by
+theorem chunk_127 : facts_127.all (CodeFact.holdsV (cview chunks 11199 1595536 188243 53 1 200 1) jtW) = true := by
   decide +kernel
 
 theorem chunk_ok_127 : facts_127.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_cview 53 1 200 1) _ chunk_127
+  CodeFact.all_holds_of_view prog _ (prog_cview 53 1 200 1) _ (by rw [show prog.jumpTable = jtW from jt_eq]; exact chunk_127)
 
 theorem chunks_1 : factGroup_1.all (fun c => c.all (·.holds prog)) = true := by
   simp only [factGroup_1, List.all_cons, List.all_nil, Bool.and_true, chunk_ok_64, chunk_ok_65, chunk_ok_66, chunk_ok_67, chunk_ok_68, chunk_ok_69, chunk_ok_70, chunk_ok_71, chunk_ok_72, chunk_ok_73, chunk_ok_74, chunk_ok_75, chunk_ok_76, chunk_ok_77, chunk_ok_78, chunk_ok_79, chunk_ok_80, chunk_ok_81, chunk_ok_82, chunk_ok_83, chunk_ok_84, chunk_ok_85, chunk_ok_86, chunk_ok_87, chunk_ok_88, chunk_ok_89, chunk_ok_90, chunk_ok_91, chunk_ok_92, chunk_ok_93, chunk_ok_94, chunk_ok_95, chunk_ok_96, chunk_ok_97, chunk_ok_98, chunk_ok_99, chunk_ok_100, chunk_ok_101, chunk_ok_102, chunk_ok_103, chunk_ok_104, chunk_ok_105, chunk_ok_106, chunk_ok_107, chunk_ok_108, chunk_ok_109, chunk_ok_110, chunk_ok_111, chunk_ok_112, chunk_ok_113, chunk_ok_114, chunk_ok_115, chunk_ok_116, chunk_ok_117, chunk_ok_118, chunk_ok_119, chunk_ok_120, chunk_ok_121, chunk_ok_122, chunk_ok_123, chunk_ok_124, chunk_ok_125, chunk_ok_126, chunk_ok_127]

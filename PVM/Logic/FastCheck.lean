@@ -296,6 +296,38 @@ theorem CodeView.blockCost_of_run (V : CodeView) (s : Nat) (z : SimState)
     V.blockCost s = max (z.cycle - 3) 1 := by
   simp [CodeView.blockCost, CodeView.blockCost?, h]
 
+/-- `followsTerminator`, with T read from its bit mask. -/
+def CodeView.followsTerminatorF (V : CodeView) (n : Nat) : Bool :=
+  (List.range 25).any fun d =>
+    decide (d + 1 ≤ n) &&
+      (let m := n - 1 - d
+       decide (m < V.codeSize) && V.maskAt m && terminatorBits.testBit (V.zeta m) && V.next m == n)
+
+/-- `isBlockStart`, testing the cheap half first and reading U and T from their bit masks. -/
+def CodeView.isBlockStartF (V : CodeView) (n : Nat) : Bool :=
+  (decide (n < V.codeSize) && V.maskAt n && validOpcodeBits.testBit (V.zeta n)) &&
+    (n == 0 || V.followsTerminatorF n)
+
+theorem CodeView.isBlockStartF_eq (V : CodeView) (hz : ∀ i, V.zeta i < 256) (n : Nat) :
+    V.isBlockStartF n = V.isBlockStart n := by
+  have hf : V.followsTerminatorF n = V.followsTerminator n := by
+    simp only [followsTerminatorF, followsTerminator]
+    congr 1
+    funext d
+    rw [isTerminator_bits _ (hz _)]
+  rw [isBlockStartF, isBlockStart, hf, isInstrStart, isValidOpcode_bits _ (hz n), Bool.and_comm]
+
+/-- No block starts at a, …, a + len − 1. -/
+def CodeView.noStartsF (V : CodeView) (a len : Nat) : Bool :=
+  (List.range len).all fun k => !V.isBlockStartF (a + k)
+
+theorem CodeView.noStartsF_sound (V : CodeView) (hz : ∀ i, V.zeta i < 256) (a len : Nat)
+    (h : V.noStartsF a len = true) : ∀ k, a ≤ k → k < a + len → V.isBlockStart k = false := by
+  intro k h1 h2
+  simp only [noStartsF, List.all_eq_true, List.mem_range, Bool.not_eq_true'] at h
+  have := h (k - a) (by omega)
+  rwa [show a + (k - a) = k by omega, isBlockStartF_eq V hz] at this
+
 /-- The block-start part of a `.block` fact. -/
 def CodeFact.blockStartsV (V : CodeView) (s e : Nat) : Bool :=
   V.isBlockStart s && ((List.range (e - s - 1)).all fun k => !V.isBlockStart (s + 1 + k))
@@ -304,6 +336,15 @@ theorem CodeFact.holds_block (P : Program) (s e : Nat) :
     (CodeFact.block s e).holds P = (CodeFact.blockStartsV P.view s e && decide (P.view.blockCost s ≤ stepCostCap)) := by
   simp only [CodeFact.holds, CodeFact.blockStartsV, Program.blockCost_view]
   rfl
+
+/-- The block-start part of a `.block` fact, from s ∈ ϖ and no starts in (s, e). -/
+theorem CodeFact.blockStartsV_of (V : CodeView) (s e : Nat) (hs : V.isBlockStart s = true)
+    (hno : ∀ k, s + 1 ≤ k → k < e → V.isBlockStart k = false) :
+    CodeFact.blockStartsV V s e = true := by
+  simp only [CodeFact.blockStartsV, hs, Bool.true_and, List.all_eq_true, List.mem_range,
+    Bool.not_eq_true']
+  intro k hk
+  exact hno (s + 1 + k) (by omega) (by omega)
 
 /-! ## The host-call ids a program names -/
 

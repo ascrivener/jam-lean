@@ -1825,6 +1825,26 @@ def mode_cutAuto (cx : Cx) : IO Unit := do
       changed := true
   -- write the final cuts' files
   mode_cut cx (some bs)
+set_option maxHeartbeats 2000000 in
+/-- `yclasses`: the payload lengths whose runs visit the same set of pcs (loops collapsed), for
+    payloads of k octets 255 (k from a list of lengths up to 2^24), as maximal ranges of the scan. -/
+def mode_yclasses (cx : Cx) : IO Unit := do
+  let ks : List Nat := (List.range 600) ++ ((List.range 100).map (600 + 50 * ·)) ++
+    ((List.range 40).map (5600 + 5000 * ·)) ++ [262144, 1048576, 4194304, 16777000]
+  let mut prev : Option (List Nat) := none
+  let mut start := 0
+  let mut last := 0
+  let mut sig := 0
+  for k in ks do
+    let some t := traceFor cx.code cx.h cx.acct cx.Q cx.c cx.i cx.sid (List.replicate k 255) | continue
+    let pcs := (t.toList.map (·.1)).eraseDups.mergeSort
+    if prev != some pcs then
+      if prev.isSome then IO.println s!"class {sig}: |y| {start} … {last}"
+      sig := sig + 1
+      prev := some pcs; start := k
+    last := k
+  IO.println s!"class {sig}: |y| {start} … {last}"
+
 
 def main (args0 : List String) : IO Unit := do
   -- `--service NAME` first selects the service (default witness)
@@ -1868,4 +1888,5 @@ def main (args0 : List String) : IO Unit := do
   | "reads" => mode_reads cx
   | "seg" => mode_seg cx
   | "cut" => mode_cutAuto cx
+  | "yclasses" => mode_yclasses cx
   | _ => mode_codeRun cx

@@ -4,397 +4,397 @@
 -/
 import Services.Witness.CodeCheck
 
-/-! # The host-call ids witness's code names, indices 0–15999 -/
+/-! # The host-call ids witness's code names, indices 0–12799 -/
 
 namespace Services.Witness.CodeCheck
 
 open PVM PVM.NatBlob Services.Witness.Blob Services.Witness.Code
 
-theorem hosts_0 : ∀ i, 0 ≤ i → i < 250 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_0 : ∀ i, 0 ≤ i → i < 200 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 10 2 194 1).hostScan hostIds 250 0 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 10 2 194 1).hostScan hostIds 200 0 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_1 : ∀ i, 250 ≤ i → i < 500 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_1 : ∀ i, 200 ≤ i → i < 400 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 11 1 194 1).hostScan hostIds 250 250 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 11 1 194 1).hostScan hostIds 200 200 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_2 : ∀ i, 500 ≤ i → i < 750 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_2 : ∀ i, 400 ≤ i → i < 600 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 11 1 194 1).hostScan hostIds 250 500 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 11 1 194 1).hostScan hostIds 200 400 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_3 : ∀ i, 750 ≤ i → i < 1000 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_3 : ∀ i, 600 ≤ i → i < 800 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 11 1 194 1).hostScan hostIds 250 750 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 11 1 194 1).hostScan hostIds 200 600 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_4 : ∀ i, 1000 ≤ i → i < 1250 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_4 : ∀ i, 800 ≤ i → i < 1000 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 11 2 194 1).hostScan hostIds 250 1000 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 11 1 194 1).hostScan hostIds 200 800 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_5 : ∀ i, 1250 ≤ i → i < 1500 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_5 : ∀ i, 1000 ≤ i → i < 1200 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 12 1 194 1).hostScan hostIds 250 1250 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 11 2 194 1).hostScan hostIds 200 1000 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_6 : ∀ i, 1500 ≤ i → i < 1750 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_6 : ∀ i, 1200 ≤ i → i < 1400 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 12 1 194 1).hostScan hostIds 250 1500 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 12 1 194 1).hostScan hostIds 200 1200 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_7 : ∀ i, 1750 ≤ i → i < 2000 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_7 : ∀ i, 1400 ≤ i → i < 1600 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 12 1 194 2).hostScan hostIds 250 1750 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 12 1 194 1).hostScan hostIds 200 1400 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_8 : ∀ i, 2000 ≤ i → i < 2250 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_8 : ∀ i, 1600 ≤ i → i < 1800 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 12 2 195 1).hostScan hostIds 250 2000 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 12 1 194 1).hostScan hostIds 200 1600 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_9 : ∀ i, 2250 ≤ i → i < 2500 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_9 : ∀ i, 1800 ≤ i → i < 2000 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 13 1 195 1).hostScan hostIds 250 2250 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 12 1 194 2).hostScan hostIds 200 1800 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_10 : ∀ i, 2500 ≤ i → i < 2750 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_10 : ∀ i, 2000 ≤ i → i < 2200 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 13 1 195 1).hostScan hostIds 250 2500 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 12 2 195 1).hostScan hostIds 200 2000 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_11 : ∀ i, 2750 ≤ i → i < 3000 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_11 : ∀ i, 2200 ≤ i → i < 2400 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 13 1 195 1).hostScan hostIds 250 2750 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 13 1 195 1).hostScan hostIds 200 2200 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_12 : ∀ i, 3000 ≤ i → i < 3250 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_12 : ∀ i, 2400 ≤ i → i < 2600 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 13 2 195 1).hostScan hostIds 250 3000 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 13 1 195 1).hostScan hostIds 200 2400 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_13 : ∀ i, 3250 ≤ i → i < 3500 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_13 : ∀ i, 2600 ≤ i → i < 2800 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 14 1 195 1).hostScan hostIds 250 3250 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 13 1 195 1).hostScan hostIds 200 2600 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_14 : ∀ i, 3500 ≤ i → i < 3750 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_14 : ∀ i, 2800 ≤ i → i < 3000 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 14 1 195 1).hostScan hostIds 250 3500 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 13 1 195 1).hostScan hostIds 200 2800 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_15 : ∀ i, 3750 ≤ i → i < 4000 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_15 : ∀ i, 3000 ≤ i → i < 3200 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 14 1 195 1).hostScan hostIds 250 3750 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 13 2 195 1).hostScan hostIds 200 3000 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_16 : ∀ i, 4000 ≤ i → i < 4250 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_16 : ∀ i, 3200 ≤ i → i < 3400 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 14 2 195 1).hostScan hostIds 250 4000 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 14 1 195 1).hostScan hostIds 200 3200 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_17 : ∀ i, 4250 ≤ i → i < 4500 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_17 : ∀ i, 3400 ≤ i → i < 3600 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 15 1 195 1).hostScan hostIds 250 4250 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 14 1 195 1).hostScan hostIds 200 3400 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_18 : ∀ i, 4500 ≤ i → i < 4750 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_18 : ∀ i, 3600 ≤ i → i < 3800 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 15 1 195 1).hostScan hostIds 250 4500 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 14 1 195 1).hostScan hostIds 200 3600 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_19 : ∀ i, 4750 ≤ i → i < 5000 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_19 : ∀ i, 3800 ≤ i → i < 4000 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 15 1 195 1).hostScan hostIds 250 4750 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 14 1 195 1).hostScan hostIds 200 3800 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_20 : ∀ i, 5000 ≤ i → i < 5250 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_20 : ∀ i, 4000 ≤ i → i < 4200 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 15 2 195 1).hostScan hostIds 250 5000 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 14 2 195 1).hostScan hostIds 200 4000 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_21 : ∀ i, 5250 ≤ i → i < 5500 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_21 : ∀ i, 4200 ≤ i → i < 4400 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 16 1 195 1).hostScan hostIds 250 5250 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 15 1 195 1).hostScan hostIds 200 4200 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_22 : ∀ i, 5500 ≤ i → i < 5750 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_22 : ∀ i, 4400 ≤ i → i < 4600 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 16 1 195 1).hostScan hostIds 250 5500 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 15 1 195 1).hostScan hostIds 200 4400 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_23 : ∀ i, 5750 ≤ i → i < 6000 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_23 : ∀ i, 4600 ≤ i → i < 4800 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 16 1 195 1).hostScan hostIds 250 5750 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 15 1 195 1).hostScan hostIds 200 4600 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_24 : ∀ i, 6000 ≤ i → i < 6250 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_24 : ∀ i, 4800 ≤ i → i < 5000 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 16 2 195 1).hostScan hostIds 250 6000 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 15 1 195 1).hostScan hostIds 200 4800 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_25 : ∀ i, 6250 ≤ i → i < 6500 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_25 : ∀ i, 5000 ≤ i → i < 5200 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 17 1 195 1).hostScan hostIds 250 6250 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 15 2 195 1).hostScan hostIds 200 5000 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_26 : ∀ i, 6500 ≤ i → i < 6750 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_26 : ∀ i, 5200 ≤ i → i < 5400 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 17 1 195 1).hostScan hostIds 250 6500 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 16 1 195 1).hostScan hostIds 200 5200 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_27 : ∀ i, 6750 ≤ i → i < 7000 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_27 : ∀ i, 5400 ≤ i → i < 5600 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 17 1 195 1).hostScan hostIds 250 6750 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 16 1 195 1).hostScan hostIds 200 5400 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_28 : ∀ i, 7000 ≤ i → i < 7250 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_28 : ∀ i, 5600 ≤ i → i < 5800 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 17 2 195 1).hostScan hostIds 250 7000 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 16 1 195 1).hostScan hostIds 200 5600 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_29 : ∀ i, 7250 ≤ i → i < 7500 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_29 : ∀ i, 5800 ≤ i → i < 6000 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 18 1 195 1).hostScan hostIds 250 7250 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 16 1 195 1).hostScan hostIds 200 5800 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_30 : ∀ i, 7500 ≤ i → i < 7750 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_30 : ∀ i, 6000 ≤ i → i < 6200 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 18 1 195 1).hostScan hostIds 250 7500 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 16 2 195 1).hostScan hostIds 200 6000 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_31 : ∀ i, 7750 ≤ i → i < 8000 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_31 : ∀ i, 6200 ≤ i → i < 6400 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 18 1 195 1).hostScan hostIds 250 7750 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 16 2 195 1).hostScan hostIds 200 6200 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_32 : ∀ i, 8000 ≤ i → i < 8250 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_32 : ∀ i, 6400 ≤ i → i < 6600 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 18 2 195 1).hostScan hostIds 250 8000 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 17 1 195 1).hostScan hostIds 200 6400 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_33 : ∀ i, 8250 ≤ i → i < 8500 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_33 : ∀ i, 6600 ≤ i → i < 6800 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 18 2 195 1).hostScan hostIds 250 8250 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 17 1 195 1).hostScan hostIds 200 6600 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_34 : ∀ i, 8500 ≤ i → i < 8750 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_34 : ∀ i, 6800 ≤ i → i < 7000 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 19 1 195 1).hostScan hostIds 250 8500 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 17 1 195 1).hostScan hostIds 200 6800 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_35 : ∀ i, 8750 ≤ i → i < 9000 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_35 : ∀ i, 7000 ≤ i → i < 7200 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 19 1 195 1).hostScan hostIds 250 8750 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 17 2 195 1).hostScan hostIds 200 7000 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_36 : ∀ i, 9000 ≤ i → i < 9250 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_36 : ∀ i, 7200 ≤ i → i < 7400 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 19 2 195 1).hostScan hostIds 250 9000 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 17 2 195 1).hostScan hostIds 200 7200 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_37 : ∀ i, 9250 ≤ i → i < 9500 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_37 : ∀ i, 7400 ≤ i → i < 7600 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 19 2 195 1).hostScan hostIds 250 9250 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 18 1 195 1).hostScan hostIds 200 7400 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_38 : ∀ i, 9500 ≤ i → i < 9750 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_38 : ∀ i, 7600 ≤ i → i < 7800 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 20 1 195 1).hostScan hostIds 250 9500 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 18 1 195 1).hostScan hostIds 200 7600 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_39 : ∀ i, 9750 ≤ i → i < 10000 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_39 : ∀ i, 7800 ≤ i → i < 8000 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 20 1 195 1).hostScan hostIds 250 9750 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 18 1 195 1).hostScan hostIds 200 7800 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_40 : ∀ i, 10000 ≤ i → i < 10250 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_40 : ∀ i, 8000 ≤ i → i < 8200 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 20 1 195 2).hostScan hostIds 250 10000 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 18 1 195 1).hostScan hostIds 200 8000 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_41 : ∀ i, 10250 ≤ i → i < 10500 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_41 : ∀ i, 8200 ≤ i → i < 8400 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 20 2 196 1).hostScan hostIds 250 10250 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 18 2 195 1).hostScan hostIds 200 8200 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_42 : ∀ i, 10500 ≤ i → i < 10750 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_42 : ∀ i, 8400 ≤ i → i < 8600 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 21 1 196 1).hostScan hostIds 250 10500 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 19 1 195 1).hostScan hostIds 200 8400 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_43 : ∀ i, 10750 ≤ i → i < 11000 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_43 : ∀ i, 8600 ≤ i → i < 8800 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 21 1 196 1).hostScan hostIds 250 10750 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 19 1 195 1).hostScan hostIds 200 8600 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_44 : ∀ i, 11000 ≤ i → i < 11250 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_44 : ∀ i, 8800 ≤ i → i < 9000 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 21 1 196 1).hostScan hostIds 250 11000 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 19 1 195 1).hostScan hostIds 200 8800 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_45 : ∀ i, 11250 ≤ i → i < 11500 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_45 : ∀ i, 9000 ≤ i → i < 9200 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 21 2 196 1).hostScan hostIds 250 11250 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 19 1 195 1).hostScan hostIds 200 9000 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_46 : ∀ i, 11500 ≤ i → i < 11750 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_46 : ∀ i, 9200 ≤ i → i < 9400 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 22 1 196 1).hostScan hostIds 250 11500 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 19 2 195 1).hostScan hostIds 200 9200 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_47 : ∀ i, 11750 ≤ i → i < 12000 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_47 : ∀ i, 9400 ≤ i → i < 9600 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 22 1 196 1).hostScan hostIds 250 11750 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 20 1 195 1).hostScan hostIds 200 9400 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_48 : ∀ i, 12000 ≤ i → i < 12250 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_48 : ∀ i, 9600 ≤ i → i < 9800 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 22 1 196 1).hostScan hostIds 250 12000 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 20 1 195 1).hostScan hostIds 200 9600 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_49 : ∀ i, 12250 ≤ i → i < 12500 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_49 : ∀ i, 9800 ≤ i → i < 10000 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 22 2 196 1).hostScan hostIds 250 12250 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 20 1 195 1).hostScan hostIds 200 9800 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_50 : ∀ i, 12500 ≤ i → i < 12750 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_50 : ∀ i, 10000 ≤ i → i < 10200 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 23 1 196 1).hostScan hostIds 250 12500 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 20 1 195 2).hostScan hostIds 200 10000 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_51 : ∀ i, 12750 ≤ i → i < 13000 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_51 : ∀ i, 10200 ≤ i → i < 10400 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 23 1 196 1).hostScan hostIds 250 12750 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 20 2 196 1).hostScan hostIds 200 10200 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_52 : ∀ i, 13000 ≤ i → i < 13250 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_52 : ∀ i, 10400 ≤ i → i < 10600 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 23 1 196 1).hostScan hostIds 250 13000 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 21 1 196 1).hostScan hostIds 200 10400 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_53 : ∀ i, 13250 ≤ i → i < 13500 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_53 : ∀ i, 10600 ≤ i → i < 10800 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 23 2 196 1).hostScan hostIds 250 13250 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 21 1 196 1).hostScan hostIds 200 10600 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_54 : ∀ i, 13500 ≤ i → i < 13750 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_54 : ∀ i, 10800 ≤ i → i < 11000 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 24 1 196 1).hostScan hostIds 250 13500 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 21 1 196 1).hostScan hostIds 200 10800 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_55 : ∀ i, 13750 ≤ i → i < 14000 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_55 : ∀ i, 11000 ≤ i → i < 11200 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 24 1 196 1).hostScan hostIds 250 13750 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 21 1 196 1).hostScan hostIds 200 11000 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_56 : ∀ i, 14000 ≤ i → i < 14250 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_56 : ∀ i, 11200 ≤ i → i < 11400 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 24 1 196 1).hostScan hostIds 250 14000 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 21 2 196 1).hostScan hostIds 200 11200 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_57 : ∀ i, 14250 ≤ i → i < 14500 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_57 : ∀ i, 11400 ≤ i → i < 11600 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 24 2 196 1).hostScan hostIds 250 14250 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 22 1 196 1).hostScan hostIds 200 11400 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_58 : ∀ i, 14500 ≤ i → i < 14750 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_58 : ∀ i, 11600 ≤ i → i < 11800 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 25 1 196 1).hostScan hostIds 250 14500 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 22 1 196 1).hostScan hostIds 200 11600 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_59 : ∀ i, 14750 ≤ i → i < 15000 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_59 : ∀ i, 11800 ≤ i → i < 12000 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 25 1 196 1).hostScan hostIds 250 14750 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 22 1 196 1).hostScan hostIds 200 11800 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_60 : ∀ i, 15000 ≤ i → i < 15250 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_60 : ∀ i, 12000 ≤ i → i < 12200 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 25 1 196 1).hostScan hostIds 250 15000 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 22 1 196 1).hostScan hostIds 200 12000 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_61 : ∀ i, 15250 ≤ i → i < 15500 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_61 : ∀ i, 12200 ≤ i → i < 12400 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 25 2 196 1).hostScan hostIds 250 15250 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 22 2 196 1).hostScan hostIds 200 12200 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_62 : ∀ i, 15500 ≤ i → i < 15750 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_62 : ∀ i, 12400 ≤ i → i < 12600 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 26 1 196 1).hostScan hostIds 250 15500 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 23 1 196 1).hostScan hostIds 200 12400 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hosts_63 : ∀ i, 15750 ≤ i → i < 16000 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hosts_63 : ∀ i, 12600 ≤ i → i < 12800 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds := by
-  have h : (cview chunks 11199 1595536 188243 26 1 196 1).hostScan hostIds 250 15750 = true := by decide +kernel
+  have h : (cview chunks 11199 1595536 188243 23 1 196 1).hostScan hostIds 200 12600 = true := by decide +kernel
   rw [cview_eq chunks chunks_lt] at h
   exact CodeView.hostScan_sound _ _ _ _ h
 
-theorem hostsG_0 : ∀ i, 0 ≤ i → i < 16000 → (view N 11199 1595536 188243).maskAt i = true →
+theorem hostsG_0 : ∀ i, 0 ≤ i → i < 12800 → (view N 11199 1595536 188243).maskAt i = true →
     ∀ x, (view N 11199 1595536 188243).decode i = some (.oneImm .ecalli x) → x.toNat ∈ hostIds :=
   (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover hosts_0 hosts_1) hosts_2) hosts_3) hosts_4) hosts_5) hosts_6) hosts_7) hosts_8) hosts_9) hosts_10) hosts_11) hosts_12) hosts_13) hosts_14) hosts_15) hosts_16) hosts_17) hosts_18) hosts_19) hosts_20) hosts_21) hosts_22) hosts_23) hosts_24) hosts_25) hosts_26) hosts_27) hosts_28) hosts_29) hosts_30) hosts_31) hosts_32) hosts_33) hosts_34) hosts_35) hosts_36) hosts_37) hosts_38) hosts_39) hosts_40) hosts_41) hosts_42) hosts_43) hosts_44) hosts_45) hosts_46) hosts_47) hosts_48) hosts_49) hosts_50) hosts_51) hosts_52) hosts_53) hosts_54) hosts_55) hosts_56) hosts_57) hosts_58) hosts_59) hosts_60) hosts_61) hosts_62) hosts_63)
 

@@ -10,327 +10,327 @@ namespace Services.Witness.CodeCheck
 
 open PVM PVM.NatBlob Services.Witness.Blob Services.Witness.Code
 
-theorem walk_320 : (view N 11199 1595536 188243).vBlobAux 169044 61815 = (view N 11199 1595536 188243).vBlobAux 168984 62028 := by
-  have h : (cview chunks 11199 1595536 188243 71 1 202 1).walkF 60 61815 = some 62028 := by decide +kernel
+theorem walk_320 : (view N 11199 1595536 188243).vBlobAux 175444 39841 = (view N 11199 1595536 188243).vBlobAux 175404 39969 := by
+  have h : (cview chunks 11199 1595536 188243 49 2 199 1).walkF 40 39841 = some 39969 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 61815 62028 169044 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 39841 39969 175444 h (by decide)
 
-theorem walk_321 : (view N 11199 1595536 188243).vBlobAux 168984 62028 = (view N 11199 1595536 188243).vBlobAux 168924 62258 := by
-  have h : (cview chunks 11199 1595536 188243 71 1 202 1).walkF 60 62028 = some 62258 := by decide +kernel
+theorem walk_321 : (view N 11199 1595536 188243).vBlobAux 175404 39969 = (view N 11199 1595536 188243).vBlobAux 175364 40083 := by
+  have h : (cview chunks 11199 1595536 188243 49 2 199 1).walkF 40 39969 = some 40083 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 62028 62258 168984 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 39969 40083 175404 h (by decide)
 
-theorem walk_322 : (view N 11199 1595536 188243).vBlobAux 168924 62258 = (view N 11199 1595536 188243).vBlobAux 168864 62457 := by
-  have h : (cview chunks 11199 1595536 188243 71 1 202 1).walkF 60 62258 = some 62457 := by decide +kernel
+theorem walk_322 : (view N 11199 1595536 188243).vBlobAux 175364 40083 = (view N 11199 1595536 188243).vBlobAux 175324 40202 := by
+  have h : (cview chunks 11199 1595536 188243 50 1 199 1).walkF 40 40083 = some 40202 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 62258 62457 168924 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 40083 40202 175364 h (by decide)
 
-theorem walk_323 : (view N 11199 1595536 188243).vBlobAux 168864 62457 = (view N 11199 1595536 188243).vBlobAux 168804 62682 := by
-  have h : (cview chunks 11199 1595536 188243 71 2 202 1).walkF 60 62457 = some 62682 := by decide +kernel
+theorem walk_323 : (view N 11199 1595536 188243).vBlobAux 175324 40202 = (view N 11199 1595536 188243).vBlobAux 175284 40327 := by
+  have h : (cview chunks 11199 1595536 188243 50 1 199 1).walkF 40 40202 = some 40327 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 62457 62682 168864 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 40202 40327 175324 h (by decide)
 
-theorem walk_324 : (view N 11199 1595536 188243).vBlobAux 168804 62682 = (view N 11199 1595536 188243).vBlobAux 168744 62894 := by
-  have h : (cview chunks 11199 1595536 188243 72 1 202 1).walkF 60 62682 = some 62894 := by decide +kernel
+theorem walk_324 : (view N 11199 1595536 188243).vBlobAux 175284 40327 = (view N 11199 1595536 188243).vBlobAux 175244 40452 := by
+  have h : (cview chunks 11199 1595536 188243 50 1 199 1).walkF 40 40327 = some 40452 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 62682 62894 168804 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 40327 40452 175284 h (by decide)
 
-theorem walk_325 : (view N 11199 1595536 188243).vBlobAux 168744 62894 = (view N 11199 1595536 188243).vBlobAux 168684 63086 := by
-  have h : (cview chunks 11199 1595536 188243 72 1 202 1).walkF 60 62894 = some 63086 := by decide +kernel
+theorem walk_325 : (view N 11199 1595536 188243).vBlobAux 175244 40452 = (view N 11199 1595536 188243).vBlobAux 175204 40584 := by
+  have h : (cview chunks 11199 1595536 188243 50 1 199 1).walkF 40 40452 = some 40584 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 62894 63086 168744 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 40452 40584 175244 h (by decide)
 
-theorem walk_326 : (view N 11199 1595536 188243).vBlobAux 168684 63086 = (view N 11199 1595536 188243).vBlobAux 168624 63274 := by
-  have h : (cview chunks 11199 1595536 188243 72 1 202 1).walkF 60 63086 = some 63274 := by decide +kernel
+theorem walk_326 : (view N 11199 1595536 188243).vBlobAux 175204 40584 = (view N 11199 1595536 188243).vBlobAux 175164 40716 := by
+  have h : (cview chunks 11199 1595536 188243 50 1 199 1).walkF 40 40584 = some 40716 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 63086 63274 168684 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 40584 40716 175204 h (by decide)
 
-theorem walk_327 : (view N 11199 1595536 188243).vBlobAux 168624 63274 = (view N 11199 1595536 188243).vBlobAux 168564 63486 := by
-  have h : (cview chunks 11199 1595536 188243 72 1 202 1).walkF 60 63274 = some 63486 := by decide +kernel
+theorem walk_327 : (view N 11199 1595536 188243).vBlobAux 175164 40716 = (view N 11199 1595536 188243).vBlobAux 175124 40844 := by
+  have h : (cview chunks 11199 1595536 188243 50 1 199 1).walkF 40 40716 = some 40844 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 63274 63486 168624 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 40716 40844 175164 h (by decide)
 
-theorem walk_328 : (view N 11199 1595536 188243).vBlobAux 168564 63486 = (view N 11199 1595536 188243).vBlobAux 168504 63675 := by
-  have h : (cview chunks 11199 1595536 188243 72 2 202 1).walkF 60 63486 = some 63675 := by decide +kernel
+theorem walk_328 : (view N 11199 1595536 188243).vBlobAux 175124 40844 = (view N 11199 1595536 188243).vBlobAux 175084 40969 := by
+  have h : (cview chunks 11199 1595536 188243 50 2 199 1).walkF 40 40844 = some 40969 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 63486 63675 168564 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 40844 40969 175124 h (by decide)
 
-theorem walk_329 : (view N 11199 1595536 188243).vBlobAux 168504 63675 = (view N 11199 1595536 188243).vBlobAux 168444 63878 := by
-  have h : (cview chunks 11199 1595536 188243 73 1 202 1).walkF 60 63675 = some 63878 := by decide +kernel
+theorem walk_329 : (view N 11199 1595536 188243).vBlobAux 175084 40969 = (view N 11199 1595536 188243).vBlobAux 175044 41100 := by
+  have h : (cview chunks 11199 1595536 188243 50 2 199 1).walkF 40 40969 = some 41100 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 63675 63878 168504 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 40969 41100 175084 h (by decide)
 
-theorem walk_330 : (view N 11199 1595536 188243).vBlobAux 168444 63878 = (view N 11199 1595536 188243).vBlobAux 168384 64084 := by
-  have h : (cview chunks 11199 1595536 188243 73 1 202 1).walkF 60 63878 = some 64084 := by decide +kernel
+theorem walk_330 : (view N 11199 1595536 188243).vBlobAux 175044 41100 = (view N 11199 1595536 188243).vBlobAux 175004 41225 := by
+  have h : (cview chunks 11199 1595536 188243 51 1 199 1).walkF 40 41100 = some 41225 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 63878 64084 168444 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 41100 41225 175044 h (by decide)
 
-theorem walk_331 : (view N 11199 1595536 188243).vBlobAux 168384 64084 = (view N 11199 1595536 188243).vBlobAux 168324 64282 := by
-  have h : (cview chunks 11199 1595536 188243 73 1 202 1).walkF 60 64084 = some 64282 := by decide +kernel
+theorem walk_331 : (view N 11199 1595536 188243).vBlobAux 175004 41225 = (view N 11199 1595536 188243).vBlobAux 174964 41354 := by
+  have h : (cview chunks 11199 1595536 188243 51 1 199 1).walkF 40 41225 = some 41354 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 64084 64282 168384 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 41225 41354 175004 h (by decide)
 
-theorem walk_332 : (view N 11199 1595536 188243).vBlobAux 168324 64282 = (view N 11199 1595536 188243).vBlobAux 168264 64489 := by
-  have h : (cview chunks 11199 1595536 188243 73 1 202 1).walkF 60 64282 = some 64489 := by decide +kernel
+theorem walk_332 : (view N 11199 1595536 188243).vBlobAux 174964 41354 = (view N 11199 1595536 188243).vBlobAux 174924 41482 := by
+  have h : (cview chunks 11199 1595536 188243 51 1 199 1).walkF 40 41354 = some 41482 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 64282 64489 168324 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 41354 41482 174964 h (by decide)
 
-theorem walk_333 : (view N 11199 1595536 188243).vBlobAux 168264 64489 = (view N 11199 1595536 188243).vBlobAux 168204 64714 := by
-  have h : (cview chunks 11199 1595536 188243 73 2 202 1).walkF 60 64489 = some 64714 := by decide +kernel
+theorem walk_333 : (view N 11199 1595536 188243).vBlobAux 174924 41482 = (view N 11199 1595536 188243).vBlobAux 174884 41624 := by
+  have h : (cview chunks 11199 1595536 188243 51 1 199 1).walkF 40 41482 = some 41624 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 64489 64714 168264 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 41482 41624 174924 h (by decide)
 
-theorem walk_334 : (view N 11199 1595536 188243).vBlobAux 168204 64714 = (view N 11199 1595536 188243).vBlobAux 168144 64912 := by
-  have h : (cview chunks 11199 1595536 188243 74 1 202 1).walkF 60 64714 = some 64912 := by decide +kernel
+theorem walk_334 : (view N 11199 1595536 188243).vBlobAux 174884 41624 = (view N 11199 1595536 188243).vBlobAux 174844 41743 := by
+  have h : (cview chunks 11199 1595536 188243 51 1 199 1).walkF 40 41624 = some 41743 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 64714 64912 168204 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 41624 41743 174884 h (by decide)
 
-theorem walk_335 : (view N 11199 1595536 188243).vBlobAux 168144 64912 = (view N 11199 1595536 188243).vBlobAux 168084 65107 := by
-  have h : (cview chunks 11199 1595536 188243 74 1 202 1).walkF 60 64912 = some 65107 := by decide +kernel
+theorem walk_335 : (view N 11199 1595536 188243).vBlobAux 174844 41743 = (view N 11199 1595536 188243).vBlobAux 174804 41870 := by
+  have h : (cview chunks 11199 1595536 188243 51 1 199 1).walkF 40 41743 = some 41870 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 64912 65107 168144 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 41743 41870 174844 h (by decide)
 
-theorem walk_336 : (view N 11199 1595536 188243).vBlobAux 168084 65107 = (view N 11199 1595536 188243).vBlobAux 168024 65335 := by
-  have h : (cview chunks 11199 1595536 188243 74 1 202 1).walkF 60 65107 = some 65335 := by decide +kernel
+theorem walk_336 : (view N 11199 1595536 188243).vBlobAux 174804 41870 = (view N 11199 1595536 188243).vBlobAux 174764 42014 := by
+  have h : (cview chunks 11199 1595536 188243 51 2 199 1).walkF 40 41870 = some 42014 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 65107 65335 168084 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 41870 42014 174804 h (by decide)
 
-theorem walk_337 : (view N 11199 1595536 188243).vBlobAux 168024 65335 = (view N 11199 1595536 188243).vBlobAux 167964 65554 := by
-  have h : (cview chunks 11199 1595536 188243 74 2 202 1).walkF 60 65335 = some 65554 := by decide +kernel
+theorem walk_337 : (view N 11199 1595536 188243).vBlobAux 174764 42014 = (view N 11199 1595536 188243).vBlobAux 174724 42144 := by
+  have h : (cview chunks 11199 1595536 188243 51 2 199 1).walkF 40 42014 = some 42144 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 65335 65554 168024 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 42014 42144 174764 h (by decide)
 
-theorem walk_338 : (view N 11199 1595536 188243).vBlobAux 167964 65554 = (view N 11199 1595536 188243).vBlobAux 167904 65743 := by
-  have h : (cview chunks 11199 1595536 188243 74 2 202 1).walkF 60 65554 = some 65743 := by decide +kernel
+theorem walk_338 : (view N 11199 1595536 188243).vBlobAux 174724 42144 = (view N 11199 1595536 188243).vBlobAux 174684 42268 := by
+  have h : (cview chunks 11199 1595536 188243 52 1 199 1).walkF 40 42144 = some 42268 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 65554 65743 167964 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 42144 42268 174724 h (by decide)
 
-theorem walk_339 : (view N 11199 1595536 188243).vBlobAux 167904 65743 = (view N 11199 1595536 188243).vBlobAux 167844 65958 := by
-  have h : (cview chunks 11199 1595536 188243 75 1 202 1).walkF 60 65743 = some 65958 := by decide +kernel
+theorem walk_339 : (view N 11199 1595536 188243).vBlobAux 174684 42268 = (view N 11199 1595536 188243).vBlobAux 174644 42399 := by
+  have h : (cview chunks 11199 1595536 188243 52 1 199 1).walkF 40 42268 = some 42399 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 65743 65958 167904 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 42268 42399 174684 h (by decide)
 
-theorem walk_340 : (view N 11199 1595536 188243).vBlobAux 167844 65958 = (view N 11199 1595536 188243).vBlobAux 167784 66165 := by
-  have h : (cview chunks 11199 1595536 188243 75 1 202 1).walkF 60 65958 = some 66165 := by decide +kernel
+theorem walk_340 : (view N 11199 1595536 188243).vBlobAux 174644 42399 = (view N 11199 1595536 188243).vBlobAux 174604 42532 := by
+  have h : (cview chunks 11199 1595536 188243 52 1 199 1).walkF 40 42399 = some 42532 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 65958 66165 167844 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 42399 42532 174644 h (by decide)
 
-theorem walk_341 : (view N 11199 1595536 188243).vBlobAux 167784 66165 = (view N 11199 1595536 188243).vBlobAux 167724 66390 := by
-  have h : (cview chunks 11199 1595536 188243 75 1 202 1).walkF 60 66165 = some 66390 := by decide +kernel
+theorem walk_341 : (view N 11199 1595536 188243).vBlobAux 174604 42532 = (view N 11199 1595536 188243).vBlobAux 174564 42661 := by
+  have h : (cview chunks 11199 1595536 188243 52 1 199 1).walkF 40 42532 = some 42661 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 66165 66390 167784 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 42532 42661 174604 h (by decide)
 
-theorem walk_342 : (view N 11199 1595536 188243).vBlobAux 167724 66390 = (view N 11199 1595536 188243).vBlobAux 167664 66590 := by
-  have h : (cview chunks 11199 1595536 188243 75 2 202 1).walkF 60 66390 = some 66590 := by decide +kernel
+theorem walk_342 : (view N 11199 1595536 188243).vBlobAux 174564 42661 = (view N 11199 1595536 188243).vBlobAux 174524 42791 := by
+  have h : (cview chunks 11199 1595536 188243 52 1 199 1).walkF 40 42661 = some 42791 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 66390 66590 167724 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 42661 42791 174564 h (by decide)
 
-theorem walk_343 : (view N 11199 1595536 188243).vBlobAux 167664 66590 = (view N 11199 1595536 188243).vBlobAux 167604 66790 := by
-  have h : (cview chunks 11199 1595536 188243 75 2 202 1).walkF 60 66590 = some 66790 := by decide +kernel
+theorem walk_343 : (view N 11199 1595536 188243).vBlobAux 174524 42791 = (view N 11199 1595536 188243).vBlobAux 174484 42916 := by
+  have h : (cview chunks 11199 1595536 188243 52 1 199 2).walkF 40 42791 = some 42916 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 66590 66790 167664 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 42791 42916 174524 h (by decide)
 
-theorem walk_344 : (view N 11199 1595536 188243).vBlobAux 167604 66790 = (view N 11199 1595536 188243).vBlobAux 167544 67012 := by
-  have h : (cview chunks 11199 1595536 188243 76 1 202 1).walkF 60 66790 = some 67012 := by decide +kernel
+theorem walk_344 : (view N 11199 1595536 188243).vBlobAux 174484 42916 = (view N 11199 1595536 188243).vBlobAux 174444 43045 := by
+  have h : (cview chunks 11199 1595536 188243 52 2 200 1).walkF 40 42916 = some 43045 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 66790 67012 167604 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 42916 43045 174484 h (by decide)
 
-theorem walk_345 : (view N 11199 1595536 188243).vBlobAux 167544 67012 = (view N 11199 1595536 188243).vBlobAux 167484 67213 := by
-  have h : (cview chunks 11199 1595536 188243 76 1 202 1).walkF 60 67012 = some 67213 := by decide +kernel
+theorem walk_345 : (view N 11199 1595536 188243).vBlobAux 174444 43045 = (view N 11199 1595536 188243).vBlobAux 174404 43165 := by
+  have h : (cview chunks 11199 1595536 188243 52 2 200 1).walkF 40 43045 = some 43165 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 67012 67213 167544 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 43045 43165 174444 h (by decide)
 
-theorem walk_346 : (view N 11199 1595536 188243).vBlobAux 167484 67213 = (view N 11199 1595536 188243).vBlobAux 167424 67429 := by
-  have h : (cview chunks 11199 1595536 188243 76 1 202 2).walkF 60 67213 = some 67429 := by decide +kernel
+theorem walk_346 : (view N 11199 1595536 188243).vBlobAux 174404 43165 = (view N 11199 1595536 188243).vBlobAux 174364 43315 := by
+  have h : (cview chunks 11199 1595536 188243 53 1 200 1).walkF 40 43165 = some 43315 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 67213 67429 167484 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 43165 43315 174404 h (by decide)
 
-theorem walk_347 : (view N 11199 1595536 188243).vBlobAux 167424 67429 = (view N 11199 1595536 188243).vBlobAux 167364 67655 := by
-  have h : (cview chunks 11199 1595536 188243 76 2 202 2).walkF 60 67429 = some 67655 := by decide +kernel
+theorem walk_347 : (view N 11199 1595536 188243).vBlobAux 174364 43315 = (view N 11199 1595536 188243).vBlobAux 174324 43425 := by
+  have h : (cview chunks 11199 1595536 188243 53 1 200 1).walkF 40 43315 = some 43425 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 67429 67655 167424 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 43315 43425 174364 h (by decide)
 
-theorem walk_348 : (view N 11199 1595536 188243).vBlobAux 167364 67655 = (view N 11199 1595536 188243).vBlobAux 167304 67869 := by
-  have h : (cview chunks 11199 1595536 188243 77 1 203 1).walkF 60 67655 = some 67869 := by decide +kernel
+theorem walk_348 : (view N 11199 1595536 188243).vBlobAux 174324 43425 = (view N 11199 1595536 188243).vBlobAux 174284 43555 := by
+  have h : (cview chunks 11199 1595536 188243 53 1 200 1).walkF 40 43425 = some 43555 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 67655 67869 167364 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 43425 43555 174324 h (by decide)
 
-theorem walk_349 : (view N 11199 1595536 188243).vBlobAux 167304 67869 = (view N 11199 1595536 188243).vBlobAux 167244 68094 := by
-  have h : (cview chunks 11199 1595536 188243 77 1 203 1).walkF 60 67869 = some 68094 := by decide +kernel
+theorem walk_349 : (view N 11199 1595536 188243).vBlobAux 174284 43555 = (view N 11199 1595536 188243).vBlobAux 174244 43686 := by
+  have h : (cview chunks 11199 1595536 188243 53 1 200 1).walkF 40 43555 = some 43686 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 67869 68094 167304 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 43555 43686 174284 h (by decide)
 
-theorem walk_350 : (view N 11199 1595536 188243).vBlobAux 167244 68094 = (view N 11199 1595536 188243).vBlobAux 167184 68302 := by
-  have h : (cview chunks 11199 1595536 188243 77 1 203 1).walkF 60 68094 = some 68302 := by decide +kernel
+theorem walk_350 : (view N 11199 1595536 188243).vBlobAux 174244 43686 = (view N 11199 1595536 188243).vBlobAux 174204 43820 := by
+  have h : (cview chunks 11199 1595536 188243 53 1 200 1).walkF 40 43686 = some 43820 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 68094 68302 167244 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 43686 43820 174244 h (by decide)
 
-theorem walk_351 : (view N 11199 1595536 188243).vBlobAux 167184 68302 = (view N 11199 1595536 188243).vBlobAux 167124 68499 := by
-  have h : (cview chunks 11199 1595536 188243 77 1 203 1).walkF 60 68302 = some 68499 := by decide +kernel
+theorem walk_351 : (view N 11199 1595536 188243).vBlobAux 174204 43820 = (view N 11199 1595536 188243).vBlobAux 174164 43961 := by
+  have h : (cview chunks 11199 1595536 188243 53 1 200 1).walkF 40 43820 = some 43961 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 68302 68499 167184 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 43820 43961 174204 h (by decide)
 
-theorem walk_352 : (view N 11199 1595536 188243).vBlobAux 167124 68499 = (view N 11199 1595536 188243).vBlobAux 167064 68716 := by
-  have h : (cview chunks 11199 1595536 188243 77 2 203 1).walkF 60 68499 = some 68716 := by decide +kernel
+theorem walk_352 : (view N 11199 1595536 188243).vBlobAux 174164 43961 = (view N 11199 1595536 188243).vBlobAux 174124 44085 := by
+  have h : (cview chunks 11199 1595536 188243 53 2 200 1).walkF 40 43961 = some 44085 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 68499 68716 167124 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 43961 44085 174164 h (by decide)
 
-theorem walk_353 : (view N 11199 1595536 188243).vBlobAux 167064 68716 = (view N 11199 1595536 188243).vBlobAux 167004 68921 := by
-  have h : (cview chunks 11199 1595536 188243 78 1 203 1).walkF 60 68716 = some 68921 := by decide +kernel
+theorem walk_353 : (view N 11199 1595536 188243).vBlobAux 174124 44085 = (view N 11199 1595536 188243).vBlobAux 174084 44193 := by
+  have h : (cview chunks 11199 1595536 188243 53 2 200 1).walkF 40 44085 = some 44193 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 68716 68921 167064 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 44085 44193 174124 h (by decide)
 
-theorem walk_354 : (view N 11199 1595536 188243).vBlobAux 167004 68921 = (view N 11199 1595536 188243).vBlobAux 166944 69114 := by
-  have h : (cview chunks 11199 1595536 188243 78 1 203 1).walkF 60 68921 = some 69114 := by decide +kernel
+theorem walk_354 : (view N 11199 1595536 188243).vBlobAux 174084 44193 = (view N 11199 1595536 188243).vBlobAux 174044 44316 := by
+  have h : (cview chunks 11199 1595536 188243 54 1 200 1).walkF 40 44193 = some 44316 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 68921 69114 167004 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 44193 44316 174084 h (by decide)
 
-theorem walk_355 : (view N 11199 1595536 188243).vBlobAux 166944 69114 = (view N 11199 1595536 188243).vBlobAux 166884 69313 := by
-  have h : (cview chunks 11199 1595536 188243 78 1 203 1).walkF 60 69114 = some 69313 := by decide +kernel
+theorem walk_355 : (view N 11199 1595536 188243).vBlobAux 174044 44316 = (view N 11199 1595536 188243).vBlobAux 174004 44424 := by
+  have h : (cview chunks 11199 1595536 188243 54 1 200 1).walkF 40 44316 = some 44424 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 69114 69313 166944 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 44316 44424 174044 h (by decide)
 
-theorem walk_356 : (view N 11199 1595536 188243).vBlobAux 166884 69313 = (view N 11199 1595536 188243).vBlobAux 166824 69515 := by
-  have h : (cview chunks 11199 1595536 188243 78 1 203 1).walkF 60 69313 = some 69515 := by decide +kernel
+theorem walk_356 : (view N 11199 1595536 188243).vBlobAux 174004 44424 = (view N 11199 1595536 188243).vBlobAux 173964 44529 := by
+  have h : (cview chunks 11199 1595536 188243 54 1 200 1).walkF 40 44424 = some 44529 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 69313 69515 166884 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 44424 44529 174004 h (by decide)
 
-theorem walk_357 : (view N 11199 1595536 188243).vBlobAux 166824 69515 = (view N 11199 1595536 188243).vBlobAux 166764 69711 := by
-  have h : (cview chunks 11199 1595536 188243 78 2 203 1).walkF 60 69515 = some 69711 := by decide +kernel
+theorem walk_357 : (view N 11199 1595536 188243).vBlobAux 173964 44529 = (view N 11199 1595536 188243).vBlobAux 173924 44641 := by
+  have h : (cview chunks 11199 1595536 188243 54 1 200 1).walkF 40 44529 = some 44641 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 69515 69711 166824 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 44529 44641 173964 h (by decide)
 
-theorem walk_358 : (view N 11199 1595536 188243).vBlobAux 166764 69711 = (view N 11199 1595536 188243).vBlobAux 166704 69915 := by
-  have h : (cview chunks 11199 1595536 188243 79 1 203 1).walkF 60 69711 = some 69915 := by decide +kernel
+theorem walk_358 : (view N 11199 1595536 188243).vBlobAux 173924 44641 = (view N 11199 1595536 188243).vBlobAux 173884 44778 := by
+  have h : (cview chunks 11199 1595536 188243 54 1 200 1).walkF 40 44641 = some 44778 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 69711 69915 166764 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 44641 44778 173924 h (by decide)
 
-theorem walk_359 : (view N 11199 1595536 188243).vBlobAux 166704 69915 = (view N 11199 1595536 188243).vBlobAux 166644 70136 := by
-  have h : (cview chunks 11199 1595536 188243 79 1 203 1).walkF 60 69915 = some 70136 := by decide +kernel
+theorem walk_359 : (view N 11199 1595536 188243).vBlobAux 173884 44778 = (view N 11199 1595536 188243).vBlobAux 173844 44922 := by
+  have h : (cview chunks 11199 1595536 188243 54 1 200 1).walkF 40 44778 = some 44922 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 69915 70136 166704 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 44778 44922 173884 h (by decide)
 
-theorem walk_360 : (view N 11199 1595536 188243).vBlobAux 166644 70136 = (view N 11199 1595536 188243).vBlobAux 166584 70352 := by
-  have h : (cview chunks 11199 1595536 188243 79 1 203 1).walkF 60 70136 = some 70352 := by decide +kernel
+theorem walk_360 : (view N 11199 1595536 188243).vBlobAux 173844 44922 = (view N 11199 1595536 188243).vBlobAux 173804 45073 := by
+  have h : (cview chunks 11199 1595536 188243 54 2 200 1).walkF 40 44922 = some 45073 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 70136 70352 166644 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 44922 45073 173844 h (by decide)
 
-theorem walk_361 : (view N 11199 1595536 188243).vBlobAux 166584 70352 = (view N 11199 1595536 188243).vBlobAux 166524 70580 := by
-  have h : (cview chunks 11199 1595536 188243 79 1 203 1).walkF 60 70352 = some 70580 := by decide +kernel
+theorem walk_361 : (view N 11199 1595536 188243).vBlobAux 173804 45073 = (view N 11199 1595536 188243).vBlobAux 173764 45219 := by
+  have h : (cview chunks 11199 1595536 188243 54 2 200 1).walkF 40 45073 = some 45219 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 70352 70580 166584 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 45073 45219 173804 h (by decide)
 
-theorem walk_362 : (view N 11199 1595536 188243).vBlobAux 166524 70580 = (view N 11199 1595536 188243).vBlobAux 166464 70766 := by
-  have h : (cview chunks 11199 1595536 188243 79 2 203 1).walkF 60 70580 = some 70766 := by decide +kernel
+theorem walk_362 : (view N 11199 1595536 188243).vBlobAux 173764 45219 = (view N 11199 1595536 188243).vBlobAux 173724 45345 := by
+  have h : (cview chunks 11199 1595536 188243 55 1 200 1).walkF 40 45219 = some 45345 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 70580 70766 166524 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 45219 45345 173764 h (by decide)
 
-theorem walk_363 : (view N 11199 1595536 188243).vBlobAux 166464 70766 = (view N 11199 1595536 188243).vBlobAux 166404 70965 := by
-  have h : (cview chunks 11199 1595536 188243 80 1 203 1).walkF 60 70766 = some 70965 := by decide +kernel
+theorem walk_363 : (view N 11199 1595536 188243).vBlobAux 173724 45345 = (view N 11199 1595536 188243).vBlobAux 173684 45480 := by
+  have h : (cview chunks 11199 1595536 188243 55 1 200 1).walkF 40 45345 = some 45480 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 70766 70965 166464 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 45345 45480 173724 h (by decide)
 
-theorem walk_364 : (view N 11199 1595536 188243).vBlobAux 166404 70965 = (view N 11199 1595536 188243).vBlobAux 166344 71155 := by
-  have h : (cview chunks 11199 1595536 188243 80 1 203 1).walkF 60 70965 = some 71155 := by decide +kernel
+theorem walk_364 : (view N 11199 1595536 188243).vBlobAux 173684 45480 = (view N 11199 1595536 188243).vBlobAux 173644 45621 := by
+  have h : (cview chunks 11199 1595536 188243 55 1 200 1).walkF 40 45480 = some 45621 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 70965 71155 166404 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 45480 45621 173684 h (by decide)
 
-theorem walk_365 : (view N 11199 1595536 188243).vBlobAux 166344 71155 = (view N 11199 1595536 188243).vBlobAux 166284 71380 := by
-  have h : (cview chunks 11199 1595536 188243 80 1 203 1).walkF 60 71155 = some 71380 := by decide +kernel
+theorem walk_365 : (view N 11199 1595536 188243).vBlobAux 173644 45621 = (view N 11199 1595536 188243).vBlobAux 173604 45748 := by
+  have h : (cview chunks 11199 1595536 188243 55 1 200 1).walkF 40 45621 = some 45748 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 71155 71380 166344 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 45621 45748 173644 h (by decide)
 
-theorem walk_366 : (view N 11199 1595536 188243).vBlobAux 166284 71380 = (view N 11199 1595536 188243).vBlobAux 166224 71605 := by
-  have h : (cview chunks 11199 1595536 188243 80 1 203 1).walkF 60 71380 = some 71605 := by decide +kernel
+theorem walk_366 : (view N 11199 1595536 188243).vBlobAux 173604 45748 = (view N 11199 1595536 188243).vBlobAux 173564 45894 := by
+  have h : (cview chunks 11199 1595536 188243 55 1 200 1).walkF 40 45748 = some 45894 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 71380 71605 166284 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 45748 45894 173604 h (by decide)
 
-theorem walk_367 : (view N 11199 1595536 188243).vBlobAux 166224 71605 = (view N 11199 1595536 188243).vBlobAux 166164 71800 := by
-  have h : (cview chunks 11199 1595536 188243 80 2 203 1).walkF 60 71605 = some 71800 := by decide +kernel
+theorem walk_367 : (view N 11199 1595536 188243).vBlobAux 173564 45894 = (view N 11199 1595536 188243).vBlobAux 173524 46016 := by
+  have h : (cview chunks 11199 1595536 188243 55 1 200 1).walkF 40 45894 = some 46016 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 71605 71800 166224 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 45894 46016 173564 h (by decide)
 
-theorem walk_368 : (view N 11199 1595536 188243).vBlobAux 166164 71800 = (view N 11199 1595536 188243).vBlobAux 166104 71992 := by
-  have h : (cview chunks 11199 1595536 188243 81 1 203 1).walkF 60 71800 = some 71992 := by decide +kernel
+theorem walk_368 : (view N 11199 1595536 188243).vBlobAux 173524 46016 = (view N 11199 1595536 188243).vBlobAux 173484 46142 := by
+  have h : (cview chunks 11199 1595536 188243 55 2 200 1).walkF 40 46016 = some 46142 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 71800 71992 166164 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 46016 46142 173524 h (by decide)
 
-theorem walk_369 : (view N 11199 1595536 188243).vBlobAux 166104 71992 = (view N 11199 1595536 188243).vBlobAux 166044 72203 := by
-  have h : (cview chunks 11199 1595536 188243 81 1 203 1).walkF 60 71992 = some 72203 := by decide +kernel
+theorem walk_369 : (view N 11199 1595536 188243).vBlobAux 173484 46142 = (view N 11199 1595536 188243).vBlobAux 173444 46271 := by
+  have h : (cview chunks 11199 1595536 188243 55 2 200 1).walkF 40 46142 = some 46271 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 71992 72203 166104 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 46142 46271 173484 h (by decide)
 
-theorem walk_370 : (view N 11199 1595536 188243).vBlobAux 166044 72203 = (view N 11199 1595536 188243).vBlobAux 165984 72411 := by
-  have h : (cview chunks 11199 1595536 188243 81 1 203 1).walkF 60 72203 = some 72411 := by decide +kernel
+theorem walk_370 : (view N 11199 1595536 188243).vBlobAux 173444 46271 = (view N 11199 1595536 188243).vBlobAux 173404 46427 := by
+  have h : (cview chunks 11199 1595536 188243 56 1 200 1).walkF 40 46271 = some 46427 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 72203 72411 166044 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 46271 46427 173444 h (by decide)
 
-theorem walk_371 : (view N 11199 1595536 188243).vBlobAux 165984 72411 = (view N 11199 1595536 188243).vBlobAux 165924 72617 := by
-  have h : (cview chunks 11199 1595536 188243 81 1 203 1).walkF 60 72411 = some 72617 := by decide +kernel
+theorem walk_371 : (view N 11199 1595536 188243).vBlobAux 173404 46427 = (view N 11199 1595536 188243).vBlobAux 173364 46563 := by
+  have h : (cview chunks 11199 1595536 188243 56 1 200 1).walkF 40 46427 = some 46563 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 72411 72617 165984 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 46427 46563 173404 h (by decide)
 
-theorem walk_372 : (view N 11199 1595536 188243).vBlobAux 165924 72617 = (view N 11199 1595536 188243).vBlobAux 165864 72815 := by
-  have h : (cview chunks 11199 1595536 188243 81 2 203 1).walkF 60 72617 = some 72815 := by decide +kernel
+theorem walk_372 : (view N 11199 1595536 188243).vBlobAux 173364 46563 = (view N 11199 1595536 188243).vBlobAux 173324 46722 := by
+  have h : (cview chunks 11199 1595536 188243 56 1 200 1).walkF 40 46563 = some 46722 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 72617 72815 165924 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 46563 46722 173364 h (by decide)
 
-theorem walk_373 : (view N 11199 1595536 188243).vBlobAux 165864 72815 = (view N 11199 1595536 188243).vBlobAux 165804 73010 := by
-  have h : (cview chunks 11199 1595536 188243 82 1 203 1).walkF 60 72815 = some 73010 := by decide +kernel
+theorem walk_373 : (view N 11199 1595536 188243).vBlobAux 173324 46722 = (view N 11199 1595536 188243).vBlobAux 173284 46859 := by
+  have h : (cview chunks 11199 1595536 188243 56 1 200 1).walkF 40 46722 = some 46859 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 72815 73010 165864 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 46722 46859 173324 h (by decide)
 
-theorem walk_374 : (view N 11199 1595536 188243).vBlobAux 165804 73010 = (view N 11199 1595536 188243).vBlobAux 165744 73214 := by
-  have h : (cview chunks 11199 1595536 188243 82 1 203 1).walkF 60 73010 = some 73214 := by decide +kernel
+theorem walk_374 : (view N 11199 1595536 188243).vBlobAux 173284 46859 = (view N 11199 1595536 188243).vBlobAux 173244 46981 := by
+  have h : (cview chunks 11199 1595536 188243 56 1 200 1).walkF 40 46859 = some 46981 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 73010 73214 165804 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 46859 46981 173284 h (by decide)
 
-theorem walk_375 : (view N 11199 1595536 188243).vBlobAux 165744 73214 = (view N 11199 1595536 188243).vBlobAux 165684 73411 := by
-  have h : (cview chunks 11199 1595536 188243 82 1 203 1).walkF 60 73214 = some 73411 := by decide +kernel
+theorem walk_375 : (view N 11199 1595536 188243).vBlobAux 173244 46981 = (view N 11199 1595536 188243).vBlobAux 173204 47127 := by
+  have h : (cview chunks 11199 1595536 188243 56 2 200 1).walkF 40 46981 = some 47127 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 73214 73411 165744 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 46981 47127 173244 h (by decide)
 
-theorem walk_376 : (view N 11199 1595536 188243).vBlobAux 165684 73411 = (view N 11199 1595536 188243).vBlobAux 165624 73601 := by
-  have h : (cview chunks 11199 1595536 188243 82 1 203 1).walkF 60 73411 = some 73601 := by decide +kernel
+theorem walk_376 : (view N 11199 1595536 188243).vBlobAux 173204 47127 = (view N 11199 1595536 188243).vBlobAux 173164 47224 := by
+  have h : (cview chunks 11199 1595536 188243 56 2 200 1).walkF 40 47127 = some 47224 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 73411 73601 165684 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 47127 47224 173204 h (by decide)
 
-theorem walk_377 : (view N 11199 1595536 188243).vBlobAux 165624 73601 = (view N 11199 1595536 188243).vBlobAux 165564 73800 := by
-  have h : (cview chunks 11199 1595536 188243 82 2 203 1).walkF 60 73601 = some 73800 := by decide +kernel
+theorem walk_377 : (view N 11199 1595536 188243).vBlobAux 173164 47224 = (view N 11199 1595536 188243).vBlobAux 173124 47334 := by
+  have h : (cview chunks 11199 1595536 188243 57 1 200 1).walkF 40 47224 = some 47334 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 73601 73800 165624 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 47224 47334 173164 h (by decide)
 
-theorem walk_378 : (view N 11199 1595536 188243).vBlobAux 165564 73800 = (view N 11199 1595536 188243).vBlobAux 165504 73985 := by
-  have h : (cview chunks 11199 1595536 188243 83 1 203 1).walkF 60 73800 = some 73985 := by decide +kernel
+theorem walk_378 : (view N 11199 1595536 188243).vBlobAux 173124 47334 = (view N 11199 1595536 188243).vBlobAux 173084 47495 := by
+  have h : (cview chunks 11199 1595536 188243 57 1 200 1).walkF 40 47334 = some 47495 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 73800 73985 165564 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 47334 47495 173124 h (by decide)
 
-theorem walk_379 : (view N 11199 1595536 188243).vBlobAux 165504 73985 = (view N 11199 1595536 188243).vBlobAux 165444 74198 := by
-  have h : (cview chunks 11199 1595536 188243 83 1 203 1).walkF 60 73985 = some 74198 := by decide +kernel
+theorem walk_379 : (view N 11199 1595536 188243).vBlobAux 173084 47495 = (view N 11199 1595536 188243).vBlobAux 173044 47632 := by
+  have h : (cview chunks 11199 1595536 188243 57 1 200 1).walkF 40 47495 = some 47632 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 73985 74198 165504 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 47495 47632 173084 h (by decide)
 
-theorem walk_380 : (view N 11199 1595536 188243).vBlobAux 165444 74198 = (view N 11199 1595536 188243).vBlobAux 165384 74411 := by
-  have h : (cview chunks 11199 1595536 188243 83 1 203 1).walkF 60 74198 = some 74411 := by decide +kernel
+theorem walk_380 : (view N 11199 1595536 188243).vBlobAux 173044 47632 = (view N 11199 1595536 188243).vBlobAux 173004 47785 := by
+  have h : (cview chunks 11199 1595536 188243 57 1 200 1).walkF 40 47632 = some 47785 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 74198 74411 165444 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 47632 47785 173044 h (by decide)
 
-theorem walk_381 : (view N 11199 1595536 188243).vBlobAux 165384 74411 = (view N 11199 1595536 188243).vBlobAux 165324 74617 := by
-  have h : (cview chunks 11199 1595536 188243 83 1 203 1).walkF 60 74411 = some 74617 := by decide +kernel
+theorem walk_381 : (view N 11199 1595536 188243).vBlobAux 173004 47785 = (view N 11199 1595536 188243).vBlobAux 172964 47916 := by
+  have h : (cview chunks 11199 1595536 188243 57 1 200 1).walkF 40 47785 = some 47916 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 74411 74617 165384 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 47785 47916 173004 h (by decide)
 
-theorem walk_382 : (view N 11199 1595536 188243).vBlobAux 165324 74617 = (view N 11199 1595536 188243).vBlobAux 165264 74818 := by
-  have h : (cview chunks 11199 1595536 188243 83 2 203 1).walkF 60 74617 = some 74818 := by decide +kernel
+theorem walk_382 : (view N 11199 1595536 188243).vBlobAux 172964 47916 = (view N 11199 1595536 188243).vBlobAux 172924 48064 := by
+  have h : (cview chunks 11199 1595536 188243 57 1 200 1).walkF 40 47916 = some 48064 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 74617 74818 165324 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 47916 48064 172964 h (by decide)
 
-theorem walk_383 : (view N 11199 1595536 188243).vBlobAux 165264 74818 = (view N 11199 1595536 188243).vBlobAux 165204 75019 := by
-  have h : (cview chunks 11199 1595536 188243 84 1 203 1).walkF 60 74818 = some 75019 := by decide +kernel
+theorem walk_383 : (view N 11199 1595536 188243).vBlobAux 172924 48064 = (view N 11199 1595536 188243).vBlobAux 172884 48219 := by
+  have h : (cview chunks 11199 1595536 188243 57 2 200 1).walkF 40 48064 = some 48219 := by decide +kernel
   rw [CodeView.walkF_eq _ (fun i => cview_zeta_lt chunks chunks_lt _ _ _ _ _ _ _ i), cview_eq chunks chunks_lt] at h
-  exact CodeView.vBlobAux_walk _ 60 74818 75019 165264 h (by decide)
+  exact CodeView.vBlobAux_walk _ 40 48064 48219 172924 h (by decide)
 
-theorem walks_5 : (view N 11199 1595536 188243).vBlobAux 169044 61815 = (view N 11199 1595536 188243).vBlobAux 165204 75019 :=
+theorem walks_5 : (view N 11199 1595536 188243).vBlobAux 175444 39841 = (view N 11199 1595536 188243).vBlobAux 172884 48219 :=
   (walk_320.trans (walk_321.trans (walk_322.trans (walk_323.trans (walk_324.trans (walk_325.trans (walk_326.trans (walk_327.trans (walk_328.trans (walk_329.trans (walk_330.trans (walk_331.trans (walk_332.trans (walk_333.trans (walk_334.trans (walk_335.trans (walk_336.trans (walk_337.trans (walk_338.trans (walk_339.trans (walk_340.trans (walk_341.trans (walk_342.trans (walk_343.trans (walk_344.trans (walk_345.trans (walk_346.trans (walk_347.trans (walk_348.trans (walk_349.trans (walk_350.trans (walk_351.trans (walk_352.trans (walk_353.trans (walk_354.trans (walk_355.trans (walk_356.trans (walk_357.trans (walk_358.trans (walk_359.trans (walk_360.trans (walk_361.trans (walk_362.trans (walk_363.trans (walk_364.trans (walk_365.trans (walk_366.trans (walk_367.trans (walk_368.trans (walk_369.trans (walk_370.trans (walk_371.trans (walk_372.trans (walk_373.trans (walk_374.trans (walk_375.trans (walk_376.trans (walk_377.trans (walk_378.trans (walk_379.trans (walk_380.trans (walk_381.trans (walk_382.trans walk_383)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
 
 end Services.Witness.CodeCheck

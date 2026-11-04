@@ -18,6 +18,13 @@ import Services.Witness.CodeCheck.W12
 import Services.Witness.CodeCheck.W13
 import Services.Witness.CodeCheck.W14
 import Services.Witness.CodeCheck.W15
+import Services.Witness.CodeCheck.W16
+import Services.Witness.CodeCheck.W17
+import Services.Witness.CodeCheck.W18
+import Services.Witness.CodeCheck.W19
+import Services.Witness.CodeCheck.W20
+import Services.Witness.CodeCheck.W21
+import Services.Witness.CodeCheck.W22
 import Services.Witness.CodeCheck.G0
 import Services.Witness.CodeCheck.G1
 import Services.Witness.CodeCheck.G2
@@ -40,6 +47,12 @@ import Services.Witness.CodeCheck.G18
 import Services.Witness.CodeCheck.G19
 import Services.Witness.CodeCheck.G20
 import Services.Witness.CodeCheck.G21
+import Services.Witness.CodeCheck.G22
+import Services.Witness.CodeCheck.G23
+import Services.Witness.CodeCheck.G24
+import Services.Witness.CodeCheck.G25
+import Services.Witness.CodeCheck.G26
+import Services.Witness.CodeCheck.G27
 import Services.Witness.CodeCheck.H0
 import Services.Witness.CodeCheck.H1
 import Services.Witness.CodeCheck.H2
@@ -52,6 +65,9 @@ import Services.Witness.CodeCheck.H8
 import Services.Witness.CodeCheck.H9
 import Services.Witness.CodeCheck.H10
 import Services.Witness.CodeCheck.H11
+import Services.Witness.CodeCheck.H12
+import Services.Witness.CodeCheck.H13
+import Services.Witness.CodeCheck.H14
 
 /-!
 # witness's code facts hold of the vendored blob, by the kernel
@@ -68,13 +84,13 @@ open PVM PVM.NatBlob Services.Witness.Blob Services.Witness.Code
 /-- 𝔳_blob(**c**, **k**, 0) (GP §A.1): the walks lead from 0 to the end of the code. -/
 theorem vBlob_ok : prog.vBlob = true := by
   rw [Program.vBlob_view, prog_view, CodeView.vBlob]
-  exact (walks_0.trans (walks_1.trans (walks_2.trans (walks_3.trans (walks_4.trans (walks_5.trans (walks_6.trans (walks_7.trans (walks_8.trans (walks_9.trans (walks_10.trans (walks_11.trans (walks_12.trans (walks_13.trans (walks_14.trans (walks_15.trans (CodeView.vBlobAux_end _ 130012 188243 (by decide) (by decide) rfl)))))))))))))))))
+  exact (walks_0.trans (walks_1.trans (walks_2.trans (walks_3.trans (walks_4.trans (walks_5.trans (walks_6.trans (walks_7.trans (walks_8.trans (walks_9.trans (walks_10.trans (walks_11.trans (walks_12.trans (walks_13.trans (walks_14.trans (walks_15.trans (walks_16.trans (walks_17.trans (walks_18.trans (walks_19.trans (walks_20.trans (walks_21.trans (walks_22.trans (CodeView.vBlobAux_end _ 130012 188243 (by decide) (by decide) rfl))))))))))))))))))))))))
 
 /-- **The blob passes `checkCode` for the code facts**, checked by the kernel. -/
 theorem checkCode_ok : checkCode (ba N 6054 216919) facts = true :=
   checkCode_of_chunks parse vBlob_ok (by
     simp only [factChunks, factGroups, List.flatten_cons, List.flatten_nil, List.all_append, List.all_nil,
-      Bool.and_true, chunks_0, chunks_1, chunks_2, chunks_3, chunks_4, chunks_5, chunks_6, chunks_7, chunks_8, chunks_9, chunks_10, chunks_11, chunks_12, chunks_13, chunks_14, chunks_15, chunks_16, chunks_17, chunks_18, chunks_19, chunks_20, chunks_21])
+      Bool.and_true, chunks_0, chunks_1, chunks_2, chunks_3, chunks_4, chunks_5, chunks_6, chunks_7, chunks_8, chunks_9, chunks_10, chunks_11, chunks_12, chunks_13, chunks_14, chunks_15, chunks_16, chunks_17, chunks_18, chunks_19, chunks_20, chunks_21, chunks_22, chunks_23, chunks_24, chunks_25, chunks_26, chunks_27])
 
 /-- **The host-call ids the blob names** (`PVM.jamHostCallIdsOf`, GP §A.1, §A.5.2), by the kernel. -/
 theorem hostIds_ok : ∀ n ∈ PVM.jamHostCallIdsOf (ba N 71 222902), n ∈ hostIds := by
@@ -85,6 +101,6 @@ theorem hostIds_ok : ∀ n ∈ PVM.jamHostCallIdsOf (ba N 71 222902), n ∈ host
   apply prog.hostCallIds_sub
   intro i hi hm x hd
   rw [prog_view] at hm hd
-  exact (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover hostsG_0 hostsG_1) hostsG_2) hostsG_3) hostsG_4) hostsG_5) hostsG_6) hostsG_7) hostsG_8) hostsG_9) hostsG_10) hostsG_11) i (Nat.zero_le _) (by simpa [prog] using hi) hm x hd
+  exact (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover (range_cover hostsG_0 hostsG_1) hostsG_2) hostsG_3) hostsG_4) hostsG_5) hostsG_6) hostsG_7) hostsG_8) hostsG_9) hostsG_10) hostsG_11) hostsG_12) hostsG_13) hostsG_14) i (Nat.zero_le _) (by simpa [prog] using hi) hm x hd
 
 end Services.Witness.CodeCheck

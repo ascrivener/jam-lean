@@ -423,6 +423,13 @@ theorem jamHostCallIdsOf_of {b : ByteArray} {jb : JamBlob} (h : JamBlob.parse? b
     jamHostCallIdsOf b = hostCallIdsOf jb.code := by
   unfold jamHostCallIdsOf; rw [h]
 
+theorem getD_map_range (f : Nat → Nat) (n k : Nat) (hk : k < n) :
+    ((List.range n).map f).toArray.getD k 0 = f k := by
+  simp [Array.getD_eq_getD_getElem?, hk]
+
+theorem size_map_range (f : Nat → Nat) (n : Nat) : ((List.range n).map f).toArray.size = n := by
+  simp
+
 /-- Covering a range by two. -/
 theorem range_cover {Q : Nat → Prop} {a b c : Nat} (h1 : ∀ i, a ≤ i → i < b → Q i)
     (h2 : ∀ i, b ≤ i → i < c → Q i) : ∀ i, a ≤ i → i < c → Q i := by

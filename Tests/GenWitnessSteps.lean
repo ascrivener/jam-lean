@@ -754,7 +754,7 @@ def groupFacts (fs : List String) : List (List String) := Id.run do
       if cur.size > 0 then out := out.push cur.toList; cur := #[]
       out := out.push [f]
     else
-      if cur.size ≥ 4 || (cur.size > 0 && (k ≥ 1000000000) != (lo ≥ 1000000000)) ||
+      if cur.size ≥ 3 || (cur.size > 0 && (k ≥ 1000000000) != (lo ≥ 1000000000)) ||
           (cur.size > 0 && k < 1000000000 && k > lo + 800) then
         out := out.push cur.toList; cur := #[]
       if cur.size == 0 then lo := k
@@ -885,6 +885,10 @@ def mode_codeRun (cx : Cx) : IO Unit := do
       let (kc, mc, km, mm) := cvArgs lo hi
       NatBlob.cview csN oc mb cLen kc mc km mm
     let idsL := (jamHostCallIdsOf code).eraseDups.mergeSort
+    -- read octets [lo, hi) of the blob from the chunks that hold them, not from N
+    let rwN (lo hi : Nat) : String :=
+      let (k, m) := chunkRange lo hi
+      s!"simp (disch := omega) only [show N = ofChunks chunks from rfl, byte_ofChunks_window chunks chunks_lt {k} {m}, bytes_ofChunks_window chunks chunks_lt {k} {m}]"
     let (jk, jm) := chunkRange (o2 + hd.p2) (o2 + hd.p2 + hd.jLen * hd.jz)
     let mut out := ""
     out := out ++ "\n" ++ s!"/-
@@ -918,6 +922,7 @@ open PVM PVM.NatBlob Services.{NS}.Blob Services.{NS}.Code
 
 theorem meta_len : Blob.decodeNat? (ba N 0 size) 0 = some ({hd.mLen}, {hd.pos}) := by
   simp only [Blob.decodeNat?, getElem?_ba, slice?_ba]
+  {rwN 0 16}
   decide +kernel
 
 /-- The code after the metadata. -/
@@ -932,15 +937,22 @@ def jamBlob : JamBlob :=
 
 theorem jam : JamBlob.parse? (ba N {o1} {hd.n1}) = some jamBlob :=
   jamParse?_ba N {o1} {hd.n1} (oLen := {hd.oLen}) (wLen := {hd.wLen}) (z := {hd.z}) (s := {hd.s}) (pLen := {hd.pLen})
-    (by decide +kernel) (by decide +kernel) (by decide +kernel) (by decide +kernel) (by decide +kernel)
-    (by decide)
+    (by {rwN o1 (o1 + 16)}; decide +kernel) (by {rwN o1 (o1 + 16)}; decide +kernel)
+    (by {rwN o1 (o1 + 16)}; decide +kernel) (by {rwN o1 (o1 + 16)}; decide +kernel)
+    (by {rwN (o2 - 4) o2}; decide +kernel) (by decide)
 
 theorem jtLen : Blob.decodeNat? (ba N {o2} {hd.pLen}) 0 = some ({hd.jLen}, {hd.p1}) := by
   simp only [Blob.decodeNat?, getElem?_ba, slice?_ba]
+  {rwN o2 (o2 + 16)}
   decide +kernel
 
 theorem codeLen : Blob.decodeNat? (ba N {o2} {hd.pLen}) {hd.p1 + 1} = some ({cLen}, {hd.p2}) := by
   simp only [Blob.decodeNat?, getElem?_ba, slice?_ba]
+  {rwN o2 (o2 + 16)}
+  decide +kernel
+
+theorem jz_ok : byte N ({o2} + {hd.p1}) = {hd.jz} := by
+  {rwN o2 (o2 + 16)}
   decide +kernel
 
 /-- **j**, the dynamic jump table. -/
@@ -961,8 +973,7 @@ theorem jt_eq : jt = jtW := by
 def prog : Program := ⟨ba N {oc} {cLen}, bits N {mb} {cLen}, jt⟩
 
 theorem parse : Blob.parse? (ba N {o2} {hd.pLen}) = some prog := by
-  have h := parse?_ba N {o2} {hd.pLen} jtLen (by decide) (show byte N ({o2} + {hd.p1}) = {hd.jz} by decide +kernel)
-    codeLen (by decide) (by decide +kernel)
+  have h := parse?_ba N {o2} {hd.pLen} jtLen (by decide) jz_ok codeLen (by decide) (by decide +kernel)
   exact h
 
 theorem prog_view : prog.view = view N {oc} {mb} {cLen} := view_eq N {oc} {mb} {cLen} jt
@@ -997,7 +1008,7 @@ open PVM PVM.NatBlob Services.{NS}.Blob Services.{NS}.Code
       | [] => "rfl"
       | z :: zs => zs.foldl (fun acc x => s!"({x}.trans {acc})") z
     -- no block starts in (s, e), BP indices to a theorem
-    let BP := 16
+    let BP := 12
     let bnoRanges (bs be : Nat) : List (Nat × Nat) :=
       (List.range ((be - bs - 1 + BP - 1) / BP)).map fun j => (bs + 1 + BP * j, min BP (be - (bs + 1 + BP * j)))
     let bnoPieces (c bs be : Nat) : String := String.join ((bnoRanges bs be).zipIdx.map fun ((a, len), j) =>
@@ -1026,7 +1037,7 @@ theorem chunk_ok_{c} : facts_{c}.all (·.holds prog) = true :=
     while pc < cLen do
       starts := starts.push pc
       pc := P.next pc
-    let K := 60
+    let K := 40
     let nseg := (starts.size + K - 1) / K
     let WG := 64
     let nwg := (nseg + WG - 1) / WG
@@ -1083,8 +1094,9 @@ theorem walks_{g} : {V}.vBlobAux {f0} {gi0} = {V}.vBlobAux {fuel} {gj} :=
         let (lo, hi) := match (ks.map (·.1)).min?, (ks.map (·.2)).max? with
           | some lo, some hi => (lo - min lo 32, hi + 40)
           | _, _ => (0, 1)
-        match ch with
-        | [f] =>
+        let jumpish := ch.all (fun f => f.startsWith ".jumpEntry " || f.startsWith ".jumpTableSize ")
+        match ch, jumpish with
+        | [f], false =>
           if f.startsWith ".block " then
             -- a block's cost: 𝔛 a few transitions to a theorem, from state to state
             let (bs, be) := (ks.headD (0, 0))
@@ -1112,7 +1124,7 @@ theorem walks_{g} : {V}.vBlobAux {f0} {gi0} = {V}.vBlobAux {fuel} {gj} :=
                 budget := budget + x.rob.length + 4
                 cur := cur + 1
                 x := y
-                if budget ≥ 45 then
+                if budget ≥ 35 then
                   states := states.push x; links := links.push cur; cur := 0; budget := 0
               | some (.inr _) => done := true; break
               | none => break
@@ -1178,7 +1190,32 @@ theorem chunk_ok_{c} : facts_{c}.all (·.holds prog) = true := by
 "
           else
             gs := gs ++ chunkPlain c lo hi
-        | _ => gs := gs ++ chunkPlain c lo hi
+        | _, _ =>
+          if jumpish then
+            -- jump-table facts: each entry read directly (`getD_map_range`), not by walking **j**
+            let mut names : Array String := #[]
+            for (f, fi) in ch.zipIdx do
+              let parts := f.splitOn " "
+              if f.startsWith ".jumpEntry " then
+                let k := parts[1]!; let t := parts[2]!
+                gs := gs ++ s!"
+theorem jte_{c}_{fi} : (CodeFact.jumpEntry {k} {t}).holds prog = true := by
+  simp only [CodeFact.holds, beq_iff_eq]
+  rw [show prog.jumpTable = jtW from jt_eq, jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+"
+              else
+                gs := gs ++ s!"
+theorem jte_{c}_{fi} : (CodeFact.jumpTableSize {parts[1]!}).holds prog = true := by
+  simp only [CodeFact.holds, beq_iff_eq]
+  rw [show prog.jumpTable = jt from rfl, jt, size_map_range]
+"
+              names := names.push s!"jte_{c}_{fi}"
+            gs := gs ++ s!"
+theorem chunk_ok_{c} : facts_{c}.all (·.holds prog) = true := by
+  simp only [facts_{c}, List.all_cons, List.all_nil, Bool.and_true, {", ".intercalate names.toList}]
+"
+          else gs := gs ++ chunkPlain c lo hi
       gs := gs ++ s!"
 theorem chunks_{g} : factGroup_{g}.all (fun c => c.all (·.holds prog)) = true := by
   simp only [factGroup_{g}, List.all_cons, List.all_nil, Bool.and_true, {", ".intercalate (cs.map (s!"chunk_ok_{·}"))}]
@@ -1187,7 +1224,7 @@ theorem chunks_{g} : factGroup_{g}.all (fun c => c.all (·.holds prog)) = true :
       imports := imports.push s!"Services.{NS}.CodeCheck.G{g}"
       factGroupsL := factGroupsL.push (s!"chunks_{g}", cs)
     -- the host-call ids: a scan of the code in stretches of 300 indices, 64 to a module
-    let HS := 250
+    let HS := 200
     let nh := (cLen + HS - 1) / HS
     let HG := 64
     let nhg := (nh + HG - 1) / HG

@@ -29,6 +29,7 @@ open PVM PVM.NatBlob Services.Witness.Blob Services.Witness.Code
 
 theorem meta_len : Blob.decodeNat? (ba N 0 size) 0 = some (70, 1) := by
   simp only [Blob.decodeNat?, getElem?_ba, slice?_ba]
+  simp (disch := omega) only [show N = ofChunks chunks from rfl, byte_ofChunks_window chunks chunks_lt 0 1, bytes_ofChunks_window chunks chunks_lt 0 1]
   decide +kernel
 
 /-- The code after the metadata. -/
@@ -43,15 +44,22 @@ def jamBlob : JamBlob :=
 
 theorem jam : JamBlob.parse? (ba N 71 222902) = some jamBlob :=
   jamParse?_ba N 71 222902 (oLen := 5928) (wLen := 40) (z := 2) (s := 262144) (pLen := 216919)
-    (by decide +kernel) (by decide +kernel) (by decide +kernel) (by decide +kernel) (by decide +kernel)
-    (by decide)
+    (by simp (disch := omega) only [show N = ofChunks chunks from rfl, byte_ofChunks_window chunks chunks_lt 0 1, bytes_ofChunks_window chunks chunks_lt 0 1]; decide +kernel) (by simp (disch := omega) only [show N = ofChunks chunks from rfl, byte_ofChunks_window chunks chunks_lt 0 1, bytes_ofChunks_window chunks chunks_lt 0 1]; decide +kernel)
+    (by simp (disch := omega) only [show N = ofChunks chunks from rfl, byte_ofChunks_window chunks chunks_lt 0 1, bytes_ofChunks_window chunks chunks_lt 0 1]; decide +kernel) (by simp (disch := omega) only [show N = ofChunks chunks from rfl, byte_ofChunks_window chunks chunks_lt 0 1, bytes_ofChunks_window chunks chunks_lt 0 1]; decide +kernel)
+    (by simp (disch := omega) only [show N = ofChunks chunks from rfl, byte_ofChunks_window chunks chunks_lt 5 1, bytes_ofChunks_window chunks chunks_lt 5 1]; decide +kernel) (by decide)
 
 theorem jtLen : Blob.decodeNat? (ba N 6054 216919) 0 = some (1713, 2) := by
   simp only [Blob.decodeNat?, getElem?_ba, slice?_ba]
+  simp (disch := omega) only [show N = ofChunks chunks from rfl, byte_ofChunks_window chunks chunks_lt 5 1, bytes_ofChunks_window chunks chunks_lt 5 1]
   decide +kernel
 
 theorem codeLen : Blob.decodeNat? (ba N 6054 216919) 3 = some (188243, 6) := by
   simp only [Blob.decodeNat?, getElem?_ba, slice?_ba]
+  simp (disch := omega) only [show N = ofChunks chunks from rfl, byte_ofChunks_window chunks chunks_lt 5 1, bytes_ofChunks_window chunks chunks_lt 5 1]
+  decide +kernel
+
+theorem jz_ok : byte N (6054 + 2) = 3 := by
+  simp (disch := omega) only [show N = ofChunks chunks from rfl, byte_ofChunks_window chunks chunks_lt 5 1, bytes_ofChunks_window chunks chunks_lt 5 1]
   decide +kernel
 
 /-- **j**, the dynamic jump table. -/
@@ -72,8 +80,7 @@ theorem jt_eq : jt = jtW := by
 def prog : Program := ⟨ba N 11199 188243, bits N 1595536 188243, jt⟩
 
 theorem parse : Blob.parse? (ba N 6054 216919) = some prog := by
-  have h := parse?_ba N 6054 216919 jtLen (by decide) (show byte N (6054 + 2) = 3 by decide +kernel)
-    codeLen (by decide) (by decide +kernel)
+  have h := parse?_ba N 6054 216919 jtLen (by decide) jz_ok codeLen (by decide) (by decide +kernel)
   exact h
 
 theorem prog_view : prog.view = view N 11199 1595536 188243 := view_eq N 11199 1595536 188243 jt

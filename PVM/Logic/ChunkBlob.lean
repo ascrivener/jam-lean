@@ -102,6 +102,11 @@ theorem getElem?_bytes (N : Nat) (o n j : Nat) :
   · rw [List.getElem?_eq_getElem (by simpa), getElem_bytes]
   · rw [List.getElem?_eq_none (by simp; omega)]
 
+theorem getElem!_bytes (N o n k : Nat) :
+    (bytes N o n)[k]! = if k < n then UInt8.ofNat (byte N (o + k)) else default := by
+  rw [List.getElem!_eq_getElem?_getD, getElem?_bytes]
+  split <;> rfl
+
 theorem toNat_byte (N : Nat) (j : Nat) : (UInt8.ofNat (byte N j)).toNat = byte N j := by
   simp [UInt8.toNat_ofNat', Nat.mod_eq_of_lt (byte_lt N j)]
 

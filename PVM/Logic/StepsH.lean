@@ -5,16 +5,28 @@ import PVM.Logic.Steps
 
 `FreeStepsH p R i ω μ x i' ω' μ' x' n`: from (ı, ω, μ, x) the machine continues, through ordinary
 steps and through host calls whose outcome the contract `R` allows (resuming at ı + 1 + skip(ı)),
-to (ı', ω', μ', x'), in at most `n` steps (each ordinary step and each host call counts one). It
+to (ı', ω', μ', x'), in at most `n` steps (each ordinary step and each host call counts one), each
+at an index whose basic block costs at most `stepCostCap` (`CostOk`). It
 is to `FreeRunH` what `FreeSteps` is to `FreeRun`: chains compose and end in a run
 (`FreeStepsH.run`), so a proof can follow a program across its host calls piece by piece. The
 count is what bounds the gas a run needs (`PVM.Logic.GasBound`): each step charges at most one
-block cost, each host call what its handler charges.
+block cost, at most `stepCostCap`, and each host call what its handler charges.
 -/
 
 namespace PVM
 
 variable {X : Type}
+
+/-- The basic block containing ı costs at most `stepCostCap`, if the program deblobs at ı. -/
+def CostOk (p : ByteArray) (i : Nat) : Prop :=
+  ∀ P, deblob p i = some P → P.blockCost (P.blockStartOf i) ≤ stepCostCap
+
+theorem CostOk.of {p : ByteArray} {i : Nat} {P : Program} (hP : deblob p i = some P)
+    (hc : P.blockCost (P.blockStartOf i) ≤ stepCostCap) : CostOk p i := by
+  intro P' hP'
+  rw [hP] at hP'
+  cases hP'
+  exact hc
 
 /-- Zero or more continuing steps, some of them host calls allowed by `R`, at most `n` of them. -/
 inductive FreeStepsH (p : ByteArray) (R : HostRel X) :
@@ -23,9 +35,10 @@ inductive FreeStepsH (p : ByteArray) (R : HostRel X) :
   /-- A bound can be loosened. -/
   | pad {i ω μ x i' ω' μ' x' n} : FreeStepsH p R i ω μ x i' ω' μ' x' n →
       FreeStepsH p R i ω μ x i' ω' μ' x' (n + 1)
-  | next {i ω μ x i' ω' μ' i'' ω'' μ'' x'' n} : FreeNext p i ω μ i' ω' μ' →
+  | next {i ω μ x i' ω' μ' i'' ω'' μ'' x'' n} : FreeNext p i ω μ i' ω' μ' → CostOk p i →
       FreeStepsH p R i' ω' μ' x i'' ω'' μ'' x'' n → FreeStepsH p R i ω μ x i'' ω'' μ'' x'' (n + 1)
   | host {i ω μ x P h j ω₁ μ₁ ω' μ' x' i'' ω'' μ'' x'' n} : deblob p i = some P →
+      P.blockCost (P.blockStartOf i) ≤ stepCostCap →
       P.freeStep i ω μ = (.host h, j, ω₁, μ₁) → R h.toNat ω μ x .cont ω' μ' x' →
       FreeStepsH p R (P.next i) ω' μ' x' i'' ω'' μ'' x'' n → FreeStepsH p R i ω μ x i'' ω'' μ'' x'' (n + 1)
 
@@ -61,8 +74,8 @@ theorem trans {i ω μ x i' ω' μ' x' i'' ω'' μ'' x'' n₁ n₂} (h₁ : Free
   induction h₁ with
   | refl => simpa using h₂
   | pad _ ih => rw [Nat.add_right_comm]; exact .pad (ih h₂)
-  | next hn _ ih => rw [Nat.add_right_comm]; exact .next hn (ih h₂)
-  | host hP hs hR _ ih => rw [Nat.add_right_comm]; exact .host hP hs hR (ih h₂)
+  | next hn hc _ ih => rw [Nat.add_right_comm]; exact .next hn hc (ih h₂)
+  | host hP hc hs hR _ ih => rw [Nat.add_right_comm]; exact .host hP hc hs hR (ih h₂)
 
 /-- `trans` with the counts the other way round, for a goal whose count ends in a literal. -/
 theorem trans' {i ω μ x i' ω' μ' x' i'' ω'' μ'' x'' n₁ n₂} (h₁ : FreeStepsH p R i ω μ x i' ω' μ' x' n₁)
@@ -105,8 +118,8 @@ theorem run {i ω μ x i' ω' μ' x' ε ω'' μ'' x'' n} (h : FreeStepsH p R i �
   induction h with
   | refl => exact hr
   | pad _ ih => exact ih hr
-  | next hn _ ih => exact FreeRunH.cons_next hn (ih hr)
-  | @host i ω μ x P h j ω₁ μ₁ ω' μ' x' i'' ω'' μ'' x'' n hP hs hR _ ih =>
+  | next hn _ _ ih => exact FreeRunH.cons_next hn (ih hr)
+  | @host i ω μ x P h j ω₁ μ₁ ω' μ' x' i'' ω'' μ'' x'' n hP _ hs hR _ ih =>
     have hexit : FreeRun p i ω μ (.host h) i ω μ := by
       have := FreeExit.step (p := p) hP hs (by simp)
       simpa using FreeRun.exit this
@@ -116,20 +129,22 @@ theorem run {i ω μ x i' ω' μ' x' ε ω'' μ'' x'' n} (h : FreeStepsH p R i �
     `FreeSteps.step_decode`). -/
 theorem step_decode {P : Program} {i : Nat} {ins : Instr} {n : Nat} {ω : Regs} {μ : Memory} {x : X}
     {i' : Nat} {ω' : Regs} {μ' : Memory} {i'' : Nat} {ω'' : Regs} {μ'' : Memory} {x'' : X} {k : Nat}
-    (hd : deblob p i = some P ∧ P.decode i = some ins ∧ P.next i = n)
+    (hd : deblob p i = some P ∧ P.decode i = some ins ∧ P.next i = n ∧
+      P.blockCost (P.blockStartOf i) ≤ stepCostCap)
     (hs : (let m := P.exec i ins ω μ
            Program.finalState .cont i ω μ m (memoryException μ m.reads m.writes)) = (.cont, i', ω', μ'))
     (rest : FreeStepsH p R i' ω' μ' x i'' ω'' μ'' x'' k) : FreeStepsH p R i ω μ x i'' ω'' μ'' x'' (k + 1) :=
-  .next ⟨P, hd.1, by rw [Program.freeStep_of_decode ω μ hd.2.1]; exact hs⟩ rest
+  .next ⟨P, hd.1, by rw [Program.freeStep_of_decode ω μ hd.2.1]; exact hs⟩ (.of hd.1 hd.2.2.2) rest
 
 /-- A host call `ecalli h` at an index the code facts give, with an outcome `R` allows; the run
     resumes at ı + 1 + skip(ı) = n. -/
 theorem host_decode {P : Program} {i : Nat} {h : UInt64} {n : Nat} {ω : Regs} {μ : Memory} {x : X}
     {ω' : Regs} {μ' : Memory} {x' : X} {i'' : Nat} {ω'' : Regs} {μ'' : Memory} {x'' : X} {k : Nat}
-    (hd : deblob p i = some P ∧ P.decode i = some (.oneImm .ecalli h) ∧ P.next i = n)
+    (hd : deblob p i = some P ∧ P.decode i = some (.oneImm .ecalli h) ∧ P.next i = n ∧
+      P.blockCost (P.blockStartOf i) ≤ stepCostCap)
     (hR : R h.toNat ω μ x .cont ω' μ' x')
     (rest : FreeStepsH p R n ω' μ' x' i'' ω'' μ'' x'' k) : FreeStepsH p R i ω μ x i'' ω'' μ'' x'' (k + 1) := by
-  refine .host (j := P.next i) (ω₁ := ω) (μ₁ := μ) hd.1 ?_ hR (hd.2.2 ▸ rest)
+  refine .host (j := P.next i) (ω₁ := ω) (μ₁ := μ) hd.1 hd.2.2.2 ?_ hR (hd.2.2.1 ▸ rest)
   rw [Program.freeStep_of_decode ω μ hd.2.1]
   simp [Program.exec, Program.finalState, memoryException]
 

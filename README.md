@@ -220,8 +220,8 @@ the build of the semantics rather than drifting silently.
   - `Lift.psiM_of_run`, from `psiM_of_freeRunH`, the dispatcher's contract, and the halting step
     `halt_43609`.
 
-  The trust split is unchanged: `checkCode` and the layout are checked by compiled code, and the
-  rest by the kernel. The theorem depends on propext, Classical.choice and Quot.sound only.
+  `checkCode` and the layout are hypotheses here; `Rejects.refine_rejects` discharges them for the
+  vendored blob in the kernel. The theorem depends on propext, Classical.choice and Quot.sound only.
 * **Witness rejects a bad tag, end to end** (`Services/Witness/BadPayload.lean`, `run_badTag`).
   For every core index c < 2^16, item index i < 2^16, service id s < 2^32, payload y of 1 to 15
   octets whose first octet (the `Op` tag) is at least 12, and 32-octet hash h, the gas-free machine
@@ -253,13 +253,25 @@ the build of the semantics rather than drifting silently.
   whose first octet is at least 12, Ψ_R's result is ℰ(`Rejected(BadPayload)`) = [12, 0], or ∞.
   It depends on propext, Classical.choice and Quot.sound only.
 * **Milestone A′, exactly** (`PsiREmpty.psiR_rejects_exact`, with `psiR_badTag_exact` and
-  `psiR_empty_exact`). With two more hypotheses, the "or ∞" goes: every basic block of the blob
-  costs at most 7761 gas (`checkMaxBlockCost`, checked of the vendored blob by
-  `lake build witnesscheck`, like the code facts), and the work item's refine gas limit is at least
-  `gasBound` = 4001 · (7761 + 2000) = 39,054,761, under 1% of the full chain's 5 · 10⁹. Then Ψ_R's
-  result is exactly ℰ(`Rejected(BadPayload)`) = [12, 0]. The bound is (N + 1)(M + H): the path
-  takes at most N = 4000 steps, each step charges at most one block cost M, and each host call at
-  most H = `hostCostMax` = 2000 (`fetch` of the parameters costs 390, `log` 1000).
+  `psiR_empty_exact`). With a refine gas limit of at least `gasBound` = 4001 · (8192 + 2000) =
+  40,782,192 (under 1% of the full chain's 5 · 10⁹), the "or ∞" goes: Ψ_R's result is exactly
+  ℰ(`Rejected(BadPayload)`) = [12, 0]. The bound is (N + 1)(M + H): the path takes at most N = 4000
+  steps, each in a basic block costing at most M = `stepCostCap` = 2^13 (each step of a counted
+  chain carries its block's bound, from the code facts' `.block` entries), and each host call costs
+  at most H = `hostCostMax` = 2000 (`fetch` of the parameters costs 390, `log` 1000).
+* **The deployed witness binary rejects malformed payloads, by the kernel alone**
+  (`Services/Witness/Rejects.lean`, `refine_rejects`). Milestone A′ exactly, for the code preimage
+  that *is* `services/witness/witness-service.jam` (`Services.Witness.Blob.preimage`): no hypothesis
+  about the code is left. Its sections (`CodeCheck.split`, `CodeCheck.jam`), 𝔳_blob and the 3,800
+  code facts (`CodeCheck.checkCode_ok`), the costs of the 344 blocks the path visits, the section
+  sizes and data octets the path reads (`layout_ok`) and the heap bounds (`heap_ok`) are all checked
+  by the kernel. That is possible because the blob is a number to the kernel (`PVM.NatBlob`): octet
+  j is ⌊N / 2^(8j)⌋ mod 256, computed with the kernel's arbitrary-precision arithmetic, and each check
+  reads its stretch of the code from a window cut out of N once (`NatBlob.wview`). The model's
+  code-reading definitions are repeated over a `CodeView` (`PVM/Logic/View.lean`, equal by `rfl`),
+  𝔳_blob is checked as a chain of walks (`PVM/Logic/FastCheck.lean`), and the generated
+  `Services/Witness/CodeCheck.lean` (`genwitnesssteps codecheck`) holds the checks. The theorem
+  depends on propext, Classical.choice and Quot.sound only.
 * **The witness service** (`Services/Witness.lean`). The witness bounty market
   (ascrivener/witness at 71e585a), built with `cargo jam-build` 0.1.29, is vendored as
   `services/witness/witness-service.jam`. Its code names host calls 0–6, 9, 11–14, 18, 20, 21, 24
@@ -337,8 +349,8 @@ Theorems and proof rules about the Appendix A model; nothing here adds semantics
   contract allows) constrains every way the run can end.
 * **Enough gas** (`Logic/GasBound.lean`). The converse of `psiM_of_freeRunH`'s "or ∞":
   `psiM_of_stepsH` says that from Y's state, a chain of at most n steps (`FreeStepsH … n`) to a
-  halting step gives Ψ_M exactly that halt's output, given at least (n + 1)(M + H) gas, every block
-  costing at most M (`MaxBlockCost`, checked by `checkMaxBlockCost`) and every host call the
+  halting step gives Ψ_M exactly that halt's output, given at least (n + 1)(M + H) gas, every step's
+  block costing at most M = `stepCostCap` (`CostOk`, which each step of the chain carries) and every host call the
   contract allows costing at most H and doing what the contract says with that much gas
   (`HostCostLe`). Each continuing Ψ₁ step with ϱ ≥ M is the gas-free step (`step_eq_of_gas`), and
   Ψ_H* then follows the chain step by step (`psiHStar_of_steps`). `FreeStepsH` carries the bound:
@@ -394,10 +406,9 @@ The plan (`Logic/Det.lean`, `Logic/Code.lean` and `Logic/Steps.lean` are its fir
 `Services/Witness/Prefix.lean` runs it on the first 39 instructions, at about 0.15 s each):
 
 1. **Program access the kernel can afford.** The kernel cannot evaluate over a 217 kB `ByteArray`.
-   For now the facts the proof uses are one hypothesis, `checkCode p fs = true`, evaluated by
-   compiled code in CI (as `witnesscheck` does for the host-call ids). A kernel check over a
-   representation it evaluates quickly (GMP-backed `Nat`s) can discharge the same hypothesis
-   later without changing the theorem.
+   The facts the proof uses are one hypothesis, `checkCode p fs = true`, which the kernel checks of
+   the vendored witness blob over a representation it evaluates quickly, the blob as one number
+   (`PVM.NatBlob`, `Services/Witness/CodeCheck.lean`).
 2. **Symbolic execution**, proved sound against Ψ₁: registers and memory as terms over the
    inputs, a path condition, case splits at the input-dependent branches.
 3. **Summaries** for loops and library code (the copy loop first), proved once by induction and

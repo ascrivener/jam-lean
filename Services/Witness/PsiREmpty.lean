@@ -99,9 +99,7 @@ theorem psiR_rejects (params : Params) (hpar : params = Params.full) (d : Accoun
         hjb hlay hcc hheap hc hi hs ⟨hpos, hle⟩ htag
 
 
-/-- **Witness's refine rejects the empty payload, exactly.** As `psiR_empty`, for a blob whose basic blocks each cost at
-    most 7761 gas (`checkMaxBlockCost`, which `lake build witnesscheck` checks of the vendored blob)
-    and a work item whose refine gas limit is at least `gasBound` (about 3.9 × 10⁷, under 1% of the
+/-- **Witness's refine rejects the empty payload, exactly.** As `psiR_empty`, and a work item whose refine gas limit is at least `gasBound` (about 4.1 × 10⁷, under 1% of the
     full chain's 5 × 10⁹): Ψ_R's result is ℰ(`Rejected(BadPayload)`) = [12, 0]. -/
 theorem psiR_empty_exact (params : Params) (hpar : params = Params.full) (d : Accounts) (c i : Nat)
     (p : WorkPackage) (r : List UInt8) (imports extrinsics : List (List (List UInt8))) (off : Nat)
@@ -112,12 +110,12 @@ theorem psiR_empty_exact (params : Params) (hpar : params = Params.full) (d : Ac
     (hcode : splitMetadata l = some code) (jb : JamBlob) (hjb : JamBlob.parse? code = some jb)
     (hlay : layoutOk jb = true) (hcc : checkCode jb.code facts = true)
     (hheap : heapBounds code = (48, 1044368))
-    (hmc : checkMaxBlockCost jb.code 7761 = true) (hgas : gasBound ≤ w.refineGasLimit)
+    (hgas : gasBound ≤ w.refineGasLimit)
     (hg64 : w.refineGasLimit < 2 ^ 64) (hc : c < 65536) (hi : i < 65536)
     (hs : w.service < 4294967296) (hy : w.payload.size = 0) :
     (psiR params d c i p r imports extrinsics off).result = .ok ⟨#[12, 0]⟩ := by
   refine psiR_exact_of_run params d c i p r imports extrinsics off w hw l hl hsize code hcode jb hjb hlay hcc
-    206752 (by decide) 4000 7761 hmc hgas hg64
+    206752 (by decide) 4000 hgas hg64
     (fun P _ env hcodeE hparE => ?_)
   intro a
   have hlist : a.toList = Blob.encodeNat c ++ Blob.encodeNat i ++ Blob.encodeNat w.service ++
@@ -155,9 +153,8 @@ theorem psiR_empty_exact (params : Params) (hpar : params = Params.full) (d : Ac
   rw [initRegs_eq, hasize]
   exact hrun
 
-/-- **Milestone A′, exactly**: as `psiR_rejects`, for a blob whose blocks each cost at most 7761
-    gas (`checkMaxBlockCost`, checked by `lake build witnesscheck`) and a refine gas limit of at
-    least `gasBound` (about 3.9 × 10⁷): for a payload that is empty or of 1 to 15 octets with first
+/-- **Milestone A′, exactly**: as `psiR_rejects`, for a refine gas limit of at
+    least `gasBound` (about 4.1 × 10⁷): for a payload that is empty or of 1 to 15 octets with first
     octet at least 12, Ψ_R's result is exactly ℰ(`Rejected(BadPayload)`) = [12, 0]. -/
 theorem psiR_rejects_exact (params : Params) (hpar : params = Params.full) (d : Accounts) (c i : Nat)
     (p : WorkPackage) (r : List UInt8) (imports extrinsics : List (List (List UInt8))) (off : Nat)
@@ -168,7 +165,7 @@ theorem psiR_rejects_exact (params : Params) (hpar : params = Params.full) (d : 
     (hcode : splitMetadata l = some code) (jb : JamBlob) (hjb : JamBlob.parse? code = some jb)
     (hlay : layoutOk jb = true) (hcc : checkCode jb.code facts = true)
     (hheap : heapBounds code = (48, 1044368))
-    (hmc : checkMaxBlockCost jb.code 7761 = true) (hgas : gasBound ≤ w.refineGasLimit)
+    (hgas : gasBound ≤ w.refineGasLimit)
     (hg64 : w.refineGasLimit < 2 ^ 64) (hc : c < 65536) (hi : i < 65536)
     (hs : w.service < 4294967296)
     (hy : w.payload.size = 0 ∨
@@ -176,11 +173,11 @@ theorem psiR_rejects_exact (params : Params) (hpar : params = Params.full) (d : 
     (psiR params d c i p r imports extrinsics off).result = .ok ⟨#[12, 0]⟩ := by
   rcases hy with h0 | ⟨hle, htag⟩
   · exact psiR_empty_exact params hpar d c i p r imports extrinsics off w hw l hl hsize code hcode jb hjb
-      hlay hcc hheap hmc hgas hg64 hc hi hs h0
+      hlay hcc hheap hgas hg64 hc hi hs h0
   · rcases Nat.eq_zero_or_pos w.payload.size with h0 | hpos
     · exact psiR_empty_exact params hpar d c i p r imports extrinsics off w hw l hl hsize code hcode jb
-        hjb hlay hcc hheap hmc hgas hg64 hc hi hs h0
+        hjb hlay hcc hheap hgas hg64 hc hi hs h0
     · exact psiR_badTag_exact params hpar d c i p r imports extrinsics off w hw l hl hsize code hcode jb
-        hjb hlay hcc hheap hmc hgas hg64 hc hi hs ⟨hpos, hle⟩ htag
+        hjb hlay hcc hheap hgas hg64 hc hi hs ⟨hpos, hle⟩ htag
 
 end Services.Witness.PsiREmpty

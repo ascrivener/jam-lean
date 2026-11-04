@@ -88,6 +88,8 @@ jobs:
       - name: the generated witness files are what their generator produces
         run: |
           lake exe genwitnesssteps code 2835 | diff - Services/Witness/Code.lean
+          lake exe genwitnesssteps blob | diff - Services/Witness/Blob.lean
+          lake exe genwitnesssteps codecheck 2835 | diff - Services/Witness/CodeCheck.lean
           lake exe genwitnesssteps cut 0 PrefixC 0 702 every=16 frame words
           lake exe genwitnesssteps run 702 cut=PrefixC | diff - Services/Witness/Prefix.lean
           lake exe genwitnesssteps cut 74620 ErrTail 0 1542 every=16 out

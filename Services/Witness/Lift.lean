@@ -73,13 +73,13 @@ theorem psiM_of_run {p : ByteArray} {P : Program} [HasCode p P] (code a : ByteAr
     simp [freeOutput, h7', h8', hrr, hmem]
 
 
-/-- **With enough gas, exactly that output.** As `psiM_of_run`, for a run of at most N steps, a
-    program whose blocks each cost at most M gas (`MaxBlockCost`, checked by `checkMaxBlockCost`),
-    and at least (N + 1)(M + `hostCostMax`) gas: Ψ_M's output is `out`. -/
+/-- **With enough gas, exactly that output.** As `psiM_of_run`, for a run of at most N steps (each in
+    a block costing at most `stepCostCap`), and at least (N + 1)(`stepCostCap` + `hostCostMax`) gas:
+    Ψ_M's output is `out`. -/
 theorem psiM_exact_of_run {p : ByteArray} {P : Program} [HasCode p P] (code a : ByteArray)
     (gas : UInt64) (env : RefineHost.Env) {ω₀ : Regs} {μ₀ : Memory}
-    (hY : standardInit code a = some (p, ω₀, μ₀)) (o : Nat) (out : List UInt8) (N M : Nat)
-    (hM : MaxBlockCost p M) (hg : (N + 1) * (M + hostCostMax) ≤ gas.toNat)
+    (hY : standardInit code a = some (p, ω₀, μ₀)) (o : Nat) (out : List UInt8) (N : Nat)
+    (hg : (N + 1) * (stepCostCap + hostCostMax) ≤ gas.toNat)
     (hrun : ∃ ω' μ' x', FreeStepsH p (refineContract env) 0 ω₀ μ₀ ((∅, []) : RefineCtx) 43609 ω' μ' x' N ∧
       ω'[0] = UInt64.ofNat 4294901760 ∧ ω'[7] = UInt64.ofNat o ∧ ω'[8] = UInt64.ofNat out.length ∧
       o + out.length < 4294967296 ∧ out.length < 18446744073709551616 ∧
@@ -88,7 +88,8 @@ theorem psiM_exact_of_run {p : ByteArray} {P : Program} [HasCode p P] (code a : 
       .ok ⟨out.toArray⟩ := by
   obtain ⟨ω', μ', x', hsteps, h0, h7, h8, hb, hb', hmem, hrd⟩ := hrun
   have h := psiM_of_stepsH code 0 gas a ((∅, []) : RefineCtx) _ (refineHostFn_gasNonIncreasing env)
-    (refineContract env) hY hM (refineContract_cost env) hsteps (halt_43609 (P := P) ω' μ' h0) hg
+    (refineContract env) hY (refineContract_cost env) hsteps (halt_43609 (P := P) ω' μ' h0)
+    (CostOk.of (d_43609 (p := p)).1 (d_43609 (p := p)).2.2.2) hg
   rw [show (psiM code 0 gas a (toHostFn (RefineHost.dispatch env)) ((∅, []) : RefineCtx)).2.1 =
     (freeOutput .halt ω' μ') from congrArg Prod.fst h]
   have h7' : (ω'.get 7).toNat = o := by

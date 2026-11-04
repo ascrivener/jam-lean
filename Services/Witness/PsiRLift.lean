@@ -66,9 +66,8 @@ theorem psiR_of_run (params : Params) (d : Accounts) (c i : Nat) (p : WorkPackag
   · right; rw [h]; rfl
 
 
-/-- **Ψ_R with enough gas**: as `psiR_of_run`, for a run of at most N steps, a blob whose blocks each
-    cost at most M (`checkMaxBlockCost`, checked by `lake build witnesscheck`) and a refine gas limit
-    of at least (N + 1)(M + `hostCostMax`): Ψ_R's result is exactly [12, 0]. -/
+/-- **Ψ_R with enough gas**: as `psiR_of_run`, for a run of at most N steps and a refine gas limit
+    of at least (N + 1)(`stepCostCap` + `hostCostMax`): Ψ_R's result is exactly [12, 0]. -/
 theorem psiR_exact_of_run (params : Params) (d : Accounts) (c i : Nat) (p : WorkPackage) (r : List UInt8)
     (imports extrinsics : List (List (List UInt8))) (off : Nat) (w : WorkItem)
     (hw : p.items[i]? = some w) (l : List UInt8)
@@ -76,9 +75,8 @@ theorem psiR_exact_of_run (params : Params) (d : Accounts) (c i : Nat) (p : Work
       w.codeHash.toList) = some l)
     (hsize : l.length ≤ Constants.Cmaxservicecodesize) (code : ByteArray)
     (hcode : splitMetadata l = some code) (jb : JamBlob) (hjb : JamBlob.parse? code = some jb)
-    (hlay : layoutOk jb = true) (hcc : checkCode jb.code facts = true) (o : Nat) (ho : o + 2 < 4294967296) (N M : Nat)
-    (hmc : checkMaxBlockCost jb.code M = true)
-    (hgas : (N + 1) * (M + hostCostMax) ≤ w.refineGasLimit) (hg64 : w.refineGasLimit < 2 ^ 64)
+    (hlay : layoutOk jb = true) (hcc : checkCode jb.code facts = true) (o : Nat) (ho : o + 2 < 4294967296) (N : Nat)
+    (hgas : (N + 1) * (stepCostCap + hostCostMax) ≤ w.refineGasLimit) (hg64 : w.refineGasLimit < 2 ^ 64)
     (hrun : ∀ (P : Program) [HasCode jb.code P] (env : RefineHost.Env), env.code = code →
       env.fetch.params = params →
       let a : ByteArray := ⟨(Codec.nat c ++ Codec.nat i ++ Codec.nat w.service ++ Codec.var w.payload ++
@@ -110,8 +108,7 @@ theorem psiR_exact_of_run (params : Params) (d : Accounts) (c i : Nat) (p : Work
     unfold standardInit validJamBlob?
     rw [ite_eq_right (by omega), hjb, Option.bind_some, ite_eq_right hfit]
     rfl
-  have hres := psiM_exact_of_run (P := P) code a (UInt64.ofNat w.refineGasLimit) env hY o [12, 0] N M
-    (checkMaxBlockCost_sound hmc)
+  have hres := psiM_exact_of_run (P := P) code a (UInt64.ofNat w.refineGasLimit) env hY o [12, 0] N
     (by rw [UInt64.toNat_ofNat_of_lt' (by rw [show UInt64.size = 2 ^ 64 from rfl]; exact hg64)]; exact hgas)
     ⟨ω', μ', x', hsteps, h0, h7, by simpa using h8, by simp; omega, by decide,
       by simp only [Memory.readN, List.length_cons, List.length_nil, Nat.reduceAdd,

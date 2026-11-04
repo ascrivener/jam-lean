@@ -22,6 +22,9 @@ import Services.Witness.PsiR
 import Services.Witness.EFront3
 import Services.Witness.EmptyPayload
 import Services.Witness.PsiREmpty
+import Services.Witness.Blob
+import Services.Witness.CodeCheck
+import Services.Witness.Rejects
 
 /-!
 # Results about specific services' deployed code

@@ -729,7 +729,7 @@ def hdrOf (b : ByteArray) : Option Hdr := do
 /-- The index a code fact is about, for sorting and windows (jump-table facts last). -/
 def factKey (f : String) : Nat := match f.splitOn " " with
   | k :: v :: _ =>
-    if k == ".instr" || k == ".blockStart" then v.toNat!
+    if k == ".instr" || k == ".blockStart" || k == ".block" then v.toNat!
     else if k == ".jumpTableSize" then 1000000000 else 1000000001 + v.toNat!
   | _ => 0
 
@@ -804,6 +804,16 @@ def mode_codeRun (cx : Cx) : IO Unit := do
         facts := facts.push s!".jumpEntry {k} {t}"
         facts := facts.push s!".blockStart {t} {P.isBlockStart t}"
     | _ => pure ()
+  -- the basic block of every listed instruction: its start s, and e, the next block start
+  let blockOf (pc : Nat) : Nat × Nat := Id.run do
+    let st := P.blockStartOf pc
+    let mut e := pc + 1
+    while e < P.code.size && !P.isBlockStart e do e := e + 1
+    return (st, e)
+  for pc in seen do
+    if (P.decode pc).isSome then
+      let (st, e) := blockOf pc
+      facts := facts.push s!".block {st} {e}"
   -- sorted by index, so each chunk of 64 reads a short stretch of the code (`codecheck`)
   let factsL := facts.toList.eraseDups.mergeSort (fun a b => factKey a ≤ factKey b)
   let idxOf (f : String) : Nat := (factsL.idxOf f)
@@ -935,7 +945,9 @@ end Services.{NS}.CodeCheck"
     let some ins := P.decode pc | continue
     let fi := s!".instr {pc} ({leanInstr ins}) {P.next pc}"
     let k := idxOf fi
-    let l := s!"theorem d_{pc} \{p : ByteArray} \{P : Program} [h : HasCode p P] : deblob p {pc} = some P ∧ P.decode {pc} = some ({leanInstr ins}) ∧ P.next {pc} = {P.next pc} :=\n  h.ok.instr (show CodeFact.instr {pc} ({leanInstr ins}) {P.next pc} ∈ facts from {memFact (k)})\n\n@[pvm_code] theorem nx_{pc} \{p : ByteArray} \{P : Program} [h : HasCode p P] : P.next {pc} = {P.next pc} := (d_{pc} (p := p)).2.2"
+    let (bst, be) := blockOf pc
+    let kb := idxOf s!".block {bst} {be}"
+    let l := s!"theorem d_{pc} \{p : ByteArray} \{P : Program} [h : HasCode p P] : deblob p {pc} = some P ∧ P.decode {pc} = some ({leanInstr ins}) ∧ P.next {pc} = {P.next pc} ∧ P.blockCost (P.blockStartOf {pc}) ≤ stepCostCap :=\n  h.ok.instrCost (show CodeFact.instr {pc} ({leanInstr ins}) {P.next pc} ∈ facts from {memFact (k)})\n    (show CodeFact.block {bst} {be} ∈ facts from {memFact kb}) (by decide)\n\n@[pvm_code] theorem nx_{pc} \{p : ByteArray} \{P : Program} [h : HasCode p P] : P.next {pc} = {P.next pc} := (d_{pc} (p := p)).2.2.1"
     if !lemmasL.contains l then lemmasL := lemmasL.push l
   for f in factsL do
     if f.startsWith ".jumpTableSize " then

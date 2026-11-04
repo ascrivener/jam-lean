@@ -221,375 +221,405 @@ theorem vBlob_ok : prog.vBlob = true := by
   rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_29 (by decide)]
   exact CodeView.vBlobAux_end _ _ _ (by decide) (by decide) rfl
 
-theorem chunk_0 : facts_0.all (CodeFact.holdsV (wview N 11199 1595536 188243 0 23842) jt) = true := by
+theorem chunk_0 : facts_0.all (CodeFact.holdsV (wview N 11199 1595536 188243 0 23836) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_0 : facts_0.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 0 23842).symm) _ chunk_0
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 0 23836).symm) _ chunk_0
 
-theorem chunk_1 : facts_1.all (CodeFact.holdsV (wview N 11199 1595536 188243 23777 181) jt) = true := by
+theorem chunk_1 : facts_1.all (CodeFact.holdsV (wview N 11199 1595536 188243 23766 171) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_1 : facts_1.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 23777 181).symm) _ chunk_1
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 23766 171).symm) _ chunk_1
 
-theorem chunk_2 : facts_2.all (CodeFact.holdsV (wview N 11199 1595536 188243 23889 253) jt) = true := by
+theorem chunk_2 : facts_2.all (CodeFact.holdsV (wview N 11199 1595536 188243 23868 162) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_2 : facts_2.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 23889 253).symm) _ chunk_2
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 23868 162).symm) _ chunk_2
 
-theorem chunk_3 : facts_3.all (CodeFact.holdsV (wview N 11199 1595536 188243 24070 15841) jt) = true := by
+theorem chunk_3 : facts_3.all (CodeFact.holdsV (wview N 11199 1595536 188243 23958 15875) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_3 : facts_3.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 24070 15841).symm) _ chunk_3
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 23958 15875).symm) _ chunk_3
 
-theorem chunk_4 : facts_4.all (CodeFact.holdsV (wview N 11199 1595536 188243 39842 184) jt) = true := by
+theorem chunk_4 : facts_4.all (CodeFact.holdsV (wview N 11199 1595536 188243 39764 205) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_4 : facts_4.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 39842 184).symm) _ chunk_4
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 39764 205).symm) _ chunk_4
 
-theorem chunk_5 : facts_5.all (CodeFact.holdsV (wview N 11199 1595536 188243 39957 3270) jt) = true := by
+theorem chunk_5 : facts_5.all (CodeFact.holdsV (wview N 11199 1595536 188243 39897 3277) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_5 : facts_5.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 39957 3270).symm) _ chunk_5
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 39897 3277).symm) _ chunk_5
 
-theorem chunk_6 : facts_6.all (CodeFact.holdsV (wview N 11199 1595536 188243 43155 194) jt) = true := by
+theorem chunk_6 : facts_6.all (CodeFact.holdsV (wview N 11199 1595536 188243 43105 170) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_6 : facts_6.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 43155 194).symm) _ chunk_6
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 43105 170).symm) _ chunk_6
 
-theorem chunk_7 : facts_7.all (CodeFact.holdsV (wview N 11199 1595536 188243 43277 159) jt) = true := by
+theorem chunk_7 : facts_7.all (CodeFact.holdsV (wview N 11199 1595536 188243 43203 171) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_7 : facts_7.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 43277 159).symm) _ chunk_7
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 43203 171).symm) _ chunk_7
 
-theorem chunk_8 : facts_8.all (CodeFact.holdsV (wview N 11199 1595536 188243 43364 171) jt) = true := by
+theorem chunk_8 : facts_8.all (CodeFact.holdsV (wview N 11199 1595536 188243 43302 143) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_8 : facts_8.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 43364 171).symm) _ chunk_8
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 43302 143).symm) _ chunk_8
 
-theorem chunk_9 : facts_9.all (CodeFact.holdsV (wview N 11199 1595536 188243 43463 178) jt) = true := by
+theorem chunk_9 : facts_9.all (CodeFact.holdsV (wview N 11199 1595536 188243 43373 155) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_9 : facts_9.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 43463 178).symm) _ chunk_9
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 43373 155).symm) _ chunk_9
 
-theorem chunk_10 : facts_10.all (CodeFact.holdsV (wview N 11199 1595536 188243 43569 19991) jt) = true := by
+theorem chunk_10 : facts_10.all (CodeFact.holdsV (wview N 11199 1595536 188243 43463 164) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_10 : facts_10.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 43569 19991).symm) _ chunk_10
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 43463 164).symm) _ chunk_10
 
-theorem chunk_11 : facts_11.all (CodeFact.holdsV (wview N 11199 1595536 188243 74588 178) jt) = true := by
+theorem chunk_11 : facts_11.all (CodeFact.holdsV (wview N 11199 1595536 188243 43555 19985) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_11 : facts_11.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 74588 178).symm) _ chunk_11
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 43555 19985).symm) _ chunk_11
 
-theorem chunk_12 : facts_12.all (CodeFact.holdsV (wview N 11199 1595536 188243 74699 234) jt) = true := by
+theorem chunk_12 : facts_12.all (CodeFact.holdsV (wview N 11199 1595536 188243 63468 11278) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_12 : facts_12.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 74699 234).symm) _ chunk_12
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 63468 11278).symm) _ chunk_12
 
-theorem chunk_13 : facts_13.all (CodeFact.holdsV (wview N 11199 1595536 188243 74861 374) jt) = true := by
+theorem chunk_13 : facts_13.all (CodeFact.holdsV (wview N 11199 1595536 188243 74674 163) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_13 : facts_13.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 74861 374).symm) _ chunk_13
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 74674 163).symm) _ chunk_13
 
-theorem chunk_14 : facts_14.all (CodeFact.holdsV (wview N 11199 1595536 188243 75163 2466) jt) = true := by
+theorem chunk_14 : facts_14.all (CodeFact.holdsV (wview N 11199 1595536 188243 74765 423) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_14 : facts_14.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 75163 2466).symm) _ chunk_14
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 74765 423).symm) _ chunk_14
 
-theorem chunk_15 : facts_15.all (CodeFact.holdsV (wview N 11199 1595536 188243 77557 189) jt) = true := by
+theorem chunk_15 : facts_15.all (CodeFact.holdsV (wview N 11199 1595536 188243 75116 415) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_15 : facts_15.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 77557 189).symm) _ chunk_15
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 75116 415).symm) _ chunk_15
 
-theorem chunk_16 : facts_16.all (CodeFact.holdsV (wview N 11199 1595536 188243 77674 7085) jt) = true := by
+theorem chunk_16 : facts_16.all (CodeFact.holdsV (wview N 11199 1595536 188243 75462 2220) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_16 : facts_16.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 77674 7085).symm) _ chunk_16
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 75462 2220).symm) _ chunk_16
 
-theorem chunk_17 : facts_17.all (CodeFact.holdsV (wview N 11199 1595536 188243 84687 1916) jt) = true := by
+theorem chunk_17 : facts_17.all (CodeFact.holdsV (wview N 11199 1595536 188243 77610 951) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_17 : facts_17.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 84687 1916).symm) _ chunk_17
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 77610 951).symm) _ chunk_17
 
-theorem chunk_18 : facts_18.all (CodeFact.holdsV (wview N 11199 1595536 188243 86534 3087) jt) = true := by
+theorem chunk_18 : facts_18.all (CodeFact.holdsV (wview N 11199 1595536 188243 84388 755) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_18 : facts_18.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 86534 3087).symm) _ chunk_18
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 84388 755).symm) _ chunk_18
 
-theorem chunk_19 : facts_19.all (CodeFact.holdsV (wview N 11199 1595536 188243 89552 10544) jt) = true := by
+theorem chunk_19 : facts_19.all (CodeFact.holdsV (wview N 11199 1595536 188243 85071 1546) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_19 : facts_19.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 89552 10544).symm) _ chunk_19
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 85071 1546).symm) _ chunk_19
 
-theorem chunk_20 : facts_20.all (CodeFact.holdsV (wview N 11199 1595536 188243 100024 264) jt) = true := by
+theorem chunk_20 : facts_20.all (CodeFact.holdsV (wview N 11199 1595536 188243 86545 3086) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_20 : facts_20.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 100024 264).symm) _ chunk_20
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 86545 3086).symm) _ chunk_20
 
-theorem chunk_21 : facts_21.all (CodeFact.holdsV (wview N 11199 1595536 188243 100219 190) jt) = true := by
+theorem chunk_21 : facts_21.all (CodeFact.holdsV (wview N 11199 1595536 188243 89559 10540) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_21 : facts_21.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 100219 190).symm) _ chunk_21
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 89559 10540).symm) _ chunk_21
 
-theorem chunk_22 : facts_22.all (CodeFact.holdsV (wview N 11199 1595536 188243 100337 199) jt) = true := by
+theorem chunk_22 : facts_22.all (CodeFact.holdsV (wview N 11199 1595536 188243 100027 257) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_22 : facts_22.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 100337 199).symm) _ chunk_22
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 100027 257).symm) _ chunk_22
 
-theorem chunk_23 : facts_23.all (CodeFact.holdsV (wview N 11199 1595536 188243 100467 171) jt) = true := by
+theorem chunk_23 : facts_23.all (CodeFact.holdsV (wview N 11199 1595536 188243 100214 180) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_23 : facts_23.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 100467 171).symm) _ chunk_23
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 100214 180).symm) _ chunk_23
 
-theorem chunk_24 : facts_24.all (CodeFact.holdsV (wview N 11199 1595536 188243 100568 314) jt) = true := by
+theorem chunk_24 : facts_24.all (CodeFact.holdsV (wview N 11199 1595536 188243 100325 186) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_24 : facts_24.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 100568 314).symm) _ chunk_24
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 100325 186).symm) _ chunk_24
 
-theorem chunk_25 : facts_25.all (CodeFact.holdsV (wview N 11199 1595536 188243 100810 2100) jt) = true := by
+theorem chunk_25 : facts_25.all (CodeFact.holdsV (wview N 11199 1595536 188243 100439 168) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_25 : facts_25.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 100810 2100).symm) _ chunk_25
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 100439 168).symm) _ chunk_25
 
-theorem chunk_26 : facts_26.all (CodeFact.holdsV (wview N 11199 1595536 188243 102839 164) jt) = true := by
+theorem chunk_26 : facts_26.all (CodeFact.holdsV (wview N 11199 1595536 188243 100538 309) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_26 : facts_26.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 102839 164).symm) _ chunk_26
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 100538 309).symm) _ chunk_26
 
-theorem chunk_27 : facts_27.all (CodeFact.holdsV (wview N 11199 1595536 188243 102933 20628) jt) = true := by
+theorem chunk_27 : facts_27.all (CodeFact.holdsV (wview N 11199 1595536 188243 100778 152) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_27 : facts_27.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 102933 20628).symm) _ chunk_27
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 100778 152).symm) _ chunk_27
 
-theorem chunk_28 : facts_28.all (CodeFact.holdsV (wview N 11199 1595536 188243 123489 225) jt) = true := by
+theorem chunk_28 : facts_28.all (CodeFact.holdsV (wview N 11199 1595536 188243 100858 2096) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_28 : facts_28.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 123489 225).symm) _ chunk_28
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 100858 2096).symm) _ chunk_28
 
-theorem chunk_29 : facts_29.all (CodeFact.holdsV (wview N 11199 1595536 188243 123642 190) jt) = true := by
+theorem chunk_29 : facts_29.all (CodeFact.holdsV (wview N 11199 1595536 188243 102882 196) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_29 : facts_29.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 123642 190).symm) _ chunk_29
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 102882 196).symm) _ chunk_29
 
-theorem chunk_30 : facts_30.all (CodeFact.holdsV (wview N 11199 1595536 188243 123760 159) jt) = true := by
+theorem chunk_30 : facts_30.all (CodeFact.holdsV (wview N 11199 1595536 188243 103159 20421) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_30 : facts_30.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 123760 159).symm) _ chunk_30
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 103159 20421).symm) _ chunk_30
 
-theorem chunk_31 : facts_31.all (CodeFact.holdsV (wview N 11199 1595536 188243 123847 223) jt) = true := by
+theorem chunk_31 : facts_31.all (CodeFact.holdsV (wview N 11199 1595536 188243 123508 242) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_31 : facts_31.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 123847 223).symm) _ chunk_31
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 123508 242).symm) _ chunk_31
 
-theorem chunk_32 : facts_32.all (CodeFact.holdsV (wview N 11199 1595536 188243 123998 166) jt) = true := by
+theorem chunk_32 : facts_32.all (CodeFact.holdsV (wview N 11199 1595536 188243 123678 161) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_32 : facts_32.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 123998 166).symm) _ chunk_32
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 123678 161).symm) _ chunk_32
 
-theorem chunk_33 : facts_33.all (CodeFact.holdsV (wview N 11199 1595536 188243 124092 164) jt) = true := by
+theorem chunk_33 : facts_33.all (CodeFact.holdsV (wview N 11199 1595536 188243 123770 153) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_33 : facts_33.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 124092 164).symm) _ chunk_33
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 123770 153).symm) _ chunk_33
 
-theorem chunk_34 : facts_34.all (CodeFact.holdsV (wview N 11199 1595536 188243 124187 197) jt) = true := by
+theorem chunk_34 : facts_34.all (CodeFact.holdsV (wview N 11199 1595536 188243 123851 219) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_34 : facts_34.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 124187 197).symm) _ chunk_34
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 123851 219).symm) _ chunk_34
 
-theorem chunk_35 : facts_35.all (CodeFact.holdsV (wview N 11199 1595536 188243 124312 198) jt) = true := by
+theorem chunk_35 : facts_35.all (CodeFact.holdsV (wview N 11199 1595536 188243 123998 161) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_35 : facts_35.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 124312 198).symm) _ chunk_35
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 123998 161).symm) _ chunk_35
 
-theorem chunk_36 : facts_36.all (CodeFact.holdsV (wview N 11199 1595536 188243 124441 262) jt) = true := by
+theorem chunk_36 : facts_36.all (CodeFact.holdsV (wview N 11199 1595536 188243 124087 159) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_36 : facts_36.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 124441 262).symm) _ chunk_36
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 124087 159).symm) _ chunk_36
 
-theorem chunk_37 : facts_37.all (CodeFact.holdsV (wview N 11199 1595536 188243 124631 377) jt) = true := by
+theorem chunk_37 : facts_37.all (CodeFact.holdsV (wview N 11199 1595536 188243 124178 191) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_37 : facts_37.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 124631 377).symm) _ chunk_37
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 124178 191).symm) _ chunk_37
 
-theorem chunk_38 : facts_38.all (CodeFact.holdsV (wview N 11199 1595536 188243 124936 191) jt) = true := by
+theorem chunk_38 : facts_38.all (CodeFact.holdsV (wview N 11199 1595536 188243 124299 170) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_38 : facts_38.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 124936 191).symm) _ chunk_38
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 124299 170).symm) _ chunk_38
 
-theorem chunk_39 : facts_39.all (CodeFact.holdsV (wview N 11199 1595536 188243 125055 163) jt) = true := by
+theorem chunk_39 : facts_39.all (CodeFact.holdsV (wview N 11199 1595536 188243 124397 283) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_39 : facts_39.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 125055 163).symm) _ chunk_39
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 124397 283).symm) _ chunk_39
 
-theorem chunk_40 : facts_40.all (CodeFact.holdsV (wview N 11199 1595536 188243 125149 171) jt) = true := by
+theorem chunk_40 : facts_40.all (CodeFact.holdsV (wview N 11199 1595536 188243 124608 347) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_40 : facts_40.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 125149 171).symm) _ chunk_40
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 124608 347).symm) _ chunk_40
 
-theorem chunk_41 : facts_41.all (CodeFact.holdsV (wview N 11199 1595536 188243 125248 1803) jt) = true := by
+theorem chunk_41 : facts_41.all (CodeFact.holdsV (wview N 11199 1595536 188243 124901 183) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_41 : facts_41.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 125248 1803).symm) _ chunk_41
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 124901 183).symm) _ chunk_41
 
-theorem chunk_42 : facts_42.all (CodeFact.holdsV (wview N 11199 1595536 188243 126983 200) jt) = true := by
+theorem chunk_42 : facts_42.all (CodeFact.holdsV (wview N 11199 1595536 188243 125012 162) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_42 : facts_42.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 126983 200).symm) _ chunk_42
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 125012 162).symm) _ chunk_42
 
-theorem chunk_43 : facts_43.all (CodeFact.holdsV (wview N 11199 1595536 188243 127115 194) jt) = true := by
+theorem chunk_43 : facts_43.all (CodeFact.holdsV (wview N 11199 1595536 188243 125102 159) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_43 : facts_43.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 127115 194).symm) _ chunk_43
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 125102 159).symm) _ chunk_43
 
-theorem chunk_44 : facts_44.all (CodeFact.holdsV (wview N 11199 1595536 188243 127240 173) jt) = true := by
+theorem chunk_44 : facts_44.all (CodeFact.holdsV (wview N 11199 1595536 188243 125190 170) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_44 : facts_44.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 127240 173).symm) _ chunk_44
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 125190 170).symm) _ chunk_44
 
-theorem chunk_45 : facts_45.all (CodeFact.holdsV (wview N 11199 1595536 188243 127344 165) jt) = true := by
+theorem chunk_45 : facts_45.all (CodeFact.holdsV (wview N 11199 1595536 188243 125288 1805) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_45 : facts_45.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 127344 165).symm) _ chunk_45
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 125288 1805).symm) _ chunk_45
 
-theorem chunk_46 : facts_46.all (CodeFact.holdsV (wview N 11199 1595536 188243 127439 173) jt) = true := by
+theorem chunk_46 : facts_46.all (CodeFact.holdsV (wview N 11199 1595536 188243 127024 173) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_46 : facts_46.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 127439 173).symm) _ chunk_46
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 127024 173).symm) _ chunk_46
 
-theorem chunk_47 : facts_47.all (CodeFact.holdsV (wview N 11199 1595536 188243 127543 170) jt) = true := by
+theorem chunk_47 : facts_47.all (CodeFact.holdsV (wview N 11199 1595536 188243 127125 174) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_47 : facts_47.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 127543 170).symm) _ chunk_47
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 127125 174).symm) _ chunk_47
 
-theorem chunk_48 : facts_48.all (CodeFact.holdsV (wview N 11199 1595536 188243 127644 183) jt) = true := by
+theorem chunk_48 : facts_48.all (CodeFact.holdsV (wview N 11199 1595536 188243 127227 177) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_48 : facts_48.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 127644 183).symm) _ chunk_48
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 127227 177).symm) _ chunk_48
 
-theorem chunk_49 : facts_49.all (CodeFact.holdsV (wview N 11199 1595536 188243 127757 209) jt) = true := by
+theorem chunk_49 : facts_49.all (CodeFact.holdsV (wview N 11199 1595536 188243 127332 165) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_49 : facts_49.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 127757 209).symm) _ chunk_49
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 127332 165).symm) _ chunk_49
 
-theorem chunk_50 : facts_50.all (CodeFact.holdsV (wview N 11199 1595536 188243 127894 56725) jt) = true := by
+theorem chunk_50 : facts_50.all (CodeFact.holdsV (wview N 11199 1595536 188243 127425 166) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_50 : facts_50.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 127894 56725).symm) _ chunk_50
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 127425 166).symm) _ chunk_50
 
-theorem chunk_51 : facts_51.all (CodeFact.holdsV (wview N 11199 1595536 188243 184550 157) jt) = true := by
+theorem chunk_51 : facts_51.all (CodeFact.holdsV (wview N 11199 1595536 188243 127523 170) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_51 : facts_51.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 184550 157).symm) _ chunk_51
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 127523 170).symm) _ chunk_51
 
-theorem chunk_52 : facts_52.all (CodeFact.holdsV (wview N 11199 1595536 188243 184638 155) jt) = true := by
+theorem chunk_52 : facts_52.all (CodeFact.holdsV (wview N 11199 1595536 188243 127624 184) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_52 : facts_52.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 184638 155).symm) _ chunk_52
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 127624 184).symm) _ chunk_52
 
-theorem chunk_53 : facts_53.all (CodeFact.holdsV (wview N 11199 1595536 188243 184724 158) jt) = true := by
+theorem chunk_53 : facts_53.all (CodeFact.holdsV (wview N 11199 1595536 188243 127739 190) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_53 : facts_53.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 184724 158).symm) _ chunk_53
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 127739 190).symm) _ chunk_53
 
-theorem chunk_54 : facts_54.all (CodeFact.holdsV (wview N 11199 1595536 188243 184813 2021) jt) = true := by
+theorem chunk_54 : facts_54.all (CodeFact.holdsV (wview N 11199 1595536 188243 127857 170) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_54 : facts_54.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 184813 2021).symm) _ chunk_54
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 127857 170).symm) _ chunk_54
 
-theorem chunk_55 : facts_55.all (CodeFact.holdsV (wview N 11199 1595536 188243 186762 153) jt) = true := by
+theorem chunk_55 : facts_55.all (CodeFact.holdsV (wview N 11199 1595536 188243 127955 56711) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_55 : facts_55.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 186762 153).symm) _ chunk_55
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 127955 56711).symm) _ chunk_55
 
-theorem chunk_56 : facts_56.all (CodeFact.holdsV (wview N 11199 1595536 188243 186843 157) jt) = true := by
+theorem chunk_56 : facts_56.all (CodeFact.holdsV (wview N 11199 1595536 188243 184595 144) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_56 : facts_56.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 186843 157).symm) _ chunk_56
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 184595 144).symm) _ chunk_56
 
-theorem chunk_57 : facts_57.all (CodeFact.holdsV (wview N 11199 1595536 188243 186928 153) jt) = true := by
+theorem chunk_57 : facts_57.all (CodeFact.holdsV (wview N 11199 1595536 188243 184670 137) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_57 : facts_57.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 186928 153).symm) _ chunk_57
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 184670 137).symm) _ chunk_57
 
-theorem chunk_58 : facts_58.all (CodeFact.holdsV (wview N 11199 1595536 188243 187009 146) jt) = true := by
+theorem chunk_58 : facts_58.all (CodeFact.holdsV (wview N 11199 1595536 188243 184738 157) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_58 : facts_58.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 187009 146).symm) _ chunk_58
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 184738 157).symm) _ chunk_58
 
-theorem chunk_59 : facts_59.all (CodeFact.holdsV (wview N 11199 1595536 188243 187083 107) jt) = true := by
+theorem chunk_59 : facts_59.all (CodeFact.holdsV (wview N 11199 1595536 188243 184823 2014) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_59 : facts_59.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 187083 107).symm) _ chunk_59
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 184823 2014).symm) _ chunk_59
 
-theorem chunk_60 : facts_60.all (CodeFact.holdsV (wview N 11199 1595536 188243 0 1) jt) = true := by
+theorem chunk_60 : facts_60.all (CodeFact.holdsV (wview N 11199 1595536 188243 186768 140) jt) = true := by
   decide +kernel
 
 theorem chunk_ok_60 : facts_60.all (·.holds prog) = true :=
-  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 0 1).symm) _ chunk_60
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 186768 140).symm) _ chunk_60
+
+theorem chunk_61 : facts_61.all (CodeFact.holdsV (wview N 11199 1595536 188243 186837 149) jt) = true := by
+  decide +kernel
+
+theorem chunk_ok_61 : facts_61.all (·.holds prog) = true :=
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 186837 149).symm) _ chunk_61
+
+theorem chunk_62 : facts_62.all (CodeFact.holdsV (wview N 11199 1595536 188243 186914 145) jt) = true := by
+  decide +kernel
+
+theorem chunk_ok_62 : facts_62.all (·.holds prog) = true :=
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 186914 145).symm) _ chunk_62
+
+theorem chunk_63 : facts_63.all (CodeFact.holdsV (wview N 11199 1595536 188243 186990 143) jt) = true := by
+  decide +kernel
+
+theorem chunk_ok_63 : facts_63.all (·.holds prog) = true :=
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 186990 143).symm) _ chunk_63
+
+theorem chunk_64 : facts_64.all (CodeFact.holdsV (wview N 11199 1595536 188243 187061 129) jt) = true := by
+  decide +kernel
+
+theorem chunk_ok_64 : facts_64.all (·.holds prog) = true :=
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 187061 129).symm) _ chunk_64
+
+theorem chunk_65 : facts_65.all (CodeFact.holdsV (wview N 11199 1595536 188243 0 1) jt) = true := by
+  decide +kernel
+
+theorem chunk_ok_65 : facts_65.all (·.holds prog) = true :=
+  CodeFact.all_holds_of_view prog _ (prog_view.trans (wview_eq N 11199 1595536 188243 0 1).symm) _ chunk_65
 
 /-- **The blob passes `checkCode` for the code facts**, checked by the kernel. -/
 theorem checkCode_ok : checkCode (ba N 6054 216919) facts = true :=
   checkCode_of_chunks parse vBlob_ok (by
-    simp only [factChunks, List.all_cons, List.all_nil, Bool.and_true, chunk_ok_0, chunk_ok_1, chunk_ok_2, chunk_ok_3, chunk_ok_4, chunk_ok_5, chunk_ok_6, chunk_ok_7, chunk_ok_8, chunk_ok_9, chunk_ok_10, chunk_ok_11, chunk_ok_12, chunk_ok_13, chunk_ok_14, chunk_ok_15, chunk_ok_16, chunk_ok_17, chunk_ok_18, chunk_ok_19, chunk_ok_20, chunk_ok_21, chunk_ok_22, chunk_ok_23, chunk_ok_24, chunk_ok_25, chunk_ok_26, chunk_ok_27, chunk_ok_28, chunk_ok_29, chunk_ok_30, chunk_ok_31, chunk_ok_32, chunk_ok_33, chunk_ok_34, chunk_ok_35, chunk_ok_36, chunk_ok_37, chunk_ok_38, chunk_ok_39, chunk_ok_40, chunk_ok_41, chunk_ok_42, chunk_ok_43, chunk_ok_44, chunk_ok_45, chunk_ok_46, chunk_ok_47, chunk_ok_48, chunk_ok_49, chunk_ok_50, chunk_ok_51, chunk_ok_52, chunk_ok_53, chunk_ok_54, chunk_ok_55, chunk_ok_56, chunk_ok_57, chunk_ok_58, chunk_ok_59, chunk_ok_60])
+    simp only [factChunks, List.all_cons, List.all_nil, Bool.and_true, chunk_ok_0, chunk_ok_1, chunk_ok_2, chunk_ok_3, chunk_ok_4, chunk_ok_5, chunk_ok_6, chunk_ok_7, chunk_ok_8, chunk_ok_9, chunk_ok_10, chunk_ok_11, chunk_ok_12, chunk_ok_13, chunk_ok_14, chunk_ok_15, chunk_ok_16, chunk_ok_17, chunk_ok_18, chunk_ok_19, chunk_ok_20, chunk_ok_21, chunk_ok_22, chunk_ok_23, chunk_ok_24, chunk_ok_25, chunk_ok_26, chunk_ok_27, chunk_ok_28, chunk_ok_29, chunk_ok_30, chunk_ok_31, chunk_ok_32, chunk_ok_33, chunk_ok_34, chunk_ok_35, chunk_ok_36, chunk_ok_37, chunk_ok_38, chunk_ok_39, chunk_ok_40, chunk_ok_41, chunk_ok_42, chunk_ok_43, chunk_ok_44, chunk_ok_45, chunk_ok_46, chunk_ok_47, chunk_ok_48, chunk_ok_49, chunk_ok_50, chunk_ok_51, chunk_ok_52, chunk_ok_53, chunk_ok_54, chunk_ok_55, chunk_ok_56, chunk_ok_57, chunk_ok_58, chunk_ok_59, chunk_ok_60, chunk_ok_61, chunk_ok_62, chunk_ok_63, chunk_ok_64, chunk_ok_65])
 
 end Services.Witness.CodeCheck

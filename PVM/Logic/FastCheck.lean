@@ -96,9 +96,13 @@ def CodeFact.holdsV (V : CodeView) (jt : Array Nat) : CodeFact → Bool
   | .blockStart n b => V.isBlockStart n == b
   | .jumpTableSize n => jt.size == n
   | .jumpEntry k t => jt.getD k 0 == t
+  | .block s e => V.isBlockStart s && ((List.range (e - s - 1)).all fun k => !V.isBlockStart (s + 1 + k)) &&
+      decide (V.blockCost s ≤ stepCostCap)
 
 theorem CodeFact.holds_view (P : Program) (f : CodeFact) : f.holds P = f.holdsV P.view P.jumpTable := by
-  cases f <;> rfl
+  cases f
+  case block s e => simp only [CodeFact.holds, CodeFact.holdsV, Program.blockCost_view]; rfl
+  all_goals rfl
 
 theorem CodeFact.all_holds_of_view (P : Program) (V : CodeView) (hV : P.view = V) (fs : List CodeFact)
     (h : fs.all (CodeFact.holdsV V P.jumpTable) = true) : fs.all (·.holds P) = true := by

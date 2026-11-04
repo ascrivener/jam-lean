@@ -11,10 +11,9 @@ its Blake2b-256 hash, as on chain), takes the account's code by the paper's rule
 id is in `Services.Witness.ids`.
 
 It also checks `checkCode` of the PVM code against `Services.Witness.Code.facts`, the one
-hypotheses `Services.Witness.Prefix.prefix_from_Y` makes about the bytes, with `layoutOk`, and
-`checkMaxBlockCost` (every basic block costs at most 7761 gas), which the `_exact` theorems assume.
-
-These are the steps not checked by the kernel: they run compiled code over the 223 kB blob.
+hypotheses `Services.Witness.Prefix.prefix_from_Y` makes about the bytes, with `layoutOk`.
+`Services.Witness.CodeCheck` and `Services.Witness.Rejects` prove the same of the vendored blob in
+the kernel; this compiled check is a quick cross-check.
 -/
 
 open JAM PVM
@@ -51,8 +50,4 @@ def main (args : List String) : IO UInt32 := do
       IO.eprintln "the section sizes differ from Services.Witness.Prefix.layoutOk"
       return 1
     IO.println s!"witnesscheck: the blob passes 𝔳_blob, the {n} code facts and the section sizes and data octets of Services.Witness.Prefix, so `prefix_from_Y` applies"
-    if !checkMaxBlockCost jb.code 7761 then
-      IO.eprintln "a basic block of the blob costs more than 7761 gas"
-      return 1
-    IO.println "witnesscheck: every basic block costs at most 7761 gas (`checkMaxBlockCost`), so the `_exact` rejection theorems apply"
     return 0

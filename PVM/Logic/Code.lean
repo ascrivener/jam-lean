@@ -16,6 +16,10 @@ for blobs too large for the kernel).
 
 namespace PVM
 
+/-- The most gas the basic block of a step on a counted chain may cost (GP eq. `gascostforblock`):
+    2^13, above the costliest block of the services proved about here (`PVM.FreeStepsH`). -/
+def stepCostCap : Nat := 8192
+
 /-- One fact about a program. -/
 inductive CodeFact where
   /-- At index i: 𝔳_inst, the decoded instruction, and ı + 1 + skip(ı). -/
@@ -26,6 +30,8 @@ inductive CodeFact where
   | jumpTableSize (n : Nat)
   /-- **j**_k = t. -/
   | jumpEntry (k t : Nat)
+  /-- s ∈ ϖ, no index in (s, e) is in ϖ, and ϱ^Δ of the block at s is at most `stepCostCap`. -/
+  | block (s e : Nat)
   deriving DecidableEq, Repr
 
 /-- Whether a fact holds of a program. -/
@@ -34,6 +40,8 @@ def CodeFact.holds (P : Program) : CodeFact → Bool
   | .blockStart n b => P.isBlockStart n == b
   | .jumpTableSize n => P.jumpTable.size == n
   | .jumpEntry k t => P.jumpTable.getD k 0 == t
+  | .block s e => P.isBlockStart s && ((List.range (e - s - 1)).all fun k => !P.isBlockStart (s + 1 + k)) &&
+      decide (P.blockCost s ≤ stepCostCap)
 
 /-- The blob deblobs, passes 𝔳_blob, and every listed fact holds. -/
 def checkCode (p : ByteArray) (fs : List CodeFact) : Bool :=
@@ -82,6 +90,39 @@ theorem jumpEntry (h : CodeOk p fs P) {k t : Nat} (hm : CodeFact.jumpEntry k t �
     P.jumpTable.getD k 0 = t := by
   have hf := h.facts _ hm
   simpa [CodeFact.holds] using hf
+
+/-- 𝔏(ı) = s when s ∈ ϖ and nothing in (s, ı] is. -/
+theorem _root_.PVM.Program.blockStartFrom_eq (P : Program) {s : Nat} (hs : P.isBlockStart s = true) :
+    ∀ i, s ≤ i → (∀ k, s < k → k ≤ i → P.isBlockStart k = false) → P.blockStartFrom i = s := by
+  intro i
+  induction i with
+  | zero => intro h _; rw [Nat.le_zero.1 h]; rfl
+  | succ i ih =>
+    intro hsi hno
+    rw [Program.blockStartFrom]
+    by_cases he : s = i + 1
+    · subst he; rw [if_pos hs]
+    · rw [if_neg (by rw [hno (i + 1) (by omega) (Nat.le_refl _)]; decide)]
+      exact ih (by omega) (fun k h1 h2 => hno k h1 (by omega))
+
+theorem cost (h : CodeOk p fs P) {s e i : Nat} (hm : CodeFact.block s e ∈ fs) (hi : s ≤ i ∧ i < e) :
+    P.blockCost (P.blockStartOf i) ≤ stepCostCap := by
+  have hf := h.facts _ hm
+  simp only [CodeFact.holds, Bool.and_eq_true, List.all_eq_true, List.mem_range, Bool.not_eq_true',
+    decide_eq_true_eq] at hf
+  obtain ⟨⟨hs, hno⟩, hc⟩ := hf
+  rw [Program.blockStartOf, P.blockStartFrom_eq hs i hi.1 (fun k h1 h2 => by
+    have := hno (k - s - 1) (by omega)
+    rwa [show s + 1 + (k - s - 1) = k by omega] at this)]
+  exact hc
+
+/-- An instruction fact, with the cost of the block it is in. -/
+theorem instrCost (h : CodeOk p fs P) {i : Nat} {ins : Instr} {n s e : Nat}
+    (hm : CodeFact.instr i ins n ∈ fs) (hb : CodeFact.block s e ∈ fs) (hi : s ≤ i ∧ i < e) :
+    deblob p i = some P ∧ P.decode i = some ins ∧ P.next i = n ∧
+      P.blockCost (P.blockStartOf i) ≤ stepCostCap :=
+  let ⟨a, b, c⟩ := h.instr hm
+  ⟨a, b, c, h.cost hb hi⟩
 
 end CodeOk
 

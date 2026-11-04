@@ -197,8 +197,8 @@ structure SimState where
   startSlots : Nat
   /-- t, available execution units. -/
   units : Units
-  /-- **r**, the reorder buffer. -/
-  rob : Array RobEntry
+  /-- **r**, the reorder buffer (a list, which the kernel walks faster than an array). -/
+  rob : List RobEntry
   deriving Repr
 
 namespace Sim
@@ -209,7 +209,7 @@ def maxDecode : Nat := 4
 def maxStart : Nat := 5
 
 /-- **x**^init = (ı, 0, 4, 5, (4, 4, 4, 1, 1), []) (GP eq. `gascostforblock`). -/
-def init (i : Nat) : SimState := ⟨some i, 0, maxDecode, maxStart, .initial, #[]⟩
+def init (i : Nat) : SimState := ⟨some i, 0, maxDecode, maxStart, .initial, []⟩
 
 /-- l = |[r | r ∈ **x**_**r**, r_s ≠ ∅]| (GP §A.9). -/
 def live (x : SimState) : Nat := x.rob.foldl (fun n e => if e.state != .none then n + 1 else n) 0
@@ -217,9 +217,8 @@ def live (x : SimState) : Nat := x.rob.foldl (fun n e => if e.state != .none the
 /-- 𝔖(**x**): the least index of a WAIT entry whose units fit and whose dependencies all have
     zero cycles left, if any (GP §A.9). -/
 def readyToStart (x : SimState) : Option Nat :=
-  (List.range x.rob.size).find? fun j =>
-    let e := x.rob[j]!
-    e.state == .wait && e.units.le x.units && e.deps.all fun k => x.rob[k]!.cycles == 0
+  (x.rob.zipIdx.find? fun (e, _) =>
+    e.state == .wait && e.units.le x.units && e.deps.all fun k => x.rob[k]!.cycles == 0).map (·.2)
 
 /-- 𝔛^mov (GP §A.9): `move_reg` is handled by the front end and renames registers. -/
 def decodeMove (P : Program) (x : SimState) (i : Nat) (ins : Instr) : SimState :=
@@ -231,12 +230,12 @@ def decodeMove (P : Program) (x : SimState) (i : Nat) (ins : Instr) : SimState :
 
 /-- 𝔛^dec (GP §A.9): decode an instruction into a new reorder-buffer entry. -/
 def decodeInstr (P : Program) (x : SimState) (i : Nat) (ins : Instr) (cost : InstrCost) : SimState :=
-  let deps := (List.range x.rob.size).filter fun k => ins.src.meets x.rob[k]!.regs
+  let deps := (x.rob.zipIdx.filter fun (e, _) => ins.src.meets e.regs).map (·.2)
   let rob := x.rob.map fun e => { e with regs := e.regs.diff ins.dst }
   { x with
     pc := if isTerminator (P.zeta i) then none else some (P.next i)
     decodeSlots := x.decodeSlots - cost.decodeSlots
-    rob := rob.push ⟨.dec, cost.cycles, deps, ins.dst, cost.units⟩ }
+    rob := rob ++ [⟨.dec, cost.cycles, deps, ins.dst, cost.units⟩] }
 
 /-- 𝔛' (GP §A.9): `move_reg` (when ı < |**c**|) goes to 𝔛^mov, everything else to 𝔛^dec. -/
 def decodeStep (P : Program) (x : SimState) (i : Nat) (ins : Instr) (cost : InstrCost) : SimState :=
@@ -250,26 +249,32 @@ def startStep (x : SimState) (n : Nat) : SimState :=
     units := x.units - x.rob[n]!.units
     rob := x.rob.modify n fun e => { e with state := .exe } }
 
+/-- For each entry, whether it and every entry before it is FIN or ∅ (given `ok`, that every
+    entry before the list is). -/
+def retiredPrefix : List RobEntry → Bool → List Bool
+  | [], _ => []
+  | e :: es, ok =>
+    let ok' := ok && (e.state == .fin || e.state == .none)
+    ok' :: retiredPrefix es ok'
+
 /-- 𝔛''' (GP §A.9): advance one cycle. -/
 def cycleStep (x : SimState) : SimState :=
   let freed := x.rob.foldl (fun u e => if e.state == .exe && e.cycles == 1 then u + e.units else u) Units.zero
   -- retired j: every entry k ≤ j is FIN or ∅ (in the state before this step)
-  let retired : Array Bool := (x.rob.foldl (fun (acc : Array Bool × Bool) e =>
-      let ok := acc.2 && (e.state == .fin || e.state == .none)
-      (acc.1.push ok, ok)) (#[], true)).1
+  let retired : List Bool := retiredPrefix x.rob true
   { x with
     decodeSlots := maxDecode
     startSlots := maxStart
     cycle := x.cycle + 1
     units := x.units + freed
-    rob := x.rob.mapIdx fun j e =>
+    rob := x.rob.zipWith (fun e r =>
       { e with
         state :=
-          if retired[j]! then .none
+          if r then .none
           else if e.state == .dec then .wait
           else if e.state == .exe && e.cycles == 0 then .fin
           else e.state
-        cycles := if e.state == .exe && e.cycles > 0 then e.cycles - 1 else e.cycles } }
+        cycles := if e.state == .exe && e.cycles > 0 then e.cycles - 1 else e.cycles }) retired }
 
 /-- One transition of 𝔛 (GP §A.9). `.inl x'` continues with x'; `.inr x` is the final state;
     `none` means ď(**x**_ı) is undefined because ζ at **x**_ı is not in U (impossible for the

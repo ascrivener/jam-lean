@@ -58,7 +58,8 @@ def growTop (w h b : Nat) : Nat := if w ≤ h ∨ w > b then h else w
 theorem FreeStepsH.growHeap (env : RefineHost.Env) {p : ByteArray} {P : Program} {i n : Nat}
     {ω : Regs} {μ : Memory} {x : RefineCtx} {a b h : Nat} (t : Nat)
     {i'' : Nat} {ω'' : Regs} {μ'' : Memory} {x'' : RefineCtx} {k : Nat}
-    (hd : deblob p i = some P ∧ P.decode i = some (.oneImm .ecalli 1) ∧ P.next i = n)
+    (hd : deblob p i = some P ∧ P.decode i = some (.oneImm .ecalli 1) ∧ P.next i = n ∧
+      P.blockCost (P.blockStartOf i) ≤ stepCostCap)
     (hb : heapBounds env.code = (a, b)) (hp : HeapPages μ a b h) (hah : a ≤ h) (hhb : h ≤ b)
     (hbs : b < 2 ^ 32) (ht : growTop (reg ω 7) h b = t)
     (hcost : Constants.CgasGeminiconst + (t - h) * Constants.CgasGeminilinear ≤ hostCostMax)

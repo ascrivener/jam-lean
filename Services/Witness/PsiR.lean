@@ -14,8 +14,8 @@ open PVM JAM Services.Witness Services.Witness.Code Services.Witness.Prefix
   Services.Witness.BadPayload
 
 /-- The refine gas that suffices for the rejection theorems: (N + 1)(M + `hostCostMax`) for the
-    path's at most N = 4000 steps and witness's largest block cost M = 7761 (`psiR_exact_of_run`). -/
-def gasBound : Nat := (4000 + 1) * (7761 + hostCostMax)
+    path's at most N = 4000 steps, each in a block costing at most M = `stepCostCap` (`psiR_exact_of_run`). -/
+def gasBound : Nat := (4000 + 1) * (stepCostCap + hostCostMax)
 
 theorem hash256_length (m : ByteArray) : (Blake2b.hash256 m).toList.length = 32 := by
   rw [ByteArray.toList_eq_data]
@@ -80,9 +80,7 @@ theorem psiR_badTag (params : Params) (hpar : params = Params.full) (d : Account
   exact hrun
 
 
-/-- **Witness's refine rejects a payload with a bad tag, exactly.** As `psiR_badTag`, for a blob whose basic blocks each cost at
-    most 7761 gas (`checkMaxBlockCost`, which `lake build witnesscheck` checks of the vendored blob)
-    and a work item whose refine gas limit is at least `gasBound` (about 3.9 × 10⁷, under 1% of the
+/-- **Witness's refine rejects a payload with a bad tag, exactly.** As `psiR_badTag`, and a work item whose refine gas limit is at least `gasBound` (about 4.1 × 10⁷, under 1% of the
     full chain's 5 × 10⁹): Ψ_R's result is ℰ(`Rejected(BadPayload)`) = [12, 0]. -/
 theorem psiR_badTag_exact (params : Params) (hpar : params = Params.full) (d : Accounts) (c i : Nat)
     (p : WorkPackage) (r : List UInt8) (imports extrinsics : List (List (List UInt8))) (off : Nat)
@@ -93,13 +91,13 @@ theorem psiR_badTag_exact (params : Params) (hpar : params = Params.full) (d : A
     (hcode : splitMetadata l = some code) (jb : JamBlob) (hjb : JamBlob.parse? code = some jb)
     (hlay : layoutOk jb = true) (hcc : checkCode jb.code facts = true)
     (hheap : heapBounds code = (48, 1044368))
-    (hmc : checkMaxBlockCost jb.code 7761 = true) (hgas : gasBound ≤ w.refineGasLimit)
+    (hgas : gasBound ≤ w.refineGasLimit)
     (hg64 : w.refineGasLimit < 2 ^ 64) (hc : c < 65536) (hi : i < 65536)
     (hs : w.service < 4294967296) (hy : 1 ≤ w.payload.size ∧ w.payload.size ≤ 15)
     (htag : 12 ≤ (w.payload.toList.headD 0).toNat) :
     (psiR params d c i p r imports extrinsics off).result = .ok ⟨#[12, 0]⟩ := by
   refine psiR_exact_of_run params d c i p r imports extrinsics off w hw l hl hsize code hcode jb hjb hlay hcc
-    206816 (by decide) 4000 7761 hmc hgas hg64
+    206816 (by decide) 4000 hgas hg64
     (fun P _ env hcodeE hparE => ?_)
   intro a
   have hlist : a.toList = Blob.encodeNat c ++ Blob.encodeNat i ++ Blob.encodeNat w.service ++

@@ -24,11 +24,152 @@ def validOpcodeBits : Nat := 345087317339371424506931176087694348141259785575425
 /-- T, the block-termination opcodes, as a bit mask (`isTerminator_bits`). -/
 def terminatorBits : Nat := 1626779934493380067417503145553173186535055562438082563
 
-theorem isValidOpcode_bits : ∀ n, n < 256 → isValidOpcode n = validOpcodeBits.testBit n := by
+/-- A fact about every octet, from facts about 16 at a time. -/
+theorem forall_octet_of_ranges {Q : Nat → Prop} (h : ∀ k, k < 16 → ∀ m, m < 16 → Q (16 * k + m)) :
+    ∀ n, n < 256 → Q n := by
+  intro n hn
+  have := h (n / 16) (by omega) (n % 16) (Nat.mod_lt _ (by decide))
+  rwa [Nat.div_add_mod] at this
+
+theorem isValidOpcode_bits_0 : ∀ m, m < 16 → isValidOpcode (16 * 0 + m) = validOpcodeBits.testBit (16 * 0 + m) := by
   decide +kernel
 
-theorem isTerminator_bits : ∀ n, n < 256 → isTerminator n = terminatorBits.testBit n := by
+theorem isValidOpcode_bits_1 : ∀ m, m < 16 → isValidOpcode (16 * 1 + m) = validOpcodeBits.testBit (16 * 1 + m) := by
   decide +kernel
+
+theorem isValidOpcode_bits_2 : ∀ m, m < 16 → isValidOpcode (16 * 2 + m) = validOpcodeBits.testBit (16 * 2 + m) := by
+  decide +kernel
+
+theorem isValidOpcode_bits_3 : ∀ m, m < 16 → isValidOpcode (16 * 3 + m) = validOpcodeBits.testBit (16 * 3 + m) := by
+  decide +kernel
+
+theorem isValidOpcode_bits_4 : ∀ m, m < 16 → isValidOpcode (16 * 4 + m) = validOpcodeBits.testBit (16 * 4 + m) := by
+  decide +kernel
+
+theorem isValidOpcode_bits_5 : ∀ m, m < 16 → isValidOpcode (16 * 5 + m) = validOpcodeBits.testBit (16 * 5 + m) := by
+  decide +kernel
+
+theorem isValidOpcode_bits_6 : ∀ m, m < 16 → isValidOpcode (16 * 6 + m) = validOpcodeBits.testBit (16 * 6 + m) := by
+  decide +kernel
+
+theorem isValidOpcode_bits_7 : ∀ m, m < 16 → isValidOpcode (16 * 7 + m) = validOpcodeBits.testBit (16 * 7 + m) := by
+  decide +kernel
+
+theorem isValidOpcode_bits_8 : ∀ m, m < 16 → isValidOpcode (16 * 8 + m) = validOpcodeBits.testBit (16 * 8 + m) := by
+  decide +kernel
+
+theorem isValidOpcode_bits_9 : ∀ m, m < 16 → isValidOpcode (16 * 9 + m) = validOpcodeBits.testBit (16 * 9 + m) := by
+  decide +kernel
+
+theorem isValidOpcode_bits_10 : ∀ m, m < 16 → isValidOpcode (16 * 10 + m) = validOpcodeBits.testBit (16 * 10 + m) := by
+  decide +kernel
+
+theorem isValidOpcode_bits_11 : ∀ m, m < 16 → isValidOpcode (16 * 11 + m) = validOpcodeBits.testBit (16 * 11 + m) := by
+  decide +kernel
+
+theorem isValidOpcode_bits_12 : ∀ m, m < 16 → isValidOpcode (16 * 12 + m) = validOpcodeBits.testBit (16 * 12 + m) := by
+  decide +kernel
+
+theorem isValidOpcode_bits_13 : ∀ m, m < 16 → isValidOpcode (16 * 13 + m) = validOpcodeBits.testBit (16 * 13 + m) := by
+  decide +kernel
+
+theorem isValidOpcode_bits_14 : ∀ m, m < 16 → isValidOpcode (16 * 14 + m) = validOpcodeBits.testBit (16 * 14 + m) := by
+  decide +kernel
+
+theorem isValidOpcode_bits_15 : ∀ m, m < 16 → isValidOpcode (16 * 15 + m) = validOpcodeBits.testBit (16 * 15 + m) := by
+  decide +kernel
+
+/-- U as its bit mask, for every octet (16 octets to a theorem, so that no check is long). -/
+theorem isValidOpcode_bits : ∀ n, n < 256 → isValidOpcode n = validOpcodeBits.testBit n :=
+  forall_octet_of_ranges fun k hk =>
+    match k, hk with
+    | 0, _ => isValidOpcode_bits_0
+    | 1, _ => isValidOpcode_bits_1
+    | 2, _ => isValidOpcode_bits_2
+    | 3, _ => isValidOpcode_bits_3
+    | 4, _ => isValidOpcode_bits_4
+    | 5, _ => isValidOpcode_bits_5
+    | 6, _ => isValidOpcode_bits_6
+    | 7, _ => isValidOpcode_bits_7
+    | 8, _ => isValidOpcode_bits_8
+    | 9, _ => isValidOpcode_bits_9
+    | 10, _ => isValidOpcode_bits_10
+    | 11, _ => isValidOpcode_bits_11
+    | 12, _ => isValidOpcode_bits_12
+    | 13, _ => isValidOpcode_bits_13
+    | 14, _ => isValidOpcode_bits_14
+    | 15, _ => isValidOpcode_bits_15
+    | k + 16, hk => absurd hk (by omega)
+
+theorem isTerminator_bits_0 : ∀ m, m < 16 → isTerminator (16 * 0 + m) = terminatorBits.testBit (16 * 0 + m) := by
+  decide +kernel
+
+theorem isTerminator_bits_1 : ∀ m, m < 16 → isTerminator (16 * 1 + m) = terminatorBits.testBit (16 * 1 + m) := by
+  decide +kernel
+
+theorem isTerminator_bits_2 : ∀ m, m < 16 → isTerminator (16 * 2 + m) = terminatorBits.testBit (16 * 2 + m) := by
+  decide +kernel
+
+theorem isTerminator_bits_3 : ∀ m, m < 16 → isTerminator (16 * 3 + m) = terminatorBits.testBit (16 * 3 + m) := by
+  decide +kernel
+
+theorem isTerminator_bits_4 : ∀ m, m < 16 → isTerminator (16 * 4 + m) = terminatorBits.testBit (16 * 4 + m) := by
+  decide +kernel
+
+theorem isTerminator_bits_5 : ∀ m, m < 16 → isTerminator (16 * 5 + m) = terminatorBits.testBit (16 * 5 + m) := by
+  decide +kernel
+
+theorem isTerminator_bits_6 : ∀ m, m < 16 → isTerminator (16 * 6 + m) = terminatorBits.testBit (16 * 6 + m) := by
+  decide +kernel
+
+theorem isTerminator_bits_7 : ∀ m, m < 16 → isTerminator (16 * 7 + m) = terminatorBits.testBit (16 * 7 + m) := by
+  decide +kernel
+
+theorem isTerminator_bits_8 : ∀ m, m < 16 → isTerminator (16 * 8 + m) = terminatorBits.testBit (16 * 8 + m) := by
+  decide +kernel
+
+theorem isTerminator_bits_9 : ∀ m, m < 16 → isTerminator (16 * 9 + m) = terminatorBits.testBit (16 * 9 + m) := by
+  decide +kernel
+
+theorem isTerminator_bits_10 : ∀ m, m < 16 → isTerminator (16 * 10 + m) = terminatorBits.testBit (16 * 10 + m) := by
+  decide +kernel
+
+theorem isTerminator_bits_11 : ∀ m, m < 16 → isTerminator (16 * 11 + m) = terminatorBits.testBit (16 * 11 + m) := by
+  decide +kernel
+
+theorem isTerminator_bits_12 : ∀ m, m < 16 → isTerminator (16 * 12 + m) = terminatorBits.testBit (16 * 12 + m) := by
+  decide +kernel
+
+theorem isTerminator_bits_13 : ∀ m, m < 16 → isTerminator (16 * 13 + m) = terminatorBits.testBit (16 * 13 + m) := by
+  decide +kernel
+
+theorem isTerminator_bits_14 : ∀ m, m < 16 → isTerminator (16 * 14 + m) = terminatorBits.testBit (16 * 14 + m) := by
+  decide +kernel
+
+theorem isTerminator_bits_15 : ∀ m, m < 16 → isTerminator (16 * 15 + m) = terminatorBits.testBit (16 * 15 + m) := by
+  decide +kernel
+
+/-- T as its bit mask, for every octet (16 octets to a theorem, so that no check is long). -/
+theorem isTerminator_bits : ∀ n, n < 256 → isTerminator n = terminatorBits.testBit n :=
+  forall_octet_of_ranges fun k hk =>
+    match k, hk with
+    | 0, _ => isTerminator_bits_0
+    | 1, _ => isTerminator_bits_1
+    | 2, _ => isTerminator_bits_2
+    | 3, _ => isTerminator_bits_3
+    | 4, _ => isTerminator_bits_4
+    | 5, _ => isTerminator_bits_5
+    | 6, _ => isTerminator_bits_6
+    | 7, _ => isTerminator_bits_7
+    | 8, _ => isTerminator_bits_8
+    | 9, _ => isTerminator_bits_9
+    | 10, _ => isTerminator_bits_10
+    | 11, _ => isTerminator_bits_11
+    | 12, _ => isTerminator_bits_12
+    | 13, _ => isTerminator_bits_13
+    | 14, _ => isTerminator_bits_14
+    | 15, _ => isTerminator_bits_15
+    | k + 16, hk => absurd hk (by omega)
 
 namespace CodeView
 
@@ -117,6 +258,94 @@ theorem checkCode_of_chunks {p : ByteArray} {P : Program} {cs : List (List CodeF
   simp only [checkCode, hp, hv, Bool.true_and, List.all_flatten]
   exact hc
 
+/-! ## A block's cost, a few transitions at a time -/
+
+namespace CodeView.Sim
+
+/-- k transitions of 𝔛 that each continue (`.inl`), or `none`. -/
+def steps (V : CodeView) : Nat → SimState → Option SimState
+  | 0, x => some x
+  | k + 1, x => match transition V x with
+    | some (.inl y) => steps V k y
+    | _ => none
+
+/-- **𝔛 from x is 𝔛 from where k continuing transitions lead.** -/
+theorem run_steps (V : CodeView) : ∀ k x y f, steps V k x = some y → run V (f + k) x = run V f y := by
+  intro k
+  induction k with
+  | zero => intro x y f h; simp only [steps, Option.some.injEq] at h; subst h; rfl
+  | succ k ih =>
+    intro x y f h
+    rw [steps] at h
+    rw [show f + (k + 1) = (f + k) + 1 by omega, run]
+    split at h
+    · rename_i x' hx
+      rw [hx]
+      exact ih x' y f h
+    · cases h
+
+/-- 𝔛 stops at a final state. -/
+theorem run_final (V : CodeView) (x : SimState) (f : Nat) (h : transition V x = some (.inr x)) :
+    run V (f + 1) x = some x := by
+  rw [run, h]
+
+end CodeView.Sim
+
+theorem CodeView.blockCost_of_run (V : CodeView) (s : Nat) (z : SimState)
+    (h : CodeView.Sim.run V (CodeView.Sim.fuel V s) (Sim.init s) = some z) :
+    V.blockCost s = max (z.cycle - 3) 1 := by
+  simp [CodeView.blockCost, CodeView.blockCost?, h]
+
+/-- `followsTerminator`, with T read from its bit mask. -/
+def CodeView.followsTerminatorF (V : CodeView) (n : Nat) : Bool :=
+  (List.range 25).any fun d =>
+    decide (d + 1 ≤ n) &&
+      (let m := n - 1 - d
+       decide (m < V.codeSize) && V.maskAt m && terminatorBits.testBit (V.zeta m) && V.next m == n)
+
+/-- `isBlockStart`, testing the cheap half first and reading U and T from their bit masks. -/
+def CodeView.isBlockStartF (V : CodeView) (n : Nat) : Bool :=
+  (decide (n < V.codeSize) && V.maskAt n && validOpcodeBits.testBit (V.zeta n)) &&
+    (n == 0 || V.followsTerminatorF n)
+
+theorem CodeView.isBlockStartF_eq (V : CodeView) (hz : ∀ i, V.zeta i < 256) (n : Nat) :
+    V.isBlockStartF n = V.isBlockStart n := by
+  have hf : V.followsTerminatorF n = V.followsTerminator n := by
+    simp only [followsTerminatorF, followsTerminator]
+    congr 1
+    funext d
+    rw [isTerminator_bits _ (hz _)]
+  rw [isBlockStartF, isBlockStart, hf, isInstrStart, isValidOpcode_bits _ (hz n), Bool.and_comm]
+
+/-- No block starts at a, …, a + len − 1. -/
+def CodeView.noStartsF (V : CodeView) (a len : Nat) : Bool :=
+  (List.range len).all fun k => !V.isBlockStartF (a + k)
+
+theorem CodeView.noStartsF_sound (V : CodeView) (hz : ∀ i, V.zeta i < 256) (a len : Nat)
+    (h : V.noStartsF a len = true) : ∀ k, a ≤ k → k < a + len → V.isBlockStart k = false := by
+  intro k h1 h2
+  simp only [noStartsF, List.all_eq_true, List.mem_range, Bool.not_eq_true'] at h
+  have := h (k - a) (by omega)
+  rwa [show a + (k - a) = k by omega, isBlockStartF_eq V hz] at this
+
+/-- The block-start part of a `.block` fact. -/
+def CodeFact.blockStartsV (V : CodeView) (s e : Nat) : Bool :=
+  V.isBlockStart s && ((List.range (e - s - 1)).all fun k => !V.isBlockStart (s + 1 + k))
+
+theorem CodeFact.holds_block (P : Program) (s e : Nat) :
+    (CodeFact.block s e).holds P = (CodeFact.blockStartsV P.view s e && decide (P.view.blockCost s ≤ stepCostCap)) := by
+  simp only [CodeFact.holds, CodeFact.blockStartsV, Program.blockCost_view]
+  rfl
+
+/-- The block-start part of a `.block` fact, from s ∈ ϖ and no starts in (s, e). -/
+theorem CodeFact.blockStartsV_of (V : CodeView) (s e : Nat) (hs : V.isBlockStart s = true)
+    (hno : ∀ k, s + 1 ≤ k → k < e → V.isBlockStart k = false) :
+    CodeFact.blockStartsV V s e = true := by
+  simp only [CodeFact.blockStartsV, hs, Bool.true_and, List.all_eq_true, List.mem_range,
+    Bool.not_eq_true']
+  intro k hk
+  exact hno (s + 1 + k) (by omega) (by omega)
+
 /-! ## The host-call ids a program names -/
 
 theorem OneImmOp.ofOpcode?_some {n : Nat} {o : OneImmOp} (h : OneImmOp.ofOpcode? n = some o) : n = 10 := by
@@ -194,6 +423,21 @@ theorem jamHostCallIdsOf_of {b : ByteArray} {jb : JamBlob} (h : JamBlob.parse? b
     jamHostCallIdsOf b = hostCallIdsOf jb.code := by
   unfold jamHostCallIdsOf; rw [h]
 
+theorem getD_map_range (f : Nat → Nat) (n k : Nat) (hk : k < n) :
+    ((List.range n).map f).toArray.getD k 0 = f k := by
+  simp [Array.getD_eq_getD_getElem?, hk]
+
+theorem size_map_range (f : Nat → Nat) (n : Nat) : ((List.range n).map f).toArray.size = n := by
+  simp
+
+theorem CodeFact.jumpEntry_holds (P : Program) (k t : Nat) (h : P.jumpTable.getD k 0 = t) :
+    (CodeFact.jumpEntry k t).holds P = true := by
+  simp [CodeFact.holds, h]
+
+theorem CodeFact.jumpTableSize_holds (P : Program) (n : Nat) (h : P.jumpTable.size = n) :
+    (CodeFact.jumpTableSize n).holds P = true := by
+  simp [CodeFact.holds, h]
+
 /-- Covering a range by two. -/
 theorem range_cover {Q : Nat → Prop} {a b c : Nat} (h1 : ∀ i, a ≤ i → i < b → Q i)
     (h2 : ∀ i, b ≤ i → i < c → Q i) : ∀ i, a ≤ i → i < c → Q i := by
@@ -235,6 +479,80 @@ theorem wview_eq (N oc mb cLen a w : Nat) : wview N oc mb cLen a w = view N oc m
       congr 1; omega
     · rfl
   simp only [wview, view, hz, hm]
+
+/-- `view` of a blob of chunks, reading the code from chunks kc … kc + mc − 1 and the bitmask
+    from chunks km … km + mm − 1 alone, wherever they hold it (`cview_eq`). A check then works
+    on a few small numbers and never builds the whole blob. -/
+def cview (cs : List Nat) (oc mb cLen kc mc km mm : Nat) : CodeView where
+  zeta i := if i < cLen then
+      (if 1024 * kc ≤ oc + i ∧ oc + i < 1024 * (kc + mc) then
+        byte (ofChunks ((cs.drop kc).take mc)) (oc + i - 1024 * kc)
+      else byte (ofChunks cs) (oc + i))
+    else 0
+  maskExt i := if i < cLen then
+      (if 8192 * km ≤ mb + i ∧ mb + i < 8192 * (km + mm) then
+        bit (ofChunks ((cs.drop km).take mm)) (mb + i - 8192 * km)
+      else bit (ofChunks cs) (mb + i))
+    else true
+  maskAt i := if i < cLen then
+      (if 8192 * km ≤ mb + i ∧ mb + i < 8192 * (km + mm) then
+        bit (ofChunks ((cs.drop km).take mm)) (mb + i - 8192 * km)
+      else bit (ofChunks cs) (mb + i))
+    else false
+  codeSize := cLen
+  maskSize := cLen
+
+theorem cview_eq (cs : List Nat) (h : ∀ c ∈ cs, c < 2 ^ 8192) (oc mb cLen kc mc km mm : Nat) :
+    cview cs oc mb cLen kc mc km mm = view (ofChunks cs) oc mb cLen := by
+  have hz : ∀ i, (if 1024 * kc ≤ oc + i ∧ oc + i < 1024 * (kc + mc) then
+      byte (ofChunks ((cs.drop kc).take mc)) (oc + i - 1024 * kc) else byte (ofChunks cs) (oc + i)) =
+      byte (ofChunks cs) (oc + i) := by
+    intro i
+    split
+    · rename_i hw; exact (byte_ofChunks_window cs h kc mc _ hw.1 hw.2).symm
+    · rfl
+  have hm : ∀ i, (if 8192 * km ≤ mb + i ∧ mb + i < 8192 * (km + mm) then
+      bit (ofChunks ((cs.drop km).take mm)) (mb + i - 8192 * km) else bit (ofChunks cs) (mb + i)) =
+      bit (ofChunks cs) (mb + i) := by
+    intro i
+    split
+    · rename_i hw; exact (bit_ofChunks_window cs h km mm _ hw.1 hw.2).symm
+    · rfl
+  simp only [cview, view, hz, hm]
+
+/-- `cview` with a second stretch of code, chunks kc₂ … kc₂ + mc₂ − 1: for a block whose branch
+    target lies far from it. -/
+def cview2 (cs : List Nat) (oc mb cLen kc mc kc₂ mc₂ km mm : Nat) : CodeView :=
+  { cview cs oc mb cLen kc mc km mm with
+    zeta := fun i => if i < cLen then
+      (if 1024 * kc ≤ oc + i ∧ oc + i < 1024 * (kc + mc) then
+        byte (ofChunks ((cs.drop kc).take mc)) (oc + i - 1024 * kc)
+      else if 1024 * kc₂ ≤ oc + i ∧ oc + i < 1024 * (kc₂ + mc₂) then
+        byte (ofChunks ((cs.drop kc₂).take mc₂)) (oc + i - 1024 * kc₂)
+      else byte (ofChunks cs) (oc + i))
+    else 0 }
+
+theorem cview2_eq (cs : List Nat) (h : ∀ c ∈ cs, c < 2 ^ 8192) (oc mb cLen kc mc kc₂ mc₂ km mm : Nat) :
+    cview2 cs oc mb cLen kc mc kc₂ mc₂ km mm = view (ofChunks cs) oc mb cLen := by
+  rw [← cview_eq cs h oc mb cLen kc mc km mm]
+  simp only [cview2, cview, CodeView.mk.injEq, and_true]
+  funext i
+  split
+  · split
+    · rfl
+    · split
+      · rename_i _ _ hw
+        exact (byte_ofChunks_window cs h kc₂ mc₂ _ hw.1 hw.2).symm
+      · rfl
+  · rfl
+
+theorem cview_zeta_lt (cs : List Nat) (h : ∀ c ∈ cs, c < 2 ^ 8192) (oc mb cLen kc mc km mm i : Nat) :
+    (cview cs oc mb cLen kc mc km mm).zeta i < 256 := by
+  rw [cview_eq cs h]
+  simp only [view]
+  split
+  · exact byte_lt _ _
+  · decide
 
 theorem view_zeta_lt (N oc mb cLen i : Nat) : (view N oc mb cLen).zeta i < 256 := by
   simp only [view]

@@ -6,6 +6,8 @@ import Services.Witness.DecodeC
 import Services.Bootstrap.Code
 import Services.Bootstrap.Memcpy
 import Services.Bootstrap.Prefix
+import Services.Bootstrap.CodeOk
+import Services.Bootstrap.BParams
 import Services.Witness.Prefix
 import Services.Witness.EmptyTail
 import Services.Witness.Front1

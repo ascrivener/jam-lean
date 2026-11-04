@@ -5,6 +5,7 @@
 import Services.Witness.Code
 import Services.Witness.Blob
 import PVM.Logic.FastCheck
+import PVM.Theorems.HostIds
 
 /-!
 # witness's code facts, checked by the kernel
@@ -16,9 +17,10 @@ fact of `Services.Witness.Code.facts` (`chunk_ok_*` in `Services.Witness.CodeChe
 facts at a time). So `checkCode_ok` (`Services.Witness.CodeOk`): the blob passes `checkCode` for the
 facts, by the kernel alone.
 
-Every check is `decide +kernel` on arithmetic over `Services.Witness.Blob.N` (`PVM.NatBlob`), each
-reading the stretch of the code its facts are about from a number cut out of `N` once
-(`PVM.NatBlob.wview`).
+Every check is `decide +kernel` on arithmetic over the blob's 1024-octet chunks
+(`Services.Witness.Blob.chunks`), each reading only the chunks that hold the stretch of code it is about
+(`PVM.NatBlob.cview`), and each small enough for one kernel run on chain: the walks, facts and
+scans are in `Services.Witness.CodeCheck.*`, and `Services.Witness.CodeOk` puts them together.
 -/
 
 namespace Services.Witness.CodeCheck
@@ -27,6 +29,7 @@ open PVM PVM.NatBlob Services.Witness.Blob Services.Witness.Code
 
 theorem meta_len : Blob.decodeNat? (ba N 0 size) 0 = some (70, 1) := by
   simp only [Blob.decodeNat?, getElem?_ba, slice?_ba]
+  simp (disch := omega) only [show N = ofChunks chunks from rfl, byte_ofChunks_window chunks chunks_lt 0 1, bytes_ofChunks_window chunks chunks_lt 0 1]
   decide +kernel
 
 /-- The code after the metadata. -/
@@ -41,185 +44,52 @@ def jamBlob : JamBlob :=
 
 theorem jam : JamBlob.parse? (ba N 71 222902) = some jamBlob :=
   jamParse?_ba N 71 222902 (oLen := 5928) (wLen := 40) (z := 2) (s := 262144) (pLen := 216919)
-    (by decide +kernel) (by decide +kernel) (by decide +kernel) (by decide +kernel) (by decide +kernel)
-    (by decide)
+    (by simp (disch := omega) only [show N = ofChunks chunks from rfl, byte_ofChunks_window chunks chunks_lt 0 1, bytes_ofChunks_window chunks chunks_lt 0 1]; decide +kernel) (by simp (disch := omega) only [show N = ofChunks chunks from rfl, byte_ofChunks_window chunks chunks_lt 0 1, bytes_ofChunks_window chunks chunks_lt 0 1]; decide +kernel)
+    (by simp (disch := omega) only [show N = ofChunks chunks from rfl, byte_ofChunks_window chunks chunks_lt 0 1, bytes_ofChunks_window chunks chunks_lt 0 1]; decide +kernel) (by simp (disch := omega) only [show N = ofChunks chunks from rfl, byte_ofChunks_window chunks chunks_lt 0 1, bytes_ofChunks_window chunks chunks_lt 0 1]; decide +kernel)
+    (by simp (disch := omega) only [show N = ofChunks chunks from rfl, byte_ofChunks_window chunks chunks_lt 5 1, bytes_ofChunks_window chunks chunks_lt 5 1]; decide +kernel) (by decide)
 
 theorem jtLen : Blob.decodeNat? (ba N 6054 216919) 0 = some (1713, 2) := by
   simp only [Blob.decodeNat?, getElem?_ba, slice?_ba]
+  simp (disch := omega) only [show N = ofChunks chunks from rfl, byte_ofChunks_window chunks chunks_lt 5 1, bytes_ofChunks_window chunks chunks_lt 5 1]
   decide +kernel
 
 theorem codeLen : Blob.decodeNat? (ba N 6054 216919) 3 = some (188243, 6) := by
   simp only [Blob.decodeNat?, getElem?_ba, slice?_ba]
+  simp (disch := omega) only [show N = ofChunks chunks from rfl, byte_ofChunks_window chunks chunks_lt 5 1, bytes_ofChunks_window chunks chunks_lt 5 1]
+  decide +kernel
+
+theorem jz_ok : byte N (6054 + 2) = 3 := by
+  simp (disch := omega) only [show N = ofChunks chunks from rfl, byte_ofChunks_window chunks chunks_lt 5 1, bytes_ofChunks_window chunks chunks_lt 5 1]
   decide +kernel
 
 /-- **j**, the dynamic jump table. -/
 def jt : Array Nat :=
   ((List.range 1713).map fun i => Num.decodeLE (bytes N (6054 + 6 + i * 3) 3)).toArray
 
+/-- **j**, read from the chunks that hold it. -/
+def jtW : Array Nat :=
+  ((List.range 1713).map fun i => Num.decodeLE (bytes (ofChunks ((chunks.drop 5).take 6)) (6054 + 6 + i * 3 - 1024 * 5) 3)).toArray
+
+theorem jt_eq : jt = jtW := by
+  unfold jt jtW
+  refine congrArg List.toArray (List.map_congr_left (fun i hi => ?_))
+  have := List.mem_range.1 hi
+  exact congrArg Num.decodeLE (bytes_ofChunks_window chunks chunks_lt 5 6 _ _ (by omega) (by omega))
+
 /-- The program: **c**, **k** and **j** (GP §A.1). -/
 def prog : Program := ⟨ba N 11199 188243, bits N 1595536 188243, jt⟩
 
 theorem parse : Blob.parse? (ba N 6054 216919) = some prog := by
-  have h := parse?_ba N 6054 216919 jtLen (by decide) (show byte N (6054 + 2) = 3 by decide +kernel)
-    codeLen (by decide) (by decide +kernel)
+  have h := parse?_ba N 6054 216919 jtLen (by decide) jz_ok codeLen (by decide) (by decide +kernel)
   exact h
 
 theorem prog_view : prog.view = view N 11199 1595536 188243 := view_eq N 11199 1595536 188243 jt
 
-theorem walk_0 : (view N 11199 1595536 188243).walk 2000 0 = some 6429 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 11199 1595536 188243), ← wview_eq N 11199 1595536 188243 0 6493]
-  decide +kernel
+/-- The program's view, read from the chunks kc … kc + mc − 1 and km … km + mm − 1. -/
+theorem prog_cview (kc mc km mm : Nat) : prog.view = cview chunks 11199 1595536 188243 kc mc km mm :=
+  prog_view.trans (cview_eq chunks chunks_lt 11199 1595536 188243 kc mc km mm).symm
 
-theorem walk_1 : (view N 11199 1595536 188243).walk 2000 6429 = some 12719 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 11199 1595536 188243), ← wview_eq N 11199 1595536 188243 6429 6354]
-  decide +kernel
-
-theorem walk_2 : (view N 11199 1595536 188243).walk 2000 12719 = some 18783 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 11199 1595536 188243), ← wview_eq N 11199 1595536 188243 12719 6128]
-  decide +kernel
-
-theorem walk_3 : (view N 11199 1595536 188243).walk 2000 18783 = some 24634 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 11199 1595536 188243), ← wview_eq N 11199 1595536 188243 18783 5915]
-  decide +kernel
-
-theorem walk_4 : (view N 11199 1595536 188243).walk 2000 24634 = some 31034 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 11199 1595536 188243), ← wview_eq N 11199 1595536 188243 24634 6464]
-  decide +kernel
-
-theorem walk_5 : (view N 11199 1595536 188243).walk 2000 31034 = some 37380 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 11199 1595536 188243), ← wview_eq N 11199 1595536 188243 31034 6410]
-  decide +kernel
-
-theorem walk_6 : (view N 11199 1595536 188243).walk 2000 37380 = some 43686 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 11199 1595536 188243), ← wview_eq N 11199 1595536 188243 37380 6370]
-  decide +kernel
-
-theorem walk_7 : (view N 11199 1595536 188243).walk 2000 43686 = some 50432 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 11199 1595536 188243), ← wview_eq N 11199 1595536 188243 43686 6810]
-  decide +kernel
-
-theorem walk_8 : (view N 11199 1595536 188243).walk 2000 50432 = some 57563 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 11199 1595536 188243), ← wview_eq N 11199 1595536 188243 50432 7195]
-  decide +kernel
-
-theorem walk_9 : (view N 11199 1595536 188243).walk 2000 57563 = some 64566 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 11199 1595536 188243), ← wview_eq N 11199 1595536 188243 57563 7067]
-  decide +kernel
-
-theorem walk_10 : (view N 11199 1595536 188243).walk 2000 64566 = some 71533 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 11199 1595536 188243), ← wview_eq N 11199 1595536 188243 64566 7031]
-  decide +kernel
-
-theorem walk_11 : (view N 11199 1595536 188243).walk 2000 71533 = some 78099 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 11199 1595536 188243), ← wview_eq N 11199 1595536 188243 71533 6630]
-  decide +kernel
-
-theorem walk_12 : (view N 11199 1595536 188243).walk 2000 78099 = some 85128 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 11199 1595536 188243), ← wview_eq N 11199 1595536 188243 78099 7093]
-  decide +kernel
-
-theorem walk_13 : (view N 11199 1595536 188243).walk 2000 85128 = some 91549 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 11199 1595536 188243), ← wview_eq N 11199 1595536 188243 85128 6485]
-  decide +kernel
-
-theorem walk_14 : (view N 11199 1595536 188243).walk 2000 91549 = some 97749 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 11199 1595536 188243), ← wview_eq N 11199 1595536 188243 91549 6264]
-  decide +kernel
-
-theorem walk_15 : (view N 11199 1595536 188243).walk 2000 97749 = some 103572 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 11199 1595536 188243), ← wview_eq N 11199 1595536 188243 97749 5887]
-  decide +kernel
-
-theorem walk_16 : (view N 11199 1595536 188243).walk 2000 103572 = some 109730 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 11199 1595536 188243), ← wview_eq N 11199 1595536 188243 103572 6222]
-  decide +kernel
-
-theorem walk_17 : (view N 11199 1595536 188243).walk 2000 109730 = some 116549 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 11199 1595536 188243), ← wview_eq N 11199 1595536 188243 109730 6883]
-  decide +kernel
-
-theorem walk_18 : (view N 11199 1595536 188243).walk 2000 116549 = some 123435 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 11199 1595536 188243), ← wview_eq N 11199 1595536 188243 116549 6950]
-  decide +kernel
-
-theorem walk_19 : (view N 11199 1595536 188243).walk 2000 123435 = some 129339 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 11199 1595536 188243), ← wview_eq N 11199 1595536 188243 123435 5968]
-  decide +kernel
-
-theorem walk_20 : (view N 11199 1595536 188243).walk 2000 129339 = some 135883 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 11199 1595536 188243), ← wview_eq N 11199 1595536 188243 129339 6608]
-  decide +kernel
-
-theorem walk_21 : (view N 11199 1595536 188243).walk 2000 135883 = some 142558 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 11199 1595536 188243), ← wview_eq N 11199 1595536 188243 135883 6739]
-  decide +kernel
-
-theorem walk_22 : (view N 11199 1595536 188243).walk 2000 142558 = some 149381 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 11199 1595536 188243), ← wview_eq N 11199 1595536 188243 142558 6887]
-  decide +kernel
-
-theorem walk_23 : (view N 11199 1595536 188243).walk 2000 149381 = some 155853 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 11199 1595536 188243), ← wview_eq N 11199 1595536 188243 149381 6536]
-  decide +kernel
-
-theorem walk_24 : (view N 11199 1595536 188243).walk 2000 155853 = some 161684 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 11199 1595536 188243), ← wview_eq N 11199 1595536 188243 155853 5895]
-  decide +kernel
-
-theorem walk_25 : (view N 11199 1595536 188243).walk 2000 161684 = some 168578 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 11199 1595536 188243), ← wview_eq N 11199 1595536 188243 161684 6958]
-  decide +kernel
-
-theorem walk_26 : (view N 11199 1595536 188243).walk 2000 168578 = some 175507 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 11199 1595536 188243), ← wview_eq N 11199 1595536 188243 168578 6993]
-  decide +kernel
-
-theorem walk_27 : (view N 11199 1595536 188243).walk 2000 175507 = some 181669 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 11199 1595536 188243), ← wview_eq N 11199 1595536 188243 175507 6226]
-  decide +kernel
-
-theorem walk_28 : (view N 11199 1595536 188243).walk 2000 181669 = some 187613 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 11199 1595536 188243), ← wview_eq N 11199 1595536 188243 181669 6008]
-  decide +kernel
-
-theorem walk_29 : (view N 11199 1595536 188243).walk 232 187613 = some 188243 := by
-  rw [← CodeView.walkF_eq _ (view_zeta_lt N 11199 1595536 188243), ← wview_eq N 11199 1595536 188243 187613 694]
-  decide +kernel
-
-/-- 𝔳_blob(**c**, **k**, 0) (GP §A.1): the walks lead from 0 to the end of the code. -/
-theorem vBlob_ok : prog.vBlob = true := by
-  rw [Program.vBlob_view, prog_view, CodeView.vBlob]
-  show (view N 11199 1595536 188243).vBlobAux (188243 + 1) 0 = true
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_0 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_1 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_2 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_3 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_4 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_5 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_6 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_7 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_8 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_9 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_10 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_11 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_12 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_13 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_14 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_15 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_16 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_17 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_18 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_19 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_20 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_21 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_22 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_23 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_24 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_25 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_26 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_27 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_28 (by decide)]
-  rw [CodeView.vBlobAux_walk _ _ _ _ _ walk_29 (by decide)]
-  exact CodeView.vBlobAux_end _ _ _ (by decide) (by decide) rfl
+/-- The ids of every `ecalli` at an opcode position of the code. -/
+def hostIds : List Nat := [0, 1, 2, 3, 4, 5, 6, 9, 11, 12, 13, 14, 18, 20, 21, 24, 100]
 
 end Services.Witness.CodeCheck

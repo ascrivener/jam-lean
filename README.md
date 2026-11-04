@@ -272,6 +272,15 @@ the build of the semantics rather than drifting silently.
   𝔳_blob is checked as a chain of walks (`PVM/Logic/FastCheck.lean`), and the generated
   `Services/Witness/CodeCheck.lean` (`genwitnesssteps codecheck`) holds the checks. The theorem
   depends on propext, Classical.choice and Quot.sound only.
+* **Kernel checks sized for one refine.** witness-lean attests a declaration in one refine (about
+  55 ms of nanoda), and a long kernel reduction cannot be split for it. So the generated checks are
+  small: 𝔳_blob in walks of at most 40 instructions, the code facts 3 to a check, the host-call scan
+  200 indices at a time, block starts 12 indices at a time, and each block's cost as a chain of
+  simulation links between explicit states (`CodeView.Sim.steps`, `run_steps`). The blob is a list
+  of 1024-octet chunks (`NatBlob.ofChunks`), and every check reads only the chunks it needs
+  (`NatBlob.cview`, `byte_ofChunks_window`), so none rebuilds the 223 kB number. Profiled with
+  nanoda (`scripts/nanoda-profile.sh`), witness's whole code check is about 16,800 declarations,
+  1.6 × 10¹³ gas in all, none over a refine (the heaviest 54 ms).
 * **The witness service** (`Services/Witness.lean`). The witness bounty market
   (ascrivener/witness at 71e585a), built with `cargo jam-build` 0.1.29, is vendored as
   `services/witness/witness-service.jam`. Its code names host calls 0–6, 9, 11–14, 18, 20, 21, 24

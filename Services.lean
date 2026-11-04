@@ -69,7 +69,9 @@ Built on `JAM`; nothing in `PVM` or `JAM` depends on this library.
   summarized calls of witness's front end (after the `u32` decodes of i, s and |y|, through the
   allocator, and from the payload copy to `Op::decode`'s error jump at 74620), for every input
   width, with the payload length Y, the tag T ≥ 12, the service id S and the reader position Q
-  symbolic (`genwitnesssteps segx`).
+  symbolic. `Front1` and `Front2` (5 and 14 steps) are `genwitnesssteps segx` segments; `Front3`
+  (275 steps, 18 segments) and `Front4` (68 steps, 5 segments) are `genwitnesssteps cut … frame`
+  chains, whose `run` states what a `segx` segment would.
 * `Services.Bootstrap.Code`, `.Prefix`, `.Memcpy` — the same tooling on a second service, Parity's
   bootstrap service (`services/bootstrap`): its code facts (`lake build bootstrapcheck`), the
   first 600 steps of its refine with what they leave (`prefix_from_Y`, `PrefixPost`), and

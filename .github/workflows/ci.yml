@@ -92,12 +92,12 @@ jobs:
           lake exe genwitnesssteps run 702 | diff - Services/Witness/Prefix.lean
           lake exe genwitnesssteps cut 74620 ErrTail 0 1542 every=16 out
           lake exe genwitnesssteps cut0 74620 EmptyTail 0 1445 every=16 out
-          test -z "$(git status --porcelain -- Services/Witness/ErrTail Services/Witness/ErrTail.lean Services/Witness/EmptyTail Services/Witness/EmptyTail.lean)"
-          lake exe genwitnesssteps segx0 23809 0 60 EFront3 keep=0,1,5,6,7,8 | diff - Services/Witness/EFront3.lean
+          lake exe genwitnesssteps cut 23809 Front3 0 275 every=16 frame keep=0,1,5,6,7,8
+          lake exe genwitnesssteps cut 23918 Front4 0 68 every=16 frame keep=0,1,2,3,4,5,6,7,12
+          lake exe genwitnesssteps cut0 23809 EFront3 0 60 every=16 frame keep=0,1,5,6,7,8
+          test -z "$(git status --porcelain -- Services/Witness)"
           lake exe genwitnesssteps segx 43495 0 5 Front1 keep=0,1,5,6,7,8 | diff - Services/Witness/Front1.lean
           lake exe genwitnesssteps segx 43514 0 14 Front2 keep=0,1,5,6,7,8 | diff - Services/Witness/Front2.lean
-          lake exe genwitnesssteps segx 23809 0 275 Front3 keep=0,1,5,6,7,8 | diff - Services/Witness/Front3.lean
-          lake exe genwitnesssteps segx 23918 0 68 Front4 keep=0,1,2,3,4,5,6,7,12 | diff - Services/Witness/Front4.lean
 
       - name: The real witness binary rejects malformed payloads (a test, not a proof)
         run: lake build witnessrun

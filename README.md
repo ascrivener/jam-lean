@@ -246,7 +246,7 @@ the build of the semantics rather than drifting silently.
   (here at ω₇ = 206752).
 * **Witness rejects the empty payload** (`Services/Witness/EmptyPayload.lean`, `run_empty`;
   `Services/Witness/PsiREmpty.lean`, `psiR_empty`). The same chain as `run_badTag` up to the
-  decode of |y| = 0, then the empty path's front segment `EFront3` (`genwitnesssteps segx0`) and
+  decode of |y| = 0, then the empty path's front segment `EFront3` (`genwitnesssteps cut0 … frame`) and
   `EmptyTail.run`, lifted to Ψ_R by `psiR_of_run` with the output at 206752.
 * **Milestone A′** (`PsiREmpty.psiR_rejects`). Under the hypotheses above, for every core index
   c < 2^16, item index i < 2^16, service id < 2^32 and payload that is empty or of 1 to 15 octets
@@ -451,6 +451,24 @@ registers and 342 facts before. Measured for the error tail at N = 16 (97 segmen
 | `chain` (97 segments) | 36 ms, 3.5×10⁹ gas |
 | `run`, the 94-fact statement | 1.3×10⁹ gas |
 | The tail in all | 12.9 s natively; 12,914 nodes, most of them the states' field projections |
+
+Three options make `cut` a drop-in for a `segx` segment inside a composition:
+
+- `frame`: each state also carries, from the chain's start (ω₀, μ₀), the frame (`fr`: every
+  octet outside the writes of the segments so far, under the condition `C k`, built segment by
+  segment), unchanged page access, and the registers no segment writes. The chain's `run` then
+  states what `segx` would: the registers and live octets it leaves, its frame in `seg`'s form
+  (converted with `not_mem_of_not_mem_cover`), and unchanged access.
+- `keep=j,…`: the start registers the caller knows. Static reads overcount (a spill whose value
+  nothing uses), so the others are dropped from the reads of the segments before their first
+  write; a segment that did need one would fail to check.
+- Cuts move: where a cut's state cannot be stated (a live value that is input-dependent and no
+  variable's expression, such as a partly computed varint), the cut is dropped, joining its two
+  segments, and the analysis retried.
+
+`Front3`, `Front4` and `EFront3` are generated this way (18, 5 and 4 segments). A cut's values
+may also be a variable sign-extended from 32 bits (𝒳₄, a 32-bit operation's result: the service id
+in `Front4`), stated in the form `pvm_simp` leaves, `S + S / 2^31 · (2^64 − 2^32)`.
  The
 model, the code facts and core are already small enough. What has to change is the shape of the
 generated proofs: segments of about 20 steps, and compositions that don't re-derive every

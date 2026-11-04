@@ -53,7 +53,7 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
     (hb_4278059006 : μ.read 4278059006 = 0)
     (hb_4278059007 : μ.read 4278059007 = 0)
     : ∃ ω' μ', FreeStepsH p (refineContract env) 43590 ω μ x 43609 ω' μ' x ∧
-      (ω'[0] = UInt64.ofNat 4294901760 ∧ ω'[1] = UInt64.ofNat 4278059008 ∧ ω'[2] = ω[2] ∧ ω'[3] = ω[3] ∧ ω'[4] = ω[4] ∧ ω'[5] = UInt64.ofNat 0 ∧ ω'[6] = UInt64.ofNat 0 ∧ ω'[7] = ω[7] ∧ ω'[8] = UInt64.ofNat 2 ∧ ω'[9] = ω[9] ∧ ω'[10] = ω[10] ∧ ω'[11] = ω[11] ∧ ω'[12] = ω[12]) ∧
+      (ω'[0] = UInt64.ofNat 4294901760 ∧ ω'[7] = ω[7] ∧ ω'[8] = UInt64.ofNat 2) ∧
       (True) ∧
       (∀ a, (decide (a < 4294967296)) = true → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
@@ -103,8 +103,8 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
 theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
     (x : RefineCtx) (S : Nat) (hS : S < 4294967296) (I : Nat) (hI : I < 65536) (h : St90 S I ω μ) :
     ∃ ω' μ', FreeStepsH p (refineContract env) 43590 ω μ x 43609 ω' μ' x ∧ St91 S I ω' μ' := by
-  obtain ⟨ω', μ', hrun, ⟨r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12⟩, -, hfr, hrd, hwr⟩ :=
+  obtain ⟨ω', μ', hrun, ⟨r0, r1, r2⟩, -, hfr, hrd, hwr⟩ :=
     steps p P env ω μ x S hS h.hreg1 h.hrd_4278058872_4278058880 h.hrd_4278058984_4278059008 (Memory.read_of_readN h.hm_4278058872_8 0 (by decide)) (Memory.read_of_readN h.hm_4278058872_8 1 (by decide)) (Memory.read_of_readN h.hm_4278058872_8 2 (by decide)) (Memory.read_of_readN h.hm_4278058872_8 3 (by decide)) (Memory.read_of_readN h.hm_4278058872_8 4 (by decide)) (Memory.read_of_readN h.hm_4278058872_8 5 (by decide)) (Memory.read_of_readN h.hm_4278058872_8 6 (by decide)) (Memory.read_of_readN h.hm_4278058872_8 7 (by decide)) (Memory.read_of_readN h.hm_4278058984_8 0 (by decide)) (Memory.read_of_readN h.hm_4278058984_8 1 (by decide)) (Memory.read_of_readN h.hm_4278058984_8 2 (by decide)) (Memory.read_of_readN h.hm_4278058984_8 3 (by decide)) (Memory.read_of_readN h.hm_4278058984_8 4 (by decide)) (Memory.read_of_readN h.hm_4278058984_8 5 (by decide)) (Memory.read_of_readN h.hm_4278058984_8 6 (by decide)) (Memory.read_of_readN h.hm_4278058984_8 7 (by decide)) (Memory.read_of_readN h.hm_4278058992_8 0 (by decide)) (Memory.read_of_readN h.hm_4278058992_8 1 (by decide)) (Memory.read_of_readN h.hm_4278058992_8 2 (by decide)) (Memory.read_of_readN h.hm_4278058992_8 3 (by decide)) (Memory.read_of_readN h.hm_4278058992_8 4 (by decide)) (Memory.read_of_readN h.hm_4278058992_8 5 (by decide)) (Memory.read_of_readN h.hm_4278058992_8 6 (by decide)) (Memory.read_of_readN h.hm_4278058992_8 7 (by decide)) (Memory.read_of_readN h.hm_4278059000_8 0 (by decide)) (Memory.read_of_readN h.hm_4278059000_8 1 (by decide)) (Memory.read_of_readN h.hm_4278059000_8 2 (by decide)) (Memory.read_of_readN h.hm_4278059000_8 3 (by decide)) (Memory.read_of_readN h.hm_4278059000_8 4 (by decide)) (Memory.read_of_readN h.hm_4278059000_8 5 (by decide)) (Memory.read_of_readN h.hm_4278059000_8 6 (by decide)) (Memory.read_of_readN h.hm_4278059000_8 7 (by decide))
-  exact ⟨ω', μ', hrun, ⟨r0, r7.trans h.hreg7, r8, (Memory.readN_of_frame hfr 206752 2 rfl).trans h.hm_206752_2, fun a h1 h2 => (hrd a).trans (h.hrd_206752_206754 a h1 h2)⟩⟩
+  exact ⟨ω', μ', hrun, ⟨r0, r1.trans h.hreg7, r2, (Memory.readN_of_frame hfr 206752 2 rfl).trans h.hm_206752_2, fun a h1 h2 => (hrd a).trans (h.hrd_206752_206754 a h1 h2)⟩⟩
 
 end Services.Witness.EmptyTail.S90

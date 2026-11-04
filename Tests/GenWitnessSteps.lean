@@ -168,7 +168,7 @@ def pickVar (q : Nat × Nat × Nat × List UInt8) (v : String) : Nat :=
 /-- A value that equals an input parameter (`ext`: or a constant plus one or two of them) in every
     run of the class `allQ` (the base input first), as a Lean expression over the variables. -/
 def matchVarG (ext : Bool) (names : List String) (allQ : List (Nat × Nat × Nat × List UInt8))
-    (valBase : Nat) (valsOther : List Nat) : Option String := Id.run do
+    (valBase : Nat) (valsOther : List Nat) (sx : Bool := false) : Option String := Id.run do
   let vals := valBase :: valsOther
   let baseP := allQ.head!
   let fits (f : (Nat × Nat × Nat × List UInt8) → Int) : Option Int :=
@@ -187,6 +187,10 @@ def matchVarG (ext : Bool) (names : List String) (allQ : List (Nat × Nat × Nat
       if v < u then
         if let some k := fits (fun q => (pickVar q v : Int) + pickVar q u) then
           if k ≥ 0 then return some (showE [v, u] k)
+  -- `sx` (`cut`): a variable sign-extended from 32 bits, 𝒳₄ (a 32-bit operation's result)
+  if sx then
+    for v in names do
+      if let some 0 := fits (fun q => (PVM.Num.sext 4 (pickVar q v) : Int)) then return some s!"({v} + {v} / 2147483648 * 18446744069414584320)"
   return none
 
 /-- What a segment of the traced path reads and leaves (see the `seg` mode). -/
@@ -217,7 +221,8 @@ structure SegInfo where
 def analyzeSeg (P : Program) (tr : Array (Nat × Regs × Memory))
     (others : Array (Array (Nat × Regs × Memory) × Nat)) (otherPs : Array (Nat × Nat × Nat × List UInt8))
     (k0 a b : Nat) (out : Bool) (baseP : Nat × Nat × Nat × List UInt8 := (3, 0, 7, [255]))
-    (ext : Bool := false) (extra : List Nat := []) (staticW : List Nat := []) : IO SegInfo := do
+    (ext : Bool := false) (extra : List Nat := []) (staticW : List Nat := []) (cutMode : Bool := false) :
+    IO SegInfo := do
   let A := k0 + a; let B := k0 + b
   let some (pcA, rA, mA) := tr[A]? | throw (IO.userError "step out of range")
   let some (pcB, rB, mB) := tr[B]? | throw (IO.userError "step out of range")
@@ -273,7 +278,7 @@ def analyzeSeg (P : Program) (tr : Array (Nat × Regs × Memory))
   let names := varNames ext baseP
   let allQ := baseP :: otherPs.toList
   let matchVar (valBase : Nat) (valsOther : List Nat) : Option String :=
-    matchVarG ext names allQ valBase valsOther
+    matchVarG ext names allQ valBase valsOther cutMode
   let mut symLoads : List (Nat × Nat × String) := []
   for (a, k) in loads.toList do
     if !goodLoads.contains (a, k) then
@@ -317,13 +322,15 @@ def analyzeSeg (P : Program) (tr : Array (Nat × Regs × Memory))
   let mixed (b : Nat) : Bool := ext && (List.range 8).any fun j =>
     let c := b - b % 8 + j
     written.contains c && !agreeMem B c
-  let livePost := ((live ++ outBytes ++ extra.filter written.contains).eraseDups.mergeSort).filter fun b => agreeMem B b && !inSym b
+  let livePost := ((live ++ outBytes ++ extra.filter written.contains).eraseDups.mergeSort).filter fun b =>
+    agreeMem B b && (!inSym b || extra.contains b)
   let vars := (vars0 ++ symMem.flatMap (fun (_, e) =>
     ((e.replace "(" "").replace ")" "" |>.splitOn " ").filter names.contains)).eraseDups
   let pcs := (List.range (B - A)).filterMap fun j => tr[A + j]?.map (·.1)
   return { A, B, pcA, pcB, vars, regFacts := regFacts.map (fun j => (j, rA[j]!.toNat)), symRegs, symLoads, wr, rr,
            loads := goodLoads.map (fun (a, k) => (a, k, (List.range k).map fun j => (mA.read (a + j)).toNat)),
-           byteFacts := ((rlist.mergeSort).filter (agreeMem A)).map (fun a => (a, (mA.read a).toNat)),
+           byteFacts := ((rlist.mergeSort).filter (fun a => agreeMem A a &&
+             !(cutMode && symLoads.any fun (c, k, _) => c ≤ a && a < c + k))).map (fun a => (a, (mA.read a).toNat)),
            wregs,
            regPost := regPost.map (fun j => (j, if wregs.contains j then some rB[j]!.toNat else none)),
            symPost, memPost := livePost.map (fun a => (a, (mB.read a).toNat)), pcs, symMem := symMem.reverse }
@@ -1644,15 +1651,22 @@ def exprVars (names : List String) (e : String) : List String :=
     cut bₖ is a named predicate `Stₖ` (the registers, octets, symbolic words and page access the rest
     of the path needs), and segment k proves `Stₖ → ∃ run, Stₖ₊₁`, so the segments compose by
     transitivity alone. Writes `Services/NS/name/St.lean`, `…/name/S{k}.lean` and `…/name.lean`. -/
-def mode_cut (cx : Cx) : IO Unit := do
+def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
   let args := cx.args; let tr := cx.tr; let P := cx.P
   let NS := cx.svc.name; let LBL := cx.svc.label; let BLOB := cx.svc.blob; let FLAG := cx.svc.flag
   let joinPc := cx.n
   let name := args.getD 2 "cut"
   let opts := args.drop 3
   let out := opts.contains "out"
+  -- `frame`: also carry, from the start, the frame (octets outside every write so far), the page
+  -- access and the registers no segment writes, so the composed run states what `seg` states
+  let frame := opts.contains "frame"
+  -- `keep=j,…`: the start registers the caller knows; the others are dropped from the reads of
+  -- the segments before their first write (a spill, say, whose value nothing uses)
+  let keepO : Option (List Nat) := (opts.find? (·.startsWith "keep=")).map fun o =>
+    (((o.drop 5).toString).splitOn ",").map String.toNat!
   let nums := (opts.filter fun o => o.all Char.isDigit).map String.toNat!
-  let bs : List Nat := match opts.find? (·.startsWith "every=") with
+  let bs : List Nat := bsOv.getD <| match opts.find? (·.startsWith "every=") with
     | some e =>
       let N := ((e.drop 6).toString).toNat!
       let A := nums[0]!; let B := nums[1]!
@@ -1681,7 +1695,7 @@ def mode_cut (cx : Cx) : IO Unit := do
   let regAt (b j : Nat) : Option String :=
     let vb := (tr[k0 + b]?.map (·.2.1[j]!.toNat)).getD 0
     let vo := others.toList.map fun (t2, k2) => (t2[k2 + b]?.map (·.2.1[j]!.toNat)).getD 0
-    if vo.all (· == vb) then some (toString vb) else matchVarG true names allQ vb vo
+    if vo.all (· == vb) then some (toString vb) else matchVarG true names allQ vb vo true
   let octAt (b a : Nat) : Option Nat :=
     let vb := (tr[k0 + b]?.map (·.2.2.read a |>.toNat)).getD 0
     let vo := others.toList.map fun (t2, k2) => (t2[k2 + b]?.map (·.2.2.read a |>.toNat)).getD 0
@@ -1693,9 +1707,13 @@ def mode_cut (cx : Cx) : IO Unit := do
   -- the state each cut needs, backward from the end
   let fin := (List.range 13).map (fun j => (tr[k0 + bs.getLast!]?.map (·.2.1[j]!.toNat)).getD 0)
   let outO := if out then (List.range fin[8]!).map (fin[7]! + ·) else []
-  let mut needR : List Nat := if out then [0, 7, 8] else []
-  let mut needO : List Nat := outO
-  let mut needS : List (Nat × Nat × String) := []
+  let whole ← analyzeSeg P tr others otherPs k0 bs.head! bs.getLast! false baseP true []
+    (regsWritten cx (k0 + bs.head!) (k0 + bs.getLast!)) true
+  let unch : List Nat := if frame then (List.range 13).filter (fun j => whole.regPost.any (· == (j, none))) else []
+  let mut needR : List Nat := (if out then [0, 7, 8] else []) ++
+    (if frame then whole.regPost.filterMap (fun (j, v) => v.map (fun _ => j)) ++ whole.symPost.map (·.1) else [])
+  let mut needO : List Nat := outO ++ (if frame then whole.memPost.map (·.1) else [])
+  let mut needS : List (Nat × Nat × String) := if frame then whole.symMem.map (fun (a, e) => (a, 8, e)) else []
   let mut needW : List (Nat × Nat) := []
   let mut needRd : List (Nat × Nat) := if out && fin[8]! > 0 then [(fin[7]!, fin[7]! + fin[8]!)] else []
   let mut sts0 : Array (List Nat × List Nat × List (Nat × Nat × String) × List (Nat × Nat) × List (Nat × Nat)) :=
@@ -1703,23 +1721,31 @@ def mode_cut (cx : Cx) : IO Unit := do
   for kk in [0:nseg] do
     let k := nseg - 1 - kk
     let info ← analyzeSeg P tr others otherPs k0 bs[k]! bs[k+1]! false baseP true needO
-      (regsWritten cx (k0 + bs[k]!) (k0 + bs[k+1]!))
+      (regsWritten cx (k0 + bs[k]!) (k0 + bs[k+1]!)) true
     let mut w : Std.HashSet Nat := {}
     for (lo, hi) in info.wr do
       for a in [lo:hi] do w := w.insert a
     infos := infos.set! k info
     writes := writes.set! k w
-    reads := reads.set! k (regsRead cx (k0 + bs[k]!) (k0 + bs[k+1]!))
+    let rd0 := regsRead cx (k0 + bs[k]!) (k0 + bs[k+1]!)
+    let before := regsWritten cx (k0 + bs[0]!) (k0 + bs[k]!)
+    reads := reads.set! k (match keepO with
+      | some ks => rd0.filter fun j => ks.contains j || before.contains j
+      | none => rd0)
     -- what segment k must leave: check it does
     for j in needR do
       if info.wregs.contains j && !(info.regPost.any (fun (i, v) => i == j && v.isSome)) && !(info.symPost.any (·.1 == j)) then
-        throw (IO.userError s!"segment {k} leaves register {j} input-dependent, and a later step reads it")
+        let b := bs[k+1]!
+        let vb := (tr[k0 + b]?.map (fun (x : Nat × Regs × Memory) => x.2.1[j]!.toNat)).getD 0
+        let vo := others.toList.map fun ((t2, k2) : Array (Nat × Regs × Memory) × Nat) =>
+          (t2[k2 + b]?.map (fun (x : Nat × Regs × Memory) => x.2.1[j]!.toNat)).getD 0
+        throw (IO.userError s!"cut {k + 1}: segment {k} leaves register {j} input-dependent ({vb} :: {vo} for |y| = {allQ.map (fun (q : Nat × Nat × Nat × List UInt8) => q.2.2.2.length)}), and a later step reads it")
     for a in needO do
       if w.contains a && !(info.memPost.any (·.1 == a)) then
-        throw (IO.userError s!"segment {k} leaves octet {a} input-dependent, and a later step reads it")
+        throw (IO.userError s!"cut {k + 1}: segment {k} leaves octet {a} input-dependent, and a later step reads it")
     for (a, n, e) in needS do
       if (List.range n).any (fun q => w.contains (a + q)) && !(n == 8 && info.symMem.any (· == (a, e))) then
-        throw (IO.userError s!"segment {k} writes into the symbolic word at {a}, and a later step reads it")
+        throw (IO.userError s!"cut {k + 1}: segment {k} writes into the symbolic word at {a}, and a later step reads it")
     let rd := reads[k]!
     needR := (rd ++ needR.filter (fun j => !info.wregs.contains j)).eraseDups.mergeSort
     needO := (info.byteFacts.map (·.1) ++ needO.filter (fun a => !w.contains a)).eraseDups.mergeSort
@@ -1762,13 +1788,22 @@ def mode_cut (cx : Cx) : IO Unit := do
   for k in [0:nseg + 1] do
     let (r, _, s, _, _) := sts[k]!
     for j in r do
-      let some e := regAt bs[k]! j | throw (IO.userError s!"register {j} at cut {k} is input-dependent")
+      let some e := regAt bs[k]! j | throw (IO.userError s!"cut {k}: register {j} there is input-dependent")
       vars0 := vars0 ++ exprVars names e
     for (_, _, e) in s do vars0 := vars0 ++ exprVars names e
   for info in infos do vars0 := vars0 ++ info.vars
   let vars := names.filter vars0.contains
   let varArgs := " ".intercalate (vars.flatMap fun v => [v, s!"h{v}"])
   let varBinders := " ".intercalate (vars.map varBinder)
+  let segCond (k : Nat) : String :=
+    let outW := " && ".intercalate (infos[k]!.wr.map fun (lo, hi) => s!"!(decide ({lo} ≤ a ∧ a < {hi}))")
+    s!"decide (a < 4294967296){if outW == "" then "" else " && " ++ outW}"
+  let fp := if frame then " ω₀ μ₀" else ""
+  let fpB := if frame then " (ω₀ : Regs) (μ₀ : Memory)" else ""
+  let frameFields (k : Nat) : List (String × String) :=
+    if !frame then [] else
+      [("fr", s!"∀ a, C{k} a = true → μ.read a = μ₀.read a"), ("rdq", "∀ a, μ.readable a = μ₀.readable a"),
+       ("wrq", "∀ a, μ.writable a = μ₀.writable a")] ++ unch.map (fun j => (s!"uk{j}", s!"ω[{j}] = ω₀[{j}]"))
   let dir := s!"Services/{NS}/{name}"
   IO.FS.createDirAll dir
   let header (what : String) : String := s!"/-
@@ -1790,7 +1825,7 @@ def mode_cut (cx : Cx) : IO Unit := do
   for k in [0:nseg + 1] do
     let (_, o, _, _, _) := sts[k]!
     for a in o do
-      if (octAt bs[k]! a).isNone then throw (IO.userError s!"octet {a} at cut {k} is input-dependent")
+      if (octAt bs[k]! a).isNone then throw (IO.userError s!"cut {k}: octet {a} there is input-dependent")
   let mut st := header "The state at each cut." ++ s!"
 import PVM.Logic.Chase
 
@@ -1801,10 +1836,14 @@ open PVM
 set_option maxRecDepth 100000
 
 "
+  if frame then
+    st := st ++ "/-- The frame conditions: an address outside every write of the segments before a cut. -/\ndef C0 (a : Nat) : Bool := decide (a < 4294967296)\n\n"
+    for k in [0:nseg] do
+      st := st ++ s!"def C{k + 1} (a : Nat) : Bool := C{k} a && ({segCond k})\n\n"
   for k in [0:nseg + 1] do
-    let fs := fieldsOf k
+    let fs := fieldsOf k ++ frameFields k
     st := st ++ s!"/-- The state at cut {k} (step {bs[k]!} after pc {joinPc}, pc {infos[min k (nseg - 1)]!.pcA}): what the rest of the path reads. -/
-structure St{k} {" ".intercalate (vars.map (s!"({·} : Nat)"))} (ω : Regs) (μ : Memory) : Prop where
+structure St{k} {" ".intercalate (vars.map (s!"({·} : Nat)"))}{fpB} (ω : Regs) (μ : Memory) : Prop where
   {if fs.isEmpty then "triv : True" else "\n  ".intercalate (fs.map (fun (n, t) => s!"{n} : {t}"))}
 
 "
@@ -1841,10 +1880,13 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
     let binders := regB ++ symB ++ wB ++ rB ++ bB
     for (n, t) in binders do sx := sx ++ s!"\n    ({n} : {t})"
     sx := sx ++ s!"\n    : ∃ ω' μ', FreeStepsH p (refineContract env) {info.pcA} ω μ x {info.pcB} ω' μ' x ∧"
-    let regC := info.regPost.map (fun (j, v) =>
+    -- the registers the next cut needs (and, with `frame`, those no segment writes)
+    let postR := sts[k + 1]!.1 ++ unch
+    let regC0 : List (Nat × String) := info.regPost.map (fun (j, v) =>
       match v with | some v => (j, s!"ω'[{j}] = UInt64.ofNat {v}") | none => (j, s!"ω'[{j}] = ω[{j}]")) ++
       info.symPost.map fun (j, v) => (j, s!"ω'[{j}] = UInt64.ofNat {v}")
-    sx := sx ++ "\n      (" ++ " ∧ ".intercalate (regC.map (·.2)) ++ ") ∧"
+    let regC := regC0.filter fun (j, _) => postR.contains j
+    sx := sx ++ "\n      (" ++ (if regC.isEmpty then "True" else " ∧ ".intercalate (regC.map (·.2))) ++ ") ∧"
     let memC := info.memPost.map fun (a, v) => s!"μ'.read {a} = {v}"
     sx := sx ++ "\n      (" ++ (if memC.isEmpty then "True" else " ∧ ".intercalate memC) ++ ") ∧"
     if !info.symMem.isEmpty then
@@ -1940,12 +1982,18 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
         let parts := (nm.drop 4).toString.splitOn "_"
         rangeArg k false parts[0]!.toNat! parts[1]!.toNat!
       else s!"h.{nm}"
+    let fproofs : List String := if !frame then [] else
+      ["fun a ha => (hfr a (right_of_and ha)).trans (h.fr a (left_of_and ha))",
+       "fun a => (hrd a).trans (h.rdq a)", "fun a => (hwr a).trans (h.wrq a)"] ++
+      unch.map (fun j => match regC.findIdx? (·.1 == j) with
+        | some q => s!"r{q}.trans h.uk{j}" | none => "sorryNoUk")
+    let proofs := proofs ++ fproofs
     let stepArgs := " ".intercalate (ivars.flatMap (fun v => [v, s!"h{v}"]) ++ binders.map (argOf ·.1))
     sx := sx ++ s!"
 /-- **Cut {k} to cut {k + 1}**: from the state `St{k}`, the steps reach `St{k + 1}`. -/
 theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
-    (x : RefineCtx) {varBinders} (h : St{k} {" ".intercalate vars} ω μ) :
-    ∃ ω' μ', FreeStepsH p (refineContract env) {info.pcA} ω μ x {info.pcB} ω' μ' x ∧ St{k + 1} {" ".intercalate vars} ω' μ' := by
+    (x : RefineCtx) {varBinders}{fpB} (h : St{k} {" ".intercalate vars}{fp} ω μ) :
+    ∃ ω' μ', FreeStepsH p (refineContract env) {info.pcA} ω μ x {info.pcB} ω' μ' x ∧ St{k + 1} {" ".intercalate vars}{fp} ω' μ' := by
   obtain ⟨ω', μ', hrun, {pat rNames}, {pat mNames}, {if sNames.isEmpty then "" else pat sNames ++ ", "}hfr, hrd, hwr⟩ :=
     steps p P env ω μ x {stepArgs}
   exact ⟨ω', μ', hrun, ⟨{", ".intercalate (if proofs.isEmpty then ["trivial"] else proofs)}⟩⟩
@@ -1966,12 +2014,12 @@ set_option maxRecDepth 100000
 
 /-- **Steps {bs[0]!} … {bs[nseg]! - 1} after pc {joinPc}**: the segments `S0` … `S{nseg - 1}`, composed. -/
 theorem chain (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
-    (x : RefineCtx) {varBinders} (h : St0 {" ".intercalate vars} ω μ) :
-    ∃ ω' μ', FreeStepsH p (refineContract env) {infos[0]!.pcA} ω μ x {infos[nseg - 1]!.pcB} ω' μ' x ∧ St{nseg} {" ".intercalate vars} ω' μ' := by
+    (x : RefineCtx) {varBinders}{fpB} (h : St0 {" ".intercalate vars}{fp} ω μ) :
+    ∃ ω' μ', FreeStepsH p (refineContract env) {infos[0]!.pcA} ω μ x {infos[nseg - 1]!.pcB} ω' μ' x ∧ St{nseg} {" ".intercalate vars}{fp} ω' μ' := by
 "
   let mut cw := "ω"; let mut cm := "μ"; let mut ch' := "h"
   for k in [0:nseg] do
-    ch := ch ++ s!"  obtain ⟨ω{k+1}, μ{k+1}, run{k+1}, h{k+1}⟩ := S{k}.run p P env {cw} {cm} x {varArgs} {ch'}\n"
+    ch := ch ++ s!"  obtain ⟨ω{k+1}, μ{k+1}, run{k+1}, h{k+1}⟩ := S{k}.run p P env {cw} {cm} x {varArgs}{fp} {ch'}\n"
     cw := s!"ω{k+1}"; cm := s!"μ{k+1}"; ch' := s!"h{k+1}"
   let runs := (List.range nseg).map (s!"run{· + 1}")
   let chainT := runs.foldr (fun r acc => if acc == "" then r else s!"({r}.trans {acc})") ""
@@ -1994,16 +2042,119 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
     (x : RefineCtx)"
   for v in vars do ch := ch ++ s!"\n    {varBinder v}"
   for (n, t) in pre0 do ch := ch ++ s!"\n    ({n} : {t})"
-  ch := ch ++ s!"\n    : ∃ ω' μ', FreeStepsH p (refineContract env) {infos[0]!.pcA} ω μ x {infos[nseg - 1]!.pcB} ω' μ' x ∧\n      " ++
-    (if concl.isEmpty then "True" else " ∧ ".intercalate (concl.map (·.2))) ++ " := by"
-  ch := ch ++ s!"\n  obtain ⟨ω', μ', hrun, hN⟩ :=\n    chain p P env ω μ x {varArgs} ⟨{", ".intercalate (if pre0.isEmpty then ["trivial"] else pre0.map (·.1))}⟩"
-  ch := ch ++ s!"\n  exact ⟨ω', μ', hrun, {", ".intercalate (concl.map (·.1))}⟩\n\nend Services.{NS}.{name}\n"
+  let startArgs := (if pre0.isEmpty && !frame then ["trivial"] else pre0.map (·.1)) ++
+    (if frame then ["fun _ _ => rfl", "fun _ => rfl", "fun _ => rfl"] ++ unch.map (fun _ => "rfl") else [])
+  if !frame then
+    ch := ch ++ s!"\n    : ∃ ω' μ', FreeStepsH p (refineContract env) {infos[0]!.pcA} ω μ x {infos[nseg - 1]!.pcB} ω' μ' x ∧\n      " ++
+      (if concl.isEmpty then "True" else " ∧ ".intercalate (concl.map (·.2))) ++ " := by"
+    ch := ch ++ s!"\n  obtain ⟨ω', μ', hrun, hN⟩ :=\n    chain p P env ω μ x {varArgs} ⟨{", ".intercalate startArgs}⟩"
+    ch := ch ++ s!"\n  exact ⟨ω', μ', hrun, {", ".intercalate (concl.map (·.1))}⟩\n\nend Services.{NS}.{name}\n"
+  else
+    -- as `seg` states it: the registers and live octets it leaves, its frame, unchanged access
+    let regC := whole.regPost.map (fun (j, v) =>
+      match v with
+      | some v => (s!"ω'[{j}] = UInt64.ofNat {v}", s!"hN.hreg{j}")
+      | none => (s!"ω'[{j}] = ω[{j}]", s!"hN.uk{j}")) ++
+      whole.symPost.map fun (j, v) => (s!"ω'[{j}] = UInt64.ofNat {v}", s!"hN.hreg{j}")
+    let memC := whole.memPost.map fun (a, v) =>
+      match runAt nseg a with
+      | some (c, m, j) => (s!"μ'.read {a} = {v}", s!"(Memory.read_of_readN hN.hm_{c}_{m} {j} (by decide))")
+      | none => (s!"μ'.read {a} = {v}", "noRun")
+    let symC := whole.symMem.map fun (a, e) => (s!"μ'.readN {a} 8 = Num.encodeLE 8 {e}", s!"hN.hbn_{a}_8")
+    let ww := whole.wr
+    let m := ww.length
+    let outW := " && ".intercalate (ww.map fun (lo, hi) => s!"!(decide ({lo} ≤ a ∧ a < {hi}))")
+    -- ha's conjuncts: the bound, then range i (1-based) of `ww`
+    let lefts (n : Nat) (t : String) : String := (List.range n).foldl (fun acc _ => s!"(left_of_and {acc})") t
+    let conj (i : Nat) : String := if i == 0 then lefts m "ha" else s!"(right_of_and {lefts (m - i) "ha"})"
+    let segProof (k : Nat) : String :=
+      let rs := infos[k]!.wr
+      rs.foldl (fun acc (lo, hi) =>
+        match ww.findIdx? (fun (l, h) => l ≤ lo && hi ≤ h) with
+        | some q => s!"(and_true_of {acc} (not_mem_of_not_mem_cover {conj (q + 1)} (by decide) (by decide)))"
+        | none => "noCover") (conj 0)
+    let cProof := (List.range nseg).foldl (fun acc k => s!"(and_true_of {acc} {segProof k})") (conj 0)
+    let grp (xs : List (String × String)) : String × String := match xs with
+      | [] => ("True", "trivial")
+      | [x] => x
+      | xs => (" ∧ ".intercalate (xs.map (·.1)), "⟨" ++ ", ".intercalate (xs.map (·.2)) ++ "⟩")
+    let (rT, rP) := grp regC
+    let (mT, mP) := grp memC
+    let symPart := if symC.isEmpty then ("", "") else
+      let (sT, sP) := grp symC
+      (s!"\n      ({sT}) ∧", s!"{sP}, ")
+    ch := ch ++ s!"\n    : ∃ ω' μ', FreeStepsH p (refineContract env) {infos[0]!.pcA} ω μ x {infos[nseg - 1]!.pcB} ω' μ' x ∧"
+    ch := ch ++ s!"\n      ({rT}) ∧\n      ({mT}) ∧{symPart.1}"
+    ch := ch ++ s!"\n      (∀ a, (decide (a < 4294967296){if outW == "" then "" else " && " ++ outW}) = true → μ'.read a = μ.read a) ∧"
+    ch := ch ++ "\n      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by"
+    ch := ch ++ s!"\n  obtain ⟨ω', μ', hrun, hN⟩ :=\n    chain p P env ω μ x {varArgs} ω μ ⟨{", ".intercalate startArgs}⟩"
+    ch := ch ++ s!"\n  exact ⟨ω', μ', hrun, {rP}, {mP}, {symPart.2}fun a ha => hN.fr a {cProof}, hN.rdq, hN.wrq⟩\n\nend Services.{NS}.{name}\n"
   IO.FS.writeFile s!"Services/{NS}/{name}.lean" ch
   IO.eprintln s!"{nseg} segments; the start state needs registers {sts[0]!.1} and {pre0.length} facts"
+  if bsOv.isSome then IO.eprintln s!"cuts moved: steps {bs}"
 where
   pat' (xs : List String) : String := match xs with
     | [] => "-" | [x] => x | xs => "⟨" ++ ", ".intercalate xs ++ "⟩"
 
+
+/-- `cut`, moving cuts where the state cannot be stated (a live value that is input-dependent and
+    no variable's expression): such a cut is dropped, joining its two segments, and the analysis
+    retried. -/
+def mode_cutAuto (cx : Cx) : IO Unit := do
+  let opts := cx.args.drop 3
+  let nums := (opts.filter fun o => o.all Char.isDigit).map String.toNat!
+  let N : Option Nat := (opts.find? (·.startsWith "every=")).map fun e => ((e.drop 6).toString).toNat!
+  let mut bs : List Nat := match N with
+    | some N =>
+      let A := nums[0]!; let B := nums[1]!
+      ((List.range ((B - A + N - 1) / N)).map (A + N * ·)) ++ [B]
+    | none => nums
+  -- the cut that fails, from the error
+  let failing (e : IO.Error) : Option Nat :=
+    ((toString e).splitOn ":").head?.bind fun h => if h.startsWith "cut " then (h.drop 4).toString.toNat? else none
+  -- first, drop the cuts whose state cannot be stated
+  let mut moved := false
+  let mut ok := false
+  for _ in [0:bs.length] do
+    try
+      mode_cut cx (if moved then some bs else none)
+      ok := true
+      break
+    catch e =>
+      match failing e with
+      | some k =>
+        if k == 0 || k + 1 ≥ bs.length then throw e
+        IO.eprintln s!"dropping cut {k} (step {bs[k]!}): {e}"
+        bs := bs.eraseIdx k
+        moved := true
+      | none => throw e
+  if !ok then throw (IO.userError "no cuts could be stated")
+  -- then split the segments longer than N where a cut inside them can be stated, from the middle out
+  let some N := N | return
+  let mut changed := true
+  let mut noSplit : List (Nat × Nat) := []
+  while changed do
+    changed := false
+    let long := ((List.range (bs.length - 1)).filter fun q =>
+      bs[q+1]! - bs[q]! > N && !noSplit.contains (bs[q]!, bs[q+1]!))
+    let some q := long.head? | break
+    let a := bs[q]!; let b := bs[q+1]!
+    let mid := (a + b) / 2
+    let cands := ((List.range (b - a)).flatMap fun d => [mid + d, mid - d - 1]).filter fun c => a < c && c < b
+    let mut done := false
+    for c in cands.eraseDups do
+      let bs' := (bs.take (q + 1)) ++ [c] ++ (bs.drop (q + 1))
+      try
+        mode_cut cx (some bs')
+        IO.eprintln s!"split [{a}, {b}) at {c}"
+        bs := bs'; done := true; changed := true
+        break
+      catch _ => pure ()
+    if !done then
+      noSplit := noSplit ++ [(a, b)]
+      changed := true
+  -- write the final cuts' files
+  mode_cut cx (some bs)
 
 def main (args0 : List String) : IO Unit := do
   -- `--service NAME` first selects the service (default witness)
@@ -2048,5 +2199,5 @@ def main (args0 : List String) : IO Unit := do
   | "chain" => mode_chain cx
   | "seg" => mode_seg cx
   | "chainx" => mode_chainx cx
-  | "cut" => mode_cut cx
+  | "cut" => mode_cutAuto cx
   | _ => mode_codeRun cx

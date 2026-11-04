@@ -97,4 +97,21 @@ theorem Memory.read_of_readN {μ : Memory} {a n : Nat} {l : List UInt8} (h : μ.
   subst h
   simp [Memory.readN, hj]
 
+
+/-- An address outside a range is outside every range it covers (frame conditions, decided at
+    concrete bounds). -/
+theorem not_mem_of_not_mem_cover {a LO HI lo hi : Nat} (h : (!(decide (LO ≤ a ∧ a < HI))) = true)
+    (h1 : LO ≤ lo) (h2 : hi ≤ HI) : (!(decide (lo ≤ a ∧ a < hi))) = true := by
+  simp only [Bool.not_eq_true', decide_eq_false_iff_not, not_and, Nat.not_lt] at h ⊢
+  intro hl; exact Nat.le_trans h2 (h (Nat.le_trans h1 hl))
+
+theorem and_true_of {x y : Bool} (hx : x = true) (hy : y = true) : (x && y) = true := by
+  simp [hx, hy]
+
+theorem left_of_and {x y : Bool} (h : (x && y) = true) : x = true := by
+  simp only [Bool.and_eq_true] at h; exact h.1
+
+theorem right_of_and {x y : Bool} (h : (x && y) = true) : y = true := by
+  simp only [Bool.and_eq_true] at h; exact h.2
+
 end PVM

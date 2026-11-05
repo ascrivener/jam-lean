@@ -1776,4 +1776,566 @@ theorem memcpy_mis_end_6 {p : ByteArray} {P : Program} [HasCode p P] (ω : Regs)
       List.length_take, PVM.two32, Nat.reduceMul, Nat.reduceSub]
     all_goals (try rfl)
 
+/-- What the misaligned path leaves at 69132: the W octets at `d` are the source's from `s`, the tail
+    registers set up, memory otherwise unchanged but for the stack words [sp, sp + 24). -/
+def MisOk (ω ω' : Regs) (μ μ' : Memory) (s d W n' sp : Nat) : Prop :=
+  μ'.readN d W = μ.readN s W ∧ ω'[8] = UInt64.ofNat (s + W) ∧ ω'[9] = UInt64.ofNat (n' % 8) ∧
+    ω'[10] = UInt64.ofNat (d + W) ∧ ω'[11] = UInt64.ofNat (d + W + n' % 8) ∧ ω'[1] = UInt64.ofNat sp ∧
+    ω'[7] = ω[7] ∧ ω'[12] = ω[12] ∧
+    (∀ a, a < 4294967296 → (a < d ∨ d + W ≤ a) → (a < sp ∨ sp + 24 ≤ a) → μ'.read a = μ.read a) ∧
+    (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a)
+
+/-- **The misaligned path of `memcpy`**, m = 7 (68872 … 69129): head, loop, end. -/
+theorem memcpy_mis_7 {p : ByteArray} {P : Program} [HasCode p P] (ω : Regs) (μ : Memory) (x : X)
+    (A0 d W n' sp : Nat) (h0 : ω[0] = UInt64.ofNat (A0 + 7)) (h2 : ω[2] = UInt64.ofNat 7)
+    (h9 : ω[9] = UInt64.ofNat n') (h10 : ω[10] = UInt64.ofNat (d + W)) (h11 : ω[11] = UInt64.ofNat d)
+    (h12 : ω[12] = UInt64.ofNat W) (h1 : ω[1] = UInt64.ofNat sp)
+    (hW : 8 ≤ W ∧ W % 8 = 0) (hA0 : A0 % 8 = 0) (hsp : sp % 8 = 0) (hn' : n' < 4294967296)
+    (hb : A0 + W + 16 < 4294967296) (hd : d + W + 16 < 4294967296) (hs : sp + 24 < 4294967296)
+    (hdA : d + W + 16 ≤ A0 ∨ A0 + W + 16 ≤ d) (hsA : sp + 24 ≤ A0 ∨ A0 + W + 16 ≤ sp)
+    (hsd : sp + 24 ≤ d ∨ d + W ≤ sp)
+    (hr : ∀ a, A0 + 7 ≤ a → a < A0 + 7 + W → μ.readable a = true)
+    (hrs : ∀ a, sp ≤ a → a < sp + 24 → μ.writable a = true)
+    (hw : ∀ a, d ≤ a → a < d + W → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 68872 ω μ x 69132 ω' μ' x (2 * W + 100) ∧
+      MisOk ω ω' μ μ' (A0 + 7) d W n' sp := by
+  rcases Nat.lt_or_ge W 16 with hW8 | hW16
+  · -- one word: head, then end
+    have hW' : W = 8 := by omega
+    subst hW'
+    obtain ⟨ω₁, μ₁, pw, run₁, e4, elt, edrop, e6, e3, e11, e10, e1, e0, e2, e12, efr, emf, erd, ewr⟩ :=
+      memcpy_mis_head8_7 (p := p) (P := P) (R := R) ω μ x A0 d 8 sp h0 h2 h10 h11 h12 h1 rfl hsp (by omega) (by omega) (by omega)
+        (by omega) (fun a h1 h2 => hr a h1 (by omega)) hrs
+    have m1 : ∀ a n, a + n < 4294967296 → (a + n ≤ sp ∨ sp + 24 ≤ a) → μ₁.readN a n = μ.readN a n :=
+      fun a n h1 h2 => Memory.readN_congr (fun j hj => emf (a + j) (by omega) (by omega))
+    obtain ⟨ω₂, μ₂, run₂, w2, r8, r9, r10, r11, r1', fr2, mf2, rd2, wr2⟩ :=
+      memcpy_mis_end_7 (p := p) (P := P) (R := R) (regsNF ω₁ []) μ₁ x pw A0 d (A0 + 7) 8 n' sp e4 elt
+        (by rw [edrop, m1 _ _ (by omega) (by omega)]) e6 e3 e11 e0 e2 e12 ((efr 9 (by decide)).trans h9) e10 e1
+        (by omega) (by omega) hsp (by omega) (by omega) (by omega) hn' (by omega) (by omega) (by omega)
+        (fun a h1 h2 => by rw [erd]; exact hr a (by omega) (by omega))
+        (fun a h1 h2 => by rw [ewr]; exact hrs a h1 h2)
+        (fun a h1 h2 => by rw [ewr]; exact hw a h1 h2)
+    refine ⟨ω₂, μ₂, (run₁.trans run₂).mono (by omega), ?_, r8, r9, r10, r11, r1',
+      (fr2 7 (by decide)).trans (efr 7 (by decide)), (fr2 12 (by decide)).trans (efr 12 (by decide)),
+      fun a ha0 ha1 ha2 => (mf2 a ha0 ha1 (by omega)).trans (emf a ha0 ha2), fun a => by rw [rd2, erd],
+      fun a => by rw [wr2, ewr]⟩
+    rw [w2, m1 _ _ (by omega) (by omega)]
+  · obtain ⟨k, hk⟩ : ∃ k, W = 8 * (k + 2) := ⟨W / 8 - 2, by omega⟩
+    subst hk
+    obtain ⟨ω₁, μ₁, pw, run₁, e4, elt, edrop, e6, e3, e11, e10, e1, e0, e2, e12, efr, eT, emf, erd, ewr⟩ :=
+      memcpy_mis_head_7 (p := p) (P := P) (R := R) ω μ x A0 d (8 * (k + 2)) sp h0 h2 h10 h11 h12 h1 hW16 hsp
+        (by omega) (by omega) (by omega) (by omega) (fun a h1 h2 => hr a h1 (by omega)) hrs
+    have m1 : ∀ a n, a + n < 4294967296 → (a + n ≤ sp ∨ sp + 24 ≤ a) → μ₁.readN a n = μ.readN a n :=
+      fun a n h1 h2 => Memory.readN_congr (fun j hj => emf (a + j) (by omega) (by omega))
+    obtain ⟨ω₂, μ₂, run₂, s1, ⟨pw₂, f4, flt, fdrop⟩, f6, f3, f11, f1, f10, ffr, fmf, frd, fwr⟩ :=
+      memcpy_shift_loop (p := p) (P := P) (R := R) x 7 sp (by decide) k (regsNF ω₁ []) μ₁ pw A0 d e4 elt
+        (by rw [edrop, m1 _ _ (by omega) (by omega)]) e6 e3 e11 e10 e1 (by omega) (by omega) (by omega)
+        (by omega) (by omega) (by omega) eT
+        (fun a h1 h2 => by rw [erd]; exact hr a (by omega) (by omega))
+        (fun a h1 h2 => by rw [ewr]; exact hrs a (by omega) (by omega))
+        (fun a h1 h2 => by rw [ewr]; exact hw a h1 (by omega))
+    have m2 : ∀ a n, a + n < 4294967296 → (a + n ≤ d ∨ d + 8 * (k + 1) ≤ a) → (a + n ≤ sp + 8 ∨ sp + 16 ≤ a) →
+        μ₂.readN a n = μ₁.readN a n :=
+      fun a n h1 h2 h3 => Memory.readN_congr (fun j hj => fmf (a + j) (by omega) (by omega) (by omega))
+    obtain ⟨ω₃, μ₃, run₃, w3, r8, r9, r10, r11, r1', fr3, mf3, rd3, wr3⟩ :=
+      memcpy_mis_end_7 (p := p) (P := P) (R := R) (regsNF ω₂ []) μ₂ x pw₂ (A0 + 8 * (k + 1)) (d + 8 * (k + 1))
+        (A0 + 7) (8 * (k + 2)) n' sp f4 flt
+        (by rw [fdrop, m2 _ _ (by omega) (by omega) (by omega)])
+        f6 f3 f11 ((ffr 0 (by decide)).trans e0) ((ffr 2 (by decide)).trans e2) ((ffr 12 (by decide)).trans e12)
+        ((ffr 9 (by decide)).trans ((efr 9 (by decide)).trans h9)) (f10.trans e10) f1
+        (by omega) (by omega) hsp (by omega) (by omega) (by omega) hn' (by omega) (by omega) (by omega)
+        (fun a h1 h2 => by rw [frd, erd]; exact hr a (by omega) (by omega))
+        (fun a h1 h2 => by rw [fwr, ewr]; exact hrs a h1 h2)
+        (fun a h1 h2 => by rw [fwr, ewr]; exact hw a (by omega) (by omega))
+    have m3 : ∀ a n, a + n < 4294967296 → (a + n ≤ d + 8 * (k + 1) ∨ d + 8 * (k + 1) + 8 ≤ a) →
+        (a + n ≤ sp + 16 ∨ sp + 24 ≤ a) → μ₃.readN a n = μ₂.readN a n :=
+      fun a n h1 h2 h3 => Memory.readN_congr (fun j hj => mf3 (a + j) (by omega) (by omega) (by omega))
+    refine ⟨ω₃, μ₃, ((run₁.trans run₂).trans run₃).mono (by omega), ?_, by rw [r8], r9, by rw [r10, show d + 8 * (k + 1) + 8 = d + 8 * (k + 2) by omega],
+      by rw [r11, show d + 8 * (k + 1) + 8 = d + 8 * (k + 2) by omega], r1',
+      (fr3 7 (by decide)).trans ((ffr 7 (by decide)).trans (efr 7 (by decide))),
+      (fr3 12 (by decide)).trans ((ffr 12 (by decide)).trans (efr 12 (by decide))),
+      fun a ha0 ha1 ha2 => (mf3 a ha0 (by omega) (by omega)).trans ((fmf a ha0 (by omega) (by omega)).trans
+        (emf a ha0 ha2)),
+      fun a => by rw [rd3, frd, erd], fun a => by rw [wr3, fwr, ewr]⟩
+    have sp1 := Memory.readN_split μ₃ d (8 * (k + 1)) 8
+    have sp2 := Memory.readN_split μ (A0 + 7) (8 * (k + 1)) 8
+    rw [show 8 * (k + 1) + 8 = 8 * (k + 2) by omega] at sp1 sp2
+    rw [sp1, sp2, m3 _ _ (by omega) (by omega) (by omega), s1, m1 _ _ (by omega) (by omega), w3,
+      m2 _ _ (by omega) (by omega) (by omega), m1 _ _ (by omega) (by omega),
+      show A0 + 8 * (k + 1) + 7 = A0 + 7 + 8 * (k + 1) by omega]
+
+/-- **The misaligned path of `memcpy`**, m = 1 (68872 … 69129): head, loop, end. -/
+theorem memcpy_mis_1 {p : ByteArray} {P : Program} [HasCode p P] (ω : Regs) (μ : Memory) (x : X)
+    (A0 d W n' sp : Nat) (h0 : ω[0] = UInt64.ofNat (A0 + 1)) (h2 : ω[2] = UInt64.ofNat 1)
+    (h9 : ω[9] = UInt64.ofNat n') (h10 : ω[10] = UInt64.ofNat (d + W)) (h11 : ω[11] = UInt64.ofNat d)
+    (h12 : ω[12] = UInt64.ofNat W) (h1 : ω[1] = UInt64.ofNat sp)
+    (hW : 8 ≤ W ∧ W % 8 = 0) (hA0 : A0 % 8 = 0) (hsp : sp % 8 = 0) (hn' : n' < 4294967296)
+    (hb : A0 + W + 16 < 4294967296) (hd : d + W + 16 < 4294967296) (hs : sp + 24 < 4294967296)
+    (hdA : d + W + 16 ≤ A0 ∨ A0 + W + 16 ≤ d) (hsA : sp + 24 ≤ A0 ∨ A0 + W + 16 ≤ sp)
+    (hsd : sp + 24 ≤ d ∨ d + W ≤ sp)
+    (hr : ∀ a, A0 + 1 ≤ a → a < A0 + 1 + W → μ.readable a = true)
+    (hrs : ∀ a, sp ≤ a → a < sp + 24 → μ.writable a = true)
+    (hw : ∀ a, d ≤ a → a < d + W → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 68872 ω μ x 69132 ω' μ' x (2 * W + 100) ∧
+      MisOk ω ω' μ μ' (A0 + 1) d W n' sp := by
+  rcases Nat.lt_or_ge W 16 with hW8 | hW16
+  · -- one word: head, then end
+    have hW' : W = 8 := by omega
+    subst hW'
+    obtain ⟨ω₁, μ₁, pw, run₁, e4, elt, edrop, e6, e3, e11, e10, e1, e0, e2, e12, efr, emf, erd, ewr⟩ :=
+      memcpy_mis_head8_1 (p := p) (P := P) (R := R) ω μ x A0 d 8 sp h0 h2 h10 h11 h12 h1 rfl hsp (by omega) (by omega) (by omega)
+        (by omega) (fun a h1 h2 => hr a h1 (by omega)) hrs
+    have m1 : ∀ a n, a + n < 4294967296 → (a + n ≤ sp ∨ sp + 24 ≤ a) → μ₁.readN a n = μ.readN a n :=
+      fun a n h1 h2 => Memory.readN_congr (fun j hj => emf (a + j) (by omega) (by omega))
+    obtain ⟨ω₂, μ₂, run₂, w2, r8, r9, r10, r11, r1', fr2, mf2, rd2, wr2⟩ :=
+      memcpy_mis_end_1 (p := p) (P := P) (R := R) (regsNF ω₁ []) μ₁ x pw A0 d (A0 + 1) 8 n' sp e4 elt
+        (by rw [edrop, m1 _ _ (by omega) (by omega)]) e6 e3 e11 e0 e2 e12 ((efr 9 (by decide)).trans h9) e10 e1
+        (by omega) (by omega) hsp (by omega) (by omega) (by omega) hn' (by omega) (by omega) (by omega)
+        (fun a h1 h2 => by rw [erd]; exact hr a (by omega) (by omega))
+        (fun a h1 h2 => by rw [ewr]; exact hrs a h1 h2)
+        (fun a h1 h2 => by rw [ewr]; exact hw a h1 h2)
+    refine ⟨ω₂, μ₂, (run₁.trans run₂).mono (by omega), ?_, r8, r9, r10, r11, r1',
+      (fr2 7 (by decide)).trans (efr 7 (by decide)), (fr2 12 (by decide)).trans (efr 12 (by decide)),
+      fun a ha0 ha1 ha2 => (mf2 a ha0 ha1 (by omega)).trans (emf a ha0 ha2), fun a => by rw [rd2, erd],
+      fun a => by rw [wr2, ewr]⟩
+    rw [w2, m1 _ _ (by omega) (by omega)]
+  · obtain ⟨k, hk⟩ : ∃ k, W = 8 * (k + 2) := ⟨W / 8 - 2, by omega⟩
+    subst hk
+    obtain ⟨ω₁, μ₁, pw, run₁, e4, elt, edrop, e6, e3, e11, e10, e1, e0, e2, e12, efr, eT, emf, erd, ewr⟩ :=
+      memcpy_mis_head_1 (p := p) (P := P) (R := R) ω μ x A0 d (8 * (k + 2)) sp h0 h2 h10 h11 h12 h1 hW16 hsp
+        (by omega) (by omega) (by omega) (by omega) (fun a h1 h2 => hr a h1 (by omega)) hrs
+    have m1 : ∀ a n, a + n < 4294967296 → (a + n ≤ sp ∨ sp + 24 ≤ a) → μ₁.readN a n = μ.readN a n :=
+      fun a n h1 h2 => Memory.readN_congr (fun j hj => emf (a + j) (by omega) (by omega))
+    obtain ⟨ω₂, μ₂, run₂, s1, ⟨pw₂, f4, flt, fdrop⟩, f6, f3, f11, f1, f10, ffr, fmf, frd, fwr⟩ :=
+      memcpy_shift_loop (p := p) (P := P) (R := R) x 1 sp (by decide) k (regsNF ω₁ []) μ₁ pw A0 d e4 elt
+        (by rw [edrop, m1 _ _ (by omega) (by omega)]) e6 e3 e11 e10 e1 (by omega) (by omega) (by omega)
+        (by omega) (by omega) (by omega) eT
+        (fun a h1 h2 => by rw [erd]; exact hr a (by omega) (by omega))
+        (fun a h1 h2 => by rw [ewr]; exact hrs a (by omega) (by omega))
+        (fun a h1 h2 => by rw [ewr]; exact hw a h1 (by omega))
+    have m2 : ∀ a n, a + n < 4294967296 → (a + n ≤ d ∨ d + 8 * (k + 1) ≤ a) → (a + n ≤ sp + 8 ∨ sp + 16 ≤ a) →
+        μ₂.readN a n = μ₁.readN a n :=
+      fun a n h1 h2 h3 => Memory.readN_congr (fun j hj => fmf (a + j) (by omega) (by omega) (by omega))
+    obtain ⟨ω₃, μ₃, run₃, w3, r8, r9, r10, r11, r1', fr3, mf3, rd3, wr3⟩ :=
+      memcpy_mis_end_1 (p := p) (P := P) (R := R) (regsNF ω₂ []) μ₂ x pw₂ (A0 + 8 * (k + 1)) (d + 8 * (k + 1))
+        (A0 + 1) (8 * (k + 2)) n' sp f4 flt
+        (by rw [fdrop, m2 _ _ (by omega) (by omega) (by omega)])
+        f6 f3 f11 ((ffr 0 (by decide)).trans e0) ((ffr 2 (by decide)).trans e2) ((ffr 12 (by decide)).trans e12)
+        ((ffr 9 (by decide)).trans ((efr 9 (by decide)).trans h9)) (f10.trans e10) f1
+        (by omega) (by omega) hsp (by omega) (by omega) (by omega) hn' (by omega) (by omega) (by omega)
+        (fun a h1 h2 => by rw [frd, erd]; exact hr a (by omega) (by omega))
+        (fun a h1 h2 => by rw [fwr, ewr]; exact hrs a h1 h2)
+        (fun a h1 h2 => by rw [fwr, ewr]; exact hw a (by omega) (by omega))
+    have m3 : ∀ a n, a + n < 4294967296 → (a + n ≤ d + 8 * (k + 1) ∨ d + 8 * (k + 1) + 8 ≤ a) →
+        (a + n ≤ sp + 16 ∨ sp + 24 ≤ a) → μ₃.readN a n = μ₂.readN a n :=
+      fun a n h1 h2 h3 => Memory.readN_congr (fun j hj => mf3 (a + j) (by omega) (by omega) (by omega))
+    refine ⟨ω₃, μ₃, ((run₁.trans run₂).trans run₃).mono (by omega), ?_, by rw [r8], r9, by rw [r10, show d + 8 * (k + 1) + 8 = d + 8 * (k + 2) by omega],
+      by rw [r11, show d + 8 * (k + 1) + 8 = d + 8 * (k + 2) by omega], r1',
+      (fr3 7 (by decide)).trans ((ffr 7 (by decide)).trans (efr 7 (by decide))),
+      (fr3 12 (by decide)).trans ((ffr 12 (by decide)).trans (efr 12 (by decide))),
+      fun a ha0 ha1 ha2 => (mf3 a ha0 (by omega) (by omega)).trans ((fmf a ha0 (by omega) (by omega)).trans
+        (emf a ha0 ha2)),
+      fun a => by rw [rd3, frd, erd], fun a => by rw [wr3, fwr, ewr]⟩
+    have sp1 := Memory.readN_split μ₃ d (8 * (k + 1)) 8
+    have sp2 := Memory.readN_split μ (A0 + 1) (8 * (k + 1)) 8
+    rw [show 8 * (k + 1) + 8 = 8 * (k + 2) by omega] at sp1 sp2
+    rw [sp1, sp2, m3 _ _ (by omega) (by omega) (by omega), s1, m1 _ _ (by omega) (by omega), w3,
+      m2 _ _ (by omega) (by omega) (by omega), m1 _ _ (by omega) (by omega),
+      show A0 + 8 * (k + 1) + 1 = A0 + 1 + 8 * (k + 1) by omega]
+
+/-- **The misaligned path of `memcpy`**, m = 2 (68872 … 69129): head, loop, end. -/
+theorem memcpy_mis_2 {p : ByteArray} {P : Program} [HasCode p P] (ω : Regs) (μ : Memory) (x : X)
+    (A0 d W n' sp : Nat) (h0 : ω[0] = UInt64.ofNat (A0 + 2)) (h2 : ω[2] = UInt64.ofNat 2)
+    (h9 : ω[9] = UInt64.ofNat n') (h10 : ω[10] = UInt64.ofNat (d + W)) (h11 : ω[11] = UInt64.ofNat d)
+    (h12 : ω[12] = UInt64.ofNat W) (h1 : ω[1] = UInt64.ofNat sp)
+    (hW : 8 ≤ W ∧ W % 8 = 0) (hA0 : A0 % 8 = 0) (hsp : sp % 8 = 0) (hn' : n' < 4294967296)
+    (hb : A0 + W + 16 < 4294967296) (hd : d + W + 16 < 4294967296) (hs : sp + 24 < 4294967296)
+    (hdA : d + W + 16 ≤ A0 ∨ A0 + W + 16 ≤ d) (hsA : sp + 24 ≤ A0 ∨ A0 + W + 16 ≤ sp)
+    (hsd : sp + 24 ≤ d ∨ d + W ≤ sp)
+    (hr : ∀ a, A0 + 2 ≤ a → a < A0 + 2 + W → μ.readable a = true)
+    (hrs : ∀ a, sp ≤ a → a < sp + 24 → μ.writable a = true)
+    (hw : ∀ a, d ≤ a → a < d + W → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 68872 ω μ x 69132 ω' μ' x (2 * W + 100) ∧
+      MisOk ω ω' μ μ' (A0 + 2) d W n' sp := by
+  rcases Nat.lt_or_ge W 16 with hW8 | hW16
+  · -- one word: head, then end
+    have hW' : W = 8 := by omega
+    subst hW'
+    obtain ⟨ω₁, μ₁, pw, run₁, e4, elt, edrop, e6, e3, e11, e10, e1, e0, e2, e12, efr, emf, erd, ewr⟩ :=
+      memcpy_mis_head8_2 (p := p) (P := P) (R := R) ω μ x A0 d 8 sp h0 h2 h10 h11 h12 h1 rfl hsp (by omega) (by omega) (by omega)
+        (by omega) (fun a h1 h2 => hr a h1 (by omega)) hrs
+    have m1 : ∀ a n, a + n < 4294967296 → (a + n ≤ sp ∨ sp + 24 ≤ a) → μ₁.readN a n = μ.readN a n :=
+      fun a n h1 h2 => Memory.readN_congr (fun j hj => emf (a + j) (by omega) (by omega))
+    obtain ⟨ω₂, μ₂, run₂, w2, r8, r9, r10, r11, r1', fr2, mf2, rd2, wr2⟩ :=
+      memcpy_mis_end_2 (p := p) (P := P) (R := R) (regsNF ω₁ []) μ₁ x pw A0 d (A0 + 2) 8 n' sp e4 elt
+        (by rw [edrop, m1 _ _ (by omega) (by omega)]) e6 e3 e11 e0 e2 e12 ((efr 9 (by decide)).trans h9) e10 e1
+        (by omega) (by omega) hsp (by omega) (by omega) (by omega) hn' (by omega) (by omega) (by omega)
+        (fun a h1 h2 => by rw [erd]; exact hr a (by omega) (by omega))
+        (fun a h1 h2 => by rw [ewr]; exact hrs a h1 h2)
+        (fun a h1 h2 => by rw [ewr]; exact hw a h1 h2)
+    refine ⟨ω₂, μ₂, (run₁.trans run₂).mono (by omega), ?_, r8, r9, r10, r11, r1',
+      (fr2 7 (by decide)).trans (efr 7 (by decide)), (fr2 12 (by decide)).trans (efr 12 (by decide)),
+      fun a ha0 ha1 ha2 => (mf2 a ha0 ha1 (by omega)).trans (emf a ha0 ha2), fun a => by rw [rd2, erd],
+      fun a => by rw [wr2, ewr]⟩
+    rw [w2, m1 _ _ (by omega) (by omega)]
+  · obtain ⟨k, hk⟩ : ∃ k, W = 8 * (k + 2) := ⟨W / 8 - 2, by omega⟩
+    subst hk
+    obtain ⟨ω₁, μ₁, pw, run₁, e4, elt, edrop, e6, e3, e11, e10, e1, e0, e2, e12, efr, eT, emf, erd, ewr⟩ :=
+      memcpy_mis_head_2 (p := p) (P := P) (R := R) ω μ x A0 d (8 * (k + 2)) sp h0 h2 h10 h11 h12 h1 hW16 hsp
+        (by omega) (by omega) (by omega) (by omega) (fun a h1 h2 => hr a h1 (by omega)) hrs
+    have m1 : ∀ a n, a + n < 4294967296 → (a + n ≤ sp ∨ sp + 24 ≤ a) → μ₁.readN a n = μ.readN a n :=
+      fun a n h1 h2 => Memory.readN_congr (fun j hj => emf (a + j) (by omega) (by omega))
+    obtain ⟨ω₂, μ₂, run₂, s1, ⟨pw₂, f4, flt, fdrop⟩, f6, f3, f11, f1, f10, ffr, fmf, frd, fwr⟩ :=
+      memcpy_shift_loop (p := p) (P := P) (R := R) x 2 sp (by decide) k (regsNF ω₁ []) μ₁ pw A0 d e4 elt
+        (by rw [edrop, m1 _ _ (by omega) (by omega)]) e6 e3 e11 e10 e1 (by omega) (by omega) (by omega)
+        (by omega) (by omega) (by omega) eT
+        (fun a h1 h2 => by rw [erd]; exact hr a (by omega) (by omega))
+        (fun a h1 h2 => by rw [ewr]; exact hrs a (by omega) (by omega))
+        (fun a h1 h2 => by rw [ewr]; exact hw a h1 (by omega))
+    have m2 : ∀ a n, a + n < 4294967296 → (a + n ≤ d ∨ d + 8 * (k + 1) ≤ a) → (a + n ≤ sp + 8 ∨ sp + 16 ≤ a) →
+        μ₂.readN a n = μ₁.readN a n :=
+      fun a n h1 h2 h3 => Memory.readN_congr (fun j hj => fmf (a + j) (by omega) (by omega) (by omega))
+    obtain ⟨ω₃, μ₃, run₃, w3, r8, r9, r10, r11, r1', fr3, mf3, rd3, wr3⟩ :=
+      memcpy_mis_end_2 (p := p) (P := P) (R := R) (regsNF ω₂ []) μ₂ x pw₂ (A0 + 8 * (k + 1)) (d + 8 * (k + 1))
+        (A0 + 2) (8 * (k + 2)) n' sp f4 flt
+        (by rw [fdrop, m2 _ _ (by omega) (by omega) (by omega)])
+        f6 f3 f11 ((ffr 0 (by decide)).trans e0) ((ffr 2 (by decide)).trans e2) ((ffr 12 (by decide)).trans e12)
+        ((ffr 9 (by decide)).trans ((efr 9 (by decide)).trans h9)) (f10.trans e10) f1
+        (by omega) (by omega) hsp (by omega) (by omega) (by omega) hn' (by omega) (by omega) (by omega)
+        (fun a h1 h2 => by rw [frd, erd]; exact hr a (by omega) (by omega))
+        (fun a h1 h2 => by rw [fwr, ewr]; exact hrs a h1 h2)
+        (fun a h1 h2 => by rw [fwr, ewr]; exact hw a (by omega) (by omega))
+    have m3 : ∀ a n, a + n < 4294967296 → (a + n ≤ d + 8 * (k + 1) ∨ d + 8 * (k + 1) + 8 ≤ a) →
+        (a + n ≤ sp + 16 ∨ sp + 24 ≤ a) → μ₃.readN a n = μ₂.readN a n :=
+      fun a n h1 h2 h3 => Memory.readN_congr (fun j hj => mf3 (a + j) (by omega) (by omega) (by omega))
+    refine ⟨ω₃, μ₃, ((run₁.trans run₂).trans run₃).mono (by omega), ?_, by rw [r8], r9, by rw [r10, show d + 8 * (k + 1) + 8 = d + 8 * (k + 2) by omega],
+      by rw [r11, show d + 8 * (k + 1) + 8 = d + 8 * (k + 2) by omega], r1',
+      (fr3 7 (by decide)).trans ((ffr 7 (by decide)).trans (efr 7 (by decide))),
+      (fr3 12 (by decide)).trans ((ffr 12 (by decide)).trans (efr 12 (by decide))),
+      fun a ha0 ha1 ha2 => (mf3 a ha0 (by omega) (by omega)).trans ((fmf a ha0 (by omega) (by omega)).trans
+        (emf a ha0 ha2)),
+      fun a => by rw [rd3, frd, erd], fun a => by rw [wr3, fwr, ewr]⟩
+    have sp1 := Memory.readN_split μ₃ d (8 * (k + 1)) 8
+    have sp2 := Memory.readN_split μ (A0 + 2) (8 * (k + 1)) 8
+    rw [show 8 * (k + 1) + 8 = 8 * (k + 2) by omega] at sp1 sp2
+    rw [sp1, sp2, m3 _ _ (by omega) (by omega) (by omega), s1, m1 _ _ (by omega) (by omega), w3,
+      m2 _ _ (by omega) (by omega) (by omega), m1 _ _ (by omega) (by omega),
+      show A0 + 8 * (k + 1) + 2 = A0 + 2 + 8 * (k + 1) by omega]
+
+/-- **The misaligned path of `memcpy`**, m = 3 (68872 … 69129): head, loop, end. -/
+theorem memcpy_mis_3 {p : ByteArray} {P : Program} [HasCode p P] (ω : Regs) (μ : Memory) (x : X)
+    (A0 d W n' sp : Nat) (h0 : ω[0] = UInt64.ofNat (A0 + 3)) (h2 : ω[2] = UInt64.ofNat 3)
+    (h9 : ω[9] = UInt64.ofNat n') (h10 : ω[10] = UInt64.ofNat (d + W)) (h11 : ω[11] = UInt64.ofNat d)
+    (h12 : ω[12] = UInt64.ofNat W) (h1 : ω[1] = UInt64.ofNat sp)
+    (hW : 8 ≤ W ∧ W % 8 = 0) (hA0 : A0 % 8 = 0) (hsp : sp % 8 = 0) (hn' : n' < 4294967296)
+    (hb : A0 + W + 16 < 4294967296) (hd : d + W + 16 < 4294967296) (hs : sp + 24 < 4294967296)
+    (hdA : d + W + 16 ≤ A0 ∨ A0 + W + 16 ≤ d) (hsA : sp + 24 ≤ A0 ∨ A0 + W + 16 ≤ sp)
+    (hsd : sp + 24 ≤ d ∨ d + W ≤ sp)
+    (hr : ∀ a, A0 + 3 ≤ a → a < A0 + 3 + W → μ.readable a = true)
+    (hrs : ∀ a, sp ≤ a → a < sp + 24 → μ.writable a = true)
+    (hw : ∀ a, d ≤ a → a < d + W → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 68872 ω μ x 69132 ω' μ' x (2 * W + 100) ∧
+      MisOk ω ω' μ μ' (A0 + 3) d W n' sp := by
+  rcases Nat.lt_or_ge W 16 with hW8 | hW16
+  · -- one word: head, then end
+    have hW' : W = 8 := by omega
+    subst hW'
+    obtain ⟨ω₁, μ₁, pw, run₁, e4, elt, edrop, e6, e3, e11, e10, e1, e0, e2, e12, efr, emf, erd, ewr⟩ :=
+      memcpy_mis_head8_3 (p := p) (P := P) (R := R) ω μ x A0 d 8 sp h0 h2 h10 h11 h12 h1 rfl hsp (by omega) (by omega) (by omega)
+        (by omega) (fun a h1 h2 => hr a h1 (by omega)) hrs
+    have m1 : ∀ a n, a + n < 4294967296 → (a + n ≤ sp ∨ sp + 24 ≤ a) → μ₁.readN a n = μ.readN a n :=
+      fun a n h1 h2 => Memory.readN_congr (fun j hj => emf (a + j) (by omega) (by omega))
+    obtain ⟨ω₂, μ₂, run₂, w2, r8, r9, r10, r11, r1', fr2, mf2, rd2, wr2⟩ :=
+      memcpy_mis_end_3 (p := p) (P := P) (R := R) (regsNF ω₁ []) μ₁ x pw A0 d (A0 + 3) 8 n' sp e4 elt
+        (by rw [edrop, m1 _ _ (by omega) (by omega)]) e6 e3 e11 e0 e2 e12 ((efr 9 (by decide)).trans h9) e10 e1
+        (by omega) (by omega) hsp (by omega) (by omega) (by omega) hn' (by omega) (by omega) (by omega)
+        (fun a h1 h2 => by rw [erd]; exact hr a (by omega) (by omega))
+        (fun a h1 h2 => by rw [ewr]; exact hrs a h1 h2)
+        (fun a h1 h2 => by rw [ewr]; exact hw a h1 h2)
+    refine ⟨ω₂, μ₂, (run₁.trans run₂).mono (by omega), ?_, r8, r9, r10, r11, r1',
+      (fr2 7 (by decide)).trans (efr 7 (by decide)), (fr2 12 (by decide)).trans (efr 12 (by decide)),
+      fun a ha0 ha1 ha2 => (mf2 a ha0 ha1 (by omega)).trans (emf a ha0 ha2), fun a => by rw [rd2, erd],
+      fun a => by rw [wr2, ewr]⟩
+    rw [w2, m1 _ _ (by omega) (by omega)]
+  · obtain ⟨k, hk⟩ : ∃ k, W = 8 * (k + 2) := ⟨W / 8 - 2, by omega⟩
+    subst hk
+    obtain ⟨ω₁, μ₁, pw, run₁, e4, elt, edrop, e6, e3, e11, e10, e1, e0, e2, e12, efr, eT, emf, erd, ewr⟩ :=
+      memcpy_mis_head_3 (p := p) (P := P) (R := R) ω μ x A0 d (8 * (k + 2)) sp h0 h2 h10 h11 h12 h1 hW16 hsp
+        (by omega) (by omega) (by omega) (by omega) (fun a h1 h2 => hr a h1 (by omega)) hrs
+    have m1 : ∀ a n, a + n < 4294967296 → (a + n ≤ sp ∨ sp + 24 ≤ a) → μ₁.readN a n = μ.readN a n :=
+      fun a n h1 h2 => Memory.readN_congr (fun j hj => emf (a + j) (by omega) (by omega))
+    obtain ⟨ω₂, μ₂, run₂, s1, ⟨pw₂, f4, flt, fdrop⟩, f6, f3, f11, f1, f10, ffr, fmf, frd, fwr⟩ :=
+      memcpy_shift_loop (p := p) (P := P) (R := R) x 3 sp (by decide) k (regsNF ω₁ []) μ₁ pw A0 d e4 elt
+        (by rw [edrop, m1 _ _ (by omega) (by omega)]) e6 e3 e11 e10 e1 (by omega) (by omega) (by omega)
+        (by omega) (by omega) (by omega) eT
+        (fun a h1 h2 => by rw [erd]; exact hr a (by omega) (by omega))
+        (fun a h1 h2 => by rw [ewr]; exact hrs a (by omega) (by omega))
+        (fun a h1 h2 => by rw [ewr]; exact hw a h1 (by omega))
+    have m2 : ∀ a n, a + n < 4294967296 → (a + n ≤ d ∨ d + 8 * (k + 1) ≤ a) → (a + n ≤ sp + 8 ∨ sp + 16 ≤ a) →
+        μ₂.readN a n = μ₁.readN a n :=
+      fun a n h1 h2 h3 => Memory.readN_congr (fun j hj => fmf (a + j) (by omega) (by omega) (by omega))
+    obtain ⟨ω₃, μ₃, run₃, w3, r8, r9, r10, r11, r1', fr3, mf3, rd3, wr3⟩ :=
+      memcpy_mis_end_3 (p := p) (P := P) (R := R) (regsNF ω₂ []) μ₂ x pw₂ (A0 + 8 * (k + 1)) (d + 8 * (k + 1))
+        (A0 + 3) (8 * (k + 2)) n' sp f4 flt
+        (by rw [fdrop, m2 _ _ (by omega) (by omega) (by omega)])
+        f6 f3 f11 ((ffr 0 (by decide)).trans e0) ((ffr 2 (by decide)).trans e2) ((ffr 12 (by decide)).trans e12)
+        ((ffr 9 (by decide)).trans ((efr 9 (by decide)).trans h9)) (f10.trans e10) f1
+        (by omega) (by omega) hsp (by omega) (by omega) (by omega) hn' (by omega) (by omega) (by omega)
+        (fun a h1 h2 => by rw [frd, erd]; exact hr a (by omega) (by omega))
+        (fun a h1 h2 => by rw [fwr, ewr]; exact hrs a h1 h2)
+        (fun a h1 h2 => by rw [fwr, ewr]; exact hw a (by omega) (by omega))
+    have m3 : ∀ a n, a + n < 4294967296 → (a + n ≤ d + 8 * (k + 1) ∨ d + 8 * (k + 1) + 8 ≤ a) →
+        (a + n ≤ sp + 16 ∨ sp + 24 ≤ a) → μ₃.readN a n = μ₂.readN a n :=
+      fun a n h1 h2 h3 => Memory.readN_congr (fun j hj => mf3 (a + j) (by omega) (by omega) (by omega))
+    refine ⟨ω₃, μ₃, ((run₁.trans run₂).trans run₃).mono (by omega), ?_, by rw [r8], r9, by rw [r10, show d + 8 * (k + 1) + 8 = d + 8 * (k + 2) by omega],
+      by rw [r11, show d + 8 * (k + 1) + 8 = d + 8 * (k + 2) by omega], r1',
+      (fr3 7 (by decide)).trans ((ffr 7 (by decide)).trans (efr 7 (by decide))),
+      (fr3 12 (by decide)).trans ((ffr 12 (by decide)).trans (efr 12 (by decide))),
+      fun a ha0 ha1 ha2 => (mf3 a ha0 (by omega) (by omega)).trans ((fmf a ha0 (by omega) (by omega)).trans
+        (emf a ha0 ha2)),
+      fun a => by rw [rd3, frd, erd], fun a => by rw [wr3, fwr, ewr]⟩
+    have sp1 := Memory.readN_split μ₃ d (8 * (k + 1)) 8
+    have sp2 := Memory.readN_split μ (A0 + 3) (8 * (k + 1)) 8
+    rw [show 8 * (k + 1) + 8 = 8 * (k + 2) by omega] at sp1 sp2
+    rw [sp1, sp2, m3 _ _ (by omega) (by omega) (by omega), s1, m1 _ _ (by omega) (by omega), w3,
+      m2 _ _ (by omega) (by omega) (by omega), m1 _ _ (by omega) (by omega),
+      show A0 + 8 * (k + 1) + 3 = A0 + 3 + 8 * (k + 1) by omega]
+
+/-- **The misaligned path of `memcpy`**, m = 4 (68872 … 69129): head, loop, end. -/
+theorem memcpy_mis_4 {p : ByteArray} {P : Program} [HasCode p P] (ω : Regs) (μ : Memory) (x : X)
+    (A0 d W n' sp : Nat) (h0 : ω[0] = UInt64.ofNat (A0 + 4)) (h2 : ω[2] = UInt64.ofNat 4)
+    (h9 : ω[9] = UInt64.ofNat n') (h10 : ω[10] = UInt64.ofNat (d + W)) (h11 : ω[11] = UInt64.ofNat d)
+    (h12 : ω[12] = UInt64.ofNat W) (h1 : ω[1] = UInt64.ofNat sp)
+    (hW : 8 ≤ W ∧ W % 8 = 0) (hA0 : A0 % 8 = 0) (hsp : sp % 8 = 0) (hn' : n' < 4294967296)
+    (hb : A0 + W + 16 < 4294967296) (hd : d + W + 16 < 4294967296) (hs : sp + 24 < 4294967296)
+    (hdA : d + W + 16 ≤ A0 ∨ A0 + W + 16 ≤ d) (hsA : sp + 24 ≤ A0 ∨ A0 + W + 16 ≤ sp)
+    (hsd : sp + 24 ≤ d ∨ d + W ≤ sp)
+    (hr : ∀ a, A0 + 4 ≤ a → a < A0 + 4 + W → μ.readable a = true)
+    (hrs : ∀ a, sp ≤ a → a < sp + 24 → μ.writable a = true)
+    (hw : ∀ a, d ≤ a → a < d + W → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 68872 ω μ x 69132 ω' μ' x (2 * W + 100) ∧
+      MisOk ω ω' μ μ' (A0 + 4) d W n' sp := by
+  rcases Nat.lt_or_ge W 16 with hW8 | hW16
+  · -- one word: head, then end
+    have hW' : W = 8 := by omega
+    subst hW'
+    obtain ⟨ω₁, μ₁, pw, run₁, e4, elt, edrop, e6, e3, e11, e10, e1, e0, e2, e12, efr, emf, erd, ewr⟩ :=
+      memcpy_mis_head8_4 (p := p) (P := P) (R := R) ω μ x A0 d 8 sp h0 h2 h10 h11 h12 h1 rfl hsp (by omega) (by omega) (by omega)
+        (by omega) (fun a h1 h2 => hr a h1 (by omega)) hrs
+    have m1 : ∀ a n, a + n < 4294967296 → (a + n ≤ sp ∨ sp + 24 ≤ a) → μ₁.readN a n = μ.readN a n :=
+      fun a n h1 h2 => Memory.readN_congr (fun j hj => emf (a + j) (by omega) (by omega))
+    obtain ⟨ω₂, μ₂, run₂, w2, r8, r9, r10, r11, r1', fr2, mf2, rd2, wr2⟩ :=
+      memcpy_mis_end_4 (p := p) (P := P) (R := R) (regsNF ω₁ []) μ₁ x pw A0 d (A0 + 4) 8 n' sp e4 elt
+        (by rw [edrop, m1 _ _ (by omega) (by omega)]) e6 e3 e11 e0 e2 e12 ((efr 9 (by decide)).trans h9) e10 e1
+        (by omega) (by omega) hsp (by omega) (by omega) (by omega) hn' (by omega) (by omega) (by omega)
+        (fun a h1 h2 => by rw [erd]; exact hr a (by omega) (by omega))
+        (fun a h1 h2 => by rw [ewr]; exact hrs a h1 h2)
+        (fun a h1 h2 => by rw [ewr]; exact hw a h1 h2)
+    refine ⟨ω₂, μ₂, (run₁.trans run₂).mono (by omega), ?_, r8, r9, r10, r11, r1',
+      (fr2 7 (by decide)).trans (efr 7 (by decide)), (fr2 12 (by decide)).trans (efr 12 (by decide)),
+      fun a ha0 ha1 ha2 => (mf2 a ha0 ha1 (by omega)).trans (emf a ha0 ha2), fun a => by rw [rd2, erd],
+      fun a => by rw [wr2, ewr]⟩
+    rw [w2, m1 _ _ (by omega) (by omega)]
+  · obtain ⟨k, hk⟩ : ∃ k, W = 8 * (k + 2) := ⟨W / 8 - 2, by omega⟩
+    subst hk
+    obtain ⟨ω₁, μ₁, pw, run₁, e4, elt, edrop, e6, e3, e11, e10, e1, e0, e2, e12, efr, eT, emf, erd, ewr⟩ :=
+      memcpy_mis_head_4 (p := p) (P := P) (R := R) ω μ x A0 d (8 * (k + 2)) sp h0 h2 h10 h11 h12 h1 hW16 hsp
+        (by omega) (by omega) (by omega) (by omega) (fun a h1 h2 => hr a h1 (by omega)) hrs
+    have m1 : ∀ a n, a + n < 4294967296 → (a + n ≤ sp ∨ sp + 24 ≤ a) → μ₁.readN a n = μ.readN a n :=
+      fun a n h1 h2 => Memory.readN_congr (fun j hj => emf (a + j) (by omega) (by omega))
+    obtain ⟨ω₂, μ₂, run₂, s1, ⟨pw₂, f4, flt, fdrop⟩, f6, f3, f11, f1, f10, ffr, fmf, frd, fwr⟩ :=
+      memcpy_shift_loop (p := p) (P := P) (R := R) x 4 sp (by decide) k (regsNF ω₁ []) μ₁ pw A0 d e4 elt
+        (by rw [edrop, m1 _ _ (by omega) (by omega)]) e6 e3 e11 e10 e1 (by omega) (by omega) (by omega)
+        (by omega) (by omega) (by omega) eT
+        (fun a h1 h2 => by rw [erd]; exact hr a (by omega) (by omega))
+        (fun a h1 h2 => by rw [ewr]; exact hrs a (by omega) (by omega))
+        (fun a h1 h2 => by rw [ewr]; exact hw a h1 (by omega))
+    have m2 : ∀ a n, a + n < 4294967296 → (a + n ≤ d ∨ d + 8 * (k + 1) ≤ a) → (a + n ≤ sp + 8 ∨ sp + 16 ≤ a) →
+        μ₂.readN a n = μ₁.readN a n :=
+      fun a n h1 h2 h3 => Memory.readN_congr (fun j hj => fmf (a + j) (by omega) (by omega) (by omega))
+    obtain ⟨ω₃, μ₃, run₃, w3, r8, r9, r10, r11, r1', fr3, mf3, rd3, wr3⟩ :=
+      memcpy_mis_end_4 (p := p) (P := P) (R := R) (regsNF ω₂ []) μ₂ x pw₂ (A0 + 8 * (k + 1)) (d + 8 * (k + 1))
+        (A0 + 4) (8 * (k + 2)) n' sp f4 flt
+        (by rw [fdrop, m2 _ _ (by omega) (by omega) (by omega)])
+        f6 f3 f11 ((ffr 0 (by decide)).trans e0) ((ffr 2 (by decide)).trans e2) ((ffr 12 (by decide)).trans e12)
+        ((ffr 9 (by decide)).trans ((efr 9 (by decide)).trans h9)) (f10.trans e10) f1
+        (by omega) (by omega) hsp (by omega) (by omega) (by omega) hn' (by omega) (by omega) (by omega)
+        (fun a h1 h2 => by rw [frd, erd]; exact hr a (by omega) (by omega))
+        (fun a h1 h2 => by rw [fwr, ewr]; exact hrs a h1 h2)
+        (fun a h1 h2 => by rw [fwr, ewr]; exact hw a (by omega) (by omega))
+    have m3 : ∀ a n, a + n < 4294967296 → (a + n ≤ d + 8 * (k + 1) ∨ d + 8 * (k + 1) + 8 ≤ a) →
+        (a + n ≤ sp + 16 ∨ sp + 24 ≤ a) → μ₃.readN a n = μ₂.readN a n :=
+      fun a n h1 h2 h3 => Memory.readN_congr (fun j hj => mf3 (a + j) (by omega) (by omega) (by omega))
+    refine ⟨ω₃, μ₃, ((run₁.trans run₂).trans run₃).mono (by omega), ?_, by rw [r8], r9, by rw [r10, show d + 8 * (k + 1) + 8 = d + 8 * (k + 2) by omega],
+      by rw [r11, show d + 8 * (k + 1) + 8 = d + 8 * (k + 2) by omega], r1',
+      (fr3 7 (by decide)).trans ((ffr 7 (by decide)).trans (efr 7 (by decide))),
+      (fr3 12 (by decide)).trans ((ffr 12 (by decide)).trans (efr 12 (by decide))),
+      fun a ha0 ha1 ha2 => (mf3 a ha0 (by omega) (by omega)).trans ((fmf a ha0 (by omega) (by omega)).trans
+        (emf a ha0 ha2)),
+      fun a => by rw [rd3, frd, erd], fun a => by rw [wr3, fwr, ewr]⟩
+    have sp1 := Memory.readN_split μ₃ d (8 * (k + 1)) 8
+    have sp2 := Memory.readN_split μ (A0 + 4) (8 * (k + 1)) 8
+    rw [show 8 * (k + 1) + 8 = 8 * (k + 2) by omega] at sp1 sp2
+    rw [sp1, sp2, m3 _ _ (by omega) (by omega) (by omega), s1, m1 _ _ (by omega) (by omega), w3,
+      m2 _ _ (by omega) (by omega) (by omega), m1 _ _ (by omega) (by omega),
+      show A0 + 8 * (k + 1) + 4 = A0 + 4 + 8 * (k + 1) by omega]
+
+/-- **The misaligned path of `memcpy`**, m = 5 (68872 … 69129): head, loop, end. -/
+theorem memcpy_mis_5 {p : ByteArray} {P : Program} [HasCode p P] (ω : Regs) (μ : Memory) (x : X)
+    (A0 d W n' sp : Nat) (h0 : ω[0] = UInt64.ofNat (A0 + 5)) (h2 : ω[2] = UInt64.ofNat 5)
+    (h9 : ω[9] = UInt64.ofNat n') (h10 : ω[10] = UInt64.ofNat (d + W)) (h11 : ω[11] = UInt64.ofNat d)
+    (h12 : ω[12] = UInt64.ofNat W) (h1 : ω[1] = UInt64.ofNat sp)
+    (hW : 8 ≤ W ∧ W % 8 = 0) (hA0 : A0 % 8 = 0) (hsp : sp % 8 = 0) (hn' : n' < 4294967296)
+    (hb : A0 + W + 16 < 4294967296) (hd : d + W + 16 < 4294967296) (hs : sp + 24 < 4294967296)
+    (hdA : d + W + 16 ≤ A0 ∨ A0 + W + 16 ≤ d) (hsA : sp + 24 ≤ A0 ∨ A0 + W + 16 ≤ sp)
+    (hsd : sp + 24 ≤ d ∨ d + W ≤ sp)
+    (hr : ∀ a, A0 + 5 ≤ a → a < A0 + 5 + W → μ.readable a = true)
+    (hrs : ∀ a, sp ≤ a → a < sp + 24 → μ.writable a = true)
+    (hw : ∀ a, d ≤ a → a < d + W → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 68872 ω μ x 69132 ω' μ' x (2 * W + 100) ∧
+      MisOk ω ω' μ μ' (A0 + 5) d W n' sp := by
+  rcases Nat.lt_or_ge W 16 with hW8 | hW16
+  · -- one word: head, then end
+    have hW' : W = 8 := by omega
+    subst hW'
+    obtain ⟨ω₁, μ₁, pw, run₁, e4, elt, edrop, e6, e3, e11, e10, e1, e0, e2, e12, efr, emf, erd, ewr⟩ :=
+      memcpy_mis_head8_5 (p := p) (P := P) (R := R) ω μ x A0 d 8 sp h0 h2 h10 h11 h12 h1 rfl hsp (by omega) (by omega) (by omega)
+        (by omega) (fun a h1 h2 => hr a h1 (by omega)) hrs
+    have m1 : ∀ a n, a + n < 4294967296 → (a + n ≤ sp ∨ sp + 24 ≤ a) → μ₁.readN a n = μ.readN a n :=
+      fun a n h1 h2 => Memory.readN_congr (fun j hj => emf (a + j) (by omega) (by omega))
+    obtain ⟨ω₂, μ₂, run₂, w2, r8, r9, r10, r11, r1', fr2, mf2, rd2, wr2⟩ :=
+      memcpy_mis_end_5 (p := p) (P := P) (R := R) (regsNF ω₁ []) μ₁ x pw A0 d (A0 + 5) 8 n' sp e4 elt
+        (by rw [edrop, m1 _ _ (by omega) (by omega)]) e6 e3 e11 e0 e2 e12 ((efr 9 (by decide)).trans h9) e10 e1
+        (by omega) (by omega) hsp (by omega) (by omega) (by omega) hn' (by omega) (by omega) (by omega)
+        (fun a h1 h2 => by rw [erd]; exact hr a (by omega) (by omega))
+        (fun a h1 h2 => by rw [ewr]; exact hrs a h1 h2)
+        (fun a h1 h2 => by rw [ewr]; exact hw a h1 h2)
+    refine ⟨ω₂, μ₂, (run₁.trans run₂).mono (by omega), ?_, r8, r9, r10, r11, r1',
+      (fr2 7 (by decide)).trans (efr 7 (by decide)), (fr2 12 (by decide)).trans (efr 12 (by decide)),
+      fun a ha0 ha1 ha2 => (mf2 a ha0 ha1 (by omega)).trans (emf a ha0 ha2), fun a => by rw [rd2, erd],
+      fun a => by rw [wr2, ewr]⟩
+    rw [w2, m1 _ _ (by omega) (by omega)]
+  · obtain ⟨k, hk⟩ : ∃ k, W = 8 * (k + 2) := ⟨W / 8 - 2, by omega⟩
+    subst hk
+    obtain ⟨ω₁, μ₁, pw, run₁, e4, elt, edrop, e6, e3, e11, e10, e1, e0, e2, e12, efr, eT, emf, erd, ewr⟩ :=
+      memcpy_mis_head_5 (p := p) (P := P) (R := R) ω μ x A0 d (8 * (k + 2)) sp h0 h2 h10 h11 h12 h1 hW16 hsp
+        (by omega) (by omega) (by omega) (by omega) (fun a h1 h2 => hr a h1 (by omega)) hrs
+    have m1 : ∀ a n, a + n < 4294967296 → (a + n ≤ sp ∨ sp + 24 ≤ a) → μ₁.readN a n = μ.readN a n :=
+      fun a n h1 h2 => Memory.readN_congr (fun j hj => emf (a + j) (by omega) (by omega))
+    obtain ⟨ω₂, μ₂, run₂, s1, ⟨pw₂, f4, flt, fdrop⟩, f6, f3, f11, f1, f10, ffr, fmf, frd, fwr⟩ :=
+      memcpy_shift_loop (p := p) (P := P) (R := R) x 5 sp (by decide) k (regsNF ω₁ []) μ₁ pw A0 d e4 elt
+        (by rw [edrop, m1 _ _ (by omega) (by omega)]) e6 e3 e11 e10 e1 (by omega) (by omega) (by omega)
+        (by omega) (by omega) (by omega) eT
+        (fun a h1 h2 => by rw [erd]; exact hr a (by omega) (by omega))
+        (fun a h1 h2 => by rw [ewr]; exact hrs a (by omega) (by omega))
+        (fun a h1 h2 => by rw [ewr]; exact hw a h1 (by omega))
+    have m2 : ∀ a n, a + n < 4294967296 → (a + n ≤ d ∨ d + 8 * (k + 1) ≤ a) → (a + n ≤ sp + 8 ∨ sp + 16 ≤ a) →
+        μ₂.readN a n = μ₁.readN a n :=
+      fun a n h1 h2 h3 => Memory.readN_congr (fun j hj => fmf (a + j) (by omega) (by omega) (by omega))
+    obtain ⟨ω₃, μ₃, run₃, w3, r8, r9, r10, r11, r1', fr3, mf3, rd3, wr3⟩ :=
+      memcpy_mis_end_5 (p := p) (P := P) (R := R) (regsNF ω₂ []) μ₂ x pw₂ (A0 + 8 * (k + 1)) (d + 8 * (k + 1))
+        (A0 + 5) (8 * (k + 2)) n' sp f4 flt
+        (by rw [fdrop, m2 _ _ (by omega) (by omega) (by omega)])
+        f6 f3 f11 ((ffr 0 (by decide)).trans e0) ((ffr 2 (by decide)).trans e2) ((ffr 12 (by decide)).trans e12)
+        ((ffr 9 (by decide)).trans ((efr 9 (by decide)).trans h9)) (f10.trans e10) f1
+        (by omega) (by omega) hsp (by omega) (by omega) (by omega) hn' (by omega) (by omega) (by omega)
+        (fun a h1 h2 => by rw [frd, erd]; exact hr a (by omega) (by omega))
+        (fun a h1 h2 => by rw [fwr, ewr]; exact hrs a h1 h2)
+        (fun a h1 h2 => by rw [fwr, ewr]; exact hw a (by omega) (by omega))
+    have m3 : ∀ a n, a + n < 4294967296 → (a + n ≤ d + 8 * (k + 1) ∨ d + 8 * (k + 1) + 8 ≤ a) →
+        (a + n ≤ sp + 16 ∨ sp + 24 ≤ a) → μ₃.readN a n = μ₂.readN a n :=
+      fun a n h1 h2 h3 => Memory.readN_congr (fun j hj => mf3 (a + j) (by omega) (by omega) (by omega))
+    refine ⟨ω₃, μ₃, ((run₁.trans run₂).trans run₃).mono (by omega), ?_, by rw [r8], r9, by rw [r10, show d + 8 * (k + 1) + 8 = d + 8 * (k + 2) by omega],
+      by rw [r11, show d + 8 * (k + 1) + 8 = d + 8 * (k + 2) by omega], r1',
+      (fr3 7 (by decide)).trans ((ffr 7 (by decide)).trans (efr 7 (by decide))),
+      (fr3 12 (by decide)).trans ((ffr 12 (by decide)).trans (efr 12 (by decide))),
+      fun a ha0 ha1 ha2 => (mf3 a ha0 (by omega) (by omega)).trans ((fmf a ha0 (by omega) (by omega)).trans
+        (emf a ha0 ha2)),
+      fun a => by rw [rd3, frd, erd], fun a => by rw [wr3, fwr, ewr]⟩
+    have sp1 := Memory.readN_split μ₃ d (8 * (k + 1)) 8
+    have sp2 := Memory.readN_split μ (A0 + 5) (8 * (k + 1)) 8
+    rw [show 8 * (k + 1) + 8 = 8 * (k + 2) by omega] at sp1 sp2
+    rw [sp1, sp2, m3 _ _ (by omega) (by omega) (by omega), s1, m1 _ _ (by omega) (by omega), w3,
+      m2 _ _ (by omega) (by omega) (by omega), m1 _ _ (by omega) (by omega),
+      show A0 + 8 * (k + 1) + 5 = A0 + 5 + 8 * (k + 1) by omega]
+
+/-- **The misaligned path of `memcpy`**, m = 6 (68872 … 69129): head, loop, end. -/
+theorem memcpy_mis_6 {p : ByteArray} {P : Program} [HasCode p P] (ω : Regs) (μ : Memory) (x : X)
+    (A0 d W n' sp : Nat) (h0 : ω[0] = UInt64.ofNat (A0 + 6)) (h2 : ω[2] = UInt64.ofNat 6)
+    (h9 : ω[9] = UInt64.ofNat n') (h10 : ω[10] = UInt64.ofNat (d + W)) (h11 : ω[11] = UInt64.ofNat d)
+    (h12 : ω[12] = UInt64.ofNat W) (h1 : ω[1] = UInt64.ofNat sp)
+    (hW : 8 ≤ W ∧ W % 8 = 0) (hA0 : A0 % 8 = 0) (hsp : sp % 8 = 0) (hn' : n' < 4294967296)
+    (hb : A0 + W + 16 < 4294967296) (hd : d + W + 16 < 4294967296) (hs : sp + 24 < 4294967296)
+    (hdA : d + W + 16 ≤ A0 ∨ A0 + W + 16 ≤ d) (hsA : sp + 24 ≤ A0 ∨ A0 + W + 16 ≤ sp)
+    (hsd : sp + 24 ≤ d ∨ d + W ≤ sp)
+    (hr : ∀ a, A0 + 6 ≤ a → a < A0 + 6 + W → μ.readable a = true)
+    (hrs : ∀ a, sp ≤ a → a < sp + 24 → μ.writable a = true)
+    (hw : ∀ a, d ≤ a → a < d + W → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 68872 ω μ x 69132 ω' μ' x (2 * W + 100) ∧
+      MisOk ω ω' μ μ' (A0 + 6) d W n' sp := by
+  rcases Nat.lt_or_ge W 16 with hW8 | hW16
+  · -- one word: head, then end
+    have hW' : W = 8 := by omega
+    subst hW'
+    obtain ⟨ω₁, μ₁, pw, run₁, e4, elt, edrop, e6, e3, e11, e10, e1, e0, e2, e12, efr, emf, erd, ewr⟩ :=
+      memcpy_mis_head8_6 (p := p) (P := P) (R := R) ω μ x A0 d 8 sp h0 h2 h10 h11 h12 h1 rfl hsp (by omega) (by omega) (by omega)
+        (by omega) (fun a h1 h2 => hr a h1 (by omega)) hrs
+    have m1 : ∀ a n, a + n < 4294967296 → (a + n ≤ sp ∨ sp + 24 ≤ a) → μ₁.readN a n = μ.readN a n :=
+      fun a n h1 h2 => Memory.readN_congr (fun j hj => emf (a + j) (by omega) (by omega))
+    obtain ⟨ω₂, μ₂, run₂, w2, r8, r9, r10, r11, r1', fr2, mf2, rd2, wr2⟩ :=
+      memcpy_mis_end_6 (p := p) (P := P) (R := R) (regsNF ω₁ []) μ₁ x pw A0 d (A0 + 6) 8 n' sp e4 elt
+        (by rw [edrop, m1 _ _ (by omega) (by omega)]) e6 e3 e11 e0 e2 e12 ((efr 9 (by decide)).trans h9) e10 e1
+        (by omega) (by omega) hsp (by omega) (by omega) (by omega) hn' (by omega) (by omega) (by omega)
+        (fun a h1 h2 => by rw [erd]; exact hr a (by omega) (by omega))
+        (fun a h1 h2 => by rw [ewr]; exact hrs a h1 h2)
+        (fun a h1 h2 => by rw [ewr]; exact hw a h1 h2)
+    refine ⟨ω₂, μ₂, (run₁.trans run₂).mono (by omega), ?_, r8, r9, r10, r11, r1',
+      (fr2 7 (by decide)).trans (efr 7 (by decide)), (fr2 12 (by decide)).trans (efr 12 (by decide)),
+      fun a ha0 ha1 ha2 => (mf2 a ha0 ha1 (by omega)).trans (emf a ha0 ha2), fun a => by rw [rd2, erd],
+      fun a => by rw [wr2, ewr]⟩
+    rw [w2, m1 _ _ (by omega) (by omega)]
+  · obtain ⟨k, hk⟩ : ∃ k, W = 8 * (k + 2) := ⟨W / 8 - 2, by omega⟩
+    subst hk
+    obtain ⟨ω₁, μ₁, pw, run₁, e4, elt, edrop, e6, e3, e11, e10, e1, e0, e2, e12, efr, eT, emf, erd, ewr⟩ :=
+      memcpy_mis_head_6 (p := p) (P := P) (R := R) ω μ x A0 d (8 * (k + 2)) sp h0 h2 h10 h11 h12 h1 hW16 hsp
+        (by omega) (by omega) (by omega) (by omega) (fun a h1 h2 => hr a h1 (by omega)) hrs
+    have m1 : ∀ a n, a + n < 4294967296 → (a + n ≤ sp ∨ sp + 24 ≤ a) → μ₁.readN a n = μ.readN a n :=
+      fun a n h1 h2 => Memory.readN_congr (fun j hj => emf (a + j) (by omega) (by omega))
+    obtain ⟨ω₂, μ₂, run₂, s1, ⟨pw₂, f4, flt, fdrop⟩, f6, f3, f11, f1, f10, ffr, fmf, frd, fwr⟩ :=
+      memcpy_shift_loop (p := p) (P := P) (R := R) x 6 sp (by decide) k (regsNF ω₁ []) μ₁ pw A0 d e4 elt
+        (by rw [edrop, m1 _ _ (by omega) (by omega)]) e6 e3 e11 e10 e1 (by omega) (by omega) (by omega)
+        (by omega) (by omega) (by omega) eT
+        (fun a h1 h2 => by rw [erd]; exact hr a (by omega) (by omega))
+        (fun a h1 h2 => by rw [ewr]; exact hrs a (by omega) (by omega))
+        (fun a h1 h2 => by rw [ewr]; exact hw a h1 (by omega))
+    have m2 : ∀ a n, a + n < 4294967296 → (a + n ≤ d ∨ d + 8 * (k + 1) ≤ a) → (a + n ≤ sp + 8 ∨ sp + 16 ≤ a) →
+        μ₂.readN a n = μ₁.readN a n :=
+      fun a n h1 h2 h3 => Memory.readN_congr (fun j hj => fmf (a + j) (by omega) (by omega) (by omega))
+    obtain ⟨ω₃, μ₃, run₃, w3, r8, r9, r10, r11, r1', fr3, mf3, rd3, wr3⟩ :=
+      memcpy_mis_end_6 (p := p) (P := P) (R := R) (regsNF ω₂ []) μ₂ x pw₂ (A0 + 8 * (k + 1)) (d + 8 * (k + 1))
+        (A0 + 6) (8 * (k + 2)) n' sp f4 flt
+        (by rw [fdrop, m2 _ _ (by omega) (by omega) (by omega)])
+        f6 f3 f11 ((ffr 0 (by decide)).trans e0) ((ffr 2 (by decide)).trans e2) ((ffr 12 (by decide)).trans e12)
+        ((ffr 9 (by decide)).trans ((efr 9 (by decide)).trans h9)) (f10.trans e10) f1
+        (by omega) (by omega) hsp (by omega) (by omega) (by omega) hn' (by omega) (by omega) (by omega)
+        (fun a h1 h2 => by rw [frd, erd]; exact hr a (by omega) (by omega))
+        (fun a h1 h2 => by rw [fwr, ewr]; exact hrs a h1 h2)
+        (fun a h1 h2 => by rw [fwr, ewr]; exact hw a (by omega) (by omega))
+    have m3 : ∀ a n, a + n < 4294967296 → (a + n ≤ d + 8 * (k + 1) ∨ d + 8 * (k + 1) + 8 ≤ a) →
+        (a + n ≤ sp + 16 ∨ sp + 24 ≤ a) → μ₃.readN a n = μ₂.readN a n :=
+      fun a n h1 h2 h3 => Memory.readN_congr (fun j hj => mf3 (a + j) (by omega) (by omega) (by omega))
+    refine ⟨ω₃, μ₃, ((run₁.trans run₂).trans run₃).mono (by omega), ?_, by rw [r8], r9, by rw [r10, show d + 8 * (k + 1) + 8 = d + 8 * (k + 2) by omega],
+      by rw [r11, show d + 8 * (k + 1) + 8 = d + 8 * (k + 2) by omega], r1',
+      (fr3 7 (by decide)).trans ((ffr 7 (by decide)).trans (efr 7 (by decide))),
+      (fr3 12 (by decide)).trans ((ffr 12 (by decide)).trans (efr 12 (by decide))),
+      fun a ha0 ha1 ha2 => (mf3 a ha0 (by omega) (by omega)).trans ((fmf a ha0 (by omega) (by omega)).trans
+        (emf a ha0 ha2)),
+      fun a => by rw [rd3, frd, erd], fun a => by rw [wr3, fwr, ewr]⟩
+    have sp1 := Memory.readN_split μ₃ d (8 * (k + 1)) 8
+    have sp2 := Memory.readN_split μ (A0 + 6) (8 * (k + 1)) 8
+    rw [show 8 * (k + 1) + 8 = 8 * (k + 2) by omega] at sp1 sp2
+    rw [sp1, sp2, m3 _ _ (by omega) (by omega) (by omega), s1, m1 _ _ (by omega) (by omega), w3,
+      m2 _ _ (by omega) (by omega) (by omega), m1 _ _ (by omega) (by omega),
+      show A0 + 8 * (k + 1) + 6 = A0 + 6 + 8 * (k + 1) by omega]
+
 end Services.Bootstrap

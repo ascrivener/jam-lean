@@ -2157,9 +2157,19 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
     sts0 := sts0.push (needR, needO, needS, needW, needRd)
   let stsR := sts0.reverse
   -- `wild`: the start state too states only what is expressible
-  let sts := if !cx.wild then stsR else (List.range stsR.size).toArray.map fun k =>
+  let mut sts := if !cx.wild then stsR else (List.range stsR.size).toArray.map fun k =>
     let (r, o, sy, wr, rr) := stsR[k]!
     (r.filter (fun j => (regAt bs[k]! j).isSome), o.filter (fun a => (octAt bs[k]! a).isSome), sy, wr, rr)
+  -- `wild`: a symbolic word dropped at a cut stays dropped while no segment re-establishes it
+  if cx.wild then
+    for k in [1:sts.size] do
+      let (r, o, sy, wr, rr) := sts[k]!
+      let prev := sts[k-1]!.2.2.1
+      let w := writes[k-1]!
+      let sy' := sy.filter fun (a, n, e) =>
+        prev.contains (a, n, e) ||
+          ((List.range n).any (fun q => w.contains (a + q)) && n == 8 && infos[k-1]!.symMem.any (· == (a, e)))
+      sts := sts.set! k (r, o, sy', wr, rr)
   -- octets as runs inside aligned 8-octet words; page ranges merged into maximal intervals
   let runsOf (os : List Nat) : List (Nat × Nat) := Id.run do
     let mut rs : List (Nat × Nat) := []

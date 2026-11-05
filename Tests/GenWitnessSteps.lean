@@ -82,6 +82,8 @@ structure Svc where
   segClass : List (Nat × Nat × Nat × List UInt8)
   emptyClass : List (Nat × Nat × Nat × List UInt8)
   postClass : List (Nat × Nat × Nat × List UInt8)
+  /-- More inputs whose paths' starting octets the prefix states (e.g. every hex digit of s). -/
+  pathExtra : List (Nat × Nat × Nat × List UInt8) := []
   fnRanges : List (Nat × Nat)
   /-- Whether `Services/<name>/Memcpy.lean` exists (`memcpy_small` at the head of `fnRanges`):
       the prefix then calls it for each `memcpy` of fewer than 16 octets instead of stepping. -/
@@ -131,6 +133,7 @@ def bootstrapSvc : Svc where
   postClass := [(5, 0, 9, 0 :: List.replicate 32 7), (200, 1, 70000, 0 :: List.replicate 32 255),
     (20000, 300, 3, 0 :: List.replicate 32 1)]
   fnRanges := [(68729, 69139), (31894, 32166), (58434, 58509), (32166, 32412)]
+  pathExtra := [(3, 0, 0x01234567, []), (3, 0, 0x89abcdef, [])]
   memcpySummary := true
   emptyCode := true
   lBound := 16777217
@@ -173,7 +176,7 @@ def pickVar (q : Nat × Nat × Nat × List UInt8) (v : String) : Nat :=
 /-- A value that equals an input parameter (`ext`: or a constant plus one or two of them) in every
     run of the class `allQ` (the base input first), as a Lean expression over the variables. -/
 def matchVarG (ext : Bool) (names : List String) (allQ : List (Nat × Nat × Nat × List UInt8))
-    (valBase : Nat) (valsOther : List Nat) (sx : Bool := false) : Option String := Id.run do
+    (valBase : Nat) (valsOther : List Nat) (sx : Bool := false) (digits : Bool := false) : Option String := Id.run do
   let vals := valBase :: valsOther
   let baseP := allQ.head!
   let fits (f : (Nat × Nat × Nat × List UInt8) → Int) : Option Int :=
@@ -192,6 +195,12 @@ def matchVarG (ext : Bool) (names : List String) (allQ : List (Nat × Nat × Nat
       if v < u then
         if let some k := fits (fun q => (pickVar q v : Int) + pickVar q u) then
           if k ≥ 0 then return some (showE [v, u] k)
+  -- `digits` (wild cuts): a variable's hex digits shifted away, v / 16^k, and its low digits v mod 16^k
+  if digits then
+    for v in names do
+      for k in [1:9] do
+        if let some 0 := fits (fun q => (pickVar q v / 16 ^ k : Int)) then return some s!"({v} / {16 ^ k})"
+        if let some 0 := fits (fun q => (pickVar q v % 16 ^ k : Int)) then return some s!"({v} % {16 ^ k})"
   -- `sx` (`cut`): a variable sign-extended from 32 bits, 𝒳₄ (a 32-bit operation's result)
   if sx then
     for v in names do
@@ -218,7 +227,7 @@ structure SegInfo where
   memPost : List (Nat × Nat)
   pcs : List Nat
   /-- `segx`: 8-octet words the segment leaves holding a symbolic value. -/
-  symMem : List (Nat × String) := []
+  symMem : List (Nat × Nat × String) := []
   deriving Inhabited
 
 /-- Analyze steps `k0 + a … k0 + b − 1` of trace `tr`, against the other traces of the class
@@ -226,7 +235,8 @@ structure SegInfo where
 def analyzeSeg (P : Program) (tr : Array (Nat × Regs × Memory))
     (others : Array (Array (Nat × Regs × Memory) × Nat)) (otherPs : Array (Nat × Nat × Nat × List UInt8))
     (k0 a b : Nat) (out : Bool) (baseP : Nat × Nat × Nat × List UInt8 := (3, 0, 7, [255]))
-    (ext : Bool := false) (extra : List Nat := []) (staticW : List Nat := []) (cutMode : Bool := false) (allWords : Bool := false) :
+    (ext : Bool := false) (extra : List Nat := []) (staticW : List Nat := []) (cutMode : Bool := false) (allWords : Bool := false)
+    (half : Bool := false) (wantS : List (Nat × Nat × String) := []) :
     IO SegInfo := do
   let A := k0 + a; let B := k0 + b
   let some (pcA, rA, mA) := tr[A]? | throw (IO.userError "step out of range")
@@ -260,6 +270,22 @@ def analyzeSeg (P : Program) (tr : Array (Nat × Regs × Memory))
     for r in m.reads do
       let a := r % 2 ^ 32
       if !written.contains a && !rlist.contains a then rlist := a :: rlist
+    -- a read at an input-dependent address (a table indexed by an input): the hull of the class's
+    -- addresses, so the readability fact covers every input's
+    if let some r0 := m.reads.head? then
+      let n := m.reads.length
+      let addrs := others.toList.filterMap fun (t2, k2) => do
+        let (pc2, regs2, mem2) ← t2[k2 + (k - k0)]?
+        let ins2 ← P.decode pc2
+        let m2 := P.exec pc2 ins2 regs2 mem2
+        let r2 ← m2.reads.head?
+        pure (r2 % 2 ^ 32)
+      let a0 := r0 % 2 ^ 32
+      if addrs.any (· != a0) then
+        let lo := (a0 :: addrs).foldl min a0
+        let hi := (a0 :: addrs).foldl max a0 + n
+        for b in [lo:hi] do
+          if !written.contains b && !rlist.contains b then rlist := b :: rlist
     for w in m.writes do
       let a := w % 2 ^ 32
       if !written.contains a then wlist := a :: wlist
@@ -290,7 +316,7 @@ def analyzeSeg (P : Program) (tr : Array (Nat × Regs × Memory))
   let names := varNames ext baseP
   let allQ := baseP :: otherPs.toList
   let matchVar (valBase : Nat) (valsOther : List Nat) : Option String :=
-    matchVarG ext names allQ valBase valsOther cutMode
+    matchVarG ext names allQ valBase valsOther cutMode half
   let mut symLoads : List (Nat × Nat × String) := []
   for (a, k) in loads.toList do
     if !goodLoads.contains (a, k) then
@@ -319,24 +345,47 @@ def analyzeSeg (P : Program) (tr : Array (Nat × Regs × Memory))
   let outBytes := if out then
       (List.range rB[8]!.toNat).map (rB[7]!.toNat + ·) else []
   -- `ext`: live 8-octet words, all written, that hold the same symbolic value in every run
-  let mut symMem : List (Nat × String) := []
+  let mut symMem : List (Nat × Nat × String) := []
   if ext then
-    let words := (((if allWords then wlist else live).map (fun a => a - a % 8)).eraseDups.mergeSort).filter fun a =>
-      (List.range 8).all fun j => written.contains (a + j)
-    for a in words do
-      if !((List.range 8).all fun j => agreeMem B (a + j)) then
-        let vb := Num.decodeLE (mB.readN a 8)
+    -- 8-octet words, and the 4-octet halves of those that hold no symbolic value whole (a `u32`)
+    for n in (if half then [8, 4] else [8]) do
+      let words := (((if allWords then wlist else live).map (fun a => a - a % n)).eraseDups.mergeSort).filter fun a =>
+        (List.range n).all fun j => written.contains (a + j)
+      for a in words do
+        if n == 4 && symMem.any (fun (c, m, _) => c ≤ a && a < c + m) then continue
+        if !((List.range n).all fun j => agreeMem B (a + j)) then
+          let vb := Num.decodeLE (mB.readN a n)
+          let vo := (others.toList).map fun (t2, k2) =>
+            (t2[k2 + (B - k0)]?.map (fun x => Num.decodeLE (x.2.2.readN a n))).getD 0
+          if let some e := matchVar vb vo then symMem := (a, n, e) :: symMem
+  -- `out`: an input-dependent output octet, as an expression (e.g. a `u16` index's I % 256, I / 256)
+  if ext && out then
+    let dep := outBytes.filter fun b => !agreeMem B b && !(symMem.any fun (c, m, _) => c ≤ b && b < c + m)
+    for a in dep do
+      let n := 1
+      do
+        let vb := Num.decodeLE (mB.readN a n)
         let vo := (others.toList).map fun (t2, k2) =>
-          (t2[k2 + (B - k0)]?.map (fun x => Num.decodeLE (x.2.2.readN a 8))).getD 0
-        if let some e := matchVar vb vo then symMem := (a, e) :: symMem
-  let inSym (b : Nat) : Bool := symMem.any fun (a, _) => a ≤ b && b < a + 8
+          (t2[k2 + (B - k0)]?.map (fun x => Num.decodeLE (x.2.2.readN a n))).getD 0
+        match matchVar vb vo with
+        | some v => symMem := (a, n, v) :: symMem
+        | none => IO.eprintln s!"input-dependent output octets at {a} ({n})"
+  -- words a later cut states symbolically (`wantS`) that this segment writes
+  if ext then
+    for (a, n, _) in wantS do
+      if (List.range n).any (fun q => written.contains (a + q)) && !(symMem.any fun (c, m, _) => c == a && m == n) then
+        let vb := Num.decodeLE (mB.readN a n)
+        let vo := (others.toList).map fun (t2, k2) =>
+          (t2[k2 + (B - k0)]?.map (fun x => Num.decodeLE (x.2.2.readN a n))).getD 0
+        if let some e := matchVar vb vo then symMem := (a, n, e) :: symMem
+  let inSym (b : Nat) : Bool := symMem.any fun (a, n, _) => a ≤ b && b < a + n
   -- `ext`: an octet of a word with an input-dependent written octet is not stated on its own
   let mixed (b : Nat) : Bool := ext && (List.range 8).any fun j =>
     let c := b - b % 8 + j
     written.contains c && !agreeMem B c
   let livePost := ((live ++ outBytes ++ extra.filter written.contains).eraseDups.mergeSort).filter fun b =>
     agreeMem B b && (!inSym b || extra.contains b)
-  let vars := (vars0 ++ symMem.flatMap (fun (_, e) =>
+  let vars := (vars0 ++ symMem.flatMap (fun (_, _, e) =>
     ((e.replace "(" "").replace ")" "" |>.splitOn " ").filter names.contains)).eraseDups
   let pcs := (List.range (B - A)).filterMap fun j => tr[A + j]?.map (·.1)
   return { A, B, pcA, pcB, vars, regFacts := regFacts.map (fun j => (j, rA[j]!.toNat)), symRegs, symLoads, wr, rr,
@@ -370,6 +419,14 @@ def divReport (pa pb : Array Nat) (n : Nat) : IO Unit := do
 /-- What every mode of the generator shares: the arguments, the blob and the base run. -/
 structure Cx where
   svc : Svc
+  /-- The bound stated on S (`WITNESS_SBOUND=lo,hi`: lo ≤ S < hi), for a class of s by hex digits. -/
+  sBound : String := "S < 4294967296"
+  /-- Extra simp arguments for every generated step (`WITNESS_SIMP`). -/
+  extraSimp : List String := []
+  /-- `WITNESS_WILD=1`: a cut leaves unstated the live values that differ across the class and match
+      no expression (data the rest only moves, such as formatted digits); a step that needs one for
+      control or an address makes its proof fail. -/
+  wild : Bool := false
   args : List String
   mode0 : String
   empty : Bool
@@ -587,7 +644,7 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
     let memC := info.memPost.map fun (a, v) => s!"μ'.read {a} = {v}"
     IO.println ("      (" ++ (if memC.isEmpty then "True" else " ∧ ".intercalate memC) ++ ") ∧")
     if !info.symMem.isEmpty then
-      IO.println ("      (" ++ " ∧ ".intercalate (info.symMem.map fun (a, e) => s!"μ'.readN {a} 8 = Num.encodeLE 8 {e}") ++ ") ∧")
+      IO.println ("      (" ++ " ∧ ".intercalate (info.symMem.map fun (a, n, e) => s!"μ'.readN {a} {n} = Num.encodeLE {n} {e}") ++ ") ∧")
     let outW := " && ".intercalate (wr.map fun (lo, hi) => s!"!(decide ({lo} ≤ a ∧ a < {hi}))")
     IO.println s!"      (∀ a, (decide (a < 4294967296){if outW == "" then "" else " && " ++ outW}) = true → μ'.read a = μ.read a) ∧"
     IO.println "      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by"
@@ -643,7 +700,9 @@ def prefixInfo (cx : Cx) : IO (SegInfo × Array (Array (Nat × Regs × Memory) �
         throw (IO.userError s!"paths differ at {j} for c={c2}")
     others := others.push (t2, 0)
     otherPs := otherPs.push (c2, i2, s2, y2)
-  return (← analyzeSeg cx.P cx.tr others otherPs 0 0 cx.n false (cx.c, cx.i, cx.sid, cx.y), others, otherPs)
+  -- on a cut chain (`run … cut=NAME`), what `fetch` writes counts as written, as in the chain
+  let cutM := cx.args.any (·.startsWith "cut=")
+  return (← analyzeSeg cx.P cx.tr others otherPs 0 0 cx.n false (cx.c, cx.i, cx.sid, cx.y) (cutMode := cutM), others, otherPs)
 
 set_option linter.unusedVariables false in
 /-! ## Blobs as numbers (`blob`, `codecheck`) -/
@@ -1355,7 +1414,8 @@ end Services.{NS}.CodeCheck
   -- the octets any traced run reads from the starting memory before writing them, on its whole path
   -- (the facts the theorems after the prefix chase back to the start)
   let mut pathAcc : Array (Nat × Nat) := #[]
-  let pathInputs := cx.svc.base :: cx.svc.emptyBase :: (cx.svc.segClass ++ cx.svc.segxExtra ++ cx.svc.emptyClass)
+  let pathInputs := cx.svc.base :: cx.svc.emptyBase :: (cx.svc.segClass ++ cx.svc.segxExtra ++ cx.svc.emptyClass ++
+    cx.svc.pathExtra)
   for (c2, i2, s2, y2) in pathInputs do
     let some t2 := traceFor code h acct Q c2 i2 s2 y2 | continue
     let mut w2 : Std.HashSet Nat := {}
@@ -1975,9 +2035,9 @@ def regsWritten (cx : Cx) (A B : Nat) : List Nat := Id.run do
   return out
 
 /-- The Lean binder for a variable and its bound. -/
-def varBinder (lb : Nat) (v : String) : String :=
+def varBinder (lb : Nat) (v : String) (sb : String := "S < 4294967296") : String :=
   let bound := match v with
-    | "Y" => "1 ≤ Y ∧ Y ≤ 15" | "S" => "S < 4294967296" | "C" => "C < 65536" | "L" => s!"0 < L ∧ L < {lb}"
+    | "Y" => "1 ≤ Y ∧ Y ≤ 15" | "S" => sb | "C" => "C < 65536" | "L" => s!"0 < L ∧ L < {lb}"
     | "T" => "12 ≤ T ∧ T < 256" | "Q" => "4278124548 ≤ Q ∧ Q ≤ 4278124564" | _ => "I < 65536"
   s!"({v} : Nat) (h{v} : {bound})"
 
@@ -2011,8 +2071,17 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
       let A := nums[0]!; let B := nums[1]!
       ((List.range ((B - A + N - 1) / N)).map (A + N * ·)) ++ [B]
     | none => nums
+  -- `WITNESS_CLASS=c,i,s,k;…` replaces the class (k octets 255 of payload, or `c,i,s,k,b,f` as
+  -- for `WITNESS_INPUT`), e.g. one per hex-digit
+  -- count of s where the path depends on it
+  let classOv := ((← IO.getEnv "WITNESS_CLASS").getD "").splitOn ";" |>.filterMap fun e =>
+    match (e.splitOn ",").filterMap String.toNat? with
+    | [c, i, s, k] => some (c, i, s, List.replicate k (255 : UInt8))
+    | [c, i, s, k, b0, f] => some (c, i, s, (b0.toUInt8 :: List.replicate (k - 1) f.toUInt8).take k)
+    | _ => none
   let classInputs : List (Nat × Nat × Nat × List UInt8) :=
-    if cx.empty then cx.svc.emptyClass ++ cx.svc.emptyExtra else cx.svc.segClass ++ cx.svc.segxExtra
+    if !classOv.isEmpty then classOv
+    else if cx.empty then cx.svc.emptyClass ++ cx.svc.emptyExtra else cx.svc.segClass ++ cx.svc.segxExtra
   let baseP := (cx.c, cx.i, cx.sid, cx.y)
   let align (t : Array (Nat × Regs × Memory)) : Option Nat :=
     (List.range t.size).find? (fun k => (t[k]?.map (·.1)) == some joinPc)
@@ -2034,7 +2103,7 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
   let regAt (b j : Nat) : Option String :=
     let vb := (tr[k0 + b]?.map (·.2.1[j]!.toNat)).getD 0
     let vo := others.toList.map fun (t2, k2) => (t2[k2 + b]?.map (·.2.1[j]!.toNat)).getD 0
-    if vo.all (· == vb) then some (toString vb) else matchVarG true names allQ vb vo true
+    if vo.all (· == vb) then some (toString vb) else matchVarG true names allQ vb vo true cx.wild
   let octAt (b a : Nat) : Option Nat :=
     let vb := (tr[k0 + b]?.map (·.2.2.read a |>.toNat)).getD 0
     let vo := others.toList.map fun (t2, k2) => (t2[k2 + b]?.map (·.2.2.read a |>.toNat)).getD 0
@@ -2066,13 +2135,15 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
   -- the state each cut needs, backward from the end
   let fin := (List.range 13).map (fun j => (tr[k0 + bs.getLast!]?.map (·.2.1[j]!.toNat)).getD 0)
   let outO := if out then (List.range fin[8]!).map (fin[7]! + ·) else []
-  let whole ← analyzeSeg P tr others otherPs k0 bs.head! bs.getLast! false baseP true []
-    (regsWritten cx (k0 + bs.head!) (k0 + bs.getLast!)) true (opts.contains "words")
+  let whole ← analyzeSeg P tr others otherPs k0 bs.head! bs.getLast! out baseP true []
+    (regsWritten cx (k0 + bs.head!) (k0 + bs.getLast!)) true (opts.contains "words") (half := cx.wild && out)
   let unch : List Nat := if frame then (List.range 13).filter (fun j => whole.regPost.any (· == (j, none))) else []
   let mut needR : List Nat := (if out then [0, 7, 8] else []) ++
     (if frame then whole.regPost.filterMap (fun (j, v) => v.map (fun _ => j)) ++ whole.symPost.map (·.1) else [])
-  let mut needO : List Nat := outO ++ (if frame then whole.memPost.map (·.1) else [])
-  let mut needS : List (Nat × Nat × String) := if frame then whole.symMem.map (fun (a, e) => (a, 8, e)) else []
+  needR := needR.eraseDups
+  let mut needO : List Nat := (outO ++ (if frame then whole.memPost.map (·.1) else [])).eraseDups.filter
+    fun b => !(whole.symMem.any fun (a, n, _) => a ≤ b && b < a + n)
+  let mut needS : List (Nat × Nat × String) := if frame || out then whole.symMem else []
   let mut needW : List (Nat × Nat) := []
   let mut needRd : List (Nat × Nat) := if out && fin[8]! > 0 then [(fin[7]!, fin[7]! + fin[8]!)] else []
   let mut sts0 : Array (List Nat × List Nat × List (Nat × Nat × String) × List (Nat × Nat) × List (Nat × Nat)) :=
@@ -2080,7 +2151,7 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
   for kk in [0:nseg] do
     let k := nseg - 1 - kk
     let info ← analyzeSeg P tr others otherPs k0 bs[k]! bs[k+1]! false baseP true needO
-      (regsWritten cx (k0 + bs[k]!) (k0 + bs[k+1]!)) true
+      (regsWritten cx (k0 + bs[k]!) (k0 + bs[k+1]!)) true (half := cx.wild) (wantS := needS)
     let mut w : Std.HashSet Nat := {}
     for (lo, hi) in info.wr do
       for a in [lo:hi] do w := w.insert a
@@ -2091,6 +2162,18 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
     reads := reads.set! k (match keepO with
       | some ks => rd0.filter fun j => ks.contains j || before.contains j
       | none => rd0)
+    -- `wild`: drop from cut k + 1's state what segment k leaves inexpressible
+    if cx.wild then
+      let badR := needR.filter fun j =>
+        info.wregs.contains j && !(info.regPost.any (fun (i, v) => i == j && v.isSome)) && !(info.symPost.any (·.1 == j))
+      let badO := needO.filter fun a => w.contains a && !(info.memPost.any (·.1 == a))
+      let badS := needS.filter fun (a, n, e) =>
+        (List.range n).any (fun q => w.contains (a + q)) && !(info.symMem.any (· == (a, n, e)))
+      if !(badR.isEmpty && badO.isEmpty && badS.isEmpty) then
+        needR := needR.filter (!badR.contains ·)
+        needO := needO.filter (!badO.contains ·)
+        needS := needS.filter (!badS.contains ·)
+        sts0 := sts0.set! (sts0.size - 1) (needR, needO, needS, needW, needRd)
     -- what segment k must leave: check it does
     for j in needR do
       if info.wregs.contains j && !(info.regPost.any (fun (i, v) => i == j && v.isSome)) && !(info.symPost.any (·.1 == j)) then
@@ -2103,7 +2186,7 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
       if w.contains a && !(info.memPost.any (·.1 == a)) then
         throw (IO.userError s!"cut {k + 1}: segment {k} leaves octet {a} input-dependent, and a later step reads it")
     for (a, n, e) in needS do
-      if (List.range n).any (fun q => w.contains (a + q)) && !(n == 8 && info.symMem.any (· == (a, e))) then
+      if (List.range n).any (fun q => w.contains (a + q)) && !(info.symMem.any (· == (a, n, e))) then
         throw (IO.userError s!"cut {k + 1}: segment {k} writes into the symbolic word at {a}, and a later step reads it")
     let rd := reads[k]!
     needR := (rd ++ needR.filter (fun j => !info.wregs.contains j)).eraseDups.mergeSort
@@ -2112,7 +2195,21 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
     needW := (info.wr ++ pageRanges k ++ needW).eraseDups
     needRd := (info.rr ++ needRd).eraseDups
     sts0 := sts0.push (needR, needO, needS, needW, needRd)
-  let sts := sts0.reverse
+  let stsR := sts0.reverse
+  -- `wild`: the start state too states only what is expressible
+  let mut sts := if !cx.wild then stsR else (List.range stsR.size).toArray.map fun k =>
+    let (r, o, sy, wr, rr) := stsR[k]!
+    (r.filter (fun j => (regAt bs[k]! j).isSome), o.filter (fun a => (octAt bs[k]! a).isSome), sy, wr, rr)
+  -- `wild`: a symbolic word dropped at a cut stays dropped while no segment re-establishes it
+  if cx.wild then
+    for k in [1:sts.size] do
+      let (r, o, sy, wr, rr) := sts[k]!
+      let prev := sts[k-1]!.2.2.1
+      let w := writes[k-1]!
+      let sy' := sy.filter fun (a, n, e) =>
+        prev.contains (a, n, e) ||
+          ((List.range n).any (fun q => w.contains (a + q)) && infos[k-1]!.symMem.any (· == (a, n, e)))
+      sts := sts.set! k (r, o, sy', wr, rr)
   -- octets as runs inside aligned 8-octet words; page ranges merged into maximal intervals
   let runsOf (os : List Nat) : List (Nat × Nat) := Id.run do
     let mut rs : List (Nat × Nat) := []
@@ -2153,7 +2250,7 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
   for info in infos do vars0 := vars0 ++ info.vars
   let vars := names.filter vars0.contains
   let varArgs := " ".intercalate (vars.flatMap fun v => [v, s!"h{v}"])
-  let varBinders := " ".intercalate (vars.map (varBinder cx.svc.lBound))
+  let varBinders := " ".intercalate (vars.map (varBinder cx.svc.lBound · cx.sBound))
   let segCond (k : Nat) : String :=
     let outW := " && ".intercalate (infos[k]!.wr.map fun (lo, hi) => s!"!(decide ({lo} ≤ a ∧ a < {hi}))")
     s!"decide (a < 4294967296){if outW == "" then "" else " && " ++ outW}"
@@ -2194,7 +2291,7 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
     for a in o do
       if (octAt bs[k]! a).isNone then throw (IO.userError s!"cut {k}: octet {a} there is input-dependent")
   let mut st := header "The state at each cut." ++ s!"
-import PVM.Logic.Chase{if hasGrow then "\nimport JAM.Theorems.GrowHeap" else ""}
+import PVM.Logic.Chase{if cx.extraSimp.isEmpty && !(cx.wild && out) then "" else "\nimport PVM.Logic.Words"}{if hasGrow then "\nimport JAM.Theorems.GrowHeap" else ""}
 
 namespace Services.{NS}.{name}
 
@@ -2239,9 +2336,12 @@ set_option maxHeartbeats 10000000
 theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
     (x : RefineCtx){envB}"
     if hasGrow then sx := sx ++ s!"\n    (hhp : HeapPages μ {hA} {hB} {topAt bs[k]!})"
-    for v in ivars do sx := sx ++ s!"\n    {varBinder cx.svc.lBound v}"
-    let regB := rd.map fun j => (s!"hreg{j}", s!"ω[{j}] = UInt64.ofNat {(regAt bs[k]! j).getD "0"}")
-    let symB := info.symLoads.map fun (a, n, e) => (s!"hbn_{a}_{n}", s!"μ.readN {a} {n} = Num.encodeLE {n} {e}")
+    for v in ivars do sx := sx ++ s!"\n    {varBinder cx.svc.lBound v cx.sBound}"
+    -- `wild`: only what cut k's state states
+    let rdS := if cx.wild then rd.filter (sts[k]!.1.contains ·) else rd
+    let symS := if cx.wild then info.symLoads.filter (sts[k]!.2.2.1.contains ·) else info.symLoads
+    let regB := rdS.map fun j => (s!"hreg{j}", s!"ω[{j}] = UInt64.ofNat {(regAt bs[k]! j).getD "0"}")
+    let symB := symS.map fun (a, n, e) => (s!"hbn_{a}_{n}", s!"μ.readN {a} {n} = Num.encodeLE {n} {e}")
     let wB := (info.wr ++ pageRanges k).eraseDups.map fun (lo, hi) => (s!"hw_{lo}_{hi}", s!"∀ a, {lo} ≤ a → a < {hi} → μ.writable a = true")
     let rB := info.rr.map fun (lo, hi) => (s!"hrd_{lo}_{hi}", s!"∀ a, {lo} ≤ a → a < {hi} → μ.readable a = true")
     let bB := info.byteFacts.map fun (a, v) => (s!"hb_{a}", s!"μ.read {a} = {v}")
@@ -2258,7 +2358,7 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
     let memC := info.memPost.map fun (a, v) => s!"μ'.read {a} = {v}"
     sx := sx ++ "\n      (" ++ (if memC.isEmpty then "True" else " ∧ ".intercalate memC) ++ ") ∧"
     if !info.symMem.isEmpty then
-      sx := sx ++ "\n      (" ++ " ∧ ".intercalate (info.symMem.map fun (a, e) => s!"μ'.readN {a} 8 = Num.encodeLE 8 {e}") ++ ") ∧"
+      sx := sx ++ "\n      (" ++ " ∧ ".intercalate (info.symMem.map fun (a, n, e) => s!"μ'.readN {a} {n} = Num.encodeLE {n} {e}") ++ ") ∧"
     let outW := " && ".intercalate (info.wr.map fun (lo, hi) => s!"!(decide ({lo} ≤ a ∧ a < {hi}))")
     sx := sx ++ s!"\n      (∀ a, (decide (a < 4294967296){if outW == "" then "" else " && " ++ outW}) = true → μ'.read a = μ.read a) ∧"
     let grow := segGrow k
@@ -2288,7 +2388,7 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
     let simpArgsH := ", ".intercalate ([regA, loadA, hws, hrs, factA].filter (· != "") ++
       (if hasGrow then ["setR7"] else []))
     let simpArgs := ", ".intercalate ([regA, loadA, hws, hrs, factA].filter (· != "") ++
-      (if hasHost then ["hpar", "Params.full_encode"] else []) ++ (if hasGrow then ["setR7"] else []))
+      (if hasHost then ["hpar", "Params.full_encode"] else []) ++ (if hasGrow then ["setR7"] else []) ++ cx.extraSimp)
     sx := sx ++ "\n  rw [show ω = regsNF ω [] from rfl]\n  refine ⟨?ω', ?μ', ?run, ?post⟩\n  case run =>"
     for j in [0:info.pcs.length] do
       let pc := info.pcs[j]!
@@ -2307,8 +2407,8 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
       sx := sx ++ s!"\n    exact FreeStepsH.refl\n  case post =>\n    refine ⟨?regs, ?mem, ?frame, ?rd, ?wr{hpH}⟩"
     else
       sx := sx ++ s!"\n    exact FreeStepsH.refl\n  case post =>\n    refine ⟨?regs, ?mem, ?smem, ?frame, ?rd, ?wr{hpH}⟩"
-      sx := sx ++ "\n    case smem =>\n      " ++ (if info.symMem.length > 1 then "refine ⟨" ++ ", ".intercalate (info.symMem.map fun _ => "?_") ++ "⟩ <;>\n      " else "") ++ "simp (disch := pvm_arith) only [PVM.Memory.readN_writeN_same, PVM.Memory.readN_writeN_disjoint,\n        PVM.Num.length_encodeLE, List.length_cons, List.length_nil, PVM.two32]"
-    sx := sx ++ s!"\n    case regs =>\n      simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,\n        PVM.getD_some', List.lookup_nil, Option.getD_none, and_self, and_true, true_and{if regA == "" then "" else ", " ++ regA}{if hasGrow then ", setR7, PVM.set_regsNF, PVM.insertReg" else ""}]"
+      sx := sx ++ "\n    case smem =>\n      " ++ (if info.symMem.length > 1 then "refine ⟨" ++ ", ".intercalate (info.symMem.map fun _ => "?_") ++ "⟩ <;>\n      " else "") ++ "simp (disch := pvm_arith) only [PVM.Memory.readN_writeN_same, PVM.Memory.readN_writeN_disjoint,\n        PVM.Num.length_encodeLE, List.length_cons, List.length_nil, PVM.two32" ++ (if cx.wild && out then ", PVM.readN_writeN_encodeLE2_hi, PVM.readN_writeN_encodeLE2_lo]\n      all_goals first | (congr 1; split <;> omega) | simp only [PVM.Num.encodeLE, Nat.mod_mod, Nat.zero_div, PVM.ofNat_mod256]" else "]")
+    sx := sx ++ s!"\n    case regs =>\n      simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,\n        PVM.getD_some', List.lookup_nil, Option.getD_none, and_self, and_true, true_and{if regA == "" then "" else ", " ++ regA}{if hasGrow then ", setR7, PVM.set_regsNF, PVM.insertReg" else ""}]{if cx.wild then "\n      all_goals (try simp only [Nat.div_div_eq_div_mul, Nat.reduceMul])\n      all_goals (try (congr 1; split <;> omega))" else ""}"
     sx := sx ++ s!"\n    case mem =>\n      try and_intros\n      all_goals simp (disch := pvm_arith) only [PVM.Memory.read_writeN, PVM.reduceEncodeLE, PVM.Num.length_encodeLE,\n        List.length_cons, List.length_nil, PVM.two32, Nat.reduceAdd, Nat.reduceSub, Nat.reduceLeDiff,\n        Nat.reduceLT, and_true, true_and, and_false, false_and, ↓reduceIte, List.getElem!_cons_zero,\n        List.getElem!_cons_succ, UInt8.reduceOfNat, and_self, PVM.Num.encodeLE{if hasGrow then ", PVM.Memory.read_setPages" else ""}{if hasHost then ", hpar, Params.full_encode, List.drop_zero, List.take_of_length_le" else ""}] <;> chase_octet"
     sx := sx ++ s!"\n    case frame =>\n      intro a ha\n      simp only [Bool.and_eq_true, decide_eq_true_eq, Bool.not_eq_true', decide_eq_false_iff_not,\n        not_and, Nat.not_lt] at ha\n      simp (disch := pvm_arith) only [PVM.Memory.read_writeN_disjoint, PVM.Num.length_encodeLE,\n        List.length_cons, List.length_nil, PVM.two32{if hasGrow then ", PVM.Memory.read_setPages" else ""}]"
     if grow then
@@ -2317,7 +2417,7 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
     else
       sx := sx ++ "\n    case rd => intro a; simp only [PVM.Memory.readable_writeN]\n    case wr => intro a; simp only [PVM.Memory.writable_writeN]\n"
     if grow then
-      sx := sx ++ "    case rdA =>\n      intro a ha\n      simp only [PVM.Memory.readable_writeN, PVM.Memory.readable_setPages, PVM.pageSize]\n      split <;> first | rfl | omega\n"
+      sx := sx ++ "    case rdA =>\n      intro a ha\n      simp only [PVM.Memory.readable_writeN, PVM.Memory.readable_setPages]\n      first | (rw [if_neg (by simp only [PVM.pageSize]; omega)]) | (simp only [PVM.pageSize]; split <;> first | rfl | omega)\n"
     if hasGrow then sx := sx ++ "    case hp => first | exact hhp | heap_pages hhp\n"
     -- the segment between cut states
     let pat (xs : List String) : String := match xs with
@@ -2336,7 +2436,7 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
         let parts := (n.drop 4).toString.splitOn "_"
         let a := parts[0]!.toNat!; let len := parts[1]!.toNat!
         if (List.range len).any (fun q => w.contains (a + q)) then
-          match info.symMem.findIdx? (·.1 == a) with
+          match info.symMem.findIdx? (fun (c, m, _) => c == a && m == len) with
           | some q => s!"s{q}" | none => "sorryNoSym"
         else s!"(Memory.readN_of_frame hfr {a} {len} rfl).trans h.{n}"
       else if n.startsWith "hm_" then
@@ -2437,7 +2537,7 @@ theorem chain (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
 /-- **Steps {bs[0]!} … {bs[nseg]! - 1} after pc {joinPc}**, from the facts the path reads before writing them. -/
 theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
     (x : RefineCtx){envB}"
-  for v in vars do ch := ch ++ s!"\n    {varBinder cx.svc.lBound v}"
+  for v in vars do ch := ch ++ s!"\n    {varBinder cx.svc.lBound v cx.sBound}"
   for (n, t) in pre0 do ch := ch ++ s!"\n    ({n} : {t})"
   let startArgs := (if pre0.isEmpty && !frame then ["trivial"] else pre0.map (·.1)) ++
     (if frame then (if hasGrow then ["fun _ _ => rfl", "fun _ _ => rfl", "fun _ h => h", "fun _ h => h"]
@@ -2458,7 +2558,7 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
       match runAt nseg a with
       | some (c, m, j) => (s!"μ'.read {a} = {v}", s!"(Memory.read_of_readN hN.hm_{c}_{m} {j} (by decide))")
       | none => (s!"μ'.read {a} = {v}", "noRun")
-    let symC := whole.symMem.map fun (a, e) => (s!"μ'.readN {a} 8 = Num.encodeLE 8 {e}", s!"hN.hbn_{a}_8")
+    let symC := whole.symMem.map fun (a, n, e) => (s!"μ'.readN {a} {n} = Num.encodeLE {n} {e}", s!"hN.hbn_{a}_{n}")
     let ww := whole.wr
     let m := ww.length
     let outW := " && ".intercalate (ww.map fun (lo, hi) => s!"!(decide ({lo} ≤ a ∧ a < {hi}))")
@@ -2597,10 +2697,12 @@ def main (args0 : List String) : IO Unit := do
   let some jb := JamBlob.parse? code | return
   let some P := Blob.parse? jb.code | return
   let Q := P.prepare
-  -- `WITNESS_INPUT=c,i,s,k` replaces the base input (exploration only; generated files use the default)
+  -- `WITNESS_INPUT=c,i,s,k` replaces the base input (k octets 255), `c,i,s,k,b,f` with payload
+  -- b then k − 1 octets f
   let inp := ((← IO.getEnv "WITNESS_INPUT").getD "").splitOn ","
   let (c, i, sid, y) : Nat × Nat × Nat × List UInt8 := match inp.filterMap String.toNat? with
     | [c, i, s, k] => (c, i, s, List.replicate k 255)
+    | [c, i, s, k, b0, f] => (c, i, s, (b0.toUInt8 :: List.replicate (k - 1) f.toUInt8).take k)
     | _ => if empty then svc.emptyBase else svc.base
   let pkg := mkPkg h sid (i + 1) (mkItem h sid y)
   let a : ByteArray := ⟨(Codec.nat c ++ Codec.nat i ++ Codec.nat sid ++ Codec.var ⟨y.toArray⟩ ++ (Blake2b.hash256 ⟨pkg.encode.toArray⟩).toList).toArray⟩
@@ -2608,7 +2710,13 @@ def main (args0 : List String) : IO Unit := do
   let env := mkEnv code sid i (Std.ExtTreeMap.ofList [(sid, acct)]) pkg
   let (tr, _, _, _, _) := go Q (toHostFn (RefineHost.dispatch env)) 0 1000000000 false ω μ (∅, []) #[] #[] 3000000
   let path := (tr.toList.take n).map (·.1)
-  let cx : Cx := { svc, args, mode0, empty, mode, n, bytes, code, h, acct, jb, P, Q, c, i, sid, y, pkg, a, ω, μ, env, tr, path }
+  let sbE := ((← IO.getEnv "WITNESS_SBOUND").getD "").splitOn "," |>.filterMap String.toNat?
+  let sBound := match sbE with
+    | [lo, hi] => s!"{lo} ≤ S ∧ S < {hi}"
+    | _ => "S < 4294967296"
+  let extraSimp := ((← IO.getEnv "WITNESS_SIMP").getD "").splitOn "," |>.filter (· != "")
+  let wild := (← IO.getEnv "WITNESS_WILD") == some "1"
+  let cx : Cx := { svc, sBound, extraSimp, wild, args, mode0, empty, mode, n, bytes, code, h, acct, jb, P, Q, c, i, sid, y, pkg, a, ω, μ, env, tr, path }
   match mode with
   | "calls" => mode_calls cx
   | "div" => mode_div cx

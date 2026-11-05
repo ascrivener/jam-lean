@@ -107,8 +107,8 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
       split <;> simp_all
     case rdA =>
       intro a ha
-      simp only [PVM.Memory.readable_writeN, PVM.Memory.readable_setPages, PVM.pageSize]
-      split <;> first | rfl | omega
+      simp only [PVM.Memory.readable_writeN, PVM.Memory.readable_setPages]
+      first | (rw [if_neg (by simp only [PVM.pageSize]; omega)]) | (simp only [PVM.pageSize]; split <;> first | rfl | omega)
     case hp => first | exact hhp | heap_pages hhp
 
 /-- **Cut 11 to cut 12**: from the state `St11`, the steps reach `St12`. -/

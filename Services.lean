@@ -5,6 +5,7 @@ import Services.Witness.DecodeU32
 import Services.Witness.DecodeC
 import Services.Bootstrap.Code
 import Services.Bootstrap.Memcpy
+import Services.Bootstrap.PrefixC
 import Services.Bootstrap.Prefix
 import Services.Bootstrap.CodeOk
 import Services.Bootstrap.BParams
@@ -12,6 +13,18 @@ import Services.Bootstrap.Reader
 import Services.Bootstrap.DecodeU32
 import Services.Bootstrap.DecodeU16
 import Services.Bootstrap.MemcpyBig
+import Services.Bootstrap.ReaderBig
+import Services.Bootstrap.BTail1
+import Services.Bootstrap.BTail2
+import Services.Bootstrap.BTail3
+import Services.Bootstrap.BTail4
+import Services.Bootstrap.BTail5
+import Services.Bootstrap.BTail6
+import Services.Bootstrap.BTail7
+import Services.Bootstrap.BTail8
+import Services.Bootstrap.Glue
+import Services.Bootstrap.EmptyPayload
+import Services.Bootstrap.PsiREmpty
 import Services.Witness.Prefix
 import Services.Witness.EmptyTail
 import Services.Witness.Front1

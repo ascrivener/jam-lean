@@ -358,12 +358,12 @@ def analyzeSeg (P : Program) (tr : Array (Nat × Regs × Memory))
           let vo := (others.toList).map fun (t2, k2) =>
             (t2[k2 + (B - k0)]?.map (fun x => Num.decodeLE (x.2.2.readN a n))).getD 0
           if let some e := matchVar vb vo then symMem := (a, n, e) :: symMem
-  -- `out`: a run of input-dependent output octets, as one word (e.g. a `u16` index)
+  -- `out`: an input-dependent output octet, as an expression (e.g. a `u16` index's I % 256, I / 256)
   if ext && out then
     let dep := outBytes.filter fun b => !agreeMem B b && !(symMem.any fun (c, m, _) => c ≤ b && b < c + m)
-    for (a, e) in ranges dep do
-      let n := e - a
-      if n ≤ 8 then
+    for a in dep do
+      let n := 1
+      do
         let vb := Num.decodeLE (mB.readN a n)
         let vo := (others.toList).map fun (t2, k2) =>
           (t2[k2 + (B - k0)]?.map (fun x => Num.decodeLE (x.2.2.readN a n))).getD 0
@@ -2136,7 +2136,7 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
   let fin := (List.range 13).map (fun j => (tr[k0 + bs.getLast!]?.map (·.2.1[j]!.toNat)).getD 0)
   let outO := if out then (List.range fin[8]!).map (fin[7]! + ·) else []
   let whole ← analyzeSeg P tr others otherPs k0 bs.head! bs.getLast! out baseP true []
-    (regsWritten cx (k0 + bs.head!) (k0 + bs.getLast!)) true (opts.contains "words")
+    (regsWritten cx (k0 + bs.head!) (k0 + bs.getLast!)) true (opts.contains "words") (half := cx.wild && out)
   let unch : List Nat := if frame then (List.range 13).filter (fun j => whole.regPost.any (· == (j, none))) else []
   let mut needR : List Nat := (if out then [0, 7, 8] else []) ++
     (if frame then whole.regPost.filterMap (fun (j, v) => v.map (fun _ => j)) ++ whole.symPost.map (·.1) else [])
@@ -2291,7 +2291,7 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
     for a in o do
       if (octAt bs[k]! a).isNone then throw (IO.userError s!"cut {k}: octet {a} there is input-dependent")
   let mut st := header "The state at each cut." ++ s!"
-import PVM.Logic.Chase{if cx.extraSimp.isEmpty then "" else "\nimport PVM.Logic.Words"}{if hasGrow then "\nimport JAM.Theorems.GrowHeap" else ""}
+import PVM.Logic.Chase{if cx.extraSimp.isEmpty && !(cx.wild && out) then "" else "\nimport PVM.Logic.Words"}{if hasGrow then "\nimport JAM.Theorems.GrowHeap" else ""}
 
 namespace Services.{NS}.{name}
 
@@ -2407,7 +2407,7 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
       sx := sx ++ s!"\n    exact FreeStepsH.refl\n  case post =>\n    refine ⟨?regs, ?mem, ?frame, ?rd, ?wr{hpH}⟩"
     else
       sx := sx ++ s!"\n    exact FreeStepsH.refl\n  case post =>\n    refine ⟨?regs, ?mem, ?smem, ?frame, ?rd, ?wr{hpH}⟩"
-      sx := sx ++ "\n    case smem =>\n      " ++ (if info.symMem.length > 1 then "refine ⟨" ++ ", ".intercalate (info.symMem.map fun _ => "?_") ++ "⟩ <;>\n      " else "") ++ "simp (disch := pvm_arith) only [PVM.Memory.readN_writeN_same, PVM.Memory.readN_writeN_disjoint,\n        PVM.Num.length_encodeLE, List.length_cons, List.length_nil, PVM.two32]"
+      sx := sx ++ "\n    case smem =>\n      " ++ (if info.symMem.length > 1 then "refine ⟨" ++ ", ".intercalate (info.symMem.map fun _ => "?_") ++ "⟩ <;>\n      " else "") ++ "simp (disch := pvm_arith) only [PVM.Memory.readN_writeN_same, PVM.Memory.readN_writeN_disjoint,\n        PVM.Num.length_encodeLE, List.length_cons, List.length_nil, PVM.two32" ++ (if cx.wild && out then ", PVM.readN_writeN_encodeLE2_hi, PVM.readN_writeN_encodeLE2_lo]\n      all_goals first | (congr 1; split <;> omega) | simp only [PVM.Num.encodeLE, Nat.mod_mod, Nat.zero_div, PVM.ofNat_mod256]" else "]")
     sx := sx ++ s!"\n    case regs =>\n      simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,\n        PVM.getD_some', List.lookup_nil, Option.getD_none, and_self, and_true, true_and{if regA == "" then "" else ", " ++ regA}{if hasGrow then ", setR7, PVM.set_regsNF, PVM.insertReg" else ""}]{if cx.wild then "\n      all_goals (try simp only [Nat.div_div_eq_div_mul, Nat.reduceMul])\n      all_goals (try (congr 1; split <;> omega))" else ""}"
     sx := sx ++ s!"\n    case mem =>\n      try and_intros\n      all_goals simp (disch := pvm_arith) only [PVM.Memory.read_writeN, PVM.reduceEncodeLE, PVM.Num.length_encodeLE,\n        List.length_cons, List.length_nil, PVM.two32, Nat.reduceAdd, Nat.reduceSub, Nat.reduceLeDiff,\n        Nat.reduceLT, and_true, true_and, and_false, false_and, ↓reduceIte, List.getElem!_cons_zero,\n        List.getElem!_cons_succ, UInt8.reduceOfNat, and_self, PVM.Num.encodeLE{if hasGrow then ", PVM.Memory.read_setPages" else ""}{if hasHost then ", hpar, Params.full_encode, List.drop_zero, List.take_of_length_le" else ""}] <;> chase_octet"
     sx := sx ++ s!"\n    case frame =>\n      intro a ha\n      simp only [Bool.and_eq_true, decide_eq_true_eq, Bool.not_eq_true', decide_eq_false_iff_not,\n        not_and, Nat.not_lt] at ha\n      simp (disch := pvm_arith) only [PVM.Memory.read_writeN_disjoint, PVM.Num.length_encodeLE,\n        List.length_cons, List.length_nil, PVM.two32{if hasGrow then ", PVM.Memory.read_setPages" else ""}]"

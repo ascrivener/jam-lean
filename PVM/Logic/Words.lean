@@ -229,6 +229,10 @@ theorem read_write_ne' (μ : Memory) (a c : Nat) (b : UInt8) (h : c ≠ a) (ha :
     (hc : c < 4294967296) : (μ.write a b).read c = μ.read c :=
   Memory.read_write_of_ne μ b (by simp only [two32]; rw [Nat.mod_eq_of_lt ha, Nat.mod_eq_of_lt hc]; omega)
 
+theorem ofNat_mod256 (x : Nat) : UInt8.ofNat (x % 256) = UInt8.ofNat x := by
+  apply UInt8.toNat.inj
+  simp [UInt8.toNat_ofNat]
+
 theorem read_congr_addr (μ : Memory) (a b : Nat) (h : a = b) : μ.read a = μ.read b := by rw [h]
 
 theorem ofNat_eq_iff (e : Nat) (b : UInt8) : UInt8.ofNat e = b ↔ e % 256 = b.toNat := by
@@ -277,6 +281,18 @@ theorem readN_drop (μ : Memory) (a n m : Nat) : (μ.readN a n).drop m = μ.read
   · intro j h1 h2
     simp only [List.getElem_drop, Memory.readN, List.getElem_map, List.getElem_range, Nat.add_assoc]
 
+/-- The high octet of a stored 2-octet word. -/
+theorem readN_writeN_encodeLE2_hi (μ : Memory) (a b v : Nat) (h : b = a + 1) :
+    (μ.writeN a (Num.encodeLE 2 v)).readN b 1 = Num.encodeLE 1 (v / 256) := by
+  subst h
+  have h1 := Memory.readN_writeN_same μ a 2 (Num.encodeLE 2 v) (by simp [Num.length_encodeLE])
+    (by simp [two32])
+  have h2 := readN_drop (μ.writeN a (Num.encodeLE 2 v)) a 2 1
+  rw [h1] at h2
+  rw [show a + 1 = a + 1 from rfl, show (1 : Nat) = 2 - 1 from rfl, ← h2,
+    show (2 : Nat) = 1 + 1 from rfl, Num.encodeLE_split 1 1 v]
+  simp [Num.encodeLE]
+
 theorem readN_take (μ : Memory) (a n m : Nat) (h : m ≤ n) : (μ.readN a n).take m = μ.readN a m := by
   apply List.ext_getElem
   · simp [Memory.length_readN]; omega
@@ -288,6 +304,17 @@ end PVM
 namespace PVM
 
 open Num Exec
+
+/-- The low octet of a stored 2-octet word. -/
+theorem readN_writeN_encodeLE2_lo (μ : Memory) (a b v : Nat) (h : b = a) :
+    (μ.writeN a (Num.encodeLE 2 v)).readN b 1 = Num.encodeLE 1 (v % 256) := by
+  subst b
+  have h1 := Memory.readN_writeN_same μ a 2 (Num.encodeLE 2 v) (by simp [Num.length_encodeLE])
+    (by simp [two32])
+  have h2 := readN_take (μ.writeN a (Num.encodeLE 2 v)) a 2 1 (by omega)
+  rw [h1] at h2
+  rw [← h2]
+  simp [Num.encodeLE]
 
 /-- `load_ind_i8`'s sign extension, folded as `sx8` . -/
 theorem loadI8_sx8 (b : UInt8) :

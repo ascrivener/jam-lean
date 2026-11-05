@@ -342,6 +342,22 @@ with host calls for storage, service creation and transfers.
   `memcpy_small_regs` (`FreeStepsH.bind_ex`), and continues from the return with the registers
   it guarantees. Bootstrap's prologue makes 31 `memcpy` calls before it reads its arguments
   (step 3455); 29 of them are under 16 octets.
+* **Refine on an empty payload** (`Services/Bootstrap/PsiREmpty.lean`, `psiR_empty`): for every
+  c < 2^16, i < 2^16 and service id < 2^32, Ψ_R's result is ☇ (panic) or ∞. The decode of
+  `Instructions` fails and the service's `unwrap` traps at 6377.
+* **Refine on an empty instruction list** (`Services/Bootstrap/NoInstr.lean`, `psiR_noinstr`): for
+  every c < 2^16, i < 2^16, service id < 2^32 and 32-octet salt, with the payload
+  ℰ(`Instructions { instructions: [], salt }`) = [0] ⌢ salt, Ψ_R's result is
+  ℰ(`BootstrapWorkOutput { instructions: [], work_item_index: i }`) = [0] ⌢ ℰ₂(i), or ∞. The run
+  is composed as follows:
+  * `NoInstrArgs` covers the prefix and the argument decodes.
+  * `NoInstrHead` copies the payload to the heap and reads the hash.
+  * `NoInstrTail1` … `NoInstrTail8` handle the log of s; each one is generated for a different
+    number of hex digits of s.
+  * `NoInstrFinish` reads the salt, encodes the output and halts.
+
+  The generator's `out` mode states each output octet that depends on the input as an expression
+  in it (i mod 256 and i / 256 here).
 
 ## Reasoning about programs (`PVM/Logic/`)
 

@@ -82,6 +82,8 @@ structure Svc where
   segClass : List (Nat × Nat × Nat × List UInt8)
   emptyClass : List (Nat × Nat × Nat × List UInt8)
   postClass : List (Nat × Nat × Nat × List UInt8)
+  /-- More inputs whose paths' starting octets the prefix states (e.g. every hex digit of s). -/
+  pathExtra : List (Nat × Nat × Nat × List UInt8) := []
   fnRanges : List (Nat × Nat)
   /-- Whether `Services/<name>/Memcpy.lean` exists (`memcpy_small` at the head of `fnRanges`):
       the prefix then calls it for each `memcpy` of fewer than 16 octets instead of stepping. -/
@@ -131,6 +133,7 @@ def bootstrapSvc : Svc where
   postClass := [(5, 0, 9, 0 :: List.replicate 32 7), (200, 1, 70000, 0 :: List.replicate 32 255),
     (20000, 300, 3, 0 :: List.replicate 32 1)]
   fnRanges := [(68729, 69139), (31894, 32166), (58434, 58509), (32166, 32412)]
+  pathExtra := [(3, 0, 0x01234567, []), (3, 0, 0x89abcdef, [])]
   memcpySummary := true
   emptyCode := true
   lBound := 16777217
@@ -1389,7 +1392,8 @@ end Services.{NS}.CodeCheck
   -- the octets any traced run reads from the starting memory before writing them, on its whole path
   -- (the facts the theorems after the prefix chase back to the start)
   let mut pathAcc : Array (Nat × Nat) := #[]
-  let pathInputs := cx.svc.base :: cx.svc.emptyBase :: (cx.svc.segClass ++ cx.svc.segxExtra ++ cx.svc.emptyClass)
+  let pathInputs := cx.svc.base :: cx.svc.emptyBase :: (cx.svc.segClass ++ cx.svc.segxExtra ++ cx.svc.emptyClass ++
+    cx.svc.pathExtra)
   for (c2, i2, s2, y2) in pathInputs do
     let some t2 := traceFor code h acct Q c2 i2 s2 y2 | continue
     let mut w2 : Std.HashSet Nat := {}

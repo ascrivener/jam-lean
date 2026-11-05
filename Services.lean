@@ -13,6 +13,7 @@ import Services.Bootstrap.DecodeU32
 import Services.Bootstrap.DecodeU16
 import Services.Bootstrap.MemcpyBig
 import Services.Bootstrap.ReaderBig
+import Services.Bootstrap.BTail1
 import Services.Witness.Prefix
 import Services.Witness.EmptyTail
 import Services.Witness.Front1

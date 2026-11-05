@@ -1,4 +1,5 @@
 import Services.Bootstrap.DecodeU16
+import PVM.Logic.Chase
 
 /-!
 # `memcpy` in bootstrap for any length (in progress)
@@ -121,6 +122,96 @@ theorem bitwise_lt (f : Bool → Bool → Bool) (a b : Nat) : Exec.bitwise f a b
 theorem bitwise_mod64 (f : Bool → Bool → Bool) (a b : Nat) :
     Exec.bitwise f a b % 18446744073709551616 = Exec.bitwise f a b := Nat.mod_eq_of_lt (bitwise_lt f a b)
 
+/-- Or of an 8-aligned value and a value below 8 is their sum. -/
+theorem bitwise_or_low8 (X m : Nat) (hX : X % 8 = 0) (hm : m < 8) (hX64 : X < 18446744073709551616) :
+    Exec.bitwise (· || ·) X m = X + m := by
+  rw [bitwise_or_comm, show X = X / 8 * 2 ^ 3 by omega, bitwise_or_add m (X / 8) 3 (by omega) (by omega) (by omega)]
+  omega
+
+/-- A sign-extending load of n octets, folded (as `sx8`), so the sign is never split. -/
+def sxw (n v : Nat) : Nat := Exec.u64 (Num.signed n v)
+
+theorem loadI_fold (n v : Nat) : Exec.u64 (Num.signed n v) = sxw n v := rfl
+
+theorem sxw_mod (n v : Nat) (hn : n = 2 ∨ n = 4) (hv : v < 2 ^ (8 * n)) :
+    sxw n v % 256 ^ n = v % 256 ^ n := by
+  rcases hn with rfl | rfl <;>
+  · simp only [sxw, Exec.u64, Num.unsigned, Num.signed, Nat.reduceMul, Nat.reducePow, Nat.reduceSub] at *
+    split <;> omega
+
+/-- Storing the low n octets of a sign-extended n-octet value gives the value back. -/
+theorem encodeLE_sxw (n v : Nat) (hn : n = 2 ∨ n = 4) (hv : v < 2 ^ (8 * n)) :
+    Num.encodeLE n (sxw n v) = Num.encodeLE n v := by
+  rw [← encodeLE_mod n (sxw n v), ← encodeLE_mod n v, sxw_mod n v hn hv]
+
+/-- An n-octet load, folded so `pvm_simp` keeps it whole. -/
+def rdN (μ : Memory) (a n : Nat) : Nat := Num.decodeLE (μ.readN a n)
+
+theorem rdN_fold (μ : Memory) (a n : Nat) : Num.decodeLE (μ.readN a n) = rdN μ a n := rfl
+
+theorem rdN_lt (μ : Memory) (a n : Nat) : rdN μ a n < 256 ^ n := by
+  have := decodeLE_lt (μ.readN a n); rwa [Memory.length_readN] at this
+
+theorem rdN_lt64 (μ : Memory) (a : Nat) : rdN μ a 8 < 18446744073709551616 := rdN_lt μ a 8
+
+theorem encodeLE_rdN (μ : Memory) (a n : Nat) : Num.encodeLE n (rdN μ a n) = μ.readN a n := by
+  have := encodeLE_decodeLE (μ.readN a n); rwa [Memory.length_readN] at this
+
+theorem store_rd1 (μ : Memory) (a : Nat) :
+    [UInt8.ofNat (rdN μ a 1 % 18446744073709551616 % 256)] = μ.readN a 1 := by
+  have h := rdN_lt μ a 1
+  simp only [Nat.pow_one] at h
+  rw [Nat.mod_eq_of_lt (show rdN μ a 1 < 18446744073709551616 by omega), Nat.mod_eq_of_lt h,
+    ← encodeLE_rdN μ a 1]
+  simp [Num.encodeLE, Nat.mod_eq_of_lt h]
+
+theorem store_rd2 (μ : Memory) (a : Nat) :
+    Num.encodeLE 2 (sxw 2 (rdN μ a 2) % 18446744073709551616 % 65536) = μ.readN a 2 := by
+  have := rdN_lt μ a 2
+  have h := sxw_mod 2 (rdN μ a 2) (Or.inl rfl) (by simpa using this)
+  rw [← encodeLE_rdN μ a 2, ← encodeLE_mod 2 (sxw 2 (rdN μ a 2) % 18446744073709551616 % 65536),
+    ← encodeLE_mod 2 (rdN μ a 2)]
+  congr 1
+  simp only [Nat.reducePow] at h ⊢
+  rw [Nat.mod_mod_of_dvd _ (by decide), Nat.mod_mod_of_dvd _ (by decide)]
+  exact h
+
+theorem store_rd4 (μ : Memory) (a : Nat) :
+    Num.encodeLE 4 (sxw 4 (rdN μ a 4) % 18446744073709551616 % 4294967296) = μ.readN a 4 := by
+  have := rdN_lt μ a 4
+  have h := sxw_mod 4 (rdN μ a 4) (Or.inr rfl) (by simpa using this)
+  rw [← encodeLE_rdN μ a 4, ← encodeLE_mod 4 (sxw 4 (rdN μ a 4) % 18446744073709551616 % 4294967296),
+    ← encodeLE_mod 4 (rdN μ a 4)]
+  congr 1
+  simp only [Nat.reducePow] at h ⊢
+  rw [Nat.mod_mod_of_dvd _ (by decide), Nat.mod_mod_of_dvd _ (by decide)]
+  exact h
+
+theorem read_writeN_single (μ : Memory) (a c : Nat) (b : UInt8) (h : c = a) :
+    (μ.writeN a [b]).read c = b := by
+  subst h; simp [Memory.writeN, Memory.read, Memory.write]
+
+theorem readN_congr2 {μ μ' : Memory} {a b n : Nat} (h : ∀ j, j < n → μ'.read (a + j) = μ.read (b + j)) :
+    μ'.readN a n = μ.readN b n := by
+  simp only [Memory.readN]
+  apply List.map_congr_left
+  intro j hj
+  exact h j (List.mem_range.mp hj)
+
+theorem read_write_eq' (μ : Memory) (a c : Nat) (b : UInt8) (h : c = a) : (μ.write a b).read c = b := by
+  subst h; simp [Memory.read, Memory.write]
+
+theorem read_write_ne' (μ : Memory) (a c : Nat) (b : UInt8) (h : c ≠ a) (ha : a < 4294967296)
+    (hc : c < 4294967296) : (μ.write a b).read c = μ.read c :=
+  Memory.read_write_of_ne μ b (by simp only [two32]; rw [Nat.mod_eq_of_lt ha, Nat.mod_eq_of_lt hc]; omega)
+
+theorem read_congr_addr (μ : Memory) (a b : Nat) (h : a = b) : μ.read a = μ.read b := by rw [h]
+
+theorem ofNat_eq_iff (e : Nat) (b : UInt8) : UInt8.ofNat e = b ↔ e % 256 = b.toNat := by
+  constructor
+  · intro h; subst h; simp [UInt8.toNat_ofNat]
+  · intro h; apply UInt8.toNat_inj.mp; rw [UInt8.toNat_ofNat']; exact h
+
 theorem readN_drop (μ : Memory) (a n m : Nat) : (μ.readN a n).drop m = μ.readN (a + m) (n - m) := by
   apply List.ext_getElem
   · simp [Memory.length_readN]
@@ -136,6 +227,41 @@ theorem readN_take (μ : Memory) (a n m : Nat) (h : m ≤ n) : (μ.readN a n).ta
 end PVM
 
 namespace Services.Bootstrap
+
+/-- Octets of a word assembled from copies: `μ'.readN a n = μ.readN b n` index by index, each read
+    stepping back through the writes (copies by their source, others by disjointness). -/
+macro "copy_bytes" : tactic => `(tactic| (
+  apply PVM.readN_congr2
+  intro j hj
+  have : j = 0 ∨ j = 1 ∨ j = 2 ∨ j = 3 ∨ j = 4 ∨ j = 5 ∨ j = 6 ∨ j = 7 := by omega
+  obtain h | h | h | h | h | h | h | h := this <;> subst h <;>
+  (try omega) <;>
+  (try simp (disch := omega) only [PVM.Memory.writeN_cons, PVM.Memory.writeN_nil, PVM.read_write_eq',
+    PVM.read_write_ne']) <;>
+  (try (apply PVM.read_congr_addr; omega))))
+
+open Lean Elab Tactic Meta in
+/-- `pvm_go [hs]`: step a `FreeStepsH p R i … i' …` goal one decoded instruction at a time
+    (`d_i` from the code facts, each step's equation by `pvm_simp [hs]`) until the pc is `i'`,
+    then close it with `FreeStepsH.refl`. -/
+elab "pvm_go" "[" hs:Lean.Parser.Tactic.simpLemma,* "]" : tactic => do
+  for _ in [0:400] do
+    let g ← getMainGoal
+    let t ← instantiateMVars (← g.getType)
+    let args := t.getAppArgs
+    unless t.getAppFn.constName? == some ``PVM.FreeStepsH && args.size ≥ 12 do
+      throwError "pvm_go: not a FreeStepsH goal"
+    let some i := (← whnfR args[3]!).nat? | throwError "pvm_go: symbolic pc {args[3]!}"
+    let j? := (← instantiateMVars args[7]!).nat?
+    if j? == some i then
+      evalTactic (← `(tactic| first | exact PVM.FreeStepsH.refl | exact PVM.FreeStepsH.refl.mono (by omega)))
+      return
+    let nm := mkIdent (Name.mkSimple s!"d_{i}")
+    let pId := mkIdent `p
+    let PId := mkIdent `P
+    evalTactic (← `(tactic| apply PVM.FreeStepsH.step_decode ($nm (p := $pId) (P := $PId))))
+    evalTactic (← `(tactic| · pvm_simp [$hs,*]))
+  throwError "pvm_go: too many steps"
 
 open PVM Services.Bootstrap.Code
 
@@ -515,5 +641,341 @@ theorem memcpy_shift_loop {p : ByteArray} {P : Program} [HasCode p P] (x : X) (m
       · rw [k11]; congr 1; omega
       · rw [k10]; exact g10.trans h10.symm
       · rw [e2 a ha0 (by omega) ha2, e1 a ha0 (by omega) ha2]
+
+/-- **The misaligned path's head**, m = 7: 68872 … 68988 assemble the source's first 8 − m octets
+    into the temporary word at sp + 16 and store the splice shift 64 − 8m at sp, then enter the loop. -/
+theorem memcpy_mis_head_7 {p : ByteArray} {P : Program} [HasCode p P] (ω : Regs) (μ : Memory) (x : X)
+    (A0 d W sp : Nat) (h0 : ω[0] = UInt64.ofNat (A0 + 7)) (h2 : ω[2] = UInt64.ofNat 7)
+    (h10 : ω[10] = UInt64.ofNat (d + W)) (h11 : ω[11] = UInt64.ofNat d) (h12 : ω[12] = UInt64.ofNat W)
+    (h1 : ω[1] = UInt64.ofNat sp) (hW : 16 ≤ W) (hsp : sp % 8 = 0)
+    (hb : A0 + 16 < 4294967296) (hd : d + W < 4294967296) (hs : sp + 24 < 4294967296)
+    (hsA : sp + 24 ≤ A0 ∨ A0 + 16 ≤ sp)
+    (hr : ∀ a, A0 + 7 ≤ a → a < A0 + 8 → μ.readable a = true)
+    (hrs : ∀ a, sp ≤ a → a < sp + 24 → μ.writable a = true) :
+    ∃ ω' μ' pw, FreeStepsH p R 68872 ω μ x 68989 ω' μ' x 30 ∧
+      ω'[4] = UInt64.ofNat pw ∧ pw < 18446744073709551616 ∧
+      (Num.encodeLE 8 pw).drop 7 = μ.readN (A0 + 7) (8 - 7) ∧
+      ω'[6] = UInt64.ofNat A0 ∧ ω'[3] = UInt64.ofNat (8 * 7) ∧ ω'[11] = UInt64.ofNat d ∧
+      ω'[10] = UInt64.ofNat (d + W) ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[0] = UInt64.ofNat (A0 + 7) ∧
+      ω'[2] = UInt64.ofNat 7 ∧ ω'[12] = UInt64.ofNat W ∧
+      (∀ j : Fin 13, j.val ∉ [3, 4, 5, 6, 8] → ω'[j] = ω[j]) ∧
+      μ'.readN sp 8 = Num.encodeLE 8 (64 - 8 * 7) ∧
+      (∀ a, a < 4294967296 → (a < sp ∨ sp + 24 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have hrs' : ∀ a, sp ≤ a → a < sp + 24 → μ.readable a = true := fun a h1 h2 => Memory.readable_of_writable (hrs a h1 h2)
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?pw, ?run, ?post⟩
+  case run =>
+    pvm_go [h0, h2, h10, h11, h12, h1, hrs, hrs', hr, bitwise_or_low8, ↓rdN_fold, ↓loadI_fold, store_rd1, store_rd2, store_rd4, rdN_lt64]
+  case post =>
+    refine ⟨?e4, ?rest⟩
+    case e4 =>
+      simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some']
+      rfl
+    refine ⟨rdN_lt64 _ _, ?drop, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun j hj => ?fr, ?T, fun a ha0 ha1 => ?mf,
+      fun a => ?rd, fun a => ?wr⟩
+    case drop =>
+      rw [encodeLE_rdN, readN_drop]
+      copy_bytes
+    case fr =>
+      simp only [List.mem_cons, List.not_mem_nil, or_false, not_or] at hj
+      obtain ⟨g1, g2, g3, g4, g5⟩ := hj
+      simp only [Fin.getElem_fin]
+      rw [PVM.getElem_regsNF _ _ _ j.isLt, PVM.getElem_regsNF _ _ _ j.isLt]
+      simp [PVM.lookup_cons_nat, g1, g2, g3, g4, g5]
+    all_goals simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+      ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, h0, h1, h2, h10, h11, h12,
+      PVM.Memory.readN_writeN_same, PVM.Memory.read_writeN_disjoint,
+      PVM.Memory.readable_writeN, PVM.Memory.writable_writeN, PVM.Num.length_encodeLE, List.length_cons,
+      List.length_nil, PVM.two32, Nat.reduceMul, Nat.reduceSub]
+    all_goals rfl
+
+/-- **The misaligned path's head**, m = 1: 68872 … 68988 assemble the source's first 8 − m octets
+    into the temporary word at sp + 16 and store the splice shift 64 − 8m at sp, then enter the loop. -/
+theorem memcpy_mis_head_1 {p : ByteArray} {P : Program} [HasCode p P] (ω : Regs) (μ : Memory) (x : X)
+    (A0 d W sp : Nat) (h0 : ω[0] = UInt64.ofNat (A0 + 1)) (h2 : ω[2] = UInt64.ofNat 1)
+    (h10 : ω[10] = UInt64.ofNat (d + W)) (h11 : ω[11] = UInt64.ofNat d) (h12 : ω[12] = UInt64.ofNat W)
+    (h1 : ω[1] = UInt64.ofNat sp) (hW : 16 ≤ W) (hsp : sp % 8 = 0)
+    (hb : A0 + 16 < 4294967296) (hd : d + W < 4294967296) (hs : sp + 24 < 4294967296)
+    (hsA : sp + 24 ≤ A0 ∨ A0 + 16 ≤ sp)
+    (hr : ∀ a, A0 + 1 ≤ a → a < A0 + 8 → μ.readable a = true)
+    (hrs : ∀ a, sp ≤ a → a < sp + 24 → μ.writable a = true) :
+    ∃ ω' μ' pw, FreeStepsH p R 68872 ω μ x 68989 ω' μ' x 40 ∧
+      ω'[4] = UInt64.ofNat pw ∧ pw < 18446744073709551616 ∧
+      (Num.encodeLE 8 pw).drop 1 = μ.readN (A0 + 1) (8 - 1) ∧
+      ω'[6] = UInt64.ofNat A0 ∧ ω'[3] = UInt64.ofNat (8 * 1) ∧ ω'[11] = UInt64.ofNat d ∧
+      ω'[10] = UInt64.ofNat (d + W) ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[0] = UInt64.ofNat (A0 + 1) ∧
+      ω'[2] = UInt64.ofNat 1 ∧ ω'[12] = UInt64.ofNat W ∧
+      (∀ j : Fin 13, j.val ∉ [3, 4, 5, 6, 8] → ω'[j] = ω[j]) ∧
+      μ'.readN sp 8 = Num.encodeLE 8 (64 - 8 * 1) ∧
+      (∀ a, a < 4294967296 → (a < sp ∨ sp + 24 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have hrs' : ∀ a, sp ≤ a → a < sp + 24 → μ.readable a = true := fun a h1 h2 => Memory.readable_of_writable (hrs a h1 h2)
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?pw, ?run, ?post⟩
+  case run =>
+    pvm_go [h0, h2, h10, h11, h12, h1, hrs, hrs', hr, bitwise_or_low8, ↓rdN_fold, ↓loadI_fold, store_rd1, store_rd2, store_rd4, rdN_lt64]
+  case post =>
+    refine ⟨?e4, ?rest⟩
+    case e4 =>
+      simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some']
+      rfl
+    refine ⟨rdN_lt64 _ _, ?drop, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun j hj => ?fr, ?T, fun a ha0 ha1 => ?mf,
+      fun a => ?rd, fun a => ?wr⟩
+    case drop =>
+      rw [encodeLE_rdN, readN_drop]
+      copy_bytes
+    case fr =>
+      simp only [List.mem_cons, List.not_mem_nil, or_false, not_or] at hj
+      obtain ⟨g1, g2, g3, g4, g5⟩ := hj
+      simp only [Fin.getElem_fin]
+      rw [PVM.getElem_regsNF _ _ _ j.isLt, PVM.getElem_regsNF _ _ _ j.isLt]
+      simp [PVM.lookup_cons_nat, g1, g2, g3, g4, g5]
+    all_goals simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+      ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, h0, h1, h2, h10, h11, h12,
+      PVM.Memory.readN_writeN_same, PVM.Memory.read_writeN_disjoint,
+      PVM.Memory.readable_writeN, PVM.Memory.writable_writeN, PVM.Num.length_encodeLE, List.length_cons,
+      List.length_nil, PVM.two32, Nat.reduceMul, Nat.reduceSub]
+    all_goals rfl
+
+/-- **The misaligned path's head**, m = 2: 68872 … 68988 assemble the source's first 8 − m octets
+    into the temporary word at sp + 16 and store the splice shift 64 − 8m at sp, then enter the loop. -/
+theorem memcpy_mis_head_2 {p : ByteArray} {P : Program} [HasCode p P] (ω : Regs) (μ : Memory) (x : X)
+    (A0 d W sp : Nat) (h0 : ω[0] = UInt64.ofNat (A0 + 2)) (h2 : ω[2] = UInt64.ofNat 2)
+    (h10 : ω[10] = UInt64.ofNat (d + W)) (h11 : ω[11] = UInt64.ofNat d) (h12 : ω[12] = UInt64.ofNat W)
+    (h1 : ω[1] = UInt64.ofNat sp) (hW : 16 ≤ W) (hsp : sp % 8 = 0)
+    (hb : A0 + 16 < 4294967296) (hd : d + W < 4294967296) (hs : sp + 24 < 4294967296)
+    (hsA : sp + 24 ≤ A0 ∨ A0 + 16 ≤ sp)
+    (hr : ∀ a, A0 + 2 ≤ a → a < A0 + 8 → μ.readable a = true)
+    (hrs : ∀ a, sp ≤ a → a < sp + 24 → μ.writable a = true) :
+    ∃ ω' μ' pw, FreeStepsH p R 68872 ω μ x 68989 ω' μ' x 40 ∧
+      ω'[4] = UInt64.ofNat pw ∧ pw < 18446744073709551616 ∧
+      (Num.encodeLE 8 pw).drop 2 = μ.readN (A0 + 2) (8 - 2) ∧
+      ω'[6] = UInt64.ofNat A0 ∧ ω'[3] = UInt64.ofNat (8 * 2) ∧ ω'[11] = UInt64.ofNat d ∧
+      ω'[10] = UInt64.ofNat (d + W) ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[0] = UInt64.ofNat (A0 + 2) ∧
+      ω'[2] = UInt64.ofNat 2 ∧ ω'[12] = UInt64.ofNat W ∧
+      (∀ j : Fin 13, j.val ∉ [3, 4, 5, 6, 8] → ω'[j] = ω[j]) ∧
+      μ'.readN sp 8 = Num.encodeLE 8 (64 - 8 * 2) ∧
+      (∀ a, a < 4294967296 → (a < sp ∨ sp + 24 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have hrs' : ∀ a, sp ≤ a → a < sp + 24 → μ.readable a = true := fun a h1 h2 => Memory.readable_of_writable (hrs a h1 h2)
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?pw, ?run, ?post⟩
+  case run =>
+    pvm_go [h0, h2, h10, h11, h12, h1, hrs, hrs', hr, bitwise_or_low8, ↓rdN_fold, ↓loadI_fold, store_rd1, store_rd2, store_rd4, rdN_lt64]
+  case post =>
+    refine ⟨?e4, ?rest⟩
+    case e4 =>
+      simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some']
+      rfl
+    refine ⟨rdN_lt64 _ _, ?drop, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun j hj => ?fr, ?T, fun a ha0 ha1 => ?mf,
+      fun a => ?rd, fun a => ?wr⟩
+    case drop =>
+      rw [encodeLE_rdN, readN_drop]
+      copy_bytes
+    case fr =>
+      simp only [List.mem_cons, List.not_mem_nil, or_false, not_or] at hj
+      obtain ⟨g1, g2, g3, g4, g5⟩ := hj
+      simp only [Fin.getElem_fin]
+      rw [PVM.getElem_regsNF _ _ _ j.isLt, PVM.getElem_regsNF _ _ _ j.isLt]
+      simp [PVM.lookup_cons_nat, g1, g2, g3, g4, g5]
+    all_goals simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+      ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, h0, h1, h2, h10, h11, h12,
+      PVM.Memory.readN_writeN_same, PVM.Memory.read_writeN_disjoint,
+      PVM.Memory.readable_writeN, PVM.Memory.writable_writeN, PVM.Num.length_encodeLE, List.length_cons,
+      List.length_nil, PVM.two32, Nat.reduceMul, Nat.reduceSub]
+    all_goals rfl
+
+/-- **The misaligned path's head**, m = 3: 68872 … 68988 assemble the source's first 8 − m octets
+    into the temporary word at sp + 16 and store the splice shift 64 − 8m at sp, then enter the loop. -/
+theorem memcpy_mis_head_3 {p : ByteArray} {P : Program} [HasCode p P] (ω : Regs) (μ : Memory) (x : X)
+    (A0 d W sp : Nat) (h0 : ω[0] = UInt64.ofNat (A0 + 3)) (h2 : ω[2] = UInt64.ofNat 3)
+    (h10 : ω[10] = UInt64.ofNat (d + W)) (h11 : ω[11] = UInt64.ofNat d) (h12 : ω[12] = UInt64.ofNat W)
+    (h1 : ω[1] = UInt64.ofNat sp) (hW : 16 ≤ W) (hsp : sp % 8 = 0)
+    (hb : A0 + 16 < 4294967296) (hd : d + W < 4294967296) (hs : sp + 24 < 4294967296)
+    (hsA : sp + 24 ≤ A0 ∨ A0 + 16 ≤ sp)
+    (hr : ∀ a, A0 + 3 ≤ a → a < A0 + 8 → μ.readable a = true)
+    (hrs : ∀ a, sp ≤ a → a < sp + 24 → μ.writable a = true) :
+    ∃ ω' μ' pw, FreeStepsH p R 68872 ω μ x 68989 ω' μ' x 40 ∧
+      ω'[4] = UInt64.ofNat pw ∧ pw < 18446744073709551616 ∧
+      (Num.encodeLE 8 pw).drop 3 = μ.readN (A0 + 3) (8 - 3) ∧
+      ω'[6] = UInt64.ofNat A0 ∧ ω'[3] = UInt64.ofNat (8 * 3) ∧ ω'[11] = UInt64.ofNat d ∧
+      ω'[10] = UInt64.ofNat (d + W) ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[0] = UInt64.ofNat (A0 + 3) ∧
+      ω'[2] = UInt64.ofNat 3 ∧ ω'[12] = UInt64.ofNat W ∧
+      (∀ j : Fin 13, j.val ∉ [3, 4, 5, 6, 8] → ω'[j] = ω[j]) ∧
+      μ'.readN sp 8 = Num.encodeLE 8 (64 - 8 * 3) ∧
+      (∀ a, a < 4294967296 → (a < sp ∨ sp + 24 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have hrs' : ∀ a, sp ≤ a → a < sp + 24 → μ.readable a = true := fun a h1 h2 => Memory.readable_of_writable (hrs a h1 h2)
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?pw, ?run, ?post⟩
+  case run =>
+    pvm_go [h0, h2, h10, h11, h12, h1, hrs, hrs', hr, bitwise_or_low8, ↓rdN_fold, ↓loadI_fold, store_rd1, store_rd2, store_rd4, rdN_lt64]
+  case post =>
+    refine ⟨?e4, ?rest⟩
+    case e4 =>
+      simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some']
+      rfl
+    refine ⟨rdN_lt64 _ _, ?drop, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun j hj => ?fr, ?T, fun a ha0 ha1 => ?mf,
+      fun a => ?rd, fun a => ?wr⟩
+    case drop =>
+      rw [encodeLE_rdN, readN_drop]
+      copy_bytes
+    case fr =>
+      simp only [List.mem_cons, List.not_mem_nil, or_false, not_or] at hj
+      obtain ⟨g1, g2, g3, g4, g5⟩ := hj
+      simp only [Fin.getElem_fin]
+      rw [PVM.getElem_regsNF _ _ _ j.isLt, PVM.getElem_regsNF _ _ _ j.isLt]
+      simp [PVM.lookup_cons_nat, g1, g2, g3, g4, g5]
+    all_goals simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+      ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, h0, h1, h2, h10, h11, h12,
+      PVM.Memory.readN_writeN_same, PVM.Memory.read_writeN_disjoint,
+      PVM.Memory.readable_writeN, PVM.Memory.writable_writeN, PVM.Num.length_encodeLE, List.length_cons,
+      List.length_nil, PVM.two32, Nat.reduceMul, Nat.reduceSub]
+    all_goals rfl
+
+/-- **The misaligned path's head**, m = 4: 68872 … 68988 assemble the source's first 8 − m octets
+    into the temporary word at sp + 16 and store the splice shift 64 − 8m at sp, then enter the loop. -/
+theorem memcpy_mis_head_4 {p : ByteArray} {P : Program} [HasCode p P] (ω : Regs) (μ : Memory) (x : X)
+    (A0 d W sp : Nat) (h0 : ω[0] = UInt64.ofNat (A0 + 4)) (h2 : ω[2] = UInt64.ofNat 4)
+    (h10 : ω[10] = UInt64.ofNat (d + W)) (h11 : ω[11] = UInt64.ofNat d) (h12 : ω[12] = UInt64.ofNat W)
+    (h1 : ω[1] = UInt64.ofNat sp) (hW : 16 ≤ W) (hsp : sp % 8 = 0)
+    (hb : A0 + 16 < 4294967296) (hd : d + W < 4294967296) (hs : sp + 24 < 4294967296)
+    (hsA : sp + 24 ≤ A0 ∨ A0 + 16 ≤ sp)
+    (hr : ∀ a, A0 + 4 ≤ a → a < A0 + 8 → μ.readable a = true)
+    (hrs : ∀ a, sp ≤ a → a < sp + 24 → μ.writable a = true) :
+    ∃ ω' μ' pw, FreeStepsH p R 68872 ω μ x 68989 ω' μ' x 40 ∧
+      ω'[4] = UInt64.ofNat pw ∧ pw < 18446744073709551616 ∧
+      (Num.encodeLE 8 pw).drop 4 = μ.readN (A0 + 4) (8 - 4) ∧
+      ω'[6] = UInt64.ofNat A0 ∧ ω'[3] = UInt64.ofNat (8 * 4) ∧ ω'[11] = UInt64.ofNat d ∧
+      ω'[10] = UInt64.ofNat (d + W) ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[0] = UInt64.ofNat (A0 + 4) ∧
+      ω'[2] = UInt64.ofNat 4 ∧ ω'[12] = UInt64.ofNat W ∧
+      (∀ j : Fin 13, j.val ∉ [3, 4, 5, 6, 8] → ω'[j] = ω[j]) ∧
+      μ'.readN sp 8 = Num.encodeLE 8 (64 - 8 * 4) ∧
+      (∀ a, a < 4294967296 → (a < sp ∨ sp + 24 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have hrs' : ∀ a, sp ≤ a → a < sp + 24 → μ.readable a = true := fun a h1 h2 => Memory.readable_of_writable (hrs a h1 h2)
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?pw, ?run, ?post⟩
+  case run =>
+    pvm_go [h0, h2, h10, h11, h12, h1, hrs, hrs', hr, bitwise_or_low8, ↓rdN_fold, ↓loadI_fold, store_rd1, store_rd2, store_rd4, rdN_lt64]
+  case post =>
+    refine ⟨?e4, ?rest⟩
+    case e4 =>
+      simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some']
+      rfl
+    refine ⟨rdN_lt64 _ _, ?drop, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun j hj => ?fr, ?T, fun a ha0 ha1 => ?mf,
+      fun a => ?rd, fun a => ?wr⟩
+    case drop =>
+      rw [encodeLE_rdN, readN_drop]
+      copy_bytes
+    case fr =>
+      simp only [List.mem_cons, List.not_mem_nil, or_false, not_or] at hj
+      obtain ⟨g1, g2, g3, g4, g5⟩ := hj
+      simp only [Fin.getElem_fin]
+      rw [PVM.getElem_regsNF _ _ _ j.isLt, PVM.getElem_regsNF _ _ _ j.isLt]
+      simp [PVM.lookup_cons_nat, g1, g2, g3, g4, g5]
+    all_goals simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+      ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, h0, h1, h2, h10, h11, h12,
+      PVM.Memory.readN_writeN_same, PVM.Memory.read_writeN_disjoint,
+      PVM.Memory.readable_writeN, PVM.Memory.writable_writeN, PVM.Num.length_encodeLE, List.length_cons,
+      List.length_nil, PVM.two32, Nat.reduceMul, Nat.reduceSub]
+    all_goals rfl
+
+/-- **The misaligned path's head**, m = 5: 68872 … 68988 assemble the source's first 8 − m octets
+    into the temporary word at sp + 16 and store the splice shift 64 − 8m at sp, then enter the loop. -/
+theorem memcpy_mis_head_5 {p : ByteArray} {P : Program} [HasCode p P] (ω : Regs) (μ : Memory) (x : X)
+    (A0 d W sp : Nat) (h0 : ω[0] = UInt64.ofNat (A0 + 5)) (h2 : ω[2] = UInt64.ofNat 5)
+    (h10 : ω[10] = UInt64.ofNat (d + W)) (h11 : ω[11] = UInt64.ofNat d) (h12 : ω[12] = UInt64.ofNat W)
+    (h1 : ω[1] = UInt64.ofNat sp) (hW : 16 ≤ W) (hsp : sp % 8 = 0)
+    (hb : A0 + 16 < 4294967296) (hd : d + W < 4294967296) (hs : sp + 24 < 4294967296)
+    (hsA : sp + 24 ≤ A0 ∨ A0 + 16 ≤ sp)
+    (hr : ∀ a, A0 + 5 ≤ a → a < A0 + 8 → μ.readable a = true)
+    (hrs : ∀ a, sp ≤ a → a < sp + 24 → μ.writable a = true) :
+    ∃ ω' μ' pw, FreeStepsH p R 68872 ω μ x 68989 ω' μ' x 40 ∧
+      ω'[4] = UInt64.ofNat pw ∧ pw < 18446744073709551616 ∧
+      (Num.encodeLE 8 pw).drop 5 = μ.readN (A0 + 5) (8 - 5) ∧
+      ω'[6] = UInt64.ofNat A0 ∧ ω'[3] = UInt64.ofNat (8 * 5) ∧ ω'[11] = UInt64.ofNat d ∧
+      ω'[10] = UInt64.ofNat (d + W) ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[0] = UInt64.ofNat (A0 + 5) ∧
+      ω'[2] = UInt64.ofNat 5 ∧ ω'[12] = UInt64.ofNat W ∧
+      (∀ j : Fin 13, j.val ∉ [3, 4, 5, 6, 8] → ω'[j] = ω[j]) ∧
+      μ'.readN sp 8 = Num.encodeLE 8 (64 - 8 * 5) ∧
+      (∀ a, a < 4294967296 → (a < sp ∨ sp + 24 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have hrs' : ∀ a, sp ≤ a → a < sp + 24 → μ.readable a = true := fun a h1 h2 => Memory.readable_of_writable (hrs a h1 h2)
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?pw, ?run, ?post⟩
+  case run =>
+    pvm_go [h0, h2, h10, h11, h12, h1, hrs, hrs', hr, bitwise_or_low8, ↓rdN_fold, ↓loadI_fold, store_rd1, store_rd2, store_rd4, rdN_lt64]
+  case post =>
+    refine ⟨?e4, ?rest⟩
+    case e4 =>
+      simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some']
+      rfl
+    refine ⟨rdN_lt64 _ _, ?drop, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun j hj => ?fr, ?T, fun a ha0 ha1 => ?mf,
+      fun a => ?rd, fun a => ?wr⟩
+    case drop =>
+      rw [encodeLE_rdN, readN_drop]
+      copy_bytes
+    case fr =>
+      simp only [List.mem_cons, List.not_mem_nil, or_false, not_or] at hj
+      obtain ⟨g1, g2, g3, g4, g5⟩ := hj
+      simp only [Fin.getElem_fin]
+      rw [PVM.getElem_regsNF _ _ _ j.isLt, PVM.getElem_regsNF _ _ _ j.isLt]
+      simp [PVM.lookup_cons_nat, g1, g2, g3, g4, g5]
+    all_goals simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+      ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, h0, h1, h2, h10, h11, h12,
+      PVM.Memory.readN_writeN_same, PVM.Memory.read_writeN_disjoint,
+      PVM.Memory.readable_writeN, PVM.Memory.writable_writeN, PVM.Num.length_encodeLE, List.length_cons,
+      List.length_nil, PVM.two32, Nat.reduceMul, Nat.reduceSub]
+    all_goals rfl
+
+/-- **The misaligned path's head**, m = 6: 68872 … 68988 assemble the source's first 8 − m octets
+    into the temporary word at sp + 16 and store the splice shift 64 − 8m at sp, then enter the loop. -/
+theorem memcpy_mis_head_6 {p : ByteArray} {P : Program} [HasCode p P] (ω : Regs) (μ : Memory) (x : X)
+    (A0 d W sp : Nat) (h0 : ω[0] = UInt64.ofNat (A0 + 6)) (h2 : ω[2] = UInt64.ofNat 6)
+    (h10 : ω[10] = UInt64.ofNat (d + W)) (h11 : ω[11] = UInt64.ofNat d) (h12 : ω[12] = UInt64.ofNat W)
+    (h1 : ω[1] = UInt64.ofNat sp) (hW : 16 ≤ W) (hsp : sp % 8 = 0)
+    (hb : A0 + 16 < 4294967296) (hd : d + W < 4294967296) (hs : sp + 24 < 4294967296)
+    (hsA : sp + 24 ≤ A0 ∨ A0 + 16 ≤ sp)
+    (hr : ∀ a, A0 + 6 ≤ a → a < A0 + 8 → μ.readable a = true)
+    (hrs : ∀ a, sp ≤ a → a < sp + 24 → μ.writable a = true) :
+    ∃ ω' μ' pw, FreeStepsH p R 68872 ω μ x 68989 ω' μ' x 40 ∧
+      ω'[4] = UInt64.ofNat pw ∧ pw < 18446744073709551616 ∧
+      (Num.encodeLE 8 pw).drop 6 = μ.readN (A0 + 6) (8 - 6) ∧
+      ω'[6] = UInt64.ofNat A0 ∧ ω'[3] = UInt64.ofNat (8 * 6) ∧ ω'[11] = UInt64.ofNat d ∧
+      ω'[10] = UInt64.ofNat (d + W) ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[0] = UInt64.ofNat (A0 + 6) ∧
+      ω'[2] = UInt64.ofNat 6 ∧ ω'[12] = UInt64.ofNat W ∧
+      (∀ j : Fin 13, j.val ∉ [3, 4, 5, 6, 8] → ω'[j] = ω[j]) ∧
+      μ'.readN sp 8 = Num.encodeLE 8 (64 - 8 * 6) ∧
+      (∀ a, a < 4294967296 → (a < sp ∨ sp + 24 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have hrs' : ∀ a, sp ≤ a → a < sp + 24 → μ.readable a = true := fun a h1 h2 => Memory.readable_of_writable (hrs a h1 h2)
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?pw, ?run, ?post⟩
+  case run =>
+    pvm_go [h0, h2, h10, h11, h12, h1, hrs, hrs', hr, bitwise_or_low8, ↓rdN_fold, ↓loadI_fold, store_rd1, store_rd2, store_rd4, rdN_lt64]
+  case post =>
+    refine ⟨?e4, ?rest⟩
+    case e4 =>
+      simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some']
+      rfl
+    refine ⟨rdN_lt64 _ _, ?drop, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun j hj => ?fr, ?T, fun a ha0 ha1 => ?mf,
+      fun a => ?rd, fun a => ?wr⟩
+    case drop =>
+      rw [encodeLE_rdN, readN_drop]
+      copy_bytes
+    case fr =>
+      simp only [List.mem_cons, List.not_mem_nil, or_false, not_or] at hj
+      obtain ⟨g1, g2, g3, g4, g5⟩ := hj
+      simp only [Fin.getElem_fin]
+      rw [PVM.getElem_regsNF _ _ _ j.isLt, PVM.getElem_regsNF _ _ _ j.isLt]
+      simp [PVM.lookup_cons_nat, g1, g2, g3, g4, g5]
+    all_goals simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+      ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, h0, h1, h2, h10, h11, h12,
+      PVM.Memory.readN_writeN_same, PVM.Memory.read_writeN_disjoint,
+      PVM.Memory.readable_writeN, PVM.Memory.writable_writeN, PVM.Num.length_encodeLE, List.length_cons,
+      List.length_nil, PVM.two32, Nat.reduceMul, Nat.reduceSub]
+    all_goals rfl
 
 end Services.Bootstrap

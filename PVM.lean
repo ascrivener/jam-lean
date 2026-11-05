@@ -25,6 +25,8 @@ import PVM.Logic.Bits
 import PVM.Logic.Steps
 import PVM.Logic.Chase
 import PVM.Logic.StepsH
+import PVM.Logic.Words
+import PVM.Logic.Go
 import PVM.Logic.GasBound
 
 /-!

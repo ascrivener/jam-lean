@@ -1,4 +1,5 @@
 import Services.Bootstrap.Reader
+import PVM.Logic.Words
 
 /-!
 # Bootstrap's `u32` decoder, summarized
@@ -19,23 +20,6 @@ set_option maxHeartbeats 8000000
 
 variable {X : Type} {R : HostRel X}
 
-/-- `load_ind_i8`'s sign extension, folded as `sx8` (`PVM.Logic.Bits`). -/
-theorem loadI8_sx8 (b : UInt8) :
-    ((if b.toNat < 128 then (b.toNat : Int) else (b.toNat : Int) - 256) % 18446744073709551616).toNat =
-      sx8 b.toNat := by
-  have hb := b.toNat_lt
-  unfold sx8
-  split <;> omega
-
-/-- `load_ind_i8` of the octet at `a`, folded as `sx8` before simp splits the sign. -/
-theorem loadI8_read_sx8 (μ : Memory) (a : Nat) :
-    Exec.u64 (Num.signed 1 (Num.decodeLE (μ.readN a 1))) = sx8 (μ.read a).toNat := by
-  have hb := (μ.read a).toNat_lt
-  simp only [Memory.readN, List.range_succ, List.range_zero, List.nil_append, List.map_cons, List.map_nil,
-    Nat.add_zero, Num.decodeLE, Exec.u64, Num.unsigned, Num.signed, sx8, Nat.reducePow, Nat.reduceMul,
-    Nat.reduceSub]
-  split <;> (try split) <;> omega
-
 /-- What a successful decode of n (an encoding of w octets) leaves: ω₇ = 0 and ω₈ = n, ω₀ … ω₆
     other than ω₇ as they were, ω₁₂ too, the reader advanced by w, and memory unchanged outside the
     stack frames [sp − 128, sp) and the reader, with the same page access. -/
@@ -45,22 +29,6 @@ def DecodeOk (ω ω' : Regs) (μ μ' : Memory) (sp rd ptr len n w : Nat) : Prop 
     μ'.readN rd 8 = Num.encodeLE 8 (ptr + w) ∧ μ'.readN (rd + 8) 8 = Num.encodeLE 8 (len - w) ∧
     (∀ a, a < 4294967296 → (a < sp - 128 ∨ sp ≤ a) → (a < rd ∨ rd + 16 ≤ a) → μ'.read a = μ.read a) ∧
     (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a)
-
-theorem Memory.readN_split (μ : Memory) (a m l : Nat) :
-    μ.readN a (m + l) = μ.readN a m ++ μ.readN (a + m) l := by
-  simp only [Memory.readN, List.range_add, List.map_append, List.map_map]
-  congr 1
-  apply List.map_congr_left
-  intro j _
-  simp only [Function.comp, Nat.add_assoc]
-
-theorem Num.encodeLE_split (m l v : Nat) :
-    Num.encodeLE (m + l) v = Num.encodeLE m v ++ Num.encodeLE l (v / 256 ^ m) := by
-  induction m generalizing v with
-  | zero => simp [Num.encodeLE]
-  | succ m ih =>
-    rw [show m + 1 + l = (m + l) + 1 by omega]
-    simp only [Num.encodeLE, ih, List.cons_append, Nat.div_div_eq_div_mul, Nat.pow_succ, Nat.mul_comm]
 
 /-- **Decoding ℰ(0)**, the single octet 0 (GP (C)): the prefix test exits at once. -/
 theorem decodeU32_zero {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
@@ -1600,20 +1568,6 @@ theorem decodeU32_len5 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω :
       case hle3 => omega
     case hle2 => omega
   case hle => decide
-
-/-- ℰ(x) for 2^(7l) ≤ x < 2^(7(l+1)), l < 5 (GP (C)): the prefix octet 2^8 − 2^(8−l) + ⌊x / 2^(8l)⌋, then
-    ℰ_l(x mod 2^(8l)). -/
-theorem encodeNat_of_lt (x l : Nat) (hl : l < 5) (hx : 0 < x) (h1 : 2 ^ (7 * l) ≤ x)
-    (h2 : x < 2 ^ (7 * (l + 1))) :
-    Blob.encodeNat x = UInt8.ofNat (2 ^ 8 - 2 ^ (8 - l) + x / 2 ^ (8 * l)) :: Num.encodeLE l (x % 2 ^ (8 * l)) := by
-  have hx' : x ≠ 0 := by omega
-  have : l = 0 ∨ l = 1 ∨ l = 2 ∨ l = 3 ∨ l = 4 := by omega
-  rcases this with rfl | rfl | rfl | rfl | rfl <;>
-  simp only [Nat.reduceMul, Nat.reducePow, Nat.reduceAdd] at h1 h2 <;>
-  simp (disch := omega) only [Blob.encodeNat, hx', ite_false, List.range_succ, List.range_zero, List.nil_append,
-    List.find?_append, List.find?_cons, List.find?_nil, Nat.reduceMul, Nat.reducePow, Nat.reduceAdd,
-    decide_eq_true, decide_eq_false, Bool.and_true, Bool.true_and, Bool.and_false, Bool.false_and,
-    Option.some_or, Option.none_or, Nat.reduceSub, Nat.reduceDiv, Nat.div_one, Nat.mod_one, Nat.zero_add]
 
 /-- **The `u32` decoder at 31894**, for every n < 2^32: with ℰ(n) (GP (C)) at the reader's pointer, it
     returns ω₈ = n and ω₇ = 0, advances the reader past ℰ(n), and touches only its stack frames, within

@@ -84,6 +84,7 @@ fails the build. `lake exe pvmtrace <vector.json> [steps]` prints a step-by-step
 | `PVM/Machine.lean` | Ψ₁ (`Program.step`) and Ψ (`psi`) | §A.1, §A.4 |
 | `PVM/Invocation.lean` | host-call handlers 𝔉_X, Ψ_H (`psiH`, `psiHStar`), Y (`standardInit`), Ψ_M (`psiM`) | §A.6–A.8, eqs. `conditions`, `memlayout`, `registers` |
 | `PVM/Tables.lean` | **generated**: opcode enumerations per argument format, U, T, 𝔪, the gas cost table | §A.3, §A.5, §A.10 |
+| `PVM/Logic/Words.lean`, `PVM/Logic/Go.lean` | service-independent tools for summaries: ℰ and little-endian words as octet lists, misaligned word splices, folded loads (`rdN`, `sxw`, `sx8`); `pvm_go` steps a run through generated code facts | (C) |
 | `PVM/Theorems/*.lean` | the theorems below | |
 | `Tests/` | vector runner, gas checker, tracer, kernel-checked invocation examples | |
 | `scripts/gen_tables.py` | LaTeX → `PVM/Tables.lean` | |

@@ -680,7 +680,9 @@ def prefixInfo (cx : Cx) : IO (SegInfo × Array (Array (Nat × Regs × Memory) �
         throw (IO.userError s!"paths differ at {j} for c={c2}")
     others := others.push (t2, 0)
     otherPs := otherPs.push (c2, i2, s2, y2)
-  return (← analyzeSeg cx.P cx.tr others otherPs 0 0 cx.n false (cx.c, cx.i, cx.sid, cx.y), others, otherPs)
+  -- on a cut chain (`run … cut=NAME`), what `fetch` writes counts as written, as in the chain
+  let cutM := cx.args.any (·.startsWith "cut=")
+  return (← analyzeSeg cx.P cx.tr others otherPs 0 0 cx.n false (cx.c, cx.i, cx.sid, cx.y) (cutMode := cutM), others, otherPs)
 
 set_option linter.unusedVariables false in
 /-! ## Blobs as numbers (`blob`, `codecheck`) -/
@@ -2391,7 +2393,7 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
     else
       sx := sx ++ "\n    case rd => intro a; simp only [PVM.Memory.readable_writeN]\n    case wr => intro a; simp only [PVM.Memory.writable_writeN]\n"
     if grow then
-      sx := sx ++ "    case rdA =>\n      intro a ha\n      simp only [PVM.Memory.readable_writeN, PVM.Memory.readable_setPages, PVM.pageSize]\n      split <;> first | rfl | omega\n"
+      sx := sx ++ "    case rdA =>\n      intro a ha\n      simp only [PVM.Memory.readable_writeN, PVM.Memory.readable_setPages]\n      first | (rw [if_neg (by simp only [PVM.pageSize]; omega)]) | (simp only [PVM.pageSize]; split <;> first | rfl | omega)\n"
     if hasGrow then sx := sx ++ "    case hp => first | exact hhp | heap_pages hhp\n"
     -- the segment between cut states
     let pat (xs : List String) : String := match xs with

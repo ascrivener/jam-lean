@@ -94,7 +94,8 @@ jobs:
           WITNESS_WILD=1 WITNESS_INPUT=3,0,16777219,0 WITNESS_CLASS="5,1,16777216,0;100,3,268435455,0;65535,65535,142606336,0;300,20000,100663296,0;40000,129,16777225,0;7,2,268435449,0" WITNESS_SBOUND=16777216,268435456 WITNESS_SIMP=PVM.bitwise_and_m15,PVM.bitwise_and_m7,PVM.bitwise_and_m255 lake exe genwitnesssteps --service bootstrap cut0 35202 BTail7 0 1105 every=16 frame
           WITNESS_WILD=1 WITNESS_INPUT=3,0,268435459,0 WITNESS_CLASS="5,1,268435456,0;100,3,4294967295,0;65535,65535,2281701376,0;300,20000,1610612736,0;40000,129,268435465,0;7,2,4294967289,0" WITNESS_SBOUND=268435456,4294967296 WITNESS_SIMP=PVM.bitwise_and_m15,PVM.bitwise_and_m7,PVM.bitwise_and_m255 lake exe genwitnesssteps --service bootstrap cut0 35202 BTail8 0 1122 every=16 frame
           test -z "$(git status --porcelain -- Services/Bootstrap)"
-          lake exe genwitnesssteps --service bootstrap run 600 | diff - Services/Bootstrap/Prefix.lean
+          lake exe genwitnesssteps --service bootstrap cut 0 PrefixC 0 600 every=16 frame words
+          lake exe genwitnesssteps --service bootstrap run 600 cut=PrefixC | diff - Services/Bootstrap/Prefix.lean
           lake exe genwitnesssteps --service bootstrap memcpy | diff - Services/Bootstrap/Memcpy.lean
 
       - name: the generated witness files are what their generator produces

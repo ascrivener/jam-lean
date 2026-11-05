@@ -368,4 +368,39 @@ theorem bitwise_and_m65535 (a : Nat) : Exec.bitwise (· && ·) a 65535 = a % 655
 theorem bitwise_and_m4294967295 (a : Nat) : Exec.bitwise (· && ·) a 4294967295 = a % 4294967296 := by
   rw [bitwise_and_low _ 4294967295 32 (by decide) (by decide)]
 
+
+/-- A slice of what memory holds: if memory holds `l₁ ⌢ l₂ ⌢ l₃` at `b`, it holds `l₂` at `b + |l₁|`. -/
+theorem Memory.readN_mid (μ : Memory) (b : Nat) (l₁ l₂ l₃ : List UInt8)
+    (h : μ.readN b (l₁ ++ l₂ ++ l₃).length = l₁ ++ l₂ ++ l₃) :
+    μ.readN (b + l₁.length) l₂.length = l₂ := by
+  simp only [List.length_append, Memory.readN_split, List.append_assoc] at h
+  have h1 := List.append_inj h (by simp [Memory.length_readN])
+  have h2 := List.append_inj h1.2 (by simp [Memory.length_readN])
+  exact h2.1
+
+/-- |ℰ(n)| for n < 2^32: one to five octets. -/
+theorem encodeNat_len_le5 (n : Nat) (h : n < 4294967296) :
+    1 ≤ (Blob.encodeNat n).length ∧ (Blob.encodeNat n).length ≤ 5 := by
+  rcases Nat.eq_zero_or_pos n with h0 | h0
+  · subst h0; simp [Blob.encodeNat]
+  have : n < 128 ∨ (128 ≤ n ∧ n < 16384) ∨ (16384 ≤ n ∧ n < 2097152) ∨ (2097152 ≤ n ∧ n < 268435456) ∨
+      268435456 ≤ n := by omega
+  rcases this with h1 | h1 | h1 | h1 | h1
+  · rw [encodeNat_of_lt n 0 (by decide) h0 (by simp; omega) (by simp; omega)]; simp
+  · rw [encodeNat_of_lt n 1 (by decide) h0 (by simp; omega) (by simp; omega)]; simp
+  · rw [encodeNat_of_lt n 2 (by decide) h0 (by simp; omega) (by simp; omega)]; simp
+  · rw [encodeNat_of_lt n 3 (by decide) h0 (by simp; omega) (by simp; omega)]; simp
+  · rw [encodeNat_of_lt n 4 (by decide) h0 (by simp; omega) (by simp; omega)]; simp
+
+/-- |ℰ(n)| for n < 2^16: one to three octets. -/
+theorem encodeNat_len_le3 (n : Nat) (h : n < 65536) :
+    1 ≤ (Blob.encodeNat n).length ∧ (Blob.encodeNat n).length ≤ 3 := by
+  rcases Nat.eq_zero_or_pos n with h0 | h0
+  · subst h0; simp [Blob.encodeNat]
+  have : n < 128 ∨ (128 ≤ n ∧ n < 16384) ∨ 16384 ≤ n := by omega
+  rcases this with h1 | h1 | h1
+  · rw [encodeNat_of_lt n 0 (by decide) h0 (by simp; omega) (by simp; omega)]; simp
+  · rw [encodeNat_of_lt n 1 (by decide) h0 (by simp; omega) (by simp; omega)]; simp
+  · rw [encodeNat_of_lt n 2 (by decide) h0 (by simp; omega) (by simp; omega)]; simp
+
 end PVM

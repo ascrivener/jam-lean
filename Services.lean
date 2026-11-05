@@ -5,6 +5,7 @@ import Services.Witness.DecodeU32
 import Services.Witness.DecodeC
 import Services.Bootstrap.Code
 import Services.Bootstrap.Memcpy
+import Services.Bootstrap.PrefixC
 import Services.Bootstrap.Prefix
 import Services.Bootstrap.CodeOk
 import Services.Bootstrap.BParams

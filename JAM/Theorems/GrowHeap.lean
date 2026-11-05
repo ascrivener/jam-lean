@@ -87,8 +87,8 @@ theorem FreeStepsH.growHeap (env : RefineHost.Env) {p : ByteArray} {P : Program}
 macro "heap_pages" h:term : tactic => `(tactic| (
   intro q h1 h2
   have hq := $h q h1 h2
-  simp only [PVM.Memory.writeN_pages, PVM.Memory.setPages_get?]
+  try simp only [PVM.Memory.writeN_pages, PVM.Memory.setPages_get?]
   repeat' split
-  all_goals (try simp only [hq]) <;> simp <;> omega))
+  all_goals (try simp only [hq]) <;> (try simp) <;> omega))
 
 end JAM

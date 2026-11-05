@@ -2287,8 +2287,11 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
     (x : RefineCtx){envB}"
     if hasGrow then sx := sx ++ s!"\n    (hhp : HeapPages μ {hA} {hB} {topAt bs[k]!})"
     for v in ivars do sx := sx ++ s!"\n    {varBinder cx.svc.lBound v cx.sBound}"
-    let regB := rd.map fun j => (s!"hreg{j}", s!"ω[{j}] = UInt64.ofNat {(regAt bs[k]! j).getD "0"}")
-    let symB := info.symLoads.map fun (a, n, e) => (s!"hbn_{a}_{n}", s!"μ.readN {a} {n} = Num.encodeLE {n} {e}")
+    -- `wild`: only what cut k's state states
+    let rdS := if cx.wild then rd.filter (sts[k]!.1.contains ·) else rd
+    let symS := if cx.wild then info.symLoads.filter (sts[k]!.2.2.1.contains ·) else info.symLoads
+    let regB := rdS.map fun j => (s!"hreg{j}", s!"ω[{j}] = UInt64.ofNat {(regAt bs[k]! j).getD "0"}")
+    let symB := symS.map fun (a, n, e) => (s!"hbn_{a}_{n}", s!"μ.readN {a} {n} = Num.encodeLE {n} {e}")
     let wB := (info.wr ++ pageRanges k).eraseDups.map fun (lo, hi) => (s!"hw_{lo}_{hi}", s!"∀ a, {lo} ≤ a → a < {hi} → μ.writable a = true")
     let rB := info.rr.map fun (lo, hi) => (s!"hrd_{lo}_{hi}", s!"∀ a, {lo} ≤ a → a < {hi} → μ.readable a = true")
     let bB := info.byteFacts.map fun (a, v) => (s!"hb_{a}", s!"μ.read {a} = {v}")

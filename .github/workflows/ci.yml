@@ -84,7 +84,7 @@ jobs:
           lake exe genwitnesssteps --service bootstrap code 7463 | diff - Services/Bootstrap/Code.lean
           lake exe genwitnesssteps --service bootstrap blob | diff - Services/Bootstrap/Blob.lean
           lake exe genwitnesssteps --service bootstrap codecheck 7463
-          lake exe genwitnesssteps --service bootstrap cut0 38875 BParams 0 2855 every=16 frame
+          lake exe genwitnesssteps --service bootstrap cut0 38875 BParams 0 2829 every=16 frame
           WITNESS_WILD=1 WITNESS_INPUT=3,0,7,0 WITNESS_CLASS="5,1,9,0;100,3,12,0;2,0,0,0;7,2,15,0;65535,65535,9,0;300,20000,12,0;40000,129,5,0" WITNESS_SBOUND=0,16 WITNESS_SIMP=PVM.bitwise_and_m15,PVM.bitwise_and_m7,PVM.bitwise_and_m255 lake exe genwitnesssteps --service bootstrap cut0 35202 BTail1 0 1003 every=16 frame
           WITNESS_WILD=1 WITNESS_INPUT=3,0,19,0 WITNESS_CLASS="5,1,16,0;100,3,255,0;65535,65535,136,0;300,20000,96,0;40000,129,25,0;7,2,249,0" WITNESS_SBOUND=16,256 WITNESS_SIMP=PVM.bitwise_and_m15,PVM.bitwise_and_m7,PVM.bitwise_and_m255 lake exe genwitnesssteps --service bootstrap cut0 35202 BTail2 0 1020 every=16 frame
           WITNESS_WILD=1 WITNESS_INPUT=3,0,259,0 WITNESS_CLASS="5,1,256,0;100,3,4095,0;65535,65535,2176,0;300,20000,1536,0;40000,129,265,0;7,2,4089,0" WITNESS_SBOUND=256,4096 WITNESS_SIMP=PVM.bitwise_and_m15,PVM.bitwise_and_m7,PVM.bitwise_and_m255 lake exe genwitnesssteps --service bootstrap cut0 35202 BTail3 0 1037 every=16 frame

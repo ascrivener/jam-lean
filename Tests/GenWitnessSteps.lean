@@ -236,7 +236,7 @@ def analyzeSeg (P : Program) (tr : Array (Nat × Regs × Memory))
     (others : Array (Array (Nat × Regs × Memory) × Nat)) (otherPs : Array (Nat × Nat × Nat × List UInt8))
     (k0 a b : Nat) (out : Bool) (baseP : Nat × Nat × Nat × List UInt8 := (3, 0, 7, [255]))
     (ext : Bool := false) (extra : List Nat := []) (staticW : List Nat := []) (cutMode : Bool := false) (allWords : Bool := false)
-    (half : Bool := false) :
+    (half : Bool := false) (wantS : List (Nat × Nat × String) := []) :
     IO SegInfo := do
   let A := k0 + a; let B := k0 + b
   let some (pcA, rA, mA) := tr[A]? | throw (IO.userError "step out of range")
@@ -358,6 +358,26 @@ def analyzeSeg (P : Program) (tr : Array (Nat × Regs × Memory))
           let vo := (others.toList).map fun (t2, k2) =>
             (t2[k2 + (B - k0)]?.map (fun x => Num.decodeLE (x.2.2.readN a n))).getD 0
           if let some e := matchVar vb vo then symMem := (a, n, e) :: symMem
+  -- `out`: a run of input-dependent output octets, as one word (e.g. a `u16` index)
+  if ext && out then
+    let dep := outBytes.filter fun b => !agreeMem B b && !(symMem.any fun (c, m, _) => c ≤ b && b < c + m)
+    for (a, e) in ranges dep do
+      let n := e - a
+      if n ≤ 8 then
+        let vb := Num.decodeLE (mB.readN a n)
+        let vo := (others.toList).map fun (t2, k2) =>
+          (t2[k2 + (B - k0)]?.map (fun x => Num.decodeLE (x.2.2.readN a n))).getD 0
+        match matchVar vb vo with
+        | some v => symMem := (a, n, v) :: symMem
+        | none => IO.eprintln s!"input-dependent output octets at {a} ({n})"
+  -- words a later cut states symbolically (`wantS`) that this segment writes
+  if ext then
+    for (a, n, _) in wantS do
+      if (List.range n).any (fun q => written.contains (a + q)) && !(symMem.any fun (c, m, _) => c == a && m == n) then
+        let vb := Num.decodeLE (mB.readN a n)
+        let vo := (others.toList).map fun (t2, k2) =>
+          (t2[k2 + (B - k0)]?.map (fun x => Num.decodeLE (x.2.2.readN a n))).getD 0
+        if let some e := matchVar vb vo then symMem := (a, n, e) :: symMem
   let inSym (b : Nat) : Bool := symMem.any fun (a, n, _) => a ≤ b && b < a + n
   -- `ext`: an octet of a word with an input-dependent written octet is not stated on its own
   let mixed (b : Nat) : Bool := ext && (List.range 8).any fun j =>
@@ -2051,11 +2071,13 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
       let A := nums[0]!; let B := nums[1]!
       ((List.range ((B - A + N - 1) / N)).map (A + N * ·)) ++ [B]
     | none => nums
-  -- `WITNESS_CLASS=c,i,s,k;…` replaces the class (k octets 255 of payload), e.g. one per hex-digit
+  -- `WITNESS_CLASS=c,i,s,k;…` replaces the class (k octets 255 of payload, or `c,i,s,k,b,f` as
+  -- for `WITNESS_INPUT`), e.g. one per hex-digit
   -- count of s where the path depends on it
   let classOv := ((← IO.getEnv "WITNESS_CLASS").getD "").splitOn ";" |>.filterMap fun e =>
     match (e.splitOn ",").filterMap String.toNat? with
     | [c, i, s, k] => some (c, i, s, List.replicate k (255 : UInt8))
+    | [c, i, s, k, b0, f] => some (c, i, s, (b0.toUInt8 :: List.replicate (k - 1) f.toUInt8).take k)
     | _ => none
   let classInputs : List (Nat × Nat × Nat × List UInt8) :=
     if !classOv.isEmpty then classOv
@@ -2113,13 +2135,15 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
   -- the state each cut needs, backward from the end
   let fin := (List.range 13).map (fun j => (tr[k0 + bs.getLast!]?.map (·.2.1[j]!.toNat)).getD 0)
   let outO := if out then (List.range fin[8]!).map (fin[7]! + ·) else []
-  let whole ← analyzeSeg P tr others otherPs k0 bs.head! bs.getLast! false baseP true []
+  let whole ← analyzeSeg P tr others otherPs k0 bs.head! bs.getLast! out baseP true []
     (regsWritten cx (k0 + bs.head!) (k0 + bs.getLast!)) true (opts.contains "words")
   let unch : List Nat := if frame then (List.range 13).filter (fun j => whole.regPost.any (· == (j, none))) else []
   let mut needR : List Nat := (if out then [0, 7, 8] else []) ++
     (if frame then whole.regPost.filterMap (fun (j, v) => v.map (fun _ => j)) ++ whole.symPost.map (·.1) else [])
-  let mut needO : List Nat := outO ++ (if frame then whole.memPost.map (·.1) else [])
-  let mut needS : List (Nat × Nat × String) := if frame then whole.symMem else []
+  needR := needR.eraseDups
+  let mut needO : List Nat := (outO ++ (if frame then whole.memPost.map (·.1) else [])).eraseDups.filter
+    fun b => !(whole.symMem.any fun (a, n, _) => a ≤ b && b < a + n)
+  let mut needS : List (Nat × Nat × String) := if frame || out then whole.symMem else []
   let mut needW : List (Nat × Nat) := []
   let mut needRd : List (Nat × Nat) := if out && fin[8]! > 0 then [(fin[7]!, fin[7]! + fin[8]!)] else []
   let mut sts0 : Array (List Nat × List Nat × List (Nat × Nat × String) × List (Nat × Nat) × List (Nat × Nat)) :=
@@ -2127,7 +2151,7 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
   for kk in [0:nseg] do
     let k := nseg - 1 - kk
     let info ← analyzeSeg P tr others otherPs k0 bs[k]! bs[k+1]! false baseP true needO
-      (regsWritten cx (k0 + bs[k]!) (k0 + bs[k+1]!)) true (half := cx.wild)
+      (regsWritten cx (k0 + bs[k]!) (k0 + bs[k+1]!)) true (half := cx.wild) (wantS := needS)
     let mut w : Std.HashSet Nat := {}
     for (lo, hi) in info.wr do
       for a in [lo:hi] do w := w.insert a
@@ -2673,10 +2697,12 @@ def main (args0 : List String) : IO Unit := do
   let some jb := JamBlob.parse? code | return
   let some P := Blob.parse? jb.code | return
   let Q := P.prepare
-  -- `WITNESS_INPUT=c,i,s,k` replaces the base input (exploration only; generated files use the default)
+  -- `WITNESS_INPUT=c,i,s,k` replaces the base input (k octets 255), `c,i,s,k,b,f` with payload
+  -- b then k − 1 octets f
   let inp := ((← IO.getEnv "WITNESS_INPUT").getD "").splitOn ","
   let (c, i, sid, y) : Nat × Nat × Nat × List UInt8 := match inp.filterMap String.toNat? with
     | [c, i, s, k] => (c, i, s, List.replicate k 255)
+    | [c, i, s, k, b0, f] => (c, i, s, (b0.toUInt8 :: List.replicate (k - 1) f.toUInt8).take k)
     | _ => if empty then svc.emptyBase else svc.base
   let pkg := mkPkg h sid (i + 1) (mkItem h sid y)
   let a : ByteArray := ⟨(Codec.nat c ++ Codec.nat i ++ Codec.nat sid ++ Codec.var ⟨y.toArray⟩ ++ (Blake2b.hash256 ⟨pkg.encode.toArray⟩).toList).toArray⟩

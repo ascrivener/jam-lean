@@ -390,6 +390,10 @@ structure Cx where
   sBound : String := "S < 4294967296"
   /-- Extra simp arguments for every generated step (`WITNESS_SIMP`). -/
   extraSimp : List String := []
+  /-- `WITNESS_WILD=1`: a cut leaves unstated the live values that differ across the class and match
+      no expression (data the rest only moves, such as formatted digits); a step that needs one for
+      control or an address makes its proof fail. -/
+  wild : Bool := false
   args : List String
   mode0 : String
   empty : Bool
@@ -2118,6 +2122,18 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
     reads := reads.set! k (match keepO with
       | some ks => rd0.filter fun j => ks.contains j || before.contains j
       | none => rd0)
+    -- `wild`: drop from cut k + 1's state what segment k leaves inexpressible
+    if cx.wild then
+      let badR := needR.filter fun j =>
+        info.wregs.contains j && !(info.regPost.any (fun (i, v) => i == j && v.isSome)) && !(info.symPost.any (·.1 == j))
+      let badO := needO.filter fun a => w.contains a && !(info.memPost.any (·.1 == a))
+      let badS := needS.filter fun (a, n, e) =>
+        (List.range n).any (fun q => w.contains (a + q)) && !(n == 8 && info.symMem.any (· == (a, e)))
+      if !(badR.isEmpty && badO.isEmpty && badS.isEmpty) then
+        needR := needR.filter (!badR.contains ·)
+        needO := needO.filter (!badO.contains ·)
+        needS := needS.filter (!badS.contains ·)
+        sts0 := sts0.set! (sts0.size - 1) (needR, needO, needS, needW, needRd)
     -- what segment k must leave: check it does
     for j in needR do
       if info.wregs.contains j && !(info.regPost.any (fun (i, v) => i == j && v.isSome)) && !(info.symPost.any (·.1 == j)) then
@@ -2139,7 +2155,11 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
     needW := (info.wr ++ pageRanges k ++ needW).eraseDups
     needRd := (info.rr ++ needRd).eraseDups
     sts0 := sts0.push (needR, needO, needS, needW, needRd)
-  let sts := sts0.reverse
+  let stsR := sts0.reverse
+  -- `wild`: the start state too states only what is expressible
+  let sts := if !cx.wild then stsR else (List.range stsR.size).toArray.map fun k =>
+    let (r, o, sy, wr, rr) := stsR[k]!
+    (r.filter (fun j => (regAt bs[k]! j).isSome), o.filter (fun a => (octAt bs[k]! a).isSome), sy, wr, rr)
   -- octets as runs inside aligned 8-octet words; page ranges merged into maximal intervals
   let runsOf (os : List Nat) : List (Nat × Nat) := Id.run do
     let mut rs : List (Nat × Nat) := []
@@ -2640,7 +2660,8 @@ def main (args0 : List String) : IO Unit := do
     | [lo, hi] => s!"{lo} ≤ S ∧ S < {hi}"
     | _ => "S < 4294967296"
   let extraSimp := ((← IO.getEnv "WITNESS_SIMP").getD "").splitOn "," |>.filter (· != "")
-  let cx : Cx := { svc, sBound, extraSimp, args, mode0, empty, mode, n, bytes, code, h, acct, jb, P, Q, c, i, sid, y, pkg, a, ω, μ, env, tr, path }
+  let wild := (← IO.getEnv "WITNESS_WILD") == some "1"
+  let cx : Cx := { svc, sBound, extraSimp, wild, args, mode0, empty, mode, n, bytes, code, h, acct, jb, P, Q, c, i, sid, y, pkg, a, ω, μ, env, tr, path }
   match mode with
   | "calls" => mode_calls cx
   | "div" => mode_div cx

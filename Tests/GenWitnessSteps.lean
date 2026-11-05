@@ -260,6 +260,22 @@ def analyzeSeg (P : Program) (tr : Array (Nat × Regs × Memory))
     for r in m.reads do
       let a := r % 2 ^ 32
       if !written.contains a && !rlist.contains a then rlist := a :: rlist
+    -- a read at an input-dependent address (a table indexed by an input): the hull of the class's
+    -- addresses, so the readability fact covers every input's
+    if let some r0 := m.reads.head? then
+      let n := m.reads.length
+      let addrs := others.toList.filterMap fun (t2, k2) => do
+        let (pc2, regs2, mem2) ← t2[k2 + (k - k0)]?
+        let ins2 ← P.decode pc2
+        let m2 := P.exec pc2 ins2 regs2 mem2
+        let r2 ← m2.reads.head?
+        pure (r2 % 2 ^ 32)
+      let a0 := r0 % 2 ^ 32
+      if addrs.any (· != a0) then
+        let lo := (a0 :: addrs).foldl min a0
+        let hi := (a0 :: addrs).foldl max a0 + n
+        for b in [lo:hi] do
+          if !written.contains b && !rlist.contains b then rlist := b :: rlist
     for w in m.writes do
       let a := w % 2 ^ 32
       if !written.contains a then wlist := a :: wlist
@@ -370,6 +386,10 @@ def divReport (pa pb : Array Nat) (n : Nat) : IO Unit := do
 /-- What every mode of the generator shares: the arguments, the blob and the base run. -/
 structure Cx where
   svc : Svc
+  /-- The bound stated on S (`WITNESS_SBOUND=lo,hi`: lo ≤ S < hi), for a class of s by hex digits. -/
+  sBound : String := "S < 4294967296"
+  /-- Extra simp arguments for every generated step (`WITNESS_SIMP`). -/
+  extraSimp : List String := []
   args : List String
   mode0 : String
   empty : Bool
@@ -1975,9 +1995,9 @@ def regsWritten (cx : Cx) (A B : Nat) : List Nat := Id.run do
   return out
 
 /-- The Lean binder for a variable and its bound. -/
-def varBinder (lb : Nat) (v : String) : String :=
+def varBinder (lb : Nat) (v : String) (sb : String := "S < 4294967296") : String :=
   let bound := match v with
-    | "Y" => "1 ≤ Y ∧ Y ≤ 15" | "S" => "S < 4294967296" | "C" => "C < 65536" | "L" => s!"0 < L ∧ L < {lb}"
+    | "Y" => "1 ≤ Y ∧ Y ≤ 15" | "S" => sb | "C" => "C < 65536" | "L" => s!"0 < L ∧ L < {lb}"
     | "T" => "12 ≤ T ∧ T < 256" | "Q" => "4278124548 ≤ Q ∧ Q ≤ 4278124564" | _ => "I < 65536"
   s!"({v} : Nat) (h{v} : {bound})"
 
@@ -2011,8 +2031,15 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
       let A := nums[0]!; let B := nums[1]!
       ((List.range ((B - A + N - 1) / N)).map (A + N * ·)) ++ [B]
     | none => nums
+  -- `WITNESS_CLASS=c,i,s,k;…` replaces the class (k octets 255 of payload), e.g. one per hex-digit
+  -- count of s where the path depends on it
+  let classOv := ((← IO.getEnv "WITNESS_CLASS").getD "").splitOn ";" |>.filterMap fun e =>
+    match (e.splitOn ",").filterMap String.toNat? with
+    | [c, i, s, k] => some (c, i, s, List.replicate k (255 : UInt8))
+    | _ => none
   let classInputs : List (Nat × Nat × Nat × List UInt8) :=
-    if cx.empty then cx.svc.emptyClass ++ cx.svc.emptyExtra else cx.svc.segClass ++ cx.svc.segxExtra
+    if !classOv.isEmpty then classOv
+    else if cx.empty then cx.svc.emptyClass ++ cx.svc.emptyExtra else cx.svc.segClass ++ cx.svc.segxExtra
   let baseP := (cx.c, cx.i, cx.sid, cx.y)
   let align (t : Array (Nat × Regs × Memory)) : Option Nat :=
     (List.range t.size).find? (fun k => (t[k]?.map (·.1)) == some joinPc)
@@ -2153,7 +2180,7 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
   for info in infos do vars0 := vars0 ++ info.vars
   let vars := names.filter vars0.contains
   let varArgs := " ".intercalate (vars.flatMap fun v => [v, s!"h{v}"])
-  let varBinders := " ".intercalate (vars.map (varBinder cx.svc.lBound))
+  let varBinders := " ".intercalate (vars.map (varBinder cx.svc.lBound · cx.sBound))
   let segCond (k : Nat) : String :=
     let outW := " && ".intercalate (infos[k]!.wr.map fun (lo, hi) => s!"!(decide ({lo} ≤ a ∧ a < {hi}))")
     s!"decide (a < 4294967296){if outW == "" then "" else " && " ++ outW}"
@@ -2194,7 +2221,7 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
     for a in o do
       if (octAt bs[k]! a).isNone then throw (IO.userError s!"cut {k}: octet {a} there is input-dependent")
   let mut st := header "The state at each cut." ++ s!"
-import PVM.Logic.Chase{if hasGrow then "\nimport JAM.Theorems.GrowHeap" else ""}
+import PVM.Logic.Chase{if cx.extraSimp.isEmpty then "" else "\nimport PVM.Logic.Words"}{if hasGrow then "\nimport JAM.Theorems.GrowHeap" else ""}
 
 namespace Services.{NS}.{name}
 
@@ -2239,7 +2266,7 @@ set_option maxHeartbeats 10000000
 theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
     (x : RefineCtx){envB}"
     if hasGrow then sx := sx ++ s!"\n    (hhp : HeapPages μ {hA} {hB} {topAt bs[k]!})"
-    for v in ivars do sx := sx ++ s!"\n    {varBinder cx.svc.lBound v}"
+    for v in ivars do sx := sx ++ s!"\n    {varBinder cx.svc.lBound v cx.sBound}"
     let regB := rd.map fun j => (s!"hreg{j}", s!"ω[{j}] = UInt64.ofNat {(regAt bs[k]! j).getD "0"}")
     let symB := info.symLoads.map fun (a, n, e) => (s!"hbn_{a}_{n}", s!"μ.readN {a} {n} = Num.encodeLE {n} {e}")
     let wB := (info.wr ++ pageRanges k).eraseDups.map fun (lo, hi) => (s!"hw_{lo}_{hi}", s!"∀ a, {lo} ≤ a → a < {hi} → μ.writable a = true")
@@ -2288,7 +2315,7 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
     let simpArgsH := ", ".intercalate ([regA, loadA, hws, hrs, factA].filter (· != "") ++
       (if hasGrow then ["setR7"] else []))
     let simpArgs := ", ".intercalate ([regA, loadA, hws, hrs, factA].filter (· != "") ++
-      (if hasHost then ["hpar", "Params.full_encode"] else []) ++ (if hasGrow then ["setR7"] else []))
+      (if hasHost then ["hpar", "Params.full_encode"] else []) ++ (if hasGrow then ["setR7"] else []) ++ cx.extraSimp)
     sx := sx ++ "\n  rw [show ω = regsNF ω [] from rfl]\n  refine ⟨?ω', ?μ', ?run, ?post⟩\n  case run =>"
     for j in [0:info.pcs.length] do
       let pc := info.pcs[j]!
@@ -2437,7 +2464,7 @@ theorem chain (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
 /-- **Steps {bs[0]!} … {bs[nseg]! - 1} after pc {joinPc}**, from the facts the path reads before writing them. -/
 theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
     (x : RefineCtx){envB}"
-  for v in vars do ch := ch ++ s!"\n    {varBinder cx.svc.lBound v}"
+  for v in vars do ch := ch ++ s!"\n    {varBinder cx.svc.lBound v cx.sBound}"
   for (n, t) in pre0 do ch := ch ++ s!"\n    ({n} : {t})"
   let startArgs := (if pre0.isEmpty && !frame then ["trivial"] else pre0.map (·.1)) ++
     (if frame then (if hasGrow then ["fun _ _ => rfl", "fun _ _ => rfl", "fun _ h => h", "fun _ h => h"]
@@ -2608,7 +2635,12 @@ def main (args0 : List String) : IO Unit := do
   let env := mkEnv code sid i (Std.ExtTreeMap.ofList [(sid, acct)]) pkg
   let (tr, _, _, _, _) := go Q (toHostFn (RefineHost.dispatch env)) 0 1000000000 false ω μ (∅, []) #[] #[] 3000000
   let path := (tr.toList.take n).map (·.1)
-  let cx : Cx := { svc, args, mode0, empty, mode, n, bytes, code, h, acct, jb, P, Q, c, i, sid, y, pkg, a, ω, μ, env, tr, path }
+  let sbE := ((← IO.getEnv "WITNESS_SBOUND").getD "").splitOn "," |>.filterMap String.toNat?
+  let sBound := match sbE with
+    | [lo, hi] => s!"{lo} ≤ S ∧ S < {hi}"
+    | _ => "S < 4294967296"
+  let extraSimp := ((← IO.getEnv "WITNESS_SIMP").getD "").splitOn "," |>.filter (· != "")
+  let cx : Cx := { svc, sBound, extraSimp, args, mode0, empty, mode, n, bytes, code, h, acct, jb, P, Q, c, i, sid, y, pkg, a, ω, μ, env, tr, path }
   match mode with
   | "calls" => mode_calls cx
   | "div" => mode_div cx

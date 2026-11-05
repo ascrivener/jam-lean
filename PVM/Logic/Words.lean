@@ -338,4 +338,34 @@ theorem encodeNat_of_lt (x l : Nat) (hl : l < 5) (hx : 0 < x) (h1 : 2 ^ (7 * l) 
     Option.some_or, Option.none_or, Nat.reduceSub, Nat.reduceDiv, Nat.div_one, Nat.mod_one, Nat.zero_add]
 
 
+
+/-! Literal low masks: `a & (2^k − 1) = a mod 2^k`. -/
+
+theorem bitwise_and_m1 (a : Nat) : Exec.bitwise (· && ·) a 1 = a % 2 := by
+  rw [bitwise_and_low _ 1 1 (by decide) (by decide)]
+
+theorem bitwise_and_m3 (a : Nat) : Exec.bitwise (· && ·) a 3 = a % 4 := by
+  rw [bitwise_and_low _ 3 2 (by decide) (by decide)]
+
+theorem bitwise_and_m7 (a : Nat) : Exec.bitwise (· && ·) a 7 = a % 8 := by
+  rw [bitwise_and_low _ 7 3 (by decide) (by decide)]
+
+theorem bitwise_and_m15 (a : Nat) : Exec.bitwise (· && ·) a 15 = a % 16 := by
+  rw [bitwise_and_low _ 15 4 (by decide) (by decide)]
+
+theorem bitwise_and_m31 (a : Nat) : Exec.bitwise (· && ·) a 31 = a % 32 := by
+  rw [bitwise_and_low _ 31 5 (by decide) (by decide)]
+
+theorem bitwise_and_m63 (a : Nat) : Exec.bitwise (· && ·) a 63 = a % 64 := by
+  rw [bitwise_and_low _ 63 6 (by decide) (by decide)]
+
+theorem bitwise_and_m255 (a : Nat) : Exec.bitwise (· && ·) a 255 = a % 256 := by
+  rw [bitwise_and_low _ 255 8 (by decide) (by decide)]
+
+theorem bitwise_and_m65535 (a : Nat) : Exec.bitwise (· && ·) a 65535 = a % 65536 := by
+  rw [bitwise_and_low _ 65535 16 (by decide) (by decide)]
+
+theorem bitwise_and_m4294967295 (a : Nat) : Exec.bitwise (· && ·) a 4294967295 = a % 4294967296 := by
+  rw [bitwise_and_low _ 4294967295 32 (by decide) (by decide)]
+
 end PVM

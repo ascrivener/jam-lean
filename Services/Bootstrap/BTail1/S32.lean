@@ -113,6 +113,8 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
     case regs =>
       simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,
         PVM.getD_some', List.lookup_nil, Option.getD_none, and_self, and_true, true_and, hreg1, hreg8, hreg9, hreg10]
+      all_goals (try simp only [Nat.div_div_eq_div_mul, Nat.reduceMul])
+      all_goals (try (congr 1; split <;> omega))
     case mem =>
       try and_intros
       all_goals simp (disch := pvm_arith) only [PVM.Memory.read_writeN, PVM.reduceEncodeLE, PVM.Num.length_encodeLE,

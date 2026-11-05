@@ -14,6 +14,13 @@ import Services.Bootstrap.DecodeU16
 import Services.Bootstrap.MemcpyBig
 import Services.Bootstrap.ReaderBig
 import Services.Bootstrap.BTail1
+import Services.Bootstrap.BTail2
+import Services.Bootstrap.BTail3
+import Services.Bootstrap.BTail4
+import Services.Bootstrap.BTail5
+import Services.Bootstrap.BTail6
+import Services.Bootstrap.BTail7
+import Services.Bootstrap.BTail8
 import Services.Witness.Prefix
 import Services.Witness.EmptyTail
 import Services.Witness.Front1

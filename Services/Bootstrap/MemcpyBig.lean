@@ -394,4 +394,126 @@ theorem memcpy_shift_iter {p : ByteArray} {P : Program} [HasCode p P] (ω : Regs
     all_goals simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,
       PVM.getD_some', List.lookup_nil, Option.getD_none, h10, h1]
 
+/-- The spliced word is the source's 8 octets from A + m. -/
+theorem splice_readN (μ : Memory) (pw A m : Nat) (hm : 0 < m ∧ m < 8)
+    (hdrop : (Num.encodeLE 8 pw).drop m = μ.readN (A + m) (8 - m)) :
+    (Num.encodeLE 8 pw).drop m ++ (μ.readN (A + 8) 8).take m = μ.readN (A + m) 8 := by
+  rw [hdrop, readN_take _ _ _ _ (by omega)]
+  have := Memory.readN_split μ (A + m) (8 - m) m
+  rw [show 8 - m + m = 8 by omega, show A + m + (8 - m) = A + 8 by omega] at this
+  exact this.symm
+
+/-- What the misaligned loop leaves after k + 1 passes from `A`, `d`: the k + 1 words at `d` are the
+    source's from A + m, ω₄ holds the next word (its high 8 − m octets the source's), ω₆, ω₁₁ moved
+    by 8(k + 1), and memory otherwise unchanged but for the temporary word at sp + 8. -/
+def ShiftOk (ω ω' : Regs) (μ μ' : Memory) (m sp A d k : Nat) : Prop :=
+  μ'.readN d (8 * (k + 1)) = μ.readN (A + m) (8 * (k + 1)) ∧
+    (∃ pw', ω'[4] = UInt64.ofNat pw' ∧ pw' < 18446744073709551616 ∧
+      (Num.encodeLE 8 pw').drop m = μ.readN (A + 8 * (k + 1) + m) (8 - m)) ∧
+    ω'[6] = UInt64.ofNat (A + 8 * (k + 1)) ∧ ω'[3] = UInt64.ofNat (8 * m) ∧
+    ω'[11] = UInt64.ofNat (d + 8 * (k + 1)) ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[10] = ω[10] ∧
+    (∀ j : Fin 13, j.val ∉ [3, 4, 5, 6, 8, 11] → ω'[j] = ω[j]) ∧
+    (∀ a, a < 4294967296 → (a < d ∨ d + 8 * (k + 1) ≤ a) → (a < sp + 8 ∨ sp + 16 ≤ a) → μ'.read a = μ.read a) ∧
+    (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a)
+
+/-- **The misaligned loop of `memcpy`** (68989 … 69027), k + 1 passes: see `ShiftOk`. -/
+theorem memcpy_shift_loop {p : ByteArray} {P : Program} [HasCode p P] (x : X) (m sp : Nat)
+    (hm : 0 < m ∧ m < 8) : ∀ (k : Nat) (ω : Regs) (μ : Memory) (pw A d : Nat),
+    ω[4] = UInt64.ofNat pw → pw < 18446744073709551616 →
+    (Num.encodeLE 8 pw).drop m = μ.readN (A + m) (8 - m) →
+    ω[6] = UInt64.ofNat A → ω[3] = UInt64.ofNat (8 * m) → ω[11] = UInt64.ofNat d →
+    ω[10] = UInt64.ofNat (d + 8 * (k + 2)) → ω[1] = UInt64.ofNat sp →
+    A + 8 * (k + 2) + 8 < 4294967296 → d + 8 * (k + 2) < 4294967296 → sp + 16 < 4294967296 →
+    (d + 8 * (k + 1) ≤ A ∨ A + 8 * (k + 2) ≤ d) → (sp + 16 ≤ d ∨ d + 8 * (k + 1) ≤ sp) →
+    (sp + 16 ≤ A ∨ A + 8 * (k + 2) ≤ sp) →
+    μ.readN sp 8 = Num.encodeLE 8 (64 - 8 * m) →
+    (∀ a, A + 8 ≤ a → a < A + 8 * (k + 2) → μ.readable a = true) →
+    (∀ a, sp ≤ a → a < sp + 16 → μ.writable a = true) →
+    (∀ a, d ≤ a → a < d + 8 * (k + 1) → μ.writable a = true) →
+    ∃ ω' μ', FreeStepsH p R 68989 ω μ x 69030 ω' μ' x (16 * (k + 1)) ∧ ShiftOk ω ω' μ μ' m sp A d k := by
+  intro k
+  induction k with
+  | zero =>
+    intro ω μ pw A d h4 hpw hdrop h6 h3 h11 h10 h1 hA hd hsp hdA hsd hsA hT hr hrs hw
+    obtain ⟨ω₁, hrun, g4, g6, g3, g11, g8, g10, g1, gfr⟩ := memcpy_shift_iter (p := p) (P := P) (R := R) ω μ x pw A d
+      (d + 8 * (0 + 2)) sp m hm hpw h4 h6 h3 h11 h10 h1 (by omega) (by omega) (by omega) (by omega) (by omega)
+      (by omega) hT (fun a h1 h2 => hr a h1 (by omega)) hrs (fun a h1 h2 => hw a h1 (by omega))
+    refine ⟨regsNF ω₁ [], (μ.writeN (sp + 8) (Num.encodeLE 8 (pw / 2 ^ (8 * m)))).writeN d
+        ((Num.encodeLE 8 pw).drop m ++ (μ.readN (A + 8) 8).take m), ?run, ?post⟩
+    case run =>
+      refine hrun.trans' ?_
+      rw [show ω₁ = regsNF ω₁ [] from rfl]
+      apply FreeStepsH.step_decode (d_69027 (p := p) (P := P))
+      · pvm_simp [g8, g10]
+      exact FreeStepsH.refl
+    case post =>
+      have hW := splice_readN μ pw A m hm hdrop
+      rw [hW]
+      have hl := encodeLE_decodeLE (μ.readN (A + 8) 8)
+      have hlt := decodeLE_lt (μ.readN (A + 8) 8)
+      rw [Memory.length_readN] at hl hlt
+      refine ⟨?_, ⟨_, g4, hlt, ?_⟩, g6, g3, (by exact g11), g1, g10.trans h10.symm, gfr,
+        fun a ha0 ha1 ha2 => ?_, fun a => ?_, fun a => ?_⟩
+      · rw [show 8 * (0 + 1) = 8 by rfl, Memory.readN_writeN_same _ _ _ _ (Memory.length_readN _ _ _) (by simp [two32])]
+      · rw [hl, readN_drop]
+      · rw [Memory.read_writeN_disjoint _ _ _ _ (by simp [Memory.length_readN]; omega)
+          (by simp [Memory.length_readN, two32]; omega) (by simp [two32]; omega),
+          Memory.read_writeN_disjoint _ _ _ _ (by simp; omega) (by simp [two32]; omega) (by simp [two32]; omega)]
+      · simp only [Memory.readable_writeN]
+      · simp only [Memory.writable_writeN]
+  | succ k ih =>
+    intro ω μ pw A d h4 hpw hdrop h6 h3 h11 h10 h1 hA hd hsp hdA hsd hsA hT hr hrs hw
+    obtain ⟨ω₁, hrun, g4, g6, g3, g11, g8, g10, g1, gfr⟩ := memcpy_shift_iter (p := p) (P := P) (R := R) ω μ x pw A d
+      (d + 8 * (k + 1 + 2)) sp m hm hpw h4 h6 h3 h11 h10 h1 (by omega) (by omega) (by omega) (by omega) (by omega)
+      (by omega) hT (fun a h1 h2 => hr a h1 (by omega)) hrs (fun a h1 h2 => hw a h1 (by omega))
+    have hW := splice_readN μ pw A m hm hdrop
+    rw [hW] at hrun
+    generalize hμ₁ : (μ.writeN (sp + 8) (Num.encodeLE 8 (pw / 2 ^ (8 * m)))).writeN d (μ.readN (A + m) 8) = μ₁ at hrun
+    -- μ₁ agrees with μ off the temporary word and [d, d + 8)
+    have e1 : ∀ a, a < 4294967296 → (a < d ∨ d + 8 ≤ a) → (a < sp + 8 ∨ sp + 16 ≤ a) → μ₁.read a = μ.read a := by
+      intro a ha0 ha1 ha2
+      rw [← hμ₁, Memory.read_writeN_disjoint _ _ _ _ (by simp [Memory.length_readN]; omega)
+        (by simp [Memory.length_readN, two32]; omega) (by simp [two32]; omega),
+        Memory.read_writeN_disjoint _ _ _ _ (by simp; omega) (by simp [two32]; omega) (by simp [two32]; omega)]
+    have e1N : ∀ a n, a + n < 4294967296 → (a + n ≤ d ∨ d + 8 ≤ a) → (a + n ≤ sp + 8 ∨ sp + 16 ≤ a) →
+        μ₁.readN a n = μ.readN a n := fun a n h1 h2 h3 =>
+      Memory.readN_congr (fun j hj => e1 (a + j) (by omega) (by omega) (by omega))
+    have e1r : ∀ a, μ₁.readable a = μ.readable a := fun a => by rw [← hμ₁]; simp only [Memory.readable_writeN]
+    have e1w : ∀ a, μ₁.writable a = μ.writable a := fun a => by rw [← hμ₁]; simp only [Memory.writable_writeN]
+    have hl := encodeLE_decodeLE (μ.readN (A + 8) 8)
+    have hlt := decodeLE_lt (μ.readN (A + 8) 8)
+    rw [Memory.length_readN] at hl hlt
+    obtain ⟨ω₂, μ₂, run₂, ⟨k1, ⟨pw₂, k4, k4lt, k4d⟩, k6, k3, k11, k1', k10, kfr, krd, krr, krw⟩⟩ :=
+      ih (regsNF ω₁ []) μ₁ (Num.decodeLE (μ.readN (A + 8) 8)) (A + 8) (d + 8) g4 hlt
+        (by rw [hl, readN_drop, e1N _ _ (by omega) (by omega) (by omega)])
+        g6 g3 g11 (g10.trans (by congr 1; omega)) g1 (by omega) (by omega) (by omega) (by omega) (by omega)
+        (by omega) (by rw [e1N _ _ (by omega) (by omega) (by omega)]; exact hT)
+        (fun a h1 h2 => by rw [e1r]; exact hr a (by omega) (by omega))
+        (fun a h1 h2 => by rw [e1w]; exact hrs a h1 h2)
+        (fun a h1 h2 => by rw [e1w]; exact hw a (by omega) (by omega))
+    refine ⟨ω₂, μ₂, ?run, ?post⟩
+    case run =>
+      refine hrun.trans' ?_
+      rw [show ω₁ = regsNF ω₁ [] from rfl]
+      apply FreeStepsH.step_decode (d_69027 (p := p) (P := P))
+      · pvm_simp [g8, g10]
+      exact run₂
+    case post =>
+      have e2 : ∀ a, a < 4294967296 → (a < d + 8 ∨ d + 8 + 8 * (k + 1) ≤ a) → (a < sp + 8 ∨ sp + 16 ≤ a) →
+          μ₂.read a = μ₁.read a := krd
+      refine ⟨?_, ⟨pw₂, k4, k4lt, ?_⟩, ?_, k3, ?_, k1', ?_, fun j hj => (kfr j hj).trans (gfr j hj),
+        fun a ha0 ha1 ha2 => ?_, fun a => by rw [krr, e1r], fun a => by rw [krw, e1w]⟩
+      · have s1 := Memory.readN_split μ₂ d 8 (8 * (k + 1))
+        have s2 := Memory.readN_split μ (A + m) 8 (8 * (k + 1))
+        rw [show 8 + 8 * (k + 1) = 8 * (k + 1 + 1) by omega] at s1 s2
+        rw [s1, s2, k1, e1N _ _ (by omega) (by omega) (by omega), show A + 8 + m = A + m + 8 by omega]
+        congr 1
+        rw [Memory.readN_congr (μ := μ₁) (fun j hj => e2 (d + j) (by omega) (by omega) (by omega)), ← hμ₁,
+          Memory.readN_writeN_same _ _ _ _ (Memory.length_readN _ _ _) (by simp [two32])]
+      · rw [k4d, e1N _ _ (by omega) (by omega) (by omega)]; congr 1; omega
+      · rw [k6]; congr 1; omega
+      · rw [k11]; congr 1; omega
+      · rw [k10]; exact g10.trans h10.symm
+      · rw [e2 a ha0 (by omega) ha2, e1 a ha0 (by omega) ha2]
+
 end Services.Bootstrap

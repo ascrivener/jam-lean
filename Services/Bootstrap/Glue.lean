@@ -95,7 +95,8 @@ theorem glueVec {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) 
       ω'[0] = UInt64.ofNat 1644 ∧ ω'[1] = UInt64.ofNat 4278058264 ∧ ω'[5] = ω[5] ∧ ω'[6] = UInt64.ofNat 0 ∧
       ω'[7] = UInt64.ofNat 4278058304 ∧ ω'[8] = UInt64.ofNat 4278058320 ∧ ω'[9] = UInt64.ofNat 32 ∧
       μ'.readN 4278058264 8 = Num.encodeLE 8 0 ∧ μ'.readN 4278058272 8 = Num.encodeLE 8 1 ∧
-      (∀ a, a < 4294967296 → (a < 4278058168 ∨ 4278058352 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, a < 4294967296 → (a < 4278058168 ∨ 4278058280 ≤ a) → (a < 4278058320 ∨ 4278058352 ≤ a) →
+        μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
   have hrf : ∀ a, 4278058168 ≤ a → a < 4278058352 → μ.readable a = true :=
     fun a h1 h2 => Memory.readable_of_writable (hwf a h1 h2)
@@ -103,7 +104,7 @@ theorem glueVec {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) 
   refine ⟨?ω', ?μ', ?run, ?post⟩
   case run => pvm_go [h1, h7, h8, hwf, hrf, PVM.bitwise_and_m1]
   case post =>
-    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 ha2 => ?_, fun a => ?_, fun a => ?_⟩
     all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
       ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, PVM.Memory.readN_writeN_same,
       PVM.Memory.readN_writeN_disjoint, PVM.Memory.read_writeN_disjoint, PVM.Memory.readable_writeN,

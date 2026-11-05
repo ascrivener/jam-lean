@@ -218,7 +218,7 @@ structure SegInfo where
   memPost : List (Nat × Nat)
   pcs : List Nat
   /-- `segx`: 8-octet words the segment leaves holding a symbolic value. -/
-  symMem : List (Nat × String) := []
+  symMem : List (Nat × Nat × String) := []
   deriving Inhabited
 
 /-- Analyze steps `k0 + a … k0 + b − 1` of trace `tr`, against the other traces of the class
@@ -226,7 +226,8 @@ structure SegInfo where
 def analyzeSeg (P : Program) (tr : Array (Nat × Regs × Memory))
     (others : Array (Array (Nat × Regs × Memory) × Nat)) (otherPs : Array (Nat × Nat × Nat × List UInt8))
     (k0 a b : Nat) (out : Bool) (baseP : Nat × Nat × Nat × List UInt8 := (3, 0, 7, [255]))
-    (ext : Bool := false) (extra : List Nat := []) (staticW : List Nat := []) (cutMode : Bool := false) (allWords : Bool := false) :
+    (ext : Bool := false) (extra : List Nat := []) (staticW : List Nat := []) (cutMode : Bool := false) (allWords : Bool := false)
+    (half : Bool := false) :
     IO SegInfo := do
   let A := k0 + a; let B := k0 + b
   let some (pcA, rA, mA) := tr[A]? | throw (IO.userError "step out of range")
@@ -335,24 +336,27 @@ def analyzeSeg (P : Program) (tr : Array (Nat × Regs × Memory))
   let outBytes := if out then
       (List.range rB[8]!.toNat).map (rB[7]!.toNat + ·) else []
   -- `ext`: live 8-octet words, all written, that hold the same symbolic value in every run
-  let mut symMem : List (Nat × String) := []
+  let mut symMem : List (Nat × Nat × String) := []
   if ext then
-    let words := (((if allWords then wlist else live).map (fun a => a - a % 8)).eraseDups.mergeSort).filter fun a =>
-      (List.range 8).all fun j => written.contains (a + j)
-    for a in words do
-      if !((List.range 8).all fun j => agreeMem B (a + j)) then
-        let vb := Num.decodeLE (mB.readN a 8)
-        let vo := (others.toList).map fun (t2, k2) =>
-          (t2[k2 + (B - k0)]?.map (fun x => Num.decodeLE (x.2.2.readN a 8))).getD 0
-        if let some e := matchVar vb vo then symMem := (a, e) :: symMem
-  let inSym (b : Nat) : Bool := symMem.any fun (a, _) => a ≤ b && b < a + 8
+    -- 8-octet words, and the 4-octet halves of those that hold no symbolic value whole (a `u32`)
+    for n in (if half then [8, 4] else [8]) do
+      let words := (((if allWords then wlist else live).map (fun a => a - a % n)).eraseDups.mergeSort).filter fun a =>
+        (List.range n).all fun j => written.contains (a + j)
+      for a in words do
+        if n == 4 && symMem.any (fun (c, m, _) => c ≤ a && a < c + m) then continue
+        if !((List.range n).all fun j => agreeMem B (a + j)) then
+          let vb := Num.decodeLE (mB.readN a n)
+          let vo := (others.toList).map fun (t2, k2) =>
+            (t2[k2 + (B - k0)]?.map (fun x => Num.decodeLE (x.2.2.readN a n))).getD 0
+          if let some e := matchVar vb vo then symMem := (a, n, e) :: symMem
+  let inSym (b : Nat) : Bool := symMem.any fun (a, n, _) => a ≤ b && b < a + n
   -- `ext`: an octet of a word with an input-dependent written octet is not stated on its own
   let mixed (b : Nat) : Bool := ext && (List.range 8).any fun j =>
     let c := b - b % 8 + j
     written.contains c && !agreeMem B c
   let livePost := ((live ++ outBytes ++ extra.filter written.contains).eraseDups.mergeSort).filter fun b =>
     agreeMem B b && (!inSym b || extra.contains b)
-  let vars := (vars0 ++ symMem.flatMap (fun (_, e) =>
+  let vars := (vars0 ++ symMem.flatMap (fun (_, _, e) =>
     ((e.replace "(" "").replace ")" "" |>.splitOn " ").filter names.contains)).eraseDups
   let pcs := (List.range (B - A)).filterMap fun j => tr[A + j]?.map (·.1)
   return { A, B, pcA, pcB, vars, regFacts := regFacts.map (fun j => (j, rA[j]!.toNat)), symRegs, symLoads, wr, rr,
@@ -611,7 +615,7 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
     let memC := info.memPost.map fun (a, v) => s!"μ'.read {a} = {v}"
     IO.println ("      (" ++ (if memC.isEmpty then "True" else " ∧ ".intercalate memC) ++ ") ∧")
     if !info.symMem.isEmpty then
-      IO.println ("      (" ++ " ∧ ".intercalate (info.symMem.map fun (a, e) => s!"μ'.readN {a} 8 = Num.encodeLE 8 {e}") ++ ") ∧")
+      IO.println ("      (" ++ " ∧ ".intercalate (info.symMem.map fun (a, n, e) => s!"μ'.readN {a} {n} = Num.encodeLE {n} {e}") ++ ") ∧")
     let outW := " && ".intercalate (wr.map fun (lo, hi) => s!"!(decide ({lo} ≤ a ∧ a < {hi}))")
     IO.println s!"      (∀ a, (decide (a < 4294967296){if outW == "" then "" else " && " ++ outW}) = true → μ'.read a = μ.read a) ∧"
     IO.println "      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by"
@@ -2103,7 +2107,7 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
   let mut needR : List Nat := (if out then [0, 7, 8] else []) ++
     (if frame then whole.regPost.filterMap (fun (j, v) => v.map (fun _ => j)) ++ whole.symPost.map (·.1) else [])
   let mut needO : List Nat := outO ++ (if frame then whole.memPost.map (·.1) else [])
-  let mut needS : List (Nat × Nat × String) := if frame then whole.symMem.map (fun (a, e) => (a, 8, e)) else []
+  let mut needS : List (Nat × Nat × String) := if frame then whole.symMem else []
   let mut needW : List (Nat × Nat) := []
   let mut needRd : List (Nat × Nat) := if out && fin[8]! > 0 then [(fin[7]!, fin[7]! + fin[8]!)] else []
   let mut sts0 : Array (List Nat × List Nat × List (Nat × Nat × String) × List (Nat × Nat) × List (Nat × Nat)) :=
@@ -2111,7 +2115,7 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
   for kk in [0:nseg] do
     let k := nseg - 1 - kk
     let info ← analyzeSeg P tr others otherPs k0 bs[k]! bs[k+1]! false baseP true needO
-      (regsWritten cx (k0 + bs[k]!) (k0 + bs[k+1]!)) true
+      (regsWritten cx (k0 + bs[k]!) (k0 + bs[k+1]!)) true (half := cx.wild)
     let mut w : Std.HashSet Nat := {}
     for (lo, hi) in info.wr do
       for a in [lo:hi] do w := w.insert a
@@ -2128,7 +2132,7 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
         info.wregs.contains j && !(info.regPost.any (fun (i, v) => i == j && v.isSome)) && !(info.symPost.any (·.1 == j))
       let badO := needO.filter fun a => w.contains a && !(info.memPost.any (·.1 == a))
       let badS := needS.filter fun (a, n, e) =>
-        (List.range n).any (fun q => w.contains (a + q)) && !(n == 8 && info.symMem.any (· == (a, e)))
+        (List.range n).any (fun q => w.contains (a + q)) && !(info.symMem.any (· == (a, n, e)))
       if !(badR.isEmpty && badO.isEmpty && badS.isEmpty) then
         needR := needR.filter (!badR.contains ·)
         needO := needO.filter (!badO.contains ·)
@@ -2146,7 +2150,7 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
       if w.contains a && !(info.memPost.any (·.1 == a)) then
         throw (IO.userError s!"cut {k + 1}: segment {k} leaves octet {a} input-dependent, and a later step reads it")
     for (a, n, e) in needS do
-      if (List.range n).any (fun q => w.contains (a + q)) && !(n == 8 && info.symMem.any (· == (a, e))) then
+      if (List.range n).any (fun q => w.contains (a + q)) && !(info.symMem.any (· == (a, n, e))) then
         throw (IO.userError s!"cut {k + 1}: segment {k} writes into the symbolic word at {a}, and a later step reads it")
     let rd := reads[k]!
     needR := (rd ++ needR.filter (fun j => !info.wregs.contains j)).eraseDups.mergeSort
@@ -2168,7 +2172,7 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
       let w := writes[k-1]!
       let sy' := sy.filter fun (a, n, e) =>
         prev.contains (a, n, e) ||
-          ((List.range n).any (fun q => w.contains (a + q)) && n == 8 && infos[k-1]!.symMem.any (· == (a, e)))
+          ((List.range n).any (fun q => w.contains (a + q)) && infos[k-1]!.symMem.any (· == (a, n, e)))
       sts := sts.set! k (r, o, sy', wr, rr)
   -- octets as runs inside aligned 8-octet words; page ranges merged into maximal intervals
   let runsOf (os : List Nat) : List (Nat × Nat) := Id.run do
@@ -2318,7 +2322,7 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
     let memC := info.memPost.map fun (a, v) => s!"μ'.read {a} = {v}"
     sx := sx ++ "\n      (" ++ (if memC.isEmpty then "True" else " ∧ ".intercalate memC) ++ ") ∧"
     if !info.symMem.isEmpty then
-      sx := sx ++ "\n      (" ++ " ∧ ".intercalate (info.symMem.map fun (a, e) => s!"μ'.readN {a} 8 = Num.encodeLE 8 {e}") ++ ") ∧"
+      sx := sx ++ "\n      (" ++ " ∧ ".intercalate (info.symMem.map fun (a, n, e) => s!"μ'.readN {a} {n} = Num.encodeLE {n} {e}") ++ ") ∧"
     let outW := " && ".intercalate (info.wr.map fun (lo, hi) => s!"!(decide ({lo} ≤ a ∧ a < {hi}))")
     sx := sx ++ s!"\n      (∀ a, (decide (a < 4294967296){if outW == "" then "" else " && " ++ outW}) = true → μ'.read a = μ.read a) ∧"
     let grow := segGrow k
@@ -2396,7 +2400,7 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
         let parts := (n.drop 4).toString.splitOn "_"
         let a := parts[0]!.toNat!; let len := parts[1]!.toNat!
         if (List.range len).any (fun q => w.contains (a + q)) then
-          match info.symMem.findIdx? (·.1 == a) with
+          match info.symMem.findIdx? (fun (c, m, _) => c == a && m == len) with
           | some q => s!"s{q}" | none => "sorryNoSym"
         else s!"(Memory.readN_of_frame hfr {a} {len} rfl).trans h.{n}"
       else if n.startsWith "hm_" then
@@ -2518,7 +2522,7 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
       match runAt nseg a with
       | some (c, m, j) => (s!"μ'.read {a} = {v}", s!"(Memory.read_of_readN hN.hm_{c}_{m} {j} (by decide))")
       | none => (s!"μ'.read {a} = {v}", "noRun")
-    let symC := whole.symMem.map fun (a, e) => (s!"μ'.readN {a} 8 = Num.encodeLE 8 {e}", s!"hN.hbn_{a}_8")
+    let symC := whole.symMem.map fun (a, n, e) => (s!"μ'.readN {a} {n} = Num.encodeLE {n} {e}", s!"hN.hbn_{a}_{n}")
     let ww := whole.wr
     let m := ww.length
     let outW := " && ".intercalate (ww.map fun (lo, hi) => s!"!(decide ({lo} ≤ a ∧ a < {hi}))")

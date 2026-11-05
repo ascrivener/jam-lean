@@ -2,12 +2,14 @@ import Services.Bootstrap.DecodeU16
 import PVM.Logic.Chase
 
 /-!
-# `memcpy` in bootstrap for any length (in progress)
+# `memcpy` in bootstrap for n ≥ 16
 
 The compiler's `memcpy` at 68729 for n ≥ 16: a head loop aligning the destination (68763), then an
 aligned word loop (68804) or, when the source is misaligned by m, a loop splicing the high 8 − m
 octets of one aligned source word with the low m of the next (68989), then the byte loop at 68840.
-This file holds the arithmetic of the splice (`encodeLE_splice`) and the loops' summaries.
+`memcpy_big` proves its effect for every length and alignment; `encodeLE_splice` is the
+arithmetic of the splice. Loads are folded (`rdN`, `sxw`) so stores read as copies; `pvm_go`
+steps a run through the decoded code facts.
 -/
 
 namespace PVM
@@ -289,8 +291,13 @@ elab "pvm_go" "[" hs:Lean.Parser.Tactic.simpLemma,* "]" : tactic => do
     let args := t.getAppArgs
     unless t.getAppFn.constName? == some ``PVM.FreeStepsH && args.size ≥ 12 do
       throwError "pvm_go: not a FreeStepsH goal"
+    let cur ← instantiateMVars args[3]!
+    let tgt ← instantiateMVars args[7]!
+    if cur == tgt then
+      evalTactic (← `(tactic| first | exact PVM.FreeStepsH.refl | exact PVM.FreeStepsH.refl.mono (by omega)))
+      return
     let some i := (← whnfR args[3]!).nat? | throwError "pvm_go: symbolic pc {args[3]!}"
-    let j? := (← instantiateMVars args[7]!).nat?
+    let j? := tgt.nat?
     if j? == some i then
       evalTactic (← `(tactic| first | exact PVM.FreeStepsH.refl | exact PVM.FreeStepsH.refl.mono (by omega)))
       return
@@ -2935,5 +2942,120 @@ theorem memcpy_mid_6 {p : ByteArray} {P : Program} [HasCode p P] (ω : Regs) (μ
       (fun a ha0 ha1 ha2 => mf a ha0 ha1 ha2) rd wr hr hw
     exact ⟨ω₄, _, (run₁.trans (run₂.trans (run₃.trans run₄))).mono (by omega), o1,
       o2.trans (c1.trans (r1'.trans h1.symm)), o3, o4, o5⟩
+
+/-- **`memcpy` of n ≥ 16 octets** (68729): from ω₇ = dst, ω₈ = src, ω₉ = n, the n octets at `dst` become
+    the source's; ω₀, ω₁, ω₅, ω₆ are restored, and memory is otherwise unchanged but for the frame
+    [sp − 48, sp). The ranges are kept 24 octets apart (the misaligned path reads whole aligned words
+    and splices them on the stack). -/
+theorem memcpy_big {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (ret t sp dst src n : Nat) (h0 : ω[0] = UInt64.ofNat ret) (h1 : ω[1] = UInt64.ofNat sp)
+    (h7 : ω[7] = UInt64.ofNat dst) (h8 : ω[8] = UInt64.ofNat src) (h9 : ω[9] = UInt64.ofNat n)
+    (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t)
+    (hbt : P.isBlockStart t = true) (hsp : 65536 + 48 ≤ sp ∧ sp < 4294967296 ∧ sp % 8 = 0) (hn : 16 ≤ n)
+    (hs : src + n + 16 < 4294967296) (hd : dst + n + 16 < 4294967296)
+    (hdj : dst + n + 24 ≤ src ∨ src + n + 24 ≤ dst) (hfd : sp ≤ dst ∨ dst + n ≤ sp - 48)
+    (hfs : sp + 8 ≤ src ∨ src + n + 16 ≤ sp - 48)
+    (hr : ∀ a, src ≤ a → a < src + n → μ.readable a = true)
+    (hw : ∀ a, dst ≤ a → a < dst + n → μ.writable a = true)
+    (hwf : ∀ a, sp - 48 ≤ a → a < sp → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 68729 ω μ x t ω' μ' x (2 * n + 320) ∧
+      ω'[0] = UInt64.ofNat ret ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      μ'.readN dst n = μ.readN src n ∧
+      (∀ a, a < 4294967296 → (a < dst ∨ dst + n ≤ a) → (a < sp - 48 ∨ sp ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  obtain ⟨ω₁, run₁, e2, e7, e8, e9, e11, e1, efr⟩ := memcpy_entry (p := p) (P := P) (R := R) ω μ x sp dst src n
+    h1 h7 h8 h9 hn (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)
+    (fun a h1 h2 => hr a h1 (by omega)) (fun a h1 h2 => hw a h1 (by omega)) hwf
+  generalize hd8def : (8 - dst % 8) % 8 = hd8 at e2 e11 run₁
+  have hd87 : hd8 ≤ 7 := by omega
+  -- the memory after the entry
+  generalize hM1 : (memcpyFrame μ ω sp).writeN dst ((memcpyFrame μ ω sp).readN src hd8) = M1 at run₁
+  have mF : ∀ a, a < 4294967296 → (a < sp - 48 + 24 ∨ sp ≤ a) → (memcpyFrame μ ω sp).read a = μ.read a :=
+    fun a ha0 ha1 => by
+      simp (disch := pvm_arith) only [memcpyFrame, PVM.Memory.read_writeN_disjoint, PVM.Num.length_encodeLE,
+        PVM.two32]
+  have m1 : ∀ a, a < 4294967296 → (a < dst ∨ dst + hd8 ≤ a) → (a < sp - 48 + 24 ∨ sp ≤ a) → M1.read a = μ.read a :=
+    fun a ha0 ha1 ha2 => by
+      rw [← hM1, Memory.read_writeN_disjoint _ _ _ _ (by simp [Memory.length_readN]; omega)
+        (by simp [Memory.length_readN, two32]; omega) (by simp [two32]; omega), mF a ha0 ha2]
+  have m1r : ∀ a, M1.readable a = μ.readable a := fun a => by
+    rw [← hM1]; simp only [memcpyFrame, Memory.readable_writeN]
+  have m1w : ∀ a, M1.writable a = μ.writable a := fun a => by
+    rw [← hM1]; simp only [memcpyFrame, Memory.writable_writeN]
+  have hrM : ∀ a, src + hd8 ≤ a → a < src + hd8 + (n - hd8) → M1.readable a = true :=
+    fun a h1 h2 => by rw [m1r]; exact hr a (by omega) (by omega)
+  have hwM : ∀ a, dst + hd8 ≤ a → a < dst + hd8 + (n - hd8) → M1.writable a = true :=
+    fun a h1 h2 => by rw [m1w]; exact hw a (by omega) (by omega)
+  have hrsM : ∀ a, sp - 48 ≤ a → a < sp - 48 + 24 → M1.writable a = true :=
+    fun a h1 h2 => by rw [m1w]; exact hwf a h1 (by omega)
+  have hmid : ∃ ω₂ μ₂, FreeStepsH p R 68780 (regsNF ω₁ []) M1 x 68857 ω₂ μ₂ x (2 * (n - hd8) + 220) ∧
+      MidOk (regsNF ω₁ []) ω₂ M1 μ₂ (src + hd8) (dst + hd8) (n - hd8) (sp - 48) := by
+    have : (src + hd8) % 8 = 0 ∨ (src + hd8) % 8 = 1 ∨ (src + hd8) % 8 = 2 ∨ (src + hd8) % 8 = 3 ∨
+        (src + hd8) % 8 = 4 ∨ (src + hd8) % 8 = 5 ∨ (src + hd8) % 8 = 6 ∨ (src + hd8) % 8 = 7 := by omega
+    rcases this with hm | hm | hm | hm | hm | hm | hm | hm
+    · obtain ⟨ω₂, μ₂, run₂, ok⟩ := memcpy_mid_0 (p := p) (P := P) (R := R) (regsNF ω₁ []) _ x (src + hd8)
+        (dst + hd8) (n - hd8) hd8 e2 (e8.trans (by congr 1; omega)) (e9.trans (by congr 1; omega)) e11 (by omega)
+        (by omega) hm (sp - 48) (by omega) (by omega) (by omega) (by omega) (by omega) hrM hwM
+      exact ⟨ω₂, μ₂, run₂.mono (by omega), ok⟩
+    · exact memcpy_mid_1 (p := p) (P := P) (R := R) (regsNF ω₁ []) _ x (src + hd8) (dst + hd8) (n - hd8) hd8 e2
+        (e8.trans (by congr 1; omega)) (e9.trans (by congr 1; omega)) e11 (by omega) (by omega) hm (sp - 48) e1
+        (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) hrM hwM hrsM
+    · exact memcpy_mid_2 (p := p) (P := P) (R := R) (regsNF ω₁ []) _ x (src + hd8) (dst + hd8) (n - hd8) hd8 e2
+        (e8.trans (by congr 1; omega)) (e9.trans (by congr 1; omega)) e11 (by omega) (by omega) hm (sp - 48) e1
+        (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) hrM hwM hrsM
+    · exact memcpy_mid_3 (p := p) (P := P) (R := R) (regsNF ω₁ []) _ x (src + hd8) (dst + hd8) (n - hd8) hd8 e2
+        (e8.trans (by congr 1; omega)) (e9.trans (by congr 1; omega)) e11 (by omega) (by omega) hm (sp - 48) e1
+        (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) hrM hwM hrsM
+    · exact memcpy_mid_4 (p := p) (P := P) (R := R) (regsNF ω₁ []) _ x (src + hd8) (dst + hd8) (n - hd8) hd8 e2
+        (e8.trans (by congr 1; omega)) (e9.trans (by congr 1; omega)) e11 (by omega) (by omega) hm (sp - 48) e1
+        (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) hrM hwM hrsM
+    · exact memcpy_mid_5 (p := p) (P := P) (R := R) (regsNF ω₁ []) _ x (src + hd8) (dst + hd8) (n - hd8) hd8 e2
+        (e8.trans (by congr 1; omega)) (e9.trans (by congr 1; omega)) e11 (by omega) (by omega) hm (sp - 48) e1
+        (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) hrM hwM hrsM
+    · exact memcpy_mid_6 (p := p) (P := P) (R := R) (regsNF ω₁ []) _ x (src + hd8) (dst + hd8) (n - hd8) hd8 e2
+        (e8.trans (by congr 1; omega)) (e9.trans (by congr 1; omega)) e11 (by omega) (by omega) hm (sp - 48) e1
+        (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) hrM hwM hrsM
+    · exact memcpy_mid_7 (p := p) (P := P) (R := R) (regsNF ω₁ []) _ x (src + hd8) (dst + hd8) (n - hd8) hd8 e2
+        (e8.trans (by congr 1; omega)) (e9.trans (by congr 1; omega)) e11 (by omega) (by omega) hm (sp - 48) e1
+        (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) hrM hwM hrsM
+  obtain ⟨ω₂, μ₂, run₂, o1, o2, o3, o4, o5⟩ := hmid
+  have m2 : ∀ a k, a + k < 4294967296 → (a + k ≤ dst + hd8 ∨ dst + hd8 + (n - hd8) ≤ a) →
+      (a + k ≤ sp - 48 ∨ sp - 48 + 24 ≤ a) → μ₂.readN a k = M1.readN a k :=
+    fun a k h1 h2 h3 => Memory.readN_congr (fun j hj => o3 (a + j) (by omega) (by omega) (by omega))
+  have stk : ∀ o v, (o = 40 ∧ v = ω[0].toNat) ∨ (o = 32 ∧ v = ω[5].toNat) ∨ (o = 24 ∧ v = ω[6].toNat) →
+      μ₂.readN (sp - 48 + o) 8 = Num.encodeLE 8 v := by
+    intro o v ho
+    rw [m2 _ _ (by omega) (by omega) (by omega), ← hM1, Memory.readN_writeN_disjoint _ _ _ _ _
+      (by simp [Memory.length_readN]; omega) (by simp [Memory.length_readN, two32]; omega) (by simp [two32]; omega)]
+    rcases ho with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩ <;>
+    simp (disch := pvm_arith) only [memcpyFrame, PVM.Memory.readN_writeN_same, PVM.Memory.readN_writeN_disjoint,
+      PVM.Num.length_encodeLE, PVM.two32]
+  have s0 := stk 40 _ (Or.inl ⟨rfl, rfl⟩)
+  have s5 := stk 32 _ (Or.inr (Or.inl ⟨rfl, rfl⟩))
+  have s6 := stk 24 _ (Or.inr (Or.inr ⟨rfl, rfl⟩))
+  have q1 : ω₂[1] = UInt64.ofNat (sp - 48) := o2.trans e1
+  have hrs2 : ∀ a, sp - 48 ≤ a → a < sp → μ₂.readable a = true := fun a h1 h2 => by
+    rw [o4, m1r]; exact Memory.readable_of_writable (hwf a h1 h2)
+  have stE : ∃ ω₃, FreeStepsH p R 68857 (regsNF ω₂ []) μ₂ x t ω₃ μ₂ x 6 ∧
+      ω₃[0] = UInt64.ofNat ret ∧ ω₃[1] = UInt64.ofNat sp ∧ ω₃[5] = ω[5] ∧ ω₃[6] = ω[6] := by
+    generalize μ₂ = M at s0 s5 s6 hrs2 ⊢
+    refine ⟨?ω₃, ?run, ?post⟩
+    case run => pvm_go [q1, s0, s5, s6, hrs2, h0, hret, hjt, hbt]
+    case post =>
+      refine ⟨?_, ?_, ?_, ?_⟩ <;> simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat,
+        Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, q1, s0, s5, s6, h0,
+        PVM.Num.decodeLE_encodeLE, PVM.u64_toNat_mod, UInt64.ofNat_toNat, UInt64.toNat_ofNat, Nat.mod_mod]
+  obtain ⟨ω₃, run₃, c0, c1, c5, c6⟩ := stE
+  refine ⟨ω₃, μ₂, ((run₁.trans run₂).trans run₃).mono (by omega), c0, c1, c5, c6, ?_,
+    fun a ha0 ha1 ha2 => ?_, fun a => by rw [o4, m1r], fun a => by rw [o5, m1w]⟩
+  · have sp1 := Memory.readN_split μ₂ dst hd8 (n - hd8)
+    have sp2 := Memory.readN_split μ src hd8 (n - hd8)
+    rw [show hd8 + (n - hd8) = n by omega] at sp1 sp2
+    rw [sp1, sp2, o1, m2 _ _ (by omega) (by omega) (by omega)]
+    congr 1
+    · rw [← hM1, Memory.readN_writeN_same _ _ _ _ (Memory.length_readN _ _ _) (by simp [two32]; omega)]
+      exact Memory.readN_congr (fun j hj => mF _ (by omega) (by omega))
+    · exact Memory.readN_congr (fun j hj => m1 _ (by omega) (by omega) (by omega))
+  · rw [o3 a ha0 (by omega) (by omega), m1 a ha0 (by omega) (by omega)]
 
 end Services.Bootstrap

@@ -2,7 +2,13 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
+
+# one run per branch or PR at a time: a new push cancels the run it replaces
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-and-check:
@@ -17,11 +23,13 @@ jobs:
             | sh -s -- -y --default-toolchain none
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
-      - name: Cache .lake
-        uses: actions/cache@v4
+      # Restore the newest build of this toolchain; lake rebuilds only what changed since. The build is
+      # saved after every run, even a failed or timed-out one, so no run's work is lost.
+      - name: Restore .lake
+        uses: actions/cache/restore@v4
         with:
           path: .lake
-          key: lake-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lakefile.lean', 'lake-manifest.json') }}-${{ hashFiles('PVM/**', 'Tests/**', 'PVM.lean') }}
+          key: lake-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lakefile.lean', 'lake-manifest.json') }}-${{ github.sha }}
           restore-keys: lake-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lakefile.lean', 'lake-manifest.json') }}-
 
       - name: Generated tables and constants match the pinned paper
@@ -136,3 +144,10 @@ jobs:
 
       - name: Accumulate vectors (all but the listed deviations from GP 0.8.0)
         run: lake build acctest
+
+      - name: Save .lake
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .lake
+          key: lake-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lakefile.lean', 'lake-manifest.json') }}-${{ github.sha }}

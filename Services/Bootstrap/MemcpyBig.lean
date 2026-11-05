@@ -226,6 +226,30 @@ theorem encodeLE_splice' (pw T m : Nat) (hm : 0 < m ∧ m < 8) (hpw : pw < 18446
   rwa [show pw % 2 ^ (8 * 8) = pw from Nat.mod_eq_of_lt hpw,
     show T % 2 ^ (8 * 8) = T from Nat.mod_eq_of_lt hT] at this
 
+/-- `a & ~7`: `a` rounded down to a multiple of 8. -/
+theorem bitwise_and_not7 (a : Nat) (ha : a < 18446744073709551616) :
+    Exec.bitwise (· && ·) a 18446744073709551608 = a / 8 * 8 := by
+  apply Nat.eq_of_testBit_eq
+  intro i
+  have e : a / 8 * 8 = 2 ^ 3 * (a / 2 ^ 3) + 0 := by rw [Nat.mul_comm]; rfl
+  rw [e, Nat.testBit_two_pow_mul_add _ (Nat.two_pow_pos 3)]
+  simp only [Exec.bitwise, Num.testBit_ofBits, Num.bit_eq_testBit]
+  have hm : (18446744073709551608 : Nat) = 2 ^ 64 - (2 ^ 3 - 1 + 1) := by rfl
+  rw [hm, Nat.testBit_two_pow_sub_succ (by decide), Nat.testBit_two_pow_sub_one]
+  by_cases h3 : i < 3
+  · simp [h3, show i < 64 by omega]
+  · by_cases h64 : i < 64
+    · have h8 : (a / 8).testBit (i - 3) = a.testBit i := by
+        rw [show (8 : Nat) = 2 ^ 3 by rfl, Nat.testBit_div_two_pow, show i - 3 + 3 = i by omega]
+      simp [h3, h64, h8]
+    · have hp : (18446744073709551616 : Nat) ≤ 2 ^ i := by
+        have := Nat.pow_le_pow_right (by decide : 2 > 0) (show 64 ≤ i by omega)
+        simpa using this
+      have : a.testBit i = false := Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le ha hp)
+      have h2 : (a / 2 ^ 3).testBit (i - 3) = false := by
+        rw [Nat.testBit_div_two_pow, show i - 3 + 3 = i by omega, this]
+      simp [h3, h64, h2]
+
 theorem readN_drop (μ : Memory) (a n m : Nat) : (μ.readN a n).drop m = μ.readN (a + m) (n - m) := by
   apply List.ext_getElem
   · simp [Memory.length_readN]
@@ -2337,5 +2361,73 @@ theorem memcpy_mis_6 {p : ByteArray} {P : Program} [HasCode p P] (ω : Regs) (μ
     rw [sp1, sp2, m3 _ _ (by omega) (by omega) (by omega), s1, m1 _ _ (by omega) (by omega), w3,
       m2 _ _ (by omega) (by omega) (by omega), m1 _ _ (by omega) (by omega),
       show A0 + 8 * (k + 1) + 6 = A0 + 6 + 8 * (k + 1) by omega]
+
+/-- **`memcpy`'s entry for n ≥ 16** (68729 … 68777): the frame, then the h = (8 − dst mod 8) mod 8
+    octets that align the destination. -/
+theorem memcpy_entry {p : ByteArray} {P : Program} [HasCode p P] (ω : Regs) (μ : Memory) (x : X)
+    (sp dst src n : Nat) (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat dst)
+    (h8 : ω[8] = UInt64.ofNat src) (h9 : ω[9] = UInt64.ofNat n) (hn : 16 ≤ n)
+    (hsp : 48 ≤ sp ∧ sp < 4294967296) (hd : dst + n < 4294967296) (hs : src + n < 4294967296)
+    (hdj : dst + n ≤ src ∨ src + n ≤ dst) (hfd : sp ≤ dst ∨ dst + n ≤ sp - 48)
+    (hfs : sp ≤ src ∨ src + n ≤ sp - 48)
+    (hr : ∀ a, src ≤ a → a < src + 8 → μ.readable a = true)
+    (hw : ∀ a, dst ≤ a → a < dst + 8 → μ.writable a = true)
+    (hwf : ∀ a, sp - 48 ≤ a → a < sp → μ.writable a = true) :
+    ∃ ω', FreeStepsH p R 68729 ω μ x 68780 ω'
+        ((memcpyFrame μ ω sp).writeN dst ((memcpyFrame μ ω sp).readN src ((8 - dst % 8) % 8))) x 70 ∧
+      ω'[2] = UInt64.ofNat ((8 - dst % 8) % 8) ∧ ω'[7] = UInt64.ofNat dst ∧ ω'[8] = UInt64.ofNat src ∧
+      ω'[9] = UInt64.ofNat n ∧ ω'[11] = UInt64.ofNat (dst + (8 - dst % 8) % 8) ∧
+      ω'[1] = UInt64.ofNat (sp - 48) ∧
+      ∀ j : Fin 13, j.val ∉ [1, 2, 5, 6, 10, 11, 12] → ω'[j] = ω[j] := by
+  have hand7 : ∀ a, Exec.bitwise (fun x1 x2 => x1 && x2) a 7 = a % 8 := fun a => by
+    rw [bitwise_and_low _ 7 3 (by decide) (by decide)]
+  have hh : (18446744073709551616 - dst) % 18446744073709551616 % 8 = (8 - dst % 8) % 8 := by omega
+  rcases Nat.eq_zero_or_pos ((8 - dst % 8) % 8) with h0 | hpos
+  · rw [h0]
+    simp only [show ∀ μ : Memory, μ.readN src 0 = [] from fun _ => rfl, Memory.writeN_nil]
+    rw [show ω = regsNF ω [] from rfl]
+    refine ⟨?ω', ?run, ?post⟩
+    case run => pvm_go [h1, h7, h8, h9, hwf, hand7, memcpyFrame]
+    case post =>
+      refine ⟨?_, ?_, ?_, ?_, ?_, ?_, fun j hj => ?fr⟩
+      case fr =>
+        simp only [List.mem_cons, List.not_mem_nil, or_false, not_or] at hj
+        obtain ⟨g1, g2, g5, g6, g10, g11, g12⟩ := hj
+        simp only [Fin.getElem_fin]
+        rw [PVM.getElem_regsNF _ _ _ j.isLt, PVM.getElem_regsNF _ _ _ j.isLt]
+        simp [PVM.lookup_cons_nat, g1, g2, g5, g6, g10, g11, g12]
+      all_goals simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,
+        PVM.getD_some', List.lookup_nil, Option.getD_none, h1, h7, h8, h9, hh, h0, Nat.add_zero]
+  · obtain ⟨k, hk⟩ : ∃ k, (8 - dst % 8) % 8 = k + 1 := ⟨(8 - dst % 8) % 8 - 1, by omega⟩
+    have hk7 : k + 1 ≤ 7 := by omega
+    rw [hk]
+    rw [show ω = regsNF ω [] from rfl]
+    have stA : ∃ ω₁, FreeStepsH p R 68729 (regsNF ω []) μ x 68763 ω₁ (memcpyFrame μ ω sp) x 13 ∧
+        ω₁[12] = UInt64.ofNat (k + 1) ∧ ω₁[5] = UInt64.ofNat src ∧ ω₁[6] = UInt64.ofNat dst ∧
+        ω₁[2] = UInt64.ofNat (k + 1) ∧ ω₁[7] = UInt64.ofNat dst ∧ ω₁[8] = UInt64.ofNat src ∧
+        ω₁[9] = UInt64.ofNat n ∧ ω₁[11] = UInt64.ofNat (dst + (k + 1)) ∧ ω₁[1] = UInt64.ofNat (sp - 48) ∧
+        ∀ j : Fin 13, j.val ∉ [1, 2, 5, 6, 10, 11, 12] → ω₁[j] = ω[j] := by
+      refine ⟨?ω₁, ?run, ?post⟩
+      case run => pvm_go [h1, h7, h8, h9, hwf, hand7, memcpyFrame, hh, hk]
+      case post =>
+        refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun j hj => ?fr⟩
+        case fr =>
+          simp only [List.mem_cons, List.not_mem_nil, or_false, not_or] at hj
+          obtain ⟨g1, g2, g5, g6, g10, g11, g12⟩ := hj
+          simp only [Fin.getElem_fin]
+          rw [PVM.getElem_regsNF _ _ _ j.isLt]
+          simp [PVM.lookup_cons_nat, g1, g2, g5, g6, g10, g11, g12]
+        all_goals simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,
+          PVM.getD_some', List.lookup_nil, Option.getD_none, h1, h7, h8, h9, hh, hk]
+    obtain ⟨ω₁, run₁, a12, a5, a6, a2, a7, a8, a9, a11, a1, afr⟩ := stA
+    obtain ⟨ω₂, run₂, lfr⟩ := memcpy_head_loop (p := p) (P := P) (R := R) x k ω₁ (memcpyFrame μ ω sp)
+      src dst a12 a5 a6 (by omega) (by omega) (by omega) (by omega)
+      (fun a h1 h2 => by simp only [memcpyFrame, Memory.readable_writeN]; exact hr a h1 (by omega))
+      (fun a h1 h2 => by simp only [memcpyFrame, Memory.writable_writeN]; exact hw a h1 (by omega))
+    refine ⟨ω₂, (run₁.trans run₂).mono (by omega), (lfr 2 (by decide)).trans a2, (lfr 7 (by decide)).trans a7,
+      (lfr 8 (by decide)).trans a8, (lfr 9 (by decide)).trans a9, (lfr 11 (by decide)).trans a11,
+      (lfr 1 (by decide)).trans a1, fun j hj => ?_⟩
+    simp only [List.mem_cons, List.not_mem_nil, or_false, not_or] at hj
+    exact (lfr j (by simp; omega)).trans (afr j (by simp; omega))
 
 end Services.Bootstrap

@@ -9,6 +9,20 @@ at ω₈: if len ≥ n it copies them with `memcpy` (68729), advances the reader
 ω₇ = 0. This file proves it for every n < 16, from the code facts alone.
 -/
 
+/-- **Call a summary** whose memory is existential too: the summary's run to `t` with `Q` of the
+    registers and memory there, then for every such state a run from `t` with the goal's property,
+    within a bound `N`. -/
+theorem PVM.FreeStepsH.bind_ex2 {X : Type} {p : ByteArray} {R : PVM.HostRel X} {i : Nat} {ω : PVM.Regs}
+    {μ : PVM.Memory} {x : X} {t t' n₁ n₂ N : Nat} {Q : PVM.Regs → PVM.Memory → Prop}
+    {S : PVM.Regs → PVM.Memory → Prop}
+    (h : ∃ ω₁ μ₁, PVM.FreeStepsH p R i ω μ x t ω₁ μ₁ x n₁ ∧ Q ω₁ μ₁)
+    (k : ∀ ω₁ μ₁, Q ω₁ μ₁ → ∃ ω' μ', PVM.FreeStepsH p R t ω₁ μ₁ x t' ω' μ' x n₂ ∧ S ω' μ')
+    (hle : n₁ + n₂ ≤ N) :
+    ∃ ω' μ', PVM.FreeStepsH p R i ω μ x t' ω' μ' x N ∧ S ω' μ' := by
+  obtain ⟨ω₁, μ₁, h₁, hq⟩ := h
+  obtain ⟨ω', μ', h₂, hs⟩ := k ω₁ μ₁ hq
+  exact ⟨ω', μ', (h₁.trans h₂).mono (by omega), hs⟩
+
 namespace Services.Bootstrap
 
 open PVM Services.Bootstrap.Code

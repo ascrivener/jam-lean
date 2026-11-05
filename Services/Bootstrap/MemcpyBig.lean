@@ -2430,4 +2430,510 @@ theorem memcpy_entry {p : ByteArray} {P : Program} [HasCode p P] (ω : Regs) (μ
     simp only [List.mem_cons, List.not_mem_nil, or_false, not_or] at hj
     exact (lfr j (by simp; omega)).trans (afr j (by simp; omega))
 
+/-- What `memcpy` leaves at its epilogue (68857): the n' octets at `d` are the source's from `s`, ω₁ as
+    it was, memory otherwise unchanged but for [sp, sp + 24). -/
+def MidOk (ω ω' : Regs) (μ μ' : Memory) (s d n' sp : Nat) : Prop :=
+  μ'.readN d n' = μ.readN s n' ∧ ω'[1] = ω[1] ∧
+    (∀ a, a < 4294967296 → (a < d ∨ d + n' ≤ a) → (a < sp ∨ sp + 24 ≤ a) → μ'.read a = μ.read a) ∧
+    (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a)
+
+/-- The tail (68840 … 68854, `memcpy_loop`) after a body that copied W octets, for t = n' mod 8. -/
+theorem memcpy_tail {p : ByteArray} {P : Program} [HasCode p P] (ω : Regs) (μ μ₀ : Memory) (x : X)
+    (s d W n' sp : Nat) (ht : 0 < n' % 8) (h8 : ω[8] = UInt64.ofNat (s + W)) (h9 : ω[9] = UInt64.ofNat (n' % 8))
+    (h10 : ω[10] = UInt64.ofNat (d + W)) (hW : W = n' / 8 * 8) (hb : s + n' < 4294967296) (hd : d + n' < 4294967296)
+    (hdj : d + n' ≤ s ∨ s + n' ≤ d) (hsd : sp + 24 ≤ d ∨ d + n' ≤ sp) (hss : sp + 24 ≤ s ∨ s + n' ≤ sp)
+    (hbody : μ.readN d W = μ₀.readN s W)
+    (hfr : ∀ a, a < 4294967296 → (a < d ∨ d + W ≤ a) → (a < sp ∨ sp + 24 ≤ a) → μ.read a = μ₀.read a)
+    (hrd : ∀ a, μ.readable a = μ₀.readable a) (hwr : ∀ a, μ.writable a = μ₀.writable a)
+    (hr : ∀ a, s ≤ a → a < s + n' → μ₀.readable a = true) (hw : ∀ a, d ≤ a → a < d + n' → μ₀.writable a = true) :
+    ∃ ω', FreeStepsH p R 68840 ω μ x 68857 ω' (μ.writeN (d + W) (μ.readN (s + W) (n' % 8))) x 56 ∧
+      MidOk ω ω' μ₀ (μ.writeN (d + W) (μ.readN (s + W) (n' % 8))) s d n' sp := by
+  obtain ⟨k, hk⟩ : ∃ k, n' % 8 = k + 1 := ⟨n' % 8 - 1, by omega⟩
+  obtain ⟨ω', run, fr⟩ := memcpy_loop (p := p) (P := P) (R := R) x k ω μ (s + W) (d + W) (h9.trans (by rw [hk]))
+    h8 h10 (by omega) (by omega) (by omega) (by omega)
+    (fun a h1 h2 => by rw [hrd]; exact hr a (by omega) (by omega))
+    (fun a h1 h2 => by rw [hwr]; exact hw a (by omega) (by omega))
+  rw [hk]
+  refine ⟨ω', run.mono (by omega), ?_, fr 1 (by decide), fun a ha0 ha1 ha2 => ?_, fun a => ?_, fun a => ?_⟩
+  · have sp1 := Memory.readN_split (μ.writeN (d + W) (μ.readN (s + W) (k + 1))) d W (k + 1)
+    have sp2 := Memory.readN_split μ₀ s W (k + 1)
+    rw [show W + (k + 1) = n' by omega] at sp1 sp2
+    rw [sp1, sp2, Memory.readN_writeN_disjoint _ _ _ _ _ (by simp [Memory.length_readN]) (by simp [Memory.length_readN, two32]; omega)
+        (by simp [two32]; omega), hbody,
+      Memory.readN_writeN_same _ _ _ _ (Memory.length_readN _ _ _) (by simp [two32]; omega)]
+    congr 1
+    exact Memory.readN_congr (fun j hj => hfr _ (by omega) (by omega) (by omega))
+  · rw [Memory.read_writeN_disjoint _ _ _ _ (by simp [Memory.length_readN]; omega)
+      (by simp [Memory.length_readN, two32]; omega) (by simp [two32]; omega), hfr a ha0 (by omega) ha2]
+  · rw [Memory.readable_writeN, hrd]
+  · rw [Memory.writable_writeN, hwr]
+
+/-- **`memcpy`'s body, source aligned** (m = 0): 68780 … 68830, the word loop, then the tail. -/
+theorem memcpy_mid_0 {p : ByteArray} {P : Program} [HasCode p P] (ω : Regs) (μ : Memory) (x : X)
+    (s d n' h : Nat) (h2 : ω[2] = UInt64.ofNat h) (h8 : ω[8] = UInt64.ofNat (s - h)) (h9 : ω[9] = UInt64.ofNat (n' + h))
+    (h11 : ω[11] = UInt64.ofNat d) (hh : h ≤ s) (hn : 8 ≤ n') (hm : s % 8 = 0) (sp : Nat)
+    (hb : s + n' < 4294967296) (hd : d + n' < 4294967296)
+    (hdj : d + n' ≤ s ∨ s + n' ≤ d) (hsd : sp + 24 ≤ d ∨ d + n' ≤ sp) (hss : sp + 24 ≤ s ∨ s + n' ≤ sp)
+    (hr : ∀ a, s ≤ a → a < s + n' → μ.readable a = true) (hw : ∀ a, d ≤ a → a < d + n' → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 68780 ω μ x 68857 ω' μ' x (2 * n' + 150) ∧ MidOk ω ω' μ μ' s d n' sp := by
+  have hand7 : ∀ a, Exec.bitwise (fun x1 x2 => x1 && x2) a 7 = a % 8 := fun a => by
+    rw [bitwise_and_low _ 7 3 (by decide) (by decide)]
+  obtain ⟨k, hk⟩ : ∃ k, n' / 8 * 8 = 8 * (k + 1) := ⟨n' / 8 - 1, by omega⟩
+  rw [show ω = regsNF ω [] from rfl]
+  have stA : ∃ ω₁, FreeStepsH p R 68780 (regsNF ω []) μ x 68804 ω₁ μ x 9 ∧
+      ω₁[8] = UInt64.ofNat s ∧ ω₁[11] = UInt64.ofNat d ∧ ω₁[10] = UInt64.ofNat (d + 8 * (k + 1)) ∧
+      ω₁[0] = UInt64.ofNat s ∧ ω₁[9] = UInt64.ofNat n' ∧ ω₁[12] = UInt64.ofNat (8 * (k + 1)) ∧ ω₁[1] = ω[1] := by
+    refine ⟨?ω₁, ?run, ?post⟩
+    case run => pvm_go [h2, h8, h9, h11, hand7, bitwise_and_not7, hk, hm, show s - h + h = s by omega]
+    case post =>
+      refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
+      simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some',
+        List.lookup_nil, Option.getD_none, h2, h8, h9, h11, hk, show s - h + h = s by omega, Nat.add_sub_cancel]
+  obtain ⟨ω₁, run₁, a8, a11, a10, a0, a9, a12, a1⟩ := stA
+  obtain ⟨ω₂, run₂, b8, b11, bfr⟩ := memcpy_word_loop (p := p) (P := P) (R := R) x k ω₁ μ s d a8 a11 a10
+    (by omega) (by omega) (by omega) (fun a h1 h2 => hr a h1 (by omega)) (fun a h1 h2 => hw a h1 (by omega))
+  have bW : (μ.writeN d (μ.readN s (8 * (k + 1)))).readN d (8 * (k + 1)) = μ.readN s (8 * (k + 1)) :=
+    Memory.readN_writeN_same _ _ _ _ (Memory.length_readN _ _ _) (by simp [two32]; omega)
+  have bF : ∀ a, a < 4294967296 → (a < d ∨ d + 8 * (k + 1) ≤ a) → (a < sp ∨ sp + 24 ≤ a) →
+      (μ.writeN d (μ.readN s (8 * (k + 1)))).read a = μ.read a := fun a ha0 ha1 _ =>
+    Memory.read_writeN_disjoint _ _ _ _ (by simp [Memory.length_readN]; omega)
+      (by simp [Memory.length_readN, two32]; omega) (by simp [two32]; omega)
+  have q0 : ω₂[0] = UInt64.ofNat s := (bfr 0 (by decide)).trans a0
+  have q12 : ω₂[12] = UInt64.ofNat (8 * (k + 1)) := (bfr 12 (by decide)).trans a12
+  have q9 : ω₂[9] = UInt64.ofNat n' := (bfr 9 (by decide)).trans a9
+  have q10 : ω₂[10] = UInt64.ofNat (d + 8 * (k + 1)) := (bfr 10 (by decide)).trans a10
+  have q1 : ω₂[1] = ω[1] := (bfr 1 (by decide)).trans a1
+  rcases Nat.eq_zero_or_pos (n' % 8) with ht | ht
+  · -- no tail: 68818 … 68830, then 68857
+    obtain ⟨ω₃, run₃, c1⟩ : ∃ ω₃, FreeStepsH p R 68818 (regsNF ω₂ []) (μ.writeN d (μ.readN s (8 * (k + 1))))
+        x 68857 ω₃ (μ.writeN d (μ.readN s (8 * (k + 1)))) x 5 ∧ ω₃[1] = ω[1] := by
+      generalize μ.writeN d (μ.readN s (8 * (k + 1))) = M
+      refine ⟨?ω₃a, ?run, ?post⟩
+      case run =>
+        pvm_go [b8, q0, q12, q9, q10, b11, hand7, ht]
+      case post =>
+        simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some',
+          List.lookup_nil, Option.getD_none, q1]
+    refine ⟨ω₃, _, (run₁.trans (run₂.trans run₃)).mono (by omega), ?_, c1,
+      fun a ha0 ha1 ha2 => bF a ha0 (by omega) ha2,
+      fun a => by rw [Memory.readable_writeN], fun a => by rw [Memory.writable_writeN]⟩
+    rw [show n' = 8 * (k + 1) by omega, bW]
+  · obtain ⟨ω₃, run₃, c8, c9, c10, c1⟩ : ∃ ω₃, FreeStepsH p R 68818 (regsNF ω₂ []) (μ.writeN d (μ.readN s (8 * (k + 1))))
+        x 68840 ω₃ (μ.writeN d (μ.readN s (8 * (k + 1)))) x 4 ∧ ω₃[8] = UInt64.ofNat (s + n' / 8 * 8) ∧
+        ω₃[9] = UInt64.ofNat (n' % 8) ∧ ω₃[10] = UInt64.ofNat (d + n' / 8 * 8) ∧ ω₃[1] = ω[1] := by
+      generalize μ.writeN d (μ.readN s (8 * (k + 1))) = M
+      refine ⟨?ω₃b, ?run, ?post⟩
+      case run =>
+        pvm_go [b8, q0, q12, q9, q10, b11, hand7, ht]
+      case post =>
+        refine ⟨?_, ?_, ?_, ?_⟩ <;>
+        simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some',
+          List.lookup_nil, Option.getD_none, b8, q0, q12, q9, q10, q1, hand7, hk]
+    rw [hk] at c8 c10
+    obtain ⟨ω₄, run₄, ok⟩ := memcpy_tail (p := p) (P := P) (R := R) ω₃ _ μ x s d (8 * (k + 1)) n' sp ht c8 c9 c10
+      hk.symm hb hd hdj hsd hss bW (fun a ha0 ha1 ha2 => bF a ha0 (by omega) ha2)
+      (fun a => by rw [Memory.readable_writeN]) (fun a => by rw [Memory.writable_writeN]) hr hw
+    refine ⟨ω₄, _, (run₁.trans (run₂.trans (run₃.trans run₄))).mono (by omega), ?_⟩
+    obtain ⟨o1, o2, o3, o4, o5⟩ := ok
+    exact ⟨o1, o2.trans c1, o3, o4, o5⟩
+
+/-- **`memcpy`'s body, source misaligned by m = 7**: 68780 … 68795, `memcpy_mis_7`, then the tail. -/
+theorem memcpy_mid_7 {p : ByteArray} {P : Program} [HasCode p P] (ω : Regs) (μ : Memory) (x : X)
+    (s d n' h : Nat) (h2 : ω[2] = UInt64.ofNat h) (h8 : ω[8] = UInt64.ofNat (s - h)) (h9 : ω[9] = UInt64.ofNat (n' + h))
+    (h11 : ω[11] = UInt64.ofNat d) (hh : h ≤ s) (hn : 8 ≤ n') (hm : s % 8 = 7) (sp : Nat)
+    (h1 : ω[1] = UInt64.ofNat sp) (hsp : sp % 8 = 0) (hs : sp + 24 < 4294967296)
+    (hb : s + n' + 16 < 4294967296) (hd : d + n' + 16 < 4294967296)
+    (hdj : d + n' + 24 ≤ s ∨ s + n' + 24 ≤ d) (hsd : sp + 24 ≤ d ∨ d + n' ≤ sp)
+    (hss : sp + 24 + 8 ≤ s ∨ s + n' + 16 ≤ sp)
+    (hr : ∀ a, s ≤ a → a < s + n' → μ.readable a = true) (hw : ∀ a, d ≤ a → a < d + n' → μ.writable a = true)
+    (hrs : ∀ a, sp ≤ a → a < sp + 24 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 68780 ω μ x 68857 ω' μ' x (2 * n' + 220) ∧ MidOk ω ω' μ μ' s d n' sp := by
+  have hand7 : ∀ a, Exec.bitwise (fun x1 x2 => x1 && x2) a 7 = a % 8 := fun a => by
+    rw [bitwise_and_low _ 7 3 (by decide) (by decide)]
+  obtain ⟨k, hk⟩ : ∃ k, n' / 8 * 8 = 8 * (k + 1) := ⟨n' / 8 - 1, by omega⟩
+  rw [show ω = regsNF ω [] from rfl]
+  have stA : ∃ ω₁, FreeStepsH p R 68780 (regsNF ω []) μ x 68872 ω₁ μ x 6 ∧
+      ω₁[0] = UInt64.ofNat (s - 7 + 7) ∧ ω₁[2] = UInt64.ofNat 7 ∧ ω₁[9] = UInt64.ofNat n' ∧
+      ω₁[10] = UInt64.ofNat (d + 8 * (k + 1)) ∧ ω₁[11] = UInt64.ofNat d ∧ ω₁[12] = UInt64.ofNat (8 * (k + 1)) ∧
+      ω₁[1] = UInt64.ofNat sp := by
+    refine ⟨?ω₁, ?run, ?post⟩
+    case run => pvm_go [h2, h8, h9, h11, hand7, bitwise_and_not7, hk, hm, show s - h + h = s by omega]
+    case post =>
+      refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
+      simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some',
+        List.lookup_nil, Option.getD_none, h1, h2, h8, h9, h11, hk, hm, show s - h + h = s by omega,
+        show s - 7 + 7 = s by omega, Nat.add_sub_cancel]
+  obtain ⟨ω₁, run₁, a0, a2, a9, a10, a11, a12, a1⟩ := stA
+  obtain ⟨ω₂, μ₂, run₂, w2, r8, r9, r10, r11, r1', r7, r12, mf, rd, wr⟩ :=
+    memcpy_mis_7 (p := p) (P := P) (R := R) ω₁ μ x (s - 7) d (8 * (k + 1)) n' sp a0 a2 a9 a10 a11 a12 a1
+      (by omega) (by omega) hsp (by omega) (by omega) (by omega) hs (by omega) (by omega) (by omega)
+      (fun a h1 h2 => hr a (by omega) (by omega)) hrs (fun a h1 h2 => hw a h1 (by omega))
+  rw [show s - 7 + 7 = s by omega] at w2 r8
+  rcases Nat.eq_zero_or_pos (n' % 8) with ht | ht
+  · obtain ⟨ω₃, run₃, c1⟩ : ∃ ω₃, FreeStepsH p R 69132 (regsNF ω₂ []) μ₂ x 68857 ω₃ μ₂ x 2 ∧ ω₃[1] = ω₂[1] := by
+      generalize μ₂ = M
+      refine ⟨?ω₃a, ?run, ?post⟩
+      case run => pvm_go [r9, r10, r11, ht]
+      case post => simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,
+          PVM.getD_some', List.lookup_nil, Option.getD_none]
+    refine ⟨ω₃, μ₂, (run₁.trans (run₂.trans run₃)).mono (by omega), ?_, c1.trans (r1'.trans h1.symm),
+      fun a ha0 ha1 ha2 => mf a ha0 (by omega) ha2, rd, wr⟩
+    rw [show n' = 8 * (k + 1) by omega, w2]
+  · obtain ⟨ω₃, run₃, c8, c9, c10, c1⟩ : ∃ ω₃, FreeStepsH p R 69132 (regsNF ω₂ []) μ₂ x 68840 ω₃ μ₂ x 1 ∧
+        ω₃[8] = UInt64.ofNat (s + 8 * (k + 1)) ∧ ω₃[9] = UInt64.ofNat (n' % 8) ∧
+        ω₃[10] = UInt64.ofNat (d + 8 * (k + 1)) ∧ ω₃[1] = ω₂[1] := by
+      generalize μ₂ = M
+      refine ⟨?ω₃b, ?run, ?post⟩
+      case run => pvm_go [r9, r10, r11, ht]
+      case post =>
+        refine ⟨?_, ?_, ?_, ?_⟩ <;> simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+          ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, r8, r9, r10]
+    obtain ⟨ω₄, run₄, o1, o2, o3, o4, o5⟩ := memcpy_tail (p := p) (P := P) (R := R) ω₃ μ₂ μ x s d (8 * (k + 1)) n' sp
+      ht c8 c9 c10 hk.symm (by omega) (by omega) (by omega) hsd (by omega) w2
+      (fun a ha0 ha1 ha2 => mf a ha0 ha1 ha2) rd wr hr hw
+    exact ⟨ω₄, _, (run₁.trans (run₂.trans (run₃.trans run₄))).mono (by omega), o1,
+      o2.trans (c1.trans (r1'.trans h1.symm)), o3, o4, o5⟩
+
+/-- **`memcpy`'s body, source misaligned by m = 1**: 68780 … 68795, `memcpy_mis_1`, then the tail. -/
+theorem memcpy_mid_1 {p : ByteArray} {P : Program} [HasCode p P] (ω : Regs) (μ : Memory) (x : X)
+    (s d n' h : Nat) (h2 : ω[2] = UInt64.ofNat h) (h8 : ω[8] = UInt64.ofNat (s - h)) (h9 : ω[9] = UInt64.ofNat (n' + h))
+    (h11 : ω[11] = UInt64.ofNat d) (hh : h ≤ s) (hn : 8 ≤ n') (hm : s % 8 = 1) (sp : Nat)
+    (h1 : ω[1] = UInt64.ofNat sp) (hsp : sp % 8 = 0) (hs : sp + 24 < 4294967296)
+    (hb : s + n' + 16 < 4294967296) (hd : d + n' + 16 < 4294967296)
+    (hdj : d + n' + 24 ≤ s ∨ s + n' + 24 ≤ d) (hsd : sp + 24 ≤ d ∨ d + n' ≤ sp)
+    (hss : sp + 24 + 8 ≤ s ∨ s + n' + 16 ≤ sp)
+    (hr : ∀ a, s ≤ a → a < s + n' → μ.readable a = true) (hw : ∀ a, d ≤ a → a < d + n' → μ.writable a = true)
+    (hrs : ∀ a, sp ≤ a → a < sp + 24 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 68780 ω μ x 68857 ω' μ' x (2 * n' + 220) ∧ MidOk ω ω' μ μ' s d n' sp := by
+  have hand7 : ∀ a, Exec.bitwise (fun x1 x2 => x1 && x2) a 7 = a % 8 := fun a => by
+    rw [bitwise_and_low _ 7 3 (by decide) (by decide)]
+  obtain ⟨k, hk⟩ : ∃ k, n' / 8 * 8 = 8 * (k + 1) := ⟨n' / 8 - 1, by omega⟩
+  rw [show ω = regsNF ω [] from rfl]
+  have stA : ∃ ω₁, FreeStepsH p R 68780 (regsNF ω []) μ x 68872 ω₁ μ x 6 ∧
+      ω₁[0] = UInt64.ofNat (s - 1 + 1) ∧ ω₁[2] = UInt64.ofNat 1 ∧ ω₁[9] = UInt64.ofNat n' ∧
+      ω₁[10] = UInt64.ofNat (d + 8 * (k + 1)) ∧ ω₁[11] = UInt64.ofNat d ∧ ω₁[12] = UInt64.ofNat (8 * (k + 1)) ∧
+      ω₁[1] = UInt64.ofNat sp := by
+    refine ⟨?ω₁, ?run, ?post⟩
+    case run => pvm_go [h2, h8, h9, h11, hand7, bitwise_and_not7, hk, hm, show s - h + h = s by omega]
+    case post =>
+      refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
+      simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some',
+        List.lookup_nil, Option.getD_none, h1, h2, h8, h9, h11, hk, hm, show s - h + h = s by omega,
+        show s - 1 + 1 = s by omega, Nat.add_sub_cancel]
+  obtain ⟨ω₁, run₁, a0, a2, a9, a10, a11, a12, a1⟩ := stA
+  obtain ⟨ω₂, μ₂, run₂, w2, r8, r9, r10, r11, r1', r7, r12, mf, rd, wr⟩ :=
+    memcpy_mis_1 (p := p) (P := P) (R := R) ω₁ μ x (s - 1) d (8 * (k + 1)) n' sp a0 a2 a9 a10 a11 a12 a1
+      (by omega) (by omega) hsp (by omega) (by omega) (by omega) hs (by omega) (by omega) (by omega)
+      (fun a h1 h2 => hr a (by omega) (by omega)) hrs (fun a h1 h2 => hw a h1 (by omega))
+  rw [show s - 1 + 1 = s by omega] at w2 r8
+  rcases Nat.eq_zero_or_pos (n' % 8) with ht | ht
+  · obtain ⟨ω₃, run₃, c1⟩ : ∃ ω₃, FreeStepsH p R 69132 (regsNF ω₂ []) μ₂ x 68857 ω₃ μ₂ x 2 ∧ ω₃[1] = ω₂[1] := by
+      generalize μ₂ = M
+      refine ⟨?ω₃a, ?run, ?post⟩
+      case run => pvm_go [r9, r10, r11, ht]
+      case post => simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,
+          PVM.getD_some', List.lookup_nil, Option.getD_none]
+    refine ⟨ω₃, μ₂, (run₁.trans (run₂.trans run₃)).mono (by omega), ?_, c1.trans (r1'.trans h1.symm),
+      fun a ha0 ha1 ha2 => mf a ha0 (by omega) ha2, rd, wr⟩
+    rw [show n' = 8 * (k + 1) by omega, w2]
+  · obtain ⟨ω₃, run₃, c8, c9, c10, c1⟩ : ∃ ω₃, FreeStepsH p R 69132 (regsNF ω₂ []) μ₂ x 68840 ω₃ μ₂ x 1 ∧
+        ω₃[8] = UInt64.ofNat (s + 8 * (k + 1)) ∧ ω₃[9] = UInt64.ofNat (n' % 8) ∧
+        ω₃[10] = UInt64.ofNat (d + 8 * (k + 1)) ∧ ω₃[1] = ω₂[1] := by
+      generalize μ₂ = M
+      refine ⟨?ω₃b, ?run, ?post⟩
+      case run => pvm_go [r9, r10, r11, ht]
+      case post =>
+        refine ⟨?_, ?_, ?_, ?_⟩ <;> simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+          ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, r8, r9, r10]
+    obtain ⟨ω₄, run₄, o1, o2, o3, o4, o5⟩ := memcpy_tail (p := p) (P := P) (R := R) ω₃ μ₂ μ x s d (8 * (k + 1)) n' sp
+      ht c8 c9 c10 hk.symm (by omega) (by omega) (by omega) hsd (by omega) w2
+      (fun a ha0 ha1 ha2 => mf a ha0 ha1 ha2) rd wr hr hw
+    exact ⟨ω₄, _, (run₁.trans (run₂.trans (run₃.trans run₄))).mono (by omega), o1,
+      o2.trans (c1.trans (r1'.trans h1.symm)), o3, o4, o5⟩
+
+/-- **`memcpy`'s body, source misaligned by m = 2**: 68780 … 68795, `memcpy_mis_2`, then the tail. -/
+theorem memcpy_mid_2 {p : ByteArray} {P : Program} [HasCode p P] (ω : Regs) (μ : Memory) (x : X)
+    (s d n' h : Nat) (h2 : ω[2] = UInt64.ofNat h) (h8 : ω[8] = UInt64.ofNat (s - h)) (h9 : ω[9] = UInt64.ofNat (n' + h))
+    (h11 : ω[11] = UInt64.ofNat d) (hh : h ≤ s) (hn : 8 ≤ n') (hm : s % 8 = 2) (sp : Nat)
+    (h1 : ω[1] = UInt64.ofNat sp) (hsp : sp % 8 = 0) (hs : sp + 24 < 4294967296)
+    (hb : s + n' + 16 < 4294967296) (hd : d + n' + 16 < 4294967296)
+    (hdj : d + n' + 24 ≤ s ∨ s + n' + 24 ≤ d) (hsd : sp + 24 ≤ d ∨ d + n' ≤ sp)
+    (hss : sp + 24 + 8 ≤ s ∨ s + n' + 16 ≤ sp)
+    (hr : ∀ a, s ≤ a → a < s + n' → μ.readable a = true) (hw : ∀ a, d ≤ a → a < d + n' → μ.writable a = true)
+    (hrs : ∀ a, sp ≤ a → a < sp + 24 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 68780 ω μ x 68857 ω' μ' x (2 * n' + 220) ∧ MidOk ω ω' μ μ' s d n' sp := by
+  have hand7 : ∀ a, Exec.bitwise (fun x1 x2 => x1 && x2) a 7 = a % 8 := fun a => by
+    rw [bitwise_and_low _ 7 3 (by decide) (by decide)]
+  obtain ⟨k, hk⟩ : ∃ k, n' / 8 * 8 = 8 * (k + 1) := ⟨n' / 8 - 1, by omega⟩
+  rw [show ω = regsNF ω [] from rfl]
+  have stA : ∃ ω₁, FreeStepsH p R 68780 (regsNF ω []) μ x 68872 ω₁ μ x 6 ∧
+      ω₁[0] = UInt64.ofNat (s - 2 + 2) ∧ ω₁[2] = UInt64.ofNat 2 ∧ ω₁[9] = UInt64.ofNat n' ∧
+      ω₁[10] = UInt64.ofNat (d + 8 * (k + 1)) ∧ ω₁[11] = UInt64.ofNat d ∧ ω₁[12] = UInt64.ofNat (8 * (k + 1)) ∧
+      ω₁[1] = UInt64.ofNat sp := by
+    refine ⟨?ω₁, ?run, ?post⟩
+    case run => pvm_go [h2, h8, h9, h11, hand7, bitwise_and_not7, hk, hm, show s - h + h = s by omega]
+    case post =>
+      refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
+      simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some',
+        List.lookup_nil, Option.getD_none, h1, h2, h8, h9, h11, hk, hm, show s - h + h = s by omega,
+        show s - 2 + 2 = s by omega, Nat.add_sub_cancel]
+  obtain ⟨ω₁, run₁, a0, a2, a9, a10, a11, a12, a1⟩ := stA
+  obtain ⟨ω₂, μ₂, run₂, w2, r8, r9, r10, r11, r1', r7, r12, mf, rd, wr⟩ :=
+    memcpy_mis_2 (p := p) (P := P) (R := R) ω₁ μ x (s - 2) d (8 * (k + 1)) n' sp a0 a2 a9 a10 a11 a12 a1
+      (by omega) (by omega) hsp (by omega) (by omega) (by omega) hs (by omega) (by omega) (by omega)
+      (fun a h1 h2 => hr a (by omega) (by omega)) hrs (fun a h1 h2 => hw a h1 (by omega))
+  rw [show s - 2 + 2 = s by omega] at w2 r8
+  rcases Nat.eq_zero_or_pos (n' % 8) with ht | ht
+  · obtain ⟨ω₃, run₃, c1⟩ : ∃ ω₃, FreeStepsH p R 69132 (regsNF ω₂ []) μ₂ x 68857 ω₃ μ₂ x 2 ∧ ω₃[1] = ω₂[1] := by
+      generalize μ₂ = M
+      refine ⟨?ω₃a, ?run, ?post⟩
+      case run => pvm_go [r9, r10, r11, ht]
+      case post => simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,
+          PVM.getD_some', List.lookup_nil, Option.getD_none]
+    refine ⟨ω₃, μ₂, (run₁.trans (run₂.trans run₃)).mono (by omega), ?_, c1.trans (r1'.trans h1.symm),
+      fun a ha0 ha1 ha2 => mf a ha0 (by omega) ha2, rd, wr⟩
+    rw [show n' = 8 * (k + 1) by omega, w2]
+  · obtain ⟨ω₃, run₃, c8, c9, c10, c1⟩ : ∃ ω₃, FreeStepsH p R 69132 (regsNF ω₂ []) μ₂ x 68840 ω₃ μ₂ x 1 ∧
+        ω₃[8] = UInt64.ofNat (s + 8 * (k + 1)) ∧ ω₃[9] = UInt64.ofNat (n' % 8) ∧
+        ω₃[10] = UInt64.ofNat (d + 8 * (k + 1)) ∧ ω₃[1] = ω₂[1] := by
+      generalize μ₂ = M
+      refine ⟨?ω₃b, ?run, ?post⟩
+      case run => pvm_go [r9, r10, r11, ht]
+      case post =>
+        refine ⟨?_, ?_, ?_, ?_⟩ <;> simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+          ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, r8, r9, r10]
+    obtain ⟨ω₄, run₄, o1, o2, o3, o4, o5⟩ := memcpy_tail (p := p) (P := P) (R := R) ω₃ μ₂ μ x s d (8 * (k + 1)) n' sp
+      ht c8 c9 c10 hk.symm (by omega) (by omega) (by omega) hsd (by omega) w2
+      (fun a ha0 ha1 ha2 => mf a ha0 ha1 ha2) rd wr hr hw
+    exact ⟨ω₄, _, (run₁.trans (run₂.trans (run₃.trans run₄))).mono (by omega), o1,
+      o2.trans (c1.trans (r1'.trans h1.symm)), o3, o4, o5⟩
+
+/-- **`memcpy`'s body, source misaligned by m = 3**: 68780 … 68795, `memcpy_mis_3`, then the tail. -/
+theorem memcpy_mid_3 {p : ByteArray} {P : Program} [HasCode p P] (ω : Regs) (μ : Memory) (x : X)
+    (s d n' h : Nat) (h2 : ω[2] = UInt64.ofNat h) (h8 : ω[8] = UInt64.ofNat (s - h)) (h9 : ω[9] = UInt64.ofNat (n' + h))
+    (h11 : ω[11] = UInt64.ofNat d) (hh : h ≤ s) (hn : 8 ≤ n') (hm : s % 8 = 3) (sp : Nat)
+    (h1 : ω[1] = UInt64.ofNat sp) (hsp : sp % 8 = 0) (hs : sp + 24 < 4294967296)
+    (hb : s + n' + 16 < 4294967296) (hd : d + n' + 16 < 4294967296)
+    (hdj : d + n' + 24 ≤ s ∨ s + n' + 24 ≤ d) (hsd : sp + 24 ≤ d ∨ d + n' ≤ sp)
+    (hss : sp + 24 + 8 ≤ s ∨ s + n' + 16 ≤ sp)
+    (hr : ∀ a, s ≤ a → a < s + n' → μ.readable a = true) (hw : ∀ a, d ≤ a → a < d + n' → μ.writable a = true)
+    (hrs : ∀ a, sp ≤ a → a < sp + 24 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 68780 ω μ x 68857 ω' μ' x (2 * n' + 220) ∧ MidOk ω ω' μ μ' s d n' sp := by
+  have hand7 : ∀ a, Exec.bitwise (fun x1 x2 => x1 && x2) a 7 = a % 8 := fun a => by
+    rw [bitwise_and_low _ 7 3 (by decide) (by decide)]
+  obtain ⟨k, hk⟩ : ∃ k, n' / 8 * 8 = 8 * (k + 1) := ⟨n' / 8 - 1, by omega⟩
+  rw [show ω = regsNF ω [] from rfl]
+  have stA : ∃ ω₁, FreeStepsH p R 68780 (regsNF ω []) μ x 68872 ω₁ μ x 6 ∧
+      ω₁[0] = UInt64.ofNat (s - 3 + 3) ∧ ω₁[2] = UInt64.ofNat 3 ∧ ω₁[9] = UInt64.ofNat n' ∧
+      ω₁[10] = UInt64.ofNat (d + 8 * (k + 1)) ∧ ω₁[11] = UInt64.ofNat d ∧ ω₁[12] = UInt64.ofNat (8 * (k + 1)) ∧
+      ω₁[1] = UInt64.ofNat sp := by
+    refine ⟨?ω₁, ?run, ?post⟩
+    case run => pvm_go [h2, h8, h9, h11, hand7, bitwise_and_not7, hk, hm, show s - h + h = s by omega]
+    case post =>
+      refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
+      simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some',
+        List.lookup_nil, Option.getD_none, h1, h2, h8, h9, h11, hk, hm, show s - h + h = s by omega,
+        show s - 3 + 3 = s by omega, Nat.add_sub_cancel]
+  obtain ⟨ω₁, run₁, a0, a2, a9, a10, a11, a12, a1⟩ := stA
+  obtain ⟨ω₂, μ₂, run₂, w2, r8, r9, r10, r11, r1', r7, r12, mf, rd, wr⟩ :=
+    memcpy_mis_3 (p := p) (P := P) (R := R) ω₁ μ x (s - 3) d (8 * (k + 1)) n' sp a0 a2 a9 a10 a11 a12 a1
+      (by omega) (by omega) hsp (by omega) (by omega) (by omega) hs (by omega) (by omega) (by omega)
+      (fun a h1 h2 => hr a (by omega) (by omega)) hrs (fun a h1 h2 => hw a h1 (by omega))
+  rw [show s - 3 + 3 = s by omega] at w2 r8
+  rcases Nat.eq_zero_or_pos (n' % 8) with ht | ht
+  · obtain ⟨ω₃, run₃, c1⟩ : ∃ ω₃, FreeStepsH p R 69132 (regsNF ω₂ []) μ₂ x 68857 ω₃ μ₂ x 2 ∧ ω₃[1] = ω₂[1] := by
+      generalize μ₂ = M
+      refine ⟨?ω₃a, ?run, ?post⟩
+      case run => pvm_go [r9, r10, r11, ht]
+      case post => simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,
+          PVM.getD_some', List.lookup_nil, Option.getD_none]
+    refine ⟨ω₃, μ₂, (run₁.trans (run₂.trans run₃)).mono (by omega), ?_, c1.trans (r1'.trans h1.symm),
+      fun a ha0 ha1 ha2 => mf a ha0 (by omega) ha2, rd, wr⟩
+    rw [show n' = 8 * (k + 1) by omega, w2]
+  · obtain ⟨ω₃, run₃, c8, c9, c10, c1⟩ : ∃ ω₃, FreeStepsH p R 69132 (regsNF ω₂ []) μ₂ x 68840 ω₃ μ₂ x 1 ∧
+        ω₃[8] = UInt64.ofNat (s + 8 * (k + 1)) ∧ ω₃[9] = UInt64.ofNat (n' % 8) ∧
+        ω₃[10] = UInt64.ofNat (d + 8 * (k + 1)) ∧ ω₃[1] = ω₂[1] := by
+      generalize μ₂ = M
+      refine ⟨?ω₃b, ?run, ?post⟩
+      case run => pvm_go [r9, r10, r11, ht]
+      case post =>
+        refine ⟨?_, ?_, ?_, ?_⟩ <;> simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+          ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, r8, r9, r10]
+    obtain ⟨ω₄, run₄, o1, o2, o3, o4, o5⟩ := memcpy_tail (p := p) (P := P) (R := R) ω₃ μ₂ μ x s d (8 * (k + 1)) n' sp
+      ht c8 c9 c10 hk.symm (by omega) (by omega) (by omega) hsd (by omega) w2
+      (fun a ha0 ha1 ha2 => mf a ha0 ha1 ha2) rd wr hr hw
+    exact ⟨ω₄, _, (run₁.trans (run₂.trans (run₃.trans run₄))).mono (by omega), o1,
+      o2.trans (c1.trans (r1'.trans h1.symm)), o3, o4, o5⟩
+
+/-- **`memcpy`'s body, source misaligned by m = 4**: 68780 … 68795, `memcpy_mis_4`, then the tail. -/
+theorem memcpy_mid_4 {p : ByteArray} {P : Program} [HasCode p P] (ω : Regs) (μ : Memory) (x : X)
+    (s d n' h : Nat) (h2 : ω[2] = UInt64.ofNat h) (h8 : ω[8] = UInt64.ofNat (s - h)) (h9 : ω[9] = UInt64.ofNat (n' + h))
+    (h11 : ω[11] = UInt64.ofNat d) (hh : h ≤ s) (hn : 8 ≤ n') (hm : s % 8 = 4) (sp : Nat)
+    (h1 : ω[1] = UInt64.ofNat sp) (hsp : sp % 8 = 0) (hs : sp + 24 < 4294967296)
+    (hb : s + n' + 16 < 4294967296) (hd : d + n' + 16 < 4294967296)
+    (hdj : d + n' + 24 ≤ s ∨ s + n' + 24 ≤ d) (hsd : sp + 24 ≤ d ∨ d + n' ≤ sp)
+    (hss : sp + 24 + 8 ≤ s ∨ s + n' + 16 ≤ sp)
+    (hr : ∀ a, s ≤ a → a < s + n' → μ.readable a = true) (hw : ∀ a, d ≤ a → a < d + n' → μ.writable a = true)
+    (hrs : ∀ a, sp ≤ a → a < sp + 24 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 68780 ω μ x 68857 ω' μ' x (2 * n' + 220) ∧ MidOk ω ω' μ μ' s d n' sp := by
+  have hand7 : ∀ a, Exec.bitwise (fun x1 x2 => x1 && x2) a 7 = a % 8 := fun a => by
+    rw [bitwise_and_low _ 7 3 (by decide) (by decide)]
+  obtain ⟨k, hk⟩ : ∃ k, n' / 8 * 8 = 8 * (k + 1) := ⟨n' / 8 - 1, by omega⟩
+  rw [show ω = regsNF ω [] from rfl]
+  have stA : ∃ ω₁, FreeStepsH p R 68780 (regsNF ω []) μ x 68872 ω₁ μ x 6 ∧
+      ω₁[0] = UInt64.ofNat (s - 4 + 4) ∧ ω₁[2] = UInt64.ofNat 4 ∧ ω₁[9] = UInt64.ofNat n' ∧
+      ω₁[10] = UInt64.ofNat (d + 8 * (k + 1)) ∧ ω₁[11] = UInt64.ofNat d ∧ ω₁[12] = UInt64.ofNat (8 * (k + 1)) ∧
+      ω₁[1] = UInt64.ofNat sp := by
+    refine ⟨?ω₁, ?run, ?post⟩
+    case run => pvm_go [h2, h8, h9, h11, hand7, bitwise_and_not7, hk, hm, show s - h + h = s by omega]
+    case post =>
+      refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
+      simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some',
+        List.lookup_nil, Option.getD_none, h1, h2, h8, h9, h11, hk, hm, show s - h + h = s by omega,
+        show s - 4 + 4 = s by omega, Nat.add_sub_cancel]
+  obtain ⟨ω₁, run₁, a0, a2, a9, a10, a11, a12, a1⟩ := stA
+  obtain ⟨ω₂, μ₂, run₂, w2, r8, r9, r10, r11, r1', r7, r12, mf, rd, wr⟩ :=
+    memcpy_mis_4 (p := p) (P := P) (R := R) ω₁ μ x (s - 4) d (8 * (k + 1)) n' sp a0 a2 a9 a10 a11 a12 a1
+      (by omega) (by omega) hsp (by omega) (by omega) (by omega) hs (by omega) (by omega) (by omega)
+      (fun a h1 h2 => hr a (by omega) (by omega)) hrs (fun a h1 h2 => hw a h1 (by omega))
+  rw [show s - 4 + 4 = s by omega] at w2 r8
+  rcases Nat.eq_zero_or_pos (n' % 8) with ht | ht
+  · obtain ⟨ω₃, run₃, c1⟩ : ∃ ω₃, FreeStepsH p R 69132 (regsNF ω₂ []) μ₂ x 68857 ω₃ μ₂ x 2 ∧ ω₃[1] = ω₂[1] := by
+      generalize μ₂ = M
+      refine ⟨?ω₃a, ?run, ?post⟩
+      case run => pvm_go [r9, r10, r11, ht]
+      case post => simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,
+          PVM.getD_some', List.lookup_nil, Option.getD_none]
+    refine ⟨ω₃, μ₂, (run₁.trans (run₂.trans run₃)).mono (by omega), ?_, c1.trans (r1'.trans h1.symm),
+      fun a ha0 ha1 ha2 => mf a ha0 (by omega) ha2, rd, wr⟩
+    rw [show n' = 8 * (k + 1) by omega, w2]
+  · obtain ⟨ω₃, run₃, c8, c9, c10, c1⟩ : ∃ ω₃, FreeStepsH p R 69132 (regsNF ω₂ []) μ₂ x 68840 ω₃ μ₂ x 1 ∧
+        ω₃[8] = UInt64.ofNat (s + 8 * (k + 1)) ∧ ω₃[9] = UInt64.ofNat (n' % 8) ∧
+        ω₃[10] = UInt64.ofNat (d + 8 * (k + 1)) ∧ ω₃[1] = ω₂[1] := by
+      generalize μ₂ = M
+      refine ⟨?ω₃b, ?run, ?post⟩
+      case run => pvm_go [r9, r10, r11, ht]
+      case post =>
+        refine ⟨?_, ?_, ?_, ?_⟩ <;> simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+          ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, r8, r9, r10]
+    obtain ⟨ω₄, run₄, o1, o2, o3, o4, o5⟩ := memcpy_tail (p := p) (P := P) (R := R) ω₃ μ₂ μ x s d (8 * (k + 1)) n' sp
+      ht c8 c9 c10 hk.symm (by omega) (by omega) (by omega) hsd (by omega) w2
+      (fun a ha0 ha1 ha2 => mf a ha0 ha1 ha2) rd wr hr hw
+    exact ⟨ω₄, _, (run₁.trans (run₂.trans (run₃.trans run₄))).mono (by omega), o1,
+      o2.trans (c1.trans (r1'.trans h1.symm)), o3, o4, o5⟩
+
+/-- **`memcpy`'s body, source misaligned by m = 5**: 68780 … 68795, `memcpy_mis_5`, then the tail. -/
+theorem memcpy_mid_5 {p : ByteArray} {P : Program} [HasCode p P] (ω : Regs) (μ : Memory) (x : X)
+    (s d n' h : Nat) (h2 : ω[2] = UInt64.ofNat h) (h8 : ω[8] = UInt64.ofNat (s - h)) (h9 : ω[9] = UInt64.ofNat (n' + h))
+    (h11 : ω[11] = UInt64.ofNat d) (hh : h ≤ s) (hn : 8 ≤ n') (hm : s % 8 = 5) (sp : Nat)
+    (h1 : ω[1] = UInt64.ofNat sp) (hsp : sp % 8 = 0) (hs : sp + 24 < 4294967296)
+    (hb : s + n' + 16 < 4294967296) (hd : d + n' + 16 < 4294967296)
+    (hdj : d + n' + 24 ≤ s ∨ s + n' + 24 ≤ d) (hsd : sp + 24 ≤ d ∨ d + n' ≤ sp)
+    (hss : sp + 24 + 8 ≤ s ∨ s + n' + 16 ≤ sp)
+    (hr : ∀ a, s ≤ a → a < s + n' → μ.readable a = true) (hw : ∀ a, d ≤ a → a < d + n' → μ.writable a = true)
+    (hrs : ∀ a, sp ≤ a → a < sp + 24 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 68780 ω μ x 68857 ω' μ' x (2 * n' + 220) ∧ MidOk ω ω' μ μ' s d n' sp := by
+  have hand7 : ∀ a, Exec.bitwise (fun x1 x2 => x1 && x2) a 7 = a % 8 := fun a => by
+    rw [bitwise_and_low _ 7 3 (by decide) (by decide)]
+  obtain ⟨k, hk⟩ : ∃ k, n' / 8 * 8 = 8 * (k + 1) := ⟨n' / 8 - 1, by omega⟩
+  rw [show ω = regsNF ω [] from rfl]
+  have stA : ∃ ω₁, FreeStepsH p R 68780 (regsNF ω []) μ x 68872 ω₁ μ x 6 ∧
+      ω₁[0] = UInt64.ofNat (s - 5 + 5) ∧ ω₁[2] = UInt64.ofNat 5 ∧ ω₁[9] = UInt64.ofNat n' ∧
+      ω₁[10] = UInt64.ofNat (d + 8 * (k + 1)) ∧ ω₁[11] = UInt64.ofNat d ∧ ω₁[12] = UInt64.ofNat (8 * (k + 1)) ∧
+      ω₁[1] = UInt64.ofNat sp := by
+    refine ⟨?ω₁, ?run, ?post⟩
+    case run => pvm_go [h2, h8, h9, h11, hand7, bitwise_and_not7, hk, hm, show s - h + h = s by omega]
+    case post =>
+      refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
+      simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some',
+        List.lookup_nil, Option.getD_none, h1, h2, h8, h9, h11, hk, hm, show s - h + h = s by omega,
+        show s - 5 + 5 = s by omega, Nat.add_sub_cancel]
+  obtain ⟨ω₁, run₁, a0, a2, a9, a10, a11, a12, a1⟩ := stA
+  obtain ⟨ω₂, μ₂, run₂, w2, r8, r9, r10, r11, r1', r7, r12, mf, rd, wr⟩ :=
+    memcpy_mis_5 (p := p) (P := P) (R := R) ω₁ μ x (s - 5) d (8 * (k + 1)) n' sp a0 a2 a9 a10 a11 a12 a1
+      (by omega) (by omega) hsp (by omega) (by omega) (by omega) hs (by omega) (by omega) (by omega)
+      (fun a h1 h2 => hr a (by omega) (by omega)) hrs (fun a h1 h2 => hw a h1 (by omega))
+  rw [show s - 5 + 5 = s by omega] at w2 r8
+  rcases Nat.eq_zero_or_pos (n' % 8) with ht | ht
+  · obtain ⟨ω₃, run₃, c1⟩ : ∃ ω₃, FreeStepsH p R 69132 (regsNF ω₂ []) μ₂ x 68857 ω₃ μ₂ x 2 ∧ ω₃[1] = ω₂[1] := by
+      generalize μ₂ = M
+      refine ⟨?ω₃a, ?run, ?post⟩
+      case run => pvm_go [r9, r10, r11, ht]
+      case post => simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,
+          PVM.getD_some', List.lookup_nil, Option.getD_none]
+    refine ⟨ω₃, μ₂, (run₁.trans (run₂.trans run₃)).mono (by omega), ?_, c1.trans (r1'.trans h1.symm),
+      fun a ha0 ha1 ha2 => mf a ha0 (by omega) ha2, rd, wr⟩
+    rw [show n' = 8 * (k + 1) by omega, w2]
+  · obtain ⟨ω₃, run₃, c8, c9, c10, c1⟩ : ∃ ω₃, FreeStepsH p R 69132 (regsNF ω₂ []) μ₂ x 68840 ω₃ μ₂ x 1 ∧
+        ω₃[8] = UInt64.ofNat (s + 8 * (k + 1)) ∧ ω₃[9] = UInt64.ofNat (n' % 8) ∧
+        ω₃[10] = UInt64.ofNat (d + 8 * (k + 1)) ∧ ω₃[1] = ω₂[1] := by
+      generalize μ₂ = M
+      refine ⟨?ω₃b, ?run, ?post⟩
+      case run => pvm_go [r9, r10, r11, ht]
+      case post =>
+        refine ⟨?_, ?_, ?_, ?_⟩ <;> simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+          ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, r8, r9, r10]
+    obtain ⟨ω₄, run₄, o1, o2, o3, o4, o5⟩ := memcpy_tail (p := p) (P := P) (R := R) ω₃ μ₂ μ x s d (8 * (k + 1)) n' sp
+      ht c8 c9 c10 hk.symm (by omega) (by omega) (by omega) hsd (by omega) w2
+      (fun a ha0 ha1 ha2 => mf a ha0 ha1 ha2) rd wr hr hw
+    exact ⟨ω₄, _, (run₁.trans (run₂.trans (run₃.trans run₄))).mono (by omega), o1,
+      o2.trans (c1.trans (r1'.trans h1.symm)), o3, o4, o5⟩
+
+/-- **`memcpy`'s body, source misaligned by m = 6**: 68780 … 68795, `memcpy_mis_6`, then the tail. -/
+theorem memcpy_mid_6 {p : ByteArray} {P : Program} [HasCode p P] (ω : Regs) (μ : Memory) (x : X)
+    (s d n' h : Nat) (h2 : ω[2] = UInt64.ofNat h) (h8 : ω[8] = UInt64.ofNat (s - h)) (h9 : ω[9] = UInt64.ofNat (n' + h))
+    (h11 : ω[11] = UInt64.ofNat d) (hh : h ≤ s) (hn : 8 ≤ n') (hm : s % 8 = 6) (sp : Nat)
+    (h1 : ω[1] = UInt64.ofNat sp) (hsp : sp % 8 = 0) (hs : sp + 24 < 4294967296)
+    (hb : s + n' + 16 < 4294967296) (hd : d + n' + 16 < 4294967296)
+    (hdj : d + n' + 24 ≤ s ∨ s + n' + 24 ≤ d) (hsd : sp + 24 ≤ d ∨ d + n' ≤ sp)
+    (hss : sp + 24 + 8 ≤ s ∨ s + n' + 16 ≤ sp)
+    (hr : ∀ a, s ≤ a → a < s + n' → μ.readable a = true) (hw : ∀ a, d ≤ a → a < d + n' → μ.writable a = true)
+    (hrs : ∀ a, sp ≤ a → a < sp + 24 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 68780 ω μ x 68857 ω' μ' x (2 * n' + 220) ∧ MidOk ω ω' μ μ' s d n' sp := by
+  have hand7 : ∀ a, Exec.bitwise (fun x1 x2 => x1 && x2) a 7 = a % 8 := fun a => by
+    rw [bitwise_and_low _ 7 3 (by decide) (by decide)]
+  obtain ⟨k, hk⟩ : ∃ k, n' / 8 * 8 = 8 * (k + 1) := ⟨n' / 8 - 1, by omega⟩
+  rw [show ω = regsNF ω [] from rfl]
+  have stA : ∃ ω₁, FreeStepsH p R 68780 (regsNF ω []) μ x 68872 ω₁ μ x 6 ∧
+      ω₁[0] = UInt64.ofNat (s - 6 + 6) ∧ ω₁[2] = UInt64.ofNat 6 ∧ ω₁[9] = UInt64.ofNat n' ∧
+      ω₁[10] = UInt64.ofNat (d + 8 * (k + 1)) ∧ ω₁[11] = UInt64.ofNat d ∧ ω₁[12] = UInt64.ofNat (8 * (k + 1)) ∧
+      ω₁[1] = UInt64.ofNat sp := by
+    refine ⟨?ω₁, ?run, ?post⟩
+    case run => pvm_go [h2, h8, h9, h11, hand7, bitwise_and_not7, hk, hm, show s - h + h = s by omega]
+    case post =>
+      refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
+      simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some',
+        List.lookup_nil, Option.getD_none, h1, h2, h8, h9, h11, hk, hm, show s - h + h = s by omega,
+        show s - 6 + 6 = s by omega, Nat.add_sub_cancel]
+  obtain ⟨ω₁, run₁, a0, a2, a9, a10, a11, a12, a1⟩ := stA
+  obtain ⟨ω₂, μ₂, run₂, w2, r8, r9, r10, r11, r1', r7, r12, mf, rd, wr⟩ :=
+    memcpy_mis_6 (p := p) (P := P) (R := R) ω₁ μ x (s - 6) d (8 * (k + 1)) n' sp a0 a2 a9 a10 a11 a12 a1
+      (by omega) (by omega) hsp (by omega) (by omega) (by omega) hs (by omega) (by omega) (by omega)
+      (fun a h1 h2 => hr a (by omega) (by omega)) hrs (fun a h1 h2 => hw a h1 (by omega))
+  rw [show s - 6 + 6 = s by omega] at w2 r8
+  rcases Nat.eq_zero_or_pos (n' % 8) with ht | ht
+  · obtain ⟨ω₃, run₃, c1⟩ : ∃ ω₃, FreeStepsH p R 69132 (regsNF ω₂ []) μ₂ x 68857 ω₃ μ₂ x 2 ∧ ω₃[1] = ω₂[1] := by
+      generalize μ₂ = M
+      refine ⟨?ω₃a, ?run, ?post⟩
+      case run => pvm_go [r9, r10, r11, ht]
+      case post => simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,
+          PVM.getD_some', List.lookup_nil, Option.getD_none]
+    refine ⟨ω₃, μ₂, (run₁.trans (run₂.trans run₃)).mono (by omega), ?_, c1.trans (r1'.trans h1.symm),
+      fun a ha0 ha1 ha2 => mf a ha0 (by omega) ha2, rd, wr⟩
+    rw [show n' = 8 * (k + 1) by omega, w2]
+  · obtain ⟨ω₃, run₃, c8, c9, c10, c1⟩ : ∃ ω₃, FreeStepsH p R 69132 (regsNF ω₂ []) μ₂ x 68840 ω₃ μ₂ x 1 ∧
+        ω₃[8] = UInt64.ofNat (s + 8 * (k + 1)) ∧ ω₃[9] = UInt64.ofNat (n' % 8) ∧
+        ω₃[10] = UInt64.ofNat (d + 8 * (k + 1)) ∧ ω₃[1] = ω₂[1] := by
+      generalize μ₂ = M
+      refine ⟨?ω₃b, ?run, ?post⟩
+      case run => pvm_go [r9, r10, r11, ht]
+      case post =>
+        refine ⟨?_, ?_, ?_, ?_⟩ <;> simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+          ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, r8, r9, r10]
+    obtain ⟨ω₄, run₄, o1, o2, o3, o4, o5⟩ := memcpy_tail (p := p) (P := P) (R := R) ω₃ μ₂ μ x s d (8 * (k + 1)) n' sp
+      ht c8 c9 c10 hk.symm (by omega) (by omega) (by omega) hsd (by omega) w2
+      (fun a ha0 ha1 ha2 => mf a ha0 ha1 ha2) rd wr hr hw
+    exact ⟨ω₄, _, (run₁.trans (run₂.trans (run₃.trans run₄))).mono (by omega), o1,
+      o2.trans (c1.trans (r1'.trans h1.symm)), o3, o4, o5⟩
+
 end Services.Bootstrap

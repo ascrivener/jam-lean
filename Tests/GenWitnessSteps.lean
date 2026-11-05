@@ -173,7 +173,7 @@ def pickVar (q : Nat × Nat × Nat × List UInt8) (v : String) : Nat :=
 /-- A value that equals an input parameter (`ext`: or a constant plus one or two of them) in every
     run of the class `allQ` (the base input first), as a Lean expression over the variables. -/
 def matchVarG (ext : Bool) (names : List String) (allQ : List (Nat × Nat × Nat × List UInt8))
-    (valBase : Nat) (valsOther : List Nat) (sx : Bool := false) : Option String := Id.run do
+    (valBase : Nat) (valsOther : List Nat) (sx : Bool := false) (digits : Bool := false) : Option String := Id.run do
   let vals := valBase :: valsOther
   let baseP := allQ.head!
   let fits (f : (Nat × Nat × Nat × List UInt8) → Int) : Option Int :=
@@ -192,6 +192,12 @@ def matchVarG (ext : Bool) (names : List String) (allQ : List (Nat × Nat × Nat
       if v < u then
         if let some k := fits (fun q => (pickVar q v : Int) + pickVar q u) then
           if k ≥ 0 then return some (showE [v, u] k)
+  -- `digits` (wild cuts): a variable's hex digits shifted away, v / 16^k, and its low digits v mod 16^k
+  if digits then
+    for v in names do
+      for k in [1:9] do
+        if let some 0 := fits (fun q => (pickVar q v / 16 ^ k : Int)) then return some s!"({v} / {16 ^ k})"
+        if let some 0 := fits (fun q => (pickVar q v % 16 ^ k : Int)) then return some s!"({v} % {16 ^ k})"
   -- `sx` (`cut`): a variable sign-extended from 32 bits, 𝒳₄ (a 32-bit operation's result)
   if sx then
     for v in names do
@@ -307,7 +313,7 @@ def analyzeSeg (P : Program) (tr : Array (Nat × Regs × Memory))
   let names := varNames ext baseP
   let allQ := baseP :: otherPs.toList
   let matchVar (valBase : Nat) (valsOther : List Nat) : Option String :=
-    matchVarG ext names allQ valBase valsOther cutMode
+    matchVarG ext names allQ valBase valsOther cutMode half
   let mut symLoads : List (Nat × Nat × String) := []
   for (a, k) in loads.toList do
     if !goodLoads.contains (a, k) then
@@ -2069,7 +2075,7 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
   let regAt (b j : Nat) : Option String :=
     let vb := (tr[k0 + b]?.map (·.2.1[j]!.toNat)).getD 0
     let vo := others.toList.map fun (t2, k2) => (t2[k2 + b]?.map (·.2.1[j]!.toNat)).getD 0
-    if vo.all (· == vb) then some (toString vb) else matchVarG true names allQ vb vo true
+    if vo.all (· == vb) then some (toString vb) else matchVarG true names allQ vb vo true cx.wild
   let octAt (b a : Nat) : Option Nat :=
     let vb := (tr[k0 + b]?.map (·.2.2.read a |>.toNat)).getD 0
     let vo := others.toList.map fun (t2, k2) => (t2[k2 + b]?.map (·.2.2.read a |>.toNat)).getD 0

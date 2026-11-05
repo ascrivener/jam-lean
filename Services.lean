@@ -21,6 +21,7 @@ import Services.Bootstrap.BTail5
 import Services.Bootstrap.BTail6
 import Services.Bootstrap.BTail7
 import Services.Bootstrap.BTail8
+import Services.Bootstrap.Glue
 import Services.Witness.Prefix
 import Services.Witness.EmptyTail
 import Services.Witness.Front1

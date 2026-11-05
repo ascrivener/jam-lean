@@ -130,7 +130,7 @@ def bootstrapSvc : Svc where
   emptyClass := [(5, 0, 9, []), (200, 0, 70000, [])]
   postClass := [(5, 0, 9, 0 :: List.replicate 32 7), (200, 1, 70000, 0 :: List.replicate 32 255),
     (20000, 300, 3, 0 :: List.replicate 32 1)]
-  fnRanges := [(68729, 69139), (31894, 32166), (58434, 58509)]
+  fnRanges := [(68729, 69139), (31894, 32166), (58434, 58509), (32166, 32412)]
   memcpySummary := true
   emptyCode := true
   lBound := 16777217

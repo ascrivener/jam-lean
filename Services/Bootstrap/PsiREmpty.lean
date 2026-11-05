@@ -20,7 +20,7 @@ open PVM JAM Services.Bootstrap Services.Bootstrap.Code Services.Bootstrap.Prefi
 theorem trap_6377 {p : ByteArray} {P : Program} [HasCode p P] (ω : Regs) (μ : Memory) :
     FreeExit p 6377 ω μ .panic ω μ := by
   have hd := d_6377 (p := p) (P := P)
-  have hs : P.freeStep 6377 ω μ = (.panic, 6377, ω, μ) := by
+  have hs : P.freeStep 6377 ω μ = (.panic, P.next 6377, ω, μ) := by
     simp [Program.freeStep, hd.2.1, Program.exec, Program.finalState, memoryException]
   have := FreeExit.step (p := p) hd.1 hs (by decide)
   simpa using this

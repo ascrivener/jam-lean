@@ -2,12 +2,18 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
+
+# one run per branch or PR at a time: a new push cancels the run it replaces
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-and-check:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
 
@@ -17,11 +23,13 @@ jobs:
             | sh -s -- -y --default-toolchain none
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
-      - name: Cache .lake
-        uses: actions/cache@v4
+      # Restore the newest build of this toolchain; lake rebuilds only what changed since. The build is
+      # saved after every run, even a failed or timed-out one, so no run's work is lost.
+      - name: Restore .lake
+        uses: actions/cache/restore@v4
         with:
           path: .lake
-          key: lake-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lakefile.lean', 'lake-manifest.json') }}-${{ hashFiles('PVM/**', 'Tests/**', 'PVM.lean') }}
+          key: lake-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lakefile.lean', 'lake-manifest.json') }}-${{ github.sha }}
           restore-keys: lake-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lakefile.lean', 'lake-manifest.json') }}-
 
       - name: Generated tables and constants match the pinned paper
@@ -93,6 +101,17 @@ jobs:
           WITNESS_WILD=1 WITNESS_INPUT=3,0,1048579,0 WITNESS_CLASS="5,1,1048576,0;100,3,16777215,0;65535,65535,8912896,0;300,20000,6291456,0;40000,129,1048585,0;7,2,16777209,0" WITNESS_SBOUND=1048576,16777216 WITNESS_SIMP=PVM.bitwise_and_m15,PVM.bitwise_and_m7,PVM.bitwise_and_m255 lake exe genwitnesssteps --service bootstrap cut0 35202 BTail6 0 1088 every=16 frame
           WITNESS_WILD=1 WITNESS_INPUT=3,0,16777219,0 WITNESS_CLASS="5,1,16777216,0;100,3,268435455,0;65535,65535,142606336,0;300,20000,100663296,0;40000,129,16777225,0;7,2,268435449,0" WITNESS_SBOUND=16777216,268435456 WITNESS_SIMP=PVM.bitwise_and_m15,PVM.bitwise_and_m7,PVM.bitwise_and_m255 lake exe genwitnesssteps --service bootstrap cut0 35202 BTail7 0 1105 every=16 frame
           WITNESS_WILD=1 WITNESS_INPUT=3,0,268435459,0 WITNESS_CLASS="5,1,268435456,0;100,3,4294967295,0;65535,65535,2281701376,0;300,20000,1610612736,0;40000,129,268435465,0;7,2,4294967289,0" WITNESS_SBOUND=268435456,4294967296 WITNESS_SIMP=PVM.bitwise_and_m15,PVM.bitwise_and_m7,PVM.bitwise_and_m255 lake exe genwitnesssteps --service bootstrap cut0 35202 BTail8 0 1122 every=16 frame
+          WITNESS_WILD=1 WITNESS_INPUT=3,0,7,33,0,0 WITNESS_CLASS="5,1,9,33,0,7;100,3,300,33,0,255;65535,65535,4294967295,33,0,1;300,20000,70000,33,0,77;40000,129,16,33,0,3" lake exe genwitnesssteps --service bootstrap cut0 35130 GlueY 0 310 every=16 frame
+          WITNESS_WILD=1 WITNESS_INPUT=3,0,7,33,0,0 WITNESS_CLASS="5,1,9,33,0,7;100,3,300,33,0,255;65535,65535,4294967295,33,0,1;300,20000,70000,33,0,77;40000,129,16,33,0,3" lake exe genwitnesssteps --service bootstrap cut0 3635 GlueY2 0 35 every=16 frame
+          WITNESS_WILD=1 WITNESS_INPUT=3,0,7,33,0,0 WITNESS_CLASS="5,1,9,33,0,7;100,3,300,33,0,255;65535,65535,4294967295,33,0,1;300,20000,70000,33,0,77;40000,129,16,33,0,3" lake exe genwitnesssteps --service bootstrap cut0 20473 OTail 0 1596 every=16 frame out
+          WITNESS_WILD=1 WITNESS_INPUT=3,0,7,33,0,0 WITNESS_CLASS="5,1,9,33,0,7;100,3,12,33,0,255;2,0,0,33,0,1;7,2,15,33,0,77;65535,65535,9,33,0,3;300,20000,12,33,0,9" WITNESS_SBOUND=0,16 WITNESS_SIMP=PVM.bitwise_and_m15,PVM.bitwise_and_m7,PVM.bitwise_and_m255 lake exe genwitnesssteps --service bootstrap cut0 35202 VTail1 0 1120 every=16 frame
+          WITNESS_WILD=1 WITNESS_INPUT=3,0,19,33,0,0 WITNESS_CLASS="5,1,16,33,0,7;100,3,255,33,0,255;65535,65535,136,33,0,1;300,20000,96,33,0,77;40000,129,25,33,0,3;7,2,249,33,0,9" WITNESS_SBOUND=16,256 WITNESS_SIMP=PVM.bitwise_and_m15,PVM.bitwise_and_m7,PVM.bitwise_and_m255 lake exe genwitnesssteps --service bootstrap cut0 35202 VTail2 0 1137 every=15 frame
+          WITNESS_WILD=1 WITNESS_INPUT=3,0,259,33,0,0 WITNESS_CLASS="5,1,256,33,0,7;100,3,4095,33,0,255;65535,65535,2176,33,0,1;300,20000,1536,33,0,77;40000,129,265,33,0,3;7,2,4089,33,0,9" WITNESS_SBOUND=256,4096 WITNESS_SIMP=PVM.bitwise_and_m15,PVM.bitwise_and_m7,PVM.bitwise_and_m255 lake exe genwitnesssteps --service bootstrap cut0 35202 VTail3 0 1154 every=15 frame
+          WITNESS_WILD=1 WITNESS_INPUT=3,0,4099,33,0,0 WITNESS_CLASS="5,1,4096,33,0,7;100,3,65535,33,0,255;65535,65535,34816,33,0,1;300,20000,24576,33,0,77;40000,129,4105,33,0,3;7,2,65529,33,0,9" WITNESS_SBOUND=4096,65536 WITNESS_SIMP=PVM.bitwise_and_m15,PVM.bitwise_and_m7,PVM.bitwise_and_m255 lake exe genwitnesssteps --service bootstrap cut0 35202 VTail4 0 1171 every=15 frame
+          WITNESS_WILD=1 WITNESS_INPUT=3,0,65539,33,0,0 WITNESS_CLASS="5,1,65536,33,0,7;100,3,1048575,33,0,255;65535,65535,557056,33,0,1;300,20000,393216,33,0,77;40000,129,65545,33,0,3;7,2,1048569,33,0,9" WITNESS_SBOUND=65536,1048576 WITNESS_SIMP=PVM.bitwise_and_m15,PVM.bitwise_and_m7,PVM.bitwise_and_m255 lake exe genwitnesssteps --service bootstrap cut0 35202 VTail5 0 1188 every=15 frame
+          WITNESS_WILD=1 WITNESS_INPUT=3,0,1048579,33,0,0 WITNESS_CLASS="5,1,1048576,33,0,7;100,3,16777215,33,0,255;65535,65535,8912896,33,0,1;300,20000,6291456,33,0,77;40000,129,1048585,33,0,3;7,2,16777209,33,0,9" WITNESS_SBOUND=1048576,16777216 WITNESS_SIMP=PVM.bitwise_and_m15,PVM.bitwise_and_m7,PVM.bitwise_and_m255 lake exe genwitnesssteps --service bootstrap cut0 35202 VTail6 0 1205 every=15 frame
+          WITNESS_WILD=1 WITNESS_INPUT=3,0,16777219,33,0,0 WITNESS_CLASS="5,1,16777216,33,0,7;100,3,268435455,33,0,255;65535,65535,142606336,33,0,1;300,20000,100663296,33,0,77;40000,129,16777225,33,0,3;7,2,268435449,33,0,9" WITNESS_SBOUND=16777216,268435456 WITNESS_SIMP=PVM.bitwise_and_m15,PVM.bitwise_and_m7,PVM.bitwise_and_m255 lake exe genwitnesssteps --service bootstrap cut0 35202 VTail7 0 1222 every=15 frame
+          WITNESS_WILD=1 WITNESS_INPUT=3,0,268435459,33,0,0 WITNESS_CLASS="5,1,268435456,33,0,7;100,3,4294967295,33,0,255;65535,65535,2281701376,33,0,1;300,20000,1610612736,33,0,77;40000,129,268435465,33,0,3;7,2,4294967289,33,0,9" WITNESS_SBOUND=268435456,4294967296 WITNESS_SIMP=PVM.bitwise_and_m15,PVM.bitwise_and_m7,PVM.bitwise_and_m255 lake exe genwitnesssteps --service bootstrap cut0 35202 VTail8 0 1239 every=15 frame
           test -z "$(git status --porcelain -- Services/Bootstrap)"
           lake exe genwitnesssteps --service bootstrap cut 0 PrefixC 0 600 every=16 frame words
           lake exe genwitnesssteps --service bootstrap run 600 cut=PrefixC | diff - Services/Bootstrap/Prefix.lean
@@ -125,3 +144,10 @@ jobs:
 
       - name: Accumulate vectors (all but the listed deviations from GP 0.8.0)
         run: lake build acctest
+
+      - name: Save .lake
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .lake
+          key: lake-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lakefile.lean', 'lake-manifest.json') }}-${{ github.sha }}

@@ -490,6 +490,10 @@ def allocDiff (s t : Picoalloc.State) : List String := Id.run do
 
 
 /-- `WF`, computably, for testing it on traced states: the violations found. -/
+def listWalk (s : Picoalloc.State) (a : Nat) : Nat → List Nat
+  | 0 => []
+  | f + 1 => if a = 0 then [] else a :: listWalk s (s.hdr a).next f
+
 def wfCheck (s : Picoalloc.State) : List String := Id.run do
   let mut d : List String := []
   if s.base == 0 then return ["uninitialized"]
@@ -508,7 +512,9 @@ def wfCheck (s : Picoalloc.State) : List String := Id.run do
     if (s.hdr e.addr).prev != c.size then d := s!"prev at {e.addr}: {(s.hdr e.addr).prev} vs {c.size}" :: d
   -- lists and bitmap
   for b in [0:Picoalloc.binCount] do
-    let l := Picoalloc.listOf s (s.heads b) (cs.length + 1)
+    let l := listWalk s (s.heads b) (cs.length + 1)
+    if l.length > cs.length then d := s!"bin {b}: list does not end" :: d
+    if l.eraseDups.length != l.length then d := s!"bin {b}: repeats" :: d
     let want := (cs.filter fun c => !c.used && Picoalloc.binDown c.size == b).map (·.addr)
     if l.length != want.length || !(want.all l.contains) then d := s!"bin {b}: list {l} vs free {want}" :: d
     if s.heads b != 0 && (s.hdr (s.heads b)).prevL != 0 then d := s!"bin {b}: head prevL" :: d
@@ -518,6 +524,9 @@ def wfCheck (s : Picoalloc.State) : List String := Id.run do
     if ((s.secondary (b / 64)).testBit (b % 64)) != (s.heads b != 0) then d := s!"bit {b}" :: d
   for p in [0:38] do
     if s.primary.testBit p != (s.secondary p % 2 ^ 64 != 0) then d := s!"primary bit {p}" :: d
+  if s.primary ≥ 2 ^ 38 then d := "primary has bits past 38" :: d
+  for p in [0:38] do
+    if s.secondary p ≥ 2 ^ 64 then d := s!"secondary {p} too wide" :: d
   -- space
   for c in cs do
     if c.used && c.addr + 32 * c.size > s.base + 32 * s.allocated then d := s!"used chunk {c.addr} past space" :: d

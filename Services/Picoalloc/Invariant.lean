@@ -54,26 +54,25 @@ def PrevOk (s : State) : List Chunk → Prop
   | c :: d :: cs => (s.hdr d.addr).prev = c.size ∧ PrevOk s (d :: cs)
   | _ => True
 
-/-- The free list of bin `b`, followed from its head through `next`, at most `fuel` links. -/
-def listOf (s : State) (a : Nat) : Nat → List Nat
-  | 0 => []
-  | fuel + 1 => if a = 0 then [] else a :: listOf s (s.hdr a).next fuel
+/-- `l` is the list linked from `a` through the `next` fields, ending at 0. -/
+def Linked (s : State) : Nat → List Nat → Prop
+  | a, [] => a = 0
+  | a, x :: xs => a = x ∧ x ≠ 0 ∧ Linked s (s.hdr x).next xs
 
-/-- The free lists: each bin's list holds exactly the free chunks of that bin, without repeats,
-    linked back through `prevL`, and the bitmap marks the non-empty bins. -/
+/-- `l`'s `prevL` fields point back: the first to `p`, each other to its predecessor. -/
+def BackLinked (s : State) : Nat → List Nat → Prop
+  | _, [] => True
+  | p, x :: xs => (s.hdr x).prevL = p ∧ BackLinked s x xs
+
+/-- The free lists: each bin's list, linked from its head and back, without repeats, holds
+    exactly the free chunks of that bin; the bitmap marks the non-empty bins. -/
 structure ListsOk (s : State) (cs : List Chunk) : Prop where
-  exact : ∀ b, b < binCount → ∀ a, a ∈ listOf s (s.heads b) (cs.length + 1) ↔
-    ∃ c ∈ cs, c.addr = a ∧ c.used = false ∧ binDown c.size = b
-  nodup : ∀ b, b < binCount → (listOf s (s.heads b) (cs.length + 1)).Nodup
-  ends : ∀ b, b < binCount → ∀ a ∈ listOf s (s.heads b) (cs.length + 1),
-    (s.hdr a).next = 0 ∨ (s.hdr a).next ∈ listOf s (s.heads b) (cs.length + 1)
-  back : ∀ b, b < binCount → s.heads b ≠ 0 → (s.hdr (s.heads b)).prevL = 0
-  backN : ∀ b, b < binCount → ∀ a ∈ listOf s (s.heads b) (cs.length + 1),
-    (s.hdr a).next ≠ 0 → (s.hdr (s.hdr a).next).prevL = a
+  lists : ∀ b, b < binCount → ∃ l, Linked s (s.heads b) l ∧ BackLinked s 0 l ∧ l.Nodup ∧
+    ∀ a, a ∈ l ↔ ∃ c ∈ cs, c.addr = a ∧ c.used = false ∧ binDown c.size = b
   bits : ∀ b, b < binCount → ((s.secondary (b / 64)).testBit (b % 64) ↔ s.heads b ≠ 0)
   prim : ∀ p, p < 38 → (s.primary.testBit p ↔ s.secondary p % 2 ^ 64 ≠ 0)
-  words : ∀ p, s.secondary p < 2 ^ 64
-  primW : s.primary < 2 ^ 64
+  words : ∀ p, p < 38 → s.secondary p < 2 ^ 64
+  primW : s.primary < 2 ^ 38
 
 /-- The parts of the invariant about the chunk list, named (a `structure` field applying these
     recursive predicates to `chunks s` directly is slow to elaborate). -/

@@ -227,7 +227,8 @@ def shrink (s : State) (ptr newReq : Nat) : State :=
     let n := mergeNext s chunk cur (s.base + 32 * maxSize)
     freeFinal n.1 (chunk + 32 * newSize) newSize (n.2 - newSize) (s.base + 32 * maxSize)
 
-/-- `grow_inplace`: the allocation at `ptr` grows into a free next chunk, if one is large enough. -/
+/-- `grow_inplace`: the allocation at `ptr` grows into a free next chunk, if one is large enough;
+    the rest of that chunk, if any, stays free. -/
 def growInplace (grow : Grow) (s : State) (ptr newReq : Nat) : Option State := do
   let chunk := ptr - 32
   let newSize := newReq + 1
@@ -248,9 +249,7 @@ def growInplace (grow : Grow) (s : State) (ptr newReq : Nat) : Option State := d
     else some s
   let s := unregister s onc (binDown (wordSize onw))
   let s := setHdr s chunk (fun h => { h with size := sizeWord newSize true })
-  let (s, cs) := register s nnc newSize remaining
-  let final := nnc + 32 * remaining
-  return (if final < endAll then setHdr s final (fun h => { h with prev := cs }) else s)
+  return freeFinal s nnc newSize remaining endAll
 
 /-- `realloc`: the new data address and state, and whether the old data must be copied there
     (`copy_nonoverlapping` of the old usable size, then `free` of the old chunk). -/

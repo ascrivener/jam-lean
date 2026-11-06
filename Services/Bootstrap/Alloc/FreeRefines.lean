@@ -1,5 +1,6 @@
 import Services.Bootstrap.Alloc.FreeImpl
 import Services.Picoalloc.ListFacts
+import Services.Picoalloc.First
 
 /-!
 # The binary's `free` on a well-formed heap
@@ -57,16 +58,19 @@ theorem free_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
     (h1 : ω[1] = UInt64.ofNat sp) (h8 : ω[8] = UInt64.ofNat ptr) (h7 : ω[7] = UInt64.ofNat 196792)
     (h0 : ω[0] = UInt64.ofNat 1986) (hsp : 2147483700 ≤ sp) (hsp1 : sp < 4294967296)
     (hb0 : 206864 ≤ s.base) (hbT : s.base + 1073741824 < 2147483648)
-    (hp0 : (s.hdr s.base).prev < 2147483648) (hw : ∀ a, μ.writable a = true) :
+    (hfo : FirstOk s) (hw : ∀ a, μ.writable a = true) :
     ∃ ω' μ', FreeStepsH p R 42327 ω μ x 40681 ω' μ' x 220 ∧ Rep μ' (free s ptr) ∧ WF (free s ptr) ∧
+      FirstOk (free s ptr) ∧
       (∀ a, μ'.writable a = true) ∧ ω'[0] = UInt64.ofNat 1986 ∧ ω'[1] = UInt64.ofNat sp ∧
       ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
+  have hp0 : (s.hdr s.base).prev < 2147483648 := by unfold FirstOk at hfo; omega
   obtain ⟨c, hcm, hca, hcu⟩ := hc
   obtain ⟨pre, post, hcs⟩ := List.append_of_mem hcm
   have hceq : c = ⟨ptr - 32, c.size, true⟩ := by
     cases c; simp only at hca hcu ⊢; subst hcu; simp only [Chunk.mk.injEq, and_true]; omega
   rw [hceq] at hcs
   generalize hn0 : c.size = n at hcs
+  have hfirst := free_first hwf hfo hcs
   obtain ⟨pre0F, LF, RF, post0F, MF, totF, hpreF, hpostF, -, hchF, hwfF, hMF⟩ := free_ok hwf hcs
   have hwf' := hwf
   obtain ⟨-, hbal, hfit, htiles, hcoal, hprev, hlists, hspace⟩ := hwf'
@@ -301,7 +305,7 @@ theorem free_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
     hold1'
     hnext'
     hw
-  refine ⟨ω', μ', run, ?_, hwfF, ww, e0, e1, e5, e6⟩
+  refine ⟨ω', μ', run, ?_, hwfF, hfirst, ww, e0, e1, e5, e6⟩
   -- the model's result, read from memory
   have hcsF := hchF
   rw [hMF] at hcsF

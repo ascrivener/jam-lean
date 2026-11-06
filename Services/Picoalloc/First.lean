@@ -124,4 +124,16 @@ theorem alloc_first {grow : Grow} {hb r p : Nat} {s s' : State} (hwf : WF s) (h0
   exact allocPost_first (s1 := { s with allocated := a1 }) rfl
     (show s.base + 32 * ((s.heads bin - s.base) / 32) = s.heads bin by omega) hS hCb h0
 
+
+theorem init_first {grow : Grow} {hb : Nat} {s s' : State} (hs0 : s.base = 0)
+    (h : init grow hb s = some s') : FirstOk s' := by
+  unfold init at h
+  simp only [hs0, ne_eq, not_true_eq_false, ↓reduceIte] at h
+  split at h
+  · simp at h
+  simp only [Option.some.injEq] at h
+  subst h
+  unfold FirstOk
+  simp [setHdr, setBit, upd]
+
 end Picoalloc

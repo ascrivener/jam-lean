@@ -205,7 +205,7 @@ theorem alloc_mid {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
     (hFC : F C) (hHC : H C) (hHF : ∀ a, H a ∨ F a → Al s.base a)
     (hnx : (s.hdr C).next ≠ 0 → F (s.hdr C).next) (hb0 : 206864 ≤ s.base)
     (hbT : s.base + 1073741824 < 2147483648) (hpv : (s.hdr C).prev < 2147483648)
-    (hrq : req + 1 ≤ sz) (hsz : sz < 33554432) (hCend : C + 32 * sz ≤ s.base + 1073741824)
+    (hrq : req + 1 ≤ sz) (hsz : sz ≤ 33554432) (hCend : C + 32 * sz ≤ s.base + 1073741824)
     (hal : s.allocated < 2147483648)
     (hend : (C - s.base) / 32 + 1 + req + (if sz - req - 1 = 0 then 0 else 1) ≤ s.allocated)
     (h1 : ω[1] = UInt64.ofNat sp) (h10 : ω[10] = UInt64.ofNat C) (h11 : ω[11] = UInt64.ofNat sz)
@@ -348,7 +348,7 @@ theorem alloc_end1 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Reg
     (s : State) (H F : Nat → Prop) (sp req C pv rhs : Nat) (hrep : RepAt μ s H F)
     (hHC : H C) (hHF : ∀ a, H a ∨ F a → Al s.base a) (hb0 : 206864 ≤ s.base)
     (hbT : s.base + 1073741824 < 2147483648) (hCa : (C - s.base) % 32 = 0) (hCb : s.base ≤ C)
-    (hpv : pv < 2147483648) (hrq : req + 1 < 33554432) (hrh : rhs < 33554432)
+    (hpv : pv < 2147483648) (hrq : req + 1 ≤ 33554432) (hrh : rhs ≤ 33554432)
     (hNe : C + 32 * (req + 1) + 32 * rhs ≤ s.base + 1073741824)
     (hNdis : rhs ≠ 0 → ∀ a, H a ∨ F a → a + 32 ≤ C + 32 * (req + 1) ∨ C + 32 * (req + 1) + 32 ≤ a)
     (hNold : rhs ≠ 0 → (registerAlloc s C pv (req + 1)).heads (binDown rhs) ≠ 0 →
@@ -516,5 +516,130 @@ theorem alloc_end2 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Reg
       (by rw [fget g1 1 (by decide) (by decide)]; exact h1) hsp hr
     exact ⟨ω2, μ, (r1.trans r2).mono (by omega), hrep, by rw [d7, e11], d0, d5, d6, d1, hw, fun _ _ _ => rfl,
       frame_trans g2 g1 (fun j hj => by simp at hj ⊢; omega) (fun j hj => by simp at hj ⊢; omega)⟩
+
+/-- `allocPost`, for the bin's head C at a 32-aligned offset, as the binary computes it. -/
+theorem allocPost_eq {s : State} {bin r S T C : Nat} (hcb : s.heads bin = C) (hCb : s.base ≤ C)
+    (hCa : (C - s.base) % 32 = 0) :
+    allocPost s bin r S T =
+      if C + 32 * (r + 1) + 32 * (S - r - 1) < T then
+        setHdr (register (registerAlloc (unregister s C bin) C (s.hdr C).prev (r + 1)) (C + 32 * (r + 1)) (r + 1)
+          (S - r - 1)).1 (C + 32 * (r + 1) + 32 * (S - r - 1))
+          (fun h => { h with prev := (register (registerAlloc (unregister s C bin) C (s.hdr C).prev (r + 1))
+            (C + 32 * (r + 1)) (r + 1) (S - r - 1)).2 })
+      else (register (registerAlloc (unregister s C bin) C (s.hdr C).prev (r + 1)) (C + 32 * (r + 1)) (r + 1)
+          (S - r - 1)).1 := by
+  have hA : s.base + 32 * ((C - s.base) / 32) = C := by omega
+  have hu : unregister s C bin = unregisterFirst s C bin := by unfold unregister; rw [if_pos hcb]
+  unfold allocPost
+  simp only [hcb, hA, hu, show 1 + r = r + 1 from Nat.add_comm _ _]
+
+/-- **The binary's `alloc_impl` refines the model's allocation step** (alignment one unit, the heap in
+    use, no growth, not zeroing): from the entry (41177) to its return (41423), memory holding s at
+    the header addresses H/F comes to hold `allocPost s bin req S top`, and C + 32 is returned —
+    given the facts about the heap the stages need, which the invariant provides. -/
+theorem alloc_impl {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (s : State) (H F : Nat → Prop) (sp req bin C : Nat) (hrep : RepAt μ s H F)
+    (hbits : BitsOk s.secondary s.primary s.heads)
+    (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat 196792) (h8 : ω[8] = UInt64.ofNat 1)
+    (h9 : ω[9] = UInt64.ofNat req) (h10 : ω[10] = UInt64.ofNat 0)
+    (hsp : 2147483800 ≤ sp) (hsp1 : sp < 4294967296)
+    (hb0 : 206864 ≤ s.base) (hbT : s.base + 1073741824 < 2147483648)
+    (hm : req + 1 ≤ 33554432)
+    (hbin : (findFirst s (binUp (req + 1))).or (findFirst s (binDown (req + 1))) = some bin) (hbn : bin < 2432)
+    (hcb : s.heads bin = C) (hFC : F C) (hHC : H C) (hHF : ∀ a, H a ∨ F a → Al s.base a)
+    (hnx : (s.hdr C).next ≠ 0 → F (s.hdr C).next) (hpv : (s.hdr C).prev < 2147483648)
+    (hS : req + 1 ≤ wordSize (s.hdr C).size) (hCend : C + 32 * wordSize (s.hdr C).size ≤ s.base + 1073741824)
+    (hal : s.allocated < 2147483648)
+    (hend : (C - s.base) / 32 + 1 + req +
+      (if wordSize (s.hdr C).size - req - 1 = 0 then 0 else 1) ≤ s.allocated)
+    (hNdis : wordSize (s.hdr C).size - req - 1 ≠ 0 → ∀ a, H a ∨ F a →
+      a + 32 ≤ C + 32 * (req + 1) ∨ C + 32 * (req + 1) + 32 ≤ a)
+    (hNold : wordSize (s.hdr C).size - req - 1 ≠ 0 →
+      (registerAlloc (unregister s C bin) C (s.hdr C).prev (req + 1)).heads (binDown (wordSize (s.hdr C).size - req - 1))
+        ≠ 0 →
+      F ((registerAlloc (unregister s C bin) C (s.hdr C).prev (req + 1)).heads
+        (binDown (wordSize (s.hdr C).size - req - 1))))
+    (hFin : C + 32 * wordSize (s.hdr C).size < s.base + 1073741824 → H (C + 32 * wordSize (s.hdr C).size))
+    (hwr : ∀ a, μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 41177 ω μ x 41423 ω' μ' x 400 ∧
+      RepAt μ' (allocPost s bin req (wordSize (s.hdr C).size) (s.base + 1073741824))
+        (fun a => H a ∨ (wordSize (s.hdr C).size - req - 1 ≠ 0 ∧ a = C + 32 * (req + 1)))
+        (fun a => F a ∨ (wordSize (s.hdr C).size - req - 1 ≠ 0 ∧ a = C + 32 * (req + 1))) ∧
+      ω'[7] = UInt64.ofNat (C + 32) ∧ ω'[0] = ω[0] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ ω'[1] = ω[1] ∧
+      (∀ a, μ'.writable a = true) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) := by
+  have hAC := hHF C (Or.inr hFC)
+  unfold Al at hAC
+  have hHFl : ∀ a, H a ∨ F a → a + 16 < 2147483648 := fun a ha => by have := hHF a ha; unfold Al at this; omega
+  generalize hSd : wordSize (s.hdr C).size = S at *
+  have hsz := hrep.size C hHC
+  have hwS : (s.hdr C).size / 2 = S := by rw [← hSd]; rfl
+  have hsec : ∀ q, q < 38 → rdN μ (q * 8 + 204984 + 1544) 8 = s.secondary q := fun q hq => by
+    have := hrep.sec q hq; unfold A0 at this; rw [show q * 8 + 204984 + 1544 = 196792 + 9736 + 8 * q by omega]
+    exact this
+  have hheads : rdN μ (196792 + 4 * bin) 4 = C := by
+    have := hrep.heads bin hbn; unfold A0 at this; rw [this, hcb]
+  have hbase : rdN μ 206520 8 = s.base := by have := hrep.base; unfold A0 at this; exact this
+  have hpri : rdN μ 206832 8 = s.primary := by have := hrep.pri; unfold A0 at this; exact this
+  obtain ⟨ω1, μ1, r1, q, b, hqb, hq, hb, a1, a10, a11, a5, a2, a6, a3, a8, a9, a4, a12, a7, st0, st5, st6, st10,
+      st32, sf1, ww1⟩ := alloc_entry (p := p) (P := P) (R := R) x ω μ s sp req bin C (s.hdr C).size hbits h1 h7 h8 h9
+    hsp hsp1 hbase (by omega) hpri hsec hm hbin hheads hsz (by omega) (by omega) hwr
+  rw [hwS] at a11
+  have rep1 : RepAt μ1 s H F := hrep.congr_low (fun a ha => sf1 a (by omega) (Or.inl (by omega))) hHFl
+  obtain ⟨ω2, μ2, r2, rep2, b1, b8, b0, m96, m48, m80, m72, m104, m88, m120, ww2, fr2, g2⟩ := alloc_mid (p := p)
+    (P := P) (R := R) x ω1 μ1 s H F (sp - 152) req bin q b C S rep1 hcb hqb hq hb hFC hHC hHF hnx hb0 hbT hpv hS
+    (by omega) hCend hal hend a1 a10 a11 a5 a2 a6 a3 a8 a9 (by rw [show sp - 152 + 120 = sp - 32 by omega]; exact st32)
+    (by omega) (by omega) ww1
+  generalize hpvd : (s.hdr C).prev = pv at *
+  generalize ht2 : unregister s C bin = t2 at *
+  have e2b : t2.base = s.base := by rw [← ht2, unregister_base]
+  have e2a : t2.allocated = s.allocated := by rw [← ht2, unregister_allocated]
+  have hCa : (C - s.base) % 32 = 0 := hAC.2.1
+  obtain ⟨ω3, μ3, r3, rep3, c3, c12, c8, c2, c1, ww3, fr3⟩ := alloc_end1 (p := p) (P := P) (R := R) x ω2 μ2 t2 H F
+    (sp - 152) req C pv (S - req - 1) rep2 hHC (by rw [e2b]; exact hHF) (by rw [e2b]; exact hb0)
+    (by rw [e2b]; exact hbT) (by rw [e2b]; exact hCa) (by rw [e2b]; omega) hpv (by omega) (by omega)
+    (by rw [e2b]; omega) hNdis hNold b1 (by rw [e2b]; exact b8) b0
+    (by rw [fget g2 4 (by decide) (by decide)]; exact a4) (by rw [fget g2 9 (by decide) (by decide)]; exact a9)
+    (by rw [fget g2 7 (by decide) (by decide)]; exact a7) (by rw [e2b]; exact m96) m48 (by rw [e2a]; exact m80)
+    (by rw [e2b]; exact m72) m104 m88 m120 (by omega) (by omega) ww2
+  generalize ht3 : register (registerAlloc t2 C pv (req + 1)) (C + 32 * (req + 1)) (req + 1) (S - req - 1) = rr at *
+  have e3b : rr.1.base = s.base := by rw [← ht3, register_base, registerAlloc_base, e2b]
+  have k112 : rdN μ3 (sp - 152 + 112) 8 = 0 := by
+    rw [show rdN μ3 (sp - 152 + 112) 8 = rdN μ1 (sp - 152 + 112) 8 from rdN_frame fun j hj =>
+      (fr3 _ (by omega) (by omega)).trans (fr2 _ (by omega) (by omega) (by omega)),
+      show sp - 152 + 112 = sp - 40 by omega]
+    unfold rdN; rw [st10, h10]; rfl
+  have k120 : rdN μ3 (sp - 152 + 120) 8 = 204984 := by
+    rw [← m120]; exact rdN_frame fun j hj => fr3 _ (by omega) (by omega)
+  have hS32 : C + 32 * (req + 1) + 32 * (S - req - 1) = C + 32 * S := by omega
+  obtain ⟨ω4, μ4, r4, rep4, d7, d0, d5, d6, d1, ww4, fr4, -⟩ := alloc_end2 (p := p) (P := P) (R := R) x ω3 μ3 rr.1
+    (fun a => H a ∨ (S - req - 1 ≠ 0 ∧ a = C + 32 * (req + 1)))
+    (fun a => F a ∨ (S - req - 1 ≠ 0 ∧ a = C + 32 * (req + 1))) (sp - 152) (C + 32 * (req + 1)) (S - req - 1) rr.2
+    (C + 32) rep3
+    (fun a ha => by
+      rw [e3b]
+      rcases ha with (h | ⟨h0, rfl⟩) | (h | ⟨h0, rfl⟩)
+      · exact hHF a (Or.inl h)
+      · unfold Al; omega
+      · exact hHF a (Or.inr h)
+      · unfold Al; omega)
+    (by rw [e3b]; exact hb0) (by rw [e3b]; exact hbT)
+    (fun h => Or.inl (by rw [hS32]; exact hFin (by rw [e3b, hS32] at h; exact h)))
+    (by rw [e3b, hS32]; exact hCend) (by omega) c1 c12 c8 c3 c2 k120 k112
+    (by rw [← ht3]; unfold register; split <;> simp <;> omega) (by omega) (by omega) (by omega) ww3
+  have tr : ∀ a, sp - 152 + 128 ≤ a → a + 8 ≤ sp → rdN μ3 a 8 = rdN μ1 a 8 := fun a h h' =>
+    rdN_frame fun j hj => (fr3 _ (by omega) (by omega)).trans (fr2 _ (by omega) (by omega) (by omega))
+  refine ⟨ω4, μ4, (((r1.trans r2).trans r3).trans r4).mono (by omega), ?_, d7, ?_, ?_, ?_, ?_, ww4,
+    fun a h h' => ((fr4 a h (by omega)).trans ((fr3 a h (by omega)).trans (fr2 a h (by omega) (by omega)))).trans
+      (sf1 a h (Or.inr h'))⟩
+  · rw [allocPost_eq hcb (by omega) hCa, hpvd, ht2, ht3]
+    rw [e3b] at rep4
+    exact rep4
+  · rw [d0, tr _ (by omega) (by omega), show sp - 152 + 144 = sp - 8 by omega]
+    unfold rdN; rw [st0, Num.decodeLE_encodeLE, Nat.mod_eq_of_lt (UInt64.toNat_lt _), UInt64.ofNat_toNat]
+  · rw [d5, tr _ (by omega) (by omega), show sp - 152 + 136 = sp - 16 by omega]
+    unfold rdN; rw [st5, Num.decodeLE_encodeLE, Nat.mod_eq_of_lt (UInt64.toNat_lt _), UInt64.ofNat_toNat]
+  · rw [d6, tr _ (by omega) (by omega), show sp - 152 + 128 = sp - 24 by omega]
+    unfold rdN; rw [st6, Num.decodeLE_encodeLE, Nat.mod_eq_of_lt (UInt64.toNat_lt _), UInt64.ofNat_toNat]
+  · rw [d1, h1]; congr 1; omega
 
 end Services.Bootstrap.Alloc

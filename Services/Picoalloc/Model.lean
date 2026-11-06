@@ -15,7 +15,9 @@ for a free chunk, its neighbours in its bin's free list. Free chunks are kept in
 namespace Picoalloc
 
 /-- `MAX_ALLOCATION_SIZE` and the SDK's `total_space`: 1 GiB, in units. -/
-def maxSize : Nat := 33554432
+@[irreducible] def maxSize : Nat := 33554432
+
+theorem maxSize_val : maxSize = 33554432 := by unfold maxSize; rfl
 
 /-- The bins' mantissa bits and count (`calculate_optimal_bin_config` for 1 GiB and 4096 bins). -/
 def mantissaBits : Nat := 7

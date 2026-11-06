@@ -293,4 +293,66 @@ theorem pv_join {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) 
   case run => pvm_go [h4, h10, h2, h0, h8, hb, hr, ↓rdN_fold]
   case post => refine ⟨by reg_val, by reg_val, by reg_val, by reg_frame⟩
 
+/-- **42530 … 42583** (the chunk before), the bin's list now empty: its bit is cleared in its secondary word w, and if
+    that leaves the word 0, the word's bit in the primary word -/
+theorem pv_clear {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (bin w pri : Nat) (h5 : ω[5] = UInt64.ofNat bin) (h7 : ω[7] = UInt64.ofNat 196792)
+    (h4 : ω[4] = UInt64.ofNat 204984) (hb : bin < 2432) (hw : rdN μ (bin / 64 * 8 + 204984 + 1544) 8 = w) (hp : rdN μ 206832 8 = pri)
+    (hwr : ∀ a, μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 42530 ω μ x 42583 ω' μ' x 18 ∧
+      rdN μ' (bin / 64 * 8 + 204984 + 1544) 8 = w &&& ((2 ^ 64 - 1) ^^^ 2 ^ (bin % 64)) ∧
+      rdN μ' 206832 8 = (if w &&& ((2 ^ 64 - 1) ^^^ 2 ^ (bin % 64)) = 0 then
+        pri &&& ((2 ^ 64 - 1) ^^^ 2 ^ (bin / 64)) else pri) ∧
+      (∀ a, a < 4294967296 → (a < bin / 64 * 8 + 204984 + 1544 ∨ bin / 64 * 8 + 204984 + 1552 ≤ a) →
+        (a < 206832 ∨ 206840 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.writable a = true) ∧
+      ∀ j : Fin 13, j.val ∉ [5, 6, 9, 11, 12] → ω'[j] = ω[j] := by
+  have hr : ∀ a, μ.readable a = true := fun a => Memory.readable_of_writable (hwr a)
+  have hw64 : w < 2 ^ 64 := by rw [← hw]; exact rdN_lt64 μ _
+  have hp64 : pri < 2 ^ 64 := by rw [← hp]; exact rdN_lt64 μ _
+  have hc1 := clear_word (bin % 64) w (Nat.mod_lt _ (by decide)) hw64
+  have hc2 := clear_word (bin / 64) pri (by omega) hp64
+  have hl1 := clear_lt (bin % 64) w hw64
+  have hl2 := clear_lt (bin / 64) pri hp64
+  rw [← hw] at hc1 hl1
+  rw [← hp] at hc2 hl2
+  rw [show ω = regsNF ω [] from rfl]
+  by_cases hz : w &&& ((2 ^ 64 - 1) ^^^ 2 ^ (bin % 64)) = 0
+  · have hz' : rdN μ (bin / 64 * 8 + 204984 + 1544) 8 &&& ((2 ^ 64 - 1) ^^^ 2 ^ (bin % 64)) = 0 := by
+      rw [hw]; exact hz
+    refine ⟨?ω', ?μ', ?run, ?post⟩
+    case run => pvm_go [h5, h7, h4, hwr, hr, bitwise_and_m63, hc1, hc2, hz', ↓rdN_fold]
+    case post =>
+      refine ⟨?_, ?_, fun a ha h1 h2 => ?_, fun a => ?_, ?_⟩
+      all_goals try rd_simp [hwr, hz, hc2, hw, hp]
+      all_goals try (simp only [Nat.reducePow, Nat.reduceMul]; omega)
+      all_goals try reg_frame
+      all_goals try (simp [Num.decodeLE]; done)
+      all_goals try exact hp
+      all_goals try rw [show Num.decodeLE (μ.readN 206832 8) = pri from hp]
+      all_goals try rw [show Num.decodeLE (μ.readN (bin / 64 * 8 + 204984 + 1544) 8) = w from hw]
+      all_goals try rw [clear_word _ _ (by omega) hp64]
+      all_goals try rw [show (18446744073709551615 : Nat) = 2 ^ 64 - 1 from rfl]
+      all_goals try rw [Nat.mod_eq_of_lt (clear_lt _ _ hp64)]
+      all_goals try exact Nat.mod_eq_of_lt (clear_lt _ _ hp64)
+      all_goals try exact Nat.mod_eq_of_lt (clear_lt _ _ hw64)
+  · have hz' : ¬ rdN μ (bin / 64 * 8 + 204984 + 1544) 8 &&& ((2 ^ 64 - 1) ^^^ 2 ^ (bin % 64)) = 0 := by
+      rw [hw]; exact hz
+    refine ⟨?ω'', ?μ'', ?run', ?post'⟩
+    case run' => pvm_go [h5, h7, h4, hwr, hr, bitwise_and_m63, hc1, hz', ↓rdN_fold]
+    case post' =>
+      refine ⟨?_, ?_, fun a ha h1 h2 => ?_, fun a => ?_, ?_⟩
+      all_goals try rd_simp [hwr, hz, hw, hp]
+      all_goals try (simp only [Nat.reducePow, Nat.reduceMul]; omega)
+      all_goals try reg_frame
+      all_goals try (simp [Num.decodeLE]; done)
+      all_goals try exact hp
+      all_goals try rw [show Num.decodeLE (μ.readN 206832 8) = pri from hp]
+      all_goals try rw [show Num.decodeLE (μ.readN (bin / 64 * 8 + 204984 + 1544) 8) = w from hw]
+      all_goals try rw [clear_word _ _ (by omega) hp64]
+      all_goals try rw [show (18446744073709551615 : Nat) = 2 ^ 64 - 1 from rfl]
+      all_goals try rw [Nat.mod_eq_of_lt (clear_lt _ _ hp64)]
+      all_goals try exact Nat.mod_eq_of_lt (clear_lt _ _ hp64)
+      all_goals try exact Nat.mod_eq_of_lt (clear_lt _ _ hw64)
+
 end Services.Bootstrap.Alloc

@@ -86,4 +86,38 @@ theorem sxw4_small {v : Nat} (hv : v < 2147483648) : sxw 4 v = v := by
   simp only [sxw, Exec.u64, Num.unsigned, Num.signed, Nat.reduceMul, Nat.reducePow, Nat.reduceSub]
   split <;> omega
 
+
+/-- `and` of two 64-bit words is `&&&`. -/
+theorem bitwise_and_land (a b : Nat) (hb : b < 2 ^ 64) : Exec.bitwise (· && ·) a b = a &&& b := by
+  apply Nat.eq_of_testBit_eq
+  intro i
+  simp only [Exec.bitwise, Num.testBit_ofBits, Num.bit_eq_testBit, Nat.testBit_and]
+  by_cases hi : i < 64
+  · simp [hi]
+  · have h2 : b.testBit i = false :=
+      Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le hb (Nat.pow_le_pow_right (by decide) (by omega)))
+    simp [hi, h2]
+
+/-- **The code's bit-clearing mask**: −2 rotated left by k is every bit but bit k. -/
+theorem rotl_clear (k : Nat) (hk : k < 64) :
+    Num.rotl 64 18446744073709551614 k = (2 ^ 64 - 1) ^^^ 2 ^ k := by
+  apply Nat.eq_of_testBit_eq
+  intro j
+  simp only [Num.rotl, Num.testBit_ofBits, Num.bit_eq_testBit, Nat.testBit_xor, Nat.testBit_two_pow_sub_one,
+    Nat.testBit_two_pow, Nat.mod_eq_of_lt hk]
+  by_cases hj : j < 64
+  · have : (18446744073709551614 : Nat).testBit ((j + 64 - k) % 64) = decide ((j + 64 - k) % 64 ≠ 0) := by
+      have hlt : (j + 64 - k) % 64 < 64 := Nat.mod_lt _ (by decide)
+      generalize (j + 64 - k) % 64 = i at hlt ⊢
+      rw [show (18446744073709551614 : Nat) = 2 ^ 64 - 1 - 1 by rfl]
+      rw [show 2 ^ 64 - 1 - 1 = (2 ^ 64 - 1) ^^^ 1 by decide, Nat.testBit_xor, Nat.testBit_two_pow_sub_one,
+        show (1 : Nat) = 2 ^ 0 by rfl, Nat.testBit_two_pow]
+      by_cases hi : i = 0 <;> simp [hi, hlt] <;> omega
+    rw [this]
+    by_cases hjk : j = k
+    · subst hjk; simp [hj]
+    · have : (j + 64 - k) % 64 ≠ 0 := by omega
+      simp [hj, this, hjk, Ne.symm hjk]
+  · simp [hj]; omega
+
 end Services.Bootstrap.Alloc

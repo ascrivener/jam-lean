@@ -98,11 +98,21 @@ macro "rd_finish" : tactic => `(tactic| first
   | (intro h; exact absurd rfl h)
   | (rw [show ∀ b : Nat, b % 64 % 18446744073709551616 % 64 = b % 64 from fun b => by omega];
      exact or_word _ _ (decodeLE_readN8_lt _ _) (Nat.mod_lt _ (by decide)))
-  | (exact or_word _ _ (decodeLE_readN8_lt _ _) (by omega))
-  | (simp only [List.mem_cons, List.not_mem_nil, or_false, not_or] at *
-     simp only [Fin.getElem_fin]
-     rw [PVM.getElem_regsNF _ _ _ (Fin.isLt _), PVM.getElem_regsNF _ _ _ (Fin.isLt _)]
-     simp_all [PVM.lookup_cons_nat]))
+  | (exact or_word _ _ (decodeLE_readN8_lt _ _) (by omega)))
+
+/-- Close a register-frame goal `∀ j ∉ l, ω'[j] = ω[j]` after `pvm_go`. -/
+macro "reg_frame" : tactic => `(tactic| (
+  intro j hj
+  simp only [List.mem_cons, List.not_mem_nil, or_false, not_or] at hj
+  simp only [Fin.getElem_fin]
+  rw [PVM.getElem_regsNF _ _ _ j.isLt, PVM.getElem_regsNF _ _ _ j.isLt]
+  simp [PVM.lookup_cons_nat, hj]))
+
+/-- Close a register-value goal `ω'[j] = UInt64.ofNat v` after `pvm_go`. -/
+macro "reg_val" : tactic => `(tactic| (
+  simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some',
+    Option.getD_some]
+  try (congr 1; omega)))
 
 /-- The memory facts `simp` uses to read back through the writes. -/
 macro "rd_simp" "[" hs:Lean.Parser.Tactic.simpLemma,* "]" : tactic => `(tactic|
@@ -140,15 +150,15 @@ theorem reg_write {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
     refine ⟨?ω', ?μ', ?run, ?post⟩
     case run => pvm_go [h9, h2, h8, h3, h7, h4, hbin, hold, hw, hr, rdN_writeN_disjoint, ↓rdN_fold]
     case post =>
-      refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha h1 h2 h3 h4 h5 => ?_, fun a => ?_, fun j hj => ?_⟩
+      refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha h1 h2 h3 h4 h5 => ?_, fun a => ?_, ?_⟩
       all_goals try rd_simp [bitwise_and_m63, rdN_mod64, hw]
-      all_goals rd_finish
+      all_goals first | rd_finish | reg_frame
   · obtain ⟨ho1, ho2⟩ := holda h0
     refine ⟨?ω'', ?μ'', ?run', ?post'⟩
     case run' => pvm_go [h9, h2, h8, h3, h7, h4, hbin, hold, hw, hr, rdN_writeN_disjoint, ↓rdN_fold]
     case post' =>
-      refine ⟨?_, ?_, ?_, ?_, ?_, fun _ => ?_, ?_, ?_, fun a ha h1 h2 h3 h4 h5 => ?_, fun a => ?_, fun j hj => ?_⟩
+      refine ⟨?_, ?_, ?_, ?_, ?_, fun _ => ?_, ?_, ?_, fun a ha h1 h2 h3 h4 h5 => ?_, fun a => ?_, ?_⟩
       all_goals try rd_simp [bitwise_and_m63, rdN_mod64, hw]
-      all_goals rd_finish
+      all_goals first | rd_finish | reg_frame
 
 end Services.Bootstrap.Alloc

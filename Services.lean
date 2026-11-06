@@ -52,6 +52,7 @@ import Services.Bootstrap.DecodeLoop
 import Services.Picoalloc.Model
 import Services.Picoalloc.Invariant
 import Services.Picoalloc.FreeLists
+import Services.Picoalloc.ListFacts
 import Services.Picoalloc.Alloc
 import Services.Picoalloc.Free
 import Services.Picoalloc.Realloc

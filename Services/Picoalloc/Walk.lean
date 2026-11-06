@@ -104,3 +104,64 @@ theorem chunks_hdr {s : State} : ∀ c ∈ chunks s, (s.hdr c.addr).size = sizeW
   unfold chunks; exact mem_walk_hdr
 
 end Picoalloc
+
+namespace Picoalloc
+
+theorem Tiles.append {a limit : Nat} {xs ys : List Chunk} :
+    Tiles a limit (xs ++ ys) ↔ ∃ m, Tiles a m xs ∧ Tiles m limit ys := by
+  induction xs generalizing a with
+  | nil => simp [Tiles]
+  | cons x xs ih =>
+    simp only [List.cons_append, Tiles]
+    constructor
+    · rintro ⟨h1, h2, h3⟩
+      obtain ⟨m', hm1, hm2⟩ := ih.mp h3
+      exact ⟨m', ⟨h1, h2, hm1⟩, hm2⟩
+    · rintro ⟨m', ⟨h1, h2, hm1⟩, hm2⟩
+      exact ⟨h1, h2, ih.mpr ⟨m', hm1, hm2⟩⟩
+
+/-- In a tiling, a chunk's address determines it. -/
+theorem Tiles.addr_inj {a limit : Nat} {cs : List Chunk} (h : Tiles a limit cs) :
+    ∀ c ∈ cs, ∀ d ∈ cs, c.addr = d.addr → c = d := by
+  induction cs generalizing a with
+  | nil => simp
+  | cons x xs ih =>
+    obtain ⟨h1, h2, h3⟩ := h
+    have hlt := h3.mem_lt
+    intro c hc d hd hcd
+    rcases List.mem_cons.mp hc with rfl | hc' <;> rcases List.mem_cons.mp hd with rfl | hd'
+    · rfl
+    · have := hlt d hd'; omega
+    · have := hlt c hc'; omega
+    · exact ih h3 c hc' d hd' hcd
+
+/-- A tiling's chunk addresses are 32-aligned from its start. -/
+theorem Tiles.aligned {a limit : Nat} {cs : List Chunk} (h : Tiles a limit cs) :
+    ∀ c ∈ cs, a ≤ c.addr ∧ (c.addr - a) % 32 = 0 := by
+  induction cs generalizing a with
+  | nil => simp
+  | cons x xs ih =>
+    obtain ⟨h1, h2, h3⟩ := h
+    intro c hc
+    rcases List.mem_cons.mp hc with rfl | hc
+    · omega
+    · have := ih h3 c hc; omega
+
+/-- **Splitting a chunk** of S units at its start into `k` units and the rest keeps a tiling. -/
+theorem Tiles.split {a limit C S k : Nat} {u v w : Bool} {pre post : List Chunk} (hk : 0 < k) (hkS : k < S)
+    (h : Tiles a limit (pre ++ ⟨C, S, u⟩ :: post)) :
+    Tiles a limit (pre ++ ⟨C, k, v⟩ :: ⟨C + 32 * k, S - k, w⟩ :: post) := by
+  obtain ⟨m, h1, h2, h3, h4⟩ := Tiles.append.mp h
+  simp only at h2 h3 h4
+  subst h2
+  refine Tiles.append.mpr ⟨C, h1, rfl, hk, rfl, show 0 < S - k by omega, ?_⟩
+  rw [show C + 32 * k + 32 * (S - k) = C + 32 * S by omega]
+  exact h4
+
+/-- Relabelling a chunk keeps a tiling. -/
+theorem Tiles.relabel {a limit C S : Nat} {u v : Bool} {pre post : List Chunk}
+    (h : Tiles a limit (pre ++ ⟨C, S, u⟩ :: post)) : Tiles a limit (pre ++ ⟨C, S, v⟩ :: post) := by
+  obtain ⟨m, h1, h2, h3, h4⟩ := Tiles.append.mp h
+  exact Tiles.append.mpr ⟨m, h1, h2, h3, h4⟩
+
+end Picoalloc

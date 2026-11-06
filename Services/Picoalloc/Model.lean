@@ -24,6 +24,10 @@ def binCount : Nat := 2432
 /-- `f` with the value at `a` replaced. -/
 def upd {β : Type} (f : Nat → β) (a : Nat) (b : β) : Nat → β := fun x => if x = a then b else f x
 
+theorem upd_self {β : Type} (f : Nat → β) (a : Nat) (b : β) : upd f a b a = b := by simp [upd]
+theorem upd_ne {β : Type} (f : Nat → β) {a x : Nat} (b : β) (h : x ≠ a) : upd f a b x = f x := by
+  simp [upd, h]
+
 /-- A chunk header (`FreeChunkHeader`; an allocated chunk uses only `prev` and `size`). -/
 structure Hdr where
   prev : Nat
@@ -79,9 +83,9 @@ def setBit (s : State) (bin : Nat) : State :=
 
 /-- `BitMask::unset`. -/
 def unsetBit (s : State) (bin : Nat) : State :=
-  let w := s.secondary (bin / 64) &&& (2 ^ 64 - 1 - 2 ^ (bin % 64))
+  let w := s.secondary (bin / 64) &&& ((2 ^ 64 - 1) ^^^ 2 ^ (bin % 64))
   { s with secondary := upd s.secondary (bin / 64) w
-           primary := if w = 0 then s.primary &&& (2 ^ 64 - 1 - 2 ^ (bin / 64)) else s.primary }
+           primary := if w = 0 then s.primary &&& ((2 ^ 64 - 1) ^^^ 2 ^ (bin / 64)) else s.primary }
 
 /-- `BitMask::find_first`: the first non-empty bin at or after `bin`. -/
 def findFirst (s : State) (bin : Nat) : Option Nat :=

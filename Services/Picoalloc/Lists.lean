@@ -10,9 +10,6 @@ a chunk that no list holds.
 
 namespace Picoalloc
 
-theorem upd_self {β : Type} (f : Nat → β) (a : Nat) (b : β) : upd f a b a = b := by simp [upd]
-theorem upd_ne {β : Type} (f : Nat → β) {a x : Nat} (b : β) (h : x ≠ a) : upd f a b x = f x := by
-  simp [upd, h]
 
 theorem Linked.congr {s s' : State} {a : Nat} {l : List Nat} (h : Linked s a l)
     (hn : ∀ x ∈ l, (s'.hdr x).next = (s.hdr x).next) : Linked s' a l := by

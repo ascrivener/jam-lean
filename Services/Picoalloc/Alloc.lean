@@ -1,6 +1,5 @@
 import Services.Picoalloc.Walk
-import Services.Picoalloc.Lists
-import Services.Picoalloc.Bits
+import Services.Picoalloc.FreeLists
 
 /-!
 # `alloc`, on a well-formed heap
@@ -272,6 +271,73 @@ theorem allocPost_size {s1 : State} {bin r S C T : Nat} (hC : s1.heads bin = C)
         rw [(register_hdr_other hx').2.1, registerAlloc_hdr]; simp only [hx, ↓reduceIte]
         exact unregisterFirst_hdr.2.1
 
+theorem setHdr_prev_get {s : State} {a x p : Nat} :
+    ((setHdr s a (fun h => { h with prev := p })).hdr x).prev = if x = a then p else (s.hdr x).prev := by
+  unfold setHdr
+  by_cases h : x = a
+  · subst h; simp [upd_self]
+  · simp [upd_ne _ _ h, h]
+
+theorem register_prev_self {s : State} {n prev size : Nat} (hs : size ≠ 0) :
+    ((register s n prev size).1.hdr n).prev = prev := by
+  unfold register
+  simp only [hs, ↓reduceIte, setBit_hdr]
+  split
+  · rw [setHdr_self]
+  · unfold setHdr
+    by_cases h : n = s.heads (binDown size)
+    · rw [← h]; simp [upd_self]
+    · simp [upd_ne _ _ h, upd_self]
+
+theorem register_snd {s : State} {n prev size : Nat} :
+    (register s n prev size).2 = if size = 0 then prev else size := by
+  unfold register; split <;> rfl
+
+/-- The `prev` fields `allocPost` leaves: C's as before, the rest's r + 1, the next chunk's the size
+    before it; every other unchanged. -/
+theorem allocPost_prev {s1 : State} {bin r S C T : Nat} (hC : s1.heads bin = C)
+    (hA : s1.base + 32 * ((C - s1.base) / 32) = C) (hr : r + 1 ≤ S) (x : Nat) :
+    ((allocPost s1 bin r S T).hdr x).prev =
+      if x = C + 32 * S ∧ x < T then (if S - r - 1 = 0 then r + 1 else S - r - 1)
+      else if x = C + 32 * (1 + r) ∧ S - r - 1 ≠ 0 then r + 1
+      else (s1.hdr x).prev := by
+  unfold allocPost
+  dsimp only
+  rw [hC, hA, show C + 32 * (1 + r) + 32 * (S - r - 1) = C + 32 * S by omega]
+  by_cases hx : x = C + 32 * S ∧ x < T
+  · obtain ⟨rfl, hxT⟩ := hx
+    simp only [hxT, ↓reduceIte, and_self, setHdr_prev_get, register_snd]
+  · simp only [hx, ↓reduceIte]
+    have hfin : ((if C + 32 * S < T then setHdr (register (registerAlloc (unregisterFirst s1 C bin) C
+        (s1.hdr C).prev (r + 1)) (C + 32 * (1 + r)) (r + 1) (S - r - 1)).1 (C + 32 * S)
+        (fun h => { h with prev := (register (registerAlloc (unregisterFirst s1 C bin) C (s1.hdr C).prev (r + 1))
+          (C + 32 * (1 + r)) (r + 1) (S - r - 1)).2 }) else (register (registerAlloc (unregisterFirst s1 C bin) C
+        (s1.hdr C).prev (r + 1)) (C + 32 * (1 + r)) (r + 1) (S - r - 1)).1).hdr x).prev =
+        ((register (registerAlloc (unregisterFirst s1 C bin) C (s1.hdr C).prev (r + 1)) (C + 32 * (1 + r)) (r + 1)
+          (S - r - 1)).1.hdr x).prev := by
+      split
+      · rename_i hT
+        rw [setHdr_prev_get]
+        have : x ≠ C + 32 * S := fun h => hx ⟨h, h ▸ hT⟩
+        simp [this]
+      · rfl
+    rw [hfin]
+    by_cases hx' : x = C + 32 * (1 + r) ∧ S - r - 1 ≠ 0
+    · obtain ⟨rfl, h0⟩ := hx'
+      simp only [ne_eq, h0, not_false_eq_true, and_self, ↓reduceIte]
+      exact register_prev_self h0
+    · simp only [hx', ↓reduceIte]
+      have hreg : ((register (registerAlloc (unregisterFirst s1 C bin) C (s1.hdr C).prev (r + 1))
+          (C + 32 * (1 + r)) (r + 1) (S - r - 1)).1.hdr x).prev =
+          ((registerAlloc (unregisterFirst s1 C bin) C (s1.hdr C).prev (r + 1)).hdr x).prev := by
+        by_cases h0 : S - r - 1 = 0
+        · rw [h0, register_zero]
+        · exact (register_hdr_other (fun h => hx' ⟨h, h0⟩)).1
+      rw [hreg, registerAlloc_hdr]
+      split
+      · rename_i h; subst h; rfl
+      · exact unregisterFirst_hdr.1
+
 /-- The remainder chunk after the allocated front, if any. -/
 def remChunk (C r S : Nat) : List Chunk :=
   if S - r - 1 = 0 then [] else [⟨C + 32 * (r + 1), S - r - 1, false⟩]
@@ -411,5 +477,292 @@ theorem alloc_chunks {grow : Grow} {hb r p : Nat} {s s' : State} (hwf : WF s)
   have hpC : p - 32 = s.heads bin := by rw [hp]; omega
   obtain ⟨pre, post, h1, h2⟩ := allocPost_chunks (a1 := a1) hwf hmax hbin hS
   exact ⟨pre, post, _, by rw [hpC]; exact h1, hS, by rw [hpC]; exact h2⟩
+
+
+theorem tiles_after {a top C S r : Nat} {pre post : List Chunk} (hr : r + 1 ≤ S)
+    (h : Tiles a top (pre ++ ⟨C, S, false⟩ :: post)) :
+    Tiles a top (pre ++ ⟨C, r + 1, true⟩ :: (remChunk C r S ++ post)) := by
+  unfold remChunk
+  by_cases h0 : S - r - 1 = 0
+  · simp only [h0, ↓reduceIte, List.nil_append]
+    have : S = r + 1 := by omega
+    subst this
+    exact Tiles.relabel h
+  · simp only [h0, ↓reduceIte, List.singleton_append]
+    have := Tiles.split (k := r + 1) (v := true) (w := false) (by omega) (by omega) h
+    rw [show S - (r + 1) = S - r - 1 by omega] at this
+    exact this
+
+/-- Where the chunks around a chunk of a tiling lie. -/
+theorem Tiles.around {a top C S : Nat} {u : Bool} {pre post : List Chunk}
+    (h : Tiles a top (pre ++ ⟨C, S, u⟩ :: post)) :
+    (∀ d ∈ pre, d.addr + 32 * d.size ≤ C) ∧ (∀ d ∈ post.head?, d.addr = C + 32 * S) ∧
+      (∀ d ∈ post, C + 32 * S ≤ d.addr ∧ d.addr < top) ∧ (∀ d ∈ post.tail, C + 32 * S < d.addr) := by
+  obtain ⟨m, h1, h2, h3, h4⟩ := Tiles.append.mp h
+  simp only at h2 h3 h4
+  subst h2
+  refine ⟨fun d hd => (h1.mem_lt d hd).2.1, fun d hd => ?_, fun d hd => ?_, fun d hd => ?_⟩
+  · cases post with
+    | nil => simp at hd
+    | cons e es => simp only [List.head?_cons, Option.mem_def, Option.some.injEq] at hd; subst hd; exact h4.1
+  · have := h4.mem_lt d hd; omega
+  · cases post with
+    | nil => simp at hd
+    | cons e es =>
+      obtain ⟨he1, he2, he3⟩ := h4
+      have := he3.mem_lt d hd
+      omega
+
+/-- **The free lists after `alloc`'s writes**: the bin's head `C` is gone, and the rest of the
+    chunk, if any, is in its bin. -/
+theorem allocPost_lists {s1 : State} {bin r S C T : Nat} {F : Nat → Nat → Prop}
+    (hF : FreeLists s1 F) (hd : Disj F) (hbits : BitsOk s1.secondary s1.primary s1.heads)
+    (hbin : bin < binCount) (hC : s1.heads bin = C) (hC0 : C ≠ 0)
+    (hA : s1.base + 32 * ((C - s1.base) / 32) = C)
+    (hN : S - r - 1 ≠ 0 → ∀ b, ¬ F b (C + 32 * (1 + r))) :
+    FreeLists (allocPost s1 bin r S T) (fun b a => (F b a ∧ a ≠ C) ∨
+        (S - r - 1 ≠ 0 ∧ b = binDown (S - r - 1) ∧ a = C + 32 * (1 + r))) ∧
+      BitsOk (allocPost s1 bin r S T).secondary (allocPost s1 bin r S T).primary
+        (allocPost s1 bin r S T).heads := by
+  obtain ⟨p1, p2⟩ := pop_ok hF hd hbits hbin hC hC0
+  have hd1 : Disj (fun b a => F b a ∧ a ≠ C) := fun b b' a h1 h2 => hd b b' a h1.1 h2.1
+  unfold allocPost
+  dsimp only
+  rw [hC, hA]
+  generalize unregisterFirst s1 C bin = s2 at p1 p2 ⊢
+  generalize hs3 : registerAlloc s2 C (s1.hdr C).prev (r + 1) = s3
+  have hn3 : ∀ x, (s3.hdr x).next = (s2.hdr x).next ∧ (s3.hdr x).prevL = (s2.hdr x).prevL := by
+    intro x; rw [← hs3, registerAlloc_hdr]
+    split
+    · rename_i h; subst h; exact ⟨rfl, rfl⟩
+    · exact ⟨rfl, rfl⟩
+  have q1 : FreeLists s3 (fun b a => F b a ∧ a ≠ C) :=
+    p1.congr (by rw [← hs3, registerAlloc_heads]) (fun x => (hn3 x).1) (fun x => (hn3 x).2)
+  have q2 : BitsOk s3.secondary s3.primary s3.heads := by
+    rw [← hs3, registerAlloc_secondary, registerAlloc_primary, registerAlloc_heads]; exact p2
+  -- the last write changes a `prev` only
+  have fin : ∀ (t : State) (G : Nat → Nat → Prop) (c : Prop) [Decidable c] (y : Nat) (f : Hdr → Hdr),
+      (∀ h, (f h).next = h.next) → (∀ h, (f h).prevL = h.prevL) →
+      FreeLists t G ∧ BitsOk t.secondary t.primary t.heads →
+      FreeLists (if c then setHdr t y f else t) G ∧
+        BitsOk (if c then setHdr t y f else t).secondary (if c then setHdr t y f else t).primary
+          (if c then setHdr t y f else t).heads := by
+    intro t G c _ y f hf1 hf2 ⟨h1, h2⟩
+    split
+    · exact ⟨h1.congr rfl (setHdr_next hf1) (setHdr_prevL hf2), h2⟩
+    · exact ⟨h1, h2⟩
+  by_cases hR : S - r - 1 = 0
+  · rw [hR, register_zero]
+    refine fin _ _ _ _ _ (fun _ => rfl) (fun _ => rfl) ⟨q1.iff (fun b a _ => ?_), q2⟩
+    exact ⟨Or.inl, fun h => h.elim id (fun h => absurd rfl h.1)⟩
+  · obtain ⟨u1, u2⟩ := push_ok (prev := r + 1) q1 hd1 q2 hR (toBin_lt false (Nat.min_le_right _ _))
+      (by omega) (fun b h => hN hR b h.1)
+    generalize register s3 (C + 32 * (1 + r)) (r + 1) (S - r - 1) = rs at u1 u2 ⊢
+    refine fin _ _ _ _ _ (fun _ => rfl) (fun _ => rfl) ⟨u1.iff (fun b a _ => ?_), u2⟩
+    exact ⟨fun h => h.elim Or.inl (fun h => Or.inr ⟨hR, h⟩), fun h => h.elim Or.inl (fun h => Or.inr h.2)⟩
+
+/-- The free chunks after `alloc`, against those before. -/
+theorem free_after {pre post : List Chunk} {C S r a b : Nat}
+    (hpre : ∀ d ∈ pre, d.addr < C) (hpost : ∀ d ∈ post, C + 32 * S ≤ d.addr) (hr : r + 1 ≤ S) :
+    (((∃ c ∈ pre ++ ⟨C, S, false⟩ :: post, c.addr = a ∧ c.used = false ∧ binDown c.size = b) ∧ a ≠ C) ∨
+      (S - r - 1 ≠ 0 ∧ b = binDown (S - r - 1) ∧ a = C + 32 * (1 + r))) ↔
+    ∃ c ∈ pre ++ ⟨C, r + 1, true⟩ :: (remChunk C r S ++ post), c.addr = a ∧ c.used = false ∧
+      binDown c.size = b := by
+  constructor
+  · rintro (⟨⟨c, hc, h1, h2, h3⟩, hne⟩ | ⟨hR, hb, ha⟩)
+    · rcases List.mem_append.mp hc with hc | hc
+      · exact ⟨c, List.mem_append_left _ hc, h1, h2, h3⟩
+      · rcases List.mem_cons.mp hc with rfl | hc
+        · exact absurd h1.symm hne
+        · exact ⟨c, List.mem_append_right _ (List.mem_cons_of_mem _ (List.mem_append_right _ hc)), h1, h2, h3⟩
+    · refine ⟨⟨C + 32 * (r + 1), S - r - 1, false⟩, List.mem_append_right _ (List.mem_cons_of_mem _
+        (List.mem_append_left _ ?_)), ?_, rfl, hb.symm⟩
+      · unfold remChunk; simp [hR]
+      · show C + 32 * (r + 1) = a
+        omega
+  · rintro ⟨c, hc, h1, h2, h3⟩
+    rcases List.mem_append.mp hc with hc | hc
+    · exact Or.inl ⟨⟨c, List.mem_append_left _ hc, h1, h2, h3⟩, by have := hpre c hc; omega⟩
+    · rcases List.mem_cons.mp hc with rfl | hc
+      · simp at h2
+      · rcases List.mem_append.mp hc with hc | hc
+        · unfold remChunk at hc
+          split at hc
+          · simp at hc
+          · rename_i hR
+            simp only [List.mem_singleton] at hc
+            subst hc
+            refine Or.inr ⟨hR, h3.symm, ?_⟩
+            have : C + 32 * (r + 1) = a := h1
+            omega
+        · refine Or.inl ⟨⟨c, List.mem_append_right _ (List.mem_cons_of_mem _ hc), h1, h2, h3⟩, ?_⟩
+          have := hpost c hc; omega
+
+/-- **`alloc` keeps the heap well-formed.** -/
+theorem allocPost_wf {s : State} {r bin a1 : Nat} (hwf : WF s) (hmax : r + 1 ≤ maxSize)
+    (hbin : (findFirst s (binUp (r + 1))).or (findFirst s (binDown (r + 1))) = some bin)
+    (hS : r + 1 ≤ wordSize (s.hdr (s.heads bin)).size) (ha1 : s.allocated ≤ a1)
+    (hend : (s.heads bin - s.base) / 32 + 1 + r +
+        (if wordSize (s.hdr (s.heads bin)).size - r - 1 = 0 then 0 else 1) ≤ a1) :
+    WF (allocPost { s with allocated := a1 } bin r (wordSize (s.hdr (s.heads bin)).size) s.top) := by
+  obtain ⟨pre, post, hcs, hcs'⟩ := allocPost_chunks (a1 := a1) hwf hmax hbin hS
+  obtain ⟨hbc, hne, ⟨rest, hl, hbl, hnd, hex⟩, hbS, -, hCb, hCal⟩ := bin_chunk hwf hmax hbin
+  have hwf' := hwf
+  obtain ⟨hb0, hbal, hfit, htiles, hcoal, hprev, hlists, hspace⟩ := hwf'
+  unfold TilesOk at htiles
+  unfold CoalOk at hcoal
+  unfold SpaceOk at hspace
+  generalize hs' : allocPost { s with allocated := a1 } bin r (wordSize (s.hdr (s.heads bin)).size) s.top = s' at hcs' ⊢
+  have hb' : s'.base = s.base := by rw [← hs', allocPost_base]
+  have ha' : s'.allocated = a1 := by rw [← hs', allocPost_allocated]
+  have ht' : s'.top = s.top := by unfold State.top; rw [hb']
+  generalize hC : s.heads bin = C at *
+  generalize hSd : wordSize (s.hdr C).size = S at *
+  have hA : s.base + 32 * ((C - s.base) / 32) = C := by omega
+  rw [hcs] at htiles hcoal hspace
+  have htl := htiles
+  refine ⟨by rw [hb']; exact hb0, by rw [hb']; exact hbal, by rw [ht']; exact hfit, ?_, ?_, ?_, ?_, ?_⟩
+  · -- tiling
+    unfold TilesOk; rw [hcs', hb', ht']
+    exact tiles_after hS htl
+  · -- coalesced
+    unfold CoalOk; rw [hcs']
+    unfold remChunk
+    split
+    · simp only [List.nil_append]; exact (Coalesced.split (C' := 0) (S' := 0) hcoal).2
+    · simp only [List.singleton_append]; exact (Coalesced.split hcoal).1
+  · -- prev links
+    unfold PrevsOk; rw [hcs']
+    unfold PrevsOk at hprev; rw [hcs] at hprev
+    obtain ⟨hpre, hmid, hlink⟩ := PrevOk.append.mp hprev
+    obtain ⟨hpa, hph, hpp, hpt⟩ := Tiles.around htl
+    have hpv := fun x => allocPost_prev (s1 := { s with allocated := a1 }) (bin := bin) (r := r) (S := S)
+      (T := s.top) (C := C) hC hA hS x
+    rw [hs'] at hpv
+    generalize s.top = T at hpv hpp
+    -- every chunk before C, or after the one following it, keeps its prev
+    have keep : ∀ d ∈ pre ++ post.tail, (s'.hdr d.addr).prev = (s.hdr d.addr).prev := by
+      intro d hd
+      rw [hpv]
+      have hcases : d.addr < C ∨ C + 32 * S < d.addr := by
+        rcases List.mem_append.mp hd with hd | hd
+        · have := hpa d hd
+          have := (htl.mem_lt d (List.mem_append_left _ hd)).2.2
+          omega
+        · exact Or.inr (hpt d hd)
+      have e1 : ¬ (d.addr = C + 32 * S ∧ d.addr < T) := by omega
+      have e2 : ¬ (d.addr = C + 32 * (1 + r) ∧ S - r - 1 ≠ 0) := by omega
+      rw [if_neg e1, if_neg e2]
+    refine PrevOk.append.mpr ⟨hpre.congr (fun d hd => keep d (List.mem_append_left _ (List.mem_of_mem_tail hd))),
+      ?_, fun x hx y hy => ?_⟩
+    · -- from C on
+      have hpostOk : PrevOk s' post := by
+        cases post with
+        | nil => trivial
+        | cons e es => exact hmid.2.congr (fun d hd => keep d (List.mem_append_right _ (by simpa using hd)))
+      have hhead : ∀ d ∈ post.head?, (s'.hdr d.addr).prev = (if S - r - 1 = 0 then r + 1 else S - r - 1) := by
+        intro d hd
+        rw [hpv]
+        have hda := hph d hd
+        have hlt : d.addr < T := (hpp d (by cases post <;> simp_all)).2
+        rw [hda] at hlt ⊢
+        rw [if_pos ⟨rfl, hlt⟩]
+      unfold remChunk
+      split
+      · rename_i h0
+        simp only [List.nil_append]
+        cases post with
+        | nil => trivial
+        | cons e es =>
+          refine ⟨?_, hpostOk⟩
+          have := hhead e (by simp)
+          rw [if_pos h0] at this
+          exact this
+      · rename_i h0
+        simp only [List.singleton_append]
+        refine ⟨?_, ?_⟩
+        · have hx := hpv (C + 32 * (1 + r))
+          have e1 : ¬ (C + 32 * (1 + r) = C + 32 * S ∧ C + 32 * (1 + r) < T) := by omega
+          rw [if_neg e1, if_pos ⟨rfl, h0⟩, show C + 32 * (1 + r) = C + 32 * (r + 1) by omega] at hx
+          rw [show ∀ a s u, Chunk.addr ⟨a, s, u⟩ = a from fun _ _ _ => rfl]
+          exact hx
+        · cases post with
+          | nil => trivial
+          | cons e es =>
+            refine ⟨?_, hpostOk⟩
+            have := hhead e (by simp)
+            rw [if_neg h0] at this
+            exact this
+    · -- the link from the last chunk before C
+      simp only [List.head?_cons, Option.mem_def, Option.some.injEq] at hy
+      subst hy
+      rw [hpv]
+      have e1 : ¬ (C = C + 32 * S ∧ C < T) := by omega
+      have e2 : ¬ (C = C + 32 * (1 + r) ∧ S - r - 1 ≠ 0) := by omega
+      rw [if_neg e1, if_neg e2]
+      exact hlink x hx ⟨C, S, false⟩ (by simp)
+  · -- free lists
+    unfold ListsOk' at hlists ⊢
+    rw [hcs] at hlists
+    rw [hcs']
+    obtain ⟨hpa, -, hpp, -⟩ := Tiles.around htl
+    have hpre : ∀ d ∈ pre, d.addr < C := fun d hd => by
+      have := hpa d hd
+      have := (htl.mem_lt d (List.mem_append_left _ hd)).2.2
+      omega
+    have hpost : ∀ d ∈ post, C + 32 * S ≤ d.addr := fun d hd => (hpp d hd).1
+    have hF0 : FreeLists { s with allocated := a1 } (fun b a => ∃ c ∈ pre ++ ⟨C, S, false⟩ :: post,
+        c.addr = a ∧ c.used = false ∧ binDown c.size = b) :=
+      FreeLists.congr (s := s) (fun b hb => hlists.lists b hb) rfl (fun _ => rfl) (fun _ => rfl)
+    have hd0 : Disj (fun b a => ∃ c ∈ pre ++ ⟨C, S, false⟩ :: post,
+        c.addr = a ∧ c.used = false ∧ binDown c.size = b) := by
+      rintro b b' a ⟨c, hc, h1, -, h3⟩ ⟨d, hd, h1', -, h3'⟩
+      have := htl.addr_inj c hc d hd (h1.trans h1'.symm)
+      subst this; rw [← h3, ← h3']
+    have hN : S - r - 1 ≠ 0 → ∀ b, ¬ ∃ c ∈ pre ++ ⟨C, S, false⟩ :: post,
+        c.addr = C + 32 * (1 + r) ∧ c.used = false ∧ binDown c.size = b := by
+      rintro hR b ⟨c, hc, h1, -, -⟩
+      rcases List.mem_append.mp hc with hc | hc
+      · have := hpre c hc; omega
+      · rcases List.mem_cons.mp hc with rfl | hc
+        · simp only at h1; omega
+        · have := hpost c hc; omega
+    obtain ⟨hL, hB⟩ := allocPost_lists (s1 := { s with allocated := a1 }) (T := s.top) hF0 hd0
+      ⟨hlists.bits, hlists.prim, hlists.words, hlists.primW⟩ hbc hC hne hA hN
+    rw [hs'] at hL hB
+    obtain ⟨b1, b2, b3, b4⟩ := hB
+    refine ⟨fun b hb => ?_, b1, b2, b3, b4⟩
+    obtain ⟨l, h1, h2, h3, h4⟩ := hL b hb
+    exact ⟨l, h1, h2, h3, fun a => (h4 a).trans (free_after hpre hpost hS)⟩
+  · -- space
+    unfold SpaceOk; rw [hcs', ha', hb']
+    intro c hc
+    rcases List.mem_append.mp hc with hc | hc
+    · obtain ⟨h1, h2⟩ := hspace c (List.mem_append_left _ hc)
+      exact ⟨fun hu => by have := h1 hu; omega, by omega⟩
+    · rcases List.mem_cons.mp hc with rfl | hc
+      · simp only [forall_const]
+        split at hend <;> omega
+      · rcases List.mem_append.mp hc with hc | hc
+        · unfold remChunk at hc
+          split at hc
+          · simp at hc
+          · rename_i h0
+            simp only [List.mem_singleton] at hc
+            subst hc
+            simp only [Bool.false_eq_true, false_imp_iff, true_and]
+            simp only [h0, ↓reduceIte] at hend
+            omega
+        · obtain ⟨h1, h2⟩ := hspace c (List.mem_append_right _ (List.mem_cons_of_mem _ hc))
+          exact ⟨fun hu => by have := h1 hu; omega, by omega⟩
+
+/-- **`alloc` keeps the heap well-formed** (an allocation of `r + 1` units, without alignment). -/
+theorem alloc_wf {grow : Grow} {hb r p : Nat} {s s' : State} (hwf : WF s)
+    (h : alloc grow hb 1 r s = some (p, s')) : WF s' := by
+  rw [alloc_one hwf.1] at h
+  obtain ⟨bin, a1, hbin, hmax, hS, ha1, hend, -, rfl⟩ := alloc1_eq h
+  have ht : s.base + 32 * maxSize = s.top := rfl
+  rw [ht]
+  exact allocPost_wf hwf hmax hbin hS ha1 hend
 
 end Picoalloc

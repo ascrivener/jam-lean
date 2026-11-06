@@ -291,7 +291,8 @@ theorem free_eq (s : State) (ptr : Nat) : free s ptr =
 theorem free_ok {s : State} {ptr n : Nat} {pre post : List Chunk} (hwf : WF s)
     (hcs : chunks s = pre ++ ⟨ptr - 32, n, true⟩ :: post) :
     ∃ pre0 L R post0 M total, pre = pre0 ++ L ∧ post = R ++ post0 ∧ (∀ c ∈ L ++ R, c.used = false) ∧
-      chunks (free s ptr) = pre0 ++ ⟨M, total, false⟩ :: post0 ∧ WF (free s ptr) := by
+      chunks (free s ptr) = pre0 ++ ⟨M, total, false⟩ :: post0 ∧ WF (free s ptr) ∧
+      M = (mergePrev s (ptr - 32) (wordSize (s.hdr (ptr - 32)).size) (s.hdr (ptr - 32)).prev).2.1 := by
   have hwf' := hwf
   obtain ⟨hb0, hbal, hfit, htiles, hcoal, hprev, hlists, hspace⟩ := hwf'
   unfold TilesOk at htiles
@@ -372,7 +373,7 @@ theorem free_ok {s : State} {ptr n : Nat} {pre post : List Chunk} (hwf : WF s)
   have hprevs : ∀ x, (s'.hdr x).prev =
       if x = M then pv else if x = M + 32 * total ∧ M + 32 * total < s.top then total else (s.hdr x).prev := by
     intro x; rw [f4, (hps2 _).1, (hps1 _).1]
-  refine ⟨pre0, L, R, post0, M, total, rfl, rfl, fun c hc => ?_, hchunks, ?_⟩
+  refine ⟨pre0, L, R, post0, M, total, rfl, rfl, fun c hc => ?_, hchunks, ?_, rfl⟩
   · rcases List.mem_append.mp hc with hc | hc
     · exact hLf c hc
     · exact hRf c hc
@@ -434,7 +435,7 @@ theorem free_wf {s : State} {ptr : Nat} (hwf : WF s)
   have hc' : c = ⟨ptr - 32, c.size, true⟩ := by
     cases c; simp only at h1 h2 ⊢; subst h2; simp only [Chunk.mk.injEq, and_true]; omega
   rw [hc'] at hcs
-  obtain ⟨-, -, -, -, -, -, -, -, -, -, hw⟩ := free_ok hwf hcs
+  obtain ⟨-, -, -, -, -, -, -, -, -, -, hw, -⟩ := free_ok hwf hcs
   exact hw
 
 end Picoalloc

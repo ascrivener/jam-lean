@@ -70,6 +70,10 @@ import Services.Bootstrap.Alloc.StageA
 import Services.Bootstrap.Alloc.FreeImpl
 import Services.Bootstrap.Alloc.FreeRefines
 import Services.Bootstrap.Alloc.Dealloc
+import Services.Bootstrap.Alloc.AllocPro
+import Services.Bootstrap.Alloc.AllocFind
+import Services.Bootstrap.Alloc.AllocSearch
+import Services.Bootstrap.Alloc.AllocSplit
 import Services.Witness.Prefix
 import Services.Witness.EmptyTail
 import Services.Witness.Front1

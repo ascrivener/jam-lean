@@ -180,34 +180,37 @@ def alloc (grow : Grow) (heapBase : Nat) (align req : Nat) (s : State) : Option 
   let s := if final < s.base + 32 * maxSize then setHdr s final (fun h => { h with prev := prev }) else s
   return (allocChunk + 32, s)
 
+/-- `free`'s merge with the previous chunk, if free: the state, the merged chunk, its size and its
+    `prev`. -/
+def mergePrev (s : State) (chunk size prev : Nat) : State × Nat × Nat × Nat :=
+  if chunk ≠ s.base then
+    let pc := chunk - 32 * prev
+    let pw := (s.hdr pc).size
+    if !wordUsed pw then (unregister s pc (binDown (wordSize pw)), pc, size + wordSize pw, (s.hdr pc).prev)
+    else (s, chunk, size, prev)
+  else (s, chunk, size, prev)
+
+/-- `free`'s merge with the next chunk, if below `T` and free: the state and the merged size. -/
+def mergeNext (s : State) (chunk size T : Nat) : State × Nat :=
+  if chunk + 32 * size < T then
+    if !wordUsed (s.hdr (chunk + 32 * size)).size then
+      (unregister s (chunk + 32 * size) (binDown (wordSize (s.hdr (chunk + 32 * size)).size)),
+        size + wordSize (s.hdr (chunk + 32 * size)).size)
+    else (s, size)
+  else (s, size)
+
+/-- `free`'s last step: the merged chunk registered, and the next chunk's `prev`, below `T`. -/
+def freeFinal (s : State) (chunk prev size T : Nat) : State :=
+  if chunk + 32 * size < T then
+    setHdr (register s chunk prev size).1 (chunk + 32 * size) (fun h => { h with prev := size })
+  else (register s chunk prev size).1
+
 /-- `free`: the chunk of the data at `ptr` becomes free, merged with free neighbours. -/
 def free (s : State) (ptr : Nat) : State :=
   let chunk := ptr - 32
-  let size := wordSize (s.hdr chunk).size
-  let prev := (s.hdr chunk).prev
-  let endAll := s.base + 32 * maxSize
-  -- merge with the previous chunk
-  let (s, chunk, size, prev) :=
-    if chunk ≠ s.base then
-      let pc := chunk - 32 * prev
-      let pw := (s.hdr pc).size
-      if !wordUsed pw then
-        let pprev := (s.hdr pc).prev
-        let s := unregister s pc (binDown (wordSize pw))
-        (s, pc, size + wordSize pw, pprev)
-      else (s, chunk, size, prev)
-    else (s, chunk, size, prev)
-  -- merge with the next chunk
-  let nc := chunk + 32 * size
-  let (s, size) :=
-    if nc < endAll then
-      let nw := (s.hdr nc).size
-      if !wordUsed nw then (unregister s nc (binDown (wordSize nw)), size + wordSize nw)
-      else (s, size)
-    else (s, size)
-  let (s, _) := register s chunk prev size
-  let nc := chunk + 32 * size
-  if nc < endAll then setHdr s nc (fun h => { h with prev := size }) else s
+  let m := mergePrev s chunk (wordSize (s.hdr chunk).size) (s.hdr chunk).prev
+  let n := mergeNext m.1 m.2.1 m.2.2.1 (s.base + 32 * maxSize)
+  freeFinal n.1 m.2.1 m.2.2.2 n.2 (s.base + 32 * maxSize)
 
 /-- The usable size of the allocation at `ptr`, in units (`usable_size_impl`). -/
 def usable (s : State) (ptr : Nat) : Nat := wordSize (s.hdr (ptr - 32)).size - 1

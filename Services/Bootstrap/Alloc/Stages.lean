@@ -196,4 +196,71 @@ theorem free_tail {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
     · have := hHF b (Or.inr hb); unfold Al at this; omega
     · omega
 
+
+/-- 42630 … the head test, the next chunk nc free with sz units (1 … 2²⁵) and its bin's head `hd`:
+    to 42675 if nc is the head, with ω₀ = sz, ω₅ = its bin, ω₆ = the head slot. -/
+theorem nx_lookup_head {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (nc sz : Nat) (h5 : ω[5] = UInt64.ofNat (2 * sz)) (h7 : ω[7] = UInt64.ofNat 196792)
+    (h9 : ω[9] = UInt64.ofNat nc) (hs1 : 1 ≤ sz) (hs2 : sz ≤ 33554432)
+    (hhd : rdN μ (196792 + binDown sz * 4) 4 = nc) (hnc : nc < 2147483648) (hr : ∀ a, μ.readable a = true) :
+    ∃ ω', FreeStepsH p R 42630 ω μ x 42675 ω' μ x 21 ∧ ω'[0] = UInt64.ofNat sz ∧
+      ω'[5] = UInt64.ofNat (binDown sz) ∧ ω'[6] = UInt64.ofNat (196792 + binDown sz * 4) ∧
+      ∀ j : Fin 13, j.val ∉ [0, 5, 6, 10] → ω'[j] = ω[j] := by
+  by_cases hs : sz ≤ 127
+  · rw [binDown_small hs1 hs] at hhd ⊢
+    obtain ⟨ω1, r1, a0, a5, a6, a10, fr⟩ := nx_bin_small (p := p) (P := P) (R := R) x ω μ sz nc h5 h7 hs1
+      (by omega) hhd hnc hr
+    have b := nx_br_head_s (p := p) (P := P) (R := R) x ω1 μ nc
+      (by have := fr ⟨9, by decide⟩ (by decide); simp only [Fin.getElem_fin] at this; rw [this]; exact h9) a10
+    refine ⟨ω1, (r1.trans b).mono (by omega), a0, a5, a6, fun j hj => fr j (by
+      simp only [List.mem_cons, List.not_mem_nil, or_false] at hj ⊢; omega)⟩
+  · obtain ⟨ω1, r1, a0, a5, fr1⟩ := nx_bin_big (p := p) (P := P) (R := R) x ω μ sz h5 (by omega) hs2
+    have hB : binDown sz < 2432 := toBin_lt false (Nat.min_le_right _ _)
+    obtain ⟨ω2, r2, a6, a10, fr2⟩ := nx_head_big (p := p) (P := P) (R := R) x ω1 μ (binDown sz) nc a5
+      (by have := fr1 ⟨7, by decide⟩ (by decide); simp only [Fin.getElem_fin] at this; rw [this]; exact h7)
+      hB hhd hnc hr
+    have b := nx_br_head_b (p := p) (P := P) (R := R) x ω2 μ nc
+      (by
+        have e2 := fr2 ⟨9, by decide⟩ (by decide); have e1 := fr1 ⟨9, by decide⟩ (by decide)
+        simp only [Fin.getElem_fin] at e1 e2; rw [e2, e1]; exact h9) a10
+    refine ⟨ω2, ((r1.trans r2).trans b).mono (by omega),
+      by have := fr2 ⟨0, by decide⟩ (by decide); simp only [Fin.getElem_fin] at this; rw [this]; exact a0,
+      by have := fr2 ⟨5, by decide⟩ (by decide); simp only [Fin.getElem_fin] at this; rw [this]; exact a5,
+      a6, fun j hj => ?_⟩
+    rw [fr2 j (by simp only [List.mem_cons, List.not_mem_nil, or_false] at hj ⊢; omega),
+      fr1 j (by simp only [List.mem_cons, List.not_mem_nil, or_false] at hj ⊢; omega)]
+
+/-- 42630 … the head test, nc not its bin's head `hd`: to 42732. -/
+theorem nx_lookup_mid {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (nc sz hd : Nat) (h5 : ω[5] = UInt64.ofNat (2 * sz)) (h7 : ω[7] = UInt64.ofNat 196792)
+    (h9 : ω[9] = UInt64.ofNat nc) (hs1 : 1 ≤ sz) (hs2 : sz ≤ 33554432)
+    (hhd : rdN μ (196792 + binDown sz * 4) 4 = hd) (hne : hd ≠ nc) (hhd1 : hd < 2147483648)
+    (hnc : nc < 2147483648) (hr : ∀ a, μ.readable a = true) :
+    ∃ ω', FreeStepsH p R 42630 ω μ x 42732 ω' μ x 21 ∧ ω'[0] = UInt64.ofNat sz ∧
+      ω'[5] = UInt64.ofNat (binDown sz) ∧ ∀ j : Fin 13, j.val ∉ [0, 5, 6, 10] → ω'[j] = ω[j] := by
+  by_cases hs : sz ≤ 127
+  · rw [binDown_small hs1 hs] at hhd ⊢
+    obtain ⟨ω1, r1, a0, a5, a6, a10, fr⟩ := nx_bin_small (p := p) (P := P) (R := R) x ω μ sz hd h5 h7 hs1
+      (by omega) hhd hhd1 hr
+    have b := nx_br_mid_s (p := p) (P := P) (R := R) x ω1 μ nc hd
+      (by have := fr ⟨9, by decide⟩ (by decide); simp only [Fin.getElem_fin] at this; rw [this]; exact h9) a10
+      hne hnc hhd1
+    refine ⟨ω1, (r1.trans b).mono (by omega), a0, a5, fun j hj => fr j (by
+      simp only [List.mem_cons, List.not_mem_nil, or_false] at hj ⊢; omega)⟩
+  · obtain ⟨ω1, r1, a0, a5, fr1⟩ := nx_bin_big (p := p) (P := P) (R := R) x ω μ sz h5 (by omega) hs2
+    have hB : binDown sz < 2432 := toBin_lt false (Nat.min_le_right _ _)
+    obtain ⟨ω2, r2, a6, a10, fr2⟩ := nx_head_big (p := p) (P := P) (R := R) x ω1 μ (binDown sz) hd a5
+      (by have := fr1 ⟨7, by decide⟩ (by decide); simp only [Fin.getElem_fin] at this; rw [this]; exact h7)
+      hB hhd hhd1 hr
+    have b := nx_br_mid_b (p := p) (P := P) (R := R) x ω2 μ nc hd
+      (by
+        have e2 := fr2 ⟨9, by decide⟩ (by decide); have e1 := fr1 ⟨9, by decide⟩ (by decide)
+        simp only [Fin.getElem_fin] at e1 e2; rw [e2, e1]; exact h9) a10 hne hnc hhd1
+    refine ⟨ω2, ((r1.trans r2).trans b).mono (by omega),
+      by have := fr2 ⟨0, by decide⟩ (by decide); simp only [Fin.getElem_fin] at this; rw [this]; exact a0,
+      by have := fr2 ⟨5, by decide⟩ (by decide); simp only [Fin.getElem_fin] at this; rw [this]; exact a5,
+      fun j hj => ?_⟩
+    rw [fr2 j (by simp only [List.mem_cons, List.not_mem_nil, or_false] at hj ⊢; omega),
+      fr1 j (by simp only [List.mem_cons, List.not_mem_nil, or_false] at hj ⊢; omega)]
+
 end Services.Bootstrap.Alloc

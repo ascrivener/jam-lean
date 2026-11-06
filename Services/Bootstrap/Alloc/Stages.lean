@@ -373,4 +373,124 @@ theorem nx_unreg_mid {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
   · exact Or.inl h
   · unfold Al at h; omega
 
+
+/-- What `free_next` needs of a free next chunk nc (the invariant gives it): a free chunk of 1 … 2²⁵
+    units, linked in its bin's list. -/
+def NxFree (s : State) (F : Nat → Prop) (base nc sz1 : Nat) : Prop :=
+  F nc ∧ 2 ≤ (s.hdr nc).size ∧ (s.hdr nc).size ≤ 67108864 ∧ sz1 + (s.hdr nc).size / 2 < 2147483648 ∧
+    (s.heads (binDown ((s.hdr nc).size / 2)) = 0 ∨ Al base (s.heads (binDown ((s.hdr nc).size / 2)))) ∧
+    ((s.hdr nc).next ≠ 0 → F (s.hdr nc).next) ∧
+    (s.heads (binDown ((s.hdr nc).size / 2)) ≠ nc → F (s.hdr nc).prevL ∧
+      ((s.hdr nc).next ≠ 0 → (s.hdr nc).next ≠ (s.hdr nc).prevL))
+
+/-- **`free`'s merge with the next chunk, 42597 … 42814**: the memory holds the model's
+    `mergeNext`, and ω₂ its merged size. -/
+theorem free_next {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (s : State) (H F : Nat → Prop) (base M sz1 : Nat) (hrep : RepAt μ s H F)
+    (h5 : ω[5] = UInt64.ofNat base) (h2 : ω[2] = UInt64.ofNat sz1) (h8 : ω[8] = UInt64.ofNat M)
+    (h7 : ω[7] = UInt64.ofNat 196792) (h4 : ω[4] = UInt64.ofNat 204984)
+    (hb0 : 206864 ≤ base) (hbT : base + 1073741824 < 2147483648) (hAM : Al base M)
+    (hM : M + 32 * sz1 ≤ base + 1073741824) (hHF : ∀ a, H a ∨ F a → Al base a)
+    (hnc : M + 32 * sz1 < base + 1073741824 → H (M + 32 * sz1))
+    (hfree : M + 32 * sz1 < base + 1073741824 → (s.hdr (M + 32 * sz1)).size % 2 = 0 →
+      NxFree s F base (M + 32 * sz1) sz1)
+    (hw : ∀ a, μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 42597 ω μ x 42814 ω' μ' x 70 ∧
+      RepAt μ' (mergeNext s M sz1 (base + 1073741824)).1 H F ∧
+      ω'[2] = UInt64.ofNat (mergeNext s M sz1 (base + 1073741824)).2 ∧
+      ω'[12] = UInt64.ofNat (base + 1073741824) ∧
+      (∀ a, μ'.writable a = true) ∧ (∀ a, a < 4294967296 → 2147483648 ≤ a → μ'.read a = μ.read a) ∧
+      ∀ j : Fin 13, j.val ∉ [0, 2, 5, 6, 9, 10, 11, 12] → ω'[j] = ω[j] := by
+  have hr : ∀ a, μ.readable a = true := fun a => Memory.readable_of_writable (hw a)
+  obtain ⟨hM1, hM2, hM3⟩ := hAM
+  obtain ⟨ω1, r1, a12, a9, g1⟩ := nx_addr (p := p) (P := P) (R := R) x ω μ base M sz1 h5 h2 h8 hbT (by omega)
+  unfold mergeNext
+  by_cases hlt : M + 32 * sz1 < base + 1073741824
+  · rw [if_pos hlt]
+    have b1 := nx_br_in (p := p) (P := P) (R := R) x ω1 μ (M + 32 * sz1) (base + 1073741824) a9 a12 hlt
+      (by omega) hbT
+    have hAn := hHF _ (Or.inl (hnc hlt))
+    unfold Al at hAn
+    have hsz : rdN μ (M + 32 * sz1 + 4) 4 = (s.hdr (M + 32 * sz1)).size := hrep.size _ (hnc hlt)
+    obtain ⟨ω2, r2, c5, c10, c11, g2⟩ := nx_hdr (p := p) (P := P) (R := R) x ω1 μ (M + 32 * sz1)
+      (s.hdr (M + 32 * sz1)).size a9 (by omega) hsz hr
+    generalize hW : (s.hdr (M + 32 * sz1)).size = w at *
+    by_cases hu : w % 2 = 1
+    · -- the next chunk allocated
+      have b2 := nx_br_used (p := p) (P := P) (R := R) x ω2 μ (w % 2) c10 (by omega) (by omega)
+      have hwu : (!wordUsed w) = false := by simp [wordUsed, hu]
+      rw [if_neg (by simp [hwu])]
+      refine ⟨ω2, μ, (((r1.trans b1).trans r2).trans b2).mono (by omega), hrep, ?_, ?_, hw,
+        fun _ _ _ => rfl, fun j hj => ?_⟩
+      · rw [fget g2 2 (by decide) (by decide), fget g1 2 (by decide) (by decide)]; exact h2
+      · rw [fget g2 12 (by decide) (by decide)]; exact a12
+      · rw [g2 j (by simp only [List.mem_cons, List.not_mem_nil, or_false] at hj ⊢; omega),
+          g1 j (by simp only [List.mem_cons, List.not_mem_nil, or_false] at hj ⊢; omega)]
+    · -- free: it leaves its bin's list and is merged in
+      have hu0 : w % 2 = 0 := by omega
+      obtain ⟨hFn, hw2, hw3, hss, hhd, hnx, hmid⟩ := hfree hlt hu0
+      rw [hW] at hhd hmid hss hw2 hw3
+      have b2 := nx_br_free (p := p) (P := P) (R := R) x ω2 μ (by rw [c10, hu0])
+      have hwu : (!wordUsed w) = true := by simp [wordUsed, hu0]
+      rw [if_pos hwu]
+      have hws : wordSize w = w / 2 := rfl
+      rw [hws]
+      generalize hsz' : w / 2 = sz at *
+      have hw' : w = 2 * sz := by omega
+      have h5' : ω2[5] = UInt64.ofNat (2 * sz) := by rw [c5, hw']
+      have hB : binDown sz < 2432 := toBin_lt false (Nat.min_le_right _ _)
+      have hhd' : rdN μ (196792 + binDown sz * 4) 4 = s.heads (binDown sz) := by
+        have := hrep.heads (binDown sz) (by unfold binCount; omega)
+        unfold A0 at this; rw [show 196792 + binDown sz * 4 = 196792 + 4 * binDown sz by omega, this]
+      have e7 : ω2[7] = UInt64.ofNat 196792 := by
+        rw [fget g2 7 (by decide) (by decide), fget g1 7 (by decide) (by decide)]; exact h7
+      have e9 : ω2[9] = UInt64.ofNat (M + 32 * sz1) := by rw [fget g2 9 (by decide) (by decide)]; exact a9
+      by_cases hh : s.heads (binDown sz) = M + 32 * sz1
+      · obtain ⟨ω3, r3, d0, d5, d6, g3⟩ := nx_lookup_head (p := p) (P := P) (R := R) x ω2 μ (M + 32 * sz1) sz
+          h5' e7 e9 (by omega) (by omega) (by rw [hhd', hh]) (by omega) hr
+        obtain ⟨ω4, μ4, r4, rep4, ww4, sf4, e2, g4⟩ := nx_unreg_head (p := p) (P := P) (R := R) x ω3 μ s H F
+          base (M + 32 * sz1) (binDown sz) sz1 sz hrep hh (by unfold binCount; omega) hFn hHF hnx hb0 hbT
+          (by rw [fget g3 11 (by decide) (by decide)]; exact c11) d6 d0
+          (by rw [fget g3 2 (by decide) (by decide), fget g2 2 (by decide) (by decide),
+            fget g1 2 (by decide) (by decide)]; exact h2) d5
+          (by rw [fget g3 7 (by decide) (by decide)]; exact e7)
+          (by rw [fget g3 4 (by decide) (by decide), fget g2 4 (by decide) (by decide),
+            fget g1 4 (by decide) (by decide)]; exact h4) hss hw
+        refine ⟨ω4, μ4, ((((r1.trans b1).trans r2).trans b2).trans r3 |>.trans r4).mono (by omega), rep4, e2,
+          ?_, ww4, sf4, fun j hj => ?_⟩
+        · rw [fget g4 12 (by decide) (by decide), fget g3 12 (by decide) (by decide),
+            fget g2 12 (by decide) (by decide)]; exact a12
+        · simp only [List.mem_cons, List.not_mem_nil, or_false] at hj
+          rw [g4 j (by simp only [List.mem_cons, List.not_mem_nil, or_false]; omega),
+            g3 j (by simp only [List.mem_cons, List.not_mem_nil, or_false]; omega),
+            g2 j (by simp only [List.mem_cons, List.not_mem_nil, or_false]; omega),
+            g1 j (by simp only [List.mem_cons, List.not_mem_nil, or_false]; omega)]
+      · obtain ⟨hFp, hpn⟩ := hmid hh
+        have hhd1 : s.heads (binDown sz) < 2147483648 := by
+          rcases hhd with h | h
+          · omega
+          · unfold Al at h; omega
+        obtain ⟨ω3, r3, d0, d5, g3⟩ := nx_lookup_mid (p := p) (P := P) (R := R) x ω2 μ (M + 32 * sz1) sz
+          (s.heads (binDown sz)) h5' e7 e9 (by omega) (by omega) hhd' hh hhd1 (by omega) hr
+        obtain ⟨ω4, μ4, r4, rep4, ww4, sf4, e2, g4⟩ := nx_unreg_mid (p := p) (P := P) (R := R) x ω3 μ s H F
+          base (M + 32 * sz1) (binDown sz) sz1 sz hrep hh hFn hHF hFp hnx hpn hb0 hbT
+          (by rw [fget g3 11 (by decide) (by decide)]; exact c11) d0
+          (by rw [fget g3 2 (by decide) (by decide), fget g2 2 (by decide) (by decide),
+            fget g1 2 (by decide) (by decide)]; exact h2) hss hw
+        refine ⟨ω4, μ4, ((((r1.trans b1).trans r2).trans b2).trans r3 |>.trans r4).mono (by omega), rep4, e2,
+          ?_, ww4, sf4, fun j hj => ?_⟩
+        · rw [fget g4 12 (by decide) (by decide), fget g3 12 (by decide) (by decide),
+            fget g2 12 (by decide) (by decide)]; exact a12
+        · simp only [List.mem_cons, List.not_mem_nil, or_false] at hj
+          rw [g4 j (by simp only [List.mem_cons, List.not_mem_nil, or_false]; omega),
+            g3 j (by simp only [List.mem_cons, List.not_mem_nil, or_false]; omega),
+            g2 j (by simp only [List.mem_cons, List.not_mem_nil, or_false]; omega),
+            g1 j (by simp only [List.mem_cons, List.not_mem_nil, or_false]; omega)]
+  · rw [if_neg hlt]
+    have b1 := nx_br_end (p := p) (P := P) (R := R) x ω1 μ (M + 32 * sz1) (base + 1073741824) a9 a12
+      (by omega) (by omega) hbT
+    refine ⟨ω1, μ, (r1.trans b1).mono (by omega), hrep, ?_, a12, hw, fun _ _ _ => rfl, fun j hj => ?_⟩
+    · rw [fget g1 2 (by decide) (by decide)]; exact h2
+    · exact g1 j (by simp only [List.mem_cons, List.not_mem_nil, or_false] at hj ⊢; omega)
+
 end Services.Bootstrap.Alloc

@@ -64,6 +64,7 @@ import Services.Bootstrap.Alloc.FreeNext
 import Services.Bootstrap.Alloc.UnregisterRep
 import Services.Bootstrap.Alloc.FreePrev
 import Services.Bootstrap.Alloc.Stages
+import Services.Bootstrap.Alloc.StageA
 import Services.Witness.Prefix
 import Services.Witness.EmptyTail
 import Services.Witness.Front1

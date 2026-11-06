@@ -51,6 +51,16 @@ import Services.Bootstrap.CodeCheck.G35
 import Services.Bootstrap.CodeCheck.G36
 import Services.Bootstrap.CodeCheck.G37
 import Services.Bootstrap.CodeCheck.G38
+import Services.Bootstrap.CodeCheck.G39
+import Services.Bootstrap.CodeCheck.G40
+import Services.Bootstrap.CodeCheck.G41
+import Services.Bootstrap.CodeCheck.G42
+import Services.Bootstrap.CodeCheck.G43
+import Services.Bootstrap.CodeCheck.G44
+import Services.Bootstrap.CodeCheck.G45
+import Services.Bootstrap.CodeCheck.G46
+import Services.Bootstrap.CodeCheck.G47
+import Services.Bootstrap.CodeCheck.G48
 import Services.Bootstrap.CodeCheck.H0
 import Services.Bootstrap.CodeCheck.H1
 import Services.Bootstrap.CodeCheck.H2
@@ -79,7 +89,7 @@ theorem vBlob_ok : prog.vBlob = true := by
 theorem checkCode_ok : checkCode (ba N 11888 83235) facts = true :=
   checkCode_of_chunks parse vBlob_ok (by
     simp only [factChunks, factGroups, List.flatten_cons, List.flatten_nil, List.all_append, List.all_nil,
-      Bool.and_true, chunks_0, chunks_1, chunks_2, chunks_3, chunks_4, chunks_5, chunks_6, chunks_7, chunks_8, chunks_9, chunks_10, chunks_11, chunks_12, chunks_13, chunks_14, chunks_15, chunks_16, chunks_17, chunks_18, chunks_19, chunks_20, chunks_21, chunks_22, chunks_23, chunks_24, chunks_25, chunks_26, chunks_27, chunks_28, chunks_29, chunks_30, chunks_31, chunks_32, chunks_33, chunks_34, chunks_35, chunks_36, chunks_37, chunks_38])
+      Bool.and_true, chunks_0, chunks_1, chunks_2, chunks_3, chunks_4, chunks_5, chunks_6, chunks_7, chunks_8, chunks_9, chunks_10, chunks_11, chunks_12, chunks_13, chunks_14, chunks_15, chunks_16, chunks_17, chunks_18, chunks_19, chunks_20, chunks_21, chunks_22, chunks_23, chunks_24, chunks_25, chunks_26, chunks_27, chunks_28, chunks_29, chunks_30, chunks_31, chunks_32, chunks_33, chunks_34, chunks_35, chunks_36, chunks_37, chunks_38, chunks_39, chunks_40, chunks_41, chunks_42, chunks_43, chunks_44, chunks_45, chunks_46, chunks_47, chunks_48])
 
 /-- **The host-call ids the blob names** (`PVM.jamHostCallIdsOf`, GP §A.1, §A.5.2), by the kernel. -/
 theorem hostIds_ok : ∀ n ∈ PVM.jamHostCallIdsOf (ba N 81 95042), n ∈ hostIds := by

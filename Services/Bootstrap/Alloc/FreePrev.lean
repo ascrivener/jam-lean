@@ -355,4 +355,47 @@ theorem pv_clear {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs)
       all_goals try exact Nat.mod_eq_of_lt (clear_lt _ _ hp64)
       all_goals try exact Nat.mod_eq_of_lt (clear_lt _ _ hw64)
 
+/-- **42948 … the return to `dealloc` (40681)**: the chunk after the merged one (M, `total`
+    units), if below the heap's end, records `total` as its `prev`; ω₀, ω₅, ω₆ and sp come back
+    from the frame. -/
+theorem free_epi {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (sp M total en v5 v6 : Nat) (h1 : ω[1] = UInt64.ofNat (sp - 24)) (h2 : ω[2] = UInt64.ofNat total)
+    (h8 : ω[8] = UInt64.ofNat M) (h12 : ω[12] = UInt64.ofNat en) (hsp : 2147483700 ≤ sp)
+    (hsp1 : sp < 4294967296) (hMt : M + 32 * total < 2147483648) (hen : en < 2147483648)
+    (ht : total < 4294967296)
+    (s0 : μ.readN (sp - 8) 8 = Num.encodeLE 8 1986) (s5 : μ.readN (sp - 16) 8 = Num.encodeLE 8 v5)
+    (s6 : μ.readN (sp - 24) 8 = Num.encodeLE 8 v6) (hv5 : v5 < 18446744073709551616)
+    (hv6 : v6 < 18446744073709551616) (hw : ∀ a, μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 42948 ω μ x 40681 ω' μ' x 13 ∧
+      (M + 32 * total < en → rdN μ' (M + 32 * total) 4 = total) ∧
+      (∀ a, a < 4294967296 → (en ≤ M + 32 * total ∨ a < M + 32 * total ∨ M + 32 * total + 4 ≤ a) →
+        μ'.read a = μ.read a) ∧
+      (∀ a, μ'.writable a = true) ∧
+      ω'[0] = UInt64.ofNat 1986 ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = UInt64.ofNat v5 ∧ ω'[6] = UInt64.ofNat v6 ∧
+      ∀ j : Fin 13, j.val ∉ [0, 1, 5, 6, 7] → ω'[j] = ω[j] := by
+  have hr : ∀ a, μ.readable a = true := fun a => Memory.readable_of_writable (hw a)
+  have r0 : rdN μ (sp - 24 + 16) 8 = 1986 := by
+    rw [show sp - 24 + 16 = sp - 8 by omega]; exact rdN_of' s0 (by decide)
+  have r5 : rdN μ (sp - 24 + 8) 8 = v5 := by
+    rw [show sp - 24 + 8 = sp - 16 by omega]; exact rdN_of' s5 hv5
+  have r6 : rdN μ (sp - 24) 8 = v6 := rdN_of' s6 hv6
+  rw [show ω = regsNF ω [] from rfl]
+  by_cases hlt : M + 32 * total < en
+  · have hlt' : ¬ en ≤ total * 32 + M := by omega
+    refine ⟨?ω', ?μ', ?run, ?post⟩
+    case run => pvm_go [h1, h2, h8, h12, r0, r5, r6, hlt', hw, hr, rdN_writeN_disjoint, ↓rdN_fold]
+    case post =>
+      refine ⟨fun _ => ?_, fun a ha h1 => ?_, fun a => ?_, by reg_val, by reg_val, by reg_val, ?_, by reg_frame⟩
+      · rw [show M + 32 * total = total * 32 + M by omega]; rd_simp []
+        simp only [Nat.reducePow, Nat.reduceMul]; omega
+      · rd_simp []
+      · rd_simp [hw]
+      · reg_val
+  · have hge : en ≤ total * 32 + M := by omega
+    refine ⟨?ω'', ?μ'', ?run', ?post'⟩
+    case run' => pvm_go [h1, h2, h8, h12, r0, r5, r6, hge, hw, hr, ↓rdN_fold]
+    case post' =>
+      refine ⟨fun h => absurd h hlt, fun a ha h1 => rfl, fun a => hw a, by reg_val, by reg_val, by reg_val,
+        by reg_val, by reg_frame⟩
+
 end Services.Bootstrap.Alloc

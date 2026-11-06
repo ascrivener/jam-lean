@@ -120,4 +120,11 @@ theorem rotl_clear (k : Nat) (hk : k < 64) :
       simp [hj, this, hjk, Ne.symm hjk]
   · simp [hj]; omega
 
+
+/-- A word fact as the folded load `pvm_simp` sees. -/
+theorem rdN_of' {μ : Memory} {a n v : Nat} (h : μ.readN a n = Num.encodeLE n v) (hv : v < 2 ^ (8 * n)) :
+    rdN μ a n = v := by
+  show Num.decodeLE (μ.readN a n) = v
+  rw [h, Num.decodeLE_encodeLE, Nat.mod_eq_of_lt hv]
+
 end Services.Bootstrap.Alloc

@@ -75,6 +75,7 @@ import Services.Bootstrap.Alloc.AllocFind
 import Services.Bootstrap.Alloc.AllocSearch
 import Services.Bootstrap.Alloc.AllocSplit
 import Services.Bootstrap.Alloc.AllocUnreg
+import Services.Bootstrap.Alloc.AllocWrite
 import Services.Witness.Prefix
 import Services.Witness.EmptyTail
 import Services.Witness.Front1

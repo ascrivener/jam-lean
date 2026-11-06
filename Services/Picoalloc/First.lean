@@ -108,4 +108,20 @@ theorem free_first {s : State} {ptr n : Nat} {pre post : List Chunk} (hwf : WF s
     Nat.pos_iff_ne_zero.mp (Nat.lt_of_lt_of_le (Nat.lt_of_lt_of_le hXl.2.2 hsz1) hst)
   exact free_first_aux h0 hpv (fun z => (hp2 z).trans (hp1 z)) (hb2.trans hb1) ht hMb
 
+
+theorem allocPost_first {s1 : State} {bin r S C T : Nat} (hC : s1.heads bin = C)
+    (hA : s1.base + 32 * ((C - s1.base) / 32) = C) (hS : r + 1 ≤ S) (hCb : s1.base ≤ C)
+    (h0 : (s1.hdr s1.base).prev = 0) :
+    ((allocPost s1 bin r S T).hdr (allocPost s1 bin r S T).base).prev = 0 := by
+  rw [allocPost_base, allocPost_prev hC hA hS, if_neg (by omega), if_neg (by omega)]
+  exact h0
+
+theorem alloc_first {grow : Grow} {hb r p : Nat} {s s' : State} (hwf : WF s) (h0 : FirstOk s)
+    (h : alloc grow hb 1 r s = some (p, s')) : FirstOk s' := by
+  rw [alloc_one hwf.1] at h
+  obtain ⟨bin, a1, hbin, hmax, hS, -, -, -, rfl⟩ := alloc1_eq h
+  obtain ⟨-, -, -, -, -, hCb, hCal⟩ := bin_chunk hwf hmax hbin
+  exact allocPost_first (s1 := { s with allocated := a1 }) rfl
+    (show s.base + 32 * ((s.heads bin - s.base) / 32) = s.heads bin by omega) hS hCb h0
+
 end Picoalloc

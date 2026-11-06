@@ -493,4 +493,66 @@ theorem free_next {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
     · rw [fget g1 2 (by decide) (by decide)]; exact h2
     · exact g1 j (by simp only [List.mem_cons, List.not_mem_nil, or_false] at hj ⊢; omega)
 
+
+/-- 42396 … the head test, the chunk before (Pa) free with psz units and its bin's head `hd`, its
+    own `prev` ppv: to 42486 if Pa is the head, with ω₁₀ = psz, ω₅ = its bin, ω₆ = the head slot,
+    ω₃ = ppv. -/
+theorem pv_lookup_head {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (Pa psz ppv : Nat) (h0 : ω[0] = UInt64.ofNat (2 * psz)) (h7 : ω[7] = UInt64.ofNat 196792)
+    (h9 : ω[9] = UInt64.ofNat Pa) (h11 : ω[11] = UInt64.ofNat Pa) (hs1 : 1 ≤ psz) (hs2 : psz ≤ 33554432)
+    (hhd : rdN μ (196792 + binDown psz * 4) 4 = Pa) (hPa : Pa < 2147483648)
+    (hpp : rdN μ Pa 4 = ppv) (hpp1 : ppv < 2147483648) (hr : ∀ a, μ.readable a = true) :
+    ∃ ω', FreeStepsH p R 42396 ω μ x 42486 ω' μ x 21 ∧ ω'[10] = UInt64.ofNat psz ∧
+      ω'[5] = UInt64.ofNat (binDown psz) ∧ ω'[6] = UInt64.ofNat (196792 + binDown psz * 4) ∧
+      ω'[3] = UInt64.ofNat ppv ∧ ∀ j : Fin 13, j.val ∉ [3, 5, 6, 10, 12] → ω'[j] = ω[j] := by
+  by_cases hs : psz ≤ 127
+  · rw [binDown_small hs1 hs] at hhd ⊢
+    obtain ⟨ω1, r1, a10, a5, a6, a12, a3, fr⟩ := pv_bin_small (p := p) (P := P) (R := R) x ω μ psz Pa Pa ppv
+      h0 h7 h11 hs1 (by omega) hhd hPa hpp hpp1 hPa hr
+    have b := pv_br_head_s (p := p) (P := P) (R := R) x ω1 μ Pa (by rw [fget fr 9 (by decide) (by decide)]; exact h9) a12
+    exact ⟨ω1, (r1.trans b).mono (by omega), a10, a5, a6, a3, fr⟩
+  · obtain ⟨ω1, r1, a10, a5, fr1⟩ := pv_bin_big (p := p) (P := P) (R := R) x ω μ psz h0 (by omega) hs2
+    have hB : binDown psz < 2432 := toBin_lt false (Nat.min_le_right _ _)
+    obtain ⟨ω2, r2, a6, a12, a3, fr2⟩ := pv_head_big (p := p) (P := P) (R := R) x ω1 μ (binDown psz) Pa Pa ppv a5
+      (by rw [fget fr1 7 (by decide) (by decide)]; exact h7) (by rw [fget fr1 11 (by decide) (by decide)]; exact h11)
+      hB hhd hPa hpp hpp1 hPa hr
+    have b := pv_br_head_b (p := p) (P := P) (R := R) x ω2 μ Pa
+      (by rw [fget fr2 9 (by decide) (by decide), fget fr1 9 (by decide) (by decide)]; exact h9) a12
+    refine ⟨ω2, ((r1.trans r2).trans b).mono (by omega),
+      by rw [fget fr2 10 (by decide) (by decide)]; exact a10, by rw [fget fr2 5 (by decide) (by decide)]; exact a5,
+      a6, a3, fun j hj => ?_⟩
+    simp only [List.mem_cons, List.not_mem_nil, or_false] at hj
+    rw [fr2 j (by simp only [List.mem_cons, List.not_mem_nil, or_false]; omega),
+      fr1 j (by simp only [List.mem_cons, List.not_mem_nil, or_false]; omega)]
+
+/-- 42396 … the head test, Pa not its bin's head `hd`: to 42512. -/
+theorem pv_lookup_mid {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (Pa psz ppv hd : Nat) (h0 : ω[0] = UInt64.ofNat (2 * psz)) (h7 : ω[7] = UInt64.ofNat 196792)
+    (h9 : ω[9] = UInt64.ofNat Pa) (h11 : ω[11] = UInt64.ofNat Pa) (hs1 : 1 ≤ psz) (hs2 : psz ≤ 33554432)
+    (hhd : rdN μ (196792 + binDown psz * 4) 4 = hd) (hne : hd ≠ Pa) (hhd1 : hd < 2147483648)
+    (hPa : Pa < 2147483648) (hpp : rdN μ Pa 4 = ppv) (hpp1 : ppv < 2147483648) (hr : ∀ a, μ.readable a = true) :
+    ∃ ω', FreeStepsH p R 42396 ω μ x 42512 ω' μ x 21 ∧ ω'[10] = UInt64.ofNat psz ∧
+      ω'[5] = UInt64.ofNat (binDown psz) ∧ ω'[3] = UInt64.ofNat ppv ∧
+      ∀ j : Fin 13, j.val ∉ [3, 5, 6, 10, 12] → ω'[j] = ω[j] := by
+  by_cases hs : psz ≤ 127
+  · rw [binDown_small hs1 hs] at hhd ⊢
+    obtain ⟨ω1, r1, a10, a5, a6, a12, a3, fr⟩ := pv_bin_small (p := p) (P := P) (R := R) x ω μ psz Pa hd ppv
+      h0 h7 h11 hs1 (by omega) hhd hhd1 hpp hpp1 hPa hr
+    have b := pv_br_mid_s (p := p) (P := P) (R := R) x ω1 μ Pa hd
+      (by rw [fget fr 9 (by decide) (by decide)]; exact h9) a12 hne hPa hhd1
+    exact ⟨ω1, (r1.trans b).mono (by omega), a10, a5, a3, fr⟩
+  · obtain ⟨ω1, r1, a10, a5, fr1⟩ := pv_bin_big (p := p) (P := P) (R := R) x ω μ psz h0 (by omega) hs2
+    have hB : binDown psz < 2432 := toBin_lt false (Nat.min_le_right _ _)
+    obtain ⟨ω2, r2, a6, a12, a3, fr2⟩ := pv_head_big (p := p) (P := P) (R := R) x ω1 μ (binDown psz) hd Pa ppv a5
+      (by rw [fget fr1 7 (by decide) (by decide)]; exact h7) (by rw [fget fr1 11 (by decide) (by decide)]; exact h11)
+      hB hhd hhd1 hpp hpp1 hPa hr
+    have b := pv_br_mid_b (p := p) (P := P) (R := R) x ω2 μ Pa hd
+      (by rw [fget fr2 9 (by decide) (by decide), fget fr1 9 (by decide) (by decide)]; exact h9) a12 hne hPa hhd1
+    refine ⟨ω2, ((r1.trans r2).trans b).mono (by omega),
+      by rw [fget fr2 10 (by decide) (by decide)]; exact a10, by rw [fget fr2 5 (by decide) (by decide)]; exact a5,
+      a3, fun j hj => ?_⟩
+    simp only [List.mem_cons, List.not_mem_nil, or_false] at hj
+    rw [fr2 j (by simp only [List.mem_cons, List.not_mem_nil, or_false]; omega),
+      fr1 j (by simp only [List.mem_cons, List.not_mem_nil, or_false]; omega)]
+
 end Services.Bootstrap.Alloc

@@ -100,4 +100,197 @@ theorem pv_br_free {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Reg
   rw [show ω = regsNF ω [] from rfl]
   pvm_go [h12]
 
+/-- 42396 … 42439, the chunk before (at Pa) free with 1 … 127 units (size word 2·psz): ω₅ = its
+    bin, ω₆ = the bin's head slot, ω₁₂ = the bin's head, ω₃ = its own `prev`, ω₁₀ = psz. -/
+theorem pv_bin_small {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (psz Pa hd ppv : Nat) (h0 : ω[0] = UInt64.ofNat (2 * psz)) (h7 : ω[7] = UInt64.ofNat 196792)
+    (h11 : ω[11] = UInt64.ofNat Pa) (hs1 : 1 ≤ psz) (hs2 : psz < 128)
+    (hhd : rdN μ (196792 + (psz - 1) * 4) 4 = hd) (hhd1 : hd < 2147483648)
+    (hpp : rdN μ Pa 4 = ppv) (hpp1 : ppv < 2147483648) (hPa : Pa < 2147483648)
+    (hr : ∀ a, μ.readable a = true) :
+    ∃ ω', FreeStepsH p R 42396 ω μ x 42439 ω' μ x 13 ∧ ω'[10] = UInt64.ofNat psz ∧
+      ω'[5] = UInt64.ofNat (psz - 1) ∧ ω'[6] = UInt64.ofNat (196792 + (psz - 1) * 4) ∧
+      ω'[12] = UInt64.ofNat hd ∧ ω'[3] = UInt64.ofNat ppv ∧
+      ∀ j : Fin 13, j.val ∉ [3, 5, 6, 10, 12] → ω'[j] = ω[j] := by
+  have hsx : sxw 4 hd = hd := sxw4_small hhd1
+  have hsx2 : sxw 4 ppv = ppv := sxw4_small hpp1
+  have hsh : 2 * psz / 2 = psz := by omega
+  have hb : (psz - 1) % 4294967296 = psz - 1 := by omega
+  have hq : (psz - 1) * 4294967296 / 1073741824 = (psz - 1) * 4 := by omega
+  have hq' : (psz - 1) * 4294967296 % 18446744073709551616 / 1073741824 = (psz - 1) * 4 := by omega
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?run, ?post⟩
+  case run => pvm_go [h0, h7, h11, hhd, hpp, hr, hsx, hsx2, hsh, hb, hq, hq', ↓rdN_fold, ↓loadI_fold]
+  case post => refine ⟨by reg_val, by reg_val, by reg_val, by reg_val, by reg_val, by reg_frame⟩
+
+/-- 42396 … 42470, the chunk before free with 128 … 2²⁵ units (size word 2·psz): ω₅ = its bin,
+    ω₁₀ = psz. -/
+theorem pv_bin_big {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (psz : Nat) (h0 : ω[0] = UInt64.ofNat (2 * psz)) (hs1 : 128 ≤ psz) (hs2 : psz ≤ 33554432) :
+    ∃ ω', FreeStepsH p R 42396 ω μ x 42470 ω' μ x 15 ∧ ω'[10] = UInt64.ofNat psz ∧
+      ω'[5] = UInt64.ofNat (binDown psz) ∧ ∀ j : Fin 13, j.val ∉ [5, 6, 10, 12] → ω'[j] = ω[j] := by
+  have hsh : 2 * psz / 2 = psz := by omega
+  have hc1 : ¬ 67108864 < 2 * psz := by omega
+  have hc2 : 2 * psz ≠ 0 := by omega
+  have hc3 : 256 ≤ 2 * psz := by omega
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?run, ?post⟩
+  case run => pvm_go [h0, hsh, hc1, hc2, hc3]
+  case post =>
+    refine ⟨by reg_val, ?_, by reg_frame⟩
+    simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some',
+      Option.getD_some]
+    congr 1
+    rw [binDown_big hs1, show min psz 33554432 = psz by omega]
+    have hy0 : psz ≠ 0 := by omega
+    rw [clz32 hy0 (by omega)]
+    have hL1 : 7 ≤ Nat.log2 psz := (Nat.le_log2 hy0).mpr (by simpa using hs1)
+    have hL2 : Nat.log2 psz < 26 := (Nat.log2_lt hy0).mpr (by simpa using Nat.lt_of_le_of_lt hs2 (by decide))
+    have hv : psz / 2 ^ (Nat.log2 psz - 7) < 256 := by
+      rw [Nat.div_lt_iff_lt_mul (Nat.two_pow_pos _)]
+      have := Nat.lt_log2_self (n := psz)
+      calc psz < 2 ^ (Nat.log2 psz + 1) := this
+        _ = 256 * 2 ^ (Nat.log2 psz - 7) := by
+          rw [show Nat.log2 psz + 1 = 8 + (Nat.log2 psz - 7) by omega, Nat.pow_add]
+    rw [show (18446744073709551640 - (31 - Nat.log2 psz) % 18446744073709551616) % 18446744073709551616 % 32 =
+      Nat.log2 psz - 7 by omega]
+    generalize psz / 2 ^ (Nat.log2 psz - 7) = v at *
+    simp only [show v % 4294967296 = v by omega, show v / 2147483648 = 0 by omega, Nat.zero_mul, Nat.add_zero,
+      bitwise_and_m127]
+    omega
+
+/-- 42470 … 42483: ω₆ = the head slot of bin ω₅, ω₁₂ = the bin's head, ω₃ = the chunk's `prev`. -/
+theorem pv_head_big {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (bin hd Pa ppv : Nat) (h5 : ω[5] = UInt64.ofNat bin) (h7 : ω[7] = UInt64.ofNat 196792)
+    (h11 : ω[11] = UInt64.ofNat Pa) (hb : bin < 2432)
+    (hhd : rdN μ (196792 + bin * 4) 4 = hd) (hhd1 : hd < 2147483648)
+    (hpp : rdN μ Pa 4 = ppv) (hpp1 : ppv < 2147483648) (hPa : Pa < 2147483648)
+    (hr : ∀ a, μ.readable a = true) :
+    ∃ ω', FreeStepsH p R 42470 ω μ x 42483 ω' μ x 5 ∧ ω'[6] = UInt64.ofNat (196792 + bin * 4) ∧
+      ω'[12] = UInt64.ofNat hd ∧ ω'[3] = UInt64.ofNat ppv ∧
+      ∀ j : Fin 13, j.val ∉ [3, 6, 12] → ω'[j] = ω[j] := by
+  have hsx : sxw 4 hd = hd := sxw4_small hhd1
+  have hsx2 : sxw 4 ppv = ppv := sxw4_small hpp1
+  have hq : bin * 4294967296 % 18446744073709551616 / 1073741824 = bin * 4 := by omega
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?run, ?post⟩
+  case run => pvm_go [h5, h7, h11, hhd, hpp, hr, hsx, hsx2, hq, ↓rdN_fold, ↓loadI_fold]
+  case post => refine ⟨by reg_val, by reg_val, by reg_val, by reg_frame⟩
+
+/-- 42439 / 42483: the chunk before is its bin's head, to 42486. -/
+theorem pv_br_head_s {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (a : Nat) (h9 : ω[9] = UInt64.ofNat a) (h12 : ω[12] = UInt64.ofNat a) :
+    FreeStepsH p R 42439 ω μ x 42486 ω μ x 1 := by
+  rw [show ω = regsNF ω [] from rfl]
+  pvm_go [h9, h12]
+
+theorem pv_br_head_b {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (a : Nat) (h9 : ω[9] = UInt64.ofNat a) (h12 : ω[12] = UInt64.ofNat a) :
+    FreeStepsH p R 42483 ω μ x 42486 ω μ x 1 := by
+  rw [show ω = regsNF ω [] from rfl]
+  pvm_go [h9, h12]
+
+/-- 42439 / 42483: the chunk before is inside its bin's list, to 42512. -/
+theorem pv_br_mid_s {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (a b : Nat) (h9 : ω[9] = UInt64.ofNat a) (h12 : ω[12] = UInt64.ofNat b) (hab : b ≠ a)
+    (ha : a < 2147483648) (hb : b < 2147483648) :
+    FreeStepsH p R 42439 ω μ x 42512 ω μ x 2 := by
+  rw [show ω = regsNF ω [] from rfl]
+  pvm_go [h9, h12, hab]
+
+theorem pv_br_mid_b {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (a b : Nat) (h9 : ω[9] = UInt64.ofNat a) (h12 : ω[12] = UInt64.ofNat b) (hab : b ≠ a)
+    (ha : a < 2147483648) (hb : b < 2147483648) :
+    FreeStepsH p R 42483 ω μ x 42512 ω μ x 1 := by
+  rw [show ω = regsNF ω [] from rfl]
+  pvm_go [h9, h12, hab]
+
+/-- 42486 … 42583, the chunk before (at Pa) its bin's head, with a successor `nxt`. -/
+theorem pv_unlink_head {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (Pa slot nxt : Nat) (h11 : ω[11] = UInt64.ofNat Pa) (h6 : ω[6] = UInt64.ofNat slot)
+    (hn : rdN μ (Pa + 8) 4 = nxt) (hPa : Pa + 16 < 4294967296) (hn0 : nxt ≠ 0)
+    (hn1 : nxt + 16 < 4294967296) (hsl : slot + 4 ≤ 206864) (hna : 206864 ≤ nxt)
+    (hw : ∀ a, μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 42486 ω μ x 42583 ω' μ' x 6 ∧
+      rdN μ' slot 4 = nxt ∧ rdN μ' (nxt + 12) 4 = 0 ∧
+      (∀ a, a < 4294967296 → (a < slot ∨ slot + 4 ≤ a) → (a < nxt + 12 ∨ nxt + 16 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.writable a = true) ∧ ∀ j : Fin 13, j.val ∉ [9] → ω'[j] = ω[j] := by
+  have hr : ∀ a, μ.readable a = true := fun a => Memory.readable_of_writable (hw a)
+  have hn32 : nxt < 4294967296 := by omega
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?run, ?post⟩
+  case run => pvm_go [h11, h6, hn, hn0, hw, hr, ↓rdN_fold]
+  case post =>
+    refine ⟨?_, ?_, fun a ha h1 h2 => ?_, fun a => ?_, ?_⟩
+    all_goals try rd_simp [hw]
+    all_goals try (simp only [Nat.reducePow, Nat.reduceMul]; omega)
+    all_goals try (simp [Num.decodeLE]; done)
+    all_goals try reg_frame
+
+/-- 42486 … 42530, the chunk before its bin's head and last: the bin's head becomes 0. -/
+theorem pv_unlink_head0 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (Pa slot : Nat) (h11 : ω[11] = UInt64.ofNat Pa) (h6 : ω[6] = UInt64.ofNat slot)
+    (hn : rdN μ (Pa + 8) 4 = 0) (hPa : Pa + 16 < 4294967296) (hsl : slot + 4 ≤ 206864)
+    (hw : ∀ a, μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 42486 ω μ x 42530 ω' μ' x 4 ∧ rdN μ' slot 4 = 0 ∧
+      (∀ a, a < 4294967296 → (a < slot ∨ slot + 4 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.writable a = true) ∧ ∀ j : Fin 13, j.val ∉ [9] → ω'[j] = ω[j] := by
+  have hr : ∀ a, μ.readable a = true := fun a => Memory.readable_of_writable (hw a)
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?run, ?post⟩
+  case run => pvm_go [h11, h6, hn, hw, hr, ↓rdN_fold]
+  case post =>
+    refine ⟨?_, fun a ha h1 => ?_, fun a => ?_, ?_⟩
+    all_goals try rd_simp [hw]
+    all_goals try (simp only [Nat.reducePow, Nat.reduceMul]; omega)
+    all_goals try (simp [Num.decodeLE]; done)
+    all_goals try reg_frame
+
+/-- 42512 … 42583, the chunk before inside its bin's list, between `prv` and `nxt` (0 if last). -/
+theorem pv_unlink_mid {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (Pa prv nxt : Nat) (h11 : ω[11] = UInt64.ofNat Pa)
+    (hn : rdN μ (Pa + 8) 4 = nxt) (hp : rdN μ (Pa + 12) 4 = prv) (hPa : Pa + 16 < 4294967296)
+    (hn1 : nxt + 16 < 4294967296) (hp1 : prv + 16 < 4294967296)
+    (hna : nxt ≠ 0 → (nxt + 16 ≤ prv ∨ prv + 16 ≤ nxt)) (hw : ∀ a, μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 42512 ω μ x 42583 ω' μ' x 7 ∧
+      rdN μ' (prv + 8) 4 = nxt ∧ (nxt ≠ 0 → rdN μ' (nxt + 12) 4 = prv) ∧
+      (∀ a, a < 4294967296 → (a < prv + 8 ∨ prv + 12 ≤ a) → (nxt = 0 ∨ a < nxt + 12 ∨ nxt + 16 ≤ a) →
+        μ'.read a = μ.read a) ∧
+      (∀ a, μ'.writable a = true) ∧ ∀ j : Fin 13, j.val ∉ [9, 11] → ω'[j] = ω[j] := by
+  have hr : ∀ a, μ.readable a = true := fun a => Memory.readable_of_writable (hw a)
+  rw [show ω = regsNF ω [] from rfl]
+  by_cases hn0 : nxt = 0
+  · subst hn0
+    refine ⟨?ω', ?μ', ?run, ?post⟩
+    case run => pvm_go [h11, hn, hp, hw, hr, ↓rdN_fold]
+    case post =>
+      refine ⟨?_, fun h => absurd rfl h, fun a ha h1 h2 => ?_, fun a => ?_, ?_⟩
+      all_goals try rd_simp [hw]
+      all_goals try (simp only [Nat.reducePow, Nat.reduceMul]; omega)
+      all_goals try (simp [Num.decodeLE]; done)
+      all_goals try reg_frame
+  · have hd := hna hn0
+    refine ⟨?ω'', ?μ'', ?run', ?post'⟩
+    case run' => pvm_go [h11, hn, hp, hn0, hw, hr, ↓rdN_fold]
+    case post' =>
+      refine ⟨?_, fun _ => ?_, fun a ha h1 h2 => ?_, fun a => ?_, ?_⟩
+      all_goals try rd_simp [hw]
+      all_goals try (simp only [Nat.reducePow, Nat.reduceMul]; omega)
+      all_goals try (simp [Num.decodeLE]; done)
+      all_goals try reg_frame
+
+/-- 42583 … 42597: ω₅ = the base, ω₂ = psz + size, ω₈ = the merged chunk Xa − 16·pw. -/
+theorem pv_join {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (base psz size pw Xa : Nat) (h4 : ω[4] = UInt64.ofNat 204984) (h10 : ω[10] = UInt64.ofNat psz)
+    (h2 : ω[2] = UInt64.ofNat size) (h0 : ω[0] = UInt64.ofNat pw) (h8 : ω[8] = UInt64.ofNat Xa)
+    (hb : rdN μ 206520 8 = base) (hss : psz + size < 2147483648) (hpw : 16 * pw ≤ Xa)
+    (hX : Xa < 4294967296) (hr : ∀ a, μ.readable a = true) :
+    ∃ ω', FreeStepsH p R 42583 ω μ x 42597 ω' μ x 5 ∧ ω'[5] = UInt64.ofNat base ∧
+      ω'[2] = UInt64.ofNat (psz + size) ∧ ω'[8] = UInt64.ofNat (Xa - 16 * pw) ∧
+      ∀ j : Fin 13, j.val ∉ [0, 2, 5, 8] → ω'[j] = ω[j] := by
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?run, ?post⟩
+  case run => pvm_go [h4, h10, h2, h0, h8, hb, hr, ↓rdN_fold]
+  case post => refine ⟨by reg_val, by reg_val, by reg_val, by reg_frame⟩
+
 end Services.Bootstrap.Alloc

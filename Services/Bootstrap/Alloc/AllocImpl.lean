@@ -461,4 +461,60 @@ theorem alloc_end1 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Reg
         · exact Or.inl h0
         · have := hOA h0; unfold Al at this; right; right; omega) (by omega) (by omega)).trans (tr2 a h h')⟩
 
+/-- A 64-bit word's low half. -/
+theorem rdN_lo (μ : Memory) (a : Nat) : rdN μ a 4 = rdN μ a 8 % 4294967296 := by
+  simp only [rdN, Memory.readN, List.range, List.range.loop, List.map, Num.decodeLE, Nat.add_zero]
+  have := (μ.read a).toNat_lt; have := (μ.read (a + 1)).toNat_lt; have := (μ.read (a + 2)).toNat_lt
+  have := (μ.read (a + 3)).toNat_lt
+  omega
+
+/-- **42054 … 41423**, not zeroing: the final chunk F = N + 32·rhs records `pv` if below the heap's
+    end — the memory holding the model's last step — and the data address D returned in ω₇. -/
+theorem alloc_end2 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (t : State) (H F : Nat → Prop) (sp N rhs pv D : Nat) (hrep : RepAt μ t H F)
+    (hHF : ∀ a, H a ∨ F a → Al t.base a) (hb0 : 206864 ≤ t.base) (hbT : t.base + 1073741824 < 2147483648)
+    (hFin : N + 32 * rhs < t.base + 1073741824 → H (N + 32 * rhs))
+    (hNe : N + 32 * rhs ≤ t.base + 1073741824) (hNa : 206864 ≤ N)
+    (h1 : ω[1] = UInt64.ofNat sp) (h12 : ω[12] = UInt64.ofNat rhs) (h8 : ω[8] = UInt64.ofNat N)
+    (h3 : ω[3] = UInt64.ofNat pv) (h2 : ω[2] = UInt64.ofNat D)
+    (h120 : rdN μ (sp + 120) 8 = 204984) (h112 : rdN μ (sp + 112) 8 = 0)
+    (hpv : pv < 4294967296) (hD : D < 4294967296)
+    (hsp0 : 2147483648 ≤ sp) (hsp : sp + 152 < 4294967296) (hw : ∀ a, μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 42054 ω μ x 41423 ω' μ' x 30 ∧
+      RepAt μ' (if N + 32 * rhs < t.base + 1073741824 then
+        setHdr t (N + 32 * rhs) (fun h => { h with prev := pv }) else t) H F ∧
+      ω'[7] = UInt64.ofNat D ∧ ω'[0] = UInt64.ofNat (rdN μ (sp + 144) 8) ∧
+      ω'[5] = UInt64.ofNat (rdN μ (sp + 136) 8) ∧ ω'[6] = UInt64.ofNat (rdN μ (sp + 128) 8) ∧
+      ω'[1] = UInt64.ofNat (sp + 152) ∧ (∀ a, μ'.writable a = true) ∧
+      (∀ a, a < 4294967296 → 2147483648 ≤ a → μ'.read a = μ.read a) ∧
+      ∀ j : Fin 13, j.val ∉ [0, 1, 5, 6, 7, 8, 9, 10, 11] → ω'[j] = ω[j] := by
+  have hb4 : rdN μ 206520 4 = t.base := by
+    rw [rdN_lo]; have := hrep.base; unfold A0 at this; rw [this]; omega
+  have hr : ∀ a, μ.readable a = true := fun a => Memory.readable_of_writable (hw a)
+  by_cases hin : N + 32 * rhs < t.base + 1073741824
+  · rw [if_pos hin]
+    have hHF' := hFin hin
+    have hAF := hHF _ (Or.inl hHF')
+    unfold Al at hAF
+    obtain ⟨ω1, μ1, r1, w1, e11, fr1, ww1, g1⟩ := an_tail_in (p := p) (P := P) (R := R) x ω μ sp N rhs pv t.base D
+      h1 h12 h8 h3 h2 h120 h112 hb4 hbT hin hpv hD hsp0 hsp hw
+    have rep1 : RepAt μ1 (setHdr t (N + 32 * rhs) (fun h => { h with prev := pv })) H F :=
+      setPrev_rep hrep hHF' w1 fr1 (by omega) (fun b hb => by
+        have := hHF b hb; unfold Al at this; omega)
+    have tr : ∀ a, sp + 128 ≤ a → a + 8 ≤ sp + 152 → rdN μ1 a 8 = rdN μ a 8 := fun a h h' =>
+      rdN_frame fun j hj => fr1 _ (by omega) (by omega)
+    obtain ⟨ω2, r2, d7, d0, d5, d6, d1, g2⟩ := an_ret (p := p) (P := P) (R := R) x ω1 μ1 sp
+      (by rw [fget g1 1 (by decide) (by decide)]; exact h1) hsp (fun a => Memory.readable_of_writable (ww1 a))
+    refine ⟨ω2, μ1, (r1.trans r2).mono (by omega), rep1, by rw [d7, e11], by rw [d0, tr _ (by omega) (by omega)],
+      by rw [d5, tr _ (by omega) (by omega)], by rw [d6, tr _ (by omega) (by omega)], d1, ww1,
+      fun a h h' => fr1 a h (by omega),
+      frame_trans g2 g1 (fun j hj => by simp at hj ⊢; omega) (fun j hj => by simp at hj ⊢; omega)⟩
+  · rw [if_neg hin]
+    obtain ⟨ω1, r1, e11, g1⟩ := an_tail_end (p := p) (P := P) (R := R) x ω μ sp N rhs t.base D
+      h1 h12 h8 h2 h120 h112 hb4 hbT (by omega) (by omega) hD hsp hr
+    obtain ⟨ω2, r2, d7, d0, d5, d6, d1, g2⟩ := an_ret (p := p) (P := P) (R := R) x ω1 μ sp
+      (by rw [fget g1 1 (by decide) (by decide)]; exact h1) hsp hr
+    exact ⟨ω2, μ, (r1.trans r2).mono (by omega), hrep, by rw [d7, e11], d0, d5, d6, d1, hw, fun _ _ _ => rfl,
+      frame_trans g2 g1 (fun j hj => by simp at hj ⊢; omega) (fun j hj => by simp at hj ⊢; omega)⟩
+
 end Services.Bootstrap.Alloc

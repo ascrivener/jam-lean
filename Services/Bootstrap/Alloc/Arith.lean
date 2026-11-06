@@ -80,4 +80,10 @@ theorem bitwise_or_lor (a b : Nat) (ha : a < 2 ^ 64) (hb : b < 2 ^ 64) :
 theorem bitwise_and_m127 (a : Nat) : Exec.bitwise (· && ·) a 127 = a % 128 := by
   rw [PVM.bitwise_and_low _ 127 7 (by decide) (by decide)]
 
+
+/-- A 32-bit load of a value below 2³¹ sign-extends to itself. -/
+theorem sxw4_small {v : Nat} (hv : v < 2147483648) : sxw 4 v = v := by
+  simp only [sxw, Exec.u64, Num.unsigned, Num.signed, Nat.reduceMul, Nat.reducePow, Nat.reduceSub]
+  split <;> omega
+
 end Services.Bootstrap.Alloc

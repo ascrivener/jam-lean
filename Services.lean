@@ -60,6 +60,7 @@ import Services.Bootstrap.Alloc.Rep
 import Services.Bootstrap.Alloc.Arith
 import Services.Bootstrap.Alloc.Register
 import Services.Bootstrap.Alloc.RegisterRep
+import Services.Bootstrap.Alloc.FreeNext
 import Services.Witness.Prefix
 import Services.Witness.EmptyTail
 import Services.Witness.Front1

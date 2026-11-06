@@ -2704,6 +2704,12 @@ def main (args0 : List String) : IO Unit := do
     | [c, i, s, k] => (c, i, s, List.replicate k 255)
     | [c, i, s, k, b0, f] => (c, i, s, (b0.toUInt8 :: List.replicate (k - 1) f.toUInt8).take k)
     | _ => if empty then svc.emptyBase else svc.base
+  -- `WITNESS_PAYLOAD=<hex>` replaces the payload (exploration only)
+  let y : List UInt8 := match (← IO.getEnv "WITNESS_PAYLOAD") with
+    | some hx => ((List.range (hx.length / 2)).map fun k =>
+        ((String.Pos.Raw.extract hx ⟨2 * k⟩ ⟨2 * k + 2⟩).foldl (fun n ch =>
+          16 * n + (if ch.isDigit then ch.toNat - 48 else ch.toNat - 87)) 0).toUInt8)
+    | none => y
   let pkg := mkPkg h sid (i + 1) (mkItem h sid y)
   let a : ByteArray := ⟨(Codec.nat c ++ Codec.nat i ++ Codec.nat sid ++ Codec.var ⟨y.toArray⟩ ++ (Blake2b.hash256 ⟨pkg.encode.toArray⟩).toList).toArray⟩
   let some (_, ω, μ) := standardInit code a | return

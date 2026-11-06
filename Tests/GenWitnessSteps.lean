@@ -135,7 +135,7 @@ def bootstrapSvc : Svc where
   emptyClass := [(5, 0, 9, []), (200, 0, 70000, [])]
   postClass := [(5, 0, 9, 0 :: List.replicate 32 7), (200, 1, 70000, 0 :: List.replicate 32 255),
     (20000, 300, 3, 0 :: List.replicate 32 1)]
-  fnRanges := [(68729, 69139), (31894, 32166), (58434, 58509), (32166, 32412)]
+  fnRanges := [(68729, 69139), (31894, 32166), (58434, 58509), (32166, 32412), (40494, 40852), (41177, 44241)]
   pathExtra := [(3, 0, 0x01234567, []), (3, 0, 0x89abcdef, [])]
   codeExtra := [(3, 0, 7, [2, 15, 15] ++ List.replicate 32 0)]
   memcpySummary := true
@@ -2056,6 +2056,16 @@ theorem prefix_from_Y (b a : ByteArray) (jb : JamBlob) (hjb : JamBlob.parse? b =
 end Services.{NS}.Prefix"
 
 set_option linter.unusedVariables false in
+def mode_dis (cx : Cx) : IO Unit := do
+    -- `dis LO HI`: the instructions at LO … HI − 1, decoded in order, with block starts marked
+    let hi := (cx.args.getD 2 "0").toNat!
+    let mut pc := cx.n
+    while pc < hi do
+      match cx.P.decode pc with
+      | some ins => IO.println s!"{if cx.P.isBlockStart pc then "*" else " "} {pc} {leanInstr ins}"
+      | none => IO.println s!"  {pc} ?"
+      pc := cx.P.next pc
+
 def mode_steps (cx : Cx) : IO Unit := do
     -- `steps N M`: steps N … M − 1 of the base run: pc, instruction, the registers it changes
     let m := (cx.args.getD 2 "0").toNat!
@@ -2875,6 +2885,7 @@ def main (args0 : List String) : IO Unit := do
   | "memcpy" => mode_memcpy cx
   | "post" => mode_post cx
   | "steps" => mode_steps cx
+  | "dis" => mode_dis cx
   | "reads" => mode_reads cx
   | "seg" => mode_seg cx
   | "cut" => mode_cutAuto cx

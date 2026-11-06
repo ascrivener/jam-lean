@@ -123,7 +123,7 @@ theorem al_bin_big {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Reg
     (hs1 : req + al ≤ 33554432) :
     ∃ ω', FreeStepsH p R 41221 ω μ x 41297 ω' μ x 30 ∧
       ω'[0] = UInt64.ofNat (binDown (req + al)) ∧ ω'[2] = UInt64.ofNat (binUp (req + al)) ∧
-      ω'[4] = UInt64.ofNat (req + 1) ∧
+      ω'[4] = UInt64.ofNat (req + 1) ∧ ω'[12] = UInt64.ofNat (req + al) ∧
       ∀ j : Fin 13, j.val ∉ [0, 2, 3, 4, 5, 6, 11, 12] → ω'[j] = ω[j] := by
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?ω', ?run, ?post⟩
@@ -162,7 +162,7 @@ theorem al_bin_big {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Reg
     have hlt : (req + al) % 2 ^ (Nat.log2 (req + al) - 7) < 2 ^ 18 :=
       Nat.lt_of_lt_of_le (Nat.mod_lt _ (by omega)) (by omega)
     generalize (req + al) / 2 ^ (Nat.log2 (req + al) - 7) = v at *
-    refine ⟨?_, ?_, by reg_val, by reg_frame⟩
+    refine ⟨?_, ?_, by reg_val, by reg_val, by reg_frame⟩
     · simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, ↓reduceIte, PVM.getD_some']
       refine congrArg UInt64.ofNat ?_
       simp only [show v % 4294967296 = v by omega, show v / 2147483648 = 0 by omega, Nat.zero_mul, Nat.add_zero,

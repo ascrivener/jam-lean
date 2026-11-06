@@ -70,6 +70,7 @@ theorem find_up {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) 
     (hr : ∀ a, μ.readable a = true) :
     (∀ bin, findFirst s bu = some bin → ∃ ω' q b, FreeStepsH p R 41297 ω μ x 41378 ω' μ x 30 ∧
       q * 64 + b = bin ∧ q < 38 ∧ b < 64 ∧ ω'[6] = UInt64.ofNat q ∧ ω'[2] = UInt64.ofNat b ∧
+      ω'[3] = UInt64.ofNat 204984 ∧ ω'[5] = UInt64.ofNat s.primary ∧
       ∀ j : Fin 13, j.val ∉ [2, 3, 5, 6, 10, 11] → ω'[j] = ω[j]) ∧
     (findFirst s bu = none → ∃ ω', FreeStepsH p R 41297 ω μ x 41614 ω' μ x 30 ∧
       ω'[5] = UInt64.ofNat s.primary ∧ ω'[3] = UInt64.ofNat 204984 ∧
@@ -86,7 +87,8 @@ theorem find_up {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) 
       (by rw [fget g1 2 (by decide) (by decide)]; exact h2) a3 a11 hb hw hA2 hr
     have hff := ff_A hA1 l2
     refine ⟨fun bin hbin => ⟨ω2, bu / 64, ω2[2].toNat, (r1.trans r2).mono (by omega), ?_, hq0,
-      (lowestAfter_spec l2).1, a6, UInt64.ofNat_toNat.symm, ?_⟩, fun hn => ?_⟩
+      (lowestAfter_spec l2).1, a6, UInt64.ofNat_toNat.symm, by rw [fget g2 3 (by decide) (by decide)]; exact a3,
+      by rw [fget g2 5 (by decide) (by decide)]; exact a5, ?_⟩, fun hn => ?_⟩
     · rw [hff] at hbin; exact Option.some.inj hbin
     · exact frame_trans g2 g1 (fun j hj => by simp at hj ⊢; omega) (fun j hj => by simp at hj ⊢; omega)
     · rw [hff] at hn; exact absurd hn (by simp)
@@ -120,7 +122,8 @@ theorem find_up {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) 
         simpa using this
       have hff := ff_B h1none lq hl0
       refine ⟨fun bin hbin => ⟨ω3, q, Num.trailingZeros 64 (s.secondary q), (r12.trans r3).mono (by omega), ?_, hq,
-        (lowestAfter_spec hl0).1, a6, by rw [a2, hsq], ?_⟩, fun hn => ?_⟩
+        (lowestAfter_spec hl0).1, a6, by rw [a2, hsq], by rw [fget g3 3 (by decide) (by decide)]; exact a3,
+        by rw [fget g3 5 (by decide) (by decide)]; exact a5, ?_⟩, fun hn => ?_⟩
       · rw [hff] at hbin; exact Option.some.inj hbin
       · exact frame_trans g3 g12 (fun j hj => by simp at hj ⊢; omega) (fun j hj => by simp at hj ⊢; omega)
       · rw [hff] at hn; exact absurd hn (by simp)

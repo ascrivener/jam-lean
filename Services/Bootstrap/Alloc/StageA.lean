@@ -159,4 +159,21 @@ theorem free_prev {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
           (by intro j h; simp only [List.mem_cons, List.not_mem_nil, or_false] at h ⊢; omega)
           (by intro j h; simp only [List.mem_cons, List.not_mem_nil, or_false] at h ⊢; omega)⟩
 
+
+/-- `RepAt` depends only on the octets below 2³¹ (for headers inside a heap below 2³¹). -/
+theorem RepAt.congr_low {μ μ' : Memory} {t : State} {H F : Nat → Prop} (h : RepAt μ t H F)
+    (wf : ∀ b, b < 2147483648 → μ'.read b = μ.read b)
+    (hHa : ∀ b, H b ∨ F b → b + 16 < 2147483648) : RepAt μ' t H F := by
+  refine ⟨fun b hb => ?_, fun q hq => ?_, ?_, ?_, ?_, fun b hb => ?_, fun b hb => ?_, fun b hb => ?_,
+    fun b hb => ?_⟩
+  · rw [← h.heads b hb]; unfold A0; unfold binCount at hb; exact rdN_frame fun j hj => wf _ (by omega)
+  · rw [← h.sec q hq]; unfold A0; exact rdN_frame fun j hj => wf _ (by omega)
+  · rw [← h.pri]; unfold A0; exact rdN_frame fun j hj => wf _ (by omega)
+  · rw [← h.base]; unfold A0; exact rdN_frame fun j hj => wf _ (by omega)
+  · rw [← h.alloc]; unfold A0; exact rdN_frame fun j hj => wf _ (by omega)
+  · have := hHa b (Or.inl hb); rw [← h.prev b hb]; exact rdN_frame fun j hj => wf _ (by omega)
+  · have := hHa b (Or.inl hb); rw [← h.size b hb]; exact rdN_frame fun j hj => wf _ (by omega)
+  · have := hHa b (Or.inr hb); rw [← h.next b hb]; exact rdN_frame fun j hj => wf _ (by omega)
+  · have := hHa b (Or.inr hb); rw [← h.prevL b hb]; exact rdN_frame fun j hj => wf _ (by omega)
+
 end Services.Bootstrap.Alloc

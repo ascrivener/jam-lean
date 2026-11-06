@@ -102,7 +102,8 @@ theorem al_offs3 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs)
       ω'[5] = UInt64.ofNat (c + 1 + req + (if sz - req - 1 = 0 then 0 else 1)) ∧
       μ'.readN (sp + 72) 8 = Num.encodeLE 8 (c + 1) ∧ μ'.readN (sp + 104) 8 = Num.encodeLE 8 (sz - req - 1) ∧
       μ'.readN (sp + 80) 8 = Num.encodeLE 8 A ∧ μ'.readN (sp + 56) 8 = Num.encodeLE 8 C ∧
-      (∀ a, a < 4294967296 → (a < sp + 56 ∨ sp + 112 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, a < 4294967296 → (a < sp + 56 ∨ sp + 64 ≤ a) → (a < sp + 72 ∨ sp + 88 ≤ a) →
+        (a < sp + 104 ∨ sp + 112 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.writable a = true) ∧
       ∀ j : Fin 13, j.val ∉ [0, 3, 5, 6, 8, 11] → ω'[j] = ω[j] := by
   have hr : ∀ a, μ.readable a = true := fun a => Memory.readable_of_writable (hwr a)
@@ -117,7 +118,7 @@ theorem al_offs3 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs)
   refine ⟨?ω', ?μ', ?run, ?post⟩
   case run => pvm_go [h1, h6, h8, h12, h9, h11, h2, h10, e1, e2, e3, Nat.zero_add, e4, e5, e6, hwr, hr, rdN_writeN_disjoint, ↓rdN_fold, ↓loadI_fold]
   case post =>
-    refine ⟨by reg_val, by reg_val, by reg_val, ?_, by reg_val, ?_, ?_, ?_, ?_, ?_, fun a ha1 ha2 => ?_, fun a => ?_,
+    refine ⟨by reg_val, by reg_val, by reg_val, ?_, by reg_val, ?_, ?_, ?_, ?_, ?_, fun a ha1 ha2 ha3 ha4 => ?_, fun a => ?_,
       by reg_frame⟩
     · reg_val; rw [Nat.sub_sub]
     · simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, ↓reduceIte, PVM.getD_some', Nat.reduceEqDiff]

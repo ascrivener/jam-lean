@@ -49,7 +49,7 @@ theorem ar_write {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs)
         (old = 0 ∨ a < old + 12 ∨ old + 16 ≤ a) →
         (a < bin / 64 * 8 + 204984 + 1544 ∨ bin / 64 * 8 + 204984 + 1552 ≤ a) → (a < 206832 ∨ 206840 ≤ a) →
         μ'.read a = μ.read a) ∧
-      (∀ a, μ'.writable a = true) ∧ ω'[3] = UInt64.ofNat rhs ∧ ω'[10] = ω[10] ∧
+      (∀ a, μ'.writable a = true) ∧ ω'[3] = UInt64.ofNat rhs ∧ ω'[10] = ω[10] ∧ ω'[12] = UInt64.ofNat rhs ∧
       ∀ j : Fin 13, j.val ∉ [0, 3, 5, 6, 7, 9, 10, 11, 12] → ω'[j] = ω[j] := by
   have hbin : (bin + 1 + 18446744073709551615) % 4294967296 = bin := by omega
   have hr : ∀ a, μ.readable a = true := fun a => Memory.readable_of_writable (hw a)
@@ -60,7 +60,7 @@ theorem ar_write {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs)
     case run => pvm_go [h1, h6, h8, h3, h12, h7, h88, h120, h104, hbin, hold, hw, hr, rdN_writeN_disjoint,
       ↓rdN_fold, ↓loadI_fold]
     case post =>
-      refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha h1 h2 h3 h4 h5 => ?_, fun a => ?_, by reg_val, by reg_val; rfl,
+      refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha h1 h2 h3 h4 h5 => ?_, fun a => ?_, by reg_val, by reg_val; rfl, by reg_val,
         by reg_frame⟩
       · rd_simp [bitwise_and_m63, rdN_mod64, hw]; (simp only [Nat.reducePow, Nat.reduceMul]; omega)
       · rd_simp [bitwise_and_m63, rdN_mod64, hw]; (simp only [Nat.reducePow, Nat.reduceMul]; omega)
@@ -78,7 +78,7 @@ theorem ar_write {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs)
       ↓rdN_fold, ↓loadI_fold]
     case post' =>
       refine ⟨?_, ?_, ?_, ?_, ?_, fun _ => ?_, ?_, ?_, fun a ha h1 h2 h3 h4 h5 => ?_, fun a => ?_, by reg_val,
-        by reg_val; rfl, by reg_frame⟩
+        by reg_val; rfl, by reg_val, by reg_frame⟩
       · rd_simp [bitwise_and_m63, rdN_mod64, hw]; (simp only [Nat.reducePow, Nat.reduceMul]; omega)
       · rd_simp [bitwise_and_m63, rdN_mod64, hw]; (simp only [Nat.reducePow, Nat.reduceMul]; omega)
       · rd_simp [bitwise_and_m63, rdN_mod64, hw]; (simp only [Nat.reducePow, Nat.reduceMul]; omega)

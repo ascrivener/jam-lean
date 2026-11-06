@@ -121,4 +121,76 @@ theorem alloc_entry {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Re
     by rw [fget g5 7 (by decide) (by decide)]; exact k7,
     st0, st5, st6, st10, st32, sf1, ww1⟩
 
+/-- **41589 … 41726**: the chosen chunk C, its bin's head, leaves the bin — the memory holds
+    `unregister s C bin`; C's `prev` saved at sp + 48, ω₈ = 32·c. -/
+theorem al_unreg {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (s : State) (H F : Nat → Prop) (sp C c bin q b : Nat) (hrep : RepAt μ s H F)
+    (hcb : s.heads bin = C) (hqb : q * 64 + b = bin) (hq : q < 38) (hb : b < 64)
+    (hFC : F C) (hHC : H C) (hHF : ∀ a, H a ∨ F a → Al s.base a)
+    (hnx : (s.hdr C).next ≠ 0 → F (s.hdr C).next) (hb0 : 206864 ≤ s.base)
+    (hbT : s.base + 1073741824 < 2147483648) (hpv : (s.hdr C).prev < 2147483648) (hc : c < 33554432)
+    (h1 : ω[1] = UInt64.ofNat sp) (h10 : ω[10] = UInt64.ofNat C) (h3 : ω[3] = UInt64.ofNat c)
+    (h64 : rdN μ (sp + 64) 8 = 196792 + 4 * bin) (h40 : rdN μ (sp + 40) 8 = q) (h32 : rdN μ (sp + 32) 8 = b)
+    (h88 : rdN μ (sp + 88) 8 = 204984) (h120 : rdN μ (sp + 120) 8 = 204984)
+    (hsp0 : 2147483648 ≤ sp) (hsp : sp + 152 < 4294967296) (hw : ∀ a, μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 41589 ω μ x 41726 ω' μ' x 30 ∧ RepAt μ' (unregister s C bin) H F ∧
+      rdN μ' (sp + 48) 8 = (s.hdr C).prev ∧ ω'[8] = UInt64.ofNat (32 * c) ∧
+      (∀ a, μ'.writable a = true) ∧
+      (∀ a, a < 4294967296 → 2147483648 ≤ a → (a < sp + 48 ∨ sp + 56 ≤ a) → μ'.read a = μ.read a) ∧
+      ∀ j : Fin 13, j.val ∉ [2, 5, 6, 8, 10, 11, 12] → ω'[j] = ω[j] := by
+  have hAC := hHF C (Or.inr hFC)
+  unfold Al at hAC
+  have hn : rdN μ (C + 8) 4 = (s.hdr C).next := hrep.next C hFC
+  have hpC : rdN μ C 4 = (s.hdr C).prev := hrep.prev C hHC
+  have hbB : bin < 2432 := by omega
+  by_cases h0' : (s.hdr C).next = 0
+  · obtain ⟨ω1, μ1, r1, s1, p48, e8, fr1, ww1, g1⟩ := au_last (p := p) (P := P) (R := R) x ω μ sp C c
+      (196792 + 4 * bin) (s.hdr C).prev h1 h10 h3 h64 (by rw [hn, h0']) hpC hpv (by omega) (by omega) hc
+      hsp0 hsp hw
+    have hsec := hrep.sec q hq
+    have hpri := hrep.pri
+    unfold A0 at hsec hpri
+    have tr : ∀ a n, 206520 ≤ a → a + n ≤ 2147483648 → rdN μ1 a n = rdN μ a n := fun a n h h' =>
+      rdN_frame fun j hj => fr1 _ (by omega) (Or.inr (by omega)) (Or.inl (by omega))
+    have trs : ∀ a, sp + 32 ≤ a → a + 8 ≤ sp + 48 → rdN μ1 a 8 = rdN μ a 8 := fun a h h' =>
+      rdN_frame fun j hj => fr1 _ (by omega) (Or.inr (by omega)) (Or.inl (by omega))
+    have trs' : ∀ a, sp + 56 ≤ a → a + 8 ≤ sp + 152 → rdN μ1 a 8 = rdN μ a 8 := fun a h h' =>
+      rdN_frame fun j hj => fr1 _ (by omega) (Or.inr (by omega)) (Or.inr (by omega))
+    obtain ⟨ω2, μ2, r2, c1, c2, cf, cw, cg⟩ := au_clear (p := p) (P := P) (R := R) x ω1 μ1 sp q b
+      (s.secondary q) s.primary (by rw [fget g1 1 (by decide) (by decide)]; exact h1)
+      (by rw [trs _ (by omega) (by omega)]; exact h40) (by rw [trs _ (by omega) (by omega)]; exact h32)
+      (by rw [trs' _ (by omega) (by omega)]; exact h88) (by rw [trs' _ (by omega) (by omega)]; exact h120) hq hb
+      (by rw [tr _ _ (by omega) (by omega), ← hsec, show 196792 + 9736 + 8 * q = q * 8 + 204984 + 1544 by omega])
+      (by rw [tr _ _ (by omega) (by omega), ← hpri]) hsp0 hsp ww1
+    refine ⟨ω2, μ2, (r1.trans r2).mono (by omega), ?_, ?_, by rw [fget cg 8 (by decide) (by decide)]; exact e8, cw,
+      fun a h1 h2 h3 => ?_, ?_⟩
+    · have hbq : bin / 64 = q := by omega
+      have hbr : bin % 64 = b := by omega
+      refine unregister_rep_last hrep hcb (by unfold binCount; omega) h0' ?_ ?_ ?_ ?_ (fun a ha => ?_)
+      · rw [show 196792 + bin * 4 = 196792 + 4 * bin by omega, ← s1]
+        exact rdN_frame fun j hj => cf _ (by omega) (by omega) (by omega)
+      · rw [hbq, hbr, show 204984 + q * 8 + 1544 = q * 8 + 204984 + 1544 by omega, c1, ← hsec,
+          show 196792 + 9736 + 8 * q = q * 8 + 204984 + 1544 by omega]
+      · rw [hbq, hbr, show 204984 + q * 8 + 1544 = q * 8 + 204984 + 1544 by omega, c2, ← hsec, ← hpri,
+          show 196792 + 9736 + 8 * q = q * 8 + 204984 + 1544 by omega, show 196792 + 10040 = 206832 from rfl]
+      · intro a h1 h2 h3 h4
+        rw [hbq] at h3
+        rw [cf a (by omega) (by omega) h4, fr1 a (by omega) (by omega) (Or.inl (by omega))]
+      · have := hHF a ha; unfold Al at this; omega
+    · rw [← p48]; exact rdN_frame fun j hj => cf _ (by omega) (by omega) (by omega)
+    · rw [cf a h1 (by omega) (by omega), fr1 a h1 (by omega) h3]
+    · exact frame_trans cg g1 (fun j hj => by simp at hj ⊢; omega) (fun j hj => by simp at hj ⊢; omega)
+  · have hFx := hnx h0'
+    have hAx := hHF _ (Or.inr hFx)
+    unfold Al at hAx
+    obtain ⟨ω1, μ1, r1, s1, s2, p48, e8, fr1, ww1, g1⟩ := au_head (p := p) (P := P) (R := R) x ω μ sp C c
+      (196792 + 4 * bin) (s.hdr C).next (s.hdr C).prev h1 h10 h3 h64 hn hpC hpv h0' (by omega) (by omega)
+      (by omega) (by omega) hc hsp0 hsp hw
+    refine ⟨ω1, μ1, r1.mono (by omega), ?_, p48, e8, ww1, fun a h1 h2 h3 => fr1 a h1 (by omega) (by omega) h3,
+      fun j hj => g1 j (by simp at hj ⊢; omega)⟩
+    refine unregister_rep_head hrep hcb (by unfold binCount; omega) h0'
+      (by rw [show 196792 + bin * 4 = 196792 + 4 * bin by omega]; exact s1) s2
+      (fun a h1 h2 h3 => fr1 a (by omega) (by omega) h3 (Or.inl (by omega))) (by omega) (fun a ha => ?_)
+    have := hHF a ha; unfold Al at this; omega
+
 end Services.Bootstrap.Alloc

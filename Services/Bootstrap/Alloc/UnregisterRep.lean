@@ -16,11 +16,11 @@ theorem unregister_rep_mid {μ μ' : Memory} {s : State} {H F : Nat → Prop} {c
     (h : RepAt μ s H F) (hc : s.heads bin ≠ c)
     (w1 : rdN μ' ((s.hdr c).prevL + 8) 4 = (s.hdr c).next)
     (w2 : (s.hdr c).next ≠ 0 → rdN μ' ((s.hdr c).next + 12) 4 = (s.hdr c).prevL)
-    (wf : ∀ a, a < 4294967296 → (a < (s.hdr c).prevL + 8 ∨ (s.hdr c).prevL + 12 ≤ a) →
+    (wf : ∀ a, a < 2147483648 → (a < (s.hdr c).prevL + 8 ∨ (s.hdr c).prevL + 12 ≤ a) →
       ((s.hdr c).next = 0 ∨ a < (s.hdr c).next + 12 ∨ (s.hdr c).next + 16 ≤ a) → μ'.read a = μ.read a)
     (hp : 206864 ≤ (s.hdr c).prevL) (hn : (s.hdr c).next ≠ 0 → 206864 ≤ (s.hdr c).next)
     (hpn : (s.hdr c).next ≠ 0 → (s.hdr c).next ≠ (s.hdr c).prevL)
-    (hHa : ∀ a, H a ∨ F a → 206864 ≤ a ∧ a + 16 < 4294967296 ∧
+    (hHa : ∀ a, H a ∨ F a → 206864 ≤ a ∧ a + 16 < 2147483648 ∧
       (a = (s.hdr c).prevL ∨ a + 16 ≤ (s.hdr c).prevL ∨ (s.hdr c).prevL + 16 ≤ a) ∧
       ((s.hdr c).next = 0 ∨ a = (s.hdr c).next ∨ a + 16 ≤ (s.hdr c).next ∨ (s.hdr c).next + 16 ≤ a)) :
     RepAt μ' (unregister s c bin) H F := by
@@ -100,10 +100,10 @@ theorem unregister_rep_mid {μ μ' : Memory} {s : State} {H F : Nat → Prop} {c
 theorem unregister_rep_head {μ μ' : Memory} {s : State} {H F : Nat → Prop} {c bin : Nat}
     (h : RepAt μ s H F) (hc : s.heads bin = c) (hb : bin < binCount) (hn0 : (s.hdr c).next ≠ 0)
     (w1 : rdN μ' (196792 + bin * 4) 4 = (s.hdr c).next) (w2 : rdN μ' ((s.hdr c).next + 12) 4 = 0)
-    (wf : ∀ a, a < 4294967296 → (a < 196792 + bin * 4 ∨ 196792 + bin * 4 + 4 ≤ a) →
+    (wf : ∀ a, a < 2147483648 → (a < 196792 + bin * 4 ∨ 196792 + bin * 4 + 4 ≤ a) →
       (a < (s.hdr c).next + 12 ∨ (s.hdr c).next + 16 ≤ a) → μ'.read a = μ.read a)
     (hn : 206864 ≤ (s.hdr c).next)
-    (hHa : ∀ a, H a ∨ F a → 206864 ≤ a ∧ a + 16 < 4294967296 ∧
+    (hHa : ∀ a, H a ∨ F a → 206864 ≤ a ∧ a + 16 < 2147483648 ∧
       (a = (s.hdr c).next ∨ a + 16 ≤ (s.hdr c).next ∨ (s.hdr c).next + 16 ≤ a)) :
     RepAt μ' (unregister s c bin) H F := by
   generalize hN : (s.hdr c).next = nxt at *
@@ -169,10 +169,10 @@ theorem unregister_rep_last {μ μ' : Memory} {s : State} {H F : Nat → Prop} {
       rdN μ (204984 + bin / 64 * 8 + 1544) 8 &&& ((2 ^ 64 - 1) ^^^ 2 ^ (bin % 64)))
     (w3 : rdN μ' 206832 8 = (if rdN μ (204984 + bin / 64 * 8 + 1544) 8 &&& ((2 ^ 64 - 1) ^^^ 2 ^ (bin % 64)) = 0
       then rdN μ 206832 8 &&& ((2 ^ 64 - 1) ^^^ 2 ^ (bin / 64)) else rdN μ 206832 8))
-    (wf : ∀ a, a < 4294967296 → (a < 196792 + bin * 4 ∨ 196792 + bin * 4 + 4 ≤ a) →
+    (wf : ∀ a, a < 2147483648 → (a < 196792 + bin * 4 ∨ 196792 + bin * 4 + 4 ≤ a) →
       (a < 204984 + bin / 64 * 8 + 1544 ∨ 204984 + bin / 64 * 8 + 1552 ≤ a) →
       (a < 206832 ∨ 206840 ≤ a) → μ'.read a = μ.read a)
-    (hHa : ∀ a, H a ∨ F a → 206864 ≤ a ∧ a + 16 < 4294967296) :
+    (hHa : ∀ a, H a ∨ F a → 206864 ≤ a ∧ a + 16 < 2147483648) :
     RepAt μ' (unregister s c bin) H F := by
   have e : unregister s c bin = unsetBit { s with heads := upd s.heads bin 0 } bin := by
     unfold unregister unregisterFirst; rw [if_pos hc]; simp only [hn0, ↓reduceIte]

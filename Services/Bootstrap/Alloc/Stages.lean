@@ -309,7 +309,7 @@ theorem nx_unreg_head {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : 
       · rw [c1, ← hsec, show 196792 + 9736 + 8 * (bin / 64) = 204984 + bin / 64 * 8 + 1544 by omega]
       · rw [c2, ← hsec, ← hpri, show 196792 + 9736 + 8 * (bin / 64) = 204984 + bin / 64 * 8 + 1544 by omega,
           show 196792 + 10040 = 206832 from rfl]
-      · intro a h1 h2 h3 h4; rw [cf a h1 h3 h4, fr1 a h1 h2]
+      · intro a h1 h2 h3 h4; rw [cf a (by omega) h3 h4, fr1 a (by omega) h2]
       · have := hHF a ha; unfold Al at this; omega
     · rw [cf a h1 (by omega) (by omega), fr1 a h1 (by omega)]
     · rw [cg j (by simp only [List.mem_cons, List.not_mem_nil, or_false] at hj ⊢; omega),
@@ -324,7 +324,7 @@ theorem nx_unreg_head {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : 
     refine ⟨ω1, μ1, r1.mono (by omega), ?_, ww1, fun a h1 h2 => fr1 a h1 (by omega) (by omega), e2,
       fun j hj => g1 j (by simp only [List.mem_cons, List.not_mem_nil, or_false] at hj ⊢; omega)⟩
     refine unregister_rep_head hrep hc (by unfold binCount; omega) h0' s1 s2
-      (fun a h1 h2 h3 => fr1 a h1 (by omega) h3) (by omega) (fun a ha => ?_)
+      (fun a h1 h2 h3 => fr1 a (by omega) (by omega) h3) (by omega) (fun a ha => ?_)
     have := hHF a ha; unfold Al at this; omega
 
 /-- **42732 … 42814**: the next chunk nc, inside its bin's list, leaves it — the memory holds
@@ -364,7 +364,7 @@ theorem nx_unreg_mid {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
       rcases hnxA with h | ⟨_, h⟩
       · exact Or.inl h
       · unfold Al at h; omega), e2, g1⟩
-  refine unregister_rep_mid hrep hc s1 s2 fr1 (by omega)
+  refine unregister_rep_mid hrep hc s1 s2 (fun a h1 => fr1 a (by omega)) (by omega)
     (fun h0 => by rcases hnxA with h | ⟨_, h⟩; exact absurd h h0; unfold Al at h; omega)
     hpn (fun a ha => ?_)
   have := hHF a ha; unfold Al at this
@@ -595,7 +595,7 @@ theorem pv_unreg_head {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : 
           show 196792 + 9736 + 8 * (bin / 64) = bin / 64 * 8 + 204984 + 1544 by omega]
       · rw [c2, ← hsec, ← hpri, show 196792 + 9736 + 8 * (bin / 64) = bin / 64 * 8 + 204984 + 1544 by omega,
           show 196792 + 10040 = 206832 from rfl, show 204984 + bin / 64 * 8 + 1544 = bin / 64 * 8 + 204984 + 1544 by omega]
-      · intro a h1 h2 h3 h4; rw [cf a h1 (by omega) h4, fr1 a h1 h2]
+      · intro a h1 h2 h3 h4; rw [cf a (by omega) (by omega) h4, fr1 a (by omega) h2]
       · have := hHF a ha; unfold Al at this; omega
     · rw [cf a h1 (by omega) (by omega), fr1 a h1 (by omega)]
     · rw [cg j (by simp only [List.mem_cons, List.not_mem_nil, or_false] at hj ⊢; omega),
@@ -608,7 +608,7 @@ theorem pv_unreg_head {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : 
     refine ⟨ω1, μ1, r1.mono (by omega), ?_, ww1, fun a h1 h2 => fr1 a h1 (by omega) (by omega),
       fun j hj => g1 j (by simp only [List.mem_cons, List.not_mem_nil, or_false] at hj ⊢; omega)⟩
     refine unregister_rep_head hrep hc (by unfold binCount; omega) h0' s1 s2
-      (fun a h1 h2 h3 => fr1 a h1 (by omega) h3) (by omega) (fun a ha => ?_)
+      (fun a h1 h2 h3 => fr1 a (by omega) (by omega) h3) (by omega) (fun a ha => ?_)
     have := hHF a ha; unfold Al at this; omega
 
 /-- **42512 … 42583**: the chunk before (Pa), inside its bin's list, leaves it. -/
@@ -646,7 +646,7 @@ theorem pv_unreg_mid {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
       rcases hnxA with h | ⟨_, h⟩
       · exact Or.inl h
       · unfold Al at h; omega), g1⟩
-  refine unregister_rep_mid hrep hc s1 s2 fr1 (by omega)
+  refine unregister_rep_mid hrep hc s1 s2 (fun a h1 => fr1 a (by omega)) (by omega)
     (fun h0 => by rcases hnxA with h | ⟨_, h⟩; exact absurd h h0; unfold Al at h; omega)
     hpn (fun a ha => ?_)
   have := hHF a ha; unfold Al at this

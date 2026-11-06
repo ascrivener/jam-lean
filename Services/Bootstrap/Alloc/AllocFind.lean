@@ -271,4 +271,59 @@ theorem fb_next_none {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
   case run => pvm_go [h6, h5, shr_shl hp64, hm, he]
   case post => exact ⟨by reg_val, by reg_frame⟩
 
+theorem or_mul64 (a m : Nat) (hm : m < 64) : a * 64 ||| m = a * 64 + m := by
+  have := Nat.two_pow_add_eq_or_of_lt (i := 6) (b := m) hm a
+  rw [show (2 : Nat) ^ 6 = 64 by rfl, Nat.mul_comm 64 a] at this
+  exact this.symm
+
+/-- **41378**: the found bin's first chunk and its size against the minimum. -/
+theorem al_pick {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (q b C w minSize : Nat) (h6 : ω[6] = UInt64.ofNat q) (h2 : ω[2] = UInt64.ofNat b)
+    (h7 : ω[7] = UInt64.ofNat 196792) (h12 : ω[12] = UInt64.ofNat minSize)
+    (hq : q < 38) (hb : b < 64) (hC : rdN μ (196792 + 4 * (q * 64 + b)) 4 = C)
+    (hw : rdN μ (C + 4) 4 = w) (hC1 : C + 8 < 4294967296) (hm : minSize < 4294967296)
+    (hr : ∀ a, μ.readable a = true) :
+    ∃ ω', FreeStepsH p R 41378 ω μ x 41398 ω' μ x 7 ∧ ω'[10] = UInt64.ofNat C ∧ ω'[11] = UInt64.ofNat (w / 2) ∧
+      ω'[5] = UInt64.ofNat (196792 + 4 * (q * 64 + b)) ∧
+      ∀ j : Fin 13, j.val ∉ [5, 10, 11] → ω'[j] = ω[j] := by
+  have hor : Exec.bitwise (· || ·) (q * 64) b = q * 64 + b := by
+    rw [bitwise_or_lor _ _ (by omega) (by omega), or_mul64 _ _ hb]
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?run, ?post⟩
+  case run => pvm_go [h6, h2, h7, h12, hr, ↓rdN_fold, ↓loadI_fold]
+  case post =>
+    refine ⟨?_, ?_, ?_, by reg_frame⟩ <;>
+      simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, ↓reduceIte, PVM.getD_some', Nat.reduceEqDiff, hor,
+        show (q * 64 + b) * 4 = 4 * (q * 64 + b) by omega, hC, hw, Nat.mod_eq_of_lt (show C < 18446744073709551616 by omega),
+        Nat.mod_eq_of_lt (show w < 18446744073709551616 by rw [← hw]; exact Nat.lt_of_lt_of_le (rdN_lt μ _ 4) (by decide))]
+
+/-- 41398: the chunk is large enough, to 41425. -/
+theorem al_size_ok {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (sz minSize : Nat) (h11 : ω[11] = UInt64.ofNat sz) (h12 : ω[12] = UInt64.ofNat minSize)
+    (hs : minSize ≤ sz) (hs1 : sz < 18446744073709551616) :
+    FreeStepsH p R 41398 ω μ x 41425 ω μ x 1 := by
+  rw [show ω = regsNF ω [] from rfl]
+  pvm_go [h11, h12, Nat.mod_eq_of_lt hs1, Nat.mod_eq_of_lt (show minSize < 18446744073709551616 by omega), hs]
+
+/-- 41398: too small, to the failure at 41401. -/
+theorem al_size_small {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (sz minSize : Nat) (h11 : ω[11] = UInt64.ofNat sz) (h12 : ω[12] = UInt64.ofNat minSize)
+    (hs : sz < minSize) (hm : minSize < 18446744073709551616) :
+    FreeStepsH p R 41398 ω μ x 41401 ω μ x 1 := by
+  rw [show ω = regsNF ω [] from rfl]
+  pvm_go [h11, h12, Nat.mod_eq_of_lt (show sz < 18446744073709551616 by omega), Nat.mod_eq_of_lt hm,
+    show ¬ minSize ≤ sz by omega]
+
+/-- **41401 / 41404 … 41423**: the failure: ω₇ = 0 (null), the frame popped; at the return. -/
+theorem al_fail {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (sp : Nat) (h1 : ω[1] = UInt64.ofNat sp) (hsp : sp + 152 < 4294967296) (hr : ∀ a, μ.readable a = true) :
+    ∃ ω', FreeStepsH p R 41401 ω μ x 41423 ω' μ x 8 ∧ ω'[7] = UInt64.ofNat 0 ∧
+      ω'[0] = UInt64.ofNat (rdN μ (sp + 144) 8) ∧ ω'[5] = UInt64.ofNat (rdN μ (sp + 136) 8) ∧
+      ω'[6] = UInt64.ofNat (rdN μ (sp + 128) 8) ∧ ω'[1] = UInt64.ofNat (sp + 152) ∧
+      ∀ j : Fin 13, j.val ∉ [0, 1, 5, 6, 7, 11] → ω'[j] = ω[j] := by
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?run, ?post⟩
+  case run => pvm_go [h1, hr, ↓rdN_fold, ↓loadI_fold]
+  case post => exact ⟨by reg_val, by reg_val, by reg_val, by reg_val, by reg_val, by reg_frame⟩
+
 end Services.Bootstrap.Alloc

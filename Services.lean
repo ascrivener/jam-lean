@@ -78,6 +78,7 @@ import Services.Bootstrap.Alloc.AllocUnreg
 import Services.Bootstrap.Alloc.AllocWrite
 import Services.Bootstrap.Alloc.AllocRight
 import Services.Bootstrap.Alloc.AllocTail
+import Services.Bootstrap.Alloc.AllocImpl
 import Services.Witness.Prefix
 import Services.Witness.EmptyTail
 import Services.Witness.Front1

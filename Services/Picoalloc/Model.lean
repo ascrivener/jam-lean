@@ -202,7 +202,7 @@ def mergeNext (s : State) (chunk size T : Nat) : State × Nat :=
 /-- `free`'s last step: the merged chunk registered, and the next chunk's `prev`, below `T`. -/
 def freeFinal (s : State) (chunk prev size T : Nat) : State :=
   if chunk + 32 * size < T then
-    setHdr (register s chunk prev size).1 (chunk + 32 * size) (fun h => { h with prev := size })
+    setHdr (register s chunk prev size).1 (chunk + 32 * size) (fun h => { h with prev := (register s chunk prev size).2 })
   else (register s chunk prev size).1
 
 /-- `free`: the chunk of the data at `ptr` becomes free, merged with free neighbours. -/
@@ -215,7 +215,8 @@ def free (s : State) (ptr : Nat) : State :=
 /-- The usable size of the allocation at `ptr`, in units (`usable_size_impl`). -/
 def usable (s : State) (ptr : Nat) : Nat := wordSize (s.hdr (ptr - 32)).size - 1
 
-/-- `shrink_inplace` (for a new size below the current one, nonzero). -/
+/-- `shrink_inplace` (for a new size below the current one, nonzero): the chunk keeps `newReq + 1`
+    units; the rest, merged with a free next chunk, becomes free. -/
 def shrink (s : State) (ptr newReq : Nat) : State :=
   let chunk := ptr - 32
   let newSize := newReq + 1
@@ -223,18 +224,8 @@ def shrink (s : State) (ptr newReq : Nat) : State :=
   if newSize ≥ cur then s
   else
     let s := setHdr s chunk (fun h => { h with size := sizeWord newSize true })
-    let endAll := s.base + 32 * maxSize
-    let nc := chunk + 32 * cur
-    let (s, freeSpace) :=
-      if nc < endAll then
-        let nw := (s.hdr nc).size
-        if !wordUsed nw then (unregister s nc (binDown (wordSize nw)), cur - newSize + wordSize nw)
-        else (s, cur - newSize)
-      else (s, cur - newSize)
-    let next := chunk + 32 * newSize
-    let (s, _) := register s next newSize freeSpace
-    let final := next + 32 * freeSpace
-    if final < endAll then setHdr s final (fun h => { h with prev := freeSpace }) else s
+    let n := mergeNext s chunk cur (s.base + 32 * maxSize)
+    freeFinal n.1 (chunk + 32 * newSize) newSize (n.2 - newSize) (s.base + 32 * maxSize)
 
 /-- `grow_inplace`: the allocation at `ptr` grows into a free next chunk, if one is large enough. -/
 def growInplace (grow : Grow) (s : State) (ptr newReq : Nat) : Option State := do

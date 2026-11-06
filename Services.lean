@@ -54,6 +54,7 @@ import Services.Picoalloc.Invariant
 import Services.Picoalloc.FreeLists
 import Services.Picoalloc.Alloc
 import Services.Picoalloc.Free
+import Services.Picoalloc.Realloc
 import Services.Witness.Prefix
 import Services.Witness.EmptyTail
 import Services.Witness.Front1

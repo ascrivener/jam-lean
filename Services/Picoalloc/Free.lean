@@ -168,7 +168,7 @@ theorem mergeNext_ok {s1 s2 : State} {B T M sz1 total : Nat} {pre0 post : List C
       Tiles B T (pre0 ++ ⟨M, total, true⟩ :: post0) ∧ (∀ c ∈ post0.head?, c.used = true) ∧
       FreeLists s2 (Fof (pre0 ++ post0)) ∧ BitsOk s2.secondary s2.primary s2.heads ∧
       (∀ z, (s2.hdr z).prev = (s1.hdr z).prev ∧ (s2.hdr z).size = (s1.hdr z).size) ∧
-      s2.base = s1.base ∧ s2.allocated = s1.allocated := by
+      s2.base = s1.base ∧ s2.allocated = s1.allocated ∧ sz1 ≤ total := by
   unfold mergeNext at hn
   obtain ⟨m0, -, hM1, hM2, hrest⟩ := Tiles.append.mp htl
   simp only at hM1 hM2 hrest
@@ -179,7 +179,7 @@ theorem mergeNext_ok {s1 s2 : State} {B T M sz1 total : Nat} {pre0 post : List C
     rw [if_neg (by omega)] at hn
     simp only [Prod.mk.injEq] at hn
     obtain ⟨rfl, rfl⟩ := hn
-    exact ⟨[], [], rfl, by simp, htl, by simp, hF, hbits, fun _ => ⟨rfl, rfl⟩, rfl, rfl⟩
+    exact ⟨[], [], rfl, by simp, htl, by simp, hF, hbits, fun _ => ⟨rfl, rfl⟩, rfl, rfl, Nat.le_refl _⟩
   | cons e post' =>
     obtain ⟨he1, he2, he3⟩ := hrest
     have heT := (he3.le)
@@ -198,7 +198,7 @@ theorem mergeNext_ok {s1 s2 : State} {B T M sz1 total : Nat} {pre0 post : List C
         hbits (toBin_lt false (Nat.min_le_right _ _)) ⟨e, List.mem_append_right _ List.mem_cons_self, rfl, hu, rfl⟩
       have hm' := htl.merge (u := true)
       refine ⟨[e], post', rfl, by simp [hu], hm', hhead, r1.iff (fun b a _ => ?_), r2, fun z => unregister_hdr,
-        unregister_base, unregister_allocated⟩
+        unregister_base, unregister_allocated, Nat.le_add_right _ _⟩
       have hne : ∀ c ∈ pre0 ++ post', c.addr ≠ e.addr := by
         have h2 := htl
         rw [show pre0 ++ ⟨M, sz1, true⟩ :: e :: post' = (pre0 ++ [⟨M, sz1, true⟩]) ++ e :: post' by simp] at h2
@@ -211,7 +211,8 @@ theorem mergeNext_ok {s1 s2 : State} {B T M sz1 total : Nat} {pre0 post : List C
     · rw [hu] at hn
       simp only [Bool.not_true, Bool.false_eq_true, ↓reduceIte, Prod.mk.injEq] at hn
       obtain ⟨rfl, rfl⟩ := hn
-      exact ⟨[], e :: post', rfl, by simp, htl, by simp [hu], hF, hbits, fun _ => ⟨rfl, rfl⟩, rfl, rfl⟩
+      exact ⟨[], e :: post', rfl, by simp, htl, by simp [hu], hF, hbits, fun _ => ⟨rfl, rfl⟩, rfl, rfl,
+        Nat.le_refl _⟩
 
 theorem Fof_insert {A B : List Chunk} {c : Chunk} (b a : Nat) :
     Fof (A ++ c :: B) b a ↔ Fof (A ++ B) b a ∨ (c.used = false ∧ b = binDown c.size ∧ a = c.addr) := by
@@ -252,7 +253,9 @@ theorem freeFinal_facts {s2 : State} {M pv total T : Nat} {F : Nat → Nat → P
     · subst hx; rw [register_prev_self htot, if_pos rfl]
     · rw [(register_hdr_other hx).1, if_neg hx]
   have hne : M + 32 * total ≠ M := by omega
+  have h2 : (register s2 M pv total).2 = total := by rw [register_snd, if_neg htot]
   unfold freeFinal
+  rw [h2]
   split
   · rename_i hlt
     refine ⟨p1.congr rfl (setHdr_next (f := fun h => { h with prev := total }) (fun _ => rfl))
@@ -315,7 +318,7 @@ theorem free_ok {s : State} {ptr n : Nat} {pre post : List Chunk} (hwf : WF s)
   have hcp : Coalesced post := ((Coalesced.append (xs := [⟨X, n, true⟩]) (ys := post)).mp hcX).2.1
   have henc' : ∀ c ∈ post, (s1.hdr c.addr).size = sizeWord c.size c.used := fun c hc => by
     rw [(hps1 _).2]; exact henc c (List.mem_append_right _ (List.mem_cons_of_mem _ hc))
-  obtain ⟨R, post0, hpost, hRf, htl2, hhead, hF2, hb2, hps2, hbase2, halloc2⟩ :=
+  obtain ⟨R, post0, hpost, hRf, htl2, hhead, hF2, hb2, hps2, hbase2, halloc2, -⟩ :=
     mergeNext_ok htl1 henc' hcp hF1 hb1 hn2
   subst hpre hpost
   -- the merged chunk's place

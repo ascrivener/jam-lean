@@ -50,6 +50,7 @@ import Services.Bootstrap.NoInstrTail8
 import Services.Bootstrap.NoInstr
 import Services.Bootstrap.DecodeLoop
 import Services.Picoalloc.Model
+import Services.Picoalloc.Invariant
 import Services.Witness.Prefix
 import Services.Witness.EmptyTail
 import Services.Witness.Front1

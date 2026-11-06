@@ -1,6 +1,6 @@
 import JAM
 import PVM.Logic.FastCheck
-import Services.Picoalloc.Model
+import Services.Picoalloc.Invariant
 open PVM JAM
 
 def go (Q : Prepared) (f : HostFn RefineCtx) (i : Nat) (gas : UInt64) (ch : Bool)
@@ -488,6 +488,42 @@ def allocDiff (s t : Picoalloc.State) : List String := Id.run do
     c := c + 32 * sz
   return d.reverse
 
+
+/-- `WF`, computably, for testing it on traced states: the violations found. -/
+def wfCheck (s : Picoalloc.State) : List String := Id.run do
+  let mut d : List String := []
+  if s.base == 0 then return ["uninitialized"]
+  if s.base % 32 != 0 then d := "base misaligned" :: d
+  let cs := Picoalloc.walk s s.base s.top 200000
+  -- tiles
+  let mut a := s.base
+  for c in cs do
+    if c.addr != a then d := s!"gap at {a}" :: d
+    if c.size == 0 then d := s!"empty chunk at {c.addr}" :: d
+    a := c.addr + 32 * c.size
+  if a != s.top then d := s!"chunks end at {a}, not {s.top}" :: d
+  -- coalesced, prev
+  for (c, e) in cs.zip (cs.drop 1) do
+    if !c.used && !e.used then d := s!"adjacent free {c.addr} {e.addr}" :: d
+    if (s.hdr e.addr).prev != c.size then d := s!"prev at {e.addr}: {(s.hdr e.addr).prev} vs {c.size}" :: d
+  -- lists and bitmap
+  for b in [0:Picoalloc.binCount] do
+    let l := Picoalloc.listOf s (s.heads b) (cs.length + 1)
+    let want := (cs.filter fun c => !c.used && Picoalloc.binDown c.size == b).map (·.addr)
+    if l.length != want.length || !(want.all l.contains) then d := s!"bin {b}: list {l} vs free {want}" :: d
+    if s.heads b != 0 && (s.hdr (s.heads b)).prevL != 0 then d := s!"bin {b}: head prevL" :: d
+    for x in l do
+      let nx := (s.hdr x).next
+      if nx != 0 && (s.hdr nx).prevL != x then d := s!"bin {b}: back link at {nx}" :: d
+    if ((s.secondary (b / 64)).testBit (b % 64)) != (s.heads b != 0) then d := s!"bit {b}" :: d
+  for p in [0:38] do
+    if s.primary.testBit p != (s.secondary p % 2 ^ 64 != 0) then d := s!"primary bit {p}" :: d
+  -- space
+  for c in cs do
+    if c.used && c.addr + 32 * c.size > s.base + 32 * s.allocated then d := s!"used chunk {c.addr} past space" :: d
+    if c.addr + 32 > s.base + 32 * s.allocated then d := s!"header {c.addr} past space" :: d
+  return d.reverse
+
 def mode_allocck (cx : Cx) : IO Unit := do
   let grow : Picoalloc.Grow := fun _ _ => true
   let salt := List.replicate 32 (0 : UInt8)
@@ -535,7 +571,10 @@ def mode_allocck (cx : Cx) : IO Unit := do
       let rdiff := match res with
         | some q => if q != got then [s!"result {q} vs {got}"] else []
         | none => if pc == 40613 then [] else [s!"model failed, binary returned {got}"]
-      let d := rdiff ++ (match model with | some m => allocDiff m after | none => [])
+      let w0 := if s0.base == 0 then [] else wfCheck s0
+      let w1 := wfCheck after
+      let d := rdiff ++ (match model with | some m => allocDiff m after | none => []) ++
+        (w0.map ("WF before: " ++ ·)) ++ (w1.map ("WF after: " ++ ·))
       if !d.isEmpty then
         bad := bad + 1
         IO.println s!"MISMATCH {pc} at step {k} (r7={r7} r8={r8} r9={r9} r10={r10}) input |y|={y.length}: {d.take 6}"

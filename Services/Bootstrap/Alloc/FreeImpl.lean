@@ -46,7 +46,7 @@ theorem free_impl {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
     (hw : ∀ a, μ.writable a = true) :
     ∃ ω' μ', FreeStepsH p R 42327 ω μ x 40681 ω' μ' x 220 ∧
       RepAt μ' (free s ptr) (fun a => H a ∨ a = M) (fun a => F a ∨ a = M) ∧
-      (∀ a, μ'.writable a = true) ∧ ω'[0] = UInt64.ofNat 1986 ∧ ω'[1] = UInt64.ofNat sp ∧
+      (∀ a, μ'.writable a = true) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧ ω'[0] = UInt64.ofNat 1986 ∧ ω'[1] = UInt64.ofNat sp ∧
       ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
   have hHFl : ∀ b, H b ∨ F b → b + 16 < 2147483648 := fun b hb => by
     have := hHF b hb; unfold Al at this; omega
@@ -85,7 +85,8 @@ theorem free_impl {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
     (by rw [← st5]; exact readN_frame fun j hj => stk _ (by omega) (by omega))
     (by rw [← st6]; exact readN_frame fun j hj => stk _ (by omega) (by omega))
     (UInt64.toNat_lt _) (UInt64.toNat_lt _) hsp hsp1 ww3
-  refine ⟨ω4, μ4, ((((r1.trans r2).trans r3).trans r4)).mono (by omega), ?_, ww4, e0, e1,
+  refine ⟨ω4, μ4, ((((r1.trans r2).trans r3).trans r4)).mono (by omega), ?_, ww4,
+    fun a h1 h2 => ((sf4 a h1 (by omega)).trans (stk a h1 (by omega))).trans (sf1 a h1 (Or.inr h2)), e0, e1,
     by rw [e5, UInt64.ofNat_toNat], by rw [e6, UInt64.ofNat_toNat]⟩
   unfold free
   simp only [hm, hn, maxSize_val, Nat.reduceMul]

@@ -69,6 +69,7 @@ import Services.Bootstrap.Alloc.Stages
 import Services.Bootstrap.Alloc.StageA
 import Services.Bootstrap.Alloc.FreeImpl
 import Services.Bootstrap.Alloc.FreeRefines
+import Services.Bootstrap.Alloc.Dealloc
 import Services.Witness.Prefix
 import Services.Witness.EmptyTail
 import Services.Witness.Front1

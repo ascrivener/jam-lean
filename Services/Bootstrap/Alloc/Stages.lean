@@ -263,4 +263,114 @@ theorem nx_lookup_mid {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : 
     rw [fr2 j (by simp only [List.mem_cons, List.not_mem_nil, or_false] at hj ⊢; omega),
       fr1 j (by simp only [List.mem_cons, List.not_mem_nil, or_false] at hj ⊢; omega)]
 
+
+theorem fget {ω' ω : Regs} {l : List Nat} (fr : ∀ j : Fin 13, j.val ∉ l → ω'[j] = ω[j]) (j : Nat) (hj : j < 13)
+    (hl : j ∉ l) : ω'[j]'hj = ω[j]'hj := by
+  have := fr ⟨j, hj⟩ hl; simpa only [Fin.getElem_fin] using this
+
+/-- **42675 … 42814**: the next chunk nc, its bin's head, leaves the list — the memory holds
+    `unregister s nc bin`; ω₂ = size + sz. -/
+theorem nx_unreg_head {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (s : State) (H F : Nat → Prop) (base nc bin size sz : Nat) (hrep : RepAt μ s H F)
+    (hc : s.heads bin = nc) (hb : bin < binCount) (hFn : F nc) (hHF : ∀ a, H a ∨ F a → Al base a)
+    (hnx : (s.hdr nc).next ≠ 0 → F (s.hdr nc).next) (hb0 : 206864 ≤ base)
+    (hbT : base + 1073741824 < 2147483648)
+    (h11 : ω[11] = UInt64.ofNat nc) (h6 : ω[6] = UInt64.ofNat (196792 + bin * 4))
+    (h0 : ω[0] = UInt64.ofNat sz) (h2 : ω[2] = UInt64.ofNat size) (h5 : ω[5] = UInt64.ofNat bin)
+    (h7 : ω[7] = UInt64.ofNat 196792) (h4 : ω[4] = UInt64.ofNat 204984) (hss : size + sz < 2147483648)
+    (hw : ∀ a, μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 42675 ω μ x 42814 ω' μ' x 30 ∧ RepAt μ' (unregister s nc bin) H F ∧
+      (∀ a, μ'.writable a = true) ∧ (∀ a, a < 4294967296 → 2147483648 ≤ a → μ'.read a = μ.read a) ∧
+      ω'[2] = UInt64.ofNat (size + sz) ∧ ∀ j : Fin 13, j.val ∉ [2, 5, 6, 9, 10, 11] → ω'[j] = ω[j] := by
+  have hAn := hHF nc (Or.inr hFn)
+  unfold binCount at hb
+  have hn : rdN μ (nc + 8) 4 = (s.hdr nc).next := hrep.next nc hFn
+  unfold Al at hAn
+  by_cases h0' : (s.hdr nc).next = 0
+  · -- the list's last element
+    obtain ⟨ω1, μ1, r1, s1, fr1, ww1, g1⟩ := nx_unlink_head0 (p := p) (P := P) (R := R) x ω μ nc
+      (196792 + bin * 4) h11 h6 (by rw [hn, h0']) (by omega) (by omega) hw
+    have hsec := hrep.sec (bin / 64) (by omega)
+    have hpri := hrep.pri
+    unfold A0 at hsec hpri
+    have hw1 : rdN μ1 (204984 + bin / 64 * 8 + 1544) 8 = s.secondary (bin / 64) := by
+      rw [← hsec, show 196792 + 9736 + 8 * (bin / 64) = 204984 + bin / 64 * 8 + 1544 by omega]
+      exact rdN_frame fun j hj => fr1 _ (by omega) (by omega)
+    have hp1 : rdN μ1 206832 8 = s.primary := by
+      rw [← hpri]; exact rdN_frame fun j hj => fr1 _ (by omega) (by omega)
+    obtain ⟨ω2, μ2, r2, c1, c2, cf, cw, c2', cg⟩ := nx_clear (p := p) (P := P) (R := R) x ω1 μ1 bin
+      (s.secondary (bin / 64)) s.primary size sz
+      (by rw [fget g1 5 (by decide) (by decide)]; exact h5) (by rw [fget g1 7 (by decide) (by decide)]; exact h7)
+      (by rw [fget g1 4 (by decide) (by decide)]; exact h4) (by rw [fget g1 0 (by decide) (by decide)]; exact h0)
+      (by rw [fget g1 2 (by decide) (by decide)]; exact h2) (by omega) hw1 hp1 hss ww1
+    refine ⟨ω2, μ2, (r1.trans r2).mono (by omega), ?_, cw, fun a h1 h2 => ?_, c2', fun j hj => ?_⟩
+    · refine unregister_rep_last hrep hc (by unfold binCount; omega) h0' ?_ ?_ ?_ ?_ (fun a ha => ?_)
+      · rw [← s1]; exact rdN_frame fun j hj => cf _ (by omega) (by omega) (by omega)
+      · rw [c1, ← hsec, show 196792 + 9736 + 8 * (bin / 64) = 204984 + bin / 64 * 8 + 1544 by omega]
+      · rw [c2, ← hsec, ← hpri, show 196792 + 9736 + 8 * (bin / 64) = 204984 + bin / 64 * 8 + 1544 by omega,
+          show 196792 + 10040 = 206832 from rfl]
+      · intro a h1 h2 h3 h4; rw [cf a h1 h3 h4, fr1 a h1 h2]
+      · have := hHF a ha; unfold Al at this; omega
+    · rw [cf a h1 (by omega) (by omega), fr1 a h1 (by omega)]
+    · rw [cg j (by simp only [List.mem_cons, List.not_mem_nil, or_false] at hj ⊢; omega),
+        g1 j (by simp only [List.mem_cons, List.not_mem_nil, or_false] at hj ⊢; omega)]
+  · -- a successor
+    have hFx := hnx h0'
+    have hAx := hHF _ (Or.inr hFx)
+    unfold Al at hAx
+    obtain ⟨ω1, μ1, r1, s1, s2, fr1, ww1, e2, g1⟩ := nx_unlink_head (p := p) (P := P) (R := R) x ω μ nc
+      (196792 + bin * 4) (s.hdr nc).next size sz h11 h6 h0 h2 hn (by omega) h0' (by omega) (by omega)
+      (by omega) hss hw
+    refine ⟨ω1, μ1, r1.mono (by omega), ?_, ww1, fun a h1 h2 => fr1 a h1 (by omega) (by omega), e2,
+      fun j hj => g1 j (by simp only [List.mem_cons, List.not_mem_nil, or_false] at hj ⊢; omega)⟩
+    refine unregister_rep_head hrep hc (by unfold binCount; omega) h0' s1 s2
+      (fun a h1 h2 h3 => fr1 a h1 (by omega) h3) (by omega) (fun a ha => ?_)
+    have := hHF a ha; unfold Al at this; omega
+
+/-- **42732 … 42814**: the next chunk nc, inside its bin's list, leaves it — the memory holds
+    `unregister s nc bin`; ω₂ = size + sz. -/
+theorem nx_unreg_mid {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (s : State) (H F : Nat → Prop) (base nc bin size sz : Nat) (hrep : RepAt μ s H F)
+    (hc : s.heads bin ≠ nc) (hFn : F nc) (hHF : ∀ a, H a ∨ F a → Al base a)
+    (hpv : F (s.hdr nc).prevL) (hnx : (s.hdr nc).next ≠ 0 → F (s.hdr nc).next)
+    (hpn : (s.hdr nc).next ≠ 0 → (s.hdr nc).next ≠ (s.hdr nc).prevL) (hb0 : 206864 ≤ base)
+    (hbT : base + 1073741824 < 2147483648)
+    (h11 : ω[11] = UInt64.ofNat nc) (h0 : ω[0] = UInt64.ofNat sz) (h2 : ω[2] = UInt64.ofNat size)
+    (hss : size + sz < 2147483648) (hw : ∀ a, μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 42732 ω μ x 42814 ω' μ' x 30 ∧ RepAt μ' (unregister s nc bin) H F ∧
+      (∀ a, μ'.writable a = true) ∧ (∀ a, a < 4294967296 → 2147483648 ≤ a → μ'.read a = μ.read a) ∧
+      ω'[2] = UInt64.ofNat (size + sz) ∧ ∀ j : Fin 13, j.val ∉ [2, 9, 11] → ω'[j] = ω[j] := by
+  have hAn := hHF nc (Or.inr hFn)
+  have hAp := hHF _ (Or.inr hpv)
+  unfold Al at hAn hAp
+  have hn : rdN μ (nc + 8) 4 = (s.hdr nc).next := hrep.next nc hFn
+  have hp : rdN μ (nc + 12) 4 = (s.hdr nc).prevL := hrep.prevL nc hFn
+  have hnxA : (s.hdr nc).next = 0 ∨ ((s.hdr nc).next ≠ 0 ∧ Al base (s.hdr nc).next) := by
+    by_cases h0 : (s.hdr nc).next = 0
+    · exact Or.inl h0
+    · exact Or.inr ⟨h0, hHF _ (Or.inr (hnx h0))⟩
+  have hnb : (s.hdr nc).next + 16 < 4294967296 := by
+    rcases hnxA with h | ⟨_, h⟩
+    · omega
+    · unfold Al at h; omega
+  obtain ⟨ω1, μ1, r1, s1, s2, fr1, ww1, e2, g1⟩ := nx_unlink_mid (p := p) (P := P) (R := R) x ω μ nc
+    (s.hdr nc).prevL (s.hdr nc).next size sz h11 h0 h2 hn hp (by omega) hnb (by omega)
+    (fun h0 => by
+      have := hpn h0
+      rcases hnxA with h | ⟨_, h⟩
+      · exact absurd h h0
+      · unfold Al at h; omega) hss hw
+  refine ⟨ω1, μ1, r1.mono (by omega), ?_, ww1, fun a h1 h2 => fr1 a h1 (by omega) (by
+      rcases hnxA with h | ⟨_, h⟩
+      · exact Or.inl h
+      · unfold Al at h; omega), e2, g1⟩
+  refine unregister_rep_mid hrep hc s1 s2 fr1 (by omega)
+    (fun h0 => by rcases hnxA with h | ⟨_, h⟩; exact absurd h h0; unfold Al at h; omega)
+    hpn (fun a ha => ?_)
+  have := hHF a ha; unfold Al at this
+  refine ⟨by omega, by omega, by omega, ?_⟩
+  rcases hnxA with h | ⟨_, h⟩
+  · exact Or.inl h
+  · unfold Al at h; omega
+
 end Services.Bootstrap.Alloc

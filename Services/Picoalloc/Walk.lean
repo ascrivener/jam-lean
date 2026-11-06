@@ -165,3 +165,102 @@ theorem Tiles.relabel {a limit C S : Nat} {u v : Bool} {pre post : List Chunk}
   exact Tiles.append.mpr ⟨m, h1, h2, h3, h4⟩
 
 end Picoalloc
+
+namespace Picoalloc
+
+/-- The chunk after a free chunk in a coalesced list is allocated, as is the one before. -/
+theorem Coalesced.around {pre post : List Chunk} {c : Chunk} (hc : c.used = false)
+    (h : Coalesced (pre ++ c :: post)) :
+    (∀ d ∈ post.head?, d.used = true) ∧ (∀ d ∈ pre.getLast?, d.used = true) := by
+  induction pre with
+  | nil =>
+    simp only [List.nil_append, List.getLast?_nil, Option.mem_def, reduceCtorEq, false_imp_iff,
+      implies_true, and_true]
+    cases post with
+    | nil => simp
+    | cons d ds =>
+      obtain ⟨h1, _⟩ := h
+      simp only [hc, Bool.false_or] at h1
+      simp [h1]
+  | cons x xs ih =>
+    cases xs with
+    | nil =>
+      obtain ⟨h1, h2⟩ := h
+      simp only [hc, Bool.or_false] at h1
+      have := ih h2
+      simp only [List.getLast?_singleton, Option.mem_def, Option.some.injEq, forall_eq', h1, and_true]
+      exact this.1
+    | cons y ys =>
+      obtain ⟨_, h2⟩ := h
+      have := ih h2
+      refine ⟨this.1, ?_⟩
+      rw [List.getLast?_cons_cons]; exact this.2
+
+/-- Marking the front of a free chunk used, the rest free, keeps a list coalesced. -/
+theorem Coalesced.split {pre post : List Chunk} {C S C' S' k : Nat}
+    (h : Coalesced (pre ++ ⟨C, S, false⟩ :: post)) :
+    Coalesced (pre ++ ⟨C, k, true⟩ :: ⟨C', S', false⟩ :: post) ∧ Coalesced (pre ++ ⟨C, k, true⟩ :: post) := by
+  have hpost := (Coalesced.around rfl h).1
+  induction pre with
+  | nil =>
+    simp only [List.nil_append] at h ⊢
+    have hp : Coalesced post := by cases post with | nil => trivial | cons d ds => exact h.2
+    refine ⟨⟨by simp, ?_⟩, ?_⟩
+    · cases post with
+      | nil => trivial
+      | cons d ds => exact ⟨by simp [hpost d (by simp)], hp⟩
+    · cases post with
+      | nil => trivial
+      | cons d ds => exact ⟨by simp, hp⟩
+  | cons x xs ih =>
+    cases xs with
+    | nil =>
+      simp only [List.cons_append, List.nil_append] at h ⊢
+      obtain ⟨_, h2⟩ := h
+      have := ih h2
+      simp only [List.nil_append] at this
+      exact ⟨⟨by simp, this.1⟩, ⟨by simp, this.2⟩⟩
+    | cons y ys =>
+      simp only [List.cons_append] at h ⊢
+      obtain ⟨h1, h2⟩ := h
+      have := ih h2
+      simp only [List.cons_append] at this
+      exact ⟨⟨h1, this.1⟩, ⟨h1, this.2⟩⟩
+
+end Picoalloc
+
+namespace Picoalloc
+
+theorem PrevOk.congr {s s' : State} {l : List Chunk} (h : PrevOk s l)
+    (hp : ∀ d ∈ l.tail, (s'.hdr d.addr).prev = (s.hdr d.addr).prev) : PrevOk s' l := by
+  induction l with
+  | nil => trivial
+  | cons x xs ih =>
+    cases xs with
+    | nil => trivial
+    | cons y ys =>
+      obtain ⟨h1, h2⟩ := h
+      refine ⟨(hp y (by simp)).trans h1, ih h2 (fun d hd => hp d ?_)⟩
+      simp only [List.tail_cons] at hd ⊢
+      exact List.mem_cons_of_mem _ hd
+
+theorem PrevOk.append {s : State} {xs ys : List Chunk} :
+    PrevOk s (xs ++ ys) ↔ PrevOk s xs ∧ PrevOk s ys ∧
+      (∀ x ∈ xs.getLast?, ∀ y ∈ ys.head?, (s.hdr y.addr).prev = x.size) := by
+  induction xs with
+  | nil => simp [PrevOk]
+  | cons x xs ih =>
+    cases xs with
+    | nil =>
+      cases ys with
+      | nil => simp [PrevOk]
+      | cons y ys => simp [PrevOk, And.comm]
+    | cons x' xs' =>
+      simp only [List.cons_append, PrevOk] at ih ⊢
+      rw [ih]
+      simp only [List.getLast?_cons_cons]
+      constructor
+      · rintro ⟨h1, h2, h3, h4⟩; exact ⟨⟨h1, h2⟩, h3, h4⟩
+      · rintro ⟨⟨h1, h2⟩, h3, h4⟩; exact ⟨h1, h2, h3, h4⟩
+
+end Picoalloc

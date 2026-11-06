@@ -4,8 +4,10 @@ import Services.Picoalloc.Init
 # The first chunk's `prev`
 
 `init` writes 0 as the first chunk's `prev`, and no operation writes another value there: the
-merged or split chunk at the base keeps the `prev` it had. `FirstOk` says so; the binary's loads of
-`prev` are sign-extending, and agree with the model's for this value.
+merged or split chunk at the base keeps the `prev` it had, and `shrink` and `growInplace` write
+headers only above the chunk they resize. `FirstOk` says so, for `init`, `alloc`, `free` and
+`realloc`; the binary's loads of `prev` are sign-extending, and agree with the model's for this
+value.
 -/
 
 namespace Picoalloc
@@ -135,5 +137,136 @@ theorem init_first {grow : Grow} {hb : Nat} {s s' : State} (hs0 : s.base = 0)
   subst h
   unfold FirstOk
   simp [setHdr, setBit, upd]
+theorem setHdr_size_prev {s : State} {a z w : Nat} :
+    ((setHdr s a (fun h => { h with size := w })).hdr z).prev = (s.hdr z).prev := by
+  by_cases hz : z = a
+  · subst hz; rw [setHdr_self]
+  · rw [setHdr_other hz]
+
+/-- `freeFinal` at M leaves the `prev` of headers below M. -/
+theorem freeFinal_other {s : State} {z M pv total T : Nat} (hM : z < M) :
+    ((freeFinal s M pv total T).hdr z).prev = (s.hdr z).prev := by
+  unfold freeFinal
+  split
+  · rw [setHdr_prev_get, if_neg (by omega)]; exact (register_hdr_other (by omega)).1
+  · exact (register_hdr_other (by omega)).1
+
+theorem mergeNext_base {s : State} {M sz1 T : Nat} : (mergeNext s M sz1 T).1.base = s.base := by
+  generalize hq : mergeNext s M sz1 T = q
+  obtain ⟨s2, total⟩ := q
+  exact (mergeNext_prev hq).2.1
+
+theorem shrink_base {s : State} {ptr newReq : Nat} : (shrink s ptr newReq).base = s.base := by
+  unfold shrink
+  dsimp only
+  split
+  · rfl
+  · rw [freeFinal_base, mergeNext_base, setHdr_base]
+
+theorem shrink_first {s : State} {ptr newReq : Nat} (h0 : FirstOk s) (hX : s.base ≤ ptr - 32) :
+    FirstOk (shrink s ptr newReq) := by
+  unfold FirstOk
+  rw [shrink_base]
+  unfold shrink
+  generalize ptr - 32 = X at *
+  dsimp only
+  split
+  · exact h0
+  rw [setHdr_base, show s.base + 32 * maxSize = s.top from rfl]
+  generalize s.top = T
+  generalize hq : mergeNext (setHdr s X (fun h => { h with size := sizeWord (newReq + 1) true })) X
+    (wordSize (s.hdr X).size) T = q
+  obtain ⟨s2, total⟩ := q
+  obtain ⟨hp2, -, -⟩ := mergeNext_prev hq
+  rw [freeFinal_other (by omega), hp2, setHdr_size_prev]
+  exact h0
+
+theorem growInplace_first {grow : Grow} {s s' : State} {ptr newReq : Nat} (h0 : FirstOk s)
+    (hX : s.base ≤ ptr - 32) (h : growInplace grow s ptr newReq = some s') : FirstOk s' := by
+  unfold growInplace at h
+  generalize ptr - 32 = X at *
+  simp only at h
+  split at h
+  · simp only [Option.pure_def, Option.some.injEq] at h; subst h; exact h0
+  split at h
+  · simp at h
+  split at h
+  · simp at h
+  split at h
+  · simp at h
+  generalize hE : (X + 32 * (newReq + 1) - s.base) / 32 + _ = E at h
+  obtain ⟨sa, sah, sabase, rfl⟩ : ∃ sa : State, sa.hdr = s.hdr ∧ sa.base = s.base ∧
+      s' = freeFinal (setHdr (unregister sa (X + 32 * wordSize (s.hdr X).size)
+        (binDown (wordSize (s.hdr (X + 32 * wordSize (s.hdr X).size)).size))) X
+        (fun h => { h with size := sizeWord (newReq + 1) true })) (X + 32 * (newReq + 1)) (newReq + 1)
+        (wordSize (s.hdr X).size + wordSize (s.hdr (X + 32 * wordSize (s.hdr X).size)).size - (newReq + 1))
+        (s.base + 32 * maxSize) := by
+    by_cases hlt : s.allocated < E
+    · by_cases hg : grow s.base E = true
+      · simp only [hlt, hg, ↓reduceIte, Option.bind_eq_bind, Option.bind_some, Option.pure_def,
+          Option.some.injEq] at h
+        exact ⟨{ s with allocated := E }, rfl, rfl, h.symm⟩
+      · simp [hlt, hg] at h
+    · simp only [hlt, ↓reduceIte, Option.bind_eq_bind, Option.bind_some, Option.pure_def,
+        Option.some.injEq] at h
+      exact ⟨s, rfl, rfl, h.symm⟩
+  unfold FirstOk
+  rw [freeFinal_base, setHdr_base, unregister_base, sabase,
+    freeFinal_other (by omega), setHdr_size_prev,
+    unregister_hdr.1, sah]
+  exact h0
+/-- **`realloc` keeps the first chunk's `prev` at 0**, for the data address of an allocated chunk
+    and alignment one unit. -/
+theorem realloc_first {grow : Grow} {hb : Nat} {s s' : State} {ptr newReq p : Nat} {cp : Bool} (hwf : WF s)
+    (h0 : FirstOk s) (hptr : ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true)
+    (h : realloc grow hb s ptr 1 newReq = some (p, s', cp)) : FirstOk s' := by
+  obtain ⟨c, hc, h1, h2⟩ := hptr
+  have hX : s.base ≤ ptr - 32 := by
+    have ht := hwf.2.2.2.1
+    unfold TilesOk at ht
+    have := (ht.mem_lt c hc).1
+    omega
+  unfold realloc at h
+  by_cases e1 : newReq = usable s ptr
+  · simp only [e1, ↓reduceIte, Option.pure_def, Option.some.injEq, Prod.mk.injEq] at h
+    obtain ⟨-, rfl, -⟩ := h; exact h0
+  by_cases e2 : newReq = 0
+  · simp [e2] at h e1; simp [e1] at h
+  by_cases e3 : newReq < usable s ptr
+  · simp only [e1, e2, e3, ↓reduceIte, Option.pure_def, Option.some.injEq, Prod.mk.injEq] at h
+    obtain ⟨-, rfl, -⟩ := h; exact shrink_first h0 hX
+  simp only [e1, e2, e3, ↓reduceIte] at h
+  cases hg : growInplace grow s ptr newReq with
+  | some s2 =>
+    simp only [hg, Option.pure_def, Option.some.injEq, Prod.mk.injEq] at h
+    obtain ⟨-, rfl, -⟩ := h
+    exact growInplace_first h0 hX hg
+  | none =>
+    simp only [hg] at h
+    cases ha : alloc grow hb 1 newReq s with
+    | none => simp [ha] at h
+    | some r =>
+      obtain ⟨p1, s1⟩ := r
+      simp only [ha, Option.bind_eq_bind, Option.bind_some, Option.pure_def, Option.some.injEq,
+        Prod.mk.injEq] at h
+      obtain ⟨-, rfl, -⟩ := h
+      have hw1 := alloc_wf hwf ha
+      have hf1 := alloc_first hwf h0 ha
+      obtain ⟨pre', post', S, h1', -, h2'⟩ := alloc_chunks hwf ha
+      obtain ⟨pre, post, hcs⟩ := List.append_of_mem hc
+      have hc' : c = ⟨ptr - 32, c.size, true⟩ := by
+        cases c; simp only at h1 h2 ⊢; subst h2; simp only [Chunk.mk.injEq, and_true]; omega
+      rw [hc'] at hcs
+      have hm : (⟨ptr - 32, c.size, true⟩ : Chunk) ∈ pre' ++ ⟨p1 - 32, S, false⟩ :: post' := by
+        rw [← h1', hcs]; exact List.mem_append_right _ List.mem_cons_self
+      have hm1 : (⟨ptr - 32, c.size, true⟩ : Chunk) ∈ chunks s1 := by
+        rw [h2']
+        rcases List.mem_append.mp hm with hm | hm
+        · exact List.mem_append_left _ hm
+        · rcases List.mem_cons.mp hm with hm | hm
+          · simp at hm
+          · exact List.mem_append_right _ (List.mem_cons_of_mem _ (List.mem_append_right _ hm))
+      obtain ⟨pre1, post1, hcs1⟩ := List.append_of_mem hm1
+      exact free_first hw1 hf1 hcs1
 
 end Picoalloc

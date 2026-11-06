@@ -35,4 +35,23 @@ structure Rep (μ : Memory) (s : State) : Prop where
   next : ∀ c ∈ chunks s, c.used = false → rdN μ (c.addr + 8) 4 = (s.hdr c.addr).next
   prevL : ∀ c ∈ chunks s, c.used = false → rdN μ (c.addr + 12) 4 = (s.hdr c.addr).prevL
 
+
+/-- `Rep` at chosen addresses: the fields, the `prev` and `size` of the headers at `H`, and the
+    links of those at `F`. The operations' steps go between such states. -/
+structure RepAt (μ : Memory) (s : State) (H F : Nat → Prop) : Prop where
+  heads : ∀ b, b < binCount → rdN μ (A0 + 4 * b) 4 = s.heads b
+  sec : ∀ p, p < 38 → rdN μ (A0 + 9736 + 8 * p) 8 = s.secondary p
+  pri : rdN μ (A0 + 10040) 8 = s.primary
+  base : rdN μ (A0 + 9728) 8 = s.base
+  alloc : rdN μ (A0 + 10048) 4 = s.allocated
+  prev : ∀ a, H a → rdN μ a 4 = (s.hdr a).prev
+  size : ∀ a, H a → rdN μ (a + 4) 4 = (s.hdr a).size
+  next : ∀ a, F a → rdN μ (a + 8) 4 = (s.hdr a).next
+  prevL : ∀ a, F a → rdN μ (a + 12) 4 = (s.hdr a).prevL
+
+/-- A read whose octets a write sequence kept is the same read. -/
+theorem rdN_frame {μ μ' : Memory} {a n : Nat} (h : ∀ j, j < n → μ'.read (a + j) = μ.read (a + j)) :
+    rdN μ' a n = rdN μ a n := by
+  unfold rdN; rw [readN_congr2 h]
+
 end Services.Bootstrap.Alloc

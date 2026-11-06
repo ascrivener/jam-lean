@@ -1,4 +1,5 @@
 import Services.Bootstrap.Alloc.Rep
+import PVM.Logic.Bits
 
 /-!
 # The allocator's arithmetic in the binary
@@ -60,5 +61,23 @@ theorem binDown_big {x : Nat} (h1 : 128 ≤ x) :
   rw [show (2 : Nat) ^ 7 = 128 by rfl, or_mul128 _ _ (Nat.mod_lt _ (by decide))]
   rw [show Nat.log2 y - 6 = Nat.log2 y - 7 + 1 by omega]
   omega
+
+
+/-- `or` of two 64-bit words is `|||`. -/
+theorem bitwise_or_lor (a b : Nat) (ha : a < 2 ^ 64) (hb : b < 2 ^ 64) :
+    Exec.bitwise (· || ·) a b = a ||| b := by
+  apply Nat.eq_of_testBit_eq
+  intro i
+  simp only [Exec.bitwise, Num.testBit_ofBits, Num.bit_eq_testBit, Nat.testBit_or]
+  by_cases hi : i < 64
+  · simp [hi]
+  · have h1 : a.testBit i = false :=
+      Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le ha (Nat.pow_le_pow_right (by decide) (by omega)))
+    have h2 : b.testBit i = false :=
+      Nat.testBit_lt_two_pow (Nat.lt_of_lt_of_le hb (Nat.pow_le_pow_right (by decide) (by omega)))
+    simp [hi, h1, h2]
+
+theorem bitwise_and_m127 (a : Nat) : Exec.bitwise (· && ·) a 127 = a % 128 := by
+  rw [PVM.bitwise_and_low _ 127 7 (by decide) (by decide)]
 
 end Services.Bootstrap.Alloc

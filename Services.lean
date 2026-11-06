@@ -56,6 +56,10 @@ import Services.Picoalloc.Alloc
 import Services.Picoalloc.Free
 import Services.Picoalloc.Realloc
 import Services.Picoalloc.Init
+import Services.Bootstrap.Alloc.Rep
+import Services.Bootstrap.Alloc.Arith
+import Services.Bootstrap.Alloc.Register
+import Services.Bootstrap.Alloc.RegisterRep
 import Services.Witness.Prefix
 import Services.Witness.EmptyTail
 import Services.Witness.Front1

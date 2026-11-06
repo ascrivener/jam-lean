@@ -296,4 +296,169 @@ theorem alloc_mid {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
         (fun j hj => by simp at hj ⊢; omega)) (fun j hj => hj) (fun j hj => by simp at hj ⊢; omega))
       (fun j hj => hj) (fun j hj => by simp at hj ⊢; omega)
 
+/-- **`registerAlloc` against memory**: the chunk at `a` (one of H) records `pv` and `n` units used. -/
+theorem registerAlloc_rep {μ μ' : Memory} {t : State} {H F : Nat → Prop} {a pv n : Nat}
+    (h : RepAt μ t H F) (haH : H a) (w1 : rdN μ' a 4 = pv) (w2 : rdN μ' (a + 4) 4 = sizeWord n true)
+    (wf : ∀ b, b < 2147483648 → (b < a ∨ a + 8 ≤ b) → μ'.read b = μ.read b)
+    (ha : 206864 ≤ a)
+    (hHa : ∀ b, H b ∨ F b → 206864 ≤ b ∧ b + 16 < 2147483648 ∧ (b = a ∨ b + 16 ≤ a ∨ a + 16 ≤ b)) :
+    RepAt μ' (registerAlloc t a pv n) H F := by
+  have pr : ∀ b, (registerAlloc t a pv n).hdr b =
+      if b = a then { t.hdr a with prev := pv, size := sizeWord n true } else t.hdr b := by
+    intro b; unfold registerAlloc; by_cases hb : b = a
+    · subst hb; rw [setHdr_self, if_pos rfl]
+    · rw [setHdr_other hb, if_neg hb]
+  have hb2 := (hHa a (Or.inl haH)).2.1
+  refine ⟨fun b hb => ?_, fun q hq => ?_, ?_, ?_, ?_, fun b hb => ?_, fun b hb => ?_, fun b hb => ?_,
+    fun b hb => ?_⟩
+  · rw [show (registerAlloc t a pv n).heads = t.heads from rfl, ← h.heads b hb]; unfold A0; unfold binCount at hb
+    exact rdN_frame fun j hj => wf _ (by omega) (by omega)
+  · rw [show (registerAlloc t a pv n).secondary = t.secondary from rfl, ← h.sec q hq]; unfold A0
+    exact rdN_frame fun j hj => wf _ (by omega) (by omega)
+  · rw [show (registerAlloc t a pv n).primary = t.primary from rfl, ← h.pri]; unfold A0
+    exact rdN_frame fun j hj => wf _ (by omega) (by omega)
+  · rw [show (registerAlloc t a pv n).base = t.base from rfl, ← h.base]; unfold A0
+    exact rdN_frame fun j hj => wf _ (by omega) (by omega)
+  · rw [show (registerAlloc t a pv n).allocated = t.allocated from rfl, ← h.alloc]; unfold A0
+    exact rdN_frame fun j hj => wf _ (by omega) (by omega)
+  · rw [pr]
+    by_cases hba : b = a
+    · subst hba; rw [if_pos rfl, w1]
+    · rw [if_neg hba]
+      obtain ⟨b1, b2, b3⟩ := hHa b (Or.inl hb)
+      rw [← h.prev b hb]; exact rdN_frame fun j hj => wf _ (by omega) (by omega)
+  · rw [pr]
+    by_cases hba : b = a
+    · subst hba; rw [if_pos rfl, w2]
+    · rw [if_neg hba]
+      obtain ⟨b1, b2, b3⟩ := hHa b (Or.inl hb)
+      rw [← h.size b hb]; exact rdN_frame fun j hj => wf _ (by omega) (by omega)
+  · obtain ⟨b1, b2, b3⟩ := hHa b (Or.inr hb)
+    rw [pr]; split
+    · rename_i hba; subst hba; rw [← h.next _ hb]; exact rdN_frame fun j hj => wf _ (by omega) (by omega)
+    · rw [← h.next b hb]; exact rdN_frame fun j hj => wf _ (by omega) (by omega)
+  · obtain ⟨b1, b2, b3⟩ := hHa b (Or.inr hb)
+    rw [pr]; split
+    · rename_i hba; subst hba; rw [← h.prevL _ hb]; exact rdN_frame fun j hj => wf _ (by omega) (by omega)
+    · rw [← h.prevL b hb]; exact rdN_frame fun j hj => wf _ (by omega) (by omega)
+
+/-- **41726 … 42054**: the allocated chunk C's header (`registerAlloc`), and the `rhs` units after it,
+    at N, registered free (`register`), the memory holding the result; ω₃ what `register` returns. -/
+theorem alloc_end1 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (s : State) (H F : Nat → Prop) (sp req C pv rhs : Nat) (hrep : RepAt μ s H F)
+    (hHC : H C) (hHF : ∀ a, H a ∨ F a → Al s.base a) (hb0 : 206864 ≤ s.base)
+    (hbT : s.base + 1073741824 < 2147483648) (hCa : (C - s.base) % 32 = 0) (hCb : s.base ≤ C)
+    (hpv : pv < 2147483648) (hrq : req + 1 < 33554432) (hrh : rhs < 33554432)
+    (hNe : C + 32 * (req + 1) + 32 * rhs ≤ s.base + 1073741824)
+    (hNdis : rhs ≠ 0 → ∀ a, H a ∨ F a → a + 32 ≤ C + 32 * (req + 1) ∨ C + 32 * (req + 1) + 32 ≤ a)
+    (hNold : rhs ≠ 0 → (registerAlloc s C pv (req + 1)).heads (binDown rhs) ≠ 0 →
+      F ((registerAlloc s C pv (req + 1)).heads (binDown rhs)))
+    (h1 : ω[1] = UInt64.ofNat sp) (h8 : ω[8] = UInt64.ofNat (32 * ((C - s.base) / 32)))
+    (h0 : ω[0] = UInt64.ofNat 0) (h4 : ω[4] = UInt64.ofNat (req + 1)) (h9 : ω[9] = UInt64.ofNat req)
+    (h7 : ω[7] = UInt64.ofNat 196792)
+    (h96 : rdN μ (sp + 96) 8 = s.base) (h48 : rdN μ (sp + 48) 8 = pv) (h80 : rdN μ (sp + 80) 8 = s.allocated)
+    (h72 : rdN μ (sp + 72) 8 = (C - s.base) / 32 + 1) (h104 : rdN μ (sp + 104) 8 = rhs)
+    (h88 : rdN μ (sp + 88) 8 = 204984) (h120 : rdN μ (sp + 120) 8 = 204984)
+    (hsp0 : 2147483648 ≤ sp) (hsp : sp + 152 < 4294967296) (hw : ∀ a, μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 41726 ω μ x 42054 ω' μ' x 80 ∧
+      RepAt μ' (register (registerAlloc s C pv (req + 1)) (C + 32 * (req + 1)) (req + 1) rhs).1
+        (fun a => H a ∨ (rhs ≠ 0 ∧ a = C + 32 * (req + 1))) (fun a => F a ∨ (rhs ≠ 0 ∧ a = C + 32 * (req + 1))) ∧
+      ω'[3] = UInt64.ofNat (register (registerAlloc s C pv (req + 1)) (C + 32 * (req + 1)) (req + 1) rhs).2 ∧
+      ω'[12] = UInt64.ofNat rhs ∧ ω'[8] = UInt64.ofNat (C + 32 * (req + 1)) ∧ ω'[2] = UInt64.ofNat (C + 32) ∧
+      ω'[1] = UInt64.ofNat sp ∧ (∀ a, μ'.writable a = true) ∧
+      (∀ a, a < 4294967296 → 2147483648 ≤ a → μ'.read a = μ.read a) := by
+  have hC : s.base + 32 * ((C - s.base) / 32) = C := by omega
+  have hHFl : ∀ a, H a ∨ F a → 206864 ≤ a ∧ a + 16 < 2147483648 := fun a ha => by
+    have := hHF a ha; unfold Al at this; omega
+  have hAC := hHF C (Or.inl hHC)
+  unfold Al at hAC
+  obtain ⟨ω1, r1, a2, a0, g1⟩ := aw_left0 (p := p) (P := P) (R := R) x ω μ sp s.base ((C - s.base) / 32) pv h1 h8
+    h0 h96 h48 (by omega) hsp (fun a => Memory.readable_of_writable (hw a))
+  rw [hC] at a2
+  obtain ⟨ω2, μ2, r2, m1, m2, b2, b8, b12, b3, fr2, ww2, g2⟩ := aw_hdr (p := p) (P := P) (R := R) x ω1 μ sp C pv req
+    s.allocated ((C - s.base) / 32 + 1) rhs (by rw [fget g1 1 (by decide) (by decide)]; exact h1) a2 a0
+    (by rw [fget g1 4 (by decide) (by decide)]; exact h4) (by rw [fget g1 9 (by decide) (by decide)]; exact h9)
+    h80 h72 h104 (by omega) (by omega) (by omega) hsp0 hsp hw
+  have rep2 : RepAt μ2 (registerAlloc s C pv (req + 1)) H F :=
+    registerAlloc_rep hrep hHC m1 m2 (fun b h1 h2 => fr2 b (by omega) h2) (by omega) (fun b hb => by
+      have := hHF b hb; unfold Al at this; omega)
+  have k1 : ω2[1] = UInt64.ofNat sp := by
+    rw [fget g2 1 (by decide) (by decide), fget g1 1 (by decide) (by decide)]; exact h1
+  have tr2 : ∀ a, a < 4294967296 → 2147483648 ≤ a → μ2.read a = μ.read a := fun a h h' => fr2 a h (by omega)
+  have st2 : ∀ a, sp + 32 ≤ a → a + 8 ≤ sp + 152 → rdN μ2 a 8 = rdN μ a 8 := fun a h h' =>
+    rdN_frame fun j hj => tr2 _ (by omega) (by omega)
+  by_cases hr0 : rhs = 0
+  · subst hr0
+    have r3 := ar_zero (p := p) (P := P) (R := R) x ω2 μ2 b12
+    have e : register (registerAlloc s C pv (req + 1)) (C + 32 * (req + 1)) (req + 1) 0 =
+        (registerAlloc s C pv (req + 1), req + 1) := by unfold register; simp
+    have eH : (fun a => H a ∨ ((0 : Nat) ≠ 0 ∧ a = C + 32 * (req + 1))) = H := funext fun a => propext (by simp)
+    have eF : (fun a => F a ∨ ((0 : Nat) ≠ 0 ∧ a = C + 32 * (req + 1))) = F := funext fun a => propext (by simp)
+    rw [e, eH, eF]
+    exact ⟨ω2, μ2, ((r1.trans r2).trans r3).mono (by omega), rep2, b3, b12, b8, b2, k1, ww2, tr2⟩
+  · generalize hN : C + 32 * (req + 1) = N at *
+    generalize hs3 : registerAlloc s C pv (req + 1) = s3 at *
+    have hBin : binDown rhs < 2432 := toBin_lt false (Nat.min_le_right _ _)
+    -- the bin of rhs, plus one, in ω₆
+    obtain ⟨ω3, r3, c6, c12, g3⟩ : ∃ ω3, FreeStepsH p R 41910 ω2 μ2 x 41958 ω3 μ2 x 16 ∧
+        ω3[6] = UInt64.ofNat (binDown rhs + 1) ∧ ω3[12] = UInt64.ofNat rhs ∧
+        ∀ j : Fin 13, j.val ∉ [6, 9, 11, 12] → ω3[j] = ω2[j] := by
+      by_cases hsm : rhs ≤ 127
+      · obtain ⟨ω3, r, e6, g⟩ := ar_bin_small (p := p) (P := P) (R := R) x ω2 μ2 rhs b12 (by omega) hsm
+        exact ⟨ω3, r.mono (by omega), e6, by rw [fget g 12 (by decide) (by decide)]; exact b12,
+          fun j hj => g j (by simp at hj ⊢; omega)⟩
+      · exact ar_bin_big (p := p) (P := P) (R := R) x ω2 μ2 sp rhs k1 b12 (by rw [st2 _ (by omega) (by omega)]; exact h104)
+          (by omega) (by omega) hsp (fun a => Memory.readable_of_writable (ww2 a))
+    have hold := rep2.heads (binDown rhs) (by unfold binCount; omega)
+    unfold A0 at hold
+    generalize hO : s3.heads (binDown rhs) = old at hold hNold
+    have hOF := hNold hr0
+    have hOA : old ≠ 0 → Al s.base old := fun h => hHF _ (Or.inr (hOF h))
+    have hNd := hNdis hr0
+    obtain ⟨ω4, μ4, r4, w1, w2, w3, w4, w5, w6, w7, w8, wf, ww4, d3, -, d12, g4⟩ := ar_write (p := p) (P := P) (R := R)
+      x ω3 μ2 sp (binDown rhs) N (req + 1) rhs old
+      (by rw [fget g3 1 (by decide) (by decide)]; exact k1) c6 (by rw [fget g3 8 (by decide) (by decide)]; exact b8)
+      (by rw [fget g3 3 (by decide) (by decide)]; exact b3) c12
+      (by rw [fget g3 7 (by decide) (by decide), fget g2 7 (by decide) (by decide), fget g1 7 (by decide) (by decide)]
+          exact h7)
+      (by rw [st2 _ (by omega) (by omega)]; exact h88) (by rw [st2 _ (by omega) (by omega)]; exact h120)
+      (by rw [st2 _ (by omega) (by omega)]; exact h104) hBin (by omega) (by omega) (by omega) (by omega)
+      (by rw [show 196792 + binDown rhs * 4 = 196792 + 4 * binDown rhs by omega]; exact hold)
+      (by by_cases h0 : old = 0
+          · omega
+          · have := hOA h0; unfold Al at this; omega)
+      (fun h0 => by
+        have := hOA h0; have h2 := hNd old (Or.inr (hOF h0)); unfold Al at this; omega)
+      hsp0 hsp ww2
+    have hNa : 206864 ≤ N := by omega
+    have rep4 := register_rep (M := N) (pv := req + 1) (size := rhs) rep2 hr0 (by unfold binCount; omega)
+      (by rw [hO]; intro e; subst e; have := hNd _ (Or.inr (hOF (by omega))); omega)
+      (by rw [show binDown rhs * 4 + 196792 = 196792 + binDown rhs * 4 by omega]; exact w1) w2 w3
+      (by rw [hO]; exact w4) w5 (by rw [hO]; exact w6)
+      (by rw [show 204984 + binDown rhs / 64 * 8 + 1544 = binDown rhs / 64 * 8 + 204984 + 1544 by omega]; exact w7) w8
+      (fun a h1 h2 h3 h4 h5 h6 => wf a h1 (by omega) h3 (by rw [hO] at h4; exact h4) (by omega) h6)
+      hNa (by omega) (by rw [hO]; intro h0; have := hOA h0; unfold Al at this; omega)
+      (fun a ha => by
+        rw [hO]
+        have hAa := hHF a ha; have hda := hNd a ha
+        unfold Al at hAa
+        refine ⟨by omega, by omega, by omega, ?_⟩
+        by_cases h0 : old = 0
+        · exact Or.inl h0
+        · have := hOA h0; unfold Al at this; omega)
+    have eH : (fun a => H a ∨ (rhs ≠ 0 ∧ a = N)) = (fun a => H a ∨ a = N) :=
+      funext fun a => propext (by simp [hr0])
+    have eF : (fun a => F a ∨ (rhs ≠ 0 ∧ a = N)) = (fun a => F a ∨ a = N) :=
+      funext fun a => propext (by simp [hr0])
+    have e2 : (register s3 N (req + 1) rhs).2 = rhs := by unfold register; simp [hr0]
+    rw [eH, eF, e2]
+    refine ⟨ω4, μ4, (((r1.trans r2).trans r3).trans r4).mono (by omega), rep4, d3, d12,
+      by rw [fget g4 8 (by decide) (by decide), fget g3 8 (by decide) (by decide)]; exact b8,
+      by rw [fget g4 2 (by decide) (by decide), fget g3 2 (by decide) (by decide)]; exact b2,
+      by rw [fget g4 1 (by decide) (by decide), fget g3 1 (by decide) (by decide)]; exact k1, ww4,
+      fun a h h' => (wf a h (by omega) (by omega) (by
+        by_cases h0 : old = 0
+        · exact Or.inl h0
+        · have := hOA h0; unfold Al at this; right; right; omega) (by omega) (by omega)).trans (tr2 a h h')⟩
+
 end Services.Bootstrap.Alloc

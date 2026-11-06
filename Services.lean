@@ -48,6 +48,7 @@ import Services.Bootstrap.NoInstrTail6
 import Services.Bootstrap.NoInstrTail7
 import Services.Bootstrap.NoInstrTail8
 import Services.Bootstrap.NoInstr
+import Services.Bootstrap.DecodeLoop
 import Services.Witness.Prefix
 import Services.Witness.EmptyTail
 import Services.Witness.Front1

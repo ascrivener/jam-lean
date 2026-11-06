@@ -1,5 +1,6 @@
 import JAM
 import PVM.Logic.FastCheck
+import Services.Picoalloc.Invariant
 open PVM JAM
 
 def go (Q : Prepared) (f : HostFn RefineCtx) (i : Nat) (gas : UInt64) (ch : Bool)
@@ -84,6 +85,8 @@ structure Svc where
   postClass : List (Nat × Nat × Nat × List UInt8)
   /-- More inputs whose paths' starting octets the prefix states (e.g. every hex digit of s). -/
   pathExtra : List (Nat × Nat × Nat × List UInt8) := []
+  /-- Further inputs whose whole refine paths the code facts cover (`code`, `codecheck`). -/
+  codeExtra : List (Nat × Nat × Nat × List UInt8) := []
   fnRanges : List (Nat × Nat)
   /-- Whether `Services/<name>/Memcpy.lean` exists (`memcpy_small` at the head of `fnRanges`):
       the prefix then calls it for each `memcpy` of fewer than 16 octets instead of stepping. -/
@@ -132,8 +135,9 @@ def bootstrapSvc : Svc where
   emptyClass := [(5, 0, 9, []), (200, 0, 70000, [])]
   postClass := [(5, 0, 9, 0 :: List.replicate 32 7), (200, 1, 70000, 0 :: List.replicate 32 255),
     (20000, 300, 3, 0 :: List.replicate 32 1)]
-  fnRanges := [(68729, 69139), (31894, 32166), (58434, 58509), (32166, 32412)]
+  fnRanges := [(68729, 69139), (31894, 32166), (58434, 58509), (32166, 32412), (40494, 40852), (41177, 44241)]
   pathExtra := [(3, 0, 0x01234567, []), (3, 0, 0x89abcdef, [])]
+  codeExtra := [(3, 0, 7, [2, 15, 15] ++ List.replicate 32 0)]
   memcpySummary := true
   emptyCode := true
   lBound := 16777217
@@ -450,6 +454,140 @@ structure Cx where
   env : RefineHost.Env
   tr : Array (Nat × Regs × Memory)
   path : List Nat
+
+/-- `allocck`: the picoalloc model (`Services/Picoalloc/Model.lean`) against the binary. For each
+    traced input, at every call of the allocator's entry points (`alloc` 40494, `dealloc` 40613,
+    `realloc` 40701), the model runs from the state the memory holds at the call and is compared
+    with the memory at the return: the result, the metadata and every chunk header from the base up. -/
+def allocState (μ : Memory) : Picoalloc.State :=
+  let A := 196792
+  let rd (a n : Nat) : Nat := Num.decodeLE (μ.readN a n)
+  { allocated := rd (A + 10048) 4, base := rd (A + 9728) 8, primary := rd (A + 10040) 8,
+    secondary := fun p => rd (A + 9736 + 8 * p) 8, heads := fun b => rd (A + 4 * b) 4,
+    hdr := fun a => ⟨rd a 4, rd (a + 4) 4, rd (a + 8) 4, rd (a + 12) 4⟩ }
+
+def allocDiff (s t : Picoalloc.State) : List String := Id.run do
+  let mut d : List String := []
+  if s.allocated != t.allocated then d := s!"allocated {s.allocated} vs {t.allocated}" :: d
+  if s.base != t.base then d := s!"base {s.base} vs {t.base}" :: d
+  if s.primary % 2 ^ 64 != t.primary % 2 ^ 64 then d := s!"primary {s.primary} vs {t.primary}" :: d
+  for p in [0:38] do
+    if s.secondary p % 2 ^ 64 != t.secondary p % 2 ^ 64 then d := s!"secondary {p}: {s.secondary p} vs {t.secondary p}" :: d
+  for b in [0:2432] do
+    if s.heads b != t.heads b then d := s!"head {b}: {s.heads b} vs {t.heads b}" :: d
+  -- the chunk chain from the base, up to the allocated space
+  let mut c := t.base
+  for _ in [0:100000] do
+    if t.base == 0 || c ≥ t.base + 32 * t.allocated then break
+    let hs := s.hdr c; let ht := t.hdr c
+    if hs.prev != ht.prev || hs.size != ht.size then d := s!"hdr {c}: {repr hs} vs {repr ht}" :: d
+    else if !Picoalloc.wordUsed ht.size && (hs.next != ht.next || hs.prevL != ht.prevL) then
+      d := s!"free hdr {c}: {repr hs} vs {repr ht}" :: d
+    let sz := Picoalloc.wordSize ht.size
+    if sz == 0 then d := s!"zero-size chunk at {c}" :: d; break
+    c := c + 32 * sz
+  return d.reverse
+
+
+/-- `WF`, computably, for testing it on traced states: the violations found. -/
+def listWalk (s : Picoalloc.State) (a : Nat) : Nat → List Nat
+  | 0 => []
+  | f + 1 => if a = 0 then [] else a :: listWalk s (s.hdr a).next f
+
+def wfCheck (s : Picoalloc.State) : List String := Id.run do
+  let mut d : List String := []
+  if s.base == 0 then return ["uninitialized"]
+  if s.base % 32 != 0 then d := "base misaligned" :: d
+  let cs := Picoalloc.walk s s.base s.top 200000
+  -- tiles
+  let mut a := s.base
+  for c in cs do
+    if c.addr != a then d := s!"gap at {a}" :: d
+    if c.size == 0 then d := s!"empty chunk at {c.addr}" :: d
+    a := c.addr + 32 * c.size
+  if a != s.top then d := s!"chunks end at {a}, not {s.top}" :: d
+  -- coalesced, prev
+  for (c, e) in cs.zip (cs.drop 1) do
+    if !c.used && !e.used then d := s!"adjacent free {c.addr} {e.addr}" :: d
+    if (s.hdr e.addr).prev != c.size then d := s!"prev at {e.addr}: {(s.hdr e.addr).prev} vs {c.size}" :: d
+  -- lists and bitmap
+  for b in [0:Picoalloc.binCount] do
+    let l := listWalk s (s.heads b) (cs.length + 1)
+    if l.length > cs.length then d := s!"bin {b}: list does not end" :: d
+    if l.eraseDups.length != l.length then d := s!"bin {b}: repeats" :: d
+    let want := (cs.filter fun c => !c.used && Picoalloc.binDown c.size == b).map (·.addr)
+    if l.length != want.length || !(want.all l.contains) then d := s!"bin {b}: list {l} vs free {want}" :: d
+    if s.heads b != 0 && (s.hdr (s.heads b)).prevL != 0 then d := s!"bin {b}: head prevL" :: d
+    for x in l do
+      let nx := (s.hdr x).next
+      if nx != 0 && (s.hdr nx).prevL != x then d := s!"bin {b}: back link at {nx}" :: d
+    if ((s.secondary (b / 64)).testBit (b % 64)) != (s.heads b != 0) then d := s!"bit {b}" :: d
+  for p in [0:38] do
+    if s.primary.testBit p != (s.secondary p % 2 ^ 64 != 0) then d := s!"primary bit {p}" :: d
+  if s.primary ≥ 2 ^ 38 then d := "primary has bits past 38" :: d
+  for p in [0:38] do
+    if s.secondary p ≥ 2 ^ 64 then d := s!"secondary {p} too wide" :: d
+  -- space
+  for c in cs do
+    if c.used && c.addr + 32 * c.size > s.base + 32 * s.allocated then d := s!"used chunk {c.addr} past space" :: d
+    if c.addr + 32 > s.base + 32 * s.allocated then d := s!"header {c.addr} past space" :: d
+  return d.reverse
+
+def mode_allocck (cx : Cx) : IO Unit := do
+  let grow : Picoalloc.Grow := fun _ _ => true
+  let salt := List.replicate 32 (0 : UInt8)
+  let inputs : List (Nat × Nat × Nat × List UInt8) :=
+    [cx.svc.base, cx.svc.emptyBase] ++ ((List.range 12).map fun n =>
+      (3, 0, 7, (n.toUInt8 :: List.replicate n 15) ++ salt)) ++
+    [(3, 0, 7, ([3, 3, 1, 2, 3, 4, 15, 15] : List UInt8) ++ salt)]
+  let mut calls := 0
+  let mut bad := 0
+  for (c, i, sid, y) in inputs do
+    let some tr := traceFor cx.code cx.h cx.acct cx.Q c i sid y | continue
+    let arr := tr
+    for k in [0:arr.size] do
+      let some (pc, ω, μ) := arr[k]? | continue
+      if pc != 40494 && pc != 40613 && pc != 40701 then continue
+      -- the matching return: the first step at the caller's return address with ω₁ restored
+      let ret := (ω.get 0).toNat; let sp := (ω.get 1).toNat
+      let target := cx.P.jumpTable.getD (ret / 2 - 1) 0
+      let some kr := (List.range (arr.size - k)).find? (fun j => j > 0 &&
+          (match arr[k + j]? with
+           | some (pc2, ω2, _) => pc2 == target && (ω2.get 1).toNat == sp
+           | none => false))
+        | IO.println s!"{pc} at {k}: no return found"; continue
+      let some (_, ω', μ') := arr[k + kr]? | continue
+      let s0 := allocState μ
+      let after := allocState μ'
+      let r7 := (ω.get 7).toNat; let r8 := (ω.get 8).toNat; let r9 := (ω.get 9).toNat; let r10 := (ω.get 10).toNat
+      let units (b : Nat) : Nat := (b + 31) / 32
+      let heapBase := 207008 - 32 -- refined below from the first initialisation
+      let (res, model) : Option Nat × Option Picoalloc.State :=
+        if pc == 40494 then
+          match Picoalloc.alloc grow (if s0.base == 0 then after.base else s0.base) (units r8) (units r7) s0 with
+          | some (q, s') => (some q, some s')
+          | none => (none, none)
+        else if pc == 40613 then (none, some (Picoalloc.free s0 r7))
+        else
+          match Picoalloc.realloc grow s0.base s0 r7 (units r9) (units r10) with
+          | some (q, s', _) => (some q, some s')
+          | none => (none, none)
+      let _ := heapBase
+      calls := calls + 1
+      if (← IO.getEnv "ALLOCCK_V") == some "1" then
+        IO.println s!"{pc} k={k} r7={r7} r8={r8} r9={r9} r10={r10} -> {(ω'.get 7).toNat}; changed={!(allocDiff s0 after).isEmpty}"
+      let got := (ω'.get 7).toNat
+      let rdiff := match res with
+        | some q => if q != got then [s!"result {q} vs {got}"] else []
+        | none => if pc == 40613 then [] else [s!"model failed, binary returned {got}"]
+      let w0 := if s0.base == 0 then [] else wfCheck s0
+      let w1 := wfCheck after
+      let d := rdiff ++ (match model with | some m => allocDiff m after | none => []) ++
+        (w0.map ("WF before: " ++ ·)) ++ (w1.map ("WF after: " ++ ·))
+      if !d.isEmpty then
+        bad := bad + 1
+        IO.println s!"MISMATCH {pc} at step {k} (r7={r7} r8={r8} r9={r9} r10={r10}) input |y|={y.length}: {d.take 6}"
+  IO.println s!"{calls} allocator calls checked, {bad} mismatches"
 
 set_option maxHeartbeats 2000000 in
 set_option linter.unusedVariables false in
@@ -848,7 +986,11 @@ def mode_codeRun (cx : Cx) : IO Unit := do
   let (ec, ei, es, ey) := cx.svc.emptyBase
   let emptyRun : List (Nat × Regs × Memory) :=
     if (mode == "code" || mode == "codecheck") && cx.svc.emptyCode then ((traceFor code h acct Q ec ei es ey).map (·.toList)).getD [] else []
-  let codePath := tr.toList.take n ++ emptyRun
+  let extraRuns : List (Nat × Regs × Memory) :=
+    if mode == "code" || mode == "codecheck" then
+      cx.svc.codeExtra.flatMap fun (c2, i2, s2, y2) => ((traceFor code h acct Q c2 i2 s2 y2).map (·.toList)).getD []
+    else []
+  let codePath := tr.toList.take n ++ emptyRun ++ extraRuns
   for (pc, regs, _) in codePath do
     if seen.contains pc then continue
     seen := pc :: seen
@@ -1415,7 +1557,7 @@ end Services.{NS}.CodeCheck
   -- (the facts the theorems after the prefix chase back to the start)
   let mut pathAcc : Array (Nat × Nat) := #[]
   let pathInputs := cx.svc.base :: cx.svc.emptyBase :: (cx.svc.segClass ++ cx.svc.segxExtra ++ cx.svc.emptyClass ++
-    cx.svc.pathExtra)
+    cx.svc.pathExtra ++ cx.svc.codeExtra)
   for (c2, i2, s2, y2) in pathInputs do
     let some t2 := traceFor code h acct Q c2 i2 s2 y2 | continue
     let mut w2 : Std.HashSet Nat := {}
@@ -1914,6 +2056,16 @@ theorem prefix_from_Y (b a : ByteArray) (jb : JamBlob) (hjb : JamBlob.parse? b =
 end Services.{NS}.Prefix"
 
 set_option linter.unusedVariables false in
+def mode_dis (cx : Cx) : IO Unit := do
+    -- `dis LO HI`: the instructions at LO … HI − 1, decoded in order, with block starts marked
+    let hi := (cx.args.getD 2 "0").toNat!
+    let mut pc := cx.n
+    while pc < hi do
+      match cx.P.decode pc with
+      | some ins => IO.println s!"{if cx.P.isBlockStart pc then "*" else " "} {pc} {leanInstr ins}"
+      | none => IO.println s!"  {pc} ?"
+      pc := cx.P.next pc
+
 def mode_steps (cx : Cx) : IO Unit := do
     -- `steps N M`: steps N … M − 1 of the base run: pc, instruction, the registers it changes
     let m := (cx.args.getD 2 "0").toNat!
@@ -2704,6 +2856,12 @@ def main (args0 : List String) : IO Unit := do
     | [c, i, s, k] => (c, i, s, List.replicate k 255)
     | [c, i, s, k, b0, f] => (c, i, s, (b0.toUInt8 :: List.replicate (k - 1) f.toUInt8).take k)
     | _ => if empty then svc.emptyBase else svc.base
+  -- `WITNESS_PAYLOAD=<hex>` replaces the payload (exploration only)
+  let y : List UInt8 := match (← IO.getEnv "WITNESS_PAYLOAD") with
+    | some hx => ((List.range (hx.length / 2)).map fun k =>
+        ((String.Pos.Raw.extract hx ⟨2 * k⟩ ⟨2 * k + 2⟩).foldl (fun n ch =>
+          16 * n + (if ch.isDigit then ch.toNat - 48 else ch.toNat - 87)) 0).toUInt8)
+    | none => y
   let pkg := mkPkg h sid (i + 1) (mkItem h sid y)
   let a : ByteArray := ⟨(Codec.nat c ++ Codec.nat i ++ Codec.nat sid ++ Codec.var ⟨y.toArray⟩ ++ (Blake2b.hash256 ⟨pkg.encode.toArray⟩).toList).toArray⟩
   let some (_, ω, μ) := standardInit code a | return
@@ -2719,6 +2877,7 @@ def main (args0 : List String) : IO Unit := do
   let cx : Cx := { svc, sBound, extraSimp, wild, args, mode0, empty, mode, n, bytes, code, h, acct, jb, P, Q, c, i, sid, y, pkg, a, ω, μ, env, tr, path }
   match mode with
   | "calls" => mode_calls cx
+  | "allocck" => mode_allocck cx
   | "div" => mode_div cx
   | "cmp" => mode_cmp cx
   | "vals" => mode_vals cx
@@ -2726,6 +2885,7 @@ def main (args0 : List String) : IO Unit := do
   | "memcpy" => mode_memcpy cx
   | "post" => mode_post cx
   | "steps" => mode_steps cx
+  | "dis" => mode_dis cx
   | "reads" => mode_reads cx
   | "seg" => mode_seg cx
   | "cut" => mode_cutAuto cx

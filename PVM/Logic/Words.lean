@@ -181,6 +181,12 @@ theorem rdN_mod64 (μ : Memory) (a : Nat) : rdN μ a 8 % 18446744073709551616 = 
 theorem encodeLE_rdN (μ : Memory) (a n : Nat) : Num.encodeLE n (rdN μ a n) = μ.readN a n := by
   have := encodeLE_decodeLE (μ.readN a n); rwa [Memory.length_readN] at this
 
+/-- A folded load through a write elsewhere. -/
+theorem rdN_writeN_disjoint (μ : Memory) (a : Nat) (bs : List UInt8) (b n : Nat)
+    (h : a + bs.length ≤ b ∨ b + n ≤ a) (ha : a + bs.length ≤ two32) (hb : b + n ≤ two32) :
+    rdN (μ.writeN a bs) b n = rdN μ b n := by
+  unfold rdN; rw [Memory.readN_writeN_disjoint μ a bs b n h ha hb]
+
 theorem store_rd1 (μ : Memory) (a : Nat) :
     [UInt8.ofNat (rdN μ a 1 % 18446744073709551616 % 256)] = μ.readN a 1 := by
   have h := rdN_lt μ a 1

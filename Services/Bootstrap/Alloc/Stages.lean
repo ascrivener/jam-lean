@@ -5,7 +5,7 @@ import Services.Bootstrap.Alloc.UnregisterRep
 # The binary's `free`, stage by stage
 
 The blocks of `FreeNext`/`FreePrev`/`Register` composed against the model's steps: the last
-stage (`free_tail`, 42814 … 40681) is `freeFinal`.
+stage (`free_tail`, 42814 … the return's `jumpInd` at 42978) is `freeFinal`.
 -/
 
 namespace Services.Bootstrap.Alloc
@@ -91,7 +91,7 @@ theorem readN_frame {μ μ' : Memory} {a n : Nat} (h : ∀ j, j < n → μ'.read
     μ'.readN a n = μ.readN a n := readN_congr2 h
 
 
-/-- **The last stage of `free`, 42814 … the return into `dealloc`** (40681): the merged chunk M of
+/-- **The last stage of `free`, 42814 … the return's `jumpInd`** (42978): the merged chunk M of
     `total` units, with `prev` pv, is registered free and the chunk after it records `total` — the
     memory holds the model's `freeFinal`. -/
 theorem free_tail {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
@@ -105,16 +105,17 @@ theorem free_tail {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
     (hpv : pv < 4294967296) (hold : s2.heads (binDown total) ≠ M)
     (hold1 : s2.heads (binDown total) ≠ 0 → Al base (s2.heads (binDown total)))
     (hHF : ∀ a, H a ∨ F a → Al base a) (hnext : M + 32 * total < base + 1073741824 → H (M + 32 * total))
-    (s0 : μ.readN (sp - 8) 8 = Num.encodeLE 8 1986) (s5 : μ.readN (sp - 16) 8 = Num.encodeLE 8 v5)
+    {ret : Nat} (s0 : μ.readN (sp - 8) 8 = Num.encodeLE 8 ret) (s5 : μ.readN (sp - 16) 8 = Num.encodeLE 8 v5)
     (s6 : μ.readN (sp - 24) 8 = Num.encodeLE 8 v6) (hv5 : v5 < 18446744073709551616)
-    (hv6 : v6 < 18446744073709551616) (hsp : 2147483700 ≤ sp) (hsp1 : sp < 4294967296)
+    (hv6 : v6 < 18446744073709551616) (hret : ret < 18446744073709551616) (hsp : 2147483700 ≤ sp)
+    (hsp1 : sp < 4294967296)
     {HT S0 S1 : Nat} (hMT : M + 32 ≤ HT) (hold1T : s2.heads (binDown total) ≠ 0 → s2.heads (binDown total) + 32 ≤ HT)
     (hHFT : ∀ a, H a ∨ F a → a + 32 ≤ HT) (hS : S0 + 24 ≤ sp ∧ sp ≤ S1) (hw : WrAt μ HT S0 S1) :
-    ∃ ω' μ', FreeStepsH p R 42814 ω μ x 40681 ω' μ' x 60 ∧
+    ∃ ω' μ', FreeStepsH p R 42814 ω μ x 42978 ω' μ' x 60 ∧
       RepAt μ' (freeFinal s2 M pv total (base + 1073741824)) (fun a => H a ∨ a = M) (fun a => F a ∨ a = M) ∧
       (∀ a, μ'.writable a = μ.writable a) ∧
       (∀ a, a < 4294967296 → 2147483648 ≤ a → μ'.read a = μ.read a) ∧
-      ω'[0] = UInt64.ofNat 1986 ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = UInt64.ofNat v5 ∧
+      ω'[0] = UInt64.ofNat ret ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = UInt64.ofNat v5 ∧
       ω'[6] = UInt64.ofNat v6 := by
   obtain ⟨hM1, hM2, hM3⟩ := hAM
   have hB : binDown total < 2432 := toBin_lt false (Nat.min_le_right _ _)
@@ -173,7 +174,7 @@ theorem free_tail {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
     hsp hsp1 (by omega) hbT (by omega)
     (by rw [← s0]; exact readN_frame fun j hj => stk _ (by omega) (by omega))
     (by rw [← s5]; exact readN_frame fun j hj => stk _ (by omega) (by omega))
-    (by rw [← s6]; exact readN_frame fun j hj => stk _ (by omega) (by omega)) hv5 hv6 hS
+    (by rw [← s6]; exact readN_frame fun j hj => stk _ (by omega) (by omega)) hv5 hv6 hret hS
     (fun hlt => by have := hHFT _ (Or.inl (hnext hlt)); omega) (hw.of_eq ww2)
   refine ⟨ω3, μ3, ((r1.trans r2).trans r3).mono (by omega), ?_, fun a => (ew a).trans (ww2 a),
     fun a h1 h2 => (ef a h1 (by omega)).trans (stk a h2 h1), e0, e1', e5, e6⟩

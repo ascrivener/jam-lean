@@ -81,6 +81,7 @@ import Services.Bootstrap.Alloc.AllocTail
 import Services.Bootstrap.Alloc.AllocImpl
 import Services.Bootstrap.Alloc.AllocRefines
 import Services.Bootstrap.Alloc.AllocWrap
+import Services.Bootstrap.Alloc.AllocGrow
 import Services.Witness.Prefix
 import Services.Witness.EmptyTail
 import Services.Witness.Front1

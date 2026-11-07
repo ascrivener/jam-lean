@@ -73,7 +73,7 @@ theorem ii_post {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) 
       ω'[1] = UInt64.ofNat (sp + 32) ∧
       (∀ a, a < 4294967296 → (a < 206516 ∨ 206528 ≤ a) → (a < 206824 ∨ 206844 ≤ a) →
         (a < 206880 ∨ 206896 ≤ a) → μ'.read a = μ.read a) ∧
-      (∀ a, μ'.writable a = true) := by
+      (∀ a, μ'.writable a = true) ∧ ∀ j : Fin 13, j.val ∉ [0, 1, 5, 6, 7, 8, 9, 10, 11] → ω'[j] = ω[j] := by
   have hr : ∀ a, μ.readable a = true := fun a => Memory.readable_of_writable (hwr a)
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?ω', ?μ', ?run, ?post⟩
@@ -83,7 +83,7 @@ theorem ii_post {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) 
     have hw64 : w < 2 ^ 64 := by rw [← hw]; exact rdN_lt64 μ _
     have hp64 : pri < 2 ^ 64 := by rw [← hp]; exact rdN_lt64 μ _
     refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, by reg_val, by reg_val, by reg_val, by reg_val, by reg_val,
-      fun a ha h1 h2 h3 => ?_, fun a => ?_⟩
+      fun a ha h1 h2 h3 => ?_, fun a => ?_, by reg_frame⟩
     all_goals try rd_simp [hwr]
     all_goals try decide
     · rw [show (9223372036854775808 : Nat) = 2 ^ 63 % 18446744073709551616 from rfl]
@@ -149,7 +149,7 @@ theorem init_rep {μ μ' : Memory} {s s' : State} {grow : Grow} (h : RepAt μ s 
     (w3 : rdN μ' 206824 8 = rdN μ 206824 8 ||| 2 ^ 63) (w4 : rdN μ' 206832 8 = rdN μ 206832 8 ||| 2 ^ 37)
     (w5 : rdN μ' 206840 4 = 1) (w6 : rdN μ' 206880 4 = 0) (w7 : rdN μ' 206884 4 = sizeWord 33554432 false)
     (w8 : rdN μ' 206888 4 = 0) (w9 : rdN μ' 206892 4 = 0)
-    (wf : ∀ a, a < 4294967296 → (a < 206516 ∨ 206528 ≤ a) → (a < 206824 ∨ 206844 ≤ a) →
+    (wf : ∀ a, a < 2147483648 → (a < 206516 ∨ 206528 ≤ a) → (a < 206824 ∨ 206844 ≤ a) →
       (a < 206880 ∨ 206896 ≤ a) → μ'.read a = μ.read a) :
     RepAt μ' s' (fun a => a = 206880) (fun a => a = 206880) := by
   unfold init at hinit

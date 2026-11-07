@@ -255,12 +255,14 @@ def growInplace (grow : Grow) (s : State) (ptr newReq : Nat) : Option State := d
   return freeFinal s nnc newSize remaining endAll
 
 /-- `realloc`: the new data address and state, and whether the old data must be copied there
-    (`copy_nonoverlapping` of the old usable size, then `free` of the old chunk). -/
+    (`copy_nonoverlapping` of the old usable size, then `free` of the old chunk). A request of 0
+    units frees the allocation and gives the null address, as the SDK's `realloc_impl` does
+    (it calls `free` and returns null). -/
 def realloc (grow : Grow) (heapBase : Nat) (s : State) (ptr align newReq : Nat) :
     Option (Nat × State × Bool) := do
   let cur := usable s ptr
   if newReq = cur then return (ptr, s, false)
-  if newReq = 0 then none
+  if newReq = 0 then return (0, free s ptr, false)
   if newReq < cur then return (ptr, shrink s ptr newReq, false)
   match growInplace grow s ptr newReq with
   | some s' => return (ptr, s', false)

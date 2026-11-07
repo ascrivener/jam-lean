@@ -89,6 +89,10 @@ import Services.Bootstrap.Alloc.AllocGrowRefines
 import Services.Bootstrap.Alloc.AllocInit
 import Services.Bootstrap.Alloc.AllocWrapGrow
 import Services.Bootstrap.Alloc.AllocFirst
+import Services.Bootstrap.Alloc.AllocFailModel
+import Services.Bootstrap.Alloc.AllocFailSteps
+import Services.Bootstrap.Alloc.AllocFailGrow
+import Services.Bootstrap.Alloc.AllocFailRefines
 import Services.Witness.Prefix
 import Services.Witness.EmptyTail
 import Services.Witness.Front1

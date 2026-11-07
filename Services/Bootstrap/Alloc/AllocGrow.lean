@@ -144,4 +144,35 @@ theorem ag_grow {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.En
     rw [setR7_other j.isLt hj7]
     exact g1 j (by simp at hj ⊢; omega)
 
+/-- 41558 … 41401: the heap's new top below the requested page: to the failure. -/
+theorem ag_post_fail {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (t Rq : Nat) (h7 : ω[7] = UInt64.ofNat t) (h6 : ω[6] = UInt64.ofNat Rq) (hlt : t < Rq)
+    (hRq : Rq < 18446744073709551616) : FreeStepsH p R 41558 ω μ x 41401 ω μ x 2 := by
+  rw [show ω = regsNF ω [] from rfl]
+  pvm_go [h7, h6, Nat.mod_eq_of_lt hRq, Nat.mod_eq_of_lt (show t < 18446744073709551616 by omega), hlt]
+
+/-- **41517 … 41401, the heap cannot grow**: the allocation's end lies past the heap's bound; the
+    host returns the bound and the code goes to the failure. -/
+theorem ag_grow_fail {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (x : RefineCtx) (ω : Regs)
+    (μ : Memory) (sp E base a b : Nat) (hb : heapBounds env.code = (a, b)) (hab : a ≤ b) (hbs : b < 4294967296)
+    (hR : b < pagesOf (base + 32 * E))
+    (h1 : ω[1] = UInt64.ofNat sp) (h5 : ω[5] = UInt64.ofNat E) (h96 : rdN μ (sp + 96) 8 = base)
+    (hE : E < 33554432) (hbase : base < 2147483648)
+    (hsp0 : 2147483648 ≤ sp) (hsp : sp + 152 < 4294967296) (hwr : ∀ a, μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p (refineContract env) 41517 ω μ x 41401 ω' μ' x 30 ∧ ω'[1] = ω[1] ∧
+      (∀ a, a < 4294967296 → (a < sp ∨ sp + 32 ≤ a) → (a < sp + 48 ∨ sp + 56 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.writable a = true) := by
+  obtain ⟨ω1, μ1, r1, a7, a6, -, -, -, -, -, fr1, ww1, g1⟩ :=
+    ag_pre (p := p) (P := P) (R := refineContract env) x ω μ sp E base h1 h5 h96 hE hbase hsp0 hsp hwr
+  have r2 := ag_call (p := p) (P := P) env x ω1 μ1 a b _ hb hab hbs a7 (by unfold pagesOf; split <;> omega) ww1
+  have r3 := ag_post_fail (p := p) (P := P) (R := refineContract env) x (setR7 ω1 b)
+    (μ1.setPages a (b - a) (some .write)) b _ setR7_self (by rw [setR7_other (by decide) (by decide)]; exact a6) hR
+    (by unfold pagesOf; split <;> omega)
+  refine ⟨_, _, ((r1.trans r2).trans r3).mono (by omega),
+    by rw [setR7_other (by decide) (by decide), fget g1 1 (by decide) (by decide)],
+    fun q h1 h2 h3 => fr1 q h1 h2 h3, fun a' => ?_⟩
+  rw [Memory.writable_setPages]; split
+  · rfl
+  · exact ww1 a'
+
 end Services.Bootstrap.Alloc

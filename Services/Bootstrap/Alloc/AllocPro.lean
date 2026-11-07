@@ -62,16 +62,17 @@ theorem al_pro {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (
     (sp k base : Nat) (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat 196792)
     (h8 : ω[8] = UInt64.ofNat (2 ^ k)) (hk : k < 32)
     (hsp : 2147483800 ≤ sp) (hsp1 : sp < 4294967296)
-    (hb : rdN μ 206520 8 = base) (hwr : ∀ a, μ.writable a = true) :
+    (hb : rdN μ 206520 8 = base) {HT S0 S1 : Nat} (hH : 206864 ≤ HT) (hS : S0 + 152 ≤ sp ∧ sp ≤ S1)
+    (hwr : WrAt μ HT S0 S1) :
     ∃ ω' μ', FreeStepsH p R 41177 ω μ x 41217 ω' μ' x 12 ∧
       ω'[1] = UInt64.ofNat (sp - 152) ∧ ω'[11] = UInt64.ofNat base ∧ ω'[12] = UInt64.ofNat 1 ∧
       μ'.readN (sp - 8) 8 = Num.encodeLE 8 ω[0].toNat ∧ μ'.readN (sp - 16) 8 = Num.encodeLE 8 ω[5].toNat ∧
       μ'.readN (sp - 24) 8 = Num.encodeLE 8 ω[6].toNat ∧ μ'.readN (sp - 40) 8 = Num.encodeLE 8 ω[10].toNat ∧
       rdN μ' (sp - 32) 8 = 204984 ∧
       (∀ a, a < 4294967296 → (a < sp - 152 ∨ sp ≤ a) → μ'.read a = μ.read a) ∧
-      (∀ a, μ'.writable a = true) ∧
+      (∀ a, μ'.writable a = μ.writable a) ∧
       ∀ j : Fin 13, j.val ∉ [1, 11, 12] → ω'[j] = ω[j] := by
-  have hr : ∀ a, μ.readable a = true := fun a => Memory.readable_of_writable (hwr a)
+  have hr := hwr.rd
   have hb64 : base < 18446744073709551616 := by rw [← hb]; exact rdN_lt64 μ _
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?ω', ?μ', ?run, ?post⟩
@@ -79,7 +80,7 @@ theorem al_pro {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (
   case post =>
     refine ⟨by reg_val, ?_, by reg_val, ?_, ?_, ?_, ?_, ?_, fun a ha h1 => ?_, fun a => ?_, by reg_frame⟩
     · simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some']
-      rw [rdN_frame (μ := μ) (a := 206520) (n := 8) (fun j hj => by rd_simp []), hb]
+      try rw [rdN_frame (μ := μ) (a := 206520) (n := 8) (fun j hj => by rd_simp []), hb]
     · rw [show sp - 8 = sp - 152 + 144 by omega]; rd_simp []; rfl
     · rw [show sp - 16 = sp - 152 + 136 by omega]; rd_simp []; rfl
     · rw [show sp - 24 = sp - 152 + 128 by omega]; rd_simp []; rfl

@@ -58,10 +58,11 @@ theorem free_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
     (h1 : ω[1] = UInt64.ofNat sp) (h8 : ω[8] = UInt64.ofNat ptr) (h7 : ω[7] = UInt64.ofNat 196792)
     (h0 : ω[0] = UInt64.ofNat 1986) (hsp : 2147483700 ≤ sp) (hsp1 : sp < 4294967296)
     (hb0 : 206864 ≤ s.base) (hbT : s.base + 1073741824 < 2147483648)
-    (hfo : FirstOk s) (hw : ∀ a, μ.writable a = true) :
+    (hfo : FirstOk s) {HT S0 S1 : Nat} (hHT : s.base + 32 * s.allocated ≤ HT) (hS : S0 + 24 ≤ sp ∧ sp ≤ S1)
+    (hw : WrAt μ HT S0 S1) :
     ∃ ω' μ', FreeStepsH p R 42327 ω μ x 40681 ω' μ' x 220 ∧ Rep μ' (free s ptr) ∧ WF (free s ptr) ∧
       FirstOk (free s ptr) ∧
-      (∀ a, μ'.writable a = true) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
       ω'[0] = UInt64.ofNat 1986 ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
   have hp0 : (s.hdr s.base).prev < 2147483648 := by unfold FirstOk at hfo; omega
   obtain ⟨c, hcm, hca, hcu⟩ := hc
@@ -99,6 +100,14 @@ theorem free_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
       · obtain ⟨c, hc, h1, -⟩ := unF a h; exact ⟨c, hc, h1⟩
     have := htiles.aligned c hc; have := htiles.mem_lt c hc; unfold Al; omega
   have hcs' : chunks s = pre ++ ⟨Xa, n, true⟩ :: post := hcs
+  -- every header lies in the allocated space, so in the writable heap
+  have hspT : ∀ c ∈ pre ++ ⟨Xa, n, true⟩ :: post, c.addr + 32 ≤ HT := fun c hc => by
+    unfold SpaceOk at hspace; have := (hspace c (hcs' ▸ hc)).2; omega
+  have hHFT : ∀ a, H a ∨ F a → a + 32 ≤ HT := by
+    intro a h
+    rcases h with h | h
+    · obtain ⟨c, hc, rfl⟩ := unH a h; exact hspT c hc
+    · obtain ⟨c, hc, rfl, -⟩ := unF a h; exact hspT c hc
   have hrep' : RepAt μ s H F :=
     ⟨hrep.heads, hrep.sec, hrep.pri, hrep.base, hrep.alloc,
       fun a h => by obtain ⟨c, hc, rfl⟩ := unH a h; exact hrep.prev c (hcs' ▸ hc),
@@ -172,6 +181,10 @@ theorem free_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
     exact (Tiles.around htiles).2.1 e rfl
   have hM2 := htl2.mem_lt ⟨M, total, true⟩ (List.mem_append_right _ List.mem_cons_self)
   simp only at hM2
+  have hMT : M + 32 ≤ HT := by
+    rcases hMw with h | ⟨c, hc, h⟩
+    · rw [h]; exact hspT _ hXm
+    · rw [← h]; exact hspT c (hsub c (Or.inl hc))
   have hMa : Al s.base M := by
     rcases hMw with h | ⟨c, hc, h⟩
     · rw [h]; exact hHF _ (Or.inl (mkH _ hXm))
@@ -280,6 +293,11 @@ theorem free_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
     rcases heads_ok hF2 (hbinlt total) with h | ⟨c, hc, h1, -⟩
     · exact absurd h h0
     · rw [← h1]; exact hAlc c (hsub0 c hc)
+  have hold1T : s2.heads (binDown total) ≠ 0 → s2.heads (binDown total) + 32 ≤ HT := by
+    intro h0
+    rcases heads_ok hF2 (hbinlt total) with h | ⟨c, hc, h1, -⟩
+    · exact absurd h h0
+    · rw [← h1]; exact hspT c (hsub0 c hc)
   have hnext' : M + 32 * total < s.base + 1073741824 → H (M + 32 * total) := by
     intro hlt
     cases hp : post0 with
@@ -304,7 +322,7 @@ theorem free_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
     hold'
     hold1'
     hnext'
-    hw
+    hHFT hMT hold1T hS hw
   refine ⟨ω', μ', run, ?_, hwfF, hfirst, ww, stk, e0, e1, e5, e6⟩
   -- the model's result, read from memory
   have hcsF := hchF

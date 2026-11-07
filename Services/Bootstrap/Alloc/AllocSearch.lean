@@ -67,7 +67,7 @@ theorem find_up {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) 
     (h1 : ω[1] = UInt64.ofNat sp) (h2 : ω[2] = UInt64.ofNat bu) (h7 : ω[7] = UInt64.ofNat 196792)
     (hsp : sp + 128 < 4294967296) (hf : rdN μ (sp + 120) 8 = 204984) (hp : rdN μ 206832 8 = s.primary)
     (hs : ∀ q, q < 38 → rdN μ (q * 8 + 204984 + 1544) 8 = s.secondary q) (hb : bu < 2432)
-    (hr : ∀ a, μ.readable a = true) :
+    {HT S0 S1 : Nat} (hHTs : 208896 ≤ HT) (hSTk : S0 ≤ sp ∧ sp + 152 ≤ S1) (hr : RdAt μ HT S0 S1) :
     (∀ bin, findFirst s bu = some bin → ∃ ω' q b, FreeStepsH p R 41297 ω μ x 41378 ω' μ x 30 ∧
       q * 64 + b = bin ∧ q < 38 ∧ b < 64 ∧ ω'[6] = UInt64.ofNat q ∧ ω'[2] = UInt64.ofNat b ∧
       ω'[3] = UInt64.ofNat 204984 ∧ ω'[5] = UInt64.ofNat s.primary ∧
@@ -82,9 +82,9 @@ theorem find_up {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) 
   by_cases hA : s.primary.testBit (bu / 64) = true ∧
       s.secondary (bu / 64) / 2 ^ (bu % 64) * 2 ^ (bu % 64) ≠ 0
   · obtain ⟨hA1, hA2⟩ := hA
-    obtain ⟨ω1, r1, a5, a3, a11, g1⟩ := ff_head_set (p := p) (P := P) (R := R) x ω μ sp bu s.primary h1 h2 h7 hsp hf hp hb hA1 hr
+    obtain ⟨ω1, r1, a5, a3, a11, g1⟩ := ff_head_set (p := p) (P := P) (R := R) x ω μ sp bu s.primary h1 h2 h7 hsp hf hp hb hA1 hHTs hSTk hr
     obtain ⟨ω2, r2, l2, a6, g2⟩ := ff_sec_found (p := p) (P := P) (R := R) x ω1 μ bu (s.secondary (bu / 64))
-      (by rw [fget g1 2 (by decide) (by decide)]; exact h2) a3 a11 hb hw hA2 hr
+      (by rw [fget g1 2 (by decide) (by decide)]; exact h2) a3 a11 hb hw hA2 hHTs hr
     have hff := ff_A hA1 l2
     refine ⟨fun bin hbin => ⟨ω2, bu / 64, ω2[2].toNat, (r1.trans r2).mono (by omega), ?_, hq0,
       (lowestAfter_spec l2).1, a6, UInt64.ofNat_toNat.symm, by rw [fget g2 3 (by decide) (by decide)]; exact a3,
@@ -101,17 +101,17 @@ theorem find_up {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) 
         ω2[5] = UInt64.ofNat s.primary ∧ ω2[3] = UInt64.ofNat 204984 ∧ ω2[11] = UInt64.ofNat (bu / 64) ∧
         ∀ j : Fin 13, j.val ∉ [3, 5, 6, 10, 11] → ω2[j] = ω[j] := by
       cases ht : s.primary.testBit (bu / 64)
-      · obtain ⟨ω1, r1, a5, a3, a11, g1⟩ := ff_head_clr (p := p) (P := P) (R := R) x ω μ sp bu s.primary h1 h2 h7 hsp hf hp hb ht hr
+      · obtain ⟨ω1, r1, a5, a3, a11, g1⟩ := ff_head_clr (p := p) (P := P) (R := R) x ω μ sp bu s.primary h1 h2 h7 hsp hf hp hb ht hHTs hSTk hr
         exact ⟨ω1, r1.mono (by omega), a5, a3, a11, g1⟩
       · have he : s.secondary (bu / 64) / 2 ^ (bu % 64) * 2 ^ (bu % 64) = 0 := by simp [ht] at hA; exact hA
-        obtain ⟨ω1, r1, a5, a3, a11, g1⟩ := ff_head_set (p := p) (P := P) (R := R) x ω μ sp bu s.primary h1 h2 h7 hsp hf hp hb ht hr
+        obtain ⟨ω1, r1, a5, a3, a11, g1⟩ := ff_head_set (p := p) (P := P) (R := R) x ω μ sp bu s.primary h1 h2 h7 hsp hf hp hb ht hHTs hSTk hr
         obtain ⟨ω2, r2, g2⟩ := ff_sec_none (p := p) (P := P) (R := R) x ω1 μ bu (s.secondary (bu / 64))
-          (by rw [fget g1 2 (by decide) (by decide)]; exact h2) a3 a11 hb hw he hr
+          (by rw [fget g1 2 (by decide) (by decide)]; exact h2) a3 a11 hb hw he hHTs hr
         exact ⟨ω2, (r1.trans r2).mono (by omega), by rw [fget g2 5 (by decide) (by decide)]; exact a5,
           by rw [fget g2 3 (by decide) (by decide)]; exact a3, by rw [fget g2 11 (by decide) (by decide)]; exact a11,
           frame_trans g2 g1 (fun j hj => by simp at hj ⊢; omega) (fun j hj => by simp at hj ⊢; omega)⟩
     by_cases hB : s.primary / 2 ^ (bu / 64 + 1) * 2 ^ (bu / 64 + 1) ≠ 0
-    · obtain ⟨ω3, q, r3, lq, a6, a2, g3⟩ := ff_next_found (p := p) (P := P) (R := R) x ω2 μ (bu / 64) s.primary a11 a5 a3 hq0 hp64 hB hr
+    · obtain ⟨ω3, q, r3, lq, a6, a2, g3⟩ := ff_next_found (p := p) (P := P) (R := R) x ω2 μ (bu / 64) s.primary a11 a5 a3 hq0 hp64 hB hHTs hr
       have hq : q < 38 := lowestAfter_lt38 hpri38 lq
       have hsq := hs q hq
       have hsne : s.secondary q ≠ 0 := by
@@ -141,7 +141,7 @@ theorem find_down {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
     (s : State) (bd : Nat) (hbits : BitsOk s.secondary s.primary s.heads)
     (h0 : ω[0] = UInt64.ofNat bd) (h5 : ω[5] = UInt64.ofNat s.primary) (h3 : ω[3] = UInt64.ofNat 204984)
     (hs : ∀ q, q < 38 → rdN μ (q * 8 + 204984 + 1544) 8 = s.secondary q) (hb : bd < 2432)
-    (hr : ∀ a, μ.readable a = true) :
+    {HT S0 S1 : Nat} (hHTs : 208896 ≤ HT) (hr : RdAt μ HT S0 S1) :
     (∀ bin, findFirst s bd = some bin → ∃ ω' q b, FreeStepsH p R 41614 ω μ x 41378 ω' μ x 30 ∧
       q * 64 + b = bin ∧ q < 38 ∧ b < 64 ∧ ω'[6] = UInt64.ofNat q ∧ ω'[2] = UInt64.ofNat b ∧
       ∀ j : Fin 13, j.val ∉ [2, 6, 11] → ω'[j] = ω[j]) ∧
@@ -157,7 +157,7 @@ theorem find_down {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
     obtain ⟨ω1, r1, a6, g1⟩ := fb_head_set (p := p) (P := P) (R := R) x ω μ bd s.primary h0 h5 hb hp64 hA1
     obtain ⟨ω2, r2, l2, b6, g2⟩ := fb_sec_found (p := p) (P := P) (R := R) x ω1 μ bd (s.secondary (bd / 64))
       (by rw [fget g1 0 (by decide) (by decide)]; exact h0) (by rw [fget g1 3 (by decide) (by decide)]; exact h3)
-      a6 hb hw hA2 hr
+      a6 hb hw hA2 hHTs hr
     have hff := ff_A hA1 l2
     refine ⟨fun bin hbin => ⟨ω2, bd / 64, ω2[2].toNat, (r1.trans r2).mono (by omega), ?_, hq0,
       (lowestAfter_spec l2).1, b6, UInt64.ofNat_toNat.symm, ?_⟩, fun hn => ?_⟩
@@ -178,7 +178,7 @@ theorem find_down {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
         obtain ⟨ω1, r1, a6, g1⟩ := fb_head_set (p := p) (P := P) (R := R) x ω μ bd s.primary h0 h5 hb hp64 ht
         obtain ⟨ω2, r2, b6, g2⟩ := fb_sec_none (p := p) (P := P) (R := R) x ω1 μ bd (s.secondary (bd / 64))
           (by rw [fget g1 0 (by decide) (by decide)]; exact h0) (by rw [fget g1 3 (by decide) (by decide)]; exact h3)
-          a6 hb hw he hr
+          a6 hb hw he hHTs hr
         exact ⟨ω2, (r1.trans r2).mono (by omega), b6,
           frame_trans g2 g1 (fun j hj => by simp at hj ⊢; omega) (fun j hj => by simp at hj ⊢; omega)⟩
     have c5 : ω2[5] = UInt64.ofNat s.primary := by rw [fget g12 5 (by decide) (by decide)]; exact h5
@@ -187,7 +187,7 @@ theorem find_down {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
     · obtain ⟨ω3, r3, a11, g3⟩ := fb_next_found (p := p) (P := P) (R := R) x ω2 μ (bd / 64) s.primary a6 c5 hq0 hp64 hB
       obtain ⟨ω4, r4, d6, d2, g4⟩ := ff_tail (p := p) (P := P) (R := R) x ω3 μ _ a11
         (by rw [fget g3 3 (by decide) (by decide)]; exact c3)
-        (Nat.lt_of_le_of_lt (Nat.div_mul_le_self _ _) hp64) hr
+        (Nat.lt_of_le_of_lt (Nat.div_mul_le_self _ _) hp64) hHTs hr
       have lq := lowestAfter_tz hp64 hB
       generalize Num.trailingZeros 64 (s.primary / 2 ^ (bd / 64 + 1) * 2 ^ (bd / 64 + 1)) = q at lq d6 d2
       have hq : q < 38 := lowestAfter_lt38 hpri38 lq

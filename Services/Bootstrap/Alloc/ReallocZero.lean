@@ -45,7 +45,7 @@ theorem realloc_zero_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X)
     (h10 : ω[10] = UInt64.ofNat 0) (h0 : ω[0] = UInt64.ofNat 1988)
     (hsp : 2147483852 ≤ sp) (hsp1 : sp < 4294967296)
     (hb0 : 206864 ≤ s.base) (hbT : s.base + 1073741824 < 2147483648)
-    (hfo : FirstOk s) {HT S0 S1 : Nat} (hHT : s.base + 32 * s.allocated ≤ HT) (hS : S0 + 152 ≤ sp ∧ sp ≤ S1)
+    (hfo : FirstOk s) {HT S0 S1 : Nat} (hHT : s.base + 32 * s.allocated ≤ HT) (hS : S0 + 176 ≤ sp ∧ sp ≤ S1)
     (hw : WrAt μ HT S0 S1) :
     realloc grow hb s ptr align 0 = some (0, free s ptr, false) ∧
       ∃ ω' μ', FreeStepsH p R 42980 ω μ x 40805 ω' μ' x 250 ∧ Rep μ' (free s ptr) ∧ WF (free s ptr) ∧

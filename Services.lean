@@ -86,6 +86,7 @@ import Services.Bootstrap.Alloc.AllocGrowMid
 import Services.Bootstrap.Alloc.AllocGrowImpl
 import Services.Bootstrap.Alloc.AllocGrowRefines
 import Services.Bootstrap.Alloc.AllocInit
+import Services.Bootstrap.Alloc.AllocWrapGrow
 import Services.Witness.Prefix
 import Services.Witness.EmptyTail
 import Services.Witness.Front1

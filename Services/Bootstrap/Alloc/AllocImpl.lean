@@ -356,7 +356,7 @@ theorem alloc_end1 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Reg
     (h1 : ω[1] = UInt64.ofNat sp) (h8 : ω[8] = UInt64.ofNat (32 * ((C - s.base) / 32)))
     (h0 : ω[0] = UInt64.ofNat 0) (h4 : ω[4] = UInt64.ofNat (req + 1)) (h9 : ω[9] = UInt64.ofNat req)
     (h7 : ω[7] = UInt64.ofNat 196792)
-    (h96 : rdN μ (sp + 96) 8 = s.base) (h48 : rdN μ (sp + 48) 8 = pv) (h80 : rdN μ (sp + 80) 8 = s.allocated)
+    (h96 : rdN μ (sp + 96) 8 = s.base) (h48 : rdN μ (sp + 48) 8 = pv) (A : Nat) (h80 : rdN μ (sp + 80) 8 = A)
     (h72 : rdN μ (sp + 72) 8 = (C - s.base) / 32 + 1) (h104 : rdN μ (sp + 104) 8 = rhs)
     (h88 : rdN μ (sp + 88) 8 = 204984) (h120 : rdN μ (sp + 120) 8 = 204984)
     (hsp0 : 2147483648 ≤ sp) (hsp : sp + 152 < 4294967296) (hw : ∀ a, μ.writable a = true) :
@@ -376,7 +376,7 @@ theorem alloc_end1 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Reg
     h0 h96 h48 (by omega) hsp (fun a => Memory.readable_of_writable (hw a))
   rw [hC] at a2
   obtain ⟨ω2, μ2, r2, m1, m2, b2, b8, b12, b3, fr2, ww2, g2⟩ := aw_hdr (p := p) (P := P) (R := R) x ω1 μ sp C pv req
-    s.allocated ((C - s.base) / 32 + 1) rhs (by rw [fget g1 1 (by decide) (by decide)]; exact h1) a2 a0
+    A ((C - s.base) / 32 + 1) rhs (by rw [fget g1 1 (by decide) (by decide)]; exact h1) a2 a0
     (by rw [fget g1 4 (by decide) (by decide)]; exact h4) (by rw [fget g1 9 (by decide) (by decide)]; exact h9)
     h80 h72 h104 (by omega) (by omega) (by omega) hsp0 hsp hw
   have rep2 : RepAt μ2 (registerAlloc s C pv (req + 1)) H F :=
@@ -599,7 +599,7 @@ theorem alloc_impl {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Reg
     (by rw [e2b]; exact hbT) (by rw [e2b]; exact hCa) (by rw [e2b]; omega) hpv (by omega) (by omega)
     (by rw [e2b]; omega) hNdis hNold b1 (by rw [e2b]; exact b8) b0
     (by rw [fget g2 4 (by decide) (by decide)]; exact a4) (by rw [fget g2 9 (by decide) (by decide)]; exact a9)
-    (by rw [fget g2 7 (by decide) (by decide)]; exact a7) (by rw [e2b]; exact m96) m48 (by rw [e2a]; exact m80)
+    (by rw [fget g2 7 (by decide) (by decide)]; exact a7) (by rw [e2b]; exact m96) m48 _ m80
     (by rw [e2b]; exact m72) m104 m88 m120 (by omega) (by omega) ww2
   generalize ht3 : register (registerAlloc t2 C pv (req + 1)) (C + 32 * (req + 1)) (req + 1) (S - req - 1) = rr at *
   have e3b : rr.1.base = s.base := by rw [← ht3, register_base, registerAlloc_base, e2b]

@@ -21,23 +21,29 @@ theorem alloc_mid_grow {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
     (hrq : req + 1 ≤ sz) (hsz : sz ≤ 33554432) (hCend : C + 32 * sz ≤ s.base + 1073741824)
     (hal : s.allocated < 2147483648)
     (E : Nat) (hE : (C - s.base) / 32 + 1 + req + (if sz - req - 1 = 0 then 0 else 1) = E)
-    (hgr : s.allocated < E) (pa pb : Nat) (hbd : heapBounds env.code = (pa, pb)) (hab : pa ≤ pb)
+    (hgr : s.allocated < E) (pb h : Nat) (hbd : heapBounds env.code = (48, pb)) (h48 : 48 ≤ h) (hhb : h ≤ pb)
     (hbs : pb < 4294967296) (hR : pagesOf (s.base + 32 * E) ≤ pb)
+    (hcost : growTop (pagesOf (s.base + 32 * E)) h pb ≤ h + 14)
     (h1 : ω[1] = UInt64.ofNat sp) (h10 : ω[10] = UInt64.ofNat C) (h11 : ω[11] = UInt64.ofNat sz)
     (h5 : ω[5] = UInt64.ofNat (196792 + 4 * bin)) (h2 : ω[2] = UInt64.ofNat b) (h6 : ω[6] = UInt64.ofNat q)
     (h3 : ω[3] = UInt64.ofNat 204984) (h8 : ω[8] = UInt64.ofNat 1) (h9 : ω[9] = UInt64.ofNat req)
     (h120 : rdN μ (sp + 120) 8 = 204984)
-    (hsp0 : 2147483648 ≤ sp) (hsp : sp + 152 < 4294967296) (hw : ∀ a, μ.writable a = true) :
+    (hsp0 : 2147483648 ≤ sp) (hsp : sp + 152 < 4294967296) {S0 S1 : Nat} (hHTs : 208896 ≤ 4096 * h)
+    (hSTk : S0 ≤ sp ∧ sp + 152 ≤ S1) (hSb : 4096 * pb ≤ S0) (hp : HeapPages μ 48 pb h)
+    (hst : ∀ a, S0 ≤ a → a < S1 → μ.writable a = true) (hHFT : ∀ a, H a ∨ F a → a + 32 ≤ 4096 * h) :
     ∃ ω' μ', FreeStepsH p (refineContract env) 41425 ω μ x 41726 ω' μ' x 150 ∧
       RepAt μ' (unregister { s with allocated := E } C bin) H F ∧
       ω'[1] = UInt64.ofNat sp ∧ ω'[8] = UInt64.ofNat (32 * ((C - s.base) / 32)) ∧ ω'[0] = UInt64.ofNat 0 ∧
       rdN μ' (sp + 96) 8 = s.base ∧ rdN μ' (sp + 48) 8 = (s.hdr C).prev ∧ rdN μ' (sp + 80) 8 = s.allocated ∧
       rdN μ' (sp + 72) 8 = (C - s.base) / 32 + 1 ∧ rdN μ' (sp + 104) 8 = sz - req - 1 ∧
       rdN μ' (sp + 88) 8 = 204984 ∧ rdN μ' (sp + 120) 8 = 204984 ∧
-      (∀ a, μ'.writable a = true) ∧
+      HeapPages μ' 48 pb (growTop (pagesOf (s.base + 32 * E)) h pb) ∧
+      (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧
       (∀ a, a < 4294967296 → 2147483648 ≤ a → (a < sp ∨ sp + 112 ≤ a) → μ'.read a = μ.read a) ∧
       ∀ j : Fin 13, j.val ∉ [0, 2, 3, 5, 6, 8, 10, 11, 12] → ω'[j] = ω[j] := by
   have hAC := hHF C (Or.inr hFC)
+  have hw := HeapPages.wrAt hp hhb hst
+  obtain ⟨-, ht1, ht2⟩ := growTop_ge (h := h) hR
   unfold Al at hAC
   have hEb : E ≤ 33554432 := by rw [← hE]; split <;> omega
   have hbase : rdN μ 206520 8 = s.base := by have := hrep.base; unfold A0 at this; exact this
@@ -45,10 +51,10 @@ theorem alloc_mid_grow {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
   have hHFl : ∀ a, H a ∨ F a → a + 16 < 2147483648 := fun a ha => by have := hHF a ha; unfold Al at this; omega
   -- the offsets
   obtain ⟨ω1, μ1, r1, a2, a5, a6, a12, s64, s32, s40, s88, fr1, ww1, g1⟩ := al_offs1 (p := p) (P := P) (R := refineContract env)
-    x ω μ sp C s.base s.allocated h1 h10 h8 h120 hbase halloc hal (by omega) (by omega) hsp0 hsp hw
+    x ω μ sp C s.base s.allocated h1 h10 h8 h120 hbase halloc hal (by omega) (by omega) hsp0 hsp hHTs hSTk hw
   obtain ⟨ω2, μ2, r2, b6, b8, b12, s96, fr2, ww2, g2⟩ := al_offs2 (p := p) (P := P) (R := refineContract env)
     x ω1 μ1 sp (C - s.base) s.base (by rw [fget g1 1 (by decide) (by decide)]; exact h1) a12 a6 a5
-    (by omega) (by omega) hsp0 hsp ww1
+    (by omega) (by omega) hsp0 hsp hHTs hSTk (hw.of_eq ww1)
   generalize hc : (C - s.base) / 32 = c at *
   obtain ⟨ω3, μ3, r3, c6, c3, c0, c11, c8, c5, s72, s104, s80, s56, fr3, ww3, g3⟩ := al_offs3 (p := p) (P := P)
     (R := refineContract env) x ω2 μ2 sp (s.base / 32) c req sz s.allocated C
@@ -57,7 +63,7 @@ theorem alloc_mid_grow {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
     (by rw [fget g2 11 (by decide) (by decide), fget g1 11 (by decide) (by decide)]; exact h11)
     (by rw [fget g2 2 (by decide) (by decide)]; exact a2)
     (by rw [fget g2 10 (by decide) (by decide), fget g1 10 (by decide) (by decide)]; exact h10)
-    (by omega) hrq (by omega) (by omega) (by omega) hal (by omega) hsp0 hsp ww2
+    (by omega) hrq (by omega) (by omega) (by omega) hal (by omega) hsp0 hsp hHTs hSTk ((hw.of_eq ww1).of_eq ww2)
   rw [hE] at c5
   have r4a := al_grow (p := p) (P := P) (R := refineContract env) x ω3 μ3 s.allocated E
     (by rw [fget g3 2 (by decide) (by decide), fget g2 2 (by decide) (by decide)]; exact a2) c5 hgr (by omega)
@@ -89,10 +95,12 @@ theorem alloc_mid_grow {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
     rw [show rdN μ3 (sp + 96) 8 = rdN μ2 (sp + 96) 8 from rdN_frame fun j hj => fr3 _ (by omega) (by omega)
       (by omega) (by omega)]
     exact rd_enc s96 (by omega)
-  obtain ⟨ωg, μg, rg, gE, g7, g9, g4', g0, g3', g10, frg, wwg, gg⟩ := ag_grow (p := p) (P := P) env x ω3 μ3 sp E
-    s.base pa pb hbd hab hbs hR
+  obtain ⟨ωg, μg, rg, gE, g7, g9, g4', g0, g3', g10, frg, hpg, hstg, gg⟩ := ag_grow (p := p) (P := P) env x ω3 μ3 sp E
+    s.base pb h hbd h48 hhb hbs hR hcost
     (by rw [fget g3 1 (by decide) (by decide), fget g2 1 (by decide) (by decide), fget g1 1 (by decide) (by decide)]
-        exact h1) c5 h96' k120 hEb (by omega) hsp0 hsp ww3
+        exact h1) c5 h96' k120 hEb (by omega) hsp0 hsp hHTs hSTk hSb
+        (HeapPages.of_eq hp fun a => (ww3 a).trans ((ww2 a).trans (ww1 a)))
+        (fun a h1 h2 => by rw [ww3, ww2, ww1]; exact hst a h1 h2)
   have tg : ∀ q, sp + 32 ≤ q → (q + 8 ≤ sp + 48 ∨ sp + 56 ≤ q) → q + 8 ≤ sp + 152 → rdN μg q 8 = rdN μ3 q 8 :=
     fun q h h' h'' => rdN_frame fun j hj => frg _ (by omega) (by omega) (by omega) (by omega)
   have repg : RepAt μg { s with allocated := E } H F := rep3.setAlloc gE
@@ -116,6 +124,7 @@ theorem alloc_mid_grow {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
     · subst e9; exact g9
     have := gg ⟨j, hj13⟩ (by simp at hj ⊢; omega)
     simpa only [Fin.getElem_fin] using this
+  have hwg := HeapPages.wrAt hpg (by omega) hstg
   obtain ⟨ω4, μ4, r5, rep4, p48, e8, ww4, fr4, g4⟩ := al_unreg (p := p) (P := P) (R := refineContract env) x ωg μg
     { s with allocated := E } H F sp C c bin q b repg hcb hqb hq hb hFC hHC hHF hnx hb0 hbT hpv (by omega)
     (by rw [fget ggf 1 (by decide) (by decide), fget g3 1 (by decide) (by decide), fget g2 1 (by decide) (by decide),
@@ -123,7 +132,7 @@ theorem alloc_mid_grow {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
     gC (by rw [fget ggf 3 (by decide) (by decide)]; exact c3)
     (by rw [tg _ (by omega) (by omega) (by omega)]; exact k64) (by rw [tg _ (by omega) (by omega) (by omega)]; exact k40)
     (by rw [tg _ (by omega) (by omega) (by omega)]; exact k32) (by rw [tg _ (by omega) (by omega) (by omega)]; exact k88)
-    (by rw [tg _ (by omega) (by omega) (by omega)]; exact k120) hsp0 hsp wwg
+    (by rw [tg _ (by omega) (by omega) (by omega)]; exact k120) hsp0 hsp (by omega) hSTk (fun a ha => by have := hHFT a ha; omega) hwg
   have t4 : ∀ a, sp + 32 ≤ a → a + 8 ≤ sp + 152 → (a + 8 ≤ sp + 48 ∨ sp + 56 ≤ a) → rdN μ4 a 8 = rdN μ3 a 8 :=
     fun a h h' e => (rdN_frame fun j hj => fr4 _ (by omega) (by omega) (by omega)).trans (tg a h e h')
   refine ⟨ω4, μ4, (((((r1.trans r2).trans r3).trans r4a).trans rg).trans r5).mono (by omega), rep4,
@@ -131,7 +140,7 @@ theorem alloc_mid_grow {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
       fget g2 1 (by decide) (by decide), fget g1 1 (by decide) (by decide)]; exact h1, e8,
     by rw [fget g4 0 (by decide) (by decide), fget ggf 0 (by decide) (by decide)]; exact c0, ?_, p48, ?_, ?_, ?_,
     by rw [t4 _ (by omega) (by omega) (by omega)]; exact k88, by rw [t4 _ (by omega) (by omega) (by omega)]; exact k120,
-    ww4, fun a h1 h2 h3 => ?_, ?_⟩
+    HeapPages.of_eq hpg ww4, fun a h1 h2 => by rw [ww4]; exact hstg a h1 h2, fun a h1 h2 h3 => ?_, ?_⟩
   · rw [t4 _ (by omega) (by omega) (by omega)]; exact h96'
   · rw [t4 _ (by omega) (by omega) (by omega)]; exact rd_enc s80 (by omega)
   · rw [t4 _ (by omega) (by omega) (by omega)]; exact rd_enc s72 (by omega)

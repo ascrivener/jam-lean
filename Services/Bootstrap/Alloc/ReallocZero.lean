@@ -45,12 +45,12 @@ theorem realloc_zero_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X)
     (h10 : ω[10] = UInt64.ofNat 0) (h0 : ω[0] = UInt64.ofNat 1988)
     (hsp : 2147483852 ≤ sp) (hsp1 : sp < 4294967296)
     (hb0 : 206864 ≤ s.base) (hbT : s.base + 1073741824 < 2147483648)
-    (hA : s.base + 32 * s.allocated ≤ 4294967296)
-    (hfo : FirstOk s) (hw : ∀ a, μ.writable a = true) :
+    (hfo : FirstOk s) {HT S0 S1 : Nat} (hHT : s.base + 32 * s.allocated ≤ HT) (hS : S0 + 176 ≤ sp ∧ sp ≤ S1)
+    (hw : WrAt μ HT S0 S1) :
     realloc grow hb s ptr align 0 = some (0, free s ptr, false) ∧
       ∃ ω' μ', FreeStepsH p R 42980 ω μ x 40805 ω' μ' x 250 ∧ Rep μ' (free s ptr) ∧ WF (free s ptr) ∧
         FirstOk (free s ptr) ∧
-        (∀ a, μ'.writable a = true) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
+        (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
         ω'[7] = UInt64.ofNat 0 ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat sp ∧
         ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
   refine ⟨realloc_zero hu, ?_⟩
@@ -61,12 +61,14 @@ theorem realloc_zero_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X)
   have htop : s.top = s.base + 1073741824 := by unfold State.top; rw [maxSize_val]
   have hsz : (s.hdr c.addr).size = sizeWord c.size true := by rw [chunks_hdr c hcm, hcu]
   have hca' : c.addr = ptr - 32 := by omega
+  have hcT : c.addr + 32 ≤ HT := by
+    have hsp' := hwf.2.2.2.2.2.2.2; unfold SpaceOk at hsp'; have := (hsp' c hcm).2; omega
   have hw' : rdN μ (ptr - 28) 4 = 2 * c.size + 1 := by
     rw [show ptr - 28 = c.addr + 4 by omega, hrep.size c hcm, hsz]; unfold sizeWord; simp
   have hus : usable s ptr = c.size - 1 := by
     unfold usable; rw [← hca', hsz, wordSize_sizeWord]
   obtain ⟨ω1, μ1, r1, a1, -, a6, st0, st5, st6, sf1, ww1, g1⟩ := rl_pro (p := p) (P := P) (R := R) x ω μ sp
-    ptr (2 * c.size + 1) h1 h8 (by omega) (by omega) hw' (by omega) (by omega) hsp1 hw
+    ptr (2 * c.size + 1) h1 h8 (by omega) (by omega) hw' (by omega) (by omega) hsp1 ⟨by omega, by omega⟩ ⟨by omega, hS.2⟩ hw
   obtain ⟨ω2, r2, b0, g2⟩ := rl_go_zero (p := p) (P := P) (R := R) x ω1 μ1 ((2 * c.size + 1) / 2 - 1)
     (by rw [fget g1 10 (by decide) (by decide)]; exact h10) a6 (by omega) (by omega)
   have rep1 : Rep μ1 s := hrep.congr_lock hwf hb0 hbT fun a ha1 ha2 ha3 =>
@@ -77,10 +79,9 @@ theorem realloc_zero_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X)
     (by rw [fget g2 1 (by decide) (by decide)]; exact a1)
     (by rw [fget g2 8 (by decide) (by decide), fget g1 8 (by decide) (by decide)]; exact h8)
     (by rw [fget g2 7 (by decide) (by decide), fget g1 7 (by decide) (by decide)]; exact h7)
-    (by omega) (by omega) hb0 hbT hfo (HT := 4294967296) (S0 := 0) (S1 := 4294967296) hA
-    ⟨by omega, by omega⟩ (fun a _ => ww1 a)
+    (by omega) (by omega) hb0 hbT hfo hHT ⟨by omega, by omega⟩ (hw.of_eq ww1)
   have rj := free_ret_realloc (p := p) (P := P) (R := R) x ω3 μ3 (by rw [c0, b0])
-  have ww3' : ∀ a, μ3.writable a = true := fun a => (ww3 a).trans (ww1 a)
+  have ww3' : ∀ a, μ3.writable a = μ.writable a := fun a => (ww3 a).trans (ww1 a)
   have stk : ∀ a, a < 4294967296 → sp - 152 ≤ a → μ3.read a = μ1.read a := stk3
   have rd8 : ∀ a v, μ1.readN a 8 = Num.encodeLE 8 v → v < 18446744073709551616 → sp - 152 ≤ a →
       a + 8 ≤ sp → rdN μ3 a 8 = v := fun a v h hv h1 h2 => by
@@ -92,7 +93,7 @@ theorem realloc_zero_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X)
         rfl)
     (rd8 _ _ (by rw [show sp - 152 + 136 = sp - 16 by omega]; exact st5) (UInt64.toNat_lt _) (by omega) (by omega))
     (rd8 _ _ (by rw [show sp - 152 + 128 = sp - 24 by omega]; exact st6) (UInt64.toNat_lt _) (by omega) (by omega))
-    (fun a => Memory.readable_of_writable (ww3' a))
+    ⟨by omega, by omega⟩ (hw.of_eq ww3').rd
   refine ⟨ω4, μ3, (((r1.trans r2).trans r3).trans (rj.trans r4)).mono (by omega), rep3, wf3, fo3, ww3',
     fun a h1 h2 => (stk a h1 (by omega)).trans (sf1 a h1 (Or.inr h2)), e7, e0,
     by rw [e1]; congr 1; omega, by rw [e5, UInt64.ofNat_toNat], by rw [e6, UInt64.ofNat_toNat]⟩

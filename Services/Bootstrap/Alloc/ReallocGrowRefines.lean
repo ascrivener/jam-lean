@@ -96,6 +96,11 @@ set_option maxRecDepth 100000
 
 variable {X : Type} {R : HostRel X}
 
+/-- The free tail's header lies in the allocated space. -/
+theorem tail_le {X b A HT n : Nat} (hX : (X - b) % 32 = 0) (hb : b ≤ X)
+    (hE : (X + 32 * n - b) / 32 + 1 ≤ A) (hHT : b + 32 * A ≤ HT) : X + 32 * n + 32 ≤ HT := by
+  omega
+
 /-- `mergeNext` with a free next chunk below the end: it leaves its bin and is merged in. -/
 theorem mergeNext_free {s : State} {c sz sz' T : Nat} (hlt : c + 32 * sz < T)
     (hw : (s.hdr (c + 32 * sz)).size = 2 * sz') :
@@ -280,7 +285,9 @@ theorem grow_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
     · exact absurd h h0
     · rw [← h1]; exact hspT c (hsub0 c hc)
   have hNT : cur + e.size - (req + 1) ≠ 0 → ptr - 32 + 32 * (req + 1) + 32 ≤ HT := by
-    intro hr0; have h' := hE; rw [if_neg hr0] at h'; omega
+    intro hr0
+    have h' := hE; rw [if_neg hr0] at h'
+    exact tail_le hXa.2 hXa.1 h' hHT
   have hnext' : ptr - 32 + 32 * (cur + e.size) < s.base + 1073741824 → H (ptr - 32 + 32 * (cur + e.size)) := by
     intro hlt
     cases hp : post0 with

@@ -479,7 +479,9 @@ theorem realloc_wf {grow : Grow} {hb : Nat} {s s' : State} {ptr newReq p : Nat} 
   · simp only [e1, ↓reduceIte, Option.pure_def, Option.some.injEq, Prod.mk.injEq] at h
     obtain ⟨-, rfl, -⟩ := h; exact hwf
   by_cases e2 : newReq = 0
-  · rw [e2] at e1; simp [e2, e1] at h
+  · simp only [e1, e2, ↓reduceIte, Option.pure_def, Option.some.injEq, Prod.mk.injEq] at h
+    obtain ⟨-, rfl, -⟩ := h
+    exact free_wf hwf ⟨c, hc, h1, h2⟩
   by_cases e3 : newReq < c.size - 1
   · simp only [e1, e2, e3, ↓reduceIte, Option.pure_def, Option.some.injEq, Prod.mk.injEq] at h
     obtain ⟨-, rfl, -⟩ := h

@@ -1,6 +1,7 @@
 import Services.Bootstrap.Alloc.Arith
 import Services.Bootstrap.Code
 import PVM.Logic.Go
+import Services.Bootstrap.Alloc.Writable
 
 /-!
 # `register_free_space` in the binary
@@ -130,7 +131,7 @@ theorem reg_write {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
     (hpv : pv < 4294967296) (hsz : 2 * size < 4294967296)
     (hold : rdN μ (bin * 4 + 196792) 4 = old) (hold1 : old < 2147483648)
     (holda : old ≠ 0 → 206864 ≤ old ∧ (old + 16 ≤ M ∨ M + 16 ≤ old))
-    (hw : ∀ a, μ.writable a = true) :
+    {HT S0 S1 : Nat} (hMH : M + 16 ≤ HT) (holdH : old ≠ 0 → old + 16 ≤ HT) (hw : WrAt μ HT S0 S1) :
     ∃ ω' μ', FreeStepsH p R 42862 ω μ x 42948 ω' μ' x 30 ∧
       rdN μ' (bin * 4 + 196792) 4 = M ∧ rdN μ' M 4 = pv ∧ rdN μ' (M + 4) 4 = 2 * size ∧
       rdN μ' (M + 8) 4 = old ∧ rdN μ' (M + 12) 4 = 0 ∧ (old ≠ 0 → rdN μ' (old + 12) 4 = M) ∧
@@ -140,10 +141,10 @@ theorem reg_write {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
         (old = 0 ∨ a < old + 12 ∨ old + 16 ≤ a) →
         (a < 204984 + bin / 64 * 8 + 1544 ∨ 204984 + bin / 64 * 8 + 1552 ≤ a) → (a < 206832 ∨ 206840 ≤ a) →
         μ'.read a = μ.read a) ∧
-      (∀ a, μ'.writable a = true) ∧
+      (∀ a, μ'.writable a = μ.writable a) ∧
       ∀ j : Fin 13, j.val ∉ [5, 6, 7, 9, 10, 11] → ω'[j] = ω[j] := by
   have hbin : (bin + 1 + 18446744073709551615) % 4294967296 = bin := by omega
-  have hr : ∀ a, μ.readable a = true := fun a => Memory.readable_of_writable (hw a)
+  have hr := hw.rd
   rw [show ω = regsNF ω [] from rfl]
   by_cases h0 : old = 0
   · subst h0
@@ -154,6 +155,7 @@ theorem reg_write {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
       all_goals try rd_simp [bitwise_and_m63, rdN_mod64, hw]
       all_goals first | rd_finish | reg_frame
   · obtain ⟨ho1, ho2⟩ := holda h0
+    have hoH := holdH h0
     refine ⟨?ω'', ?μ'', ?run', ?post'⟩
     case run' => pvm_go [h9, h2, h8, h3, h7, h4, hbin, hold, hw, hr, rdN_writeN_disjoint, ↓rdN_fold]
     case post' =>

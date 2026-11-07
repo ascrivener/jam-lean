@@ -20,15 +20,15 @@ theorem al_offs1 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs)
     (h8 : ω[8] = UInt64.ofNat 1)
     (hf : rdN μ (sp + 120) 8 = 204984) (hb : rdN μ 206520 8 = base) (ha : rdN μ 206840 4 = A)
     (hA : A < 2147483648) (hbC : base ≤ C) (hC : C < 18446744073709551616)
-    (hsp0 : 2147483648 ≤ sp) (hsp : sp + 152 < 4294967296) (hwr : ∀ a, μ.writable a = true) :
+    (hsp0 : 2147483648 ≤ sp) (hsp : sp + 152 < 4294967296) {HT S0 S1 : Nat} (hHTs : 208896 ≤ HT) (hSTk : S0 ≤ sp ∧ sp + 152 ≤ S1) (hwr : WrAt μ HT S0 S1) :
     ∃ ω' μ', FreeStepsH p R 41425 ω μ x 41455 ω' μ' x 12 ∧ ω'[2] = UInt64.ofNat A ∧ ω'[5] = UInt64.ofNat 0 ∧
       ω'[6] = UInt64.ofNat base ∧ ω'[12] = UInt64.ofNat (C - base) ∧
       μ'.readN (sp + 64) 8 = Num.encodeLE 8 ω[5].toNat ∧ μ'.readN (sp + 32) 8 = Num.encodeLE 8 ω[2].toNat ∧
       μ'.readN (sp + 40) 8 = Num.encodeLE 8 ω[6].toNat ∧ μ'.readN (sp + 88) 8 = Num.encodeLE 8 ω[3].toNat ∧
       (∀ a, a < 4294967296 → (a < sp + 32 ∨ sp + 96 ≤ a) → μ'.read a = μ.read a) ∧
-      (∀ a, μ'.writable a = true) ∧
+      (∀ a, μ'.writable a = μ.writable a) ∧
       ∀ j : Fin 13, j.val ∉ [2, 5, 6, 12] → ω'[j] = ω[j] := by
-  have hr : ∀ a, μ.readable a = true := fun a => Memory.readable_of_writable (hwr a)
+  have hr := hwr.rd
   have hb64 : base < 18446744073709551616 := by rw [← hb]; exact rdN_lt64 μ _
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?ω', ?μ', ?run, ?post⟩
@@ -55,14 +55,14 @@ theorem al_offs2 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs)
     (sp D base : Nat) (h1 : ω[1] = UInt64.ofNat sp) (h12 : ω[12] = UInt64.ofNat D)
     (h6 : ω[6] = UInt64.ofNat base) (h5 : ω[5] = UInt64.ofNat 0)
     (hD : D < 4294967296) (hb : base < 4294967296)
-    (hsp0 : 2147483648 ≤ sp) (hsp : sp + 152 < 4294967296) (hwr : ∀ a, μ.writable a = true) :
+    (hsp0 : 2147483648 ≤ sp) (hsp : sp + 152 < 4294967296) {HT S0 S1 : Nat} (hHTs : 208896 ≤ HT) (hSTk : S0 ≤ sp ∧ sp + 152 ≤ S1) (hwr : WrAt μ HT S0 S1) :
     ∃ ω' μ', FreeStepsH p R 41455 ω μ x 41476 ω' μ' x 7 ∧ ω'[6] = UInt64.ofNat (base / 32) ∧
       ω'[8] = UInt64.ofNat (base / 32 + D / 32 + 1) ∧ ω'[12] = UInt64.ofNat (D / 32) ∧
       μ'.readN (sp + 96) 8 = Num.encodeLE 8 base ∧
       (∀ a, a < 4294967296 → (a < sp + 96 ∨ sp + 104 ≤ a) → μ'.read a = μ.read a) ∧
-      (∀ a, μ'.writable a = true) ∧
+      (∀ a, μ'.writable a = μ.writable a) ∧
       ∀ j : Fin 13, j.val ∉ [6, 8, 12] → ω'[j] = ω[j] := by
-  have hr : ∀ a, μ.readable a = true := fun a => Memory.readable_of_writable (hwr a)
+  have hr := hwr.rd
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?ω', ?μ', ?run, ?post⟩
   case run => pvm_go [h1, h12, h6, h5, hwr, hr, rdN_writeN_disjoint, ↓rdN_fold, ↓loadI_fold]
@@ -95,7 +95,7 @@ theorem al_offs3 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs)
     (h8 : ω[8] = UInt64.ofNat (B + c + 1)) (h12 : ω[12] = UInt64.ofNat c) (h9 : ω[9] = UInt64.ofNat req)
     (h11 : ω[11] = UInt64.ofNat sz) (h2 : ω[2] = UInt64.ofNat A) (h10 : ω[10] = UInt64.ofNat C)
     (hc : B + c + 1 < 4294967296) (hrq : req + 1 ≤ sz) (hsz : sz < 2147483648) (hcr : c + 1 + req + 1 < 2147483648) (hB : B < 4294967296) (hA : A < 2147483648) (hC : C < 18446744073709551616)
-    (hsp0 : 2147483648 ≤ sp) (hsp : sp + 152 < 4294967296) (hwr : ∀ a, μ.writable a = true) :
+    (hsp0 : 2147483648 ≤ sp) (hsp : sp + 152 < 4294967296) {HT S0 S1 : Nat} (hHTs : 208896 ≤ HT) (hSTk : S0 ≤ sp ∧ sp + 152 ≤ S1) (hwr : WrAt μ HT S0 S1) :
     ∃ ω' μ', FreeStepsH p R 41476 ω μ x 41514 ω' μ' x 13 ∧ ω'[6] = UInt64.ofNat (c + 1) ∧
       ω'[3] = UInt64.ofNat c ∧ ω'[0] = UInt64.ofNat 0 ∧ ω'[11] = UInt64.ofNat (sz - req - 1) ∧
       ω'[8] = UInt64.ofNat (req + (c + 1)) ∧
@@ -104,9 +104,9 @@ theorem al_offs3 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs)
       μ'.readN (sp + 80) 8 = Num.encodeLE 8 A ∧ μ'.readN (sp + 56) 8 = Num.encodeLE 8 C ∧
       (∀ a, a < 4294967296 → (a < sp + 56 ∨ sp + 64 ≤ a) → (a < sp + 72 ∨ sp + 88 ≤ a) →
         (a < sp + 104 ∨ sp + 112 ≤ a) → μ'.read a = μ.read a) ∧
-      (∀ a, μ'.writable a = true) ∧
+      (∀ a, μ'.writable a = μ.writable a) ∧
       ∀ j : Fin 13, j.val ∉ [0, 3, 5, 6, 8, 11] → ω'[j] = ω[j] := by
-  have hr : ∀ a, μ.readable a = true := fun a => Memory.readable_of_writable (hwr a)
+  have hr := hwr.rd
   have e1 : (B + c + 1 + 4294967296 - B) % 4294967296 = c + 1 := by omega
   have e2 : (c + 1) / 2147483648 = 0 := by omega
   have e3 : (c + 4294967296 - c) % 4294967296 = 0 := by omega

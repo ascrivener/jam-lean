@@ -21,15 +21,15 @@ variable {X : Type} {R : HostRel X}
 /-- **42165 … 42211**: the frame, the heap's base 206880 in ω₅, and the 51 pages to grow to. -/
 theorem ii_pre {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
     (sp : Nat) (h1 : ω[1] = UInt64.ofNat sp)
-    (hsp0 : 2147483680 ≤ sp) (hsp : sp < 4294967296) (hwr : ∀ a, μ.writable a = true) :
+    (hsp0 : 2147483680 ≤ sp) (hsp : sp < 4294967296) {HT S0 S1 : Nat} (hHTs : 208896 ≤ HT) (hSTk : S0 + 32 ≤ sp ∧ sp ≤ S1) (hwr : WrAt μ HT S0 S1) :
     ∃ ω' μ', FreeStepsH p R 42165 ω μ x 42211 ω' μ' x 20 ∧
       ω'[1] = UInt64.ofNat (sp - 32) ∧ ω'[5] = UInt64.ofNat 206880 ∧ ω'[6] = UInt64.ofNat 51 ∧
       ω'[7] = UInt64.ofNat 51 ∧
       μ'.readN (sp - 8) 8 = Num.encodeLE 8 ω[0].toNat ∧ μ'.readN (sp - 16) 8 = Num.encodeLE 8 ω[5].toNat ∧
       μ'.readN (sp - 24) 8 = Num.encodeLE 8 ω[6].toNat ∧ μ'.readN (sp - 32) 8 = Num.encodeLE 8 ω[7].toNat ∧
       (∀ a, a < 4294967296 → (a < sp - 32 ∨ sp ≤ a) → μ'.read a = μ.read a) ∧
-      (∀ a, μ'.writable a = true) ∧ ∀ j : Fin 13, j.val ∉ [1, 5, 6, 7, 8] → ω'[j] = ω[j] := by
-  have hr : ∀ a, μ.readable a = true := fun a => Memory.readable_of_writable (hwr a)
+      (∀ a, μ'.writable a = μ.writable a) ∧ ∀ j : Fin 13, j.val ∉ [1, 5, 6, 7, 8] → ω'[j] = ω[j] := by
+  have hr := hwr.rd
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?ω', ?μ', ?run, ?post⟩
   case run => pvm_go [h1, hwr, hr, rdN_writeN_disjoint, ↓rdN_fold, ↓loadI_fold]
@@ -42,20 +42,21 @@ theorem ii_pre {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (
     · rd_simp []
     · rd_simp [hwr]
 
-/-- **42211, `ecalli 1`**, every page writable: the call returns the heap's bound b. -/
+/-- **42211, `ecalli 1` (Ω_♊)** in `initialize`: the host grows the heap to the 51 pages that hold
+    the first chunk's header, if its top h is below that, and returns the new top
+    `growTop 51 h b` in ω₇. -/
 theorem ii_call {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (x : RefineCtx) (ω : Regs)
-    (μ : Memory) (a b : Nat) (hb : heapBounds env.code = (a, b)) (hab : a ≤ b) (hbs : b < 4294967296)
-    (hw : ∀ a, μ.writable a = true) :
-    FreeStepsH p (refineContract env) 42211 ω μ x 42213 (setR7 ω b) (μ.setPages a (b - a) (some .write)) x 1 := by
-  have ht : growTop (reg ω 7) b b = b := by unfold growTop; rw [if_pos (by omega)]
-  have hp : HeapPages μ a b b := fun q h1 h2 => by
-    have h' : (μ.pages.get? q == some .write) = true := by
-      have := hw (q * pageSize); unfold Memory.writable at this
-      rwa [Nat.mul_div_cancel _ (show 0 < pageSize by unfold pageSize; decide)] at this
-    rw [h']; simp [h2]
-  rw [← ht]
-  exact FreeStepsH.growHeap env _ (d_42211 (p := p) (P := P)) hb hp hab (Nat.le_refl b) hbs rfl
-    (by rw [ht]; simp only [Nat.sub_self, Nat.zero_mul, Nat.add_zero]; decide) FreeStepsH.refl
+    (μ : Memory) (b h : Nat) (hb : heapBounds env.code = (48, b)) (hp : HeapPages μ 48 b h) (h48 : 48 ≤ h)
+    (hhb : h ≤ b) (hbs : b < 4294967296) (h7 : ω[7] = UInt64.ofNat 51) (hcost : growTop 51 h b ≤ h + 14) :
+    FreeStepsH p (refineContract env) 42211 ω μ x 42213 (setR7 ω (growTop 51 h b))
+      (μ.setPages 48 (growTop 51 h b - 48) (some .write)) x 1 := by
+  have hr7 : reg ω 7 = 51 := by
+    unfold reg; have : ω.get 7 = ω[7] := rfl; rw [this, h7]; rfl
+  have ht : growTop (reg ω 7) h b = growTop 51 h b := by rw [hr7]
+  have hge : h ≤ growTop 51 h b := by unfold growTop; split <;> omega
+  exact FreeStepsH.growHeap env _ (d_42211 (p := p) (P := P)) hb hp h48 hhb hbs ht
+    (by unfold Constants.CgasGeminiconst Constants.CgasGeminilinear hostCostMax; omega) FreeStepsH.refl
+
 
 /-- **42213 … 42325**, the heap reaching the 51 pages: the base, one unit allocated, the top bin
     (2431)'s head and bits, and the first chunk's header written; ω₇ = 1, the frame popped. -/
@@ -63,7 +64,7 @@ theorem ii_post {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) 
     (sp t w pri : Nat) (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat t) (h6 : ω[6] = UInt64.ofNat 51)
     (h5 : ω[5] = UInt64.ofNat 206880) (h0 : rdN μ sp 8 = 196792) (ht : 51 ≤ t) (ht1 : t < 4294967296)
     (hw : rdN μ 206824 8 = w) (hp : rdN μ 206832 8 = pri)
-    (hsp0 : 2147483648 ≤ sp) (hsp : sp + 32 < 4294967296) (hwr : ∀ a, μ.writable a = true) :
+    (hsp0 : 2147483648 ≤ sp) (hsp : sp + 32 < 4294967296) {HT S0 S1 : Nat} (hHTs : 208896 ≤ HT) (hSTk : S0 ≤ sp ∧ sp + 152 ≤ S1) (hwr : WrAt μ HT S0 S1) :
     ∃ ω' μ', FreeStepsH p R 42213 ω μ x 42325 ω' μ' x 30 ∧
       rdN μ' 206516 4 = 206880 ∧ rdN μ' 206520 8 = 206880 ∧ rdN μ' 206824 8 = w ||| 2 ^ 63 ∧
       rdN μ' 206832 8 = pri ||| 2 ^ 37 ∧ rdN μ' 206840 4 = 1 ∧ rdN μ' 206880 4 = 0 ∧
@@ -73,8 +74,8 @@ theorem ii_post {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) 
       ω'[1] = UInt64.ofNat (sp + 32) ∧
       (∀ a, a < 4294967296 → (a < 206516 ∨ 206528 ≤ a) → (a < 206824 ∨ 206844 ≤ a) →
         (a < 206880 ∨ 206896 ≤ a) → μ'.read a = μ.read a) ∧
-      (∀ a, μ'.writable a = true) ∧ ∀ j : Fin 13, j.val ∉ [0, 1, 5, 6, 7, 8, 9, 10, 11] → ω'[j] = ω[j] := by
-  have hr : ∀ a, μ.readable a = true := fun a => Memory.readable_of_writable (hwr a)
+      (∀ a, μ'.writable a = μ.writable a) ∧ ∀ j : Fin 13, j.val ∉ [0, 1, 5, 6, 7, 8, 9, 10, 11] → ω'[j] = ω[j] := by
+  have hr := hwr.rd
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?ω', ?μ', ?run, ?post⟩
   case run => pvm_go [h1, h7, h6, h5, h0, hw, hp, Nat.mod_eq_of_lt ht1, show 51 ≤ t from ht, hwr, hr,
@@ -100,13 +101,13 @@ theorem ii_post {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) 
 /-- **42131 … 42165**: `alloc_impl` saves ω₇ and ω₈, keeps ω₉ in ω₅, and calls `initialize`. -/
 theorem ai_call {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
     (sp : Nat) (h1 : ω[1] = UInt64.ofNat sp) (hsp0 : 2147483648 ≤ sp) (hsp : sp + 152 < 4294967296)
-    (hwr : ∀ a, μ.writable a = true) :
+    {HT S0 S1 : Nat} (hHTs : 208896 ≤ HT) (hSTk : S0 ≤ sp ∧ sp + 152 ≤ S1) (hwr : WrAt μ HT S0 S1) :
     ∃ ω' μ', FreeStepsH p R 42131 ω μ x 42165 ω' μ' x 6 ∧ ω'[0] = UInt64.ofNat 1998 ∧ ω'[5] = ω[9] ∧
       ω'[7] = ω[7] ∧ μ'.readN (sp + 48) 8 = Num.encodeLE 8 ω[7].toNat ∧
       μ'.readN (sp + 104) 8 = Num.encodeLE 8 ω[8].toNat ∧
       (∀ a, a < 4294967296 → (a < sp + 48 ∨ sp + 56 ≤ a) → (a < sp + 104 ∨ sp + 112 ≤ a) → μ'.read a = μ.read a) ∧
-      (∀ a, μ'.writable a = true) ∧ ∀ j : Fin 13, j.val ∉ [0, 5, 7] → ω'[j] = ω[j] := by
-  have hr : ∀ a, μ.readable a = true := fun a => Memory.readable_of_writable (hwr a)
+      (∀ a, μ'.writable a = μ.writable a) ∧ ∀ j : Fin 13, j.val ∉ [0, 5, 7] → ω'[j] = ω[j] := by
+  have hr := hwr.rd
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?ω', ?μ', ?run, ?post⟩
   case run => pvm_go [h1, hwr, hr, rdN_writeN_disjoint, ↓rdN_fold, ↓loadI_fold]
@@ -129,7 +130,7 @@ theorem ii_ret {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (
     bins at 41221. -/
 theorem ai_back {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
     (sp : Nat) (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat 1) (hsp : sp + 152 < 4294967296)
-    (hr : ∀ a, μ.readable a = true) :
+    {HT S0 S1 : Nat} (hHTs : 208896 ≤ HT) (hSTk : S0 ≤ sp ∧ sp + 152 ≤ S1) (hr : RdAt μ HT S0 S1) :
     ∃ ω', FreeStepsH p R 42147 ω μ x 41221 ω' μ x 6 ∧ ω'[8] = UInt64.ofNat (rdN μ (sp + 104) 8) ∧
       ω'[9] = ω[5] ∧ ω'[7] = UInt64.ofNat (rdN μ (sp + 48) 8) ∧ ω'[11] = UInt64.ofNat 1 ∧
       ∀ j : Fin 13, j.val ∉ [7, 8, 9, 11] → ω'[j] = ω[j] := by

@@ -38,16 +38,17 @@ theorem lock_test {w : Nat} (h0 : w % 256 = 0) :
 theorem dl_lock {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
     (sp ptr : Nat) (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat ptr) (hp0 : ptr ≠ 0)
     (hp1 : ptr < 4294967296) (hsp : 2147483716 ≤ sp) (hsp1 : sp < 4294967296)
-    (hl : rdN μ 206848 1 = 0) (hwr : ∀ a, μ.writable a = true) :
+    (hl : rdN μ 206848 1 = 0) {HT S0 S1 : Nat} (hH : 206864 ≤ HT) (hS : S0 + 16 ≤ sp ∧ sp ≤ S1)
+    (hwr : WrAt μ HT S0 S1) :
     ∃ ω' μ', FreeStepsH p R 40613 ω μ x 42327 ω' μ' x 22 ∧
       ω'[1] = UInt64.ofNat (sp - 16) ∧ ω'[8] = UInt64.ofNat ptr ∧ ω'[7] = UInt64.ofNat 196792 ∧
       ω'[0] = UInt64.ofNat 1986 ∧ ω'[5] = UInt64.ofNat 196792 ∧ ω'[4] = ω[4] ∧
       μ'.readN (sp - 8) 8 = Num.encodeLE 8 ω[0].toNat ∧ μ'.readN (sp - 16) 8 = Num.encodeLE 8 ω[5].toNat ∧
       (∀ a, a < 4294967296 → (a < sp - 16 ∨ sp ≤ a) → (a < 196608 ∨ 196616 ≤ a) →
         (a < 206848 ∨ 206852 ≤ a) → μ'.read a = μ.read a) ∧
-      (∀ a, μ'.writable a = true) ∧
+      (∀ a, μ'.writable a = μ.writable a) ∧
       ∀ j : Fin 13, j.val ∉ [0, 1, 4, 5, 7, 8, 9, 10] → ω'[j] = ω[j] := by
-  have hr : ∀ a, μ.readable a = true := fun a => Memory.readable_of_writable (hwr a)
+  have hr := hwr.rd
   have hand := lock_test (w := rdN μ 206848 4) (by rw [rdN4_mod]; exact hl)
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?ω', ?μ', ?run, ?post⟩
@@ -67,13 +68,14 @@ theorem dl_lock {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) 
 /-- **40681 … 40697**: the lock byte cleared, the frame popped; at the return's `jumpInd`. -/
 theorem dl_unlock {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
     (sp : Nat) (h1 : ω[1] = UInt64.ofNat sp) (h5 : ω[5] = UInt64.ofNat 196792)
-    (hsp : 2147483648 ≤ sp) (hsp1 : sp + 16 < 4294967296) (hwr : ∀ a, μ.writable a = true) :
+    (hsp : 2147483648 ≤ sp) (hsp1 : sp + 16 < 4294967296) {HT S0 S1 : Nat} (hH : 206864 ≤ HT)
+    (hS : S0 ≤ sp ∧ sp + 16 ≤ S1) (hwr : WrAt μ HT S0 S1) :
     ∃ ω' μ', FreeStepsH p R 40681 ω μ x 40697 ω' μ' x 5 ∧
       ω'[0] = UInt64.ofNat (rdN μ (sp + 8) 8) ∧ ω'[5] = UInt64.ofNat (rdN μ sp 8) ∧
       ω'[1] = UInt64.ofNat (sp + 16) ∧ rdN μ' 206848 1 = 0 ∧
-      (∀ a, a < 4294967296 → a ≠ 206848 → μ'.read a = μ.read a) ∧ (∀ a, μ'.writable a = true) ∧
+      (∀ a, a < 4294967296 → a ≠ 206848 → μ'.read a = μ.read a) ∧ (∀ a, μ'.writable a = μ.writable a) ∧
       ∀ j : Fin 13, j.val ∉ [0, 1, 5, 7] → ω'[j] = ω[j] := by
-  have hr : ∀ a, μ.readable a = true := fun a => Memory.readable_of_writable (hwr a)
+  have hr := hwr.rd
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?ω', ?μ', ?run, ?post⟩
   case run => pvm_go [h1, h5, hwr, hr, rdN_writeN_disjoint, ↓rdN_fold, ↓loadI_fold]
@@ -129,9 +131,10 @@ theorem dealloc_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω 
     (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat ptr)
     (hsp : 2147483716 ≤ sp) (hsp1 : sp < 4294967296)
     (hb0 : 206864 ≤ s.base) (hbT : s.base + 1073741824 < 2147483648)
-    (hfo : FirstOk s) (hl : rdN μ 206848 1 = 0) (hw : ∀ a, μ.writable a = true) :
+    (hfo : FirstOk s) (hl : rdN μ 206848 1 = 0) {HT S0 S1 : Nat} (hHT : s.base + 32 * s.allocated ≤ HT)
+    (hS : S0 + 40 ≤ sp ∧ sp ≤ S1) (hw : WrAt μ HT S0 S1) :
     ∃ ω' μ', FreeStepsH p R 40613 ω μ x 40697 ω' μ' x 247 ∧ Rep μ' (free s ptr) ∧ WF (free s ptr) ∧
-      FirstOk (free s ptr) ∧ rdN μ' 206848 1 = 0 ∧ (∀ a, μ'.writable a = true) ∧
+      FirstOk (free s ptr) ∧ rdN μ' 206848 1 = 0 ∧ (∀ a, μ'.writable a = μ.writable a) ∧
       (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
       ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
   have hc' := hc
@@ -142,18 +145,21 @@ theorem dealloc_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω 
     exact ht.mem_lt c hcm
   have htop : s.top = s.base + 1073741824 := by unfold State.top; rw [maxSize_val]
   obtain ⟨ω1, μ1, r1, a1, a8, a7, a0, a5, a4, st8, st16, fr1, ww1, g1⟩ :=
-    dl_lock (p := p) (P := P) (R := R) x ω μ sp ptr h1 h7 (by omega) (by omega) hsp hsp1 hl hw
+    dl_lock (p := p) (P := P) (R := R) x ω μ sp ptr h1 h7 (by omega) (by omega) hsp hsp1 hl (by omega)
+      ⟨by omega, by omega⟩ hw
   have rep1 : Rep μ1 s := hrep.congr_lock hwf hb0 hbT fun a ha1 ha2 ha3 =>
     fr1 a (by omega) (Or.inl (by omega)) (Or.inr (by unfold A0 at ha1; omega)) ha3
   obtain ⟨ω2, μ2, r2, rep2, wf2, fo2, ww2, stk2, b0, b1, b5, b6⟩ :=
     free_refines (p := p) (P := P) (R := R) x ω1 μ1 s (sp - 16) ptr hwf rep1 hc a1 a8 a7 a0 (by omega)
-      (by omega) hb0 hbT hfo ww1
+      (by omega) hb0 hbT hfo hHT ⟨by omega, by omega⟩ (hw.of_eq ww1)
   obtain ⟨ω3, μ3, r3, c0, c5, c1, cl, fr3, ww3, g3⟩ :=
-    dl_unlock (p := p) (P := P) (R := R) x ω2 μ2 (sp - 16) b1 (by rw [b5, a5]) (by omega) (by omega) ww2
+    dl_unlock (p := p) (P := P) (R := R) x ω2 μ2 (sp - 16) b1 (by rw [b5, a5]) (by omega) (by omega) (by omega)
+      ⟨by omega, by omega⟩ ((hw.of_eq ww1).of_eq ww2)
   have hb' : (free s ptr).base = s.base := free_base'
   refine ⟨ω3, μ3, ((r1.trans r2).trans r3).mono (by omega),
     rep2.congr_lock wf2 (by rw [hb']; exact hb0) (by rw [hb']; exact hbT)
-      (fun a ha1 ha2 ha3 => fr3 a (by omega) (by omega)), wf2, fo2, cl, ww3,
+      (fun a ha1 ha2 ha3 => fr3 a (by omega) (by omega)), wf2, fo2, cl,
+    fun a => (ww3 a).trans ((ww2 a).trans (ww1 a)),
     fun a ha1 ha2 => ((fr3 a ha1 (by omega)).trans (stk2 a ha1 (by omega))).trans
       (fr1 a ha1 (Or.inr ha2) (Or.inr (by omega)) (Or.inr (by omega))), ?_, ?_, ?_, ?_⟩
   · rw [c0, rdN_frame (μ := μ1) fun j hj => stk2 _ (by omega) (by omega), show sp - 16 + 8 = sp - 8 by omega]

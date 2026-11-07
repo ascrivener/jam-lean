@@ -26,8 +26,9 @@ theorem alloc_impl_grow {p : ByteArray} {P : Program} [HasCode p P] (env : Refin
     (hS : req + 1 ≤ wordSize (s.hdr C).size) (hCend : C + 32 * wordSize (s.hdr C).size ≤ s.base + 1073741824)
     (hal : s.allocated < 2147483648)
     (E : Nat) (hE : (C - s.base) / 32 + 1 + req + (if wordSize (s.hdr C).size - req - 1 = 0 then 0 else 1) = E)
-    (hgr : s.allocated < E) (pa pb : Nat) (hbd : heapBounds env.code = (pa, pb)) (hab : pa ≤ pb)
+    (hgr : s.allocated < E) (pb h : Nat) (hbd : heapBounds env.code = (48, pb)) (h48 : 48 ≤ h) (hhb : h ≤ pb)
     (hbs : pb < 4294967296) (hR : pagesOf (s.base + 32 * E) ≤ pb)
+    (hcost : growTop (pagesOf (s.base + 32 * E)) h pb ≤ h + 14)
     (hNdis : wordSize (s.hdr C).size - req - 1 ≠ 0 → ∀ a, H a ∨ F a →
       a + 32 ≤ C + 32 * (req + 1) ∨ C + 32 * (req + 1) + 32 ≤ a)
     (hNold : wordSize (s.hdr C).size - req - 1 ≠ 0 →
@@ -36,13 +37,20 @@ theorem alloc_impl_grow {p : ByteArray} {P : Program} [HasCode p P] (env : Refin
       F ((registerAlloc (unregister { s with allocated := E } C bin) C (s.hdr C).prev (req + 1)).heads
         (binDown (wordSize (s.hdr C).size - req - 1))))
     (hFin : C + 32 * wordSize (s.hdr C).size < s.base + 1073741824 → H (C + 32 * wordSize (s.hdr C).size))
-    (hwr : ∀ a, μ.writable a = true) :
+    {S0 S1 : Nat} (hHTs : 208896 ≤ 4096 * h) (hSTk : S0 + 152 ≤ sp ∧ sp ≤ S1) (hSb : 4096 * pb ≤ S0)
+    (hp : HeapPages μ 48 pb h) (hst : ∀ a, S0 ≤ a → a < S1 → μ.writable a = true)
+    (hHFT : ∀ a, H a ∨ F a → a + 32 ≤ 4096 * h) :
     ∃ ω' μ', FreeStepsH p (refineContract env) 41177 ω μ x 41423 ω' μ' x 500 ∧
       RepAt μ' (allocPost { s with allocated := E } bin req (wordSize (s.hdr C).size) (s.base + 1073741824))
         (fun a => H a ∨ (wordSize (s.hdr C).size - req - 1 ≠ 0 ∧ a = C + 32 * (req + 1)))
         (fun a => F a ∨ (wordSize (s.hdr C).size - req - 1 ≠ 0 ∧ a = C + 32 * (req + 1))) ∧
       ω'[7] = UInt64.ofNat (C + 32) ∧ ω'[0] = ω[0] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ ω'[1] = ω[1] ∧
-      (∀ a, μ'.writable a = true) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) := by
+      HeapPages μ' 48 pb (growTop (pagesOf (s.base + 32 * E)) h pb) ∧
+      (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) := by
+  have hwr := HeapPages.wrAt hp hhb hst
+  obtain ⟨hRt, ht1, ht2⟩ := growTop_ge (h := h) hR
+  have hpE := pagesOf_ge (s.base + 32 * E)
+  generalize hT : growTop (pagesOf (s.base + 32 * E)) h pb = t at *
   have hAC := hHF C (Or.inr hFC)
   unfold Al at hAC
   have hHFl : ∀ a, H a ∨ F a → a + 16 < 2147483648 := fun a ha => by have := hHF a ha; unfold Al at this; omega
@@ -58,13 +66,17 @@ theorem alloc_impl_grow {p : ByteArray} {P : Program} [HasCode p P] (env : Refin
   have hpri : rdN μ 206832 8 = s.primary := by have := hrep.pri; unfold A0 at this; exact this
   obtain ⟨ω1, μ1, r1, q, b, hqb, hq, hb, a1, a10, a11, a5, a2, a6, a3, a8, a9, a4, a12, a7, st0, st5, st6, st10,
       st32, sf1, ww1⟩ := alloc_entry (p := p) (P := P) (R := refineContract env) x ω μ s sp req bin C (s.hdr C).size hbits h1 h7 h8 h9
-    hsp hsp1 hbase (by omega) hpri hsec hm hbin hheads hsz (by omega) (by omega) hwr
+    hsp hsp1 hbase (by omega) hpri hsec hm hbin hheads hsz (by omega) (by omega) hHTs hSTk ⟨by omega, by have := hHFT C (Or.inr hFC); omega⟩ hwr
   rw [hwS] at a11
   have rep1 : RepAt μ1 s H F := hrep.congr_low (fun a ha => sf1 a (by omega) (Or.inl (by omega))) hHFl
-  obtain ⟨ω2, μ2, r2, rep2, b1, b8, b0, m96, m48, m80, m72, m104, m88, m120, ww2, fr2, g2⟩ := alloc_mid_grow (p := p)
-    (P := P) env x ω1 μ1 s H F (sp - 152) req bin q b C S rep1 hcb hqb hq hb hFC hHC hHF hnx hb0 hbT hpv hS
-    (by omega) hCend hal E hE hgr pa pb hbd hab hbs hR a1 a10 a11 a5 a2 a6 a3 a8 a9 (by rw [show sp - 152 + 120 = sp - 32 by omega]; exact st32)
-    (by omega) (by omega) ww1
+  obtain ⟨ω2, μ2, r2, rep2, b1, b8, b0, m96, m48, m80, m72, m104, m88, m120, hp2, hst2, fr2, g2⟩ := alloc_mid_grow (p := p)
+    (P := P) (S0 := S0) (S1 := S1) env x ω1 μ1 s H F (sp - 152) req bin q b C S rep1 hcb hqb hq hb hFC hHC hHF hnx hb0 hbT hpv hS
+    (by omega) hCend hal E hE hgr pb h hbd h48 hhb hbs hR (by rw [hT]; exact hcost) a1 a10 a11 a5 a2 a6 a3 a8 a9 (by rw [show sp - 152 + 120 = sp - 32 by omega]; exact st32)
+    (by omega) (by omega) hHTs ⟨by omega, by omega⟩ hSb (HeapPages.of_eq hp ww1)
+    (fun a h1 h2 => by rw [ww1]; exact hst a h1 h2) hHFT
+  rw [hT] at hp2
+  have hw2 := HeapPages.wrAt hp2 (by omega) hst2
+  have hHFT2 : ∀ a, H a ∨ F a → a + 32 ≤ 4096 * t := fun a ha => by have := hHFT a ha; omega
   generalize hpvd : (s.hdr C).prev = pv at *
   generalize ht2 : unregister { s with allocated := E } C bin = t2 at *
   have e2b : t2.base = s.base := by rw [← ht2, unregister_base]
@@ -76,7 +88,8 @@ theorem alloc_impl_grow {p : ByteArray} {P : Program} [HasCode p P] (env : Refin
     (by rw [e2b]; omega) hNdis hNold b1 (by rw [e2b]; exact b8) b0
     (by rw [fget g2 4 (by decide) (by decide)]; exact a4) (by rw [fget g2 9 (by decide) (by decide)]; exact a9)
     (by rw [fget g2 7 (by decide) (by decide)]; exact a7) (by rw [e2b]; exact m96) m48 _ m80
-    (by rw [e2b]; exact m72) m104 m88 m120 (by omega) (by omega) ww2
+    (by rw [e2b]; exact m72) m104 m88 m120 (by omega) (by omega) (by omega) ⟨by omega, by omega⟩ hHFT2
+    (fun h0 => by have h' := hE; rw [if_neg h0] at h'; omega) hw2
   generalize ht3 : register (registerAlloc t2 C pv (req + 1)) (C + 32 * (req + 1)) (req + 1) (S - req - 1) = rr at *
   have e3b : rr.1.base = s.base := by rw [← ht3, register_base, registerAlloc_base, e2b]
   have k112 : rdN μ3 (sp - 152 + 112) 8 = 0 := by
@@ -101,10 +114,18 @@ theorem alloc_impl_grow {p : ByteArray} {P : Program} [HasCode p P] (env : Refin
     (by rw [e3b]; exact hb0) (by rw [e3b]; exact hbT)
     (fun h => Or.inl (by rw [hS32]; exact hFin (by rw [e3b, hS32] at h; exact h)))
     (by rw [e3b, hS32]; exact hCend) (by omega) c1 c12 c8 c3 c2 k120 k112
-    (by rw [← ht3]; unfold register; split <;> simp <;> omega) (by omega) (by omega) (by omega) ww3
+    (by rw [← ht3]; unfold register; split <;> simp <;> omega) (by omega) (by omega) (by omega) (by omega) ⟨by omega, by omega⟩
+    (fun a ha => by
+      rcases ha with (h' | ⟨h0, rfl⟩) | (h' | ⟨h0, rfl⟩)
+      · exact hHFT2 a (Or.inl h')
+      · have h'' := hE; rw [if_neg h0] at h''; omega
+      · exact hHFT2 a (Or.inr h')
+      · have h'' := hE; rw [if_neg h0] at h''; omega)
+    (hw2.of_eq ww3)
   have tr : ∀ a, sp - 152 + 128 ≤ a → a + 8 ≤ sp → rdN μ3 a 8 = rdN μ1 a 8 := fun a h h' =>
     rdN_frame fun j hj => (fr3 _ (by omega) (by omega)).trans (fr2 _ (by omega) (by omega) (by omega))
-  refine ⟨ω4, μ4, (((r1.trans r2).trans r3).trans r4).mono (by omega), ?_, d7, ?_, ?_, ?_, ?_, ww4,
+  refine ⟨ω4, μ4, (((r1.trans r2).trans r3).trans r4).mono (by omega), ?_, d7, ?_, ?_, ?_, ?_,
+    HeapPages.of_eq hp2 (fun a => (ww4 a).trans (ww3 a)), fun a h1 h2 => by rw [ww4, ww3]; exact hst2 a h1 h2,
     fun a h h' => ((fr4 a h (by omega)).trans ((fr3 a h (by omega)).trans (fr2 a h (by omega) (by omega)))).trans
       (sf1 a h (Or.inr h'))⟩
   · rw [allocPost_eq (s := { s with allocated := E }) hcb (show s.base ≤ C by omega) hCa]

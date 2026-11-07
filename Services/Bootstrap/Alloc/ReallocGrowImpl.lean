@@ -71,15 +71,24 @@ theorem realloc_impl_grow {p : ByteArray} {P : Program} [HasCode p P] (x : X) (�
       Al s.base ((growHdr (unregister s (ptr - 32 + 32 * cur) (binDown sz)) (ptr - 32) (req + 1)).heads
         (binDown (cur + sz - (req + 1)))))
     (hnext : ptr - 32 + 32 * (cur + sz) < s.base + 1073741824 → H (ptr - 32 + 32 * (cur + sz)))
-    (hwr : ∀ a, μ.writable a = true) :
+    {HT S0 S1 : Nat} (hHFT : ∀ a, H a ∨ F a → a + 32 ≤ HT)
+    (hNT : cur + sz - (req + 1) ≠ 0 → ptr - 32 + 32 * (req + 1) + 32 ≤ HT)
+    (hold1T : cur + sz - (req + 1) ≠ 0 →
+      (growHdr (unregister s (ptr - 32 + 32 * cur) (binDown sz)) (ptr - 32) (req + 1)).heads
+        (binDown (cur + sz - (req + 1))) ≠ 0 →
+      (growHdr (unregister s (ptr - 32 + 32 * cur) (binDown sz)) (ptr - 32) (req + 1)).heads
+        (binDown (cur + sz - (req + 1))) + 32 ≤ HT)
+    (hS : S0 + 152 ≤ sp ∧ sp ≤ S1) (hwr : WrAt μ HT S0 S1) :
     ∃ ω' μ', FreeStepsH p R 42980 ω μ x 40805 ω' μ' x 250 ∧
       RepAt μ' (freeFinal (growHdr (unregister s (ptr - 32 + 32 * cur) (binDown sz)) (ptr - 32) (req + 1))
           (ptr - 32 + 32 * (req + 1)) (req + 1) (cur + sz - (req + 1)) (s.base + 1073741824))
         (fun a => H a ∨ (cur + sz - (req + 1) ≠ 0 ∧ a = ptr - 32 + 32 * (req + 1)))
         (fun a => F a ∨ (cur + sz - (req + 1) ≠ 0 ∧ a = ptr - 32 + 32 * (req + 1))) ∧
-      (∀ a, μ'.writable a = true) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
       ω'[7] = UInt64.ofNat ptr ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat sp ∧
       ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
+  have hXT := hHFT _ (Or.inl hXH)
+  have hnT := hHFT _ (Or.inl hnc)
   obtain ⟨hX1, hX2, hX3⟩ := hX
   have hHFl : ∀ b, H b ∨ F b → b + 16 < 2147483648 := fun b hb => by
     have := hHF b hb; unfold Al at this; omega
@@ -92,7 +101,8 @@ theorem realloc_impl_grow {p : ByteArray} {P : Program} [HasCode p P] (x : X) (�
   have hwX : rdN μ (ptr - 28) 4 = 2 * cur + 1 := by
     rw [show ptr - 28 = ptr - 32 + 4 by omega, hrep.size _ hXH, hsz]
   obtain ⟨ω1, μ1, r1, a1, a11, a6, st0, st5, st6, sf1, ww1, g1⟩ := rl_pro (p := p) (P := P) (R := R) x ω μ sp
-    ptr (2 * cur + 1) h1 h8 (by omega) (by omega) hwX (by omega) hsp hsp1 hwr
+    ptr (2 * cur + 1) h1 h8 (by omega) (by omega) hwX (by omega) hsp hsp1 ⟨by omega, by omega⟩ hS hwr
+  have W1 := hwr.of_eq ww1
   have rep1 : RepAt μ1 s H F := hrep.congr_low (fun a ha => sf1 a (by omega) (Or.inl (by omega))) hHFl
   have lo1 : ∀ a n, a + n ≤ 2147483648 → rdN μ1 a n = rdN μ a n := fun a n h =>
     rdN_frame fun j hj => sf1 _ (by omega) (Or.inl (by omega))
@@ -106,14 +116,17 @@ theorem realloc_impl_grow {p : ByteArray} {P : Program} [HasCode p P] (x : X) (�
     (by rw [fget g2 8 (by decide) (by decide), fget g1 8 (by decide) (by decide)]; exact h8)
     (by rw [fget g2 10 (by decide) (by decide), fget g1 10 (by decide) (by decide)]; exact h10) b5 b3
     (by omega) (by rw [lo1 _ _ (by omega), hrep.size _ hXH, hsz]) hlt (by omega) hb1 hbT (by omega)
-    (by omega) (by omega) ww1
+    (by omega) (by omega) (by omega) ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ W1
+  have W3 := W1.of_eq ww3
   have rep3 : RepAt μ3 s H F := rep1.congr_low (fun a ha => sf3 a (by omega) (Or.inl (by omega))) hHFl
   have b4 := rg_br_in (p := p) (P := P) (R := R) x ω3 μ3 (ptr - 32 + 32 * cur) (s.base + 1073741824) c0 c4 honc
     (by omega) hbT
   have hwn : rdN μ3 (ptr - 32 + 32 * cur + 4) 4 = 2 * sz := by rw [rep3.size _ hnc, hw]
   obtain ⟨ω5, μ5, r5, d5, d11, d80, sf5, ww5, g5⟩ := rg_nhdr (p := p) (P := P) (R := R) x ω3 μ3 (sp - 152)
     (ptr - 32 + 32 * cur) (2 * sz) (by rw [fget g3 1 (by decide) (by decide)]; exact
-      (by rw [fget g2 1 (by decide) (by decide)]; exact a1)) c0 (by omega) hwn (by omega) (by omega) ww3
+      (by rw [fget g2 1 (by decide) (by decide)]; exact a1)) c0 (by omega) hwn (by omega) (by omega)
+    ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ W3
+  have W5 := W3.of_eq ww5
   have b6 := rg_br_free (p := p) (P := P) (R := R) x ω5 μ5 (by rw [d11]; congr 1; omega)
   have k1 : ω5[1] = UInt64.ofNat (sp - 152) := by
     rw [fget g5 1 (by decide) (by decide), fget g3 1 (by decide) (by decide), fget g2 1 (by decide) (by decide)]
@@ -122,7 +135,7 @@ theorem realloc_impl_grow {p : ByteArray} {P : Program} [HasCode p P] (x : X) (�
     rw [← c112]; exact rdN_frame fun j hj => sf5 _ (by omega) (Or.inr (by omega))
   obtain ⟨ω6, r6, f4, f12, f11, g6⟩ := rg_avail_ok (p := p) (P := P) (R := R) x ω5 μ5 (sp - 152) cur sz (req + 1)
     k1 d5 (by rw [fget g5 12 (by decide) (by decide)]; exact c12) k112 hav (by omega) (by omega) (by omega)
-    (by omega) (fun a => Memory.readable_of_writable (ww5 a))
+    (by omega) ⟨by omega, by omega⟩ W5.rd
   have hal5 : rdN μ5 206840 4 = s.allocated := by
     rw [rdN_frame (μ := μ1) fun j hj => (sf5 _ (by omega) (Or.inl (by omega))).trans (sf3 _ (by omega) (Or.inl (by omega)))]
     have := rep1.alloc; unfold A0 at this; exact this
@@ -136,7 +149,9 @@ theorem realloc_impl_grow {p : ByteArray} {P : Program} [HasCode p P] (x : X) (�
     (by rw [fget g6 2 (by decide) (by decide), fget g5 2 (by decide) (by decide)]; exact c2)
     (by rw [fget g6 3 (by decide) (by decide), fget g5 3 (by decide) (by decide), fget g3 3 (by decide) (by decide)]
         exact b3)
-    hal5 hal (by omega) (by omega) hav (by omega) (by omega) (by omega) (by omega) (by omega) ww5
+    hal5 hal (by omega) (by omega) hav (by omega) (by omega) (by omega) (by omega) (by omega)
+    (by omega) ⟨by omega, by omega⟩ W5
+  have W7 := W5.of_eq ww7
   have b8 := rg_nogrow (p := p) (P := P) (R := R) x ω7 μ7 s.allocated _ f5' f11' (by omega) hal (by omega)
   -- registers kept through the checks
   have K : ∀ j : Nat, (hj : j < 13) → j ∉ [0, 1, 2, 3, 4, 5, 6, 10, 11, 12] → ω7[j]'hj = ω[j]'hj := fun j hj h => by
@@ -160,7 +175,8 @@ theorem realloc_impl_grow {p : ByteArray} {P : Program} [HasCode p P] (x : X) (�
   obtain ⟨ω8, μ8, r9, rep8, ww8, sf8, u2, u5, u6, g8⟩ := grow_unreg (p := p) (P := P) (R := R) x ω7 μ7 s H F
     (sp - 152) s.base (ptr - 32 + 32 * cur) sz (req + 1) (ptr - 32 + 32 * (req + 1)) (cur + sz) rep7 K1
     (by rw [K 7 (by decide) (by decide)]; exact h7) K3 s40 s48 k112' s64 s72 s56 k80 hav (by omega)
-    hb0 hbT hHF hw hfree (by omega) (by omega) ww7
+    hb0 hbT hHF hw hfree (by omega) (by omega) hHFT ⟨by omega, by omega⟩ W7
+  have W8 := W7.of_eq ww8
   -- the frame, read back
   have stk1 : ∀ a, a < 4294967296 → sp - 152 + 128 ≤ a → μ8.read a = μ1.read a := fun a h1 h2 =>
     (((sf8 a h1 (by omega)).trans (sf7 a h1 (Or.inr (by omega)))).trans (sf5 a h1 (Or.inr (by omega)))).trans
@@ -194,9 +210,11 @@ theorem realloc_impl_grow {p : ByteArray} {P : Program} [HasCode p P] (x : X) (�
       (by omega) (by omega))
     (rd8 _ _ (by rw [show sp - 152 + 136 = sp - 16 by omega]; exact st5) (UInt64.toNat_lt _) (by omega) (by omega))
     (rd8 _ _ (by rw [show sp - 152 + 128 = sp - 24 by omega]; exact st6) (UInt64.toNat_lt _) (by omega) (by omega))
-    (by omega) (by omega) ww8
+    (by omega) (by omega) hHFT ⟨by omega, by omega⟩ W8 hNT hold1T
   refine ⟨ω9, μ9, ((((((((((r1.trans r2).trans r3).trans b4).trans r5).trans b6).trans r6).trans r7).trans b8).trans
-      r9).trans r10).mono (by omega), rep9, ww9, fun a h1 h2 => ?_, e7, e0,
+      r9).trans r10).mono (by omega), rep9,
+    fun a => (ww9 a).trans ((ww8 a).trans ((ww7 a).trans ((ww5 a).trans ((ww3 a).trans (ww1 a))))),
+    fun a h1 h2 => ?_, e7, e0,
     by rw [e1]; congr 1; omega, by rw [e5, UInt64.ofNat_toNat], by rw [e6, UInt64.ofNat_toNat]⟩
   rw [sf9 a h1 (by omega) (Or.inr (by omega)), stk1 a h1 (by omega)]
   exact sf1 a h1 (Or.inr h2)

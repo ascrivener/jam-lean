@@ -231,7 +231,8 @@ theorem realloc_first {grow : Grow} {hb : Nat} {s s' : State} {ptr newReq p : Na
   · simp only [e1, ↓reduceIte, Option.pure_def, Option.some.injEq, Prod.mk.injEq] at h
     obtain ⟨-, rfl, -⟩ := h; exact h0
   by_cases e2 : newReq = 0
-  · simp only [e1, e2, ↓reduceIte, Option.pure_def, Option.some.injEq, Prod.mk.injEq] at h
+  · subst e2
+    simp only [e1, ↓reduceIte, Option.pure_def, Option.some.injEq, Prod.mk.injEq] at h
     obtain ⟨-, rfl, -⟩ := h
     obtain ⟨pre, post, hcs⟩ := List.append_of_mem hc
     have hc' : c = ⟨ptr - 32, c.size, true⟩ := by

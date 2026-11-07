@@ -97,4 +97,90 @@ theorem ii_post {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) 
                      List.getElem!_cons_succ, UInt8.reduceOfNat]
                    decide)
 
+/-- **42131 … 42165**: `alloc_impl` saves ω₇ and ω₈, keeps ω₉ in ω₅, and calls `initialize`. -/
+theorem ai_call {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (sp : Nat) (h1 : ω[1] = UInt64.ofNat sp) (hsp0 : 2147483648 ≤ sp) (hsp : sp + 152 < 4294967296)
+    (hwr : ∀ a, μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 42131 ω μ x 42165 ω' μ' x 6 ∧ ω'[0] = UInt64.ofNat 1998 ∧ ω'[5] = ω[9] ∧
+      ω'[7] = ω[7] ∧ μ'.readN (sp + 48) 8 = Num.encodeLE 8 ω[7].toNat ∧
+      μ'.readN (sp + 104) 8 = Num.encodeLE 8 ω[8].toNat ∧
+      (∀ a, a < 4294967296 → (a < sp + 48 ∨ sp + 56 ≤ a) → (a < sp + 104 ∨ sp + 112 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.writable a = true) ∧ ∀ j : Fin 13, j.val ∉ [0, 5, 7] → ω'[j] = ω[j] := by
+  have hr : ∀ a, μ.readable a = true := fun a => Memory.readable_of_writable (hwr a)
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?run, ?post⟩
+  case run => pvm_go [h1, hwr, hr, rdN_writeN_disjoint, ↓rdN_fold, ↓loadI_fold]
+  case post =>
+    refine ⟨by reg_val, by reg_val; rfl, ?_, ?_, ?_, fun a ha h1 h2 => ?_, fun a => ?_, by reg_frame⟩
+    · simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some',
+        List.lookup_nil, Option.getD_none]
+      rd_simp []; simp
+    all_goals try (rd_simp []; rfl)
+    · rd_simp []
+    · rd_simp [hwr]
+
+/-- 42325: `initialize`'s return, through the jump table, to 42147. -/
+theorem ii_ret {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (h0 : ω[0] = UInt64.ofNat 1998) : FreeStepsH p R 42325 ω μ x 42147 ω μ x 1 := by
+  rw [show ω = regsNF ω [] from rfl]
+  pvm_go [h0]
+
+/-- **42147 … 41221**, `initialize` succeeded (ω₇ = 1): ω₈ and ω₇ restored, ω₉ from ω₅; on to the
+    bins at 41221. -/
+theorem ai_back {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (sp : Nat) (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat 1) (hsp : sp + 152 < 4294967296)
+    (hr : ∀ a, μ.readable a = true) :
+    ∃ ω', FreeStepsH p R 42147 ω μ x 41221 ω' μ x 6 ∧ ω'[8] = UInt64.ofNat (rdN μ (sp + 104) 8) ∧
+      ω'[9] = ω[5] ∧ ω'[7] = UInt64.ofNat (rdN μ (sp + 48) 8) ∧ ω'[11] = UInt64.ofNat 1 ∧
+      ∀ j : Fin 13, j.val ∉ [7, 8, 9, 11] → ω'[j] = ω[j] := by
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?run, ?post⟩
+  case run => pvm_go [h1, h7, hr, ↓rdN_fold, ↓loadI_fold]
+  case post => exact ⟨by reg_val, by reg_val; rfl, by reg_val, by reg_val, by reg_frame⟩
+
+theorem binDown_max : binDown maxSize = 2431 := by
+  rw [maxSize_val, binDown_big (by decide), show min 33554432 33554432 = 2 ^ 25 from rfl, Nat.log2_two_pow]
+
+/-- **`init` against memory**: memory holding the allocator's fields of a zeroed `s` (base 0), with
+    `initialize`'s writes, holds the model's `init` result, its first chunk at 206880. -/
+theorem init_rep {μ μ' : Memory} {s s' : State} {grow : Grow} (h : RepAt μ s (fun _ => False) (fun _ => False))
+    (hb : s.base = 0) (hinit : init grow 206880 s = some s')
+    (w1 : rdN μ' 206516 4 = 206880) (w2 : rdN μ' 206520 8 = 206880)
+    (w3 : rdN μ' 206824 8 = rdN μ 206824 8 ||| 2 ^ 63) (w4 : rdN μ' 206832 8 = rdN μ 206832 8 ||| 2 ^ 37)
+    (w5 : rdN μ' 206840 4 = 1) (w6 : rdN μ' 206880 4 = 0) (w7 : rdN μ' 206884 4 = sizeWord 33554432 false)
+    (w8 : rdN μ' 206888 4 = 0) (w9 : rdN μ' 206892 4 = 0)
+    (wf : ∀ a, a < 4294967296 → (a < 206516 ∨ 206528 ≤ a) → (a < 206824 ∨ 206844 ≤ a) →
+      (a < 206880 ∨ 206896 ≤ a) → μ'.read a = μ.read a) :
+    RepAt μ' s' (fun a => a = 206880) (fun a => a = 206880) := by
+  unfold init at hinit
+  simp only [hb, ne_eq, not_true_eq_false, ↓reduceIte] at hinit
+  split at hinit
+  · simp at hinit
+  simp only [Option.some.injEq] at hinit
+  subst hinit
+  rw [binDown_max]
+  have hsec := h.sec 37 (by decide)
+  have hpri := h.pri
+  unfold A0 at hsec hpri
+  refine ⟨fun b hb' => ?_, fun q hq => ?_, ?_, ?_, ?_, fun a ha => ?_, fun a ha => ?_, fun a ha => ?_,
+    fun a ha => ?_⟩
+  · simp only [upd, setHdr_heads, setBit_heads]
+    split
+    · rename_i e; subst e; unfold A0; exact w1
+    · rw [← h.heads b hb']; unfold A0; unfold binCount at hb'
+      exact rdN_frame fun j hj => wf _ (by omega) (by omega) (by omega) (by omega)
+  · simp only [setBit, setHdr, upd, show 2431 / 64 = 37 by decide, show 2431 % 64 = 63 by decide]
+    split
+    · rename_i e; subst e; unfold A0; rw [show 196792 + 9736 + 8 * 37 = 206824 by decide, w3, hsec]
+    · rw [← h.sec q hq]; unfold A0
+      exact rdN_frame fun j hj => wf _ (by omega) (by omega) (by omega) (by omega)
+  · simp only [setBit, setHdr, show 2431 / 64 = 37 by decide]; unfold A0
+    rw [show 196792 + 10040 = 206832 by decide, w4, hpri]
+  · unfold A0; exact w2
+  · unfold A0; exact w5
+  · subst ha; simp [setBit, setHdr, upd]; exact w6
+  · subst ha; simp [setBit, setHdr, upd]; rw [maxSize_val]; exact w7
+  · subst ha; simp [setBit, setHdr, upd]; exact w8
+  · subst ha; simp [setBit, setHdr, upd]; exact w9
+
 end Services.Bootstrap.Alloc

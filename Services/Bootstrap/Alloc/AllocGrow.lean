@@ -22,7 +22,7 @@ def pagesOf (x : Nat) : Nat := x / 4096 + (if x % 4096 = 0 then 0 else 1)
 
 theorem ag_pre {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
     (sp E base : Nat) (h1 : ω[1] = UInt64.ofNat sp) (h5 : ω[5] = UInt64.ofNat E)
-    (h96 : rdN μ (sp + 96) 8 = base) (hE : E < 33554432) (hb : base < 2147483648)
+    (h96 : rdN μ (sp + 96) 8 = base) (hE : E ≤ 33554432) (hb : base < 2147483648)
     (hsp0 : 2147483648 ≤ sp) (hsp : sp + 152 < 4294967296) (hwr : ∀ a, μ.writable a = true) :
     ∃ ω' μ', FreeStepsH p R 41517 ω μ x 41556 ω' μ' x 20 ∧ ω'[7] = UInt64.ofNat (pagesOf (base + 32 * E)) ∧
       ω'[6] = UInt64.ofNat (pagesOf (base + 32 * E)) ∧
@@ -101,7 +101,7 @@ theorem ag_grow {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.En
     (hR : pagesOf (base + 32 * E) ≤ b)
     (h1 : ω[1] = UInt64.ofNat sp) (h5 : ω[5] = UInt64.ofNat E)
     (h96 : rdN μ (sp + 96) 8 = base) (h120 : rdN μ (sp + 120) 8 = 204984)
-    (hE : E < 33554432) (hbase : base < 2147483648)
+    (hE : E ≤ 33554432) (hbase : base < 2147483648)
     (hsp0 : 2147483648 ≤ sp) (hsp : sp + 152 < 4294967296) (hwr : ∀ a, μ.writable a = true) :
     ∃ ω' μ', FreeStepsH p (refineContract env) 41517 ω μ x 41589 ω' μ' x 40 ∧ rdN μ' 206840 4 = E ∧
       ω'[7] = ω[7] ∧ ω'[9] = ω[9] ∧ ω'[4] = ω[4] ∧ ω'[0] = ω[0] ∧ ω'[3] = ω[3] ∧
@@ -157,7 +157,7 @@ theorem ag_grow_fail {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHo
     (μ : Memory) (sp E base a b : Nat) (hb : heapBounds env.code = (a, b)) (hab : a ≤ b) (hbs : b < 4294967296)
     (hR : b < pagesOf (base + 32 * E))
     (h1 : ω[1] = UInt64.ofNat sp) (h5 : ω[5] = UInt64.ofNat E) (h96 : rdN μ (sp + 96) 8 = base)
-    (hE : E < 33554432) (hbase : base < 2147483648)
+    (hE : E ≤ 33554432) (hbase : base < 2147483648)
     (hsp0 : 2147483648 ≤ sp) (hsp : sp + 152 < 4294967296) (hwr : ∀ a, μ.writable a = true) :
     ∃ ω' μ', FreeStepsH p (refineContract env) 41517 ω μ x 41401 ω' μ' x 30 ∧ ω'[1] = ω[1] ∧
       (∀ a, a < 4294967296 → (a < sp ∨ sp + 32 ≤ a) → (a < sp + 48 ∨ sp + 56 ≤ a) → μ'.read a = μ.read a) ∧
@@ -174,5 +174,23 @@ theorem ag_grow_fail {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHo
   rw [Memory.writable_setPages]; split
   · rfl
   · exact ww1 a'
+
+/-- Memory holding t, with the allocated space written as E, holds t with that allocated space. -/
+theorem RepAt.setAlloc {μ μ' : Memory} {t : State} {H F : Nat → Prop} {E : Nat} (h : RepAt μ t H F)
+    (w : rdN μ' 206840 4 = E)
+    (wf : ∀ a, a < 2147483648 → (a < 206840 ∨ 206844 ≤ a) → μ'.read a = μ.read a)
+    (hHa : ∀ b, H b ∨ F b → 206864 ≤ b ∧ b + 16 < 2147483648) :
+    RepAt μ' { t with allocated := E } H F := by
+  refine ⟨fun b hb => ?_, fun q hq => ?_, ?_, ?_, ?_, fun b hb => ?_, fun b hb => ?_, fun b hb => ?_,
+    fun b hb => ?_⟩
+  · rw [← h.heads b hb]; unfold A0; unfold binCount at hb; exact rdN_frame fun j hj => wf _ (by omega) (by omega)
+  · rw [← h.sec q hq]; unfold A0; exact rdN_frame fun j hj => wf _ (by omega) (by omega)
+  · rw [← h.pri]; unfold A0; exact rdN_frame fun j hj => wf _ (by omega) (by omega)
+  · rw [← h.base]; unfold A0; exact rdN_frame fun j hj => wf _ (by omega) (by omega)
+  · unfold A0; exact w
+  · have := hHa b (Or.inl hb); rw [← h.prev b hb]; exact rdN_frame fun j hj => wf _ (by omega) (by omega)
+  · have := hHa b (Or.inl hb); rw [← h.size b hb]; exact rdN_frame fun j hj => wf _ (by omega) (by omega)
+  · have := hHa b (Or.inr hb); rw [← h.next b hb]; exact rdN_frame fun j hj => wf _ (by omega) (by omega)
+  · have := hHa b (Or.inr hb); rw [← h.prevL b hb]; exact rdN_frame fun j hj => wf _ (by omega) (by omega)
 
 end Services.Bootstrap.Alloc

@@ -68,7 +68,7 @@ theorem realloc_zero_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X)
   have hus : usable s ptr = c.size - 1 := by
     unfold usable; rw [← hca', hsz, wordSize_sizeWord]
   obtain ⟨ω1, μ1, r1, a1, -, a6, st0, st5, st6, sf1, ww1, g1⟩ := rl_pro (p := p) (P := P) (R := R) x ω μ sp
-    ptr (2 * c.size + 1) h1 h8 (by omega) (by omega) hw' (by omega) (by omega) hsp1 ⟨by omega, by omega⟩ hS hw
+    ptr (2 * c.size + 1) h1 h8 (by omega) (by omega) hw' (by omega) (by omega) hsp1 ⟨by omega, by omega⟩ ⟨by omega, hS.2⟩ hw
   obtain ⟨ω2, r2, b0, g2⟩ := rl_go_zero (p := p) (P := P) (R := R) x ω1 μ1 ((2 * c.size + 1) / 2 - 1)
     (by rw [fget g1 10 (by decide) (by decide)]; exact h10) a6 (by omega) (by omega)
   have rep1 : Rep μ1 s := hrep.congr_lock hwf hb0 hbT fun a ha1 ha2 ha3 =>

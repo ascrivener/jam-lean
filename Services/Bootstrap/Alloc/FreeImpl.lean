@@ -3,8 +3,8 @@ import Services.Bootstrap.Alloc.StageA
 /-!
 # The binary's `free`, whole
 
-`free_impl`: the compiled free path, from its entry (42327, called by `dealloc` with ω₀ = 1986)
-to the return into `dealloc` (40681), leaves memory that holds the model's `free s ptr` — given the
+`free_impl`: the compiled free path, from its entry (42327, called by `dealloc` with ω₀ = 1986, and
+by `realloc_impl` with ω₀ = 2000) to its return's `jumpInd` (42978, with ω₀ restored), leaves memory that holds the model's `free s ptr` — given the
 facts about the heap the stages need, which the invariant provides.
 -/
 
@@ -21,7 +21,7 @@ variable {X : Type} {R : HostRel X}
 theorem free_impl {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
     (s s1 s2 : State) (H F : Nat → Prop) (sp ptr M sz1 pv' total : Nat) (hrep : RepAt μ s H F)
     (h1 : ω[1] = UInt64.ofNat sp) (h8 : ω[8] = UInt64.ofNat ptr) (h7 : ω[7] = UInt64.ofNat 196792)
-    (h0 : ω[0] = UInt64.ofNat 1986) (hsp : 2147483700 ≤ sp) (hsp1 : sp < 4294967296)
+    (hsp : 2147483700 ≤ sp) (hsp1 : sp < 4294967296)
     (hb0 : 206864 ≤ s.base) (hbT : s.base + 1073741824 < 2147483648)
     (hX : Al s.base (ptr - 32)) (hptr : 32 ≤ ptr) (hXH : H (ptr - 32)) (hHF : ∀ a, H a ∨ F a → Al s.base a)
     (hpv : (s.hdr (ptr - 32)).prev < 2147483648)
@@ -46,9 +46,9 @@ theorem free_impl {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
     {HT S0 S1 : Nat} (hHFT : ∀ a, H a ∨ F a → a + 32 ≤ HT) (hMT : M + 32 ≤ HT)
     (hold1T : s2.heads (binDown total) ≠ 0 → s2.heads (binDown total) + 32 ≤ HT) (hS : S0 + 24 ≤ sp ∧ sp ≤ S1)
     (hw : WrAt μ HT S0 S1) :
-    ∃ ω' μ', FreeStepsH p R 42327 ω μ x 40681 ω' μ' x 220 ∧
+    ∃ ω' μ', FreeStepsH p R 42327 ω μ x 42978 ω' μ' x 220 ∧
       RepAt μ' (free s ptr) (fun a => H a ∨ a = M) (fun a => F a ∨ a = M) ∧
-      (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧ ω'[0] = UInt64.ofNat 1986 ∧ ω'[1] = UInt64.ofNat sp ∧
+      (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧ ω'[0] = ω[0] ∧ ω'[1] = UInt64.ofNat sp ∧
       ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
   have hHFl : ∀ b, H b ∨ F b → b + 16 < 2147483648 := fun b hb => by
     have := hHF b hb; unfold Al at this; omega
@@ -82,15 +82,14 @@ theorem free_impl {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
     (by rw [fget g3 4 (by decide) (by decide), fget g2 4 (by decide) (by decide)]; exact a4) c12
     (by rw [fget g3 1 (by decide) (by decide), fget g2 1 (by decide) (by decide)]; exact a1)
     hb0 hbT ht1 ht2 hAM hMt hpv' hold hold1 hHF hnext
-    (by
-      have e : ω[0].toNat = 1986 := by rw [h0]; rfl
-      rw [← e, ← st0]; exact readN_frame fun j hj => stk _ (by omega) (by omega))
+    (by rw [← st0]; exact readN_frame fun j hj => stk _ (by omega) (by omega))
     (by rw [← st5]; exact readN_frame fun j hj => stk _ (by omega) (by omega))
     (by rw [← st6]; exact readN_frame fun j hj => stk _ (by omega) (by omega))
-    (UInt64.toNat_lt _) (UInt64.toNat_lt _) hsp hsp1 hMT hold1T hHFT hS (((hw.of_eq ww1).of_eq ww2).of_eq ww3)
+    (UInt64.toNat_lt _) (UInt64.toNat_lt _) (UInt64.toNat_lt _) hsp hsp1 hMT hold1T hHFT hS (((hw.of_eq ww1).of_eq ww2).of_eq ww3)
   refine ⟨ω4, μ4, ((((r1.trans r2).trans r3).trans r4)).mono (by omega), ?_,
     fun a => (ww4 a).trans ((ww3 a).trans ((ww2 a).trans (ww1 a))),
-    fun a h1 h2 => ((sf4 a h1 (by omega)).trans (stk a h1 (by omega))).trans (sf1 a h1 (Or.inr h2)), e0, e1,
+    fun a h1 h2 => ((sf4 a h1 (by omega)).trans (stk a h1 (by omega))).trans (sf1 a h1 (Or.inr h2)),
+    by rw [e0, UInt64.ofNat_toNat], e1,
     by rw [e5, UInt64.ofNat_toNat], by rw [e6, UInt64.ofNat_toNat]⟩
   unfold free
   simp only [hm, hn, maxSize_val, Nat.reduceMul]

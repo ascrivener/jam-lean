@@ -37,10 +37,11 @@ theorem alloc_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : 
     (h9 : ω[9] = UInt64.ofNat req) (h10 : ω[10] = UInt64.ofNat 0)
     (hsp : 2147483800 ≤ sp) (hsp1 : sp < 4294967296)
     (hb0 : 206864 ≤ s.base) (hbT : s.base + 1073741824 < 2147483648) (hal : s.allocated < 2147483648)
-    (hfo : FirstOk s) (hw : ∀ a, μ.writable a = true) :
+    (hfo : FirstOk s) {HT S0 S1 : Nat} (hHTs : 208896 ≤ HT) (hSTk : S0 + 152 ≤ sp ∧ sp ≤ S1)
+    (hHT : s.base + 32 * s.allocated ≤ HT) (hw : WrAt μ HT S0 S1) :
     ∃ ω' μ', FreeStepsH p R 41177 ω μ x 41423 ω' μ' x 400 ∧ Rep μ' s' ∧ WF s' ∧
       ω'[7] = UInt64.ofNat ptr ∧ ω'[0] = ω[0] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ ω'[1] = ω[1] ∧
-      (∀ a, μ'.writable a = true) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) := by
+      (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) := by
   have hwf' : WF s' := alloc_wf hwf h
   rw [alloc_one hwf.1] at h
   obtain ⟨bin, a1, hbin, hmax, hS, ha1, hend, hp, rfl⟩ := alloc1_eq h
@@ -82,6 +83,10 @@ theorem alloc_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : 
     intro a h
     obtain ⟨c, hc, rfl⟩ := unHF a h
     have := htiles.aligned c hc; have := htiles.mem_lt c hc; unfold Al; omega
+  have hHFT : ∀ a, H a ∨ F a → a + 32 ≤ HT := by
+    intro a h
+    obtain ⟨c, hc, rfl⟩ := unHF a h
+    unfold SpaceOk at hspace; have := (hspace c (hcs ▸ hc)).2; omega
   have hrep' : RepAt μ s H F :=
     ⟨hrep.heads, hrep.sec, hrep.pri, hrep.base, hrep.alloc,
       fun a h => by obtain ⟨c, hc, rfl⟩ := unH a h; exact hrep.prev c (hcs ▸ hc),
@@ -141,7 +146,7 @@ theorem alloc_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : 
   obtain ⟨ω', μ', run, rep', e7, e0, e5, e6, e1, ww, stk⟩ := alloc_impl (p := p) (P := P) (R := R) x ω μ s H F sp req
     bin C hrep' hbits h1 h7 h8 h9 h10 hsp hsp1 hb0 hbT hm' hbin (by unfold binCount at hbc; omega) hC hFC hHC hHF
     hnx hpv (by rw [hSd]; exact hS) (by rw [hSd]; omega) hal (by rw [hSd]; exact hend)
-    (by rw [hSd]; exact hNdis) (by rw [hSd]; exact hNold) (by rw [hSd]; exact hFin) hw
+    (by rw [hSd]; exact hNdis) (by rw [hSd]; exact hNold) (by rw [hSd]; exact hFin) hHTs hSTk hHFT hHT hw
   rw [hSd] at rep'
   refine ⟨ω', μ', run, ?_, hwf', e7, e0, e5, e6, e1, ww, stk⟩
   rw [show s.base + 32 * maxSize = s.base + 1073741824 by rw [maxSize_val]]

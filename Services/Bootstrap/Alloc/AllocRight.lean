@@ -39,7 +39,8 @@ theorem ar_write {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs)
     (hsz : 2 * rhs < 4294967296)
     (hold : rdN μ (196792 + bin * 4) 4 = old) (hold1 : old < 2147483648)
     (holda : old ≠ 0 → 206864 ≤ old ∧ (old + 16 ≤ N ∨ N + 16 ≤ old))
-    (hsp0 : 2147483648 ≤ sp) (hsp : sp + 152 < 4294967296) (hw : ∀ a, μ.writable a = true) :
+    (hsp0 : 2147483648 ≤ sp) (hsp : sp + 152 < 4294967296) {HT S0 S1 : Nat} (hHTs : 208896 ≤ HT) (hSTk : S0 ≤ sp ∧ sp + 152 ≤ S1)
+    (hNT : N + 16 ≤ HT) (holdT : old ≠ 0 → old + 16 ≤ HT) (hw : WrAt μ HT S0 S1) :
     ∃ ω' μ', FreeStepsH p R 41958 ω μ x 42054 ω' μ' x 40 ∧
       rdN μ' (196792 + bin * 4) 4 = N ∧ rdN μ' N 4 = pv ∧ rdN μ' (N + 4) 4 = 2 * rhs ∧
       rdN μ' (N + 8) 4 = old ∧ rdN μ' (N + 12) 4 = 0 ∧ (old ≠ 0 → rdN μ' (old + 12) 4 = N) ∧
@@ -49,10 +50,10 @@ theorem ar_write {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs)
         (old = 0 ∨ a < old + 12 ∨ old + 16 ≤ a) →
         (a < bin / 64 * 8 + 204984 + 1544 ∨ bin / 64 * 8 + 204984 + 1552 ≤ a) → (a < 206832 ∨ 206840 ≤ a) →
         μ'.read a = μ.read a) ∧
-      (∀ a, μ'.writable a = true) ∧ ω'[3] = UInt64.ofNat rhs ∧ ω'[10] = ω[10] ∧ ω'[12] = UInt64.ofNat rhs ∧
+      (∀ a, μ'.writable a = μ.writable a) ∧ ω'[3] = UInt64.ofNat rhs ∧ ω'[10] = ω[10] ∧ ω'[12] = UInt64.ofNat rhs ∧
       ∀ j : Fin 13, j.val ∉ [0, 3, 5, 6, 7, 9, 10, 11, 12] → ω'[j] = ω[j] := by
   have hbin : (bin + 1 + 18446744073709551615) % 4294967296 = bin := by omega
-  have hr : ∀ a, μ.readable a = true := fun a => Memory.readable_of_writable (hw a)
+  have hr := hw.rd
   rw [show ω = regsNF ω [] from rfl]
   by_cases h0 : old = 0
   · subst h0
@@ -112,7 +113,7 @@ theorem ar_bin_small {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
 theorem ar_bin_big {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
     (sp rhs : Nat) (h1 : ω[1] = UInt64.ofNat sp) (h12 : ω[12] = UInt64.ofNat rhs)
     (h104 : rdN μ (sp + 104) 8 = rhs) (hs : 128 ≤ rhs) (hs32 : rhs < 4294967296) (hsp : sp + 152 < 4294967296)
-    (hr : ∀ a, μ.readable a = true) :
+    {HT S0 S1 : Nat} (hHTs : 208896 ≤ HT) (hSTk : S0 ≤ sp ∧ sp + 152 ≤ S1) (hr : RdAt μ HT S0 S1) :
     ∃ ω', FreeStepsH p R 41910 ω μ x 41958 ω' μ x 16 ∧ ω'[6] = UInt64.ofNat (binDown rhs + 1) ∧
       ω'[12] = UInt64.ofNat rhs ∧ ∀ j : Fin 13, j.val ∉ [6, 9, 11, 12] → ω'[j] = ω[j] := by
   rw [show ω = regsNF ω [] from rfl]

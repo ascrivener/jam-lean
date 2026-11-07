@@ -36,7 +36,8 @@ def alloc1 (grow : Grow) (r : Nat) (s : State) : Option (Nat × State) := do
 theorem alloc_one {grow : Grow} {hb r : Nat} {s : State} (hbase : s.base ≠ 0) :
     alloc grow hb 1 r s = alloc1 grow r s := by
   simp only [alloc, alloc1, init, hbase, ne_eq, not_false_eq_true, ↓reduceIte, show (1 : Nat) &&& 0 = 0 from rfl,
-    Nat.sub_self, Nat.add_zero, Nat.div_one, Nat.mul_one, Nat.add_sub_cancel, Nat.sub_zero]
+    Nat.sub_self, Nat.add_zero, Nat.div_one, Nat.mul_one, Nat.add_sub_cancel, Nat.sub_zero,
+    show ∀ a b : Nat, a + b + 1 - a = b + 1 from fun a b => by omega]
   simp [register]
 
 

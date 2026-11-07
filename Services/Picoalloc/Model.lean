@@ -161,7 +161,10 @@ def alloc (grow : Grow) (heapBase : Nat) (align req : Nat) (s : State) : Option 
   let chunkSize := wordSize (s.hdr chunk).size
   if chunkSize < minSize then none
   let chunkOff := (chunk - s.base) / 32
-  let dataOff := (chunkOff + 1 + (align - 1)) / align * align
+  -- the data's unit, counted from address 0, is rounded up to `align`: the block is aligned to
+  -- `32 · align` octets in the address space, not from the heap base
+  let baseUnit := s.base / 32
+  let dataOff := (baseUnit + chunkOff + 1 + (align - 1)) / align * align - baseUnit
   let headerOff := dataOff - 1
   let allocChunk := s.base + 32 * headerOff
   let lhs := headerOff - chunkOff

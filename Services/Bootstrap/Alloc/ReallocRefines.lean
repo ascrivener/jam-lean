@@ -41,16 +41,15 @@ theorem shrink_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω :
     cases c; simp only at hca hcu ⊢; subst hcu; simp only [Chunk.mk.injEq, and_true]; omega
   rw [hceq] at hcs
   generalize hn0 : c.size = cur at hcs
+  have hXmem : (⟨ptr - 32, cur, true⟩ : Chunk) ∈ chunks s := by
+    rw [hcs]; exact List.mem_append_right _ List.mem_cons_self
   have hcur : wordSize (s.hdr (ptr - 32)).size = cur := by
-    have := chunks_hdr _ (hcs ▸ List.mem_append_right pre List.mem_cons_self :
-      (⟨ptr - 32, cur, true⟩ : Chunk) ∈ chunks s)
+    have := chunks_hdr _ hXmem
     simp only at this; rw [this, wordSize_sizeWord]
   have hr' : req + 1 < cur := by unfold usable at hr; rw [hcur] at hr; omega
   have hfirst := shrink_first (newReq := req) hfo (by
     have ht := hwf.2.2.2.1; unfold TilesOk at ht
-    have := ht.mem_lt _ (hcs ▸ List.mem_append_right pre List.mem_cons_self :
-      (⟨ptr - 32, cur, true⟩ : Chunk) ∈ chunks s)
-    simp only at this; omega)
+    exact (ht.mem_lt _ hXmem).1)
   obtain ⟨Rs, post0s, rest, hposts, -, hchS, hwfS⟩ := shrink_ok (newReq := req) hwf hcs (by omega)
   have hwf' := hwf
   obtain ⟨-, hbal, hfit, htiles, hcoal, hprev, hlists, hspace⟩ := hwf'
@@ -103,7 +102,7 @@ theorem shrink_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω :
   have hF0 : FreeLists s (Fof (pre ++ ⟨ptr - 32, cur, true⟩ :: post)) := fun b hb => hlists.lists b hb
   have hbits : BitsOk s.secondary s.primary s.heads := ⟨hlists.bits, hlists.prim, hlists.words, hlists.primW⟩
   have hF1 : FreeLists (shrinkHdr s ptr req) (Fof (pre ++ post)) :=
-    (hF0.congr rfl (fun z => setHdr_next (f := fun h => { h with size := sizeWord (req + 1) true }) (fun _ => rfl) z)
+    (FreeLists.congr (t := shrinkHdr s ptr req) hF0 rfl (fun z => setHdr_next (f := fun h => { h with size := sizeWord (req + 1) true }) (fun _ => rfl) z)
       (fun z => setHdr_prevL (f := fun h => { h with size := sizeWord (req + 1) true }) (fun _ => rfl) z)).iff
       (fun b a _ => Fof_skip rfl b a)
   have hb1 : BitsOk (shrinkHdr s ptr req).secondary (shrinkHdr s ptr req).primary (shrinkHdr s ptr req).heads :=
@@ -206,17 +205,16 @@ theorem shrink_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω :
   refine ⟨ω', μ', run, ?_, hwfS, hfirst, ww, stk, e7, e0, e1, e5, e6⟩
   -- the model's result, read from memory
   subst hposts
-  have cls : ∀ c ∈ chunks (shrink s ptr req), c ∈ pre ++ ⟨ptr - 32, cur, true⟩ :: (Rs ++ post0s) ∨
-      c = ⟨ptr - 32 + 32 * (req + 1), rest, false⟩ := by
+  have cls : ∀ c ∈ chunks (shrink s ptr req), H c.addr ∨ c = ⟨ptr - 32 + 32 * (req + 1), rest, false⟩ := by
     intro c hc
     rw [hchS] at hc
     rcases List.mem_append.mp hc with h | h
-    · exact Or.inl (List.mem_append_left _ h)
+    · exact Or.inl (mkH c (List.mem_append_left _ h))
     · rcases List.mem_cons.mp h with h | h
-      · exact Or.inl (h ▸ hXm)
+      · exact Or.inl (by rw [h]; show H (ptr - 32); exact mkH _ hXm)
       · rcases List.mem_cons.mp h with h | h
         · exact Or.inr h
-        · exact Or.inl (hsub c (Or.inr (List.mem_append_right _ h)))
+        · exact Or.inl (mkH c (hsub c (Or.inr (List.mem_append_right _ h))))
   have clsF : ∀ c ∈ chunks (shrink s ptr req), c.used = false →
       F c.addr ∨ c.addr = ptr - 32 + 32 * (req + 1) := by
     intro c hc hu
@@ -231,10 +229,10 @@ theorem shrink_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω :
   refine ⟨rep'.heads, rep'.sec, rep'.pri, rep'.base, rep'.alloc, fun c hc => ?_, fun c hc => ?_,
     fun c hc hu => ?_, fun c hc hu => ?_⟩
   · rcases cls c hc with h | rfl
-    · exact rep'.prev _ (Or.inl (mkH c h))
+    · exact rep'.prev _ (Or.inl h)
     · exact rep'.prev _ (Or.inr rfl)
   · rcases cls c hc with h | rfl
-    · exact rep'.size _ (Or.inl (mkH c h))
+    · exact rep'.size _ (Or.inl h)
     · exact rep'.size _ (Or.inr rfl)
   · rcases clsF c hc hu with h | h
     · exact rep'.next _ (Or.inl h)

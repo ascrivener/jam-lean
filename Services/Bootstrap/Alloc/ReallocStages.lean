@@ -235,7 +235,8 @@ theorem shrink_next {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Re
       · have b4 := rs_br_head (p := p) (P := P) (R := R) x ω4 μ3 (Xc + 32 * cur) (by rw [d11, hh]) e12
         obtain ⟨ω5, μ5, r5, rep5, ww5, sf5, f2, f5, g5⟩ := rs_unreg_head (p := p) (P := P) (R := R) x ω4 μ3 s H F
           sp base (Xc + 32 * cur) (binDown sz) (cur - n) sz n rep3 hh (by unfold binCount; omega) hFn hHF hnx
-          hb0 hbT e1 e6 d9 e10 e2 (by rw [fget g4 3 (by decide) (by decide)]; exact d3) e7 k120 s112
+          hb0 hbT e1 e6 d9 e10 e2 (by rw [fget g4 3 (by decide) (by decide)]; exact d3)
+          (by rw [fget g4 7 (by decide) (by decide)]; exact e7) k120 s112
           (by omega) hsp hsp1 ww3
         refine ⟨ω5, μ5, (((((b1.trans r2).trans b2).trans r3).trans r4).trans (b4.trans r5)).mono (by omega),
           rep5, by rw [f2]; congr 1; omega, f5, ww5, hfr ω5 μ5 sf5, fun j hj => ?_⟩
@@ -335,7 +336,7 @@ theorem shrink_tail {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Re
   have g12 : ∀ j : Nat, (hj : j < 13) → j ∉ [3, 4, 5, 6, 7, 9, 10, 11, 12] → ω2[j]'hj = ω[j]'hj := fun j hj h => by
     rw [fget g2 j hj (by simp only [List.mem_cons, List.not_mem_nil, or_false] at h ⊢; omega),
       fget g1 j hj (by simp only [List.mem_cons, List.not_mem_nil, or_false] at h ⊢; omega)]
-  obtain ⟨ω3, μ3, r3, e1, ef, ew, e7, e0, e1', e5', e6⟩ := rs_epi (p := p) (P := P) (R := R) x ω2 μ2 sp Xc n
+  obtain ⟨ω3, μ3, r3, e1, ef, ew, e7, e0, e1', e5', e6, -⟩ := rs_epi (p := p) (P := P) (R := R) x ω2 μ2 sp Xc n
     size (base + 1073741824) ptr v5 v6
     (by rw [g12 1 (by decide) (by decide)]; exact h1) (by rw [g12 2 (by decide) (by decide)]; exact h2)
     e5 (by rw [g12 0 (by decide) (by decide)]; exact h0) e4 (by rw [g12 8 (by decide) (by decide)]; exact h8) hp

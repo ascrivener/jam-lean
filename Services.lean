@@ -128,6 +128,10 @@ import Services.Bootstrap.Alloc.ReallocGrowHeap
 import Services.Bootstrap.Alloc.ReallocGrowPost
 import Services.Bootstrap.Alloc.ReallocGrowHeapImpl
 import Services.Bootstrap.Alloc.ReallocGrowHeapRefines
+import Services.Bootstrap.Alloc.ReallocFallback
+import Services.Bootstrap.Alloc.ReallocFallbackTail
+import Services.Bootstrap.Alloc.ReallocFallbackPre
+import Services.Bootstrap.Alloc.ReallocFallbackRefines
 
 /-!
 # Results about specific services' deployed code

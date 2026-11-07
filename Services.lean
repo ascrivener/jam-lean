@@ -121,6 +121,7 @@ import Services.Bootstrap.Alloc.ReallocGrowReg
 import Services.Bootstrap.Alloc.ReallocGrowStages
 import Services.Bootstrap.Alloc.ReallocGrowImpl
 import Services.Bootstrap.Alloc.ReallocGrowRefines
+import Services.Bootstrap.Alloc.ReallocZero
 
 /-!
 # Results about specific services' deployed code

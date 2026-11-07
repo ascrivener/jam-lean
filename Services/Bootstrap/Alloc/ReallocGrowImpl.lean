@@ -87,6 +87,9 @@ theorem realloc_impl_grow {p : ByteArray} {P : Program} [HasCode p P] (x : X) (�
       (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
       ω'[7] = UInt64.ofNat ptr ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat sp ∧
       ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
+  -- kept out of `omega`'s sight until the tail needs them
+  have hT : PLift ((_ : Prop) ∧ (_ : Prop)) := ⟨⟨hNT, hold1T⟩⟩
+  clear hNT hold1T
   have hXT := hHFT _ (Or.inl hXH)
   have hnT := hHFT _ (Or.inl hnc)
   obtain ⟨hX1, hX2, hX3⟩ := hX
@@ -210,7 +213,7 @@ theorem realloc_impl_grow {p : ByteArray} {P : Program} [HasCode p P] (x : X) (�
       (by omega) (by omega))
     (rd8 _ _ (by rw [show sp - 152 + 136 = sp - 16 by omega]; exact st5) (UInt64.toNat_lt _) (by omega) (by omega))
     (rd8 _ _ (by rw [show sp - 152 + 128 = sp - 24 by omega]; exact st6) (UInt64.toNat_lt _) (by omega) (by omega))
-    (by omega) (by omega) hHFT ⟨by omega, by omega⟩ W8 hNT hold1T
+    (by omega) (by omega) hHFT ⟨by omega, by omega⟩ W8 hT.down.1 hT.down.2
   refine ⟨ω9, μ9, ((((((((((r1.trans r2).trans r3).trans b4).trans r5).trans b6).trans r6).trans r7).trans b8).trans
       r9).trans r10).mono (by omega), rep9,
     fun a => (ww9 a).trans ((ww8 a).trans ((ww7 a).trans ((ww5 a).trans ((ww3 a).trans (ww1 a))))),

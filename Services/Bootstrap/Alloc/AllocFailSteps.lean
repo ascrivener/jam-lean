@@ -28,18 +28,40 @@ theorem rd_restore {μ : Memory} {a : Nat} {v : UInt64} (h : μ.readN a 8 = Num.
     UInt64.ofNat (rdN μ a 8) = v := by
   unfold rdN; rw [h, Num.decodeLE_encodeLE, Nat.mod_eq_of_lt (UInt64.toNat_lt _), UInt64.ofNat_toNat]
 
-/-- **41221 … 41404, the request too large**: the minimum size `req + 1` (32-bit arithmetic) is
-    above `MAX_ALLOCATION_SIZE` = 2²⁵ units; ω₁₁ = 0 for the failure tail. For `req < 2³¹` the
-    32-bit sums are exact or, at `req + 1 = 2³¹`, sign-extend to a value still above 2²⁵. -/
-theorem al_big {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+/-- **41221 … 41404, the request too large**: the minimum size `req + 1` (32-bit arithmetic, here
+    exact) is above `MAX_ALLOCATION_SIZE` = 2²⁵ units; ω₁₁ = 0 for the failure tail. -/
+theorem al_big_lo {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
     (req : Nat) (h9 : ω[9] = UInt64.ofNat req) (h8 : ω[8] = UInt64.ofNat 1)
-    (hr : 33554432 < req + 1) (hr1 : req < 2147483648) :
+    (hr : 33554432 < req + 1) (hr1 : req + 1 < 2147483648) :
+    ∃ ω', FreeStepsH p R 41221 ω μ x 41404 ω' μ x 6 ∧ ω'[11] = UInt64.ofNat 0 ∧
+      ∀ j : Fin 13, j.val ∉ [4, 11, 12] → ω'[j] = ω[j] := by
+  have e : (req + 1) / 2147483648 = 0 := by omega
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?run, ?post⟩
+  case run => pvm_go [h9, h8, e, Nat.mod_eq_of_lt (show req + 1 < 18446744073709551616 by omega),
+    show ¬ req + 1 ≤ 33554432 by omega]
+  case post => exact ⟨by reg_val, by reg_frame⟩
+
+/-- **41221 … 41404**, `req = 2³¹ − 1`: the 32-bit sum 2³¹ sign-extends to 2⁶⁴ − 2³¹, still above
+    2²⁵. -/
+theorem al_big_edge {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (h9 : ω[9] = UInt64.ofNat 2147483647) (h8 : ω[8] = UInt64.ofNat 1) :
     ∃ ω', FreeStepsH p R 41221 ω μ x 41404 ω' μ x 6 ∧ ω'[11] = UInt64.ofNat 0 ∧
       ∀ j : Fin 13, j.val ∉ [4, 11, 12] → ω'[j] = ω[j] := by
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?ω', ?run, ?post⟩
   case run => pvm_go [h9, h8]
   case post => exact ⟨by reg_val, by reg_frame⟩
+
+/-- **41221 … 41404, the request too large** (`req < 2³¹`). -/
+theorem al_big {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (req : Nat) (h9 : ω[9] = UInt64.ofNat req) (h8 : ω[8] = UInt64.ofNat 1)
+    (hr : 33554432 < req + 1) (hr1 : req < 2147483648) :
+    ∃ ω', FreeStepsH p R 41221 ω μ x 41404 ω' μ x 6 ∧ ω'[11] = UInt64.ofNat 0 ∧
+      ∀ j : Fin 13, j.val ∉ [4, 11, 12] → ω'[j] = ω[j] := by
+  by_cases he : req = 2147483647
+  · subst he; exact al_big_edge (p := p) (P := P) x ω μ h9 h8
+  · exact al_big_lo (p := p) (P := P) x ω μ req h9 h8 hr (by omega)
 
 /-- **41177 … 41423, the request too large**: null returned, only the frame written. -/
 theorem alloc_fail_big {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)

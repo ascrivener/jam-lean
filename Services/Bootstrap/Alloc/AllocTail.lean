@@ -27,12 +27,13 @@ theorem an_tail_in {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Reg
     (h120 : rdN μ (sp + 120) 8 = 204984) (h112 : rdN μ (sp + 112) 8 = 0) (hb : rdN μ 206520 4 = base)
     (hbT : base + 1073741824 < 2147483648) (hF : N + 32 * rhs < base + 1073741824)
     (hpv : pv < 4294967296) (hD : D < 4294967296)
-    (hsp0 : 2147483648 ≤ sp) (hsp : sp + 152 < 4294967296) (hwr : ∀ a, μ.writable a = true) :
+    (hsp0 : 2147483648 ≤ sp) (hsp : sp + 152 < 4294967296) {HT S0 S1 : Nat} (hHTs : 208896 ≤ HT) (hSTk : S0 ≤ sp ∧ sp + 152 ≤ S1)
+    (hNT : 196608 ≤ N + 32 * rhs ∧ N + 32 * rhs + 4 ≤ HT) (hwr : WrAt μ HT S0 S1) :
     ∃ ω' μ', FreeStepsH p R 42054 ω μ x 41404 ω' μ' x 16 ∧ rdN μ' (N + 32 * rhs) 4 = pv ∧
       ω'[11] = UInt64.ofNat D ∧
       (∀ a, a < 4294967296 → (a < N + 32 * rhs ∨ N + 32 * rhs + 4 ≤ a) → μ'.read a = μ.read a) ∧
-      (∀ a, μ'.writable a = true) ∧ ∀ j : Fin 13, j.val ∉ [7, 8, 9, 10, 11] → ω'[j] = ω[j] := by
-  have hr : ∀ a, μ.readable a = true := fun a => Memory.readable_of_writable (hwr a)
+      (∀ a, μ'.writable a = μ.writable a) ∧ ∀ j : Fin 13, j.val ∉ [7, 8, 9, 10, 11] → ω'[j] = ω[j] := by
+  have hr := hwr.rd
   rw [show ω = regsNF ω [] from rfl]
   have e1 : (rhs * 32 + N) % 18446744073709551616 = rhs * 32 + N := Nat.mod_eq_of_lt (by omega)
   have e2 : (base + 1073741824) % 18446744073709551616 = base + 1073741824 := Nat.mod_eq_of_lt (by omega)
@@ -53,7 +54,7 @@ theorem an_tail_end {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Re
     (h120 : rdN μ (sp + 120) 8 = 204984) (h112 : rdN μ (sp + 112) 8 = 0) (hb : rdN μ 206520 4 = base)
     (hbT : base + 1073741824 < 2147483648) (hF : base + 1073741824 ≤ N + 32 * rhs)
     (hF1 : N + 32 * rhs < 2147483648) (hD : D < 4294967296)
-    (hsp : sp + 152 < 4294967296) (hr : ∀ a, μ.readable a = true) :
+    (hsp : sp + 152 < 4294967296) {HT S0 S1 : Nat} (hHTs : 208896 ≤ HT) (hSTk : S0 ≤ sp ∧ sp + 152 ≤ S1) (hr : RdAt μ HT S0 S1) :
     ∃ ω', FreeStepsH p R 42054 ω μ x 41404 ω' μ x 16 ∧ ω'[11] = UInt64.ofNat D ∧
       ∀ j : Fin 13, j.val ∉ [7, 8, 9, 10, 11] → ω'[j] = ω[j] := by
   rw [show ω = regsNF ω [] from rfl]
@@ -67,7 +68,7 @@ theorem an_tail_end {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Re
 
 /-- **41404 … 41423**: ω₇ = ω₁₁ returned, the frame popped; at the return. -/
 theorem an_ret {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
-    (sp : Nat) (h1 : ω[1] = UInt64.ofNat sp) (hsp : sp + 152 < 4294967296) (hr : ∀ a, μ.readable a = true) :
+    (sp : Nat) (h1 : ω[1] = UInt64.ofNat sp) (hsp : sp + 152 < 4294967296) {HT S0 S1 : Nat} (hHTs : 208896 ≤ HT) (hSTk : S0 ≤ sp ∧ sp + 152 ≤ S1) (hr : RdAt μ HT S0 S1) :
     ∃ ω', FreeStepsH p R 41404 ω μ x 41423 ω' μ x 6 ∧ ω'[7] = ω[11] ∧
       ω'[0] = UInt64.ofNat (rdN μ (sp + 144) 8) ∧ ω'[5] = UInt64.ofNat (rdN μ (sp + 136) 8) ∧
       ω'[6] = UInt64.ofNat (rdN μ (sp + 128) 8) ∧ ω'[1] = UInt64.ofNat (sp + 152) ∧

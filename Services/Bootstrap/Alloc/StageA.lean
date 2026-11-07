@@ -35,38 +35,39 @@ theorem free_prev {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
     (hHF : ∀ a, H a ∨ F a → Al s.base a)
     (hpH : Xa ≠ s.base → 32 * pv ≤ Xa - s.base ∧ H (Xa - 32 * pv))
     (hfree : Xa ≠ s.base → (s.hdr (Xa - 32 * pv)).size % 2 = 0 → PvFree s F s.base (Xa - 32 * pv) n pv)
-    (hw : ∀ a, μ.writable a = true) :
+    {HT S0 S1 : Nat} (hHFT : ∀ a, H a ∨ F a → a + 32 ≤ HT) (hw : WrAt μ HT S0 S1) :
     ∃ ω' μ', FreeStepsH p R 42369 ω μ x 42597 ω' μ' x 70 ∧
       RepAt μ' (mergePrev s Xa n pv).1 H F ∧
       ω'[8] = UInt64.ofNat (mergePrev s Xa n pv).2.1 ∧ ω'[2] = UInt64.ofNat (mergePrev s Xa n pv).2.2.1 ∧
       ω'[3] = UInt64.ofNat (mergePrev s Xa n pv).2.2.2 ∧ ω'[5] = UInt64.ofNat s.base ∧
-      (∀ a, μ'.writable a = true) ∧ (∀ a, a < 4294967296 → 2147483648 ≤ a → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → 2147483648 ≤ a → μ'.read a = μ.read a) ∧
       ∀ j : Fin 13, j.val ∉ [0, 2, 3, 5, 6, 8, 9, 10, 11, 12] → ω'[j] = ω[j] := by
-  have hr : ∀ a, μ.readable a = true := fun a => Memory.readable_of_writable (hw a)
+  have hr := hw.rd
   obtain ⟨hX1, hX2, hX3⟩ := hAX
   unfold mergePrev
   by_cases hXb : Xa = s.base
   · -- X is the first chunk
     rw [if_neg (fun h => h hXb)]
     have b := pv_br_first (p := p) (P := P) (R := R) x ω μ (Xa - s.base) h9 h11 (by omega)
-    exact ⟨ω, μ, b.mono (by omega), hrep, h8, h2, h3, h5, hw, fun _ _ _ => rfl, fun _ _ => rfl⟩
+    exact ⟨ω, μ, b.mono (by omega), hrep, h8, h2, h3, h5, fun _ => rfl, fun _ _ _ => rfl, fun _ _ => rfl⟩
   rw [if_pos hXb]
   dsimp only
   obtain ⟨hpv, hHP⟩ := hpH hXb
   have b1 := pv_br_has (p := p) (P := P) (R := R) x ω μ (Xa - s.base) h9 h11 (by
     have := hX2; omega) (by omega)
   have hAP := hHF _ (Or.inl hHP)
+  have hPT := hHFT _ (Or.inl hHP)
   unfold Al at hAP
   have hsz : rdN μ (Xa - 32 * pv + 4) 4 = (s.hdr (Xa - 32 * pv)).size := hrep.size _ hHP
   obtain ⟨ω1, r1, c0, c12, c9, c11, g1⟩ := pv_hdr (p := p) (P := P) (R := R) x ω μ Xa pv
-    (s.hdr (Xa - 32 * pv)).size h3 h8 (by omega) (by omega) hsz hr
+    (s.hdr (Xa - 32 * pv)).size h3 h8 (by omega) (by omega) hsz ⟨by omega, by omega⟩ hr
   generalize hPa : Xa - 32 * pv = Pa at *
   generalize hW : (s.hdr Pa).size = w at *
   by_cases hu : w % 2 = 1
   · have b2 := pv_br_used (p := p) (P := P) (R := R) x ω1 μ (w % 2) c12 (by omega) (by omega)
     have hwu : (!wordUsed w) = false := by simp [wordUsed, hu]
     rw [if_neg (by simp [hwu])]
-    refine ⟨ω1, μ, ((b1.trans r1).trans b2).mono (by omega), hrep, ?_, ?_, ?_, ?_, hw, fun _ _ _ => rfl,
+    refine ⟨ω1, μ, ((b1.trans r1).trans b2).mono (by omega), hrep, ?_, ?_, ?_, ?_, fun _ => rfl, fun _ _ _ => rfl,
       fun j hj => g1 j (by simp only [List.mem_cons, List.not_mem_nil, or_false] at hj ⊢; omega)⟩
     · rw [fget g1 8 (by decide) (by decide)]; exact h8
     · rw [fget g1 2 (by decide) (by decide)]; exact h2
@@ -89,7 +90,7 @@ theorem free_prev {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
     have e7 : ω1[7] = UInt64.ofNat 196792 := by rw [fget g1 7 (by decide) (by decide)]; exact h7
     -- the join, from either unlinking
     have join : ∀ (ω3 : Regs) (μ3 : Memory) (s3 : State), RepAt μ3 s3 H F → s3.base = s.base →
-        (∀ a, μ3.writable a = true) →
+        RdAt μ3 HT S0 S1 →
         ω3[4] = UInt64.ofNat 204984 → ω3[10] = UInt64.ofNat pv → ω3[2] = UInt64.ofNat n →
         ω3[0] = UInt64.ofNat (2 * pv) → ω3[8] = UInt64.ofNat Xa →
         ∃ ω4, FreeStepsH p R 42583 ω3 μ3 x 42597 ω4 μ3 x 5 ∧ ω4[5] = UInt64.ofNat s.base ∧
@@ -98,8 +99,7 @@ theorem free_prev {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
       intro ω3 μ3 s3 rep3 hb3 hw3 e4 e10 e2 e0 e8
       have hbase3 : rdN μ3 206520 8 = s.base := by have := rep3.base; unfold A0 at this; rw [← hb3]; exact this
       obtain ⟨ω4, r4, d5, d2, d8, g4⟩ := pv_join (p := p) (P := P) (R := R) x ω3 μ3 s.base pv n (2 * pv) Xa
-        e4 e10 e2 e0 e8 hbase3 (by omega) (by omega) (by omega)
-        (fun a => Memory.readable_of_writable (hw3 a))
+        e4 e10 e2 e0 e8 hbase3 (by omega) (by omega) (by omega) (by omega) hw3
       exact ⟨ω4, r4, d5, by rw [d2]; congr 1; omega, by rw [d8, ← hPa]; congr 1; omega, g4⟩
     have hfr : ∀ (l1 l2 l3 l4 : List Nat) (ω2 ω3 ω4 : Regs),
         (∀ j : Fin 13, j.val ∉ l2 → ω2[j] = ω1[j]) → (∀ j : Fin 13, j.val ∉ l3 → ω3[j] = ω2[j]) →
@@ -112,13 +112,13 @@ theorem free_prev {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
         g1 j (by simp only [List.mem_cons, List.not_mem_nil, or_false] at hj ⊢; omega)]
     by_cases hh : s.heads (binDown pv) = Pa
     · obtain ⟨ω2, r2, d10, d5, d6, d3, g2⟩ := pv_lookup_head (p := p) (P := P) (R := R) x ω1 μ Pa pv
-        (s.hdr Pa).prev h0' e7 c9 c11 hp1 hp2 (by rw [hhd', hh]) (by omega) hpp' hpp hr
+        (s.hdr Pa).prev h0' e7 c9 c11 hp1 hp2 (by rw [hhd', hh]) (by omega) hpp' hpp (by omega) ⟨by omega, by omega⟩ hr
       obtain ⟨ω3, μ3, r3, rep3, ww3, sf3, g3⟩ := pv_unreg_head (p := p) (P := P) (R := R) x ω2 μ s H F s.base
         Pa (binDown pv) hrep hh (by unfold binCount; omega) hFn hHF hnx hb0 hbT
         (by rw [fget g2 11 (by decide) (by decide)]; exact c11) d6 d5
         (by rw [fget g2 7 (by decide) (by decide)]; exact e7)
-        (by rw [fget g2 4 (by decide) (by decide), fget g1 4 (by decide) (by decide)]; exact h4) hw
-      obtain ⟨ω4, r4, j5, j2, j8, g4⟩ := join ω3 μ3 _ rep3 unregister_base ww3
+        (by rw [fget g2 4 (by decide) (by decide), fget g1 4 (by decide) (by decide)]; exact h4) hHFT hw
+      obtain ⟨ω4, r4, j5, j2, j8, g4⟩ := join ω3 μ3 _ rep3 unregister_base (hw.of_eq ww3).rd
         (by rw [fget g3 4 (by decide) (by decide), fget g2 4 (by decide) (by decide),
           fget g1 4 (by decide) (by decide)]; exact h4)
         (by rw [fget g3 10 (by decide) (by decide)]; exact d10)
@@ -139,11 +139,11 @@ theorem free_prev {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
         · omega
         · unfold Al at h; omega
       obtain ⟨ω2, r2, d10, d5, d3, g2⟩ := pv_lookup_mid (p := p) (P := P) (R := R) x ω1 μ Pa pv
-        (s.hdr Pa).prev (s.heads (binDown pv)) h0' e7 c9 c11 hp1 hp2 hhd' hh hhd1 (by omega) hpp' hpp hr
+        (s.hdr Pa).prev (s.heads (binDown pv)) h0' e7 c9 c11 hp1 hp2 hhd' hh hhd1 (by omega) hpp' hpp (by omega) ⟨by omega, by omega⟩ hr
       obtain ⟨ω3, μ3, r3, rep3, ww3, sf3, g3⟩ := pv_unreg_mid (p := p) (P := P) (R := R) x ω2 μ s H F s.base
         Pa (binDown pv) hrep hh hFn hHF hFp hnx hpn hb0 hbT
-        (by rw [fget g2 11 (by decide) (by decide)]; exact c11) hw
-      obtain ⟨ω4, r4, j5, j2, j8, g4⟩ := join ω3 μ3 _ rep3 unregister_base ww3
+        (by rw [fget g2 11 (by decide) (by decide)]; exact c11) hHFT hw
+      obtain ⟨ω4, r4, j5, j2, j8, g4⟩ := join ω3 μ3 _ rep3 unregister_base (hw.of_eq ww3).rd
         (by rw [fget g3 4 (by decide) (by decide), fget g2 4 (by decide) (by decide),
           fget g1 4 (by decide) (by decide)]; exact h4)
         (by rw [fget g3 10 (by decide) (by decide)]; exact d10)

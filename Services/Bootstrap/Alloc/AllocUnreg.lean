@@ -23,13 +23,14 @@ theorem au_head {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) 
     (h3 : ω[3] = UInt64.ofNat c) (hsl : rdN μ (sp + 64) 8 = slot) (hn : rdN μ (C + 8) 4 = nxt)
     (hp : rdN μ C 4 = pv) (hpv : pv < 2147483648) (hn0 : nxt ≠ 0)
     (hC : C + 16 < 2147483648) (hna : 206864 ≤ nxt) (hn1 : nxt + 16 < 2147483648) (hsl1 : slot + 4 ≤ 206864)
-    (hc : c < 33554432) (hsp0 : 2147483648 ≤ sp) (hsp : sp + 152 < 4294967296) (hwr : ∀ a, μ.writable a = true) :
+    (hc : c < 33554432) (hsp0 : 2147483648 ≤ sp) (hsp : sp + 152 < 4294967296) {HT S0 S1 : Nat} (hHTs : 208896 ≤ HT) (hSTk : S0 ≤ sp ∧ sp + 152 ≤ S1)
+    (hCT : 196608 ≤ C ∧ C + 16 ≤ HT) (hsl0 : 196608 ≤ slot) (hnxT : nxt + 16 ≤ HT) (hwr : WrAt μ HT S0 S1) :
     ∃ ω' μ', FreeStepsH p R 41589 ω μ x 41726 ω' μ' x 10 ∧
       rdN μ' slot 4 = nxt ∧ rdN μ' (nxt + 12) 4 = 0 ∧ rdN μ' (sp + 48) 8 = pv ∧ ω'[8] = UInt64.ofNat (32 * c) ∧
       (∀ a, a < 4294967296 → (a < slot ∨ slot + 4 ≤ a) → (a < nxt + 12 ∨ nxt + 16 ≤ a) →
         (a < sp + 48 ∨ sp + 56 ≤ a) → μ'.read a = μ.read a) ∧
-      (∀ a, μ'.writable a = true) ∧ ∀ j : Fin 13, j.val ∉ [8, 10, 12] → ω'[j] = ω[j] := by
-  have hr : ∀ a, μ.readable a = true := fun a => Memory.readable_of_writable (hwr a)
+      (∀ a, μ'.writable a = μ.writable a) ∧ ∀ j : Fin 13, j.val ∉ [8, 10, 12] → ω'[j] = ω[j] := by
+  have hr := hwr.rd
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?ω', ?μ', ?run, ?post⟩
   case run => pvm_go [h1, h10, h3, hsl, hn, hp, sxw4_small hpv, hn0, hwr, hr, rdN_writeN_disjoint, ↓rdN_fold, ↓loadI_fold]
@@ -45,12 +46,13 @@ theorem au_last {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) 
     (h3 : ω[3] = UInt64.ofNat c) (hsl : rdN μ (sp + 64) 8 = slot) (hn : rdN μ (C + 8) 4 = 0)
     (hp : rdN μ C 4 = pv) (hpv : pv < 2147483648)
     (hC : C + 16 < 2147483648) (hsl1 : slot + 4 ≤ 206864)
-    (hc : c < 33554432) (hsp0 : 2147483648 ≤ sp) (hsp : sp + 152 < 4294967296) (hwr : ∀ a, μ.writable a = true) :
+    (hc : c < 33554432) (hsp0 : 2147483648 ≤ sp) (hsp : sp + 152 < 4294967296) {HT S0 S1 : Nat} (hHTs : 208896 ≤ HT) (hSTk : S0 ≤ sp ∧ sp + 152 ≤ S1)
+    (hCT : 196608 ≤ C ∧ C + 16 ≤ HT) (hsl0 : 196608 ≤ slot) (hwr : WrAt μ HT S0 S1) :
     ∃ ω' μ', FreeStepsH p R 41589 ω μ x 41671 ω' μ' x 8 ∧
       rdN μ' slot 4 = 0 ∧ rdN μ' (sp + 48) 8 = pv ∧ ω'[8] = UInt64.ofNat (32 * c) ∧
       (∀ a, a < 4294967296 → (a < slot ∨ slot + 4 ≤ a) → (a < sp + 48 ∨ sp + 56 ≤ a) → μ'.read a = μ.read a) ∧
-      (∀ a, μ'.writable a = true) ∧ ∀ j : Fin 13, j.val ∉ [8, 10, 12] → ω'[j] = ω[j] := by
-  have hr : ∀ a, μ.readable a = true := fun a => Memory.readable_of_writable (hwr a)
+      (∀ a, μ'.writable a = μ.writable a) ∧ ∀ j : Fin 13, j.val ∉ [8, 10, 12] → ω'[j] = ω[j] := by
+  have hr := hwr.rd
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?ω', ?μ', ?run, ?post⟩
   case run => pvm_go [h1, h10, h3, hsl, hn, hp, sxw4_small hpv, hwr, hr, rdN_writeN_disjoint, ↓rdN_fold, ↓loadI_fold]
@@ -74,14 +76,14 @@ theorem au_clear {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs)
     (hq : rdN μ (sp + 40) 8 = q) (hb : rdN μ (sp + 32) 8 = b) (h88 : rdN μ (sp + 88) 8 = 204984)
     (h120 : rdN μ (sp + 120) 8 = 204984) (hq1 : q < 38) (hb1 : b < 64)
     (hw : rdN μ (q * 8 + 204984 + 1544) 8 = w) (hp : rdN μ 206832 8 = pri)
-    (hsp0 : 2147483648 ≤ sp) (hsp : sp + 152 < 4294967296) (hwr : ∀ a, μ.writable a = true) :
+    (hsp0 : 2147483648 ≤ sp) (hsp : sp + 152 < 4294967296) {HT S0 S1 : Nat} (hHTs : 208896 ≤ HT) (hSTk : S0 ≤ sp ∧ sp + 152 ≤ S1) (hwr : WrAt μ HT S0 S1) :
     ∃ ω' μ', FreeStepsH p R 41671 ω μ x 41726 ω' μ' x 20 ∧
       rdN μ' (q * 8 + 204984 + 1544) 8 = w &&& ((2 ^ 64 - 1) ^^^ 2 ^ b) ∧
       rdN μ' 206832 8 = (if w &&& ((2 ^ 64 - 1) ^^^ 2 ^ b) = 0 then pri &&& ((2 ^ 64 - 1) ^^^ 2 ^ q) else pri) ∧
       (∀ a, a < 4294967296 → (a < q * 8 + 204984 + 1544 ∨ q * 8 + 204984 + 1552 ≤ a) →
         (a < 206832 ∨ 206840 ≤ a) → μ'.read a = μ.read a) ∧
-      (∀ a, μ'.writable a = true) ∧ ∀ j : Fin 13, j.val ∉ [2, 5, 6, 10, 11, 12] → ω'[j] = ω[j] := by
-  have hr : ∀ a, μ.readable a = true := fun a => Memory.readable_of_writable (hwr a)
+      (∀ a, μ'.writable a = μ.writable a) ∧ ∀ j : Fin 13, j.val ∉ [2, 5, 6, 10, 11, 12] → ω'[j] = ω[j] := by
+  have hr := hwr.rd
   have hw64 : w < 2 ^ 64 := by rw [← hw]; exact rdN_lt64 μ _
   have hp64 : pri < 2 ^ 64 := by rw [← hp]; exact rdN_lt64 μ _
   have hc1 := clear_word' b w hb1 hw64

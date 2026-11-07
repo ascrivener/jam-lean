@@ -25,9 +25,10 @@ theorem same_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
     (h1 : ω[1] = UInt64.ofNat sp) (h8 : ω[8] = UInt64.ofNat ptr)
     (h10 : ω[10] = UInt64.ofNat req) (h0 : ω[0] = UInt64.ofNat 1988)
     (hsp : 2147483800 ≤ sp) (hsp1 : sp < 4294967296)
-    (hb0 : 206864 ≤ s.base) (hbT : s.base + 1073741824 < 2147483648) (hw : ∀ a, μ.writable a = true) :
+    (hb0 : 206864 ≤ s.base) (hbT : s.base + 1073741824 < 2147483648) {HT S0 S1 : Nat}
+    (hHT : s.base + 32 * s.allocated ≤ HT) (hS : S0 + 152 ≤ sp ∧ sp ≤ S1) (hw : WrAt μ HT S0 S1) :
     ∃ ω' μ', FreeStepsH p R 42980 ω μ x 40805 ω' μ' x 180 ∧ Rep μ' s ∧
-      (∀ a, μ'.writable a = true) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
       ω'[7] = UInt64.ofNat ptr ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat sp ∧
       ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
   obtain ⟨c, hcm, hca, hcu⟩ := hc
@@ -37,21 +38,24 @@ theorem same_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
   have htop : s.top = s.base + 1073741824 := by unfold State.top; rw [maxSize_val]
   have hsz : (s.hdr c.addr).size = sizeWord c.size true := by rw [chunks_hdr c hcm, hcu]
   have hca' : c.addr = ptr - 32 := by omega
+  have hcT : c.addr + 32 ≤ HT := by
+    have hsp' := hwf.2.2.2.2.2.2.2; unfold SpaceOk at hsp'; have := (hsp' c hcm).2; omega
   have hw' : rdN μ (ptr - 28) 4 = 2 * c.size + 1 := by
     rw [show ptr - 28 = c.addr + 4 by omega, hrep.size c hcm, hsz]; unfold sizeWord; simp
   have hus : usable s ptr = c.size - 1 := by
     unfold usable; rw [← hca', hsz, wordSize_sizeWord]
   obtain ⟨ω1, μ1, r1, a1, -, a6, st0, st5, st6, sf1, ww1, g1⟩ := rl_pro (p := p) (P := P) (R := R) x ω μ sp
-    ptr (2 * c.size + 1) h1 h8 (by omega) (by omega) hw' (by omega) hsp hsp1 hw
+    ptr (2 * c.size + 1) h1 h8 (by omega) (by omega) hw' (by omega) hsp hsp1 ⟨by omega, by omega⟩ hS hw
   have b := rl_br_same (p := p) (P := P) (R := R) x ω1 μ1 req
     (by rw [fget g1 10 (by decide) (by decide)]; exact h10)
     (by rw [a6, hr, hus]; congr 1; omega)
-  have hr1 : ∀ a, μ1.readable a = true := fun a => Memory.readable_of_writable (ww1 a)
+  have hr1 := (hw.of_eq ww1).rd
   obtain ⟨ω2, r2, e7, e0, e1, e5, e6, -⟩ := rl_ret (p := p) (P := P) (R := R) x ω1 μ1 (sp - 152) ptr
     ω[5].toNat ω[6].toNat a1 (by rw [fget g1 8 (by decide) (by decide)]; exact h8) (by omega) (by omega) (by omega)
     (by rw [show sp - 152 + 144 = sp - 8 by omega, rd_enc st0 (UInt64.toNat_lt _), h0]; rfl)
     (by rw [show sp - 152 + 136 = sp - 16 by omega]; exact rd_enc st5 (UInt64.toNat_lt _))
-    (by rw [show sp - 152 + 128 = sp - 24 by omega]; exact rd_enc st6 (UInt64.toNat_lt _)) hr1
+    (by rw [show sp - 152 + 128 = sp - 24 by omega]; exact rd_enc st6 (UInt64.toNat_lt _))
+    ⟨by omega, by omega⟩ hr1
   refine ⟨ω2, μ1, ((r1.trans b).trans r2).mono (by omega),
     hrep.congr_lock hwf hb0 hbT (fun a ha1 ha2 ha3 => sf1 a (by omega) (Or.inl (by omega))), ww1,
     fun a h1 h2 => sf1 a h1 (Or.inr h2), e7, e0, by rw [e1]; congr 1; omega,
@@ -82,20 +86,21 @@ theorem realloc_inplace_refines {p : ByteArray} {P : Program} [HasCode p P] (x :
     (h10 : ω[10] = UInt64.ofNat req) (h0 : ω[0] = UInt64.ofNat 1988)
     (hsp : 2147483800 ≤ sp) (hsp1 : sp < 4294967296)
     (hb0 : 206864 ≤ s.base) (hbT : s.base + 1073741824 < 2147483648)
-    (hfo : FirstOk s) (hw : ∀ a, μ.writable a = true) :
+    (hfo : FirstOk s) {HT S0 S1 : Nat} (hHT : s.base + 32 * s.allocated ≤ HT) (hS : S0 + 152 ≤ sp ∧ sp ≤ S1)
+    (hw : WrAt μ HT S0 S1) :
     ∃ s', realloc grow hb s ptr align req = some (ptr, s', false) ∧
       ∃ ω' μ', FreeStepsH p R 42980 ω μ x 40805 ω' μ' x 180 ∧ Rep μ' s' ∧ WF s' ∧ FirstOk s' ∧
-        (∀ a, μ'.writable a = true) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
+        (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
         ω'[7] = UInt64.ofNat ptr ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat sp ∧
         ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
   refine ⟨_, realloc_inplace hr0 hr, ?_⟩
   by_cases e : req = usable s ptr
   · rw [if_pos e]
     obtain ⟨ω', μ', run, rep, ww, stk, e7, e0, e1, e5, e6⟩ := same_refines (p := p) (P := P) (R := R) x ω μ s
-      sp ptr req hwf hrep hc e h1 h8 h10 h0 hsp hsp1 hb0 hbT hw
+      sp ptr req hwf hrep hc e h1 h8 h10 h0 hsp hsp1 hb0 hbT hHT hS hw
     exact ⟨ω', μ', run, rep, hwf, hfo, ww, stk, e7, e0, e1, e5, e6⟩
   · rw [if_neg e]
     exact shrink_refines (p := p) (P := P) (R := R) x ω μ s sp ptr req hwf hrep hc hr0 (by omega) h1 h8 h7 h10
-      h0 hsp hsp1 hb0 hbT hfo hw
+      h0 hsp hsp1 hb0 hbT hfo hHT hS hw
 
 end Services.Bootstrap.Alloc

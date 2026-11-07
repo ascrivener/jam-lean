@@ -1,4 +1,5 @@
 import Services.Bootstrap.Alloc.AllocWrap
+import Services.Bootstrap.Alloc.Writable
 
 /-!
 # The binary's `realloc_impl`: entry
@@ -39,15 +40,16 @@ theorem rdN_wrap (μ : Memory) {a b : Nat} (n : Nat) (h : a % 4294967296 = b % 4
 theorem rl_pro {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
     (sp ptr w : Nat) (h1 : ω[1] = UInt64.ofNat sp) (h8 : ω[8] = UInt64.ofNat ptr)
     (hp : 32 ≤ ptr) (hp1 : ptr < 2147483648) (hw : rdN μ (ptr - 28) 4 = w) (hw1 : 2 ≤ w)
-    (hsp : 2147483800 ≤ sp) (hsp1 : sp < 4294967296) (hwr : ∀ a, μ.writable a = true) :
+    (hsp : 2147483800 ≤ sp) (hsp1 : sp < 4294967296) {HT S0 S1 : Nat}
+    (hXH : 196608 ≤ ptr - 32 ∧ ptr - 32 + 8 ≤ HT) (hS : S0 + 152 ≤ sp ∧ sp ≤ S1) (hwr : WrAt μ HT S0 S1) :
     ∃ ω' μ', FreeStepsH p R 42980 ω μ x 43005 ω' μ' x 7 ∧
       ω'[1] = UInt64.ofNat (sp - 152) ∧ ω'[11] = UInt64.ofNat (w / 2) ∧ ω'[6] = UInt64.ofNat (w / 2 - 1) ∧
       μ'.readN (sp - 8) 8 = Num.encodeLE 8 ω[0].toNat ∧ μ'.readN (sp - 16) 8 = Num.encodeLE 8 ω[5].toNat ∧
       μ'.readN (sp - 24) 8 = Num.encodeLE 8 ω[6].toNat ∧
       (∀ a, a < 4294967296 → (a < sp - 24 ∨ sp ≤ a) → μ'.read a = μ.read a) ∧
-      (∀ a, μ'.writable a = true) ∧
+      (∀ a, μ'.writable a = μ.writable a) ∧
       ∀ j : Fin 13, j.val ∉ [1, 6, 11] → ω'[j] = ω[j] := by
-  have hr : ∀ a, μ.readable a = true := fun a => Memory.readable_of_writable (hwr a)
+  have hr := hwr.rd
   have hw32 : w < 4294967296 := by rw [← hw]; exact rdN_lt μ _ 4
   have ha : ∀ μ' : Memory, rdN μ' (ptr + 18446744073709551588) 4 = rdN μ' (ptr - 28) 4 :=
     fun μ' => rdN_wrap μ' 4 (by omega)
@@ -116,7 +118,7 @@ theorem rl_go_zero {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Reg
 theorem rl_ret_null {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
     (sp v5 v6 : Nat) (h1 : ω[1] = UInt64.ofNat sp) (hsp : 2147483648 ≤ sp) (hsp1 : sp + 152 < 4294967296)
     (s0 : rdN μ (sp + 144) 8 = 1988) (s5 : rdN μ (sp + 136) 8 = v5) (s6 : rdN μ (sp + 128) 8 = v6)
-    (hr : ∀ a, μ.readable a = true) :
+    {HT S0 S1 : Nat} (hS : S0 ≤ sp ∧ sp + 152 ≤ S1) (hr : RdAt μ HT S0 S1) :
     ∃ ω', FreeStepsH p R 43145 ω μ x 40805 ω' μ x 9 ∧ ω'[7] = UInt64.ofNat 0 ∧ ω'[8] = UInt64.ofNat 0 ∧
       ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat (sp + 152) ∧ ω'[5] = UInt64.ofNat v5 ∧
       ω'[6] = UInt64.ofNat v6 ∧ ∀ j : Fin 13, j.val ∉ [0, 1, 5, 6, 7, 8] → ω'[j] = ω[j] := by
@@ -130,7 +132,7 @@ theorem rl_ret {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (
     (sp ptr v5 v6 : Nat) (h1 : ω[1] = UInt64.ofNat sp) (h8 : ω[8] = UInt64.ofNat ptr)
     (hp : ptr < 18446744073709551616) (hsp : 2147483648 ≤ sp) (hsp1 : sp + 152 < 4294967296)
     (s0 : rdN μ (sp + 144) 8 = 1988) (s5 : rdN μ (sp + 136) 8 = v5) (s6 : rdN μ (sp + 128) 8 = v6)
-    (hr : ∀ a, μ.readable a = true) :
+    {HT S0 S1 : Nat} (hS : S0 ≤ sp ∧ sp + 152 ≤ S1) (hr : RdAt μ HT S0 S1) :
     ∃ ω', FreeStepsH p R 43148 ω μ x 40805 ω' μ x 7 ∧ ω'[7] = UInt64.ofNat ptr ∧
       ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat (sp + 152) ∧ ω'[5] = UInt64.ofNat v5 ∧
       ω'[6] = UInt64.ofNat v6 ∧ ∀ j : Fin 13, j.val ∉ [0, 1, 5, 6, 7] → ω'[j] = ω[j] := by
@@ -147,16 +149,17 @@ theorem rs_hdr {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (
     (h5 : ω[5] = UInt64.ofNat n) (h3 : ω[3] = UInt64.ofNat 204984)
     (hp : 206896 ≤ ptr) (hw : rdN μ (ptr - 32 + 4) 4 = 2 * cur + 1) (hn : n < cur)
     (hb : rdN μ 206520 8 = base) (hbT : base + 1073741824 < 2147483648) (hpc : ptr - 32 + 32 * cur < 2147483648)
-    (hsp : 2147483648 ≤ sp) (hsp1 : sp + 152 < 4294967296) (hwr : ∀ a, μ.writable a = true) :
+    (hsp : 2147483648 ≤ sp) (hsp1 : sp + 152 < 4294967296) {HT S0 S1 : Nat} (hH : 206864 ≤ HT)
+    (hXH : 196608 ≤ ptr - 32 ∧ ptr - 32 + 8 ≤ HT) (hS : S0 ≤ sp ∧ sp + 152 ≤ S1) (hwr : WrAt μ HT S0 S1) :
     ∃ ω' μ', FreeStepsH p R 43027 ω μ x 43080 ω' μ' x 18 ∧
       ω'[0] = UInt64.ofNat (ptr - 32) ∧ ω'[4] = UInt64.ofNat (base + 1073741824) ∧
       ω'[12] = UInt64.ofNat (ptr - 32 + 32 * cur) ∧ ω'[2] = UInt64.ofNat (cur - n) ∧
       rdN μ' (ptr - 32 + 4) 4 = 2 * n + 1 ∧ rdN μ' (sp + 120) 8 = 204984 ∧
       (∀ a, a < 4294967296 → (a < ptr - 32 + 4 ∨ ptr - 32 + 8 ≤ a) → (a < sp + 120 ∨ sp + 128 ≤ a) →
         μ'.read a = μ.read a) ∧
-      (∀ a, μ'.writable a = true) ∧
+      (∀ a, μ'.writable a = μ.writable a) ∧
       ∀ j : Fin 13, j.val ∉ [0, 2, 4, 9, 10, 11, 12] → ω'[j] = ω[j] := by
-  have hr : ∀ a, μ.readable a = true := fun a => Memory.readable_of_writable (hwr a)
+  have hr := hwr.rd
   have hb' : rdN μ 206520 4 = base := by
     have := rdN_lo μ 206520; rw [hb] at this; rw [this]; omega
   have hsx : sxw 4 base = base := sxw4_small (by omega)
@@ -193,7 +196,7 @@ theorem rs_br_in {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs)
 /-- **43084 … 43097**: the old next chunk nc's size word w: ω₆ = nc, ω₁₁ = w, ω₉ = its used bit. -/
 theorem rs_nhdr {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
     (nc w : Nat) (h12 : ω[12] = UInt64.ofNat nc) (hnc : nc < 2147483648)
-    (hw : rdN μ (nc + 4) 4 = w) (hr : ∀ a, μ.readable a = true) :
+    (hw : rdN μ (nc + 4) 4 = w) {HT S0 S1 : Nat} (hncH : 196608 ≤ nc ∧ nc + 8 ≤ HT) (hr : RdAt μ HT S0 S1) :
     ∃ ω', FreeStepsH p R 43084 ω μ x 43097 ω' μ x 5 ∧ ω'[6] = UInt64.ofNat nc ∧
       ω'[11] = UInt64.ofNat w ∧ ω'[9] = UInt64.ofNat (w % 2) ∧
       ∀ j : Fin 13, j.val ∉ [6, 9, 11] → ω'[j] = ω[j] := by

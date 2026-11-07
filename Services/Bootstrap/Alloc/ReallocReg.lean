@@ -44,7 +44,7 @@ theorem rs_reg_pre {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Reg
     case run' => pvm_go [h1, h0, h5, h2, h4, hz, hs, hwr]
     case post' =>
       refine ⟨?_, ?_, by reg_val, ?_, fun a ha h1 => ?_, fun a => ?_, by reg_frame⟩
-      · simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, ↓reduceIte, PVM.getD_some']
+      · simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some']
         congr 1
         have hy : (if size ≤ 33554432 then size else 33554432) % 18446744073709551616 % 4294967296 =
             min size 33554432 := by split <;> omega
@@ -87,7 +87,7 @@ theorem rs_reg_write {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
     (hold : rdN μ (bin * 4 + 196792) 4 = old) (hold1 : old < 2147483648)
     (holda : old ≠ 0 → 206864 ≤ old ∧ (old + 16 ≤ M ∨ M + 16 ≤ old))
     (hsp : 2147483648 ≤ sp) (hsp1 : sp + 152 < 4294967296) (hw : ∀ a, μ.writable a = true) :
-    ∃ ω' μ', FreeStepsH p R 43736 ω μ x 43834 ω' μ' x 32 ∧
+    ∃ ω' μ', FreeStepsH p R 43736 ω μ x 43834 ω' μ' x 36 ∧
       rdN μ' (bin * 4 + 196792) 4 = M ∧ rdN μ' M 4 = pv ∧ rdN μ' (M + 4) 4 = 2 * size ∧
       rdN μ' (M + 8) 4 = old ∧ rdN μ' (M + 12) 4 = 0 ∧ (old ≠ 0 → rdN μ' (old + 12) 4 = M) ∧
       rdN μ' (204984 + bin / 64 * 8 + 1544) 8 = rdN μ (204984 + bin / 64 * 8 + 1544) 8 ||| 2 ^ (bin % 64) ∧
@@ -107,16 +107,18 @@ theorem rs_reg_write {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
     refine ⟨?ω', ?μ', ?run, ?post⟩
     case run => pvm_go [h1, h9, h2, h3, h4, h7, hbin, hold, h120, h112, hw, hr, rdN_writeN_disjoint, ↓rdN_fold]
     case post =>
-      refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha h1 h2 h3 h4 h5 => ?_, fun a => ?_, ?_, ?_, ?_⟩
+      refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha h1 h2 h3 h4 h5 => ?_, fun a => ?_, by reg_val, by reg_val,
+        by reg_frame⟩
       all_goals try rd_simp [bitwise_and_m63, rdN_mod64, hw]
-      all_goals first | rd_finish | reg_frame | reg_val | skip
+      all_goals rd_finish
   · obtain ⟨ho1, ho2⟩ := holda h0
     refine ⟨?ω'', ?μ'', ?run', ?post'⟩
     case run' => pvm_go [h1, h9, h2, h3, h4, h7, hbin, hold, h0, h120, h112, hw, hr, rdN_writeN_disjoint, ↓rdN_fold]
     case post' =>
-      refine ⟨?_, ?_, ?_, ?_, ?_, fun _ => ?_, ?_, ?_, fun a ha h1 h2 h3 h4 h5 => ?_, fun a => ?_, ?_, ?_, ?_⟩
+      refine ⟨?_, ?_, ?_, ?_, ?_, fun _ => ?_, ?_, ?_, fun a ha h1 h2 h3 h4 h5 => ?_, fun a => ?_, by reg_val,
+        by reg_val, by reg_frame⟩
       all_goals try rd_simp [bitwise_and_m63, rdN_mod64, hw]
-      all_goals first | rd_finish | reg_frame | reg_val | skip
+      all_goals rd_finish
 
 /-- **43834 … the return to `realloc` (40805)**: the chunk after the tail (X + 32·(n + size)), if
     below the heap's end `en`, records `size` as its `prev`; ω₇ = ptr; ω₀, ω₅, ω₆ and sp come back
@@ -128,7 +130,7 @@ theorem rs_epi {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (
     (hXt : X0 + 32 * (n + size) < 2147483648) (hen : en < 2147483648) (hs : size < 4294967296)
     (s0 : rdN μ (sp + 144) 8 = 1988) (s5 : rdN μ (sp + 136) 8 = v5) (s6 : rdN μ (sp + 128) 8 = v6)
     (hsp : 2147483648 ≤ sp) (hsp1 : sp + 152 < 4294967296) (hw : ∀ a, μ.writable a = true) :
-    ∃ ω' μ', FreeStepsH p R 43834 ω μ x 40805 ω' μ' x 13 ∧
+    ∃ ω' μ', FreeStepsH p R 43834 ω μ x 40805 ω' μ' x 14 ∧
       (X0 + 32 * (n + size) < en → rdN μ' (X0 + 32 * (n + size)) 4 = size) ∧
       (∀ a, a < 4294967296 → (en ≤ X0 + 32 * (n + size) ∨ a < X0 + 32 * (n + size) ∨
         X0 + 32 * (n + size) + 4 ≤ a) → μ'.read a = μ.read a) ∧

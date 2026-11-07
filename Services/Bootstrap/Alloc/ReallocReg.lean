@@ -145,12 +145,12 @@ theorem rs_epi {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (
     refine ⟨?ω', ?μ', ?run, ?post⟩
     case run => pvm_go [h1, h2, h5, h0, h4, h8, ha, s0, s5, s6, hlt', hw, hr, rdN_writeN_disjoint, ↓rdN_fold]
     case post =>
-      refine ⟨fun _ => ?_, fun a ha h1 => ?_, fun a => ?_, by reg_val, by reg_val, by reg_val, ?_, ?_, by reg_frame⟩
-      · rd_simp []; simp only [Nat.reducePow, Nat.reduceMul]; omega
+      refine ⟨fun _ => ?_, fun a ha h1 => ?_, fun a => ?_, by reg_val, by reg_val, by reg_val, by reg_val, by reg_val,
+        by reg_frame⟩
+      · rw [show X0 + 32 * (n + size) = (size + n) * 32 + X0 by omega]; rd_simp []
+        simp only [Nat.reducePow, Nat.reduceMul]; omega
       · rd_simp []
       · rd_simp [hw]
-      · reg_val; rw [rdN_frame (μ := μ) (a := sp + 136) (n := 8) (fun j hj => by rd_simp []), s5]
-      · reg_val; rw [rdN_frame (μ := μ) (a := sp + 128) (n := 8) (fun j hj => by rd_simp []), s6]
   · have hge : en ≤ X0 + 32 * (n + size) := by omega
     refine ⟨?ω'', ?μ'', ?run', ?post'⟩
     case run' => pvm_go [h1, h2, h5, h0, h4, h8, ha, s0, s5, s6, hge, hw, hr, ↓rdN_fold]

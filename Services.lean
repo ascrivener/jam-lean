@@ -108,6 +108,13 @@ import Services.Witness.Blob
 import Services.Witness.CodeOk
 import Services.Witness.Rejects
 import Services.Witness.Confined
+import Services.Bootstrap.Alloc.ReallocEntry
+import Services.Bootstrap.Alloc.ReallocShrink
+import Services.Bootstrap.Alloc.ReallocReg
+import Services.Bootstrap.Alloc.ReallocStages
+import Services.Bootstrap.Alloc.ReallocImpl
+import Services.Bootstrap.Alloc.ReallocRefines
+import Services.Bootstrap.Alloc.ReallocInplace
 
 /-!
 # Results about specific services' deployed code

@@ -8,6 +8,10 @@ progress). The PVM is checked against the PVM test vectors of
 commit `6bf3768e5b37bbe4ca5d6e1306284ecb27c0198f`, directory `pvm/`); `JAM` against
 [davxy/jam-test-vectors](https://github.com/davxy/jam-test-vectors) `v0.8.0`.
 
+**What's proven:** [`docs/whats-proven.md`](docs/whats-proven.md) summarises the theorems about real
+service binaries (witness, and Parity's bootstrap service with its picoalloc heap allocator), their
+assumptions, the trust base, the model/binary disagreements found, and how to reproduce it all.
+
 It is meant for proofs as well as evaluation: everything is total, decoding is kept separate from
 execution, memory is an extensional finite map, and the theorems use only `propext`,
 `Classical.choice` and `Quot.sound`. The model depends only on Lean core and `Std` (toolchain

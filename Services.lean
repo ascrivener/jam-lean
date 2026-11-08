@@ -58,6 +58,7 @@ import Services.Picoalloc.Free
 import Services.Picoalloc.Realloc
 import Services.Picoalloc.Init
 import Services.Picoalloc.First
+import Services.Picoalloc.AllocAlign
 import Services.Bootstrap.Alloc.Rep
 import Services.Bootstrap.Alloc.Arith
 import Services.Bootstrap.Alloc.Register
@@ -88,6 +89,10 @@ import Services.Bootstrap.Alloc.AllocGrowRefines
 import Services.Bootstrap.Alloc.AllocInit
 import Services.Bootstrap.Alloc.AllocWrapGrow
 import Services.Bootstrap.Alloc.AllocFirst
+import Services.Bootstrap.Alloc.AllocFailModel
+import Services.Bootstrap.Alloc.AllocFailSteps
+import Services.Bootstrap.Alloc.AllocFailGrow
+import Services.Bootstrap.Alloc.AllocFailRefines
 import Services.Witness.Prefix
 import Services.Witness.EmptyTail
 import Services.Witness.Front1
@@ -115,6 +120,28 @@ import Services.Bootstrap.Alloc.ReallocStages
 import Services.Bootstrap.Alloc.ReallocImpl
 import Services.Bootstrap.Alloc.ReallocRefines
 import Services.Bootstrap.Alloc.ReallocInplace
+import Services.Bootstrap.Alloc.ReallocGrow
+import Services.Bootstrap.Alloc.ReallocGrowUnreg
+import Services.Bootstrap.Alloc.ReallocGrowReg
+import Services.Bootstrap.Alloc.ReallocGrowStages
+import Services.Bootstrap.Alloc.ReallocGrowImpl
+import Services.Bootstrap.Alloc.ReallocGrowRefines
+import Services.Bootstrap.Alloc.ReallocZero
+import Services.Bootstrap.Alloc.ReallocWrap
+import Services.Bootstrap.Alloc.ReallocGrowHeap
+import Services.Bootstrap.Alloc.ReallocGrowPost
+import Services.Bootstrap.Alloc.ReallocGrowHeapImpl
+import Services.Bootstrap.Alloc.ReallocGrowHeapRefines
+import Services.Bootstrap.Alloc.ReallocFallback
+import Services.Bootstrap.Alloc.ReallocFallbackTail
+import Services.Bootstrap.Alloc.ReallocFallbackPre
+import Services.Bootstrap.Alloc.ReallocFallbackRefines
+import Services.Bootstrap.Alloc.ReallocFallbackCopy
+import Services.Bootstrap.Alloc.ReallocFallbackAlloc
+import Services.Bootstrap.Alloc.ReallocFallbackGrowFail
+import Services.Bootstrap.Alloc.ReallocFallbackHeap
+import Services.Bootstrap.Alloc.ReallocFallbackWrap
+import Services.Bootstrap.Alloc.ReallocCases
 
 /-!
 # Results about specific services' deployed code

@@ -56,6 +56,8 @@ call `pc`) live in `Tests/`, not in the model.
 | `witness-service.jam`'s host-call ids within those `Services.Witness` assumes (`lake build witnesscheck`) | **pass** |
 | The real witness binary's refine on 7 malformed payloads gives `Rejected(BadPayload)` (`lake build witnessrun`; a test, not a proof) | **7 / 7** |
 | Accumulation STF (§12) vs. GP v0.8.0 accumulate vectors (tiny) | **61 / 63** pass; the 2 others are `bless_from_non_manager`, which the vectors' changelog lists as departing from GP 0.8.0 |
+| Recent-history STF (§7: β_H, the accumulation-output belt β_B) vs. `stf/history` (`lake build historytest`) | **4 / 4** tiny, **4 / 4** full |
+| Authorization STF (§8: the pool α from the queue φ') vs. `stf/authorizations` (`lake build authtest`) | **3 / 3** tiny, **3 / 3** full |
 
 ## Building and running
 
@@ -66,6 +68,8 @@ scripts/fetch-vectors.sh              # pinned vectors into vendor/jamtestvector
 lake build pvmtest                    # run every vector in programs/
 lake build gascheck                   # compare ϱ^Δ with every block cost
 scripts/check-tables.sh               # regenerate PVM/Tables.lean from the pinned paper and diff
+scripts/fetch-jam-vectors.sh          # GP v0.8.0 JAM vectors into vendor/jam-test-vectors
+lake build historytest authtest       # the recent-history and authorization STF vectors (tiny and full)
 ```
 
 `pvmtest` and `gascheck` are Lake targets that build an executable and run it; a failing vector
@@ -610,6 +614,12 @@ noted here and in a comment at the definition.
     missing preimage: BAD. Likewise an item index i ≥ |p_w| gives BAD.
 20. **`pages` gives no ε'.** Ω_Z's row defines only (ω'_7, **m**'); with the common rules it
     continues (▸) in every case, including WHO and HUH.
+21. **Authorization's F(c) binds g only in its condition** (§8): α[c] ⊖ {(g_w)_a} names a g that
+    is quantified only in the case "∃ g ∈ E_G : (g_w)_c = c". We read it as that guarantee's
+    authorizer (E_G has at most one guarantee per core). All authorizations vectors agree.
+22. **Recent history** (§7) follows the paper as written: β_H^† corrects the last state root, the
+    new entry has state root ℍ_0 and super-peak ℳ_R(β_B'), and β_B' = 𝒜(β_B, r, ℋ_K). The
+    vectors give r = ℳ_B(**s**, ℋ_K) directly (`accumulate_root`) and agree throughout.
 
 ## Caveats
 

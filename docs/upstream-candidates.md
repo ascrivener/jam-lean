@@ -27,6 +27,7 @@ Gaps, where the paper leaves behaviour undefined:
 | 18 | Ψ_R | The refine dispatcher passes x̄ to `fetch`, but Ψ_R's arguments do not include that data. The account state **d** is also implicit. |
 | 19 | Ψ_R, §14.3 | A looked-up preimage that is not of the form ℰ(↕**m**, **c**). |
 | 20 | Ω_Z (`pages`) | The row defines only (ω'_7, **m**'), with no ε'. |
+| 21 | §8, F(c) | α[c] ⊖ {(g_w)_a} names a g bound only in the case condition; it should say the guarantee on core c. |
 
 ## Paper and vectors
 
@@ -51,5 +52,5 @@ These cases have no test vector, so the readings above are untested:
 - **The picoalloc model's alignment rounding.** A bug in this repository's own model, not in the
   paper or the vectors. The model rounded the data unit from the heap base; the binary rounds it
   in the address space. Fixed in `Services/Picoalloc/Model.lean`.
-- **Notes 6–10, 14 and 16.** Points where the vectors confirm a subtle reading, or observations
+- **Notes 6–10, 14, 16 and 22.** Points where the vectors confirm a subtle reading, or observations
   that need no change.

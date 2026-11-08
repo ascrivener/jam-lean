@@ -29,7 +29,8 @@ lean_lib Services
 lean_lib Tests where
   globs := #[.one `Tests.Vectors, .one `Tests.Invocation, .one `Tests.LogicExample,
     .one `Tests.Blake2bTest, .one `Tests.HostGeneralTest, .one `Tests.JamJson,
-    .one `Tests.KeccakTest, .one `Tests.RefineTest]
+    .one `Tests.KeccakTest, .one `Tests.RefineTest,
+    .one `Tests.StfRunner]
 
 lean_exe «pvmtest-exe» where
   root := `Tests.PvmTest
@@ -115,3 +116,19 @@ lean_exe genwitnesssteps where
 /-- Development aid: `lake exe pvmtrace <vector.json> [steps]`. -/
 lean_exe pvmtrace where
   root := `Tests.Trace
+
+lean_exe «historytest-exe» where
+  root := `Tests.HistoryTest
+  exeName := "historytest"
+
+/-- Run the recent-history STF (§7) on every history vector (tiny and full). -/
+target historytest pkg : Unit := do
+  runOnVectors `«historytest-exe» #[(jamVectorDir pkg / "stf" / "history").toString]
+
+lean_exe «authtest-exe» where
+  root := `Tests.AuthorizationsTest
+  exeName := "authtest"
+
+/-- Run the authorization STF (§8) on every authorizations vector (tiny and full). -/
+target authtest pkg : Unit := do
+  runOnVectors `«authtest-exe» #[(jamVectorDir pkg / "stf" / "authorizations").toString]

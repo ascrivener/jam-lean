@@ -291,8 +291,10 @@ block's data as it was when `realloc` was called. The theorems are `realloc_wrap
 and `realloc_wrap_cases_data` for every outcome that returns an address other than the old one
 and null. They rest on frames for the allocator: `free_refines_hdr`, `alloc_refines_hdr` and
 `alloc_refines_growK_hdr` show that in the heap only the allocator's fields and chunk headers
-change (`HKeep`, `Rep.lean`), so other chunks' data is kept. The same data statement for the
-in-place and grow-in-place paths is still open.
+change (`HKeep`, `Rep.lean`), so other chunks' data is kept. On the paths that keep the address
+(same size, shrink, grow in place, grow with the heap grown), the block's first
+min(usable, new size)·32 octets are kept (`ReallocKeep.lean`). `realloc_wrap_cases_data` states
+both for every outcome: any non-null result r holds those octets of the old block.
 
 Through the wrapper, a null address returns null at once, and so does an alignment or size above
 2³⁷ − 32 octets.
@@ -433,6 +435,5 @@ At the time of writing, other work in progress includes:
 - **Lifting the 14-page limit,** by making the host-call gas cap a parameter of `refineContract`.
 - **`alloc` in the binary at alignment above one unit with heap growth, on first use and on
   failure.** The no-growth success path is done (`AllocAlignRefines.lean`).
-- **The data `realloc` keeps on its in-place and grow-in-place paths.** The fallback's copy is done.
 
 This page should be updated as these land.

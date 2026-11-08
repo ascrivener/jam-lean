@@ -87,6 +87,8 @@ theorem realloc_impl_shrink {p : ByteArray} {P : Program} [HasCode p P] (x : X) 
       RepAt μ' (shrink s ptr req) (fun a => H a ∨ a = ptr - 32 + 32 * (req + 1))
         (fun a => F a ∨ a = ptr - 32 + 32 * (req + 1)) ∧
       (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
+      HKeep μ μ' (fun a => (H a ∨ F a) ∨ a = ptr - 32 + 32 * (req + 1) ∨
+        a = (mergeNext (shrinkHdr s ptr req) (ptr - 32) cur (s.base + 1073741824)).1.heads (binDown ((mergeNext (shrinkHdr s ptr req) (ptr - 32) cur (s.base + 1073741824)).2 - (req + 1)))) ∧
       ω'[7] = UInt64.ofNat ptr ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat sp ∧
       ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
   obtain ⟨hX1, hX2, hX3⟩ := hX
@@ -130,7 +132,7 @@ theorem realloc_impl_shrink {p : ByteArray} {P : Program} [HasCode p P] (x : X) 
     unfold shrinkHdr; rw [hXd']; exact this
   -- the merge
   have hHF' : ∀ a, H a ∨ F a → Al (shrinkHdr s (Xc + 32) req).base a := hHF
-  obtain ⟨ω4, μ4, r4, rep4, d2, d5, ww4, sf4, g4⟩ := shrink_next (p := p) (P := P) (R := R) x ω3 μ3
+  obtain ⟨ω4, μ4, r4, rep4, d2, d5, ww4, sf4, hk4, g4⟩ := shrink_next (p := p) (P := P) (R := R) x ω3 μ3
     (shrinkHdr s (Xc + 32) req) H F (sp - 152) s.base Xc cur (req + 1) rep3
     (by rw [fget g3 1 (by decide) (by decide), fget g2 1 (by decide) (by decide)]; exact a1) c0 c4 c12 c2
     (by rw [fget g3 5 (by decide) (by decide)]; exact b5)
@@ -148,7 +150,7 @@ theorem realloc_impl_shrink {p : ByteArray} {P : Program} [HasCode p P] (x : X) 
       a + 8 ≤ sp → rdN μ4 a 8 = v := fun a v h hv h1 h2 => by
     rw [rdN_frame (μ := μ1) fun j hj => stk31 _ (by omega) (by omega)]
     exact rd_enc h hv
-  obtain ⟨ω5, μ5, r5, rep5, ww5, sf5, e7, e0, e1, e5, e6⟩ := shrink_tail (p := p) (P := P) (R := R) x ω4 μ4 m.1 H F
+  obtain ⟨ω5, μ5, r5, rep5, ww5, sf5, hk5, e7, e0, e1, e5, e6⟩ := shrink_tail (p := p) (P := P) (R := R) x ω4 μ4 m.1 H F
     (sp - 152) s.base Xc (req + 1) (m.2 - (req + 1)) (Xc + 32) ω[5].toNat ω[6].toNat rep4
     (by rw [fget g4 1 (by decide) (by decide), fget g3 1 (by decide) (by decide),
       fget g2 1 (by decide) (by decide)]; exact a1)
@@ -169,7 +171,10 @@ theorem realloc_impl_shrink {p : ByteArray} {P : Program} [HasCode p P] (x : X) 
     (by omega) (by omega) hMT hold1T hHFT ⟨by omega, by omega⟩ (((hw.of_eq ww1).of_eq ww3).of_eq ww4)
   refine ⟨ω5, μ5, ((((r1.trans r2).trans r3).trans r4).trans r5).mono (by omega), ?_,
     fun a => (ww5 a).trans ((ww4 a).trans ((ww3 a).trans (ww1 a))),
-    fun a h1 h2 => (sf5 a h1 (by omega) (Or.inr (by omega))).trans (stk3 a h1 h2), e7, e0,
+    fun a h1 h2 => (sf5 a h1 (by omega) (Or.inr (by omega))).trans (stk3 a h1 h2),
+    (((HKeep.of_low fun a h1 h2 _ => sf1 a (by omega) (Or.inl (by omega))).trans
+      (HKeep.of_low fun a h1 h2 h3 => sf3 a (by omega) (by have := h3 Xc (Or.inl (Or.inl hXH)); omega)
+        (Or.inl (by omega)))).trans (hk4.mono fun b hb => Or.inl (Or.inl hb))).trans hk5, e7, e0,
     by rw [e1]; congr 1; omega, by rw [e5, UInt64.ofNat_toNat], by rw [e6, UInt64.ofNat_toNat]⟩
   rw [shrink_eq (cur := cur) (by rw [hXd']; exact hsz) hr, hXd', hm]
   exact rep5

@@ -60,6 +60,9 @@ theorem realloc_impl_grow_heapK {p : ByteArray} {P : Program} [HasCode p P] (env
         (fun a => F a ∨ (cur + sz - (req + 1) ≠ 0 ∧ a = ptr - 32 + 32 * (req + 1))) ∧
       HeapPages μ' 48 pb (growTop (pagesOf (s.base + 32 * E)) h pb) ∧
       (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
+      HKeep μ μ' (fun a => (H a ∨ F a) ∨ a = ptr - 32 + 32 * (req + 1) ∨
+        a = (growHdr (unregister { s with allocated := E } (ptr - 32 + 32 * cur) (binDown sz)) (ptr - 32) (req + 1)).heads
+          (binDown (cur + sz - (req + 1)))) ∧
       ω'[7] = UInt64.ofNat ptr ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat sp ∧
       ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
   -- kept out of `omega`'s sight until the tail needs them
@@ -208,7 +211,7 @@ theorem realloc_impl_grow_heapK {p : ByteArray} {P : Program} [HasCode p P] (env
     exact tail_le (A := E) hX2 hX1 (by omega) (by omega)⟩
   have hT' : PLift (_ : Prop) := ⟨fun r0 h0 => Nat.le_trans (hT.down r0 h0) (Nat.mul_le_mul_left 4096 ht1)⟩
   clear hEd hgr hR hcost hhb hbs h48 hSb hE32 ht0 ht1 htb hpE gE hTt hT hHFT hal5 hal
-  obtain ⟨ω9, μ9, rP, rep9, wwP, sfP, e7, e0, e1, e5, e6⟩ := grow_post (p := p) (P := P)
+  obtain ⟨ω9, μ9, rP, rep9, wwP, sfP, hkP, e7, e0, e1, e5, e6⟩ := grow_post (p := p) (P := P)
     (R := refineContractK cap env) x ω7h μ7h { s with allocated := E } H F (sp - 152) s.base (ptr - 32) cur sz
     (req + 1) ptr ω[5].toNat ω[6].toNat rep7h K1h (by rw [K 7 (by decide) (by decide)]; exact h7) k3
     (by rw [K 8 (by decide) (by decide)]; exact h8) hp64 s40' s48' k112' s64' s72' s56' k80
@@ -223,7 +226,11 @@ theorem realloc_impl_grow_heapK {p : ByteArray} {P : Program} [HasCode p P] (env
   refine ⟨ω9, μ9, (((((((((r1.trans r2).trans r3).trans b4).trans r5).trans b6).trans r6).trans r7).trans rH).trans
       rP).mono (by omega), rep9,
     HeapPages.of_eq hpH wwP, fun a h1 h2 => by rw [wwP]; exact hstH a h1 h2,
-    fun a h1 h2 => ?_, e7, e0,
+    fun a h1 h2 => ?_,
+    (HKeep.of_low fun a h1 h2 _ => (frH a (by omega) (by omega) (by omega) (by omega)).trans
+      (((sf7 a (by omega) (Or.inl (by omega))).trans
+      ((sf5 a (by omega) (Or.inl (by omega))).trans (sf3 a (by omega) (Or.inl (by omega))))).trans
+        (sf1 a (by omega) (Or.inl (by omega))))).trans hkP, e7, e0,
     by rw [e1]; congr 1; omega, by rw [e5, UInt64.ofNat_toNat], by rw [e6, UInt64.ofNat_toNat]⟩
   rw [sfP a h1 (by omega) (Or.inr (by omega)), stk1 a h1 (by omega)]
   exact sf1 a h1 (Or.inr h2)
@@ -273,6 +280,9 @@ theorem realloc_impl_grow_heap {p : ByteArray} {P : Program} [HasCode p P] (env 
         (fun a => F a ∨ (cur + sz - (req + 1) ≠ 0 ∧ a = ptr - 32 + 32 * (req + 1))) ∧
       HeapPages μ' 48 pb (growTop (pagesOf (s.base + 32 * E)) h pb) ∧
       (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
+      HKeep μ μ' (fun a => (H a ∨ F a) ∨ a = ptr - 32 + 32 * (req + 1) ∨
+        a = (growHdr (unregister { s with allocated := E } (ptr - 32 + 32 * cur) (binDown sz)) (ptr - 32) (req + 1)).heads
+          (binDown (cur + sz - (req + 1)))) ∧
       ω'[7] = UInt64.ofNat ptr ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat sp ∧
       ω'[5] = ω[5] ∧ ω'[6] = ω[6] :=
   realloc_impl_grow_heapK (p := p) (P := P) (S0 := S0) (S1 := S1) env hostCostMax (by decide) x ω μ

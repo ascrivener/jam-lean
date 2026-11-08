@@ -1,11 +1,16 @@
 import JAM.Params
 
 /-!
-# Bootstrap's intended behaviour: the spec
+# Bootstrap's behaviour: the spec
 
 What Parity's bootstrap service (`services/bootstrap/jam-bootstrap-service.jam`, crate
-`jam-bootstrap-service` 0.1.29) is meant to do, as Lean definitions. The target theorems in
+`jam-bootstrap-service` 0.1.29) does, as Lean definitions. The target theorems in
 `docs/bootstrap-target.md` say the binary does exactly this. The file has no theorems.
+
+**The spec describes what the binary does today, not what it was meant to do.** Behaviour that may
+be surprising is specified exactly and listed as a quirk (Q1, Q2, …) in the doc's "Quirks"
+section; the definitions that implement a quirk say so. Whether a quirk was intended is not
+decided here.
 
 Every definition here is read off the Rust source of the crate and of the crates it uses at the
 versions in its `Cargo.lock`: `jam-bootstrap-service-common` 0.1.29 (the `Instruction` type and
@@ -31,6 +36,16 @@ The file has four parts:
 
 Host calls made only for logging are left out: `log` (100), the `gas` calls in log lines, and the
 `info` call that feeds accumulate's first log line. They change nothing but gas and registers.
+
+Two outcomes are allowed beyond what `Prog` says, and the theorems carry them:
+
+* **Heap exhaustion.** Any allocation may fail, and a failed allocation panics (Rust's
+  `handle_alloc_error`). So refine may end in ☇, and accumulate may stop and roll back to its last
+  checkpoint, at any point where the binary allocates. The theorems allow this; they do not prove
+  that it cannot happen.
+* **Running out of gas**, as for any service.
+
+The test-only instructions (`Instr.testOnly`) are in the spec like the others.
 -/
 
 namespace Services.Bootstrap.Spec
@@ -100,6 +115,13 @@ inductive Instr where
   | randomStorageAccumulate (keys : Option (List Bytes))
   | benchmark
   | assignForGasCost (core : Nat) (queue : List Bytes) (assigner : Nat)
+
+/-- The instructions the source marks as being for tests and benchmarks: `RandomStorageRefine`,
+    `RandomStorageAccumulate`, `Benchmark` and `AssignForGasCost`. They are specified like the
+    others; the predicate only labels them. -/
+def Instr.testOnly : Instr → Bool
+  | .randomStorageRefine .. | .randomStorageAccumulate _ | .benchmark | .assignForGasCost .. => true
+  | _ => false
 
 /-- `InstructionRet`: what a successful instruction returns. -/
 inductive Ret where
@@ -265,7 +287,7 @@ def Registry.update (r : Registry) (name : Bytes) (id : Nat) (codeHash : Bytes) 
 /-! ## The decoder the binary runs
 
 `jam-codec` 0.1.1's `Decode`, as a parser. It reads a prefix and leaves the rest, so trailing octets
-are ignored: bootstrap calls `decode`, not `decode_all`. -/
+are ignored: bootstrap calls `decode`, not `decode_all` (quirk Q2). -/
 
 /-- A parser: consume a prefix, or fail. -/
 abbrev Dec := StateT Bytes Option
@@ -293,7 +315,7 @@ def leadingOnes (b : Nat) : Nat := ((List.range 8).find? (fun i => (b / 2 ^ (7 -
 /-- A natural in `jam-codec`'s compact form (`WrappedPrimitive::decode`): the prefix octet b, then
     l octets, where l is b's number of leading ones; 255 is followed by 8 octets. This inverts GP's
     ℰ, but it also accepts encodings ℰ never produces (a value in a longer form than needed, such as
-    [128, 5] for 5). -/
+    [128, 5] for 5). Quirk Q1. -/
 def compact : Dec Nat := do
   let b ← byte
   if b = 255 then fixedN 8
@@ -454,14 +476,14 @@ def refineInstr (C : Consts) : Instr → Prog ROp Instr
   | .randomStorageRefine seed n => pure (.randomStorageAccumulate (some (C.randomKeys seed n)))
   | .exportSegs ds => do
     for d in ds do op (ROp.exportSeg d)
-    pure (.exported ds.length)
+    pure (.exported ds.length)  -- quirk Q11: counts attempts, failed exports included
   | .importSegs items => do
     let segs ← items.mapM fun (i, l) => do
       match ← op (ROp.importSeg i) with
       | some seg => pure (seg.take l)
-      | none => Prog.panic
+      | none => Prog.panic  -- quirk Q10
     pure (.imported segs)
-  | i => pure i
+  | i => pure i  -- quirk Q3: internal variants pass through too
 
 /-- **Refine** for work item `item` with payload `y`: decode `Instructions` (panic if that fails),
     rewrite each instruction with `refineInstr`, and return ℰ(`BootstrapWorkOutput`). The core
@@ -542,7 +564,7 @@ def load {α : Type} (k : Key) (p : Dec α) : Prog AOp (Option α) := do
 /-- `add_recent_work_item`: write (package, item) into the ring's next slot, removing the results of
     the work item it replaces, and advance the slot. -/
 def addRecent (C : Consts) (package : Bytes) (item : Nat) : Prog AOp Unit := do
-  let c := (← load .counter (Dec.fixedN 4)).getD 0
+  let c := (← load .counter (Dec.fixedN 4)).getD 0  -- quirk Q12: undecodable reads as 0
   match ← load (.recent c) (do return (← Dec.take 32, ← Dec.fixedN 2)) with
   | some (p, i) => op (AOp.remove (Key.results p i).encode)
   | none => pure ()
@@ -586,19 +608,20 @@ def onInstr (C : Consts) (now : Nat) : Instr → Prog AOp Result
       | some code => do let _ ← op (AOp.provide s code)
       | none => pure ()
       match ← op (AOp.transfer s b m memo) with
-      | .error _ => pure (.error .transfer)
+      | .error _ => pure (.error .transfer)  -- quirk Q5: the new service stays
       | .ok _ =>
         match reg with
         | some name => do
+          -- quirk Q12: an undecodable registry reads as empty and is overwritten
           let r := (← load .registry (Dec.vec (do
             return (← Dec.bytes, ← Dec.fixedN 4, ← Dec.take 32)))).getD []
           store .registry (encodeRegistry (Registry.update r name s h))
         | none => pure ()
         pure (.ok (.serviceId s))
-  | .upgrade h g m => do orPanic (.upgrade h g m); pure (.ok .unit)
+  | .upgrade h g m => do orPanic (.upgrade h g m); pure (.ok .unit)  -- quirk Q8
   | .transfer d a g memo => check (.transfer d a g memo) .transfer (.transferred d a memo)
   | .zombify e => do
-    removeAllKeys C
+    removeAllKeys C  -- quirk Q4: before the precondition check
     let info ← op AOp.myInfo
     if ¬ (info.bytes ≥ preimageOverhead ∧ info.items = 2) then pure (.error .zombify)
     else
@@ -610,10 +633,10 @@ def onInstr (C : Consts) (now : Nat) : Instr → Prog AOp Result
         pure (.ok .unit)
   | .eject t h => check (.eject t h) .eject .unit
   | .deleteItems ks => do
-    for k in ks do op (AOp.remove k)
+    for k in ks do op (AOp.remove k)  -- quirk Q6: own keys included
     pure (.ok .unit)
   | .imported ds => pure (.ok (.dataVec ds))
-  | .exported n => pure (.ok (.length (n % 2 ^ 32)))
+  | .exported n => pure (.ok (.length (n % 2 ^ 32)))  -- quirk Q9
   | .solicit h l => check (.solicit h l) .solicit (.hash h)
   | .forget h l => do
     if ← op (AOp.query h l) then check (.forget h l) .forget (.hash h)
@@ -626,11 +649,11 @@ def onInstr (C : Consts) (now : Nat) : Instr → Prog AOp Result
   | .lookedUp none => pure (.error .lookup)
   | .assign c q a => check (.assign c q.flatten a) .assign .unit
   | .assignForGasCost c q a =>
-    -- the raw call is passed ℰ(q), length prefix included (see the doc)
+    -- quirk Q7: the raw call is passed ℰ(q), length prefix included
     if q.isEmpty then pure (.ok .unit) else check (.assign c (vec id q) a) .assign .unit
-  | .bless m a v r z => do orPanic (.bless m a v r z); pure (.ok .unit)
+  | .bless m a v r z => do orPanic (.bless m a v r z); pure (.ok .unit)  -- quirk Q8
   | .designate ks => check (.designate ks) .designate .unit
-  | .yield h => do orPanic (.yield h); pure (.ok .unit)
+  | .yield h => do orPanic (.yield h); pure (.ok .unit)  -- quirk Q8
   | .provide s (.hash h) => do
     match ← op (AOp.lookup none h) with
     | none => pure (.error .lookup)
@@ -645,7 +668,7 @@ def onInstr (C : Consts) (now : Nat) : Instr → Prog AOp Result
       | none => pure 0
       | some v => match decode (Dec.fixedN 8) v with
         | some n => pure n
-        | none => Prog.panic
+        | none => Prog.panic  -- quirk Q13
     for k in ks do orPanic (.write k k)
     orPanic (.write key (fixed 8 (n + ks.length)))
     pure (.ok .unit)
@@ -675,6 +698,7 @@ def onWorkItem (C : Consts) (now : Nat) (package out : Bytes) : Prog AOp Unit :=
       | _ => pure ()
       let r ← onInstr C now i
       results := results ++ [r]
+    -- quirk Q4: any `Zombify`, failed or not, suppresses the final write
     unless is.any (fun | .zombify _ => true | _ => false) do
       store key (encodeResults results)
 
@@ -682,8 +706,8 @@ def onWorkItem (C : Consts) (now : Nat) (package out : Bytes) : Prog AOp Unit :=
     and store ℰ(source, amount, memo) under "transfer{count}". -/
 def onTransfer (source amount : Nat) (memo : Bytes) : Prog AOp Unit := do
   let key := "transfer-count".toUTF8.toList
-  let n := ((← op (AOp.read key)).bind (decode (Dec.fixedN 4))).getD 0
-  orPanic (.write key (fixed 4 ((n + 1) % 2 ^ 32)))
+  let n := ((← op (AOp.read key)).bind (decode (Dec.fixedN 4))).getD 0  -- quirk Q12
+  orPanic (.write key (fixed 4 ((n + 1) % 2 ^ 32)))  -- quirk Q14
   orPanic (.write s!"transfer{n}".toUTF8.toList (fixed 4 source ++ fixed 8 amount ++ memo))
 
 /-- An accumulate input, as bootstrap decodes it (`AccumulateItem`): an operand, with its package

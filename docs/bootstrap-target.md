@@ -1,7 +1,13 @@
 # Bootstrap: target theorems, spec and proof plan
 
-**Status: proposal for review. No proofs.** This page proposes what "bootstrap is verified" should
-mean in this repository, and how to get there. It has five parts:
+**Status: for review. Decisions taken ([section 6](#6-decisions)); no proofs yet.** This page says
+what "bootstrap is verified" means in this repository, and how to get there.
+
+**The guiding rule: the spec describes what the binary does today.** Behaviour that may be
+surprising is specified exactly and listed under [Quirks](#quirks). This page does not decide
+whether a quirk was intended.
+
+It has five parts:
 
 1. [What bootstrap does](#1-what-bootstrap-does), read off its source.
 2. [The spec](#2-the-spec), in prose and as Lean definitions (`Services/Bootstrap/Spec.lean`).
@@ -9,28 +15,31 @@ mean in this repository, and how to get there. It has five parts:
 4. [The proof plan](#4-the-proof-plan): what exists, what is missing, the steps, and the risks.
    [Section 5](#5-the-allocator-assumptions-against-bootstrap) checks the allocator's assumptions
    against bootstrap.
-5. [Open questions](#6-open-questions) for you to decide before proof work starts.
+5. [Decisions](#6-decisions): the answers to the open questions of the first draft.
 
 ## Summary
 
 - **Headline theorems.**
-  - **T1 (refine):** for every payload, Ψ_R's result and exports are what `Spec.refine` gives (or ∞).
-    With enough gas, the "or ∞" goes.
+  - **T1 (refine):** for every payload, Ψ_R's result and exports are what `Spec.refine` gives, or
+    ∞, or ☇ from heap exhaustion. With enough gas, the "or ∞" goes. The first milestone is T1 for
+    canonically encoded payloads.
   - **T2 (accumulate):** for every input, Ψ_A's effect on the state, transfers, yield and provisions
     is that of running `Spec.accumulate` against the Gray Paper's host functions. If gas runs out,
     the effect is that of a prefix of that run, rolled back to its last checkpoint.
 - **Safety corollaries:** refine never panics on well-formed input, refine's gas is bounded, the
   "local" instructions never touch another account, and accumulate's own bookkeeping stays
   consistent.
-- **The spec** is a Lean transliteration of the Rust source. It covers all 25 instructions, the
-  codec the binary actually runs, and every host call bootstrap makes, in order. It compiles, has
-  no theorems and was checked by evaluation against the cases already proved.
+- **The spec** is a Lean transliteration of the Rust source. It covers all 25 instructions (the
+  four test-only ones marked as such), the codec the binary actually runs, and every host call
+  bootstrap makes, in order, except logging. It compiles, has no theorems and was checked by
+  evaluation against the cases already proved.
+- **Quirks:** fourteen behaviours that may be surprising, from non-canonical lengths to a failed
+  `Zombify` wiping the bookkeeping. Each is specified exactly and [listed](#quirks).
 - **Biggest risks:**
   - The logging code runs on every path and formats whole values with `core::fmt`.
   - The heap needs a model of the data in live blocks, not just the allocator's metadata.
   - The decoder accepts non-canonical lengths, which adds many paths.
-- **What you need to decide:** see [the open questions](#6-open-questions). The main ones are which
-  instructions to cover, how to treat logging, and which safety properties matter most.
+- **Decisions:** see [section 6](#6-decisions).
 
 ---
 
@@ -105,7 +114,7 @@ works as follows:
 
 It does **not** check that the encoding is the shortest one, so `[128, 5]` decodes as 5 just as
 `[5]` does. A `Vec` length must also be below 2^32. This is the decoder the binary runs, so the
-spec uses it (`Spec.Dec.compact`). The existing `decodeU32` proof covers only the canonical
+spec uses it (`Spec.Dec.compact`, quirk Q1). The existing `decodeU32` proof covers only the canonical
 encodings ℰ(n).
 
 ### The instructions
@@ -194,32 +203,42 @@ For each accumulate input, in order:
 - then remove the counter and the registry.
 
 The source comment says occupied slots always form a prefix of the ring. `DeleteItems` can break
-that (see the open questions).
+that (quirk Q6).
 
 **Host calls made only for logging.** Every log line is `alloc::format!` followed by `log` (100).
 The model treats 100 as an unknown host call (WHAT), so it changes only gas and ω₇. Some log lines
 also call `gas` (0), and accumulate's first line calls `info` (6). These calls change nothing but
-gas and registers, so the spec leaves them out, and the theorems say nothing about them beyond gas.
-The formatting itself runs a lot of code, and allocates; see [risks](#risks).
+gas and registers, so **the spec leaves logging out** (decision 5), and the theorems say nothing
+about it beyond gas. The proofs still have to get past the formatting code, which runs a lot of
+code and allocates; see [risks](#risks).
 
-### Things in the source you may not intend
+**Heap exhaustion.** Every allocation can fail, and a failed allocation panics. This is an allowed
+outcome (decision 4): the theorems say the run may end in ☇ (refine) or roll back to its last
+checkpoint (accumulate) there. They do not prove that it cannot happen. In practice it needs
+about 4 GB live (section 5).
 
-These are what the code does, so the spec does them too. Each is a question for you
-([open questions](#6-open-questions)).
+### Quirks
 
-1. **A failed `Zombify` still wipes the bookkeeping, and suppresses the final results write.** The
-   keys are removed before the precondition check. The "zombified" flag is set before the
-   instruction runs, whether or not it succeeds.
-2. **`CreateService` reports `Err(Transfer)` but keeps the new service** if the endowment transfer
-   fails. There is no checkpoint around the two calls.
-3. **`DeleteItems` can delete bootstrap's own bookkeeping keys.** A hole in the ring then stops
-   `remove_all_recent_work_items` early, and later entries leak.
-4. **`AssignForGasCost` passes the length-prefixed encoding to `assign`.** The queue the host reads
-   is shifted by the prefix, and is read past the end of the buffer. Its outcome depends on heap
-   contents the spec does not track.
-5. **`Bless`, `Upgrade` and `Yield` panic on failure** (SDK `expect`) instead of recording an
-   error. For `Bless` this happens whenever bootstrap is not the manager.
-6. **Refine passes internal variants through** (above).
+These are things the binary does that a reader may not expect. The spec does each of them exactly,
+and its definitions mark them with `-- quirk Qn`. Whether each was intended is not decided here.
+"Test-only" means the quirk is reachable only through a test-only instruction.
+
+| # | Quirk | Where in the spec |
+| --- | --- | --- |
+| Q1 | **Non-canonical compact lengths are accepted.** `jam-codec` does not check that a compact natural is in its shortest form, so `[128, 5]` decodes as 5 just as `[5]` does, and `[255, 5, 0⁷]` too. Every `Vec` length in a payload or work output has up to nine encodings. | `Dec.compact` |
+| Q2 | **Trailing octets are ignored.** `Instructions::decode`, not `decode_all`: anything after the 32-octet salt is ignored. The same holds for the work output in accumulate, after ℰ₂(k). | `decode` |
+| Q3 | **Refine passes the internal variants through.** A payload can contain `LookedUp`, `Imported`, `Exported` or `RandomStorageAccumulate` directly, and accumulate treats them as if refine had produced them. | `refineInstr`, last case |
+| Q4 | **A failed `Zombify` still wipes the bookkeeping, and suppresses the final results write.** The keys are removed before the precondition check. The final write is skipped whenever the list contains a `Zombify`, whether or not it succeeded, so what stays stored is the results written before the last `Checkpoint` instruction (or none). | `onInstr` `.zombify`, `onWorkItem` |
+| Q5 | **`CreateService` reports `Err(Transfer)` but keeps the new service** if the endowment transfer fails. There is no checkpoint around the two calls. The reply of the `provide` of the code is ignored. | `onInstr` `.createService` |
+| Q6 | **`DeleteItems` can delete bootstrap's own bookkeeping keys.** A hole in the ring then stops a later `Zombify`'s ring walk early, and the entries after the hole are left behind. | `onInstr` `.deleteItems`, `removeRecentFrom` |
+| Q7 | **`AssignForGasCost` passes the length-prefixed encoding to `assign`** (test-only). The queue the host reads is shifted by the prefix, and is read past the end of the buffer, so its outcome depends on heap contents the spec does not track. | `onInstr` `.assignForGasCost` |
+| Q8 | **`Bless`, `Upgrade` and `Yield` panic on failure** (SDK `expect`) instead of recording an error, so the whole accumulate rolls back to its last checkpoint. For `Bless` this happens whenever bootstrap is not the manager. | `onInstr` |
+| Q9 | **`Exported`'s result is the count mod 2³²**: the u64 count is cast to u32. | `onInstr` `.exported` |
+| Q10 | **`Import` panics on a missing segment** instead of recording an error, so refine's result is ☇. | `refineInstr` `.importSegs` |
+| Q11 | **`Export` counts attempts.** The reply of each `export` is ignored, so `Exported{count}` includes exports the host refused (for example past 𝖶_X). | `refineInstr` `.exportSegs` |
+| Q12 | **Stored values that do not decode read as absent.** The ring counter and `"transfer-count"` then restart at 0, and an undecodable registry reads as empty, so the next registration overwrites it. | `addRecent`, `onInstr` `.createService`, `onTransfer` |
+| Q13 | **`"count_random_storage"` panics if present but shorter than 8 octets**, and a longer value is read from its first 8 (test-only). | `onInstr` `.randomStorageAccumulate` |
+| Q14 | **The transfer counter wraps** at 2³² ([A2]); the next transfer then overwrites `"transfer0"`. | `onTransfer` |
 
 ---
 
@@ -232,6 +251,7 @@ parts:
 | --- | --- |
 | `Consts`, `Consts.ofParams` | 𝖰, the designate limit 3·𝖢, the ring size 2·𝖢·𝖨, and `randomKeys`, the one function the source leaves to a library (rand's `SmallRng`), taken as a parameter |
 | `Instr`, `Ret`, `Err`, `Key`, `Preimage` | the source's types, constructor for constructor, in declaration order (constructor index = codec tag) |
+| `Instr.testOnly` | marks the four test-only instructions: `RandomStorageRefine`, `RandomStorageAccumulate`, `Benchmark`, `AssignForGasCost` |
 | `Instr.encode`, `encodePayload`, `encodeOutput`, `Result.encode`, `Key.encode`, … | ℰ, using the model's `Codec.nat` and `Codec.fixed`, so lengths agree with the existing proofs |
 | `Instr.WF` | the instructions ℰ encodes faithfully: field widths, hash/memo/keyset sizes, list lengths |
 | `Dec`, `Dec.compact`, `Dec.instr`, `Dec.payload`, `Dec.output`, `Dec.item`, `decode` | the decoder the binary runs, as a `StateT Bytes Option` parser, including the lenient compact naturals |
@@ -301,6 +321,15 @@ def ASem.outcome : ASem.Stop × AccCtx → PartialState × List DeferredTransfer
 Small predicates that the statements name, such as `Instr.importIndices`, `Instr.Local`,
 `Spec.ownKeys`, `credit` and `codeOf`, are one-line definitions that step 1 adds alongside these.
 
+One more, for heap exhaustion (decision 4):
+
+```lean
+/-- The run traps in the allocation-failure path: some call to picoalloc's `alloc` or `realloc`
+    wrapper returned null, and the run then reached the panic handler's trap. A predicate on the
+    PVM run, defined from the code facts (the wrappers' return points). -/
+def ExhaustsHeap : PVM.Run → Prop
+```
+
 Throughout, `C = Consts.ofParams Params.full rk`, where `rk` is the `randomKeys` function (see open
 question 1).
 
@@ -309,7 +338,7 @@ question 1).
 > For every work item whose code is bootstrap, every core index c < 2¹⁶, item index i < 2¹⁶,
 > service id < 2³² and **every payload y**, Ψ_R's result and exports are those of `Spec.refine C i
 > y` under the GP refine host functions: the output and exports if it returns, ☇ and no exports if
-> it panics. The other possibility is ∞.
+> it panics. The other possibilities are ∞, and ☇ with no exports when an allocation fails.
 
 ```lean
 theorem refine_spec (rk) (d : Accounts) (c i : Nat) (p : WorkPackage) (r : List UInt8)
@@ -323,7 +352,18 @@ theorem refine_spec (rk) (d : Accounts) (c i : Nat) (p : WorkPackage) (r : List 
                              | some (out, ex) => (.ok ⟨out.toArray⟩, ex)
                              | none => (.err .panic, []))
       ∨ (o.result = .err .outOfGas ∧ o.exports = [])
+      ∨ (o.result = .err .panic ∧ o.exports = [] ∧ ExhaustsHeap (psiRRun …))
 ```
+
+The last disjunct is heap exhaustion (decision 4). It is not vacuous: it applies only to runs that
+actually reach the allocation-failure path.
+
+**T1c (canonical payloads, the first milestone).** T1 restricted to payloads
+`y = encodePayload is salt ++ rest` with every instruction `WF`, |salt| = 32 and fewer than 2³²
+instructions (decision 3). On these payloads `Dec.compact` sees only the canonical encodings ℰ(n),
+which the existing `decodeU32` proof covers, and `Spec.refine` reduces to `is.mapM (refineInstr C)`
+(step 0's round trip). T1 for every payload then adds the non-canonical lengths (quirk Q1) and the
+decoder's failure paths.
 
 **T1′ (exact).** The same, without the ∞ case, when `w.refineGasLimit ≥ Spec.refineGas C y env`.
 `refineGas` is an explicit bound, affine in |y|, the instruction count, the imported and exported
@@ -350,7 +390,9 @@ theorem accumulate_spec (rk) (η : List UInt8) (e : PartialState) (t s g : Nat)
 ```
 
 "Some number n" is how gas enters: running out of gas can only cut the spec's run short, and roll
-it back to a checkpoint. It never adds an effect the spec does not have.
+it back to a checkpoint. It never adds an effect the spec does not have. Heap exhaustion needs no extra case: a failed
+allocation panics, which rolls back to the last checkpoint, and that is the outcome of stopping
+the spec's run at that point.
 
 **T2′ (exact).** With `g ≥ Spec.accGas …`, n can be taken as the full run's length, so the outcome
 is `done` or `panicked` and does not depend on gas. Useful, but lower priority than T1′: on chain,
@@ -364,30 +406,46 @@ decode (the spec panics on those). For the operands bootstrap's own refine produ
 ### Safety properties, stated separately
 
 Each is a corollary of T1 or T2 plus a lemma about the spec alone, with no binary in it. That
-makes them cheap once T1 and T2 exist, and readable on their own.
+makes them cheap once T1 and T2 exist, and readable on their own. They are numbered cheapest first
+(decision 6), counting only the work beyond the headline theorem each one needs.
 
-**S1. Refine never panics on well-formed input.** For `y = encodePayload is salt ++ rest` with
-every instruction `WF`, |salt| = 32, fewer than 2³² instructions, and every `Import` index present
+**S1. Bootstrap's bookkeeping stays consistent.**
+*Cost: none beyond the spec; no binary in it.*
+"The occupied ring slots are `[0, c)`, or all of them, where c is the stored counter, and each occupied slot's results key is either present or was
+overwritten later" is preserved by accumulate, provided no `DeleteItems` key starts with octet 0–3
+and has length 1, 5 or 35. This is the invariant the source comment relies on, and it shows that
+`DeleteItems` (quirk Q6) is the only way to break it. It is a statement about the spec alone.
+
+**S2. Refine rejects exactly the undecodable payloads.**
+*Cost: Given T1 for every payload: a one-line spec lemma.*
+If `decode (Dec.payload C) y = none`, the result is ☇ (or ∞). This generalizes `psiR_empty` to every malformed payload.
+
+**S3. Refine never panics on well-formed input.**
+*Cost: Given T1′ for canonical payloads: step 0's round trip.*
+For `y = encodePayload is salt ++ rest` with every instruction `WF`, |salt| = 32, fewer than 2³² instructions, and every `Import` index present
 among the item's imports: with enough gas, Ψ_R's result is
-`.ok (encodeOutput (refined is) i)`, never ☇.
+`.ok (encodeOutput (refined is) i)`. It is never ☇, except from heap exhaustion (decision 4).
 
 ```lean
 theorem refine_ok (…) (hwf : ∀ x ∈ is, x.WF C) (hn : is.length < 2^32) (hsalt : salt.length = 32)
     (himp : ∀ x ∈ is, ∀ q ∈ x.importIndices, q < (imports[i]?.getD []).length)
     (hgas : w.refineGasLimit ≥ Spec.refineGas …) (hy : w.payload.toList = encodePayload is salt ++ rest) :
     ∃ out ex, RSem.run (Spec.refine C i w.payload.toList) env = some (out, ex) ∧
-      (psiR Params.full d c i p r imports extrinsics off).result = .ok ⟨out.toArray⟩
+      ((psiR Params.full d c i p r imports extrinsics off).result = .ok ⟨out.toArray⟩
+        ∨ ExhaustsHeap (psiRRun …))
 ```
 
 The output `out` is `encodeOutput is' i`, where `is'` is `is` with eager lookups, imports, exports
 and random-storage requests replaced by what the host returned.
 
-**S2. Refine rejects exactly the undecodable payloads.** If `decode (Dec.payload C) y = none`, the
-result is ☇ (or ∞). This generalizes `psiR_empty` to every malformed payload.
+**S4. Refine's gas is bounded.**
+*Cost: Given T1′: the same bound.*
+`(psiR …).gasUsed ≤ Spec.refineGas …`, by the same bound as T1′.
 
-**S3. Refine's gas is bounded.** `(psiR …).gasUsed ≤ Spec.refineGas …`, by the same bound as T1′.
 
-**S4. Local instructions stay local.** If every operand's instructions are among the local ones
+**S5. Local instructions stay local.**
+*Cost: Given T2: an induction over `Prog` under `ASem`.*
+If every operand's instructions are among the local ones
 (`Checkpoint`, `Solicit`, `Forget`, `DeleteItems`, `Lookup`, `LookedUp`, `Imported`, `Exported`,
 `Yield`, `RandomStorageAccumulate`, `Benchmark`, `Panic`), then Ψ_A:
 - changes no account but s;
@@ -413,7 +471,9 @@ theorem accumulate_local (…) (hloc : ∀ o ∈ operandOutputs inputs, ∀ is k
     StorageChangesWithin (Spec.ownKeys t inputs) ((credit e s inputs).accounts.getD s default) (o.state.accounts.getD s default)
 ```
 
-**S5. When accumulate does not panic.** Suppose:
+**S6. When accumulate does not panic.**
+*Cost: Given T2′, which is itself low priority.*
+Suppose:
 - every operand's output decodes;
 - no instruction is `Panic`;
 - `Bless` appears only if s is the manager;
@@ -421,12 +481,6 @@ theorem accumulate_local (…) (hloc : ∀ o ∈ operandOutputs inputs, ∀ is k
 
 Then the run ends `done` (T2 with T2′), so every operand's results are stored. This is a lemma
 about `Spec.accumulate` under `ASem`, carried over by T2.
-
-**S6. Bootstrap's bookkeeping stays consistent.** "The occupied ring slots are `[0, c)`, or all of
-them, where c is the stored counter, and each occupied slot's results key is either present or was
-overwritten later" is preserved by accumulate, provided no `DeleteItems` key starts with octet 0–3
-and has length 1, 5 or 35. This is the invariant the source comment relies on, and it shows the
-`DeleteItems` caveat is the only way to break it. It is a statement about the spec alone.
 
 **What is left out on purpose:**
 - **Logs.** Their content is unobservable in the GP state.
@@ -449,8 +503,8 @@ and has length 1, 5 or 35. This is the invariant the source comment relies on, a
 | The decode loop for `Checkpoint` lists | `DecodeLoop` | the shape of the general decode loop (the frame, the 232-octet slot, the buffer) |
 | picoalloc: model, `WF`, and `alloc`/`dealloc`/`realloc` refinement | `Services/Picoalloc/`, `Services/Bootstrap/Alloc/` | every allocation (section 5) |
 | `refineContract`, `grow_heap` | `JAM/Theorems/RefineContract.lean`, `GrowHeap.lean` | the heap-growth host call |
-| Witness's exact-gas pattern: `checkMaxBlockCost`, `gasBound` | `Services/Witness/PsiREmpty.lean` | T1′, S3 |
-| `psiA_confined`, `psiR_noExports` | `JAM/Theorems/Confinement.lean` | pattern only; S4 needs the spec route |
+| Witness's exact-gas pattern: `checkMaxBlockCost`, `gasBound` | `Services/Witness/PsiREmpty.lean` | T1′, S4 |
+| `psiA_confined`, `psiR_noExports` | `JAM/Theorems/Confinement.lean` | pattern only; S5 needs the spec route |
 
 ### What is missing
 
@@ -477,7 +531,7 @@ and has length 1, 5 or 35. This is the invariant the source comment relies on, a
    wrapper passes to the host, and what it returns from the reply.
 6. **The semantic bridge `RSem`/`ASem`**, with a lemma per operation tying it to `JAM.AccHost` /
    `RefineHost` on a memory holding the arguments.
-7. **Gas** bounds for T1′/S3: block costs × step bounds, as for witness.
+7. **Gas** bounds for T1′/S4: block costs × step bounds, as for witness.
 
 ### Steps
 
@@ -494,18 +548,20 @@ Effort is relative: S < M < L < XL. Steps 0, 1 and 9 involve no binary.
 | 5 | **Logging.** A frame-and-termination summary for every `format!` + `log` site: allocates only fresh blocks, frees them, changes no live data, terminates within a gas bound, calls only `log` | 4a | L–XL |
 | 6 | **T1** (and S2): compose the prefix, the general decode loop, the refine loop (three host operations and the pass-through), the output encode and the halt; lift to Ψ_R | 2, 3, 4, 5 | M |
 | 7 | **T2:** the entry, the items fetch and decode, the item loop, `on_work_item`, the 25 `on_instruction` branches, the ring and registry helpers; lift to Ψ_A with checkpoints | 2, 3, 4, 5 | L |
-| 8 | **Gas:** block-cost bound for the blob (as `checkMaxBlockCost`), then `refineGas`; T1′, S3, S1. Optionally `accGas` and T2′ | 6 (7) | M |
-| 9 | **Spec-level safety:** S4, S5 and S6 about `Spec.accumulate` under `ASem`, carried over by T2 | 1, 7 | S–M each |
+| 8 | **Gas:** block-cost bound for the blob (as `checkMaxBlockCost`), then `refineGas`; T1′, S3, S4. Optionally `accGas` and T2′ | 6 (7) | M |
+| 9 | **Spec-level safety:** S1, S5 and S6 about `Spec.accumulate` under `ASem`, carried over by T2 | 1 (S1), 7 | S–M each |
 | 10 | **The vendored blob:** discharge `IsBootstrap` for `jam-bootstrap-service.jam`, as witness's `refine_rejects` does | 6 | S |
 
-**Suggested milestones,** each a usable statement:
-- **M1:** T1 for payloads of pass-through instructions only (no refine host call). This builds on
-  `DecodeLoop` and `NoInstr*`, and forces the general decode loop and the heap-contents layer.
-- **M2:** T1 in full, then T1′ and S1–S3.
+**Milestones,** each a usable statement:
+- **M1 (first): T1c, T1 for canonically encoded payloads** (decision 3). Decoding, dispatch and
+  the top-level structure first, building on `DecodeLoop`, `NoInstr*` and the allocator theorems on
+  main. Allocator facts not yet on main (the 14-page cap, alignment > 1, `realloc` preserving the
+  copied data) are named hypotheses until they land.
+- **M2:** T1 for every payload (the real decoder, quirk Q1), then T1′ and S2–S4.
 - **M3:** T2 for operands whose instructions are among `Checkpoint`, `Solicit`, `Forget`,
   `DeleteItems`, `Yield` and `Transfer`, plus transfers. This brings in the ring, the results
-  writes and checkpoints, and gives S4 for that subset.
-- **M4:** T2 in full, then S4–S6.
+  writes and checkpoints, and gives S5 for that subset.
+- **M4:** T2 in full, then S5 and S6. S1 needs no binary and can be done at any time.
 
 ### Risks
 
@@ -523,20 +579,22 @@ Effort is relative: S < M < L < XL. Steps 0, 1 and 9 involve no binary.
   has far more paths: 25 tags, lenient lengths and data-dependent loops. Without loop invariants
   and generated per-function summaries, file count and elaboration memory will grow quickly.
   Already "some proof files take several GB".
-- **The lenient decoder** roughly multiplies the length-decoding paths by nine. Option: do M1–M2 for
-  canonical payloads first, then generalize (open question 3).
+- **The lenient decoder** (quirk Q1) roughly multiplies the length-decoding paths by nine. Hence
+  canonical payloads first (M1), then the real decoder (M2).
 - **Heap growth.** Until the 14-page cap is parametrized, any allocation more than 56 KiB beyond the
   heap top is outside the proved allocator theorems. That includes:
   - payloads or outputs of that size;
   - `CreateService`/`Provide` code lookups (up to 𝖶_C ≈ 4 MB);
   - large `Lookup` data;
   - the accumulate inputs buffer.
-- **Spec versus intent.** The spec is what the code does, including the quirks listed above. If any
-  quirk is a bug you would rather have the spec reject, the theorem would then (correctly) fail.
-  Decide before step 7.
+- **Spec versus intent.** The spec is what the code does, including the [quirks](#quirks). An
+  intended-behaviour spec is not planned for now (decision 8).
 - **Under-determined instructions.** `AssignForGasCost` reads heap contents the spec does not track.
   `RandomStorageRefine` needs `rand`'s `SmallRng` (Xoshiro256++ seeded by SplitMix64) as a Lean
   function, and a proof that the binary computes it.
+
+  Both are test-only (decision 1). They stay in the spec; T1 and T2 may exclude them by hypothesis
+  until they are done, and a theorem that does so says so.
 
 ---
 
@@ -546,14 +604,14 @@ From [whats-proven.md](whats-proven.md#assumptions-and-limits):
 
 | Assumption | Does bootstrap meet it? |
 | --- | --- |
-| **Alignment one unit (≤ 32 octets)** for `alloc` | **Yes, from the source.** Every type bootstrap allocates is aligned to 8 or less: `u8`, `u16`, `u32` and `u64` fields, `Vec`, `String`, the 232-octet `Instruction` enum, `Box<Hash>`, and the results. Nothing is `#[repr(align)]` or uses `u128`. So every Rust allocation is one unit, and `alloc_wrap_refines*` applies. **To confirm on the binary:** a scan of the alignment argument at every call to the `alloc` (40494) and `realloc` (40701) wrappers, cheap with the code facts. The model's any-alignment theorems are not needed. |
-| **Heap growth ≤ 14 pages per call** (`hcost`; `hostCostMax` = 2000) | **No, in general.** Small runs fit: `psiR_noinstr`'s allocations are a few hundred octets. But allocations scale with the input: the payload copy (\|y\|), the instruction `Vec` (232 octets per instruction), the output and its encode buffer, the `debug!` string (several times the output), the accumulate inputs, `lookup` results (up to 𝖶_C = 4,000,000 octets for code), `Lookup` data, and 4104-octet import segments. "Every payload" therefore needs the parametrized cap now in progress. With it, the hypothesis becomes a gas condition (275 + 121 per page within the cap), which T1 and T2 absorb into "or ∞". Until then, T1 and T2 can be proved under a size hypothesis that keeps each growth within 14 pages. |
+| **Alignment one unit (≤ 32 octets)** for `alloc` | **Yes, from the source.** Every type bootstrap allocates is aligned to 8 or less: `u8`, `u16`, `u32` and `u64` fields, `Vec`, `String`, the 232-octet `Instruction` enum, `Box<Hash>`, and the results. Nothing is `#[repr(align)]` or uses `u128`. So every Rust allocation is one unit, and `alloc_wrap_refines*` applies. **To confirm on the binary:** a scan of the alignment argument at every call to the `alloc` (40494) and `realloc` (40701) wrappers, cheap with the code facts. The model's any-alignment theorems are not needed. If the scan finds an alignment above one unit, the alignment > 1 theorems (#74) are taken as a named hypothesis until they land. |
+| **Heap growth ≤ 14 pages per call** (`hcost`; `hostCostMax` = 2000) | **No, in general.** Small runs fit: `psiR_noinstr`'s allocations are a few hundred octets. But allocations scale with the input: the payload copy (\|y\|), the instruction `Vec` (232 octets per instruction), the output and its encode buffer, the `debug!` string (several times the output), the accumulate inputs, `lookup` results (up to 𝖶_C = 4,000,000 octets for code), `Lookup` data, and 4104-octet import segments. "Every payload" therefore needs the parametrized cap now in progress. With it, the hypothesis becomes a gas condition (275 + 121 per page within the cap), which T1 and T2 absorb into "or ∞". Until it lands (#73), the proofs take the parametrized cap as a named hypothesis, listed in the PR that uses it. |
 | **Writable heap and stack only** (`WrAt`, `HeapPages`) | **Yes.** This is how Y lays bootstrap out. `HeapPages` holds at the first allocation (`first_grows`) and is kept by each growth. |
 | **Stack range and room** (sp ≥ 2147483800, below 2³²; 40–304 octets below sp; 8-aligned sp for the `realloc` fallback) | **Range: yes.** Bootstrap's stack is just below 2³² − 2¹⁶ (the decode loop's frame is at sp = 4278057688). **Room: probably yes, unproved.** The source has no recursion. `core::fmt` recursion is bounded by the nesting of the formatted types, at most about five levels here. The maximum stack depth at each allocator call site is still to be computed: a call-graph analysis over the code facts, new tooling of moderate size. 8-alignment of sp holds at the call sites seen so far and is to be checked per site. |
 | **Heap base ≥ 206864, heap below 2³¹, `allocated < 2³¹`** | **Yes** for the base: picoalloc's chunk area starts at 206880 (`init_rep`). "Below 2³¹" is a size condition: it holds while the live heap stays under about 2 GB, which a gas bound or the size hypothesis gives. |
 | **`req < 2³¹` units for `alloc_impl`** | **Yes:** only the public wrapper is called, and it passes ⌈size/32⌉ < 2³¹. |
 | **`realloc` fallback needs ≥ 1 unit of usable size** | **Yes, from Rust's `RawVec`**, which never reallocates a zero-capacity buffer; it allocates instead. To confirm with the call-site scan. |
-| **Alloc failure** (`alloc_refines_fail`) | **Needed only for the panic case.** Rust calls `handle_alloc_error`, which panics and traps. With heap bounds of (48, 1044430) pages, failure needs about 4 GB live. T1/T2 can either carry "☇ if the heap is exhausted" or rule it out with a size or gas bound (open question 4). |
+| **Alloc failure** (`alloc_refines_fail`) | **Needed only for the panic case.** Rust calls `handle_alloc_error`, which panics and traps. With heap bounds of (48, 1044430) pages, failure needs about 4 GB live. This is an allowed outcome (decision 4): T1 carries it as its `ExhaustsHeap` disjunct, and T2's "some n" covers it. It is not ruled out. |
 
 **Is `realloc`'s copied-data statement needed? Yes, on the critical path of T1 and T2.** Bootstrap
 relies on `realloc` preserving contents in at least these places:
@@ -564,52 +622,32 @@ relies on `realloc` preserving contents in at least these places:
 
 `results` is allocated with capacity, so it does not reallocate. The frame lemma (data in *other*
 live blocks unchanged across `alloc`, `dealloc` and `realloc`) is needed just as much, and is not
-yet stated either. Both are step 4a.
+yet stated either. Both are step 4a. The copied-data statement is in progress; until it lands, the
+proofs take it as a named hypothesis.
 
 ---
 
-## 6. Open questions
+## 6. Decisions
 
-1. **Which instructions should the theorems cover?** The test-only ones are `RandomStorageRefine`,
-   `RandomStorageAccumulate`, `Benchmark` and `AssignForGasCost`.
-   - `RandomStorageRefine` needs `rand`'s `SmallRng` as a Lean function and a proof that the binary
-     computes it.
-   - `AssignForGasCost` has an outcome the spec cannot pin down.
+The first draft of this page ended with eight open questions. They are answered as follows. The
+guiding rule throughout: **the spec describes what the binary does today**; surprising behaviour is
+listed as a quirk, and this page does not decide whether it was intended.
 
-   *Proposal:* keep them in the spec, as now, but exclude `RandomStorageRefine` and
-   `AssignForGasCost` from T1 and T2 by hypothesis, and leave `randomKeys` a parameter. Or cover
-   them only by the safety properties.
-2. **Are the quirks intended?** These are the six items in
-   [Things in the source you may not intend](#things-in-the-source-you-may-not-intend): the failed
-   `Zombify` side effects, `CreateService` keeping the service after a failed transfer,
-   `DeleteItems` on own keys, the `AssignForGasCost` prefix, `Bless`/`Upgrade`/`Yield` panicking,
-   and refine passing internal variants through.
-   - The spec follows the code. If any of them is a bug, should the spec say what was intended, so
-     that the proof fails and the finding is reported upstream? Or should it keep the behaviour and
-     only document it?
-   - Items 1, 3 and 4 look like upstream candidates (`docs/upstream-candidates.md`).
-3. **Every payload, or canonical payloads first?** "Every payload" means the lenient decoder, with
-   about nine times the length paths. *Proposal:* M1–M2 for payloads of the form
-   `encodePayload is salt ++ rest` plus S2 for malformed ones, then generalize.
-4. **How should heap exhaustion and large inputs be treated?** The options:
-   - (a) wait for the parametrized `grow_heap` cap, and allow "☇ if the heap is exhausted";
-   - (b) a size hypothesis, for example every allocation within 14 pages of the top;
-   - (c) a gas argument that rules exhaustion out.
+1. **Test-only instructions** (`RandomStorageRefine`, `RandomStorageAccumulate`, `Benchmark`,
+   `AssignForGasCost`): in the spec, marked as test-only (`Instr.testOnly`). `randomKeys` stays a
+   parameter. A theorem that excludes them says so in its hypotheses.
+2. **Quirks**, including non-canonical compact lengths: specified exactly, and each listed under
+   [Quirks](#quirks).
+3. **Canonical payloads first.** T1 for canonically encoded payloads (T1c) is the first milestone;
+   the real decoder follows (M2).
+4. **Heap exhaustion** is an allowed outcome. The theorems say that a run may fail or panic there
+   (T1's `ExhaustsHeap` disjunct; T2's "some n"); they do not prove that it is impossible.
+5. **Logging** is left out of the spec: it has no effect on the state. The proofs still have to
+   get past it ([risks](#risks)).
+6. **S1–S6** are kept, numbered cheapest first.
+7. **T2** as proposed: equal to the spec's run up to the checkpoint rollback ("some n").
+8. **A separate intended-behaviour spec:** not now.
 
-   *Proposal:* (b) for the first milestones, then (a).
-5. **Is a frame-only treatment of logging acceptable?** That is: memory safety, termination and gas,
-   with log content unspecified. *Proposal:* yes. Log content is invisible in the GP state.
-6. **Which safety properties matter most?** The candidates are S1 (no panic on well-formed input),
-   S3 (refine gas), S4 (local instructions stay local), S5 (when accumulate completes) and S6 (ring
-   invariant). *Proposal:* S1 and S4 first, as the clearest statements to show reviewers; S6 as a
-   cheap spec-only result that documents the `DeleteItems` caveat.
-7. **Is "∃ n" an acceptable form for accumulate?** It reads "the outcome of some prefix of the
-   spec's run, rolled back to its last checkpoint". The alternatives are a gas bound for every
-   input (T2′), or a trace-level statement: "the binary's sequence of state-changing host calls is
-   a prefix of the spec's". *Proposal:* T2 as stated. The trace form is how step 7 would prove it
-   anyway, and can be exported as a lemma.
-8. **Should the spec live in the repository at all, or should it be the source?** The spec is a
-   transliteration of about 400 lines of Rust (plus SDK and codec details), not an independent
-   statement of intent. That is what makes T1/T2 "the binary does what its source says". If you
-   want "the binary does what it should", someone has to write the intended behaviour
-   independently. The quirks above are where the two would differ.
+**Allocator facts not yet on main** (the 14-page cap, #73; alignment > 1, #74; `realloc` preserving
+the copied data, in progress) are used as named hypotheses or clearly marked section variables,
+never as axioms, and each PR that uses one lists it.

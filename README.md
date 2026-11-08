@@ -628,12 +628,25 @@ noted here and in a comment at the definition.
     p of degree < d = R(v) through the d message words at 0̃ … (d−1)~ and gives validator i ≥ d the
     word p(ĩ). Every erasure vector (tiny and full) instead takes p of degree < n = 2^⌈log₂ d⌉
     through the message words and zeroes at d̃ … (n−1)~, and gives validator i ≥ d the word at
-    (n + i − d)~, the layout of the Lin–Chung–Han transform the paper cites. The data shards agree;
-    the parity shards differ. We follow the paper, and `Tests/ErasureTest.lean` lists all 12
-    vectors in `knownDeviations`. For each it checks that the vectors' convention, built from the
-    model's own interpolation, reproduces every shard, and that ℛ recovers the paper's code from
-    two different shard subsets. CI fails if any vector departs in another way or starts to
-    match.
+    (n + i − d)~. The data shards agree; the parity shards differ. We follow the paper, and
+    `Tests/ErasureTest.lean` lists all 12 vectors in `knownDeviations`. For each it checks that the
+    vectors' convention, built from the model's own interpolation, reproduces every shard, and
+    that ℛ recovers the paper's code from two different shard subsets. CI fails if any vector
+    departs in another way or starts to match.
+
+    *Where the convention comes from.* No Gray Paper release describes it. From v0.3.3, the first
+    with "The Generator Polynomial", to v0.8.0, that subsection says degree < d (341 before the
+    rate became R(v) in v0.8.0) and points d̃ …; v0.1.1–v0.3.2 give no polynomial, only "the same
+    transform as done by the algorithm of" Lin, Chung and Han (2014), which §H still cites. The
+    vectors' own documentation (`erasure/README.md`, the schema, the CHANGELOG) says nothing about
+    the layout. It is the layout of power-of-two additive-FFT encoders in that paper's line: the
+    documentation of the `reed-solomon-simd` crate (a Leopard-RS derivative) describes its
+    "low rate" mode, used when there are more recovery than original shards, as "Original shards
+    fit into a single chunk which is padded with zero-filled shards if needed. Recovery shards are
+    generated in chunks", chunks being the next power of two of the original count, which is the
+    convention above. Only documentation was consulted, not any implementation's code; the vectors do
+    not say which implementation produced them. The paper's text, which is explicit, is what the
+    model follows.
 
 ## Caveats
 

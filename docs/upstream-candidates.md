@@ -27,6 +27,10 @@ Gaps, where the paper leaves behaviour undefined:
 | 18 | Ψ_R | The refine dispatcher passes x̄ to `fetch`, but Ψ_R's arguments do not include that data. The account state **d** is also implicit. |
 | 19 | Ψ_R, §14.3 | A looked-up preimage that is not of the form ℰ(↕**m**, **c**). |
 | 20 | Ω_Z (`pages`) | The row defines only (ω'_7, **m**'), with no ε'. |
+| 21 | §8, F(c) | α[c] ⊖ {(g_w)_a} names a g bound only in the case condition; it should say the guarantee on core c. |
+| 23 | §13.1 | The guarantee count tests κ'_v ∈ G, a validator key against a set of Ed25519 keys. The fresh accumulator [(0, …), …] has no stated length (|κ'| is implied). |
+| 24 | §13.2 | The provision sum ∑_{(s, **d**) ∈ E_P} reuses s, already bound by ∀ s ∈ **s**. It reads as a fresh binding unless the reader knows it is a filter. |
+| 25 | §12.4 | No error is named for an invalid E_P, and no order is given between the ordering check and the providable check. |
 
 ## Paper and vectors
 
@@ -45,11 +49,12 @@ These cases have no test vector, so the readings above are untested:
 | 2 | A branch with a target outside [0, \|**c**\|). |
 | 3 | A program that maps a page below 2^16. |
 | 4 | A three-register instruction with ζ_{ı+2} ≥ 16. |
+| 24 | Core statistics π_C, and the refinement and accumulation parts of π_S, in the statistics and preimages suites. They are covered by the reports and accumulate suites. |
 
 ## Not for upstream
 
 - **The picoalloc model's alignment rounding.** A bug in this repository's own model, not in the
   paper or the vectors. The model rounded the data unit from the heap base; the binary rounds it
   in the address space. Fixed in `Services/Picoalloc/Model.lean`.
-- **Notes 6–10, 14 and 16.** Points where the vectors confirm a subtle reading, or observations
+- **Notes 6–10, 14, 16 and 22.** Points where the vectors confirm a subtle reading, or observations
   that need no change.

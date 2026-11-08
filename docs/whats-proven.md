@@ -213,6 +213,7 @@ The wrapper theorems also take the allocator's lock byte at 206848 and release i
 | Case | Theorems | File |
 | --- | --- | --- |
 | Success, no heap growth | `alloc_refines`, `alloc_wrap_refines` | `AllocRefines.lean`, `AllocWrap.lean` |
+| Success at any power-of-two alignment `2^k` units, no heap growth | `alloc_refines_align`, `alloc_wrap_refines_align`, `alloc_impl_align` | `AllocAlignRefines.lean`, `AllocAlignImpl.lean` |
 | Success, the heap grown through `grow_heap` | `alloc_refines_grow`, `alloc_wrap_refines_grow` | `AllocGrowRefines.lean`, `AllocWrapGrow.lean` |
 | First use: `initialize`, which grows the heap and sets up one free chunk at 206880 | `alloc_refines_first`, `alloc_wrap_refines_first`, `init_rep`, `first_grows` | `AllocFirst.lean`, `AllocInit.lean` |
 | Failure: the binary returns null wherever the model's `alloc` fails, with memory still holding `s` | `alloc_refines_fail`, `alloc_wrap_refines_fail`, `alloc1_none` | `AllocFailRefines.lean`, `AllocFailModel.lean` |
@@ -225,10 +226,17 @@ The wrapper theorems also take the allocator's lock byte at 206848 and release i
 
 The binary is proved to return null on each path.
 
-**Alignment.** For the binary, every `alloc` theorem is for an alignment of **one unit**, that is
-1 to 32 octets, which covers every Rust allocation aligned to at most 32 octets. The model handles
-any alignment (`AllocAlign.lean`), but the binary's path for alignment above 32 octets is not
-proved yet.
+**Alignment.** Successful `alloc` without heap growth is proved at **any** power-of-two
+alignment of `2^k` units (`AllocAlign*.lean`):
+- The binary rounds the data unit up to a multiple of `2^k` in the address space, as the model's
+  `dataOff` does.
+- When this leaves a left remainder of `lhs ≠ 0` units, the binary registers it free at the
+  chunk C (41736 … 41864), and the allocated chunk at `C + 32·lhs` gets `prev = lhs`.
+- Memory ends up holding the model's `allocPostL`.
+- The wrapper theorem takes an alignment of `al` octets with `(al + 31) / 32 = 2^k` and `k < 31`.
+
+The other `alloc` theorems (heap growth, first use, failure) are for an alignment of **one
+unit**, that is 1 to 32 octets. That covers every Rust allocation aligned to at most 32 octets.
 
 **`dealloc`** (wrapper at 40613, free path at 42327):
 - `dealloc_refines` (`Dealloc.lean`) and `free_refines` (`FreeRefines.lean`) state that memory
@@ -294,7 +302,9 @@ What you trust beyond the kernel:
   2000 gas (`JAM/Theorems/RefineContract.lean`). `grow_heap` costs 275 + 121 per page, so a
   growth theorem assumes the new top is at most 14 pages above the old one (the `hcost`
   hypothesis). Larger single growths are not covered yet.
-- **Alignment.** In the binary, `alloc` is proved at alignment one unit (≤ 32 octets). The `realloc`
+- **Alignment.** In the binary, `alloc` with heap growth, on first use and on failure is proved
+  at alignment one unit (≤ 32 octets). Success without growth is proved at any power-of-two
+  alignment. The `realloc`
   fallback also needs a usable size of at least one unit, because a 0-unit copy takes `memcpy`'s
   small path, which is not composed yet.
 - **Stack and range preconditions.** Each theorem fixes:
@@ -385,7 +395,8 @@ At the time of writing, other work in progress includes:
   - `realloc_wrap_cases`, which matches every outcome of the model's `realloc` at alignment 1
     through the locked wrapper.
 - **Lifting the 14-page limit,** by making the host-call gas cap a parameter of `refineContract`.
-- **`alloc` in the binary at alignment above one unit,** building on the model's `AllocAlign.lean`.
+- **`alloc` in the binary at alignment above one unit with heap growth, on first use and on
+  failure.** The no-growth success path is done (`AllocAlignRefines.lean`).
 - **Stating the data `realloc` copies,** and a frame for other allocations' data.
 
 This page should be updated as these land.

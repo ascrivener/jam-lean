@@ -188,8 +188,15 @@ An independent kernel, nanoda as vendored by
     The reader is advanced by the field's width. Memory changes only in the stack below the frame,
     the reader and the slot. `read_u64` summarizes the shared `u64` reader at 3791, which every `u64`
     field goes through.
-  - *Scope:* hash fields need `read_big` for a buffer at sp itself, which it does not cover yet. The
-    other variants are not covered yet.
+  - *Scope:* the other variants are not covered yet.
+- **`Instruction::decode` for variants with a hash field.** `Decode.Hash.yield`
+  (`Services/Bootstrap/Decode/Hash.lean`).
+  - *Statement:* from 20626 with tag 14 (`Yield { hash }`) and the reader holding at least 32
+    octets, the function reads the hash into its frame (`read_big_sp`), copies it to O + 8 and puts
+    the discriminant word 2^63 + 13 at O. The reader is advanced by 32. Memory changes only in
+    A − 88 … A + 32, the reader and O … O + 40.
+  - *Scope:* the other hash-field variants (`Eject`, `Solicit`, `Forget`, `Upgrade`, `Lookup`,
+    `CreateService`, `Provide`) are not covered yet.
 
 ### picoalloc: the model (`Services/Picoalloc/`)
 

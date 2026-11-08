@@ -25,18 +25,21 @@ def ReadOkBig (ω ω' : Regs) (μ μ' : Memory) (sp rd buf ptr len n : Nat) : Pr
       μ'.read a = μ.read a) ∧
     (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a)
 
-/-- **Reading n ≥ 16 octets** (58434): as `read_ok`, through `memcpy_big`. The buffer and the source
-    are kept 24 octets apart from each other and from the stack frames. -/
-theorem read_big {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+/-- **Reading n ≥ 16 octets** (58434): as `read_ok`, through `memcpy_big`. The buffer need only be
+    disjoint from the two stack frames [sp − 88, sp) (the reader's 40 octets and `memcpy_big`'s 48 below
+    them), so buf = sp is covered, as in the decoders of 32-octet hash fields. The source must lie at or
+    above sp, or end 16 octets below the frames, and be 24 octets from the buffer: `memcpy_big`'s own
+    margins (`hfs`, `hdj`). -/
+theorem read_big_sp {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
     (ret t sp rd buf ptr len n : Nat) (h0 : ω[0] = UInt64.ofNat ret) (h1 : ω[1] = UInt64.ofNat sp)
     (h7 : ω[7] = UInt64.ofNat rd) (h8 : ω[8] = UInt64.ofNat buf) (h9 : ω[9] = UInt64.ofNat n)
     (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0)
     (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t) (hbt : P.isBlockStart t = true)
     (hsp : 65536 + 88 ≤ sp ∧ sp < 4294967296 ∧ sp % 8 = 0) (hrd : 65536 ≤ rd ∧ rd + 16 < 4294967296)
-    (hbuf : 65536 ≤ buf ∧ buf + n + 24 < 4294967296) (hptr : 65536 ≤ ptr ∧ ptr + n + 24 < 4294967296)
+    (hbuf : 65536 ≤ buf ∧ buf + n + 16 < 4294967296) (hptr : 65536 ≤ ptr ∧ ptr + n + 16 < 4294967296)
     (hn : 16 ≤ n) (hnl : n ≤ len) (hlen : len < 4294967296)
-    (hrf : rd + 16 ≤ sp - 88 ∨ sp ≤ rd) (hbf : buf + n + 24 ≤ sp - 88 ∨ sp + 8 ≤ buf)
-    (hpf : ptr + n + 24 ≤ sp - 88 ∨ sp + 8 ≤ ptr) (hbr : buf + n ≤ rd ∨ rd + 16 ≤ buf)
+    (hrf : rd + 16 ≤ sp - 88 ∨ sp ≤ rd) (hbf : buf + n ≤ sp - 88 ∨ sp ≤ buf)
+    (hpf : ptr + n + 16 ≤ sp - 88 ∨ sp ≤ ptr) (hbr : buf + n ≤ rd ∨ rd + 16 ≤ buf)
     (hbp : buf + n + 24 ≤ ptr ∨ ptr + n + 24 ≤ buf)
     (hwf : ∀ a, sp - 88 ≤ a → a < sp → μ.writable a = true)
     (hwr : ∀ a, rd ≤ a → a < rd + 16 → μ.writable a = true)
@@ -143,5 +146,27 @@ theorem read_big {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs)
       · rw [grd, m1r]
       · rw [gwr, m1w]
   case hle => omega
+
+/-- **Reading n ≥ 16 octets** (58434): `read_big_sp` with the buffer and the source kept 24 octets apart
+    from each other and from the stack frames. -/
+theorem read_big {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (ret t sp rd buf ptr len n : Nat) (h0 : ω[0] = UInt64.ofNat ret) (h1 : ω[1] = UInt64.ofNat sp)
+    (h7 : ω[7] = UInt64.ofNat rd) (h8 : ω[8] = UInt64.ofNat buf) (h9 : ω[9] = UInt64.ofNat n)
+    (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0)
+    (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t) (hbt : P.isBlockStart t = true)
+    (hsp : 65536 + 88 ≤ sp ∧ sp < 4294967296 ∧ sp % 8 = 0) (hrd : 65536 ≤ rd ∧ rd + 16 < 4294967296)
+    (hbuf : 65536 ≤ buf ∧ buf + n + 24 < 4294967296) (hptr : 65536 ≤ ptr ∧ ptr + n + 24 < 4294967296)
+    (hn : 16 ≤ n) (hnl : n ≤ len) (hlen : len < 4294967296)
+    (hrf : rd + 16 ≤ sp - 88 ∨ sp ≤ rd) (hbf : buf + n + 24 ≤ sp - 88 ∨ sp + 8 ≤ buf)
+    (hpf : ptr + n + 24 ≤ sp - 88 ∨ sp + 8 ≤ ptr) (hbr : buf + n ≤ rd ∨ rd + 16 ≤ buf)
+    (hbp : buf + n + 24 ≤ ptr ∨ ptr + n + 24 ≤ buf)
+    (hwf : ∀ a, sp - 88 ≤ a → a < sp → μ.writable a = true)
+    (hwr : ∀ a, rd ≤ a → a < rd + 16 → μ.writable a = true)
+    (hwb : ∀ a, buf ≤ a → a < buf + n → μ.writable a = true)
+    (hra : ∀ a, ptr ≤ a → a < ptr + n → μ.readable a = true)
+    (hR0 : μ.readN rd 8 = Num.encodeLE 8 ptr) (hR8 : μ.readN (rd + 8) 8 = Num.encodeLE 8 len) :
+    ∃ ω' μ', FreeStepsH p R 58434 ω μ x t ω' μ' x (2 * n + 400) ∧ ReadOkBig ω ω' μ μ' sp rd buf ptr len n :=
+  read_big_sp x ω μ ret t sp rd buf ptr len n h0 h1 h7 h8 h9 hret hjt hbt hsp hrd ⟨hbuf.1, by omega⟩
+    ⟨hptr.1, by omega⟩ hn hnl hlen hrf (by omega) (by omega) hbr hbp hwf hwr hwb hra hR0 hR8
 
 end Services.Bootstrap

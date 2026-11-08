@@ -62,6 +62,8 @@ call `pc`) live in `Tests/`, not in the model.
 | Accumulation STF (§12) vs. GP v0.8.0 accumulate vectors (tiny) | **61 / 63** pass; the 2 others are `bless_from_non_manager`, which the vectors' changelog lists as departing from GP 0.8.0 |
 | Recent-history STF (§7: β_H, the accumulation-output belt β_B) vs. `stf/history` (`lake build historytest`) | **4 / 4** tiny, **4 / 4** full |
 | Authorization STF (§8: the pool α from the queue φ') vs. `stf/authorizations` (`lake build authtest`) | **3 / 3** tiny, **3 / 3** full |
+| Validator statistics (§13.1: π_V, π_L) vs. `stf/statistics` (`lake build statstest`) | **4 / 4** tiny, **4 / 4** full |
+| Preimage STF (§12.4) and its service statistics (§13.2 provision counts) vs. `stf/preimages` (`lake build preimagestest`) | **8 / 8** tiny, **8 / 8** full |
 
 ## Building and running
 
@@ -74,6 +76,7 @@ lake build gascheck                   # compare ϱ^Δ with every block cost
 scripts/check-tables.sh               # regenerate PVM/Tables.lean from the pinned paper and diff
 scripts/fetch-jam-vectors.sh          # GP v0.8.0 JAM vectors into vendor/jam-test-vectors
 lake build historytest authtest       # the recent-history and authorization STF vectors (tiny and full)
+lake build statstest preimagestest    # the statistics and preimage STF vectors (tiny and full)
 ```
 
 `pvmtest` and `gascheck` are Lake targets that build an executable and run it; a failing vector
@@ -624,6 +627,29 @@ noted here and in a comment at the definition.
 22. **Recent history** (§7) follows the paper as written: β_H^† corrects the last state root, the
     new entry has state root ℍ_0 and super-peak ℳ_R(β_B'), and β_B' = 𝒜(β_B, r, ℋ_K). The
     vectors give r = ℳ_B(**s**, ℋ_K) directly (`accumulate_root`) and agree throughout.
+23. **Validator statistics** (§13.1). Three points the paper leaves loose:
+    * The guarantee count tests κ'_v ∈ G, but G (eq. `guarantorsig`) holds Ed25519 keys. We
+      compare (κ'_v)_e.
+    * On an epoch change the fresh accumulator is written [(0, …), …] with no length. We use
+      |κ'|, which |π_V'| = |κ'| (eq. `activityspec`) requires.
+    * π_V^† credits assurances over N_{|κ|}, which we take as |π_V|.
+
+    G itself is an argument: computing it needs the guarantor assignments M or M*, which need
+    entropy and λ' that the vectors do not carry. The test builds G from κ' and each credential's
+    validator index. The vectors agree with all three readings, including the full-size
+    `stats_epoch_change_with_set_resize-1`, where the set shrinks from 1023 to 6 validators.
+24. **The service provision sum** (§13.2) is written ∑_{(s, **d**) ∈ E_P}(1, |**d**|) inside
+    ∀ s ∈ **s**. Read literally as a fresh binding, it would give every service the whole
+    extrinsic's count. We read s as already bound, so the sum covers that service's pairs only.
+    `preimages_order_check-3` provides to two services and agrees. The statistics vectors cover
+    only validator records, and the preimages vectors only the provision counts. Core
+    statistics and the refinement and accumulation parts of service records are modelled
+    (`coreStats`, `serviceStats`) but untested here.
+25. **Preimage errors.** The paper says E_P must be ordered and unique and every pair providable,
+    but it names no errors and gives no order between the two checks. We check ordering first
+    and use the vectors' names (`preimages_not_sorted_unique`, `preimage_unneeded`). Pairs are
+    ordered by service, then by the data octets lexicographically. On an error, the vectors keep
+    the prior state; the paper makes such a block invalid.
 
 ## Caveats
 

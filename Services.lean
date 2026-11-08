@@ -142,6 +142,7 @@ import Services.Bootstrap.Alloc.ReallocFallbackGrowFail
 import Services.Bootstrap.Alloc.ReallocFallbackHeap
 import Services.Bootstrap.Alloc.ReallocFallbackWrap
 import Services.Bootstrap.Alloc.ReallocCases
+import Services.Bootstrap.Spec
 
 /-!
 # Results about specific services' deployed code
@@ -200,4 +201,7 @@ Built on `JAM`; nothing in `PVM` or `JAM` depends on this library.
   first 600 steps of its refine with what they leave (`prefix_from_Y`, `PrefixPost`), and
   `memcpy_small`. The bootstrap blob has witness's `memcpy` at another address, so this is
   witness's proof with the pcs moved (`genwitnesssteps --service bootstrap memcpy`).
+* `Services.Bootstrap.Spec` — bootstrap's intended behaviour as Lean definitions (no theorems):
+  its instructions and codec, and its refine and accumulate as programs over host calls. The
+  target theorems stated against it are in `docs/bootstrap-target.md`.
 -/

@@ -86,7 +86,7 @@ theorem realloc_wrap_cases {p : ByteArray} {P : Program} [HasCode p P] (env : Re
   by_cases hin : (size + 31) / 32 ≤ usable s ptr ∧ size ≠ 0
   · -- in place (the same usable size, or shrunk)
     obtain ⟨s', e, ω', μ', run, rep, wf, fo, e7, cl, ww, stk, e0, e1, e5, e6⟩ :=
-      realloc_wrap_inplace (R := refineContract env) (grow := growTo pb) (hb := hb) x ω μ s sp ptr al size hwf hrep hc
+      realloc_wrap_inplace (p := p) (P := P) (R := refineContract env) (grow := growTo pb) (hb := hb) x ω μ s sp ptr al size hwf hrep hc
         hin.2 hin.1 h1 h7 h9 h10 hal (by omega) (by omega) hsp1 hb0 hbT hfo hl hHT ⟨by omega, by omega⟩ hwr
     exact ⟨ω', μ', run.mono (by omega), cl, fun a h1 h2 => by rw [ww]; exact hst a h1 h2, stk, e0, e1, e5, e6,
       fun r s'' b hrr => by
@@ -96,7 +96,7 @@ theorem realloc_wrap_cases {p : ByteArray} {P : Program} [HasCode p P] (env : Re
   · -- to size 0: freed, null
     subst hs0
     obtain ⟨e, ω', μ', run, rep, wf, fo, e7, cl, ww, stk, e0, e1, e5, e6⟩ :=
-      realloc_wrap_zero (R := refineContract env) (grow := growTo pb) (hb := hb) x ω μ s sp ptr al hwf hrep hc
+      realloc_wrap_zero (p := p) (P := P) (R := refineContract env) (grow := growTo pb) (hb := hb) x ω μ s sp ptr al hwf hrep hc
         (hz rfl) h1 h7 h9 h10 hal (by omega) hsp1 hb0 hbT hfo hl hHT ⟨by omega, by omega⟩ hwr
     exact ⟨ω', μ', run.mono (by omega), cl, fun a h1 h2 => by rw [ww]; exact hst a h1 h2, stk, e0, e1, e5, e6,
       fun r s'' b hrr => by
@@ -109,7 +109,7 @@ theorem realloc_wrap_cases {p : ByteArray} {P : Program} [HasCode p P] (env : Re
     by_cases hng : s'.allocated = s.allocated
     · -- grown in place
       obtain ⟨e, ω', μ', run, rep, wf, fo, e7, cl, ww, stk, e0, e1, e5, e6⟩ :=
-        realloc_wrap_grow (R := refineContract env) (hb := hb) x ω μ s s' sp ptr al size hwf hrep hc hr hr1 hg hng
+        realloc_wrap_grow (p := p) (P := P) (R := refineContract env) (hb := hb) x ω μ s s' sp ptr al size hwf hrep hc hr hr1 hg hng
           h1 h7 h9 h10 hal (by omega) hsp1 hb0 hbT hA hfo hl hHT ⟨by omega, by omega⟩ hwr
       exact ⟨ω', μ', run.mono (by omega), cl, fun a h1 h2 => by rw [ww]; exact hst a h1 h2, stk, e0, e1, e5, e6,
         fun r s'' b hrr => by
@@ -117,7 +117,7 @@ theorem realloc_wrap_cases {p : ByteArray} {P : Program} [HasCode p P] (env : Re
         fun hrr => by rw [e] at hrr; cases hrr⟩
     · -- grown in place, the heap grown
       obtain ⟨e, ω', μ', run, rep, wf, fo, e7, cl, ⟨h', hpH, -, hph, hpb⟩, hst', stk, e0, e1, e5, e6⟩ :=
-        realloc_wrap_grow_heap (hb := hb) env x ω μ s s' sp ptr al size hwf hrep hc hr hr1 pb ph hbd h48 hhb hbs hg
+        realloc_wrap_grow_heap (p := p) (P := P) (hb := hb) env x ω μ s s' sp ptr al size hwf hrep hc hr hr1 pb ph hbd h48 hhb hbs hg
           hng h1 h7 h9 h10 hal (by omega) hsp1 hb0 hbT hA hfo
           (Nat.le_trans (growInplace_pages hr hg hng) hcost) hl hHT ⟨by omega, by omega⟩ hSb hp hst
       exact ⟨ω', μ', run.mono (by omega), cl, hst', stk, e0, e1, e5, e6,
@@ -132,17 +132,17 @@ theorem realloc_wrap_cases {p : ByteArray} {P : Program} [HasCode p P] (env : Re
         · rw [hng]; exact Nat.le_trans (pagesOf_le hHT) (by omega)
         · exact Nat.le_trans (alloc_pages hwf ha hng) hcost
       obtain ⟨e, ω', μ', run, rep, wf, fo, e7, cl, ⟨h', hpH, -, hph, hpb⟩, hst', stk, e0, e1, e5, e6⟩ :=
-        realloc_wrap_fallback (hb := hb) env x ω μ s s1 sp ptr al size q pb ph hwf hrep hc hr hr1 hbd h48 hhb hbs hg
+        realloc_wrap_fallback (p := p) (P := P) (hb := hb) env x ω μ s s1 sp ptr al size q pb ph hwf hrep hc hr hr1 hbd h48 hhb hbs hg
           ha hc1 h1 h7 h9 h10 hal1 hal2 hsp hsp1 hsp8 hba hb0 hbT hA hfo hl hHTs hHT hS hSb hp hst
       exact ⟨ω', μ', run.mono (by omega), cl, hst', stk, e0, e1, e5, e6,
         fun r s'' b hrr => by rw [e] at hrr; cases hrr; exact ⟨e7, rep, wf, fo, h', hpH, hph, hpb⟩,
         fun hrr => by rw [e] at hrr; cases hrr⟩
     | none =>
       obtain ⟨e, ω', μ', run, rep, e7, cl, hp', hst', fr, -, e0, e1, e5, e6⟩ :=
-        realloc_wrap_fallback_fail (hb := hb) env x ω μ s sp ptr al size pb ph hwf hrep hc hr hr1 hbd h48 hhb hbs hg
+        realloc_wrap_fallback_fail (p := p) (P := P) (hb := hb) env x ω μ s sp ptr al size pb ph hwf hrep hc hr hr1 hbd h48 hhb hbs hg
           ha h1 h7 h9 h10 hal1 hal2 hsp hsp1 hb0 hbT hA hl hHTs hHT hS hSb hp hst
       exact ⟨ω', μ', run.mono (by omega), cl, hst',
         fun a h1 h2 => fr a h1 (Or.inr h2) (Or.inr (by omega)) (Or.inr (by omega)), e0, e1, e5, e6,
-        fun r s'' b hrr => by rw [e] at hrr; cases hrr, fun _ => ⟨e7, rep, hp'⟩⟩
+        fun r s'' b hrr => (by rw [e] at hrr; cases hrr), fun _ => ⟨e7, rep, hp'⟩⟩
 
 end Services.Bootstrap.Alloc

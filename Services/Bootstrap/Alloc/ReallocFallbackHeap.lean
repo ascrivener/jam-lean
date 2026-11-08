@@ -291,7 +291,7 @@ theorem fallback_entry {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
       obtain ⟨m, -, hm1, -, hm3⟩ := Tiles.append.mp htiles
       simp only [Tiles] at hm1 hm3; omega
     | cons e es =>
-      exact ⟨e, List.mem_append_right _ (List.mem_cons_of_mem _ (by rw [hpo]; simp)), hph e (by rw [hpo]; rfl)⟩
+      exact ⟨e, List.mem_append_right _ (List.mem_cons_of_mem _ (by simp)), hph e (by rw [hpo]; rfl)⟩
   have hnc : ptr - 32 + 32 * cur < s.base + 1073741824 → H (ptr - 32 + 32 * cur) := fun hlt' => by
     obtain ⟨e, hem, hea⟩ := hnx hlt'; rw [← hea]; exact mkH e hem
   rcases growInplace_none_cases hcur hlt hnone with hcase | ⟨hin, hfree, hav, hgr, hno⟩
@@ -330,7 +330,7 @@ theorem fallback_entry {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
       rw [hes] at hw0 ⊢; unfold sizeWord at hw0 ⊢
       cases hu : e.used
       · simp
-      · simp [hu] at hw0; omega
+      · simp [hu] at hw0
     have hws : wordSize (s.hdr (ptr - 32 + 32 * cur)).size = e.size := by rw [hw2]; unfold wordSize; omega
     rw [hws] at hav hgr hno
     have hR : pb < pagesOf (s.base + 32 * ((ptr - 32 + 32 * (req + 1) - s.base) / 32 +
@@ -339,7 +339,7 @@ theorem fallback_entry {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
     obtain ⟨ω1, μ1, r1, rep1, hp1, hst1, fr1, st0, st5, st6, a1, a6, a7, a8, a9, a10⟩ := fallback_pre_grow
       (p := p) (P := P) env x ω μ s H F sp ptr req cur e.size hrep' h1 h8 h7 h10 hsp hsp1 hb0 hbT hA
       (hHF _ (Or.inl (mkH _ hXm))) (by omega) (mkH _ hXm) hHF (by rw [hXs]; unfold sizeWord; simp) hlt hr1 hc1
-      hin (hnc hin) hw2 (by omega) (by omega) hav _ rfl hgr pb ph hbd h48 hhb hbs hR hHFT hS hSb hp hst
+      hin (hnc hin) hw2 (by omega) (by omega) hav (by omega) _ rfl hgr pb ph hbd h48 hhb hbs hR hHFT hS hSb hp hst
     exact ⟨ω1, μ1, r1, hrep.congr_lock hwf hb0 hbT (fun a ha1 ha2 ha3 => fr1 a (by omega) (Or.inl (by omega))),
       hp1, hst1, fr1, st0, st5, st6, a1, by rw [a6, husable], a7, a8, a9, a10⟩
 

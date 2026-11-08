@@ -72,7 +72,7 @@ theorem fallback_pre_grow {p : ByteArray} {P : Program} [HasCode p P] (env : Ref
     (hc1 : 1 ≤ cur)
     (honc : ptr - 32 + 32 * cur < s.base + 1073741824) (hnc : H (ptr - 32 + 32 * cur))
     (hw : (s.hdr (ptr - 32 + 32 * cur)).size = 2 * sz) (hsz1 : 1 ≤ sz) (hszN : sz ≤ 33554432)
-    (hav : req + 1 ≤ cur + sz)
+    (hav : req + 1 ≤ cur + sz) (hMt : ptr - 32 + 32 * (cur + sz) ≤ s.base + 1073741824)
     (E : Nat) (hEd : (ptr - 32 + 32 * (req + 1) - s.base) / 32 + (if cur + sz - (req + 1) = 0 then 0 else 1) = E)
     (hgr : s.allocated < E)
     (pb h : Nat) (hbd : heapBounds env.code = (48, pb)) (h48 : 48 ≤ h) (hhb : h ≤ pb) (hbs : pb < 4294967296)
@@ -175,7 +175,6 @@ theorem fallback_pre_grow {p : ByteArray} {P : Program} [HasCode p P] (env : Ref
   have hst7 : ∀ a, S0 ≤ a → a < S1 → μ7.writable a = true := fun a h1 h2 => by
     rw [ww7, ww5, ww3, ww1]; exact hst a h1 h2
   have hE32 : E ≤ 33554432 := by rw [← hEd]; split <;> omega
-  have hE32 : E ≤ 33554432 := by rw [← hEd]; split <;> omega
   have K : ∀ j : Nat, (hj : j < 13) → j ∉ [0, 1, 2, 3, 4, 5, 6, 11, 12] → ω7[j]'hj = ω[j]'hj := fun j hj h => by
     rw [fget g7 j hj (by simp only [List.mem_cons, List.not_mem_nil, or_false] at h ⊢; omega),
       fget g6 j hj (by simp only [List.mem_cons, List.not_mem_nil, or_false] at h ⊢; omega),
@@ -218,11 +217,12 @@ theorem fallback_pre_grow {p : ByteArray} {P : Program} [HasCode p P] (env : Ref
   have sv : ∀ a, sp - 24 ≤ a → a + 8 ≤ sp →
       (μ8.setPages 48 (h - 48) (some .write)).readN a 8 = μ1.readN a 8 := fun a h1 h2 =>
     Memory.readN_congr fun j hj => fr _ (by omega) (Or.inr (by omega))
+  have rep10 : RepAt (μ8.setPages 48 (h - 48) (some .write)) s H F :=
+    rep7.congr_low (fun a ha => fr8 a (by omega) (Or.inl (by omega)) (Or.inl (by omega))) hHFl
   refine ⟨ω10, μ8.setPages 48 (h - 48) (some .write),
-    (((((((((((r1.trans r2).trans r3).trans b4).trans r5).trans b6).trans r6).trans r7).trans r8).trans r9).trans
+    ((((((((((r1.trans r2).trans r3).trans b4).trans r5).trans b6).trans r6).trans r7).trans r8).trans r9).trans
       r10).mono (by omega),
-    rep7.congr_low (fun a ha => by
-      rw [Memory.read_setPages]; exact fr8 a (by omega) (Or.inl (by omega)) (Or.inl (by omega))) hHFl,
+    rep10,
     hp9, hst9, fun a h1 h2 => (fr a h1 (by omega)).trans (sf1 a h1 (by omega)),
     by rw [sv _ (by omega) (by omega)]; exact st0, by rw [sv _ (by omega) (by omega)]; exact st5,
     by rw [sv _ (by omega) (by omega)]; exact st6, ?_, ?_, ?_, ?_, ?_, ?_⟩

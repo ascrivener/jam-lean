@@ -26,11 +26,10 @@ theorem unregister_heads_head {s : State} {C bin b : Nat} (hc : s.heads bin = C)
   · rw [unsetBit_heads]; simp [upd]
   · rw [setHdr_heads]; simp [upd]
 
-/-- **The binary's `alloc_impl` on a well-formed heap**: from memory holding a well-formed `s`, an
-    allocation of `req` units at alignment one unit that the model makes without growing the heap,
-    the binary returns its address and leaves memory holding the model's result, itself
-    well-formed. -/
-theorem alloc_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+/-- **`alloc_refines` with the heap's frame**: as `alloc_refines`, and in the heap only the
+    allocator's fields and the headers of chunks of the result `s'` change (`HKeep`): every
+    allocated chunk of `s`, still a chunk of `s'`, keeps its data. -/
+theorem alloc_refines_hdr {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
     {grow : Grow} {hb : Nat} (s s' : State) (sp req ptr : Nat) (hwf : WF s) (hrep : Rep μ s)
     (h : alloc grow hb 1 req s = some (ptr, s')) (hng : s'.allocated = s.allocated)
     (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat 196792) (h8 : ω[8] = UInt64.ofNat 1)
@@ -41,7 +40,8 @@ theorem alloc_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : 
     (hHT : s.base + 32 * s.allocated ≤ HT) (hw : WrAt μ HT S0 S1) :
     ∃ ω' μ', FreeStepsH p R 41177 ω μ x 41423 ω' μ' x 400 ∧ Rep μ' s' ∧ WF s' ∧
       ω'[7] = UInt64.ofNat ptr ∧ ω'[0] = ω[0] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ ω'[1] = ω[1] ∧
-      (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) := by
+      (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
+      HKeep μ μ' (fun a => ∃ c ∈ chunks s', c.addr = a) := by
   have hwf' : WF s' := alloc_wf hwf h
   rw [alloc_one hwf.1] at h
   obtain ⟨bin, a1, hbin, hmax, hS, ha1, hend, hp, rfl⟩ := alloc1_eq h
@@ -143,12 +143,12 @@ theorem alloc_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : 
       have := hpost1 e (by rw [hpo]; rfl)
       rw [← this]; exact mkH e (List.mem_append_right _ (List.mem_cons_of_mem _ (by rw [hpo]; exact List.mem_cons_self)))
   have hm' : req + 1 ≤ 33554432 := by rw [← maxSize_val]; exact hmax
-  obtain ⟨ω', μ', run, rep', e7, e0, e5, e6, e1, ww, stk⟩ := alloc_impl (p := p) (P := P) (R := R) x ω μ s H F sp req
+  obtain ⟨ω', μ', run, rep', e7, e0, e5, e6, e1, ww, stk, hk⟩ := alloc_impl (p := p) (P := P) (R := R) x ω μ s H F sp req
     bin C hrep' hbits h1 h7 h8 h9 h10 hsp hsp1 hb0 hbT hm' hbin (by unfold binCount at hbc; omega) hC hFC hHC hHF
     hnx hpv (by rw [hSd]; exact hS) (by rw [hSd]; omega) hal (by rw [hSd]; exact hend)
     (by rw [hSd]; exact hNdis) (by rw [hSd]; exact hNold) (by rw [hSd]; exact hFin) hHTs hSTk hHFT hHT hw
   rw [hSd] at rep'
-  refine ⟨ω', μ', run, ?_, hwf', e7, e0, e5, e6, e1, ww, stk⟩
+  refine ⟨ω', μ', run, ?_, hwf', e7, e0, e5, e6, e1, ww, stk, ?_⟩
   rw [show s.base + 32 * maxSize = s.base + 1073741824 by rw [maxSize_val]]
   rw [htop] at hcs'
   generalize hN : C + 32 * (req + 1) = N at rep'
@@ -198,4 +198,41 @@ theorem alloc_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : 
     · exact rep'.prevL _ (Or.inl (mkF c h hu))
     · rw [h] at hu; exact absurd hu (by decide)
     · rw [h]; exact rep'.prevL _ (Or.inr ⟨hr, rfl⟩)
+  rw [show s.base + 32 * maxSize = s.base + 1073741824 by rw [maxSize_val]]
+  rw [htop] at hcs'
+  rw [hSd] at hk
+  refine hk.mono fun b hb => Or.inl ?_
+  rw [hcs']
+  rcases hb with hb | ⟨hr, rfl⟩
+  · obtain ⟨c, hc, rfl⟩ := unHF b hb
+    rcases List.mem_append.mp hc with h | h
+    · exact ⟨c, List.mem_append_left _ h, rfl⟩
+    · rcases List.mem_cons.mp h with h | h
+      · subst h; exact ⟨_, List.mem_append_right _ List.mem_cons_self, rfl⟩
+      · exact ⟨c, List.mem_append_right _ (List.mem_cons_of_mem _ (List.mem_append_right _ h)), rfl⟩
+  · refine ⟨⟨C + 32 * (req + 1), S - req - 1, false⟩,
+      List.mem_append_right _ (List.mem_cons_of_mem _ (List.mem_append_left _ ?_)), rfl⟩
+    unfold remChunk; rw [if_neg hr]; exact List.mem_singleton_self _
+
+
+/-- **The binary's `alloc_impl` on a well-formed heap**: from memory holding a well-formed `s`, an
+    allocation of `req` units at alignment one unit that the model makes without growing the heap,
+    the binary returns its address and leaves memory holding the model's result, itself
+    well-formed. -/
+theorem alloc_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    {grow : Grow} {hb : Nat} (s s' : State) (sp req ptr : Nat) (hwf : WF s) (hrep : Rep μ s)
+    (h : alloc grow hb 1 req s = some (ptr, s')) (hng : s'.allocated = s.allocated)
+    (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat 196792) (h8 : ω[8] = UInt64.ofNat 1)
+    (h9 : ω[9] = UInt64.ofNat req) (h10 : ω[10] = UInt64.ofNat 0)
+    (hsp : 2147483800 ≤ sp) (hsp1 : sp < 4294967296)
+    (hb0 : 206864 ≤ s.base) (hbT : s.base + 1073741824 < 2147483648) (hal : s.allocated < 2147483648)
+    (hfo : FirstOk s) {HT S0 S1 : Nat} (hHTs : 208896 ≤ HT) (hSTk : S0 + 152 ≤ sp ∧ sp ≤ S1)
+    (hHT : s.base + 32 * s.allocated ≤ HT) (hw : WrAt μ HT S0 S1) :
+    ∃ ω' μ', FreeStepsH p R 41177 ω μ x 41423 ω' μ' x 400 ∧ Rep μ' s' ∧ WF s' ∧
+      ω'[7] = UInt64.ofNat ptr ∧ ω'[0] = ω[0] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ ω'[1] = ω[1] ∧
+      (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) := by
+  obtain ⟨ω', μ', a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, -⟩ := alloc_refines_hdr (p := p) (P := P) (R := R) (grow := grow) (hb := hb)
+    x ω μ s s' sp req ptr hwf hrep h hng h1 h7 h8 h9 h10 hsp hsp1 hb0 hbT hal hfo hHTs hSTk hHT hw
+  exact ⟨ω', μ', a0, a1, a2, a3, a4, a5, a6, a7, a8, a9⟩
+
 end Services.Bootstrap.Alloc

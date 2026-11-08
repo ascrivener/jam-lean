@@ -157,6 +157,18 @@ jobs:
       - name: Accumulate vectors (all but the listed deviations from GP 0.8.0)
         run: lake build acctest
 
+      - name: Recent-history vectors (tiny and full)
+        run: lake build historytest
+
+      - name: Authorizations vectors (tiny and full)
+        run: lake build authtest
+
+      - name: Statistics vectors (tiny and full)
+        run: lake build statstest
+
+      - name: Preimages vectors (tiny and full)
+        run: lake build preimagestest
+
       - name: Save .lake
         if: always()
         uses: actions/cache/save@v4

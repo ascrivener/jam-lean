@@ -6,8 +6,9 @@ import JAM.Theorems.RefineContract
 Ω_♊ counts the writable pages in ℕ_{a…b} to find the heap's top h. In a symbolic run the memory
 is not a concrete page map, so we describe its heap pages instead: `HeapPages μ a b h` says the
 writable pages in ℕ_{a…b} are exactly those below h. From it `growHeapCore_eq` gives Ω_♊'s top
-without counting, and `FreeStepsH.growHeap` takes a whole `grow_heap` step under
-`refineContract`.
+without counting, and `FreeStepsH.growHeapK` takes a whole `grow_heap` step under
+`refineContractK cap`, for a call whose cost fits in `cap` (`FreeStepsH.growHeap`: under
+`refineContract`).
 -/
 
 namespace JAM
@@ -52,20 +53,22 @@ theorem growHeapCore_eq (ω : Regs) (μ : Memory) (jam : ByteArray) {a b h : Nat
 /-- The new top Ω_♊ sets: h if ω_7 ≤ h or ω_7 > b, else ω_7. -/
 def growTop (w h b : Nat) : Nat := if w ≤ h ∨ w > b then h else w
 
-/-- **A `grow_heap` step**, under `refineContract`: from a memory whose heap is described by
-    `HeapPages`, the call continues with ω'_7 = the new top `t` and pages a … t made writable.
-    The new top is named by `t` so that the memory term stays concrete. -/
-theorem FreeStepsH.growHeap (env : RefineHost.Env) {p : ByteArray} {P : Program} {i n : Nat}
+/-- **A `grow_heap` step**, under `refineContractK cap`: from a memory whose heap is described by
+    `HeapPages`, the call continues with ω'_7 = the new top `t` and pages a … t made writable,
+    provided its cost 275 + 121 (t − h) fits in `cap`. The new top is named by `t` so that the
+    memory term stays concrete. -/
+theorem FreeStepsH.growHeapK (cap : Nat) (hcap : cap < 2 ^ 64) (env : RefineHost.Env)
+    {p : ByteArray} {P : Program} {i n : Nat}
     {ω : Regs} {μ : Memory} {x : RefineCtx} {a b h : Nat} (t : Nat)
     {i'' : Nat} {ω'' : Regs} {μ'' : Memory} {x'' : RefineCtx} {k : Nat}
     (hd : deblob p i = some P ∧ P.decode i = some (.oneImm .ecalli 1) ∧ P.next i = n ∧
       P.blockCost (P.blockStartOf i) ≤ stepCostCap)
     (hb : heapBounds env.code = (a, b)) (hp : HeapPages μ a b h) (hah : a ≤ h) (hhb : h ≤ b)
     (hbs : b < 2 ^ 32) (ht : growTop (reg ω 7) h b = t)
-    (hcost : Constants.CgasGeminiconst + (t - h) * Constants.CgasGeminilinear ≤ hostCostMax)
-    (rest : FreeStepsH p (refineContract env) n (setR7 ω t)
+    (hcost : Constants.CgasGeminiconst + (t - h) * Constants.CgasGeminilinear ≤ cap)
+    (rest : FreeStepsH p (refineContractK cap env) n (setR7 ω t)
       (μ.setPages a (t - a) (some .write)) x i'' ω'' μ'' x'' k) :
-    FreeStepsH p (refineContract env) i ω μ x i'' ω'' μ'' x'' (k + 1) := by
+    FreeStepsH p (refineContractK cap env) i ω μ x i'' ω'' μ'' x'' (k + 1) := by
   subst ht
   apply FreeStepsH.host_decode hd _ rest
   refine ⟨by unfold GasFreeId; decide, by decide, ?_⟩
@@ -76,11 +79,26 @@ theorem FreeStepsH.growHeap (env : RefineHost.Env) {p : ByteArray} {P : Program}
   by_cases hc : (ω.get 7).toNat ≤ h ∨ (ω.get 7).toNat > b
   · simp [hc]
   · simp only [hc, ↓reduceIte] at hcost
-    have : ¬ hostCostMax % 18446744073709551616 <
+    have : ¬ cap % 18446744073709551616 <
         Constants.CgasGeminiconst + ((ω.get 7).toNat - h) * Constants.CgasGeminilinear := by
-      unfold hostCostMax at hcost ⊢
+      rw [Nat.mod_eq_of_lt hcap]
       omega
     simp [hc, this]
+
+/-- **A `grow_heap` step**, under `refineContract`: `growHeapK` at `hostCostMax`, so at most 14
+    pages a call. -/
+theorem FreeStepsH.growHeap (env : RefineHost.Env) {p : ByteArray} {P : Program} {i n : Nat}
+    {ω : Regs} {μ : Memory} {x : RefineCtx} {a b h : Nat} (t : Nat)
+    {i'' : Nat} {ω'' : Regs} {μ'' : Memory} {x'' : RefineCtx} {k : Nat}
+    (hd : deblob p i = some P ∧ P.decode i = some (.oneImm .ecalli 1) ∧ P.next i = n ∧
+      P.blockCost (P.blockStartOf i) ≤ stepCostCap)
+    (hb : heapBounds env.code = (a, b)) (hp : HeapPages μ a b h) (hah : a ≤ h) (hhb : h ≤ b)
+    (hbs : b < 2 ^ 32) (ht : growTop (reg ω 7) h b = t)
+    (hcost : Constants.CgasGeminiconst + (t - h) * Constants.CgasGeminilinear ≤ hostCostMax)
+    (rest : FreeStepsH p (refineContract env) n (setR7 ω t)
+      (μ.setPages a (t - a) (some .write)) x i'' ω'' μ'' x'' k) :
+    FreeStepsH p (refineContract env) i ω μ x i'' ω'' μ'' x'' (k + 1) :=
+  FreeStepsH.growHeapK hostCostMax (by decide) env t hd hb hp hah hhb hbs ht hcost rest
 
 /-- Prove `HeapPages` of a memory built from a starting memory by writes and `setPages`, given
     the starting memory's `HeapPages` fact `h`. -/

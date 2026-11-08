@@ -14,6 +14,10 @@ import JAM.Host.General
 import JAM.Merkle
 import JAM.Accumulate
 import JAM.Accumulation
+import JAM.History
+import JAM.Authorization
+import JAM.Statistics
+import JAM.Preimages
 import JAM.Refine
 import JAM.Theorems.HostGas
 import JAM.Theorems.Confinement
@@ -37,6 +41,10 @@ Built on `PVM` (Appendix A).
 * `JAM.Trie` — state keys C and the state trie root M (Appendix D)
 * `JAM.Shuffle` — the Fisher–Yates shuffle ℱ and 𝒬_l (Appendix F)
 * `JAM.Erasure` — Reed–Solomon erasure coding ℰ_C and recovery ℛ over GF(2¹⁶) (Appendix H)
+* `JAM.History` — recent history β and the accumulation-output belt (§7, Appendix E MMB)
+* `JAM.Authorization` — the authorizer pool α (§8)
+* `JAM.Statistics` — validator, core and service activity statistics (§13)
+* `JAM.Preimages` — the preimages extrinsic and its integration (§12.4)
 * `JAM.Refine` — the refine and is-authorized invocations Ψ_R and Ψ_I, with the refine host functions
 * `JAM.Theorems.HostGas` — the dispatchers of Ψ_A, Ψ_R and Ψ_I never add gas
 -/

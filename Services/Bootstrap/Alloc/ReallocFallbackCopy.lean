@@ -46,15 +46,16 @@ theorem rf_memcpy {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
     obtain ⟨ω', run, g0, g1, g5, g6, -⟩ := memcpy_small (p := p) (P := P) (R := R) x ω μ 2004 43295 sp q ptr 0
       h0 h1 h7 h8 (by simpa using h9) (by decide) (by decide)
       (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_1001]) bs_43295 ⟨by omega, by omega⟩ ⟨by omega, by omega⟩
-      ⟨by omega, by omega⟩ (Or.inl (by omega)) (Or.inl (by omega)) (Or.inl (by omega)) hwf
+      ⟨by omega, by omega⟩ (by omega) (Or.inl (by omega)) (Or.inl (by omega)) hwf
       (fun a h1 h2 => absurd h2 (by omega)) (fun a h1 h2 => absurd h2 (by omega))
     refine ⟨ω', _, run.mono (by omega), by rw [g0, h0], by rw [g1, h1], g5, g6, ?_, fun a ha h1 h2 => ?_,
       fun a => ?_⟩
     · rfl
-    · simp only [Memory.writeN_nil]
+    · rw [show μ.readN ptr 0 = [] from rfl, Memory.writeN_nil]
       simp (disch := pvm_arith) only [memcpyFrame, PVM.Memory.read_writeN_disjoint, PVM.Num.length_encodeLE,
         PVM.two32]
-    · simp only [Memory.writeN_nil, memcpyFrame, Memory.writable_writeN]
+    · rw [show μ.readN ptr 0 = [] from rfl, Memory.writeN_nil]
+      simp only [memcpyFrame, Memory.writable_writeN]
   · obtain ⟨ω', μ', run, d0, d1, d5, d6, dc, dfr, -, dwr⟩ := memcpy_big_aligned (p := p) (P := P) (R := R)
       x ω μ 2004 43295 sp q ptr (32 * u) h0 h1 h7 h8 h9 (by decide)
       (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_1001]) bs_43295 hsp (by omega)
@@ -122,12 +123,13 @@ theorem fallback_after {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω :
   have rj2 := free_ret_fallback (p := p) (P := P) (R := R) x ω6 μ4 (by rw [b0, f0])
   have stk : ∀ a, a < 4294967296 → sp ≤ a → μ4.read a = μ.read a := fun a h1 h2 =>
     (stk4 a h1 h2).trans (stk3 a h1 h2)
-  have rd : ∀ a v, rdN μ a 8 = v → sp ≤ a → rdN μ4 a 8 = v := fun a v h h1 => by
+  have rd : ∀ a v, rdN μ a 8 = v → sp ≤ a → a + 8 ≤ sp + 152 → rdN μ4 a 8 = v := fun a v h h1 h2 => by
     rw [← h]; exact rdN_frame fun j hj => stk _ (by omega) (by omega)
   have W4 := (hw.of_eq dwr).of_eq ww4
+  have hq2 : q < 4294967296 := by omega
   obtain ⟨ω7, r7, k7, k0, k1, k5, k6⟩ := rf_ret (p := p) (P := P) (R := R) x ω6 μ4 sp q v5 v6 b1
-    (by rw [b6, fget g5 6 (by decide) (by decide), d6, c6]) (by omega) (by omega) hsp1
-    (rd _ _ s0 (by omega)) (rd _ _ s5 (by omega)) (rd _ _ s6 (by omega)) ⟨by omega, by omega⟩ W4.rd
+    (by rw [b6, fget g5 6 (by decide) (by decide), d6, c6]) hq2 (by omega) hsp1
+    (rd _ _ s0 (by omega) (by omega)) (rd _ _ s5 (by omega) (by omega)) (rd _ _ s6 (by omega) (by omega)) ⟨by omega, by omega⟩ W4.rd
   exact ⟨ω7, μ4, (((((r3.trans r4).trans r5).trans r6).trans rj2).trans r7).mono (by omega), rep4, wf4, fo4,
     fun a => (ww4 a).trans (dwr a), stk, k7, k0, k1, k5, k6⟩
 

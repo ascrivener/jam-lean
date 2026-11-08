@@ -180,6 +180,16 @@ An independent kernel, nanoda as vendored by
   - *Scope:* the decoders of the 22 variants with fields are not covered yet. The code facts now
     cover all of `Instruction::decode`, from two traced payloads that between them hold every
     instruction kind, plus the whole range 20626 … 22145.
+- **`Instruction::decode` for variants with fixed-width fields.** `Decode.Fixed.zombify`,
+  `exported` and `read_u64` (`Services/Bootstrap/Decode/Fixed.lean`).
+  - *Statement:* from 20626 with tag 3 (`Zombify { ejector: u32 }`) or 20 (`Exported { count: u64 }`),
+    and the reader holding enough octets, the function returns the variant in its slot O: the
+    discriminant word 2^63 + t − 1 at O and the field's octets, copied from the payload, at O + 8.
+    The reader is advanced by the field's width. Memory changes only in the stack below the frame,
+    the reader and the slot. `read_u64` summarizes the shared `u64` reader at 3791, which every `u64`
+    field goes through.
+  - *Scope:* hash fields need `read_big` for a buffer at sp itself, which it does not cover yet. The
+    other variants are not covered yet.
 
 ### picoalloc: the model (`Services/Picoalloc/`)
 

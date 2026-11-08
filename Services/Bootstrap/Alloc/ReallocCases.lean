@@ -149,7 +149,7 @@ theorem realloc_wrap_cases_data {p : ByteArray} {P : Program} [HasCode p P] (env
         realloc_wrap_fallback_fail (p := p) (P := P) (hb := hb) env x ω μ s sp ptr al size pb ph hwf hrep hc hr hr1 hbd h48 hhb hbs hg
           ha h1 h7 h9 h10 hal1 hal2 hsp hsp1 hb0 hbT hA hl hHTs hHT hS hSb hp hst
       exact ⟨ω', μ',
-      fun r s'' b hrr => by rw [e] at hrr; cases hrr,
+      fun r s'' b hrr => (by rw [e] at hrr; cases hrr),
       run.mono (by omega), cl, hst',
         fun a h1 h2 => fr a h1 (Or.inr h2) (Or.inr (by omega)) (Or.inr (by omega)), e0, e1, e5, e6,
         fun r s'' b hrr => (by rw [e] at hrr; cases hrr), fun _ => ⟨e7, rep, hp'⟩⟩

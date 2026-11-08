@@ -87,6 +87,10 @@ structure Svc where
   pathExtra : List (Nat × Nat × Nat × List UInt8) := []
   /-- Further inputs whose whole refine paths the code facts cover (`code`, `codecheck`). -/
   codeExtra : List (Nat × Nat × Nat × List UInt8) := []
+  /-- `code` only: more inputs whose instructions the code facts cover, not used by the other modes,
+      each run up to its first visit to `codeOnlyStop`. -/
+  codeOnly : List (Nat × Nat × Nat × List UInt8) := []
+  codeOnlyStop : Nat := 0
   fnRanges : List (Nat × Nat)
   /-- Whether `Services/<name>/Memcpy.lean` exists (`memcpy_small` at the head of `fnRanges`):
       the prefix then calls it for each `memcpy` of fewer than 16 octets instead of stepping. -/
@@ -122,6 +126,59 @@ def witnessSvc : Svc where
   emptyExtra := [(3, 0, 2147483653, []), (3, 1, 7, []), (20000, 300, 4000000000, [])]
   emptyCode := true
 
+/-- ℰ_l(x), little-endian, for the payloads below. -/
+def le (l x : Nat) : List UInt8 := (List.range l).map fun k => UInt8.ofNat (x / 256 ^ k)
+
+/-- Bootstrap payloads holding every instruction kind (tags 0 … 24, `Instruction` in
+    `jam-bootstrap-service-common` 0.1.29), canonically encoded, then a 32-octet salt: the first
+    with every `Option`, `bool` and choice in its second form and non-empty lists, the second in
+    its first form with empty lists. Their refine runs put every instruction decoder in the code
+    facts. -/
+def allInstrPayloads : List (List UInt8) :=
+  let h (b : Nat) : List UInt8 := List.replicate 32 (UInt8.ofNat b)
+  let memo := List.replicate 128 9
+  let q := (List.range 80).flatMap fun k => h k
+  let a : List (List UInt8) := [
+    [0] ++ h 1 ++ le 8 10 ++ le 8 11 ++ le 8 12 ++ le 8 13 ++ memo ++ [1, 3, 97, 98, 99] ++ le 8 14 ++ [1] ++ le 4 15,
+    [1] ++ h 2 ++ le 8 20 ++ le 8 21,
+    [2] ++ le 4 30 ++ le 8 31 ++ le 8 32 ++ memo,
+    [3] ++ le 4 40,
+    [4] ++ le 4 50 ++ h 3,
+    [5, 2, 2, 1, 2, 0],
+    [6] ++ h 4 ++ le 8 60,
+    [7] ++ h 5 ++ le 8 70,
+    [8] ++ le 4 80 ++ h 6 ++ [0],
+    [9, 0],
+    [10, 2, 1, 7, 0],
+    [11] ++ le 4 1 ++ le 4 2 ++ le 4 3 ++ le 4 4 ++ [1] ++ le 4 5 ++ le 8 6,
+    [12] ++ le 2 1 ++ q ++ le 4 7,
+    [13, 1] ++ List.replicate 336 8,
+    [14] ++ h 7,
+    [15],
+    [16],
+    [17] ++ le 4 90 ++ [1, 2, 5, 6],
+    [18, 1, 2, 3, 4],
+    [19, 2, 1, 5, 0],
+    [20] ++ le 8 3,
+    [21] ++ le 8 42 ++ [2],
+    [22, 0, 1] ++ h 8,
+    [23],
+    [24] ++ le 2 2 ++ [1] ++ h 9 ++ le 4 8]
+  let b : List (List UInt8) := [
+    [0] ++ h 1 ++ le 8 10 ++ le 8 11 ++ le 8 12 ++ le 8 13 ++ memo ++ [0] ++ le 8 14 ++ [0],
+    [5, 0],
+    [8] ++ le 4 80 ++ h 6 ++ [1],
+    [10, 0],
+    [11] ++ le 4 1 ++ le 4 2 ++ le 4 3 ++ le 4 4 ++ [0],
+    [13, 0],
+    [17] ++ le 4 90 ++ [0] ++ h 10,
+    [18, 0],
+    [19, 0],
+    [22, 1],
+    [24] ++ le 2 2 ++ [0] ++ le 4 8,
+    [9, 1] ++ le 8 0 ++ le 8 4]
+  [[UInt8.ofNat a.length] ++ a.flatten ++ h 0, [UInt8.ofNat b.length] ++ b.flatten ++ h 0]
+
 /-- Parity's bootstrap service (`services/bootstrap`): the payload is an encoded `Instructions`,
     the instruction list then a 32-octet salt; the base input has no instructions. -/
 def bootstrapSvc : Svc where
@@ -138,6 +195,9 @@ def bootstrapSvc : Svc where
   fnRanges := [(68729, 69139), (31894, 32166), (58434, 58509), (32166, 32412), (40494, 40852), (41177, 44241)]
   pathExtra := [(3, 0, 0x01234567, []), (3, 0, 0x89abcdef, [])]
   codeExtra := [(3, 0, 7, [2, 15, 15] ++ List.replicate 32 0)]
+  codeOnly := allInstrPayloads.map fun y => (3, 0, 7, y)
+  -- up to the end of `Instructions::decode`'s element loop
+  codeOnlyStop := 562
   memcpySummary := true
   emptyCode := true
   lBound := 16777217
@@ -988,7 +1048,9 @@ def mode_codeRun (cx : Cx) : IO Unit := do
     if (mode == "code" || mode == "codecheck") && cx.svc.emptyCode then ((traceFor code h acct Q ec ei es ey).map (·.toList)).getD [] else []
   let extraRuns : List (Nat × Regs × Memory) :=
     if mode == "code" || mode == "codecheck" then
-      cx.svc.codeExtra.flatMap fun (c2, i2, s2, y2) => ((traceFor code h acct Q c2 i2 s2 y2).map (·.toList)).getD []
+      (cx.svc.codeExtra.flatMap fun (c2, i2, s2, y2) => ((traceFor code h acct Q c2 i2 s2 y2).map (·.toList)).getD []) ++
+      cx.svc.codeOnly.flatMap fun (c2, i2, s2, y2) =>
+        (((traceFor code h acct Q c2 i2 s2 y2).map (·.toList)).getD []).takeWhile (·.1 ≠ cx.svc.codeOnlyStop)
     else []
   let codePath := tr.toList.take n ++ emptyRun ++ extraRuns
   for (pc, regs, _) in codePath do

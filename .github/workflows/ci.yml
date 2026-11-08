@@ -146,6 +146,9 @@ jobs:
       - name: State trie vectors (Appendix D)
         run: lake build trietest
 
+      - name: Shuffle vectors (Appendix F)
+        run: lake build shuffletest
+
       - name: Accumulate vectors (all but the listed deviations from GP 0.8.0)
         run: lake build acctest
 

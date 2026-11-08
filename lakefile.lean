@@ -83,6 +83,14 @@ lean_exe «trietest-exe» where
 target trietest pkg : Unit := do
   runOnVectors `«trietest-exe» #[(jamVectorDir pkg / "trie" / "trie.json").toString]
 
+lean_exe «shuffletest-exe» where
+  root := `Tests.ShuffleTest
+  exeName := "shuffletest"
+
+/-- ℱ (GP Appendix F) on every case of the shuffle vectors. -/
+target shuffletest pkg : Unit := do
+  runOnVectors `«shuffletest-exe» #[(jamVectorDir pkg / "shuffle" / "shuffle_tests.json").toString]
+
 /-- Run the accumulation STF on every accumulate vector (tiny). -/
 target acctest pkg : Unit := do
   runOnVectors `«acctest-exe» #[(jamVectorDir pkg / "stf" / "accumulate" / "tiny").toString]

@@ -65,6 +65,12 @@ theorem dl_lock {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) 
     · rd_simp []
     · rd_simp [hwr]
 
+/-- 42978: the free path's return, through the jump table, to `dealloc` (40681). -/
+theorem free_ret_dealloc {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (h0 : ω[0] = UInt64.ofNat 1986) : FreeStepsH p R 42978 ω μ x 40681 ω μ x 1 := by
+  rw [show ω = regsNF ω [] from rfl]
+  pvm_go [h0]
+
 /-- **40681 … 40697**: the lock byte cleared, the frame popped; at the return's `jumpInd`. -/
 theorem dl_unlock {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
     (sp : Nat) (h1 : ω[1] = UInt64.ofNat sp) (h5 : ω[5] = UInt64.ofNat 196792)
@@ -133,7 +139,7 @@ theorem dealloc_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω 
     (hb0 : 206864 ≤ s.base) (hbT : s.base + 1073741824 < 2147483648)
     (hfo : FirstOk s) (hl : rdN μ 206848 1 = 0) {HT S0 S1 : Nat} (hHT : s.base + 32 * s.allocated ≤ HT)
     (hS : S0 + 40 ≤ sp ∧ sp ≤ S1) (hw : WrAt μ HT S0 S1) :
-    ∃ ω' μ', FreeStepsH p R 40613 ω μ x 40697 ω' μ' x 247 ∧ Rep μ' (free s ptr) ∧ WF (free s ptr) ∧
+    ∃ ω' μ', FreeStepsH p R 40613 ω μ x 40697 ω' μ' x 248 ∧ Rep μ' (free s ptr) ∧ WF (free s ptr) ∧
       FirstOk (free s ptr) ∧ rdN μ' 206848 1 = 0 ∧ (∀ a, μ'.writable a = μ.writable a) ∧
       (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
       ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
@@ -150,13 +156,14 @@ theorem dealloc_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω 
   have rep1 : Rep μ1 s := hrep.congr_lock hwf hb0 hbT fun a ha1 ha2 ha3 =>
     fr1 a (by omega) (Or.inl (by omega)) (Or.inr (by unfold A0 at ha1; omega)) ha3
   obtain ⟨ω2, μ2, r2, rep2, wf2, fo2, ww2, stk2, b0, b1, b5, b6⟩ :=
-    free_refines (p := p) (P := P) (R := R) x ω1 μ1 s (sp - 16) ptr hwf rep1 hc a1 a8 a7 a0 (by omega)
+    free_refines (p := p) (P := P) (R := R) x ω1 μ1 s (sp - 16) ptr hwf rep1 hc a1 a8 a7 (by omega)
       (by omega) hb0 hbT hfo hHT ⟨by omega, by omega⟩ (hw.of_eq ww1)
+  have rj := free_ret_dealloc (p := p) (P := P) (R := R) x ω2 μ2 (by rw [b0, a0])
   obtain ⟨ω3, μ3, r3, c0, c5, c1, cl, fr3, ww3, g3⟩ :=
     dl_unlock (p := p) (P := P) (R := R) x ω2 μ2 (sp - 16) b1 (by rw [b5, a5]) (by omega) (by omega) (by omega)
       ⟨by omega, by omega⟩ ((hw.of_eq ww1).of_eq ww2)
   have hb' : (free s ptr).base = s.base := free_base'
-  refine ⟨ω3, μ3, ((r1.trans r2).trans r3).mono (by omega),
+  refine ⟨ω3, μ3, (((r1.trans r2).trans rj).trans r3).mono (by omega),
     rep2.congr_lock wf2 (by rw [hb']; exact hb0) (by rw [hb']; exact hbT)
       (fun a ha1 ha2 ha3 => fr3 a (by omega) (by omega)), wf2, fo2, cl,
     fun a => (ww3 a).trans ((ww2 a).trans (ww1 a)),

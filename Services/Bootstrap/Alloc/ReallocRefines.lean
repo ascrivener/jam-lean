@@ -29,10 +29,11 @@ theorem shrink_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω :
     (h10 : ω[10] = UInt64.ofNat req) (h0 : ω[0] = UInt64.ofNat 1988)
     (hsp : 2147483800 ≤ sp) (hsp1 : sp < 4294967296)
     (hb0 : 206864 ≤ s.base) (hbT : s.base + 1073741824 < 2147483648)
-    (hfo : FirstOk s) (hw : ∀ a, μ.writable a = true) :
+    (hfo : FirstOk s) {HT S0 S1 : Nat} (hHT : s.base + 32 * s.allocated ≤ HT) (hS : S0 + 152 ≤ sp ∧ sp ≤ S1)
+    (hw : WrAt μ HT S0 S1) :
     ∃ ω' μ', FreeStepsH p R 42980 ω μ x 40805 ω' μ' x 180 ∧ Rep μ' (shrink s ptr req) ∧
       WF (shrink s ptr req) ∧ FirstOk (shrink s ptr req) ∧
-      (∀ a, μ'.writable a = true) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
       ω'[7] = UInt64.ofNat ptr ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat sp ∧
       ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
   obtain ⟨c, hcm, hca, hcu⟩ := hc
@@ -78,6 +79,19 @@ theorem shrink_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω :
       · obtain ⟨c, hc, h1, -⟩ := unF a h; exact ⟨c, hc, h1⟩
     have := htiles.aligned c hc; have := htiles.mem_lt c hc; unfold Al; omega
   have hcs' : chunks s = pre ++ ⟨ptr - 32, cur, true⟩ :: post := hcs
+  -- every header lies in the allocated space, so in the writable heap
+  have hspT : ∀ c ∈ pre ++ ⟨ptr - 32, cur, true⟩ :: post, c.addr + 32 ≤ HT := fun c hc => by
+    unfold SpaceOk at hspace; have := (hspace c (hcs' ▸ hc)).2; omega
+  have hHFT : ∀ a, H a ∨ F a → a + 32 ≤ HT := by
+    intro a h
+    rcases h with h | h
+    · obtain ⟨c, hc, rfl⟩ := unH a h; exact hspT c hc
+    · obtain ⟨c, hc, rfl, -⟩ := unF a h; exact hspT c hc
+  have hXT : ptr - 32 + 32 * cur ≤ HT := by
+    unfold SpaceOk at hspace
+    have := (hspace _ (hcs' ▸ List.mem_append_right pre List.mem_cons_self :
+      (⟨ptr - 32, cur, true⟩ : Chunk) ∈ chunks s)).1 rfl
+    simp only at this; omega
   have hrep' : RepAt μ s H F :=
     ⟨hrep.heads, hrep.sec, hrep.pri, hrep.base, hrep.alloc,
       fun a h => by obtain ⟨c, hc, rfl⟩ := unH a h; exact hrep.prev c (hcs' ▸ hc),
@@ -187,6 +201,11 @@ theorem shrink_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω :
     rcases heads_ok hF2 (hbinlt (total - (req + 1))) with h | ⟨c, hc, h1, -⟩
     · exact absurd h h0
     · rw [← h1]; exact hAlc c (hsub0 c hc)
+  have hold1T : s2.heads (binDown (total - (req + 1))) ≠ 0 → s2.heads (binDown (total - (req + 1))) + 32 ≤ HT := by
+    intro h0
+    rcases heads_ok hF2 (hbinlt (total - (req + 1))) with h | ⟨c, hc, h1, -⟩
+    · exact absurd h h0
+    · rw [← h1]; exact hspT c (hsub0 c hc)
   have hnext' : ptr - 32 + 32 * total < s.base + 1073741824 → H (ptr - 32 + 32 * total) := by
     intro hlt
     cases hp : post0 with
@@ -201,7 +220,8 @@ theorem shrink_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω :
     x ω μ s H F sp ptr req cur hrep' h1 h8 h7 h10 h0 hsp hsp1 hb0 hbT (hHF _ (Or.inl (mkH _ hXm)))
     (by omega) (mkH _ hXm) hHF (by rw [hXs]; rfl) hr0 (by omega) (by omega) (by omega) hnc' hnf'
     (by rw [hnx]; simp only; omega) (by rw [hnx]; simp only; omega)
-    (by rw [hnx]; exact hold') (by rw [hnx]; exact hold1') (by rw [hnx]; exact hnext') hw
+    (by rw [hnx]; exact hold') (by rw [hnx]; exact hold1') (by rw [hnx]; exact hnext') hHFT (by omega)
+    (by rw [hnx]; exact hold1T) hS hw
   refine ⟨ω', μ', run, ?_, hwfS, hfirst, ww, stk, e7, e0, e1, e5, e6⟩
   -- the model's result, read from memory
   subst hposts

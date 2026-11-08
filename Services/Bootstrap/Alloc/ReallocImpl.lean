@@ -77,11 +77,16 @@ theorem realloc_impl_shrink {p : ByteArray} {P : Program} [HasCode p P] (x : X) 
     (hnext : ptr - 32 + 32 * (mergeNext (shrinkHdr s ptr req) (ptr - 32) cur (s.base + 1073741824)).2 <
       s.base + 1073741824 →
       H (ptr - 32 + 32 * (mergeNext (shrinkHdr s ptr req) (ptr - 32) cur (s.base + 1073741824)).2))
-    (hw : ∀ a, μ.writable a = true) :
+    {HT S0 S1 : Nat} (hHFT : ∀ a, H a ∨ F a → a + 32 ≤ HT) (hMT : ptr - 32 + 32 * (req + 1) + 32 ≤ HT)
+    (hold1T : (mergeNext (shrinkHdr s ptr req) (ptr - 32) cur (s.base + 1073741824)).1.heads
+      (binDown ((mergeNext (shrinkHdr s ptr req) (ptr - 32) cur (s.base + 1073741824)).2 - (req + 1))) ≠ 0 →
+      (mergeNext (shrinkHdr s ptr req) (ptr - 32) cur (s.base + 1073741824)).1.heads
+        (binDown ((mergeNext (shrinkHdr s ptr req) (ptr - 32) cur (s.base + 1073741824)).2 - (req + 1))) + 32 ≤ HT)
+    (hS : S0 + 152 ≤ sp ∧ sp ≤ S1) (hw : WrAt μ HT S0 S1) :
     ∃ ω' μ', FreeStepsH p R 42980 ω μ x 40805 ω' μ' x 180 ∧
       RepAt μ' (shrink s ptr req) (fun a => H a ∨ a = ptr - 32 + 32 * (req + 1))
         (fun a => F a ∨ a = ptr - 32 + 32 * (req + 1)) ∧
-      (∀ a, μ'.writable a = true) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
       ω'[7] = UInt64.ofNat ptr ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat sp ∧
       ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
   obtain ⟨hX1, hX2, hX3⟩ := hX
@@ -95,7 +100,8 @@ theorem realloc_impl_shrink {p : ByteArray} {P : Program} [HasCode p P] (x : X) 
   have hwX : rdN μ (Xc + 32 - 28) 4 = 2 * cur + 1 := by
     rw [show Xc + 32 - 28 = Xc + 4 by omega, hrep.size _ hXH, hsz]
   obtain ⟨ω1, μ1, r1, a1, a11, a6, st0, st5, st6, sf1, ww1, g1⟩ := rl_pro (p := p) (P := P) (R := R) x ω μ sp
-    (Xc + 32) (2 * cur + 1) h1 h8 (by omega) (by omega) hwX (by omega) hsp hsp1 hw
+    (Xc + 32) (2 * cur + 1) h1 h8 (by omega) (by omega) hwX (by omega) hsp hsp1
+    ⟨by omega, by have := hHFT _ (Or.inl hXH); omega⟩ hS hw
   have rep1 : RepAt μ1 s H F := hrep.congr_low (fun a ha => sf1 a (by omega) (Or.inl (by omega))) hHFl
   obtain ⟨ω2, r2, b3, b5, g2⟩ := rl_go_shrink (p := p) (P := P) (R := R) x ω1 μ1 req ((2 * cur + 1) / 2 - 1)
     (by rw [fget g1 10 (by decide) (by decide)]; exact h10) a6
@@ -109,7 +115,8 @@ theorem realloc_impl_shrink {p : ByteArray} {P : Program} [HasCode p P] (x : X) 
     (by
       rw [hXd', ← hsz, ← hrep.size _ hXH]
       exact rdN_frame fun j hj => sf1 _ (by omega) (Or.inl (by omega)))
-    hr hb1 hbT (by omega) (by omega) (by omega) ww1
+    hr hb1 hbT (by omega) (by omega) (by omega) (by have := hHFT _ (Or.inl hXH); omega)
+    ⟨by omega, by have := hHFT _ (Or.inl hXH); omega⟩ ⟨by omega, by omega⟩ (hw.of_eq ww1)
   rw [hXd'] at c0 c12 cw4 sf3
   -- the chunk's new size, against memory
   have rep3 : RepAt μ3 (shrinkHdr s (Xc + 32) req) H F := by
@@ -129,7 +136,7 @@ theorem realloc_impl_shrink {p : ByteArray} {P : Program} [HasCode p P] (x : X) 
     (by rw [fget g3 5 (by decide) (by decide)]; exact b5)
     (by rw [fget g3 7 (by decide) (by decide), fget g2 7 (by decide) (by decide),
       fget g1 7 (by decide) (by decide)]; exact h7) c120 hb0 hbT ⟨hX1, hX2, hX3⟩ hr hcur hHF
-    hnc hfree (by omega) (by omega) ww3
+    hnc hfree (by omega) (by omega) hHFT ⟨by omega, by omega⟩ ((hw.of_eq ww1).of_eq ww3)
   generalize hm : mergeNext (shrinkHdr s (Xc + 32) req) Xc cur (s.base + 1073741824) = m at *
   have hm2 : cur ≤ m.2 := by rw [← hm]; exact mergeNext_snd_ge
   -- the free tail and the return
@@ -159,8 +166,9 @@ theorem realloc_impl_shrink {p : ByteArray} {P : Program} [HasCode p P] (x : X) 
       (by omega) (by omega))
     (rd8 _ _ (by rw [show sp - 152 + 136 = sp - 16 by omega]; exact st5) (UInt64.toNat_lt _) (by omega) (by omega))
     (rd8 _ _ (by rw [show sp - 152 + 128 = sp - 24 by omega]; exact st6) (UInt64.toNat_lt _) (by omega) (by omega))
-    (by omega) (by omega) ww4
-  refine ⟨ω5, μ5, ((((r1.trans r2).trans r3).trans r4).trans r5).mono (by omega), ?_, ww5,
+    (by omega) (by omega) hMT hold1T hHFT ⟨by omega, by omega⟩ (((hw.of_eq ww1).of_eq ww3).of_eq ww4)
+  refine ⟨ω5, μ5, ((((r1.trans r2).trans r3).trans r4).trans r5).mono (by omega), ?_,
+    fun a => (ww5 a).trans ((ww4 a).trans ((ww3 a).trans (ww1 a))),
     fun a h1 h2 => (sf5 a h1 (by omega) (Or.inr (by omega))).trans (stk3 a h1 h2), e7, e0,
     by rw [e1]; congr 1; omega, by rw [e5, UInt64.ofNat_toNat], by rw [e6, UInt64.ofNat_toNat]⟩
   rw [shrink_eq (cur := cur) (by rw [hXd']; exact hsz) hr, hXd', hm]

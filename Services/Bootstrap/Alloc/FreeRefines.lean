@@ -50,20 +50,21 @@ def HA (cs : List Chunk) (a : Nat) : Prop := ∃ c ∈ cs, c.addr = a
 def FA (cs : List Chunk) (a : Nat) : Prop := ∃ c ∈ cs, c.addr = a ∧ c.used = false
 
 /-- **The binary's `free` on a well-formed heap**: from memory holding a well-formed `s` and the
-    data address of an allocated chunk, the compiled free path returns into `dealloc` with memory
-    holding the model's `free s ptr`, itself well-formed, and the stack from sp up untouched. -/
+    data address of an allocated chunk, the compiled free path reaches its return's `jumpInd` (42978,
+    with the caller's return address ω₀ restored) with memory holding the model's `free s ptr`, itself
+    well-formed, and the stack from sp up untouched. -/
 theorem free_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
     (s : State) (sp ptr : Nat) (hwf : WF s) (hrep : Rep μ s)
     (hc : ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true)
     (h1 : ω[1] = UInt64.ofNat sp) (h8 : ω[8] = UInt64.ofNat ptr) (h7 : ω[7] = UInt64.ofNat 196792)
-    (h0 : ω[0] = UInt64.ofNat 1986) (hsp : 2147483700 ≤ sp) (hsp1 : sp < 4294967296)
+    (hsp : 2147483700 ≤ sp) (hsp1 : sp < 4294967296)
     (hb0 : 206864 ≤ s.base) (hbT : s.base + 1073741824 < 2147483648)
     (hfo : FirstOk s) {HT S0 S1 : Nat} (hHT : s.base + 32 * s.allocated ≤ HT) (hS : S0 + 24 ≤ sp ∧ sp ≤ S1)
     (hw : WrAt μ HT S0 S1) :
-    ∃ ω' μ', FreeStepsH p R 42327 ω μ x 40681 ω' μ' x 220 ∧ Rep μ' (free s ptr) ∧ WF (free s ptr) ∧
+    ∃ ω' μ', FreeStepsH p R 42327 ω μ x 42978 ω' μ' x 220 ∧ Rep μ' (free s ptr) ∧ WF (free s ptr) ∧
       FirstOk (free s ptr) ∧
       (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
-      ω'[0] = UInt64.ofNat 1986 ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
+      ω'[0] = ω[0] ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
   have hp0 : (s.hdr s.base).prev < 2147483648 := by unfold FirstOk at hfo; omega
   obtain ⟨c, hcm, hca, hcu⟩ := hc
   obtain ⟨pre, post, hcs⟩ := List.append_of_mem hcm
@@ -309,7 +310,7 @@ theorem free_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
       have := (Tiles.around htl2).2.1 e (by rw [hp]; rfl)
       exact this ▸ mkH e (hsub0 e (by rw [hp]; simp))
   obtain ⟨ω', μ', run, rep', ww, stk, e0, e1, e5, e6⟩ := free_impl (p := p) (P := P) (R := R) x ω μ s s1 s2 H F
-    sp ptr M sz1 pv' total hrep' h1 h8 h7 h0 hsp hsp1 hb0 hbT
+    sp ptr M sz1 pv' total hrep' h1 h8 h7 hsp hsp1 hb0 hbT
     (by rw [hXd]; exact hHF _ (Or.inl (mkH _ hXm))) (by omega) (by rw [hXd]; exact mkH _ hXm) hHF
     (by rw [hXd]; exact hpvX) (by rw [hXd, hwn]; exact hm) hnx
     (by rw [hXd]; exact hpH')

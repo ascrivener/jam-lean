@@ -75,6 +75,14 @@ target codectest pkg : Unit := do
   runOnVectors `«codectest-exe»
     #[(jamVectorDir pkg / "codec" / "tiny").toString, (jamVectorDir pkg / "codec" / "full").toString]
 
+lean_exe «trietest-exe» where
+  root := `Tests.TrieTest
+  exeName := "trietest"
+
+/-- M (GP Appendix D) on every case of the trie vectors. -/
+target trietest pkg : Unit := do
+  runOnVectors `«trietest-exe» #[(jamVectorDir pkg / "trie" / "trie.json").toString]
+
 /-- Run the accumulation STF on every accumulate vector (tiny). -/
 target acctest pkg : Unit := do
   runOnVectors `«acctest-exe» #[(jamVectorDir pkg / "stf" / "accumulate" / "tiny").toString]

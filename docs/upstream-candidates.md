@@ -27,6 +27,7 @@ Gaps, where the paper leaves behaviour undefined:
 | 18 | Ψ_R | The refine dispatcher passes x̄ to `fetch`, but Ψ_R's arguments do not include that data. The account state **d** is also implicit. |
 | 19 | Ψ_R, §14.3 | A looked-up preimage that is not of the form ℰ(↕**m**, **c**). |
 | 20 | Ω_Z (`pages`) | The row defines only (ω'_7, **m**'), with no ε'. |
+| 21 | Appendix C | No encoding of Booleans {⊤, ⊥} is defined, though 𝔼_D's judgments and faults contain them; 0/1 is the evident reading and the vectors use it. |
 
 ## Paper and vectors
 
@@ -34,6 +35,7 @@ Gaps, where the paper leaves behaviour undefined:
 |---|---|---|
 | 5 | Ψ returns ı = 0 on ∎ and ☇; the vectors report the exiting instruction. | Paper or vector docs: which one is meant? |
 | 15 | The accumulate vectors follow later GP PRs rather than v0.8.0: `bless_from_non_manager-1` and `-2`. | Already in the vectors' CHANGELOG; no issue needed. |
+| 22 | `trie/trie.json` gives 32-octet keys; GP §D.1 state keys are 31 octets. The roots match with the last octet dropped. | Vectors: say keys are cut to 31 octets, or give 31-octet keys. |
 
 ## Vector coverage
 

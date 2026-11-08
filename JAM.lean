@@ -6,6 +6,7 @@ import JAM.Keccak
 import JAM.Work
 import JAM.Decode
 import JAM.Block
+import JAM.Trie
 import JAM.Params
 import JAM.Host.General
 import JAM.Merkle
@@ -31,6 +32,7 @@ Built on `PVM` (Appendix A).
 * `JAM.Work`  — work packages, items, digests and reports (§11, §14)
 * `JAM.Decode` — ℰ⁻¹, the decoders of Appendix C, and those of the work-package family
 * `JAM.Block` — blocks, headers and extrinsics with their encoders and decoders (Appendix C)
+* `JAM.Trie` — state keys C and the state trie root M (Appendix D)
 * `JAM.Refine` — the refine and is-authorized invocations Ψ_R and Ψ_I, with the refine host functions
 * `JAM.Theorems.HostGas` — the dispatchers of Ψ_A, Ψ_R and Ψ_I never add gas
 -/

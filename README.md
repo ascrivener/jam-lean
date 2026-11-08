@@ -59,6 +59,7 @@ call `pc`) live in `Tests/`, not in the model.
 | `JAM` refine host functions, Ψ_R and Ψ_I, hand-written cases (no vectors exist) | **59 / 59** pass, 2 more kernel-checked |
 | `witness-service.jam`'s host-call ids within those `Services.Witness` assumes (`lake build witnesscheck`) | **pass** |
 | The real witness binary's refine on 7 malformed payloads gives `Rejected(BadPayload)` (`lake build witnessrun`; a test, not a proof) | **7 / 7** |
+| `JAM` state trie M (Appendix D) vs. GP v0.8.0 trie vectors (keys cut to 31 octets, note 22); state-key constructor C, hand-written | **11 / 11** roots match; **4 / 4** |
 | Accumulation STF (§12) vs. GP v0.8.0 accumulate vectors (tiny) | **61 / 63** pass; the 2 others are `bless_from_non_manager`, which the vectors' changelog lists as departing from GP 0.8.0 |
 
 ## Building and running
@@ -614,6 +615,13 @@ noted here and in a comment at the definition.
     missing preimage: BAD. Likewise an item index i ≥ |p_w| gives BAD.
 20. **`pages` gives no ε'.** Ω_Z's row defines only (ω'_7, **m**'); with the common rules it
     continues (▸) in every case, including WHO and HUH.
+21. **ℰ on Booleans.** Appendix C defines no encoding of {⊤, ⊥}, which appears in a verdict's
+    judgments and in faults (𝔼_D). We encode ⊤ as 1 and ⊥ as 0 (ℰ of the indicator, by the
+    notation section's ⊤ = 1, ⊥ = 0) and decode only those two octets. The codec vectors agree.
+22. **Trie keys are 31 octets; the vectors' are 32.** State keys are 𝔹_31 (§D.1) and L stores
+    exactly 31 octets of key, but `trie/trie.json` gives 32-octet keys. The test passes the first
+    31 octets to M, after checking that no two keys of a case share them; all 11 roots then
+    match, so the vectors' last octet never matters.
 
 ## Caveats
 

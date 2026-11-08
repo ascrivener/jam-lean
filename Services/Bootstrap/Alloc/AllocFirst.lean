@@ -766,6 +766,7 @@ theorem alloc_first_base {grow : Grow} {r p : Nat} {s s' : State} (hs0 : s.base 
     memory then holds the model's state, the lock is released, and ω₀, ω₁, ω₅ and ω₆ are restored.
     Under `refineContractK cap`: the `grow_heap` call may cost up to `cap`. -/
 theorem alloc_wrap_refines_firstK {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env)
+    (cap : Nat) (hcap : cap < 18446744073709551616)
     (x : RefineCtx) (ω : Regs) (μ : Memory) (s s' : State) (sp size al ptr pb ph : Nat)
     (hrep : RepAt μ s (fun _ => False) (fun _ => False)) (hs0 : s.base = 0) (hheads : ∀ b, s.heads b = 0)
     (hsec : ∀ q, s.secondary q = 0) (hpri : s.primary = 0)

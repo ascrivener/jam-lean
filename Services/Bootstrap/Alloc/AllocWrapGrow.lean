@@ -19,6 +19,7 @@ set_option maxRecDepth 100000
     again, the caller's ω₀, ω₁, ω₅, ω₆ restored and the stack from sp up untouched.
     Under `refineContractK cap`: the `grow_heap` call may cost up to `cap`. -/
 theorem alloc_wrap_refines_growK {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env)
+    (cap : Nat) (hcap : cap < 18446744073709551616)
     (x : RefineCtx) (ω : Regs) (μ : Memory) {hb : Nat} (s s' : State) (sp size al ptr pb ph : Nat) (hwf : WF s)
     (hrep : Rep μ s) (hbd : heapBounds env.code = (48, pb)) (h48 : 48 ≤ ph) (hhb : ph ≤ pb) (hbs : pb < 4294967296)
     (h : alloc (growTo pb) hb 1 ((size + 31) / 32) s = some (ptr, s')) (hgrown : s'.allocated ≠ s.allocated)

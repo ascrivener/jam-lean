@@ -383,6 +383,7 @@ theorem grow_heap_refines {p : ByteArray} {P : Program} [HasCode p P] (env : Ref
     restored and the stack from sp up untouched.
     Under `refineContractK cap`: the `grow_heap` call may cost up to `cap`. -/
 theorem realloc_wrap_grow_heapK {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env)
+    (cap : Nat) (hcap : cap < 18446744073709551616)
     (x : RefineCtx) (ω : Regs) (μ : Memory) {hb : Nat} (s s' : State) (sp ptr al size : Nat)
     (hwf : WF s) (hrep : Rep μ s)
     (hc : ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true) (hr : usable s ptr < (size + 31) / 32)

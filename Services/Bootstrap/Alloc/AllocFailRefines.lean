@@ -131,6 +131,7 @@ theorem alloc_refines_fail {p : ByteArray} {P : Program} [HasCode p P] (env : Re
     caller's ω₀, ω₁, ω₅, ω₆ restored and the stack from sp up untouched.
     Under `refineContractK cap`, for any cap covering the call's 275. -/
 theorem alloc_wrap_refines_failK {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env)
+    (cap : Nat) (hcap : cap < 18446744073709551616) (h275 : 275 ≤ cap)
     (x : RefineCtx) (ω : Regs) (μ : Memory) {hb : Nat} (s : State) (sp size al pb ph : Nat) (hwf : WF s)
     (hrep : Rep μ s) (hbd : heapBounds env.code = (48, pb)) (h48 : 48 ≤ ph) (hhb : ph ≤ pb) (hbs : pb < 4294967296)
     (h : alloc (growTo pb) hb 1 ((size + 31) / 32) s = none)

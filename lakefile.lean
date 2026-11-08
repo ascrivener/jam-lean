@@ -29,7 +29,7 @@ lean_lib Services
 lean_lib Tests where
   globs := #[.one `Tests.Vectors, .one `Tests.Invocation, .one `Tests.LogicExample,
     .one `Tests.Blake2bTest, .one `Tests.HostGeneralTest, .one `Tests.JamJson,
-    .one `Tests.KeccakTest, .one `Tests.RefineTest]
+    .one `Tests.KeccakTest, .one `Tests.RefineTest, .one `Tests.BlockJson]
 
 lean_exe «pvmtest-exe» where
   root := `Tests.PvmTest
@@ -69,9 +69,11 @@ target pvmtest pkg : Unit := do
     `scripts/fetch-jam-vectors.sh`. -/
 def jamVectorDir (pkg : Package) : FilePath := pkg.dir / "vendor" / "jam-test-vectors"
 
-/-- Encode the work-package family and compare with the codec vectors. -/
+/-- Encode every codec vector's term from its JSON, decode its `.bin` and encode it again, for the
+    tiny and the full chain. -/
 target codectest pkg : Unit := do
-  runOnVectors `«codectest-exe» #[(jamVectorDir pkg / "codec" / "tiny").toString]
+  runOnVectors `«codectest-exe»
+    #[(jamVectorDir pkg / "codec" / "tiny").toString, (jamVectorDir pkg / "codec" / "full").toString]
 
 /-- Run the accumulation STF on every accumulate vector (tiny). -/
 target acctest pkg : Unit := do

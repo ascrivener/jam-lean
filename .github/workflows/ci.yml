@@ -140,7 +140,7 @@ jobs:
       - name: Fetch the Gray Paper v0.8.0 JAM vectors
         run: scripts/fetch-jam-vectors.sh
 
-      - name: Codec vectors (work-package family)
+      - name: Codec vectors, tiny and full (encode from JSON, decode and re-encode)
         run: lake build codectest
 
       - name: Accumulate vectors (all but the listed deviations from GP 0.8.0)

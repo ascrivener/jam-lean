@@ -24,8 +24,8 @@ Two libraries, each bounded by the Gray Paper (v0.8.0):
   definitions of §4.7, and constants. `PVM/Logic/` holds proof rules about this model; it adds no
   semantics.
 * **`JAM`: Appendix B (in progress)**, built on `PVM`, with the protocol terms Appendix B needs:
-  the codec (Appendix C), ℋ = Blake2b-256 (§3.8), work packages, items, digests and reports
-  (§11, §14), service accounts (§9), ℋ_K = Keccak-256 and the binary Merkle root (Appendix E).
+  the codec (Appendix C) with its decoder ℰ⁻¹, blocks, headers and extrinsics, ℋ = Blake2b-256
+  (§3.8), work packages, items, digests and reports (§11, §14), service accounts (§9), ℋ_K = Keccak-256 and the binary Merkle root (Appendix E).
   It has the general host functions (`gas`, `grow_heap`, `fetch`, `lookup`, `read`, `write`,
   `info`), the 13 accumulate host functions, Ψ_A, and the accumulation state transition of §12
   (Δ_1, Δ_*, Δ_+, the ready queue and history, statistics, and the output root); and the refine
@@ -48,7 +48,7 @@ call `pc`) live in `Tests/`, not in the model.
 | Block costs in `programs/` | **5,123 / 5,123** correct |
 | Block costs in `gas-tests/` (doom, pinky, prime-sieve) | **39,737 / 39,737** correct |
 | Model's ϖ against the blocks the vectors list | identical in all 367 programs |
-| `JAM` codec: work-package family vs. GP v0.8.0 codec vectors | **6 / 6** match |
+| `JAM` codec (Appendix C): every GP v0.8.0 codec vector (headers, blocks, all extrinsics, the work-package family), encoded from JSON and round-tripped through ℰ⁻¹ | **15 / 15** tiny, **15 / 15** full |
 | `JAM` Blake2b-256 vs. `hashlib` and RFC 7693 | **13 / 13** match |
 | `JAM` general host functions, hand-written cases | **30 / 30** pass |
 | `JAM` Keccak-256 / SHA3-256 vs. `hashlib` and standard vectors | **15 / 15** match |

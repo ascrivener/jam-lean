@@ -154,6 +154,12 @@ jobs:
       - name: Authorizations vectors (tiny and full)
         run: lake build authtest
 
+      - name: Statistics vectors (tiny and full)
+        run: lake build statstest
+
+      - name: Preimages vectors (tiny and full)
+        run: lake build preimagestest
+
       - name: Save .lake
         if: always()
         uses: actions/cache/save@v4

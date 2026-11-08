@@ -72,7 +72,7 @@ theorem growInplace_grown {grow : Grow} {s s' : State} {ptr req cur : Nat}
     grown**: as `grow_refines`, when `growInplace` grows the allocated space; the heap's writable
     pages grow to cover it.
     Under `refineContractK cap`: the `grow_heap` call may cost up to `cap`. -/
-theorem grow_heap_refinesK {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env)
+theorem grow_heap_refinesK_hdr {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env)
     (cap : Nat) (hcap : cap < 18446744073709551616) (x : RefineCtx)
     (ω : Regs) (μ : Memory) (s s' : State) (sp ptr req : Nat) (hwf : WF s) (hrep : Rep μ s)
     (hc : ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true) (hr : usable s ptr < req) (hr1 : req < 33554431)
@@ -86,7 +86,8 @@ theorem grow_heap_refinesK {p : ByteArray} {P : Program} [HasCode p P] (env : Re
     {S0 S1 : Nat} (hHT : s.base + 32 * s.allocated ≤ 4096 * ph)
     (hS : S0 + 152 ≤ sp ∧ sp ≤ S1) (hSb : 4096 * pb ≤ S0) (hp : HeapPages μ 48 pb ph)
     (hst : ∀ a, S0 ≤ a → a < S1 → μ.writable a = true) :
-    ∃ ω' μ', FreeStepsH p (refineContractK cap env) 42980 ω μ x 40805 ω' μ' x 300 ∧ Rep μ' s' ∧ WF s' ∧
+    ∃ ω' μ', HKeep μ μ' (fun a => (∃ c ∈ chunks s, c.addr = a) ∨ a = ptr - 32 + 32 * (req + 1)) ∧
+      FreeStepsH p (refineContractK cap env) 42980 ω μ x 40805 ω' μ' x 300 ∧ Rep μ' s' ∧ WF s' ∧
       FirstOk s' ∧ (∃ h', HeapPages μ' 48 pb h' ∧ s'.base + 32 * s'.allocated ≤ 4096 * h' ∧ ph ≤ h' ∧ h' ≤ pb) ∧
       (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
       ω'[7] = UInt64.ofNat ptr ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat sp ∧
@@ -269,15 +270,30 @@ theorem grow_heap_refinesK {p : ByteArray} {P : Program} [HasCode p P] (env : Re
     | cons d ds =>
       have := (Tiles.around htl2).2.1 d (by rw [hp]; rfl)
       exact this ▸ mkH d (hsub0 d (by rw [hp]; simp))
-  obtain ⟨ω', μ', run, rep', hpH, hstH, stk, e7, e0, e1, e5, e6⟩ := realloc_impl_grow_heapK (p := p) (P := P) env cap hcap x ω μ s H F sp ptr req cur e.size hrep' h1 h8 h7 h10 h0 hsp hsp1 hb0 hbT hA (hHF _ (Or.inl (mkH _ hXm)))
+  obtain ⟨ω', μ', run, rep', hpH, hstH, stk, hk, e7, e0, e1, e5, e6⟩ := realloc_impl_grow_heapK (p := p) (P := P) env cap hcap x ω μ s H F sp ptr req cur e.size hrep' h1 h8 h7 h10 h0 hsp hsp1 hb0 hbT hA (hHF _ (Or.inl (mkH _ hXm)))
     (by omega) (mkH _ hXm) hHF (by rw [hXs]; rfl) hlt (by omega) (by omega) honc (by rw [← hea]; exact mkH e hem)
     hw2 hnf havail (by omega) E hEd hgr pb ph hbd h48 hhb hbs hR hcost' hold' hold1' hnext' hHFT hold1T hS hSb hp hst
   have hs' := hs'0
   obtain ⟨g1, g2, g3⟩ := growTop_ge (h := ph) hR
   have hpE := pagesOf_ge (s.base + 32 * E)
   have hbs' : s'.base = s.base := by rw [hs', freeFinal_base]; simp [growHdr]
-  refine ⟨ω', μ', run, ?_, hwfS, hfirst, ⟨_, hpH, by rw [hbs', hal']; omega, g2, by omega⟩, hstH, stk,
+  refine ⟨ω', μ', ?hk, run, ?_, hwfS, hfirst, ⟨_, hpH, by rw [hbs', hal']; omega, g2, by omega⟩, hstH, stk,
     e7, e0, e1, e5, e6⟩
+  case hk =>
+    have inS : ∀ c, c ∈ pre ++ ⟨ptr - 32, cur, true⟩ :: e :: post' → c ∈ chunks s := fun c hc => by
+      rw [hcs']; exact hc
+    refine hk.mono fun b hb => ?_
+    rcases hb with (hb | hb) | hb | hb
+    · obtain ⟨c, hc, h⟩ := unH b hb; exact Or.inl (Or.inl ⟨c, inS c hc, h⟩)
+    · obtain ⟨c, hc, h, -⟩ := unF b hb; exact Or.inl (Or.inl ⟨c, inS c hc, h⟩)
+    · exact Or.inl (Or.inr hb)
+    · have hb' : b = (unregister s (ptr - 32 + 32 * cur) (binDown e.size)).heads
+          (binDown (cur + e.size - (req + 1))) := by
+        rw [hb]; show (unregister { s with allocated := E } (ptr - 32 + 32 * cur) (binDown e.size)).heads _ = _
+        rw [unregister_heads_alloc]
+      rcases heads_ok hF2 (hbinlt (cur + e.size - (req + 1))) with h | ⟨c, hc, h1, -⟩
+      · right; rw [hb', h]; decide
+      · exact Or.inl (Or.inl ⟨c, inS c (hsub0 c hc), h1.trans hb'.symm⟩)
   rw [← hs'] at rep'
   -- the model's result, read from memory
   have hwfS' := hwfS
@@ -348,6 +364,28 @@ theorem grow_heap_refinesK {p : ByteArray} {P : Program} [HasCode p P] (env : Re
       · exact rep'.prevL _ (Or.inl (mkF c (h hu) hu))
       · exact absurd (hXu c hc h) (by rw [hu]; simp)
       · exact rep'.prevL _ (Or.inr h)
+
+theorem grow_heap_refinesK {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env)
+    (cap : Nat) (hcap : cap < 18446744073709551616) (x : RefineCtx)
+    (ω : Regs) (μ : Memory) (s s' : State) (sp ptr req : Nat) (hwf : WF s) (hrep : Rep μ s)
+    (hc : ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true) (hr : usable s ptr < req) (hr1 : req < 33554431)
+    (pb ph : Nat) (hbd : heapBounds env.code = (48, pb)) (h48 : 48 ≤ ph) (hhb : ph ≤ pb) (hbs : pb < 4294967296)
+    (h : growInplace (growTo pb) s ptr req = some s') (hgrown : s'.allocated ≠ s.allocated)
+    (h1 : ω[1] = UInt64.ofNat sp) (h8 : ω[8] = UInt64.ofNat ptr) (h7 : ω[7] = UInt64.ofNat 196792)
+    (h10 : ω[10] = UInt64.ofNat req) (h0 : ω[0] = UInt64.ofNat 1988)
+    (hsp : 2147483800 ≤ sp) (hsp1 : sp < 4294967296)
+    (hb0 : 206864 ≤ s.base) (hbT : s.base + 1073741824 < 2147483648) (hA : s.allocated < 2147483648)
+    (hfo : FirstOk s) (hcost : 275 + 121 * (pagesOf (s.base + 32 * s'.allocated) - ph) ≤ cap)
+    {S0 S1 : Nat} (hHT : s.base + 32 * s.allocated ≤ 4096 * ph)
+    (hS : S0 + 152 ≤ sp ∧ sp ≤ S1) (hSb : 4096 * pb ≤ S0) (hp : HeapPages μ 48 pb ph)
+    (hst : ∀ a, S0 ≤ a → a < S1 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p (refineContractK cap env) 42980 ω μ x 40805 ω' μ' x 300 ∧ Rep μ' s' ∧ WF s' ∧
+      FirstOk s' ∧ (∃ h', HeapPages μ' 48 pb h' ∧ s'.base + 32 * s'.allocated ≤ 4096 * h' ∧ ph ≤ h' ∧ h' ≤ pb) ∧
+      (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
+      ω'[7] = UInt64.ofNat ptr ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat sp ∧
+      ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
+  obtain ⟨ω', μ', -, h⟩ := grow_heap_refinesK_hdr (p := p) (P := P) (S0 := S0) (S1 := S1) env cap hcap x ω μ s s' sp ptr req hwf hrep hc hr hr1 pb ph hbd h48 hhb hbs h hgrown h1 h8 h7 h10 h0 hsp hsp1 hb0 hbT hA hfo hcost hHT hS hSb hp hst
+  exact ⟨ω', μ', h⟩
 
 /-- `grow_heap_refinesK` at `hostCostMax`, the cap of `refineContract`: at most 14 pages a
     `grow_heap` call. -/

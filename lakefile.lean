@@ -91,6 +91,15 @@ lean_exe «shuffletest-exe» where
 target shuffletest pkg : Unit := do
   runOnVectors `«shuffletest-exe» #[(jamVectorDir pkg / "shuffle" / "shuffle_tests.json").toString]
 
+lean_exe «erasuretest-exe» where
+  root := `Tests.ErasureTest
+  exeName := "erasuretest"
+
+/-- ℰ_C and ℛ (GP Appendix H) on every erasure vector, tiny and full. -/
+target erasuretest pkg : Unit := do
+  runOnVectors `«erasuretest-exe»
+    #[(jamVectorDir pkg / "erasure" / "tiny").toString, (jamVectorDir pkg / "erasure" / "full").toString]
+
 /-- Run the accumulation STF on every accumulate vector (tiny). -/
 target acctest pkg : Unit := do
   runOnVectors `«acctest-exe» #[(jamVectorDir pkg / "stf" / "accumulate" / "tiny").toString]

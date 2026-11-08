@@ -208,7 +208,7 @@ theorem alloc_mid_align {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω 
   have k120 : rdN μ3 (sp + 120) 8 = 204984 := by
     rw [← h120]; exact rdN_frame fun j hj => ((fr3 _ (by omega) (by omega) (by omega) (by omega)).trans
       (fr2 _ (by omega) (by omega))).trans (fr1 _ (by omega) (by omega))
-  obtain ⟨ω4, μ4, r5, rep4, p48, e8, ww4, fr4, g4⟩ := al_unreg (p := p) (P := P) (R := R) x ω3 μ3 s H F sp C
+  obtain ⟨ω4, μ4, r5, rep4, p48, e8, ww4, fr4, -, g4⟩ := al_unreg (p := p) (P := P) (R := R) x ω3 μ3 s H F sp C
     (c + lhs) bin q b rep3 hcb hqb hq hb hFC hHC hHF hnx hb0 hbT hpv (by omega)
     (by rw [fget g3 1 (by decide) (by decide), fget g2 1 (by decide) (by decide), fget g1 1 (by decide) (by decide)]
         exact h1)
@@ -637,7 +637,7 @@ theorem alloc_impl_align {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω
   have k120 : rdN μ4 (sp - 152 + 120) 8 = 204984 := by
     rw [← m120]; exact rdN_frame fun j hj => (fr4 _ (by omega) (by omega)).trans (fr3 _ (by omega) (by omega))
   have hS32 : C + 32 * lhs + 32 * (req + 1) + 32 * (S - lhs - req - 1) = C + 32 * S := by omega
-  obtain ⟨ω5, μ5, r5, rep5, f7, f0, f5, f6, f1, ww5, fr5, -⟩ := alloc_end2 (p := p) (P := P) (R := R) x ω4 μ4 rr.1
+  obtain ⟨ω5, μ5, r5, rep5, f7, f0, f5, f6, f1, ww5, fr5, -, -⟩ := alloc_end2 (p := p) (P := P) (R := R) x ω4 μ4 rr.1
     (fun a => (H a ∨ a = C + 32 * lhs) ∨ (S - lhs - req - 1 ≠ 0 ∧ a = C + 32 * lhs + 32 * (req + 1)))
     (fun a => F a ∨ (S - lhs - req - 1 ≠ 0 ∧ a = C + 32 * lhs + 32 * (req + 1))) (sp - 152)
     (C + 32 * lhs + 32 * (req + 1)) (S - lhs - req - 1) rr.2 (C + 32 * lhs + 32) rep4

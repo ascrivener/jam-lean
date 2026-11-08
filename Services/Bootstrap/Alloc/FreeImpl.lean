@@ -48,7 +48,8 @@ theorem free_impl {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
     (hw : WrAt μ HT S0 S1) :
     ∃ ω' μ', FreeStepsH p R 42327 ω μ x 42978 ω' μ' x 220 ∧
       RepAt μ' (free s ptr) (fun a => H a ∨ a = M) (fun a => F a ∨ a = M) ∧
-      (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧ ω'[0] = ω[0] ∧ ω'[1] = UInt64.ofNat sp ∧
+      (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
+      HKeep μ μ' (fun a => (H a ∨ F a) ∨ a = M ∨ a = s2.heads (binDown total)) ∧ ω'[0] = ω[0] ∧ ω'[1] = UInt64.ofNat sp ∧
       ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
   have hHFl : ∀ b, H b ∨ F b → b + 16 < 2147483648 := fun b hb => by
     have := hHF b hb; unfold Al at this; omega
@@ -61,19 +62,19 @@ theorem free_impl {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
     free_pro (p := p) (P := P) (R := R) x ω μ sp ptr s.base (s.hdr (ptr - 32)).size (s.hdr (ptr - 32)).prev
       h1 h8 h7 (by omega) hsp1 hbase hwX hpX hpv (by omega) (by omega) (by omega) ⟨by omega, by omega⟩ hS hw
   have rep1 := hrep.congr_low (fun b hb => sf1 b (by omega) (Or.inl (by omega))) hHFl
-  obtain ⟨ω2, μ2, r2, rep2, b8, b2, b3, b5, ww2, sf2, g2⟩ := free_prev (p := p) (P := P) (R := R) x ω1 μ1 s H F
+  obtain ⟨ω2, μ2, r2, rep2, b8, b2, b3, b5, ww2, sf2, hk2, g2⟩ := free_prev (p := p) (P := P) (R := R) x ω1 μ1 s H F
     (ptr - 32) (wordSize (s.hdr (ptr - 32)).size) (s.hdr (ptr - 32)).prev rep1 a9 a11 a8 a3 a2 a5
     (by rw [fget g1 7 (by decide) (by decide)]; exact h7) a4 hb0 hbT ⟨hX1, hX2, hX3⟩ hHF hpH hpf hHFT (hw.of_eq ww1)
   rw [hm] at rep2 b8 b2 b3
   simp only at rep2 b8 b2 b3
-  obtain ⟨ω3, μ3, r3, rep3, c2, c12, ww3, sf3, g3⟩ := free_next (p := p) (P := P) (R := R) x ω2 μ2 s1 H F s.base M
+  obtain ⟨ω3, μ3, r3, rep3, c2, c12, ww3, sf3, hk3, g3⟩ := free_next (p := p) (P := P) (R := R) x ω2 μ2 s1 H F s.base M
     sz1 rep2 b5 b2 b8 (by rw [fget g2 7 (by decide) (by decide), fget g1 7 (by decide) (by decide)]; exact h7)
     (by rw [fget g2 4 (by decide) (by decide)]; exact a4) hb0 hbT hAM hM hHF hnc hnf hHFT ((hw.of_eq ww1).of_eq ww2)
   rw [hn] at rep3 c2
   simp only at rep3 c2
   have stk : ∀ a, a < 4294967296 → 2147483648 ≤ a → μ3.read a = μ1.read a := fun a h1 h2 =>
     (sf3 a h1 h2).trans (sf2 a h1 h2)
-  obtain ⟨ω4, μ4, r4, rep4, ww4, sf4, e0, e1, e5, e6⟩ := free_tail (p := p) (P := P) (R := R) x ω3 μ3 s2 H F
+  obtain ⟨ω4, μ4, r4, rep4, ww4, sf4, hk4, e0, e1, e5, e6⟩ := free_tail (p := p) (P := P) (R := R) x ω3 μ3 s2 H F
     s.base M pv' total sp ω[5].toNat ω[6].toNat rep3 c2
     (by rw [fget g3 8 (by decide) (by decide)]; exact b8)
     (by rw [fget g3 3 (by decide) (by decide)]; exact b3)
@@ -89,6 +90,8 @@ theorem free_impl {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
   refine ⟨ω4, μ4, ((((r1.trans r2).trans r3).trans r4)).mono (by omega), ?_,
     fun a => (ww4 a).trans ((ww3 a).trans ((ww2 a).trans (ww1 a))),
     fun a h1 h2 => ((sf4 a h1 (by omega)).trans (stk a h1 (by omega))).trans (sf1 a h1 (Or.inr h2)),
+    ((((HKeep.of_low fun a h1 h2 _ => sf1 a (by omega) (Or.inl (by omega))).trans
+      (hk2.mono fun b hb => Or.inl (Or.inl hb))).trans (hk3.mono fun b hb => Or.inl (Or.inl hb))).trans hk4),
     by rw [e0, UInt64.ofNat_toNat], e1,
     by rw [e5, UInt64.ofNat_toNat], by rw [e6, UInt64.ofNat_toNat]⟩
   unfold free

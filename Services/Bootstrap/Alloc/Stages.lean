@@ -115,6 +115,7 @@ theorem free_tail {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
       RepAt μ' (freeFinal s2 M pv total (base + 1073741824)) (fun a => H a ∨ a = M) (fun a => F a ∨ a = M) ∧
       (∀ a, μ'.writable a = μ.writable a) ∧
       (∀ a, a < 4294967296 → 2147483648 ≤ a → μ'.read a = μ.read a) ∧
+      HKeep μ μ' (fun a => (H a ∨ F a) ∨ a = M ∨ a = s2.heads (binDown total)) ∧
       ω'[0] = UInt64.ofNat ret ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = UInt64.ofNat v5 ∧
       ω'[6] = UInt64.ofNat v6 := by
   obtain ⟨hM1, hM2, hM3⟩ := hAM
@@ -177,7 +178,20 @@ theorem free_tail {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
     (by rw [← s6]; exact readN_frame fun j hj => stk _ (by omega) (by omega)) hv5 hv6 hret hS
     (fun hlt => by have := hHFT _ (Or.inl (hnext hlt)); omega) (hw.of_eq ww2)
   refine ⟨ω3, μ3, ((r1.trans r2).trans r3).mono (by omega), ?_, fun a => (ew a).trans (ww2 a),
-    fun a h1 h2 => (ef a h1 (by omega)).trans (stk a h2 h1), e0, e1', e5, e6⟩
+    fun a h1 h2 => (ef a h1 (by omega)).trans (stk a h2 h1), ?hk, e0, e1', e5, e6⟩
+  case hk =>
+    refine HKeep.of_low fun a h1 h2 h3 => ?_
+    have e1 : μ3.read a = μ2.read a := by
+      by_cases hlt : M + 32 * total < base + 1073741824
+      · have := h3 _ (Or.inl (Or.inl (hnext hlt))); exact ef a (by omega) (Or.inr (by omega))
+      · exact ef a (by omega) (Or.inl (by omega))
+    rw [e1]
+    have := h3 M (Or.inr (Or.inl rfl))
+    have ho : old = 0 ∨ a < old + 12 ∨ old + 16 ≤ a := by
+      by_cases h0 : old = 0
+      · exact Or.inl h0
+      · have := h3 old (Or.inr (Or.inr rfl)); omega
+    exact wf2 a (by omega) (by omega) (by omega) ho (by omega) (by omega)
   -- the model's last step
   have hsnd : (register s2 M pv total).2 = total := by rw [register_snd, if_neg (by omega)]
   unfold freeFinal
@@ -285,6 +299,7 @@ theorem nx_unreg_head {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : 
     {HT S0 S1 : Nat} (hHFT : ∀ a, H a ∨ F a → a + 32 ≤ HT) (hw : WrAt μ HT S0 S1) :
     ∃ ω' μ', FreeStepsH p R 42675 ω μ x 42814 ω' μ' x 30 ∧ RepAt μ' (unregister s nc bin) H F ∧
       (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → 2147483648 ≤ a → μ'.read a = μ.read a) ∧
+      HKeep μ μ' (fun a => H a ∨ F a) ∧
       ω'[2] = UInt64.ofNat (size + sz) ∧ ∀ j : Fin 13, j.val ∉ [2, 5, 6, 9, 10, 11] → ω'[j] = ω[j] := by
   have hAn := hHF nc (Or.inr hFn)
   have hnT := hHFT nc (Or.inr hFn)
@@ -308,7 +323,8 @@ theorem nx_unreg_head {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : 
       (by rw [fget g1 5 (by decide) (by decide)]; exact h5) (by rw [fget g1 7 (by decide) (by decide)]; exact h7)
       (by rw [fget g1 4 (by decide) (by decide)]; exact h4) (by rw [fget g1 0 (by decide) (by decide)]; exact h0)
       (by rw [fget g1 2 (by decide) (by decide)]; exact h2) (by omega) hw1 hp1 hss (by omega) (hw.of_eq ww1)
-    refine ⟨ω2, μ2, (r1.trans r2).mono (by omega), ?_, fun a => (cw a).trans (ww1 a), fun a h1 h2 => ?_, c2',
+    refine ⟨ω2, μ2, (r1.trans r2).mono (by omega), ?_, fun a => (cw a).trans (ww1 a), fun a h1 h2 => ?_,
+      HKeep.of_low fun a h1 h2 _ => by rw [cf a (by omega) (by omega) (by omega), fr1 a (by omega) (by omega)], c2',
       fun j hj => ?_⟩
     · refine unregister_rep_last hrep hc (by unfold binCount; omega) h0' ?_ ?_ ?_ ?_ (fun a ha => ?_)
       · rw [← s1]; exact rdN_frame fun j hj => cf _ (by omega) (by omega) (by omega)
@@ -327,7 +343,8 @@ theorem nx_unreg_head {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : 
     obtain ⟨ω1, μ1, r1, s1, s2, fr1, ww1, e2, g1⟩ := nx_unlink_head (p := p) (P := P) (R := R) x ω μ nc
       (196792 + bin * 4) (s.hdr nc).next size sz h11 h6 h0 h2 hn (by omega) h0' (by omega) (by omega)
       (by omega) hss (by omega) ⟨by omega, by omega⟩ (by have := hHFT _ (Or.inr hFx); omega) hw
-    refine ⟨ω1, μ1, r1.mono (by omega), ?_, ww1, fun a h1 h2 => fr1 a h1 (by omega) (by omega), e2,
+    refine ⟨ω1, μ1, r1.mono (by omega), ?_, ww1, fun a h1 h2 => fr1 a h1 (by omega) (by omega),
+      HKeep.of_low fun a h1 h2 h3 => fr1 a (by omega) (by omega) (by have := h3 _ (Or.inr hFx); omega), e2,
       fun j hj => g1 j (by simp only [List.mem_cons, List.not_mem_nil, or_false] at hj ⊢; omega)⟩
     refine unregister_rep_head hrep hc (by unfold binCount; omega) h0' s1 s2
       (fun a h1 h2 h3 => fr1 a (by omega) (by omega) h3) (by omega) (fun a ha => ?_)
@@ -346,6 +363,7 @@ theorem nx_unreg_mid {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
     (hw : WrAt μ HT S0 S1) :
     ∃ ω' μ', FreeStepsH p R 42732 ω μ x 42814 ω' μ' x 30 ∧ RepAt μ' (unregister s nc bin) H F ∧
       (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → 2147483648 ≤ a → μ'.read a = μ.read a) ∧
+      HKeep μ μ' (fun a => H a ∨ F a) ∧
       ω'[2] = UInt64.ofNat (size + sz) ∧ ∀ j : Fin 13, j.val ∉ [2, 9, 11] → ω'[j] = ω[j] := by
   have hAn := hHF nc (Or.inr hFn)
   have hAp := hHF _ (Or.inr hpv)
@@ -374,7 +392,11 @@ theorem nx_unreg_mid {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
   refine ⟨ω1, μ1, r1.mono (by omega), ?_, ww1, fun a h1 h2 => fr1 a h1 (by omega) (by
       rcases hnxA with h | ⟨_, h⟩
       · exact Or.inl h
-      · unfold Al at h; omega), e2, g1⟩
+      · unfold Al at h; omega),
+    HKeep.of_low fun a h1 h2 h3 => fr1 a (by omega) (by have := h3 _ (Or.inr hpv); omega) (by
+      rcases hnxA with h | ⟨h0, _⟩
+      · exact Or.inl h
+      · have := h3 _ (Or.inr (hnx h0)); omega), e2, g1⟩
   refine unregister_rep_mid hrep hc s1 s2 (fun a h1 => fr1 a (by omega)) (by omega)
     (fun h0 => by rcases hnxA with h | ⟨_, h⟩; exact absurd h h0; unfold Al at h; omega)
     hpn (fun a ha => ?_)
@@ -411,6 +433,7 @@ theorem free_next {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
       ω'[2] = UInt64.ofNat (mergeNext s M sz1 (base + 1073741824)).2 ∧
       ω'[12] = UInt64.ofNat (base + 1073741824) ∧
       (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → 2147483648 ≤ a → μ'.read a = μ.read a) ∧
+      HKeep μ μ' (fun a => H a ∨ F a) ∧
       ∀ j : Fin 13, j.val ∉ [0, 2, 5, 6, 9, 10, 11, 12] → ω'[j] = ω[j] := by
   have hr := hw.rd
   obtain ⟨hM1, hM2, hM3⟩ := hAM
@@ -433,7 +456,7 @@ theorem free_next {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
       have hwu : (!wordUsed w) = false := by simp [wordUsed, hu]
       rw [if_neg (by simp [hwu])]
       refine ⟨ω2, μ, (((r1.trans b1).trans r2).trans b2).mono (by omega), hrep, ?_, ?_, fun _ => rfl,
-        fun _ _ _ => rfl, fun j hj => ?_⟩
+        fun _ _ _ => rfl, HKeep.refl μ _, fun j hj => ?_⟩
       · rw [fget g2 2 (by decide) (by decide), fget g1 2 (by decide) (by decide)]; exact h2
       · rw [fget g2 12 (by decide) (by decide)]; exact a12
       · rw [g2 j (by simp only [List.mem_cons, List.not_mem_nil, or_false] at hj ⊢; omega),
@@ -460,7 +483,7 @@ theorem free_next {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
       by_cases hh : s.heads (binDown sz) = M + 32 * sz1
       · obtain ⟨ω3, r3, d0, d5, d6, g3⟩ := nx_lookup_head (p := p) (P := P) (R := R) x ω2 μ (M + 32 * sz1) sz
           h5' e7 e9 (by omega) (by omega) (by rw [hhd', hh]) (by omega) (by omega) hr
-        obtain ⟨ω4, μ4, r4, rep4, ww4, sf4, e2, g4⟩ := nx_unreg_head (p := p) (P := P) (R := R) x ω3 μ s H F
+        obtain ⟨ω4, μ4, r4, rep4, ww4, sf4, hk4, e2, g4⟩ := nx_unreg_head (p := p) (P := P) (R := R) x ω3 μ s H F
           base (M + 32 * sz1) (binDown sz) sz1 sz hrep hh (by unfold binCount; omega) hFn hHF hnx hb0 hbT
           (by rw [fget g3 11 (by decide) (by decide)]; exact c11) d6 d0
           (by rw [fget g3 2 (by decide) (by decide), fget g2 2 (by decide) (by decide),
@@ -469,7 +492,7 @@ theorem free_next {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
           (by rw [fget g3 4 (by decide) (by decide), fget g2 4 (by decide) (by decide),
             fget g1 4 (by decide) (by decide)]; exact h4) hss hHFT hw
         refine ⟨ω4, μ4, ((((r1.trans b1).trans r2).trans b2).trans r3 |>.trans r4).mono (by omega), rep4, e2,
-          ?_, ww4, sf4, fun j hj => ?_⟩
+          ?_, ww4, sf4, hk4, fun j hj => ?_⟩
         · rw [fget g4 12 (by decide) (by decide), fget g3 12 (by decide) (by decide),
             fget g2 12 (by decide) (by decide)]; exact a12
         · simp only [List.mem_cons, List.not_mem_nil, or_false] at hj
@@ -484,13 +507,13 @@ theorem free_next {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
           · unfold Al at h; omega
         obtain ⟨ω3, r3, d0, d5, g3⟩ := nx_lookup_mid (p := p) (P := P) (R := R) x ω2 μ (M + 32 * sz1) sz
           (s.heads (binDown sz)) h5' e7 e9 (by omega) (by omega) hhd' hh hhd1 (by omega) (by omega) hr
-        obtain ⟨ω4, μ4, r4, rep4, ww4, sf4, e2, g4⟩ := nx_unreg_mid (p := p) (P := P) (R := R) x ω3 μ s H F
+        obtain ⟨ω4, μ4, r4, rep4, ww4, sf4, hk4, e2, g4⟩ := nx_unreg_mid (p := p) (P := P) (R := R) x ω3 μ s H F
           base (M + 32 * sz1) (binDown sz) sz1 sz hrep hh hFn hHF hFp hnx hpn hb0 hbT
           (by rw [fget g3 11 (by decide) (by decide)]; exact c11) d0
           (by rw [fget g3 2 (by decide) (by decide), fget g2 2 (by decide) (by decide),
             fget g1 2 (by decide) (by decide)]; exact h2) hss hHFT hw
         refine ⟨ω4, μ4, ((((r1.trans b1).trans r2).trans b2).trans r3 |>.trans r4).mono (by omega), rep4, e2,
-          ?_, ww4, sf4, fun j hj => ?_⟩
+          ?_, ww4, sf4, hk4, fun j hj => ?_⟩
         · rw [fget g4 12 (by decide) (by decide), fget g3 12 (by decide) (by decide),
             fget g2 12 (by decide) (by decide)]; exact a12
         · simp only [List.mem_cons, List.not_mem_nil, or_false] at hj
@@ -501,7 +524,8 @@ theorem free_next {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
   · rw [if_neg hlt]
     have b1 := nx_br_end (p := p) (P := P) (R := R) x ω1 μ (M + 32 * sz1) (base + 1073741824) a9 a12
       (by omega) (by omega) hbT
-    refine ⟨ω1, μ, (r1.trans b1).mono (by omega), hrep, ?_, a12, fun _ => rfl, fun _ _ _ => rfl, fun j hj => ?_⟩
+    refine ⟨ω1, μ, (r1.trans b1).mono (by omega), hrep, ?_, a12, fun _ => rfl, fun _ _ _ => rfl, HKeep.refl μ _,
+      fun j hj => ?_⟩
     · rw [fget g1 2 (by decide) (by decide)]; exact h2
     · exact g1 j (by simp only [List.mem_cons, List.not_mem_nil, or_false] at hj ⊢; omega)
 
@@ -582,6 +606,7 @@ theorem pv_unreg_head {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : 
     {HT S0 S1 : Nat} (hHFT : ∀ a, H a ∨ F a → a + 32 ≤ HT) (hw : WrAt μ HT S0 S1) :
     ∃ ω' μ', FreeStepsH p R 42486 ω μ x 42583 ω' μ' x 30 ∧ RepAt μ' (unregister s Pa bin) H F ∧
       (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → 2147483648 ≤ a → μ'.read a = μ.read a) ∧
+      HKeep μ μ' (fun a => H a ∨ F a) ∧
       ∀ j : Fin 13, j.val ∉ [5, 6, 9, 11, 12] → ω'[j] = ω[j] := by
   have hAn := hHF Pa (Or.inr hFn)
   have hnT := hHFT Pa (Or.inr hFn)
@@ -604,6 +629,7 @@ theorem pv_unreg_head {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : 
       (by rw [fget g1 5 (by decide) (by decide)]; exact h5) (by rw [fget g1 7 (by decide) (by decide)]; exact h7)
       (by rw [fget g1 4 (by decide) (by decide)]; exact h4) (by omega) hw1 hp1 (by omega) (hw.of_eq ww1)
     refine ⟨ω2, μ2, (r1.trans r2).mono (by omega), ?_, fun a => (cw a).trans (ww1 a), fun a h1 h2 => ?_,
+      HKeep.of_low fun a h1 h2 _ => by rw [cf a (by omega) (by omega) (by omega), fr1 a (by omega) (by omega)],
       fun j hj => ?_⟩
     · refine unregister_rep_last hrep hc (by unfold binCount; omega) h0' ?_ ?_ ?_ ?_ (fun a ha => ?_)
       · rw [← s1]; exact rdN_frame fun j hj => cf _ (by omega) (by omega) (by omega)
@@ -623,6 +649,7 @@ theorem pv_unreg_head {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : 
       (196792 + bin * 4) (s.hdr Pa).next h11 h6 hn (by omega) h0' (by omega) (by omega) (by omega) (by omega) ⟨by omega, by omega⟩
       (by have := hHFT _ (Or.inr hFx); omega) hw
     refine ⟨ω1, μ1, r1.mono (by omega), ?_, ww1, fun a h1 h2 => fr1 a h1 (by omega) (by omega),
+      HKeep.of_low fun a h1 h2 h3 => fr1 a (by omega) (by omega) (by have := h3 _ (Or.inr hFx); omega),
       fun j hj => g1 j (by simp only [List.mem_cons, List.not_mem_nil, or_false] at hj ⊢; omega)⟩
     refine unregister_rep_head hrep hc (by unfold binCount; omega) h0' s1 s2
       (fun a h1 h2 h3 => fr1 a (by omega) (by omega) h3) (by omega) (fun a ha => ?_)
@@ -639,6 +666,7 @@ theorem pv_unreg_mid {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
     (hw : WrAt μ HT S0 S1) :
     ∃ ω' μ', FreeStepsH p R 42512 ω μ x 42583 ω' μ' x 30 ∧ RepAt μ' (unregister s Pa bin) H F ∧
       (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → 2147483648 ≤ a → μ'.read a = μ.read a) ∧
+      HKeep μ μ' (fun a => H a ∨ F a) ∧
       ∀ j : Fin 13, j.val ∉ [9, 11] → ω'[j] = ω[j] := by
   have hAn := hHF Pa (Or.inr hFn)
   have hAp := hHF _ (Or.inr hpv)
@@ -667,7 +695,11 @@ theorem pv_unreg_mid {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
   refine ⟨ω1, μ1, r1.mono (by omega), ?_, ww1, fun a h1 h2 => fr1 a h1 (by omega) (by
       rcases hnxA with h | ⟨_, h⟩
       · exact Or.inl h
-      · unfold Al at h; omega), g1⟩
+      · unfold Al at h; omega),
+    HKeep.of_low fun a h1 h2 h3 => fr1 a (by omega) (by have := h3 _ (Or.inr hpv); omega) (by
+      rcases hnxA with h | ⟨h0, _⟩
+      · exact Or.inl h
+      · have := h3 _ (Or.inr (hnx h0)); omega), g1⟩
   refine unregister_rep_mid hrep hc s1 s2 (fun a h1 => fr1 a (by omega)) (by omega)
     (fun h0 => by rcases hnxA with h | ⟨_, h⟩; exact absurd h h0; unfold Al at h; omega)
     hpn (fun a ha => ?_)

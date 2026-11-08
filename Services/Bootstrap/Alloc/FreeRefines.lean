@@ -52,8 +52,9 @@ def FA (cs : List Chunk) (a : Nat) : Prop := ∃ c ∈ cs, c.addr = a ∧ c.used
 /-- **The binary's `free` on a well-formed heap**: from memory holding a well-formed `s` and the
     data address of an allocated chunk, the compiled free path reaches its return's `jumpInd` (42978,
     with the caller's return address ω₀ restored) with memory holding the model's `free s ptr`, itself
-    well-formed, and the stack from sp up untouched. -/
-theorem free_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    well-formed, and the stack from sp up untouched; in the heap only the allocator's fields and
+    chunk headers of `s` change (`HKeep`), so every chunk's data keeps its octets. -/
+theorem free_refines_hdr {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
     (s : State) (sp ptr : Nat) (hwf : WF s) (hrep : Rep μ s)
     (hc : ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true)
     (h1 : ω[1] = UInt64.ofNat sp) (h8 : ω[8] = UInt64.ofNat ptr) (h7 : ω[7] = UInt64.ofNat 196792)
@@ -64,7 +65,8 @@ theorem free_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
     ∃ ω' μ', FreeStepsH p R 42327 ω μ x 42978 ω' μ' x 220 ∧ Rep μ' (free s ptr) ∧ WF (free s ptr) ∧
       FirstOk (free s ptr) ∧
       (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
-      ω'[0] = ω[0] ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
+      ω'[0] = ω[0] ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      HKeep μ μ' (fun a => ∃ c ∈ chunks s, c.addr = a) := by
   have hp0 : (s.hdr s.base).prev < 2147483648 := by unfold FirstOk at hfo; omega
   obtain ⟨c, hcm, hca, hcu⟩ := hc
   obtain ⟨pre, post, hcs⟩ := List.append_of_mem hcm
@@ -190,6 +192,10 @@ theorem free_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
     rcases hMw with h | ⟨c, hc, h⟩
     · rw [h]; exact hHF _ (Or.inl (mkH _ hXm))
     · rw [← h]; exact hAlc c (hsub c (Or.inl hc))
+  have hMc : ∃ c ∈ chunks s, c.addr = M := by
+    rcases hMw with h | ⟨c, hc, h⟩
+    · exact ⟨_, by rw [hcs']; exact hXm, h.symm⟩
+    · exact ⟨c, by rw [hcs']; exact hsub c (Or.inl hc), h⟩
   clear hMw
   have hsub0 : ∀ c ∈ pre0 ++ post0, c ∈ pre ++ ⟨Xa, n, true⟩ :: post := by
     intro c hc
@@ -309,7 +315,7 @@ theorem free_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
     | cons e es =>
       have := (Tiles.around htl2).2.1 e (by rw [hp]; rfl)
       exact this ▸ mkH e (hsub0 e (by rw [hp]; simp))
-  obtain ⟨ω', μ', run, rep', ww, stk, e0, e1, e5, e6⟩ := free_impl (p := p) (P := P) (R := R) x ω μ s s1 s2 H F
+  obtain ⟨ω', μ', run, rep', ww, stk, hk, e0, e1, e5, e6⟩ := free_impl (p := p) (P := P) (R := R) x ω μ s s1 s2 H F
     sp ptr M sz1 pv' total hrep' h1 h8 h7 hsp hsp1 hb0 hbT
     (by rw [hXd]; exact hHF _ (Or.inl (mkH _ hXm))) (by omega) (by rw [hXd]; exact mkH _ hXm) hHF
     (by rw [hXd]; exact hpvX) (by rw [hXd, hwn]; exact hm) hnx
@@ -324,7 +330,16 @@ theorem free_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
     hold1'
     hnext'
     hHFT hMT hold1T hS hw
-  refine ⟨ω', μ', run, ?_, hwfF, hfirst, ww, stk, e0, e1, e5, e6⟩
+  have inS : ∀ c, c ∈ pre ++ ⟨Xa, n, true⟩ :: post → c ∈ chunks s := fun c hc => by rw [hcs']; exact hc
+  have hk' : HKeep μ μ' (fun a => ∃ c ∈ chunks s, c.addr = a) := hk.mono fun b hb => by
+    rcases hb with (hb | hb) | hb | hb
+    · obtain ⟨c, hc, h⟩ := unH b hb; exact Or.inl ⟨c, inS c hc, h⟩
+    · obtain ⟨c, hc, h, -⟩ := unF b hb; exact Or.inl ⟨c, inS c hc, h⟩
+    · obtain ⟨c, hc, h⟩ := hMc; exact Or.inl ⟨c, hc, h.trans hb.symm⟩
+    · rcases heads_ok hF2 (hbinlt total) with h | ⟨c, hc, h1, -⟩
+      · right; omega
+      · exact Or.inl ⟨c, inS c (hsub0 c hc), h1.trans hb.symm⟩
+  refine ⟨ω', μ', run, ?_, hwfF, hfirst, ww, stk, e0, e1, e5, e6, hk'⟩
   -- the model's result, read from memory
   have hcsF := hchF
   rw [hMF] at hcsF
@@ -363,5 +378,25 @@ theorem free_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
   · rcases clsF c hc hu with h | h
     · exact rep'.prevL _ (Or.inl h)
     · exact rep'.prevL _ (Or.inr h)
+
+/-- **The binary's `free` on a well-formed heap**: from memory holding a well-formed `s` and the
+    data address of an allocated chunk, the compiled free path reaches its return's `jumpInd` (42978,
+    with the caller's return address ω₀ restored) with memory holding the model's `free s ptr`, itself
+    well-formed, and the stack from sp up untouched. -/
+theorem free_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (s : State) (sp ptr : Nat) (hwf : WF s) (hrep : Rep μ s)
+    (hc : ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true)
+    (h1 : ω[1] = UInt64.ofNat sp) (h8 : ω[8] = UInt64.ofNat ptr) (h7 : ω[7] = UInt64.ofNat 196792)
+    (hsp : 2147483700 ≤ sp) (hsp1 : sp < 4294967296)
+    (hb0 : 206864 ≤ s.base) (hbT : s.base + 1073741824 < 2147483648)
+    (hfo : FirstOk s) {HT S0 S1 : Nat} (hHT : s.base + 32 * s.allocated ≤ HT) (hS : S0 + 24 ≤ sp ∧ sp ≤ S1)
+    (hw : WrAt μ HT S0 S1) :
+    ∃ ω' μ', FreeStepsH p R 42327 ω μ x 42978 ω' μ' x 220 ∧ Rep μ' (free s ptr) ∧ WF (free s ptr) ∧
+      FirstOk (free s ptr) ∧
+      (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
+      ω'[0] = ω[0] ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
+  obtain ⟨ω', μ', run, rep, wf, fo, ww, stk, e0, e1, e5, e6, -⟩ := free_refines_hdr (p := p) (P := P) (R := R)
+    x ω μ s sp ptr hwf hrep hc h1 h8 h7 hsp hsp1 hb0 hbT hfo hHT hS hw
+  exact ⟨ω', μ', run, rep, wf, fo, ww, stk, e0, e1, e5, e6⟩
 
 end Services.Bootstrap.Alloc

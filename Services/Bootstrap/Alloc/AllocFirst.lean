@@ -156,7 +156,7 @@ theorem alloc_impl_grow221K {p : ByteArray} {P : Program} [HasCode p P] (env : R
     alloc_entry221 (p := p) (P := P) (R := refineContractK cap env) x ω μ s sp req bin C (s.hdr C).size hbits h1 h7 h8 h9
       h12 h120 hsp hsp1 hpri hsec hm hbin hheads hsz (by omega) (by omega) hHTs hSTk ⟨by omega, by have := hHFT C (Or.inr hFC); omega⟩ hwr
   rw [hwS] at a11
-  obtain ⟨ω2, μ2, r2, rep2, b1, b8, b0, m96, m48, m80, m72, m104, m88, m120, hp2, hst2, fr2, g2⟩ := alloc_mid_growK (p := p)
+  obtain ⟨ω2, μ2, r2, rep2, b1, b8, b0, m96, m48, m80, m72, m104, m88, m120, hp2, hst2, fr2, -, g2⟩ := alloc_mid_growK (p := p)
     (P := P) (S0 := S0) (S1 := S1) env cap hcap x ω1 μ s H F sp req bin q b C S hrep hcb hqb hq hb hFC hHC hHF hnx hb0 hbT hpv hS
     (by omega) hCend hal E hE hgr pb h hbd h48 hhb hbs hR (by rw [hT]; exact hcost) a1 a10 a11 a5 a2 a6 a3 a8 a9 h120
     (by omega) (by omega) hHTs hSTk hSb hp hst hHFT
@@ -168,7 +168,7 @@ theorem alloc_impl_grow221K {p : ByteArray} {P : Program} [HasCode p P] (env : R
   have e2b : t2.base = s.base := by rw [← ht2, unregister_base]
 
   have hCa : (C - s.base) % 32 = 0 := hAC.2.1
-  obtain ⟨ω3, μ3, r3, rep3, c3, c12, c8, c2, c1, ww3, fr3⟩ := alloc_end1 (p := p) (P := P) (R := refineContractK cap env) x ω2 μ2 t2 H F
+  obtain ⟨ω3, μ3, r3, rep3, c3, c12, c8, c2, c1, ww3, fr3, -⟩ := alloc_end1 (p := p) (P := P) (R := refineContractK cap env) x ω2 μ2 t2 H F
     sp req C pv (S - req - 1) rep2 hHC (by rw [e2b]; exact hHF) (by rw [e2b]; exact hb0)
     (by rw [e2b]; exact hbT) (by rw [e2b]; exact hCa) (by rw [e2b]; omega) hpv (by omega) (by omega)
     (by rw [e2b]; omega) hNdis hNold b1 (by rw [e2b]; exact b8) b0
@@ -185,7 +185,7 @@ theorem alloc_impl_grow221K {p : ByteArray} {P : Program} [HasCode p P] (env : R
   have k120 : rdN μ3 (sp + 120) 8 = 204984 := by
     rw [← m120]; exact rdN_frame fun j hj => fr3 _ (by omega) (by omega)
   have hS32 : C + 32 * (req + 1) + 32 * (S - req - 1) = C + 32 * S := by omega
-  obtain ⟨ω4, μ4, r4, rep4, d7, d0, d5, d6, d1, ww4, fr4, -⟩ := alloc_end2 (p := p) (P := P) (R := refineContractK cap env) x ω3 μ3 rr.1
+  obtain ⟨ω4, μ4, r4, rep4, d7, d0, d5, d6, d1, ww4, fr4, -, -⟩ := alloc_end2 (p := p) (P := P) (R := refineContractK cap env) x ω3 μ3 rr.1
     (fun a => H a ∨ (S - req - 1 ≠ 0 ∧ a = C + 32 * (req + 1)))
     (fun a => F a ∨ (S - req - 1 ≠ 0 ∧ a = C + 32 * (req + 1))) sp (C + 32 * (req + 1)) (S - req - 1) rr.2
     (C + 32) rep3

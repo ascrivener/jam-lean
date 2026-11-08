@@ -62,6 +62,78 @@ theorem rf_memcpy {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
       (by omega) (by omega) hpa hqa hdj (Or.inr hfd) (Or.inr hfs) hr hw hwf
     exact ⟨ω', μ', run.mono (by omega), d0, d1, d5, d6, dc, dfr, dwr⟩
 
+/-- **`fallback_after` with the copy**: as `fallback_after`, and the new block's first u·32 octets
+    are the old block's, as they were at 43276: the copy (`rf_memcpy`) writes them, and the free of
+    the old chunk (`free_refines_hdr`) changes only headers, outside q's data. -/
+theorem fallback_after_data {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (s1 : State) (sp ptr q u r v5 v6 : Nat) (hwf1 : WF s1) (hrep : Rep μ s1) (hfo1 : FirstOk s1)
+    (hc : ∃ c ∈ chunks s1, c.addr + 32 = ptr ∧ c.used = true ∧ c.size = u + 1 ∧
+      (c.addr + 32 * c.size ≤ q - 32 ∨ q - 32 + 32 * (r + 1) ≤ c.addr))
+    (hnew : (⟨q - 32, r + 1, true⟩ : Chunk) ∈ chunks s1) (hq32 : 32 ≤ q) (hur : u ≤ r)
+    (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat q) (h5 : ω[5] = UInt64.ofNat ptr)
+    (h6 : ω[6] = UInt64.ofNat u) (h104 : rdN μ (sp + 104) 8 = 196792)
+    (s0 : rdN μ (sp + 144) 8 = 1988) (s5 : rdN μ (sp + 136) 8 = v5) (s6 : rdN μ (sp + 128) 8 = v6)
+    (hsp : 2147483800 ≤ sp) (hsp1 : sp + 152 < 4294967296) (hsp8 : sp % 8 = 0) (hba : s1.base % 8 = 0)
+    (hb0 : 206864 ≤ s1.base) (hbT : s1.base + 1073741824 < 2147483648)
+    {HT S0 S1 : Nat} (hHT : s1.base + 32 * s1.allocated ≤ HT)
+    (hS : S0 + 152 ≤ sp ∧ sp + 152 ≤ S1) (hw : WrAt μ HT S0 S1) :
+    ∃ ω' μ', μ'.readN q (32 * u) = μ.readN ptr (32 * u) ∧
+      FreeStepsH p R 43276 ω μ x 40805 ω' μ' x (64 * u + 560) ∧
+      Rep μ' (free s1 ptr) ∧ WF (free s1 ptr) ∧ FirstOk (free s1 ptr) ∧
+      (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
+      ω'[7] = UInt64.ofNat q ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat (sp + 152) ∧
+      ω'[5] = UInt64.ofNat v5 ∧ ω'[6] = UInt64.ofNat v6 := by
+  obtain ⟨c, hc1, hca, hcu, hcsz, hdis⟩ := hc
+  have ht1 := hwf1.2.2.2.1
+  unfold TilesOk at ht1
+  have htop1 : s1.top = s1.base + 1073741824 := by unfold State.top; rw [maxSize_val]
+  have hcl := ht1.mem_lt c hc1
+  have hca' := ht1.aligned c hc1
+  have hnl := ht1.mem_lt _ hnew
+  have hna := ht1.aligned _ hnew
+  simp only at hnl hna
+  have hsp1' := hwf1.2.2.2.2.2.2.2
+  unfold SpaceOk at hsp1'
+  have hnT := (hsp1' _ hnew).1 rfl
+  have hcT := (hsp1' c hc1).1 hcu
+  simp only at hnT
+  -- the copy
+  obtain ⟨ω3, r3, c7, c8, c9, c6, c0, g3⟩ := rf_copy (p := p) (P := P) (R := R) x ω μ q u ptr h7 h6 h5
+    (by omega) (by omega) (by omega) (by omega)
+  obtain ⟨ω4, μ3, r4, d0, d1, d5, d6, dc, dfr, dwr⟩ := rf_memcpy (p := p) (P := P) (R := R)
+    x ω3 μ sp q ptr u c0 (by rw [fget g3 1 (by decide) (by decide)]; exact h1) c7 c8 c9 ⟨by omega, by omega, hsp8⟩
+    (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)
+    (fun a h1 h2 => Memory.readable_of_writable (hw a (Or.inl ⟨by omega, by omega⟩)))
+    (fun a h1 h2 => hw a (Or.inl ⟨by omega, by omega⟩))
+    (fun a h1 h2 => hw a (Or.inr ⟨by omega, by omega⟩))
+  have rep3 : Rep μ3 s1 := Rep.congr_data hrep hwf1 hb0 hbT hnew
+    (lo := q) (hi := q + 32 * u) (by simp only; omega) (by simp only; omega)
+    (fun a ha1 ha2 ha3 => dfr a (by omega) ha3 (Or.inl (by omega)))
+  have stk3 : ∀ a, a < 4294967296 → sp ≤ a → μ3.read a = μ.read a := fun a h1 h2 =>
+    dfr a h1 (Or.inr (by omega)) (Or.inr h2)
+  -- the free of the old chunk
+  obtain ⟨ω5, r5, f7, f8, f0, g5⟩ := rf_free_call (p := p) (P := P) (R := R) x ω4 μ3 sp ptr d1
+    (by rw [d5, fget g3 5 (by decide) (by decide)]; exact h5)
+    (by rw [← h104]; exact rdN_frame fun j hj => stk3 _ (by omega) (by omega)) (by omega) (by omega) hsp1
+    ⟨by omega, by omega⟩ ((hw.of_eq dwr).rd)
+  obtain ⟨ω6, μ4, r6, rep4, wf4, fo4, ww4, stk4, b0, b1, b5, b6, hk4⟩ := free_refines_hdr (p := p) (P := P) (R := R)
+    x ω5 μ3 s1 sp ptr hwf1 rep3 ⟨c, hc1, hca, hcu⟩ (by rw [fget g5 1 (by decide) (by decide)]; exact d1) f8 f7
+    (by omega) (by omega) hb0 hbT hfo1 hHT ⟨by omega, by omega⟩ (hw.of_eq dwr)
+  have rj2 := free_ret_fallback (p := p) (P := P) (R := R) x ω6 μ4 (by rw [b0, f0])
+  have stk : ∀ a, a < 4294967296 → sp ≤ a → μ4.read a = μ.read a := fun a h1 h2 =>
+    (stk4 a h1 h2).trans (stk3 a h1 h2)
+  have rd : ∀ a v, rdN μ a 8 = v → sp ≤ a → a + 8 ≤ sp + 152 → rdN μ4 a 8 = v := fun a v h h1 h2 => by
+    rw [← h]; exact rdN_frame fun j hj => stk _ (by omega) (by omega)
+  have W4 := (hw.of_eq dwr).of_eq ww4
+  have hq2 : q < 4294967296 := by omega
+  obtain ⟨ω7, r7, k7, k0, k1, k5, k6⟩ := rf_ret (p := p) (P := P) (R := R) x ω6 μ4 sp q v5 v6 b1
+    (by rw [b6, fget g5 6 (by decide) (by decide), d6, c6]) hq2 (by omega) hsp1
+    (rd _ _ s0 (by omega) (by omega)) (rd _ _ s5 (by omega) (by omega)) (rd _ _ s6 (by omega) (by omega)) ⟨by omega, by omega⟩ W4.rd
+  have dat : μ4.readN q (32 * u) = μ.readN ptr (32 * u) := by
+    rw [← dc]; exact hk4.readN fun j hj => off_hdr_data hwf1 hb0 hbT hnew (by simp only; omega) (by simp only; omega)
+  exact ⟨ω7, μ4, dat, (((((r3.trans r4).trans r5).trans r6).trans rj2).trans r7).mono (by omega), rep4, wf4, fo4,
+    fun a => (ww4 a).trans (dwr a), stk, k7, k0, k1, k5, k6⟩
+
 /-- **43276 … 40805, the fallback after the allocation**: from memory holding a well-formed `s₁`
     (its first chunk's `prev` 0) in which the old chunk (u + 1 units, at ptr − 32) and the new block
     q (r + 1 ≥ u + 1 units, at q − 32) are disjoint allocated chunks, with ω₇ = q, ω₅ = ptr, ω₆ = u
@@ -84,53 +156,7 @@ theorem fallback_after {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω :
       (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
       ω'[7] = UInt64.ofNat q ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat (sp + 152) ∧
       ω'[5] = UInt64.ofNat v5 ∧ ω'[6] = UInt64.ofNat v6 := by
-  obtain ⟨c, hc1, hca, hcu, hcsz, hdis⟩ := hc
-  have ht1 := hwf1.2.2.2.1
-  unfold TilesOk at ht1
-  have htop1 : s1.top = s1.base + 1073741824 := by unfold State.top; rw [maxSize_val]
-  have hcl := ht1.mem_lt c hc1
-  have hca' := ht1.aligned c hc1
-  have hnl := ht1.mem_lt _ hnew
-  have hna := ht1.aligned _ hnew
-  simp only at hnl hna
-  have hsp1' := hwf1.2.2.2.2.2.2.2
-  unfold SpaceOk at hsp1'
-  have hnT := (hsp1' _ hnew).1 rfl
-  have hcT := (hsp1' c hc1).1 hcu
-  simp only at hnT
-  -- the copy
-  obtain ⟨ω3, r3, c7, c8, c9, c6, c0, g3⟩ := rf_copy (p := p) (P := P) (R := R) x ω μ q u ptr h7 h6 h5
-    (by omega) (by omega) (by omega) (by omega)
-  obtain ⟨ω4, μ3, r4, d0, d1, d5, d6, -, dfr, dwr⟩ := rf_memcpy (p := p) (P := P) (R := R)
-    x ω3 μ sp q ptr u c0 (by rw [fget g3 1 (by decide) (by decide)]; exact h1) c7 c8 c9 ⟨by omega, by omega, hsp8⟩
-    (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)
-    (fun a h1 h2 => Memory.readable_of_writable (hw a (Or.inl ⟨by omega, by omega⟩)))
-    (fun a h1 h2 => hw a (Or.inl ⟨by omega, by omega⟩))
-    (fun a h1 h2 => hw a (Or.inr ⟨by omega, by omega⟩))
-  have rep3 : Rep μ3 s1 := Rep.congr_data hrep hwf1 hb0 hbT hnew
-    (lo := q) (hi := q + 32 * u) (by simp only; omega) (by simp only; omega)
-    (fun a ha1 ha2 ha3 => dfr a (by omega) ha3 (Or.inl (by omega)))
-  have stk3 : ∀ a, a < 4294967296 → sp ≤ a → μ3.read a = μ.read a := fun a h1 h2 =>
-    dfr a h1 (Or.inr (by omega)) (Or.inr h2)
-  -- the free of the old chunk
-  obtain ⟨ω5, r5, f7, f8, f0, g5⟩ := rf_free_call (p := p) (P := P) (R := R) x ω4 μ3 sp ptr d1
-    (by rw [d5, fget g3 5 (by decide) (by decide)]; exact h5)
-    (by rw [← h104]; exact rdN_frame fun j hj => stk3 _ (by omega) (by omega)) (by omega) (by omega) hsp1
-    ⟨by omega, by omega⟩ ((hw.of_eq dwr).rd)
-  obtain ⟨ω6, μ4, r6, rep4, wf4, fo4, ww4, stk4, b0, b1, b5, b6⟩ := free_refines (p := p) (P := P) (R := R)
-    x ω5 μ3 s1 sp ptr hwf1 rep3 ⟨c, hc1, hca, hcu⟩ (by rw [fget g5 1 (by decide) (by decide)]; exact d1) f8 f7
-    (by omega) (by omega) hb0 hbT hfo1 hHT ⟨by omega, by omega⟩ (hw.of_eq dwr)
-  have rj2 := free_ret_fallback (p := p) (P := P) (R := R) x ω6 μ4 (by rw [b0, f0])
-  have stk : ∀ a, a < 4294967296 → sp ≤ a → μ4.read a = μ.read a := fun a h1 h2 =>
-    (stk4 a h1 h2).trans (stk3 a h1 h2)
-  have rd : ∀ a v, rdN μ a 8 = v → sp ≤ a → a + 8 ≤ sp + 152 → rdN μ4 a 8 = v := fun a v h h1 h2 => by
-    rw [← h]; exact rdN_frame fun j hj => stk _ (by omega) (by omega)
-  have W4 := (hw.of_eq dwr).of_eq ww4
-  have hq2 : q < 4294967296 := by omega
-  obtain ⟨ω7, r7, k7, k0, k1, k5, k6⟩ := rf_ret (p := p) (P := P) (R := R) x ω6 μ4 sp q v5 v6 b1
-    (by rw [b6, fget g5 6 (by decide) (by decide), d6, c6]) hq2 (by omega) hsp1
-    (rd _ _ s0 (by omega) (by omega)) (rd _ _ s5 (by omega) (by omega)) (rd _ _ s6 (by omega) (by omega)) ⟨by omega, by omega⟩ W4.rd
-  exact ⟨ω7, μ4, (((((r3.trans r4).trans r5).trans r6).trans rj2).trans r7).mono (by omega), rep4, wf4, fo4,
-    fun a => (ww4 a).trans (dwr a), stk, k7, k0, k1, k5, k6⟩
+  obtain ⟨ω', μ', -, h⟩ := fallback_after_data (R := R) (p := p) (P := P) (HT := HT) (S0 := S0) (S1 := S1) x ω μ s1 sp ptr q u r v5 v6 hwf1 hrep hfo1 hc hnew hq32 hur h1 h7 h5 h6 h104 s0 s5 s6 hsp hsp1 hsp8 hba hb0 hbT hHT hS hw
+  exact ⟨ω', μ', h⟩
 
 end Services.Bootstrap.Alloc

@@ -89,6 +89,39 @@ theorem Rep.congr_data {μ μ' : Memory} {s : State} (h : Rep μ s) (hwf : WF s)
   · have := hd d hd'; rw [← h.prevL d hd' ‹_›]
     exact rdN_frame fun j hj => wf _ (by unfold A0; omega) (by omega) (by omega)
 
+/-- Reads off the headers keep their octets. -/
+theorem HKeep.readN {μ μ' : Memory} {G : Nat → Prop} (h : HKeep μ μ' G) {a n : Nat}
+    (ha : ∀ j, j < n → OffHdr G (a + j)) : μ'.readN a n = μ.readN a n :=
+  readN_congr2 fun j hj => h _ (ha j hj)
+
+/-- **A chunk's data is off the headers**: in a well-formed heap below 2³¹, an octet of a chunk's
+    data (from its address + 32 to its end) lies outside the allocator's fields, the stack and the
+    first 16 octets of every chunk's header. -/
+theorem off_hdr_data {t : State} (hwf : WF t) (hb0 : 206864 ≤ t.base)
+    (hbT : t.base + 1073741824 < 2147483648) {c : Chunk} (hc : c ∈ chunks t) {a : Nat}
+    (h1 : c.addr + 32 ≤ a) (h2 : a < c.addr + 32 * c.size) :
+    OffHdr (fun h => ∃ d ∈ chunks t, d.addr = h) a := by
+  have ht := hwf.2.2.2.1
+  unfold TilesOk at ht
+  have htop : t.top = t.base + 1073741824 := by unfold State.top; rw [maxSize_val]
+  have hCl := ht.mem_lt _ hc
+  obtain ⟨pre, post, hcs⟩ := List.append_of_mem hc
+  obtain ⟨C, S, u⟩ := c
+  have ht' := ht
+  rw [hcs] at ht'
+  obtain ⟨hpa, -, hpp, -⟩ := Tiles.around ht'
+  simp only at hCl h1 h2
+  unfold OffHdr
+  refine ⟨by omega, by omega, fun h ⟨d, hdm, hdh⟩ => ?_⟩
+  subst hdh
+  have hdl := ht.mem_lt d hdm
+  rw [hcs] at hdm
+  rcases List.mem_append.mp hdm with h3 | h3
+  · have := hpa d h3; omega
+  · rcases List.mem_cons.mp h3 with h4 | h4
+    · subst h4; simp only; omega
+    · have := (hpp d h4).1; omega
+
 /-- **43259 … 40805, the fallback**: from memory holding a well-formed `s` (its first chunk's `prev`
     0), the frame at sp, ω₈ = ptr the data address of an allocated chunk with `u` (≥ 1) usable units
     (ω₆, u < req), and ω₁₀ = req, when the model's `alloc` at one unit gives q and s₁ without

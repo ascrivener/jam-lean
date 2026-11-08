@@ -28,8 +28,8 @@ Two libraries, each bounded by the Gray Paper (v0.8.0):
   definitions of §4.7, and constants. `PVM/Logic/` holds proof rules about this model; it adds no
   semantics.
 * **`JAM`: Appendix B (in progress)**, built on `PVM`, with the protocol terms Appendix B needs:
-  the codec (Appendix C), ℋ = Blake2b-256 (§3.8), work packages, items, digests and reports
-  (§11, §14), service accounts (§9), ℋ_K = Keccak-256 and the binary Merkle root (Appendix E).
+  the codec (Appendix C) with its decoder ℰ⁻¹, blocks, headers and extrinsics, ℋ = Blake2b-256
+  (§3.8), work packages, items, digests and reports (§11, §14), service accounts (§9), ℋ_K = Keccak-256 and the binary Merkle root (Appendix E).
   It has the general host functions (`gas`, `grow_heap`, `fetch`, `lookup`, `read`, `write`,
   `info`), the 13 accumulate host functions, Ψ_A, and the accumulation state transition of §12
   (Δ_1, Δ_*, Δ_+, the ready queue and history, statistics, and the output root); and the refine
@@ -52,14 +52,21 @@ call `pc`) live in `Tests/`, not in the model.
 | Block costs in `programs/` | **5,123 / 5,123** correct |
 | Block costs in `gas-tests/` (doom, pinky, prime-sieve) | **39,737 / 39,737** correct |
 | Model's ϖ against the blocks the vectors list | identical in all 367 programs |
-| `JAM` codec: work-package family vs. GP v0.8.0 codec vectors | **6 / 6** match |
+| `JAM` codec (Appendix C): every GP v0.8.0 codec vector (headers, blocks, all extrinsics, the work-package family), encoded from JSON and round-tripped through ℰ⁻¹ | **15 / 15** tiny, **15 / 15** full |
 | `JAM` Blake2b-256 vs. `hashlib` and RFC 7693 | **13 / 13** match |
 | `JAM` general host functions, hand-written cases | **30 / 30** pass |
 | `JAM` Keccak-256 / SHA3-256 vs. `hashlib` and standard vectors | **15 / 15** match |
 | `JAM` refine host functions, Ψ_R and Ψ_I, hand-written cases (no vectors exist) | **59 / 59** pass, 2 more kernel-checked |
 | `witness-service.jam`'s host-call ids within those `Services.Witness` assumes (`lake build witnesscheck`) | **pass** |
 | The real witness binary's refine on 7 malformed payloads gives `Rejected(BadPayload)` (`lake build witnessrun`; a test, not a proof) | **7 / 7** |
+| `JAM` state trie M (Appendix D) vs. GP v0.8.0 trie vectors (keys cut to 31 octets, note 27); state-key constructor C, hand-written | **11 / 11** roots match; **4 / 4** |
+| `JAM` Fisher–Yates shuffle ℱ with 𝒬_l (Appendix F) vs. GP v0.8.0 shuffle vectors | **8 / 8** match |
+| `JAM` erasure coding ℰ_C / ℛ over GF(2¹⁶) (Appendix H) vs. GP v0.8.0 erasure vectors | data shards match in **12 / 12** (6 tiny, 6 full); parity shards follow a different convention in all 12 (note 28), which the test reproduces exactly; ℛ recovers the paper's code in all 12 |
 | Accumulation STF (§12) vs. GP v0.8.0 accumulate vectors (tiny) | **61 / 63** pass; the 2 others are `bless_from_non_manager`, which the vectors' changelog lists as departing from GP 0.8.0 |
+| Recent-history STF (§7: β_H, the accumulation-output belt β_B) vs. `stf/history` (`lake build historytest`) | **4 / 4** tiny, **4 / 4** full |
+| Authorization STF (§8: the pool α from the queue φ') vs. `stf/authorizations` (`lake build authtest`) | **3 / 3** tiny, **3 / 3** full |
+| Validator statistics (§13.1: π_V, π_L) vs. `stf/statistics` (`lake build statstest`) | **4 / 4** tiny, **4 / 4** full |
+| Preimage STF (§12.4) and its service statistics (§13.2 provision counts) vs. `stf/preimages` (`lake build preimagestest`) | **8 / 8** tiny, **8 / 8** full |
 
 ## Building and running
 
@@ -70,6 +77,9 @@ scripts/fetch-vectors.sh              # pinned vectors into vendor/jamtestvector
 lake build pvmtest                    # run every vector in programs/
 lake build gascheck                   # compare ϱ^Δ with every block cost
 scripts/check-tables.sh               # regenerate PVM/Tables.lean from the pinned paper and diff
+scripts/fetch-jam-vectors.sh          # GP v0.8.0 JAM vectors into vendor/jam-test-vectors
+lake build historytest authtest       # the recent-history and authorization STF vectors (tiny and full)
+lake build statstest preimagestest    # the statistics and preimage STF vectors (tiny and full)
 ```
 
 `pvmtest` and `gascheck` are Lake targets that build an executable and run it; a failing vector
@@ -152,8 +162,9 @@ the build of the semantics rather than drifting silently.
   memory knowing only a blob's section sizes and the octets it reads.
 * **`grow_heap` in symbolic runs** (`JAM/Theorems/GrowHeap.lean`). `HeapPages μ a b h`: in
   ℕ_{a…b} the writable pages are exactly those below h. `growHeapCore_eq` gives Ω_♊'s heap top
-  from it without counting, and `FreeStepsH.growHeap` takes a whole `grow_heap` step under
-  `refineContract`.
+  from it without counting, and `FreeStepsH.growHeapK` takes a whole `grow_heap` step under
+  `refineContractK cap`, for a growth whose cost 275 + 121 a page fits in `cap`
+  (`FreeStepsH.growHeap`: under `refineContract`, so at most 14 pages).
 * **Witness's refine, first steps** (`Services/Witness/Prefix.lean`, generated by
   `lake exe genwitnesssteps run 702`, drift-checked in CI). `prefix_from_Y`: for a JAM blob with the
   deployed section sizes and read data octets (`layoutOk`) whose PVM code passes
@@ -389,7 +400,10 @@ Theorems and proof rules about the Appendix A model; nothing here adds semantics
   each step and host call counts one, `pad` and `mono` loosen it, and generated chains state their
   exact step count. `refineContract` allows a call only as the dispatcher answers it with
   `hostCostMax` gas, which `refineContract_cost` turns into `HostCostLe`: each gas-independent call
-  charges a fixed cost (`RefineHost.dispatch_cost`).
+  charges a fixed cost (`RefineHost.dispatch_cost`). `refineContractK cap` is the same contract
+  with any cap (`refineContract` is it at `hostCostMax`; `refineContractK_pins`,
+  `refineContractK_cost`), and a chain under `refineContract` lifts to any larger cap
+  (`refineContract_le`, `FreeStepsH.weaken`).
 * **Determinism** (`Logic/Det.lean`). `FreeRun.det`, `FreeRunH.det`: gas-free runs from one
   state end the same way (under contracts where one pins down the other). `psiM_of_freeRunH`:
   exhibiting *one* gas-free run from Y's initial state determines Ψ_M's result: it is that run's
@@ -614,6 +628,65 @@ noted here and in a comment at the definition.
     missing preimage: BAD. Likewise an item index i ≥ |p_w| gives BAD.
 20. **`pages` gives no ε'.** Ω_Z's row defines only (ω'_7, **m**'); with the common rules it
     continues (▸) in every case, including WHO and HUH.
+21. **Authorization's F(c) binds g only in its condition** (§8): α[c] ⊖ {(g_w)_a} names a g that
+    is quantified only in the case "∃ g ∈ E_G : (g_w)_c = c". We read it as that guarantee's
+    authorizer (E_G has at most one guarantee per core). All authorizations vectors agree.
+22. **Recent history** (§7) follows the paper as written: β_H^† corrects the last state root, the
+    new entry has state root ℍ_0 and super-peak ℳ_R(β_B'), and β_B' = 𝒜(β_B, r, ℋ_K). The
+    vectors give r = ℳ_B(**s**, ℋ_K) directly (`accumulate_root`) and agree throughout.
+23. **Validator statistics** (§13.1). Three points the paper leaves loose:
+    * The guarantee count tests κ'_v ∈ G, but G (eq. `guarantorsig`) holds Ed25519 keys. We
+      compare (κ'_v)_e.
+    * On an epoch change the fresh accumulator is written [(0, …), …] with no length. We use
+      |κ'|, which |π_V'| = |κ'| (eq. `activityspec`) requires.
+    * π_V^† credits assurances over N_{|κ|}, which we take as |π_V|.
+
+    G itself is an argument: computing it needs the guarantor assignments M or M*, which need
+    entropy and λ' that the vectors do not carry. The test builds G from κ' and each credential's
+    validator index. The vectors agree with all three readings, including the full-size
+    `stats_epoch_change_with_set_resize-1`, where the set shrinks from 1023 to 6 validators.
+24. **The service provision sum** (§13.2) is written ∑_{(s, **d**) ∈ E_P}(1, |**d**|) inside
+    ∀ s ∈ **s**. Read literally as a fresh binding, it would give every service the whole
+    extrinsic's count. We read s as already bound, so the sum covers that service's pairs only.
+    `preimages_order_check-3` provides to two services and agrees. The statistics vectors cover
+    only validator records, and the preimages vectors only the provision counts. Core
+    statistics and the refinement and accumulation parts of service records are modelled
+    (`coreStats`, `serviceStats`) but untested here.
+25. **Preimage errors.** The paper says E_P must be ordered and unique and every pair providable,
+    but it names no errors and gives no order between the two checks. We check ordering first
+    and use the vectors' names (`preimages_not_sorted_unique`, `preimage_unneeded`). Pairs are
+    ordered by service, then by the data octets lexicographically. On an error, the vectors keep
+    the prior state; the paper makes such a block invalid.
+26. **ℰ on Booleans.** Appendix C defines no encoding of {⊤, ⊥}, which appears in a verdict's
+    judgments and in faults (𝔼_D). We encode ⊤ as 1 and ⊥ as 0 (ℰ of the indicator, by the
+    notation section's ⊤ = 1, ⊥ = 0) and decode only those two octets. The codec vectors agree.
+27. **Trie keys are 31 octets; the vectors' are 32.** State keys are 𝔹_31 (§D.1) and L stores
+    exactly 31 octets of key, but `trie/trie.json` gives 32-octet keys. The test passes the first
+    31 octets to M, after checking that no two keys of a case share them; all 11 roots then
+    match, so the vectors' last octet never matters.
+28. **Erasure coding: the vectors pad the message polynomial to a power of two.** §H.3 interpolates
+    p of degree < d = R(v) through the d message words at 0̃ … (d−1)~ and gives validator i ≥ d the
+    word p(ĩ). Every erasure vector (tiny and full) instead takes p of degree < n = 2^⌈log₂ d⌉
+    through the message words and zeroes at d̃ … (n−1)~, and gives validator i ≥ d the word at
+    (n + i − d)~. The data shards agree; the parity shards differ. We follow the paper, and
+    `Tests/ErasureTest.lean` lists all 12 vectors in `knownDeviations`. For each it checks that the
+    vectors' convention, built from the model's own interpolation, reproduces every shard, and
+    that ℛ recovers the paper's code from two different shard subsets. CI fails if any vector
+    departs in another way or starts to match.
+
+    *Where the convention comes from.* No Gray Paper release describes it. From v0.3.3, the first
+    with "The Generator Polynomial", to v0.8.0, that subsection says degree < d (341 before the
+    rate became R(v) in v0.8.0) and points d̃ …; v0.1.1–v0.3.2 give no polynomial, only "the same
+    transform as done by the algorithm of" Lin, Chung and Han (2014), which §H still cites. The
+    vectors' own documentation (`erasure/README.md`, the schema, the CHANGELOG) says nothing about
+    the layout. It is the layout of power-of-two additive-FFT encoders in that paper's line: the
+    documentation of the `reed-solomon-simd` crate (a Leopard-RS derivative) describes its
+    "low rate" mode, used when there are more recovery than original shards, as "Original shards
+    fit into a single chunk which is padded with zero-filled shards if needed. Recovery shards are
+    generated in chunks", chunks being the next power of two of the original count, which is the
+    convention above. Only documentation was consulted, not any implementation's code; the vectors do
+    not say which implementation produced them. The paper's text, which is explicit, is what the
+    model follows.
 
 ## Caveats
 

@@ -95,6 +95,9 @@ import Services.Bootstrap.Alloc.AllocFailModel
 import Services.Bootstrap.Alloc.AllocFailSteps
 import Services.Bootstrap.Alloc.AllocFailGrow
 import Services.Bootstrap.Alloc.AllocFailRefines
+import Services.Bootstrap.Alloc.AllocAlignSteps
+import Services.Bootstrap.Alloc.AllocAlignImpl
+import Services.Bootstrap.Alloc.AllocAlignRefines
 import Services.Witness.Prefix
 import Services.Witness.EmptyTail
 import Services.Witness.Front1

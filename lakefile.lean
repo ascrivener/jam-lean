@@ -29,7 +29,8 @@ lean_lib Services
 lean_lib Tests where
   globs := #[.one `Tests.Vectors, .one `Tests.Invocation, .one `Tests.LogicExample,
     .one `Tests.Blake2bTest, .one `Tests.HostGeneralTest, .one `Tests.JamJson,
-    .one `Tests.KeccakTest, .one `Tests.RefineTest]
+    .one `Tests.KeccakTest, .one `Tests.RefineTest, .one `Tests.BlockJson,
+    .one `Tests.StfRunner]
 
 lean_exe «pvmtest-exe» where
   root := `Tests.PvmTest
@@ -69,9 +70,36 @@ target pvmtest pkg : Unit := do
     `scripts/fetch-jam-vectors.sh`. -/
 def jamVectorDir (pkg : Package) : FilePath := pkg.dir / "vendor" / "jam-test-vectors"
 
-/-- Encode the work-package family and compare with the codec vectors. -/
+/-- Encode every codec vector's term from its JSON, decode its `.bin` and encode it again, for the
+    tiny and the full chain. -/
 target codectest pkg : Unit := do
-  runOnVectors `«codectest-exe» #[(jamVectorDir pkg / "codec" / "tiny").toString]
+  runOnVectors `«codectest-exe»
+    #[(jamVectorDir pkg / "codec" / "tiny").toString, (jamVectorDir pkg / "codec" / "full").toString]
+
+lean_exe «trietest-exe» where
+  root := `Tests.TrieTest
+  exeName := "trietest"
+
+/-- M (GP Appendix D) on every case of the trie vectors. -/
+target trietest pkg : Unit := do
+  runOnVectors `«trietest-exe» #[(jamVectorDir pkg / "trie" / "trie.json").toString]
+
+lean_exe «shuffletest-exe» where
+  root := `Tests.ShuffleTest
+  exeName := "shuffletest"
+
+/-- ℱ (GP Appendix F) on every case of the shuffle vectors. -/
+target shuffletest pkg : Unit := do
+  runOnVectors `«shuffletest-exe» #[(jamVectorDir pkg / "shuffle" / "shuffle_tests.json").toString]
+
+lean_exe «erasuretest-exe» where
+  root := `Tests.ErasureTest
+  exeName := "erasuretest"
+
+/-- ℰ_C and ℛ (GP Appendix H) on every erasure vector, tiny and full. -/
+target erasuretest pkg : Unit := do
+  runOnVectors `«erasuretest-exe»
+    #[(jamVectorDir pkg / "erasure" / "tiny").toString, (jamVectorDir pkg / "erasure" / "full").toString]
 
 /-- Run the accumulation STF on every accumulate vector (tiny). -/
 target acctest pkg : Unit := do
@@ -115,3 +143,35 @@ lean_exe genwitnesssteps where
 /-- Development aid: `lake exe pvmtrace <vector.json> [steps]`. -/
 lean_exe pvmtrace where
   root := `Tests.Trace
+
+lean_exe «historytest-exe» where
+  root := `Tests.HistoryTest
+  exeName := "historytest"
+
+/-- Run the recent-history STF (§7) on every history vector (tiny and full). -/
+target historytest pkg : Unit := do
+  runOnVectors `«historytest-exe» #[(jamVectorDir pkg / "stf" / "history").toString]
+
+lean_exe «authtest-exe» where
+  root := `Tests.AuthorizationsTest
+  exeName := "authtest"
+
+/-- Run the authorization STF (§8) on every authorizations vector (tiny and full). -/
+target authtest pkg : Unit := do
+  runOnVectors `«authtest-exe» #[(jamVectorDir pkg / "stf" / "authorizations").toString]
+
+lean_exe «statstest-exe» where
+  root := `Tests.StatisticsTest
+  exeName := "statstest"
+
+/-- Run the validator-statistics STF (§13) on every statistics vector (tiny and full). -/
+target statstest pkg : Unit := do
+  runOnVectors `«statstest-exe» #[(jamVectorDir pkg / "stf" / "statistics").toString]
+
+lean_exe «preimagestest-exe» where
+  root := `Tests.PreimagesTest
+  exeName := "preimagestest"
+
+/-- Run the preimage STF (§12.4) and its service statistics on every preimages vector (tiny and full). -/
+target preimagestest pkg : Unit := do
+  runOnVectors `«preimagestest-exe» #[(jamVectorDir pkg / "stf" / "preimages").toString]

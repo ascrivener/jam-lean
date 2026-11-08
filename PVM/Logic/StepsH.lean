@@ -77,6 +77,18 @@ theorem trans {i ω μ x i' ω' μ' x' i'' ω'' μ'' x'' n₁ n₂} (h₁ : Free
   | next hn hc _ ih => rw [Nat.add_right_comm]; exact .next hn hc (ih h₂)
   | host hP hc hs hR _ ih => rw [Nat.add_right_comm]; exact .host hP hc hs hR (ih h₂)
 
+/-- A chain under a contract is one under any contract that allows at least its continuing host
+    calls. -/
+theorem weaken {R' : HostRel X}
+    (hR : ∀ h ω μ x ω' μ' x', R h ω μ x .cont ω' μ' x' → R' h ω μ x .cont ω' μ' x')
+    {i ω μ x i' ω' μ' x' n} (hs : FreeStepsH p R i ω μ x i' ω' μ' x' n) :
+    FreeStepsH p R' i ω μ x i' ω' μ' x' n := by
+  induction hs with
+  | refl => exact .refl
+  | pad _ ih => exact .pad ih
+  | next hn hc _ ih => exact .next hn hc ih
+  | host hP hc hs hr _ ih => exact .host hP hc hs (hR _ _ _ _ _ _ _ hr) ih
+
 /-- `trans` with the counts the other way round, for a goal whose count ends in a literal. -/
 theorem trans' {i ω μ x i' ω' μ' x' i'' ω'' μ'' x'' n₁ n₂} (h₁ : FreeStepsH p R i ω μ x i' ω' μ' x' n₁)
     (h₂ : FreeStepsH p R i' ω' μ' x' i'' ω'' μ'' x'' n₂) :

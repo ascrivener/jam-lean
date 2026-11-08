@@ -6,7 +6,8 @@ import Services.Bootstrap.Reader
 
 A field is read by the reader (58434) into a buffer below the frame, and handed back through a small
 return stub that loads it into a register (for a `u32`, the stub at 3780). This file proves
-`Zombify { ejector: u32 }` (tag 3), the first such variant.
+`Zombify { ejector: u32 }` (tag 3), the shared `u64` reader (`read_u64`) and `Exported { count: u64 }`
+(tag 20).
 -/
 
 namespace Services.Bootstrap.Decode.Fixed
@@ -267,5 +268,107 @@ theorem read_u64 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs)
   · rw [k6, g6, f6]
   · rw [k7, g7]
   · rw [gfr a h0 (by omega) h2 (by omega)]; exact ffr a h0 (by omega)
+
+/-- 21485 … 21520: after `Exported`'s `u64` read succeeded (ω₇ = 0), its value (ω₈) goes to O + 8 and
+    the discriminant word 2^63 + 19 to O, and the decoder returns through its frame at A. -/
+theorem ex2 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (A O ret t v5 v6 v : Nat) (hA : A + 56 < 4294967296) (hO : O + 16 ≤ 4294967296)
+    (hOA : O + 16 ≤ A + 32 ∨ A + 56 ≤ O)
+    (h1 : ω[1] = UInt64.ofNat A) (h5 : ω[5] = UInt64.ofNat O) (h7 : ω[7] = UInt64.ofNat 0)
+    (h8 : ω[8] = UInt64.ofNat v) (hv : v < 18446744073709551616)
+    (hv5 : v5 < 18446744073709551616) (hv6 : v6 < 18446744073709551616)
+    (s0 : μ.readN (A + 48) 8 = Num.encodeLE 8 ret) (s5 : μ.readN (A + 40) 8 = Num.encodeLE 8 v5)
+    (s6 : μ.readN (A + 32) 8 = Num.encodeLE 8 v6)
+    (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0)
+    (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t) (hbt : P.isBlockStart t = true)
+    (hw : ∀ a, O ≤ a → a < O + 16 → μ.writable a = true)
+    (hr : ∀ a, A ≤ a → a < A + 56 → μ.readable a = true) :
+    ∃ ω' μ', FreeStepsH p R 21485 ω μ x t ω' μ' x 12 ∧
+      ω'[0] = UInt64.ofNat ret ∧ ω'[1] = UInt64.ofNat (A + 56) ∧ ω'[5] = UInt64.ofNat v5 ∧
+      ω'[6] = UInt64.ofNat v6 ∧
+      μ'.readN O 8 = Num.encodeLE 8 9223372036854775827 ∧ μ'.readN (O + 8) 8 = Num.encodeLE 8 v ∧
+      (∀ a, a < 4294967296 → (a < O ∨ O + 16 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have rd : ∀ a w, w < 2 ^ 64 → μ.readN a 8 = Num.encodeLE 8 w → rdN μ a 8 = w := by
+    intro a w hw h
+    show Num.decodeLE _ = _
+    rw [h, Num.decodeLE_encodeLE, Nat.mod_eq_of_lt hw]
+  have r0 := rd _ ret (by omega) s0
+  have r5 := rd _ v5 hv5 s5
+  have r6 := rd _ v6 hv6 s6
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?_, ?_, ?_, ?_⟩
+  rotate_left 2
+  · pvm_go [h1, h5, h7, h8, hA, hO, hOA, hw, hr, r0, r5, r6, hret, hjt, hbt, rdN_writeN_disjoint, ↓rdN_fold]
+  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
+    post_simp
+
+/-- 21477 … 21479: `Exported`'s decoder calls the `u64` reader with ω₇ = ω₆ and return address 986. -/
+theorem ex1 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory) :
+    ∃ ω', FreeStepsH p R 21477 ω μ x 3791 ω' μ x 2 ∧
+      ω'[0] = UInt64.ofNat 986 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ ω'[7] = ω[6] := by
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?_, ?_, ?_⟩
+  rotate_left
+  · pvm_go []
+  · refine ⟨?_, ?_, ?_, ?_, ?_⟩
+    post_simp
+    exact UInt64.ofNat_toNat
+
+/-- **`Exported`**: from 20626, with tag 20 read without error and the reader `{ptr, len}` at rd (ω₆)
+    holding at least 8 more octets, `Instruction::decode` returns `Exported { count }` in its slot O:
+    the discriminant word 2^63 + 19 at O and `count` (ℰ₈⁻¹ of the 8 octets at ptr) at O + 8. The
+    reader is advanced by 8. Memory changes only in the stack below A, the reader and O … O + 16. -/
+theorem exported {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (A O ret t v5 v6 rd ptr len : Nat) (F : Frame P A O ret t v5 v6 ω μ)
+    (hA : 65536 + 104 ≤ A) (h6 : ω[6] = UInt64.ofNat rd) (h7 : ω[7] = UInt64.ofNat 0)
+    (tag : μ.read A = 20) (tab : μ.readN 67476 100 = table)
+    (hrt : ∀ a, 67476 ≤ a → a < 67576 → μ.readable a = true)
+    (hrd : 65536 ≤ rd ∧ rd + 16 < 4294967296) (hptr : 65536 ≤ ptr ∧ ptr + 16 < 4294967296)
+    (hlen : 8 ≤ len ∧ len < 4294967296)
+    (hR0 : μ.readN rd 8 = Num.encodeLE 8 ptr) (hR8 : μ.readN (rd + 8) 8 = Num.encodeLE 8 len)
+    (hrdA : rd + 16 ≤ A - 104 ∨ A + 56 ≤ rd) (hpA : ptr + 16 ≤ A - 104 ∨ A ≤ ptr)
+    (hOA' : O + 16 ≤ A - 104 ∨ A + 56 ≤ O) (hOr : O + 16 ≤ rd ∨ rd + 16 ≤ O)
+    (hO16 : O + 16 ≤ 4294967296)
+    (hws : ∀ a, A - 104 ≤ a → a < A → μ.writable a = true)
+    (hwr : ∀ a, rd ≤ a → a < rd + 16 → μ.writable a = true)
+    (hwO : ∀ a, O ≤ a → a < O + 16 → μ.writable a = true)
+    (hrp : ∀ a, ptr ≤ a → a < ptr + 8 → μ.readable a = true) :
+    ∃ ω' μ', FreeStepsH p R 20626 ω μ x t ω' μ' x 150 ∧
+      ω'[0] = UInt64.ofNat ret ∧ ω'[1] = UInt64.ofNat (A + 56) ∧ ω'[5] = UInt64.ofNat v5 ∧
+      ω'[6] = UInt64.ofNat v6 ∧
+      μ'.readN O 8 = Num.encodeLE 8 9223372036854775827 ∧ μ'.readN (O + 8) 8 = μ.readN ptr 8 ∧
+      μ'.readN rd 8 = Num.encodeLE 8 (ptr + 8) ∧ μ'.readN (rd + 8) 8 = Num.encodeLE 8 (len - 8) ∧
+      (∀ a, a < 4294967296 → (a < A - 104 ∨ A ≤ a) → (a < rd ∨ rd + 16 ≤ a) → (a < O ∨ O + 16 ≤ a) →
+        μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have hA2 := F.hA
+  obtain ⟨ω1, run1, e0, e1, e5, e6⟩ := dispatch (p := p) (P := P) (R := R) x ω μ A 20 (by decide) (by omega)
+    F.h1 h7 tag tab (F.hr A (by omega) (by omega)) hrt
+  obtain ⟨ω2, run2, d0, d1, d5, d6, d7⟩ := ex1 (p := p) (P := P) (R := R) x ω1 μ
+  obtain ⟨ω3, μ3, run3, g0, g1, g5, g6, g7, g8, gR0, gR8, gfr, grd, gwr⟩ :=
+    read_u64 (p := p) (P := P) (R := R) x ω2 μ A 986 21485 rd ptr len ⟨by omega, by omega⟩ d0
+      (d1.trans (e1.trans F.h1)) (d7.trans (e6.trans h6)) (by decide) jte_492 bs_21485 hrd hptr hlen hR0 hR8
+      (by omega) (by omega) hws hwr hrp
+  have hv : Num.decodeLE (μ.readN ptr 8) < 18446744073709551616 := by
+    have := decodeLE_lt (μ.readN ptr 8); simpa [Memory.length_readN] using this
+  have ev : Num.encodeLE 8 (Num.decodeLE (μ.readN ptr 8)) = μ.readN ptr 8 := by
+    have := encodeLE_decodeLE (μ.readN ptr 8); simpa [Memory.length_readN] using this
+  have hfar : ∀ a, A ≤ a → a < A + 56 → μ3.read a = μ.read a :=
+    fun a h1 h2 => gfr a (by omega) (by omega) (by omega)
+  obtain ⟨ω4, μ4, run4, k0, k1, k5, k6, kO, kO8, kfr, krd, kwr⟩ := ex2 (p := p) (P := P) (R := R) x ω3 μ3
+    A O ret t v5 v6 (Num.decodeLE (μ.readN ptr 8)) hA2 hO16 (by omega) g1
+    (g5.trans (d5.trans (e5.trans F.h5))) g7 g8 hv F.hv5 F.hv6
+    (by rw [Memory.readN_congr (fun j hj => hfar _ (by omega) (by omega))]; exact F.s0)
+    (by rw [Memory.readN_congr (fun j hj => hfar _ (by omega) (by omega))]; exact F.s5)
+    (by rw [Memory.readN_congr (fun j hj => hfar _ (by omega) (by omega))]; exact F.s6)
+    F.hret F.hjt F.hbt (fun a h1 h2 => by rw [gwr]; exact hwO a h1 h2)
+    (fun a h1 h2 => by rw [grd]; exact F.hr a h1 h2)
+  refine ⟨ω4, μ4, (run1.trans (run2.trans (run3.trans run4))).mono (by omega), k0, k1, k5, k6, kO,
+    kO8.trans ev, ?_, ?_, ?_, fun a => by rw [krd, grd], fun a => by rw [kwr, gwr]⟩
+  · rw [Memory.readN_congr (fun j hj => kfr _ (by omega) (by omega))]; exact gR0
+  · rw [Memory.readN_congr (fun j hj => kfr _ (by omega) (by omega))]; exact gR8
+  · intro a h0 h1 h2 h3
+    rw [kfr a h0 h3]; exact gfr a h0 h1 h2
 
 end Services.Bootstrap.Decode.Fixed

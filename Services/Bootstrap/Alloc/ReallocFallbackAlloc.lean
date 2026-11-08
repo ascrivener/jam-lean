@@ -58,6 +58,7 @@ theorem fallback_tail' {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω :
   have ht := hwf.2.2.2.1
   unfold TilesOk at ht
   have hcl := ht.mem_lt c hcm
+  have htop : s.top = s.base + 1073741824 := by unfold State.top; rw [maxSize_val]
   have hcsz : c.size = u + 1 := chunk_size_usable hcm hca hcu hu hcl.2.2
   -- the call to `alloc_impl`
   obtain ⟨ω1, μ1, r1, a5, a8, a9, a10, a0, a104, fr1, ww1, g1⟩ := rf_call (p := p) (P := P) (R := R) x ω μ
@@ -68,7 +69,7 @@ theorem fallback_tail' {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω :
       (by rw [fget g1 1 (by decide) (by decide)]; exact h1) (by rw [fget g1 7 (by decide) (by decide)]; exact h7)
       a8 a9 a10 hsp (by omega) hb0 hbT hA hfo hHTs ⟨by omega, by omega⟩ hHT (hw.of_eq ww1)
   have rj := al_ret_realloc (p := p) (P := P) (R := R) x ω2 μ2 (by rw [e0, a0])
-  have rd : ∀ a v, rdN μ a 8 = v → sp + 112 ≤ a → a < sp + 152 → rdN μ2 a 8 = v := fun a v h h1 h2 => by
+  have rd : ∀ a v, rdN μ a 8 = v → sp + 112 ≤ a → a + 8 ≤ sp + 152 → rdN μ2 a 8 = v := fun a v h h1 h2 => by
     rw [← h]; exact rdN_frame fun j hj => (stk2 _ (by omega) (by omega)).trans (fr1 _ (by omega) (Or.inr (by omega)))
   have h104 : rdN μ2 (sp + 104) 8 = 196792 := by
     rw [← a104]; exact rdN_frame fun j hj => stk2 _ (by omega) (by omega)
@@ -127,6 +128,7 @@ theorem fallback_tail_heap {p : ByteArray} {P : Program} [HasCode p P] (env : Re
   have ht := hwf.2.2.2.1
   unfold TilesOk at ht
   have hcl := ht.mem_lt c hcm
+  have htop : s.top = s.base + 1073741824 := by unfold State.top; rw [maxSize_val]
   have hcsz : c.size = u + 1 := chunk_size_usable hcm hca hcu hu hcl.2.2
   -- the call to `alloc_impl`, which grows the heap
   obtain ⟨ω1, μ1, r1, a5, a8, a9, a10, a0, a104, fr1, ww1, g1⟩ := rf_call (p := p) (P := P)
@@ -139,7 +141,7 @@ theorem fallback_tail_heap {p : ByteArray} {P : Program} [HasCode p P] (env : Re
       (by rw [fget g1 7 (by decide) (by decide)]; exact h7) a8 a9 a10 hsp (by omega) hb0 hbT hA hfo hcost hHTs
       ⟨by omega, by omega⟩ hSb (HeapPages.of_eq hp ww1) (fun a h1 h2 => by rw [ww1]; exact hst a h1 h2) hHT
   have rj := al_ret_realloc (p := p) (P := P) (R := refineContract env) x ω2 μ2 (by rw [e0, a0])
-  have rd : ∀ a v, rdN μ a 8 = v → sp + 112 ≤ a → a < sp + 152 → rdN μ2 a 8 = v := fun a v h h1 h2 => by
+  have rd : ∀ a v, rdN μ a 8 = v → sp + 112 ≤ a → a + 8 ≤ sp + 152 → rdN μ2 a 8 = v := fun a v h h1 h2 => by
     rw [← h]; exact rdN_frame fun j hj => (stk2 _ (by omega) (by omega)).trans (fr1 _ (by omega) (Or.inr (by omega)))
   have h104 : rdN μ2 (sp + 104) 8 = 196792 := by
     rw [← a104]; exact rdN_frame fun j hj => stk2 _ (by omega) (by omega)
@@ -270,7 +272,7 @@ theorem fallback_tail_fail {p : ByteArray} {P : Program} [HasCode p P] (env : Re
   have rj := al_ret_realloc (p := p) (P := P) (R := refineContract env) x ω2 μ2 (by rw [e0, a0])
   have fr : ∀ a, a < 4294967296 → (a < sp - 152 ∨ sp ≤ a) → (a < sp + 104 ∨ sp + 112 ≤ a) →
       μ2.read a = μ.read a := fun a h1 h2 h3 => (fr2 a h1 h2).trans (fr1 a h1 h3)
-  have rd : ∀ a v, rdN μ a 8 = v → sp + 112 ≤ a → a < sp + 152 → rdN μ2 a 8 = v := fun a v h h1 h2 => by
+  have rd : ∀ a v, rdN μ a 8 = v → sp + 112 ≤ a → a + 8 ≤ sp + 152 → rdN μ2 a 8 = v := fun a v h h1 h2 => by
     rw [← h]; exact rdN_frame fun j hj => fr _ (by omega) (Or.inr (by omega)) (Or.inr (by omega))
   obtain ⟨ω3, r3, k7, k0, k1, k5, k6⟩ := rf_null (p := p) (P := P) (R := refineContract env) x ω2 μ2 sp v5 v6
     (by rw [e1, fget g1 1 (by decide) (by decide)]; exact h1) e7 (by omega) hsp1

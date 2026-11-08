@@ -162,6 +162,24 @@ An independent kernel, nanoda as vendored by
     below 2³¹ (`Ok`). The loop invariant `Inv` fixes the frame's concrete addresses.
   - *Scope:* this is a loop lemma. It is **not yet composed** into a Ψ_R theorem for a payload of
     `Checkpoint`s, and other instruction kinds are not covered.
+- **`Instruction::decode`'s tag dispatch, for every tag.** `Decode.Tag.dispatch`, `reject` and
+  `unit_variant` (`Services/Bootstrap/Decode/Tag.lean`).
+  - *Statement:* from 20626, where the reader has just read the tag octet into the function's
+    frame at A:
+    - for each tag t < 25, the 32-bit offset table at 67476 sends the run to t's decoder
+      `handler t`, changing nothing but ω₇ and ω₈ (`dispatch`);
+    - if the reader failed or t ≥ 25, the function returns the error word 2^64 − 2 in its result
+      slot (`reject`);
+    - for the variants without fields (`Checkpoint`, `Panic`, `Benchmark`), the function returns
+      their discriminant word 2^63 + t − 1 (`unit_variant`).
+
+    In each case the function restores ω₀, ω₅, ω₆ and sp from the frame and returns.
+  - *Assumed:* the offset table's 100 octets (read-only data) and the frame's saved words. Unlike
+    `DecodeLoop`, the frame address A and the slot O are arbitrary, so the theorems also serve the
+    decode of work outputs in accumulate.
+  - *Scope:* the decoders of the 22 variants with fields are not covered yet. The code facts now
+    cover all of `Instruction::decode`, from two traced payloads that between them hold every
+    instruction kind, plus the whole range 20626 … 22145.
 
 ### picoalloc: the model (`Services/Picoalloc/`)
 

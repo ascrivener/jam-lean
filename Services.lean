@@ -49,6 +49,7 @@ import Services.Bootstrap.NoInstrTail7
 import Services.Bootstrap.NoInstrTail8
 import Services.Bootstrap.NoInstr
 import Services.Bootstrap.DecodeLoop
+import Services.Bootstrap.Decode.Tag
 import Services.Picoalloc.Model
 import Services.Picoalloc.Invariant
 import Services.Picoalloc.FreeLists

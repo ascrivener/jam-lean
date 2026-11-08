@@ -142,8 +142,17 @@ jobs:
       - name: Fetch the Gray Paper v0.8.0 JAM vectors
         run: scripts/fetch-jam-vectors.sh
 
-      - name: Codec vectors (work-package family)
+      - name: Codec vectors, tiny and full (encode from JSON, decode and re-encode)
         run: lake build codectest
+
+      - name: State trie vectors (Appendix D)
+        run: lake build trietest
+
+      - name: Shuffle vectors (Appendix F)
+        run: lake build shuffletest
+
+      - name: Erasure-coding vectors, tiny and full (all listed as deviating from GP 0.8.0)
+        run: lake build erasuretest
 
       - name: Accumulate vectors (all but the listed deviations from GP 0.8.0)
         run: lake build acctest

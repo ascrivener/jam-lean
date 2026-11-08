@@ -29,7 +29,7 @@ lean_lib Services
 lean_lib Tests where
   globs := #[.one `Tests.Vectors, .one `Tests.Invocation, .one `Tests.LogicExample,
     .one `Tests.Blake2bTest, .one `Tests.HostGeneralTest, .one `Tests.JamJson,
-    .one `Tests.KeccakTest, .one `Tests.RefineTest,
+    .one `Tests.KeccakTest, .one `Tests.RefineTest, .one `Tests.BlockJson,
     .one `Tests.StfRunner]
 
 lean_exe «pvmtest-exe» where
@@ -70,9 +70,36 @@ target pvmtest pkg : Unit := do
     `scripts/fetch-jam-vectors.sh`. -/
 def jamVectorDir (pkg : Package) : FilePath := pkg.dir / "vendor" / "jam-test-vectors"
 
-/-- Encode the work-package family and compare with the codec vectors. -/
+/-- Encode every codec vector's term from its JSON, decode its `.bin` and encode it again, for the
+    tiny and the full chain. -/
 target codectest pkg : Unit := do
-  runOnVectors `«codectest-exe» #[(jamVectorDir pkg / "codec" / "tiny").toString]
+  runOnVectors `«codectest-exe»
+    #[(jamVectorDir pkg / "codec" / "tiny").toString, (jamVectorDir pkg / "codec" / "full").toString]
+
+lean_exe «trietest-exe» where
+  root := `Tests.TrieTest
+  exeName := "trietest"
+
+/-- M (GP Appendix D) on every case of the trie vectors. -/
+target trietest pkg : Unit := do
+  runOnVectors `«trietest-exe» #[(jamVectorDir pkg / "trie" / "trie.json").toString]
+
+lean_exe «shuffletest-exe» where
+  root := `Tests.ShuffleTest
+  exeName := "shuffletest"
+
+/-- ℱ (GP Appendix F) on every case of the shuffle vectors. -/
+target shuffletest pkg : Unit := do
+  runOnVectors `«shuffletest-exe» #[(jamVectorDir pkg / "shuffle" / "shuffle_tests.json").toString]
+
+lean_exe «erasuretest-exe» where
+  root := `Tests.ErasureTest
+  exeName := "erasuretest"
+
+/-- ℰ_C and ℛ (GP Appendix H) on every erasure vector, tiny and full. -/
+target erasuretest pkg : Unit := do
+  runOnVectors `«erasuretest-exe»
+    #[(jamVectorDir pkg / "erasure" / "tiny").toString, (jamVectorDir pkg / "erasure" / "full").toString]
 
 /-- Run the accumulation STF on every accumulate vector (tiny). -/
 target acctest pkg : Unit := do

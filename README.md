@@ -28,8 +28,8 @@ Two libraries, each bounded by the Gray Paper (v0.8.0):
   definitions of §4.7, and constants. `PVM/Logic/` holds proof rules about this model; it adds no
   semantics.
 * **`JAM`: Appendix B (in progress)**, built on `PVM`, with the protocol terms Appendix B needs:
-  the codec (Appendix C), ℋ = Blake2b-256 (§3.8), work packages, items, digests and reports
-  (§11, §14), service accounts (§9), ℋ_K = Keccak-256 and the binary Merkle root (Appendix E).
+  the codec (Appendix C) with its decoder ℰ⁻¹, blocks, headers and extrinsics, ℋ = Blake2b-256
+  (§3.8), work packages, items, digests and reports (§11, §14), service accounts (§9), ℋ_K = Keccak-256 and the binary Merkle root (Appendix E).
   It has the general host functions (`gas`, `grow_heap`, `fetch`, `lookup`, `read`, `write`,
   `info`), the 13 accumulate host functions, Ψ_A, and the accumulation state transition of §12
   (Δ_1, Δ_*, Δ_+, the ready queue and history, statistics, and the output root); and the refine
@@ -52,13 +52,16 @@ call `pc`) live in `Tests/`, not in the model.
 | Block costs in `programs/` | **5,123 / 5,123** correct |
 | Block costs in `gas-tests/` (doom, pinky, prime-sieve) | **39,737 / 39,737** correct |
 | Model's ϖ against the blocks the vectors list | identical in all 367 programs |
-| `JAM` codec: work-package family vs. GP v0.8.0 codec vectors | **6 / 6** match |
+| `JAM` codec (Appendix C): every GP v0.8.0 codec vector (headers, blocks, all extrinsics, the work-package family), encoded from JSON and round-tripped through ℰ⁻¹ | **15 / 15** tiny, **15 / 15** full |
 | `JAM` Blake2b-256 vs. `hashlib` and RFC 7693 | **13 / 13** match |
 | `JAM` general host functions, hand-written cases | **30 / 30** pass |
 | `JAM` Keccak-256 / SHA3-256 vs. `hashlib` and standard vectors | **15 / 15** match |
 | `JAM` refine host functions, Ψ_R and Ψ_I, hand-written cases (no vectors exist) | **59 / 59** pass, 2 more kernel-checked |
 | `witness-service.jam`'s host-call ids within those `Services.Witness` assumes (`lake build witnesscheck`) | **pass** |
 | The real witness binary's refine on 7 malformed payloads gives `Rejected(BadPayload)` (`lake build witnessrun`; a test, not a proof) | **7 / 7** |
+| `JAM` state trie M (Appendix D) vs. GP v0.8.0 trie vectors (keys cut to 31 octets, note 27); state-key constructor C, hand-written | **11 / 11** roots match; **4 / 4** |
+| `JAM` Fisher–Yates shuffle ℱ with 𝒬_l (Appendix F) vs. GP v0.8.0 shuffle vectors | **8 / 8** match |
+| `JAM` erasure coding ℰ_C / ℛ over GF(2¹⁶) (Appendix H) vs. GP v0.8.0 erasure vectors | data shards match in **12 / 12** (6 tiny, 6 full); parity shards follow a different convention in all 12 (note 28), which the test reproduces exactly; ℛ recovers the paper's code in all 12 |
 | Accumulation STF (§12) vs. GP v0.8.0 accumulate vectors (tiny) | **61 / 63** pass; the 2 others are `bless_from_non_manager`, which the vectors' changelog lists as departing from GP 0.8.0 |
 | Recent-history STF (§7: β_H, the accumulation-output belt β_B) vs. `stf/history` (`lake build historytest`) | **4 / 4** tiny, **4 / 4** full |
 | Authorization STF (§8: the pool α from the queue φ') vs. `stf/authorizations` (`lake build authtest`) | **3 / 3** tiny, **3 / 3** full |
@@ -654,6 +657,36 @@ noted here and in a comment at the definition.
     and use the vectors' names (`preimages_not_sorted_unique`, `preimage_unneeded`). Pairs are
     ordered by service, then by the data octets lexicographically. On an error, the vectors keep
     the prior state; the paper makes such a block invalid.
+26. **ℰ on Booleans.** Appendix C defines no encoding of {⊤, ⊥}, which appears in a verdict's
+    judgments and in faults (𝔼_D). We encode ⊤ as 1 and ⊥ as 0 (ℰ of the indicator, by the
+    notation section's ⊤ = 1, ⊥ = 0) and decode only those two octets. The codec vectors agree.
+27. **Trie keys are 31 octets; the vectors' are 32.** State keys are 𝔹_31 (§D.1) and L stores
+    exactly 31 octets of key, but `trie/trie.json` gives 32-octet keys. The test passes the first
+    31 octets to M, after checking that no two keys of a case share them; all 11 roots then
+    match, so the vectors' last octet never matters.
+28. **Erasure coding: the vectors pad the message polynomial to a power of two.** §H.3 interpolates
+    p of degree < d = R(v) through the d message words at 0̃ … (d−1)~ and gives validator i ≥ d the
+    word p(ĩ). Every erasure vector (tiny and full) instead takes p of degree < n = 2^⌈log₂ d⌉
+    through the message words and zeroes at d̃ … (n−1)~, and gives validator i ≥ d the word at
+    (n + i − d)~. The data shards agree; the parity shards differ. We follow the paper, and
+    `Tests/ErasureTest.lean` lists all 12 vectors in `knownDeviations`. For each it checks that the
+    vectors' convention, built from the model's own interpolation, reproduces every shard, and
+    that ℛ recovers the paper's code from two different shard subsets. CI fails if any vector
+    departs in another way or starts to match.
+
+    *Where the convention comes from.* No Gray Paper release describes it. From v0.3.3, the first
+    with "The Generator Polynomial", to v0.8.0, that subsection says degree < d (341 before the
+    rate became R(v) in v0.8.0) and points d̃ …; v0.1.1–v0.3.2 give no polynomial, only "the same
+    transform as done by the algorithm of" Lin, Chung and Han (2014), which §H still cites. The
+    vectors' own documentation (`erasure/README.md`, the schema, the CHANGELOG) says nothing about
+    the layout. It is the layout of power-of-two additive-FFT encoders in that paper's line: the
+    documentation of the `reed-solomon-simd` crate (a Leopard-RS derivative) describes its
+    "low rate" mode, used when there are more recovery than original shards, as "Original shards
+    fit into a single chunk which is padded with zero-filled shards if needed. Recovery shards are
+    generated in chunks", chunks being the next power of two of the original count, which is the
+    convention above. Only documentation was consulted, not any implementation's code; the vectors do
+    not say which implementation produced them. The paper's text, which is explicit, is what the
+    model follows.
 
 ## Caveats
 

@@ -31,6 +31,7 @@ Gaps, where the paper leaves behaviour undefined:
 | 23 | §13.1 | The guarantee count tests κ'_v ∈ G, a validator key against a set of Ed25519 keys. The fresh accumulator [(0, …), …] has no stated length (|κ'| is implied). |
 | 24 | §13.2 | The provision sum ∑_{(s, **d**) ∈ E_P} reuses s, already bound by ∀ s ∈ **s**. It reads as a fresh binding unless the reader knows it is a filter. |
 | 25 | §12.4 | No error is named for an invalid E_P, and no order is given between the ordering check and the providable check. |
+| 26 | Appendix C | No encoding of Booleans {⊤, ⊥} is defined, though 𝔼_D's judgments and faults contain them; 0/1 is the evident reading and the vectors use it. |
 
 ## Paper and vectors
 
@@ -38,6 +39,8 @@ Gaps, where the paper leaves behaviour undefined:
 |---|---|---|
 | 5 | Ψ returns ı = 0 on ∎ and ☇; the vectors report the exiting instruction. | Paper or vector docs: which one is meant? |
 | 15 | The accumulate vectors follow later GP PRs rather than v0.8.0: `bless_from_non_manager-1` and `-2`. | Already in the vectors' CHANGELOG; no issue needed. |
+| 27 | `trie/trie.json` gives 32-octet keys; GP §D.1 state keys are 31 octets. The roots match with the last octet dropped. | Vectors: say keys are cut to 31 octets, or give 31-octet keys. |
+| 28 | Every erasure vector pads the message polynomial with zeroes to degree < n = 2^⌈log₂ R(v)⌉ and puts parity word i at point (n + i − R(v))~; §H.3 says degree < R(v) and point ĩ. No GP release (v0.1.1–v0.8.0) describes the vectors' layout; it is the "low rate" layout `reed-solomon-simd` documents (originals in one zero-padded power-of-two chunk, recovery shards in the chunks after). | Paper: if that code is intended (the cited Lin–Chung–Han transform works on power-of-two blocks), §H.3 should define p of degree < n with zeroes at d̃ … (n−1)~ and parity at (n + i − d)~; otherwise the vectors should follow §H.3. |
 
 ## Vector coverage
 

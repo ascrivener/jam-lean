@@ -61,6 +61,36 @@ import Services.Bootstrap.CodeCheck.G45
 import Services.Bootstrap.CodeCheck.G46
 import Services.Bootstrap.CodeCheck.G47
 import Services.Bootstrap.CodeCheck.G48
+import Services.Bootstrap.CodeCheck.G49
+import Services.Bootstrap.CodeCheck.G50
+import Services.Bootstrap.CodeCheck.G51
+import Services.Bootstrap.CodeCheck.G52
+import Services.Bootstrap.CodeCheck.G53
+import Services.Bootstrap.CodeCheck.G54
+import Services.Bootstrap.CodeCheck.G55
+import Services.Bootstrap.CodeCheck.G56
+import Services.Bootstrap.CodeCheck.G57
+import Services.Bootstrap.CodeCheck.G58
+import Services.Bootstrap.CodeCheck.G59
+import Services.Bootstrap.CodeCheck.G60
+import Services.Bootstrap.CodeCheck.G61
+import Services.Bootstrap.CodeCheck.G62
+import Services.Bootstrap.CodeCheck.G63
+import Services.Bootstrap.CodeCheck.G64
+import Services.Bootstrap.CodeCheck.G65
+import Services.Bootstrap.CodeCheck.G66
+import Services.Bootstrap.CodeCheck.G67
+import Services.Bootstrap.CodeCheck.G68
+import Services.Bootstrap.CodeCheck.G69
+import Services.Bootstrap.CodeCheck.G70
+import Services.Bootstrap.CodeCheck.G71
+import Services.Bootstrap.CodeCheck.G72
+import Services.Bootstrap.CodeCheck.G73
+import Services.Bootstrap.CodeCheck.G74
+import Services.Bootstrap.CodeCheck.G75
+import Services.Bootstrap.CodeCheck.G76
+import Services.Bootstrap.CodeCheck.G77
+import Services.Bootstrap.CodeCheck.G78
 import Services.Bootstrap.CodeCheck.H0
 import Services.Bootstrap.CodeCheck.H1
 import Services.Bootstrap.CodeCheck.H2
@@ -89,7 +119,7 @@ theorem vBlob_ok : prog.vBlob = true := by
 theorem checkCode_ok : checkCode (ba N 11888 83235) facts = true :=
   checkCode_of_chunks parse vBlob_ok (by
     simp only [factChunks, factGroups, List.flatten_cons, List.flatten_nil, List.all_append, List.all_nil,
-      Bool.and_true, chunks_0, chunks_1, chunks_2, chunks_3, chunks_4, chunks_5, chunks_6, chunks_7, chunks_8, chunks_9, chunks_10, chunks_11, chunks_12, chunks_13, chunks_14, chunks_15, chunks_16, chunks_17, chunks_18, chunks_19, chunks_20, chunks_21, chunks_22, chunks_23, chunks_24, chunks_25, chunks_26, chunks_27, chunks_28, chunks_29, chunks_30, chunks_31, chunks_32, chunks_33, chunks_34, chunks_35, chunks_36, chunks_37, chunks_38, chunks_39, chunks_40, chunks_41, chunks_42, chunks_43, chunks_44, chunks_45, chunks_46, chunks_47, chunks_48])
+      Bool.and_true, chunks_0, chunks_1, chunks_2, chunks_3, chunks_4, chunks_5, chunks_6, chunks_7, chunks_8, chunks_9, chunks_10, chunks_11, chunks_12, chunks_13, chunks_14, chunks_15, chunks_16, chunks_17, chunks_18, chunks_19, chunks_20, chunks_21, chunks_22, chunks_23, chunks_24, chunks_25, chunks_26, chunks_27, chunks_28, chunks_29, chunks_30, chunks_31, chunks_32, chunks_33, chunks_34, chunks_35, chunks_36, chunks_37, chunks_38, chunks_39, chunks_40, chunks_41, chunks_42, chunks_43, chunks_44, chunks_45, chunks_46, chunks_47, chunks_48, chunks_49, chunks_50, chunks_51, chunks_52, chunks_53, chunks_54, chunks_55, chunks_56, chunks_57, chunks_58, chunks_59, chunks_60, chunks_61, chunks_62, chunks_63, chunks_64, chunks_65, chunks_66, chunks_67, chunks_68, chunks_69, chunks_70, chunks_71, chunks_72, chunks_73, chunks_74, chunks_75, chunks_76, chunks_77, chunks_78])
 
 /-- **The host-call ids the blob names** (`PVM.jamHostCallIdsOf`, GP §A.1, §A.5.2), by the kernel. -/
 theorem hostIds_ok : ∀ n ∈ PVM.jamHostCallIdsOf (ba N 81 95042), n ∈ hostIds := by

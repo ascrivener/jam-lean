@@ -62,6 +62,7 @@ theorem it_pre {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X
       | rw [Nat.mod_eq_of_lt (by omega)]
       | (congr 1; rw [Nat.mod_eq_of_lt (by omega)])
       | exact UInt64.ofNat_toNat
+      | exact Nat.mod_eq_of_lt (UInt64.toNat_lt _)
 
 
 /-- **46300 … 58434**, the tag read (ω₇ = 0) and the tag 1 (a transfer, at b + 272, b the frame's
@@ -130,6 +131,7 @@ theorem it_tr_dst {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x 
       | rfl
       | (congr 1; rw [Nat.mod_eq_of_lt (by omega)])
       | exact UInt64.ofNat_toNat
+      | exact Nat.mod_eq_of_lt (UInt64.toNat_lt _)
 
 /-- **46658 … 58434**: ℰ₄(d) read; d saved at b + 8, a zero word at b + 272 and the read of ℰ₈(a) (return address 2096). -/
 theorem it_tr_amt {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
@@ -163,6 +165,7 @@ theorem it_tr_amt {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x 
       | rfl
       | (congr 1; rw [Nat.mod_eq_of_lt (by omega)])
       | exact UInt64.ofNat_toNat
+      | exact Nat.mod_eq_of_lt (UInt64.toNat_lt _)
 
 /-- **46688 … 70133**: ℰ₈(a) read; a saved at b + 0, and the memo's buffer b + 272 … + 400 zeroed by `memzero` (return address 2098). -/
 theorem it_tr_memo0 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
@@ -196,6 +199,7 @@ theorem it_tr_memo0 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (
       | rfl
       | (congr 1; rw [Nat.mod_eq_of_lt (by omega)])
       | exact UInt64.ofNat_toNat
+      | exact Nat.mod_eq_of_lt (UInt64.toNat_lt _)
 
 /-- **46714 … 58434**: the read of the memo m (128 octets) into b + 272 (return address 2100). -/
 theorem it_tr_memo {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
@@ -224,6 +228,7 @@ theorem it_tr_memo {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x
       | rfl
       | (congr 1; rw [Nat.mod_eq_of_lt (by omega)])
       | exact UInt64.ofNat_toNat
+      | exact Nat.mod_eq_of_lt (UInt64.toNat_lt _)
 
 /-- **46730 … 68729**: the memo read; its copy from b + 272 to b + 136 (`memcpy`, 128 octets, return address 2102). -/
 theorem it_tr_memocp {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
@@ -250,6 +255,7 @@ theorem it_tr_memocp {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
       | rfl
       | (congr 1; rw [Nat.mod_eq_of_lt (by omega)])
       | exact UInt64.ofNat_toNat
+      | exact Nat.mod_eq_of_lt (UInt64.toNat_lt _)
 
 /-- **46751 … 46040**: the call of the `u64` reader on the reader (ω₇ = ω₆, return address 2104). -/
 theorem it_tr_gas {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
@@ -275,5 +281,98 @@ theorem it_tr_gas {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x 
       | rfl
       | (congr 1; rw [Nat.mod_eq_of_lt (by omega)])
       | exact UInt64.ofNat_toNat
+      | exact Nat.mod_eq_of_lt (UInt64.toNat_lt _)
+
+/-- **46040 … 58434**, the `u64` reader: the 16-octet frame (ω₀ at sp − 8), a zero word at sp − 16 and the read of 8 octets into it (return address 2068). -/
+theorem u64_pre {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
+    (sp : Nat) (h1 : ω[1] = UInt64.ofNat sp) (hsp : 65536 + 16 ≤ sp ∧ sp < 4294967296)
+    (hwf : ∀ a, sp - 16 ≤ a → a < sp → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 46040 ω μ x 58434 ω' μ' x 20 ∧
+      ω'[0] = UInt64.ofNat 2068 ∧ ω'[1] = UInt64.ofNat (sp - 16) ∧ ω'[8] = UInt64.ofNat (sp - 16) ∧
+      ω'[9] = UInt64.ofNat 8 ∧ ω'[7] = ω[7] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      rdN μ' (sp - 8) 8 = ω[0].toNat ∧
+      (∀ a, a < 4294967296 → (a < sp - 16 ∨ sp ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?run, ?post⟩
+  case run => pvm_go [h1, hwf, Memory.readable_of_writable, rdN_writeN_disjoint, ↓rdN_fold, ↓loadI_fold]
+  case post =>
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha h1 => ?_, fun a => ?_, fun a => ?_⟩
+    all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+      ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, h1]
+    all_goals try with_reducible rfl
+    all_goals try simp only [show sp - 16 + 8 = sp - 8 from by omega]
+    all_goals try first
+      | (rd_simp []; done)
+      | rd_simp []
+    all_goals try first
+      | with_reducible rfl
+      | exact Nat.mod_eq_of_lt (by omega)
+    all_goals first
+      | (congr 1; omega)
+      | rfl
+      | (congr 1; rw [Nat.mod_eq_of_lt (by omega)])
+      | exact UInt64.ofNat_toNat
+      | exact Nat.mod_eq_of_lt (UInt64.toNat_lt _)
+
+/-- **46059 … 46067**: the word read (at sp, the frame's base) in ω₈, ω₀ restored from sp + 8, the frame popped, at the return's `jumpInd`. -/
+theorem u64_post {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
+    (sp v r0 : Nat) (h1 : ω[1] = UInt64.ofNat sp) (m0 : rdN μ sp 8 = v) (m8 : rdN μ (sp + 8) 8 = r0)
+    (hsp : 65536 ≤ sp ∧ sp + 16 < 4294967296)
+    (hrf : ∀ a, sp ≤ a → a < sp + 16 → μ.readable a = true) :
+    ∃ ω' μ', FreeStepsH p R 46059 ω μ x 46067 ω' μ' x 20 ∧
+      ω'[8] = UInt64.ofNat v ∧ ω'[0] = UInt64.ofNat r0 ∧ ω'[1] = UInt64.ofNat (sp + 16) ∧ ω'[7] = ω[7] ∧
+      ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ μ' = μ := by
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?run, ?post⟩
+  case run => pvm_go [h1, m0, m8, hrf, rdN_writeN_disjoint, ↓rdN_fold, ↓loadI_fold]
+  case post =>
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+    all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+      ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, h1]
+    all_goals try with_reducible rfl
+    all_goals try simp only [Nat.add_zero]
+    all_goals try first
+      | (rd_simp []; done)
+      | rd_simp []
+    all_goals try first
+      | with_reducible rfl
+      | exact Nat.mod_eq_of_lt (by omega)
+    all_goals first
+      | (congr 1; omega)
+      | rfl
+      | (congr 1; rw [Nat.mod_eq_of_lt (by omega)])
+      | exact UInt64.ofNat_toNat
+      | exact Nat.mod_eq_of_lt (UInt64.toNat_lt _)
+
+/-- **46759 … 68729**: the gas g read (ω₇ = 0, g in ω₈): g kept in ω₆, and the memo's copy from b + 136 to out + 8 (`memcpy`, 128 octets, return address 2112). -/
+theorem it_tr_cp {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
+    (b out g : Nat) (h1 : ω[1] = UInt64.ofNat b) (h5 : ω[5] = UInt64.ofNat out) (h7 : ω[7] = UInt64.ofNat 0)
+    (h8 : ω[8] = UInt64.ofNat g) (hb : b + 424 < 4294967296) (hout : out + 8 < 18446744073709551616)
+    (hg : g < 18446744073709551616) :
+    ∃ ω' μ', FreeStepsH p R 46759 ω μ x 68729 ω' μ' x 20 ∧
+      ω'[0] = UInt64.ofNat 2112 ∧ ω'[1] = UInt64.ofNat b ∧ ω'[5] = UInt64.ofNat out ∧ ω'[6] = UInt64.ofNat g ∧
+      ω'[7] = UInt64.ofNat (out + 8) ∧ ω'[8] = UInt64.ofNat (b + 136) ∧ ω'[9] = UInt64.ofNat 128 ∧ μ' = μ := by
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?run, ?post⟩
+  case run => pvm_go [h1, h5, h7, h8, rdN_writeN_disjoint, ↓rdN_fold, ↓loadI_fold]
+  case post =>
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+    all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+      ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, h1, h5, h8]
+    all_goals try with_reducible rfl
+    all_goals try simp only [Nat.add_zero]
+    all_goals try first
+      | (rd_simp []; done)
+      | rd_simp []
+    all_goals try first
+      | with_reducible rfl
+      | exact Nat.mod_eq_of_lt (by omega)
+    all_goals first
+      | (congr 1; omega)
+      | rfl
+      | (congr 1; rw [Nat.mod_eq_of_lt (by omega)])
+      | exact UInt64.ofNat_toNat
+      | exact Nat.mod_eq_of_lt (UInt64.toNat_lt _)
 
 end Services.Bootstrap.Acc

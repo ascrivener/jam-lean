@@ -165,6 +165,56 @@ theorem vv_call {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
         rw [wr1]; exact heapC_writable_data H hcm hcu ⟨by omega, by omega⟩))
       (by rw [PVM.Memory.readN_congr (μ := μ) (fun j hj => m1 _ (by omega) (Or.inl (by omega)))]; exact henc)
   rw [hw] at q0 q8
-  sorry
+  have hS1 := H.hS1
+  -- 3. on to the reader
+  obtain ⟨ω3, r3, b0, b7, b8, b9, b1, b5, b6⟩ :=
+    vv_mid (p := p) (P := P) (R := env.rel cap) x ω2 μ2 out rd n (by rw [d5, a5]) (by rw [d6, a6]) d7 d8
+      (by omega) (by omega) (by omega)
+  -- the context, carried over the frame and the reader's words (all on the stack)
+  have m2 : ∀ a, a < 4294967296 → (a < sp - 152 ∨ sp ≤ a) → (a < rd ∨ rd + 16 ≤ a) → μ2.read a = μ.read a :=
+    fun a h1 h2 h3 => by rw [dfr a h1 (by omega) h3, m1 a h1 (by omega)]
+  have ww2 : ∀ a, μ2.writable a = μ.writable a := fun a => by rw [dwr, wr1]
+  have H2 : HeapCtxC env.code pb S0 S1 μ2 s :=
+    ⟨H.wf, H.rep.congr_lock H.wf H.hb0 H.hbT fun a _ ha2 _ => m2 a (by omega) (Or.inl (by omega)) (Or.inl (by omega)),
+      H.fo, by rw [rdN_frame fun j hj => m2 _ (by omega) (Or.inl (by omega)) (Or.inl (by omega))]; exact H.lock,
+      H.hb0, H.hbT, H.hA, H.bd, ⟨ph, h48, hhb, HeapPages.of_eq hp ww2, hHTs, hHT⟩, H.hSb, hS1,
+      fun a h1 h2 => by rw [ww2]; exact hst a h1 h2, fun a ha => by rw [ww2]; exact H.ro a ha⟩
+  -- 4. the reader
+  rcases rv_call (p := p) (P := P) (hb := hb) env cap hcap1 hcap x ω3 μ2 s (sp - 24) out rd (ip + w) (rlen - w) n
+      pb S0 S1 H2 (by rw [b1, d1, a1]) b7 b8 b9 q0 q8 hn (by omega) (by omega)
+      ⟨c, hcm, hcu, by omega, by omega⟩ ⟨by omega, by omega⟩ (by omega) ⟨by omega, hout.2⟩ ⟨by omega, hrd.2⟩ dor with
+    ⟨ptr, s', ω4, μ4, ha, r4, H4, keep, hnew, hfresh, keepd, g0, g8, g16, gd, gr0, gr8, gfr, e0, e1, e5, e6⟩ |
+    ⟨ha, ω4, μ4, r4⟩
+  · left
+    -- the frame words, from μ1 to μ4
+    have f41 : ∀ a, sp - 24 ≤ a → a < sp → μ4.read a = μ1.read a := fun a h1 h2 => by
+      rw [gfr a (by omega) h1 (Or.inl (by omega)) (Or.inl (by omega)), dfr a (by omega) (Or.inr h1) (Or.inl (by omega))]
+    have l : ∀ o v, sp - 24 ≤ o → o + 8 ≤ sp → rdN μ1 o 8 = v → rdN μ4 o 8 = v := fun o v h1 h2 hv => by
+      rw [rdN_frame fun j hj => f41 _ (by omega) (by omega)]; exact hv
+    obtain ⟨ω5, r5, f0, f1, f5, f6, -⟩ :=
+      vv_post (p := p) (P := P) (R := env.rel cap) x ω4 μ4 (sp - 24) ω[0].toNat ω[5].toNat ω[6].toNat
+        (by rw [e0, b0]) (by rw [e1, b1, d1, a1]) (l _ _ (by omega) (by omega) s24)
+        (l _ _ (by omega) (by omega) (by rw [show sp - 24 + 8 = sp - 16 by omega]; exact s16))
+        (l _ _ (by omega) (by omega) (by rw [show sp - 24 + 16 = sp - 8 by omega]; exact s8))
+        ⟨by omega, by omega⟩ (UInt64.toNat_lt _) (UInt64.toNat_lt _) (UInt64.toNat_lt _)
+        (fun a h1 h2 => Memory.readable_of_writable (by
+          have := H4.st a (by omega) (by omega); exact this))
+    have dec : ∀ v : UInt64, UInt64.ofNat v.toNat = v := fun v => UInt64.ofNat_toNat
+    -- heap memory below 2³¹ is not touched by the frame and the length
+    have m2h : ∀ a, a < 2147483648 → μ2.read a = μ.read a := fun a h =>
+      m2 a (by omega) (Or.inl (by omega)) (Or.inl (by omega))
+    refine ⟨ptr, s', ω5, μ4, ha, ((((r1.trans r2).trans r3).trans r4).trans r5).mono (by omega), H4, keep, hnew,
+      hfresh, fun c' hc' hu a ha' => ?_, g0, g8, g16, ?_, ?_, ?_, ?_, by rw [f0, dec], ?_, by rw [f5, dec],
+      by rw [f6, dec]⟩
+    · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc' hu
+      unfold InDataA at ha'
+      rw [keepd c' hc' hu a ⟨ha'.1, ha'.2⟩, m2h a (by omega)]
+    · rw [gd, PVM.Memory.readN_congr (μ := μ) (fun j hj => m2h _ (by omega)), hw]
+    · rw [gr0, hw]
+    · rw [gr8, hw]
+    · intro a h0 hs ho hr
+      rw [gfr a h0 (by omega) ho hr, m2 a h0 (Or.inr hs) hr]
+    · rw [f1, h1]; congr 1; omega
+  · exact Or.inr ⟨ha, ω4, μ4, ((((r1.trans r2).trans r3).trans r4)).mono (by omega)⟩
 
 end Services.Bootstrap.Acc

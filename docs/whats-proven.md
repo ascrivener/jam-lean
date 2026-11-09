@@ -247,6 +247,36 @@ An independent kernel, nanoda as vendored by
   - *How:* a 176-octet frame; three `read_ok`s park the integers, `memzero` clears the memo's buffer,
     `read_big_sp` reads the memo into it and `memcpy_big_aligned` copies it to O + 8 (`t1` … `t7`).
 
+- **`Instruction::decode` of `LookedUp { data: Option<Vec<u8>> }`, without allocation.**
+  `Decode.LookedUp.looked_up_none` and `looked_up_empty` (`Services/Bootstrap/Decode/LookedUp.lean`).
+  - *Statement:* from 20626 with tag 18, if the reader's next octet is 0 (`None`), the function
+    returns the discriminant word 2^63 + 17 at O and the niche word 2^64 − 1 at O + 8, and advances
+    the reader by 1 (`looked_up_none`). If the next octets are 1 (`Some`) and ℰ(0) (length 0), it
+    returns 2^63 + 17 at O and the empty `Vec` `{cap 0, ptr 1, len 0}` at O + 8, and advances the
+    reader by 2 (`looked_up_empty`). Memory changes only in the callees' frames below A, the reader
+    and O … O + 32.
+  - *How:* `Option<Vec<u8>>::decode` (35937) reads the tag (`read_ok`). For `Some`, it decodes the
+    length (`decodeU32`) and calls `read_vec` (3473), which for n = 0 neither reads nor allocates
+    (`VecU8.vec_u8_empty`).
+  - *Also proved, not yet composed:* the steps of `read_vec` for 1 ≤ n ≤ 16384 (one chunk) and of
+    `finish_grow`'s path through `alloc` (`VecU8.v1` … `v3`, `g1`, `g2`). `AllocOk.alloc_ok`
+    (`Services/Bootstrap/Decode/AllocOk.lean`) is `alloc` (40494) for any successful model `alloc`, growing the heap or not, as one statement.
+  - *Scope:* non-empty `Some` payloads are not covered yet. The code facts lack `read_vec`'s and
+    `finish_grow`'s realloc paths and the error exits. The allocator's wrapper theorems also don't
+    state that page access outside the heap is kept, so the payload's readability after an `alloc`
+    can't be shown yet.
+
+- **`Instruction::decode` of the single-`Vec` variants with no elements.**
+  `Decode.VecEmpty.vec_empty` (`Services/Bootstrap/Decode/VecEmpty.lean`).
+  - *Statement:* from 20626 with tag 5 (`DeleteItems`), 10 (`Export`), 19 (`Imported`) or 9
+    (`Import`), and the reader's next octet ℰ(0), the function returns the discriminant word
+    (2^63 + 4, 2^63 + 9, 2^63 + 18 or 2^63 + 8) at O and the empty `Vec` `{cap 0, ptr 8, len 0}` at
+    O + 8. The reader is advanced by
+    1. Nothing is allocated. Memory changes only in A − 176 … A, the reader and O … O + 32.
+  - *How:* the four decoders share one shape: a helper frame, `decodeU32` for the length, and the
+    element reader at 8 or 3100 (`vec_elems_empty`, `vec_pairs_empty` for n = 0).
+  - *Scope:* non-empty vectors allocate, and are not covered yet (see the previous item's scope).
+
 ### picoalloc: the model (`Services/Picoalloc/`)
 
 `Services/Picoalloc/Model.lean` is picoalloc 5.2, the SDK's heap allocator, written as Lean

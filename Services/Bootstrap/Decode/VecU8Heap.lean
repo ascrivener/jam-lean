@@ -121,7 +121,9 @@ theorem vec_u8_heap {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHos
       (∀ d ∈ chunks s, d.used = true → d ≠ ⟨q - 32, (n + 31) / 32 + 1, true⟩) ∧
       (∀ c ∈ chunks s, c.used = true → ∀ a, InData c a → μ'.read a = μ.read a) ∧
       PagesOut 48 pb μ μ' ∧
-      (∀ a, a < 4294967296 → sp ≤ a → (a < rd ∨ rd + 16 ≤ a) → (a < O ∨ O + 24 ≤ a) → μ'.read a = μ.read a)) ∨
+      (∀ a, a < 4294967296 → sp ≤ a → (a < rd ∨ rd + 16 ≤ a) → (a < O ∨ O + 24 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, a < 196608 → μ'.read a = μ.read a ∧ μ'.readable a = μ.readable a) ∧
+      (∀ a, Glob a → μ'.read a = μ.read a) ∧ (∀ a, S0 ≤ a → μ'.writable a = μ.writable a)) ∨
     (alloc (growTo pb) hb 1 ((n + 31) / 32) s = none ∧ ∃ ω' μ',
       FreeStepsH p (refineContractK cap env) 3473 ω μ x 40611 ω' μ' x (2 * n + 1200) ∧
       ω'[7] = UInt64.ofNat 0) := by
@@ -241,7 +243,7 @@ theorem vec_u8_heap {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHos
   have wr8' : ∀ a, μ8.writable a = μ3.writable a := fun a => by rw [wr8, wr7, wr36]
   refine Or.inl ⟨q, s', ω8, μ8, ha, run18.mono (by omega), z0, by rw [z1]; congr 1; omega, z5, z6, zO, zO8, zO16,
     ?_, ?_, ?_, ctx_congr_data H3 hnew (fun a h1 h2 => hlowh a h1 (by simp only at h2; omega)) wr8', keep, hnew,
-    hfresh, ?_, FreeStepsH.pagesOut H.bd run18, ?_⟩
+    hfresh, ?_, FreeStepsH.pagesOut H.bd run18, ?_, ?_, ?_, ?_⟩
   · rw [Memory.readN_congr (fun j hj => fr8 _ (by omega) (by omega)), rbuf]
     exact Memory.readN_congr (fun j hj => hpay6 _ ⟨by omega, by omega⟩)
   · rw [Memory.readN_congr (fun j hj => fr8 _ (by omega) (by omega))]; exact rR0
@@ -256,5 +258,24 @@ theorem vec_u8_heap {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHos
     exact hlow a (by omega) (Or.inl (by omega))
   · intro a h0 h1 h2 h3
     rw [fr8 a h0 h3, fr7 a h0 (Or.inr (by omega)) h2 (Or.inr (by omega))]; exact hhigh a h0 h1
+  · intro a ha'
+    obtain ⟨kp, kr⟩ := FreeStepsH.keepRO H.bd run18
+    refine ⟨kr a (by unfold two32; omega) (Or.inl (by unfold pageSize; omega)) (H.ro a ha'), ?_⟩
+    unfold Memory.readable
+    rw [kp _ (Or.inl (by unfold pageSize; omega))]
+  · intro a ha'
+    have hg := ha'
+    unfold Glob at hg
+    have ht3 := H3.wf.2.2.2.1
+    unfold TilesOk at ht3
+    have hb3 := H3.hb0
+    rw [hlowh a (by omega) (Or.inl (by omega)),
+      hk.glob (fun b ⟨c, hc, e⟩ => Or.inr (by have := (ht3.mem_lt c hc).1; omega)) a ha']
+    exact hlow a (by omega) (Or.inl (by omega))
+  · intro a ha'
+    obtain ⟨kp, -⟩ := FreeStepsH.keepRO H.bd run18
+    have := H.hSb
+    unfold Memory.writable
+    rw [kp _ (Or.inr (by unfold pageSize; omega))]
 
 end Services.Bootstrap.Decode.VecU8

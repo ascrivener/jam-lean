@@ -375,4 +375,49 @@ theorem it_tr_cp {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x :
       | exact UInt64.ofNat_toNat
       | exact Nat.mod_eq_of_lt (UInt64.toNat_lt _)
 
+/-- **47029 … 47072**, the transfer's slot filled: −1 at out + 0, a (from b) at + 136, g (ω₆) at + 144,
+    s (b + 16) as a `u32` at + 152 and d (b + 8) at + 156; ω₀, ω₅, ω₆ restored from b + 416, + 408,
+    + 400 and the frame popped, at the return's `jumpInd`. -/
+theorem it_tr_fill {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
+    (b out g am sv dv r0 r5 r6 : Nat) (h1 : ω[1] = UInt64.ofNat b) (h5 : ω[5] = UInt64.ofNat out)
+    (h6 : ω[6] = UInt64.ofNat g)
+    (m0 : rdN μ b 8 = am) (m8 : rdN μ (b + 8) 8 = dv) (m16 : rdN μ (b + 16) 8 = sv)
+    (m400 : rdN μ (b + 400) 8 = r6) (m408 : rdN μ (b + 408) 8 = r5) (m416 : rdN μ (b + 416) 8 = r0)
+    (hb : 65536 ≤ b ∧ b + 424 < 4294967296) (hout : 65536 ≤ out ∧ out + 184 < 4294967296)
+    (dbo : out + 184 ≤ b ∨ b + 424 ≤ out) (hg : g < 18446744073709551616)
+    (ham : am < 18446744073709551616) (hsv : sv < 18446744073709551616) (hdv : dv < 18446744073709551616)
+    (hr0 : r0 < 18446744073709551616) (hr5 : r5 < 18446744073709551616) (hr6 : r6 < 18446744073709551616)
+    (hrf : ∀ a, b ≤ a → a < b + 424 → μ.readable a = true)
+    (hwo : ∀ a, out ≤ a → a < out + 184 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 47029 ω μ x 47072 ω' μ' x 20 ∧
+      ω'[0] = UInt64.ofNat r0 ∧ ω'[1] = UInt64.ofNat (b + 424) ∧ ω'[5] = UInt64.ofNat r5 ∧
+      ω'[6] = UInt64.ofNat r6 ∧
+      rdN μ' out 8 = 18446744073709551615 ∧ rdN μ' (out + 136) 8 = am ∧ rdN μ' (out + 144) 8 = g ∧
+      rdN μ' (out + 152) 4 = sv % 4294967296 ∧ rdN μ' (out + 156) 4 = dv % 4294967296 ∧
+      (∀ a, a < 4294967296 → (a < out ∨ out + 8 ≤ a) → (a < out + 136 ∨ out + 160 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have hro : ∀ a, out ≤ a → a < out + 184 → μ.readable a = true :=
+    fun a h1 h2 => Memory.readable_of_writable (hwo a h1 h2)
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?run, ?post⟩
+  case run => pvm_go [h1, h5, h6, m0, m8, m16, m400, m408, m416, hrf, hro, hwo, rdN_writeN_disjoint, ↓rdN_fold,
+    ↓loadI_fold]
+  case post =>
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha h1 h2 => ?_, fun a => ?_, fun a => ?_⟩
+    all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+      ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, h1]
+    all_goals try with_reducible rfl
+    all_goals try simp only [show 136 + out = out + 136 from Nat.add_comm _ _, show 144 + out = out + 144 from Nat.add_comm _ _,
+      show 152 + out = out + 152 from Nat.add_comm _ _, show 156 + out = out + 156 from Nat.add_comm _ _]
+    all_goals try first
+      | (rd_simp []; done)
+      | rd_simp []
+    all_goals try first
+      | with_reducible rfl
+      | exact Nat.mod_eq_of_lt (by omega)
+    all_goals first
+      | (congr 1; omega)
+      | rfl
+      | (congr 1; rw [Nat.mod_eq_of_lt (by omega)])
+
 end Services.Bootstrap.Acc

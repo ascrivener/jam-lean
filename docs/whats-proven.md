@@ -194,6 +194,21 @@ An independent kernel, nanoda as vendored by
     (the payload in the heap, from 206864). Accumulate runs the same loop 1160 octets lower; refine's
     theorems (`ElemOk`, `pass`, `loop`, `ElemOkA`, `passA`, `loopA`, each adapter) are these at
     F = 4278057632, RD = 4278058648, P0 = 206913, with unchanged statements.
+- **Refine's output encoder: the writer, the dispatch and the variants without fields.**
+  `Encode.Writer.extend_ok`, `Encode.Enc.dispatch`, `EncOk` and `Encode.Enc.unit`
+  (`Services/Bootstrap/Encode/Writer.lean`, `Dispatch.lean`).
+  - *Statement:* `Vec<u8>::extend_from_slice` (58508) without growth appends n octets and stores
+    `len + n`. `Instruction::encode_to` (30145) dispatches on the value's discriminant word
+    2^63 + t − 1 (1 ≤ t ≤ 24) through its table at 67376 to the variant's arm. `EncOk p P enc Rep` is
+    the contract of one element at any frame base F: a value satisfying `Rep`, with room for `enc` in
+    the writer, is encoded by appending exactly `enc`. The function changes memory only in [F − 136, F),
+    in the octets it appends and in the writer's length, and returns with ω₁, ω₅, ω₆ as they were.
+    `unit` proves `EncOk` for `Checkpoint`, `Panic` and `Benchmark` (the single octet t).
+  - *Assumed:* the 100-octet table at 67376 as read-only data, F above it, and the slot, the writer,
+    the appended octets and the frame apart.
+  - *Scope:* the other variants' arms, the element loop and length prefix (30073), and the
+    pass-through copy in refine's transform loop are not done yet. The encoder's code facts are
+    in `CodeX` (`fnRangesX`, plus `jumpRangesX` for the arms' jump-table entries).
 - **`Instruction::decode`'s tag dispatch, for every tag.** `Decode.Tag.dispatch`, `reject` and
   `unit_variant` (`Services/Bootstrap/Decode/Tag.lean`).
   - *Statement:* from 20626, where the reader has just read the tag octet into the function's

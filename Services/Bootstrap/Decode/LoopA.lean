@@ -122,6 +122,7 @@ def ElemOkA (env : RefineHost.Env) (cap pb : Nat) (p : ByteArray) (P : Program) 
       (∀ a, 4278057664 ≤ a → a < 4294967296 →
         (a < 4278058648 ∨ 4278058664 ≤ a) → (a < 4278057752 ∨ 4278057984 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, a < 196608 → μ'.read a = μ.read a) ∧ (∀ a, a < 196608 → μ'.readable a = μ.readable a) ∧
+      (∀ a, Glob a → μ'.read a = μ.read a) ∧
       (∀ a, 4278050816 ≤ a → μ'.writable a = μ.writable a)) ∨
     Exhausts env cap pb p P 20626 ω μ x N
 
@@ -143,7 +144,8 @@ theorem ElemOkA.of_elemOk {env : RefineHost.Env} {cap pb : Nat} {p : ByteArray} 
       ⟨ph, h48, hhb, HeapPages.of_eq hpg ewr, hHTs, hHT⟩, H.hSb, H.hS1,
       fun a h1 h2 => by rw [ewr]; exact H.st a h1 h2, fun a ha => by rw [ewr]; exact H.ro a ha⟩,
     fun c hc _ => hc, fun c hc _ a ha => low a ?_, ⟨[], by simp, fun _ _ => eRep⟩,
-    fun a h h0 h2 h3 => efr a h0 (Or.inr h) h2 h3, fun a ha => low a (by omega), fun a _ => erd a, fun a _ => ewr a⟩
+    fun a h h0 h2 h3 => efr a h0 (Or.inr h) h2 h3, fun a ha => low a (by omega), fun a _ => erd a,
+    fun a ha => low a (by unfold Glob at ha; omega), fun a _ => ewr a⟩
   have ht := H.wf.2.2.2.1
   unfold TilesOk at ht
   have htop : s.top = s.base + 1073741824 := by unfold State.top; rw [maxSize_val]

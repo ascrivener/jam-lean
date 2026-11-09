@@ -474,8 +474,7 @@ theorem vec_hash {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.E
     (hlen : 32 * n ≤ len ∧ len < 4294967296)
     (hr0 : r0 < 18446744073709551616) (hv5 : v5 < 18446744073709551616) (hv6 : v6 < 18446744073709551616)
     (hret : 0 < r0 ∧ r0 ≤ 2806 ∧ r0 % 2 = 0)
-    (hjt : P.jumpTable.getD (r0 / 2 - 1) 0 = t) (hbt : P.isBlockStart t = true)
-    (hlow : ∀ a, a < 196608 → μ.writable a = false) :
+    (hjt : P.jumpTable.getD (r0 / 2 - 1) 0 = t) (hbt : P.isBlockStart t = true) :
     (∃ q s' ω' μ', alloc (growTo pb) 0 1 n s = some (q, s') ∧
       FreeStepsH p (refineContractK cap env) 1764 ω μ x t ω' μ' x (700 + 550 * n) ∧
       ω'[0] = UInt64.ofNat r0 ∧ ω'[1] = UInt64.ofNat (S + 152) ∧ ω'[5] = UInt64.ofNat v5 ∧
@@ -490,6 +489,7 @@ theorem vec_hash {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.E
       (∀ a, S + 152 ≤ a → a < 4294967296 → (a < rd ∨ rd + 16 ≤ a) →
         (a < out ∨ out + 24 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, a < 196608 → μ'.read a = μ.read a ∧ μ'.readable a = μ.readable a) ∧
+      (∀ a, Glob a → μ'.read a = μ.read a) ∧
       (∀ a, LoopA.S0 ≤ a → μ'.writable a = μ.writable a)) ∨
     Exhausts env cap pb p P 1764 ω μ x (700 + 550 * n) := by
   obtain ⟨hS1, hS2, hS3⟩ := hS
@@ -573,7 +573,7 @@ theorem vec_hash {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.E
   have pkeep : ∀ a, ptr ≤ a → a < ptr + 32 * n → μ6.read a = μ.read a := fun a h1 h2 => by
     have hd := hpd a h1 h2
     unfold InData at hd
-    rw [low36 a (by omega), hk a (off_hdr_data H3.wf H3.hb0 H3.hbT hcp' hd.1 hd.2), low12 a (by omega)]
+    rw [low36 a (by omega), hk.hkeep a (off_hdr_data H3.wf H3.hb0 H3.hbT hcp' hd.1 hd.2), low12 a (by omega)]
   -- the loop
   have L : LoopSt S n q rd ptr len out r0 v5 v6 0 Pl ω6 μ6 :=
     ⟨e0, e1, e6.trans (congrArg _ (by omega)), e7, e8, e9, e40, e48,
@@ -611,7 +611,7 @@ theorem vec_hash {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.E
     run1.trans (run2.trans (run3.trans (run4.trans (run5.trans (run6.trans run7)))))
   obtain ⟨kp, kr⟩ := FreeStepsH.keepRO H.bd runAll
   refine Or.inl ⟨q, s', ω7, μ7, ha, runAll.mono (by omega), f0, f1, f5, f6, fO, fO8, fO16, fall, fR0, fR8, H7, hnew,
-    hfresh, keepU, ?_, ?_, ?_, ?_⟩
+    hfresh, keepU, ?_, ?_, ?_, ?_, ?_⟩
   · intro c hc hu a ha'
     have hc' := keepU c hc hu
     have hne : (⟨q - 32, n + 1, true⟩ : Chunk) ≠ c := fun e => hfresh c hc hu e.symm
@@ -620,14 +620,21 @@ theorem vec_hash {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.E
     unfold InData at hna hd
     simp only at hna
     have hcm := htS.mem_lt c hc
-    rw [hl7 a (by omega) (by omega), low36 a (by omega), hk a (off_hdr_data H3.wf H3.hb0 H3.hbT hc' hd.1 hd.2),
+    rw [hl7 a (by omega) (by omega), low36 a (by omega), hk.hkeep a (off_hdr_data H3.wf H3.hb0 H3.hbT hc' hd.1 hd.2),
       low12 a (by omega)]
   · intro a h1 h2 h3 h4
     rw [ffr.1 a h2 (Or.inr h1) h3 (Or.inr (by omega)) h4]; exact up6 a h1 h2
   · intro a ha'
-    refine ⟨kr a (by unfold two32; omega) (Or.inl (by unfold pageSize; omega)) (hlow a ha'), ?_⟩
+    refine ⟨kr a (by unfold two32; omega) (Or.inl (by unfold pageSize; omega)) (H.ro a ha'), ?_⟩
     unfold Memory.readable
     rw [kp _ (Or.inl (by unfold pageSize; omega))]
+  · intro a ha'
+    have hg := ha'
+    unfold Glob at hg
+    have hb3 := H3.hb0
+    rw [hl7 a (by omega) (Or.inl (by omega)), low36 a (by omega),
+      hk.glob (fun b ⟨c, hc, e⟩ => Or.inr (by have := (ht3.mem_lt c hc).1; omega)) a ha',
+      low12 a (by omega)]
   · intro a ha'
     have := H.hSb
     unfold Memory.writable

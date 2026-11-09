@@ -81,13 +81,15 @@ structure InvA (env : RefineHost.Env) (pb : Nat) (es : List (List UInt8))
 
 /-- What a pass may change: above the loop's frame (4278058216), only the reader; among the allocated
     chunks' data, only the buffer's octets; nothing below 196608; and the access of nothing from the
-    stack's bottom up. -/
+    stack's bottom up. The globals between the allocator's lock and the allocator (`Glob`) keep their
+    values. -/
 def FrameA (n B : Nat) (s : State) (μ : Memory) (s' : State) (μ' : Memory) : Prop :=
   (∀ a, 4278058216 ≤ a → a < 4294967296 →
     (a < 4278058648 ∨ 4278058664 ≤ a) → μ'.read a = μ.read a) ∧
   (∀ c ∈ chunks s, c.used = true → c ∈ chunks s') ∧
   (∀ c ∈ chunks s, c.used = true → ∀ a, InData c a → (a < B ∨ B + 232 * n ≤ a) → μ'.read a = μ.read a) ∧
   (∀ a, a < 196608 → μ'.read a = μ.read a ∧ μ'.readable a = μ.readable a) ∧
+  (∀ a, Glob a → μ'.read a = μ.read a) ∧
   (∀ a, 4278050816 ≤ a → μ'.writable a = μ.writable a)
 
 /-- **One pass, with the allocator** (see the module doc). -/
@@ -171,7 +173,7 @@ theorem passA {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env)
   rotate_left
   · exact Or.inr ((Exhausts.pre (run1.trans run2) hx).mono (by omega))
   obtain ⟨ω3, μ3, s', run3, c1, c5, c6, cR0, cR8, ⟨W, hW, cW, cne⟩, heap3, keepU, keepD, ⟨cs, hcs, crep⟩,
-    cfr, clow, clowr, cwr⟩ := hs
+    cfr, clow, clowr, cglob, cwr⟩ := hs
   have cfr' : ∀ a, 4278057664 ≤ a → (decide (a < 4294967296) && !(decide (4278058648 ≤ a ∧ a < 4278058664)) && !(decide (4278057752 ≤ a ∧ a < 4278057984))) = true →
       μ3.read a = μ2.read a := fun a h0 ha => cfr a h0 (by fr_conv) (by fr_conv) (by fr_conv)
   clear cfr
@@ -248,6 +250,9 @@ theorem passA {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env)
     exact low2 a (by omega)
   have backL : ∀ a, a < 196608 → μ7.read a = μ.read a := fun a ha => by
     rw [low37 a (by omega) (by omega), clow a ha]; exact low2 a (by omega)
+  have backG : ∀ a, Glob a → μ7.read a = μ.read a := fun a ha => by
+    have hg := ha; unfold Glob at hg
+    rw [low37 a (by omega) (by omega), cglob a ha]; exact low2 a (by omega)
   have q6 : ω7[6] = UInt64.ofNat k := g6.trans f6
   have q5 : ω7[5] = UInt64.ofNat (es.length - k) := g5.trans (f5.trans (e5.trans (d5.trans c5)))
   have q1 : ω7[1] = UInt64.ofNat 4278057688 := g1
@@ -274,7 +279,7 @@ theorem passA {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env)
     refine ⟨ω8, _, s', (run1.trans (run2.trans (run3.trans (run4.trans (run5.trans (run6.trans (run7.trans
       run8))))))).mono (by omega),
       ⟨h1', h5', ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ⟨hcp', hcpu⟩, cpd, ⟨hcb', hcbu⟩, cbd⟩,
-      ⟨?_, keepU, ?_, ?_, ?_⟩⟩
+      ⟨?_, keepU, ?_, ?_, ?_, ?_⟩⟩
     · rw [Memory.readN_writeN_disjoint _ _ _ _ _ (by simp) (by simp [two32]) (by simp [two32]),
         Memory.readN_congr (fun j hj => (gfr' _ (by fr_conv)).trans ((ffr' _ (by fr_conv)).trans (keep _ (by omega) (by omega))))]; exact m24
     · rw [Memory.readN_writeN_disjoint _ _ _ _ _ (by simp) (by simp [two32]) (by simp [two32]),
@@ -351,6 +356,9 @@ theorem passA {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env)
       rw [wlow a (by omega)]; exact backD c hc hu a ha (by omega)
     · intro a ha
       exact ⟨by rw [wlow a (by omega)]; exact backL a ha, by rw [Memory.readable_writeN]; exact hrdL a ha⟩
+    · intro a ha
+      have hg := ha; unfold Glob at hg
+      rw [wlow a (by omega)]; exact backG a ha
     · intro a ha; rw [Memory.writable_writeN]; exact hwrq a ha
   by_cases hmore : k + 1 < es.length
   · rw [if_pos hmore]
@@ -370,7 +378,8 @@ theorem FrameA.trans {n B : Nat} {s s1 s2 : State} {μ μ1 μ2 : Memory} (f1 : F
    fun c hc hu => f2.2.1 c (f1.2.1 c hc hu) hu,
    fun c hc hu a ha hb => (f2.2.2.1 c (f1.2.1 c hc hu) hu a ha hb).trans (f1.2.2.1 c hc hu a ha hb),
    fun a ha => ⟨(f2.2.2.2.1 a ha).1.trans (f1.2.2.2.1 a ha).1, (f2.2.2.2.1 a ha).2.trans (f1.2.2.2.1 a ha).2⟩,
-   fun a ha => (f2.2.2.2.2 a ha).trans (f1.2.2.2.2 a ha)⟩
+   fun a ha => (f2.2.2.2.2.1 a ha).trans (f1.2.2.2.2.1 a ha),
+   fun a ha => (f2.2.2.2.2.2 a ha).trans (f1.2.2.2.2.2 a ha)⟩
 
 /-- The loop's step bound from element k, r elements to go: each element's own bound and 1700 for
     the loop's own steps. -/

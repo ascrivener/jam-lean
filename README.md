@@ -68,6 +68,7 @@ call `pc`) live in `Tests/`, not in the model.
 | Validator statistics (§13.1: π_V, π_L) vs. `stf/statistics` (`lake build statstest`) | **4 / 4** tiny, **4 / 4** full |
 | Preimage STF (§12.4) and its service statistics (§13.2 provision counts) vs. `stf/preimages` (`lake build preimagestest`) | **8 / 8** tiny, **8 / 8** full |
 | Disputes STF (§10: verdicts, culprits, faults, ψ', ρ^‡ and H_O) vs. `stf/disputes` (`lake build disputestest`; Ed25519 verification is a parameter, note 29) | **29 / 29** tiny, **31 / 31** full |
+| Assurances STF (§11.2: the available reports **R** and ρ after assurances) vs. `stf/assurances` (`lake build assurancestest`; signatures as in note 29) | **11 / 11** tiny, **11 / 11** full |
 
 ## Building and running
 
@@ -81,7 +82,7 @@ scripts/check-tables.sh               # regenerate PVM/Tables.lean from the pinn
 scripts/fetch-jam-vectors.sh          # GP v0.8.0 JAM vectors into vendor/jam-test-vectors
 lake build historytest authtest       # the recent-history and authorization STF vectors (tiny and full)
 lake build statstest preimagestest    # the statistics and preimage STF vectors (tiny and full)
-lake build disputestest               # the disputes STF vectors (tiny and full)
+lake build disputestest assurancestest  # the disputes and assurances STF vectors (tiny and full)
 ```
 
 `pvmtest` and `gascheck` are Lake targets that build an executable and run it; a failing vector
@@ -711,6 +712,14 @@ noted here and in a comment at the definition.
     * A bad verdict needs no culprits in GP 0.8.0, and the vectors agree
       (`progress_with_bad_verdict_without_culprits-1`). On an error the vectors keep the prior
       state; the paper makes such a block invalid.
+
+30. **Assurances** (§11.2). Signatures are checked through `Crypto.edVerify`, with the test oracle
+    of note 29. The paper names no errors and gives no order between the conditions; each
+    assurance is checked in turn, in the order §11.2.1 states them: the anchor H_P, the assurer
+    index (a_v ∈ ℕ_{|κ|}) and order, the signature, then the bits. A core is cleared when its
+    report is in **R**, compared by encoding. A stale report that is still assigned may be
+    assured and made available; the paper allows it (ρ^‡[c] ≠ ∅ is all a set bit needs) and the
+    vectors agree (`assurances_for_stale_report-1`).
 
 ## Caveats
 

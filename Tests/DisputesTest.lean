@@ -1,5 +1,5 @@
 import Tests.StfRunner
-import Tests.BlockJson
+import Tests.ReportsJson
 import JAM.Disputes
 
 /-!
@@ -31,24 +31,8 @@ def psi (j : Json) : Except String DisputesState := do
   return { good := ← octetSet j "good", bad := ← octetSet j "bad", wonky := ← octetSet j "wonky",
            offenders := ← octetSet j "offenders" }
 
-def assignment (j : Json) : Except String AvailAssignment := do
-  return { guarantee := ← guarantee (← field j "guarantee"), time := ← natField j "registered_slot" }
-
-def rho (j : Json) : Except String AvailAssignments := do
-  items j fun e => match e with
-    | .null => pure none
-    | v => do return some (← assignment v)
-
-def edKeys (j : Json) (k : String) : Except String (List (List UInt8)) :=
-  list j k fun v => do return (← hexField v "ed25519").toList
-
 def showPsi (s : DisputesState) : String :=
   s!"good={s.good.toList.map hexS} bad={s.bad.toList.map hexS} wonky={s.wonky.toList.map hexS} offenders={s.offenders.toList.map hexS}"
-
-def showRho (ρ : AvailAssignments) : List String :=
-  ρ.map fun
-    | none => "none"
-    | some a => s!"{hexS (a.guarantee.encode)}@{a.time}"
 
 def errName : DisputesError → String
   | .alreadyJudged => "already_judged"
@@ -68,17 +52,6 @@ def errName : DisputesError → String
   | .badAuditorKey => "bad_auditor_key"
   | .badVotesCount => "bad_votes_count"
 
-/-- The expected error of a vector, if any. -/
-def expectedErr (j : Json) : Except String (Option String) := do
-  let out ← field j "output"
-  match out.getObjVal? "err" with
-  | .ok e => return some (← e.getStr?)
-  | .error _ => return none
-
-/-- The signature oracle: reject everything exactly when the vector expects `bad_signature`. -/
-def oracle (expErr : Option String) : Crypto :=
-  { edVerify := fun _ _ _ => expErr != some "bad_signature" }
-
 def check (params : Params) (j : Json) : Except String (List String) := do
   let pre ← field j "pre_state"
   let post ← field j "post_state"
@@ -88,7 +61,7 @@ def check (params : Params) (j : Json) : Except String (List String) := do
     { slot := ← natField pre "tau", activeEd := ← edKeys pre "kappa", previousEd := ← edKeys pre "lambda" }
   let ψ ← psi (← field pre "psi")
   let ρ ← rho (← field pre "rho")
-  let res := JAM.disputesTransition params (oracle expErr) input ψ ρ x
+  let res := JAM.disputesTransition params (sigOracle expErr) input ψ ρ x
   let mut diffs := []
   match res, expErr with
   | .ok o, none =>

@@ -283,6 +283,17 @@ An independent kernel, nanoda as vendored by
   - *Scope:* `Provide` with `Inline(bytes)`, `RandomStorageAccumulate(Ok(keys))`, and non-empty
     `Bless` and `Designate` allocate, and are not covered yet.
 
+- **Runs under the refine contract keep page access outside the heap.** `Alloc.FreeStepsH.pagesOut`
+  (`Services/Bootstrap/Alloc/Pages.lean`).
+  - *Statement:* any `FreeStepsH` run under `refineContractK cap env`, with `heapBounds env.code =
+    (48, pb)`, keeps every page entry outside the pages 48 … pb − 1 (`PagesOut 48 pb`). So readability
+    and writability are kept below 196608 and from 4096·pb up (`PagesOut.readable`, `.writable`). This
+    is the page frame of the allocator's theorems: after `alloc` or `realloc`, the read-only payload
+    is still readable.
+  - *How:* every instruction's memory is μ or a `writeN` of μ (`exec_pages`). The contract allows only
+    `grow_heap`, which sets pages 48 … t with t ≤ pb; `fetch`, which only writes octets; and unknown ids,
+    which change nothing (`refineContractK_pagesOut`).
+
 ### picoalloc: the model (`Services/Picoalloc/`)
 
 `Services/Picoalloc/Model.lean` is picoalloc 5.2, the SDK's heap allocator, written as Lean

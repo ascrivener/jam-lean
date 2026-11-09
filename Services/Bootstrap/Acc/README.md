@@ -116,3 +116,31 @@ From 6378, 18,050 instructions are reachable statically. 5,537 of them already h
 
 These are decoders over symbolic data, like T1's, at accumulate's stack. They should reuse T1's
 frame-base `ElemOkF` pattern (#120) where the code is shared.
+## The inputs decode, 6630 → 6674, as the code facts show it
+
+- **6630 … 6670** inline the prologue of the inputs function (frame 144, return address 226 → 6674,
+  the output at the caller's sp + 1568). It stores the kind 14 at sp + 32 and tail-calls the SDK's
+  `fetch_vec` at 47417 (out = sp + 56, its arguments at sp + 32), returning through entry 2022 to
+  44495.
+- **47417, `fetch_vec(kind)`**: kind 14 is in the no-argument mask 20359 (bits 0–2, 7–11, 14).
+  - First `fetch` (47490) with a null buffer, for the length L. NONE stores `None` (−1 at out);
+    any other error code traps (47844).
+  - L = 0 gives the dangling pointer 1. Otherwise L ≤ 2³⁷ − 32 (else trap), then the allocator's
+    lock (47578 … 47606), `alloc_impl` (41177) with ω₈ = 1, ω₉ = ⌈L/32⌉ and **ω₁₀ = 1 (zeroed)**,
+    and the unlock (47631 … 47635). A null block traps at 47554 (`handle_alloc_error`), so
+    allocation failure here is ☇.
+  - Second `fetch` (47690) into the block, then `Some(Vec { cap: L, ptr, len: L })`. The returned
+    length is not compared with L. After an error on the second call, the block is freed (lock,
+    42327, unlock) and the result is `None`.
+- **44495**: `None` traps (the `unwrap`). The reader over the bytes at sp + 104 gives the item count
+  by **39710**, a trap on error. 39710 … 39981 is refine's `u32` decoder 31894 … 32165 moved by 7816
+  (`DecodeU32A.lean`). Then **44916** decodes `Vec<AccumulateItem>` into sp + 80 (a trap on
+  error), frees the fetched bytes (lock, 42327, unlock) if L ≠ 0, stores the `Vec` at the caller's
+  sp + 1568 and returns to 6674. The reader is not checked to be empty, so trailing octets after
+  ℰ(↕**i**) are ignored.
+- **44916**: capacity min(n, 89) of 184-octet items, grown by 40852 / 41016. `AccumulateItem::decode`
+  is inlined at 45115 … 45254, using the reader 58434 and memcpy 68729. The `Vec<u8>` decoders are
+  45643, and 39634 (length by 39710, then 45643); 46040 decodes a `u64`, and 46856 is also called.
+  None of these is a copy of refine code that is already proved.
+- `alloc_impl` with ω₁₀ = 1 runs the zeroing paths (from 42098), which the refine proofs (all with
+  ω₁₀ = 0) do not cover.

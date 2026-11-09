@@ -298,4 +298,106 @@ theorem fg_new_hdr {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x
       unfold Glob at ha1; exact fr4 a (by omega) (by omega) (Or.inl (by omega))
     exact ((k1.trans k2).trans hk3).trans k4
 
+/-- **`finish_grow` with no current block, the model's `alloc` growing the heap** (40852 → 41175),
+    under a host fit for the allocator (`HeapHost`), the growth's cost within `cap`; otherwise as
+    `fg_new_hdr`, with the heap's pages grown to some h' covering the allocated space: from memory holding a well-formed `s`, `Ok(ptr, size)` is written at
+    `out` for the model's block `ptr` and state `s'`; memory holds `s'` with the lock clear, the
+    heap off the new headers is kept (`HKeepG`), and the stack from sp up is kept outside `out`.
+    ω₀, ω₁, ω₅, ω₆ are restored, at the return's `jumpInd`. -/
+theorem fg_new_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env : HeapHost X)
+    (cap : Nat) (hcap : cap < 18446744073709551616) (x : X) (ω : Regs)
+    (μ : Memory) {hb : Nat} (s s' : State) (sp out ncap al el ptr pb ph : Nat)
+    (hwf : WF s) (hrep : Rep μ s) (hbd : heapBounds env.code = (48, pb)) (h48 : 48 ≤ ph) (hhb : ph ≤ pb)
+    (hbs : pb < 4294967296)
+    (h : alloc (growTo pb) hb 1 ((ncap * el + 31) / 32) s = some (ptr, s')) (hgrown : s'.allocated ≠ s.allocated)
+    (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat out)
+    (h8 : ω[8] = UInt64.ofNat 0) (h10 : ω[10] = UInt64.ofNat ncap) (h11 : ω[11] = UInt64.ofNat al)
+    (h12 : ω[12] = UInt64.ofNat el) (hal : 1 ≤ al ∧ al ≤ 32)
+    (hsz : 0 < ncap * el) (hs : ncap * el + 31 < 68719476736)
+    (hsp : 2147483840 ≤ sp ∧ sp < 4294967296) (hout : sp ≤ out ∧ out + 24 < 4294967296)
+    (hb0 : 206864 ≤ s.base) (hbT : s.base + 1073741824 < 2147483648) (hA : s.allocated < 2147483648)
+    (hfo : FirstOk s) (hl : rdN μ 206848 1 = 0)
+    (hcost : 275 + 121 * (pagesOf (s.base + 32 * s'.allocated) - ph) ≤ cap)
+    {S0 S1 : Nat} (hHTs : 208896 ≤ 4096 * ph) (hSTk : S0 + 192 ≤ sp ∧ out + 24 ≤ S1) (hSb : 4096 * pb ≤ S0)
+    (hp : HeapPages μ 48 pb ph) (hst : ∀ a, S0 ≤ a → a < S1 → μ.writable a = true)
+    (hHT : s.base + 32 * s.allocated ≤ 4096 * ph) :
+    ∃ ω' μ', FreeStepsH p (env.rel cap) 40852 ω μ x 41175 ω' μ' x 600 ∧ Rep μ' s' ∧ WF s' ∧
+      rdN μ' out 8 = 0 ∧ rdN μ' (out + 8) 8 = ptr ∧ rdN μ' (out + 16) 8 = ncap * el ∧
+      rdN μ' 206848 1 = 0 ∧
+      (∃ h', HeapPages μ' 48 pb h' ∧ s'.base + 32 * s'.allocated ≤ 4096 * h' ∧ ph ≤ h' ∧ h' ≤ pb) ∧
+      (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧
+      (∀ a, a < 4294967296 → sp ≤ a → (a < out ∨ out + 24 ≤ a) → μ'.read a = μ.read a) ∧
+      ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      HKeepG μ μ' (fun a => ∃ c ∈ chunks s', c.addr = a) := by
+  have hw := HeapPages.wrAt hp hhb hst
+  -- 1. the entry: the frame, `out` and align stored, the size
+  obtain ⟨ω1, μ1, r1, a1, a6, a0, m0, m8, m16, m24, m32, fr1, rd1, wr1⟩ :=
+    fg_entry_new (p := p) (P := P) (R := env.rel cap) x ω μ sp out ncap al el h1 h7 h8 h10 h11 h12 hsz (by omega) (by omega)
+      (by omega) ⟨by omega, hsp.2⟩ (fun a h1 h2 => hst a (by omega) (by omega))
+  have hw1 : WrAt μ1 (4096 * ph) S0 S1 := hw.of_eq wr1
+  have hl1 : rdN μ1 206848 1 = 0 := by rw [rdN_frame fun j hj => fr1 _ (by omega) (Or.inl (by omega))]; exact hl
+  -- 2. the lock and the call of `alloc_impl`
+  obtain ⟨ω2, μ2, r2, b7, b8, b9, b10, b0, b1, b4, b5, b6, fr2, wr2⟩ :=
+    fg_alloc_lock (p := p) (P := P) (R := env.rel cap) x ω1 μ1 (sp - 40) al (ncap * el) out a1 a6 m0
+      (by rw [show sp - 40 + 8 = sp - 32 by omega]; exact m8) (by omega) hs ⟨by omega, by omega⟩ (by omega)
+      (fun a h1 h2 => by rw [rd1]; exact Memory.readable_of_writable (hst a (by omega) (by omega))) hl1
+      (by omega) hw1
+  have hw2 : WrAt μ2 (4096 * ph) S0 S1 := hw1.of_eq wr2
+  have rep2 : Rep μ2 s := hrep.congr_lock hwf hb0 hbT fun a ha1 ha2 ha3 => by
+    unfold A0 at ha1
+    rw [fr2 a (by omega) (Or.inr (by omega)) ha3, fr1 a (by omega) (Or.inl (by omega))]
+  have hun : (al + 31) / 32 = 1 := by omega
+  -- 3. `alloc_impl` refines the model's `alloc`
+  obtain ⟨ω3, μ3, r3, rep3, wf3, e7, e0, e5, e6, e1, ⟨h', hp3, hsp3, hh1, hh2⟩, hst3, stk3, hk3⟩ :=
+    alloc_refines_growK_hdrG (p := p) (P := P) (S0 := S0) (S1 := S1) env cap hcap x ω2 μ2 s s' (sp - 40) _ ptr pb
+      ph hwf rep2 hbd h48 hhb hbs h hgrown (by rw [b1, a1]) b7 (by rw [b8, hun]) b9 b10
+      (by omega) (by omega) hb0 hbT hA hfo hcost hHTs ⟨by omega, by omega⟩ hSb
+      (HeapPages.of_eq (HeapPages.of_eq hp wr1) wr2) (fun a h1 h2 => by rw [wr2, wr1]; exact hst a h1 h2) hHT
+  have rj := fg_ret_jump (p := p) (P := P) (R := env.rel cap) x ω3 μ3 (by rw [e0, b0])
+  -- the block is a chunk of s', so it is not null
+  have hb' : s'.base = s.base := by
+    rw [alloc_one hwf.1] at h; obtain ⟨-, -, -, -, -, -, -, rfl⟩ := alloc1_grown h hgrown; rw [allocPost_base]
+  obtain ⟨pre, post, S, -, -, hcs'⟩ := alloc_chunks hwf h
+  have hnew : (⟨ptr - 32, (ncap * el + 31) / 32 + 1, true⟩ : Chunk) ∈ chunks s' := by
+    rw [hcs']; exact List.mem_append_right _ List.mem_cons_self
+  have hin := Services.Bootstrap.Decode.VecU8.chunk_in wf3 hnew rfl
+  simp only at hin
+  have hp0 : ptr ≠ 0 := by omega
+  -- the frame at sp − 40 … sp, as `fg_alloc_ok` reads it
+  have k13 : ∀ a, sp - 40 ≤ a → a < 4294967296 → μ3.read a = μ1.read a := fun a h1 h2 => by
+    rw [stk3 a h2 h1, fr2 a h2 (Or.inr (by omega)) (Or.inr (by omega))]
+  have q : ∀ o v, sp - 40 ≤ o → o + 8 ≤ sp → rdN μ1 o 8 = v → rdN μ3 o 8 = v := fun o v h1 h2 hv => by
+    rw [rdN_frame fun j hj => k13 _ (by omega) (by omega)]; exact hv
+  have hwr3 : ∀ a, S0 ≤ a → a < S1 → μ3.writable a = μ.writable a := fun a h1 h2 => by
+    rw [hst3 a h1 h2, hst a h1 h2]
+  obtain ⟨ω4, μ4, r4, c0, c1, c5, c6, o0, o8, o16, ol, fr4, rd4, wr4⟩ :=
+    fg_alloc_ok (p := p) (P := P) (R := env.rel cap) x ω3 μ3 (sp - 40) al (ncap * el) out ptr ω[0].toNat ω[5].toNat
+      ω[6].toNat (by rw [e1, b1, a1]) (by rw [e6, b6, a6]) e7 (q _ _ (by omega) (by omega) m0)
+      (q _ _ (by omega) (by omega) (by rw [show sp - 40 + 8 = sp - 32 by omega]; exact m8))
+      (q _ _ (by omega) (by omega) (by rw [show sp - 40 + 16 = sp - 24 by omega]; exact m16))
+      (q _ _ (by omega) (by omega) (by rw [show sp - 40 + 24 = sp - 16 by omega]; exact m24))
+      (q _ _ (by omega) (by omega) (by rw [show sp - 40 + 32 = sp - 8 by omega]; exact m32))
+      (by omega) (by omega) (by omega) ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ (Or.inr (by omega))
+      (fun a h1 h2 => Memory.readable_of_writable (hst3 a (by omega) (by omega)))
+      (fun a h1 h2 => hst3 a (by omega) (by omega))
+      (HeapPages.wrAt hp3 hh2 hst3 206848 (Or.inl ⟨by omega, by have := hp3; omega⟩)) hp0
+  have dec : ∀ v : UInt64, UInt64.ofNat v.toNat = v := fun v => UInt64.ofNat_toNat
+  refine ⟨ω4, μ4, ((((r1.trans r2).trans r3).trans rj).trans r4).mono (by omega),
+    rep3.congr_lock wf3 (by rw [hb']; exact hb0) (by rw [hb']; exact hbT)
+      (fun a ha1 ha2 ha3 => fr4 a (by omega) (by unfold A0 at ha1; omega) (Or.inl (by omega))),
+    wf3, o0, o8, o16, ol, ⟨h', HeapPages.of_eq hp3 wr4, hsp3, hh1, hh2⟩,
+    fun a h1 h2 => by rw [wr4]; exact hst3 a h1 h2, ?_, by rw [c0, dec], ?_, by rw [c5, dec],
+    by rw [c6, dec], ?_⟩
+  · intro a ha hs ho
+    rw [fr4 a ha (by omega) ho, stk3 a ha (by omega), fr2 a ha (Or.inr (by omega)) (Or.inr (by omega)),
+      fr1 a ha (Or.inr hs)]
+  · rw [c1, h1]; congr 1; omega
+  · have k1 : HKeepG μ μ1 (fun a => ∃ c ∈ chunks s', c.addr = a) := fun a ⟨ha1, ha2, _⟩ =>
+      fr1 a (by omega) (Or.inl (by omega))
+    have k2 : HKeepG μ1 μ2 (fun a => ∃ c ∈ chunks s', c.addr = a) := fun a ⟨ha1, ha2, _⟩ => by
+      unfold Glob at ha1; exact fr2 a (by omega) (by omega) (by omega)
+    have k4 : HKeepG μ3 μ4 (fun a => ∃ c ∈ chunks s', c.addr = a) := fun a ⟨ha1, ha2, _⟩ => by
+      unfold Glob at ha1; exact fr4 a (by omega) (by omega) (Or.inl (by omega))
+    exact ((k1.trans k2).trans hk3).trans k4
+
 end Services.Bootstrap.Acc

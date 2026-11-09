@@ -159,8 +159,21 @@ Proved, with no `sorry` (`Acc/DecodeU32A.lean`, `Acc/Inputs/*.lean`):
   - the paths `fg_new_hdr`, `fg_new_grow` and `fg_new_fail`;
   - `fg_new_call` on `HeapCtxC`.
 
+Also proved since:
+- `finish_grow`'s alloc path, generic in the host: `fg_new_hdr`, `fg_new_grow`, `fg_new_fail` and
+  `fg_new_call`.
+- The `Vec<u8>` reader (45643), one chunk: `rv_entry`, `rv_mid`, `rv_exit`, `rv_fail`, `rv_empty`,
+  `read_any`, and `rv_call` on `HeapCtxC`.
+- 39634's segments: `vv_pre`, `vv_mid` and `vv_post`.
+
+**Decision (Adam via @parent):** prove 6630 → 6674 first for inputs whose `Vec`s never grow: at
+most 89 items, and each work output and auth trace at most 16384 octets. These bounds are explicit
+hypotheses, marked temporary. They are lifted by generalizing the realloc impl lemmas over the
+return address (they fix ω₀ = 1988 / 40805) after the HeapHost PR, keeping the ω₀ = 1988 forms as
+corollaries.
+
 Plan:
-1. `finish_grow`'s realloc path (a current block, 40898 … 40995 → 42980 → 41109). It needs:
+1. (After the bounds are lifted.) `finish_grow`'s realloc path (a current block, 40898 … 40995 → 42980 → 41109). It needs:
    - the lock and unlock glue at these addresses, taking an `impl` run as `ReallocWrap.realloc_wrap`
      and `ReallocKeepAll.realloc_wrap_keep` do;
    - the per-case compositions with the impl-level lemmas (`realloc_inplace_refines_keep`, grow,

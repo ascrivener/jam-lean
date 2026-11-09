@@ -65,6 +65,10 @@ import Services.Bootstrap.Decode.VecU8
 import Services.Bootstrap.Decode.AllocOk
 import Services.Bootstrap.Decode.LookedUp
 import Services.Bootstrap.Decode.VecEmpty
+import Services.Bootstrap.Decode.Provide
+import Services.Bootstrap.Decode.RandomStorage
+import Services.Bootstrap.Decode.Bless
+import Services.Bootstrap.Decode.Designate
 import Services.Picoalloc.Model
 import Services.Picoalloc.Invariant
 import Services.Picoalloc.FreeLists

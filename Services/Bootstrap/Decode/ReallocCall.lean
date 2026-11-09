@@ -455,6 +455,7 @@ theorem realloc_wrap_cases_keepKG {X : Type} {p : ByteArray} {P : Program} [HasC
         fun r s'' b hrr => (by rw [e] at hrr; cases hrr), fun _ => ⟨e7, rep, hp'⟩,
         fun r s'' b hrr => (by rw [e] at hrr; cases hrr)⟩
 
+open Services.Bootstrap.Decode.ReallocOk Services.Bootstrap.Decode.VecU8 in
 /-- `realloc_wrap_cases_keepKG` for the refine contract (`refineHeap env`). -/
 theorem realloc_wrap_cases_keepK {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap : Nat) (hcap1 : 134217728 ≤ cap)
     (hcap : cap < 18446744073709551616)
@@ -647,6 +648,7 @@ theorem realloc_callG {X : Type} {p : ByteArray} {P : Program} [HasCode p P] (en
     exact ⟨rfl, ω', μ', run, e7, ⟨H.wf, rep', H.fo, cl, H.hb0, H.hbT, H.hA, H.bd,
       ⟨ph, h48, hhb, hp', hHTs, hHT⟩, hSb, hS1, hst', ro'⟩, stk, e0, e1, e5, e6⟩
 
+open Services.Bootstrap.Decode.HeapCtx Services.Bootstrap.Decode.ReallocOk Picoalloc in
 /-- `realloc_callG` for the refine contract (`refineHeap env`). -/
 theorem realloc_call {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap : Nat)
     (hcap1 : 134217728 ≤ cap) (hcap : cap < 18446744073709551616) (x : RefineCtx) (ω : Regs) (μ : Memory)

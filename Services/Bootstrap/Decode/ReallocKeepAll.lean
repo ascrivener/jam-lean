@@ -1199,6 +1199,7 @@ theorem realloc_wrap_cases_keepG {X : Type} {p : ByteArray} {P : Program} [HasCo
         fun r s'' b hrr => (by rw [e] at hrr; cases hrr), fun _ => ⟨e7, rep, hp'⟩,
         fun r s'' b hrr => (by rw [e] at hrr; cases hrr)⟩
 
+open Services.Bootstrap.Decode.ReallocOk Services.Bootstrap.Decode.VecU8 in
 /-- `realloc_wrap_cases_keepG` for the refine contract (`refineHeap env`). -/
 theorem realloc_wrap_cases_keep {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env)
     (x : RefineCtx) (ω : Regs) (μ : Memory) {hb : Nat} (s : State) (sp ptr al size pb ph : Nat)

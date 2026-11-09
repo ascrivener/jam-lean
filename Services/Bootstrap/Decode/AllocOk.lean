@@ -61,6 +61,7 @@ theorem alloc_okG {p : ByteArray} {P : Program} [HasCode p P] (env : HeapHost X)
       size al q pb ph hwf hrep hbd h48 hhb hbs h hng h1 h7 h8 hal hal1 hs hsp hsp1 hb0 hbT hA hfo hl
       (Nat.le_trans (alloc_pages hwf h hng) hcost) hHTs hSTk hSb hp hst hHT
 
+open Picoalloc Services.Bootstrap.Alloc JAM in
 /-- `alloc_okG` for the refine contract (`refineHeap env`). -/
 theorem alloc_ok {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (x : RefineCtx)
     (ω : Regs) (μ : Memory) {hb : Nat} (s s' : State) (sp size al q pb ph : Nat) (hwf : WF s)

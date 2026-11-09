@@ -98,6 +98,7 @@ import Services.Bootstrap.Decode.ReallocCall
 import Services.Bootstrap.Acc.Checkpoint
 import Services.Bootstrap.Acc.Contract
 import Services.Bootstrap.Acc.HostSteps
+import Services.Bootstrap.Acc.HeapHost
 import Services.Bootstrap.AccPrefixC
 import Services.Bootstrap.AccBParams
 import Services.Bootstrap.Acc.Args
@@ -207,6 +208,7 @@ import Services.Bootstrap.Spec
 import Services.Bootstrap.SpecLemmas.Codec
 import Services.Bootstrap.SpecLemmas.Refine
 import Services.Bootstrap.SpecLemmas.Ring
+import Services.Bootstrap.Alloc.HeapContract
 
 /-!
 # Results about specific services' deployed code

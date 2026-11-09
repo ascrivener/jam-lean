@@ -56,6 +56,7 @@ call `pc`) live in `Tests/`, not in the model.
 | `JAM` Blake2b-256 vs. `hashlib` and RFC 7693 | **13 / 13** match |
 | `JAM` general host functions, hand-written cases | **30 / 30** pass |
 | `JAM` Keccak-256 / SHA3-256 vs. `hashlib` and standard vectors | **15 / 15** match |
+| `JAM` SHA-512 vs. FIPS 180-2 examples and `hashlib`; the VRF output Y of one trace block against its η'_0 | **9 / 9** match; **1 / 1** |
 | `JAM` refine host functions, Ψ_R and Ψ_I, hand-written cases (no vectors exist) | **59 / 59** pass, 2 more kernel-checked |
 | `witness-service.jam`'s host-call ids within those `Services.Witness` assumes (`lake build witnesscheck`) | **pass** |
 | The real witness binary's refine on 7 malformed payloads gives `Rejected(BadPayload)` (`lake build witnessrun`; a test, not a proof) | **7 / 7** |
@@ -808,7 +809,7 @@ noted here and in a comment at the definition.
       recognised by hashing) and keeps the model's own σ from there, comparing T(σ') and M_σ(σ')
       with every post-state. Cryptography: every signature, VRF and ring proof is accepted (the
       blocks are known valid); Y is the Bandersnatch VRF specification's output hash, SHA-512 of the
-      suite string, 3, the 32-octet output point and 0, cut to 32 octets (`Tests/Sha512.lean`); O
+      suite string, 3, the 32-octet output point and 0, cut to 32 octets (`JAM/Sha512.lean`, FIPS 180-4). This follows the output-hash convention of the Bandersnatch VRF specification, which GP Appendix G defers to; it is beyond the paper's text. Only the runner's `Crypto` instance uses it: `JAM.Crypto` stays a parameter and no STF changed; O
       is answered from (γ_P, γ_Z) of the states already seen, as every state has γ_Z = O(γ_P).
 
 ## Caveats

@@ -1,10 +1,12 @@
 /-!
-# SHA-512 (FIPS 180-4), for the trace runner's VRF-output oracle
+# SHA-512 (FIPS 180-4 §5.1.2, §5.3.5, §6.4)
 
-Not a Gray Paper primitive. The Bandersnatch VRF output Y of GP Appendix G is, in the VRF
-specification the paper defers to, the first 32 octets of SHA-512 over the suite string, 0x03, the
-encoded output point and 0x00; the output point is the first 32 octets of both an IETF signature and
-a ring proof. The trace runner uses this to supply `Crypto.bsOut` and `Crypto.bsRingOut`.
+Not a primitive the Gray Paper names. GP Appendix G defers the Bandersnatch VRF to its
+specification, in which the VRF output Y of a signature or ring proof is the first 32 octets of
+SHA-512 over the suite string, 0x03, the encoded output point and 0x00; the output point is the
+first 32 octets of both an IETF signature and a ring proof (`vrfOutput`). The model's
+`JAM.Crypto` stays a parameter: only the block-import trace runner supplies `bsOut` and
+`bsRingOut` with `vrfOutput`. Tested in `Tests/Sha512Test.lean`.
 -/
 
 namespace JAM.Sha512
@@ -33,7 +35,7 @@ def H0 : Array UInt64 := #[
 
 def rotr (x : UInt64) (n : UInt64) : UInt64 := (x >>> n) ||| (x <<< (64 - n))
 
-/-- The compression function on one 128-octet block starting at `off`. -/
+/-- The compression function on one 128-octet block starting at `off` (FIPS 180-4 §6.4.2). -/
 def compress (h : Array UInt64) (m : ByteArray) (off : Nat) : Array UInt64 := Id.run do
   let mut w : Array UInt64 := Array.replicate 80 0
   for t in [0:16] do
@@ -57,7 +59,7 @@ def compress (h : Array UInt64) (m : ByteArray) (off : Nat) : Array UInt64 := Id
     hh := g; g := f; f := e; e := d + t1; d := c; c := b; b := a; a := t1 + t2
   return #[h[0]! + a, h[1]! + b, h[2]! + c, h[3]! + d, h[4]! + e, h[5]! + f, h[6]! + g, h[7]! + hh]
 
-/-- SHA-512 of an octet sequence. -/
+/-- SHA-512 of an octet sequence, padded as in FIPS 180-4 §5.1.2. -/
 def hash (msg : List UInt8) : List UInt8 := Id.run do
   let len := msg.length
   let padLen := (128 - (len + 17) % 128) % 128

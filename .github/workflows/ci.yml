@@ -87,6 +87,9 @@ jobs:
       - name: Keccak and SHA3 vectors
         run: lake build Tests.KeccakTest
 
+      - name: SHA-512 vectors (FIPS 180-2 and hashlib) and one trace block's VRF output
+        run: lake build Tests.Sha512Test
+
       - name: Refine host functions, Ψ_R and Ψ_I (hand-written; no vectors exist)
         run: lake build Tests.RefineTest
 

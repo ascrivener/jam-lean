@@ -3,6 +3,7 @@ import JAM.Constants
 import JAM.Account
 import JAM.Blake2b
 import JAM.Keccak
+import JAM.Sha512
 import JAM.Work
 import JAM.Decode
 import JAM.Block

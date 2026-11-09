@@ -1,6 +1,6 @@
 import JAM.BlockImport
 import Tests.TraceState
-import Tests.Sha512
+import JAM.Sha512
 
 /-!
 # Block-import trace runner (davxy/jam-test-vectors `traces/`, GP v0.8.0)
@@ -20,7 +20,7 @@ The cryptographic primitives (`JAM.Crypto`) are supplied as follows:
 * verification (Ed25519, Bandersnatch IETF VRF, Ring VRF): accepts every signature and proof,
   as the trace blocks are known to be validly signed;
 * the VRF output Y (`bsOut`, `bsRingOut`): `JAM.Sha512.vrfOutput`, the output-point hash of the
-  Bandersnatch VRF specification (see `Tests/Sha512.lean`);
+  Bandersnatch VRF specification (`JAM/Sha512.lean`);
 * the ring root O (`bsRingRoot`): the pairs (keys of γ_P, γ_Z) of the states seen so far, since
   every state satisfies γ_Z = O(γ_P); an unknown key sequence yields the empty root.
 -/

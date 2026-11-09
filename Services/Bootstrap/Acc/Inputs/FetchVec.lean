@@ -1,6 +1,7 @@
 import Services.Bootstrap.Acc.Inputs.FetchStep
 import Services.Bootstrap.CodeAAll
 import PVM.Logic.Go
+import Services.Bootstrap.Alloc.AllocWrap
 
 /-!
 # The SDK's `fetch_vec` (47417) for the accumulate inputs, in segments
@@ -13,7 +14,7 @@ eq. `fetch`) is in the no-argument mask 20359, so both calls pass ω₁₁ = ω�
 
 namespace Services.Bootstrap.Acc
 
-open PVM JAM Services.Bootstrap Services.Bootstrap.Code Services.Bootstrap.CodeA
+open PVM JAM Services.Bootstrap Services.Bootstrap.Code Services.Bootstrap.CodeA Services.Bootstrap.Alloc
 
 set_option maxHeartbeats 8000000
 set_option maxRecDepth 100000
@@ -100,6 +101,36 @@ theorem fv_fetch1 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (ca
     all_goals first
       | exact eo _ (by decide) (by decide)
       | simp only [UInt64.ofNat_toNat]
+
+/-- **47541 … 41177**, L > 0: L ≤ 2³⁷ − 32, the allocator's lock taken (the word at 206848, the
+    scratch at 196608 … 196616 used), and the call of `alloc_impl` for ⌈L/32⌉ units of alignment 1
+    with the zero flag set: ω₇ = 196792, ω₈ = 1, ω₉ = ⌈L/32⌉, ω₁₀ = 1, return address 2122. -/
+theorem fv_lock {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
+    (μ : Memory) (L : Nat) (h5 : ω[5] = UInt64.ofNat L) (hL : L + 31 < 68719476736)
+    (hl : rdN μ 206848 1 = 0) {HT S0 S1 : Nat} (hH : 206864 ≤ HT) (hwr : WrAt μ HT S0 S1) :
+    ∃ ω' μ', FreeStepsH p R 47541 ω μ x 41177 ω' μ' x 30 ∧
+      ω'[7] = UInt64.ofNat 196792 ∧ ω'[8] = UInt64.ofNat 1 ∧
+      ω'[9] = UInt64.ofNat ((L + 31) / 32) ∧ ω'[10] = UInt64.ofNat 1 ∧ ω'[0] = UInt64.ofNat 2122 ∧
+      ω'[6] = UInt64.ofNat 196792 ∧ ω'[5] = ω[5] ∧ ω'[1] = ω[1] ∧ ω'[4] = ω[4] ∧
+      (∀ a, a < 4294967296 → (a < 196608 ∨ 196616 ≤ a) → (a < 206848 ∨ 206852 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.writable a = μ.writable a) ∧
+      ∀ j : Fin 13, j.val ∉ [0, 1, 4, 5, 6, 7, 8, 9, 10, 11] → ω'[j] = ω[j] := by
+  have hr := hwr.rd
+  have hand := lock_test (w := rdN μ 206848 4) (by rw [rdN4_mod]; exact hl)
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?run, ?post⟩
+  case run => pvm_go [h5, hand, show 137438953440 ≥ L by omega, hwr, hr, rdN_writeN_disjoint, ↓rdN_fold,
+    ↓loadI_fold]
+  case post =>
+    refine ⟨by reg_val, by reg_val, ?_, by reg_val, by reg_val, by reg_val, by reg_val, by reg_val, ?_,
+      fun a ha h1 h2 => ?_, fun a => ?_, by reg_frame⟩
+    · reg_val
+    · simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some',
+        List.lookup_nil, Option.getD_none]
+      rd_simp []
+      simp
+    · rd_simp []
+    · rd_simp [hwr]
 
 /-- **47631 … 47690**, kind 14: the lock byte cleared, the block `ptr` ≠ 0 saved at sp, and the
     registers of the second `fetch`: ω₇ = ptr, ω₈ = 0, ω₉ = L, ω₁₀ = 14, ω₁₁ = ω₁₂ = 0. -/

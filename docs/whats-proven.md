@@ -352,6 +352,27 @@ An independent kernel, nanoda as vendored by
     only off their data (`HKeep`, `off_hdr_data`); the reader's writes stay in the new block
     (`data_disj`). `read_low` is the reader for a source below its frames.
 
+- **`Vec<Vec<u8>>` with the payload in the heap (1 ≤ n ≤ 682 elements, each ≤ 16384 octets).**
+  `Decode.VecVecU8.vec_vec_u8_heap` (`Services/Bootstrap/Decode/VecVecU8.lean`).
+  - *Statement:* the element reader at 8, which reads the items of `DeleteItems`, `Export` and
+    `Imported`. It runs in the decode loop's setting: the payload (each element's ℰ(|e|) ++ e, laid
+    end to end) lies inside an allocated chunk's data, under `HeapCtx` and `refineContractK cap`
+    (cap ≥ 2²⁷). There are two outcomes:
+    - the reader returns the `Vec` `{cap n, ptr q, len n}`, with element j at q + 24j as the
+      `Vec<u8>` `{|es[j]|, qs j, |es[j]|}` and qs j holding es[j]. The buffer and the elements'
+      blocks are fresh allocated chunks (`cs`): the elements read back from any memory that keeps
+      their data. The reader is advanced past the payload. The context, every allocated chunk of
+      `s` with its data, memory below 196608, the globals and the stack's access are kept;
+    - an allocation fails (`Exhausts`): the first `alloc`, or one element's `read_vec`.
+  - *How:* `q1` opens the frame and calls `finish_grow`, then `alloc_call` and `q4`. Each pass is
+    `pass` = `elem` + `r3`. `elem` covers the length decoder (`decodeU32`) and `read_vec`, which is
+    `vec_u8_empty` for an empty element (the dangling pointer 1, no allocation) or `vec_u8_heap`.
+    `r3` pushes the element. `loop` is induction on the elements left, collecting the elements'
+    chunks. `x1` and `x2` store the `Vec`.
+  - *Assumed:* n ≤ 682, so a single `alloc` holds the buffer (the binary reserves min(n, 682)
+    elements first); each element at most 16384 octets (`vec_u8_heap`'s range). Larger values go
+    through `realloc` and are not proven yet.
+
 - **`Vec<(u64, u64)>` and `Import { items }` with the payload in the heap (1 ≤ n ≤ 1024).**
   `Decode.VecPairs.vec_pairs_heap` and `Decode.VecPairs.import_heap`
   (`Services/Bootstrap/Decode/VecPairs.lean`).

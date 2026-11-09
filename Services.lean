@@ -93,6 +93,7 @@ import Services.Bootstrap.Decode.ReallocKeepAll
 import Services.Bootstrap.Acc.Checkpoint
 import Services.Bootstrap.Acc.Contract
 import Services.Bootstrap.Decode.VecPairs
+import Services.Bootstrap.Decode.VecVecU8
 import Services.Picoalloc.Model
 import Services.Picoalloc.Invariant
 import Services.Picoalloc.FreeLists

@@ -46,19 +46,19 @@ theorem g3 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ :
     A = 4278057632, its slot at O = 4278057752, the reader at RD = 4278058648), with the first octet of
     `enc` read into A and the rest of `enc` at the reader, `Instruction::decode` returns to 723 with the
     reader advanced past `enc`, a value satisfying `Rep` and other than the error word in O … O + 232,
-    and memory changed only in the 184 octets below A, the reader and the slot. -/
+    and memory changed only in the stack from its bottom (4278050816) to A + 32, the reader and the slot. -/
 def ElemOk (p : ByteArray) (P : Program) (enc : List UInt8) (Rep : List UInt8 → Prop) : Prop :=
   ∀ (X : Type) (R : HostRel X) (x : X) (ω : Regs) (μ : Memory) (ptr len v5 v6 : Nat),
     ω[1] = UInt64.ofNat 4278057632 → ω[5] = UInt64.ofNat 4278057752 → ω[6] = UInt64.ofNat 4278058648 →
     ω[7] = UInt64.ofNat 0 → μ.read 4278057632 = enc.headD 0 →
     μ.readN 4278058648 8 = Num.encodeLE 8 ptr → μ.readN 4278058656 8 = Num.encodeLE 8 len →
-    enc.length - 1 ≤ len → len < 4294967296 → 65536 ≤ ptr → ptr + enc.length + 72 ≤ 4278057448 →
+    enc.length - 1 ≤ len → len < 4294967296 → 65536 ≤ ptr → ptr + enc.length + 72 ≤ 4278050816 →
     μ.readN ptr (enc.length - 1) = enc.tail →
     (∀ a, ptr ≤ a → a < ptr + (enc.length - 1) → μ.readable a = true) →
     μ.readN 4278057680 8 = Num.encodeLE 8 18 → μ.readN 4278057672 8 = Num.encodeLE 8 v5 →
     μ.readN 4278057664 8 = Num.encodeLE 8 v6 → v5 < 18446744073709551616 → v6 < 18446744073709551616 →
     μ.readN 67476 100 = Tag.table → (∀ a, 67476 ≤ a → a < 67576 → μ.readable a = true) →
-    (∀ a, 4278057448 ≤ a → a < 4278058216 → μ.writable a = true) →
+    (∀ a, 4278050816 ≤ a → a < 4278058216 → μ.writable a = true) →
     (∀ a, 4278058648 ≤ a → a < 4278058664 → μ.writable a = true) →
     ∃ ω' μ', FreeStepsH p R 20626 ω μ x 723 ω' μ' x 2000 ∧
       ω'[1] = UInt64.ofNat 4278057688 ∧ ω'[5] = UInt64.ofNat v5 ∧ ω'[6] = UInt64.ofNat v6 ∧
@@ -67,7 +67,7 @@ def ElemOk (p : ByteArray) (P : Program) (enc : List UInt8) (Rep : List UInt8 �
       (∃ W, W < 18446744073709551616 ∧ μ'.readN 4278057752 8 = Num.encodeLE 8 W ∧
         W ≠ 18446744073709551614) ∧
       Rep (μ'.readN 4278057752 232) ∧
-      (∀ a, a < 4294967296 → (a < 4278057448 ∨ 4278057664 ≤ a) → (a < 4278058648 ∨ 4278058664 ≤ a) →
+      (∀ a, a < 4294967296 → (a < 4278050816 ∨ 4278057664 ≤ a) → (a < 4278058648 ∨ 4278058664 ≤ a) →
         (a < 4278057752 ∨ 4278057984 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a)
 
@@ -130,7 +130,7 @@ structure Inv (es : List (List UInt8)) (reps : Nat → List UInt8 → Prop) (k B
   pay : μ.readN 206913 es.flatten.length = es.flatten
   tab : μ.readN 67476 100 = Tag.table
   el : ∀ j, j < k → reps j (μ.readN (B + 232 * j) 232)
-  ws : ∀ a, 4278057448 ≤ a → a < 4278058216 → μ.writable a = true
+  ws : ∀ a, 4278050816 ≤ a → a < 4278058216 → μ.writable a = true
   wr : ∀ a, 4278058648 ≤ a → a < 4278058664 → μ.writable a = true
   wb : ∀ a, B ≤ a → a < B + 232 * es.length → μ.writable a = true
   rp : ∀ a, 206913 ≤ a → a < 206913 + es.flatten.length → μ.readable a = true
@@ -138,7 +138,7 @@ structure Inv (es : List (List UInt8)) (reps : Nat → List UInt8 → Prop) (k B
 
 /-- The memory a pass may change: the stack below the loop's frame, the reader and the buffer. -/
 def Frame (n B : Nat) (μ μ' : Memory) : Prop :=
-  (∀ a, a < 4294967296 → (a < 4278057448 ∨ 4278058216 ≤ a) → (a < 4278058648 ∨ 4278058664 ≤ a) →
+  (∀ a, a < 4294967296 → (a < 4278050816 ∨ 4278058216 ≤ a) → (a < 4278058648 ∨ 4278058664 ≤ a) →
     (a < B ∨ B + 232 * n ≤ a) → μ'.read a = μ.read a) ∧
   (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a)
 
@@ -215,7 +215,7 @@ theorem pass {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ
       (fun a h1 h2 => by rw [brd, ard]; exact rt a h1 h2)
       (fun a h1 h2 => by rw [bwr, awr]; exact ws a h1 h2)
       (fun a h1 h2 => by rw [bwr, awr]; exact wr a h1 h2)
-  have cfr' : ∀ a, (decide (a < 4294967296) && !(decide (4278057448 ≤ a ∧ a < 4278057664)) && !(decide (4278058648 ≤ a ∧ a < 4278058664)) && !(decide (4278057752 ≤ a ∧ a < 4278057984))) = true →
+  have cfr' : ∀ a, (decide (a < 4294967296) && !(decide (4278050816 ≤ a ∧ a < 4278057664)) && !(decide (4278058648 ≤ a ∧ a < 4278058664)) && !(decide (4278057752 ≤ a ∧ a < 4278057984))) = true →
       μ3.read a = μ2.read a := fun a ha => cfr a (by fr_conv) (by fr_conv) (by fr_conv) (by fr_conv)
   clear cfr
   -- S3 and the first move
@@ -259,7 +259,7 @@ theorem pass {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ
   have slot : μ7.readN (B + 232 * k) 232 = μ3.readN 4278057752 232 := by
     rw [gcp, Memory.readN_congr (fun j hj => ffr' _ (by fr_conv)), ecp]
   -- everything outside the stack, the reader and the slot is as at the start
-  have back : ∀ a, a < 4294967296 → (a < 4278057448 ∨ 4278058216 ≤ a) → (a < 4278058648 ∨ 4278058664 ≤ a) →
+  have back : ∀ a, a < 4294967296 → (a < 4278050816 ∨ 4278058216 ≤ a) → (a < 4278058648 ∨ 4278058664 ≤ a) →
       (a < B + 232 * k ∨ B + 232 * k + 232 ≤ a) → μ7.read a = μ.read a := fun a h0 h1 h2 h3 =>
     (gfr' a (by fr_conv)).trans ((ffr' a (by fr_conv)).trans ((efr' a (by fr_conv)).trans
       ((cfr' a (by fr_conv)).trans ((bfr' a (by fr_conv)).trans (afr' a (by fr_conv))))))

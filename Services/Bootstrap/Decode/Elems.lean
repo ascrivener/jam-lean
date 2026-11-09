@@ -27,7 +27,7 @@ theorem loopFrame {p : ByteArray} {P : Program} [HasCode p P] (ω : Regs) (μ : 
     (s0 : μ.readN 4278057680 8 = Num.encodeLE 8 18) (s5 : μ.readN 4278057672 8 = Num.encodeLE 8 v5)
     (s6 : μ.readN 4278057664 8 = Num.encodeLE 8 v6) (hv5 : v5 < 18446744073709551616)
     (hv6 : v6 < 18446744073709551616)
-    (ws : ∀ a, 4278057448 ≤ a → a < 4278058216 → μ.writable a = true) :
+    (ws : ∀ a, 4278050816 ≤ a → a < 4278058216 → μ.writable a = true) :
     Tag.Frame P 4278057632 4278057752 18 723 v5 v6 ω μ :=
   { hA := by decide, hO := by decide, hOA := by decide, h1 := h1, h5 := h5, hv5 := hv5, hv6 := hv6,
     s0 := s0, s5 := s5, s6 := s6, hret := by decide,

@@ -169,11 +169,14 @@ An independent kernel, nanoda as vendored by
     the error word) in its slot. If every element of a payload `es` has an `ElemOk`, the loop at 680
     decodes them all: it leaves for 562 with value j, satisfying `reps j`, in buffer slot j, and changes
     only the stack, the reader and the buffer. This generalizes `DecodeLoop.loop` from `Checkpoint`s to
-    any list. `Elems.unit` gives the `ElemOk` of `Checkpoint`, `Panic` and `Benchmark`.
+    any list. `Elems` gives the `ElemOk` of `Checkpoint`, `Panic` and `Benchmark` (`unit`), and of
+    `Zombify`, `Exported`, `Yield`, `Solicit`, `Forget`, `Eject`, `Upgrade` and `Lookup`, each saying the
+    slot holds the discriminant and then the encoding's fields at their offsets.
   - *Assumed:* fewer than 128 elements (a one-octet length), each encoding non-empty, the buffer
-    8-aligned after the payload and below 2^31 (`Ok`).
-  - *Scope:* the `ElemOk`s of the variants with fields are not stated yet (their decode theorems are
-    below); the loop is not yet composed into a Ψ_R theorem.
+    8-aligned after the payload and below 2^31 (`Ok`); the stack writable from its bottom
+    (4278050816, the blob's 8192-octet stack) to the loop's frame.
+  - *Scope:* `ElemOk`s for the remaining variants (Transfer, Assign, the Vec/Option ones,
+    RandomStorageRefine) are not stated yet; the loop is not yet composed into a Ψ_R theorem.
 - **`Instruction::decode`'s tag dispatch, for every tag.** `Decode.Tag.dispatch`, `reject` and
   `unit_variant` (`Services/Bootstrap/Decode/Tag.lean`).
   - *Statement:* from 20626, where the reader has just read the tag octet into the function's

@@ -273,7 +273,11 @@ def loopSteps (L left : Nat) : Nat := 2 * L + 8 * left + 2000 * (left / L) + 200
       len L + left}` at O, q' holding the payload's first L + left octets, the reader advanced by
       `left`, and the heap holding the model's state after the passes' `realloc`s; or
     * reaches `finish_grow`'s return point from a `realloc` (33055) with ω₇ = 0, the model's
-      `realloc` having given `none` from the state memory holds. -/
+      `realloc` having given `none` from the state memory holds.
+
+    *Setting:* this assumes the payload lies at or above the stack frame, which the decode loop
+    does not satisfy (there the payload is inside an allocated heap chunk). A heap-payload version
+    needs `realloc` to keep other chunks' data, which is not yet proved. -/
 theorem loop {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env : RefineHost.Env)
     (x : RefineCtx) (ω : Regs) (μ : Memory) {hb : Nat} (s : State)
     (S O rd q L left ptr0 len ret t v5 v6 pb h : Nat)
@@ -416,7 +420,11 @@ theorem loop {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env : R
     `alloc` of 512 units; then the loop (`loop`) doubles the buffer through `realloc` until all n
     octets are read. Either `read_vec` returns to t with the `Vec` `{cap n, ptr q', len n}` at O,
     q' holding the n payload octets and the heap the model's state after the `realloc`s, or it
-    reaches `finish_grow`'s return point from a `realloc` that the model fails (33055, ω₇ = 0). -/
+    reaches `finish_grow`'s return point from a `realloc` that the model fails (33055, ω₇ = 0).
+
+    *Setting:* this assumes the payload lies at or above the stack frame, which the decode loop
+    does not satisfy (there the payload is inside an allocated heap chunk). A heap-payload version
+    needs `realloc` to keep other chunks' data, which is not yet proved. -/
 theorem vec_u8_big {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env : RefineHost.Env)
     (x : RefineCtx) (ω : Regs) (μ : Memory) {hb : Nat} (s s1 : State) (sp O rd ptr len n ret t v5 v6 q pb ph : Nat)
     (hwf : WF s) (hrep : Rep μ s) (hbd : heapBounds env.code = (48, pb)) (h48 : 48 ≤ ph) (hhb : ph ≤ pb)

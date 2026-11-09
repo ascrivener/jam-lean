@@ -165,6 +165,7 @@ import Services.Bootstrap.Alloc.ReallocFallbackGrowFail
 import Services.Bootstrap.Alloc.ReallocFallbackHeap
 import Services.Bootstrap.Alloc.ReallocFallbackWrap
 import Services.Bootstrap.Alloc.ReallocCases
+import Services.Bootstrap.Alloc.Pages
 
 /-!
 # Results about specific services' deployed code

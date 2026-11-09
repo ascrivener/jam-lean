@@ -223,7 +223,7 @@ An independent kernel, nanoda as vendored by
     octets, the function reads the hash into its frame (`read_big_sp`), copies it to O + 8 and puts
     the discriminant word 2^63 + 13 at O. The reader is advanced by 32. Memory changes only in
     A − 88 … A + 32, the reader and O … O + 40.
-  - *Scope:* the other hash-field variants (`CreateService`, `Provide`) are not covered yet.
+  - *Scope:* `CreateService` is not covered yet (`Provide`: see `provide_hash` and `provide_inline_*`).
 - **`Instruction::decode` for a hash and a `u64`.** `Decode.HashU64.solicit` and `forget`
   (`Services/Bootstrap/Decode/HashU64.lean`).
   - *Statement:* from 20626 with tag 6 (`Solicit { hash, len }`) and the reader holding at least 40
@@ -308,8 +308,27 @@ An independent kernel, nanoda as vendored by
 
     Memory changes only in the callees' frames below A (and the result slot at A for `Designate`),
     the reader and the slot.
-  - *Scope:* `Provide` with `Inline(bytes)`, `RandomStorageAccumulate(Ok(keys))`, and non-empty
-    `Bless` and `Designate` allocate, and are not covered yet.
+  - *Scope:* `RandomStorageAccumulate(Ok(keys))` and non-empty `Bless` and `Designate` allocate, and
+    are not covered yet. `Provide` with `Inline(bytes)`: see the next item.
+
+- **`Instruction::decode` of `Provide { service, preimage: Inline(bytes) }`.**
+  `Decode.Provide.provide_inline_small` and `provide_inline_big`
+  (`Services/Bootstrap/Decode/ProvideInline.lean`).
+  - *Statement:* from 20626 with tag 17, and the reader holding the service (4 octets), the preimage
+    tag 1, ℰ(n) and n octets, `Provide`'s helper keeps the tag word 1 and decodes n (`decodeU32`). It
+    then reads the bytes with `read_vec` into a `Vec` at H + 80 and moves the `Vec` with unaligned
+    stores. `Instruction::decode` returns the discriminant word 2^63 + 16 at O, the tag 1 at O + 8,
+    the `Vec` `{cap n, ptr q, len n}` at O + 16 and the service at O + 48, with the n octets at q. The
+    reader is advanced by 5 + |ℰ(n)| + n.
+    - 1 ≤ n ≤ 16384: q is the model's `alloc` of ⌈n/32⌉ units, and the heap holds the state after it
+      (`vec_u8_small`).
+    - 16384 < n < 2³⁰ − 64: through `vec_u8_big`, with the same two outcomes. Either the variant is
+      returned, q an allocated chunk of ⌈n/32⌉ + 1 units of the state after the `realloc`s, or the
+      run stops at a `realloc` the model fails (33055, ω₇ = 0).
+  - *How:* `pi_pre` runs from 20626 to `read_vec`'s call and `pi_post` from its return to t. The new
+    steps are `q3`, `q4`, `q5` and `p5i`. `q5`'s overlapping stores are checked octet by octet.
+  - *Assumed:* as `vec_u8_small` / `vec_u8_big`, with `Instruction::decode`'s frame at A, the helper's
+    frame at A − 152, and the reader, the slot and the payload above A.
 
 - **The decode loop for elements that allocate.** `Decode.LoopA.loopA`, `ElemOkA`,
   `Decode.HeapCtx.alloc_call` (`Services/Bootstrap/Decode/LoopA.lean`, `LoopAPass.lean`, `HeapCtx.lean`,

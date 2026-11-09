@@ -1,3 +1,4 @@
+import Services.Bootstrap.Alloc.HeapContract
 import Services.Bootstrap.Alloc.ReallocFallbackAlloc
 import Services.Bootstrap.Alloc.ReallocFallbackGrowFail
 import Services.Bootstrap.Alloc.ReallocFallbackRefines
@@ -237,7 +238,7 @@ theorem realloc_fallback_none {grow : Grow} {hb : Nat} {s : State} {ptr align re
     binary reaches the fallback with the frame at sp − 152, ω₆ = the usable size, ω₇ the allocator,
     ω₈ = ptr, ω₉ kept and ω₁₀ = req, the caller's ω₀, ω₅, ω₆ saved, memory still holding `s`
     (changed only in the frame) and the heap's pages as they were. -/
-theorem fallback_entry {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (x : RefineCtx)
+theorem fallback_entryG {p : ByteArray} {P : Program} [HasCode p P] (env : HeapHost X) (x : X)
     (ω : Regs) (μ : Memory) (s : State) (sp ptr req pb ph : Nat) (hwf : WF s) (hrep : Rep μ s)
     (hc : ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true) (hr : usable s ptr < req) (hr1 : req < 33554431)
     (hbd : heapBounds env.code = (48, pb)) (h48 : 48 ≤ ph) (hhb : ph ≤ pb) (hbs : pb < 4294967296)
@@ -249,7 +250,7 @@ theorem fallback_entry {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
     {S0 S1 : Nat} (hHT : s.base + 32 * s.allocated ≤ 4096 * ph)
     (hS : S0 + 152 ≤ sp ∧ sp ≤ S1) (hSb : 4096 * pb ≤ S0) (hp : HeapPages μ 48 pb ph)
     (hst : ∀ a, S0 ≤ a → a < S1 → μ.writable a = true) :
-    ∃ ω' μ', FreeStepsH p (refineContract env) 42980 ω μ x 43259 ω' μ' x 120 ∧ Rep μ' s ∧
+    ∃ ω' μ', FreeStepsH p (env.rel hostCostMax) 42980 ω μ x 43259 ω' μ' x 120 ∧ Rep μ' s ∧
       HeapPages μ' 48 pb ph ∧ (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧
       (∀ a, a < 4294967296 → (a < sp - 152 ∨ sp ≤ a) → μ'.read a = μ.read a) ∧
       μ'.readN (sp - 8) 8 = Num.encodeLE 8 ω[0].toNat ∧ μ'.readN (sp - 16) 8 = Num.encodeLE 8 ω[5].toNat ∧
@@ -342,7 +343,7 @@ theorem fallback_entry {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
           · exfalso; unfold wordUsed at h; simp at h; omega
           · unfold wordSize at h; exact h
     obtain ⟨ω1, μ1, r1, -, ww1, fr1, st0, st5, st6, a1, a6, a7, a8, a9, a10⟩ := fallback_pre (p := p) (P := P)
-      (R := refineContract env) x ω μ s H F sp ptr req cur hrep' h1 h8 h7 h10 hsp hsp1 hb0 hbT
+      (R := env.rel hostCostMax) x ω μ s H F sp ptr req cur hrep' h1 h8 h7 h10 hsp hsp1 hb0 hbT
       (hHF _ (Or.inl (mkH _ hXm))) (by omega) (mkH _ hXm) hHF (by rw [hXs]; unfold sizeWord; simp) hlt hr1 hc1
       (by omega) hcase' hHFT hS hw
     exact ⟨ω1, μ1, r1.mono (by omega),
@@ -366,16 +367,82 @@ theorem fallback_entry {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
     have hR : pb < pagesOf (s.base + 32 * ((ptr - 32 + 32 * (req + 1) - s.base) / 32 +
         (if cur + e.size - (req + 1) = 0 then 0 else 1))) := by
       unfold growTo at hno; have := of_decide_eq_false hno; omega
-    obtain ⟨ω1, μ1, r1, rep1, hp1, hst1, fr1, st0, st5, st6, a1, a6, a7, a8, a9, a10⟩ := fallback_pre_grow
+    obtain ⟨ω1, μ1, r1, rep1, hp1, hst1, fr1, st0, st5, st6, a1, a6, a7, a8, a9, a10⟩ := fallback_pre_growG
       (p := p) (P := P) env x ω μ s H F sp ptr req cur e.size hrep' h1 h8 h7 h10 hsp hsp1 hb0 hbT hA
       (hHF _ (Or.inl (mkH _ hXm))) (by omega) (mkH _ hXm) hHF (by rw [hXs]; unfold sizeWord; simp) hlt hr1 hc1
       hin (hnc hin) hw2 (by omega) (by omega) hav (by omega) _ rfl hgr pb ph hbd h48 hhb hbs hR hHFT hS hSb hp hst
     exact ⟨ω1, μ1, r1, hrep.congr_lock hwf hb0 hbT (fun a ha1 ha2 ha3 => fr1 a (by omega) (Or.inl (by omega))),
       hp1, hst1, fr1, st0, st5, st6, a1, by rw [a6, husable], a7, a8, a9, a10⟩
 
-/-- **`fallback_refines_heap` with the copy**: as `fallback_refines_heap`, and the new block q's
+/-- `fallback_entryG` for the refine contract (`refineHeap env`). -/
+theorem fallback_entry {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (x : RefineCtx)
+    (ω : Regs) (μ : Memory) (s : State) (sp ptr req pb ph : Nat) (hwf : WF s) (hrep : Rep μ s)
+    (hc : ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true) (hr : usable s ptr < req) (hr1 : req < 33554431)
+    (hbd : heapBounds env.code = (48, pb)) (h48 : 48 ≤ ph) (hhb : ph ≤ pb) (hbs : pb < 4294967296)
+    (hnone : growInplace (growTo pb) s ptr req = none)
+    (h1 : ω[1] = UInt64.ofNat sp) (h8 : ω[8] = UInt64.ofNat ptr) (h7 : ω[7] = UInt64.ofNat 196792)
+    (h10 : ω[10] = UInt64.ofNat req)
+    (hsp : 2147483800 ≤ sp) (hsp1 : sp < 4294967296)
+    (hb0 : 206864 ≤ s.base) (hbT : s.base + 1073741824 < 2147483648) (hA : s.allocated < 2147483648)
+    {S0 S1 : Nat} (hHT : s.base + 32 * s.allocated ≤ 4096 * ph)
+    (hS : S0 + 152 ≤ sp ∧ sp ≤ S1) (hSb : 4096 * pb ≤ S0) (hp : HeapPages μ 48 pb ph)
+    (hst : ∀ a, S0 ≤ a → a < S1 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p (refineContract env) 42980 ω μ x 43259 ω' μ' x 120 ∧ Rep μ' s ∧
+      HeapPages μ' 48 pb ph ∧ (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧
+      (∀ a, a < 4294967296 → (a < sp - 152 ∨ sp ≤ a) → μ'.read a = μ.read a) ∧
+      μ'.readN (sp - 8) 8 = Num.encodeLE 8 ω[0].toNat ∧ μ'.readN (sp - 16) 8 = Num.encodeLE 8 ω[5].toNat ∧
+      μ'.readN (sp - 24) 8 = Num.encodeLE 8 ω[6].toNat ∧
+      ω'[1] = UInt64.ofNat (sp - 152) ∧ ω'[6] = UInt64.ofNat (usable s ptr) ∧ ω'[7] = UInt64.ofNat 196792 ∧
+      ω'[8] = UInt64.ofNat ptr ∧ ω'[9] = ω[9] ∧ ω'[10] = UInt64.ofNat req :=
+  fallback_entryG (p := p) (P := P) (refineHeap env) x ω μ s sp ptr req pb ph hwf hrep hc hr hr1 hbd h48 hhb hbs hnone h1 h8 h7 h10 hsp hsp1 hb0 hbT hA (S0 := S0) (S1 := S1) hHT hS hSb hp hst
+
+/-- **`fallback_refines_heapG` with the copy**: as `fallback_refines_heapG`, and the new block q's
     first `usable s ptr`·32 octets are the old block's as they were at `realloc_impl`'s entry
     (42980). -/
+theorem fallback_refines_heap_dataG {p : ByteArray} {P : Program} [HasCode p P] (env : HeapHost X)
+    (x : X) (ω : Regs) (μ : Memory) {hb : Nat} (s s1 : State) (sp ptr req q pb ph : Nat)
+    (hwf : WF s) (hrep : Rep μ s)
+    (hc : ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true) (hr : usable s ptr < req) (hr1 : req < 33554431)
+    (hbd : heapBounds env.code = (48, pb)) (h48 : 48 ≤ ph) (hhb : ph ≤ pb) (hbs : pb < 4294967296)
+    (hnone : growInplace (growTo pb) s ptr req = none) (ha : alloc (growTo pb) hb 1 req s = some (q, s1))
+    (hcost : pagesOf (s.base + 32 * s1.allocated) ≤ ph + 14)
+    (h1 : ω[1] = UInt64.ofNat sp) (h8 : ω[8] = UInt64.ofNat ptr) (h7 : ω[7] = UInt64.ofNat 196792)
+    (h9 : ω[9] = UInt64.ofNat 1) (h10 : ω[10] = UInt64.ofNat req) (h0 : ω[0] = UInt64.ofNat 1988)
+    (hsp : 2147483952 ≤ sp) (hsp1 : sp < 4294967296) (hsp8 : sp % 8 = 0) (hba : s.base % 8 = 0)
+    (hb0 : 206864 ≤ s.base) (hbT : s.base + 1073741824 < 2147483648) (hA : s.allocated < 2147483648)
+    (hfo : FirstOk s) {S0 S1 : Nat} (hHTs : 208896 ≤ 4096 * ph) (hHT : s.base + 32 * s.allocated ≤ 4096 * ph)
+    (hS : S0 + 304 ≤ sp ∧ sp ≤ S1) (hSb : 4096 * pb ≤ S0) (hp : HeapPages μ 48 pb ph)
+    (hst : ∀ a, S0 ≤ a → a < S1 → μ.writable a = true) :
+    realloc (growTo pb) hb s ptr 1 req = some (q, free s1 ptr, true) ∧
+      ∃ ω' μ', μ'.readN q (32 * usable s ptr) = μ.readN ptr (32 * usable s ptr) ∧
+      FreeStepsH p (env.rel hostCostMax) 42980 ω μ x 40805 ω' μ' x (64 * usable s ptr + 1220) ∧
+        Rep μ' (free s1 ptr) ∧ WF (free s1 ptr) ∧ FirstOk (free s1 ptr) ∧
+        (∃ h', HeapPages μ' 48 pb h' ∧ s1.base + 32 * s1.allocated ≤ 4096 * h' ∧ ph ≤ h' ∧ h' ≤ pb) ∧
+        (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧
+        (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
+        ω'[7] = UInt64.ofNat q ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat sp ∧
+        ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
+  refine ⟨realloc_fallback hr hnone ha, ?_⟩
+  obtain ⟨ω1, μ1, r1, rep1, hp1, hst1, fr1, st0, st5, st6, a1, a6, a7, a8, a9, a10⟩ := fallback_entryG
+    (p := p) (P := P) env x ω μ s sp ptr req pb ph hwf hrep hc hr hr1 hbd h48 hhb hbs hnone h1 h8 h7 h10
+    (by omega) hsp1 hb0 hbT hA hHT ⟨by omega, by omega⟩ hSb hp hst
+  have rd : ∀ a v, μ1.readN a 8 = Num.encodeLE 8 v → v < 18446744073709551616 → rdN μ1 a 8 = v :=
+    fun a v h hv => rd_enc h hv
+  obtain ⟨ω2, μ2, dat2, r2, rep2, wf2, fo2, hpH, hst2, stk2, e7, e0, e1, e5, e6⟩ := fallback_tail_heap_dataG (p := p)
+    (P := P) env x ω1 μ1 (hb := hb) s s1 (sp - 152) ptr req q (usable s ptr) ω[5].toNat ω[6].toNat pb ph hwf
+    rep1 hfo hc rfl hr hbd h48 hhb hbs ha hcost a1 a7 a8 (by rw [a9]; exact h9) a10 a6 (by omega)
+    (by rw [show sp - 152 + 144 = sp - 8 by omega]; exact (rd _ _ st0 (UInt64.toNat_lt _)).trans (by rw [h0]; rfl))
+    (by rw [show sp - 152 + 136 = sp - 16 by omega]; exact rd _ _ st5 (UInt64.toNat_lt _))
+    (by rw [show sp - 152 + 128 = sp - 24 by omega]; exact rd _ _ st6 (UInt64.toNat_lt _))
+    (by omega) (by omega) (by omega) hba hb0 hbT hA hHTs hHT ⟨by omega, by omega⟩ hSb hp1 hst1
+  have hdl := data_lt hwf hbT hc
+  have dat : μ2.readN q (32 * usable s ptr) = μ.readN ptr (32 * usable s ptr) := by
+    rw [dat2]; exact readN_congr2 fun j hj => fr1 _ (by omega) (Or.inl (by omega))
+  exact ⟨ω2, μ2, dat, (r1.trans r2).mono (by omega), rep2, wf2, fo2, hpH, hst2,
+    fun a h1 h2 => (stk2 a h1 (by omega)).trans (fr1 a h1 (Or.inr h2)), e7, e0,
+    by rw [e1]; congr 1; omega, by rw [e5, UInt64.ofNat_toNat], by rw [e6, UInt64.ofNat_toNat]⟩
+
+/-- `fallback_refines_heap_dataG` for the refine contract (`refineHeap env`). -/
 theorem fallback_refines_heap_data {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env)
     (x : RefineCtx) (ω : Regs) (μ : Memory) {hb : Nat} (s s1 : State) (sp ptr req q pb ph : Nat)
     (hwf : WF s) (hrep : Rep μ s)
@@ -398,26 +465,8 @@ theorem fallback_refines_heap_data {p : ByteArray} {P : Program} [HasCode p P] (
         (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧
         (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
         ω'[7] = UInt64.ofNat q ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat sp ∧
-        ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
-  refine ⟨realloc_fallback hr hnone ha, ?_⟩
-  obtain ⟨ω1, μ1, r1, rep1, hp1, hst1, fr1, st0, st5, st6, a1, a6, a7, a8, a9, a10⟩ := fallback_entry
-    (p := p) (P := P) env x ω μ s sp ptr req pb ph hwf hrep hc hr hr1 hbd h48 hhb hbs hnone h1 h8 h7 h10
-    (by omega) hsp1 hb0 hbT hA hHT ⟨by omega, by omega⟩ hSb hp hst
-  have rd : ∀ a v, μ1.readN a 8 = Num.encodeLE 8 v → v < 18446744073709551616 → rdN μ1 a 8 = v :=
-    fun a v h hv => rd_enc h hv
-  obtain ⟨ω2, μ2, dat2, r2, rep2, wf2, fo2, hpH, hst2, stk2, e7, e0, e1, e5, e6⟩ := fallback_tail_heap_data (p := p)
-    (P := P) env x ω1 μ1 (hb := hb) s s1 (sp - 152) ptr req q (usable s ptr) ω[5].toNat ω[6].toNat pb ph hwf
-    rep1 hfo hc rfl hr hbd h48 hhb hbs ha hcost a1 a7 a8 (by rw [a9]; exact h9) a10 a6 (by omega)
-    (by rw [show sp - 152 + 144 = sp - 8 by omega]; exact (rd _ _ st0 (UInt64.toNat_lt _)).trans (by rw [h0]; rfl))
-    (by rw [show sp - 152 + 136 = sp - 16 by omega]; exact rd _ _ st5 (UInt64.toNat_lt _))
-    (by rw [show sp - 152 + 128 = sp - 24 by omega]; exact rd _ _ st6 (UInt64.toNat_lt _))
-    (by omega) (by omega) (by omega) hba hb0 hbT hA hHTs hHT ⟨by omega, by omega⟩ hSb hp1 hst1
-  have hdl := data_lt hwf hbT hc
-  have dat : μ2.readN q (32 * usable s ptr) = μ.readN ptr (32 * usable s ptr) := by
-    rw [dat2]; exact readN_congr2 fun j hj => fr1 _ (by omega) (Or.inl (by omega))
-  exact ⟨ω2, μ2, dat, (r1.trans r2).mono (by omega), rep2, wf2, fo2, hpH, hst2,
-    fun a h1 h2 => (stk2 a h1 (by omega)).trans (fr1 a h1 (Or.inr h2)), e7, e0,
-    by rw [e1]; congr 1; omega, by rw [e5, UInt64.ofNat_toNat], by rw [e6, UInt64.ofNat_toNat]⟩
+        ω'[5] = ω[5] ∧ ω'[6] = ω[6] :=
+  fallback_refines_heap_dataG (p := p) (P := P) (refineHeap env) x ω μ (hb := hb) s s1 sp ptr req q pb ph hwf hrep hc hr hr1 hbd h48 hhb hbs hnone ha hcost h1 h8 h7 h9 h10 h0 hsp hsp1 hsp8 hba hb0 hbT hA hfo (S0 := S0) (S1 := S1) hHTs hHT hS hSb hp hst
 
 /-- **The binary's `realloc_impl` refines the model's `realloc`, through any fallback**: under
     `refineContract` (the model's `grow` the host's `growTo pb`, GP Appendix B Ω_♊), from memory
@@ -429,6 +478,32 @@ theorem fallback_refines_heap_data {p : ByteArray} {P : Program} [HasCode p P] (
     the old usable size there, frees ptr and returns q into `realloc` (40805), memory holding
     `free s₁ ptr`, the heap's pages covering its allocated space, the caller's ω₀, ω₁, ω₅, ω₆
     restored and the stack from sp up untouched. -/
+theorem fallback_refines_heapG {p : ByteArray} {P : Program} [HasCode p P] (env : HeapHost X)
+    (x : X) (ω : Regs) (μ : Memory) {hb : Nat} (s s1 : State) (sp ptr req q pb ph : Nat)
+    (hwf : WF s) (hrep : Rep μ s)
+    (hc : ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true) (hr : usable s ptr < req) (hr1 : req < 33554431)
+    (hbd : heapBounds env.code = (48, pb)) (h48 : 48 ≤ ph) (hhb : ph ≤ pb) (hbs : pb < 4294967296)
+    (hnone : growInplace (growTo pb) s ptr req = none) (ha : alloc (growTo pb) hb 1 req s = some (q, s1))
+    (hcost : pagesOf (s.base + 32 * s1.allocated) ≤ ph + 14)
+    (h1 : ω[1] = UInt64.ofNat sp) (h8 : ω[8] = UInt64.ofNat ptr) (h7 : ω[7] = UInt64.ofNat 196792)
+    (h9 : ω[9] = UInt64.ofNat 1) (h10 : ω[10] = UInt64.ofNat req) (h0 : ω[0] = UInt64.ofNat 1988)
+    (hsp : 2147483952 ≤ sp) (hsp1 : sp < 4294967296) (hsp8 : sp % 8 = 0) (hba : s.base % 8 = 0)
+    (hb0 : 206864 ≤ s.base) (hbT : s.base + 1073741824 < 2147483648) (hA : s.allocated < 2147483648)
+    (hfo : FirstOk s) {S0 S1 : Nat} (hHTs : 208896 ≤ 4096 * ph) (hHT : s.base + 32 * s.allocated ≤ 4096 * ph)
+    (hS : S0 + 304 ≤ sp ∧ sp ≤ S1) (hSb : 4096 * pb ≤ S0) (hp : HeapPages μ 48 pb ph)
+    (hst : ∀ a, S0 ≤ a → a < S1 → μ.writable a = true) :
+    realloc (growTo pb) hb s ptr 1 req = some (q, free s1 ptr, true) ∧
+      ∃ ω' μ', FreeStepsH p (env.rel hostCostMax) 42980 ω μ x 40805 ω' μ' x (64 * usable s ptr + 1220) ∧
+        Rep μ' (free s1 ptr) ∧ WF (free s1 ptr) ∧ FirstOk (free s1 ptr) ∧
+        (∃ h', HeapPages μ' 48 pb h' ∧ s1.base + 32 * s1.allocated ≤ 4096 * h' ∧ ph ≤ h' ∧ h' ≤ pb) ∧
+        (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧
+        (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
+        ω'[7] = UInt64.ofNat q ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat sp ∧
+        ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
+  obtain ⟨e, ω', μ', -, h⟩ := fallback_refines_heap_dataG (p := p) (P := P) (hb := hb) (S0 := S0) (S1 := S1) env x ω μ s s1 sp ptr req q pb ph hwf hrep hc hr hr1 hbd h48 hhb hbs hnone ha hcost h1 h8 h7 h9 h10 h0 hsp hsp1 hsp8 hba hb0 hbT hA hfo hHTs hHT hS hSb hp hst
+  exact ⟨e, ω', μ', h⟩
+
+/-- `fallback_refines_heapG` for the refine contract (`refineHeap env`). -/
 theorem fallback_refines_heap {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env)
     (x : RefineCtx) (ω : Regs) (μ : Memory) {hb : Nat} (s s1 : State) (sp ptr req q pb ph : Nat)
     (hwf : WF s) (hrep : Rep μ s)
@@ -450,15 +525,58 @@ theorem fallback_refines_heap {p : ByteArray} {P : Program} [HasCode p P] (env :
         (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧
         (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
         ω'[7] = UInt64.ofNat q ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat sp ∧
-        ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
-  obtain ⟨e, ω', μ', -, h⟩ := fallback_refines_heap_data (p := p) (P := P) (hb := hb) (S0 := S0) (S1 := S1) env x ω μ s s1 sp ptr req q pb ph hwf hrep hc hr hr1 hbd h48 hhb hbs hnone ha hcost h1 h8 h7 h9 h10 h0 hsp hsp1 hsp8 hba hb0 hbT hA hfo hHTs hHT hS hSb hp hst
-  exact ⟨e, ω', μ', h⟩
+        ω'[5] = ω[5] ∧ ω'[6] = ω[6] :=
+  fallback_refines_heapG (p := p) (P := P) (refineHeap env) x ω μ (hb := hb) s s1 sp ptr req q pb ph hwf hrep hc hr hr1 hbd h48 hhb hbs hnone ha hcost h1 h8 h7 h9 h10 h0 hsp hsp1 hsp8 hba hb0 hbT hA hfo (S0 := S0) (S1 := S1) hHTs hHT hS hSb hp hst
 
 /-- **The binary's `realloc_impl` fails where the model's `realloc` does**: as
-    `fallback_refines_heap`, when the model's `alloc` returns `none`: the model's `realloc` is
+    `fallback_refines_heapG`, when the model's `alloc` returns `none`: the model's `realloc` is
     `none`, and `realloc_impl` returns null into `realloc` (40805, through 43326) with memory still
     holding `s`, the heap's pages as they were, and memory changed only in the stack below sp (in
     sp − 304 … sp): the old block, and the whole heap, untouched. -/
+theorem fallback_refines_failG {p : ByteArray} {P : Program} [HasCode p P] (env : HeapHost X)
+    (x : X) (ω : Regs) (μ : Memory) {hb : Nat} (s : State) (sp ptr req pb ph : Nat)
+    (hwf : WF s) (hrep : Rep μ s)
+    (hc : ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true) (hr : usable s ptr < req) (hr1 : req < 33554431)
+    (hbd : heapBounds env.code = (48, pb)) (h48 : 48 ≤ ph) (hhb : ph ≤ pb) (hbs : pb < 4294967296)
+    (hnone : growInplace (growTo pb) s ptr req = none) (ha : alloc (growTo pb) hb 1 req s = none)
+    (h1 : ω[1] = UInt64.ofNat sp) (h8 : ω[8] = UInt64.ofNat ptr) (h7 : ω[7] = UInt64.ofNat 196792)
+    (h9 : ω[9] = UInt64.ofNat 1) (h10 : ω[10] = UInt64.ofNat req) (h0 : ω[0] = UInt64.ofNat 1988)
+    (hsp : 2147483952 ≤ sp) (hsp1 : sp < 4294967296)
+    (hb0 : 206864 ≤ s.base) (hbT : s.base + 1073741824 < 2147483648) (hA : s.allocated < 2147483648)
+    {S0 S1 : Nat} (hHTs : 208896 ≤ 4096 * ph) (hHT : s.base + 32 * s.allocated ≤ 4096 * ph)
+    (hS : S0 + 304 ≤ sp ∧ sp ≤ S1) (hSb : 4096 * pb ≤ S0) (hp : HeapPages μ 48 pb ph)
+    (hst : ∀ a, S0 ≤ a → a < S1 → μ.writable a = true) :
+    realloc (growTo pb) hb s ptr 1 req = none ∧
+      ∃ ω' μ', FreeStepsH p (env.rel hostCostMax) 42980 ω μ x 40805 ω' μ' x 640 ∧ Rep μ' s ∧
+        HeapPages μ' 48 pb ph ∧ (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧
+        (∀ a, a < 4294967296 → (a < sp - 304 ∨ sp ≤ a) → μ'.read a = μ.read a) ∧
+        ω'[7] = UInt64.ofNat 0 ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat sp ∧
+        ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
+  refine ⟨realloc_fallback_none hr hnone ha, ?_⟩
+  have hp32 : ptr < 4294967296 := by
+    obtain ⟨c, hcm, hca, -⟩ := hc
+    have ht := hwf.2.2.2.1
+    unfold TilesOk at ht
+    have := ht.mem_lt c hcm
+    have htop : s.top = s.base + 1073741824 := by unfold State.top; rw [maxSize_val]
+    omega
+  obtain ⟨ω1, μ1, r1, rep1, hp1, hst1, fr1, st0, st5, st6, a1, -, a7, a8, a9, a10⟩ := fallback_entryG
+    (p := p) (P := P) env x ω μ s sp ptr req pb ph hwf hrep hc hr hr1 hbd h48 hhb hbs hnone h1 h8 h7 h10
+    (by omega) hsp1 hb0 hbT hA hHT ⟨by omega, by omega⟩ hSb hp hst
+  have rd : ∀ a v, μ1.readN a 8 = Num.encodeLE 8 v → v < 18446744073709551616 → rdN μ1 a 8 = v :=
+    fun a v h hv => rd_enc h hv
+  obtain ⟨ω2, μ2, r2, rep2, hp2, hst2, fr2, e7, e0, e1, e5, e6⟩ := fallback_tail_failG (p := p) (P := P) env x
+    ω1 μ1 (hb := hb) s (sp - 152) ptr req ω[5].toNat ω[6].toNat pb ph hwf rep1 hbd h48 hhb hbs ha (by omega)
+    a1 a7 a8 (by rw [a9]; exact h9) a10 hp32
+    (by rw [show sp - 152 + 144 = sp - 8 by omega]; exact (rd _ _ st0 (UInt64.toNat_lt _)).trans (by rw [h0]; rfl))
+    (by rw [show sp - 152 + 136 = sp - 16 by omega]; exact rd _ _ st5 (UInt64.toNat_lt _))
+    (by rw [show sp - 152 + 128 = sp - 24 by omega]; exact rd _ _ st6 (UInt64.toNat_lt _))
+    (by omega) (by omega) hb0 hbT hA hHTs hHT ⟨by omega, by omega⟩ hSb hp1 hst1
+  exact ⟨ω2, μ2, (r1.trans r2).mono (by omega), rep2, hp2, hst2,
+    fun a h1 h2 => (fr2 a h1 (by omega) (by omega)).trans (fr1 a h1 (by omega)), e7, e0,
+    by rw [e1]; congr 1; omega, by rw [e5, UInt64.ofNat_toNat], by rw [e6, UInt64.ofNat_toNat]⟩
+
+/-- `fallback_refines_failG` for the refine contract (`refineHeap env`). -/
 theorem fallback_refines_fail {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env)
     (x : RefineCtx) (ω : Regs) (μ : Memory) {hb : Nat} (s : State) (sp ptr req pb ph : Nat)
     (hwf : WF s) (hrep : Rep μ s)
@@ -477,29 +595,7 @@ theorem fallback_refines_fail {p : ByteArray} {P : Program} [HasCode p P] (env :
         HeapPages μ' 48 pb ph ∧ (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧
         (∀ a, a < 4294967296 → (a < sp - 304 ∨ sp ≤ a) → μ'.read a = μ.read a) ∧
         ω'[7] = UInt64.ofNat 0 ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat sp ∧
-        ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
-  refine ⟨realloc_fallback_none hr hnone ha, ?_⟩
-  have hp32 : ptr < 4294967296 := by
-    obtain ⟨c, hcm, hca, -⟩ := hc
-    have ht := hwf.2.2.2.1
-    unfold TilesOk at ht
-    have := ht.mem_lt c hcm
-    have htop : s.top = s.base + 1073741824 := by unfold State.top; rw [maxSize_val]
-    omega
-  obtain ⟨ω1, μ1, r1, rep1, hp1, hst1, fr1, st0, st5, st6, a1, -, a7, a8, a9, a10⟩ := fallback_entry
-    (p := p) (P := P) env x ω μ s sp ptr req pb ph hwf hrep hc hr hr1 hbd h48 hhb hbs hnone h1 h8 h7 h10
-    (by omega) hsp1 hb0 hbT hA hHT ⟨by omega, by omega⟩ hSb hp hst
-  have rd : ∀ a v, μ1.readN a 8 = Num.encodeLE 8 v → v < 18446744073709551616 → rdN μ1 a 8 = v :=
-    fun a v h hv => rd_enc h hv
-  obtain ⟨ω2, μ2, r2, rep2, hp2, hst2, fr2, e7, e0, e1, e5, e6⟩ := fallback_tail_fail (p := p) (P := P) env x
-    ω1 μ1 (hb := hb) s (sp - 152) ptr req ω[5].toNat ω[6].toNat pb ph hwf rep1 hbd h48 hhb hbs ha (by omega)
-    a1 a7 a8 (by rw [a9]; exact h9) a10 hp32
-    (by rw [show sp - 152 + 144 = sp - 8 by omega]; exact (rd _ _ st0 (UInt64.toNat_lt _)).trans (by rw [h0]; rfl))
-    (by rw [show sp - 152 + 136 = sp - 16 by omega]; exact rd _ _ st5 (UInt64.toNat_lt _))
-    (by rw [show sp - 152 + 128 = sp - 24 by omega]; exact rd _ _ st6 (UInt64.toNat_lt _))
-    (by omega) (by omega) hb0 hbT hA hHTs hHT ⟨by omega, by omega⟩ hSb hp1 hst1
-  exact ⟨ω2, μ2, (r1.trans r2).mono (by omega), rep2, hp2, hst2,
-    fun a h1 h2 => (fr2 a h1 (by omega) (by omega)).trans (fr1 a h1 (by omega)), e7, e0,
-    by rw [e1]; congr 1; omega, by rw [e5, UInt64.ofNat_toNat], by rw [e6, UInt64.ofNat_toNat]⟩
+        ω'[5] = ω[5] ∧ ω'[6] = ω[6] :=
+  fallback_refines_failG (p := p) (P := P) (refineHeap env) x ω μ (hb := hb) s sp ptr req pb ph hwf hrep hc hr hr1 hbd h48 hhb hbs hnone ha h1 h8 h7 h9 h10 h0 hsp hsp1 hb0 hbT hA (S0 := S0) (S1 := S1) hHTs hHT hS hSb hp hst
 
 end Services.Bootstrap.Alloc

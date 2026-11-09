@@ -36,6 +36,11 @@ structure St (F v ptr len ret r5 r6 : Nat) (μ0 : Memory) (pre : List UInt8) (ω
   rd : ∀ a, μ.readable a = μ0.readable a
   wr : ∀ a, μ.writable a = μ0.writable a
 
+/-- `St` for a list written differently. -/
+theorem St.cast {F v ptr len ret r5 r6 : Nat} {μ0 : Memory} {pre pre' : List UInt8} {ω : Regs} {μ : Memory}
+    (h : pre = pre') (st : St F v ptr len ret r5 r6 μ0 pre ω μ) : St F v ptr len ret r5 r6 μ0 pre' ω μ :=
+  h ▸ st
+
 theorem readN_add' (μ : Memory) (a n m : Nat) : μ.readN a (n + m) = μ.readN a n ++ μ.readN (a + n) m := by
   simp only [Memory.readN, List.range_add, List.map_append, List.map_map]
   congr 1
@@ -166,22 +171,54 @@ theorem St.scratch {F S v cap ptr len N ret t r5 r6 : Nat} {μ0 : Memory} {pre :
   · rw [Memory.readN_congr (fun j hj => hk _ (by omega) (by omega))]; exact st.out
   · rw [hk a h0 (by omega)]; exact st.keep a h0 h1 h2 h3
 
-/-- A variant's first piece, its tag octet: from the arm e the octet goes to sp + 24 and the arm calls
+/-- The arms that start with their tag octet: the arm e, the tag, and the return address r of the
+    call that writes it. `Solicit` (19474) and `Forget` (18919) share the call at 19478. -/
+def TagCase (e tag r : Nat) : Prop :=
+  (e = 18890 ∧ tag = 3 ∧ r = 792) ∨ (e = 19088 ∧ tag = 20 ∧ r = 816) ∨ (e = 18369 ∧ tag = 4 ∧ r = 746) ∨
+  (e = 18925 ∧ tag = 1 ∧ r = 798) ∨ (e = 18778 ∧ tag = 2 ∧ r = 780) ∨ (e = 19789 ∧ tag = 8 ∧ r = 876) ∨
+  (e = 19256 ∧ tag = 21 ∧ r = 830) ∨ (e = 19474 ∧ tag = 6 ∧ r = 850) ∨ (e = 18919 ∧ tag = 7 ∧ r = 850)
+
+/-- The pieces that load a field of w octets (1, 4 or 8) at S + off into the scratch word: the piece's
+    start e and the return address r of its call. -/
+def FieldCase (e r off w : Nat) : Prop :=
+  (e = 18913 ∧ r = 916 ∧ off = 8 ∧ w = 4) ∨ (e = 19111 ∧ r = 916 ∧ off = 8 ∧ w = 8) ∨
+  (e = 19515 ∧ r = 916 ∧ off = 40 ∧ w = 8) ∨ (e = 18392 ∧ r = 748 ∧ off = 40 ∧ w = 4) ∨
+  (e = 18963 ∧ r = 802 ∧ off = 40 ∧ w = 8) ∨ (e = 18984 ∧ r = 916 ∧ off = 48 ∧ w = 8) ∨
+  (e = 18801 ∧ r = 782 ∧ off = 152 ∧ w = 4) ∨ (e = 18823 ∧ r = 784 ∧ off = 136 ∧ w = 8) ∨
+  (e = 18845 ∧ r = 786 ∧ off = 144 ∧ w = 8) ∨ (e = 19812 ∧ r = 878 ∧ off = 8 ∧ w = 4) ∨
+  (e = 19848 ∧ r = 916 ∧ off = 44 ∧ w = 1) ∨ (e = 19279 ∧ r = 832 ∧ off = 8 ∧ w = 8) ∨
+  (e = 19300 ∧ r = 916 ∧ off = 16 ∧ w = 1)
+
+/-- The pieces that append n octets straight from the value, at S + off. -/
+def DirectCase (e r off n : Nat) : Prop :=
+  (e = 19500 ∧ r = 852 ∧ off = 8 ∧ n = 32) ∨ (e = 18413 ∧ r = 916 ∧ off = 8 ∧ n = 32) ∨
+  (e = 18948 ∧ r = 800 ∧ off = 8 ∧ n = 32) ∨ (e = 19833 ∧ r = 880 ∧ off = 12 ∧ n = 32) ∨
+  (e = 18867 ∧ r = 916 ∧ off = 8 ∧ n = 128)
+
+theorem FieldCase.le {e r off w : Nat} (h : FieldCase e r off w) : off + w ≤ 232 ∧ w ≤ 8 ∧ 0 < w := by
+  unfold FieldCase at h; omega
+
+theorem DirectCase.le {e r off n : Nat} (h : DirectCase e r off n) : off + n ≤ 232 := by
+  unfold DirectCase at h; omega
+
+/-- A tag piece's code: from the arm e, the octet `tag` goes to sp + 24 and the arm calls
     `Vec<u8>::extend_from_slice` for it with return address r, the writer v (ω₁₀) in ω₇ and ω₅ and the
     value S (ω₁₁) in ω₆. -/
-theorem tagArm {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X) (ω : Regs) (μ : Memory)
-    (e tag r sp v S : Nat) (he : (e = 18890 ∧ tag = 3 ∧ r = 792) ∨ (e = 19088 ∧ tag = 20 ∧ r = 816))
+theorem tagSeg {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X) (ω : Regs) (μ : Memory)
+    (e tag r sp v S : Nat) (he : TagCase e tag r)
     (hsp : sp + 32 ≤ 4294967296) (hv : v < 18446744073709551616) (hS : S < 18446744073709551616)
     (h1 : ω[1] = UInt64.ofNat sp) (h10 : ω[10] = UInt64.ofNat v) (h11 : ω[11] = UInt64.ofNat S)
     (hw : ∀ a, sp + 24 ≤ a → a < sp + 25 → μ.writable a = true) :
-    ∃ ω' μ', FreeStepsH p R e ω μ x 58508 ω' μ' x 8 ∧
+    ∃ ω' μ', FreeStepsH p R e ω μ x 58508 ω' μ' x 10 ∧
       ω'[0] = UInt64.ofNat r ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = UInt64.ofNat v ∧ ω'[6] = UInt64.ofNat S ∧
       ω'[7] = UInt64.ofNat v ∧ ω'[8] = UInt64.ofNat (sp + 24) ∧ ω'[9] = UInt64.ofNat 1 ∧
       μ'.readN (sp + 24) 1 = [UInt8.ofNat tag] ∧
       (∀ a, a < 4294967296 → (a < sp + 24 ∨ sp + 25 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
   rw [show ω = regsNF ω [] from rfl]
-  rcases he with ⟨rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩ <;>
+  unfold TagCase at he
+  rcases he with ⟨rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩ |
+    ⟨rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩ <;>
   · refine ⟨?_, ?_, ?_, ?_⟩
     rotate_left 2
     · pvm_go [h1, h10, h11, hsp, hw]
@@ -192,60 +229,126 @@ theorem tagArm {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X
       post_simp
       all_goals try assumption
 
-/-- A field of 4 octets (`Zombify`'s `ejector`, at S + 8): from 18913 the arm loads it from the value
-    (ω₆ = S), and the shared tail at 20292 puts it at sp + 24 and calls `Vec<u8>::extend_from_slice` for
-    the 4 octets, returning to 916 (→ 20329), with the writer from ω₅. -/
-theorem fieldU32 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X) (ω : Regs) (μ : Memory)
-    (sp v S : Nat) (hsp : sp + 32 ≤ 4294967296) (hS : S + 12 ≤ 4294967296)
+/-- A field piece's code: from e the arm loads the w-octet field at S + off (ω₆ = S), puts it at sp + 24
+    and calls `Vec<u8>::extend_from_slice` for the w octets with return address r, the writer from ω₅. -/
+theorem fieldSeg {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X) (ω : Regs) (μ : Memory)
+    (e r off w sp v S : Nat) (hc : FieldCase e r off w) (hsp : sp + 32 ≤ 4294967296) (hS : S + 232 ≤ 4294967296)
     (hv : v < 18446744073709551616)
     (h1 : ω[1] = UInt64.ofNat sp) (h5 : ω[5] = UInt64.ofNat v) (h6 : ω[6] = UInt64.ofNat S)
-    (hr : ∀ a, S + 8 ≤ a → a < S + 12 → μ.readable a = true)
-    (hw : ∀ a, sp + 24 ≤ a → a < sp + 28 → μ.writable a = true) :
-    ∃ ω' μ', FreeStepsH p R 18913 ω μ x 58508 ω' μ' x 12 ∧
-      ω'[0] = UInt64.ofNat 916 ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
-      ω'[7] = UInt64.ofNat v ∧ ω'[8] = UInt64.ofNat (sp + 24) ∧ ω'[9] = UInt64.ofNat 4 ∧
-      μ'.readN (sp + 24) 4 = μ.readN (S + 8) 4 ∧
-      (∀ a, a < 4294967296 → (a < sp + 24 ∨ sp + 28 ≤ a) → μ'.read a = μ.read a) ∧
+    (hr : ∀ a, S + off ≤ a → a < S + off + w → μ.readable a = true)
+    (hw : ∀ a, sp + 24 ≤ a → a < sp + 24 + w → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R e ω μ x 58508 ω' μ' x 12 ∧
+      ω'[0] = UInt64.ofNat r ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      ω'[7] = UInt64.ofNat v ∧ ω'[8] = UInt64.ofNat (sp + 24) ∧ ω'[9] = UInt64.ofNat w ∧
+      μ'.readN (sp + 24) w = μ.readN (S + off) w ∧
+      (∀ a, a < 4294967296 → (a < sp + 24 ∨ sp + 24 + w ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
-  have hsx : Num.encodeLE 4 (sxw 4 (rdN μ (S + 8) 4)) = μ.readN (S + 8) 4 := by
+  have hsx : Num.encodeLE 4 (sxw 4 (rdN μ (S + off) 4)) = μ.readN (S + off) 4 := by
     rw [encodeLE_sxw 4 _ (Or.inr rfl) (rdN_lt μ _ 4), encodeLE_rdN]
+  have hm : ∀ w : Nat, w % 18446744073709551616 % 4294967296 = w % 256 ^ 4 := fun w => by omega
+  have hm1 : ∀ w : Nat, w % 18446744073709551616 % 256 = w % 256 ^ 1 := fun w => by omega
   rw [show ω = regsNF ω [] from rfl]
-  refine ⟨?_, ?_, ?_, ?_⟩
-  rotate_left 2
-  · pvm_go [h1, h5, h6, hsp, hS, hr, hw, ↓rdN_fold, ↓loadI_fold]
-  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
-    all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
-      ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, h5, h6, Nat.mod_eq_of_lt hv]
-    post_simp
-    all_goals try assumption
-    all_goals try (rw [← hsx, show ∀ w : Nat, w % 18446744073709551616 % 4294967296 = w % 256 ^ 4 from
-      fun w => by omega, encodeLE_mod])
+  unfold FieldCase at hc
+  rcases hc with ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ |
+    ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ |
+    ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ |
+    ⟨rfl, rfl, rfl, rfl⟩ <;>
+  · refine ⟨?_, ?_, ?_, ?_⟩
+    rotate_left 2
+    · pvm_go [h1, h5, h6, hsp, hS, hr, hw, ↓rdN_fold, ↓loadI_fold, rdN_mod64]
+    · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
+      all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+        ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, h5, h6, Nat.mod_eq_of_lt hv]
+      post_simp
+      all_goals try assumption
+      all_goals try exact encodeLE_rdN μ _ 8
+      all_goals try (rw [← hsx, hm, encodeLE_mod])
+      all_goals try (rw [hm1, encodeLE_mod, encodeLE_rdN])
 
-/-- A field of 8 octets (`Exported`'s segment index, at S + 8): from 19111 the arm loads it from the
-    value (ω₆ = S), and the shared tail at 19519 puts it at sp + 24 and calls
-    `Vec<u8>::extend_from_slice` for the 8 octets, returning to 916 (→ 20329). -/
-theorem fieldU64 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X) (ω : Regs) (μ : Memory)
-    (sp v S : Nat) (hsp : sp + 32 ≤ 4294967296) (hS : S + 16 ≤ 4294967296)
-    (hv : v < 18446744073709551616)
-    (h1 : ω[1] = UInt64.ofNat sp) (h5 : ω[5] = UInt64.ofNat v) (h6 : ω[6] = UInt64.ofNat S)
-    (hr : ∀ a, S + 8 ≤ a → a < S + 16 → μ.readable a = true)
-    (hw : ∀ a, sp + 24 ≤ a → a < sp + 32 → μ.writable a = true) :
-    ∃ ω' μ', FreeStepsH p R 19111 ω μ x 58508 ω' μ' x 12 ∧
-      ω'[0] = UInt64.ofNat 916 ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
-      ω'[7] = UInt64.ofNat v ∧ ω'[8] = UInt64.ofNat (sp + 24) ∧ ω'[9] = UInt64.ofNat 8 ∧
-      μ'.readN (sp + 24) 8 = μ.readN (S + 8) 8 ∧
-      (∀ a, a < 4294967296 → (a < sp + 24 ∨ sp + 32 ≤ a) → μ'.read a = μ.read a) ∧
-      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+/-- A direct piece's code: from e the arm calls `Vec<u8>::extend_from_slice` for the n octets at S + off
+    (ω₆ = S) with return address r, the writer from ω₅. -/
+theorem directSeg {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X) (ω : Regs) (μ : Memory)
+    (e r off n sp v S : Nat) (hc : DirectCase e r off n) (hS : S + 232 ≤ 4294967296)
+    (h5 : ω[5] = UInt64.ofNat v) (h6 : ω[6] = UInt64.ofNat S) :
+    ∃ ω', FreeStepsH p R e ω μ x 58508 ω' μ x 6 ∧
+      ω'[0] = UInt64.ofNat r ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      ω'[7] = UInt64.ofNat v ∧ ω'[8] = UInt64.ofNat (S + off) ∧ ω'[9] = UInt64.ofNat n := by
   rw [show ω = regsNF ω [] from rfl]
-  refine ⟨?_, ?_, ?_, ?_⟩
-  rotate_left 2
-  · pvm_go [h1, h5, h6, hsp, hS, hr, hw, ↓rdN_fold, rdN_mod64]
-  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
-    all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
-      ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, h5, h6, Nat.mod_eq_of_lt hv]
-    post_simp
-    all_goals try assumption
-    all_goals try exact encodeLE_rdN μ _ 8
+  unfold DirectCase at hc
+  rcases hc with ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ |
+    ⟨rfl, rfl, rfl, rfl⟩ <;>
+  · refine ⟨?_, ?_, ?_⟩
+    rotate_left
+    · pvm_go [h5, h6, hS]
+    · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+      all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+        ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h5, h6]
+      all_goals try (congr 1; omega)
+
+/-- **A tag piece**: from `St pre` at the arm, `St (pre ++ [tag])` at the call's return e', with the
+    writer in ω₅ and the value in ω₆. -/
+theorem pieceTag {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X) (ω : Regs) (μ μ0 : Memory)
+    {F S v cap ptr len N ret t r5 r6 : Nat} {pre : List UInt8} (L : Lay P F S v cap ptr len N ret t μ0)
+    (st : St F v ptr len ret r5 r6 μ0 pre ω μ) (e tag r e' : Nat) (hc : TagCase e tag r)
+    (hje : P.jumpTable.getD (r / 2 - 1) 0 = e') (hbe : P.isBlockStart e' = true)
+    (h10 : ω[10] = UInt64.ofNat v) (h11 : ω[11] = UInt64.ofNat S) (hn : pre.length + 1 ≤ N) :
+    ∃ ω' μ', FreeStepsH p R e ω μ x e' ω' μ' x 377 ∧
+      St F v ptr len ret r5 r6 μ0 (pre ++ [UInt8.ofNat tag]) ω' μ' ∧
+      ω'[5] = UInt64.ofNat v ∧ ω'[6] = UInt64.ofNat S := by
+  have hF := L.hF; have hF' := L.hF'; have hv := L.hv; have hS' := L.hS'
+  have hr : 0 < r ∧ r ≤ 2806 ∧ r % 2 = 0 := by unfold TagCase at hc; omega
+  obtain ⟨ω2, μ2, run2, b0, b1, b5, b6, b7, b8, b9, bt, bfr, brd, bwr⟩ := tagSeg (p := p) (P := P) (R := R) x ω μ
+    e tag r (F - 56) v S hc (by omega) (by omega) (by omega) st.h1 h10 h11
+    (fun a h1 h2 => by rw [st.wr]; exact L.hwF a (by omega) (by omega))
+  have st2 := st.scratch L (by omega) b1 (fun a h0 h1 => bfr a h0 (by omega)) brd bwr
+  obtain ⟨ω3, μ3, run3, st3, c5, c6, _⟩ := ext_step (p := p) (P := P) (R := R) x ω2 μ2 μ0 L st2 (F - 32) 1 r e'
+    b0 b7 (by rw [b8]; congr 1; omega) b9 hr hje hbe hn (Or.inl ⟨rfl, by decide⟩)
+  rw [show F - 32 = F - 56 + 24 by omega, bt] at st3
+  exact ⟨ω3, μ3, (run2.trans run3).mono (by omega), st3, c5.trans b5, c6.trans b6⟩
+
+/-- **A field piece**: from `St pre` at e, with the writer in ω₅ and the value in ω₆,
+    `St (pre ++ field)` at the call's return e', the field being the w octets at S + off at entry. -/
+theorem pieceField {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X) (ω : Regs) (μ μ0 : Memory)
+    {F S v cap ptr len N ret t r5 r6 : Nat} {pre : List UInt8} (L : Lay P F S v cap ptr len N ret t μ0)
+    (st : St F v ptr len ret r5 r6 μ0 pre ω μ) (e r e' off w : Nat) (hc : FieldCase e r off w)
+    (hje : P.jumpTable.getD (r / 2 - 1) 0 = e') (hbe : P.isBlockStart e' = true)
+    (h5 : ω[5] = UInt64.ofNat v) (h6 : ω[6] = UInt64.ofNat S) (hn : pre.length + w ≤ N) :
+    ∃ ω' μ', FreeStepsH p R e ω μ x e' ω' μ' x (7 * w + 372) ∧
+      St F v ptr len ret r5 r6 μ0 (pre ++ μ0.readN (S + off) w) ω' μ' ∧
+      ω'[5] = UInt64.ofNat v ∧ ω'[6] = UInt64.ofNat S := by
+  have hF := L.hF; have hF' := L.hF'; have hv := L.hv; have hS' := L.hS'; have hS := L.hS
+  have hle := hc.le
+  have hr : 0 < r ∧ r ≤ 2806 ∧ r % 2 = 0 := by unfold FieldCase at hc; omega
+  obtain ⟨ω2, μ2, run2, b0, b1, b5, b6, b7, b8, b9, bt, bfr, brd, bwr⟩ := fieldSeg (p := p) (P := P) (R := R) x ω μ
+    e r off w (F - 56) v S hc (by omega) (by omega) (by omega) st.h1 h5 h6
+    (fun a h1 h2 => by rw [st.rd]; exact L.hrS a (by omega) (by omega))
+    (fun a h1 h2 => by rw [st.wr]; exact L.hwF a (by omega) (by omega))
+  have st2 := st.scratch L (by omega) b1 (fun a h0 h1 => bfr a h0 (by omega)) brd bwr
+  obtain ⟨ω3, μ3, run3, st3, c5, c6, _⟩ := ext_step (p := p) (P := P) (R := R) x ω2 μ2 μ0 L st2 (F - 32) w r e'
+    b0 b7 (by rw [b8]; congr 1; omega) b9 hr hje hbe hn (Or.inl ⟨rfl, by omega⟩)
+  rw [show F - 32 = F - 56 + 24 by omega, bt, st.slot L (by omega) off w (by omega)] at st3
+  exact ⟨ω3, μ3, (run2.trans run3).mono (by omega), st3, c5.trans (b5.trans h5), c6.trans (b6.trans h6)⟩
+
+/-- **A direct piece**: from `St pre` at e, with the writer in ω₅ and the value in ω₆,
+    `St (pre ++ field)` at the call's return e', the field being the n octets at S + off at entry. -/
+theorem pieceDirect {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X) (ω : Regs) (μ μ0 : Memory)
+    {F S v cap ptr len N ret t r5 r6 : Nat} {pre : List UInt8} (L : Lay P F S v cap ptr len N ret t μ0)
+    (st : St F v ptr len ret r5 r6 μ0 pre ω μ) (e r e' off n : Nat) (hc : DirectCase e r off n)
+    (hje : P.jumpTable.getD (r / 2 - 1) 0 = e') (hbe : P.isBlockStart e' = true)
+    (h5 : ω[5] = UInt64.ofNat v) (h6 : ω[6] = UInt64.ofNat S) (hn : pre.length + n ≤ N) :
+    ∃ ω' μ', FreeStepsH p R e ω μ x e' ω' μ' x (7 * n + 366) ∧
+      St F v ptr len ret r5 r6 μ0 (pre ++ μ0.readN (S + off) n) ω' μ' ∧
+      ω'[5] = UInt64.ofNat v ∧ ω'[6] = UInt64.ofNat S := by
+  have hS' := L.hS'
+  have hle := hc.le
+  have hr : 0 < r ∧ r ≤ 2806 ∧ r % 2 = 0 := by unfold DirectCase at hc; omega
+  obtain ⟨ω2, run2, b0, b1, b5, b6, b7, b8, b9⟩ := directSeg (p := p) (P := P) (R := R) x ω μ e r off n (F - 56) v S
+    hc (by omega) h5 h6
+  obtain ⟨ω3, μ3, run3, st3, c5, c6, _⟩ := ext_step (p := p) (P := P) (R := R) x ω2 μ μ0 L
+    ⟨b1.trans st.h1, st.s0, st.s5, st.s6, st.vl, st.out, st.keep, st.rd, st.wr⟩ (S + off) n r e'
+    b0 b7 b8 b9 hr hje hbe hn (Or.inr ⟨by omega, by omega⟩)
+  rw [st.slot L (by omega) off n (by omega)] at st3
+  exact ⟨ω3, μ3, (run2.trans run3).mono (by omega), st3, c5.trans (b5.trans h5), c6.trans (b6.trans h6)⟩
 
 /-- From 30145 to the arm of the variant with discriminant word 2^63 + t − 1, in `St []`, with the writer
     in ω₁₀ and the value in ω₁₁. -/
@@ -276,78 +379,59 @@ theorem slot_take (μ : Memory) (S i m : Nat) (him : i + m ≤ 232) :
   rw [show 232 = i + (m + (232 - i - m)) by omega, readN_add', readN_add', List.drop_left' (by simp [Memory.readN]),
     List.take_left' (by simp [Memory.readN])]
 
+/-- Closing a variant: from `St enc` at a shared tail, after a run from 30145, `EncOk`'s conclusion. -/
+theorem close {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] {x : X} {ω ω5 : Regs} {μ μ5 : Memory}
+    {F S v cap ptr len ret t : Nat} {enc : List UInt8} (L : Lay P F S v cap ptr len enc.length ret t μ)
+    (e k : Nat) (he : e = 20155 ∨ e = 20204 ∨ e = 20329 ∨ e = 20383) (hk : k + 6 ≤ 7 * enc.length + 4000)
+    (run : FreeStepsH p R 30145 ω μ x e ω5 μ5 x k)
+    (st : St F v ptr len ret ω[5].toNat ω[6].toNat μ enc ω5 μ5) :
+    ∃ ω' μ', FreeStepsH p R 30145 ω μ x t ω' μ' x (7 * enc.length + 4000) ∧
+      ω'[0] = UInt64.ofNat ret ∧ ω'[1] = UInt64.ofNat F ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      μ'.readN (ptr + len) enc.length = enc ∧ μ'.readN (v + 16) 8 = Num.encodeLE 8 (len + enc.length) ∧
+      (∀ a, a < 4294967296 → (a < F - 136 ∨ F ≤ a) → (a < ptr + len ∨ ptr + len + enc.length ≤ a) →
+        (a < v + 16 ∨ v + 24 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  obtain ⟨ω6, run6, e0, e1, e5, e6, eo, el, efr, erd, ewr⟩ := finish (p := p) (P := P) (R := R) x ω5 μ5 μ L st
+    e he (UInt64.toNat_lt _) (UInt64.toNat_lt _)
+  exact ⟨ω6, μ5, (run.trans run6).mono hk, e0, e1, by rw [e5]; exact UInt64.ofNat_toNat,
+    by rw [e6]; exact UInt64.ofNat_toNat, eo, el, efr, erd, ewr⟩
+
 /-- **`Zombify`** (tag 3): a value holding the discriminant 2^63 + 2 and then e, the 4 octets of
     `ejector`, encodes to 3 :: e. -/
 theorem zombify {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (e : List UInt8) (he : e.length = 4) :
     EncOk p P (3 :: e) (fun bs => bs.take 8 = Num.encodeLE 8 9223372036854775810 ∧ (bs.drop 8).take 4 = e) := by
   intro X R x ω μ F S v cap ptr len ret t' h0 h1 h7 h8 rep L tab hrt
   have hN : (3 :: e).length = 5 := by simp [he]
-  have hv := L.hv; have hF := L.hF; have hF' := L.hF'; have hS := L.hS; have hS' := L.hS'; have hSF := L.hSF
   have hD : μ.readN S 8 = Num.encodeLE 8 (9223372036854775807 + 3) := by
     rw [← readN_take _ _ 232 8 (by decide)]; exact rep.1
   have hE : μ.readN (S + 8) 4 = e := by rw [← slot_take μ S 8 4 (by decide)]; exact rep.2
   obtain ⟨ω1, μ1, run1, st1, a10, a11⟩ := start (p := p) (P := P) (R := R) x ω μ L 3 (by decide) h0 h1 h7 h8 hD
     tab hrt
   rw [show arm 3 = 18890 from rfl] at run1
-  obtain ⟨ω2, μ2, run2, b0, b1, b5, b6, b7, b8, b9, bt, bfr, brd, bwr⟩ := tagArm (p := p) (P := P) (R := R) x ω1 μ1
-    18890 3 792 (F - 56) v S (Or.inl ⟨rfl, rfl, rfl⟩) (by omega) (by omega) (by omega) st1.h1 a10 a11
-    (fun a h1 h2 => by rw [st1.wr]; exact L.hwF a (by omega) (by omega))
-  have st2 := st1.scratch L (by simp) b1 (fun a h0 h1 => bfr a h0 (by omega)) brd bwr
-  obtain ⟨ω3, μ3, run3, st3, c5, c6, _⟩ := ext_step (p := p) (P := P) (R := R) x ω2 μ2 μ L st2 (F - 32) 1 792 18913
-    b0 b7 (by rw [b8]; congr 1; omega) b9 ⟨by decide, by decide, by decide⟩ jte_395 bs_18913
-    (by rw [hN]; decide) (Or.inl ⟨rfl, by decide⟩)
-  rw [show F - 32 = F - 56 + 24 by omega, bt] at st3
-  obtain ⟨ω4, μ4, run4, d0, d1, d5, d6, d7, d8, d9, dt, dfr, drd, dwr⟩ := fieldU32 (p := p) (P := P) (R := R) x ω3
-    μ3 (F - 56) v S (by omega) (by omega) (by omega) st3.h1 (c5.trans b5) (c6.trans b6)
-    (fun a h1 h2 => by rw [st3.rd]; exact L.hrS a (by omega) (by omega))
-    (fun a h1 h2 => by rw [st3.wr]; exact L.hwF a (by omega) (by omega))
-  have st4 := st3.scratch L (by simp [hN]) d1 (fun a h0 h1 => dfr a h0 (by omega)) drd dwr
-  obtain ⟨ω5, μ5, run5, st5, _, _, _⟩ := ext_step (p := p) (P := P) (R := R) x ω4 μ4 μ L st4 (F - 32) 4 916 20329
-    d0 d7 (by rw [d8]; congr 1; omega) d9 ⟨by decide, by decide, by decide⟩ jte_457 bs_20329
-    (by simp [hN]) (Or.inl ⟨rfl, by decide⟩)
-  have hpre : [] ++ [UInt8.ofNat 3] ++ μ4.readN (F - 32) 4 = 3 :: e := by
-    rw [show F - 32 = F - 56 + 24 by omega, dt, st3.slot L (by simp [hN]) 8 4 (by decide), hE]; rfl
-  rw [hpre] at st5
-  obtain ⟨ω6, run6, e0, e1, e5, e6, eo, el, efr, erd, ewr⟩ := finish (p := p) (P := P) (R := R) x ω5 μ5 μ L st5
-    20329 (by decide) (UInt64.toNat_lt _) (UInt64.toNat_lt _)
-  refine ⟨ω6, μ5, (run1.trans (run2.trans (run3.trans (run4.trans (run5.trans run6))))).mono (by simp [hN]),
-    e0, e1, by rw [e5]; exact UInt64.ofNat_toNat, by rw [e6]; exact UInt64.ofNat_toNat, eo, el, efr, erd, ewr⟩
+  obtain ⟨ω2, μ2, run2, st2, b5, b6⟩ := pieceTag (p := p) (P := P) (R := R) x ω1 μ1 μ L st1 18890 3 792 18913
+    (by unfold TagCase; omega) jte_395 bs_18913 a10 a11 (by simp [hN])
+  obtain ⟨ω3, μ3, run3, st3, _, _⟩ := pieceField (p := p) (P := P) (R := R) x ω2 μ2 μ L st2 18913 916 20329 8 4
+    (by unfold FieldCase; omega) jte_457 bs_20329 b5 b6 (by simp [hN])
+  rw [hE, show [] ++ [UInt8.ofNat 3] ++ e = 3 :: e from rfl] at st3
+  exact close L 20329 _ (by decide) (by simp [hN]) (run1.trans (run2.trans run3)) st3
 
-/-- **`Exported`** (tag 20): a value holding the discriminant 2^63 + 19 and then e, the 8 octets of
-    the segment index, encodes to 20 :: e. -/
+/-- **`Exported`** (tag 20): a value holding the discriminant 2^63 + 19 and then e, the 8 octets of the
+    segment index, encodes to 20 :: e. -/
 theorem exported {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (e : List UInt8) (he : e.length = 8) :
     EncOk p P (20 :: e) (fun bs => bs.take 8 = Num.encodeLE 8 9223372036854775827 ∧ (bs.drop 8).take 8 = e) := by
   intro X R x ω μ F S v cap ptr len ret t' h0 h1 h7 h8 rep L tab hrt
   have hN : (20 :: e).length = 9 := by simp [he]
-  have hv := L.hv; have hF := L.hF; have hF' := L.hF'; have hS := L.hS; have hS' := L.hS'; have hSF := L.hSF
   have hD : μ.readN S 8 = Num.encodeLE 8 (9223372036854775807 + 20) := by
     rw [← readN_take _ _ 232 8 (by decide)]; exact rep.1
   have hE : μ.readN (S + 8) 8 = e := by rw [← slot_take μ S 8 8 (by decide)]; exact rep.2
   obtain ⟨ω1, μ1, run1, st1, a10, a11⟩ := start (p := p) (P := P) (R := R) x ω μ L 20 (by decide) h0 h1 h7 h8 hD
     tab hrt
   rw [show arm 20 = 19088 from rfl] at run1
-  obtain ⟨ω2, μ2, run2, b0, b1, b5, b6, b7, b8, b9, bt, bfr, brd, bwr⟩ := tagArm (p := p) (P := P) (R := R) x ω1 μ1
-    19088 20 816 (F - 56) v S (Or.inr ⟨rfl, rfl, rfl⟩) (by omega) (by omega) (by omega) st1.h1 a10 a11
-    (fun a h1 h2 => by rw [st1.wr]; exact L.hwF a (by omega) (by omega))
-  have st2 := st1.scratch L (by simp) b1 (fun a h0 h1 => bfr a h0 (by omega)) brd bwr
-  obtain ⟨ω3, μ3, run3, st3, c5, c6, _⟩ := ext_step (p := p) (P := P) (R := R) x ω2 μ2 μ L st2 (F - 32) 1 816 19111
-    b0 b7 (by rw [b8]; congr 1; omega) b9 ⟨by decide, by decide, by decide⟩ jte_407 bs_19111
-    (by rw [hN]; decide) (Or.inl ⟨rfl, by decide⟩)
-  rw [show F - 32 = F - 56 + 24 by omega, bt] at st3
-  obtain ⟨ω4, μ4, run4, d0, d1, d5, d6, d7, d8, d9, dt, dfr, drd, dwr⟩ := fieldU64 (p := p) (P := P) (R := R) x ω3
-    μ3 (F - 56) v S (by omega) (by omega) (by omega) st3.h1 (c5.trans b5) (c6.trans b6)
-    (fun a h1 h2 => by rw [st3.rd]; exact L.hrS a (by omega) (by omega))
-    (fun a h1 h2 => by rw [st3.wr]; exact L.hwF a (by omega) (by omega))
-  have st4 := st3.scratch L (by simp [hN]) d1 (fun a h0 h1 => dfr a h0 (by omega)) drd dwr
-  obtain ⟨ω5, μ5, run5, st5, _, _, _⟩ := ext_step (p := p) (P := P) (R := R) x ω4 μ4 μ L st4 (F - 32) 8 916 20329
-    d0 d7 (by rw [d8]; congr 1; omega) d9 ⟨by decide, by decide, by decide⟩ jte_457 bs_20329
-    (by simp [hN]) (Or.inl ⟨rfl, by decide⟩)
-  have hpre : [] ++ [UInt8.ofNat 20] ++ μ4.readN (F - 32) 8 = 20 :: e := by
-    rw [show F - 32 = F - 56 + 24 by omega, dt, st3.slot L (by simp [hN]) 8 8 (by decide), hE]; rfl
-  rw [hpre] at st5
-  obtain ⟨ω6, run6, e0, e1, e5, e6, eo, el, efr, erd, ewr⟩ := finish (p := p) (P := P) (R := R) x ω5 μ5 μ L st5
-    20329 (by decide) (UInt64.toNat_lt _) (UInt64.toNat_lt _)
-  refine ⟨ω6, μ5, (run1.trans (run2.trans (run3.trans (run4.trans (run5.trans run6))))).mono (by simp [hN]),
-    e0, e1, by rw [e5]; exact UInt64.ofNat_toNat, by rw [e6]; exact UInt64.ofNat_toNat, eo, el, efr, erd, ewr⟩
+  obtain ⟨ω2, μ2, run2, st2, b5, b6⟩ := pieceTag (p := p) (P := P) (R := R) x ω1 μ1 μ L st1 19088 20 816 19111
+    (by unfold TagCase; omega) jte_407 bs_19111 a10 a11 (by simp [hN])
+  obtain ⟨ω3, μ3, run3, st3, _, _⟩ := pieceField (p := p) (P := P) (R := R) x ω2 μ2 μ L st2 19111 916 20329 8 8
+    (by unfold FieldCase; omega) jte_457 bs_20329 b5 b6 (by simp [hN])
+  rw [hE, show [] ++ [UInt8.ofNat 20] ++ e = 20 :: e from rfl] at st3
+  exact close L 20329 _ (by decide) (by simp [hN]) (run1.trans (run2.trans run3)) st3
 
 end Services.Bootstrap.Encode.Enc

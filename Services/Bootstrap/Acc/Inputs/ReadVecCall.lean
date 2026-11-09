@@ -109,7 +109,92 @@ theorem rv_call {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
       (by omega) (by omega) ⟨by omega, by omega⟩ with
     ⟨ptr, s', ω2, μ2, ha, r2, H2, keep, hnew, hfresh, hk, o0, o8, o16, fr2, e0, e1', e5, e6⟩ |
     ⟨ha, ω2, μ2, r2, H2, o0, o8, o16, fr2, e0, e1', e5, e6⟩
-  · sorry
+  · left
+    rw [e1] at ha hnew hfresh o16
+    have hb' := alloc_base H.wf ha
+    obtain ⟨c, hcm, hcu, hci1, hci2⟩ := hsrc
+    have hcm' := keep c hcm hcu
+    have hcs := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hcm hcu
+    have hns := Services.Bootstrap.Decode.VecU8.chunk_in H2.wf hnew rfl
+    simp only at hns
+    have hne : c ≠ ⟨ptr - 32, (len + 31) / 32 + 1, true⟩ := hfresh c hcm hcu
+    have ht2 := H2.wf.2.2.2.1
+    unfold TilesOk at ht2
+    have hdis := Services.Bootstrap.Decode.HeapFrame.Tiles.disjoint ht2 c hcm' _ hnew hne
+    simp only at hdis
+    have hlt : len ≤ 32 * ((len + 31) / 32) := by omega
+    -- the frame base b = sp − 96
+    have b48 : sp - 96 + 48 = sp - 48 := by omega
+    rw [b48] at o0 o8 o16 fr2
+    -- 3. after `finish_grow`: to the chunk's read
+    have q2 : ∀ o v, sp - 96 ≤ o → o + 8 ≤ sp - 48 ∨ sp - 24 ≤ o → o + 8 ≤ sp → rdN μ1 o 8 = v →
+        rdN μ2 o 8 = v := fun o v h1 h2 h3 hv => by
+      rw [rdN_frame fun j hj => fr2 _ (by omega) (by omega) (by omega)]; exact hv
+    obtain ⟨ω3, μ3, r3, c0, c1, c5, c6, c7, c8, c9, k24, k32, fr3, rd3, wr3⟩ :=
+      rv_mid (p := p) (P := P) (R := env.rel cap) x ω2 μ2 (sp - 96) rd ptr len (by rw [e0, a0]) (by rw [e1', a1])
+        (by rw [e5, a5]) (by rw [e6, a6]) (q2 _ _ (by omega) (by omega) (by omega) sl0)
+        (q2 _ _ (by omega) (by omega) (by omega) (by rw [show sp - 96 + 16 = sp - 80 by omega]; exact s80))
+        (by rw [show sp - 96 + 48 = sp - 48 by omega]; exact o0)
+        (by rw [show sp - 96 + 56 = sp - 48 + 8 by omega]; exact o8)
+        ⟨by omega, by omega⟩ (by omega) (by omega) (by omega)
+        (fun a h1 h2 => H2.st a (by omega) (by omega))
+    -- bounds of the block and the source
+    have hbase := H.hb0
+    have hbT := H.hbT
+    obtain ⟨n1, -, n3⟩ := hns
+    obtain ⟨u1, -, u3⟩ := hcs
+    rw [hb'] at n1 n3
+    have hp32 : 206896 ≤ ptr := by omega
+    have hpe : ptr + len < 2147483648 := by omega
+    have hie : 206896 ≤ ip ∧ ip + len < 2147483648 := by omega
+    have hsep : ptr + len + 24 ≤ ip ∨ ip + len + 24 ≤ ptr := by omega
+    -- memory facts carried to μ3
+    have m3 : ∀ a, a < 4294967296 → sp ≤ a → μ3.read a = μ.read a := fun a h1 h2 => by
+      rw [fr3 a h1 (Or.inr (by omega)), fr2 a h1 (by omega) (Or.inr (by omega)), fr1 a h1 (Or.inr h2)]
+    have wr2' : ∀ a, μ3.writable a = μ2.writable a := wr3
+    have hwb : ∀ a, ptr ≤ a → a < ptr + len → μ3.writable a = true := fun a h1 h2 => by
+      rw [wr2']; exact heapC_writable_data H2 hnew rfl ⟨by simp only; omega, by simp only; omega⟩
+    have hra : ∀ a, ip ≤ a → a < ip + len → μ3.readable a = true := fun a h1 h2 => by
+      apply Memory.readable_of_writable
+      rw [wr2']; exact heapC_writable_data H2 hcm' hcu ⟨by omega, by omega⟩
+    have hrd3 : μ3.readN rd 8 = Num.encodeLE 8 ip := by
+      rw [PVM.Memory.readN_congr (μ := μ) (fun j hj => m3 _ (by omega) (by omega))]; exact hR0
+    have hrd8 : μ3.readN (rd + 8) 8 = Num.encodeLE 8 rlen := by
+      rw [PVM.Memory.readN_congr (μ := μ) (fun j hj => m3 _ (by omega) (by omega))]; exact hR8
+    -- 4. the reader copies the chunk into the block
+    obtain ⟨ω4, μ4, r4, d0, d1, d5, d6, d7, q0, q8, qb, fr4, rd4, wr4⟩ :=
+      read_any (p := p) (P := P) (R := env.rel cap) x ω3 μ3 2060 45809 (sp - 96) rd ptr ip rlen len c0 c1 c7 c8 c9
+        (by decide) (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_1029]) bs_45809
+        ⟨by omega, by omega, by omega⟩ ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ hrl hrl32
+        (Or.inr (by omega)) (Or.inl (by omega)) (Or.inl (by omega)) (Or.inl (by omega)) hsep
+        (fun a h1 h2 => by rw [wr2']; exact H2.st a (by omega) (by omega))
+        (fun a h1 h2 => by rw [wr2']; exact H2.st a (by omega) (by omega)) hwb hra hrd3 hrd8
+    -- the frame words, carried to μ4
+    have f4 : ∀ a, sp - 96 ≤ a → a < sp → μ4.read a = μ3.read a := fun a h1 h2 =>
+      fr4 a (by omega) (Or.inr h1) (Or.inl (by omega)) (Or.inr (by omega))
+    have l4 : ∀ o v, sp - 96 ≤ o → o + 8 ≤ sp → rdN μ3 o 8 = v → rdN μ4 o 8 = v := fun o v h1 h2 hv => by
+      rw [rdN_frame fun j hj => f4 _ (by omega) (by omega)]; exact hv
+    have l3 : ∀ o v, sp - 96 ≤ o → o + 8 ≤ sp - 72 ∨ sp - 56 ≤ o → o + 8 ≤ sp → rdN μ2 o 8 = v →
+        rdN μ3 o 8 = v := fun o v h1 h2 h3 hv => by
+      rw [rdN_frame fun j hj => fr3 _ (by omega) (by omega)]; exact hv
+    have l1 : ∀ o v, sp - 96 ≤ o → (o + 8 ≤ sp - 72 ∨ sp - 56 ≤ o) ∧ (o + 8 ≤ sp - 48 ∨ sp - 24 ≤ o) →
+        o + 8 ≤ sp → rdN μ1 o 8 = v → rdN μ4 o 8 = v := fun o v h1 h2 h3 hv =>
+      l4 _ _ h1 h3 (l3 _ _ h1 h2.1 h3 (q2 _ _ h1 h2.2 h3 hv))
+    -- 5. the exit: the vector written at `out`
+    obtain ⟨ω5, μ5, r5, f0, f1, f5, f6, g0, g8, g16, fr5, rd5, wr5⟩ :=
+      rv_exit (p := p) (P := P) (R := env.rel cap) x ω4 μ4 (sp - 96) out ptr len ω[0].toNat ω[5].toNat ω[6].toNat
+        (by rw [d1, c1]) (by rw [d5, c5]) (by rw [d6, c6]) d7
+        (l1 _ _ (by omega) (by omega) (by omega) (by rw [show sp - 96 + 8 = sp - 88 by omega]; exact s88))
+        (l4 _ _ (by omega) (by omega) k24) (l4 _ _ (by omega) (by omega) k32)
+        (l1 _ _ (by omega) (by omega) (by omega) (by rw [show sp - 96 + 40 = sp - 56 by omega]; exact sl40))
+        (l1 _ _ (by omega) (by omega) (by omega) (by rw [show sp - 96 + 72 = sp - 24 by omega]; exact s24))
+        (l1 _ _ (by omega) (by omega) (by omega) (by rw [show sp - 96 + 80 = sp - 16 by omega]; exact s16))
+        (l1 _ _ (by omega) (by omega) (by omega) (by rw [show sp - 96 + 88 = sp - 8 by omega]; exact s8))
+        ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ (by omega) (by omega) (Or.inr (by omega))
+        (fun a h1 h2 => by
+          rw [rd4, rd3]; exact Memory.readable_of_writable (H2.st a (by omega) (by omega)))
+        (fun a h1 h2 => by rw [wr4, wr3]; exact H2.st a (by omega) (by omega))
+    sorry
   · right
     rw [e1] at ha
     refine ⟨ha, ?_⟩

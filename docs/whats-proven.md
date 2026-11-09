@@ -353,9 +353,26 @@ An independent kernel, nanoda as vendored by
   - *Assumed:* a well-formed, initialized heap within 14 pages of its bound (as
     `realloc_wrap_cases`), the stack above the heap's bound and 2³¹, and the reader, the slot and the
     payload at or above the frame. The run is under `refineContract`.
-  - *Scope:* more than 16384 octets (a second chunk, through `realloc`) and the failure of `alloc` are
-    not covered yet; the steps of the loop for any chunk are proved (`Services/Bootstrap/Decode/VecU8Loop.lean`:
-    `v1g`, `lh`, `g3`, `realloc_ret`, `g2r`, `v2g`, `v5`, `v3g`), not yet composed. Nor is the data of other live heap blocks, which `alloc_ok` does not state.
+  - *Scope:* the failure of `alloc` is not covered, nor is the data of other live heap blocks, which
+    `alloc_ok` does not state. More than 16384 octets: see `vec_u8_big` below.
+- *`Vec<u8>` of more than 16384 octets* (`Services/Bootstrap/Decode/VecU8Pass.lean`, `vec_u8_big`;
+  steps in `VecU8Loop.lean`): `read_vec` (3473) for 16384 < n < 2³⁰ − 64. The first chunk of 16384
+  octets goes into q, the model's `alloc` of 512 units. Then the loop at 3520 (`loop`, by induction
+  over the octets left; one pass is `pass_ok`/`pass_fail`) reads chunks of min(left, L) octets,
+  L the octets read so far, growing the buffer to exactly L + chunk with `realloc`
+  (`realloc_wrap_cases_hdata`). The result is one of two:
+  - `read_vec` returns with the `Vec` `{cap n, ptr q', len n}` at O and the n payload octets at q'.
+    The heap then holds the model's state after the `realloc`s, q' is an allocated chunk of
+    ⌈n/32⌉ + 1 units, and the reader is advanced by n.
+  - A `realloc` the model fails (`none`, from the state memory then holds) is reached: the run stops
+    at `finish_grow`'s return point from it (33055) with ω₇ = 0. What follows (`handle_alloc_error`)
+    is not covered.
+  - *Assumed:* as `vec_u8_small`, with the first `alloc` succeeding, the stack frame 96 octets
+    lower, the payload disjoint from the reader's slot, and n < 2³⁰ − 64 (the model's `realloc`
+    sizes are below 2²⁵ − 1 units).
+  - *Steps:* the bound `loopSteps` adds 2000 for each doubling pass.
+  - `looked_up_big` (`Services/Bootstrap/Decode/LookedUpBig.lean`) lifts this to `Instruction::decode`
+    of tag 18, `LookedUp { data: Some(bytes) }` with |bytes| > 16384, with the same two outcomes.
   - *`realloc` keeps the heap bound* (`Services/Bootstrap/Decode/ReallocOk.lean`,
     `realloc_wrap_cases_hdata`): `realloc_wrap_cases_data`, and for each block the model's `realloc`
     returns, the new state keeps the heap base and its allocated space ends within the heap's pages

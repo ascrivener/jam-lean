@@ -83,6 +83,12 @@ section):
   certain host calls cannot touch other accounts or export segments.
 - `psi_freeRun`, `psiM_of_freeRunH` and `psiM_of_stepsH` (`PVM/Logic/`): the gas-free reasoning
   layer used below. It is sound against Ψ and Ψ_M.
+- `FreeStepsH.keepRO` (`JAM/Theorems/KeepRO.lean`): a gas-free refine run (under
+  `refineContractK`, any cap) keeps the access of every page outside the heap's 48 … pb and the value
+  of every octet on such a page that is not writable, so read-only data is never touched. From
+  `Program.exec_mem` (an instruction changes nothing off its writes), `Program.freeStep_keep` (a
+  continuing step writes only writable octets, GP §A.4) and `refineContractK_keep` (`grow_heap` sets
+  only heap pages; `fetch` writes only a writable range).
 
 **Provenance.** The model was written from the Gray Paper and the test vectors only. No other PVM
 or JAM implementation was consulted.

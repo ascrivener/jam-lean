@@ -67,6 +67,7 @@ call `pc`) live in `Tests/`, not in the model.
 | Authorization STF (§8: the pool α from the queue φ') vs. `stf/authorizations` (`lake build authtest`) | **3 / 3** tiny, **3 / 3** full |
 | Validator statistics (§13.1: π_V, π_L) vs. `stf/statistics` (`lake build statstest`) | **4 / 4** tiny, **4 / 4** full |
 | Preimage STF (§12.4) and its service statistics (§13.2 provision counts) vs. `stf/preimages` (`lake build preimagestest`) | **8 / 8** tiny, **8 / 8** full |
+| Disputes STF (§10: verdicts, culprits, faults, ψ', ρ^‡ and H_O) vs. `stf/disputes` (`lake build disputestest`; Ed25519 verification is a parameter, note 29) | **29 / 29** tiny, **31 / 31** full |
 
 ## Building and running
 
@@ -80,6 +81,7 @@ scripts/check-tables.sh               # regenerate PVM/Tables.lean from the pinn
 scripts/fetch-jam-vectors.sh          # GP v0.8.0 JAM vectors into vendor/jam-test-vectors
 lake build historytest authtest       # the recent-history and authorization STF vectors (tiny and full)
 lake build statstest preimagestest    # the statistics and preimage STF vectors (tiny and full)
+lake build disputestest               # the disputes STF vectors (tiny and full)
 ```
 
 `pvmtest` and `gascheck` are Lake targets that build an executable and run it; a failing vector
@@ -687,6 +689,27 @@ noted here and in a comment at the definition.
     convention above. Only documentation was consulted, not any implementation's code; the vectors do
     not say which implementation produced them. The paper's text, which is explicit, is what the
     model follows.
+
+29. **Disputes** (§10).
+    * *Signatures are a parameter.* The model does not implement Ed25519: `JAM.disputes` takes a
+      `Crypto` (`JAM/Crypto.lean`) whose `edVerify` stands for s ∈ 𝕍̄_k⟨m⟩. The test runner's
+      oracle is read from each vector's expected output: when it is `bad_signature`, every
+      signature is rejected, otherwise every one is accepted. The vectors therefore check where
+      the transition looks for signatures and what it does with the verdict, not the signatures.
+    * *Errors and their order.* The paper names no errors and gives no order between the
+      conditions. We use the vectors' names, and check in the order of §10.2: verdicts ordered
+      and unique; for each verdict its age, the order of its judgments, their count
+      ⌊2/3·|**k**|⌋ + 1, each judge index and signature, then "not already judged" and V
+      defined; then culprits, then faults, then the faults that good verdicts need.
+    * *Faults.* The condition r ∈ ψ_B' ⇔ r ∉ ψ_G' ⇔ v is read as a chain of two equivalences:
+      the report is in exactly one of ψ_B' and ψ_G', and v = ⊤ exactly when it is bad. Read as
+      ((r ∈ ψ_B' ⇔ r ∉ ψ_G') ⇔ v), a ⊤ fault on a good report would pass.
+    * *Offender keys.* **k** = {i_e | i ∈ λ ∪ κ} ∖ ψ_O. A key outside **k** is reported as
+      `offender_already_reported` when it is in ψ_O, and as `bad_guarantor_key` (culprits) or
+      `bad_auditor_key` (faults) otherwise. κ and λ are the prior sets, as the paper writes them.
+    * A bad verdict needs no culprits in GP 0.8.0, and the vectors agree
+      (`progress_with_bad_verdict_without_culprits-1`). On an error the vectors keep the prior
+      state; the paper makes such a block invalid.
 
 ## Caveats
 

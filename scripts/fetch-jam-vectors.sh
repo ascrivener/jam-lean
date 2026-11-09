@@ -10,5 +10,5 @@ if [ ! -d "$DEST/.git" ]; then
     --sparse "$REPO" "$DEST"
 fi
 git -C "$DEST" sparse-checkout set codec stf/accumulate stf/history stf/authorizations stf/statistics \
-  stf/preimages trie shuffle erasure
+  stf/preimages stf/disputes stf/assurances stf/reports trie shuffle erasure
 echo "jam-test-vectors at $(git -C "$DEST" describe --tags)"

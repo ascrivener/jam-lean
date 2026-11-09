@@ -32,6 +32,7 @@ Gaps, where the paper leaves behaviour undefined:
 | 24 | §13.2 | The provision sum ∑_{(s, **d**) ∈ E_P} reuses s, already bound by ∀ s ∈ **s**. It reads as a fresh binding unless the reader knows it is a filter. |
 | 25 | §12.4 | No error is named for an invalid E_P, and no order is given between the ordering check and the providable check. |
 | 26 | Appendix C | No encoding of Booleans {⊤, ⊥} is defined, though 𝔼_D's judgments and faults contain them; 0/1 is the evident reading and the vectors use it. |
+| 29 | §10.2 | The fault condition r ∈ ψ_B' ⇔ r ∉ ψ_G' ⇔ v can be read as a chain or as ((… ⇔ …) ⇔ v); the second accepts a ⊤ fault on a good report. No errors are named and no order is given between the conditions. |
 
 ## Paper and vectors
 
@@ -53,6 +54,7 @@ These cases have no test vector, so the readings above are untested:
 | 3 | A program that maps a page below 2^16. |
 | 4 | A three-register instruction with ζ_{ı+2} ≥ 16. |
 | 24 | Core statistics π_C, and the refinement and accumulation parts of π_S, in the statistics and preimages suites. They are covered by the reports and accumulate suites. |
+| 29 | Ed25519 verification is a parameter of the model, so the disputes vectors' signatures are not verified; the runner rejects all of them exactly when a vector expects `bad_signature`. |
 
 ## Not for upstream
 

@@ -48,7 +48,7 @@ theorem alloc_impl_growK {p : ByteArray} {P : Program} [HasCode p P] (env : Refi
       ω'[7] = UInt64.ofNat (C + 32) ∧ ω'[0] = ω[0] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ ω'[1] = ω[1] ∧
       HeapPages μ' 48 pb (growTop (pagesOf (s.base + 32 * E)) h pb) ∧
       (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
-      HKeep μ μ' (fun a => (H a ∨ F a) ∨ (wordSize (s.hdr C).size - req - 1 ≠ 0 ∧ a = C + 32 * (req + 1))) := by
+      HKeepG μ μ' (fun a => (H a ∨ F a) ∨ (wordSize (s.hdr C).size - req - 1 ≠ 0 ∧ a = C + 32 * (req + 1))) := by
   have hwr := HeapPages.wrAt hp hhb hst
   obtain ⟨hRt, ht1, ht2⟩ := growTop_ge (h := h) hR
   have hpE := pagesOf_ge (s.base + 32 * E)
@@ -130,7 +130,7 @@ theorem alloc_impl_growK {p : ByteArray} {P : Program} [HasCode p P] (env : Refi
     HeapPages.of_eq hp2 (fun a => (ww4 a).trans (ww3 a)), fun a h1 h2 => by rw [ww4, ww3]; exact hst2 a h1 h2,
     fun a h h' => ((fr4 a h (by omega)).trans ((fr3 a h (by omega)).trans (fr2 a h (by omega) (by omega)))).trans
       (sf1 a h (Or.inr h')),
-    (((HKeep.of_low fun a h1 h2 _ => sf1 a (by omega) (Or.inl (by omega))).trans
+    (((HKeepG.of_low fun a h1 h2 _ => sf1 a (by omega) (Or.inl (by omega))).trans
       (hk2.mono fun b hb => Or.inl (Or.inl hb))).trans hk3).trans
       (hk4.mono fun b hb => Or.inl (by
       rcases hb with (h | h) | (h | h)
@@ -189,7 +189,7 @@ theorem alloc_impl_grow {p : ByteArray} {P : Program} [HasCode p P] (env : Refin
       ω'[7] = UInt64.ofNat (C + 32) ∧ ω'[0] = ω[0] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ ω'[1] = ω[1] ∧
       HeapPages μ' 48 pb (growTop (pagesOf (s.base + 32 * E)) h pb) ∧
       (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
-      HKeep μ μ' (fun a => (H a ∨ F a) ∨ (wordSize (s.hdr C).size - req - 1 ≠ 0 ∧ a = C + 32 * (req + 1))) :=
+      HKeepG μ μ' (fun a => (H a ∨ F a) ∨ (wordSize (s.hdr C).size - req - 1 ≠ 0 ∧ a = C + 32 * (req + 1))) :=
   alloc_impl_growK (p := p) (P := P) (S0 := S0) (S1 := S1) env hostCostMax (by decide) x ω μ s H F
     sp req bin C hrep hbits h1 h7 h8 h9 h10 hsp hsp1 hb0 hbT hm hbin hbn hcb hFC hHC hHF hnx hpv hS
     hCend hal E hE hgr pb h hbd h48 hhb hbs hR (by unfold hostCostMax; omega) hNdis hNold hFin hHTs

@@ -85,7 +85,7 @@ theorem realloc_impl_grow {p : ByteArray} {P : Program} [HasCode p P] (x : X) (�
         (fun a => H a ∨ (cur + sz - (req + 1) ≠ 0 ∧ a = ptr - 32 + 32 * (req + 1)))
         (fun a => F a ∨ (cur + sz - (req + 1) ≠ 0 ∧ a = ptr - 32 + 32 * (req + 1))) ∧
       (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
-      HKeep μ μ' (fun a => (H a ∨ F a) ∨ a = ptr - 32 + 32 * (req + 1) ∨
+      HKeepG μ μ' (fun a => (H a ∨ F a) ∨ a = ptr - 32 + 32 * (req + 1) ∨
         a = (growHdr (unregister s (ptr - 32 + 32 * cur) (binDown sz)) (ptr - 32) (req + 1)).heads
           (binDown (cur + sz - (req + 1)))) ∧
       ω'[7] = UInt64.ofNat ptr ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat sp ∧
@@ -221,7 +221,7 @@ theorem realloc_impl_grow {p : ByteArray} {P : Program} [HasCode p P] (x : X) (�
       r9).trans r10).mono (by omega), rep9,
     fun a => (ww9 a).trans ((ww8 a).trans ((ww7 a).trans ((ww5 a).trans ((ww3 a).trans (ww1 a))))),
     fun a h1 h2 => ?_,
-    (((HKeep.of_low fun a h1 h2 _ => ((sf7 a (by omega) (Or.inl (by omega))).trans
+    (((HKeepG.of_low fun a h1 h2 _ => ((sf7 a (by omega) (Or.inl (by omega))).trans
       ((sf5 a (by omega) (Or.inl (by omega))).trans (sf3 a (by omega) (Or.inl (by omega))))).trans
         (sf1 a (by omega) (Or.inl (by omega)))).trans (hk8.mono fun b hb => Or.inl (Or.inl hb))).trans hk9), e7, e0,
     by rw [e1]; congr 1; omega, by rw [e5, UInt64.ofNat_toNat], by rw [e6, UInt64.ofNat_toNat]⟩

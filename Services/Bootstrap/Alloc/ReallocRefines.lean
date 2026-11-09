@@ -31,7 +31,7 @@ theorem shrink_refines_hdr {p : ByteArray} {P : Program} [HasCode p P] (x : X) (
     (hb0 : 206864 ≤ s.base) (hbT : s.base + 1073741824 < 2147483648)
     (hfo : FirstOk s) {HT S0 S1 : Nat} (hHT : s.base + 32 * s.allocated ≤ HT) (hS : S0 + 152 ≤ sp ∧ sp ≤ S1)
     (hw : WrAt μ HT S0 S1) :
-    ∃ ω' μ', HKeep μ μ' (fun a => (∃ c ∈ chunks s, c.addr = a) ∨ a = ptr - 32 + 32 * (req + 1)) ∧
+    ∃ ω' μ', HKeepG μ μ' (fun a => (∃ c ∈ chunks s, c.addr = a) ∨ a = ptr - 32 + 32 * (req + 1)) ∧
       FreeStepsH p R 42980 ω μ x 40805 ω' μ' x 180 ∧ Rep μ' (shrink s ptr req) ∧
       WF (shrink s ptr req) ∧ FirstOk (shrink s ptr req) ∧
       (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧

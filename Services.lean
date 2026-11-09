@@ -73,6 +73,7 @@ import Services.Bootstrap.Decode.Designate
 import Services.Bootstrap.Decode.VecU8Small
 import Services.Bootstrap.Decode.LookedUpSmall
 import Services.Bootstrap.Decode.VecU8Loop
+import Services.Bootstrap.Decode.ReallocOk
 import Services.Picoalloc.Model
 import Services.Picoalloc.Invariant
 import Services.Picoalloc.FreeLists

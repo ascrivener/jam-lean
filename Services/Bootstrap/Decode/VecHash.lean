@@ -512,7 +512,7 @@ theorem vec_hash {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.E
     LoopA.S1 H2 b1 b7 b8 (by decide) (by decide) (by omega) (by omega) ⟨by rw [hs0]; omega, by rw [hs1]; omega⟩ with
     ⟨q, s', ω3, μ3, ha, run3, H3, keepU, hnew, hfresh, hk, c7, cfr, c0, c1, c5, c6⟩ | ⟨ha, ω3, μ3, run3, c7, -⟩
   rotate_left
-  · exact Or.inr ⟨ω3, μ3, s, 0, (32 * n + 31) / 32, ((run1.trans (run2.trans run3)).mono (by omega)), c7, ha⟩
+  · exact Or.inr (Exhausts.of_alloc ((run1.trans (run2.trans run3)).mono (by omega)) c7 ha)
   have hsz : (32 * n + 31) / 32 = n := by omega
   rw [hsz] at ha hnew hfresh
   -- the block's chunk, and the payload's

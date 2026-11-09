@@ -110,13 +110,13 @@ theorem it_tr_dst {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x 
       ω'[0] = UInt64.ofNat 2094 ∧ ω'[1] = UInt64.ofNat b ∧ ω'[5] = UInt64.ofNat out ∧ ω'[6] = UInt64.ofNat rd ∧
       ω'[7] = UInt64.ofNat rd ∧ ω'[8] = UInt64.ofNat (b + 272) ∧ ω'[9] = UInt64.ofNat 4 ∧
       rdN μ' (b + 16) 8 = sxw 4 v % 18446744073709551616 ∧
-      (∀ a, a < 4294967296 → (a < b ∨ b + 424 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, a < 4294967296 → (a < b + 16 ∨ b + 24 ≤ a) → (a < b + 272 ∨ b + 276 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?ω', ?μ', ?run, ?post⟩
   case run => pvm_go [h1, h6, h7, m24, mv, hrf, hwf, rdN_writeN_disjoint, ↓rdN_fold, ↓loadI_fold]
   case post =>
-    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha h1 => ?_, fun a => ?_, fun a => ?_⟩
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha h1 h2 => ?_, fun a => ?_, fun a => ?_⟩
     all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
       ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, h1, h6]
     all_goals try with_reducible rfl
@@ -144,13 +144,13 @@ theorem it_tr_amt {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x 
       ω'[0] = UInt64.ofNat 2096 ∧ ω'[1] = UInt64.ofNat b ∧ ω'[6] = UInt64.ofNat rd ∧
       ω'[7] = UInt64.ofNat rd ∧ ω'[8] = UInt64.ofNat (b + 272) ∧ ω'[9] = UInt64.ofNat 8 ∧ ω'[5] = ω[5] ∧
       rdN μ' (b + 8) 8 = sxw 4 v % 18446744073709551616 ∧
-      (∀ a, a < 4294967296 → (a < b ∨ b + 424 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, a < 4294967296 → (a < b + 8 ∨ b + 16 ≤ a) → (a < b + 272 ∨ b + 280 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?ω', ?μ', ?run, ?post⟩
   case run => pvm_go [h1, h6, h7, mv, hrf, hwf, rdN_writeN_disjoint, ↓rdN_fold, ↓loadI_fold]
   case post =>
-    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha h1 => ?_, fun a => ?_, fun a => ?_⟩
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha h1 h2 => ?_, fun a => ?_, fun a => ?_⟩
     all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
       ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, h1, h6]
     all_goals try with_reducible rfl
@@ -178,7 +178,7 @@ theorem it_tr_memo0 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (
       ω'[0] = UInt64.ofNat 2098 ∧ ω'[1] = UInt64.ofNat b ∧ ω'[6] = UInt64.ofNat rd ∧
       ω'[7] = UInt64.ofNat (b + 272) ∧ ω'[8] = UInt64.ofNat 0 ∧ ω'[9] = UInt64.ofNat 128 ∧ ω'[5] = ω[5] ∧
       rdN μ' b 8 = v ∧
-      (∀ a, a < 4294967296 → (a < b ∨ b + 424 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, a < 4294967296 → (a < b ∨ b + 8 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?ω', ?μ', ?run, ?post⟩
@@ -505,5 +505,68 @@ theorem tr_s1 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X)
   · intro a h0 hs hr
     rw [fr4 a h0 (by omega) hr (by omega), m32 a h0 (by omega) (by omega),
       fr2 a h0 (by omega) hr (by omega), m1 a h0 (by omega)]
+
+/-- **Stage 2 of the transfer arm, 46624 … 46688**: s (at b + 272) saved sign-extended at b + 16,
+    ℰ₄(d) read and d saved at b + 8, ℰ₈(a) read into b + 272; the reader advanced by 12. -/
+theorem tr_s2 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
+    (b out rd ip rlen : Nat) (h1 : ω[1] = UInt64.ofNat b) (h5 : ω[5] = UInt64.ofNat rd)
+    (h6 : ω[6] = UInt64.ofNat rd) (h7 : ω[7] = UInt64.ofNat 0)
+    (m24 : rdN μ (b + 24) 8 = out) (hout : out < 18446744073709551616)
+    (hR0 : μ.readN rd 8 = Num.encodeLE 8 ip) (hR8 : μ.readN (rd + 8) 8 = Num.encodeLE 8 rlen)
+    (hrl : 12 ≤ rlen) (hrl32 : rlen < 4294967296)
+    (hip : 65536 ≤ ip ∧ ip + 160 < 2147483648) (hra : ∀ a, ip ≤ a → a < ip + 12 → μ.readable a = true)
+    (hb : 2147483648 + 88 ≤ b ∧ b + 424 < 4294967296 ∧ b % 8 = 0) (hrd : b + 424 ≤ rd ∧ rd + 16 < 4294967296)
+    (hwf : ∀ a, b - 88 ≤ a → a < b + 424 → μ.writable a = true)
+    (hwr : ∀ a, rd ≤ a → a < rd + 16 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 46624 ω μ x 46688 ω' μ' x 300 ∧
+      ω'[1] = UInt64.ofNat b ∧ ω'[5] = UInt64.ofNat out ∧ ω'[6] = UInt64.ofNat rd ∧ ω'[7] = UInt64.ofNat 0 ∧
+      rdN μ' (b + 16) 8 = sxw 4 (rdN μ (b + 272) 4) % 18446744073709551616 ∧
+      rdN μ' (b + 8) 8 = sxw 4 (rdN μ ip 4) % 18446744073709551616 ∧
+      rdN μ' (b + 272) 8 = rdN μ (ip + 4) 8 ∧
+      μ'.readN rd 8 = Num.encodeLE 8 (ip + 12) ∧ μ'.readN (rd + 8) 8 = Num.encodeLE 8 (rlen - 12) ∧
+      (∀ a, a < 4294967296 → (a < b - 88 ∨ b + 32 ≤ a) → (a < b + 272 ∨ b + 280 ≤ a) → (a < rd ∨ rd + 16 ≤ a) →
+        μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have hrd64 : rd < 18446744073709551616 := by omega
+  obtain ⟨ω1, μ1, r1, a0, a1, a5, a6, a7, a8, a9, s16, fr1, rd1, wr1⟩ :=
+    it_tr_dst (p := p) (P := P) (R := R) x ω μ b out rd (rdN μ (b + 272) 4) h1 h6 h7 ⟨by omega, by omega⟩ hrd64
+      (fun a h1 h2 => Memory.readable_of_writable (hwf a (by omega) h2))
+      (fun a h1 h2 => hwf a (by omega) h2) m24 rfl (rdN_lt μ _ 4) hout
+  have m1 : ∀ a, a < 4294967296 → (a < b ∨ b + 424 ≤ a) → μ1.read a = μ.read a := fun a h0 h =>
+    fr1 a h0 (by omega) (by omega)
+  have k1 : ∀ (o : Nat) {l : List UInt8}, b + 424 ≤ o → o + 8 < 4294967296 → μ.readN o 8 = l → μ1.readN o 8 = l :=
+    fun o l h1 h2 h => by rw [PVM.Memory.readN_congr (μ := μ) (fun j hj => m1 _ (by omega) (Or.inr (by omega)))]; exact h
+  obtain ⟨ω2, μ2, r2, e0, e1, -, -, -, e5, e6, -, e7, q0, q8, qb, fr2, rd2, wr2⟩ :=
+    read_ok (p := p) (P := P) (R := R) x ω1 μ1 2094 46658 b rd (b + 272) ip rlen 4 a0 a1 a7 a8 a9
+      (by decide) (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_1046]) bs_46658
+      ⟨by omega, by omega⟩ ⟨by omega, hrd.2⟩ ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ (by decide) (by omega) hrl32
+      (Or.inr (by omega)) (Or.inr (by omega)) (Or.inl (by omega)) (Or.inl (by omega)) (Or.inr (by omega))
+      (fun a h1 h2 => by rw [wr1]; exact hwf a (by omega) (by omega))
+      (fun a h1 h2 => by rw [wr1]; exact hwr a h1 h2)
+      (fun a h1 h2 => by rw [wr1]; exact hwf a (by omega) (by omega))
+      (fun a h1 h2 => by rw [rd1]; exact hra a h1 (by omega))
+      (k1 rd (by omega) (by omega) hR0) (k1 (rd + 8) (by omega) (by omega) hR8)
+  have mv : rdN μ2 (b + 272) 4 = rdN μ ip 4 := by
+    unfold rdN; rw [qb, PVM.Memory.readN_congr (μ := μ) (fun j hj => m1 _ (by omega) (Or.inl (by omega)))]
+  obtain ⟨ω3, μ3, r3, c0, c1, c6, c7, c8, c9, c5, s8, fr3, rd3, wr3⟩ :=
+    it_tr_amt (p := p) (P := P) (R := R) x ω2 μ2 b rd (rdN μ ip 4) (by rw [e1, a1]) (by rw [e6, a6]) e7
+      ⟨by omega, by omega⟩ hrd64
+      (fun a h1 h2 => by rw [rd2, rd1]; exact Memory.readable_of_writable (hwf a (by omega) h2))
+      (fun a h1 h2 => by rw [wr2, wr1]; exact hwf a (by omega) h2) mv (rdN_lt μ _ 4)
+  have m3 : ∀ a, a < 4294967296 → (a < b ∨ b + 424 ≤ a) → μ3.read a = μ2.read a := fun a h0 h =>
+    fr3 a h0 (by omega) (by omega)
+  have k3 : ∀ (o : Nat) {l : List UInt8}, b + 424 ≤ o → o + 8 < 4294967296 → μ2.readN o 8 = l → μ3.readN o 8 = l :=
+    fun o l h1 h2 h => by rw [PVM.Memory.readN_congr (μ := μ2) (fun j hj => m3 _ (by omega) (Or.inr (by omega)))]; exact h
+  obtain ⟨ω4, μ4, r4, d0, d1, -, -, -, d5, d6, -, d7, p0, p8, pb, fr4, rd4, wr4⟩ :=
+    read_ok (p := p) (P := P) (R := R) x ω3 μ3 2096 46688 b rd (b + 272) (ip + 4) (rlen - 4) 8 c0 c1 c7 c8 c9
+      (by decide) (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_1047]) bs_46688
+      ⟨by omega, by omega⟩ ⟨by omega, hrd.2⟩ ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ (by decide) (by omega) (by omega)
+      (Or.inr (by omega)) (Or.inr (by omega)) (Or.inl (by omega)) (Or.inl (by omega)) (Or.inr (by omega))
+      (fun a h1 h2 => by rw [wr3, wr2, wr1]; exact hwf a (by omega) (by omega))
+      (fun a h1 h2 => by rw [wr3, wr2, wr1]; exact hwr a h1 h2)
+      (fun a h1 h2 => by rw [wr3, wr2, wr1]; exact hwf a (by omega) (by omega))
+      (fun a h1 h2 => by rw [rd3, rd2, rd1]; exact hra a (by omega) (by omega))
+      (k3 rd (by omega) (by omega) q0) (k3 (rd + 8) (by omega) (by omega) q8)
+  sorry
 
 end Services.Bootstrap.Acc

@@ -349,6 +349,24 @@ An independent kernel, nanoda as vendored by
     only off their data (`HKeep`, `off_hdr_data`); the reader's writes stay in the new block
     (`data_disj`). `read_low` is the reader for a source below its frames.
 
+- **`Vec<(u64, u64)>` and `Import { items }` with the payload in the heap (1 ≤ n ≤ 1024).**
+  `Decode.VecPairs.vec_pairs_heap` and `Decode.VecPairs.import_heap`
+  (`Services/Bootstrap/Decode/VecPairs.lean`).
+  - *Statement:* the decode loop's setting, as `vec_u8_heap`. The reader at 3100 reads n pairs (16n
+    octets) from a payload inside an allocated chunk's data, under `HeapCtx` and `refineContractK cap`
+    (cap ≥ 2²⁷). There are two outcomes:
+    - the model's `alloc` of ⌈16n/32⌉ units gives `(q, s')`: the `Vec` `{cap n, ptr q, len n}` with
+      the 16n payload octets at q, the reader advanced by 16n, the context kept for `s'`, every
+      allocated chunk of `s` kept with its data, the block a new allocated chunk, and page entries
+      outside the heap kept. `import_heap` returns `Import` from 20626: the discriminant word
+      2^63 + 8 and that `Vec` at O, with the reader advanced past ℰ(n) and the items;
+    - the model's `alloc` fails: the run reaches the `alloc` wrapper's return (40611) with null.
+  - *How:* `p1` sets up the frame and calls `finish_grow` (`g1e`), then `alloc_call`. `loop` copies
+    one pair per pass (`pass`, 260 steps), induction on the count left. `ex1` and `ex2` store the
+    `Vec`, and `VecEmpty.e3` / `e4` copy it into the variant.
+  - *Assumed:* n ≤ 1024, so a single `alloc` holds the whole `Vec` (the binary caps its first
+    allocation at 1024 elements). Larger n needs the `realloc` growth path; that is not proven yet.
+
 - **`realloc` keeps the other allocated chunks' data.** `Decode.ReallocKeepAll.realloc_wrap_cases_keep`
   (`Services/Bootstrap/Decode/ReallocKeepAll.lean`).
   - *Statement:* `realloc_wrap_cases_hdata`, and whenever the model's `realloc` returns a block, every

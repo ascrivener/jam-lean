@@ -536,7 +536,9 @@ theorem vec_pairs_heap {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
       (∀ d ∈ chunks s, d.used = true → d ≠ ⟨q - 32, (16 * n + 31) / 32 + 1, true⟩) ∧
       (∀ c ∈ chunks s, c.used = true → ∀ a, InData c a → μ'.read a = μ.read a) ∧
       PagesOut 48 pb μ μ' ∧
-      (∀ a, a < 4294967296 → sp ≤ a → (a < rd ∨ rd + 16 ≤ a) → (a < O ∨ O + 24 ≤ a) → μ'.read a = μ.read a)) ∨
+      (∀ a, a < 4294967296 → sp ≤ a → (a < rd ∨ rd + 16 ≤ a) → (a < O ∨ O + 24 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, a < 196608 → μ'.read a = μ.read a ∧ μ'.readable a = μ.readable a) ∧
+      (∀ a, Glob a → μ'.read a = μ.read a) ∧ (∀ a, S0 ≤ a → μ'.writable a = μ.writable a)) ∨
     (alloc (growTo pb) hb 1 ((16 * n + 31) / 32) s = none ∧ ∃ ω' μ',
       FreeStepsH p (refineContractK cap env) 3100 ω μ x 40611 ω' μ' x (260 * n + 800) ∧
       ω'[7] = UInt64.ofNat 0) := by
@@ -666,7 +668,7 @@ theorem vec_pairs_heap {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
   have wr9' : ∀ a, μ9.writable a = μ3.writable a := fun a => by rw [wr9, fwr, wr36]
   refine Or.inl ⟨q, s', ω9, μ9, ha, run19.mono (by omega), z0, by rw [z1]; congr 1; omega, z5, z6, zO, zO8, zO16,
     ?_, ?_, ?_, ctx_congr_data H3 hnew (fun a h1 h2 => hlowh a h1 (by simp only at h2; omega)) wr9', keep, hnew,
-    hfresh, ?_, FreeStepsH.pagesOut H.bd run19, ?_⟩
+    hfresh, ?_, FreeStepsH.pagesOut H.bd run19, ?_, ?_, ?_, ?_⟩
   · rw [Memory.readN_congr (fun j hj => fr9 _ (by omega) (Or.inl (by omega)) (Or.inl (by omega))), fdat]
     exact Memory.readN_congr (fun j hj => hpay6 _ ⟨by omega, by omega⟩)
   · rw [Memory.readN_congr (fun j hj => fr9 _ (by omega) (Or.inr (by omega)) (by omega)), fR0]
@@ -683,6 +685,25 @@ theorem vec_pairs_heap {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
     rw [fr9 a h0 (Or.inr (by omega)) h3, ffr a h0 (Or.inr (by omega)) (Or.inr (by omega)) (Or.inr (by omega)) h2
       (Or.inr (by omega))]
     exact hhigh a h0 h1
+  · intro a ha'
+    obtain ⟨kp, kr⟩ := FreeStepsH.keepRO H.bd run19
+    refine ⟨kr a (by unfold two32; omega) (Or.inl (by unfold pageSize; omega)) (H.ro a ha'), ?_⟩
+    unfold Memory.readable
+    rw [kp _ (Or.inl (by unfold pageSize; omega))]
+  · intro a ha'
+    have hg := ha'
+    unfold Glob at hg
+    have ht3 := H3.wf.2.2.2.1
+    unfold TilesOk at ht3
+    have hb3 := H3.hb0
+    rw [hlowh a (by omega) (Or.inl (by omega)),
+      hk.glob (fun b ⟨c, hc, e⟩ => Or.inr (by have := (ht3.mem_lt c hc).1; omega)) a ha']
+    exact hlow a (by omega) (Or.inl (by omega))
+  · intro a ha'
+    obtain ⟨kp, -⟩ := FreeStepsH.keepRO H.bd run19
+    have := H.hSb
+    unfold Memory.writable
+    rw [kp _ (Or.inr (by unfold pageSize; omega))]
 
 open Picoalloc Services.Bootstrap.Alloc JAM Services.Bootstrap.Decode.HeapCtx Services.Bootstrap.Decode.LoopA
   Services.Bootstrap.Decode.Tag Services.Bootstrap.Decode.VecEmpty in
@@ -722,7 +743,9 @@ theorem import_heap {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHos
       (∀ d ∈ chunks s, d.used = true → d ≠ ⟨q - 32, (16 * n + 31) / 32 + 1, true⟩) ∧
       (∀ c ∈ chunks s, c.used = true → ∀ a, InData c a → μ'.read a = μ.read a) ∧
       PagesOut 48 pb μ μ' ∧
-      (∀ a, a < 4294967296 → A ≤ a → (a < rd ∨ rd + 16 ≤ a) → (a < O ∨ O + 32 ≤ a) → μ'.read a = μ.read a)) ∨
+      (∀ a, a < 4294967296 → A ≤ a → (a < rd ∨ rd + 16 ≤ a) → (a < O ∨ O + 32 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, a < 196608 → μ'.read a = μ.read a ∧ μ'.readable a = μ.readable a) ∧
+      (∀ a, Glob a → μ'.read a = μ.read a) ∧ (∀ a, S0 ≤ a → μ'.writable a = μ.writable a)) ∨
     (alloc (growTo pb) hb 1 ((16 * n + 31) / 32) s = none ∧ ∃ ω' μ',
       FreeStepsH p (refineContractK cap env) 20626 ω μ x 40611 ω' μ' x (260 * n + 2000) ∧
       ω'[7] = UInt64.ofNat 0) := by
@@ -775,7 +798,7 @@ theorem import_heap {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHos
       ⟨by omega, by omega⟩ c0 (by rw [c1, d1, b1]) (by rw [c5, d5, b5]) (by rw [c6, d6, b6]) c7
       (by rw [c8, d6, b6]) c9 (by decide) rfl bs3 hO64 (by omega) hn (by omega) (by omega) ⟨by omega, by omega⟩
       ⟨Nat.le_refl _, by omega⟩ (by omega) dR0 dR8 with
-    ⟨q, s', ω5, μ5, ha, run5, v0, v1, v5', v6', vc, vp, vl, vdata, vR0, vR8, H5, keep, cm5, hfresh, kd5, pg5, vfr⟩ |
+    ⟨q, s', ω5, μ5, ha, run5, v0, v1, v5', v6', vc, vp, vl, vdata, vR0, vR8, H5, keep, cm5, hfresh, kd5, pg5, vfr, -, vgl, -⟩ |
     ⟨hna, ω5, μ5, run5, f7⟩
   rotate_left
   · exact Or.inr ⟨hna, ω5, μ5, (run04.trans run5).mono (by omega), f7⟩
@@ -814,13 +837,27 @@ theorem import_heap {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHos
       unfold InData at hia'
       rw [hlow a (by omega), kd5 c hc hu a hia]
       exact b3 a (by omega) (Or.inl (by omega)) (Or.inl (by omega)),
-    FreeStepsH.pagesOut H.bd run, hfar⟩
+    FreeStepsH.pagesOut H.bd run, hfar, ?_, ?_, ?_⟩
   · rw [Memory.readN_congr (fun j hj => hlow _ (by omega)), vdata]
     exact Memory.readN_congr (fun j hj => b3 _ (by omega) (Or.inl (by omega)) (Or.inl (by omega)))
   · have e : ∀ j, j < 8 → μ6.read (rd + j) = μ5.read (rd + j) := fun j hj => ffr _ (by omega) (by omega)
     rw [Memory.readN_congr e, vR0]
   · have e : ∀ j, j < 8 → μ6.read (rd + 8 + j) = μ5.read (rd + 8 + j) := fun j hj => ffr _ (by omega) (by omega)
     rw [Memory.readN_congr e, vR8]
-
+  · intro a ha'
+    obtain ⟨kp, kr⟩ := FreeStepsH.keepRO H.bd run
+    refine ⟨kr a (by unfold two32; omega) (Or.inl (by unfold pageSize; omega)) (H.ro a ha'), ?_⟩
+    unfold Memory.readable
+    rw [kp _ (Or.inl (by unfold pageSize; omega))]
+  · intro a ha'
+    have hg := ha'
+    unfold Glob at hg
+    rw [hlow a (by omega), vgl a ha']
+    exact b3 a (by omega) (Or.inl (by omega)) (Or.inl (by omega))
+  · intro a ha'
+    obtain ⟨kp, -⟩ := FreeStepsH.keepRO H.bd run
+    have := H.hSb
+    unfold Memory.writable
+    rw [kp _ (Or.inr (by unfold pageSize; omega))]
 
 end Services.Bootstrap.Decode.VecPairs

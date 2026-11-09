@@ -22,6 +22,18 @@ open PVM JAM Services.Bootstrap Services.Bootstrap.Code Services.Bootstrap.CodeA
 set_option maxHeartbeats 8000000
 set_option maxRecDepth 100000
 
+/-- 32 octets as four words. -/
+theorem readN32_split (μ : Memory) (a : Nat) :
+    μ.readN a 32 = μ.readN a 8 ++ μ.readN (a + 8) 8 ++ μ.readN (a + 16) 8 ++ μ.readN (a + 24) 8 := by
+  rw [show (32 : Nat) = 8 + 24 from rfl, Memory.readN_split, show (24 : Nat) = 8 + 16 from rfl,
+    Memory.readN_split, show (16 : Nat) = 8 + 8 from rfl, Memory.readN_split]
+  simp [Nat.add_assoc]
+
+/-- `readMem` of a readable range whose octets are known, at the address a register holds. -/
+theorem readMem_of {μ : Memory} {ω : Regs} {a n : Nat} {c : List UInt8} (hreg : reg ω 7 = a)
+    (hr : μ.rangeReadable a n = true) (h : μ.readN a n = c) : AccHost.readMem μ (reg ω 7) n = some c := by
+  rw [hreg]; unfold AccHost.readMem; rw [hr, h]; rfl
+
 /-- Ω_U (`upgrade`, id 20) when the 32 octets at ω₇ are readable, as Ψ_A's handler gives it at the
     contract's gas: OK, and x_s's code hash and gas limits set from them and ω₈, ω₉. -/
 theorem upgrade_eq (env : AccEnv) (ω : Regs) (μ : Memory) (x : AccCtx) (h : List UInt8)
@@ -77,9 +89,9 @@ theorem toCheck {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
   refine ⟨?ω', ?μ', ?run, ?post⟩
   case run =>
     refine FreeStepsH.mono (FreeStepsH.trans (i' := 11792) (ω' := ?w1) (μ' := ?m1) (x' := x)
-      (n₁ := 30) (n₂ := 1) ?a (FreeStepsH.accHostC env (h := 20) (by unfold AccGasFreeId; decide)
+      (n₁ := 30) (n₂ := 2) ?a (FreeStepsH.accHostC env (h := 20) (by unfold AccGasFreeId; decide)
         (d_11792 (p := p) (P := P)) rfl ?hs ?b)) (by omega)
-    case a => pvm_go [m192, hv192, m0, hw0, m1, hw1, m2, hw2, m3, hw3, jtsA, h1, h6, c216, disc, mg,
+    case a => pvm_go [m192, hv192, m0, hw0, m1, hw1, m2, hw2, m3, hw3, jts, h1, h6, c216, disc, mg,
       mm, tab, hw, hr, hrt, hws, hrs]
     case hs =>
       rw [upgrade_eq env _ _ x c ?hread]
@@ -90,19 +102,47 @@ theorem toCheck {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
           [UInt8.ofNat 172, UInt8.ofNat 1, UInt8.ofNat 0, UInt8.ofNat 0, UInt8.ofNat 0, UInt8.ofNat 0, UInt8.ofNat 0,
             UInt8.ofNat 0])) (a := 4278058720) (n := 32) (fun j h1 h2 => by
               simp only [PVM.Memory.readable_writeN]; exact hr j (by omega) (by omega)) (by decide)
-        simp only [AccHost.readMem, reg, PVM.getElem_regsNF, PVM.lookup_cons_nat, Regs.get,
-          PVM.regIdx_val_7, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some', UInt64.toNat_ofNat',
-          Nat.reduceMod, hrr, Option.some.injEq]
-        rw [show (32 : Nat) = 8 + 24 from rfl, Memory.readN_split, show (24 : Nat) = 8 + 16 from rfl,
-          Memory.readN_split, show (16 : Nat) = 8 + 8 from rfl, Memory.readN_split]
+        refine readMem_of (a := 4278058720) (by simp [reg, Regs.get, PVM.getElem_regsNF, PVM.lookup_cons_nat]) hrr ?_
+        rw [readN32_split, ← mc, readN32_split]
+        simp only [Nat.reduceAdd, m0, m1, m2, m3]
         simp (disch := pvm_arith) only [PVM.Memory.readN_writeN_same, PVM.Memory.readN_writeN_disjoint,
-          PVM.Num.length_encodeLE, List.length_cons, List.length_nil, PVM.two32, Nat.reduceAdd]
-        rw [← m0, ← m1, ← m2, ← m3, ← mc, show (32 : Nat) = 8 + 24 from rfl, Memory.readN_split,
-          show (24 : Nat) = 8 + 16 from rfl, Memory.readN_split, show (16 : Nat) = 8 + 8 from rfl,
-          Memory.readN_split]
+          PVM.Num.length_encodeLE, List.length_cons, List.length_nil, PVM.two32]
     case b =>
-      sorry
+      rw [upgrade_eq env _ _ x c ?hread]
+      case hread =>
+        have hrr := rangeReadable_of' (μ := ((((((μ.writeN 4278058532 (Num.encodeLE 4 (v192 % 4294967296))).writeN 4278058720 (Num.encodeLE 8 w0)).writeN
+                      4278058728 (Num.encodeLE 8 w1)).writeN 4278058736 (Num.encodeLE 8 w2)).writeN
+              4278058744 (Num.encodeLE 8 w3)).writeN 4278057144
+          [UInt8.ofNat 172, UInt8.ofNat 1, UInt8.ofNat 0, UInt8.ofNat 0, UInt8.ofNat 0, UInt8.ofNat 0, UInt8.ofNat 0,
+            UInt8.ofNat 0])) (a := 4278058720) (n := 32) (fun j h1 h2 => by
+              simp only [PVM.Memory.readable_writeN]; exact hr j (by omega) (by omega)) (by decide)
+        refine readMem_of (a := 4278058720) (by simp [reg, Regs.get, PVM.getElem_regsNF, PVM.lookup_cons_nat]) hrr ?_
+        rw [readN32_split, ← mc, readN32_split]
+        simp only [Nat.reduceAdd, m0, m1, m2, m3]
+        simp (disch := pvm_arith) only [PVM.Memory.readN_writeN_same, PVM.Memory.readN_writeN_disjoint,
+          PVM.Num.length_encodeLE, List.length_cons, List.length_nil, PVM.two32]
+      have r8 : reg (regsNF ω [(0, UInt64.ofNat 428), (1, UInt64.ofNat 4278057144), (7, UInt64.ofNat 4278058720),
+          (8, UInt64.ofNat g), (9, UInt64.ofNat m), (10, UInt64.ofNat w1), (11, UInt64.ofNat w2),
+          (12, UInt64.ofNat w3)]) 8 = g := by
+        simp [reg, Regs.get, PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.mod_eq_of_lt hg64]
+      have r9 : reg (regsNF ω [(0, UInt64.ofNat 428), (1, UInt64.ofNat 4278057144), (7, UInt64.ofNat 4278058720),
+          (8, UInt64.ofNat g), (9, UInt64.ofNat m), (10, UInt64.ofNat w1), (11, UInt64.ofNat w2),
+          (12, UInt64.ofNat w3)]) 9 = m := by
+        simp [reg, Regs.get, PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.mod_eq_of_lt hm64]
+      rw [r8, r9]
+      dsimp only
+      refine (?_ : FreeStepsH _ _ _ _ _ _ _ _ _ _ _)
+      pvm_go [JAM.setR7, bs_49541]
   case post =>
-    sorry
+    refine ⟨?_, ?_, ?_, fun a ha hrs => ?_, fun a => ?_, fun a => ?_⟩
+    all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat,
+      Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none,
+      PVM.Memory.readN_writeN_same, PVM.Memory.read_writeN_disjoint, PVM.Memory.readable_writeN,
+      PVM.Memory.writable_writeN, PVM.Num.length_encodeLE, List.length_cons, List.length_nil, PVM.two32]
+    · rfl
+    · rfl
+    · simp only [List.mem_cons, List.not_mem_nil, or_false, forall_eq_or_imp, forall_eq] at hrs
+      simp (disch := pvm_arith) only [PVM.Memory.read_writeN_disjoint, PVM.Num.length_encodeLE,
+        List.length_cons, List.length_nil, PVM.two32]
 
 end Services.Bootstrap.Acc.Handlers.Upgrade

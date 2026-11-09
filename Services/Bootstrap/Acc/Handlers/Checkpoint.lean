@@ -58,7 +58,7 @@ theorem toAlloc {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
   case run =>
     refine FreeStepsH.mono (FreeStepsH.trans (i' := 9944) (ω' := ?w1) (μ' := ?m1) (x' := x) (n₁ := 15) (n₂ := 15) ?a
       (FreeStepsH.checkpointAcc env (d_9944 (p := p) (P := P)) ?b)) (by omega)
-    case a => pvm_go [m192, hv192, jtsA, h1, h6, c216, disc, tab, hw, hr, hrt]
+    case a => pvm_go [m192, hv192, jts, h1, h6, c216, disc, tab, hw, hr, hrt]
     case b => pvm_go [JAM.setR7, bs_40494]
   case post =>
     refine ⟨?_, ?_, ?_, ?_, fun a ha hrs => ?_, fun a => ?_, fun a => ?_⟩
@@ -127,7 +127,7 @@ theorem tail {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {X : Typ
   clear tab
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?ω', ?μ', ?run, ?post⟩
-  case run => pvm_go [jtsA, jts, h1, disc, tab15, hw, hr, hrt]
+  case run => pvm_go [jts, jts, h1, disc, tab15, hw, hr, hrt]
   case post =>
     refine ⟨?_, ?_, ?_, ?_, fun a ha hrs => ?_, fun a => ?_, fun a => ?_⟩
     all_goals post_simp

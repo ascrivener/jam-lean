@@ -20,6 +20,7 @@ import JAM.Statistics
 import JAM.Preimages
 import JAM.Crypto
 import JAM.Disputes
+import JAM.Assurances
 import JAM.Refine
 import JAM.Theorems.HostGas
 import JAM.Theorems.Confinement
@@ -50,6 +51,7 @@ Built on `PVM` (Appendix A).
 * `JAM.Preimages` — the preimages extrinsic and its integration (§12.4)
 * `JAM.Crypto` — the cryptographic primitives (Ed25519 verification) as parameters (§3.8)
 * `JAM.Disputes` — verdicts, culprits and faults, ψ' and the cleared assignments ρ^‡ (§10)
+* `JAM.Assurances` — the assurances extrinsic, the newly available reports **R** and ρ after assurances (§11.2)
 * `JAM.Refine` — the refine and is-authorized invocations Ψ_R and Ψ_I, with the refine host functions
 * `JAM.Theorems.HostGas` — the dispatchers of Ψ_A, Ψ_R and Ψ_I never add gas
 -/

@@ -192,6 +192,14 @@ lean_exe «assurancestest-exe» where
 target assurancestest pkg : Unit := do
   runOnVectors `«assurancestest-exe» #[(jamVectorDir pkg / "stf" / "assurances").toString]
 
+lean_exe «reportstest-exe» where
+  root := `Tests.ReportsTest
+  exeName := "reportstest"
+
+/-- Run the guarantees STF (§11.3–§11.5) on every reports vector (tiny and full). -/
+target reportstest pkg : Unit := do
+  runOnVectors `«reportstest-exe» #[(jamVectorDir pkg / "stf" / "reports").toString]
+
 lean_exe «safroletest-exe» where
   root := `Tests.SafroleTest
   exeName := "safroletest"

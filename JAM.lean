@@ -21,6 +21,7 @@ import JAM.Preimages
 import JAM.Crypto
 import JAM.Disputes
 import JAM.Assurances
+import JAM.Reports
 import JAM.Safrole
 import JAM.Refine
 import JAM.Theorems.HostGas
@@ -53,6 +54,7 @@ Built on `PVM` (Appendix A).
 * `JAM.Crypto` — the cryptographic primitives (Ed25519 verification; Bandersnatch VRF, Ring VRF and ring root) as parameters (§3.8, Appendix G)
 * `JAM.Disputes` — verdicts, culprits and faults, ψ' and the cleared assignments ρ^‡ (§10)
 * `JAM.Assurances` — the assurances extrinsic, the newly available reports **R** and ρ after assurances (§11.2)
+* `JAM.Reports` — guarantor assignments M and M*, the guarantees extrinsic, ρ' and the reporters G (§11.3–§11.5)
 * `JAM.Safrole` — Safrole: timekeeping, key rotation, entropy, the slot-sealer sequence, the markers and the tickets (§6)
 * `JAM.Refine` — the refine and is-authorized invocations Ψ_R and Ψ_I, with the refine host functions
 * `JAM.Theorems.HostGas` — the dispatchers of Ψ_A, Ψ_R and Ψ_I never add gas

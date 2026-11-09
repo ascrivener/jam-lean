@@ -384,7 +384,7 @@ An independent kernel, nanoda as vendored by
     kept, the block a fresh allocated chunk and the heap's data and the globals below the allocator
     (196616 … 196792) kept (`HKeepG`), or null when the model fails.
   - *Assumed:* the cap on what one host call may charge is at least 2^27 (so any `grow_heap` fits);
-    pending confirmation.
+    approved by Adam (2026-11-09).
   - *How:* main's `alloc_wrap_refines`, `alloc_wrap_refines_growK` and `alloc_wrap_refines_failK`,
     with the `HKeepG` frame of `alloc_refines_hdr` carried through the wrapper (`HeapWrap`);
     `HKeepG` is `HKeep` with the globals between the wrapper's lock word (196608) and the allocator
@@ -403,8 +403,8 @@ An independent kernel, nanoda as vendored by
     2^63 + 11, the queue's capacity and length n and pointer q, the assigner and the core, and the
     n hashes at q in the heap; within 1000 + 550·n steps.
   - *Assumed:* the global at 196680 is a parameter G (the start-up code copies it from the protocol
-    parameters, presumably 𝖰 = 80 of GP v0.8.0); that start-up sets it is not yet proved. Pending
-    confirmation.
+    parameters, presumably 𝖰 = 80 of GP v0.8.0); that start-up sets it is not yet proved (a
+    follow-up). Approved by Adam (2026-11-09).
   - *How:* step lemmas `p1`, `g1`, `p5`, the element loop `elems`, and `alloc_call` for 1764; `as1`
     … `as4` for `Assign`'s handler (20971) and helper (24765), with `read_ok` for the core and the
     assigner; the decoder stores the length capped by the global (`min len (G mod 2^32)`), which is n.

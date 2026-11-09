@@ -9,8 +9,8 @@ host contract `refineContractK cap env`, with the allocator's context (`HeapCtx`
 inside an allocated chunk, and either
 * returns to the loop as `ElemOk` says, in at most N steps, with a new allocator state s' that keeps
   every allocated chunk of s and its data, the context kept, and a value whose property may also
-  depend on the heap, through allocated chunks of s' only (so later steps that keep those chunks'
-  data keep it); or
+  depend on the heap, through chunks allocated during the element only (so later steps that keep
+  those chunks' data keep it); or
 * reaches the `alloc` wrapper's return (40611) with null, the model's `alloc` having failed: the
   start of heap exhaustion (bootstrap decision 4).
 
@@ -28,6 +28,24 @@ abbrev S1 : Nat := 4278059008
 
 /-- A chunk's data: from 32 past its start to its end. -/
 def InData (c : Chunk) (a : Nat) : Prop := c.addr + 32 ≤ a ∧ a < c.addr + 32 * c.size
+
+/-- **An allocated chunk's data is writable**: it lies in the heap's writable pages. -/
+theorem heap_writable_data {env : RefineHost.Env} {pb : Nat} {μ : Memory} {s : State}
+    (H : HeapCtx env pb S0 S1 μ s) {c : Chunk} (hc : c ∈ chunks s) (hu : c.used = true) {a : Nat}
+    (ha : InData c a) : μ.writable a = true := by
+  obtain ⟨ph, h48, hhb, hp, hHTs, hHT⟩ := H.pages
+  have hsp := H.wf.2.2.2.2.2.2.2
+  unfold SpaceOk at hsp
+  have h1 := (hsp c hc).1 hu
+  have ht := H.wf.2.2.2.1
+  unfold TilesOk at ht
+  have hm := ht.mem_lt c hc
+  have := H.hb0
+  unfold InData at ha
+  have hq := hp (a / 4096) (by omega) (by omega)
+  unfold Memory.writable
+  rw [show pageSize = 4096 from rfl, hq]
+  simp only [decide_eq_true_eq]; omega
 
 /-- **One element decodes, possibly allocating** (see the module doc). -/
 def ElemOkA (env : RefineHost.Env) (cap pb : Nat) (p : ByteArray) (P : Program) (N : Nat)
@@ -55,12 +73,12 @@ def ElemOkA (env : RefineHost.Env) (cap pb : Nat) (p : ByteArray) (P : Program) 
       HeapCtx env pb S0 S1 μ' s' ∧
       (∀ c ∈ chunks s, c.used = true → c ∈ chunks s') ∧
       (∀ c ∈ chunks s, c.used = true → ∀ a, InData c a → μ'.read a = μ.read a) ∧
-      (∃ cs : List Chunk, (∀ c ∈ cs, c ∈ chunks s' ∧ c.used = true) ∧
+      (∃ cs : List Chunk, (∀ c ∈ cs, c ∈ chunks s' ∧ c.used = true ∧ ∀ d ∈ chunks s, d.used = true → d ≠ c) ∧
         ∀ μ'' : Memory, (∀ c ∈ cs, ∀ a, InData c a → μ''.read a = μ'.read a) →
           Rep (μ'.readN 4278057752 232) μ'') ∧
       (∀ a, 2147483648 ≤ a → a < 4294967296 → (a < 4278050816 ∨ 4278057664 ≤ a) →
         (a < 4278058648 ∨ 4278058664 ≤ a) → (a < 4278057752 ∨ 4278057984 ≤ a) → μ'.read a = μ.read a) ∧
-      (∀ a, a < 196608 → μ'.readable a = μ.readable a) ∧
+      (∀ a, a < 196608 → μ'.read a = μ.read a) ∧ (∀ a, a < 196608 → μ'.readable a = μ.readable a) ∧
       (∀ a, 2147483648 ≤ a → μ'.writable a = μ.writable a)) ∨
     (∃ (ω' : Regs) (μ' : Memory) (s'' : State) (hb r : Nat), FreeStepsH p (refineContractK cap env) 20626 ω μ x 40611 ω' μ' x N ∧
       ω'[7] = UInt64.ofNat 0 ∧ alloc (growTo pb) hb 1 r s'' = none)
@@ -83,7 +101,7 @@ theorem ElemOkA.of_elemOk {env : RefineHost.Env} {cap pb : Nat} {p : ByteArray} 
       ⟨ph, h48, hhb, HeapPages.of_eq hpg ewr, hHTs, hHT⟩, H.hSb, H.hS1,
       fun a h1 h2 => by rw [ewr]; exact H.st a h1 h2⟩,
     fun c hc _ => hc, fun c hc _ a ha => low a ?_, ⟨[], by simp, fun _ _ => eRep⟩,
-    fun a _ h0 h1 h2 h3 => efr a h0 h1 h2 h3, fun a _ => erd a, fun a _ => ewr a⟩
+    fun a _ h0 h1 h2 h3 => efr a h0 h1 h2 h3, fun a ha => low a (by omega), fun a _ => erd a, fun a _ => ewr a⟩
   have ht := H.wf.2.2.2.1
   unfold TilesOk at ht
   have htop : s.top = s.base + 1073741824 := by unfold State.top; rw [maxSize_val]

@@ -17,21 +17,28 @@ any gas, must be the one the contract allows.
 `accContractK_pins` proves that it pins down the handler. The contract is defined from the
 model's dispatcher alone, so it adds no assumption about the host.
 
-`AccGasFreeId` covers the general functions accumulate's start-up uses, and the ids the
-dispatcher does not know. The general functions are `grow_heap` (1), `fetch` (2), `lookup` (3),
-`read` (4), `write` (5) and `info` (6); `log` (100) is one of the unknown ids. It leaves out `gas`
-(0) and `checkpoint` (18), since both report the gas left in ω₇. It also leaves out the other
-accumulate functions (15–27); they can be added the same way when the handlers need them.
+`AccGasFreeId` covers every id except `gas` (0) and `checkpoint` (18):
+- the general functions `grow_heap` (1), `fetch` (2), `lookup` (3), `read` (4), `write` (5) and
+  `info` (6);
+- the accumulate functions `bless` (15), `assign` (16), `designate` (17), `new` (19), `upgrade`
+  (20), `transfer` (21), `eject` (22), `query` (23), `solicit` (24), `forget` (25), `yield` (26) and
+  `provide` (27). Each charges a cost fixed by its registers and the context (for `transfer`,
+  𝖬_T + t with t = l on success), and its body never reads the gas left;
+- the ids the dispatcher does not know (7 … 14 and above 27; `log` = 100 is one).
+
+`gas` and `checkpoint` are left out: both report the gas left in ω₇ (Ω_G, Ω_C), so no contract
+can pin them down in this sense.
 -/
 
 namespace Services.Bootstrap.Acc
 
 open PVM JAM
 
-/-- The accumulate host-call ids whose non-∞ outcome does not depend on the gas: the general
-    functions `grow_heap`, `fetch`, `lookup`, `read`, `write`, `info` (1 … 6), and every id the
+/-- The accumulate host-call ids whose non-∞ outcome does not depend on the gas: every id but
+    `gas` (0) and `checkpoint` (18), which report the gas left. These are the general functions
+    `grow_heap` … `info` (1 … 6), the accumulate functions 15 … 17 and 19 … 27, and every id the
     accumulate dispatcher does not know (7 … 14 and above 27, e.g. `log` = 100). -/
-def AccGasFreeId (h : Nat) : Prop := (1 ≤ h ∧ h ≤ 14) ∨ 27 < h
+def AccGasFreeId (h : Nat) : Prop := h ≠ 0 ∧ h ≠ 18
 
 /-- A general function's tail through `writeValue` does not depend on the gas it is handed. -/
 theorem writeValue_body_sameButGas {X : Type} (ω : Regs) (μ : Memory) (x : X)
@@ -51,6 +58,91 @@ theorem hostWrite_sameButGas (ω : Regs) (μ : Memory) (s : ServiceAccount) {gas
   all_goals simp
 
 namespace AccHost
+
+open JAM.AccHost
+
+/-- Close `SameButGas (charge g gas₁ ω μ c body) (charge g gas₂ ω μ c body)` for an accumulate
+    host function, with both calls' `≠ .oog` in context: every branch of the body returns its
+    `out` with only the registers, the status or x changed, and branches on registers, memory
+    and context, never on the gas. -/
+macro "sbg_tac" : tactic =>
+  `(tactic| (
+    refine charged_sameButGas _ _ _ _ _ (fun a b => ?_) ‹_› ‹_›
+    unfold SameButGas
+    try dsimp only
+    (repeat' split) <;> simp_all [JAM.AccHost.r7, JAM.AccHost.panic, JAM.AccHost.updX]))
+
+/-- Ω_B (`bless`, 15)'s non-∞ outcome does not depend on the gas. -/
+theorem bless_sameButGas (env : AccEnv) (ω : Regs) (μ : Memory) (c : AccCtx) {gas₁ gas₂ : Nat}
+    (h₁ : (bless env gas₁ ω μ c).status ≠ .oog) (h₂ : (bless env gas₂ ω μ c).status ≠ .oog) :
+    SameButGas (bless env gas₁ ω μ c) (bless env gas₂ ω μ c) := by
+  unfold bless charge at *; sbg_tac
+
+/-- Ω_A (`assign`, 16)'s non-∞ outcome does not depend on the gas. -/
+theorem assign_sameButGas (env : AccEnv) (ω : Regs) (μ : Memory) (c : AccCtx) {gas₁ gas₂ : Nat}
+    (h₁ : (assign env gas₁ ω μ c).status ≠ .oog) (h₂ : (assign env gas₂ ω μ c).status ≠ .oog) :
+    SameButGas (assign env gas₁ ω μ c) (assign env gas₂ ω μ c) := by
+  unfold assign charge at *; sbg_tac
+
+/-- Ω_D (`designate`, 17)'s non-∞ outcome does not depend on the gas. -/
+theorem designate_sameButGas (env : AccEnv) (ω : Regs) (μ : Memory) (c : AccCtx) {gas₁ gas₂ : Nat}
+    (h₁ : (designate env gas₁ ω μ c).status ≠ .oog) (h₂ : (designate env gas₂ ω μ c).status ≠ .oog) :
+    SameButGas (designate env gas₁ ω μ c) (designate env gas₂ ω μ c) := by
+  unfold designate charge at *; sbg_tac
+
+/-- Ω_N (`new`, 19)'s non-∞ outcome does not depend on the gas. -/
+theorem new_sameButGas (env : AccEnv) (ω : Regs) (μ : Memory) (c : AccCtx) {gas₁ gas₂ : Nat}
+    (h₁ : (new env gas₁ ω μ c).status ≠ .oog) (h₂ : (new env gas₂ ω μ c).status ≠ .oog) :
+    SameButGas (new env gas₁ ω μ c) (new env gas₂ ω μ c) := by
+  unfold new charge at *; sbg_tac
+
+/-- Ω_U (`upgrade`, 20)'s non-∞ outcome does not depend on the gas. -/
+theorem upgrade_sameButGas (ω : Regs) (μ : Memory) (c : AccCtx) {gas₁ gas₂ : Nat}
+    (h₁ : (upgrade gas₁ ω μ c).status ≠ .oog) (h₂ : (upgrade gas₂ ω μ c).status ≠ .oog) :
+    SameButGas (upgrade gas₁ ω μ c) (upgrade gas₂ ω μ c) := by
+  unfold upgrade charge at *; sbg_tac
+
+/-- Ω_T (`transfer`, 21)'s non-∞ outcome does not depend on the gas. -/
+theorem transfer_sameButGas (env : AccEnv) (ω : Regs) (μ : Memory) (c : AccCtx) {gas₁ gas₂ : Nat}
+    (h₁ : (transfer env gas₁ ω μ c).status ≠ .oog) (h₂ : (transfer env gas₂ ω μ c).status ≠ .oog) :
+    SameButGas (transfer env gas₁ ω μ c) (transfer env gas₂ ω μ c) := by
+  unfold transfer charge at *; sbg_tac
+
+/-- Ω_J (`eject`, 22)'s non-∞ outcome does not depend on the gas. -/
+theorem eject_sameButGas (env : AccEnv) (ω : Regs) (μ : Memory) (c : AccCtx) {gas₁ gas₂ : Nat}
+    (h₁ : (eject env gas₁ ω μ c).status ≠ .oog) (h₂ : (eject env gas₂ ω μ c).status ≠ .oog) :
+    SameButGas (eject env gas₁ ω μ c) (eject env gas₂ ω μ c) := by
+  unfold eject charge at *; sbg_tac
+
+/-- Ω_Q (`query`, 23)'s non-∞ outcome does not depend on the gas. -/
+theorem query_sameButGas (ω : Regs) (μ : Memory) (c : AccCtx) {gas₁ gas₂ : Nat}
+    (h₁ : (query gas₁ ω μ c).status ≠ .oog) (h₂ : (query gas₂ ω μ c).status ≠ .oog) :
+    SameButGas (query gas₁ ω μ c) (query gas₂ ω μ c) := by
+  unfold query charge at *; sbg_tac
+
+/-- Ω_S (`solicit`, 24)'s non-∞ outcome does not depend on the gas. -/
+theorem solicit_sameButGas (env : AccEnv) (ω : Regs) (μ : Memory) (c : AccCtx) {gas₁ gas₂ : Nat}
+    (h₁ : (solicit env gas₁ ω μ c).status ≠ .oog) (h₂ : (solicit env gas₂ ω μ c).status ≠ .oog) :
+    SameButGas (solicit env gas₁ ω μ c) (solicit env gas₂ ω μ c) := by
+  unfold solicit charge at *; sbg_tac
+
+/-- Ω_F (`forget`, 25)'s non-∞ outcome does not depend on the gas. -/
+theorem forget_sameButGas (env : AccEnv) (ω : Regs) (μ : Memory) (c : AccCtx) {gas₁ gas₂ : Nat}
+    (h₁ : (forget env gas₁ ω μ c).status ≠ .oog) (h₂ : (forget env gas₂ ω μ c).status ≠ .oog) :
+    SameButGas (forget env gas₁ ω μ c) (forget env gas₂ ω μ c) := by
+  unfold forget charge at *; sbg_tac
+
+/-- Ω_♉ (`yield`, 26)'s non-∞ outcome does not depend on the gas. -/
+theorem yield_sameButGas (ω : Regs) (μ : Memory) (c : AccCtx) {gas₁ gas₂ : Nat}
+    (h₁ : (yield gas₁ ω μ c).status ≠ .oog) (h₂ : (yield gas₂ ω μ c).status ≠ .oog) :
+    SameButGas (yield gas₁ ω μ c) (yield gas₂ ω μ c) := by
+  unfold yield charge at *; sbg_tac
+
+/-- Ω_♈ (`provide`, 27)'s non-∞ outcome does not depend on the gas. -/
+theorem provide_sameButGas (ω : Regs) (μ : Memory) (c : AccCtx) {gas₁ gas₂ : Nat}
+    (h₁ : (provide gas₁ ω μ c).status ≠ .oog) (h₂ : (provide gas₂ ω μ c).status ≠ .oog) :
+    SameButGas (provide gas₁ ω μ c) (provide gas₂ ω μ c) := by
+  unfold provide charge at *; sbg_tac
 
 /-- **The accumulate dispatcher's non-∞ outcome does not depend on the gas**, for the ids of
     `AccGasFreeId`. -/
@@ -108,9 +200,35 @@ theorem dispatch_sameButGas (env : AccEnv) {h : Nat} (hh : AccGasFreeId h) (ω :
     obtain ⟨a, b, c', d⟩ := charged_sameButGas _ _ _ _ _
       (fun a b => writeValue_sameButGas _ _ _ _ _ _ _ _ _ _) h₁ h₂
     exact ⟨a, b, c', rfl⟩
+  -- the accumulate functions 15 … 27, but `checkpoint` (18)
+  have h0 : h ≠ 0 := hh.1
+  have h18 : h ≠ 18 := hh.2
+  by_cases e15 : h = 15
+  · subst e15; simp only [AccHost.dispatch] at *; exact bless_sameButGas env ω μ c h₁ h₂
+  by_cases e16 : h = 16
+  · subst e16; simp only [AccHost.dispatch] at *; exact assign_sameButGas env ω μ c h₁ h₂
+  by_cases e17 : h = 17
+  · subst e17; simp only [AccHost.dispatch] at *; exact designate_sameButGas env ω μ c h₁ h₂
+  by_cases e19 : h = 19
+  · subst e19; simp only [AccHost.dispatch] at *; exact new_sameButGas env ω μ c h₁ h₂
+  by_cases e20 : h = 20
+  · subst e20; simp only [AccHost.dispatch] at *; exact upgrade_sameButGas ω μ c h₁ h₂
+  by_cases e21 : h = 21
+  · subst e21; simp only [AccHost.dispatch] at *; exact transfer_sameButGas env ω μ c h₁ h₂
+  by_cases e22 : h = 22
+  · subst e22; simp only [AccHost.dispatch] at *; exact eject_sameButGas env ω μ c h₁ h₂
+  by_cases e23 : h = 23
+  · subst e23; simp only [AccHost.dispatch] at *; exact query_sameButGas ω μ c h₁ h₂
+  by_cases e24 : h = 24
+  · subst e24; simp only [AccHost.dispatch] at *; exact solicit_sameButGas env ω μ c h₁ h₂
+  by_cases e25 : h = 25
+  · subst e25; simp only [AccHost.dispatch] at *; exact forget_sameButGas env ω μ c h₁ h₂
+  by_cases e26 : h = 26
+  · subst e26; simp only [AccHost.dispatch] at *; exact yield_sameButGas ω μ c h₁ h₂
+  by_cases e27 : h = 27
+  · subst e27; simp only [AccHost.dispatch] at *; exact provide_sameButGas ω μ c h₁ h₂
   -- the rest are unknown ids
-  have hr : h < 15 ∨ 27 < h := by unfold AccGasFreeId at hh; omega
-  have h0 : h ≠ 0 := by unfold AccGasFreeId at hh; omega
+  have hr : h < 15 ∨ 27 < h := by omega
   rw [unk gas₁ h0 e1 e2 e3 e4 e5 e6 hr] at h₁ ⊢
   rw [unk gas₂ h0 e1 e2 e3 e4 e5 e6 hr] at h₂ ⊢
   unfold SameButGas

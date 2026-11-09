@@ -241,7 +241,7 @@ theorem rt2 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X) (
     (D W q m n src len : Nat) (hD : 65536 ≤ D ∧ D + 96 < 4294967296)
     (h1 : ω[1] = UInt64.ofNat D) (h5 : ω[5] = UInt64.ofNat m) (hq : q < 4294967296)
     (hm : m < 4294967296) (hn : n < 4294967296) (hsrc : src < 4294967296)
-    (hW : W + 24 < 4294967296) (hWf : W + 24 ≤ D ∨ D + 96 ≤ W)
+    (hW : W + 24 < 4294967296) (hWf : W + 24 ≤ D ∨ D + 64 ≤ W)
     (r8 : rdN μ (D + 8) 8 = 0) (r16 : rdN μ (D + 16) 8 = q) (rW : rdN μ D 8 = W)
     (r0 : rdN μ (D + 48) 8 = 2600) (r5 : rdN μ (D + 40) 8 = n) (r6 : rdN μ (D + 32) 8 = W)
     (rs : rdN μ (D + 56) 8 = src) (rl : rdN μ (W + 16) 8 = len)

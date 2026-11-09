@@ -326,7 +326,8 @@ An independent kernel, nanoda as vendored by
     `realloc_wrap_cases`), the stack above the heap's bound and 2³¹, and the reader, the slot and the
     payload at or above the frame. The run is under `refineContract`.
   - *Scope:* more than 16384 octets (a second chunk, through `realloc`) and the failure of `alloc` are
-    not covered yet. Nor is the data of other live heap blocks, which `alloc_ok` does not state.
+    not covered yet; the steps of the loop for any chunk are proved (`Services/Bootstrap/Decode/VecU8Loop.lean`:
+    `v1g`, `lh`, `g3`, `realloc_ret`, `g2r`, `v2g`, `v5`, `v3g`), not yet composed. Nor is the data of other live heap blocks, which `alloc_ok` does not state.
 
 ### picoalloc: the model (`Services/Picoalloc/`)
 

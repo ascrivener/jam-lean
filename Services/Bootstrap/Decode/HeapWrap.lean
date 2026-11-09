@@ -58,9 +58,11 @@ theorem alloc_wrap_refines_hdr {p : ByteArray} {P : Program} [HasCode p P] (x : 
     unfold rdN; rw [st16, Num.decodeLE_encodeLE]
     rw [Nat.mod_eq_of_lt (UInt64.toNat_lt _), UInt64.ofNat_toNat]
   · rw [fget g3 6 (by decide) (by decide), e6, fget g1 6 (by decide) (by decide)]
-  · have k1 : HKeepG μ μ1 (fun a => ∃ c ∈ chunks s', c.addr = a) := fun a ⟨ha1, ha2, _⟩ =>
+  · have k1 : HKeepG μ μ1 (fun a => ∃ c ∈ chunks s', c.addr = a) := fun a ⟨ha1, ha2, _⟩ => by
+      unfold Glob at ha1; exact
       fr1 a (by omega) (Or.inl (by omega)) (Or.inr (by omega)) (Or.inr (by omega))
-    have k3 : HKeepG μ2 μ3 (fun a => ∃ c ∈ chunks s', c.addr = a) := fun a ⟨ha1, ha2, _⟩ =>
+    have k3 : HKeepG μ2 μ3 (fun a => ∃ c ∈ chunks s', c.addr = a) := fun a ⟨ha1, ha2, _⟩ => by
+      unfold Glob at ha1; exact
       fr3 a (by omega) (by omega)
     exact (k1.trans hk2).trans k3
 
@@ -118,9 +120,11 @@ theorem alloc_wrap_refines_growK_hdr {p : ByteArray} {P : Program} [HasCode p P]
     unfold rdN; rw [st16, Num.decodeLE_encodeLE]
     rw [Nat.mod_eq_of_lt (UInt64.toNat_lt _), UInt64.ofNat_toNat]
   · rw [fget g3 6 (by decide) (by decide), e6, fget g1 6 (by decide) (by decide)]
-  · have k1 : HKeepG μ μ1 (fun a => ∃ c ∈ chunks s', c.addr = a) := fun a ⟨ha1, ha2, _⟩ =>
+  · have k1 : HKeepG μ μ1 (fun a => ∃ c ∈ chunks s', c.addr = a) := fun a ⟨ha1, ha2, _⟩ => by
+      unfold Glob at ha1; exact
       fr1 a (by omega) (Or.inl (by omega)) (Or.inr (by omega)) (Or.inr (by omega))
-    have k3 : HKeepG μ2 μ3 (fun a => ∃ c ∈ chunks s', c.addr = a) := fun a ⟨ha1, ha2, _⟩ =>
+    have k3 : HKeepG μ2 μ3 (fun a => ∃ c ∈ chunks s', c.addr = a) := fun a ⟨ha1, ha2, _⟩ => by
+      unfold Glob at ha1; exact
       fr3 a (by omega) (by omega)
     exact (k1.trans hk2).trans k3
 

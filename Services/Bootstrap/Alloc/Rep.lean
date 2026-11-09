@@ -83,12 +83,13 @@ theorem HKeep.of_low {μ μ' : Memory} {G : Nat → Prop}
 
 /-! ### The heap frame with the globals
 
-`HKeepG` is `HKeep` with the program's globals below the allocator (196608 … `A0`) also kept: the
-allocator's steps write none of them. It implies `HKeep` (`HKeepG.hkeep`). -/
+`HKeepG` is `HKeep` with the program's globals below the allocator (196616 … `A0`) also kept: the
+allocator's steps write none of them. (The `alloc` wrapper's lock takes the word at 196608, so the
+globals start after it.) It implies `HKeep` (`HKeepG.hkeep`). -/
 
-/-- The program's globals below the allocator: from 196608 (the start of the read-write data) up to
-    `A0`. -/
-def Glob (a : Nat) : Prop := 196608 ≤ a ∧ a < 196792
+/-- The program's globals below the allocator: from 196616 (after the wrapper's lock word at 196608,
+    the start of the read-write data) up to `A0`. -/
+def Glob (a : Nat) : Prop := 196616 ≤ a ∧ a < 196792
 
 /-- `OffHdr`, or a global below the allocator off the headers at `G`. -/
 def OffHdrG (G : Nat → Prop) (a : Nat) : Prop :=
@@ -103,7 +104,7 @@ theorem HKeepG.hkeep {μ μ' : Memory} {G : Nat → Prop} (h : HKeepG μ μ' G) 
 
 /-- The globals below the allocator are kept, when no header at `G` meets them. -/
 theorem HKeepG.glob {μ μ' : Memory} {G : Nat → Prop} (h : HKeepG μ μ' G)
-    (hG : ∀ b, G b → b + 16 ≤ 196608 ∨ 196792 ≤ b) : ∀ a, Glob a → μ'.read a = μ.read a :=
+    (hG : ∀ b, G b → b + 16 ≤ 196616 ∨ 196792 ≤ b) : ∀ a, Glob a → μ'.read a = μ.read a :=
   fun a ha => h a ⟨Or.inl ha, by unfold Glob at ha; omega, fun b hb => by
     unfold Glob at ha; rcases hG b hb with h | h <;> omega⟩
 
@@ -112,17 +113,17 @@ theorem HKeepG.refl (μ : Memory) (G : Nat → Prop) : HKeepG μ μ G := fun _ _
 theorem HKeepG.trans {μ μ1 μ2 : Memory} {G : Nat → Prop} (h1 : HKeepG μ μ1 G) (h2 : HKeepG μ1 μ2 G) :
     HKeepG μ μ2 G := fun a ha => (h2 a ha).trans (h1 a ha)
 
-/-- More headers, or headers below the globals (196608) or inside the allocator's fields (196792 …
+/-- More headers, or headers below the globals (196616) or inside the allocator's fields (196792 …
     206864) dropped. -/
 theorem HKeepG.mono {μ μ' : Memory} {G G' : Nat → Prop} (h : HKeepG μ μ' G)
-    (hG : ∀ b, G b → G' b ∨ b + 16 ≤ 196608 ∨ (196792 ≤ b ∧ b + 16 ≤ 206864)) : HKeepG μ μ' G' :=
+    (hG : ∀ b, G b → G' b ∨ b + 16 ≤ 196616 ∨ (196792 ≤ b ∧ b + 16 ≤ 206864)) : HKeepG μ μ' G' :=
   fun a ⟨h1, h2, h3⟩ =>
     h a ⟨h1, h2, fun b hb => by rcases hG b hb with h | h; exact h3 b h; unfold Glob at h1; omega⟩
 
 /-- A frame that keeps every global below the allocator and every octet from 206864 below 2³¹
     outside some written ranges, each inside the allocator's fields or a header at `G`. -/
 theorem HKeepG.of_low {μ μ' : Memory} {G : Nat → Prop}
-    (h : ∀ a, (196608 ≤ a ∧ a < 196792 ∨ 206864 ≤ a) → a < 2147483648 → (∀ b, G b → a < b ∨ b + 16 ≤ a) →
+    (h : ∀ a, (196616 ≤ a ∧ a < 196792 ∨ 206864 ≤ a) → a < 2147483648 → (∀ b, G b → a < b ∨ b + 16 ≤ a) →
       μ'.read a = μ.read a) :
     HKeepG μ μ' G := fun a ⟨h1, h2, h3⟩ => h a h1 h2 h3
 

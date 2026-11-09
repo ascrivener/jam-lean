@@ -217,3 +217,8 @@ lean_exe «tracetest-exe» where
     with Υ (`JAM.importBlock`), comparing the state after each block (see `Tests/TraceTest.lean`). -/
 target tracetest pkg : Unit := do
   runOnVectors `«tracetest-exe» #[(pkg.dir / "vendor" / "jam-traces" / "traces").toString]
+
+/-- Development aid: replay a trace and show one step's accumulation (`Tests/TraceDebug.lean`). -/
+lean_exe «tracedebug-exe» where
+  root := `Tests.TraceDebug
+  exeName := "tracedebug"

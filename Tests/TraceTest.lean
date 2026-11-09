@@ -13,8 +13,9 @@ The genesis state is decoded from its key-values (`Tests.TraceState`); from then
 the model's own σ and, after each block, compares T(σ') and M_σ(σ') with the step's post-state
 key by key. A step whose post-state root equals its pre-state root is a block the importer must
 reject; the runner then expects an error and keeps σ. If the model's σ does not match a step's
-pre-state, the runner reports it and re-synchronises from the pre-state when that state can be
-decoded, and otherwise stops the trace.
+post-state, the runner reports it (or, at a step listed in `knownDeviations`, counts it as a
+known deviation) and continues from the trace's post-state when that can be decoded: storage
+entries are matched against the storage keys the model's σ and σ' hold. Otherwise it stops.
 
 The cryptographic primitives (`JAM.Crypto`) are supplied as follows:
 * verification (Ed25519, Bandersnatch IETF VRF, Ring VRF): accepts every signature and proof,
@@ -57,11 +58,22 @@ def diffKvs (got exp : List (List UInt8 × List UInt8)) : List String :=
     if (exp.lookup k).isNone then some s!"  extra {componentName k} {hexS k}" else none
   missing ++ extra
 
+/-- The storage keys of σ, which a raw state's hashed storage entries can be matched against. -/
+def storageKeys (σ : State) : List (Nat × List UInt8) :=
+  σ.accounts.toList.flatMap fun (s, a) => a.storage.keys.map (s, ·)
+
+/-- Steps where the trace follows a rule other than GP v0.8.0's, by trace and step number, with
+    the reason. At such a step the runner reports the difference, then continues from the trace's
+    post-state. -/
+def knownDeviations : List (String × Nat × String) :=
+  [("fuzzy_light", 77, "bless from a non-manager is accepted (GP #519, vectors' CHANGELOG); GP 0.8.0 answers HUH")]
+
 structure Summary where
   name : String
   steps : Nat := 0
   passed : Nat := 0
   rejectedOk : Nat := 0
+  deviations : Nat := 0
   failures : List String := []
   stoppedAt : Option Nat := none
   totalMs : Nat := 0
@@ -95,7 +107,7 @@ def runTrace (dir : System.FilePath) (name : String) : IO Summary := do
     sum := { sum with steps := idx }
     -- The model's σ against the step's pre-state.
     if σ.root != st.pre.root.toList then
-      match decodeState p st.pre.kvs with
+      match decodeState p st.pre.kvs (storageKeys σ) with
       | .ok s =>
         sum := { sum with failures := sum.failures ++ [s!"{f}: σ ≠ pre-state; re-synchronised"] }
         σ := s
@@ -120,33 +132,45 @@ def runTrace (dir : System.FilePath) (name : String) : IO Summary := do
                         failures := sum.failures ++ [s!"{f}: rejected as expected ({repr e})"] }
     | .error e, false =>
       sum := { sum with failures := sum.failures ++ [s!"{f}: rejected a valid block: {repr e}"] }
-      match decodeState p st.post.kvs with
+      match decodeState p st.post.kvs (storageKeys σ) with
       | .ok s => σ := s; chain := { ancestors := chain.ancestors ++ [st.block.header] }
       | .error _ => sum := { sum with stoppedAt := some idx }; break
     | .ok _, true =>
       sum := { sum with failures := sum.failures ++ [s!"{f}: imported a block the trace rejects"] }
     | .ok (s', _), false =>
       chain := { ancestors := chain.ancestors ++ [st.block.header] }
-      let got := s'.serializeList
       if s'.root == st.post.root.toList then
         sum := { sum with passed := sum.passed + 1 }
+        σ := s'
       else
-        let d := diffKvs got st.post.kvs
-        sum := { sum with failures := sum.failures ++ [s!"{f}: post-state root differs\n" ++ "\n".intercalate (d.take 12)] }
-      σ := s'
+        let d := diffKvs s'.serializeList st.post.kvs
+        let known := knownDeviations.find? fun (t, i, _) => t == name && i == idx
+        if known.isSome then sum := { sum with deviations := sum.deviations + 1 }
+        let head := match known with
+          | some (_, _, why) => s!"{f}: known deviation: {why}"
+          | none => s!"{f}: post-state root differs"
+        -- Continue from the trace's post-state, with the storage keys of σ and σ'.
+        match decodeState p st.post.kvs (storageKeys σ ++ storageKeys s') with
+        | .ok s =>
+          sum := { sum with failures := sum.failures ++ [head ++ "; continuing from the trace's post-state\n" ++ "\n".intercalate (d.take 12)] }
+          σ := s
+        | .error e =>
+          sum := { sum with stoppedAt := some idx,
+                            failures := sum.failures ++ [head ++ s!"; the post-state cannot be decoded ({e}); trace stopped\n" ++ "\n".intercalate (d.take 12)] }
+          break
   return sum
 
 def main (args : List String) : IO UInt32 := do
   let dir : System.FilePath := args.headD "vendor/jam-traces/traces"
   let all := ["fallback", "safrole", "storage", "storage_light", "preimages", "preimages_light",
               "fuzzy", "fuzzy_light"]
-  let names ← match args.drop 1 with
-    | [] => all.filterM fun n => (dir / n / "genesis.bin").pathExists
+  let names : List String ← match args.drop 1 with
+    | [] => all.filterM fun (n : String) => (dir / n / "genesis.bin").pathExists
     | ns => pure ns
   let mut bad := false
   for n in names do
     let s ← runTrace dir n
-    IO.println s!"{n}: {s.passed}/{s.steps} imported with matching state, {s.rejectedOk} rejected as expected; total {s.totalMs} ms, slowest block {s.maxStep} at {s.maxMs} ms"
+    IO.println s!"{n}: {s.passed}/{s.steps} imported with matching state, {s.rejectedOk} rejected as expected, {s.deviations} known deviations; total {s.totalMs} ms, slowest block {s.maxStep} at {s.maxMs} ms"
     for f in s.failures do IO.println s!"  {f}"
-    if s.passed + s.rejectedOk != s.steps then bad := true
+    if s.passed + s.rejectedOk + s.deviations != s.steps then bad := true
   return if bad then 1 else 0

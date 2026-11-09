@@ -108,7 +108,8 @@ def dec {α : Type} (kvs : List (List UInt8 × List UInt8)) (i : Nat) (d : Decod
   | .error e => .error s!"C({i}): {e}"
 
 /-- Decode a raw state into σ (see the module note for what can be decoded). -/
-def decodeState (p : Params) (kvs : List (List UInt8 × List UInt8)) : Except String State := do
+def decodeState (p : Params) (kvs : List (List UInt8 × List UInt8))
+    (knownKeys : List (Nat × List UInt8) := []) : Except String State := do
   let C := p.coreCount
   let E := p.epochLen
   let authPools ← dec kvs 1 (seqN C (varSeq hash32))
@@ -149,9 +150,20 @@ def decodeState (p : Params) (kvs : List (List UInt8 × List UInt8)) : Except St
   let small := (List.range 17).map Trie.keyOfIndex
   used := used ++ small
   let rest := kvs.filter fun (k, _) => !used.contains k
-  -- Preimages first, then the requests of known preimages.
-  let mut left : List (List UInt8 × List UInt8) := []
+  -- Storage entries under keys already known, then preimages, then the requests of known
+  -- preimages.
+  let known : Std.ExtTreeMap (List UInt8) (Nat × List UInt8) := Std.ExtTreeMap.ofList
+    (knownKeys.map fun (s, k) => (Trie.keyOfServiceData s (Codec.fixed 4 (2 ^ 32 - 1) ++ k), (s, k)))
+  let mut rest' : List (List UInt8 × List UInt8) := []
   for (k, v) in rest do
+    match known.get? k with
+    | some (s, sk) =>
+      if let some a := accounts.get? s then
+        accounts := accounts.insert s { a with storage := a.storage.insert sk v }
+      else rest' := rest' ++ [(k, v)]
+    | none => rest' := rest' ++ [(k, v)]
+  let mut left : List (List UInt8 × List UInt8) := []
+  for (k, v) in rest' do
     let h := (Blake2b.hash256 ⟨v.toArray⟩).toList
     match accounts.keys.find? fun s => Trie.keyOfServiceData s (Codec.fixed 4 (2 ^ 32 - 2) ++ h) == k with
     | some s =>

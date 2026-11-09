@@ -200,8 +200,11 @@ def bootstrapSvc : Svc where
     (20626, 22145)]
   -- `Vec`/`Option` decoding: the allocator's growth paths (`finish_grow`'s realloc branch,
   -- 33037–33122), the decoders' loops and their callees
+  -- and refine's output encoding: `Instruction::encode_to`'s per-variant arms (17905–20162), the
+  -- element loop and its dispatch (30073–30286), the length prefix (30977–31362) and
+  -- `Vec<u8>::extend_from_slice` (58508–58615)
   fnRangesX := [(8, 482), (907, 2200), (2727, 3716), (23303, 25588), (32727, 33152), (35293, 36170),
-    (50078, 50409), (70133, 70239)]
+    (50078, 50409), (70133, 70239), (17905, 20162), (30073, 30286), (30977, 31362), (58508, 58615)]
   pathExtra := [(3, 0, 0x01234567, []), (3, 0, 0x89abcdef, [])]
   codeExtra := [(3, 0, 7, [2, 15, 15] ++ List.replicate 32 0)]
   codeOnly := allInstrPayloads.map fun y => (3, 0, 7, y)

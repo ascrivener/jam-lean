@@ -694,8 +694,9 @@ noted here and in a comment at the definition.
     * *Signatures are a parameter.* The model does not implement Ed25519: `JAM.disputes` takes a
       `Crypto` (`JAM/Crypto.lean`) whose `edVerify` stands for s ∈ 𝕍̄_k⟨m⟩. The test runner's
       oracle is read from each vector's expected output: when it is `bad_signature`, every
-      signature is rejected, otherwise every one is accepted. The vectors therefore check where
-      the transition looks for signatures and what it does with the verdict, not the signatures.
+      signature is rejected, otherwise every one is accepted. So these tests check everything
+      except signature validity itself: a `bad_signature` vector only confirms that the
+      transition rejects when verification fails.
     * *Errors and their order.* The paper names no errors and gives no order between the
       conditions. We use the vectors' names, and check in the order of §10.2: verdicts ordered
       and unique; for each verdict its age, the order of its judgments, their count

@@ -162,6 +162,18 @@ An independent kernel, nanoda as vendored by
     below 2³¹ (`Ok`). The loop invariant `Inv` fixes the frame's concrete addresses.
   - *Scope:* this is a loop lemma. It is **not yet composed** into a Ψ_R theorem for a payload of
     `Checkpoint`s, and other instruction kinds are not covered.
+- **The decode loop, for any instruction.** `Decode.Loop.loop` and `Decode.Elems`
+  (`Services/Bootstrap/Decode/Loop.lean`, `Elems.lean`).
+  - *Statement:* `ElemOk enc Rep` says that `Instruction::decode`, entered after the first octet of
+    the encoding `enc`, reads the rest, returns to the loop and leaves a value satisfying `Rep` (and not
+    the error word) in its slot. If every element of a payload `es` has an `ElemOk`, the loop at 680
+    decodes them all: it leaves for 562 with value j, satisfying `reps j`, in buffer slot j, and changes
+    only the stack, the reader and the buffer. This generalizes `DecodeLoop.loop` from `Checkpoint`s to
+    any list. `Elems.unit` gives the `ElemOk` of `Checkpoint`, `Panic` and `Benchmark`.
+  - *Assumed:* fewer than 128 elements (a one-octet length), each encoding non-empty, the buffer
+    8-aligned after the payload and below 2^31 (`Ok`).
+  - *Scope:* the `ElemOk`s of the variants with fields are not stated yet (their decode theorems are
+    below); the loop is not yet composed into a Ψ_R theorem.
 - **`Instruction::decode`'s tag dispatch, for every tag.** `Decode.Tag.dispatch`, `reject` and
   `unit_variant` (`Services/Bootstrap/Decode/Tag.lean`).
   - *Statement:* from 20626, where the reader has just read the tag octet into the function's

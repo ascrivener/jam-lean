@@ -95,6 +95,9 @@ structure Svc where
   /-- `codex` / `codexcheck`: more summarized functions, whose code facts go in a separate module
       (`Services/<name>/CodeX.lean`, assumed by `HasCodeX p P`) so the base facts are not regenerated. -/
   fnRangesX : List (Nat × Nat) := []
+  /-- `codex` / `codexcheck`: also every jump-table entry whose target lies in these ranges (and that the
+      base facts lack). A dispatch through a table in memory names no entry in its instructions. -/
+  jumpRangesX : List (Nat × Nat) := []
   /-- `codea` / `codeacheck`: as `fnRangesX`, for accumulate, in a third module
       (`Services/<name>/CodeA.lean`, assumed by `HasCodeA p P`) holding what neither `Code` nor
       `CodeX` has. -/
@@ -209,6 +212,8 @@ def bootstrapSvc : Svc where
   -- `Vec<u8>::extend_from_slice` (58508–58615)
   fnRangesX := [(8, 482), (907, 2200), (2727, 3716), (23303, 25588), (32727, 33152), (35293, 36170),
     (50078, 50409), (70133, 70239), (17905, 20162), (30073, 30286), (30977, 31362), (58508, 58615)]
+  -- `Instruction::encode_to` dispatches through its table at 67376 to the arms' jump-table entries
+  jumpRangesX := [(17905, 20162)]
   -- accumulate (`Services/Bootstrap/Acc/README.md`, tier A): the entry 6378 … 15368, the inputs fetch
   -- and `AccumulateItem` decode, `BootstrapWorkOutput::decode`, the ring and results helpers, the
   -- storage wrappers and the allocator's remaining paths
@@ -1197,11 +1202,13 @@ def mode_codeRun (cx : Cx) : IO Unit := do
     -- addresses set by `load_imm` (then `jump`) and dispatches through tables in memory, neither of
     -- which names its entry in the instruction, so each entry whose target lies in the ranges is
     -- stated.
-    let fx := if !amode then fx else Id.run do
+    -- `codex`: the entries into `jumpRangesX` that the base facts lack.
+    let jr := if amode then cx.svc.fnRangesA else cx.svc.jumpRangesX
+    let fx := Id.run do
       let mut fx := fx
       for k in [0:P.jumpTable.size] do
         let t := P.jumpTable.getD k 0
-        if cx.svc.fnRangesA.any (fun (lo, hi) => lo ≤ t ∧ t < hi) then
+        if jr.any (fun (lo, hi) => lo ≤ t ∧ t < hi) && (amode || !baseFacts.contains s!".jumpEntry {k} {t}") then
           fx := fx.push s!".jumpTableSize {P.jumpTable.size}"
           fx := fx.push s!".jumpEntry {k} {t}"
           fx := fx.push s!".blockStart {t} {P.isBlockStart t}"

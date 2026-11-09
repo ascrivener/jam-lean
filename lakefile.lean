@@ -199,3 +199,12 @@ lean_exe «reportstest-exe» where
 /-- Run the guarantees STF (§11.3–§11.5) on every reports vector (tiny and full). -/
 target reportstest pkg : Unit := do
   runOnVectors `«reportstest-exe» #[(jamVectorDir pkg / "stf" / "reports").toString]
+
+lean_exe «safroletest-exe» where
+  root := `Tests.SafroleTest
+  exeName := "safroletest"
+
+/-- Run the Safrole STF (§6) on every safrole vector (tiny and full), with the crypto oracle read
+    from the vectors (see `Tests/SafroleTest.lean`). -/
+target safroletest pkg : Unit := do
+  runOnVectors `«safroletest-exe» #[(jamVectorDir pkg / "stf" / "safrole").toString]

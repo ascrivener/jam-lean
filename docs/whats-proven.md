@@ -372,6 +372,17 @@ An independent kernel, nanoda as vendored by
   - *How:* `looked_up_none`, `provide_hash`, `looked_up_heap` and `provide_inline_heap` at the
     loop's addresses, following `ImportElem`.
 
+- **`Vec<(u32, u64)>` and `Bless` with 1 … 1024 always-accumulate entries, the payload in the heap.**
+  `Decode.VecU32U64.vec_u32u64_heap` (`Services/Bootstrap/Decode/VecU32U64.lean`),
+  `Decode.Bless.bless_heap` and `Decode.Bless.bless_elem` (`BlessHeap.lean`).
+  - *Statement:* the element reader at 2727 reads n entries (a `u32` then a `u64`, 12 octets each) into
+    a fresh `Vec` of 16-octet elements: entry j's octets at q + 16j (4) and q + 16j + 8 (8); the 4
+    padding octets are left unspecified. `bless_heap` is `Instruction::decode` of `Bless` (tag 11)
+    with n ≥ 1, the variant in O as in `bless_empty` but with the `Vec` `{n, q, n}`; `bless_elem` is
+    its decode-loop element (`ElemOkAF`, `BlessRep`). As the other heap decoders, the `alloc` may fail.
+  - *How:* the code at 2727 is the pair reader at 3100 shifted by −373, except the first field
+    (a 4-octet read, `loadIndI32`, `storeIndU32`); `bless_heap` reuses `bless_empty`'s steps.
+
 - **`Vec<Vec<u8>>` with the payload in the heap (1 ≤ n ≤ 682 elements, each ≤ 16384 octets).**
   `Decode.VecVecU8.vec_vec_u8_heap` (`Services/Bootstrap/Decode/VecVecU8.lean`).
   - *Statement:* the element reader at 8, which reads the items of `DeleteItems`, `Export` and

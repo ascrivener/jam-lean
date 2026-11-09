@@ -100,6 +100,7 @@ import Services.Bootstrap.AccPrefixC
 import Services.Bootstrap.AccBParams
 import Services.Bootstrap.Decode.VecPairs
 import Services.Bootstrap.Decode.VecU32U64
+import Services.Bootstrap.Decode.BlessHeap
 import Services.Bootstrap.Decode.VecVecU8
 import Services.Picoalloc.Model
 import Services.Picoalloc.Invariant

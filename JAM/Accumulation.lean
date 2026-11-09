@@ -57,6 +57,9 @@ structure AccResult where
   state : AccState
   root : List UInt8
   stats : List (Nat × AccStat)
+  /-- θ' = [(s, h) ∈ **b**] (GP eq. `finalstateaccumulation`), in service order; `root` is the
+      Merkle root of its encoding. -/
+  outputs : List (Nat × List UInt8) := []
 
 section
 variable (params : Params) (entropy : List UInt8) (slot : Nat)
@@ -181,8 +184,9 @@ def accumulate (params : Params) (pre : AccState) (slot : Nat) (reports : List W
     if i = 0 then editQueue rQ newAcc
     else if i < slot - pre.slot then []
     else editQueue (pre.ready.getD idx []) newAcc
-  let outs := (b.mergeSort fun x y => x.1 ≤ y.1).map fun (s, h) => Codec.fixed 4 s ++ h
+  let theta := b.mergeSort fun x y => x.1 ≤ y.1
+  let outs := theta.map fun (s, h) => Codec.fixed 4 s ++ h
   { state := { slot, entropy := pre.entropy, ready, accumulated, pstate := { e' with accounts } },
-    root := Merkle.root Keccak.keccak256 outs, stats }
+    root := Merkle.root Keccak.keccak256 outs, stats, outputs := theta }
 
 end JAM

@@ -10,2404 +10,2404 @@ namespace Services.Bootstrap.CodeA
 
 open PVM
 
+theorem d_11970 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 11970 = some P ∧ P.decode 11970 = some (.twoRegImm (.loadIndU64) 7 1 1504) ∧ P.next 11970 = 11974 ∧ P.blockCost (P.blockStartOf 11970) ≤ stepCostCap :=
+  h.ok.instrCost (show CodeFact.instr 11970 (.twoRegImm (.loadIndU64) 7 1 1504) 11974 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 47) (by decide))) (List.getElem_mem (l := facts_1839) (n := 0) (by decide)))
+    (show CodeFact.block 11962 12014 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 45) (by decide))) (List.getElem_mem (l := facts_1837) (n := 0) (by decide))) (by decide)
+
+@[pvm_code] theorem nx_11970 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 11970 = 11974 := (d_11970 (p := p)).2.2.1
+
 theorem d_11974 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 11974 = some P ∧ P.decode 11974 = some (.twoRegImm (.storeIndU64) 7 1 248) ∧ P.next 11974 = 11978 ∧ P.blockCost (P.blockStartOf 11974) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 11974 (.twoRegImm (.storeIndU64) 7 1 248) 11978 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 45) (by decide))) (List.getElem_mem (l := facts_1837) (n := 2) (by decide)))
-    (show CodeFact.block 11962 12014 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 43) (by decide))) (List.getElem_mem (l := facts_1835) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 11974 (.twoRegImm (.storeIndU64) 7 1 248) 11978 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 47) (by decide))) (List.getElem_mem (l := facts_1839) (n := 2) (by decide)))
+    (show CodeFact.block 11962 12014 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 45) (by decide))) (List.getElem_mem (l := facts_1837) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_11974 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 11974 = 11978 := (d_11974 (p := p)).2.2.1
 
 theorem d_11978 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 11978 = some P ∧ P.decode 11978 = some (.twoRegImm (.loadIndU64) 7 1 1512) ∧ P.next 11978 = 11982 ∧ P.blockCost (P.blockStartOf 11978) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 11978 (.twoRegImm (.loadIndU64) 7 1 1512) 11982 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 46) (by decide))) (List.getElem_mem (l := facts_1838) (n := 1) (by decide)))
-    (show CodeFact.block 11962 12014 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 43) (by decide))) (List.getElem_mem (l := facts_1835) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 11978 (.twoRegImm (.loadIndU64) 7 1 1512) 11982 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 48) (by decide))) (List.getElem_mem (l := facts_1840) (n := 1) (by decide)))
+    (show CodeFact.block 11962 12014 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 45) (by decide))) (List.getElem_mem (l := facts_1837) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_11978 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 11978 = 11982 := (d_11978 (p := p)).2.2.1
 
 theorem d_11982 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 11982 = some P ∧ P.decode 11982 = some (.twoRegImm (.storeIndU64) 7 1 240) ∧ P.next 11982 = 11986 ∧ P.blockCost (P.blockStartOf 11982) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 11982 (.twoRegImm (.storeIndU64) 7 1 240) 11986 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 47) (by decide))) (List.getElem_mem (l := facts_1839) (n := 0) (by decide)))
-    (show CodeFact.block 11962 12014 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 43) (by decide))) (List.getElem_mem (l := facts_1835) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 11982 (.twoRegImm (.storeIndU64) 7 1 240) 11986 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 49) (by decide))) (List.getElem_mem (l := facts_1841) (n := 0) (by decide)))
+    (show CodeFact.block 11962 12014 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 45) (by decide))) (List.getElem_mem (l := facts_1837) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_11982 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 11982 = 11986 := (d_11982 (p := p)).2.2.1
 
 theorem d_11986 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 11986 = some P ∧ P.decode 11986 = some (.twoRegImm (.storeIndU64) 6 1 1496) ∧ P.next 11986 = 11990 ∧ P.blockCost (P.blockStartOf 11986) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 11986 (.twoRegImm (.storeIndU64) 6 1 1496) 11990 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 47) (by decide))) (List.getElem_mem (l := facts_1839) (n := 2) (by decide)))
-    (show CodeFact.block 11962 12014 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 43) (by decide))) (List.getElem_mem (l := facts_1835) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 11986 (.twoRegImm (.storeIndU64) 6 1 1496) 11990 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 49) (by decide))) (List.getElem_mem (l := facts_1841) (n := 2) (by decide)))
+    (show CodeFact.block 11962 12014 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 45) (by decide))) (List.getElem_mem (l := facts_1837) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_11986 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 11986 = 11990 := (d_11986 (p := p)).2.2.1
 
 theorem d_11990 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 11990 = some P ∧ P.decode 11990 = some (.twoRegImm (.storeIndU64) 5 1 1504) ∧ P.next 11990 = 11994 ∧ P.blockCost (P.blockStartOf 11990) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 11990 (.twoRegImm (.storeIndU64) 5 1 1504) 11994 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 48) (by decide))) (List.getElem_mem (l := facts_1840) (n := 1) (by decide)))
-    (show CodeFact.block 11962 12014 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 43) (by decide))) (List.getElem_mem (l := facts_1835) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 11990 (.twoRegImm (.storeIndU64) 5 1 1504) 11994 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 50) (by decide))) (List.getElem_mem (l := facts_1842) (n := 1) (by decide)))
+    (show CodeFact.block 11962 12014 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 45) (by decide))) (List.getElem_mem (l := facts_1837) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_11990 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 11990 = 11994 := (d_11990 (p := p)).2.2.1
 
 theorem d_11994 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 11994 = some P ∧ P.decode 11994 = some (.regImm (.loadImm) 8 66194) ∧ P.next 11994 = 11999 ∧ P.blockCost (P.blockStartOf 11994) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 11994 (.regImm (.loadImm) 8 66194) 11999 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 49) (by decide))) (List.getElem_mem (l := facts_1841) (n := 0) (by decide)))
-    (show CodeFact.block 11962 12014 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 43) (by decide))) (List.getElem_mem (l := facts_1835) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 11994 (.regImm (.loadImm) 8 66194) 11999 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 51) (by decide))) (List.getElem_mem (l := facts_1843) (n := 0) (by decide)))
+    (show CodeFact.block 11962 12014 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 45) (by decide))) (List.getElem_mem (l := facts_1837) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_11994 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 11994 = 11999 := (d_11994 (p := p)).2.2.1
 
 theorem d_11999 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 11999 = some P ∧ P.decode 11999 = some (.twoRegImm (.addImm64) 7 1 1568) ∧ P.next 11999 = 12003 ∧ P.blockCost (P.blockStartOf 11999) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 11999 (.twoRegImm (.addImm64) 7 1 1568) 12003 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 49) (by decide))) (List.getElem_mem (l := facts_1841) (n := 2) (by decide)))
-    (show CodeFact.block 11962 12014 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 43) (by decide))) (List.getElem_mem (l := facts_1835) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 11999 (.twoRegImm (.addImm64) 7 1 1568) 12003 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 51) (by decide))) (List.getElem_mem (l := facts_1843) (n := 2) (by decide)))
+    (show CodeFact.block 11962 12014 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 45) (by decide))) (List.getElem_mem (l := facts_1837) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_11999 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 11999 = 12003 := (d_11999 (p := p)).2.2.1
 
 theorem d_12003 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12003 = some P ∧ P.decode 12003 = some (.twoRegImm (.addImm64) 9 1 1496) ∧ P.next 12003 = 12007 ∧ P.blockCost (P.blockStartOf 12003) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12003 (.twoRegImm (.addImm64) 9 1 1496) 12007 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 50) (by decide))) (List.getElem_mem (l := facts_1842) (n := 1) (by decide)))
-    (show CodeFact.block 11962 12014 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 43) (by decide))) (List.getElem_mem (l := facts_1835) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12003 (.twoRegImm (.addImm64) 9 1 1496) 12007 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 52) (by decide))) (List.getElem_mem (l := facts_1844) (n := 1) (by decide)))
+    (show CodeFact.block 11962 12014 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 45) (by decide))) (List.getElem_mem (l := facts_1837) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12003 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12003 = 12007 := (d_12003 (p := p)).2.2.1
 
 theorem d_12007 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12007 = some P ∧ P.decode 12007 = some (.regImmOffset (.loadImmJump) 0 438 59375) ∧ P.next 12007 = 12014 ∧ P.blockCost (P.blockStartOf 12007) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12007 (.regImmOffset (.loadImmJump) 0 438 59375) 12014 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 51) (by decide))) (List.getElem_mem (l := facts_1843) (n := 0) (by decide)))
-    (show CodeFact.block 11962 12014 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 43) (by decide))) (List.getElem_mem (l := facts_1835) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12007 (.regImmOffset (.loadImmJump) 0 438 59375) 12014 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 53) (by decide))) (List.getElem_mem (l := facts_1845) (n := 0) (by decide)))
+    (show CodeFact.block 11962 12014 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 45) (by decide))) (List.getElem_mem (l := facts_1837) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12007 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12007 = 12014 := (d_12007 (p := p)).2.2.1
 
 theorem d_12014 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12014 = some P ∧ P.decode 12014 = some (.twoRegImm (.loadIndU64) 5 1 1568) ∧ P.next 12014 = 12018 ∧ P.blockCost (P.blockStartOf 12014) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12014 (.twoRegImm (.loadIndU64) 5 1 1568) 12018 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 51) (by decide))) (List.getElem_mem (l := facts_1843) (n := 2) (by decide)))
-    (show CodeFact.block 12014 12047 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 52) (by decide))) (List.getElem_mem (l := facts_1844) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12014 (.twoRegImm (.loadIndU64) 5 1 1568) 12018 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 53) (by decide))) (List.getElem_mem (l := facts_1845) (n := 2) (by decide)))
+    (show CodeFact.block 12014 12047 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 54) (by decide))) (List.getElem_mem (l := facts_1846) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12014 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12014 = 12018 := (d_12014 (p := p)).2.2.1
 
 theorem d_12018 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12018 = some P ∧ P.decode 12018 = some (.twoRegImm (.loadIndU64) 6 1 1576) ∧ P.next 12018 = 12022 ∧ P.blockCost (P.blockStartOf 12018) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12018 (.twoRegImm (.loadIndU64) 6 1 1576) 12022 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 53) (by decide))) (List.getElem_mem (l := facts_1845) (n := 1) (by decide)))
-    (show CodeFact.block 12014 12047 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 52) (by decide))) (List.getElem_mem (l := facts_1844) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12018 (.twoRegImm (.loadIndU64) 6 1 1576) 12022 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 55) (by decide))) (List.getElem_mem (l := facts_1847) (n := 1) (by decide)))
+    (show CodeFact.block 12014 12047 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 54) (by decide))) (List.getElem_mem (l := facts_1846) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12018 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12018 = 12022 := (d_12018 (p := p)).2.2.1
 
 theorem d_12022 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12022 = some P ∧ P.decode 12022 = some (.twoRegImm (.loadIndU64) 11 1 1584) ∧ P.next 12022 = 12026 ∧ P.blockCost (P.blockStartOf 12022) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12022 (.twoRegImm (.loadIndU64) 11 1 1584) 12026 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 54) (by decide))) (List.getElem_mem (l := facts_1846) (n := 0) (by decide)))
-    (show CodeFact.block 12014 12047 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 52) (by decide))) (List.getElem_mem (l := facts_1844) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12022 (.twoRegImm (.loadIndU64) 11 1 1584) 12026 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 56) (by decide))) (List.getElem_mem (l := facts_1848) (n := 0) (by decide)))
+    (show CodeFact.block 12014 12047 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 54) (by decide))) (List.getElem_mem (l := facts_1846) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12022 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12022 = 12026 := (d_12022 (p := p)).2.2.1
 
 theorem d_12026 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12026 = some P ∧ P.decode 12026 = some (.twoRegImm (.addImm64) 7 1 1568) ∧ P.next 12026 = 12030 ∧ P.blockCost (P.blockStartOf 12026) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12026 (.twoRegImm (.addImm64) 7 1 1568) 12030 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 54) (by decide))) (List.getElem_mem (l := facts_1846) (n := 2) (by decide)))
-    (show CodeFact.block 12014 12047 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 52) (by decide))) (List.getElem_mem (l := facts_1844) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12026 (.twoRegImm (.addImm64) 7 1 1568) 12030 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 56) (by decide))) (List.getElem_mem (l := facts_1848) (n := 2) (by decide)))
+    (show CodeFact.block 12014 12047 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 54) (by decide))) (List.getElem_mem (l := facts_1846) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12026 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12026 = 12030 := (d_12026 (p := p)).2.2.1
 
 theorem d_12030 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12030 = some P ∧ P.decode 12030 = some (.twoRegImm (.loadIndU64) 8 1 248) ∧ P.next 12030 = 12034 ∧ P.blockCost (P.blockStartOf 12030) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12030 (.twoRegImm (.loadIndU64) 8 1 248) 12034 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 55) (by decide))) (List.getElem_mem (l := facts_1847) (n := 1) (by decide)))
-    (show CodeFact.block 12014 12047 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 52) (by decide))) (List.getElem_mem (l := facts_1844) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12030 (.twoRegImm (.loadIndU64) 8 1 248) 12034 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 57) (by decide))) (List.getElem_mem (l := facts_1849) (n := 1) (by decide)))
+    (show CodeFact.block 12014 12047 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 54) (by decide))) (List.getElem_mem (l := facts_1846) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12030 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12030 = 12034 := (d_12030 (p := p)).2.2.1
 
 theorem d_12034 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12034 = some P ∧ P.decode 12034 = some (.twoRegImm (.loadIndU64) 9 1 240) ∧ P.next 12034 = 12038 ∧ P.blockCost (P.blockStartOf 12034) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12034 (.twoRegImm (.loadIndU64) 9 1 240) 12038 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 56) (by decide))) (List.getElem_mem (l := facts_1848) (n := 0) (by decide)))
-    (show CodeFact.block 12014 12047 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 52) (by decide))) (List.getElem_mem (l := facts_1844) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12034 (.twoRegImm (.loadIndU64) 9 1 240) 12038 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 58) (by decide))) (List.getElem_mem (l := facts_1850) (n := 0) (by decide)))
+    (show CodeFact.block 12014 12047 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 54) (by decide))) (List.getElem_mem (l := facts_1846) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12034 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12034 = 12038 := (d_12034 (p := p)).2.2.1
 
 theorem d_12038 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12038 = some P ∧ P.decode 12038 = some (.twoReg (.moveReg) 10 6) ∧ P.next 12038 = 12040 ∧ P.blockCost (P.blockStartOf 12038) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12038 (.twoReg (.moveReg) 10 6) 12040 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 56) (by decide))) (List.getElem_mem (l := facts_1848) (n := 2) (by decide)))
-    (show CodeFact.block 12014 12047 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 52) (by decide))) (List.getElem_mem (l := facts_1844) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12038 (.twoReg (.moveReg) 10 6) 12040 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 58) (by decide))) (List.getElem_mem (l := facts_1850) (n := 2) (by decide)))
+    (show CodeFact.block 12014 12047 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 54) (by decide))) (List.getElem_mem (l := facts_1846) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12038 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12038 = 12040 := (d_12038 (p := p)).2.2.1
 
 theorem d_12040 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12040 = some P ∧ P.decode 12040 = some (.regImmOffset (.loadImmJump) 0 440 48104) ∧ P.next 12040 = 12047 ∧ P.blockCost (P.blockStartOf 12040) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12040 (.regImmOffset (.loadImmJump) 0 440 48104) 12047 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 57) (by decide))) (List.getElem_mem (l := facts_1849) (n := 1) (by decide)))
-    (show CodeFact.block 12014 12047 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 52) (by decide))) (List.getElem_mem (l := facts_1844) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12040 (.regImmOffset (.loadImmJump) 0 440 48104) 12047 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 59) (by decide))) (List.getElem_mem (l := facts_1851) (n := 1) (by decide)))
+    (show CodeFact.block 12014 12047 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 54) (by decide))) (List.getElem_mem (l := facts_1846) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12040 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12040 = 12047 := (d_12040 (p := p)).2.2.1
 
 theorem d_12047 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12047 = some P ∧ P.decode 12047 = some (.twoRegImm (.loadIndU64) 7 1 1568) ∧ P.next 12047 = 12051 ∧ P.blockCost (P.blockStartOf 12047) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12047 (.twoRegImm (.loadIndU64) 7 1 1568) 12051 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 58) (by decide))) (List.getElem_mem (l := facts_1850) (n := 0) (by decide)))
-    (show CodeFact.block 12047 12056 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 59) (by decide))) (List.getElem_mem (l := facts_1851) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12047 (.twoRegImm (.loadIndU64) 7 1 1568) 12051 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 60) (by decide))) (List.getElem_mem (l := facts_1852) (n := 0) (by decide)))
+    (show CodeFact.block 12047 12056 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 61) (by decide))) (List.getElem_mem (l := facts_1853) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12047 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12047 = 12051 := (d_12047 (p := p)).2.2.1
 
 theorem d_12051 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12051 = some P ∧ P.decode 12051 = some (.regImmOffset (.branchEqImm) 7 18446744073709551615 15361) ∧ P.next 12051 = 12056 ∧ P.blockCost (P.blockStartOf 12051) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12051 (.regImmOffset (.branchEqImm) 7 18446744073709551615 15361) 12056 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 60) (by decide))) (List.getElem_mem (l := facts_1852) (n := 1) (by decide)))
-    (show CodeFact.block 12047 12056 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 59) (by decide))) (List.getElem_mem (l := facts_1851) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12051 (.regImmOffset (.branchEqImm) 7 18446744073709551615 15361) 12056 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 62) (by decide))) (List.getElem_mem (l := facts_1854) (n := 1) (by decide)))
+    (show CodeFact.block 12047 12056 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 61) (by decide))) (List.getElem_mem (l := facts_1853) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12051 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12051 = 12056 := (d_12051 (p := p)).2.2.1
 
 theorem d_12056 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12056 = some P ∧ P.decode 12056 = some (.regImmOffset (.branchEqImm) 5 0 12072) ∧ P.next 12056 = 12059 ∧ P.blockCost (P.blockStartOf 12056) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12056 (.regImmOffset (.branchEqImm) 5 0 12072) 12059 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 61) (by decide))) (List.getElem_mem (l := facts_1853) (n := 0) (by decide)))
-    (show CodeFact.block 12056 12059 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 62) (by decide))) (List.getElem_mem (l := facts_1854) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12056 (.regImmOffset (.branchEqImm) 5 0 12072) 12059 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 63) (by decide))) (List.getElem_mem (l := facts_1855) (n := 0) (by decide)))
+    (show CodeFact.block 12056 12059 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 0) (by decide))) (List.getElem_mem (l := facts_1856) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12056 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12056 = 12059 := (d_12056 (p := p)).2.2.1
 
 theorem d_12059 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12059 = some P ∧ P.decode 12059 = some (.regImm (.loadImm) 9 1) ∧ P.next 12059 = 12062 ∧ P.blockCost (P.blockStartOf 12059) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12059 (.regImm (.loadImm) 9 1) 12062 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 28) (by decide)) (List.getElem_mem (l := factGroup_28) (n := 63) (by decide))) (List.getElem_mem (l := facts_1855) (n := 1) (by decide)))
-    (show CodeFact.block 12059 12072 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 0) (by decide))) (List.getElem_mem (l := facts_1856) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12059 (.regImm (.loadImm) 9 1) 12062 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 1) (by decide))) (List.getElem_mem (l := facts_1857) (n := 1) (by decide)))
+    (show CodeFact.block 12059 12072 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 2) (by decide))) (List.getElem_mem (l := facts_1858) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12059 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12059 = 12062 := (d_12059 (p := p)).2.2.1
 
 theorem d_12062 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12062 = some P ∧ P.decode 12062 = some (.twoReg (.moveReg) 7 6) ∧ P.next 12062 = 12064 ∧ P.blockCost (P.blockStartOf 12062) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12062 (.twoReg (.moveReg) 7 6) 12064 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 1) (by decide))) (List.getElem_mem (l := facts_1857) (n := 1) (by decide)))
-    (show CodeFact.block 12059 12072 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 0) (by decide))) (List.getElem_mem (l := facts_1856) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12062 (.twoReg (.moveReg) 7 6) 12064 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 3) (by decide))) (List.getElem_mem (l := facts_1859) (n := 1) (by decide)))
+    (show CodeFact.block 12059 12072 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 2) (by decide))) (List.getElem_mem (l := facts_1858) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12062 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12062 = 12064 := (d_12062 (p := p)).2.2.1
 
 theorem d_12064 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12064 = some P ∧ P.decode 12064 = some (.twoReg (.moveReg) 8 5) ∧ P.next 12064 = 12066 ∧ P.blockCost (P.blockStartOf 12064) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12064 (.twoReg (.moveReg) 8 5) 12066 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 2) (by decide))) (List.getElem_mem (l := facts_1858) (n := 0) (by decide)))
-    (show CodeFact.block 12059 12072 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 0) (by decide))) (List.getElem_mem (l := facts_1856) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12064 (.twoReg (.moveReg) 8 5) 12066 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 4) (by decide))) (List.getElem_mem (l := facts_1860) (n := 0) (by decide)))
+    (show CodeFact.block 12059 12072 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 2) (by decide))) (List.getElem_mem (l := facts_1858) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12064 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12064 = 12066 := (d_12064 (p := p)).2.2.1
 
 theorem d_12066 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12066 = some P ∧ P.decode 12066 = some (.regImmOffset (.loadImmJump) 0 442 40613) ∧ P.next 12066 = 12072 ∧ P.blockCost (P.blockStartOf 12066) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12066 (.regImmOffset (.loadImmJump) 0 442 40613) 12072 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 2) (by decide))) (List.getElem_mem (l := facts_1858) (n := 2) (by decide)))
-    (show CodeFact.block 12059 12072 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 0) (by decide))) (List.getElem_mem (l := facts_1856) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12066 (.regImmOffset (.loadImmJump) 0 442 40613) 12072 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 4) (by decide))) (List.getElem_mem (l := facts_1860) (n := 2) (by decide)))
+    (show CodeFact.block 12059 12072 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 2) (by decide))) (List.getElem_mem (l := facts_1858) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12066 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12066 = 12072 := (d_12066 (p := p)).2.2.1
 
 theorem d_12072 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12072 = some P ∧ P.decode 12072 = some (.twoRegImm (.loadIndU64) 8 1 224) ∧ P.next 12072 = 12076 ∧ P.blockCost (P.blockStartOf 12072) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12072 (.twoRegImm (.loadIndU64) 8 1 224) 12076 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 3) (by decide))) (List.getElem_mem (l := facts_1859) (n := 1) (by decide)))
-    (show CodeFact.block 12072 12080 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 4) (by decide))) (List.getElem_mem (l := facts_1860) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12072 (.twoRegImm (.loadIndU64) 8 1 224) 12076 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 5) (by decide))) (List.getElem_mem (l := facts_1861) (n := 1) (by decide)))
+    (show CodeFact.block 12072 12080 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 6) (by decide))) (List.getElem_mem (l := facts_1862) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12072 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12072 = 12076 := (d_12072 (p := p)).2.2.1
 
 theorem d_12076 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12076 = some P ∧ P.decode 12076 = some (.regImmOffset (.branchEqImm) 8 0 11889) ∧ P.next 12076 = 12080 ∧ P.blockCost (P.blockStartOf 12076) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12076 (.regImmOffset (.branchEqImm) 8 0 11889) 12080 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 5) (by decide))) (List.getElem_mem (l := facts_1861) (n := 1) (by decide)))
-    (show CodeFact.block 12072 12080 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 4) (by decide))) (List.getElem_mem (l := facts_1860) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12076 (.regImmOffset (.branchEqImm) 8 0 11889) 12080 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 7) (by decide))) (List.getElem_mem (l := facts_1863) (n := 1) (by decide)))
+    (show CodeFact.block 12072 12080 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 6) (by decide))) (List.getElem_mem (l := facts_1862) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12076 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12076 = 12080 := (d_12076 (p := p)).2.2.1
 
 theorem d_12080 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12080 = some P ∧ P.decode 12080 = some (.regImm (.loadImm) 9 1) ∧ P.next 12080 = 12083 ∧ P.blockCost (P.blockStartOf 12080) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12080 (.regImm (.loadImm) 9 1) 12083 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 6) (by decide))) (List.getElem_mem (l := facts_1862) (n := 0) (by decide)))
-    (show CodeFact.block 12080 12093 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 7) (by decide))) (List.getElem_mem (l := facts_1863) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12080 (.regImm (.loadImm) 9 1) 12083 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 8) (by decide))) (List.getElem_mem (l := facts_1864) (n := 0) (by decide)))
+    (show CodeFact.block 12080 12093 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 9) (by decide))) (List.getElem_mem (l := facts_1865) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12080 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12080 = 12083 := (d_12080 (p := p)).2.2.1
 
 theorem d_12083 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12083 = some P ∧ P.decode 12083 = some (.twoRegImm (.loadIndU64) 7 1 248) ∧ P.next 12083 = 12087 ∧ P.blockCost (P.blockStartOf 12083) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12083 (.twoRegImm (.loadIndU64) 7 1 248) 12087 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 8) (by decide))) (List.getElem_mem (l := facts_1864) (n := 1) (by decide)))
-    (show CodeFact.block 12080 12093 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 7) (by decide))) (List.getElem_mem (l := facts_1863) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12083 (.twoRegImm (.loadIndU64) 7 1 248) 12087 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 10) (by decide))) (List.getElem_mem (l := facts_1866) (n := 1) (by decide)))
+    (show CodeFact.block 12080 12093 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 9) (by decide))) (List.getElem_mem (l := facts_1865) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12083 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12083 = 12087 := (d_12083 (p := p)).2.2.1
 
 theorem d_12087 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12087 = some P ∧ P.decode 12087 = some (.regImmOffset (.loadImmJump) 0 444 40613) ∧ P.next 12087 = 12093 ∧ P.blockCost (P.blockStartOf 12087) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12087 (.regImmOffset (.loadImmJump) 0 444 40613) 12093 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 9) (by decide))) (List.getElem_mem (l := facts_1865) (n := 0) (by decide)))
-    (show CodeFact.block 12080 12093 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 7) (by decide))) (List.getElem_mem (l := facts_1863) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12087 (.regImmOffset (.loadImmJump) 0 444 40613) 12093 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 11) (by decide))) (List.getElem_mem (l := facts_1867) (n := 0) (by decide)))
+    (show CodeFact.block 12080 12093 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 9) (by decide))) (List.getElem_mem (l := facts_1865) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12087 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12087 = 12093 := (d_12087 (p := p)).2.2.1
 
 theorem d_12093 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12093 = some P ∧ P.decode 12093 = some (.oneOffset (.jump) 11889) ∧ P.next 12093 = 12096 ∧ P.blockCost (P.blockStartOf 12093) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12093 (.oneOffset (.jump) 11889) 12096 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 9) (by decide))) (List.getElem_mem (l := facts_1865) (n := 2) (by decide)))
-    (show CodeFact.block 12093 12096 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 10) (by decide))) (List.getElem_mem (l := facts_1866) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12093 (.oneOffset (.jump) 11889) 12096 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 11) (by decide))) (List.getElem_mem (l := facts_1867) (n := 2) (by decide)))
+    (show CodeFact.block 12093 12096 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 12) (by decide))) (List.getElem_mem (l := facts_1868) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12093 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12093 = 12096 := (d_12093 (p := p)).2.2.1
 
 theorem d_12096 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12096 = some P ∧ P.decode 12096 = some (.twoRegImm (.addImm64) 7 1 752) ∧ P.next 12096 = 12100 ∧ P.blockCost (P.blockStartOf 12096) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12096 (.twoRegImm (.addImm64) 7 1 752) 12100 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 11) (by decide))) (List.getElem_mem (l := facts_1867) (n := 1) (by decide)))
-    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 12) (by decide))) (List.getElem_mem (l := facts_1868) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12096 (.twoRegImm (.addImm64) 7 1 752) 12100 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 13) (by decide))) (List.getElem_mem (l := facts_1869) (n := 1) (by decide)))
+    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 14) (by decide))) (List.getElem_mem (l := facts_1870) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12096 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12096 = 12100 := (d_12096 (p := p)).2.2.1
 
 theorem d_12100 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12100 = some P ∧ P.decode 12100 = some (.twoRegImm (.loadIndU64) 8 7 0) ∧ P.next 12100 = 12102 ∧ P.blockCost (P.blockStartOf 12100) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12100 (.twoRegImm (.loadIndU64) 8 7 0) 12102 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 13) (by decide))) (List.getElem_mem (l := facts_1869) (n := 1) (by decide)))
-    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 12) (by decide))) (List.getElem_mem (l := facts_1868) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12100 (.twoRegImm (.loadIndU64) 8 7 0) 12102 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 15) (by decide))) (List.getElem_mem (l := facts_1871) (n := 1) (by decide)))
+    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 14) (by decide))) (List.getElem_mem (l := facts_1870) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12100 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12100 = 12102 := (d_12100 (p := p)).2.2.1
 
 theorem d_12102 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12102 = some P ∧ P.decode 12102 = some (.twoRegImm (.loadIndU64) 10 7 8) ∧ P.next 12102 = 12105 ∧ P.blockCost (P.blockStartOf 12102) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12102 (.twoRegImm (.loadIndU64) 10 7 8) 12105 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 14) (by decide))) (List.getElem_mem (l := facts_1870) (n := 0) (by decide)))
-    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 12) (by decide))) (List.getElem_mem (l := facts_1868) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12102 (.twoRegImm (.loadIndU64) 10 7 8) 12105 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 16) (by decide))) (List.getElem_mem (l := facts_1872) (n := 0) (by decide)))
+    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 14) (by decide))) (List.getElem_mem (l := facts_1870) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12102 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12102 = 12105 := (d_12102 (p := p)).2.2.1
 
 theorem d_12105 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12105 = some P ∧ P.decode 12105 = some (.twoRegImm (.loadIndU64) 11 7 16) ∧ P.next 12105 = 12108 ∧ P.blockCost (P.blockStartOf 12105) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12105 (.twoRegImm (.loadIndU64) 11 7 16) 12108 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 14) (by decide))) (List.getElem_mem (l := facts_1870) (n := 2) (by decide)))
-    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 12) (by decide))) (List.getElem_mem (l := facts_1868) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12105 (.twoRegImm (.loadIndU64) 11 7 16) 12108 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 16) (by decide))) (List.getElem_mem (l := facts_1872) (n := 2) (by decide)))
+    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 14) (by decide))) (List.getElem_mem (l := facts_1870) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12105 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12105 = 12108 := (d_12105 (p := p)).2.2.1
 
 theorem d_12108 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12108 = some P ∧ P.decode 12108 = some (.twoRegImm (.loadIndI32) 9 1 1176) ∧ P.next 12108 = 12112 ∧ P.blockCost (P.blockStartOf 12108) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12108 (.twoRegImm (.loadIndI32) 9 1 1176) 12112 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 15) (by decide))) (List.getElem_mem (l := facts_1871) (n := 1) (by decide)))
-    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 12) (by decide))) (List.getElem_mem (l := facts_1868) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12108 (.twoRegImm (.loadIndI32) 9 1 1176) 12112 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 17) (by decide))) (List.getElem_mem (l := facts_1873) (n := 1) (by decide)))
+    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 14) (by decide))) (List.getElem_mem (l := facts_1870) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12108 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12108 = 12112 := (d_12108 (p := p)).2.2.1
 
 theorem d_12112 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12112 = some P ∧ P.decode 12112 = some (.twoRegImm (.loadIndU16) 7 1 1180) ∧ P.next 12112 = 12116 ∧ P.blockCost (P.blockStartOf 12112) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12112 (.twoRegImm (.loadIndU16) 7 1 1180) 12116 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 16) (by decide))) (List.getElem_mem (l := facts_1872) (n := 0) (by decide)))
-    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 12) (by decide))) (List.getElem_mem (l := facts_1868) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12112 (.twoRegImm (.loadIndU16) 7 1 1180) 12116 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 18) (by decide))) (List.getElem_mem (l := facts_1874) (n := 0) (by decide)))
+    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 14) (by decide))) (List.getElem_mem (l := facts_1870) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12112 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12112 = 12116 := (d_12112 (p := p)).2.2.1
 
 theorem d_12116 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12116 = some P ∧ P.decode 12116 = some (.twoRegImm (.storeIndU64) 8 1 1568) ∧ P.next 12116 = 12120 ∧ P.blockCost (P.blockStartOf 12116) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12116 (.twoRegImm (.storeIndU64) 8 1 1568) 12120 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 16) (by decide))) (List.getElem_mem (l := facts_1872) (n := 2) (by decide)))
-    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 12) (by decide))) (List.getElem_mem (l := facts_1868) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12116 (.twoRegImm (.storeIndU64) 8 1 1568) 12120 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 18) (by decide))) (List.getElem_mem (l := facts_1874) (n := 2) (by decide)))
+    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 14) (by decide))) (List.getElem_mem (l := facts_1870) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12116 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12116 = 12120 := (d_12116 (p := p)).2.2.1
 
 theorem d_12120 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12120 = some P ∧ P.decode 12120 = some (.twoRegImm (.storeIndU64) 10 1 1576) ∧ P.next 12120 = 12124 ∧ P.blockCost (P.blockStartOf 12120) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12120 (.twoRegImm (.storeIndU64) 10 1 1576) 12124 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 17) (by decide))) (List.getElem_mem (l := facts_1873) (n := 1) (by decide)))
-    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 12) (by decide))) (List.getElem_mem (l := facts_1868) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12120 (.twoRegImm (.storeIndU64) 10 1 1576) 12124 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 19) (by decide))) (List.getElem_mem (l := facts_1875) (n := 1) (by decide)))
+    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 14) (by decide))) (List.getElem_mem (l := facts_1870) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12120 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12120 = 12124 := (d_12120 (p := p)).2.2.1
 
 theorem d_12124 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12124 = some P ∧ P.decode 12124 = some (.twoRegImm (.storeIndU64) 11 1 1584) ∧ P.next 12124 = 12128 ∧ P.blockCost (P.blockStartOf 12124) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12124 (.twoRegImm (.storeIndU64) 11 1 1584) 12128 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 18) (by decide))) (List.getElem_mem (l := facts_1874) (n := 0) (by decide)))
-    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 12) (by decide))) (List.getElem_mem (l := facts_1868) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12124 (.twoRegImm (.storeIndU64) 11 1 1584) 12128 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 20) (by decide))) (List.getElem_mem (l := facts_1876) (n := 0) (by decide)))
+    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 14) (by decide))) (List.getElem_mem (l := facts_1870) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12124 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12124 = 12128 := (d_12124 (p := p)).2.2.1
 
 theorem d_12128 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12128 = some P ∧ P.decode 12128 = some (.twoRegImm (.addImm64) 8 1 1568) ∧ P.next 12128 = 12132 ∧ P.blockCost (P.blockStartOf 12128) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12128 (.twoRegImm (.addImm64) 8 1 1568) 12132 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 18) (by decide))) (List.getElem_mem (l := facts_1874) (n := 2) (by decide)))
-    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 12) (by decide))) (List.getElem_mem (l := facts_1868) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12128 (.twoRegImm (.addImm64) 8 1 1568) 12132 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 20) (by decide))) (List.getElem_mem (l := facts_1876) (n := 2) (by decide)))
+    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 14) (by decide))) (List.getElem_mem (l := facts_1870) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12128 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12128 = 12132 := (d_12128 (p := p)).2.2.1
 
 theorem d_12132 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12132 = some P ∧ P.decode 12132 = some (.regImm (.loadImm) 0 448) ∧ P.next 12132 = 12136 ∧ P.blockCost (P.blockStartOf 12132) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12132 (.regImm (.loadImm) 0 448) 12136 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 19) (by decide))) (List.getElem_mem (l := facts_1875) (n := 1) (by decide)))
-    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 12) (by decide))) (List.getElem_mem (l := facts_1868) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12132 (.regImm (.loadImm) 0 448) 12136 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 21) (by decide))) (List.getElem_mem (l := facts_1877) (n := 1) (by decide)))
+    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 14) (by decide))) (List.getElem_mem (l := facts_1870) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12132 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12132 = 12136 := (d_12132 (p := p)).2.2.1
 
 theorem d_12136 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12136 = some P ∧ P.decode 12136 = some (.twoRegImm (.addImm64) 1 1 18446744073709551600) ∧ P.next 12136 = 12139 ∧ P.blockCost (P.blockStartOf 12136) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12136 (.twoRegImm (.addImm64) 1 1 18446744073709551600) 12139 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 20) (by decide))) (List.getElem_mem (l := facts_1876) (n := 0) (by decide)))
-    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 12) (by decide))) (List.getElem_mem (l := facts_1868) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12136 (.twoRegImm (.addImm64) 1 1 18446744073709551600) 12139 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 22) (by decide))) (List.getElem_mem (l := facts_1878) (n := 0) (by decide)))
+    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 14) (by decide))) (List.getElem_mem (l := facts_1870) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12136 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12136 = 12139 := (d_12136 (p := p)).2.2.1
 
 theorem d_12139 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12139 = some P ∧ P.decode 12139 = some (.twoRegImm (.storeIndU64) 0 1 8) ∧ P.next 12139 = 12142 ∧ P.blockCost (P.blockStartOf 12139) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12139 (.twoRegImm (.storeIndU64) 0 1 8) 12142 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 20) (by decide))) (List.getElem_mem (l := facts_1876) (n := 2) (by decide)))
-    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 12) (by decide))) (List.getElem_mem (l := facts_1868) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12139 (.twoRegImm (.storeIndU64) 0 1 8) 12142 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 22) (by decide))) (List.getElem_mem (l := facts_1878) (n := 2) (by decide)))
+    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 14) (by decide))) (List.getElem_mem (l := facts_1870) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12139 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12139 = 12142 := (d_12139 (p := p)).2.2.1
 
 theorem d_12142 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12142 = some P ∧ P.decode 12142 = some (.twoReg (.moveReg) 10 8) ∧ P.next 12142 = 12144 ∧ P.blockCost (P.blockStartOf 12142) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12142 (.twoReg (.moveReg) 10 8) 12144 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 21) (by decide))) (List.getElem_mem (l := facts_1877) (n := 1) (by decide)))
-    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 12) (by decide))) (List.getElem_mem (l := facts_1868) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12142 (.twoReg (.moveReg) 10 8) 12144 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 23) (by decide))) (List.getElem_mem (l := facts_1879) (n := 1) (by decide)))
+    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 14) (by decide))) (List.getElem_mem (l := facts_1870) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12142 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12142 = 12144 := (d_12142 (p := p)).2.2.1
 
 theorem d_12144 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12144 = some P ∧ P.decode 12144 = some (.twoRegImm (.storeIndU16) 7 1 2) ∧ P.next 12144 = 12147 ∧ P.blockCost (P.blockStartOf 12144) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12144 (.twoRegImm (.storeIndU16) 7 1 2) 12147 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 22) (by decide))) (List.getElem_mem (l := facts_1878) (n := 0) (by decide)))
-    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 12) (by decide))) (List.getElem_mem (l := facts_1868) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12144 (.twoRegImm (.storeIndU16) 7 1 2) 12147 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 24) (by decide))) (List.getElem_mem (l := facts_1880) (n := 0) (by decide)))
+    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 14) (by decide))) (List.getElem_mem (l := facts_1870) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12144 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12144 = 12147 := (d_12144 (p := p)).2.2.1
 
 theorem d_12147 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12147 = some P ∧ P.decode 12147 = some (.twoRegImm (.storeIndU32) 9 1 4) ∧ P.next 12147 = 12150 ∧ P.blockCost (P.blockStartOf 12147) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12147 (.twoRegImm (.storeIndU32) 9 1 4) 12150 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 22) (by decide))) (List.getElem_mem (l := facts_1878) (n := 2) (by decide)))
-    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 12) (by decide))) (List.getElem_mem (l := facts_1868) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12147 (.twoRegImm (.storeIndU32) 9 1 4) 12150 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 24) (by decide))) (List.getElem_mem (l := facts_1880) (n := 2) (by decide)))
+    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 14) (by decide))) (List.getElem_mem (l := facts_1870) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12147 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12147 = 12150 := (d_12147 (p := p)).2.2.1
 
 theorem d_12150 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12150 = some P ∧ P.decode 12150 = some (.twoRegImm (.addImm64) 8 1 2) ∧ P.next 12150 = 12153 ∧ P.blockCost (P.blockStartOf 12150) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12150 (.twoRegImm (.addImm64) 8 1 2) 12153 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 23) (by decide))) (List.getElem_mem (l := facts_1879) (n := 1) (by decide)))
-    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 12) (by decide))) (List.getElem_mem (l := facts_1868) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12150 (.twoRegImm (.addImm64) 8 1 2) 12153 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 25) (by decide))) (List.getElem_mem (l := facts_1881) (n := 1) (by decide)))
+    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 14) (by decide))) (List.getElem_mem (l := facts_1870) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12150 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12150 = 12153 := (d_12150 (p := p)).2.2.1
 
 theorem d_12153 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12153 = some P ∧ P.decode 12153 = some (.twoRegImm (.addImm64) 9 1 4) ∧ P.next 12153 = 12156 ∧ P.blockCost (P.blockStartOf 12153) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12153 (.twoRegImm (.addImm64) 9 1 4) 12156 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 24) (by decide))) (List.getElem_mem (l := facts_1880) (n := 0) (by decide)))
-    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 12) (by decide))) (List.getElem_mem (l := facts_1868) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12153 (.twoRegImm (.addImm64) 9 1 4) 12156 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 26) (by decide))) (List.getElem_mem (l := facts_1882) (n := 0) (by decide)))
+    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 14) (by decide))) (List.getElem_mem (l := facts_1870) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12153 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12153 = 12156 := (d_12153 (p := p)).2.2.1
 
 theorem d_12156 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12156 = some P ∧ P.decode 12156 = some (.twoReg (.moveReg) 7 10) ∧ P.next 12156 = 12158 ∧ P.blockCost (P.blockStartOf 12156) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12156 (.twoReg (.moveReg) 7 10) 12158 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 24) (by decide))) (List.getElem_mem (l := facts_1880) (n := 2) (by decide)))
-    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 12) (by decide))) (List.getElem_mem (l := facts_1868) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12156 (.twoReg (.moveReg) 7 10) 12158 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 26) (by decide))) (List.getElem_mem (l := facts_1882) (n := 2) (by decide)))
+    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 14) (by decide))) (List.getElem_mem (l := facts_1870) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12156 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12156 = 12158 := (d_12156 (p := p)).2.2.1
 
 theorem d_12158 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12158 = some P ∧ P.decode 12158 = some (.regImm (.loadImm) 0 2186) ∧ P.next 12158 = 12162 ∧ P.blockCost (P.blockStartOf 12158) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12158 (.regImm (.loadImm) 0 2186) 12162 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 25) (by decide))) (List.getElem_mem (l := facts_1881) (n := 1) (by decide)))
-    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 12) (by decide))) (List.getElem_mem (l := facts_1868) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12158 (.regImm (.loadImm) 0 2186) 12162 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 27) (by decide))) (List.getElem_mem (l := facts_1883) (n := 1) (by decide)))
+    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 14) (by decide))) (List.getElem_mem (l := facts_1870) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12158 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12158 = 12162 := (d_12158 (p := p)).2.2.1
 
 theorem d_12162 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12162 = some P ∧ P.decode 12162 = some (.twoRegImm (.addImm64) 1 1 18446744073709551536) ∧ P.next 12162 = 12165 ∧ P.blockCost (P.blockStartOf 12162) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12162 (.twoRegImm (.addImm64) 1 1 18446744073709551536) 12165 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 26) (by decide))) (List.getElem_mem (l := facts_1882) (n := 0) (by decide)))
-    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 12) (by decide))) (List.getElem_mem (l := facts_1868) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12162 (.twoRegImm (.addImm64) 1 1 18446744073709551536) 12165 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 28) (by decide))) (List.getElem_mem (l := facts_1884) (n := 0) (by decide)))
+    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 14) (by decide))) (List.getElem_mem (l := facts_1870) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12162 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12162 = 12165 := (d_12162 (p := p)).2.2.1
 
 theorem d_12165 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12165 = some P ∧ P.decode 12165 = some (.twoRegImm (.storeIndU64) 0 1 72) ∧ P.next 12165 = 12168 ∧ P.blockCost (P.blockStartOf 12165) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12165 (.twoRegImm (.storeIndU64) 0 1 72) 12168 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 26) (by decide))) (List.getElem_mem (l := facts_1882) (n := 2) (by decide)))
-    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 12) (by decide))) (List.getElem_mem (l := facts_1868) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12165 (.twoRegImm (.storeIndU64) 0 1 72) 12168 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 28) (by decide))) (List.getElem_mem (l := facts_1884) (n := 2) (by decide)))
+    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 14) (by decide))) (List.getElem_mem (l := facts_1870) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12165 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12165 = 12168 := (d_12165 (p := p)).2.2.1
 
 theorem d_12168 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12168 = some P ∧ P.decode 12168 = some (.twoRegImm (.storeIndU64) 5 1 64) ∧ P.next 12168 = 12171 ∧ P.blockCost (P.blockStartOf 12168) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12168 (.twoRegImm (.storeIndU64) 5 1 64) 12171 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 27) (by decide))) (List.getElem_mem (l := facts_1883) (n := 1) (by decide)))
-    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 12) (by decide))) (List.getElem_mem (l := facts_1868) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12168 (.twoRegImm (.storeIndU64) 5 1 64) 12171 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 29) (by decide))) (List.getElem_mem (l := facts_1885) (n := 1) (by decide)))
+    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 14) (by decide))) (List.getElem_mem (l := facts_1870) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12168 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12168 = 12171 := (d_12168 (p := p)).2.2.1
 
 theorem d_12171 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12171 = some P ∧ P.decode 12171 = some (.twoRegImm (.storeIndU64) 6 1 56) ∧ P.next 12171 = 12174 ∧ P.blockCost (P.blockStartOf 12171) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12171 (.twoRegImm (.storeIndU64) 6 1 56) 12174 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 28) (by decide))) (List.getElem_mem (l := facts_1884) (n := 0) (by decide)))
-    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 12) (by decide))) (List.getElem_mem (l := facts_1868) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12171 (.twoRegImm (.storeIndU64) 6 1 56) 12174 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 30) (by decide))) (List.getElem_mem (l := facts_1886) (n := 0) (by decide)))
+    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 14) (by decide))) (List.getElem_mem (l := facts_1870) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12171 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12171 = 12174 := (d_12171 (p := p)).2.2.1
 
 theorem d_12174 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12174 = some P ∧ P.decode 12174 = some (.twoRegImm (.storeIndU64) 9 1 8) ∧ P.next 12174 = 12177 ∧ P.blockCost (P.blockStartOf 12174) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12174 (.twoRegImm (.storeIndU64) 9 1 8) 12177 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 28) (by decide))) (List.getElem_mem (l := facts_1884) (n := 2) (by decide)))
-    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 12) (by decide))) (List.getElem_mem (l := facts_1868) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12174 (.twoRegImm (.storeIndU64) 9 1 8) 12177 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 30) (by decide))) (List.getElem_mem (l := facts_1886) (n := 2) (by decide)))
+    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 14) (by decide))) (List.getElem_mem (l := facts_1870) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12174 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12174 = 12177 := (d_12174 (p := p)).2.2.1
 
 theorem d_12177 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12177 = some P ∧ P.decode 12177 = some (.twoRegImm (.storeIndU64) 8 1 0) ∧ P.next 12177 = 12179 ∧ P.blockCost (P.blockStartOf 12177) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12177 (.twoRegImm (.storeIndU64) 8 1 0) 12179 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 29) (by decide))) (List.getElem_mem (l := facts_1885) (n := 1) (by decide)))
-    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 12) (by decide))) (List.getElem_mem (l := facts_1868) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12177 (.twoRegImm (.storeIndU64) 8 1 0) 12179 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 31) (by decide))) (List.getElem_mem (l := facts_1887) (n := 1) (by decide)))
+    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 14) (by decide))) (List.getElem_mem (l := facts_1870) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12177 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12177 = 12179 := (d_12177 (p := p)).2.2.1
 
 theorem d_12179 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12179 = some P ∧ P.decode 12179 = some (.twoRegImm (.loadIndU64) 5 7 16) ∧ P.next 12179 = 12182 ∧ P.blockCost (P.blockStartOf 12179) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12179 (.twoRegImm (.loadIndU64) 5 7 16) 12182 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 30) (by decide))) (List.getElem_mem (l := facts_1886) (n := 0) (by decide)))
-    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 12) (by decide))) (List.getElem_mem (l := facts_1868) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12179 (.twoRegImm (.loadIndU64) 5 7 16) 12182 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 32) (by decide))) (List.getElem_mem (l := facts_1888) (n := 0) (by decide)))
+    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 14) (by decide))) (List.getElem_mem (l := facts_1870) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12179 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12179 = 12182 := (d_12179 (p := p)).2.2.1
 
 theorem d_12182 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12182 = some P ∧ P.decode 12182 = some (.twoRegImm (.loadIndU64) 6 7 8) ∧ P.next 12182 = 12185 ∧ P.blockCost (P.blockStartOf 12182) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12182 (.twoRegImm (.loadIndU64) 6 7 8) 12185 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 30) (by decide))) (List.getElem_mem (l := facts_1886) (n := 2) (by decide)))
-    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 12) (by decide))) (List.getElem_mem (l := facts_1868) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12182 (.twoRegImm (.loadIndU64) 6 7 8) 12185 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 32) (by decide))) (List.getElem_mem (l := facts_1888) (n := 2) (by decide)))
+    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 14) (by decide))) (List.getElem_mem (l := facts_1870) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12182 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12182 = 12185 := (d_12182 (p := p)).2.2.1
 
 theorem d_12185 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12185 = some P ∧ P.decode 12185 = some (.twoRegImm (.storeIndU64) 5 1 24) ∧ P.next 12185 = 12188 ∧ P.blockCost (P.blockStartOf 12185) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12185 (.twoRegImm (.storeIndU64) 5 1 24) 12188 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 31) (by decide))) (List.getElem_mem (l := facts_1887) (n := 1) (by decide)))
-    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 12) (by decide))) (List.getElem_mem (l := facts_1868) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12185 (.twoRegImm (.storeIndU64) 5 1 24) 12188 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 33) (by decide))) (List.getElem_mem (l := facts_1889) (n := 1) (by decide)))
+    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 14) (by decide))) (List.getElem_mem (l := facts_1870) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12185 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12185 = 12188 := (d_12185 (p := p)).2.2.1
 
 theorem d_12188 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12188 = some P ∧ P.decode 12188 = some (.twoRegImm (.shloLImm64) 5 5 5) ∧ P.next 12188 = 12191 ∧ P.blockCost (P.blockStartOf 12188) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12188 (.twoRegImm (.shloLImm64) 5 5 5) 12191 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 32) (by decide))) (List.getElem_mem (l := facts_1888) (n := 0) (by decide)))
-    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 12) (by decide))) (List.getElem_mem (l := facts_1868) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12188 (.twoRegImm (.shloLImm64) 5 5 5) 12191 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 34) (by decide))) (List.getElem_mem (l := facts_1890) (n := 0) (by decide)))
+    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 14) (by decide))) (List.getElem_mem (l := facts_1870) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12188 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12188 = 12191 := (d_12188 (p := p)).2.2.1
 
 theorem d_12191 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12191 = some P ∧ P.decode 12191 = some (.regImm (.loadImm) 0 1974) ∧ P.next 12191 = 12195 ∧ P.blockCost (P.blockStartOf 12191) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12191 (.regImm (.loadImm) 0 1974) 12195 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 32) (by decide))) (List.getElem_mem (l := facts_1888) (n := 2) (by decide)))
-    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 12) (by decide))) (List.getElem_mem (l := facts_1868) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12191 (.regImm (.loadImm) 0 1974) 12195 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 34) (by decide))) (List.getElem_mem (l := facts_1890) (n := 2) (by decide)))
+    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 14) (by decide))) (List.getElem_mem (l := facts_1870) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12191 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12191 = 12195 := (d_12191 (p := p)).2.2.1
 
 theorem d_12195 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12195 = some P ∧ P.decode 12195 = some (.oneOffset (.jump) 40215) ∧ P.next 12195 = 12198 ∧ P.blockCost (P.blockStartOf 12195) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12195 (.oneOffset (.jump) 40215) 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 33) (by decide))) (List.getElem_mem (l := facts_1889) (n := 1) (by decide)))
-    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 12) (by decide))) (List.getElem_mem (l := facts_1868) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12195 (.oneOffset (.jump) 40215) 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 35) (by decide))) (List.getElem_mem (l := facts_1891) (n := 1) (by decide)))
+    (show CodeFact.block 12096 12198 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 14) (by decide))) (List.getElem_mem (l := facts_1870) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12195 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12195 = 12198 := (d_12195 (p := p)).2.2.1
 
 theorem d_12198 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12198 = some P ∧ P.decode 12198 = some (.twoRegImm (.andImm) 7 7 255) ∧ P.next 12198 = 12202 ∧ P.blockCost (P.blockStartOf 12198) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12198 (.twoRegImm (.andImm) 7 7 255) 12202 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 34) (by decide))) (List.getElem_mem (l := facts_1890) (n := 0) (by decide)))
-    (show CodeFact.block 12198 12208 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 35) (by decide))) (List.getElem_mem (l := facts_1891) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12198 (.twoRegImm (.andImm) 7 7 255) 12202 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 36) (by decide))) (List.getElem_mem (l := facts_1892) (n := 0) (by decide)))
+    (show CodeFact.block 12198 12208 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 37) (by decide))) (List.getElem_mem (l := facts_1893) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12198 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12198 = 12202 := (d_12198 (p := p)).2.2.1
 
 theorem d_12202 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12202 = some P ∧ P.decode 12202 = some (.regImmOffset (.branchEqImm) 7 255 13566) ∧ P.next 12202 = 12208 ∧ P.blockCost (P.blockStartOf 12202) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12202 (.regImmOffset (.branchEqImm) 7 255 13566) 12208 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 36) (by decide))) (List.getElem_mem (l := facts_1892) (n := 1) (by decide)))
-    (show CodeFact.block 12198 12208 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 35) (by decide))) (List.getElem_mem (l := facts_1891) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12202 (.regImmOffset (.branchEqImm) 7 255 13566) 12208 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 38) (by decide))) (List.getElem_mem (l := facts_1894) (n := 1) (by decide)))
+    (show CodeFact.block 12198 12208 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 37) (by decide))) (List.getElem_mem (l := facts_1893) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12202 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12202 = 12208 := (d_12202 (p := p)).2.2.1
 
 theorem d_12208 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12208 = some P ∧ P.decode 12208 = some (.noArgs (.unlikely)) ∧ P.next 12208 = 12209 ∧ P.blockCost (P.blockStartOf 12208) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12208 (.noArgs (.unlikely)) 12209 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 37) (by decide))) (List.getElem_mem (l := facts_1893) (n := 0) (by decide)))
-    (show CodeFact.block 12208 12228 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 38) (by decide))) (List.getElem_mem (l := facts_1894) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12208 (.noArgs (.unlikely)) 12209 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 39) (by decide))) (List.getElem_mem (l := facts_1895) (n := 0) (by decide)))
+    (show CodeFact.block 12208 12228 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 40) (by decide))) (List.getElem_mem (l := facts_1896) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12208 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12208 = 12209 := (d_12208 (p := p)).2.2.1
 
 theorem d_12209 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12209 = some P ∧ P.decode 12209 = some (.regTwoImm (.storeImmIndU8) 1 1001 9) ∧ P.next 12209 = 12214 ∧ P.blockCost (P.blockStartOf 12209) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12209 (.regTwoImm (.storeImmIndU8) 1 1001 9) 12214 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 39) (by decide))) (List.getElem_mem (l := facts_1895) (n := 1) (by decide)))
-    (show CodeFact.block 12208 12228 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 38) (by decide))) (List.getElem_mem (l := facts_1894) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12209 (.regTwoImm (.storeImmIndU8) 1 1001 9) 12214 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 41) (by decide))) (List.getElem_mem (l := facts_1897) (n := 1) (by decide)))
+    (show CodeFact.block 12208 12228 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 40) (by decide))) (List.getElem_mem (l := facts_1896) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12209 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12209 = 12214 := (d_12209 (p := p)).2.2.1
 
 theorem d_12214 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12214 = some P ∧ P.decode 12214 = some (.twoRegImm (.loadIndU64) 8 1 1568) ∧ P.next 12214 = 12218 ∧ P.blockCost (P.blockStartOf 12214) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12214 (.twoRegImm (.loadIndU64) 8 1 1568) 12218 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 40) (by decide))) (List.getElem_mem (l := facts_1896) (n := 0) (by decide)))
-    (show CodeFact.block 12208 12228 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 38) (by decide))) (List.getElem_mem (l := facts_1894) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12214 (.twoRegImm (.loadIndU64) 8 1 1568) 12218 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 42) (by decide))) (List.getElem_mem (l := facts_1898) (n := 0) (by decide)))
+    (show CodeFact.block 12208 12228 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 40) (by decide))) (List.getElem_mem (l := facts_1896) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12214 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12214 = 12218 := (d_12214 (p := p)).2.2.1
 
 theorem d_12218 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12218 = some P ∧ P.decode 12218 = some (.regTwoImm (.storeImmIndU8) 1 1000 255) ∧ P.next 12218 = 12224 ∧ P.blockCost (P.blockStartOf 12218) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12218 (.regTwoImm (.storeImmIndU8) 1 1000 255) 12224 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 40) (by decide))) (List.getElem_mem (l := facts_1896) (n := 2) (by decide)))
-    (show CodeFact.block 12208 12228 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 38) (by decide))) (List.getElem_mem (l := facts_1894) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12218 (.regTwoImm (.storeImmIndU8) 1 1000 255) 12224 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 42) (by decide))) (List.getElem_mem (l := facts_1898) (n := 2) (by decide)))
+    (show CodeFact.block 12208 12228 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 40) (by decide))) (List.getElem_mem (l := facts_1896) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12218 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12218 = 12224 := (d_12218 (p := p)).2.2.1
 
 theorem d_12224 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12224 = some P ∧ P.decode 12224 = some (.regImmOffset (.branchNeImm) 8 0 13579) ∧ P.next 12224 = 12228 ∧ P.blockCost (P.blockStartOf 12224) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12224 (.regImmOffset (.branchNeImm) 8 0 13579) 12228 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 41) (by decide))) (List.getElem_mem (l := facts_1897) (n := 1) (by decide)))
-    (show CodeFact.block 12208 12228 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 38) (by decide))) (List.getElem_mem (l := facts_1894) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12224 (.regImmOffset (.branchNeImm) 8 0 13579) 12228 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 43) (by decide))) (List.getElem_mem (l := facts_1899) (n := 1) (by decide)))
+    (show CodeFact.block 12208 12228 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 40) (by decide))) (List.getElem_mem (l := facts_1896) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12224 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12224 = 12228 := (d_12224 (p := p)).2.2.1
 
 theorem d_12228 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12228 = some P ∧ P.decode 12228 = some (.oneOffset (.jump) 14278) ∧ P.next 12228 = 12231 ∧ P.blockCost (P.blockStartOf 12228) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12228 (.oneOffset (.jump) 14278) 12231 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 42) (by decide))) (List.getElem_mem (l := facts_1898) (n := 0) (by decide)))
-    (show CodeFact.block 12228 12231 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 43) (by decide))) (List.getElem_mem (l := facts_1899) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12228 (.oneOffset (.jump) 14278) 12231 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 44) (by decide))) (List.getElem_mem (l := facts_1900) (n := 0) (by decide)))
+    (show CodeFact.block 12228 12231 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 45) (by decide))) (List.getElem_mem (l := facts_1901) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12228 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12228 = 12231 := (d_12228 (p := p)).2.2.1
 
 theorem d_12231 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12231 = some P ∧ P.decode 12231 = some (.twoRegImm (.storeIndU64) 9 1 152) ∧ P.next 12231 = 12235 ∧ P.blockCost (P.blockStartOf 12231) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12231 (.twoRegImm (.storeIndU64) 9 1 152) 12235 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 44) (by decide))) (List.getElem_mem (l := facts_1900) (n := 1) (by decide)))
-    (show CodeFact.block 12231 12250 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 45) (by decide))) (List.getElem_mem (l := facts_1901) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12231 (.twoRegImm (.storeIndU64) 9 1 152) 12235 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 46) (by decide))) (List.getElem_mem (l := facts_1902) (n := 1) (by decide)))
+    (show CodeFact.block 12231 12250 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 47) (by decide))) (List.getElem_mem (l := facts_1903) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12231 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12231 = 12235 := (d_12231 (p := p)).2.2.1
 
 theorem d_12235 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12235 = some P ∧ P.decode 12235 = some (.twoRegImm (.loadIndU64) 7 1 1152) ∧ P.next 12235 = 12239 ∧ P.blockCost (P.blockStartOf 12235) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12235 (.twoRegImm (.loadIndU64) 7 1 1152) 12239 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 46) (by decide))) (List.getElem_mem (l := facts_1902) (n := 1) (by decide)))
-    (show CodeFact.block 12231 12250 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 45) (by decide))) (List.getElem_mem (l := facts_1901) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12235 (.twoRegImm (.loadIndU64) 7 1 1152) 12239 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 48) (by decide))) (List.getElem_mem (l := facts_1904) (n := 1) (by decide)))
+    (show CodeFact.block 12231 12250 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 47) (by decide))) (List.getElem_mem (l := facts_1903) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12235 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12235 = 12239 := (d_12235 (p := p)).2.2.1
 
 theorem d_12239 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12239 = some P ∧ P.decode 12239 = some (.regImm (.loadImm) 5 18446744073709551615) ∧ P.next 12239 = 12242 ∧ P.blockCost (P.blockStartOf 12239) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12239 (.regImm (.loadImm) 5 18446744073709551615) 12242 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 47) (by decide))) (List.getElem_mem (l := facts_1903) (n := 0) (by decide)))
-    (show CodeFact.block 12231 12250 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 45) (by decide))) (List.getElem_mem (l := facts_1901) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12239 (.regImm (.loadImm) 5 18446744073709551615) 12242 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 49) (by decide))) (List.getElem_mem (l := facts_1905) (n := 0) (by decide)))
+    (show CodeFact.block 12231 12250 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 47) (by decide))) (List.getElem_mem (l := facts_1903) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12239 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12239 = 12242 := (d_12239 (p := p)).2.2.1
 
 theorem d_12242 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12242 = some P ∧ P.decode 12242 = some (.twoRegImm (.storeIndU64) 7 1 248) ∧ P.next 12242 = 12246 ∧ P.blockCost (P.blockStartOf 12242) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12242 (.twoRegImm (.storeIndU64) 7 1 248) 12246 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 47) (by decide))) (List.getElem_mem (l := facts_1903) (n := 2) (by decide)))
-    (show CodeFact.block 12231 12250 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 45) (by decide))) (List.getElem_mem (l := facts_1901) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12242 (.twoRegImm (.storeIndU64) 7 1 248) 12246 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 49) (by decide))) (List.getElem_mem (l := facts_1905) (n := 2) (by decide)))
+    (show CodeFact.block 12231 12250 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 47) (by decide))) (List.getElem_mem (l := facts_1903) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12242 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12242 = 12246 := (d_12242 (p := p)).2.2.1
 
 theorem d_12246 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12246 = some P ∧ P.decode 12246 = some (.twoRegOffset (.branchEq) 7 5 13598) ∧ P.next 12246 = 12250 ∧ P.blockCost (P.blockStartOf 12246) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12246 (.twoRegOffset (.branchEq) 7 5 13598) 12250 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 48) (by decide))) (List.getElem_mem (l := facts_1904) (n := 1) (by decide)))
-    (show CodeFact.block 12231 12250 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 45) (by decide))) (List.getElem_mem (l := facts_1901) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12246 (.twoRegOffset (.branchEq) 7 5 13598) 12250 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 50) (by decide))) (List.getElem_mem (l := facts_1906) (n := 1) (by decide)))
+    (show CodeFact.block 12231 12250 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 47) (by decide))) (List.getElem_mem (l := facts_1903) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12246 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12246 = 12250 := (d_12246 (p := p)).2.2.1
 
 theorem d_12250 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12250 = some P ∧ P.decode 12250 = some (.noArgs (.unlikely)) ∧ P.next 12250 = 12251 ∧ P.blockCost (P.blockStartOf 12250) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12250 (.noArgs (.unlikely)) 12251 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 49) (by decide))) (List.getElem_mem (l := facts_1905) (n := 0) (by decide)))
-    (show CodeFact.block 12250 12286 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 50) (by decide))) (List.getElem_mem (l := facts_1906) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12250 (.noArgs (.unlikely)) 12251 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 51) (by decide))) (List.getElem_mem (l := facts_1907) (n := 0) (by decide)))
+    (show CodeFact.block 12250 12286 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 52) (by decide))) (List.getElem_mem (l := facts_1908) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12250 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12250 = 12251 := (d_12250 (p := p)).2.2.1
 
 theorem d_12251 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12251 = some P ∧ P.decode 12251 = some (.twoRegImm (.loadIndU64) 7 1 1160) ∧ P.next 12251 = 12255 ∧ P.blockCost (P.blockStartOf 12251) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12251 (.twoRegImm (.loadIndU64) 7 1 1160) 12255 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 51) (by decide))) (List.getElem_mem (l := facts_1907) (n := 1) (by decide)))
-    (show CodeFact.block 12250 12286 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 50) (by decide))) (List.getElem_mem (l := facts_1906) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12251 (.twoRegImm (.loadIndU64) 7 1 1160) 12255 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 53) (by decide))) (List.getElem_mem (l := facts_1909) (n := 1) (by decide)))
+    (show CodeFact.block 12250 12286 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 52) (by decide))) (List.getElem_mem (l := facts_1908) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12251 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12251 = 12255 := (d_12251 (p := p)).2.2.1
 
 theorem d_12255 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12255 = some P ∧ P.decode 12255 = some (.twoRegImm (.storeIndU64) 7 1 232) ∧ P.next 12255 = 12259 ∧ P.blockCost (P.blockStartOf 12255) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12255 (.twoRegImm (.storeIndU64) 7 1 232) 12259 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 52) (by decide))) (List.getElem_mem (l := facts_1908) (n := 0) (by decide)))
-    (show CodeFact.block 12250 12286 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 50) (by decide))) (List.getElem_mem (l := facts_1906) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12255 (.twoRegImm (.storeIndU64) 7 1 232) 12259 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 54) (by decide))) (List.getElem_mem (l := facts_1910) (n := 0) (by decide)))
+    (show CodeFact.block 12250 12286 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 52) (by decide))) (List.getElem_mem (l := facts_1908) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12255 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12255 = 12259 := (d_12255 (p := p)).2.2.1
 
 theorem d_12259 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12259 = some P ∧ P.decode 12259 = some (.twoRegImm (.loadIndU64) 7 1 1168) ∧ P.next 12259 = 12263 ∧ P.blockCost (P.blockStartOf 12259) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12259 (.twoRegImm (.loadIndU64) 7 1 1168) 12263 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 52) (by decide))) (List.getElem_mem (l := facts_1908) (n := 2) (by decide)))
-    (show CodeFact.block 12250 12286 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 50) (by decide))) (List.getElem_mem (l := facts_1906) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12259 (.twoRegImm (.loadIndU64) 7 1 1168) 12263 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 54) (by decide))) (List.getElem_mem (l := facts_1910) (n := 2) (by decide)))
+    (show CodeFact.block 12250 12286 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 52) (by decide))) (List.getElem_mem (l := facts_1908) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12259 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12259 = 12263 := (d_12259 (p := p)).2.2.1
 
 theorem d_12263 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12263 = some P ∧ P.decode 12263 = some (.twoRegImm (.storeIndU64) 7 1 224) ∧ P.next 12263 = 12267 ∧ P.blockCost (P.blockStartOf 12263) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12263 (.twoRegImm (.storeIndU64) 7 1 224) 12267 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 53) (by decide))) (List.getElem_mem (l := facts_1909) (n := 1) (by decide)))
-    (show CodeFact.block 12250 12286 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 50) (by decide))) (List.getElem_mem (l := facts_1906) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12263 (.twoRegImm (.storeIndU64) 7 1 224) 12267 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 55) (by decide))) (List.getElem_mem (l := facts_1911) (n := 1) (by decide)))
+    (show CodeFact.block 12250 12286 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 52) (by decide))) (List.getElem_mem (l := facts_1908) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12263 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12263 = 12267 := (d_12263 (p := p)).2.2.1
 
 theorem d_12267 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12267 = some P ∧ P.decode 12267 = some (.regImm (.loadImm) 8 66813) ∧ P.next 12267 = 12272 ∧ P.blockCost (P.blockStartOf 12267) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12267 (.regImm (.loadImm) 8 66813) 12272 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 54) (by decide))) (List.getElem_mem (l := facts_1910) (n := 0) (by decide)))
-    (show CodeFact.block 12250 12286 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 50) (by decide))) (List.getElem_mem (l := facts_1906) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12267 (.regImm (.loadImm) 8 66813) 12272 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 56) (by decide))) (List.getElem_mem (l := facts_1912) (n := 0) (by decide)))
+    (show CodeFact.block 12250 12286 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 52) (by decide))) (List.getElem_mem (l := facts_1908) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12267 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12267 = 12272 := (d_12267 (p := p)).2.2.1
 
 theorem d_12272 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12272 = some P ∧ P.decode 12272 = some (.twoRegImm (.addImm64) 7 1 1568) ∧ P.next 12272 = 12276 ∧ P.blockCost (P.blockStartOf 12272) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12272 (.twoRegImm (.addImm64) 7 1 1568) 12276 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 54) (by decide))) (List.getElem_mem (l := facts_1910) (n := 2) (by decide)))
-    (show CodeFact.block 12250 12286 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 50) (by decide))) (List.getElem_mem (l := facts_1906) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12272 (.twoRegImm (.addImm64) 7 1 1568) 12276 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 56) (by decide))) (List.getElem_mem (l := facts_1912) (n := 2) (by decide)))
+    (show CodeFact.block 12250 12286 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 52) (by decide))) (List.getElem_mem (l := facts_1908) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12272 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12272 = 12276 := (d_12272 (p := p)).2.2.1
 
 theorem d_12276 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12276 = some P ∧ P.decode 12276 = some (.regImm (.loadImm) 9 20) ∧ P.next 12276 = 12279 ∧ P.blockCost (P.blockStartOf 12276) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12276 (.regImm (.loadImm) 9 20) 12279 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 55) (by decide))) (List.getElem_mem (l := facts_1911) (n := 1) (by decide)))
-    (show CodeFact.block 12250 12286 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 50) (by decide))) (List.getElem_mem (l := facts_1906) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12276 (.regImm (.loadImm) 9 20) 12279 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 57) (by decide))) (List.getElem_mem (l := facts_1913) (n := 1) (by decide)))
+    (show CodeFact.block 12250 12286 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 52) (by decide))) (List.getElem_mem (l := facts_1908) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12276 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12276 = 12279 := (d_12276 (p := p)).2.2.1
 
 theorem d_12279 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12279 = some P ∧ P.decode 12279 = some (.regImmOffset (.loadImmJump) 0 452 47857) ∧ P.next 12279 = 12286 ∧ P.blockCost (P.blockStartOf 12279) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12279 (.regImmOffset (.loadImmJump) 0 452 47857) 12286 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 56) (by decide))) (List.getElem_mem (l := facts_1912) (n := 0) (by decide)))
-    (show CodeFact.block 12250 12286 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 50) (by decide))) (List.getElem_mem (l := facts_1906) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12279 (.regImmOffset (.loadImmJump) 0 452 47857) 12286 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 58) (by decide))) (List.getElem_mem (l := facts_1914) (n := 0) (by decide)))
+    (show CodeFact.block 12250 12286 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 52) (by decide))) (List.getElem_mem (l := facts_1908) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12279 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12279 = 12286 := (d_12279 (p := p)).2.2.1
 
 theorem d_12286 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12286 = some P ∧ P.decode 12286 = some (.twoRegImm (.loadIndU64) 6 1 1568) ∧ P.next 12286 = 12290 ∧ P.blockCost (P.blockStartOf 12286) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12286 (.twoRegImm (.loadIndU64) 6 1 1568) 12290 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 56) (by decide))) (List.getElem_mem (l := facts_1912) (n := 2) (by decide)))
-    (show CodeFact.block 12286 12294 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 57) (by decide))) (List.getElem_mem (l := facts_1913) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12286 (.twoRegImm (.loadIndU64) 6 1 1568) 12290 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 58) (by decide))) (List.getElem_mem (l := facts_1914) (n := 2) (by decide)))
+    (show CodeFact.block 12286 12294 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 59) (by decide))) (List.getElem_mem (l := facts_1915) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12286 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12286 = 12290 := (d_12286 (p := p)).2.2.1
 
 theorem d_12290 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12290 = some P ∧ P.decode 12290 = some (.twoRegOffset (.branchEq) 6 5 13631) ∧ P.next 12290 = 12294 ∧ P.blockCost (P.blockStartOf 12290) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12290 (.twoRegOffset (.branchEq) 6 5 13631) 12294 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 58) (by decide))) (List.getElem_mem (l := facts_1914) (n := 1) (by decide)))
-    (show CodeFact.block 12286 12294 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 57) (by decide))) (List.getElem_mem (l := facts_1913) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12290 (.twoRegOffset (.branchEq) 6 5 13631) 12294 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 60) (by decide))) (List.getElem_mem (l := facts_1916) (n := 1) (by decide)))
+    (show CodeFact.block 12286 12294 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 59) (by decide))) (List.getElem_mem (l := facts_1915) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12290 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12290 = 12294 := (d_12290 (p := p)).2.2.1
 
 theorem d_12294 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12294 = some P ∧ P.decode 12294 = some (.noArgs (.unlikely)) ∧ P.next 12294 = 12295 ∧ P.blockCost (P.blockStartOf 12294) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12294 (.noArgs (.unlikely)) 12295 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 59) (by decide))) (List.getElem_mem (l := facts_1915) (n := 0) (by decide)))
-    (show CodeFact.block 12294 12333 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 60) (by decide))) (List.getElem_mem (l := facts_1916) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12294 (.noArgs (.unlikely)) 12295 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 61) (by decide))) (List.getElem_mem (l := facts_1917) (n := 0) (by decide)))
+    (show CodeFact.block 12294 12333 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 62) (by decide))) (List.getElem_mem (l := facts_1918) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12294 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12294 = 12295 := (d_12294 (p := p)).2.2.1
 
 theorem d_12295 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12295 = some P ∧ P.decode 12295 = some (.twoRegImm (.loadIndU64) 5 1 1576) ∧ P.next 12295 = 12299 ∧ P.blockCost (P.blockStartOf 12295) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12295 (.twoRegImm (.loadIndU64) 5 1 1576) 12299 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 61) (by decide))) (List.getElem_mem (l := facts_1917) (n := 1) (by decide)))
-    (show CodeFact.block 12294 12333 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 60) (by decide))) (List.getElem_mem (l := facts_1916) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12295 (.twoRegImm (.loadIndU64) 5 1 1576) 12299 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 63) (by decide))) (List.getElem_mem (l := facts_1919) (n := 1) (by decide)))
+    (show CodeFact.block 12294 12333 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 62) (by decide))) (List.getElem_mem (l := facts_1918) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12295 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12295 = 12299 := (d_12295 (p := p)).2.2.1
 
 theorem d_12299 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12299 = some P ∧ P.decode 12299 = some (.twoRegImm (.loadIndU64) 7 1 1584) ∧ P.next 12299 = 12303 ∧ P.blockCost (P.blockStartOf 12299) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12299 (.twoRegImm (.loadIndU64) 7 1 1584) 12303 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 62) (by decide))) (List.getElem_mem (l := facts_1918) (n := 0) (by decide)))
-    (show CodeFact.block 12294 12333 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 60) (by decide))) (List.getElem_mem (l := facts_1916) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12299 (.twoRegImm (.loadIndU64) 7 1 1584) 12303 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 0) (by decide))) (List.getElem_mem (l := facts_1920) (n := 0) (by decide)))
+    (show CodeFact.block 12294 12333 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 62) (by decide))) (List.getElem_mem (l := facts_1918) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12299 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12299 = 12303 := (d_12299 (p := p)).2.2.1
 
 theorem d_12303 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12303 = some P ∧ P.decode 12303 = some (.twoRegImm (.storeIndU64) 5 1 1496) ∧ P.next 12303 = 12307 ∧ P.blockCost (P.blockStartOf 12303) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12303 (.twoRegImm (.storeIndU64) 5 1 1496) 12307 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 62) (by decide))) (List.getElem_mem (l := facts_1918) (n := 2) (by decide)))
-    (show CodeFact.block 12294 12333 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 60) (by decide))) (List.getElem_mem (l := facts_1916) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12303 (.twoRegImm (.storeIndU64) 5 1 1496) 12307 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 0) (by decide))) (List.getElem_mem (l := facts_1920) (n := 2) (by decide)))
+    (show CodeFact.block 12294 12333 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 62) (by decide))) (List.getElem_mem (l := facts_1918) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12303 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12303 = 12307 := (d_12303 (p := p)).2.2.1
 
 theorem d_12307 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12307 = some P ∧ P.decode 12307 = some (.twoRegImm (.storeIndU64) 7 1 1504) ∧ P.next 12307 = 12311 ∧ P.blockCost (P.blockStartOf 12307) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12307 (.twoRegImm (.storeIndU64) 7 1 1504) 12311 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 63) (by decide))) (List.getElem_mem (l := facts_1919) (n := 1) (by decide)))
-    (show CodeFact.block 12294 12333 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 60) (by decide))) (List.getElem_mem (l := facts_1916) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12307 (.twoRegImm (.storeIndU64) 7 1 1504) 12311 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 1) (by decide))) (List.getElem_mem (l := facts_1921) (n := 1) (by decide)))
+    (show CodeFact.block 12294 12333 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 62) (by decide))) (List.getElem_mem (l := facts_1918) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12307 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12307 = 12311 := (d_12307 (p := p)).2.2.1
 
 theorem d_12311 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12311 = some P ∧ P.decode 12311 = some (.regTwoImm (.storeImmIndU64) 1 1416 0) ∧ P.next 12311 = 12315 ∧ P.blockCost (P.blockStartOf 12311) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12311 (.regTwoImm (.storeImmIndU64) 1 1416 0) 12315 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 0) (by decide))) (List.getElem_mem (l := facts_1920) (n := 0) (by decide)))
-    (show CodeFact.block 12294 12333 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 60) (by decide))) (List.getElem_mem (l := facts_1916) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12311 (.regTwoImm (.storeImmIndU64) 1 1416 0) 12315 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 2) (by decide))) (List.getElem_mem (l := facts_1922) (n := 0) (by decide)))
+    (show CodeFact.block 12294 12333 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 62) (by decide))) (List.getElem_mem (l := facts_1918) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12311 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12311 = 12315 := (d_12311 (p := p)).2.2.1
 
 theorem d_12315 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12315 = some P ∧ P.decode 12315 = some (.twoRegImm (.addImm64) 7 1 1496) ∧ P.next 12315 = 12319 ∧ P.blockCost (P.blockStartOf 12315) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12315 (.twoRegImm (.addImm64) 7 1 1496) 12319 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 0) (by decide))) (List.getElem_mem (l := facts_1920) (n := 2) (by decide)))
-    (show CodeFact.block 12294 12333 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 60) (by decide))) (List.getElem_mem (l := facts_1916) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12315 (.twoRegImm (.addImm64) 7 1 1496) 12319 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 2) (by decide))) (List.getElem_mem (l := facts_1922) (n := 2) (by decide)))
+    (show CodeFact.block 12294 12333 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 62) (by decide))) (List.getElem_mem (l := facts_1918) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12315 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12315 = 12319 := (d_12315 (p := p)).2.2.1
 
 theorem d_12319 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12319 = some P ∧ P.decode 12319 = some (.twoRegImm (.addImm64) 8 1 1416) ∧ P.next 12319 = 12323 ∧ P.blockCost (P.blockStartOf 12319) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12319 (.twoRegImm (.addImm64) 8 1 1416) 12323 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 1) (by decide))) (List.getElem_mem (l := facts_1921) (n := 1) (by decide)))
-    (show CodeFact.block 12294 12333 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 60) (by decide))) (List.getElem_mem (l := facts_1916) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12319 (.twoRegImm (.addImm64) 8 1 1416) 12323 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 3) (by decide))) (List.getElem_mem (l := facts_1923) (n := 1) (by decide)))
+    (show CodeFact.block 12294 12333 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 62) (by decide))) (List.getElem_mem (l := facts_1918) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12319 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12319 = 12323 := (d_12319 (p := p)).2.2.1
 
 theorem d_12323 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12323 = some P ∧ P.decode 12323 = some (.regImm (.loadImm) 9 8) ∧ P.next 12323 = 12326 ∧ P.blockCost (P.blockStartOf 12323) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12323 (.regImm (.loadImm) 9 8) 12326 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 2) (by decide))) (List.getElem_mem (l := facts_1922) (n := 0) (by decide)))
-    (show CodeFact.block 12294 12333 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 60) (by decide))) (List.getElem_mem (l := facts_1916) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12323 (.regImm (.loadImm) 9 8) 12326 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 4) (by decide))) (List.getElem_mem (l := facts_1924) (n := 0) (by decide)))
+    (show CodeFact.block 12294 12333 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 62) (by decide))) (List.getElem_mem (l := facts_1918) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12323 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12323 = 12326 := (d_12323 (p := p)).2.2.1
 
 theorem d_12326 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12326 = some P ∧ P.decode 12326 = some (.regImmOffset (.loadImmJump) 0 454 58434) ∧ P.next 12326 = 12333 ∧ P.blockCost (P.blockStartOf 12326) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12326 (.regImmOffset (.loadImmJump) 0 454 58434) 12333 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 2) (by decide))) (List.getElem_mem (l := facts_1922) (n := 2) (by decide)))
-    (show CodeFact.block 12294 12333 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 60) (by decide))) (List.getElem_mem (l := facts_1916) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12326 (.regImmOffset (.loadImmJump) 0 454 58434) 12333 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 4) (by decide))) (List.getElem_mem (l := facts_1924) (n := 2) (by decide)))
+    (show CodeFact.block 12294 12333 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 29) (by decide)) (List.getElem_mem (l := factGroup_29) (n := 62) (by decide))) (List.getElem_mem (l := facts_1918) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12326 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12326 = 12333 := (d_12326 (p := p)).2.2.1
 
 theorem d_12333 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12333 = some P ∧ P.decode 12333 = some (.regImmOffset (.branchNeImm) 7 0 15361) ∧ P.next 12333 = 12337 ∧ P.blockCost (P.blockStartOf 12333) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12333 (.regImmOffset (.branchNeImm) 7 0 15361) 12337 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 3) (by decide))) (List.getElem_mem (l := facts_1923) (n := 1) (by decide)))
-    (show CodeFact.block 12333 12337 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 4) (by decide))) (List.getElem_mem (l := facts_1924) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12333 (.regImmOffset (.branchNeImm) 7 0 15361) 12337 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 5) (by decide))) (List.getElem_mem (l := facts_1925) (n := 1) (by decide)))
+    (show CodeFact.block 12333 12337 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 6) (by decide))) (List.getElem_mem (l := facts_1926) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12333 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12333 = 12337 := (d_12333 (p := p)).2.2.1
 
 theorem d_12337 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12337 = some P ∧ P.decode 12337 = some (.noArgs (.unlikely)) ∧ P.next 12337 = 12338 ∧ P.blockCost (P.blockStartOf 12337) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12337 (.noArgs (.unlikely)) 12338 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 5) (by decide))) (List.getElem_mem (l := facts_1925) (n := 1) (by decide)))
-    (show CodeFact.block 12337 12349 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 6) (by decide))) (List.getElem_mem (l := facts_1926) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12337 (.noArgs (.unlikely)) 12338 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 7) (by decide))) (List.getElem_mem (l := facts_1927) (n := 1) (by decide)))
+    (show CodeFact.block 12337 12349 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 8) (by decide))) (List.getElem_mem (l := facts_1928) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12337 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12337 = 12338 := (d_12337 (p := p)).2.2.1
 
 theorem d_12338 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12338 = some P ∧ P.decode 12338 = some (.twoRegImm (.loadIndU64) 7 1 1416) ∧ P.next 12338 = 12342 ∧ P.blockCost (P.blockStartOf 12338) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12338 (.twoRegImm (.loadIndU64) 7 1 1416) 12342 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 7) (by decide))) (List.getElem_mem (l := facts_1927) (n := 1) (by decide)))
-    (show CodeFact.block 12337 12349 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 6) (by decide))) (List.getElem_mem (l := facts_1926) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12338 (.twoRegImm (.loadIndU64) 7 1 1416) 12342 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 9) (by decide))) (List.getElem_mem (l := facts_1929) (n := 1) (by decide)))
+    (show CodeFact.block 12337 12349 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 8) (by decide))) (List.getElem_mem (l := facts_1928) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12338 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12338 = 12342 := (d_12338 (p := p)).2.2.1
 
 theorem d_12342 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12342 = some P ∧ P.decode 12342 = some (.twoRegImm (.storeIndU64) 7 1 240) ∧ P.next 12342 = 12346 ∧ P.blockCost (P.blockStartOf 12342) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12342 (.twoRegImm (.storeIndU64) 7 1 240) 12346 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 8) (by decide))) (List.getElem_mem (l := facts_1928) (n := 0) (by decide)))
-    (show CodeFact.block 12337 12349 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 6) (by decide))) (List.getElem_mem (l := facts_1926) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12342 (.twoRegImm (.storeIndU64) 7 1 240) 12346 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 10) (by decide))) (List.getElem_mem (l := facts_1930) (n := 0) (by decide)))
+    (show CodeFact.block 12337 12349 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 8) (by decide))) (List.getElem_mem (l := facts_1928) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12342 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12342 = 12346 := (d_12342 (p := p)).2.2.1
 
 theorem d_12346 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12346 = some P ∧ P.decode 12346 = some (.regImmOffset (.branchEqImm) 6 0 12362) ∧ P.next 12346 = 12349 ∧ P.blockCost (P.blockStartOf 12346) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12346 (.regImmOffset (.branchEqImm) 6 0 12362) 12349 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 8) (by decide))) (List.getElem_mem (l := facts_1928) (n := 2) (by decide)))
-    (show CodeFact.block 12337 12349 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 6) (by decide))) (List.getElem_mem (l := facts_1926) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12346 (.regImmOffset (.branchEqImm) 6 0 12362) 12349 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 10) (by decide))) (List.getElem_mem (l := facts_1930) (n := 2) (by decide)))
+    (show CodeFact.block 12337 12349 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 8) (by decide))) (List.getElem_mem (l := facts_1928) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12346 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12346 = 12349 := (d_12346 (p := p)).2.2.1
 
 theorem d_12349 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12349 = some P ∧ P.decode 12349 = some (.regImm (.loadImm) 9 1) ∧ P.next 12349 = 12352 ∧ P.blockCost (P.blockStartOf 12349) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12349 (.regImm (.loadImm) 9 1) 12352 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 9) (by decide))) (List.getElem_mem (l := facts_1929) (n := 1) (by decide)))
-    (show CodeFact.block 12349 12362 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 10) (by decide))) (List.getElem_mem (l := facts_1930) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12349 (.regImm (.loadImm) 9 1) 12352 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 11) (by decide))) (List.getElem_mem (l := facts_1931) (n := 1) (by decide)))
+    (show CodeFact.block 12349 12362 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 12) (by decide))) (List.getElem_mem (l := facts_1932) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12349 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12349 = 12352 := (d_12349 (p := p)).2.2.1
 
 theorem d_12352 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12352 = some P ∧ P.decode 12352 = some (.twoReg (.moveReg) 7 5) ∧ P.next 12352 = 12354 ∧ P.blockCost (P.blockStartOf 12352) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12352 (.twoReg (.moveReg) 7 5) 12354 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 11) (by decide))) (List.getElem_mem (l := facts_1931) (n := 1) (by decide)))
-    (show CodeFact.block 12349 12362 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 10) (by decide))) (List.getElem_mem (l := facts_1930) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12352 (.twoReg (.moveReg) 7 5) 12354 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 13) (by decide))) (List.getElem_mem (l := facts_1933) (n := 1) (by decide)))
+    (show CodeFact.block 12349 12362 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 12) (by decide))) (List.getElem_mem (l := facts_1932) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12352 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12352 = 12354 := (d_12352 (p := p)).2.2.1
 
 theorem d_12354 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12354 = some P ∧ P.decode 12354 = some (.twoReg (.moveReg) 8 6) ∧ P.next 12354 = 12356 ∧ P.blockCost (P.blockStartOf 12354) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12354 (.twoReg (.moveReg) 8 6) 12356 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 12) (by decide))) (List.getElem_mem (l := facts_1932) (n := 0) (by decide)))
-    (show CodeFact.block 12349 12362 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 10) (by decide))) (List.getElem_mem (l := facts_1930) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12354 (.twoReg (.moveReg) 8 6) 12356 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 14) (by decide))) (List.getElem_mem (l := facts_1934) (n := 0) (by decide)))
+    (show CodeFact.block 12349 12362 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 12) (by decide))) (List.getElem_mem (l := facts_1932) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12354 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12354 = 12356 := (d_12354 (p := p)).2.2.1
 
 theorem d_12356 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12356 = some P ∧ P.decode 12356 = some (.regImmOffset (.loadImmJump) 0 456 40613) ∧ P.next 12356 = 12362 ∧ P.blockCost (P.blockStartOf 12356) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12356 (.regImmOffset (.loadImmJump) 0 456 40613) 12362 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 12) (by decide))) (List.getElem_mem (l := facts_1932) (n := 2) (by decide)))
-    (show CodeFact.block 12349 12362 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 10) (by decide))) (List.getElem_mem (l := facts_1930) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12356 (.regImmOffset (.loadImmJump) 0 456 40613) 12362 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 14) (by decide))) (List.getElem_mem (l := facts_1934) (n := 2) (by decide)))
+    (show CodeFact.block 12349 12362 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 12) (by decide))) (List.getElem_mem (l := facts_1932) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12356 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12356 = 12362 := (d_12356 (p := p)).2.2.1
 
 theorem d_12362 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12362 = some P ∧ P.decode 12362 = some (.twoRegImm (.loadIndU64) 6 1 240) ∧ P.next 12362 = 12366 ∧ P.blockCost (P.blockStartOf 12362) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12362 (.twoRegImm (.loadIndU64) 6 1 240) 12366 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 13) (by decide))) (List.getElem_mem (l := facts_1933) (n := 1) (by decide)))
-    (show CodeFact.block 12362 12374 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 14) (by decide))) (List.getElem_mem (l := facts_1934) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12362 (.twoRegImm (.loadIndU64) 6 1 240) 12366 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 15) (by decide))) (List.getElem_mem (l := facts_1935) (n := 1) (by decide)))
+    (show CodeFact.block 12362 12374 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 16) (by decide))) (List.getElem_mem (l := facts_1936) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12362 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12362 = 12366 := (d_12362 (p := p)).2.2.1
 
 theorem d_12366 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12366 = some P ∧ P.decode 12366 = some (.twoRegImm (.loadIndU64) 5 1 224) ∧ P.next 12366 = 12370 ∧ P.blockCost (P.blockStartOf 12366) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12366 (.twoRegImm (.loadIndU64) 5 1 224) 12370 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 15) (by decide))) (List.getElem_mem (l := facts_1935) (n := 1) (by decide)))
-    (show CodeFact.block 12362 12374 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 14) (by decide))) (List.getElem_mem (l := facts_1934) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12366 (.twoRegImm (.loadIndU64) 5 1 224) 12370 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 17) (by decide))) (List.getElem_mem (l := facts_1937) (n := 1) (by decide)))
+    (show CodeFact.block 12362 12374 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 16) (by decide))) (List.getElem_mem (l := facts_1936) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12366 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12366 = 12370 := (d_12366 (p := p)).2.2.1
 
 theorem d_12370 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12370 = some P ∧ P.decode 12370 = some (.regImmOffset (.branchNeImm) 5 0 13641) ∧ P.next 12370 = 12374 ∧ P.blockCost (P.blockStartOf 12370) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12370 (.regImmOffset (.branchNeImm) 5 0 13641) 12374 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 16) (by decide))) (List.getElem_mem (l := facts_1936) (n := 0) (by decide)))
-    (show CodeFact.block 12362 12374 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 14) (by decide))) (List.getElem_mem (l := facts_1934) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12370 (.regImmOffset (.branchNeImm) 5 0 13641) 12374 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 18) (by decide))) (List.getElem_mem (l := facts_1938) (n := 0) (by decide)))
+    (show CodeFact.block 12362 12374 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 16) (by decide))) (List.getElem_mem (l := facts_1936) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12370 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12370 = 12374 := (d_12370 (p := p)).2.2.1
 
 theorem d_12374 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12374 = some P ∧ P.decode 12374 = some (.oneOffset (.jump) 13741) ∧ P.next 12374 = 12377 ∧ P.blockCost (P.blockStartOf 12374) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12374 (.oneOffset (.jump) 13741) 12377 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 16) (by decide))) (List.getElem_mem (l := facts_1936) (n := 2) (by decide)))
-    (show CodeFact.block 12374 12377 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 17) (by decide))) (List.getElem_mem (l := facts_1937) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12374 (.oneOffset (.jump) 13741) 12377 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 18) (by decide))) (List.getElem_mem (l := facts_1938) (n := 2) (by decide)))
+    (show CodeFact.block 12374 12377 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 19) (by decide))) (List.getElem_mem (l := facts_1939) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12374 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12374 = 12377 := (d_12374 (p := p)).2.2.1
 
 theorem d_12377 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12377 = some P ∧ P.decode 12377 = some (.twoRegImm (.loadIndU64) 7 1 1152) ∧ P.next 12377 = 12381 ∧ P.blockCost (P.blockStartOf 12377) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12377 (.twoRegImm (.loadIndU64) 7 1 1152) 12381 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 18) (by decide))) (List.getElem_mem (l := facts_1938) (n := 1) (by decide)))
-    (show CodeFact.block 12377 12421 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 19) (by decide))) (List.getElem_mem (l := facts_1939) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12377 (.twoRegImm (.loadIndU64) 7 1 1152) 12381 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 20) (by decide))) (List.getElem_mem (l := facts_1940) (n := 1) (by decide)))
+    (show CodeFact.block 12377 12421 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 21) (by decide))) (List.getElem_mem (l := facts_1941) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12377 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12377 = 12381 := (d_12377 (p := p)).2.2.1
 
 theorem d_12381 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12381 = some P ∧ P.decode 12381 = some (.twoRegImm (.storeIndU64) 7 1 1416) ∧ P.next 12381 = 12385 ∧ P.blockCost (P.blockStartOf 12381) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12381 (.twoRegImm (.storeIndU64) 7 1 1416) 12385 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 20) (by decide))) (List.getElem_mem (l := facts_1940) (n := 1) (by decide)))
-    (show CodeFact.block 12377 12421 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 19) (by decide))) (List.getElem_mem (l := facts_1939) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12381 (.twoRegImm (.storeIndU64) 7 1 1416) 12385 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 22) (by decide))) (List.getElem_mem (l := facts_1942) (n := 1) (by decide)))
+    (show CodeFact.block 12377 12421 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 21) (by decide))) (List.getElem_mem (l := facts_1941) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12381 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12381 = 12385 := (d_12381 (p := p)).2.2.1
 
 theorem d_12385 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12385 = some P ∧ P.decode 12385 = some (.twoRegImm (.addImm64) 7 1 1416) ∧ P.next 12385 = 12389 ∧ P.blockCost (P.blockStartOf 12385) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12385 (.twoRegImm (.addImm64) 7 1 1416) 12389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 21) (by decide))) (List.getElem_mem (l := facts_1941) (n := 0) (by decide)))
-    (show CodeFact.block 12377 12421 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 19) (by decide))) (List.getElem_mem (l := facts_1939) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12385 (.twoRegImm (.addImm64) 7 1 1416) 12389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 23) (by decide))) (List.getElem_mem (l := facts_1943) (n := 0) (by decide)))
+    (show CodeFact.block 12377 12421 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 21) (by decide))) (List.getElem_mem (l := facts_1941) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12385 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12385 = 12389 := (d_12385 (p := p)).2.2.1
 
 theorem d_12389 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12389 = some P ∧ P.decode 12389 = some (.twoRegImm (.storeIndU64) 7 1 1496) ∧ P.next 12389 = 12393 ∧ P.blockCost (P.blockStartOf 12389) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12389 (.twoRegImm (.storeIndU64) 7 1 1496) 12393 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 21) (by decide))) (List.getElem_mem (l := facts_1941) (n := 2) (by decide)))
-    (show CodeFact.block 12377 12421 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 19) (by decide))) (List.getElem_mem (l := facts_1939) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12389 (.twoRegImm (.storeIndU64) 7 1 1496) 12393 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 23) (by decide))) (List.getElem_mem (l := facts_1943) (n := 2) (by decide)))
+    (show CodeFact.block 12377 12421 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 21) (by decide))) (List.getElem_mem (l := facts_1941) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12389 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12389 = 12393 := (d_12389 (p := p)).2.2.1
 
 theorem d_12393 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12393 = some P ∧ P.decode 12393 = some (.twoRegImm (.loadIndU64) 7 1 136) ∧ P.next 12393 = 12397 ∧ P.blockCost (P.blockStartOf 12393) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12393 (.twoRegImm (.loadIndU64) 7 1 136) 12397 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 22) (by decide))) (List.getElem_mem (l := facts_1942) (n := 1) (by decide)))
-    (show CodeFact.block 12377 12421 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 19) (by decide))) (List.getElem_mem (l := facts_1939) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12393 (.twoRegImm (.loadIndU64) 7 1 136) 12397 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 24) (by decide))) (List.getElem_mem (l := facts_1944) (n := 1) (by decide)))
+    (show CodeFact.block 12377 12421 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 21) (by decide))) (List.getElem_mem (l := facts_1941) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12393 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12393 = 12397 := (d_12393 (p := p)).2.2.1
 
 theorem d_12397 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12397 = some P ∧ P.decode 12397 = some (.twoRegImm (.storeIndU64) 7 1 1504) ∧ P.next 12397 = 12401 ∧ P.blockCost (P.blockStartOf 12397) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12397 (.twoRegImm (.storeIndU64) 7 1 1504) 12401 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 23) (by decide))) (List.getElem_mem (l := facts_1943) (n := 0) (by decide)))
-    (show CodeFact.block 12377 12421 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 19) (by decide))) (List.getElem_mem (l := facts_1939) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12397 (.twoRegImm (.storeIndU64) 7 1 1504) 12401 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 25) (by decide))) (List.getElem_mem (l := facts_1945) (n := 0) (by decide)))
+    (show CodeFact.block 12377 12421 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 21) (by decide))) (List.getElem_mem (l := facts_1941) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12397 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12397 = 12401 := (d_12397 (p := p)).2.2.1
 
 theorem d_12401 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12401 = some P ∧ P.decode 12401 = some (.regImm (.loadImm) 8 66747) ∧ P.next 12401 = 12406 ∧ P.blockCost (P.blockStartOf 12401) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12401 (.regImm (.loadImm) 8 66747) 12406 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 23) (by decide))) (List.getElem_mem (l := facts_1943) (n := 2) (by decide)))
-    (show CodeFact.block 12377 12421 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 19) (by decide))) (List.getElem_mem (l := facts_1939) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12401 (.regImm (.loadImm) 8 66747) 12406 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 25) (by decide))) (List.getElem_mem (l := facts_1945) (n := 2) (by decide)))
+    (show CodeFact.block 12377 12421 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 21) (by decide))) (List.getElem_mem (l := facts_1941) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12401 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12401 = 12406 := (d_12401 (p := p)).2.2.1
 
 theorem d_12406 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12406 = some P ∧ P.decode 12406 = some (.twoRegImm (.addImm64) 7 1 1568) ∧ P.next 12406 = 12410 ∧ P.blockCost (P.blockStartOf 12406) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12406 (.twoRegImm (.addImm64) 7 1 1568) 12410 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 24) (by decide))) (List.getElem_mem (l := facts_1944) (n := 1) (by decide)))
-    (show CodeFact.block 12377 12421 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 19) (by decide))) (List.getElem_mem (l := facts_1939) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12406 (.twoRegImm (.addImm64) 7 1 1568) 12410 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 26) (by decide))) (List.getElem_mem (l := facts_1946) (n := 1) (by decide)))
+    (show CodeFact.block 12377 12421 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 21) (by decide))) (List.getElem_mem (l := facts_1941) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12406 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12406 = 12410 := (d_12406 (p := p)).2.2.1
 
 theorem d_12410 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12410 = some P ∧ P.decode 12410 = some (.twoRegImm (.addImm64) 9 1 1496) ∧ P.next 12410 = 12414 ∧ P.blockCost (P.blockStartOf 12410) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12410 (.twoRegImm (.addImm64) 9 1 1496) 12414 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 25) (by decide))) (List.getElem_mem (l := facts_1945) (n := 0) (by decide)))
-    (show CodeFact.block 12377 12421 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 19) (by decide))) (List.getElem_mem (l := facts_1939) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12410 (.twoRegImm (.addImm64) 9 1 1496) 12414 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 27) (by decide))) (List.getElem_mem (l := facts_1947) (n := 0) (by decide)))
+    (show CodeFact.block 12377 12421 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 21) (by decide))) (List.getElem_mem (l := facts_1941) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12410 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12410 = 12414 := (d_12410 (p := p)).2.2.1
 
 theorem d_12414 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12414 = some P ∧ P.decode 12414 = some (.regImmOffset (.loadImmJump) 0 460 59375) ∧ P.next 12414 = 12421 ∧ P.blockCost (P.blockStartOf 12414) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12414 (.regImmOffset (.loadImmJump) 0 460 59375) 12421 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 25) (by decide))) (List.getElem_mem (l := facts_1945) (n := 2) (by decide)))
-    (show CodeFact.block 12377 12421 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 19) (by decide))) (List.getElem_mem (l := facts_1939) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12414 (.regImmOffset (.loadImmJump) 0 460 59375) 12421 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 27) (by decide))) (List.getElem_mem (l := facts_1947) (n := 2) (by decide)))
+    (show CodeFact.block 12377 12421 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 21) (by decide))) (List.getElem_mem (l := facts_1941) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12414 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12414 = 12421 := (d_12414 (p := p)).2.2.1
 
 theorem d_12421 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12421 = some P ∧ P.decode 12421 = some (.twoRegImm (.loadIndU64) 5 1 1576) ∧ P.next 12421 = 12425 ∧ P.blockCost (P.blockStartOf 12421) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12421 (.twoRegImm (.loadIndU64) 5 1 1576) 12425 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 26) (by decide))) (List.getElem_mem (l := facts_1946) (n := 1) (by decide)))
-    (show CodeFact.block 12421 12445 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 27) (by decide))) (List.getElem_mem (l := facts_1947) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12421 (.twoRegImm (.loadIndU64) 5 1 1576) 12425 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 28) (by decide))) (List.getElem_mem (l := facts_1948) (n := 1) (by decide)))
+    (show CodeFact.block 12421 12445 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 29) (by decide))) (List.getElem_mem (l := facts_1949) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12421 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12421 = 12425 := (d_12421 (p := p)).2.2.1
 
 theorem d_12425 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12425 = some P ∧ P.decode 12425 = some (.twoRegImm (.loadIndU64) 11 1 1584) ∧ P.next 12425 = 12429 ∧ P.blockCost (P.blockStartOf 12425) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12425 (.twoRegImm (.loadIndU64) 11 1 1584) 12429 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 28) (by decide))) (List.getElem_mem (l := facts_1948) (n := 1) (by decide)))
-    (show CodeFact.block 12421 12445 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 27) (by decide))) (List.getElem_mem (l := facts_1947) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12425 (.twoRegImm (.loadIndU64) 11 1 1584) 12429 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 30) (by decide))) (List.getElem_mem (l := facts_1950) (n := 1) (by decide)))
+    (show CodeFact.block 12421 12445 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 29) (by decide))) (List.getElem_mem (l := facts_1949) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12425 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12425 = 12429 := (d_12425 (p := p)).2.2.1
 
 theorem d_12429 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12429 = some P ∧ P.decode 12429 = some (.regImm (.loadImm) 8 66793) ∧ P.next 12429 = 12434 ∧ P.blockCost (P.blockStartOf 12429) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12429 (.regImm (.loadImm) 8 66793) 12434 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 29) (by decide))) (List.getElem_mem (l := facts_1949) (n := 0) (by decide)))
-    (show CodeFact.block 12421 12445 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 27) (by decide))) (List.getElem_mem (l := facts_1947) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12429 (.regImm (.loadImm) 8 66793) 12434 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 31) (by decide))) (List.getElem_mem (l := facts_1951) (n := 0) (by decide)))
+    (show CodeFact.block 12421 12445 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 29) (by decide))) (List.getElem_mem (l := facts_1949) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12429 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12429 = 12434 := (d_12429 (p := p)).2.2.1
 
 theorem d_12434 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12434 = some P ∧ P.decode 12434 = some (.regImm (.loadImm) 7 2) ∧ P.next 12434 = 12437 ∧ P.blockCost (P.blockStartOf 12434) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12434 (.regImm (.loadImm) 7 2) 12437 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 29) (by decide))) (List.getElem_mem (l := facts_1949) (n := 2) (by decide)))
-    (show CodeFact.block 12421 12445 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 27) (by decide))) (List.getElem_mem (l := facts_1947) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12434 (.regImm (.loadImm) 7 2) 12437 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 31) (by decide))) (List.getElem_mem (l := facts_1951) (n := 2) (by decide)))
+    (show CodeFact.block 12421 12445 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 29) (by decide))) (List.getElem_mem (l := facts_1949) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12434 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12434 = 12437 := (d_12434 (p := p)).2.2.1
 
 theorem d_12437 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12437 = some P ∧ P.decode 12437 = some (.regImm (.loadImm) 9 4) ∧ P.next 12437 = 12440 ∧ P.blockCost (P.blockStartOf 12437) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12437 (.regImm (.loadImm) 9 4) 12440 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 30) (by decide))) (List.getElem_mem (l := facts_1950) (n := 1) (by decide)))
-    (show CodeFact.block 12421 12445 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 27) (by decide))) (List.getElem_mem (l := facts_1947) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12437 (.regImm (.loadImm) 9 4) 12440 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 32) (by decide))) (List.getElem_mem (l := facts_1952) (n := 1) (by decide)))
+    (show CodeFact.block 12421 12445 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 29) (by decide))) (List.getElem_mem (l := facts_1949) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12437 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12437 = 12440 := (d_12437 (p := p)).2.2.1
 
 theorem d_12440 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12440 = some P ∧ P.decode 12440 = some (.twoReg (.moveReg) 10 5) ∧ P.next 12440 = 12442 ∧ P.blockCost (P.blockStartOf 12440) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12440 (.twoReg (.moveReg) 10 5) 12442 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 31) (by decide))) (List.getElem_mem (l := facts_1951) (n := 0) (by decide)))
-    (show CodeFact.block 12421 12445 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 27) (by decide))) (List.getElem_mem (l := facts_1947) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12440 (.twoReg (.moveReg) 10 5) 12442 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 33) (by decide))) (List.getElem_mem (l := facts_1953) (n := 0) (by decide)))
+    (show CodeFact.block 12421 12445 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 29) (by decide))) (List.getElem_mem (l := facts_1949) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12440 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12440 = 12442 := (d_12440 (p := p)).2.2.1
 
 theorem d_12442 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12442 = some P ∧ P.decode 12442 = some (.oneImm (.ecalli) 100) ∧ P.next 12442 = 12444 ∧ P.blockCost (P.blockStartOf 12442) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12442 (.oneImm (.ecalli) 100) 12444 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 31) (by decide))) (List.getElem_mem (l := facts_1951) (n := 2) (by decide)))
-    (show CodeFact.block 12421 12445 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 27) (by decide))) (List.getElem_mem (l := facts_1947) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12442 (.oneImm (.ecalli) 100) 12444 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 33) (by decide))) (List.getElem_mem (l := facts_1953) (n := 2) (by decide)))
+    (show CodeFact.block 12421 12445 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 29) (by decide))) (List.getElem_mem (l := facts_1949) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12442 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12442 = 12444 := (d_12442 (p := p)).2.2.1
 
 theorem d_12444 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12444 = some P ∧ P.decode 12444 = some (.noArgs (.fallthrough)) ∧ P.next 12444 = 12445 ∧ P.blockCost (P.blockStartOf 12444) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12444 (.noArgs (.fallthrough)) 12445 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 32) (by decide))) (List.getElem_mem (l := facts_1952) (n := 1) (by decide)))
-    (show CodeFact.block 12421 12445 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 27) (by decide))) (List.getElem_mem (l := facts_1947) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12444 (.noArgs (.fallthrough)) 12445 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 34) (by decide))) (List.getElem_mem (l := facts_1954) (n := 1) (by decide)))
+    (show CodeFact.block 12421 12445 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 29) (by decide))) (List.getElem_mem (l := facts_1949) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12444 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12444 = 12445 := (d_12444 (p := p)).2.2.1
 
 theorem d_12445 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12445 = some P ∧ P.decode 12445 = some (.twoRegImm (.loadIndU64) 8 1 1568) ∧ P.next 12445 = 12449 ∧ P.blockCost (P.blockStartOf 12445) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12445 (.twoRegImm (.loadIndU64) 8 1 1568) 12449 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 33) (by decide))) (List.getElem_mem (l := facts_1953) (n := 0) (by decide)))
-    (show CodeFact.block 12445 12452 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 34) (by decide))) (List.getElem_mem (l := facts_1954) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12445 (.twoRegImm (.loadIndU64) 8 1 1568) 12449 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 35) (by decide))) (List.getElem_mem (l := facts_1955) (n := 0) (by decide)))
+    (show CodeFact.block 12445 12452 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 36) (by decide))) (List.getElem_mem (l := facts_1956) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12445 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12445 = 12449 := (d_12445 (p := p)).2.2.1
 
 theorem d_12449 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12449 = some P ∧ P.decode 12449 = some (.regImmOffset (.branchEqImm) 8 0 12463) ∧ P.next 12449 = 12452 ∧ P.blockCost (P.blockStartOf 12449) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12449 (.regImmOffset (.branchEqImm) 8 0 12463) 12452 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 35) (by decide))) (List.getElem_mem (l := facts_1955) (n := 1) (by decide)))
-    (show CodeFact.block 12445 12452 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 34) (by decide))) (List.getElem_mem (l := facts_1954) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12449 (.regImmOffset (.branchEqImm) 8 0 12463) 12452 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 37) (by decide))) (List.getElem_mem (l := facts_1957) (n := 1) (by decide)))
+    (show CodeFact.block 12445 12452 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 36) (by decide))) (List.getElem_mem (l := facts_1956) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12449 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12449 = 12452 := (d_12449 (p := p)).2.2.1
 
 theorem d_12452 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12452 = some P ∧ P.decode 12452 = some (.regImm (.loadImm) 9 1) ∧ P.next 12452 = 12455 ∧ P.blockCost (P.blockStartOf 12452) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12452 (.regImm (.loadImm) 9 1) 12455 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 36) (by decide))) (List.getElem_mem (l := facts_1956) (n := 0) (by decide)))
-    (show CodeFact.block 12452 12463 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 37) (by decide))) (List.getElem_mem (l := facts_1957) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12452 (.regImm (.loadImm) 9 1) 12455 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 38) (by decide))) (List.getElem_mem (l := facts_1958) (n := 0) (by decide)))
+    (show CodeFact.block 12452 12463 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 39) (by decide))) (List.getElem_mem (l := facts_1959) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12452 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12452 = 12455 := (d_12452 (p := p)).2.2.1
 
 theorem d_12455 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12455 = some P ∧ P.decode 12455 = some (.twoReg (.moveReg) 7 5) ∧ P.next 12455 = 12457 ∧ P.blockCost (P.blockStartOf 12455) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12455 (.twoReg (.moveReg) 7 5) 12457 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 38) (by decide))) (List.getElem_mem (l := facts_1958) (n := 1) (by decide)))
-    (show CodeFact.block 12452 12463 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 37) (by decide))) (List.getElem_mem (l := facts_1957) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12455 (.twoReg (.moveReg) 7 5) 12457 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 40) (by decide))) (List.getElem_mem (l := facts_1960) (n := 1) (by decide)))
+    (show CodeFact.block 12452 12463 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 39) (by decide))) (List.getElem_mem (l := facts_1959) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12455 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12455 = 12457 := (d_12455 (p := p)).2.2.1
 
 theorem d_12457 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12457 = some P ∧ P.decode 12457 = some (.regImmOffset (.loadImmJump) 0 462 40613) ∧ P.next 12457 = 12463 ∧ P.blockCost (P.blockStartOf 12457) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12457 (.regImmOffset (.loadImmJump) 0 462 40613) 12463 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 39) (by decide))) (List.getElem_mem (l := facts_1959) (n := 0) (by decide)))
-    (show CodeFact.block 12452 12463 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 37) (by decide))) (List.getElem_mem (l := facts_1957) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12457 (.regImmOffset (.loadImmJump) 0 462 40613) 12463 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 41) (by decide))) (List.getElem_mem (l := facts_1961) (n := 0) (by decide)))
+    (show CodeFact.block 12452 12463 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 39) (by decide))) (List.getElem_mem (l := facts_1959) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12457 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12457 = 12463 := (d_12457 (p := p)).2.2.1
 
 theorem d_12463 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12463 = some P ∧ P.decode 12463 = some (.twoRegImm (.loadIndU64) 7 1 1416) ∧ P.next 12463 = 12467 ∧ P.blockCost (P.blockStartOf 12463) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12463 (.twoRegImm (.loadIndU64) 7 1 1416) 12467 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 39) (by decide))) (List.getElem_mem (l := facts_1959) (n := 2) (by decide)))
-    (show CodeFact.block 12463 12487 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 40) (by decide))) (List.getElem_mem (l := facts_1960) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12463 (.twoRegImm (.loadIndU64) 7 1 1416) 12467 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 41) (by decide))) (List.getElem_mem (l := facts_1961) (n := 2) (by decide)))
+    (show CodeFact.block 12463 12487 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 42) (by decide))) (List.getElem_mem (l := facts_1962) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12463 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12463 = 12467 := (d_12463 (p := p)).2.2.1
 
 theorem d_12467 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12467 = some P ∧ P.decode 12467 = some (.regTwoImm (.storeImmIndU8) 1 1000 2) ∧ P.next 12467 = 12472 ∧ P.blockCost (P.blockStartOf 12467) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12467 (.regTwoImm (.storeImmIndU8) 1 1000 2) 12472 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 41) (by decide))) (List.getElem_mem (l := facts_1961) (n := 1) (by decide)))
-    (show CodeFact.block 12463 12487 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 40) (by decide))) (List.getElem_mem (l := facts_1960) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12467 (.regTwoImm (.storeImmIndU8) 1 1000 2) 12472 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 43) (by decide))) (List.getElem_mem (l := facts_1963) (n := 1) (by decide)))
+    (show CodeFact.block 12463 12487 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 42) (by decide))) (List.getElem_mem (l := facts_1962) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12467 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12467 = 12472 := (d_12467 (p := p)).2.2.1
 
 theorem d_12472 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12472 = some P ∧ P.decode 12472 = some (.twoRegImm (.storeIndU32) 7 1 1004) ∧ P.next 12472 = 12476 ∧ P.blockCost (P.blockStartOf 12472) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12472 (.twoRegImm (.storeIndU32) 7 1 1004) 12476 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 42) (by decide))) (List.getElem_mem (l := facts_1962) (n := 0) (by decide)))
-    (show CodeFact.block 12463 12487 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 40) (by decide))) (List.getElem_mem (l := facts_1960) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12472 (.twoRegImm (.storeIndU32) 7 1 1004) 12476 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 44) (by decide))) (List.getElem_mem (l := facts_1964) (n := 0) (by decide)))
+    (show CodeFact.block 12463 12487 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 42) (by decide))) (List.getElem_mem (l := facts_1962) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12472 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12472 = 12476 := (d_12472 (p := p)).2.2.1
 
 theorem d_12476 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12476 = some P ∧ P.decode 12476 = some (.twoRegImm (.addImm64) 7 1 1144) ∧ P.next 12476 = 12480 ∧ P.blockCost (P.blockStartOf 12476) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12476 (.twoRegImm (.addImm64) 7 1 1144) 12480 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 42) (by decide))) (List.getElem_mem (l := facts_1962) (n := 2) (by decide)))
-    (show CodeFact.block 12463 12487 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 40) (by decide))) (List.getElem_mem (l := facts_1960) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12476 (.twoRegImm (.addImm64) 7 1 1144) 12480 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 44) (by decide))) (List.getElem_mem (l := facts_1964) (n := 2) (by decide)))
+    (show CodeFact.block 12463 12487 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 42) (by decide))) (List.getElem_mem (l := facts_1962) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12476 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12476 = 12480 := (d_12476 (p := p)).2.2.1
 
 theorem d_12480 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12480 = some P ∧ P.decode 12480 = some (.regImm (.loadImm) 0 532) ∧ P.next 12480 = 12484 ∧ P.blockCost (P.blockStartOf 12480) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12480 (.regImm (.loadImm) 0 532) 12484 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 43) (by decide))) (List.getElem_mem (l := facts_1963) (n := 1) (by decide)))
-    (show CodeFact.block 12463 12487 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 40) (by decide))) (List.getElem_mem (l := facts_1960) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12480 (.regImm (.loadImm) 0 532) 12484 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 45) (by decide))) (List.getElem_mem (l := facts_1965) (n := 1) (by decide)))
+    (show CodeFact.block 12463 12487 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 42) (by decide))) (List.getElem_mem (l := facts_1962) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12480 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12480 = 12484 := (d_12480 (p := p)).2.2.1
 
 theorem d_12484 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12484 = some P ∧ P.decode 12484 = some (.oneOffset (.jump) 4046) ∧ P.next 12484 = 12487 ∧ P.blockCost (P.blockStartOf 12484) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12484 (.oneOffset (.jump) 4046) 12487 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 44) (by decide))) (List.getElem_mem (l := facts_1964) (n := 0) (by decide)))
-    (show CodeFact.block 12463 12487 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 40) (by decide))) (List.getElem_mem (l := facts_1960) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12484 (.oneOffset (.jump) 4046) 12487 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 46) (by decide))) (List.getElem_mem (l := facts_1966) (n := 0) (by decide)))
+    (show CodeFact.block 12463 12487 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 42) (by decide))) (List.getElem_mem (l := facts_1962) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12484 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12484 = 12487 := (d_12484 (p := p)).2.2.1
 
 theorem d_12487 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12487 = some P ∧ P.decode 12487 = some (.twoRegImm (.addImm64) 7 1 1568) ∧ P.next 12487 = 12491 ∧ P.blockCost (P.blockStartOf 12487) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12487 (.twoRegImm (.addImm64) 7 1 1568) 12491 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 44) (by decide))) (List.getElem_mem (l := facts_1964) (n := 2) (by decide)))
-    (show CodeFact.block 12487 12506 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 45) (by decide))) (List.getElem_mem (l := facts_1965) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12487 (.twoRegImm (.addImm64) 7 1 1568) 12491 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 46) (by decide))) (List.getElem_mem (l := facts_1966) (n := 2) (by decide)))
+    (show CodeFact.block 12487 12506 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 47) (by decide))) (List.getElem_mem (l := facts_1967) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12487 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12487 = 12491 := (d_12487 (p := p)).2.2.1
 
 theorem d_12491 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12491 = some P ∧ P.decode 12491 = some (.twoRegImm (.addImm64) 8 1 744) ∧ P.next 12491 = 12495 ∧ P.blockCost (P.blockStartOf 12491) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12491 (.twoRegImm (.addImm64) 8 1 744) 12495 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 46) (by decide))) (List.getElem_mem (l := facts_1966) (n := 1) (by decide)))
-    (show CodeFact.block 12487 12506 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 45) (by decide))) (List.getElem_mem (l := facts_1965) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12491 (.twoRegImm (.addImm64) 8 1 744) 12495 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 48) (by decide))) (List.getElem_mem (l := facts_1968) (n := 1) (by decide)))
+    (show CodeFact.block 12487 12506 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 47) (by decide))) (List.getElem_mem (l := facts_1967) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12491 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12491 = 12495 := (d_12491 (p := p)).2.2.1
 
 theorem d_12495 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12495 = some P ∧ P.decode 12495 = some (.regImm (.loadImm) 9 232) ∧ P.next 12495 = 12499 ∧ P.blockCost (P.blockStartOf 12495) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12495 (.regImm (.loadImm) 9 232) 12499 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 47) (by decide))) (List.getElem_mem (l := facts_1967) (n := 0) (by decide)))
-    (show CodeFact.block 12487 12506 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 45) (by decide))) (List.getElem_mem (l := facts_1965) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12495 (.regImm (.loadImm) 9 232) 12499 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 49) (by decide))) (List.getElem_mem (l := facts_1969) (n := 0) (by decide)))
+    (show CodeFact.block 12487 12506 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 47) (by decide))) (List.getElem_mem (l := facts_1967) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12495 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12495 = 12499 := (d_12495 (p := p)).2.2.1
 
 theorem d_12499 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12499 = some P ∧ P.decode 12499 = some (.regImmOffset (.loadImmJump) 0 466 68729) ∧ P.next 12499 = 12506 ∧ P.blockCost (P.blockStartOf 12499) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12499 (.regImmOffset (.loadImmJump) 0 466 68729) 12506 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 47) (by decide))) (List.getElem_mem (l := facts_1967) (n := 2) (by decide)))
-    (show CodeFact.block 12487 12506 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 45) (by decide))) (List.getElem_mem (l := facts_1965) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12499 (.regImmOffset (.loadImmJump) 0 466 68729) 12506 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 49) (by decide))) (List.getElem_mem (l := facts_1969) (n := 2) (by decide)))
+    (show CodeFact.block 12487 12506 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 47) (by decide))) (List.getElem_mem (l := facts_1967) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12499 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12499 = 12506 := (d_12499 (p := p)).2.2.1
 
 theorem d_12506 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12506 = some P ∧ P.decode 12506 = some (.regImm (.loadImm) 7 578) ∧ P.next 12506 = 12510 ∧ P.blockCost (P.blockStartOf 12506) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12506 (.regImm (.loadImm) 7 578) 12510 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 48) (by decide))) (List.getElem_mem (l := facts_1968) (n := 1) (by decide)))
-    (show CodeFact.block 12506 12542 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 49) (by decide))) (List.getElem_mem (l := facts_1969) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12506 (.regImm (.loadImm) 7 578) 12510 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 50) (by decide))) (List.getElem_mem (l := facts_1970) (n := 1) (by decide)))
+    (show CodeFact.block 12506 12542 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 51) (by decide))) (List.getElem_mem (l := facts_1971) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12506 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12506 = 12510 := (d_12506 (p := p)).2.2.1
 
 theorem d_12510 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12510 = some P ∧ P.decode 12510 = some (.twoRegImm (.addImm64) 8 1 1568) ∧ P.next 12510 = 12514 ∧ P.blockCost (P.blockStartOf 12510) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12510 (.twoRegImm (.addImm64) 8 1 1568) 12514 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 50) (by decide))) (List.getElem_mem (l := facts_1970) (n := 1) (by decide)))
-    (show CodeFact.block 12506 12542 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 49) (by decide))) (List.getElem_mem (l := facts_1969) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12510 (.twoRegImm (.addImm64) 8 1 1568) 12514 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 52) (by decide))) (List.getElem_mem (l := facts_1972) (n := 1) (by decide)))
+    (show CodeFact.block 12506 12542 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 51) (by decide))) (List.getElem_mem (l := facts_1971) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12510 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12510 = 12514 := (d_12510 (p := p)).2.2.1
 
 theorem d_12514 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12514 = some P ∧ P.decode 12514 = some (.twoRegImm (.storeIndU64) 8 1 1416) ∧ P.next 12514 = 12518 ∧ P.blockCost (P.blockStartOf 12514) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12514 (.twoRegImm (.storeIndU64) 8 1 1416) 12518 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 51) (by decide))) (List.getElem_mem (l := facts_1971) (n := 0) (by decide)))
-    (show CodeFact.block 12506 12542 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 49) (by decide))) (List.getElem_mem (l := facts_1969) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12514 (.twoRegImm (.storeIndU64) 8 1 1416) 12518 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 53) (by decide))) (List.getElem_mem (l := facts_1973) (n := 0) (by decide)))
+    (show CodeFact.block 12506 12542 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 51) (by decide))) (List.getElem_mem (l := facts_1971) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12514 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12514 = 12518 := (d_12514 (p := p)).2.2.1
 
 theorem d_12518 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12518 = some P ∧ P.decode 12518 = some (.twoRegImm (.storeIndU64) 7 1 1424) ∧ P.next 12518 = 12522 ∧ P.blockCost (P.blockStartOf 12518) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12518 (.twoRegImm (.storeIndU64) 7 1 1424) 12522 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 51) (by decide))) (List.getElem_mem (l := facts_1971) (n := 2) (by decide)))
-    (show CodeFact.block 12506 12542 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 49) (by decide))) (List.getElem_mem (l := facts_1969) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12518 (.twoRegImm (.storeIndU64) 7 1 1424) 12522 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 53) (by decide))) (List.getElem_mem (l := facts_1973) (n := 2) (by decide)))
+    (show CodeFact.block 12506 12542 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 51) (by decide))) (List.getElem_mem (l := facts_1971) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12518 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12518 = 12522 := (d_12518 (p := p)).2.2.1
 
 theorem d_12522 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12522 = some P ∧ P.decode 12522 = some (.regImm (.loadImm) 8 66055) ∧ P.next 12522 = 12527 ∧ P.blockCost (P.blockStartOf 12522) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12522 (.regImm (.loadImm) 8 66055) 12527 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 52) (by decide))) (List.getElem_mem (l := facts_1972) (n := 1) (by decide)))
-    (show CodeFact.block 12506 12542 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 49) (by decide))) (List.getElem_mem (l := facts_1969) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12522 (.regImm (.loadImm) 8 66055) 12527 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 54) (by decide))) (List.getElem_mem (l := facts_1974) (n := 1) (by decide)))
+    (show CodeFact.block 12506 12542 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 51) (by decide))) (List.getElem_mem (l := facts_1971) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12522 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12522 = 12527 := (d_12522 (p := p)).2.2.1
 
 theorem d_12527 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12527 = some P ∧ P.decode 12527 = some (.twoRegImm (.addImm64) 7 1 1496) ∧ P.next 12527 = 12531 ∧ P.blockCost (P.blockStartOf 12527) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12527 (.twoRegImm (.addImm64) 7 1 1496) 12531 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 53) (by decide))) (List.getElem_mem (l := facts_1973) (n := 0) (by decide)))
-    (show CodeFact.block 12506 12542 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 49) (by decide))) (List.getElem_mem (l := facts_1969) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12527 (.twoRegImm (.addImm64) 7 1 1496) 12531 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 55) (by decide))) (List.getElem_mem (l := facts_1975) (n := 0) (by decide)))
+    (show CodeFact.block 12506 12542 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 51) (by decide))) (List.getElem_mem (l := facts_1971) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12527 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12527 = 12531 := (d_12527 (p := p)).2.2.1
 
 theorem d_12531 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12531 = some P ∧ P.decode 12531 = some (.twoRegImm (.addImm64) 9 1 1416) ∧ P.next 12531 = 12535 ∧ P.blockCost (P.blockStartOf 12531) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12531 (.twoRegImm (.addImm64) 9 1 1416) 12535 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 53) (by decide))) (List.getElem_mem (l := facts_1973) (n := 2) (by decide)))
-    (show CodeFact.block 12506 12542 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 49) (by decide))) (List.getElem_mem (l := facts_1969) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12531 (.twoRegImm (.addImm64) 9 1 1416) 12535 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 55) (by decide))) (List.getElem_mem (l := facts_1975) (n := 2) (by decide)))
+    (show CodeFact.block 12506 12542 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 51) (by decide))) (List.getElem_mem (l := facts_1971) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12531 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12531 = 12535 := (d_12531 (p := p)).2.2.1
 
 theorem d_12535 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12535 = some P ∧ P.decode 12535 = some (.regImmOffset (.loadImmJump) 0 468 59375) ∧ P.next 12535 = 12542 ∧ P.blockCost (P.blockStartOf 12535) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12535 (.regImmOffset (.loadImmJump) 0 468 59375) 12542 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 54) (by decide))) (List.getElem_mem (l := facts_1974) (n := 1) (by decide)))
-    (show CodeFact.block 12506 12542 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 49) (by decide))) (List.getElem_mem (l := facts_1969) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12535 (.regImmOffset (.loadImmJump) 0 468 59375) 12542 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 56) (by decide))) (List.getElem_mem (l := facts_1976) (n := 1) (by decide)))
+    (show CodeFact.block 12506 12542 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 51) (by decide))) (List.getElem_mem (l := facts_1971) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12535 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12535 = 12542 := (d_12535 (p := p)).2.2.1
 
 theorem d_12542 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12542 = some P ∧ P.decode 12542 = some (.twoRegImm (.loadIndU64) 5 1 1504) ∧ P.next 12542 = 12546 ∧ P.blockCost (P.blockStartOf 12542) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12542 (.twoRegImm (.loadIndU64) 5 1 1504) 12546 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 55) (by decide))) (List.getElem_mem (l := facts_1975) (n := 0) (by decide)))
-    (show CodeFact.block 12542 12566 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 56) (by decide))) (List.getElem_mem (l := facts_1976) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12542 (.twoRegImm (.loadIndU64) 5 1 1504) 12546 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 57) (by decide))) (List.getElem_mem (l := facts_1977) (n := 0) (by decide)))
+    (show CodeFact.block 12542 12566 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 58) (by decide))) (List.getElem_mem (l := facts_1978) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12542 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12542 = 12546 := (d_12542 (p := p)).2.2.1
 
 theorem d_12546 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12546 = some P ∧ P.decode 12546 = some (.twoRegImm (.loadIndU64) 11 1 1512) ∧ P.next 12546 = 12550 ∧ P.blockCost (P.blockStartOf 12546) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12546 (.twoRegImm (.loadIndU64) 11 1 1512) 12550 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 57) (by decide))) (List.getElem_mem (l := facts_1977) (n := 1) (by decide)))
-    (show CodeFact.block 12542 12566 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 56) (by decide))) (List.getElem_mem (l := facts_1976) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12546 (.twoRegImm (.loadIndU64) 11 1 1512) 12550 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 59) (by decide))) (List.getElem_mem (l := facts_1979) (n := 1) (by decide)))
+    (show CodeFact.block 12542 12566 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 58) (by decide))) (List.getElem_mem (l := facts_1978) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12546 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12546 = 12550 := (d_12546 (p := p)).2.2.1
 
 theorem d_12550 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12550 = some P ∧ P.decode 12550 = some (.regImm (.loadImm) 8 66793) ∧ P.next 12550 = 12555 ∧ P.blockCost (P.blockStartOf 12550) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12550 (.regImm (.loadImm) 8 66793) 12555 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 58) (by decide))) (List.getElem_mem (l := facts_1978) (n := 0) (by decide)))
-    (show CodeFact.block 12542 12566 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 56) (by decide))) (List.getElem_mem (l := facts_1976) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12550 (.regImm (.loadImm) 8 66793) 12555 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 60) (by decide))) (List.getElem_mem (l := facts_1980) (n := 0) (by decide)))
+    (show CodeFact.block 12542 12566 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 58) (by decide))) (List.getElem_mem (l := facts_1978) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12550 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12550 = 12555 := (d_12550 (p := p)).2.2.1
 
 theorem d_12555 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12555 = some P ∧ P.decode 12555 = some (.regImm (.loadImm) 7 2) ∧ P.next 12555 = 12558 ∧ P.blockCost (P.blockStartOf 12555) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12555 (.regImm (.loadImm) 7 2) 12558 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 58) (by decide))) (List.getElem_mem (l := facts_1978) (n := 2) (by decide)))
-    (show CodeFact.block 12542 12566 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 56) (by decide))) (List.getElem_mem (l := facts_1976) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12555 (.regImm (.loadImm) 7 2) 12558 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 60) (by decide))) (List.getElem_mem (l := facts_1980) (n := 2) (by decide)))
+    (show CodeFact.block 12542 12566 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 58) (by decide))) (List.getElem_mem (l := facts_1978) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12555 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12555 = 12558 := (d_12555 (p := p)).2.2.1
 
 theorem d_12558 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12558 = some P ∧ P.decode 12558 = some (.regImm (.loadImm) 9 4) ∧ P.next 12558 = 12561 ∧ P.blockCost (P.blockStartOf 12558) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12558 (.regImm (.loadImm) 9 4) 12561 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 59) (by decide))) (List.getElem_mem (l := facts_1979) (n := 1) (by decide)))
-    (show CodeFact.block 12542 12566 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 56) (by decide))) (List.getElem_mem (l := facts_1976) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12558 (.regImm (.loadImm) 9 4) 12561 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 61) (by decide))) (List.getElem_mem (l := facts_1981) (n := 1) (by decide)))
+    (show CodeFact.block 12542 12566 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 58) (by decide))) (List.getElem_mem (l := facts_1978) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12558 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12558 = 12561 := (d_12558 (p := p)).2.2.1
 
 theorem d_12561 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12561 = some P ∧ P.decode 12561 = some (.twoReg (.moveReg) 10 5) ∧ P.next 12561 = 12563 ∧ P.blockCost (P.blockStartOf 12561) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12561 (.twoReg (.moveReg) 10 5) 12563 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 60) (by decide))) (List.getElem_mem (l := facts_1980) (n := 0) (by decide)))
-    (show CodeFact.block 12542 12566 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 56) (by decide))) (List.getElem_mem (l := facts_1976) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12561 (.twoReg (.moveReg) 10 5) 12563 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 62) (by decide))) (List.getElem_mem (l := facts_1982) (n := 0) (by decide)))
+    (show CodeFact.block 12542 12566 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 58) (by decide))) (List.getElem_mem (l := facts_1978) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12561 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12561 = 12563 := (d_12561 (p := p)).2.2.1
 
 theorem d_12563 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12563 = some P ∧ P.decode 12563 = some (.oneImm (.ecalli) 100) ∧ P.next 12563 = 12565 ∧ P.blockCost (P.blockStartOf 12563) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12563 (.oneImm (.ecalli) 100) 12565 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 60) (by decide))) (List.getElem_mem (l := facts_1980) (n := 2) (by decide)))
-    (show CodeFact.block 12542 12566 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 56) (by decide))) (List.getElem_mem (l := facts_1976) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12563 (.oneImm (.ecalli) 100) 12565 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 62) (by decide))) (List.getElem_mem (l := facts_1982) (n := 2) (by decide)))
+    (show CodeFact.block 12542 12566 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 58) (by decide))) (List.getElem_mem (l := facts_1978) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12563 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12563 = 12565 := (d_12563 (p := p)).2.2.1
 
 theorem d_12565 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12565 = some P ∧ P.decode 12565 = some (.noArgs (.fallthrough)) ∧ P.next 12565 = 12566 ∧ P.blockCost (P.blockStartOf 12565) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12565 (.noArgs (.fallthrough)) 12566 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 61) (by decide))) (List.getElem_mem (l := facts_1981) (n := 1) (by decide)))
-    (show CodeFact.block 12542 12566 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 56) (by decide))) (List.getElem_mem (l := facts_1976) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12565 (.noArgs (.fallthrough)) 12566 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 63) (by decide))) (List.getElem_mem (l := facts_1983) (n := 1) (by decide)))
+    (show CodeFact.block 12542 12566 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 58) (by decide))) (List.getElem_mem (l := facts_1978) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12565 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12565 = 12566 := (d_12565 (p := p)).2.2.1
 
 theorem d_12566 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12566 = some P ∧ P.decode 12566 = some (.twoRegImm (.loadIndU64) 8 1 1496) ∧ P.next 12566 = 12570 ∧ P.blockCost (P.blockStartOf 12566) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12566 (.twoRegImm (.loadIndU64) 8 1 1496) 12570 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 62) (by decide))) (List.getElem_mem (l := facts_1982) (n := 0) (by decide)))
-    (show CodeFact.block 12566 12573 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 63) (by decide))) (List.getElem_mem (l := facts_1983) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12566 (.twoRegImm (.loadIndU64) 8 1 1496) 12570 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 0) (by decide))) (List.getElem_mem (l := facts_1984) (n := 0) (by decide)))
+    (show CodeFact.block 12566 12573 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 1) (by decide))) (List.getElem_mem (l := facts_1985) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12566 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12566 = 12570 := (d_12566 (p := p)).2.2.1
 
 theorem d_12570 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12570 = some P ∧ P.decode 12570 = some (.regImmOffset (.branchEqImm) 8 0 12584) ∧ P.next 12570 = 12573 ∧ P.blockCost (P.blockStartOf 12570) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12570 (.regImmOffset (.branchEqImm) 8 0 12584) 12573 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 0) (by decide))) (List.getElem_mem (l := facts_1984) (n := 1) (by decide)))
-    (show CodeFact.block 12566 12573 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 30) (by decide)) (List.getElem_mem (l := factGroup_30) (n := 63) (by decide))) (List.getElem_mem (l := facts_1983) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12570 (.regImmOffset (.branchEqImm) 8 0 12584) 12573 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 2) (by decide))) (List.getElem_mem (l := facts_1986) (n := 1) (by decide)))
+    (show CodeFact.block 12566 12573 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 1) (by decide))) (List.getElem_mem (l := facts_1985) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12570 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12570 = 12573 := (d_12570 (p := p)).2.2.1
 
 theorem d_12573 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12573 = some P ∧ P.decode 12573 = some (.regImm (.loadImm) 9 1) ∧ P.next 12573 = 12576 ∧ P.blockCost (P.blockStartOf 12573) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12573 (.regImm (.loadImm) 9 1) 12576 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 1) (by decide))) (List.getElem_mem (l := facts_1985) (n := 0) (by decide)))
-    (show CodeFact.block 12573 12584 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 2) (by decide))) (List.getElem_mem (l := facts_1986) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12573 (.regImm (.loadImm) 9 1) 12576 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 3) (by decide))) (List.getElem_mem (l := facts_1987) (n := 0) (by decide)))
+    (show CodeFact.block 12573 12584 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 4) (by decide))) (List.getElem_mem (l := facts_1988) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12573 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12573 = 12576 := (d_12573 (p := p)).2.2.1
 
 theorem d_12576 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12576 = some P ∧ P.decode 12576 = some (.twoReg (.moveReg) 7 5) ∧ P.next 12576 = 12578 ∧ P.blockCost (P.blockStartOf 12576) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12576 (.twoReg (.moveReg) 7 5) 12578 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 3) (by decide))) (List.getElem_mem (l := facts_1987) (n := 1) (by decide)))
-    (show CodeFact.block 12573 12584 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 2) (by decide))) (List.getElem_mem (l := facts_1986) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12576 (.twoReg (.moveReg) 7 5) 12578 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 5) (by decide))) (List.getElem_mem (l := facts_1989) (n := 1) (by decide)))
+    (show CodeFact.block 12573 12584 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 4) (by decide))) (List.getElem_mem (l := facts_1988) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12576 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12576 = 12578 := (d_12576 (p := p)).2.2.1
 
 theorem d_12578 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12578 = some P ∧ P.decode 12578 = some (.regImmOffset (.loadImmJump) 0 470 40613) ∧ P.next 12578 = 12584 ∧ P.blockCost (P.blockStartOf 12578) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12578 (.regImmOffset (.loadImmJump) 0 470 40613) 12584 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 4) (by decide))) (List.getElem_mem (l := facts_1988) (n := 0) (by decide)))
-    (show CodeFact.block 12573 12584 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 2) (by decide))) (List.getElem_mem (l := facts_1986) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12578 (.regImmOffset (.loadImmJump) 0 470 40613) 12584 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 6) (by decide))) (List.getElem_mem (l := facts_1990) (n := 0) (by decide)))
+    (show CodeFact.block 12573 12584 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 4) (by decide))) (List.getElem_mem (l := facts_1988) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12578 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12578 = 12584 := (d_12578 (p := p)).2.2.1
 
 theorem d_12584 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12584 = some P ∧ P.decode 12584 = some (.twoRegImm (.loadIndU64) 7 1 40) ∧ P.next 12584 = 12587 ∧ P.blockCost (P.blockStartOf 12584) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12584 (.twoRegImm (.loadIndU64) 7 1 40) 12587 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 4) (by decide))) (List.getElem_mem (l := facts_1988) (n := 2) (by decide)))
-    (show CodeFact.block 12584 12602 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 5) (by decide))) (List.getElem_mem (l := facts_1989) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12584 (.twoRegImm (.loadIndU64) 7 1 40) 12587 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 6) (by decide))) (List.getElem_mem (l := facts_1990) (n := 2) (by decide)))
+    (show CodeFact.block 12584 12602 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 7) (by decide))) (List.getElem_mem (l := facts_1991) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12584 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12584 = 12587 := (d_12584 (p := p)).2.2.1
 
 theorem d_12587 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12587 = some P ∧ P.decode 12587 = some (.twoRegImm (.storeIndU16) 7 1 1000) ∧ P.next 12587 = 12591 ∧ P.blockCost (P.blockStartOf 12587) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12587 (.twoRegImm (.storeIndU16) 7 1 1000) 12591 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 6) (by decide))) (List.getElem_mem (l := facts_1990) (n := 1) (by decide)))
-    (show CodeFact.block 12584 12602 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 5) (by decide))) (List.getElem_mem (l := facts_1989) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12587 (.twoRegImm (.storeIndU16) 7 1 1000) 12591 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 8) (by decide))) (List.getElem_mem (l := facts_1992) (n := 1) (by decide)))
+    (show CodeFact.block 12584 12602 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 7) (by decide))) (List.getElem_mem (l := facts_1991) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12587 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12587 = 12591 := (d_12587 (p := p)).2.2.1
 
 theorem d_12591 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12591 = some P ∧ P.decode 12591 = some (.twoRegImm (.addImm64) 7 1 1568) ∧ P.next 12591 = 12595 ∧ P.blockCost (P.blockStartOf 12591) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12591 (.twoRegImm (.addImm64) 7 1 1568) 12595 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 7) (by decide))) (List.getElem_mem (l := facts_1991) (n := 0) (by decide)))
-    (show CodeFact.block 12584 12602 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 5) (by decide))) (List.getElem_mem (l := facts_1989) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12591 (.twoRegImm (.addImm64) 7 1 1568) 12595 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 9) (by decide))) (List.getElem_mem (l := facts_1993) (n := 0) (by decide)))
+    (show CodeFact.block 12584 12602 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 7) (by decide))) (List.getElem_mem (l := facts_1991) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12591 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12591 = 12595 := (d_12591 (p := p)).2.2.1
 
 theorem d_12595 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12595 = some P ∧ P.decode 12595 = some (.regImm (.loadImm) 0 532) ∧ P.next 12595 = 12599 ∧ P.blockCost (P.blockStartOf 12595) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12595 (.regImm (.loadImm) 0 532) 12599 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 7) (by decide))) (List.getElem_mem (l := facts_1991) (n := 2) (by decide)))
-    (show CodeFact.block 12584 12602 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 5) (by decide))) (List.getElem_mem (l := facts_1989) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12595 (.regImm (.loadImm) 0 532) 12599 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 9) (by decide))) (List.getElem_mem (l := facts_1993) (n := 2) (by decide)))
+    (show CodeFact.block 12584 12602 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 7) (by decide))) (List.getElem_mem (l := facts_1991) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12595 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12595 = 12599 := (d_12595 (p := p)).2.2.1
 
 theorem d_12599 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12599 = some P ∧ P.decode 12599 = some (.oneOffset (.jump) 4046) ∧ P.next 12599 = 12602 ∧ P.blockCost (P.blockStartOf 12599) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12599 (.oneOffset (.jump) 4046) 12602 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 8) (by decide))) (List.getElem_mem (l := facts_1992) (n := 1) (by decide)))
-    (show CodeFact.block 12584 12602 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 5) (by decide))) (List.getElem_mem (l := facts_1989) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12599 (.oneOffset (.jump) 4046) 12602 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 10) (by decide))) (List.getElem_mem (l := facts_1994) (n := 1) (by decide)))
+    (show CodeFact.block 12584 12602 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 7) (by decide))) (List.getElem_mem (l := facts_1991) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12599 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12599 = 12602 := (d_12599 (p := p)).2.2.1
 
 theorem d_12602 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12602 = some P ∧ P.decode 12602 = some (.noArgs (.unlikely)) ∧ P.next 12602 = 12603 ∧ P.blockCost (P.blockStartOf 12602) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12602 (.noArgs (.unlikely)) 12603 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 9) (by decide))) (List.getElem_mem (l := facts_1993) (n := 0) (by decide)))
-    (show CodeFact.block 12602 12653 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 10) (by decide))) (List.getElem_mem (l := facts_1994) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12602 (.noArgs (.unlikely)) 12603 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 11) (by decide))) (List.getElem_mem (l := facts_1995) (n := 0) (by decide)))
+    (show CodeFact.block 12602 12653 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 12) (by decide))) (List.getElem_mem (l := facts_1996) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12602 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12602 = 12603 := (d_12602 (p := p)).2.2.1
 
 theorem d_12603 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12603 = some P ∧ P.decode 12603 = some (.twoRegImm (.storeIndU64) 7 1 248) ∧ P.next 12603 = 12607 ∧ P.blockCost (P.blockStartOf 12603) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12603 (.twoRegImm (.storeIndU64) 7 1 248) 12607 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 11) (by decide))) (List.getElem_mem (l := facts_1995) (n := 1) (by decide)))
-    (show CodeFact.block 12602 12653 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 10) (by decide))) (List.getElem_mem (l := facts_1994) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12603 (.twoRegImm (.storeIndU64) 7 1 248) 12607 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 13) (by decide))) (List.getElem_mem (l := facts_1997) (n := 1) (by decide)))
+    (show CodeFact.block 12602 12653 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 12) (by decide))) (List.getElem_mem (l := facts_1996) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12603 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12603 = 12607 := (d_12603 (p := p)).2.2.1
 
 theorem d_12607 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12607 = some P ∧ P.decode 12607 = some (.twoRegImm (.addImm64) 10 1 753) ∧ P.next 12607 = 12611 ∧ P.blockCost (P.blockStartOf 12607) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12607 (.twoRegImm (.addImm64) 10 1 753) 12611 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 12) (by decide))) (List.getElem_mem (l := facts_1996) (n := 0) (by decide)))
-    (show CodeFact.block 12602 12653 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 10) (by decide))) (List.getElem_mem (l := facts_1994) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12607 (.twoRegImm (.addImm64) 10 1 753) 12611 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 14) (by decide))) (List.getElem_mem (l := facts_1998) (n := 0) (by decide)))
+    (show CodeFact.block 12602 12653 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 12) (by decide))) (List.getElem_mem (l := facts_1996) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12607 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12607 = 12611 := (d_12607 (p := p)).2.2.1
 
 theorem d_12611 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12611 = some P ∧ P.decode 12611 = some (.twoRegImm (.loadIndU64) 7 10 0) ∧ P.next 12611 = 12613 ∧ P.blockCost (P.blockStartOf 12611) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12611 (.twoRegImm (.loadIndU64) 7 10 0) 12613 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 12) (by decide))) (List.getElem_mem (l := facts_1996) (n := 2) (by decide)))
-    (show CodeFact.block 12602 12653 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 10) (by decide))) (List.getElem_mem (l := facts_1994) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12611 (.twoRegImm (.loadIndU64) 7 10 0) 12613 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 14) (by decide))) (List.getElem_mem (l := facts_1998) (n := 2) (by decide)))
+    (show CodeFact.block 12602 12653 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 12) (by decide))) (List.getElem_mem (l := facts_1996) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12611 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12611 = 12613 := (d_12611 (p := p)).2.2.1
 
 theorem d_12613 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12613 = some P ∧ P.decode 12613 = some (.twoRegImm (.loadIndU64) 8 10 8) ∧ P.next 12613 = 12616 ∧ P.blockCost (P.blockStartOf 12613) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12613 (.twoRegImm (.loadIndU64) 8 10 8) 12616 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 13) (by decide))) (List.getElem_mem (l := facts_1997) (n := 1) (by decide)))
-    (show CodeFact.block 12602 12653 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 10) (by decide))) (List.getElem_mem (l := facts_1994) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12613 (.twoRegImm (.loadIndU64) 8 10 8) 12616 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 15) (by decide))) (List.getElem_mem (l := facts_1999) (n := 1) (by decide)))
+    (show CodeFact.block 12602 12653 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 12) (by decide))) (List.getElem_mem (l := facts_1996) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12613 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12613 = 12616 := (d_12613 (p := p)).2.2.1
 
 theorem d_12616 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12616 = some P ∧ P.decode 12616 = some (.twoRegImm (.loadIndU64) 9 10 16) ∧ P.next 12616 = 12619 ∧ P.blockCost (P.blockStartOf 12616) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12616 (.twoRegImm (.loadIndU64) 9 10 16) 12619 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 14) (by decide))) (List.getElem_mem (l := facts_1998) (n := 0) (by decide)))
-    (show CodeFact.block 12602 12653 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 10) (by decide))) (List.getElem_mem (l := facts_1994) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12616 (.twoRegImm (.loadIndU64) 9 10 16) 12619 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 16) (by decide))) (List.getElem_mem (l := facts_2000) (n := 0) (by decide)))
+    (show CodeFact.block 12602 12653 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 12) (by decide))) (List.getElem_mem (l := facts_1996) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12616 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12616 = 12619 := (d_12616 (p := p)).2.2.1
 
 theorem d_12619 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12619 = some P ∧ P.decode 12619 = some (.twoRegImm (.loadIndU64) 10 10 24) ∧ P.next 12619 = 12622 ∧ P.blockCost (P.blockStartOf 12619) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12619 (.twoRegImm (.loadIndU64) 10 10 24) 12622 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 14) (by decide))) (List.getElem_mem (l := facts_1998) (n := 2) (by decide)))
-    (show CodeFact.block 12602 12653 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 10) (by decide))) (List.getElem_mem (l := facts_1994) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12619 (.twoRegImm (.loadIndU64) 10 10 24) 12622 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 16) (by decide))) (List.getElem_mem (l := facts_2000) (n := 2) (by decide)))
+    (show CodeFact.block 12602 12653 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 12) (by decide))) (List.getElem_mem (l := facts_1996) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12619 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12619 = 12622 := (d_12619 (p := p)).2.2.1
 
 theorem d_12622 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12622 = some P ∧ P.decode 12622 = some (.twoRegImm (.storeIndU64) 7 1 1568) ∧ P.next 12622 = 12626 ∧ P.blockCost (P.blockStartOf 12622) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12622 (.twoRegImm (.storeIndU64) 7 1 1568) 12626 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 15) (by decide))) (List.getElem_mem (l := facts_1999) (n := 1) (by decide)))
-    (show CodeFact.block 12602 12653 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 10) (by decide))) (List.getElem_mem (l := facts_1994) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12622 (.twoRegImm (.storeIndU64) 7 1 1568) 12626 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 17) (by decide))) (List.getElem_mem (l := facts_2001) (n := 1) (by decide)))
+    (show CodeFact.block 12602 12653 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 12) (by decide))) (List.getElem_mem (l := facts_1996) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12622 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12622 = 12626 := (d_12622 (p := p)).2.2.1
 
 theorem d_12626 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12626 = some P ∧ P.decode 12626 = some (.twoRegImm (.storeIndU64) 8 1 1576) ∧ P.next 12626 = 12630 ∧ P.blockCost (P.blockStartOf 12626) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12626 (.twoRegImm (.storeIndU64) 8 1 1576) 12630 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 16) (by decide))) (List.getElem_mem (l := facts_2000) (n := 0) (by decide)))
-    (show CodeFact.block 12602 12653 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 10) (by decide))) (List.getElem_mem (l := facts_1994) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12626 (.twoRegImm (.storeIndU64) 8 1 1576) 12630 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 18) (by decide))) (List.getElem_mem (l := facts_2002) (n := 0) (by decide)))
+    (show CodeFact.block 12602 12653 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 12) (by decide))) (List.getElem_mem (l := facts_1996) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12626 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12626 = 12630 := (d_12626 (p := p)).2.2.1
 
 theorem d_12630 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12630 = some P ∧ P.decode 12630 = some (.twoRegImm (.storeIndU64) 9 1 1584) ∧ P.next 12630 = 12634 ∧ P.blockCost (P.blockStartOf 12630) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12630 (.twoRegImm (.storeIndU64) 9 1 1584) 12634 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 16) (by decide))) (List.getElem_mem (l := facts_2000) (n := 2) (by decide)))
-    (show CodeFact.block 12602 12653 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 10) (by decide))) (List.getElem_mem (l := facts_1994) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12630 (.twoRegImm (.storeIndU64) 9 1 1584) 12634 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 18) (by decide))) (List.getElem_mem (l := facts_2002) (n := 2) (by decide)))
+    (show CodeFact.block 12602 12653 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 12) (by decide))) (List.getElem_mem (l := facts_1996) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12630 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12630 = 12634 := (d_12630 (p := p)).2.2.1
 
 theorem d_12634 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12634 = some P ∧ P.decode 12634 = some (.twoRegImm (.storeIndU64) 10 1 1592) ∧ P.next 12634 = 12638 ∧ P.blockCost (P.blockStartOf 12634) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12634 (.twoRegImm (.storeIndU64) 10 1 1592) 12638 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 17) (by decide))) (List.getElem_mem (l := facts_2001) (n := 1) (by decide)))
-    (show CodeFact.block 12602 12653 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 10) (by decide))) (List.getElem_mem (l := facts_1994) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12634 (.twoRegImm (.storeIndU64) 10 1 1592) 12638 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 19) (by decide))) (List.getElem_mem (l := facts_2003) (n := 1) (by decide)))
+    (show CodeFact.block 12602 12653 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 12) (by decide))) (List.getElem_mem (l := facts_1996) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12634 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12634 = 12638 := (d_12634 (p := p)).2.2.1
 
 theorem d_12638 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12638 = some P ∧ P.decode 12638 = some (.twoRegImm (.addImm64) 7 1 1496) ∧ P.next 12638 = 12642 ∧ P.blockCost (P.blockStartOf 12638) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12638 (.twoRegImm (.addImm64) 7 1 1496) 12642 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 18) (by decide))) (List.getElem_mem (l := facts_2002) (n := 0) (by decide)))
-    (show CodeFact.block 12602 12653 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 10) (by decide))) (List.getElem_mem (l := facts_1994) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12638 (.twoRegImm (.addImm64) 7 1 1496) 12642 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 20) (by decide))) (List.getElem_mem (l := facts_2004) (n := 0) (by decide)))
+    (show CodeFact.block 12602 12653 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 12) (by decide))) (List.getElem_mem (l := facts_1996) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12638 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12638 = 12642 := (d_12638 (p := p)).2.2.1
 
 theorem d_12642 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12642 = some P ∧ P.decode 12642 = some (.twoRegImm (.addImm64) 8 1 1568) ∧ P.next 12642 = 12646 ∧ P.blockCost (P.blockStartOf 12642) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12642 (.twoRegImm (.addImm64) 8 1 1568) 12646 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 18) (by decide))) (List.getElem_mem (l := facts_2002) (n := 2) (by decide)))
-    (show CodeFact.block 12602 12653 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 10) (by decide))) (List.getElem_mem (l := facts_1994) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12642 (.twoRegImm (.addImm64) 8 1 1568) 12646 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 20) (by decide))) (List.getElem_mem (l := facts_2004) (n := 2) (by decide)))
+    (show CodeFact.block 12602 12653 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 12) (by decide))) (List.getElem_mem (l := facts_1996) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12642 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12642 = 12646 := (d_12642 (p := p)).2.2.1
 
 theorem d_12646 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12646 = some P ∧ P.decode 12646 = some (.regImmOffset (.loadImmJump) 0 472 49237) ∧ P.next 12646 = 12653 ∧ P.blockCost (P.blockStartOf 12646) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12646 (.regImmOffset (.loadImmJump) 0 472 49237) 12653 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 19) (by decide))) (List.getElem_mem (l := facts_2003) (n := 1) (by decide)))
-    (show CodeFact.block 12602 12653 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 10) (by decide))) (List.getElem_mem (l := facts_1994) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12646 (.regImmOffset (.loadImmJump) 0 472 49237) 12653 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 21) (by decide))) (List.getElem_mem (l := facts_2005) (n := 1) (by decide)))
+    (show CodeFact.block 12602 12653 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 12) (by decide))) (List.getElem_mem (l := facts_1996) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12646 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12646 = 12653 := (d_12646 (p := p)).2.2.1
 
 theorem d_12653 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12653 = some P ∧ P.decode 12653 = some (.twoRegImm (.loadIndU64) 5 1 1496) ∧ P.next 12653 = 12657 ∧ P.blockCost (P.blockStartOf 12653) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12653 (.twoRegImm (.loadIndU64) 5 1 1496) 12657 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 20) (by decide))) (List.getElem_mem (l := facts_2004) (n := 0) (by decide)))
-    (show CodeFact.block 12653 12662 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 21) (by decide))) (List.getElem_mem (l := facts_2005) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12653 (.twoRegImm (.loadIndU64) 5 1 1496) 12657 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 22) (by decide))) (List.getElem_mem (l := facts_2006) (n := 0) (by decide)))
+    (show CodeFact.block 12653 12662 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 23) (by decide))) (List.getElem_mem (l := facts_2007) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12653 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12653 = 12657 := (d_12653 (p := p)).2.2.1
 
 theorem d_12657 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12657 = some P ∧ P.decode 12657 = some (.regImmOffset (.branchEqImm) 5 18446744073709551615 13927) ∧ P.next 12657 = 12662 ∧ P.blockCost (P.blockStartOf 12657) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12657 (.regImmOffset (.branchEqImm) 5 18446744073709551615 13927) 12662 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 22) (by decide))) (List.getElem_mem (l := facts_2006) (n := 1) (by decide)))
-    (show CodeFact.block 12653 12662 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 21) (by decide))) (List.getElem_mem (l := facts_2005) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12657 (.regImmOffset (.branchEqImm) 5 18446744073709551615 13927) 12662 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 24) (by decide))) (List.getElem_mem (l := facts_2008) (n := 1) (by decide)))
+    (show CodeFact.block 12653 12662 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 23) (by decide))) (List.getElem_mem (l := facts_2007) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12657 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12657 = 12662 := (d_12657 (p := p)).2.2.1
 
 theorem d_12662 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12662 = some P ∧ P.decode 12662 = some (.twoRegImm (.loadIndU64) 6 1 1504) ∧ P.next 12662 = 12666 ∧ P.blockCost (P.blockStartOf 12662) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12662 (.twoRegImm (.loadIndU64) 6 1 1504) 12666 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 23) (by decide))) (List.getElem_mem (l := facts_2007) (n := 0) (by decide)))
-    (show CodeFact.block 12662 12679 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 24) (by decide))) (List.getElem_mem (l := facts_2008) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12662 (.twoRegImm (.loadIndU64) 6 1 1504) 12666 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 25) (by decide))) (List.getElem_mem (l := facts_2009) (n := 0) (by decide)))
+    (show CodeFact.block 12662 12679 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 26) (by decide))) (List.getElem_mem (l := facts_2010) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12662 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12662 = 12666 := (d_12662 (p := p)).2.2.1
 
 theorem d_12666 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12666 = some P ∧ P.decode 12666 = some (.twoRegImm (.loadIndU64) 9 1 1512) ∧ P.next 12666 = 12670 ∧ P.blockCost (P.blockStartOf 12666) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12666 (.twoRegImm (.loadIndU64) 9 1 1512) 12670 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 25) (by decide))) (List.getElem_mem (l := facts_2009) (n := 1) (by decide)))
-    (show CodeFact.block 12662 12679 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 24) (by decide))) (List.getElem_mem (l := facts_2008) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12666 (.twoRegImm (.loadIndU64) 9 1 1512) 12670 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 27) (by decide))) (List.getElem_mem (l := facts_2011) (n := 1) (by decide)))
+    (show CodeFact.block 12662 12679 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 26) (by decide))) (List.getElem_mem (l := facts_2010) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12666 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12666 = 12670 := (d_12666 (p := p)).2.2.1
 
 theorem d_12670 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12670 = some P ∧ P.decode 12670 = some (.twoRegImm (.loadIndU64) 7 1 248) ∧ P.next 12670 = 12674 ∧ P.blockCost (P.blockStartOf 12670) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12670 (.twoRegImm (.loadIndU64) 7 1 248) 12674 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 26) (by decide))) (List.getElem_mem (l := facts_2010) (n := 0) (by decide)))
-    (show CodeFact.block 12662 12679 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 24) (by decide))) (List.getElem_mem (l := facts_2008) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12670 (.twoRegImm (.loadIndU64) 7 1 248) 12674 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 28) (by decide))) (List.getElem_mem (l := facts_2012) (n := 0) (by decide)))
+    (show CodeFact.block 12662 12679 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 26) (by decide))) (List.getElem_mem (l := facts_2010) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12670 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12670 = 12674 := (d_12670 (p := p)).2.2.1
 
 theorem d_12674 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12674 = some P ∧ P.decode 12674 = some (.twoReg (.moveReg) 8 6) ∧ P.next 12674 = 12676 ∧ P.blockCost (P.blockStartOf 12674) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12674 (.twoReg (.moveReg) 8 6) 12676 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 26) (by decide))) (List.getElem_mem (l := facts_2010) (n := 2) (by decide)))
-    (show CodeFact.block 12662 12679 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 24) (by decide))) (List.getElem_mem (l := facts_2008) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12674 (.twoReg (.moveReg) 8 6) 12676 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 28) (by decide))) (List.getElem_mem (l := facts_2012) (n := 2) (by decide)))
+    (show CodeFact.block 12662 12679 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 26) (by decide))) (List.getElem_mem (l := facts_2010) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12674 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12674 = 12676 := (d_12674 (p := p)).2.2.1
 
 theorem d_12676 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12676 = some P ∧ P.decode 12676 = some (.oneImm (.ecalli) 27) ∧ P.next 12676 = 12678 ∧ P.blockCost (P.blockStartOf 12676) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12676 (.oneImm (.ecalli) 27) 12678 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 27) (by decide))) (List.getElem_mem (l := facts_2011) (n := 1) (by decide)))
-    (show CodeFact.block 12662 12679 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 24) (by decide))) (List.getElem_mem (l := facts_2008) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12676 (.oneImm (.ecalli) 27) 12678 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 29) (by decide))) (List.getElem_mem (l := facts_2013) (n := 1) (by decide)))
+    (show CodeFact.block 12662 12679 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 26) (by decide))) (List.getElem_mem (l := facts_2010) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12676 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12676 = 12678 := (d_12676 (p := p)).2.2.1
 
 theorem d_12678 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12678 = some P ∧ P.decode 12678 = some (.noArgs (.fallthrough)) ∧ P.next 12678 = 12679 ∧ P.blockCost (P.blockStartOf 12678) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12678 (.noArgs (.fallthrough)) 12679 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 28) (by decide))) (List.getElem_mem (l := facts_2012) (n := 0) (by decide)))
-    (show CodeFact.block 12662 12679 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 24) (by decide))) (List.getElem_mem (l := facts_2008) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12678 (.noArgs (.fallthrough)) 12679 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 30) (by decide))) (List.getElem_mem (l := facts_2014) (n := 0) (by decide)))
+    (show CodeFact.block 12662 12679 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 26) (by decide))) (List.getElem_mem (l := facts_2010) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12678 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12678 = 12679 := (d_12678 (p := p)).2.2.1
 
 theorem d_12679 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12679 = some P ∧ P.decode 12679 = some (.twoRegImm (.addImm64) 8 7 9) ∧ P.next 12679 = 12682 ∧ P.blockCost (P.blockStartOf 12679) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12679 (.twoRegImm (.addImm64) 8 7 9) 12682 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 28) (by decide))) (List.getElem_mem (l := facts_2012) (n := 2) (by decide)))
-    (show CodeFact.block 12679 12687 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 29) (by decide))) (List.getElem_mem (l := facts_2013) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12679 (.twoRegImm (.addImm64) 8 7 9) 12682 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 30) (by decide))) (List.getElem_mem (l := facts_2014) (n := 2) (by decide)))
+    (show CodeFact.block 12679 12687 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 31) (by decide))) (List.getElem_mem (l := facts_2015) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12679 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12679 = 12682 := (d_12679 (p := p)).2.2.1
 
 theorem d_12682 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12682 = some P ∧ P.decode 12682 = some (.regImmOffset (.branchLtUImm) 8 8 9273) ∧ P.next 12682 = 12687 ∧ P.blockCost (P.blockStartOf 12682) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12682 (.regImmOffset (.branchLtUImm) 8 8 9273) 12687 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 30) (by decide))) (List.getElem_mem (l := facts_2014) (n := 1) (by decide)))
-    (show CodeFact.block 12679 12687 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 29) (by decide))) (List.getElem_mem (l := facts_2013) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12682 (.regImmOffset (.branchLtUImm) 8 8 9273) 12687 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 32) (by decide))) (List.getElem_mem (l := facts_2016) (n := 1) (by decide)))
+    (show CodeFact.block 12679 12687 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 31) (by decide))) (List.getElem_mem (l := facts_2015) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12682 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12682 = 12687 := (d_12682 (p := p)).2.2.1
 
 theorem d_12687 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12687 = some P ∧ P.decode 12687 = some (.regImmOffset (.branchNeImm) 7 0 15361) ∧ P.next 12687 = 12691 ∧ P.blockCost (P.blockStartOf 12687) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12687 (.regImmOffset (.branchNeImm) 7 0 15361) 12691 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 31) (by decide))) (List.getElem_mem (l := facts_2015) (n := 0) (by decide)))
-    (show CodeFact.block 12687 12691 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 32) (by decide))) (List.getElem_mem (l := facts_2016) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12687 (.regImmOffset (.branchNeImm) 7 0 15361) 12691 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 33) (by decide))) (List.getElem_mem (l := facts_2017) (n := 0) (by decide)))
+    (show CodeFact.block 12687 12691 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 34) (by decide))) (List.getElem_mem (l := facts_2018) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12687 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12687 = 12691 := (d_12687 (p := p)).2.2.1
 
 theorem d_12691 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12691 = some P ∧ P.decode 12691 = some (.regTwoImm (.storeImmIndU8) 1 1000 0) ∧ P.next 12691 = 12695 ∧ P.blockCost (P.blockStartOf 12691) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12691 (.regTwoImm (.storeImmIndU8) 1 1000 0) 12695 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 33) (by decide))) (List.getElem_mem (l := facts_2017) (n := 1) (by decide)))
-    (show CodeFact.block 12691 12699 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 34) (by decide))) (List.getElem_mem (l := facts_2018) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12691 (.regTwoImm (.storeImmIndU8) 1 1000 0) 12695 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 35) (by decide))) (List.getElem_mem (l := facts_2019) (n := 1) (by decide)))
+    (show CodeFact.block 12691 12699 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 36) (by decide))) (List.getElem_mem (l := facts_2020) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12691 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12691 = 12695 := (d_12691 (p := p)).2.2.1
 
 theorem d_12695 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12695 = some P ∧ P.decode 12695 = some (.regImmOffset (.branchNeImm) 5 0 9285) ∧ P.next 12695 = 12699 ∧ P.blockCost (P.blockStartOf 12695) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12695 (.regImmOffset (.branchNeImm) 5 0 9285) 12699 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 35) (by decide))) (List.getElem_mem (l := facts_2019) (n := 1) (by decide)))
-    (show CodeFact.block 12691 12699 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 34) (by decide))) (List.getElem_mem (l := facts_2018) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12695 (.regImmOffset (.branchNeImm) 5 0 9285) 12699 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 37) (by decide))) (List.getElem_mem (l := facts_2021) (n := 1) (by decide)))
+    (show CodeFact.block 12691 12699 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 36) (by decide))) (List.getElem_mem (l := facts_2020) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12695 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12695 = 12699 := (d_12695 (p := p)).2.2.1
 
 theorem d_12699 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12699 = some P ∧ P.decode 12699 = some (.oneOffset (.jump) 14278) ∧ P.next 12699 = 12702 ∧ P.blockCost (P.blockStartOf 12699) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12699 (.oneOffset (.jump) 14278) 12702 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 36) (by decide))) (List.getElem_mem (l := facts_2020) (n := 0) (by decide)))
-    (show CodeFact.block 12699 12702 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 37) (by decide))) (List.getElem_mem (l := facts_2021) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12699 (.oneOffset (.jump) 14278) 12702 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 38) (by decide))) (List.getElem_mem (l := facts_2022) (n := 0) (by decide)))
+    (show CodeFact.block 12699 12702 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 39) (by decide))) (List.getElem_mem (l := facts_2023) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12699 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12699 = 12702 := (d_12699 (p := p)).2.2.1
 
 theorem d_12702 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12702 = some P ∧ P.decode 12702 = some (.noArgs (.unlikely)) ∧ P.next 12702 = 12703 ∧ P.blockCost (P.blockStartOf 12702) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12702 (.noArgs (.unlikely)) 12703 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 38) (by decide))) (List.getElem_mem (l := facts_2022) (n := 1) (by decide)))
-    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 39) (by decide))) (List.getElem_mem (l := facts_2023) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12702 (.noArgs (.unlikely)) 12703 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 40) (by decide))) (List.getElem_mem (l := facts_2024) (n := 1) (by decide)))
+    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 41) (by decide))) (List.getElem_mem (l := facts_2025) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12702 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12702 = 12703 := (d_12702 (p := p)).2.2.1
 
 theorem d_12703 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12703 = some P ∧ P.decode 12703 = some (.twoRegImm (.shloRImm64) 11 7 32) ∧ P.next 12703 = 12706 ∧ P.blockCost (P.blockStartOf 12703) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12703 (.twoRegImm (.shloRImm64) 11 7 32) 12706 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 40) (by decide))) (List.getElem_mem (l := facts_2024) (n := 1) (by decide)))
-    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 39) (by decide))) (List.getElem_mem (l := facts_2023) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12703 (.twoRegImm (.shloRImm64) 11 7 32) 12706 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 42) (by decide))) (List.getElem_mem (l := facts_2026) (n := 1) (by decide)))
+    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 41) (by decide))) (List.getElem_mem (l := facts_2025) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12703 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12703 = 12706 := (d_12703 (p := p)).2.2.1
 
 theorem d_12706 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12706 = some P ∧ P.decode 12706 = some (.twoRegImm (.loadIndU64) 7 1 1384) ∧ P.next 12706 = 12710 ∧ P.blockCost (P.blockStartOf 12706) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12706 (.twoRegImm (.loadIndU64) 7 1 1384) 12710 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 41) (by decide))) (List.getElem_mem (l := facts_2025) (n := 0) (by decide)))
-    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 39) (by decide))) (List.getElem_mem (l := facts_2023) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12706 (.twoRegImm (.loadIndU64) 7 1 1384) 12710 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 43) (by decide))) (List.getElem_mem (l := facts_2027) (n := 0) (by decide)))
+    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 41) (by decide))) (List.getElem_mem (l := facts_2025) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12706 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12706 = 12710 := (d_12706 (p := p)).2.2.1
 
 theorem d_12710 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12710 = some P ∧ P.decode 12710 = some (.twoRegImm (.loadIndU64) 8 1 1392) ∧ P.next 12710 = 12714 ∧ P.blockCost (P.blockStartOf 12710) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12710 (.twoRegImm (.loadIndU64) 8 1 1392) 12714 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 41) (by decide))) (List.getElem_mem (l := facts_2025) (n := 2) (by decide)))
-    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 39) (by decide))) (List.getElem_mem (l := facts_2023) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12710 (.twoRegImm (.loadIndU64) 8 1 1392) 12714 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 43) (by decide))) (List.getElem_mem (l := facts_2027) (n := 2) (by decide)))
+    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 41) (by decide))) (List.getElem_mem (l := facts_2025) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12710 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12710 = 12714 := (d_12710 (p := p)).2.2.1
 
 theorem d_12714 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12714 = some P ∧ P.decode 12714 = some (.twoRegImm (.loadIndU64) 9 1 1400) ∧ P.next 12714 = 12718 ∧ P.blockCost (P.blockStartOf 12714) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12714 (.twoRegImm (.loadIndU64) 9 1 1400) 12718 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 42) (by decide))) (List.getElem_mem (l := facts_2026) (n := 1) (by decide)))
-    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 39) (by decide))) (List.getElem_mem (l := facts_2023) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12714 (.twoRegImm (.loadIndU64) 9 1 1400) 12718 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 44) (by decide))) (List.getElem_mem (l := facts_2028) (n := 1) (by decide)))
+    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 41) (by decide))) (List.getElem_mem (l := facts_2025) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12714 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12714 = 12718 := (d_12714 (p := p)).2.2.1
 
 theorem d_12718 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12718 = some P ∧ P.decode 12718 = some (.twoRegImm (.loadIndU64) 10 1 1408) ∧ P.next 12718 = 12722 ∧ P.blockCost (P.blockStartOf 12718) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12718 (.twoRegImm (.loadIndU64) 10 1 1408) 12722 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 43) (by decide))) (List.getElem_mem (l := facts_2027) (n := 0) (by decide)))
-    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 39) (by decide))) (List.getElem_mem (l := facts_2023) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12718 (.twoRegImm (.loadIndU64) 10 1 1408) 12722 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 45) (by decide))) (List.getElem_mem (l := facts_2029) (n := 0) (by decide)))
+    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 41) (by decide))) (List.getElem_mem (l := facts_2025) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12718 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12718 = 12722 := (d_12718 (p := p)).2.2.1
 
 theorem d_12722 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12722 = some P ∧ P.decode 12722 = some (.twoRegImm (.storeIndU64) 7 1 1416) ∧ P.next 12722 = 12726 ∧ P.blockCost (P.blockStartOf 12722) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12722 (.twoRegImm (.storeIndU64) 7 1 1416) 12726 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 43) (by decide))) (List.getElem_mem (l := facts_2027) (n := 2) (by decide)))
-    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 39) (by decide))) (List.getElem_mem (l := facts_2023) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12722 (.twoRegImm (.storeIndU64) 7 1 1416) 12726 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 45) (by decide))) (List.getElem_mem (l := facts_2029) (n := 2) (by decide)))
+    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 41) (by decide))) (List.getElem_mem (l := facts_2025) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12722 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12722 = 12726 := (d_12722 (p := p)).2.2.1
 
 theorem d_12726 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12726 = some P ∧ P.decode 12726 = some (.twoRegImm (.storeIndU64) 8 1 1424) ∧ P.next 12726 = 12730 ∧ P.blockCost (P.blockStartOf 12726) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12726 (.twoRegImm (.storeIndU64) 8 1 1424) 12730 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 44) (by decide))) (List.getElem_mem (l := facts_2028) (n := 1) (by decide)))
-    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 39) (by decide))) (List.getElem_mem (l := facts_2023) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12726 (.twoRegImm (.storeIndU64) 8 1 1424) 12730 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 46) (by decide))) (List.getElem_mem (l := facts_2030) (n := 1) (by decide)))
+    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 41) (by decide))) (List.getElem_mem (l := facts_2025) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12726 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12726 = 12730 := (d_12726 (p := p)).2.2.1
 
 theorem d_12730 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12730 = some P ∧ P.decode 12730 = some (.twoRegImm (.storeIndU64) 9 1 1432) ∧ P.next 12730 = 12734 ∧ P.blockCost (P.blockStartOf 12730) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12730 (.twoRegImm (.storeIndU64) 9 1 1432) 12734 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 45) (by decide))) (List.getElem_mem (l := facts_2029) (n := 0) (by decide)))
-    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 39) (by decide))) (List.getElem_mem (l := facts_2023) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12730 (.twoRegImm (.storeIndU64) 9 1 1432) 12734 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 47) (by decide))) (List.getElem_mem (l := facts_2031) (n := 0) (by decide)))
+    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 41) (by decide))) (List.getElem_mem (l := facts_2025) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12730 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12730 = 12734 := (d_12730 (p := p)).2.2.1
 
 theorem d_12734 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12734 = some P ∧ P.decode 12734 = some (.twoRegImm (.storeIndU64) 10 1 1440) ∧ P.next 12734 = 12738 ∧ P.blockCost (P.blockStartOf 12734) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12734 (.twoRegImm (.storeIndU64) 10 1 1440) 12738 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 45) (by decide))) (List.getElem_mem (l := facts_2029) (n := 2) (by decide)))
-    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 39) (by decide))) (List.getElem_mem (l := facts_2023) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12734 (.twoRegImm (.storeIndU64) 10 1 1440) 12738 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 47) (by decide))) (List.getElem_mem (l := facts_2031) (n := 2) (by decide)))
+    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 41) (by decide))) (List.getElem_mem (l := facts_2025) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12734 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12734 = 12738 := (d_12734 (p := p)).2.2.1
 
 theorem d_12738 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12738 = some P ∧ P.decode 12738 = some (.twoRegImm (.storeIndU64) 11 1 72) ∧ P.next 12738 = 12741 ∧ P.blockCost (P.blockStartOf 12738) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12738 (.twoRegImm (.storeIndU64) 11 1 72) 12741 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 46) (by decide))) (List.getElem_mem (l := facts_2030) (n := 1) (by decide)))
-    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 39) (by decide))) (List.getElem_mem (l := facts_2023) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12738 (.twoRegImm (.storeIndU64) 11 1 72) 12741 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 48) (by decide))) (List.getElem_mem (l := facts_2032) (n := 1) (by decide)))
+    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 41) (by decide))) (List.getElem_mem (l := facts_2025) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12738 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12738 = 12741 := (d_12738 (p := p)).2.2.1
 
 theorem d_12741 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12741 = some P ∧ P.decode 12741 = some (.twoRegImm (.storeIndU32) 11 1 1564) ∧ P.next 12741 = 12745 ∧ P.blockCost (P.blockStartOf 12741) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12741 (.twoRegImm (.storeIndU32) 11 1 1564) 12745 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 47) (by decide))) (List.getElem_mem (l := facts_2031) (n := 0) (by decide)))
-    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 39) (by decide))) (List.getElem_mem (l := facts_2023) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12741 (.twoRegImm (.storeIndU32) 11 1 1564) 12745 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 49) (by decide))) (List.getElem_mem (l := facts_2033) (n := 0) (by decide)))
+    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 41) (by decide))) (List.getElem_mem (l := facts_2025) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12741 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12741 = 12745 := (d_12741 (p := p)).2.2.1
 
 theorem d_12745 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12745 = some P ∧ P.decode 12745 = some (.regImm (.loadImm) 7 2502) ∧ P.next 12745 = 12749 ∧ P.blockCost (P.blockStartOf 12745) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12745 (.regImm (.loadImm) 7 2502) 12749 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 47) (by decide))) (List.getElem_mem (l := facts_2031) (n := 2) (by decide)))
-    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 39) (by decide))) (List.getElem_mem (l := facts_2023) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12745 (.regImm (.loadImm) 7 2502) 12749 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 49) (by decide))) (List.getElem_mem (l := facts_2033) (n := 2) (by decide)))
+    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 41) (by decide))) (List.getElem_mem (l := facts_2025) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12745 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12745 = 12749 := (d_12745 (p := p)).2.2.1
 
 theorem d_12749 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12749 = some P ∧ P.decode 12749 = some (.twoRegImm (.addImm64) 8 1 1564) ∧ P.next 12749 = 12753 ∧ P.blockCost (P.blockStartOf 12749) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12749 (.twoRegImm (.addImm64) 8 1 1564) 12753 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 48) (by decide))) (List.getElem_mem (l := facts_2032) (n := 1) (by decide)))
-    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 39) (by decide))) (List.getElem_mem (l := facts_2023) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12749 (.twoRegImm (.addImm64) 8 1 1564) 12753 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 50) (by decide))) (List.getElem_mem (l := facts_2034) (n := 1) (by decide)))
+    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 41) (by decide))) (List.getElem_mem (l := facts_2025) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12749 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12749 = 12753 := (d_12749 (p := p)).2.2.1
 
 theorem d_12753 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12753 = some P ∧ P.decode 12753 = some (.twoRegImm (.storeIndU64) 8 1 1496) ∧ P.next 12753 = 12757 ∧ P.blockCost (P.blockStartOf 12753) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12753 (.twoRegImm (.storeIndU64) 8 1 1496) 12757 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 49) (by decide))) (List.getElem_mem (l := facts_2033) (n := 0) (by decide)))
-    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 39) (by decide))) (List.getElem_mem (l := facts_2023) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12753 (.twoRegImm (.storeIndU64) 8 1 1496) 12757 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 51) (by decide))) (List.getElem_mem (l := facts_2035) (n := 0) (by decide)))
+    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 41) (by decide))) (List.getElem_mem (l := facts_2025) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12753 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12753 = 12757 := (d_12753 (p := p)).2.2.1
 
 theorem d_12757 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12757 = some P ∧ P.decode 12757 = some (.twoRegImm (.loadIndU64) 8 1 80) ∧ P.next 12757 = 12760 ∧ P.blockCost (P.blockStartOf 12757) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12757 (.twoRegImm (.loadIndU64) 8 1 80) 12760 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 49) (by decide))) (List.getElem_mem (l := facts_2033) (n := 2) (by decide)))
-    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 39) (by decide))) (List.getElem_mem (l := facts_2023) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12757 (.twoRegImm (.loadIndU64) 8 1 80) 12760 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 51) (by decide))) (List.getElem_mem (l := facts_2035) (n := 2) (by decide)))
+    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 41) (by decide))) (List.getElem_mem (l := facts_2025) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12757 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12757 = 12760 := (d_12757 (p := p)).2.2.1
 
 theorem d_12760 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12760 = some P ∧ P.decode 12760 = some (.twoRegImm (.storeIndU64) 8 1 1504) ∧ P.next 12760 = 12764 ∧ P.blockCost (P.blockStartOf 12760) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12760 (.twoRegImm (.storeIndU64) 8 1 1504) 12764 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 50) (by decide))) (List.getElem_mem (l := facts_2034) (n := 1) (by decide)))
-    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 39) (by decide))) (List.getElem_mem (l := facts_2023) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12760 (.twoRegImm (.storeIndU64) 8 1 1504) 12764 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 52) (by decide))) (List.getElem_mem (l := facts_2036) (n := 1) (by decide)))
+    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 41) (by decide))) (List.getElem_mem (l := facts_2025) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12760 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12760 = 12764 := (d_12760 (p := p)).2.2.1
 
 theorem d_12764 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12764 = some P ∧ P.decode 12764 = some (.twoRegImm (.addImm64) 8 1 1416) ∧ P.next 12764 = 12768 ∧ P.blockCost (P.blockStartOf 12764) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12764 (.twoRegImm (.addImm64) 8 1 1416) 12768 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 51) (by decide))) (List.getElem_mem (l := facts_2035) (n := 0) (by decide)))
-    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 39) (by decide))) (List.getElem_mem (l := facts_2023) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12764 (.twoRegImm (.addImm64) 8 1 1416) 12768 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 53) (by decide))) (List.getElem_mem (l := facts_2037) (n := 0) (by decide)))
+    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 41) (by decide))) (List.getElem_mem (l := facts_2025) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12764 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12764 = 12768 := (d_12764 (p := p)).2.2.1
 
 theorem d_12768 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12768 = some P ∧ P.decode 12768 = some (.twoRegImm (.storeIndU64) 8 1 1512) ∧ P.next 12768 = 12772 ∧ P.blockCost (P.blockStartOf 12768) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12768 (.twoRegImm (.storeIndU64) 8 1 1512) 12772 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 51) (by decide))) (List.getElem_mem (l := facts_2035) (n := 2) (by decide)))
-    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 39) (by decide))) (List.getElem_mem (l := facts_2023) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12768 (.twoRegImm (.storeIndU64) 8 1 1512) 12772 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 53) (by decide))) (List.getElem_mem (l := facts_2037) (n := 2) (by decide)))
+    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 41) (by decide))) (List.getElem_mem (l := facts_2025) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12768 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12768 = 12772 := (d_12768 (p := p)).2.2.1
 
 theorem d_12772 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12772 = some P ∧ P.decode 12772 = some (.twoRegImm (.storeIndU64) 7 1 1520) ∧ P.next 12772 = 12776 ∧ P.blockCost (P.blockStartOf 12772) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12772 (.twoRegImm (.storeIndU64) 7 1 1520) 12776 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 52) (by decide))) (List.getElem_mem (l := facts_2036) (n := 1) (by decide)))
-    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 39) (by decide))) (List.getElem_mem (l := facts_2023) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12772 (.twoRegImm (.storeIndU64) 7 1 1520) 12776 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 54) (by decide))) (List.getElem_mem (l := facts_2038) (n := 1) (by decide)))
+    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 41) (by decide))) (List.getElem_mem (l := facts_2025) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12772 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12772 = 12776 := (d_12772 (p := p)).2.2.1
 
 theorem d_12776 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12776 = some P ∧ P.decode 12776 = some (.regImm (.loadImm) 8 66129) ∧ P.next 12776 = 12781 ∧ P.blockCost (P.blockStartOf 12776) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12776 (.regImm (.loadImm) 8 66129) 12781 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 53) (by decide))) (List.getElem_mem (l := facts_2037) (n := 0) (by decide)))
-    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 39) (by decide))) (List.getElem_mem (l := facts_2023) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12776 (.regImm (.loadImm) 8 66129) 12781 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 55) (by decide))) (List.getElem_mem (l := facts_2039) (n := 0) (by decide)))
+    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 41) (by decide))) (List.getElem_mem (l := facts_2025) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12776 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12776 = 12781 := (d_12776 (p := p)).2.2.1
 
 theorem d_12781 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12781 = some P ∧ P.decode 12781 = some (.twoRegImm (.addImm64) 7 1 1472) ∧ P.next 12781 = 12785 ∧ P.blockCost (P.blockStartOf 12781) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12781 (.twoRegImm (.addImm64) 7 1 1472) 12785 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 53) (by decide))) (List.getElem_mem (l := facts_2037) (n := 2) (by decide)))
-    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 39) (by decide))) (List.getElem_mem (l := facts_2023) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12781 (.twoRegImm (.addImm64) 7 1 1472) 12785 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 55) (by decide))) (List.getElem_mem (l := facts_2039) (n := 2) (by decide)))
+    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 41) (by decide))) (List.getElem_mem (l := facts_2025) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12781 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12781 = 12785 := (d_12781 (p := p)).2.2.1
 
 theorem d_12785 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12785 = some P ∧ P.decode 12785 = some (.twoRegImm (.addImm64) 9 1 1496) ∧ P.next 12785 = 12789 ∧ P.blockCost (P.blockStartOf 12785) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12785 (.twoRegImm (.addImm64) 9 1 1496) 12789 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 54) (by decide))) (List.getElem_mem (l := facts_2038) (n := 1) (by decide)))
-    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 39) (by decide))) (List.getElem_mem (l := facts_2023) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12785 (.twoRegImm (.addImm64) 9 1 1496) 12789 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 56) (by decide))) (List.getElem_mem (l := facts_2040) (n := 1) (by decide)))
+    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 41) (by decide))) (List.getElem_mem (l := facts_2025) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12785 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12785 = 12789 := (d_12785 (p := p)).2.2.1
 
 theorem d_12789 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12789 = some P ∧ P.decode 12789 = some (.regImmOffset (.loadImmJump) 0 474 59375) ∧ P.next 12789 = 12796 ∧ P.blockCost (P.blockStartOf 12789) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12789 (.regImmOffset (.loadImmJump) 0 474 59375) 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 55) (by decide))) (List.getElem_mem (l := facts_2039) (n := 0) (by decide)))
-    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 39) (by decide))) (List.getElem_mem (l := facts_2023) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12789 (.regImmOffset (.loadImmJump) 0 474 59375) 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 57) (by decide))) (List.getElem_mem (l := facts_2041) (n := 0) (by decide)))
+    (show CodeFact.block 12702 12796 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 41) (by decide))) (List.getElem_mem (l := facts_2025) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12789 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12789 = 12796 := (d_12789 (p := p)).2.2.1
 
 theorem d_12796 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12796 = some P ∧ P.decode 12796 = some (.twoRegImm (.loadIndU64) 5 1 1480) ∧ P.next 12796 = 12800 ∧ P.blockCost (P.blockStartOf 12796) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12796 (.twoRegImm (.loadIndU64) 5 1 1480) 12800 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 55) (by decide))) (List.getElem_mem (l := facts_2039) (n := 2) (by decide)))
-    (show CodeFact.block 12796 12820 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 56) (by decide))) (List.getElem_mem (l := facts_2040) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12796 (.twoRegImm (.loadIndU64) 5 1 1480) 12800 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 57) (by decide))) (List.getElem_mem (l := facts_2041) (n := 2) (by decide)))
+    (show CodeFact.block 12796 12820 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 58) (by decide))) (List.getElem_mem (l := facts_2042) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12796 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12796 = 12800 := (d_12796 (p := p)).2.2.1
 
 theorem d_12800 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12800 = some P ∧ P.decode 12800 = some (.twoRegImm (.loadIndU64) 11 1 1488) ∧ P.next 12800 = 12804 ∧ P.blockCost (P.blockStartOf 12800) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12800 (.twoRegImm (.loadIndU64) 11 1 1488) 12804 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 57) (by decide))) (List.getElem_mem (l := facts_2041) (n := 1) (by decide)))
-    (show CodeFact.block 12796 12820 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 56) (by decide))) (List.getElem_mem (l := facts_2040) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12800 (.twoRegImm (.loadIndU64) 11 1 1488) 12804 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 59) (by decide))) (List.getElem_mem (l := facts_2043) (n := 1) (by decide)))
+    (show CodeFact.block 12796 12820 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 58) (by decide))) (List.getElem_mem (l := facts_2042) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12800 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12800 = 12804 := (d_12800 (p := p)).2.2.1
 
 theorem d_12804 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12804 = some P ∧ P.decode 12804 = some (.regImm (.loadImm) 8 66793) ∧ P.next 12804 = 12809 ∧ P.blockCost (P.blockStartOf 12804) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12804 (.regImm (.loadImm) 8 66793) 12809 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 58) (by decide))) (List.getElem_mem (l := facts_2042) (n := 0) (by decide)))
-    (show CodeFact.block 12796 12820 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 56) (by decide))) (List.getElem_mem (l := facts_2040) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12804 (.regImm (.loadImm) 8 66793) 12809 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 60) (by decide))) (List.getElem_mem (l := facts_2044) (n := 0) (by decide)))
+    (show CodeFact.block 12796 12820 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 58) (by decide))) (List.getElem_mem (l := facts_2042) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12804 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12804 = 12809 := (d_12804 (p := p)).2.2.1
 
 theorem d_12809 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12809 = some P ∧ P.decode 12809 = some (.regImm (.loadImm) 7 2) ∧ P.next 12809 = 12812 ∧ P.blockCost (P.blockStartOf 12809) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12809 (.regImm (.loadImm) 7 2) 12812 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 58) (by decide))) (List.getElem_mem (l := facts_2042) (n := 2) (by decide)))
-    (show CodeFact.block 12796 12820 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 56) (by decide))) (List.getElem_mem (l := facts_2040) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12809 (.regImm (.loadImm) 7 2) 12812 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 60) (by decide))) (List.getElem_mem (l := facts_2044) (n := 2) (by decide)))
+    (show CodeFact.block 12796 12820 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 58) (by decide))) (List.getElem_mem (l := facts_2042) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12809 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12809 = 12812 := (d_12809 (p := p)).2.2.1
 
 theorem d_12812 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12812 = some P ∧ P.decode 12812 = some (.regImm (.loadImm) 9 4) ∧ P.next 12812 = 12815 ∧ P.blockCost (P.blockStartOf 12812) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12812 (.regImm (.loadImm) 9 4) 12815 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 59) (by decide))) (List.getElem_mem (l := facts_2043) (n := 1) (by decide)))
-    (show CodeFact.block 12796 12820 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 56) (by decide))) (List.getElem_mem (l := facts_2040) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12812 (.regImm (.loadImm) 9 4) 12815 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 61) (by decide))) (List.getElem_mem (l := facts_2045) (n := 1) (by decide)))
+    (show CodeFact.block 12796 12820 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 58) (by decide))) (List.getElem_mem (l := facts_2042) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12812 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12812 = 12815 := (d_12812 (p := p)).2.2.1
 
 theorem d_12815 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12815 = some P ∧ P.decode 12815 = some (.twoReg (.moveReg) 10 5) ∧ P.next 12815 = 12817 ∧ P.blockCost (P.blockStartOf 12815) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12815 (.twoReg (.moveReg) 10 5) 12817 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 60) (by decide))) (List.getElem_mem (l := facts_2044) (n := 0) (by decide)))
-    (show CodeFact.block 12796 12820 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 56) (by decide))) (List.getElem_mem (l := facts_2040) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12815 (.twoReg (.moveReg) 10 5) 12817 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 62) (by decide))) (List.getElem_mem (l := facts_2046) (n := 0) (by decide)))
+    (show CodeFact.block 12796 12820 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 58) (by decide))) (List.getElem_mem (l := facts_2042) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12815 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12815 = 12817 := (d_12815 (p := p)).2.2.1
 
 theorem d_12817 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12817 = some P ∧ P.decode 12817 = some (.oneImm (.ecalli) 100) ∧ P.next 12817 = 12819 ∧ P.blockCost (P.blockStartOf 12817) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12817 (.oneImm (.ecalli) 100) 12819 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 60) (by decide))) (List.getElem_mem (l := facts_2044) (n := 2) (by decide)))
-    (show CodeFact.block 12796 12820 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 56) (by decide))) (List.getElem_mem (l := facts_2040) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12817 (.oneImm (.ecalli) 100) 12819 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 62) (by decide))) (List.getElem_mem (l := facts_2046) (n := 2) (by decide)))
+    (show CodeFact.block 12796 12820 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 58) (by decide))) (List.getElem_mem (l := facts_2042) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12817 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12817 = 12819 := (d_12817 (p := p)).2.2.1
 
 theorem d_12819 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12819 = some P ∧ P.decode 12819 = some (.noArgs (.fallthrough)) ∧ P.next 12819 = 12820 ∧ P.blockCost (P.blockStartOf 12819) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12819 (.noArgs (.fallthrough)) 12820 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 61) (by decide))) (List.getElem_mem (l := facts_2045) (n := 1) (by decide)))
-    (show CodeFact.block 12796 12820 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 56) (by decide))) (List.getElem_mem (l := facts_2040) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12819 (.noArgs (.fallthrough)) 12820 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 63) (by decide))) (List.getElem_mem (l := facts_2047) (n := 1) (by decide)))
+    (show CodeFact.block 12796 12820 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 58) (by decide))) (List.getElem_mem (l := facts_2042) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12819 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12819 = 12820 := (d_12819 (p := p)).2.2.1
 
 theorem d_12820 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12820 = some P ∧ P.decode 12820 = some (.twoRegImm (.loadIndU64) 8 1 1472) ∧ P.next 12820 = 12824 ∧ P.blockCost (P.blockStartOf 12820) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12820 (.twoRegImm (.loadIndU64) 8 1 1472) 12824 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 62) (by decide))) (List.getElem_mem (l := facts_2046) (n := 0) (by decide)))
-    (show CodeFact.block 12820 12827 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 63) (by decide))) (List.getElem_mem (l := facts_2047) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12820 (.twoRegImm (.loadIndU64) 8 1 1472) 12824 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 0) (by decide))) (List.getElem_mem (l := facts_2048) (n := 0) (by decide)))
+    (show CodeFact.block 12820 12827 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 1) (by decide))) (List.getElem_mem (l := facts_2049) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12820 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12820 = 12824 := (d_12820 (p := p)).2.2.1
 
 theorem d_12824 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12824 = some P ∧ P.decode 12824 = some (.regImmOffset (.branchEqImm) 8 0 12838) ∧ P.next 12824 = 12827 ∧ P.blockCost (P.blockStartOf 12824) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12824 (.regImmOffset (.branchEqImm) 8 0 12838) 12827 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 0) (by decide))) (List.getElem_mem (l := facts_2048) (n := 1) (by decide)))
-    (show CodeFact.block 12820 12827 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 31) (by decide)) (List.getElem_mem (l := factGroup_31) (n := 63) (by decide))) (List.getElem_mem (l := facts_2047) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12824 (.regImmOffset (.branchEqImm) 8 0 12838) 12827 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 2) (by decide))) (List.getElem_mem (l := facts_2050) (n := 1) (by decide)))
+    (show CodeFact.block 12820 12827 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 1) (by decide))) (List.getElem_mem (l := facts_2049) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12824 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12824 = 12827 := (d_12824 (p := p)).2.2.1
 
 theorem d_12827 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12827 = some P ∧ P.decode 12827 = some (.regImm (.loadImm) 9 1) ∧ P.next 12827 = 12830 ∧ P.blockCost (P.blockStartOf 12827) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12827 (.regImm (.loadImm) 9 1) 12830 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 1) (by decide))) (List.getElem_mem (l := facts_2049) (n := 0) (by decide)))
-    (show CodeFact.block 12827 12838 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 2) (by decide))) (List.getElem_mem (l := facts_2050) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12827 (.regImm (.loadImm) 9 1) 12830 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 3) (by decide))) (List.getElem_mem (l := facts_2051) (n := 0) (by decide)))
+    (show CodeFact.block 12827 12838 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 4) (by decide))) (List.getElem_mem (l := facts_2052) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12827 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12827 = 12830 := (d_12827 (p := p)).2.2.1
 
 theorem d_12830 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12830 = some P ∧ P.decode 12830 = some (.twoReg (.moveReg) 7 5) ∧ P.next 12830 = 12832 ∧ P.blockCost (P.blockStartOf 12830) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12830 (.twoReg (.moveReg) 7 5) 12832 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 3) (by decide))) (List.getElem_mem (l := facts_2051) (n := 1) (by decide)))
-    (show CodeFact.block 12827 12838 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 2) (by decide))) (List.getElem_mem (l := facts_2050) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12830 (.twoReg (.moveReg) 7 5) 12832 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 5) (by decide))) (List.getElem_mem (l := facts_2053) (n := 1) (by decide)))
+    (show CodeFact.block 12827 12838 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 4) (by decide))) (List.getElem_mem (l := facts_2052) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12830 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12830 = 12832 := (d_12830 (p := p)).2.2.1
 
 theorem d_12832 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12832 = some P ∧ P.decode 12832 = some (.regImmOffset (.loadImmJump) 0 476 40613) ∧ P.next 12832 = 12838 ∧ P.blockCost (P.blockStartOf 12832) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12832 (.regImmOffset (.loadImmJump) 0 476 40613) 12838 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 4) (by decide))) (List.getElem_mem (l := facts_2052) (n := 0) (by decide)))
-    (show CodeFact.block 12827 12838 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 2) (by decide))) (List.getElem_mem (l := facts_2050) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12832 (.regImmOffset (.loadImmJump) 0 476 40613) 12838 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 6) (by decide))) (List.getElem_mem (l := facts_2054) (n := 0) (by decide)))
+    (show CodeFact.block 12827 12838 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 4) (by decide))) (List.getElem_mem (l := facts_2052) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12832 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12832 = 12838 := (d_12832 (p := p)).2.2.1
 
 theorem d_12838 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12838 = some P ∧ P.decode 12838 = some (.twoRegImm (.addImm64) 7 1 1416) ∧ P.next 12838 = 12842 ∧ P.blockCost (P.blockStartOf 12838) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12838 (.twoRegImm (.addImm64) 7 1 1416) 12842 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 4) (by decide))) (List.getElem_mem (l := facts_2052) (n := 2) (by decide)))
-    (show CodeFact.block 12838 12853 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 5) (by decide))) (List.getElem_mem (l := facts_2053) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12838 (.twoRegImm (.addImm64) 7 1 1416) 12842 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 6) (by decide))) (List.getElem_mem (l := facts_2054) (n := 2) (by decide)))
+    (show CodeFact.block 12838 12853 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 7) (by decide))) (List.getElem_mem (l := facts_2055) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12838 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12838 = 12842 := (d_12838 (p := p)).2.2.1
 
 theorem d_12842 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12842 = some P ∧ P.decode 12842 = some (.twoRegImm (.addImm64) 8 1 1384) ∧ P.next 12842 = 12846 ∧ P.blockCost (P.blockStartOf 12842) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12842 (.twoRegImm (.addImm64) 8 1 1384) 12846 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 6) (by decide))) (List.getElem_mem (l := facts_2054) (n := 1) (by decide)))
-    (show CodeFact.block 12838 12853 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 5) (by decide))) (List.getElem_mem (l := facts_2053) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12842 (.twoRegImm (.addImm64) 8 1 1384) 12846 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 8) (by decide))) (List.getElem_mem (l := facts_2056) (n := 1) (by decide)))
+    (show CodeFact.block 12838 12853 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 7) (by decide))) (List.getElem_mem (l := facts_2055) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12842 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12842 = 12846 := (d_12842 (p := p)).2.2.1
 
 theorem d_12846 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12846 = some P ∧ P.decode 12846 = some (.regImmOffset (.loadImmJump) 0 478 49237) ∧ P.next 12846 = 12853 ∧ P.blockCost (P.blockStartOf 12846) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12846 (.regImmOffset (.loadImmJump) 0 478 49237) 12853 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 7) (by decide))) (List.getElem_mem (l := facts_2055) (n := 0) (by decide)))
-    (show CodeFact.block 12838 12853 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 5) (by decide))) (List.getElem_mem (l := facts_2053) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12846 (.regImmOffset (.loadImmJump) 0 478 49237) 12853 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 9) (by decide))) (List.getElem_mem (l := facts_2057) (n := 0) (by decide)))
+    (show CodeFact.block 12838 12853 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 7) (by decide))) (List.getElem_mem (l := facts_2055) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12846 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12846 = 12853 := (d_12846 (p := p)).2.2.1
 
 theorem d_12853 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12853 = some P ∧ P.decode 12853 = some (.twoRegImm (.loadIndU64) 8 1 1416) ∧ P.next 12853 = 12857 ∧ P.blockCost (P.blockStartOf 12853) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12853 (.twoRegImm (.loadIndU64) 8 1 1416) 12857 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 7) (by decide))) (List.getElem_mem (l := facts_2055) (n := 2) (by decide)))
-    (show CodeFact.block 12853 12862 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 8) (by decide))) (List.getElem_mem (l := facts_2056) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12853 (.twoRegImm (.loadIndU64) 8 1 1416) 12857 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 9) (by decide))) (List.getElem_mem (l := facts_2057) (n := 2) (by decide)))
+    (show CodeFact.block 12853 12862 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 10) (by decide))) (List.getElem_mem (l := facts_2058) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12853 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12853 = 12857 := (d_12853 (p := p)).2.2.1
 
 theorem d_12857 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12857 = some P ∧ P.decode 12857 = some (.regImmOffset (.branchEqImm) 8 18446744073709551615 13011) ∧ P.next 12857 = 12862 ∧ P.blockCost (P.blockStartOf 12857) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12857 (.regImmOffset (.branchEqImm) 8 18446744073709551615 13011) 12862 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 9) (by decide))) (List.getElem_mem (l := facts_2057) (n := 1) (by decide)))
-    (show CodeFact.block 12853 12862 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 8) (by decide))) (List.getElem_mem (l := facts_2056) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12857 (.regImmOffset (.branchEqImm) 8 18446744073709551615 13011) 12862 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 11) (by decide))) (List.getElem_mem (l := facts_2059) (n := 1) (by decide)))
+    (show CodeFact.block 12853 12862 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 10) (by decide))) (List.getElem_mem (l := facts_2058) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12857 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12857 = 12862 := (d_12857 (p := p)).2.2.1
 
 theorem d_12862 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12862 = some P ∧ P.decode 12862 = some (.noArgs (.unlikely)) ∧ P.next 12862 = 12863 ∧ P.blockCost (P.blockStartOf 12862) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12862 (.noArgs (.unlikely)) 12863 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 10) (by decide))) (List.getElem_mem (l := facts_2058) (n := 0) (by decide)))
-    (show CodeFact.block 12862 12882 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 11) (by decide))) (List.getElem_mem (l := facts_2059) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12862 (.noArgs (.unlikely)) 12863 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 12) (by decide))) (List.getElem_mem (l := facts_2060) (n := 0) (by decide)))
+    (show CodeFact.block 12862 12882 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 13) (by decide))) (List.getElem_mem (l := facts_2061) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12862 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12862 = 12863 := (d_12862 (p := p)).2.2.1
 
 theorem d_12863 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12863 = some P ∧ P.decode 12863 = some (.twoRegImm (.storeIndU64) 8 1 56) ∧ P.next 12863 = 12866 ∧ P.blockCost (P.blockStartOf 12863) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12863 (.twoRegImm (.storeIndU64) 8 1 56) 12866 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 12) (by decide))) (List.getElem_mem (l := facts_2060) (n := 1) (by decide)))
-    (show CodeFact.block 12862 12882 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 11) (by decide))) (List.getElem_mem (l := facts_2059) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12863 (.twoRegImm (.storeIndU64) 8 1 56) 12866 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 14) (by decide))) (List.getElem_mem (l := facts_2062) (n := 1) (by decide)))
+    (show CodeFact.block 12862 12882 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 13) (by decide))) (List.getElem_mem (l := facts_2061) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12863 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12863 = 12866 := (d_12863 (p := p)).2.2.1
 
 theorem d_12866 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12866 = some P ∧ P.decode 12866 = some (.twoRegImm (.loadIndU64) 6 1 1424) ∧ P.next 12866 = 12870 ∧ P.blockCost (P.blockStartOf 12866) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12866 (.twoRegImm (.loadIndU64) 6 1 1424) 12870 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 13) (by decide))) (List.getElem_mem (l := facts_2061) (n := 0) (by decide)))
-    (show CodeFact.block 12862 12882 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 11) (by decide))) (List.getElem_mem (l := facts_2059) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12866 (.twoRegImm (.loadIndU64) 6 1 1424) 12870 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 15) (by decide))) (List.getElem_mem (l := facts_2063) (n := 0) (by decide)))
+    (show CodeFact.block 12862 12882 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 13) (by decide))) (List.getElem_mem (l := facts_2061) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12866 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12866 = 12870 := (d_12866 (p := p)).2.2.1
 
 theorem d_12870 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12870 = some P ∧ P.decode 12870 = some (.twoRegImm (.loadIndU64) 9 1 1432) ∧ P.next 12870 = 12874 ∧ P.blockCost (P.blockStartOf 12870) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12870 (.twoRegImm (.loadIndU64) 9 1 1432) 12874 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 13) (by decide))) (List.getElem_mem (l := facts_2061) (n := 2) (by decide)))
-    (show CodeFact.block 12862 12882 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 11) (by decide))) (List.getElem_mem (l := facts_2059) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12870 (.twoRegImm (.loadIndU64) 9 1 1432) 12874 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 15) (by decide))) (List.getElem_mem (l := facts_2063) (n := 2) (by decide)))
+    (show CodeFact.block 12862 12882 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 13) (by decide))) (List.getElem_mem (l := facts_2061) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12870 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12870 = 12874 := (d_12870 (p := p)).2.2.1
 
 theorem d_12874 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12874 = some P ∧ P.decode 12874 = some (.twoRegImm (.loadIndU64) 7 1 72) ∧ P.next 12874 = 12877 ∧ P.blockCost (P.blockStartOf 12874) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12874 (.twoRegImm (.loadIndU64) 7 1 72) 12877 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 14) (by decide))) (List.getElem_mem (l := facts_2062) (n := 1) (by decide)))
-    (show CodeFact.block 12862 12882 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 11) (by decide))) (List.getElem_mem (l := facts_2059) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12874 (.twoRegImm (.loadIndU64) 7 1 72) 12877 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 16) (by decide))) (List.getElem_mem (l := facts_2064) (n := 1) (by decide)))
+    (show CodeFact.block 12862 12882 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 13) (by decide))) (List.getElem_mem (l := facts_2061) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12874 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12874 = 12877 := (d_12874 (p := p)).2.2.1
 
 theorem d_12877 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12877 = some P ∧ P.decode 12877 = some (.twoReg (.moveReg) 8 6) ∧ P.next 12877 = 12879 ∧ P.blockCost (P.blockStartOf 12877) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12877 (.twoReg (.moveReg) 8 6) 12879 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 15) (by decide))) (List.getElem_mem (l := facts_2063) (n := 0) (by decide)))
-    (show CodeFact.block 12862 12882 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 11) (by decide))) (List.getElem_mem (l := facts_2059) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12877 (.twoReg (.moveReg) 8 6) 12879 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 17) (by decide))) (List.getElem_mem (l := facts_2065) (n := 0) (by decide)))
+    (show CodeFact.block 12862 12882 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 13) (by decide))) (List.getElem_mem (l := facts_2061) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12877 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12877 = 12879 := (d_12877 (p := p)).2.2.1
 
 theorem d_12879 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12879 = some P ∧ P.decode 12879 = some (.oneImm (.ecalli) 27) ∧ P.next 12879 = 12881 ∧ P.blockCost (P.blockStartOf 12879) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12879 (.oneImm (.ecalli) 27) 12881 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 15) (by decide))) (List.getElem_mem (l := facts_2063) (n := 2) (by decide)))
-    (show CodeFact.block 12862 12882 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 11) (by decide))) (List.getElem_mem (l := facts_2059) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12879 (.oneImm (.ecalli) 27) 12881 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 17) (by decide))) (List.getElem_mem (l := facts_2065) (n := 2) (by decide)))
+    (show CodeFact.block 12862 12882 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 13) (by decide))) (List.getElem_mem (l := facts_2061) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12879 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12879 = 12881 := (d_12879 (p := p)).2.2.1
 
 theorem d_12881 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12881 = some P ∧ P.decode 12881 = some (.noArgs (.fallthrough)) ∧ P.next 12881 = 12882 ∧ P.blockCost (P.blockStartOf 12881) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12881 (.noArgs (.fallthrough)) 12882 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 16) (by decide))) (List.getElem_mem (l := facts_2064) (n := 1) (by decide)))
-    (show CodeFact.block 12862 12882 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 11) (by decide))) (List.getElem_mem (l := facts_2059) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12881 (.noArgs (.fallthrough)) 12882 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 18) (by decide))) (List.getElem_mem (l := facts_2066) (n := 1) (by decide)))
+    (show CodeFact.block 12862 12882 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 13) (by decide))) (List.getElem_mem (l := facts_2061) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12881 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12881 = 12882 := (d_12881 (p := p)).2.2.1
 
 theorem d_12882 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12882 = some P ∧ P.decode 12882 = some (.twoRegImm (.addImm64) 7 7 9) ∧ P.next 12882 = 12885 ∧ P.blockCost (P.blockStartOf 12882) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12882 (.twoRegImm (.addImm64) 7 7 9) 12885 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 17) (by decide))) (List.getElem_mem (l := facts_2065) (n := 0) (by decide)))
-    (show CodeFact.block 12882 12890 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 18) (by decide))) (List.getElem_mem (l := facts_2066) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12882 (.twoRegImm (.addImm64) 7 7 9) 12885 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 19) (by decide))) (List.getElem_mem (l := facts_2067) (n := 0) (by decide)))
+    (show CodeFact.block 12882 12890 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 20) (by decide))) (List.getElem_mem (l := facts_2068) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12882 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12882 = 12885 := (d_12882 (p := p)).2.2.1
 
 theorem d_12885 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12885 = some P ∧ P.decode 12885 = some (.regImmOffset (.branchGtUImm) 7 9 15361) ∧ P.next 12885 = 12890 ∧ P.blockCost (P.blockStartOf 12885) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12885 (.regImmOffset (.branchGtUImm) 7 9 15361) 12890 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 19) (by decide))) (List.getElem_mem (l := facts_2067) (n := 1) (by decide)))
-    (show CodeFact.block 12882 12890 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 18) (by decide))) (List.getElem_mem (l := facts_2066) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12885 (.regImmOffset (.branchGtUImm) 7 9 15361) 12890 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 21) (by decide))) (List.getElem_mem (l := facts_2069) (n := 1) (by decide)))
+    (show CodeFact.block 12882 12890 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 20) (by decide))) (List.getElem_mem (l := facts_2068) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12885 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12885 = 12890 := (d_12885 (p := p)).2.2.1
 
 theorem d_12890 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12890 = some P ∧ P.decode 12890 = some (.twoRegImm (.shloRImmAlt64) 8 7 767) ∧ P.next 12890 = 12894 ∧ P.blockCost (P.blockStartOf 12890) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12890 (.twoRegImm (.shloRImmAlt64) 8 7 767) 12894 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 20) (by decide))) (List.getElem_mem (l := facts_2068) (n := 0) (by decide)))
-    (show CodeFact.block 12890 12901 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 21) (by decide))) (List.getElem_mem (l := facts_2069) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12890 (.twoRegImm (.shloRImmAlt64) 8 7 767) 12894 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 22) (by decide))) (List.getElem_mem (l := facts_2070) (n := 0) (by decide)))
+    (show CodeFact.block 12890 12901 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 23) (by decide))) (List.getElem_mem (l := facts_2071) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12890 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12890 = 12894 := (d_12890 (p := p)).2.2.1
 
 theorem d_12894 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12894 = some P ∧ P.decode 12894 = some (.twoRegImm (.andImm) 8 8 1) ∧ P.next 12894 = 12897 ∧ P.blockCost (P.blockStartOf 12894) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12894 (.twoRegImm (.andImm) 8 8 1) 12897 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 22) (by decide))) (List.getElem_mem (l := facts_2070) (n := 1) (by decide)))
-    (show CodeFact.block 12890 12901 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 21) (by decide))) (List.getElem_mem (l := facts_2069) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12894 (.twoRegImm (.andImm) 8 8 1) 12897 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 24) (by decide))) (List.getElem_mem (l := facts_2072) (n := 1) (by decide)))
+    (show CodeFact.block 12890 12901 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 23) (by decide))) (List.getElem_mem (l := facts_2071) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12894 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12894 = 12897 := (d_12894 (p := p)).2.2.1
 
 theorem d_12897 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12897 = some P ∧ P.decode 12897 = some (.regImmOffset (.branchEqImm) 8 0 15361) ∧ P.next 12897 = 12901 ∧ P.blockCost (P.blockStartOf 12897) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12897 (.regImmOffset (.branchEqImm) 8 0 15361) 12901 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 23) (by decide))) (List.getElem_mem (l := facts_2071) (n := 0) (by decide)))
-    (show CodeFact.block 12890 12901 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 21) (by decide))) (List.getElem_mem (l := facts_2069) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12897 (.regImmOffset (.branchEqImm) 8 0 15361) 12901 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 25) (by decide))) (List.getElem_mem (l := facts_2073) (n := 0) (by decide)))
+    (show CodeFact.block 12890 12901 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 23) (by decide))) (List.getElem_mem (l := facts_2071) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12897 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12897 = 12901 := (d_12897 (p := p)).2.2.1
 
 theorem d_12901 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12901 = some P ∧ P.decode 12901 = some (.noArgs (.unlikely)) ∧ P.next 12901 = 12902 ∧ P.blockCost (P.blockStartOf 12901) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12901 (.noArgs (.unlikely)) 12902 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 23) (by decide))) (List.getElem_mem (l := facts_2071) (n := 2) (by decide)))
-    (show CodeFact.block 12901 12952 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 24) (by decide))) (List.getElem_mem (l := facts_2072) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12901 (.noArgs (.unlikely)) 12902 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 25) (by decide))) (List.getElem_mem (l := facts_2073) (n := 2) (by decide)))
+    (show CodeFact.block 12901 12952 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 26) (by decide))) (List.getElem_mem (l := facts_2074) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12901 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12901 = 12902 := (d_12901 (p := p)).2.2.1
 
 theorem d_12902 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12902 = some P ∧ P.decode 12902 = some (.regImm (.loadImm) 8 67364) ∧ P.next 12902 = 12907 ∧ P.blockCost (P.blockStartOf 12902) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12902 (.regImm (.loadImm) 8 67364) 12907 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 25) (by decide))) (List.getElem_mem (l := facts_2073) (n := 1) (by decide)))
-    (show CodeFact.block 12901 12952 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 24) (by decide))) (List.getElem_mem (l := facts_2072) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12902 (.regImm (.loadImm) 8 67364) 12907 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 27) (by decide))) (List.getElem_mem (l := facts_2075) (n := 1) (by decide)))
+    (show CodeFact.block 12901 12952 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 26) (by decide))) (List.getElem_mem (l := facts_2074) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12902 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12902 = 12907 := (d_12902 (p := p)).2.2.1
 
 theorem d_12907 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12907 = some P ∧ P.decode 12907 = some (.threeReg (.add64) 7 8 7) ∧ P.next 12907 = 12910 ∧ P.blockCost (P.blockStartOf 12907) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12907 (.threeReg (.add64) 7 8 7) 12910 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 26) (by decide))) (List.getElem_mem (l := facts_2074) (n := 0) (by decide)))
-    (show CodeFact.block 12901 12952 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 24) (by decide))) (List.getElem_mem (l := facts_2072) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12907 (.threeReg (.add64) 7 8 7) 12910 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 28) (by decide))) (List.getElem_mem (l := facts_2076) (n := 0) (by decide)))
+    (show CodeFact.block 12901 12952 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 26) (by decide))) (List.getElem_mem (l := facts_2074) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12907 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12907 = 12910 := (d_12907 (p := p)).2.2.1
 
 theorem d_12910 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12910 = some P ∧ P.decode 12910 = some (.twoRegImm (.loadIndU8) 7 7 0) ∧ P.next 12910 = 12912 ∧ P.blockCost (P.blockStartOf 12910) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12910 (.twoRegImm (.loadIndU8) 7 7 0) 12912 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 26) (by decide))) (List.getElem_mem (l := facts_2074) (n := 2) (by decide)))
-    (show CodeFact.block 12901 12952 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 24) (by decide))) (List.getElem_mem (l := facts_2072) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12910 (.twoRegImm (.loadIndU8) 7 7 0) 12912 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 28) (by decide))) (List.getElem_mem (l := facts_2076) (n := 2) (by decide)))
+    (show CodeFact.block 12901 12952 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 26) (by decide))) (List.getElem_mem (l := facts_2074) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12910 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12910 = 12912 := (d_12910 (p := p)).2.2.1
 
 theorem d_12912 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12912 = some P ∧ P.decode 12912 = some (.regImm (.loadImm) 8 686) ∧ P.next 12912 = 12916 ∧ P.blockCost (P.blockStartOf 12912) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12912 (.regImm (.loadImm) 8 686) 12916 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 27) (by decide))) (List.getElem_mem (l := facts_2075) (n := 1) (by decide)))
-    (show CodeFact.block 12901 12952 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 24) (by decide))) (List.getElem_mem (l := facts_2072) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12912 (.regImm (.loadImm) 8 686) 12916 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 29) (by decide))) (List.getElem_mem (l := facts_2077) (n := 1) (by decide)))
+    (show CodeFact.block 12901 12952 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 26) (by decide))) (List.getElem_mem (l := facts_2074) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12912 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12912 = 12916 := (d_12912 (p := p)).2.2.1
 
 theorem d_12916 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12916 = some P ∧ P.decode 12916 = some (.twoRegImm (.storeIndU8) 7 1 1448) ∧ P.next 12916 = 12920 ∧ P.blockCost (P.blockStartOf 12916) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12916 (.twoRegImm (.storeIndU8) 7 1 1448) 12920 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 28) (by decide))) (List.getElem_mem (l := facts_2076) (n := 0) (by decide)))
-    (show CodeFact.block 12901 12952 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 24) (by decide))) (List.getElem_mem (l := facts_2072) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12916 (.twoRegImm (.storeIndU8) 7 1 1448) 12920 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 30) (by decide))) (List.getElem_mem (l := facts_2078) (n := 0) (by decide)))
+    (show CodeFact.block 12901 12952 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 26) (by decide))) (List.getElem_mem (l := facts_2074) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12916 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12916 = 12920 := (d_12916 (p := p)).2.2.1
 
 theorem d_12920 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12920 = some P ∧ P.decode 12920 = some (.twoRegImm (.addImm64) 7 1 1448) ∧ P.next 12920 = 12924 ∧ P.blockCost (P.blockStartOf 12920) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12920 (.twoRegImm (.addImm64) 7 1 1448) 12924 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 28) (by decide))) (List.getElem_mem (l := facts_2076) (n := 2) (by decide)))
-    (show CodeFact.block 12901 12952 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 24) (by decide))) (List.getElem_mem (l := facts_2072) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12920 (.twoRegImm (.addImm64) 7 1 1448) 12924 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 30) (by decide))) (List.getElem_mem (l := facts_2078) (n := 2) (by decide)))
+    (show CodeFact.block 12901 12952 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 26) (by decide))) (List.getElem_mem (l := facts_2074) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12920 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12920 = 12924 := (d_12920 (p := p)).2.2.1
 
 theorem d_12924 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12924 = some P ∧ P.decode 12924 = some (.twoRegImm (.storeIndU64) 7 1 1472) ∧ P.next 12924 = 12928 ∧ P.blockCost (P.blockStartOf 12924) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12924 (.twoRegImm (.storeIndU64) 7 1 1472) 12928 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 29) (by decide))) (List.getElem_mem (l := facts_2077) (n := 1) (by decide)))
-    (show CodeFact.block 12901 12952 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 24) (by decide))) (List.getElem_mem (l := facts_2072) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12924 (.twoRegImm (.storeIndU64) 7 1 1472) 12928 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 31) (by decide))) (List.getElem_mem (l := facts_2079) (n := 1) (by decide)))
+    (show CodeFact.block 12901 12952 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 26) (by decide))) (List.getElem_mem (l := facts_2074) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12924 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12924 = 12928 := (d_12924 (p := p)).2.2.1
 
 theorem d_12928 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12928 = some P ∧ P.decode 12928 = some (.twoRegImm (.storeIndU64) 8 1 1480) ∧ P.next 12928 = 12932 ∧ P.blockCost (P.blockStartOf 12928) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12928 (.twoRegImm (.storeIndU64) 8 1 1480) 12932 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 30) (by decide))) (List.getElem_mem (l := facts_2078) (n := 0) (by decide)))
-    (show CodeFact.block 12901 12952 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 24) (by decide))) (List.getElem_mem (l := facts_2072) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12928 (.twoRegImm (.storeIndU64) 8 1 1480) 12932 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 32) (by decide))) (List.getElem_mem (l := facts_2080) (n := 0) (by decide)))
+    (show CodeFact.block 12901 12952 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 26) (by decide))) (List.getElem_mem (l := facts_2074) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12928 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12928 = 12932 := (d_12928 (p := p)).2.2.1
 
 theorem d_12932 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12932 = some P ∧ P.decode 12932 = some (.regImm (.loadImm) 8 66329) ∧ P.next 12932 = 12937 ∧ P.blockCost (P.blockStartOf 12932) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12932 (.regImm (.loadImm) 8 66329) 12937 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 30) (by decide))) (List.getElem_mem (l := facts_2078) (n := 2) (by decide)))
-    (show CodeFact.block 12901 12952 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 24) (by decide))) (List.getElem_mem (l := facts_2072) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12932 (.regImm (.loadImm) 8 66329) 12937 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 32) (by decide))) (List.getElem_mem (l := facts_2080) (n := 2) (by decide)))
+    (show CodeFact.block 12901 12952 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 26) (by decide))) (List.getElem_mem (l := facts_2074) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12932 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12932 = 12937 := (d_12932 (p := p)).2.2.1
 
 theorem d_12937 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12937 = some P ∧ P.decode 12937 = some (.twoRegImm (.addImm64) 7 1 1496) ∧ P.next 12937 = 12941 ∧ P.blockCost (P.blockStartOf 12937) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12937 (.twoRegImm (.addImm64) 7 1 1496) 12941 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 31) (by decide))) (List.getElem_mem (l := facts_2079) (n := 1) (by decide)))
-    (show CodeFact.block 12901 12952 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 24) (by decide))) (List.getElem_mem (l := facts_2072) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12937 (.twoRegImm (.addImm64) 7 1 1496) 12941 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 33) (by decide))) (List.getElem_mem (l := facts_2081) (n := 1) (by decide)))
+    (show CodeFact.block 12901 12952 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 26) (by decide))) (List.getElem_mem (l := facts_2074) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12937 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12937 = 12941 := (d_12937 (p := p)).2.2.1
 
 theorem d_12941 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12941 = some P ∧ P.decode 12941 = some (.twoRegImm (.addImm64) 9 1 1472) ∧ P.next 12941 = 12945 ∧ P.blockCost (P.blockStartOf 12941) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12941 (.twoRegImm (.addImm64) 9 1 1472) 12945 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 32) (by decide))) (List.getElem_mem (l := facts_2080) (n := 0) (by decide)))
-    (show CodeFact.block 12901 12952 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 24) (by decide))) (List.getElem_mem (l := facts_2072) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12941 (.twoRegImm (.addImm64) 9 1 1472) 12945 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 34) (by decide))) (List.getElem_mem (l := facts_2082) (n := 0) (by decide)))
+    (show CodeFact.block 12901 12952 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 26) (by decide))) (List.getElem_mem (l := facts_2074) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12941 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12941 = 12945 := (d_12941 (p := p)).2.2.1
 
 theorem d_12945 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12945 = some P ∧ P.decode 12945 = some (.regImmOffset (.loadImmJump) 0 480 59375) ∧ P.next 12945 = 12952 ∧ P.blockCost (P.blockStartOf 12945) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12945 (.regImmOffset (.loadImmJump) 0 480 59375) 12952 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 32) (by decide))) (List.getElem_mem (l := facts_2080) (n := 2) (by decide)))
-    (show CodeFact.block 12901 12952 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 24) (by decide))) (List.getElem_mem (l := facts_2072) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12945 (.regImmOffset (.loadImmJump) 0 480 59375) 12952 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 34) (by decide))) (List.getElem_mem (l := facts_2082) (n := 2) (by decide)))
+    (show CodeFact.block 12901 12952 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 26) (by decide))) (List.getElem_mem (l := facts_2074) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12945 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12945 = 12952 := (d_12945 (p := p)).2.2.1
 
 theorem d_12952 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12952 = some P ∧ P.decode 12952 = some (.twoRegImm (.loadIndU64) 5 1 1504) ∧ P.next 12952 = 12956 ∧ P.blockCost (P.blockStartOf 12952) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12952 (.twoRegImm (.loadIndU64) 5 1 1504) 12956 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 33) (by decide))) (List.getElem_mem (l := facts_2081) (n := 1) (by decide)))
-    (show CodeFact.block 12952 12976 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 34) (by decide))) (List.getElem_mem (l := facts_2082) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12952 (.twoRegImm (.loadIndU64) 5 1 1504) 12956 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 35) (by decide))) (List.getElem_mem (l := facts_2083) (n := 1) (by decide)))
+    (show CodeFact.block 12952 12976 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 36) (by decide))) (List.getElem_mem (l := facts_2084) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12952 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12952 = 12956 := (d_12952 (p := p)).2.2.1
 
 theorem d_12956 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12956 = some P ∧ P.decode 12956 = some (.twoRegImm (.loadIndU64) 11 1 1512) ∧ P.next 12956 = 12960 ∧ P.blockCost (P.blockStartOf 12956) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12956 (.twoRegImm (.loadIndU64) 11 1 1512) 12960 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 35) (by decide))) (List.getElem_mem (l := facts_2083) (n := 1) (by decide)))
-    (show CodeFact.block 12952 12976 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 34) (by decide))) (List.getElem_mem (l := facts_2082) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12956 (.twoRegImm (.loadIndU64) 11 1 1512) 12960 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 37) (by decide))) (List.getElem_mem (l := facts_2085) (n := 1) (by decide)))
+    (show CodeFact.block 12952 12976 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 36) (by decide))) (List.getElem_mem (l := facts_2084) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12956 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12956 = 12960 := (d_12956 (p := p)).2.2.1
 
 theorem d_12960 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12960 = some P ∧ P.decode 12960 = some (.regImm (.loadImm) 8 66793) ∧ P.next 12960 = 12965 ∧ P.blockCost (P.blockStartOf 12960) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12960 (.regImm (.loadImm) 8 66793) 12965 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 36) (by decide))) (List.getElem_mem (l := facts_2084) (n := 0) (by decide)))
-    (show CodeFact.block 12952 12976 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 34) (by decide))) (List.getElem_mem (l := facts_2082) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12960 (.regImm (.loadImm) 8 66793) 12965 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 38) (by decide))) (List.getElem_mem (l := facts_2086) (n := 0) (by decide)))
+    (show CodeFact.block 12952 12976 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 36) (by decide))) (List.getElem_mem (l := facts_2084) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12960 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12960 = 12965 := (d_12960 (p := p)).2.2.1
 
 theorem d_12965 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12965 = some P ∧ P.decode 12965 = some (.regImm (.loadImm) 7 2) ∧ P.next 12965 = 12968 ∧ P.blockCost (P.blockStartOf 12965) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12965 (.regImm (.loadImm) 7 2) 12968 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 36) (by decide))) (List.getElem_mem (l := facts_2084) (n := 2) (by decide)))
-    (show CodeFact.block 12952 12976 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 34) (by decide))) (List.getElem_mem (l := facts_2082) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12965 (.regImm (.loadImm) 7 2) 12968 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 38) (by decide))) (List.getElem_mem (l := facts_2086) (n := 2) (by decide)))
+    (show CodeFact.block 12952 12976 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 36) (by decide))) (List.getElem_mem (l := facts_2084) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12965 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12965 = 12968 := (d_12965 (p := p)).2.2.1
 
 theorem d_12968 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12968 = some P ∧ P.decode 12968 = some (.regImm (.loadImm) 9 4) ∧ P.next 12968 = 12971 ∧ P.blockCost (P.blockStartOf 12968) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12968 (.regImm (.loadImm) 9 4) 12971 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 37) (by decide))) (List.getElem_mem (l := facts_2085) (n := 1) (by decide)))
-    (show CodeFact.block 12952 12976 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 34) (by decide))) (List.getElem_mem (l := facts_2082) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12968 (.regImm (.loadImm) 9 4) 12971 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 39) (by decide))) (List.getElem_mem (l := facts_2087) (n := 1) (by decide)))
+    (show CodeFact.block 12952 12976 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 36) (by decide))) (List.getElem_mem (l := facts_2084) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12968 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12968 = 12971 := (d_12968 (p := p)).2.2.1
 
 theorem d_12971 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12971 = some P ∧ P.decode 12971 = some (.twoReg (.moveReg) 10 5) ∧ P.next 12971 = 12973 ∧ P.blockCost (P.blockStartOf 12971) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12971 (.twoReg (.moveReg) 10 5) 12973 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 38) (by decide))) (List.getElem_mem (l := facts_2086) (n := 0) (by decide)))
-    (show CodeFact.block 12952 12976 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 34) (by decide))) (List.getElem_mem (l := facts_2082) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12971 (.twoReg (.moveReg) 10 5) 12973 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 40) (by decide))) (List.getElem_mem (l := facts_2088) (n := 0) (by decide)))
+    (show CodeFact.block 12952 12976 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 36) (by decide))) (List.getElem_mem (l := facts_2084) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12971 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12971 = 12973 := (d_12971 (p := p)).2.2.1
 
 theorem d_12973 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12973 = some P ∧ P.decode 12973 = some (.oneImm (.ecalli) 100) ∧ P.next 12973 = 12975 ∧ P.blockCost (P.blockStartOf 12973) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12973 (.oneImm (.ecalli) 100) 12975 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 38) (by decide))) (List.getElem_mem (l := facts_2086) (n := 2) (by decide)))
-    (show CodeFact.block 12952 12976 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 34) (by decide))) (List.getElem_mem (l := facts_2082) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12973 (.oneImm (.ecalli) 100) 12975 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 40) (by decide))) (List.getElem_mem (l := facts_2088) (n := 2) (by decide)))
+    (show CodeFact.block 12952 12976 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 36) (by decide))) (List.getElem_mem (l := facts_2084) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12973 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12973 = 12975 := (d_12973 (p := p)).2.2.1
 
 theorem d_12975 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12975 = some P ∧ P.decode 12975 = some (.noArgs (.fallthrough)) ∧ P.next 12975 = 12976 ∧ P.blockCost (P.blockStartOf 12975) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12975 (.noArgs (.fallthrough)) 12976 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 39) (by decide))) (List.getElem_mem (l := facts_2087) (n := 1) (by decide)))
-    (show CodeFact.block 12952 12976 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 34) (by decide))) (List.getElem_mem (l := facts_2082) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12975 (.noArgs (.fallthrough)) 12976 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 41) (by decide))) (List.getElem_mem (l := facts_2089) (n := 1) (by decide)))
+    (show CodeFact.block 12952 12976 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 36) (by decide))) (List.getElem_mem (l := facts_2084) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12975 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12975 = 12976 := (d_12975 (p := p)).2.2.1
 
 theorem d_12976 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12976 = some P ∧ P.decode 12976 = some (.twoRegImm (.loadIndU64) 8 1 1496) ∧ P.next 12976 = 12980 ∧ P.blockCost (P.blockStartOf 12976) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12976 (.twoRegImm (.loadIndU64) 8 1 1496) 12980 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 40) (by decide))) (List.getElem_mem (l := facts_2088) (n := 0) (by decide)))
-    (show CodeFact.block 12976 12983 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 41) (by decide))) (List.getElem_mem (l := facts_2089) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12976 (.twoRegImm (.loadIndU64) 8 1 1496) 12980 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 42) (by decide))) (List.getElem_mem (l := facts_2090) (n := 0) (by decide)))
+    (show CodeFact.block 12976 12983 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 43) (by decide))) (List.getElem_mem (l := facts_2091) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12976 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12976 = 12980 := (d_12976 (p := p)).2.2.1
 
 theorem d_12980 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12980 = some P ∧ P.decode 12980 = some (.regImmOffset (.branchEqImm) 8 0 12994) ∧ P.next 12980 = 12983 ∧ P.blockCost (P.blockStartOf 12980) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12980 (.regImmOffset (.branchEqImm) 8 0 12994) 12983 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 42) (by decide))) (List.getElem_mem (l := facts_2090) (n := 1) (by decide)))
-    (show CodeFact.block 12976 12983 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 41) (by decide))) (List.getElem_mem (l := facts_2089) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12980 (.regImmOffset (.branchEqImm) 8 0 12994) 12983 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 44) (by decide))) (List.getElem_mem (l := facts_2092) (n := 1) (by decide)))
+    (show CodeFact.block 12976 12983 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 43) (by decide))) (List.getElem_mem (l := facts_2091) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12980 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12980 = 12983 := (d_12980 (p := p)).2.2.1
 
 theorem d_12983 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12983 = some P ∧ P.decode 12983 = some (.regImm (.loadImm) 9 1) ∧ P.next 12983 = 12986 ∧ P.blockCost (P.blockStartOf 12983) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12983 (.regImm (.loadImm) 9 1) 12986 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 43) (by decide))) (List.getElem_mem (l := facts_2091) (n := 0) (by decide)))
-    (show CodeFact.block 12983 12994 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 44) (by decide))) (List.getElem_mem (l := facts_2092) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12983 (.regImm (.loadImm) 9 1) 12986 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 45) (by decide))) (List.getElem_mem (l := facts_2093) (n := 0) (by decide)))
+    (show CodeFact.block 12983 12994 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 46) (by decide))) (List.getElem_mem (l := facts_2094) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12983 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12983 = 12986 := (d_12983 (p := p)).2.2.1
 
 theorem d_12986 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12986 = some P ∧ P.decode 12986 = some (.twoReg (.moveReg) 7 5) ∧ P.next 12986 = 12988 ∧ P.blockCost (P.blockStartOf 12986) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12986 (.twoReg (.moveReg) 7 5) 12988 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 45) (by decide))) (List.getElem_mem (l := facts_2093) (n := 1) (by decide)))
-    (show CodeFact.block 12983 12994 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 44) (by decide))) (List.getElem_mem (l := facts_2092) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12986 (.twoReg (.moveReg) 7 5) 12988 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 47) (by decide))) (List.getElem_mem (l := facts_2095) (n := 1) (by decide)))
+    (show CodeFact.block 12983 12994 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 46) (by decide))) (List.getElem_mem (l := facts_2094) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12986 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12986 = 12988 := (d_12986 (p := p)).2.2.1
 
 theorem d_12988 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12988 = some P ∧ P.decode 12988 = some (.regImmOffset (.loadImmJump) 0 482 40613) ∧ P.next 12988 = 12994 ∧ P.blockCost (P.blockStartOf 12988) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12988 (.regImmOffset (.loadImmJump) 0 482 40613) 12994 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 46) (by decide))) (List.getElem_mem (l := facts_2094) (n := 0) (by decide)))
-    (show CodeFact.block 12983 12994 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 44) (by decide))) (List.getElem_mem (l := facts_2092) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12988 (.regImmOffset (.loadImmJump) 0 482 40613) 12994 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 48) (by decide))) (List.getElem_mem (l := facts_2096) (n := 0) (by decide)))
+    (show CodeFact.block 12983 12994 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 46) (by decide))) (List.getElem_mem (l := facts_2094) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12988 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12988 = 12994 := (d_12988 (p := p)).2.2.1
 
 theorem d_12994 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12994 = some P ∧ P.decode 12994 = some (.twoRegImm (.loadIndU64) 8 1 56) ∧ P.next 12994 = 12997 ∧ P.blockCost (P.blockStartOf 12994) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12994 (.twoRegImm (.loadIndU64) 8 1 56) 12997 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 46) (by decide))) (List.getElem_mem (l := facts_2094) (n := 2) (by decide)))
-    (show CodeFact.block 12994 13000 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 47) (by decide))) (List.getElem_mem (l := facts_2095) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12994 (.twoRegImm (.loadIndU64) 8 1 56) 12997 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 48) (by decide))) (List.getElem_mem (l := facts_2096) (n := 2) (by decide)))
+    (show CodeFact.block 12994 13000 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 49) (by decide))) (List.getElem_mem (l := facts_2097) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12994 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12994 = 12997 := (d_12994 (p := p)).2.2.1
 
 theorem d_12997 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 12997 = some P ∧ P.decode 12997 = some (.regImmOffset (.branchEqImm) 8 0 13011) ∧ P.next 12997 = 13000 ∧ P.blockCost (P.blockStartOf 12997) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 12997 (.regImmOffset (.branchEqImm) 8 0 13011) 13000 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 48) (by decide))) (List.getElem_mem (l := facts_2096) (n := 1) (by decide)))
-    (show CodeFact.block 12994 13000 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 47) (by decide))) (List.getElem_mem (l := facts_2095) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 12997 (.regImmOffset (.branchEqImm) 8 0 13011) 13000 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 50) (by decide))) (List.getElem_mem (l := facts_2098) (n := 1) (by decide)))
+    (show CodeFact.block 12994 13000 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 49) (by decide))) (List.getElem_mem (l := facts_2097) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_12997 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 12997 = 13000 := (d_12997 (p := p)).2.2.1
 
 theorem d_13000 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13000 = some P ∧ P.decode 13000 = some (.regImm (.loadImm) 9 1) ∧ P.next 13000 = 13003 ∧ P.blockCost (P.blockStartOf 13000) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13000 (.regImm (.loadImm) 9 1) 13003 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 49) (by decide))) (List.getElem_mem (l := facts_2097) (n := 0) (by decide)))
-    (show CodeFact.block 13000 13011 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 50) (by decide))) (List.getElem_mem (l := facts_2098) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13000 (.regImm (.loadImm) 9 1) 13003 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 51) (by decide))) (List.getElem_mem (l := facts_2099) (n := 0) (by decide)))
+    (show CodeFact.block 13000 13011 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 52) (by decide))) (List.getElem_mem (l := facts_2100) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13000 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13000 = 13003 := (d_13000 (p := p)).2.2.1
 
 theorem d_13003 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13003 = some P ∧ P.decode 13003 = some (.twoReg (.moveReg) 7 6) ∧ P.next 13003 = 13005 ∧ P.blockCost (P.blockStartOf 13003) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13003 (.twoReg (.moveReg) 7 6) 13005 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 51) (by decide))) (List.getElem_mem (l := facts_2099) (n := 1) (by decide)))
-    (show CodeFact.block 13000 13011 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 50) (by decide))) (List.getElem_mem (l := facts_2098) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13003 (.twoReg (.moveReg) 7 6) 13005 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 53) (by decide))) (List.getElem_mem (l := facts_2101) (n := 1) (by decide)))
+    (show CodeFact.block 13000 13011 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 52) (by decide))) (List.getElem_mem (l := facts_2100) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13003 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13003 = 13005 := (d_13003 (p := p)).2.2.1
 
 theorem d_13005 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13005 = some P ∧ P.decode 13005 = some (.regImmOffset (.loadImmJump) 0 484 40613) ∧ P.next 13005 = 13011 ∧ P.blockCost (P.blockStartOf 13005) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13005 (.regImmOffset (.loadImmJump) 0 484 40613) 13011 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 52) (by decide))) (List.getElem_mem (l := facts_2100) (n := 0) (by decide)))
-    (show CodeFact.block 13000 13011 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 50) (by decide))) (List.getElem_mem (l := facts_2098) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13005 (.regImmOffset (.loadImmJump) 0 484 40613) 13011 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 54) (by decide))) (List.getElem_mem (l := facts_2102) (n := 0) (by decide)))
+    (show CodeFact.block 13000 13011 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 52) (by decide))) (List.getElem_mem (l := facts_2100) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13005 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13005 = 13011 := (d_13005 (p := p)).2.2.1
 
 theorem d_13011 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13011 = some P ∧ P.decode 13011 = some (.oneImm (.ecalli) 0) ∧ P.next 13011 = 13012 ∧ P.blockCost (P.blockStartOf 13011) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13011 (.oneImm (.ecalli) 0) 13012 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 52) (by decide))) (List.getElem_mem (l := facts_2100) (n := 2) (by decide)))
-    (show CodeFact.block 13011 13052 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 53) (by decide))) (List.getElem_mem (l := facts_2101) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13011 (.oneImm (.ecalli) 0) 13012 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 54) (by decide))) (List.getElem_mem (l := facts_2102) (n := 2) (by decide)))
+    (show CodeFact.block 13011 13052 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 55) (by decide))) (List.getElem_mem (l := facts_2103) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13011 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13011 = 13012 := (d_13011 (p := p)).2.2.1
 
 theorem d_13012 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13012 = some P ∧ P.decode 13012 = some (.twoRegImm (.storeIndU64) 7 1 1472) ∧ P.next 13012 = 13016 ∧ P.blockCost (P.blockStartOf 13012) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13012 (.twoRegImm (.storeIndU64) 7 1 1472) 13016 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 54) (by decide))) (List.getElem_mem (l := facts_2102) (n := 1) (by decide)))
-    (show CodeFact.block 13011 13052 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 53) (by decide))) (List.getElem_mem (l := facts_2101) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13012 (.twoRegImm (.storeIndU64) 7 1 1472) 13016 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 56) (by decide))) (List.getElem_mem (l := facts_2104) (n := 1) (by decide)))
+    (show CodeFact.block 13011 13052 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 55) (by decide))) (List.getElem_mem (l := facts_2103) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13012 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13012 = 13016 := (d_13012 (p := p)).2.2.1
 
 theorem d_13016 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13016 = some P ∧ P.decode 13016 = some (.twoRegImm (.addImm64) 7 1 1472) ∧ P.next 13016 = 13020 ∧ P.blockCost (P.blockStartOf 13016) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13016 (.twoRegImm (.addImm64) 7 1 1472) 13020 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 55) (by decide))) (List.getElem_mem (l := facts_2103) (n := 0) (by decide)))
-    (show CodeFact.block 13011 13052 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 53) (by decide))) (List.getElem_mem (l := facts_2101) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13016 (.twoRegImm (.addImm64) 7 1 1472) 13020 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 57) (by decide))) (List.getElem_mem (l := facts_2105) (n := 0) (by decide)))
+    (show CodeFact.block 13011 13052 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 55) (by decide))) (List.getElem_mem (l := facts_2103) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13016 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13016 = 13020 := (d_13016 (p := p)).2.2.1
 
 theorem d_13020 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13020 = some P ∧ P.decode 13020 = some (.twoRegImm (.storeIndU64) 7 1 1416) ∧ P.next 13020 = 13024 ∧ P.blockCost (P.blockStartOf 13020) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13020 (.twoRegImm (.storeIndU64) 7 1 1416) 13024 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 55) (by decide))) (List.getElem_mem (l := facts_2103) (n := 2) (by decide)))
-    (show CodeFact.block 13011 13052 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 53) (by decide))) (List.getElem_mem (l := facts_2101) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13020 (.twoRegImm (.storeIndU64) 7 1 1416) 13024 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 57) (by decide))) (List.getElem_mem (l := facts_2105) (n := 2) (by decide)))
+    (show CodeFact.block 13011 13052 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 55) (by decide))) (List.getElem_mem (l := facts_2103) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13020 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13020 = 13024 := (d_13020 (p := p)).2.2.1
 
 theorem d_13024 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13024 = some P ∧ P.decode 13024 = some (.twoRegImm (.loadIndU64) 7 1 136) ∧ P.next 13024 = 13028 ∧ P.blockCost (P.blockStartOf 13024) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13024 (.twoRegImm (.loadIndU64) 7 1 136) 13028 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 56) (by decide))) (List.getElem_mem (l := facts_2104) (n := 1) (by decide)))
-    (show CodeFact.block 13011 13052 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 53) (by decide))) (List.getElem_mem (l := facts_2101) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13024 (.twoRegImm (.loadIndU64) 7 1 136) 13028 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 58) (by decide))) (List.getElem_mem (l := facts_2106) (n := 1) (by decide)))
+    (show CodeFact.block 13011 13052 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 55) (by decide))) (List.getElem_mem (l := facts_2103) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13024 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13024 = 13028 := (d_13024 (p := p)).2.2.1
 
 theorem d_13028 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13028 = some P ∧ P.decode 13028 = some (.twoRegImm (.storeIndU64) 7 1 1424) ∧ P.next 13028 = 13032 ∧ P.blockCost (P.blockStartOf 13028) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13028 (.twoRegImm (.storeIndU64) 7 1 1424) 13032 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 57) (by decide))) (List.getElem_mem (l := facts_2105) (n := 0) (by decide)))
-    (show CodeFact.block 13011 13052 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 53) (by decide))) (List.getElem_mem (l := facts_2101) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13028 (.twoRegImm (.storeIndU64) 7 1 1424) 13032 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 59) (by decide))) (List.getElem_mem (l := facts_2107) (n := 0) (by decide)))
+    (show CodeFact.block 13011 13052 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 55) (by decide))) (List.getElem_mem (l := facts_2103) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13028 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13028 = 13032 := (d_13028 (p := p)).2.2.1
 
 theorem d_13032 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13032 = some P ∧ P.decode 13032 = some (.regImm (.loadImm) 8 66527) ∧ P.next 13032 = 13037 ∧ P.blockCost (P.blockStartOf 13032) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13032 (.regImm (.loadImm) 8 66527) 13037 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 57) (by decide))) (List.getElem_mem (l := facts_2105) (n := 2) (by decide)))
-    (show CodeFact.block 13011 13052 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 53) (by decide))) (List.getElem_mem (l := facts_2101) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13032 (.regImm (.loadImm) 8 66527) 13037 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 59) (by decide))) (List.getElem_mem (l := facts_2107) (n := 2) (by decide)))
+    (show CodeFact.block 13011 13052 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 55) (by decide))) (List.getElem_mem (l := facts_2103) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13032 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13032 = 13037 := (d_13032 (p := p)).2.2.1
 
 theorem d_13037 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13037 = some P ∧ P.decode 13037 = some (.twoRegImm (.addImm64) 7 1 1496) ∧ P.next 13037 = 13041 ∧ P.blockCost (P.blockStartOf 13037) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13037 (.twoRegImm (.addImm64) 7 1 1496) 13041 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 58) (by decide))) (List.getElem_mem (l := facts_2106) (n := 1) (by decide)))
-    (show CodeFact.block 13011 13052 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 53) (by decide))) (List.getElem_mem (l := facts_2101) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13037 (.twoRegImm (.addImm64) 7 1 1496) 13041 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 60) (by decide))) (List.getElem_mem (l := facts_2108) (n := 1) (by decide)))
+    (show CodeFact.block 13011 13052 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 55) (by decide))) (List.getElem_mem (l := facts_2103) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13037 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13037 = 13041 := (d_13037 (p := p)).2.2.1
 
 theorem d_13041 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13041 = some P ∧ P.decode 13041 = some (.twoRegImm (.addImm64) 9 1 1416) ∧ P.next 13041 = 13045 ∧ P.blockCost (P.blockStartOf 13041) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13041 (.twoRegImm (.addImm64) 9 1 1416) 13045 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 59) (by decide))) (List.getElem_mem (l := facts_2107) (n := 0) (by decide)))
-    (show CodeFact.block 13011 13052 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 53) (by decide))) (List.getElem_mem (l := facts_2101) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13041 (.twoRegImm (.addImm64) 9 1 1416) 13045 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 61) (by decide))) (List.getElem_mem (l := facts_2109) (n := 0) (by decide)))
+    (show CodeFact.block 13011 13052 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 55) (by decide))) (List.getElem_mem (l := facts_2103) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13041 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13041 = 13045 := (d_13041 (p := p)).2.2.1
 
 theorem d_13045 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13045 = some P ∧ P.decode 13045 = some (.regImmOffset (.loadImmJump) 0 486 59375) ∧ P.next 13045 = 13052 ∧ P.blockCost (P.blockStartOf 13045) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13045 (.regImmOffset (.loadImmJump) 0 486 59375) 13052 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 59) (by decide))) (List.getElem_mem (l := facts_2107) (n := 2) (by decide)))
-    (show CodeFact.block 13011 13052 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 53) (by decide))) (List.getElem_mem (l := facts_2101) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13045 (.regImmOffset (.loadImmJump) 0 486 59375) 13052 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 61) (by decide))) (List.getElem_mem (l := facts_2109) (n := 2) (by decide)))
+    (show CodeFact.block 13011 13052 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 55) (by decide))) (List.getElem_mem (l := facts_2103) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13045 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13045 = 13052 := (d_13045 (p := p)).2.2.1
 
 theorem d_13052 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13052 = some P ∧ P.decode 13052 = some (.twoRegImm (.loadIndU64) 5 1 1504) ∧ P.next 13052 = 13056 ∧ P.blockCost (P.blockStartOf 13052) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13052 (.twoRegImm (.loadIndU64) 5 1 1504) 13056 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 60) (by decide))) (List.getElem_mem (l := facts_2108) (n := 1) (by decide)))
-    (show CodeFact.block 13052 13076 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 61) (by decide))) (List.getElem_mem (l := facts_2109) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13052 (.twoRegImm (.loadIndU64) 5 1 1504) 13056 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 62) (by decide))) (List.getElem_mem (l := facts_2110) (n := 1) (by decide)))
+    (show CodeFact.block 13052 13076 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 63) (by decide))) (List.getElem_mem (l := facts_2111) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13052 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13052 = 13056 := (d_13052 (p := p)).2.2.1
 
 theorem d_13056 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13056 = some P ∧ P.decode 13056 = some (.twoRegImm (.loadIndU64) 11 1 1512) ∧ P.next 13056 = 13060 ∧ P.blockCost (P.blockStartOf 13056) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13056 (.twoRegImm (.loadIndU64) 11 1 1512) 13060 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 62) (by decide))) (List.getElem_mem (l := facts_2110) (n := 1) (by decide)))
-    (show CodeFact.block 13052 13076 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 61) (by decide))) (List.getElem_mem (l := facts_2109) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13056 (.twoRegImm (.loadIndU64) 11 1 1512) 13060 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 0) (by decide))) (List.getElem_mem (l := facts_2112) (n := 1) (by decide)))
+    (show CodeFact.block 13052 13076 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 63) (by decide))) (List.getElem_mem (l := facts_2111) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13056 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13056 = 13060 := (d_13056 (p := p)).2.2.1
 
 theorem d_13060 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13060 = some P ∧ P.decode 13060 = some (.regImm (.loadImm) 8 66793) ∧ P.next 13060 = 13065 ∧ P.blockCost (P.blockStartOf 13060) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13060 (.regImm (.loadImm) 8 66793) 13065 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 63) (by decide))) (List.getElem_mem (l := facts_2111) (n := 0) (by decide)))
-    (show CodeFact.block 13052 13076 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 61) (by decide))) (List.getElem_mem (l := facts_2109) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13060 (.regImm (.loadImm) 8 66793) 13065 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 1) (by decide))) (List.getElem_mem (l := facts_2113) (n := 0) (by decide)))
+    (show CodeFact.block 13052 13076 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 63) (by decide))) (List.getElem_mem (l := facts_2111) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13060 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13060 = 13065 := (d_13060 (p := p)).2.2.1
 
 theorem d_13065 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13065 = some P ∧ P.decode 13065 = some (.regImm (.loadImm) 7 2) ∧ P.next 13065 = 13068 ∧ P.blockCost (P.blockStartOf 13065) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13065 (.regImm (.loadImm) 7 2) 13068 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 63) (by decide))) (List.getElem_mem (l := facts_2111) (n := 2) (by decide)))
-    (show CodeFact.block 13052 13076 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 61) (by decide))) (List.getElem_mem (l := facts_2109) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13065 (.regImm (.loadImm) 7 2) 13068 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 1) (by decide))) (List.getElem_mem (l := facts_2113) (n := 2) (by decide)))
+    (show CodeFact.block 13052 13076 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 63) (by decide))) (List.getElem_mem (l := facts_2111) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13065 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13065 = 13068 := (d_13065 (p := p)).2.2.1
 
 theorem d_13068 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13068 = some P ∧ P.decode 13068 = some (.regImm (.loadImm) 9 4) ∧ P.next 13068 = 13071 ∧ P.blockCost (P.blockStartOf 13068) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13068 (.regImm (.loadImm) 9 4) 13071 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 0) (by decide))) (List.getElem_mem (l := facts_2112) (n := 1) (by decide)))
-    (show CodeFact.block 13052 13076 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 61) (by decide))) (List.getElem_mem (l := facts_2109) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13068 (.regImm (.loadImm) 9 4) 13071 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 2) (by decide))) (List.getElem_mem (l := facts_2114) (n := 1) (by decide)))
+    (show CodeFact.block 13052 13076 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 63) (by decide))) (List.getElem_mem (l := facts_2111) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13068 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13068 = 13071 := (d_13068 (p := p)).2.2.1
 
 theorem d_13071 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13071 = some P ∧ P.decode 13071 = some (.twoReg (.moveReg) 10 5) ∧ P.next 13071 = 13073 ∧ P.blockCost (P.blockStartOf 13071) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13071 (.twoReg (.moveReg) 10 5) 13073 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 1) (by decide))) (List.getElem_mem (l := facts_2113) (n := 0) (by decide)))
-    (show CodeFact.block 13052 13076 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 61) (by decide))) (List.getElem_mem (l := facts_2109) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13071 (.twoReg (.moveReg) 10 5) 13073 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 3) (by decide))) (List.getElem_mem (l := facts_2115) (n := 0) (by decide)))
+    (show CodeFact.block 13052 13076 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 63) (by decide))) (List.getElem_mem (l := facts_2111) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13071 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13071 = 13073 := (d_13071 (p := p)).2.2.1
 
 theorem d_13073 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13073 = some P ∧ P.decode 13073 = some (.oneImm (.ecalli) 100) ∧ P.next 13073 = 13075 ∧ P.blockCost (P.blockStartOf 13073) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13073 (.oneImm (.ecalli) 100) 13075 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 1) (by decide))) (List.getElem_mem (l := facts_2113) (n := 2) (by decide)))
-    (show CodeFact.block 13052 13076 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 61) (by decide))) (List.getElem_mem (l := facts_2109) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13073 (.oneImm (.ecalli) 100) 13075 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 3) (by decide))) (List.getElem_mem (l := facts_2115) (n := 2) (by decide)))
+    (show CodeFact.block 13052 13076 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 63) (by decide))) (List.getElem_mem (l := facts_2111) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13073 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13073 = 13075 := (d_13073 (p := p)).2.2.1
 
 theorem d_13075 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13075 = some P ∧ P.decode 13075 = some (.noArgs (.fallthrough)) ∧ P.next 13075 = 13076 ∧ P.blockCost (P.blockStartOf 13075) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13075 (.noArgs (.fallthrough)) 13076 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 2) (by decide))) (List.getElem_mem (l := facts_2114) (n := 1) (by decide)))
-    (show CodeFact.block 13052 13076 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 61) (by decide))) (List.getElem_mem (l := facts_2109) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13075 (.noArgs (.fallthrough)) 13076 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 4) (by decide))) (List.getElem_mem (l := facts_2116) (n := 1) (by decide)))
+    (show CodeFact.block 13052 13076 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 32) (by decide)) (List.getElem_mem (l := factGroup_32) (n := 63) (by decide))) (List.getElem_mem (l := facts_2111) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13075 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13075 = 13076 := (d_13075 (p := p)).2.2.1
 
 theorem d_13076 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13076 = some P ∧ P.decode 13076 = some (.twoRegImm (.loadIndU64) 8 1 1496) ∧ P.next 13076 = 13080 ∧ P.blockCost (P.blockStartOf 13076) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13076 (.twoRegImm (.loadIndU64) 8 1 1496) 13080 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 3) (by decide))) (List.getElem_mem (l := facts_2115) (n := 0) (by decide)))
-    (show CodeFact.block 13076 13083 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 4) (by decide))) (List.getElem_mem (l := facts_2116) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13076 (.twoRegImm (.loadIndU64) 8 1 1496) 13080 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 5) (by decide))) (List.getElem_mem (l := facts_2117) (n := 0) (by decide)))
+    (show CodeFact.block 13076 13083 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 6) (by decide))) (List.getElem_mem (l := facts_2118) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13076 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13076 = 13080 := (d_13076 (p := p)).2.2.1
 
 theorem d_13080 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13080 = some P ∧ P.decode 13080 = some (.regImmOffset (.branchEqImm) 8 0 13094) ∧ P.next 13080 = 13083 ∧ P.blockCost (P.blockStartOf 13080) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13080 (.regImmOffset (.branchEqImm) 8 0 13094) 13083 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 5) (by decide))) (List.getElem_mem (l := facts_2117) (n := 1) (by decide)))
-    (show CodeFact.block 13076 13083 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 4) (by decide))) (List.getElem_mem (l := facts_2116) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13080 (.regImmOffset (.branchEqImm) 8 0 13094) 13083 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 7) (by decide))) (List.getElem_mem (l := facts_2119) (n := 1) (by decide)))
+    (show CodeFact.block 13076 13083 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 6) (by decide))) (List.getElem_mem (l := facts_2118) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13080 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13080 = 13083 := (d_13080 (p := p)).2.2.1
 
 theorem d_13083 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13083 = some P ∧ P.decode 13083 = some (.regImm (.loadImm) 9 1) ∧ P.next 13083 = 13086 ∧ P.blockCost (P.blockStartOf 13083) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13083 (.regImm (.loadImm) 9 1) 13086 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 6) (by decide))) (List.getElem_mem (l := facts_2118) (n := 0) (by decide)))
-    (show CodeFact.block 13083 13094 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 7) (by decide))) (List.getElem_mem (l := facts_2119) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13083 (.regImm (.loadImm) 9 1) 13086 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 8) (by decide))) (List.getElem_mem (l := facts_2120) (n := 0) (by decide)))
+    (show CodeFact.block 13083 13094 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 9) (by decide))) (List.getElem_mem (l := facts_2121) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13083 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13083 = 13086 := (d_13083 (p := p)).2.2.1
 
 theorem d_13086 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13086 = some P ∧ P.decode 13086 = some (.twoReg (.moveReg) 7 5) ∧ P.next 13086 = 13088 ∧ P.blockCost (P.blockStartOf 13086) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13086 (.twoReg (.moveReg) 7 5) 13088 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 8) (by decide))) (List.getElem_mem (l := facts_2120) (n := 1) (by decide)))
-    (show CodeFact.block 13083 13094 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 7) (by decide))) (List.getElem_mem (l := facts_2119) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13086 (.twoReg (.moveReg) 7 5) 13088 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 10) (by decide))) (List.getElem_mem (l := facts_2122) (n := 1) (by decide)))
+    (show CodeFact.block 13083 13094 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 9) (by decide))) (List.getElem_mem (l := facts_2121) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13086 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13086 = 13088 := (d_13086 (p := p)).2.2.1
 
 theorem d_13088 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13088 = some P ∧ P.decode 13088 = some (.regImmOffset (.loadImmJump) 0 488 40613) ∧ P.next 13088 = 13094 ∧ P.blockCost (P.blockStartOf 13088) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13088 (.regImmOffset (.loadImmJump) 0 488 40613) 13094 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 9) (by decide))) (List.getElem_mem (l := facts_2121) (n := 0) (by decide)))
-    (show CodeFact.block 13083 13094 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 7) (by decide))) (List.getElem_mem (l := facts_2119) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13088 (.regImmOffset (.loadImmJump) 0 488 40613) 13094 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 11) (by decide))) (List.getElem_mem (l := facts_2123) (n := 0) (by decide)))
+    (show CodeFact.block 13083 13094 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 9) (by decide))) (List.getElem_mem (l := facts_2121) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13088 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13088 = 13094 := (d_13088 (p := p)).2.2.1
 
 theorem d_13094 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13094 = some P ∧ P.decode 13094 = some (.twoRegImm (.addImm64) 10 1 1568) ∧ P.next 13094 = 13098 ∧ P.blockCost (P.blockStartOf 13094) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13094 (.twoRegImm (.addImm64) 10 1 1568) 13098 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 9) (by decide))) (List.getElem_mem (l := facts_2121) (n := 2) (by decide)))
-    (show CodeFact.block 13094 13114 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 10) (by decide))) (List.getElem_mem (l := facts_2122) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13094 (.twoRegImm (.addImm64) 10 1 1568) 13098 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 11) (by decide))) (List.getElem_mem (l := facts_2123) (n := 2) (by decide)))
+    (show CodeFact.block 13094 13114 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 12) (by decide))) (List.getElem_mem (l := facts_2124) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13094 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13094 = 13098 := (d_13094 (p := p)).2.2.1
 
 theorem d_13098 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13098 = some P ∧ P.decode 13098 = some (.twoRegImm (.loadIndU64) 6 1 72) ∧ P.next 13098 = 13101 ∧ P.blockCost (P.blockStartOf 13098) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13098 (.twoRegImm (.loadIndU64) 6 1 72) 13101 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 11) (by decide))) (List.getElem_mem (l := facts_2123) (n := 1) (by decide)))
-    (show CodeFact.block 13094 13114 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 10) (by decide))) (List.getElem_mem (l := facts_2122) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13098 (.twoRegImm (.loadIndU64) 6 1 72) 13101 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 13) (by decide))) (List.getElem_mem (l := facts_2125) (n := 1) (by decide)))
+    (show CodeFact.block 13094 13114 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 12) (by decide))) (List.getElem_mem (l := facts_2124) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13098 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13098 = 13101 := (d_13098 (p := p)).2.2.1
 
 theorem d_13101 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13101 = some P ∧ P.decode 13101 = some (.twoReg (.moveReg) 7 6) ∧ P.next 13101 = 13103 ∧ P.blockCost (P.blockStartOf 13101) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13101 (.twoReg (.moveReg) 7 6) 13103 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 12) (by decide))) (List.getElem_mem (l := facts_2124) (n := 0) (by decide)))
-    (show CodeFact.block 13094 13114 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 10) (by decide))) (List.getElem_mem (l := facts_2122) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13101 (.twoReg (.moveReg) 7 6) 13103 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 14) (by decide))) (List.getElem_mem (l := facts_2126) (n := 0) (by decide)))
+    (show CodeFact.block 13094 13114 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 12) (by decide))) (List.getElem_mem (l := facts_2124) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13101 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13101 = 13103 := (d_13101 (p := p)).2.2.1
 
 theorem d_13103 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13103 = some P ∧ P.decode 13103 = some (.twoRegImm (.loadIndU64) 8 1 224) ∧ P.next 13103 = 13107 ∧ P.blockCost (P.blockStartOf 13103) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13103 (.twoRegImm (.loadIndU64) 8 1 224) 13107 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 12) (by decide))) (List.getElem_mem (l := facts_2124) (n := 2) (by decide)))
-    (show CodeFact.block 13094 13114 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 10) (by decide))) (List.getElem_mem (l := facts_2122) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13103 (.twoRegImm (.loadIndU64) 8 1 224) 13107 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 14) (by decide))) (List.getElem_mem (l := facts_2126) (n := 2) (by decide)))
+    (show CodeFact.block 13094 13114 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 12) (by decide))) (List.getElem_mem (l := facts_2124) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13103 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13103 = 13107 := (d_13103 (p := p)).2.2.1
 
 theorem d_13107 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13107 = some P ∧ P.decode 13107 = some (.twoRegImm (.loadIndU64) 9 1 248) ∧ P.next 13107 = 13111 ∧ P.blockCost (P.blockStartOf 13107) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13107 (.twoRegImm (.loadIndU64) 9 1 248) 13111 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 13) (by decide))) (List.getElem_mem (l := facts_2125) (n := 1) (by decide)))
-    (show CodeFact.block 13094 13114 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 10) (by decide))) (List.getElem_mem (l := facts_2122) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13107 (.twoRegImm (.loadIndU64) 9 1 248) 13111 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 15) (by decide))) (List.getElem_mem (l := facts_2127) (n := 1) (by decide)))
+    (show CodeFact.block 13094 13114 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 12) (by decide))) (List.getElem_mem (l := facts_2124) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13107 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13107 = 13111 := (d_13107 (p := p)).2.2.1
 
 theorem d_13111 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13111 = some P ∧ P.decode 13111 = some (.oneImm (.ecalli) 21) ∧ P.next 13111 = 13113 ∧ P.blockCost (P.blockStartOf 13111) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13111 (.oneImm (.ecalli) 21) 13113 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 14) (by decide))) (List.getElem_mem (l := facts_2126) (n := 0) (by decide)))
-    (show CodeFact.block 13094 13114 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 10) (by decide))) (List.getElem_mem (l := facts_2122) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13111 (.oneImm (.ecalli) 21) 13113 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 16) (by decide))) (List.getElem_mem (l := facts_2128) (n := 0) (by decide)))
+    (show CodeFact.block 13094 13114 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 12) (by decide))) (List.getElem_mem (l := facts_2124) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13111 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13111 = 13113 := (d_13111 (p := p)).2.2.1
 
 theorem d_13113 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13113 = some P ∧ P.decode 13113 = some (.noArgs (.fallthrough)) ∧ P.next 13113 = 13114 ∧ P.blockCost (P.blockStartOf 13113) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13113 (.noArgs (.fallthrough)) 13114 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 14) (by decide))) (List.getElem_mem (l := facts_2126) (n := 2) (by decide)))
-    (show CodeFact.block 13094 13114 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 10) (by decide))) (List.getElem_mem (l := facts_2122) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13113 (.noArgs (.fallthrough)) 13114 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 16) (by decide))) (List.getElem_mem (l := facts_2128) (n := 2) (by decide)))
+    (show CodeFact.block 13094 13114 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 12) (by decide))) (List.getElem_mem (l := facts_2124) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13113 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13113 = 13114 := (d_13113 (p := p)).2.2.1
 
 theorem d_13114 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13114 = some P ∧ P.decode 13114 = some (.twoRegImm (.addImm64) 8 7 9) ∧ P.next 13114 = 13117 ∧ P.blockCost (P.blockStartOf 13114) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13114 (.twoRegImm (.addImm64) 8 7 9) 13117 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 15) (by decide))) (List.getElem_mem (l := facts_2127) (n := 1) (by decide)))
-    (show CodeFact.block 13114 13122 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 16) (by decide))) (List.getElem_mem (l := facts_2128) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13114 (.twoRegImm (.addImm64) 8 7 9) 13117 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 17) (by decide))) (List.getElem_mem (l := facts_2129) (n := 1) (by decide)))
+    (show CodeFact.block 13114 13122 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 18) (by decide))) (List.getElem_mem (l := facts_2130) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13114 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13114 = 13117 := (d_13114 (p := p)).2.2.1
 
 theorem d_13117 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13117 = some P ∧ P.decode 13117 = some (.regImmOffset (.branchGeUImm) 8 8 14711) ∧ P.next 13117 = 13122 ∧ P.blockCost (P.blockStartOf 13117) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13117 (.regImmOffset (.branchGeUImm) 8 8 14711) 13122 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 17) (by decide))) (List.getElem_mem (l := facts_2129) (n := 1) (by decide)))
-    (show CodeFact.block 13114 13122 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 16) (by decide))) (List.getElem_mem (l := facts_2128) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13117 (.regImmOffset (.branchGeUImm) 8 8 14711) 13122 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 19) (by decide))) (List.getElem_mem (l := facts_2131) (n := 1) (by decide)))
+    (show CodeFact.block 13114 13122 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 18) (by decide))) (List.getElem_mem (l := facts_2130) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13117 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13117 = 13122 := (d_13117 (p := p)).2.2.1
 
 theorem d_13122 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13122 = some P ∧ P.decode 13122 = some (.regImm (.loadImm) 7 3) ∧ P.next 13122 = 13125 ∧ P.blockCost (P.blockStartOf 13122) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13122 (.regImm (.loadImm) 7 3) 13125 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 18) (by decide))) (List.getElem_mem (l := facts_2130) (n := 0) (by decide)))
-    (show CodeFact.block 13122 13126 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 19) (by decide))) (List.getElem_mem (l := facts_2131) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13122 (.regImm (.loadImm) 7 3) 13125 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 20) (by decide))) (List.getElem_mem (l := facts_2132) (n := 0) (by decide)))
+    (show CodeFact.block 13122 13126 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 21) (by decide))) (List.getElem_mem (l := facts_2133) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13122 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13122 = 13125 := (d_13122 (p := p)).2.2.1
 
 theorem d_13125 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13125 = some P ∧ P.decode 13125 = some (.noArgs (.fallthrough)) ∧ P.next 13125 = 13126 ∧ P.blockCost (P.blockStartOf 13125) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13125 (.noArgs (.fallthrough)) 13126 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 20) (by decide))) (List.getElem_mem (l := facts_2132) (n := 1) (by decide)))
-    (show CodeFact.block 13122 13126 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 19) (by decide))) (List.getElem_mem (l := facts_2131) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13125 (.noArgs (.fallthrough)) 13126 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 22) (by decide))) (List.getElem_mem (l := facts_2134) (n := 1) (by decide)))
+    (show CodeFact.block 13122 13126 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 21) (by decide))) (List.getElem_mem (l := facts_2133) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13125 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13125 = 13126 := (d_13125 (p := p)).2.2.1
 
 theorem d_13126 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13126 = some P ∧ P.decode 13126 = some (.twoRegImm (.loadIndU64) 8 1 240) ∧ P.next 13126 = 13130 ∧ P.blockCost (P.blockStartOf 13126) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13126 (.twoRegImm (.loadIndU64) 8 1 240) 13130 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 21) (by decide))) (List.getElem_mem (l := facts_2133) (n := 0) (by decide)))
-    (show CodeFact.block 13126 13147 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 22) (by decide))) (List.getElem_mem (l := facts_2134) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13126 (.twoRegImm (.loadIndU64) 8 1 240) 13130 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 23) (by decide))) (List.getElem_mem (l := facts_2135) (n := 0) (by decide)))
+    (show CodeFact.block 13126 13147 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 24) (by decide))) (List.getElem_mem (l := facts_2136) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13126 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13126 = 13130 := (d_13126 (p := p)).2.2.1
 
 theorem d_13130 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13130 = some P ∧ P.decode 13130 = some (.twoRegImm (.addImm64) 10 8 18446744073709551615) ∧ P.next 13130 = 13133 ∧ P.blockCost (P.blockStartOf 13130) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13130 (.twoRegImm (.addImm64) 10 8 18446744073709551615) 13133 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 23) (by decide))) (List.getElem_mem (l := facts_2135) (n := 1) (by decide)))
-    (show CodeFact.block 13126 13147 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 22) (by decide))) (List.getElem_mem (l := facts_2134) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13130 (.twoRegImm (.addImm64) 10 8 18446744073709551615) 13133 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 25) (by decide))) (List.getElem_mem (l := facts_2137) (n := 1) (by decide)))
+    (show CodeFact.block 13126 13147 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 24) (by decide))) (List.getElem_mem (l := facts_2136) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13130 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13130 = 13133 := (d_13130 (p := p)).2.2.1
 
 theorem d_13133 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13133 = some P ∧ P.decode 13133 = some (.regTwoImm (.storeImmIndU8) 1 1000 18446744073709551615) ∧ P.next 13133 = 13138 ∧ P.blockCost (P.blockStartOf 13133) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13133 (.regTwoImm (.storeImmIndU8) 1 1000 18446744073709551615) 13138 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 24) (by decide))) (List.getElem_mem (l := facts_2136) (n := 0) (by decide)))
-    (show CodeFact.block 13126 13147 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 22) (by decide))) (List.getElem_mem (l := facts_2134) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13133 (.regTwoImm (.storeImmIndU8) 1 1000 18446744073709551615) 13138 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 26) (by decide))) (List.getElem_mem (l := facts_2138) (n := 0) (by decide)))
+    (show CodeFact.block 13126 13147 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 24) (by decide))) (List.getElem_mem (l := facts_2136) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13133 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13133 = 13138 := (d_13133 (p := p)).2.2.1
 
 theorem d_13138 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13138 = some P ∧ P.decode 13138 = some (.twoRegImm (.storeIndU8) 7 1 1001) ∧ P.next 13138 = 13142 ∧ P.blockCost (P.blockStartOf 13138) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13138 (.twoRegImm (.storeIndU8) 7 1 1001) 13142 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 24) (by decide))) (List.getElem_mem (l := facts_2136) (n := 2) (by decide)))
-    (show CodeFact.block 13126 13147 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 22) (by decide))) (List.getElem_mem (l := facts_2134) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13138 (.twoRegImm (.storeIndU8) 7 1 1001) 13142 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 26) (by decide))) (List.getElem_mem (l := facts_2138) (n := 2) (by decide)))
+    (show CodeFact.block 13126 13147 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 24) (by decide))) (List.getElem_mem (l := facts_2136) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13138 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13138 = 13142 := (d_13138 (p := p)).2.2.1
 
 theorem d_13142 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13142 = some P ∧ P.decode 13142 = some (.regImmOffset (.branchGtUImm) 10 18446744073709551613 14278) ∧ P.next 13142 = 13147 ∧ P.blockCost (P.blockStartOf 13142) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13142 (.regImmOffset (.branchGtUImm) 10 18446744073709551613 14278) 13147 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 25) (by decide))) (List.getElem_mem (l := facts_2137) (n := 1) (by decide)))
-    (show CodeFact.block 13126 13147 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 22) (by decide))) (List.getElem_mem (l := facts_2134) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13142 (.regImmOffset (.branchGtUImm) 10 18446744073709551613 14278) 13147 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 27) (by decide))) (List.getElem_mem (l := facts_2139) (n := 1) (by decide)))
+    (show CodeFact.block 13126 13147 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 24) (by decide))) (List.getElem_mem (l := facts_2136) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13142 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13142 = 13147 := (d_13142 (p := p)).2.2.1
 
 theorem d_13147 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13147 = some P ∧ P.decode 13147 = some (.regImm (.loadImm) 9 1) ∧ P.next 13147 = 13150 ∧ P.blockCost (P.blockStartOf 13147) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13147 (.regImm (.loadImm) 9 1) 13150 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 26) (by decide))) (List.getElem_mem (l := facts_2138) (n := 0) (by decide)))
-    (show CodeFact.block 13147 13160 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 27) (by decide))) (List.getElem_mem (l := facts_2139) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13147 (.regImm (.loadImm) 9 1) 13150 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 28) (by decide))) (List.getElem_mem (l := facts_2140) (n := 0) (by decide)))
+    (show CodeFact.block 13147 13160 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 29) (by decide))) (List.getElem_mem (l := facts_2141) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13147 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13147 = 13150 := (d_13147 (p := p)).2.2.1
 
 theorem d_13150 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13150 = some P ∧ P.decode 13150 = some (.twoRegImm (.loadIndU64) 7 1 232) ∧ P.next 13150 = 13154 ∧ P.blockCost (P.blockStartOf 13150) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13150 (.twoRegImm (.loadIndU64) 7 1 232) 13154 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 28) (by decide))) (List.getElem_mem (l := facts_2140) (n := 1) (by decide)))
-    (show CodeFact.block 13147 13160 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 27) (by decide))) (List.getElem_mem (l := facts_2139) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13150 (.twoRegImm (.loadIndU64) 7 1 232) 13154 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 30) (by decide))) (List.getElem_mem (l := facts_2142) (n := 1) (by decide)))
+    (show CodeFact.block 13147 13160 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 29) (by decide))) (List.getElem_mem (l := facts_2141) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13150 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13150 = 13154 := (d_13150 (p := p)).2.2.1
 
 theorem d_13154 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13154 = some P ∧ P.decode 13154 = some (.regImmOffset (.loadImmJump) 0 490 40613) ∧ P.next 13154 = 13160 ∧ P.blockCost (P.blockStartOf 13154) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13154 (.regImmOffset (.loadImmJump) 0 490 40613) 13160 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 29) (by decide))) (List.getElem_mem (l := facts_2141) (n := 0) (by decide)))
-    (show CodeFact.block 13147 13160 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 27) (by decide))) (List.getElem_mem (l := facts_2139) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13154 (.regImmOffset (.loadImmJump) 0 490 40613) 13160 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 31) (by decide))) (List.getElem_mem (l := facts_2143) (n := 0) (by decide)))
+    (show CodeFact.block 13147 13160 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 29) (by decide))) (List.getElem_mem (l := facts_2141) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13154 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13154 = 13160 := (d_13154 (p := p)).2.2.1
 
 theorem d_13160 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13160 = some P ∧ P.decode 13160 = some (.oneOffset (.jump) 14278) ∧ P.next 13160 = 13163 ∧ P.blockCost (P.blockStartOf 13160) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13160 (.oneOffset (.jump) 14278) 13163 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 29) (by decide))) (List.getElem_mem (l := facts_2141) (n := 2) (by decide)))
-    (show CodeFact.block 13160 13163 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 30) (by decide))) (List.getElem_mem (l := facts_2142) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13160 (.oneOffset (.jump) 14278) 13163 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 31) (by decide))) (List.getElem_mem (l := facts_2143) (n := 2) (by decide)))
+    (show CodeFact.block 13160 13163 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 32) (by decide))) (List.getElem_mem (l := facts_2144) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13160 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13160 = 13163 := (d_13160 (p := p)).2.2.1
 
 theorem d_13163 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13163 = some P ∧ P.decode 13163 = some (.regImmOffset (.branchNeImm) 10 3 13906) ∧ P.next 13163 = 13168 ∧ P.blockCost (P.blockStartOf 13163) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13163 (.regImmOffset (.branchNeImm) 10 3 13906) 13168 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 31) (by decide))) (List.getElem_mem (l := facts_2143) (n := 1) (by decide)))
-    (show CodeFact.block 13163 13168 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 32) (by decide))) (List.getElem_mem (l := facts_2144) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13163 (.regImmOffset (.branchNeImm) 10 3 13906) 13168 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 33) (by decide))) (List.getElem_mem (l := facts_2145) (n := 1) (by decide)))
+    (show CodeFact.block 13163 13168 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 34) (by decide))) (List.getElem_mem (l := facts_2146) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13163 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13163 = 13168 := (d_13163 (p := p)).2.2.1
 
 theorem d_13168 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13168 = some P ∧ P.decode 13168 = some (.noArgs (.unlikely)) ∧ P.next 13168 = 13169 ∧ P.blockCost (P.blockStartOf 13168) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13168 (.noArgs (.unlikely)) 13169 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 33) (by decide))) (List.getElem_mem (l := facts_2145) (n := 1) (by decide)))
-    (show CodeFact.block 13168 13193 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 34) (by decide))) (List.getElem_mem (l := facts_2146) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13168 (.noArgs (.unlikely)) 13169 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 35) (by decide))) (List.getElem_mem (l := facts_2147) (n := 1) (by decide)))
+    (show CodeFact.block 13168 13193 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 36) (by decide))) (List.getElem_mem (l := facts_2148) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13168 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13168 = 13169 := (d_13168 (p := p)).2.2.1
 
 theorem d_13169 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13169 = some P ∧ P.decode 13169 = some (.twoRegImm (.storeIndU64) 7 1 1384) ∧ P.next 13169 = 13173 ∧ P.blockCost (P.blockStartOf 13169) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13169 (.twoRegImm (.storeIndU64) 7 1 1384) 13173 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 35) (by decide))) (List.getElem_mem (l := facts_2147) (n := 1) (by decide)))
-    (show CodeFact.block 13168 13193 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 34) (by decide))) (List.getElem_mem (l := facts_2146) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13169 (.twoRegImm (.storeIndU64) 7 1 1384) 13173 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 37) (by decide))) (List.getElem_mem (l := facts_2149) (n := 1) (by decide)))
+    (show CodeFact.block 13168 13193 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 36) (by decide))) (List.getElem_mem (l := facts_2148) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13169 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13169 = 13173 := (d_13169 (p := p)).2.2.1
 
 theorem d_13173 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13173 = some P ∧ P.decode 13173 = some (.twoRegImm (.storeIndU64) 8 1 1392) ∧ P.next 13173 = 13177 ∧ P.blockCost (P.blockStartOf 13173) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13173 (.twoRegImm (.storeIndU64) 8 1 1392) 13177 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 36) (by decide))) (List.getElem_mem (l := facts_2148) (n := 0) (by decide)))
-    (show CodeFact.block 13168 13193 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 34) (by decide))) (List.getElem_mem (l := facts_2146) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13173 (.twoRegImm (.storeIndU64) 8 1 1392) 13177 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 38) (by decide))) (List.getElem_mem (l := facts_2150) (n := 0) (by decide)))
+    (show CodeFact.block 13168 13193 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 36) (by decide))) (List.getElem_mem (l := facts_2148) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13173 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13173 = 13177 := (d_13173 (p := p)).2.2.1
 
 theorem d_13177 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13177 = some P ∧ P.decode 13177 = some (.regImm (.loadI32) 7 196648) ∧ P.next 13177 = 13182 ∧ P.blockCost (P.blockStartOf 13177) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13177 (.regImm (.loadI32) 7 196648) 13182 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 36) (by decide))) (List.getElem_mem (l := facts_2148) (n := 2) (by decide)))
-    (show CodeFact.block 13168 13193 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 34) (by decide))) (List.getElem_mem (l := facts_2146) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13177 (.regImm (.loadI32) 7 196648) 13182 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 38) (by decide))) (List.getElem_mem (l := facts_2150) (n := 2) (by decide)))
+    (show CodeFact.block 13168 13193 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 36) (by decide))) (List.getElem_mem (l := facts_2148) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13177 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13177 = 13182 := (d_13177 (p := p)).2.2.1
 
 theorem d_13182 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13182 = some P ∧ P.decode 13182 = some (.threeReg (.add32) 7 8 7) ∧ P.next 13182 = 13185 ∧ P.blockCost (P.blockStartOf 13182) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13182 (.threeReg (.add32) 7 8 7) 13185 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 37) (by decide))) (List.getElem_mem (l := facts_2149) (n := 1) (by decide)))
-    (show CodeFact.block 13168 13193 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 34) (by decide))) (List.getElem_mem (l := facts_2146) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13182 (.threeReg (.add32) 7 8 7) 13185 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 39) (by decide))) (List.getElem_mem (l := facts_2151) (n := 1) (by decide)))
+    (show CodeFact.block 13168 13193 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 36) (by decide))) (List.getElem_mem (l := facts_2148) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13182 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13182 = 13185 := (d_13182 (p := p)).2.2.1
 
 theorem d_13185 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13185 = some P ∧ P.decode 13185 = some (.twoRegImm (.loadIndU64) 9 1 192) ∧ P.next 13185 = 13189 ∧ P.blockCost (P.blockStartOf 13185) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13185 (.twoRegImm (.loadIndU64) 9 1 192) 13189 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 38) (by decide))) (List.getElem_mem (l := facts_2150) (n := 0) (by decide)))
-    (show CodeFact.block 13168 13193 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 34) (by decide))) (List.getElem_mem (l := facts_2146) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13185 (.twoRegImm (.loadIndU64) 9 1 192) 13189 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 40) (by decide))) (List.getElem_mem (l := facts_2152) (n := 0) (by decide)))
+    (show CodeFact.block 13168 13193 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 36) (by decide))) (List.getElem_mem (l := facts_2148) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13185 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13185 = 13189 := (d_13185 (p := p)).2.2.1
 
 theorem d_13189 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13189 = some P ∧ P.decode 13189 = some (.twoRegOffset (.branchGeU) 7 9 14115) ∧ P.next 13189 = 13193 ∧ P.blockCost (P.blockStartOf 13189) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13189 (.twoRegOffset (.branchGeU) 7 9 14115) 13193 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 38) (by decide))) (List.getElem_mem (l := facts_2150) (n := 2) (by decide)))
-    (show CodeFact.block 13168 13193 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 34) (by decide))) (List.getElem_mem (l := facts_2146) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13189 (.twoRegOffset (.branchGeU) 7 9 14115) 13193 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 40) (by decide))) (List.getElem_mem (l := facts_2152) (n := 2) (by decide)))
+    (show CodeFact.block 13168 13193 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 36) (by decide))) (List.getElem_mem (l := facts_2148) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13189 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13189 = 13193 := (d_13189 (p := p)).2.2.1
 
 theorem d_13193 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13193 = some P ∧ P.decode 13193 = some (.regImm (.loadImm) 7 1) ∧ P.next 13193 = 13196 ∧ P.blockCost (P.blockStartOf 13193) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13193 (.regImm (.loadImm) 7 1) 13196 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 39) (by decide))) (List.getElem_mem (l := facts_2151) (n := 1) (by decide)))
-    (show CodeFact.block 13193 13199 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 40) (by decide))) (List.getElem_mem (l := facts_2152) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13193 (.regImm (.loadImm) 7 1) 13196 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 41) (by decide))) (List.getElem_mem (l := facts_2153) (n := 1) (by decide)))
+    (show CodeFact.block 13193 13199 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 42) (by decide))) (List.getElem_mem (l := facts_2154) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13193 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13193 = 13196 := (d_13193 (p := p)).2.2.1
 
 theorem d_13196 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13196 = some P ∧ P.decode 13196 = some (.oneOffset (.jump) 14127) ∧ P.next 13196 = 13199 ∧ P.blockCost (P.blockStartOf 13196) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13196 (.oneOffset (.jump) 14127) 13199 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 41) (by decide))) (List.getElem_mem (l := facts_2153) (n := 1) (by decide)))
-    (show CodeFact.block 13193 13199 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 40) (by decide))) (List.getElem_mem (l := facts_2152) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13196 (.oneOffset (.jump) 14127) 13199 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 43) (by decide))) (List.getElem_mem (l := facts_2155) (n := 1) (by decide)))
+    (show CodeFact.block 13193 13199 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 42) (by decide))) (List.getElem_mem (l := facts_2154) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13196 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13196 = 13199 := (d_13196 (p := p)).2.2.1
 
 theorem d_13199 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13199 = some P ∧ P.decode 13199 = some (.regTwoImm (.storeImmIndU8) 1 1000 255) ∧ P.next 13199 = 13205 ∧ P.blockCost (P.blockStartOf 13199) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13199 (.regTwoImm (.storeImmIndU8) 1 1000 255) 13205 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 42) (by decide))) (List.getElem_mem (l := facts_2154) (n := 0) (by decide)))
-    (show CodeFact.block 13199 13213 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 43) (by decide))) (List.getElem_mem (l := facts_2155) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13199 (.regTwoImm (.storeImmIndU8) 1 1000 255) 13205 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 44) (by decide))) (List.getElem_mem (l := facts_2156) (n := 0) (by decide)))
+    (show CodeFact.block 13199 13213 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 45) (by decide))) (List.getElem_mem (l := facts_2157) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13199 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13199 = 13205 := (d_13199 (p := p)).2.2.1
 
 theorem d_13205 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13205 = some P ∧ P.decode 13205 = some (.regTwoImm (.storeImmIndU8) 1 1001 6) ∧ P.next 13205 = 13210 ∧ P.blockCost (P.blockStartOf 13205) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13205 (.regTwoImm (.storeImmIndU8) 1 1001 6) 13210 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 44) (by decide))) (List.getElem_mem (l := facts_2156) (n := 1) (by decide)))
-    (show CodeFact.block 13199 13213 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 43) (by decide))) (List.getElem_mem (l := facts_2155) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13205 (.regTwoImm (.storeImmIndU8) 1 1001 6) 13210 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 46) (by decide))) (List.getElem_mem (l := facts_2158) (n := 1) (by decide)))
+    (show CodeFact.block 13199 13213 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 45) (by decide))) (List.getElem_mem (l := facts_2157) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13205 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13205 = 13210 := (d_13205 (p := p)).2.2.1
 
 theorem d_13210 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13210 = some P ∧ P.decode 13210 = some (.oneOffset (.jump) 14278) ∧ P.next 13210 = 13213 ∧ P.blockCost (P.blockStartOf 13210) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13210 (.oneOffset (.jump) 14278) 13213 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 45) (by decide))) (List.getElem_mem (l := facts_2157) (n := 0) (by decide)))
-    (show CodeFact.block 13199 13213 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 43) (by decide))) (List.getElem_mem (l := facts_2155) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13210 (.oneOffset (.jump) 14278) 13213 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 47) (by decide))) (List.getElem_mem (l := facts_2159) (n := 0) (by decide)))
+    (show CodeFact.block 13199 13213 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 45) (by decide))) (List.getElem_mem (l := facts_2157) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13210 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13210 = 13213 := (d_13210 (p := p)).2.2.1
 
 theorem d_13213 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13213 = some P ∧ P.decode 13213 = some (.regImm (.loadImm) 7 1890) ∧ P.next 13213 = 13217 ∧ P.blockCost (P.blockStartOf 13213) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13213 (.regImm (.loadImm) 7 1890) 13217 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 45) (by decide))) (List.getElem_mem (l := facts_2157) (n := 2) (by decide)))
-    (show CodeFact.block 13213 13249 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 46) (by decide))) (List.getElem_mem (l := facts_2158) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13213 (.regImm (.loadImm) 7 1890) 13217 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 47) (by decide))) (List.getElem_mem (l := facts_2159) (n := 2) (by decide)))
+    (show CodeFact.block 13213 13249 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 48) (by decide))) (List.getElem_mem (l := facts_2160) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13213 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13213 = 13217 := (d_13213 (p := p)).2.2.1
 
 theorem d_13217 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13217 = some P ∧ P.decode 13217 = some (.twoRegImm (.addImm64) 8 1 1496) ∧ P.next 13217 = 13221 ∧ P.blockCost (P.blockStartOf 13217) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13217 (.twoRegImm (.addImm64) 8 1 1496) 13221 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 47) (by decide))) (List.getElem_mem (l := facts_2159) (n := 1) (by decide)))
-    (show CodeFact.block 13213 13249 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 46) (by decide))) (List.getElem_mem (l := facts_2158) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13217 (.twoRegImm (.addImm64) 8 1 1496) 13221 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 49) (by decide))) (List.getElem_mem (l := facts_2161) (n := 1) (by decide)))
+    (show CodeFact.block 13213 13249 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 48) (by decide))) (List.getElem_mem (l := facts_2160) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13217 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13217 = 13221 := (d_13217 (p := p)).2.2.1
 
 theorem d_13221 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13221 = some P ∧ P.decode 13221 = some (.twoRegImm (.storeIndU64) 8 1 1416) ∧ P.next 13221 = 13225 ∧ P.blockCost (P.blockStartOf 13221) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13221 (.twoRegImm (.storeIndU64) 8 1 1416) 13225 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 48) (by decide))) (List.getElem_mem (l := facts_2160) (n := 0) (by decide)))
-    (show CodeFact.block 13213 13249 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 46) (by decide))) (List.getElem_mem (l := facts_2158) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13221 (.twoRegImm (.storeIndU64) 8 1 1416) 13225 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 50) (by decide))) (List.getElem_mem (l := facts_2162) (n := 0) (by decide)))
+    (show CodeFact.block 13213 13249 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 48) (by decide))) (List.getElem_mem (l := facts_2160) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13221 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13221 = 13225 := (d_13221 (p := p)).2.2.1
 
 theorem d_13225 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13225 = some P ∧ P.decode 13225 = some (.twoRegImm (.storeIndU64) 7 1 1424) ∧ P.next 13225 = 13229 ∧ P.blockCost (P.blockStartOf 13225) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13225 (.twoRegImm (.storeIndU64) 7 1 1424) 13229 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 48) (by decide))) (List.getElem_mem (l := facts_2160) (n := 2) (by decide)))
-    (show CodeFact.block 13213 13249 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 46) (by decide))) (List.getElem_mem (l := facts_2158) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13225 (.twoRegImm (.storeIndU64) 7 1 1424) 13229 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 50) (by decide))) (List.getElem_mem (l := facts_2162) (n := 2) (by decide)))
+    (show CodeFact.block 13213 13249 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 48) (by decide))) (List.getElem_mem (l := facts_2160) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13225 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13225 = 13229 := (d_13225 (p := p)).2.2.1
 
 theorem d_13229 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13229 = some P ∧ P.decode 13229 = some (.regImm (.loadImm) 8 66555) ∧ P.next 13229 = 13234 ∧ P.blockCost (P.blockStartOf 13229) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13229 (.regImm (.loadImm) 8 66555) 13234 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 49) (by decide))) (List.getElem_mem (l := facts_2161) (n := 1) (by decide)))
-    (show CodeFact.block 13213 13249 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 46) (by decide))) (List.getElem_mem (l := facts_2158) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13229 (.regImm (.loadImm) 8 66555) 13234 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 51) (by decide))) (List.getElem_mem (l := facts_2163) (n := 1) (by decide)))
+    (show CodeFact.block 13213 13249 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 48) (by decide))) (List.getElem_mem (l := facts_2160) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13229 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13229 = 13234 := (d_13229 (p := p)).2.2.1
 
 theorem d_13234 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13234 = some P ∧ P.decode 13234 = some (.twoRegImm (.addImm64) 7 1 1568) ∧ P.next 13234 = 13238 ∧ P.blockCost (P.blockStartOf 13234) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13234 (.twoRegImm (.addImm64) 7 1 1568) 13238 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 50) (by decide))) (List.getElem_mem (l := facts_2162) (n := 0) (by decide)))
-    (show CodeFact.block 13213 13249 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 46) (by decide))) (List.getElem_mem (l := facts_2158) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13234 (.twoRegImm (.addImm64) 7 1 1568) 13238 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 52) (by decide))) (List.getElem_mem (l := facts_2164) (n := 0) (by decide)))
+    (show CodeFact.block 13213 13249 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 48) (by decide))) (List.getElem_mem (l := facts_2160) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13234 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13234 = 13238 := (d_13234 (p := p)).2.2.1
 
 theorem d_13238 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13238 = some P ∧ P.decode 13238 = some (.twoRegImm (.addImm64) 9 1 1416) ∧ P.next 13238 = 13242 ∧ P.blockCost (P.blockStartOf 13238) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13238 (.twoRegImm (.addImm64) 9 1 1416) 13242 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 50) (by decide))) (List.getElem_mem (l := facts_2162) (n := 2) (by decide)))
-    (show CodeFact.block 13213 13249 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 46) (by decide))) (List.getElem_mem (l := facts_2158) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13238 (.twoRegImm (.addImm64) 9 1 1416) 13242 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 52) (by decide))) (List.getElem_mem (l := facts_2164) (n := 2) (by decide)))
+    (show CodeFact.block 13213 13249 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 48) (by decide))) (List.getElem_mem (l := facts_2160) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13238 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13238 = 13242 := (d_13238 (p := p)).2.2.1
 
 theorem d_13242 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13242 = some P ∧ P.decode 13242 = some (.regImmOffset (.loadImmJump) 0 492 59375) ∧ P.next 13242 = 13249 ∧ P.blockCost (P.blockStartOf 13242) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13242 (.regImmOffset (.loadImmJump) 0 492 59375) 13249 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 51) (by decide))) (List.getElem_mem (l := facts_2163) (n := 1) (by decide)))
-    (show CodeFact.block 13213 13249 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 46) (by decide))) (List.getElem_mem (l := facts_2158) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13242 (.regImmOffset (.loadImmJump) 0 492 59375) 13249 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 53) (by decide))) (List.getElem_mem (l := facts_2165) (n := 1) (by decide)))
+    (show CodeFact.block 13213 13249 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 48) (by decide))) (List.getElem_mem (l := facts_2160) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13242 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13242 = 13249 := (d_13242 (p := p)).2.2.1
 
 theorem d_13249 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13249 = some P ∧ P.decode 13249 = some (.twoRegImm (.loadIndU64) 5 1 1576) ∧ P.next 13249 = 13253 ∧ P.blockCost (P.blockStartOf 13249) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13249 (.twoRegImm (.loadIndU64) 5 1 1576) 13253 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 52) (by decide))) (List.getElem_mem (l := facts_2164) (n := 0) (by decide)))
-    (show CodeFact.block 13249 13273 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 53) (by decide))) (List.getElem_mem (l := facts_2165) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13249 (.twoRegImm (.loadIndU64) 5 1 1576) 13253 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 54) (by decide))) (List.getElem_mem (l := facts_2166) (n := 0) (by decide)))
+    (show CodeFact.block 13249 13273 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 55) (by decide))) (List.getElem_mem (l := facts_2167) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13249 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13249 = 13253 := (d_13249 (p := p)).2.2.1
 
 theorem d_13253 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13253 = some P ∧ P.decode 13253 = some (.twoRegImm (.loadIndU64) 11 1 1584) ∧ P.next 13253 = 13257 ∧ P.blockCost (P.blockStartOf 13253) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13253 (.twoRegImm (.loadIndU64) 11 1 1584) 13257 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 54) (by decide))) (List.getElem_mem (l := facts_2166) (n := 1) (by decide)))
-    (show CodeFact.block 13249 13273 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 53) (by decide))) (List.getElem_mem (l := facts_2165) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13253 (.twoRegImm (.loadIndU64) 11 1 1584) 13257 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 56) (by decide))) (List.getElem_mem (l := facts_2168) (n := 1) (by decide)))
+    (show CodeFact.block 13249 13273 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 55) (by decide))) (List.getElem_mem (l := facts_2167) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13253 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13253 = 13257 := (d_13253 (p := p)).2.2.1
 
 theorem d_13257 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13257 = some P ∧ P.decode 13257 = some (.regImm (.loadImm) 8 66793) ∧ P.next 13257 = 13262 ∧ P.blockCost (P.blockStartOf 13257) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13257 (.regImm (.loadImm) 8 66793) 13262 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 55) (by decide))) (List.getElem_mem (l := facts_2167) (n := 0) (by decide)))
-    (show CodeFact.block 13249 13273 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 53) (by decide))) (List.getElem_mem (l := facts_2165) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13257 (.regImm (.loadImm) 8 66793) 13262 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 57) (by decide))) (List.getElem_mem (l := facts_2169) (n := 0) (by decide)))
+    (show CodeFact.block 13249 13273 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 55) (by decide))) (List.getElem_mem (l := facts_2167) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13257 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13257 = 13262 := (d_13257 (p := p)).2.2.1
 
 theorem d_13262 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13262 = some P ∧ P.decode 13262 = some (.regImm (.loadImm) 7 2) ∧ P.next 13262 = 13265 ∧ P.blockCost (P.blockStartOf 13262) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13262 (.regImm (.loadImm) 7 2) 13265 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 55) (by decide))) (List.getElem_mem (l := facts_2167) (n := 2) (by decide)))
-    (show CodeFact.block 13249 13273 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 53) (by decide))) (List.getElem_mem (l := facts_2165) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13262 (.regImm (.loadImm) 7 2) 13265 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 57) (by decide))) (List.getElem_mem (l := facts_2169) (n := 2) (by decide)))
+    (show CodeFact.block 13249 13273 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 55) (by decide))) (List.getElem_mem (l := facts_2167) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13262 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13262 = 13265 := (d_13262 (p := p)).2.2.1
 
 theorem d_13265 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13265 = some P ∧ P.decode 13265 = some (.regImm (.loadImm) 9 4) ∧ P.next 13265 = 13268 ∧ P.blockCost (P.blockStartOf 13265) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13265 (.regImm (.loadImm) 9 4) 13268 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 56) (by decide))) (List.getElem_mem (l := facts_2168) (n := 1) (by decide)))
-    (show CodeFact.block 13249 13273 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 53) (by decide))) (List.getElem_mem (l := facts_2165) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13265 (.regImm (.loadImm) 9 4) 13268 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 58) (by decide))) (List.getElem_mem (l := facts_2170) (n := 1) (by decide)))
+    (show CodeFact.block 13249 13273 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 55) (by decide))) (List.getElem_mem (l := facts_2167) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13265 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13265 = 13268 := (d_13265 (p := p)).2.2.1
 
 theorem d_13268 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13268 = some P ∧ P.decode 13268 = some (.twoReg (.moveReg) 10 5) ∧ P.next 13268 = 13270 ∧ P.blockCost (P.blockStartOf 13268) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13268 (.twoReg (.moveReg) 10 5) 13270 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 57) (by decide))) (List.getElem_mem (l := facts_2169) (n := 0) (by decide)))
-    (show CodeFact.block 13249 13273 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 53) (by decide))) (List.getElem_mem (l := facts_2165) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13268 (.twoReg (.moveReg) 10 5) 13270 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 59) (by decide))) (List.getElem_mem (l := facts_2171) (n := 0) (by decide)))
+    (show CodeFact.block 13249 13273 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 55) (by decide))) (List.getElem_mem (l := facts_2167) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13268 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13268 = 13270 := (d_13268 (p := p)).2.2.1
 
 theorem d_13270 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13270 = some P ∧ P.decode 13270 = some (.oneImm (.ecalli) 100) ∧ P.next 13270 = 13272 ∧ P.blockCost (P.blockStartOf 13270) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13270 (.oneImm (.ecalli) 100) 13272 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 57) (by decide))) (List.getElem_mem (l := facts_2169) (n := 2) (by decide)))
-    (show CodeFact.block 13249 13273 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 53) (by decide))) (List.getElem_mem (l := facts_2165) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13270 (.oneImm (.ecalli) 100) 13272 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 59) (by decide))) (List.getElem_mem (l := facts_2171) (n := 2) (by decide)))
+    (show CodeFact.block 13249 13273 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 55) (by decide))) (List.getElem_mem (l := facts_2167) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13270 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13270 = 13272 := (d_13270 (p := p)).2.2.1
 
 theorem d_13272 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13272 = some P ∧ P.decode 13272 = some (.noArgs (.fallthrough)) ∧ P.next 13272 = 13273 ∧ P.blockCost (P.blockStartOf 13272) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13272 (.noArgs (.fallthrough)) 13273 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 58) (by decide))) (List.getElem_mem (l := facts_2170) (n := 1) (by decide)))
-    (show CodeFact.block 13249 13273 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 53) (by decide))) (List.getElem_mem (l := facts_2165) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13272 (.noArgs (.fallthrough)) 13273 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 60) (by decide))) (List.getElem_mem (l := facts_2172) (n := 1) (by decide)))
+    (show CodeFact.block 13249 13273 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 55) (by decide))) (List.getElem_mem (l := facts_2167) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13272 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13272 = 13273 := (d_13272 (p := p)).2.2.1
 
 theorem d_13273 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13273 = some P ∧ P.decode 13273 = some (.twoRegImm (.loadIndU64) 8 1 1568) ∧ P.next 13273 = 13277 ∧ P.blockCost (P.blockStartOf 13273) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13273 (.twoRegImm (.loadIndU64) 8 1 1568) 13277 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 59) (by decide))) (List.getElem_mem (l := facts_2171) (n := 0) (by decide)))
-    (show CodeFact.block 13273 13280 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 60) (by decide))) (List.getElem_mem (l := facts_2172) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13273 (.twoRegImm (.loadIndU64) 8 1 1568) 13277 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 61) (by decide))) (List.getElem_mem (l := facts_2173) (n := 0) (by decide)))
+    (show CodeFact.block 13273 13280 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 62) (by decide))) (List.getElem_mem (l := facts_2174) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13273 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13273 = 13277 := (d_13273 (p := p)).2.2.1
 
 theorem d_13277 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13277 = some P ∧ P.decode 13277 = some (.regImmOffset (.branchEqImm) 8 0 13291) ∧ P.next 13277 = 13280 ∧ P.blockCost (P.blockStartOf 13277) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13277 (.regImmOffset (.branchEqImm) 8 0 13291) 13280 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 61) (by decide))) (List.getElem_mem (l := facts_2173) (n := 1) (by decide)))
-    (show CodeFact.block 13273 13280 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 60) (by decide))) (List.getElem_mem (l := facts_2172) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13277 (.regImmOffset (.branchEqImm) 8 0 13291) 13280 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 63) (by decide))) (List.getElem_mem (l := facts_2175) (n := 1) (by decide)))
+    (show CodeFact.block 13273 13280 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 62) (by decide))) (List.getElem_mem (l := facts_2174) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13277 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13277 = 13280 := (d_13277 (p := p)).2.2.1
 
 theorem d_13280 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13280 = some P ∧ P.decode 13280 = some (.regImm (.loadImm) 9 1) ∧ P.next 13280 = 13283 ∧ P.blockCost (P.blockStartOf 13280) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13280 (.regImm (.loadImm) 9 1) 13283 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 62) (by decide))) (List.getElem_mem (l := facts_2174) (n := 0) (by decide)))
-    (show CodeFact.block 13280 13291 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 63) (by decide))) (List.getElem_mem (l := facts_2175) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13280 (.regImm (.loadImm) 9 1) 13283 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 0) (by decide))) (List.getElem_mem (l := facts_2176) (n := 0) (by decide)))
+    (show CodeFact.block 13280 13291 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 1) (by decide))) (List.getElem_mem (l := facts_2177) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13280 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13280 = 13283 := (d_13280 (p := p)).2.2.1
 
 theorem d_13283 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13283 = some P ∧ P.decode 13283 = some (.twoReg (.moveReg) 7 5) ∧ P.next 13283 = 13285 ∧ P.blockCost (P.blockStartOf 13283) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13283 (.twoReg (.moveReg) 7 5) 13285 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 0) (by decide))) (List.getElem_mem (l := facts_2176) (n := 1) (by decide)))
-    (show CodeFact.block 13280 13291 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 63) (by decide))) (List.getElem_mem (l := facts_2175) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13283 (.twoReg (.moveReg) 7 5) 13285 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 2) (by decide))) (List.getElem_mem (l := facts_2178) (n := 1) (by decide)))
+    (show CodeFact.block 13280 13291 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 1) (by decide))) (List.getElem_mem (l := facts_2177) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13283 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13283 = 13285 := (d_13283 (p := p)).2.2.1
 
 theorem d_13285 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13285 = some P ∧ P.decode 13285 = some (.regImmOffset (.loadImmJump) 0 494 40613) ∧ P.next 13285 = 13291 ∧ P.blockCost (P.blockStartOf 13285) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13285 (.regImmOffset (.loadImmJump) 0 494 40613) 13291 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 1) (by decide))) (List.getElem_mem (l := facts_2177) (n := 0) (by decide)))
-    (show CodeFact.block 13280 13291 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 33) (by decide)) (List.getElem_mem (l := factGroup_33) (n := 63) (by decide))) (List.getElem_mem (l := facts_2175) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13285 (.regImmOffset (.loadImmJump) 0 494 40613) 13291 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 3) (by decide))) (List.getElem_mem (l := facts_2179) (n := 0) (by decide)))
+    (show CodeFact.block 13280 13291 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 1) (by decide))) (List.getElem_mem (l := facts_2177) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13285 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13285 = 13291 := (d_13285 (p := p)).2.2.1
 
 theorem d_13291 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13291 = some P ∧ P.decode 13291 = some (.twoRegImm (.loadIndU64) 8 1 1496) ∧ P.next 13291 = 13295 ∧ P.blockCost (P.blockStartOf 13291) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13291 (.twoRegImm (.loadIndU64) 8 1 1496) 13295 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 1) (by decide))) (List.getElem_mem (l := facts_2177) (n := 2) (by decide)))
-    (show CodeFact.block 13291 13303 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 2) (by decide))) (List.getElem_mem (l := facts_2178) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13291 (.twoRegImm (.loadIndU64) 8 1 1496) 13295 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 3) (by decide))) (List.getElem_mem (l := facts_2179) (n := 2) (by decide)))
+    (show CodeFact.block 13291 13303 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 4) (by decide))) (List.getElem_mem (l := facts_2180) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13291 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13291 = 13295 := (d_13291 (p := p)).2.2.1
 
 theorem d_13295 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13295 = some P ∧ P.decode 13295 = some (.regTwoImm (.storeImmIndU8) 1 1000 0) ∧ P.next 13295 = 13299 ∧ P.blockCost (P.blockStartOf 13295) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13295 (.regTwoImm (.storeImmIndU8) 1 1000 0) 13299 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 3) (by decide))) (List.getElem_mem (l := facts_2179) (n := 1) (by decide)))
-    (show CodeFact.block 13291 13303 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 2) (by decide))) (List.getElem_mem (l := facts_2178) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13295 (.regTwoImm (.storeImmIndU8) 1 1000 0) 13299 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 5) (by decide))) (List.getElem_mem (l := facts_2181) (n := 1) (by decide)))
+    (show CodeFact.block 13291 13303 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 4) (by decide))) (List.getElem_mem (l := facts_2180) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13295 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13295 = 13299 := (d_13295 (p := p)).2.2.1
 
 theorem d_13299 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13299 = some P ∧ P.decode 13299 = some (.regImmOffset (.branchEqImm) 8 0 14278) ∧ P.next 13299 = 13303 ∧ P.blockCost (P.blockStartOf 13299) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13299 (.regImmOffset (.branchEqImm) 8 0 14278) 13303 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 4) (by decide))) (List.getElem_mem (l := facts_2180) (n := 0) (by decide)))
-    (show CodeFact.block 13291 13303 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 2) (by decide))) (List.getElem_mem (l := facts_2178) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13299 (.regImmOffset (.branchEqImm) 8 0 14278) 13303 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 6) (by decide))) (List.getElem_mem (l := facts_2182) (n := 0) (by decide)))
+    (show CodeFact.block 13291 13303 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 4) (by decide))) (List.getElem_mem (l := facts_2180) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13299 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13299 = 13303 := (d_13299 (p := p)).2.2.1
 
 theorem d_13303 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13303 = some P ∧ P.decode 13303 = some (.twoRegImm (.loadIndU64) 7 1 1504) ∧ P.next 13303 = 13307 ∧ P.blockCost (P.blockStartOf 13303) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13303 (.twoRegImm (.loadIndU64) 7 1 1504) 13307 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 4) (by decide))) (List.getElem_mem (l := facts_2180) (n := 2) (by decide)))
-    (show CodeFact.block 13303 13321 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 5) (by decide))) (List.getElem_mem (l := facts_2181) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13303 (.twoRegImm (.loadIndU64) 7 1 1504) 13307 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 6) (by decide))) (List.getElem_mem (l := facts_2182) (n := 2) (by decide)))
+    (show CodeFact.block 13303 13321 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 7) (by decide))) (List.getElem_mem (l := facts_2183) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13303 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13303 = 13307 := (d_13303 (p := p)).2.2.1
 
 theorem d_13307 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13307 = some P ∧ P.decode 13307 = some (.twoRegImm (.mulImm64) 8 8 336) ∧ P.next 13307 = 13311 ∧ P.blockCost (P.blockStartOf 13307) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13307 (.twoRegImm (.mulImm64) 8 8 336) 13311 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 6) (by decide))) (List.getElem_mem (l := facts_2182) (n := 1) (by decide)))
-    (show CodeFact.block 13303 13321 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 5) (by decide))) (List.getElem_mem (l := facts_2181) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13307 (.twoRegImm (.mulImm64) 8 8 336) 13311 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 8) (by decide))) (List.getElem_mem (l := facts_2184) (n := 1) (by decide)))
+    (show CodeFact.block 13303 13321 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 7) (by decide))) (List.getElem_mem (l := facts_2183) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13307 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13307 = 13311 := (d_13307 (p := p)).2.2.1
 
 theorem d_13311 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13311 = some P ∧ P.decode 13311 = some (.regImm (.loadImm) 9 1) ∧ P.next 13311 = 13314 ∧ P.blockCost (P.blockStartOf 13311) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13311 (.regImm (.loadImm) 9 1) 13314 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 7) (by decide))) (List.getElem_mem (l := facts_2183) (n := 0) (by decide)))
-    (show CodeFact.block 13303 13321 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 5) (by decide))) (List.getElem_mem (l := facts_2181) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13311 (.regImm (.loadImm) 9 1) 13314 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 9) (by decide))) (List.getElem_mem (l := facts_2185) (n := 0) (by decide)))
+    (show CodeFact.block 13303 13321 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 7) (by decide))) (List.getElem_mem (l := facts_2183) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13311 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13311 = 13314 := (d_13311 (p := p)).2.2.1
 
 theorem d_13314 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13314 = some P ∧ P.decode 13314 = some (.regImm (.loadImm) 0 508) ∧ P.next 13314 = 13318 ∧ P.blockCost (P.blockStartOf 13314) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13314 (.regImm (.loadImm) 0 508) 13318 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 7) (by decide))) (List.getElem_mem (l := facts_2183) (n := 2) (by decide)))
-    (show CodeFact.block 13303 13321 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 5) (by decide))) (List.getElem_mem (l := facts_2181) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13314 (.regImm (.loadImm) 0 508) 13318 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 9) (by decide))) (List.getElem_mem (l := facts_2185) (n := 2) (by decide)))
+    (show CodeFact.block 13303 13321 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 7) (by decide))) (List.getElem_mem (l := facts_2183) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13314 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13314 = 13318 := (d_13314 (p := p)).2.2.1
 
 theorem d_13318 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13318 = some P ∧ P.decode 13318 = some (.oneOffset (.jump) 40613) ∧ P.next 13318 = 13321 ∧ P.blockCost (P.blockStartOf 13318) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13318 (.oneOffset (.jump) 40613) 13321 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 8) (by decide))) (List.getElem_mem (l := facts_2184) (n := 1) (by decide)))
-    (show CodeFact.block 13303 13321 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 5) (by decide))) (List.getElem_mem (l := facts_2181) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13318 (.oneOffset (.jump) 40613) 13321 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 10) (by decide))) (List.getElem_mem (l := facts_2186) (n := 1) (by decide)))
+    (show CodeFact.block 13303 13321 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 7) (by decide))) (List.getElem_mem (l := facts_2183) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13318 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13318 = 13321 := (d_13318 (p := p)).2.2.1
 
 theorem d_13321 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13321 = some P ∧ P.decode 13321 = some (.regTwoImm (.storeImmIndU64) 1 224 0) ∧ P.next 13321 = 13325 ∧ P.blockCost (P.blockStartOf 13321) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13321 (.regTwoImm (.storeImmIndU64) 1 224 0) 13325 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 9) (by decide))) (List.getElem_mem (l := facts_2185) (n := 0) (by decide)))
-    (show CodeFact.block 13321 13326 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 10) (by decide))) (List.getElem_mem (l := facts_2186) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13321 (.regTwoImm (.storeImmIndU64) 1 224 0) 13325 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 11) (by decide))) (List.getElem_mem (l := facts_2187) (n := 0) (by decide)))
+    (show CodeFact.block 13321 13326 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 12) (by decide))) (List.getElem_mem (l := facts_2188) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13321 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13321 = 13325 := (d_13321 (p := p)).2.2.1
 
 theorem d_13325 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13325 = some P ∧ P.decode 13325 = some (.noArgs (.fallthrough)) ∧ P.next 13325 = 13326 ∧ P.blockCost (P.blockStartOf 13325) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13325 (.noArgs (.fallthrough)) 13326 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 11) (by decide))) (List.getElem_mem (l := facts_2187) (n := 1) (by decide)))
-    (show CodeFact.block 13321 13326 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 10) (by decide))) (List.getElem_mem (l := facts_2186) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13325 (.noArgs (.fallthrough)) 13326 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 13) (by decide))) (List.getElem_mem (l := facts_2189) (n := 1) (by decide)))
+    (show CodeFact.block 13321 13326 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 12) (by decide))) (List.getElem_mem (l := facts_2188) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13325 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13325 = 13326 := (d_13325 (p := p)).2.2.1
 
 theorem d_13326 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13326 = some P ∧ P.decode 13326 = some (.noArgs (.unlikely)) ∧ P.next 13326 = 13327 ∧ P.blockCost (P.blockStartOf 13326) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13326 (.noArgs (.unlikely)) 13327 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 12) (by decide))) (List.getElem_mem (l := facts_2188) (n := 0) (by decide)))
-    (show CodeFact.block 13326 13389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 13) (by decide))) (List.getElem_mem (l := facts_2189) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13326 (.noArgs (.unlikely)) 13327 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 14) (by decide))) (List.getElem_mem (l := facts_2190) (n := 0) (by decide)))
+    (show CodeFact.block 13326 13389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 15) (by decide))) (List.getElem_mem (l := facts_2191) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13326 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13326 = 13327 := (d_13326 (p := p)).2.2.1
 
 theorem d_13327 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13327 = some P ∧ P.decode 13327 = some (.regImm (.loadImm) 7 2804) ∧ P.next 13327 = 13331 ∧ P.blockCost (P.blockStartOf 13327) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13327 (.regImm (.loadImm) 7 2804) 13331 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 14) (by decide))) (List.getElem_mem (l := facts_2190) (n := 1) (by decide)))
-    (show CodeFact.block 13326 13389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 13) (by decide))) (List.getElem_mem (l := facts_2189) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13327 (.regImm (.loadImm) 7 2804) 13331 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 16) (by decide))) (List.getElem_mem (l := facts_2192) (n := 1) (by decide)))
+    (show CodeFact.block 13326 13389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 15) (by decide))) (List.getElem_mem (l := facts_2191) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13327 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13327 = 13331 := (d_13327 (p := p)).2.2.1
 
 theorem d_13331 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13331 = some P ∧ P.decode 13331 = some (.twoRegImm (.loadIndU64) 6 1 56) ∧ P.next 13331 = 13334 ∧ P.blockCost (P.blockStartOf 13331) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13331 (.twoRegImm (.loadIndU64) 6 1 56) 13334 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 15) (by decide))) (List.getElem_mem (l := facts_2191) (n := 0) (by decide)))
-    (show CodeFact.block 13326 13389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 13) (by decide))) (List.getElem_mem (l := facts_2189) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13331 (.twoRegImm (.loadIndU64) 6 1 56) 13334 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 17) (by decide))) (List.getElem_mem (l := facts_2193) (n := 0) (by decide)))
+    (show CodeFact.block 13326 13389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 15) (by decide))) (List.getElem_mem (l := facts_2191) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13331 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13331 = 13334 := (d_13331 (p := p)).2.2.1
 
 theorem d_13334 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13334 = some P ∧ P.decode 13334 = some (.twoRegImm (.loadIndU64) 8 1 224) ∧ P.next 13334 = 13338 ∧ P.blockCost (P.blockStartOf 13334) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13334 (.twoRegImm (.loadIndU64) 8 1 224) 13338 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 15) (by decide))) (List.getElem_mem (l := facts_2191) (n := 2) (by decide)))
-    (show CodeFact.block 13326 13389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 13) (by decide))) (List.getElem_mem (l := facts_2189) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13334 (.twoRegImm (.loadIndU64) 8 1 224) 13338 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 17) (by decide))) (List.getElem_mem (l := facts_2193) (n := 2) (by decide)))
+    (show CodeFact.block 13326 13389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 15) (by decide))) (List.getElem_mem (l := facts_2191) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13334 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13334 = 13338 := (d_13334 (p := p)).2.2.1
 
 theorem d_13338 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13338 = some P ∧ P.decode 13338 = some (.threeReg (.sub64) 6 8 8) ∧ P.next 13338 = 13341 ∧ P.blockCost (P.blockStartOf 13338) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13338 (.threeReg (.sub64) 6 8 8) 13341 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 16) (by decide))) (List.getElem_mem (l := facts_2192) (n := 1) (by decide)))
-    (show CodeFact.block 13326 13389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 13) (by decide))) (List.getElem_mem (l := facts_2189) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13338 (.threeReg (.sub64) 6 8 8) 13341 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 18) (by decide))) (List.getElem_mem (l := facts_2194) (n := 1) (by decide)))
+    (show CodeFact.block 13326 13389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 15) (by decide))) (List.getElem_mem (l := facts_2191) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13338 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13338 = 13341 := (d_13338 (p := p)).2.2.1
 
 theorem d_13341 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13341 = some P ∧ P.decode 13341 = some (.twoRegImm (.storeIndU64) 8 1 1416) ∧ P.next 13341 = 13345 ∧ P.blockCost (P.blockStartOf 13341) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13341 (.twoRegImm (.storeIndU64) 8 1 1416) 13345 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 17) (by decide))) (List.getElem_mem (l := facts_2193) (n := 0) (by decide)))
-    (show CodeFact.block 13326 13389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 13) (by decide))) (List.getElem_mem (l := facts_2189) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13341 (.twoRegImm (.storeIndU64) 8 1 1416) 13345 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 19) (by decide))) (List.getElem_mem (l := facts_2195) (n := 0) (by decide)))
+    (show CodeFact.block 13326 13389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 15) (by decide))) (List.getElem_mem (l := facts_2191) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13341 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13341 = 13345 := (d_13341 (p := p)).2.2.1
 
 theorem d_13345 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13345 = some P ∧ P.decode 13345 = some (.twoRegImm (.addImm64) 8 1 1416) ∧ P.next 13345 = 13349 ∧ P.blockCost (P.blockStartOf 13345) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13345 (.twoRegImm (.addImm64) 8 1 1416) 13349 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 17) (by decide))) (List.getElem_mem (l := facts_2193) (n := 2) (by decide)))
-    (show CodeFact.block 13326 13389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 13) (by decide))) (List.getElem_mem (l := facts_2189) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13345 (.twoRegImm (.addImm64) 8 1 1416) 13349 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 19) (by decide))) (List.getElem_mem (l := facts_2195) (n := 2) (by decide)))
+    (show CodeFact.block 13326 13389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 15) (by decide))) (List.getElem_mem (l := facts_2191) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13345 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13345 = 13349 := (d_13345 (p := p)).2.2.1
 
 theorem d_13349 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13349 = some P ∧ P.decode 13349 = some (.twoRegImm (.storeIndU64) 8 1 1568) ∧ P.next 13349 = 13353 ∧ P.blockCost (P.blockStartOf 13349) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13349 (.twoRegImm (.storeIndU64) 8 1 1568) 13353 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 18) (by decide))) (List.getElem_mem (l := facts_2194) (n := 1) (by decide)))
-    (show CodeFact.block 13326 13389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 13) (by decide))) (List.getElem_mem (l := facts_2189) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13349 (.twoRegImm (.storeIndU64) 8 1 1568) 13353 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 20) (by decide))) (List.getElem_mem (l := facts_2196) (n := 1) (by decide)))
+    (show CodeFact.block 13326 13389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 15) (by decide))) (List.getElem_mem (l := facts_2191) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13349 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13349 = 13353 := (d_13349 (p := p)).2.2.1
 
 theorem d_13353 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13353 = some P ∧ P.decode 13353 = some (.twoRegImm (.storeIndU64) 7 1 1576) ∧ P.next 13353 = 13357 ∧ P.blockCost (P.blockStartOf 13353) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13353 (.twoRegImm (.storeIndU64) 7 1 1576) 13357 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 19) (by decide))) (List.getElem_mem (l := facts_2195) (n := 0) (by decide)))
-    (show CodeFact.block 13326 13389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 13) (by decide))) (List.getElem_mem (l := facts_2189) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13353 (.twoRegImm (.storeIndU64) 7 1 1576) 13357 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 21) (by decide))) (List.getElem_mem (l := facts_2197) (n := 0) (by decide)))
+    (show CodeFact.block 13326 13389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 15) (by decide))) (List.getElem_mem (l := facts_2191) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13353 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13353 = 13357 := (d_13353 (p := p)).2.2.1
 
 theorem d_13357 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13357 = some P ∧ P.decode 13357 = some (.twoRegImm (.addImm64) 8 1 1472) ∧ P.next 13357 = 13361 ∧ P.blockCost (P.blockStartOf 13357) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13357 (.twoRegImm (.addImm64) 8 1 1472) 13361 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 19) (by decide))) (List.getElem_mem (l := facts_2195) (n := 2) (by decide)))
-    (show CodeFact.block 13326 13389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 13) (by decide))) (List.getElem_mem (l := facts_2189) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13357 (.twoRegImm (.addImm64) 8 1 1472) 13361 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 21) (by decide))) (List.getElem_mem (l := facts_2197) (n := 2) (by decide)))
+    (show CodeFact.block 13326 13389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 15) (by decide))) (List.getElem_mem (l := facts_2191) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13357 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13357 = 13361 := (d_13357 (p := p)).2.2.1
 
 theorem d_13361 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13361 = some P ∧ P.decode 13361 = some (.twoRegImm (.storeIndU64) 8 1 1584) ∧ P.next 13361 = 13365 ∧ P.blockCost (P.blockStartOf 13361) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13361 (.twoRegImm (.storeIndU64) 8 1 1584) 13365 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 20) (by decide))) (List.getElem_mem (l := facts_2196) (n := 1) (by decide)))
-    (show CodeFact.block 13326 13389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 13) (by decide))) (List.getElem_mem (l := facts_2189) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13361 (.twoRegImm (.storeIndU64) 8 1 1584) 13365 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 22) (by decide))) (List.getElem_mem (l := facts_2198) (n := 1) (by decide)))
+    (show CodeFact.block 13326 13389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 15) (by decide))) (List.getElem_mem (l := facts_2191) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13361 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13361 = 13365 := (d_13361 (p := p)).2.2.1
 
 theorem d_13365 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13365 = some P ∧ P.decode 13365 = some (.twoRegImm (.storeIndU64) 7 1 1592) ∧ P.next 13365 = 13369 ∧ P.blockCost (P.blockStartOf 13365) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13365 (.twoRegImm (.storeIndU64) 7 1 1592) 13369 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 21) (by decide))) (List.getElem_mem (l := facts_2197) (n := 0) (by decide)))
-    (show CodeFact.block 13326 13389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 13) (by decide))) (List.getElem_mem (l := facts_2189) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13365 (.twoRegImm (.storeIndU64) 7 1 1592) 13369 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 23) (by decide))) (List.getElem_mem (l := facts_2199) (n := 0) (by decide)))
+    (show CodeFact.block 13326 13389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 15) (by decide))) (List.getElem_mem (l := facts_2191) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13365 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13365 = 13369 := (d_13365 (p := p)).2.2.1
 
 theorem d_13369 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13369 = some P ∧ P.decode 13369 = some (.regImm (.loadImm) 8 65988) ∧ P.next 13369 = 13374 ∧ P.blockCost (P.blockStartOf 13369) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13369 (.regImm (.loadImm) 8 65988) 13374 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 21) (by decide))) (List.getElem_mem (l := facts_2197) (n := 2) (by decide)))
-    (show CodeFact.block 13326 13389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 13) (by decide))) (List.getElem_mem (l := facts_2189) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13369 (.regImm (.loadImm) 8 65988) 13374 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 23) (by decide))) (List.getElem_mem (l := facts_2199) (n := 2) (by decide)))
+    (show CodeFact.block 13326 13389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 15) (by decide))) (List.getElem_mem (l := facts_2191) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13369 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13369 = 13374 := (d_13369 (p := p)).2.2.1
 
 theorem d_13374 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13374 = some P ∧ P.decode 13374 = some (.twoRegImm (.addImm64) 7 1 1496) ∧ P.next 13374 = 13378 ∧ P.blockCost (P.blockStartOf 13374) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13374 (.twoRegImm (.addImm64) 7 1 1496) 13378 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 22) (by decide))) (List.getElem_mem (l := facts_2198) (n := 1) (by decide)))
-    (show CodeFact.block 13326 13389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 13) (by decide))) (List.getElem_mem (l := facts_2189) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13374 (.twoRegImm (.addImm64) 7 1 1496) 13378 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 24) (by decide))) (List.getElem_mem (l := facts_2200) (n := 1) (by decide)))
+    (show CodeFact.block 13326 13389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 15) (by decide))) (List.getElem_mem (l := facts_2191) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13374 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13374 = 13378 := (d_13374 (p := p)).2.2.1
 
 theorem d_13378 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13378 = some P ∧ P.decode 13378 = some (.twoRegImm (.addImm64) 9 1 1568) ∧ P.next 13378 = 13382 ∧ P.blockCost (P.blockStartOf 13378) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13378 (.twoRegImm (.addImm64) 9 1 1568) 13382 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 23) (by decide))) (List.getElem_mem (l := facts_2199) (n := 0) (by decide)))
-    (show CodeFact.block 13326 13389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 13) (by decide))) (List.getElem_mem (l := facts_2189) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13378 (.twoRegImm (.addImm64) 9 1 1568) 13382 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 25) (by decide))) (List.getElem_mem (l := facts_2201) (n := 0) (by decide)))
+    (show CodeFact.block 13326 13389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 15) (by decide))) (List.getElem_mem (l := facts_2191) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13378 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13378 = 13382 := (d_13378 (p := p)).2.2.1
 
 theorem d_13382 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13382 = some P ∧ P.decode 13382 = some (.regImmOffset (.loadImmJump) 0 496 59375) ∧ P.next 13382 = 13389 ∧ P.blockCost (P.blockStartOf 13382) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13382 (.regImmOffset (.loadImmJump) 0 496 59375) 13389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 23) (by decide))) (List.getElem_mem (l := facts_2199) (n := 2) (by decide)))
-    (show CodeFact.block 13326 13389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 13) (by decide))) (List.getElem_mem (l := facts_2189) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13382 (.regImmOffset (.loadImmJump) 0 496 59375) 13389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 25) (by decide))) (List.getElem_mem (l := facts_2201) (n := 2) (by decide)))
+    (show CodeFact.block 13326 13389 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 15) (by decide))) (List.getElem_mem (l := facts_2191) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13382 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13382 = 13389 := (d_13382 (p := p)).2.2.1
 
 theorem d_13389 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13389 = some P ∧ P.decode 13389 = some (.twoRegImm (.loadIndU64) 5 1 1504) ∧ P.next 13389 = 13393 ∧ P.blockCost (P.blockStartOf 13389) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13389 (.twoRegImm (.loadIndU64) 5 1 1504) 13393 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 24) (by decide))) (List.getElem_mem (l := facts_2200) (n := 1) (by decide)))
-    (show CodeFact.block 13389 13413 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 25) (by decide))) (List.getElem_mem (l := facts_2201) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13389 (.twoRegImm (.loadIndU64) 5 1 1504) 13393 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 26) (by decide))) (List.getElem_mem (l := facts_2202) (n := 1) (by decide)))
+    (show CodeFact.block 13389 13413 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 27) (by decide))) (List.getElem_mem (l := facts_2203) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13389 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13389 = 13393 := (d_13389 (p := p)).2.2.1
 
 theorem d_13393 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13393 = some P ∧ P.decode 13393 = some (.twoRegImm (.loadIndU64) 11 1 1512) ∧ P.next 13393 = 13397 ∧ P.blockCost (P.blockStartOf 13393) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13393 (.twoRegImm (.loadIndU64) 11 1 1512) 13397 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 26) (by decide))) (List.getElem_mem (l := facts_2202) (n := 1) (by decide)))
-    (show CodeFact.block 13389 13413 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 25) (by decide))) (List.getElem_mem (l := facts_2201) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13393 (.twoRegImm (.loadIndU64) 11 1 1512) 13397 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 28) (by decide))) (List.getElem_mem (l := facts_2204) (n := 1) (by decide)))
+    (show CodeFact.block 13389 13413 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 27) (by decide))) (List.getElem_mem (l := facts_2203) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13393 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13393 = 13397 := (d_13393 (p := p)).2.2.1
 
 theorem d_13397 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13397 = some P ∧ P.decode 13397 = some (.regImm (.loadImm) 7 2) ∧ P.next 13397 = 13400 ∧ P.blockCost (P.blockStartOf 13397) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13397 (.regImm (.loadImm) 7 2) 13400 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 27) (by decide))) (List.getElem_mem (l := facts_2203) (n := 0) (by decide)))
-    (show CodeFact.block 13389 13413 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 25) (by decide))) (List.getElem_mem (l := facts_2201) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13397 (.regImm (.loadImm) 7 2) 13400 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 29) (by decide))) (List.getElem_mem (l := facts_2205) (n := 0) (by decide)))
+    (show CodeFact.block 13389 13413 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 27) (by decide))) (List.getElem_mem (l := facts_2203) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13397 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13397 = 13400 := (d_13397 (p := p)).2.2.1
 
 theorem d_13400 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13400 = some P ∧ P.decode 13400 = some (.regImm (.loadImm) 8 0) ∧ P.next 13400 = 13402 ∧ P.blockCost (P.blockStartOf 13400) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13400 (.regImm (.loadImm) 8 0) 13402 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 27) (by decide))) (List.getElem_mem (l := facts_2203) (n := 2) (by decide)))
-    (show CodeFact.block 13389 13413 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 25) (by decide))) (List.getElem_mem (l := facts_2201) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13400 (.regImm (.loadImm) 8 0) 13402 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 29) (by decide))) (List.getElem_mem (l := facts_2205) (n := 2) (by decide)))
+    (show CodeFact.block 13389 13413 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 27) (by decide))) (List.getElem_mem (l := facts_2203) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13400 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13400 = 13402 := (d_13400 (p := p)).2.2.1
 
 theorem d_13402 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13402 = some P ∧ P.decode 13402 = some (.regImm (.loadImm) 9 0) ∧ P.next 13402 = 13404 ∧ P.blockCost (P.blockStartOf 13402) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13402 (.regImm (.loadImm) 9 0) 13404 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 28) (by decide))) (List.getElem_mem (l := facts_2204) (n := 1) (by decide)))
-    (show CodeFact.block 13389 13413 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 25) (by decide))) (List.getElem_mem (l := facts_2201) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13402 (.regImm (.loadImm) 9 0) 13404 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 30) (by decide))) (List.getElem_mem (l := facts_2206) (n := 1) (by decide)))
+    (show CodeFact.block 13389 13413 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 27) (by decide))) (List.getElem_mem (l := facts_2203) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13402 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13402 = 13404 := (d_13402 (p := p)).2.2.1
 
 theorem d_13404 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13404 = some P ∧ P.decode 13404 = some (.twoReg (.moveReg) 10 5) ∧ P.next 13404 = 13406 ∧ P.blockCost (P.blockStartOf 13404) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13404 (.twoReg (.moveReg) 10 5) 13406 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 29) (by decide))) (List.getElem_mem (l := facts_2205) (n := 0) (by decide)))
-    (show CodeFact.block 13389 13413 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 25) (by decide))) (List.getElem_mem (l := facts_2201) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13404 (.twoReg (.moveReg) 10 5) 13406 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 31) (by decide))) (List.getElem_mem (l := facts_2207) (n := 0) (by decide)))
+    (show CodeFact.block 13389 13413 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 27) (by decide))) (List.getElem_mem (l := facts_2203) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13404 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13404 = 13406 := (d_13404 (p := p)).2.2.1
 
 theorem d_13406 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13406 = some P ∧ P.decode 13406 = some (.regImm (.loadImm) 0 498) ∧ P.next 13406 = 13410 ∧ P.blockCost (P.blockStartOf 13406) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13406 (.regImm (.loadImm) 0 498) 13410 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 29) (by decide))) (List.getElem_mem (l := facts_2205) (n := 2) (by decide)))
-    (show CodeFact.block 13389 13413 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 25) (by decide))) (List.getElem_mem (l := facts_2201) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13406 (.regImm (.loadImm) 0 498) 13410 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 31) (by decide))) (List.getElem_mem (l := facts_2207) (n := 2) (by decide)))
+    (show CodeFact.block 13389 13413 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 27) (by decide))) (List.getElem_mem (l := facts_2203) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13406 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13406 = 13410 := (d_13406 (p := p)).2.2.1
 
 theorem d_13410 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13410 = some P ∧ P.decode 13410 = some (.oneImm (.ecalli) 100) ∧ P.next 13410 = 13412 ∧ P.blockCost (P.blockStartOf 13410) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13410 (.oneImm (.ecalli) 100) 13412 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 30) (by decide))) (List.getElem_mem (l := facts_2206) (n := 1) (by decide)))
-    (show CodeFact.block 13389 13413 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 25) (by decide))) (List.getElem_mem (l := facts_2201) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13410 (.oneImm (.ecalli) 100) 13412 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 32) (by decide))) (List.getElem_mem (l := facts_2208) (n := 1) (by decide)))
+    (show CodeFact.block 13389 13413 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 27) (by decide))) (List.getElem_mem (l := facts_2203) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13410 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13410 = 13412 := (d_13410 (p := p)).2.2.1
 
 theorem d_13412 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13412 = some P ∧ P.decode 13412 = some (.noArgs (.fallthrough)) ∧ P.next 13412 = 13413 ∧ P.blockCost (P.blockStartOf 13412) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13412 (.noArgs (.fallthrough)) 13413 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 31) (by decide))) (List.getElem_mem (l := facts_2207) (n := 0) (by decide)))
-    (show CodeFact.block 13389 13413 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 25) (by decide))) (List.getElem_mem (l := facts_2201) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13412 (.noArgs (.fallthrough)) 13413 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 33) (by decide))) (List.getElem_mem (l := facts_2209) (n := 0) (by decide)))
+    (show CodeFact.block 13389 13413 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 27) (by decide))) (List.getElem_mem (l := facts_2203) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13412 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13412 = 13413 := (d_13412 (p := p)).2.2.1
 
 theorem d_13413 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13413 = some P ∧ P.decode 13413 = some (.twoRegImm (.loadIndU64) 8 1 1496) ∧ P.next 13413 = 13417 ∧ P.blockCost (P.blockStartOf 13413) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13413 (.twoRegImm (.loadIndU64) 8 1 1496) 13417 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 31) (by decide))) (List.getElem_mem (l := facts_2207) (n := 2) (by decide)))
-    (show CodeFact.block 13413 13420 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 32) (by decide))) (List.getElem_mem (l := facts_2208) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13413 (.twoRegImm (.loadIndU64) 8 1 1496) 13417 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 33) (by decide))) (List.getElem_mem (l := facts_2209) (n := 2) (by decide)))
+    (show CodeFact.block 13413 13420 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 34) (by decide))) (List.getElem_mem (l := facts_2210) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13413 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13413 = 13417 := (d_13413 (p := p)).2.2.1
 
 theorem d_13417 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13417 = some P ∧ P.decode 13417 = some (.regImmOffset (.branchEqImm) 8 0 13431) ∧ P.next 13417 = 13420 ∧ P.blockCost (P.blockStartOf 13417) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13417 (.regImmOffset (.branchEqImm) 8 0 13431) 13420 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 33) (by decide))) (List.getElem_mem (l := facts_2209) (n := 1) (by decide)))
-    (show CodeFact.block 13413 13420 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 32) (by decide))) (List.getElem_mem (l := facts_2208) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13417 (.regImmOffset (.branchEqImm) 8 0 13431) 13420 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 35) (by decide))) (List.getElem_mem (l := facts_2211) (n := 1) (by decide)))
+    (show CodeFact.block 13413 13420 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 34) (by decide))) (List.getElem_mem (l := facts_2210) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13417 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13417 = 13420 := (d_13417 (p := p)).2.2.1
 
 theorem d_13420 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13420 = some P ∧ P.decode 13420 = some (.regImm (.loadImm) 9 1) ∧ P.next 13420 = 13423 ∧ P.blockCost (P.blockStartOf 13420) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13420 (.regImm (.loadImm) 9 1) 13423 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 34) (by decide))) (List.getElem_mem (l := facts_2210) (n := 0) (by decide)))
-    (show CodeFact.block 13420 13431 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 35) (by decide))) (List.getElem_mem (l := facts_2211) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13420 (.regImm (.loadImm) 9 1) 13423 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 36) (by decide))) (List.getElem_mem (l := facts_2212) (n := 0) (by decide)))
+    (show CodeFact.block 13420 13431 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 37) (by decide))) (List.getElem_mem (l := facts_2213) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13420 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13420 = 13423 := (d_13420 (p := p)).2.2.1
 
 theorem d_13423 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13423 = some P ∧ P.decode 13423 = some (.twoReg (.moveReg) 7 5) ∧ P.next 13423 = 13425 ∧ P.blockCost (P.blockStartOf 13423) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13423 (.twoReg (.moveReg) 7 5) 13425 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 36) (by decide))) (List.getElem_mem (l := facts_2212) (n := 1) (by decide)))
-    (show CodeFact.block 13420 13431 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 35) (by decide))) (List.getElem_mem (l := facts_2211) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13423 (.twoReg (.moveReg) 7 5) 13425 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 38) (by decide))) (List.getElem_mem (l := facts_2214) (n := 1) (by decide)))
+    (show CodeFact.block 13420 13431 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 37) (by decide))) (List.getElem_mem (l := facts_2213) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13423 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13423 = 13425 := (d_13423 (p := p)).2.2.1
 
 theorem d_13425 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13425 = some P ∧ P.decode 13425 = some (.regImmOffset (.loadImmJump) 0 500 40613) ∧ P.next 13425 = 13431 ∧ P.blockCost (P.blockStartOf 13425) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13425 (.regImmOffset (.loadImmJump) 0 500 40613) 13431 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 37) (by decide))) (List.getElem_mem (l := facts_2213) (n := 0) (by decide)))
-    (show CodeFact.block 13420 13431 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 35) (by decide))) (List.getElem_mem (l := facts_2211) (n := 0) (by decide))) (by decide)
+  h.ok.instrCost (show CodeFact.instr 13425 (.regImmOffset (.loadImmJump) 0 500 40613) 13431 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 39) (by decide))) (List.getElem_mem (l := facts_2215) (n := 0) (by decide)))
+    (show CodeFact.block 13420 13431 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 37) (by decide))) (List.getElem_mem (l := facts_2213) (n := 0) (by decide))) (by decide)
 
 @[pvm_code] theorem nx_13425 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13425 = 13431 := (d_13425 (p := p)).2.2.1
-
-theorem d_13431 {p : ByteArray} {P : Program} [h : HasCodeA p P] : deblob p 13431 = some P ∧ P.decode 13431 = some (.regTwoImm (.storeImmIndU8) 1 1000 0) ∧ P.next 13431 = 13435 ∧ P.blockCost (P.blockStartOf 13431) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 13431 (.regTwoImm (.storeImmIndU8) 1 1000 0) 13435 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 37) (by decide))) (List.getElem_mem (l := facts_2213) (n := 2) (by decide)))
-    (show CodeFact.block 13431 13438 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 34) (by decide)) (List.getElem_mem (l := factGroup_34) (n := 38) (by decide))) (List.getElem_mem (l := facts_2214) (n := 0) (by decide))) (by decide)
-
-@[pvm_code] theorem nx_13431 {p : ByteArray} {P : Program} [h : HasCodeA p P] : P.next 13431 = 13435 := (d_13431 (p := p)).2.2.1
 
 end Services.Bootstrap.CodeA

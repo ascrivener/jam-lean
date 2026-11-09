@@ -56,6 +56,7 @@ call `pc`) live in `Tests/`, not in the model.
 | `JAM` Blake2b-256 vs. `hashlib` and RFC 7693 | **13 / 13** match |
 | `JAM` general host functions, hand-written cases | **30 / 30** pass |
 | `JAM` Keccak-256 / SHA3-256 vs. `hashlib` and standard vectors | **15 / 15** match |
+| `JAM` SHA-512 vs. FIPS 180-2 examples and `hashlib`; the VRF output Y of one trace block against its η'_0 | **9 / 9** match; **1 / 1** |
 | `JAM` refine host functions, Ψ_R and Ψ_I, hand-written cases (no vectors exist) | **59 / 59** pass, 2 more kernel-checked |
 | `witness-service.jam`'s host-call ids within those `Services.Witness` assumes (`lake build witnesscheck`) | **pass** |
 | The real witness binary's refine on 7 malformed payloads gives `Rejected(BadPayload)` (`lake build witnessrun`; a test, not a proof) | **7 / 7** |
@@ -71,6 +72,7 @@ call `pc`) live in `Tests/`, not in the model.
 | Assurances STF (§11.2: the available reports **R** and ρ after assurances) vs. `stf/assurances` (`lake build assurancestest`; signatures as in note 29) | **11 / 11** tiny, **11 / 11** full |
 | Reports STF (§11.3–§11.5: guarantor assignments M and M*, guarantee validity, ρ', G and the reported packages) and core and service statistics (§13.2) vs. `stf/reports` (`lake build reportstest`; signatures as in note 29) | **44 / 44** tiny, **48 / 48** full |
 | Safrole STF (§6: τ, η, key rotation, γ_Z, γ_S, γ_A, H_E, H_W) vs. `stf/safrole` (`lake build safroletest`), with the Bandersnatch primitives as an oracle read from the vectors (note 31) | **21 / 21** tiny, **25 / 25** full |
+| Block import Υ (§4, §5; T and M_σ of Appendix D) vs. the `traces/` block-import traces (`lake build tracetest`; signatures accepted, Y by SHA-512 and O from the states, note 33): post-state compared key by key after every block | fallback **100 / 100**, safrole **100 / 100**, storage **100 / 100**, storage_light **100 / 100**, preimages **100 / 100**, preimages_light **100 / 100**; fuzzy_light **188 / 200**, **4 / 4** rejections (bad code hash), and 8 blocks that follow the vectors' `bless` deviation (note 33); fuzzy **16 / 17**, then the same deviation at block 17, after which the trace cannot run model-faithfully |
 
 ## Building and running
 
@@ -86,6 +88,8 @@ lake build historytest authtest       # the recent-history and authorization STF
 lake build statstest preimagestest    # the statistics and preimage STF vectors (tiny and full)
 lake build disputestest assurancestest reportstest  # disputes, assurances and reports STF vectors
 lake build safroletest                # the Safrole STF vectors (tiny and full)
+scripts/fetch-trace-vectors.sh        # block-import traces (.bin only) into vendor/jam-traces; names optional
+lake build tracetest                  # Υ over every fetched trace
 ```
 
 `pvmtest` and `gascheck` are Lake targets that build an executable and run it; a failing vector
@@ -782,6 +786,56 @@ noted here and in a comment at the definition.
       taken as 0 when τ' < 𝖱. The full-chain vectors with a shrunk set agree.
     * The reporters G and the incoming reports' core and service statistics (π_C', π_S' of
       §13.2) are checked too, with no available reports, assurances, preimages or accumulation.
+
+33. **Block import Υ** (§4, §5, Appendix D).
+    * *Composition.* `JAM.importBlock` (`JAM/BlockImport.lean`) composes the section transitions
+      along GP eq. `transitionfunctioncomposition`: disputes, Safrole (with ψ'_O), assurances,
+      guarantees (with κ', λ', η', ψ'_O and β_H^†), accumulation of **R**, recent history with θ',
+      preimages (checked against the prior δ, integrated into δ^‡), authorizations from φ', and
+      statistics. The STFs are used unchanged; `AccResult` gained a field `outputs` holding θ',
+      which `accumulate` computed but did not return. σ is `JAM.State` and T, M_σ are
+      `State.serialize` and `State.root` (`JAM/State.lean`).
+    * *Header conditions* (§5): H_P is the hash of the last retained header, H_R = M_σ(σ), H_X as in
+      eq. `extrinsichash`, H_O, H_E and H_W equal to the markers the transitions produce,
+      H_I < |κ'|, and `sealValid` for the seal and entropy source. The wall-clock bound is not
+      checked. The ancestor set 𝒜 of §11.4.1 is the retained headers together with the block's own
+      header, so that a lookup anchor can be the parent; the paper does not say whether 𝒜 includes
+      the block being imported.
+    * *Serialization.* ρ's entries are serialized with the whole guarantee (r, t, **a**) and then
+      ℰ_4 of the timestamp, as in C(10); the traces agree. The core and service statistics π_C, π_S
+      use the general natural encoding ℰ for every field, gas included; the traces agree, while
+      Appendix D says numeric state terms use fixed-length encodings by the size of the term.
+    * *The trace runner* (`Tests/TraceTest.lean`, `lake build tracetest` after
+      `scripts/fetch-trace-vectors.sh`). Trace states are raw key-values. A storage key is hashed
+      in C(s, h), so a raw state with storage cannot be decoded into 𝔸 (whose storage is keyed by
+      the original keys). The runner decodes only the genesis state (preimages and requests are
+      recognised by hashing) and keeps the model's own σ from there, comparing T(σ') and M_σ(σ')
+      with every post-state. Cryptography: every signature, VRF and ring proof is accepted (the
+      blocks are known valid); Y is the Bandersnatch VRF specification's output hash, SHA-512 of the
+      suite string, 3, the 32-octet output point and 0, cut to 32 octets (`JAM/Sha512.lean`, FIPS 180-4). This follows the output-hash convention of the Bandersnatch VRF specification, which GP Appendix G defers to; it is beyond the paper's text. Only the runner's `Crypto` instance uses it: `JAM.Crypto` stays a parameter and no STF changed; O
+      is answered from (γ_P, γ_Z) of the states already seen, as every state has γ_Z = O(γ_P).
+    * *Differences and how the runner continues.* After a block whose post-state differs, the runner
+      reports it and continues from the trace's post-state, decoding its storage entries under the
+      storage keys the model's own states hold; when an entry's key is unknown it stops. Each
+      difference is listed in `knownDeviations` with its reason, found from a host-call log
+      (`Tests/TraceDebug.lean`). All of them are the vectors' `bless` deviation (GP #519, in their
+      CHANGELOG; the accumulate vectors' `bless_from_non_manager` of note 15): in GP 0.8.0 `bless`
+      from a service other than χ_M answers HUH, and the fuzz service then panics; in the traces
+      it is accepted. `fuzzy_light` blocks 77, 118, 148, 151, 163 and 165, and 86 and 179 where the
+      caller is the delegator χ_V handing its role over. In `fuzzy` block 17 the fuzz service
+      stores the results of `bless`, `designate` and `assign` calls without the privilege, so the
+      trace's storage holds an entry under a key the model never wrote and the remaining 183 blocks
+      cannot be run model-faithfully.
+    * *Rejected blocks.* The 7 steps whose root does not change (`fuzzy` 37–39, `fuzzy_light`
+      152–155) are blocks to reject. `fuzzy_light` 152–155 are rejected by the model too, with a
+      report whose code hash is not the service's (`badCodeHash`), not for a cryptographic reason,
+      so accepting every signature does not hide them. `fuzzy` 37–39 come after block 17 and are
+      not reached.
+    * *Timings* (compiled, one core, while other runs shared a 4-core machine): fallback and
+      safrole about 3.6 s per 100 blocks; storage_light 246 s (slowest block 7.2 s), preimages_light
+      190 s (6.9 s), preimages 417 s (18 s), storage 613 s (23 s), fuzzy_light 482 s (30 s). The
+      time goes to the PVM in accumulation. CI runs fallback, safrole, storage_light and
+      preimages_light.
 
 ## Caveats
 

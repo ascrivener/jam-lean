@@ -213,7 +213,7 @@ def bootstrapSvc : Svc where
   -- accumulate (`Services/Bootstrap/Acc/README.md`, tier A): the entry 6378 … 15368, the inputs fetch
   -- and `AccumulateItem` decode, `BootstrapWorkOutput::decode`, the ring and results helpers, the
   -- storage wrappers and the allocator's remaining paths
-  fnRangesA := [(550, 562), (638, 639), (758, 824), (904, 907), (2200, 2727), (3820, 4565), (6378, 15369),
+  fnRangesA := [(5, 8), (550, 562), (638, 639), (758, 824), (904, 907), (2200, 2727), (3820, 4565), (6378, 15369),
     (22145, 22839), (22915, 22934), (23097, 23120), (23227, 23246), (25588, 26397), (28864, 29176),
     (30285, 31894), (32414, 32727), (33214, 34636), (36170, 36529), (38832, 38857), (39388, 39411),
     (39634, 40215), (40852, 41176), (44494, 44677), (44916, 45976), (46300, 47561), (47662, 48251),

@@ -41,7 +41,7 @@ theorem alloc_mid_growK {p : ByteArray} {P : Program} [HasCode p P] (env : Refin
       HeapPages μ' 48 pb (growTop (pagesOf (s.base + 32 * E)) h pb) ∧
       (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧
       (∀ a, a < 4294967296 → 2147483648 ≤ a → (a < sp ∨ sp + 112 ≤ a) → μ'.read a = μ.read a) ∧
-      HKeep μ μ' (fun a => H a ∨ F a) ∧
+      HKeepG μ μ' (fun a => H a ∨ F a) ∧
       ∀ j : Fin 13, j.val ∉ [0, 2, 3, 5, 6, 8, 10, 11, 12] → ω'[j] = ω[j] := by
   have hAC := hHF C (Or.inr hFC)
   have hw := HeapPages.wrAt hp hhb hst
@@ -143,7 +143,7 @@ theorem alloc_mid_growK {p : ByteArray} {P : Program} [HasCode p P] (env : Refin
     by rw [fget g4 0 (by decide) (by decide), fget ggf 0 (by decide) (by decide)]; exact c0, ?_, p48, ?_, ?_, ?_,
     by rw [t4 _ (by omega) (by omega) (by omega)]; exact k88, by rw [t4 _ (by omega) (by omega) (by omega)]; exact k120,
     HeapPages.of_eq hpg ww4, fun a h1 h2 => by rw [ww4]; exact hstg a h1 h2, fun a h1 h2 h3 => ?_,
-    (HKeep.of_low fun a h1 h2 _ => (frg a (by omega) (by omega) (by omega) (by omega)).trans (lo a h2)).trans hk4, ?_⟩
+    (HKeepG.of_low fun a h1 h2 _ => (frg a (by omega) (by omega) (by omega) (by omega)).trans (lo a h2)).trans hk4, ?_⟩
   · rw [t4 _ (by omega) (by omega) (by omega)]; exact h96'
   · rw [t4 _ (by omega) (by omega) (by omega)]; exact rd_enc s80 (by omega)
   · rw [t4 _ (by omega) (by omega) (by omega)]; exact rd_enc s72 (by omega)
@@ -188,7 +188,7 @@ theorem alloc_mid_grow {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
       HeapPages μ' 48 pb (growTop (pagesOf (s.base + 32 * E)) h pb) ∧
       (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧
       (∀ a, a < 4294967296 → 2147483648 ≤ a → (a < sp ∨ sp + 112 ≤ a) → μ'.read a = μ.read a) ∧
-      HKeep μ μ' (fun a => H a ∨ F a) ∧
+      HKeepG μ μ' (fun a => H a ∨ F a) ∧
       ∀ j : Fin 13, j.val ∉ [0, 2, 3, 5, 6, 8, 10, 11, 12] → ω'[j] = ω[j] :=
   alloc_mid_growK (p := p) (P := P) (S0 := S0) (S1 := S1) env hostCostMax (by decide) x ω μ s H F
     sp req bin q b C sz hrep hcb hqb hq hb hFC hHC hHF hnx hb0 hbT hpv hrq hsz hCend hal E hE hgr

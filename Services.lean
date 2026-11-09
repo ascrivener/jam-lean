@@ -110,6 +110,10 @@ import Services.Bootstrap.Acc.Inputs.VecU8A
 import Services.Bootstrap.Acc.Inputs.Item
 import Services.Bootstrap.Acc.Inputs.CompactU64
 import Services.Bootstrap.Acc.Inputs.CompactU64Call
+import Services.Bootstrap.Acc.ContractC
+import Services.Bootstrap.Acc.CkSites
+import Services.Bootstrap.Acc.CkDead
+import Services.Bootstrap.Acc.CkLift
 import Services.Bootstrap.AccPrefixC
 import Services.Bootstrap.AccBParams
 import Services.Bootstrap.Acc.Args

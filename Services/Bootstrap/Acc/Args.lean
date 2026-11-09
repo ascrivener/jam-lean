@@ -212,4 +212,43 @@ theorem args_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x :
   · intro a; simp only [Memory.readable_writeN, d6_rd, d4_rd, d2_rd]
   · intro a; simp only [Memory.writable_writeN, d6_wr, d4_wr, d2_wr]
 
+/-- 6508 … 6576: after `info`, the arguments of the first log line's `format!`: the fmt::Arguments
+    pairs (value address, formatter) at sp + 1144 … sp + 1191 for s (sp + 260, 2616), t (sp + 256,
+    2800) and the info record (sp + 1600, 2804), spills at sp + 80, sp + 136 and sp + 208; then ω₇ =
+    sp + 744 (the `String`), ω₈ = 66464 (the pieces) and ω₉ = sp + 1144 for the call at 6580. -/
+theorem fmt_setup {p : ByteArray} {P : Program} [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
+    (h1 : ω[1] = UInt64.ofNat 4278057152)
+    (hw1 : ∀ a, 4278057232 ≤ a → a < 4278057240 → μ.writable a = true)
+    (hw2 : ∀ a, 4278057288 ≤ a → a < 4278057296 → μ.writable a = true)
+    (hw3 : ∀ a, 4278057360 ≤ a → a < 4278057368 → μ.writable a = true)
+    (hw4 : ∀ a, 4278058296 ≤ a → a < 4278058344 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 6508 ω μ x 6580 ω' μ' x 18 ∧
+      ω'[1] = UInt64.ofNat 4278057152 ∧ ω'[7] = UInt64.ofNat 4278057896 ∧ ω'[8] = UInt64.ofNat 66464 ∧
+      ω'[9] = UInt64.ofNat 4278058296 ∧
+      ω'[0] = ω[0] ∧ ω'[2] = ω[2] ∧ ω'[3] = ω[3] ∧ ω'[4] = ω[4] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      μ'.readN 4278058296 8 = Num.encodeLE 8 4278057412 ∧ μ'.readN 4278058304 8 = Num.encodeLE 8 2616 ∧
+      μ'.readN 4278058312 8 = Num.encodeLE 8 4278057408 ∧ μ'.readN 4278058320 8 = Num.encodeLE 8 2800 ∧
+      μ'.readN 4278058328 8 = Num.encodeLE 8 4278058752 ∧ μ'.readN 4278058336 8 = Num.encodeLE 8 2804 ∧
+      (∀ a, a < 4294967296 → (a < 4278057232 ∨ 4278057240 ≤ a) → (a < 4278057288 ∨ 4278057296 ≤ a) →
+        (a < 4278057360 ∨ 4278057368 ≤ a) → (a < 4278058296 ∨ 4278058344 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have hr1 := fun a h1 h2 => Memory.readable_of_writable (hw1 a h1 h2)
+  have hr2 := fun a h1 h2 => Memory.readable_of_writable (hw2 a h1 h2)
+  have hr3 := fun a h1 h2 => Memory.readable_of_writable (hw3 a h1 h2)
+  have hr4 := fun a h1 h2 => Memory.readable_of_writable (hw4 a h1 h2)
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?run, ?post⟩
+  case run => pvm_go [h1, hw1, hw2, hw3, hw4, hr1, hr2, hr3, hr4]
+  case post =>
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+    all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+      ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, h1]
+    all_goals try rfl
+    all_goals try (simp (disch := pvm_arith) only [PVM.Memory.readN_writeN_same, PVM.Memory.readN_writeN_disjoint,
+      PVM.Num.length_encodeLE, List.length_cons, List.length_nil, PVM.two32]; done)
+    all_goals try (intro a; simp only [PVM.Memory.readable_writeN, PVM.Memory.writable_writeN]; done)
+    all_goals try (intro a ha h1 h2 h3 h4
+                   simp (disch := pvm_arith) only [PVM.Memory.read_writeN_disjoint, PVM.Num.length_encodeLE,
+                     List.length_cons, List.length_nil, PVM.two32])
+
 end Services.Bootstrap.Acc

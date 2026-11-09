@@ -182,6 +182,9 @@ jobs:
       - name: Assurances vectors (tiny and full)
         run: lake build assurancestest
 
+      - name: Safrole vectors (tiny and full; Bandersnatch primitives as an oracle read from the vectors)
+        run: lake build safroletest
+
       - name: Save .lake
         if: always()
         uses: actions/cache/save@v4

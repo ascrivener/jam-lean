@@ -198,6 +198,7 @@ import Services.Bootstrap.Alloc.ReallocCases
 import Services.Bootstrap.Alloc.Pages
 import Services.Bootstrap.Encode.Variants
 import Services.Bootstrap.Encode.Yield
+import Services.Bootstrap.Encode.Prefix
 
 /-!
 # Results about specific services' deployed code

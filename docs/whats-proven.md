@@ -383,6 +383,16 @@ An independent kernel, nanoda as vendored by
   - *How:* the code at 2727 is the pair reader at 3100 shifted by −373, except the first field
     (a 4-octet read, `loadIndI32`, `storeIndU32`); `bless_heap` reuses `bless_empty`'s steps.
 
+- **`Vec<[u8; 32]>` and `RandomStorageAccumulate(Ok(v))` with 1 … 512 hashes, the payload in the heap.**
+  `Decode.VecHash32.vec_hash32_heap` (`Services/Bootstrap/Decode/VecHash32.lean`),
+  `Decode.RandomStorage.random_storage_ok_heap` and `random_storage_ok_elem` (`RandomStorageOk.lean`).
+  - *Statement:* the element reader at 907 (called only from `RandomStorageAccumulate`'s `Ok` branch,
+    35867) copies the 32n octets into a fresh `Vec` `{n, q, n}`; `random_storage_ok_heap` is
+    `Instruction::decode` of tag 22 with the result tag 0, the variant in O (discriminant 2⁶³ + 21, then
+    the `Vec`); `random_storage_ok_elem` is its decode-loop element (`ElemOkAF`). The `alloc` may fail.
+  - *How:* the code at 907 is the hash reader at 1764 (`VecHash`) shifted (−857 for the element loop,
+    −900 for the exit), with its own return addresses.
+
 - **`Vec<Vec<u8>>` with the payload in the heap (1 ≤ n ≤ 682 elements, each ≤ 16384 octets).**
   `Decode.VecVecU8.vec_vec_u8_heap` (`Services/Bootstrap/Decode/VecVecU8.lean`).
   - *Statement:* the element reader at 8, which reads the items of `DeleteItems`, `Export` and

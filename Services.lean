@@ -60,6 +60,7 @@ import Services.Bootstrap.Decode.U32Hash
 import Services.Bootstrap.Decode.Upgrade
 import Services.Bootstrap.Decode.Lookup
 import Services.Bootstrap.Decode.Transfer
+import Services.Bootstrap.Decode.RandomStorageRefine
 import Services.Bootstrap.Decode.Loop
 import Services.Bootstrap.Decode.Elems
 import Services.Bootstrap.Decode.LoopAPass
@@ -72,6 +73,9 @@ import Services.Bootstrap.Decode.Provide
 import Services.Bootstrap.Decode.RandomStorage
 import Services.Bootstrap.Decode.Bless
 import Services.Bootstrap.Decode.Designate
+import Services.Bootstrap.Decode.VecU8Small
+import Services.Bootstrap.Decode.LookedUpSmall
+import Services.Bootstrap.Decode.VecU8Loop
 import Services.Picoalloc.Model
 import Services.Picoalloc.Invariant
 import Services.Picoalloc.FreeLists

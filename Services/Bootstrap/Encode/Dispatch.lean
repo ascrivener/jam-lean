@@ -127,7 +127,7 @@ theorem dispatch {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x :
     writer v (from ω₁₀) in ω₇. -/
 theorem unit_arm {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X) (ω : Regs) (μ : Memory)
     (sp v t : Nat) (ht : t = 15 ∨ t = 16 ∨ t = 23) (hsp : sp + 32 ≤ 4294967296)
-    (h1 : ω[1] = UInt64.ofNat sp) (h10 : ω[10] = UInt64.ofNat v)
+    (hv : v < 18446744073709551616) (h1 : ω[1] = UInt64.ofNat sp) (h10 : ω[10] = UInt64.ofNat v)
     (hw : ∀ a, sp + 24 ≤ a → a < sp + 25 → μ.writable a = true) :
     ∃ ω', FreeStepsH p R (arm t) ω μ x 58508 ω' (μ.writeN (sp + 24) [UInt8.ofNat t]) x 8 ∧
       ω'[0] = UInt64.ofNat 904 ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
@@ -140,7 +140,7 @@ theorem unit_arm {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x :
     · pvm_go [h1, h10, hsp, hw]
     · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
       all_goals simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
-        ↓reduceIte, List.lookup_nil, Option.getD_none, h1, h10]
+        ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, h10, Nat.mod_eq_of_lt hv]
 
 /-- 20155 … 20167: the function's end: ω₀, ω₅, ω₆ from the frame at sp (sp + 48, + 40, + 32), the frame
     closed (sp + 56), and the return. -/
@@ -217,7 +217,7 @@ theorem unit {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (t : Nat
     (by omega) (by omega) (by omega) hD tab hrt (fun a h1 h2 => hrS a h1 (by omega))
     (fun a h1 h2 => hwF a (by omega) h2)
   obtain ⟨ω2, run2, b0, b1, b5, b6, b7, b8, b9⟩ := unit_arm (p := p) (P := P) (R := R) x ω1 μ1 (F - 56) v t ht
-    (by omega) a1 a10 (fun a h1 h2 => by rw [awr]; exact hwF a (by omega) (by omega))
+    (by omega) (by omega) a1 a10 (fun a h1 h2 => by rw [awr]; exact hwF a (by omega) (by omega))
   -- the octet at F − 32, and what the write keeps
   have back2 : ∀ a, a < 4294967296 → (a < F - 32 ∨ F - 31 ≤ a) →
       (μ1.writeN (F - 56 + 24) [UInt8.ofNat t]).read a = μ1.read a := fun a h0 h1 =>

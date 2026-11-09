@@ -117,4 +117,60 @@ theorem dl_iter {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : 
       all_goals post_simp [h1, h2, h3, h7]
       all_goals rw [Nat.mod_eq_of_lt hyl]
 
+/-- A 32-bit word sign-extended to 64 bits. -/
+def sx32 (x : Nat) : Nat := if x < 2147483648 then x else x + 18446744069414584320
+
+theorem sx32_mod (x : Nat) (hx : x < 4294967296) : sx32 x % 4294967296 = x := by
+  unfold sx32; split <;> omega
+
+theorem sx32_lt (x : Nat) (hx : x < 4294967296) : sx32 x < 18446744073709551616 := by
+  unfold sx32; split <;> omega
+
+/-- A signed 32-bit load, as the stepping leaves it, is `sx32`. -/
+theorem sx32_eq (x : Nat) (hx : x < 4294967296) :
+    UInt64.ofNat ((if x < 2147483648 then (x : Int) else (x : Int) - 4294967296) %
+      18446744073709551616).toNat = UInt64.ofNat (sx32 x) := by
+  unfold sx32
+  split
+  · congr 1; omega
+  · congr 1; omega
+
+/-- 68146 … 68167: a 72-octet frame at T = sp − 72 (ω₀, ω₅, ω₆ at T + 64, T + 56, T + 48), the
+    `Formatter` (ω₈) in ω₆, the value read (signed) from ω₇ into ω₁₂, the table 70844 in ω₇; on to
+    68331 for a value below 1000, else 68173. -/
+theorem dl_entry {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X) (ω : Regs) (μ : Memory)
+    (sp v F r0 v5 v6 : Nat) (hsp : 65536 + 72 ≤ sp ∧ sp < 4294967296)
+    (h0 : ω[0] = UInt64.ofNat r0) (h1 : ω[1] = UInt64.ofNat sp) (h5 : ω[5] = UInt64.ofNat v5)
+    (h6 : ω[6] = UInt64.ofNat v6) (h7 : ω[7] = UInt64.ofNat v) (h8 : ω[8] = UInt64.ofNat F)
+    (hb : r0 < 18446744073709551616 ∧ v5 < 18446744073709551616 ∧ v6 < 18446744073709551616 ∧
+      F < 18446744073709551616)
+    (hv : v + 4 < 4294967296) (hvf : v + 4 ≤ sp - 72 ∨ sp ≤ v)
+    (hrv : ∀ a, v ≤ a → a < v + 4 → μ.readable a = true)
+    (hw : ∀ a, sp - 72 ≤ a → a < sp → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 68146 ω μ x (if rdN μ v 4 < 1000 then 68331 else 68173) ω' μ' x 10 ∧
+      ω'[1] = UInt64.ofNat (sp - 72) ∧ ω'[6] = UInt64.ofNat F ∧ ω'[7] = UInt64.ofNat 70844 ∧
+      ω'[12] = UInt64.ofNat (sx32 (rdN μ v 4)) ∧
+      rdN μ' (sp - 72 + 64) 8 = r0 ∧ rdN μ' (sp - 72 + 56) 8 = v5 ∧ rdN μ' (sp - 72 + 48) 8 = v6 ∧
+      (∀ a, a < 4294967296 → (a < sp - 72 + 48 ∨ sp ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have hr : ∀ a, sp - 72 ≤ a → a < sp → μ.readable a = true := fun a h1 h2 => Memory.readable_of_writable (hw a h1 h2)
+  have hX := rdN_lt μ v 4
+  generalize hXd : rdN μ v 4 = X at hX ⊢
+  have hX' : X < 4294967296 := by simpa using hX
+  rw [show ω = regsNF ω [] from rfl]
+  by_cases hc : X < 1000
+  · rw [if_pos hc]
+    refine ⟨?_, ?_, ?_, ?_⟩
+    rotate_left 2
+    · pvm_go [h0, h1, h5, h6, h7, h8, hb, hsp, hv, hvf, hrv, hw, hr, hXd, hX', hc, rdN_writeN_disjoint, ↓rdN_fold]
+    · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
+      all_goals post_simp [rdN_writeN_disjoint, rdN_writeN_same8, sx32_eq _ hX']
+      all_goals (unfold sx32; rw [if_pos (by omega)])
+  · rw [if_neg hc]
+    refine ⟨?_, ?_, ?_, ?_⟩
+    rotate_left 2
+    · pvm_go [h0, h1, h5, h6, h7, h8, hb, hsp, hv, hvf, hrv, hw, hr, hXd, hX', hc, rdN_writeN_disjoint, ↓rdN_fold]
+    · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
+      all_goals post_simp [rdN_writeN_disjoint, rdN_writeN_same8, sx32_eq _ hX']
+
 end Services.Bootstrap.Fmt

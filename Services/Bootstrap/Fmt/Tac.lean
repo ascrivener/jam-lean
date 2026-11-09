@@ -34,6 +34,20 @@ theorem rdN_zero (μ : Memory) (F : Nat) (hF : F + 8 ≤ 4294967296) :
   rw [Memory.readN_writeN_same _ _ _ _ (by simp) (by simp [two32] <;> omega)]
   decide
 
+/-- The word 2⁶⁴ − 1, just written at F, read back. -/
+theorem rdN_ones (μ : Memory) (F : Nat) (hF : F + 8 ≤ 4294967296) :
+    rdN (μ.writeN F [UInt8.ofNat 255, UInt8.ofNat 255, UInt8.ofNat 255, UInt8.ofNat 255, UInt8.ofNat 255,
+      UInt8.ofNat 255, UInt8.ofNat 255, UInt8.ofNat 255]) F 8 = 18446744073709551615 := by
+  unfold rdN
+  rw [Memory.readN_writeN_same _ _ _ _ (by simp) (by simp [two32] <;> omega)]
+  decide
+
+/-- Eight octets, just written at a, read back as a word. -/
+theorem rdN_lit8 (μ : Memory) (a : Nat) (bs : List UInt8) (hb : bs.length = 8) (ha : a + 8 ≤ 4294967296) :
+    rdN (μ.writeN a bs) a 8 = Num.decodeLE bs := by
+  unfold rdN
+  rw [Memory.readN_writeN_same _ _ _ _ hb (by simp only [two32]; omega)]
+
 syntax "post_simp" ("[" Lean.Parser.Tactic.simpLemma,* "]")? : tactic
 
 macro_rules

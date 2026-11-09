@@ -1,5 +1,6 @@
 import Services.Bootstrap.Fmt.Frame
 import Services.Bootstrap.Alloc.ReallocFallbackTail
+import Services.Bootstrap.Decode.ReallocCall
 
 /-!
 # The allocator interface under refine's host contract
@@ -58,5 +59,45 @@ theorem allocOk_refine {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
       exact hfresh d hd hu this
   · right
     exact ⟨ω', μ', x, run, e7, 0, ha⟩
+
+/-- **What `realloc` returns** (alignment one unit, a nonzero request): the base is kept, and the
+    block is the old one (at `ptr`) or one at an address no allocated chunk of s had. -/
+theorem realloc_fresh {grow : Grow} {hb : Nat} {s s' : State} {ptr newReq r : Nat} {b : Bool} (hwf : WF s)
+    (hbT : s.base + 1073741824 < 2147483648) (h0 : newReq ≠ 0)
+    (h : realloc grow hb s ptr 1 newReq = some (r, s', b)) :
+    s'.base = s.base ∧ (r = ptr ∨ ∀ e ∈ chunks s, e.used = true → e.addr + 32 ≠ r) := by
+  unfold realloc at h
+  by_cases e1 : newReq = usable s ptr
+  · simp only [e1, ↓reduceIte, Option.pure_def, Option.some.injEq, Prod.mk.injEq] at h
+    obtain ⟨rfl, rfl, -⟩ := h
+    exact ⟨rfl, Or.inl rfl⟩
+  by_cases e3 : newReq < usable s ptr
+  · simp only [e1, h0, e3, ↓reduceIte, Option.pure_def, Option.some.injEq, Prod.mk.injEq] at h
+    obtain ⟨rfl, rfl, -⟩ := h
+    exact ⟨shrink_base, Or.inl rfl⟩
+  simp only [e1, h0, e3, ↓reduceIte] at h
+  cases hg : growInplace grow s ptr newReq with
+  | some s2 =>
+    simp only [hg, Option.pure_def, Option.some.injEq, Prod.mk.injEq] at h
+    obtain ⟨rfl, rfl, -⟩ := h
+    exact ⟨growInplace_base hg, Or.inl rfl⟩
+  | none =>
+    simp only [hg] at h
+    cases ha : alloc grow hb 1 newReq s with
+    | none => simp [ha] at h
+    | some q =>
+      obtain ⟨p1, s1⟩ := q
+      simp only [ha, Option.bind_eq_bind, Option.bind_some, Option.pure_def, Option.some.injEq,
+        Prod.mk.injEq] at h
+      obtain ⟨rfl, rfl, -⟩ := h
+      refine ⟨by rw [free_base', (Services.Bootstrap.Decode.VecU8.alloc_block hwf hbT ha).1], Or.inr ?_⟩
+      obtain ⟨pre, post, S, hcs, -, -⟩ := alloc_chunks hwf ha
+      have hlo := (Services.Bootstrap.Decode.VecU8.alloc_block hwf hbT ha).2.2.1
+      intro e he hu hea
+      have ht := hwf.2.2.2.1
+      unfold TilesOk at ht
+      have hf : (⟨p1 - 32, S, false⟩ : Chunk) ∈ chunks s := by rw [hcs]; simp
+      have := Tiles.addr_inj ht e he _ hf (by simp only; omega)
+      rw [this] at hu; simp at hu
 
 end Services.Bootstrap.Fmt

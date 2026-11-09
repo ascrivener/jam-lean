@@ -1,4 +1,5 @@
 import Services.Bootstrap.Decode.Loop
+import Services.Bootstrap.Decode.Fixed
 
 /-!
 # `ElemOk` for the decoded variants
@@ -46,5 +47,26 @@ theorem unit {p : ByteArray} {P : Program} [HasCode p P] (t : Nat) (ht : t = 15 
     rw [readN_take _ _ 232 8 (by decide)]
     exact Memory.readN_writeN_same _ _ _ _ (Num.length_encodeLE _ _) (by simp [two32])
   · exact Memory.read_writeN_disjoint _ _ _ _ (by simp; omega) (by simp [two32]) (by simp [two32]; omega)
+
+/-- The first word and a later stretch of a 232-octet slot, from reads at O. -/
+theorem slot_parts (μ : Memory) (O i m : Nat) (him : i + m ≤ 232) :
+    (μ.readN O 232).take 8 = μ.readN O 8 ∧ ((μ.readN O 232).drop i).take m = μ.readN (O + i) m :=
+  ⟨readN_take _ _ 232 8 (by decide), (readN_sub μ O 232 i m _ rfl him).symm⟩
+
+/-- **`Zombify`** (tag 3): the encoding 3 :: e, with e the 4 octets of `ejector`, decodes to a slot
+    holding the discriminant 2^63 + 2 and then e. -/
+theorem zombify {p : ByteArray} {P : Program} [HasCode p P] (e : List UInt8) (he : e.length = 4) :
+    ElemOk p P (3 :: e) (fun bs => bs.take 8 = Num.encodeLE 8 9223372036854775810 ∧ (bs.drop 8).take 4 = e) := by
+  intro X R x ω μ ptr len v5 v6 h1 h5 h6 h7 tag rP rL hlen hlen' hptr hpb pay rpay s0 s5 s6 hv5 hv6 tab rt ws wr
+  simp only [List.length_cons, he, Nat.add_sub_cancel, List.headD_cons, List.tail_cons] at *
+  obtain ⟨ω', μ', run, e0, e1, e5, e6, eO, eO8, eR0, eR8, efr, erd, ewr⟩ := Fixed.zombify (p := p) (P := P) (R := R)
+    x ω μ 4278057632 4278057752 18 723 v5 v6 4278058648 ptr len (loopFrame ω μ v5 v6 h1 h5 s0 s5 s6 hv5 hv6 ws)
+    (by decide) h6 h7 tag tab rt (by decide) ⟨hptr, by omega⟩ ⟨hlen, hlen'⟩ rP rL (by decide) (by omega)
+    (by decide) (by decide) (by decide) (fun a h1 h2 => ws a (by omega) (by omega)) wr
+    (fun a h1 h2 => ws a (by omega) (by omega)) rpay
+  refine ⟨ω', μ', run.mono (by omega), e1, e5, e6, eR0, eR8, ⟨9223372036854775810, by decide, eO, by decide⟩, ?_,
+    fun a h0 h1 h2 h3 => efr a h0 (by omega) h2 (by omega), erd, ewr⟩
+  obtain ⟨t8, d8⟩ := slot_parts μ' 4278057752 8 4 (by decide)
+  exact ⟨t8.trans eO, d8.trans (eO8.trans pay)⟩
 
 end Services.Bootstrap.Decode.Elems

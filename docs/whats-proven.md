@@ -345,6 +345,9 @@ An independent kernel, nanoda as vendored by
       allocated chunk of `s` is kept with its data, the block is a new allocated chunk, and page
       entries outside the heap are kept;
     - the model's `alloc` fails: the run reaches the `alloc` wrapper's return (40611) with null.
+
+    `vec_u8_heap` also keeps memory below 196608 (contents and readability), the globals (`Glob`)
+    and the stack's writability.
   - *How:* the payload survives the `alloc` because `alloc` keeps every allocated chunk and writes
     only off their data (`HKeep`, `off_hdr_data`); the reader's writes stay in the new block
     (`data_disj`). `read_low` is the reader for a source below its frames.

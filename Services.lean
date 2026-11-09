@@ -83,6 +83,7 @@ import Services.Bootstrap.Decode.VecU8Heap
 import Services.Bootstrap.Decode.LookedUpHeap
 import Services.Bootstrap.Decode.ProvideInlineHeap
 import Services.Bootstrap.Decode.ReallocKeepAll
+import Services.Bootstrap.Decode.VecPairs
 import Services.Picoalloc.Model
 import Services.Picoalloc.Invariant
 import Services.Picoalloc.FreeLists

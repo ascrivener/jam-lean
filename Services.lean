@@ -100,6 +100,7 @@ import Services.Bootstrap.Acc.Contract
 import Services.Bootstrap.Acc.HostSteps
 import Services.Bootstrap.Acc.HeapHost
 import Services.Bootstrap.Acc.DecodeU32A
+import Services.Bootstrap.Acc.Inputs.FetchStep
 import Services.Bootstrap.AccPrefixC
 import Services.Bootstrap.AccBParams
 import Services.Bootstrap.Acc.Args

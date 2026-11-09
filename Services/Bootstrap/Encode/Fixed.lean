@@ -186,7 +186,7 @@ theorem tagArm {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X
     rotate_left 2
     · pvm_go [h1, h10, h11, hsp, hw]
     · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
-      all_goals simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+      all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
         ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, h10, h11, Nat.mod_eq_of_lt hv,
         Nat.mod_eq_of_lt hS]
       post_simp
@@ -214,11 +214,12 @@ theorem fieldU32 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x :
   rotate_left 2
   · pvm_go [h1, h5, h6, hsp, hS, hr, hw, ↓rdN_fold, ↓loadI_fold]
   · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
-    all_goals simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+    all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
       ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, h5, h6, Nat.mod_eq_of_lt hv]
     post_simp
     all_goals try assumption
-    all_goals try (rw [← hsx]; congr 1; simp [sxw, Exec.u64]; omega)
+    all_goals try (rw [← hsx, show ∀ w : Nat, w % 18446744073709551616 % 4294967296 = w % 256 ^ 4 from
+      fun w => by omega, encodeLE_mod])
 
 /-- A field of 8 octets (`Exported`'s segment index, at S + 8): from 19111 the arm loads it from the
     value (ω₆ = S), and the shared tail at 19519 puts it at sp + 24 and calls
@@ -240,7 +241,7 @@ theorem fieldU64 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x :
   rotate_left 2
   · pvm_go [h1, h5, h6, hsp, hS, hr, hw, ↓rdN_fold, rdN_mod64]
   · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
-    all_goals simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+    all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
       ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, h5, h6, Nat.mod_eq_of_lt hv]
     post_simp
     all_goals try assumption
@@ -281,7 +282,7 @@ theorem zombify {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (e : 
     EncOk p P (3 :: e) (fun bs => bs.take 8 = Num.encodeLE 8 9223372036854775810 ∧ (bs.drop 8).take 4 = e) := by
   intro X R x ω μ F S v cap ptr len ret t' h0 h1 h7 h8 rep L tab hrt
   have hN : (3 :: e).length = 5 := by simp [he]
-  have hF := L.hF; have hF' := L.hF'; have hS := L.hS; have hS' := L.hS'; have hSF := L.hSF
+  have hv := L.hv; have hF := L.hF; have hF' := L.hF'; have hS := L.hS; have hS' := L.hS'; have hSF := L.hSF
   have hD : μ.readN S 8 = Num.encodeLE 8 (9223372036854775807 + 3) := by
     rw [← readN_take _ _ 232 8 (by decide)]; exact rep.1
   have hE : μ.readN (S + 8) 4 = e := by rw [← slot_take μ S 8 4 (by decide)]; exact rep.2
@@ -306,6 +307,43 @@ theorem zombify {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (e : 
     (by simp [hN]) (Or.inl ⟨rfl, by decide⟩)
   have hpre : [] ++ [UInt8.ofNat 3] ++ μ4.readN (F - 32) 4 = 3 :: e := by
     rw [show F - 32 = F - 56 + 24 by omega, dt, st3.slot L (by simp [hN]) 8 4 (by decide), hE]; rfl
+  rw [hpre] at st5
+  obtain ⟨ω6, run6, e0, e1, e5, e6, eo, el, efr, erd, ewr⟩ := finish (p := p) (P := P) (R := R) x ω5 μ5 μ L st5
+    20329 (by decide) (UInt64.toNat_lt _) (UInt64.toNat_lt _)
+  refine ⟨ω6, μ5, (run1.trans (run2.trans (run3.trans (run4.trans (run5.trans run6))))).mono (by simp [hN]),
+    e0, e1, by rw [e5]; exact UInt64.ofNat_toNat, by rw [e6]; exact UInt64.ofNat_toNat, eo, el, efr, erd, ewr⟩
+
+/-- **`Exported`** (tag 20): a value holding the discriminant 2^63 + 19 and then e, the 8 octets of
+    the segment index, encodes to 20 :: e. -/
+theorem exported {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (e : List UInt8) (he : e.length = 8) :
+    EncOk p P (20 :: e) (fun bs => bs.take 8 = Num.encodeLE 8 9223372036854775827 ∧ (bs.drop 8).take 8 = e) := by
+  intro X R x ω μ F S v cap ptr len ret t' h0 h1 h7 h8 rep L tab hrt
+  have hN : (20 :: e).length = 9 := by simp [he]
+  have hv := L.hv; have hF := L.hF; have hF' := L.hF'; have hS := L.hS; have hS' := L.hS'; have hSF := L.hSF
+  have hD : μ.readN S 8 = Num.encodeLE 8 (9223372036854775807 + 20) := by
+    rw [← readN_take _ _ 232 8 (by decide)]; exact rep.1
+  have hE : μ.readN (S + 8) 8 = e := by rw [← slot_take μ S 8 8 (by decide)]; exact rep.2
+  obtain ⟨ω1, μ1, run1, st1, a10, a11⟩ := start (p := p) (P := P) (R := R) x ω μ L 20 (by decide) h0 h1 h7 h8 hD
+    tab hrt
+  rw [show arm 20 = 19088 from rfl] at run1
+  obtain ⟨ω2, μ2, run2, b0, b1, b5, b6, b7, b8, b9, bt, bfr, brd, bwr⟩ := tagArm (p := p) (P := P) (R := R) x ω1 μ1
+    19088 20 816 (F - 56) v S (Or.inr ⟨rfl, rfl, rfl⟩) (by omega) (by omega) (by omega) st1.h1 a10 a11
+    (fun a h1 h2 => by rw [st1.wr]; exact L.hwF a (by omega) (by omega))
+  have st2 := st1.scratch L (by simp) b1 (fun a h0 h1 => bfr a h0 (by omega)) brd bwr
+  obtain ⟨ω3, μ3, run3, st3, c5, c6, _⟩ := ext_step (p := p) (P := P) (R := R) x ω2 μ2 μ L st2 (F - 32) 1 816 19111
+    b0 b7 (by rw [b8]; congr 1; omega) b9 ⟨by decide, by decide, by decide⟩ jte_407 bs_19111
+    (by rw [hN]; decide) (Or.inl ⟨rfl, by decide⟩)
+  rw [show F - 32 = F - 56 + 24 by omega, bt] at st3
+  obtain ⟨ω4, μ4, run4, d0, d1, d5, d6, d7, d8, d9, dt, dfr, drd, dwr⟩ := fieldU64 (p := p) (P := P) (R := R) x ω3
+    μ3 (F - 56) v S (by omega) (by omega) (by omega) st3.h1 (c5.trans b5) (c6.trans b6)
+    (fun a h1 h2 => by rw [st3.rd]; exact L.hrS a (by omega) (by omega))
+    (fun a h1 h2 => by rw [st3.wr]; exact L.hwF a (by omega) (by omega))
+  have st4 := st3.scratch L (by simp [hN]) d1 (fun a h0 h1 => dfr a h0 (by omega)) drd dwr
+  obtain ⟨ω5, μ5, run5, st5, _, _, _⟩ := ext_step (p := p) (P := P) (R := R) x ω4 μ4 μ L st4 (F - 32) 8 916 20329
+    d0 d7 (by rw [d8]; congr 1; omega) d9 ⟨by decide, by decide, by decide⟩ jte_457 bs_20329
+    (by simp [hN]) (Or.inl ⟨rfl, by decide⟩)
+  have hpre : [] ++ [UInt8.ofNat 20] ++ μ4.readN (F - 32) 8 = 20 :: e := by
+    rw [show F - 32 = F - 56 + 24 by omega, dt, st3.slot L (by simp [hN]) 8 8 (by decide), hE]; rfl
   rw [hpre] at st5
   obtain ⟨ω6, run6, e0, e1, e5, e6, eo, el, efr, erd, ewr⟩ := finish (p := p) (P := P) (R := R) x ω5 μ5 μ L st5
     20329 (by decide) (UInt64.toNat_lt _) (UInt64.toNat_lt _)

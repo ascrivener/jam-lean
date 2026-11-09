@@ -172,6 +172,24 @@ hypotheses, marked temporary. They are lifted by generalizing the realloc impl l
 return address (they fix ω₀ = 1988 / 40805) after the HeapHost PR, keeping the ω₀ = 1988 forms as
 corollaries.
 
+- `AccumulateItem::decode` (45126, frame 424), its entry and the transfer arm, as segments
+  (`Acc/Inputs/Item.lean`): `it_pre`, `it_tr_src`, `it_tr_dst`, `it_tr_amt`, `it_tr_memo0`,
+  `it_tr_memo`, `it_tr_memocp`, `it_tr_gas`, `u64_pre` / `u64_post` (the `u64` reader 46040),
+  `it_tr_cp` and `it_tr_fill`. **Next:** their composition, 45126 → 47072. The order is:
+  - `it_pre`, then `read_ok` (1 octet; 2082 → 46300);
+  - `it_tr_src`, then `read_ok` (4; 2092 → 46624);
+  - `it_tr_dst`, then `read_ok` (4; 2094 → 46658);
+  - `it_tr_amt`, then `read_ok` (8; 2096 → 46688);
+  - `it_tr_memo0`, then `memzero` (2098 → 46714);
+  - `it_tr_memo`, then `read_any` (128; 2100 → 46730);
+  - `it_tr_memocp`, then `memcpy_big` (2102 → 46751);
+  - `it_tr_gas`, then `u64_pre`, `read_ok` (8; 2068 → 46059), `u64_post`, and the jump (2104 → 46759);
+  - `it_tr_cp`, then `memcpy_big` (2112 → 47029);
+  - `it_tr_fill`.
+
+  The operand arm starts at 46344: four hashes by `read_ok`, then gas, the work result and the auth
+  trace (`vv_call`).
+
 Plan:
 1. (After the bounds are lifted.) `finish_grow`'s realloc path (a current block, 40898 … 40995 → 42980 → 41109). It needs:
    - the lock and unlock glue at these addresses, taking an `impl` run as `ReallocWrap.realloc_wrap`

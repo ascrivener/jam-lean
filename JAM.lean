@@ -18,6 +18,8 @@ import JAM.History
 import JAM.Authorization
 import JAM.Statistics
 import JAM.Preimages
+import JAM.Crypto
+import JAM.Disputes
 import JAM.Refine
 import JAM.Theorems.HostGas
 import JAM.Theorems.Confinement
@@ -46,6 +48,8 @@ Built on `PVM` (Appendix A).
 * `JAM.Authorization` — the authorizer pool α (§8)
 * `JAM.Statistics` — validator, core and service activity statistics (§13)
 * `JAM.Preimages` — the preimages extrinsic and its integration (§12.4)
+* `JAM.Crypto` — the cryptographic primitives (Ed25519 verification) as parameters (§3.8)
+* `JAM.Disputes` — verdicts, culprits and faults, ψ' and the cleared assignments ρ^‡ (§10)
 * `JAM.Refine` — the refine and is-authorized invocations Ψ_R and Ψ_I, with the refine host functions
 * `JAM.Theorems.HostGas` — the dispatchers of Ψ_A, Ψ_R and Ψ_I never add gas
 -/

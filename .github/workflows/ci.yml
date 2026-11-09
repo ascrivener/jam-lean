@@ -176,6 +176,9 @@ jobs:
       - name: Preimages vectors (tiny and full)
         run: lake build preimagestest
 
+      - name: Disputes vectors (tiny and full)
+        run: lake build disputestest
+
       - name: Save .lake
         if: always()
         uses: actions/cache/save@v4

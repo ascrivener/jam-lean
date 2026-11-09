@@ -191,3 +191,12 @@ lean_exe «assurancestest-exe» where
 /-- Run the assurances STF (§11.2) on every assurances vector (tiny and full). -/
 target assurancestest pkg : Unit := do
   runOnVectors `«assurancestest-exe» #[(jamVectorDir pkg / "stf" / "assurances").toString]
+
+lean_exe «safroletest-exe» where
+  root := `Tests.SafroleTest
+  exeName := "safroletest"
+
+/-- Run the Safrole STF (§6) on every safrole vector (tiny and full), with the crypto oracle read
+    from the vectors (see `Tests/SafroleTest.lean`). -/
+target safroletest pkg : Unit := do
+  runOnVectors `«safroletest-exe» #[(jamVectorDir pkg / "stf" / "safrole").toString]

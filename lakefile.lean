@@ -175,3 +175,11 @@ lean_exe «preimagestest-exe» where
 /-- Run the preimage STF (§12.4) and its service statistics on every preimages vector (tiny and full). -/
 target preimagestest pkg : Unit := do
   runOnVectors `«preimagestest-exe» #[(jamVectorDir pkg / "stf" / "preimages").toString]
+
+lean_exe «disputestest-exe» where
+  root := `Tests.DisputesTest
+  exeName := "disputestest"
+
+/-- Run the disputes STF (§10) on every disputes vector (tiny and full). -/
+target disputestest pkg : Unit := do
+  runOnVectors `«disputestest-exe» #[(jamVectorDir pkg / "stf" / "disputes").toString]

@@ -217,4 +217,79 @@ theorem vv_call {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
     · rw [f1, h1]; congr 1; omega
   · exact Or.inr ⟨ha, ω4, μ4, ((((r1.trans r2).trans r3).trans r4)).mono (by omega)⟩
 
+
+/-- **The length-prefixed `Vec<u8>` decoder for an empty vector** (39634 → 39708): the reader holds
+    ℰ(0) = [0]; `Vec { cap: 0, ptr: 1, len: 0 }` is written at `out` and the reader advanced by 1.
+    Nothing is allocated: memory changes only below sp (the frames), at `out` and at the reader. -/
+theorem vv_empty {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
+    (sp out rd ip rlen : Nat) (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat out)
+    (h8 : ω[8] = UInt64.ofNat rd)
+    (hR0 : μ.readN rd 8 = Num.encodeLE 8 ip) (hR8 : μ.readN (rd + 8) 8 = Num.encodeLE 8 rlen)
+    (hrl : 1 ≤ rlen) (hrl32 : rlen < 4294967296) (hb0 : μ.readN ip 1 = [0])
+    (hip : 65536 ≤ ip ∧ ip + 32 < 2147483648) (hra : μ.readable ip = true)
+    (hsp : 2147483960 ≤ sp ∧ sp < 4294967296) (hout : sp ≤ out ∧ out + 24 < 4294967296)
+    (hrd : sp ≤ rd ∧ rd + 16 < 4294967296) (dor : out + 24 ≤ rd ∨ rd + 16 ≤ out)
+    (hwf : ∀ a, sp - 160 ≤ a → a < sp → μ.writable a = true)
+    (hwo : ∀ a, out ≤ a → a < out + 24 → μ.writable a = true)
+    (hwr : ∀ a, rd ≤ a → a < rd + 16 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 39634 ω μ x 39708 ω' μ' x 600 ∧
+      rdN μ' out 8 = 0 ∧ rdN μ' (out + 8) 8 = 1 ∧ rdN μ' (out + 16) 8 = 0 ∧
+      μ'.readN rd 8 = Num.encodeLE 8 (ip + 1) ∧ μ'.readN (rd + 8) 8 = Num.encodeLE 8 (rlen - 1) ∧
+      (∀ a, a < 4294967296 → (a < sp - 160 ∨ sp ≤ a) → (a < out ∨ out + 24 ≤ a) → (a < rd ∨ rd + 16 ≤ a) →
+        μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) ∧
+      ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
+  have he : Blob.encodeNat 0 = [0] := by simp [Blob.encodeNat]
+  obtain ⟨ω1, μ1, r1, a0, a1, a5, a6, a7, s8, s16, s24, fr1, rd1, wr1⟩ :=
+    vv_pre (p := p) (P := P) (R := R) x ω μ sp out rd h1 h7 h8 ⟨by omega, hsp.2⟩ (by omega) (by omega)
+      (fun a h1 h2 => hwf a (by omega) h2)
+  have m1 : ∀ a, a < 4294967296 → (a < sp - 24 ∨ sp ≤ a) → μ1.read a = μ.read a := fr1
+  obtain ⟨ω2, μ2, r2, d0, d1, -, -, -, d5, d6, -, d7, d8, q0, q8, dfr, drd, dwr⟩ :=
+    decodeU32A (p := p) (P := P) (R := R) x ω1 μ1 1958 39656 (sp - 24) rd ip rlen a0 a1 a7
+      (by decide) (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_978]) bs_39656
+      ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ ⟨by omega, by omega⟩
+      (Or.inr (by omega)) (Or.inl (by omega)) (Or.inl (by omega))
+      (fun a h1 h2 => by rw [wr1]; exact hwf a (by omega) (by omega))
+      (fun a h1 h2 => by rw [wr1]; exact hwr a h1 h2)
+      (by rw [PVM.Memory.readN_congr (μ := μ) (fun j hj => m1 _ (by omega) (by omega))]; exact hR0)
+      (by rw [PVM.Memory.readN_congr (μ := μ) (fun j hj => m1 _ (by omega) (by omega))]; exact hR8)
+      0 (by omega) ⟨by rw [he]; simpa using hrl, hrl32⟩
+      (fun a h1 h2 => by rw [he] at h2; simp at h2; rw [rd1, show a = ip by omega]; exact hra)
+      (by rw [he, PVM.Memory.readN_congr (μ := μ) (fun j hj => m1 _ (by simp at hj; omega)
+        (Or.inl (by simp at hj; omega)))]; exact hb0)
+  rw [he] at q0 q8
+  simp only [List.length_cons, List.length_nil, Nat.zero_add] at q0 q8
+  obtain ⟨ω3, r3, b0, b7, b8, b9, b1, b5, b6⟩ :=
+    vv_mid (p := p) (P := P) (R := R) x ω2 μ2 out rd 0 (by rw [d5, a5]) (by rw [d6, a6]) d7 d8
+      (by omega) (by omega) (by omega)
+  have m2 : ∀ a, a < 4294967296 → (a < sp - 152 ∨ sp ≤ a) → (a < rd ∨ rd + 16 ≤ a) → μ2.read a = μ.read a :=
+    fun a h1 h2 h3 => by rw [dfr a h1 (by omega) h3, m1 a h1 (by omega)]
+  have ww2 : ∀ a, μ2.writable a = μ.writable a := fun a => by rw [dwr, wr1]
+  obtain ⟨ω4, μ4, r4, e0, e1, e5, e6, g0, g8, g16, gfr, grd, gwr⟩ :=
+    rv_empty (p := p) (P := P) (R := R) x ω3 μ2 (sp - 24) out rd (by rw [b1, d1, a1]) b7 b8 b9
+      ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ (by omega)
+      (fun a h1 h2 => Memory.readable_of_writable (by rw [ww2]; exact hwr a h1 h2))
+      (fun a h1 h2 => by rw [ww2]; exact hwf a (by omega) (by omega))
+      (fun a h1 h2 => by rw [ww2]; exact hwo a h1 h2)
+  have f41 : ∀ a, sp - 24 ≤ a → a < sp → μ4.read a = μ1.read a := fun a h1 h2 => by
+    rw [gfr a (by omega) (Or.inr h1) (Or.inl (by omega)), dfr a (by omega) (Or.inr h1) (Or.inl (by omega))]
+  have l : ∀ o v, sp - 24 ≤ o → o + 8 ≤ sp → rdN μ1 o 8 = v → rdN μ4 o 8 = v := fun o v h1 h2 hv => by
+    rw [rdN_frame fun j hj => f41 _ (by omega) (by omega)]; exact hv
+  obtain ⟨ω5, r5, f0, f1, f5, f6, -⟩ :=
+    vv_post (p := p) (P := P) (R := R) x ω4 μ4 (sp - 24) ω[0].toNat ω[5].toNat ω[6].toNat
+      (by rw [e0, b0]) (by rw [e1]) (l _ _ (by omega) (by omega) s24)
+      (l _ _ (by omega) (by omega) (by rw [show sp - 24 + 8 = sp - 16 by omega]; exact s16))
+      (l _ _ (by omega) (by omega) (by rw [show sp - 24 + 16 = sp - 8 by omega]; exact s8))
+      ⟨by omega, by omega⟩ (UInt64.toNat_lt _) (UInt64.toNat_lt _) (UInt64.toNat_lt _)
+      (fun a h1 h2 => Memory.readable_of_writable (by rw [gwr, ww2]; exact hwf a (by omega) (by omega)))
+  have dec : ∀ v : UInt64, UInt64.ofNat v.toNat = v := fun v => UInt64.ofNat_toNat
+  refine ⟨ω5, μ4, ((((r1.trans r2).trans r3).trans r4).trans r5).mono (by omega), g0, g8, g16, ?_, ?_, ?_,
+    fun a => by rw [grd, drd, rd1], fun a => by rw [gwr, ww2], by rw [f0, dec], ?_, by rw [f5, dec],
+    by rw [f6, dec]⟩
+  · rw [PVM.Memory.readN_congr (μ := μ2) (fun j hj => gfr _ (by omega) (Or.inr (by omega)) (by omega))]; exact q0
+  · rw [PVM.Memory.readN_congr (μ := μ2) (fun j hj => gfr _ (by omega) (Or.inr (by omega)) (by omega))]; exact q8
+  · intro a h0 hs ho hr
+    rw [gfr a h0 (by omega) ho, m2 a h0 (by omega) hr]
+  · rw [f1, h1]; congr 1; omega
+
 end Services.Bootstrap.Acc

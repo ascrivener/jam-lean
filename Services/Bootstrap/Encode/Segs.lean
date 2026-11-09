@@ -503,7 +503,7 @@ theorem fieldSeg_19848 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P
       ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, h5, h6, Nat.mod_eq_of_lt hv]
     post_simp
     all_goals try assumption
-    all_goals try (rw [hm1, encodeLE_mod, encodeLE_rdN])
+    all_goals try (rw [← encodeLE_rdN μ _ 1]; simp only [Num.encodeLE]; congr 2; omega)
 
 theorem fieldSeg_19279 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X) (ω : Regs) (μ : Memory)
     (sp v S : Nat) (hsp : sp + 32 ≤ 4294967296) (hS : S + 232 ≤ 4294967296)
@@ -557,10 +557,11 @@ theorem fieldSeg_19300 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P
       ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, h5, h6, Nat.mod_eq_of_lt hv]
     post_simp
     all_goals try assumption
-    all_goals try (rw [hm1, encodeLE_mod, encodeLE_rdN])
+    all_goals try (rw [← encodeLE_rdN μ _ 1]; simp only [Num.encodeLE]; congr 2; omega)
 
 theorem directSeg_19500 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X) (ω : Regs) (μ : Memory)
-    (v S : Nat) (hS : S + 232 ≤ 4294967296) (h5 : ω[5] = UInt64.ofNat v) (h6 : ω[6] = UInt64.ofNat S) :
+    (v S : Nat) (hS : S + 232 ≤ 4294967296) (hv : v < 18446744073709551616) (h5 : ω[5] = UInt64.ofNat v)
+    (h6 : ω[6] = UInt64.ofNat S) :
     ∃ ω', FreeStepsH p R 19500 ω μ x 58508 ω' μ x 6 ∧
       ω'[0] = UInt64.ofNat 852 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat v ∧ ω'[8] = UInt64.ofNat (S + 8) ∧ ω'[9] = UInt64.ofNat 32 := by
@@ -570,11 +571,12 @@ theorem directSeg_19500 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p 
   · pvm_go [h5, h6, hS]
   · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
     all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
-      ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h5, h6]
+      ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h5, h6, Nat.mod_eq_of_lt hv]
     all_goals try (congr 1; omega)
 
 theorem directSeg_18413 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X) (ω : Regs) (μ : Memory)
-    (v S : Nat) (hS : S + 232 ≤ 4294967296) (h5 : ω[5] = UInt64.ofNat v) (h6 : ω[6] = UInt64.ofNat S) :
+    (v S : Nat) (hS : S + 232 ≤ 4294967296) (hv : v < 18446744073709551616) (h5 : ω[5] = UInt64.ofNat v)
+    (h6 : ω[6] = UInt64.ofNat S) :
     ∃ ω', FreeStepsH p R 18413 ω μ x 58508 ω' μ x 6 ∧
       ω'[0] = UInt64.ofNat 916 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat v ∧ ω'[8] = UInt64.ofNat (S + 8) ∧ ω'[9] = UInt64.ofNat 32 := by
@@ -584,11 +586,12 @@ theorem directSeg_18413 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p 
   · pvm_go [h5, h6, hS]
   · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
     all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
-      ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h5, h6]
+      ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h5, h6, Nat.mod_eq_of_lt hv]
     all_goals try (congr 1; omega)
 
 theorem directSeg_18948 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X) (ω : Regs) (μ : Memory)
-    (v S : Nat) (hS : S + 232 ≤ 4294967296) (h5 : ω[5] = UInt64.ofNat v) (h6 : ω[6] = UInt64.ofNat S) :
+    (v S : Nat) (hS : S + 232 ≤ 4294967296) (hv : v < 18446744073709551616) (h5 : ω[5] = UInt64.ofNat v)
+    (h6 : ω[6] = UInt64.ofNat S) :
     ∃ ω', FreeStepsH p R 18948 ω μ x 58508 ω' μ x 6 ∧
       ω'[0] = UInt64.ofNat 800 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat v ∧ ω'[8] = UInt64.ofNat (S + 8) ∧ ω'[9] = UInt64.ofNat 32 := by
@@ -598,11 +601,12 @@ theorem directSeg_18948 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p 
   · pvm_go [h5, h6, hS]
   · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
     all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
-      ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h5, h6]
+      ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h5, h6, Nat.mod_eq_of_lt hv]
     all_goals try (congr 1; omega)
 
 theorem directSeg_19833 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X) (ω : Regs) (μ : Memory)
-    (v S : Nat) (hS : S + 232 ≤ 4294967296) (h5 : ω[5] = UInt64.ofNat v) (h6 : ω[6] = UInt64.ofNat S) :
+    (v S : Nat) (hS : S + 232 ≤ 4294967296) (hv : v < 18446744073709551616) (h5 : ω[5] = UInt64.ofNat v)
+    (h6 : ω[6] = UInt64.ofNat S) :
     ∃ ω', FreeStepsH p R 19833 ω μ x 58508 ω' μ x 6 ∧
       ω'[0] = UInt64.ofNat 880 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat v ∧ ω'[8] = UInt64.ofNat (S + 12) ∧ ω'[9] = UInt64.ofNat 32 := by
@@ -612,11 +616,12 @@ theorem directSeg_19833 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p 
   · pvm_go [h5, h6, hS]
   · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
     all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
-      ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h5, h6]
+      ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h5, h6, Nat.mod_eq_of_lt hv]
     all_goals try (congr 1; omega)
 
 theorem directSeg_18867 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X) (ω : Regs) (μ : Memory)
-    (v S : Nat) (hS : S + 232 ≤ 4294967296) (h5 : ω[5] = UInt64.ofNat v) (h6 : ω[6] = UInt64.ofNat S) :
+    (v S : Nat) (hS : S + 232 ≤ 4294967296) (hv : v < 18446744073709551616) (h5 : ω[5] = UInt64.ofNat v)
+    (h6 : ω[6] = UInt64.ofNat S) :
     ∃ ω', FreeStepsH p R 18867 ω μ x 58508 ω' μ x 6 ∧
       ω'[0] = UInt64.ofNat 916 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat v ∧ ω'[8] = UInt64.ofNat (S + 8) ∧ ω'[9] = UInt64.ofNat 128 := by
@@ -626,7 +631,7 @@ theorem directSeg_18867 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p 
   · pvm_go [h5, h6, hS]
   · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
     all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
-      ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h5, h6]
+      ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h5, h6, Nat.mod_eq_of_lt hv]
     all_goals try (congr 1; omega)
 
 end Services.Bootstrap.Encode.Enc

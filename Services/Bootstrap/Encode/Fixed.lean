@@ -261,17 +261,17 @@ theorem fieldSeg {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x :
     (ω₆ = S) with return address r, the writer from ω₅. -/
 theorem directSeg {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X) (ω : Regs) (μ : Memory)
     (e r off n sp v S : Nat) (hc : DirectCase e r off n) (hS : S + 232 ≤ 4294967296)
-    (h5 : ω[5] = UInt64.ofNat v) (h6 : ω[6] = UInt64.ofNat S) :
+    (hv : v < 18446744073709551616) (h5 : ω[5] = UInt64.ofNat v) (h6 : ω[6] = UInt64.ofNat S) :
     ∃ ω', FreeStepsH p R e ω μ x 58508 ω' μ x 6 ∧
       ω'[0] = UInt64.ofNat r ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat v ∧ ω'[8] = UInt64.ofNat (S + off) ∧ ω'[9] = UInt64.ofNat n := by
   unfold DirectCase at hc
   rcases hc with ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩
-  · exact directSeg_19500 x ω μ v S hS h5 h6
-  · exact directSeg_18413 x ω μ v S hS h5 h6
-  · exact directSeg_18948 x ω μ v S hS h5 h6
-  · exact directSeg_19833 x ω μ v S hS h5 h6
-  · exact directSeg_18867 x ω μ v S hS h5 h6
+  · exact directSeg_19500 x ω μ v S hS hv h5 h6
+  · exact directSeg_18413 x ω μ v S hS hv h5 h6
+  · exact directSeg_18948 x ω μ v S hS hv h5 h6
+  · exact directSeg_19833 x ω μ v S hS hv h5 h6
+  · exact directSeg_18867 x ω μ v S hS hv h5 h6
 
 /-- **A tag piece**: from `St pre` at the arm, `St (pre ++ [tag])` at the call's return e', with the
     writer in ω₅ and the value in ω₆. -/
@@ -327,11 +327,11 @@ theorem pieceDirect {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (
     ∃ ω' μ', FreeStepsH p R e ω μ x e' ω' μ' x (7 * n + 366) ∧
       St F v ptr len ret r5 r6 μ0 (pre ++ μ0.readN (S + off) n) ω' μ' ∧
       ω'[5] = UInt64.ofNat v ∧ ω'[6] = UInt64.ofNat S := by
-  have hS' := L.hS'
+  have hS' := L.hS'; have hv := L.hv
   have hle := hc.le
   have hr : 0 < r ∧ r ≤ 2806 ∧ r % 2 = 0 := by unfold DirectCase at hc; omega
   obtain ⟨ω2, run2, b0, b1, b5, b6, b7, b8, b9⟩ := directSeg (p := p) (P := P) (R := R) x ω μ e r off n (F - 56) v S
-    hc (by omega) h5 h6
+    hc (by omega) (by omega) h5 h6
   obtain ⟨ω3, μ3, run3, st3, c5, c6, _⟩ := ext_step (p := p) (P := P) (R := R) x ω2 μ μ0 L
     ⟨b1.trans st.h1, st.s0, st.s5, st.s6, st.vl, st.out, st.keep, st.rd, st.wr⟩ (S + off) n r e'
     b0 b7 b8 b9 hr hje hbe hn (Or.inr ⟨by omega, by omega⟩)

@@ -87,6 +87,9 @@ jobs:
       - name: Keccak and SHA3 vectors
         run: lake build Tests.KeccakTest
 
+      - name: SHA-512 vectors (FIPS 180-2 and hashlib) and one trace block's VRF output
+        run: lake build Tests.Sha512Test
+
       - name: Refine host functions, Ψ_R and Ψ_I (hand-written; no vectors exist)
         run: lake build Tests.RefineTest
 
@@ -187,6 +190,12 @@ jobs:
 
       - name: Safrole vectors (tiny and full; Bandersnatch primitives as an oracle read from the vectors)
         run: lake build safroletest
+
+      - name: Fetch four block-import traces (fallback, safrole, storage_light, preimages_light)
+        run: scripts/fetch-trace-vectors.sh fallback safrole storage_light preimages_light
+
+      - name: Block import Υ over those traces, state compared after every block
+        run: lake build tracetest
 
       - name: Save .lake
         if: always()

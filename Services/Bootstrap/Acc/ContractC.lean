@@ -84,6 +84,25 @@ theorem FreeStepsH.checkpointAcc (env : AccEnv)
     FreeStepsH p (accContractC env) i ω μ x i'' ω'' μ'' x'' (k + 1) :=
   FreeStepsH.checkpointAccK hostCostMax (by decide) env hd rest
 
+/-- **A host-call step at a gas-independent id** under `accContractC`: the call continues with
+    the registers, memory and context of Ψ_A's handler F (`accHostFn env`) at the largest gas,
+    when that continues. The state-changing accumulate functions (15–17, 19–27) are stepped
+    through this way; their outcomes are the model's (`JAM.AccHost.bless` … `provide`). -/
+theorem FreeStepsH.accHostC (env : AccEnv) {h : Nat} (hh : AccGasFreeId h)
+    {p : ByteArray} {P : Program} {i n : Nat} {hx : UInt64} {ω : Regs} {μ : Memory} {x : AccCtx}
+    {i'' : Nat} {ω'' : Regs} {μ'' : Memory} {x'' : AccCtx} {k : Nat}
+    (hd : deblob p i = some P ∧ P.decode i = some (.oneImm .ecalli hx) ∧ P.next i = n ∧
+      P.blockCost (P.blockStartOf i) ≤ stepCostCap) (hId : hx.toNat = h)
+    (hs : (accHostFn env h (UInt64.ofNat hostCostMax) ω μ x).status = .cont)
+    (rest : FreeStepsH p (accContractC env) n (accHostFn env h (UInt64.ofNat hostCostMax) ω μ x).regs
+      (accHostFn env h (UInt64.ofNat hostCostMax) ω μ x).mem
+      (accHostFn env h (UInt64.ofNat hostCostMax) ω μ x).ctx i'' ω'' μ'' x'' k) :
+    FreeStepsH p (accContractC env) i ω μ x i'' ω'' μ'' x'' (k + 1) := by
+  subst hId
+  refine FreeStepsH.host_decode hd (.inl ⟨hh, by simp, ?_⟩) rest
+  cases ho : accHostFn env hx.toNat (UInt64.ofNat hostCostMax) ω μ x
+  simp_all
+
 /-- **A `log` step** (id 100, which Ψ_A's dispatcher does not know: 𝖬_∅ is charged and ω₇ := WHAT,
     GP v0.8.0 eq. `accinvocation`) under `accContractC`. -/
 theorem FreeStepsH.logAcc (env : AccEnv)

@@ -84,4 +84,16 @@ theorem FreeStepsH.checkpointAcc (env : AccEnv)
     FreeStepsH p (accContractC env) i ω μ x i'' ω'' μ'' x'' (k + 1) :=
   FreeStepsH.checkpointAccK hostCostMax (by decide) env hd rest
 
+/-- **A `log` step** (id 100, which Ψ_A's dispatcher does not know: 𝖬_∅ is charged and ω₇ := WHAT,
+    GP v0.8.0 eq. `accinvocation`) under `accContractC`. -/
+theorem FreeStepsH.logAcc (env : AccEnv)
+    {p : ByteArray} {P : Program} {i n : Nat} {ω : Regs} {μ : Memory} {x : AccCtx}
+    {i'' : Nat} {ω'' : Regs} {μ'' : Memory} {x'' : AccCtx} {k : Nat}
+    (hd : deblob p i = some P ∧ P.decode i = some (.oneImm .ecalli 100) ∧ P.next i = n ∧
+      P.blockCost (P.blockStartOf i) ≤ stepCostCap)
+    (rest : FreeStepsH p (accContractC env) n (setR7 ω Result.WHAT) μ x i'' ω'' μ'' x'' k) :
+    FreeStepsH p (accContractC env) i ω μ x i'' ω'' μ'' x'' (k + 1) := by
+  refine FreeStepsH.host_decode hd (.inl ⟨by unfold AccGasFreeId; decide, by decide, ?_⟩) rest
+  simp [accHostFn, AccHost.dispatch, hostCostMax, Constants.Cgasunknown]
+
 end Services.Bootstrap.Acc

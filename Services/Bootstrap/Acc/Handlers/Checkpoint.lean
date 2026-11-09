@@ -66,6 +66,35 @@ theorem toAlloc {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
     simp only [List.mem_cons, List.not_mem_nil, or_false, forall_eq] at hrs
     post_simp
 
+/-- **Between `alloc` and `dealloc`**, from `alloc`'s return (9958) with a block at ω₇ = ptr ≠ 0:
+    the 13-octet message is written at ptr and logged (`log`, 100, an id Ψ_A's dispatcher does not
+    know, so ω₇ := WHAT and nothing else changes), then `dealloc(ptr, 13, 1)` (40613) is called
+    with return address ω₀ = 432 (the jump table's entry for 11866). Memory changes only at
+    ptr … ptr + 13; ω₁ is kept. -/
+theorem mid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env : AccEnv) (x : AccCtx)
+    (ω : Regs) (μ : Memory) (ptr : Nat) (h7 : ω[7] = UInt64.ofNat ptr) (hp0 : ptr ≠ 0)
+    (hp : ptr + 13 ≤ 4294967296)
+    (hw : ∀ a, ptr ≤ a → a < ptr + 13 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p (accContractC env) 9958 ω μ x 40613 ω' μ' x 25 ∧
+      ω'[0] = UInt64.ofNat 432 ∧ ω'[1] = ω[1] ∧ ω'[7] = UInt64.ofNat ptr ∧ ω'[8] = UInt64.ofNat 13 ∧
+      ω'[9] = UInt64.ofNat 1 ∧ KeepsExcept μ μ' [(ptr, 13)] ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have hr : ∀ a, ptr ≤ a → a < ptr + 13 → μ.readable a = true :=
+    fun a h1 h2 => Memory.readable_of_writable (hw a h1 h2)
+  have hp64 : ptr < 18446744073709551616 := by omega
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?run, ?post⟩
+  case run =>
+    refine FreeStepsH.mono (FreeStepsH.trans (i' := 10009) (ω' := ?w1) (μ' := ?m1) (x' := x)
+      (n₁ := 12) (n₂ := 12) ?a (FreeStepsH.logAcc env (d_10009 (p := p) (P := P)) ?b)) (by omega)
+    case a => pvm_go [h7, hp0, hp64, hw, hr]
+    case b => pvm_go [JAM.setR7, bs_40613, bs_11855]
+  case post =>
+    refine ⟨?_, ?_, ?_, ?_, ?_, fun a ha hrs => ?_, fun a => ?_, fun a => ?_⟩
+    all_goals post_simp
+    simp only [List.mem_cons, List.not_mem_nil, or_false, forall_eq] at hrs
+    post_simp
+
 /-- `drop_in_place::<Instruction>`'s jump table at 65536 (in the read-only data), the first 24
     entries. -/
 def dropTab : List UInt8 :=

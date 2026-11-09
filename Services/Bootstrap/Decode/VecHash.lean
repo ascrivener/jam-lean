@@ -1,6 +1,7 @@
 import Services.Bootstrap.Decode.HeapCtx
 import Services.Bootstrap.Decode.VecU8
 import Services.Bootstrap.Decode.HashU64
+import Services.Bootstrap.ReaderBig
 
 /-!
 # Decoding `count` hashes into a fresh `Vec<[u8; 32]>` (function 1764)
@@ -214,5 +215,132 @@ theorem i2 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ :
     all_goals (rw [show q + 32 * j = j * 32 + q by omega, show S + 104 = S + 96 + 8 by omega,
       show S + 112 = S + 96 + 16 by omega,
       show S + 120 = S + 96 + 24 by omega]; exact HashU64.copy4g _ _ (S + 96) (j * 32 + q) (by omega))
+
+/-- The state at each call of the reader in the element loop, after j of the n elements: the
+    registers the call needs, the function's frame, the reader at element j, the elements from j on
+    still in the payload, and the first j already in the block q. -/
+structure LoopSt (S n q rd ptr len out r0 v5 v6 j : Nat) (P : Nat → List UInt8) (ω : Regs) (μ : Memory) :
+    Prop where
+  e0 : ω[0] = UInt64.ofNat 50
+  e1 : ω[1] = UInt64.ofNat S
+  e6 : ω[6] = UInt64.ofNat (n - j)
+  e7 : ω[7] = UInt64.ofNat rd
+  e8 : ω[8] = UInt64.ofNat (S + 96)
+  e9 : ω[9] = UInt64.ofNat 32
+  m40 : μ.readN (S + 40) 8 = Num.encodeLE 8 n
+  m48 : μ.readN (S + 48) 8 = Num.encodeLE 8 q
+  m56 : μ.readN (S + 56) 8 = Num.encodeLE 8 j
+  m32 : μ.readN (S + 32) 8 = Num.encodeLE 8 rd
+  m24 : μ.readN (S + 24) 8 = Num.encodeLE 8 n
+  m16 : μ.readN (S + 16) 8 = Num.encodeLE 8 n
+  m8 : μ.readN (S + 8) 8 = Num.encodeLE 8 out
+  m144 : μ.readN (S + 144) 8 = Num.encodeLE 8 r0
+  m136 : μ.readN (S + 136) 8 = Num.encodeLE 8 v5
+  m128 : μ.readN (S + 128) 8 = Num.encodeLE 8 v6
+  R0 : μ.readN rd 8 = Num.encodeLE 8 (ptr + 32 * j)
+  R8 : μ.readN (rd + 8) 8 = Num.encodeLE 8 (len - 32 * j)
+  pay : ∀ k, j ≤ k → k < n → μ.readN (ptr + 32 * k) 32 = P k
+  done : ∀ k, k < j → μ.readN (q + 32 * k) 32 = P k
+  ws : ∀ a, S - 88 ≤ a → a < S + 152 → μ.writable a = true
+  wr : ∀ a, rd ≤ a → a < rd + 16 → μ.writable a = true
+  wq : ∀ a, q ≤ a → a < q + 32 * n → μ.writable a = true
+  wo : ∀ a, out ≤ a → a < out + 24 → μ.writable a = true
+  rp : ∀ a, ptr ≤ a → a < ptr + 32 * n → μ.readable a = true
+
+/-- The bounds and separations the element loop needs: the frame S − 88 … S + 152 (the function's
+    and the reader's), the reader rd, the block q … q + 32·n, the slot out and the payload apart. -/
+structure Bnd (S n q rd ptr len out : Nat) : Prop where
+  hS : 65536 + 88 ≤ S ∧ S + 152 < 4294967296 ∧ S % 8 = 0
+  hn : 1 ≤ n ∧ n ≤ 512
+  hq : 65536 ≤ q ∧ q + 32 * n < 4294967296
+  hrd : 65536 ≤ rd ∧ rd + 16 < 4294967296
+  hptr : 65536 ≤ ptr ∧ ptr + 32 * n + 16 < 4294967296
+  hlen : 32 * n ≤ len ∧ len < 4294967296
+  hout : out + 24 < 4294967296
+  rS : rd + 16 ≤ S - 88 ∨ S + 152 ≤ rd
+  pS : ptr + 32 * n + 24 ≤ S - 88 ∨ S + 152 ≤ ptr
+  qS : q + 32 * n ≤ S - 88 ∨ S + 152 ≤ q
+  oS : out + 24 ≤ S - 88 ∨ S + 152 ≤ out
+  rq : rd + 16 ≤ q ∨ q + 32 * n ≤ rd
+  ro : rd + 16 ≤ out ∨ out + 24 ≤ rd
+  oq : out + 24 ≤ q ∨ q + 32 * n ≤ out
+  pq : ptr + 32 * n ≤ q ∨ q + 32 * n ≤ ptr
+  pr : ptr + 32 * n ≤ rd ∨ rd + 16 ≤ ptr
+  po : ptr + 32 * n ≤ out ∨ out + 24 ≤ ptr
+
+/-- The memory the loop may change: the frames, the reader, the block and the slot. -/
+def LFrame (S n q rd out : Nat) (μ μ' : Memory) : Prop :=
+  (∀ a, a < 4294967296 → (a < S - 88 ∨ S + 152 ≤ a) → (a < rd ∨ rd + 16 ≤ a) → (a < q ∨ q + 32 * n ≤ a) →
+    (a < out ∨ out + 24 ≤ a) → μ'.read a = μ.read a) ∧
+  (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a)
+
+/-- **One element, more to come**: from `LoopSt` after j < n − 1 elements, the reader reads element
+    j into S + 96, the function copies it to q + 32·j, and calls the reader again: `LoopSt` after j + 1. -/
+theorem one {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (S n q rd ptr len out r0 v5 v6 j : Nat) (Pl : Nat → List UInt8) (B : Bnd S n q rd ptr len out)
+    (hj : j + 1 < n) (h : LoopSt S n q rd ptr len out r0 v5 v6 j Pl ω μ) :
+    ∃ ω' μ', FreeStepsH p R 58434 ω μ x 58434 ω' μ' x 520 ∧ LoopSt S n q rd ptr len out r0 v5 v6 (j + 1) Pl ω' μ' ∧
+      LFrame S n q rd out μ μ' := by
+  obtain ⟨hS1, hS2, hS3⟩ := B.hS
+  have := B.hn; have := B.hq; have := B.hrd; have := B.hptr; have := B.hlen; have := B.hout
+  have := B.rS; have := B.pS; have := B.qS; have := B.oS; have := B.rq; have := B.ro; have := B.oq
+  have := B.pq; have := B.pr; have := B.po
+  obtain ⟨e0, e1, e6, e7, e8, e9, m40, m48, m56, m32, m24, m16, m8, m144, m136, m128, R0, R8, pay, done, ws, wr,
+    wq, wo, rp⟩ := h
+  obtain ⟨ω1, μ1, run1, g0, g1, g5, g6, g7, gR0, gR8, gbuf, gfr, grd, gwr⟩ := read_big_sp (p := p) (P := P)
+    (R := R) x ω μ 50 1982 S rd (S + 96) (ptr + 32 * j) (len - 32 * j) 32 e0 e1 e7 e8 e9 (by decide) jte_24 bs_1982
+    ⟨by omega, by omega, by omega⟩ B.hrd ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ (by decide) (by omega)
+    (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)
+    (fun a h1 h2 => ws a h1 (by omega)) wr (fun a h1 h2 => ws a (by omega) (by omega))
+    (fun a h1 h2 => rp a (by omega) (by omega)) R0 R8
+  have g' : ∀ a, a < 4294967296 → (a < S - 88 ∨ S ≤ a) → (a < rd ∨ rd + 16 ≤ a) →
+      (a < S + 96 ∨ S + 128 ≤ a) → μ1.read a = μ.read a := fun a h0 h1 h2 h3 => gfr a h0 (by omega) h2 h3
+  obtain ⟨ω2, μ2, run2, f0, f1, f6, f7, f8, f9, fcp, f56, ffr, frd, fwr⟩ := i1 (p := p) (P := P) (R := R) x ω1 μ1
+    S n q j (n - j) rd ⟨by omega, by omega⟩ (g1.trans e1) (g6.trans e6) g7 (by omega) (by omega) (by omega)
+    (by omega) (by omega) (by omega)
+    (by rw [Memory.readN_congr (fun i hi => g' _ (by omega) (by omega) (by omega) (by omega))]; exact m40)
+    (by rw [Memory.readN_congr (fun i hi => g' _ (by omega) (by omega) (by omega) (by omega))]; exact m48)
+    (by rw [Memory.readN_congr (fun i hi => g' _ (by omega) (by omega) (by omega) (by omega))]; exact m56)
+    (by rw [Memory.readN_congr (fun i hi => g' _ (by omega) (by omega) (by omega) (by omega))]; exact m32)
+    (fun a h1 h2 => by rw [gwr]; exact ws a (by omega) h2)
+    (fun a h1 h2 => by rw [gwr]; exact wq a (by omega) (by omega))
+  have back : ∀ a, a < 4294967296 → (a < S - 88 ∨ S + 152 ≤ a) → (a < rd ∨ rd + 16 ≤ a) →
+      (a < q + 32 * j ∨ q + 32 * j + 32 ≤ a) → μ2.read a = μ.read a := fun a h0 h1 h2 h3 =>
+    (ffr a h0 (by omega) (by omega) h3).trans (g' a h0 (by omega) h2 (by omega))
+  have hS' : ∀ a, S + 8 ≤ a → a < S + 56 ∨ S + 128 ≤ a → a < S + 152 → μ2.read a = μ.read a := fun a h1 h2 h3 =>
+    (ffr a (by omega) (by omega) (by omega) (by omega)).trans (g' a (by omega) (by omega) (by omega) (by omega))
+  refine ⟨ω2, μ2, (run1.trans run2).mono (by omega), ⟨f0, f1, ?_, f7, f8, f9, ?_, ?_, f56, ?_, ?_, ?_, ?_, ?_, ?_,
+    ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩, ?_, ?_, ?_⟩
+  · exact f6.trans (congrArg UInt64.ofNat (by omega))
+  · rw [Memory.readN_congr (fun i hi => hS' _ (by omega) (by omega) (by omega))]; exact m40
+  · rw [Memory.readN_congr (fun i hi => hS' _ (by omega) (by omega) (by omega))]; exact m48
+  · rw [Memory.readN_congr (fun i hi => hS' _ (by omega) (by omega) (by omega))]; exact m32
+  · rw [Memory.readN_congr (fun i hi => hS' _ (by omega) (by omega) (by omega))]; exact m24
+  · rw [Memory.readN_congr (fun i hi => (ffr _ (by omega) (by omega) (by omega) (by omega)).trans
+      (g' _ (by omega) (by omega) (by omega) (by omega)))]; exact m16
+  · rw [Memory.readN_congr (fun i hi => hS' _ (by omega) (by omega) (by omega))]; exact m8
+  · rw [Memory.readN_congr (fun i hi => hS' _ (by omega) (by omega) (by omega))]; exact m144
+  · rw [Memory.readN_congr (fun i hi => hS' _ (by omega) (by omega) (by omega))]; exact m136
+  · rw [Memory.readN_congr (fun i hi => hS' _ (by omega) (by omega) (by omega))]; exact m128
+  · rw [Memory.readN_congr (fun i hi => ffr _ (by omega) (by omega) (by omega) (by omega))]
+    exact gR0.trans (congrArg (Num.encodeLE 8) (by omega))
+  · rw [Memory.readN_congr (fun i hi => ffr _ (by omega) (by omega) (by omega) (by omega))]
+    exact gR8.trans (congrArg (Num.encodeLE 8) (by omega))
+  · intro k h1 h2
+    rw [Memory.readN_congr (fun i hi => back _ (by omega) (by omega) (by omega) (by omega))]
+    exact pay k (by omega) h2
+  · intro k hk
+    rcases Nat.lt_or_ge k j with hk' | hk'
+    · rw [Memory.readN_congr (fun i hi => back _ (by omega) (by omega) (by omega) (by omega))]
+      exact done k hk'
+    · rw [show k = j by omega, fcp, gbuf]; exact pay j (by omega) (by omega)
+  · intro a h1 h2; rw [fwr, gwr]; exact ws a h1 h2
+  · intro a h1 h2; rw [fwr, gwr]; exact wr a h1 h2
+  · intro a h1 h2; rw [fwr, gwr]; exact wq a h1 h2
+  · intro a h1 h2; rw [fwr, gwr]; exact wo a h1 h2
+  · intro a h1 h2; rw [frd, grd]; exact rp a h1 h2
+  · intro a h0 h1 h2 h3 h4; exact back a h0 h1 h2 (by omega)
+  · intro a; rw [frd, grd]
+  · intro a; rw [fwr, gwr]
 
 end Services.Bootstrap.Decode.VecHash

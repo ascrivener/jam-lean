@@ -10,7 +10,7 @@ helper writes `Ok` (the word 0) at A, the `u64` at A + 8 and the `u8` at A + 16.
 stores the variant: the discriminant word 2^63 + 20 at O, the `u64` at O + 8 and the `u8` at O + 16.
 -/
 
-namespace Services.Bootstrap.Decode.RandomStorage
+namespace Services.Bootstrap.Decode.RandomStorageRefine
 
 open PVM Services.Bootstrap Services.Bootstrap.Code Services.Bootstrap.Decode.Tag
 
@@ -282,4 +282,4 @@ theorem random_storage_refine {p : ByteArray} {P : Program} [HasCode p P] (x : X
   · intro a h0 h1 h2 h3
     rw [rfr a h0 h3]; exact b6 a h0 h1 h2
 
-end Services.Bootstrap.Decode.RandomStorage
+end Services.Bootstrap.Decode.RandomStorageRefine

@@ -6,7 +6,7 @@ import Services.Bootstrap.Decode.U32Hash
 import Services.Bootstrap.Decode.Upgrade
 import Services.Bootstrap.Decode.Lookup
 import Services.Bootstrap.Decode.Transfer
-import Services.Bootstrap.Decode.RandomStorage
+import Services.Bootstrap.Decode.RandomStorageRefine
 
 /-!
 # `ElemOk` for the decoded variants
@@ -276,7 +276,7 @@ theorem random_storage_refine {p : ByteArray} {P : Program} [HasCode p P] (g : L
   simp only [List.length_cons, List.length_append, List.length_nil, hg, Nat.add_sub_cancel, List.headD_cons,
     List.tail_cons] at tag hlen hptr hpb pay rpay ⊢
   obtain ⟨ω', μ', run, e0, e1, e5, e6, eO, eO8, eO16, eR0, eR8, efr, erd, ewr⟩ :=
-    RandomStorage.random_storage_refine (p := p) (P := P) (R := R) x ω μ 4278057632 4278057752 18 723 v5 v6
+    RandomStorageRefine.random_storage_refine (p := p) (P := P) (R := R) x ω μ 4278057632 4278057752 18 723 v5 v6
       4278058648 ptr len (loopFrame ω μ v5 v6 h1 h5 s0 s5 s6 hv5 hv6 ws)
       (by decide) h6 h7 tag tab rt (by decide) ⟨hptr, by omega⟩ ⟨hlen, hlen'⟩ rP rL (by decide) (by omega)
       (by decide) (by decide) (by omega) (by decide) (fun a h1 h2 => ws a (by omega) (by omega)) wr

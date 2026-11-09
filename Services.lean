@@ -60,7 +60,7 @@ import Services.Bootstrap.Decode.U32Hash
 import Services.Bootstrap.Decode.Upgrade
 import Services.Bootstrap.Decode.Lookup
 import Services.Bootstrap.Decode.Transfer
-import Services.Bootstrap.Decode.RandomStorage
+import Services.Bootstrap.Decode.RandomStorageRefine
 import Services.Bootstrap.Decode.Loop
 import Services.Bootstrap.Decode.Elems
 import Services.Bootstrap.Decode.VecU8

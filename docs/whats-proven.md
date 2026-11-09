@@ -237,8 +237,8 @@ An independent kernel, nanoda as vendored by
     by 37.
   - *How:* a helper with its own 88-octet frame reads the hash (`read_big_sp`), moves it, reads the
     `u64` (`read_ok`) and stores the variant (`s1`, `s2`, `s3`).
-- **`Instruction::decode` for `RandomStorageRefine`.** `Decode.RandomStorage.random_storage_refine`
-  (`Services/Bootstrap/Decode/RandomStorage.lean`).
+- **`Instruction::decode` for `RandomStorageRefine`.** `Decode.RandomStorageRefine.random_storage_refine`
+  (`Services/Bootstrap/Decode/RandomStorageRefine.lean`).
   - *Statement:* from 20626 with tag 21 (`RandomStorageRefine { seed: u64, n: u8 }`) and the reader
     holding at least 9 octets, the function returns the variant in its slot O: the discriminant word
     2^63 + 20 at O, `seed` at O + 8 and `n` at O + 16, copied from the payload (any octet for `n`). The

@@ -783,6 +783,34 @@ noted here and in a comment at the definition.
     * The reporters G and the incoming reports' core and service statistics (π_C', π_S' of
       §13.2) are checked too, with no available reports, assurances, preimages or accumulation.
 
+33. **Block import Υ** (§4, §5, Appendix D).
+    * *Composition.* `JAM.importBlock` (`JAM/BlockImport.lean`) composes the section transitions
+      along GP eq. `transitionfunctioncomposition`: disputes, Safrole (with ψ'_O), assurances,
+      guarantees (with κ', λ', η', ψ'_O and β_H^†), accumulation of **R**, recent history with θ',
+      preimages (checked against the prior δ, integrated into δ^‡), authorizations from φ', and
+      statistics. The STFs are used unchanged; `AccResult` gained a field `outputs` holding θ',
+      which `accumulate` computed but did not return. σ is `JAM.State` and T, M_σ are
+      `State.serialize` and `State.root` (`JAM/State.lean`).
+    * *Header conditions* (§5): H_P is the hash of the last retained header, H_R = M_σ(σ), H_X as in
+      eq. `extrinsichash`, H_O, H_E and H_W equal to the markers the transitions produce,
+      H_I < |κ'|, and `sealValid` for the seal and entropy source. The wall-clock bound is not
+      checked. The ancestor set 𝒜 of §11.4.1 is the retained headers together with the block's own
+      header, so that a lookup anchor can be the parent; the paper does not say whether 𝒜 includes
+      the block being imported.
+    * *Serialization.* ρ's entries are serialized with the whole guarantee (r, t, **a**) and then
+      ℰ_4 of the timestamp, as in C(10); the traces agree. The core and service statistics π_C, π_S
+      use the general natural encoding ℰ for every field, gas included; the traces agree, while
+      Appendix D says numeric state terms use fixed-length encodings by the size of the term.
+    * *The trace runner* (`Tests/TraceTest.lean`, `lake build tracetest` after
+      `scripts/fetch-trace-vectors.sh`). Trace states are raw key-values. A storage key is hashed
+      in C(s, h), so a raw state with storage cannot be decoded into 𝔸 (whose storage is keyed by
+      the original keys). The runner decodes only the genesis state (preimages and requests are
+      recognised by hashing) and keeps the model's own σ from there, comparing T(σ') and M_σ(σ')
+      with every post-state. Cryptography: every signature, VRF and ring proof is accepted (the
+      blocks are known valid); Y is the Bandersnatch VRF specification's output hash, SHA-512 of the
+      suite string, 3, the 32-octet output point and 0, cut to 32 octets (`Tests/Sha512.lean`); O
+      is answered from (γ_P, γ_Z) of the states already seen, as every state has γ_Z = O(γ_P).
+
 ## Caveats
 
 * **𝔛's termination is not proved.** The simulation runs with fuel `256 · (|**c**| − ı + 2)`

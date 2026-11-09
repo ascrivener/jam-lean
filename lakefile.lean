@@ -30,7 +30,7 @@ lean_lib Tests where
   globs := #[.one `Tests.Vectors, .one `Tests.Invocation, .one `Tests.LogicExample,
     .one `Tests.Blake2bTest, .one `Tests.HostGeneralTest, .one `Tests.JamJson,
     .one `Tests.KeccakTest, .one `Tests.RefineTest, .one `Tests.BlockJson,
-    .one `Tests.StfRunner, .one `Tests.ReportsJson]
+    .one `Tests.StfRunner, .one `Tests.ReportsJson, .one `Tests.TraceState, .one `Tests.Sha512]
 
 lean_exe «pvmtest-exe» where
   root := `Tests.PvmTest
@@ -208,3 +208,12 @@ lean_exe «safroletest-exe» where
     from the vectors (see `Tests/SafroleTest.lean`). -/
 target safroletest pkg : Unit := do
   runOnVectors `«safroletest-exe» #[(jamVectorDir pkg / "stf" / "safrole").toString]
+
+lean_exe «tracetest-exe» where
+  root := `Tests.TraceTest
+  exeName := "tracetest"
+
+/-- Import every block of each block-import trace fetched by `scripts/fetch-trace-vectors.sh`
+    with Υ (`JAM.importBlock`), comparing the state after each block (see `Tests/TraceTest.lean`). -/
+target tracetest pkg : Unit := do
+  runOnVectors `«tracetest-exe» #[(pkg.dir / "vendor" / "jam-traces" / "traces").toString]

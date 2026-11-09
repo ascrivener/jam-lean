@@ -72,4 +72,46 @@ theorem rv_entry {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x :
       | (congr 1; omega)
       | rfl
 
+
+/-- **41175 … 58434**, after `finish_grow` wrote `Ok(ptr, len)` at b + 48 (b the frame's base):
+    `finish_grow`'s return through entry 1028 (2058) to 45773, the block and its capacity stored at
+    b + 24 and b + 32, and the reader call for the chunk: ω₇ = rd (from b + 16), ω₈ = ptr,
+    ω₉ = len, return address 2060. -/
+theorem rv_mid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
+    (μ : Memory) (b rd ptr len : Nat) (h0 : ω[0] = UInt64.ofNat 2058) (h1 : ω[1] = UInt64.ofNat b)
+    (h5 : ω[5] = UInt64.ofNat 0) (h6 : ω[6] = UInt64.ofNat len)
+    (m0 : rdN μ b 8 = len) (m16 : rdN μ (b + 16) 8 = rd) (m48 : rdN μ (b + 48) 8 = 0)
+    (m56 : rdN μ (b + 56) 8 = ptr)
+    (hb : 65536 ≤ b ∧ b + 96 < 4294967296) (hptr : ptr < 18446744073709551616) (hlen : len < 4294967296)
+    (hrd : rd < 18446744073709551616)
+    (hwf : ∀ a, b ≤ a → a < b + 96 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 41175 ω μ x 58434 ω' μ' x 30 ∧
+      ω'[0] = UInt64.ofNat 2060 ∧ ω'[1] = UInt64.ofNat b ∧ ω'[5] = UInt64.ofNat 0 ∧
+      ω'[6] = UInt64.ofNat len ∧ ω'[7] = UInt64.ofNat rd ∧ ω'[8] = UInt64.ofNat ptr ∧
+      ω'[9] = UInt64.ofNat len ∧
+      rdN μ' (b + 24) 8 = ptr ∧ rdN μ' (b + 32) 8 = len ∧
+      (∀ a, a < 4294967296 → (a < b + 24 ∨ b + 40 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have hr : ∀ a, b ≤ a → a < b + 96 → μ.readable a = true :=
+    fun a h1 h2 => Memory.readable_of_writable (hwf a h1 h2)
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?run, ?post⟩
+  case run => pvm_go [h0, h1, h5, h6, m0, m16, m48, m56, hwf, hr, Nat.mod_eq_of_lt hptr,
+    Nat.mod_eq_of_lt hrd, Nat.mod_eq_of_lt (show len < 18446744073709551616 by omega),
+    rdN_writeN_disjoint, ↓rdN_fold, ↓loadI_fold]
+  case post =>
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha h1 => ?_, fun a => ?_, fun a => ?_⟩
+    all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+      ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, h0, h1, h5, h6]
+    all_goals try with_reducible rfl
+    all_goals try first
+      | (rd_simp []; done)
+      | rd_simp []
+    all_goals try first
+      | with_reducible rfl
+      | exact Nat.mod_eq_of_lt (by omega)
+    all_goals first
+      | (congr 1; omega)
+      | rfl
+
 end Services.Bootstrap.Acc

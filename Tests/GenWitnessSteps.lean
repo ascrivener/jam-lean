@@ -92,6 +92,9 @@ structure Svc where
   codeOnly : List (Nat × Nat × Nat × List UInt8) := []
   codeOnlyStop : Nat := 0
   fnRanges : List (Nat × Nat)
+  /-- `codex` / `codexcheck`: more summarized functions, whose code facts go in a separate module
+      (`Services/<name>/CodeX.lean`, assumed by `HasCodeX p P`) so the base facts are not regenerated. -/
+  fnRangesX : List (Nat × Nat) := []
   /-- Whether `Services/<name>/Memcpy.lean` exists (`memcpy_small` at the head of `fnRanges`):
       the prefix then calls it for each `memcpy` of fewer than 16 octets instead of stepping. -/
   memcpySummary : Bool := false
@@ -195,6 +198,10 @@ def bootstrapSvc : Svc where
   -- the last range: `Instruction::decode` from its tag dispatch on, error exits included
   fnRanges := [(68729, 69139), (31894, 32166), (58434, 58509), (32166, 32412), (40494, 40852), (41177, 44241),
     (20626, 22145)]
+  -- `Vec`/`Option` decoding: the allocator's growth paths (`finish_grow`'s realloc branch,
+  -- 33037–33122), the decoders' loops and their callees
+  fnRangesX := [(8, 482), (907, 2200), (2727, 3716), (23303, 25588), (32727, 33152), (35293, 36170),
+    (50078, 50409), (70133, 70239)]
   pathExtra := [(3, 0, 0x01234567, []), (3, 0, 0x89abcdef, [])]
   codeExtra := [(3, 0, 7, [2, 15, 15] ++ List.replicate 32 0)]
   codeOnly := allInstrPayloads.map fun y => (3, 0, 7, y)
@@ -1041,6 +1048,13 @@ def mode_codeRun (cx : Cx) : IO Unit := do
   let c := cx.c; let i := cx.i; let sid := cx.sid; let y := cx.y; let pkg := cx.pkg; let a := cx.a
   let ω := cx.ω; let μ := cx.μ; let env := cx.env; let tr := cx.tr; let path := cx.path
   let NS := cx.svc.name; let LBL := cx.svc.label; let BLOB := cx.svc.blob; let FLAG := cx.svc.flag
+  -- `codex` / `codexcheck`: as `code` / `codecheck`, for the facts of `fnRangesX` that the base facts
+  -- lack, in the module `CodeX` (class `HasCodeX`), checked by `CodeXCheck.G*` and `CodeXOk`
+  let xmode := mode == "codex" || mode == "codexcheck"
+  let mode := if mode == "codex" then "code" else if mode == "codexcheck" then "codecheck" else mode
+  let CN := if xmode then "CodeX" else "Code"
+  let CC := if xmode then "CodeXCheck" else "CodeCheck"
+  let HC := if xmode then "HasCodeX" else "HasCode"
   let mut facts : Array String := #[]
   let mut lemmas : Array String := #[]
   let mut seen : List Nat := []
@@ -1060,10 +1074,10 @@ def mode_codeRun (cx : Cx) : IO Unit := do
     seen := pc :: seen
     let some ins := P.decode pc | continue
     facts := facts.push s!".instr {pc} ({leanInstr ins}) {P.next pc}"
-    lemmas := lemmas.push s!"theorem d_{pc} \{p : ByteArray} \{P : Program} [h : HasCode p P] : deblob p {pc} = some P ∧ P.decode {pc} = some ({leanInstr ins}) ∧ P.next {pc} = {P.next pc} :=\n  h.ok.instr (by decide)"
+    lemmas := lemmas.push s!"theorem d_{pc} \{p : ByteArray} \{P : Program} [h : {HC} p P] : deblob p {pc} = some P ∧ P.decode {pc} = some ({leanInstr ins}) ∧ P.next {pc} = {P.next pc} :=\n  h.ok.instr (by decide)"
     let bs (t : Nat) : Array String × Array String :=
       (#[s!".blockStart {t} {P.isBlockStart t}"],
-       #[s!"@[pvm_code] theorem bs_{t} \{p : ByteArray} \{P : Program} [h : HasCode p P] : P.isBlockStart {t} = {P.isBlockStart t} := h.ok.blockStart (by decide)"])
+       #[s!"@[pvm_code] theorem bs_{t} \{p : ByteArray} \{P : Program} [h : {HC} p P] : P.isBlockStart {t} = {P.isBlockStart t} := h.ok.blockStart (by decide)"])
     let mut ts : List Nat := [P.next pc]
     match ins with
     | .oneOffset _ t | .regImmOffset _ _ _ t | .twoRegOffset _ _ _ t => if t ≥ 0 then ts := t.toNat :: ts
@@ -1122,6 +1136,36 @@ def mode_codeRun (cx : Cx) : IO Unit := do
     if (P.decode pc).isSome then
       let (st, e) := blockOf pc
       facts := facts.push s!".block {st} {e}"
+  -- `codex`: only the instructions of `fnRangesX` that the base facts lack, with what they need
+  let baseFacts := facts
+  if xmode then
+    let mut fx : Array String := #[]
+    let mut sx : List Nat := []
+    for (lo, hi) in cx.svc.fnRangesX do
+      let mut pc := lo
+      while pc < hi do
+        if !seen.contains pc && !sx.contains pc then
+          sx := pc :: sx
+          if let some ins := P.decode pc then
+            fx := fx.push s!".instr {pc} ({leanInstr ins}) {P.next pc}"
+            let mut ts : List Nat := [P.next pc]
+            match ins with
+            | .oneOffset _ t | .regImmOffset _ _ _ t | .twoRegOffset _ _ _ t => if t ≥ 0 then ts := t.toNat :: ts
+            | _ => pure ()
+            for t in ts do fx := fx.push s!".blockStart {t} {P.isBlockStart t}"
+            if let .regImmOffset .loadImmJump _ x _ := ins then
+              let k := x.toNat / 2 - 1
+              let t := P.jumpTable.getD k 0
+              fx := fx.push s!".jumpTableSize {P.jumpTable.size}"
+              fx := fx.push s!".jumpEntry {k} {t}"
+              fx := fx.push s!".blockStart {t} {P.isBlockStart t}"
+        pc := P.next pc
+    for pc in sx do
+      if (P.decode pc).isSome then
+        let (st, e) := blockOf pc
+        fx := fx.push s!".block {st} {e}"
+    facts := fx
+    seen := sx
   -- sorted by index, so each chunk of 64 reads a short stretch of the code (`codecheck`)
   let factsL := facts.toList.eraseDups.mergeSort (fun a b => factKey a ≤ factKey b)
   let idxOf (f : String) : Nat := (factsL.idxOf f)
@@ -1251,21 +1295,21 @@ theorem prog_cview (kc mc km mm : Nat) : prog.view = cview chunks {oc} {mb} {cLe
 def hostIds : List Nat := {idsL}
 "
     out := out ++ s!"\nend Services.{NS}.CodeCheck\n"
-    IO.FS.writeFile s!"Services/{NS}/CodeCheck.lean" ((out.drop 1).toString)
-    IO.FS.createDirAll s!"Services/{NS}/CodeCheck"
+    unless xmode do IO.FS.writeFile s!"Services/{NS}/CodeCheck.lean" ((out.drop 1).toString)
+    IO.FS.createDirAll s!"Services/{NS}/{CC}"
     let modHead (what : String) : String := s!"/-
   GENERATED by `lake exe genwitnesssteps {FLAG}codecheck {n}` from {BLOB}.
   Do not edit by hand.
 -/
-import Services.{NS}.CodeCheck
+import Services.{NS}.CodeCheck{if xmode then s!"\nimport Services.{NS}.CodeX" else ""}
 
 /-! # {what} -/
 
-namespace Services.{NS}.CodeCheck
+namespace Services.{NS}.{CC}
 
-open PVM PVM.NatBlob Services.{NS}.Blob Services.{NS}.Code
+open PVM PVM.NatBlob Services.{NS}.Blob {if xmode then s!"Services.{NS}.CodeCheck Services.{NS}.CodeX" else s!"Services.{NS}.Code"}
 "
-    let modEnd := s!"\nend Services.{NS}.CodeCheck\n"
+    let modEnd := s!"\nend Services.{NS}.{CC}\n"
     let V := s!"(view N {oc} {mb} {cLen})"
     let nest (xs : List String) (last : Option String) : String :=
       let ys := xs ++ (last.map ([·])).getD []
@@ -1342,8 +1386,9 @@ theorem walk_{sgi} : {V}.vBlobAux {fuel} {i0} = {V}.vBlobAux {fuel - k} {j} := b
 theorem walks_{g} : {V}.vBlobAux {f0} {gi0} = {V}.vBlobAux {fuel} {gj} :=
   {nest names.toList none}
 "
-      IO.FS.writeFile s!"Services/{NS}/CodeCheck/W{g}.lean" (ws ++ modEnd)
-      imports := imports.push s!"Services.{NS}.CodeCheck.W{g}"
+      unless xmode do
+        IO.FS.writeFile s!"Services/{NS}/CodeCheck/W{g}.lean" (ws ++ modEnd)
+        imports := imports.push s!"Services.{NS}.CodeCheck.W{g}"
       walkGroups := walkGroups.push s!"walks_{g}"
     let vEnd := s!"(CodeView.vBlobAux_end _ {fuel} {cLen} (by decide) (by decide) rfl)"
     -- the facts, a chunk to a theorem, 64 chunks to a module
@@ -1494,8 +1539,8 @@ theorem chunk_ok_{c} : facts_{c}.all (·.holds prog) = true := by
 theorem chunks_{g} : factGroup_{g}.all (fun c => c.all (·.holds prog)) = true := by
   simp only [factGroup_{g}, List.all_cons, List.all_nil, Bool.and_true, {", ".intercalate (cs.map (s!"chunk_ok_{·}"))}]
 "
-      IO.FS.writeFile s!"Services/{NS}/CodeCheck/G{g}.lean" (gs ++ modEnd)
-      imports := imports.push s!"Services.{NS}.CodeCheck.G{g}"
+      IO.FS.writeFile s!"Services/{NS}/{CC}/G{g}.lean" (gs ++ modEnd)
+      imports := imports.push s!"Services.{NS}.{CC}.G{g}"
       factGroupsL := factGroupsL.push (s!"chunks_{g}", cs)
     -- the host-call ids: a scan of the code in stretches of 300 indices, 64 to a module
     let HS := 200
@@ -1524,10 +1569,44 @@ theorem hosts_{k} : {hostQ a (a + len)} := by
 theorem hostsG_{g} : {hostQ ga gb} :=
   {cover}
 "
-      IO.FS.writeFile s!"Services/{NS}/CodeCheck/H{g}.lean" (hs ++ modEnd)
-      imports := imports.push s!"Services.{NS}.CodeCheck.H{g}"
+      unless xmode do
+        IO.FS.writeFile s!"Services/{NS}/CodeCheck/H{g}.lean" (hs ++ modEnd)
+        imports := imports.push s!"Services.{NS}.CodeCheck.H{g}"
       hostGroups := hostGroups.push s!"hostsG_{g}"
     let hcover := hostGroups.toList.tail.foldl (fun acc x => s!"(range_cover {acc} {x})") hostGroups[0]!
+    if xmode then
+      IO.FS.writeFile s!"Services/{NS}/CodeXOk.lean" (s!"/-
+  GENERATED by `lake exe genwitnesssteps {FLAG}codexcheck {n}` from {BLOB}.
+  Do not edit by hand.
+-/
+import Services.{NS}.CodeOk
+" ++ String.join (imports.toList.map (s!"import {·}\n")) ++ s!"
+/-!
+# {LBL}'s further code facts hold of the vendored blob, by the kernel
+
+`Services.{NS}.CodeXCheck.G*` check the facts of `Services.{NS}.CodeX` a chunk at a time against
+the program `Services.{NS}.CodeCheck` parses; with its 𝔳_blob (`CodeCheck.vBlob_ok`): `checkCode_ok`,
+and so `hasCodeX`: wherever the base facts hold, these do too.
+-/
+
+namespace Services.{NS}.CodeXCheck
+
+open PVM PVM.NatBlob Services.{NS}.Blob Services.{NS}.CodeX
+
+/-- **The blob passes `checkCode` for the further code facts**, checked by the kernel. -/
+theorem checkCode_ok : checkCode (ba N {o2} {hd.pLen}) facts = true :=
+  checkCode_of_chunks CodeCheck.parse CodeCheck.vBlob_ok (by
+    simp only [factChunks, factGroups, List.flatten_cons, List.flatten_nil, List.all_append, List.all_nil,
+      Bool.and_true, {", ".intercalate (factGroupsL.toList.map (·.1))}])
+
+/-- The further code facts, wherever the base facts hold of the blob. -/
+theorem hasCodeX \{P : Program} (h : CodeOk (ba N {o2} {hd.pLen}) Code.facts P) :
+    HasCodeX (ba N {o2} {hd.pLen}) P :=
+  HasCodeX.of h checkCode_ok
+
+end Services.{NS}.CodeXCheck
+")
+      return
     IO.FS.writeFile s!"Services/{NS}/CodeOk.lean" (s!"/-
   GENERATED by `lake exe genwitnesssteps {FLAG}codecheck {n}` from {BLOB}.
   Do not edit by hand.
@@ -1578,20 +1657,21 @@ end Services.{NS}.CodeCheck
     let k := idxOf fi
     let (bst, be) := blockOf pc
     let kb := idxOf s!".block {bst} {be}"
-    let l := s!"theorem d_{pc} \{p : ByteArray} \{P : Program} [h : HasCode p P] : deblob p {pc} = some P ∧ P.decode {pc} = some ({leanInstr ins}) ∧ P.next {pc} = {P.next pc} ∧ P.blockCost (P.blockStartOf {pc}) ≤ stepCostCap :=\n  h.ok.instrCost (show CodeFact.instr {pc} ({leanInstr ins}) {P.next pc} ∈ facts from {memFact (k)})\n    (show CodeFact.block {bst} {be} ∈ facts from {memFact kb}) (by decide)\n\n@[pvm_code] theorem nx_{pc} \{p : ByteArray} \{P : Program} [h : HasCode p P] : P.next {pc} = {P.next pc} := (d_{pc} (p := p)).2.2.1"
+    let l := s!"theorem d_{pc} \{p : ByteArray} \{P : Program} [h : {HC} p P] : deblob p {pc} = some P ∧ P.decode {pc} = some ({leanInstr ins}) ∧ P.next {pc} = {P.next pc} ∧ P.blockCost (P.blockStartOf {pc}) ≤ stepCostCap :=\n  h.ok.instrCost (show CodeFact.instr {pc} ({leanInstr ins}) {P.next pc} ∈ facts from {memFact (k)})\n    (show CodeFact.block {bst} {be} ∈ facts from {memFact kb}) (by decide)\n\n@[pvm_code] theorem nx_{pc} \{p : ByteArray} \{P : Program} [h : {HC} p P] : P.next {pc} = {P.next pc} := (d_{pc} (p := p)).2.2.1"
     if !lemmasL.contains l then lemmasL := lemmasL.push l
   for f in factsL do
+    if xmode && baseFacts.contains f then continue
     if f.startsWith ".jumpTableSize " then
       let m := (f.drop 15).toString
-      lemmasL := lemmasL.push s!"@[pvm_code] theorem jts \{p : ByteArray} \{P : Program} [h : HasCode p P] : P.jumpTable.size = {m} := h.ok.jumpTableSize (show CodeFact.jumpTableSize {m} ∈ facts from {memFact (idxOf f)})"
+      lemmasL := lemmasL.push s!"@[pvm_code] theorem jts \{p : ByteArray} \{P : Program} [h : {HC} p P] : P.jumpTable.size = {m} := h.ok.jumpTableSize (show CodeFact.jumpTableSize {m} ∈ facts from {memFact (idxOf f)})"
     if f.startsWith ".jumpEntry " then
       let parts := (f.drop 11).toString.splitOn " "
       let k := parts[0]!; let t := parts[1]!
-      lemmasL := lemmasL.push s!"@[pvm_code] theorem jte_{k} \{p : ByteArray} \{P : Program} [h : HasCode p P] : P.jumpTable.getD {k} 0 = {t} := h.ok.jumpEntry (show CodeFact.jumpEntry {k} {t} ∈ facts from {memFact (idxOf f)})"
+      lemmasL := lemmasL.push s!"@[pvm_code] theorem jte_{k} \{p : ByteArray} \{P : Program} [h : {HC} p P] : P.jumpTable.getD {k} 0 = {t} := h.ok.jumpEntry (show CodeFact.jumpEntry {k} {t} ∈ facts from {memFact (idxOf f)})"
     if f.startsWith ".blockStart " then
       let parts := (f.drop 12).toString.splitOn " "
       let t := parts[0]!; let b := parts[1]!
-      lemmasL := lemmasL.push s!"@[pvm_code] theorem bs_{t} \{p : ByteArray} \{P : Program} [h : HasCode p P] : P.isBlockStart {t} = {b} := h.ok.blockStart (show CodeFact.blockStart {t} {b} ∈ facts from {memFact (idxOf f)})"
+      lemmasL := lemmasL.push s!"@[pvm_code] theorem bs_{t} \{p : ByteArray} \{P : Program} [h : {HC} p P] : P.isBlockStart {t} = {b} := h.ok.blockStart (show CodeFact.blockStart {t} {b} ∈ facts from {memFact (idxOf f)})"
   let endPc := (tr[n]?.map (·.1)).getD 0
   -- the octets the path reads before anything writes them, with their initial values
   let mut written : Std.HashSet Nat := {}
@@ -1646,18 +1726,21 @@ end Services.{NS}.CodeCheck
   GENERATED by `lake exe genwitnesssteps {FLAG}code {n}` from {BLOB}.
   Do not edit by hand.
 -/
-import JAM.Theorems.GrowHeap
+{if xmode then s!"import Services.{NS}.Code" else "import JAM.Theorems.GrowHeap"}
 
 /-!
-# Code facts of {LBL}
+# {if xmode then "Further code facts" else "Code facts"} of {LBL}
 
-The code facts the proofs about {LBL} use: every instruction on the first {n} steps of its
+{if xmode then s!"Every instruction of the further summarized functions (`fnRangesX`) that `Code.facts` lacks,
+with the block starts, blocks and jump-table entries they need, kept apart from `Code.facts` so that
+adding them rechecks nothing that uses only those. `Services.{NS}.CodeXOk` checks them against the
+blob by the kernel (`CodeXCheck.checkCode_ok`, `hasCodeX`); `HasCodeX p P` assumes them." else s!"The code facts the proofs about {LBL} use: every instruction on the first {n} steps of its
 refine path{if cx.svc.emptyCode then " and on the empty payload's refine path," else ""} and every instruction of the summarized functions (`fnRanges`), with the block
 starts and jump-table entries they need. `checkCode` checks them against the blob
-(`lake build {LBL}check`); `HasCode p P` assumes them.
+(`lake build {LBL}check`); `HasCode p P` assumes them."}
 -/
 
-namespace Services.{NS}.Code
+namespace Services.{NS}.{CN}
 
 open PVM
 
@@ -1671,9 +1754,17 @@ open PVM
     IO.println ("/-- The groups of chunks of `facts`. -/\ndef factGroups : List (List (List CodeFact)) := [" ++ ", ".intercalate ((List.range ng).map fun g => s!"factGroup_{g}") ++ "]\n")
     IO.println "/-- The chunks of `facts`. -/\ndef factChunks : List (List CodeFact) := factGroups.flatten\n"
     IO.println s!"/-- The code facts the {LBL} proofs use. -/\ndef facts : List CodeFact := factChunks.flatten\n"
-    IO.println "/-- The blob `p` deblobs to `P`, and `facts` hold of it. -/\nclass HasCode (p : outParam ByteArray) (P : Program) : Prop where\n  ok : CodeOk p facts P\n"
+    IO.println s!"/-- The blob `p` deblobs to `P`, and `facts` hold of it. -/\nclass {HC} (p : outParam ByteArray) (P : Program) : Prop where\n  ok : CodeOk p facts P\n"
+    if xmode then
+      IO.println "/-- Where some facts hold of `P` and `checkCode` passes for these, these hold of `P` too. -/
+theorem HasCodeX.of {p : ByteArray} {P : Program} {fs : List CodeFact} (h : CodeOk p fs P)
+    (hx : checkCode p facts = true) : HasCodeX p P := by
+  obtain ⟨P', h'⟩ := checkCode_sound hx
+  have e : P' = P := Option.some.inj (h'.parse.symm.trans h.parse)
+  exact ⟨e ▸ h'⟩
+"
     IO.println ("\n\n".intercalate lemmasL.toList)
-    IO.println s!"\nend Services.{NS}.Code"
+    IO.println s!"\nend Services.{NS}.{CN}"
     return
   IO.println s!"/-
   GENERATED by `lake exe genwitnesssteps {FLAG}run {n}{((args.find? (·.startsWith "cut=")).map (" " ++ ·)).getD ""}` from {BLOB}.

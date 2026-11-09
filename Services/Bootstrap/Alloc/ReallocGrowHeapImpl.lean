@@ -286,7 +286,7 @@ theorem realloc_impl_grow_heapK {p : ByteArray} {P : Program} [HasCode p P] (env
           (binDown (cur + sz - (req + 1)))) ∧
       ω'[7] = UInt64.ofNat ptr ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat sp ∧
       ω'[5] = ω[5] ∧ ω'[6] = ω[6] :=
-  realloc_impl_grow_heapKG (p := p) (P := P) (refineHeap env) cap hcap x ω μ s H F sp ptr req cur sz hrep h1 h8 h7 h10 h0 hsp hsp1 hb0 hbT hal hX hptr hXH hHF hsz hlt hr hc1
+  realloc_impl_grow_heapKG (p := p) (P := P) (refineHeap env) cap hcap x ω μ s H F sp ptr req cur sz hrep h1 h8 h7 h10 h0 hsp hsp1 hb0 hbT hal hX hptr hXH hHF hsz hlt hr hc1 honc hnc hw hfree hav hMt E hEd hgr pb h hbd h48 hhb hbs hR hcost hold hold1 hnext (S0 := S0) (S1 := S1) hHFT hold1T hS hSb hp hst
 
 /-- `realloc_impl_grow_heapKG` at `hostCostMax`, the cap of `refineContract`: at most 14 pages a
     `grow_heap` call. -/
@@ -392,6 +392,6 @@ theorem realloc_impl_grow_heap {p : ByteArray} {P : Program} [HasCode p P] (env 
           (binDown (cur + sz - (req + 1)))) ∧
       ω'[7] = UInt64.ofNat ptr ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat sp ∧
       ω'[5] = ω[5] ∧ ω'[6] = ω[6] :=
-  realloc_impl_grow_heapG (p := p) (P := P) (refineHeap env) x ω μ s H F sp ptr req cur sz hrep h1 h8 h7 h10 h0 hsp hsp1 hb0 hbT hal hX hptr hXH hHF hsz hlt hr hc1
+  realloc_impl_grow_heapG (p := p) (P := P) (refineHeap env) x ω μ s H F sp ptr req cur sz hrep h1 h8 h7 h10 h0 hsp hsp1 hb0 hbT hal hX hptr hXH hHF hsz hlt hr hc1 honc hnc hw hfree hav hMt E hEd hgr pb h hbd h48 hhb hbs hR hcost hold hold1 hnext (S0 := S0) (S1 := S1) hHFT hold1T hS hSb hp hst
 
 end Services.Bootstrap.Alloc

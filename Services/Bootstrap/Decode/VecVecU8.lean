@@ -759,7 +759,7 @@ theorem vec_vec_u8_heap {p : ByteArray} {P : Program} [HasCode p P] (env : Refin
     (hR0 : μ.readN rd 8 = Num.encodeLE 8 ptr) (hR8 : μ.readN (rd + 8) 8 = Num.encodeLE 8 len)
     (hpd : μ.readN ptr (encs es).flatten.length = (encs es).flatten) :
     (∃ s' ω' μ' q, ∃ cs : List Chunk, ∃ qs : Nat → Nat,
-      FreeStepsH p (refineContractK cap env) 8 ω μ x t ω' μ' x (34668 * es.length + 800) ∧
+      FreeStepsH p (refineContractK cap env) 8 ω μ x t ω' μ' x (34668 * es.length + 800) ∧ q < 2147483648 ∧
       ω'[0] = UInt64.ofNat ret ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = UInt64.ofNat v5 ∧
       ω'[6] = UInt64.ofNat v6 ∧
       μ'.readN O 8 = Num.encodeLE 8 es.length ∧ μ'.readN (O + 8) 8 = Num.encodeLE 8 q ∧
@@ -910,7 +910,7 @@ theorem vec_vec_u8_heap {p : ByteArray} {P : Program} [HasCode p P] (env : Refin
   have hst7 := H7.st
   have ht3 := H3.wf.2.2.2.1
   unfold TilesOk at ht3
-  refine Or.inl ⟨s2, ω9, μ9, q, ⟨q - 32, (24 * n + 31) / 32 + 1, true⟩ :: cs, qs, run19.mono (by omega), z0,
+  refine Or.inl ⟨s2, ω9, μ9, q, ⟨q - 32, (24 * n + 31) / 32 + 1, true⟩ :: cs, qs, run19.mono (by omega), by omega, z0,
     by rw [z1]; congr 1; omega, z5, z6, by rw [hN]; exact zO, zO8, by rw [hN]; exact zO16, ?_, ?_,
     ctx_congr_data H7 (keep7 cp hcp' hcpu) (fun a h1 _ => hlow9 a h1) wr9,
     fun c hc hu => keep7 c (keep c hc hu) hu, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩

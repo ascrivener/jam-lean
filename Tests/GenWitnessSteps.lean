@@ -102,6 +102,10 @@ structure Svc where
       (`Services/<name>/CodeA.lean`, assumed by `HasCodeA p P`) holding what neither `Code` nor
       `CodeX` has. -/
   fnRangesA : List (Nat × Nat) := []
+  /-- `codef` / `codefcheck`: as `fnRangesA`, for logging (`format!`, `core::fmt` and the `String`
+      sink), in a fourth module (`Services/<name>/CodeF.lean`, assumed by `HasCodeF p P`) holding
+      what none of `Code`, `CodeX` and `CodeA` has. -/
+  fnRangesF : List (Nat × Nat) := []
   /-- Whether `Services/<name>/Memcpy.lean` exists (`memcpy_small` at the head of `fnRanges`):
       the prefix then calls it for each `memcpy` of fewer than 16 octets instead of stepping. -/
   memcpySummary : Bool := false
@@ -217,11 +221,17 @@ def bootstrapSvc : Svc where
   -- accumulate (`Services/Bootstrap/Acc/README.md`, tier A): the entry 6378 … 15368, the inputs fetch
   -- and `AccumulateItem` decode, `BootstrapWorkOutput::decode`, the ring and results helpers, the
   -- storage wrappers and the allocator's remaining paths
-  fnRangesA := [(550, 562), (638, 639), (758, 824), (904, 907), (2200, 2727), (3820, 4565), (6378, 15369),
+  fnRangesA := [(5, 8), (550, 562), (638, 639), (758, 824), (904, 907), (2200, 2727), (3820, 4565), (6378, 15369),
     (22145, 22839), (22915, 22934), (23097, 23120), (23227, 23246), (25588, 26397), (28864, 29176),
     (30285, 31894), (32414, 32727), (33214, 34636), (36170, 36529), (38832, 38857), (39388, 39411),
     (39634, 40215), (40852, 41176), (44494, 44677), (44916, 45976), (46300, 47561), (47662, 48251),
     (48341, 49015), (49237, 49541), (55989, 56119), (58251, 58433), (58578, 58598)]
+  -- logging (`Services/Bootstrap/Fmt/`): `alloc::fmt::format` (59375), `core::fmt` and the `String`
+  -- sink, accumulate's tier C, and every function on refine's level-3 `Debug` line (6159 → 59375)
+  fnRangesF := [(15369, 15435), (15949, 15977), (16544, 16572), (16726, 16754), (16908, 17351),
+    (17465, 17696), (26397, 27570), (27601, 28165), (28197, 28347), (28378, 28737), (28739, 28864),
+    (29675, 29975), (33152, 33211), (36529, 37156), (37158, 37312), (37352, 38704), (49995, 50076),
+    (50830, 54577), (54744, 55968), (56340, 58251), (58615, 58878), (59375, 66380), (66488, 70131)]
   pathExtra := [(3, 0, 0x01234567, []), (3, 0, 0x89abcdef, [])]
   codeExtra := [(3, 0, 7, [2, 15, 15] ++ List.replicate 32 0)]
   codeOnly := allInstrPayloads.map fun y => (3, 0, 7, y)
@@ -1117,11 +1127,15 @@ def mode_codeRun (cx : Cx) : IO Unit := do
   -- lack, in the module `CodeX` (class `HasCodeX`), checked by `CodeXCheck.G*` and `CodeXOk`
   -- `codea` / `codeacheck`: the same for `fnRangesA`, in the module `CodeA` (class `HasCodeA`),
   -- leaving out what `Code` or `CodeX` already has
-  let amode := mode == "codea" || mode == "codeacheck"
+  -- `codef` / `codefcheck`: the same for `fnRangesF`, in the module `CodeF` (class `HasCodeF`),
+  -- leaving out what `Code`, `CodeX` or `CodeA` already has
+  let fmode := mode == "codef" || mode == "codefcheck"
+  let amode := mode == "codea" || mode == "codeacheck" || fmode
   let xmode := mode == "codex" || mode == "codexcheck" || amode
-  let E := if amode then "A" else "X"
-  let mode := if mode == "codex" || mode == "codea" then "code"
-    else if mode == "codexcheck" || mode == "codeacheck" then "codecheck" else mode
+  let E := if fmode then "F" else if amode then "A" else "X"
+  let rangesE := if fmode then cx.svc.fnRangesF else cx.svc.fnRangesA
+  let mode := if mode == "codex" || mode == "codea" || mode == "codef" then "code"
+    else if mode == "codexcheck" || mode == "codeacheck" || mode == "codefcheck" then "codecheck" else mode
   let CN := if xmode then s!"Code{E}" else "Code"
   let CC := if xmode then s!"Code{E}Check" else "CodeCheck"
   let HC := if xmode then s!"HasCode{E}" else "HasCode"
@@ -1241,14 +1255,18 @@ def mode_codeRun (cx : Cx) : IO Unit := do
     let (fX, sX) := extFacts cx.svc.fnRangesX seen
     baseFacts := baseFacts ++ fX
     seen := seen ++ sX
+  if fmode then
+    let (fA, sA) := extFacts cx.svc.fnRangesA seen
+    baseFacts := baseFacts ++ fA
+    seen := seen ++ sA
   if xmode then
-    let (fx, sx) := extFacts (if amode then cx.svc.fnRangesA else cx.svc.fnRangesX) seen
+    let (fx, sx) := extFacts (if amode then rangesE else cx.svc.fnRangesX) seen
     -- `codea`: also every jump-table entry into `fnRangesA`. Accumulate also returns through
     -- addresses set by `load_imm` (then `jump`) and dispatches through tables in memory, neither of
     -- which names its entry in the instruction, so each entry whose target lies in the ranges is
     -- stated.
     -- `codex`: the entries into `jumpRangesX` that the base facts lack.
-    let jr := if amode then cx.svc.fnRangesA else cx.svc.jumpRangesX
+    let jr := if amode then rangesE else cx.svc.jumpRangesX
     let fx := Id.run do
       let mut fx := fx
       for k in [0:P.jumpTable.size] do
@@ -1817,15 +1835,19 @@ end Services.{NS}.CodeCheck
   let rwHi := rwStart jb + roundPage jb.rw.size + jb.heapPages * pageSize
   if mode == "code" then
     IO.println s!"/-
-  GENERATED by `lake exe genwitnesssteps {FLAG}code{if amode then "a" else ""} {n}` from {BLOB}.
+  GENERATED by `lake exe genwitnesssteps {FLAG}code{if amode then E.toLower else ""} {n}` from {BLOB}.
   Do not edit by hand.
 -/
 {if xmode then s!"import Services.{NS}.Code" else "import JAM.Theorems.GrowHeap"}
 
 /-!
-# {if amode then "Accumulate code facts" else if xmode then "Further code facts" else "Code facts"} of {LBL}
+# {if fmode then "Logging code facts" else if amode then "Accumulate code facts" else if xmode then "Further code facts" else "Code facts"} of {LBL}
 
-{if amode then s!"Every instruction of {LBL}'s accumulate ranges (`fnRangesA`) that neither `Code.facts` nor
+{if fmode then s!"Every instruction of {LBL}'s logging ranges (`fnRangesF`: `format!`, `core::fmt` and the
+`String` sink) that none of `Code.facts`, `CodeX.facts` and `CodeA.facts` has, with the block starts,
+blocks and jump-table entries they need (every entry into the ranges), kept apart so that adding them
+rechecks nothing that uses only those. `Services.{NS}.CodeFOk` checks them against the blob by the
+kernel (`CodeFCheck.checkCode_ok`, `hasCodeF`); `HasCodeF p P` assumes them." else if amode then s!"Every instruction of {LBL}'s accumulate ranges (`fnRangesA`) that neither `Code.facts` nor
 `CodeX.facts` has, with the block starts, blocks and jump-table entries they need (every entry into
 the ranges), kept apart so that adding them rechecks nothing that uses only those.
 `Services.{NS}.CodeAOk` checks them against the blob by the kernel (`CodeACheck.checkCode_ok`,
@@ -1871,7 +1893,7 @@ theorem HasCode{E}.of \{p : ByteArray} \{P : Program} \{fs : List CodeFact} (h :
       for k in [0:nS] do
         let part := (lemmasL.toList.drop (k * sl)).take sl
         IO.FS.writeFile s!"Services/{NS}/{CN}/L{k}.lean" (s!"/-
-  GENERATED by `lake exe genwitnesssteps {FLAG}codea {n}` from {BLOB}.
+  GENERATED by `lake exe genwitnesssteps {FLAG}code{E.toLower} {n}` from {BLOB}.
   Do not edit by hand.
 -/
 import Services.{NS}.{CN}
@@ -1884,7 +1906,7 @@ open PVM
 
 " ++ "\n\n".intercalate part ++ s!"\n\nend Services.{NS}.{CN}\n")
       IO.FS.writeFile s!"Services/{NS}/{CN}All.lean" (s!"/-
-  GENERATED by `lake exe genwitnesssteps {FLAG}codea {n}` from {BLOB}.
+  GENERATED by `lake exe genwitnesssteps {FLAG}code{E.toLower} {n}` from {BLOB}.
   Do not edit by hand.
 -/
 " ++ String.join ((List.range nS).map fun k => s!"import Services.{NS}.{CN}.L{k}\n") ++ s!"

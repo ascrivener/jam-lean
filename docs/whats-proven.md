@@ -392,6 +392,23 @@ An independent kernel, nanoda as vendored by
     only off their data (`HKeep`, `off_hdr_data`); the reader's writes stay in the new block
     (`data_disj`). `read_low` is the reader for a source below its frames.
 
+- **`Import`, `DeleteItems`, `Export` and `Imported` as elements of the decode loop (any frame base).**
+  `Decode.ImportElem.import_elem` (`Services/Bootstrap/Decode/ImportElem.lean`) and
+  `Decode.VecVecElem.vecvec_elem` (`VecVecElem.lean`).
+  - *Statement:* `ElemOkAF` at a frame F with the reader at RD (`Lay F RD`), under
+    `refineContractK cap` (cap ≥ 2²⁷):
+    - `import_elem`: tag 9 with 1 ≤ n ≤ 1024 items (16n octets). The slot gets `ImportRep`: the
+      discriminant word 2^63 + 8 and a fresh `Vec` whose 16n octets are the items;
+    - `vecvec_elem`: tags 5, 10, 19 (`DeleteItems`, `Export`, `Imported`) with 1 ≤ n ≤ 682 items of at
+      most 16384 octets each. The slot gets `VecVecRep W es`: the discriminant word W and a fresh `Vec`
+      of fresh `Vec<u8>`s holding the items.
+
+    Either way an allocation may fail instead (`Exhausts`).
+  - *How:* the dispatch, the helper's frame at F − 48 (`VecEmpty.e1`), the length (`decodeU32`), then
+    the element reader (`VecPairs.import_heap`'s composition, or `VecVecU8.vec_vec_u8_heap` at 8),
+    the copy into the slot (`e3`) and the return (`e4`).
+  - *Assumed:* as `vec_pairs_heap` and `vec_vec_u8_heap` (n ≤ 1024, n ≤ 682, items ≤ 16384 octets).
+
 - **`Vec<Vec<u8>>` with the payload in the heap (1 ≤ n ≤ 682 elements, each ≤ 16384 octets).**
   `Decode.VecVecU8.vec_vec_u8_heap` (`Services/Bootstrap/Decode/VecVecU8.lean`).
   - *Statement:* the element reader at 8, which reads the items of `DeleteItems`, `Export` and

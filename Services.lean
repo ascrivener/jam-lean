@@ -13,6 +13,9 @@ import Services.Bootstrap.CodeXOk
 import Services.Bootstrap.CodeA
 import Services.Bootstrap.CodeAAll
 import Services.Bootstrap.CodeAOk
+import Services.Bootstrap.CodeF
+import Services.Bootstrap.CodeFAll
+import Services.Bootstrap.CodeFOk
 import Services.Bootstrap.BParams
 import Services.Bootstrap.BParamsConsts
 import Services.Bootstrap.StartupConsts
@@ -97,8 +100,12 @@ import Services.Bootstrap.Acc.Contract
 import Services.Bootstrap.Acc.HostSteps
 import Services.Bootstrap.AccPrefixC
 import Services.Bootstrap.AccBParams
+import Services.Bootstrap.Acc.Args
+import Services.Bootstrap.Acc.Start
 import Services.Bootstrap.Decode.VecPairs
 import Services.Bootstrap.Decode.VecVecU8
+import Services.Bootstrap.Decode.ImportElem
+import Services.Bootstrap.Decode.VecVecElem
 import Services.Picoalloc.Model
 import Services.Picoalloc.Invariant
 import Services.Picoalloc.FreeLists
@@ -200,6 +207,10 @@ import Services.Bootstrap.Encode.Variants
 import Services.Bootstrap.Encode.Yield
 import Services.Bootstrap.Encode.Prefix
 import Services.Bootstrap.Encode.Loop
+import Services.Bootstrap.Spec
+import Services.Bootstrap.SpecLemmas.Codec
+import Services.Bootstrap.SpecLemmas.Refine
+import Services.Bootstrap.SpecLemmas.Ring
 
 /-!
 # Results about specific services' deployed code
@@ -258,4 +269,11 @@ Built on `JAM`; nothing in `PVM` or `JAM` depends on this library.
   first 600 steps of its refine with what they leave (`prefix_from_Y`, `PrefixPost`), and
   `memcpy_small`. The bootstrap blob has witness's `memcpy` at another address, so this is
   witness's proof with the pcs moved (`genwitnesssteps --service bootstrap memcpy`).
+* `Services.Bootstrap.Spec` — bootstrap's intended behaviour as Lean definitions (no theorems):
+  its instructions and codec, and its refine and accumulate as programs over host calls. The
+  target theorems stated against it are in `docs/bootstrap-target.md`.
+* `Services.Bootstrap.SpecLemmas.Codec`, `.Refine`, `.Ring` — lemmas about the spec alone: the
+  codec round trip of step 0 (`decode_payload`, `decode_output`), `refineInstr` keeping
+  instructions well-formed (`refineInstr_wf`, `refine_output`), and the ring half of S1 kept by
+  `addRecent` (`addRecent_ringInv`) in a minimal storage model.
 -/

@@ -56,7 +56,7 @@ theorem ctx_congr_data {env : RefineHost.Env} {pb S0 S1 : Nat} {μ μ' : Memory}
   obtain ⟨ph, h48, hhb, hp, hHTs, hHT⟩ := H.pages
   refine ⟨H.wf, HeapFrame.Rep.congr_data H.rep H.wf H.hb0 H.hbT hc (fun a h1 h2 => wf a h1 (by omega)),
     H.fo, ?_, H.hb0, H.hbT, H.hA, H.bd, ⟨ph, h48, hhb, HeapPages.of_eq hp ww, hHTs, hHT⟩, H.hSb, H.hS1,
-    fun a h1 h2 => by rw [ww]; exact H.st a h1 h2⟩
+    fun a h1 h2 => by rw [ww]; exact H.st a h1 h2, fun a ha => by rw [ww]; exact H.ro a ha⟩
   have ht := H.wf.2.2.2.1; unfold TilesOk at ht
   have hca := (ht.mem_lt c hc).1
   have := H.hb0

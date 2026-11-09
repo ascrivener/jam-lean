@@ -176,13 +176,14 @@ An independent kernel, nanoda as vendored by
     decodes them all: it leaves for 562 with value j, satisfying `reps j`, in buffer slot j, and changes
     only the stack, the reader and the buffer. This generalizes `DecodeLoop.loop` from `Checkpoint`s to
     any list. `Elems` gives the `ElemOk` of `Checkpoint`, `Panic` and `Benchmark` (`unit`), and of
-    `Zombify`, `Exported`, `Yield`, `Solicit`, `Forget`, `Eject`, `Upgrade`, `Lookup` and `Transfer`, each saying the
+    `Zombify`, `Exported`, `Yield`, `Solicit`, `Forget`, `Eject`, `Upgrade`, `Lookup`, `Transfer` and
+    `RandomStorageRefine`, each saying the
     slot holds the discriminant and then the encoding's fields at their offsets.
   - *Assumed:* fewer than 128 elements (a one-octet length), each encoding non-empty, the buffer
     8-aligned after the payload and below 2^31 (`Ok`); the stack writable from its bottom
     (4278050816, the blob's 8192-octet stack) to the loop's frame.
-  - *Scope:* `ElemOk`s for the remaining variants (Assign, the Vec/Option ones,
-    RandomStorageRefine) are not stated yet; the loop is not yet composed into a Ψ_R theorem.
+  - *Scope:* `ElemOk`s for the remaining variants (Assign and the Vec/Option ones)
+    are not stated yet; the loop is not yet composed into a Ψ_R theorem.
 - **`Instruction::decode`'s tag dispatch, for every tag.** `Decode.Tag.dispatch`, `reject` and
   `unit_variant` (`Services/Bootstrap/Decode/Tag.lean`).
   - *Statement:* from 20626, where the reader has just read the tag octet into the function's
@@ -242,6 +243,14 @@ An independent kernel, nanoda as vendored by
     by 37.
   - *How:* a helper with its own 88-octet frame reads the hash (`read_big_sp`), moves it, reads the
     `u64` (`read_ok`) and stores the variant (`s1`, `s2`, `s3`).
+- **`Instruction::decode` for `RandomStorageRefine`.** `Decode.RandomStorageRefine.random_storage_refine`
+  (`Services/Bootstrap/Decode/RandomStorageRefine.lean`).
+  - *Statement:* from 20626 with tag 21 (`RandomStorageRefine { seed: u64, n: u8 }`) and the reader
+    holding at least 9 octets, the function returns the variant in its slot O: the discriminant word
+    2^63 + 20 at O, `seed` at O + 8 and `n` at O + 16, copied from the payload (any octet for `n`). The
+    reader is advanced by 9. Memory changes only in A − 144 … A + 24, the reader and O … O + 17.
+  - *How:* the decoder's 56-octet frame and a shared helper for a `(u64, u8)` pair (35406, jump-table
+    entry 825), which reads both (`read_ok`) and writes `Ok` with them at A (`r1` … `r4`).
 - **`Instruction::decode` for `Transfer`.** `Decode.Transfer.transfer`
   (`Services/Bootstrap/Decode/Transfer.lean`).
   - *Statement:* from 20626 with tag 2 (`Transfer { destination: u32, amount: u64, gas_limit: u64,

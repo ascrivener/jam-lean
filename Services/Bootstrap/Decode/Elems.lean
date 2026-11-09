@@ -6,6 +6,7 @@ import Services.Bootstrap.Decode.U32Hash
 import Services.Bootstrap.Decode.Upgrade
 import Services.Bootstrap.Decode.Lookup
 import Services.Bootstrap.Decode.Transfer
+import Services.Bootstrap.Decode.RandomStorageRefine
 
 /-!
 # `ElemOk` for the decoded variants
@@ -264,5 +265,31 @@ theorem transfer {p : ByteArray} {P : Program} [HasCode p P] (d a g m : List UIn
     simp [List.take_append, List.drop_append, List.take_of_length_le, List.drop_of_length_le, hd, ha, hg, hm]
   · rw [show ptr = ptr + 0 by rfl, readN_sub μ ptr 148 0 4 _ pay (by decide)]
     simp [List.take_append, List.drop_append, List.take_of_length_le, List.drop_of_length_le, hd, ha, hg, hm]
+
+/-- **`RandomStorageRefine`** (tag 21): the encoding 21 :: g ++ [n], with g the 8 octets of the seed
+    and n any octet, decodes to a slot holding the discriminant 2^63 + 20, then g, then n. -/
+theorem random_storage_refine {p : ByteArray} {P : Program} [HasCode p P] (g : List UInt8) (n : UInt8)
+    (hg : g.length = 8) :
+    ElemOk p P (21 :: (g ++ [n])) (fun bs => bs.take 8 = Num.encodeLE 8 9223372036854775828 ∧
+      (bs.drop 8).take 8 = g ∧ (bs.drop 16).take 1 = [n]) := by
+  intro X R x ω μ ptr len v5 v6 h1 h5 h6 h7 tag rP rL hlen hlen' hptr hpb pay rpay s0 s5 s6 hv5 hv6 tab rt ws wr
+  simp only [List.length_cons, List.length_append, List.length_nil, hg, Nat.add_sub_cancel, List.headD_cons,
+    List.tail_cons] at tag hlen hptr hpb pay rpay ⊢
+  obtain ⟨ω', μ', run, e0, e1, e5, e6, eO, eO8, eO16, eR0, eR8, efr, erd, ewr⟩ :=
+    RandomStorageRefine.random_storage_refine (p := p) (P := P) (R := R) x ω μ 4278057632 4278057752 18 723 v5 v6
+      4278058648 ptr len (loopFrame ω μ v5 v6 h1 h5 s0 s5 s6 hv5 hv6 ws)
+      (by decide) h6 h7 tag tab rt (by decide) ⟨hptr, by omega⟩ ⟨hlen, hlen'⟩ rP rL (by decide) (by omega)
+      (by decide) (by decide) (by omega) (by decide) (fun a h1 h2 => ws a (by omega) (by omega)) wr
+      (fun a h1 h2 => ws a (by omega) (by omega)) rpay
+  refine ⟨ω', μ', run.mono (by omega), e1, e5, e6, eR0, eR8, ⟨9223372036854775828, by decide, eO, by decide⟩, ?_,
+    fun a h0 h1 h2 h3 => efr a h0 (by omega) h2 (by omega), erd, ewr⟩
+  obtain ⟨t8, d8⟩ := slot_parts μ' 4278057752 8 8 (by decide)
+  obtain ⟨-, d16⟩ := slot_parts μ' 4278057752 16 1 (by decide)
+  refine ⟨t8.trans eO, d8.trans (eO8.trans ?_), d16.trans ?_⟩
+  · rw [show ptr = ptr + 0 by rfl, readN_sub μ ptr 9 0 8 _ pay (by decide)]
+    simp [List.take_append, List.take_of_length_le, hg]
+  · have hn := readN_sub μ ptr 9 8 1 _ pay (by decide)
+    simp [List.drop_append, List.drop_of_length_le, hg, Memory.readN] at hn
+    simp [Memory.readN, eO16, hn]
 
 end Services.Bootstrap.Decode.Elems

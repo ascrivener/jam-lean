@@ -1,5 +1,6 @@
 import Services.Bootstrap.Prefix
 import Services.Bootstrap.BParamsConsts
+import PVM.Logic.Words
 
 /-!
 # Bootstrap's start-up leaves 𝖢 at 196616 and 𝖰 at 196680
@@ -26,17 +27,33 @@ set_option maxRecDepth 100000
 
 /-! ## The reply's fields (GP v0.8.0 Appendix B, Ω_Y case 0) -/
 
+/-- Dropping k ≥ n octets past an n-octet field. -/
+theorem drop_fixed {n k : Nat} (x : Nat) (l : List UInt8) (h : n ≤ k) :
+    (Codec.fixed n x ++ l).drop k = l.drop (k - n) := by
+  rw [List.drop_append, Codec.fixed, PVM.Num.length_encodeLE,
+    List.drop_eq_nil_of_le (by rw [PVM.Num.length_encodeLE]; exact h), List.nil_append]
+
+/-- The first n octets of an n-octet field and what follows are the field. -/
+theorem take_fixed (n x : Nat) (l : List UInt8) : (Codec.fixed n x ++ l).take n = Codec.fixed n x :=
+  List.take_left' (PVM.Num.length_encodeLE _ _)
+
 /-- ℰ₂(𝖢) is octets 24 … 26 of `fetch` case 0's reply: after ℰ₈(𝖡_I), ℰ₈(𝖡_L), ℰ₈(𝖡_S)
     (GP v0.8.0 Appendix B, Ω_Y). -/
 theorem coreCount_octets (c : Params) : (c.encode.drop 24).take 2 = Codec.fixed 2 c.coreCount := by
-  simp [Params.encode, Codec.fixed, List.drop_append, List.take_append, PVM.Num.length_encodeLE]
+  unfold Params.encode
+  simp only [List.append_assoc]
+  repeat (rw [drop_fixed _ _ (by decide)]; simp only [Nat.reduceSub])
+  rw [List.drop_zero, take_fixed]
 
 /-- ℰ₂(𝖰) is octets 82 … 84 of `fetch` case 0's reply: after ℰ₈(𝖡_I, 𝖡_L, 𝖡_S), ℰ₂(𝖢),
     ℰ₄(𝖣, 𝖤), ℰ₈(𝖦_A, 𝖦_I, 𝖦_R, 𝖦_T), ℰ₂(𝖧, 𝖨, 𝖩, 𝖪), ℰ₄(𝖫), ℰ₂(𝖮, 𝖯) (GP v0.8.0 Appendix B,
     Ω_Y). -/
 theorem authQueueSize_octets (c : Params) :
     (c.encode.drop 82).take 2 = Codec.fixed 2 c.authQueueSize := by
-  simp [Params.encode, Codec.fixed, List.drop_append, List.take_append, PVM.Num.length_encodeLE]
+  unfold Params.encode
+  simp only [List.append_assoc]
+  repeat (rw [drop_fixed _ _ (by decide)]; simp only [Nat.reduceSub])
+  rw [List.drop_zero, take_fixed]
 
 /-- The full chain's 𝖢 = 341 encodes as [85, 1]. -/
 theorem coreCount_full : Codec.fixed 2 Params.full.coreCount = [85, 1] := by decide
@@ -105,7 +122,7 @@ theorem authQueue_word {μ : Memory} (h : μ.readN 196680 8 = Codec.fixed 8 Para
       Params.full.authQueueSize % 4294967296 = Params.full.authQueueSize ∧
       1 ≤ Params.full.authQueueSize % 4294967296 ∧ Params.full.authQueueSize % 4294967296 ≤ 512 := by
   refine ⟨h, ?_, by decide, by decide, by decide, by decide⟩
-  rw [← h]; rfl
+  exact (show (List.range 8).map (fun k => μ.read (196680 + k)) = μ.readN 196680 8 from rfl).trans h
 
 /-- `startup_consts`, with the decoders' forms: after the start-up, `rdN μ' 196616 2 = 𝖢` and the
     word at 196680 is 𝖰, with 1 ≤ 𝖰 mod 2³² ≤ 512. -/

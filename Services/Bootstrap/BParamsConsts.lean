@@ -15,8 +15,8 @@ In segment 174 (pc 56250 … 56316):
   16-bit word at 196616.
 
 The generated chain records only that these octets are written (`St177` frames them out). This file
-re-proves segment 174 with the octets it writes (`steps174`, `run174`), shows segments 175 and 176
-keep them (`run175`, `run176`), and composes: `chain_consts` and `run_consts` are `BParams.chain`
+re-proves segment 174 with the octets it writes (`steps174`, `seg174`), shows segments 175 and 176
+keep them (`seg175`, `seg176`), and composes: `chain_consts` and `run_consts` are `BParams.chain`
 and `BParams.run` with, in addition, 196616 … 196618 holding ℰ₂(𝖢) and 196680 … 196688 holding
 ℰ₈(𝖰). `startup_consts` takes it from Y's state. The corollaries state the facts in the forms the
 decoders assume (`Decode.Designate`'s 𝖢 at 196616, `Decode.Assign`'s word G at 196680 with
@@ -159,7 +159,7 @@ theorem steps174 (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.E
 
 
 /-- **Cut 174 to cut 175**, as `BParams.S174.run`, with ℰ₂(341) at 196616 and ℰ₈(80) at 196680. -/
-theorem run174 (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
+theorem seg174 (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
     (x : RefineCtx) (L : Nat) (hL : 0 < L ∧ L < 16777217) (ω₀ : Regs) (μ₀ : Memory) (h : St174 L ω₀ μ₀ ω μ) :
     ∃ ω' μ', FreeStepsH p (refineContract env) 56250 ω μ x 56316 ω' μ' x 16 ∧ St175 L ω₀ μ₀ ω' μ' ∧
       (μ'.read 196616 = 85 ∧ μ'.read 196617 = 1 ∧ μ'.read 196680 = 80 ∧ μ'.read 196681 = 0 ∧ μ'.read 196682 = 0 ∧ μ'.read 196683 = 0 ∧ μ'.read 196684 = 0 ∧ μ'.read 196685 = 0 ∧ μ'.read 196686 = 0 ∧ μ'.read 196687 = 0) := by
@@ -169,7 +169,7 @@ theorem run174 (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env
 
 /-- **Cut 175 to cut 176**, as `BParams.S175.run`, keeping the octets at 196616 … 196618 and
     196680 … 196688. -/
-theorem run175 (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
+theorem seg175 (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
     (x : RefineCtx) (L : Nat) (hL : 0 < L ∧ L < 16777217) (ω₀ : Regs) (μ₀ : Memory) (h : St175 L ω₀ μ₀ ω μ) :
     ∃ ω' μ', FreeStepsH p (refineContract env) 56316 ω μ x 4603 ω' μ' x 16 ∧ St176 L ω₀ μ₀ ω' μ' ∧
       (μ'.read 196616 = μ.read 196616 ∧ μ'.read 196617 = μ.read 196617 ∧ μ'.read 196680 = μ.read 196680 ∧ μ'.read 196681 = μ.read 196681 ∧ μ'.read 196682 = μ.read 196682 ∧ μ'.read 196683 = μ.read 196683 ∧ μ'.read 196684 = μ.read 196684 ∧ μ'.read 196685 = μ.read 196685 ∧ μ'.read 196686 = μ.read 196686 ∧ μ'.read 196687 = μ.read 196687) := by
@@ -179,7 +179,7 @@ theorem run175 (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env
 
 /-- **Cut 176 to cut 177**, as `BParams.S176.run`, keeping the octets at 196616 … 196618 and
     196680 … 196688. -/
-theorem run176 (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
+theorem seg176 (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
     (x : RefineCtx) (L : Nat) (hL : 0 < L ∧ L < 16777217) (ω₀ : Regs) (μ₀ : Memory) (h : St176 L ω₀ μ₀ ω μ) :
     ∃ ω' μ', FreeStepsH p (refineContract env) 4603 ω μ x 4642 ω' μ' x 13 ∧ St177 L ω₀ μ₀ ω' μ' ∧
       (μ'.read 196616 = μ.read 196616 ∧ μ'.read 196617 = μ.read 196617 ∧ μ'.read 196680 = μ.read 196680 ∧ μ'.read 196681 = μ.read 196681 ∧ μ'.read 196682 = μ.read 196682 ∧ μ'.read 196683 = μ.read 196683 ∧ μ'.read 196684 = μ.read 196684 ∧ μ'.read 196685 = μ.read 196685 ∧ μ'.read 196686 = μ.read 196686 ∧ μ'.read 196687 = μ.read 196687) := by
@@ -367,9 +367,9 @@ theorem chain_consts (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHo
   obtain ⟨ω172, μ172, run172, h172⟩ := S171.run p P env ω171 μ171 x L hL ω₀ μ₀ h171
   obtain ⟨ω173, μ173, run173, h173⟩ := S172.run p P env ω172 μ172 x L hL ω₀ μ₀ h172
   obtain ⟨ω174, μ174, run174, h174⟩ := S173.run p P env ω173 μ173 x L hL ω₀ μ₀ h173
-  obtain ⟨ω175, μ175, run175, h175, v175⟩ := run174 p P env ω174 μ174 x L hL ω₀ μ₀ h174
-  obtain ⟨ω176, μ176, run176, h176, k176⟩ := run175 p P env ω175 μ175 x L hL ω₀ μ₀ h175
-  obtain ⟨ω177, μ177, run177, h177, k177⟩ := run176 p P env ω176 μ176 x L hL ω₀ μ₀ h176
+  obtain ⟨ω175, μ175, run175, h175, v175⟩ := seg174 p P env ω174 μ174 x L hL ω₀ μ₀ h174
+  obtain ⟨ω176, μ176, run176, h176, k176⟩ := seg175 p P env ω175 μ175 x L hL ω₀ μ₀ h175
+  obtain ⟨ω177, μ177, run177, h177, k177⟩ := seg176 p P env ω176 μ176 x L hL ω₀ μ₀ h176
   obtain ⟨v_a16, v_a17, v_b0, v_b1, v_b2, v_b3, v_b4, v_b5, v_b6, v_b7⟩ := v175
   obtain ⟨k_a16, k_a17, k_b0, k_b1, k_b2, k_b3, k_b4, k_b5, k_b6, k_b7⟩ := k176
   obtain ⟨l_a16, l_a17, l_b0, l_b1, l_b2, l_b3, l_b4, l_b5, l_b6, l_b7⟩ := k177

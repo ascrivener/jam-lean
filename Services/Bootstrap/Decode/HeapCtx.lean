@@ -45,7 +45,8 @@ theorem alloc_base {grow : Grow} {hb r p : Nat} {s s' : State} (hwf : WF s)
 /-- **One call of the `alloc` wrapper**, from 40494 with ω₇ = size and ω₈ = align (1 … 32) and the
     stack pointer in S0 + 168 … S1: either the model's `alloc` returns block `ptr` and state `s'` and
     the wrapper returns `ptr` at 40611 with the context kept for `s'`, every allocated chunk of `s`
-    still allocated, the stack from sp up untouched and ω₀, ω₁, ω₅, ω₆ restored; or the model's
+    still allocated, the block a new allocated chunk at `ptr − 32` of ⌈size/32⌉ + 1 units, the heap
+    off the new headers kept (`HKeep`), the stack from sp up untouched and ω₀, ω₁, ω₅, ω₆ restored; or the model's
     `alloc` fails and the wrapper returns null. -/
 theorem alloc_call {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap : Nat)
     (hcap1 : 134217728 ≤ cap) (hcap : cap < 18446744073709551616)
@@ -57,6 +58,8 @@ theorem alloc_call {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost
     (∃ ptr s' ω' μ', alloc (growTo pb) hb 1 ((size + 31) / 32) s = some (ptr, s') ∧
       FreeStepsH p (refineContractK cap env) 40494 ω μ x 40611 ω' μ' x 540 ∧
       HeapCtx env pb S0 S1 μ' s' ∧ (∀ c ∈ chunks s, c.used = true → c ∈ chunks s') ∧
+      (⟨ptr - 32, (size + 31) / 32 + 1, true⟩ : Chunk) ∈ chunks s' ∧
+      (∀ d ∈ chunks s, d.used = true → d ≠ ⟨ptr - 32, (size + 31) / 32 + 1, true⟩) ∧
       HKeep μ μ' (fun a => ∃ c ∈ chunks s', c.addr = a) ∧ ω'[7] = UInt64.ofNat ptr ∧
       (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
       ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6]) ∨
@@ -80,6 +83,18 @@ theorem alloc_call {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost
     have hb' := alloc_base H.wf ha
     have keep := HeapFrame.alloc_keeps_used H.wf ha
     have fo' := alloc_first H.wf H.fo ha
+    obtain ⟨pre, post, S, hcs, -, hcs'⟩ := alloc_chunks H.wf ha
+    have hnew : (⟨ptr - 32, (size + 31) / 32 + 1, true⟩ : Chunk) ∈ chunks s' := by
+      rw [hcs']; exact List.mem_append_right _ List.mem_cons_self
+    have hfresh : ∀ d ∈ chunks s, d.used = true → d ≠ ⟨ptr - 32, (size + 31) / 32 + 1, true⟩ := by
+      intro d hd hu e
+      have ht := H.wf.2.2.2.1
+      unfold TilesOk at ht
+      rw [hcs] at ht hd
+      have hfree : (⟨ptr - 32, S, false⟩ : Chunk) ∈ pre ++ ⟨ptr - 32, S, false⟩ :: post :=
+        List.mem_append_right _ List.mem_cons_self
+      have := Tiles.addr_inj ht d hd _ hfree (by rw [e])
+      rw [this] at hu; simp at hu
     by_cases hg : s'.allocated = s.allocated
     · obtain ⟨ω', μ', run, rep', wf', e7, lk, ww, efr, e0, e1, e5, e6, hk⟩ :=
         HeapWrap.alloc_wrap_refines_hdr (p := p) (P := P)
@@ -89,7 +104,7 @@ theorem alloc_call {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost
       refine ⟨ptr, s', ω', μ', rfl, run.mono (by omega), ⟨wf', rep', fo', lk, by rw [hb']; exact H.hb0,
         by rw [hb']; exact H.hbT, by rw [hg]; exact H.hA, H.bd,
         ⟨ph, h48, hhb, HeapPages.of_eq hp ww, hHTs, by rw [hb', hg]; exact hHT⟩, H.hSb, H.hS1,
-        fun a h1 h2 => by rw [ww]; exact H.st a h1 h2⟩, keep, hk, e7, efr, e0, e1, e5, e6⟩
+        fun a h1 h2 => by rw [ww]; exact H.st a h1 h2⟩, keep, hnew, hfresh, hk, e7, efr, e0, e1, e5, e6⟩
     · obtain ⟨bin, -, -, -, -, hgrow, -, hs'⟩ := alloc1_grown (by rw [alloc_one H.wf.1] at ha; exact ha) hg
       have hpg : pagesOf (s.base + 32 * s'.allocated) ≤ pb := by
         rw [hs', allocPost_allocated]
@@ -100,6 +115,6 @@ theorem alloc_call {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost
           H.fo H.lock (by have := H.hSb; omega) hHTs hSTk H.hSb hp H.st hHT
       refine ⟨ptr, s', ω', μ', rfl, run, ⟨wf', rep', fo', lk, by rw [hb']; exact H.hb0,
         by rw [hb']; exact H.hbT, by have := H.hSb; rw [hb'] at hHT'; omega, H.bd,
-        ⟨h', by omega, hh'b, hp', by omega, hHT'⟩, H.hSb, H.hS1, wst⟩, keep, hk, e7, efr, e0, e1, e5, e6⟩
+        ⟨h', by omega, hh'b, hp', by omega, hHT'⟩, H.hSb, H.hS1, wst⟩, keep, hnew, hfresh, hk, e7, efr, e0, e1, e5, e6⟩
 
 end Services.Bootstrap.Decode.HeapCtx

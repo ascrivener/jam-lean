@@ -91,8 +91,32 @@ theorem alloc_wrap_refines_growK {p : ByteArray} {P : Program} [HasCode p P] (en
       ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] :=
   alloc_wrap_refines_growKG (p := p) (P := P) (refineHeap env) cap hcap x ω μ (hb := hb) s s' sp size al ptr pb ph hwf hrep hbd h48 hhb hbs h hgrown h1 h7 h8 hal hal1 hs hsp hsp1 hb0 hbT hA hfo hl hcost (S0 := S0) (S1 := S1) hHTs hSTk hSb hp hst hHT
 
-/-- `alloc_wrap_refines_growK` at `hostCostMax`, the cap of `refineContract`: at most 14 pages a
+/-- `alloc_wrap_refines_growKG` at `hostCostMax`, the cap of `refineContract`: at most 14 pages a
     `grow_heap` call. -/
+theorem alloc_wrap_refines_growG {X : Type} {p : ByteArray} {P : Program} [HasCode p P] (env : HeapHost X)
+    (x : X) (ω : Regs) (μ : Memory) {hb : Nat} (s s' : State) (sp size al ptr pb ph : Nat) (hwf : WF s)
+    (hrep : Rep μ s) (hbd : heapBounds env.code = (48, pb)) (h48 : 48 ≤ ph) (hhb : ph ≤ pb) (hbs : pb < 4294967296)
+    (h : alloc (growTo pb) hb 1 ((size + 31) / 32) s = some (ptr, s')) (hgrown : s'.allocated ≠ s.allocated)
+    (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat size) (h8 : ω[8] = UInt64.ofNat al)
+    (hal : 1 ≤ al) (hal1 : al ≤ 32) (hs : size + 31 < 68719476736)
+    (hsp : 2147483816 ≤ sp) (hsp1 : sp < 4294967296)
+    (hb0 : 206864 ≤ s.base) (hbT : s.base + 1073741824 < 2147483648) (hA : s.allocated < 2147483648)
+    (hfo : FirstOk s) (hl : rdN μ 206848 1 = 0) (hcost : pagesOf (s.base + 32 * s'.allocated) ≤ ph + 14)
+    {S0 S1 : Nat} (hHTs : 208896 ≤ 4096 * ph) (hSTk : S0 + 168 ≤ sp ∧ sp ≤ S1) (hSb : 4096 * pb ≤ S0)
+    (hp : HeapPages μ 48 pb ph) (hst : ∀ a, S0 ≤ a → a < S1 → μ.writable a = true)
+    (hHT : s.base + 32 * s.allocated ≤ 4096 * ph) :
+    ∃ ω' μ', FreeStepsH p (env.rel hostCostMax) 40494 ω μ x 40611 ω' μ' x 540 ∧ Rep μ' s' ∧ WF s' ∧
+      ω'[7] = UInt64.ofNat ptr ∧ rdN μ' 206848 1 = 0 ∧
+      (∃ h', HeapPages μ' 48 pb h' ∧ s'.base + 32 * s'.allocated ≤ 4096 * h' ∧ ph ≤ h' ∧ h' ≤ pb) ∧
+      (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧
+      (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
+      ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] :=
+  alloc_wrap_refines_growKG (p := p) (P := P) (hb := hb) (S0 := S0) (S1 := S1)
+    env hostCostMax (by decide) x ω μ s s' sp size al ptr pb ph hwf hrep hbd h48 hhb hbs h hgrown
+    h1 h7 h8 hal hal1 hs hsp hsp1 hb0 hbT hA hfo hl (by unfold hostCostMax; omega) hHTs hSTk hSb hp
+    hst hHT
+
+/-- `alloc_wrap_refines_growG` for the refine contract (`refineHeap env`). -/
 theorem alloc_wrap_refines_grow {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env)
     (x : RefineCtx) (ω : Regs) (μ : Memory) {hb : Nat} (s s' : State) (sp size al ptr pb ph : Nat) (hwf : WF s)
     (hrep : Rep μ s) (hbd : heapBounds env.code = (48, pb)) (h48 : 48 ≤ ph) (hhb : ph ≤ pb) (hbs : pb < 4294967296)
@@ -111,9 +135,6 @@ theorem alloc_wrap_refines_grow {p : ByteArray} {P : Program} [HasCode p P] (env
       (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧
       (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
       ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] :=
-  alloc_wrap_refines_growK (p := p) (P := P) (hb := hb) (S0 := S0) (S1 := S1)
-    env hostCostMax (by decide) x ω μ s s' sp size al ptr pb ph hwf hrep hbd h48 hhb hbs h hgrown
-    h1 h7 h8 hal hal1 hs hsp hsp1 hb0 hbT hA hfo hl (by unfold hostCostMax; omega) hHTs hSTk hSb hp
-    hst hHT
+  alloc_wrap_refines_growG (p := p) (P := P) (refineHeap env) x ω μ (hb := hb) s s' sp size al ptr pb ph hwf hrep hbd h48 hhb hbs h hgrown h1 h7 h8 hal hal1 hs hsp hsp1 hb0 hbT hA hfo hl hcost (S0 := S0) (S1 := S1) hHTs hSTk hSb hp hst hHT
 
 end Services.Bootstrap.Alloc

@@ -23,7 +23,7 @@ variable {X : Type} {R : HostRel X}
 
 open Picoalloc Services.Bootstrap.Alloc JAM in
 /-- **`alloc` (40494) when the model's `alloc` succeeds**, growing the heap or not: the two cases
-    `alloc_wrap_refines` and `alloc_wrap_refines_grow` under one statement, for a heap bound within 14
+    `alloc_wrap_refines` and `alloc_wrap_refines_growG` under one statement, for a heap bound within 14
     pages of the heap's top (as `realloc_wrap_casesG`). -/
 theorem alloc_okG {p : ByteArray} {P : Program} [HasCode p P] (env : HeapHost X) (x : X)
     (ω : Regs) (μ : Memory) {hb : Nat} (s s' : State) (sp size al q pb ph : Nat) (hwf : WF s)
@@ -57,7 +57,7 @@ theorem alloc_okG {p : ByteArray} {P : Program} [HasCode p P] (env : HeapHost X)
     exact ⟨ω', μ', run.mono (by omega), rep, wf, e7, cl,
       ⟨ph, HeapPages.of_eq hp ww, by rw [hb', hng]; exact hHT, Nat.le_refl _, hhb⟩,
       fun a h1 h2 => by rw [ww]; exact hst a h1 h2, stk, e0, e1, e5, e6⟩
-  · exact alloc_wrap_refines_grow (p := p) (P := P) (hb := hb) (S0 := S0) (S1 := S1) env x ω μ s s' sp
+  · exact alloc_wrap_refines_growG (p := p) (P := P) (hb := hb) (S0 := S0) (S1 := S1) env x ω μ s s' sp
       size al q pb ph hwf hrep hbd h48 hhb hbs h hng h1 h7 h8 hal hal1 hs hsp hsp1 hb0 hbT hA hfo hl
       (Nat.le_trans (alloc_pages hwf h hng) hcost) hHTs hSTk hSb hp hst hHT
 

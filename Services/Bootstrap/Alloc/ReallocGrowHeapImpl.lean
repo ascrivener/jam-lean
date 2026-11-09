@@ -288,8 +288,62 @@ theorem realloc_impl_grow_heapK {p : ByteArray} {P : Program} [HasCode p P] (env
       ω'[5] = ω[5] ∧ ω'[6] = ω[6] :=
   realloc_impl_grow_heapKG (p := p) (P := P) (refineHeap env) cap hcap x ω μ s H F sp ptr req cur sz hrep h1 h8 h7 h10 h0 hsp hsp1 hb0 hbT hal hX hptr hXH hHF hsz hlt hr hc1
 
-/-- `realloc_impl_grow_heapK` at `hostCostMax`, the cap of `refineContract`: at most 14 pages a
+/-- `realloc_impl_grow_heapKG` at `hostCostMax`, the cap of `refineContract`: at most 14 pages a
     `grow_heap` call. -/
+theorem realloc_impl_grow_heapG {X : Type} {p : ByteArray} {P : Program} [HasCode p P] (env : HeapHost X) (x : X)
+    (ω : Regs) (μ : Memory)
+    (s : State) (H F : Nat → Prop) (sp ptr req cur sz : Nat) (hrep : RepAt μ s H F)
+    (h1 : ω[1] = UInt64.ofNat sp) (h8 : ω[8] = UInt64.ofNat ptr) (h7 : ω[7] = UInt64.ofNat 196792)
+    (h10 : ω[10] = UInt64.ofNat req) (h0 : ω[0] = UInt64.ofNat 1988)
+    (hsp : 2147483800 ≤ sp) (hsp1 : sp < 4294967296)
+    (hb0 : 206864 ≤ s.base) (hbT : s.base + 1073741824 < 2147483648) (hal : s.allocated < 2147483648)
+    (hX : Al s.base (ptr - 32)) (hptr : 32 ≤ ptr) (hXH : H (ptr - 32)) (hHF : ∀ a, H a ∨ F a → Al s.base a)
+    (hsz : (s.hdr (ptr - 32)).size = 2 * cur + 1) (hlt : cur < req + 1) (hr : req < 33554431)
+    (hc1 : 1 ≤ cur)
+    -- the next chunk
+    (honc : ptr - 32 + 32 * cur < s.base + 1073741824) (hnc : H (ptr - 32 + 32 * cur))
+    (hw : (s.hdr (ptr - 32 + 32 * cur)).size = 2 * sz) (hfree : NxFree s F s.base (ptr - 32 + 32 * cur) 0)
+    (hav : req + 1 ≤ cur + sz) (hMt : ptr - 32 + 32 * (cur + sz) ≤ s.base + 1073741824)
+    (E : Nat) (hEd : (ptr - 32 + 32 * (req + 1) - s.base) / 32 + (if cur + sz - (req + 1) = 0 then 0 else 1) = E)
+    (hgr : s.allocated < E)
+    (pb h : Nat) (hbd : heapBounds env.code = (48, pb)) (h48 : 48 ≤ h) (hhb : h ≤ pb) (hbs : pb < 4294967296)
+    (hR : pagesOf (s.base + 32 * E) ≤ pb) (hcost : growTop (pagesOf (s.base + 32 * E)) h pb ≤ h + 14)
+    -- the free tail
+    (hold : cur + sz - (req + 1) ≠ 0 →
+      (growHdr (unregister { s with allocated := E } (ptr - 32 + 32 * cur) (binDown sz)) (ptr - 32) (req + 1)).heads
+        (binDown (cur + sz - (req + 1))) ≠ ptr - 32 + 32 * (req + 1))
+    (hold1 : cur + sz - (req + 1) ≠ 0 →
+      (growHdr (unregister { s with allocated := E } (ptr - 32 + 32 * cur) (binDown sz)) (ptr - 32) (req + 1)).heads
+        (binDown (cur + sz - (req + 1))) ≠ 0 →
+      Al s.base ((growHdr (unregister { s with allocated := E } (ptr - 32 + 32 * cur) (binDown sz)) (ptr - 32) (req + 1)).heads
+        (binDown (cur + sz - (req + 1)))))
+    (hnext : ptr - 32 + 32 * (cur + sz) < s.base + 1073741824 → H (ptr - 32 + 32 * (cur + sz)))
+    {S0 S1 : Nat} (hHFT : ∀ a, H a ∨ F a → a + 32 ≤ 4096 * h)
+    (hold1T : cur + sz - (req + 1) ≠ 0 →
+      (growHdr (unregister { s with allocated := E } (ptr - 32 + 32 * cur) (binDown sz)) (ptr - 32) (req + 1)).heads
+        (binDown (cur + sz - (req + 1))) ≠ 0 →
+      (growHdr (unregister { s with allocated := E } (ptr - 32 + 32 * cur) (binDown sz)) (ptr - 32) (req + 1)).heads
+        (binDown (cur + sz - (req + 1))) + 32 ≤ 4096 * h)
+    (hS : S0 + 152 ≤ sp ∧ sp ≤ S1) (hSb : 4096 * pb ≤ S0) (hp : HeapPages μ 48 pb h)
+    (hst : ∀ a, S0 ≤ a → a < S1 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p (env.rel hostCostMax) 42980 ω μ x 40805 ω' μ' x 300 ∧
+      RepAt μ' (freeFinal (growHdr (unregister { s with allocated := E } (ptr - 32 + 32 * cur) (binDown sz)) (ptr - 32) (req + 1))
+          (ptr - 32 + 32 * (req + 1)) (req + 1) (cur + sz - (req + 1)) (s.base + 1073741824))
+        (fun a => H a ∨ (cur + sz - (req + 1) ≠ 0 ∧ a = ptr - 32 + 32 * (req + 1)))
+        (fun a => F a ∨ (cur + sz - (req + 1) ≠ 0 ∧ a = ptr - 32 + 32 * (req + 1))) ∧
+      HeapPages μ' 48 pb (growTop (pagesOf (s.base + 32 * E)) h pb) ∧
+      (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
+      HKeepG μ μ' (fun a => (H a ∨ F a) ∨ a = ptr - 32 + 32 * (req + 1) ∨
+        a = (growHdr (unregister { s with allocated := E } (ptr - 32 + 32 * cur) (binDown sz)) (ptr - 32) (req + 1)).heads
+          (binDown (cur + sz - (req + 1)))) ∧
+      ω'[7] = UInt64.ofNat ptr ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat sp ∧
+      ω'[5] = ω[5] ∧ ω'[6] = ω[6] :=
+  realloc_impl_grow_heapKG (p := p) (P := P) (S0 := S0) (S1 := S1) env hostCostMax (by decide) x ω μ
+    s H F sp ptr req cur sz hrep h1 h8 h7 h10 h0 hsp hsp1 hb0 hbT hal hX hptr hXH hHF hsz hlt hr
+    hc1 honc hnc hw hfree hav hMt E hEd hgr pb h hbd h48 hhb hbs hR (by unfold hostCostMax; omega)
+    hold hold1 hnext hHFT hold1T hS hSb hp hst
+
+/-- `realloc_impl_grow_heapG` for the refine contract (`refineHeap env`). -/
 theorem realloc_impl_grow_heap {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (x : RefineCtx)
     (ω : Regs) (μ : Memory)
     (s : State) (H F : Nat → Prop) (sp ptr req cur sz : Nat) (hrep : RepAt μ s H F)
@@ -338,9 +392,6 @@ theorem realloc_impl_grow_heap {p : ByteArray} {P : Program} [HasCode p P] (env 
           (binDown (cur + sz - (req + 1)))) ∧
       ω'[7] = UInt64.ofNat ptr ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat sp ∧
       ω'[5] = ω[5] ∧ ω'[6] = ω[6] :=
-  realloc_impl_grow_heapK (p := p) (P := P) (S0 := S0) (S1 := S1) env hostCostMax (by decide) x ω μ
-    s H F sp ptr req cur sz hrep h1 h8 h7 h10 h0 hsp hsp1 hb0 hbT hal hX hptr hXH hHF hsz hlt hr
-    hc1 honc hnc hw hfree hav hMt E hEd hgr pb h hbd h48 hhb hbs hR (by unfold hostCostMax; omega)
-    hold hold1 hnext hHFT hold1T hS hSb hp hst
+  realloc_impl_grow_heapG (p := p) (P := P) (refineHeap env) x ω μ s H F sp ptr req cur sz hrep h1 h8 h7 h10 h0 hsp hsp1 hb0 hbT hal hX hptr hXH hHF hsz hlt hr hc1
 
 end Services.Bootstrap.Alloc

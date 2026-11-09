@@ -52,7 +52,7 @@ theorem rgh_pre {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) 
     · rd_simp []
     · rd_simp [hwr]
 
-/-- **43470, `ecalli 1` (Ω_♊)**, as `ag_call`.
+/-- **43470, `ecalli 1` (Ω_♊)**, as `ag_callG`.
     Under `refineContractK cap`, any growth whose cost 275 + 121 (t − h) fits in `cap`. -/
 theorem rgh_callKG {p : ByteArray} {P : Program} [HasCode p P] (env : HeapHost X)
     (cap : Nat) (hcap : cap < 18446744073709551616) (x : X) (ω : Regs)
@@ -78,16 +78,25 @@ theorem rgh_callK {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.
       (μ.setPages 48 (growTop Rq h b - 48) (some .write)) x 1 :=
   rgh_callKG (p := p) (P := P) (refineHeap env) cap hcap x ω μ b h Rq hb hp h48 hhb hbs h7 hRq hcost
 
-/-- `rgh_callK` at `hostCostMax`, the cap of `refineContract`: at most 14 pages a
+/-- `rgh_callKG` at `hostCostMax`, the cap of `refineContract`: at most 14 pages a
     `grow_heap` call. -/
+theorem rgh_callG {p : ByteArray} {P : Program} [HasCode p P] (env : HeapHost X) (x : X) (ω : Regs)
+    (μ : Memory) (b h Rq : Nat) (hb : heapBounds env.code = (48, b)) (hp : HeapPages μ 48 b h) (h48 : 48 ≤ h)
+    (hhb : h ≤ b) (hbs : b < 4294967296) (h7 : ω[7] = UInt64.ofNat Rq) (hRq : Rq < 18446744073709551616)
+    (hcost : growTop Rq h b ≤ h + 14) :
+    FreeStepsH p (env.rel hostCostMax) 43470 ω μ x 43472 (setR7 ω (growTop Rq h b))
+      (μ.setPages 48 (growTop Rq h b - 48) (some .write)) x 1 :=
+  rgh_callKG (p := p) (P := P) env hostCostMax (by decide) x ω μ b h Rq hb hp h48 hhb hbs h7 hRq
+    (by unfold hostCostMax; omega)
+
+/-- `rgh_callG` for the refine contract (`refineHeap env`). -/
 theorem rgh_call {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (x : RefineCtx) (ω : Regs)
     (μ : Memory) (b h Rq : Nat) (hb : heapBounds env.code = (48, b)) (hp : HeapPages μ 48 b h) (h48 : 48 ≤ h)
     (hhb : h ≤ b) (hbs : b < 4294967296) (h7 : ω[7] = UInt64.ofNat Rq) (hRq : Rq < 18446744073709551616)
     (hcost : growTop Rq h b ≤ h + 14) :
     FreeStepsH p (refineContract env) 43470 ω μ x 43472 (setR7 ω (growTop Rq h b))
       (μ.setPages 48 (growTop Rq h b - 48) (some .write)) x 1 :=
-  rgh_callK (p := p) (P := P) env hostCostMax (by decide) x ω μ b h Rq hb hp h48 hhb hbs h7 hRq
-    (by unfold hostCostMax; omega)
+  rgh_callG (p := p) (P := P) (refineHeap env) x ω μ b h Rq hb hp h48 hhb hbs h7 hRq hcost
 
 /-- **43472 … 43504**, the heap's new top `t` reaching the requested page: the allocated space
     becomes E; the kept registers come back. -/
@@ -208,8 +217,30 @@ theorem rg_heapK {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.E
       ∀ j : Fin 13, j.val ∉ [0, 3, 5, 7, 8, 9, 10, 11, 12] → ω'[j] = ω[j] :=
   rg_heapKG (p := p) (P := P) (refineHeap env) cap hcap x ω μ sp al E base b h hb h48 hhb hbs hR hcost h1 h5 h11 h2 h3 hlt hE hbase hsp0 hsp (S0 := S0) (S1 := S1) hHTs hS hSb hp hst
 
-/-- `rg_heapK` at `hostCostMax`, the cap of `refineContract`: at most 14 pages a
+/-- `rg_heapKG` at `hostCostMax`, the cap of `refineContract`: at most 14 pages a
     `grow_heap` call. -/
+theorem rg_heapG {p : ByteArray} {P : Program} [HasCode p P] (env : HeapHost X) (x : X) (ω : Regs)
+    (μ : Memory) (sp al E base b h : Nat) (hb : heapBounds env.code = (48, b)) (h48 : 48 ≤ h) (hhb : h ≤ b)
+    (hbs : b < 4294967296)
+    (hR : pagesOf (base + 32 * E) ≤ b) (hcost : growTop (pagesOf (base + 32 * E)) h b ≤ h + 14)
+    (h1 : ω[1] = UInt64.ofNat sp) (h5 : ω[5] = UInt64.ofNat al) (h11 : ω[11] = UInt64.ofNat E)
+    (h2 : ω[2] = UInt64.ofNat base) (h3 : ω[3] = UInt64.ofNat 204984)
+    (hlt : al < E) (hE : E ≤ 33554432) (hbase : base < 2147483648)
+    (hsp0 : 2147483648 ≤ sp) (hsp : sp + 152 < 4294967296) {S0 S1 : Nat} (hHTs : 206864 ≤ 4096 * h)
+    (hS : S0 ≤ sp ∧ sp + 152 ≤ S1) (hSb : 4096 * b ≤ S0) (hp : HeapPages μ 48 b h)
+    (hst : ∀ a, S0 ≤ a → a < S1 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p (env.rel hostCostMax) 43421 ω μ x 43504 ω' μ' x 40 ∧ rdN μ' 206840 4 = E ∧
+      ω'[7] = ω[7] ∧ ω'[8] = ω[8] ∧ ω'[10] = ω[10] ∧ ω'[3] = UInt64.ofNat 204984 ∧
+      (∀ a, a < 4294967296 → (a < sp ∨ sp + 40 ≤ a) → (a < sp + 104 ∨ sp + 112 ≤ a) →
+        (a < 206840 ∨ 206844 ≤ a) → μ'.read a = μ.read a) ∧
+      HeapPages μ' 48 b (growTop (pagesOf (base + 32 * E)) h b) ∧
+      (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧
+      ∀ j : Fin 13, j.val ∉ [0, 3, 5, 7, 8, 9, 10, 11, 12] → ω'[j] = ω[j] :=
+  rg_heapKG (p := p) (P := P) (S0 := S0) (S1 := S1) env hostCostMax (by decide) x ω μ sp al E base b
+    h hb h48 hhb hbs hR (by unfold hostCostMax; omega) h1 h5 h11 h2 h3 hlt hE hbase hsp0 hsp hHTs
+    hS hSb hp hst
+
+/-- `rg_heapG` for the refine contract (`refineHeap env`). -/
 theorem rg_heap {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (x : RefineCtx) (ω : Regs)
     (μ : Memory) (sp al E base b h : Nat) (hb : heapBounds env.code = (48, b)) (h48 : 48 ≤ h) (hhb : h ≤ b)
     (hbs : b < 4294967296)
@@ -227,8 +258,6 @@ theorem rg_heap {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.En
       HeapPages μ' 48 b (growTop (pagesOf (base + 32 * E)) h b) ∧
       (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧
       ∀ j : Fin 13, j.val ∉ [0, 3, 5, 7, 8, 9, 10, 11, 12] → ω'[j] = ω[j] :=
-  rg_heapK (p := p) (P := P) (S0 := S0) (S1 := S1) env hostCostMax (by decide) x ω μ sp al E base b
-    h hb h48 hhb hbs hR (by unfold hostCostMax; omega) h1 h5 h11 h2 h3 hlt hE hbase hsp0 hsp hHTs
-    hS hSb hp hst
+  rg_heapG (p := p) (P := P) (refineHeap env) x ω μ sp al E base b h hb h48 hhb hbs hR hcost h1 h5 h11 h2 h3 hlt hE hbase hsp0 hsp (S0 := S0) (S1 := S1) hHTs hS hSb hp hst
 
 end Services.Bootstrap.Alloc

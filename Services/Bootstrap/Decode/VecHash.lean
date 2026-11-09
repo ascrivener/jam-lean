@@ -343,4 +343,100 @@ theorem one {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ 
   · intro a; rw [frd, grd]
   · intro a; rw [fwr, gwr]
 
+/-- What the loop leaves when it returns: the function's return through its frame, the `Vec` {n, q, n}
+    in the slot, all n elements in the block, and the reader past them. -/
+def Done (S n q rd ptr len out r0 v5 v6 : Nat) (Pl : Nat → List UInt8) (μ0 : Memory) (ω' : Regs) (μ' : Memory) :
+    Prop :=
+  ω'[0] = UInt64.ofNat r0 ∧ ω'[1] = UInt64.ofNat (S + 152) ∧ ω'[5] = UInt64.ofNat v5 ∧
+    ω'[6] = UInt64.ofNat v6 ∧
+    μ'.readN out 8 = Num.encodeLE 8 n ∧ μ'.readN (out + 8) 8 = Num.encodeLE 8 q ∧
+    μ'.readN (out + 16) 8 = Num.encodeLE 8 n ∧ (∀ k, k < n → μ'.readN (q + 32 * k) 32 = Pl k) ∧
+    μ'.readN rd 8 = Num.encodeLE 8 (ptr + 32 * n) ∧ μ'.readN (rd + 8) 8 = Num.encodeLE 8 (len - 32 * n) ∧
+    LFrame S n q rd out μ0 μ'
+
+/-- **The last element**: from `LoopSt` after n − 1 elements, the reader reads the last, the function
+    copies it, stores the `Vec` and returns. -/
+theorem last {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (S n q rd ptr len out r0 t v5 v6 j : Nat) (Pl : Nat → List UInt8) (B : Bnd S n q rd ptr len out)
+    (hj : j + 1 = n) (hv5 : v5 < 18446744073709551616) (hv6 : v6 < 18446744073709551616)
+    (hret : 0 < r0 ∧ r0 ≤ 2806 ∧ r0 % 2 = 0)
+    (hjt : P.jumpTable.getD (r0 / 2 - 1) 0 = t) (hbt : P.isBlockStart t = true)
+    (h : LoopSt S n q rd ptr len out r0 v5 v6 j Pl ω μ) :
+    ∃ ω' μ', FreeStepsH p R 58434 ω μ x t ω' μ' x 550 ∧ Done S n q rd ptr len out r0 v5 v6 Pl μ ω' μ' := by
+  obtain ⟨hS1, hS2, hS3⟩ := B.hS
+  have := B.hn; have := B.hq; have := B.hrd; have := B.hptr; have := B.hlen; have := B.hout
+  have := B.rS; have := B.pS; have := B.qS; have := B.oS; have := B.rq; have := B.ro; have := B.oq
+  have := B.pq; have := B.pr; have := B.po
+  obtain ⟨e0, e1, e6, e7, e8, e9, m40, m48, m56, m32, m24, m16, m8, m144, m136, m128, R0, R8, pay, done, ws, wr,
+    wq, wo, rp⟩ := h
+  obtain ⟨ω1, μ1, run1, g0, g1, g5, g6, g7, gR0, gR8, gbuf, gfr, grd, gwr⟩ := read_big_sp (p := p) (P := P)
+    (R := R) x ω μ 50 1982 S rd (S + 96) (ptr + 32 * j) (len - 32 * j) 32 e0 e1 e7 e8 e9 (by decide) jte_24 bs_1982
+    ⟨by omega, by omega, by omega⟩ B.hrd ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ (by decide) (by omega)
+    (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)
+    (fun a h1 h2 => ws a h1 (by omega)) wr (fun a h1 h2 => ws a (by omega) (by omega))
+    (fun a h1 h2 => rp a (by omega) (by omega)) R0 R8
+  have g' : ∀ a, a < 4294967296 → (a < S - 88 ∨ S ≤ a) → (a < rd ∨ rd + 16 ≤ a) →
+      (a < S + 96 ∨ S + 128 ≤ a) → μ1.read a = μ.read a := fun a h0 h1 h2 h3 => gfr a h0 (by omega) h2 h3
+  have gS : ∀ a, S ≤ a → a < S + 96 ∨ S + 128 ≤ a → a < S + 152 → μ1.read a = μ.read a := fun a h1 h2 h3 =>
+    g' a (by omega) (by omega) (by omega) (by omega)
+  obtain ⟨ω2, μ2, run2, f0, f1, f5, f6, fcp, fo0, fo8, fo16, ffr, frd, fwr⟩ := i2 (p := p) (P := P) (R := R) x
+    ω1 μ1 S n q j out r0 t v5 v6 ⟨by omega, by omega⟩ (g1.trans e1)
+    (g6.trans (e6.trans (congrArg UInt64.ofNat (by omega)))) g7 hj (by omega) (by omega) (by omega)
+    (by omega) (by omega) (by omega) hv5 hv6
+    (by rw [Memory.readN_congr (fun i hi => gS _ (by omega) (by omega) (by omega))]; exact m40)
+    (by rw [Memory.readN_congr (fun i hi => gS _ (by omega) (by omega) (by omega))]; exact m48)
+    (by rw [Memory.readN_congr (fun i hi => gS _ (by omega) (by omega) (by omega))]; exact m56)
+    (by rw [Memory.readN_congr (fun i hi => gS _ (by omega) (by omega) (by omega))]; exact m24)
+    (by rw [Memory.readN_congr (fun i hi => gS _ (by omega) (by omega) (by omega))]; exact m16)
+    (by rw [Memory.readN_congr (fun i hi => gS _ (by omega) (by omega) (by omega))]; exact m8)
+    (by rw [Memory.readN_congr (fun i hi => gS _ (by omega) (by omega) (by omega))]; exact m144)
+    (by rw [Memory.readN_congr (fun i hi => gS _ (by omega) (by omega) (by omega))]; exact m136)
+    (by rw [Memory.readN_congr (fun i hi => gS _ (by omega) (by omega) (by omega))]; exact m128)
+    hret hjt hbt
+    (fun a h1 h2 => by rw [gwr]; exact ws a (by omega) h2)
+    (fun a h1 h2 => by rw [gwr]; exact wq a (by omega) (by omega))
+    (fun a h1 h2 => by rw [gwr]; exact wo a h1 h2)
+  have back : ∀ a, a < 4294967296 → (a < S - 88 ∨ S + 152 ≤ a) → (a < rd ∨ rd + 16 ≤ a) →
+      (a < q + 32 * j ∨ q + 32 * j + 32 ≤ a) → (a < out ∨ out + 24 ≤ a) → μ2.read a = μ.read a :=
+    fun a h0 h1 h2 h3 h4 => (ffr a h0 (by omega) h3 h4).trans (g' a h0 (by omega) h2 (by omega))
+  refine ⟨ω2, μ2, (run1.trans run2).mono (by omega), f0, f1, f5, f6, fo0, fo8, fo16, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · intro k hk
+    rcases Nat.lt_or_ge k j with hk' | hk'
+    · rw [Memory.readN_congr (fun i hi => back _ (by omega) (by omega) (by omega) (by omega) (by omega))]
+      exact done k hk'
+    · rw [show k = j by omega, fcp, gbuf]; exact pay j (by omega) (by omega)
+  · rw [Memory.readN_congr (fun i hi => ffr _ (by omega) (by omega) (by omega) (by omega))]
+    exact gR0.trans (congrArg (Num.encodeLE 8) (by omega))
+  · rw [Memory.readN_congr (fun i hi => ffr _ (by omega) (by omega) (by omega) (by omega))]
+    exact gR8.trans (congrArg (Num.encodeLE 8) (by omega))
+  · intro a h0 h1 h2 h3 h4; exact back a h0 h1 h2 (by omega) h4
+  · intro a; rw [frd, grd]
+  · intro a; rw [fwr, gwr]
+
+/-- **The element loop**: from `LoopSt` after j < n elements, the loop reads the rest and returns
+    (`Done`). -/
+theorem elems {p : ByteArray} {P : Program} [HasCode p P] (x : X)
+    (S n q rd ptr len out r0 t v5 v6 : Nat) (Pl : Nat → List UInt8) (B : Bnd S n q rd ptr len out)
+    (hv5 : v5 < 18446744073709551616) (hv6 : v6 < 18446744073709551616)
+    (hret : 0 < r0 ∧ r0 ≤ 2806 ∧ r0 % 2 = 0)
+    (hjt : P.jumpTable.getD (r0 / 2 - 1) 0 = t) (hbt : P.isBlockStart t = true) :
+    ∀ r j (ω : Regs) (μ : Memory), n - j = r → j < n → LoopSt S n q rd ptr len out r0 v5 v6 j Pl ω μ →
+      ∃ ω' μ', FreeStepsH p R 58434 ω μ x t ω' μ' x (550 * r) ∧ Done S n q rd ptr len out r0 v5 v6 Pl μ ω' μ' := by
+  intro r
+  induction r with
+  | zero => intro j ω μ hr hj; omega
+  | succ r ih =>
+    intro j ω μ hr hj h
+    by_cases hlast : j + 1 = n
+    · obtain ⟨ω', μ', run, hd⟩ := last (p := p) (P := P) (R := R) x ω μ S n q rd ptr len out r0 t v5 v6 j Pl B
+        hlast hv5 hv6 hret hjt hbt h
+      exact ⟨ω', μ', run.mono (by rw [Nat.mul_succ]; omega), hd⟩
+    · obtain ⟨ω1, μ1, run1, h1, f1⟩ := one (p := p) (P := P) (R := R) x ω μ S n q rd ptr len out r0 v5 v6 j Pl B
+        (by omega) h
+      obtain ⟨ω2, μ2, run2, d0, d1, d5, d6, dO, dO8, dO16, dall, dR0, dR8, f2⟩ :=
+        ih (j + 1) ω1 μ1 (by omega) (by omega) h1
+      exact ⟨ω2, μ2, (run1.trans run2).mono (by rw [Nat.mul_succ]; omega), d0, d1, d5, d6, dO, dO8, dO16, dall,
+        dR0, dR8, fun a h0 ha hb hc hd => (f2.1 a h0 ha hb hc hd).trans (f1.1 a h0 ha hb hc hd),
+        fun a => (f2.2.1 a).trans (f1.2.1 a), fun a => (f2.2.2 a).trans (f1.2.2 a)⟩
+
 end Services.Bootstrap.Decode.VecHash

@@ -169,7 +169,7 @@ def FrameF (F RD : Nat) (n B : Nat) (μ μ' : Memory) : Prop :=
     the heap, 8-aligned and below 2^31. -/
 def OkF (F RD P0 Lt : Nat) (es : List (List UInt8)) (B : Nat) : Prop :=
   es.length < 128 ∧ P0 + es.flatten.length ≤ B ∧ B % 8 = 0 ∧ B + 232 * es.length < 2147483648 ∧
-    (∀ j (hj : j < es.length), 1 ≤ es[j].length) ∧ 196608 ≤ P0 ∧ es.flatten.length ≤ Lt ∧ Lt < 4294967296 ∧
+    (∀ j (hj : j < es.length), 1 ≤ es[j].length) ∧ 206864 ≤ P0 ∧ es.flatten.length ≤ Lt ∧ Lt < 4294967296 ∧
     4278050816 + 2048 ≤ F ∧ F % 8 = 0 ∧ F + 584 ≤ RD ∧ RD + 16 ≤ 4278059008
 
 

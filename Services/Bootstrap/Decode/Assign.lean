@@ -235,15 +235,18 @@ theorem glob_writable {env : RefineHost.Env} {pb : Nat} {μ : Memory} {s : State
     `gl` holding at 196680 a word G whose low 32 bits n (the queue's length 𝖰) are 1 … 512, the
     encoding [12] ++ c2 ++ hb ++ w4 (the core's two octets, n hashes, the assigner's four) decodes to
     `Assign`'s slot (`AssignRep`), its queue a fresh `Vec` in the heap; or an allocation fails. -/
-theorem assign_elem {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap pb : Nat)
+theorem assign_elemF {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap pb : Nat)
+    (F RD : Nat) (hL : Lay F RD)
     (hcap1 : 134217728 ≤ cap) (hcap : cap < 18446744073709551616) (gl : Nat → UInt8) (G : Nat)
     (hG : G < 18446744073709551616)
     (gv : (List.range 8).map (fun k => gl (196680 + k)) = Num.encodeLE 8 G)
     (hn : 1 ≤ G % 4294967296 ∧ G % 4294967296 ≤ 512)
     (c2 hb w4 : List UInt8) (hc2 : c2.length = 2) (hhb : hb.length = 32 * (G % 4294967296))
     (hw4 : w4.length = 4) :
-    ElemOkA env cap pb gl p P (1000 + 550 * (G % 4294967296)) (12 :: (c2 ++ hb ++ w4))
+    ElemOkAF env cap pb gl p P F RD (1000 + 550 * (G % 4294967296)) (12 :: (c2 ++ hb ++ w4))
       (AssignRep (G % 4294967296) c2 hb w4) := by
+  have hL' := hL
+  obtain ⟨l1, l2, l3, l4⟩ := hL'
   intro x ω μ ptr len v5 v6 s h1 h5 h6 h7 tag rP rL hl hl' hp hp' pay rpay s0 s5 s6 hv5 hv6 tab rt ws wr H hg
     ⟨cp, hcp, hcpu, hcpl, hcph⟩
   have hL : (12 :: (c2 ++ hb ++ w4)).length = 7 + 32 * (G % 4294967296) := by
@@ -283,18 +286,18 @@ theorem assign_elem {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHos
   have ew4 : Num.encodeLE 4 (Num.decodeLE w4) = w4 := by have := encodeLE_decodeLE w4; rwa [hw4] at this
   -- the dispatch and the helper's entry
   obtain ⟨ω1, run1, d0, d1, d5, d6⟩ := dispatch (p := p) (P := P) (R := refineContractK cap env) x ω μ
-    4278057632 12 (by decide) (by decide) h1 h7 (by simpa using tag) tab
-    (Memory.readable_of_writable (hst _ (by decide) (by decide))) rt
+    F 12 (by omega) (by omega) h1 h7 (by simpa using tag) tab
+    (Memory.readable_of_writable (hst _ (by omega) (by omega))) rt
   obtain ⟨ω2, μ2, run2, f0, f1, f5, f6, f7, f8, f9, f80, f72, f64, ffr, frd, fwr⟩ :=
-    as1 (p := p) (P := P) (R := refineContractK cap env) x ω1 μ 4278057632 4278057752 4278058648
-      ⟨by decide, by decide⟩ (d1.trans h1) (d5.trans h5) (d6.trans h6) (by decide) (by decide)
+    as1 (p := p) (P := P) (R := refineContractK cap env) x ω1 μ F (F + 120) RD
+      ⟨by omega, by omega⟩ (d1.trans h1) (d5.trans h5) (d6.trans h6) (by omega) (by omega)
       (fun a h1 h2 => hst a (by omega) (by omega))
   -- the core, into H + 40
   obtain ⟨ω3, μ3, run3, g0, g1, g2, g3, g4, g5, g6, g12, g7, gR0, gR8, gbuf, gfr, grd, gwr⟩ :=
-    read_ok (p := p) (P := P) (R := refineContractK cap env) x ω2 μ2 1152 24765 4278057544 4278058648
-      4278057584 ptr len 2 f0 f1 f7 f8 f9 (by decide) jte_575 bs_24765 ⟨by decide, by decide⟩
-      ⟨by decide, by decide⟩ ⟨by decide, by decide⟩ ⟨by omega, by omega⟩ (by decide) (by omega) hl'
-      (Or.inr (by decide)) (Or.inr (by decide)) (Or.inl (by omega)) (Or.inl (by decide)) (Or.inr (by omega))
+    read_ok (p := p) (P := P) (R := refineContractK cap env) x ω2 μ2 1152 24765 (F - 88) RD
+      (F - 48) ptr len 2 f0 f1 f7 f8 f9 (by omega) jte_575 bs_24765 ⟨by omega, by omega⟩
+      ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ (by omega) (by omega) hl'
+      (Or.inr (by omega)) (Or.inr (by omega)) (Or.inl (by omega)) (Or.inl (by omega)) (Or.inr (by omega))
       (fun a h1 h2 => by rw [fwr]; exact hst a (by omega) (by omega))
       (fun a h1 h2 => by rw [fwr]; exact wr a h1 h2)
       (fun a h1 h2 => by rw [fwr]; exact hst a (by omega) (by omega))
@@ -308,9 +311,9 @@ theorem assign_elem {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHos
   have H3 : HeapCtx env pb S0 S1 μ3 s := heap_of_high H low3 (fun a => by rw [gwr, fwr])
   -- the global, and the call of the hash-Vec decoder
   obtain ⟨ω4, μ4, run4, k0, k1, k5, k6, k7, k8, k9, k32, k24, kfr, krd, kwr⟩ :=
-    as2 (p := p) (P := P) (R := refineContractK cap env) x ω3 μ3 4278057544 4278057752 4278058648
-      (Num.decodeLE c2) G ⟨by decide, by decide⟩ (g1.trans f1) (g5.trans f5) (g6.trans f6) g7 (by decide)
-      (by decide) hc2v (by rw [gbuf, Memory.readN_congr (fun j hj => ffr _ (by omega) (by omega)), pc2, ec2])
+    as2 (p := p) (P := P) (R := refineContractK cap env) x ω3 μ3 (F - 88) (F + 120) RD
+      (Num.decodeLE c2) G ⟨by omega, by omega⟩ (g1.trans f1) (g5.trans f5) (g6.trans f6) g7 (by omega)
+      (by omega) hc2v (by rw [gbuf, Memory.readN_congr (fun j hj => ffr _ (by omega) (by omega)), pc2, ec2])
       hG (glob_word gv hg3)
       (fun a h1 h2 => Memory.readable_of_writable (glob_writable H3 ⟨by omega, by omega⟩))
       (fun a h1 h2 => by rw [gwr, fwr]; exact hst a (by omega) (by omega))
@@ -320,17 +323,17 @@ theorem assign_elem {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHos
     (fun a => by rw [kwr])
   have hcpm := hcp
   -- the queue: n hashes, into a fresh Vec at H + 40
-  rcases VecHash.vec_hash (p := p) (P := P) env cap pb hcap1 hcap x ω4 μ4 s cp 4278057392 n 4278058648 (ptr + 2)
-      (len - 2) 4278057584 1154 24826 196680 4278058648 (fun k => (hb.drop (32 * k)).take 32) H4 k0 k1 k5 k6 k7 k8
-      (by rw [hnG]; exact k9) hn ⟨by decide, by decide, by decide⟩ (by decide) ⟨by decide, by decide⟩
-      (Or.inr (by decide)) ⟨hcp, hcpu⟩
+  rcases VecHash.vec_hash (p := p) (P := P) env cap pb hcap1 hcap x ω4 μ4 s cp (F - 240) n RD (ptr + 2)
+      (len - 2) (F - 48) 1154 24826 196680 RD (fun k => (hb.drop (32 * k)).take 32) H4 k0 k1 k5 k6 k7 k8
+      (by rw [hnG]; exact k9) hn ⟨by omega, by omega, by omega⟩ (by omega) ⟨by omega, by omega⟩
+      (Or.inr (by omega)) ⟨hcp, hcpu⟩
       (fun a h1 h2 => by unfold InData; omega)
       (fun k hk => by
         rw [Memory.readN_congr (fun j hj => low4 _ (by omega)), show ptr + 2 + 32 * k = ptr + 2 + 32 * k from rfl]
         exact phb k hk)
       (by rw [Memory.readN_congr (fun j hj => kfr _ (by omega) (Or.inr (by omega)))]; exact gR0)
       (by rw [Memory.readN_congr (fun j hj => kfr _ (by omega) (Or.inr (by omega)))]; exact gR8)
-      ⟨by omega, by omega⟩ (by decide) (by decide) (by decide) ⟨by decide, by decide, by decide⟩ jte_576 bs_24826 with
+      ⟨by omega, by omega⟩ (by omega) (by omega) (by omega) ⟨by omega, by omega, by omega⟩ jte_576 bs_24826 with
     ⟨q, s', ω5, μ5, ha, run5, v0, v1, v5', v6', vO, vO8, vO16, vel, vR0, vR8, H5, hnew, hfresh, keepU, keepD, vfr,
       vlow, vglob, vwr⟩ | ex
   rotate_left
@@ -350,8 +353,8 @@ theorem assign_elem {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHos
   have hst5 : ∀ a, 4278050816 ≤ a → a < 4278059008 → μ5.writable a = true := H5.st
   -- the Vec copied, the global reloaded, and the assigner's call
   obtain ⟨ω6, μ6, run6, m0, m1, m5, m6, m7, m8, m9, m16, m8', m0', mfr, mrd, mwr⟩ :=
-    as3 (p := p) (P := P) (R := refineContractK cap env) x ω5 μ5 4278057544 4278058648 n q n G
-      ⟨by decide, by decide⟩ v1 v5' v6' (by decide) (by omega) (by omega) (by omega) vO vO8 vO16 hG
+    as3 (p := p) (P := P) (R := refineContractK cap env) x ω5 μ5 (F - 88) RD n q n G
+      ⟨by omega, by omega⟩ v1 v5' v6' (by omega) (by omega) (by omega) (by omega) vO vO8 vO16 hG
       (glob_word gv hg5) (fun a h1 h2 => Memory.readable_of_writable (glob_writable H5 ⟨by omega, by omega⟩))
       (fun a h1 h2 => hst5 a (by omega) (by omega))
   have pw46 : μ6.readN (ptr + 2 + 32 * n) 4 = w4 := by
@@ -359,11 +362,11 @@ theorem assign_elem {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHos
       ((keepD cp hcp hcpu _ ⟨by omega, by omega⟩).trans (low4 _ (by omega))))]
     exact pw4
   obtain ⟨ω7, μ7, run7, n0, n1, n2, n3, n4, n5, n6, n12, n7, nR0, nR8, nbuf, nfr, nrd, nwr⟩ :=
-    read_ok (p := p) (P := P) (R := refineContractK cap env) x ω6 μ6 1156 24867 4278057544 4278058648
-      4278057584 (ptr + 2 + 32 * n) (len - 2 - 32 * n) 4 m0 m1 m7 m8 m9 (by decide) jte_577 bs_24867
-      ⟨by decide, by decide⟩ ⟨by decide, by decide⟩ ⟨by decide, by decide⟩ ⟨by omega, by omega⟩ (by decide)
+    read_ok (p := p) (P := P) (R := refineContractK cap env) x ω6 μ6 1156 24867 (F - 88) RD
+      (F - 48) (ptr + 2 + 32 * n) (len - 2 - 32 * n) 4 m0 m1 m7 m8 m9 (by omega) jte_577 bs_24867
+      ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ (by omega)
       (by omega) (by omega)
-      (Or.inr (by decide)) (Or.inr (by decide)) (Or.inl (by omega)) (Or.inl (by decide)) (Or.inr (by omega))
+      (Or.inr (by omega)) (Or.inr (by omega)) (Or.inl (by omega)) (Or.inl (by omega)) (Or.inr (by omega))
       (fun a h1 h2 => by rw [mwr]; exact hst5 a (by omega) (by omega))
       (fun a h1 h2 => by rw [mwr]; exact hst5 a (by omega) (by omega))
       (fun a h1 h2 => by rw [mwr]; exact hst5 a (by omega) (by omega))
@@ -373,43 +376,43 @@ theorem assign_elem {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHos
       (by rw [Memory.readN_congr (fun j hj => mfr _ (by omega) (Or.inr (by omega)) (Or.inr (by omega)))]; exact vR0)
       (by rw [Memory.readN_congr (fun j hj => mfr _ (by omega) (Or.inr (by omega)) (Or.inr (by omega)))]; exact vR8)
   -- the frame above H, from the start to before the store
-  have up7 : ∀ a, 4278057608 ≤ a → a < 4294967296 →
-      (a < 4278058648 ∨ 4278058664 ≤ a) → μ7.read a = μ2.read a := fun a h0 h1 h3 =>
+  have up7 : ∀ a, (F - 24) ≤ a → a < 4294967296 →
+      (a < RD ∨ (RD + 16) ≤ a) → μ7.read a = μ2.read a := fun a h0 h1 h3 =>
     (nfr a h1 (Or.inr (by omega)) h3 (Or.inr (by omega))).trans ((mfr a h1 (Or.inr (by omega)) (Or.inr (by omega))).trans
       ((vfr a (by omega) h1 h3 (Or.inr (by omega))).trans ((kfr a h1 (Or.inr (by omega))).trans
         (gfr a h1 (Or.inr (by omega)) h3 (Or.inr (by omega))))))
-  have up2 : ∀ a, 4278057632 ≤ a → a < 4294967296 → μ2.read a = μ.read a := fun a h0 h1 =>
+  have up2 : ∀ a, F ≤ a → a < 4294967296 → μ2.read a = μ.read a := fun a h0 h1 =>
     ffr a h1 (Or.inr h0)
-  have sv : ∀ a v, a + 8 ≤ 4278058648 → 4278057632 ≤ a → μ.readN a 8 = Num.encodeLE 8 v →
+  have sv : ∀ a v, a + 8 ≤ RD → F ≤ a → μ.readN a 8 = Num.encodeLE 8 v →
       μ7.readN a 8 = Num.encodeLE 8 v := fun a v h1 h2 h => by
     rw [Memory.readN_congr (fun j hj => (up7 _ (by omega) (by omega) (by omega)).trans
       (up2 _ (by omega) (by omega)))]; exact h
-  have sH : ∀ a v, 4278057544 ≤ a → a + 8 ≤ 4278057584 → μ6.readN a 8 = Num.encodeLE 8 v →
+  have sH : ∀ a v, (F - 88) ≤ a → a + 8 ≤ (F - 48) → μ6.readN a 8 = Num.encodeLE 8 v →
       μ7.readN a 8 = Num.encodeLE 8 v := fun a v h1 h2 h => by
     rw [Memory.readN_congr (fun j hj => nfr _ (by omega) (Or.inr (by omega)) (Or.inl (by omega)) (Or.inl (by omega)))]
     exact h
-  have sK4 : ∀ a v, 4278057544 + 24 ≤ a → a + 8 ≤ 4278057584 → μ4.readN a 8 = Num.encodeLE 8 v →
+  have sK4 : ∀ a v, (F - 88) + 24 ≤ a → a + 8 ≤ (F - 48) → μ4.readN a 8 = Num.encodeLE 8 v →
       μ7.readN a 8 = Num.encodeLE 8 v := fun a v h1 h2 h => by
     rw [Memory.readN_congr (fun j hj => (nfr _ (by omega) (Or.inr (by omega)) (Or.inl (by omega)) (Or.inl (by omega))).trans
       ((mfr _ (by omega) (Or.inr (by omega)) (Or.inl (by omega))).trans (vfr _ (by omega) (by omega) (Or.inl (by omega))
         (Or.inl (by omega)))))]
     exact h
-  have sA : ∀ a v, 4278057544 + 64 ≤ a → a + 8 ≤ 4278057632 → μ2.readN a 8 = Num.encodeLE 8 v →
+  have sA : ∀ a v, (F - 88) + 64 ≤ a → a + 8 ≤ F → μ2.readN a 8 = Num.encodeLE 8 v →
       μ7.readN a 8 = Num.encodeLE 8 v := fun a v h1 h2 h => by
     rw [Memory.readN_congr (fun j hj => up7 _ (by omega) (by omega) (by omega))]; exact h
   have hst7 : ∀ a, 4278050816 ≤ a → a < 4278059008 → μ7.writable a = true := fun a h1 h2 => by
     rw [nwr, mwr]; exact hst5 a h1 h2
   -- the variant, into the slot O, and the returns
   obtain ⟨ω8, μ8, run8, o0, o1, o5, o6, oO, oO8, oO16, oO24, oO32, oO36, ofr, ord, owr⟩ :=
-    as4 (p := p) (P := P) (R := refineContractK cap env) x ω7 μ7 4278057544 4278057752 18 723 v5 v6 4278058648
-      n q n G (Num.decodeLE w4) (Num.decodeLE c2) (by decide) (by decide) (Or.inr (by decide)) (n1.trans m1)
-      (n5.trans m5) n7 hG hv5 hv6 (by decide) (by decide) (by omega) (by omega) (by omega) hw4v hc2v
-      (sH _ _ (by decide) (by decide) m0') (sH _ _ (by decide) (by decide) m8') (sH _ _ (by decide) (by decide) m16)
-      (sK4 _ _ (by decide) (by decide) k24) (sK4 _ _ (by decide) (by decide) k32)
+    as4 (p := p) (P := P) (R := refineContractK cap env) x ω7 μ7 (F - 88) (F + 120) 18 723 v5 v6 RD
+      n q n G (Num.decodeLE w4) (Num.decodeLE c2) (by omega) (by omega) (Or.inr (by omega)) (n1.trans m1)
+      (n5.trans m5) n7 hG hv5 hv6 (by omega) (by omega) (by omega) (by omega) (by omega) hw4v hc2v
+      (sH _ _ (by omega) (by omega) m0') (sH _ _ (by omega) (by omega) m8') (sH _ _ (by omega) (by omega) m16)
+      (sK4 _ _ (by omega) (by omega) k24) (sK4 _ _ (by omega) (by omega) k32)
       (by rw [nbuf, pw46, ew4])
-      (sA _ _ (by decide) (by decide) f80) (sA _ _ (by decide) (by decide) f72) (sA _ _ (by decide) (by decide) f64)
-      (sv _ _ (by decide) (by decide) s0) (sv _ _ (by decide) (by decide) s5) (sv _ _ (by decide) (by decide) s6)
-      ⟨by decide, by decide, by decide⟩ jte_8 bs_723
+      (sA _ _ (by omega) (by omega) f80) (sA _ _ (by omega) (by omega) f72) (sA _ _ (by omega) (by omega) f64)
+      (sv _ _ (by omega) (by omega) s0) (sv _ _ (by omega) (by omega) s5) (sv _ _ (by omega) (by omega) s6)
+      ⟨by omega, by omega, by omega⟩ jte_8 bs_723
       (fun a h1 h2 => hst7 a (by omega) (by omega))
       (fun a h1 h2 => Memory.readable_of_writable (hst7 a (by omega) (by omega)))
   have low85 : ∀ a, a < 2147483648 → μ8.read a = μ5.read a := fun a ha =>
@@ -417,7 +420,7 @@ theorem assign_elem {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHos
       (Or.inl (by omega))).trans (mfr a (by omega) (Or.inl (by omega)) (Or.inl (by omega))))
   refine Or.inl ⟨ω8, μ8, s', (run1.trans (run2.trans (run3.trans (run4.trans (run5.trans (run6.trans
     (run7.trans run8))))))).mono (by omega), o1, o5, o6, ?_, ?_,
-    ⟨9223372036854775819, by decide, oO, by decide⟩,
+    ⟨9223372036854775819, by omega, oO, by omega⟩,
     heap_of_high H5 low85 (fun a => by rw [owr, nwr, mwr]), keepU, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · rw [Memory.readN_congr (fun j hj => ofr _ (by omega) (Or.inr (by omega)))]
     rw [nR0]; congr 1; omega
@@ -432,12 +435,12 @@ theorem assign_elem {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHos
     · simp only [List.mem_singleton] at hc
       subst hc
       exact ⟨hnew, rfl, hfresh⟩
-    · refine ⟨by rw [readN_take _ _ 232 8 (by decide)]; exact oO, q, ?_, ?_, ?_, ?_, ?_, fun k hk => ?_⟩
-      · rw [← readN_sub μ8 4278057752 232 8 8 _ rfl (by decide)]; exact oO8
-      · rw [← readN_sub μ8 4278057752 232 16 8 _ rfl (by decide)]; exact oO16
-      · rw [← readN_sub μ8 4278057752 232 24 8 _ rfl (by decide)]; rw [oO24, ← hnG, Nat.min_self]
-      · rw [← readN_sub μ8 4278057752 232 32 4 _ rfl (by decide)]; rw [oO32, ew4]
-      · rw [← readN_sub μ8 4278057752 232 36 2 _ rfl (by decide)]; rw [oO36, ec2]
+    · refine ⟨by rw [readN_take _ _ 232 8 (by omega)]; exact oO, q, ?_, ?_, ?_, ?_, ?_, fun k hk => ?_⟩
+      · rw [← readN_sub μ8 (F + 120) 232 8 8 _ rfl (by omega)]; exact oO8
+      · rw [← readN_sub μ8 (F + 120) 232 16 8 _ rfl (by omega)]; exact oO16
+      · rw [← readN_sub μ8 (F + 120) 232 24 8 _ rfl (by omega)]; rw [oO24, ← hnG, Nat.min_self]
+      · rw [← readN_sub μ8 (F + 120) 232 32 4 _ rfl (by omega)]; rw [oO32, ew4]
+      · rw [← readN_sub μ8 (F + 120) 232 36 2 _ rfl (by omega)]; rw [oO36, ec2]
       · rw [Memory.readN_congr (fun j hj => (hag _ (List.mem_singleton.mpr rfl) _
           ⟨by simp only; omega, by simp only; omega⟩).trans (low85 _ (by omega)))]
         exact vel k hk
@@ -452,5 +455,22 @@ theorem assign_elem {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHos
     rw [low85 a (by omega), vglob a ha, low4 a (by omega)]
   · intro a ha
     rw [owr, nwr, mwr, vwr a ha, kwr, gwr, fwr]
+
+
+/-- `assign_elemF` in refine's frame. -/
+/-- **`Assign`, as an element of the decode loop** (tag 12; GP v0.8.0 B.7, Ω_A): with the globals
+    `gl` holding at 196680 a word G whose low 32 bits n (the queue's length 𝖰) are 1 … 512, the
+    encoding [12] ++ c2 ++ hb ++ w4 (the core's two octets, n hashes, the assigner's four) decodes to
+    `Assign`'s slot (`AssignRep`), its queue a fresh `Vec` in the heap; or an allocation fails. -/
+theorem assign_elem {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap pb : Nat)
+    (hcap1 : 134217728 ≤ cap) (hcap : cap < 18446744073709551616) (gl : Nat → UInt8) (G : Nat)
+    (hG : G < 18446744073709551616)
+    (gv : (List.range 8).map (fun k => gl (196680 + k)) = Num.encodeLE 8 G)
+    (hn : 1 ≤ G % 4294967296 ∧ G % 4294967296 ≤ 512)
+    (c2 hb w4 : List UInt8) (hc2 : c2.length = 2) (hhb : hb.length = 32 * (G % 4294967296))
+    (hw4 : w4.length = 4) :
+    ElemOkA env cap pb gl p P (1000 + 550 * (G % 4294967296)) (12 :: (c2 ++ hb ++ w4))
+      (AssignRep (G % 4294967296) c2 hb w4) :=
+  assign_elemF env cap pb 4278057632 4278058648 lay_refine hcap1 hcap gl G hG gv hn c2 hb w4 hc2 hhb hw4
 
 end Services.Bootstrap.Decode.Assign

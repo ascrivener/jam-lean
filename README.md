@@ -67,6 +67,9 @@ call `pc`) live in `Tests/`, not in the model.
 | Authorization STF (§8: the pool α from the queue φ') vs. `stf/authorizations` (`lake build authtest`) | **3 / 3** tiny, **3 / 3** full |
 | Validator statistics (§13.1: π_V, π_L) vs. `stf/statistics` (`lake build statstest`) | **4 / 4** tiny, **4 / 4** full |
 | Preimage STF (§12.4) and its service statistics (§13.2 provision counts) vs. `stf/preimages` (`lake build preimagestest`) | **8 / 8** tiny, **8 / 8** full |
+| Disputes STF (§10: verdicts, culprits, faults, ψ', ρ^‡ and H_O) vs. `stf/disputes` (`lake build disputestest`; Ed25519 verification is a parameter, note 29) | **29 / 29** tiny, **31 / 31** full |
+| Assurances STF (§11.2: the available reports **R** and ρ after assurances) vs. `stf/assurances` (`lake build assurancestest`; signatures as in note 29) | **11 / 11** tiny, **11 / 11** full |
+| Safrole STF (§6: τ, η, key rotation, γ_Z, γ_S, γ_A, H_E, H_W) vs. `stf/safrole` (`lake build safroletest`), with the Bandersnatch primitives as an oracle read from the vectors (note 31) | **21 / 21** tiny, **25 / 25** full |
 
 ## Building and running
 
@@ -80,6 +83,8 @@ scripts/check-tables.sh               # regenerate PVM/Tables.lean from the pinn
 scripts/fetch-jam-vectors.sh          # GP v0.8.0 JAM vectors into vendor/jam-test-vectors
 lake build historytest authtest       # the recent-history and authorization STF vectors (tiny and full)
 lake build statstest preimagestest    # the statistics and preimage STF vectors (tiny and full)
+lake build disputestest assurancestest  # the disputes and assurances STF vectors (tiny and full)
+lake build safroletest                # the Safrole STF vectors (tiny and full)
 ```
 
 `pvmtest` and `gascheck` are Lake targets that build an executable and run it; a failing vector
@@ -687,6 +692,67 @@ noted here and in a comment at the definition.
     convention above. Only documentation was consulted, not any implementation's code; the vectors do
     not say which implementation produced them. The paper's text, which is explicit, is what the
     model follows.
+
+29. **Disputes** (§10).
+    * *Signatures are a parameter.* The model does not implement Ed25519: `JAM.disputesTransition` takes a
+      `Crypto` (`JAM/Crypto.lean`) whose `edVerify` stands for s ∈ 𝕍̄_k⟨m⟩. The test runner's
+      oracle is read from each vector's expected output: when it is `bad_signature`, every
+      signature is rejected, otherwise every one is accepted. So these tests check everything
+      except signature validity itself: a `bad_signature` vector only confirms that the
+      transition rejects when verification fails.
+    * *Errors and their order.* The paper names no errors and gives no order between the
+      conditions. We use the vectors' names, and check in the order of §10.2: verdicts ordered
+      and unique; for each verdict its age, the order of its judgments, their count
+      ⌊2/3·|**k**|⌋ + 1, each judge index and signature, then "not already judged" and V
+      defined; then culprits, then faults, then the faults that good verdicts need.
+    * *Faults.* The condition r ∈ ψ_B' ⇔ r ∉ ψ_G' ⇔ v is read as a chain of two equivalences:
+      the report is in exactly one of ψ_B' and ψ_G', and v = ⊤ exactly when it is bad. Read as
+      ((r ∈ ψ_B' ⇔ r ∉ ψ_G') ⇔ v), a ⊤ fault on a good report would pass.
+    * *Offender keys.* **k** = {i_e | i ∈ λ ∪ κ} ∖ ψ_O. A key outside **k** is reported as
+      `offender_already_reported` when it is in ψ_O, and as `bad_guarantor_key` (culprits) or
+      `bad_auditor_key` (faults) otherwise. κ and λ are the prior sets, as the paper writes them.
+    * A bad verdict needs no culprits in GP 0.8.0, and the vectors agree
+      (`progress_with_bad_verdict_without_culprits-1`). On an error the vectors keep the prior
+      state; the paper makes such a block invalid.
+
+30. **Assurances** (§11.2). Signatures are checked through `Crypto.edVerify`, with the test oracle
+    of note 29. The paper names no errors and gives no order between the conditions; each
+    assurance is checked in turn, in the order §11.2.1 states them: the anchor H_P, the assurer
+    index (a_v ∈ ℕ_{|κ|}) and order, the signature, then the bits. A core is cleared when its
+    report is in **R**, compared by encoding. A stale report that is still assigned may be
+    assured and made available; the paper allows it (ρ^‡[c] ≠ ∅ is all a set bit needs) and the
+    vectors agree (`assurances_for_stale_report-1`).
+
+31. **Safrole** (§6).
+    * *Cryptography is a parameter.* The model implements no Bandersnatch arithmetic. `JAM.safrole`
+      takes a `Crypto` (`JAM/Crypto.lean`) whose `bsRingRoot`, `bsRingVerify` and `bsRingOut` stand
+      for O, 𝔹̄°_r⟨c⟩⟨m⟩ and Y of a Ring VRF proof (Appendix G). `bsVerify` and `bsOut` stand for
+      the IETF VRF and are used only by `JAM.sealValid`, the header's seal and entropy-source
+      conditions. The transition takes Y(H_V) as an input, as the vectors give it.
+    * *What the vector tests check.* `Tests/SafroleTest.lean` builds a closed-world oracle per
+      chain from the vectors themselves. The vectors' tickets carry only (entry index, proof).
+      Since **n** ⊆ γ_A', each accepted ticket's identifier is read from the posterior γ_A'.
+      `bsRingVerify` is then true exactly on the (γ_Z', `$jam_ticket_seal` ⌢ η_2' ⌢ e, proof)
+      triples of accepted tickets, and `bsRingOut` maps those proofs to their identifiers.
+      `bsRingRoot` maps the Bandersnatch keys of each epoch change's γ_P' to its γ_Z'.
+      The tests therefore check everything in §6 except the cryptography: rotation and Φ, η, F, Z,
+      the markers, the merge into γ_A', and the extrinsic's conditions. They also check that the
+      model passes the right root, context and keys to the primitives; feeding η_1' for η_2', or ι
+      for Φ(ι), fails the suite. They do not check that any proof, ring root or identifier is
+      cryptographically right. "Valid" here means "accepted by some vector". The `bad_ticket_proof`
+      vectors reuse an accepted proof with a different entry index, so the oracle rejects them.
+    * *Errors and their order.* The paper names no errors and gives no order between the
+      conditions. We use the vectors' names, and check the timeslot (H_T > τ, §5), then |E_T|
+      (eq. `enforceticketlimit`), then each entry index and then each proof (eq.
+      `ticketsextrinsic`), then the order of **n**, then its disjointness from γ_A, then
+      **n** ⊆ γ_A'. Every error vector gets the vectors' error with this order. No vector submits a
+      ticket that is valid but falls outside γ_A' (`useless_ticket` here), so that condition is
+      untested.
+    * *The order on identifiers.* The paper orders tickets by y ∈ ℍ without defining an order on
+      ℍ. We compare the octet sequences lexicographically; the vectors agree.
+    * *The entry index in a context.* `$jam_ticket_seal` ⌢ η_2' ⌢ e appends a natural number to an
+      octet sequence. We append it as one octet (e < n ≤ 2𝖤/6 + 1 < 256). Under the oracle this
+      is only checked to be the same convention in the extrinsic and in the oracle's tables.
 
 ## Caveats
 

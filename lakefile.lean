@@ -30,7 +30,7 @@ lean_lib Tests where
   globs := #[.one `Tests.Vectors, .one `Tests.Invocation, .one `Tests.LogicExample,
     .one `Tests.Blake2bTest, .one `Tests.HostGeneralTest, .one `Tests.JamJson,
     .one `Tests.KeccakTest, .one `Tests.RefineTest, .one `Tests.BlockJson,
-    .one `Tests.StfRunner]
+    .one `Tests.StfRunner, .one `Tests.ReportsJson]
 
 lean_exe «pvmtest-exe» where
   root := `Tests.PvmTest
@@ -175,3 +175,28 @@ lean_exe «preimagestest-exe» where
 /-- Run the preimage STF (§12.4) and its service statistics on every preimages vector (tiny and full). -/
 target preimagestest pkg : Unit := do
   runOnVectors `«preimagestest-exe» #[(jamVectorDir pkg / "stf" / "preimages").toString]
+
+lean_exe «disputestest-exe» where
+  root := `Tests.DisputesTest
+  exeName := "disputestest"
+
+/-- Run the disputes STF (§10) on every disputes vector (tiny and full). -/
+target disputestest pkg : Unit := do
+  runOnVectors `«disputestest-exe» #[(jamVectorDir pkg / "stf" / "disputes").toString]
+
+lean_exe «assurancestest-exe» where
+  root := `Tests.AssurancesTest
+  exeName := "assurancestest"
+
+/-- Run the assurances STF (§11.2) on every assurances vector (tiny and full). -/
+target assurancestest pkg : Unit := do
+  runOnVectors `«assurancestest-exe» #[(jamVectorDir pkg / "stf" / "assurances").toString]
+
+lean_exe «safroletest-exe» where
+  root := `Tests.SafroleTest
+  exeName := "safroletest"
+
+/-- Run the Safrole STF (§6) on every safrole vector (tiny and full), with the crypto oracle read
+    from the vectors (see `Tests/SafroleTest.lean`). -/
+target safroletest pkg : Unit := do
+  runOnVectors `«safroletest-exe» #[(jamVectorDir pkg / "stf" / "safrole").toString]

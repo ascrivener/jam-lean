@@ -1,6 +1,7 @@
 import Services.Bootstrap.CodeAAll
 import Services.Bootstrap.Alloc.AllocWrap
 import PVM.Logic.Go
+import Services.Bootstrap.ReaderBig
 
 /-!
 # Accumulate's `Vec<u8>` body reader (45643), for a length of at most 16 KiB
@@ -156,5 +157,36 @@ theorem rv_exit {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : 
     all_goals first
       | (congr 1; omega)
       | rfl
+
+
+/-- **The reader (58434) for any n**: `read_ok` for n < 16, `read_big` for n ≥ 16, stated with the
+    larger separations `read_big` needs and its weaker result `ReadOkBig`. -/
+theorem read_any {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (ret t sp rd buf ptr len n : Nat) (h0 : ω[0] = UInt64.ofNat ret) (h1 : ω[1] = UInt64.ofNat sp)
+    (h7 : ω[7] = UInt64.ofNat rd) (h8 : ω[8] = UInt64.ofNat buf) (h9 : ω[9] = UInt64.ofNat n)
+    (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0)
+    (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t) (hbt : P.isBlockStart t = true)
+    (hsp : 65536 + 88 ≤ sp ∧ sp < 4294967296 ∧ sp % 8 = 0) (hrd : 65536 ≤ rd ∧ rd + 16 < 4294967296)
+    (hbuf : 65536 ≤ buf ∧ buf + n + 24 < 4294967296) (hptr : 65536 ≤ ptr ∧ ptr + n + 24 < 4294967296)
+    (hnl : n ≤ len) (hlen : len < 4294967296)
+    (hrf : rd + 16 ≤ sp - 88 ∨ sp ≤ rd) (hbf : buf + n + 24 ≤ sp - 88 ∨ sp + 8 ≤ buf)
+    (hpf : ptr + n + 24 ≤ sp - 88 ∨ sp + 8 ≤ ptr) (hbr : buf + n + 16 ≤ rd ∨ rd + 16 ≤ buf)
+    (hbp : buf + n + 24 ≤ ptr ∨ ptr + n + 24 ≤ buf)
+    (hwf : ∀ a, sp - 88 ≤ a → a < sp → μ.writable a = true)
+    (hwr : ∀ a, rd ≤ a → a < rd + 16 → μ.writable a = true)
+    (hwb : ∀ a, buf ≤ a → a < buf + n → μ.writable a = true)
+    (hra : ∀ a, ptr ≤ a → a < ptr + n → μ.readable a = true)
+    (hR0 : μ.readN rd 8 = Num.encodeLE 8 ptr) (hR8 : μ.readN (rd + 8) 8 = Num.encodeLE 8 len) :
+    ∃ ω' μ', FreeStepsH p R 58434 ω μ x t ω' μ' x (7 * n + 400) ∧ ReadOkBig ω ω' μ μ' sp rd buf ptr len n := by
+  by_cases hn : n < 16
+  · obtain ⟨ω', μ', run, e0, e1, -, -, -, e5, e6, -, e7, r0, r8, rb, fr, rd', wr'⟩ :=
+      read_ok (p := p) (P := P) (R := R) x ω μ ret t sp rd buf ptr len n h0 h1 h7 h8 h9 hret hjt hbt
+        ⟨hsp.1, hsp.2.1⟩ hrd ⟨hbuf.1, by omega⟩ ⟨hptr.1, by omega⟩ hn hnl hlen hrf (by omega) (by omega)
+        (by omega) (by omega) hwf hwr hwb hra hR0 hR8
+    exact ⟨ω', μ', run.mono (by omega), e0, e1, e5, e6, e7, r0, r8, rb, fr, rd', wr'⟩
+  · obtain ⟨ω', μ', run, h⟩ :=
+      read_big (p := p) (P := P) (R := R) x ω μ ret t sp rd buf ptr len n h0 h1 h7 h8 h9 hret hjt hbt hsp hrd
+        hbuf hptr (by omega) hnl hlen hrf hbf hpf (by omega) hbp hwf hwr hwb hra hR0 hR8
+    exact ⟨ω', μ', run.mono (by omega), h⟩
 
 end Services.Bootstrap.Acc

@@ -134,4 +134,87 @@ theorem step {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X) 
   · rw [off_succ] at h2
     rw [efr a h0 (by omega) (by omega) (by omega), st.keep a h0 h1 (by omega)]
 
+/-- **After the last element**, at the call appending `work_item_index` (58508, return address 1420):
+    the writer holds `[n] ++ enc 0 ++ … ++ enc (n − 1)` and the index's 2 octets wait at M + 52. -/
+structure Fin (M n buf cap S0 : Nat) (enc : Nat → List UInt8) (μ0 : Memory) (ω : Regs) (μ : Memory) : Prop where
+  h0 : ω[0] = UInt64.ofNat 1420
+  h1 : ω[1] = UInt64.ofNat M
+  h7 : ω[7] = UInt64.ofNat (M + 24)
+  h8 : ω[8] = UInt64.ofNat (M + 52)
+  h9 : ω[9] = UInt64.ofNat 2
+  vc : μ.readN (M + 24) 8 = Num.encodeLE 8 cap
+  vp : μ.readN (M + 32) 8 = Num.encodeLE 8 buf
+  vl : μ.readN (M + 40) 8 = Num.encodeLE 8 (1 + off enc n)
+  wout : μ.readN buf (1 + off enc n) = UInt8.ofNat n :: out enc n
+  w52 : μ.readN (M + 52) 2 = μ0.readN (S0 + 24) 2
+  keep : ∀ a, a < 4294967296 → (a < M - 136 ∨ (M ≤ a ∧ a < M + 16) ∨ M + 56 ≤ a) →
+    (a < buf ∨ buf + 1 + off enc n ≤ a) → μ.read a = μ0.read a
+  rd : ∀ a, μ.readable a = μ0.readable a
+  wr : ∀ a, μ.writable a = μ0.writable a
+
+/-- **The element loop**: from `W k` with m = n − k > 0 elements left, the encoder encodes them all and
+    reaches the call appending `work_item_index` (`Fin`). S0 (at M + 8) is the work item, its index at
+    S0 + 24 apart from what the loop writes. -/
+theorem loop {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X)
+    {M E n buf cap S0 : Nat} {enc : Nat → List UInt8} {rep : Nat → List UInt8 → Prop} (μ0 : Memory)
+    (L : LayL P p M E n buf cap enc rep μ0) (s8 : μ0.readN (M + 8) 8 = Num.encodeLE 8 S0)
+    (hS0 : S0 + 26 ≤ M - 136 ∨ M + 80 ≤ S0) (hS0' : S0 + 26 ≤ 4294967296) (hS0b : S0 + 26 ≤ buf ∨ buf + cap ≤ S0 + 24)
+    (rS0 : ∀ a, S0 + 24 ≤ a → a < S0 + 26 → μ0.readable a = true) :
+    ∀ m k (ω : Regs) (μ : Memory), k + m = n → 0 < m → W M E n buf cap enc μ0 k ω μ →
+      ∃ ω' μ', FreeStepsH p R 30145 ω μ x 58508 ω' μ' x (4100 * m + 7 * (off enc n - off enc k)) ∧
+        Fin M n buf cap S0 enc μ0 ω' μ' := by
+  obtain ⟨hM0, hM1, hM8⟩ := L.hM
+  have hbuf := L.hbuf; have hbM := L.hbM; have hcap := L.hcap; have hE := L.hE
+  intro m
+  induction m with
+  | zero => intro k ω μ _ h; omega
+  | succ m ih =>
+    intro k ω μ hkm _ st
+    have hk : k < n := by omega
+    have hon : off enc (k + 1) ≤ off enc n := by
+      have h := off_le enc (k + 1) (n - (k + 1)); rwa [show k + 1 + (n - (k + 1)) = n by omega] at h
+    have hos := off_succ enc k
+    obtain ⟨ω1, μ1, run1, a1, a6, a16, ac, ap, al, ao, akeep, ard, awr⟩ := step (R := R) x ω μ μ0 L k hk st
+    rcases Nat.eq_zero_or_pos m with rfl | hm
+    · -- the last element: on to `work_item_index`
+      have hkn : k + 1 = n := by omega
+      have s8' : μ1.readN (M + 8) 8 = Num.encodeLE 8 S0 := by
+        rw [Memory.readN_congr (fun j hj => akeep _ (by omega) (by omega) (by omega))]; exact s8
+      obtain ⟨ω2, μ2, run2, b0, b1, b7, b8, b9, b52, bfr, brd, bwr⟩ := tC (p := p) (P := P) (R := R) x ω1 μ1
+        30215 M S0 (Or.inl ⟨rfl, by rw [a6, show n - k = 1 by omega]⟩) (by omega) (by omega) (by omega) a1 s8'
+        (fun a h1 h2 => by rw [ard]; exact L.rM a (by omega) (by omega))
+        (fun a h1 h2 => by rw [ard]; exact rS0 a h1 h2)
+        (fun a h1 h2 => by rw [awr]; exact L.wM a (by omega) (by omega))
+      have k2 : ∀ a, M + 24 ≤ a → a < M + 48 → μ2.read a = μ1.read a := fun a h1 h2 =>
+        bfr a (by omega) (by omega)
+      rw [hkn] at al ao akeep
+      refine ⟨ω2, μ2, (run1.trans run2).mono (by rw [← hkn, hos]; omega), ⟨b0, b1, b7, b8, b9, ?_, ?_, ?_, ?_, ?_,
+        fun a h0 h1 h2 => ?_, fun a => by rw [brd, ard], fun a => by rw [bwr, awr]⟩⟩
+      · rw [Memory.readN_congr (fun j hj => k2 _ (by omega) (by omega))]; exact ac
+      · rw [Memory.readN_congr (fun j hj => k2 _ (by omega) (by omega))]; exact ap
+      · rw [Memory.readN_congr (fun j hj => k2 _ (by omega) (by omega))]; exact al
+      · rw [Memory.readN_congr (fun j hj => bfr _ (by omega) (by omega))]; exact ao
+      · rw [b52, Memory.readN_congr (fun j hj => akeep _ (by omega) (by omega) (by omega))]
+      · rw [bfr a h0 (by omega), akeep a h0 h1 h2]
+    · -- more elements: on to the next one
+      obtain ⟨ω2, μ2, run2, b0, b1, b5, b6, b7, b8, b16, bfr, brd, bwr⟩ := tB (p := p) (P := P) (R := R) x ω1 μ1
+        M (E + 232 * k + 232) (232 * (n - (k + 1))) (by omega) (by have := L.hE; omega)
+        ⟨by omega, by omega⟩ a1 (by rw [a6]; congr 1; omega) a16
+        (fun a h1 h2 => by rw [ard]; exact L.rM a (by omega) (by omega))
+        (fun a h1 h2 => by rw [awr]; exact L.wM a (by omega) (by omega))
+      have k2 : ∀ a, M + 24 ≤ a → a < M + 48 → μ2.read a = μ1.read a := fun a h1 h2 =>
+        bfr a (by omega) (by omega)
+      have st2 : W M E n buf cap enc μ0 (k + 1) ω2 μ2 :=
+        { h0 := b0, h1 := b1, h5 := by rw [b5, show E + 232 * k + 232 = E + 232 * (k + 1) by omega], h6 := b6,
+          h7 := by rw [b7, show E + 232 * k + 232 = E + 232 * (k + 1) by omega],
+          h8 := b8, s16 := by rw [b16, show E + 232 * k + 232 + 232 = E + 232 * (k + 1) + 232 by omega],
+          vc := by rw [Memory.readN_congr (fun j hj => k2 _ (by omega) (by omega))]; exact ac,
+          vp := by rw [Memory.readN_congr (fun j hj => k2 _ (by omega) (by omega))]; exact ap,
+          vl := by rw [Memory.readN_congr (fun j hj => k2 _ (by omega) (by omega))]; exact al,
+          wout := by rw [Memory.readN_congr (fun j hj => bfr _ (by omega) (by omega))]; exact ao,
+          keep := fun a h0 h1 h2 => by rw [bfr a h0 (by omega), akeep a h0 h1 h2],
+          rd := fun a => by rw [brd, ard], wr := fun a => by rw [bwr, awr] }
+      obtain ⟨ω3, μ3, run3, fin⟩ := ih (k + 1) ω2 μ2 (by omega) hm st2
+      exact ⟨ω3, μ3, (run1.trans (run2.trans run3)).mono (by omega), fin⟩
+
 end Services.Bootstrap.Encode.Loop

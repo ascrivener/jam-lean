@@ -83,6 +83,12 @@ section):
   certain host calls cannot touch other accounts or export segments.
 - `psi_freeRun`, `psiM_of_freeRunH` and `psiM_of_stepsH` (`PVM/Logic/`): the gas-free reasoning
   layer used below. It is sound against Ψ and Ψ_M.
+- `FreeStepsH.keepRO` (`JAM/Theorems/KeepRO.lean`): a gas-free refine run (under
+  `refineContractK`, any cap) keeps the access of every page outside the heap's 48 … pb and the value
+  of every octet on such a page that is not writable, so read-only data is never touched. From
+  `Program.exec_mem` (an instruction changes nothing off its writes), `Program.freeStep_keep` (a
+  continuing step writes only writable octets, GP §A.4) and `refineContractK_keep` (`grow_heap` sets
+  only heap pages; `fetch` writes only a writable range).
 
 **Provenance.** The model was written from the Gray Paper and the test vectors only. No other PVM
 or JAM implementation was consulted.
@@ -276,6 +282,55 @@ An independent kernel, nanoda as vendored by
   - *How:* the four decoders share one shape: a helper frame, `decodeU32` for the length, and the
     element reader at 8 or 3100 (`vec_elems_empty`, `vec_pairs_empty` for n = 0).
   - *Scope:* non-empty vectors allocate, and are not covered yet (see the previous item's scope).
+
+- **`Instruction::decode` of the other `Vec`/`Option` variants, in their cases without allocation.**
+  `Decode.Provide.provide_hash`, `Decode.RandomStorage.random_storage_err`, `Decode.Bless.bless_empty`
+  and `Decode.Designate.designate_empty` (`Services/Bootstrap/Decode/`).
+  - *Statement:* from 20626, each returns the variant in its slot O with the reader advanced past
+    its encoding:
+    - `Provide { service, preimage: Hash(hash) }` (tag 17): the discriminant word 2^63 + 16 at O,
+      the preimage's tag 0 at O + 8, `hash` at O + 9 and `service` at O + 48 (37 octets read);
+    - `RandomStorageAccumulate(Err(()))` (tag 22): 2^63 + 21 at O and the niche word 2^64 − 1 at
+      O + 8 (1 octet read);
+    - `Bless` with no always-accumulate entries (tag 11): 2^63 + 10 at O, the empty `Vec`
+      `{cap 0, ptr 8, len 0}` at O + 8 and the four `u32`s at O + 32 … O + 44 (17 octets read);
+    - `Designate` with no keys (tag 13): 2^63 + 12 at O and `{cap 0, ptr 1, len 0}` at O + 8 (1 octet
+      read). The bound check against 3·𝖢 (𝖢 read from 196616) passes for n = 0 whatever 𝖢 is.
+
+    Memory changes only in the callees' frames below A (and the result slot at A for `Designate`),
+    the reader and the slot.
+  - *Scope:* `Provide` with `Inline(bytes)`, `RandomStorageAccumulate(Ok(keys))`, and non-empty
+    `Bless` and `Designate` allocate, and are not covered yet.
+
+- **The decode loop for elements that allocate.** `Decode.LoopA.loopA`, `ElemOkA`,
+  `Decode.HeapCtx.alloc_call` (`Services/Bootstrap/Decode/LoopA.lean`, `LoopAPass.lean`, `HeapCtx.lean`,
+  `HeapWrap.lean`, `HeapFrame.lean`).
+  - *Statement:* `ElemOkA` is `ElemOk` for a decoder that may call picoalloc's `alloc`. It runs under
+    `refineContractK cap env`, with the allocator's context `HeapCtx` (picoalloc's state in memory,
+    the heap pages and the stack). It either returns to the loop with a new state that keeps every
+    allocated chunk and its data, and a value whose property depends only on chunks allocated during
+    the element, or reaches a failed allocation (`Exhausts`). Every `ElemOk` lifts to an `ElemOkA`
+    (`ElemOkA.of_elemOk`). `loopA` decodes the whole payload through `ElemOkA`s, within the sum of the
+    elements' own step bounds and 1700 an element (`bound`), or reaches a failed allocation.
+    `alloc_call` is one call of the `alloc` wrapper: the model's block and state, with the context
+    kept, the block a fresh allocated chunk and the heap's data kept (`HKeep`), or null when the model
+    fails.
+  - *Assumed:* the cap on what one host call may charge is at least 2^27 (so any `grow_heap` fits);
+    pending confirmation.
+  - *How:* main's `alloc_wrap_refines`, `alloc_wrap_refines_growK` and `alloc_wrap_refines_failK`,
+    with the `HKeep` frame of `alloc_refines_hdr` carried through the wrapper (`HeapWrap`);
+    `Rep.congr_data` (writes inside an allocated chunk's data keep `Rep`) and `alloc_keeps_used`.
+
+- **Runs under the refine contract keep page access outside the heap.** `Alloc.FreeStepsH.pagesOut`
+  (`Services/Bootstrap/Alloc/Pages.lean`).
+  - *Statement:* any `FreeStepsH` run under `refineContractK cap env`, with `heapBounds env.code =
+    (48, pb)`, keeps every page entry outside the pages 48 … pb − 1 (`PagesOut 48 pb`). So readability
+    and writability are kept below 196608 and from 4096·pb up (`PagesOut.readable`, `.writable`). This
+    is the page frame of the allocator's theorems: after `alloc` or `realloc`, the read-only payload
+    is still readable.
+  - *How:* every instruction's memory is μ or a `writeN` of μ (`exec_pages`). The contract allows only
+    `grow_heap`, which sets pages 48 … t with t ≤ pb; `fetch`, which only writes octets; and unknown ids,
+    which change nothing (`refineContractK_pagesOut`).
 
 ### picoalloc: the model (`Services/Picoalloc/`)
 

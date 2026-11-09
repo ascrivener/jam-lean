@@ -62,10 +62,15 @@ import Services.Bootstrap.Decode.Lookup
 import Services.Bootstrap.Decode.Transfer
 import Services.Bootstrap.Decode.Loop
 import Services.Bootstrap.Decode.Elems
+import Services.Bootstrap.Decode.LoopAPass
 import Services.Bootstrap.Decode.VecU8
 import Services.Bootstrap.Decode.AllocOk
 import Services.Bootstrap.Decode.LookedUp
 import Services.Bootstrap.Decode.VecEmpty
+import Services.Bootstrap.Decode.Provide
+import Services.Bootstrap.Decode.RandomStorage
+import Services.Bootstrap.Decode.Bless
+import Services.Bootstrap.Decode.Designate
 import Services.Picoalloc.Model
 import Services.Picoalloc.Invariant
 import Services.Picoalloc.FreeLists
@@ -162,6 +167,7 @@ import Services.Bootstrap.Alloc.ReallocFallbackGrowFail
 import Services.Bootstrap.Alloc.ReallocFallbackHeap
 import Services.Bootstrap.Alloc.ReallocFallbackWrap
 import Services.Bootstrap.Alloc.ReallocCases
+import Services.Bootstrap.Alloc.Pages
 
 /-!
 # Results about specific services' deployed code

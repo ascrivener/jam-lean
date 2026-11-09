@@ -144,3 +144,31 @@ frame-base `ElemOkF` pattern (#120) where the code is shared.
   None of these is a copy of refine code that is already proved.
 - `alloc_impl` with ω₁₀ = 1 runs the zeroing paths (from 42098), which the refine proofs (all with
   ω₁₀ = 0) do not cover.
+
+## Inputs decode: proved so far (branch `claude/bootstrap-t2-inputs`) and the plan
+
+Proved, with no `sorry` (`Acc/DecodeU32A.lean`, `Acc/Inputs/*.lean`):
+- `decodeU32A`: 39710, refine's `u32` decoder moved by 7816.
+- `fetch14_step`: one `fetch` of kind 14 under `accContractK`. `rangeWritable_of`.
+- `fetch_vec` (47417), in segments: `fv_pre` (47417 → 47490), `fv_fetch1` (→ 47541), `fv_lock`
+  (→ 41177), and `fv_unlock` / `fv_store` / `fv_post` (47631 → 47722).
+  **Open:** `alloc_impl` with the zero flag between 41177 and 47631. Agreed: new `AllocZeroed*.lean`
+  files after the HeapHost PR lands. Generalized step lemmas keep their ω₁₀ = 0 forms as corollaries.
+- `finish_grow` (40852), no current block:
+  - the steps `fg_entry_new`, `fg_alloc_lock`, `fg_alloc_ok` / `fg_alloc_err` and `fg_ret_jump`;
+  - the paths `fg_new_hdr`, `fg_new_grow` and `fg_new_fail`;
+  - `fg_new_call` on `HeapCtxC`.
+
+Plan:
+1. `finish_grow`'s realloc path (a current block, 40898 … 40995 → 42980 → 41109). It needs:
+   - the lock and unlock glue at these addresses, taking an `impl` run as `ReallocWrap.realloc_wrap`
+     and `ReallocKeepAll.realloc_wrap_keep` do;
+   - the per-case compositions with the impl-level lemmas (`realloc_inplace_refines_keep`, grow,
+     grow-heap, `fallback_refines_heap_keepG`);
+   - a case split as in `realloc_wrap_cases_keepG`.
+2. The `Vec<u8>` reader 45643 (16 KiB chunks; the reader 58434 and `finish_grow`), and 39634
+   (length, then 45643).
+3. `AccumulateItem::decode`, inlined at 45115 … 45254, with 46040 (`u64`) and 46856.
+4. The item loop 44916 (capacity min(n, 89), 184-octet slots), a LoopA-style proof at accumulate's
+   frame.
+5. 44495's glue (unwrap, count, free of the fetched bytes), then the summary 6630 → 6674.

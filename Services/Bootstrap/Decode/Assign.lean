@@ -425,7 +425,7 @@ theorem assign_elemF {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHo
     (ofr a (by omega) (Or.inl (by omega))).trans ((nfr a (by omega) (Or.inl (by omega)) (Or.inl (by omega))
       (Or.inl (by omega))).trans (mfr a (by omega) (Or.inl (by omega)) (Or.inl (by omega))))
   refine Or.inl ⟨ω8, μ8, s', (run1.trans (run2.trans (run3.trans (run4.trans (run5.trans (run6.trans
-    (run7.trans run8))))))).mono (by omega), o1, o5, o6, ?_, ?_,
+    (run7.trans run8))))))).mono (by omega), (by rw [o1]; congr 1; omega), o5, o6, ?_, ?_,
     ⟨9223372036854775819, by omega, oO, by omega⟩,
     heap_of_high H5 low85 (fun a => by rw [owr, nwr, mwr]), keepU, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · rw [Memory.readN_congr (fun j hj => ofr _ (by omega) (Or.inr (by omega)))]

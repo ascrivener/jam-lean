@@ -184,6 +184,16 @@ An independent kernel, nanoda as vendored by
     (4278050816, the blob's 8192-octet stack) to the loop's frame.
   - *Scope:* `ElemOk`s for the remaining variants (Assign and the Vec/Option ones)
     are not stated yet; the loop is not yet composed into a Ψ_R theorem.
+- **The decode loops at any frame base.** `Decode.Loop.ElemOkF`, `passF`, `loopF`,
+  `Decode.LoopA.ElemOkAF`, `passAF`, `loopAF`, the adapters `Decode.Elems.*F` and
+  `Decode.Assign.assign_elemF` (`Services/Bootstrap/Decode/LoopF.lean`, `Loop.lean`, `LoopA.lean`,
+  `LoopAPass.lean`, `Elems.lean`, `Assign.lean`).
+  - *Statement:* the decode loop's theorems with the decoder's frame at any base F (every stack
+    address F + const), the reader at RD, the payload at P0 and the reader's length Lt, under `Lay F RD`
+    (F at least 2048 above the stack's bottom and 8-aligned, RD above the loop's frame) and `OkF`
+    (the payload in the heap, from 206864). Accumulate runs the same loop 1160 octets lower; refine's
+    theorems (`ElemOk`, `pass`, `loop`, `ElemOkA`, `passA`, `loopA`, each adapter) are these at
+    F = 4278057632, RD = 4278058648, P0 = 206913, with unchanged statements.
 - **`Instruction::decode`'s tag dispatch, for every tag.** `Decode.Tag.dispatch`, `reject` and
   `unit_variant` (`Services/Bootstrap/Decode/Tag.lean`).
   - *Statement:* from 20626, where the reader has just read the tag octet into the function's

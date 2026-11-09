@@ -110,7 +110,7 @@ theorem realloc_inplace_refines_data {p : ByteArray} {P : Program} [HasCode p P]
   · rw [if_neg e]
     obtain ⟨ω', μ', hk, rest⟩ := shrink_refines_hdr (p := p) (P := P) (R := R) x ω μ s sp ptr req hwf hrep hc hr0
       (by omega) h1 h8 h7 h10 h0 hsp hsp1 hb0 hbT hfo hHT hS hw
-    exact ⟨ω', μ', readN_inplace hwf hb0 hbT hcm hca (by omega) (by omega) hk, rest⟩
+    exact ⟨ω', μ', readN_inplace hwf hb0 hbT hcm hca (by omega) (by omega) hk.hkeep, rest⟩
 
 /-- **`realloc` around a refinement of `realloc_impl`, with data**: as `realloc_wrap`, when
     `realloc_impl` also brings m octets at ptr to r (both in the heap below 2³¹), so does
@@ -237,7 +237,7 @@ theorem realloc_wrap_grow_data {p : ByteArray} {P : Program} [HasCode p P] (x : 
         grow_refines_hdr (p := p) (P := P) (R := R) x ω1 μ1 s s' (sp - 16) ptr
           ((size + 31) / 32) hwf rep1 hc hr hr1 h hng a1 a8 a7 a10 a0 (by omega) (by omega)
           hb0 hbT hA hfo hHT ⟨by omega, by omega⟩ W1
-      exact ⟨ω2, μ2, readN_inplace hwf hb0 hbT hcm hca' (by omega) (by omega) hk, run, rep, wf, fo, ww, stk, e7, e1, e5, e6⟩)
+      exact ⟨ω2, μ2, readN_inplace hwf hb0 hbT hcm hca' (by omega) (by omega) hk.hkeep, run, rep, wf, fo, ww, stk, e7, e1, e5, e6⟩)
 
 /-- **`realloc_wrap_grow_heapK` with the data**: as `realloc_wrap_grow_heapK`, and the block's
     first `usable s ptr`·32 octets are as they were when `realloc` was called.
@@ -293,7 +293,7 @@ theorem realloc_wrap_grow_heapK_data {p : ByteArray} {P : Program} [HasCode p P]
   have dat : μ3.readN ptr (32 * usable s ptr) = μ.readN ptr (32 * usable s ptr) := by
     have e3 : μ3.readN ptr (32 * usable s ptr) = μ2.readN ptr (32 * usable s ptr) :=
       readN_congr2 fun j hj => fr3 _ (by omega) (by omega)
-    rw [e3, readN_inplace hwf hb0 hbT hcm hca (by omega) (by omega) hk]
+    rw [e3, readN_inplace hwf hb0 hbT hcm hca (by omega) (by omega) hk.hkeep]
     exact readN_congr2 fun j hj => fr1 _ (by omega) (Or.inl (by omega)) (Or.inr (by omega)) (Or.inr (by omega))
   refine ⟨ω3, μ3, dat, ((r1.trans r2).trans r3).mono (by omega),
     rep2.congr_lock wf2 (by rw [hb']; exact hb0) (by rw [hb']; exact hbT)

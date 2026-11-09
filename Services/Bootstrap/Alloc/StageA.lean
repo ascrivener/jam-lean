@@ -41,7 +41,7 @@ theorem free_prev {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
       ω'[8] = UInt64.ofNat (mergePrev s Xa n pv).2.1 ∧ ω'[2] = UInt64.ofNat (mergePrev s Xa n pv).2.2.1 ∧
       ω'[3] = UInt64.ofNat (mergePrev s Xa n pv).2.2.2 ∧ ω'[5] = UInt64.ofNat s.base ∧
       (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → 2147483648 ≤ a → μ'.read a = μ.read a) ∧
-      HKeep μ μ' (fun a => H a ∨ F a) ∧
+      HKeepG μ μ' (fun a => H a ∨ F a) ∧
       ∀ j : Fin 13, j.val ∉ [0, 2, 3, 5, 6, 8, 9, 10, 11, 12] → ω'[j] = ω[j] := by
   have hr := hw.rd
   obtain ⟨hX1, hX2, hX3⟩ := hAX
@@ -50,7 +50,7 @@ theorem free_prev {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
   · -- X is the first chunk
     rw [if_neg (fun h => h hXb)]
     have b := pv_br_first (p := p) (P := P) (R := R) x ω μ (Xa - s.base) h9 h11 (by omega)
-    exact ⟨ω, μ, b.mono (by omega), hrep, h8, h2, h3, h5, fun _ => rfl, fun _ _ _ => rfl, HKeep.refl μ _,
+    exact ⟨ω, μ, b.mono (by omega), hrep, h8, h2, h3, h5, fun _ => rfl, fun _ _ _ => rfl, HKeepG.refl μ _,
       fun _ _ => rfl⟩
   rw [if_pos hXb]
   dsimp only
@@ -70,7 +70,7 @@ theorem free_prev {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
     have hwu : (!wordUsed w) = false := by simp [wordUsed, hu]
     rw [if_neg (by simp [hwu])]
     refine ⟨ω1, μ, ((b1.trans r1).trans b2).mono (by omega), hrep, ?_, ?_, ?_, ?_, fun _ => rfl, fun _ _ _ => rfl,
-      HKeep.refl μ _, fun j hj => g1 j (by simp only [List.mem_cons, List.not_mem_nil, or_false] at hj ⊢; omega)⟩
+      HKeepG.refl μ _, fun j hj => g1 j (by simp only [List.mem_cons, List.not_mem_nil, or_false] at hj ⊢; omega)⟩
     · rw [fget g1 8 (by decide) (by decide)]; exact h8
     · rw [fget g1 2 (by decide) (by decide)]; exact h2
     · rw [fget g1 3 (by decide) (by decide)]; exact h3

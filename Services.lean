@@ -80,6 +80,9 @@ import Services.Bootstrap.Decode.ReallocOk
 import Services.Bootstrap.Decode.VecU8Pass
 import Services.Bootstrap.Decode.LookedUpBig
 import Services.Bootstrap.Decode.ProvideInline
+import Services.Bootstrap.Decode.VecU8Heap
+import Services.Bootstrap.Decode.LookedUpHeap
+import Services.Bootstrap.Decode.ProvideInlineHeap
 import Services.Picoalloc.Model
 import Services.Picoalloc.Invariant
 import Services.Picoalloc.FreeLists

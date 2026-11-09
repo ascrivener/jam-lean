@@ -94,6 +94,10 @@ theorem HKeep.readN {μ μ' : Memory} {G : Nat → Prop} (h : HKeep μ μ' G) {a
     (ha : ∀ j, j < n → OffHdr G (a + j)) : μ'.readN a n = μ.readN a n :=
   readN_congr2 fun j hj => h _ (ha j hj)
 
+theorem HKeepG.readN {μ μ' : Memory} {G : Nat → Prop} (h : HKeepG μ μ' G) {a n : Nat}
+    (ha : ∀ j, j < n → OffHdr G (a + j)) : μ'.readN a n = μ.readN a n :=
+  h.hkeep.readN ha
+
 /-- **A chunk's data is off the headers**: in a well-formed heap below 2³¹, an octet of a chunk's
     data (from its address + 32 to its end) lies outside the allocator's fields, the stack and the
     first 16 octets of every chunk's header. -/

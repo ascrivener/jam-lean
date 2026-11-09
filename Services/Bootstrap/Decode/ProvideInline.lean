@@ -371,7 +371,11 @@ open Picoalloc Services.Bootstrap.Alloc JAM Services.Bootstrap.Decode.VecU8 Serv
     O + 8, the `Vec` `{cap n, ptr q, len n}` at O + 16, the service's four octets at O + 48, and the n
     octets (from ptr + 5 + w) at q. The reader is advanced by 5 + w + n. The heap holds the model's
     state after the `alloc` (as `vec_u8_small`); from A up, memory changes only in the reader and
-    O … O + 52. -/
+    O … O + 52.
+
+    *Setting:* this assumes the payload lies at or above the stack frame, which the decode loop
+    does not satisfy (there the payload is inside an allocated heap chunk). The loop uses the
+    heap-payload version, `Provide.provide_inline_heap`. -/
 theorem provide_inline_small {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env)
     (x : RefineCtx) (ω : Regs) (μ : Memory) {hb : Nat} (s s' : State)
     (A O ret t v5 v6 rd ptr len n q pb ph : Nat) (F : Frame P A O ret t v5 v6 ω μ)
@@ -483,7 +487,11 @@ theorem provide_inline_small {p : ByteArray} {P : Program} [HasCode p P] (env : 
     `Provide { service, preimage: Inline(bytes) }` in O (the `Vec` `{cap n, ptr q, len n}` at O + 16,
     the n octets at q, q an allocated chunk of ⌈n/32⌉ + 1 units of the model's state after the
     `realloc`s), or the run reaches `finish_grow`'s return point from a `realloc` that the model fails
-    (33055, ω₇ = 0). -/
+    (33055, ω₇ = 0).
+
+    *Setting:* this assumes the payload lies at or above the stack frame, which the decode loop
+    does not satisfy (there the payload is inside an allocated heap chunk). A heap-payload version
+    needs `realloc` to keep other chunks' data, which is not yet proved. -/
 theorem provide_inline_big {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env : RefineHost.Env)
     (x : RefineCtx) (ω : Regs) (μ : Memory) {hb : Nat} (s s1 : State)
     (A O ret t v5 v6 rd ptr len n q0 pb ph : Nat) (F : Frame P A O ret t v5 v6 ω μ)

@@ -60,7 +60,7 @@ theorem realloc_impl_grow_heapK {p : ByteArray} {P : Program} [HasCode p P] (env
         (fun a => F a ∨ (cur + sz - (req + 1) ≠ 0 ∧ a = ptr - 32 + 32 * (req + 1))) ∧
       HeapPages μ' 48 pb (growTop (pagesOf (s.base + 32 * E)) h pb) ∧
       (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
-      HKeep μ μ' (fun a => (H a ∨ F a) ∨ a = ptr - 32 + 32 * (req + 1) ∨
+      HKeepG μ μ' (fun a => (H a ∨ F a) ∨ a = ptr - 32 + 32 * (req + 1) ∨
         a = (growHdr (unregister { s with allocated := E } (ptr - 32 + 32 * cur) (binDown sz)) (ptr - 32) (req + 1)).heads
           (binDown (cur + sz - (req + 1)))) ∧
       ω'[7] = UInt64.ofNat ptr ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat sp ∧
@@ -227,7 +227,7 @@ theorem realloc_impl_grow_heapK {p : ByteArray} {P : Program} [HasCode p P] (env
       rP).mono (by omega), rep9,
     HeapPages.of_eq hpH wwP, fun a h1 h2 => by rw [wwP]; exact hstH a h1 h2,
     fun a h1 h2 => ?_,
-    (HKeep.of_low fun a h1 h2 _ => (frH a (by omega) (by omega) (by omega) (by omega)).trans
+    (HKeepG.of_low fun a h1 h2 _ => (frH a (by omega) (by omega) (by omega) (by omega)).trans
       (((sf7 a (by omega) (Or.inl (by omega))).trans
       ((sf5 a (by omega) (Or.inl (by omega))).trans (sf3 a (by omega) (Or.inl (by omega))))).trans
         (sf1 a (by omega) (Or.inl (by omega))))).trans hkP, e7, e0,
@@ -280,7 +280,7 @@ theorem realloc_impl_grow_heap {p : ByteArray} {P : Program} [HasCode p P] (env 
         (fun a => F a ∨ (cur + sz - (req + 1) ≠ 0 ∧ a = ptr - 32 + 32 * (req + 1))) ∧
       HeapPages μ' 48 pb (growTop (pagesOf (s.base + 32 * E)) h pb) ∧
       (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
-      HKeep μ μ' (fun a => (H a ∨ F a) ∨ a = ptr - 32 + 32 * (req + 1) ∨
+      HKeepG μ μ' (fun a => (H a ∨ F a) ∨ a = ptr - 32 + 32 * (req + 1) ∨
         a = (growHdr (unregister { s with allocated := E } (ptr - 32 + 32 * cur) (binDown sz)) (ptr - 32) (req + 1)).heads
           (binDown (cur + sz - (req + 1)))) ∧
       ω'[7] = UInt64.ofNat ptr ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat sp ∧

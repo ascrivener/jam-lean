@@ -58,7 +58,7 @@ theorem alloc_base {grow : Grow} {hb r p : Nat} {s s' : State} (hwf : WF s)
     stack pointer in S0 + 168 … S1: either the model's `alloc` returns block `ptr` and state `s'` and
     the wrapper returns `ptr` at 40611 with the context kept for `s'`, every allocated chunk of `s`
     still allocated, the block a new allocated chunk at `ptr − 32` of ⌈size/32⌉ + 1 units, the heap
-    off the new headers kept (`HKeep`), the stack from sp up untouched and ω₀, ω₁, ω₅, ω₆ restored; or the model's
+    off the new headers kept (`HKeepG`), the stack from sp up untouched and ω₀, ω₁, ω₅, ω₆ restored; or the model's
     `alloc` fails and the wrapper returns null. -/
 theorem alloc_call {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap : Nat)
     (hcap1 : 134217728 ≤ cap) (hcap : cap < 18446744073709551616)
@@ -72,7 +72,7 @@ theorem alloc_call {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost
       HeapCtx env pb S0 S1 μ' s' ∧ (∀ c ∈ chunks s, c.used = true → c ∈ chunks s') ∧
       (⟨ptr - 32, (size + 31) / 32 + 1, true⟩ : Chunk) ∈ chunks s' ∧
       (∀ d ∈ chunks s, d.used = true → d ≠ ⟨ptr - 32, (size + 31) / 32 + 1, true⟩) ∧
-      HKeep μ μ' (fun a => ∃ c ∈ chunks s', c.addr = a) ∧ ω'[7] = UInt64.ofNat ptr ∧
+      HKeepG μ μ' (fun a => ∃ c ∈ chunks s', c.addr = a) ∧ ω'[7] = UInt64.ofNat ptr ∧
       (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
       ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6]) ∨
     (alloc (growTo pb) hb 1 ((size + 31) / 32) s = none ∧ ∃ ω' μ',

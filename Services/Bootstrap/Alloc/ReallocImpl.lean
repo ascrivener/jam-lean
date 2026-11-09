@@ -87,7 +87,7 @@ theorem realloc_impl_shrink {p : ByteArray} {P : Program} [HasCode p P] (x : X) 
       RepAt μ' (shrink s ptr req) (fun a => H a ∨ a = ptr - 32 + 32 * (req + 1))
         (fun a => F a ∨ a = ptr - 32 + 32 * (req + 1)) ∧
       (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
-      HKeep μ μ' (fun a => (H a ∨ F a) ∨ a = ptr - 32 + 32 * (req + 1) ∨
+      HKeepG μ μ' (fun a => (H a ∨ F a) ∨ a = ptr - 32 + 32 * (req + 1) ∨
         a = (mergeNext (shrinkHdr s ptr req) (ptr - 32) cur (s.base + 1073741824)).1.heads (binDown ((mergeNext (shrinkHdr s ptr req) (ptr - 32) cur (s.base + 1073741824)).2 - (req + 1)))) ∧
       ω'[7] = UInt64.ofNat ptr ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat sp ∧
       ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
@@ -172,8 +172,8 @@ theorem realloc_impl_shrink {p : ByteArray} {P : Program} [HasCode p P] (x : X) 
   refine ⟨ω5, μ5, ((((r1.trans r2).trans r3).trans r4).trans r5).mono (by omega), ?_,
     fun a => (ww5 a).trans ((ww4 a).trans ((ww3 a).trans (ww1 a))),
     fun a h1 h2 => (sf5 a h1 (by omega) (Or.inr (by omega))).trans (stk3 a h1 h2),
-    (((HKeep.of_low fun a h1 h2 _ => sf1 a (by omega) (Or.inl (by omega))).trans
-      (HKeep.of_low fun a h1 h2 h3 => sf3 a (by omega) (by have := h3 Xc (Or.inl (Or.inl hXH)); omega)
+    (((HKeepG.of_low fun a h1 h2 _ => sf1 a (by omega) (Or.inl (by omega))).trans
+      (HKeepG.of_low fun a h1 h2 h3 => sf3 a (by omega) (by have := h3 Xc (Or.inl (Or.inl hXH)); omega)
         (Or.inl (by omega)))).trans (hk4.mono fun b hb => Or.inl (Or.inl hb))).trans hk5, e7, e0,
     by rw [e1]; congr 1; omega, by rw [e5, UInt64.ofNat_toNat], by rw [e6, UInt64.ofNat_toNat]⟩
   rw [shrink_eq (cur := cur) (by rw [hXd']; exact hsz) hr, hXd', hm]

@@ -49,7 +49,7 @@ theorem free_impl {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
     ∃ ω' μ', FreeStepsH p R 42327 ω μ x 42978 ω' μ' x 220 ∧
       RepAt μ' (free s ptr) (fun a => H a ∨ a = M) (fun a => F a ∨ a = M) ∧
       (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
-      HKeep μ μ' (fun a => (H a ∨ F a) ∨ a = M ∨ a = s2.heads (binDown total)) ∧ ω'[0] = ω[0] ∧ ω'[1] = UInt64.ofNat sp ∧
+      HKeepG μ μ' (fun a => (H a ∨ F a) ∨ a = M ∨ a = s2.heads (binDown total)) ∧ ω'[0] = ω[0] ∧ ω'[1] = UInt64.ofNat sp ∧
       ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
   have hHFl : ∀ b, H b ∨ F b → b + 16 < 2147483648 := fun b hb => by
     have := hHF b hb; unfold Al at this; omega
@@ -90,7 +90,7 @@ theorem free_impl {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
   refine ⟨ω4, μ4, ((((r1.trans r2).trans r3).trans r4)).mono (by omega), ?_,
     fun a => (ww4 a).trans ((ww3 a).trans ((ww2 a).trans (ww1 a))),
     fun a h1 h2 => ((sf4 a h1 (by omega)).trans (stk a h1 (by omega))).trans (sf1 a h1 (Or.inr h2)),
-    ((((HKeep.of_low fun a h1 h2 _ => sf1 a (by omega) (Or.inl (by omega))).trans
+    ((((HKeepG.of_low fun a h1 h2 _ => sf1 a (by omega) (Or.inl (by omega))).trans
       (hk2.mono fun b hb => Or.inl (Or.inl hb))).trans (hk3.mono fun b hb => Or.inl (Or.inl hb))).trans hk4),
     by rw [e0, UInt64.ofNat_toNat], e1,
     by rw [e5, UInt64.ofNat_toNat], by rw [e6, UInt64.ofNat_toNat]⟩

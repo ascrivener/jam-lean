@@ -5,7 +5,7 @@ import Services.Bootstrap.Alloc.AllocWrapGrow
 
 `alloc_wrap_refines` and `alloc_wrap_refines_growK` with the frame of main's `alloc_refines_hdr`
 and `alloc_refines_growK_hdr` carried through the wrapper's lock and unlock: every heap octet off the
-headers of the new state keeps its value (`HKeep`). With `off_hdr_data`, an allocated chunk's data
+headers of the new state keeps its value (`HKeepG`). With `off_hdr_data`, an allocated chunk's data
 is such an octet.
 -/
 
@@ -15,7 +15,7 @@ open PVM Picoalloc Services.Bootstrap.Code Services.Bootstrap.Alloc JAM
 
 variable {X : Type} {R : HostRel X}
 
-/-- `alloc_wrap_refines`, with the heap frame `HKeep`. -/
+/-- `alloc_wrap_refines`, with the heap frame `HKeepG`. -/
 theorem alloc_wrap_refines_hdr {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
     {grow : Grow} {hb : Nat} (s s' : State) (sp size al ptr : Nat) (hwf : WF s) (hrep : Rep μ s)
     (h : alloc grow hb 1 ((size + 31) / 32) s = some (ptr, s')) (hng : s'.allocated = s.allocated)
@@ -29,7 +29,7 @@ theorem alloc_wrap_refines_hdr {p : ByteArray} {P : Program} [HasCode p P] (x : 
       ω'[7] = UInt64.ofNat ptr ∧ rdN μ' 206848 1 = 0 ∧ (∀ a, μ'.writable a = μ.writable a) ∧
       (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
       ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
-      HKeep μ μ' (fun a => ∃ c ∈ chunks s', c.addr = a) := by
+      HKeepG μ μ' (fun a => ∃ c ∈ chunks s', c.addr = a) := by
   obtain ⟨ω1, μ1, r1, a1, a7, a8, a9, a10, a0, a5, -, st8, st16, fr1, ww1, g1⟩ :=
     al_lock (p := p) (P := P) (R := R) x ω μ sp size al h1 h7 h8 hal hal1 hs (by omega) hsp1 hl (by omega)
       ⟨by omega, by omega⟩ hw
@@ -58,13 +58,15 @@ theorem alloc_wrap_refines_hdr {p : ByteArray} {P : Program} [HasCode p P] (x : 
     unfold rdN; rw [st16, Num.decodeLE_encodeLE]
     rw [Nat.mod_eq_of_lt (UInt64.toNat_lt _), UInt64.ofNat_toNat]
   · rw [fget g3 6 (by decide) (by decide), e6, fget g1 6 (by decide) (by decide)]
-  · have k1 : HKeep μ μ1 (fun a => ∃ c ∈ chunks s', c.addr = a) := fun a ⟨ha1, ha2, _⟩ =>
-      fr1 a (by omega) (Or.inl (by omega)) (Or.inr (by omega)) (Or.inr (by omega))
-    have k3 : HKeep μ2 μ3 (fun a => ∃ c ∈ chunks s', c.addr = a) := fun a ⟨ha1, ha2, _⟩ =>
+  · have k1 : HKeepG μ μ1 (fun a => ∃ c ∈ chunks s', c.addr = a) := fun a ⟨ha1, ha2, _⟩ => by
+      unfold Glob at ha1; exact
+      fr1 a (by omega) (Or.inl (by omega)) (by omega) (by omega)
+    have k3 : HKeepG μ2 μ3 (fun a => ∃ c ∈ chunks s', c.addr = a) := fun a ⟨ha1, ha2, _⟩ => by
+      unfold Glob at ha1; exact
       fr3 a (by omega) (by omega)
     exact (k1.trans hk2).trans k3
 
-/-- `alloc_wrap_refines_growK`, with the heap frame `HKeep`. -/
+/-- `alloc_wrap_refines_growK`, with the heap frame `HKeepG`. -/
 theorem alloc_wrap_refines_growK_hdr {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env)
     (cap : Nat) (hcap : cap < 18446744073709551616)
     (x : RefineCtx) (ω : Regs) (μ : Memory) {hb : Nat} (s s' : State) (sp size al ptr pb ph : Nat) (hwf : WF s)
@@ -84,7 +86,7 @@ theorem alloc_wrap_refines_growK_hdr {p : ByteArray} {P : Program} [HasCode p P]
       (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧
       (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
       ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
-      HKeep μ μ' (fun a => ∃ c ∈ chunks s', c.addr = a) := by
+      HKeepG μ μ' (fun a => ∃ c ∈ chunks s', c.addr = a) := by
   have hw := HeapPages.wrAt hp hhb hst
   obtain ⟨ω1, μ1, r1, a1, a7, a8, a9, a10, a0, a5, -, st8, st16, fr1, ww1, g1⟩ :=
     al_lock (p := p) (P := P) (R := refineContractK cap env) (S0 := S0) (S1 := S1) x ω μ sp size al h1 h7 h8 hal
@@ -118,9 +120,11 @@ theorem alloc_wrap_refines_growK_hdr {p : ByteArray} {P : Program} [HasCode p P]
     unfold rdN; rw [st16, Num.decodeLE_encodeLE]
     rw [Nat.mod_eq_of_lt (UInt64.toNat_lt _), UInt64.ofNat_toNat]
   · rw [fget g3 6 (by decide) (by decide), e6, fget g1 6 (by decide) (by decide)]
-  · have k1 : HKeep μ μ1 (fun a => ∃ c ∈ chunks s', c.addr = a) := fun a ⟨ha1, ha2, _⟩ =>
-      fr1 a (by omega) (Or.inl (by omega)) (Or.inr (by omega)) (Or.inr (by omega))
-    have k3 : HKeep μ2 μ3 (fun a => ∃ c ∈ chunks s', c.addr = a) := fun a ⟨ha1, ha2, _⟩ =>
+  · have k1 : HKeepG μ μ1 (fun a => ∃ c ∈ chunks s', c.addr = a) := fun a ⟨ha1, ha2, _⟩ => by
+      unfold Glob at ha1; exact
+      fr1 a (by omega) (Or.inl (by omega)) (by omega) (by omega)
+    have k3 : HKeepG μ2 μ3 (fun a => ∃ c ∈ chunks s', c.addr = a) := fun a ⟨ha1, ha2, _⟩ => by
+      unfold Glob at ha1; exact
       fr3 a (by omega) (by omega)
     exact (k1.trans hk2).trans k3
 

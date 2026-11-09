@@ -207,13 +207,13 @@ def bootstrapSvc : Svc where
     (20626, 22145)]
   -- `Vec`/`Option` decoding: the allocator's growth paths (`finish_grow`'s realloc branch,
   -- 33037–33122), the decoders' loops and their callees
-  -- and refine's output encoding: `Instruction::encode_to`'s per-variant arms (17905–20162), the
+  -- and refine's output encoding: `Instruction::encode_to`'s per-variant arms and their shared tails (17905–20398), the
   -- element loop and its dispatch (30073–30286), the length prefix (30977–31362) and
   -- `Vec<u8>::extend_from_slice` (58508–58615)
   fnRangesX := [(8, 482), (907, 2200), (2727, 3716), (23303, 25588), (32727, 33152), (35293, 36170),
-    (50078, 50409), (70133, 70239), (17905, 20162), (30073, 30286), (30977, 31362), (58508, 58615)]
+    (50078, 50409), (70133, 70239), (17905, 20398), (30073, 30286), (30977, 31362), (58508, 58615)]
   -- `Instruction::encode_to` dispatches through its table at 67376 to the arms' jump-table entries
-  jumpRangesX := [(17905, 20162)]
+  jumpRangesX := [(17905, 20398)]
   -- accumulate (`Services/Bootstrap/Acc/README.md`, tier A): the entry 6378 … 15368, the inputs fetch
   -- and `AccumulateItem` decode, `BootstrapWorkOutput::decode`, the ring and results helpers, the
   -- storage wrappers and the allocator's remaining paths

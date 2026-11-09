@@ -105,6 +105,7 @@ import Services.Bootstrap.Acc.Inputs.FetchVec
 import Services.Bootstrap.Acc.Inputs.FinishGrow
 import Services.Bootstrap.Acc.Inputs.FinishGrowCall
 import Services.Bootstrap.Acc.Inputs.ReadVec
+import Services.Bootstrap.Acc.Inputs.ReadVecCall
 import Services.Bootstrap.AccPrefixC
 import Services.Bootstrap.AccBParams
 import Services.Bootstrap.Acc.Args

@@ -88,13 +88,6 @@ def FrameA (n B : Nat) (s : State) (μ : Memory) (s' : State) (μ' : Memory) : P
   (∀ a, a < 196608 → μ'.read a = μ.read a ∧ μ'.readable a = μ.readable a) ∧
   (∀ a, 4278050816 ≤ a → μ'.writable a = μ.writable a)
 
-/-- The run reaches a failed allocation. -/
-def Exhausts (env : RefineHost.Env) (cap pb : Nat) (p : ByteArray) (P : Program) (i : Nat) (ω : Regs)
-    (μ : Memory) (x : RefineCtx) (n : Nat) : Prop :=
-  ∃ (ω' : Regs) (μ' : Memory) (s'' : State) (hb r : Nat),
-    FreeStepsH p (refineContractK cap env) i ω μ x 40611 ω' μ' x n ∧ ω'[7] = UInt64.ofNat 0 ∧
-      alloc (growTo pb) hb 1 r s'' = none
-
 /-- **One pass, with the allocator** (see the module doc). -/
 theorem passA {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap pb N : Nat)
     (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State)
@@ -174,8 +167,7 @@ theorem passA {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env)
       (fun a h1 h2 => by rw [bwr, awr]; exact wr a h1 h2)
       heap2 ⟨cp, hcp, hcpu, by omega, by omega⟩ with hs | hx
   rotate_left
-  · obtain ⟨ω3, μ3, s'', hb, r, run3, e7, ha⟩ := hx
-    exact Or.inr ⟨ω3, μ3, s'', hb, r, (run1.trans (run2.trans run3)).mono (by omega), e7, ha⟩
+  · exact Or.inr ((Exhausts.pre (run1.trans run2) hx).mono (by omega))
   obtain ⟨ω3, μ3, s', run3, c1, c5, c6, cR0, cR8, ⟨W, hW, cW, cne⟩, heap3, keepU, keepD, ⟨cs, hcs, crep⟩,
     cfr, clow, clowr, cwr⟩ := hs
   have cfr' : ∀ a, 4278057664 ≤ a → (decide (a < 4294967296) && !(decide (4278058648 ≤ a ∧ a < 4278058664)) && !(decide (4278057752 ≤ a ∧ a < 4278057984))) = true →
@@ -377,20 +369,6 @@ theorem FrameA.trans {n B : Nat} {s s1 s2 : State} {μ μ1 μ2 : Memory} (f1 : F
    fun c hc hu a ha hb => (f2.2.2.1 c (f1.2.1 c hc hu) hu a ha hb).trans (f1.2.2.1 c hc hu a ha hb),
    fun a ha => ⟨(f2.2.2.2.1 a ha).1.trans (f1.2.2.2.1 a ha).1, (f2.2.2.2.1 a ha).2.trans (f1.2.2.2.1 a ha).2⟩,
    fun a ha => (f2.2.2.2.2 a ha).trans (f1.2.2.2.2 a ha)⟩
-
-/-- A run before a failed allocation is still one. -/
-theorem Exhausts.pre {env : RefineHost.Env} {cap pb : Nat} {p : ByteArray} {P : Program} {i j : Nat}
-    {ω ω1 : Regs} {μ μ1 : Memory} {x : RefineCtx} {n m : Nat}
-    (run : FreeStepsH p (refineContractK cap env) i ω μ x j ω1 μ1 x n) (h : Exhausts env cap pb p P j ω1 μ1 x m) :
-    Exhausts env cap pb p P i ω μ x (n + m) := by
-  obtain ⟨ω', μ', s'', hb, r, run', e7, ha⟩ := h
-  exact ⟨ω', μ', s'', hb, r, run.trans run', e7, ha⟩
-
-theorem Exhausts.mono {env : RefineHost.Env} {cap pb : Nat} {p : ByteArray} {P : Program} {i : Nat}
-    {ω : Regs} {μ : Memory} {x : RefineCtx} {n m : Nat} (h : Exhausts env cap pb p P i ω μ x n) (hnm : n ≤ m) :
-    Exhausts env cap pb p P i ω μ x m := by
-  obtain ⟨ω', μ', s'', hb, r, run', e7, ha⟩ := h
-  exact ⟨ω', μ', s'', hb, r, run'.mono hnm, e7, ha⟩
 
 /-- The loop's step bound from element k, r elements to go: each element's own bound and 1700 for
     the loop's own steps. -/

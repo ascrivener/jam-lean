@@ -337,7 +337,8 @@ An independent kernel, nanoda as vendored by
     `refineContractK cap env`, with the allocator's context `HeapCtx` (picoalloc's state in memory,
     the heap pages and the stack). It either returns to the loop with a new state that keeps every
     allocated chunk and its data, and a value whose property depends only on chunks allocated during
-    the element, or reaches a failed allocation (`Exhausts`). Every `ElemOk` lifts to an `ElemOkA`
+    the element, or reaches a failed allocator call (`Exhausts`: a wrapper returned null and the
+    model's call fails, `alloc` at 40611 or `realloc` in `read_vec` at 33055, `AllocFail`). Every `ElemOk` lifts to an `ElemOkA`
     (`ElemOkA.of_elemOk`). `loopA` decodes the whole payload through `ElemOkA`s, within the sum of the
     elements' own step bounds and 1700 an element (`bound`), or reaches a failed allocation.
     `alloc_call` is one call of the `alloc` wrapper: the model's block and state, with the context

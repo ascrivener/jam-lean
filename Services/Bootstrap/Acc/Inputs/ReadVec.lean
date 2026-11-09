@@ -114,4 +114,47 @@ theorem rv_mid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X
       | (congr 1; omega)
       | rfl
 
+
+/-- **45809 … 45950**, the chunk read (ω₇ = 0) and nothing left: `Vec { cap: len, ptr, len }`
+    stored at `out` (from b + 8; capacity b + 32, pointer b + 24), ω₀, ω₅, ω₆ restored from
+    b + 88, + 80, + 72 and the frame popped, at the return's `jumpInd`. -/
+theorem rv_exit {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
+    (μ : Memory) (b out ptr len r0 r5 r6 : Nat) (h1 : ω[1] = UInt64.ofNat b)
+    (h5 : ω[5] = UInt64.ofNat 0) (h6 : ω[6] = UInt64.ofNat len) (h7 : ω[7] = UInt64.ofNat 0)
+    (m8 : rdN μ (b + 8) 8 = out) (m24 : rdN μ (b + 24) 8 = ptr) (m32 : rdN μ (b + 32) 8 = len)
+    (m40 : rdN μ (b + 40) 8 = len) (m72 : rdN μ (b + 72) 8 = r6) (m80 : rdN μ (b + 80) 8 = r5)
+    (m88 : rdN μ (b + 88) 8 = r0)
+    (hb : 65536 ≤ b ∧ b + 96 < 4294967296) (hout : 65536 ≤ out ∧ out + 24 < 4294967296)
+    (hptr : ptr < 18446744073709551616) (hlen : len < 4294967296)
+    (dbo : out + 24 ≤ b ∨ b + 96 ≤ out)
+    (hrb : ∀ a, b ≤ a → a < b + 96 → μ.readable a = true)
+    (hwo : ∀ a, out ≤ a → a < out + 24 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 45809 ω μ x 45950 ω' μ' x 30 ∧
+      ω'[0] = UInt64.ofNat r0 ∧ ω'[1] = UInt64.ofNat (b + 96) ∧ ω'[5] = UInt64.ofNat r5 ∧
+      ω'[6] = UInt64.ofNat r6 ∧
+      rdN μ' out 8 = len ∧ rdN μ' (out + 8) 8 = ptr ∧ rdN μ' (out + 16) 8 = len ∧
+      (∀ a, a < 4294967296 → (a < out ∨ out + 24 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have hro : ∀ a, out ≤ a → a < out + 24 → μ.readable a = true :=
+    fun a h1 h2 => Memory.readable_of_writable (hwo a h1 h2)
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?run, ?post⟩
+  case run => pvm_go [h1, h5, h6, h7, m8, m24, m32, m40, m72, m80, m88, hrb, hro, hwo,
+    Nat.mod_eq_of_lt (show len < 18446744073709551616 by omega), rdN_writeN_disjoint, ↓rdN_fold, ↓loadI_fold]
+  case post =>
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha h1 => ?_, fun a => ?_, fun a => ?_⟩
+    all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+      ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, h1, h5, h6]
+    all_goals try with_reducible rfl
+    all_goals try simp only [show 16 + out = out + 16 from Nat.add_comm _ _, show 8 + out = out + 8 from Nat.add_comm _ _]
+    all_goals try first
+      | (rd_simp []; done)
+      | rd_simp []
+    all_goals try first
+      | with_reducible rfl
+      | exact Nat.mod_eq_of_lt (by omega)
+    all_goals first
+      | (congr 1; omega)
+      | rfl
+
 end Services.Bootstrap.Acc

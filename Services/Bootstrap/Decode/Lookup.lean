@@ -93,4 +93,60 @@ theorem l3 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ :
       show S + 32 = S + 8 + 24 by omega, show S + 48 = S + 40 + 8 by omega, show S + 56 = S + 40 + 16 by omega,
       show S + 64 = S + 40 + 24 by omega]; exact copy4g μ μ (S + 40) (S + 8) (by omega))
 
+set_option maxHeartbeats 32000000 in
+/-- 23745 … 23829 then 21961 … 21973: the octet read succeeded (ω₇ = 0) and is a bool b ∈ {0, 1}: the
+    helper stores `Lookup`'s discriminant word 2^63 + 7 at O, the `u32` (the low four octets of the word
+    at S) at O + 8, the hash (S + 8 … S + 40) at O + 12 and b at O + 44, pops its frame and returns to
+    21961, and the decoder returns through its frame at A = S + 96. -/
+theorem l4 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (S O ret t v5 v6 w b o6 : Nat) (hA : S + 96 + 56 < 4294967296) (hO : O + 45 ≤ 4294967296)
+    (hOS : O + 45 ≤ S ∨ S + 152 ≤ O)
+    (h1 : ω[1] = UInt64.ofNat S) (h5 : ω[5] = UInt64.ofNat O) (h7 : ω[7] = UInt64.ofNat 0)
+    (hw64 : w < 18446744073709551616) (hb : b < 2)
+    (hv5 : v5 < 18446744073709551616) (hv6 : v6 < 18446744073709551616)
+    (ho6 : o6 < 18446744073709551616) (hOv : O < 18446744073709551616)
+    (sw : μ.readN S 8 = Num.encodeLE 8 w) (sb : μ.read (S + 40) = UInt8.ofNat b)
+    (sr : μ.readN (S + 88) 8 = Num.encodeLE 8 1014) (sO : μ.readN (S + 80) 8 = Num.encodeLE 8 O)
+    (so6 : μ.readN (S + 72) 8 = Num.encodeLE 8 o6)
+    (s0 : μ.readN (S + 144) 8 = Num.encodeLE 8 ret) (s5 : μ.readN (S + 136) 8 = Num.encodeLE 8 v5)
+    (s6 : μ.readN (S + 128) 8 = Num.encodeLE 8 v6)
+    (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0)
+    (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t) (hbt : P.isBlockStart t = true)
+    (hw : ∀ x, O ≤ x → x < O + 45 → μ.writable x = true)
+    (hr : ∀ x, S ≤ x → x < S + 152 → μ.readable x = true) :
+    ∃ ω' μ', FreeStepsH p R 23745 ω μ x t ω' μ' x 34 ∧
+      ω'[0] = UInt64.ofNat ret ∧ ω'[1] = UInt64.ofNat (S + 152) ∧ ω'[5] = UInt64.ofNat v5 ∧
+      ω'[6] = UInt64.ofNat v6 ∧
+      μ'.readN O 8 = Num.encodeLE 8 9223372036854775815 ∧ μ'.readN (O + 8) 4 = Num.encodeLE 4 w ∧
+      μ'.readN (O + 12) 32 = μ.readN (S + 8) 32 ∧ μ'.read (O + 44) = UInt8.ofNat b ∧
+      (∀ x, x < 4294967296 → (x < O ∨ O + 45 ≤ x) → μ'.read x = μ.read x) ∧
+      (∀ x, μ'.readable x = μ.readable x) ∧ (∀ x, μ'.writable x = μ.writable x) := by
+  have rd : ∀ a w, w < 2 ^ 64 → μ.readN a 8 = Num.encodeLE 8 w → rdN μ a 8 = w := by
+    intro a w hw h
+    show Num.decodeLE _ = _
+    rw [h, Num.decodeLE_encodeLE, Nat.mod_eq_of_lt hw]
+  have rw0 := rd _ w hw64 sw
+  have rr := rd _ 1014 (by decide) sr
+  have rO := rd _ O hOv sO
+  have ro6 := rd _ o6 ho6 so6
+  have r0 : rdN μ (S + 96 + 48) 8 = ret := by rw [show S + 96 + 48 = S + 144 by omega]; exact rd _ ret (by omega) s0
+  have r5 : rdN μ (S + 96 + 40) 8 = v5 := by rw [show S + 96 + 40 = S + 136 by omega]; exact rd _ v5 hv5 s5
+  have r6 : rdN μ (S + 96 + 32) 8 = v6 := by rw [show S + 96 + 32 = S + 128 by omega]; exact rd _ v6 hv6 s6
+  have rbb : rdN μ (S + 40) 1 = b := by
+    simp only [rdN, Memory.readN, List.range_one, List.map_cons, List.map_nil, Nat.add_zero, sb, Num.decodeLE]
+    simp; omega
+  rcases (show b = 0 ∨ b = 1 by omega) with rfl | rfl <;>
+  · rw [show ω = regsNF ω [] from rfl]
+    refine ⟨?_, ?_, ?_, ?_⟩
+    rotate_left 2
+    · pvm_go [h1, h5, h7, hA, hO, hOS, hw, hr, rw0, rr, rO, ro6, r0, r5, r6, rbb, hret, hjt, hbt,
+        rdN_writeN_disjoint, ↓rdN_fold]
+    · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun x ha0 ha1 => ?_, fun x => ?_, fun x => ?_⟩
+      post_simp
+      all_goals try exact encodeLE_mod 4 w
+      all_goals try (simp (disch := omega) only [Memory.writeN_cons, Memory.writeN_nil, PVM.read_write_eq'])
+      all_goals try (rw [show O + 20 = O + 12 + 8 by omega, show O + 28 = O + 12 + 16 by omega,
+        show O + 36 = O + 12 + 24 by omega, show S + 16 = S + 8 + 8 by omega, show S + 24 = S + 8 + 16 by omega,
+        show S + 32 = S + 8 + 24 by omega]; exact copy4g μ _ (S + 8) (O + 12) (by omega))
+
 end Services.Bootstrap.Decode.Lookup

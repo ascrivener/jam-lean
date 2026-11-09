@@ -88,7 +88,7 @@ theorem provide_inline_heap {p : ByteArray} {P : Program} [HasCode p P] (env : R
       (ptr + 5 + w) (len - 5 - w) n 1168 25153 O rd pb S0 S1 H1 ⟨cp, hcpm, hcpu, by omega, by omega⟩
       ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ a0 a1 a5 a6 a7 a8 a9 (by decide) jte_583 bs_25153 hO64 (by omega) hn
       (by omega) (by omega) ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ (by omega) aR0 aR8 with
-    ⟨q, s', ω2, μ2, ha, run2, v0, v1, v5', v6', vc, vp, vl, vdata, vR0, vR8, H2, keep, cm2, hfresh, kd2, pg2, vfr⟩ |
+    ⟨q, s', ω2, μ2, ha, run2, v0, v1, v5', v6', vc, vp, vl, vdata, vR0, vR8, H2, keep, cm2, hfresh, kd2, pg2, vfr, -, -, -⟩ |
     ⟨hna, ω2, μ2, run2, f7⟩
   rotate_left
   · exact Or.inr ⟨hna, ω2, μ2, (run1.trans run2).mono (by omega), f7⟩

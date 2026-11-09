@@ -162,7 +162,7 @@ def clearNonPositive (ρ : AvailAssignments) (verdicts : List (List UInt8 × Out
 
     **k** = {i_e | i ∈ λ ∪ κ} ∖ ψ_O. A key outside it is reported as already an offender when it is
     in ψ_O, and as an unknown guarantor or auditor otherwise. -/
-def disputes (params : Params) (crypto : Crypto) (i : DisputesInput) (ψ : DisputesState)
+def disputesTransition (params : Params) (crypto : Crypto) (i : DisputesInput) (ψ : DisputesState)
     (ρ : AvailAssignments) (x : Disputes) : Except DisputesError DisputesOutput := do
   unless orderedUniqBy (·.target.toList) x.verdicts do throw .verdictsNotSortedUnique
   let verdicts ← x.verdicts.mapM (checkVerdict params crypto i ψ)

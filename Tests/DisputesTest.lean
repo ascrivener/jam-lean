@@ -5,7 +5,7 @@ import JAM.Disputes
 /-!
 # Disputes STF vectors (`lake build disputestest`)
 
-Runs the disputes transition of GP v0.8.0 §10 (`JAM.disputes`) on every vector of
+Runs the disputes transition of GP v0.8.0 §10 (`JAM.disputesTransition`) on every vector of
 davxy/jam-test-vectors `v0.8.0` `stf/disputes/{tiny,full}`, and compares:
 * the output: the offenders marker H_O, or the error (the paper names no errors; we compare the
   vectors' names);
@@ -88,7 +88,7 @@ def check (params : Params) (j : Json) : Except String (List String) := do
     { slot := ← natField pre "tau", activeEd := ← edKeys pre "kappa", previousEd := ← edKeys pre "lambda" }
   let ψ ← psi (← field pre "psi")
   let ρ ← rho (← field pre "rho")
-  let res := JAM.disputes params (oracle expErr) input ψ ρ x
+  let res := JAM.disputesTransition params (oracle expErr) input ψ ρ x
   let mut diffs := []
   match res, expErr with
   | .ok o, none =>

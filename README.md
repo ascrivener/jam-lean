@@ -691,7 +691,7 @@ noted here and in a comment at the definition.
     model follows.
 
 29. **Disputes** (§10).
-    * *Signatures are a parameter.* The model does not implement Ed25519: `JAM.disputes` takes a
+    * *Signatures are a parameter.* The model does not implement Ed25519: `JAM.disputesTransition` takes a
       `Crypto` (`JAM/Crypto.lean`) whose `edVerify` stands for s ∈ 𝕍̄_k⟨m⟩. The test runner's
       oracle is read from each vector's expected output: when it is `bad_signature`, every
       signature is rejected, otherwise every one is accepted. So these tests check everything

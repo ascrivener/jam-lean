@@ -359,7 +359,9 @@ An independent kernel, nanoda as vendored by
       the 16n payload octets at q, the reader advanced by 16n, the context kept for `s'`, every
       allocated chunk of `s` kept with its data, the block a new allocated chunk, and page entries
       outside the heap kept. `import_heap` returns `Import` from 20626: the discriminant word
-      2^63 + 8 and that `Vec` at O, with the reader advanced past ℰ(n) and the items;
+      2^63 + 8 and that `Vec` at O, with the reader advanced past ℰ(n) and the items. Both also
+      keep memory below 196608 (contents and readability), the globals (`Glob`) and the stack's
+      writability, which the decode loop's element contract asks for;
     - the model's `alloc` fails: the run reaches the `alloc` wrapper's return (40611) with null.
   - *How:* `p1` sets up the frame and calls `finish_grow` (`g1e`), then `alloc_call`. `loop` copies
     one pair per pass (`pass`, 260 steps), induction on the count left. `ex1` and `ex2` store the

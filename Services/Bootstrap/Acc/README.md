@@ -147,7 +147,7 @@ frame-base `ElemOkF` pattern (#120) where the code is shared.
 
 ## Inputs decode: proved so far (branch `claude/bootstrap-t2-inputs`) and the plan
 
-Proved, with no `sorry` (`Acc/DecodeU32A.lean`, `Acc/Inputs/*.lean`):
+Proved, complete (`Acc/DecodeU32A.lean`, `Acc/Inputs/*.lean`):
 - `decodeU32A`: 39710, refine's `u32` decoder moved by 7816.
 - `fetch14_step`: one `fetch` of kind 14 under `accContractK`. `rangeWritable_of`.
 - `fetch_vec` (47417), in segments: `fv_pre` (47417 → 47490), `fv_fetch1` (→ 47541), `fv_lock`

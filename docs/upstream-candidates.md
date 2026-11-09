@@ -35,6 +35,7 @@ Gaps, where the paper leaves behaviour undefined:
 | 26 | Appendix C | No encoding of Booleans {⊤, ⊥} is defined, though 𝔼_D's judgments and faults contain them; 0/1 is the evident reading and the vectors use it. |
 | 29 | §10.2 | The fault condition r ∈ ψ_B' ⇔ r ∉ ψ_G' ⇔ v can be read as a chain or as ((… ⇔ …) ⇔ v); the second accepts a ⊤ fault on a good report. No errors are named and no order is given between the conditions. |
 | 30 | §11.2 | No errors are named and no order is given between the assurance conditions. |
+| 33 | Appendix D, §13.2 | D.1 says every non-discriminator number in the state is serialized fixed-length by the size of its term, but π_C and π_S (C(13)) hold ℕ and ℕ_G terms with no stated encoding; the traces use the general encoding ℰ for all of them, gas included. §11.4.1 does not say whether the ancestor set 𝒜 includes the block being imported (needed when the lookup anchor is the parent). |
 | 32 | §11.3–§11.4 | R and P divide by 3 (\|**c**\|/3, ⌊i/3⌋) without saying what happens when \|κ'\| is not a multiple of 3; M* uses τ' − 𝖱, which is negative when τ' < 𝖱. No errors are named and no order is given between the guarantee conditions; a segment-root lookup key outside the extrinsic and β fails two conditions at once. |
 
 ## Paper and vectors
@@ -43,6 +44,7 @@ Gaps, where the paper leaves behaviour undefined:
 |---|---|---|
 | 5 | Ψ returns ı = 0 on ∎ and ☇; the vectors report the exiting instruction. | Paper or vector docs: which one is meant? |
 | 15 | The accumulate vectors follow later GP PRs rather than v0.8.0: `bless_from_non_manager-1` and `-2`. | Already in the vectors' CHANGELOG; no issue needed. |
+| 33 | The `fuzzy` and `fuzzy_light` block-import traces follow GP #519 (`bless` from a non-manager accepted), like the accumulate vectors (note 15): `fuzzy_light` block 77. | Already in the vectors' CHANGELOG; no issue needed. |
 | 27 | `trie/trie.json` gives 32-octet keys; GP §D.1 state keys are 31 octets. The roots match with the last octet dropped. | Vectors: say keys are cut to 31 octets, or give 31-octet keys. |
 | 28 | Every erasure vector pads the message polynomial with zeroes to degree < n = 2^⌈log₂ R(v)⌉ and puts parity word i at point (n + i − R(v))~; §H.3 says degree < R(v) and point ĩ. No GP release (v0.1.1–v0.8.0) describes the vectors' layout; it is the "low rate" layout `reed-solomon-simd` documents (originals in one zero-padded power-of-two chunk, recovery shards in the chunks after). | Paper: if that code is intended (the cited Lin–Chung–Han transform works on power-of-two blocks), §H.3 should define p of degree < n with zeroes at d̃ … (n−1)~ and parity at (n + i − d)~; otherwise the vectors should follow §H.3. |
 

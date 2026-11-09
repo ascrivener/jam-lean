@@ -415,6 +415,20 @@ An independent kernel, nanoda as vendored by
   - *How:* as `Assign` (tag 12), with the count n decoded from the stream (`decodeU32`) instead of read
     from the globals. Tag 24 is `AssignForGasCost` by elimination; the field shapes agree.
 
+- **Tag 0 (`CreateService`) as a decode-loop element.** `Decode.CreateServiceElem`
+  (`Services/Bootstrap/Decode/CreateService*.lean`).
+  - *Statement:* the encoding 0 :: h ++ u₁ ++ u₂ ++ u₃ ++ u₄ ++ arr ++ ov ++ u₅ ++ ou (a 32-octet hash,
+    four `u64`s, a 128-octet array, an `Option<Vec<u8>>` ov, a `u64`, an `Option<u32>` ou) decodes to
+    the slot with the hash at 32, the `u64`s at 64 … 88, the array at 96, u₅ at 224, ou's tag at 24 and
+    its value at 28 (for `Some`). The first three words are ov's: `create_service_noneF` (ElemOkF) and
+    `create_service_none_elem` for `None` (the niche 2⁶⁴ − 1 at 0), `create_service_empty_elem` for
+    `Some([])` (`{0, 1, 0}`), `create_service_some_elem` for `Some(bytes)` with 1 … 16384 octets
+    (`{n, q, n}`, bytes in a fresh chunk, or the `alloc` fails).
+  - *Binary:* `CreateService` is the enum's dataful variant: it has no discriminant word, its
+    `Option<Vec<u8>>` capacity word is the niche the other variants' 2⁶³ + t − 1 live in. For `None`,
+    the words at 8 and 16 are stale and the value at 28 is unconstrained; the statements claim neither.
+    Tag 0 is `CreateService` by elimination; the field shapes agree.
+
 - **`Vec<Vec<u8>>` with the payload in the heap (1 ≤ n ≤ 682 elements, each ≤ 16384 octets).**
   `Decode.VecVecU8.vec_vec_u8_heap` (`Services/Bootstrap/Decode/VecVecU8.lean`).
   - *Statement:* the element reader at 8, which reads the items of `DeleteItems`, `Export` and

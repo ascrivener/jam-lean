@@ -107,6 +107,11 @@ import Services.Bootstrap.Decode.Key336Memcpy
 import Services.Bootstrap.Decode.VecKey336
 import Services.Bootstrap.Decode.DesignateHeap
 import Services.Bootstrap.Decode.AssignGas
+import Services.Bootstrap.Decode.CreateService
+import Services.Bootstrap.Decode.CreateServiceRun
+import Services.Bootstrap.Decode.CreateServiceHeap
+import Services.Bootstrap.Decode.CreateServiceEmpty
+import Services.Bootstrap.Decode.CreateServiceElem
 import Services.Bootstrap.Decode.VecVecU8
 import Services.Picoalloc.Model
 import Services.Picoalloc.Invariant

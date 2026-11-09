@@ -61,4 +61,41 @@ theorem fg_alloc_lock {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
     · rd_simp []
     · rd_simp [hwr]
 
+/-- **41109 … 41175**: `alloc_impl` returned `ptr`; the lock byte cleared, and the `Result` written
+    at `out` (from sp + 8): `Ok` (tag 0, `ptr`, size) for a block, `Err` (tag 1, align, size) for
+    null. ω₀, ω₅, ω₆ are restored from the frame (sp + 32, + 24, + 16) and the 40-octet frame popped,
+    at the return's `jumpInd`. -/
+theorem fg_alloc_unlock {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
+    (μ : Memory) (sp al size out ptr r0 r5 r6 : Nat) (h1 : ω[1] = UInt64.ofNat sp)
+    (h6 : ω[6] = UInt64.ofNat size) (h7 : ω[7] = UInt64.ofNat ptr)
+    (m0 : rdN μ sp 8 = al) (m8 : rdN μ (sp + 8) 8 = out) (m16 : rdN μ (sp + 16) 8 = r6)
+    (m24 : rdN μ (sp + 24) 8 = r5) (m32 : rdN μ (sp + 32) 8 = r0)
+    (hal : al < 18446744073709551616) (hs : size < 18446744073709551616) (hptr : ptr < 18446744073709551616)
+    (hsp : 206852 ≤ sp ∧ sp + 40 < 4294967296) (hout : 206852 ≤ out ∧ out + 24 < 4294967296)
+    (dso : out + 24 ≤ sp ∨ sp + 40 ≤ out)
+    (hrs : ∀ a, sp ≤ a → a < sp + 40 → μ.readable a = true)
+    (hwo : ∀ a, out ≤ a → a < out + 24 → μ.writable a = true) (hwl : μ.writable 206848 = true) :
+    ∃ ω' μ', FreeStepsH p R 41109 ω μ x 41175 ω' μ' x 30 ∧
+      ω'[0] = UInt64.ofNat r0 ∧ ω'[1] = UInt64.ofNat (sp + 40) ∧ ω'[5] = UInt64.ofNat r5 ∧
+      ω'[6] = UInt64.ofNat r6 ∧
+      rdN μ' out 8 = (if ptr = 0 then 1 else 0) ∧ rdN μ' (out + 8) 8 = (if ptr = 0 then al else ptr) ∧
+      rdN μ' (out + 16) 8 = size ∧ rdN μ' 206848 1 = 0 ∧
+      (∀ a, a < 4294967296 → a ≠ 206848 → (a < out ∨ out + 24 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have hro : ∀ a, out ≤ a → a < out + 24 → μ.readable a = true :=
+    fun a h1 h2 => Memory.readable_of_writable (hwo a h1 h2)
+  have hrl : μ.readable 206848 = true := Memory.readable_of_writable hwl
+  by_cases hp0 : ptr = 0
+  · rw [hp0] at h7
+    rw [show ω = regsNF ω [] from rfl]
+    refine ⟨?ω', ?μ', ?run, ?post⟩
+    case run => pvm_go [h1, h6, h7, m0, m8, m16, m24, m32, hrs, hro, hwo, hwl, hrl, rdN_writeN_disjoint,
+      ↓rdN_fold, ↓loadI_fold, Nat.mod_eq_of_lt hal]
+    case post => sorry
+  · rw [show ω = regsNF ω [] from rfl]
+    refine ⟨?ω', ?μ', ?run, ?post⟩
+    case run => pvm_go [h1, h6, h7, m0, m8, m16, m24, m32, hrs, hro, hwo, hwl, hrl, rdN_writeN_disjoint,
+      ↓rdN_fold, ↓loadI_fold, Nat.mod_eq_of_lt hptr, hp0]
+    case post => sorry
+
 end Services.Bootstrap.Acc

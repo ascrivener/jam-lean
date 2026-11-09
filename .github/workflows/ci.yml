@@ -19,9 +19,16 @@ jobs:
 
       - name: Install elan
         run: |
-          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh \
+          curl -sSfL --retry 5 --retry-all-errors https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh \
             | sh -s -- -y --default-toolchain none
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+          # Download the pinned toolchain up front, retrying transient download errors (e.g. HTTP 504).
+          for i in 1 2 3 4 5; do
+            "$HOME/.elan/bin/elan" toolchain install "$(cat lean-toolchain)" && break
+            echo "toolchain download failed (attempt $i); retrying" >&2
+            sleep $((i * 15))
+          done
+          "$HOME/.elan/bin/elan" toolchain list | grep -q "$(cut -d: -f2 lean-toolchain)"
 
       # Restore the newest build of this toolchain; lake rebuilds only what changed since. The build is
       # saved after every run, even a failed or timed-out one, so no run's work is lost.

@@ -11,8 +11,9 @@ inside an allocated chunk, and either
   every allocated chunk of s and its data, the context kept, and a value whose property may also
   depend on the heap, through chunks allocated during the element only (so later steps that keep
   those chunks' data keep it); or
-* reaches the `alloc` wrapper's return (40611) with null, the model's `alloc` having failed: the
-  start of heap exhaustion (bootstrap decision 4).
+* reaches a failed allocator call (`Exhausts`): an allocator wrapper returned null and the model's
+  call fails (`AllocFail`: `alloc` at 40611, or `realloc` in `read_vec` at 33055), the start of heap
+  exhaustion (bootstrap decision 4).
 
 `ElemOkA.of_elemOk`: every `ElemOk` is an `ElemOkA` that leaves the allocator alone.
 -/
@@ -47,6 +48,48 @@ theorem heap_writable_data {env : RefineHost.Env} {pb : Nat} {μ : Memory} {s : 
   rw [show pageSize = 4096 from rfl, hq]
   simp only [decide_eq_true_eq]; omega
 
+/-- **A failed allocator call**, at the point `j` where the run sees it: the `alloc` wrapper's
+    return (40611), the model's `alloc` failing; or `read_vec`'s return from the `realloc` wrapper
+    (33055, in `finish_grow`'s growth of a `Vec`), the model's `realloc` failing. At either the wrapper
+    has returned null (ω₇ = 0): the start of heap exhaustion (bootstrap decision 4). -/
+def AllocFail (pb j : Nat) : Prop :=
+  (j = 40611 ∧ ∃ (s : State) (hb r : Nat), alloc (growTo pb) hb 1 r s = none) ∨
+  (j = 33055 ∧ ∃ (s : State) (hb ptr al r : Nat), realloc (growTo pb) hb s ptr al r = none)
+
+/-- The run reaches a failed allocator call (`AllocFail`), the wrapper having returned null. -/
+def Exhausts (env : RefineHost.Env) (cap pb : Nat) (p : ByteArray) (P : Program) (i : Nat) (ω : Regs)
+    (μ : Memory) (x : RefineCtx) (n : Nat) : Prop :=
+  ∃ (ω' : Regs) (μ' : Memory) (j : Nat),
+    FreeStepsH p (refineContractK cap env) i ω μ x j ω' μ' x n ∧ ω'[7] = UInt64.ofNat 0 ∧ AllocFail pb j
+
+/-- A failed `alloc`, reaching the wrapper's return with null, is a failed allocator call. -/
+theorem Exhausts.of_alloc {env : RefineHost.Env} {cap pb : Nat} {p : ByteArray} {P : Program} {i : Nat}
+    {ω ω' : Regs} {μ μ' : Memory} {x : RefineCtx} {n : Nat} {s : State} {hb r : Nat}
+    (run : FreeStepsH p (refineContractK cap env) i ω μ x 40611 ω' μ' x n) (e7 : ω'[7] = UInt64.ofNat 0)
+    (ha : alloc (growTo pb) hb 1 r s = none) : Exhausts env cap pb p P i ω μ x n :=
+  ⟨ω', μ', 40611, run, e7, Or.inl ⟨rfl, s, hb, r, ha⟩⟩
+
+/-- A failed `realloc` in `read_vec`, returning null to 33055, is a failed allocator call. -/
+theorem Exhausts.of_realloc {env : RefineHost.Env} {cap pb : Nat} {p : ByteArray} {P : Program} {i : Nat}
+    {ω ω' : Regs} {μ μ' : Memory} {x : RefineCtx} {n : Nat} {s : State} {hb ptr al r : Nat}
+    (run : FreeStepsH p (refineContractK cap env) i ω μ x 33055 ω' μ' x n) (e7 : ω'[7] = UInt64.ofNat 0)
+    (ha : realloc (growTo pb) hb s ptr al r = none) : Exhausts env cap pb p P i ω μ x n :=
+  ⟨ω', μ', 33055, run, e7, Or.inr ⟨rfl, s, hb, ptr, al, r, ha⟩⟩
+
+/-- A run before a failed allocator call is still one. -/
+theorem Exhausts.pre {env : RefineHost.Env} {cap pb : Nat} {p : ByteArray} {P : Program} {i j : Nat}
+    {ω ω1 : Regs} {μ μ1 : Memory} {x : RefineCtx} {n m : Nat}
+    (run : FreeStepsH p (refineContractK cap env) i ω μ x j ω1 μ1 x n) (h : Exhausts env cap pb p P j ω1 μ1 x m) :
+    Exhausts env cap pb p P i ω μ x (n + m) := by
+  obtain ⟨ω', μ', k, run', e7, ha⟩ := h
+  exact ⟨ω', μ', k, run.trans run', e7, ha⟩
+
+theorem Exhausts.mono {env : RefineHost.Env} {cap pb : Nat} {p : ByteArray} {P : Program} {i : Nat}
+    {ω : Regs} {μ : Memory} {x : RefineCtx} {n m : Nat} (h : Exhausts env cap pb p P i ω μ x n) (hnm : n ≤ m) :
+    Exhausts env cap pb p P i ω μ x m := by
+  obtain ⟨ω', μ', k, run', e7, ha⟩ := h
+  exact ⟨ω', μ', k, run'.mono hnm, e7, ha⟩
+
 /-- **One element decodes, possibly allocating** (see the module doc). -/
 def ElemOkA (env : RefineHost.Env) (cap pb : Nat) (p : ByteArray) (P : Program) (N : Nat)
     (enc : List UInt8) (Rep : List UInt8 → Memory → Prop) : Prop :=
@@ -80,8 +123,7 @@ def ElemOkA (env : RefineHost.Env) (cap pb : Nat) (p : ByteArray) (P : Program) 
         (a < 4278058648 ∨ 4278058664 ≤ a) → (a < 4278057752 ∨ 4278057984 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, a < 196608 → μ'.read a = μ.read a) ∧ (∀ a, a < 196608 → μ'.readable a = μ.readable a) ∧
       (∀ a, 4278050816 ≤ a → μ'.writable a = μ.writable a)) ∨
-    (∃ (ω' : Regs) (μ' : Memory) (s'' : State) (hb r : Nat), FreeStepsH p (refineContractK cap env) 20626 ω μ x 40611 ω' μ' x N ∧
-      ω'[7] = UInt64.ofNat 0 ∧ alloc (growTo pb) hb 1 r s'' = none)
+    Exhausts env cap pb p P 20626 ω μ x N
 
 /-- **Every `ElemOk` is an `ElemOkA`** that keeps the allocator's state: its writes, to the stack,
     the reader and the slot, are all above 2^31. -/

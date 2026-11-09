@@ -76,10 +76,10 @@ def ElemOkA (env : RefineHost.Env) (cap pb : Nat) (p : ByteArray) (P : Program) 
       (∃ cs : List Chunk, (∀ c ∈ cs, c ∈ chunks s' ∧ c.used = true ∧ ∀ d ∈ chunks s, d.used = true → d ≠ c) ∧
         ∀ μ'' : Memory, (∀ c ∈ cs, ∀ a, InData c a → μ''.read a = μ'.read a) →
           Rep (μ'.readN 4278057752 232) μ'') ∧
-      (∀ a, 2147483648 ≤ a → a < 4294967296 → (a < 4278050816 ∨ 4278057664 ≤ a) →
+      (∀ a, 4278057664 ≤ a → a < 4294967296 →
         (a < 4278058648 ∨ 4278058664 ≤ a) → (a < 4278057752 ∨ 4278057984 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, a < 196608 → μ'.read a = μ.read a) ∧ (∀ a, a < 196608 → μ'.readable a = μ.readable a) ∧
-      (∀ a, 2147483648 ≤ a → μ'.writable a = μ.writable a)) ∨
+      (∀ a, 4278050816 ≤ a → μ'.writable a = μ.writable a)) ∨
     (∃ (ω' : Regs) (μ' : Memory) (s'' : State) (hb r : Nat), FreeStepsH p (refineContractK cap env) 20626 ω μ x 40611 ω' μ' x N ∧
       ω'[7] = UInt64.ofNat 0 ∧ alloc (growTo pb) hb 1 r s'' = none)
 
@@ -101,7 +101,7 @@ theorem ElemOkA.of_elemOk {env : RefineHost.Env} {cap pb : Nat} {p : ByteArray} 
       ⟨ph, h48, hhb, HeapPages.of_eq hpg ewr, hHTs, hHT⟩, H.hSb, H.hS1,
       fun a h1 h2 => by rw [ewr]; exact H.st a h1 h2⟩,
     fun c hc _ => hc, fun c hc _ a ha => low a ?_, ⟨[], by simp, fun _ _ => eRep⟩,
-    fun a _ h0 h1 h2 h3 => efr a h0 h1 h2 h3, fun a ha => low a (by omega), fun a _ => erd a, fun a _ => ewr a⟩
+    fun a h h0 h2 h3 => efr a h0 (Or.inr h) h2 h3, fun a ha => low a (by omega), fun a _ => erd a, fun a _ => ewr a⟩
   have ht := H.wf.2.2.2.1
   unfold TilesOk at ht
   have htop : s.top = s.base + 1073741824 := by unfold State.top; rw [maxSize_val]

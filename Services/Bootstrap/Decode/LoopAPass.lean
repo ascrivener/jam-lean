@@ -77,15 +77,16 @@ structure InvA (env : RefineHost.Env) (pb : Nat) (es : List (List UInt8))
   cbm : cb ∈ chunks s ∧ cb.used = true
   cbd : ∀ a, B ≤ a → a < B + 232 * es.length → InData cb a
 
-/-- What a pass may change: the stack below the loop's frame and the reader, above 2^31; below it,
-    only the buffer's octets among the allocated chunks' data, and nothing below 196608. -/
+/-- What a pass may change: above the loop's frame (4278058216), only the reader; among the allocated
+    chunks' data, only the buffer's octets; nothing below 196608; and the access of nothing from the
+    stack's bottom up. -/
 def FrameA (n B : Nat) (s : State) (μ : Memory) (s' : State) (μ' : Memory) : Prop :=
-  (∀ a, 2147483648 ≤ a → a < 4294967296 → (a < 4278050816 ∨ 4278058216 ≤ a) →
+  (∀ a, 4278058216 ≤ a → a < 4294967296 →
     (a < 4278058648 ∨ 4278058664 ≤ a) → μ'.read a = μ.read a) ∧
   (∀ c ∈ chunks s, c.used = true → c ∈ chunks s') ∧
   (∀ c ∈ chunks s, c.used = true → ∀ a, InData c a → (a < B ∨ B + 232 * n ≤ a) → μ'.read a = μ.read a) ∧
   (∀ a, a < 196608 → μ'.read a = μ.read a ∧ μ'.readable a = μ.readable a) ∧
-  (∀ a, 2147483648 ≤ a → μ'.writable a = μ.writable a)
+  (∀ a, 4278050816 ≤ a → μ'.writable a = μ.writable a)
 
 /-- The run reaches a failed allocation. -/
 def Exhausts (env : RefineHost.Env) (cap pb : Nat) (p : ByteArray) (P : Program) (i : Nat) (ω : Regs)
@@ -177,10 +178,10 @@ theorem passA {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env)
     exact Or.inr ⟨ω3, μ3, s'', hb, r, (run1.trans (run2.trans run3)).mono (by omega), e7, ha⟩
   obtain ⟨ω3, μ3, s', run3, c1, c5, c6, cR0, cR8, ⟨W, hW, cW, cne⟩, heap3, keepU, keepD, ⟨cs, hcs, crep⟩,
     cfr, clow, clowr, cwr⟩ := hs
-  have cfr' : ∀ a, 2147483648 ≤ a → (decide (a < 4294967296) && !(decide (4278050816 ≤ a ∧ a < 4278057664)) && !(decide (4278058648 ≤ a ∧ a < 4278058664)) && !(decide (4278057752 ≤ a ∧ a < 4278057984))) = true →
-      μ3.read a = μ2.read a := fun a h0 ha => cfr a h0 (by fr_conv) (by fr_conv) (by fr_conv) (by fr_conv)
+  have cfr' : ∀ a, 4278057664 ≤ a → (decide (a < 4294967296) && !(decide (4278058648 ≤ a ∧ a < 4278058664)) && !(decide (4278057752 ≤ a ∧ a < 4278057984))) = true →
+      μ3.read a = μ2.read a := fun a h0 ha => cfr a h0 (by fr_conv) (by fr_conv) (by fr_conv)
   clear cfr
-  have wr3 : ∀ a, 2147483648 ≤ a → μ3.writable a = μ.writable a := fun a h => by rw [cwr a h, bwr, awr]
+  have wr3 : ∀ a, 4278050816 ≤ a → μ3.writable a = μ.writable a := fun a h => by rw [cwr a h, bwr, awr]
   have hcb' := keepU cb hcb hcbu
   have hcp' := keepU cp hcp hcpu
   -- S3 and the first move
@@ -236,10 +237,10 @@ theorem passA {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env)
   have low37 : ∀ a, a < 2147483648 → (a < B + 232 * k ∨ B + 232 * k + 232 ≤ a) → μ7.read a = μ3.read a :=
     fun a h0 h1 => (gfr' a (by fr_conv)).trans ((ffr' a (by fr_conv)).trans (efr' a (by fr_conv)))
   -- everything above 2^31 outside the stack and the reader is as at the start
-  have backH : ∀ a, 2147483648 ≤ a → a < 4294967296 → (a < 4278050816 ∨ 4278058216 ≤ a) →
-      (a < 4278058648 ∨ 4278058664 ≤ a) → μ7.read a = μ.read a := fun a h h0 h1 h2 =>
+  have backH : ∀ a, 4278058216 ≤ a → a < 4294967296 →
+      (a < 4278058648 ∨ 4278058664 ≤ a) → μ7.read a = μ.read a := fun a h h0 h2 =>
     (gfr' a (by fr_conv)).trans ((ffr' a (by fr_conv)).trans ((efr' a (by fr_conv)).trans
-      ((cfr' a h (by fr_conv)).trans ((bfr' a (by fr_conv)).trans (afr' a (by fr_conv))))))
+      ((cfr' a (by omega) (by fr_conv)).trans ((bfr' a (by fr_conv)).trans (afr' a (by fr_conv))))))
   -- an allocated chunk's data, off the slot, is as at the start
   have backD : ∀ c ∈ chunks s, c.used = true → ∀ a, InData c a → (a < B + 232 * k ∨ B + 232 * k + 232 ≤ a) →
       μ7.read a = μ.read a := fun c hc hu a ha hs => by
@@ -258,7 +259,7 @@ theorem passA {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env)
   have q1 : ω7[1] = UInt64.ofNat 4278057688 := g1
   have hrdL : ∀ a, a < 196608 → μ7.readable a = μ.readable a := fun a ha => by
     rw [grd, frd, erd, clowr a ha, brd, ard]
-  have hwrq : ∀ a, 2147483648 ≤ a → μ7.writable a = μ.writable a := fun a ha => by
+  have hwrq : ∀ a, 4278050816 ≤ a → μ7.writable a = μ.writable a := fun a ha => by
     rw [gwr, fwr, ewr, wr3 a ha]
   have hwr73 : ∀ a, μ7.writable a = μ3.writable a := fun a => by rw [gwr, fwr, ewr]
   -- the reader, after the element
@@ -342,9 +343,9 @@ theorem passA {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env)
     · intro a h1 h2; rw [Memory.writable_writeN, hwrq a (by omega)]; exact wr a h1 h2
     · intro a h1 h2; rw [Memory.readable_writeN, hrdL a (by omega)]; exact rt a h1 h2
     · exact heap_of_high heap7 wlow (fun a => Memory.writable_writeN _ _ _ _)
-    · intro a h h0 h1 h2
+    · intro a h h0 h2
       rw [Memory.read_writeN_disjoint _ _ _ _ (by simp; omega) (by simp [two32]) (by simp [two32]; omega)]
-      exact backH a h h0 h1 h2
+      exact backH a h h0 h2
     · intro c hc hu a ha hb
       have hd := ha
       unfold InData at hd
@@ -371,7 +372,7 @@ theorem passA {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env)
 
 theorem FrameA.trans {n B : Nat} {s s1 s2 : State} {μ μ1 μ2 : Memory} (f1 : FrameA n B s μ s1 μ1)
     (f2 : FrameA n B s1 μ1 s2 μ2) : FrameA n B s μ s2 μ2 :=
-  ⟨fun a h h0 h1 h2 => (f2.1 a h h0 h1 h2).trans (f1.1 a h h0 h1 h2),
+  ⟨fun a h h0 h2 => (f2.1 a h h0 h2).trans (f1.1 a h h0 h2),
    fun c hc hu => f2.2.1 c (f1.2.1 c hc hu) hu,
    fun c hc hu a ha hb => (f2.2.2.1 c (f1.2.1 c hc hu) hu a ha hb).trans (f1.2.2.1 c hc hu a ha hb),
    fun a ha => ⟨(f2.2.2.2.1 a ha).1.trans (f1.2.2.2.1 a ha).1, (f2.2.2.2.1 a ha).2.trans (f1.2.2.2.1 a ha).2⟩,

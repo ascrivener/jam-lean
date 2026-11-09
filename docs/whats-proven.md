@@ -184,6 +184,16 @@ An independent kernel, nanoda as vendored by
     (4278050816, the blob's 8192-octet stack) to the loop's frame.
   - *Scope:* `ElemOk`s for the remaining variants (Assign and the Vec/Option ones)
     are not stated yet; the loop is not yet composed into a Ψ_R theorem.
+- **The decode loops at any frame base.** `Decode.Loop.ElemOkF`, `passF`, `loopF`,
+  `Decode.LoopA.ElemOkAF`, `passAF`, `loopAF`, the adapters `Decode.Elems.*F` and
+  `Decode.Assign.assign_elemF` (`Services/Bootstrap/Decode/LoopF.lean`, `Loop.lean`, `LoopA.lean`,
+  `LoopAPass.lean`, `Elems.lean`, `Assign.lean`).
+  - *Statement:* the decode loop's theorems with the decoder's frame at any base F (every stack
+    address F + const), the reader at RD, the payload at P0 and the reader's length Lt, under `Lay F RD`
+    (F at least 2048 above the stack's bottom and 8-aligned, RD above the loop's frame) and `OkF`
+    (the payload in the heap, from 206864). Accumulate runs the same loop 1160 octets lower; refine's
+    theorems (`ElemOk`, `pass`, `loop`, `ElemOkA`, `passA`, `loopA`, each adapter) are these at
+    F = 4278057632, RD = 4278058648, P0 = 206913, with unchanged statements.
 - **`Instruction::decode`'s tag dispatch, for every tag.** `Decode.Tag.dispatch`, `reject` and
   `unit_variant` (`Services/Bootstrap/Decode/Tag.lean`).
   - *Statement:* from 20626, where the reader has just read the tag octet into the function's
@@ -345,9 +355,33 @@ An independent kernel, nanoda as vendored by
       allocated chunk of `s` is kept with its data, the block is a new allocated chunk, and page
       entries outside the heap are kept;
     - the model's `alloc` fails: the run reaches the `alloc` wrapper's return (40611) with null.
+
+    `vec_u8_heap` also keeps memory below 196608 (contents and readability), the globals (`Glob`)
+    and the stack's writability.
   - *How:* the payload survives the `alloc` because `alloc` keeps every allocated chunk and writes
     only off their data (`HKeep`, `off_hdr_data`); the reader's writes stay in the new block
     (`data_disj`). `read_low` is the reader for a source below its frames.
+
+- **`Vec<Vec<u8>>` with the payload in the heap (1 ≤ n ≤ 682 elements, each ≤ 16384 octets).**
+  `Decode.VecVecU8.vec_vec_u8_heap` (`Services/Bootstrap/Decode/VecVecU8.lean`).
+  - *Statement:* the element reader at 8, which reads the items of `DeleteItems`, `Export` and
+    `Imported`. It runs in the decode loop's setting: the payload (each element's ℰ(|e|) ++ e, laid
+    end to end) lies inside an allocated chunk's data, under `HeapCtx` and `refineContractK cap`
+    (cap ≥ 2²⁷). There are two outcomes:
+    - the reader returns the `Vec` `{cap n, ptr q, len n}`, with element j at q + 24j as the
+      `Vec<u8>` `{|es[j]|, qs j, |es[j]|}` and qs j holding es[j]. The buffer and the elements'
+      blocks are fresh allocated chunks (`cs`): the elements read back from any memory that keeps
+      their data. The reader is advanced past the payload. The context, every allocated chunk of
+      `s` with its data, memory below 196608, the globals and the stack's access are kept;
+    - an allocation fails (`Exhausts`): the first `alloc`, or one element's `read_vec`.
+  - *How:* `q1` opens the frame and calls `finish_grow`, then `alloc_call` and `q4`. Each pass is
+    `pass` = `elem` + `r3`. `elem` covers the length decoder (`decodeU32`) and `read_vec`, which is
+    `vec_u8_empty` for an empty element (the dangling pointer 1, no allocation) or `vec_u8_heap`.
+    `r3` pushes the element. `loop` is induction on the elements left, collecting the elements'
+    chunks. `x1` and `x2` store the `Vec`.
+  - *Assumed:* n ≤ 682, so a single `alloc` holds the buffer (the binary reserves min(n, 682)
+    elements first); each element at most 16384 octets (`vec_u8_heap`'s range). Larger values go
+    through `realloc` and are not proven yet.
 
 - **`Vec<(u64, u64)>` and `Import { items }` with the payload in the heap (1 ≤ n ≤ 1024).**
   `Decode.VecPairs.vec_pairs_heap` and `Decode.VecPairs.import_heap`
@@ -359,7 +393,9 @@ An independent kernel, nanoda as vendored by
       the 16n payload octets at q, the reader advanced by 16n, the context kept for `s'`, every
       allocated chunk of `s` kept with its data, the block a new allocated chunk, and page entries
       outside the heap kept. `import_heap` returns `Import` from 20626: the discriminant word
-      2^63 + 8 and that `Vec` at O, with the reader advanced past ℰ(n) and the items;
+      2^63 + 8 and that `Vec` at O, with the reader advanced past ℰ(n) and the items. Both also
+      keep memory below 196608 (contents and readability), the globals (`Glob`) and the stack's
+      writability, which the decode loop's element contract asks for;
     - the model's `alloc` fails: the run reaches the `alloc` wrapper's return (40611) with null.
   - *How:* `p1` sets up the frame and calls `finish_grow` (`g1e`), then `alloc_call`. `loop` copies
     one pair per pass (`pass`, 260 steps), induction on the count left. `ex1` and `ex2` store the
@@ -383,6 +419,25 @@ An independent kernel, nanoda as vendored by
 
     The wrappers (`realloc_wrap_keep`, `realloc_wrap_keep0`) carry it through the lock and unlock.
   - *Assumed:* as `realloc_wrap_cases_hdata`.
+
+- **One `realloc` call on the allocator's context.** `Decode.ReallocCall.realloc_call`
+  (`Services/Bootstrap/Decode/ReallocCall.lean`).
+  - *Statement:* from 40701 to 40821, under `refineContractK cap` with cap ≥ 2²⁷, on `HeapCtx`, with
+    ω₇ = ptr the data address of an allocated chunk, ω₉ = align (1 … 32) and ω₁₀ = size > 0. Two
+    outcomes:
+    - the model's `realloc` gives `(r, s', b)`: the wrapper returns r, and `HeapCtx` holds for `s'`.
+      The old block's first min(usable, ⌈size/32⌉)·32 octets are at r. Every other allocated chunk
+      of `s` is still a chunk of `s'` (`realloc_keeps_used`), with its data (`OthersData`). r's
+      chunk is allocated, of exactly ⌈size/32⌉ + 1 units. The stack from sp up, memory below 196608
+      (contents and readability) and writability from S0 up are kept, and ω₀, ω₁, ω₅, ω₆ restored;
+    - the model's `realloc` fails: the wrapper returns null and `HeapCtx` holds for `s`.
+  - *How:* `realloc_wrap_cases_keepK` restates `realloc_wrap_cases_keep` under `refineContractK cap`.
+    The fallback's `alloc` may now grow the heap by any amount within the cap (`fallback_tail_heap_keepK`,
+    `fallback_refines_heap_keepK`, `realloc_wrap_fallback_keepK`, through `alloc_refines_growK_hdr`).
+    Every other step lifts from `refineContract` (`lift`: `FreeStepsH.weaken`, `refineContract_le`).
+    With cap ≥ 2²⁷ the growth cost fits, since 4096·pb ≤ S0 < 2³² gives pb < 2²⁰.
+  - *Assumed:* the heap base is 8-aligned (`s.base % 8 = 0`), which `HeapCtx` does not record; the
+    stack frame below sp (S0 + 320 ≤ sp, 2147483968 ≤ sp, 8-aligned).
 
 - **The decode loop for elements that allocate.** `Decode.LoopA.loopA`, `ElemOkA`,
   `Decode.HeapCtx.alloc_call` (`Services/Bootstrap/Decode/LoopA.lean`, `LoopAPass.lean`, `HeapCtx.lean`,

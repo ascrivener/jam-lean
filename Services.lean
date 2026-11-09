@@ -66,6 +66,7 @@ import Services.Bootstrap.Decode.Upgrade
 import Services.Bootstrap.Decode.Lookup
 import Services.Bootstrap.Decode.Transfer
 import Services.Bootstrap.Decode.RandomStorageRefine
+import Services.Bootstrap.Decode.LoopF
 import Services.Bootstrap.Decode.Loop
 import Services.Bootstrap.Decode.Elems
 import Services.Bootstrap.Decode.LoopAPass
@@ -90,8 +91,14 @@ import Services.Bootstrap.Decode.VecU8Heap
 import Services.Bootstrap.Decode.LookedUpHeap
 import Services.Bootstrap.Decode.ProvideInlineHeap
 import Services.Bootstrap.Decode.ReallocKeepAll
+import Services.Bootstrap.Decode.ReallocCall
 import Services.Bootstrap.Acc.Checkpoint
+import Services.Bootstrap.Acc.Contract
+import Services.Bootstrap.Acc.HostSteps
+import Services.Bootstrap.AccPrefixC
+import Services.Bootstrap.AccBParams
 import Services.Bootstrap.Decode.VecPairs
+import Services.Bootstrap.Decode.VecVecU8
 import Services.Picoalloc.Model
 import Services.Picoalloc.Invariant
 import Services.Picoalloc.FreeLists

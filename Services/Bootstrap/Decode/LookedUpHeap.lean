@@ -132,7 +132,7 @@ theorem looked_up_heap {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
       (by rw [o1', d1, m1, k1', g1]) (by rw [o5, d5, m5, k5, g5]) hv6 o7 (by rw [o8, d6, m6, k6, g6]) o9
       (by decide) jte_842 bs_36016 (by omega) (by omega) hn (by omega) (by omega) ⟨by omega, by omega⟩
       ⟨Nat.le_refl _, by omega⟩ (by omega) dR0 dR8 with
-    ⟨q, s', ω8, μ8, ha, run8, v0, v1, v5', v6', vc, vp, vl, vdata, vR0, vR8, H8, keep, cm8, hfresh, kd8, pg8, vfr⟩ |
+    ⟨q, s', ω8, μ8, ha, run8, v0, v1, v5', v6', vc, vp, vl, vdata, vR0, vR8, H8, keep, cm8, hfresh, kd8, pg8, vfr, -, -, -⟩ |
     ⟨hna, ω8, μ8, run8, f7⟩
   rotate_left
   · exact Or.inr ⟨hna, ω8, μ8, (run07.trans run8).mono (by omega), f7⟩

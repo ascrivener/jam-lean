@@ -2,6 +2,7 @@ import Services.Bootstrap.Decode.HeapFrame
 import Services.Bootstrap.Decode.HeapWrap
 import Services.Bootstrap.Alloc.AllocWrap
 import Services.Bootstrap.Alloc.AllocFailRefines
+import JAM.Theorems.KeepRO
 
 /-!
 # The allocator's context, and one call of its `alloc` wrapper
@@ -35,6 +36,17 @@ structure HeapCtx (env : RefineHost.Env) (pb S0 S1 : Nat) (μ : Memory) (s : Sta
   hSb : 4096 * pb ≤ S0
   hS1 : S1 < 4294967296
   st : ∀ a, S0 ≤ a → a < S1 → μ.writable a = true
+  /-- Below the read-write data (196608, page 48) nothing is writable: the code's read-only data. -/
+  ro : ∀ a, a < 196608 → μ.writable a = false
+
+/-- Pages below 48 kept keep the read-only region read-only. -/
+theorem ro_of_pages {μ μ' : Memory} (h : ∀ a, a < 196608 → μ.writable a = false)
+    (hp : ∀ q, q < 48 → μ'.pages.get? q = μ.pages.get? q) : ∀ a, a < 196608 → μ'.writable a = false := by
+  intro a ha
+  have e := hp (a / pageSize) (by unfold pageSize; omega)
+  have := h a ha
+  unfold Memory.writable at this ⊢
+  rw [e]; exact this
 
 theorem alloc_base {grow : Grow} {hb r p : Nat} {s s' : State} (hwf : WF s)
     (h : alloc grow hb 1 r s = some (p, s')) : s'.base = s.base := by
@@ -104,7 +116,7 @@ theorem alloc_call {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost
       refine ⟨ptr, s', ω', μ', rfl, run.mono (by omega), ⟨wf', rep', fo', lk, by rw [hb']; exact H.hb0,
         by rw [hb']; exact H.hbT, by rw [hg]; exact H.hA, H.bd,
         ⟨ph, h48, hhb, HeapPages.of_eq hp ww, hHTs, by rw [hb', hg]; exact hHT⟩, H.hSb, H.hS1,
-        fun a h1 h2 => by rw [ww]; exact H.st a h1 h2⟩, keep, hnew, hfresh, hk, e7, efr, e0, e1, e5, e6⟩
+        fun a h1 h2 => by rw [ww]; exact H.st a h1 h2, fun a ha => by rw [ww]; exact H.ro a ha⟩, keep, hnew, hfresh, hk, e7, efr, e0, e1, e5, e6⟩
     · obtain ⟨bin, -, -, -, -, hgrow, -, hs'⟩ := alloc1_grown (by rw [alloc_one H.wf.1] at ha; exact ha) hg
       have hpg : pagesOf (s.base + 32 * s'.allocated) ≤ pb := by
         rw [hs', allocPost_allocated]
@@ -115,6 +127,7 @@ theorem alloc_call {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost
           H.fo H.lock (by have := H.hSb; omega) hHTs hSTk H.hSb hp H.st hHT
       refine ⟨ptr, s', ω', μ', rfl, run, ⟨wf', rep', fo', lk, by rw [hb']; exact H.hb0,
         by rw [hb']; exact H.hbT, by have := H.hSb; rw [hb'] at hHT'; omega, H.bd,
-        ⟨h', by omega, hh'b, hp', by omega, hHT'⟩, H.hSb, H.hS1, wst⟩, keep, hnew, hfresh, hk, e7, efr, e0, e1, e5, e6⟩
+        ⟨h', by omega, hh'b, hp', by omega, hHT'⟩, H.hSb, H.hS1, wst,
+        ro_of_pages H.ro fun q hq => (FreeStepsH.keepRO H.bd run).1 q (Or.inl hq)⟩, keep, hnew, hfresh, hk, e7, efr, e0, e1, e5, e6⟩
 
 end Services.Bootstrap.Decode.HeapCtx

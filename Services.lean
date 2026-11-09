@@ -10,7 +10,12 @@ import Services.Bootstrap.Prefix
 import Services.Bootstrap.CodeOk
 import Services.Bootstrap.CodeX
 import Services.Bootstrap.CodeXOk
+import Services.Bootstrap.CodeA
+import Services.Bootstrap.CodeAAll
+import Services.Bootstrap.CodeAOk
 import Services.Bootstrap.BParams
+import Services.Bootstrap.BParamsConsts
+import Services.Bootstrap.StartupConsts
 import Services.Bootstrap.Reader
 import Services.Bootstrap.DecodeU32
 import Services.Bootstrap.DecodeU16
@@ -85,6 +90,8 @@ import Services.Bootstrap.Decode.VecU8Heap
 import Services.Bootstrap.Decode.LookedUpHeap
 import Services.Bootstrap.Decode.ProvideInlineHeap
 import Services.Bootstrap.Decode.ReallocKeepAll
+import Services.Bootstrap.Acc.Checkpoint
+import Services.Bootstrap.Decode.VecPairs
 import Services.Picoalloc.Model
 import Services.Picoalloc.Invariant
 import Services.Picoalloc.FreeLists

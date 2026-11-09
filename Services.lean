@@ -53,6 +53,7 @@ import Services.Bootstrap.Decode.Tag
 import Services.Bootstrap.Decode.Hash
 import Services.Bootstrap.Decode.Fixed
 import Services.Bootstrap.Decode.HashU64
+import Services.Bootstrap.Decode.U32Hash
 import Services.Picoalloc.Model
 import Services.Picoalloc.Invariant
 import Services.Picoalloc.FreeLists

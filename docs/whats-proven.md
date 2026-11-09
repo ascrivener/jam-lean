@@ -349,6 +349,23 @@ An independent kernel, nanoda as vendored by
     only off their data (`HKeep`, `off_hdr_data`); the reader's writes stay in the new block
     (`data_disj`). `read_low` is the reader for a source below its frames.
 
+- **`realloc` keeps the other allocated chunks' data.** `Decode.ReallocKeepAll.realloc_wrap_cases_keep`
+  (`Services/Bootstrap/Decode/ReallocKeepAll.lean`).
+  - *Statement:* `realloc_wrap_cases_hdata`, and whenever the model's `realloc` returns a block, every
+    octet of the data of an allocated chunk of `s` other than ptr's is as it was (`OthersData`).
+  - *How:* `keep_of_hkeep`: a heap frame (`HKeep`) whose headers are those of `s`'s chunks, or lie in a
+    free chunk or ptr's own chunk, or past the heap's top, keeps every such octet. Each case of
+    `realloc` gives one:
+    - same size: `same_refines_low`, only the stack;
+    - shrink: `shrink_refines_hdr`;
+    - to 0: `free_refines_hdr`;
+    - grow in place, with or without `grow_heap`: `grow_refines_hdr` / `grow_heap_refinesK_hdr`, the
+      new header in the free next chunk (`grow_hdr`);
+    - fallback: `alloc`'s frame, then `memcpy` into the new block (free in `s`), then `free`.
+
+    The wrappers (`realloc_wrap_keep`, `realloc_wrap_keep0`) carry it through the lock and unlock.
+  - *Assumed:* as `realloc_wrap_cases_hdata`.
+
 - **The decode loop for elements that allocate.** `Decode.LoopA.loopA`, `ElemOkA`,
   `Decode.HeapCtx.alloc_call` (`Services/Bootstrap/Decode/LoopA.lean`, `LoopAPass.lean`, `HeapCtx.lean`,
   `HeapWrap.lean`, `HeapFrame.lean`).

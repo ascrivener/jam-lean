@@ -33,6 +33,7 @@ theorem rs_unreg_head {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : 
     (hw : WrAt μ HT S0 S1) :
     ∃ ω' μ', FreeStepsH p R 43563 ω μ x 43677 ω' μ' x 30 ∧ RepAt μ' (unregister s nc bin) H F ∧
       (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → 2147483648 ≤ a → μ'.read a = μ.read a) ∧
+      HKeepG μ μ' (fun a => H a ∨ F a) ∧
       ω'[2] = UInt64.ofNat (size + sz) ∧ ω'[5] = UInt64.ofNat n ∧
       ∀ j : Fin 13, j.val ∉ [2, 5, 6, 9, 11, 12] → ω'[j] = ω[j] := by
   have hAn := hHF nc (Or.inr hFn)
@@ -60,7 +61,9 @@ theorem rs_unreg_head {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : 
       (by rw [← h120]; exact rdN_frame fun j hj => fr1 _ (by omega) (by omega))
       (by rw [← h112]; exact rdN_frame fun j hj => fr1 _ (by omega) (by omega)) hss hsp hsp1 (by omega) hS
       (hw.of_eq ww1)
-    refine ⟨ω2, μ2, (r1.trans r2).mono (by omega), ?_, fun a => (cw a).trans (ww1 a), fun a h1 h2 => ?_, c2', c5,
+    refine ⟨ω2, μ2, (r1.trans r2).mono (by omega), ?_, fun a => (cw a).trans (ww1 a), fun a h1 h2 => ?_,
+      HKeepG.of_low (fun a h1 h2 _ => by rw [cf a (by omega) (by omega) (by omega), fr1 a (by omega) (by omega)]),
+      c2', c5,
       fun j hj => ?_⟩
     · refine unregister_rep_last hrep hc (by unfold binCount; omega) h0' ?_ ?_ ?_ ?_ (fun a ha => ?_)
       · rw [← s1]; exact rdN_frame fun j hj => cf _ (by omega) (by omega) (by omega)
@@ -81,7 +84,8 @@ theorem rs_unreg_head {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : 
     obtain ⟨ω1, μ1, r1, s1, s2, fr1, ww1, e2, e5, g1⟩ := rs_unlink_head (p := p) (P := P) (R := R) x ω μ sp nc
       (196792 + bin * 4) (s.hdr nc).next size sz n h1 h6 h9 h10 h2 hn h112 (by omega) h0' (by omega) (by omega)
       (by omega) hss hsp hsp1 (by omega) ⟨by omega, by omega⟩ (by have := hHFT _ (Or.inr hFx); omega) hS hw
-    refine ⟨ω1, μ1, r1.mono (by omega), ?_, ww1, fun a h1 h2 => fr1 a h1 (by omega) (by omega), e2, e5,
+    refine ⟨ω1, μ1, r1.mono (by omega), ?_, ww1, fun a h1 h2 => fr1 a h1 (by omega) (by omega),
+      HKeepG.of_low (fun a h1 h2 h3 => fr1 a (by omega) (by omega) (by have := h3 _ (Or.inr hFx); omega)), e2, e5,
       fun j hj => g1 j (by simp only [List.mem_cons, List.not_mem_nil, or_false] at hj ⊢; omega)⟩
     refine unregister_rep_head hrep hc (by unfold binCount; omega) h0' s1 s2
       (fun a h1 h2 h3 => fr1 a (by omega) (by omega) h3) (by omega) (fun a ha => ?_)
@@ -102,6 +106,7 @@ theorem rs_unreg_mid {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
     (hw : WrAt μ HT S0 S1) :
     ∃ ω' μ', FreeStepsH p R 43583 ω μ x 43677 ω' μ' x 30 ∧ RepAt μ' (unregister s nc bin) H F ∧
       (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → 2147483648 ≤ a → μ'.read a = μ.read a) ∧
+      HKeepG μ μ' (fun a => H a ∨ F a) ∧
       ω'[2] = UInt64.ofNat (size + sz) ∧ ω'[5] = UInt64.ofNat n ∧
       ∀ j : Fin 13, j.val ∉ [2, 5, 9, 11] → ω'[j] = ω[j] := by
   have hAn := hHF nc (Or.inr hFn)
@@ -131,7 +136,11 @@ theorem rs_unreg_mid {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
   refine ⟨ω1, μ1, r1.mono (by omega), ?_, ww1, fun a h1 h2 => fr1 a h1 (by omega) (by
       rcases hnxA with h | ⟨_, h⟩
       · exact Or.inl h
-      · unfold Al at h; omega), e2, e5, g1⟩
+      · unfold Al at h; omega),
+    HKeepG.of_low (fun a h1 h2 h3 => fr1 a (by omega) (by have := h3 _ (Or.inr hpv); omega) (by
+      rcases hnxA with h | ⟨h0, _⟩
+      · exact Or.inl h
+      · have := h3 _ (Or.inr (hnx h0)); omega)), e2, e5, g1⟩
   refine unregister_rep_mid hrep hc s1 s2 (fun a h1 => fr1 a (by omega)) (by omega)
     (fun h0 => by rcases hnxA with h | ⟨_, h⟩; exact absurd h h0; unfold Al at h; omega)
     hpn (fun a ha => ?_)
@@ -161,6 +170,7 @@ theorem shrink_next {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Re
       ω'[2] = UInt64.ofNat ((mergeNext s Xc cur (base + 1073741824)).2 - n) ∧ ω'[5] = UInt64.ofNat n ∧
       (∀ a, μ'.writable a = μ.writable a) ∧
       (∀ a, a < 4294967296 → 2147483648 ≤ a → (a < sp + 112 ∨ sp + 120 ≤ a) → μ'.read a = μ.read a) ∧
+      HKeepG μ μ' (fun a => H a ∨ F a) ∧
       ∀ j : Fin 13, j.val ∉ [2, 3, 5, 6, 9, 10, 11, 12] → ω'[j] = ω[j] := by
   have hr := hw.rd
   obtain ⟨hX1, hX2, hX3⟩ := hAX
@@ -182,7 +192,7 @@ theorem shrink_next {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Re
       have hwu : (!wordUsed w) = false := by simp [wordUsed, hu]
       rw [if_neg (by simp [hwu])]
       refine ⟨ω2, μ, ((b1.trans r2).trans b2).mono (by omega), hrep, ?_, ?_, fun _ => rfl, fun _ _ _ _ => rfl,
-        fun j hj => ?_⟩
+        HKeepG.refl μ _, fun j hj => ?_⟩
       · rw [fget g2 2 (by decide) (by decide)]; exact h2
       · rw [fget g2 5 (by decide) (by decide)]; exact h5
       · exact g2 j (by simp only [List.mem_cons, List.not_mem_nil, or_false] at hj ⊢; omega)
@@ -245,13 +255,14 @@ theorem shrink_next {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Re
         fun _ _ h a h1 h2 h3 => (h a h1 h2).trans (sf3 a h1 h3)
       by_cases hh : s.heads (binDown sz) = Xc + 32 * cur
       · have b4 := rs_br_head (p := p) (P := P) (R := R) x ω4 μ3 (Xc + 32 * cur) (by rw [d11, hh]) e12
-        obtain ⟨ω5, μ5, r5, rep5, ww5, sf5, f2, f5, g5⟩ := rs_unreg_head (p := p) (P := P) (R := R) x ω4 μ3 s H F
+        obtain ⟨ω5, μ5, r5, rep5, ww5, sf5, hk5, f2, f5, g5⟩ := rs_unreg_head (p := p) (P := P) (R := R) x ω4 μ3 s H F
           sp base (Xc + 32 * cur) (binDown sz) (cur - n) sz n rep3 hh (by unfold binCount; omega) hFn hHF hnx
           hb0 hbT e1 e6 d9 e10 e2 (by rw [fget g4 3 (by decide) (by decide)]; exact d3)
           (by rw [fget g4 7 (by decide) (by decide)]; exact e7) k120 s112
           (by omega) hsp hsp1 hHFT hS (hw.of_eq ww3)
         refine ⟨ω5, μ5, (((((b1.trans r2).trans b2).trans r3).trans r4).trans (b4.trans r5)).mono (by omega),
-          rep5, by rw [f2]; congr 1; omega, f5, fun a => (ww5 a).trans (ww3 a), hfr ω5 μ5 sf5, fun j hj => ?_⟩
+          rep5, by rw [f2]; congr 1; omega, f5, fun a => (ww5 a).trans (ww3 a), hfr ω5 μ5 sf5,
+          (HKeepG.of_low fun a h1 h2 _ => sf3 a (by omega) (Or.inl (by omega))).trans hk5, fun j hj => ?_⟩
         simp only [List.mem_cons, List.not_mem_nil, or_false] at hj
         rw [g5 j (by simp only [List.mem_cons, List.not_mem_nil, or_false]; omega),
           g4 j (by simp only [List.mem_cons, List.not_mem_nil, or_false]; omega),
@@ -260,11 +271,12 @@ theorem shrink_next {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Re
       · obtain ⟨hFp, hpn⟩ := hmid hh
         have b4 := rs_br_mid (p := p) (P := P) (R := R) x ω4 μ3 (Xc + 32 * cur) (s.heads (binDown sz)) d11 e12 hh
           (by omega) hhd1
-        obtain ⟨ω5, μ5, r5, rep5, ww5, sf5, f2, f5, g5⟩ := rs_unreg_mid (p := p) (P := P) (R := R) x ω4 μ3 s H F
+        obtain ⟨ω5, μ5, r5, rep5, ww5, sf5, hk5, f2, f5, g5⟩ := rs_unreg_mid (p := p) (P := P) (R := R) x ω4 μ3 s H F
           sp base (Xc + 32 * cur) (binDown sz) (cur - n) sz n rep3 hh hFn hHF hFp hnx hpn hb0 hbT e1 e6 e10 e2
           s112 (by omega) hsp hsp1 hHFT hS (hw.of_eq ww3)
         refine ⟨ω5, μ5, (((((b1.trans r2).trans b2).trans r3).trans r4).trans (b4.trans r5)).mono (by omega),
-          rep5, by rw [f2]; congr 1; omega, f5, fun a => (ww5 a).trans (ww3 a), hfr ω5 μ5 sf5, fun j hj => ?_⟩
+          rep5, by rw [f2]; congr 1; omega, f5, fun a => (ww5 a).trans (ww3 a), hfr ω5 μ5 sf5,
+          (HKeepG.of_low fun a h1 h2 _ => sf3 a (by omega) (Or.inl (by omega))).trans hk5, fun j hj => ?_⟩
         simp only [List.mem_cons, List.not_mem_nil, or_false] at hj
         rw [g5 j (by simp only [List.mem_cons, List.not_mem_nil, or_false]; omega),
           g4 j (by simp only [List.mem_cons, List.not_mem_nil, or_false]; omega),
@@ -273,7 +285,8 @@ theorem shrink_next {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Re
   · rw [if_neg hlt]
     have b1 := rs_br_end (p := p) (P := P) (R := R) x ω μ (Xc + 32 * cur) (base + 1073741824) h12 h4
       (by omega) (by omega) hbT
-    exact ⟨ω, μ, b1.mono (by omega), hrep, h2, h5, fun _ => rfl, fun _ _ _ _ => rfl, fun _ _ => rfl⟩
+    exact ⟨ω, μ, b1.mono (by omega), hrep, h2, h5, fun _ => rfl, fun _ _ _ _ => rfl, HKeepG.refl μ _,
+      fun _ _ => rfl⟩
 
 /-- **The shrink's last stage, 43677 … the return to `realloc` (40805)**: the tail M = X + 32·n of
     `size` units, with `prev` n, is registered free and the chunk after it records `size` — the
@@ -301,6 +314,7 @@ theorem shrink_tail {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Re
         (fun a => H a ∨ a = Xc + 32 * n) (fun a => F a ∨ a = Xc + 32 * n) ∧
       (∀ a, μ'.writable a = μ.writable a) ∧
       (∀ a, a < 4294967296 → 2147483648 ≤ a → (a < sp + 112 ∨ sp + 120 ≤ a) → μ'.read a = μ.read a) ∧
+      HKeepG μ μ' (fun a => (H a ∨ F a) ∨ a = Xc + 32 * n ∨ a = s2.heads (binDown size)) ∧
       ω'[7] = UInt64.ofNat ptr ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat (sp + 152) ∧
       ω'[5] = UInt64.ofNat v5 ∧ ω'[6] = UInt64.ofNat v6 := by
   obtain ⟨hM1, hM2, hM3⟩ := hAM
@@ -361,7 +375,21 @@ theorem shrink_tail {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Re
     (by rw [← s6]; exact rdN_frame fun j hj => stk1 _ (by omega) (by omega) (Or.inr (by omega))) hsp hsp1
     (fun hlt => ⟨by omega, by have := hHFT _ (Or.inl (hnext hlt)); omega⟩) hS ((hw.of_eq ww1).of_eq ww2)
   refine ⟨ω3, μ3, ((r1.trans r2).trans r3).mono (by omega), ?_, fun a => (ew a).trans ((ww2 a).trans (ww1 a)),
-    fun a h1 h2 h3 => (ef a h1 (by omega)).trans (stk1 a h2 h1 h3), e7, e0, e1', e5', e6⟩
+    fun a h1 h2 h3 => (ef a h1 (by omega)).trans (stk1 a h2 h1 h3), ?hk, e7, e0, e1', e5', e6⟩
+  case hk =>
+    refine HKeepG.of_low fun a h1 h2 h3 => ?_
+    have e1 : μ3.read a = μ2.read a := by
+      by_cases hlt : Xc + 32 * (n + size) < base + 1073741824
+      · have := h3 _ (Or.inl (Or.inl (hnext hlt))); exact ef a (by omega) (Or.inr (by omega))
+      · exact ef a (by omega) (Or.inl (by omega))
+    rw [e1]
+    have := h3 _ (Or.inr (Or.inl rfl))
+    have ho : old = 0 ∨ a < old + 12 ∨ old + 16 ≤ a := by
+      by_cases h0 : old = 0
+      · exact Or.inl h0
+      · have := h3 old (Or.inr (Or.inr rfl)); omega
+    rw [wf2 a (by omega) (by omega) (by omega) ho (by omega) (by omega)]
+    exact sf1 a (by omega) (Or.inl (by omega))
   -- the model's last step
   have hsnd : (register s2 (Xc + 32 * n) n size).2 = size := by rw [register_snd, if_neg (by omega)]
   unfold freeFinal

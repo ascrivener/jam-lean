@@ -22,7 +22,7 @@ variable {X : Type} {R : HostRel X}
     `realloc_impl` (42980) returns into `realloc` (40805) with ω₇ = ptr and memory holding the
     model's `shrink s ptr req`, itself well-formed with its first chunk's `prev` 0, the caller's
     ω₀, ω₁, ω₅, ω₆ restored and the stack from sp up untouched. -/
-theorem shrink_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+theorem shrink_refines_hdr {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
     (s : State) (sp ptr req : Nat) (hwf : WF s) (hrep : Rep μ s)
     (hc : ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true) (hr0 : req ≠ 0) (hr : req < usable s ptr)
     (h1 : ω[1] = UInt64.ofNat sp) (h8 : ω[8] = UInt64.ofNat ptr) (h7 : ω[7] = UInt64.ofNat 196792)
@@ -31,7 +31,8 @@ theorem shrink_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω :
     (hb0 : 206864 ≤ s.base) (hbT : s.base + 1073741824 < 2147483648)
     (hfo : FirstOk s) {HT S0 S1 : Nat} (hHT : s.base + 32 * s.allocated ≤ HT) (hS : S0 + 152 ≤ sp ∧ sp ≤ S1)
     (hw : WrAt μ HT S0 S1) :
-    ∃ ω' μ', FreeStepsH p R 42980 ω μ x 40805 ω' μ' x 180 ∧ Rep μ' (shrink s ptr req) ∧
+    ∃ ω' μ', HKeepG μ μ' (fun a => (∃ c ∈ chunks s, c.addr = a) ∨ a = ptr - 32 + 32 * (req + 1)) ∧
+      FreeStepsH p R 42980 ω μ x 40805 ω' μ' x 180 ∧ Rep μ' (shrink s ptr req) ∧
       WF (shrink s ptr req) ∧ FirstOk (shrink s ptr req) ∧
       (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
       ω'[7] = UInt64.ofNat ptr ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat sp ∧
@@ -216,13 +217,25 @@ theorem shrink_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω :
     | cons e es =>
       have := (Tiles.around htl2).2.1 e (by rw [hp]; rfl)
       exact this ▸ mkH e (hsub0 e (by rw [hp]; simp))
-  obtain ⟨ω', μ', run, rep', ww, stk, e7, e0, e1, e5, e6⟩ := realloc_impl_shrink (p := p) (P := P) (R := R)
+  obtain ⟨ω', μ', run, rep', ww, stk, hk, e7, e0, e1, e5, e6⟩ := realloc_impl_shrink (p := p) (P := P) (R := R)
     x ω μ s H F sp ptr req cur hrep' h1 h8 h7 h10 h0 hsp hsp1 hb0 hbT (hHF _ (Or.inl (mkH _ hXm)))
     (by omega) (mkH _ hXm) hHF (by rw [hXs]; rfl) hr0 (by omega) (by omega) (by omega) hnc' hnf'
     (by rw [hnx]; simp only; omega) (by rw [hnx]; simp only; omega)
     (by rw [hnx]; exact hold') (by rw [hnx]; exact hold1') (by rw [hnx]; exact hnext') hHFT (by omega)
     (by rw [hnx]; exact hold1T) hS hw
-  refine ⟨ω', μ', run, ?_, hwfS, hfirst, ww, stk, e7, e0, e1, e5, e6⟩
+  refine ⟨ω', μ', ?hk, run, ?_, hwfS, hfirst, ww, stk, e7, e0, e1, e5, e6⟩
+  case hk =>
+    rw [hnx] at hk
+    dsimp only at hk
+    have inS : ∀ c, c ∈ pre ++ ⟨ptr - 32, cur, true⟩ :: post → c ∈ chunks s := fun c hc => by rw [hcs']; exact hc
+    refine hk.mono fun b hb => ?_
+    rcases hb with (hb | hb) | hb | hb
+    · obtain ⟨c, hc, h⟩ := unH b hb; exact Or.inl (Or.inl ⟨c, inS c hc, h⟩)
+    · obtain ⟨c, hc, h, -⟩ := unF b hb; exact Or.inl (Or.inl ⟨c, inS c hc, h⟩)
+    · exact Or.inl (Or.inr hb)
+    · rcases heads_ok hF2 (hbinlt (total - (req + 1))) with h | ⟨c, hc, h1, -⟩
+      · right; omega
+      · exact Or.inl (Or.inl ⟨c, inS c (hsub0 c hc), h1.trans hb.symm⟩)
   -- the model's result, read from memory
   subst hposts
   have cls : ∀ c ∈ chunks (shrink s ptr req), H c.addr ∨ c = ⟨ptr - 32 + 32 * (req + 1), rest, false⟩ := by
@@ -260,5 +273,22 @@ theorem shrink_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω :
   · rcases clsF c hc hu with h | h
     · exact rep'.prevL _ (Or.inl h)
     · exact rep'.prevL _ (Or.inr h)
+
+theorem shrink_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (s : State) (sp ptr req : Nat) (hwf : WF s) (hrep : Rep μ s)
+    (hc : ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true) (hr0 : req ≠ 0) (hr : req < usable s ptr)
+    (h1 : ω[1] = UInt64.ofNat sp) (h8 : ω[8] = UInt64.ofNat ptr) (h7 : ω[7] = UInt64.ofNat 196792)
+    (h10 : ω[10] = UInt64.ofNat req) (h0 : ω[0] = UInt64.ofNat 1988)
+    (hsp : 2147483800 ≤ sp) (hsp1 : sp < 4294967296)
+    (hb0 : 206864 ≤ s.base) (hbT : s.base + 1073741824 < 2147483648)
+    (hfo : FirstOk s) {HT S0 S1 : Nat} (hHT : s.base + 32 * s.allocated ≤ HT) (hS : S0 + 152 ≤ sp ∧ sp ≤ S1)
+    (hw : WrAt μ HT S0 S1) :
+    ∃ ω' μ', FreeStepsH p R 42980 ω μ x 40805 ω' μ' x 180 ∧ Rep μ' (shrink s ptr req) ∧
+      WF (shrink s ptr req) ∧ FirstOk (shrink s ptr req) ∧
+      (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
+      ω'[7] = UInt64.ofNat ptr ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat sp ∧
+      ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
+  obtain ⟨ω', μ', -, h⟩ := shrink_refines_hdr (R := R) (p := p) (P := P) (HT := HT) (S0 := S0) (S1 := S1) x ω μ s sp ptr req hwf hrep hc hr0 hr h1 h8 h7 h10 h0 hsp hsp1 hb0 hbT hfo hHT hS hw
+  exact ⟨ω', μ', h⟩
 
 end Services.Bootstrap.Alloc

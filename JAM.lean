@@ -4,15 +4,30 @@ import JAM.Account
 import JAM.Blake2b
 import JAM.Keccak
 import JAM.Work
+import JAM.Decode
+import JAM.Block
+import JAM.Trie
+import JAM.Shuffle
+import JAM.Erasure
 import JAM.Params
 import JAM.Host.General
 import JAM.Merkle
 import JAM.Accumulate
 import JAM.Accumulation
+import JAM.History
+import JAM.Authorization
+import JAM.Statistics
+import JAM.Preimages
+import JAM.Crypto
+import JAM.Disputes
+import JAM.Assurances
+import JAM.Reports
+import JAM.Safrole
 import JAM.Refine
 import JAM.Theorems.HostGas
 import JAM.Theorems.Confinement
 import JAM.Theorems.RefineContract
+import JAM.Theorems.KeepRO
 import JAM.Theorems.GrowHeap
 
 /-!
@@ -27,6 +42,20 @@ Built on `PVM` (Appendix A).
 * `JAM.Params` — chain parameters (full and tiny)
 * `JAM.Host.General` — the general host functions: gas, grow_heap, fetch, lookup, read, write, info
 * `JAM.Work`  — work packages, items, digests and reports (§11, §14)
+* `JAM.Decode` — ℰ⁻¹, the decoders of Appendix C, and those of the work-package family
+* `JAM.Block` — blocks, headers and extrinsics with their encoders and decoders (Appendix C)
+* `JAM.Trie` — state keys C and the state trie root M (Appendix D)
+* `JAM.Shuffle` — the Fisher–Yates shuffle ℱ and 𝒬_l (Appendix F)
+* `JAM.Erasure` — Reed–Solomon erasure coding ℰ_C and recovery ℛ over GF(2¹⁶) (Appendix H)
+* `JAM.History` — recent history β and the accumulation-output belt (§7, Appendix E MMB)
+* `JAM.Authorization` — the authorizer pool α (§8)
+* `JAM.Statistics` — validator, core and service activity statistics (§13)
+* `JAM.Preimages` — the preimages extrinsic and its integration (§12.4)
+* `JAM.Crypto` — the cryptographic primitives (Ed25519 verification; Bandersnatch VRF, Ring VRF and ring root) as parameters (§3.8, Appendix G)
+* `JAM.Disputes` — verdicts, culprits and faults, ψ' and the cleared assignments ρ^‡ (§10)
+* `JAM.Assurances` — the assurances extrinsic, the newly available reports **R** and ρ after assurances (§11.2)
+* `JAM.Reports` — guarantor assignments M and M*, the guarantees extrinsic, ρ' and the reporters G (§11.3–§11.5)
+* `JAM.Safrole` — Safrole: timekeeping, key rotation, entropy, the slot-sealer sequence, the markers and the tickets (§6)
 * `JAM.Refine` — the refine and is-authorized invocations Ψ_R and Ψ_I, with the refine host functions
 * `JAM.Theorems.HostGas` — the dispatchers of Ψ_A, Ψ_R and Ψ_I never add gas
 -/

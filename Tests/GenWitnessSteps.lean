@@ -87,7 +87,18 @@ structure Svc where
   pathExtra : List (Nat × Nat × Nat × List UInt8) := []
   /-- Further inputs whose whole refine paths the code facts cover (`code`, `codecheck`). -/
   codeExtra : List (Nat × Nat × Nat × List UInt8) := []
+  /-- `code` only: more inputs whose instructions the code facts cover, not used by the other modes,
+      each run up to its first visit to `codeOnlyStop`. -/
+  codeOnly : List (Nat × Nat × Nat × List UInt8) := []
+  codeOnlyStop : Nat := 0
   fnRanges : List (Nat × Nat)
+  /-- `codex` / `codexcheck`: more summarized functions, whose code facts go in a separate module
+      (`Services/<name>/CodeX.lean`, assumed by `HasCodeX p P`) so the base facts are not regenerated. -/
+  fnRangesX : List (Nat × Nat) := []
+  /-- `codea` / `codeacheck`: as `fnRangesX`, for accumulate, in a third module
+      (`Services/<name>/CodeA.lean`, assumed by `HasCodeA p P`) holding what neither `Code` nor
+      `CodeX` has. -/
+  fnRangesA : List (Nat × Nat) := []
   /-- Whether `Services/<name>/Memcpy.lean` exists (`memcpy_small` at the head of `fnRanges`):
       the prefix then calls it for each `memcpy` of fewer than 16 octets instead of stepping. -/
   memcpySummary : Bool := false
@@ -122,6 +133,59 @@ def witnessSvc : Svc where
   emptyExtra := [(3, 0, 2147483653, []), (3, 1, 7, []), (20000, 300, 4000000000, [])]
   emptyCode := true
 
+/-- ℰ_l(x), little-endian, for the payloads below. -/
+def le (l x : Nat) : List UInt8 := (List.range l).map fun k => UInt8.ofNat (x / 256 ^ k)
+
+/-- Bootstrap payloads holding every instruction kind (tags 0 … 24, `Instruction` in
+    `jam-bootstrap-service-common` 0.1.29), canonically encoded, then a 32-octet salt: the first
+    with every `Option`, `bool` and choice in its second form and non-empty lists, the second in
+    its first form with empty lists. Their refine runs put every instruction decoder in the code
+    facts. -/
+def allInstrPayloads : List (List UInt8) :=
+  let h (b : Nat) : List UInt8 := List.replicate 32 (UInt8.ofNat b)
+  let memo := List.replicate 128 9
+  let q := (List.range 80).flatMap fun k => h k
+  let a : List (List UInt8) := [
+    [0] ++ h 1 ++ le 8 10 ++ le 8 11 ++ le 8 12 ++ le 8 13 ++ memo ++ [1, 3, 97, 98, 99] ++ le 8 14 ++ [1] ++ le 4 15,
+    [1] ++ h 2 ++ le 8 20 ++ le 8 21,
+    [2] ++ le 4 30 ++ le 8 31 ++ le 8 32 ++ memo,
+    [3] ++ le 4 40,
+    [4] ++ le 4 50 ++ h 3,
+    [5, 2, 2, 1, 2, 0],
+    [6] ++ h 4 ++ le 8 60,
+    [7] ++ h 5 ++ le 8 70,
+    [8] ++ le 4 80 ++ h 6 ++ [0],
+    [9, 0],
+    [10, 2, 1, 7, 0],
+    [11] ++ le 4 1 ++ le 4 2 ++ le 4 3 ++ le 4 4 ++ [1] ++ le 4 5 ++ le 8 6,
+    [12] ++ le 2 1 ++ q ++ le 4 7,
+    [13, 1] ++ List.replicate 336 8,
+    [14] ++ h 7,
+    [15],
+    [16],
+    [17] ++ le 4 90 ++ [1, 2, 5, 6],
+    [18, 1, 2, 3, 4],
+    [19, 2, 1, 5, 0],
+    [20] ++ le 8 3,
+    [21] ++ le 8 42 ++ [2],
+    [22, 0, 1] ++ h 8,
+    [23],
+    [24] ++ le 2 2 ++ [1] ++ h 9 ++ le 4 8]
+  let b : List (List UInt8) := [
+    [0] ++ h 1 ++ le 8 10 ++ le 8 11 ++ le 8 12 ++ le 8 13 ++ memo ++ [0] ++ le 8 14 ++ [0],
+    [5, 0],
+    [8] ++ le 4 80 ++ h 6 ++ [1],
+    [10, 0],
+    [11] ++ le 4 1 ++ le 4 2 ++ le 4 3 ++ le 4 4 ++ [0],
+    [13, 0],
+    [17] ++ le 4 90 ++ [0] ++ h 10,
+    [18, 0],
+    [19, 0],
+    [22, 1],
+    [24] ++ le 2 2 ++ [0] ++ le 4 8,
+    [9, 1] ++ le 8 0 ++ le 8 4]
+  [[UInt8.ofNat a.length] ++ a.flatten ++ h 0, [UInt8.ofNat b.length] ++ b.flatten ++ h 0]
+
 /-- Parity's bootstrap service (`services/bootstrap`): the payload is an encoded `Instructions`,
     the instruction list then a 32-octet salt; the base input has no instructions. -/
 def bootstrapSvc : Svc where
@@ -135,9 +199,26 @@ def bootstrapSvc : Svc where
   emptyClass := [(5, 0, 9, []), (200, 0, 70000, [])]
   postClass := [(5, 0, 9, 0 :: List.replicate 32 7), (200, 1, 70000, 0 :: List.replicate 32 255),
     (20000, 300, 3, 0 :: List.replicate 32 1)]
-  fnRanges := [(68729, 69139), (31894, 32166), (58434, 58509), (32166, 32412), (40494, 40852), (41177, 44241)]
+  -- the last range: `Instruction::decode` from its tag dispatch on, error exits included
+  fnRanges := [(68729, 69139), (31894, 32166), (58434, 58509), (32166, 32412), (40494, 40852), (41177, 44241),
+    (20626, 22145)]
+  -- `Vec`/`Option` decoding: the allocator's growth paths (`finish_grow`'s realloc branch,
+  -- 33037–33122), the decoders' loops and their callees
+  fnRangesX := [(8, 482), (907, 2200), (2727, 3716), (23303, 25588), (32727, 33152), (35293, 36170),
+    (50078, 50409), (70133, 70239)]
+  -- accumulate (`Services/Bootstrap/Acc/README.md`, tier A): the entry 6378 … 15368, the inputs fetch
+  -- and `AccumulateItem` decode, `BootstrapWorkOutput::decode`, the ring and results helpers, the
+  -- storage wrappers and the allocator's remaining paths
+  fnRangesA := [(550, 562), (638, 639), (758, 824), (904, 907), (2200, 2727), (3820, 4565), (6378, 15369),
+    (22145, 22839), (22915, 22934), (23097, 23120), (23227, 23246), (25588, 26397), (28864, 29176),
+    (30285, 31894), (32414, 32727), (33214, 34636), (36170, 36529), (38832, 38857), (39388, 39411),
+    (39634, 40215), (40852, 41176), (44494, 44677), (44916, 45976), (46300, 47561), (47662, 48251),
+    (48341, 49015), (49237, 49541), (55989, 56119), (58251, 58433), (58578, 58598)]
   pathExtra := [(3, 0, 0x01234567, []), (3, 0, 0x89abcdef, [])]
   codeExtra := [(3, 0, 7, [2, 15, 15] ++ List.replicate 32 0)]
+  codeOnly := allInstrPayloads.map fun y => (3, 0, 7, y)
+  -- up to the end of `Instructions::decode`'s element loop
+  codeOnlyStop := 562
   memcpySummary := true
   emptyCode := true
   lBound := 16777217
@@ -155,6 +236,40 @@ def traceFor (code : ByteArray) (h : List UInt8) (acct : ServiceAccount) (Q : Pr
   let (tr, _, _, _, _) := go Q (toHostFn (RefineHost.dispatch env)) 0 1000000000 false ω μ (∅, []) #[] #[] 300000
   return tr
 
+/-- As `go`, for an accumulate run (Ψ_A's context 𝕃²). -/
+def goA (Q : Prepared) (f : HostFn AccCtx) (i : Nat) (gas : UInt64) (ch : Bool)
+    (ω : Regs) (μ : Memory) (x : AccCtx) (acc : Array (Nat × Regs × Memory)) :
+    Nat → Array (Nat × Regs × Memory)
+  | 0 => acc
+  | n + 1 =>
+    if !(Q.valid && Q.prog.vInst i) then acc else
+    let r := Q.step i gas ch ω μ
+    let acc := acc.push (i, ω, μ)
+    match r.status with
+    | .cont => goA Q f r.pc r.gas r.charged r.regs r.mem x acc n
+    | .host h =>
+      let y := f h.toNat r.gas r.regs r.mem x
+      match y.status with
+      | .cont => goA Q f (Q.prog.next i) y.gas r.charged y.regs y.mem y.ctx acc n
+      | _ => acc
+    | _ => acc
+
+/-- The traced accumulate of a service (`WITNESS_ACC=1`) for slot `t`, service id `s` and `n`
+    inputs (each an incoming transfer of 5 with a zero memo), from instruction 5 with arguments
+    ℰ(t, s, n), under Ψ_A's handler (`accHostFn`, `Params.full`). Inputs are passed in the refine
+    shape (t, n, s, []). -/
+def traceForAcc (code : ByteArray) (h : List UInt8) (Q : Prepared) (t n s : Nat) :
+    Option (Array (Nat × Regs × Memory)) := do
+  let acct0 : ServiceAccount := { codeHash := h, balance := 1000000000, minAccGas := 0, minMemoGas := 0 }
+  let st : PartialState := { accounts := Std.ExtTreeMap.ofList [(s, acct0)], staging := [], authQueue := [], manager := 0, assigners := [], delegator := 0, registrar := 0, alwaysAcc := ∅ }
+  let xfer : DeferredTransfer := { source := 9, dest := s, amount := 5, memo := ⟨(List.replicate 128 0).toArray⟩, gas := 1000000 }
+  let inputs : List AccumulateInput := List.replicate n (.transfer xfer)
+  let env : AccEnv := { params := .full, slot := t, entropy := List.replicate 32 0, inputs, code := code }
+  let x := initImplications st s t (List.replicate 32 0)
+  let a : ByteArray := ⟨(Codec.nat t ++ Codec.nat s ++ Codec.nat n).toArray⟩
+  let (_, ω, μ) ← standardInit code a
+  return goA Q (accHostFn env) 5 1000000000 false ω μ (x, x) #[] 300000
+
 /-- Maximal runs of consecutive naturals in a sorted list, as [lo, hi). -/
 def ranges (xs : List Nat) : List (Nat × Nat) :=
   xs.foldl (fun acc x => match acc with
@@ -163,8 +278,9 @@ def ranges (xs : List Nat) : List (Nat × Nat) :=
 
 /-- The symbolic variables a class of inputs offers: `ext` (`segx`) adds the payload's first
     octet T and the reader position Q after the argument header. -/
-def varNames (ext : Bool) (baseP : Nat × Nat × Nat × List UInt8) : List String :=
-  if ext then (if baseP.2.2.2.isEmpty then ["Y", "S", "C", "I", "L", "Q"] else ["Y", "S", "C", "I", "L", "T", "Q"])
+def varNames (ext : Bool) (baseP : Nat × Nat × Nat × List UInt8) (acc : Bool := false) : List String :=
+  if acc then ["TS", "S", "NI", "LA"]
+  else if ext then (if baseP.2.2.2.isEmpty then ["Y", "S", "C", "I", "L", "Q"] else ["Y", "S", "C", "I", "L", "T", "Q"])
   else ["Y", "S", "C", "I", "L"]
 
 /-- A variable's value for input `q = (c, i, s, y)`. -/
@@ -172,6 +288,9 @@ def pickVar (q : Nat × Nat × Nat × List UInt8) (v : String) : Nat :=
   let header := (Codec.nat q.1).length + (Codec.nat q.2.1).length + (Codec.nat q.2.2.1).length + (Codec.nat q.2.2.2.length).length
   match v with
   | "C" => q.1 | "I" => q.2.1 | "S" => q.2.2.1
+  -- accumulate (`WITNESS_ACC=1`): the slot t and the input count n, in the refine shape (t, n, s, [])
+  | "TS" => q.1 | "NI" => q.2.1
+  | "LA" => (Codec.nat q.1).length + (Codec.nat q.2.2.1).length + (Codec.nat q.2.1).length
   | "L" => header + q.2.2.2.length + 32
   | "T" => (q.2.2.2.headD 0).toNat
   | "Q" => 2 ^ 32 - 2 ^ 16 - 2 ^ 24 + header
@@ -240,7 +359,7 @@ def analyzeSeg (P : Program) (tr : Array (Nat × Regs × Memory))
     (others : Array (Array (Nat × Regs × Memory) × Nat)) (otherPs : Array (Nat × Nat × Nat × List UInt8))
     (k0 a b : Nat) (out : Bool) (baseP : Nat × Nat × Nat × List UInt8 := (3, 0, 7, [255]))
     (ext : Bool := false) (extra : List Nat := []) (staticW : List Nat := []) (cutMode : Bool := false) (allWords : Bool := false)
-    (half : Bool := false) (wantS : List (Nat × Nat × String) := []) :
+    (half : Bool := false) (wantS : List (Nat × Nat × String) := []) (acc : Bool := false) :
     IO SegInfo := do
   let A := k0 + a; let B := k0 + b
   let some (pcA, rA, mA) := tr[A]? | throw (IO.userError "step out of range")
@@ -317,7 +436,7 @@ def analyzeSeg (P : Program) (tr : Array (Nat × Regs × Memory))
   let regFacts := (List.range 13).filter (agreeReg A)
   let goodLoads := loads.toList.filter fun (a, k) =>
     (List.range k).all fun j => agreeMem A (a + j)
-  let names := varNames ext baseP
+  let names := varNames ext baseP acc
   let allQ := baseP :: otherPs.toList
   let matchVar (valBase : Nat) (valsOther : List Nat) : Option String :=
     matchVarG ext names allQ valBase valsOther cutMode half
@@ -454,6 +573,13 @@ structure Cx where
   env : RefineHost.Env
   tr : Array (Nat × Regs × Memory)
   path : List Nat
+  /-- `WITNESS_ACC=1`: the traced run is the service's accumulate (`traceForAcc`), and `cut` states
+      its segments under `accContract` with the variables TS (slot), S (service id), NI (inputs). -/
+  acc : Bool := false
+  /-- The traces of the class: `traceFor`, or `traceForAcc` for accumulate. -/
+  traceF : Nat → Nat → Nat → List UInt8 → Option (Array (Nat × Regs × Memory)) := fun _ _ _ _ => none
+  /-- `WITNESS_VBOUND=V:lo,hi;…`: the bounds stated on further variables, as `sBound` for S. -/
+  vBounds : List (String × String) := []
 
 /-- `allocck`: the picoalloc model (`Services/Picoalloc/Model.lean`) against the binary. For each
     traced input, at every call of the allocator's entry points (`alloc` 40494, `dealloc` 40613,
@@ -979,6 +1105,18 @@ def mode_codeRun (cx : Cx) : IO Unit := do
   let c := cx.c; let i := cx.i; let sid := cx.sid; let y := cx.y; let pkg := cx.pkg; let a := cx.a
   let ω := cx.ω; let μ := cx.μ; let env := cx.env; let tr := cx.tr; let path := cx.path
   let NS := cx.svc.name; let LBL := cx.svc.label; let BLOB := cx.svc.blob; let FLAG := cx.svc.flag
+  -- `codex` / `codexcheck`: as `code` / `codecheck`, for the facts of `fnRangesX` that the base facts
+  -- lack, in the module `CodeX` (class `HasCodeX`), checked by `CodeXCheck.G*` and `CodeXOk`
+  -- `codea` / `codeacheck`: the same for `fnRangesA`, in the module `CodeA` (class `HasCodeA`),
+  -- leaving out what `Code` or `CodeX` already has
+  let amode := mode == "codea" || mode == "codeacheck"
+  let xmode := mode == "codex" || mode == "codexcheck" || amode
+  let E := if amode then "A" else "X"
+  let mode := if mode == "codex" || mode == "codea" then "code"
+    else if mode == "codexcheck" || mode == "codeacheck" then "codecheck" else mode
+  let CN := if xmode then s!"Code{E}" else "Code"
+  let CC := if xmode then s!"Code{E}Check" else "CodeCheck"
+  let HC := if xmode then s!"HasCode{E}" else "HasCode"
   let mut facts : Array String := #[]
   let mut lemmas : Array String := #[]
   let mut seen : List Nat := []
@@ -988,7 +1126,9 @@ def mode_codeRun (cx : Cx) : IO Unit := do
     if (mode == "code" || mode == "codecheck") && cx.svc.emptyCode then ((traceFor code h acct Q ec ei es ey).map (·.toList)).getD [] else []
   let extraRuns : List (Nat × Regs × Memory) :=
     if mode == "code" || mode == "codecheck" then
-      cx.svc.codeExtra.flatMap fun (c2, i2, s2, y2) => ((traceFor code h acct Q c2 i2 s2 y2).map (·.toList)).getD []
+      (cx.svc.codeExtra.flatMap fun (c2, i2, s2, y2) => ((traceFor code h acct Q c2 i2 s2 y2).map (·.toList)).getD []) ++
+      cx.svc.codeOnly.flatMap fun (c2, i2, s2, y2) =>
+        (((traceFor code h acct Q c2 i2 s2 y2).map (·.toList)).getD []).takeWhile (·.1 ≠ cx.svc.codeOnlyStop)
     else []
   let codePath := tr.toList.take n ++ emptyRun ++ extraRuns
   for (pc, regs, _) in codePath do
@@ -996,10 +1136,10 @@ def mode_codeRun (cx : Cx) : IO Unit := do
     seen := pc :: seen
     let some ins := P.decode pc | continue
     facts := facts.push s!".instr {pc} ({leanInstr ins}) {P.next pc}"
-    lemmas := lemmas.push s!"theorem d_{pc} \{p : ByteArray} \{P : Program} [h : HasCode p P] : deblob p {pc} = some P ∧ P.decode {pc} = some ({leanInstr ins}) ∧ P.next {pc} = {P.next pc} :=\n  h.ok.instr (by decide)"
+    lemmas := lemmas.push s!"theorem d_{pc} \{p : ByteArray} \{P : Program} [h : {HC} p P] : deblob p {pc} = some P ∧ P.decode {pc} = some ({leanInstr ins}) ∧ P.next {pc} = {P.next pc} :=\n  h.ok.instr (by decide)"
     let bs (t : Nat) : Array String × Array String :=
       (#[s!".blockStart {t} {P.isBlockStart t}"],
-       #[s!"@[pvm_code] theorem bs_{t} \{p : ByteArray} \{P : Program} [h : HasCode p P] : P.isBlockStart {t} = {P.isBlockStart t} := h.ok.blockStart (by decide)"])
+       #[s!"@[pvm_code] theorem bs_{t} \{p : ByteArray} \{P : Program} [h : {HC} p P] : P.isBlockStart {t} = {P.isBlockStart t} := h.ok.blockStart (by decide)"])
     let mut ts : List Nat := [P.next pc]
     match ins with
     | .oneOffset _ t | .regImmOffset _ _ _ t | .twoRegOffset _ _ _ t => if t ≥ 0 then ts := t.toNat :: ts
@@ -1058,6 +1198,58 @@ def mode_codeRun (cx : Cx) : IO Unit := do
     if (P.decode pc).isSome then
       let (st, e) := blockOf pc
       facts := facts.push s!".block {st} {e}"
+  -- `codex` / `codea`: only the instructions of `fnRangesX` / `fnRangesA` that the facts before lack,
+  -- with what they need: the instructions of `ranges` not in `seen0`, with what they need
+  let extFacts (ranges : List (Nat × Nat)) (seen0 : List Nat) : Array String × List Nat := Id.run do
+    let mut fx : Array String := #[]
+    let mut sx : List Nat := []
+    let seen := seen0
+    for (lo, hi) in ranges do
+      let mut pc := lo
+      while pc < hi do
+        if !seen.contains pc && !sx.contains pc then
+          sx := pc :: sx
+          if let some ins := P.decode pc then
+            fx := fx.push s!".instr {pc} ({leanInstr ins}) {P.next pc}"
+            let mut ts : List Nat := [P.next pc]
+            match ins with
+            | .oneOffset _ t | .regImmOffset _ _ _ t | .twoRegOffset _ _ _ t => if t ≥ 0 then ts := t.toNat :: ts
+            | _ => pure ()
+            for t in ts do fx := fx.push s!".blockStart {t} {P.isBlockStart t}"
+            if let .regImmOffset .loadImmJump _ x _ := ins then
+              let k := x.toNat / 2 - 1
+              let t := P.jumpTable.getD k 0
+              fx := fx.push s!".jumpTableSize {P.jumpTable.size}"
+              fx := fx.push s!".jumpEntry {k} {t}"
+              fx := fx.push s!".blockStart {t} {P.isBlockStart t}"
+        pc := P.next pc
+    for pc in sx do
+      if (P.decode pc).isSome then
+        let (st, e) := blockOf pc
+        fx := fx.push s!".block {st} {e}"
+    return (fx, sx)
+  let mut baseFacts := facts
+  if amode then
+    let (fX, sX) := extFacts cx.svc.fnRangesX seen
+    baseFacts := baseFacts ++ fX
+    seen := seen ++ sX
+  if xmode then
+    let (fx, sx) := extFacts (if amode then cx.svc.fnRangesA else cx.svc.fnRangesX) seen
+    -- `codea`: also every jump-table entry into `fnRangesA`. Accumulate also returns through
+    -- addresses set by `load_imm` (then `jump`) and dispatches through tables in memory, neither of
+    -- which names its entry in the instruction, so each entry whose target lies in the ranges is
+    -- stated.
+    let fx := if !amode then fx else Id.run do
+      let mut fx := fx
+      for k in [0:P.jumpTable.size] do
+        let t := P.jumpTable.getD k 0
+        if cx.svc.fnRangesA.any (fun (lo, hi) => lo ≤ t ∧ t < hi) then
+          fx := fx.push s!".jumpTableSize {P.jumpTable.size}"
+          fx := fx.push s!".jumpEntry {k} {t}"
+          fx := fx.push s!".blockStart {t} {P.isBlockStart t}"
+      return fx
+    facts := fx
+    seen := sx
   -- sorted by index, so each chunk of 64 reads a short stretch of the code (`codecheck`)
   let factsL := facts.toList.eraseDups.mergeSort (fun a b => factKey a ≤ factKey b)
   let idxOf (f : String) : Nat := (factsL.idxOf f)
@@ -1187,21 +1379,21 @@ theorem prog_cview (kc mc km mm : Nat) : prog.view = cview chunks {oc} {mb} {cLe
 def hostIds : List Nat := {idsL}
 "
     out := out ++ s!"\nend Services.{NS}.CodeCheck\n"
-    IO.FS.writeFile s!"Services/{NS}/CodeCheck.lean" ((out.drop 1).toString)
-    IO.FS.createDirAll s!"Services/{NS}/CodeCheck"
+    unless xmode do IO.FS.writeFile s!"Services/{NS}/CodeCheck.lean" ((out.drop 1).toString)
+    IO.FS.createDirAll s!"Services/{NS}/{CC}"
     let modHead (what : String) : String := s!"/-
   GENERATED by `lake exe genwitnesssteps {FLAG}codecheck {n}` from {BLOB}.
   Do not edit by hand.
 -/
-import Services.{NS}.CodeCheck
+import Services.{NS}.CodeCheck{if xmode then s!"\nimport Services.{NS}.Code{E}" else ""}
 
 /-! # {what} -/
 
-namespace Services.{NS}.CodeCheck
+namespace Services.{NS}.{CC}
 
-open PVM PVM.NatBlob Services.{NS}.Blob Services.{NS}.Code
+open PVM PVM.NatBlob Services.{NS}.Blob {if xmode then s!"Services.{NS}.CodeCheck Services.{NS}.Code{E}" else s!"Services.{NS}.Code"}
 "
-    let modEnd := s!"\nend Services.{NS}.CodeCheck\n"
+    let modEnd := s!"\nend Services.{NS}.{CC}\n"
     let V := s!"(view N {oc} {mb} {cLen})"
     let nest (xs : List String) (last : Option String) : String :=
       let ys := xs ++ (last.map ([·])).getD []
@@ -1278,8 +1470,9 @@ theorem walk_{sgi} : {V}.vBlobAux {fuel} {i0} = {V}.vBlobAux {fuel - k} {j} := b
 theorem walks_{g} : {V}.vBlobAux {f0} {gi0} = {V}.vBlobAux {fuel} {gj} :=
   {nest names.toList none}
 "
-      IO.FS.writeFile s!"Services/{NS}/CodeCheck/W{g}.lean" (ws ++ modEnd)
-      imports := imports.push s!"Services.{NS}.CodeCheck.W{g}"
+      unless xmode do
+        IO.FS.writeFile s!"Services/{NS}/CodeCheck/W{g}.lean" (ws ++ modEnd)
+        imports := imports.push s!"Services.{NS}.CodeCheck.W{g}"
       walkGroups := walkGroups.push s!"walks_{g}"
     let vEnd := s!"(CodeView.vBlobAux_end _ {fuel} {cLen} (by decide) (by decide) rfl)"
     -- the facts, a chunk to a theorem, 64 chunks to a module
@@ -1430,8 +1623,8 @@ theorem chunk_ok_{c} : facts_{c}.all (·.holds prog) = true := by
 theorem chunks_{g} : factGroup_{g}.all (fun c => c.all (·.holds prog)) = true := by
   simp only [factGroup_{g}, List.all_cons, List.all_nil, Bool.and_true, {", ".intercalate (cs.map (s!"chunk_ok_{·}"))}]
 "
-      IO.FS.writeFile s!"Services/{NS}/CodeCheck/G{g}.lean" (gs ++ modEnd)
-      imports := imports.push s!"Services.{NS}.CodeCheck.G{g}"
+      IO.FS.writeFile s!"Services/{NS}/{CC}/G{g}.lean" (gs ++ modEnd)
+      imports := imports.push s!"Services.{NS}.{CC}.G{g}"
       factGroupsL := factGroupsL.push (s!"chunks_{g}", cs)
     -- the host-call ids: a scan of the code in stretches of 300 indices, 64 to a module
     let HS := 200
@@ -1460,10 +1653,44 @@ theorem hosts_{k} : {hostQ a (a + len)} := by
 theorem hostsG_{g} : {hostQ ga gb} :=
   {cover}
 "
-      IO.FS.writeFile s!"Services/{NS}/CodeCheck/H{g}.lean" (hs ++ modEnd)
-      imports := imports.push s!"Services.{NS}.CodeCheck.H{g}"
+      unless xmode do
+        IO.FS.writeFile s!"Services/{NS}/CodeCheck/H{g}.lean" (hs ++ modEnd)
+        imports := imports.push s!"Services.{NS}.CodeCheck.H{g}"
       hostGroups := hostGroups.push s!"hostsG_{g}"
     let hcover := hostGroups.toList.tail.foldl (fun acc x => s!"(range_cover {acc} {x})") hostGroups[0]!
+    if xmode then
+      IO.FS.writeFile s!"Services/{NS}/Code{E}Ok.lean" (s!"/-
+  GENERATED by `lake exe genwitnesssteps {FLAG}code{E.toLower}check {n}` from {BLOB}.
+  Do not edit by hand.
+-/
+import Services.{NS}.CodeOk
+" ++ String.join (imports.toList.map (s!"import {·}\n")) ++ s!"
+/-!
+# {LBL}'s further code facts hold of the vendored blob, by the kernel
+
+`Services.{NS}.Code{E}Check.G*` check the facts of `Services.{NS}.Code{E}` a chunk at a time against
+the program `Services.{NS}.CodeCheck` parses; with its 𝔳_blob (`CodeCheck.vBlob_ok`): `checkCode_ok`,
+and so `hasCode{E}`: wherever the base facts hold, these do too.
+-/
+
+namespace Services.{NS}.Code{E}Check
+
+open PVM PVM.NatBlob Services.{NS}.Blob Services.{NS}.Code{E}
+
+/-- **The blob passes `checkCode` for the further code facts**, checked by the kernel. -/
+theorem checkCode_ok : checkCode (ba N {o2} {hd.pLen}) facts = true :=
+  checkCode_of_chunks CodeCheck.parse CodeCheck.vBlob_ok (by
+    simp only [factChunks, factGroups, List.flatten_cons, List.flatten_nil, List.all_append, List.all_nil,
+      Bool.and_true, {", ".intercalate (factGroupsL.toList.map (·.1))}])
+
+/-- The further code facts, wherever the base facts hold of the blob. -/
+theorem hasCode{E} \{P : Program} (h : CodeOk (ba N {o2} {hd.pLen}) Code.facts P) :
+    HasCode{E} (ba N {o2} {hd.pLen}) P :=
+  HasCode{E}.of h checkCode_ok
+
+end Services.{NS}.Code{E}Check
+")
+      return
     IO.FS.writeFile s!"Services/{NS}/CodeOk.lean" (s!"/-
   GENERATED by `lake exe genwitnesssteps {FLAG}codecheck {n}` from {BLOB}.
   Do not edit by hand.
@@ -1514,20 +1741,21 @@ end Services.{NS}.CodeCheck
     let k := idxOf fi
     let (bst, be) := blockOf pc
     let kb := idxOf s!".block {bst} {be}"
-    let l := s!"theorem d_{pc} \{p : ByteArray} \{P : Program} [h : HasCode p P] : deblob p {pc} = some P ∧ P.decode {pc} = some ({leanInstr ins}) ∧ P.next {pc} = {P.next pc} ∧ P.blockCost (P.blockStartOf {pc}) ≤ stepCostCap :=\n  h.ok.instrCost (show CodeFact.instr {pc} ({leanInstr ins}) {P.next pc} ∈ facts from {memFact (k)})\n    (show CodeFact.block {bst} {be} ∈ facts from {memFact kb}) (by decide)\n\n@[pvm_code] theorem nx_{pc} \{p : ByteArray} \{P : Program} [h : HasCode p P] : P.next {pc} = {P.next pc} := (d_{pc} (p := p)).2.2.1"
+    let l := s!"theorem d_{pc} \{p : ByteArray} \{P : Program} [h : {HC} p P] : deblob p {pc} = some P ∧ P.decode {pc} = some ({leanInstr ins}) ∧ P.next {pc} = {P.next pc} ∧ P.blockCost (P.blockStartOf {pc}) ≤ stepCostCap :=\n  h.ok.instrCost (show CodeFact.instr {pc} ({leanInstr ins}) {P.next pc} ∈ facts from {memFact (k)})\n    (show CodeFact.block {bst} {be} ∈ facts from {memFact kb}) (by decide)\n\n@[pvm_code] theorem nx_{pc} \{p : ByteArray} \{P : Program} [h : {HC} p P] : P.next {pc} = {P.next pc} := (d_{pc} (p := p)).2.2.1"
     if !lemmasL.contains l then lemmasL := lemmasL.push l
   for f in factsL do
+    if xmode && baseFacts.contains f then continue
     if f.startsWith ".jumpTableSize " then
       let m := (f.drop 15).toString
-      lemmasL := lemmasL.push s!"@[pvm_code] theorem jts \{p : ByteArray} \{P : Program} [h : HasCode p P] : P.jumpTable.size = {m} := h.ok.jumpTableSize (show CodeFact.jumpTableSize {m} ∈ facts from {memFact (idxOf f)})"
+      lemmasL := lemmasL.push s!"@[pvm_code] theorem jts \{p : ByteArray} \{P : Program} [h : {HC} p P] : P.jumpTable.size = {m} := h.ok.jumpTableSize (show CodeFact.jumpTableSize {m} ∈ facts from {memFact (idxOf f)})"
     if f.startsWith ".jumpEntry " then
       let parts := (f.drop 11).toString.splitOn " "
       let k := parts[0]!; let t := parts[1]!
-      lemmasL := lemmasL.push s!"@[pvm_code] theorem jte_{k} \{p : ByteArray} \{P : Program} [h : HasCode p P] : P.jumpTable.getD {k} 0 = {t} := h.ok.jumpEntry (show CodeFact.jumpEntry {k} {t} ∈ facts from {memFact (idxOf f)})"
+      lemmasL := lemmasL.push s!"@[pvm_code] theorem jte_{k} \{p : ByteArray} \{P : Program} [h : {HC} p P] : P.jumpTable.getD {k} 0 = {t} := h.ok.jumpEntry (show CodeFact.jumpEntry {k} {t} ∈ facts from {memFact (idxOf f)})"
     if f.startsWith ".blockStart " then
       let parts := (f.drop 12).toString.splitOn " "
       let t := parts[0]!; let b := parts[1]!
-      lemmasL := lemmasL.push s!"@[pvm_code] theorem bs_{t} \{p : ByteArray} \{P : Program} [h : HasCode p P] : P.isBlockStart {t} = {b} := h.ok.blockStart (show CodeFact.blockStart {t} {b} ∈ facts from {memFact (idxOf f)})"
+      lemmasL := lemmasL.push s!"@[pvm_code] theorem bs_{t} \{p : ByteArray} \{P : Program} [h : {HC} p P] : P.isBlockStart {t} = {b} := h.ok.blockStart (show CodeFact.blockStart {t} {b} ∈ facts from {memFact (idxOf f)})"
   let endPc := (tr[n]?.map (·.1)).getD 0
   -- the octets the path reads before anything writes them, with their initial values
   let mut written : Std.HashSet Nat := {}
@@ -1579,21 +1807,28 @@ end Services.{NS}.CodeCheck
   let rwHi := rwStart jb + roundPage jb.rw.size + jb.heapPages * pageSize
   if mode == "code" then
     IO.println s!"/-
-  GENERATED by `lake exe genwitnesssteps {FLAG}code {n}` from {BLOB}.
+  GENERATED by `lake exe genwitnesssteps {FLAG}code{if amode then "a" else ""} {n}` from {BLOB}.
   Do not edit by hand.
 -/
-import JAM.Theorems.GrowHeap
+{if xmode then s!"import Services.{NS}.Code" else "import JAM.Theorems.GrowHeap"}
 
 /-!
-# Code facts of {LBL}
+# {if amode then "Accumulate code facts" else if xmode then "Further code facts" else "Code facts"} of {LBL}
 
-The code facts the proofs about {LBL} use: every instruction on the first {n} steps of its
+{if amode then s!"Every instruction of {LBL}'s accumulate ranges (`fnRangesA`) that neither `Code.facts` nor
+`CodeX.facts` has, with the block starts, blocks and jump-table entries they need (every entry into
+the ranges), kept apart so that adding them rechecks nothing that uses only those.
+`Services.{NS}.CodeAOk` checks them against the blob by the kernel (`CodeACheck.checkCode_ok`,
+`hasCodeA`); `HasCodeA p P` assumes them." else if xmode then s!"Every instruction of the further summarized functions (`fnRangesX`) that `Code.facts` lacks,
+with the block starts, blocks and jump-table entries they need, kept apart from `Code.facts` so that
+adding them rechecks nothing that uses only those. `Services.{NS}.CodeXOk` checks them against the
+blob by the kernel (`CodeXCheck.checkCode_ok`, `hasCodeX`); `HasCodeX p P` assumes them." else s!"The code facts the proofs about {LBL} use: every instruction on the first {n} steps of its
 refine path{if cx.svc.emptyCode then " and on the empty payload's refine path," else ""} and every instruction of the summarized functions (`fnRanges`), with the block
 starts and jump-table entries they need. `checkCode` checks them against the blob
-(`lake build {LBL}check`); `HasCode p P` assumes them.
+(`lake build {LBL}check`); `HasCode p P` assumes them."}
 -/
 
-namespace Services.{NS}.Code
+namespace Services.{NS}.{CN}
 
 open PVM
 
@@ -1607,9 +1842,47 @@ open PVM
     IO.println ("/-- The groups of chunks of `facts`. -/\ndef factGroups : List (List (List CodeFact)) := [" ++ ", ".intercalate ((List.range ng).map fun g => s!"factGroup_{g}") ++ "]\n")
     IO.println "/-- The chunks of `facts`. -/\ndef factChunks : List (List CodeFact) := factGroups.flatten\n"
     IO.println s!"/-- The code facts the {LBL} proofs use. -/\ndef facts : List CodeFact := factChunks.flatten\n"
-    IO.println "/-- The blob `p` deblobs to `P`, and `facts` hold of it. -/\nclass HasCode (p : outParam ByteArray) (P : Program) : Prop where\n  ok : CodeOk p facts P\n"
+    IO.println s!"/-- The blob `p` deblobs to `P`, and `facts` hold of it. -/\nclass {HC} (p : outParam ByteArray) (P : Program) : Prop where\n  ok : CodeOk p facts P\n"
+    if xmode then
+      IO.println s!"/-- Where some facts hold of `P` and `checkCode` passes for these, these hold of `P` too. -/
+theorem HasCode{E}.of \{p : ByteArray} \{P : Program} \{fs : List CodeFact} (h : CodeOk p fs P)
+    (hx : checkCode p facts = true) : HasCode{E} p P := by
+  obtain ⟨P', h'⟩ := checkCode_sound hx
+  have e : P' = P := Option.some.inj (h'.parse.symm.trans h.parse)
+  exact ⟨e ▸ h'⟩
+"
+    if amode then
+      -- `codea`: the lemmas go in slices `CodeA/L*.lean` of 400 each, since one module holding them
+      -- all needs more memory than a CI runner has; each slice imports only `CodeA`
+      IO.println s!"\nend Services.{NS}.{CN}"
+      IO.FS.createDirAll s!"Services/{NS}/{CN}"
+      let sl := 400
+      let nS := (lemmasL.size + sl - 1) / sl
+      for k in [0:nS] do
+        let part := (lemmasL.toList.drop (k * sl)).take sl
+        IO.FS.writeFile s!"Services/{NS}/{CN}/L{k}.lean" (s!"/-
+  GENERATED by `lake exe genwitnesssteps {FLAG}codea {n}` from {BLOB}.
+  Do not edit by hand.
+-/
+import Services.{NS}.{CN}
+
+/-! # Lemmas of `{CN}.facts`, slice {k} of {nS} -/
+
+namespace Services.{NS}.{CN}
+
+open PVM
+
+" ++ "\n\n".intercalate part ++ s!"\n\nend Services.{NS}.{CN}\n")
+      IO.FS.writeFile s!"Services/{NS}/{CN}All.lean" (s!"/-
+  GENERATED by `lake exe genwitnesssteps {FLAG}codea {n}` from {BLOB}.
+  Do not edit by hand.
+-/
+" ++ String.join ((List.range nS).map fun k => s!"import Services.{NS}.{CN}.L{k}\n") ++ s!"
+/-! # Every lemma of `{CN}.facts` -/
+")
+      return
     IO.println ("\n\n".intercalate lemmasL.toList)
-    IO.println s!"\nend Services.{NS}.Code"
+    IO.println s!"\nend Services.{NS}.{CN}"
     return
   IO.println s!"/-
   GENERATED by `lake exe genwitnesssteps {FLAG}run {n}{((args.find? (·.startsWith "cut=")).map (" " ++ ·)).getD ""}` from {BLOB}.
@@ -2187,8 +2460,10 @@ def regsWritten (cx : Cx) (A B : Nat) : List Nat := Id.run do
   return out
 
 /-- The Lean binder for a variable and its bound. -/
-def varBinder (lb : Nat) (v : String) (sb : String := "S < 4294967296") : String :=
-  let bound := match v with
+def varBinder (lb : Nat) (v : String) (sb : String := "S < 4294967296")
+    (vb : List (String × String) := []) : String :=
+  let bound := (vb.lookup v).getD <| match v with
+    | "TS" => "TS < 4294967296" | "NI" => "NI < 4294967296" | "LA" => "3 ≤ LA ∧ LA ≤ 15"
     | "Y" => "1 ≤ Y ∧ Y ≤ 15" | "S" => sb | "C" => "C < 65536" | "L" => s!"0 < L ∧ L < {lb}"
     | "T" => "12 ≤ T ∧ T < 256" | "Q" => "4278124548 ≤ Q ∧ Q ≤ 4278124564" | _ => "I < 65536"
   s!"({v} : Nat) (h{v} : {bound})"
@@ -2206,6 +2481,18 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
   let args := cx.args; let tr := cx.tr; let P := cx.P
   let NS := cx.svc.name; let LBL := cx.svc.label; let BLOB := cx.svc.blob; let FLAG := cx.svc.flag
   let joinPc := cx.n
+  -- refine or accumulate (`WITNESS_ACC=1`): the environment, context, contract, host tactic and
+  -- code facts the generated steps use
+  let envT := if cx.acc then "AccEnv" else "RefineHost.Env"
+  let ctxT := if cx.acc then "AccCtx" else "RefineCtx"
+  let contr := if cx.acc then "accContract env" else "refineContract env"
+  let growL := if cx.acc then "FreeStepsH.growHeapAcc" else "FreeStepsH.growHeap"
+  let hostT := if cx.acc then "pvm_host_acc" else "pvm_host"
+  let parT := if cx.acc then "env.params = Params.full" else "env.fetch.params = Params.full"
+  let codeImp := if cx.acc then s!"import Services.{cx.svc.name}.CodeX\nimport Services.{cx.svc.name}.CodeAAll\nimport Services.Bootstrap.Acc.HostSteps" else s!"import Services.{cx.svc.name}.Code"
+  let codeOpen := if cx.acc then s!"Services.{cx.svc.name}.Code Services.{cx.svc.name}.CodeX Services.{cx.svc.name}.CodeA Services.Bootstrap.Acc" else s!"Services.{cx.svc.name}.Code"
+  let hasC := if cx.acc then "[HasCode p P] [HasCodeX p P] [HasCodeA p P]" else "[HasCode p P]"
+  let what := if cx.acc then "accumulate" else "refine"
   let name := args.getD 2 "cut"
   let opts := args.drop 3
   let out := opts.contains "out"
@@ -2228,6 +2515,7 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
   -- count of s where the path depends on it
   let classOv := ((← IO.getEnv "WITNESS_CLASS").getD "").splitOn ";" |>.filterMap fun e =>
     match (e.splitOn ",").filterMap String.toNat? with
+    | [t, s, n] => if cx.acc then some (t, n, s, []) else none
     | [c, i, s, k] => some (c, i, s, List.replicate k (255 : UInt8))
     | [c, i, s, k, b0, f] => some (c, i, s, (b0.toUInt8 :: List.replicate (k - 1) f.toUInt8).take k)
     | _ => none
@@ -2241,14 +2529,14 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
   let mut others : Array (Array (Nat × Regs × Memory) × Nat) := #[]
   let mut otherPs : Array (Nat × Nat × Nat × List UInt8) := #[]
   for (c2, i2, s2, y2) in classInputs do
-    let some t2 := traceFor cx.code cx.h cx.acct cx.Q c2 i2 s2 y2 | continue
+    let some t2 := cx.traceF c2 i2 s2 y2 | continue
     let some k2 := align t2 | IO.eprintln "join not reached"; return
     for j in [bs.head!:bs.getLast!+1] do
       if (tr[k0 + j]?.map (·.1)) != (t2[k2 + j]?.map (·.1)) then
         IO.eprintln s!"paths differ at +{j}"; return
     others := others.push (t2, k2)
     otherPs := otherPs.push (c2, i2, s2, y2)
-  let names := varNames true baseP
+  let names := varNames true baseP cx.acc
   let allQ := baseP :: otherPs.toList
   -- the value of register j / octet a at path step b (after PC), if the class agrees on it or it
   -- is one of the variables' expressions
@@ -2288,7 +2576,7 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
   let fin := (List.range 13).map (fun j => (tr[k0 + bs.getLast!]?.map (·.2.1[j]!.toNat)).getD 0)
   let outO := if out then (List.range fin[8]!).map (fin[7]! + ·) else []
   let whole ← analyzeSeg P tr others otherPs k0 bs.head! bs.getLast! out baseP true []
-    (regsWritten cx (k0 + bs.head!) (k0 + bs.getLast!)) true (opts.contains "words") (half := cx.wild && out)
+    (regsWritten cx (k0 + bs.head!) (k0 + bs.getLast!)) true (opts.contains "words") (half := cx.wild && out) (acc := cx.acc)
   let unch : List Nat := if frame then (List.range 13).filter (fun j => whole.regPost.any (· == (j, none))) else []
   let mut needR : List Nat := (if out then [0, 7, 8] else []) ++
     (if frame then whole.regPost.filterMap (fun (j, v) => v.map (fun _ => j)) ++ whole.symPost.map (·.1) else [])
@@ -2303,7 +2591,7 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
   for kk in [0:nseg] do
     let k := nseg - 1 - kk
     let info ← analyzeSeg P tr others otherPs k0 bs[k]! bs[k+1]! false baseP true needO
-      (regsWritten cx (k0 + bs[k]!) (k0 + bs[k+1]!)) true (half := cx.wild) (wantS := needS)
+      (regsWritten cx (k0 + bs[k]!) (k0 + bs[k+1]!)) true (half := cx.wild) (wantS := needS) (acc := cx.acc)
     let mut w : Std.HashSet Nat := {}
     for (lo, hi) in info.wr do
       for a in [lo:hi] do w := w.insert a
@@ -2402,7 +2690,7 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
   for info in infos do vars0 := vars0 ++ info.vars
   let vars := names.filter vars0.contains
   let varArgs := " ".intercalate (vars.flatMap fun v => [v, s!"h{v}"])
-  let varBinders := " ".intercalate (vars.map (varBinder cx.svc.lBound · cx.sBound))
+  let varBinders := " ".intercalate (vars.map (varBinder cx.svc.lBound · cx.sBound cx.vBounds))
   let segCond (k : Nat) : String :=
     let outW := " && ".intercalate (infos[k]!.wr.map fun (lo, hi) => s!"!(decide ({lo} ≤ a ∧ a < {hi}))")
     s!"decide (a < 4294967296){if outW == "" then "" else " && " ++ outW}"
@@ -2417,7 +2705,7 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
     else
       [("fr", s!"∀ a, C{k} a = true → μ.read a = μ₀.read a"), ("rdq", "∀ a, μ.readable a = μ₀.readable a"),
        ("wrq", "∀ a, μ.writable a = μ₀.writable a")] ++ unch.map (fun j => (s!"uk{j}", s!"ω[{j}] = ω₀[{j}]"))
-  let envB := if hasHost then s!" (henv : heapBounds env.code = ({hA}, {hB})) (hpar : env.fetch.params = Params.full)" else ""
+  let envB := if hasHost then s!" (henv : heapBounds env.code = ({hA}, {hB})) (hpar : {parT})" else ""
   let envA := if hasHost then " henv hpar" else ""
   let dir := s!"Services/{NS}/{name}"
   IO.FS.createDirAll dir
@@ -2472,23 +2760,23 @@ structure St{k} {" ".intercalate (vars.map (s!"({·} : Nat)"))}{fpB} (ω : Regs)
     let post := fieldsOf (k + 1)
     let ivars := names.filter info.vars.contains
     -- the steps: as `seg`, from the registers the segment reads and the octets it reads first
-    let mut sx := header s!"Steps {info.A} … {info.B - 1} of {LBL}'s refine." ++ s!"
-import Services.{NS}.Code
+    let mut sx := header s!"Steps {info.A} … {info.B - 1} of {LBL}'s {what}." ++ s!"
+{codeImp}
 import Services.{NS}.{name}.St
 
 namespace Services.{NS}.{name}.S{k}
 
-open PVM JAM Services.{NS}.Code Services.{NS}.{name}
+open PVM JAM {codeOpen} Services.{NS}.{name}
 
 set_option maxRecDepth 20000
 set_option maxHeartbeats 10000000
 
-/-- **Steps {info.A} … {info.B - 1} of {LBL}'s refine** (pc {info.pcA} to pc {info.pcB}), from the
+/-- **Steps {info.A} … {info.B - 1} of {LBL}'s {what}** (pc {info.pcA} to pc {info.pcB}), from the
     registers they read and the octets they read first, to the values they leave. -/
-theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
-    (x : RefineCtx){envB}"
+theorem steps (p : ByteArray) (P : Program) {hasC} (env : {envT}) (ω : Regs) (μ : Memory)
+    (x : {ctxT}){envB}"
     if hasGrow then sx := sx ++ s!"\n    (hhp : HeapPages μ {hA} {hB} {topAt bs[k]!})"
-    for v in ivars do sx := sx ++ s!"\n    {varBinder cx.svc.lBound v cx.sBound}"
+    for v in ivars do sx := sx ++ s!"\n    {varBinder cx.svc.lBound v cx.sBound cx.vBounds}"
     -- `wild`: only what cut k's state states
     let rdS := if cx.wild then rd.filter (sts[k]!.1.contains ·) else rd
     let symS := if cx.wild then info.symLoads.filter (sts[k]!.2.2.1.contains ·) else info.symLoads
@@ -2499,7 +2787,7 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
     let bB := info.byteFacts.map fun (a, v) => (s!"hb_{a}", s!"μ.read {a} = {v}")
     let binders := regB ++ symB ++ wB ++ rB ++ bB
     for (n, t) in binders do sx := sx ++ s!"\n    ({n} : {t})"
-    sx := sx ++ s!"\n    : ∃ ω' μ', FreeStepsH p (refineContract env) {info.pcA} ω μ x {info.pcB} ω' μ' x {info.B - info.A} ∧"
+    sx := sx ++ s!"\n    : ∃ ω' μ', FreeStepsH p ({contr}) {info.pcA} ω μ x {info.pcB} ω' μ' x {info.B - info.A} ∧"
     -- the registers the next cut needs (and, with `frame`, those no segment writes)
     let postR := sts[k + 1]!.1 ++ unch
     let regC0 : List (Nat × String) := info.regPost.map (fun (j, v) =>
@@ -2549,9 +2837,9 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
         let some (_, rg, mg) := tr[k0 + bs[k]! + j]? | pure ()
         let top := (growHeapCore rg mg cx.code).2.2.1
         let t := growTop rg[7]!.toNat top hB
-        sx := sx ++ s!"\n    apply FreeStepsH.growHeap env {t} (d_{pc} (p := p) (P := P)) henv (h := {top})\n      (by heap_pages hhp) (by decide) (by decide) (by decide)\n      (by pvm_simp [growTop, reg, {simpArgs}])\n      (by decide)"
+        sx := sx ++ s!"\n    apply {growL} env {t} (d_{pc} (p := p) (P := P)) henv (h := {top})\n      (by heap_pages hhp) (by decide) (by decide) (by decide)\n      (by pvm_simp [growTop, reg, {simpArgs}])\n      (by decide)"
       | some (.oneImm .ecalli _) =>
-        sx := sx ++ s!"\n    apply FreeStepsH.host_decode (d_{pc} (p := p) (P := P))\n    · set_option maxHeartbeats 1000000 in pvm_host [{simpArgsH}, PVM.Memory.writable_writeN, PVM.Memory.writable_setPages, List.range_succ, List.range_zero, List.nil_append, List.all_cons, List.all_nil, List.all_append, Bool.and_true, Bool.true_and, Nat.reduceDiv, PVM.Memory.writeN_nil, Num.length_encodeLE]"
+        sx := sx ++ s!"\n    apply FreeStepsH.host_decode (d_{pc} (p := p) (P := P))\n    · set_option maxHeartbeats 1000000 in {hostT} [{simpArgsH}, PVM.Memory.writable_writeN, PVM.Memory.writable_setPages, List.range_succ, List.range_zero, List.nil_append, List.all_cons, List.all_nil, List.all_append, Bool.and_true, Bool.true_and, Nat.reduceDiv, PVM.Memory.writeN_nil, Num.length_encodeLE]"
       | _ =>
         sx := sx ++ s!"\n    apply FreeStepsH.step_decode (d_{pc} (p := p) (P := P))\n    · set_option maxHeartbeats 1000000 in pvm_simp [{simpArgs}]"
     let hpH := (if grow then ", ?rdA" else "") ++ (if hasGrow then ", ?hp" else "")
@@ -2562,7 +2850,9 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
       sx := sx ++ "\n    case smem =>\n      " ++ (if info.symMem.length > 1 then "refine ⟨" ++ ", ".intercalate (info.symMem.map fun _ => "?_") ++ "⟩ <;>\n      " else "") ++ "simp (disch := pvm_arith) only [PVM.Memory.readN_writeN_same, PVM.Memory.readN_writeN_disjoint,\n        PVM.Num.length_encodeLE, List.length_cons, List.length_nil, PVM.two32" ++ (if cx.wild && out then ", PVM.readN_writeN_encodeLE2_hi, PVM.readN_writeN_encodeLE2_lo]\n      all_goals first | (congr 1; split <;> omega) | simp only [PVM.Num.encodeLE, Nat.mod_mod, Nat.zero_div, PVM.ofNat_mod256]" else "]")
     sx := sx ++ s!"\n    case regs =>\n      simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,\n        PVM.getD_some', List.lookup_nil, Option.getD_none, and_self, and_true, true_and{if regA == "" then "" else ", " ++ regA}{if hasGrow then ", setR7, PVM.set_regsNF, PVM.insertReg" else ""}]{if cx.wild then "\n      all_goals (try simp only [Nat.div_div_eq_div_mul, Nat.reduceMul])\n      all_goals (try (congr 1; split <;> omega))" else ""}"
     sx := sx ++ s!"\n    case mem =>\n      try and_intros\n      all_goals simp (disch := pvm_arith) only [PVM.Memory.read_writeN, PVM.reduceEncodeLE, PVM.Num.length_encodeLE,\n        List.length_cons, List.length_nil, PVM.two32, Nat.reduceAdd, Nat.reduceSub, Nat.reduceLeDiff,\n        Nat.reduceLT, and_true, true_and, and_false, false_and, ↓reduceIte, List.getElem!_cons_zero,\n        List.getElem!_cons_succ, UInt8.reduceOfNat, and_self, PVM.Num.encodeLE{if hasGrow then ", PVM.Memory.read_setPages" else ""}{if hasHost then ", hpar, Params.full_encode, List.drop_zero, List.take_of_length_le" else ""}] <;> chase_octet"
-    sx := sx ++ s!"\n    case frame =>\n      intro a ha\n      simp only [Bool.and_eq_true, decide_eq_true_eq, Bool.not_eq_true', decide_eq_false_iff_not,\n        not_and, Nat.not_lt] at ha\n      simp (disch := pvm_arith) only [PVM.Memory.read_writeN_disjoint, PVM.Num.length_encodeLE,\n        List.length_cons, List.length_nil, PVM.two32{if hasGrow then ", PVM.Memory.read_setPages" else ""}]"
+    -- accumulate: a `fetch` of the parameters leaves `env.params.encode` in memory, which `hpar` makes concrete
+    let parFix := if cx.acc && (hostAt k).any (·.2 == 2) then "\n      try simp only [hpar, JAM.Params.full_encode]" else ""
+    sx := sx ++ s!"\n    case frame =>\n      intro a ha\n      simp only [Bool.and_eq_true, decide_eq_true_eq, Bool.not_eq_true', decide_eq_false_iff_not,\n        not_and, Nat.not_lt] at ha{parFix}\n      simp (disch := pvm_arith) only [PVM.Memory.read_writeN_disjoint, PVM.Num.length_encodeLE,\n        List.length_cons, List.length_nil, PVM.two32{if hasGrow then ", PVM.Memory.read_setPages" else ""}]"
     if grow then
       sx := sx ++ "\n    case rd =>\n      intro a ha\n      simp only [PVM.Memory.readable_writeN, PVM.Memory.readable_setPages]\n      split <;> simp_all"
       sx := sx ++ "\n    case wr =>\n      intro a ha\n      simp only [PVM.Memory.writable_writeN, PVM.Memory.writable_setPages]\n      split <;> simp_all\n"
@@ -2570,7 +2860,7 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
       sx := sx ++ "\n    case rd => intro a; simp only [PVM.Memory.readable_writeN]\n    case wr => intro a; simp only [PVM.Memory.writable_writeN]\n"
     if grow then
       sx := sx ++ "    case rdA =>\n      intro a ha\n      simp only [PVM.Memory.readable_writeN, PVM.Memory.readable_setPages]\n      first | (rw [if_neg (by simp only [PVM.pageSize]; omega)]) | (simp only [PVM.pageSize]; split <;> first | rfl | omega)\n"
-    if hasGrow then sx := sx ++ "    case hp => first | exact hhp | heap_pages hhp\n"
+    if hasGrow then sx := sx ++ s!"    case hp =>{if parFix.isEmpty then "" else " (try simp only [hpar, JAM.Params.full_encode]);"} first | exact hhp | heap_pages hhp\n"
     -- the segment between cut states
     let pat (xs : List String) : String := match xs with
       | [] => "-" | [x] => x | xs => "⟨" ++ ", ".intercalate xs ++ "⟩"
@@ -2640,9 +2930,9 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
     let stepArgs := " ".intercalate ((if hasHost then ["henv", "hpar"] else []) ++ (if hasGrow then ["h.hhp"] else []) ++ ivars.flatMap (fun v => [v, s!"h{v}"]) ++ binders.map (argOf ·.1))
     sx := sx ++ s!"
 /-- **Cut {k} to cut {k + 1}**: from the state `St{k}`, the steps reach `St{k + 1}`. -/
-theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
-    (x : RefineCtx){envB} {varBinders}{fpB} (h : St{k} {" ".intercalate vars}{fp} ω μ) :
-    ∃ ω' μ', FreeStepsH p (refineContract env) {info.pcA} ω μ x {info.pcB} ω' μ' x {info.B - info.A} ∧ St{k + 1} {" ".intercalate vars}{fp} ω' μ' := by
+theorem run (p : ByteArray) (P : Program) {hasC} (env : {envT}) (ω : Regs) (μ : Memory)
+    (x : {ctxT}){envB} {varBinders}{fpB} (h : St{k} {" ".intercalate vars}{fp} ω μ) :
+    ∃ ω' μ', FreeStepsH p ({contr}) {info.pcA} ω μ x {info.pcB} ω' μ' x {info.B - info.A} ∧ St{k + 1} {" ".intercalate vars}{fp} ω' μ' := by
   obtain ⟨ω', μ', hrun, {pat rNames}, {pat mNames}, {if sNames.isEmpty then "" else pat sNames ++ ", "}hfr, hrd, hwr{if grow then ", hrdA" else ""}{if hasGrow then ", hhp'" else ""}⟩ :=
     steps p P env ω μ x {stepArgs}
   exact ⟨ω', μ', hrun, ⟨{", ".intercalate (if proofs.isEmpty then ["trivial"] else proofs)}⟩⟩
@@ -2657,14 +2947,14 @@ end Services.{NS}.{name}.S{k}
 
 namespace Services.{NS}.{name}
 
-open PVM JAM Services.{NS}.Code
+open PVM JAM {codeOpen}
 
 set_option maxRecDepth 100000
 
 /-- **Steps {bs[0]!} … {bs[nseg]! - 1} after pc {joinPc}**: the segments `S0` … `S{nseg - 1}`, composed. -/
-theorem chain (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
-    (x : RefineCtx){envB} {varBinders}{fpB} (h : St0 {" ".intercalate vars}{fp} ω μ) :
-    ∃ ω' μ', FreeStepsH p (refineContract env) {infos[0]!.pcA} ω μ x {infos[nseg - 1]!.pcB} ω' μ' x {bs[nseg]! - bs[0]!} ∧ St{nseg} {" ".intercalate vars}{fp} ω' μ' := by
+theorem chain (p : ByteArray) (P : Program) {hasC} (env : {envT}) (ω : Regs) (μ : Memory)
+    (x : {ctxT}){envB} {varBinders}{fpB} (h : St0 {" ".intercalate vars}{fp} ω μ) :
+    ∃ ω' μ', FreeStepsH p ({contr}) {infos[0]!.pcA} ω μ x {infos[nseg - 1]!.pcB} ω' μ' x {bs[nseg]! - bs[0]!} ∧ St{nseg} {" ".intercalate vars}{fp} ω' μ' := by
 "
   let mut cw := "ω"; let mut cm := "μ"; let mut ch' := "h"
   for k in [0:nseg] do
@@ -2687,15 +2977,15 @@ theorem chain (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
     else [(s!"hN.{n}", (((t.replace "ω[" "ω'[").replace "μ." "μ'.").replace "HeapPages μ " "HeapPages μ' "))]
   ch := ch ++ s!"
 /-- **Steps {bs[0]!} … {bs[nseg]! - 1} after pc {joinPc}**, from the facts the path reads before writing them. -/
-theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
-    (x : RefineCtx){envB}"
-  for v in vars do ch := ch ++ s!"\n    {varBinder cx.svc.lBound v cx.sBound}"
+theorem run (p : ByteArray) (P : Program) {hasC} (env : {envT}) (ω : Regs) (μ : Memory)
+    (x : {ctxT}){envB}"
+  for v in vars do ch := ch ++ s!"\n    {varBinder cx.svc.lBound v cx.sBound cx.vBounds}"
   for (n, t) in pre0 do ch := ch ++ s!"\n    ({n} : {t})"
   let startArgs := (if pre0.isEmpty && !frame then ["trivial"] else pre0.map (·.1)) ++
     (if frame then (if hasGrow then ["fun _ _ => rfl", "fun _ _ => rfl", "fun _ h => h", "fun _ h => h"]
       else ["fun _ _ => rfl", "fun _ => rfl", "fun _ => rfl"]) ++ unch.map (fun _ => "rfl") else [])
   if !frame then
-    ch := ch ++ s!"\n    : ∃ ω' μ', FreeStepsH p (refineContract env) {infos[0]!.pcA} ω μ x {infos[nseg - 1]!.pcB} ω' μ' x {bs[nseg]! - bs[0]!} ∧\n      " ++
+    ch := ch ++ s!"\n    : ∃ ω' μ', FreeStepsH p ({contr}) {infos[0]!.pcA} ω μ x {infos[nseg - 1]!.pcB} ω' μ' x {bs[nseg]! - bs[0]!} ∧\n      " ++
       (if concl.isEmpty then "True" else " ∧ ".intercalate (concl.map (·.2))) ++ " := by"
     ch := ch ++ s!"\n  obtain ⟨ω', μ', hrun, hN⟩ :=\n    chain p P env ω μ x{envA} {varArgs} ⟨{", ".intercalate startArgs}⟩"
     ch := ch ++ s!"\n  exact ⟨ω', μ', hrun, {", ".intercalate (concl.map (·.1))}⟩\n\nend Services.{NS}.{name}\n"
@@ -2733,7 +3023,7 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
     let symPart := if symC.isEmpty then ("", "") else
       let (sT, sP) := grp symC
       (s!"\n      ({sT}) ∧", s!"{sP}, ")
-    ch := ch ++ s!"\n    : ∃ ω' μ', FreeStepsH p (refineContract env) {infos[0]!.pcA} ω μ x {infos[nseg - 1]!.pcB} ω' μ' x {bs[nseg]! - bs[0]!} ∧"
+    ch := ch ++ s!"\n    : ∃ ω' μ', FreeStepsH p ({contr}) {infos[0]!.pcA} ω μ x {infos[nseg - 1]!.pcB} ω' μ' x {bs[nseg]! - bs[0]!} ∧"
     ch := ch ++ s!"\n      ({rT}) ∧\n      ({mT}) ∧{symPart.1}"
     ch := ch ++ s!"\n      (∀ a, (decide (a < 4294967296){if outW == "" then "" else " && " ++ outW}) = true → μ'.read a = μ.read a) ∧"
     if hasGrow then
@@ -2874,7 +3164,25 @@ def main (args0 : List String) : IO Unit := do
     | _ => "S < 4294967296"
   let extraSimp := ((← IO.getEnv "WITNESS_SIMP").getD "").splitOn "," |>.filter (· != "")
   let wild := (← IO.getEnv "WITNESS_WILD") == some "1"
-  let cx : Cx := { svc, sBound, extraSimp, wild, args, mode0, empty, mode, n, bytes, code, h, acct, jb, P, Q, c, i, sid, y, pkg, a, ω, μ, env, tr, path }
+  -- `WITNESS_ACC=1`: the traced run is the accumulate (`traceForAcc`), from `WITNESS_INPUT=t,s,n`
+  -- (default t = 100, s = 7, n = 1), passed in the refine shape (t, n, s, [])
+  let acc := (← IO.getEnv "WITNESS_ACC") == some "1"
+  let (c, i, sid, y, tr) := if !acc then (c, i, sid, y, tr) else
+    let (t, s, nI) := match inp.filterMap String.toNat? with
+      | [t, s, nI] => (t, s, nI)
+      | _ => (100, 7, 1)
+    (t, nI, s, [], (traceForAcc code h Q t nI s).getD #[])
+  let path := if acc then (tr.toList.take n).map (·.1) else path
+  let traceF : Nat → Nat → Nat → List UInt8 → Option (Array (Nat × Regs × Memory)) :=
+    if acc then fun t nI s _ => traceForAcc code h Q t nI s
+    else fun c2 i2 s2 y2 => traceFor code h acct Q c2 i2 s2 y2
+  let vBounds : List (String × String) := ((← IO.getEnv "WITNESS_VBOUND").getD "").splitOn ";" |>.filterMap fun e =>
+    match e.splitOn ":" with
+    | [v, r] => match (r.splitOn ",").filterMap String.toNat? with
+      | [lo, hi] => some (v, s!"{lo} ≤ {v} ∧ {v} < {hi}")
+      | _ => none
+    | _ => none
+  let cx : Cx := { svc, sBound, extraSimp, wild, args, mode0, empty, mode, n, bytes, code, h, acct, jb, P, Q, c, i, sid, y, pkg, a, ω, μ, env, tr, path, acc, traceF, vBounds }
   match mode with
   | "calls" => mode_calls cx
   | "allocck" => mode_allocck cx

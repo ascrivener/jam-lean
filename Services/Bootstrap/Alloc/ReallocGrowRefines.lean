@@ -115,7 +115,7 @@ theorem mergeNext_free {s : State} {c sz sz' T : Nat} (hlt : c + 32 * sz < T)
     in place without changing the allocated space, `realloc_impl` (42980) returns into `realloc`
     (40805) with ω₇ = ptr and memory holding the model's result, itself well-formed with its first
     chunk's `prev` 0, the caller's ω₀, ω₁, ω₅, ω₆ restored and the stack from sp up untouched. -/
-theorem grow_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+theorem grow_refines_hdr {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
     {grow : Grow} (s s' : State) (sp ptr req : Nat) (hwf : WF s) (hrep : Rep μ s)
     (hc : ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true) (hr : usable s ptr < req) (hr1 : req < 33554431)
     (h : growInplace grow s ptr req = some s') (hng : s'.allocated = s.allocated)
@@ -125,7 +125,8 @@ theorem grow_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
     (hb0 : 206864 ≤ s.base) (hbT : s.base + 1073741824 < 2147483648) (hA : s.allocated < 2147483648)
     (hfo : FirstOk s) {HT S0 S1 : Nat} (hHT : s.base + 32 * s.allocated ≤ HT)
     (hS : S0 + 152 ≤ sp ∧ sp ≤ S1) (hw : WrAt μ HT S0 S1) :
-    ∃ ω' μ', FreeStepsH p R 42980 ω μ x 40805 ω' μ' x 250 ∧ Rep μ' s' ∧ WF s' ∧ FirstOk s' ∧
+    ∃ ω' μ', HKeepG μ μ' (fun a => (∃ c ∈ chunks s, c.addr = a) ∨ a = ptr - 32 + 32 * (req + 1)) ∧
+      FreeStepsH p R 42980 ω μ x 40805 ω' μ' x 250 ∧ Rep μ' s' ∧ WF s' ∧ FirstOk s' ∧
       (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
       ω'[7] = UInt64.ofNat ptr ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat sp ∧
       ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
@@ -298,7 +299,7 @@ theorem grow_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
     | cons d ds =>
       have := (Tiles.around htl2).2.1 d (by rw [hp]; rfl)
       exact this ▸ mkH d (hsub0 d (by rw [hp]; simp))
-  obtain ⟨ω', μ', run, rep', ww, stk, e7, e0, e1, e5, e6⟩ := realloc_impl_grow (p := p) (P := P) (R := R)
+  obtain ⟨ω', μ', run, rep', ww, stk, hk, e7, e0, e1, e5, e6⟩ := realloc_impl_grow (p := p) (P := P) (R := R)
     x ω μ s H F sp ptr req cur e.size hrep' h1 h8 h7 h10 h0 hsp hsp1 hb0 hbT hA (hHF _ (Or.inl (mkH _ hXm)))
     (by omega) (mkH _ hXm) hHF (by rw [hXs]; rfl) hlt (by omega) (by omega) honc (by rw [← hea]; exact mkH e hem)
     hw2 hnf havail (by omega) hE hold' hold1' hnext' hHFT hNT hold1T hS hw
@@ -306,7 +307,20 @@ theorem grow_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
       (ptr - 32 + 32 * (req + 1)) (req + 1) (cur + e.size - (req + 1)) (s.base + 1073741824) := by
     have := growInplace_eq (grow := grow) (by rw [hXs]; rfl) hlt honc hw2 havail hE
     rw [h] at this; exact Option.some.inj this
-  refine ⟨ω', μ', run, ?_, hwfS, hfirst, ww, stk, e7, e0, e1, e5, e6⟩
+  refine ⟨ω', μ', ?hk, run, ?_, hwfS, hfirst, ww, stk, e7, e0, e1, e5, e6⟩
+  case hk =>
+    have inS : ∀ c, c ∈ pre ++ ⟨ptr - 32, cur, true⟩ :: e :: post' → c ∈ chunks s := fun c hc => by
+      rw [hcs']; exact hc
+    refine hk.mono fun b hb => ?_
+    rcases hb with (hb | hb) | hb | hb
+    · obtain ⟨c, hc, h⟩ := unH b hb; exact Or.inl (Or.inl ⟨c, inS c hc, h⟩)
+    · obtain ⟨c, hc, h, -⟩ := unF b hb; exact Or.inl (Or.inl ⟨c, inS c hc, h⟩)
+    · exact Or.inl (Or.inr hb)
+    · have hb' : b = (unregister s (ptr - 32 + 32 * cur) (binDown e.size)).heads
+          (binDown (cur + e.size - (req + 1))) := hb
+      rcases heads_ok hF2 (hbinlt (cur + e.size - (req + 1))) with h | ⟨c, hc, h1, -⟩
+      · right; rw [hb', h]; decide
+      · exact Or.inl (Or.inl ⟨c, inS c (hsub0 c hc), h1.trans hb'.symm⟩)
   rw [← hs'] at rep'
   -- the model's result, read from memory
   have hwfS' := hwfS
@@ -377,6 +391,23 @@ theorem grow_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
       · exact rep'.prevL _ (Or.inl (mkF c (h hu) hu))
       · exact absurd (hXu c hc h) (by rw [hu]; simp)
       · exact rep'.prevL _ (Or.inr h)
+
+theorem grow_refines {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    {grow : Grow} (s s' : State) (sp ptr req : Nat) (hwf : WF s) (hrep : Rep μ s)
+    (hc : ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true) (hr : usable s ptr < req) (hr1 : req < 33554431)
+    (h : growInplace grow s ptr req = some s') (hng : s'.allocated = s.allocated)
+    (h1 : ω[1] = UInt64.ofNat sp) (h8 : ω[8] = UInt64.ofNat ptr) (h7 : ω[7] = UInt64.ofNat 196792)
+    (h10 : ω[10] = UInt64.ofNat req) (h0 : ω[0] = UInt64.ofNat 1988)
+    (hsp : 2147483800 ≤ sp) (hsp1 : sp < 4294967296)
+    (hb0 : 206864 ≤ s.base) (hbT : s.base + 1073741824 < 2147483648) (hA : s.allocated < 2147483648)
+    (hfo : FirstOk s) {HT S0 S1 : Nat} (hHT : s.base + 32 * s.allocated ≤ HT)
+    (hS : S0 + 152 ≤ sp ∧ sp ≤ S1) (hw : WrAt μ HT S0 S1) :
+    ∃ ω' μ', FreeStepsH p R 42980 ω μ x 40805 ω' μ' x 250 ∧ Rep μ' s' ∧ WF s' ∧ FirstOk s' ∧
+      (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
+      ω'[7] = UInt64.ofNat ptr ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat sp ∧
+      ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
+  obtain ⟨ω', μ', -, h⟩ := grow_refines_hdr (R := R) (p := p) (P := P) (grow := grow) (HT := HT) (S0 := S0) (S1 := S1) x ω μ s s' sp ptr req hwf hrep hc hr hr1 h hng h1 h8 h7 h10 h0 hsp hsp1 hb0 hbT hA hfo hHT hS hw
+  exact ⟨ω', μ', h⟩
 
 /-- The model's `realloc` above the usable size, when `growInplace` succeeds: the address kept, no
     copy. -/

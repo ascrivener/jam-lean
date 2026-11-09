@@ -54,17 +54,18 @@ theorem grow_post {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
         (fun a => H a ∨ (cur + sz - n ≠ 0 ∧ a = Xc + 32 * n)) (fun a => F a ∨ (cur + sz - n ≠ 0 ∧ a = Xc + 32 * n)) ∧
       (∀ a, μ'.writable a = μ.writable a) ∧
       (∀ a, a < 4294967296 → 2147483648 ≤ a → (a < sp + 104 ∨ sp + 112 ≤ a) → μ'.read a = μ.read a) ∧
+      HKeepG μ μ' (fun a => (H a ∨ F a) ∨ a = Xc + 32 * n ∨ a = (growHdr (unregister s (Xc + 32 * cur) (binDown sz)) Xc n).heads (binDown (cur + sz - n))) ∧
       ω'[7] = UInt64.ofNat ptr ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat (sp + 152) ∧
       ω'[5] = UInt64.ofNat v5 ∧ ω'[6] = UInt64.ofNat v6 := by
   have hT : PLift ((_ : Prop) ∧ (_ : Prop)) := ⟨⟨hNT, hold1T⟩⟩
   have hszN : sz ≤ 33554432 := by have := hfree.2.2.1; rw [hsz] at this; omega
   clear hNT hold1T
-  obtain ⟨ω1, μ1, r1, rep1, ww1, sf1, u2, u5, u6, g1⟩ := grow_unreg (p := p) (P := P) (R := R) x ω μ s H F
+  obtain ⟨ω1, μ1, r1, rep1, ww1, sf1, hk1, u2, u5, u6, g1⟩ := grow_unreg (p := p) (P := P) (R := R) x ω μ s H F
     sp base (Xc + 32 * cur) sz n (Xc + 32 * n) (cur + sz) hrep h1 h7 h3 s40 s48 s112 s64 s72 s56 s80 hn
     (by omega) hb0 hbT hHF hsz hfree hsp hsp1 hHFT hS hw
   have rd : ∀ a v, rdN μ a 8 = v → sp ≤ a → a + 8 ≤ sp + 152 → rdN μ1 a 8 = v := fun a v h h1 h2 => by
     rw [← h]; exact rdN_frame fun j hj => sf1 _ (by omega) (by omega)
-  obtain ⟨ω2, μ2, r2, rep2, ww2, sf2, e7, e0, e1, e5, e6⟩ := grow_tail (p := p) (P := P) (R := R) x ω1 μ1
+  obtain ⟨ω2, μ2, r2, rep2, ww2, sf2, hk2, e7, e0, e1, e5, e6⟩ := grow_tail (p := p) (P := P) (R := R) x ω1 μ1
     (unregister s (Xc + 32 * cur) (binDown sz)) H F sp base Xc n (cur + sz - n) ptr v5 v6 rep1
     (by rw [fget g1 1 (by decide) (by decide)]; exact h1) u5 u6 u2
     (by rw [fget g1 7 (by decide) (by decide)]; exact h7) (by rw [fget g1 3 (by decide) (by decide)]; exact h3)
@@ -77,6 +78,7 @@ theorem grow_post {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
     (rd _ _ s0 (by omega) (by omega)) (rd _ _ s5 (by omega) (by omega)) (rd _ _ s6 (by omega) (by omega))
     hsp hsp1 hHFT hS (hw.of_eq ww1) hT.down.1 hT.down.2
   exact ⟨ω2, μ2, (r1.trans r2).mono (by omega), rep2, fun a => (ww2 a).trans (ww1 a),
-    fun a h1 h2 h3 => (sf2 a h1 h2 h3).trans (sf1 a h1 h2), e7, e0, e1, e5, e6⟩
+    fun a h1 h2 h3 => (sf2 a h1 h2 h3).trans (sf1 a h1 h2), (hk1.mono fun b hb => Or.inl (Or.inl hb)).trans hk2,
+    e7, e0, e1, e5, e6⟩
 
 end Services.Bootstrap.Alloc

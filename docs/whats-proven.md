@@ -83,6 +83,12 @@ section):
   certain host calls cannot touch other accounts or export segments.
 - `psi_freeRun`, `psiM_of_freeRunH` and `psiM_of_stepsH` (`PVM/Logic/`): the gas-free reasoning
   layer used below. It is sound against Ψ and Ψ_M.
+- `FreeStepsH.keepRO` (`JAM/Theorems/KeepRO.lean`): a gas-free refine run (under
+  `refineContractK`, any cap) keeps the access of every page outside the heap's 48 … pb and the value
+  of every octet on such a page that is not writable, so read-only data is never touched. From
+  `Program.exec_mem` (an instruction changes nothing off its writes), `Program.freeStep_keep` (a
+  continuing step writes only writable octets, GP §A.4) and `refineContractK_keep` (`grow_heap` sets
+  only heap pages; `fetch` writes only a writable range).
 
 **Provenance.** The model was written from the Gray Paper and the test vectors only. No other PVM
 or JAM implementation was consulted.
@@ -162,6 +168,391 @@ An independent kernel, nanoda as vendored by
     below 2³¹ (`Ok`). The loop invariant `Inv` fixes the frame's concrete addresses.
   - *Scope:* this is a loop lemma. It is **not yet composed** into a Ψ_R theorem for a payload of
     `Checkpoint`s, and other instruction kinds are not covered.
+- **The decode loop, for any instruction.** `Decode.Loop.loop` and `Decode.Elems`
+  (`Services/Bootstrap/Decode/Loop.lean`, `Elems.lean`).
+  - *Statement:* `ElemOk enc Rep` says that `Instruction::decode`, entered after the first octet of
+    the encoding `enc`, reads the rest, returns to the loop and leaves a value satisfying `Rep` (and not
+    the error word) in its slot. If every element of a payload `es` has an `ElemOk`, the loop at 680
+    decodes them all: it leaves for 562 with value j, satisfying `reps j`, in buffer slot j, and changes
+    only the stack, the reader and the buffer. This generalizes `DecodeLoop.loop` from `Checkpoint`s to
+    any list. `Elems` gives the `ElemOk` of `Checkpoint`, `Panic` and `Benchmark` (`unit`), and of
+    `Zombify`, `Exported`, `Yield`, `Solicit`, `Forget`, `Eject`, `Upgrade`, `Lookup`, `Transfer` and
+    `RandomStorageRefine`, each saying the
+    slot holds the discriminant and then the encoding's fields at their offsets.
+  - *Assumed:* fewer than 128 elements (a one-octet length), each encoding non-empty, the buffer
+    8-aligned after the payload and below 2^31 (`Ok`); the stack writable from its bottom
+    (4278050816, the blob's 8192-octet stack) to the loop's frame.
+  - *Scope:* `ElemOk`s for the remaining variants (Assign and the Vec/Option ones)
+    are not stated yet; the loop is not yet composed into a Ψ_R theorem.
+- **The decode loops at any frame base.** `Decode.Loop.ElemOkF`, `passF`, `loopF`,
+  `Decode.LoopA.ElemOkAF`, `passAF`, `loopAF`, the adapters `Decode.Elems.*F` and
+  `Decode.Assign.assign_elemF` (`Services/Bootstrap/Decode/LoopF.lean`, `Loop.lean`, `LoopA.lean`,
+  `LoopAPass.lean`, `Elems.lean`, `Assign.lean`).
+  - *Statement:* the decode loop's theorems with the decoder's frame at any base F (every stack
+    address F + const), the reader at RD, the payload at P0 and the reader's length Lt, under `Lay F RD`
+    (F at least 2048 above the stack's bottom and 8-aligned, RD above the loop's frame) and `OkF`
+    (the payload in the heap, from 206864). Accumulate runs the same loop 1160 octets lower; refine's
+    theorems (`ElemOk`, `pass`, `loop`, `ElemOkA`, `passA`, `loopA`, each adapter) are these at
+    F = 4278057632, RD = 4278058648, P0 = 206913, with unchanged statements.
+- **`Instruction::decode`'s tag dispatch, for every tag.** `Decode.Tag.dispatch`, `reject` and
+  `unit_variant` (`Services/Bootstrap/Decode/Tag.lean`).
+  - *Statement:* from 20626, where the reader has just read the tag octet into the function's
+    frame at A:
+    - for each tag t < 25, the 32-bit offset table at 67476 sends the run to t's decoder
+      `handler t`, changing nothing but ω₇ and ω₈ (`dispatch`);
+    - if the reader failed or t ≥ 25, the function returns the error word 2^64 − 2 in its result
+      slot (`reject`);
+    - for the variants without fields (`Checkpoint`, `Panic`, `Benchmark`), the function returns
+      their discriminant word 2^63 + t − 1 (`unit_variant`).
+
+    In each case the function restores ω₀, ω₅, ω₆ and sp from the frame and returns.
+  - *Assumed:* the offset table's 100 octets (read-only data) and the frame's saved words. Unlike
+    `DecodeLoop`, the frame address A and the slot O are arbitrary, so the theorems also serve the
+    decode of work outputs in accumulate.
+  - *Scope:* the decoders of the 22 variants with fields are not covered yet. The code facts now
+    cover all of `Instruction::decode`, from two traced payloads that between them hold every
+    instruction kind, plus the whole range 20626 … 22145.
+- **The compiler's `memset`, zeroing an aligned buffer.** `Memzero.memzero`
+  (`Services/Bootstrap/Memzero.lean`).
+  - *Statement:* called at 70133 with an 8-aligned D, the octet 0 and n a multiple of 8 and at
+    least 16, `memset` zeroes D … D + n, changes no other memory and returns.
+  - *Scope:* only that case (the word loop). Other fill octets, unaligned destinations and short or
+    ragged lengths take paths not covered yet. `Transfer`'s decoder uses this case for its memo.
+- **`Instruction::decode` for variants with fixed-width fields.** `Decode.Fixed.zombify`,
+  `exported` and `read_u64` (`Services/Bootstrap/Decode/Fixed.lean`).
+  - *Statement:* from 20626 with tag 3 (`Zombify { ejector: u32 }`) or 20 (`Exported { count: u64 }`),
+    and the reader holding enough octets, the function returns the variant in its slot O: the
+    discriminant word 2^63 + t − 1 at O and the field's octets, copied from the payload, at O + 8.
+    The reader is advanced by the field's width. Memory changes only in the stack below the frame,
+    the reader and the slot. `read_u64` summarizes the shared `u64` reader at 3791, which every `u64`
+    field goes through.
+  - *Scope:* the other variants are not covered yet.
+- **`Instruction::decode` for variants with a hash field.** `Decode.Hash.yield`
+  (`Services/Bootstrap/Decode/Hash.lean`).
+  - *Statement:* from 20626 with tag 14 (`Yield { hash }`) and the reader holding at least 32
+    octets, the function reads the hash into its frame (`read_big_sp`), copies it to O + 8 and puts
+    the discriminant word 2^63 + 13 at O. The reader is advanced by 32. Memory changes only in
+    A − 88 … A + 32, the reader and O … O + 40.
+  - *Scope:* `CreateService` is not covered yet (`Provide`: see `provide_hash` and `provide_inline_*`).
+- **`Instruction::decode` for a hash and a `u64`.** `Decode.HashU64.solicit` and `forget`
+  (`Services/Bootstrap/Decode/HashU64.lean`).
+  - *Statement:* from 20626 with tag 6 (`Solicit { hash, len }`) and the reader holding at least 40
+    octets, the function returns the variant in its slot O: the discriminant word 2^63 + 5 at O, the
+    hash at O + 8 and `len`'s 8 octets at O + 40, all copied from the payload. The reader is advanced
+    by 40. Memory changes only in the 176 octets below the frame, the reader and O … O + 48.
+    `forget` is the same for tag 7 (`Forget { hash, len }`, word 2^63 + 6).
+    `U32Hash.eject` (`Services/Bootstrap/Decode/U32Hash.lean`) does the same for tag 4
+    (`Eject { target: u32, code_hash }`, word 2^63 + 3): the hash at O + 8 and `target` at O + 40,
+    the reader advanced by 36.
+    `Upgrade.upgrade` (`Services/Bootstrap/Decode/Upgrade.lean`) does the same for tag 1
+    (`Upgrade { code_hash, min_item_gas, min_memo_gas }`, word 2^63): the hash at O + 8 and the two
+    `u64`s at O + 40 and O + 48, the reader advanced by 48, through three reads.
+    `Lookup.lookup` (`Services/Bootstrap/Decode/Lookup.lean`) does the same for tag 8
+    (`Lookup { service: u32, hash, eager: bool }`, word 2^63 + 7): `service` at O + 8, the hash at
+    O + 12 and the bool at O + 44, given that the payload's bool octet is 0 or 1; the reader advanced
+    by 37.
+  - *How:* a helper with its own 88-octet frame reads the hash (`read_big_sp`), moves it, reads the
+    `u64` (`read_ok`) and stores the variant (`s1`, `s2`, `s3`).
+- **`Instruction::decode` for `RandomStorageRefine`.** `Decode.RandomStorageRefine.random_storage_refine`
+  (`Services/Bootstrap/Decode/RandomStorageRefine.lean`).
+  - *Statement:* from 20626 with tag 21 (`RandomStorageRefine { seed: u64, n: u8 }`) and the reader
+    holding at least 9 octets, the function returns the variant in its slot O: the discriminant word
+    2^63 + 20 at O, `seed` at O + 8 and `n` at O + 16, copied from the payload (any octet for `n`). The
+    reader is advanced by 9. Memory changes only in A − 144 … A + 24, the reader and O … O + 17.
+  - *How:* the decoder's 56-octet frame and a shared helper for a `(u64, u8)` pair (35406, jump-table
+    entry 825), which reads both (`read_ok`) and writes `Ok` with them at A (`r1` … `r4`).
+- **`Instruction::decode` for `Transfer`.** `Decode.Transfer.transfer`
+  (`Services/Bootstrap/Decode/Transfer.lean`).
+  - *Statement:* from 20626 with tag 2 (`Transfer { destination: u32, amount: u64, gas_limit: u64,
+    memo }`) and the reader holding at least 148 octets, the function returns the variant in its slot
+    O: the discriminant word 2^63 + 1 at O, the 128-octet memo at O + 8, `amount` at O + 136,
+    `gas_limit` at O + 144 and `destination` at O + 152, all copied from the payload. The reader is
+    advanced by 148. Memory changes only in the 264 octets below the frame, the reader and O … O + 156.
+  - *Assumed:* A and O 8-aligned; the stack, reader, payload and slot apart.
+  - *How:* a 176-octet frame; three `read_ok`s park the integers, `memzero` clears the memo's buffer,
+    `read_big_sp` reads the memo into it and `memcpy_big_aligned` copies it to O + 8 (`t1` … `t7`).
+
+- **`Instruction::decode` of `LookedUp { data: Option<Vec<u8>> }`, without allocation.**
+  `Decode.LookedUp.looked_up_none` and `looked_up_empty` (`Services/Bootstrap/Decode/LookedUp.lean`).
+  - *Statement:* from 20626 with tag 18, if the reader's next octet is 0 (`None`), the function
+    returns the discriminant word 2^63 + 17 at O and the niche word 2^64 − 1 at O + 8, and advances
+    the reader by 1 (`looked_up_none`). If the next octets are 1 (`Some`) and ℰ(0) (length 0), it
+    returns 2^63 + 17 at O and the empty `Vec` `{cap 0, ptr 1, len 0}` at O + 8, and advances the
+    reader by 2 (`looked_up_empty`). Memory changes only in the callees' frames below A, the reader
+    and O … O + 32.
+  - *How:* `Option<Vec<u8>>::decode` (35937) reads the tag (`read_ok`). For `Some`, it decodes the
+    length (`decodeU32`) and calls `read_vec` (3473), which for n = 0 neither reads nor allocates
+    (`VecU8.vec_u8_empty`).
+  - *Also proved, not yet composed:* the steps of `read_vec` for 1 ≤ n ≤ 16384 (one chunk) and of
+    `finish_grow`'s path through `alloc` (`VecU8.v1` … `v3`, `g1`, `g2`). `AllocOk.alloc_ok`
+    (`Services/Bootstrap/Decode/AllocOk.lean`) is `alloc` (40494) for any successful model `alloc`, growing the heap or not, as one statement.
+  - *Scope:* non-empty `Some` payloads are not covered yet. The code facts lack `read_vec`'s and
+    `finish_grow`'s realloc paths and the error exits. The allocator's wrapper theorems also don't
+    state that page access outside the heap is kept, so the payload's readability after an `alloc`
+    can't be shown yet.
+
+- **`Instruction::decode` of the single-`Vec` variants with no elements.**
+  `Decode.VecEmpty.vec_empty` (`Services/Bootstrap/Decode/VecEmpty.lean`).
+  - *Statement:* from 20626 with tag 5 (`DeleteItems`), 10 (`Export`), 19 (`Imported`) or 9
+    (`Import`), and the reader's next octet ℰ(0), the function returns the discriminant word
+    (2^63 + 4, 2^63 + 9, 2^63 + 18 or 2^63 + 8) at O and the empty `Vec` `{cap 0, ptr 8, len 0}` at
+    O + 8. The reader is advanced by
+    1. Nothing is allocated. Memory changes only in A − 176 … A, the reader and O … O + 32.
+  - *How:* the four decoders share one shape: a helper frame, `decodeU32` for the length, and the
+    element reader at 8 or 3100 (`vec_elems_empty`, `vec_pairs_empty` for n = 0).
+  - *Scope:* non-empty vectors allocate, and are not covered yet (see the previous item's scope).
+
+- **`Instruction::decode` of the other `Vec`/`Option` variants, in their cases without allocation.**
+  `Decode.Provide.provide_hash`, `Decode.RandomStorage.random_storage_err`, `Decode.Bless.bless_empty`
+  and `Decode.Designate.designate_empty` (`Services/Bootstrap/Decode/`).
+  - *Statement:* from 20626, each returns the variant in its slot O with the reader advanced past
+    its encoding:
+    - `Provide { service, preimage: Hash(hash) }` (tag 17): the discriminant word 2^63 + 16 at O,
+      the preimage's tag 0 at O + 8, `hash` at O + 9 and `service` at O + 48 (37 octets read);
+    - `RandomStorageAccumulate(Err(()))` (tag 22): 2^63 + 21 at O and the niche word 2^64 − 1 at
+      O + 8 (1 octet read);
+    - `Bless` with no always-accumulate entries (tag 11): 2^63 + 10 at O, the empty `Vec`
+      `{cap 0, ptr 8, len 0}` at O + 8 and the four `u32`s at O + 32 … O + 44 (17 octets read);
+    - `Designate` with no keys (tag 13): 2^63 + 12 at O and `{cap 0, ptr 1, len 0}` at O + 8 (1 octet
+      read). The bound check against 3·𝖢 (𝖢 read from 196616) passes for n = 0 whatever 𝖢 is.
+
+    Memory changes only in the callees' frames below A (and the result slot at A for `Designate`),
+    the reader and the slot.
+  - *Scope:* `RandomStorageAccumulate(Ok(keys))` and non-empty `Bless` and `Designate` allocate, and
+    are not covered yet. `Provide` with `Inline(bytes)`: see the next item.
+
+- **`Instruction::decode` of `Provide { service, preimage: Inline(bytes) }`.**
+  `Decode.Provide.provide_inline_small` and `provide_inline_big`
+  (`Services/Bootstrap/Decode/ProvideInline.lean`).
+  - *Statement:* from 20626 with tag 17, and the reader holding the service (4 octets), the preimage
+    tag 1, ℰ(n) and n octets, `Provide`'s helper keeps the tag word 1 and decodes n (`decodeU32`). It
+    then reads the bytes with `read_vec` into a `Vec` at H + 80 and moves the `Vec` with unaligned
+    stores. `Instruction::decode` returns the discriminant word 2^63 + 16 at O, the tag 1 at O + 8,
+    the `Vec` `{cap n, ptr q, len n}` at O + 16 and the service at O + 48, with the n octets at q. The
+    reader is advanced by 5 + |ℰ(n)| + n.
+    - 1 ≤ n ≤ 16384: q is the model's `alloc` of ⌈n/32⌉ units, and the heap holds the state after it
+      (`vec_u8_small`).
+    - 16384 < n < 2³⁰ − 64: through `vec_u8_big`, with the same two outcomes. Either the variant is
+      returned, q an allocated chunk of ⌈n/32⌉ + 1 units of the state after the `realloc`s, or the
+      run stops at a `realloc` the model fails (33055, ω₇ = 0).
+  - *How:* `pi_pre` runs from 20626 to `read_vec`'s call and `pi_post` from its return to t. The new
+    steps are `q3`, `q4`, `q5` and `p5i`. `q5`'s overlapping stores are checked octet by octet.
+  - *Assumed:* as `vec_u8_small` / `vec_u8_big`, with `Instruction::decode`'s frame at A, the helper's
+    frame at A − 152, and the reader, the slot and the payload above A.
+  - *Setting:* the payload above A is not the decode loop's setting (see `vec_u8_small`). The loop
+    uses `provide_inline_heap` (below) for n ≤ 16384.
+
+- **`Vec<u8>`, `LookedUp { Some(bytes) }` and `Provide { Inline(bytes) }` with the payload in the heap
+  (1 ≤ n ≤ 16384).** `Decode.VecU8.vec_u8_heap` (`Services/Bootstrap/Decode/VecU8Heap.lean`),
+  `Decode.LookedUp.looked_up_heap` (`LookedUpHeap.lean`) and `Decode.Provide.provide_inline_heap`
+  (`ProvideInlineHeap.lean`).
+  - *Statement:* as `vec_u8_small`, `looked_up_small` and `provide_inline_small`, in the decode loop's
+    setting. The payload (the whole encoding) lies inside the data of an allocated chunk, the
+    allocator's context is `HeapCtx`, and the run is under `refineContractK cap` (cap ≥ 2²⁷). The
+    `alloc` is `HeapCtx.alloc_call`, with two outcomes:
+    - the model's `alloc` of ⌈n/32⌉ units gives `(q, s')`: the variant is returned with the `Vec`
+      `{cap n, ptr q, len n}` and the n payload octets at q. The context is kept for `s'`, every
+      allocated chunk of `s` is kept with its data, the block is a new allocated chunk, and page
+      entries outside the heap are kept;
+    - the model's `alloc` fails: the run reaches the `alloc` wrapper's return (40611) with null.
+
+    `vec_u8_heap` also keeps memory below 196608 (contents and readability), the globals (`Glob`)
+    and the stack's writability.
+  - *How:* the payload survives the `alloc` because `alloc` keeps every allocated chunk and writes
+    only off their data (`HKeep`, `off_hdr_data`); the reader's writes stay in the new block
+    (`data_disj`). `read_low` is the reader for a source below its frames.
+
+- **`Vec<Vec<u8>>` with the payload in the heap (1 ≤ n ≤ 682 elements, each ≤ 16384 octets).**
+  `Decode.VecVecU8.vec_vec_u8_heap` (`Services/Bootstrap/Decode/VecVecU8.lean`).
+  - *Statement:* the element reader at 8, which reads the items of `DeleteItems`, `Export` and
+    `Imported`. It runs in the decode loop's setting: the payload (each element's ℰ(|e|) ++ e, laid
+    end to end) lies inside an allocated chunk's data, under `HeapCtx` and `refineContractK cap`
+    (cap ≥ 2²⁷). There are two outcomes:
+    - the reader returns the `Vec` `{cap n, ptr q, len n}`, with element j at q + 24j as the
+      `Vec<u8>` `{|es[j]|, qs j, |es[j]|}` and qs j holding es[j]. The buffer and the elements'
+      blocks are fresh allocated chunks (`cs`): the elements read back from any memory that keeps
+      their data. The reader is advanced past the payload. The context, every allocated chunk of
+      `s` with its data, memory below 196608, the globals and the stack's access are kept;
+    - an allocation fails (`Exhausts`): the first `alloc`, or one element's `read_vec`.
+  - *How:* `q1` opens the frame and calls `finish_grow`, then `alloc_call` and `q4`. Each pass is
+    `pass` = `elem` + `r3`. `elem` covers the length decoder (`decodeU32`) and `read_vec`, which is
+    `vec_u8_empty` for an empty element (the dangling pointer 1, no allocation) or `vec_u8_heap`.
+    `r3` pushes the element. `loop` is induction on the elements left, collecting the elements'
+    chunks. `x1` and `x2` store the `Vec`.
+  - *Assumed:* n ≤ 682, so a single `alloc` holds the buffer (the binary reserves min(n, 682)
+    elements first); each element at most 16384 octets (`vec_u8_heap`'s range). Larger values go
+    through `realloc` and are not proven yet.
+
+- **`Vec<(u64, u64)>` and `Import { items }` with the payload in the heap (1 ≤ n ≤ 1024).**
+  `Decode.VecPairs.vec_pairs_heap` and `Decode.VecPairs.import_heap`
+  (`Services/Bootstrap/Decode/VecPairs.lean`).
+  - *Statement:* the decode loop's setting, as `vec_u8_heap`. The reader at 3100 reads n pairs (16n
+    octets) from a payload inside an allocated chunk's data, under `HeapCtx` and `refineContractK cap`
+    (cap ≥ 2²⁷). There are two outcomes:
+    - the model's `alloc` of ⌈16n/32⌉ units gives `(q, s')`: the `Vec` `{cap n, ptr q, len n}` with
+      the 16n payload octets at q, the reader advanced by 16n, the context kept for `s'`, every
+      allocated chunk of `s` kept with its data, the block a new allocated chunk, and page entries
+      outside the heap kept. `import_heap` returns `Import` from 20626: the discriminant word
+      2^63 + 8 and that `Vec` at O, with the reader advanced past ℰ(n) and the items. Both also
+      keep memory below 196608 (contents and readability), the globals (`Glob`) and the stack's
+      writability, which the decode loop's element contract asks for;
+    - the model's `alloc` fails: the run reaches the `alloc` wrapper's return (40611) with null.
+  - *How:* `p1` sets up the frame and calls `finish_grow` (`g1e`), then `alloc_call`. `loop` copies
+    one pair per pass (`pass`, 260 steps), induction on the count left. `ex1` and `ex2` store the
+    `Vec`, and `VecEmpty.e3` / `e4` copy it into the variant.
+  - *Assumed:* n ≤ 1024, so a single `alloc` holds the whole `Vec` (the binary caps its first
+    allocation at 1024 elements). Larger n needs the `realloc` growth path; that is not proven yet.
+
+- **`realloc` keeps the other allocated chunks' data.** `Decode.ReallocKeepAll.realloc_wrap_cases_keep`
+  (`Services/Bootstrap/Decode/ReallocKeepAll.lean`).
+  - *Statement:* `realloc_wrap_cases_hdata`, and whenever the model's `realloc` returns a block, every
+    octet of the data of an allocated chunk of `s` other than ptr's is as it was (`OthersData`).
+  - *How:* `keep_of_hkeep`: a heap frame (`HKeep`) whose headers are those of `s`'s chunks, or lie in a
+    free chunk or ptr's own chunk, or past the heap's top, keeps every such octet. Each case of
+    `realloc` gives one:
+    - same size: `same_refines_low`, only the stack;
+    - shrink: `shrink_refines_hdr`;
+    - to 0: `free_refines_hdr`;
+    - grow in place, with or without `grow_heap`: `grow_refines_hdr` / `grow_heap_refinesK_hdr`, the
+      new header in the free next chunk (`grow_hdr`);
+    - fallback: `alloc`'s frame, then `memcpy` into the new block (free in `s`), then `free`.
+
+    The wrappers (`realloc_wrap_keep`, `realloc_wrap_keep0`) carry it through the lock and unlock.
+  - *Assumed:* as `realloc_wrap_cases_hdata`.
+
+- **One `realloc` call on the allocator's context.** `Decode.ReallocCall.realloc_call`
+  (`Services/Bootstrap/Decode/ReallocCall.lean`).
+  - *Statement:* from 40701 to 40821, under `refineContractK cap` with cap ≥ 2²⁷, on `HeapCtx`, with
+    ω₇ = ptr the data address of an allocated chunk, ω₉ = align (1 … 32) and ω₁₀ = size > 0. Two
+    outcomes:
+    - the model's `realloc` gives `(r, s', b)`: the wrapper returns r, and `HeapCtx` holds for `s'`.
+      The old block's first min(usable, ⌈size/32⌉)·32 octets are at r. Every other allocated chunk
+      of `s` is still a chunk of `s'` (`realloc_keeps_used`), with its data (`OthersData`). r's
+      chunk is allocated, of exactly ⌈size/32⌉ + 1 units. The stack from sp up, memory below 196608
+      (contents and readability) and writability from S0 up are kept, and ω₀, ω₁, ω₅, ω₆ restored;
+    - the model's `realloc` fails: the wrapper returns null and `HeapCtx` holds for `s`.
+  - *How:* `realloc_wrap_cases_keepK` restates `realloc_wrap_cases_keep` under `refineContractK cap`.
+    The fallback's `alloc` may now grow the heap by any amount within the cap (`fallback_tail_heap_keepK`,
+    `fallback_refines_heap_keepK`, `realloc_wrap_fallback_keepK`, through `alloc_refines_growK_hdr`).
+    Every other step lifts from `refineContract` (`lift`: `FreeStepsH.weaken`, `refineContract_le`).
+    With cap ≥ 2²⁷ the growth cost fits, since 4096·pb ≤ S0 < 2³² gives pb < 2²⁰.
+  - *Assumed:* the heap base is 8-aligned (`s.base % 8 = 0`), which `HeapCtx` does not record; the
+    stack frame below sp (S0 + 320 ≤ sp, 2147483968 ≤ sp, 8-aligned).
+
+- **The decode loop for elements that allocate.** `Decode.LoopA.loopA`, `ElemOkA`,
+  `Decode.HeapCtx.alloc_call` (`Services/Bootstrap/Decode/LoopA.lean`, `LoopAPass.lean`, `HeapCtx.lean`,
+  `HeapWrap.lean`, `HeapFrame.lean`).
+  - *Statement:* `ElemOkA` is `ElemOk` for a decoder that may call picoalloc's `alloc`. It runs under
+    `refineContractK cap env`, with the allocator's context `HeapCtx` (picoalloc's state in memory,
+    the heap pages and the stack). It either returns to the loop with a new state that keeps every
+    allocated chunk and its data, and a value whose property depends only on chunks allocated during
+    the element, or reaches a failed allocator call (`Exhausts`: a wrapper returned null and the
+    model's call fails, `alloc` at 40611 or `realloc` in `read_vec` at 33055, `AllocFail`). Every `ElemOk` lifts to an `ElemOkA`
+    (`ElemOkA.of_elemOk`). `ElemOkA` takes the globals' contents `gl` (196616 … 196792, `Glob`) at its
+    start, and keeps them; `loopA` decodes the whole payload through `ElemOkA`s with the same `gl`,
+    within the sum of the elements' own step bounds and 1700 an element (`bound`), or reaches a
+    failed allocation. The heap context also says the read-only region (below 196608) is not
+    writable (`HeapCtx.ro`).
+    `alloc_call` is one call of the `alloc` wrapper: the model's block and state, with the context
+    kept, the block a fresh allocated chunk and the heap's data and the globals below the allocator
+    (196616 … 196792) kept (`HKeepG`), or null when the model fails.
+  - *Assumed:* the cap on what one host call may charge is at least 2^27 (so any `grow_heap` fits);
+    approved by Adam (2026-11-09).
+  - *How:* main's `alloc_wrap_refines`, `alloc_wrap_refines_growK` and `alloc_wrap_refines_failK`,
+    with the `HKeepG` frame of `alloc_refines_hdr` carried through the wrapper (`HeapWrap`);
+    `HKeepG` is `HKeep` with the globals between the wrapper's lock word (196608) and the allocator
+    (`A0` = 196792); the allocator's proofs give it unchanged, and `HKeepG.hkeep` recovers `HKeep`;
+    `Rep.congr_data` (writes inside an allocated chunk's data keep `Rep`) and `alloc_keeps_used`.
+
+- **`Instruction::decode` of a `Vec` of hashes, and of `Assign`.** `Decode.VecHash.vec_hash`,
+  `Decode.Assign.assign_elem` (`Services/Bootstrap/Decode/VecHash.lean`, `Assign.lean`).
+  - *Statement:* `vec_hash`: the hash-`Vec` decoder (1764) with 1 ≤ n ≤ 512 and the payload's n·32
+    octets in an allocated chunk either allocates a fresh chunk q (the model's `alloc` of n units),
+    copies the n hashes there, returns the `Vec` (n, q, n) and advances the reader, keeping the heap
+    context, every allocated chunk and its data, the globals and the read-only data; or an
+    allocation fails (`Exhausts`). `assign_elem`: `Assign` (tag 12) is an `ElemOkA`. With the
+    globals holding at 196680 a word G whose low 32 bits n are 1 … 512, the encoding
+    [12] ++ core (2) ++ n hashes ++ assigner (4) decodes to the slot `AssignRep`: the discriminant
+    2^63 + 11, the queue's capacity and length n and pointer q, the assigner and the core, and the
+    n hashes at q in the heap; within 1000 + 550·n steps.
+  - *Assumed:* the global at 196680 is a parameter G (the start-up code copies it from the protocol
+    parameters, presumably 𝖰 = 80 of GP v0.8.0); that start-up sets it is not yet proved (a
+    follow-up). Approved by Adam (2026-11-09).
+  - *How:* step lemmas `p1`, `g1`, `p5`, the element loop `elems`, and `alloc_call` for 1764; `as1`
+    … `as4` for `Assign`'s handler (20971) and helper (24765), with `read_ok` for the core and the
+    assigner; the decoder stores the length capped by the global (`min len (G mod 2^32)`), which is n.
+
+- **Runs under the refine contract keep page access outside the heap.** `Alloc.FreeStepsH.pagesOut`
+  (`Services/Bootstrap/Alloc/Pages.lean`).
+  - *Statement:* any `FreeStepsH` run under `refineContractK cap env`, with `heapBounds env.code =
+    (48, pb)`, keeps every page entry outside the pages 48 … pb − 1 (`PagesOut 48 pb`). So readability
+    and writability are kept below 196608 and from 4096·pb up (`PagesOut.readable`, `.writable`). This
+    is the page frame of the allocator's theorems: after `alloc` or `realloc`, the read-only payload
+    is still readable.
+  - *How:* every instruction's memory is μ or a `writeN` of μ (`exec_pages`). The contract allows only
+    `grow_heap`, which sets pages 48 … t with t ≤ pb; `fetch`, which only writes octets; and unknown ids,
+    which change nothing (`refineContractK_pagesOut`).
+
+- **Reading 1 … 16384 octets into a fresh `Vec<u8>`, and `LookedUp { data: Some(bytes) }`.**
+  `Decode.VecU8.vec_u8_small` (`Services/Bootstrap/Decode/VecU8Small.lean`) and
+  `Decode.LookedUp.looked_up_small` (`Services/Bootstrap/Decode/LookedUpSmall.lean`).
+  - *Statement:* `read_vec` (3473) for 1 ≤ n ≤ 16384 octets: when the model's `alloc` (the host's
+    `growTo pb`) returns q for ⌈n/32⌉ units, it returns `{cap n, ptr q, len n}` with the n payload
+    octets at q. The heap then holds the model's state after the `alloc` (`Rep`, `WF`, `FirstOk`, the
+    lock clear), and ⟨q − 32, ⌈n/32⌉ + 1, used⟩ is one of its chunks. The reader is advanced by n. Page
+    entries outside the heap are kept, and at sp and above memory changes only in the reader and the
+    slot. `looked_up_small` lifts this to `Instruction::decode` of tag 18 with payload 1, ℰ(n), bytes.
+  - *Assumed:* a well-formed, initialized heap within 14 pages of its bound (as
+    `realloc_wrap_cases`), the stack above the heap's bound and 2³¹, and the reader, the slot and the
+    payload at or above the frame. The run is under `refineContract`.
+  - *Setting:* the payload at or above the stack frame is **not** the decode loop's setting: there the
+    payload is inside an allocated heap chunk. These theorems remain true but do not apply to the
+    loop; the loop uses the heap-payload versions below (`vec_u8_heap`, `looked_up_heap`).
+  - *Scope:* the failure of `alloc` is not covered, nor is the data of other live heap blocks, which
+    `alloc_ok` does not state (both are in `vec_u8_heap`). More than 16384 octets: see `vec_u8_big`
+    below.
+- *`Vec<u8>` of more than 16384 octets* (`Services/Bootstrap/Decode/VecU8Pass.lean`, `vec_u8_big`;
+  steps in `VecU8Loop.lean`): `read_vec` (3473) for 16384 < n < 2³⁰ − 64. The first chunk of 16384
+  octets goes into q, the model's `alloc` of 512 units. Then the loop at 3520 (`loop`, by induction
+  over the octets left; one pass is `pass_ok`/`pass_fail`) reads chunks of min(left, L) octets,
+  L the octets read so far, growing the buffer to exactly L + chunk with `realloc`
+  (`realloc_wrap_cases_hdata`). The result is one of two:
+  - `read_vec` returns with the `Vec` `{cap n, ptr q', len n}` at O and the n payload octets at q'.
+    The heap then holds the model's state after the `realloc`s, q' is an allocated chunk of
+    ⌈n/32⌉ + 1 units, and the reader is advanced by n.
+  - A `realloc` the model fails (`none`, from the state memory then holds) is reached: the run stops
+    at `finish_grow`'s return point from it (33055) with ω₇ = 0. What follows (`handle_alloc_error`)
+    is not covered.
+  - *Assumed:* as `vec_u8_small`, with the first `alloc` succeeding, the stack frame 96 octets
+    lower, the payload disjoint from the reader's slot, and n < 2³⁰ − 64 (the model's `realloc`
+    sizes are below 2²⁵ − 1 units).
+  - *Steps:* the bound `loopSteps` adds 2000 for each doubling pass.
+  - *Setting:* as `vec_u8_small`, the payload is at or above the stack frame, which is not the decode
+    loop's setting. A heap-payload version needs `realloc` to keep other chunks' data, which is not
+    yet proved.
+  - `looked_up_big` (`Services/Bootstrap/Decode/LookedUpBig.lean`) lifts this to `Instruction::decode`
+    of tag 18, `LookedUp { data: Some(bytes) }` with |bytes| > 16384, with the same two outcomes.
+  - *`realloc` keeps the heap bound* (`Services/Bootstrap/Decode/ReallocOk.lean`,
+    `realloc_wrap_cases_hdata`): `realloc_wrap_cases_data`, and for each block the model's `realloc`
+    returns, the new state keeps the heap base and its allocated space ends within the heap's pages
+    afterwards (`s'.base + 32 · s'.allocated ≤ 4096 · h'`), the bound the next `alloc` or `realloc`
+    assumes. Model lemmas: `free`, `shrink` and `free`'s merges keep the allocated space, and
+    `realloc_chunk`: the block `realloc` returns (alignment one unit, a nonzero request) is an
+    allocated chunk of exactly the request plus one unit. Same assumptions as
+    `realloc_wrap_cases_data`.
+- **The start-up stores 𝖢 at 196616 and 𝖰 at 196680.** `StartupConsts.startup_consts`
+  (`Services/Bootstrap/StartupConsts.lean`), from `BParamsConsts.chain_consts` / `run_consts`
+  (`Services/Bootstrap/BParamsConsts.lean`).
+  - *Statement:* from Y's state, the first 3429 steps of refine (the prefix and the parameter chain,
+    to 4642) leave ℰ₂(𝖢) = [85, 1] at 196616 and ℰ₈(𝖰) = [80, 0, …] at 196680, 𝖢 and 𝖰 as `fetch`
+    case 0 reports them (GP v0.8.0 Appendix B, Ω_Y; `coreCount_octets` and `authQueueSize_octets`
+    place them at octets 24 … 26 and 82 … 84 of the reply). `startup_decoder_facts` restates this in
+    the forms the decoders assume: `rdN μ 196616 2 = 𝖢` and the word G at 196680 with
+    1 ≤ G mod 2³² ≤ 512.
+  - *Assumed:* as `Prefix.prefix_run`, including `env.fetch.params = Params.full`. So 𝖢 = 341 and
+    𝖰 = 80. Other parameter sets are not covered.
+  - *Scope:* the facts hold at 4642. That the later code until each decoder keeps these globals is a
+    separate matter (`HKeepG` and the decoders' own statements).
 
 ### picoalloc: the model (`Services/Picoalloc/`)
 
@@ -213,6 +604,7 @@ The wrapper theorems also take the allocator's lock byte at 206848 and release i
 | Case | Theorems | File |
 | --- | --- | --- |
 | Success, no heap growth | `alloc_refines`, `alloc_wrap_refines` | `AllocRefines.lean`, `AllocWrap.lean` |
+| Success at any power-of-two alignment `2^k` units, no heap growth | `alloc_refines_align`, `alloc_wrap_refines_align`, `alloc_impl_align` | `AllocAlignRefines.lean`, `AllocAlignImpl.lean` |
 | Success, the heap grown through `grow_heap` | `alloc_refines_grow`, `alloc_wrap_refines_grow` | `AllocGrowRefines.lean`, `AllocWrapGrow.lean` |
 | First use: `initialize`, which grows the heap and sets up one free chunk at 206880 | `alloc_refines_first`, `alloc_wrap_refines_first`, `init_rep`, `first_grows` | `AllocFirst.lean`, `AllocInit.lean` |
 | Failure: the binary returns null wherever the model's `alloc` fails, with memory still holding `s` | `alloc_refines_fail`, `alloc_wrap_refines_fail`, `alloc1_none` | `AllocFailRefines.lean`, `AllocFailModel.lean` |
@@ -225,10 +617,17 @@ The wrapper theorems also take the allocator's lock byte at 206848 and release i
 
 The binary is proved to return null on each path.
 
-**Alignment.** For the binary, every `alloc` theorem is for an alignment of **one unit**, that is
-1 to 32 octets, which covers every Rust allocation aligned to at most 32 octets. The model handles
-any alignment (`AllocAlign.lean`), but the binary's path for alignment above 32 octets is not
-proved yet.
+**Alignment.** Successful `alloc` without heap growth is proved at **any** power-of-two
+alignment of `2^k` units (`AllocAlign*.lean`):
+- The binary rounds the data unit up to a multiple of `2^k` in the address space, as the model's
+  `dataOff` does.
+- When this leaves a left remainder of `lhs ≠ 0` units, the binary registers it free at the
+  chunk C (41736 … 41864), and the allocated chunk at `C + 32·lhs` gets `prev = lhs`.
+- Memory ends up holding the model's `allocPostL`.
+- The wrapper theorem takes an alignment of `al` octets with `(al + 31) / 32 = 2^k` and `k < 31`.
+
+The other `alloc` theorems (heap growth, first use, failure) are for an alignment of **one
+unit**, that is 1 to 32 octets. That covers every Rust allocation aligned to at most 32 octets.
 
 **`dealloc`** (wrapper at 40613, free path at 42327):
 - `dealloc_refines` (`Dealloc.lean`) and `free_refines` (`FreeRefines.lean`) state that memory
@@ -249,6 +648,16 @@ proved yet.
 | Size 0: free, return null | `realloc_zero_refines` | `ReallocZero.lean` |
 | Fallback: alloc a new block, copy, free the old one | `fallback_pre`, `fallback_tail`, `fallback_refines`, `realloc_fallback` | `ReallocFallback*.lean` |
 | Through the locked wrapper | `realloc_wrap` (generic), `realloc_wrap_inplace`, `realloc_wrap_grow`, `realloc_wrap_grow_heap`, `realloc_wrap_zero` | `ReallocWrap.lean`, `ReallocGrowHeapRefines.lean` |
+
+When the fallback moves the block, the new block's first `usable`·32 octets equal the old
+block's data as it was when `realloc` was called. The theorems are `realloc_wrap_fallback_data`,
+and `realloc_wrap_cases_data` for every outcome that returns an address other than the old one
+and null. They rest on frames for the allocator: `free_refines_hdr`, `alloc_refines_hdr` and
+`alloc_refines_growK_hdr` show that in the heap only the allocator's fields and chunk headers
+change (`HKeep`, `Rep.lean`), so other chunks' data is kept. On the paths that keep the address
+(same size, shrink, grow in place, grow with the heap grown), the block's first
+min(usable, new size)·32 octets are kept (`ReallocKeep.lean`). `realloc_wrap_cases_data` states
+both for every outcome: any non-null result r holds those octets of the old block.
 
 Through the wrapper, a null address returns null at once, and so does an alignment or size above
 2³⁷ − 32 octets.
@@ -294,7 +703,9 @@ What you trust beyond the kernel:
   2000 gas (`JAM/Theorems/RefineContract.lean`). `grow_heap` costs 275 + 121 per page, so a
   growth theorem assumes the new top is at most 14 pages above the old one (the `hcost`
   hypothesis). Larger single growths are not covered yet.
-- **Alignment.** In the binary, `alloc` is proved at alignment one unit (≤ 32 octets). The `realloc`
+- **Alignment.** In the binary, `alloc` with heap growth, on first use and on failure is proved
+  at alignment one unit (≤ 32 octets). Success without growth is proved at any power-of-two
+  alignment. The `realloc`
   fallback also needs a usable size of at least one unit, because a 0-unit copy takes `memcpy`'s
   small path, which is not composed yet.
 - **Stack and range preconditions.** Each theorem fixes:
@@ -385,7 +796,7 @@ At the time of writing, other work in progress includes:
   - `realloc_wrap_cases`, which matches every outcome of the model's `realloc` at alignment 1
     through the locked wrapper.
 - **Lifting the 14-page limit,** by making the host-call gas cap a parameter of `refineContract`.
-- **`alloc` in the binary at alignment above one unit,** building on the model's `AllocAlign.lean`.
-- **Stating the data `realloc` copies,** and a frame for other allocations' data.
+- **`alloc` in the binary at alignment above one unit with heap growth, on first use and on
+  failure.** The no-growth success path is done (`AllocAlignRefines.lean`).
 
 This page should be updated as these land.

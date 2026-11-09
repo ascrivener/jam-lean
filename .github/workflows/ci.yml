@@ -19,9 +19,16 @@ jobs:
 
       - name: Install elan
         run: |
-          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh \
+          curl -sSfL --retry 5 --retry-all-errors https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh \
             | sh -s -- -y --default-toolchain none
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+          # Download the pinned toolchain up front, retrying transient download errors (e.g. HTTP 504).
+          for i in 1 2 3 4 5; do
+            "$HOME/.elan/bin/elan" toolchain install "$(cat lean-toolchain)" && break
+            echo "toolchain download failed (attempt $i); retrying" >&2
+            sleep $((i * 15))
+          done
+          "$HOME/.elan/bin/elan" toolchain list | grep -q "$(cut -d: -f2 lean-toolchain)"
 
       # Restore the newest build of this toolchain; lake rebuilds only what changed since. The build is
       # saved after every run, even a failed or timed-out one, so no run's work is lost.
@@ -29,8 +36,10 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: .lake
-          key: lake-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lakefile.lean', 'lake-manifest.json') }}-${{ github.sha }}
-          restore-keys: lake-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lakefile.lean', 'lake-manifest.json') }}-
+          key: lake-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
+          restore-keys: |
+            lake-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
+            lake-${{ runner.os }}-
 
       - name: Generated tables and constants match the pinned paper
         run: scripts/check-tables.sh
@@ -140,15 +149,48 @@ jobs:
       - name: Fetch the Gray Paper v0.8.0 JAM vectors
         run: scripts/fetch-jam-vectors.sh
 
-      - name: Codec vectors (work-package family)
+      - name: Codec vectors, tiny and full (encode from JSON, decode and re-encode)
         run: lake build codectest
+
+      - name: State trie vectors (Appendix D)
+        run: lake build trietest
+
+      - name: Shuffle vectors (Appendix F)
+        run: lake build shuffletest
+
+      - name: Erasure-coding vectors, tiny and full (all listed as deviating from GP 0.8.0)
+        run: lake build erasuretest
 
       - name: Accumulate vectors (all but the listed deviations from GP 0.8.0)
         run: lake build acctest
+
+      - name: Recent-history vectors (tiny and full)
+        run: lake build historytest
+
+      - name: Authorizations vectors (tiny and full)
+        run: lake build authtest
+
+      - name: Statistics vectors (tiny and full)
+        run: lake build statstest
+
+      - name: Preimages vectors (tiny and full)
+        run: lake build preimagestest
+
+      - name: Disputes vectors (tiny and full)
+        run: lake build disputestest
+
+      - name: Assurances vectors (tiny and full)
+        run: lake build assurancestest
+
+      - name: Reports vectors (tiny and full)
+        run: lake build reportstest
+
+      - name: Safrole vectors (tiny and full; Bandersnatch primitives as an oracle read from the vectors)
+        run: lake build safroletest
 
       - name: Save .lake
         if: always()
         uses: actions/cache/save@v4
         with:
           path: .lake
-          key: lake-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lakefile.lean', 'lake-manifest.json') }}-${{ github.sha }}
+          key: lake-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}

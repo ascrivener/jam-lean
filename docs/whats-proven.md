@@ -313,6 +313,21 @@ An independent kernel, nanoda as vendored by
     `grow_heap`, which sets pages 48 … t with t ≤ pb; `fetch`, which only writes octets; and unknown ids,
     which change nothing (`refineContractK_pagesOut`).
 
+- **Reading 1 … 16384 octets into a fresh `Vec<u8>`, and `LookedUp { data: Some(bytes) }`.**
+  `Decode.VecU8.vec_u8_small` (`Services/Bootstrap/Decode/VecU8Small.lean`) and
+  `Decode.LookedUp.looked_up_small` (`Services/Bootstrap/Decode/LookedUpSmall.lean`).
+  - *Statement:* `read_vec` (3473) for 1 ≤ n ≤ 16384 octets: when the model's `alloc` (the host's
+    `growTo pb`) returns q for ⌈n/32⌉ units, it returns `{cap n, ptr q, len n}` with the n payload
+    octets at q. The heap then holds the model's state after the `alloc` (`Rep`, `WF`, `FirstOk`, the
+    lock clear), and ⟨q − 32, ⌈n/32⌉ + 1, used⟩ is one of its chunks. The reader is advanced by n. Page
+    entries outside the heap are kept, and at sp and above memory changes only in the reader and the
+    slot. `looked_up_small` lifts this to `Instruction::decode` of tag 18 with payload 1, ℰ(n), bytes.
+  - *Assumed:* a well-formed, initialized heap within 14 pages of its bound (as
+    `realloc_wrap_cases`), the stack above the heap's bound and 2³¹, and the reader, the slot and the
+    payload at or above the frame. The run is under `refineContract`.
+  - *Scope:* more than 16384 octets (a second chunk, through `realloc`) and the failure of `alloc` are
+    not covered yet. Nor is the data of other live heap blocks, which `alloc_ok` does not state.
+
 ### picoalloc: the model (`Services/Picoalloc/`)
 
 `Services/Picoalloc/Model.lean` is picoalloc 5.2, the SDK's heap allocator, written as Lean

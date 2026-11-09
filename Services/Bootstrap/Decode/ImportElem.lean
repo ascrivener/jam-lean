@@ -58,8 +58,8 @@ theorem import_elem {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHos
     ⟨q, s', ω', μ', ha, run, g0, g1, g5, g6, gO, gO8, gO16, gO24, gdat, gR0, gR8, H', keep, hnew, hfresh, kd, -,
       gfr, glo, ggl, gwr⟩ | ⟨hna, ω', μ', run, f7⟩
   · rw [hW] at gdat gR0 gR8
-    refine Or.inl ⟨ω', μ', s', run.mono (by omega), by rw [g1]; congr 1; omega, g5, g6, by rw [gR0],
-      by rw [gR8]; congr 1; omega, ⟨9223372036854775816, by decide, gO, by decide⟩, H', keep, kd, ?_,
+    refine Or.inl ⟨ω', μ', s', run.mono (by omega), by rw [g1]; try (congr 1; omega), g5, g6, by rw [gR0, Nat.add_assoc],
+      by rw [gR8]; try (congr 1; omega), ⟨9223372036854775816, by decide, gO, by decide⟩, H', keep, kd, ?_,
       fun a h0 h1 h2 h3 => gfr a h1 (by omega) h2 (by omega), fun a ha => (glo a ha).1,
       fun a ha => (glo a ha).2, ggl, fun a ha => gwr a (by unfold S0; omega)⟩
     refine ⟨[⟨q - 32, (16 * n + 31) / 32 + 1, true⟩], fun c hc => ?_, fun μ'' hag => ?_⟩
@@ -67,6 +67,7 @@ theorem import_elem {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHos
       subst hc
       exact ⟨hnew, rfl, hfresh⟩
     · have hqm := VecU8.chunk_in H'.wf hnew rfl
+      have hb' := H'.hb0
       simp only at hqm
       refine ⟨by rw [readN_take _ _ 232 8 (by decide)]; exact gO, q, ?_, ?_, ?_, ?_⟩
       · rw [← readN_sub μ' (F + 120) 232 8 8 _ rfl (by decide)]; exact gO8

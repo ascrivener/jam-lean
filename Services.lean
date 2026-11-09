@@ -64,6 +64,8 @@ import Services.Bootstrap.Decode.RandomStorageRefine
 import Services.Bootstrap.Decode.Loop
 import Services.Bootstrap.Decode.Elems
 import Services.Bootstrap.Decode.LoopAPass
+import Services.Bootstrap.Decode.VecHash
+import Services.Bootstrap.Decode.Assign
 import Services.Bootstrap.Decode.VecU8
 import Services.Bootstrap.Decode.AllocOk
 import Services.Bootstrap.Decode.LookedUp

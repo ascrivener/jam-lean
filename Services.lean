@@ -104,6 +104,8 @@ import Services.Bootstrap.Acc.Args
 import Services.Bootstrap.Acc.Start
 import Services.Bootstrap.Decode.VecPairs
 import Services.Bootstrap.Decode.VecVecU8
+import Services.Bootstrap.Decode.ImportElem
+import Services.Bootstrap.Decode.VecVecElem
 import Services.Picoalloc.Model
 import Services.Picoalloc.Invariant
 import Services.Picoalloc.FreeLists

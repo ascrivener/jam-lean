@@ -27,7 +27,7 @@ theorem unregister_heads_head {s : State} {C bin b : Nat} (hc : s.heads bin = C)
   · rw [setHdr_heads]; simp [upd]
 
 /-- **`alloc_refines` with the heap's frame**: as `alloc_refines`, and in the heap only the
-    allocator's fields and the headers of chunks of the result `s'` change (`HKeep`): every
+    allocator's fields and the headers of chunks of the result `s'` change (`HKeepG`): every
     allocated chunk of `s`, still a chunk of `s'`, keeps its data. -/
 theorem alloc_refines_hdr {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
     {grow : Grow} {hb : Nat} (s s' : State) (sp req ptr : Nat) (hwf : WF s) (hrep : Rep μ s)
@@ -41,7 +41,7 @@ theorem alloc_refines_hdr {p : ByteArray} {P : Program} [HasCode p P] (x : X) (�
     ∃ ω' μ', FreeStepsH p R 41177 ω μ x 41423 ω' μ' x 400 ∧ Rep μ' s' ∧ WF s' ∧
       ω'[7] = UInt64.ofNat ptr ∧ ω'[0] = ω[0] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ ω'[1] = ω[1] ∧
       (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
-      HKeep μ μ' (fun a => ∃ c ∈ chunks s', c.addr = a) := by
+      HKeepG μ μ' (fun a => ∃ c ∈ chunks s', c.addr = a) := by
   have hwf' : WF s' := alloc_wf hwf h
   rw [alloc_one hwf.1] at h
   obtain ⟨bin, a1, hbin, hmax, hS, ha1, hend, hp, rfl⟩ := alloc1_eq h

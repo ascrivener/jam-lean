@@ -53,7 +53,7 @@ def FA (cs : List Chunk) (a : Nat) : Prop := ∃ c ∈ cs, c.addr = a ∧ c.used
     data address of an allocated chunk, the compiled free path reaches its return's `jumpInd` (42978,
     with the caller's return address ω₀ restored) with memory holding the model's `free s ptr`, itself
     well-formed, and the stack from sp up untouched; in the heap only the allocator's fields and
-    chunk headers of `s` change (`HKeep`), so every chunk's data keeps its octets. -/
+    chunk headers of `s` change (`HKeepG`), so every chunk's data keeps its octets. -/
 theorem free_refines_hdr {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
     (s : State) (sp ptr : Nat) (hwf : WF s) (hrep : Rep μ s)
     (hc : ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true)
@@ -66,7 +66,7 @@ theorem free_refines_hdr {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω
       FirstOk (free s ptr) ∧
       (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
       ω'[0] = ω[0] ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
-      HKeep μ μ' (fun a => ∃ c ∈ chunks s, c.addr = a) := by
+      HKeepG μ μ' (fun a => ∃ c ∈ chunks s, c.addr = a) := by
   have hp0 : (s.hdr s.base).prev < 2147483648 := by unfold FirstOk at hfo; omega
   obtain ⟨c, hcm, hca, hcu⟩ := hc
   obtain ⟨pre, post, hcs⟩ := List.append_of_mem hcm
@@ -331,7 +331,7 @@ theorem free_refines_hdr {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω
     hnext'
     hHFT hMT hold1T hS hw
   have inS : ∀ c, c ∈ pre ++ ⟨Xa, n, true⟩ :: post → c ∈ chunks s := fun c hc => by rw [hcs']; exact hc
-  have hk' : HKeep μ μ' (fun a => ∃ c ∈ chunks s, c.addr = a) := hk.mono fun b hb => by
+  have hk' : HKeepG μ μ' (fun a => ∃ c ∈ chunks s, c.addr = a) := hk.mono fun b hb => by
     rcases hb with (hb | hb) | hb | hb
     · obtain ⟨c, hc, h⟩ := unH b hb; exact Or.inl ⟨c, inS c hc, h⟩
     · obtain ⟨c, hc, h, -⟩ := unF b hb; exact Or.inl ⟨c, inS c hc, h⟩

@@ -86,7 +86,7 @@ theorem grow_heap_refinesK_hdr {p : ByteArray} {P : Program} [HasCode p P] (env 
     {S0 S1 : Nat} (hHT : s.base + 32 * s.allocated ≤ 4096 * ph)
     (hS : S0 + 152 ≤ sp ∧ sp ≤ S1) (hSb : 4096 * pb ≤ S0) (hp : HeapPages μ 48 pb ph)
     (hst : ∀ a, S0 ≤ a → a < S1 → μ.writable a = true) :
-    ∃ ω' μ', HKeep μ μ' (fun a => (∃ c ∈ chunks s, c.addr = a) ∨ a = ptr - 32 + 32 * (req + 1)) ∧
+    ∃ ω' μ', HKeepG μ μ' (fun a => (∃ c ∈ chunks s, c.addr = a) ∨ a = ptr - 32 + 32 * (req + 1)) ∧
       FreeStepsH p (refineContractK cap env) 42980 ω μ x 40805 ω' μ' x 300 ∧ Rep μ' s' ∧ WF s' ∧
       FirstOk s' ∧ (∃ h', HeapPages μ' 48 pb h' ∧ s'.base + 32 * s'.allocated ≤ 4096 * h' ∧ ph ≤ h' ∧ h' ≤ pb) ∧
       (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧

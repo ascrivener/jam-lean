@@ -24,7 +24,11 @@ set_option maxRecDepth 100000
     `Vec` `{cap n, ptr q, len n}` at O + 8, with the n octets (from ptr + 1 + w) at q. The reader is
     advanced by 1 + w + n. The heap holds the model's state after the `alloc` (as `vec_u8_small`); the
     page entries outside the heap's are kept; from A + 24 up, memory changes only in the reader and
-    O … O + 32. -/
+    O … O + 32.
+
+    *Setting:* this assumes the payload lies at or above the stack frame, which the decode loop
+    does not satisfy (there the payload is inside an allocated heap chunk). The loop uses the
+    heap-payload version, `LookedUp.looked_up_heap`. -/
 theorem looked_up_small {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (x : RefineCtx)
     (ω : Regs) (μ : Memory) {hb : Nat} (s s' : State) (A O ret t v5 v6 rd ptr len n q pb ph : Nat)
     (F : Frame P A O ret t v5 v6 ω μ)

@@ -85,7 +85,11 @@ theorem read_any {p : ByteArray} {P : Program} [HasCode p P] {X : Type} {R : Hos
 
     Assumed: a well-formed, initialized heap (as `realloc_wrap_cases`), the stack [S0, S1) writable
     above the heap's bound, sp in it with 320 octets below, and the reader, O and the payload at or
-    above sp. -/
+    above sp.
+
+    *Setting:* this assumes the payload lies at or above the stack frame, which the decode loop
+    does not satisfy (there the payload is inside an allocated heap chunk). The loop uses the
+    heap-payload version, `VecU8.vec_u8_heap`. -/
 theorem vec_u8_small {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (x : RefineCtx)
     (ω : Regs) (μ : Memory) {hb : Nat} (s s' : State) (sp O rd ptr len n ret t v5 v6 q pb ph : Nat)
     (hwf : WF s) (hrep : Rep μ s) (hbd : heapBounds env.code = (48, pb)) (h48 : 48 ≤ ph) (hhb : ph ≤ pb)

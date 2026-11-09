@@ -62,7 +62,7 @@ theorem alloc1_grown {grow : Grow} {r p : Nat} {s s' : State} (h : alloc1 grow r
 variable {X : Type}
 
 /-- **`alloc_refines_growK` with the heap's frame**: as `alloc_refines_growK`, and in the heap
-    only the allocator's fields and the headers of chunks of the result `s'` change (`HKeep`).
+    only the allocator's fields and the headers of chunks of the result `s'` change (`HKeepG`).
     Under `refineContractK cap`: the `grow_heap` call may cost up to `cap`. -/
 theorem alloc_refines_growK_hdr {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env)
     (cap : Nat) (hcap : cap < 18446744073709551616) (x : RefineCtx)
@@ -81,7 +81,7 @@ theorem alloc_refines_growK_hdr {p : ByteArray} {P : Program} [HasCode p P] (env
       ω'[7] = UInt64.ofNat ptr ∧ ω'[0] = ω[0] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ ω'[1] = ω[1] ∧
       (∃ h', HeapPages μ' 48 pb h' ∧ s'.base + 32 * s'.allocated ≤ 4096 * h' ∧ ph ≤ h' ∧ h' ≤ pb) ∧
       (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
-      HKeep μ μ' (fun a => ∃ c ∈ chunks s', c.addr = a) := by
+      HKeepG μ μ' (fun a => ∃ c ∈ chunks s', c.addr = a) := by
   have hwf' : WF s' := alloc_wf hwf h
   rw [alloc_one hwf.1] at h
   obtain ⟨bin, hbin, hmax, hS, hlt, hgr, hp', rfl⟩ := alloc1_grown h hgrown
@@ -329,7 +329,7 @@ theorem alloc_refines_grow_hdr {p : ByteArray} {P : Program} [HasCode p P] (env 
       ω'[7] = UInt64.ofNat ptr ∧ ω'[0] = ω[0] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ ω'[1] = ω[1] ∧
       (∃ h', HeapPages μ' 48 pb h' ∧ s'.base + 32 * s'.allocated ≤ 4096 * h' ∧ ph ≤ h' ∧ h' ≤ pb) ∧
       (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
-      HKeep μ μ' (fun a => ∃ c ∈ chunks s', c.addr = a) :=
+      HKeepG μ μ' (fun a => ∃ c ∈ chunks s', c.addr = a) :=
   alloc_refines_growK_hdr (p := p) (P := P) (hb := hb) (S0 := S0) (S1 := S1)
     env hostCostMax (by decide) x ω μ s s' sp req ptr pb ph hwf hrep hbd h48 hhb hbs h hgrown h1 h7
     h8 h9 h10 hsp hsp1 hb0 hbT hal hfo (by unfold hostCostMax; omega) hHTs hSTk hSb hp hst hHT

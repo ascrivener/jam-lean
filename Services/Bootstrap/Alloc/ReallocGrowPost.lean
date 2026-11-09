@@ -54,7 +54,7 @@ theorem grow_post {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
         (fun a => H a ∨ (cur + sz - n ≠ 0 ∧ a = Xc + 32 * n)) (fun a => F a ∨ (cur + sz - n ≠ 0 ∧ a = Xc + 32 * n)) ∧
       (∀ a, μ'.writable a = μ.writable a) ∧
       (∀ a, a < 4294967296 → 2147483648 ≤ a → (a < sp + 104 ∨ sp + 112 ≤ a) → μ'.read a = μ.read a) ∧
-      HKeep μ μ' (fun a => (H a ∨ F a) ∨ a = Xc + 32 * n ∨ a = (growHdr (unregister s (Xc + 32 * cur) (binDown sz)) Xc n).heads (binDown (cur + sz - n))) ∧
+      HKeepG μ μ' (fun a => (H a ∨ F a) ∨ a = Xc + 32 * n ∨ a = (growHdr (unregister s (Xc + 32 * cur) (binDown sz)) Xc n).heads (binDown (cur + sz - n))) ∧
       ω'[7] = UInt64.ofNat ptr ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat (sp + 152) ∧
       ω'[5] = UInt64.ofNat v5 ∧ ω'[6] = UInt64.ofNat v6 := by
   have hT : PLift ((_ : Prop) ∧ (_ : Prop)) := ⟨⟨hNT, hold1T⟩⟩

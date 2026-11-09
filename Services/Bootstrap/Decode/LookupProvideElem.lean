@@ -176,7 +176,7 @@ theorem provide_inline_elem {p : ByteArray} {P : Program} [HasCode p P] (env : R
   simp only [hL, List.tail_cons, List.headD_cons] at hl hp' pay rpay hcph tag ⊢
   have pay' : μ.readN ptr (5 + w + n) = (s ++ [1] ++ Blob.encodeNat n) ++ bytes := by rw [pay]; simp
   have hl5 : (s ++ [1]).length = 5 := by simp [hs]
-  have hl5w : (s ++ [1] ++ Blob.encodeNat n).length = 5 + w := by simp [hs, hW]
+  have hl5w : (s ++ [1] ++ Blob.encodeNat n).length = 5 + w := by simp [hs, hW]; omega
   have hs4 : μ.readN ptr 4 = s := by
     rw [← readN_take _ _ (5 + w + n) 4 (by omega), pay, List.take_left' hs]
   have hinl : μ.read (ptr + 4) = 1 := by

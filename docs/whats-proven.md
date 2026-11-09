@@ -356,11 +356,21 @@ An independent kernel, nanoda as vendored by
       entries outside the heap are kept;
     - the model's `alloc` fails: the run reaches the `alloc` wrapper's return (40611) with null.
 
-    `vec_u8_heap` also keeps memory below 196608 (contents and readability), the globals (`Glob`)
+    All three also keep memory below 196608 (contents and readability), the globals (`Glob`)
     and the stack's writability.
   - *How:* the payload survives the `alloc` because `alloc` keeps every allocated chunk and writes
     only off their data (`HKeep`, `off_hdr_data`); the reader's writes stay in the new block
     (`data_disj`). `read_low` is the reader for a source below its frames.
+
+- **`LookedUp` and `Provide` as decode-loop elements.** `Decode.LookupProvideElem`
+  (`Services/Bootstrap/Decode/LookupProvideElem.lean`), at any frame base F (`Lay F RD`).
+  - *Statement:* `looked_up_noneF` ([18, 0]) and `provide_hashF` (17 :: s ++ 0 :: h) are `ElemOkF`s.
+    Their slots hold the discriminant, then the `None` niche 2⁶⁴ − 1, or the tag 0, h and s.
+    `looked_up_some_elem` (18 :: 1 :: ℰ(n) ++ bytes) and `provide_inline_elem`
+    (17 :: s ++ 1 :: ℰ(n) ++ bytes), for 1 ≤ n ≤ 16384, are `ElemOkAF`s: the slot holds the `Vec`
+    `{n, q, n}` with `bytes` at q in a fresh chunk, or the `alloc` fails (`Exhausts`).
+  - *How:* `looked_up_none`, `provide_hash`, `looked_up_heap` and `provide_inline_heap` at the
+    loop's addresses, following `ImportElem`.
 
 - **`Vec<Vec<u8>>` with the payload in the heap (1 ≤ n ≤ 682 elements, each ≤ 16384 octets).**
   `Decode.VecVecU8.vec_vec_u8_heap` (`Services/Bootstrap/Decode/VecVecU8.lean`).

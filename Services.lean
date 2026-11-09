@@ -196,7 +196,8 @@ import Services.Bootstrap.Alloc.ReallocFallbackHeap
 import Services.Bootstrap.Alloc.ReallocFallbackWrap
 import Services.Bootstrap.Alloc.ReallocCases
 import Services.Bootstrap.Alloc.Pages
-import Services.Bootstrap.Encode.Dispatch
+import Services.Bootstrap.Encode.Variants
+import Services.Bootstrap.Encode.Yield
 
 /-!
 # Results about specific services' deployed code

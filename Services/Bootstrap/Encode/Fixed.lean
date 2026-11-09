@@ -1,4 +1,4 @@
-import Services.Bootstrap.Encode.Dispatch
+import Services.Bootstrap.Encode.Segs
 
 /-!
 # `Instruction::encode_to`: the writer's state between calls, and the variants of fixed width
@@ -215,19 +215,17 @@ theorem tagSeg {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X
       μ'.readN (sp + 24) 1 = [UInt8.ofNat tag] ∧
       (∀ a, a < 4294967296 → (a < sp + 24 ∨ sp + 25 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
-  rw [show ω = regsNF ω [] from rfl]
   unfold TagCase at he
-  rcases he with ⟨rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩ |
-    ⟨rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩ <;>
-  · refine ⟨?_, ?_, ?_, ?_⟩
-    rotate_left 2
-    · pvm_go [h1, h10, h11, hsp, hw]
-    · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
-      all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
-        ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, h10, h11, Nat.mod_eq_of_lt hv,
-        Nat.mod_eq_of_lt hS]
-      post_simp
-      all_goals try assumption
+  rcases he with ⟨rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩
+  · exact tagSeg_18890 x ω μ sp v S hsp hv hS h1 h10 h11 hw
+  · exact tagSeg_19088 x ω μ sp v S hsp hv hS h1 h10 h11 hw
+  · exact tagSeg_18369 x ω μ sp v S hsp hv hS h1 h10 h11 hw
+  · exact tagSeg_18925 x ω μ sp v S hsp hv hS h1 h10 h11 hw
+  · exact tagSeg_18778 x ω μ sp v S hsp hv hS h1 h10 h11 hw
+  · exact tagSeg_19789 x ω μ sp v S hsp hv hS h1 h10 h11 hw
+  · exact tagSeg_19256 x ω μ sp v S hsp hv hS h1 h10 h11 hw
+  · exact tagSeg_19474 x ω μ sp v S hsp hv hS h1 h10 h11 hw
+  · exact tagSeg_18919 x ω μ sp v S hsp hv hS h1 h10 h11 hw
 
 /-- A field piece's code: from e the arm loads the w-octet field at S + off (ω₆ = S), puts it at sp + 24
     and calls `Vec<u8>::extend_from_slice` for the w octets with return address r, the writer from ω₅. -/
@@ -243,27 +241,21 @@ theorem fieldSeg {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x :
       μ'.readN (sp + 24) w = μ.readN (S + off) w ∧
       (∀ a, a < 4294967296 → (a < sp + 24 ∨ sp + 24 + w ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
-  have hsx : Num.encodeLE 4 (sxw 4 (rdN μ (S + off) 4)) = μ.readN (S + off) 4 := by
-    rw [encodeLE_sxw 4 _ (Or.inr rfl) (rdN_lt μ _ 4), encodeLE_rdN]
-  have hm : ∀ w : Nat, w % 18446744073709551616 % 4294967296 = w % 256 ^ 4 := fun w => by omega
-  have hm1 : ∀ w : Nat, w % 18446744073709551616 % 256 = w % 256 ^ 1 := fun w => by omega
-  rw [show ω = regsNF ω [] from rfl]
   unfold FieldCase at hc
-  rcases hc with ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ |
-    ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ |
-    ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ |
-    ⟨rfl, rfl, rfl, rfl⟩ <;>
-  · refine ⟨?_, ?_, ?_, ?_⟩
-    rotate_left 2
-    · pvm_go [h1, h5, h6, hsp, hS, hr, hw, ↓rdN_fold, ↓loadI_fold, rdN_mod64]
-    · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
-      all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
-        ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, h5, h6, Nat.mod_eq_of_lt hv]
-      post_simp
-      all_goals try assumption
-      all_goals try exact encodeLE_rdN μ _ 8
-      all_goals try (rw [← hsx, hm, encodeLE_mod])
-      all_goals try (rw [hm1, encodeLE_mod, encodeLE_rdN])
+  rcases hc with ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩
+  · exact fieldSeg_18913 x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
+  · exact fieldSeg_19111 x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
+  · exact fieldSeg_19515 x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
+  · exact fieldSeg_18392 x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
+  · exact fieldSeg_18963 x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
+  · exact fieldSeg_18984 x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
+  · exact fieldSeg_18801 x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
+  · exact fieldSeg_18823 x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
+  · exact fieldSeg_18845 x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
+  · exact fieldSeg_19812 x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
+  · exact fieldSeg_19848 x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
+  · exact fieldSeg_19279 x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
+  · exact fieldSeg_19300 x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
 
 /-- A direct piece's code: from e the arm calls `Vec<u8>::extend_from_slice` for the n octets at S + off
     (ω₆ = S) with return address r, the writer from ω₅. -/
@@ -273,17 +265,13 @@ theorem directSeg {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x 
     ∃ ω', FreeStepsH p R e ω μ x 58508 ω' μ x 6 ∧
       ω'[0] = UInt64.ofNat r ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat v ∧ ω'[8] = UInt64.ofNat (S + off) ∧ ω'[9] = UInt64.ofNat n := by
-  rw [show ω = regsNF ω [] from rfl]
   unfold DirectCase at hc
-  rcases hc with ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ |
-    ⟨rfl, rfl, rfl, rfl⟩ <;>
-  · refine ⟨?_, ?_, ?_⟩
-    rotate_left
-    · pvm_go [h5, h6, hS]
-    · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
-      all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
-        ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h5, h6]
-      all_goals try (congr 1; omega)
+  rcases hc with ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩
+  · exact directSeg_19500 x ω μ v S hS h5 h6
+  · exact directSeg_18413 x ω μ v S hS h5 h6
+  · exact directSeg_18948 x ω μ v S hS h5 h6
+  · exact directSeg_19833 x ω μ v S hS h5 h6
+  · exact directSeg_18867 x ω μ v S hS h5 h6
 
 /-- **A tag piece**: from `St pre` at the arm, `St (pre ++ [tag])` at the call's return e', with the
     writer in ω₅ and the value in ω₆. -/

@@ -66,4 +66,48 @@ theorem toAlloc {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
     simp only [List.mem_cons, List.not_mem_nil, or_false, forall_eq] at hrs
     post_simp
 
+/-- `drop_in_place::<Instruction>`'s jump table at 65536 (in the read-only data), the first 24
+    entries. -/
+def dropTab : List UInt8 :=
+  [144, 0, 255, 255, 122, 0, 255, 255, 122, 0, 255, 255, 122, 0, 255, 255, 122, 0, 255, 255,
+   128, 0, 255, 255, 122, 0, 255, 255, 122, 0, 255, 255, 122, 0, 255, 255, 124, 0, 255, 255,
+   136, 0, 255, 255, 124, 0, 255, 255, 126, 0, 255, 255, 146, 0, 255, 255, 122, 0, 255, 255,
+   122, 0, 255, 255, 122, 0, 255, 255, 132, 0, 255, 255, 134, 0, 255, 255, 140, 0, 255, 255,
+   122, 0, 255, 255, 122, 0, 255, 255, 148, 0, 255, 255, 122, 0, 255, 255]
+
+/-- **The end of the handler**, from 11866: the result `Ok(Unit)` (the octet 0 at `RES`), then
+    `drop_in_place::<Instruction>` (4046) of the value at sp + 1144, which holds nothing for
+    `Checkpoint` (the discriminant 2⁶³ + 14), returning to 14278. Memory changes only at `RES`
+    and in the 40 octets below sp; ω₁, ω₅, ω₆ are kept. -/
+theorem tail {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {X : Type} {R : HostRel X}
+    (x : X) (ω : Regs) (μ : Memory)
+    (h1 : ω[1] = UInt64.ofNat 4278057152)
+    (disc : μ.readN 4278058296 8 = Num.encodeLE 8 9223372036854775822)
+    (tab : μ.readN 65536 96 = dropTab)
+    (hrt : ∀ a, 65536 ≤ a → a < 65632 → μ.readable a = true)
+    (hw : ∀ a, 4278057112 ≤ a → a < 4278059008 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 11866 ω μ x 14278 ω' μ' x 40 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧
+      ω'[6] = ω[6] ∧ μ'.read RES = 0 ∧
+      KeepsExcept μ μ' [(RES, 1), (4278057112, 40)] ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have hr : ∀ a, 4278057112 ≤ a → a < 4278059008 → μ.readable a = true :=
+    fun a h1 h2 => Memory.readable_of_writable (hw a h1 h2)
+  have tab15 : μ.readN (65536 + 4 * 15) 4 = [122, 0, 255, 255] :=
+    Decode.Loop.readN_sub μ 65536 96 (4 * 15) 4 dropTab tab (by omega)
+  simp only [Nat.reduceMul, Nat.reduceAdd] at tab15
+  clear tab
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?run, ?post⟩
+  case run => pvm_go [jtsA, jts, h1, disc, tab15, hw, hr, hrt]
+  case post =>
+    refine ⟨?_, ?_, ?_, ?_, fun a ha hrs => ?_, fun a => ?_, fun a => ?_⟩
+    all_goals post_simp
+    · exact h1.symm
+    · simp only [RES]
+      post_simp
+      simp (disch := omega) only [PVM.Memory.writeN_cons, PVM.Memory.writeN_nil, PVM.read_write_eq']
+      rfl
+    · simp only [RES, List.mem_cons, List.not_mem_nil, or_false, forall_eq_or_imp, forall_eq] at hrs
+      post_simp
+
 end Services.Bootstrap.Acc.Handlers.Checkpoint

@@ -93,4 +93,54 @@ theorem u3 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ :
     all_goals try exact UInt64.ofNat_toNat
     all_goals try (rw [Nat.mod_eq_of_lt hv])
 
+/-- 22912 … 22995 then 21402 … 21414: the second `u64` read succeeded (ω₇ = 0): the helper stores
+    `Upgrade`'s discriminant word 2^63 at O, the hash (S + 8 … S + 40) at O + 8, the first `u64` (S) at
+    O + 40 and the second (S + 40) at O + 48, pops its frame and returns to 21402, and the decoder
+    returns through its frame at A = S + 96. -/
+theorem u4 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (S O ret t v5 v6 a b o6 : Nat) (hA : S + 96 + 56 < 4294967296) (hO : O + 56 ≤ 4294967296)
+    (hOS : O + 56 ≤ S ∨ S + 152 ≤ O)
+    (h1 : ω[1] = UInt64.ofNat S) (h5 : ω[5] = UInt64.ofNat O) (h7 : ω[7] = UInt64.ofNat 0)
+    (ha : a < 18446744073709551616) (hb : b < 18446744073709551616)
+    (hv5 : v5 < 18446744073709551616) (hv6 : v6 < 18446744073709551616)
+    (ho6 : o6 < 18446744073709551616) (hOv : O < 18446744073709551616)
+    (sa : μ.readN S 8 = Num.encodeLE 8 a) (sb : μ.readN (S + 40) 8 = Num.encodeLE 8 b)
+    (sr : μ.readN (S + 88) 8 = Num.encodeLE 8 978) (sO : μ.readN (S + 80) 8 = Num.encodeLE 8 O)
+    (so6 : μ.readN (S + 72) 8 = Num.encodeLE 8 o6)
+    (s0 : μ.readN (S + 144) 8 = Num.encodeLE 8 ret) (s5 : μ.readN (S + 136) 8 = Num.encodeLE 8 v5)
+    (s6 : μ.readN (S + 128) 8 = Num.encodeLE 8 v6)
+    (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0)
+    (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t) (hbt : P.isBlockStart t = true)
+    (hw : ∀ x, O ≤ x → x < O + 56 → μ.writable x = true)
+    (hr : ∀ x, S ≤ x → x < S + 152 → μ.readable x = true) :
+    ∃ ω' μ', FreeStepsH p R 22912 ω μ x t ω' μ' x 26 ∧
+      ω'[0] = UInt64.ofNat ret ∧ ω'[1] = UInt64.ofNat (S + 152) ∧ ω'[5] = UInt64.ofNat v5 ∧
+      ω'[6] = UInt64.ofNat v6 ∧
+      μ'.readN O 8 = Num.encodeLE 8 9223372036854775808 ∧ μ'.readN (O + 8) 32 = μ.readN (S + 8) 32 ∧
+      μ'.readN (O + 40) 8 = Num.encodeLE 8 a ∧ μ'.readN (O + 48) 8 = Num.encodeLE 8 b ∧
+      (∀ x, x < 4294967296 → (x < O ∨ O + 56 ≤ x) → μ'.read x = μ.read x) ∧
+      (∀ x, μ'.readable x = μ.readable x) ∧ (∀ x, μ'.writable x = μ.writable x) := by
+  have rd : ∀ a w, w < 2 ^ 64 → μ.readN a 8 = Num.encodeLE 8 w → rdN μ a 8 = w := by
+    intro a w hw h
+    show Num.decodeLE _ = _
+    rw [h, Num.decodeLE_encodeLE, Nat.mod_eq_of_lt hw]
+  have ra := rd _ a ha sa
+  have rb := rd _ b hb sb
+  have rr := rd _ 978 (by decide) sr
+  have rO := rd _ O hOv sO
+  have ro6 := rd _ o6 ho6 so6
+  have r0 : rdN μ (S + 96 + 48) 8 = ret := by rw [show S + 96 + 48 = S + 144 by omega]; exact rd _ ret (by omega) s0
+  have r5 : rdN μ (S + 96 + 40) 8 = v5 := by rw [show S + 96 + 40 = S + 136 by omega]; exact rd _ v5 hv5 s5
+  have r6 : rdN μ (S + 96 + 32) 8 = v6 := by rw [show S + 96 + 32 = S + 128 by omega]; exact rd _ v6 hv6 s6
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?_, ?_, ?_, ?_⟩
+  rotate_left 2
+  · pvm_go [h1, h5, h7, hA, hO, hOS, hw, hr, ra, rb, rr, rO, ro6, r0, r5, r6, hret, hjt, hbt,
+      rdN_writeN_disjoint, ↓rdN_fold]
+  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun x ha0 ha1 => ?_, fun x => ?_, fun x => ?_⟩
+    post_simp
+    all_goals try (rw [show O + 16 = O + 8 + 8 by omega, show O + 24 = O + 8 + 16 by omega,
+      show O + 32 = O + 8 + 24 by omega, show S + 16 = S + 8 + 8 by omega, show S + 24 = S + 8 + 16 by omega,
+      show S + 32 = S + 8 + 24 by omega]; exact copy4g μ _ (S + 8) (O + 8) (by omega))
+
 end Services.Bootstrap.Decode.Upgrade

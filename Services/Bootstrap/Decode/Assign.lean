@@ -313,7 +313,7 @@ theorem assign_elemF {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHo
   obtain ⟨ω4, μ4, run4, k0, k1, k5, k6, k7, k8, k9, k32, k24, kfr, krd, kwr⟩ :=
     as2 (p := p) (P := P) (R := refineContractK cap env) x ω3 μ3 (F - 88) (F + 120) RD
       (Num.decodeLE c2) G ⟨by omega, by omega⟩ (g1.trans f1) (g5.trans f5) (g6.trans f6) g7 (by omega)
-      (by omega) hc2v (by rw [gbuf, Memory.readN_congr (fun j hj => ffr _ (by omega) (by omega)), pc2, ec2])
+      (by omega) hc2v (by rw [show F - 88 + 40 = F - 48 by omega, gbuf, Memory.readN_congr (fun j hj => ffr _ (by omega) (by omega)), pc2, ec2])
       hG (glob_word gv hg3)
       (fun a h1 h2 => Memory.readable_of_writable (glob_writable H3 ⟨by omega, by omega⟩))
       (fun a h1 h2 => by rw [gwr, fwr]; exact hst a (by omega) (by omega))
@@ -324,7 +324,7 @@ theorem assign_elemF {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHo
   have hcpm := hcp
   -- the queue: n hashes, into a fresh Vec at H + 40
   rcases VecHash.vec_hash (p := p) (P := P) env cap pb hcap1 hcap x ω4 μ4 s cp (F - 240) n RD (ptr + 2)
-      (len - 2) (F - 48) 1154 24826 196680 RD (fun k => (hb.drop (32 * k)).take 32) H4 k0 k1 k5 k6 k7 k8
+      (len - 2) (F - 48) 1154 24826 196680 RD (fun k => (hb.drop (32 * k)).take 32) H4 k0 (by rw [k1]; congr 1; omega) k5 k6 k7 k8
       (by rw [hnG]; exact k9) hn ⟨by omega, by omega, by omega⟩ (by omega) ⟨by omega, by omega⟩
       (Or.inr (by omega)) ⟨hcp, hcpu⟩
       (fun a h1 h2 => by unfold InData; omega)
@@ -354,7 +354,7 @@ theorem assign_elemF {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHo
   -- the Vec copied, the global reloaded, and the assigner's call
   obtain ⟨ω6, μ6, run6, m0, m1, m5, m6, m7, m8, m9, m16, m8', m0', mfr, mrd, mwr⟩ :=
     as3 (p := p) (P := P) (R := refineContractK cap env) x ω5 μ5 (F - 88) RD n q n G
-      ⟨by omega, by omega⟩ v1 v5' v6' (by omega) (by omega) (by omega) (by omega) vO vO8 vO16 hG
+      ⟨by omega, by omega⟩ (by rw [v1]; congr 1; omega) v5' v6' (by omega) (by omega) (by omega) (by omega) vO vO8 vO16 hG
       (glob_word gv hg5) (fun a h1 h2 => Memory.readable_of_writable (glob_writable H5 ⟨by omega, by omega⟩))
       (fun a h1 h2 => hst5 a (by omega) (by omega))
   have pw46 : μ6.readN (ptr + 2 + 32 * n) 4 = w4 := by
@@ -363,7 +363,7 @@ theorem assign_elemF {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHo
     exact pw4
   obtain ⟨ω7, μ7, run7, n0, n1, n2, n3, n4, n5, n6, n12, n7, nR0, nR8, nbuf, nfr, nrd, nwr⟩ :=
     read_ok (p := p) (P := P) (R := refineContractK cap env) x ω6 μ6 1156 24867 (F - 88) RD
-      (F - 48) (ptr + 2 + 32 * n) (len - 2 - 32 * n) 4 m0 m1 m7 m8 m9 (by omega) jte_577 bs_24867
+      (F - 48) (ptr + 2 + 32 * n) (len - 2 - 32 * n) 4 m0 m1 m7 (by rw [m8]; congr 1; omega) m9 (by omega) jte_577 bs_24867
       ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ (by omega)
       (by omega) (by omega)
       (Or.inr (by omega)) (Or.inr (by omega)) (Or.inl (by omega)) (Or.inl (by omega)) (Or.inr (by omega))
@@ -410,8 +410,12 @@ theorem assign_elemF {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHo
       (sH _ _ (by omega) (by omega) m0') (sH _ _ (by omega) (by omega) m8') (sH _ _ (by omega) (by omega) m16)
       (sK4 _ _ (by omega) (by omega) k24) (sK4 _ _ (by omega) (by omega) k32)
       (by rw [nbuf, pw46, ew4])
-      (sA _ _ (by omega) (by omega) f80) (sA _ _ (by omega) (by omega) f72) (sA _ _ (by omega) (by omega) f64)
-      (sv _ _ (by omega) (by omega) s0) (sv _ _ (by omega) (by omega) s5) (sv _ _ (by omega) (by omega) s6)
+      (by rw [show F - 88 + 80 = F - 8 by omega]; exact sA _ _ (by omega) (by omega) f80)
+      (by rw [show F - 88 + 72 = F - 16 by omega]; exact sA _ _ (by omega) (by omega) f72)
+      (by rw [show F - 88 + 64 = F - 24 by omega]; exact sA _ _ (by omega) (by omega) f64)
+      (by rw [show F - 88 + 136 = F + 48 by omega]; exact sv _ _ (by omega) (by omega) s0)
+      (by rw [show F - 88 + 128 = F + 40 by omega]; exact sv _ _ (by omega) (by omega) s5)
+      (by rw [show F - 88 + 120 = F + 32 by omega]; exact sv _ _ (by omega) (by omega) s6)
       ⟨by omega, by omega, by omega⟩ jte_8 bs_723
       (fun a h1 h2 => hst7 a (by omega) (by omega))
       (fun a h1 h2 => Memory.readable_of_writable (hst7 a (by omega) (by omega)))

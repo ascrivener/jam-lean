@@ -192,4 +192,60 @@ theorem read_any {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs)
         hbuf hptr (by omega) hnl hlen hrf hbf hpf (by omega) hbp hwf hwr hwb hra hR0 hR8
     exact ⟨ω', μ', run.mono (by omega), h⟩
 
+
+/-- **45643 … 45950, len = 0**: no chunk; `Vec { cap: 0, ptr: 1, len: 0 }` (the dangling pointer 1)
+    written at `out`, the frame popped with ω₀, ω₅, ω₆ restored, at the return's `jumpInd`. -/
+theorem rv_empty {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
+    (μ : Memory) (sp out rd : Nat) (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat out)
+    (h8 : ω[8] = UInt64.ofNat rd) (h9 : ω[9] = UInt64.ofNat 0)
+    (hsp : 65536 + 96 ≤ sp ∧ sp < 4294967296) (hrd : 65536 ≤ rd ∧ rd + 16 < 4294967296)
+    (hout : 65536 ≤ out ∧ out + 24 < 4294967296) (dso : sp ≤ out)
+    (hrr : ∀ a, rd ≤ a → a < rd + 16 → μ.readable a = true)
+    (hwf : ∀ a, sp - 96 ≤ a → a < sp → μ.writable a = true)
+    (hwo : ∀ a, out ≤ a → a < out + 24 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 45643 ω μ x 45950 ω' μ' x 40 ∧
+      ω'[0] = ω[0] ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      rdN μ' out 8 = 0 ∧ rdN μ' (out + 8) 8 = 1 ∧ rdN μ' (out + 16) 8 = 0 ∧
+      (∀ a, a < 4294967296 → (a < sp - 96 ∨ sp ≤ a) → (a < out ∨ out + 24 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have hr : ∀ a, sp - 96 ≤ a → a < sp → μ.readable a = true :=
+    fun a h1 h2 => Memory.readable_of_writable (hwf a h1 h2)
+  have hro : ∀ a, out ≤ a → a < out + 24 → μ.readable a = true :=
+    fun a h1 h2 => Memory.readable_of_writable (hwo a h1 h2)
+  have rb : ∀ (μ0 : Memory) (a v : Nat), v < 18446744073709551616 → a + 8 ≤ 4294967296 →
+      rdN (μ0.writeN a (Num.encodeLE 8 v)) a 8 = v := fun μ0 a v hv ha => by
+    unfold rdN
+    rw [PVM.Memory.readN_writeN_same μ0 a 8 _ (Num.length_encodeLE _ _) (by unfold PVM.two32; omega),
+      Num.decodeLE_encodeLE, Nat.mod_eq_of_lt (by simpa using hv)]
+  have o8 : ∀ μ0 : Memory, rdN (μ0.writeN (sp - 96 + 8) (Num.encodeLE 8 out)) (sp - 96 + 8) 8 = out :=
+    fun μ0 => rb μ0 _ _ (by omega) (by omega)
+  have p24 : ∀ μ0 : Memory, rdN (μ0.writeN (sp - 96 + 24) (Num.encodeLE 8 1)) (sp - 96 + 24) 8 = 1 :=
+    fun μ0 => rb μ0 _ _ (by omega) (by omega)
+  have z32 : ∀ μ0 : Memory, rdN (μ0.writeN (sp - 96 + 32) [UInt8.ofNat 0, UInt8.ofNat 0, UInt8.ofNat 0,
+      UInt8.ofNat 0, UInt8.ofNat 0, UInt8.ofNat 0, UInt8.ofNat 0, UInt8.ofNat 0]) (sp - 96 + 32) 8 = 0 := by
+    intro μ0; unfold rdN
+    rw [PVM.Memory.readN_writeN_same μ0 (sp - 96 + 32) 8 _ rfl (by unfold PVM.two32; omega)]; rfl
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?run, ?post⟩
+  case run => pvm_go [h1, h7, h8, h9, hrr, hwf, hr, hwo, hro, o8, p24, z32, rdN_writeN_disjoint, ↓rdN_fold,
+    ↓loadI_fold]
+  case post =>
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha h1 h2 => ?_, fun a => ?_, fun a => ?_⟩
+    all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+      ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, h1]
+    all_goals try with_reducible rfl
+    all_goals try simp only [show 16 + out = out + 16 from Nat.add_comm _ _, show 8 + out = out + 8 from Nat.add_comm _ _,
+      show sp - 96 + 88 = sp - 8 from by omega, show sp - 96 + 80 = sp - 16 from by omega,
+      show sp - 96 + 72 = sp - 24 from by omega]
+    all_goals try first
+      | (rd_simp []; done)
+      | rd_simp []
+    all_goals try first
+      | with_reducible rfl
+      | exact Nat.mod_eq_of_lt (by omega)
+      | (rw [Nat.mod_eq_of_lt (UInt64.toNat_lt _), UInt64.ofNat_toNat])
+    all_goals first
+      | (congr 1; omega)
+      | rfl
+
 end Services.Bootstrap.Acc

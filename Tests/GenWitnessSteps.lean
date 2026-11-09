@@ -236,6 +236,40 @@ def traceFor (code : ByteArray) (h : List UInt8) (acct : ServiceAccount) (Q : Pr
   let (tr, _, _, _, _) := go Q (toHostFn (RefineHost.dispatch env)) 0 1000000000 false ω μ (∅, []) #[] #[] 300000
   return tr
 
+/-- As `go`, for an accumulate run (Ψ_A's context 𝕃²). -/
+def goA (Q : Prepared) (f : HostFn AccCtx) (i : Nat) (gas : UInt64) (ch : Bool)
+    (ω : Regs) (μ : Memory) (x : AccCtx) (acc : Array (Nat × Regs × Memory)) :
+    Nat → Array (Nat × Regs × Memory)
+  | 0 => acc
+  | n + 1 =>
+    if !(Q.valid && Q.prog.vInst i) then acc else
+    let r := Q.step i gas ch ω μ
+    let acc := acc.push (i, ω, μ)
+    match r.status with
+    | .cont => goA Q f r.pc r.gas r.charged r.regs r.mem x acc n
+    | .host h =>
+      let y := f h.toNat r.gas r.regs r.mem x
+      match y.status with
+      | .cont => goA Q f (Q.prog.next i) y.gas r.charged y.regs y.mem y.ctx acc n
+      | _ => acc
+    | _ => acc
+
+/-- The traced accumulate of a service (`WITNESS_ACC=1`) for slot `t`, service id `s` and `n`
+    inputs (each an incoming transfer of 5 with a zero memo), from instruction 5 with arguments
+    ℰ(t, s, n), under Ψ_A's handler (`accHostFn`, `Params.full`). Inputs are passed in the refine
+    shape (t, n, s, []). -/
+def traceForAcc (code : ByteArray) (h : List UInt8) (Q : Prepared) (t n s : Nat) :
+    Option (Array (Nat × Regs × Memory)) := do
+  let acct0 : ServiceAccount := { codeHash := h, balance := 1000000000, minAccGas := 0, minMemoGas := 0 }
+  let st : PartialState := { accounts := Std.ExtTreeMap.ofList [(s, acct0)], staging := [], authQueue := [], manager := 0, assigners := [], delegator := 0, registrar := 0, alwaysAcc := ∅ }
+  let xfer : DeferredTransfer := { source := 9, dest := s, amount := 5, memo := ⟨(List.replicate 128 0).toArray⟩, gas := 1000000 }
+  let inputs : List AccumulateInput := List.replicate n (.transfer xfer)
+  let env : AccEnv := { params := .full, slot := t, entropy := List.replicate 32 0, inputs, code := code }
+  let x := initImplications st s t (List.replicate 32 0)
+  let a : ByteArray := ⟨(Codec.nat t ++ Codec.nat s ++ Codec.nat n).toArray⟩
+  let (_, ω, μ) ← standardInit code a
+  return goA Q (accHostFn env) 5 1000000000 false ω μ (x, x) #[] 300000
+
 /-- Maximal runs of consecutive naturals in a sorted list, as [lo, hi). -/
 def ranges (xs : List Nat) : List (Nat × Nat) :=
   xs.foldl (fun acc x => match acc with
@@ -244,8 +278,9 @@ def ranges (xs : List Nat) : List (Nat × Nat) :=
 
 /-- The symbolic variables a class of inputs offers: `ext` (`segx`) adds the payload's first
     octet T and the reader position Q after the argument header. -/
-def varNames (ext : Bool) (baseP : Nat × Nat × Nat × List UInt8) : List String :=
-  if ext then (if baseP.2.2.2.isEmpty then ["Y", "S", "C", "I", "L", "Q"] else ["Y", "S", "C", "I", "L", "T", "Q"])
+def varNames (ext : Bool) (baseP : Nat × Nat × Nat × List UInt8) (acc : Bool := false) : List String :=
+  if acc then ["TS", "S", "NI", "LA"]
+  else if ext then (if baseP.2.2.2.isEmpty then ["Y", "S", "C", "I", "L", "Q"] else ["Y", "S", "C", "I", "L", "T", "Q"])
   else ["Y", "S", "C", "I", "L"]
 
 /-- A variable's value for input `q = (c, i, s, y)`. -/
@@ -253,6 +288,9 @@ def pickVar (q : Nat × Nat × Nat × List UInt8) (v : String) : Nat :=
   let header := (Codec.nat q.1).length + (Codec.nat q.2.1).length + (Codec.nat q.2.2.1).length + (Codec.nat q.2.2.2.length).length
   match v with
   | "C" => q.1 | "I" => q.2.1 | "S" => q.2.2.1
+  -- accumulate (`WITNESS_ACC=1`): the slot t and the input count n, in the refine shape (t, n, s, [])
+  | "TS" => q.1 | "NI" => q.2.1
+  | "LA" => (Codec.nat q.1).length + (Codec.nat q.2.2.1).length + (Codec.nat q.2.1).length
   | "L" => header + q.2.2.2.length + 32
   | "T" => (q.2.2.2.headD 0).toNat
   | "Q" => 2 ^ 32 - 2 ^ 16 - 2 ^ 24 + header
@@ -321,7 +359,7 @@ def analyzeSeg (P : Program) (tr : Array (Nat × Regs × Memory))
     (others : Array (Array (Nat × Regs × Memory) × Nat)) (otherPs : Array (Nat × Nat × Nat × List UInt8))
     (k0 a b : Nat) (out : Bool) (baseP : Nat × Nat × Nat × List UInt8 := (3, 0, 7, [255]))
     (ext : Bool := false) (extra : List Nat := []) (staticW : List Nat := []) (cutMode : Bool := false) (allWords : Bool := false)
-    (half : Bool := false) (wantS : List (Nat × Nat × String) := []) :
+    (half : Bool := false) (wantS : List (Nat × Nat × String) := []) (acc : Bool := false) :
     IO SegInfo := do
   let A := k0 + a; let B := k0 + b
   let some (pcA, rA, mA) := tr[A]? | throw (IO.userError "step out of range")
@@ -398,7 +436,7 @@ def analyzeSeg (P : Program) (tr : Array (Nat × Regs × Memory))
   let regFacts := (List.range 13).filter (agreeReg A)
   let goodLoads := loads.toList.filter fun (a, k) =>
     (List.range k).all fun j => agreeMem A (a + j)
-  let names := varNames ext baseP
+  let names := varNames ext baseP acc
   let allQ := baseP :: otherPs.toList
   let matchVar (valBase : Nat) (valsOther : List Nat) : Option String :=
     matchVarG ext names allQ valBase valsOther cutMode half
@@ -535,6 +573,13 @@ structure Cx where
   env : RefineHost.Env
   tr : Array (Nat × Regs × Memory)
   path : List Nat
+  /-- `WITNESS_ACC=1`: the traced run is the service's accumulate (`traceForAcc`), and `cut` states
+      its segments under `accContract` with the variables TS (slot), S (service id), NI (inputs). -/
+  acc : Bool := false
+  /-- The traces of the class: `traceFor`, or `traceForAcc` for accumulate. -/
+  traceF : Nat → Nat → Nat → List UInt8 → Option (Array (Nat × Regs × Memory)) := fun _ _ _ _ => none
+  /-- `WITNESS_VBOUND=V:lo,hi;…`: the bounds stated on further variables, as `sBound` for S. -/
+  vBounds : List (String × String) := []
 
 /-- `allocck`: the picoalloc model (`Services/Picoalloc/Model.lean`) against the binary. For each
     traced input, at every call of the allocator's entry points (`alloc` 40494, `dealloc` 40613,
@@ -2415,8 +2460,10 @@ def regsWritten (cx : Cx) (A B : Nat) : List Nat := Id.run do
   return out
 
 /-- The Lean binder for a variable and its bound. -/
-def varBinder (lb : Nat) (v : String) (sb : String := "S < 4294967296") : String :=
-  let bound := match v with
+def varBinder (lb : Nat) (v : String) (sb : String := "S < 4294967296")
+    (vb : List (String × String) := []) : String :=
+  let bound := (vb.lookup v).getD <| match v with
+    | "TS" => "TS < 4294967296" | "NI" => "NI < 4294967296" | "LA" => "3 ≤ LA ∧ LA ≤ 15"
     | "Y" => "1 ≤ Y ∧ Y ≤ 15" | "S" => sb | "C" => "C < 65536" | "L" => s!"0 < L ∧ L < {lb}"
     | "T" => "12 ≤ T ∧ T < 256" | "Q" => "4278124548 ≤ Q ∧ Q ≤ 4278124564" | _ => "I < 65536"
   s!"({v} : Nat) (h{v} : {bound})"
@@ -2434,6 +2481,18 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
   let args := cx.args; let tr := cx.tr; let P := cx.P
   let NS := cx.svc.name; let LBL := cx.svc.label; let BLOB := cx.svc.blob; let FLAG := cx.svc.flag
   let joinPc := cx.n
+  -- refine or accumulate (`WITNESS_ACC=1`): the environment, context, contract, host tactic and
+  -- code facts the generated steps use
+  let envT := if cx.acc then "AccEnv" else "RefineHost.Env"
+  let ctxT := if cx.acc then "AccCtx" else "RefineCtx"
+  let contr := if cx.acc then "accContract env" else "refineContract env"
+  let growL := if cx.acc then "FreeStepsH.growHeapAcc" else "FreeStepsH.growHeap"
+  let hostT := if cx.acc then "pvm_host_acc" else "pvm_host"
+  let parT := if cx.acc then "env.params = Params.full" else "env.fetch.params = Params.full"
+  let codeImp := if cx.acc then s!"import Services.{cx.svc.name}.CodeX\nimport Services.{cx.svc.name}.CodeAAll\nimport Services.Bootstrap.Acc.HostSteps" else s!"import Services.{cx.svc.name}.Code"
+  let codeOpen := if cx.acc then s!"Services.{cx.svc.name}.Code Services.{cx.svc.name}.CodeX Services.{cx.svc.name}.CodeA Services.Bootstrap.Acc" else s!"Services.{cx.svc.name}.Code"
+  let hasC := if cx.acc then "[HasCode p P] [HasCodeX p P] [HasCodeA p P]" else "[HasCode p P]"
+  let what := if cx.acc then "accumulate" else "refine"
   let name := args.getD 2 "cut"
   let opts := args.drop 3
   let out := opts.contains "out"
@@ -2456,6 +2515,7 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
   -- count of s where the path depends on it
   let classOv := ((← IO.getEnv "WITNESS_CLASS").getD "").splitOn ";" |>.filterMap fun e =>
     match (e.splitOn ",").filterMap String.toNat? with
+    | [t, s, n] => if cx.acc then some (t, n, s, []) else none
     | [c, i, s, k] => some (c, i, s, List.replicate k (255 : UInt8))
     | [c, i, s, k, b0, f] => some (c, i, s, (b0.toUInt8 :: List.replicate (k - 1) f.toUInt8).take k)
     | _ => none
@@ -2469,14 +2529,14 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
   let mut others : Array (Array (Nat × Regs × Memory) × Nat) := #[]
   let mut otherPs : Array (Nat × Nat × Nat × List UInt8) := #[]
   for (c2, i2, s2, y2) in classInputs do
-    let some t2 := traceFor cx.code cx.h cx.acct cx.Q c2 i2 s2 y2 | continue
+    let some t2 := cx.traceF c2 i2 s2 y2 | continue
     let some k2 := align t2 | IO.eprintln "join not reached"; return
     for j in [bs.head!:bs.getLast!+1] do
       if (tr[k0 + j]?.map (·.1)) != (t2[k2 + j]?.map (·.1)) then
         IO.eprintln s!"paths differ at +{j}"; return
     others := others.push (t2, k2)
     otherPs := otherPs.push (c2, i2, s2, y2)
-  let names := varNames true baseP
+  let names := varNames true baseP cx.acc
   let allQ := baseP :: otherPs.toList
   -- the value of register j / octet a at path step b (after PC), if the class agrees on it or it
   -- is one of the variables' expressions
@@ -2516,7 +2576,7 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
   let fin := (List.range 13).map (fun j => (tr[k0 + bs.getLast!]?.map (·.2.1[j]!.toNat)).getD 0)
   let outO := if out then (List.range fin[8]!).map (fin[7]! + ·) else []
   let whole ← analyzeSeg P tr others otherPs k0 bs.head! bs.getLast! out baseP true []
-    (regsWritten cx (k0 + bs.head!) (k0 + bs.getLast!)) true (opts.contains "words") (half := cx.wild && out)
+    (regsWritten cx (k0 + bs.head!) (k0 + bs.getLast!)) true (opts.contains "words") (half := cx.wild && out) (acc := cx.acc)
   let unch : List Nat := if frame then (List.range 13).filter (fun j => whole.regPost.any (· == (j, none))) else []
   let mut needR : List Nat := (if out then [0, 7, 8] else []) ++
     (if frame then whole.regPost.filterMap (fun (j, v) => v.map (fun _ => j)) ++ whole.symPost.map (·.1) else [])
@@ -2531,7 +2591,7 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
   for kk in [0:nseg] do
     let k := nseg - 1 - kk
     let info ← analyzeSeg P tr others otherPs k0 bs[k]! bs[k+1]! false baseP true needO
-      (regsWritten cx (k0 + bs[k]!) (k0 + bs[k+1]!)) true (half := cx.wild) (wantS := needS)
+      (regsWritten cx (k0 + bs[k]!) (k0 + bs[k+1]!)) true (half := cx.wild) (wantS := needS) (acc := cx.acc)
     let mut w : Std.HashSet Nat := {}
     for (lo, hi) in info.wr do
       for a in [lo:hi] do w := w.insert a
@@ -2630,7 +2690,7 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
   for info in infos do vars0 := vars0 ++ info.vars
   let vars := names.filter vars0.contains
   let varArgs := " ".intercalate (vars.flatMap fun v => [v, s!"h{v}"])
-  let varBinders := " ".intercalate (vars.map (varBinder cx.svc.lBound · cx.sBound))
+  let varBinders := " ".intercalate (vars.map (varBinder cx.svc.lBound · cx.sBound cx.vBounds))
   let segCond (k : Nat) : String :=
     let outW := " && ".intercalate (infos[k]!.wr.map fun (lo, hi) => s!"!(decide ({lo} ≤ a ∧ a < {hi}))")
     s!"decide (a < 4294967296){if outW == "" then "" else " && " ++ outW}"
@@ -2645,7 +2705,7 @@ def mode_cut (cx : Cx) (bsOv : Option (List Nat) := none) : IO Unit := do
     else
       [("fr", s!"∀ a, C{k} a = true → μ.read a = μ₀.read a"), ("rdq", "∀ a, μ.readable a = μ₀.readable a"),
        ("wrq", "∀ a, μ.writable a = μ₀.writable a")] ++ unch.map (fun j => (s!"uk{j}", s!"ω[{j}] = ω₀[{j}]"))
-  let envB := if hasHost then s!" (henv : heapBounds env.code = ({hA}, {hB})) (hpar : env.fetch.params = Params.full)" else ""
+  let envB := if hasHost then s!" (henv : heapBounds env.code = ({hA}, {hB})) (hpar : {parT})" else ""
   let envA := if hasHost then " henv hpar" else ""
   let dir := s!"Services/{NS}/{name}"
   IO.FS.createDirAll dir
@@ -2700,23 +2760,23 @@ structure St{k} {" ".intercalate (vars.map (s!"({·} : Nat)"))}{fpB} (ω : Regs)
     let post := fieldsOf (k + 1)
     let ivars := names.filter info.vars.contains
     -- the steps: as `seg`, from the registers the segment reads and the octets it reads first
-    let mut sx := header s!"Steps {info.A} … {info.B - 1} of {LBL}'s refine." ++ s!"
-import Services.{NS}.Code
+    let mut sx := header s!"Steps {info.A} … {info.B - 1} of {LBL}'s {what}." ++ s!"
+{codeImp}
 import Services.{NS}.{name}.St
 
 namespace Services.{NS}.{name}.S{k}
 
-open PVM JAM Services.{NS}.Code Services.{NS}.{name}
+open PVM JAM {codeOpen} Services.{NS}.{name}
 
 set_option maxRecDepth 20000
 set_option maxHeartbeats 10000000
 
-/-- **Steps {info.A} … {info.B - 1} of {LBL}'s refine** (pc {info.pcA} to pc {info.pcB}), from the
+/-- **Steps {info.A} … {info.B - 1} of {LBL}'s {what}** (pc {info.pcA} to pc {info.pcB}), from the
     registers they read and the octets they read first, to the values they leave. -/
-theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
-    (x : RefineCtx){envB}"
+theorem steps (p : ByteArray) (P : Program) {hasC} (env : {envT}) (ω : Regs) (μ : Memory)
+    (x : {ctxT}){envB}"
     if hasGrow then sx := sx ++ s!"\n    (hhp : HeapPages μ {hA} {hB} {topAt bs[k]!})"
-    for v in ivars do sx := sx ++ s!"\n    {varBinder cx.svc.lBound v cx.sBound}"
+    for v in ivars do sx := sx ++ s!"\n    {varBinder cx.svc.lBound v cx.sBound cx.vBounds}"
     -- `wild`: only what cut k's state states
     let rdS := if cx.wild then rd.filter (sts[k]!.1.contains ·) else rd
     let symS := if cx.wild then info.symLoads.filter (sts[k]!.2.2.1.contains ·) else info.symLoads
@@ -2727,7 +2787,7 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
     let bB := info.byteFacts.map fun (a, v) => (s!"hb_{a}", s!"μ.read {a} = {v}")
     let binders := regB ++ symB ++ wB ++ rB ++ bB
     for (n, t) in binders do sx := sx ++ s!"\n    ({n} : {t})"
-    sx := sx ++ s!"\n    : ∃ ω' μ', FreeStepsH p (refineContract env) {info.pcA} ω μ x {info.pcB} ω' μ' x {info.B - info.A} ∧"
+    sx := sx ++ s!"\n    : ∃ ω' μ', FreeStepsH p ({contr}) {info.pcA} ω μ x {info.pcB} ω' μ' x {info.B - info.A} ∧"
     -- the registers the next cut needs (and, with `frame`, those no segment writes)
     let postR := sts[k + 1]!.1 ++ unch
     let regC0 : List (Nat × String) := info.regPost.map (fun (j, v) =>
@@ -2777,9 +2837,9 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
         let some (_, rg, mg) := tr[k0 + bs[k]! + j]? | pure ()
         let top := (growHeapCore rg mg cx.code).2.2.1
         let t := growTop rg[7]!.toNat top hB
-        sx := sx ++ s!"\n    apply FreeStepsH.growHeap env {t} (d_{pc} (p := p) (P := P)) henv (h := {top})\n      (by heap_pages hhp) (by decide) (by decide) (by decide)\n      (by pvm_simp [growTop, reg, {simpArgs}])\n      (by decide)"
+        sx := sx ++ s!"\n    apply {growL} env {t} (d_{pc} (p := p) (P := P)) henv (h := {top})\n      (by heap_pages hhp) (by decide) (by decide) (by decide)\n      (by pvm_simp [growTop, reg, {simpArgs}])\n      (by decide)"
       | some (.oneImm .ecalli _) =>
-        sx := sx ++ s!"\n    apply FreeStepsH.host_decode (d_{pc} (p := p) (P := P))\n    · set_option maxHeartbeats 1000000 in pvm_host [{simpArgsH}, PVM.Memory.writable_writeN, PVM.Memory.writable_setPages, List.range_succ, List.range_zero, List.nil_append, List.all_cons, List.all_nil, List.all_append, Bool.and_true, Bool.true_and, Nat.reduceDiv, PVM.Memory.writeN_nil, Num.length_encodeLE]"
+        sx := sx ++ s!"\n    apply FreeStepsH.host_decode (d_{pc} (p := p) (P := P))\n    · set_option maxHeartbeats 1000000 in {hostT} [{simpArgsH}, PVM.Memory.writable_writeN, PVM.Memory.writable_setPages, List.range_succ, List.range_zero, List.nil_append, List.all_cons, List.all_nil, List.all_append, Bool.and_true, Bool.true_and, Nat.reduceDiv, PVM.Memory.writeN_nil, Num.length_encodeLE]"
       | _ =>
         sx := sx ++ s!"\n    apply FreeStepsH.step_decode (d_{pc} (p := p) (P := P))\n    · set_option maxHeartbeats 1000000 in pvm_simp [{simpArgs}]"
     let hpH := (if grow then ", ?rdA" else "") ++ (if hasGrow then ", ?hp" else "")
@@ -2790,7 +2850,9 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
       sx := sx ++ "\n    case smem =>\n      " ++ (if info.symMem.length > 1 then "refine ⟨" ++ ", ".intercalate (info.symMem.map fun _ => "?_") ++ "⟩ <;>\n      " else "") ++ "simp (disch := pvm_arith) only [PVM.Memory.readN_writeN_same, PVM.Memory.readN_writeN_disjoint,\n        PVM.Num.length_encodeLE, List.length_cons, List.length_nil, PVM.two32" ++ (if cx.wild && out then ", PVM.readN_writeN_encodeLE2_hi, PVM.readN_writeN_encodeLE2_lo]\n      all_goals first | (congr 1; split <;> omega) | simp only [PVM.Num.encodeLE, Nat.mod_mod, Nat.zero_div, PVM.ofNat_mod256]" else "]")
     sx := sx ++ s!"\n    case regs =>\n      simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,\n        PVM.getD_some', List.lookup_nil, Option.getD_none, and_self, and_true, true_and{if regA == "" then "" else ", " ++ regA}{if hasGrow then ", setR7, PVM.set_regsNF, PVM.insertReg" else ""}]{if cx.wild then "\n      all_goals (try simp only [Nat.div_div_eq_div_mul, Nat.reduceMul])\n      all_goals (try (congr 1; split <;> omega))" else ""}"
     sx := sx ++ s!"\n    case mem =>\n      try and_intros\n      all_goals simp (disch := pvm_arith) only [PVM.Memory.read_writeN, PVM.reduceEncodeLE, PVM.Num.length_encodeLE,\n        List.length_cons, List.length_nil, PVM.two32, Nat.reduceAdd, Nat.reduceSub, Nat.reduceLeDiff,\n        Nat.reduceLT, and_true, true_and, and_false, false_and, ↓reduceIte, List.getElem!_cons_zero,\n        List.getElem!_cons_succ, UInt8.reduceOfNat, and_self, PVM.Num.encodeLE{if hasGrow then ", PVM.Memory.read_setPages" else ""}{if hasHost then ", hpar, Params.full_encode, List.drop_zero, List.take_of_length_le" else ""}] <;> chase_octet"
-    sx := sx ++ s!"\n    case frame =>\n      intro a ha\n      simp only [Bool.and_eq_true, decide_eq_true_eq, Bool.not_eq_true', decide_eq_false_iff_not,\n        not_and, Nat.not_lt] at ha\n      simp (disch := pvm_arith) only [PVM.Memory.read_writeN_disjoint, PVM.Num.length_encodeLE,\n        List.length_cons, List.length_nil, PVM.two32{if hasGrow then ", PVM.Memory.read_setPages" else ""}]"
+    -- accumulate: a `fetch` of the parameters leaves `env.params.encode` in memory, which `hpar` makes concrete
+    let parFix := if cx.acc && (hostAt k).any (·.2 == 2) then "\n      try simp only [hpar, JAM.Params.full_encode]" else ""
+    sx := sx ++ s!"\n    case frame =>\n      intro a ha\n      simp only [Bool.and_eq_true, decide_eq_true_eq, Bool.not_eq_true', decide_eq_false_iff_not,\n        not_and, Nat.not_lt] at ha{parFix}\n      simp (disch := pvm_arith) only [PVM.Memory.read_writeN_disjoint, PVM.Num.length_encodeLE,\n        List.length_cons, List.length_nil, PVM.two32{if hasGrow then ", PVM.Memory.read_setPages" else ""}]"
     if grow then
       sx := sx ++ "\n    case rd =>\n      intro a ha\n      simp only [PVM.Memory.readable_writeN, PVM.Memory.readable_setPages]\n      split <;> simp_all"
       sx := sx ++ "\n    case wr =>\n      intro a ha\n      simp only [PVM.Memory.writable_writeN, PVM.Memory.writable_setPages]\n      split <;> simp_all\n"
@@ -2798,7 +2860,7 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
       sx := sx ++ "\n    case rd => intro a; simp only [PVM.Memory.readable_writeN]\n    case wr => intro a; simp only [PVM.Memory.writable_writeN]\n"
     if grow then
       sx := sx ++ "    case rdA =>\n      intro a ha\n      simp only [PVM.Memory.readable_writeN, PVM.Memory.readable_setPages]\n      first | (rw [if_neg (by simp only [PVM.pageSize]; omega)]) | (simp only [PVM.pageSize]; split <;> first | rfl | omega)\n"
-    if hasGrow then sx := sx ++ "    case hp => first | exact hhp | heap_pages hhp\n"
+    if hasGrow then sx := sx ++ s!"    case hp =>{if parFix.isEmpty then "" else " (try simp only [hpar, JAM.Params.full_encode]);"} first | exact hhp | heap_pages hhp\n"
     -- the segment between cut states
     let pat (xs : List String) : String := match xs with
       | [] => "-" | [x] => x | xs => "⟨" ++ ", ".intercalate xs ++ "⟩"
@@ -2868,9 +2930,9 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
     let stepArgs := " ".intercalate ((if hasHost then ["henv", "hpar"] else []) ++ (if hasGrow then ["h.hhp"] else []) ++ ivars.flatMap (fun v => [v, s!"h{v}"]) ++ binders.map (argOf ·.1))
     sx := sx ++ s!"
 /-- **Cut {k} to cut {k + 1}**: from the state `St{k}`, the steps reach `St{k + 1}`. -/
-theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
-    (x : RefineCtx){envB} {varBinders}{fpB} (h : St{k} {" ".intercalate vars}{fp} ω μ) :
-    ∃ ω' μ', FreeStepsH p (refineContract env) {info.pcA} ω μ x {info.pcB} ω' μ' x {info.B - info.A} ∧ St{k + 1} {" ".intercalate vars}{fp} ω' μ' := by
+theorem run (p : ByteArray) (P : Program) {hasC} (env : {envT}) (ω : Regs) (μ : Memory)
+    (x : {ctxT}){envB} {varBinders}{fpB} (h : St{k} {" ".intercalate vars}{fp} ω μ) :
+    ∃ ω' μ', FreeStepsH p ({contr}) {info.pcA} ω μ x {info.pcB} ω' μ' x {info.B - info.A} ∧ St{k + 1} {" ".intercalate vars}{fp} ω' μ' := by
   obtain ⟨ω', μ', hrun, {pat rNames}, {pat mNames}, {if sNames.isEmpty then "" else pat sNames ++ ", "}hfr, hrd, hwr{if grow then ", hrdA" else ""}{if hasGrow then ", hhp'" else ""}⟩ :=
     steps p P env ω μ x {stepArgs}
   exact ⟨ω', μ', hrun, ⟨{", ".intercalate (if proofs.isEmpty then ["trivial"] else proofs)}⟩⟩
@@ -2885,14 +2947,14 @@ end Services.{NS}.{name}.S{k}
 
 namespace Services.{NS}.{name}
 
-open PVM JAM Services.{NS}.Code
+open PVM JAM {codeOpen}
 
 set_option maxRecDepth 100000
 
 /-- **Steps {bs[0]!} … {bs[nseg]! - 1} after pc {joinPc}**: the segments `S0` … `S{nseg - 1}`, composed. -/
-theorem chain (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
-    (x : RefineCtx){envB} {varBinders}{fpB} (h : St0 {" ".intercalate vars}{fp} ω μ) :
-    ∃ ω' μ', FreeStepsH p (refineContract env) {infos[0]!.pcA} ω μ x {infos[nseg - 1]!.pcB} ω' μ' x {bs[nseg]! - bs[0]!} ∧ St{nseg} {" ".intercalate vars}{fp} ω' μ' := by
+theorem chain (p : ByteArray) (P : Program) {hasC} (env : {envT}) (ω : Regs) (μ : Memory)
+    (x : {ctxT}){envB} {varBinders}{fpB} (h : St0 {" ".intercalate vars}{fp} ω μ) :
+    ∃ ω' μ', FreeStepsH p ({contr}) {infos[0]!.pcA} ω μ x {infos[nseg - 1]!.pcB} ω' μ' x {bs[nseg]! - bs[0]!} ∧ St{nseg} {" ".intercalate vars}{fp} ω' μ' := by
 "
   let mut cw := "ω"; let mut cm := "μ"; let mut ch' := "h"
   for k in [0:nseg] do
@@ -2915,15 +2977,15 @@ theorem chain (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
     else [(s!"hN.{n}", (((t.replace "ω[" "ω'[").replace "μ." "μ'.").replace "HeapPages μ " "HeapPages μ' "))]
   ch := ch ++ s!"
 /-- **Steps {bs[0]!} … {bs[nseg]! - 1} after pc {joinPc}**, from the facts the path reads before writing them. -/
-theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
-    (x : RefineCtx){envB}"
-  for v in vars do ch := ch ++ s!"\n    {varBinder cx.svc.lBound v cx.sBound}"
+theorem run (p : ByteArray) (P : Program) {hasC} (env : {envT}) (ω : Regs) (μ : Memory)
+    (x : {ctxT}){envB}"
+  for v in vars do ch := ch ++ s!"\n    {varBinder cx.svc.lBound v cx.sBound cx.vBounds}"
   for (n, t) in pre0 do ch := ch ++ s!"\n    ({n} : {t})"
   let startArgs := (if pre0.isEmpty && !frame then ["trivial"] else pre0.map (·.1)) ++
     (if frame then (if hasGrow then ["fun _ _ => rfl", "fun _ _ => rfl", "fun _ h => h", "fun _ h => h"]
       else ["fun _ _ => rfl", "fun _ => rfl", "fun _ => rfl"]) ++ unch.map (fun _ => "rfl") else [])
   if !frame then
-    ch := ch ++ s!"\n    : ∃ ω' μ', FreeStepsH p (refineContract env) {infos[0]!.pcA} ω μ x {infos[nseg - 1]!.pcB} ω' μ' x {bs[nseg]! - bs[0]!} ∧\n      " ++
+    ch := ch ++ s!"\n    : ∃ ω' μ', FreeStepsH p ({contr}) {infos[0]!.pcA} ω μ x {infos[nseg - 1]!.pcB} ω' μ' x {bs[nseg]! - bs[0]!} ∧\n      " ++
       (if concl.isEmpty then "True" else " ∧ ".intercalate (concl.map (·.2))) ++ " := by"
     ch := ch ++ s!"\n  obtain ⟨ω', μ', hrun, hN⟩ :=\n    chain p P env ω μ x{envA} {varArgs} ⟨{", ".intercalate startArgs}⟩"
     ch := ch ++ s!"\n  exact ⟨ω', μ', hrun, {", ".intercalate (concl.map (·.1))}⟩\n\nend Services.{NS}.{name}\n"
@@ -2961,7 +3023,7 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
     let symPart := if symC.isEmpty then ("", "") else
       let (sT, sP) := grp symC
       (s!"\n      ({sT}) ∧", s!"{sP}, ")
-    ch := ch ++ s!"\n    : ∃ ω' μ', FreeStepsH p (refineContract env) {infos[0]!.pcA} ω μ x {infos[nseg - 1]!.pcB} ω' μ' x {bs[nseg]! - bs[0]!} ∧"
+    ch := ch ++ s!"\n    : ∃ ω' μ', FreeStepsH p ({contr}) {infos[0]!.pcA} ω μ x {infos[nseg - 1]!.pcB} ω' μ' x {bs[nseg]! - bs[0]!} ∧"
     ch := ch ++ s!"\n      ({rT}) ∧\n      ({mT}) ∧{symPart.1}"
     ch := ch ++ s!"\n      (∀ a, (decide (a < 4294967296){if outW == "" then "" else " && " ++ outW}) = true → μ'.read a = μ.read a) ∧"
     if hasGrow then
@@ -3102,7 +3164,25 @@ def main (args0 : List String) : IO Unit := do
     | _ => "S < 4294967296"
   let extraSimp := ((← IO.getEnv "WITNESS_SIMP").getD "").splitOn "," |>.filter (· != "")
   let wild := (← IO.getEnv "WITNESS_WILD") == some "1"
-  let cx : Cx := { svc, sBound, extraSimp, wild, args, mode0, empty, mode, n, bytes, code, h, acct, jb, P, Q, c, i, sid, y, pkg, a, ω, μ, env, tr, path }
+  -- `WITNESS_ACC=1`: the traced run is the accumulate (`traceForAcc`), from `WITNESS_INPUT=t,s,n`
+  -- (default t = 100, s = 7, n = 1), passed in the refine shape (t, n, s, [])
+  let acc := (← IO.getEnv "WITNESS_ACC") == some "1"
+  let (c, i, sid, y, tr) := if !acc then (c, i, sid, y, tr) else
+    let (t, s, nI) := match inp.filterMap String.toNat? with
+      | [t, s, nI] => (t, s, nI)
+      | _ => (100, 7, 1)
+    (t, nI, s, [], (traceForAcc code h Q t nI s).getD #[])
+  let path := if acc then (tr.toList.take n).map (·.1) else path
+  let traceF : Nat → Nat → Nat → List UInt8 → Option (Array (Nat × Regs × Memory)) :=
+    if acc then fun t nI s _ => traceForAcc code h Q t nI s
+    else fun c2 i2 s2 y2 => traceFor code h acct Q c2 i2 s2 y2
+  let vBounds : List (String × String) := ((← IO.getEnv "WITNESS_VBOUND").getD "").splitOn ";" |>.filterMap fun e =>
+    match e.splitOn ":" with
+    | [v, r] => match (r.splitOn ",").filterMap String.toNat? with
+      | [lo, hi] => some (v, s!"{lo} ≤ {v} ∧ {v} < {hi}")
+      | _ => none
+    | _ => none
+  let cx : Cx := { svc, sBound, extraSimp, wild, args, mode0, empty, mode, n, bytes, code, h, acct, jb, P, Q, c, i, sid, y, pkg, a, ω, μ, env, tr, path, acc, traceF, vBounds }
   match mode with
   | "calls" => mode_calls cx
   | "allocck" => mode_allocck cx

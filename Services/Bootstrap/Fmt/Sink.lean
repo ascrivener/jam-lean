@@ -455,7 +455,7 @@ theorem write_str {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (en
     (hsp : S0 + 448 ≤ sp ∧ sp % 8 = 0 ∧ 2147484096 ≤ sp) (hW : sp ≤ W ∧ W + 24 ≤ S1)
     (hn : len + n < 134217728)
     (hsrc : (65536 ≤ src ∧ src + n + 24 ≤ 196608) ∨
-      (sp + 8 ≤ src ∧ src + n + 16 < 4294967296 ∧ (src + n ≤ W ∨ W + 24 ≤ src)))
+      (sp ≤ src ∧ src + n + 16 < 4294967296 ∧ (src + n ≤ W ∨ W + 24 ≤ src)))
     (hr : ∀ a, src ≤ a → a < src + n → μ.readable a = true) :
     (∃ ω' μ' x' s' cap', FreeStepsH p R 59959 ω μ x t ω' μ' x' (7 * n + 2 * (cap' - cap) + 2000) ∧
       HeapCtx env pb S0 S1 μ' s' ∧ s'.base = s.base ∧ Str s₀ s' μ' W cap' (len + n) ∧ cap ≤ cap' ∧

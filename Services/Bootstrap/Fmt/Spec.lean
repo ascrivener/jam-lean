@@ -32,8 +32,28 @@ structure Fmtr (s₀ s : State) (μ : Memory) (F W cap len : Nat) : Prop where
   width : rdN μ (F + 20) 2 = 0
   vws : rdN μ 77040 8 = 2596
   vwc : rdN μ 77048 8 = 2592
-  vrd : ∀ a, 77016 ≤ a → a < 77064 → μ.readable a = true
+  /-- The read-only data (65536 … 77144) is readable. -/
+  vrd : ∀ a, 65536 ≤ a → a < 77144 → μ.readable a = true
   str : Str s₀ s μ W cap len
+
+/-- A `Formatter` is kept by a change that keeps its 24 octets, the `String`'s 24 octets, the
+    vtable's read-only words and their readability. -/
+theorem Fmtr.congr {s₀ s : State} {μ μ' : Memory} {F W cap len : Nat} (hf : Fmtr s₀ s μ F W cap len)
+    (kF : ∀ j, j < 24 → μ'.read (F + j) = μ.read (F + j))
+    (kW : ∀ j, j < 24 → μ'.read (W + j) = μ.read (W + j))
+    (kro : ∀ a, 65536 ≤ a → a < 77144 → μ'.read a = μ.read a ∧ μ'.readable a = μ.readable a) :
+    Fmtr s₀ s μ' F W cap len := by
+  have rF : ∀ o n, o + n ≤ 24 → rdN μ' (F + o) n = rdN μ (F + o) n := fun o n h =>
+    rdN_frame (fun j hj => by rw [show F + o + j = F + (o + j) by omega, kF _ (by omega)])
+  have rro : ∀ a, 77016 ≤ a → a + 8 ≤ 77064 → rdN μ' a 8 = rdN μ a 8 := fun a h1 h2 =>
+    rdN_frame (fun j hj => (kro _ (by omega) (by omega)).1)
+  refine ⟨by rw [show F = F + 0 by rfl, rF 0 8 (by omega)]; exact hf.buf, by rw [rF 8 8 (by omega)]; exact hf.vt,
+    by rw [rF 16 4 (by omega)]; exact hf.opts, by rw [rF 20 2 (by omega)]; exact hf.width,
+    by rw [rro _ (by omega) (by omega)]; exact hf.vws, by rw [rro _ (by omega) (by omega)]; exact hf.vwc,
+    fun a h1 h2 => by rw [(kro a h1 h2).2]; exact hf.vrd a h1 h2, ?_⟩
+  exact hf.str.update (fun j hj => kW j (by omega))
+    ((rdN_frame (μ := μ) (μ' := μ') (fun j hj => by
+      rw [show W + 16 + j = W + (16 + j) by omega, kW _ (by omega)])).trans hf.str.rl) hf.str.le
 
 /-- **`pad_integral` with plain options** (61857): through a `Formatter` F into the `String` W, the
     len octets of digits at dig are written by the sink's `write_str` and `pad_integral` returns to
@@ -53,7 +73,7 @@ theorem pad_plain {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (en
     (hF : sp ≤ F ∧ F + 24 ≤ S1 ∧ (F + 24 ≤ W ∨ W + 24 ≤ F))
     (hn : len + n < 134217728)
     (hsrc : (65536 ≤ dig ∧ dig + n + 24 ≤ 196608) ∨
-      (sp + 8 ≤ dig ∧ dig + n + 16 < 4294967296 ∧ (dig + n ≤ W ∨ W + 24 ≤ dig)))
+      (sp ≤ dig ∧ dig + n + 16 < 4294967296 ∧ (dig + n ≤ W ∨ W + 24 ≤ dig)))
     (hr : ∀ a, dig ≤ a → a < dig + n → μ.readable a = true) :
     (∃ ω' μ' x' s' cap', FreeStepsH p R 61857 ω μ x t ω' μ' x' (7 * n + 2 * (cap' - cap) + 2100) ∧
       HeapCtx env pb S0 S1 μ' s' ∧ s'.base = s.base ∧ Fmtr s₀ s' μ' F W cap' (len + n) ∧ cap ≤ cap' ∧
@@ -115,7 +135,7 @@ theorem pad_plain {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (en
     rw [Nat.max_self] at K
     have kF : ∀ a, F ≤ a → a < F + 24 → μ4.read a = μ.read a := fun a h1 h2 =>
       K.hi a (by omega) (by omega) (by omega)
-    have kro : ∀ a, 77016 ≤ a → a < 77064 → μ4.read a = μ.read a := fun a h1 h2 =>
+    have kro : ∀ a, 65536 ≤ a → a < 77144 → μ4.read a = μ.read a := fun a h1 h2 =>
       K.ro a (by omega) (Or.inl (by unfold pageSize; omega)) (hro a (by omega))
     refine Or.inl ⟨ω4, μ4, x4, s', cap', (((run1.trans run2).trans run3).trans run4).mono (by omega), H4, hb4,
       ⟨?_, ?_, ?_, ?_, ?_, ?_, fun a h1 h2 => ?_, hs4⟩, hc1, hc2, K, e0, e1, e5, e6, e7⟩

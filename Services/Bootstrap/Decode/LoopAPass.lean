@@ -26,7 +26,8 @@ theorem heap_of_high {env : RefineHost.Env} {pb : Nat} {μ μ' : Memory} {s : St
   obtain ⟨ph, h48, hhb, hpg, hHTs, hHT⟩ := H.pages
   exact ⟨H.wf, H.rep.congr_lock H.wf H.hb0 H.hbT (fun a _ ha2 _ => hr a ha2), H.fo,
     by rw [rdN_frame fun j hj => hr _ (by omega)]; exact H.lock, H.hb0, H.hbT, H.hA, H.bd,
-    ⟨ph, h48, hhb, HeapPages.of_eq hpg hw, hHTs, hHT⟩, H.hSb, H.hS1, fun a h1 h2 => by rw [hw]; exact H.st a h1 h2⟩
+    ⟨ph, h48, hhb, HeapPages.of_eq hpg hw, hHTs, hHT⟩, H.hSb, H.hS1, fun a h1 h2 => by rw [hw]; exact H.st a h1 h2,
+    fun a ha => by rw [hw]; exact H.ro a ha⟩
 
 /-- Writes inside an allocated chunk's data, or above 2^31, keep the allocator's context. -/
 theorem heap_of_data {env : RefineHost.Env} {pb : Nat} {μ μ' : Memory} {s : State}
@@ -40,7 +41,8 @@ theorem heap_of_data {env : RefineHost.Env} {pb : Nat} {μ μ' : Memory} {s : St
   obtain ⟨ph, h48, hhb, hpg, hHTs, hHT⟩ := H.pages
   exact ⟨H.wf, HeapFrame.Rep.congr_data H.rep H.wf H.hb0 H.hbT hc (fun a h1 h2 => hr a h1 (by omega)), H.fo,
     by rw [rdN_frame fun j hj => hr _ (by omega) (by omega)]; exact H.lock, H.hb0, H.hbT, H.hA, H.bd,
-    ⟨ph, h48, hhb, HeapPages.of_eq hpg hw, hHTs, hHT⟩, H.hSb, H.hS1, fun a h1 h2 => by rw [hw]; exact H.st a h1 h2⟩
+    ⟨ph, h48, hhb, HeapPages.of_eq hpg hw, hHTs, hHT⟩, H.hSb, H.hS1, fun a h1 h2 => by rw [hw]; exact H.st a h1 h2,
+    fun a ha => by rw [hw]; exact H.ro a ha⟩
 
 /-- Distinct chunks' data are apart. -/
 theorem InData.apart {s : State} (hwf : WF s) {c d : Chunk} (hc : c ∈ chunks s) (hd : d ∈ chunks s)

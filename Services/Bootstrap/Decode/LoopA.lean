@@ -99,7 +99,7 @@ theorem ElemOkA.of_elemOk {env : RefineHost.Env} {cap pb : Nat} {p : ByteArray} 
     ⟨H.wf, H.rep.congr_lock H.wf H.hb0 H.hbT (fun a _ ha2 _ => low a ha2), H.fo,
       by rw [rdN_frame fun j hj => low _ (by omega)]; exact H.lock, H.hb0, H.hbT, H.hA, H.bd,
       ⟨ph, h48, hhb, HeapPages.of_eq hpg ewr, hHTs, hHT⟩, H.hSb, H.hS1,
-      fun a h1 h2 => by rw [ewr]; exact H.st a h1 h2⟩,
+      fun a h1 h2 => by rw [ewr]; exact H.st a h1 h2, fun a ha => by rw [ewr]; exact H.ro a ha⟩,
     fun c hc _ => hc, fun c hc _ a ha => low a ?_, ⟨[], by simp, fun _ _ => eRep⟩,
     fun a h h0 h2 h3 => efr a h0 (Or.inr h) h2 h3, fun a ha => low a (by omega), fun a _ => erd a, fun a _ => ewr a⟩
   have ht := H.wf.2.2.2.1

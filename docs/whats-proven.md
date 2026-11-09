@@ -329,6 +329,25 @@ An independent kernel, nanoda as vendored by
     steps are `q3`, `q4`, `q5` and `p5i`. `q5`'s overlapping stores are checked octet by octet.
   - *Assumed:* as `vec_u8_small` / `vec_u8_big`, with `Instruction::decode`'s frame at A, the helper's
     frame at A − 152, and the reader, the slot and the payload above A.
+  - *Setting:* the payload above A is not the decode loop's setting (see `vec_u8_small`). The loop
+    uses `provide_inline_heap` (below) for n ≤ 16384.
+
+- **`Vec<u8>`, `LookedUp { Some(bytes) }` and `Provide { Inline(bytes) }` with the payload in the heap
+  (1 ≤ n ≤ 16384).** `Decode.VecU8.vec_u8_heap` (`Services/Bootstrap/Decode/VecU8Heap.lean`),
+  `Decode.LookedUp.looked_up_heap` (`LookedUpHeap.lean`) and `Decode.Provide.provide_inline_heap`
+  (`ProvideInlineHeap.lean`).
+  - *Statement:* as `vec_u8_small`, `looked_up_small` and `provide_inline_small`, in the decode loop's
+    setting. The payload (the whole encoding) lies inside the data of an allocated chunk, the
+    allocator's context is `HeapCtx`, and the run is under `refineContractK cap` (cap ≥ 2²⁷). The
+    `alloc` is `HeapCtx.alloc_call`, with two outcomes:
+    - the model's `alloc` of ⌈n/32⌉ units gives `(q, s')`: the variant is returned with the `Vec`
+      `{cap n, ptr q, len n}` and the n payload octets at q. The context is kept for `s'`, every
+      allocated chunk of `s` is kept with its data, the block is a new allocated chunk, and page
+      entries outside the heap are kept;
+    - the model's `alloc` fails: the run reaches the `alloc` wrapper's return (40611) with null.
+  - *How:* the payload survives the `alloc` because `alloc` keeps every allocated chunk and writes
+    only off their data (`HKeep`, `off_hdr_data`); the reader's writes stay in the new block
+    (`data_disj`). `read_low` is the reader for a source below its frames.
 
 - **The decode loop for elements that allocate.** `Decode.LoopA.loopA`, `ElemOkA`,
   `Decode.HeapCtx.alloc_call` (`Services/Bootstrap/Decode/LoopA.lean`, `LoopAPass.lean`, `HeapCtx.lean`,
@@ -372,8 +391,12 @@ An independent kernel, nanoda as vendored by
   - *Assumed:* a well-formed, initialized heap within 14 pages of its bound (as
     `realloc_wrap_cases`), the stack above the heap's bound and 2³¹, and the reader, the slot and the
     payload at or above the frame. The run is under `refineContract`.
+  - *Setting:* the payload at or above the stack frame is **not** the decode loop's setting: there the
+    payload is inside an allocated heap chunk. These theorems remain true but do not apply to the
+    loop; the loop uses the heap-payload versions below (`vec_u8_heap`, `looked_up_heap`).
   - *Scope:* the failure of `alloc` is not covered, nor is the data of other live heap blocks, which
-    `alloc_ok` does not state. More than 16384 octets: see `vec_u8_big` below.
+    `alloc_ok` does not state (both are in `vec_u8_heap`). More than 16384 octets: see `vec_u8_big`
+    below.
 - *`Vec<u8>` of more than 16384 octets* (`Services/Bootstrap/Decode/VecU8Pass.lean`, `vec_u8_big`;
   steps in `VecU8Loop.lean`): `read_vec` (3473) for 16384 < n < 2³⁰ − 64. The first chunk of 16384
   octets goes into q, the model's `alloc` of 512 units. Then the loop at 3520 (`loop`, by induction
@@ -390,6 +413,9 @@ An independent kernel, nanoda as vendored by
     lower, the payload disjoint from the reader's slot, and n < 2³⁰ − 64 (the model's `realloc`
     sizes are below 2²⁵ − 1 units).
   - *Steps:* the bound `loopSteps` adds 2000 for each doubling pass.
+  - *Setting:* as `vec_u8_small`, the payload is at or above the stack frame, which is not the decode
+    loop's setting. A heap-payload version needs `realloc` to keep other chunks' data, which is not
+    yet proved.
   - `looked_up_big` (`Services/Bootstrap/Decode/LookedUpBig.lean`) lifts this to `Instruction::decode`
     of tag 18, `LookedUp { data: Some(bytes) }` with |bytes| > 16384, with the same two outcomes.
   - *`realloc` keeps the heap bound* (`Services/Bootstrap/Decode/ReallocOk.lean`,

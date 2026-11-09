@@ -190,8 +190,8 @@ theorem realloc_inplace_refines_keep {p : ByteArray} {P : Program} [HasCode p P]
   · rw [if_neg e]
     obtain ⟨ω', μ', hk, run, rep, wf, fo, ww, stk, e7, e0, e1, e5, e6⟩ := shrink_refines_hdr (p := p) (P := P)
       (R := R) x ω μ s sp ptr req hwf hrep hc hr0 (by omega) h1 h8 h7 h10 h0 hsp hsp1 hb0 hbT hfo hHT hS hw
-    refine ⟨ω', μ', readN_inplace hwf hb0 hbT hcm hca (by omega) (by omega) hk, run, rep, wf, fo, ww, stk, e7, e0,
-      e1, e5, e6, keep_of_hkeep hwf hb0 hbT (fun h hh => ?_) hk⟩
+    refine ⟨ω', μ', readN_inplace hwf hb0 hbT hcm hca (by omega) (by omega) hk.hkeep, run, rep, wf, fo, ww, stk, e7, e0,
+      e1, e5, e6, keep_of_hkeep hwf hb0 hbT (fun h hh => ?_) hk.hkeep⟩
     rcases hh with hh | hh
     · exact Or.inl hh
     · exact Or.inr (Or.inl ⟨c, hcm, Or.inr hca, by omega, by omega⟩)
@@ -331,8 +331,8 @@ theorem realloc_wrap_grow_keep {p : ByteArray} {P : Program} [HasCode p P] {X : 
         grow_refines_hdr (p := p) (P := P) (R := R) x ω1 μ1 s s' (sp - 16) ptr
           ((size + 31) / 32) hwf rep1 hc hr hr1 h hng a1 a8 a7 a10 a0 (by omega) (by omega)
           hb0 hbT hA hfo hHT ⟨by omega, by omega⟩ W1
-      refine ⟨ω2, μ2, readN_inplace hwf hb0 hbT hcm hca' (by omega) (by omega) hk, run, rep, wf, fo, ww, stk, e7, e1,
-        e5, e6, keep_of_hkeep hwf hb0 hbT (fun h hh => ?_) hk⟩
+      refine ⟨ω2, μ2, readN_inplace hwf hb0 hbT hcm hca' (by omega) (by omega) hk.hkeep, run, rep, wf, fo, ww, stk, e7, e1,
+        e5, e6, keep_of_hkeep hwf hb0 hbT (fun h hh => ?_) hk.hkeep⟩
       rcases hh with hh | hh
       · exact Or.inl hh
       · rw [hh]; exact grow_hdr hwf hpc (by omega) hT hfr hfit)
@@ -392,7 +392,7 @@ theorem realloc_wrap_grow_heapK_keep {p : ByteArray} {P : Program} [HasCode p P]
   have dat : μ3.readN ptr (32 * usable s ptr) = μ.readN ptr (32 * usable s ptr) := by
     have e3 : μ3.readN ptr (32 * usable s ptr) = μ2.readN ptr (32 * usable s ptr) :=
       readN_congr2 fun j hj => fr3 _ (by omega) (by omega)
-    rw [e3, readN_inplace hwf hb0 hbT hcm hca (by omega) (by omega) hk]
+    rw [e3, readN_inplace hwf hb0 hbT hcm hca (by omega) (by omega) hk.hkeep]
     exact readN_congr2 fun j hj => fr1 _ (by omega) (Or.inl (by omega)) (Or.inr (by omega)) (Or.inr (by omega))
   refine ⟨ω3, μ3, dat, ((r1.trans r2).trans r3).mono (by omega),
     rep2.congr_lock wf2 (by rw [hb']; exact hb0) (by rw [hb']; exact hbT)
@@ -414,7 +414,7 @@ theorem realloc_wrap_grow_heapK_keep {p : ByteArray} {P : Program} [HasCode p P]
     have kp := keep_of_hkeep hwf hb0 hbT (fun h hh => by
       rcases hh with hh | hh
       · exact Or.inl hh
-      · rw [hh]; exact grow_hdr hwf hpc (by omega) hT hfr hfit) hk
+      · rw [hh]; exact grow_hdr hwf hpc (by omega) hT hfr hfit) hk.hkeep
     rw [fr3 a (by omega) (by omega), kp a ha]
     exact fr1 a (by omega) (Or.inl (by omega)) (Or.inr (by omega)) (Or.inr (by omega))
 
@@ -556,7 +556,7 @@ theorem realloc_zero_keep {p : ByteArray} {P : Program} [HasCode p P] {X : Type}
     fun a h1 h2 => (stk a h1 (by omega)).trans (sf1 a h1 (Or.inr h2)), e7, e0,
     by rw [e1]; congr 1; omega, by rw [e5, UInt64.ofNat_toNat], by rw [e6, UInt64.ofNat_toNat], fun a ha => ?_⟩
   have := others_lt hwf hb0 hbT ha
-  rw [keep_of_hkeep hwf hb0 hbT (fun h hh => Or.inl hh) hk3 a ha]
+  rw [keep_of_hkeep hwf hb0 hbT (fun h hh => Or.inl hh) hk3.hkeep a ha]
   exact sf1 a (by omega) (Or.inl (by omega))
 
 theorem realloc_wrap_zero_keep {p : ByteArray} {P : Program} [HasCode p P] {X : Type} {R : HostRel X} (x : X) (ω : Regs) (μ : Memory)
@@ -661,7 +661,7 @@ theorem fallback_after_keep {p : ByteArray} {P : Program} [HasCode p P] {X : Typ
   refine ⟨ω7, μ4, dat, (((((r3.trans r4).trans r5).trans r6).trans rj2).trans r7).mono (by omega), rep4, wf4, fo4,
     fun a => (ww4 a).trans (dwr a), stk, k7, k0, k1, k5, k6, fun a ha hq => ?_⟩
   have := others_lt hwf1 hb0 hbT ha
-  rw [keep_of_hkeep hwf1 hb0 hbT (fun h hh => Or.inl hh) hk4 a ha]
+  rw [keep_of_hkeep hwf1 hb0 hbT (fun h hh => Or.inl hh) hk4.hkeep a ha]
   exact dfr a (by omega) hq (Or.inl (by omega))
 
 theorem fallback_tail'_keep {p : ByteArray} {P : Program} [HasCode p P] {X : Type} {R : HostRel X} (x : X) (ω : Regs) (μ : Memory)
@@ -730,7 +730,7 @@ theorem fallback_tail'_keep {p : ByteArray} {P : Program} [HasCode p P] {X : Typ
   have := others_lt hwf1 (by rw [hbb]; exact hb0) (by rw [hbb]; exact hbT) ha1
   unfold InData at hin
   rw [kp3 a ha1 (by omega), keep_of_hkeep hwf1 (by rw [hbb]; exact hb0) (by rw [hbb]; exact hbT)
-    (fun h hh => Or.inl hh) hk2 a ha1]
+    (fun h hh => Or.inl hh) hk2.hkeep a ha1]
   exact fr1 a (by omega) (Or.inl (by omega))
 
 theorem fallback_tail_heap_keep {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (x : RefineCtx)
@@ -812,7 +812,7 @@ theorem fallback_tail_heap_keep {p : ByteArray} {P : Program} [HasCode p P] (env
   have := others_lt hwf1 (by rw [hbb]; exact hb0) (by rw [hbb]; exact hbT) ha1
   unfold InData at hin
   rw [kp3 a ha1 (by omega), keep_of_hkeep hwf1 (by rw [hbb]; exact hb0) (by rw [hbb]; exact hbT)
-    (fun h hh => Or.inl hh) hk2 a ha1]
+    (fun h hh => Or.inl hh) hk2.hkeep a ha1]
   exact fr1 a (by omega) (Or.inl (by omega))
 
 theorem fallback_refines_heap_keep {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env)

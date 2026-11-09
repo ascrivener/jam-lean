@@ -122,7 +122,8 @@ theorem dl_two {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X
     d (ω₉): if y = 0 or q ≠ 0, the digit for q from the table goes to T + 37 + d and the offset to
     d − 1; else nothing is written. -/
 theorem dl_one {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X) (ω : Regs) (μ : Memory)
-    (T q d y : Nat) (hT : 65536 ≤ T ∧ T + 72 < 4294967296) (hq : q < 1000) (hd : 1 ≤ d ∧ d ≤ 10)
+    (T q d y : Nat) (hT : 65536 ≤ T ∧ T + 72 < 4294967296) (hq : q < 1000)
+    (hd : d ≤ 10 ∧ (y = 0 ∨ q ≠ 0 → 1 ≤ d))
     (hy : y < 18446744073709551616)
     (h1 : ω[1] = UInt64.ofNat T) (h7 : ω[7] = UInt64.ofNat 70844) (h8 : ω[8] = UInt64.ofNat q)
     (h9 : ω[9] = UInt64.ofNat d) (h12 : ω[12] = UInt64.ofNat y)
@@ -133,10 +134,11 @@ theorem dl_one {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X
       ω'[9] = UInt64.ofNat (if y = 0 ∨ q ≠ 0 then d - 1 else d) ∧
       (∀ a, a < 4294967296 → a ≠ T + 37 + d → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
-  have hw' : μ.writable (T + 38 + (d - 1)) = true := by rw [show T + 38 + (d - 1) = T + 37 + d by omega]; exact hw
   rw [show ω = regsNF ω [] from rfl]
   by_cases hc : y = 0 ∨ q ≠ 0
-  · rw [if_pos hc]
+  · have hd1 := hd.2 hc
+    have hw' : μ.writable (T + 38 + (d - 1)) = true := by rw [show T + 38 + (d - 1) = T + 37 + d by omega]; exact hw
+    rw [if_pos hc]
     by_cases hy0 : y = 0
     · refine ⟨?_, ?_, ?_, ?_⟩
       rotate_left 2

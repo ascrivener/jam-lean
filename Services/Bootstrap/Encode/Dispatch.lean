@@ -167,31 +167,48 @@ theorem tail {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X) 
       ↓reduceIte, PVM.getD_some', h1]
     all_goals try (congr 1; omega)
 
+/-- **The layout of one `encode_to` call**: its frame base F (the callee frames use [F − 136, F)), the
+    value at S, the writer `{cap, ptr, len}` at v with room for N more octets, the return address `ret`
+    (whose jump-table entry is t) and the access these need, all apart from one another. -/
+structure Lay (P : Program) (F S v cap ptr len N ret t : Nat) (μ : Memory) : Prop where
+  hF : 67476 + 256 ≤ F
+  hF' : F < 4294967296
+  hF8 : F % 8 = 0
+  hS : 65536 ≤ S
+  hS' : S + 256 < 4294967296
+  hSF : S + 256 ≤ F - 136 ∨ F ≤ S
+  vc : μ.readN v 8 = Num.encodeLE 8 cap
+  vp : μ.readN (v + 8) 8 = Num.encodeLE 8 ptr
+  vl : μ.readN (v + 16) 8 = Num.encodeLE 8 len
+  hroom : len + N ≤ cap
+  hcap : cap < 18446744073709551616
+  hv : v + 24 ≤ 4294967296
+  hvF : v + 24 ≤ F - 136 ∨ F ≤ v
+  hvS : v + 24 ≤ S ∨ S + 232 ≤ v
+  hd : 65536 ≤ ptr + len
+  hd' : ptr + len + N + 16 < 4294967296
+  hdF : F ≤ ptr + len ∨ ptr + len + N + 16 ≤ F - 136
+  hdS : ptr + len + N + 24 ≤ S ∨ S + 232 + 24 ≤ ptr + len
+  hdv : v + 24 ≤ ptr + len ∨ ptr + len + N ≤ v
+  hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0
+  hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t
+  hbt : P.isBlockStart t = true
+  hrS : ∀ a, S ≤ a → a < S + 232 → μ.readable a = true
+  hrv : ∀ a, v ≤ a → a < v + 24 → μ.readable a = true
+  hwv : ∀ a, v + 16 ≤ a → a < v + 24 → μ.writable a = true
+  hwd : ∀ a, ptr + len ≤ a → a < ptr + len + N → μ.writable a = true
+  hwF : ∀ a, F - 136 ≤ a → a < F → μ.writable a = true
+
 /-- **One element encodes** (`Instruction::encode_to`, 30145), at any frame base F: called with ω₁ = F,
-    the value at S (ω₇) satisfying `Rep` and the writer `{cap, ptr, len}` at v (ω₈) with room for `enc`,
-    the function appends exactly `enc` at `ptr + len`, stores `len + |enc|` and returns to `ret` (whose
-    jump-table entry is t) with ω₁, ω₅, ω₆ as they were. Memory changes only in the stack below F (its
-    frame and its callees', [F − 136, F)), the octets appended and the writer's length. -/
+    the value at S (ω₇) satisfying `Rep` and the writer `{cap, ptr, len}` at v (ω₈) with room for `enc`
+    (`Lay`), the function appends exactly `enc` at `ptr + len`, stores `len + |enc|` and returns to `ret`
+    (whose jump-table entry is t) with ω₁, ω₅, ω₆ as they were. Memory changes only in the stack below F
+    (its frame and its callees', [F − 136, F)), the octets appended and the writer's length. -/
 def EncOk (p : ByteArray) (P : Program) (enc : List UInt8) (Rep : List UInt8 → Prop) : Prop :=
   ∀ (X : Type) (R : HostRel X) (x : X) (ω : Regs) (μ : Memory) (F S v cap ptr len ret t : Nat),
     ω[0] = UInt64.ofNat ret → ω[1] = UInt64.ofNat F → ω[7] = UInt64.ofNat S → ω[8] = UInt64.ofNat v →
-    67476 + 256 ≤ F → F < 4294967296 → F % 8 = 0 →
-    Rep (μ.readN S 232) → 65536 ≤ S → S + 232 ≤ 4294967296 → (S + 232 ≤ F - 136 ∨ F ≤ S) →
-    μ.readN v 8 = Num.encodeLE 8 cap → μ.readN (v + 8) 8 = Num.encodeLE 8 ptr →
-    μ.readN (v + 16) 8 = Num.encodeLE 8 len → len + enc.length ≤ cap → cap < 18446744073709551616 →
-    v + 24 ≤ 4294967296 → (v + 24 ≤ F - 136 ∨ F ≤ v) →
-    65536 ≤ ptr + len → ptr + len + enc.length + 16 < 4294967296 →
-    (F ≤ ptr + len ∨ ptr + len + enc.length + 16 ≤ F - 136) →
-    (ptr + len + enc.length + 24 ≤ S ∨ S + 232 + 24 ≤ ptr + len) →
-    (v + 24 ≤ ptr + len ∨ ptr + len + enc.length ≤ v) →
+    Rep (μ.readN S 232) → Lay P F S v cap ptr len enc.length ret t μ →
     μ.readN 67376 100 = table → (∀ a, 67376 ≤ a → a < 67476 → μ.readable a = true) →
-    (0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) → P.jumpTable.getD (ret / 2 - 1) 0 = t →
-    P.isBlockStart t = true →
-    (∀ a, S ≤ a → a < S + 232 → μ.readable a = true) →
-    (∀ a, v ≤ a → a < v + 24 → μ.readable a = true) →
-    (∀ a, v + 16 ≤ a → a < v + 24 → μ.writable a = true) →
-    (∀ a, ptr + len ≤ a → a < ptr + len + enc.length → μ.writable a = true) →
-    (∀ a, F - 136 ≤ a → a < F → μ.writable a = true) →
     ∃ ω' μ', FreeStepsH p R 30145 ω μ x t ω' μ' x (7 * enc.length + 4000) ∧
       ω'[0] = UInt64.ofNat ret ∧ ω'[1] = UInt64.ofNat F ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       μ'.readN (ptr + len) enc.length = enc ∧ μ'.readN (v + 16) 8 = Num.encodeLE 8 (len + enc.length) ∧
@@ -203,8 +220,9 @@ def EncOk (p : ByteArray) (P : Program) (enc : List UInt8) (Rep : List UInt8 →
     discriminant 2^63 + t − 1 encodes to the one octet t. -/
 theorem unit {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (t : Nat) (ht : t = 15 ∨ t = 16 ∨ t = 23) :
     EncOk p P [UInt8.ofNat t] (fun bs => bs.take 8 = Num.encodeLE 8 (9223372036854775807 + t)) := by
-  intro X R x ω μ F S v cap ptr len ret t' h0 h1 h7 h8 hF hF' hF8 rep hS hS' hSF vc vp vl hroom hcap hv hvF
-    hd hd' hdF hdS hdv tab hrt hret hjt hbt hrS hrv hwv hwd hwF
+  intro X R x ω μ F S v cap ptr len ret t' h0 h1 h7 h8 rep L tab hrt
+  obtain ⟨hF, hF', hF8, hS, hS', hSF, vc, vp, vl, hroom, hcap, hv, hvF, _, hd, hd', hdF, hdS, hdv, hret, hjt, hbt,
+    hrS, hrv, hwv, hwd, hwF⟩ := L
   simp only [List.length_cons, List.length_nil, Nat.zero_add] at *
   have hD : μ.readN S 8 = Num.encodeLE 8 (9223372036854775807 + t) := by
     rw [← readN_take _ _ 232 8 (by decide)]; exact rep

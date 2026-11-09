@@ -43,7 +43,8 @@ theorem yieldSeg1 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x 
 /-- 20190 … 20197: the arm calls `Vec<u8>::extend_from_slice` for the 32 octets at ω₅ (return address
     908), the writer from ω₆. -/
 theorem yieldSeg2 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X) (ω : Regs) (μ : Memory)
-    (v h : Nat) (h5 : ω[5] = UInt64.ofNat h) (h6 : ω[6] = UInt64.ofNat v) :
+    (v h : Nat) (hv : v < 18446744073709551616) (hh : h < 18446744073709551616)
+    (h5 : ω[5] = UInt64.ofNat h) (h6 : ω[6] = UInt64.ofNat v) :
     ∃ ω', FreeStepsH p R 20190 ω μ x 58508 ω' μ x 6 ∧
       ω'[0] = UInt64.ofNat 908 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat v ∧ ω'[8] = UInt64.ofNat h ∧ ω'[9] = UInt64.ofNat 32 := by
@@ -53,7 +54,8 @@ theorem yieldSeg2 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x 
   · pvm_go [h5, h6]
   · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
     all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
-      ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h5, h6]
+      ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h5, h6, Nat.mod_eq_of_lt hv,
+      Nat.mod_eq_of_lt hh]
 
 /-- **`Yield`** (tag 14): a value holding the discriminant 2^63 + 13 and then h, the 32 octets of the
     hash, encodes to 14 :: h. -/
@@ -77,7 +79,7 @@ theorem yield {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (h : Li
     (by simp [hh]) (Or.inl ⟨rfl, by decide⟩)
   rw [show F - 32 = F - 56 + 24 by omega, bt] at st3
   obtain ⟨ω4, run4, d0, d1, _, _, d7, d8, d9⟩ := yieldSeg2 (p := p) (P := P) (R := R) x ω3 μ3 v (S + 8)
-    (c5.trans b5) (c6.trans b6)
+    (by omega) (by omega) (c5.trans b5) (c6.trans b6)
   obtain ⟨ω5, μ5, run5, st5, _, _, _⟩ := ext_step (p := p) (P := P) (R := R) x ω4 μ3 μ L
     ⟨d1.trans st3.h1, st3.s0, st3.s5, st3.s6, st3.vl, st3.out, st3.keep, st3.rd, st3.wr⟩ (S + 8) 32 908 20204
     d0 d7 d8 d9 ⟨by decide, by decide, by decide⟩ jte_453 bs_20204 (by simp [hh]) (Or.inr ⟨by omega, by omega⟩)

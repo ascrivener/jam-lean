@@ -8,6 +8,8 @@ import Services.Bootstrap.Memcpy
 import Services.Bootstrap.PrefixC
 import Services.Bootstrap.Prefix
 import Services.Bootstrap.CodeOk
+import Services.Bootstrap.CodeX
+import Services.Bootstrap.CodeXOk
 import Services.Bootstrap.BParams
 import Services.Bootstrap.Reader
 import Services.Bootstrap.DecodeU32
@@ -60,6 +62,10 @@ import Services.Bootstrap.Decode.Lookup
 import Services.Bootstrap.Decode.Transfer
 import Services.Bootstrap.Decode.Loop
 import Services.Bootstrap.Decode.Elems
+import Services.Bootstrap.Decode.VecU8
+import Services.Bootstrap.Decode.AllocOk
+import Services.Bootstrap.Decode.LookedUp
+import Services.Bootstrap.Decode.VecEmpty
 import Services.Picoalloc.Model
 import Services.Picoalloc.Invariant
 import Services.Picoalloc.FreeLists

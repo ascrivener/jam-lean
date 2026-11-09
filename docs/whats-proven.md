@@ -485,6 +485,19 @@ An independent kernel, nanoda as vendored by
     `realloc_chunk`: the block `realloc` returns (alignment one unit, a nonzero request) is an
     allocated chunk of exactly the request plus one unit. Same assumptions as
     `realloc_wrap_cases_data`.
+- **The start-up stores 𝖢 at 196616 and 𝖰 at 196680.** `StartupConsts.startup_consts`
+  (`Services/Bootstrap/StartupConsts.lean`), from `BParamsConsts.chain_consts` / `run_consts`
+  (`Services/Bootstrap/BParamsConsts.lean`).
+  - *Statement:* from Y's state, the first 3429 steps of refine (the prefix and the parameter chain,
+    to 4642) leave ℰ₂(𝖢) = [85, 1] at 196616 and ℰ₈(𝖰) = [80, 0, …] at 196680, 𝖢 and 𝖰 as `fetch`
+    case 0 reports them (GP v0.8.0 Appendix B, Ω_Y; `coreCount_octets` and `authQueueSize_octets`
+    place them at octets 24 … 26 and 82 … 84 of the reply). `startup_decoder_facts` restates this in
+    the forms the decoders assume: `rdN μ 196616 2 = 𝖢` and the word G at 196680 with
+    1 ≤ G mod 2³² ≤ 512.
+  - *Assumed:* as `Prefix.prefix_run`, including `env.fetch.params = Params.full`. So 𝖢 = 341 and
+    𝖰 = 80. Other parameter sets are not covered.
+  - *Scope:* the facts hold at 4642. That the later code until each decoder keeps these globals is a
+    separate matter (`HKeepG` and the decoders' own statements).
 
 ### picoalloc: the model (`Services/Picoalloc/`)
 

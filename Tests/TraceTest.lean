@@ -66,7 +66,12 @@ def storageKeys (σ : State) : List (Nat × List UInt8) :=
     the reason. At such a step the runner reports the difference, then continues from the trace's
     post-state. -/
 def knownDeviations : List (String × Nat × String) :=
-  [("fuzzy_light", 77, "bless from a non-manager is accepted (GP #519, vectors' CHANGELOG); GP 0.8.0 answers HUH")]
+  let bless := "bless from a non-manager is accepted (GP #519, vectors' CHANGELOG); GP 0.8.0 answers HUH and the service then panics"
+  let handOver := "the delegator hands its role over with bless from a non-manager (GP #519, vectors' CHANGELOG); GP 0.8.0 answers HUH and the service then panics"
+  [("fuzzy_light", 77, bless), ("fuzzy_light", 86, handOver), ("fuzzy_light", 118, bless),
+   ("fuzzy_light", 148, bless), ("fuzzy_light", 151, bless), ("fuzzy_light", 163, bless),
+   ("fuzzy_light", 165, bless), ("fuzzy_light", 179, handOver),
+   ("fuzzy", 17, "bless, designate and assign from a service without the privilege answer HUH in GP 0.8.0; the fuzz service stores the results, and the trace's differ (GP #519, vectors' CHANGELOG)")]
 
 structure Summary where
   name : String
@@ -172,5 +177,7 @@ def main (args : List String) : IO UInt32 := do
     let s ← runTrace dir n
     IO.println s!"{n}: {s.passed}/{s.steps} imported with matching state, {s.rejectedOk} rejected as expected, {s.deviations} known deviations; total {s.totalMs} ms, slowest block {s.maxStep} at {s.maxMs} ms"
     for f in s.failures do IO.println s!"  {f}"
+    if let some i := s.stoppedAt then
+      IO.println s!"  stopped at step {i}: the remaining steps are not runnable model-faithfully (their states hold storage under keys the model never wrote)"
     if s.passed + s.rejectedOk + s.deviations != s.steps then bad := true
   return if bad then 1 else 0

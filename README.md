@@ -72,7 +72,7 @@ call `pc`) live in `Tests/`, not in the model.
 | Assurances STF (§11.2: the available reports **R** and ρ after assurances) vs. `stf/assurances` (`lake build assurancestest`; signatures as in note 29) | **11 / 11** tiny, **11 / 11** full |
 | Reports STF (§11.3–§11.5: guarantor assignments M and M*, guarantee validity, ρ', G and the reported packages) and core and service statistics (§13.2) vs. `stf/reports` (`lake build reportstest`; signatures as in note 29) | **44 / 44** tiny, **48 / 48** full |
 | Safrole STF (§6: τ, η, key rotation, γ_Z, γ_S, γ_A, H_E, H_W) vs. `stf/safrole` (`lake build safroletest`), with the Bandersnatch primitives as an oracle read from the vectors (note 31) | **21 / 21** tiny, **25 / 25** full |
-| Block import Υ (§4, §5; T and M_σ of Appendix D) vs. the `traces/` block-import traces (`lake build tracetest`; signatures accepted, Y by SHA-512 and O from the states, note 33): post-state compared key by key after every block | fallback **100 / 100**, safrole **100 / 100**, storage **100 / 100**, storage_light **100 / 100**, preimages **100 / 100**, preimages_light **100 / 100**; fuzzy_light **188 / 200** plus **4 / 4** rejections, 8 blocks differ by the vectors' `bless` deviation (note 33); fuzzy **16 / 17**, then the same deviation and the trace cannot continue |
+| Block import Υ (§4, §5; T and M_σ of Appendix D) vs. the `traces/` block-import traces (`lake build tracetest`; signatures accepted, Y by SHA-512 and O from the states, note 33): post-state compared key by key after every block | fallback **100 / 100**, safrole **100 / 100**, storage **100 / 100**, storage_light **100 / 100**, preimages **100 / 100**, preimages_light **100 / 100**; fuzzy_light **188 / 200**, **4 / 4** rejections (bad code hash), and 8 blocks that follow the vectors' `bless` deviation (note 33); fuzzy **16 / 17**, then the same deviation at block 17, after which the trace cannot run model-faithfully |
 
 ## Building and running
 
@@ -814,6 +814,28 @@ noted here and in a comment at the definition.
       blocks are known valid); Y is the Bandersnatch VRF specification's output hash, SHA-512 of the
       suite string, 3, the 32-octet output point and 0, cut to 32 octets (`JAM/Sha512.lean`, FIPS 180-4). This follows the output-hash convention of the Bandersnatch VRF specification, which GP Appendix G defers to; it is beyond the paper's text. Only the runner's `Crypto` instance uses it: `JAM.Crypto` stays a parameter and no STF changed; O
       is answered from (γ_P, γ_Z) of the states already seen, as every state has γ_Z = O(γ_P).
+    * *Differences and how the runner continues.* After a block whose post-state differs, the runner
+      reports it and continues from the trace's post-state, decoding its storage entries under the
+      storage keys the model's own states hold; when an entry's key is unknown it stops. Each
+      difference is listed in `knownDeviations` with its reason, found from a host-call log
+      (`Tests/TraceDebug.lean`). All of them are the vectors' `bless` deviation (GP #519, in their
+      CHANGELOG; the accumulate vectors' `bless_from_non_manager` of note 15): in GP 0.8.0 `bless`
+      from a service other than χ_M answers HUH, and the fuzz service then panics; in the traces
+      it is accepted. `fuzzy_light` blocks 77, 118, 148, 151, 163 and 165, and 86 and 179 where the
+      caller is the delegator χ_V handing its role over. In `fuzzy` block 17 the fuzz service
+      stores the results of `bless`, `designate` and `assign` calls without the privilege, so the
+      trace's storage holds an entry under a key the model never wrote and the remaining 183 blocks
+      cannot be run model-faithfully.
+    * *Rejected blocks.* The 7 steps whose root does not change (`fuzzy` 37–39, `fuzzy_light`
+      152–155) are blocks to reject. `fuzzy_light` 152–155 are rejected by the model too, with a
+      report whose code hash is not the service's (`badCodeHash`), not for a cryptographic reason,
+      so accepting every signature does not hide them. `fuzzy` 37–39 come after block 17 and are
+      not reached.
+    * *Timings* (compiled, one core, while other runs shared a 4-core machine): fallback and
+      safrole about 3.6 s per 100 blocks; storage_light 246 s (slowest block 7.2 s), preimages_light
+      190 s (6.9 s), preimages 417 s (18 s), storage 613 s (23 s), fuzzy_light 482 s (30 s). The
+      time goes to the PVM in accumulation. CI runs fallback, safrole, storage_light and
+      preimages_light.
 
 ## Caveats
 

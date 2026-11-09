@@ -407,6 +407,14 @@ An independent kernel, nanoda as vendored by
   - *How:* `memcpy_s1` and `memcpy_d1` (`Key336Memcpy.lean`) are two copies `memcpy_big`'s margins
     do not cover, assembled from its sub-lemmas.
 
+- **Tag 24 (`AssignForGasCost`) with 1 … 512 hashes, as a decode-loop element.**
+  `Decode.AssignGas.assign_gas_elemF` / `assign_gas_elem` (`Services/Bootstrap/Decode/AssignGas.lean`).
+  - *Statement:* the encoding 24 :: c ++ ℰ(n) ++ hs ++ g (c the 2-octet core, hs the 32n octets of the
+    hashes, g a 4-octet `u32`) decodes to `AssignGasRep`: the discriminant 2⁶³ + 23, the `Vec` `{n, q, n}`
+    with hs at q in a fresh chunk, g at 32 and c at 36; or the `alloc` fails (`Exhausts`).
+  - *How:* as `Assign` (tag 12), with the count n decoded from the stream (`decodeU32`) instead of read
+    from the globals. Tag 24 is `AssignForGasCost` by elimination; the field shapes agree.
+
 - **`Vec<Vec<u8>>` with the payload in the heap (1 ≤ n ≤ 682 elements, each ≤ 16384 octets).**
   `Decode.VecVecU8.vec_vec_u8_heap` (`Services/Bootstrap/Decode/VecVecU8.lean`).
   - *Statement:* the element reader at 8, which reads the items of `DeleteItems`, `Export` and

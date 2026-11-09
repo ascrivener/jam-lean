@@ -106,6 +106,7 @@ import Services.Bootstrap.Decode.RandomStorageOk
 import Services.Bootstrap.Decode.Key336Memcpy
 import Services.Bootstrap.Decode.VecKey336
 import Services.Bootstrap.Decode.DesignateHeap
+import Services.Bootstrap.Decode.AssignGas
 import Services.Bootstrap.Decode.VecVecU8
 import Services.Picoalloc.Model
 import Services.Picoalloc.Invariant

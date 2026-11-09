@@ -57,6 +57,7 @@ import Services.Bootstrap.Decode.HashU64
 import Services.Bootstrap.Decode.U32Hash
 import Services.Bootstrap.Decode.Upgrade
 import Services.Bootstrap.Decode.Lookup
+import Services.Bootstrap.Decode.Transfer
 import Services.Bootstrap.Decode.Loop
 import Services.Bootstrap.Decode.Elems
 import Services.Picoalloc.Model

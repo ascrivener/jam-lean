@@ -5,6 +5,7 @@ import Services.Bootstrap.Decode.HashU64
 import Services.Bootstrap.Decode.U32Hash
 import Services.Bootstrap.Decode.Upgrade
 import Services.Bootstrap.Decode.Lookup
+import Services.Bootstrap.Decode.Transfer
 
 /-!
 # `ElemOk` for the decoded variants
@@ -229,5 +230,39 @@ theorem lookup {p : ByteArray} {P : Program} [HasCode p P] (s h : List UInt8) (b
   · rw [show ptr = ptr + 0 by rfl, readN_sub μ ptr 37 0 4 _ pay (by decide)]; simp [List.take_append, List.drop_append, List.take_of_length_le, List.drop_of_length_le, hs, hh]
   · rw [readN_sub μ ptr 37 4 32 _ pay (by decide)]; simp [List.take_append, List.drop_append, List.take_of_length_le, List.drop_of_length_le, hs, hh]
   · simp [Memory.readN, eO44]
+
+/-- **`Transfer`** (tag 2): the encoding 2 :: d ++ a ++ g ++ m, with d the 4 octets of the destination,
+    a and g the 8 of the amount and the gas limit and m the 128 of the memo, decodes to a slot holding the
+    discriminant 2^63 + 1, then m, a, g and d. -/
+theorem transfer {p : ByteArray} {P : Program} [HasCode p P] (d a g m : List UInt8) (hd : d.length = 4)
+    (ha : a.length = 8) (hg : g.length = 8) (hm : m.length = 128) :
+    ElemOk p P (2 :: (d ++ a ++ g ++ m)) (fun bs => bs.take 8 = Num.encodeLE 8 9223372036854775809 ∧
+      (bs.drop 8).take 128 = m ∧ (bs.drop 136).take 8 = a ∧ (bs.drop 144).take 8 = g ∧
+      (bs.drop 152).take 4 = d) := by
+  intro X R x ω μ ptr len v5 v6 h1 h5 h6 h7 tag rP rL hlen hlen' hptr hpb pay rpay s0 s5 s6 hv5 hv6 tab rt ws wr
+  simp only [List.length_cons, List.length_append, hd, ha, hg, hm, Nat.add_sub_cancel, List.headD_cons,
+    List.tail_cons] at tag hlen hptr hpb pay rpay ⊢
+  obtain ⟨ω', μ', run, e0, e1, e5, e6, eO, eM, eA, eG, eD, eR0, eR8, efr, erd, ewr⟩ := Transfer.transfer
+    (p := p) (P := P) (R := R) x ω μ 4278057632 4278057752 18 723 v5 v6 4278058648 ptr len
+    (loopFrame ω μ v5 v6 h1 h5 s0 s5 s6 hv5 hv6 ws)
+    (by decide) (by decide) h6 h7 tag tab rt (by decide) ⟨hptr, by omega⟩ ⟨hlen, hlen'⟩ rP rL (by decide)
+    (by omega) (by decide) (by decide) (by omega) (by decide) (fun a h1 h2 => ws a (by omega) (by omega)) wr
+    (fun a h1 h2 => ws a (by omega) (by omega)) rpay
+  refine ⟨ω', μ', run.mono (by omega), e1, e5, e6, eR0, eR8, ⟨9223372036854775809, by decide, eO, by decide⟩, ?_,
+    fun a h0 h1 h2 h3 => efr a h0 (by omega) h2 (by omega), erd, ewr⟩
+  obtain ⟨t8, d8⟩ := slot_parts μ' 4278057752 8 128 (by decide)
+  obtain ⟨-, d136⟩ := slot_parts μ' 4278057752 136 8 (by decide)
+  obtain ⟨-, d144⟩ := slot_parts μ' 4278057752 144 8 (by decide)
+  obtain ⟨-, d152⟩ := slot_parts μ' 4278057752 152 4 (by decide)
+  refine ⟨t8.trans eO, d8.trans (eM.trans ?_), d136.trans (eA.trans ?_), d144.trans (eG.trans ?_),
+    d152.trans (eD.trans ?_)⟩
+  · rw [readN_sub μ ptr 148 20 128 _ pay (by decide)]
+    simp [List.take_append, List.drop_append, List.take_of_length_le, List.drop_of_length_le, hd, ha, hg, hm]
+  · rw [readN_sub μ ptr 148 4 8 _ pay (by decide)]
+    simp [List.take_append, List.drop_append, List.take_of_length_le, List.drop_of_length_le, hd, ha, hg, hm]
+  · rw [readN_sub μ ptr 148 12 8 _ pay (by decide)]
+    simp [List.take_append, List.drop_append, List.take_of_length_le, List.drop_of_length_le, hd, ha, hg, hm]
+  · rw [show ptr = ptr + 0 by rfl, readN_sub μ ptr 148 0 4 _ pay (by decide)]
+    simp [List.take_append, List.drop_append, List.take_of_length_le, List.drop_of_length_le, hd, ha, hg, hm]
 
 end Services.Bootstrap.Decode.Elems

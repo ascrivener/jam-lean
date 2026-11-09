@@ -170,12 +170,12 @@ An independent kernel, nanoda as vendored by
     decodes them all: it leaves for 562 with value j, satisfying `reps j`, in buffer slot j, and changes
     only the stack, the reader and the buffer. This generalizes `DecodeLoop.loop` from `Checkpoint`s to
     any list. `Elems` gives the `ElemOk` of `Checkpoint`, `Panic` and `Benchmark` (`unit`), and of
-    `Zombify`, `Exported`, `Yield`, `Solicit`, `Forget`, `Eject`, `Upgrade` and `Lookup`, each saying the
+    `Zombify`, `Exported`, `Yield`, `Solicit`, `Forget`, `Eject`, `Upgrade`, `Lookup` and `Transfer`, each saying the
     slot holds the discriminant and then the encoding's fields at their offsets.
   - *Assumed:* fewer than 128 elements (a one-octet length), each encoding non-empty, the buffer
     8-aligned after the payload and below 2^31 (`Ok`); the stack writable from its bottom
     (4278050816, the blob's 8192-octet stack) to the loop's frame.
-  - *Scope:* `ElemOk`s for the remaining variants (Transfer, Assign, the Vec/Option ones,
+  - *Scope:* `ElemOk`s for the remaining variants (Assign, the Vec/Option ones,
     RandomStorageRefine) are not stated yet; the loop is not yet composed into a Ψ_R theorem.
 - **`Instruction::decode`'s tag dispatch, for every tag.** `Decode.Tag.dispatch`, `reject` and
   `unit_variant` (`Services/Bootstrap/Decode/Tag.lean`).
@@ -236,6 +236,16 @@ An independent kernel, nanoda as vendored by
     by 37.
   - *How:* a helper with its own 88-octet frame reads the hash (`read_big_sp`), moves it, reads the
     `u64` (`read_ok`) and stores the variant (`s1`, `s2`, `s3`).
+- **`Instruction::decode` for `Transfer`.** `Decode.Transfer.transfer`
+  (`Services/Bootstrap/Decode/Transfer.lean`).
+  - *Statement:* from 20626 with tag 2 (`Transfer { destination: u32, amount: u64, gas_limit: u64,
+    memo }`) and the reader holding at least 148 octets, the function returns the variant in its slot
+    O: the discriminant word 2^63 + 1 at O, the 128-octet memo at O + 8, `amount` at O + 136,
+    `gas_limit` at O + 144 and `destination` at O + 152, all copied from the payload. The reader is
+    advanced by 148. Memory changes only in the 264 octets below the frame, the reader and O … O + 156.
+  - *Assumed:* A and O 8-aligned; the stack, reader, payload and slot apart.
+  - *How:* a 176-octet frame; three `read_ok`s park the integers, `memzero` clears the memo's buffer,
+    `read_big_sp` reads the memo into it and `memcpy_big_aligned` copies it to O + 8 (`t1` … `t7`).
 
 ### picoalloc: the model (`Services/Picoalloc/`)
 

@@ -60,7 +60,7 @@ def ElemOk (p : ByteArray) (P : Program) (enc : List UInt8) (Rep : List UInt8 �
     μ.readN 67476 100 = Tag.table → (∀ a, 67476 ≤ a → a < 67576 → μ.readable a = true) →
     (∀ a, 4278050816 ≤ a → a < 4278058216 → μ.writable a = true) →
     (∀ a, 4278058648 ≤ a → a < 4278058664 → μ.writable a = true) →
-    ∃ ω' μ', FreeStepsH p R 20626 ω μ x 723 ω' μ' x 2000 ∧
+    ∃ ω' μ', FreeStepsH p R 20626 ω μ x 723 ω' μ' x 4000 ∧
       ω'[1] = UInt64.ofNat 4278057688 ∧ ω'[5] = UInt64.ofNat v5 ∧ ω'[6] = UInt64.ofNat v6 ∧
       μ'.readN 4278058648 8 = Num.encodeLE 8 (ptr + (enc.length - 1)) ∧
       μ'.readN 4278058656 8 = Num.encodeLE 8 (len - (enc.length - 1)) ∧
@@ -157,7 +157,7 @@ theorem pass {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ
     (es : List (List UInt8)) (reps : Nat → List UInt8 → Prop) (k B : Nat)
     (hk : k < es.length) (ok : Ok es B) (hel : ∀ j (hj : j < es.length), ElemOk p P es[j] (reps j))
     (h : Inv es reps k B ω μ) :
-    ∃ ω' μ', FreeStepsH p R 680 ω μ x (if k + 1 < es.length then 680 else 562) ω' μ' x 3700 ∧
+    ∃ ω' μ', FreeStepsH p R 680 ω μ x (if k + 1 < es.length then 680 else 562) ω' μ' x 5700 ∧
       Inv es reps (k + 1) B ω' μ' ∧ Frame es.length B μ μ' := by
   obtain ⟨hn, hB1, hB2, hB3, hne⟩ := ok
   obtain ⟨r1, r5, m24, m40, m48, m56, rP, rL, pay, tab, el, ws, wr, wb, rp, rt⟩ := h
@@ -275,7 +275,7 @@ theorem pass {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ
   -- S5: count it, and loop or leave
   have post : ∀ (t : Nat) (ω8 : Regs), FreeStepsH p R 668 ω7 μ7 x t ω8 (μ7.writeN 4278057744 (Num.encodeLE 8 (k + 1))) x 4 →
       ω8[1] = UInt64.ofNat 4278057688 → ω8[5] = UInt64.ofNat (es.length - (k + 1)) →
-      ∃ ω' μ', FreeStepsH p R 680 ω μ x t ω' μ' x 3700 ∧ Inv es reps (k + 1) B ω' μ' ∧ Frame es.length B μ μ' := by
+      ∃ ω' μ', FreeStepsH p R 680 ω μ x t ω' μ' x 5700 ∧ Inv es reps (k + 1) B ω' μ' ∧ Frame es.length B μ μ' := by
     intro t ω8 run8 h1' h5'
     refine ⟨ω8, _, (run1.trans (run2.trans (run3.trans (run4.trans (run5.trans (run6.trans (run7.trans
       run8))))))).mono (by omega), ⟨h1', h5', ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩, ?_, ?_, ?_⟩
@@ -331,7 +331,7 @@ theorem loop {p : ByteArray} {P : Program} [HasCode p P] (x : X) (es : List (Lis
     (reps : Nat → List UInt8 → Prop) (B : Nat) (ok : Ok es B)
     (hel : ∀ j (hj : j < es.length), ElemOk p P es[j] (reps j)) :
     ∀ r k (ω : Regs) (μ : Memory), es.length - k = r → k < es.length → Inv es reps k B ω μ →
-      ∃ ω' μ', FreeStepsH p R 680 ω μ x 562 ω' μ' x (3700 * r) ∧ Inv es reps es.length B ω' μ' ∧
+      ∃ ω' μ', FreeStepsH p R 680 ω μ x 562 ω' μ' x (5700 * r) ∧ Inv es reps es.length B ω' μ' ∧
         Frame es.length B μ μ' := by
   intro r
   induction r with

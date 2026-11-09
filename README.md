@@ -72,6 +72,7 @@ call `pc`) live in `Tests/`, not in the model.
 | Assurances STF (§11.2: the available reports **R** and ρ after assurances) vs. `stf/assurances` (`lake build assurancestest`; signatures as in note 29) | **11 / 11** tiny, **11 / 11** full |
 | Reports STF (§11.3–§11.5: guarantor assignments M and M*, guarantee validity, ρ', G and the reported packages) and core and service statistics (§13.2) vs. `stf/reports` (`lake build reportstest`; signatures as in note 29) | **44 / 44** tiny, **48 / 48** full |
 | Safrole STF (§6: τ, η, key rotation, γ_Z, γ_S, γ_A, H_E, H_W) vs. `stf/safrole` (`lake build safroletest`), with the Bandersnatch primitives as an oracle read from the vectors (note 31) | **21 / 21** tiny, **25 / 25** full |
+| Block import Υ (§4, §5; T and M_σ of Appendix D) vs. the `traces/` block-import traces (`lake build tracetest`; signatures accepted, Y by SHA-512 and O from the states, note 33): post-state compared key by key after every block | fallback **100 / 100**, safrole **100 / 100**, storage **100 / 100**, storage_light **100 / 100**, preimages **100 / 100**, preimages_light **100 / 100**; fuzzy_light **188 / 200** plus **4 / 4** rejections, 8 blocks differ by the vectors' `bless` deviation (note 33); fuzzy **16 / 17**, then the same deviation and the trace cannot continue |
 
 ## Building and running
 
@@ -87,6 +88,8 @@ lake build historytest authtest       # the recent-history and authorization STF
 lake build statstest preimagestest    # the statistics and preimage STF vectors (tiny and full)
 lake build disputestest assurancestest reportstest  # disputes, assurances and reports STF vectors
 lake build safroletest                # the Safrole STF vectors (tiny and full)
+scripts/fetch-trace-vectors.sh        # block-import traces (.bin only) into vendor/jam-traces; names optional
+lake build tracetest                  # Υ over every fetched trace
 ```
 
 `pvmtest` and `gascheck` are Lake targets that build an executable and run it; a failing vector

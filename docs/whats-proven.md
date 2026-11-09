@@ -209,10 +209,21 @@ An independent kernel, nanoda as vendored by
     `Instruction::decode` produced from an encoding is encoded back to the same octets.
   - *Assumed:* the 100-octet table at 67376 as read-only data, F above it, and the value, the writer,
     the appended octets and the stack below F apart (`Lay`).
-  - *Scope:* the variants with a `Vec` or `Option` field (Assign and the rest), the element loop and
-    length prefix (30073), and the pass-through copy in refine's transform loop are not done yet.
+  - *Scope:* the variants with a `Vec` or `Option` field (Assign and the rest) are not done yet.
     The encoder's code facts are in `CodeX` (`fnRangesX`, with `jumpRangesX` for the arms' jump-table
     entries).
+- **Refine's output encoder, whole** (`Encode.Prefix.prefix_small`, `Encode.Loop.loop`,
+  `Encode.Loop.encode_ok`; `Services/Bootstrap/Encode/Prefix.lean`, `Top.lean`, `Loop.lean`).
+  - *Statement:* from 30073, where refine's body enters with a fresh buffer of 232 n + 6 octets, for
+    0 < n < 128 instructions at E each encoding to `enc j` by `EncOk`, the encoder writes
+    ℰ(n) = [n] (the length prefix, 30977), the n encodings in order (the element loop) and the work
+    item's 2-octet `work_item_index`, stores the result `{cap, buf, off + 3}` and returns. Memory changes
+    only in the stack around its frame, the result and the buffer.
+  - *Assumed:* `LayL`: the frame, the elements, the buffer and the work item apart (the buffer at least
+    24 octets from the elements), the output fitting the buffer, and each element's `Rep` at entry.
+  - *Scope:* the variants with a `Vec` or `Option` field (Assign and the rest) have no `EncOk` yet, so
+    `encode_ok` covers outputs of fixed-width instructions only; n = 0 and the allocation before 30073
+    are not done; the pass-through copy in refine's transform loop is next.
 - **`Instruction::decode`'s tag dispatch, for every tag.** `Decode.Tag.dispatch`, `reject` and
   `unit_variant` (`Services/Bootstrap/Decode/Tag.lean`).
   - *Statement:* from 20626, where the reader has just read the tag octet into the function's

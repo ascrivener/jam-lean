@@ -195,6 +195,12 @@ An independent kernel, nanoda as vendored by
   - *Scope:* the decoders of the 22 variants with fields are not covered yet. The code facts now
     cover all of `Instruction::decode`, from two traced payloads that between them hold every
     instruction kind, plus the whole range 20626 … 22145.
+- **The compiler's `memset`, zeroing an aligned buffer.** `Memzero.memzero`
+  (`Services/Bootstrap/Memzero.lean`).
+  - *Statement:* called at 70133 with an 8-aligned D, the octet 0 and n a multiple of 8 and at
+    least 16, `memset` zeroes D … D + n, changes no other memory and returns.
+  - *Scope:* only that case (the word loop). Other fill octets, unaligned destinations and short or
+    ragged lengths take paths not covered yet. `Transfer`'s decoder uses this case for its memo.
 - **`Instruction::decode` for variants with fixed-width fields.** `Decode.Fixed.zombify`,
   `exported` and `read_u64` (`Services/Bootstrap/Decode/Fixed.lean`).
   - *Statement:* from 20626 with tag 3 (`Zombify { ejector: u32 }`) or 20 (`Exported { count: u64 }`),

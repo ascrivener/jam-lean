@@ -67,7 +67,7 @@ def ElemOk (p : ByteArray) (P : Program) (enc : List UInt8) (Rep : List UInt8 �
       (∃ W, W < 18446744073709551616 ∧ μ'.readN 4278057752 8 = Num.encodeLE 8 W ∧
         W ≠ 18446744073709551614) ∧
       Rep (μ'.readN 4278057752 232) ∧
-      (∀ a, a < 4294967296 → (a < 4278057448 ∨ 4278057632 ≤ a) → (a < 4278058648 ∨ 4278058664 ≤ a) →
+      (∀ a, a < 4294967296 → (a < 4278057448 ∨ 4278057664 ≤ a) → (a < 4278058648 ∨ 4278058664 ≤ a) →
         (a < 4278057752 ∨ 4278057984 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a)
 
@@ -215,7 +215,7 @@ theorem pass {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ
       (fun a h1 h2 => by rw [brd, ard]; exact rt a h1 h2)
       (fun a h1 h2 => by rw [bwr, awr]; exact ws a h1 h2)
       (fun a h1 h2 => by rw [bwr, awr]; exact wr a h1 h2)
-  have cfr' : ∀ a, (decide (a < 4294967296) && !(decide (4278057448 ≤ a ∧ a < 4278057632)) && !(decide (4278058648 ≤ a ∧ a < 4278058664)) && !(decide (4278057752 ≤ a ∧ a < 4278057984))) = true →
+  have cfr' : ∀ a, (decide (a < 4294967296) && !(decide (4278057448 ≤ a ∧ a < 4278057664)) && !(decide (4278058648 ≤ a ∧ a < 4278058664)) && !(decide (4278057752 ≤ a ∧ a < 4278057984))) = true →
       μ3.read a = μ2.read a := fun a ha => cfr a (by fr_conv) (by fr_conv) (by fr_conv) (by fr_conv)
   clear cfr
   -- S3 and the first move

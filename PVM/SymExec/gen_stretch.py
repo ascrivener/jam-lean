@@ -85,10 +85,10 @@ def spec(fs):
         elif n.startswith('hm_'):
             mm = re.match(r'μ\.readN (\d+) (\d+) = \[(.*)\]$', t)
             lst = [int(x) for x in mm.group(3).split(',')]
-            cells.append(f'({mm.group(1)}, {mm.group(2)}, .const (Num.decodeLE [{mm.group(3)}]))'); celln.append((n, True))
+            cells.append(f'(⟨none, {mm.group(1)}⟩, {mm.group(2)}, .const (Num.decodeLE [{mm.group(3)}]))'); celln.append((n, True))
         elif n.startswith('hbn_'):
             mm = re.match(r'μ\.readN (\d+) (\d+) = Num\.encodeLE \d+ (\w+)$', t)
-            cells.append(f'({mm.group(1)}, {mm.group(2)}, {sval(mm.group(3))})'); celln.append((n, False))
+            cells.append(f'(⟨none, {mm.group(1)}⟩, {mm.group(2)}, {sval(mm.group(3))})'); celln.append((n, False))
         elif n.startswith('hrd_'):
             a, b = n[4:].split('_'); rds.append((int(a), int(b))); rdn.append(n)
         elif n.startswith('hw_'):
@@ -139,9 +139,11 @@ namespace PVM.SymExec.{mod}
 open PVM JAM Services.Bootstrap.Code {chain_ns}
 
 def st : Static :=
-  {{ bounds := {bounds}
-    rd := {lst([f"({a}, {b})" for a, b in rd0])}
-    wr := {lst([f"({a}, {b})" for a, b in wr0])} }}
+  {{ ub := {bounds}
+    lb := {[0] * len(bounds)}
+    rd := {lst([f"(⟨none, {a}⟩, {b - a})" for a, b in rd0])}
+    wr := {lst([f"(⟨none, {a}⟩, {b - a})" for a, b in wr0])}
+    sep := [] }}
 
 def code : CTree :=
   {tree(entries)}
@@ -160,7 +162,7 @@ def T : Spec :=
   {{ regs := {lst(r1)}
     cells := {lst(c1)} }}
 
-def frame : List (Nat × Nat) := {lst([f"({a}, {b})" for a, b in frame])}
+def frame : List (Aff × Nat) := {lst([f"(⟨none, {a}⟩, {b - a})" for a, b in frame])}
 
 set_option maxRecDepth 100000 in
 theorem ok : check st G A T frame {start} {end} {total} = true := by decide +kernel
@@ -173,9 +175,9 @@ theorem run {sig} (h : St{k} {targs}) :
     {treeproof(entries)}
     {tup([f"bs_{n} (p := p) (P := P)" for n in bs])}
     {tup([f"jte_{a} (p := p) (P := P)" for a, b in jt])} (jts (p := p) (P := P))
-    {'[' + ', '.join(vars_) + ']'} {tup(bproofs)} ω μ
-    {tup(['h.' + n for n in rdn0])}
-    {tup(['h.' + n for n in wrn0])}
+    {'[' + ', '.join(vars_) + ']'} {tup(bproofs)} {tup(['Nat.zero_le _' for _ in vars_])} ω μ
+    {tup([f"rng_rd (lo := {n.split('_')[1]}) (hi := {n.split('_')[2]}) h.{n}" for n in rdn0])}
+    {tup([f"rng_wr (lo := {n.split('_')[1]}) (hi := {n.split('_')[2]}) h.{n}" for n in wrn0])} trivial
     {tup(['h.' + n for n in regn0])}
     {tup([('h.' + n) if not conc else f"(cell_of_list h.{n} rfl)" for n, conc in celln0])} x
   obtain {tup([f"r{i}" for i in range(len(regn1))]).replace(', trivial⟩', ', -⟩') if regn1 else '-'} := hr
@@ -192,7 +194,7 @@ for n in rdn1:
     a, b = map(int, n[4:].split('_'))
     fl.append(f'{n} := fun a h1 h2 => (readable_pages hpg a).trans (h.{containing(rd0 + wr0, rdn0 + wrn0, a, b)} a (by omega) (by omega))' if containing(rd0 + wr0, rdn0 + wrn0, a, b) in rdn0 else
               f'{n} := fun a h1 h2 => (readable_pages hpg a).trans (Memory.readable_of_writable (h.{containing(wr0, wrn0, a, b)} a (by omega) (by omega)))')
-fl.append(f'fr := fun a ha => by\n            simp only [{", ".join(f"C{i}" for i in range(k + 1, l + 1))}, Bool.and_eq_true, decide_eq_true_eq, Bool.not_eq_true\', decide_eq_false_iff_not, not_and, Nat.not_lt] at ha\n            rw [hfr a (by show a < 4294967296; omega) (by simp only [frame, clear, List.all_cons, List.all_nil, Bool.and_true, Bool.and_eq_true, Bool.or_eq_true, decide_eq_true_eq]; omega)]\n            exact h.fr a (by simp_all)')
+fl.append(f'fr := fun a ha => by\n            simp only [{", ".join(f"C{i}" for i in range(k + 1, l + 1))}, Bool.and_eq_true, decide_eq_true_eq, Bool.not_eq_true\', decide_eq_false_iff_not, not_and, Nat.not_lt] at ha\n            rw [hfr a (by show a < 4294967296; omega) (out_of_bool (by simp only [frame, List.all_cons, List.all_nil, Bool.and_true, Bool.and_eq_true, beq_self_eq_true, Bool.true_and, Bool.or_eq_true, decide_eq_true_eq]; omega))]\n            exact h.fr a (by simp_all)')
 fl.append('rdq := fun a => (readable_pages hpg a).trans (h.rdq a)')
 fl.append('wrq := fun a => (writable_pages hpg a).trans (h.wrq a)')
 o.append('\n          '.join(fl) + ' }\n')

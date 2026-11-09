@@ -13,6 +13,11 @@ There is no `native_decide`, no `bv_decide` and no `sorry`. The axioms are only 
 
 * **Same statement.** `PVM.SymExec.BTail1S0.run` has a statement definitionally equal to
   `Services.Bootstrap.BTail1.S0.run` (checked with `rfl` on the types).
+* **Symbolic memory.** `PVM.SymExec.FixedZ.z1` and `.z2` have statements definitionally equal to
+  `Services.Bootstrap.Decode.Fixed.z1` and `.z2`. These are hand-written stretches with a symbolic
+  stack pointer `A`, a symbolic output slot `O`, a disjointness hypothesis between them, frame
+  conditions, and a final return to a symbolic address. The executor proves them in ≈1.5 s net,
+  against ≈10.8 s for the hand-written proofs.
 * **Longer stretches.** `PVM.SymExec.BTail1S0to32.run` proves `St0 → St32` of BTail1: 512 steps,
   pc 35202 to pc 68840, with function calls and returns through the jump table. That replaces the
   32 generated files `S0` … `S31` with one check.
@@ -22,7 +27,10 @@ There is no `native_decide`, no `bv_decide` and no `sorry`. The axioms are only 
   (5.9 s against 173 s) and the source is 8.5× smaller (76 KB against 645 KB). Both can improve
   further (see the plan).
 
-**Recommendation: pursue it in phases.** Phase 1 (2–3 days) lets the executor take over the
+**Recommendation: pursue it in phases.** Symbolic memory (base + offset addresses with frame
+conditions) is now prototyped and stays fast and sound; see "Symbolic memory" below.
+
+Phase 1 (2–3 days) lets the executor take over the
 straight-line and concrete-branch stretches the generator now emits. Each later phase widens what
 it covers, and each can stop independently. Loops keep their hand-written invariants.
 
@@ -30,9 +38,10 @@ it covers, and each can stop independently. Loops keep their hand-written invari
 
 | File | Lines | What it is |
 |---|---|---|
-| `PVM/SymExec/Core.lean` | 381 | Symbolic values `SVal`, state `SState`, `sstep`, `srun` (the executor) |
-| `PVM/SymExec/Sound.lean` | 812 | `sstep_sound`, `srun_sound`: soundness against `Program.exec` / `freeStep` / `FreeStepsH` |
-| `PVM/SymExec/Check.lean` | 241 | `check` (run, then compare with a target spec and a frame) and `check_sound` |
+| `PVM/SymExec/Core.lean` | 468 | Symbolic values `SVal`, affine addresses `Aff`, state `SState`, `sstep`, `srun` (the executor) |
+| `PVM/SymExec/Sound.lean` | 1049 | `sstep_sound`, `srun_sound`: soundness against `Program.exec` / `freeStep` / `FreeStepsH` |
+| `PVM/SymExec/Check.lean` | 320 | `check` (run, then compare with a target spec and a frame), `check_sound`, `ret_step` |
+| `PVM/SymExec/FixedZ.lean` | 166 | `Decode.Fixed.z1` / `z2` by the executor: symbolic stack pointer and output slot (hand-written) |
 | `PVM/SymExec/gen_stretch.py` | 202 | Prototype generator: turns `St_k`/`St_l`, the segment files and the code facts into a check |
 | `PVM/SymExec/BTail1S0.lean` | 218 | St0 → St1 (16 steps): the replacement of `BTail1/S0.lean` |
 | `PVM/SymExec/BTail1S0to32.lean` | 875 | St0 → St32 (512 steps): replaces `S0` … `S31` |
@@ -44,8 +53,12 @@ it covers, and each can stop independently. Loops keep their hand-written invari
   §A.5.9, §A.5.10 and §A.5.13. So every ALU instruction is supported with **no per-operation
   proof**: soundness is by construction. Smart constructors fold literals and drop `mod`s that the
   bounds of the named naturals show do nothing.
-* **Memory** is a list of cells `μ.readN a n = ℰ_n(v)` at concrete addresses, plus a list of
-  dirty ranges; anything not dirty reads as at the start.
+* **Addresses** are affine (`Aff`): a literal, or ρ_k + d with an integer offset d. Named naturals
+  have lower and upper bounds, so every address has an interval. Two regions are disjoint when they
+  share a base and their offsets say so, when their intervals say so, or when a declared separation
+  says so. A separation is a hypothesis of the stretch, such as `O + 12 ≤ A - 12 ∨ A + 56 ≤ O`.
+* **Memory** is a list of cells `μ_{a…+n} = ℰ_n(v)` at affine addresses, plus a list of dirty
+  regions; anything not dirty reads as at the start.
   * A store keeps the parts of a literal cell it does not overwrite, as fragments.
   * A load finds an exact cell, or assembles literal octets from several cells, or reads the start
     memory.
@@ -63,8 +76,12 @@ offset (§A.5.10), and at absolute addresses (§A.5.6, unsigned loads); `store_i
 §A.5.11) whose condition evaluates to a literal; and `jump_ind` / `load_imm_jump_ind` through the
 jump table.
 
+**Returns.** A return through the jump table to a symbolic address (`ret` with
+**j**_{ret/2−1} = t) is one generic lemma, `ret_step`, applied after the check.
+
 **Not covered.** Host calls, `trap`/halt exits (`FreeRunH`), `store_imm_*` at absolute addresses,
-symbolic branch conditions, and loads or stores at symbolic addresses. On any of these `srun`
+symbolic branch conditions, addresses with two symbolic terms (base + index·stride), regions of
+symbolic length, and table reads at a symbolic index. On any of these `srun`
 returns `none`, `check` is `false`, and nothing is proved. Soundness never depends on coverage.
 
 ## Measurements
@@ -73,7 +90,7 @@ The machine has 4 cores and 15 GB of RAM. Every figure is one `lake env lean <fi
 the dependencies already built. Loading the imports alone (Code facts, St) takes **1.2 s and
 1.65 GB**. Times marked "net" subtract that load.
 
-### Kernel cost of the check (the key unknown)
+### Kernel cost of the check (the key unknown; first iteration, concrete addresses)
 
 | Stretch | Steps | Kernel `decide` | Per step |
 |---|---:|---:|---:|
@@ -110,6 +127,26 @@ Notes on the table:
 * In the 512-step file, the bridge's `omega` over about 100 frame ranges takes 2.8 s, more than
   half the non-kernel time. A Boolean frame check removes it.
 
+### Symbolic memory (second iteration)
+
+Addresses became affine for this round. The same check now also decides disjointness from bounds
+and declared separations.
+
+| | Hand-written (`Decode/Fixed.lean`, `pvm_go`) | Executor (`FixedZ.lean`) |
+|---|---|---|
+| `z1` + `z2` (9 + 15 steps, symbolic A and O): wall time | 11.9 s (≈10.8 s net) | 2.65 s (≈1.5 s net); the kernel checks take ≈0.2–0.3 s, the rest is the bridge to the hypotheses |
+| Source | 63 lines (statements and proofs) | 166 lines (spec data and bridge, written by hand) |
+| Peak RSS | 1.88 GB | 1.71 GB |
+
+* By hand, the executor is not shorter. The win is speed, and that the proof does not depend on
+  the instruction text. A generator or tactic that reads the spec from the hypotheses would remove
+  most of those lines.
+* What the affine generality costs: the 512-step BTail1 check now takes 5.9 s in the kernel
+  (11.6 ms per step), against 3.8 s (7.5 ms per step) in the concrete-address version. Growth is
+  still linear, and the whole file takes 9.1 s against 211 s for the generated files.
+* Soundness covers everything above; nothing is assumed beyond what each stretch's hypotheses
+  state.
+
 ## Answers to the questions
 
 **1. Can the kernel evaluate it fast enough without `native_decide`?** Yes. It runs at about
@@ -140,7 +177,7 @@ generic proofs stay the same.
 | `trap`/halt/fault exits (`FreeRunH`, e.g. the run to the trap at 6377 in `EmptyPayload`) | 1 | `srun` ends on a non-▸ status; soundness via `FreeExit` |
 | Integration (phase 1) | 2–3 | One shared code tree for the whole binary, proved once from `HasCode`. `St_k` defined as `Spec` data, so no bridge. A Boolean frame check. The generator emits only cut specs. A `#eval` diagnostic for failing checks (I used one in the spike) |
 | Symbolic branch conditions | 2–3 | Decide comparisons from the named naturals' bounds (cheap and common); otherwise fork on the condition and return both paths as hypotheses |
-| Symbolic memory | 3–5 | Addresses as base + linear offset; a table read at a bounded index into literal cells; disjointness by offsets; frame conditions as now (dirty ranges with symbolic bounds need the linear normal form) |
+| Symbolic memory | **done for base + offset** (≈1 day); 2–4 more | Done: affine addresses, bounds, offset disjointness, declared separations, symbolic frames (`FixedZ`). Remaining: base + index·stride (loop indices), regions of symbolic length (`[S0, S1)`), table reads at a bounded symbolic index |
 | Host calls under contracts (`refineContract`, `accContractK`) | 3–5 | `srun` stops at `ecalli` and the stretch splits there. Each contract lemma is lifted once to a symbolic transformer: fresh named naturals for the outputs, its memory frame as dirty ranges. Cost depends on how uniform the contracts' post-conditions are |
 | Loops | 5–10 | Hand invariants remain. The executor proves the body, from invariant state to invariant state with a symbolic counter. That needs the linear-arithmetic normal form of the memory item and a proved normaliser |
 

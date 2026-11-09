@@ -5,27 +5,37 @@ import PVM.Logic.Words
 # A reflective symbolic executor for PVM code (spike)
 
 EXPERIMENTAL (see `docs/symexec-spike.md`). One function, `srun`, runs a stretch of PVM code over a
-*symbolic* state: registers hold symbolic values (`SVal`, terms over named naturals, the start
-registers and the start memory), memory is a list of cells `μ.readN a n = ℰ_n(v)` at concrete
-addresses, a list of dirty ranges (everything else reads as at the start), and the start memory's
-readable and writable ranges. `srun_sound` proves once that what `srun` computes is what the
-gas-free machine does (GP v0.8.0 §A.4–A.5, `Program.freeStep`, chained as `FreeStepsH`), so a
-stretch is proved by evaluating `check … = true` in the kernel (`decide +kernel`), with no
-per-step proof terms.
+*symbolic* state, and `srun_sound` (`PVM.SymExec.Sound`) proves once that what it computes is what
+the gas-free machine does (GP v0.8.0 §A.4–A.5, `Program.freeStep`, chained as `FreeStepsH`). A
+stretch is then proved by evaluating `check … = true` in the kernel (`decide +kernel`).
 
-Supported: the ALU instructions of §A.5.9, §A.5.10 and §A.5.13 (through the paper's own mutation
-functions, so no per-operation proof), loads and stores at register-relative addresses whose base
-is concrete (§A.5.10), stores of immediates (§A.5.7), `load_imm`/`load_imm_64`, `jump`,
-`load_imm_jump`, `fallthrough`, `unlikely`, and branches (§A.5.8, §A.5.11) whose condition
-evaluates to a constant. Anything else (host calls, `jump_ind`, symbolic addresses, symbolic branch
-conditions) makes `srun` fail, so `check` is `false` and nothing is proved.
+* Registers hold symbolic values (`SVal`): terms over named naturals ρ_k, the start registers and
+  the start memory, with the paper's own mutation functions as nodes (so no per-operation proof).
+* Addresses are affine (`Aff`): a literal, or ρ_k + d for an integer offset d. Named naturals have
+  lower and upper bounds, so an address has an interval; two regions are disjoint when they share a
+  base and their offsets say so, when their intervals say so, or when a declared separation (a
+  hypothesis of the stretch) says so.
+* Memory is a list of cells `μ_{a…+n} = ℰ_n(v)`, a list of dirty regions (everything else reads as
+  at the start), and the start memory's readable and writable regions (stores keep pages).
+
+Supported: the ALU instructions of §A.5.9, §A.5.10 and §A.5.13, loads and stores at affine addresses
+(§A.5.6, §A.5.7, §A.5.10), `load_imm`/`load_imm_64`, `jump`, `load_imm_jump`, `fallthrough`,
+`unlikely`, branches (§A.5.8, §A.5.11) whose condition evaluates to a literal, and `jump_ind` /
+`load_imm_jump_ind` to a literal address through the jump table. Anything else makes `srun` fail,
+so `check` is `false` and nothing is proved.
 -/
 
 namespace PVM.SymExec
 
 open Num Exec
 
-/-! ## Symbolic values -/
+/-! ## Values and addresses -/
+
+/-- An affine address: ρ_k + off, or the literal `off` when `base = none`. -/
+structure Aff where
+  base : Option Nat
+  off : Int
+  deriving DecidableEq, Repr
 
 /-- A symbolic natural number. -/
 inductive SVal where
@@ -35,10 +45,12 @@ inductive SVal where
   | var (k : Nat)
   /-- The start value of register `r`, as a natural. -/
   | reg0 (r : Nat)
-  /-- ℰ⁻¹ of the `n` start octets at `a`. -/
-  | mem0 (a n : Nat)
+  /-- ℰ⁻¹ of the `n` start octets at an address. -/
+  | mem0 (a : Aff) (n : Nat)
   /-- v mod m. -/
   | mod (v : SVal) (m : Nat)
+  /-- An affine value (an address). -/
+  | addr (a : Aff)
   /-- §A.5.10's ALU function of ω_A, ω_B and ν_X. -/
   | alu2i (op : TwoRegImmOp) (a b : SVal) (x : Nat)
   /-- §A.5.13's function of ω_A, ω_B and ω_D. -/
@@ -59,33 +71,113 @@ structure Env where
   ω : Regs
   μ : Memory
 
+def Aff.eval (E : Env) (a : Aff) : Int :=
+  (match a.base with | some k => (E.ρ k : Int) | none => 0) + a.off
+
 def SVal.eval (E : Env) : SVal → Nat
   | .const n => n
   | .var k => E.ρ k
   | .reg0 r => (E.ω.get (regIdx r)).toNat
-  | .mem0 a n => decodeLE (E.μ.readN a n)
+  | .mem0 a n => decodeLE (E.μ.readN (a.eval E).toNat n)
   | .mod v m => v.eval E % m
+  | .addr a => (a.eval E).toNat
   | .alu2i op a b x => (twoRegImmAlu op (a.eval E) (b.eval E) x).getD 0
   | .alu3 op a b d => threeRegAlu op (a.eval E) (b.eval E) (d.eval E)
   | .alu2 op a => twoRegAlu op (a.eval E)
   | .sx k v => u64 (signed k (v.eval E))
 
-/-- An exclusive upper bound of a value, given bounds of the named naturals. -/
-def SVal.bnd (B : List Nat) : SVal → Option Nat
+/-- `t` lies in the region of `n` octets at `a`. -/
+def InReg (E : Env) (r : Aff × Nat) (t : Nat) : Prop := r.1.eval E ≤ t ∧ (t : Int) < r.1.eval E + r.2
+
+/-! ## What a stretch assumes and keeps -/
+
+/-- Bounds of the named naturals (`lb[k] ≤ ρ_k < ub[k]`), readable and writable regions of the
+    start memory, and declared pairs of disjoint regions. -/
+structure Static where
+  ub : List Nat
+  lb : List Nat
+  rd : List (Aff × Nat)
+  wr : List (Aff × Nat)
+  sep : List ((Aff × Nat) × (Aff × Nat))
+
+/-- The least value an address can have. -/
+def Aff.lo (st : Static) (a : Aff) : Int :=
+  (match a.base with | some k => ((st.lb[k]?.getD 0 : Nat) : Int) | none => 0) + a.off
+
+/-- The greatest value an address can have, if the bounds give one. -/
+def Aff.hi (st : Static) (a : Aff) : Option Int :=
+  match a.base with
+  | some k => st.ub[k]?.map fun u => (u : Int) - 1 + a.off
+  | none => some a.off
+
+/-- `n` octets at `a` lie within ℕ_{2^32}. -/
+def valid (st : Static) (a : Aff) (n : Nat) : Bool :=
+  decide (0 ≤ a.lo st) && match a.hi st with
+    | some h => decide (h + n ≤ two32) && decide (h < two32)
+    | none => false
+
+/-- The region `(a, n)` lies within `r`. -/
+def within (st : Static) (a : Aff) (n : Nat) (r : Aff × Nat) : Bool :=
+  (a.base == r.1.base && decide (r.1.off ≤ a.off) && decide (a.off + n ≤ r.1.off + r.2)) ||
+  (r.1.base == none && decide (r.1.off ≤ a.lo st) && match a.hi st with
+    | some h => decide (h + n ≤ r.1.off + r.2)
+    | none => false)
+
+/-- The regions `(a, n)` and `(b, m)` are disjoint. -/
+def disj (st : Static) (a : Aff) (n : Nat) (b : Aff) (m : Nat) : Bool :=
+  n == 0 || m == 0 ||
+  (a.base == b.base && (decide (a.off + n ≤ b.off) || decide (b.off + m ≤ a.off))) ||
+  (match a.hi st with | some h => decide (h + n ≤ b.lo st) | none => false) ||
+  (match b.hi st with | some h => decide (h + m ≤ a.lo st) | none => false) ||
+  st.sep.any fun p => (within st a n p.1 && within st b m p.2) || (within st a n p.2 && within st b m p.1)
+
+/-- An exclusive upper bound of a value. -/
+def SVal.bnd (st : Static) : SVal → Option Nat
   | .const n => some (n + 1)
-  | .var k => B[k]?
+  | .var k => st.ub[k]?
   | .reg0 _ => some two64
   | .mem0 _ n => some (256 ^ n)
   | .mod _ m => if 0 < m then some m else none
+  | .addr a => if 0 ≤ a.lo st then (a.hi st).map fun h => (h + 1).toNat else none
+  | .sx _ _ => some two64
   | _ => none
 
-/-- `v mod m`, simplified: folded on a literal, dropped when a bound shows it does nothing. -/
-def mkMod (B : List Nat) (v : SVal) (m : Nat) : SVal :=
+/-- `v mod m`, simplified: folded on a literal, dropped when a bound shows it does nothing, and
+    `𝒵⁻¹_8(𝒵_k(w)) mod 2^(8k) = w mod 2^(8k)` for k = 2, 4. -/
+def mkMod (st : Static) (v : SVal) (m : Nat) : SVal :=
   match v with
   | .const n => .const (n % m)
-  | v => match v.bnd B with
-    | some b => if b ≤ m then v else .mod v m
-    | none => .mod v m
+  | .sx k w =>
+    if (k = 2 ∨ k = 4) ∧ m = 256 ^ k ∧ (w.bnd st).any (· ≤ 2 ^ (8 * k)) then
+      (if (w.bnd st).any (· ≤ m) then w else .mod w m)
+    else (if ((SVal.sx k w).bnd st).any (· ≤ m) then .sx k w else .mod (.sx k w) m)
+  | v => if (v.bnd st).any (· ≤ m) then v else .mod v m
+
+/-- An affine reading of a value. -/
+def asAff : SVal → Option Aff
+  | .const n => some ⟨none, n⟩
+  | .var k => some ⟨some k, 0⟩
+  | .addr a => some a
+  | _ => none
+
+/-- x mod M read as a signed offset: negative when x mod M ≥ M/2. -/
+def shift (x M : Nat) : Int := if x % M < M / 2 then ((x % M : Nat) : Int) else ((x % M : Nat) : Int) - M
+
+/-- The bounds show that `a` and `a'` are at least 0 and `a'` is below M. -/
+def affOk (st : Static) (a a' : Aff) (M : Nat) : Bool :=
+  decide (0 ≤ a.lo st) && decide (0 ≤ a'.lo st) && (a'.hi st).any (fun h => decide (h < (M : Int)))
+
+/-- (a + x) mod M as an affine value, when the bounds show it neither wraps below 0 nor reaches M. -/
+def addAff (st : Static) (a : Aff) (x M : Nat) : Option Aff :=
+  if affOk st a ⟨a.base, a.off + shift x M⟩ M = true then some ⟨a.base, a.off + shift x M⟩ else none
+
+/-- The value (v + x) mod 2^64 (`fallback` when it is not affine). -/
+def addv (st : Static) (v : SVal) (x : Nat) (fallback : SVal) : SVal :=
+  match v with
+  | .const c => .const ((c + x) % two64)
+  | v => match (asAff v).bind fun a => addAff st a x two64 with
+    | some a' => .addr a'
+    | none => fallback
 
 /-- Whether §A.5.10's function reads ω_A (only `cmov_iz_imm`, `cmov_nz_imm`). -/
 def usesA : TwoRegImmOp → Bool
@@ -102,65 +194,61 @@ def foldAlu2i (op : TwoRegImmOp) (a b : SVal) (x : Nat) : SVal :=
   | .const p, .const q => .const ((twoRegImmAlu op p q x).getD 0)
   | a, b => .alu2i op a b x
 
-def mkAlu2i (op : TwoRegImmOp) (a b : SVal) (x : Nat) : SVal :=
-  foldAlu2i op (if usesA op then a else .const 0) b x
+def mkAlu2i (st : Static) (op : TwoRegImmOp) (a b : SVal) (x : Nat) : SVal :=
+  if op = .addImm64 then addv st b x (foldAlu2i op (.const 0) b x)
+  else foldAlu2i op (if usesA op then a else .const 0) b x
 
 def foldAlu3 (op : ThreeRegOp) (a b d : SVal) : SVal :=
   match a, b, d with
   | .const p, .const q, .const r => .const (threeRegAlu op p q r)
   | a, b, d => .alu3 op a b d
 
-def mkAlu3 (op : ThreeRegOp) (a b d : SVal) : SVal :=
-  foldAlu3 op a b (if usesD op then d else .const 0)
+def mkAlu3 (st : Static) (op : ThreeRegOp) (a b d : SVal) : SVal :=
+  let f := foldAlu3 op a b (if usesD op then d else .const 0)
+  match op, b with
+  | .add64, .const q => addv st a q f
+  | .sub64, .const q => if q < two64 then addv st a (two64 - q) f else f
+  | _, _ => f
 
 def mkAlu2 (op : TwoRegOp) (a : SVal) : SVal :=
-  match a with
-  | .const p => .const (twoRegAlu op p)
-  | a => .alu2 op a
+  match op, a with
+  | .moveReg, a => a
+  | op, .const p => .const (twoRegAlu op p)
+  | op, a => .alu2 op a
 
 /-- A load's value: unchanged (`k = 0`) or sign-extended from `k` octets. -/
-def mkSx (B : List Nat) (k : Nat) (v : SVal) : SVal :=
+def mkSx (st : Static) (k : Nat) (v : SVal) : SVal :=
   if k = 0 then v else
   match v with
   | .const p => .const (u64 (signed k p))
-  | v => match v.bnd B with
+  | v => match v.bnd st with
     | some b => if b ≤ 2 ^ (8 * k - 1) ∧ k ≤ 8 then v else .sx k v
     | none => .sx k v
 
 /-! ## Symbolic states -/
 
-/-- What the stretch may assume of its start state and keeps throughout: bounds of the named
-    naturals, and readable and writable ranges `[lo, hi)` of the start memory. -/
-structure Static where
-  bounds : List Nat
-  rd : List (Nat × Nat)
-  wr : List (Nat × Nat)
-
-/-- A symbolic state: the 13 registers, memory cells `(a, n, v)` (μ.readN a n = ℰ_n(v)), and the
-    ranges written since the start. -/
+/-- A symbolic state: the 13 registers, memory cells `(a, n, v)` (μ_{a…+n} = ℰ_n(v)), and the
+    regions written since the start. -/
 structure SState where
   regs : List SVal
-  cells : List (Nat × Nat × SVal)
-  dirty : List (Nat × Nat)
-
-/-- No range of `D` meets `[a, a + n)`. -/
-def clear (D : List (Nat × Nat)) (a n : Nat) : Bool := D.all fun d => a + n ≤ d.1 || d.2 ≤ a
-
-/-- `[a, a + n)` lies in one range of `L`. -/
-def inR (L : List (Nat × Nat)) (a n : Nat) : Bool := L.any fun r => r.1 ≤ a && a + n ≤ r.2
+  cells : List (Aff × Nat × SVal)
+  dirty : List (Aff × Nat)
 
 /-- What `st` asserts of an environment. -/
 def Pre (E : Env) (st : Static) : Prop :=
-  (∀ k b, st.bounds[k]? = some b → E.ρ k < b) ∧
-  (∀ r ∈ st.rd, ∀ a, r.1 ≤ a → a < r.2 → E.μ.readable a = true) ∧
-  (∀ r ∈ st.wr, ∀ a, r.1 ≤ a → a < r.2 → E.μ.writable a = true)
+  (∀ k b, st.ub[k]? = some b → E.ρ k < b) ∧
+  (∀ k b, st.lb[k]? = some b → b ≤ E.ρ k) ∧
+  (∀ r ∈ st.rd, ∀ t, InReg E r t → E.μ.readable t = true) ∧
+  (∀ r ∈ st.wr, ∀ t, InReg E r t → E.μ.writable t = true) ∧
+  (∀ p ∈ st.sep, ∀ t, InReg E p.1 t → ¬ InReg E p.2 t)
 
 /-- A machine state (ω, μ) is described by σ. -/
 def Inv (E : Env) (σ : SState) (ω : Regs) (μ : Memory) : Prop :=
   σ.regs.length = 13 ∧
   (∀ r : Fin 13, ω.get r = UInt64.ofNat ((σ.regs.getD r.val (.const 0)).eval E)) ∧
-  (∀ c ∈ σ.cells, c.1 + c.2.1 ≤ two32 ∧ μ.readN c.1 c.2.1 = encodeLE c.2.1 (c.2.2.eval E)) ∧
-  (∀ a, a < two32 → clear σ.dirty a 1 = true → μ.read a = E.μ.read a) ∧
+  (∀ c ∈ σ.cells, 0 ≤ c.1.eval E ∧ c.1.eval E + c.2.1 ≤ two32 ∧
+    μ.readN (c.1.eval E).toNat c.2.1 = encodeLE c.2.1 (c.2.2.eval E)) ∧
+  (∀ t, t < two32 → (∀ d ∈ σ.dirty, ¬ InReg E d t) → μ.read t = E.μ.read t) ∧
   μ.pages = E.μ.pages
 
 /-! ## Code -/
@@ -170,17 +258,6 @@ structure CEntry where
   pc : Nat
   ins : Instr
   next : Nat
-
-/-- The decode facts of a list of entries (each a `d_i` of the code facts). -/
-def AllCode (p : ByteArray) (P : Program) : List CEntry → Prop
-  | [] => True
-  | e :: es => (deblob p e.pc = some P ∧ P.decode e.pc = some e.ins ∧ P.next e.pc = e.next ∧
-      P.blockCost (P.blockStartOf e.pc) ≤ stepCostCap) ∧ AllCode p P es
-
-/-- The block-start facts of a list (each a `bs_i` of the code facts). -/
-def AllBS (P : Program) : List (Nat × Bool) → Prop
-  | [] => True
-  | b :: bs => P.isBlockStart b.1 = b.2 ∧ AllBS P bs
 
 /-- Instruction facts as a search tree on pc. -/
 inductive CTree where
@@ -197,6 +274,11 @@ def AllCodeT (p : ByteArray) (P : Program) : CTree → Prop
   | .node l e r => (deblob p e.pc = some P ∧ P.decode e.pc = some e.ins ∧ P.next e.pc = e.next ∧
       P.blockCost (P.blockStartOf e.pc) ≤ stepCostCap) ∧ AllCodeT p P l ∧ AllCodeT p P r
 
+/-- The block-start facts of a list (each a `bs_i` of the code facts). -/
+def AllBS (P : Program) : List (Nat × Bool) → Prop
+  | [] => True
+  | b :: bs => P.isBlockStart b.1 = b.2 ∧ AllBS P bs
+
 /-- The jump-table entries of a list (each a `jte_k`): **j**_k = t. -/
 def AllJT (P : Program) : List (Nat × Nat) → Prop
   | [] => True
@@ -212,8 +294,6 @@ structure Prog where
 /-- The facts of a `Prog` hold of the program `p` deblobs to. -/
 def ProgHyp (p : ByteArray) (P : Program) (G : Prog) : Prop :=
   AllCodeT p P G.code ∧ AllBS P G.bs ∧ AllJT P G.jt ∧ P.jumpTable.size = G.jsize
-
-def findCode (code : List CEntry) (pc : Nat) : Option CEntry := code.find? (·.pc == pc)
 
 def isBS (bs : List (Nat × Bool)) (n : Nat) : Bool := bs.any fun b => b.1 == n && b.2
 
@@ -243,56 +323,69 @@ def rkind : RegImmOp → TK
 variable (st : Static)
 
 /-- The value of register `r`, as `(ω_r).toNat`. -/
-def rdv (σ : SState) (r : Nat) : SVal := mkMod st.bounds (σ.regs.getD r (.const 0)) two64
+def rdv (σ : SState) (r : Nat) : SVal := mkMod st (σ.regs.getD r (.const 0)) two64
 
 def setv (σ : SState) (r : Nat) (v : SVal) : SState := { σ with regs := σ.regs.set r v }
 
-/-- Literal octets `[a, a + n)` assembled, left to right, from cells holding literals. -/
-def assemble (cells : List (Nat × Nat × SVal)) : Nat → Nat → Nat → Option Nat
+/-- The address (v + x) mod 2^32 of `n` octets, as an affine address in ℕ_{2^32}. -/
+def mkAddr (v : SVal) (x n : Nat) : Option Aff :=
+  let a? : Option Aff := match v with
+    | .const c => some ⟨none, ((c + x) % two32 : Nat)⟩
+    | v => (asAff v).bind fun a => addAff st a x two32
+  match a? with
+  | some a => if valid st a n then some a else none
+  | none => none
+
+/-- Literal octets of `n` at `a` assembled, left to right, from cells on the same base holding
+    literals. -/
+def assemble (cells : List (Aff × Nat × SVal)) : Nat → Aff → Nat → Option Nat
   | 0, _, n => if n = 0 then some 0 else none
   | fuel + 1, a, n =>
     if n = 0 then some 0 else
-    match cells.find? (fun c => c.1 ≤ a && a < c.1 + c.2.1 && c.2.2.isConst) with
+    match cells.find? (fun c => c.1.base == a.base && decide (c.1.off ≤ a.off) &&
+        decide (a.off < c.1.off + c.2.1) && c.2.2.isConst) with
     | some (c, m, .const v) =>
-      (assemble cells fuel (a + min (c + m - a) n) (n - min (c + m - a) n)).map fun r =>
-        v / 256 ^ (a - c) % 256 ^ min (c + m - a) n + 256 ^ min (c + m - a) n * r
+      (assemble cells fuel ⟨a.base, a.off + (min (c.off + m - a.off).toNat n : Nat)⟩
+          (n - min (c.off + m - a.off).toNat n)).map fun r =>
+        v / 256 ^ (a.off - c.off).toNat % 256 ^ min (c.off + m - a.off).toNat n +
+          256 ^ min (c.off + m - a.off).toNat n * r
     | _ => none
 
-/-- What survives of a literal cell that a store to `[a, a + n)` partly overwrites. -/
-def frags (a n : Nat) : Nat × Nat × SVal → List (Nat × Nat × SVal)
+/-- What survives of a literal cell on the store's base that a store to `(a, n)` partly
+    overwrites. -/
+def frags (a : Aff) (n : Nat) : Aff × Nat × SVal → List (Aff × Nat × SVal)
   | (c, m, .const v) =>
-    if c + m ≤ two32 && !(c + m ≤ a || a + n ≤ c) then
-      (if c < a then [(c, a - c, .const v)] else []) ++
-      (if a + n < c + m then [(a + n, c + m - (a + n), .const (v / 256 ^ (a + n - c)))] else [])
+    if c.base == a.base then
+      (if c.off < a.off then [(c, (min (a.off - c.off) m).toNat, .const v)] else []) ++
+      (if a.off + n < c.off + m then
+        [(⟨a.base, max (a.off + n) c.off⟩, (c.off + m - max (a.off + n) c.off).toNat,
+          .const (v / 256 ^ (max (a.off + n) c.off - c.off).toNat))] else [])
     else []
   | _ => []
 
-/-- The value loaded from `[a, a + n)`: a cell recorded there, or the start memory when nothing
-    has been written there since. -/
-def loadVal (σ : SState) (a n : Nat) : Option SVal :=
+/-- The value loaded from `(a, n)`: a cell recorded there, literal cells covering it, or the start
+    memory when nothing written since may meet it. -/
+def loadVal (σ : SState) (a : Aff) (n : Nat) : Option SVal :=
   match σ.cells.find? (fun c => c.1 == a && c.2.1 == n) with
-  | some c => some (mkMod st.bounds c.2.2 (2 ^ (8 * n)))
+  | some c => some (mkMod st c.2.2 (2 ^ (8 * n)))
   | none =>
-    -- from cells holding literals
     match assemble σ.cells n a n with
     | some w => some (.const (w % 256 ^ n))
-    | none => if clear σ.dirty a n then some (.mem0 a n) else none
+    | none => if σ.dirty.all (fun d => disj st a n d.1 d.2) then some (.mem0 a n) else none
 
-/-- Store ℰ_n(v) at `A` (an address in ℕ, read mod 2^32). -/
-def sstore (σ : SState) (A n : Nat) (v : SVal) : Option SState :=
-  let a := A % two32
-  if a + n ≤ two32 && inR st.wr a n then
+/-- Store ℰ_n(v) at `a`. -/
+def sstore (σ : SState) (a : Aff) (n : Nat) (v : SVal) : Option SState :=
+  if valid st a n && st.wr.any (within st a n) then
     some { regs := σ.regs
-           cells := (a, n, v) :: (σ.cells.filter (fun c => c.1 + c.2.1 ≤ two32 &&
-             (c.1 + c.2.1 ≤ a || a + n ≤ c.1)) ++ σ.cells.flatMap (frags a n))
-           dirty := if inR σ.dirty a n then σ.dirty else (a, a + n) :: σ.dirty }
+           cells := (a, n, v) :: (σ.cells.filter (fun c => disj st c.1 c.2.1 a n) ++
+             (σ.cells.filter (fun c => !disj st c.1 c.2.1 a n)).flatMap (frags a n))
+           dirty := if σ.dirty.any (within st a n) then σ.dirty else (a, n) :: σ.dirty }
   else none
 
-/-- Load `n` octets at `A` into register `d`, sign-extended from `k` octets unless `k = 0`. -/
-def sload (σ : SState) (d : Nat) (A n k : Nat) : Option SState :=
-  let a := A % two32
-  if a + n ≤ two32 && (inR st.rd a n || inR st.wr a n) then
-    (loadVal st σ a n).map fun v => setv σ d (mkSx st.bounds k v)
+/-- Load `n` octets at `a` into register `d`, sign-extended from `k` octets unless `k = 0`. -/
+def sload (σ : SState) (d : Nat) (a : Aff) (n k : Nat) : Option SState :=
+  if valid st a n && (st.rd.any (within st a n) || st.wr.any (within st a n)) then
+    (loadVal st σ a n).map fun v => setv σ d (mkSx st k v)
   else none
 
 /-- djump(a) when it continues (GP eq. `jumptablealignment`): the target, if the facts show it. -/
@@ -303,8 +396,7 @@ def sdjump (G : Prog) (a : Nat) : Option Nat :=
   | none => none
 
 /-- One step from `pc`: the next pc and state, or `none` if the executor cannot follow it. -/
-def sstep (G : Prog) (pc : Nat) (σ : SState) :
-    Option (Nat × SState) :=
+def sstep (G : Prog) (pc : Nat) (σ : SState) : Option (Nat × SState) :=
   match G.code.find pc with
   | none => none
   | some e =>
@@ -321,32 +413,27 @@ def sstep (G : Prog) (pc : Nat) (σ : SState) :
     | .regImm op a x =>
       match rkind op with
       | .store n =>
-        (sstore st σ x.toNat n (mkMod st.bounds (rdv st σ a.val) (2 ^ (8 * n)))).map (e.next, ·)
-      | .load n _ => (sload st σ a.val x.toNat n 0).map (e.next, ·)
+        ((mkAddr st (.const 0) x.toNat n).bind fun ad =>
+          sstore st σ ad n (mkMod st (rdv st σ a.val) (2 ^ (8 * n)))).map (e.next, ·)
+      | .load n _ =>
+        ((mkAddr st (.const 0) x.toNat n).bind fun ad => sload st σ a.val ad n 0).map (e.next, ·)
       | .alu => none
     | .regExtImm .loadImm64 a x => some (e.next, setv σ a.val (.const x.toNat))
     | .twoReg op d a => some (e.next, setv σ d.val (mkAlu2 op (rdv st σ a.val)))
     | .threeReg op a b d =>
-      some (e.next, setv σ d.val (mkAlu3 op (rdv st σ a.val) (rdv st σ b.val) (rdv st σ d.val)))
+      some (e.next, setv σ d.val (mkAlu3 st op (rdv st σ a.val) (rdv st σ b.val) (rdv st σ d.val)))
     | .twoRegImm op a b x =>
       match tkind op with
-      | .alu => some (e.next, setv σ a.val (mkAlu2i op (rdv st σ a.val) (rdv st σ b.val) x.toNat))
+      | .alu => some (e.next, setv σ a.val (mkAlu2i st op (rdv st σ a.val) (rdv st σ b.val) x.toNat))
       | .store n =>
-        match rdv st σ b.val with
-        | .const base =>
-          (sstore st σ (base + x.toNat) n (mkMod st.bounds (rdv st σ a.val) (2 ^ (8 * n)))).map
-            (e.next, ·)
-        | _ => none
+        ((mkAddr st (rdv st σ b.val) x.toNat n).bind fun ad =>
+          sstore st σ ad n (mkMod st (rdv st σ a.val) (2 ^ (8 * n)))).map (e.next, ·)
       | .load n k =>
-        match rdv st σ b.val with
-        | .const base => (sload st σ a.val (base + x.toNat) n k).map (e.next, ·)
-        | _ => none
+        ((mkAddr st (rdv st σ b.val) x.toNat n).bind fun ad =>
+          sload st σ a.val ad n k).map (e.next, ·)
     | .regTwoImm op a x y =>
-      match rdv st σ a.val with
-      | .const base =>
-        (sstore st σ (base + x.toNat) op.width (.const (y.toNat % 2 ^ (8 * op.width)))).map
-          (e.next, ·)
-      | _ => none
+      ((mkAddr st (rdv st σ a.val) x.toNat op.width).bind fun ad =>
+        sstore st σ ad op.width (.const (y.toNat % 2 ^ (8 * op.width)))).map (e.next, ·)
     | .regImmOffset op a x y =>
       if op = .loadImmJump then
         if 0 ≤ y && isBS G.bs y.toNat then some (y.toNat, setv σ a.val (.const x.toNat)) else none

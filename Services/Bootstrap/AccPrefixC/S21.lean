@@ -98,11 +98,12 @@ theorem steps (p : ByteArray) (P : Program) [HasCode p P] [HasCodeX p P] [HasCod
       intro a ha
       simp only [Bool.and_eq_true, decide_eq_true_eq, Bool.not_eq_true', decide_eq_false_iff_not,
         not_and, Nat.not_lt] at ha
+      try simp only [hpar, JAM.Params.full_encode]
       simp (disch := pvm_arith) only [PVM.Memory.read_writeN_disjoint, PVM.Num.length_encodeLE,
         List.length_cons, List.length_nil, PVM.two32, PVM.Memory.read_setPages]
     case rd => intro a; simp only [PVM.Memory.readable_writeN]
     case wr => intro a; simp only [PVM.Memory.writable_writeN]
-    case hp => first | exact hhp | heap_pages hhp
+    case hp => (try simp only [hpar, JAM.Params.full_encode]); first | exact hhp | heap_pages hhp
 
 /-- **Cut 21 to cut 22**: from the state `St21`, the steps reach `St22`. -/
 theorem run (p : ByteArray) (P : Program) [HasCode p P] [HasCodeX p P] [HasCodeA p P] (env : AccEnv) (ω : Regs) (μ : Memory)

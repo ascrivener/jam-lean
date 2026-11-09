@@ -95,6 +95,10 @@ structure Svc where
   /-- `codex` / `codexcheck`: more summarized functions, whose code facts go in a separate module
       (`Services/<name>/CodeX.lean`, assumed by `HasCodeX p P`) so the base facts are not regenerated. -/
   fnRangesX : List (Nat × Nat) := []
+  /-- `codea` / `codeacheck`: as `fnRangesX`, for accumulate, in a third module
+      (`Services/<name>/CodeA.lean`, assumed by `HasCodeA p P`) holding what neither `Code` nor
+      `CodeX` has. -/
+  fnRangesA : List (Nat × Nat) := []
   /-- Whether `Services/<name>/Memcpy.lean` exists (`memcpy_small` at the head of `fnRanges`):
       the prefix then calls it for each `memcpy` of fewer than 16 octets instead of stepping. -/
   memcpySummary : Bool := false
@@ -202,6 +206,14 @@ def bootstrapSvc : Svc where
   -- 33037–33122), the decoders' loops and their callees
   fnRangesX := [(8, 482), (907, 2200), (2727, 3716), (23303, 25588), (32727, 33152), (35293, 36170),
     (50078, 50409), (70133, 70239)]
+  -- accumulate (`Services/Bootstrap/Acc/README.md`, tier A): the entry 6378 … 15368, the inputs fetch
+  -- and `AccumulateItem` decode, `BootstrapWorkOutput::decode`, the ring and results helpers, the
+  -- storage wrappers and the allocator's remaining paths
+  fnRangesA := [(550, 562), (638, 639), (758, 824), (904, 907), (2200, 2727), (3820, 4565), (6378, 15369),
+    (22145, 22839), (22915, 22934), (23097, 23120), (23227, 23246), (25588, 26397), (28864, 29176),
+    (30285, 31894), (32414, 32727), (33214, 34636), (36170, 36529), (38832, 38857), (39388, 39411),
+    (39634, 40215), (40852, 41176), (44494, 44677), (44916, 45976), (46300, 47561), (47662, 48251),
+    (48341, 49015), (49237, 49541), (55989, 56119), (58251, 58433), (58578, 58598)]
   pathExtra := [(3, 0, 0x01234567, []), (3, 0, 0x89abcdef, [])]
   codeExtra := [(3, 0, 7, [2, 15, 15] ++ List.replicate 32 0)]
   codeOnly := allInstrPayloads.map fun y => (3, 0, 7, y)
@@ -1050,11 +1062,16 @@ def mode_codeRun (cx : Cx) : IO Unit := do
   let NS := cx.svc.name; let LBL := cx.svc.label; let BLOB := cx.svc.blob; let FLAG := cx.svc.flag
   -- `codex` / `codexcheck`: as `code` / `codecheck`, for the facts of `fnRangesX` that the base facts
   -- lack, in the module `CodeX` (class `HasCodeX`), checked by `CodeXCheck.G*` and `CodeXOk`
-  let xmode := mode == "codex" || mode == "codexcheck"
-  let mode := if mode == "codex" then "code" else if mode == "codexcheck" then "codecheck" else mode
-  let CN := if xmode then "CodeX" else "Code"
-  let CC := if xmode then "CodeXCheck" else "CodeCheck"
-  let HC := if xmode then "HasCodeX" else "HasCode"
+  -- `codea` / `codeacheck`: the same for `fnRangesA`, in the module `CodeA` (class `HasCodeA`),
+  -- leaving out what `Code` or `CodeX` already has
+  let amode := mode == "codea" || mode == "codeacheck"
+  let xmode := mode == "codex" || mode == "codexcheck" || amode
+  let E := if amode then "A" else "X"
+  let mode := if mode == "codex" || mode == "codea" then "code"
+    else if mode == "codexcheck" || mode == "codeacheck" then "codecheck" else mode
+  let CN := if xmode then s!"Code{E}" else "Code"
+  let CC := if xmode then s!"Code{E}Check" else "CodeCheck"
+  let HC := if xmode then s!"HasCode{E}" else "HasCode"
   let mut facts : Array String := #[]
   let mut lemmas : Array String := #[]
   let mut seen : List Nat := []
@@ -1136,12 +1153,13 @@ def mode_codeRun (cx : Cx) : IO Unit := do
     if (P.decode pc).isSome then
       let (st, e) := blockOf pc
       facts := facts.push s!".block {st} {e}"
-  -- `codex`: only the instructions of `fnRangesX` that the base facts lack, with what they need
-  let baseFacts := facts
-  if xmode then
+  -- `codex` / `codea`: only the instructions of `fnRangesX` / `fnRangesA` that the facts before lack,
+  -- with what they need: the instructions of `ranges` not in `seen0`, with what they need
+  let extFacts (ranges : List (Nat × Nat)) (seen0 : List Nat) : Array String × List Nat := Id.run do
     let mut fx : Array String := #[]
     let mut sx : List Nat := []
-    for (lo, hi) in cx.svc.fnRangesX do
+    let seen := seen0
+    for (lo, hi) in ranges do
       let mut pc := lo
       while pc < hi do
         if !seen.contains pc && !sx.contains pc then
@@ -1164,6 +1182,27 @@ def mode_codeRun (cx : Cx) : IO Unit := do
       if (P.decode pc).isSome then
         let (st, e) := blockOf pc
         fx := fx.push s!".block {st} {e}"
+    return (fx, sx)
+  let mut baseFacts := facts
+  if amode then
+    let (fX, sX) := extFacts cx.svc.fnRangesX seen
+    baseFacts := baseFacts ++ fX
+    seen := seen ++ sX
+  if xmode then
+    let (fx, sx) := extFacts (if amode then cx.svc.fnRangesA else cx.svc.fnRangesX) seen
+    -- `codea`: also every jump-table entry into `fnRangesA`. Accumulate also returns through
+    -- addresses set by `load_imm` (then `jump`) and dispatches through tables in memory, neither of
+    -- which names its entry in the instruction, so each entry whose target lies in the ranges is
+    -- stated.
+    let fx := if !amode then fx else Id.run do
+      let mut fx := fx
+      for k in [0:P.jumpTable.size] do
+        let t := P.jumpTable.getD k 0
+        if cx.svc.fnRangesA.any (fun (lo, hi) => lo ≤ t ∧ t < hi) then
+          fx := fx.push s!".jumpTableSize {P.jumpTable.size}"
+          fx := fx.push s!".jumpEntry {k} {t}"
+          fx := fx.push s!".blockStart {t} {P.isBlockStart t}"
+      return fx
     facts := fx
     seen := sx
   -- sorted by index, so each chunk of 64 reads a short stretch of the code (`codecheck`)
@@ -1301,13 +1340,13 @@ def hostIds : List Nat := {idsL}
   GENERATED by `lake exe genwitnesssteps {FLAG}codecheck {n}` from {BLOB}.
   Do not edit by hand.
 -/
-import Services.{NS}.CodeCheck{if xmode then s!"\nimport Services.{NS}.CodeX" else ""}
+import Services.{NS}.CodeCheck{if xmode then s!"\nimport Services.{NS}.Code{E}" else ""}
 
 /-! # {what} -/
 
 namespace Services.{NS}.{CC}
 
-open PVM PVM.NatBlob Services.{NS}.Blob {if xmode then s!"Services.{NS}.CodeCheck Services.{NS}.CodeX" else s!"Services.{NS}.Code"}
+open PVM PVM.NatBlob Services.{NS}.Blob {if xmode then s!"Services.{NS}.CodeCheck Services.{NS}.Code{E}" else s!"Services.{NS}.Code"}
 "
     let modEnd := s!"\nend Services.{NS}.{CC}\n"
     let V := s!"(view N {oc} {mb} {cLen})"
@@ -1575,8 +1614,8 @@ theorem hostsG_{g} : {hostQ ga gb} :=
       hostGroups := hostGroups.push s!"hostsG_{g}"
     let hcover := hostGroups.toList.tail.foldl (fun acc x => s!"(range_cover {acc} {x})") hostGroups[0]!
     if xmode then
-      IO.FS.writeFile s!"Services/{NS}/CodeXOk.lean" (s!"/-
-  GENERATED by `lake exe genwitnesssteps {FLAG}codexcheck {n}` from {BLOB}.
+      IO.FS.writeFile s!"Services/{NS}/Code{E}Ok.lean" (s!"/-
+  GENERATED by `lake exe genwitnesssteps {FLAG}code{E.toLower}check {n}` from {BLOB}.
   Do not edit by hand.
 -/
 import Services.{NS}.CodeOk
@@ -1584,14 +1623,14 @@ import Services.{NS}.CodeOk
 /-!
 # {LBL}'s further code facts hold of the vendored blob, by the kernel
 
-`Services.{NS}.CodeXCheck.G*` check the facts of `Services.{NS}.CodeX` a chunk at a time against
+`Services.{NS}.Code{E}Check.G*` check the facts of `Services.{NS}.Code{E}` a chunk at a time against
 the program `Services.{NS}.CodeCheck` parses; with its 𝔳_blob (`CodeCheck.vBlob_ok`): `checkCode_ok`,
-and so `hasCodeX`: wherever the base facts hold, these do too.
+and so `hasCode{E}`: wherever the base facts hold, these do too.
 -/
 
-namespace Services.{NS}.CodeXCheck
+namespace Services.{NS}.Code{E}Check
 
-open PVM PVM.NatBlob Services.{NS}.Blob Services.{NS}.CodeX
+open PVM PVM.NatBlob Services.{NS}.Blob Services.{NS}.Code{E}
 
 /-- **The blob passes `checkCode` for the further code facts**, checked by the kernel. -/
 theorem checkCode_ok : checkCode (ba N {o2} {hd.pLen}) facts = true :=
@@ -1600,11 +1639,11 @@ theorem checkCode_ok : checkCode (ba N {o2} {hd.pLen}) facts = true :=
       Bool.and_true, {", ".intercalate (factGroupsL.toList.map (·.1))}])
 
 /-- The further code facts, wherever the base facts hold of the blob. -/
-theorem hasCodeX \{P : Program} (h : CodeOk (ba N {o2} {hd.pLen}) Code.facts P) :
-    HasCodeX (ba N {o2} {hd.pLen}) P :=
-  HasCodeX.of h checkCode_ok
+theorem hasCode{E} \{P : Program} (h : CodeOk (ba N {o2} {hd.pLen}) Code.facts P) :
+    HasCode{E} (ba N {o2} {hd.pLen}) P :=
+  HasCode{E}.of h checkCode_ok
 
-end Services.{NS}.CodeXCheck
+end Services.{NS}.Code{E}Check
 ")
       return
     IO.FS.writeFile s!"Services/{NS}/CodeOk.lean" (s!"/-
@@ -1723,15 +1762,19 @@ end Services.{NS}.CodeCheck
   let rwHi := rwStart jb + roundPage jb.rw.size + jb.heapPages * pageSize
   if mode == "code" then
     IO.println s!"/-
-  GENERATED by `lake exe genwitnesssteps {FLAG}code {n}` from {BLOB}.
+  GENERATED by `lake exe genwitnesssteps {FLAG}code{if amode then "a" else ""} {n}` from {BLOB}.
   Do not edit by hand.
 -/
 {if xmode then s!"import Services.{NS}.Code" else "import JAM.Theorems.GrowHeap"}
 
 /-!
-# {if xmode then "Further code facts" else "Code facts"} of {LBL}
+# {if amode then "Accumulate code facts" else if xmode then "Further code facts" else "Code facts"} of {LBL}
 
-{if xmode then s!"Every instruction of the further summarized functions (`fnRangesX`) that `Code.facts` lacks,
+{if amode then s!"Every instruction of {LBL}'s accumulate ranges (`fnRangesA`) that neither `Code.facts` nor
+`CodeX.facts` has, with the block starts, blocks and jump-table entries they need (every entry into
+the ranges), kept apart so that adding them rechecks nothing that uses only those.
+`Services.{NS}.CodeAOk` checks them against the blob by the kernel (`CodeACheck.checkCode_ok`,
+`hasCodeA`); `HasCodeA p P` assumes them." else if xmode then s!"Every instruction of the further summarized functions (`fnRangesX`) that `Code.facts` lacks,
 with the block starts, blocks and jump-table entries they need, kept apart from `Code.facts` so that
 adding them rechecks nothing that uses only those. `Services.{NS}.CodeXOk` checks them against the
 blob by the kernel (`CodeXCheck.checkCode_ok`, `hasCodeX`); `HasCodeX p P` assumes them." else s!"The code facts the proofs about {LBL} use: every instruction on the first {n} steps of its
@@ -1756,13 +1799,43 @@ open PVM
     IO.println s!"/-- The code facts the {LBL} proofs use. -/\ndef facts : List CodeFact := factChunks.flatten\n"
     IO.println s!"/-- The blob `p` deblobs to `P`, and `facts` hold of it. -/\nclass {HC} (p : outParam ByteArray) (P : Program) : Prop where\n  ok : CodeOk p facts P\n"
     if xmode then
-      IO.println "/-- Where some facts hold of `P` and `checkCode` passes for these, these hold of `P` too. -/
-theorem HasCodeX.of {p : ByteArray} {P : Program} {fs : List CodeFact} (h : CodeOk p fs P)
-    (hx : checkCode p facts = true) : HasCodeX p P := by
+      IO.println s!"/-- Where some facts hold of `P` and `checkCode` passes for these, these hold of `P` too. -/
+theorem HasCode{E}.of \{p : ByteArray} \{P : Program} \{fs : List CodeFact} (h : CodeOk p fs P)
+    (hx : checkCode p facts = true) : HasCode{E} p P := by
   obtain ⟨P', h'⟩ := checkCode_sound hx
   have e : P' = P := Option.some.inj (h'.parse.symm.trans h.parse)
   exact ⟨e ▸ h'⟩
 "
+    if amode then
+      -- `codea`: the lemmas go in slices `CodeA/L*.lean` of 400 each, since one module holding them
+      -- all needs more memory than a CI runner has; each slice imports only `CodeA`
+      IO.println s!"\nend Services.{NS}.{CN}"
+      IO.FS.createDirAll s!"Services/{NS}/{CN}"
+      let sl := 400
+      let nS := (lemmasL.size + sl - 1) / sl
+      for k in [0:nS] do
+        let part := (lemmasL.toList.drop (k * sl)).take sl
+        IO.FS.writeFile s!"Services/{NS}/{CN}/L{k}.lean" (s!"/-
+  GENERATED by `lake exe genwitnesssteps {FLAG}codea {n}` from {BLOB}.
+  Do not edit by hand.
+-/
+import Services.{NS}.{CN}
+
+/-! # Lemmas of `{CN}.facts`, slice {k} of {nS} -/
+
+namespace Services.{NS}.{CN}
+
+open PVM
+
+" ++ "\n\n".intercalate part ++ s!"\n\nend Services.{NS}.{CN}\n")
+      IO.FS.writeFile s!"Services/{NS}/{CN}All.lean" (s!"/-
+  GENERATED by `lake exe genwitnesssteps {FLAG}codea {n}` from {BLOB}.
+  Do not edit by hand.
+-/
+" ++ String.join ((List.range nS).map fun k => s!"import Services.{NS}.{CN}.L{k}\n") ++ s!"
+/-! # Every lemma of `{CN}.facts` -/
+")
+      return
     IO.println ("\n\n".intercalate lemmasL.toList)
     IO.println s!"\nend Services.{NS}.{CN}"
     return

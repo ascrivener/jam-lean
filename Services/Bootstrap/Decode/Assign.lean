@@ -324,8 +324,9 @@ theorem assign_elemF {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHo
   have hcpm := hcp
   -- the queue: n hashes, into a fresh Vec at H + 40
   rcases VecHash.vec_hash (p := p) (P := P) env cap pb hcap1 hcap x ω4 μ4 s cp (F - 240) n RD (ptr + 2)
-      (len - 2) (F - 48) 1154 24826 196680 RD (fun k => (hb.drop (32 * k)).take 32) H4 k0 (by rw [k1]; congr 1; omega) k5 k6 k7 k8
-      (by rw [hnG]; exact k9) hn ⟨by omega, by omega, by omega⟩ (by omega) ⟨by omega, by omega⟩
+      (len - 2) (F - 48) 1154 24826 196680 RD (fun k => (hb.drop (32 * k)).take 32) H4 k0 (by rw [k1]; congr 1; omega) k5 k6 (by rw [k7]; congr 1; omega) k8
+      (by rw [hnG]; exact k9) hn ⟨by simp only [LoopA.S0]; omega, by omega, by omega⟩ (by simp only [LoopA.S1]; omega)
+      ⟨by omega, by simp only [LoopA.S1]; omega⟩
       (Or.inr (by omega)) ⟨hcp, hcpu⟩
       (fun a h1 h2 => by unfold InData; omega)
       (fun k hk => by
@@ -354,7 +355,8 @@ theorem assign_elemF {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHo
   -- the Vec copied, the global reloaded, and the assigner's call
   obtain ⟨ω6, μ6, run6, m0, m1, m5, m6, m7, m8, m9, m16, m8', m0', mfr, mrd, mwr⟩ :=
     as3 (p := p) (P := P) (R := refineContractK cap env) x ω5 μ5 (F - 88) RD n q n G
-      ⟨by omega, by omega⟩ (by rw [v1]; congr 1; omega) v5' v6' (by omega) (by omega) (by omega) (by omega) vO vO8 vO16 hG
+      ⟨by omega, by omega⟩ (by rw [v1]; congr 1; omega) v5' v6' (by omega) (by omega) (by omega) (by omega) (by rw [show F - 88 + 40 = F - 48 by omega]; exact vO)
+      (by rw [show F - 88 + 48 = F - 48 + 8 by omega]; exact vO8) (by rw [show F - 88 + 56 = F - 48 + 16 by omega]; exact vO16) hG
       (glob_word gv hg5) (fun a h1 h2 => Memory.readable_of_writable (glob_writable H5 ⟨by omega, by omega⟩))
       (fun a h1 h2 => hst5 a (by omega) (by omega))
   have pw46 : μ6.readN (ptr + 2 + 32 * n) 4 = w4 := by
@@ -409,7 +411,7 @@ theorem assign_elemF {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHo
       (n5.trans m5) n7 hG hv5 hv6 (by omega) (by omega) (by omega) (by omega) (by omega) hw4v hc2v
       (sH _ _ (by omega) (by omega) m0') (sH _ _ (by omega) (by omega) m8') (sH _ _ (by omega) (by omega) m16)
       (sK4 _ _ (by omega) (by omega) k24) (sK4 _ _ (by omega) (by omega) k32)
-      (by rw [nbuf, pw46, ew4])
+      (by rw [show F - 88 + 40 = F - 48 by omega, nbuf, pw46, ew4])
       (by rw [show F - 88 + 80 = F - 8 by omega]; exact sA _ _ (by omega) (by omega) f80)
       (by rw [show F - 88 + 72 = F - 16 by omega]; exact sA _ _ (by omega) (by omega) f72)
       (by rw [show F - 88 + 64 = F - 24 by omega]; exact sA _ _ (by omega) (by omega) f64)

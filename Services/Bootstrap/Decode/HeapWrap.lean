@@ -60,7 +60,7 @@ theorem alloc_wrap_refines_hdr {p : ByteArray} {P : Program} [HasCode p P] (x : 
   · rw [fget g3 6 (by decide) (by decide), e6, fget g1 6 (by decide) (by decide)]
   · have k1 : HKeepG μ μ1 (fun a => ∃ c ∈ chunks s', c.addr = a) := fun a ⟨ha1, ha2, _⟩ => by
       unfold Glob at ha1; exact
-      fr1 a (by omega) (Or.inl (by omega)) (Or.inr (by omega)) (Or.inr (by omega))
+      fr1 a (by omega) (Or.inl (by omega)) (by omega) (by omega)
     have k3 : HKeepG μ2 μ3 (fun a => ∃ c ∈ chunks s', c.addr = a) := fun a ⟨ha1, ha2, _⟩ => by
       unfold Glob at ha1; exact
       fr3 a (by omega) (by omega)
@@ -122,7 +122,7 @@ theorem alloc_wrap_refines_growK_hdr {p : ByteArray} {P : Program} [HasCode p P]
   · rw [fget g3 6 (by decide) (by decide), e6, fget g1 6 (by decide) (by decide)]
   · have k1 : HKeepG μ μ1 (fun a => ∃ c ∈ chunks s', c.addr = a) := fun a ⟨ha1, ha2, _⟩ => by
       unfold Glob at ha1; exact
-      fr1 a (by omega) (Or.inl (by omega)) (Or.inr (by omega)) (Or.inr (by omega))
+      fr1 a (by omega) (Or.inl (by omega)) (by omega) (by omega)
     have k3 : HKeepG μ2 μ3 (fun a => ∃ c ∈ chunks s', c.addr = a) := fun a ⟨ha1, ha2, _⟩ => by
       unfold Glob at ha1; exact
       fr3 a (by omega) (by omega)

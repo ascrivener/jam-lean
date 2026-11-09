@@ -195,8 +195,7 @@ An independent kernel, nanoda as vendored by
     octets, the function reads the hash into its frame (`read_big_sp`), copies it to O + 8 and puts
     the discriminant word 2^63 + 13 at O. The reader is advanced by 32. Memory changes only in
     A − 88 … A + 32, the reader and O … O + 40.
-  - *Scope:* the other hash-field variants (`Upgrade`, `Lookup`, `CreateService`, `Provide`) are not
-    covered yet.
+  - *Scope:* the other hash-field variants (`Lookup`, `CreateService`, `Provide`) are not covered yet.
 - **`Instruction::decode` for a hash and a `u64`.** `Decode.HashU64.solicit` and `forget`
   (`Services/Bootstrap/Decode/HashU64.lean`).
   - *Statement:* from 20626 with tag 6 (`Solicit { hash, len }`) and the reader holding at least 40
@@ -207,6 +206,9 @@ An independent kernel, nanoda as vendored by
     `U32Hash.eject` (`Services/Bootstrap/Decode/U32Hash.lean`) does the same for tag 4
     (`Eject { target: u32, code_hash }`, word 2^63 + 3): the hash at O + 8 and `target` at O + 40,
     the reader advanced by 36.
+    `Upgrade.upgrade` (`Services/Bootstrap/Decode/Upgrade.lean`) does the same for tag 1
+    (`Upgrade { code_hash, min_item_gas, min_memo_gas }`, word 2^63): the hash at O + 8 and the two
+    `u64`s at O + 40 and O + 48, the reader advanced by 48, through three reads.
   - *How:* a helper with its own 88-octet frame reads the hash (`read_big_sp`), moves it, reads the
     `u64` (`read_ok`) and stores the variant (`s1`, `s2`, `s3`).
 

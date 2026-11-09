@@ -217,15 +217,15 @@ theorem tagSeg {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
   unfold TagCase at he
   rcases he with ⟨rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl⟩
-  · exact tagSeg_18890 x ω μ sp v S hsp hv hS h1 h10 h11 hw
-  · exact tagSeg_19088 x ω μ sp v S hsp hv hS h1 h10 h11 hw
-  · exact tagSeg_18369 x ω μ sp v S hsp hv hS h1 h10 h11 hw
-  · exact tagSeg_18925 x ω μ sp v S hsp hv hS h1 h10 h11 hw
-  · exact tagSeg_18778 x ω μ sp v S hsp hv hS h1 h10 h11 hw
-  · exact tagSeg_19789 x ω μ sp v S hsp hv hS h1 h10 h11 hw
-  · exact tagSeg_19256 x ω μ sp v S hsp hv hS h1 h10 h11 hw
-  · exact tagSeg_19474 x ω μ sp v S hsp hv hS h1 h10 h11 hw
-  · exact tagSeg_18919 x ω μ sp v S hsp hv hS h1 h10 h11 hw
+  · exact tagSeg_18890 (p := p) (P := P) (R := R) x ω μ sp v S hsp hv hS h1 h10 h11 hw
+  · exact tagSeg_19088 (p := p) (P := P) (R := R) x ω μ sp v S hsp hv hS h1 h10 h11 hw
+  · exact tagSeg_18369 (p := p) (P := P) (R := R) x ω μ sp v S hsp hv hS h1 h10 h11 hw
+  · exact tagSeg_18925 (p := p) (P := P) (R := R) x ω μ sp v S hsp hv hS h1 h10 h11 hw
+  · exact tagSeg_18778 (p := p) (P := P) (R := R) x ω μ sp v S hsp hv hS h1 h10 h11 hw
+  · exact tagSeg_19789 (p := p) (P := P) (R := R) x ω μ sp v S hsp hv hS h1 h10 h11 hw
+  · exact tagSeg_19256 (p := p) (P := P) (R := R) x ω μ sp v S hsp hv hS h1 h10 h11 hw
+  · exact tagSeg_19474 (p := p) (P := P) (R := R) x ω μ sp v S hsp hv hS h1 h10 h11 hw
+  · exact tagSeg_18919 (p := p) (P := P) (R := R) x ω μ sp v S hsp hv hS h1 h10 h11 hw
 
 /-- A field piece's code: from e the arm loads the w-octet field at S + off (ω₆ = S), puts it at sp + 24
     and calls `Vec<u8>::extend_from_slice` for the w octets with return address r, the writer from ω₅. -/
@@ -243,19 +243,19 @@ theorem fieldSeg {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x :
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
   unfold FieldCase at hc
   rcases hc with ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩
-  · exact fieldSeg_18913 x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
-  · exact fieldSeg_19111 x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
-  · exact fieldSeg_19515 x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
-  · exact fieldSeg_18392 x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
-  · exact fieldSeg_18963 x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
-  · exact fieldSeg_18984 x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
-  · exact fieldSeg_18801 x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
-  · exact fieldSeg_18823 x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
-  · exact fieldSeg_18845 x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
-  · exact fieldSeg_19812 x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
-  · exact fieldSeg_19848 x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
-  · exact fieldSeg_19279 x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
-  · exact fieldSeg_19300 x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
+  · exact fieldSeg_18913 (p := p) (P := P) (R := R) x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
+  · exact fieldSeg_19111 (p := p) (P := P) (R := R) x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
+  · exact fieldSeg_19515 (p := p) (P := P) (R := R) x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
+  · exact fieldSeg_18392 (p := p) (P := P) (R := R) x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
+  · exact fieldSeg_18963 (p := p) (P := P) (R := R) x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
+  · exact fieldSeg_18984 (p := p) (P := P) (R := R) x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
+  · exact fieldSeg_18801 (p := p) (P := P) (R := R) x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
+  · exact fieldSeg_18823 (p := p) (P := P) (R := R) x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
+  · exact fieldSeg_18845 (p := p) (P := P) (R := R) x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
+  · exact fieldSeg_19812 (p := p) (P := P) (R := R) x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
+  · exact fieldSeg_19848 (p := p) (P := P) (R := R) x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
+  · exact fieldSeg_19279 (p := p) (P := P) (R := R) x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
+  · exact fieldSeg_19300 (p := p) (P := P) (R := R) x ω μ sp v S hsp hS hv h1 h5 h6 hr hw
 
 /-- A direct piece's code: from e the arm calls `Vec<u8>::extend_from_slice` for the n octets at S + off
     (ω₆ = S) with return address r, the writer from ω₅. -/
@@ -267,11 +267,11 @@ theorem directSeg {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x 
       ω'[7] = UInt64.ofNat v ∧ ω'[8] = UInt64.ofNat (S + off) ∧ ω'[9] = UInt64.ofNat n := by
   unfold DirectCase at hc
   rcases hc with ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl⟩
-  · exact directSeg_19500 x ω μ v S hS hv h5 h6
-  · exact directSeg_18413 x ω μ v S hS hv h5 h6
-  · exact directSeg_18948 x ω μ v S hS hv h5 h6
-  · exact directSeg_19833 x ω μ v S hS hv h5 h6
-  · exact directSeg_18867 x ω μ v S hS hv h5 h6
+  · exact directSeg_19500 (p := p) (P := P) (R := R) x ω μ v S hS hv h5 h6
+  · exact directSeg_18413 (p := p) (P := P) (R := R) x ω μ v S hS hv h5 h6
+  · exact directSeg_18948 (p := p) (P := P) (R := R) x ω μ v S hS hv h5 h6
+  · exact directSeg_19833 (p := p) (P := P) (R := R) x ω μ v S hS hv h5 h6
+  · exact directSeg_18867 (p := p) (P := P) (R := R) x ω μ v S hS hv h5 h6
 
 /-- **A tag piece**: from `St pre` at the arm, `St (pre ++ [tag])` at the call's return e', with the
     writer in ω₅ and the value in ω₆. -/
@@ -397,9 +397,9 @@ theorem zombify {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (e : 
     tab hrt
   rw [show arm 3 = 18890 from rfl] at run1
   obtain ⟨ω2, μ2, run2, st2, b5, b6⟩ := pieceTag (p := p) (P := P) (R := R) x ω1 μ1 μ L st1 18890 3 792 18913
-    (by unfold TagCase; omega) jte_395 bs_18913 a10 a11 (by simp [hN])
+    (by unfold TagCase; decide) jte_395 bs_18913 a10 a11 (by simp [hN])
   obtain ⟨ω3, μ3, run3, st3, _, _⟩ := pieceField (p := p) (P := P) (R := R) x ω2 μ2 μ L st2 18913 916 20329 8 4
-    (by unfold FieldCase; omega) jte_457 bs_20329 b5 b6 (by simp [hN])
+    (by unfold FieldCase; decide) jte_457 bs_20329 b5 b6 (by simp [hN])
   rw [hE, show [] ++ [UInt8.ofNat 3] ++ e = 3 :: e from rfl] at st3
   exact close L 20329 _ (by decide) (by simp [hN]) (run1.trans (run2.trans run3)) st3
 
@@ -416,9 +416,9 @@ theorem exported {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (e :
     tab hrt
   rw [show arm 20 = 19088 from rfl] at run1
   obtain ⟨ω2, μ2, run2, st2, b5, b6⟩ := pieceTag (p := p) (P := P) (R := R) x ω1 μ1 μ L st1 19088 20 816 19111
-    (by unfold TagCase; omega) jte_407 bs_19111 a10 a11 (by simp [hN])
+    (by unfold TagCase; decide) jte_407 bs_19111 a10 a11 (by simp [hN])
   obtain ⟨ω3, μ3, run3, st3, _, _⟩ := pieceField (p := p) (P := P) (R := R) x ω2 μ2 μ L st2 19111 916 20329 8 8
-    (by unfold FieldCase; omega) jte_457 bs_20329 b5 b6 (by simp [hN])
+    (by unfold FieldCase; decide) jte_457 bs_20329 b5 b6 (by simp [hN])
   rw [hE, show [] ++ [UInt8.ofNat 20] ++ e = 20 :: e from rfl] at st3
   exact close L 20329 _ (by decide) (by simp [hN]) (run1.trans (run2.trans run3)) st3
 

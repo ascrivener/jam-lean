@@ -30,11 +30,11 @@ theorem eject {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (d h : 
     tab hrt
   rw [show arm 4 = 18369 from rfl] at run1
   obtain ⟨ω2, μ2, run2, st2, b25, b26⟩ := pieceTag (p := p) (P := P) (R := R) x ω1 μ1 μ L st1 18369 4 746 18392
-    (by unfold TagCase; omega) jte_372 bs_18392 a10 a11 (by simp [hd, hh])
+    (by unfold TagCase; decide) jte_372 bs_18392 a10 a11 (by simp [hd, hh])
   obtain ⟨ω3, μ3, run3, st3, b35, b36⟩ := pieceField (p := p) (P := P) (R := R) x ω2 μ2 μ L st2 18392 748 18413 40 4
-    (by unfold FieldCase; omega) jte_373 bs_18413 b25 b26 (by simp [hd, hh])
+    (by unfold FieldCase; decide) jte_373 bs_18413 b25 b26 (by simp [hd, hh])
   obtain ⟨ω4, μ4, run4, st4, b45, b46⟩ := pieceDirect (p := p) (P := P) (R := R) x ω3 μ3 μ L st3 18413 916 20329 8 32
-    (by unfold DirectCase; omega) jte_457 bs_20329 b35 b36 (by simp [hd, hh])
+    (by unfold DirectCase; decide) jte_457 bs_20329 b35 b36 (by simp [hd, hh])
   rw [c0, c1] at st4
   exact close L 20329 _ (by decide) (by simp [hd, hh]) (run1.trans (run2.trans (run3.trans (run4))))
     (St.cast (by simp only [List.nil_append, List.singleton_append, List.cons_append, List.append_assoc]; rfl) st4)
@@ -53,11 +53,11 @@ theorem solicit {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (h z 
     tab hrt
   rw [show arm 6 = 19474 from rfl] at run1
   obtain ⟨ω2, μ2, run2, st2, b25, b26⟩ := pieceTag (p := p) (P := P) (R := R) x ω1 μ1 μ L st1 19474 6 850 19500
-    (by unfold TagCase; omega) jte_424 bs_19500 a10 a11 (by simp [hh, hz])
+    (by unfold TagCase; decide) jte_424 bs_19500 a10 a11 (by simp [hh, hz])
   obtain ⟨ω3, μ3, run3, st3, b35, b36⟩ := pieceDirect (p := p) (P := P) (R := R) x ω2 μ2 μ L st2 19500 852 19515 8 32
-    (by unfold DirectCase; omega) jte_425 bs_19515 b25 b26 (by simp [hh, hz])
+    (by unfold DirectCase; decide) jte_425 bs_19515 b25 b26 (by simp [hh, hz])
   obtain ⟨ω4, μ4, run4, st4, b45, b46⟩ := pieceField (p := p) (P := P) (R := R) x ω3 μ3 μ L st3 19515 916 20329 40 8
-    (by unfold FieldCase; omega) jte_457 bs_20329 b35 b36 (by simp [hh, hz])
+    (by unfold FieldCase; decide) jte_457 bs_20329 b35 b36 (by simp [hh, hz])
   rw [c0, c1] at st4
   exact close L 20329 _ (by decide) (by simp [hh, hz]) (run1.trans (run2.trans (run3.trans (run4))))
     (St.cast (by simp only [List.nil_append, List.singleton_append, List.cons_append, List.append_assoc]; rfl) st4)
@@ -75,11 +75,11 @@ theorem forget {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (h z :
     tab hrt
   rw [show arm 7 = 18919 from rfl] at run1
   obtain ⟨ω2, μ2, run2, st2, b25, b26⟩ := pieceTag (p := p) (P := P) (R := R) x ω1 μ1 μ L st1 18919 7 850 19500
-    (by unfold TagCase; omega) jte_424 bs_19500 a10 a11 (by simp [hh, hz])
+    (by unfold TagCase; decide) jte_424 bs_19500 a10 a11 (by simp [hh, hz])
   obtain ⟨ω3, μ3, run3, st3, b35, b36⟩ := pieceDirect (p := p) (P := P) (R := R) x ω2 μ2 μ L st2 19500 852 19515 8 32
-    (by unfold DirectCase; omega) jte_425 bs_19515 b25 b26 (by simp [hh, hz])
+    (by unfold DirectCase; decide) jte_425 bs_19515 b25 b26 (by simp [hh, hz])
   obtain ⟨ω4, μ4, run4, st4, b45, b46⟩ := pieceField (p := p) (P := P) (R := R) x ω3 μ3 μ L st3 19515 916 20329 40 8
-    (by unfold FieldCase; omega) jte_457 bs_20329 b35 b36 (by simp [hh, hz])
+    (by unfold FieldCase; decide) jte_457 bs_20329 b35 b36 (by simp [hh, hz])
   rw [c0, c1] at st4
   exact close L 20329 _ (by decide) (by simp [hh, hz]) (run1.trans (run2.trans (run3.trans (run4))))
     (St.cast (by simp only [List.nil_append, List.singleton_append, List.cons_append, List.append_assoc]; rfl) st4)
@@ -99,13 +99,13 @@ theorem upgrade {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (c g 
     tab hrt
   rw [show arm 1 = 18925 from rfl] at run1
   obtain ⟨ω2, μ2, run2, st2, b25, b26⟩ := pieceTag (p := p) (P := P) (R := R) x ω1 μ1 μ L st1 18925 1 798 18948
-    (by unfold TagCase; omega) jte_398 bs_18948 a10 a11 (by simp [hc, hg, hm])
+    (by unfold TagCase; decide) jte_398 bs_18948 a10 a11 (by simp [hc, hg, hm])
   obtain ⟨ω3, μ3, run3, st3, b35, b36⟩ := pieceDirect (p := p) (P := P) (R := R) x ω2 μ2 μ L st2 18948 800 18963 8 32
-    (by unfold DirectCase; omega) jte_399 bs_18963 b25 b26 (by simp [hc, hg, hm])
+    (by unfold DirectCase; decide) jte_399 bs_18963 b25 b26 (by simp [hc, hg, hm])
   obtain ⟨ω4, μ4, run4, st4, b45, b46⟩ := pieceField (p := p) (P := P) (R := R) x ω3 μ3 μ L st3 18963 802 18984 40 8
-    (by unfold FieldCase; omega) jte_400 bs_18984 b35 b36 (by simp [hc, hg, hm])
+    (by unfold FieldCase; decide) jte_400 bs_18984 b35 b36 (by simp [hc, hg, hm])
   obtain ⟨ω5, μ5, run5, st5, b55, b56⟩ := pieceField (p := p) (P := P) (R := R) x ω4 μ4 μ L st4 18984 916 20329 48 8
-    (by unfold FieldCase; omega) jte_457 bs_20329 b45 b46 (by simp [hc, hg, hm])
+    (by unfold FieldCase; decide) jte_457 bs_20329 b45 b46 (by simp [hc, hg, hm])
   rw [c0, c1, c2] at st5
   exact close L 20329 _ (by decide) (by simp [hc, hg, hm]) (run1.trans (run2.trans (run3.trans (run4.trans (run5)))))
     (St.cast (by simp only [List.nil_append, List.singleton_append, List.cons_append, List.append_assoc]; rfl) st5)
@@ -125,13 +125,13 @@ theorem lookup {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (s h :
     tab hrt
   rw [show arm 8 = 19789 from rfl] at run1
   obtain ⟨ω2, μ2, run2, st2, b25, b26⟩ := pieceTag (p := p) (P := P) (R := R) x ω1 μ1 μ L st1 19789 8 876 19812
-    (by unfold TagCase; omega) jte_437 bs_19812 a10 a11 (by simp [hs, hh])
+    (by unfold TagCase; decide) jte_437 bs_19812 a10 a11 (by simp [hs, hh])
   obtain ⟨ω3, μ3, run3, st3, b35, b36⟩ := pieceField (p := p) (P := P) (R := R) x ω2 μ2 μ L st2 19812 878 19833 8 4
-    (by unfold FieldCase; omega) jte_438 bs_19833 b25 b26 (by simp [hs, hh])
+    (by unfold FieldCase; decide) jte_438 bs_19833 b25 b26 (by simp [hs, hh])
   obtain ⟨ω4, μ4, run4, st4, b45, b46⟩ := pieceDirect (p := p) (P := P) (R := R) x ω3 μ3 μ L st3 19833 880 19848 12 32
-    (by unfold DirectCase; omega) jte_439 bs_19848 b35 b36 (by simp [hs, hh])
+    (by unfold DirectCase; decide) jte_439 bs_19848 b35 b36 (by simp [hs, hh])
   obtain ⟨ω5, μ5, run5, st5, b55, b56⟩ := pieceField (p := p) (P := P) (R := R) x ω4 μ4 μ L st4 19848 916 20329 44 1
-    (by unfold FieldCase; omega) jte_457 bs_20329 b45 b46 (by simp [hs, hh])
+    (by unfold FieldCase; decide) jte_457 bs_20329 b45 b46 (by simp [hs, hh])
   rw [c0, c1, c2] at st5
   exact close L 20329 _ (by decide) (by simp [hs, hh]) (run1.trans (run2.trans (run3.trans (run4.trans (run5)))))
     (St.cast (by simp only [List.nil_append, List.singleton_append, List.cons_append, List.append_assoc]; rfl) st5)
@@ -153,15 +153,15 @@ theorem transfer {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (d a
     tab hrt
   rw [show arm 2 = 18778 from rfl] at run1
   obtain ⟨ω2, μ2, run2, st2, b25, b26⟩ := pieceTag (p := p) (P := P) (R := R) x ω1 μ1 μ L st1 18778 2 780 18801
-    (by unfold TagCase; omega) jte_389 bs_18801 a10 a11 (by simp [hd, ha, hg, hm])
+    (by unfold TagCase; decide) jte_389 bs_18801 a10 a11 (by simp [hd, ha, hg, hm])
   obtain ⟨ω3, μ3, run3, st3, b35, b36⟩ := pieceField (p := p) (P := P) (R := R) x ω2 μ2 μ L st2 18801 782 18823 152 4
-    (by unfold FieldCase; omega) jte_390 bs_18823 b25 b26 (by simp [hd, ha, hg, hm])
+    (by unfold FieldCase; decide) jte_390 bs_18823 b25 b26 (by simp [hd, ha, hg, hm])
   obtain ⟨ω4, μ4, run4, st4, b45, b46⟩ := pieceField (p := p) (P := P) (R := R) x ω3 μ3 μ L st3 18823 784 18845 136 8
-    (by unfold FieldCase; omega) jte_391 bs_18845 b35 b36 (by simp [hd, ha, hg, hm])
+    (by unfold FieldCase; decide) jte_391 bs_18845 b35 b36 (by simp [hd, ha, hg, hm])
   obtain ⟨ω5, μ5, run5, st5, b55, b56⟩ := pieceField (p := p) (P := P) (R := R) x ω4 μ4 μ L st4 18845 786 18867 144 8
-    (by unfold FieldCase; omega) jte_392 bs_18867 b45 b46 (by simp [hd, ha, hg, hm])
+    (by unfold FieldCase; decide) jte_392 bs_18867 b45 b46 (by simp [hd, ha, hg, hm])
   obtain ⟨ω6, μ6, run6, st6, b65, b66⟩ := pieceDirect (p := p) (P := P) (R := R) x ω5 μ5 μ L st5 18867 916 20329 8 128
-    (by unfold DirectCase; omega) jte_457 bs_20329 b55 b56 (by simp [hd, ha, hg, hm])
+    (by unfold DirectCase; decide) jte_457 bs_20329 b55 b56 (by simp [hd, ha, hg, hm])
   rw [c0, c1, c2, c3] at st6
   exact close L 20329 _ (by decide) (by simp [hd, ha, hg, hm]) (run1.trans (run2.trans (run3.trans (run4.trans (run5.trans (run6))))))
     (St.cast (by simp only [List.nil_append, List.singleton_append, List.cons_append, List.append_assoc]; rfl) st6)
@@ -180,11 +180,11 @@ theorem random_storage_refine {p : ByteArray} {P : Program} [HasCode p P] [HasCo
     tab hrt
   rw [show arm 21 = 19256 from rfl] at run1
   obtain ⟨ω2, μ2, run2, st2, b25, b26⟩ := pieceTag (p := p) (P := P) (R := R) x ω1 μ1 μ L st1 19256 21 830 19279
-    (by unfold TagCase; omega) jte_414 bs_19279 a10 a11 (by simp [hg])
+    (by unfold TagCase; decide) jte_414 bs_19279 a10 a11 (by simp [hg])
   obtain ⟨ω3, μ3, run3, st3, b35, b36⟩ := pieceField (p := p) (P := P) (R := R) x ω2 μ2 μ L st2 19279 832 19300 8 8
-    (by unfold FieldCase; omega) jte_415 bs_19300 b25 b26 (by simp [hg])
+    (by unfold FieldCase; decide) jte_415 bs_19300 b25 b26 (by simp [hg])
   obtain ⟨ω4, μ4, run4, st4, b45, b46⟩ := pieceField (p := p) (P := P) (R := R) x ω3 μ3 μ L st3 19300 916 20329 16 1
-    (by unfold FieldCase; omega) jte_457 bs_20329 b35 b36 (by simp [hg])
+    (by unfold FieldCase; decide) jte_457 bs_20329 b35 b36 (by simp [hg])
   rw [c0, c1] at st4
   exact close L 20329 _ (by decide) (by simp [hg]) (run1.trans (run2.trans (run3.trans (run4))))
     (St.cast (by simp only [List.nil_append, List.singleton_append, List.cons_append, List.append_assoc]; rfl) st4)

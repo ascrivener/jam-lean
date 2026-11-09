@@ -33,6 +33,8 @@ Gaps, where the paper leaves behaviour undefined:
 | 25 | §12.4 | No error is named for an invalid E_P, and no order is given between the ordering check and the providable check. |
 | 26 | Appendix C | No encoding of Booleans {⊤, ⊥} is defined, though 𝔼_D's judgments and faults contain them; 0/1 is the evident reading and the vectors use it. |
 | 29 | §10.2 | The fault condition r ∈ ψ_B' ⇔ r ∉ ψ_G' ⇔ v can be read as a chain or as ((… ⇔ …) ⇔ v); the second accepts a ⊤ fault on a good report. No errors are named and no order is given between the conditions. |
+| 30 | §11.2 | No errors are named and no order is given between the assurance conditions. |
+| 31 | §11.3–§11.4 | R and P divide by 3 (\|**c**\|/3, ⌊i/3⌋) without saying what happens when \|κ'\| is not a multiple of 3; M* uses τ' − 𝖱, which is negative when τ' < 𝖱. No errors are named and no order is given between the guarantee conditions; a segment-root lookup key outside the extrinsic and β fails two conditions at once. |
 
 ## Paper and vectors
 
@@ -54,7 +56,8 @@ These cases have no test vector, so the readings above are untested:
 | 3 | A program that maps a page below 2^16. |
 | 4 | A three-register instruction with ζ_{ı+2} ≥ 16. |
 | 24 | Core statistics π_C, and the refinement and accumulation parts of π_S, in the statistics and preimages suites. They are covered by the reports and accumulate suites. |
-| 29 | Ed25519 verification is a parameter of the model, so the disputes vectors' signatures are not verified; the runner rejects all of them exactly when a vector expects `bad_signature`. |
+| 29 | Ed25519 verification is a parameter of the model, so the disputes, assurances and reports vectors' signatures are not verified; the runner rejects all of them exactly when a vector expects `bad_signature`. |
+| 31 | The lookup-anchor conditions of §11.4.1 (x_t ≥ H_T − 𝖫, and h, h' in the ancestor set A): the reports vectors carry no ancestor set and no case for `lookup_anchor_not_recent`. |
 
 ## Not for upstream
 

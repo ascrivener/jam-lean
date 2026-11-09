@@ -182,6 +182,9 @@ jobs:
       - name: Assurances vectors (tiny and full)
         run: lake build assurancestest
 
+      - name: Reports vectors (tiny and full)
+        run: lake build reportstest
+
       - name: Save .lake
         if: always()
         uses: actions/cache/save@v4

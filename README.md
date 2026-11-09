@@ -69,6 +69,7 @@ call `pc`) live in `Tests/`, not in the model.
 | Preimage STF (§12.4) and its service statistics (§13.2 provision counts) vs. `stf/preimages` (`lake build preimagestest`) | **8 / 8** tiny, **8 / 8** full |
 | Disputes STF (§10: verdicts, culprits, faults, ψ', ρ^‡ and H_O) vs. `stf/disputes` (`lake build disputestest`; Ed25519 verification is a parameter, note 29) | **29 / 29** tiny, **31 / 31** full |
 | Assurances STF (§11.2: the available reports **R** and ρ after assurances) vs. `stf/assurances` (`lake build assurancestest`; signatures as in note 29) | **11 / 11** tiny, **11 / 11** full |
+| Reports STF (§11.3–§11.5: guarantor assignments M and M*, guarantee validity, ρ', G and the reported packages) and core and service statistics (§13.2) vs. `stf/reports` (`lake build reportstest`; signatures as in note 29) | **44 / 44** tiny, **48 / 48** full |
 
 ## Building and running
 
@@ -82,7 +83,7 @@ scripts/check-tables.sh               # regenerate PVM/Tables.lean from the pinn
 scripts/fetch-jam-vectors.sh          # GP v0.8.0 JAM vectors into vendor/jam-test-vectors
 lake build historytest authtest       # the recent-history and authorization STF vectors (tiny and full)
 lake build statstest preimagestest    # the statistics and preimage STF vectors (tiny and full)
-lake build disputestest assurancestest  # the disputes and assurances STF vectors (tiny and full)
+lake build disputestest assurancestest reportstest  # disputes, assurances and reports STF vectors
 ```
 
 `pvmtest` and `gascheck` are Lake targets that build an executable and run it; a failing vector
@@ -720,6 +721,34 @@ noted here and in a comment at the definition.
     report is in **R**, compared by encoding. A stale report that is still assigned may be
     assured and made available; the paper allows it (ρ^‡[c] ≠ ∅ is all a set bit needs) and the
     vectors agree (`assurances_for_stale_report-1`).
+
+31. **Reports (guarantees)** (§11.3–§11.5).
+    * *Inputs outside the state.* Two inputs are arguments of `JAM.guarantees`: the pipeline's
+      package set ⋃ K(β_H's **p**) ∪ ⋃ ξ ∪ **q** ∪ **a** (computed by `knownPackages`; the vectors
+      give it as `known_packages`), and the ancestor-set condition on lookup anchors, which needs
+      the last 𝖫 headers. The vectors carry no ancestor set, so the test takes the condition to
+      hold. The vectors' `recent_blocks` is taken as β_H^†.
+    * *Errors and their order.* The paper names no errors and gives no order between the
+      conditions. We use the vectors' names and check: the extrinsic's core order; then per
+      guarantee its credential and timeslot, the signers (index, assignment, active core, key,
+      signature), the report's shape (1 ≤ |r_d| ≤ 𝖨, dependencies ≤ 𝖩, size ≤ 𝖶_R), the erasure
+      shards, the core free, the authorizer, the services and gas; then duplicates within the
+      extrinsic; then per report its anchor, lookup anchor, novelty, segment-root lookup,
+      prerequisites and code hashes. The segment-root lookup is checked before the prerequisites:
+      a lookup key in neither the extrinsic nor β also fails the dependency condition, and the
+      vectors call it an invalid lookup (`segment_root_lookup_invalid-1`).
+    * *Split conditions.* The paper writes **c**_v = r_c < |κ'|/3 as one condition; we report
+      `wrong_assignment` and `bad_core_index` separately. The anchor condition asks for one
+      y ∈ β_H^† matching hash, state root, super-peak and slot; a context whose hash matches no
+      entry is `anchor_not_recent`, otherwise the first field that matches no such entry is named.
+    * *Banned keys.* Φ (eq. `blacklistfilter`) replaces an offender's key with the null key, whose
+      signatures the paper rejects like any other bad signature. We report a signer with the null
+      key as `banned_validator` before checking its signature.
+    * *Guarantor assignments.* R takes x mod |**c**|/3 and P uses ⌊i/3⌋; when |κ'| is not a
+      multiple of 3, |**c**|/3 is read as ⌊|**c**|/3⌋. M* reads κ' or λ' from the epoch of τ' − 𝖱,
+      taken as 0 when τ' < 𝖱. The full-chain vectors with a shrunk set agree.
+    * The reporters G and the incoming reports' core and service statistics (π_C', π_S' of
+      §13.2) are checked too, with no available reports, assurances, preimages or accumulation.
 
 ## Caveats
 

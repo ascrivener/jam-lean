@@ -22,6 +22,61 @@ set_option maxRecDepth 100000
 
 variable {X : Type} {R : HostRel X}
 
+/-- **40852 … 41016**, no current block: `finish_grow(out = ω₇, cap = ω₈ = 0, ptr = ω₉,
+    new_cap = ω₁₀, align = ω₁₁, elem = ω₁₂)` with size = new_cap · elem > 0 within 2⁶³ − align and
+    no overflow. The 40-octet frame (ω₀, ω₅, ω₆ saved at sp − 8, − 16, − 24), align and `out` stored
+    at sp − 40 and sp − 32, ω₆ = size, and the call of the alloc path (return address 1994). -/
+theorem fg_entry_new {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
+    (μ : Memory) (sp out ncap al el : Nat) (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat out)
+    (h8 : ω[8] = UInt64.ofNat 0) (h10 : ω[10] = UInt64.ofNat ncap) (h11 : ω[11] = UInt64.ofNat al)
+    (h12 : ω[12] = UInt64.ofNat el)
+    (hsz : 0 < ncap * el) (hov : ncap * el + al ≤ 9223372036854775808) (hal : al < 9223372036854775808)
+    (hout : out < 18446744073709551616)
+    (hsp : 65536 + 40 ≤ sp ∧ sp < 4294967296)
+    (hwf : ∀ a, sp - 40 ≤ a → a < sp → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 40852 ω μ x 41016 ω' μ' x 30 ∧
+      ω'[1] = UInt64.ofNat (sp - 40) ∧ ω'[6] = UInt64.ofNat (ncap * el) ∧ ω'[0] = UInt64.ofNat 1994 ∧
+      rdN μ' (sp - 40) 8 = al ∧ rdN μ' (sp - 32) 8 = out ∧
+      rdN μ' (sp - 24) 8 = ω[6].toNat ∧ rdN μ' (sp - 16) 8 = ω[5].toNat ∧ rdN μ' (sp - 8) 8 = ω[0].toNat ∧
+      (∀ a, a < 4294967296 → (a < sp - 40 ∨ sp ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have hr : ∀ a, sp - 40 ≤ a → a < sp → μ.readable a = true :=
+    fun a h1 h2 => Memory.readable_of_writable (hwf a h1 h2)
+  have hn64 : ncap * el < 18446744073709551616 := by omega
+  have hel : el < 18446744073709551616 := by
+    rcases Nat.eq_zero_or_pos ncap with h | h
+    · simp [h] at hsz
+    · exact Nat.lt_of_le_of_lt (Nat.le_mul_of_pos_left el h) hn64
+  have hnc : ncap < 18446744073709551616 := by
+    rcases Nat.eq_zero_or_pos el with h | h
+    · simp [h] at hsz
+    · exact Nat.lt_of_le_of_lt (Nat.le_mul_of_pos_right ncap h) hn64
+  have hmu : el % 18446744073709551616 * (ncap % 18446744073709551616) / 18446744073709551616 %
+      18446744073709551616 = 0 := by
+    rw [Nat.mod_eq_of_lt hel, Nat.mod_eq_of_lt hnc, Nat.mul_comm, Nat.div_eq_of_lt hn64]
+  have hml : el % 18446744073709551616 * (ncap % 18446744073709551616) % 18446744073709551616 = ncap * el := by
+    rw [Nat.mod_eq_of_lt hel, Nat.mod_eq_of_lt hnc, Nat.mul_comm, Nat.mod_eq_of_lt hn64]
+  have hmu2 : el * ncap / 18446744073709551616 % 18446744073709551616 = 0 := by
+    rw [Nat.mul_comm, Nat.div_eq_of_lt hn64]
+  have hml2 : el * ncap % 18446744073709551616 = ncap * el := by rw [Nat.mul_comm, Nat.mod_eq_of_lt hn64]
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?run, ?post⟩
+  case run => pvm_go [h1, h7, h8, h10, h11, h12, hwf, hr, hmu, hml, hmu2, hml2, Nat.mod_eq_of_lt hal, Nat.mod_eq_of_lt hout,
+    rdN_writeN_disjoint, ↓rdN_fold, ↓loadI_fold]
+  case post =>
+    refine ⟨by reg_val, ?_, by reg_val, ?_, ?_, ?_, ?_, ?_, fun a ha h1 => ?_, fun a => ?_, fun a => ?_⟩
+    · reg_val
+    all_goals try simp only [show sp - 40 + 32 = sp - 8 from by omega, show sp - 40 + 24 = sp - 16 from by omega,
+      show sp - 40 + 16 = sp - 24 from by omega, show sp - 40 + 8 = sp - 32 from by omega,
+      show sp - 40 + 0 = sp - 40 from by omega]
+    all_goals first
+      | (rd_simp []; done)
+      | rd_simp []
+    all_goals first
+      | rfl
+      | exact Nat.mod_eq_of_lt (by omega)
+      | exact Nat.mod_eq_of_lt (UInt64.toNat_lt _)
+
 /-- **41016 … 41177**: the layout (align at sp, `out` at sp + 8, size in ω₆) within 2³⁷ − 32, the
     allocator's lock taken, and the call of `alloc_impl`: ω₇ = 196792, ω₈ = ⌈align/32⌉,
     ω₉ = ⌈size/32⌉, ω₁₀ = 0, return address 1996. -/

@@ -78,7 +78,7 @@ def arm (t : Nat) : Nat :=
     (1 ≤ t ≤ 24) and the writer at v (ω₈), the function opens its frame at F − 56, saves ω₀, ω₅, ω₆ and
     v there and reaches the arm `arm t`, with ω₁ = F − 56, ω₁₀ = v and ω₁₁ = S. -/
 theorem dispatch {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X) (ω : Regs) (μ : Memory)
-    (F S v ret r5 r6 t : Nat) (ht : 1 ≤ t ∧ t < 25) (hF : 65536 + 56 ≤ F ∧ F < 4294967296)
+    (F S v ret r5 r6 t : Nat) (ht : 1 ≤ t ∧ t < 25) (hF : 67476 + 56 ≤ F ∧ F < 4294967296)
     (h0 : ω[0] = UInt64.ofNat ret) (h1 : ω[1] = UInt64.ofNat F) (h5 : ω[5] = UInt64.ofNat r5)
     (h6 : ω[6] = UInt64.ofNat r6) (h7 : ω[7] = UInt64.ofNat S) (h8 : ω[8] = UInt64.ofNat v)
     (hret : ret < 18446744073709551616) (hr5 : r5 < 18446744073709551616) (hr6 : r6 < 18446744073709551616)
@@ -102,7 +102,6 @@ theorem dispatch {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x :
     rw [table_entry tab t (by omega)]
     exact table_val t (by omega)
   have hsx := sxw_table t (by omega)
-  have hja := jaddr t (by omega)
   have hr : ∀ a, F - 56 ≤ a → a < F → μ.readable a = true :=
     fun a h1 h2 => Memory.readable_of_writable (hw a h1 h2)
   rw [show ω = regsNF ω [] from rfl]
@@ -111,11 +110,11 @@ theorem dispatch {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x :
       t = 21 ∨ t = 22 ∨ t = 23 ∨ t = 24 := by omega
   rcases this with h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h | h <;>
   subst h <;>
-  · simp only [ents, List.getD_cons_succ, List.getD_cons_zero, Nat.reduceMul, Nat.reduceAdd] at rt hrt' hsx hja
+  · simp only [ents, List.getD_cons_succ, List.getD_cons_zero, Nat.reduceMul, Nat.reduceAdd] at rt hrt' hsx
     simp only [arm, List.getD_cons_succ, List.getD_cons_zero]
     refine ⟨?_, ?_, ?_, ?_⟩
     rotate_left 2
-    · pvm_go [h0, h1, h5, h6, h7, h8, hF, hS, hSF, hw, hr, hrS, rD, rt, hrt', hsx, hja, rdN_writeN_disjoint,
+    · pvm_go [h0, h1, h5, h6, h7, h8, hF, hS, hSF, hw, hr, hrS, rD, rt, hrt', hsx, rdN_writeN_disjoint,
         ↓rdN_fold, ↓loadI_fold]
     · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
       all_goals try simp only [show F - 56 + 48 = F - 8 by omega, show F - 56 + 40 = F - 16 by omega,
@@ -176,7 +175,7 @@ theorem tail {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X) 
 def EncOk (p : ByteArray) (P : Program) (enc : List UInt8) (Rep : List UInt8 → Prop) : Prop :=
   ∀ (X : Type) (R : HostRel X) (x : X) (ω : Regs) (μ : Memory) (F S v cap ptr len ret t : Nat),
     ω[0] = UInt64.ofNat ret → ω[1] = UInt64.ofNat F → ω[7] = UInt64.ofNat S → ω[8] = UInt64.ofNat v →
-    65536 + 256 ≤ F → F < 4294967296 → F % 8 = 0 →
+    67476 + 256 ≤ F → F < 4294967296 → F % 8 = 0 →
     Rep (μ.readN S 232) → 65536 ≤ S → S + 232 ≤ 4294967296 → (S + 232 ≤ F - 136 ∨ F ≤ S) →
     μ.readN v 8 = Num.encodeLE 8 cap → μ.readN (v + 8) 8 = Num.encodeLE 8 ptr →
     μ.readN (v + 16) 8 = Num.encodeLE 8 len → len + enc.length ≤ cap → cap < 18446744073709551616 →

@@ -264,6 +264,25 @@ An independent kernel, nanoda as vendored by
     element reader at 8 or 3100 (`vec_elems_empty`, `vec_pairs_empty` for n = 0).
   - *Scope:* non-empty vectors allocate, and are not covered yet (see the previous item's scope).
 
+- **`Instruction::decode` of the other `Vec`/`Option` variants, in their cases without allocation.**
+  `Decode.Provide.provide_hash`, `Decode.RandomStorage.random_storage_err`, `Decode.Bless.bless_empty`
+  and `Decode.Designate.designate_empty` (`Services/Bootstrap/Decode/`).
+  - *Statement:* from 20626, each returns the variant in its slot O with the reader advanced past
+    its encoding:
+    - `Provide { service, preimage: Hash(hash) }` (tag 17): the discriminant word 2^63 + 16 at O,
+      the preimage's tag 0 at O + 8, `hash` at O + 9 and `service` at O + 48 (37 octets read);
+    - `RandomStorageAccumulate(Err(()))` (tag 22): 2^63 + 21 at O and the niche word 2^64 − 1 at
+      O + 8 (1 octet read);
+    - `Bless` with no always-accumulate entries (tag 11): 2^63 + 10 at O, the empty `Vec`
+      `{cap 0, ptr 8, len 0}` at O + 8 and the four `u32`s at O + 32 … O + 44 (17 octets read);
+    - `Designate` with no keys (tag 13): 2^63 + 12 at O and `{cap 0, ptr 1, len 0}` at O + 8 (1 octet
+      read). The bound check against 3·𝖢 (𝖢 read from 196616) passes for n = 0 whatever 𝖢 is.
+
+    Memory changes only in the callees' frames below A (and the result slot at A for `Designate`),
+    the reader and the slot.
+  - *Scope:* `Provide` with `Inline(bytes)`, `RandomStorageAccumulate(Ok(keys))`, and non-empty
+    `Bless` and `Designate` allocate, and are not covered yet.
+
 ### picoalloc: the model (`Services/Picoalloc/`)
 
 `Services/Picoalloc/Model.lean` is picoalloc 5.2, the SDK's heap allocator, written as Lean

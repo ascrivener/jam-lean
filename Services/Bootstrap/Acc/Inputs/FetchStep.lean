@@ -35,4 +35,36 @@ theorem fetch14_step (cap : Nat) (hcap : cap < 2 ^ 64) (env : AccEnv) (ω : Regs
   simp only [inputsEnc] at hw ⊢
   simp [hw]
 
+/-- `rangeWritable` from writability octet by octet (writability is per page). -/
+theorem rangeWritable_of {μ : Memory} {o l : Nat} (hol : o + l ≤ 2 ^ 32)
+    (h : ∀ a, o ≤ a → a < o + l → μ.writable a = true) : μ.rangeWritable o l = true := by
+  unfold Memory.rangeWritable
+  by_cases hl : l = 0
+  · simp [hl]
+  simp only [Bool.or_eq_true, beq_iff_eq, Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true,
+    List.mem_range]
+  right
+  refine ⟨hol, fun k hk => ?_⟩
+  have hps : pageSize = 4096 := rfl
+  rw [hps] at hk ⊢
+  -- the page (o / 4096 + k) holds an octet of the range: its start, or o itself
+  have ha := h (max o ((o / 4096 + k) * 4096)) (by omega) (by
+    have := Nat.div_mul_le_self o 4096
+    have := Nat.lt_div_mul_add (a := o + l - 1) (b := 4096) (by decide)
+    have : (o + l - 1) / 4096 * 4096 ≤ o + l - 1 := Nat.div_mul_le_self _ _
+    omega)
+  unfold Memory.writable at ha ⊢
+  rw [hps] at ha
+  have e : max o ((o / 4096 + k) * 4096) / 4096 = (o / 4096 + k) * 4096 / 4096 := by
+    rw [Nat.mul_div_cancel _ (by decide)]
+    by_cases hk0 : k = 0
+    · subst hk0; simp only [Nat.add_zero]
+      rw [Nat.max_def]; split
+      · rw [Nat.mul_div_cancel _ (by decide)]
+      · rfl
+    · rw [Nat.max_eq_right (by have := Nat.lt_div_mul_add (a := o) (b := 4096) (by decide); omega),
+        Nat.mul_div_cancel _ (by decide)]
+  rw [e] at ha
+  exact ha
+
 end Services.Bootstrap.Acc

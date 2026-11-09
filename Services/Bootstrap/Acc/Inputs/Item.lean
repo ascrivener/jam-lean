@@ -734,4 +734,116 @@ theorem tr_s4 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X)
   · intro a h0 hs ho hr
     rw [gfr a h0 ho (by omega), fr3 a h0 (by omega) hr (by omega), fr2 a h0 (by omega)]
 
+
+/-- A sign-extended `u32` word cut back to 32 bits is the word. -/
+theorem sxw4_cut (v : Nat) (hv : v < 4294967296) : sxw 4 v % 18446744073709551616 % 4294967296 = v := by
+  rw [Nat.mod_mod_of_dvd _ (by decide)]
+  have := sxw_mod 4 v (Or.inr rfl) (by simpa using hv)
+  simp only [Nat.reducePow] at this
+  rw [this, Nat.mod_eq_of_lt hv]
+
+/-- **The transfer arm, 45126 … 47072**: one deferred transfer ℰ(1, ℰ₄(s), ℰ₄(d), ℰ₈(a), m, ℰ₈(g))
+    (GP v0.8.0 §12 𝕏, Appendix C) read from the reader's 153 octets at ip into the slot out: −1 at
+    + 0, m at + 8, a at + 136, g at + 144, s at + 152 and d at + 156; ω₀, ω₁, ω₅, ω₆ kept, the
+    reader advanced by 153, at the return's `jumpInd`. -/
+theorem tr_call {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
+    (sp out rd ip rlen : Nat) (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat out)
+    (h8 : ω[8] = UInt64.ofNat rd)
+    (hR0 : μ.readN rd 8 = Num.encodeLE 8 ip) (hR8 : μ.readN (rd + 8) 8 = Num.encodeLE 8 rlen)
+    (hrl : 153 ≤ rlen) (hrl32 : rlen < 4294967296) (htag : rdN μ ip 1 = 1)
+    (hip : 65536 ≤ ip ∧ ip + 305 < 2147483648) (hra : ∀ a, ip ≤ a → a < ip + 153 → μ.readable a = true)
+    (hsp : 2147483648 + 536 ≤ sp ∧ sp < 4294967296 ∧ sp % 8 = 0)
+    (hout : sp ≤ out ∧ out + 184 < 4294967296 ∧ out % 8 = 0)
+    (hrd : sp ≤ rd ∧ rd + 16 < 4294967296) (dor : out + 184 ≤ rd ∨ rd + 16 ≤ out)
+    (hwf : ∀ a, sp - 536 ≤ a → a < sp → μ.writable a = true)
+    (hwr : ∀ a, rd ≤ a → a < rd + 16 → μ.writable a = true)
+    (hwo : ∀ a, out ≤ a → a < out + 184 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 45126 ω μ x 47072 ω' μ' x 3820 ∧
+      ω'[0] = ω[0] ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      rdN μ' out 8 = 18446744073709551615 ∧ μ'.readN (out + 8) 128 = μ.readN (ip + 17) 128 ∧
+      rdN μ' (out + 136) 8 = rdN μ (ip + 9) 8 ∧ rdN μ' (out + 144) 8 = rdN μ (ip + 145) 8 ∧
+      rdN μ' (out + 152) 4 = rdN μ (ip + 1) 4 ∧ rdN μ' (out + 156) 4 = rdN μ (ip + 5) 4 ∧
+      μ'.readN rd 8 = Num.encodeLE 8 (ip + 153) ∧ μ'.readN (rd + 8) 8 = Num.encodeLE 8 (rlen - 153) ∧
+      (∀ a, a < 4294967296 → (a < sp - 536 ∨ sp ≤ a) → (a < out ∨ out + 160 ≤ a) → (a < rd ∨ rd + 16 ≤ a) →
+        μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  obtain ⟨ω1, μ1, r1, a1, a5, a6, a7, s24, s272, s8, s16, s24', R0, R8, fr1, rd1, wr1⟩ :=
+    tr_s1 (p := p) (P := P) (R := R) x ω μ sp out rd ip rlen h1 h7 h8 hR0 hR8 (by omega) hrl32 htag
+      ⟨hip.1, by omega⟩ (fun a h1 h2 => hra a h1 (by omega)) ⟨by omega, hsp.2.1, hsp.2.2⟩ ⟨hout.1, by omega⟩ hrd
+      (fun a h1 h2 => hwf a (by omega) h2) hwr
+  obtain ⟨ω2, μ2, r2, b1, b5, b6, b7, w16, w8, w272, R0, R8, fr2, rd2, wr2⟩ :=
+    tr_s2 (p := p) (P := P) (R := R) x ω1 μ1 (sp - 424) out rd (ip + 5) (rlen - 5) a1 a5 a6 a7 s24 (by omega)
+      R0 R8 (by omega) (by omega) ⟨by omega, by omega⟩
+      (fun a h1 h2 => by rw [rd1]; exact hra a (by omega) (by omega)) ⟨by omega, by omega, by omega⟩
+      ⟨by omega, by omega⟩ (fun a h1 h2 => by rw [wr1]; exact hwf a (by omega) (by omega))
+      (fun a h1 h2 => by rw [wr1]; exact hwr a h1 h2)
+  obtain ⟨ω3, μ3, r3, c1, c5, c6, wb, wm, R0, R8, fr3, rd3, wr3⟩ :=
+    tr_s3 (p := p) (P := P) (R := R) x ω2 μ2 (sp - 424) rd (ip + 5 + 12) (rlen - 5 - 12) b1 b6 b7
+      R0 R8 (by omega) (by omega) ⟨by omega, by omega⟩
+      (fun a h1 h2 => by rw [rd2, rd1]; exact hra a (by omega) (by omega)) ⟨by omega, by omega, by omega⟩
+      ⟨by omega, by omega⟩ (fun a h1 h2 => by rw [wr2, wr1]; exact hwf a (by omega) (by omega))
+      (fun a h1 h2 => by rw [wr2, wr1]; exact hwr a h1 h2)
+  obtain ⟨ω4, μ4, r4, d1, d5, d6, mo, R0, R8, fr4, rd4, wr4⟩ :=
+    tr_s4 (p := p) (P := P) (R := R) x ω3 μ3 (sp - 424) out rd (ip + 5 + 12 + 128) (rlen - 5 - 12 - 128) c1
+      (c5.trans b5) c6 R0 R8 (by omega) (by omega) ⟨by omega, by omega⟩
+      (fun a h1 h2 => by rw [rd3, rd2, rd1]; exact hra a (by omega) (by omega)) ⟨by omega, by omega, by omega⟩
+      ⟨by omega, by omega⟩ ⟨by omega, hout.2.1, hout.2.2⟩ dor
+      (fun a h1 h2 => by rw [wr3, wr2, wr1]; exact hwf a (by omega) (by omega))
+      (fun a h1 h2 => by rw [wr3, wr2, wr1]; exact hwr a h1 h2)
+      (fun a h1 h2 => by rw [wr3, wr2, wr1]; exact hwo a h1 h2)
+  obtain ⟨ω5, μ5, r5, e0, e1, e5, e6, f0, f136, f144, f152, f156, fr5, rd5, wr5⟩ :=
+    it_tr_fill (p := p) (P := P) (R := R) x ω4 μ4 (sp - 424) out _ _ _ _ _ _ _ d1 d5 d6 rfl rfl rfl rfl rfl rfl
+      ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ (by omega) (rdN_lt64 _ _) (rdN_lt64 _ _) (rdN_lt64 _ _)
+      (rdN_lt64 _ _) (rdN_lt64 _ _) (rdN_lt64 _ _) (rdN_lt64 _ _)
+      (fun a h1 h2 => by
+        rw [rd4, rd3, rd2, rd1]; exact Memory.readable_of_writable (hwf a (by omega) (by omega)))
+      (fun a h1 h2 => by rw [wr4, wr3, wr2, wr1]; exact hwo a h1 h2)
+  -- the frame, from the input, through each stage
+  have k : ∀ a, a < 4294967296 → (a < sp - 536 ∨ sp ≤ a) → (a < out ∨ out + 160 ≤ a) → (a < rd ∨ rd + 16 ≤ a) →
+      μ5.read a = μ.read a := fun a h0 hs ho hr => by
+    rw [fr5 a h0 (by omega) (by omega), fr4 a h0 (by omega) (by omega) hr, fr3 a h0 (by omega) (by omega) hr,
+      fr2 a h0 (by omega) (by omega) hr, fr1 a h0 (by omega) hr]
+  -- the frame words saved by stage 1, unchanged until the fill
+  have q : ∀ o, sp - 424 + 400 ≤ o → o + 8 ≤ sp → rdN μ4 o 8 = rdN μ1 o 8 := fun o h1 h2 => by
+    rw [rdN_frame fun j hj => fr4 _ (by omega) (by omega) (by omega) (by omega),
+      rdN_frame fun j hj => fr3 _ (by omega) (by omega) (Or.inr (by omega)) (by omega),
+      rdN_frame fun j hj => fr2 _ (by omega) (Or.inr (by omega)) (Or.inr (by omega)) (by omega)]
+  -- the input's octets at ip, unchanged until stage k
+  have i1 : ∀ o n, ip ≤ o → o + n ≤ ip + 153 → rdN μ1 o n = rdN μ o n := fun o n h1 h2 =>
+    rdN_frame fun j hj => fr1 _ (by omega) (Or.inl (by omega)) (Or.inl (by omega))
+  have i2 : ∀ o n, ip ≤ o → o + n ≤ ip + 153 → rdN μ2 o n = rdN μ o n := fun o n h1 h2 => by
+    rw [rdN_frame fun j hj => fr2 _ (by omega) (Or.inl (by omega)) (Or.inl (by omega)) (Or.inl (by omega))]
+    exact i1 o n h1 h2
+  have i3 : ∀ o n, ip ≤ o → o + n ≤ ip + 153 → rdN μ3 o n = rdN μ o n := fun o n h1 h2 => by
+    rw [rdN_frame fun j hj => fr3 _ (by omega) (Or.inl (by omega)) (Or.inl (by omega)) (Or.inl (by omega))]
+    exact i2 o n h1 h2
+  -- the words stages 2 and 3 saved in the frame, unchanged until the fill
+  have v0 : rdN μ4 (sp - 424) 8 = rdN μ (ip + 9) 8 := by
+    rw [rdN_frame fun j hj => fr4 _ (by omega) (Or.inr (by omega)) (by omega) (by omega), wb, w272]
+    exact i1 _ _ (by omega) (by omega)
+  have v8 : rdN μ4 (sp - 424 + 8) 8 = sxw 4 (rdN μ (ip + 5) 4) % 18446744073709551616 := by
+    rw [rdN_frame fun j hj => fr4 _ (by omega) (Or.inr (by omega)) (by omega) (by omega),
+      rdN_frame fun j hj => fr3 _ (by omega) (Or.inr (by omega)) (Or.inl (by omega)) (by omega), w8,
+      i1 _ _ (by omega) (by omega)]
+  have v16 : rdN μ4 (sp - 424 + 16) 8 = sxw 4 (rdN μ (ip + 1) 4) % 18446744073709551616 := by
+    rw [rdN_frame fun j hj => fr4 _ (by omega) (Or.inr (by omega)) (by omega) (by omega),
+      rdN_frame fun j hj => fr3 _ (by omega) (Or.inr (by omega)) (Or.inl (by omega)) (by omega), w16, s272]
+  refine ⟨ω5, μ5, ((((r1.trans r2).trans r3).trans r4).trans r5).mono (by omega), ?_,
+    by rw [e1, show sp - 424 + 424 = sp by omega], ?_, ?_, f0, ?_, by rw [f136, v0], by rw [f144, i3 _ _ (by omega) (by omega)], ?_, ?_, ?_, ?_, k,
+    fun a => by rw [rd5, rd4, rd3, rd2, rd1], fun a => by rw [wr5, wr4, wr3, wr2, wr1]⟩
+  · rw [e0, q _ (by omega) (by omega), show sp - 424 + 416 = sp - 8 by omega, s8]; exact UInt64.ofNat_toNat
+  · rw [e5, q _ (by omega) (by omega), show sp - 424 + 408 = sp - 16 by omega, s16]; exact UInt64.ofNat_toNat
+  · rw [e6, q _ (by omega) (by omega), show sp - 424 + 400 = sp - 24 by omega, s24']; exact UInt64.ofNat_toNat
+  · rw [PVM.Memory.readN_congr (μ := μ4) (fun j hj => fr5 _ (by omega) (Or.inr (by omega)) (Or.inl (by omega))),
+      mo, wm]
+    exact PVM.Memory.readN_congr fun j hj => by
+      rw [fr2 _ (by omega) (Or.inl (by omega)) (Or.inl (by omega)) (Or.inl (by omega)),
+        fr1 _ (by omega) (Or.inl (by omega)) (Or.inl (by omega))]
+  · rw [f152, v16]; exact sxw4_cut _ (rdN_lt μ _ 4)
+  · rw [f156, v8]; exact sxw4_cut _ (rdN_lt μ _ 4)
+  · rw [PVM.Memory.readN_congr (μ := μ4) (fun j hj => fr5 _ (by omega) (by omega) (by omega)), R0,
+      show ip + 153 = ip + 5 + 12 + 128 + 8 by omega]
+  · rw [PVM.Memory.readN_congr (μ := μ4) (fun j hj => fr5 _ (by omega) (by omega) (by omega)), R8,
+      show rlen - 153 = rlen - 5 - 12 - 128 - 8 by omega]
+
 end Services.Bootstrap.Acc

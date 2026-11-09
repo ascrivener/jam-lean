@@ -193,8 +193,51 @@ theorem alloc_impl_growK {p : ByteArray} {P : Program} [HasCode p P] (env : Refi
       HKeepG μ μ' (fun a => (H a ∨ F a) ∨ (wordSize (s.hdr C).size - req - 1 ≠ 0 ∧ a = C + 32 * (req + 1))) :=
   alloc_impl_growKG (p := p) (P := P) (refineHeap env) cap hcap x ω μ s H F sp req bin C hrep hbits h1 h7 h8 h9 h10 hsp hsp1 hb0 hbT hm hbin hbn hcb hFC hHC hHF hnx hpv hS hCend hal E hE hgr pb h hbd h48 hhb hbs hR hcost hNdis hNold hFin (S0 := S0) (S1 := S1) hHTs hSTk hSb hp hst hHFT
 
-/-- `alloc_impl_growK` at `hostCostMax`, the cap of `refineContract`: at most 14 pages a
+/-- `alloc_impl_growKG` at `hostCostMax`, the cap of `refineContract`: at most 14 pages a
     `grow_heap` call. -/
+theorem alloc_impl_growG {X : Type} {p : ByteArray} {P : Program} [HasCode p P] (env : HeapHost X) (x : X) (ω : Regs)
+    (μ : Memory)
+    (s : State) (H F : Nat → Prop) (sp req bin C : Nat) (hrep : RepAt μ s H F)
+    (hbits : BitsOk s.secondary s.primary s.heads)
+    (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat 196792) (h8 : ω[8] = UInt64.ofNat 1)
+    (h9 : ω[9] = UInt64.ofNat req) (h10 : ω[10] = UInt64.ofNat 0)
+    (hsp : 2147483800 ≤ sp) (hsp1 : sp < 4294967296)
+    (hb0 : 206864 ≤ s.base) (hbT : s.base + 1073741824 < 2147483648)
+    (hm : req + 1 ≤ 33554432)
+    (hbin : (findFirst s (binUp (req + 1))).or (findFirst s (binDown (req + 1))) = some bin) (hbn : bin < 2432)
+    (hcb : s.heads bin = C) (hFC : F C) (hHC : H C) (hHF : ∀ a, H a ∨ F a → Al s.base a)
+    (hnx : (s.hdr C).next ≠ 0 → F (s.hdr C).next) (hpv : (s.hdr C).prev < 2147483648)
+    (hS : req + 1 ≤ wordSize (s.hdr C).size) (hCend : C + 32 * wordSize (s.hdr C).size ≤ s.base + 1073741824)
+    (hal : s.allocated < 2147483648)
+    (E : Nat) (hE : (C - s.base) / 32 + 1 + req + (if wordSize (s.hdr C).size - req - 1 = 0 then 0 else 1) = E)
+    (hgr : s.allocated < E) (pb h : Nat) (hbd : heapBounds env.code = (48, pb)) (h48 : 48 ≤ h) (hhb : h ≤ pb)
+    (hbs : pb < 4294967296) (hR : pagesOf (s.base + 32 * E) ≤ pb)
+    (hcost : growTop (pagesOf (s.base + 32 * E)) h pb ≤ h + 14)
+    (hNdis : wordSize (s.hdr C).size - req - 1 ≠ 0 → ∀ a, H a ∨ F a →
+      a + 32 ≤ C + 32 * (req + 1) ∨ C + 32 * (req + 1) + 32 ≤ a)
+    (hNold : wordSize (s.hdr C).size - req - 1 ≠ 0 →
+      (registerAlloc (unregister { s with allocated := E } C bin) C (s.hdr C).prev (req + 1)).heads (binDown (wordSize (s.hdr C).size - req - 1))
+        ≠ 0 →
+      F ((registerAlloc (unregister { s with allocated := E } C bin) C (s.hdr C).prev (req + 1)).heads
+        (binDown (wordSize (s.hdr C).size - req - 1))))
+    (hFin : C + 32 * wordSize (s.hdr C).size < s.base + 1073741824 → H (C + 32 * wordSize (s.hdr C).size))
+    {S0 S1 : Nat} (hHTs : 208896 ≤ 4096 * h) (hSTk : S0 + 152 ≤ sp ∧ sp ≤ S1) (hSb : 4096 * pb ≤ S0)
+    (hp : HeapPages μ 48 pb h) (hst : ∀ a, S0 ≤ a → a < S1 → μ.writable a = true)
+    (hHFT : ∀ a, H a ∨ F a → a + 32 ≤ 4096 * h) :
+    ∃ ω' μ', FreeStepsH p (env.rel hostCostMax) 41177 ω μ x 41423 ω' μ' x 500 ∧
+      RepAt μ' (allocPost { s with allocated := E } bin req (wordSize (s.hdr C).size) (s.base + 1073741824))
+        (fun a => H a ∨ (wordSize (s.hdr C).size - req - 1 ≠ 0 ∧ a = C + 32 * (req + 1)))
+        (fun a => F a ∨ (wordSize (s.hdr C).size - req - 1 ≠ 0 ∧ a = C + 32 * (req + 1))) ∧
+      ω'[7] = UInt64.ofNat (C + 32) ∧ ω'[0] = ω[0] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ ω'[1] = ω[1] ∧
+      HeapPages μ' 48 pb (growTop (pagesOf (s.base + 32 * E)) h pb) ∧
+      (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
+      HKeepG μ μ' (fun a => (H a ∨ F a) ∨ (wordSize (s.hdr C).size - req - 1 ≠ 0 ∧ a = C + 32 * (req + 1))) :=
+  alloc_impl_growKG (p := p) (P := P) (S0 := S0) (S1 := S1) env hostCostMax (by decide) x ω μ s H F
+    sp req bin C hrep hbits h1 h7 h8 h9 h10 hsp hsp1 hb0 hbT hm hbin hbn hcb hFC hHC hHF hnx hpv hS
+    hCend hal E hE hgr pb h hbd h48 hhb hbs hR (by unfold hostCostMax; omega) hNdis hNold hFin hHTs
+    hSTk hSb hp hst hHFT
+
+/-- `alloc_impl_growG` for the refine contract (`refineHeap env`). -/
 theorem alloc_impl_grow {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (x : RefineCtx) (ω : Regs)
     (μ : Memory)
     (s : State) (H F : Nat → Prop) (sp req bin C : Nat) (hrep : RepAt μ s H F)
@@ -232,9 +275,6 @@ theorem alloc_impl_grow {p : ByteArray} {P : Program} [HasCode p P] (env : Refin
       HeapPages μ' 48 pb (growTop (pagesOf (s.base + 32 * E)) h pb) ∧
       (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧ (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
       HKeepG μ μ' (fun a => (H a ∨ F a) ∨ (wordSize (s.hdr C).size - req - 1 ≠ 0 ∧ a = C + 32 * (req + 1))) :=
-  alloc_impl_growK (p := p) (P := P) (S0 := S0) (S1 := S1) env hostCostMax (by decide) x ω μ s H F
-    sp req bin C hrep hbits h1 h7 h8 h9 h10 hsp hsp1 hb0 hbT hm hbin hbn hcb hFC hHC hHF hnx hpv hS
-    hCend hal E hE hgr pb h hbd h48 hhb hbs hR (by unfold hostCostMax; omega) hNdis hNold hFin hHTs
-    hSTk hSb hp hst hHFT
+  alloc_impl_growG (p := p) (P := P) (refineHeap env) x ω μ s H F sp req bin C hrep hbits h1 h7 h8 h9 h10 hsp hsp1 hb0 hbT hm hbin hbn hcb hFC hHC hHF hnx hpv hS hCend hal E hE hgr pb h hbd h48 hhb hbs hR hcost hNdis hNold hFin (S0 := S0) (S1 := S1) hHTs hSTk hSb hp hst hHFT
 
 end Services.Bootstrap.Alloc

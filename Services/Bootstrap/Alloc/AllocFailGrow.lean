@@ -95,7 +95,28 @@ theorem alloc_mid_failK {p : ByteArray} {P : Program} [HasCode p P] (env : Refin
       (∀ a, a < 4294967296 → (a < sp ∨ sp + 112 ≤ a) → μ'.read a = μ.read a) :=
   alloc_mid_failKG (p := p) (P := P) (refineHeap env) cap hcap h275 x ω μ sp req C sz base A pb h h1 h10 h11 h8 h9 h120 hbase halloc hA hbC hbT hrq hCend hgr hbd h48 hhb hbs hR hsp0 hsp (S0 := S0) (S1 := S1) hHTs hSTk hSb hp hst
 
-/-- `alloc_mid_failK` at `hostCostMax`, the cap of `refineContract`. -/
+/-- `alloc_mid_failKG` at `hostCostMax`, the cap of `refineContract`. -/
+theorem alloc_mid_failG {X : Type} {p : ByteArray} {P : Program} [HasCode p P] (env : HeapHost X) (x : X)
+    (ω : Regs) (μ : Memory) (sp req C sz base A pb h : Nat)
+    (h1 : ω[1] = UInt64.ofNat sp) (h10 : ω[10] = UInt64.ofNat C) (h11 : ω[11] = UInt64.ofNat sz)
+    (h8 : ω[8] = UInt64.ofNat 1) (h9 : ω[9] = UInt64.ofNat req)
+    (h120 : rdN μ (sp + 120) 8 = 204984) (hbase : rdN μ 206520 8 = base) (halloc : rdN μ 206840 4 = A)
+    (hA : A < 2147483648) (hbC : base ≤ C) (hbT : base + 1073741824 < 2147483648)
+    (hrq : req + 1 ≤ sz) (hCend : C + 32 * sz ≤ base + 1073741824)
+    (hgr : A < (C - base) / 32 + 1 + req + (if sz - req - 1 = 0 then 0 else 1))
+    (hbd : heapBounds env.code = (48, pb)) (h48 : 48 ≤ h) (hhb : h ≤ pb) (hbs : pb < 4294967296)
+    (hR : pb < pagesOf (base + 32 * ((C - base) / 32 + 1 + req + (if sz - req - 1 = 0 then 0 else 1))))
+    (hsp0 : 2147483648 ≤ sp) (hsp : sp + 152 < 4294967296) {S0 S1 : Nat} (hHTs : 208896 ≤ 4096 * h)
+    (hSTk : S0 ≤ sp ∧ sp + 152 ≤ S1) (hSb : 4096 * pb ≤ S0) (hp : HeapPages μ 48 pb h)
+    (hst : ∀ a, S0 ≤ a → a < S1 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p (env.rel hostCostMax) 41425 ω μ x 41401 ω' μ' x 70 ∧ ω'[1] = UInt64.ofNat sp ∧
+      HeapPages μ' 48 pb h ∧ (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧
+      (∀ a, a < 4294967296 → (a < sp ∨ sp + 112 ≤ a) → μ'.read a = μ.read a) :=
+  alloc_mid_failKG (p := p) (P := P) (S0 := S0) (S1 := S1) env hostCostMax (by decide) (by decide) x
+    ω μ sp req C sz base A pb h h1 h10 h11 h8 h9 h120 hbase halloc hA hbC hbT hrq hCend hgr hbd h48
+    hhb hbs hR hsp0 hsp hHTs hSTk hSb hp hst
+
+/-- `alloc_mid_failG` for the refine contract (`refineHeap env`). -/
 theorem alloc_mid_fail {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (x : RefineCtx)
     (ω : Regs) (μ : Memory) (sp req C sz base A pb h : Nat)
     (h1 : ω[1] = UInt64.ofNat sp) (h10 : ω[10] = UInt64.ofNat C) (h11 : ω[11] = UInt64.ofNat sz)
@@ -112,9 +133,7 @@ theorem alloc_mid_fail {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
     ∃ ω' μ', FreeStepsH p (refineContract env) 41425 ω μ x 41401 ω' μ' x 70 ∧ ω'[1] = UInt64.ofNat sp ∧
       HeapPages μ' 48 pb h ∧ (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧
       (∀ a, a < 4294967296 → (a < sp ∨ sp + 112 ≤ a) → μ'.read a = μ.read a) :=
-  alloc_mid_failK (p := p) (P := P) (S0 := S0) (S1 := S1) env hostCostMax (by decide) (by decide) x
-    ω μ sp req C sz base A pb h h1 h10 h11 h8 h9 h120 hbase halloc hA hbC hbT hrq hCend hgr hbd h48
-    hhb hbs hR hsp0 hsp hHTs hSTk hSb hp hst
+  alloc_mid_failG (p := p) (P := P) (refineHeap env) x ω μ sp req C sz base A pb h h1 h10 h11 h8 h9 h120 hbase halloc hA hbC hbT hrq hCend hgr hbd h48 hhb hbs hR hsp0 hsp (S0 := S0) (S1 := S1) hHTs hSTk hSb hp hst
 
 /-- **41177 … 41423, the heap cannot grow**: the found bin's first chunk C (size word `w`) is large
     enough, but the allocation's end E lies past the allocated space and the heap's bound `pb`
@@ -190,7 +209,33 @@ theorem alloc_fail_growK {p : ByteArray} {P : Program} [HasCode p P] (env : Refi
       (∀ a, a < 4294967296 → (a < sp - 152 ∨ sp ≤ a) → μ'.read a = μ.read a) :=
   alloc_fail_growKG (p := p) (P := P) (refineHeap env) cap hcap h275 x ω μ s sp req bin C w pb h hbits h1 h7 h8 h9 hsp hsp1 hb hb0 hp hs ha hal hm hbin hC hw hbT hbC hS hCend hgr hbd h48 hhb hbs hR (S0 := S0) (S1 := S1) hHTs hSTk hSb hCT hpg hst
 
-/-- `alloc_fail_growK` at `hostCostMax`, the cap of `refineContract`. -/
+/-- `alloc_fail_growKG` at `hostCostMax`, the cap of `refineContract`. -/
+theorem alloc_fail_growG {X : Type} {p : ByteArray} {P : Program} [HasCode p P] (env : HeapHost X) (x : X)
+    (ω : Regs) (μ : Memory) (s : State) (sp req bin C w pb h : Nat) (hbits : BitsOk s.secondary s.primary s.heads)
+    (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat 196792) (h8 : ω[8] = UInt64.ofNat 1)
+    (h9 : ω[9] = UInt64.ofNat req) (hsp : 2147483800 ≤ sp) (hsp1 : sp < 4294967296)
+    (hb : rdN μ 206520 8 = s.base) (hb0 : s.base ≠ 0)
+    (hp : rdN μ 206832 8 = s.primary) (hs : ∀ q, q < 38 → rdN μ (q * 8 + 204984 + 1544) 8 = s.secondary q)
+    (ha : rdN μ 206840 4 = s.allocated) (hal : s.allocated < 2147483648)
+    (hm : req + 1 ≤ 33554432)
+    (hbin : (findFirst s (binUp (req + 1))).or (findFirst s (binDown (req + 1))) = some bin)
+    (hC : rdN μ (196792 + 4 * bin) 4 = C) (hw : rdN μ (C + 4) 4 = w) (hbT : s.base + 1073741824 < 2147483648)
+    (hbC : s.base ≤ C) (hS : req + 1 ≤ w / 2) (hCend : C + 32 * (w / 2) ≤ s.base + 1073741824)
+    (hgr : s.allocated < (C - s.base) / 32 + 1 + req + (if w / 2 - req - 1 = 0 then 0 else 1))
+    (hbd : heapBounds env.code = (48, pb)) (h48 : 48 ≤ h) (hhb : h ≤ pb) (hbs : pb < 4294967296)
+    (hR : pb < pagesOf (s.base + 32 * ((C - s.base) / 32 + 1 + req + (if w / 2 - req - 1 = 0 then 0 else 1))))
+    {S0 S1 : Nat} (hHTs : 208896 ≤ 4096 * h) (hSTk : S0 + 152 ≤ sp ∧ sp ≤ S1) (hSb : 4096 * pb ≤ S0)
+    (hCT : 196608 ≤ C ∧ C + 16 ≤ 4096 * h) (hpg : HeapPages μ 48 pb h)
+    (hst : ∀ a, S0 ≤ a → a < S1 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p (env.rel hostCostMax) 41177 ω μ x 41423 ω' μ' x 200 ∧ ω'[7] = UInt64.ofNat 0 ∧
+      ω'[0] = ω[0] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ ω'[1] = ω[1] ∧
+      HeapPages μ' 48 pb h ∧ (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧
+      (∀ a, a < 4294967296 → (a < sp - 152 ∨ sp ≤ a) → μ'.read a = μ.read a) :=
+  alloc_fail_growKG (p := p) (P := P) (S0 := S0) (S1 := S1) env hostCostMax (by decide) (by decide)
+    x ω μ s sp req bin C w pb h hbits h1 h7 h8 h9 hsp hsp1 hb hb0 hp hs ha hal hm hbin hC hw hbT
+    hbC hS hCend hgr hbd h48 hhb hbs hR hHTs hSTk hSb hCT hpg hst
+
+/-- `alloc_fail_growG` for the refine contract (`refineHeap env`). -/
 theorem alloc_fail_grow {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (x : RefineCtx)
     (ω : Regs) (μ : Memory) (s : State) (sp req bin C w pb h : Nat) (hbits : BitsOk s.secondary s.primary s.heads)
     (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat 196792) (h8 : ω[8] = UInt64.ofNat 1)
@@ -212,8 +257,6 @@ theorem alloc_fail_grow {p : ByteArray} {P : Program} [HasCode p P] (env : Refin
       ω'[0] = ω[0] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ ω'[1] = ω[1] ∧
       HeapPages μ' 48 pb h ∧ (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧
       (∀ a, a < 4294967296 → (a < sp - 152 ∨ sp ≤ a) → μ'.read a = μ.read a) :=
-  alloc_fail_growK (p := p) (P := P) (S0 := S0) (S1 := S1) env hostCostMax (by decide) (by decide)
-    x ω μ s sp req bin C w pb h hbits h1 h7 h8 h9 hsp hsp1 hb hb0 hp hs ha hal hm hbin hC hw hbT
-    hbC hS hCend hgr hbd h48 hhb hbs hR hHTs hSTk hSb hCT hpg hst
+  alloc_fail_growG (p := p) (P := P) (refineHeap env) x ω μ s sp req bin C w pb h hbits h1 h7 h8 h9 hsp hsp1 hb hb0 hp hs ha hal hm hbin hC hw hbT hbC hS hCend hgr hbd h48 hhb hbs hR (S0 := S0) (S1 := S1) hHTs hSTk hSb hCT hpg hst
 
 end Services.Bootstrap.Alloc

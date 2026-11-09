@@ -176,7 +176,7 @@ theorem fallback_tail_heap_dataG {p : ByteArray} {P : Program} [HasCode p P] (en
     hsp1 ⟨by omega, by omega⟩ hw
   have rep1 : Rep μ1 s := hrep.congr_lock hwf hb0 hbT fun a ha1 ha2 ha3 => fr1 a (by omega) (Or.inl (by omega))
   obtain ⟨ω2, μ2, r2, rep2, -, e7, e0, e5, e6, e1, ⟨h', hpH, hE', hph, hpb⟩, hst2, stk2, hk2⟩ :=
-    alloc_refines_grow_hdr (p := p) (P := P) (S0 := S0) (S1 := S1) env x ω1 μ1 s s1 sp req q pb ph hwf rep1 hbd h48
+    alloc_refines_grow_hdrG (p := p) (P := P) (S0 := S0) (S1 := S1) env x ω1 μ1 s s1 sp req q pb ph hwf rep1 hbd h48
       hhb hbs h hng (by rw [fget g1 1 (by decide) (by decide)]; exact h1)
       (by rw [fget g1 7 (by decide) (by decide)]; exact h7) a8 a9 a10 hsp (by omega) hb0 hbT hA hfo hcost hHTs
       ⟨by omega, by omega⟩ hSb (HeapPages.of_eq hp ww1) (fun a h1 h2 => by rw [ww1]; exact hst a h1 h2) hHT
@@ -282,7 +282,7 @@ theorem fallback_tail_heap {p : ByteArray} {P : Program} [HasCode p P] (env : Re
       ω'[5] = UInt64.ofNat v5 ∧ ω'[6] = UInt64.ofNat v6 :=
   fallback_tail_heapG (p := p) (P := P) (refineHeap env) x ω μ (hb := hb) s s1 sp ptr req q u v5 v6 pb ph hwf hrep hfo hc hu hur hbd h48 hhb hbs h hcost h1 h7 h8 h9 h10 h6 hrq s0 s5 s6 hsp hsp1 hsp8 hba hb0 hbT hA (S0 := S0) (S1 := S1) hHTs hHT hS hSb hp hst
 
-/-- **`alloc_refines_fail`, with its frame**: as `alloc_refines_fail`, and memory changes only in
+/-- **`alloc_refines_failG`, with its frame**: as `alloc_refines_failG`, and memory changes only in
     `alloc_impl`'s stack frame (sp − 152 … sp); in particular the heap is untouched. -/
 theorem alloc_refines_fail'G {p : ByteArray} {P : Program} [HasCode p P] (env : HeapHost X) (x : X)
     (ω : Regs) (μ : Memory) {hb : Nat} (s : State) (sp req pb ph : Nat) (hwf : WF s) (hrep : Rep μ s)
@@ -355,7 +355,7 @@ theorem alloc_refines_fail'G {p : ByteArray} {P : Program} [HasCode p P] (env : 
       fun a h1 h2 => by rw [ww]; exact hst a h1 h2, fr⟩
   · have hR : pb < pagesOf (s.base + 32 * ((C - s.base) / 32 + 1 + req + (if S - req - 1 = 0 then 0 else 1))) := by
       unfold growTo at hgr; have := of_decide_eq_false hgr; omega
-    obtain ⟨ω', μ', run, e7, e0, e5, e6, e1, hp', hst', fr⟩ := alloc_fail_grow (p := p) (P := P) (S0 := S0)
+    obtain ⟨ω', μ', run, e7, e0, e5, e6, e1, hp', hst', fr⟩ := alloc_fail_growG (p := p) (P := P) (S0 := S0)
       (S1 := S1) env x ω μ s sp req bin C (s.hdr C).size pb ph hbits h1 h7 h8 h9 hsp hsp1 hbase hb0' hpri hsec halc
       hal hm hbin hheads hsz hbT (by omega) (by rw [hwS]; exact hS) (by rw [hwS]; omega) (by rw [hwS]; exact hlt)
       hbd h48 hhb hbs (by rw [hwS]; exact hR) hHTs hSTk hSb ⟨by omega, by omega⟩ hp hst

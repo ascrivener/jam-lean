@@ -56,7 +56,7 @@ theorem growInplace_none_grow {grow : Grow} {s : State} {ptr req cur : Nat}
     if_neg (by simp [hno])]
   rfl
 
-/-- **42980 … 43259, the host not growing the heap**: as `realloc_impl_grow_heap` up to the host
+/-- **42980 … 43259, the host not growing the heap**: as `realloc_impl_grow_heapG` up to the host
     call, when the page that the end E needs lies past the heap's bound pb: the host leaves the
     heap's top h, and `realloc_impl` reaches the fallback (43259) with the frame, the registers and
     the memory as `fallback_pre` gives them (the memory changed only in the frame), and the heap's
@@ -198,7 +198,7 @@ theorem fallback_pre_growG {p : ByteArray} {P : Program} [HasCode p P] (env : He
   have hT : growTop Rq h pb = h := by unfold growTop; rw [if_pos (Or.inr (by omega))]
   have hp8 := HeapPages.of_eq hp7 ww8
   have hst8 : ∀ a, S0 ≤ a → a < S1 → μ8.writable a = true := fun a h1 h2 => by rw [ww8]; exact hst7 a h1 h2
-  have r9 := rgh_call (p := p) (P := P) env x ω8 μ8 pb h Rq hbd hp8 h48 hhb hbs a7' (by omega)
+  have r9 := rgh_callG (p := p) (P := P) env x ω8 μ8 pb h Rq hbd hp8 h48 hhb hbs a7' (by omega)
     (by rw [hT]; omega)
   rw [hT] at r9
   have hp9 := HeapPages.grow hp8 (t := h) (Nat.le_refl _)

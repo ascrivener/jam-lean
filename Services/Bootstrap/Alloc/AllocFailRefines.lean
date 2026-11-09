@@ -123,7 +123,26 @@ theorem alloc_refines_failK {p : ByteArray} {P : Program} [HasCode p P] (env : R
       (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) :=
   alloc_refines_failKG (p := p) (P := P) (refineHeap env) cap hcap h275 x ω μ (hb := hb) s sp req pb ph hwf hrep hbd h48 hhb hbs h hrq h1 h7 h8 h9 hsp hsp1 hb0 hbT hal (S0 := S0) (S1 := S1) hHTs hSTk hSb hp hst hHT
 
-/-- `alloc_refines_failK` at `hostCostMax`, the cap of `refineContract`. -/
+/-- `alloc_refines_failKG` at `hostCostMax`, the cap of `refineContract`. -/
+theorem alloc_refines_failG {X : Type} {p : ByteArray} {P : Program} [HasCode p P] (env : HeapHost X) (x : X)
+    (ω : Regs) (μ : Memory) {hb : Nat} (s : State) (sp req pb ph : Nat) (hwf : WF s) (hrep : Rep μ s)
+    (hbd : heapBounds env.code = (48, pb)) (h48 : 48 ≤ ph) (hhb : ph ≤ pb) (hbs : pb < 4294967296)
+    (h : alloc (growTo pb) hb 1 req s = none) (hrq : req < 2147483648)
+    (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat 196792) (h8 : ω[8] = UInt64.ofNat 1)
+    (h9 : ω[9] = UInt64.ofNat req) (hsp : 2147483800 ≤ sp) (hsp1 : sp < 4294967296)
+    (hb0 : 206864 ≤ s.base) (hbT : s.base + 1073741824 < 2147483648) (hal : s.allocated < 2147483648)
+    {S0 S1 : Nat} (hHTs : 208896 ≤ 4096 * ph) (hSTk : S0 + 152 ≤ sp ∧ sp ≤ S1) (hSb : 4096 * pb ≤ S0)
+    (hp : HeapPages μ 48 pb ph) (hst : ∀ a, S0 ≤ a → a < S1 → μ.writable a = true)
+    (hHT : s.base + 32 * s.allocated ≤ 4096 * ph) :
+    ∃ ω' μ', FreeStepsH p (env.rel hostCostMax) 41177 ω μ x 41423 ω' μ' x 500 ∧ Rep μ' s ∧
+      ω'[7] = UInt64.ofNat 0 ∧ ω'[0] = ω[0] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ ω'[1] = ω[1] ∧
+      HeapPages μ' 48 pb ph ∧ (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧
+      (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) :=
+  alloc_refines_failKG (p := p) (P := P) (hb := hb) (S0 := S0) (S1 := S1)
+    env hostCostMax (by decide) (by decide) x ω μ s sp req pb ph hwf hrep hbd h48 hhb hbs h hrq h1
+    h7 h8 h9 hsp hsp1 hb0 hbT hal hHTs hSTk hSb hp hst hHT
+
+/-- `alloc_refines_failG` for the refine contract (`refineHeap env`). -/
 theorem alloc_refines_fail {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (x : RefineCtx)
     (ω : Regs) (μ : Memory) {hb : Nat} (s : State) (sp req pb ph : Nat) (hwf : WF s) (hrep : Rep μ s)
     (hbd : heapBounds env.code = (48, pb)) (h48 : 48 ≤ ph) (hhb : ph ≤ pb) (hbs : pb < 4294967296)
@@ -138,9 +157,7 @@ theorem alloc_refines_fail {p : ByteArray} {P : Program} [HasCode p P] (env : Re
       ω'[7] = UInt64.ofNat 0 ∧ ω'[0] = ω[0] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ ω'[1] = ω[1] ∧
       HeapPages μ' 48 pb ph ∧ (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧
       (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) :=
-  alloc_refines_failK (p := p) (P := P) (hb := hb) (S0 := S0) (S1 := S1)
-    env hostCostMax (by decide) (by decide) x ω μ s sp req pb ph hwf hrep hbd h48 hhb hbs h hrq h1
-    h7 h8 h9 hsp hsp1 hb0 hbT hal hHTs hSTk hSb hp hst hHT
+  alloc_refines_failG (p := p) (P := P) (refineHeap env) x ω μ (hb := hb) s sp req pb ph hwf hrep hbd h48 hhb hbs h hrq h1 h7 h8 h9 hsp hsp1 hb0 hbT hal (S0 := S0) (S1 := S1) hHTs hSTk hSb hp hst hHT
 
 /-- **The binary's `alloc` fails where the model's `alloc` does** (under `refineContract`, the
     model's `grow` the host's `growTo pb`): from memory holding a well-formed `s`, the lock byte
@@ -215,7 +232,29 @@ theorem alloc_wrap_refines_failK {p : ByteArray} {P : Program} [HasCode p P] (en
       ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] :=
   alloc_wrap_refines_failKG (p := p) (P := P) (refineHeap env) cap hcap h275 x ω μ (hb := hb) s sp size al pb ph hwf hrep hbd h48 hhb hbs h h1 h7 h8 hal hal1 hs hsp hsp1 hb0 hbT hA hl (S0 := S0) (S1 := S1) hHTs hSTk hSb hp hst hHT
 
-/-- `alloc_wrap_refines_failK` at `hostCostMax`, the cap of `refineContract`. -/
+/-- `alloc_wrap_refines_failKG` at `hostCostMax`, the cap of `refineContract`. -/
+theorem alloc_wrap_refines_failG {X : Type} {p : ByteArray} {P : Program} [HasCode p P] (env : HeapHost X)
+    (x : X) (ω : Regs) (μ : Memory) {hb : Nat} (s : State) (sp size al pb ph : Nat) (hwf : WF s)
+    (hrep : Rep μ s) (hbd : heapBounds env.code = (48, pb)) (h48 : 48 ≤ ph) (hhb : ph ≤ pb) (hbs : pb < 4294967296)
+    (h : alloc (growTo pb) hb 1 ((size + 31) / 32) s = none)
+    (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat size) (h8 : ω[8] = UInt64.ofNat al)
+    (hal : 1 ≤ al) (hal1 : al ≤ 32) (hs : size + 31 < 68719476736)
+    (hsp : 2147483816 ≤ sp) (hsp1 : sp < 4294967296)
+    (hb0 : 206864 ≤ s.base) (hbT : s.base + 1073741824 < 2147483648) (hA : s.allocated < 2147483648)
+    (hl : rdN μ 206848 1 = 0)
+    {S0 S1 : Nat} (hHTs : 208896 ≤ 4096 * ph) (hSTk : S0 + 168 ≤ sp ∧ sp ≤ S1) (hSb : 4096 * pb ≤ S0)
+    (hp : HeapPages μ 48 pb ph) (hst : ∀ a, S0 ≤ a → a < S1 → μ.writable a = true)
+    (hHT : s.base + 32 * s.allocated ≤ 4096 * ph) :
+    ∃ ω' μ', FreeStepsH p (env.rel hostCostMax) 40494 ω μ x 40611 ω' μ' x 540 ∧ Rep μ' s ∧
+      ω'[7] = UInt64.ofNat 0 ∧ rdN μ' 206848 1 = 0 ∧ HeapPages μ' 48 pb ph ∧
+      (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧
+      (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
+      ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] :=
+  alloc_wrap_refines_failKG (p := p) (P := P) (hb := hb) (S0 := S0) (S1 := S1)
+    env hostCostMax (by decide) (by decide) x ω μ s sp size al pb ph hwf hrep hbd h48 hhb hbs h h1
+    h7 h8 hal hal1 hs hsp hsp1 hb0 hbT hA hl hHTs hSTk hSb hp hst hHT
+
+/-- `alloc_wrap_refines_failG` for the refine contract (`refineHeap env`). -/
 theorem alloc_wrap_refines_fail {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env)
     (x : RefineCtx) (ω : Regs) (μ : Memory) {hb : Nat} (s : State) (sp size al pb ph : Nat) (hwf : WF s)
     (hrep : Rep μ s) (hbd : heapBounds env.code = (48, pb)) (h48 : 48 ≤ ph) (hhb : ph ≤ pb) (hbs : pb < 4294967296)
@@ -233,8 +272,6 @@ theorem alloc_wrap_refines_fail {p : ByteArray} {P : Program} [HasCode p P] (env
       (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧
       (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
       ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] :=
-  alloc_wrap_refines_failK (p := p) (P := P) (hb := hb) (S0 := S0) (S1 := S1)
-    env hostCostMax (by decide) (by decide) x ω μ s sp size al pb ph hwf hrep hbd h48 hhb hbs h h1
-    h7 h8 hal hal1 hs hsp hsp1 hb0 hbT hA hl hHTs hSTk hSb hp hst hHT
+  alloc_wrap_refines_failG (p := p) (P := P) (refineHeap env) x ω μ (hb := hb) s sp size al pb ph hwf hrep hbd h48 hhb hbs h h1 h7 h8 hal hal1 hs hsp hsp1 hb0 hbT hA hl (S0 := S0) (S1 := S1) hHTs hSTk hSb hp hst hHT
 
 end Services.Bootstrap.Alloc

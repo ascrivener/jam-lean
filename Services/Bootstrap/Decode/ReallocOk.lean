@@ -344,7 +344,7 @@ theorem realloc_wrap_cases_hdataG {X : Type} {p : ByteArray} {P : Program} [HasC
         fun hrr => by rw [e] at hrr; cases hrr⟩
     · -- grown in place, the heap grown
       obtain ⟨e, ω', μ', dat, run, rep, wf, fo, e7, cl, ⟨h', hpH, hB, hph, hpb⟩, hst', stk, e0, e1, e5, e6⟩ :=
-        realloc_wrap_grow_heap_data (p := p) (P := P) (hb := hb) env x ω μ s s' sp ptr al size hwf hrep hc hr hr1 pb ph hbd h48 hhb hbs hg
+        realloc_wrap_grow_heap_dataG (p := p) (P := P) (hb := hb) env x ω μ s s' sp ptr al size hwf hrep hc hr hr1 pb ph hbd h48 hhb hbs hg
           hng h1 h7 h9 h10 hal (by omega) hsp1 hb0 hbT hA hfo
           (Nat.le_trans (growInplace_pages hr hg hng) hcost) hl hHT ⟨by omega, by omega⟩ hSb hp hst
       exact ⟨ω', μ',

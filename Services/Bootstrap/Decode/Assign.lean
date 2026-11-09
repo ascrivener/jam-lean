@@ -463,8 +463,7 @@ theorem assign_elemF {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHo
     rw [owr, nwr, mwr, vwr a ha, kwr, gwr, fwr]
 
 
-/-- `assign_elemF` in refine's frame. -/
-/-- **`Assign`, as an element of the decode loop** (tag 12; GP v0.8.0 B.7, Ω_A): with the globals
+/-- **`Assign`, as an element of the decode loop**, in refine's frame (`assign_elemF`) (tag 12; GP v0.8.0 B.7, Ω_A): with the globals
     `gl` holding at 196680 a word G whose low 32 bits n (the queue's length 𝖰) are 1 … 512, the
     encoding [12] ++ c2 ++ hb ++ w4 (the core's two octets, n hashes, the assigner's four) decodes to
     `Assign`'s slot (`AssignRep`), its queue a fresh `Vec` in the heap; or an allocation fails. -/

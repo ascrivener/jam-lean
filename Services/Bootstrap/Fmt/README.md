@@ -36,20 +36,19 @@ So these proofs show only that each formatting function:
 | `pad_plain` | `Spec.lean` | `Formatter::pad_integral` (61857) with plain options, through a `Fmtr` (a `Formatter` into a `String`) |
 | `hex32` | `Hex.lean` | `<u32 as LowerHex>::fmt` (60525) |
 | `dec32` | `Dec*.lean` | `<u32 as Display>::fmt` (68146) |
+| `dec64` | `Du*.lean` | `<u64 as Display>::fmt` (68449) |
 
 ## Next
 
-1. `<u64 as Display>::fmt` (68449): the same shape as `dec32`. The loop runs up to 5 times with
-   the u64 multiplier 3777893186295716171 (>> 11). It needs an induction like `hx_loop`.
-2. `core::fmt::write` (64495): the byte-template interpreter. Bytes 1 … 127 are a literal,
+1. `core::fmt::write` (64495): the byte-template interpreter. Bytes 1 … 127 are a literal,
    written with the vtable's `write_str`. 0xC0 is an argument with default options, called
    through its function pointer with a fresh `Formatter` at sp + 48. 0x80 is a long literal.
    Other bytes are an argument with explicit options. 0 ends the template.
    - Plan: a statement by induction on the template's remaining bytes, taking for each argument
      an `FmtSpec`-style hypothesis, which is the shape of `hex32` and `dec32`.
-3. `alloc::fmt::format` / `format_inner` (59375): the capacity estimate (a loop over the
+2. `alloc::fmt::format` / `format_inner` (59375): the capacity estimate (a loop over the
    template), `alloc`, then `core::fmt::write` with the `String` vtable 77016.
-4. Accumulate's first line (6580 → 59375): `{:x}` (60525), Display (68146) and u64 Display
-   (68449).
-5. Refine's level-3 line (6159 → 59375): `Debug` of the output. That needs the `DebugStruct`,
+3. Accumulate's first line (6580 → 59375): `{:x}` (60525, `hex32`), Display (68146, `dec32`) and u64 Display
+   (68449, `dec64`), all proved.
+4. Refine's level-3 line (6159 → 59375): `Debug` of the output. That needs the `DebugStruct`,
    `DebugList` and `DebugTuple` builders and each `Instruction` variant's `Debug`.

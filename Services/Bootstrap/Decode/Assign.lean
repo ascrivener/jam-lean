@@ -197,3 +197,35 @@ theorem as4 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ 
     all_goals try assumption
     all_goals try exact (encodeLE_mod 4 _).trans (encodeLE4_sxw w hw4)
     all_goals try (simp only [mask32, Nat.mod_eq_of_lt (show G' % 4294967296 < 18446744073709551616 by omega)]; congr 1; rw [Nat.min_def]; split <;> split <;> omega)
+
+open Picoalloc JAM Services.Bootstrap.Alloc Services.Bootstrap.Decode.HeapCtx Services.Bootstrap.Decode.LoopA
+
+/-- **`Assign`'s slot**: the discriminant word 2^63 + 11; the queue, a `Vec` of capacity and length n
+    at some q, whose n hashes are the 32-octet pieces of `hb` (in the heap μ); the assigner's four
+    octets `w4` at 32 and the core's two `c2` at 36. -/
+def AssignRep (n : Nat) (c2 hb w4 : List UInt8) (bs : List UInt8) (μ : Memory) : Prop :=
+  bs.take 8 = Num.encodeLE 8 9223372036854775819 ∧
+  ∃ q, (bs.drop 8).take 8 = Num.encodeLE 8 n ∧ (bs.drop 16).take 8 = Num.encodeLE 8 q ∧
+    (bs.drop 24).take 8 = Num.encodeLE 8 n ∧ (bs.drop 32).take 4 = w4 ∧ (bs.drop 36).take 2 = c2 ∧
+    ∀ k, k < n → μ.readN (q + 32 * k) 32 = (hb.drop (32 * k)).take 32
+
+/-- The globals' octets at 196680 … 196688 read as the word G in every memory that holds `gl`
+    there. -/
+theorem glob_word {gl : Nat → UInt8} {G : Nat}
+    (gv : (List.range 8).map (fun k => gl (196680 + k)) = Num.encodeLE 8 G) {μ : Memory}
+    (hg : ∀ a, Glob a → μ.read a = gl a) : μ.readN 196680 8 = Num.encodeLE 8 G := by
+  rw [← gv]
+  unfold Memory.readN
+  apply List.map_congr_left
+  intro k hk
+  simp only [List.mem_range] at hk
+  exact hg _ ⟨by omega, by omega⟩
+
+/-- The globals lie on the heap's first page, which is writable. -/
+theorem glob_writable {env : RefineHost.Env} {pb : Nat} {μ : Memory} {s : State}
+    (H : HeapCtx env pb S0 S1 μ s) {a : Nat} (ha : 196608 ≤ a ∧ a < 196792) : μ.writable a = true := by
+  obtain ⟨ph, h48, hhb, hp, hHTs, hHT⟩ := H.pages
+  have hq := hp (a / 4096) (by omega) (by omega)
+  unfold Memory.writable
+  rw [show pageSize = 4096 from rfl, hq]
+  simp only [decide_eq_true_eq]; omega

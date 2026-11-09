@@ -93,12 +93,12 @@ def FrameA (n B : Nat) (s : State) (μ : Memory) (s' : State) (μ' : Memory) : P
   (∀ a, 4278050816 ≤ a → μ'.writable a = μ.writable a)
 
 /-- **One pass, with the allocator** (see the module doc). -/
-theorem passA {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap pb N : Nat)
+theorem passA {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap pb N : Nat) (gl : Nat → UInt8)
     (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State)
     (es : List (List UInt8)) (reps : Nat → List UInt8 → Memory → Prop) (k B : Nat) (cp cb : Chunk)
     (hk : k < es.length) (ok : Ok es B)
-    (hel : ElemOkA env cap pb p P N es[k] (reps k))
-    (h : InvA env pb es reps k B cp cb ω μ s) :
+    (hel : ElemOkA env cap pb gl p P N es[k] (reps k))
+    (h : InvA env pb es reps k B cp cb ω μ s) (hg : ∀ a, Glob a → μ.read a = gl a) :
     (∃ ω' μ' s', FreeStepsH p (refineContractK cap env) 680 ω μ x (if k + 1 < es.length then 680 else 562)
       ω' μ' x (N + 1700) ∧ InvA env pb es reps (k + 1) B cp cb ω' μ' s' ∧ FrameA es.length B s μ s' μ') ∨
     Exhausts env cap pb p P 680 ω μ x (N + 1700) := by
@@ -169,7 +169,8 @@ theorem passA {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env)
       (fun a h1 h2 => by rw [brd, ard]; exact rt a h1 h2)
       (fun a h1 h2 => by rw [bwr, awr]; exact ws a h1 h2)
       (fun a h1 h2 => by rw [bwr, awr]; exact wr a h1 h2)
-      heap2 ⟨cp, hcp, hcpu, by omega, by omega⟩ with hs | hx
+      heap2 (fun a ha => by have hg' := ha; unfold Glob at hg'; rw [low2 a (by omega)]; exact hg a ha)
+      ⟨cp, hcp, hcpu, by omega, by omega⟩ with hs | hx
   rotate_left
   · exact Or.inr ((Exhausts.pre (run1.trans run2) hx).mono (by omega))
   obtain ⟨ω3, μ3, s', run3, c1, c5, c6, cR0, cR8, ⟨W, hW, cW, cne⟩, heap3, keepU, keepD, ⟨cs, hcs, crep⟩,
@@ -391,12 +392,12 @@ def bound (Ns : Nat → Nat) : Nat → Nat → Nat
     decodes the rest, element j through its `ElemOkA` with bound `Ns j`, and leaves for 562 with `InvA`
     after all n, within the sum of the elements' bounds and 1700 an element (`bound`), changing only
     what `FrameA` allows; or the run reaches a failed allocation. -/
-theorem loopA {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap pb : Nat)
+theorem loopA {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap pb : Nat) (gl : Nat → UInt8)
     (Ns : Nat → Nat) (x : RefineCtx) (es : List (List UInt8)) (reps : Nat → List UInt8 → Memory → Prop)
     (B : Nat) (cp cb : Chunk) (ok : Ok es B)
-    (hel : ∀ j (hj : j < es.length), ElemOkA env cap pb p P (Ns j) es[j] (reps j)) :
+    (hel : ∀ j (hj : j < es.length), ElemOkA env cap pb gl p P (Ns j) es[j] (reps j)) :
     ∀ r k (ω : Regs) (μ : Memory) (s : State), es.length - k = r → k < es.length →
-      InvA env pb es reps k B cp cb ω μ s →
+      InvA env pb es reps k B cp cb ω μ s → (∀ a, Glob a → μ.read a = gl a) →
       (∃ ω' μ' s', FreeStepsH p (refineContractK cap env) 680 ω μ x 562 ω' μ' x (bound Ns k r) ∧
         InvA env pb es reps es.length B cp cb ω' μ' s' ∧ FrameA es.length B s μ s' μ') ∨
       Exhausts env cap pb p P 680 ω μ x (bound Ns k r) := by
@@ -404,11 +405,11 @@ theorem loopA {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env)
   induction r with
   | zero => intro k ω μ s hr hk; omega
   | succ r ih =>
-    intro k ω μ s hr hk h
-    rcases passA (p := p) (P := P) env cap pb (Ns k) x ω μ s es reps k B cp cb hk ok (hel k hk) h with ⟨ω1, μ1, s1, run1, h1, f1⟩ | hx
+    intro k ω μ s hr hk h hg
+    rcases passA (p := p) (P := P) env cap pb (Ns k) gl x ω μ s es reps k B cp cb hk ok (hel k hk) h hg with ⟨ω1, μ1, s1, run1, h1, f1⟩ | hx
     · by_cases hmore : k + 1 < es.length
       · rw [if_pos hmore] at run1
-        rcases ih (k + 1) ω1 μ1 s1 (by omega) hmore h1 with ⟨ω2, μ2, s2, run2, h2, f2⟩ | hx
+        rcases ih (k + 1) ω1 μ1 s1 (by omega) hmore h1 (fun a ha => (f1.2.2.2.2.1 a ha).trans (hg a ha)) with ⟨ω2, μ2, s2, run2, h2, f2⟩ | hx
         · exact Or.inl ⟨ω2, μ2, s2, (run1.trans run2).mono (by simp only [bound]; omega), h2, f1.trans f2⟩
         · exact Or.inr ((Exhausts.pre run1 hx).mono (by simp only [bound]; omega))
       · rw [if_neg hmore] at run1

@@ -91,7 +91,7 @@ theorem Exhausts.mono {env : RefineHost.Env} {cap pb : Nat} {p : ByteArray} {P :
   exact ⟨ω', μ', k, run'.mono hnm, e7, ha⟩
 
 /-- **One element decodes, possibly allocating** (see the module doc). -/
-def ElemOkA (env : RefineHost.Env) (cap pb : Nat) (p : ByteArray) (P : Program) (N : Nat)
+def ElemOkA (env : RefineHost.Env) (cap pb : Nat) (gl : Nat → UInt8) (p : ByteArray) (P : Program) (N : Nat)
     (enc : List UInt8) (Rep : List UInt8 → Memory → Prop) : Prop :=
   ∀ (x : RefineCtx) (ω : Regs) (μ : Memory) (ptr len v5 v6 : Nat) (s : State),
     ω[1] = UInt64.ofNat 4278057632 → ω[5] = UInt64.ofNat 4278057752 → ω[6] = UInt64.ofNat 4278058648 →
@@ -105,7 +105,7 @@ def ElemOkA (env : RefineHost.Env) (cap pb : Nat) (p : ByteArray) (P : Program) 
     μ.readN 67476 100 = Tag.table → (∀ a, 67476 ≤ a → a < 67576 → μ.readable a = true) →
     (∀ a, 4278050816 ≤ a → a < 4278058216 → μ.writable a = true) →
     (∀ a, 4278058648 ≤ a → a < 4278058664 → μ.writable a = true) →
-    HeapCtx env pb S0 S1 μ s →
+    HeapCtx env pb S0 S1 μ s → (∀ a, Glob a → μ.read a = gl a) →
     (∃ c ∈ chunks s, c.used = true ∧ c.addr + 32 ≤ ptr ∧ ptr + (enc.length - 1) ≤ c.addr + 32 * c.size) →
     (∃ ω' μ' s', FreeStepsH p (refineContractK cap env) 20626 ω μ x 723 ω' μ' x N ∧
       ω'[1] = UInt64.ofNat 4278057688 ∧ ω'[5] = UInt64.ofNat v5 ∧ ω'[6] = UInt64.ofNat v6 ∧
@@ -128,10 +128,10 @@ def ElemOkA (env : RefineHost.Env) (cap pb : Nat) (p : ByteArray) (P : Program) 
 
 /-- **Every `ElemOk` is an `ElemOkA`** that keeps the allocator's state: its writes, to the stack,
     the reader and the slot, are all above 2^31. -/
-theorem ElemOkA.of_elemOk {env : RefineHost.Env} {cap pb : Nat} {p : ByteArray} {P : Program}
+theorem ElemOkA.of_elemOk {env : RefineHost.Env} {cap pb : Nat} {gl : Nat → UInt8} {p : ByteArray} {P : Program}
     {enc : List UInt8} {Rep : List UInt8 → Prop} (h : ElemOk p P enc Rep) :
-    ElemOkA env cap pb p P 4000 enc (fun bs _ => Rep bs) := by
-  intro x ω μ ptr len v5 v6 s h1 h5 h6 h7 tag rP rL hl hl' hp hp' pay rpay s0 s5 s6 hv5 hv6 tab rt ws wr H _
+    ElemOkA env cap pb gl p P 4000 enc (fun bs _ => Rep bs) := by
+  intro x ω μ ptr len v5 v6 s h1 h5 h6 h7 tag rP rL hl hl' hp hp' pay rpay s0 s5 s6 hv5 hv6 tab rt ws wr H _ _
   obtain ⟨ω', μ', run, e1, e5, e6, eR0, eR8, eW, eRep, efr, erd, ewr⟩ :=
     h RefineCtx (refineContractK cap env) x ω μ ptr len v5 v6 h1 h5 h6 h7 tag rP rL hl hl' hp hp' pay rpay
       s0 s5 s6 hv5 hv6 tab rt ws wr

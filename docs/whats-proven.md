@@ -361,12 +361,14 @@ An independent kernel, nanoda as vendored by
     (`ElemOkA.of_elemOk`). `loopA` decodes the whole payload through `ElemOkA`s, within the sum of the
     elements' own step bounds and 1700 an element (`bound`), or reaches a failed allocation.
     `alloc_call` is one call of the `alloc` wrapper: the model's block and state, with the context
-    kept, the block a fresh allocated chunk and the heap's data kept (`HKeep`), or null when the model
-    fails.
+    kept, the block a fresh allocated chunk and the heap's data and the globals below the allocator
+    (196616 … 196792) kept (`HKeepG`), or null when the model fails.
   - *Assumed:* the cap on what one host call may charge is at least 2^27 (so any `grow_heap` fits);
     pending confirmation.
   - *How:* main's `alloc_wrap_refines`, `alloc_wrap_refines_growK` and `alloc_wrap_refines_failK`,
-    with the `HKeep` frame of `alloc_refines_hdr` carried through the wrapper (`HeapWrap`);
+    with the `HKeepG` frame of `alloc_refines_hdr` carried through the wrapper (`HeapWrap`);
+    `HKeepG` is `HKeep` with the globals between the wrapper's lock word (196608) and the allocator
+    (`A0` = 196792); the allocator's proofs give it unchanged, and `HKeepG.hkeep` recovers `HKeep`;
     `Rep.congr_data` (writes inside an allocated chunk's data keep `Rep`) and `alloc_keeps_used`.
 
 - **Runs under the refine contract keep page access outside the heap.** `Alloc.FreeStepsH.pagesOut`

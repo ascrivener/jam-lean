@@ -567,6 +567,25 @@ theorem tr_s2 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X)
       (fun a h1 h2 => by rw [wr3, wr2, wr1]; exact hwf a (by omega) (by omega))
       (fun a h1 h2 => by rw [rd3, rd2, rd1]; exact hra a (by omega) (by omega))
       (k3 rd (by omega) (by omega) q0) (k3 (rd + 8) (by omega) (by omega) q8)
-  sorry
+  -- words of the frame from b up: kept by the second read (outside its buffer b + 272 … + 280)
+  have f4 : ∀ a, b ≤ a → a < b + 424 → (a < b + 272 ∨ b + 280 ≤ a) → μ4.read a = μ3.read a :=
+    fun a h1 h2 h3 => fr4 a (by omega) (Or.inr h1) (Or.inl (by omega)) h3
+  have l2 : ∀ o v, b ≤ o → o + 8 ≤ b + 272 → rdN μ1 o 8 = v → rdN μ2 o 8 = v := fun o v h1 h2 hv => by
+    rw [rdN_frame fun j hj => fr2 _ (by omega) (Or.inr (by omega)) (Or.inl (by omega)) (Or.inl (by omega))]; exact hv
+  refine ⟨ω4, μ4, (((r1.trans r2).trans r3).trans r4).mono (by omega), by rw [d1, c1],
+    by rw [d5, c5, e5, a5], by rw [d6, c6], d7, ?_, ?_, ?_, p0, p8, ?_,
+    fun a => by rw [rd4, rd3, rd2, rd1], fun a => by rw [wr4, wr3, wr2, wr1]⟩
+  · rw [rdN_frame fun j hj => f4 _ (by omega) (by omega) (Or.inl (by omega)),
+      rdN_frame fun j hj => fr3 _ (by omega) (Or.inr (by omega)) (Or.inl (by omega))]
+    exact l2 _ _ (by omega) (by omega) s16
+  · rw [rdN_frame fun j hj => f4 _ (by omega) (by omega) (Or.inl (by omega))]
+    rw [s8]
+  · unfold rdN; rw [pb]; congr 1
+    exact PVM.Memory.readN_congr fun j hj => by
+      rw [m3 _ (by omega) (Or.inl (by omega)), fr2 _ (by omega) (Or.inl (by omega)) (Or.inl (by omega)) (Or.inl (by omega)),
+        m1 _ (by omega) (Or.inl (by omega))]
+  · intro a h0 hs hb2 hr
+    rw [fr4 a h0 (by omega) hr (by omega), fr3 a h0 (by omega) (by omega), fr2 a h0 (by omega) hr (by omega),
+      fr1 a h0 (by omega) (by omega)]
 
 end Services.Bootstrap.Acc

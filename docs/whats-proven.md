@@ -356,6 +356,14 @@ An independent kernel, nanoda as vendored by
   - *Scope:* more than 16384 octets (a second chunk, through `realloc`) and the failure of `alloc` are
     not covered yet; the steps of the loop for any chunk are proved (`Services/Bootstrap/Decode/VecU8Loop.lean`:
     `v1g`, `lh`, `g3`, `realloc_ret`, `g2r`, `v2g`, `v5`, `v3g`), not yet composed. Nor is the data of other live heap blocks, which `alloc_ok` does not state.
+  - *`realloc` keeps the heap bound* (`Services/Bootstrap/Decode/ReallocOk.lean`,
+    `realloc_wrap_cases_hdata`): `realloc_wrap_cases_data`, and for each block the model's `realloc`
+    returns, the new state keeps the heap base and its allocated space ends within the heap's pages
+    afterwards (`s'.base + 32 · s'.allocated ≤ 4096 · h'`), the bound the next `alloc` or `realloc`
+    assumes. Model lemmas: `free`, `shrink` and `free`'s merges keep the allocated space, and
+    `realloc_chunk`: the block `realloc` returns (alignment one unit, a nonzero request) is an
+    allocated chunk of exactly the request plus one unit. Same assumptions as
+    `realloc_wrap_cases_data`.
 
 ### picoalloc: the model (`Services/Picoalloc/`)
 

@@ -393,6 +393,20 @@ An independent kernel, nanoda as vendored by
   - *How:* the code at 907 is the hash reader at 1764 (`VecHash`) shifted (−857 for the element loop,
     −900 for the exit), with its own return addresses.
 
+- **`Designate` with 1 … 48 keys, the payload in the heap.** `Decode.VecKey336.vec_key336_heap`
+  (`Services/Bootstrap/Decode/VecKey336.lean`), `Decode.Designate.designate_heap` and `designate_elem`
+  (`DesignateHeap.lean`).
+  - *Statement:* the key reader at 1300 reads n 336-octet keys into a fresh `Vec` `{n, q, n}`; each key
+    is stored in Rust's field order, its payload octets rotated (`keyRot`: the last 128 octets first,
+    then the first 208), so the claim is `μ'.readN q (336n) = keysRot n (payload)`. `designate_heap` is
+    `Instruction::decode` of tag 13 with n ≤ (3·𝖢) mod 2¹⁶, 𝖢 the 16-bit word at 196616;
+    `designate_elem` is its decode-loop element (`ElemOkAF`, 𝖢 from the globals). The `alloc` may fail.
+  - *Scope:* n ≤ 48, the reader's first reserve batch; more keys go through `finish_grow`'s regrow.
+  - *Binary:* the bound check computes 3·𝖢 in 16 bits (`loadI16`, then zero-extension), so the code
+    accepts n ≤ (3·𝖢) mod 2¹⁶ rather than n ≤ 3·𝖢; they agree for 𝖢 < 21846 (the start-up's 𝖢 = 341).
+  - *How:* `memcpy_s1` and `memcpy_d1` (`Key336Memcpy.lean`) are two copies `memcpy_big`'s margins
+    do not cover, assembled from its sub-lemmas.
+
 - **`Vec<Vec<u8>>` with the payload in the heap (1 ≤ n ≤ 682 elements, each ≤ 16384 octets).**
   `Decode.VecVecU8.vec_vec_u8_heap` (`Services/Bootstrap/Decode/VecVecU8.lean`).
   - *Statement:* the element reader at 8, which reads the items of `DeleteItems`, `Export` and

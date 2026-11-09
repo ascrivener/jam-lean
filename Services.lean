@@ -103,6 +103,9 @@ import Services.Bootstrap.Decode.VecU32U64
 import Services.Bootstrap.Decode.BlessHeap
 import Services.Bootstrap.Decode.VecHash32
 import Services.Bootstrap.Decode.RandomStorageOk
+import Services.Bootstrap.Decode.Key336Memcpy
+import Services.Bootstrap.Decode.VecKey336
+import Services.Bootstrap.Decode.DesignateHeap
 import Services.Bootstrap.Decode.VecVecU8
 import Services.Picoalloc.Model
 import Services.Picoalloc.Invariant

@@ -194,7 +194,46 @@ theorem rv_call {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
         (fun a h1 h2 => by
           rw [rd4, rd3]; exact Memory.readable_of_writable (H2.st a (by omega) (by omega)))
         (fun a h1 h2 => by rw [wr4, wr3]; exact H2.st a (by omega) (by omega))
-    sorry
+    -- below 2³¹, μ5 reads as μ2 off the new block's data
+    have low52 : ∀ a, a < 2147483648 → (a < ptr ∨ ptr + len ≤ a) → μ5.read a = μ2.read a := fun a h1 h2 => by
+      rw [fr5 a (by omega) (Or.inl (by omega)), fr4 a (by omega) (Or.inl (by omega)) (Or.inl (by omega)) h2,
+        fr3 a (by omega) (Or.inl (by omega))]
+    have ww : ∀ a, μ5.writable a = μ2.writable a := fun a => by rw [wr5, wr4, wr3]
+    have dec : ∀ v : UInt64, UInt64.ofNat v.toNat = v := fun v => UInt64.ofNat_toNat
+    -- the heap data of s: kept by `finish_grow` (off the new headers), then off the new block
+    have keepd : ∀ c' ∈ chunks s, c'.used = true → ∀ a, InDataA c' a → μ2.read a = μ.read a := by
+      intro c' hc' hu a ha
+      have hc'' := keep c' hc' hu
+      have hoff := Services.Bootstrap.Alloc.off_hdr_data H2.wf (by rw [hb']; exact H.hb0) (by rw [hb']; exact H.hbT)
+        hc'' ha.1 ha.2
+      have hcs' := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc' hu
+      unfold InDataA at ha
+      rw [hk a ⟨Or.inr hoff.1, hoff.2.1, hoff.2.2⟩, fr1 a (by omega) (Or.inl (by omega))]
+    refine ⟨ptr, s', ω5, μ5, ha, ((((r1.trans r2).trans r3).trans r4).trans r5).mono (by omega),
+      ⟨H2.wf, Services.Bootstrap.Decode.HeapFrame.Rep.congr_data H2.rep H2.wf (by rw [hb']; exact H.hb0)
+        (by rw [hb']; exact H.hbT) hnew (fun a h1 h2 => low52 a h1 (by simp only at h2; omega)),
+        H2.fo, by rw [rdN_frame fun j hj => low52 _ (by omega) (Or.inl (by omega))]; exact H2.lock,
+        H2.hb0, H2.hbT, H2.hA, H2.bd,
+        by obtain ⟨ph2, a2, b2, c2, d2, e2⟩ := H2.pages; exact ⟨ph2, a2, b2, HeapPages.of_eq c2 ww, d2, e2⟩,
+        H2.hSb, H2.hS1, fun a h1 h2 => by rw [ww]; exact H2.st a h1 h2, fun a h => by rw [ww]; exact H2.ro a h⟩,
+      keep, hnew, fun d hd hu => hfresh d hd hu, ?_, g0, g8, g16, ?_, ?_, ?_, ?_, by rw [f0, dec], ?_,
+      by rw [f5, dec], by rw [f6, dec]⟩
+    · intro c' hc' hu a ha
+      have hc'' := keep c' hc' hu
+      have hne' : c' ≠ ⟨ptr - 32, (len + 31) / 32 + 1, true⟩ := hfresh c' hc' hu
+      have hd' := Services.Bootstrap.Decode.HeapFrame.Tiles.disjoint ht2 c' hc'' _ hnew hne'
+      simp only at hd'
+      have hcs' := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc' hu
+      unfold InDataA at ha
+      rw [low52 a (by omega) (by omega), keepd c' hc' hu a ha]
+    · rw [PVM.Memory.readN_congr (μ := μ4) (fun j hj => fr5 _ (by omega) (Or.inl (by omega))), qb,
+        PVM.Memory.readN_congr (μ := μ2) (fun j hj => fr3 _ (by omega) (Or.inl (by omega)))]
+      exact PVM.Memory.readN_congr (fun j hj => keepd c hcm hcu _ ⟨by omega, by omega⟩)
+    · rw [PVM.Memory.readN_congr (μ := μ4) (fun j hj => fr5 _ (by omega) (by omega))]; exact q0
+    · rw [PVM.Memory.readN_congr (μ := μ4) (fun j hj => fr5 _ (by omega) (by omega))]; exact q8
+    · intro a h0 hs ho hr
+      rw [fr5 a h0 ho, fr4 a h0 (Or.inr (by omega)) hr (Or.inr (by omega)), m3 a h0 hs]
+    · rw [f1, h1]; congr 1; omega
   · right
     rw [e1] at ha
     refine ⟨ha, ?_⟩

@@ -5,6 +5,9 @@
 import Services.Bootstrap.BParams.E0
 import Services.Bootstrap.BParams.E64
 import Services.Bootstrap.BParams.E128
+import Services.Bootstrap.BParams.S174
+import Services.Bootstrap.BParams.S175
+import Services.Bootstrap.BParams.S176
 
 namespace Services.Bootstrap.BParams
 
@@ -16,6 +19,18 @@ set_option maxRecDepth 100000
 theorem chain (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
     (x : RefineCtx) (L : Nat) (hL : 0 < L ∧ L < 16777217) (ω₀ : Regs) (μ₀ : Memory) (h : St0 L ω₀ μ₀ ω μ) :
     ∃ ω' μ', FreeStepsH p (refineContract env) 38875 ω μ x 4642 ω' μ' x 2829 ∧ St177 L ω₀ μ₀ ω' μ' := by
+  obtain ⟨ω1, μ1, run1, h1⟩ := E0.run p P env ω μ x L hL ω₀ μ₀ h
+  obtain ⟨ω2, μ2, run2, h2⟩ := E64.run p P env ω1 μ1 x L hL ω₀ μ₀ h1
+  obtain ⟨ω3, μ3, run3, h3⟩ := E128.run p P env ω2 μ2 x L hL ω₀ μ₀ h2
+  obtain ⟨ω4, μ4, run4, h4⟩ := S174.run p P env ω3 μ3 x L hL ω₀ μ₀ h3
+  obtain ⟨ω5, μ5, run5, h5⟩ := S175.run p P env ω4 μ4 x L hL ω₀ μ₀ h4
+  obtain ⟨ω6, μ6, run6, h6⟩ := S176.run p P env ω5 μ5 x L hL ω₀ μ₀ h5
+  exact ⟨ω6, μ6, (run1.trans (run2.trans (run3.trans (run4.trans (run5.trans run6))))), h6⟩
+
+/-- **Steps 0 … 2783 after pc 38875**: the chain up to cut 174. -/
+theorem prefix174 (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)
+    (x : RefineCtx) (L : Nat) (hL : 0 < L ∧ L < 16777217) (ω₀ : Regs) (μ₀ : Memory) (h : St0 L ω₀ μ₀ ω μ) :
+    ∃ ω' μ', FreeStepsH p (refineContract env) 38875 ω μ x 56250 ω' μ' x 2784 ∧ St174 L ω₀ μ₀ ω' μ' := by
   obtain ⟨ω1, μ1, run1, h1⟩ := E0.run p P env ω μ x L hL ω₀ μ₀ h
   obtain ⟨ω2, μ2, run2, h2⟩ := E64.run p P env ω1 μ1 x L hL ω₀ μ₀ h1
   obtain ⟨ω3, μ3, run3, h3⟩ := E128.run p P env ω2 μ2 x L hL ω₀ μ₀ h2

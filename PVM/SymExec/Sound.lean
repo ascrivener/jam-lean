@@ -661,27 +661,21 @@ theorem sload_sound (hpre : Pre E st) {σ σ' : SState} {ω : Regs} {μ : Memory
   · cases hl
 /-! ## Code -/
 
-theorem allCodeT_find {p : ByteArray} {P : Program} :
-    ∀ {t : CTree}, AllCodeT p P t → ∀ pc e, t.find pc = some e →
-      e.pc = pc ∧ deblob p e.pc = some P ∧ P.decode e.pc = some e.ins ∧ P.next e.pc = e.next ∧
-        P.blockCost (P.blockStartOf e.pc) ≤ stepCostCap
-  | .leaf, _, _, _, h => by simp [CTree.find] at h
-  | .node l e' r, ⟨he, hl, hr⟩, pc, e, h => by
-    simp only [CTree.find] at h
+theorem NTree.all_find {α : Type} {Q : Nat → α → Prop} :
+    ∀ {t : NTree α}, t.All Q → ∀ k v, t.find k = some v → Q k v
+  | .leaf, _, _, _, h => by simp [NTree.find] at h
+  | .node l k' v' r, ⟨he, hl, hr⟩, k, v, h => by
+    simp only [NTree.find] at h
     split at h
-    · exact allCodeT_find hl pc e h
+    · exact NTree.all_find hl k v h
     · split at h
-      · cases h; rename_i hpc; exact ⟨hpc.symm, he⟩
-      · exact allCodeT_find hr pc e h
+      · cases h; rename_i hk; subst hk; exact he
+      · exact NTree.all_find hr k v h
 
-theorem isBS_sound {P : Program} :
-    ∀ {bs : List (Nat × Bool)}, AllBS P bs → ∀ n, isBS bs n = true → P.isBlockStart n = true
-  | [], _, n, h => by simp [isBS] at h
-  | b :: bs, ⟨hb, hs⟩, n, h => by
-    simp only [isBS, List.any_cons, Bool.or_eq_true, Bool.and_eq_true, beq_iff_eq] at h
-    rcases h with ⟨rfl, h2⟩ | h
-    · rw [hb, h2]
-    · exact isBS_sound hs n h
+theorem isBS_sound {P : Program} {bs : NTree Bool} (hb : bs.All (fun n b => P.isBlockStart n = b))
+    (n : Nat) (h : isBS bs n = true) : P.isBlockStart n = true := by
+  simp only [isBS, beq_iff_eq] at h
+  exact NTree.all_find hb n true h
 
 /-! ## Steps -/
 
@@ -764,16 +758,6 @@ theorem sjump_eq {P : Program} {i : Nat} {y : Int} (hy : 0 ≤ y)
     simp only [Program.isBlockStartInt, h1]; split <;> simp_all; omega
   simp [Program.sjump, this]
 
-theorem allJT_lookup {P : Program} : ∀ {jt : List (Nat × Nat)}, AllJT P jt → ∀ k t,
-    jt.lookup k = some t → P.jumpTable.getD k 0 = t
-  | [], _, _, _, h => by simp at h
-  | (a, b) :: js, ⟨hj, hs⟩, k, t, h => by
-    simp only [List.lookup_cons] at h
-    by_cases hk : k = a
-    · subst hk; simp at h; subst h; exact hj
-    · rw [show (k == a) = false by simpa using hk] at h
-      exact allJT_lookup hs k t h
-
 theorem sdjump_sound {p : ByteArray} {P : Program} {G : Prog} (hG : ProgHyp p P G) {i a t : Nat}
     (h : sdjump G a = some t) : P.djump i a = (.cont, t) := by
   obtain ⟨_, hbs, hjt, hsz⟩ := hG
@@ -786,7 +770,7 @@ theorem sdjump_sound {p : ByteArray} {P : Program} {G : Prog} (hG : ProgHyp p P 
     split at h
     · cases h
       rename_i hb
-      have h1 := allJT_lookup hjt _ _ hl
+      have h1 := NTree.all_find hjt _ _ hl
       have h2 := isBS_sound hbs _ hb
       unfold Program.djump
       rw [ite_eq_right (by omega), ite_eq_right (by rw [hsz]; omega)]
@@ -840,11 +824,9 @@ theorem sstep_sound {p : ByteArray} {P : Program} {G : Prog}
   · cases h
   rename_i e hfe
   have hbs := hG.2.1
-  obtain ⟨hpc, hd⟩ := allCodeT_find hG.1 pc e hfe
-  rw [hpc] at hd
-  obtain ⟨hd1, hd2, hd3, hd4⟩ := hd
+  obtain ⟨hd1, hd2, hd3, hd4⟩ := NTree.all_find hG.1 pc e hfe
   -- the step through the mutation `m`, landing at `m.pc`
-  have go : ∀ (m : Mutation), P.exec pc e.ins ω μ = m → m.status = .cont →
+  have go : ∀ (m : Mutation), P.exec pc e.1 ω μ = m → m.status = .cont →
       memoryException μ m.reads m.writes = none → Inv E σ' m.regs m.mem → m.pc = pc' →
       ∃ ω' μ', FreeNext p pc ω μ pc' ω' μ' ∧ CostOk p pc ∧ Inv E σ' ω' μ' := by
     intro m hm hs hx hi hmpc
@@ -914,6 +896,19 @@ theorem sstep_sound {p : ByteArray} {P : Program} {G : Prog}
   · -- load_imm_64
     rename_i a x hins; cases h
     exact go _ (by rw [hins]; try rfl) rfl rfl (setv_inv hinv a (.const x.toNat)) hd3
+  · -- store of an immediate at an immediate address
+    rename_i op x y hins
+    obtain ⟨hs, rfl⟩ := map_pair h
+    obtain ⟨hw, hi⟩ := memStore hpre hinv (rb := 0) rfl hs
+    rw [Nat.zero_add] at hw hi
+    refine go { status := .cont
+                pc := P.next pc
+                regs := ω
+                mem := μ.writeN x.toNat
+                  (encodeLE op.width (SVal.eval E (.const (y.toNat % 2 ^ (8 * op.width)))))
+                writes := indices x.toNat op.width }
+      (by rw [hins]; try rfl) rfl ?_ hi hd3
+    exact memEx_none (by simp) hw
   · -- two registers
     rename_i op d a hins; cases h
     refine go _ (by rw [hins]; try rfl) rfl rfl ?_ hd3

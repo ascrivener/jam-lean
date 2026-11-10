@@ -134,7 +134,7 @@ def spec(j):
             a, b = map(int, n[4:].split('_')); rd.append((a, b)); rdn.append(n)
         elif n.startswith('hw_'):
             a, b = map(int, n[3:].split('_')); wr.append((a, b)); wrn.append(n)
-        elif n in ('fr', 'rdq', 'wrq'):
+        elif n in ('fr', 'rdq', 'wrq', 'hhp', 'rdA', 'rdm', 'wrm'):
             pass
         else:
             raise Unencodable(f'St{j}: field {n}')
@@ -260,8 +260,18 @@ theorem seg{a} {X} {vbind} (hB : BHold {vl} ub) (hLB : LBHold {vl} lb)
             simp only [{cs}, Bool.and_eq_true, decide_eq_true_eq, Bool.not_eq_true', decide_eq_false_iff_not, not_and, Nat.not_lt] at ha
             rw [hfr a (by show a < 4294967296; omega) (out_of_bool (by simp only [cut{e}, List.all_cons, List.all_nil, Bool.and_true, Bool.and_eq_true, beq_self_eq_true, Bool.true_and, Bool.or_eq_true, decide_eq_true_eq]; omega))]
             exact h.fr a (by simp_all)''')
-    fl.append('rdq := fun a => (readable_pages hpg a).trans (h.rdq a)')
-    fl.append('wrq := fun a => (writable_pages hpg a).trans (h.wrq a)')
+    # the page facts: the executor keeps μ's pages, so they carry over from St_b
+    fb, fe = dict(fields(b)), dict(fields(e))
+    for n in [n for n, _ in fields(e) if n in ('rdq', 'wrq', 'hhp', 'rdA', 'rdm', 'wrm')]:
+        assert n in fb, f'St{e}.{n}: not in St{b}'
+        if n == 'rdq': fl.append('rdq := fun a => (readable_pages hpg a).trans (h.rdq a)')
+        elif n == 'wrq': fl.append('wrq := fun a => (writable_pages hpg a).trans (h.wrq a)')
+        elif n == 'rdA': fl.append('rdA := fun a ha => (readable_pages hpg a).trans (h.rdA a ha)')
+        elif n == 'rdm': fl.append('rdm := fun a ha => (readable_pages hpg a).trans (h.rdm a ha)')
+        elif n == 'wrm': fl.append('wrm := fun a ha => (writable_pages hpg a).trans (h.wrm a ha)')
+        elif n == 'hhp':
+            assert fb[n] == fe[n], f'St{e}.hhp differs from St{b}.hhp'
+            fl.append('hhp := fun q h1 h2 => by rw [hpg]; exact h.hhp q h1 h2')
     body.append(f'  exact ⟨{prev[0]}, {prev[1]}, {rr},\n    {{ ' + '\n      '.join(fl) + ' }⟩')
     tnext = targs.rsplit(' ', 2)[0]
     o.append(f'''/-- **Cut {b} to cut {e}**: the statement of the composed `S{b}.run` … `S{e - 1}.run`. -/

@@ -1,7 +1,4 @@
 import Services.Bootstrap.SymExec.Prog
-import Services.Bootstrap.SymExec.BTail1S0
-import Services.Bootstrap.SymExec.BTail1S0to32
-import Services.Bootstrap.SymExec.BTail1Cuts
 import Services.Bootstrap.SymExec.FixedZ
 
 /-!

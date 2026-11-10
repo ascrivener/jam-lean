@@ -227,7 +227,7 @@ theorem io_entry {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x :
   rotate_left 2
   · pvm_go [h0, h1, h5, h6, h7, hS, hv, hw, hr, rdN_writeN_disjoint, ↓rdN_fold]
   · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
-    all_goals post_simp [rdN_writeN_disjoint, rdN_writeN_same8, Num.decodeLE_encodeLE, h0, h1, h5, h6, h7,
+    all_goals post_simp [rdN_writeN_disjoint, rdN_writeN_same8, rdN_lit8, Num.decodeLE_encodeLE, h0, h1, h5, h6, h7,
       Nat.mod_eq_of_lt hv.1, Nat.mod_eq_of_lt hv.2.1, Nat.mod_eq_of_lt hv.2.2.1, Nat.mod_eq_of_lt hv.2.2.2]
 
 /-- 48534 … 48545: `info`'s arguments: the service itself (ω₇ = 2⁶⁴ − 1, from ω₆), the buffer T + 64,
@@ -276,7 +276,7 @@ theorem io_l {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) 
     (r6 : rdN μ (T + 240) 8 = v6)
     (hr : ∀ a, T ≤ a → a < T + 264 → μ.readable a = true)
     (hw : ∀ a, T + 264 ≤ a → a < T + 264 + 104 → μ.writable a = true) :
-    ∃ ω' μ', FreeStepsH p R 48871 ω μ x 49510 ω' μ' x 36 ∧
+    ∃ ω' μ', FreeStepsH p R 48871 ω μ x 49510 ω' μ' x 40 ∧
       ω'[1] = UInt64.ofNat (T + 264) ∧ ω'[5] = UInt64.ofNat D ∧ ω'[6] = UInt64.ofNat v6 ∧
       rdN μ' (T + 264) 8 = 1 ∧
       (∀ a, a < 4294967296 → (a < T + 264 ∨ T + 264 + 104 ≤ a) → μ'.read a = μ.read a) ∧

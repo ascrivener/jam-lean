@@ -172,23 +172,27 @@ hypotheses, marked temporary. They are lifted by generalizing the realloc impl l
 return address (they fix ω₀ = 1988 / 40805) after the HeapHost PR, keeping the ω₀ = 1988 forms as
 corollaries.
 
-- `AccumulateItem::decode` (45126, frame 424), its entry and the transfer arm, as segments
-  (`Acc/Inputs/Item.lean`): `it_pre`, `it_tr_src`, `it_tr_dst`, `it_tr_amt`, `it_tr_memo0`,
-  `it_tr_memo`, `it_tr_memocp`, `it_tr_gas`, `u64_pre` / `u64_post` (the `u64` reader 46040),
-  `it_tr_cp` and `it_tr_fill`. **Next:** their composition, 45126 → 47072. The order is:
-  - `it_pre`, then `read_ok` (1 octet; 2082 → 46300);
-  - `it_tr_src`, then `read_ok` (4; 2092 → 46624);
-  - `it_tr_dst`, then `read_ok` (4; 2094 → 46658);
-  - `it_tr_amt`, then `read_ok` (8; 2096 → 46688);
-  - `it_tr_memo0`, then `memzero` (2098 → 46714);
-  - `it_tr_memo`, then `read_any` (128; 2100 → 46730);
-  - `it_tr_memocp`, then `memcpy_big` (2102 → 46751);
-  - `it_tr_gas`, then `u64_pre`, `read_ok` (8; 2068 → 46059), `u64_post`, and the jump (2104 → 46759);
-  - `it_tr_cp`, then `memcpy_big` (2112 → 47029);
-  - `it_tr_fill`.
-
-  The operand arm starts at 46344: four hashes by `read_ok`, then gas, the work result and the auth
-  trace (`vv_call`).
+- `AccumulateItem::decode` (45126, frame 424), its entry and the transfer arm (`Acc/Inputs/Item.lean`):
+  segments `it_pre` … `it_tr_fill`, stages `tr_s1` … `tr_s4`, and **`tr_call`** (45126 → 47072): a
+  deferred transfer's 153 octets at ip into the slot (−1 at + 0, memo at + 8, amount + 136, gas + 144,
+  source + 152, destination + 156).
+- The `u64` compact decoder 46856 (body 39982 … 40212; `Acc/Inputs/CompactU64*.lean`): segments
+  `cu_head`, `cu_mid` (the leading-ones cascade, l < 8), `cu_post`, `cu_zero`, `cu_ff`, `cu_ff_post`;
+  `cu_pre`, `cu_tail_mid`, `cu_tail_ff`; and **`cu_call`**: from ℰ(g) at the reader, ω₈ = g
+  (return address 2106 → 46889).
+- **Next, the operand arm** (tag 0, from 46344), as the code facts show it:
+  - 46344 … 46571: four hashes, each by `read_ok` (32 octets into b + 272, returns 2084 / 2086 / 2088 /
+    2090) and copied to b + 32, + 64, + 96 and (after the gas) + 136; a failed read goes to 46575 / 46579
+    (−2 at out + 0, the error);
+  - 46818 … 46852: the fourth hash to b + 136 and the call of 46856 (`cu_call`, the gas);
+  - 46889 … 46932: the gas's error bit, then the work result's tag octet read into b + 272 (2108);
+  - tag 0 (47074): the `Vec<u8>` by 39634 (2114) into b + 272, cap −2⁶³ (the niche) meaning an error;
+    then b + 8 = cap, b + 16 = the packed (ptr, len) words (47095 … 47143);
+  - tags 1 … 6 (46936 … 47007): the tag re-read from a one-octet reader at b + 135; 7 … 255 fail;
+    b + 8 = −1 (no `Vec`), b + 16 = the tag;
+  - 47136 … 47152: the auth trace, a `Vec<u8>` by 39634 (2116);
+  - 47158 … 47332: the 184-octet operand slot from b and the trace; 47334 … 47414: on a trace error,
+    the work output's buffer freed (42327, the allocator's lock inline) and the error.
 
 Plan:
 1. (After the bounds are lifted.) `finish_grow`'s realloc path (a current block, 40898 … 40995 → 42980 → 41109). It needs:

@@ -197,4 +197,142 @@ theorem cu_tail_ff {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x
     fun a h0 hs' hr => ?_, fun a => by rw [rd2, rd1], fun a => by rw [wr2, wr1]⟩
   rw [fr2 a h0 (by omega) hr (by omega), fr1 a h0 (by omega)]
 
+/-- ℰ(x) for 2^(7l) ≤ x < 2^(7(l+1)), l < 8 (GP v0.8.0 Appendix C): the prefix octet
+    2⁸ − 2^(8−l) + ⌊x / 2^(8l)⌋, then ℰ_l(x mod 2^(8l)). -/
+theorem encodeNat_of_lt8 (x l : Nat) (hl : l < 8) (hx : 0 < x) (h1 : 2 ^ (7 * l) ≤ x)
+    (h2 : x < 2 ^ (7 * (l + 1))) :
+    Blob.encodeNat x = UInt8.ofNat (2 ^ 8 - 2 ^ (8 - l) + x / 2 ^ (8 * l)) :: Num.encodeLE l (x % 2 ^ (8 * l)) := by
+  have hx' : x ≠ 0 := by omega
+  have : l = 0 ∨ l = 1 ∨ l = 2 ∨ l = 3 ∨ l = 4 ∨ l = 5 ∨ l = 6 ∨ l = 7 := by omega
+  rcases this with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl <;>
+  simp only [Nat.reduceMul, Nat.reducePow, Nat.reduceAdd] at h1 h2 <;>
+  simp (disch := omega) only [Blob.encodeNat, hx', ite_false, List.range_succ, List.range_zero, List.nil_append,
+    List.find?_append, List.find?_cons, List.find?_nil, Nat.reduceMul, Nat.reducePow, Nat.reduceAdd,
+    decide_eq_true, decide_eq_false, Bool.and_true, Bool.true_and, Bool.and_false, Bool.false_and,
+    Option.some_or, Option.none_or, Nat.reduceSub, Nat.reduceDiv, Nat.div_one, Nat.mod_one, Nat.zero_add]
+
+/-- ℰ(x) for x ≥ 2^56 (GP v0.8.0 Appendix C): 255, then ℰ₈(x). -/
+theorem encodeNat_big (x : Nat) (h : 72057594037927936 ≤ x) : Blob.encodeNat x = 255 :: Num.encodeLE 8 x := by
+  have hx' : x ≠ 0 := by omega
+  simp (disch := omega) only [Blob.encodeNat, hx', ite_false, List.range_succ, List.range_zero, List.nil_append,
+    List.find?_append, List.find?_cons, List.find?_nil, Nat.reduceMul, Nat.reducePow, Nat.reduceAdd,
+    decide_eq_true, decide_eq_false, Bool.and_true, Bool.true_and, Bool.and_false, Bool.false_and,
+    Option.some_or, Option.none_or, Nat.reduceSub, Nat.reduceDiv, Nat.div_one, Nat.mod_one, Nat.zero_add]
+
+/-- The prefix octet of ℰ(x) in its l-octet form, as `cu_mid` and `cu_post` need it. -/
+theorem compact_mid_arith (x l : Nat) (hl : l < 8) (h1 : 2 ^ (7 * l) ≤ x) (h2 : x < 2 ^ (7 * (l + 1))) :
+    2 ^ 8 - 2 ^ (8 - l) + x / 2 ^ (8 * l) < 256 ∧ 0 < 2 ^ 8 - 2 ^ (8 - l) + x / 2 ^ (8 * l) ∧
+    256 - 2 ^ (8 - l) ≤ 2 ^ 8 - 2 ^ (8 - l) + x / 2 ^ (8 * l) ∧
+    2 ^ 8 - 2 ^ (8 - l) + x / 2 ^ (8 * l) < 256 - 2 ^ (7 - l) ∧
+    x % 2 ^ (8 * l) + (2 ^ 8 - 2 ^ (8 - l) + x / 2 ^ (8 * l)) % 2 ^ (7 - l) * 2 ^ (8 * l) = x ∧
+    x % 2 ^ (8 * l) < 2 ^ (8 * l) := by
+  have : l = 0 ∨ l = 1 ∨ l = 2 ∨ l = 3 ∨ l = 4 ∨ l = 5 ∨ l = 6 ∨ l = 7 := by omega
+  rcases this with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl <;>
+  simp only [Nat.reduceMul, Nat.reducePow, Nat.reduceAdd, Nat.reduceSub] at h1 h2 ⊢ <;> omega
+
+/-- **46856 → 46889, ℰ(g) decoded** (GP v0.8.0 Appendix C, the general natural encoding; the
+    caller's return address 2106): from the reader's octets ℰ(g) at ptr, ω₈ = g and ω₇ = 0, with
+    ω₁, ω₅, ω₆ kept, the reader advanced by |ℰ(g)|, and memory changed only in the frames
+    [sp − 128, sp) and the reader. -/
+theorem cu_call {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
+    (sp rd ptr len g : Nat) (h0 : ω[0] = UInt64.ofNat 2106) (h1 : ω[1] = UInt64.ofNat sp)
+    (h7 : ω[7] = UInt64.ofNat rd)
+    (hsp : 65536 + 128 ≤ sp ∧ sp < 4294967296) (hrd : 65536 ≤ rd ∧ rd + 16 < 4294967296)
+    (hptr : 65536 ≤ ptr ∧ ptr + 32 < 4294967296) (hlen : (Blob.encodeNat g).length ≤ len ∧ len < 4294967296)
+    (hrf : rd + 16 ≤ sp - 128 ∨ sp ≤ rd) (hpf : ptr + 32 ≤ sp - 128 ∨ sp ≤ ptr)
+    (hpr : ptr + 32 ≤ rd ∨ rd + 16 ≤ ptr)
+    (hwf : ∀ a, sp - 128 ≤ a → a < sp → μ.writable a = true)
+    (hwr : ∀ a, rd ≤ a → a < rd + 16 → μ.writable a = true)
+    (hra : ∀ a, ptr ≤ a → a < ptr + (Blob.encodeNat g).length → μ.readable a = true)
+    (hR0 : μ.readN rd 8 = Num.encodeLE 8 ptr) (hR8 : μ.readN (rd + 8) 8 = Num.encodeLE 8 len)
+    (hg : g < 18446744073709551616) (henc : μ.readN ptr (Blob.encodeNat g).length = Blob.encodeNat g) :
+    ∃ ω' μ', FreeStepsH p R 46856 ω μ x 46889 ω' μ' x 300 ∧
+      ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ ω'[7] = UInt64.ofNat 0 ∧
+      ω'[8] = UInt64.ofNat g ∧
+      μ'.readN rd 8 = Num.encodeLE 8 (ptr + (Blob.encodeNat g).length) ∧
+      μ'.readN (rd + 8) 8 = Num.encodeLE 8 (len - (Blob.encodeNat g).length) ∧
+      (∀ a, a < 4294967296 → (a < sp - 128 ∨ sp ≤ a) → (a < rd ∨ rd + 16 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  by_cases hz : g = 0
+  · subst hz
+    have e : Blob.encodeNat 0 = [0] := by simp [Blob.encodeNat]
+    rw [e] at henc hlen hra ⊢
+    simp only [List.length_cons, List.length_nil, Nat.zero_add] at henc hlen hra ⊢
+    have hb : rdN μ ptr 1 = 0 := by unfold rdN; rw [henc]; rfl
+    obtain ⟨ω1, μ1, r1, a1, a5, a6, a7, b8, s32, s24, s16, R0, R8, fr1, rd1, wr1⟩ :=
+      cu_pre (p := p) (P := P) (R := R) x ω μ sp rd ptr len h1 h7 hsp hrd ⟨hptr.1, by omega⟩ ⟨by omega, hlen.2⟩
+        hrf (by omega) hwf hwr (hra ptr (Nat.le_refl _) (by omega)) hR0 hR8
+    have h32 : rdN μ1 (sp - 40 + 32) 8 = 2106 := by rw [s32, h0]; rfl
+    obtain ⟨ω2, r2, f0, f1, f5, f6, f7, f8⟩ :=
+      cu_zero (p := p) (P := P) (R := R) x ω1 μ1 (sp - 40) ω[5].toNat ω[6].toNat a1 a7 ⟨by omega, by omega⟩
+        (fun a h1 h2 => by rw [rd1]; exact Memory.readable_of_writable (hwf a (by omega) (by omega)))
+        (by rw [b8, hb]) s16 s24 h32
+    refine ⟨ω2, μ1, (r1.trans r2).mono (by omega), by rw [f1, show sp - 40 + 40 = sp by omega],
+      by rw [f5, UInt64.ofNat_toNat], by rw [f6, UInt64.ofNat_toNat], f7, f8, R0, R8, fun a h0 hs hr => ?_, rd1, wr1⟩
+    exact fr1 a h0 hs hr
+  by_cases hbig : 72057594037927936 ≤ g
+  · have e := encodeNat_big g hbig
+    rw [e] at henc hlen hra ⊢
+    simp only [List.length_cons, Num.length_encodeLE] at henc hlen hra ⊢
+    rw [show 8 + 1 = 1 + 8 by rfl, PVM.Memory.readN_split, ← List.singleton_append] at henc
+    obtain ⟨hp1, hp2⟩ := List.append_inj henc (by simp)
+    have hb : rdN μ ptr 1 = 255 := by unfold rdN; rw [hp1]; rfl
+    obtain ⟨ω1, μ1, r1, a1, a5, a6, a7, b8, s32, s24, s16, R0, R8, fr1, rd1, wr1⟩ :=
+      cu_pre (p := p) (P := P) (R := R) x ω μ sp rd ptr len h1 h7 hsp hrd ⟨hptr.1, by omega⟩ ⟨by omega, hlen.2⟩
+        hrf (by omega) hwf hwr (hra ptr (Nat.le_refl _) (by omega)) hR0 hR8
+    have h32 : rdN μ1 (sp - 40 + 32) 8 = 2106 := by rw [s32, h0]; rfl
+    obtain ⟨ω2, μ2, r2, f1, f5, f6, f7, f8, q0, q8, fr2, rd2, wr2⟩ :=
+      cu_tail_ff (p := p) (P := P) (R := R) x ω1 μ1 (sp - 40) rd (ptr + 1) (len - 1) g ω[5].toNat ω[6].toNat
+        a1 a6 a7 ⟨by omega, by omega⟩ hrd ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ (by omega) (by omega)
+        (fun a h1 h2 => by rw [wr1]; exact hwf a (by omega) (by omega))
+        (fun a h1 h2 => by rw [wr1]; exact hwr a h1 h2)
+        (fun a h1 h2 => by rw [rd1]; exact hra a (by omega) (by omega)) R0 R8 (by rw [b8, hb])
+        (by rw [PVM.Memory.readN_congr (μ := μ) (fun j hj => fr1 _ (by omega) (by omega) (by omega))]; exact hp2)
+        hg s16 s24 h32
+    refine ⟨ω2, μ2, (r1.trans r2).mono (by omega), by rw [f1, show sp - 40 + 40 = sp by omega],
+      by rw [f5, UInt64.ofNat_toNat], by rw [f6, UInt64.ofNat_toNat], f7, f8,
+      by rw [q0, show ptr + 1 + 8 = ptr + (8 + 1) by omega], by rw [q8, show len - 1 - 8 = len - (8 + 1) by omega],
+      fun a h0 hs hr => ?_, fun a => by rw [rd2, rd1], fun a => by rw [wr2, wr1]⟩
+    rw [fr2 a h0 (by omega) hr, fr1 a h0 hs hr]
+  · obtain ⟨l, hl, hl1, hl2⟩ : ∃ l, l < 8 ∧ 2 ^ (7 * l) ≤ g ∧ g < 2 ^ (7 * (l + 1)) := by
+      rcases (show g < 128 ∨ (128 ≤ g ∧ g < 16384) ∨ (16384 ≤ g ∧ g < 2097152) ∨
+          (2097152 ≤ g ∧ g < 268435456) ∨ (268435456 ≤ g ∧ g < 34359738368) ∨
+          (34359738368 ≤ g ∧ g < 4398046511104) ∨ (4398046511104 ≤ g ∧ g < 562949953421312) ∨
+          (562949953421312 ≤ g ∧ g < 72057594037927936) by omega) with h | h | h | h | h | h | h | h
+      · exact ⟨0, by decide, by simp only [Nat.reduceMul, Nat.reducePow]; omega, by simp only [Nat.reduceMul, Nat.reducePow, Nat.reduceAdd]; omega⟩
+      · exact ⟨1, by decide, by simp only [Nat.reduceMul, Nat.reducePow]; omega, by simp only [Nat.reduceMul, Nat.reducePow, Nat.reduceAdd]; omega⟩
+      · exact ⟨2, by decide, by simp only [Nat.reduceMul, Nat.reducePow]; omega, by simp only [Nat.reduceMul, Nat.reducePow, Nat.reduceAdd]; omega⟩
+      · exact ⟨3, by decide, by simp only [Nat.reduceMul, Nat.reducePow]; omega, by simp only [Nat.reduceMul, Nat.reducePow, Nat.reduceAdd]; omega⟩
+      · exact ⟨4, by decide, by simp only [Nat.reduceMul, Nat.reducePow]; omega, by simp only [Nat.reduceMul, Nat.reducePow, Nat.reduceAdd]; omega⟩
+      · exact ⟨5, by decide, by simp only [Nat.reduceMul, Nat.reducePow]; omega, by simp only [Nat.reduceMul, Nat.reducePow, Nat.reduceAdd]; omega⟩
+      · exact ⟨6, by decide, by simp only [Nat.reduceMul, Nat.reducePow]; omega, by simp only [Nat.reduceMul, Nat.reducePow, Nat.reduceAdd]; omega⟩
+      · exact ⟨7, by decide, by simp only [Nat.reduceMul, Nat.reducePow]; omega, by simp only [Nat.reduceMul, Nat.reducePow, Nat.reduceAdd]; omega⟩
+    have e := encodeNat_of_lt8 g l hl (by omega) hl1 hl2
+    obtain ⟨A1, A2, A3, A4, A5, A6⟩ := compact_mid_arith g l hl hl1 hl2
+    rw [e] at henc hlen hra ⊢
+    simp only [List.length_cons, Num.length_encodeLE] at henc hlen hra ⊢
+    rw [show l + 1 = 1 + l by omega, PVM.Memory.readN_split, ← List.singleton_append] at henc
+    obtain ⟨hp1, hp2⟩ := List.append_inj henc (by simp)
+    have hb : rdN μ ptr 1 = 2 ^ 8 - 2 ^ (8 - l) + g / 2 ^ (8 * l) := by
+      unfold rdN; rw [hp1]; simp only [Num.decodeLE, Nat.mul_zero, Nat.add_zero]
+      rw [UInt8.toNat_ofNat', Nat.mod_eq_of_lt A1]
+    obtain ⟨ω1, μ1, r1, a1, a5, a6, a7, b8, s32, s24, s16, R0, R8, fr1, rd1, wr1⟩ :=
+      cu_pre (p := p) (P := P) (R := R) x ω μ sp rd ptr len h1 h7 hsp hrd ⟨hptr.1, by omega⟩ ⟨by omega, hlen.2⟩
+        hrf (by omega) hwf hwr (hra ptr (Nat.le_refl _) (by omega)) hR0 hR8
+    have h32 : rdN μ1 (sp - 40 + 32) 8 = 2106 := by rw [s32, h0]; rfl
+    obtain ⟨ω2, μ2, r2, f1, f5, f6, f7, f8, q0, q8, fr2, rd2, wr2⟩ :=
+      cu_tail_mid (p := p) (P := P) (R := R) x ω1 μ1 (sp - 40) rd (ptr + 1) (len - 1) _ l (g % 2 ^ (8 * l))
+        ω[5].toNat ω[6].toNat
+        a1 a6 a7 ⟨by omega, by omega⟩ hrd ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ (by omega) (by omega)
+        (fun a h1 h2 => by rw [wr1]; exact hwf a (by omega) (by omega))
+        (fun a h1 h2 => by rw [wr1]; exact hwr a h1 h2)
+        (fun a h1 h2 => by rw [rd1]; exact hra a (by omega) (by omega)) R0 R8 (by rw [b8, hb]) hl A2 A3 A4
+        (by rw [PVM.Memory.readN_congr (μ := μ) (fun j hj => fr1 _ (by omega) (by omega) (by omega))]; exact hp2)
+        A6 s16 s24 h32
+    refine ⟨ω2, μ2, (r1.trans r2).mono (by omega), by rw [f1, show sp - 40 + 40 = sp by omega],
+      by rw [f5, UInt64.ofNat_toNat], by rw [f6, UInt64.ofNat_toNat], f7, by rw [f8, A5],
+      by rw [q0, show ptr + 1 + l = ptr + (l + 1) by omega], by rw [q8, show len - 1 - l = len - (l + 1) by omega],
+      fun a h0 hs hr => ?_, fun a => by rw [rd2, rd1], fun a => by rw [wr2, wr1]⟩
+    rw [fr2 a h0 (by omega) hr, fr1 a h0 hs hr]
+
 end Services.Bootstrap.Acc

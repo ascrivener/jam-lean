@@ -328,6 +328,29 @@ def rkind : RegImmOp → TK
 
 variable (st : Static)
 
+/-- A lower bound of a value. -/
+def SVal.lob : SVal → Nat
+  | .const n => n
+  | .var k => st.lb[k]?.getD 0
+  | _ => 0
+
+/-- An unsigned comparison of a value in `[lo, hi)` with `x` (§A.5.8), when the interval decides it. -/
+def decideCond (op : RegImmOffsetOp) (lo hi x : Nat) : Option Bool :=
+  match op with
+  | .branchEqImm => if x < lo ∨ hi ≤ x then some false else none
+  | .branchNeImm => if x < lo ∨ hi ≤ x then some true else none
+  | .branchLtUImm => if hi ≤ x then some true else if x ≤ lo then some false else none
+  | .branchLeUImm => if hi ≤ x + 1 then some true else if x < lo then some false else none
+  | .branchGeUImm => if x ≤ lo then some true else if hi ≤ x then some false else none
+  | .branchGtUImm => if x < lo then some true else if hi ≤ x + 1 then some false else none
+  | _ => none
+
+/-- A branch condition against an immediate: computed on a literal, or decided by the bounds. -/
+def scond (op : RegImmOffsetOp) (v : SVal) (x : Nat) : Option Bool :=
+  match v with
+  | .const c => some (regImmBranchCond op c x)
+  | v => (v.bnd st).bind fun hi => decideCond op (v.lob st) hi x
+
 /-- The value of register `r`, as `(ω_r).toNat`. -/
 def rdv (σ : SState) (r : Nat) : SVal := mkMod st (σ.regs.getD r (.const 0)) two64
 
@@ -447,12 +470,12 @@ def sstep (G : Prog) (pc : Nat) (σ : SState) : Option (Nat × SState) :=
       if op = .loadImmJump then
         if 0 ≤ y && isBS G.bs y.toNat then some (y.toNat, setv σ a.val (.const x.toNat)) else none
       else
-        match rdv st σ a.val with
-        | .const v =>
+        match scond st op (rdv st σ a.val) x.toNat with
+        | some c =>
           if 0 ≤ y && isBS G.bs y.toNat && isBS G.bs e.2 then
-            some (if regImmBranchCond op v x.toNat then y.toNat else e.2, σ)
+            some (if c then y.toNat else e.2, σ)
           else none
-        | _ => none
+        | none => none
     | .twoRegTwoImm .loadImmJumpInd a b x y =>
       match rdv st σ b.val with
       | .const v => (sdjump G ((v + y.toNat) % two32)).map (·, setv σ a.val (.const x.toNat))

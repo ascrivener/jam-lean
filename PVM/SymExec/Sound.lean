@@ -398,6 +398,64 @@ theorem mkSx_eval (hpre : Pre E st) (k : Nat) (v : SVal) :
         · rfl
       · rfl
 
+theorem lob_sound (hpre : Pre E st) (v : SVal) : v.lob st ≤ v.eval E := by
+  cases v with
+  | const n => exact Nat.le_refl _
+  | var k =>
+    simp only [SVal.lob, SVal.eval]
+    cases h : st.lb[k]? with
+    | none => simp
+    | some b => simpa using hpre.2.1 k b h
+  | _ => exact Nat.zero_le _
+
+theorem decideCond_sound {op : RegImmOffsetOp} {lo hi x v : Nat} {c : Bool} (h1 : lo ≤ v)
+    (h2 : v < hi) (h : decideCond op lo hi x = some c) : regImmBranchCond op v x = c := by
+  cases op
+  case branchEqImm =>
+    simp only [decideCond] at h; split at h
+    · cases h; simp only [regImmBranchCond, beq_eq_false_iff_ne]; omega
+    · cases h
+  case branchNeImm =>
+    simp only [decideCond] at h; split at h
+    · cases h; simp only [regImmBranchCond, bne_iff_ne, ne_eq]; omega
+    · cases h
+  case branchLtUImm =>
+    simp only [decideCond] at h; split at h
+    · cases h; simp only [regImmBranchCond, decide_eq_true_eq]; omega
+    · split at h
+      · cases h; simp only [regImmBranchCond, decide_eq_false_iff_not]; omega
+      · cases h
+  case branchLeUImm =>
+    simp only [decideCond] at h; split at h
+    · cases h; simp only [regImmBranchCond, decide_eq_true_eq]; omega
+    · split at h
+      · cases h; simp only [regImmBranchCond, decide_eq_false_iff_not]; omega
+      · cases h
+  case branchGeUImm =>
+    simp only [decideCond] at h; split at h
+    · cases h; simp only [regImmBranchCond, decide_eq_true_eq]; omega
+    · split at h
+      · cases h; simp only [regImmBranchCond, decide_eq_false_iff_not]; omega
+      · cases h
+  case branchGtUImm =>
+    simp only [decideCond] at h; split at h
+    · cases h; simp only [regImmBranchCond, decide_eq_true_eq]; omega
+    · split at h
+      · cases h; simp only [regImmBranchCond, decide_eq_false_iff_not]; omega
+      · cases h
+  all_goals simp [decideCond] at h
+
+theorem scond_sound (hpre : Pre E st) {op : RegImmOffsetOp} {v : SVal} {x : Nat} {c : Bool}
+    (h : scond st op v x = some c) : regImmBranchCond op (v.eval E) x = c := by
+  unfold scond at h
+  split at h
+  · cases h; rfl
+  · cases hb : v.bnd st with
+    | none => rw [hb] at h; cases h
+    | some hi =>
+      rw [hb] at h
+      exact decideCond_sound (lob_sound hpre v) (bnd_sound hpre v hi hb) h
+
 /-! ## Registers -/
 
 theorem rdv_eval (hpre : Pre E st) {σ : SState} {ω : Regs}
@@ -1060,17 +1118,18 @@ theorem sstep_sound {p : ByteArray} {P : Program} {G : Prog}
       · cases h
     · rename_i hop
       split at h
-      · rename_i v hv
+      · rename_i c hc
         split at h
         · cases h
           rename_i hb
           simp only [Bool.and_eq_true, decide_eq_true_eq] at hb
-          have hav := hrd a
-          rw [hv] at hav; simp only [SVal.eval] at hav
-          have hbr := branch_eq (P := P) (i := pc) (c := regImmBranchCond op v x.toNat) hb.1.1
+          have hav := scond_sound hpre hc
+          rw [hrd a] at hav
+          have hbr := branch_eq (P := P) (i := pc) (c := regImmBranchCond op (ω.get a).toNat x.toNat) hb.1.1
             (isBS_sound hbs _ hb.1.2) (by rw [hd3]; exact isBS_sound hbs _ hb.2)
           have hx := exec_regImmOffset P pc op a x y ω μ hop
-          rw [← hins, ← hav] at hx
+          rw [← hins] at hx
+          rw [hav] at hbr hx
           refine go _ hx ?_ rfl hinv ?_ <;> simp [hbr, hd3]
         · cases h
       · cases h

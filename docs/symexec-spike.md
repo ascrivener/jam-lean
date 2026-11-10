@@ -224,6 +224,9 @@ Integration work, on branch `claude/symexec-phase1`:
 * **Simplification.** The zero-extension idiom now normalises to v when the bounds allow:
   `add_imm_32 0` of v < 2^31, and `shlo_r_imm_64 s` of `shlo_l_imm_64 s` of w with w·2^s < 2^64
   (`zextRule`).
+* **Branches decided by bounds.** A branch against an immediate on a symbolic value is followed
+  when the value's bounds decide it. This covers unsigned comparisons only. Example:
+  `branch_eq_imm r, 0` with 1 ≤ ρ_k is never taken. The rules are in `scond` and `decideCond`.
 * **Diagnostics.** `PVM/SymExec/Trace.lean`: `#eval traceSeg …` reports the first step the
   executor cannot follow, or the target facts that do not entail. It uses the same tests as the
   check, so it reports nothing on a check the kernel accepts.

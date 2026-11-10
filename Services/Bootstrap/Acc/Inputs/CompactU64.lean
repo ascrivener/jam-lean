@@ -51,6 +51,18 @@ theorem band_sx255 (b : Nat) (hb : b < 256) :
   rw [bitwise_and_low _ 255 8 (by decide) (by decide), sxw1_mod b hb]
   split <;> omega
 
+/-- `a & ¬(2⁶⁴ − 2^k)` keeps the low k bits. -/
+theorem band_not_high (a k : Nat) (hk : k ≤ 64) :
+    Exec.bitwise (fun x y => x && !y) a (2 ^ 64 - 2 ^ k) = a % 2 ^ k := by
+  apply Nat.eq_of_testBit_eq
+  intro i
+  have h := Nat.testBit_two_pow_sub_succ (n := 64) (x := 2 ^ k - 1)
+    (by have := Nat.pow_le_pow_right (show 0 < 2 by decide) hk; have := Nat.one_le_two_pow (n := k); omega) i
+  rw [show 2 ^ k - 1 + 1 = 2 ^ k by have := Nat.one_le_two_pow (n := k); omega] at h
+  simp only [Exec.bitwise, Num.testBit_ofBits, Num.bit_eq_testBit, h, Nat.testBit_mod_two_pow,
+    Nat.testBit_two_pow_sub_one]
+  by_cases h1 : i < k <;> by_cases h2 : i < 64 <;> simp [h1, h2] <;> omega
+
 /-- **46856 … 46886**: the 40-octet frame (s = sp − 40; ω₀, ω₅, ω₆ at s + 32, + 24, + 16), the reader
     (ω₇) kept in ω₆, a zero octet at s + 8, and the read of the prefix octet into it (ω₅ = 1, the
     error flag; return address 1968). -/
@@ -410,5 +422,225 @@ theorem cu_mid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X
         | decide
         | (simp [Num.decodeLE]; done)
         | omega
+
+/-- **40170 … 40212**, the l octets read (lo, at s + 8; ω₆ = l): the natural lo + (b mod 2^(7−l))·2^(8l),
+    `Dec.compact`'s value, in ω₈, ω₇ = 0, and the return (2106 → 46889) with ω₁ = s + 40 and ω₅, ω₆
+    restored. -/
+theorem cu_post {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
+    (s b l lo r5 r6 : Nat) (h1 : ω[1] = UInt64.ofNat s) (h6 : ω[6] = UInt64.ofNat l) (h7 : ω[7] = UInt64.ofNat 0)
+    (hs : 65536 ≤ s ∧ s + 40 < 4294967296) (hrf : ∀ a, s ≤ a → a < s + 40 → μ.readable a = true)
+    (hl : l < 8) (hb : b < 256) (hlo : lo < 2 ^ (8 * l))
+    (m0 : rdN μ s 8 = sxw 1 b % 18446744073709551616) (m8 : rdN μ (s + 8) 8 = lo)
+    (m16 : rdN μ (s + 16) 8 = r6) (m24 : rdN μ (s + 24) 8 = r5) (m32 : rdN μ (s + 32) 8 = 2106) :
+    ∃ ω', FreeStepsH p R 40170 ω μ x 46889 ω' μ x 30 ∧
+      ω'[0] = UInt64.ofNat 2106 ∧ ω'[1] = UInt64.ofNat (s + 40) ∧ ω'[5] = UInt64.ofNat r5 ∧
+      ω'[6] = UInt64.ofNat r6 ∧ ω'[7] = UInt64.ofNat 0 ∧
+      ω'[8] = UInt64.ofNat (lo + b % 2 ^ (7 - l) * 2 ^ (8 * l)) := by
+  have hsx := sxw1_mod b hb
+  have : l = 0 ∨ l = 1 ∨ l = 2 ∨ l = 3 ∨ l = 4 ∨ l = 5 ∨ l = 6 ∨ l = 7 := by omega
+  rcases this with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl
+  · have e : Exec.bitwise (fun x y => x && !y) (sxw 1 b % 18446744073709551616) 18446744073709551488 = b % 128 := by
+      have := band_not_high (sxw 1 b % 18446744073709551616) 7 (by decide)
+      simp only [Nat.reducePow, Nat.reduceSub] at this
+      rw [this, hsx]; split <;> omega
+    simp only [Nat.reduceSub, Nat.reducePow, Nat.reduceMul, Nat.mul_one, Nat.add_zero] at hlo ⊢
+    rw [show ω = regsNF ω [] from rfl]
+    refine ⟨?w0, ?run0, ?post0⟩
+    case run0 => pvm_go [h1, h6, h7, hrf, m0, m8, m16, m24, m32, e, ↓rdN_fold, ↓loadI_fold]
+    case post0 =>
+      refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
+      all_goals simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+        ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, h1, h6, h7, e]
+      all_goals first
+        | rfl
+        | (congr 1; omega)
+  · have e : Exec.bitwise (fun x y => x && !y) (sxw 1 b % 18446744073709551616) 18446744073709551552 = b % 64 := by
+      have := band_not_high (sxw 1 b % 18446744073709551616) 6 (by decide)
+      simp only [Nat.reducePow, Nat.reduceSub] at this
+      rw [this, hsx]; split <;> omega
+    simp only [Nat.reduceSub, Nat.reducePow, Nat.reduceMul, Nat.mul_one, Nat.add_zero] at hlo ⊢
+    rw [show ω = regsNF ω [] from rfl]
+    refine ⟨?w1, ?run1, ?post1⟩
+    case run1 => pvm_go [h1, h6, h7, hrf, m0, m8, m16, m24, m32, e, ↓rdN_fold, ↓loadI_fold]
+    case post1 =>
+      refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
+      all_goals simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+        ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, h1, h6, h7, e]
+      all_goals first
+        | rfl
+        | (congr 1; omega)
+  · have e : Exec.bitwise (fun x y => x && !y) (sxw 1 b % 18446744073709551616) 18446744073709551584 = b % 32 := by
+      have := band_not_high (sxw 1 b % 18446744073709551616) 5 (by decide)
+      simp only [Nat.reducePow, Nat.reduceSub] at this
+      rw [this, hsx]; split <;> omega
+    simp only [Nat.reduceSub, Nat.reducePow, Nat.reduceMul, Nat.mul_one, Nat.add_zero] at hlo ⊢
+    rw [show ω = regsNF ω [] from rfl]
+    refine ⟨?w2, ?run2, ?post2⟩
+    case run2 => pvm_go [h1, h6, h7, hrf, m0, m8, m16, m24, m32, e, ↓rdN_fold, ↓loadI_fold]
+    case post2 =>
+      refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
+      all_goals simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+        ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, h1, h6, h7, e]
+      all_goals first
+        | rfl
+        | (congr 1; omega)
+  · have e : Exec.bitwise (fun x y => x && !y) (sxw 1 b % 18446744073709551616) 18446744073709551600 = b % 16 := by
+      have := band_not_high (sxw 1 b % 18446744073709551616) 4 (by decide)
+      simp only [Nat.reducePow, Nat.reduceSub] at this
+      rw [this, hsx]; split <;> omega
+    simp only [Nat.reduceSub, Nat.reducePow, Nat.reduceMul, Nat.mul_one, Nat.add_zero] at hlo ⊢
+    rw [show ω = regsNF ω [] from rfl]
+    refine ⟨?w3, ?run3, ?post3⟩
+    case run3 => pvm_go [h1, h6, h7, hrf, m0, m8, m16, m24, m32, e, ↓rdN_fold, ↓loadI_fold]
+    case post3 =>
+      refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
+      all_goals simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+        ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, h1, h6, h7, e]
+      all_goals first
+        | rfl
+        | (congr 1; omega)
+  · have e : Exec.bitwise (fun x y => x && !y) (sxw 1 b % 18446744073709551616) 18446744073709551608 = b % 8 := by
+      have := band_not_high (sxw 1 b % 18446744073709551616) 3 (by decide)
+      simp only [Nat.reducePow, Nat.reduceSub] at this
+      rw [this, hsx]; split <;> omega
+    simp only [Nat.reduceSub, Nat.reducePow, Nat.reduceMul, Nat.mul_one, Nat.add_zero] at hlo ⊢
+    rw [show ω = regsNF ω [] from rfl]
+    refine ⟨?w4, ?run4, ?post4⟩
+    case run4 => pvm_go [h1, h6, h7, hrf, m0, m8, m16, m24, m32, e, ↓rdN_fold, ↓loadI_fold]
+    case post4 =>
+      refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
+      all_goals simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+        ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, h1, h6, h7, e]
+      all_goals first
+        | rfl
+        | (congr 1; omega)
+  · have e : Exec.bitwise (fun x y => x && !y) (sxw 1 b % 18446744073709551616) 18446744073709551612 = b % 4 := by
+      have := band_not_high (sxw 1 b % 18446744073709551616) 2 (by decide)
+      simp only [Nat.reducePow, Nat.reduceSub] at this
+      rw [this, hsx]; split <;> omega
+    simp only [Nat.reduceSub, Nat.reducePow, Nat.reduceMul, Nat.mul_one, Nat.add_zero] at hlo ⊢
+    rw [show ω = regsNF ω [] from rfl]
+    refine ⟨?w5, ?run5, ?post5⟩
+    case run5 => pvm_go [h1, h6, h7, hrf, m0, m8, m16, m24, m32, e, ↓rdN_fold, ↓loadI_fold]
+    case post5 =>
+      refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
+      all_goals simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+        ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, h1, h6, h7, e]
+      all_goals first
+        | rfl
+        | (congr 1; omega)
+  · have e : Exec.bitwise (fun x y => x && !y) (sxw 1 b % 18446744073709551616) 18446744073709551614 = b % 2 := by
+      have := band_not_high (sxw 1 b % 18446744073709551616) 1 (by decide)
+      simp only [Nat.reducePow, Nat.reduceSub] at this
+      rw [this, hsx]; split <;> omega
+    simp only [Nat.reduceSub, Nat.reducePow, Nat.reduceMul, Nat.mul_one, Nat.add_zero] at hlo ⊢
+    rw [show ω = regsNF ω [] from rfl]
+    refine ⟨?w6, ?run6, ?post6⟩
+    case run6 => pvm_go [h1, h6, h7, hrf, m0, m8, m16, m24, m32, e, ↓rdN_fold, ↓loadI_fold]
+    case post6 =>
+      refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
+      all_goals simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+        ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, h1, h6, h7, e]
+      all_goals first
+        | rfl
+        | (congr 1; omega)
+  · have e : Exec.bitwise (fun x y => x && !y) (sxw 1 b % 18446744073709551616) 18446744073709551615 = b % 1 := by
+      have := band_not_high (sxw 1 b % 18446744073709551616) 0 (by decide)
+      simp only [Nat.reducePow, Nat.reduceSub] at this
+      rw [this, hsx]; split <;> omega
+    simp only [Nat.reduceSub, Nat.reducePow, Nat.reduceMul, Nat.mul_one, Nat.add_zero] at hlo ⊢
+    rw [show ω = regsNF ω [] from rfl]
+    refine ⟨?w7, ?run7, ?post7⟩
+    case run7 => pvm_go [h1, h6, h7, hrf, m0, m8, m16, m24, m32, e, ↓rdN_fold, ↓loadI_fold]
+    case post7 =>
+      refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
+      all_goals simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+        ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, h1, h6, h7, e]
+      all_goals first
+        | rfl
+        | (congr 1; omega)
+
+/-- **39982 … 40067**, the prefix octet 0: ℰ(0), so ω₇ = ω₈ = 0, and the return (2106 → 46889). -/
+theorem cu_zero {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
+    (s r5 r6 : Nat) (h1 : ω[1] = UInt64.ofNat s) (h7 : ω[7] = UInt64.ofNat 0)
+    (hs : 65536 ≤ s ∧ s + 40 < 4294967296) (hrf : ∀ a, s ≤ a → a < s + 40 → μ.readable a = true)
+    (hb : rdN μ (s + 8) 1 = 0)
+    (m16 : rdN μ (s + 16) 8 = r6) (m24 : rdN μ (s + 24) 8 = r5) (m32 : rdN μ (s + 32) 8 = 2106) :
+    ∃ ω', FreeStepsH p R 39982 ω μ x 46889 ω' μ x 30 ∧
+      ω'[0] = UInt64.ofNat 2106 ∧ ω'[1] = UInt64.ofNat (s + 40) ∧ ω'[5] = UInt64.ofNat r5 ∧
+      ω'[6] = UInt64.ofNat r6 ∧ ω'[7] = UInt64.ofNat 0 ∧ ω'[8] = UInt64.ofNat 0 := by
+  have e255 := band_sx255 0 (by decide)
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?w, ?run, ?post⟩
+  case run => pvm_go [h1, h7, hrf, hb, m16, m24, m32, e255, ↓rdN_fold, ↓loadI_fold]
+  case post =>
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
+    all_goals simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+      ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, h1, h7]
+    all_goals first
+      | rfl
+      | (congr 1; omega)
+
+/-- **39982 … 40029**, the prefix octet 255: a zero word at s + 8 and the read of 8 octets into it
+    (return address 1970). -/
+theorem cu_ff {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
+    (s rd : Nat) (h1 : ω[1] = UInt64.ofNat s) (h6 : ω[6] = UInt64.ofNat rd) (h7 : ω[7] = UInt64.ofNat 0)
+    (hs : 65536 ≤ s ∧ s + 40 < 4294967296) (hrd : rd < 18446744073709551616)
+    (hwf : ∀ a, s ≤ a → a < s + 40 → μ.writable a = true)
+    (hb : rdN μ (s + 8) 1 = 255) :
+    ∃ ω' μ', FreeStepsH p R 39982 ω μ x 58434 ω' μ' x 20 ∧
+      ω'[0] = UInt64.ofNat 1970 ∧ ω'[1] = UInt64.ofNat s ∧ ω'[5] = ω[5] ∧ ω'[6] = UInt64.ofNat rd ∧
+      ω'[7] = UInt64.ofNat rd ∧ ω'[8] = UInt64.ofNat (s + 8) ∧ ω'[9] = UInt64.ofNat 8 ∧
+      (∀ a, a < 4294967296 → (a < s + 8 ∨ s + 16 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have hr : ∀ a, s ≤ a → a < s + 40 → μ.readable a = true :=
+    fun a h1 h2 => Memory.readable_of_writable (hwf a h1 h2)
+  have e255 := band_sx255 255 (by decide)
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?run, ?post⟩
+  case run => pvm_go [h1, h6, h7, hwf, hr, hb, e255, rdN_writeN_disjoint, ↓rdN_fold, ↓loadI_fold]
+  case post =>
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha h1 => ?_, fun a => ?_, fun a => ?_⟩
+    all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+      ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, h1, h6, h7]
+    all_goals try with_reducible rfl
+    all_goals try first
+      | (rd_simp []; done)
+      | rd_simp []
+    all_goals try first
+      | with_reducible rfl
+      | exact Nat.mod_eq_of_lt (UInt64.toNat_lt _)
+    all_goals first
+      | (congr 1; omega)
+      | rfl
+      | rw [Nat.mod_eq_of_lt (by omega)]
+      | (congr 1; rw [Nat.mod_eq_of_lt (by omega)])
+      | exact UInt64.ofNat_toNat
+      | exact Nat.mod_eq_of_lt (UInt64.toNat_lt _)
+      | exact Nat.mod_mod _ _
+      | (simp only [Nat.reduceMul, Nat.reducePow, Nat.mod_mod]; done)
+      | decide
+      | (simp [Num.decodeLE]; done)
+      | omega
+
+/-- **40035 … 40050**, the 8 octets read (at s + 8): the natural in ω₈ and the return (2106 → 46889). -/
+theorem cu_ff_post {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
+    (s v r5 r6 : Nat) (h1 : ω[1] = UInt64.ofNat s)
+    (hs : 65536 ≤ s ∧ s + 40 < 4294967296) (hrf : ∀ a, s ≤ a → a < s + 40 → μ.readable a = true)
+    (m8 : rdN μ (s + 8) 8 = v)
+    (m16 : rdN μ (s + 16) 8 = r6) (m24 : rdN μ (s + 24) 8 = r5) (m32 : rdN μ (s + 32) 8 = 2106) :
+    ∃ ω', FreeStepsH p R 40035 ω μ x 46889 ω' μ x 10 ∧
+      ω'[0] = UInt64.ofNat 2106 ∧ ω'[1] = UInt64.ofNat (s + 40) ∧ ω'[5] = UInt64.ofNat r5 ∧
+      ω'[6] = UInt64.ofNat r6 ∧ ω'[7] = ω[7] ∧ ω'[8] = UInt64.ofNat v := by
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?w, ?run, ?post⟩
+  case run => pvm_go [h1, hrf, m8, m16, m24, m32, ↓rdN_fold, ↓loadI_fold]
+  case post =>
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
+    all_goals simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+      ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, h1]
+    all_goals first
+      | rfl
+      | (congr 1; omega)
 
 end Services.Bootstrap.Acc

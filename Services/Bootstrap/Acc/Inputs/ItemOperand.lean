@@ -54,8 +54,8 @@ theorem op_h0 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X)
       | with_reducible exact Nat.mod_eq_of_lt (rdN_lt64 _ _)
     all_goals first
       | (congr 1; omega)
+      | (simp only [Nat.reduceMul, Nat.reducePow, Nat.mod_mod]; exact Nat.mod_eq_of_lt (rdN_lt64 _ _))
       | rfl
-      | with_reducible exact Nat.mod_eq_of_lt (rdN_lt64 _ _)
 
 /-- **46375 … 58434**, p read (ω₇ = 0): p copied from b + 272 to b + 32, the buffer zeroed and the read of e (return address 2086). -/
 theorem op_h1 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
@@ -89,8 +89,8 @@ theorem op_h1 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X)
       | with_reducible exact Nat.mod_eq_of_lt (rdN_lt64 _ _)
     all_goals first
       | (congr 1; omega)
+      | (simp only [Nat.reduceMul, Nat.reducePow, Nat.mod_mod]; exact Nat.mod_eq_of_lt (rdN_lt64 _ _))
       | rfl
-      | with_reducible exact Nat.mod_eq_of_lt (rdN_lt64 _ _)
 
 /-- **46442 … 58434**, e read (ω₇ = 0): the reader also in ω₆, e copied from b + 272 to b + 64, the buffer zeroed and the read of a (return address 2088). -/
 theorem op_h2 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
@@ -124,8 +124,8 @@ theorem op_h2 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X)
       | with_reducible exact Nat.mod_eq_of_lt (rdN_lt64 _ _)
     all_goals first
       | (congr 1; omega)
+      | (simp only [Nat.reduceMul, Nat.reducePow, Nat.mod_mod]; exact Nat.mod_eq_of_lt (rdN_lt64 _ _))
       | rfl
-      | with_reducible exact Nat.mod_eq_of_lt (rdN_lt64 _ _)
 
 /-- **46508 … 58434**, a read (ω₇ = 0): a copied from b + 272 to b + 96, the buffer zeroed and the read of y (return address 2090). -/
 theorem op_h3 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
@@ -159,8 +159,8 @@ theorem op_h3 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X)
       | with_reducible exact Nat.mod_eq_of_lt (rdN_lt64 _ _)
     all_goals first
       | (congr 1; omega)
+      | (simp only [Nat.reduceMul, Nat.reducePow, Nat.mod_mod]; exact Nat.mod_eq_of_lt (rdN_lt64 _ _))
       | rfl
-      | with_reducible exact Nat.mod_eq_of_lt (rdN_lt64 _ _)
 
 /-- **46571 … 46852**, y read (ω₇ = 0): y copied from b + 272 to b + 136 and the call of the gas's decoder 46856 (ω₇ = rd, return address 2106). -/
 theorem op_h4 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
@@ -194,7 +194,7 @@ theorem op_h4 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X)
       | with_reducible exact Nat.mod_eq_of_lt (rdN_lt64 _ _)
     all_goals first
       | (congr 1; omega)
+      | (simp only [Nat.reduceMul, Nat.reducePow, Nat.mod_mod]; exact Nat.mod_eq_of_lt (rdN_lt64 _ _))
       | rfl
-      | with_reducible exact Nat.mod_eq_of_lt (rdN_lt64 _ _)
 
 end Services.Bootstrap.Acc

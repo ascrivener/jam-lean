@@ -219,8 +219,14 @@ corollaries.
     block, 1990; only when n > 89, excluded by the temporary bound); 45075: memcpy sp + 272 → ptr + 184·len
     (2042 → 45103), len += 1, count −= 1, loop to 44996 / 45115;
   - 45593 … 45613: the `Vec` (cap, ptr, len) written to out, epilogue, return.
-  So with n ≤ 89 the proof is: one `fg_new_call`, then a LoopA-style induction over the items (each by
-  `tr_call` or `item_op_ok` / `item_op_err`, then two memcpys), the buffer chunk holding the decoded slots.
+  Segments done (`Acc/Inputs/Loop.lean`): `lp_pre` (44916 → 40852, n > 0), `lp_fg_ret` (41175 → 45042),
+  `lp_buf` (45042 → 45126), `lp_ret_tr` / `lp_ret_op` (47072 / 47332 → 45168), `lp_chk` (45168 → 68729,
+  then `memcpy_big_aligned` 184 octets, 2046 → 45192), `lp_step` (45192 → 68729, then memcpy into
+  q + 184·L, 2042 → 45103), `lp_next` (45103 → 45126, count > 1), `lp_last` (45103 → 45613, count 1:
+  `Vec { n, q, L + 1 }` at out). **Next:** n = 0 (44952 → 45556 → 45613); then the induction over the
+  items: an invariant "after L items, len L at s + 80, the buffer's first L slots hold the decoded
+  items, the reader past them, `HeapCtxC` for the current state", one step = item decode (`tr_call` lifted
+  by `keep_hi`, or `item_op_ok` / `item_op_err`) + `lp_ret_*` + `lp_chk` + memcpy + `lp_step` + memcpy.
   Then 44495's glue and the 6630 → 6674 summary.
 
 Plan:

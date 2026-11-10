@@ -227,6 +227,14 @@ corollaries.
   items: an invariant "after L items, len L at s + 80, the buffer's first L slots hold the decoded
   items, the reader past them, `HeapCtxC` for the current state", one step = item decode (`tr_call` lifted
   by `keep_hi`, or `item_op_ok` / `item_op_err`) + `lp_ret_*` + `lp_chk` + memcpy + `lp_step` + memcpy.
+  Statement plan for the induction, in T1's `ElemOkAF` style (`Decode/LoopA.lean`): a per-item contract
+  `ItemOk env cap pb enc Rep` = from 45126 with the reader holding `enc` (inside an allocated chunk), the
+  stack slot `out` and `HeapCtxC`, either the run reaches the item's `jumpInd` (47072 / 47332, so a
+  `Fin 2`/address parameter or an existential end point) with ω₀, ω₁, ω₅, ω₆ restored, the slot's first word
+  ≠ −2, `Rep (slot octets) μ''` for every μ'' agreeing on the item's fresh chunks, the context for a new
+  state keeping the old chunks and their data, the reader advanced by |enc|; or Exhausts (an `alloc`
+  failure reaching 45975). Instances: `tr_call` (no chunks), `item_op_ok`, `item_op_err`. The loop
+  theorem then takes a list of (enc, Rep) with `ItemOk` each, n = the list's length ≤ 89.
   Then 44495's glue and the 6630 → 6674 summary.
 
 Plan:

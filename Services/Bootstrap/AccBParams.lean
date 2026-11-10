@@ -3,6 +3,14 @@
   The executor runs (`E…`) and the remaining segments composed. Do not edit by hand.
 -/
 import Services.Bootstrap.AccBParams.E0
+import Services.Bootstrap.AccBParams.E64
+import Services.Bootstrap.AccBParams.E128
+import Services.Bootstrap.AccBParams.S171
+import Services.Bootstrap.AccBParams.S172
+import Services.Bootstrap.AccBParams.S173
+import Services.Bootstrap.AccBParams.S174
+import Services.Bootstrap.AccBParams.S175
+import Services.Bootstrap.AccBParams.S176
 
 namespace Services.Bootstrap.AccBParams
 
@@ -15,7 +23,15 @@ theorem chain (p : ByteArray) (P : Program) [HasCode p P] [HasCodeX p P] [HasCod
     (x : AccCtx) (LA : Nat) (hLA : 3 ≤ LA ∧ LA ≤ 15) (ω₀ : Regs) (μ₀ : Memory) (h : St0 LA ω₀ μ₀ ω μ) :
     ∃ ω' μ', FreeStepsH p (accContract env) 38875 ω μ x 6429 ω' μ' x 2820 ∧ St177 LA ω₀ μ₀ ω' μ' := by
   obtain ⟨ω1, μ1, run1, h1⟩ := E0.run p P env ω μ x LA hLA ω₀ μ₀ h
-  exact ⟨ω1, μ1, run1, h1⟩
+  obtain ⟨ω2, μ2, run2, h2⟩ := E64.run p P env ω1 μ1 x LA hLA ω₀ μ₀ h1
+  obtain ⟨ω3, μ3, run3, h3⟩ := E128.run p P env ω2 μ2 x LA hLA ω₀ μ₀ h2
+  obtain ⟨ω4, μ4, run4, h4⟩ := S171.run p P env ω3 μ3 x LA hLA ω₀ μ₀ h3
+  obtain ⟨ω5, μ5, run5, h5⟩ := S172.run p P env ω4 μ4 x LA hLA ω₀ μ₀ h4
+  obtain ⟨ω6, μ6, run6, h6⟩ := S173.run p P env ω5 μ5 x LA hLA ω₀ μ₀ h5
+  obtain ⟨ω7, μ7, run7, h7⟩ := S174.run p P env ω6 μ6 x LA hLA ω₀ μ₀ h6
+  obtain ⟨ω8, μ8, run8, h8⟩ := S175.run p P env ω7 μ7 x LA hLA ω₀ μ₀ h7
+  obtain ⟨ω9, μ9, run9, h9⟩ := S176.run p P env ω8 μ8 x LA hLA ω₀ μ₀ h8
+  exact ⟨ω9, μ9, (run1.trans (run2.trans (run3.trans (run4.trans (run5.trans (run6.trans (run7.trans (run8.trans run9)))))))), h9⟩
 
 /-- **Steps 0 … 2819 after pc 38875**, from the facts the path reads before writing them. -/
 theorem run (p : ByteArray) (P : Program) [HasCode p P] [HasCodeX p P] [HasCodeA p P] (env : AccEnv) (ω : Regs) (μ : Memory)

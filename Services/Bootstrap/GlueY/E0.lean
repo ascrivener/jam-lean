@@ -68,8 +68,8 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
       ⟨rng_rd (lo := 206512) (hi := 206528) h.hrd_206512_206528, rng_rd (lo := 206824) (hi := 206844) h.hrd_206824_206844, rng_rd (lo := 206848) (hi := 206852) h.hrd_206848_206852, rng_rd (lo := 206880) (hi := 206892) h.hrd_206880_206892, rng_rd (lo := 4278057992) (hi := 4278058016) h.hrd_4278057992_4278058016, rng_rd (lo := 4278058024) (hi := 4278058128) h.hrd_4278058024_4278058128, rng_rd (lo := 4278058136) (hi := 4278058176) h.hrd_4278058136_4278058176, rng_rd (lo := 4278058184) (hi := 4278058200) h.hrd_4278058184_4278058200, rng_rd (lo := 4278058224) (hi := 4278058232) h.hrd_4278058224_4278058232, rng_rd (lo := 4278058312) (hi := 4278058320) h.hrd_4278058312_4278058320, trivial⟩,
       ⟨rng_wr (lo := 196608) (hi := 196616) h.hw_196608_196616, rng_wr (lo := 206512) (hi := 206520) h.hw_206512_206520, rng_wr (lo := 206824) (hi := 206840) h.hw_206824_206840, rng_wr (lo := 206848) (hi := 206852) h.hw_206848_206852, rng_wr (lo := 206880) (hi := 206888) h.hw_206880_206888, rng_wr (lo := 206976) (hi := 206992) h.hw_206976_206992, rng_wr (lo := 4278057992) (hi := 4278058264) h.hw_4278057992_4278058264, trivial⟩,
       fun _ _ _ => rfl, rfl⟩
-  obtain ⟨ω16, μ16, run16, c16⟩ := seg0 (R := refineContract env) (p := p) (P := P)  ⟨trivial⟩ ⟨trivial⟩ μ ω μ c0 x
-  obtain ⟨ω20, μ20, run20, c20⟩ := seg16 (R := refineContract env) (p := p) (P := P)  ⟨trivial⟩ ⟨trivial⟩ μ ω16 μ16 c16 x
+  obtain ⟨ω16, μ16, run16, c16⟩ := seg0 (R := refineContract env) (p := p) (P := P)  trivial trivial μ ω μ c0 x
+  obtain ⟨ω20, μ20, run20, c20⟩ := seg16 (R := refineContract env) (p := p) (P := P)  trivial trivial μ ω16 μ16 c16 x
   obtain ⟨⟨r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, -⟩, ⟨m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, -⟩, -, -, hfr, hpg⟩ := c20
   exact ⟨ω20, μ20, (run16.trans run20),
     { hreg0 := r0

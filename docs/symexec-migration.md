@@ -30,6 +30,8 @@ For a chain `<C>` (the directory `<C>/` with `St.lean`, `S0.lean` … and the co
   to cut `n` (`prefix<n>`), for files that extend the chain.
 * `<C>/St.lean` keeps only the states the composition names, and those named by files importing the
   chain. All frame conditions `C_i` stay.
+* The page facts of the states (`rdq`, `wrq`, and the heap fields `hhp`, `rdA`, `rdm`, `wrm`) carry
+  over from `St_b` to `St_e`: the executor keeps μ's pages.
 * The replaced `S<i>.lean` are deleted.
 
 Refine chains use the code table `Services.Bootstrap.SymExec.prog`; accumulate chains
@@ -47,13 +49,14 @@ Lean time per module summed over the family (4 cores, `lake build`; before: the 
 | AccBParams | 177 | — (S176 until `progAll`) | ≈ 1440 | ≈ 100 |
 | OTail | 100 | host call; S87–S99 (states not encodable) | ≈ 800 | ≈ 180 |
 | GlueY | 20 | — | ≈ 170 | ≈ 12 |
+| VTail1 … VTail8 | 70 … 83 | host calls; hex-digit loop (1–6 segments) | ≈ 5740 | ≈ 865 |
+| PrefixC | 38 | 4 host calls | ≈ 500 | ≈ 180 |
 
 The code tables are built once: `Prog` ≈ 140 s, `ProgAll` more.
 
 ## Not migrated yet
 
-* `VTail1` … `VTail8`, `PrefixC`, `AccPrefixC`: their states carry heap fields (`hhp`, `rdA`, `rdm`,
-  `wrm`) that the converter does not translate yet.
+* `AccPrefixC`: it runs accumulate code, so it needs `progAll`.
 * `GlueY2` (3 segments).
 * The `Services/Witness` chains: they need a code table of the witness binary.
 * Phase 2 of the executor: the hex-digit table read at a symbolic index (pc 60553, BTail and VTail

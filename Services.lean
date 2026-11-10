@@ -110,6 +110,15 @@ import Services.Bootstrap.Acc.Inputs.VecU8A
 import Services.Bootstrap.Acc.Inputs.Item
 import Services.Bootstrap.Acc.Inputs.CompactU64
 import Services.Bootstrap.Acc.Inputs.CompactU64Call
+import Services.Bootstrap.Acc.Inputs.ReaderAdj
+import Services.Bootstrap.Acc.Inputs.ItemOperand
+import Services.Bootstrap.Acc.Inputs.ItemOperandB
+import Services.Bootstrap.Acc.Inputs.ItemOperandC
+import Services.Bootstrap.Acc.Inputs.ItemOperandFill
+import Services.Bootstrap.Acc.Inputs.OperandHead
+import Services.Bootstrap.Acc.Inputs.OperandCall
+import Services.Bootstrap.Acc.Inputs.OperandArm
+import Services.Bootstrap.Acc.Inputs.ItemCall
 import Services.Bootstrap.AccPrefixC
 import Services.Bootstrap.AccBParams
 import Services.Bootstrap.Acc.Args

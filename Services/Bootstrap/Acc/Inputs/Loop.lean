@@ -227,4 +227,51 @@ theorem lp_next {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : 
       | exact UInt64.ofNat_toNat
       | rfl
 
+/-- **45103 … 45613**, the last item copied into the buffer (count 1): `Vec { cap n, ptr q, len L + 1 }`
+    written at out (cap at + 0, ptr at + 8, len at + 16), ω₀, ω₅, ω₆ restored from s + 472, + 464,
+    + 456 and the frame popped, at the return's `jumpInd`. -/
+theorem lp_last {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
+    (s out n q L : Nat) (h1 : ω[1] = UInt64.ofNat s) (h5 : ω[5] = UInt64.ofNat 1) (h6 : ω[6] = UInt64.ofNat L)
+    (m0 : rdN μ s 8 = out) (m32 : rdN μ (s + 32) 8 = n) (m40 : rdN μ (s + 40) 8 = n)
+    (m56 : rdN μ (s + 56) 8 = q) (m64 : rdN μ (s + 64) 8 = n) (m72 : rdN μ (s + 72) 8 = q)
+    (hn : n < 18446744073709551615) (hL : L + 1 < 18446744073709551616)
+    (hs : 65536 ≤ s ∧ s + 480 < 4294967296) (hout : 65536 ≤ out ∧ out + 24 < 4294967296)
+    (dso : out + 24 ≤ s ∨ s + 480 ≤ out)
+    (hwf : ∀ a, s ≤ a → a < s + 480 → μ.writable a = true)
+    (hwo : ∀ a, out ≤ a → a < out + 24 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 45103 ω μ x 45613 ω' μ' x 40 ∧
+      ω'[0] = UInt64.ofNat (rdN μ (s + 472) 8) ∧ ω'[1] = UInt64.ofNat (s + 480) ∧
+      ω'[5] = UInt64.ofNat (rdN μ (s + 464) 8) ∧ ω'[6] = UInt64.ofNat (rdN μ (s + 456) 8) ∧
+      rdN μ' out 8 = n ∧ rdN μ' (out + 8) 8 = q ∧ rdN μ' (out + 16) 8 = L + 1 ∧
+      (∀ a, a < 4294967296 → (a < s + 80 ∨ s + 88 ≤ a) → (a < s + 272 ∨ s + 288 ≤ a) →
+        (a < out ∨ out + 24 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have hr : ∀ a, s ≤ a → a < s + 480 → μ.readable a = true :=
+    fun a h1 h2 => Memory.readable_of_writable (hwf a h1 h2)
+  have hro : ∀ a, out ≤ a → a < out + 24 → μ.readable a = true :=
+    fun a h1 h2 => Memory.readable_of_writable (hwo a h1 h2)
+  have hq : q < 18446744073709551616 := by rw [← m72]; exact rdN_lt64 _ _
+  have hnn : n % 18446744073709551616 ≠ 18446744073709551615 := by omega
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?run, ?post⟩
+  case run => pvm_go [h1, h5, h6, m0, m32, m40, m56, m64, m72, hnn, hwf, hr, hwo, hro, rdN_writeN_disjoint,
+    ↓rdN_fold, ↓loadI_fold]
+  case post =>
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha h1 h2 h3 => ?_, fun a => ?_, fun a => ?_⟩
+    all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+      ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, h1, h5, h6]
+    all_goals try with_reducible rfl
+    all_goals try first
+      | (rd_simp []; done)
+      | rd_simp []
+    all_goals try first
+      | with_reducible rfl
+      | with_reducible exact Nat.mod_eq_of_lt (by omega)
+    all_goals first
+      | (congr 1; omega)
+      | with_reducible exact Nat.mod_eq_of_lt (rdN_lt64 _ _)
+      | (simp only [Nat.reduceMul, Nat.reducePow]; exact Nat.mod_eq_of_lt (by omega))
+      | exact UInt64.ofNat_toNat
+      | rfl
+
 end Services.Bootstrap.Acc

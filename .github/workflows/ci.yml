@@ -60,6 +60,7 @@ jobs:
           lake build Services.Witness.EmptyPayload
 
       - name: Build the model and its theorems
+        id: build
         # bounded so a cold build ends here, with time left to save .lake for the next run to resume from
         run: timeout --signal=INT --kill-after=2m 290m lake build
 
@@ -211,10 +212,11 @@ jobs:
           pkill -KILL -x lean || true
           find .lake -name '*.tmp.*' -delete 2>/dev/null || true
 
-      # Only main saves: PR caches (several GB each) would otherwise evict main's from the 10 GB repository
-      # cache, leaving every run to start cold. PRs restore main's newest build and rebuild their own changes.
+      # Main always saves. A PR saves only when its build did not finish (e.g. it hit the time bound), so a
+      # re-run can resume; finished PR builds don't save, since their caches (several GB each) would evict
+      # main's from the 10 GB repository cache and leave every run to start cold.
       - name: Save .lake
-        if: always() && github.ref == 'refs/heads/main'
+        if: always() && (github.ref == 'refs/heads/main' || steps.build.outcome != 'success')
         uses: actions/cache/save@v4
         with:
           path: .lake

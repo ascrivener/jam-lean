@@ -130,6 +130,47 @@ theorem pi {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR 
     all_goals try assumption
     all_goals try (congr 1; omega)
 
+/-- 5561 … 5578, with the output full (`len = cap`): the loop calls `RawVec::grow_one` (32785) on the
+    output at M + 248 (return address 180 → 5584), with len in ω₅. -/
+theorem pg {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] (x : X) (ω : Regs)
+    (μ : Memory) (M len : Nat) (hM : M + 632 ≤ 4294967296) (hl : len < 18446744073709551616)
+    (h1 : ω[1] = UInt64.ofNat M) (sc : μ.readN (M + 248) 8 = Num.encodeLE 8 len)
+    (sl : μ.readN (M + 264) 8 = Num.encodeLE 8 len)
+    (hr : ∀ a, M + 248 ≤ a → a < M + 272 → μ.readable a = true) :
+    ∃ ω', FreeStepsH p R 5561 ω μ x 32785 ω' μ x 8 ∧
+      ω'[0] = UInt64.ofNat 180 ∧ ω'[1] = UInt64.ofNat M ∧ ω'[5] = UInt64.ofNat len ∧ ω'[6] = ω[6] ∧
+      ω'[7] = UInt64.ofNat (M + 248) := by
+  have rc := rd8 hl sc
+  have rl := rd8 hl sl
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?_, ?_, ?_⟩
+  rotate_left
+  · pvm_go [h1, hM, hr, rc, rl, ↓rdN_fold]
+  · refine ⟨?_, ?_, ?_, ?_, ?_⟩
+    all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+      ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, Nat.mod_eq_of_lt hl]
+
+/-- 5584 … 5027: back from `grow_one`, the loop calls `memcpy` for the 232 staged octets, from M + 304
+    to `ptr + 232 len` (ptr at M + 256, len in ω₅; return address 160 → 5034). -/
+theorem pc2 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] (x : X) (ω : Regs)
+    (μ : Memory) (M ptr len : Nat) (hM : M + 632 ≤ 4294967296) (hptr : ptr + 232 * len < 18446744073709551616)
+    (h1 : ω[1] = UInt64.ofNat M) (h5 : ω[5] = UInt64.ofNat len)
+    (sp : μ.readN (M + 256) 8 = Num.encodeLE 8 ptr)
+    (hr : ∀ a, M + 256 ≤ a → a < M + 264 → μ.readable a = true) :
+    ∃ ω', FreeStepsH p R 5584 ω μ x 68729 ω' μ x 10 ∧
+      ω'[0] = UInt64.ofNat 160 ∧ ω'[1] = UInt64.ofNat M ∧ ω'[5] = UInt64.ofNat len ∧
+      ω'[7] = UInt64.ofNat (ptr + 232 * len) ∧ ω'[8] = UInt64.ofNat (M + 304) ∧ ω'[9] = UInt64.ofNat 232 := by
+  have rp := rd8 (by omega) sp
+  have hl : len < 18446744073709551616 := by omega
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?_, ?_, ?_⟩
+  rotate_left
+  · pvm_go [h1, h5, hM, hr, rp, ↓rdN_fold]
+  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
+    all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+      ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, h5, Nat.mod_eq_of_lt hl]
+    all_goals try (congr 1; omega)
+
 theorem readN_add2 (μ : Memory) (a n m : Nat) : μ.readN a (n + m) = μ.readN a n ++ μ.readN (a + n) m := by
   simp only [Memory.readN, List.range_add, List.map_append, List.map_map]
   congr 1

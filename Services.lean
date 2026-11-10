@@ -117,6 +117,7 @@ import Services.Bootstrap.Decode.CreateServiceRun
 import Services.Bootstrap.Decode.CreateServiceHeap
 import Services.Bootstrap.Decode.CreateServiceEmpty
 import Services.Bootstrap.Decode.CreateServiceElem
+import Services.Bootstrap.Decode.VecU8HeapBig
 import Services.Bootstrap.Decode.VecVecU8
 import Services.Bootstrap.Decode.ImportElem
 import Services.Bootstrap.Decode.VecVecElem

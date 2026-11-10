@@ -1,7 +1,7 @@
 # Spike: a verified symbolic executor for PVM code
 
 Status: feasibility spike, not adopted. Whether to switch method is Adam's decision.
-Code: the generic executor is in `PVM/SymExec/` (imported by `PVM.lean`). The Bootstrap code table and the Bootstrap stretches are in `Services/Bootstrap/SymExec/` (imported by `Services.lean`). Both are in the default build. Generators: `PVM/SymExec/gen_*.py`.
+Code: the generic executor is in `PVM/SymExec/` (imported by `PVM.lean`). The Bootstrap code table and the Bootstrap stretches are in `Services/Bootstrap/SymExec/` (imported by `Services.lean`). Both are in the default build. Generators: `PVM/SymExec/gen_*.py`. The spike's BTail1 demo instances (`BTail1S0`, `BTail1S0to32`, `BTail1Cuts`) were measurement scaffolding; they were removed when the migrated BTail1 chain superseded them, and remain in git history.
 
 ## Short answer
 

@@ -60,11 +60,15 @@ def fields(i):
     body = re.search(rf'^structure St{i} .*? where\n(.*?)(?:\n\n|\Z)', stsrc, re.S | re.M).group(1)
     return [m.groups() for m in (re.match(r'  (\w+) : (.*)$', l) for l in body.split('\n')) if m]
 
+has_frame = bool(re.search(r'^def C0 \(a : Nat\)', stsrc, re.M))
+
 def frame_of(j):
     m = re.search(rf'^def C{j} \(a : Nat\) : Bool := (.*)$', stsrc, re.M).group(1)
     return [(int(a), int(b)) for a, b in re.findall(r'decide \((\d+) ≤ a ∧ a < (\d+)\)', m)]
 
 def frame_between(b, j):
+    # a chain generated without `frame` states nothing outside its cells: the whole of ℕ_{2^32}
+    if not has_frame: return [(0, 4294967296)] if j > b else []
     out = []
     for k in range(b + 1, j + 1):
         for r in frame_of(k):
@@ -258,7 +262,7 @@ theorem seg{a} {X} {vbind} (hB : BHold {vl} ub) (hLB : LBHold {vl} lb)
             w = containing(A['wr'], A['wrn'], x, y); assert w, f'St{e}.{n}: not within St{b}'
             fl.append(f'{n} := fun a h1 h2 => (readable_pages hpg a).trans (Memory.readable_of_writable (h.{w} a (by omega) (by omega)))')
     cs = ', '.join(f'C{k}' for k in range(e, b, -1))
-    fl.append(f'''fr := fun a ha => by
+    if has_frame: fl.append(f'''fr := fun a ha => by
             simp only [{cs}, Bool.and_eq_true, decide_eq_true_eq, Bool.not_eq_true', decide_eq_false_iff_not, not_and, Nat.not_lt] at ha
             rw [hfr a (by show a < 4294967296; omega) (out_of_bool (by simp only [cut{e}, List.all_cons, List.all_nil, Bool.and_true, Bool.and_eq_true, beq_self_eq_true, Bool.true_and, Bool.or_eq_true, decide_eq_true_eq]; omega))]
             exact h.fr a (by simp_all)''')

@@ -5,6 +5,7 @@
 import Services.Bootstrap.AccBParams.E0
 import Services.Bootstrap.AccBParams.E64
 import Services.Bootstrap.AccBParams.E128
+import Services.Bootstrap.AccBParams.S176
 
 namespace Services.Bootstrap.AccBParams
 
@@ -19,7 +20,8 @@ theorem chain (p : ByteArray) (P : Program) [HasCode p P] [HasCodeX p P] [HasCod
   obtain ⟨ω1, μ1, run1, h1⟩ := E0.run p P env ω μ x LA hLA ω₀ μ₀ h
   obtain ⟨ω2, μ2, run2, h2⟩ := E64.run p P env ω1 μ1 x LA hLA ω₀ μ₀ h1
   obtain ⟨ω3, μ3, run3, h3⟩ := E128.run p P env ω2 μ2 x LA hLA ω₀ μ₀ h2
-  exact ⟨ω3, μ3, (run1.trans (run2.trans run3)), h3⟩
+  obtain ⟨ω4, μ4, run4, h4⟩ := S176.run p P env ω3 μ3 x LA hLA ω₀ μ₀ h3
+  exact ⟨ω4, μ4, (run1.trans (run2.trans (run3.trans run4))), h4⟩
 
 /-- **Steps 0 … 2819 after pc 38875**, from the facts the path reads before writing them. -/
 theorem run (p : ByteArray) (P : Program) [HasCode p P] [HasCodeX p P] [HasCodeA p P] (env : AccEnv) (ω : Regs) (μ : Memory)

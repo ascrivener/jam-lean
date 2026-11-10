@@ -33,7 +33,7 @@ It has five parts:
   four test-only ones marked as such), the codec the binary actually runs, and every host call
   bootstrap makes, in order, except logging. It compiles, has no theorems and was checked by
   evaluation against the cases already proved.
-- **Quirks:** fourteen behaviours that may be surprising, from non-canonical lengths to a failed
+- **Quirks:** fifteen behaviours that may be surprising, from non-canonical lengths to a failed
   `Zombify` wiping the bookkeeping. Each is specified exactly and [listed](#quirks).
 - **Biggest risks:**
   - The logging code runs on every path and formats whole values with `core::fmt`.
@@ -239,6 +239,7 @@ and its definitions mark them with `-- quirk Qn`. Whether each was intended is n
 | Q12 | **Stored values that do not decode read as absent.** The ring counter and `"transfer-count"` then restart at 0, and an undecodable registry reads as empty, so the next registration overwrites it. | `addRecent`, `onInstr` `.createService`, `onTransfer` |
 | Q13 | **`"count_random_storage"` panics if present but shorter than 8 octets**, and a longer value is read from its first 8 (test-only). | `onInstr` `.randomStorageAccumulate` |
 | Q14 | **The transfer counter wraps** at 2³² ([A2]); the next transfer then overwrites `"transfer0"`. | `onTransfer` |
+| Q16 | **`Designate`'s key bound is computed in 16 bits.** The decoder loads 𝖢 sign-extended (`loadI16`), computes 3·𝖢 and zero-extends it from 16 bits, so it accepts n ≤ (3·𝖢) mod 2¹⁶ keys rather than n ≤ 3·𝖢. The two agree for 𝖢 < 21846 (the full parameters' 𝖢 = 341); beyond that, valid key lists are rejected. The spec's bound is 3·𝖢, exact for every 𝖢 bootstrap is built for. Proven as the code does it in `Decode.Designate.designate_heap`. | `Consts.maxValCount` |
 
 ---
 

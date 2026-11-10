@@ -123,6 +123,8 @@ import Services.Bootstrap.Decode.ImportElem
 import Services.Bootstrap.Decode.VecVecElem
 import Services.Bootstrap.Decode.VecPairsBig
 import Services.Bootstrap.Decode.VecU32U64Big
+import Services.Bootstrap.Decode.VecHashBig
+import Services.Bootstrap.Decode.VecHash32Big
 import Services.Picoalloc.Model
 import Services.Picoalloc.Invariant
 import Services.Picoalloc.FreeLists

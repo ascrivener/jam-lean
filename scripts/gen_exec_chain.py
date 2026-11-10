@@ -14,7 +14,7 @@ files `<Chain>/S<i>.lean` and the composition `<Chain>.lean`, and rewrites them 
 * `<Chain>/St.lean` keeps only the states the composition names (all frame conditions `C_i` stay);
 * the replaced `S<i>.lean` are deleted.
 
-Usage: gen_exec_chain.py <chain dir> [every=16] [keep=i,j,…] [nopc=pc,…] [cutat=i,…] [maxchecks=4] [prefix=n,…] [spike] [dry]
+Usage: gen_exec_chain.py <chain dir> [every=16] [keep=i,j,…] [nopc=pc,…] [cutat=i,…] [maxchecks=4] [prefix=n,…] [prog=<module>,<hyp>] [spike] [dry]
   e.g. scripts/gen_exec_chain.py Services/Bootstrap/BTail1
 """
 import os, re, sys
@@ -42,9 +42,11 @@ for a in args[1:]:
     elif a.startswith('cutat='): cutat = {int(x) for x in a[6:].split(',') if x}
     elif a.startswith('maxchecks='): maxchecks = int(a[10:])
     elif a.startswith('prefix='): prefixes = [int(x) for x in a[7:].split(',') if x]
+    elif a.startswith('prog='): prog_mod, prog_hyp = a[5:].split(',')
     elif a == 'dry': dry = True
 chain_file = chain_dir + '.lean'
 ns = chain_dir.replace('/', '.')
+svc = ns.split('.')[1]   # the service: Bootstrap, Witness
 cname = os.path.basename(chain_dir)
 stsrc = open(f'{chain_dir}/St.lean').read()
 csrc = open(chain_file).read()
@@ -94,7 +96,7 @@ acc = contr.startswith('accContract')
 if acc and prog_mod == 'Services.Bootstrap.SymExec.Prog':
     prog_mod, prog_hyp = 'Services.Bootstrap.SymExec.ProgAll', 'Services.Bootstrap.SymExec.hypAll'
 inst = ('[Services.Bootstrap.Code.HasCode p P] [Services.Bootstrap.CodeX.HasCodeX p P] [Services.Bootstrap.CodeA.HasCodeA p P]'
-        if acc else '[Services.Bootstrap.Code.HasCode p P]')
+        if acc else f'[Services.{svc}.Code.HasCode p P]')
 vars_, ub, lb, bpf, lpf = [], [], [], [], []
 for name, h, ty in re.findall(r'\((\w+) : Nat\) \((h\w+) : ([^)]*)\)', sig):
     parts = [p.strip() for p in ty.split('∧')]

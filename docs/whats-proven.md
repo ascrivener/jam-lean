@@ -456,6 +456,30 @@ An independent kernel, nanoda as vendored by
   - *Assumed:* the heap base is 8-aligned (`s.base % 8 = 0`), which `HeapCtx` does not record; the
     stack frame below sp (S0 + 320 ≤ sp, 2147483968 ≤ sp, 8-aligned).
 
+- **The allocator under any host fit for it, refine's or accumulate's.** `Alloc.HeapHost`,
+  `Alloc.refineHeap`, `Acc.accHeapHost` (`Services/Bootstrap/Alloc/HeapContract.lean`,
+  `Services/Bootstrap/Acc/HeapHost.lean`).
+  - *Statement:* `HeapHost X` is code with a host contract for each cap, satisfying three things:
+    - it allows a `grow_heap` call whose cost fits in the cap, with Ω_♊'s outcome;
+    - every continuing call it allows keeps the page table outside the heap (48 … pb) and every
+      octet that is not writable;
+    - a call allowed at `hostCostMax` is allowed at any larger cap.
+
+    Every allocator and heap-context theorem stated under `refineContractK cap env` or
+    `refineContract env` also has a form `…G` over any `HeapHost` (in `Alloc/` and
+    `Decode/{HeapCtx, HeapWrap, AllocOk, ReallocOk, ReallocKeepAll, ReallocCall}`). Examples are
+    `HeapCtx.alloc_callG` and `ReallocCall.realloc_callG`, on the context `HeapCtxC code`. The
+    refine theorem keeps its name and statement and is that form on `refineHeap env`
+    (`HeapCtx env` is `HeapCtxC env.code`). `accHeapHost env` is the accumulate contract
+    `accContractK · env` (Ψ_A's F, GP v0.8.0 eq. `accinvocation`) as such a host:
+    - its keep fact covers every gas-independent id (`accContractK_keep`). `fetch`, `lookup`,
+      `read` and `info` write octets only through `writeValue`, which checks that they are
+      writable;
+    - its monotonicity rests on `AccHost.dispatch_noOog_mono` and `accContract_le`.
+
+    So the allocator's results hold for accumulate's runs too.
+  - *Assumed:* nothing new. Both hosts are the model's own dispatchers.
+
 - **The decode loop for elements that allocate.** `Decode.LoopA.loopA`, `ElemOkA`,
   `Decode.HeapCtx.alloc_call` (`Services/Bootstrap/Decode/LoopA.lean`, `LoopAPass.lean`, `HeapCtx.lean`,
   `HeapWrap.lean`, `HeapFrame.lean`).

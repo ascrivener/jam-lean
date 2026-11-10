@@ -186,7 +186,7 @@ corollaries.
     (−2 at out + 0, the error);
   - 46818 … 46852: the fourth hash to b + 136 and the call of 46856 (`cu_call`, the gas);
   - 46889 … 46932: the gas's error bit, then the work result's tag octet read into b + 272 (2108);
-  - tag 0 (47074): the `Vec<u8>` by 39634 (2114) into b + 272, cap −2⁶³ (the niche) meaning an error;
+  - tag 0 (47074): the `Vec<u8>` by 39634 (2114) into b + 272, −1 there meaning an error;
     then b + 8 = cap, b + 16 = the packed (ptr, len) words (47095 … 47143);
   - tags 1 … 6 (46936 … 47007): the tag re-read from a one-octet reader at b + 135; 7 … 255 fail;
     b + 8 = −1 (no `Vec`), b + 16 = the tag;

@@ -40,6 +40,9 @@ So these proofs show only that each formatting function:
 | `hex32_ok`, `dec32_ok`, `dec64_ok` | `Template.lean` | the three above as `ArgOk` arguments |
 | `fmt_write` | `Write.lean` (steps in `WriteSteps.lean`) | `core::fmt::write` (64495) into a `String`, over a template `Tmpl` of literals and default-option arguments, each argument an `ArgOk`. Bound `tcost M C ts + 100 + 2(cap' − cap)`. |
 | `format_inner` | `Format.lean` (steps in `FormatSteps.lean`) | `alloc::fmt::format_inner` (59375): `FmtCall` within `fmtCost M C ts` steps |
+| `read_exact`, `rd_uN` | `ReadExact.lean` | a slice reader's `read_exact` (58434), `rd_u64` (46040), `rd_u32` (46008) |
+| `FreeStepsH.infoSelf` | `InfoStep.lean` | the `info` (6) host step on the service itself, from `accContractK` (Ω_I) |
+| `info_self` | `Info.lean` (steps in `InfoSteps.lean`) | accumulate's `info` call at 6501 (49454), frame-only, under `accContractK cap env` (703 ≤ cap) |
 
 ### Templates and arguments (`Template.lean`)
 
@@ -98,7 +101,10 @@ allocated in s' and fresh against s. The text stays unstated.
    - The arguments are dispatched through jump-table addresses (`jte_k` facts in CodeF).
 2. **Done** (`format_inner`). `format_inner` (59375): the capacity estimate (a loop over the template), `alloc` through
    `AllocOk`, then `core::fmt::write` with the `String` vtable 77016. Gives `FmtCall`.
-3. **Accumulate's first log line** (T2's `Acc/Args.lean`, sp = 4278057152):
+3. **Accumulate's first log line** (`info_self` done) (T2's `Acc/Args.lean`, sp = 4278057152):
+   - **Done** (`info_self`). Its two preconditions on the context x, **for T2 to discharge** from
+     Ψ_A's setup and the paper's typing (the code hash is in ℍ, so the record is 96 octets):
+     `x.1.state.accounts.get? x.1.id = some a` and `(infoValue a).length < 2⁶⁴ − 9`.
    - `info(6)` summary at 6501 (→ 49454): the `info` host call that feeds the line. Logging only,
      so the summary keeps state and says only that the record at sp + 1600 is written.
      It has to be generic in R, with an `info` contract hypothesis like `AllocOk`.

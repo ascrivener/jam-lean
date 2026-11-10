@@ -24,14 +24,14 @@ set_option maxRecDepth 100000
 variable {X : Type} {R : HostRel X}
 
 /-- 48601 … 58434: after an `Ok`, the next field: `read_exact(T + 160, T + 208, 8)`, returning to
-    2162. Only T … T + 160 and T + 176 … T + 240 change. -/
+    2162. Only T … T + 56 and T + 176 … T + 240 change. -/
 theorem ib {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
     (T : Nat) (hT : 65536 ≤ T ∧ T + 264 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h7 : ω[7] = UInt64.ofNat 0) (hr : ∀ a, T ≤ a → a < T + 264 → μ.readable a = true)
     (hw : ∀ a, T ≤ a → a < T + 264 → μ.writable a = true) :
     ∃ ω' μ', FreeStepsH p R 48601 ω μ x 58434 ω' μ' x 16 ∧
       ω'[0] = UInt64.ofNat 2162 ∧ ω'[1] = UInt64.ofNat T ∧ ω'[7] = UInt64.ofNat (T + 160) ∧ ω'[8] = UInt64.ofNat (T + 208) ∧ ω'[9] = UInt64.ofNat 8 ∧
-      (∀ a, a < 4294967296 → (a < T ∨ (T + 160 ≤ a ∧ a < T + 176) ∨ T + 240 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, a < 4294967296 → (a < T ∨ (T + 56 ≤ a ∧ a < T + 176) ∨ T + 240 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
   have b01 : Exec.bitwise (· && ·) 0 1 = 0 := by decide
   rw [show ω = regsNF ω [] from rfl]
@@ -42,14 +42,14 @@ theorem ib {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (�
     all_goals post_simp [rdN_writeN_disjoint, h1, h7]
 
 /-- 48659 … 58434: after an `Ok`, the next field: `read_exact(T + 160, T + 208, 8)`, returning to
-    2164. Only T … T + 160 and T + 176 … T + 240 change. -/
+    2164. Only T … T + 56 and T + 176 … T + 240 change. -/
 theorem ic {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
     (T : Nat) (hT : 65536 ≤ T ∧ T + 264 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h7 : ω[7] = UInt64.ofNat 0) (hr : ∀ a, T ≤ a → a < T + 264 → μ.readable a = true)
     (hw : ∀ a, T ≤ a → a < T + 264 → μ.writable a = true) :
     ∃ ω' μ', FreeStepsH p R 48659 ω μ x 58434 ω' μ' x 8 ∧
       ω'[0] = UInt64.ofNat 2164 ∧ ω'[1] = UInt64.ofNat T ∧ ω'[7] = UInt64.ofNat (T + 160) ∧ ω'[8] = UInt64.ofNat (T + 208) ∧ ω'[9] = UInt64.ofNat 8 ∧
-      (∀ a, a < 4294967296 → (a < T ∨ (T + 160 ≤ a ∧ a < T + 176) ∨ T + 240 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, a < 4294967296 → (a < T ∨ (T + 56 ≤ a ∧ a < T + 176) ∨ T + 240 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
   have b01 : Exec.bitwise (· && ·) 0 1 = 0 := by decide
   rw [show ω = regsNF ω [] from rfl]
@@ -60,14 +60,14 @@ theorem ic {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (�
     all_goals post_simp [rdN_writeN_disjoint, h1, h7]
 
 /-- 48688 … 58434: after an `Ok`, the next field: `read_exact(T + 160, T + 208, 8)`, returning to
-    2166. Only T … T + 160 and T + 176 … T + 240 change. -/
+    2166. Only T … T + 56 and T + 176 … T + 240 change. -/
 theorem id {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
     (T : Nat) (hT : 65536 ≤ T ∧ T + 264 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h7 : ω[7] = UInt64.ofNat 0) (hr : ∀ a, T ≤ a → a < T + 264 → μ.readable a = true)
     (hw : ∀ a, T ≤ a → a < T + 264 → μ.writable a = true) :
     ∃ ω' μ', FreeStepsH p R 48688 ω μ x 58434 ω' μ' x 8 ∧
       ω'[0] = UInt64.ofNat 2166 ∧ ω'[1] = UInt64.ofNat T ∧ ω'[7] = UInt64.ofNat (T + 160) ∧ ω'[8] = UInt64.ofNat (T + 208) ∧ ω'[9] = UInt64.ofNat 8 ∧
-      (∀ a, a < 4294967296 → (a < T ∨ (T + 160 ≤ a ∧ a < T + 176) ∨ T + 240 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, a < 4294967296 → (a < T ∨ (T + 56 ≤ a ∧ a < T + 176) ∨ T + 240 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
   have b01 : Exec.bitwise (· && ·) 0 1 = 0 := by decide
   rw [show ω = regsNF ω [] from rfl]
@@ -78,14 +78,14 @@ theorem id {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (�
     all_goals post_simp [rdN_writeN_disjoint, h1, h7]
 
 /-- 48717 … 58434: after an `Ok`, the next field: `read_exact(T + 160, T + 208, 8)`, returning to
-    2168. Only T … T + 160 and T + 176 … T + 240 change. -/
+    2168. Only T … T + 56 and T + 176 … T + 240 change. -/
 theorem ie {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
     (T : Nat) (hT : 65536 ≤ T ∧ T + 264 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h7 : ω[7] = UInt64.ofNat 0) (hr : ∀ a, T ≤ a → a < T + 264 → μ.readable a = true)
     (hw : ∀ a, T ≤ a → a < T + 264 → μ.writable a = true) :
     ∃ ω' μ', FreeStepsH p R 48717 ω μ x 58434 ω' μ' x 10 ∧
       ω'[0] = UInt64.ofNat 2168 ∧ ω'[1] = UInt64.ofNat T ∧ ω'[7] = UInt64.ofNat (T + 160) ∧ ω'[8] = UInt64.ofNat (T + 208) ∧ ω'[9] = UInt64.ofNat 8 ∧
-      (∀ a, a < 4294967296 → (a < T ∨ (T + 160 ≤ a ∧ a < T + 176) ∨ T + 240 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, a < 4294967296 → (a < T ∨ (T + 56 ≤ a ∧ a < T + 176) ∨ T + 240 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
   have b01 : Exec.bitwise (· && ·) 0 1 = 0 := by decide
   rw [show ω = regsNF ω [] from rfl]
@@ -96,14 +96,14 @@ theorem ie {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (�
     all_goals post_simp [rdN_writeN_disjoint, h1, h7]
 
 /-- 48750 … 46040: after an `Ok`, the next field: `rd_u64`, returning to
-    2170. Only T … T + 160 and T + 176 … T + 240 change. -/
+    2170. Only T … T + 56 and T + 176 … T + 240 change. -/
 theorem if_ {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
     (T : Nat) (hT : 65536 ≤ T ∧ T + 264 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h7 : ω[7] = UInt64.ofNat 0) (hr : ∀ a, T ≤ a → a < T + 264 → μ.readable a = true)
     (hw : ∀ a, T ≤ a → a < T + 264 → μ.writable a = true) :
     ∃ ω' μ', FreeStepsH p R 48750 ω μ x 46040 ω' μ' x 7 ∧
       ω'[0] = UInt64.ofNat 2170 ∧ ω'[1] = UInt64.ofNat T ∧ ω'[7] = UInt64.ofNat (T + 160) ∧
-      (∀ a, a < 4294967296 → (a < T ∨ (T + 160 ≤ a ∧ a < T + 176) ∨ T + 240 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, a < 4294967296 → (a < T ∨ (T + 56 ≤ a ∧ a < T + 176) ∨ T + 240 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
   have b01 : Exec.bitwise (· && ·) 0 1 = 0 := by decide
   rw [show ω = regsNF ω [] from rfl]
@@ -114,14 +114,14 @@ theorem if_ {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (
     all_goals post_simp [rdN_writeN_disjoint, h1, h7]
 
 /-- 48772 … 46008: after an `Ok`, the next field: `rd_u32`, returning to
-    2172. Only T … T + 160 and T + 176 … T + 240 change. -/
+    2172. Only T … T + 56 and T + 176 … T + 240 change. -/
 theorem ig {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
     (T : Nat) (hT : 65536 ≤ T ∧ T + 264 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h7 : ω[7] = UInt64.ofNat 0) (hr : ∀ a, T ≤ a → a < T + 264 → μ.readable a = true)
     (hw : ∀ a, T ≤ a → a < T + 264 → μ.writable a = true) :
     ∃ ω' μ', FreeStepsH p R 48772 ω μ x 46008 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 2172 ∧ ω'[1] = UInt64.ofNat T ∧ ω'[7] = UInt64.ofNat (T + 160) ∧
-      (∀ a, a < 4294967296 → (a < T ∨ (T + 160 ≤ a ∧ a < T + 176) ∨ T + 240 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, a < 4294967296 → (a < T ∨ (T + 56 ≤ a ∧ a < T + 176) ∨ T + 240 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
   have b01 : Exec.bitwise (· && ·) 0 1 = 0 := by decide
   rw [show ω = regsNF ω [] from rfl]
@@ -132,14 +132,14 @@ theorem ig {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (�
     all_goals post_simp [rdN_writeN_disjoint, h1, h7]
 
 /-- 48792 … 46040: after an `Ok`, the next field: `rd_u64`, returning to
-    2174. Only T … T + 160 and T + 176 … T + 240 change. -/
+    2174. Only T … T + 56 and T + 176 … T + 240 change. -/
 theorem ih {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
     (T : Nat) (hT : 65536 ≤ T ∧ T + 264 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h7 : ω[7] = UInt64.ofNat 0) (hr : ∀ a, T ≤ a → a < T + 264 → μ.readable a = true)
     (hw : ∀ a, T ≤ a → a < T + 264 → μ.writable a = true) :
     ∃ ω' μ', FreeStepsH p R 48792 ω μ x 46040 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 2174 ∧ ω'[1] = UInt64.ofNat T ∧ ω'[7] = UInt64.ofNat (T + 160) ∧
-      (∀ a, a < 4294967296 → (a < T ∨ (T + 160 ≤ a ∧ a < T + 176) ∨ T + 240 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, a < 4294967296 → (a < T ∨ (T + 56 ≤ a ∧ a < T + 176) ∨ T + 240 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
   have b01 : Exec.bitwise (· && ·) 0 1 = 0 := by decide
   rw [show ω = regsNF ω [] from rfl]
@@ -150,14 +150,14 @@ theorem ih {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (�
     all_goals post_simp [rdN_writeN_disjoint, h1, h7]
 
 /-- 48812 … 46008: after an `Ok`, the next field: `rd_u32`, returning to
-    2176. Only T … T + 160 and T + 176 … T + 240 change. -/
+    2176. Only T … T + 56 and T + 176 … T + 240 change. -/
 theorem ii {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
     (T : Nat) (hT : 65536 ≤ T ∧ T + 264 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h7 : ω[7] = UInt64.ofNat 0) (hr : ∀ a, T ≤ a → a < T + 264 → μ.readable a = true)
     (hw : ∀ a, T ≤ a → a < T + 264 → μ.writable a = true) :
     ∃ ω' μ', FreeStepsH p R 48812 ω μ x 46008 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 2176 ∧ ω'[1] = UInt64.ofNat T ∧ ω'[7] = UInt64.ofNat (T + 160) ∧
-      (∀ a, a < 4294967296 → (a < T ∨ (T + 160 ≤ a ∧ a < T + 176) ∨ T + 240 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, a < 4294967296 → (a < T ∨ (T + 56 ≤ a ∧ a < T + 176) ∨ T + 240 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
   have b01 : Exec.bitwise (· && ·) 0 1 = 0 := by decide
   rw [show ω = regsNF ω [] from rfl]
@@ -168,14 +168,14 @@ theorem ii {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (�
     all_goals post_simp [rdN_writeN_disjoint, h1, h7]
 
 /-- 48832 … 46008: after an `Ok`, the next field: `rd_u32`, returning to
-    2178. Only T … T + 160 and T + 176 … T + 240 change. -/
+    2178. Only T … T + 56 and T + 176 … T + 240 change. -/
 theorem ij {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
     (T : Nat) (hT : 65536 ≤ T ∧ T + 264 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h7 : ω[7] = UInt64.ofNat 0) (hr : ∀ a, T ≤ a → a < T + 264 → μ.readable a = true)
     (hw : ∀ a, T ≤ a → a < T + 264 → μ.writable a = true) :
     ∃ ω' μ', FreeStepsH p R 48832 ω μ x 46008 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 2178 ∧ ω'[1] = UInt64.ofNat T ∧ ω'[7] = UInt64.ofNat (T + 160) ∧
-      (∀ a, a < 4294967296 → (a < T ∨ (T + 160 ≤ a ∧ a < T + 176) ∨ T + 240 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, a < 4294967296 → (a < T ∨ (T + 56 ≤ a ∧ a < T + 176) ∨ T + 240 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
   have b01 : Exec.bitwise (· && ·) 0 1 = 0 := by decide
   rw [show ω = regsNF ω [] from rfl]
@@ -186,14 +186,14 @@ theorem ij {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (�
     all_goals post_simp [rdN_writeN_disjoint, h1, h7]
 
 /-- 48852 … 46008: after an `Ok`, the next field: `rd_u32`, returning to
-    2180. Only T … T + 160 and T + 176 … T + 240 change. -/
+    2180. Only T … T + 56 and T + 176 … T + 240 change. -/
 theorem ik {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
     (T : Nat) (hT : 65536 ≤ T ∧ T + 264 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h7 : ω[7] = UInt64.ofNat 0) (hr : ∀ a, T ≤ a → a < T + 264 → μ.readable a = true)
     (hw : ∀ a, T ≤ a → a < T + 264 → μ.writable a = true) :
     ∃ ω' μ', FreeStepsH p R 48852 ω μ x 46008 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 2180 ∧ ω'[1] = UInt64.ofNat T ∧ ω'[7] = UInt64.ofNat (T + 160) ∧
-      (∀ a, a < 4294967296 → (a < T ∨ (T + 160 ≤ a ∧ a < T + 176) ∨ T + 240 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, a < 4294967296 → (a < T ∨ (T + 56 ≤ a ∧ a < T + 176) ∨ T + 240 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
   have b01 : Exec.bitwise (· && ·) 0 1 = 0 := by decide
   rw [show ω = regsNF ω [] from rfl]

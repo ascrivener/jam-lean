@@ -274,4 +274,64 @@ theorem lp_last {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : 
       | exact UInt64.ofNat_toNat
       | rfl
 
+/-- **44916 … 45613, no items** (n = 0): `Vec { cap 0, ptr 8, len 0 }` (the empty vector, the dangling
+    pointer 8 for 184-octet elements) written at out, and the return with ω₀, ω₁, ω₅, ω₆ as at the call. -/
+theorem lp_empty {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
+    (sp out rd : Nat) (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat out)
+    (h8 : ω[8] = UInt64.ofNat rd) (h9 : ω[9] = UInt64.ofNat 0)
+    (hsp : 65536 + 480 ≤ sp ∧ sp < 4294967296) (hout : 65536 ≤ out ∧ out + 24 < 4294967296)
+    (dso : out + 24 ≤ sp - 480 ∨ sp ≤ out) (hrd : rd < 18446744073709551616)
+    (hwf : ∀ a, sp - 480 ≤ a → a < sp → μ.writable a = true)
+    (hwo : ∀ a, out ≤ a → a < out + 24 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 44916 ω μ x 45613 ω' μ' x 60 ∧
+      ω'[0] = ω[0] ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      rdN μ' out 8 = 0 ∧ rdN μ' (out + 8) 8 = 8 ∧ rdN μ' (out + 16) 8 = 0 ∧
+      (∀ a, a < 4294967296 → (a < sp - 480 ∨ sp ≤ a) → (a < out ∨ out + 24 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have hr : ∀ a, sp - 480 ≤ a → a < sp → μ.readable a = true :=
+    fun a h1 h2 => Memory.readable_of_writable (hwf a h1 h2)
+  have hro : ∀ a, out ≤ a → a < out + 24 → μ.readable a = true :=
+    fun a h1 h2 => Memory.readable_of_writable (hwo a h1 h2)
+  have rb : ∀ (μ0 : Memory) (a v : Nat), v < 18446744073709551616 → a + 8 ≤ 4294967296 →
+      rdN (μ0.writeN a (Num.encodeLE 8 v)) a 8 = v := fun μ0 a v hv ha => by
+    unfold rdN
+    rw [PVM.Memory.readN_writeN_same μ0 a 8 _ (Num.length_encodeLE _ _) (by unfold PVM.two32; omega),
+      Num.decodeLE_encodeLE, Nat.mod_eq_of_lt (by simpa using hv)]
+  have o0 : ∀ μ0 : Memory, rdN (μ0.writeN (sp - 480) (Num.encodeLE 8 out)) (sp - 480) 8 = out :=
+    fun μ0 => rb μ0 _ _ (by omega) (by omega)
+  have r272 : ∀ μ0 : Memory, rdN (μ0.writeN (sp - 480 + 272) (Num.encodeLE 8 8)) (sp - 480 + 272) 8 = 8 :=
+    fun μ0 => rb μ0 _ _ (by omega) (by omega)
+  have r280 : ∀ μ0 : Memory, rdN (μ0.writeN (sp - 480 + 280) (Num.encodeLE 8 0)) (sp - 480 + 280) 8 = 0 :=
+    fun μ0 => rb μ0 _ _ (by omega) (by omega)
+  have e72 : ∀ μ0 : Memory, rdN (μ0.writeN (sp - 480 + 72) [UInt8.ofNat 8, UInt8.ofNat 0, UInt8.ofNat 0,
+      UInt8.ofNat 0, UInt8.ofNat 0, UInt8.ofNat 0, UInt8.ofNat 0, UInt8.ofNat 0]) (sp - 480 + 72) 8 = 8 := by
+    intro μ0; unfold rdN
+    rw [PVM.Memory.readN_writeN_same μ0 (sp - 480 + 72) 8 _ rfl (by unfold PVM.two32; omega)]; rfl
+  have z80 : ∀ μ0 : Memory, rdN (μ0.writeN (sp - 480 + 80) [UInt8.ofNat 0, UInt8.ofNat 0, UInt8.ofNat 0,
+      UInt8.ofNat 0, UInt8.ofNat 0, UInt8.ofNat 0, UInt8.ofNat 0, UInt8.ofNat 0]) (sp - 480 + 80) 8 = 0 := by
+    intro μ0; unfold rdN
+    rw [PVM.Memory.readN_writeN_same μ0 (sp - 480 + 80) 8 _ rfl (by unfold PVM.two32; omega)]; rfl
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?run, ?post⟩
+  case run => pvm_go [h1, h7, h8, h9, hwf, hr, hwo, hro, o0, r272, r280, e72, z80, rdN_writeN_disjoint,
+    ↓rdN_fold, ↓loadI_fold]
+  case post =>
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha h1 h2 => ?_, fun a => ?_, fun a => ?_⟩
+    all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+      ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, h1, h7, h8, h9]
+    all_goals try with_reducible rfl
+    all_goals try first
+      | (rd_simp []; done)
+      | rd_simp []
+    all_goals try first
+      | with_reducible rfl
+      | with_reducible exact Nat.mod_eq_of_lt (by omega)
+    all_goals first
+      | (congr 1; omega)
+      | decide
+      | (simp only [Nat.reduceMul, Nat.reducePow]; exact Nat.mod_eq_of_lt (UInt64.toNat_lt _))
+      | exact UInt64.ofNat_toNat
+      | (simp only [Nat.reduceMul, Nat.reducePow]; rw [Nat.mod_eq_of_lt (UInt64.toNat_lt _)]; exact UInt64.ofNat_toNat)
+      | rfl
+
 end Services.Bootstrap.Acc

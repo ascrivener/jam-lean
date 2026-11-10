@@ -207,6 +207,7 @@ import Services.Bootstrap.Spec
 import Services.Bootstrap.SpecLemmas.Codec
 import Services.Bootstrap.SpecLemmas.Refine
 import Services.Bootstrap.SpecLemmas.Ring
+import Services.Bootstrap.SymExec
 
 /-!
 # Results about specific services' deployed code

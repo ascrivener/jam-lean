@@ -1,5 +1,6 @@
 import Services.Bootstrap.Fmt.InfoSteps
 import Services.Bootstrap.Memzero
+import Services.Bootstrap.Fmt.Memcpy
 
 /-!
 # `info` of the accumulating service (49454), frame-only
@@ -208,5 +209,118 @@ theorem info_reads {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x
     fun a => by simp only [wr10, wr9, wr8, wr7, wr6, wr5, wr4, wr3, wr2, wr1, wr0]⟩
   rw [fr10 a ha h, fr9 a ha h, fr8 a ha h, fr7 a ha h, fr6 a ha h, fr5 a ha h, fr4 a ha h, fr3 a ha h, fr2 a ha h,
     fr1 a ha h, fr0 a ha h]
+
+theorem setR7_getElem (ω : Regs) (v k : Nat) (hk : k < 13) (h7 : k ≠ 7) : (setR7 ω v)[k] = ω[k] := by
+  simp only [setR7, Vector.getElem_set]
+  split <;> simp_all
+
+theorem setR7_getElem7 (ω : Regs) (v : Nat) : (setR7 ω v)[7] = UInt64.ofNat v := by
+  simp [setR7, Vector.getElem_set]
+
+/-- **`info` of the accumulating service, frame-only** (49454, called at 6501 with the destination
+    D in ω₇): under `accContractK cap env` (𝖬_I ≤ cap), when the service's own account a is in the
+    context's accounts and its `info` record is shorter than 2⁶⁴ − 9 octets, the call returns to t
+    (the address ω₀ resolves to) with ω₀, ω₁, ω₅, ω₆ as they were and the context unchanged. Memory
+    changes only in S − 488 … S (its frames) and the 96 octets at D (the decoded record, not
+    stated). -/
+theorem info_self {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (cap : Nat)
+    (hcap : 703 ≤ cap ∧ cap < 2 ^ 64) (env : AccEnv) (x : AccCtx) (a : ServiceAccount)
+    (ha : x.1.state.accounts.get? x.1.id = some a) (hlen : (infoValue a).length < 18446744073709551607)
+    (ω : Regs) (μ : Memory) (S D ret t : Nat)
+    (h0 : ω[0] = UInt64.ofNat ret) (h1 : ω[1] = UInt64.ofNat S) (h7 : ω[7] = UInt64.ofNat D)
+    (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t)
+    (hbt : P.isBlockStart t = true)
+    (hS : 65536 + 600 ≤ S ∧ S % 8 = 0) (hD : S + 8 ≤ D ∧ D + 96 + 16 < 4294967296)
+    (hwS : ∀ a, S - 488 ≤ a → a < S → μ.writable a = true)
+    (hwD : ∀ a, D ≤ a → a < D + 96 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p (accContractK cap env) 49454 ω μ x t ω' μ' x 8000 ∧
+      ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      (∀ b, b < 4294967296 → (b < S - 488 ∨ S ≤ b) → (b < D ∨ D + 96 ≤ b) → μ'.read b = μ.read b) ∧
+      (∀ b, μ'.readable b = μ.readable b) ∧ (∀ b, μ'.writable b = μ.writable b) := by
+  have hv5 := UInt64.toNat_lt ω[5]
+  have hv6 := UInt64.toNat_lt ω[6]
+  have hw : ∀ b, S - 488 ≤ b → b < S → μ.writable b = true := hwS
+  -- the frames
+  obtain ⟨ω1, μ1, run1, a0, a1, a6, a7, a8, a9, m112, m104, m256, m248, m240, m56, fr1, rd1, wr1⟩ :=
+    io_entry (p := p) (P := P) (R := accContractK cap env) x ω μ S D ret ω[5].toNat ω[6].toNat ⟨by omega, by omega⟩ h0 h1
+      UInt64.ofNat_toNat.symm UInt64.ofNat_toNat.symm h7 ⟨by omega, hv5, hv6, by omega⟩
+      (fun b h1 h2 => hw b (by omega) h2)
+  -- memset of the buffer
+  obtain ⟨ω2, μ2, run2, b0, b1, b5, b6, -, fr2, rd2, wr2⟩ := Memzero.memzero (p := p) (P := P) (R := accContractK cap env) x ω1 μ1
+    (S - 384 + 64) 96 2158 48534 (by omega) ⟨by omega, by omega⟩ (by omega) a0 a7 a8 a9 (by decide) jte_1078
+    bs_48534 (fun b h1 h2 => by rw [wr1]; exact hw b (by omega) (by omega))
+  obtain ⟨ω3, run3, c1, c7, c8, c9, c10⟩ := io_a1 (p := p) (P := P) (R := accContractK cap env) x ω2 μ2 (S - 384) ⟨by omega, by omega⟩
+    (b1.trans a1) (b6.trans a6)
+  -- after the host call
+  obtain ⟨L, hL⟩ : ∃ L, (infoValue a).length = L := ⟨_, rfl⟩
+  rw [hL] at hlen
+  obtain ⟨μ4, hμ4⟩ : ∃ m, m = μ2.writeN (S - 384 + 64) ((infoValue a).take (min 96 L)) := ⟨_, rfl⟩
+  have fr4 : ∀ b, b < 4294967296 → (b < S - 384 + 64 ∨ S - 384 + 160 ≤ b) → μ4.read b = μ2.read b := fun b hb h => by
+    rw [hμ4, Memory.read_writeN_disjoint _ _ _ _ (by simp only [List.length_take]; omega)
+      (by simp only [List.length_take, two32]; omega) (by simp only [two32]; omega)]
+  have wr4 : ∀ b, μ4.writable b = μ2.writable b := fun b => by rw [hμ4, Memory.writable_writeN]
+  have rd4 : ∀ b, μ4.readable b = μ2.readable b := fun b => by rw [hμ4, Memory.readable_writeN]
+  have k14 : ∀ b, b < 4294967296 → (b < S - 384 + 64 ∨ S - 384 + 160 ≤ b) → μ4.read b = μ1.read b := fun b hb h => by
+    rw [fr4 b hb h, fr2 b hb h]
+  have wr14 : ∀ b, μ4.writable b = μ1.writable b := fun b => by rw [wr4, wr2]
+  have hw4 : ∀ b, S - 488 ≤ b → b < S → μ4.writable b = true := fun b h1 h2 => by
+    rw [wr14, wr1]; exact hw b h1 h2
+  obtain ⟨ω4, hω4⟩ : ∃ w, w = setR7 ω3 L := ⟨_, rfl⟩
+  have d1 : ω4[1] = UInt64.ofNat (S - 384) := by rw [hω4, setR7_getElem _ _ _ (by decide) (by decide), c1]
+  have d7 : ω4[7] = UInt64.ofNat L := by rw [hω4, setR7_getElem7]
+  obtain ⟨ω5, μ5, run5, e0, e1, e7, e8, e9, rp5, rl5, fr5, rd5, wr5⟩ := io_a2 (p := p) (P := P) (R := accContractK cap env) x ω4 μ4
+    (S - 384) L ⟨by omega, by omega⟩ hlen d1 d7 (fun b h1 h2 => hw4 b (by omega) (by omega))
+  have k15 : ∀ b, b < 4294967296 → (b < S - 384 + 64 ∨ (S - 384 + 240 ≤ b)) → μ5.read b = μ1.read b :=
+    fun b hb h => by rw [fr5 b hb (by omega), k14 b hb (by omega)]
+  have st5 : ISt μ5 (S - 384) (S - 120) D ω[6].toNat 0 :=
+    ⟨by rw [rdN_frame (fun j hj => k15 _ (by omega) (by omega))]; exact m56,
+     by rw [rdN_frame (fun j hj => k15 _ (by omega) (by omega))]; exact m256,
+     by rw [rdN_frame (fun j hj => k15 _ (by omega) (by omega))]; exact m248,
+     by rw [rdN_frame (fun j hj => k15 _ (by omega) (by omega))]; exact m240,
+     by rw [rp5], by rw [rl5]⟩
+  have hw5 : ∀ b, S - 384 - 104 ≤ b → b < S - 384 + 264 → μ5.writable b = true := fun b h1 h2 => by
+    rw [wr5]; exact hw4 b (by omega) (by omega)
+  obtain ⟨ω6, μ6, run6, f1, f7, st6, fr6, rd6, wr6⟩ := info_reads (p := p) (P := P) (R := accContractK cap env) x ω5 μ5 (S - 384)
+    (S - 120) D ω[6].toNat ⟨by omega, by omega, by omega⟩ st5 e0 e1 e7 e8 e9 hw5
+  -- the record's write-back, the copy to D and the return
+  have hw6 : ∀ b, S - 488 ≤ b → b < S → μ6.writable b = true := fun b h1 h2 => by
+    rw [wr6, wr5]; exact hw4 b h1 h2
+  obtain ⟨ω7, μ7, run7, g1, g5, g6, gt, fr7, rd7, wr7⟩ := io_l (p := p) (P := P) (R := accContractK cap env) x ω6 μ6 (S - 384) D
+    ω[6].toNat ⟨by omega, by omega⟩ f1 f7 (by rw [st6.res]; omega) st6.s0 st6.s5 st6.s6
+    (fun b h1 h2 => Memory.readable_of_writable (hw6 b (by omega) (by omega)))
+    (fun b h1 h2 => hw6 b (by omega) (by omega))
+  obtain ⟨ω8, run8, h80, h81, h85, h86, h87, h88, h89⟩ := io_b (p := p) (P := P) (R := accContractK cap env) x ω7 μ7 (S - 120) D
+    ⟨by omega, by omega⟩ (by omega) (by rw [g1]; congr 1; omega) g5 (by rw [show S - 120 = S - 384 + 264 by omega]; exact gt)
+    (fun b h1 h2 => by rw [rd7]; exact Memory.readable_of_writable (hw6 b (by omega) (by omega)))
+  obtain ⟨ω9, μ9, run9, i0, i1, i5, i6, fr9, rd9, wr9⟩ := memcpy_frame (p := p) (P := P) (R := accContractK cap env) x ω8 μ7 2194 49529
+    (S - 120) D (S - 120 + 8) 96 h80 h81 h87 h88 h89 (by decide) jte_1096 bs_49529 ⟨by omega, by omega, by omega⟩
+    ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ (Or.inr (by omega)) (Or.inl (by omega)) (Or.inl (by omega))
+    (fun b h1 h2 => by rw [rd7]; exact Memory.readable_of_writable (hw6 b (by omega) (by omega)))
+    (fun b h1 h2 => by rw [wr7, wr6, wr5, wr14, wr1]; exact hwD b h1 h2)
+    (fun b h1 h2 => by rw [wr7]; exact hw6 b (by omega) (by omega))
+  -- the outer frame's words, kept since io_entry
+  have kO : ∀ b, S - 120 + 104 ≤ b → b < S → μ9.read b = μ1.read b := fun b h1 h2 => by
+    rw [fr9 b (by omega) (Or.inl (by omega)) (Or.inr (by omega)), fr7 b (by omega) (Or.inr (by omega)),
+      fr6 b (by omega) (Or.inr (Or.inr (by omega))), k15 b (by omega) (Or.inr (by omega))]
+  obtain ⟨ω10, run10, j0, j1, j5, j6⟩ := io_c (p := p) (P := P) (R := accContractK cap env) x ω9 μ9 (S - 120) ret t ω[5].toNat
+    ⟨by omega, by omega⟩ (i1.trans h81)
+    (by rw [rdN_frame (fun j hj => kO _ (by omega) (by omega))]; exact m112)
+    (by rw [rdN_frame (fun j hj => kO _ (by omega) (by omega))]; exact m104) hret hjt hbt
+    (fun b h1 h2 => by rw [rd9, rd7, rd6, rd5, rd4, rd2, rd1]; exact Memory.readable_of_writable (hw b (by omega) (by omega)))
+  -- the run: the host step after io_a1
+  have rest : FreeStepsH p (accContractK cap env) 48549 ω4 μ4 x t ω10 μ9 x
+      (15 + 5000 + 40 + 6 + (7 * 96 + 320) + 5) :=
+    (((((run5.trans run6).trans run7).trans run8).trans run9).trans run10)
+  have run4 := FreeStepsH.infoSelf cap hcap env (P := P) (i := 48547) (n := 48549) d_48547 ha c7 c8 c9 c10
+    (by omega) (fun b h1 h2 => by rw [wr2, wr1]; exact hw b (by omega) (by omega))
+    (by rw [hL, ← hω4, ← hμ4]; exact rest)
+  refine ⟨ω10, μ9, (((run1.trans run2).trans run3).trans run4).mono (by omega), j0.trans h0.symm,
+    by rw [j1, h1, show S - 120 + 120 = S by omega], ?_, ?_, fun b hb h h' => ?_, fun b => ?_, fun b => ?_⟩
+  · rw [j5, UInt64.ofNat_toNat]
+  · rw [j6, i6, h86, g6, UInt64.ofNat_toNat]
+  · rw [fr9 b hb h' (by omega), fr7 b hb (by omega), fr6 b hb (by omega), fr5 b hb (by omega), fr4 b hb (by omega),
+      fr2 b hb (by omega), fr1 b hb (by omega)]
+  · rw [rd9, rd7, rd6, rd5, rd4, rd2, rd1]
+  · rw [wr9, wr7, wr6, wr5, wr4, wr2, wr1]
 
 end Services.Bootstrap.Fmt

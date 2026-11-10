@@ -218,10 +218,15 @@ Integration work, on branch `claude/symexec-phase1`:
     It is 51 lines and checks in 7.7 s.
 * **Exits and returns.** `trap_exit` (☇), `halt_exit` (∎ through `jump_ind` to 2^32 − 2^16) and
   `ret_step` (a return through **j** to a symbolic address) close a chain.
-* **Instructions.** Added `store_imm_*` at an absolute address. Not yet: signed loads at an absolute
-  address, which Bootstrap does not use.
+* **Instructions.** Added `store_imm_*` at an absolute address, and signed loads at an absolute
+  address (`load_i8/16/32`). The latter use 𝒳_n; `sext_eq` proves that equals 𝒵⁻¹_8(𝒵_n(·)) on
+  loaded values. BParams uses one at pc 56090.
+* **Simplification.** The zero-extension idiom now normalises to v when the bounds allow:
+  `add_imm_32 0` of v < 2^31, and `shlo_r_imm_64 s` of `shlo_l_imm_64 s` of w with w·2^s < 2^64
+  (`zextRule`).
 * **Diagnostics.** `PVM/SymExec/Trace.lean`: `#eval traceSeg …` reports the first step the
-  executor cannot follow, or the target facts that do not entail.
+  executor cannot follow, or the target facts that do not entail. It uses the same tests as the
+  check, so it reports nothing on a check the kernel accepts.
 
 ## Generator interface
 

@@ -140,6 +140,7 @@ def SVal.bnd (st : Static) : SVal → Option Nat
   | .mod _ m => if 0 < m then some m else none
   | .addr a => if 0 ≤ a.lo st then (a.hi st).map fun h => (h + 1).toNat else none
   | .sx _ _ => some two64
+  | .alu2i op _ _ _ => if op = .shloLImm64 then some two64 else none
   | _ => none
 
 /-- `v mod m`, simplified: folded on a literal, dropped when a bound shows it does nothing, and
@@ -194,9 +195,25 @@ def foldAlu2i (op : TwoRegImmOp) (a b : SVal) (x : Nat) : SVal :=
   | .const p, .const q => .const ((twoRegImmAlu op p q x).getD 0)
   | a, b => .alu2i op a b x
 
+/-- The zero-extension idiom: `add_imm_32 0` of a value below 2^31 is the value, and
+    `shlo_r_imm_64 s` of `shlo_l_imm_64 s` of w is w when w·2^s < 2^64. -/
+def zextRule (st : Static) (op : TwoRegImmOp) (b : SVal) (x : Nat) : Option SVal :=
+  if op = .addImm32 then
+    (if x = 0 ∧ (b.bnd st).any (· ≤ 2 ^ 31) then some b else none)
+  else if op = .shloRImm64 then
+    match b with
+    | .alu2i op' _ w s =>
+      if op' = .shloLImm64 ∧ s % 64 = x % 64 ∧ (w.bnd st).any (fun bw => bw * 2 ^ (x % 64) ≤ two64)
+      then some w else none
+    | _ => none
+  else none
+
 def mkAlu2i (st : Static) (op : TwoRegImmOp) (a b : SVal) (x : Nat) : SVal :=
-  if op = .addImm64 then addv st b x (foldAlu2i op (.const 0) b x)
-  else foldAlu2i op (if usesA op then a else .const 0) b x
+  match zextRule st op b x with
+  | some v => v
+  | none =>
+    if op = .addImm64 then addv st b x (foldAlu2i op (.const 0) b x)
+    else foldAlu2i op (if usesA op then a else .const 0) b x
 
 def foldAlu3 (op : ThreeRegOp) (a b d : SVal) : SVal :=
   match a, b, d with
@@ -305,6 +322,7 @@ def tkind : TwoRegImmOp → TK
 /-- How §A.5.6 treats a memory operation at the absolute address ν_X. -/
 def rkind : RegImmOp → TK
   | .loadU8 => .load 1 0 | .loadU16 => .load 2 0 | .loadU32 => .load 4 0 | .loadU64 => .load 8 0
+  | .loadI8 => .load 1 1 | .loadI16 => .load 2 2 | .loadI32 => .load 4 4
   | .storeU8 => .store 1 | .storeU16 => .store 2 | .storeU32 => .store 4 | .storeU64 => .store 8
   | _ => .alu
 
@@ -403,8 +421,8 @@ def sstep (G : Prog) (pc : Nat) (σ : SState) : Option (Nat × SState) :=
       | .store n =>
         ((mkAddr st (.const 0) x.toNat n).bind fun ad =>
           sstore st σ ad n (mkMod st (rdv st σ a.val) (2 ^ (8 * n)))).map (e.2, ·)
-      | .load n _ =>
-        ((mkAddr st (.const 0) x.toNat n).bind fun ad => sload st σ a.val ad n 0).map (e.2, ·)
+      | .load n k =>
+        ((mkAddr st (.const 0) x.toNat n).bind fun ad => sload st σ a.val ad n k).map (e.2, ·)
       | .alu => none
     | .regExtImm .loadImm64 a x => some (e.2, setv σ a.val (.const x.toNat))
     | .twoImm op x y =>

@@ -109,4 +109,122 @@ theorem lp_buf {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X
       | (simp only [Nat.reduceMul, Nat.reducePow]; exact Nat.mod_eq_of_lt (by omega))
       | rfl
 
+/-- 47072: a transfer's decode returns, through entry 1021 (2044), to 45168. -/
+theorem lp_ret_tr {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
+    (h0 : ω[0] = UInt64.ofNat 2044) : FreeStepsH p R 47072 ω μ x 45168 ω μ x 1 := by
+  rw [show ω = regsNF ω [] from rfl]
+  pvm_go [h0]
+
+/-- 47332: an operand's decode returns, through entry 1021 (2044), to 45168. -/
+theorem lp_ret_op {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
+    (h0 : ω[0] = UInt64.ofNat 2044) : FreeStepsH p R 47332 ω μ x 45168 ω μ x 1 := by
+  rw [show ω = regsNF ω [] from rfl]
+  pvm_go [h0]
+
+/-- **45168 … 45186**, an item decoded (its slot's first word not −2): the copy of the 184-octet slot
+    s + 88 to s + 272 (return address 2046). -/
+theorem lp_chk {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
+    (s : Nat) (h1 : ω[1] = UInt64.ofNat s) (m88 : rdN μ (s + 88) 8 ≠ 18446744073709551614)
+    (hs : 65536 ≤ s ∧ s + 480 < 4294967296) (hrf : ∀ a, s ≤ a → a < s + 480 → μ.readable a = true) :
+    ∃ ω', FreeStepsH p R 45168 ω μ x 68729 ω' μ x 10 ∧
+      ω'[0] = UInt64.ofNat 2046 ∧ ω'[1] = UInt64.ofNat s ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      ω'[7] = UInt64.ofNat (s + 272) ∧ ω'[8] = UInt64.ofNat (s + 88) ∧ ω'[9] = UInt64.ofNat 184 := by
+  have m88' : rdN μ (s + 88) 8 % 18446744073709551616 ≠ 18446744073709551614 := by
+    rw [Nat.mod_eq_of_lt (rdN_lt64 _ _)]; exact m88
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?run, ?post⟩
+  case run => pvm_go [h1, m88', hrf, ↓rdN_fold, ↓loadI_fold]
+  case post =>
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+    all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+      ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, h1]
+    all_goals try with_reducible rfl
+    all_goals try first
+      | (rd_simp []; done)
+      | rd_simp []
+    all_goals try first
+      | with_reducible rfl
+      | with_reducible exact Nat.mod_eq_of_lt (by omega)
+    all_goals first
+      | (congr 1; omega)
+      | with_reducible exact Nat.mod_eq_of_lt (rdN_lt64 _ _)
+      | (simp only [Nat.reduceMul, Nat.reducePow]; exact Nat.mod_eq_of_lt (by omega))
+      | exact UInt64.ofNat_toNat
+      | rfl
+
+/-- **45192 … 45097**, the slot copied to s + 272, with len L < cap n: the copy of it to the buffer at
+    q + 184·L (return address 2042); q kept at s + 56. -/
+theorem lp_step {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
+    (s n q L : Nat) (h1 : ω[1] = UInt64.ofNat s) (m64 : rdN μ (s + 64) 8 = n) (m72 : rdN μ (s + 72) 8 = q)
+    (m80 : rdN μ (s + 80) 8 = L) (hL : L < n) (hq : q + 184 * n < 4294967296)
+    (hs : 65536 ≤ s ∧ s + 480 < 4294967296) (hwf : ∀ a, s ≤ a → a < s + 480 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 45192 ω μ x 68729 ω' μ' x 20 ∧
+      ω'[0] = UInt64.ofNat 2042 ∧ ω'[1] = UInt64.ofNat s ∧ ω'[5] = ω[5] ∧ ω'[6] = UInt64.ofNat L ∧
+      ω'[7] = UInt64.ofNat (q + 184 * L) ∧ ω'[8] = UInt64.ofNat (s + 272) ∧ ω'[9] = UInt64.ofNat 184 ∧
+      rdN μ' (s + 56) 8 = q ∧
+      (∀ a, a < 4294967296 → (a < s + 56 ∨ s + 64 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have hr : ∀ a, s ≤ a → a < s + 480 → μ.readable a = true :=
+    fun a h1 h2 => Memory.readable_of_writable (hwf a h1 h2)
+  have hn : n < 18446744073709551616 := by rw [← m64]; exact rdN_lt64 _ _
+  have hne : ¬ (n = L) := by omega
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?run, ?post⟩
+  case run => pvm_go [h1, m64, m72, m80, Nat.mod_eq_of_lt hn, Nat.mod_eq_of_lt (show L < 18446744073709551616 by omega),
+    hne, hwf, hr, rdN_writeN_disjoint, ↓rdN_fold, ↓loadI_fold]
+  case post =>
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha h1 => ?_, fun a => ?_, fun a => ?_⟩
+    all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+      ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, h1]
+    all_goals try with_reducible rfl
+    all_goals try first
+      | (rd_simp []; done)
+      | rd_simp []
+    all_goals try first
+      | with_reducible rfl
+      | with_reducible exact Nat.mod_eq_of_lt (by omega)
+    all_goals first
+      | (congr 1; omega)
+      | with_reducible exact Nat.mod_eq_of_lt (rdN_lt64 _ _)
+      | (simp only [Nat.reduceMul, Nat.reducePow]; exact Nat.mod_eq_of_lt (by omega))
+      | exact UInt64.ofNat_toNat
+      | rfl
+
+/-- **45103 … 45122**, the slot copied into the buffer, more items left (count c > 1): len L + 1 at
+    s + 80, ω₅ = c − 1, and the next item's decode into s + 88 (return address 2044). -/
+theorem lp_next {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
+    (s rd L c : Nat) (h1 : ω[1] = UInt64.ofNat s) (h5 : ω[5] = UInt64.ofNat c) (h6 : ω[6] = UInt64.ofNat L)
+    (m48 : rdN μ (s + 48) 8 = rd) (hc : 1 < c ∧ c < 18446744073709551616) (hL : L + 1 < 18446744073709551616)
+    (hs : 65536 ≤ s ∧ s + 480 < 4294967296) (hwf : ∀ a, s ≤ a → a < s + 480 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 45103 ω μ x 45126 ω' μ' x 20 ∧
+      ω'[0] = UInt64.ofNat 2044 ∧ ω'[1] = UInt64.ofNat s ∧ ω'[5] = UInt64.ofNat (c - 1) ∧
+      ω'[7] = UInt64.ofNat (s + 88) ∧ ω'[8] = UInt64.ofNat rd ∧
+      rdN μ' (s + 80) 8 = L + 1 ∧
+      (∀ a, a < 4294967296 → (a < s + 80 ∨ s + 88 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have hr : ∀ a, s ≤ a → a < s + 480 → μ.readable a = true :=
+    fun a h1 h2 => Memory.readable_of_writable (hwf a h1 h2)
+  have hc' : (c + 18446744073709551615) % 18446744073709551616 = c - 1 := by omega
+  have hc0 : c - 1 ≠ 0 := by omega
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?run, ?post⟩
+  case run => pvm_go [h1, h5, h6, m48, hc', hc0, hwf, hr, rdN_writeN_disjoint, ↓rdN_fold, ↓loadI_fold]
+  case post =>
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, fun a ha h1 => ?_, fun a => ?_, fun a => ?_⟩
+    all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+      ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, h1, h5, h6]
+    all_goals try with_reducible rfl
+    all_goals try first
+      | (rd_simp []; done)
+      | rd_simp []
+    all_goals try first
+      | with_reducible rfl
+      | with_reducible exact Nat.mod_eq_of_lt (by omega)
+    all_goals first
+      | (congr 1; omega)
+      | with_reducible exact Nat.mod_eq_of_lt (rdN_lt64 _ _)
+      | (simp only [Nat.reduceMul, Nat.reducePow]; exact Nat.mod_eq_of_lt (by omega))
+      | exact UInt64.ofNat_toNat
+      | rfl
+
 end Services.Bootstrap.Acc

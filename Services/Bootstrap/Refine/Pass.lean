@@ -40,7 +40,8 @@ theorem pa {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR 
       ω'[0] = UInt64.ofNat 162 ∧ ω'[1] = UInt64.ofNat M ∧ ω'[6] = UInt64.ofNat D ∧
       ω'[7] = UInt64.ofNat (M + 312) ∧ ω'[8] = UInt64.ofNat (cur + 8) ∧ ω'[9] = UInt64.ofNat 224 ∧
       μ'.readN (M + 144) 8 = Num.encodeLE 8 (cur + 232) ∧ μ'.readN (M + 304) 8 = Num.encodeLE 8 D ∧
-      (∀ a, a < 4294967296 → (a < M + 144 ∨ M + 312 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, a < 4294967296 → (a < M + 144 ∨ (M + 152 ≤ a ∧ a < M + 280) ∨ (M + 288 ≤ a ∧ a < M + 304) ∨
+        M + 312 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
   have rc := rd8 (by omega) s144
   have re := rd8 hen s120
@@ -128,5 +129,108 @@ theorem pi {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR 
     post_simp
     all_goals try assumption
     all_goals try (congr 1; omega)
+
+theorem readN_add2 (μ : Memory) (a n m : Nat) : μ.readN a (n + m) = μ.readN a n ++ μ.readN (a + n) m := by
+  simp only [Memory.readN, List.range_add, List.map_append, List.map_map]
+  congr 1
+  apply List.map_congr_left
+  intro k _
+  simp [Function.comp, Nat.add_assoc]
+
+/-- **One instruction passed through** (5042 … 5042): with the element at `cur` (≠ `end`) of an index
+    passed through (`PassIdx`) and room in the output (`len ≠ cap`), the loop copies the element's 232
+    octets unchanged to `ptr + 232 len`, and stores `cur + 232` and `len + 1`. Memory changes only in the
+    frame [M − 48, M + 632) and the output slot. -/
+theorem pass_elem {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] (x : X)
+    (ω : Regs) (μ : Memory) (M cur en t cap ptr len : Nat) (ht : PassIdx t)
+    (hM : 65536 + 48 ≤ M ∧ M + 632 + 16 < 4294967296 ∧ M % 8 = 0)
+    (hcur : 65536 ≤ cur ∧ cur + 232 + 24 < 4294967296) (hcM : cur + 232 + 24 ≤ M - 48 ∨ M + 632 ≤ cur)
+    (hne : cur ≠ en) (hen : en < 18446744073709551616) (hl : len ≠ cap) (hcap : cap < 18446744073709551616)
+    (hd : 65536 ≤ ptr + 232 * len ∧ ptr + 232 * len + 232 + 24 < 4294967296)
+    (hdM : ptr + 232 * len + 232 + 16 ≤ M - 48 ∨ M + 632 ≤ ptr + 232 * len)
+    (hdc : ptr + 232 * len + 232 + 24 ≤ cur ∨ cur + 232 + 24 ≤ ptr + 232 * len)
+    (h1 : ω[1] = UInt64.ofNat M)
+    (s144 : μ.readN (M + 144) 8 = Num.encodeLE 8 cur) (s120 : μ.readN (M + 120) 8 = Num.encodeLE 8 en)
+    (sD : μ.readN cur 8 = Num.encodeLE 8 (9223372036854775807 + t))
+    (s128 : μ.readN (M + 128) 8 = Num.encodeLE 8 9223372036854775832)
+    (s136 : μ.readN (M + 136) 8 = Num.encodeLE 8 9223372036854775809)
+    (sc : μ.readN (M + 248) 8 = Num.encodeLE 8 cap) (sp : μ.readN (M + 256) 8 = Num.encodeLE 8 ptr)
+    (sl : μ.readN (M + 264) 8 = Num.encodeLE 8 len)
+    (hrc : ∀ a, cur ≤ a → a < cur + 232 → μ.readable a = true)
+    (hwM : ∀ a, M - 48 ≤ a → a < M + 632 → μ.writable a = true)
+    (hwd : ∀ a, ptr + 232 * len ≤ a → a < ptr + 232 * len + 232 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 5042 ω μ x 5042 ω' μ' x 4000 ∧ ω'[1] = UInt64.ofNat M ∧
+      μ'.readN (M + 144) 8 = Num.encodeLE 8 (cur + 232) ∧ μ'.readN (M + 264) 8 = Num.encodeLE 8 (len + 1) ∧
+      μ'.readN (ptr + 232 * len) 232 = μ.readN cur 232 ∧
+      μ'.readN (M + 120) 8 = Num.encodeLE 8 en ∧
+      μ'.readN (M + 128) 8 = Num.encodeLE 8 9223372036854775832 ∧
+      μ'.readN (M + 136) 8 = Num.encodeLE 8 9223372036854775809 ∧
+      μ'.readN (M + 248) 8 = Num.encodeLE 8 cap ∧ μ'.readN (M + 256) 8 = Num.encodeLE 8 ptr ∧
+      (∀ a, a < 4294967296 → (a < M - 48 ∨ M + 632 ≤ a) → (a < ptr + 232 * len ∨ ptr + 232 * len + 232 ≤ a) →
+        μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  obtain ⟨hM0, hM1, hM8⟩ := hM
+  have hr : ∀ a, M - 48 ≤ a → a < M + 632 → μ.readable a = true :=
+    fun a h1 h2 => Memory.readable_of_writable (hwM a h1 h2)
+  obtain ⟨ω1, μ1, run1, a0, a1, a6, a7, a8, a9, a144, a304, afr, ard, awr⟩ := pa (p := p) (P := P) (R := R) x ω μ
+    M cur en (9223372036854775807 + t) (by omega) (by omega) (by omega) hne hen (by unfold PassIdx at ht; omega)
+    (by unfold PassIdx at ht; omega) h1 s144 s120 sD (fun a h1 h2 => hr a (by omega) (by omega))
+    (fun a h1 h2 => hrc a h1 (by omega)) (fun a h1 h2 => hwM a (by omega) (by omega))
+  obtain ⟨ω2, μ2, run2, b0, b1, b5, b6, bd, bfr, brd, bwr⟩ := memcpy_any (p := p) (P := P) (R := R) x ω1 μ1
+    162 5095 M (M + 312) (cur + 8) 224 a0 a1 a7 a8 a9 ⟨by decide, by decide, by decide⟩ jte_80 bs_5095
+    ⟨by omega, by omega, hM8⟩ ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ (by omega) (by omega) (by omega)
+    (fun a h1 h2 => by rw [ard]; exact hrc a (by omega) (by omega))
+    (fun a h1 h2 => by rw [awr]; exact hwM a (by omega) (by omega))
+    (fun a h1 h2 => by rw [awr]; exact hwM a (by omega) (by omega))
+  -- outside [M − 48, M) and [M + 144, M + 536), μ2 is μ
+  have k2 : ∀ a, a < 4294967296 → (a < M - 48 ∨ (M ≤ a ∧ a < M + 144) ∨ (M + 152 ≤ a ∧ a < M + 280) ∨
+      M + 536 ≤ a) → μ2.read a = μ.read a :=
+    fun a h0 h1 => by rw [bfr a h0 (by omega) (by omega), afr a h0 (by omega)]
+  obtain ⟨ω3, run3, c1, c5⟩ := pd (p := p) (P := P) (R := R) x ω2 μ2 M t ht (by omega) b1
+    (by rw [b6, a6])
+    (by rw [Memory.readN_congr (fun j hj => k2 _ (by omega) (by omega))]; exact s128)
+    (by rw [Memory.readN_congr (fun j hj => k2 _ (by omega) (by omega))]; exact s136)
+    (fun a h1 h2 => by rw [brd, ard]; exact hr a (by omega) (by omega))
+  obtain ⟨ω4, run4, d0, d1, d5, d7, d8, d9⟩ := pc (p := p) (P := P) (R := R) x ω3 μ2 M cap ptr len (by omega) hl hcap
+    (by omega) (c1.trans b1)
+    (by rw [Memory.readN_congr (fun j hj => k2 _ (by omega) (by omega))]; exact sc)
+    (by rw [Memory.readN_congr (fun j hj => k2 _ (by omega) (by omega))]; exact sp)
+    (by rw [Memory.readN_congr (fun j hj => k2 _ (by omega) (by omega))]; exact sl)
+    (fun a h1 h2 => by rw [brd, ard]; exact hr a (by omega) (by omega))
+  -- the staged element
+  have stage : μ2.readN (M + 304) 232 = μ.readN cur 232 := by
+    rw [show (232 : Nat) = 8 + 224 from rfl, readN_add2, readN_add2, show M + 304 + 8 = M + 312 by omega, bd,
+      Memory.readN_congr (fun j hj => bfr _ (by omega) (by omega) (by omega)), a304, ← sD,
+      Memory.readN_congr (fun j hj => afr _ (by omega) (by omega))]
+  obtain ⟨ω5, μ5, run5, e0, e1, e5, e6, ed, efr, erd, ewr⟩ := memcpy_any (p := p) (P := P) (R := R) x ω4 μ2
+    160 5034 M (ptr + 232 * len) (M + 304) 232 d0 d1 d7 d8 d9 ⟨by decide, by decide, by decide⟩ jte_79 bs_5034
+    ⟨by omega, by omega, hM8⟩ ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ (by omega) (by omega) (by omega)
+    (fun a h1 h2 => by rw [brd, ard]; exact hr a (by omega) (by omega))
+    (fun a h1 h2 => by rw [bwr, awr]; exact hwd a h1 h2)
+    (fun a h1 h2 => by rw [bwr, awr]; exact hwM a (by omega) (by omega))
+  obtain ⟨ω6, μ6, run6, f1, f264, ffr, frd, fwr⟩ := pi (p := p) (P := P) (R := R) x ω5 μ5 M len (by omega)
+    (by omega) e1 (by rw [e5, d5])
+    (fun a h1 h2 => by rw [ewr, bwr, awr]; exact hwM a (by omega) (by omega))
+  -- μ6 against μ2, away from the output slot and M + 264
+  have k6 : ∀ a, a < 4294967296 → (a < M - 48 ∨ M ≤ a) → (a < M + 264 ∨ M + 272 ≤ a) →
+      (a < ptr + 232 * len ∨ ptr + 232 * len + 232 ≤ a) → μ6.read a = μ2.read a := fun a h0 h1 h2 h3 => by
+    rw [ffr a h0 h2, efr a h0 h3 (by omega)]
+  refine ⟨ω6, μ6, (run1.trans (run2.trans (run3.trans (run4.trans (run5.trans run6))))).mono (by omega), f1,
+    ?_, f264, ?_, ?_, ?_, ?_, ?_, ?_, fun a h0 h1 h2 => ?_, fun a => by rw [frd, erd, brd, ard],
+    fun a => by rw [fwr, ewr, bwr, awr]⟩
+  · rw [Memory.readN_congr (fun j hj => k6 _ (by omega) (by omega) (by omega) (by omega)),
+      Memory.readN_congr (fun j hj => bfr _ (by omega) (by omega) (by omega))]; exact a144
+  · rw [Memory.readN_congr (fun j hj => ffr _ (by omega) (by omega)), ed]; exact stage
+  · rw [Memory.readN_congr (fun j hj => k6 _ (by omega) (by omega) (by omega) (by omega)),
+      Memory.readN_congr (fun j hj => k2 _ (by omega) (by omega))]; exact s120
+  · rw [Memory.readN_congr (fun j hj => k6 _ (by omega) (by omega) (by omega) (by omega)),
+      Memory.readN_congr (fun j hj => k2 _ (by omega) (by omega))]; exact s128
+  · rw [Memory.readN_congr (fun j hj => k6 _ (by omega) (by omega) (by omega) (by omega)),
+      Memory.readN_congr (fun j hj => k2 _ (by omega) (by omega))]; exact s136
+  · rw [Memory.readN_congr (fun j hj => k6 _ (by omega) (by omega) (by omega) (by omega)),
+      Memory.readN_congr (fun j hj => k2 _ (by omega) (by omega))]; exact sc
+  · rw [Memory.readN_congr (fun j hj => k6 _ (by omega) (by omega) (by omega) (by omega)),
+      Memory.readN_congr (fun j hj => k2 _ (by omega) (by omega))]; exact sp
+  · rw [k6 a h0 (by omega) (by omega) h2, k2 a h0 (by omega)]
 
 end Services.Bootstrap.Refine.Pass

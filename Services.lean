@@ -210,6 +210,7 @@ import Services.Bootstrap.Encode.Variants
 import Services.Bootstrap.Encode.Yield
 import Services.Bootstrap.Encode.Prefix
 import Services.Bootstrap.Encode.Loop
+import Services.Bootstrap.Refine.Pass
 import Services.Bootstrap.Spec
 import Services.Bootstrap.SpecLemmas.Codec
 import Services.Bootstrap.SpecLemmas.Refine

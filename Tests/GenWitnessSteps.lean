@@ -106,6 +106,10 @@ structure Svc where
       sink), in a fourth module (`Services/<name>/CodeF.lean`, assumed by `HasCodeF p P`) holding
       what none of `Code`, `CodeX` and `CodeA` has. -/
   fnRangesF : List (Nat × Nat) := []
+  /-- `coder` / `codercheck`: as `fnRangesA`, for refine's body (its transform loop, handlers and output),
+      in the module `CodeR` (class `HasCodeR`), holding what neither `Code` nor `CodeX` has, so that the
+      proofs about refine's body import only `Code`, `CodeX` and `CodeR`. -/
+  fnRangesR : List (Nat × Nat) := []
   /-- Whether `Services/<name>/Memcpy.lean` exists (`memcpy_small` at the head of `fnRanges`):
       the prefix then calls it for each `memcpy` of fewer than 16 octets instead of stepping. -/
   memcpySummary : Bool := false
@@ -218,6 +222,8 @@ def bootstrapSvc : Svc where
     (50078, 50409), (70133, 70239), (17905, 20398), (30073, 30286), (30977, 31362), (58508, 58615)]
   -- `Instruction::encode_to` dispatches through its table at 67376 to the arms' jump-table entries
   jumpRangesX := [(17905, 20398)]
+  -- refine's body, from its prologue (4568) to its return (6373), for `coder`
+  fnRangesR := [(4568, 6378)]
   -- accumulate (`Services/Bootstrap/Acc/README.md`, tier A): the entry 6378 … 15368, the inputs fetch
   -- and `AccumulateItem` decode, `BootstrapWorkOutput::decode`, the ring and results helpers, the
   -- storage wrappers and the allocator's remaining paths
@@ -1130,12 +1136,14 @@ def mode_codeRun (cx : Cx) : IO Unit := do
   -- `codef` / `codefcheck`: the same for `fnRangesF`, in the module `CodeF` (class `HasCodeF`),
   -- leaving out what `Code`, `CodeX` or `CodeA` already has
   let fmode := mode == "codef" || mode == "codefcheck"
-  let amode := mode == "codea" || mode == "codeacheck" || fmode
+  let rmode := mode == "coder" || mode == "codercheck"
+  let amode := mode == "codea" || mode == "codeacheck" || fmode || rmode
   let xmode := mode == "codex" || mode == "codexcheck" || amode
-  let E := if fmode then "F" else if amode then "A" else "X"
-  let rangesE := if fmode then cx.svc.fnRangesF else cx.svc.fnRangesA
-  let mode := if mode == "codex" || mode == "codea" || mode == "codef" then "code"
-    else if mode == "codexcheck" || mode == "codeacheck" || mode == "codefcheck" then "codecheck" else mode
+  let E := if fmode then "F" else if rmode then "R" else if amode then "A" else "X"
+  let rangesE := if fmode then cx.svc.fnRangesF else if rmode then cx.svc.fnRangesR else cx.svc.fnRangesA
+  let mode := if mode == "codex" || mode == "codea" || mode == "codef" || mode == "coder" then "code"
+    else if mode == "codexcheck" || mode == "codeacheck" || mode == "codefcheck" || mode == "codercheck" then "codecheck"
+    else mode
   let CN := if xmode then s!"Code{E}" else "Code"
   let CC := if xmode then s!"Code{E}Check" else "CodeCheck"
   let HC := if xmode then s!"HasCode{E}" else "HasCode"
@@ -1841,13 +1849,17 @@ end Services.{NS}.CodeCheck
 {if xmode then s!"import Services.{NS}.Code" else "import JAM.Theorems.GrowHeap"}
 
 /-!
-# {if fmode then "Logging code facts" else if amode then "Accumulate code facts" else if xmode then "Further code facts" else "Code facts"} of {LBL}
+# {if fmode then "Logging code facts" else if rmode then "Refine body code facts" else if amode then "Accumulate code facts" else if xmode then "Further code facts" else "Code facts"} of {LBL}
 
 {if fmode then s!"Every instruction of {LBL}'s logging ranges (`fnRangesF`: `format!`, `core::fmt` and the
 `String` sink) that none of `Code.facts`, `CodeX.facts` and `CodeA.facts` has, with the block starts,
 blocks and jump-table entries they need (every entry into the ranges), kept apart so that adding them
 rechecks nothing that uses only those. `Services.{NS}.CodeFOk` checks them against the blob by the
-kernel (`CodeFCheck.checkCode_ok`, `hasCodeF`); `HasCodeF p P` assumes them." else if amode then s!"Every instruction of {LBL}'s accumulate ranges (`fnRangesA`) that neither `Code.facts` nor
+kernel (`CodeFCheck.checkCode_ok`, `hasCodeF`); `HasCodeF p P` assumes them." else if rmode then s!"Every instruction of {LBL}'s refine body (`fnRangesR`: its transform loop, handlers and output) that
+neither `Code.facts` nor `CodeX.facts` has, with the block starts, blocks and jump-table entries they need
+(every entry into the ranges), kept apart so that adding them rechecks nothing that uses only those.
+`Services.{NS}.CodeROk` checks them against the blob by the kernel (`CodeRCheck.checkCode_ok`,
+`hasCodeR`); `HasCodeR p P` assumes them." else if amode then s!"Every instruction of {LBL}'s accumulate ranges (`fnRangesA`) that neither `Code.facts` nor
 `CodeX.facts` has, with the block starts, blocks and jump-table entries they need (every entry into
 the ranges), kept apart so that adding them rechecks nothing that uses only those.
 `Services.{NS}.CodeAOk` checks them against the blob by the kernel (`CodeACheck.checkCode_ok`,

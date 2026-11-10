@@ -126,6 +126,7 @@ import Services.Bootstrap.Decode.VecU32U64Big
 import Services.Bootstrap.Decode.VecHashBig
 import Services.Bootstrap.Decode.VecHash32Big
 import Services.Bootstrap.Decode.GrowOne
+import Services.Bootstrap.Decode.VecKey336Big
 import Services.Picoalloc.Model
 import Services.Picoalloc.Invariant
 import Services.Picoalloc.FreeLists

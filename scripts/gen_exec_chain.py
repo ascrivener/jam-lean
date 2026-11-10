@@ -86,6 +86,12 @@ for s in segs:
     assert s['sig'] == sig and s['targs'] == targs and s['contr'] == contr, f"S{s['i']}: signature differs"
 
 # the named naturals and their bounds, from the run signature
+# accumulate chains (`accContract`) run through CodeX/CodeA code: the merged table
+acc = contr.startswith('accContract')
+if acc and prog_mod == 'Services.Bootstrap.SymExec.Prog':
+    prog_mod, prog_hyp = 'Services.Bootstrap.SymExec.ProgAll', 'Services.Bootstrap.SymExec.hypAll'
+inst = ('[Services.Bootstrap.Code.HasCode p P] [Services.Bootstrap.CodeX.HasCodeX p P] [Services.Bootstrap.CodeA.HasCodeA p P]'
+        if acc else '[Services.Bootstrap.Code.HasCode p P]')
 vars_, ub, lb, bpf, lpf = [], [], [], [], []
 for name, h, ty in re.findall(r'\((\w+) : Nat\) \((h\w+) : ([^)]*)\)', sig):
     parts = [p.strip() for p in ty.split('∧')]
@@ -203,7 +209,7 @@ def lb : List Nat := {lb}
 ''']
     for j in cuts:
         o.append(cut_def(j, b))
-    X = '{X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [Services.Bootstrap.Code.HasCode p P]'
+    X = '{X : Type} {R : HostRel X} {p : ByteArray} {P : Program} ' + inst
     for a, c in zip(cuts, cuts[1:]):
         st, en, n = segs[a]['start'], segs[c - 1]['end'], sum(s['n'] for s in segs[a:c])
         o.append(f'''/-- Segments `S{a}` … `S{c - 1}` ({n} steps, pc {st} to pc {en}), by one check. -/

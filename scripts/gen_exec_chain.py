@@ -14,7 +14,7 @@ files `<Chain>/S<i>.lean` and the composition `<Chain>.lean`, and rewrites them 
 * `<Chain>/St.lean` keeps only the states the composition names (all frame conditions `C_i` stay);
 * the replaced `S<i>.lean` are deleted.
 
-Usage: gen_exec_chain.py <chain dir> [every=16] [keep=i,j,…] [dry]
+Usage: gen_exec_chain.py <chain dir> [every=16] [keep=i,j,…] [spike] [dry]
   e.g. scripts/gen_exec_chain.py Services/Bootstrap/BTail1
 """
 import os, re, sys
@@ -24,7 +24,10 @@ chain_dir = args[0].rstrip('/')
 every = 16
 keep = set()
 dry = False
+# the binary's code table for the executor: the wiring layout by default, `spike` for the spike's
+prog_mod, prog_hyp = 'Services.Bootstrap.SymExec.Prog', 'Services.Bootstrap.SymExec.hyp'
 for a in args[1:]:
+    if a == 'spike': prog_mod, prog_hyp = 'PVM.SymExec.Bootstrap.Prog', 'PVM.SymExec.Bootstrap.hyp'
     if a.startswith('every='): every = int(a[6:])
     elif a.startswith('keep='): keep = {int(x) for x in a[5:].split(',') if x}
     elif a == 'dry': dry = True
@@ -146,7 +149,7 @@ def exec_file(b, e):
 -/
 {chr(10).join(first["imports"])}
 import PVM.SymExec.Cut
-import PVM.SymExec.Bootstrap.Prog
+import {prog_mod}
 import {ns}.St
 
 /-!
@@ -174,7 +177,7 @@ def lb : List Nat := {lb}
 theorem seg{a} {X} {vbind} (hB : BHold {vl} ub) (hLB : LBHold {vl} lb)
     (μ₀ : Memory) (ω : Regs) (μ : Memory) (h : cut{a}.Holds {vl} μ₀ ω μ) (x : X) :
     ∃ ω' μ', FreeStepsH p R {st} ω μ x {en} ω' μ' x {n} ∧ cut{c}.Holds {vl} μ₀ ω' μ' :=
-  seg_sound (lb := lb) (sep := []) (by decide +kernel) (PVM.SymExec.Bootstrap.hyp (p := p) (P := P)) hB hLB
+  seg_sound (lb := lb) (sep := []) (by decide +kernel) ({prog_hyp} (p := p) (P := P)) hB hLB
     (fun _ _ => trivial) h x
 ''')
     A, B = spec(b), spec(e)

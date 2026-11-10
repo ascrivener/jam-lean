@@ -253,49 +253,37 @@ def Inv (E : Env) (σ : SState) (ω : Regs) (μ : Memory) : Prop :=
 
 /-! ## Code -/
 
-/-- An instruction fact: at `pc`, `ins`, and ı + 1 + skip(ı) = `next`. -/
-structure CEntry where
-  pc : Nat
-  ins : Instr
-  next : Nat
-
-/-- Instruction facts as a search tree on pc. -/
-inductive CTree where
+/-- A search tree keyed by naturals. -/
+inductive NTree (α : Type) where
   | leaf
-  | node (l : CTree) (e : CEntry) (r : CTree)
+  | node (l : NTree α) (k : Nat) (v : α) (r : NTree α)
 
-def CTree.find : CTree → Nat → Option CEntry
+def NTree.find {α : Type} : NTree α → Nat → Option α
   | .leaf, _ => none
-  | .node l e r, pc => if pc < e.pc then l.find pc else if pc = e.pc then some e else r.find pc
+  | .node l k v r, i => if i < k then l.find i else if i = k then some v else r.find i
 
-/-- The decode facts of a tree of entries (each a `d_i` of the code facts). -/
-def AllCodeT (p : ByteArray) (P : Program) : CTree → Prop
+/-- Every entry of a tree satisfies `Q`. -/
+def NTree.All {α : Type} (Q : Nat → α → Prop) : NTree α → Prop
   | .leaf => True
-  | .node l e r => (deblob p e.pc = some P ∧ P.decode e.pc = some e.ins ∧ P.next e.pc = e.next ∧
-      P.blockCost (P.blockStartOf e.pc) ≤ stepCostCap) ∧ AllCodeT p P l ∧ AllCodeT p P r
+  | .node l k v r => Q k v ∧ l.All Q ∧ r.All Q
 
-/-- The block-start facts of a list (each a `bs_i` of the code facts). -/
-def AllBS (P : Program) : List (Nat × Bool) → Prop
-  | [] => True
-  | b :: bs => P.isBlockStart b.1 = b.2 ∧ AllBS P bs
-
-/-- The jump-table entries of a list (each a `jte_k`): **j**_k = t. -/
-def AllJT (P : Program) : List (Nat × Nat) → Prop
-  | [] => True
-  | j :: js => P.jumpTable.getD j.1 0 = j.2 ∧ AllJT P js
-
-/-- The code a stretch runs through: instruction facts, block starts, jump-table entries and |**j**|. -/
+/-- The code a stretch runs through: at each pc its instruction and ı + 1 + skip(ı) (the `d_i` of
+    the code facts), block starts (`bs_i`), jump-table entries (`jte_k`) and |**j**| (`jts`). -/
 structure Prog where
-  code : CTree
-  bs : List (Nat × Bool)
-  jt : List (Nat × Nat)
+  code : NTree (Instr × Nat)
+  bs : NTree Bool
+  jt : NTree Nat
   jsize : Nat
 
 /-- The facts of a `Prog` hold of the program `p` deblobs to. -/
 def ProgHyp (p : ByteArray) (P : Program) (G : Prog) : Prop :=
-  AllCodeT p P G.code ∧ AllBS P G.bs ∧ AllJT P G.jt ∧ P.jumpTable.size = G.jsize
+  G.code.All (fun pc e => deblob p pc = some P ∧ P.decode pc = some e.1 ∧ P.next pc = e.2 ∧
+      P.blockCost (P.blockStartOf pc) ≤ stepCostCap) ∧
+  G.bs.All (fun n b => P.isBlockStart n = b) ∧
+  G.jt.All (fun k t => P.jumpTable.getD k 0 = t) ∧
+  P.jumpTable.size = G.jsize
 
-def isBS (bs : List (Nat × Bool)) (n : Nat) : Bool := bs.any fun b => b.1 == n && b.2
+def isBS (bs : NTree Bool) (n : Nat) : Bool := bs.find n == some true
 
 /-! ## One step -/
 
@@ -391,7 +379,7 @@ def sload (σ : SState) (d : Nat) (a : Aff) (n k : Nat) : Option SState :=
 /-- djump(a) when it continues (GP eq. `jumptablealignment`): the target, if the facts show it. -/
 def sdjump (G : Prog) (a : Nat) : Option Nat :=
   if a = 2 ^ 32 - 2 ^ 16 ∨ a = 0 ∨ a > G.jsize * 2 ∨ a % 2 ≠ 0 then none else
-  match G.jt.lookup (a / 2 - 1) with
+  match G.jt.find (a / 2 - 1) with
   | some t => if isBS G.bs t then some t else none
   | none => none
 
@@ -400,12 +388,12 @@ def sstep (G : Prog) (pc : Nat) (σ : SState) : Option (Nat × SState) :=
   match G.code.find pc with
   | none => none
   | some e =>
-    match e.ins with
-    | .noArgs .unlikely => some (e.next, σ)
-    | .noArgs .fallthrough => if isBS G.bs e.next then some (e.next, σ) else none
+    match e.1 with
+    | .noArgs .unlikely => some (e.2, σ)
+    | .noArgs .fallthrough => if isBS G.bs e.2 then some (e.2, σ) else none
     | .oneOffset .jump x =>
       if 0 ≤ x && isBS G.bs x.toNat then some (x.toNat, σ) else none
-    | .regImm .loadImm a x => some (e.next, setv σ a.val (.const x.toNat))
+    | .regImm .loadImm a x => some (e.2, setv σ a.val (.const x.toNat))
     | .regImm .jumpInd a x =>
       match rdv st σ a.val with
       | .const v => (sdjump G ((v + x.toNat) % two32)).map (·, σ)
@@ -414,34 +402,37 @@ def sstep (G : Prog) (pc : Nat) (σ : SState) : Option (Nat × SState) :=
       match rkind op with
       | .store n =>
         ((mkAddr st (.const 0) x.toNat n).bind fun ad =>
-          sstore st σ ad n (mkMod st (rdv st σ a.val) (2 ^ (8 * n)))).map (e.next, ·)
+          sstore st σ ad n (mkMod st (rdv st σ a.val) (2 ^ (8 * n)))).map (e.2, ·)
       | .load n _ =>
-        ((mkAddr st (.const 0) x.toNat n).bind fun ad => sload st σ a.val ad n 0).map (e.next, ·)
+        ((mkAddr st (.const 0) x.toNat n).bind fun ad => sload st σ a.val ad n 0).map (e.2, ·)
       | .alu => none
-    | .regExtImm .loadImm64 a x => some (e.next, setv σ a.val (.const x.toNat))
-    | .twoReg op d a => some (e.next, setv σ d.val (mkAlu2 op (rdv st σ a.val)))
+    | .regExtImm .loadImm64 a x => some (e.2, setv σ a.val (.const x.toNat))
+    | .twoImm op x y =>
+      ((mkAddr st (.const 0) x.toNat op.width).bind fun ad =>
+        sstore st σ ad op.width (.const (y.toNat % 2 ^ (8 * op.width)))).map (e.2, ·)
+    | .twoReg op d a => some (e.2, setv σ d.val (mkAlu2 op (rdv st σ a.val)))
     | .threeReg op a b d =>
-      some (e.next, setv σ d.val (mkAlu3 st op (rdv st σ a.val) (rdv st σ b.val) (rdv st σ d.val)))
+      some (e.2, setv σ d.val (mkAlu3 st op (rdv st σ a.val) (rdv st σ b.val) (rdv st σ d.val)))
     | .twoRegImm op a b x =>
       match tkind op with
-      | .alu => some (e.next, setv σ a.val (mkAlu2i st op (rdv st σ a.val) (rdv st σ b.val) x.toNat))
+      | .alu => some (e.2, setv σ a.val (mkAlu2i st op (rdv st σ a.val) (rdv st σ b.val) x.toNat))
       | .store n =>
         ((mkAddr st (rdv st σ b.val) x.toNat n).bind fun ad =>
-          sstore st σ ad n (mkMod st (rdv st σ a.val) (2 ^ (8 * n)))).map (e.next, ·)
+          sstore st σ ad n (mkMod st (rdv st σ a.val) (2 ^ (8 * n)))).map (e.2, ·)
       | .load n k =>
         ((mkAddr st (rdv st σ b.val) x.toNat n).bind fun ad =>
-          sload st σ a.val ad n k).map (e.next, ·)
+          sload st σ a.val ad n k).map (e.2, ·)
     | .regTwoImm op a x y =>
       ((mkAddr st (rdv st σ a.val) x.toNat op.width).bind fun ad =>
-        sstore st σ ad op.width (.const (y.toNat % 2 ^ (8 * op.width)))).map (e.next, ·)
+        sstore st σ ad op.width (.const (y.toNat % 2 ^ (8 * op.width)))).map (e.2, ·)
     | .regImmOffset op a x y =>
       if op = .loadImmJump then
         if 0 ≤ y && isBS G.bs y.toNat then some (y.toNat, setv σ a.val (.const x.toNat)) else none
       else
         match rdv st σ a.val with
         | .const v =>
-          if 0 ≤ y && isBS G.bs y.toNat && isBS G.bs e.next then
-            some (if regImmBranchCond op v x.toNat then y.toNat else e.next, σ)
+          if 0 ≤ y && isBS G.bs y.toNat && isBS G.bs e.2 then
+            some (if regImmBranchCond op v x.toNat then y.toNat else e.2, σ)
           else none
         | _ => none
     | .twoRegTwoImm .loadImmJumpInd a b x y =>
@@ -451,8 +442,8 @@ def sstep (G : Prog) (pc : Nat) (σ : SState) : Option (Nat × SState) :=
     | .twoRegOffset op a b x =>
       match rdv st σ a.val, rdv st σ b.val with
       | .const va, .const vb =>
-        if 0 ≤ x && isBS G.bs x.toNat && isBS G.bs e.next then
-          some (if twoRegBranchCond op va vb then x.toNat else e.next, σ)
+        if 0 ≤ x && isBS G.bs x.toNat && isBS G.bs e.2 then
+          some (if twoRegBranchCond op va vb then x.toNat else e.2, σ)
         else none
       | _, _ => none
     | _ => none

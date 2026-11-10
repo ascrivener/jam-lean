@@ -1,5 +1,4 @@
-import PVM.SymExec.Check
-import Services.Bootstrap.Code
+import PVM.SymExec.Bootstrap.Prog
 
 /-!
 EXPERIMENTAL (symexec spike, `docs/symexec-spike.md`): symbolic memory. The stretches `z1` and `z2`
@@ -19,19 +18,6 @@ variable {X : Type} {R : HostRel X}
 def st1 : Static :=
   { ub := [4294967296], lb := [65552], rd := [], wr := [(⟨some 0, -16⟩, 16)], sep := [] }
 
-def G1 : Prog :=
-  { code := (.node (.node (.node (.node .leaf
-    ⟨21219, (.twoReg (.moveReg) 7 6), 21221⟩ .leaf)
-    ⟨21221, (.regImm (.loadImm) 0 970), 21225⟩ .leaf)
-    ⟨21225, (.twoRegImm (.addImm64) 1 1 18446744073709551600), 21228⟩ (.node .leaf
-    ⟨21228, (.twoRegImm (.storeIndU64) 0 1 8), 21231⟩ .leaf))
-    ⟨21231, (.regTwoImm (.storeImmIndU32) 1 4 0), 21234⟩ (.node (.node (.node .leaf
-    ⟨21234, (.twoRegImm (.addImm64) 8 1 4), 21237⟩ .leaf)
-    ⟨21237, (.regImm (.loadImm) 9 4), 21240⟩ .leaf)
-    ⟨21240, (.regImm (.loadImm) 0 98), 21243⟩ (.node .leaf
-    ⟨21243, (.oneOffset (.jump) 58434), 21247⟩ .leaf)))
-    bs := [(58434, true)], jt := [], jsize := 1403 }
-
 def A1 : Spec := { regs := [(1, .var 0)], cells := [] }
 
 def T1 : Spec :=
@@ -41,7 +27,7 @@ def T1 : Spec :=
 
 def F1 : List (Aff × Nat) := [(⟨some 0, -12⟩, 12)]
 
-theorem ok1 : check st1 G1 A1 T1 F1 21219 58434 9 = true := by decide +kernel
+theorem ok1 : check st1 Bootstrap.prog A1 T1 F1 21219 58434 9 = true := by decide +kernel
 
 /-- The statement of `Services.Bootstrap.Decode.Fixed.z1`, by the executor. -/
 theorem z1 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory) (A : Nat)
@@ -54,8 +40,7 @@ theorem z1 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ :
       (∀ a, a < 4294967296 → (a < A - 12 ∨ A ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
   obtain ⟨ω', μ', hrun, ⟨r0, r1, r5, r6, r7, r8, r9, -⟩, ⟨c0, -⟩, hfr, hpg⟩ :=
-    check_sound (R := R) ok1 ⟨d_21231 (p := p) (P := P), ⟨d_21225 (p := p) (P := P), ⟨d_21221 (p := p) (P := P), ⟨d_21219 (p := p) (P := P), trivial, trivial⟩, trivial⟩, ⟨d_21228 (p := p) (P := P), trivial, trivial⟩⟩, ⟨d_21240 (p := p) (P := P), ⟨d_21237 (p := p) (P := P), ⟨d_21234 (p := p) (P := P), trivial, trivial⟩, trivial⟩, ⟨d_21243 (p := p) (P := P), trivial, trivial⟩⟩⟩
-      ⟨bs_58434 (p := p) (P := P), trivial⟩ trivial (jts (p := p) (P := P))
+    check_sound (R := R) ok1 (Bootstrap.hyp (p := p) (P := P))
       [A] ⟨hA.2, trivial⟩ ⟨hA.1, trivial⟩ ω μ trivial
       ⟨fun t ht => by simp only [InReg, Aff.eval] at ht; exact hw t (by simp at ht; omega) (by simp at ht; omega), trivial⟩
       trivial ⟨h1, trivial⟩ trivial x
@@ -82,24 +67,6 @@ def st2 : Static :=
     wr := [(⟨some 1, 0⟩, 12)]
     sep := [((⟨some 1, 0⟩, 12), (⟨some 0, -12⟩, 68))] }
 
-def G2 : Prog :=
-  { code := (.node (.node (.node (.node .leaf
-    ⟨3780, (.twoRegImm (.loadIndI32) 8 1 4), 3783⟩ .leaf)
-    ⟨3783, (.twoRegImm (.loadIndU64) 0 1 8), 3786⟩ (.node .leaf
-    ⟨3786, (.twoRegImm (.addImm64) 1 1 16), 3789⟩ .leaf))
-    ⟨3789, (.regImm (.jumpInd) 0 0), 3791⟩ (.node (.node .leaf
-    ⟨21247, (.twoRegImm (.andImm) 7 7 1), 21250⟩ .leaf)
-    ⟨21250, (.regImmOffset (.branchNeImm) 7 0 20629), 21254⟩ (.node .leaf
-    ⟨21254, (.noArgs (.unlikely)), 21255⟩ .leaf)))
-    ⟨21255, (.twoRegImm (.storeIndU32) 8 5 8), 21258⟩ (.node (.node (.node .leaf
-    ⟨21258, (.regExtImm (.loadImm64) 7 9223372036854775810), 21268⟩ .leaf)
-    ⟨21268, (.twoRegImm (.storeIndU64) 7 5 0), 21270⟩ (.node .leaf
-    ⟨21270, (.twoRegImm (.loadIndU64) 0 1 48), 21273⟩ .leaf))
-    ⟨21273, (.twoRegImm (.loadIndU64) 5 1 40), 21276⟩ (.node (.node .leaf
-    ⟨21276, (.twoRegImm (.loadIndU64) 6 1 32), 21279⟩ .leaf)
-    ⟨21279, (.twoRegImm (.addImm64) 1 1 56), 21282⟩ .leaf)))
-    bs := [(20629, true), (21247, true), (21254, true)], jt := [(484, 21247)], jsize := 1403 }
-
 def A2 : Spec :=
   { regs := [(1, .addr ⟨some 0, -16⟩), (5, .var 1), (7, .const 0)]
     cells := [(⟨some 0, -12⟩, 4, .var 5), (⟨some 0, -8⟩, 8, .const 970), (⟨some 0, 48⟩, 8, .var 2),
@@ -111,7 +78,7 @@ def T2 : Spec :=
 
 def F2 : List (Aff × Nat) := [(⟨some 1, 0⟩, 12)]
 
-theorem ok2 : check st2 G2 A2 T2 F2 3780 21282 14 = true := by decide +kernel
+theorem ok2 : check st2 Bootstrap.prog A2 T2 F2 3780 21282 14 = true := by decide +kernel
 
 /-- The statement of `Services.Bootstrap.Decode.Fixed.z2`, by the executor (14 steps) and one
     return through the jump table. -/
@@ -134,9 +101,7 @@ theorem z2 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ :
       (∀ a, a < 4294967296 → (a < O ∨ O + 12 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
   obtain ⟨ω', μ', hrun, ⟨r0, r1, r5, r6, -⟩, ⟨c0, c1, -⟩, hfr, hpg⟩ :=
-    check_sound (R := R) ok2 ⟨d_21255 (p := p) (P := P), ⟨d_3789 (p := p) (P := P), ⟨d_3783 (p := p) (P := P), ⟨d_3780 (p := p) (P := P), trivial, trivial⟩, ⟨d_3786 (p := p) (P := P), trivial, trivial⟩⟩, ⟨d_21250 (p := p) (P := P), ⟨d_21247 (p := p) (P := P), trivial, trivial⟩, ⟨d_21254 (p := p) (P := P), trivial, trivial⟩⟩⟩, ⟨d_21273 (p := p) (P := P), ⟨d_21268 (p := p) (P := P), ⟨d_21258 (p := p) (P := P), trivial, trivial⟩, ⟨d_21270 (p := p) (P := P), trivial, trivial⟩⟩, ⟨d_21279 (p := p) (P := P), ⟨d_21276 (p := p) (P := P), trivial, trivial⟩, trivial⟩⟩⟩
-      ⟨bs_20629 (p := p) (P := P), bs_21247 (p := p) (P := P), bs_21254 (p := p) (P := P), trivial⟩
-      ⟨jte_484 (p := p) (P := P), trivial⟩ (jts (p := p) (P := P))
+    check_sound (R := R) ok2 (Bootstrap.hyp (p := p) (P := P))
       [A, O, ret, v5, v6, v] ⟨by omega, by omega, by omega, hv5, hv6, hv, trivial⟩
       ⟨hA.1, Nat.zero_le _, hret.1, Nat.zero_le _, Nat.zero_le _, Nat.zero_le _, trivial⟩ ω μ
       ⟨fun t ht => by simp only [InReg, Aff.eval] at ht; exact hr t (by simp at ht; omega) (by simp at ht; omega), trivial⟩

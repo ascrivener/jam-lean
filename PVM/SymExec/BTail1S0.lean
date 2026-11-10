@@ -1,5 +1,4 @@
-import PVM.SymExec.Check
-import Services.Bootstrap.Code
+import PVM.SymExec.Bootstrap.Prog
 import Services.Bootstrap.BTail1.St
 
 /-!
@@ -45,32 +44,6 @@ def st : Static :=
     (⟨none, 4278058620⟩, 4),
     (⟨none, 4278058648⟩, 16)]
     sep := [] }
-
-def code : CTree :=
-  (.node (.node (.node (.node (.node .leaf
-    ⟨35202, (.regImmOffset (.branchNeImm) 7 0 35275), 35205⟩ .leaf)
-    ⟨35205, (.noArgs (.unlikely)), 35206⟩ .leaf)
-    ⟨35206, (.twoRegImm (.loadIndU64) 7 1 56), 35209⟩ (.node .leaf
-    ⟨35209, (.twoRegImm (.loadIndU64) 8 1 64), 35212⟩ .leaf))
-    ⟨35212, (.twoRegImm (.loadIndU64) 9 1 72), 35215⟩ (.node (.node .leaf
-    ⟨35215, (.twoRegImm (.loadIndU64) 10 1 80), 35218⟩ .leaf)
-    ⟨35218, (.twoRegImm (.storeIndU64) 6 5 0), 35220⟩ (.node .leaf
-    ⟨35220, (.twoRegImm (.loadIndU64) 11 1 8), 35223⟩ .leaf)))
-    ⟨35223, (.twoRegImm (.storeIndU64) 11 5 8), 35226⟩ (.node (.node (.node .leaf
-    ⟨35226, (.twoRegImm (.loadIndU64) 11 1 0), 35228⟩ .leaf)
-    ⟨35228, (.twoRegImm (.storeIndU64) 11 5 16), 35231⟩ (.node .leaf
-    ⟨35231, (.twoRegImm (.storeIndU64) 7 5 24), 35234⟩ .leaf))
-    ⟨35234, (.twoRegImm (.storeIndU64) 8 5 32), 35237⟩ (.node (.node .leaf
-    ⟨35237, (.twoRegImm (.storeIndU64) 9 5 40), 35240⟩ .leaf)
-    ⟨35240, (.twoRegImm (.storeIndU64) 10 5 48), 35243⟩ (.node .leaf
-    ⟨35243, (.twoRegImm (.loadIndU64) 7 1 24), 35246⟩ .leaf))))
-
-def G : Prog :=
-  { code := code
-    bs := [(35205, true),
-    (35275, true)]
-    jt := []
-    jsize := 1403 }
 
 def A : Spec :=
   { regs := [(1, .const 4278058264),
@@ -134,7 +107,7 @@ def T : Spec :=
 def frame : List (Aff × Nat) := [(⟨none, 4278058544⟩, 56)]
 
 set_option maxRecDepth 100000 in
-theorem ok : check st G A T frame 35202 35246 16 = true := by decide +kernel
+theorem ok : check st Bootstrap.prog A T frame 35202 35246 16 = true := by decide +kernel
 
 set_option maxRecDepth 100000 in
 /-- **Cut 0 to cut 1** by the executor: the statement of the composed `S0.run` … `S0.run`. -/
@@ -142,9 +115,7 @@ theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (
     (x : RefineCtx) (S : Nat) (hS : 0 ≤ S ∧ S < 16) (C : Nat) (hC : C < 65536) (I : Nat) (hI : I < 65536) (L : Nat) (hL : 0 < L ∧ L < 16777217) (ω₀ : Regs) (μ₀ : Memory) (h : St0 S C I L ω₀ μ₀ ω μ) :
     ∃ ω' μ', FreeStepsH p (refineContract env) 35202 ω μ x 35246 ω' μ' x 16 ∧ St1 S C I L ω₀ μ₀ ω' μ' := by
   obtain ⟨ω', μ', hrun, hr, hc, hfr, hpg⟩ := check_sound (R := refineContract env) ok
-    ⟨d_35223 (p := p) (P := P), ⟨d_35212 (p := p) (P := P), ⟨d_35206 (p := p) (P := P), ⟨d_35205 (p := p) (P := P), ⟨d_35202 (p := p) (P := P), trivial, trivial⟩, trivial⟩, ⟨d_35209 (p := p) (P := P), trivial, trivial⟩⟩, ⟨d_35218 (p := p) (P := P), ⟨d_35215 (p := p) (P := P), trivial, trivial⟩, ⟨d_35220 (p := p) (P := P), trivial, trivial⟩⟩⟩, ⟨d_35234 (p := p) (P := P), ⟨d_35228 (p := p) (P := P), ⟨d_35226 (p := p) (P := P), trivial, trivial⟩, ⟨d_35231 (p := p) (P := P), trivial, trivial⟩⟩, ⟨d_35240 (p := p) (P := P), ⟨d_35237 (p := p) (P := P), trivial, trivial⟩, ⟨d_35243 (p := p) (P := P), trivial, trivial⟩⟩⟩⟩
-    ⟨bs_35205 (p := p) (P := P), bs_35275 (p := p) (P := P), trivial⟩
-    trivial (jts (p := p) (P := P))
+    (Bootstrap.hyp (p := p) (P := P))
     [S, C, I, L] ⟨hS.2, hC, hI, hL.2, trivial⟩ ⟨Nat.zero_le _, Nat.zero_le _, Nat.zero_le _, Nat.zero_le _, trivial⟩ ω μ
     ⟨rng_rd (lo := 66657) (hi := 66688) h.hrd_66657_66688, rng_rd (lo := 71060) (hi := 71076) h.hrd_71060_71076, rng_rd (lo := 77040) (hi := 77048) h.hrd_77040_77048, rng_rd (lo := 206512) (hi := 206528) h.hrd_206512_206528, rng_rd (lo := 206824) (hi := 206844) h.hrd_206824_206844, rng_rd (lo := 206848) (hi := 206852) h.hrd_206848_206852, rng_rd (lo := 206880) (hi := 206892) h.hrd_206880_206892, rng_rd (lo := 206980) (hi := 206988) h.hrd_206980_206988, rng_rd (lo := 4278058064) (hi := 4278058088) h.hrd_4278058064_4278058088, rng_rd (lo := 4278058104) (hi := 4278058376) h.hrd_4278058104_4278058376, rng_rd (lo := 4278058488) (hi := 4278058496) h.hrd_4278058488_4278058496, rng_rd (lo := 4278058544) (hi := 4278058568) h.hrd_4278058544_4278058568, rng_rd (lo := 4278058600) (hi := 4278058604) h.hrd_4278058600_4278058604, rng_rd (lo := 4278058620) (hi := 4278058624) h.hrd_4278058620_4278058624, rng_rd (lo := 4278058648) (hi := 4278058664) h.hrd_4278058648_4278058664, trivial⟩
     ⟨rng_wr (lo := 196608) (hi := 196616) h.hw_196608_196616, rng_wr (lo := 206512) (hi := 206520) h.hw_206512_206520, rng_wr (lo := 206824) (hi := 206840) h.hw_206824_206840, rng_wr (lo := 206848) (hi := 206852) h.hw_206848_206852, rng_wr (lo := 206880) (hi := 206896) h.hw_206880_206896, rng_wr (lo := 206912) (hi := 206940) h.hw_206912_206940, rng_wr (lo := 206976) (hi := 206992) h.hw_206976_206992, rng_wr (lo := 4278058064) (hi := 4278058088) h.hw_4278058064_4278058088, rng_wr (lo := 4278058104) (hi := 4278058376) h.hw_4278058104_4278058376, rng_wr (lo := 4278058456) (hi := 4278058472) h.hw_4278058456_4278058472, rng_wr (lo := 4278058488) (hi := 4278058496) h.hw_4278058488_4278058496, rng_wr (lo := 4278058544) (hi := 4278058610) h.hw_4278058544_4278058610, rng_wr (lo := 4278058620) (hi := 4278058624) h.hw_4278058620_4278058624, rng_wr (lo := 4278058648) (hi := 4278058664) h.hw_4278058648_4278058664, trivial⟩ trivial

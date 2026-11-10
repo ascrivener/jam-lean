@@ -327,6 +327,9 @@ theorem wr_loop {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env 
     vtable 77016 (ω₈), a template ts at tp (ω₉) and arguments at an even address args (ω₁₀) whose
     functions are `ArgOk` relative to (μA, sA, spA), and a return address ω₀ that `djump` resolves
     to t, it either:
+    (Only templates of short literals and default-option arguments, `Tmpl`; the long literal 0x80
+    and explicit-option arguments are not covered. The logging templates 66464 and 66099 use
+    neither.)
     - returns `Ok` (ω₇ = 0) to t, ω₀, ω₁, ω₅, ω₆ as they were, the `String` at most `tlen M ts`
       octets longer (the text unspecified), within `tcost M C ts + 100 + 2(cap' − cap)` steps, the
       context kept and, from sp up, only W … W + 24 changed; or

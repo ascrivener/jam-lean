@@ -10,7 +10,7 @@ EXPERIMENTAL (symexec, `docs/symexec-spike.md`): the executor's view of the code
 (260) as search trees, and `hyp`, their `ProgHyp`, from the code facts' lemmas.
 -/
 
-namespace PVM.SymExec.Bootstrap
+namespace Services.Bootstrap.SymExec
 
 open PVM PVM.SymExec Services.Bootstrap.Code
 
@@ -11304,4 +11304,4 @@ theorem hyp_jt {p : ByteArray} {P : Program} [HasCode p P] :
 theorem hyp {p : ByteArray} {P : Program} [HasCode p P] : ProgHyp p P prog :=
   ⟨hyp_code, hyp_bs, hyp_jt, jts (p := p) (P := P)⟩
 
-end PVM.SymExec.Bootstrap
+end Services.Bootstrap.SymExec

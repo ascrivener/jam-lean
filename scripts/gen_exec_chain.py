@@ -321,6 +321,16 @@ need = {0, N}
 for p in plan:
     if p[0] == 'E': need |= {p[1], p[2]}
     else: need |= {p[1], p[1] + 1}
+# states named by the files that import the chain (they may `open` its namespace)
+for root, _, fs in os.walk('.'):
+    if '.lake' in root or root.startswith('./' + chain_dir): continue
+    for fn in fs:
+        if not fn.endswith('.lean'): continue
+        path = os.path.join(root, fn)
+        if os.path.normpath(path) == os.path.normpath(chain_file): continue
+        t = open(path).read()
+        if re.search(rf'^import {re.escape(ns)}(\.St)?$', t, re.M):
+            need |= {int(x) for x in re.findall(r'\bSt(\d+)\b', t)}
 def drop_st(src):
     def rep(mm):
         return mm.group(0) if int(mm.group(2)) in need else ''

@@ -600,6 +600,112 @@ structure St128 (L : Nat) (ω₀ : Regs) (μ₀ : Memory) (ω : Regs) (μ : Memo
   rdq : ∀ a, μ.readable a = μ₀.readable a
   wrq : ∀ a, μ.writable a = μ₀.writable a
 
+/-- The state at cut 174 (step 2784 after pc 38875, pc 56250): what the rest of the path reads. -/
+structure St174 (L : Nat) (ω₀ : Regs) (μ₀ : Memory) (ω : Regs) (μ : Memory) : Prop where
+  hreg1 : ω[1] = UInt64.ofNat 4278058024
+  hreg2 : ω[2] = UInt64.ofNat 196616
+  hreg3 : ω[3] = UInt64.ofNat 341
+  hreg4 : ω[4] = UInt64.ofNat 8
+  hreg7 : ω[7] = UInt64.ofNat 0
+  hreg8 : ω[8] = UInt64.ofNat 4278058200
+  hreg9 : ω[9] = UInt64.ofNat 500
+  hreg10 : ω[10] = UInt64.ofNat 10
+  hreg12 : ω[12] = UInt64.ofNat 600
+  hm_206512_8 : μ.readN 206512 8 = [0, 0, 0, 0, 32, 40, 3, 0]
+  hm_206824_8 : μ.readN 206824 8 = [0, 0, 0, 0, 0, 0, 0, 128]
+  hm_206832_8 : μ.readN 206832 8 = [0, 0, 0, 0, 32, 0, 0, 0]
+  hm_206848_4 : μ.readN 206848 4 = [0, 0, 0, 0]
+  hm_206880_8 : μ.readN 206880 8 = [0, 0, 0, 0, 0, 0, 0, 4]
+  hm_206888_4 : μ.readN 206888 4 = [0, 0, 0, 0]
+  hm_4278058268_4 : μ.readN 4278058268 4 = [0, 250, 0, 0]
+  hm_4278058272_8 : μ.readN 4278058272 8 = [128, 112, 210, 0, 0, 9, 61, 0]
+  hm_4278058280_8 : μ.readN 4278058280 8 = [0, 12, 0, 0, 0, 192, 0, 0]
+  hm_4278058292_4 : μ.readN 4278058292 4 = [0, 12, 0, 0]
+  hm_4278058314_2 : μ.readN 4278058314 2 = [80, 0]
+  hm_4278058318_2 : μ.readN 4278058318 2 = [128, 0]
+  hm_4278058320_2 : μ.readN 4278058320 2 = [5, 0]
+  hm_4278058352_8 : μ.readN 4278058352 8 = [0, 0, 255, 254, 0, 0, 0, 0]
+  hm_4278058368_8 : μ.readN 4278058368 8 = [150, 0, 0, 0, 0, 0, 0, 0]
+  hbn_4278058360_8 : μ.readN 4278058360 8 = Num.encodeLE 8 L
+  hw_196616_196618 : ∀ a, 196616 ≤ a → a < 196618 → μ.writable a = true
+  hw_196620_196624 : ∀ a, 196620 ≤ a → a < 196624 → μ.writable a = true
+  hw_196628_196636 : ∀ a, 196628 ≤ a → a < 196636 → μ.writable a = true
+  hw_196640_196644 : ∀ a, 196640 ≤ a → a < 196644 → μ.writable a = true
+  hw_196652_196668 : ∀ a, 196652 ≤ a → a < 196668 → μ.writable a = true
+  hw_196680_196688 : ∀ a, 196680 ≤ a → a < 196688 → μ.writable a = true
+  hw_196760_196768 : ∀ a, 196760 ≤ a → a < 196768 → μ.writable a = true
+  hw_196776_196784 : ∀ a, 196776 ≤ a → a < 196784 → μ.writable a = true
+  hw_4278058304_4278058320 : ∀ a, 4278058304 ≤ a → a < 4278058320 → μ.writable a = true
+  hw_4278058352_4278058376 : ∀ a, 4278058352 ≤ a → a < 4278058376 → μ.writable a = true
+  hrd_4278058268_4278058288 : ∀ a, 4278058268 ≤ a → a < 4278058288 → μ.readable a = true
+  hrd_4278058292_4278058296 : ∀ a, 4278058292 ≤ a → a < 4278058296 → μ.readable a = true
+  hrd_4278058314_4278058316 : ∀ a, 4278058314 ≤ a → a < 4278058316 → μ.readable a = true
+  hrd_4278058318_4278058322 : ∀ a, 4278058318 ≤ a → a < 4278058322 → μ.readable a = true
+  hrd_4278058352_4278058376 : ∀ a, 4278058352 ≤ a → a < 4278058376 → μ.readable a = true
+  fr : ∀ a, C174 a = true → μ.read a = μ₀.read a
+  rdq : ∀ a, μ.readable a = μ₀.readable a
+  wrq : ∀ a, μ.writable a = μ₀.writable a
+
+/-- The state at cut 175 (step 2800 after pc 38875, pc 56316): what the rest of the path reads. -/
+structure St175 (L : Nat) (ω₀ : Regs) (μ₀ : Memory) (ω : Regs) (μ : Memory) : Prop where
+  hreg1 : ω[1] = UInt64.ofNat 4278058024
+  hreg2 : ω[2] = UInt64.ofNat 196616
+  hreg3 : ω[3] = UInt64.ofNat 341
+  hreg4 : ω[4] = UInt64.ofNat 8
+  hreg7 : ω[7] = UInt64.ofNat 0
+  hreg8 : ω[8] = UInt64.ofNat 4278058200
+  hreg9 : ω[9] = UInt64.ofNat 500
+  hreg11 : ω[11] = UInt64.ofNat 80
+  hreg12 : ω[12] = UInt64.ofNat 600
+  hm_206512_8 : μ.readN 206512 8 = [0, 0, 0, 0, 32, 40, 3, 0]
+  hm_206824_8 : μ.readN 206824 8 = [0, 0, 0, 0, 0, 0, 0, 128]
+  hm_206832_8 : μ.readN 206832 8 = [0, 0, 0, 0, 32, 0, 0, 0]
+  hm_206848_4 : μ.readN 206848 4 = [0, 0, 0, 0]
+  hm_206880_8 : μ.readN 206880 8 = [0, 0, 0, 0, 0, 0, 0, 4]
+  hm_206888_4 : μ.readN 206888 4 = [0, 0, 0, 0]
+  hm_4278058284_4 : μ.readN 4278058284 4 = [0, 192, 0, 0]
+  hm_4278058292_4 : μ.readN 4278058292 4 = [0, 12, 0, 0]
+  hm_4278058352_8 : μ.readN 4278058352 8 = [0, 0, 255, 254, 0, 0, 0, 0]
+  hm_4278058368_8 : μ.readN 4278058368 8 = [150, 0, 0, 0, 0, 0, 0, 0]
+  hbn_4278058360_8 : μ.readN 4278058360 8 = Num.encodeLE 8 L
+  hw_196620_196624 : ∀ a, 196620 ≤ a → a < 196624 → μ.writable a = true
+  hw_196632_196636 : ∀ a, 196632 ≤ a → a < 196636 → μ.writable a = true
+  hw_196660_196664 : ∀ a, 196660 ≤ a → a < 196664 → μ.writable a = true
+  hw_4278058304_4278058320 : ∀ a, 4278058304 ≤ a → a < 4278058320 → μ.writable a = true
+  hw_4278058352_4278058376 : ∀ a, 4278058352 ≤ a → a < 4278058376 → μ.writable a = true
+  hrd_4278058284_4278058288 : ∀ a, 4278058284 ≤ a → a < 4278058288 → μ.readable a = true
+  hrd_4278058292_4278058296 : ∀ a, 4278058292 ≤ a → a < 4278058296 → μ.readable a = true
+  hrd_4278058352_4278058376 : ∀ a, 4278058352 ≤ a → a < 4278058376 → μ.readable a = true
+  fr : ∀ a, C175 a = true → μ.read a = μ₀.read a
+  rdq : ∀ a, μ.readable a = μ₀.readable a
+  wrq : ∀ a, μ.writable a = μ₀.writable a
+
+/-- The state at cut 176 (step 2816 after pc 38875, pc 4603): what the rest of the path reads. -/
+structure St176 (L : Nat) (ω₀ : Regs) (μ₀ : Memory) (ω : Regs) (μ : Memory) : Prop where
+  hreg1 : ω[1] = UInt64.ofNat 4278058376
+  hreg2 : ω[2] = UInt64.ofNat 196616
+  hreg3 : ω[3] = UInt64.ofNat 341
+  hreg4 : ω[4] = UInt64.ofNat 8
+  hreg5 : ω[5] = UInt64.ofNat L
+  hreg6 : ω[6] = UInt64.ofNat 4278124544
+  hreg7 : ω[7] = UInt64.ofNat 4278058544
+  hreg8 : ω[8] = UInt64.ofNat 18446744073692708864
+  hreg9 : ω[9] = UInt64.ofNat L
+  hreg10 : ω[10] = UInt64.ofNat 49152
+  hreg11 : ω[11] = UInt64.ofNat 80
+  hreg12 : ω[12] = UInt64.ofNat 600
+  hm_206512_8 : μ.readN 206512 8 = [0, 0, 0, 0, 32, 40, 3, 0]
+  hm_206824_8 : μ.readN 206824 8 = [0, 0, 0, 0, 0, 0, 0, 128]
+  hm_206832_8 : μ.readN 206832 8 = [0, 0, 0, 0, 32, 0, 0, 0]
+  hm_206848_4 : μ.readN 206848 4 = [0, 0, 0, 0]
+  hm_206880_8 : μ.readN 206880 8 = [0, 0, 0, 0, 0, 0, 0, 4]
+  hm_206888_4 : μ.readN 206888 4 = [0, 0, 0, 0]
+  hw_4278058304_4278058320 : ∀ a, 4278058304 ≤ a → a < 4278058320 → μ.writable a = true
+  hw_4278058352_4278058376 : ∀ a, 4278058352 ≤ a → a < 4278058376 → μ.writable a = true
+  fr : ∀ a, C176 a = true → μ.read a = μ₀.read a
+  rdq : ∀ a, μ.readable a = μ₀.readable a
+  wrq : ∀ a, μ.writable a = μ₀.writable a
+
 /-- The state at cut 177 (step 2829 after pc 38875, pc 4603): what the rest of the path reads. -/
 structure St177 (L : Nat) (ω₀ : Regs) (μ₀ : Memory) (ω : Regs) (μ : Memory) : Prop where
   hreg0 : ω[0] = UInt64.ofNat 152

@@ -121,6 +121,7 @@ import Services.Bootstrap.Decode.VecU8HeapBig
 import Services.Bootstrap.Decode.VecVecU8
 import Services.Bootstrap.Decode.ImportElem
 import Services.Bootstrap.Decode.VecVecElem
+import Services.Bootstrap.Decode.VecPairsBig
 import Services.Picoalloc.Model
 import Services.Picoalloc.Invariant
 import Services.Picoalloc.FreeLists

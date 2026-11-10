@@ -151,4 +151,126 @@ theorem read_exact {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Reg
   · rw [rd3, rd2, rd1]
   · rw [wr3, wr2, wr1]
 
+/-- 46040 … 46053: `rd_u64`'s 16-octet frame at sp − 16 (ω₀ at +8, the word 0 at +0) and
+    `read_exact(Rd, sp − 16, 8)`, returning to 46059 (2068). -/
+theorem u64_a {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (sp r0 : Nat) (hsp : 65536 + 16 ≤ sp ∧ sp < 4294967296) (h0 : ω[0] = UInt64.ofNat r0)
+    (h1 : ω[1] = UInt64.ofNat sp) (hr0 : r0 < 18446744073709551616)
+    (hw : ∀ a, sp - 16 ≤ a → a < sp → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 46040 ω μ x 58434 ω' μ' x 6 ∧
+      ω'[0] = UInt64.ofNat 2068 ∧ ω'[1] = UInt64.ofNat (sp - 16) ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      ω'[7] = ω[7] ∧ ω'[8] = UInt64.ofNat (sp - 16) ∧ ω'[9] = UInt64.ofNat 8 ∧
+      rdN μ' (sp - 16 + 8) 8 = r0 ∧
+      (∀ a, a < 4294967296 → (a < sp - 16 ∨ sp ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have hr : ∀ a, sp - 16 ≤ a → a < sp → μ.readable a = true := fun a h1 h2 => Memory.readable_of_writable (hw a h1 h2)
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?_, ?_, ?_, ?_⟩
+  rotate_left 2
+  · pvm_go [h0, h1, hsp, hr0, hw, hr, rdN_writeN_disjoint, ↓rdN_fold]
+  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
+    all_goals post_simp [rdN_writeN_disjoint, rdN_writeN_same8, Num.decodeLE_encodeLE, h0, h1,
+      Nat.mod_eq_of_lt hr0]
+
+/-- 46008 … 46023: `rd_u32`'s 16-octet frame at sp − 16 (ω₀ at +8, the u32 0 at +4) and
+    `read_exact(Rd, sp − 12, 4)`, returning to 46029 (2066). -/
+theorem u32_a {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (sp r0 : Nat) (hsp : 65536 + 16 ≤ sp ∧ sp < 4294967296) (h0 : ω[0] = UInt64.ofNat r0)
+    (h1 : ω[1] = UInt64.ofNat sp) (hr0 : r0 < 18446744073709551616)
+    (hw : ∀ a, sp - 16 ≤ a → a < sp → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 46008 ω μ x 58434 ω' μ' x 6 ∧
+      ω'[0] = UInt64.ofNat 2066 ∧ ω'[1] = UInt64.ofNat (sp - 16) ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      ω'[7] = ω[7] ∧ ω'[8] = UInt64.ofNat (sp - 16 + 4) ∧ ω'[9] = UInt64.ofNat 4 ∧
+      rdN μ' (sp - 16 + 8) 8 = r0 ∧
+      (∀ a, a < 4294967296 → (a < sp - 16 ∨ sp ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have hr : ∀ a, sp - 16 ≤ a → a < sp → μ.readable a = true := fun a h1 h2 => Memory.readable_of_writable (hw a h1 h2)
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?_, ?_, ?_, ?_⟩
+  rotate_left 2
+  · pvm_go [h0, h1, hsp, hr0, hw, hr, rdN_writeN_disjoint, ↓rdN_fold]
+  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
+    all_goals post_simp [rdN_writeN_disjoint, rdN_writeN_same8, Num.decodeLE_encodeLE, h0, h1,
+      Nat.mod_eq_of_lt hr0]
+
+/-- 46059 / 46029 … the return: the value reloaded into ω₈, ω₀ from F + 8, the frame closed. -/
+theorem uN_b {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (i F r0 t : Nat) (hi : i = 46059 ∨ i = 46029) (hF : 65536 ≤ F ∧ F + 16 < 4294967296)
+    (h1 : ω[1] = UInt64.ofNat F) (r0' : rdN μ (F + 8) 8 = r0)
+    (hret : 0 < r0 ∧ r0 ≤ 2806 ∧ r0 % 2 = 0) (hjt : P.jumpTable.getD (r0 / 2 - 1) 0 = t)
+    (hbt : P.isBlockStart t = true) (hr : ∀ a, F ≤ a → a < F + 16 → μ.readable a = true) :
+    ∃ ω', FreeStepsH p R i ω μ x t ω' μ x 4 ∧
+      ω'[0] = UInt64.ofNat r0 ∧ ω'[1] = UInt64.ofNat (F + 16) ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      ω'[7] = ω[7] := by
+  rw [show ω = regsNF ω [] from rfl]
+  rcases hi with rfl | rfl
+  all_goals
+    refine ⟨?_, ?_, ?_⟩
+    rotate_left
+    · pvm_go [h1, hF, r0', hret, hjt, hbt, hr, ↓rdN_fold]
+    · refine ⟨?_, ?_, ?_, ?_, ?_⟩
+      all_goals post_simp [h1, Nat.mod_eq_of_lt (show r0 < 18446744073709551616 by omega)]
+
+/-- **`rd_u64` (46040) and `rd_u32` (46008) on a slice reader**, frame-only: from the reader at Rd
+    (ω₇) with len ≥ k octets left at ptr (k = 8 or 4) and a return address ω₀ that `djump`
+    resolves to t, they return 0 (`Ok`) in ω₇ to t, with ω₀, ω₁, ω₅, ω₆ as they were and the
+    reader at (ptr + k, len − k). The value is not stated. Memory changes only in sp − 104 … sp and
+    Rd … Rd + 16. -/
+theorem rd_uN {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (e k sp Rd ptr len r0 t : Nat) (he : (e = 46040 ∧ k = 8) ∨ (e = 46008 ∧ k = 4))
+    (hsp : 65536 + 104 ≤ sp ∧ sp < 4294967296 ∧ sp % 8 = 0)
+    (h0 : ω[0] = UInt64.ofNat r0) (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat Rd)
+    (hret : 0 < r0 ∧ r0 ≤ 2806 ∧ r0 % 2 = 0) (hjt : P.jumpTable.getD (r0 / 2 - 1) 0 = t)
+    (hbt : P.isBlockStart t = true)
+    (rp : rdN μ Rd 8 = ptr) (rl : rdN μ (Rd + 8) 8 = len) (hn : k ≤ len)
+    (hRd : sp ≤ Rd) (hRd1 : Rd + 16 < 4294967296)
+    (hs : sp + 24 ≤ ptr ∧ ptr + k + 16 < 4294967296) (hRp : Rd + 16 ≤ ptr ∨ ptr + k ≤ Rd)
+    (hr : ∀ a, ptr ≤ a → a < ptr + k → μ.readable a = true)
+    (hwR : ∀ a, Rd ≤ a → a < Rd + 16 → μ.writable a = true)
+    (hwf : ∀ a, sp - 104 ≤ a → a < sp → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R e ω μ x t ω' μ' x 420 ∧
+      ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ ω'[7] = UInt64.ofNat 0 ∧
+      rdN μ' Rd 8 = ptr + k ∧ rdN μ' (Rd + 8) 8 = len - k ∧
+      (∀ a, a < 4294967296 → (a < sp - 104 ∨ sp ≤ a) → (a < Rd ∨ Rd + 16 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have hr0 : r0 < 18446744073709551616 := by omega
+  have entry : ∃ ω1 μ1 i ri, (i = 46059 ∨ i = 46029) ∧ FreeStepsH p R e ω μ x 58434 ω1 μ1 x 6 ∧
+      ω1[0] = UInt64.ofNat ri ∧ (0 < ri ∧ ri ≤ 2806 ∧ ri % 2 = 0) ∧ ω1[1] = UInt64.ofNat (sp - 16) ∧
+      ω1[5] = ω[5] ∧ ω1[6] = ω[6] ∧ ω1[7] = ω[7] ∧ ω1[9] = UInt64.ofNat k ∧
+      (∃ dst, ω1[8] = UInt64.ofNat dst ∧ sp - 16 ≤ dst ∧ dst + k ≤ sp - 8) ∧
+      rdN μ1 (sp - 16 + 8) 8 = r0 ∧ P.jumpTable.getD (ri / 2 - 1) 0 = i ∧
+      P.isBlockStart i = true ∧
+      (∀ a, a < 4294967296 → (a < sp - 16 ∨ sp ≤ a) → μ1.read a = μ.read a) ∧
+      (∀ a, μ1.readable a = μ.readable a) ∧ (∀ a, μ1.writable a = μ.writable a) := by
+    rcases he with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
+    · obtain ⟨ω1, μ1, run, a0, a1, a5, a6, a7, a8, a9, m8, fr, rd, wr⟩ := u64_a (p := p) (P := P) (R := R)
+        x ω μ sp r0 ⟨by omega, by omega⟩ h0 h1 hr0 (fun a h1 h2 => hwf a (by omega) h2)
+      exact ⟨ω1, μ1, 46059, 2068, Or.inl rfl, run, a0, by decide, a1, a5, a6, a7, a9, ⟨sp - 16, a8, by omega, by omega⟩, m8,
+        jte_1033, bs_46059, fr, rd, wr⟩
+    · obtain ⟨ω1, μ1, run, a0, a1, a5, a6, a7, a8, a9, m8, fr, rd, wr⟩ := u32_a (p := p) (P := P) (R := R)
+        x ω μ sp r0 ⟨by omega, by omega⟩ h0 h1 hr0 (fun a h1 h2 => hwf a (by omega) h2)
+      exact ⟨ω1, μ1, 46029, 2066, Or.inr rfl, run, a0, by decide, a1, a5, a6, a7, a9, ⟨sp - 16 + 4, a8, by omega, by omega⟩, m8,
+        jte_1032, bs_46029, fr, rd, wr⟩
+  obtain ⟨ω1, μ1, i, ri, hi, run1, a0, hri, a1, a5, a6, a7, a9, ⟨dst, a8, hd1, hd2⟩, m8, hji, hbi, fr1, rd1, wr1⟩ := entry
+  have hk : k = 8 ∨ k = 4 := by omega
+  have k1 : ∀ a, sp ≤ a → a < 4294967296 → μ1.read a = μ.read a := fun a h1 h2 => fr1 a h2 (Or.inr h1)
+  obtain ⟨ω2, μ2, run2, b0, b1, b5, b6, b7, bp, bl, fr2, rd2, wr2⟩ := read_exact (p := p) (P := P) (R := R) x ω1
+    μ1 (sp - 16) Rd dst k ptr len ri i ⟨by omega, by omega, by omega⟩ a0 a1 (a7.trans h7) a8 a9
+    hri hji hbi
+    (by rw [rdN_frame (fun j hj => k1 _ (by omega) (by omega))]; exact rp)
+    (by rw [rdN_frame (fun j hj => k1 _ (by omega) (by omega))]; exact rl) hn (Or.inr (by omega)) hRd1
+    ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ (Or.inl (by omega)) (Or.inl (by omega)) (Or.inl (by omega))
+    (Or.inr (by omega)) (fun a h1 h2 => by rw [rd1]; exact hr a h1 h2)
+    (fun a h1 h2 => by rw [wr1]; exact hwf a (by omega) (by omega))
+    (fun a h1 h2 => by rw [wr1]; exact hwR a h1 h2)
+    (fun a h1 h2 => by rw [wr1]; exact hwf a (by omega) (by omega))
+  obtain ⟨ω3, run3, c0, c1, c5, c6, c7⟩ := uN_b (p := p) (P := P) (R := R) x ω2 μ2 i (sp - 16) r0 t hi
+    ⟨by omega, by omega⟩ (b1.trans a1)
+    (by rw [rdN_frame (fun j hj => fr2 _ (by omega) (by omega) (Or.inr (by omega)) (Or.inl (by omega)))]; exact m8)
+    hret hjt hbt (fun a h1 h2 => by rw [rd2, rd1]; exact Memory.readable_of_writable (hwf a (by omega) (by omega)))
+  refine ⟨ω3, μ2, ((run1.trans run2).trans run3).mono (by omega), c0.trans h0.symm,
+    by rw [c1, h1, show sp - 16 + 16 = sp by omega], c5.trans (b5.trans a5), c6.trans (b6.trans a6), c7.trans b7,
+    bp, bl, fun a ha h1 h2 => ?_, fun a => by rw [rd2, rd1], fun a => by rw [wr2, wr1]⟩
+  rw [fr2 a ha (by omega) (by omega) h2, fr1 a ha (by omega)]
+
 end Services.Bootstrap.Fmt

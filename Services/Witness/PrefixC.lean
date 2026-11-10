@@ -11,7 +11,6 @@ import Services.Witness.PrefixC.S11
 import Services.Witness.PrefixC.E12
 import Services.Witness.PrefixC.S20
 import Services.Witness.PrefixC.E21
-import Services.Witness.PrefixC.S43
 
 namespace Services.Witness.PrefixC
 
@@ -32,8 +31,7 @@ theorem chain (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
   obtain ⟨ω7, μ7, run7, h7⟩ := E12.run p P env ω6 μ6 x henv hpar L hL ω₀ μ₀ h6
   obtain ⟨ω8, μ8, run8, h8⟩ := S20.run p P env ω7 μ7 x henv hpar L hL ω₀ μ₀ h7
   obtain ⟨ω9, μ9, run9, h9⟩ := E21.run p P env ω8 μ8 x henv hpar L hL ω₀ μ₀ h8
-  obtain ⟨ω10, μ10, run10, h10⟩ := S43.run p P env ω9 μ9 x henv hpar L hL ω₀ μ₀ h9
-  exact ⟨ω10, μ10, (run1.trans (run2.trans (run3.trans (run4.trans (run5.trans (run6.trans (run7.trans (run8.trans (run9.trans run10))))))))), h10⟩
+  exact ⟨ω9, μ9, (run1.trans (run2.trans (run3.trans (run4.trans (run5.trans (run6.trans (run7.trans (run8.trans run9)))))))), h9⟩
 
 /-- **Steps 0 … 701 after pc 0**, from the facts the path reads before writing them. -/
 theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)

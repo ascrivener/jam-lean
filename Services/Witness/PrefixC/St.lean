@@ -662,45 +662,6 @@ structure St21 (L : Nat) (ω₀ : Regs) (μ₀ : Memory) (ω : Regs) (μ : Memor
   rdm : ∀ a, μ₀.readable a = true → μ.readable a = true
   wrm : ∀ a, μ₀.writable a = true → μ.writable a = true
 
-/-- The state at cut 43 (step 688 after pc 0, pc 43217): what the rest of the path reads. -/
-structure St43 (L : Nat) (ω₀ : Regs) (μ₀ : Memory) (ω : Regs) (μ : Memory) : Prop where
-  hreg0 : ω[0] = UInt64.ofNat 838
-  hreg1 : ω[1] = UInt64.ofNat 4278058816
-  hreg2 : ω[2] = UInt64.ofNat 5
-  hreg3 : ω[3] = UInt64.ofNat 6
-  hreg4 : ω[4] = UInt64.ofNat 80
-  hreg5 : ω[5] = UInt64.ofNat 4278124544
-  hreg6 : ω[6] = UInt64.ofNat L
-  hreg10 : ω[10] = UInt64.ofNat 16
-  hreg11 : ω[11] = UInt64.ofNat 64000
-  hreg12 : ω[12] = UInt64.ofNat 204840
-  hm_206368_8 : μ.readN 206368 8 = [0, 0, 0, 0, 128, 39, 3, 0]
-  hm_206376_8 : μ.readN 206376 8 = [128, 39, 3, 0, 0, 0, 0, 0]
-  hm_206680_8 : μ.readN 206680 8 = [0, 0, 0, 0, 0, 0, 0, 128]
-  hm_206688_8 : μ.readN 206688 8 = [0, 0, 0, 0, 32, 0, 0, 0]
-  hm_206696_4 : μ.readN 206696 4 = [6, 0, 0, 0]
-  hm_206704_4 : μ.readN 206704 4 = [0, 0, 0, 0]
-  hm_206720_8 : μ.readN 206720 8 = [0, 0, 0, 0, 0, 0, 0, 4]
-  hm_206728_4 : μ.readN 206728 4 = [0, 0, 0, 0]
-  hm_4278058936_4 : μ.readN 4278058936 4 = [0, 12, 0, 0]
-  hm_4278058958_2 : μ.readN 4278058958 2 = [8, 0]
-  hm_4278058960_2 : μ.readN 4278058960 2 = [16, 0]
-  hm_4278058974_2 : μ.readN 4278058974 2 = [128, 0]
-  hm_4278058984_8 : μ.readN 4278058984 8 = [0, 0, 0, 0, 0, 0, 0, 0]
-  hm_4278058992_8 : μ.readN 4278058992 8 = [0, 0, 0, 0, 0, 0, 0, 0]
-  hm_4278059000_8 : μ.readN 4278059000 8 = [0, 0, 255, 255, 0, 0, 0, 0]
-  hbn_4278058792_8 : μ.readN 4278058792 8 = Num.encodeLE 8 L
-  hw_196624_196636 : ∀ a, 196624 ≤ a → a < 196636 → μ.writable a = true
-  hw_196640_196648 : ∀ a, 196640 ≤ a → a < 196648 → μ.writable a = true
-  hrd_4278058936_4278058940 : ∀ a, 4278058936 ≤ a → a < 4278058940 → μ.readable a = true
-  hrd_4278058958_4278058962 : ∀ a, 4278058958 ≤ a → a < 4278058962 → μ.readable a = true
-  hrd_4278058974_4278058976 : ∀ a, 4278058974 ≤ a → a < 4278058976 → μ.readable a = true
-  hhp : JAM.HeapPages μ 48 1044368 51
-  fr : ∀ a, C43 a = true → μ.read a = μ₀.read a
-  rdA : ∀ a, 2147483648 ≤ a → μ.readable a = μ₀.readable a
-  rdm : ∀ a, μ₀.readable a = true → μ.readable a = true
-  wrm : ∀ a, μ₀.writable a = true → μ.writable a = true
-
 /-- The state at cut 44 (step 702 after pc 0, pc 43217): what the rest of the path reads. -/
 structure St44 (L : Nat) (ω₀ : Regs) (μ₀ : Memory) (ω : Regs) (μ : Memory) : Prop where
   hreg0 : ω[0] = UInt64.ofNat 838

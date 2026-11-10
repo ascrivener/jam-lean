@@ -5,8 +5,6 @@
 import Services.Witness.ErrTail.E0
 import Services.Witness.ErrTail.S59
 import Services.Witness.ErrTail.E60
-import Services.Witness.ErrTail.S89
-import Services.Witness.ErrTail.E90
 
 namespace Services.Witness.ErrTail
 
@@ -21,9 +19,7 @@ theorem chain (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
   obtain ⟨ω1, μ1, run1, h1⟩ := E0.run p P env ω μ x Y hY S hS I hI T hT h
   obtain ⟨ω2, μ2, run2, h2⟩ := S59.run p P env ω1 μ1 x Y hY S hS I hI T hT h1
   obtain ⟨ω3, μ3, run3, h3⟩ := E60.run p P env ω2 μ2 x Y hY S hS I hI T hT h2
-  obtain ⟨ω4, μ4, run4, h4⟩ := S89.run p P env ω3 μ3 x Y hY S hS I hI T hT h3
-  obtain ⟨ω5, μ5, run5, h5⟩ := E90.run p P env ω4 μ4 x Y hY S hS I hI T hT h4
-  exact ⟨ω5, μ5, (run1.trans (run2.trans (run3.trans (run4.trans run5)))), h5⟩
+  exact ⟨ω3, μ3, (run1.trans (run2.trans run3)), h3⟩
 
 /-- **Steps 0 … 1541 after pc 74620**, from the facts the path reads before writing them. -/
 theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)

@@ -108,6 +108,24 @@ theorem disj_sound (hpre : Pre E st) {a : Aff} {n : Nat} {b : Aff} {m : Nat}
 
 /-! ## Values -/
 
+theorem alu_addImm32 (a b x : Nat) :
+    twoRegImmAlu .addImm32 a b x = some (sext 4 ((b + x) % two32)) := by
+  simp only [twoRegImmAlu]
+
+theorem alu_shloL (a b x : Nat) :
+    twoRegImmAlu .shloLImm64 a b x = some (sext 8 ((b * 2 ^ (x % 64)) % two64)) := by
+  simp only [twoRegImmAlu]
+
+theorem alu_shloR (a b x : Nat) :
+    twoRegImmAlu .shloRImm64 a b x = some (sext 8 (b / 2 ^ (x % 64))) := by
+  simp only [twoRegImmAlu]
+
+theorem sext8_lt (y : Nat) : sext 8 y < two64 := by
+  simp only [sext, two64, show (8:Nat) ≠ 0 by decide, show (4:Nat) ≠ 0 by decide, ↓reduceIte, Nat.reduceMul, Nat.reducePow, Nat.reduceSub]; omega
+
+theorem sext8_id {y : Nat} (h : y < two64) : sext 8 y = y := by
+  simp only [sext, two64, show (8:Nat) ≠ 0 by decide, show (4:Nat) ≠ 0 by decide, ↓reduceIte, Nat.reduceMul, Nat.reducePow, Nat.reduceSub] at *; omega
+
 theorem bnd_sound (hpre : Pre E st) : ∀ (v : SVal) b, v.bnd st = some b → v.eval E < b := by
   intro v b h
   cases v with
@@ -133,6 +151,14 @@ theorem bnd_sound (hpre : Pre E st) : ∀ (v : SVal) b, v.bnd st = some b → v.
         rw [hh] at h; simp only [Option.map, Option.some.injEq] at h; subst h
         have h1 := le_hi hpre hh; have h2 := lo_le hpre a
         simp only [SVal.eval]; omega
+    · cases h
+  | alu2i op a' w s =>
+    simp only [SVal.bnd] at h
+    split at h
+    · rename_i hop; subst hop; cases h
+      simp only [SVal.eval]
+      rw [alu_shloL, Option.getD_some]
+      exact sext8_lt _
     · cases h
   | sx k w =>
     simp only [SVal.bnd, Option.some.injEq] at h; subst h
@@ -256,9 +282,59 @@ theorem foldAlu3_eval (op : ThreeRegOp) (a b d : SVal) :
     (foldAlu3 op a b d).eval E = threeRegAlu op (a.eval E) (b.eval E) (d.eval E) := by
   unfold foldAlu3; split <;> rfl
 
+theorem sext4_small {v : Nat} (h : v < 2147483648) : sext 4 v = v := by
+  have h1 : v % 2 ^ (8 * 4) = v :=
+    Nat.mod_eq_of_lt (by rw [show 2 ^ (8 * 4) = 4294967296 from rfl]; omega)
+  have h2 : v / 2 ^ (8 * 4 - 1) = 0 :=
+    Nat.div_eq_of_lt (by rw [show 2 ^ (8 * 4 - 1) = 2147483648 from rfl]; omega)
+  unfold sext
+  simp only [h1, h2, Nat.zero_mul, Nat.add_zero, ite_self]
+
+theorem zextRule_sound (hpre : Pre E st) {op : TwoRegImmOp} {b v : SVal} {x : Nat}
+    (h : zextRule st op b x = some v) (A : Nat) :
+    v.eval E = (twoRegImmAlu op A (b.eval E) x).getD 0 := by
+  unfold zextRule at h
+  by_cases h1 : op = .addImm32
+  · subst h1
+    rw [if_pos rfl] at h
+    by_cases hc : x = 0 ∧ (b.bnd st).any (· ≤ 2 ^ 31) = true
+    · rw [if_pos hc] at h; cases h
+      obtain ⟨rfl, hb⟩ := hc
+      have := bnd_any hpre hb
+      rw [alu_addImm32, Option.getD_some, Nat.add_zero,
+        Nat.mod_eq_of_lt (show b.eval E < two32 by unfold two32; omega), sext4_small (by omega)]
+    · rw [if_neg hc] at h; cases h
+  rw [if_neg h1] at h
+  by_cases h2 : op = .shloRImm64
+  · subst h2
+    rw [if_pos rfl] at h
+    cases b with
+    | alu2i op' a' w s =>
+      simp only at h
+      by_cases hc : op' = .shloLImm64 ∧ s % 64 = x % 64 ∧
+          (w.bnd st).any (fun bw => bw * 2 ^ (x % 64) ≤ two64) = true
+      · rw [if_pos hc] at h; cases h
+        obtain ⟨rfl, hs, hb⟩ := hc
+        cases hbw : SVal.bnd st v with
+        | none => rw [hbw] at hb; cases hb
+        | some bw =>
+          rw [hbw] at hb; simp only [Option.any, decide_eq_true_eq] at hb
+          have hw := bnd_sound hpre v bw hbw
+          have hp : 0 < 2 ^ (x % 64) := Nat.pow_pos (by omega)
+          have hlt : v.eval E * 2 ^ (x % 64) < two64 :=
+            Nat.lt_of_lt_of_le (Nat.mul_lt_mul_of_pos_right hw hp) hb
+          simp only [SVal.eval]
+          rw [alu_shloL, Option.getD_some, alu_shloR, Option.getD_some, hs, Nat.mod_eq_of_lt hlt, sext8_id hlt, Nat.mul_div_cancel _ hp,
+            sext8_id (by have := Nat.le_mul_of_pos_right (v.eval E) hp; omega)]
+      · rw [if_neg hc] at h; cases h
+    | _ => simp at h
+  · rw [if_neg h2] at h; cases h
+
 theorem mkAlu2i_eval (hpre : Pre E st) (op : TwoRegImmOp) (a b : SVal) (x : Nat) :
     (mkAlu2i st op a b x).eval E = (twoRegImmAlu op (a.eval E) (b.eval E) x).getD 0 := by
   unfold mkAlu2i
+  split
+  · rename_i v hv; exact zextRule_sound hpre hv _
   split
   · rename_i hop; subst hop
     rw [addv_eval hpre]
@@ -716,6 +792,14 @@ theorem exec_twoRegImm (P : Program) (i : Nat) (op : TwoRegImmOp) (a b : RegIdx)
     rfl
   all_goals rfl
 
+/-- 𝒳_k(v) = 𝒵⁻¹_8(𝒵_k(v)) for an octet string's value v < 2^(8k) (k = 1, 2, 4). -/
+theorem sext_eq (k v : Nat) (hk : k = 1 ∨ k = 2 ∨ k = 4) (hv : v < 2 ^ (8 * k)) :
+    sext k v = u64 (signed k v) := by
+  rcases hk with rfl | rfl | rfl <;>
+  · simp only [sext, u64, unsigned, signed, Nat.reduceMul, Nat.reducePow, Nat.reduceSub] at *
+    rw [Nat.mod_eq_of_lt hv]
+    split <;> omega
+
 theorem exec_regImm (P : Program) (i : Nat) (op : RegImmOp) (a : RegIdx) (x : UInt64)
     (ω : Regs) (μ : Memory) :
     P.exec i (.regImm op a x) ω μ =
@@ -723,16 +807,29 @@ theorem exec_regImm (P : Program) (i : Nat) (op : RegImmOp) (a : RegIdx) (x : UI
       | .store n => { status := .cont, pc := P.next i, regs := ω,
                       mem := μ.writeN x.toNat (encodeLE n ((ω.get a).toNat % 2 ^ (8 * n))),
                       writes := indices x.toNat n }
-      | .load n _ => { status := .cont, pc := P.next i, mem := μ,
-                       regs := ω.set a (UInt64.ofNat (decodeLE (μ.readN x.toNat n))),
+      | .load n k => { status := .cont, pc := P.next i, mem := μ,
+                       regs := ω.set a (UInt64.ofNat (if k = 0 then decodeLE (μ.readN x.toNat n) else
+                         u64 (signed k (decodeLE (μ.readN x.toNat n))))),
                        reads := indices x.toNat n }
       | .alu => P.exec i (.regImm op a x) ω μ := by
+  have hd : ∀ n, decodeLE (μ.readN x.toNat n) < 2 ^ (8 * n) := fun n => by
+    have := decodeLE_lt (μ.readN x.toNat n)
+    rw [Memory.length_readN] at this; rw [pow8]; exact this
   cases op
   case storeU64 =>
     simp only [rkind]
     rw [show (ω.get a).toNat % 2 ^ (8 * 8) = (ω.get a).toNat from
       Nat.mod_eq_of_lt (UInt64.toNat_lt _)]
     rfl
+  case loadI8 =>
+    simp only [rkind, Nat.one_ne_zero, ite_false]
+    rw [← sext_eq 1 _ (Or.inl rfl) (hd 1)]; rfl
+  case loadI16 =>
+    simp only [rkind, show (2:Nat) ≠ 0 by decide, show (4:Nat) ≠ 0 by decide, ↓reduceIte]
+    rw [← sext_eq 2 _ (Or.inr (Or.inl rfl)) (hd 2)]; rfl
+  case loadI32 =>
+    simp only [rkind, show (2:Nat) ≠ 0 by decide, show (4:Nat) ≠ 0 by decide, ↓reduceIte]
+    rw [← sext_eq 4 _ (Or.inr (Or.inr rfl)) (hd 4)]; rfl
   all_goals rfl
 
 theorem exec_regImmOffset (P : Program) (i : Nat) (op : RegImmOffsetOp) (a : RegIdx) (x : UInt64)
@@ -890,7 +987,7 @@ theorem sstep_sound {p : ByteArray} {P : Program} {G : Prog}
     · rename_i n k hk; rw [hk] at hx
       obtain ⟨hs, rfl⟩ := map_pair h
       obtain ⟨hx2, hi⟩ := memLoad hpre hinv (rb := 0) rfl hs
-      simp only [ite_true, Nat.zero_add] at hi hx2
+      simp only [Nat.zero_add] at hi hx2
       exact go _ hx rfl hx2 hi hd3
     · cases h
   · -- load_imm_64

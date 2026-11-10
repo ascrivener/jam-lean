@@ -203,8 +203,25 @@ corollaries.
     over stack-only steps.
   - Checked against the loop: 44916 decodes each item into its own stack buffer (sp + 88), then copies the
     184 octets into the `Vec` (memcpy at 45097), so `out` on the stack is right.
-- **Next:** the item decode from 45126 (it_pre, the tag read, then `tr_call` / `op_call_ok` / `op_call_err`,
-  with ω₀, ω₅, ω₆ restored to the caller's), then the loop 44916 (≤ 89 items), then 44495 and 6630 → 6674.
+- The item decode for operands from 45126 (`Acc/Inputs/ItemCall.lean`): `item_pre0`, **`item_op_ok`**,
+  **`item_op_err`** (ω₀, ω₁, ω₅, ω₆ as at the call). With `tr_call` (transfers, stack only, host-generic)
+  both arms are covered. PR #141.
+- **Next: the loop 44916** (frame 480; `Vec<AccumulateItem>::decode` with the count n from 39710), as the
+  code facts show it:
+  - 44916 … 44964: prologue (ω₀, ω₅, ω₆ at sp + 472, + 464, + 456; out at sp + 0, reader at sp + 48;
+    `Vec { cap 0, ptr 8, len 0 }` at sp + 64 … + 88); n = 0 → 45556 (the empty `Vec`);
+  - 44965 … 45036: capacity min(n, 89) (ω₁₂ = 89), `finish_grow` 40852 (2040 → 45042) for cap·184 octets,
+    align 8 (`fg_new_call`); an error → 45642 (trap);
+  - 45042 … 45126: cap and ptr stored at sp + 64 / + 72, then per item: ω₇ = sp + 88 (the stack slot),
+    ω₈ = the reader (sp + 48), the item decode 45126 (2044 → 45168);
+  - 45168: slot word −2 (an error) → 45257 (drop the decoded items, free, error out); else memcpy
+    184 octets sp + 88 → sp + 272 (2046 → 45192); len = cap → 45201: grow (`finish_grow` with a current
+    block, 1990; only when n > 89, excluded by the temporary bound); 45075: memcpy sp + 272 → ptr + 184·len
+    (2042 → 45103), len += 1, count −= 1, loop to 44996 / 45115;
+  - 45593 … 45613: the `Vec` (cap, ptr, len) written to out, epilogue, return.
+  So with n ≤ 89 the proof is: one `fg_new_call`, then a LoopA-style induction over the items (each by
+  `tr_call` or `item_op_ok` / `item_op_err`, then two memcpys), the buffer chunk holding the decoded slots.
+  Then 44495's glue and the 6630 → 6674 summary.
 
 Plan:
 1. (After the bounds are lifted.) `finish_grow`'s realloc path (a current block, 40898 … 40995 → 42980 → 41109). It needs:

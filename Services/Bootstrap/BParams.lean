@@ -5,12 +5,6 @@
 import Services.Bootstrap.BParams.E0
 import Services.Bootstrap.BParams.E64
 import Services.Bootstrap.BParams.E128
-import Services.Bootstrap.BParams.S171
-import Services.Bootstrap.BParams.S172
-import Services.Bootstrap.BParams.S173
-import Services.Bootstrap.BParams.S174
-import Services.Bootstrap.BParams.S175
-import Services.Bootstrap.BParams.S176
 
 namespace Services.Bootstrap.BParams
 
@@ -25,13 +19,7 @@ theorem chain (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
   obtain ⟨ω1, μ1, run1, h1⟩ := E0.run p P env ω μ x L hL ω₀ μ₀ h
   obtain ⟨ω2, μ2, run2, h2⟩ := E64.run p P env ω1 μ1 x L hL ω₀ μ₀ h1
   obtain ⟨ω3, μ3, run3, h3⟩ := E128.run p P env ω2 μ2 x L hL ω₀ μ₀ h2
-  obtain ⟨ω4, μ4, run4, h4⟩ := S171.run p P env ω3 μ3 x L hL ω₀ μ₀ h3
-  obtain ⟨ω5, μ5, run5, h5⟩ := S172.run p P env ω4 μ4 x L hL ω₀ μ₀ h4
-  obtain ⟨ω6, μ6, run6, h6⟩ := S173.run p P env ω5 μ5 x L hL ω₀ μ₀ h5
-  obtain ⟨ω7, μ7, run7, h7⟩ := S174.run p P env ω6 μ6 x L hL ω₀ μ₀ h6
-  obtain ⟨ω8, μ8, run8, h8⟩ := S175.run p P env ω7 μ7 x L hL ω₀ μ₀ h7
-  obtain ⟨ω9, μ9, run9, h9⟩ := S176.run p P env ω8 μ8 x L hL ω₀ μ₀ h8
-  exact ⟨ω9, μ9, (run1.trans (run2.trans (run3.trans (run4.trans (run5.trans (run6.trans (run7.trans (run8.trans run9)))))))), h9⟩
+  exact ⟨ω3, μ3, (run1.trans (run2.trans run3)), h3⟩
 
 /-- **Steps 0 … 2828 after pc 38875**, from the facts the path reads before writing them. -/
 theorem run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env) (ω : Regs) (μ : Memory)

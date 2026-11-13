@@ -170,7 +170,82 @@ theorem seg {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR
     · exact Or.inl (bok hok).1
     · obtain ⟨e0, e1⟩ := berr (by omega)
       exact Or.inr ⟨18446744073709551614 - exportR7 env x, by omega, e0, e1⟩
-  sorry
+  have hw1 : ω2[1] = UInt64.ofNat M := by rw [b1, setR7_getElem _ _ 1 (by decide) (by decide), a1, h1]
+  have hw5 : ω2[5] = UInt64.ofNat g := by rw [b5, setR7_getElem _ _ 5 (by decide) (by decide), a5, h5]
+  have r2 : ∀ a l, a + l ≤ 2147483648 → μ2.readN a l = μ.readN a l :=
+    fun a l h => Memory.readN_congr (fun j hj => k2 _ (by omega) (Or.inl (by omega)) (Or.inl (by omega)))
+  -- 4. the `format!` (a hypothesis)
+  rcases fmt (expSeg env sp sl μ x) ω2 μ2 s M g sp sl H2 hS0M (by omega) hM8 b0 hw1 b7 b8 b9 b168 b176 b184 b192
+      (by rw [Memory.readN_congr (fun j hj => bfr _ (by omega) (by omega) (by omega))]; exact a552)
+      (by rw [r2 _ _ (by omega)]; exact s8) (by rw [r2 _ _ (by omega)]; exact s16)
+      (fun a h1 h2 => by rw [brd, ard]; exact rg a h1 h2) (fun a h1 h2 => by rw [brd, ard]; exact rd a h1 h2)
+      (by omega) hres with
+    ⟨ω3, μ3, s3, N3, cap, ptr, len, run3, H3, c1, c5, c6, cfr, ckeep, c584, c592, c600, hcapb, hptrb, hlen, hbuf⟩ |
+      ⟨N3, hx⟩
+  rotate_left
+  · exact Or.inr ⟨_, ExhaustsX.pre pre2 hx⟩
+  have hS13 := H3.hS1
+  -- 5. the `log` call's arguments
+  obtain ⟨ω4, μ4, run4, d1, d5, d6, d160, dfr, drd, dwr⟩ := xl (p := p) (P := P) (R := refineContractK cap0 env)
+    (expSeg env sp sl μ x) ω3 μ3 M cap ptr len ⟨by omega, by omega, hM8⟩ (by omega) (by omega) (by omega)
+    (by rw [c1, hw1]) c584 c592 c600 (fun a h1 h2 => Memory.readable_of_writable (H3.st a (by omega) (by omega)))
+    (fun a h1 h2 => H3.st a (by omega) (by omega))
+  have H4 : HeapCtx env pb S0 S1 μ4 s3 := Decode.GrowOne.ctx_high H3 (fun a ha => dfr a (by omega) (by omega)) dwr
+  have e41 : ω4[1] = UInt64.ofNat M := by rw [d1, c1, hw1]
+  have e45 : ω4[5] = UInt64.ofNat g := by rw [d5, c5, hw5]
+  have k4 : ∀ a, a < 4294967296 → M ≤ a → (a < M + 160 ∨ M + 200 ≤ a) → (a < M + 552 ∨ M + 608 ≤ a) →
+      μ4.read a = μ.read a := fun a h0 h1 h2 h3 => by
+    rw [dfr a h0 (by omega), cfr a h0 h1 (by omega), k2 a h0 (by omega) (by omega)]
+  have s152' : μ4.readN (M + 152) 8 = Num.encodeLE 8 en := by
+    rw [Memory.readN_congr (fun j hj => k4 _ (by omega) (by omega) (by omega) (by omega))]; exact s152
+  -- the used chunks of s, through the run so far
+  have dk4 : ∀ d ∈ chunks s, d.used = true → d ∈ chunks s3 ∧ ∀ a, InData d a → μ4.read a = μ.read a :=
+    fun d hd hu => by
+      obtain ⟨hd3, hk3⟩ := ckeep d hd hu
+      refine ⟨hd3, fun a ha => ?_⟩
+      obtain ⟨-, -, hdT⟩ := Decode.VecU8.chunk_in H.wf hd hu
+      have := H.hbT
+      unfold InData at ha
+      rw [dfr a (by omega) (by omega), hk3 a ⟨ha.1, ha.2⟩, k2 a (by omega) (Or.inl (by omega)) (Or.inl (by omega))]
+  have ω5eq : (setR7 ω4 Result.WHAT)[1] = UInt64.ofNat M := by rw [setR7_getElem _ _ 1 (by decide) (by decide), e41]
+  have ω5eq5 : (setR7 ω4 Result.WHAT)[5] = UInt64.ofNat g := by
+    rw [setR7_getElem _ _ 5 (by decide) (by decide), e45]
+  -- 6. the `String` freed, and on to the next segment
+  by_cases hc0 : cap = 0
+  · subst hc0
+    obtain ⟨ω5, run5, f1, f5⟩ := xf0 (p := p) (P := P) (R := refineContractK cap0 env) (expSeg env sp sl μ x)
+      (setR7 ω4 Result.WHAT) μ4 M (by omega) ω5eq d160
+      (fun a h1 h2 => Memory.readable_of_writable (H4.st a (by omega) (by omega)))
+    obtain ⟨ω6, run6, g1, g5⟩ := xn (p := p) (P := P) (R := refineContractK cap0 env) (expSeg env sp sl μ x) ω5 μ4 M g en
+      (by omega) (by omega) hen (by rw [f1, ω5eq]) (by rw [f5, ω5eq5]) s152'
+      (fun a h1 h2 => Memory.readable_of_writable (H4.st a (by omega) (by omega)))
+    have run := pre2.trans (run3.trans (run4.trans
+      (FreeStepsH.logRef cap0 ⟨by omega, hcap0⟩ env (d_5784 (p := p) (P := P)) (run5.trans run6))))
+    exact Or.inl ⟨ω6, μ4, s3, _, run, H4, by rw [g1, f1, ω5eq], g5, k4, dk4⟩
+  · rcases hbuf with h | ⟨c, hc, hcu, hca, hcf⟩
+    · exact absurd h hc0
+    obtain ⟨ω5, run5, f0, f1, f5, f6, f7⟩ := xf (p := p) (P := P) (R := refineContractK cap0 env)
+      (expSeg env sp sl μ x) (setR7 ω4 Result.WHAT) μ4 M cap (by omega) hc0 (by omega) ω5eq d160
+      (fun a h1 h2 => Memory.readable_of_writable (H4.st a (by omega) (by omega)))
+    have f7' : ω5[7] = UInt64.ofNat (c.addr + 32) := by
+      rw [f7, setR7_getElem _ _ 6 (by decide) (by decide), d6, hca]
+    obtain ⟨ω6, μ6, run6, H6, -, -, -, stk6, -, keep6, g0, g1, g5, g6⟩ := Decode.DeallocCall.dealloc_call
+      (R := refineContractK cap0 env) (p := p) (P := P) env pb S0 S1 (expSeg env sp sl μ x) ω5 μ4 s3 M
+      (c.addr + 32) 186 5807 c H4 hc hcu rfl f0 (by rw [f1, ω5eq]) f7' ⟨by decide, by decide, by decide⟩
+      jte_92 bs_5807 (by omega) ⟨by omega, by omega⟩
+    have run7 := xf1 (p := p) (P := P) (R := refineContractK cap0 env) (expSeg env sp sl μ x) ω6 μ6
+    obtain ⟨ω8, run8, h81, h85⟩ := xn (p := p) (P := P) (R := refineContractK cap0 env) (expSeg env sp sl μ x) ω6 μ6
+      M g en (by omega) (by omega) hen (by rw [g1, f1, ω5eq]) (by rw [g5, f5, ω5eq5])
+      (by rw [Memory.readN_congr (fun j hj => stk6 _ (by omega) (by omega))]; exact s152')
+      (fun a h1 h2 => Memory.readable_of_writable (H6.st a (by omega) (by omega)))
+    have run := pre2.trans (run3.trans (run4.trans
+      (FreeStepsH.logRef cap0 ⟨by omega, hcap0⟩ env (d_5784 (p := p) (P := P))
+        (run5.trans (run6.trans (run7.trans run8))))))
+    refine Or.inl ⟨ω8, μ6, _, _, run, H6, by rw [h81, g1, f1, ω5eq], h85,
+      fun a h0 h1 h2 h3 => by rw [stk6 a h0 h1, k4 a h0 h1 h2 h3], fun d hd hu => ?_⟩
+    obtain ⟨hd3, hk4⟩ := dk4 d hd hu
+    obtain ⟨hd6, hk6⟩ := keep6 d hd3 hu (hcf d hd hu)
+    exact ⟨hd6, fun a ha => by rw [hk6 a ha, hk4 a ha]⟩
 
 end Services.Bootstrap.Refine.ExportSeg
 

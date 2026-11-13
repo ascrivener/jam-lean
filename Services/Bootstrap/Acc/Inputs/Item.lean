@@ -751,7 +751,7 @@ theorem tr_call {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : 
     (h8 : ω[8] = UInt64.ofNat rd)
     (hR0 : μ.readN rd 8 = Num.encodeLE 8 ip) (hR8 : μ.readN (rd + 8) 8 = Num.encodeLE 8 rlen)
     (hrl : 153 ≤ rlen) (hrl32 : rlen < 4294967296) (htag : rdN μ ip 1 = 1)
-    (hip : 65536 ≤ ip ∧ ip < 2147483648) (hra : ∀ a, ip ≤ a → a < ip + 153 → μ.readable a = true)
+    (hip : 65536 ≤ ip ∧ ip + 153 < 2147483648) (hra : ∀ a, ip ≤ a → a < ip + 153 → μ.readable a = true)
     (hsp : 2147483648 + 736 ≤ sp ∧ sp < 4294967296 ∧ sp % 8 = 0)
     (hout : sp ≤ out ∧ out + 184 < 4294967296 ∧ out % 8 = 0)
     (hrd : sp ≤ rd ∧ rd + 16 < 4294967296) (dor : out + 184 ≤ rd ∨ rd + 16 ≤ out)

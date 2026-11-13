@@ -1,6 +1,8 @@
 import Services.Bootstrap.Acc.Inputs.LoopInd
 import Services.Bootstrap.Acc.Inputs.FetchStep
 import PVM.Theorems.InitMem
+import Services.Bootstrap.Acc.Inputs.GlueCall
+import Services.Bootstrap.Acc.HeapHost
 
 /-!
 # The accumulation inputs as loop items
@@ -127,5 +129,67 @@ theorem inputsEnc_items (env : AccEnv) (hn : env.inputs.length < 128) :
     congr 1
     exact List.map_congr_left fun i _ => itemOf_enc i
   rw [inputsEnc, Codec.varSeq, Codec.nat, e1, e2]
+
+/-- **The inputs' decode, 44495 → 44674, for the model's inputs** (GP v0.8.0 §12; at most 89, each
+    within `InputSized`): with ℰ(↕**i**) (`inputsEnc env`) at `ptr`, the data of the allocated chunk F
+    (the fetched `Vec` at sp + 56 … + 72, its capacity fc ≠ 0), either `Vec { n, q, n }` is stored at the
+    output o, slot j of the buffer at q satisfying `itemOf` of input j for any memory agreeing on the final
+    state's allocated data, F freed, the context holding for the final state, every other allocated
+    chunk and its data kept, the stack above sp + 144 kept off o, and ω₀, ω₅, ω₆ restored at the return;
+    or the allocator is exhausted (45975, 45642). -/
+theorem g_inputs (aenv : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap)
+    (hcap : cap < 18446744073709551616) {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
+    (x : AccCtx) (ω : Regs) (μ : Memory) {hb : Nat} (s0 : State) (sp o fc ptr len S0 S1 : Nat) (F : Chunk)
+    (hn : aenv.inputs.length ≤ 89) (hsz : ∀ i ∈ aenv.inputs, InputSized i)
+    (H : HeapCtxC aenv.code pb S0 S1 μ s0) (h1 : ω[1] = UInt64.ofNat sp)
+    (m8 : rdN μ (sp + 8) 8 = o) (m56 : rdN μ (sp + 56) 8 = fc) (m64 : rdN μ (sp + 64) 8 = ptr)
+    (m72 : rdN μ (sp + 72) 8 = len) (hfc : 0 < fc ∧ fc ≠ 18446744073709551615)
+    (hF : F ∈ chunks s0) (hFu : F.used = true) (hFa : F.addr + 32 = ptr)
+    (hFe : ptr + (inputsEnc aenv).length ≤ F.addr + 32 * F.size)
+    (hlen : (inputsEnc aenv).length ≤ len ∧ len < 4294967296)
+    (henc : μ.readN ptr (inputsEnc aenv).length = inputsEnc aenv)
+    (hsp : 2147483960 + 424 + 480 ≤ sp ∧ sp % 8 = 0) (hSTk : S0 + 864 + 480 ≤ sp)
+    (ho : sp + 144 ≤ o ∧ o + 24 ≤ S1) :
+    (∃ q st' ω' μ', FreeStepsH p (accGrowK cap aenv) 44495 ω μ x 44674 ω' μ' x
+        ((itemSteps + 2100) * aenv.inputs.length + 1900) ∧
+      ω'[0] = UInt64.ofNat (rdN μ (sp + 136) 8) ∧ ω'[1] = UInt64.ofNat (sp + 144) ∧
+      ω'[5] = UInt64.ofNat (rdN μ (sp + 128) 8) ∧ ω'[6] = UInt64.ofNat (rdN μ (sp + 120) 8) ∧
+      rdN μ' o 8 = aenv.inputs.length ∧ rdN μ' (o + 8) 8 = q ∧ rdN μ' (o + 16) 8 = aenv.inputs.length ∧
+      HeapCtxC aenv.code pb S0 S1 μ' st' ∧
+      (∀ c ∈ chunks s0, c.used = true → c ≠ F → c ∈ chunks st' ∧ ∀ a, InDataA c a → μ'.read a = μ.read a) ∧
+      (∀ (j : Nat) (i : AccumulateInput), aenv.inputs[j]? = some i →
+        ∀ μ'' : Memory, (∀ c ∈ chunks st', c.used = true → ∀ a, InDataA c a → μ''.read a = μ'.read a) →
+          (itemOf i).2 (μ''.readN (q + 184 * j) 184) μ'') ∧
+      (∀ a, a < 4294967296 → sp + 144 ≤ a → (a < o ∨ o + 24 ≤ a) → μ'.read a = μ.read a)) ∨
+    (∃ j ω' μ', (j = 45975 ∨ j = 45642) ∧
+      FreeStepsH p (accGrowK cap aenv) 44495 ω μ x j ω' μ' x ((itemSteps + 2100) * aenv.inputs.length + 1900)) := by
+  have hE := inputsEnc_items aenv (by omega)
+  rcases Nat.eq_zero_or_pos aenv.inputs.length with h0 | hpos
+  · -- no inputs
+    have hnil : aenv.inputs = [] := List.eq_nil_of_length_eq_zero h0
+    have hE0 : inputsEnc aenv = [UInt8.ofNat 0] := by rw [hE, hnil]; rfl
+    rw [hE0] at hFe hlen henc
+    have hr : μ.read ptr = UInt8.ofNat 0 := by simpa [Memory.readN] using henc
+    obtain ⟨ω', μ', r, z0, z1, z5, z6, o0, o8, o16, H', kd, fr⟩ :=
+      g_call0 (R := accGrowK cap aenv) (p := p) (P := P) aenv.code pb x ω μ s0 sp o fc ptr len S0 S1 F H h1 m8 m56
+        m64 m72 hfc hF hFu hFa (by simpa using hFe) ⟨by simpa using hlen.1, hlen.2⟩ hr (by omega) (by omega) ho
+    refine Or.inl ⟨8, free s0 ptr, ω', μ', r.mono (by omega), z0, z1, z5, z6, by rw [o0, h0], o8,
+      by rw [o16, h0], H', kd, fun j i hj => ?_, fr⟩
+    rw [hnil] at hj; simp at hj
+  · -- the items
+    have hrest : (aenv.inputs.map itemOf).length = aenv.inputs.length := List.length_map _
+    rw [hE] at hFe hlen henc
+    simp only [List.length_append, List.length_singleton] at hFe hlen henc
+    rcases g_call (p := p) (P := P) (hb := hb) (accHeapHost aenv) cap pb itemSteps hcap1 hcap x ω μ s0 sp o fc ptr len S0 S1 F
+        (aenv.inputs.map itemOf)
+        (fun e he => by
+          obtain ⟨i, hi, rfl⟩ := List.mem_map.1 he
+          exact itemOf_ok (p := p) (P := P) (accHeapHost aenv) cap pb hcap1 hcap i (hsz i hi))
+        ⟨by omega, by omega⟩ H h1 m8 m56 m64 m72 hfc hF hFu hFa (by omega) ⟨by omega, hlen.2⟩
+        (by rw [hrest]; exact henc) hsp hSTk ho with
+      ⟨q, st', ω', μ', r, z0, z1, z5, z6, o0, o8, o16, H', kd, -, -, reps, fr⟩ | ⟨j, ω', μ', hj, r⟩
+    · refine Or.inl ⟨q, st', ω', μ', by simpa [hrest, accHeapHost] using r, z0, z1, z5, z6, by rw [o0, hrest],
+        o8, by rw [o16, hrest], H', kd, fun j i hj μ'' hag => reps j (itemOf i) (by simp [hj]) μ'' hag, fr⟩
+    · exact Or.inr ⟨j, ω', μ', hj, by simpa [hrest, accHeapHost] using r⟩
 
 end Services.Bootstrap.Acc

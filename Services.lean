@@ -16,6 +16,10 @@ import Services.Bootstrap.CodeAOk
 import Services.Bootstrap.CodeF
 import Services.Bootstrap.CodeFAll
 import Services.Bootstrap.CodeFOk
+import Services.Bootstrap.Fmt.OracleRefine
+import Services.Bootstrap.Fmt.Hex
+import Services.Bootstrap.Fmt.Dec4
+import Services.Bootstrap.Fmt.Du5
 import Services.Bootstrap.BParams
 import Services.Bootstrap.BParamsConsts
 import Services.Bootstrap.StartupConsts
@@ -87,6 +91,7 @@ import Services.Bootstrap.Decode.VecU8Small
 import Services.Bootstrap.Decode.LookedUpSmall
 import Services.Bootstrap.Decode.VecU8Loop
 import Services.Bootstrap.Decode.ReallocOk
+import Services.Bootstrap.Decode.DeallocCall
 import Services.Bootstrap.Decode.VecU8Pass
 import Services.Bootstrap.Decode.LookedUpBig
 import Services.Bootstrap.Decode.ProvideInline
@@ -224,6 +229,10 @@ import Services.Bootstrap.Alloc.ReallocFallbackHeap
 import Services.Bootstrap.Alloc.ReallocFallbackWrap
 import Services.Bootstrap.Alloc.ReallocCases
 import Services.Bootstrap.Alloc.Pages
+import Services.Bootstrap.Encode.Variants
+import Services.Bootstrap.Encode.Yield
+import Services.Bootstrap.Encode.Prefix
+import Services.Bootstrap.Encode.Loop
 import Services.Bootstrap.Spec
 import Services.Bootstrap.SpecLemmas.Codec
 import Services.Bootstrap.SpecLemmas.Refine

@@ -8,7 +8,7 @@ import Services.Bootstrap.Code
 # Logging code facts of bootstrap
 
 Every instruction of bootstrap's logging ranges (`fnRangesF`: `format!`, `core::fmt` and the
-`String` sink) that none of `Code.facts`, `CodeX.facts` and `CodeA.facts` has, with the block starts,
+`String` sink) that neither `Code.facts` nor `CodeA.facts` has, with the block starts,
 blocks and jump-table entries they need (every entry into the ranges), kept apart so that adding them
 rechecks nothing that uses only those. `Services.Bootstrap.CodeFOk` checks them against the blob by the
 kernel (`CodeFCheck.checkCode_ok`, `hasCodeF`); `HasCodeF p P` assumes them.

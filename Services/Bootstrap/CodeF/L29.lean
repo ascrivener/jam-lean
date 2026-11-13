@@ -10,6 +10,10 @@ namespace Services.Bootstrap.CodeF
 
 open PVM
 
+@[pvm_code] theorem bs_60977 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 60977 = true := h.ok.blockStart (show CodeFact.blockStart 60977 true ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 61) (by decide)) (List.getElem_mem (l := factGroup_61) (n := 56) (by decide))) (List.getElem_mem (l := facts_3960) (n := 1) (by decide)))
+
+@[pvm_code] theorem bs_60980 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 60980 = true := h.ok.blockStart (show CodeFact.blockStart 60980 true ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 61) (by decide)) (List.getElem_mem (l := factGroup_61) (n := 58) (by decide))) (List.getElem_mem (l := facts_3962) (n := 0) (by decide)))
+
 @[pvm_code] theorem bs_60984 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 60984 = false := h.ok.blockStart (show CodeFact.blockStart 60984 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 61) (by decide)) (List.getElem_mem (l := factGroup_61) (n := 60) (by decide))) (List.getElem_mem (l := facts_3964) (n := 0) (by decide)))
 
 @[pvm_code] theorem bs_60988 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 60988 = true := h.ok.blockStart (show CodeFact.blockStart 60988 true ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 61) (by decide)) (List.getElem_mem (l := factGroup_61) (n := 60) (by decide))) (List.getElem_mem (l := facts_3964) (n := 2) (by decide)))
@@ -805,9 +809,5 @@ open PVM
 @[pvm_code] theorem bs_62300 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 62300 = false := h.ok.blockStart (show CodeFact.blockStart 62300 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 68) (by decide)) (List.getElem_mem (l := factGroup_68) (n := 13) (by decide))) (List.getElem_mem (l := facts_4365) (n := 0) (by decide)))
 
 @[pvm_code] theorem bs_62302 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 62302 = false := h.ok.blockStart (show CodeFact.blockStart 62302 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 68) (by decide)) (List.getElem_mem (l := factGroup_68) (n := 13) (by decide))) (List.getElem_mem (l := facts_4365) (n := 2) (by decide)))
-
-@[pvm_code] theorem bs_62303 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 62303 = true := h.ok.blockStart (show CodeFact.blockStart 62303 true ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 68) (by decide)) (List.getElem_mem (l := factGroup_68) (n := 14) (by decide))) (List.getElem_mem (l := facts_4366) (n := 1) (by decide)))
-
-@[pvm_code] theorem bs_62305 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 62305 = false := h.ok.blockStart (show CodeFact.blockStart 62305 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 68) (by decide)) (List.getElem_mem (l := factGroup_68) (n := 16) (by decide))) (List.getElem_mem (l := facts_4368) (n := 0) (by decide)))
 
 end Services.Bootstrap.CodeF

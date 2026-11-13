@@ -10,6 +10,10 @@ namespace Services.Bootstrap.CodeF
 
 open PVM
 
+@[pvm_code] theorem jte_320 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.jumpTable.getD 320 0 = 16968 := h.ok.jumpEntry (show CodeFact.jumpEntry 320 16968 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 102) (by decide)) (List.getElem_mem (l := factGroup_102) (n := 26) (by decide))) (List.getElem_mem (l := facts_6554) (n := 1) (by decide)))
+
+@[pvm_code] theorem jte_321 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.jumpTable.getD 321 0 = 16986 := h.ok.jumpEntry (show CodeFact.jumpEntry 321 16986 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 102) (by decide)) (List.getElem_mem (l := factGroup_102) (n := 26) (by decide))) (List.getElem_mem (l := facts_6554) (n := 2) (by decide)))
+
 @[pvm_code] theorem jte_322 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.jumpTable.getD 322 0 = 17014 := h.ok.jumpEntry (show CodeFact.jumpEntry 322 17014 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 102) (by decide)) (List.getElem_mem (l := factGroup_102) (n := 27) (by decide))) (List.getElem_mem (l := facts_6555) (n := 0) (by decide)))
 
 @[pvm_code] theorem jte_323 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.jumpTable.getD 323 0 = 17138 := h.ok.jumpEntry (show CodeFact.jumpEntry 323 17138 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 102) (by decide)) (List.getElem_mem (l := factGroup_102) (n := 27) (by decide))) (List.getElem_mem (l := facts_6555) (n := 1) (by decide)))
@@ -805,9 +809,5 @@ open PVM
 @[pvm_code] theorem jte_1357 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.jumpTable.getD 1357 0 = 64011 := h.ok.jumpEntry (show CodeFact.jumpEntry 1357 64011 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 104) (by decide)) (List.getElem_mem (l := factGroup_104) (n := 35) (by decide))) (List.getElem_mem (l := facts_6691) (n := 2) (by decide)))
 
 @[pvm_code] theorem jte_1358 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.jumpTable.getD 1358 0 = 64216 := h.ok.jumpEntry (show CodeFact.jumpEntry 1358 64216 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 104) (by decide)) (List.getElem_mem (l := factGroup_104) (n := 36) (by decide))) (List.getElem_mem (l := facts_6692) (n := 0) (by decide)))
-
-@[pvm_code] theorem jte_1359 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.jumpTable.getD 1359 0 = 64323 := h.ok.jumpEntry (show CodeFact.jumpEntry 1359 64323 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 104) (by decide)) (List.getElem_mem (l := factGroup_104) (n := 36) (by decide))) (List.getElem_mem (l := facts_6692) (n := 1) (by decide)))
-
-@[pvm_code] theorem jte_1360 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.jumpTable.getD 1360 0 = 64368 := h.ok.jumpEntry (show CodeFact.jumpEntry 1360 64368 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 104) (by decide)) (List.getElem_mem (l := factGroup_104) (n := 36) (by decide))) (List.getElem_mem (l := facts_6692) (n := 2) (by decide)))
 
 end Services.Bootstrap.CodeF

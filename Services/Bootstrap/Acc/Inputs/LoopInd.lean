@@ -1,5 +1,6 @@
 import Services.Bootstrap.Acc.Inputs.LoopItemOp
 import Services.Bootstrap.Decode.LoopAPass
+import Services.Bootstrap.Alloc.ReallocFallbackTail
 
 /-!
 # `Vec<AccumulateItem>::decode` (44916): the induction over the items
@@ -312,5 +313,132 @@ theorem lp_items {X : Type} (env : HeapHost X) (cap pb N : Nat) {p : ByteArray} 
         · rw [R8', encs_cons, List.length_append, Nat.sub_add_eq]
       · exact Or.inr ⟨ω', μ', ((r1.trans r2).trans r3).mono (by simp; rw [Nat.mul_succ]; omega)⟩
   · exact Or.inr ⟨ω1, μ1, r1.mono (by simp; rw [Nat.mul_succ]; omega)⟩
+
+/-- **45042 … 45046, `finish_grow` failed** (`Err`: 1 at s + 272): the branch to the trap at 45642
+    (`handle_alloc_error`). -/
+theorem lp_buf_err {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X)
+    (ω : Regs) (μ : Memory) (s : Nat) (h1 : ω[1] = UInt64.ofNat s) (m272 : rdN μ (s + 272) 8 = 1)
+    (hs : 65536 ≤ s ∧ s + 480 < 4294967296) (hrf : ∀ a, s ≤ a → a < s + 480 → μ.readable a = true) :
+    ∃ ω', FreeStepsH p R 45042 ω μ x 45642 ω' μ x 5 := by
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?run⟩
+  case run => pvm_go [h1, m272, hrf, ↓rdN_fold, ↓loadI_fold]
+
+/-- **`Vec<AccumulateItem>::decode`, 44916 → 45613** (n = |rest| items, 0 < n ≤ 89, the temporary bound):
+    the buffer of 184·n octets allocated by `finish_grow`, then the items (`lp_items`). Either
+    `Vec { n, q, n }` is written at out, the buffer is a fresh chunk whose slot j satisfies item j's `Rep`,
+    the context holds for the new state keeping every allocated chunk and its data, and the reader is
+    past the items; or the allocator is exhausted (the run reaches 45975 or the trap at 45642). -/
+theorem lp_call {X : Type} (env : HeapHost X) (cap pb N : Nat) (hcap1 : 134217728 ≤ cap)
+    (hcap : cap < 18446744073709551616) {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
+    (x : X) (ω : Regs) (μ : Memory) {hb : Nat} (s0 : State) (sp out rd ip rlen S0 S1 : Nat) (Rc : Chunk)
+    (rest : List (List UInt8 × (List UInt8 → Memory → Prop)))
+    (hok : ∀ e ∈ rest, ItemOk env cap pb p P N e.1 e.2) (hn : 0 < rest.length ∧ rest.length ≤ 89)
+    (H : HeapCtxC env.code pb S0 S1 μ s0)
+    (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat out) (h8 : ω[8] = UInt64.ofNat rd)
+    (h9 : ω[9] = UInt64.ofNat rest.length)
+    (hsp : 2147483960 + 424 + 480 ≤ sp ∧ sp % 8 = 0) (hSTk : S0 + 864 + 480 ≤ sp)
+    (hrd : sp ≤ rd ∧ rd + 16 ≤ S1) (hout : sp ≤ out ∧ out + 24 ≤ S1) (dor : out + 24 ≤ rd ∨ rd + 16 ≤ out)
+    (hR : Rc ∈ chunks s0) (hRu : Rc.used = true) (hRq : Rc.addr + 32 ≤ ip)
+    (hRe : ip + (encs rest).length + 32 ≤ Rc.addr + 32 * Rc.size)
+    (hR0 : μ.readN rd 8 = Num.encodeLE 8 ip) (hR8 : μ.readN (rd + 8) 8 = Num.encodeLE 8 rlen)
+    (hrl : (encs rest).length ≤ rlen) (hrl32 : rlen < 4294967296) (henc : μ.readN ip (encs rest).length = encs rest) :
+    (∃ q st' ω' μ', FreeStepsH p (env.rel cap) 44916 ω μ x 45613 ω' μ' x ((N + 2100) * rest.length + 1000) ∧
+      ω'[0] = ω[0] ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      rdN μ' out 8 = rest.length ∧ rdN μ' (out + 8) 8 = q ∧ rdN μ' (out + 16) 8 = rest.length ∧
+      HeapCtxC env.code pb S0 S1 μ' st' ∧ (∀ c ∈ chunks s0, c.used = true → c ∈ chunks st') ∧
+      (∀ c ∈ chunks s0, c.used = true → ∀ a, InDataA c a → μ'.read a = μ.read a) ∧
+      (⟨q - 32, (rest.length * 184 + 31) / 32 + 1, true⟩ : Chunk) ∈ chunks st' ∧
+      (∀ d ∈ chunks s0, d.used = true → d ≠ ⟨q - 32, (rest.length * 184 + 31) / 32 + 1, true⟩) ∧
+      (∀ (j : Nat) (e : List UInt8 × (List UInt8 → Memory → Prop)), rest[j]? = some e →
+        e.2 (μ'.readN (q + 184 * j) 184) μ') ∧
+      μ'.readN rd 8 = Num.encodeLE 8 (ip + (encs rest).length) ∧
+      μ'.readN (rd + 8) 8 = Num.encodeLE 8 (rlen - (encs rest).length)) ∨
+    (∃ j ω' μ', (j = 45975 ∨ j = 45642) ∧
+      FreeStepsH p (env.rel cap) 44916 ω μ x j ω' μ' x ((N + 2100) * rest.length + 1000)) := by
+  have hbT := H.hbT
+  have hb0 := H.hb0
+  have hS1 := H.hS1
+  have hst := H.st
+  obtain ⟨Rb1, Rb2, Rb3⟩ := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hR hRu
+  -- the prologue (s = sp − 480)
+  obtain ⟨ω1, μ1, r1, a0, a1, a5, a6, a7, a8, a10, a11, a12, s472, s464, s456, s0', s48, s32, s40, s56, s64, s72,
+      s80, fr1, rd1, wr1⟩ :=
+    lp_pre (p := p) (P := P) (R := env.rel cap) x ω μ sp out rd rest.length h1 h7 h8 h9 hn
+      ⟨by omega, by omega⟩ (by omega) (by omega) (fun a h1 h2 => hst a (by omega) (by omega))
+  have lo1 : ∀ a, a < 2147483648 → μ1.read a = μ.read a := fun a ha => fr1 a (by omega) (Or.inl (by omega))
+  have H1 : HeapCtxC env.code pb S0 S1 μ1 s0 := HeapCtxC.keep_hi H lo1 wr1
+  -- the buffer
+  rcases fg_new_call (p := p) (P := P) (hb := hb) env cap hcap1 hcap x ω1 μ1 s0 (sp - 480) (sp - 480 + 272)
+      rest.length 8 184 pb S0 S1 H1 a1 a7 a8 a10 a11 a12 ⟨by decide, by decide⟩ (by omega) (by omega)
+      (by omega) (by omega) ⟨by omega, by omega⟩ with
+    ⟨q, s1, ω2, μ2, ha, r2, H2, keep, hnew, hfresh, hk, o0, o8, o16, fr2, e0, e1, e5, e6⟩ |
+    ⟨ha, ω2, μ2, r2, H2, o0, o8, o16, fr2, e0, e1, e5, e6⟩
+  · obtain ⟨Cb1, Cb2, Cb3⟩ := Services.Bootstrap.Decode.VecU8.chunk_in H2.wf hnew rfl
+    dsimp only at Cb1 Cb2 Cb3
+    have hb0' := H2.hb0
+    have hbT' := H2.hbT
+    have r2' := lp_fg_ret (p := p) (P := P) (R := env.rel cap) x ω2 μ2 (by rw [e0, a0])
+    have k2 : ∀ o, sp - 480 ≤ o → o + 8 ≤ sp - 480 + 272 → rdN μ2 o 8 = rdN μ1 o 8 := fun o h1 h2 =>
+      rdN_frame fun j hj => fr2 _ (by omega) (by omega) (Or.inl (by omega))
+    obtain ⟨ω3, μ3, r3, b0, b1, b5, b7, b8, t64, t72, t56, fr3, rd3, wr3⟩ :=
+      lp_buf (p := p) (P := P) (R := env.rel cap) x ω2 μ2 (sp - 480) rd rest.length q (by rw [e1, a1])
+        (by rw [e6, a6]) o0 o8 (by rw [k2 _ (by omega) (by omega)]; exact s40)
+        (by rw [k2 _ (by omega) (by omega)]; exact s56) (by rw [k2 _ (by omega) (by omega)]; exact s48)
+        ⟨by omega, by omega⟩ (by omega) (fun a h1 h2 => H2.st a (by omega) (by omega))
+    have lo3 : ∀ a, a < 2147483648 → μ3.read a = μ2.read a := fun a ha =>
+      fr3 a (by omega) (Or.inl (by omega)) (Or.inl (by omega))
+    have H3 : HeapCtxC env.code pb S0 S1 μ3 s1 := HeapCtxC.keep_hi H2 lo3 wr3
+    -- the heap data of s0, kept by `finish_grow` (off the new headers)
+    have keepd : ∀ c ∈ chunks s0, c.used = true → ∀ a, InDataA c a → μ2.read a = μ1.read a := by
+      intro c hc hu a ha'
+      have hc' := keep c hc hu
+      have hoff := Services.Bootstrap.Alloc.off_hdr_data H2.wf H2.hb0 H2.hbT hc' ha'.1 ha'.2
+      exact hk a ⟨Or.inr hoff.1, hoff.2.1, hoff.2.2⟩
+    have k3 : ∀ o, sp - 480 ≤ o → o + 8 ≤ sp - 480 + 56 → rdN μ3 o 8 = rdN μ1 o 8 := fun o h1 h2 => by
+      rw [rdN_frame fun j hj => fr3 _ (by omega) (Or.inl (by omega)) (Or.inl (by omega)), k2 _ h1 (by omega)]
+    have k3' : ∀ o, sp - 480 + 80 ≤ o → o + 8 ≤ sp - 480 + 272 → rdN μ3 o 8 = rdN μ1 o 8 := fun o h1 h2 => by
+      rw [rdN_frame fun j hj => fr3 _ (by omega) (Or.inr (by omega)) (Or.inr (by omega)), k2 _ (by omega) (by omega)]
+    have kh : ∀ o, sp - 480 + 456 ≤ o → o + 8 ≤ sp → rdN μ3 o 8 = rdN μ1 o 8 := fun o h1 h2 => by
+      rw [rdN_frame fun j hj => fr3 _ (by omega) (Or.inr (by omega)) (Or.inr (by omega)),
+        rdN_frame fun j hj => fr2 _ (by omega) (by omega) (Or.inr (by omega))]
+    have rdk : ∀ o, sp ≤ o → o + 8 ≤ 4294967296 → μ3.readN o 8 = μ.readN o 8 := fun o h1 h2 => by
+      rw [PVM.Memory.readN_congr (μ := μ2) (fun j hj => fr3 _ (by omega) (Or.inr (by omega)) (Or.inr (by omega))),
+        PVM.Memory.readN_congr (μ := μ1) (fun j hj => fr2 _ (by omega) (by omega) (Or.inr (by omega))),
+        PVM.Memory.readN_congr (μ := μ) (fun j hj => fr1 _ (by omega) (Or.inr (by omega)))]
+    have hRC : Rc ≠ ⟨q - 32, (rest.length * 184 + 31) / 32 + 1, true⟩ := hfresh Rc hR hRu
+    rcases lp_items env cap pb N x hb S0 S1 (sp - 480) rd out rest.length q ⟨q - 32, (rest.length * 184 + 31) / 32 + 1, true⟩ Rc
+        ⟨by omega, by omega⟩ (by omega) (by omega) hrd.2 ⟨by omega, hout.2⟩ dor hn.2 hRC rest ω3 μ3 s1 0 ip rlen hok
+        (by intro h; simp [h] at hn) H3 b0 b1 b5 b7 b8
+        (by rw [k3 _ (by omega) (by omega)]; simpa using s0') (by rw [k3 _ (by omega) (by omega)]; exact s32)
+        (by rw [k3 _ (by omega) (by omega)]; exact s40) (by rw [k3 _ (by omega) (by omega)]; exact s48)
+        t56 t64 t72 (by rw [k3' _ (by omega) (by omega)]; exact s80) (by omega) hnew rfl (by dsimp only; omega)
+        (by dsimp only; omega) (keep Rc hR hRu) hRu hRq hRe (by rw [rdk _ (by omega) (by omega)]; exact hR0)
+        (by rw [rdk _ (by omega) (by omega)]; exact hR8) hrl hrl32
+        (by
+          rw [PVM.Memory.readN_congr (μ := μ1) (fun j hj => by
+            rw [lo3 _ (by omega), keepd Rc hR hRu _ ⟨by omega, by omega⟩]),
+            PVM.Memory.readN_congr (μ := μ) (fun j hj => lo1 _ (by omega))]
+          exact henc) with
+      ⟨st', ω4, μ4, r4, c0, c1, c5, c6, v0, v8, v16, H4, keep', keepd', reps, R0, R8⟩ | ⟨ω4, μ4, r4⟩
+    · refine Or.inl ⟨q, st', ω4, μ4, ((((r1.trans r2).trans r2').trans r3).trans r4).mono (by omega),
+        by rw [c0, kh _ (by omega) (by omega), s472, UInt64.ofNat_toNat],
+        by rw [c1, show sp - 480 + 480 = sp by omega],
+        by rw [c5, kh _ (by omega) (by omega), s464, UInt64.ofNat_toNat],
+        by rw [c6, kh _ (by omega) (by omega), s456, UInt64.ofNat_toNat], v0, v8, v16, H4,
+        fun c hc hu => keep' c (keep c hc hu) hu, fun c hc hu a ha' => ?_, keep' _ hnew rfl, hfresh,
+        fun j e hj => by simpa using reps j e hj, R0, R8⟩
+      have hne : (⟨q - 32, (rest.length * 184 + 31) / 32 + 1, true⟩ : Chunk) ≠ c := Ne.symm (hfresh c hc hu)
+      have hap := Services.Bootstrap.Decode.LoopA.InData.apart H2.wf (keep c hc hu) hnew hne ha'
+      unfold Services.Bootstrap.Decode.LoopA.InData at hap
+      have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
+      unfold InDataA at ha'
+      rw [keepd' c (keep c hc hu) hu a ha' (by dsimp only at hap; omega), lo3 a (by omega), keepd c hc hu a ha',
+        lo1 a (by omega)]
+    · exact Or.inr ⟨45975, ω4, μ4, Or.inl rfl, ((((r1.trans r2).trans r2').trans r3).trans r4).mono (by omega)⟩
+  · obtain ⟨ω3, r3⟩ := lp_buf_err (p := p) (P := P) (R := env.rel cap) x ω2 μ2 (sp - 480) (by rw [e1, a1]) o0
+      ⟨by omega, by omega⟩ (fun a h1 h2 => Memory.readable_of_writable (H2.st a (by omega) (by omega)))
+    exact Or.inr ⟨45642, ω3, μ2, Or.inr rfl, (((r1.trans r2).trans
+      (lp_fg_ret (p := p) (P := P) (R := env.rel cap) x ω2 μ2 (by rw [e0, a0]))).trans r3).mono (by omega)⟩
 
 end Services.Bootstrap.Acc

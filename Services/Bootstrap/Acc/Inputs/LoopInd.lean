@@ -175,7 +175,8 @@ theorem lp_items {X : Type} (env : HeapHost X) (cap pb N : Nat) {p : ByteArray} 
       (∀ c ∈ chunks st, c.used = true → ∀ a, InDataA c a → (a < q + 184 * L ∨ q + 184 * n ≤ a) →
         μ'.read a = μ.read a) ∧
       (∀ (j : Nat) (e : List UInt8 × (List UInt8 → Memory → Prop)), rest[j]? = some e →
-        e.2 (μ'.readN (q + 184 * (L + j)) 184) μ') ∧
+        ∀ μ'' : Memory, (∀ c ∈ chunks st', c.used = true → ∀ a, InDataA c a → μ''.read a = μ'.read a) →
+          e.2 (μ''.readN (q + 184 * (L + j)) 184) μ'') ∧
       μ'.readN rd 8 = Num.encodeLE 8 (ip + (encs rest).length) ∧
       μ'.readN (rd + 8) 8 = Num.encodeLE 8 (rlen - (encs rest).length)) ∨
     (∃ ω' μ', FreeStepsH p (env.rel cap) 45126 ω μ x 45975 ω' μ' x ((N + 2100) * rest.length)) := by
@@ -240,9 +241,11 @@ theorem lp_items {X : Type} (env : HeapHost X) (cap pb N : Nat) {p : ByteArray} 
       · cases j with
         | zero =>
           simp only [List.getElem?_cons_zero, Option.some.injEq] at hj; subst hj
-          refine keepRep μ2 fun c hc hu a ha _ => ?_
+          intro μ'' hag
+          refine keepRep μ'' fun c hc hu a ha _ => ?_
           have := Services.Bootstrap.Decode.VecU8.chunk_in H1.wf hc hu
           have := H1.hbT
+          rw [hag c hc hu a ha]
           unfold InDataA at ha
           exact lo2 a (by omega)
         | succ j => simp at hj
@@ -300,14 +303,17 @@ theorem lp_items {X : Type} (env : HeapHost X) (cap pb N : Nat) {p : ByteArray} 
         · cases j with
           | zero =>
             simp only [List.getElem?_cons_zero, Option.some.injEq] at hj; subst hj
-            refine keepRep μ' fun c hc hu a ha hout' => ?_
+            intro μ'' hag
+            refine keepRep μ'' fun c hc hu a ha hout' => ?_
             have := Services.Bootstrap.Decode.VecU8.chunk_in H1.wf hc hu
             have := H1.hbT
+            rw [hag c (keep' c hc hu) hu a ha]
             unfold InDataA at ha
             rw [keepd' c hc hu a ha hout', lo2 a (by omega)]
           | succ j =>
             simp only [List.getElem?_cons_succ] at hj
-            have := reps j e' hj
+            intro μ'' hag
+            have := reps j e' hj μ'' hag
             rwa [show L + 1 + j = L + (j + 1) by omega] at this
         · rw [R0', encs_cons, List.length_append, Nat.add_assoc]
         · rw [R8', encs_cons, List.length_append, Nat.sub_add_eq]
@@ -351,7 +357,8 @@ theorem lp_call {X : Type} (env : HeapHost X) (cap pb N : Nat) (hcap1 : 13421772
       (⟨q - 32, (rest.length * 184 + 31) / 32 + 1, true⟩ : Chunk) ∈ chunks st' ∧
       (∀ d ∈ chunks s0, d.used = true → d ≠ ⟨q - 32, (rest.length * 184 + 31) / 32 + 1, true⟩) ∧
       (∀ (j : Nat) (e : List UInt8 × (List UInt8 → Memory → Prop)), rest[j]? = some e →
-        e.2 (μ'.readN (q + 184 * j) 184) μ') ∧
+        ∀ μ'' : Memory, (∀ c ∈ chunks st', c.used = true → ∀ a, InDataA c a → μ''.read a = μ'.read a) →
+          e.2 (μ''.readN (q + 184 * j) 184) μ'') ∧
       μ'.readN rd 8 = Num.encodeLE 8 (ip + (encs rest).length) ∧
       μ'.readN (rd + 8) 8 = Num.encodeLE 8 (rlen - (encs rest).length)) ∨
     (∃ j ω' μ', (j = 45975 ∨ j = 45642) ∧
@@ -427,7 +434,7 @@ theorem lp_call {X : Type} (env : HeapHost X) (cap pb N : Nat) (hcap1 : 13421772
         by rw [c5, kh _ (by omega) (by omega), s464, UInt64.ofNat_toNat],
         by rw [c6, kh _ (by omega) (by omega), s456, UInt64.ofNat_toNat], v0, v8, v16, H4,
         fun c hc hu => keep' c (keep c hc hu) hu, fun c hc hu a ha' => ?_, keep' _ hnew rfl, hfresh,
-        fun j e hj => by simpa using reps j e hj, R0, R8⟩
+        fun j e hj μ'' hag => by simpa using reps j e hj μ'' hag, R0, R8⟩
       have hne : (⟨q - 32, (rest.length * 184 + 31) / 32 + 1, true⟩ : Chunk) ≠ c := Ne.symm (hfresh c hc hu)
       have hap := Services.Bootstrap.Decode.LoopA.InData.apart H2.wf (keep c hc hu) hnew hne ha'
       unfold Services.Bootstrap.Decode.LoopA.InData at hap

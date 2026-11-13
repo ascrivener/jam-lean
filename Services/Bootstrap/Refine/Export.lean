@@ -114,7 +114,7 @@ theorem xs2 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR
     (h1 : ω[1] = UInt64.ofNat M) (h7 : ω[7] = UInt64.ofNat v)
     (hw : ∀ a, M + 168 ≤ a → a < M + 200 → μ.writable a = true)
     (hw2 : ∀ a, M + 560 ≤ a → a < M + 576 → μ.writable a = true) :
-    ∃ ω' μ', FreeStepsH p R 5667 ω μ x 59375 ω' μ' x 24 ∧ ω'[0] = UInt64.ofNat 182 ∧ ω'[1] = ω[1] ∧
+    ∃ ω' μ', FreeStepsH p R 5666 ω μ x 59375 ω' μ' x 26 ∧ ω'[0] = UInt64.ofNat 182 ∧ ω'[1] = ω[1] ∧
       ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ ω'[7] = UInt64.ofNat (M + 584) ∧ ω'[8] = UInt64.ofNat 66196 ∧
       ω'[9] = UInt64.ofNat (M + 168) ∧
       μ'.readN (M + 168) 8 = Num.encodeLE 8 (M + 552) ∧ μ'.readN (M + 176) 8 = Num.encodeLE 8 1250 ∧

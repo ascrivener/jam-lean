@@ -161,4 +161,47 @@ theorem step_full {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
       Memory.readN_congr (fun j hj => st.data _ (inE _ (by omega) (by omega)))]
   · exact Or.inr (hx.mono (by omega))
 
+/-- **The loop over instructions passed through** (5042 … 5042): from `PInv k`, the remaining m = n − k
+    instructions are all passed through, reaching `PInv n` for some heap s'; or the heap is exhausted. -/
+theorem loop {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P]
+    (env : RefineHost.Env) (cap0 : Nat) (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616)
+    (x : RefineCtx) (μ0 : Memory) {hb : Nat} {pb S0 S1 M E n : Nat} {ce : Chunk}
+    (L : LayP S0 S1 M E n ce μ0) :
+    ∀ m k (ω : Regs) (μ : Memory) (s : State), k + m = n → PInv env pb S0 S1 M E n ce μ0 k ω μ s →
+      (∃ s' ω' μ', FreeStepsH p (refineContractK cap0 env) 5042 ω μ x 5042 ω' μ' x (m * (512 * n + 6100)) ∧
+        PInv env pb S0 S1 M E n ce μ0 n ω' μ' s') ∨
+      Exhausts env cap0 pb p P 5042 ω μ x (m * (512 * n + 6100)) := by
+  intro m
+  induction m with
+  | zero =>
+    intro k ω μ s hkm st
+    rw [show k = n by omega] at st
+    exact Or.inl ⟨s, ω, μ, FreeStepsH.refl.mono (Nat.zero_le _), st⟩
+  | succ m ih =>
+    intro k ω μ s hkm st
+    have hk : k < n := by omega
+    obtain ⟨cap, ptr, vc, -, -, -, hcapn, -⟩ := st.out
+    have next : ∀ s1 ω1 μ1, FreeStepsH p (refineContractK cap0 env) 5042 ω μ x 5042 ω1 μ1 x (512 * n + 6100) →
+        PInv env pb S0 S1 M E n ce μ0 (k + 1) ω1 μ1 s1 →
+        (∃ s' ω' μ', FreeStepsH p (refineContractK cap0 env) 5042 ω μ x 5042 ω' μ' x
+            ((m + 1) * (512 * n + 6100)) ∧ PInv env pb S0 S1 M E n ce μ0 n ω' μ' s') ∨
+        Exhausts env cap0 pb p P 5042 ω μ x ((m + 1) * (512 * n + 6100)) := by
+      intro s1 ω1 μ1 run1 st1
+      rcases ih (k + 1) ω1 μ1 s1 (by omega) st1 with ⟨s', ω', μ', run', st'⟩ | hx
+      · exact Or.inl ⟨s', ω', μ', (run1.trans run').mono (by rw [Nat.add_mul, Nat.one_mul]; omega), st'⟩
+      · exact Or.inr ((Exhausts.pre run1 hx).mono (by rw [Nat.add_mul, Nat.one_mul]; omega))
+    by_cases hkc : k = cap
+    · subst hkc
+      rcases step_full (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 x ω μ μ0 s L k hk st vc with
+        ⟨s1, ω1, μ1, run1, st1⟩ | hx
+      · exact next s1 ω1 μ1 run1 st1
+      · exact Or.inr (hx.mono (by rw [Nat.add_mul, Nat.one_mul]; omega))
+    · obtain ⟨ω1, μ1, run1, st1⟩ := step_room (p := p) (P := P) env cap0 x ω μ μ0 s L k hk st (fun c hc => by
+        intro h; subst h
+        have h1 := congrArg Num.decodeLE (vc.symm.trans hc)
+        rw [Num.decodeLE_encodeLE, Num.decodeLE_encodeLE] at h1
+        have := L.hn
+        omega)
+      exact next s ω1 μ1 (run1.mono (by omega)) st1
+
 end Services.Bootstrap.Refine.PassLoop

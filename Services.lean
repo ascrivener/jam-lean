@@ -245,6 +245,7 @@ import Services.Bootstrap.Encode.Prefix
 import Services.Bootstrap.Encode.Loop
 import Services.Bootstrap.Refine.Pass
 import Services.Bootstrap.Refine.PassGrow
+import Services.Bootstrap.Refine.PassLoop
 import Services.Bootstrap.Spec
 import Services.Bootstrap.SpecLemmas.Codec
 import Services.Bootstrap.SpecLemmas.Refine

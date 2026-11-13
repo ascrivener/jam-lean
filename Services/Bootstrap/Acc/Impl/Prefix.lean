@@ -113,7 +113,7 @@ theorem run_xx (env : AccEnv) (prog : Prog AOp Unit) (x : JAM.Implications) :
 
 /-- After an operation from c gives (b, c₁), y is c's, or (x, x) was left and every run of
     `call op k` past it reports it (`ASem.step_snd`). -/
-theorem step_after (env : AccEnv) {op : AOp} {β : Type} {k : β → Prog AOp Unit} {c : AccCtx}
+theorem step_after (env : AccEnv) {β : Type} {op : AOp β} {k : β → Prog AOp Unit} {c : AccCtx}
     {bc : β × AccCtx} (hst : ASem.step env op c = some bc) :
     bc.2.2 = c.2 ∨ ∃ n, ASem.outcome (ASem.run n (Prog.call op k) env c) = yOutcome bc.2.2 := by
   rcases ASem.step_snd env op c (b := bc.1) (c₁ := bc.2) hst with e | e
@@ -216,9 +216,9 @@ theorem Impl.run {p : ByteArray} {R : HostRel (AccCtx × Qu)} {env : AccEnv} {Ab
       ∃ ω' μ' q', FreeRunH p R s.i s.ω s.μ (s.c, s.q) .panic ω' μ' (s.c, q') ∧
         ∃ s', Reaches p R s s' ∧ Ab s' := by
     intro s h
+    obtain ⟨ω', μ', q', he⟩ := h.ends
     obtain ⟨s', h1, h2, -⟩ := h
-    obtain ⟨ω', μ', q', h⟩ := h.ends
-    exact ⟨ω', μ', q', FreeRunH.unkeep h, s', h1.mono unk, h2⟩
+    exact ⟨ω', μ', q', FreeRunH.unkeep he, s', h1.mono unk, h2⟩
   intro prog
   induction prog with
   | pure a =>

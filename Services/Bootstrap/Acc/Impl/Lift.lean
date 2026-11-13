@@ -56,8 +56,8 @@ theorem impl_psiM (b : ByteArray) (i : Nat) (gas : UInt64) (a : ByteArray) (env 
     rw [hout]
     refine ⟨?_, fun out h => by cases h⟩
     rcases Impl.prefix hpin prog _ (himpl f) c₀ hpre with h | ⟨n, hn⟩
-    · exact ⟨0, by rw [run0_y env prog x₀ hx]; dsimp only at h; rw [h], .inr (.inl hoog)⟩
-    · exact ⟨n, hn.symm, .inr (.inl hoog)⟩
+    · exact ⟨0, by rw [run0_y env prog x₀ hx]; dsimp only at h; rw [h], .inr (.inl rfl)⟩
+    · exact ⟨n, hn.symm, .inr (.inl rfl)⟩
   | _ =>
     all_goals
       have hno : (psiM b i gas a (accHostFn env) x₀).2.1.isOog = false := by rw [hoog]; rfl

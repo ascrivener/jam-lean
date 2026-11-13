@@ -43,8 +43,7 @@ So these proofs show only that each formatting function:
 | `read_exact`, `rd_uN` | `ReadExact.lean` | a slice reader's `read_exact` (58434), `rd_u64` (46040), `rd_u32` (46008) |
 | `FreeStepsH.infoSelf` | `InfoStep.lean` | the `info` (6) host step on the service itself, from `accContractK` (Ω_I) |
 | `info_self` | `Info.lean` (steps in `InfoSteps.lean`) | accumulate's `info` call at 6501 (49454), frame-only, under `accContractK cap env` (703 ≤ cap) |
-| `dealloc_ctx` | `Dealloc.lean` | `dealloc` (40613) from `HeapCtx`, frame-only, under any host relation (no host call: the run is built under `NoHost` and widened) |
-| `FreeStepsH.logAcc`, `log_site` | `LogSteps.lean`, `LogSite.lean` | the `log` (100) step under `accContractK` (ω₇ := WHAT, the message unspecified), and 6587 … 6630: `log`, then the `String`'s `dealloc` |
+| `FreeStepsH.logAcc`, `log_site` | `LogSteps.lean`, `LogSite.lean` | the `log` (100) step under `accContractK` (ω₇ := WHAT, the message unspecified), and 6587 … 6630: `log`, then the `String`'s `dealloc` (`Decode.DeallocCall.dealloc_call`) |
 | `acc_fmt_site` | `AccFmt.lean` | 6580 … 6630: `format!` of the template at 66464 (`accTmpl`) with its three arguments, `log`, `dealloc` |
 | `acc_log_line` | `AccFmt.lean` | **accumulate's first log line, 6501 … 6630** (sp = 4278057152): `info_self`, `Acc.fmt_setup`, `acc_fmt_site`; from sp up only `logE` changes |
 

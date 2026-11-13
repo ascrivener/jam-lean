@@ -10,8 +10,7 @@ import Services.Bootstrap.CodeAAll
   the context are kept (GP v0.8.0 eq. `accinvocation`). The message is not looked at.
 - `ls_a`: 6587 … 6606, the `log` arguments from the `String` at sp + 744;
 - `ls_b`: 6610 … 6623, a nonzero capacity: the call of `dealloc` (40613), returning to 6630 (224);
-- `ls_b0`: 6610 … 6615, capacity 0: no dealloc, on to 6630;
-- `ls_ret`: `dealloc`'s return (40697) to 6630.
+- `ls_b0`: 6610 … 6615, capacity 0: no dealloc, on to 6630.
 -/
 
 namespace Services.Bootstrap.Fmt
@@ -79,11 +78,5 @@ theorem ls_b0 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X)
   · pvm_go [h1, hsp, hcap, hr, Nat.mod_eq_of_lt (rdN_lt64 μ (sp + 744)), ↓rdN_fold]
   · refine ⟨?_, ?_, ?_, ?_⟩
     all_goals post_simp [h1]
-
-/-- `dealloc`'s return (40697) to 6630 (224). -/
-theorem ls_ret {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
-    (h0 : ω[0] = UInt64.ofNat 224) : FreeStepsH p R 40697 ω μ x 6630 ω μ x 1 := by
-  rw [show ω = regsNF ω [] from rfl]
-  pvm_go [h0]
 
 end Services.Bootstrap.Fmt

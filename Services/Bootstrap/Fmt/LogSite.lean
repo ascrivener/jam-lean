@@ -1,5 +1,5 @@
 import Services.Bootstrap.Fmt.LogSteps
-import Services.Bootstrap.Fmt.Dealloc
+import Services.Bootstrap.Decode.DeallocCall
 import Services.Bootstrap.Fmt.Format
 
 /-!
@@ -52,12 +52,15 @@ theorem log_site {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (cap
     obtain ⟨ω2, run2, b0, b1, b5, b6, b7⟩ := ls_b (p := p) (P := P) (R := accContractK cap env) x
       (setR7 ω1 Result.WHAT) μ sp (rdN μ (sp + 744 + 8) 8) (by omega) (rdN_lt64 μ _) w1 w5
       (by rw [hs.rc]; exact hc0) (fun a h1 h2 => hr a h1 (by omega))
-    obtain ⟨ω3, μ3, run3, H3, hb3, out3, keep3, c0, c1, c5, c6⟩ := dealloc_ctx (R := accContractK cap env)
-      (p := p) (P := P) envH pb S0 S1 x ω2 μ s sp (rdN μ (sp + 744 + 8) 8) c H hc hcu hca
-      (b1.trans w1) b7 hsp.1 ⟨hsp.2.1, by omega⟩
-    have run4 := ls_ret (p := p) (P := P) (R := accContractK cap env) x ω3 μ3 (c0.trans b0)
+    obtain ⟨ω3, μ3, run3, H3, hb3, hpg, hro, stk, hgl, keep3, c0, c1, c5, c6⟩ :=
+      Decode.DeallocCall.dealloc_call (R := accContractK cap env) (p := p) (P := P) envH pb S0 S1 x ω2 μ s sp
+        (rdN μ (sp + 744 + 8) 8) 224 6630 c H hc hcu hca b0 (b1.trans w1) b7 (by decide) jte_111 bs_6630 hsp.1
+        ⟨hsp.2.1, by omega⟩
+    have out3 : Outside pb sp (fun _ => False) μ μ3 :=
+      ⟨fun b _ => ⟨by unfold Memory.readable; rw [hpg], by unfold Memory.writable; rw [hpg]⟩,
+        fun b hb _ hw => hro b hb hw, fun a ha hb _ => stk a hb ha, hgl⟩
     refine ⟨ω3, μ3, free s (rdN μ (sp + 744 + 8) 8),
-      (run1.trans (FreeStepsH.logAcc cap hcap env (d_6608 (p := p) (P := P)) ((run2.trans run3).trans run4))).mono (by omega),
+      (run1.trans (FreeStepsH.logAcc cap hcap env (d_6608 (p := p) (P := P)) (run2.trans run3))).mono (by omega),
       H3, hb3, out3, fun d hd hu => ?_, c1.trans (b1.trans (w1.trans h1.symm)),
       c6.trans (b6.trans w6)⟩
     have hd' := hs.base d hd hu

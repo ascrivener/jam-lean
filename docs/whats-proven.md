@@ -386,11 +386,78 @@ An independent kernel, nanoda as vendored by
       entries outside the heap are kept;
     - the model's `alloc` fails: the run reaches the `alloc` wrapper's return (40611) with null.
 
-    `vec_u8_heap` also keeps memory below 196608 (contents and readability), the globals (`Glob`)
+    All three also keep memory below 196608 (contents and readability), the globals (`Glob`)
     and the stack's writability.
   - *How:* the payload survives the `alloc` because `alloc` keeps every allocated chunk and writes
     only off their data (`HKeep`, `off_hdr_data`); the reader's writes stay in the new block
     (`data_disj`). `read_low` is the reader for a source below its frames.
+
+- **`LookedUp` and `Provide` as decode-loop elements.** `Decode.LookupProvideElem`
+  (`Services/Bootstrap/Decode/LookupProvideElem.lean`), at any frame base F (`Lay F RD`).
+  - *Statement:* `looked_up_noneF` ([18, 0]) and `provide_hashF` (17 :: s ++ 0 :: h) are `ElemOkF`s.
+    Their slots hold the discriminant, then the `None` niche 2⁶⁴ − 1, or the tag 0, h and s.
+    `looked_up_some_elem` (18 :: 1 :: ℰ(n) ++ bytes) and `provide_inline_elem`
+    (17 :: s ++ 1 :: ℰ(n) ++ bytes), for 1 ≤ n ≤ 16384, are `ElemOkAF`s: the slot holds the `Vec`
+    `{n, q, n}` with `bytes` at q in a fresh chunk, or the `alloc` fails (`Exhausts`).
+  - *How:* `looked_up_none`, `provide_hash`, `looked_up_heap` and `provide_inline_heap` at the
+    loop's addresses, following `ImportElem`.
+
+- **`Vec<(u32, u64)>` and `Bless` with 1 … 1024 always-accumulate entries, the payload in the heap.**
+  `Decode.VecU32U64.vec_u32u64_heap` (`Services/Bootstrap/Decode/VecU32U64.lean`),
+  `Decode.Bless.bless_heap` and `Decode.Bless.bless_elem` (`BlessHeap.lean`).
+  - *Statement:* the element reader at 2727 reads n entries (a `u32` then a `u64`, 12 octets each) into
+    a fresh `Vec` of 16-octet elements: entry j's octets at q + 16j (4) and q + 16j + 8 (8); the 4
+    padding octets are left unspecified. `bless_heap` is `Instruction::decode` of `Bless` (tag 11)
+    with n ≥ 1, the variant in O as in `bless_empty` but with the `Vec` `{n, q, n}`; `bless_elem` is
+    its decode-loop element (`ElemOkAF`, `BlessRep`). As the other heap decoders, the `alloc` may fail.
+  - *How:* the code at 2727 is the pair reader at 3100 shifted by −373, except the first field
+    (a 4-octet read, `loadIndI32`, `storeIndU32`); `bless_heap` reuses `bless_empty`'s steps.
+
+- **`Vec<[u8; 32]>` and `RandomStorageAccumulate(Ok(v))` with 1 … 512 hashes, the payload in the heap.**
+  `Decode.VecHash32.vec_hash32_heap` (`Services/Bootstrap/Decode/VecHash32.lean`),
+  `Decode.RandomStorage.random_storage_ok_heap` and `random_storage_ok_elem` (`RandomStorageOk.lean`).
+  - *Statement:* the element reader at 907 (called only from `RandomStorageAccumulate`'s `Ok` branch,
+    35867) copies the 32n octets into a fresh `Vec` `{n, q, n}`; `random_storage_ok_heap` is
+    `Instruction::decode` of tag 22 with the result tag 0, the variant in O (discriminant 2⁶³ + 21, then
+    the `Vec`); `random_storage_ok_elem` is its decode-loop element (`ElemOkAF`). The `alloc` may fail.
+  - *How:* the code at 907 is the hash reader at 1764 (`VecHash`) shifted (−857 for the element loop,
+    −900 for the exit), with its own return addresses.
+
+- **`Designate` with 1 … 48 keys, the payload in the heap.** `Decode.VecKey336.vec_key336_heap`
+  (`Services/Bootstrap/Decode/VecKey336.lean`), `Decode.Designate.designate_heap` and `designate_elem`
+  (`DesignateHeap.lean`).
+  - *Statement:* the key reader at 1300 reads n 336-octet keys into a fresh `Vec` `{n, q, n}`; each key
+    is stored in Rust's field order, its payload octets rotated (`keyRot`: the last 128 octets first,
+    then the first 208), so the claim is `μ'.readN q (336n) = keysRot n (payload)`. `designate_heap` is
+    `Instruction::decode` of tag 13 with n ≤ (3·𝖢) mod 2¹⁶, 𝖢 the 16-bit word at 196616;
+    `designate_elem` is its decode-loop element (`ElemOkAF`, 𝖢 from the globals). The `alloc` may fail.
+  - *Scope:* n ≤ 48, the reader's first reserve batch; more keys go through `finish_grow`'s regrow.
+  - *Binary:* the bound check computes 3·𝖢 in 16 bits (`loadI16`, then zero-extension), so the code
+    accepts n ≤ (3·𝖢) mod 2¹⁶ rather than n ≤ 3·𝖢; they agree for 𝖢 < 21846 (the start-up's 𝖢 = 341).
+  - *How:* `memcpy_s1` and `memcpy_d1` (`Key336Memcpy.lean`) are two copies `memcpy_big`'s margins
+    do not cover, assembled from its sub-lemmas.
+
+- **Tag 24 (`AssignForGasCost`) with 1 … 512 hashes, as a decode-loop element.**
+  `Decode.AssignGas.assign_gas_elemF` / `assign_gas_elem` (`Services/Bootstrap/Decode/AssignGas.lean`).
+  - *Statement:* the encoding 24 :: c ++ ℰ(n) ++ hs ++ g (c the 2-octet core, hs the 32n octets of the
+    hashes, g a 4-octet `u32`) decodes to `AssignGasRep`: the discriminant 2⁶³ + 23, the `Vec` `{n, q, n}`
+    with hs at q in a fresh chunk, g at 32 and c at 36; or the `alloc` fails (`Exhausts`).
+  - *How:* as `Assign` (tag 12), with the count n decoded from the stream (`decodeU32`) instead of read
+    from the globals. Tag 24 is `AssignForGasCost` by elimination; the field shapes agree.
+
+- **Tag 0 (`CreateService`) as a decode-loop element.** `Decode.CreateServiceElem`
+  (`Services/Bootstrap/Decode/CreateService*.lean`).
+  - *Statement:* the encoding 0 :: h ++ u₁ ++ u₂ ++ u₃ ++ u₄ ++ arr ++ ov ++ u₅ ++ ou (a 32-octet hash,
+    four `u64`s, a 128-octet array, an `Option<Vec<u8>>` ov, a `u64`, an `Option<u32>` ou) decodes to
+    the slot with the hash at 32, the `u64`s at 64 … 88, the array at 96, u₅ at 224, ou's tag at 24 and
+    its value at 28 (for `Some`). The first three words are ov's: `create_service_noneF` (ElemOkF) and
+    `create_service_none_elem` for `None` (the niche 2⁶⁴ − 1 at 0), `create_service_empty_elem` for
+    `Some([])` (`{0, 1, 0}`), `create_service_some_elem` for `Some(bytes)` with 1 … 16384 octets
+    (`{n, q, n}`, bytes in a fresh chunk, or the `alloc` fails).
+  - *Binary:* `CreateService` is the enum's dataful variant: it has no discriminant word, its
+    `Option<Vec<u8>>` capacity word is the niche the other variants' 2⁶³ + t − 1 live in. For `None`,
+    the words at 8 and 16 are stale and the value at 28 is unconstrained; the statements claim neither.
+    Tag 0 is `CreateService` by elimination; the field shapes agree.
 
 - **`Import`, `DeleteItems`, `Export` and `Imported` as elements of the decode loop (any frame base).**
   `Decode.ImportElem.import_elem` (`Services/Bootstrap/Decode/ImportElem.lean`) and
@@ -408,6 +475,37 @@ An independent kernel, nanoda as vendored by
     the element reader (`VecPairs.import_heap`'s composition, or `VecVecU8.vec_vec_u8_heap` at 8),
     the copy into the slot (`e3`) and the return (`e4`).
   - *Assumed:* as `vec_pairs_heap` and `vec_vec_u8_heap` (n ≤ 1024, n ≤ 682, items ≤ 16384 octets).
+
+- **The element readers for large sizes, the payload in the heap.** `Decode.VecU8.vec_u8_heap_big`
+  (`VecU8HeapBig.lean`, more than 16384 octets), `VecPairs.vec_pairs_heap_big` (3100) and
+  `VecU32U64.vec_u32u64_heap_big` (2727), more than 1024 elements, `VecHash.vec_hash_heap_big` (1764)
+  and `VecHash32.vec_hash32_heap_big` (907), more than 512, `VecKey336.vec_key336_heap_big` (1300),
+  more than 48 keys, and `VecVecU8.vec_vec_u8_heap_big` (8), any element count and item length
+  (`Services/Bootstrap/Decode/*Big.lean`).
+  - *Statement:* as the small readers, under `HeapCtx` and `refineContractK cap` (cap ≥ 2²⁷), with the
+    globals kept; the buffer ends with capacity exactly n, in a fresh chunk of ⌈En/32⌉ + 1 units. Or an
+    `alloc` or `realloc` fails (`Exhausts`).
+  - *How:* read_vec's chunk loop and each reader's reserve loop grow the buffer by doubling: every later
+    batch is min(left, length so far), reserved through `finish_grow`'s realloc branch
+    (`ReallocCall.realloc_call`). The payload's chunk and the elements already read are other used
+    chunks, which realloc keeps; `realloc_fresh` shows the new buffer is none of them.
+  - *Assumed:* the total size stays below about 2³⁰ (realloc's unit bound), and the readers' frames
+    fit the larger realloc stack.
+- **`realloc_call` keeps the globals and the heap base, and returns the same block or a fresh one.**
+  `Decode.ReallocCall.realloc_call` and its host-generic `realloc_callG`, through every lemma of the
+  `ReallocKeepAll` chain (each only gains the conclusion).
+- **The large cases of every allocating variant.** `Decode.VariantsBig` and `VariantsBig2` (`Import`,
+  `DeleteItems`/`Export`/`Imported`, `Bless`, `RandomStorageAccumulate(Ok)`, `Designate`,
+  `AssignForGasCost`, and `LookedUp`/`Provide`/`CreateService` with more than 16384 octets) at the
+  variant level, and as decode-loop elements in `Decode.ElemsBig` (`*_elem_big`, `ElemOkAF` at any F).
+  `Assign`'s count is the global 𝖰 (80 under the full parameters), within its small reader.
+- **`RawVec::grow_one` (32785) for refine's output `Vec<Instruction>`.** `Decode.GrowOne.grow_one_first`
+  and `grow_one_call` (`GrowOne.lean`).
+  - *Statement:* elements of 232 octets at alignment 8. The capacity becomes max(2·cap, 4), the old
+    elements move to the new block, every other used chunk is kept with its data, and the context and
+    the globals are kept; or the `alloc` / `realloc` fails (`Exhausts`). The first push (cap 0) is
+    `grow_one_first`, which also states the model's `alloc` result.
+  - *Assumed:* the RawVec lies in the caller's frame (at or above sp), and cap ≤ 2²¹.
 
 - **`Vec<Vec<u8>>` with the payload in the heap (1 ≤ n ≤ 682 elements, each ≤ 16384 octets).**
   `Decode.VecVecU8.vec_vec_u8_heap` (`Services/Bootstrap/Decode/VecVecU8.lean`).

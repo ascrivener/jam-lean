@@ -435,4 +435,80 @@ theorem debug_entry {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (
         omega
     · exact Or.inr ((Exhausts.pre run1 hx).mono (by omega))
 
+/-- **`DebugList::finish`** (66310, result `Ok`): `"]"`; returns `Ok` (ω₇ = 0). -/
+theorem debug_finish {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
+    (pb S0 S1 : Nat) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
+    (x : X) (ω : Regs) (μ : Memory) (s₀ s : State) (sp F W D cap len ret t v5 h : Nat)
+    (H : HeapCtx env pb S0 S1 μ s) (hba : s.base % 8 = 0) (hf : Fmtr s₀ s μ F W cap len) (hd : DL μ D F h)
+    (h0 : ω[0] = UInt64.ofNat ret) (h1 : ω[1] = UInt64.ofNat sp) (h5 : ω[5] = UInt64.ofNat v5)
+    (h7 : ω[7] = UInt64.ofNat D) (hv : v5 < 18446744073709551616)
+    (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t)
+    (hbt : P.isBlockStart t = true)
+    (hsp : S0 + 600 ≤ sp ∧ sp % 8 = 0 ∧ 2147484248 ≤ sp) (hW : sp ≤ W ∧ W + 24 ≤ S1)
+    (hF : sp ≤ F ∧ F + 24 ≤ S1 ∧ (F + 24 ≤ W ∨ W + 24 ≤ F))
+    (hD : sp ≤ D ∧ D + 24 ≤ S1 ∧ (D + 24 ≤ W ∨ W + 24 ≤ D) ∧ (D + 24 ≤ F ∨ F + 24 ≤ D))
+    (hn : len + 1 < 134217728) :
+    (∃ ω' μ' x' s' cap', FreeStepsH p R 66310 ω μ x t ω' μ' x' (2 * (cap' - cap) + 2100) ∧
+      HeapCtx env pb S0 S1 μ' s' ∧ s'.base = s.base ∧ Fmtr s₀ s' μ' F W cap' (len + 1) ∧ cap ≤ cap' ∧
+      cap' ≤ max cap (max 8 (2 * (len + 1))) ∧
+      Keeps pb sp (dlE W D) s₀ μ μ' s' ∧
+      ω'[0] = UInt64.ofNat ret ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = UInt64.ofNat v5 ∧
+      ω'[6] = ω[6] ∧ ω'[7] = UInt64.ofNat 0) ∨
+    Exhausts p R pb 66310 ω μ x (1073741824 + 2100) := by
+  have hS1 := H.hS1
+  have hSb := H.hSb
+  have hst : ∀ a, S0 ≤ a → a < S1 → μ.writable a = true := H.st
+  obtain ⟨ω1, μ1, run1, a0, a1, a5, a6, a7, a8, a9, s8, s0, fr1, rd1, wr1⟩ := df_a (p := p) (P := P) (R := R)
+    x ω μ sp D F W ret v5 ⟨by omega, by omega⟩ h0 h1 h5 h7 ⟨by omega, hv, by omega, by omega⟩
+    ⟨Or.inr hD.1, Or.inr hF.1⟩ hd.fm hd.ok hf.buf hf.vt hf.vws
+    (fun a h1 h2 => Memory.readable_of_writable (hst a (by omega) (by omega)))
+    (fun a h1 h2 => Memory.readable_of_writable (hst a (by omega) (by omega)))
+    (fun a h1 h2 => hf.vrd a (by omega) (by omega)) (fun a h1 h2 => hst a (by omega) (by omega))
+  have k1 : ∀ a, a < 4294967296 → (a < sp - 16 ∨ sp ≤ a) → μ1.read a = μ.read a := fr1
+  have H1 : HeapCtx env pb S0 S1 μ1 s := ctx_hi H (fun a ha => k1 a (by omega) (Or.inl (by omega))) wr1
+  have hs1 : Str s₀ s μ1 W cap len := (hf.congr (fun j hj => k1 _ (by omega) (Or.inr (by omega)))
+    (fun j hj => k1 _ (by omega) (Or.inr (by omega)))
+    (fun a h1 h2 => ⟨k1 a (by omega) (Or.inl (by omega)), rd1 a⟩)).str
+  have K1 : Keeps pb sp (dlE W D) s₀ μ μ1 s :=
+    Keeps.of_frame (Z := fun a => sp - 16 ≤ a ∧ a < sp) hf.str.base
+      (fun a ha hz => k1 a ha (by omega)) rd1 wr1 (fun a hz => hst a (by omega) (by omega))
+      (fun a hz h => by omega) (fun a hz hg => by unfold Glob at hg; omega)
+      (fun c hc hu a ha => by
+        have := chunk_bounds H.wf (hf.str.base c hc hu)
+        have := H.hbT
+        unfold InData at ha; omega)
+  rcases write_str (p := p) (P := P) (R := R) env pb S0 S1 HA HR x ω1 μ1 s₀ s (sp - 16) W 72826 1 cap len 2782
+      66367 D (ω[6].toNat) H1 hba hs1 a0 a1 a5 (by rw [a6]; simp) a7 a8 a9 ⟨by omega, UInt64.toNat_lt _⟩
+      (by decide) jte_1390 bs_66367 ⟨by omega, by omega, by omega⟩ ⟨by omega, by omega⟩ hn
+      (Or.inl ⟨by omega, by omega⟩) (fun a h1 h2 => by rw [rd1]; exact hf.vrd a (by omega) (by omega)) with
+    ⟨ω2, μ2, x2, s2, cap2, run2, H2, hb2, hs2, hc1, hc2, K2, b0, b1, b5, b6, b7⟩ | hx
+  · have hst2 : ∀ a, S0 ≤ a → a < S1 → μ2.writable a = true := H2.st
+    have kk : ∀ o, o + 8 ≤ 16 → rdN μ2 (sp - 16 + o) 8 = rdN μ1 (sp - 16 + o) 8 := fun o ho =>
+      rdN_frame (fun j hj => K2.hi _ (by omega) (by omega) (by omega))
+    obtain ⟨ω3, μ3, run3, c0, c1, c5, c6, c7, dr, fr3, rd3, wr3⟩ := df_b (p := p) (P := P) (R := R) x2 ω2 μ2
+      (sp - 16) D ret t v5 0 ⟨by omega, by omega⟩ b1 b5 b7 (by omega) ⟨by omega, Or.inr (by omega)⟩
+      ((kk 8 (by omega)).trans s8) ((show sp - 16 = sp - 16 + 0 by rfl) ▸ (kk 0 (by omega)).trans s0)
+      hret hjt hbt (fun a h1 h2 => Memory.readable_of_writable (hst2 a (by omega) (by omega)))
+      (fun a h1 h2 => hst2 a (by omega) (by omega))
+    have K3 : Keeps pb sp (dlE W D) s₀ μ2 μ3 s2 :=
+      Keeps.of_frame (Z := fun a => D + 8 ≤ a ∧ a < D + 9) hs2.base
+        (fun a ha hz => fr3 a ha (by omega)) rd3 wr3 (fun a hz => hst2 a (by omega) (by omega))
+        (fun a hz h => Or.inr ⟨by omega, by omega⟩) (fun a hz hg => by unfold Glob at hg; omega)
+        (fun c hc hu a ha => by
+          have := chunk_bounds H2.wf (hs2.base c hc hu)
+          have := H2.hbT
+          unfold InData at ha; omega)
+    have H3 : HeapCtx env pb S0 S1 μ3 s2 := ctx_hi H2 (fun a ha => fr3 a (by omega) (Or.inl (by omega))) wr3
+    have K := (K1.trans' (K2.mono (sp' := sp) (by omega) (fun a h => Or.inl h))).trans' K3
+    simp only [Nat.max_self] at K
+    have hs3 : Str s₀ s2 μ3 W cap2 (len + 1) :=
+      hs2.update (fun j hj => fr3 _ (by omega) (by omega))
+        ((rdN_frame (fun j hj => fr3 _ (by omega) (by omega))).trans hs2.rl) hs2.le
+    have hf3 : Fmtr s₀ s2 μ3 F W cap2 (len + 1) :=
+      Fmtr.of_keeps hf H K ⟨hF.1, by omega⟩ (fun a h1 h2 h => by unfold dlE at h; omega) hs3
+    refine Or.inl ⟨ω3, μ3, x2, s2, cap2, ((run1.trans run2).trans run3).mono (by omega), H3, hb2, hf3, hc1, hc2,
+      K, c0, by rw [c1]; congr 1; omega, c5, ?_, c7⟩
+    rw [c6, b6]; simp
+  · exact Or.inr ((Exhausts.pre run1 hx).mono (by omega))
+
 end Services.Bootstrap.Fmt

@@ -100,6 +100,7 @@ import Services.Bootstrap.Decode.VecU8Loop
 import Services.Bootstrap.Decode.ReallocOk
 import Services.Bootstrap.Decode.DeallocCall
 import Services.Bootstrap.Decode.AllocZeroedCall
+import Services.Bootstrap.Decode.AllocHuge
 import Services.Bootstrap.Decode.VecU8Pass
 import Services.Bootstrap.Decode.LookedUpBig
 import Services.Bootstrap.Decode.ProvideInline

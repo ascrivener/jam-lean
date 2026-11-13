@@ -1,5 +1,6 @@
 import Services.Bootstrap.Refine.PassGrow
 import Services.Bootstrap.Refine.LoopG
+import Services.Bootstrap.Bridge
 
 /-!
 # Refine's transform loop over instructions passed through unchanged
@@ -27,30 +28,42 @@ theorem chunk_apart {s : State} (hwf : WF s) {c d : Chunk} (hc : c ∈ chunks s)
   have ht := hwf.2.2.2.1; unfold TilesOk at ht
   exact Decode.HeapFrame.Tiles.disjoint ht c hc d hd hcd
 
-/-- **A failed allocator call** (`AllocFail`), reached by a run whose host context may change on the way:
-    `Exhausts` with the context left free, for loops whose steps make host calls. -/
+/-- **A failed allocation** (`Bridge.AllocFails`: a null allocation at one of the allocators' return
+    points, or the size check before one), reached by a run whose host context may change on the way: the
+    heap exhaustion of `Bridge.ExhaustsHeap`, for loops whose steps make host calls. -/
 def ExhaustsX (env : RefineHost.Env) (cap pb : Nat) (p : ByteArray) (i : Nat) (ω : Regs) (μ : Memory)
     (x : RefineCtx) (n : Nat) : Prop :=
   ∃ (ω' : Regs) (μ' : Memory) (x' : RefineCtx) (j : Nat),
-    FreeStepsH p (refineContractK cap env) i ω μ x j ω' μ' x' n ∧ ω'[7] = UInt64.ofNat 0 ∧ AllocFail pb j
+    FreeStepsH p (refineContractK cap env) i ω μ x j ω' μ' x' n ∧ Bridge.AllocFails j ω'
 
 theorem ExhaustsX.of {env : RefineHost.Env} {cap pb : Nat} {p : ByteArray} {P : Program} {i : Nat} {ω : Regs}
     {μ : Memory} {x : RefineCtx} {n : Nat} (h : Exhausts env cap pb p P i ω μ x n) : ExhaustsX env cap pb p i ω μ x n := by
   obtain ⟨ω', μ', j, run, e7, ha⟩ := h
-  exact ⟨ω', μ', x, j, run, e7, ha⟩
+  refine ⟨ω', μ', x, j, run, Or.inl ⟨?_, e7⟩⟩
+  rcases ha with ⟨rfl, -⟩ | ⟨rfl, -⟩ <;> decide
+
+/-- `Fmt.Exhausts` (the `alloc` or `realloc` wrapper returning null) under refine's contract is `ExhaustsX`. -/
+theorem ExhaustsX.ofFmt {env : RefineHost.Env} {cap pb : Nat} {p : ByteArray} {i : Nat} {ω : Regs}
+    {μ : Memory} {x : RefineCtx} {n : Nat}
+    (h : ∃ (ω' : Regs) (μ' : Memory) (x' : RefineCtx) (j : Nat),
+      FreeStepsH p (refineContractK cap env) i ω μ x j ω' μ' x' n ∧ ω'[7] = UInt64.ofNat 0 ∧ (j = 40611 ∨ j = 40821)) :
+    ExhaustsX env cap pb p i ω μ x n := by
+  obtain ⟨ω', μ', x', j, run, e7, hj⟩ := h
+  refine ⟨ω', μ', x', j, run, Or.inl ⟨?_, e7⟩⟩
+  rcases hj with rfl | rfl <;> decide
 
 theorem ExhaustsX.pre {env : RefineHost.Env} {cap pb : Nat} {p : ByteArray} {i j : Nat} {ω ω1 : Regs}
     {μ μ1 : Memory} {x x1 : RefineCtx} {n m : Nat}
     (run : FreeStepsH p (refineContractK cap env) i ω μ x j ω1 μ1 x1 n) (h : ExhaustsX env cap pb p j ω1 μ1 x1 m) :
     ExhaustsX env cap pb p i ω μ x (n + m) := by
-  obtain ⟨ω', μ', x', k, run', e7, ha⟩ := h
-  exact ⟨ω', μ', x', k, run.trans run', e7, ha⟩
+  obtain ⟨ω', μ', x', k, run', ha⟩ := h
+  exact ⟨ω', μ', x', k, run.trans run', ha⟩
 
 theorem ExhaustsX.mono {env : RefineHost.Env} {cap pb : Nat} {p : ByteArray} {i : Nat} {ω : Regs} {μ : Memory}
     {x : RefineCtx} {n m : Nat} (h : ExhaustsX env cap pb p i ω μ x n) (hnm : n ≤ m) :
     ExhaustsX env cap pb p i ω μ x m := by
-  obtain ⟨ω', μ', x', k, run', e7, ha⟩ := h
-  exact ⟨ω', μ', x', k, run'.mono hnm, e7, ha⟩
+  obtain ⟨ω', μ', x', k, run', ha⟩ := h
+  exact ⟨ω', μ', x', k, run'.mono hnm, ha⟩
 
 /-- **The transform loop's state at 5042 after k instructions passed through.** -/
 structure PInv (env : RefineHost.Env) (pb S0 S1 M E n : Nat) (ce : Chunk) (capI : Nat) (μ0 : Memory)

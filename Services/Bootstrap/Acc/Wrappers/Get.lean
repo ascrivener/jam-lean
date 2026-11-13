@@ -232,4 +232,17 @@ theorem gr_store {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x :
     all_goals try (intro a ha1 ha2; simp (disch := pvm_arith) only [PVM.Memory.read_writeN_disjoint])
     all_goals try (intro a; simp only [Memory.readable_writeN, Memory.writable_writeN])
 
+/-- **48047 … 47977**, after `alloc_impl` returned null (ω₇ = 0): the lock byte cleared, then the
+    allocation-failure trap 47977 (`handle_alloc_error`). -/
+theorem gr_null {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
+    (μ : Memory) (sp : Nat) (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat 0)
+    (hsp : 65536 ≤ sp ∧ sp + 8 < 4294967296) (m0 : μ.readN sp 8 = Num.encodeLE 8 196792)
+    (hrf : ∀ a, sp ≤ a → a < sp + 8 → μ.readable a = true) (hwl : μ.writable 206848 = true) :
+    ∃ ω' μ', FreeStepsH p R 48047 ω μ x 47977 ω' μ' x 10 := by
+  have hrl : μ.readable 206848 = true := Memory.readable_of_writable hwl
+  have r0 : rdN μ sp 8 = 196792 := by unfold rdN; rw [m0, Num.decodeLE_encodeLE]
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?run⟩
+  case run => pvm_go [h1, h7, r0, hrf, hwl, hrl, ↓rdN_fold]
+
 end Services.Bootstrap.Acc

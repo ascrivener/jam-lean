@@ -63,4 +63,33 @@ theorem items_end {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (co
       by rw [g0, kk _ (by omega) (by omega)], by rw [g5, kk _ (by omega) (by omega)],
       by rw [g6, kk _ (by omega) (by omega)], H3, stk3⟩
 
+/-- **The halting step** at 15359: `jump_ind ω₀` with ω₀ = 2³² − 2¹⁶ (Y's initial ω₀, saved by
+    accumulate's prologue) halts (GP §A.5.1). -/
+theorem halt_15359 {p : ByteArray} {P : Program} [HasCodeA p P] (ω : Regs) (μ : Memory)
+    (h0 : ω[0] = UInt64.ofNat 4294901760) : FreeExit p 15359 ω μ .halt ω μ := by
+  have hd := d_15359 (p := p) (P := P)
+  have hs : P.freeStep 15359 ω μ = (.halt, 15359, ω, μ) := by
+    have h0' : ω.get 0 = UInt64.ofNat 4294901760 := h0
+    simp [Program.freeStep, hd.2.1, Program.exec, h0', Program.djump, Program.finalState,
+      memoryException, two32]
+  have := FreeExit.step (p := p) hd.1 hs (by decide)
+  simpa using this
+
+/-- **The items loop's end halts**: as `items_end`, with the saved return address 2³² − 2¹⁶, the run
+    halts with ω₈ = 0 (no output). -/
+theorem items_halt {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (code : ByteArray)
+    (pb S0 S1 : Nat) (x : X) (ω : Regs) (μ : Memory) (s : State) (sp e q c : Nat)
+    (H : HeapCtxC code pb S0 S1 μ s) (h1 : ω[1] = UInt64.ofNat sp)
+    (hsp : 2147483716 ≤ sp ∧ sp + 1856 < 4294967296) (hS : S0 + 40 ≤ sp ∧ sp + 1856 ≤ S1)
+    (m168 : rdN μ (sp + 168) 8 = e) (m144 : rdN μ (sp + 144) 8 = e)
+    (m32 : rdN μ (sp + 32) 8 = c) (m16 : rdN μ (sp + 16) 8 = q)
+    (m1848 : rdN μ (sp + 1848) 8 = 4294901760)
+    (hq : c ≠ 0 → ∃ d ∈ chunks s, d.used = true ∧ d.addr + 32 = q) :
+    ∃ ω' μ', FreeRunH p R 6766 ω μ x .halt ω' μ' x ∧ (ω'.get 8).toNat = 0 := by
+  obtain ⟨ω', μ', s', run, g7, g8, -, g0, -⟩ :=
+    items_end (p := p) (P := P) (R := R) code pb S0 S1 x ω μ s sp e q c H h1 hsp hS m168 m144 m32 m16 hq
+  refine ⟨ω', μ', run.run (.exit (.exit (halt_15359 (P := P) ω' μ' (by rw [g0, m1848]))) (by simp)), ?_⟩
+  show (ω'[8]).toNat = 0
+  rw [g8]; rfl
+
 end Services.Bootstrap.Acc

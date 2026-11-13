@@ -68,4 +68,10 @@ theorem fv_null {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : 
   refine ⟨?ω', ?μ', ?run⟩
   case run => pvm_go [h1, h6, h7, hwf, hr, hwl, hrl]
 
+/-- **44674**, the inputs function's return (ω₀ = 226) to 6674. -/
+theorem in_ret {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
+    (h0 : ω[0] = UInt64.ofNat 226) : FreeStepsH p R 44674 ω μ x 6674 ω μ x 1 := by
+  rw [show ω = regsNF ω [] from rfl]
+  pvm_go [h0]
+
 end Services.Bootstrap.Acc

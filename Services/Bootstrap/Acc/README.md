@@ -413,3 +413,30 @@ This uses `psiM_of_freeRunH_anyG` (the `gas` proposal) and `psiARun_eq`.
 - `Impl_spec`, medium: an induction over p, alongside the run's host calls.
 - The wrapper lemmas for the `AOp`s the loop uses: `read`, `write`, `remove`, `checkpoint`. The loop
   body then composes these with frame-only code.
+
+## `Impl` and the lift: proved (`Acc/Impl/`)
+
+`Impl` is adopted as above, with one change: it is **existential, over an infinite answer stream**
+(`accContractS`, Handlers A's `accContractQ` with `Nat → Nat` for the list). A stream never runs out,
+so runs exist and compose. The real run's answers, followed by 0s, form one such stream.
+
+| File | What |
+| --- | --- |
+| `Split.lean` | `FreeRunH.of_steps`: under a self-pinning contract, a run through a known segment continues from its end. |
+| `StepSnd.lean` | `ASem.step_snd`: an operation keeps y, or leaves (x, x). Only `checkpoint` writes y. |
+| `Impl.lean` | `Impl` (pure / panic / call op k; wrappers pass only through y ∈ {c.y, c₁.y}, `YIn`), `Halts` (halt with ω₈ = 0), `Impl.pre`, `Impl.bind`, and `Impl.run`: a run exists and reports what some `ASem.run n` reports. |
+| `Prefix.lean` | `Pre` (contexts at host calls), `Pre.split` / `split_run`, and `Impl.prefix`: the out-of-gas case. |
+| `ContractS.lean` | `accContractS`, `accContractS_pins`, and `FreeRunH.toS`: every non-∞ handler run is an `accContractS` run. |
+| `OogPrefix.lean` | `psiM_oog_pre`: Ψ_M out of gas returns the y of a prefix of an `accContractS` run. |
+| `Lift.lean` | `impl_psiM` and `psiA_of_impl`. If `Impl … prog Halts` holds from instruction 5 with (x₀, x₀) for every stream, then Ψ_A's state, transfers, yield and provisions are `ASem.outcome (ASem.run n prog …)` for some n. That is T2's shape. |
+
+**What remains for T2:** `∀ f, Impl (accContractS env) env (Spec.accumulate C t) Halts` from instruction 5. This is built:
+- from the segment lemmas: 1 → 6630 (start, `acc_log_line`), `inputs_decode`, and the items loop;
+- per `AOp`, from wrapper lemmas in the call-case form: keep (x, y) to the wrapper, then the wrapper
+  under `YIn`.
+Lemmas stated under `accContractK` (no `gas`/`checkpoint` call) carry over with the stream kept.
+Lemmas under `accContractQ` (from (x, v :: qs) to (x', qs)) carry over to any stream `cons v (qs ++ₛ g)`.
+
+**Log sites** (the per-item line at 6955, the handlers' `format!`) are stated against a hypothesis of
+`acc_log_line`'s shape: the allocator's context in and out, the format!/String region kept, or
+Exhausts. They are marked "discharged by the fmt summaries". The migration session owns them.

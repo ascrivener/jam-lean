@@ -288,6 +288,7 @@ import Services.Bootstrap.Acc.Wrappers.HeapL
 import Services.Bootstrap.Acc.Wrappers.GetCall
 import Services.Bootstrap.Acc.Wrappers.Set
 import Services.Bootstrap.Acc.Wrappers.SetCall
+import Services.Bootstrap.Acc.Wrappers.Remove
 import Services.Bootstrap.Acc.Items.Head
 import Services.Bootstrap.Acc.Items.End
 import Services.Bootstrap.Acc.Items.Disp

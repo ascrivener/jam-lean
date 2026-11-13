@@ -46,4 +46,17 @@ theorem psiM_of_freeRunH_accC (b : ByteArray) (i : Nat) (gas : UInt64) (a : Byte
   psiM_of_freeRunH7 b i gas a x _ (JAM.accHostFn_gasNonIncreasing env) (· = 18) _
     (accContractC_pins7 env) hY deadAfter_checkpoint hrun
 
+/-- **`psiM_of_freeRunH_accC` at any cap**: a gas-free run of bootstrap under `accContractCK cap`
+    (each host call's outcome the model's at gas `cap`) determines Ψ_M: ∞, or that run's output and
+    context. -/
+theorem psiM_of_freeRunH_accCK (cap : Nat) (b : ByteArray) (i : Nat) (gas : UInt64) (a : ByteArray)
+    (x : JAM.AccCtx) (env : JAM.AccEnv) {ω : Regs} {μ : Memory}
+    (hY : standardInit b a = some (ba N 11888 83235, ω, μ))
+    {ε : Status} {ω' : Regs} {μ' : Memory} {x' : JAM.AccCtx}
+    (hrun : FreeRunH (ba N 11888 83235) (accContractCK cap env) i ω μ x ε ω' μ' x') :
+    (psiM b i gas a (JAM.accHostFn env) x).2.1.isOog = true ∨
+      (psiM b i gas a (JAM.accHostFn env) x).2 = (freeOutput ε ω' μ', x') :=
+  psiM_of_freeRunH7 b i gas a x _ (JAM.accHostFn_gasNonIncreasing env) (· = 18) _
+    (accContractCK_pins7 cap env) hY deadAfter_checkpoint hrun
+
 end Services.Bootstrap.Acc

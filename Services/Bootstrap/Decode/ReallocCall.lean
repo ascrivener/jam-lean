@@ -13,6 +13,61 @@ other step lifts from `refineContract` (`FreeStepsH.weaken`, `refineContract_le`
 `realloc_call`: one call of the `realloc` wrapper (40701 → 40821) on `HeapCtx`, cap ≥ 2²⁷.
 -/
 
+namespace Services.Bootstrap.Decode.VecU8
+
+open PVM Picoalloc Services.Bootstrap Services.Bootstrap.Alloc
+
+set_option maxHeartbeats 8000000 in
+/-- **`realloc`'s block is the old one or was free** (alignment one unit, a nonzero request, the
+    data address of an allocated chunk): no other allocated chunk of `s` has its data at the result. -/
+theorem realloc_fresh {grow : Grow} {hb : Nat} {s s' : State} {ptr newReq p : Nat} {cp : Bool} (hwf : WF s)
+    (hptr : ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true) (h0 : newReq ≠ 0)
+    (h : realloc grow hb s ptr 1 newReq = some (p, s', cp)) :
+    ∀ d ∈ chunks s, d.used = true → d.addr + 32 ≠ ptr → d.addr + 32 ≠ p := by
+  intro d hd hdu hda
+  obtain ⟨c, hc, h1, h2⟩ := hptr
+  have hcur : wordSize (s.hdr (ptr - 32)).size = c.size := by
+    have := chunks_hdr c hc
+    rw [show c.addr = ptr - 32 by omega, h2] at this
+    rw [this, wordSize_sizeWord]
+  unfold realloc usable at h
+  rw [hcur] at h
+  by_cases e1 : newReq = c.size - 1
+  · simp only [e1, ↓reduceIte, Option.pure_def, Option.some.injEq, Prod.mk.injEq] at h
+    obtain ⟨hp, -, -⟩ := h
+    rw [← hp]; exact hda
+  by_cases e3 : newReq < c.size - 1
+  · simp only [e1, h0, e3, ↓reduceIte, Option.pure_def, Option.some.injEq, Prod.mk.injEq] at h
+    obtain ⟨hp, -, -⟩ := h
+    rw [← hp]; exact hda
+  simp only [e1, h0, e3, ↓reduceIte] at h
+  cases hg : growInplace grow s ptr newReq with
+  | some s2 =>
+    simp only [hg, Option.pure_def, Option.some.injEq, Prod.mk.injEq] at h
+    obtain ⟨hp, -, -⟩ := h
+    rw [← hp]; exact hda
+  | none =>
+    simp only [hg] at h
+    cases ha : alloc grow hb 1 newReq s with
+    | none => simp [ha] at h
+    | some r =>
+      obtain ⟨p1, s1⟩ := r
+      simp only [ha, Option.bind_eq_bind, Option.bind_some, Option.pure_def, Option.some.injEq,
+        Prod.mk.injEq] at h
+      obtain ⟨hp, -, -⟩ := h
+      rw [← hp]
+      obtain ⟨pre, post, S, hcs, -, -⟩ := alloc_chunks hwf ha
+      intro e
+      have ht := hwf.2.2.2.1
+      unfold TilesOk at ht
+      rw [hcs] at ht hd
+      have hfree : (⟨p1 - 32, S, false⟩ : Chunk) ∈ pre ++ ⟨p1 - 32, S, false⟩ :: post :=
+        List.mem_append_right _ List.mem_cons_self
+      have := Tiles.addr_inj ht d hd _ hfree (by simp only; omega)
+      rw [this] at hdu; simp at hdu
+
+end Services.Bootstrap.Decode.VecU8
+
 namespace Services.Bootstrap.Decode.ReallocCall
 
 open PVM Picoalloc Services.Bootstrap Services.Bootstrap.Code Services.Bootstrap.Alloc JAM
@@ -59,16 +114,17 @@ theorem fallback_tail_heap_keepKG {X : Type} {p : ByteArray} {P : Program} [HasC
       (∀ a, a < 4294967296 → sp + 152 ≤ a → μ'.read a = μ.read a) ∧
       ω'[7] = UInt64.ofNat q ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat (sp + 152) ∧
       ω'[5] = UInt64.ofNat v5 ∧ ω'[6] = UInt64.ofNat v6 ∧
-      (∀ a, OthersData s ptr a → μ'.read a = μ.read a) := by
+      (∀ a, OthersData s ptr a → μ'.read a = μ.read a) ∧
+        (∀ a, Glob a → μ'.read a = μ.read a) := by
   have hw := HeapPages.wrAt hp hhb hst
   obtain ⟨hkeep, hnew, hq32, hb1⟩ := alloc_keeps hwf h
   by_cases hng : s1.allocated = s.allocated
-  · obtain ⟨ω', μ', dat, run, rep, wf, fo, ww, stk, k7, k0, k1, k5, k6, kp⟩ := fallback_tail'_keep (p := p) (P := P)
+  · obtain ⟨ω', μ', dat, run, rep, wf, fo, ww, stk, k7, k0, k1, k5, k6, kp, gl⟩ := fallback_tail'_keep (p := p) (P := P)
       (R := env.rel cap) x ω μ (grow := growTo pb) (hb := hb) s s1 sp ptr req q u v5 v6 hwf hrep hfo hc
       hu hur h hng h1 h7 h8 h9 h10 h6 hrq s0 s5 s6 hsp hsp1 hsp8 hba hb0 hbT hA hHTs hHT hS hw
     exact ⟨ω', μ', dat, run.mono (by omega), rep, wf, fo,
       ⟨ph, HeapPages.of_eq hp ww, by rw [hb1, hng]; exact hHT, Nat.le_refl _, hhb⟩,
-      fun a h1 h2 => by rw [ww]; exact hst a h1 h2, stk, k7, k0, k1, k5, k6, kp⟩
+      fun a h1 h2 => by rw [ww]; exact hst a h1 h2, stk, k7, k0, k1, k5, k6, kp, gl⟩
   obtain ⟨c, hcm, hca, hcu⟩ := hc
   obtain ⟨hc1, hdis⟩ := hkeep c hcm hcu
   have hwf1 : WF s1 := alloc_wf hwf h
@@ -93,7 +149,7 @@ theorem fallback_tail_heap_keepKG {X : Type} {p : ByteArray} {P : Program} [HasC
     rw [← h]; exact rdN_frame fun j hj => (stk2 _ (by omega) (by omega)).trans (fr1 _ (by omega) (Or.inr (by omega)))
   have h104 : rdN μ2 (sp + 104) 8 = 196792 := by
     rw [← a104]; exact rdN_frame fun j hj => stk2 _ (by omega) (by omega)
-  obtain ⟨ω3, μ3, dat3, r3, rep3, wf3, fo3, ww3, stk3, k7, k0, k1, k5, k6, kp3⟩ := fallback_after_keep (p := p) (P := P)
+  obtain ⟨ω3, μ3, dat3, r3, rep3, wf3, fo3, ww3, stk3, k7, k0, k1, k5, k6, kp3, gl3⟩ := fallback_after_keep (p := p) (P := P)
     (R := env.rel cap) x ω2 μ2 s1 sp ptr q u req v5 v6 hwf1 rep2 hfo1 ⟨c, hc1, hca, hcu, hcsz, hdis⟩ hnew
     hq32 (by omega) (by rw [e1, fget g1 1 (by decide) (by decide)]; exact h1) e7 (by rw [e5]; exact a5)
     (by rw [e6, fget g1 6 (by decide) (by decide)]; exact h6) h104
@@ -107,7 +163,7 @@ theorem fallback_tail_heap_keepKG {X : Type} {p : ByteArray} {P : Program} [HasC
   refine ⟨ω3, μ3, dat, (((r1.trans r2).trans rj).trans r3).mono (by omega), rep3, wf3, fo3,
     ⟨h', HeapPages.of_eq hpH ww3, hE', hph, hpb⟩, fun a h1 h2 => by rw [ww3]; exact hst2 a h1 h2,
     fun a h1 h2 => ((stk3 a h1 (by omega)).trans (stk2 a h1 (by omega))).trans (fr1 a h1 (Or.inr (by omega))),
-    k7, k0, k1, k5, k6, fun a ha => ?_⟩
+    k7, k0, k1, k5, k6, fun a ha => ?_, fun a ha => ?_⟩
   obtain ⟨c', hc'm, hc'u, hc'p, hin⟩ := ha
   obtain ⟨hc'1, hc'd⟩ := hkeep c' hc'm hc'u
   have ha1 : OthersData s1 ptr a := ⟨c', hc'1, hc'u, hc'p, hin⟩
@@ -116,6 +172,9 @@ theorem fallback_tail_heap_keepKG {X : Type} {p : ByteArray} {P : Program} [HasC
   unfold InData at hin
   rw [kp3 a ha1 (by omega), keep_of_hkeep hwf1 (by rw [hbb]; exact hb0) (by rw [hbb]; exact hbT)
     (fun h hh => Or.inl hh) hk2.hkeep a ha1]
+  exact fr1 a (by omega) (Or.inl (by omega))
+  have hg := ha; unfold Glob at hg
+  rw [gl3 a ha, glob_of_hkeepG hwf1 (by rw [hb1]; exact hb0) (fun h hh => Or.inl hh) hk2 a ha]
   exact fr1 a (by omega) (Or.inl (by omega))
 
 /-- `fallback_tail_heap_keepKG` for the refine contract (`refineHeap env`). -/
@@ -143,7 +202,8 @@ theorem fallback_tail_heap_keepK {p : ByteArray} {P : Program} [HasCode p P] (en
       (∀ a, a < 4294967296 → sp + 152 ≤ a → μ'.read a = μ.read a) ∧
       ω'[7] = UInt64.ofNat q ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat (sp + 152) ∧
       ω'[5] = UInt64.ofNat v5 ∧ ω'[6] = UInt64.ofNat v6 ∧
-      (∀ a, OthersData s ptr a → μ'.read a = μ.read a) :=
+      (∀ a, OthersData s ptr a → μ'.read a = μ.read a) ∧
+        (∀ a, Glob a → μ'.read a = μ.read a) :=
   fallback_tail_heap_keepKG (p := p) (P := P) (refineHeap env) cap hcap1 hcap x ω μ (hb := hb) s s1 sp ptr req q u v5 v6 pb ph hwf hrep hfo hc hu hur hbd h48 hhb hbs h hcost h1 h7 h8 h9 h10 h6 hrq s0 s5 s6 hsp hsp1 hsp8 hba hb0 hbT hA (S0 := S0) (S1 := S1) hHTs hHT hS hSb hp hst
 
 theorem fallback_refines_heap_keepKG {X : Type} {p : ByteArray} {P : Program} [HasCode p P] (env : HeapHost X) (cap : Nat) (hcap1 : 2000 ≤ cap)
@@ -169,7 +229,8 @@ theorem fallback_refines_heap_keepKG {X : Type} {p : ByteArray} {P : Program} [H
         (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧
         (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
         ω'[7] = UInt64.ofNat q ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat sp ∧
-        ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ (∀ a, OthersData s ptr a → μ'.read a = μ.read a) := by
+        ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ (∀ a, OthersData s ptr a → μ'.read a = μ.read a) ∧
+        (∀ a, Glob a → μ'.read a = μ.read a) := by
   refine ⟨realloc_fallback hr hnone ha, ?_⟩
   obtain ⟨ω1, μ1, r1, rep1, hp1, hst1, fr1, st0, st5, st6, a1, a6, a7, a8, a9, a10⟩ := fallback_entryG
     (p := p) (P := P) env x ω μ s sp ptr req pb ph hwf hrep hc hr hr1 hbd h48 hhb hbs hnone h1 h8 h7 h10
@@ -177,7 +238,7 @@ theorem fallback_refines_heap_keepKG {X : Type} {p : ByteArray} {P : Program} [H
   replace r1 := liftG hcap1 hcap r1
   have rd : ∀ a v, μ1.readN a 8 = Num.encodeLE 8 v → v < 18446744073709551616 → rdN μ1 a 8 = v :=
     fun a v h hv => rd_enc h hv
-  obtain ⟨ω2, μ2, dat2, r2, rep2, wf2, fo2, hpH, hst2, stk2, e7, e0, e1, e5, e6, kp2⟩ := fallback_tail_heap_keepKG (p := p)
+  obtain ⟨ω2, μ2, dat2, r2, rep2, wf2, fo2, hpH, hst2, stk2, e7, e0, e1, e5, e6, kp2, gl2⟩ := fallback_tail_heap_keepKG (p := p)
     (P := P) env cap hcap1 hcap x ω1 μ1 (hb := hb) s s1 (sp - 152) ptr req q (usable s ptr) ω[5].toNat ω[6].toNat pb ph hwf
     rep1 hfo hc rfl hr hbd h48 hhb hbs ha hcost a1 a7 a8 (by rw [a9]; exact h9) a10 a6 (by omega)
     (by rw [show sp - 152 + 144 = sp - 8 by omega]; exact (rd _ _ st0 (UInt64.toNat_lt _)).trans (by rw [h0]; rfl))
@@ -189,9 +250,12 @@ theorem fallback_refines_heap_keepKG {X : Type} {p : ByteArray} {P : Program} [H
     rw [dat2]; exact readN_congr2 fun j hj => fr1 _ (by omega) (Or.inl (by omega))
   refine ⟨ω2, μ2, dat, (r1.trans r2).mono (by omega), rep2, wf2, fo2, hpH, hst2,
     fun a h1 h2 => (stk2 a h1 (by omega)).trans (fr1 a h1 (Or.inr h2)), e7, e0,
-    by rw [e1]; congr 1; omega, by rw [e5, UInt64.ofNat_toNat], by rw [e6, UInt64.ofNat_toNat], fun a ha => ?_⟩
-  have := others_lt hwf hb0 hbT ha
-  rw [kp2 a ha]; exact fr1 a (by omega) (Or.inl (by omega))
+    by rw [e1]; congr 1; omega, by rw [e5, UInt64.ofNat_toNat], by rw [e6, UInt64.ofNat_toNat], fun a ha => ?_,
+    fun a ha => ?_⟩
+  · have := others_lt hwf hb0 hbT ha
+    rw [kp2 a ha]; exact fr1 a (by omega) (Or.inl (by omega))
+  · have hg := ha; unfold Glob at hg
+    rw [gl2 a ha]; exact fr1 a (by omega) (Or.inl (by omega))
 
 /-- `fallback_refines_heap_keepKG` for the refine contract (`refineHeap env`). -/
 theorem fallback_refines_heap_keepK {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap : Nat) (hcap1 : 2000 ≤ cap)
@@ -217,7 +281,8 @@ theorem fallback_refines_heap_keepK {p : ByteArray} {P : Program} [HasCode p P] 
         (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧
         (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
         ω'[7] = UInt64.ofNat q ∧ ω'[0] = UInt64.ofNat 1988 ∧ ω'[1] = UInt64.ofNat sp ∧
-        ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ (∀ a, OthersData s ptr a → μ'.read a = μ.read a) :=
+        ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ (∀ a, OthersData s ptr a → μ'.read a = μ.read a) ∧
+        (∀ a, Glob a → μ'.read a = μ.read a) :=
   fallback_refines_heap_keepKG (p := p) (P := P) (refineHeap env) cap hcap1 hcap x ω μ (hb := hb) s s1 sp ptr req q pb ph hwf hrep hc hr hr1 hbd h48 hhb hbs hnone ha hcost h1 h8 h7 h9 h10 h0 hsp hsp1 hsp8 hba hb0 hbT hA hfo (S0 := S0) (S1 := S1) hHTs hHT hS hSb hp hst
 
 theorem realloc_wrap_fallback_keepKG {X : Type} {p : ByteArray} {P : Program} [HasCode p P] (env : HeapHost X) (cap : Nat) (hcap1 : 2000 ≤ cap)
@@ -247,7 +312,8 @@ theorem realloc_wrap_fallback_keepKG {X : Type} {p : ByteArray} {P : Program} [H
         (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧
         (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
         ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
-        (∀ a, OthersData s ptr a → μ'.read a = μ.read a) := by
+        (∀ a, OthersData s ptr a → μ'.read a = μ.read a) ∧
+        (∀ a, Glob a → μ'.read a = μ.read a) := by
   have hal : (al + 31) / 32 = 1 := by omega
   rw [hal]
   have hc' := hc
@@ -264,7 +330,7 @@ theorem realloc_wrap_fallback_keepKG {X : Type} {p : ByteArray} {P : Program} [H
     fr1 a (by omega) (Or.inl (by omega)) (Or.inr (by unfold A0 at ha1; omega)) ha3
   have hp1 := HeapPages.of_eq hp ww1
   have hst1 : ∀ a, S0 ≤ a → a < S1 → μ1.writable a = true := fun a h1 h2 => by rw [ww1]; exact hst a h1 h2
-  obtain ⟨e, ω2, μ2, dat2, r2, rep2, wf2, fo2, ⟨h', hpH, hE', hph, hpb⟩, hst2, stk2, e7, e0, e1, e5, e6, kp2⟩ :=
+  obtain ⟨e, ω2, μ2, dat2, r2, rep2, wf2, fo2, ⟨h', hpH, hE', hph, hpb⟩, hst2, stk2, e7, e0, e1, e5, e6, kp2, gl2⟩ :=
     fallback_refines_heap_keepKG (p := p) (P := P) env cap hcap1 hcap x ω1 μ1 (hb := hb) s s1 (sp - 16) ptr ((size + 31) / 32) q pb ph
       hwf rep1 hc hr hr1 hbd h48 hhb hbs hnone ha hcost a1 a8 a7 (by rw [a9, hal]) a10 a0 (by omega) (by omega)
       (by omega) hba hb0 hbT hA hfo hHTs hHT ⟨by omega, by omega⟩ hSb hp1 hst1
@@ -291,7 +357,7 @@ theorem realloc_wrap_fallback_keepKG {X : Type} {p : ByteArray} {P : Program} [H
     by rw [fget g3 7 (by decide) (by decide)]; exact e7, cl,
     ⟨h', HeapPages.of_eq hpH ww3, hE', hph, hpb⟩, fun a h1 h2 => by rw [ww3]; exact hst2 a h1 h2,
     fun a ha1 ha2 => ((fr3 a ha1 (by omega)).trans (stk2 a ha1 (by omega))).trans
-      (fr1 a ha1 (Or.inr ha2) (Or.inr (by omega)) (Or.inr (by omega))), ?_, ?_, ?_, ?_, ?_⟩
+      (fr1 a ha1 (Or.inr ha2) (Or.inr (by omega)) (Or.inr (by omega))), ?_, ?_, ?_, ?_, ?_, ?_⟩
   · rw [c0, rdN_frame (μ := μ1) fun j hj => stk2 _ (by omega) (by omega), show sp - 16 + 8 = sp - 8 by omega]
     exact rd_restore st8
   · rw [c1, h1]; congr 1; omega
@@ -302,6 +368,10 @@ theorem realloc_wrap_fallback_keepKG {X : Type} {p : ByteArray} {P : Program} [H
     obtain ⟨hl1, hl2⟩ := others_lt hwf hb0 hbT ha
     rw [fr3 a (by omega) (by omega), kp2 a ha]
     exact fr1 a (by omega) (Or.inl (by omega)) (Or.inr (by omega)) (Or.inr (by omega))
+  · intro a ha
+    have hg := ha; unfold Glob at hg
+    rw [fr3 a (by omega) (by omega), gl2 a ha]
+    exact fr1 a (by omega) (Or.inl (by omega)) (Or.inr (by omega)) (Or.inl (by omega))
 
 /-- `realloc_wrap_fallback_keepKG` for the refine contract (`refineHeap env`). -/
 theorem realloc_wrap_fallback_keepK {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap : Nat) (hcap1 : 2000 ≤ cap)
@@ -331,7 +401,8 @@ theorem realloc_wrap_fallback_keepK {p : ByteArray} {P : Program} [HasCode p P] 
         (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧
         (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
         ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
-        (∀ a, OthersData s ptr a → μ'.read a = μ.read a) :=
+        (∀ a, OthersData s ptr a → μ'.read a = μ.read a) ∧
+        (∀ a, Glob a → μ'.read a = μ.read a) :=
   realloc_wrap_fallback_keepKG (p := p) (P := P) (refineHeap env) cap hcap1 hcap x ω μ (hb := hb) s s1 sp ptr al size q pb ph hwf hrep hc hr hr1 hbd h48 hhb hbs hnone ha hcost h1 h7 h9 h10 hal1 hal2 hsp hsp1 hsp8 hba hb0 hbT hA hfo hl (S0 := S0) (S1 := S1) hHTs hHT hS hSb hp hst
 
 open Services.Bootstrap.Decode.ReallocOk Services.Bootstrap.Decode.VecU8 in
@@ -368,13 +439,14 @@ theorem realloc_wrap_cases_keepKG {X : Type} {p : ByteArray} {P : Program} [HasC
       (realloc (growTo pb) hb s ptr ((al + 31) / 32) ((size + 31) / 32) = none →
         ω'[7] = UInt64.ofNat 0 ∧ Rep μ' s ∧ HeapPages μ' 48 pb ph) ∧
       (∀ r s' b, realloc (growTo pb) hb s ptr ((al + 31) / 32) ((size + 31) / 32) = some (r, s', b) →
-        ∀ a, OthersData s ptr a → μ'.read a = μ.read a) := by
+        ∀ a, OthersData s ptr a → μ'.read a = μ.read a) ∧
+      (∀ a, Glob a → μ'.read a = μ.read a) := by
   have hwr := HeapPages.wrAt hp hhb hst
   have hpb20 : pb < 1048576 := by omega
   have hal : al + 31 < 68719476736 := by omega
   by_cases hin : (size + 31) / 32 ≤ usable s ptr ∧ size ≠ 0
   · -- in place (the same usable size, or shrunk)
-    obtain ⟨s', e, ω', μ', dat, run, rep, wf, fo, e7, cl, ww, stk, e0, e1, e5, e6, kp⟩ :=
+    obtain ⟨s', e, ω', μ', dat, run, rep, wf, fo, e7, cl, ww, stk, e0, e1, e5, e6, kp, gl⟩ :=
       realloc_wrap_inplace_keep (p := p) (P := P) (R := env.rel cap) (grow := growTo pb) (hb := hb) x ω μ s sp ptr al size hwf hrep hc
         hin.2 hin.1 h1 h7 h9 h10 hal (by omega) (by omega) hsp1 hb0 hbT hfo hl hHT ⟨by omega, by omega⟩ hwr
     exact ⟨ω', μ',
@@ -383,11 +455,11 @@ theorem realloc_wrap_cases_keepKG {X : Type} {p : ByteArray} {P : Program} [HasC
       run.mono (by omega), cl, fun a h1 h2 => by rw [ww]; exact hst a h1 h2, stk, e0, e1, e5, e6,
       fun r s'' b hrr => by
         rw [e] at hrr; cases hrr; obtain ⟨eb, ea⟩ := realloc_inplace_state hin.1 (by omega) e; exact ⟨e7, rep, wf, fo, eb, ph, HeapPages.of_eq hp ww, by rw [eb, ea]; exact hHT, Nat.le_refl _, hhb⟩,
-      fun hrr => (by rw [e] at hrr; cases hrr), fun _ _ _ _ => kp⟩
+      fun hrr => (by rw [e] at hrr; cases hrr), fun _ _ _ _ => kp, gl⟩
   by_cases hs0 : size = 0
   · -- to size 0: freed, null
     subst hs0
-    obtain ⟨e, ω', μ', run, rep, wf, fo, e7, cl, ww, stk, e0, e1, e5, e6, kp⟩ :=
+    obtain ⟨e, ω', μ', run, rep, wf, fo, e7, cl, ww, stk, e0, e1, e5, e6, kp, gl⟩ :=
       realloc_wrap_zero_keep (p := p) (P := P) (R := env.rel cap) (grow := growTo pb) (hb := hb) x ω μ s sp ptr al hwf hrep hc
         (hz rfl) h1 h7 h9 h10 hal (by omega) hsp1 hb0 hbT hfo hl hHT ⟨by omega, by omega⟩ hwr
     exact ⟨ω', μ',
@@ -399,13 +471,13 @@ theorem realloc_wrap_cases_keepKG {X : Type} {p : ByteArray} {P : Program} [HasC
       fun r s'' b hrr => by
         rw [show (0 + 31) / 32 = 0 from rfl, e] at hrr; cases hrr
         exact ⟨e7, rep, wf, fo, free_base', ph, HeapPages.of_eq hp ww, by rw [free_base', free_allocated]; exact hHT, Nat.le_refl _, hhb⟩,
-      fun hrr => (by rw [show (0 + 31) / 32 = 0 from rfl, e] at hrr; cases hrr), fun _ _ _ _ => kp⟩
+      fun hrr => (by rw [show (0 + 31) / 32 = 0 from rfl, e] at hrr; cases hrr), fun _ _ _ _ => kp, gl⟩
   have hr : usable s ptr < (size + 31) / 32 := by omega
   cases hg : growInplace (growTo pb) s ptr ((size + 31) / 32) with
   | some s' =>
     by_cases hng : s'.allocated = s.allocated
     · -- grown in place
-      obtain ⟨e, ω', μ', dat, run, rep, wf, fo, e7, cl, ww, stk, e0, e1, e5, e6, kp⟩ :=
+      obtain ⟨e, ω', μ', dat, run, rep, wf, fo, e7, cl, ww, stk, e0, e1, e5, e6, kp, gl⟩ :=
         realloc_wrap_grow_keep (p := p) (P := P) (R := env.rel cap) (hb := hb) x ω μ s s' sp ptr al size hwf hrep hc hr hr1 hg hng
           h1 h7 h9 h10 hal (by omega) hsp1 hb0 hbT hA hfo hl hHT ⟨by omega, by omega⟩ hwr
       exact ⟨ω', μ',
@@ -414,9 +486,9 @@ theorem realloc_wrap_cases_keepKG {X : Type} {p : ByteArray} {P : Program} [HasC
       run.mono (by omega), cl, fun a h1 h2 => by rw [ww]; exact hst a h1 h2, stk, e0, e1, e5, e6,
         fun r s'' b hrr => by
           rw [e] at hrr; cases hrr; exact ⟨e7, rep, wf, fo, growInplace_base hg, ph, HeapPages.of_eq hp ww, by rw [growInplace_base hg, hng]; exact hHT, Nat.le_refl _, hhb⟩,
-        fun hrr => (by rw [e] at hrr; cases hrr), fun _ _ _ _ => kp⟩
+        fun hrr => (by rw [e] at hrr; cases hrr), fun _ _ _ _ => kp, gl⟩
     · -- grown in place, the heap grown
-      obtain ⟨e, ω', μ', dat, run, rep, wf, fo, e7, cl, ⟨h', hpH, hB, hph, hpb⟩, hst', stk, e0, e1, e5, e6, kp⟩ :=
+      obtain ⟨e, ω', μ', dat, run, rep, wf, fo, e7, cl, ⟨h', hpH, hB, hph, hpb⟩, hst', stk, e0, e1, e5, e6, kp, gl⟩ :=
         realloc_wrap_grow_heapK_keepG (p := p) (P := P) (hb := hb) env cap hcap x ω μ s s' sp ptr al size hwf hrep hc hr hr1 pb ph hbd h48 hhb hbs hg
           hng h1 h7 h9 h10 hal (by omega) hsp1 hb0 hbT hA hfo
           (by have := growInplace_pages hr hg hng; omega) hl hHT ⟨by omega, by omega⟩ hSb hp hst
@@ -425,7 +497,7 @@ theorem realloc_wrap_cases_keepKG {X : Type} {p : ByteArray} {P : Program} [HasC
       fun r s'' b hrr hn1 _ => by rw [e] at hrr; cases hrr; exact absurd rfl hn1,
       run.mono (by omega), cl, hst', stk, e0, e1, e5, e6,
         fun r s'' b hrr => by rw [e] at hrr; cases hrr; exact ⟨e7, rep, wf, fo, growInplace_base hg, h', hpH, hB, hph, hpb⟩,
-        fun hrr => (by rw [e] at hrr; cases hrr), fun _ _ _ _ => kp⟩
+        fun hrr => (by rw [e] at hrr; cases hrr), fun _ _ _ _ => kp, gl⟩
   | none =>
     cases ha : alloc (growTo pb) hb 1 ((size + 31) / 32) s with
     | some qs =>
@@ -434,7 +506,7 @@ theorem realloc_wrap_cases_keepKG {X : Type} {p : ByteArray} {P : Program} [HasC
         by_cases hng : s1.allocated = s.allocated
         · rw [hng]; have := pagesOf_le hHT; omega
         · have := alloc_pages hwf ha hng; omega
-      obtain ⟨e, ω', μ', dat, run, rep, wf, fo, e7, cl, ⟨h', hpH, hB, hph, hpb⟩, hst', stk, e0, e1, e5, e6, kp⟩ :=
+      obtain ⟨e, ω', μ', dat, run, rep, wf, fo, e7, cl, ⟨h', hpH, hB, hph, hpb⟩, hst', stk, e0, e1, e5, e6, kp, gl⟩ :=
         realloc_wrap_fallback_keepKG (p := p) (P := P) (hb := hb) env cap (by omega) hcap x ω μ s s1 sp ptr al size q pb ph hwf hrep hc hr hr1 hbd h48 hhb hbs hg
           ha hc1 h1 h7 h9 h10 hal1 hal2 hsp hsp1 hsp8 hba hb0 hbT hA hfo hl hHTs hHT hS hSb hp hst
       exact ⟨ω', μ',
@@ -442,7 +514,7 @@ theorem realloc_wrap_cases_keepKG {X : Type} {p : ByteArray} {P : Program} [HasC
       fun r s'' b hrr _ _ => by rw [e] at hrr; cases hrr; exact dat,
       run.mono (by omega), cl, hst', stk, e0, e1, e5, e6,
         fun r s'' b hrr => by rw [e] at hrr; cases hrr; exact ⟨e7, rep, wf, fo, by rw [free_base', (alloc_block hwf hbT ha).1], h', hpH, by rw [free_base', free_allocated]; exact hB, hph, hpb⟩,
-        fun hrr => (by rw [e] at hrr; cases hrr), fun _ _ _ _ => kp⟩
+        fun hrr => (by rw [e] at hrr; cases hrr), fun _ _ _ _ => kp, gl⟩
     | none =>
       obtain ⟨e, ω', μ', run, rep, e7, cl, hp', hst', fr, -, e0, e1, e5, e6⟩ :=
         realloc_wrap_fallback_failG (p := p) (P := P) (hb := hb) env x ω μ s sp ptr al size pb ph hwf hrep hc hr hr1 hbd h48 hhb hbs hg
@@ -453,7 +525,9 @@ theorem realloc_wrap_cases_keepKG {X : Type} {p : ByteArray} {P : Program} [HasC
       (liftG (by omega) hcap run).mono (by omega), cl, hst',
         fun a h1 h2 => fr a h1 (Or.inr h2) (Or.inr (by omega)) (Or.inr (by omega)), e0, e1, e5, e6,
         fun r s'' b hrr => (by rw [e] at hrr; cases hrr), fun _ => ⟨e7, rep, hp'⟩,
-        fun r s'' b hrr => (by rw [e] at hrr; cases hrr)⟩
+        fun r s'' b hrr => (by rw [e] at hrr; cases hrr),
+        fun a ha => by
+          unfold Glob at ha; exact fr a (by omega) (Or.inl (by omega)) (Or.inr (by omega)) (Or.inl (by omega))⟩
 
 open Services.Bootstrap.Decode.ReallocOk Services.Bootstrap.Decode.VecU8 in
 /-- `realloc_wrap_cases_keepKG` for the refine contract (`refineHeap env`). -/
@@ -487,7 +561,8 @@ theorem realloc_wrap_cases_keepK {p : ByteArray} {P : Program} [HasCode p P] (en
       (realloc (growTo pb) hb s ptr ((al + 31) / 32) ((size + 31) / 32) = none →
         ω'[7] = UInt64.ofNat 0 ∧ Rep μ' s ∧ HeapPages μ' 48 pb ph) ∧
       (∀ r s' b, realloc (growTo pb) hb s ptr ((al + 31) / 32) ((size + 31) / 32) = some (r, s', b) →
-        ∀ a, OthersData s ptr a → μ'.read a = μ.read a) :=
+        ∀ a, OthersData s ptr a → μ'.read a = μ.read a) ∧
+      (∀ a, Glob a → μ'.read a = μ.read a) :=
   realloc_wrap_cases_keepKG (p := p) (P := P) (refineHeap env) cap hcap1 hcap x ω μ (hb := hb) s sp ptr al size pb ph hwf hrep hc hr1 hz hbd h48 hhb hbs h1 h7 h9 h10 hal1 hal2 hsp hsp1 hsp8 hba hb0 hbT hA hfo hl (S0 := S0) (S1 := S1) hHTs hHT hS hSb hp hst
 
 /-- **`realloc` keeps the other allocated chunks** (alignment one unit, a nonzero request, the data
@@ -576,9 +651,11 @@ open Services.Bootstrap.Decode.HeapCtx Services.Bootstrap.Decode.ReallocOk Picoa
     octets), either the model's `realloc` gives `(r, s', b)` and the wrapper returns r with the
     context kept for `s'`, the old block's first min(usable, ⌈size/32⌉)·32 octets at r, every other
     allocated chunk of `s` still a chunk of `s'` with its data, r's chunk allocated of exactly
-    ⌈size/32⌉ + 1 units, the stack from sp up, memory below 196608 and the stack's access kept; or
-    the model's `realloc` fails and the wrapper returns null with the context kept for `s`. The heap
-    base is 8-aligned (`hba`; `HeapCtx` does not record it). -/
+    ⌈size/32⌉ + 1 units, the stack from sp up, memory below 196608 and the stack's access kept, the
+    globals below the allocator (`Glob`) kept, the heap base kept, and r either ptr or the data
+    address of no allocated chunk of `s` (`VecU8.realloc_fresh`); or the model's `realloc` fails and
+    the wrapper returns null with the context kept for `s` and the globals kept. The heap base is
+    8-aligned (`hba`; `HeapCtx` does not record it). -/
 theorem realloc_callG {X : Type} {p : ByteArray} {P : Program} [HasCode p P] (env : HeapHost X) (cap : Nat)
     (hcap1 : 134217728 ≤ cap) (hcap : cap < 18446744073709551616) (x : X) (ω : Regs) (μ : Memory)
     {hb : Nat} (s : State) (sp ptr al size pb S0 S1 : Nat) (H : HeapCtxC env.code pb S0 S1 μ s)
@@ -598,16 +675,19 @@ theorem realloc_callG {X : Type} {p : ByteArray} {P : Program} [HasCode p P] (en
       (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
       (∀ a, a < 196608 → μ'.read a = μ.read a ∧ μ'.readable a = μ.readable a) ∧
       (∀ a, S0 ≤ a → μ'.writable a = μ.writable a) ∧
-      ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6]) ∨
+      ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      (∀ a, Glob a → μ'.read a = μ.read a) ∧ s'.base = s.base ∧
+      (r = ptr ∨ ∀ e ∈ chunks s, e.used = true → e.addr + 32 ≠ r)) ∨
     (realloc (growTo pb) hb s ptr ((al + 31) / 32) ((size + 31) / 32) = none ∧ ∃ ω' μ',
       FreeStepsH p (env.rel cap) 40701 ω μ x 40821 ω' μ' x (64 * usable s ptr + 1300) ∧
       ω'[7] = UInt64.ofNat 0 ∧ HeapCtxC env.code pb S0 S1 μ' s ∧
       (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
-      ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6]) := by
+      ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      (∀ a, Glob a → μ'.read a = μ.read a)) := by
   obtain ⟨ph, h48, hhb, hp, hHTs, hHT⟩ := H.pages
   have hS1 := H.hS1
   have hSb := H.hSb
-  obtain ⟨ω', μ', dat, -, run, cl, hst', stk, e0, e1, e5, e6, hsome, hnone, kp⟩ :=
+  obtain ⟨ω', μ', dat, -, run, cl, hst', stk, e0, e1, e5, e6, hsome, hnone, kp, gl⟩ :=
     realloc_wrap_cases_keepKG (p := p) (P := P) (hb := hb) env cap hcap1 hcap x ω μ s sp ptr al size pb ph H.wf H.rep
       hc hr1 (fun h => absurd h (by omega)) H.bd h48 hhb (by omega) h1 h7 h9 h10 hal1 hal2 hsp.1 (by omega) hsp.2
       hba H.hb0 H.hbT H.hA H.fo H.lock hHTs hHT hS hSb hp H.st
@@ -636,17 +716,24 @@ theorem realloc_callG {X : Type} {p : ByteArray} {P : Program} [HasCode p P] (en
       have := (VecU8.chunk_in wf' hc'm hc'u).1
       have hb0 := H.hb0
       omega
+    have fresh : r = ptr ∨ ∀ e ∈ chunks s, e.used = true → e.addr + 32 ≠ r := by
+      by_cases hrp : r = ptr
+      · exact Or.inl hrp
+      · refine Or.inr fun e he heu => ?_
+        by_cases hep : e.addr + 32 = ptr
+        · rw [hep]; exact fun h => hrp h.symm
+        · exact VecU8.realloc_fresh H.wf hc h0 hrl1 e he heu hep
     left
     refine ⟨r, s', b, ω', μ', rfl, run, e7,
       ⟨wf', rep', fo', cl, by rw [hbase]; exact H.hb0, by rw [hbase]; exact H.hbT, by omega, H.bd,
         ⟨h', by omega, hpb, hpH, by omega, hE'⟩, hSb, hS1, hst', ro'⟩,
       dat r s' b hrl hr0, realloc_keeps_used H.wf hc h0 hrl1, ⟨c', hc'm, hc'a, hc'u, hc's⟩,
-      kp r s' b hrl, stk, low, wr, e0, e1, e5, e6⟩
+      kp r s' b hrl, stk, low, wr, e0, e1, e5, e6, gl, hbase, fresh⟩
   | none =>
     obtain ⟨e7, rep', hp'⟩ := hnone hrl
     right
     exact ⟨rfl, ω', μ', run, e7, ⟨H.wf, rep', H.fo, cl, H.hb0, H.hbT, H.hA, H.bd,
-      ⟨ph, h48, hhb, hp', hHTs, hHT⟩, hSb, hS1, hst', ro'⟩, stk, e0, e1, e5, e6⟩
+      ⟨ph, h48, hhb, hp', hHTs, hHT⟩, hSb, hS1, hst', ro'⟩, stk, e0, e1, e5, e6, gl⟩
 
 open Services.Bootstrap.Decode.HeapCtx Services.Bootstrap.Decode.ReallocOk Picoalloc in
 /-- `realloc_callG` for the refine contract (`refineHeap env`). -/
@@ -669,12 +756,15 @@ theorem realloc_call {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHo
       (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
       (∀ a, a < 196608 → μ'.read a = μ.read a ∧ μ'.readable a = μ.readable a) ∧
       (∀ a, S0 ≤ a → μ'.writable a = μ.writable a) ∧
-      ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6]) ∨
+      ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      (∀ a, Glob a → μ'.read a = μ.read a) ∧ s'.base = s.base ∧
+      (r = ptr ∨ ∀ e ∈ chunks s, e.used = true → e.addr + 32 ≠ r)) ∨
     (realloc (growTo pb) hb s ptr ((al + 31) / 32) ((size + 31) / 32) = none ∧ ∃ ω' μ',
       FreeStepsH p (refineContractK cap env) 40701 ω μ x 40821 ω' μ' x (64 * usable s ptr + 1300) ∧
       ω'[7] = UInt64.ofNat 0 ∧ HeapCtx env pb S0 S1 μ' s ∧
       (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
-      ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6]) :=
+      ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      (∀ a, Glob a → μ'.read a = μ.read a)) :=
   realloc_callG (p := p) (P := P) (refineHeap env) cap hcap1 hcap x ω μ (hb := hb) s sp ptr al size pb S0 S1 H hc hsz hr1 hba h1 h7 h9 h10 hal1 hal2 hsp hS
 
 end Services.Bootstrap.Decode.ReallocCall

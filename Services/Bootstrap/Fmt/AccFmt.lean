@@ -1,4 +1,6 @@
 import Services.Bootstrap.Fmt.LogSite
+import Services.Bootstrap.Fmt.Info
+import Services.Bootstrap.Acc.Args
 
 /-!
 # Accumulate's first log line: `format!` at 6580 and what follows, frame-only
@@ -119,12 +121,105 @@ theorem acc_fmt_site {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] 
   · obtain ⟨ω3, μ3, s3, run3, H3, hb3, out3, keep3, c1, c6⟩ := log_site (p := p) (P := P) cap hcap env envH pb S0 S1
       x2 ω2 μ2 s s2 S H2 hso (b1.trans (a1.trans h1)) ⟨by omega, by omega, by omega⟩
     have K3 : Keeps pb S (fun a => S + 744 ≤ a ∧ a < S + 744 + 24) s μ2 μ3 s3 :=
-      ⟨⟨out3.access, out3.ro, fun a ha hb _ => out3.hi a ha hb id, out3.glob⟩,
+      ⟨⟨out3.access, out3.ro, fun a ha hb _ => out3.hi a ha hb (fun h => h), out3.glob⟩,
         fun d hd hu => (keep3 d hd hu).1, fun d hd hu a ha => (keep3 d hd hu).2 a ha⟩
     have K := K2.trans' K3
     rw [Nat.max_self] at K
     exact Or.inl ⟨ω3, μ3, x2, s3, (run1.trans (run2.trans run3)).mono (by omega), H3, hb3.trans hb2, K,
       c1.trans (b1.trans a1), c6.trans (b6.trans a6)⟩
   · exact Or.inr (Exhausts.pre run1 hx)
+
+/-- 6501: the call of `info`'s wrapper (49454), returning to 6508 (220). -/
+theorem site_info {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory) :
+    ∃ ω', FreeStepsH p R 6501 ω μ x 49454 ω' μ x 1 ∧ ω'[0] = UInt64.ofNat 220 ∧ ω'[1] = ω[1] ∧
+      ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ ω'[7] = ω[7] := by
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?_, ?_, ?_⟩
+  rotate_left
+  · pvm_go []
+  · refine ⟨?_, ?_, ?_, ?_, ?_⟩
+    all_goals post_simp [rdN_lit8]
+
+/-- The octets accumulate's first log line changes from sp = S up: the fields `Acc.fmt_setup` spills
+    (S + 80, S + 136, S + 208, the argument pairs at S + 1144 … S + 1192), the `String` at
+    S + 744 … S + 768, and the `info` record at S + 1568 … S + 1664. -/
+def logE (S a : Nat) : Prop :=
+  (S + 80 ≤ a ∧ a < S + 88) ∨ (S + 136 ≤ a ∧ a < S + 144) ∨ (S + 208 ≤ a ∧ a < S + 216) ∨
+  (S + 744 ≤ a ∧ a < S + 768) ∨ (S + 1144 ≤ a ∧ a < S + 1192) ∨ (S + 1568 ≤ a ∧ a < S + 1664)
+
+/-- **Accumulate's first log line, frame-only** (6501 … 6630, sp = 4278057152): `info` of the
+    service itself (`info_self`), the `format!` arguments (`Acc.fmt_setup`), `format!`, `log` (the
+    message unspecified) and the `String`'s `dealloc`. Under `accContractK cap env`
+    (1000 ≤ cap) and its `AllocOk`/`ReallocOk`, given the service's own account a in the context
+    with an `info` record shorter than 2⁶⁴ − 9 octets, the template's octets at 66464 and the
+    `String` vtable's words (`RoW`), it either reaches 6630 with the allocator's context kept (same
+    base), ω₁ kept, and from sp up only `logE` changed (`Keeps`); or a failed allocator call. -/
+theorem acc_log_line {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] [HasCodeA p P] (cap : Nat)
+    (hcap : 1000 ≤ cap ∧ cap < 2 ^ 64) (env : AccEnv) (envH : RefineHost.Env) (pb S0 S1 : Nat)
+    (HA : AllocOk p (accContractK cap env) envH pb S0 S1)
+    (HR : ReallocOk p (accContractK cap env) envH pb S0 S1)
+    (x : AccCtx) (a : ServiceAccount) (ha : x.1.state.accounts.get? x.1.id = some a)
+    (hlen : (infoValue a).length < 18446744073709551607)
+    (ω : Regs) (μ : Memory) (s : State)
+    (H : HeapCtx envH pb S0 S1 μ s) (hba : s.base % 8 = 0)
+    (h1 : ω[1] = UInt64.ofNat 4278057152) (h7 : ω[7] = UInt64.ofNat (4278057152 + 1568))
+    (hS : S0 + 800 ≤ 4278057152 - 488 ∧ 4278057152 + 1700 ≤ S1)
+    (hro : RoW μ) (htm : μ.readN 66464 42 = accTmplBytes)
+    (hrt : ∀ a, 66464 ≤ a → a < 66506 → μ.readable a = true) :
+    (∃ ω' μ' x' s', FreeStepsH p (accContractK cap env) 6501 ω μ x 6630 ω' μ' x'
+        (8020 + (1 + fmtCost 20 2900 accTmpl + 300)) ∧
+      HeapCtx envH pb S0 S1 μ' s' ∧ s'.base = s.base ∧ Keeps pb 4278057152 (logE 4278057152) s μ μ' s' ∧
+      ω'[1] = ω[1]) ∨
+    Exhausts p (accContractK cap env) pb 6501 ω μ x (8020 + (1 + fmtCost 20 2900 accTmpl)) := by
+  have hst := H.st
+  have hS1 := H.hS1
+  have hSb := H.hSb
+  have hro0 := H.ro
+  obtain ⟨ω1, run1, a0, a1, a5, a6, a7⟩ := site_info (p := p) (P := P) (R := accContractK cap env) x ω μ
+  obtain ⟨ω2, μ2, run2, b0, b1, b5, b6, fr2, rd2, wr2⟩ := info_self (p := p) (P := P) cap ⟨by omega, hcap.2⟩
+    env x a ha hlen ω1 μ 4278057152 (4278057152 + 1568) 220 6508 a0 (a1.trans h1) (a7.trans h7) (by decide)
+    jte_109 bs_6508 ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ (fun b h1 h2 => hst b (by omega) (by omega))
+    (fun b h1 h2 => hst b (by omega) (by omega))
+  obtain ⟨ω3, μ3, run3, c1, c7, c8, c9, -, -, -, -, -, -, m0, m1, m2, m3, m4, m5, fr3, rd3, wr3⟩ :=
+    Acc.fmt_setup (p := p) (P := P) (R := accContractK cap env) x ω2 μ2 (b1.trans (a1.trans h1))
+      (fun b h1 h2 => by rw [wr2]; exact hst b (by omega) (by omega))
+      (fun b h1 h2 => by rw [wr2]; exact hst b (by omega) (by omega))
+      (fun b h1 h2 => by rw [wr2]; exact hst b (by omega) (by omega))
+      (fun b h1 h2 => by rw [wr2]; exact hst b (by omega) (by omega))
+  -- the frame of info and the set-up
+  have k3 : ∀ b, b < 4294967296 → ¬ ((4278057152 - 488 ≤ b ∧ b < 4278057152) ∨ logE 4278057152 b) →
+      μ3.read b = μ.read b := fun b hb hn => by
+    unfold logE at hn
+    rw [fr3 b hb (by omega) (by omega) (by omega) (by omega), fr2 b hb (by omega) (by omega)]
+  have wr13 : ∀ b, μ3.writable b = μ.writable b := fun b => by rw [wr3, wr2]
+  have rd13 : ∀ b, μ3.readable b = μ.readable b := fun b => by rw [rd3, rd2]
+  have K1 : Keeps pb 4278057152 (logE 4278057152) s μ μ3 s :=
+    Keeps.of_frame (Z := fun b => (4278057152 - 488 ≤ b ∧ b < 4278057152) ∨ logE 4278057152 b) (fun _ h _ => h)
+      k3 rd13 wr13 (fun b hz => by unfold logE at hz; exact hst b (by omega) (by omega))
+      (fun b hz hb => by rcases hz with hz | hz; · omega
+                         · exact hz)
+      (fun b hz hg => by unfold Glob at hg; unfold logE at hz; omega)
+      (fun d hd hu b hb => by
+        have := chunk_bounds H.wf hd
+        have := H.hbT
+        unfold InData at hb; unfold logE; omega)
+  have H3 : HeapCtx envH pb S0 S1 μ3 s := ctx_hi H (fun b hb => k3 b (by omega) (by unfold logE; omega)) wr13
+  have klow : ∀ b, b < 196608 → μ3.read b = μ.read b ∧ μ3.readable b = μ.readable b := fun b hb =>
+    ⟨k3 b (by omega) (by unfold logE; omega), rd13 b⟩
+  have hp : ∀ (v : Nat) (o : Nat), μ3.readN o 8 = Num.encodeLE 8 v → v < 18446744073709551616 → rdN μ3 o 8 = v :=
+    fun v o h hv => rdN_of_readN h hv
+  rcases acc_fmt_site (p := p) (P := P) cap hcap env envH pb S0 S1 HA HR x ω3 μ3 s 4278057152 H3 hba
+      c1 c7 c8 c9 ⟨by omega, by decide, by decide, by omega⟩
+      (hro.congr (fun b h1 h2 => klow b h2))
+      (by rw [readN_congr2 (b := 66464) (fun j hj => (klow _ (by omega)).1)]; exact htm)
+      (fun b h1 h2 => by rw [(klow b (by omega)).2]; exact hrt b h1 h2)
+      (hp _ _ m0 (by decide)) (hp _ _ m1 (by decide)) (hp _ _ m2 (by decide)) (hp _ _ m3 (by decide))
+      (hp _ _ m4 (by decide)) (hp _ _ m5 (by decide)) with
+    ⟨ω4, μ4, x4, s4, run4, H4, hb4, K4, d1, -⟩ | hx
+  · have K := K1.trans' (K4.mono (Nat.le_refl _) (fun b hb => by unfold logE; omega))
+    rw [Nat.max_self] at K
+    exact Or.inl ⟨ω4, μ4, x4, s4, ((run1.trans run2).trans (run3.trans run4)).mono (by omega), H4, hb4, K,
+      d1.trans (c1.trans h1.symm)⟩
+  · exact Or.inr ((Exhausts.pre ((run1.trans run2).trans run3) hx).mono (by omega))
 
 end Services.Bootstrap.Fmt

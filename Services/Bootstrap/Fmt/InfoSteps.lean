@@ -61,7 +61,7 @@ theorem ic {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (�
 
 /-- 48688 … 58434: after an `Ok`, the next field: `read_exact(T + 160, T + 208, 8)`, returning to
     2166. Only T … T + 56 and T + 176 … T + 240 change. -/
-theorem id {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
+theorem i_d {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
     (T : Nat) (hT : 65536 ≤ T ∧ T + 264 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h7 : ω[7] = UInt64.ofNat 0) (hr : ∀ a, T ≤ a → a < T + 264 → μ.readable a = true)
     (hw : ∀ a, T ≤ a → a < T + 264 → μ.writable a = true) :

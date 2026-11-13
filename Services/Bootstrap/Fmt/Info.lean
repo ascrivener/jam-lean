@@ -160,7 +160,7 @@ theorem info_reads {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x
     rw [wr2]; exact hw1' a h1 h2
   obtain ⟨ω3, μ3, run3, c1_3, c7_3, st3, fr3, rd3, wr3⟩ := rd_step_re (p := p) (P := P) (R := R) x ω2 μ2
     T O D v6 48 48688 48717 2166 8 8 hT (by omega) (by omega) st2
-    (id (p := p) (P := P) (R := R) x ω2 μ2 T ⟨by omega, by omega⟩ c1_2 c7_2 (fun a h1 h2 => Memory.readable_of_writable (hw2' a (by omega) h2)) (fun a h1 h2 => hw2' a (by omega) h2))
+    (i_d (p := p) (P := P) (R := R) x ω2 μ2 T ⟨by omega, by omega⟩ c1_2 c7_2 (fun a h1 h2 => Memory.readable_of_writable (hw2' a (by omega) h2)) (fun a h1 h2 => hw2' a (by omega) h2))
     (by decide) jte_1082 bs_48717 hw2'
   have hw3' : ∀ a, T - 104 ≤ a → a < T + 264 → μ3.writable a = true := fun a h1 h2 => by
     rw [wr3]; exact hw2' a h1 h2

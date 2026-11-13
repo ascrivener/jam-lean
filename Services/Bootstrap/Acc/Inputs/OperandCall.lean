@@ -54,7 +54,7 @@ theorem vv_any {X : Type} {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA 
     (hn : n ≤ 16384) (hrl : (Blob.encodeNat n).length + n ≤ rlen) (hrl32 : rlen < 4294967296)
     (henc : μ.readN ip (Blob.encodeNat n).length = Blob.encodeNat n)
     (hsrc : ∃ c ∈ chunks s, c.used = true ∧ c.addr + 32 ≤ ip ∧
-      ip + (Blob.encodeNat n).length + n + 32 ≤ c.addr + 32 * c.size)
+      ip + (Blob.encodeNat n).length + n ≤ c.addr + 32 * c.size)
     (hsp : 2147483960 ≤ sp ∧ sp % 8 = 0) (hSTk : S0 + 440 ≤ sp)
     (hout : sp ≤ out ∧ out + 24 ≤ S1) (hrd : sp ≤ rd ∧ rd + 16 ≤ S1)
     (dor : out + 24 ≤ rd ∨ rd + 16 ≤ out) :
@@ -120,7 +120,7 @@ theorem op_mid_ok {X : Type} {p : ByteArray} {P : Program} [HasCode p P] [HasCod
     (ht : μ.readN ip 1 = [0])
     (henc : μ.readN (ip + 1) (Blob.encodeNat n).length = Blob.encodeNat n)
     (hsrc : ∃ c ∈ chunks s, c.used = true ∧ c.addr + 32 ≤ ip ∧
-      ip + 1 + (Blob.encodeNat n).length + n + 32 ≤ c.addr + 32 * c.size) :
+      ip + 1 + (Blob.encodeNat n).length + n ≤ c.addr + 32 * c.size) :
     (∃ po s1 ω' μ', VAlloc pb hb n po s s1 ∧
       FreeStepsH p (env.rel cap) 46889 ω μ x 39634 ω' μ' x (7 * n + 2000) ∧
       HeapCtxC env.code pb S0 S1 μ' s1 ∧ (∀ c ∈ chunks s, c.used = true → c ∈ chunks s1) ∧
@@ -305,7 +305,7 @@ theorem op_end {X : Type} {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA 
     (hn : n ≤ 16384) (hrl : (Blob.encodeNat n).length + n ≤ rlen) (hrl32 : rlen < 4294967296)
     (henc : μ.readN it (Blob.encodeNat n).length = Blob.encodeNat n)
     (hsrc : ∃ c ∈ chunks s, c.used = true ∧ c.addr + 32 ≤ it ∧
-      it + (Blob.encodeNat n).length + n + 32 ≤ c.addr + 32 * c.size) :
+      it + (Blob.encodeNat n).length + n ≤ c.addr + 32 * c.size) :
     (∃ pt s2 ω' μ', VAlloc pb hb n pt s s2 ∧
       FreeStepsH p (env.rel cap) 39634 ω μ x 47332 ω' μ' x (7 * n + 2000) ∧
       HeapCtxC env.code pb S0 S1 μ' s2 ∧ (∀ c ∈ chunks s, c.used = true → c ∈ chunks s2) ∧

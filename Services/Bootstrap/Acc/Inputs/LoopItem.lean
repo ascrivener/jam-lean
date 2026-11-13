@@ -39,7 +39,7 @@ def ItemOk {X : Type} (env : HeapHost X) (cap pb : Nat) (p : ByteArray) (P : Pro
     2147483960 + 424 ≤ sp → sp % 8 = 0 → S0 + 864 ≤ sp → sp + 480 ≤ rd → rd + 16 ≤ S1 →
     μ.readN rd 8 = Num.encodeLE 8 ip → μ.readN (rd + 8) 8 = Num.encodeLE 8 rlen →
     enc.length ≤ rlen → rlen < 4294967296 → μ.readN ip enc.length = enc →
-    (∃ c ∈ chunks s, c.used = true ∧ c.addr + 32 ≤ ip ∧ ip + enc.length + 32 ≤ c.addr + 32 * c.size) →
+    (∃ c ∈ chunks s, c.used = true ∧ c.addr + 32 ≤ ip ∧ ip + enc.length ≤ c.addr + 32 * c.size) →
     (∃ s' ω' μ', FreeStepsH p (env.rel cap) 45126 ω μ x 45168 ω' μ' x N ∧
       ω'[0] = UInt64.ofNat 2044 ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       rdN μ' (sp + 88) 8 ≠ 18446744073709551614 ∧

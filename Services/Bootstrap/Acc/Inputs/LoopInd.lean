@@ -49,7 +49,7 @@ theorem lp_body {X : Type} (env : HeapHost X) (cap pb N : Nat) {p : ByteArray} {
     (hC : C ∈ chunks st) (hCu : C.used = true) (hCq : C.addr + 32 ≤ q) (hCe : q + 184 * n ≤ C.addr + 32 * C.size)
     (hR0 : μ.readN rd 8 = Num.encodeLE 8 ip) (hR8 : μ.readN (rd + 8) 8 = Num.encodeLE 8 rlen)
     (hrl : enc.length ≤ rlen) (hrl32 : rlen < 4294967296) (henc : μ.readN ip enc.length = enc)
-    (hsrc : ∃ c ∈ chunks st, c.used = true ∧ c.addr + 32 ≤ ip ∧ ip + enc.length + 32 ≤ c.addr + 32 * c.size) :
+    (hsrc : ∃ c ∈ chunks st, c.used = true ∧ c.addr + 32 ≤ ip ∧ ip + enc.length ≤ c.addr + 32 * c.size) :
     (∃ st' ω' μ', FreeStepsH p (env.rel cap) 45126 ω μ x 45103 ω' μ' x (N + 2000) ∧
       ω'[1] = UInt64.ofNat s ∧ ω'[5] = UInt64.ofNat c ∧ ω'[6] = UInt64.ofNat L ∧
       HeapCtxC env.code pb S0 S1 μ' st' ∧ (∀ c ∈ chunks st, c.used = true → c ∈ chunks st') ∧
@@ -164,7 +164,7 @@ theorem lp_items {X : Type} (env : HeapHost X) (cap pb N : Nat) {p : ByteArray} 
     rdN μ (s + 56) 8 = q → rdN μ (s + 64) 8 = n → rdN μ (s + 72) 8 = q → rdN μ (s + 80) 8 = L →
     L + rest.length = n →
     C ∈ chunks st → C.used = true → C.addr + 32 ≤ q → q + 184 * n ≤ C.addr + 32 * C.size →
-    Rc ∈ chunks st → Rc.used = true → Rc.addr + 32 ≤ ip → ip + (encs rest).length + 32 ≤ Rc.addr + 32 * Rc.size →
+    Rc ∈ chunks st → Rc.used = true → Rc.addr + 32 ≤ ip → ip + (encs rest).length ≤ Rc.addr + 32 * Rc.size →
     μ.readN rd 8 = Num.encodeLE 8 ip → μ.readN (rd + 8) 8 = Num.encodeLE 8 rlen →
     (encs rest).length ≤ rlen → rlen < 4294967296 → μ.readN ip (encs rest).length = encs rest →
     (∃ st' ω' μ', FreeStepsH p (env.rel cap) 45126 ω μ x 45613 ω' μ' x ((N + 2100) * rest.length) ∧
@@ -340,7 +340,7 @@ theorem lp_call {X : Type} (env : HeapHost X) (cap pb N : Nat) (hcap1 : 13421772
     (hsp : 2147483960 + 424 + 480 ≤ sp ∧ sp % 8 = 0) (hSTk : S0 + 864 + 480 ≤ sp)
     (hrd : sp ≤ rd ∧ rd + 16 ≤ S1) (hout : sp ≤ out ∧ out + 24 ≤ S1) (dor : out + 24 ≤ rd ∨ rd + 16 ≤ out)
     (hR : Rc ∈ chunks s0) (hRu : Rc.used = true) (hRq : Rc.addr + 32 ≤ ip)
-    (hRe : ip + (encs rest).length + 32 ≤ Rc.addr + 32 * Rc.size)
+    (hRe : ip + (encs rest).length ≤ Rc.addr + 32 * Rc.size)
     (hR0 : μ.readN rd 8 = Num.encodeLE 8 ip) (hR8 : μ.readN (rd + 8) 8 = Num.encodeLE 8 rlen)
     (hrl : (encs rest).length ≤ rlen) (hrl32 : rlen < 4294967296) (henc : μ.readN ip (encs rest).length = encs rest) :
     (∃ q st' ω' μ', FreeStepsH p (env.rel cap) 44916 ω μ x 45613 ω' μ' x ((N + 2100) * rest.length + 1000) ∧

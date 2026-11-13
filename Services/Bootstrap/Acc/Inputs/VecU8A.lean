@@ -118,7 +118,7 @@ theorem vv_call {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
     (hn : 0 < n ∧ n ≤ 16384) (hrl : (Blob.encodeNat n).length + n ≤ rlen) (hrl32 : rlen < 4294967296)
     (henc : μ.readN ip (Blob.encodeNat n).length = Blob.encodeNat n)
     (hsrc : ∃ c ∈ chunks s, c.used = true ∧ c.addr + 32 ≤ ip ∧
-      ip + (Blob.encodeNat n).length + n + 32 ≤ c.addr + 32 * c.size)
+      ip + (Blob.encodeNat n).length + n ≤ c.addr + 32 * c.size)
     (hsp : 2147483960 ≤ sp ∧ sp % 8 = 0) (hSTk : S0 + 440 ≤ sp)
     (hout : sp ≤ out ∧ out + 24 ≤ S1) (hrd : sp ≤ rd ∧ rd + 16 ≤ S1)
     (dor : out + 24 ≤ rd ∨ rd + 16 ≤ out) :

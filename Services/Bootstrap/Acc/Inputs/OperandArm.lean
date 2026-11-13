@@ -52,7 +52,7 @@ theorem op_call_ok {X : Type} {p : ByteArray} {P : Program} [HasCode p P] [HasCo
       (Blob.encodeNat nt).length = Blob.encodeNat nt)
     (hsrc : ∃ c ∈ chunks s, c.used = true ∧ c.addr + 32 ≤ ip ∧
       ip + (128 + (Blob.encodeNat g).length + 1 + (Blob.encodeNat no).length + no +
-        (Blob.encodeNat nt).length + nt) + 32 ≤ c.addr + 32 * c.size) :
+        (Blob.encodeNat nt).length + nt) ≤ c.addr + 32 * c.size) :
     (∃ po pt s1 s2 ω' μ', VAlloc pb hb no po s s1 ∧ VAlloc pb hb nt pt s1 s2 ∧
       FreeStepsH p (env.rel cap) 46300 ω μ x 47332 ω' μ' x (7 * no + 7 * nt + 7000) ∧
       HeapCtxC env.code pb S0 S1 μ' s2 ∧ (∀ c ∈ chunks s, c.used = true → c ∈ chunks s2) ∧
@@ -170,7 +170,7 @@ theorem op_call_err {X : Type} {p : ByteArray} {P : Program} [HasCode p P] [HasC
     (htt : rdN μ (ip + 128 + (Blob.encodeNat g).length) 1 = t)
     (het : μ.readN (ip + 128 + (Blob.encodeNat g).length + 1) (Blob.encodeNat nt).length = Blob.encodeNat nt)
     (hsrc : ∃ c ∈ chunks s, c.used = true ∧ c.addr + 32 ≤ ip ∧
-      ip + (128 + (Blob.encodeNat g).length + 1 + (Blob.encodeNat nt).length + nt) + 32 ≤
+      ip + (128 + (Blob.encodeNat g).length + 1 + (Blob.encodeNat nt).length + nt) ≤
         c.addr + 32 * c.size) :
     (∃ pt s2 ω' μ', VAlloc pb hb nt pt s s2 ∧
       FreeStepsH p (env.rel cap) 46300 ω μ x 47332 ω' μ' x (7 * nt + 7000) ∧

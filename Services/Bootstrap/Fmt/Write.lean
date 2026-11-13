@@ -227,7 +227,7 @@ theorem wr_item {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env 
           rw [show W + 16 + j = W + (16 + j) by omega, fr2 _ (by omega) (Or.inr (by omega))])).trans hs.rl)
         hs.le⟩
     rcases hok ω2 μ2 x s T (T + 48) W cap len 2726 64589 i (c + 1) H2 hba KA2 hf2 b0 (b1.trans (a1.trans h1))
-        b5 b6 b7 b8 (by omega) (by omega) (by decide) jte_1362 bs_64589 hT (by omega) ⟨by omega, hW.2.2⟩
+        b5 b6 b7 b8 (by omega) (by omega) (by decide) jte_1362 bs_64589 hT (by omega) ⟨by omega, hW.2.2⟩ hW.2.1
         ⟨by omega, by omega, Or.inl (by omega)⟩ (by omega) with
       ⟨ω3, μ3, x3, s3, cap3, n, hnM, run3, H3, hb3, hf3, hc31, hc32, K3, e0, e1, e5, e6, e7⟩ | hx
     · obtain ⟨ω4, μ4, run4, f0, f1, f6, fi, fr4, rd4, wr4⟩ := wr_arg_ret (p := p) (P := P) (R := R) x3 ω3 μ3 T i

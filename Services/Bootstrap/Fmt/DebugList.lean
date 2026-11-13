@@ -150,7 +150,7 @@ def RefOk (p : ByteArray) (P : Program) {X : Type} (R : HostRel X) (env : Refine
     v5 < 18446744073709551616 → v6 < 18446744073709551616 →
     (0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) → P.jumpTable.getD (ret / 2 - 1) 0 = t →
     P.isBlockStart t = true →
-    (S0 + 600 ≤ sp ∧ sp % 8 = 0 ∧ 2147484248 ≤ sp) → sp ≤ spA → (sp ≤ W ∧ W + 24 ≤ S1) →
+    (S0 + 600 ≤ sp ∧ sp % 8 = 0 ∧ 2147484248 ≤ sp) → sp ≤ spA → (sp ≤ W ∧ W + 24 ≤ S1) → W + 24 ≤ spA →
     (sp ≤ F ∧ F + 24 ≤ S1 ∧ (F + 24 ≤ W ∨ W + 24 ≤ F)) → len + M < 134217728 →
     (sp ≤ v ∧ v + 8 ≤ S1 ∧ (v + 8 ≤ W ∨ W + 24 ≤ v)) → rdN μ v 8 = a →
     (∃ ω' μ' x' s' cap' n, n ≤ M ∧
@@ -209,7 +209,7 @@ theorem ref_u8_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (en
     (pb S0 S1 : Nat) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
     (μA : Memory) (sA : State) (spA a : Nat) (hS : S0 ≤ spA) (ha : ValAt μA sA spA S1 a 1) :
     RefOk p P R env pb S0 S1 μA sA spA 37527 a 3 2300 := by
-  intro ω μ x s sp F W cap len ret t v5 v6 v H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hF hn
+  intro ω μ x s sp F W cap len ret t v5 v6 v H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hWA hF hn
     hv ra
   have hS1 := H.hS1
   have hst : ∀ a, S0 ≤ a → a < S1 → μ.writable a = true := H.st
@@ -263,7 +263,7 @@ theorem entry_tail {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost
     rwa [Nat.max_self] at this
   rcases hR ω1 μ1 x1 s1 (sp - 104) F W cap1 (len + d) 2774 66128 (ω1[5].toNat) (ω1[6].toNat) v H1 (hb1 ▸ hba) KA1
       hf1 g0 g1 (by simp) (by simp) g7 g8 (by simpa using UInt64.toNat_lt _) (by simpa using UInt64.toNat_lt _)
-      (by decide) jte_1386 bs_66128 ⟨by omega, by omega, by omega⟩ (by omega) ⟨by omega, by omega⟩
+      (by decide) jte_1386 bs_66128 ⟨by omega, by omega, by omega⟩ (by omega) ⟨by omega, by omega⟩ hA.2.1
       ⟨by omega, by omega, hF.2.2⟩ hn ⟨by omega, hv.2.1, hv.2.2⟩ hslot with
     ⟨ω2, μ2, x2, s2, cap2, n, hn', run2, H2, hb2, hf2, hc3, hc4, K2, b0, b1, b5, b6, b7⟩ | hx
   · have hst2 : ∀ a, S0 ≤ a → a < S1 → μ2.writable a = true := H2.st

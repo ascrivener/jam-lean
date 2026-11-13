@@ -120,7 +120,7 @@ def ArgOk (p : ByteArray) (P : Program) {X : Type} (R : HostRel X) (env : Refine
     v5 < 18446744073709551616 → v6 < 18446744073709551616 →
     (0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) → P.jumpTable.getD (ret / 2 - 1) 0 = t →
     P.isBlockStart t = true →
-    (S0 + Z ≤ sp ∧ sp % 8 = 0 ∧ 2147483648 + Z ≤ sp) → sp ≤ spA → (sp ≤ W ∧ W + 24 ≤ S1) →
+    (S0 + Z ≤ sp ∧ sp % 8 = 0 ∧ 2147483648 + Z ≤ sp) → sp ≤ spA → (sp ≤ W ∧ W + 24 ≤ S1) → W + 24 ≤ spA →
     (sp ≤ F ∧ F + 24 ≤ S1 ∧ (F + 24 ≤ W ∨ W + 24 ≤ F)) → len + M < 134217728 →
     (∃ ω' μ' x' s' cap' n, n ≤ M ∧
       FreeStepsH p R e ω μ x t ω' μ' x' (7 * n + 2 * (cap' - cap) + C) ∧
@@ -136,8 +136,8 @@ theorem ArgOk.mono {p : ByteArray} {P : Program} {X : Type} {R : HostRel X} {env
     {pb S0 S1 Z : Nat} {μA : Memory} {sA : State} {spA e v M C M' C' : Nat}
     (h : ArgOk p P R env pb S0 S1 Z μA sA spA e v M C) (hM : M ≤ M') (hC : C ≤ C') :
     ArgOk p P R env pb S0 S1 Z μA sA spA e v M' C' := by
-  intro ω μ x s sp F W cap len ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hF hn
-  rcases h ω μ x s sp F W cap len ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hF
+  intro ω μ x s sp F W cap len ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hWA hF hn
+  rcases h ω μ x s sp F W cap len ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hWA hF
       (by omega) with ⟨ω', μ', x', s', cap', n, hn', run, rest⟩ | hx
   · exact Or.inl ⟨ω', μ', x', s', cap', n, by omega, run.mono (by omega), rest⟩
   · exact Or.inr (hx.mono (by omega))
@@ -166,7 +166,7 @@ theorem hex32_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env
     (μA : Memory) (sA : State) (spA v : Nat) (hS : S0 ≤ spA) (hv : spA ≤ v ∧ v + 4 < 4294967296)
     (hrv : ∀ a, v ≤ a → a < v + 4 → μA.readable a = true) :
     ArgOk p P R env pb S0 S1 Z μA sA spA 60525 v 8 2500 := by
-  intro ω μ x s sp F W cap len ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hF hn
+  intro ω μ x s sp F W cap len ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hWA hF hn
   rcases hex32 (p := p) (P := P) (R := R) env pb S0 S1 HA HR x ω μ sA s sp F W v cap len ret t v5 v6 H hba hf
       h0 h1 h5 h6 h7 h8 ⟨hv5, hv6⟩ hret hjt hbt ⟨by omega, hsp.2.1, by omega⟩ hW hF ⟨by omega, hv.2⟩
       (fun a h1 h2 => K.readable H hS (by omega) (hrv a h1 h2)) hn with
@@ -180,7 +180,7 @@ theorem dec32_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env
     (μA : Memory) (sA : State) (spA v : Nat) (hS : S0 ≤ spA) (hv : spA ≤ v ∧ v + 4 < 4294967296)
     (hrv : ∀ a, v ≤ a → a < v + 4 → μA.readable a = true) :
     ArgOk p P R env pb S0 S1 Z μA sA spA 68146 v 10 2700 := by
-  intro ω μ x s sp F W cap len ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hF hn
+  intro ω μ x s sp F W cap len ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hWA hF hn
   rcases dec32 (p := p) (P := P) (R := R) env pb S0 S1 HA HR x ω μ sA s sp F W v cap len ret t v5 v6 H hba hf
       h0 h1 h5 h6 h7 h8 ⟨hv5, hv6⟩ hret hjt hbt ⟨by omega, hsp.2.1, by omega⟩ hW hF ⟨by omega, hv.2⟩
       (fun a h1 h2 => K.readable H hS (by omega) (hrv a h1 h2)) hn with
@@ -194,7 +194,7 @@ theorem dec64_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env
     (μA : Memory) (sA : State) (spA v : Nat) (hS : S0 ≤ spA) (hv : spA ≤ v ∧ v + 8 < 4294967296)
     (hrv : ∀ a, v ≤ a → a < v + 8 → μA.readable a = true) :
     ArgOk p P R env pb S0 S1 Z μA sA spA 68449 v 20 2900 := by
-  intro ω μ x s sp F W cap len ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hF hn
+  intro ω μ x s sp F W cap len ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hWA hF hn
   rcases dec64 (p := p) (P := P) (R := R) env pb S0 S1 HA HR x ω μ sA s sp F W v cap len ret t v5 v6 H hba hf
       h0 h1 h5 h6 h7 h8 ⟨hv5, hv6⟩ hret hjt hbt ⟨by omega, hsp.2.1, by omega⟩ hW hF ⟨by omega, hv.2⟩
       (fun a h1 h2 => K.readable H hS (by omega) (hrv a h1 h2)) hn with

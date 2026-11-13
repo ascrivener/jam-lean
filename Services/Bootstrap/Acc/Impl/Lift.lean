@@ -91,4 +91,36 @@ theorem impl_psiM (b : ByteArray) (i : Nat) (gas : UInt64) (a : ByteArray) (env 
         · rw [ite_eq_right_of_eq_false _ _ (eq_false hh)]
           cases ε₂ <;> first | exact absurd rfl hh | rfl | (exfalso; exact hε rfl)
 
+/-- **T2's shape, from `Impl`** (`docs/bootstrap-target.md`, `accumulate_spec`). Suppose service s's
+    code, in the state **e**′ with the incoming transfers credited, is `code` within 𝖶_C, and Y
+    succeeds on it. Suppose also that for every answer stream a run from instruction 5 with context
+    (x₀, x₀), x₀ = I(**e**′, s), implements `prog` and halts. Then Ψ_A's state, transfers, yield and
+    provisions are `ASem.run n prog`'s outcome for some n. -/
+theorem psiA_of_impl (η : List UInt8) (e : PartialState) (t s g : Nat) (inputs : List AccumulateInput)
+    (code : ByteArray) (hcode : ASem.codeOf (ASem.credit e s inputs) s = some code)
+    (hsize : ¬ code.size > Constants.Cmaxservicecodesize) {p : ByteArray} {ω : Regs} {μ : Memory}
+    (hY : standardInit code ⟨(Codec.nat t ++ Codec.nat s ++ Codec.nat inputs.length).toArray⟩ = some (p, ω, μ))
+    (prog : Prog AOp Unit)
+    (himpl : ∀ f : Stream, Impl p (accContractS (ASem.accEnv η t inputs code)) (ASem.accEnv η t inputs code) prog
+      (Halts p (accContractS (ASem.accEnv η t inputs code)))
+      ⟨5, ω, μ, (initImplications (ASem.credit e s inputs) s t η, initImplications (ASem.credit e s inputs) s t η), f⟩) :
+    let o := psiA Params.full η e t s g inputs
+    ∃ n, (o.state, o.xfers, o.yield, o.provisions) =
+      ASem.outcome (ASem.run n prog (ASem.accEnv η t inputs code)
+        (initImplications (ASem.credit e s inputs) s t η, initImplications (ASem.credit e s inputs) s t η)) := by
+  intro o
+  have hA : o = psiARun Params.full η (ASem.credit e s inputs) t s g inputs := ASem.psiA_eq _ _ _ _ _ _ _
+  obtain ⟨⟨n, hn⟩, hsz⟩ := impl_psiM code 5 (UInt64.ofNat g) _ (ASem.accEnv η t inputs code) _ rfl hY prog himpl
+  refine ⟨n, ?_⟩
+  rw [← hn, hA, psiARun_eq Params.full η (ASem.credit e s inputs) t s g inputs code hcode hsize]
+  simp only [ASem.accEnv] at hsz ⊢
+  generalize psiM _ _ _ _ _ _ = r at hsz ⊢
+  obtain ⟨u, out, c⟩ := r
+  cases out with
+  | ok b =>
+    have hb := hsz b rfl
+    simp only [psiMOutcome, hb]
+    rfl
+  | _ => rfl
+
 end Services.Bootstrap.Acc

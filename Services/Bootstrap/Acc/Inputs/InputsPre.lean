@@ -54,4 +54,18 @@ theorem fv_ret {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X
   rw [show ω = regsNF ω [] from rfl]
   pvm_go [h0]
 
+/-- **47631 … 47554**, `alloc_impl` returned no block (ω₇ = 0): the lock byte cleared and the branch to
+    `handle_alloc_error` (47554), the trap: allocation failure while fetching is an exhaustion. -/
+theorem fv_null {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
+    (μ : Memory) (sp : Nat) (h1 : ω[1] = UInt64.ofNat sp) (h6 : ω[6] = UInt64.ofNat 196792)
+    (h7 : ω[7] = UInt64.ofNat 0) (hwf : ∀ a, sp ≤ a → a < sp + 64 → μ.writable a = true)
+    (hwl : μ.writable 206848 = true) :
+    ∃ ω' μ', FreeStepsH p R 47631 ω μ x 47554 ω' μ' x 10 := by
+  have hr : ∀ a, sp ≤ a → a < sp + 64 → μ.readable a = true :=
+    fun a h1 h2 => Memory.readable_of_writable (hwf a h1 h2)
+  have hrl : μ.readable 206848 = true := Memory.readable_of_writable hwl
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?run⟩
+  case run => pvm_go [h1, h6, h7, hwf, hr, hwl, hrl]
+
 end Services.Bootstrap.Acc

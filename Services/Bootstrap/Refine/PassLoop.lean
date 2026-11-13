@@ -136,8 +136,8 @@ theorem step_room {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     by rw [fr _ 8 (by omega) (by omega) (by omega) (by omega)]; exact st.i24,
     ⟨cap, ptr, ecap, eptr, elen, by omega, hcapn, hptr, Or.inr ⟨co, hco, hcoa, hcou, hcos, hcoe⟩, ?_⟩, H', st.hce,
     fun a ha => ?_⟩⟩
-  · rw [ecur]; congr 1; omega
-  · rw [e280]; congr 1; omega
+  · rw [ecur]; congr 1 <;> omega
+  · rw [e280]; congr 1 <;> omega
   · intro j hj
     rcases Nat.lt_succ_iff_lt_or_eq.mp hj with hj | rfl
     · rw [Memory.readN_congr (fun i hi => efr _ (by omega) (by omega) (by omega))]; exact hout j hj
@@ -215,8 +215,8 @@ theorem step_full {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
       ⟨max (2 * cap) 4, q, ecap, eptr, elen, by omega, by omega, by omega,
         Or.inr ⟨_, hnew, by simp; omega, rfl, rfl, fun h => hfr (by rw [← h]; simp; omega)⟩, ?_⟩,
       H', ⟨hce', st.hce.2⟩, fun a ha => by rw [hkeep a ha, st.data a ha]⟩⟩
-    · rw [ecur]; congr 1; omega
-    · rw [e280]; congr 1; omega
+    · rw [ecur]; congr 1 <;> omega
+    · rw [e280]; congr 1 <;> omega
     · intro j hj
       rcases Nat.lt_succ_iff_lt_or_eq.mp hj with hj | rfl
       · rw [slot_eq emove hj]; exact hout j hj
@@ -236,31 +236,36 @@ theorem loop {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCode
     (∃ s' ω' μ', FreeStepsH p (refineContractK cap0 env) 5042 ω μ x 5042 ω' μ' x (m * (512 * n + 6100)) ∧
       PInv env pb S0 S1 M E n ce capI μ0 (fun j bs => bs = μ0.readN (E + 232 * j) 232) n ω' μ' s') ∨
     ExhaustsX env cap0 pb p 5042 ω μ x (m * (512 * n + 6100)) := by
+  have step : ∀ k ω μ y, k < n → (y = x ∧ ∃ s, PInv env pb S0 S1 M E n ce capI μ0
+      (fun j bs => bs = μ0.readN (E + 232 * j) 232) k ω μ s) →
+      (∃ ω' μ' y', FreeStepsH p (refineContractK cap0 env) 5042 ω μ y 5042 ω' μ' y' (512 * n + 6100) ∧
+        (y' = x ∧ ∃ s, PInv env pb S0 S1 M E n ce capI μ0 (fun j bs => bs = μ0.readN (E + 232 * j) 232)
+          (k + 1) ω' μ' s)) ∨ ExhaustsX env cap0 pb p 5042 ω μ y (512 * n + 6100) := by
+    intro k ω μ y hk ⟨hy, s, st⟩
+    subst hy
+    obtain ⟨t, ht, sD0⟩ := kinds k hk
+    obtain ⟨cap, ptr, vc, -, -, -, hcapn, -⟩ := st.out
+    by_cases hkc : k = cap
+    · subst hkc
+      rcases step_full (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 y ω μ μ0 s L k hk t ht sD0 rfl st vc with
+        ⟨s1, ω1, μ1, run1, st1⟩ | hx
+      · exact Or.inl ⟨ω1, μ1, y, run1, rfl, s1, st1⟩
+      · exact Or.inr (ExhaustsX.of hx)
+    · obtain ⟨ω1, μ1, run1, st1⟩ := step_room (p := p) (P := P) env y ω μ μ0 s L k hk t ht sD0 rfl st
+        (fun c hc => by
+          intro h; subst h
+          have h1 := congrArg Num.decodeLE (vc.symm.trans hc)
+          rw [Num.decodeLE_encodeLE, Num.decodeLE_encodeLE] at h1
+          have := L.hn
+          omega)
+      exact Or.inl ⟨ω1, μ1, y, run1.mono (by omega), rfl, s, st1⟩
   rcases LoopG.loop (p := p) (R := refineContractK cap0 env) 5042 n (512 * n + 6100)
       (fun k ω μ y => y = x ∧ ∃ s, PInv env pb S0 S1 M E n ce capI μ0
         (fun j bs => bs = μ0.readN (E + 232 * j) 232) k ω μ s)
       (fun i ω μ y b => ExhaustsX env cap0 pb p i ω μ y b)
-      (fun run h => ExhaustsX.pre run h) (fun h hab => h.mono hab) ?_ m k ω μ x hkm ⟨rfl, s, st⟩ with
+      (fun run h => ExhaustsX.pre run h) (fun h hab => h.mono hab) step m k ω μ x hkm ⟨rfl, s, st⟩ with
     ⟨ω', μ', y, run, rfl, s', st'⟩ | hx
   · exact Or.inl ⟨s', ω', μ', run, st'⟩
   · exact Or.inr hx
-  intro k ω μ y hk ⟨hy, s, st⟩
-  subst hy
-  obtain ⟨t, ht, sD0⟩ := kinds k hk
-  obtain ⟨cap, ptr, vc, -, -, -, hcapn, -⟩ := st.out
-  by_cases hkc : k = cap
-  · subst hkc
-    rcases step_full (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 y ω μ μ0 s L k hk t ht sD0 rfl st vc with
-      ⟨s1, ω1, μ1, run1, st1⟩ | hx
-    · exact Or.inl ⟨ω1, μ1, y, run1, rfl, s1, st1⟩
-    · exact Or.inr (ExhaustsX.of hx)
-  · obtain ⟨ω1, μ1, run1, st1⟩ := step_room (p := p) (P := P) env y ω μ μ0 s L k hk t ht sD0 rfl st
-      (fun c hc => by
-        intro h; subst h
-        have h1 := congrArg Num.decodeLE (vc.symm.trans hc)
-        rw [Num.decodeLE_encodeLE, Num.decodeLE_encodeLE] at h1
-        have := L.hn
-        omega)
-    exact Or.inl ⟨ω1, μ1, y, run1.mono (by omega), rfl, s, st1⟩
 
 end Services.Bootstrap.Refine.PassLoop

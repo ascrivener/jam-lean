@@ -22,6 +22,18 @@ set_option maxRecDepth 100000
 
 variable {X : Type} {R : HostRel X}
 
+/-- A word stored and loaded back. -/
+theorem rdN_writeN_enc8 (μ : Memory) (a v : Nat) :
+    rdN (μ.writeN a (Num.encodeLE 8 v)) a 8 = v % 18446744073709551616 := by
+  show Num.decodeLE _ = _
+  rw [Memory.readN_writeN_same μ a 8 _ (Num.length_encodeLE 8 v) (by decide), Num.decodeLE_encodeLE]
+
+/-- The return address 198, stored and loaded back. -/
+theorem rdN_writeN_198 (μ : Memory) (a : Nat) :
+    rdN (μ.writeN a [UInt8.ofNat 198, UInt8.ofNat 0, UInt8.ofNat 0, UInt8.ofNat 0, UInt8.ofNat 0, UInt8.ofNat 0,
+      UInt8.ofNat 0, UInt8.ofNat 0]) a 8 = 198 :=
+  rdN_writeN_enc8 μ a 198
+
 /-- 6120 … 33825, with the iterator at M + 272 empty (`ptr = end`) and `cap ≠ 0`: `IntoIter::drop`
     opens an 88-octet frame at M − 88 and leaves it again, then jumps to `dealloc` (40613) with ω₇ = buf,
     ω₈ = 232·cap, ω₉ = 8, ω₀ = 198 (→ 6130), ω₁ = M, and ω₅, ω₆ as they were. Memory changes only in
@@ -46,10 +58,12 @@ theorem dr1 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ 
   have rk := rd8 (by omega) s288
   have re := rd8 hcur s296
   have hcap0 : ¬ cap = 0 := hcap
+  have hr2 : ∀ a, M - 88 ≤ a → a < M → μ.readable a = true :=
+    fun a h1 h2 => Memory.readable_of_writable (hw a h1 h2)
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?_, ?_, ?_, ?_⟩
   rotate_left 2
-  · pvm_go [h1, hM0, hM1, hM8, hcap0, hr, hw, rb, rc, rk, re, rdN_writeN_disjoint, ↓rdN_fold]
+  · pvm_go [h1, hM0, hM1, hM8, hcap0, hr, hw, hr2, rb, rc, rk, re, rdN_writeN_enc8, rdN_writeN_198, rdN_writeN_disjoint, ↓rdN_fold]
   · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
     all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
       ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1]
@@ -76,10 +90,12 @@ theorem dr0 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ 
   have rc := rd8 hcur s280
   have rk := rd8 (by decide) s288
   have re := rd8 hcur s296
+  have hr2 : ∀ a, M - 88 ≤ a → a < M → μ.readable a = true :=
+    fun a h1 h2 => Memory.readable_of_writable (hw a h1 h2)
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?_, ?_, ?_, ?_⟩
   rotate_left 2
-  · pvm_go [h1, hM0, hM1, hM8, hr, hw, rb, rc, rk, re, rdN_writeN_disjoint, ↓rdN_fold]
+  · pvm_go [h1, hM0, hM1, hM8, hr, hw, hr2, rb, rc, rk, re, rdN_writeN_enc8, rdN_writeN_198, rdN_writeN_disjoint, ↓rdN_fold]
   · refine ⟨?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
     all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
       ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1]

@@ -142,9 +142,12 @@ jobs:
           lake exe genwitnesssteps blob | diff - Services/Witness/Blob.lean
           lake exe genwitnesssteps codecheck 2835
           lake exe genwitnesssteps cut 0 PrefixC 0 702 every=16 frame words
+          python3 scripts/gen_exec_chain.py Services/Witness/PrefixC prog=Services.Witness.SymExec.Prog,Services.Witness.SymExec.hyp
           lake exe genwitnesssteps run 702 cut=PrefixC | diff - Services/Witness/Prefix.lean
           lake exe genwitnesssteps cut 74620 ErrTail 0 1542 every=16 out
+          python3 scripts/gen_exec_chain.py Services/Witness/ErrTail prog=Services.Witness.SymExec.Prog,Services.Witness.SymExec.hyp
           lake exe genwitnesssteps cut0 74620 EmptyTail 0 1445 every=16 out
+          python3 scripts/gen_exec_chain.py Services/Witness/EmptyTail prog=Services.Witness.SymExec.Prog,Services.Witness.SymExec.hyp
           lake exe genwitnesssteps cut 23809 Front3 0 275 every=16 frame keep=0,1,5,6,7,8
           lake exe genwitnesssteps cut 23918 Front4 0 68 every=16 frame keep=0,1,2,3,4,5,6,7,12
           lake exe genwitnesssteps cut0 23809 EFront3 0 60 every=16 frame keep=0,1,5,6,7,8

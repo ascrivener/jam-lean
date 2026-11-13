@@ -56,4 +56,59 @@ theorem lock {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) 
     all_goals rd_simp []
     all_goals try rfl
 
+/-- **40302 … 40336**, `alloc_impl` returned a block ptr ≠ 0: the lock byte cleared; the vector
+    `{cap: 32 · n + 3, ptr, len: 0}` set up at S + 32; n ≠ 0, so on to the copy loop (40336) with
+    ω₅ = 32 · n and ω₆ (the queue's address) kept. -/
+theorem unlock {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
+    (μ : Memory) (S n ptr : Nat) (h1 : ω[1] = UInt64.ofNat S) (h5 : ω[5] = UInt64.ofNat (32 * n))
+    (h7 : ω[7] = UInt64.ofNat ptr) (hp0 : ptr ≠ 0) (hptr : ptr < 4294967296)
+    (hn : 0 < n) (hn' : 32 * n + 3 < 4294967296)
+    (m16 : μ.readN (S + 16) 8 = Num.encodeLE 8 196792) (m24 : μ.readN (S + 24) 8 = Num.encodeLE 8 n)
+    (hS : 206852 ≤ S ∧ S + 56 < 4294967296)
+    (hwf : ∀ a, S + 16 ≤ a → a < S + 56 → μ.writable a = true) (hwl : μ.writable 206848 = true) :
+    ∃ ω' μ', FreeStepsH p R 40302 ω μ x 40336 ω' μ' x 20 ∧
+      ω'[1] = UInt64.ofNat S ∧ ω'[5] = UInt64.ofNat (32 * n) ∧ ω'[6] = ω[6] ∧
+      μ'.readN (S + 32) 8 = Num.encodeLE 8 (32 * n + 3) ∧ μ'.readN (S + 40) 8 = Num.encodeLE 8 ptr ∧
+      μ'.readN (S + 48) 8 = Num.encodeLE 8 0 ∧ μ'.read 206848 = 0 ∧
+      (∀ a, a < 4294967296 → a ≠ 206848 → (a < S + 32 ∨ S + 56 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have hr : ∀ a, S + 16 ≤ a → a < S + 56 → μ.readable a = true :=
+    fun a h1 h2 => Memory.readable_of_writable (hwf a h1 h2)
+  have hrl : μ.readable 206848 = true := Memory.readable_of_writable hwl
+  have hp0' : ptr % 18446744073709551616 ≠ 0 := by rw [Nat.mod_eq_of_lt (by omega)]; exact hp0
+  have hn0 : n % 18446744073709551616 ≠ 0 := by rw [Nat.mod_eq_of_lt (by omega)]; omega
+  have r16 := rd8 (by decide) m16
+  have r24 := rd8 (by omega) m24
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?run, ?post⟩
+  case run => pvm_go [h1, h5, h7, hp0', hn0, hptr, hn', r16, r24, hwf, hr, hwl, hrl, hS,
+    rdN_writeN_disjoint, ↓rdN_fold]
+  case post =>
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha h1 h2 => ?_, fun a => ?_, fun a => ?_⟩
+    · simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h1]
+    · simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h5]
+    · simp [PVM.getElem_regsNF, PVM.lookup_cons_nat]
+    all_goals rd_simp [PVM.read_writeN_single]
+    all_goals try rfl
+    all_goals try (congr 1; omega)
+
+/-- **`alloc_impl` returned null** (ω₇ = 0 at 40302): the lock byte is cleared and the branch at
+    40318 goes to the trap at 40234 (☇, GP §A.5.1). -/
+theorem allocNull {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
+    (μ : Memory) (S : Nat) (h1 : ω[1] = UInt64.ofNat S) (h7 : ω[7] = 0)
+    (m16 : μ.readN (S + 16) 8 = Num.encodeLE 8 196792) (hS : S + 24 < 4294967296)
+    (hrf : ∀ a, S + 16 ≤ a → a < S + 24 → μ.readable a = true) (hwl : μ.writable 206848 = true) :
+    ∃ ω' μ', FreeRunH p R 40302 ω μ x .panic ω' μ' x := by
+  have r16 := rd8 (by decide) m16
+  have run : ∃ ω' μ', FreeStepsH p R 40302 ω μ x 40234 ω' μ' x 6 := by
+    rw [show ω = regsNF ω [] from rfl]
+    refine ⟨?ω', ?μ', ?run⟩
+    case run => pvm_go [h1, h7, r16, hS, hrf, hwl, ↓rdN_fold]
+  obtain ⟨ω', μ', hs⟩ := run
+  have hd := d_40234 (p := p) (P := P)
+  have hst : P.freeStep 40234 ω' μ' = (.panic, P.next 40234, ω', μ') := by
+    simp [Program.freeStep, hd.2.1, Program.exec, Program.finalState, memoryException]
+  have he := FreeExit.step (p := p) hd.1 hst (by decide)
+  exact ⟨ω', μ', hs.run (.exit (FreeRun.exit (by simpa using he)) (by simp))⟩
+
 end Services.Bootstrap.Acc.Handlers.AssignAlloc

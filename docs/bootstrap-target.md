@@ -392,17 +392,40 @@ octets and the looked-up data, plus the host-call costs. It is defined in step 8
 theorem accumulate_spec (rk) (η : List UInt8) (e : PartialState) (t s g : Nat)
     (inputs : List AccumulateInput) (code : ByteArray)
     (hcode : codeOf (credit e s inputs) s = some code) (hboot : IsBootstrapCode code)
-    (ht : t < 2^32) (hs : s < 2^32) :
+    (ht : t < 2^32) (hs : s < 2^32)
+    (hvals : ValuesFit (credit e s inputs) s) :
     let o := psiA Params.full η e t s g inputs
     let x₀ := initImplications (credit e s inputs) s t η
     ∃ n, (o.state, o.xfers, o.yield, o.provisions) =
-      ASem.outcome (ASem.run n (Spec.accumulate C t) (accEnv η t inputs code) (x₀, x₀))
+        ASem.outcome (ASem.run n (Spec.accumulate C t) (accEnv η t inputs code) (x₀, x₀)) ∧
+      ((ASem.run n (Spec.accumulate C t) (accEnv η t inputs code) (x₀, x₀)).1 ≠ .stopped
+        ∨ AccOutOfGas η e t s g inputs code
+        ∨ ∃ r, AccAborts η e t s inputs code r)
 ```
 
 "Some number n" is how gas enters: running out of gas can only cut the spec's run short, and roll
-it back to a checkpoint. It never adds an effect the spec does not have. Heap exhaustion needs no extra case: a failed
-allocation panics, which rolls back to the last checkpoint, and that is the outcome of stopping
-the spec's run at that point.
+it back to a checkpoint. It never adds an effect the spec does not have. The three cases say why the
+spec's run may stop early:
+
+1. It finished: the run is `done` or `panicked`.
+2. Ψ_M ran out of gas: `AccOutOfGas` is Ψ_M's status ∞ for this invocation.
+3. `AccAborts … r`: the binary reaches a state where reason r holds and then panics. r ranges over a
+   fixed list, `AccAbort`. A run reaching a state means a prefix under the accumulate contract, with
+   some answers for `gas` and `checkpoint`.
+   - `heap` is **heap exhaustion** (decision 4). It covers an allocation that returned null, and also
+     a length check that fails before allocating because the requested size is over the allocator's
+     limit (2³⁷ − 32 octets). The second case arises in `get`, in the inputs fetch, and in refine's
+     `foreign_historical_lookup`. Both branches reach the allocation-failure trap. Adam decided on
+     2026-11-13 to count the size limit as heap exhaustion rather than as a separate quirk.
+   - There is one further constructor per binary quirk where the binary panics and the model goes on,
+     each listed under Quirks.
+
+**`hvals` (decision of 2026-11-13).** `ValuesFit` says every storage value, preimage and encoded input
+of service s is shorter than 2⁶⁴ octets. Ω_R and Ω_Y report a length in a 64-bit register, which the
+model wraps mod 2⁶⁴. A longer value could wrap to NONE, and bootstrap would then report it absent where
+the model returns it. No trap occurs, so no abort reason can cover this case. Such values cannot exist
+physically, and bootstrap itself only writes values shorter than 2³² octets, but the model does not
+exclude them, so T2 assumes it.
 
 **T2′ (exact).** With `g ≥ Spec.accGas …`, n can be taken as the full run's length, so the outcome
 is `done` or `panicked` and does not depend on gas. Useful, but lower priority than T1′: on chain,

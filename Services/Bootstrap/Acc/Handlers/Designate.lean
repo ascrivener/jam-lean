@@ -104,4 +104,68 @@ theorem huhMid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (cap :
     simp only [List.mem_cons, List.not_mem_nil, or_false, forall_eq] at hrs
     post_simp
 
+/-- **HUH: to `alloc(19, 1)`**: back at 10070 with the result's index b ≠ 255 in ω₇ (HUH gives 7,
+    the table at 69076), the call of `alloc` (40494) for the 19-octet message, return address 356
+    (10092). No host call, so any `R`. -/
+theorem huhToAlloc {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {X : Type}
+    {R : HostRel X} (x : X) (ω : Regs) (μ : Memory) (b : Nat) (h7 : ω[7] = UInt64.ofNat b)
+    (hb : b < 255) :
+    ∃ ω', FreeStepsH p R 10070 ω μ x 40494 ω' μ x 6 ∧
+      ω'[0] = UInt64.ofNat 356 ∧ ω'[1] = ω[1] ∧ ω'[7] = UInt64.ofNat 19 ∧ ω'[8] = UInt64.ofNat 1 := by
+  have hb' : b % 256 ≠ 255 := by omega
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?_, ?_, ?_⟩
+  rotate_left
+  · pvm_go [h7, bitwise_and_m255, hb', bs_40494]
+  · refine ⟨?_, ?_, ?_, ?_⟩
+    all_goals simp [PVM.getElem_regsNF, PVM.lookup_cons_nat]
+
+/-- **HUH: `alloc` returned null** (ω₇ = 0 at 10092): the trap at 15367 (☇, GP §A.5.1). -/
+theorem huhNull {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {X : Type}
+    {R : HostRel X} (x : X) (ω : Regs) (μ : Memory) (h7 : ω[7] = 0) :
+    ∃ ω' μ', FreeRunH p R 10092 ω μ x .panic ω' μ' x := by
+  have run : ∃ ω', FreeStepsH p R 10092 ω μ x 15367 ω' μ x 3 := by
+    rw [show ω = regsNF ω [] from rfl]
+    refine ⟨?ω', ?run⟩
+    case run => pvm_go [h7]
+  obtain ⟨ω', hs⟩ := run
+  have hd := d_15367 (p := p) (P := P)
+  have hst : P.freeStep 15367 ω' μ = (.panic, P.next 15367, ω', μ) := by
+    simp [Program.freeStep, hd.2.1, Program.exec, Program.finalState, memoryException]
+  have he := FreeExit.step (p := p) hd.1 hst (by decide)
+  exact ⟨ω', μ, hs.run (.exit (FreeRun.exit (by simpa using he)) (by simp))⟩
+
+/-- **HUH: the result** (10164, back from `dealloc` with ω₁ = sp): `Err` with index 10 (the octets
+    255, 10 at `RES`); then, if the input `Vec`'s capacity c (its copy at sp + 1496) is not 0, on to
+    13303 (its buffer freed), else to the tail (14278). No host call, so any `R`. -/
+theorem huhResult {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {X : Type}
+    {R : HostRel X} (x : X) (ω : Regs) (μ : Memory) (c : Nat) (h1 : ω[1] = UInt64.ofNat 4278057152)
+    (hc : c < 18446744073709551616) (mc : μ.readN 4278058648 8 = Num.encodeLE 8 c)
+    (hw : ∀ a, 4278058152 ≤ a → a < 4278058154 → μ.writable a = true)
+    (hrc : ∀ a, 4278058648 ≤ a → a < 4278058656 → μ.readable a = true) :
+    ∃ ω', FreeStepsH p R 10164 ω μ x (if c = 0 then 14278 else 13303) ω'
+      ((μ.writeN 4278058153 [UInt8.ofNat 10]).writeN 4278058152 [UInt8.ofNat 255]) x 5 ∧
+      ω'[1] = ω[1] ∧ ω'[8] = UInt64.ofNat c := by
+  have hr : ∀ a, 4278058152 ≤ a → a < 4278058154 → μ.readable a = true :=
+    fun a h1 h2 => Memory.readable_of_writable (hw a h1 h2)
+  have rc : rdN μ 4278058648 8 = c := by
+    show Num.decodeLE _ = _
+    rw [mc, Num.decodeLE_encodeLE, Nat.mod_eq_of_lt hc]
+  rw [show ω = regsNF ω [] from rfl]
+  by_cases h0 : c = 0
+  · subst h0
+    refine ⟨?_, ?_, ?_⟩
+    rotate_left
+    · simp only [↓reduceIte]
+      pvm_go [h1, hw, hr, hrc, rc, rdN_writeN_disjoint, ↓rdN_fold]
+    · refine ⟨?_, ?_⟩
+      all_goals simp [PVM.getElem_regsNF, PVM.lookup_cons_nat]
+  · have h0' : c % 18446744073709551616 ≠ 0 := by rw [Nat.mod_eq_of_lt hc]; exact h0
+    refine ⟨?_, ?_, ?_⟩
+    rotate_left
+    · simp only [h0, ↓reduceIte]
+      pvm_go [h1, hw, hr, hrc, rc, h0', rdN_writeN_disjoint, ↓rdN_fold]
+    · refine ⟨?_, ?_⟩
+      all_goals simp [PVM.getElem_regsNF, PVM.lookup_cons_nat]
+
 end Services.Bootstrap.Acc.Handlers.Designate

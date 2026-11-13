@@ -193,4 +193,89 @@ theorem mid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR
         rw [hk3 a ha, k2 a (by omega)]
     · exact Or.inr ⟨_, ExhaustsX.pre (run1.trans run2) hx⟩
 
+/-- Distinct chunks of a well-formed heap have distinct data addresses. -/
+theorem addr_ne {s : State} (hwf : WF s) {c d : Chunk} (hc : c ∈ chunks s) (hd : d ∈ chunks s) (hcd : c ≠ d) :
+    c.addr + 32 ≠ d.addr + 32 := fun h => hcd (by
+  have ht := hwf.2.2.2.1; unfold TilesOk at ht
+  exact Picoalloc.Tiles.addr_inj ht c hc d hd (by omega))
+
+/-- **`Exported(n)` pushed** (5810 … 5868 / 5909), with room or after growing the output: the output
+    `{cap, ptr, k}` becomes `{cap', ptr', k + 1}`, its buffer an allocated chunk none of the chunks of s
+    other than the old buffer; slots j < k as they were and slot k `Exported(ns)` (`hO`); every other
+    allocated chunk keeps its data, the stack from M up is kept apart from M + 248 … M + 272. Or the heap
+    is exhausted. -/
+theorem push {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P]
+    (env : RefineHost.Env) (cap0 : Nat) (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616)
+    (x : RefineCtx) (ω : Regs) (μ : Memory) {hb : Nat} (s : State) {pb S0 S1 M n : Nat} (ns : Nat)
+    {O : Nat → List UInt8 → Prop} (k : Nat) (hkn : k < n) (hn : n < 128)
+    (hM : S0 + 456 ≤ M ∧ M + 648 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0)
+    (H : HeapCtx env pb S0 S1 μ s) (h1 : ω[1] = UInt64.ofNat M) (hns : ns < 18446744073709551616)
+    (s136 : μ.readN (M + 136) 8 = Num.encodeLE 8 9223372036854775809) (s56 : μ.readN (M + 56) 8 = Num.encodeLE 8 ns)
+    (cap ptr : Nat) (vc : μ.readN (M + 248) 8 = Num.encodeLE 8 cap) (vp : μ.readN (M + 256) 8 = Num.encodeLE 8 ptr)
+    (vl : μ.readN (M + 264) 8 = Num.encodeLE 8 k) (hkc : k ≤ cap) (hcapn : cap ≤ 2 * n + 4)
+    (hptr : ptr < 2147483648)
+    (hold : (cap = 0 ∧ ptr = 8) ∨ ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true ∧ c.size = (232 * cap + 31) / 32 + 1)
+    (hout : ∀ j, j < k → O j (μ.readN (ptr + 232 * j) 232))
+    (hO : ∀ (μ' : Memory) (a : Nat), μ'.readN a 8 = Num.encodeLE 8 (9223372036854775807 + 20) →
+      μ'.readN (a + 8) 8 = Num.encodeLE 8 ns → O k (μ'.readN a 232)) :
+    (∃ (ω' : Regs) (μ' : Memory) (s' : State) (N cap' ptr' : Nat),
+      FreeStepsH p (refineContractK cap0 env) 5810 ω μ x (if ns = 0 then 5909 else 5868) ω' μ' x N ∧
+      HeapCtx env pb S0 S1 μ' s' ∧ ω'[1] = UInt64.ofNat M ∧
+      μ'.readN (M + 248) 8 = Num.encodeLE 8 cap' ∧ μ'.readN (M + 256) 8 = Num.encodeLE 8 ptr' ∧
+      μ'.readN (M + 264) 8 = Num.encodeLE 8 (k + 1) ∧ k + 1 ≤ cap' ∧ cap' ≤ 2 * n + 4 ∧ ptr' < 2147483648 ∧
+      (∃ c ∈ chunks s', c.addr + 32 = ptr' ∧ c.used = true ∧ c.size = (232 * cap' + 31) / 32 + 1 ∧
+        ∀ d ∈ chunks s, d.used = true → d.addr + 32 ≠ ptr → d ≠ c) ∧
+      (∀ j, j < k + 1 → O j (μ'.readN (ptr' + 232 * j) 232)) ∧
+      (∀ d ∈ chunks s, d.used = true → d.addr + 32 ≠ ptr → d ∈ chunks s' ∧ ∀ a, InData d a → μ'.read a = μ.read a) ∧
+      (∀ a, a < 4294967296 → M ≤ a → (a < M + 248 ∨ M + 272 ≤ a) → μ'.read a = μ.read a)) ∨
+    ∃ N, ExhaustsX env cap0 pb p 5810 ω μ x N := by
+  obtain ⟨hS0M, hMS1, hM2, hM8⟩ := hM
+  have hS1 := H.hS1
+  have hb0 := H.hb0
+  have hbT := H.hbT
+  by_cases hroom : k = cap
+  · subst hroom
+    have hold' : k = 0 ∨ ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true ∧ c.size = (232 * k + 31) / 32 + 1 := by
+      rcases hold with ⟨h0, _⟩ | h
+      · exact Or.inl h0
+      · exact Or.inr h
+    rcases push_grow (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 x ω μ s M ptr k ns pb S0 S1 H hold'
+        (by omega) hns ⟨hS0M, hMS1, hM2, hM8⟩ (by omega) h1 vc vp vl s136 s56 with
+      ⟨q, s', ω', μ', run, e1, ecap, eptr, elen, hnew, emove, e0, e8, H', keep, fresh, efr⟩ | hx
+    · obtain ⟨hq0, -, hqT⟩ := Decode.VecU8.chunk_in H'.wf hnew rfl
+      simp only at hq0 hqT
+      have hb0' := H'.hb0
+      have hbT' := H'.hbT
+      refine Or.inl ⟨ω', μ', s', _, max (2 * k) 4, q, run, H', e1, ecap, eptr, elen, by omega, by omega, by omega,
+        ⟨_, hnew, by simp; omega, rfl, rfl, fun d hd hu hne h => ?_⟩, fun j hj => ?_, keep, efr⟩
+      · have := fresh d hd hu hne
+        rw [h] at this; simp at this; omega
+      · rcases Nat.lt_succ_iff_lt_or_eq.mp hj with hj | rfl
+        · rw [PassLoop.slot_eq emove hj]; exact hout j hj
+        · exact hO μ' _ e0 e8
+    · exact Or.inr ⟨_, hx⟩
+  · obtain ⟨c, hc, hca, hcu, hcs⟩ := hold.resolve_left (fun h => hroom (by omega))
+    obtain ⟨hc0, -, hcT⟩ := Decode.VecU8.chunk_in H.wf hc hcu
+    have hcs' : 232 * cap + 32 ≤ 32 * c.size := by rw [hcs]; omega
+    obtain ⟨ω', μ', run, b1, b0, b8, b264, bfr, brd, bwr⟩ := push_room (p := p) (P := P)
+      (R := refineContractK cap0 env) x ω μ M cap ptr k ns ⟨by omega, by omega, hM8⟩ hroom (by omega) (by omega)
+      hns (by omega) h1 vc vp vl s136 s56 (fun a h1 h2 => Memory.readable_of_writable (H.st a (by omega) (by omega)))
+      (fun a h1 h2 => Decode.VecU8.heap_writable H hc hcu ⟨by omega, by omega⟩)
+      (fun a h1 h2 => H.st a (by omega) (by omega))
+    have H' : HeapCtx env pb S0 S1 μ' s := Decode.VecU8.ctx_congr_data H hc
+      (fun a ha h => bfr a (by omega) (by omega) (Or.inl (by omega))) bwr
+    refine Or.inl ⟨ω', μ', s, _, cap, ptr, run, H', b1.trans h1,
+      by rw [Memory.readN_congr (fun j hj => bfr _ (by omega) (by omega) (Or.inl (by omega)))]; exact vc,
+      by rw [Memory.readN_congr (fun j hj => bfr _ (by omega) (by omega) (Or.inl (by omega)))]; exact vp,
+      b264, by omega, hcapn, hptr, ⟨c, hc, hca, hcu, hcs, fun d hd hu hne h => hne (by rw [h, hca])⟩,
+      fun j hj => ?_, fun d hd hu hne => ⟨hd, fun a ha => ?_⟩, fun a h0 h1 h => bfr a h0 (by omega) (by omega)⟩
+    · rcases Nat.lt_succ_iff_lt_or_eq.mp hj with hj | rfl
+      · rw [Memory.readN_congr (fun i hi => bfr _ (by omega) (by omega) (Or.inl (by omega)))]; exact hout j hj
+      · exact hO μ' _ b0 b8
+    · have hdc : d ≠ c := fun h => hne (by rw [h, hca])
+      have hdj := Decode.VecU8.data_disj H.wf hd hc hdc ha
+      obtain ⟨hd0, -, hdT⟩ := Decode.VecU8.chunk_in H.wf hd hu
+      have ha' := ha; unfold InData at ha'
+      exact bfr a (by omega) (by omega) (Or.inl (by omega))
+
 end Services.Bootstrap.Refine.ExportElem

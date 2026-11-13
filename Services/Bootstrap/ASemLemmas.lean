@@ -170,4 +170,38 @@ theorem step_read (env : AccEnv) (key : Bytes) (c : AccCtx) (hk : argBase + key.
     have := PVM.Memory.readN_writeN (argMem [key]) outBase v (by unfold two32; omega)
     rw [this]
 
+/-- This service after writing `value` under `key` (removing it when `value` is empty), as Ω_W
+    computes it. -/
+def writeAcct (a : ServiceAccount) (key value : List UInt8) : ServiceAccount :=
+  if value.length = 0 then { a with storage := a.storage.erase key }
+  else { a with storage := a.storage.insert key value }
+
+/-- **Ω_W, evaluated**: the key at kO (kZ octets) and the value at vO (vZ octets) readable, enough gas.
+    FULL (the account unchanged) if the threshold balance would not be met; else ω₇ is the old
+    value's length (NONE if there was none) and the account is written. -/
+theorem hostWrite_eval (gas : Nat) (ω : Regs) (μ : Memory) (self : ServiceAccount) (kO kZ vO vZ : Nat)
+    (key value : List UInt8)
+    (h7 : reg ω 7 = kO) (h8 : reg ω 8 = kZ) (h9 : reg ω 9 = vO) (h10 : reg ω 10 = vZ)
+    (hg : Constants.CgasWconst + memGas Constants.CgasWkeylinear kZ + memGas Constants.CgasWvallinear vZ ≤ gas)
+    (hk : μ.rangeReadable kO kZ = true) (hkey : μ.readN kO kZ = key)
+    (hv : μ.rangeReadable vO vZ = true) (hval : μ.readN vO vZ = value) (hvl : value.length = vZ) :
+    hostWrite gas ω μ self =
+      if (writeAcct self key value).minBalance > (writeAcct self key value).balance then
+        ⟨.cont, (gas : Int) - (Constants.CgasWconst + memGas Constants.CgasWkeylinear kZ +
+          memGas Constants.CgasWvallinear vZ), setR7 ω Result.FULL, μ, self⟩
+      else ⟨.cont, (gas : Int) - (Constants.CgasWconst + memGas Constants.CgasWkeylinear kZ +
+          memGas Constants.CgasWvallinear vZ),
+          setR7 ω ((self.storage.get? key).map List.length |>.getD Result.NONE), μ, writeAcct self key value⟩ := by
+  subst hvl
+  unfold hostWrite charged writeAcct
+  simp only [h7, h8, h9, h10, show ¬ gas < Constants.CgasWconst + memGas Constants.CgasWkeylinear kZ +
+    memGas Constants.CgasWvallinear value.length by omega, ite_false, hk, Bool.not_true, hkey, hv, hval]
+  by_cases h0 : value.length = 0
+  · by_cases hb : ({ self with storage := self.storage.erase key } : ServiceAccount).minBalance >
+        ({ self with storage := self.storage.erase key } : ServiceAccount).balance <;>
+      simp [hb, h0] <;> (cases self.storage[key]? <;> rfl)
+  · by_cases hb : ({ self with storage := self.storage.insert key value } : ServiceAccount).minBalance >
+        ({ self with storage := self.storage.insert key value } : ServiceAccount).balance <;>
+      simp [hb, h0] <;> (cases self.storage[key]? <;> rfl)
+
 end Services.Bootstrap.ASem

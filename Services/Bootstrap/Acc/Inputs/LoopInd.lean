@@ -139,4 +139,178 @@ theorem lp_body {X : Type} (env : HeapHost X) (cap pb N : Nat) {p : ByteArray} {
         fr1 a h0 hs (by omega) hr]
   · exact Or.inr ⟨ω1, μ1, r1.mono (by omega)⟩
 
+/-- An item list's encodings, concatenated. -/
+def encs (rest : List (List UInt8 × (List UInt8 → Memory → Prop))) : List UInt8 := (rest.map Prod.fst).flatten
+
+theorem encs_cons (e : List UInt8 × (List UInt8 → Memory → Prop)) (rest) : encs (e :: rest) = e.1 ++ encs rest := by
+  simp [encs]
+
+/-- **The loop over the remaining items, 45126 → 45613** (see the module doc): with L slots filled and the
+    reader holding the rest's encodings, either every remaining item's slot q + 184·(L + j) satisfies its
+    `Rep` in the final memory, `Vec { n, q, n }` is written at out and the frame popped; or the allocator
+    is exhausted. -/
+theorem lp_items {X : Type} (env : HeapHost X) (cap pb N : Nat) {p : ByteArray} {P : Program} [HasCode p P]
+    [HasCodeA p P] (x : X) (hb S0 S1 s rd out n q : Nat) (C Rc : Chunk)
+    (hs : 2147483960 + 424 ≤ s ∧ s % 8 = 0) (hSTk : S0 + 864 ≤ s) (hrds : s + 480 ≤ rd) (hrdS : rd + 16 ≤ S1)
+    (hout : s + 480 ≤ out ∧ out + 24 ≤ S1) (dor : out + 24 ≤ rd ∨ rd + 16 ≤ out) (hn : n ≤ 89)
+    (hRC : Rc ≠ C) :
+    ∀ (rest : List (List UInt8 × (List UInt8 → Memory → Prop))) (ω : Regs) (μ : Memory) (st : State)
+      (L ip rlen : Nat),
+    (∀ e ∈ rest, ItemOk env cap pb p P N e.1 e.2) → rest ≠ [] → HeapCtxC env.code pb S0 S1 μ st →
+    ω[0] = UInt64.ofNat 2044 → ω[1] = UInt64.ofNat s → ω[5] = UInt64.ofNat rest.length →
+    ω[7] = UInt64.ofNat (s + 88) → ω[8] = UInt64.ofNat rd →
+    rdN μ s 8 = out → rdN μ (s + 32) 8 = n → rdN μ (s + 40) 8 = n → rdN μ (s + 48) 8 = rd →
+    rdN μ (s + 56) 8 = q → rdN μ (s + 64) 8 = n → rdN μ (s + 72) 8 = q → rdN μ (s + 80) 8 = L →
+    L + rest.length = n →
+    C ∈ chunks st → C.used = true → C.addr + 32 ≤ q → q + 184 * n ≤ C.addr + 32 * C.size →
+    Rc ∈ chunks st → Rc.used = true → Rc.addr + 32 ≤ ip → ip + (encs rest).length + 32 ≤ Rc.addr + 32 * Rc.size →
+    μ.readN rd 8 = Num.encodeLE 8 ip → μ.readN (rd + 8) 8 = Num.encodeLE 8 rlen →
+    (encs rest).length ≤ rlen → rlen < 4294967296 → μ.readN ip (encs rest).length = encs rest →
+    (∃ st' ω' μ', FreeStepsH p (env.rel cap) 45126 ω μ x 45613 ω' μ' x ((N + 2100) * rest.length) ∧
+      ω'[0] = UInt64.ofNat (rdN μ (s + 472) 8) ∧ ω'[1] = UInt64.ofNat (s + 480) ∧
+      ω'[5] = UInt64.ofNat (rdN μ (s + 464) 8) ∧ ω'[6] = UInt64.ofNat (rdN μ (s + 456) 8) ∧
+      rdN μ' out 8 = n ∧ rdN μ' (out + 8) 8 = q ∧ rdN μ' (out + 16) 8 = n ∧
+      HeapCtxC env.code pb S0 S1 μ' st' ∧ (∀ c ∈ chunks st, c.used = true → c ∈ chunks st') ∧
+      (∀ c ∈ chunks st, c.used = true → ∀ a, InDataA c a → (a < q + 184 * L ∨ q + 184 * n ≤ a) →
+        μ'.read a = μ.read a) ∧
+      (∀ (j : Nat) (e : List UInt8 × (List UInt8 → Memory → Prop)), rest[j]? = some e →
+        e.2 (μ'.readN (q + 184 * (L + j)) 184) μ') ∧
+      μ'.readN rd 8 = Num.encodeLE 8 (ip + (encs rest).length) ∧
+      μ'.readN (rd + 8) 8 = Num.encodeLE 8 (rlen - (encs rest).length)) ∨
+    (∃ ω' μ', FreeStepsH p (env.rel cap) 45126 ω μ x 45975 ω' μ' x ((N + 2100) * rest.length)) := by
+  intro rest
+  induction rest with
+  | nil => intro _ _ _ _ _ _ _ hne; exact absurd rfl hne
+  | cons e tail ih =>
+  intro ω μ st L ip rlen hok _ H h0 h1 h5 h7 h8 m0 m32 m40 m48 m56 m64 m72 m80 hLn hC hCu hCq hCe hR hRu hRq hRe
+    hR0 hR8 hrl hrl32 henc
+  have hbT := H.hbT
+  have hb0 := H.hb0
+  have hS1 := H.hS1
+  have hLn' : L + 1 + tail.length = n := by simp at hLn; omega
+  rw [encs_cons] at hrl henc hRe
+  simp only [List.length_append] at hrl hRe
+  obtain ⟨he, ht⟩ := readN_app μ ip e.1 (encs tail) (by rw [← List.length_append]; exact henc)
+  rcases lp_body env cap pb N (hok e (by simp)) x ω μ hb st s rd ip rlen S0 S1 n q L (e :: tail).length C H
+      h0 h1 h5 h7 h8 hs hSTk hrds hrdS m64 m72 m80 (by simp at hLn; omega) hC hCu hCq hCe hR0 hR8 (by omega) hrl32 he
+      ⟨Rc, hR, hRu, hRq, by omega⟩ with
+    ⟨st1, ω1, μ1, r1, a1, a5, a6, H1, keep1, keepd1, ⟨cs, fresh, rep⟩, R0, R8, s56, fr1⟩ | ⟨ω1, μ1, r1⟩
+  · have hst := H1.st
+    have kf : ∀ o, s ≤ o → o + 8 ≤ s + 56 → rdN μ1 o 8 = rdN μ o 8 := fun o h1 h2 =>
+      rdN_frame fun j hj => fr1 _ (by omega) (by omega) (Or.inl (by omega)) (Or.inl (by omega)) (Or.inl (by omega))
+    have kg : ∀ o, s + 456 ≤ o → o + 8 ≤ s + 480 → rdN μ1 o 8 = rdN μ o 8 := fun o h1 h2 =>
+      rdN_frame fun j hj => fr1 _ (by omega) (by omega) (Or.inr (by omega)) (Or.inr (by omega)) (Or.inl (by omega))
+    have kh : ∀ o, s + 64 ≤ o → o + 8 ≤ s + 88 → rdN μ1 o 8 = rdN μ o 8 := fun o h1 h2 =>
+      rdN_frame fun j hj => fr1 _ (by omega) (by omega) (Or.inr (by omega)) (Or.inl (by omega)) (Or.inl (by omega))
+    have hCu1 : C ∈ chunks st1 := keep1 C hC hCu
+    have hR1 : Rc ∈ chunks st1 := keep1 Rc hR hRu
+    -- the item's slot and its fresh chunks, kept by any later step that keeps st1's chunks' data
+    have keepRep : ∀ μ' : Memory, (∀ c ∈ chunks st1, c.used = true → ∀ a, InDataA c a →
+        (a < q + 184 * (L + 1) ∨ q + 184 * n ≤ a) → μ'.read a = μ1.read a) →
+        e.2 (μ'.readN (q + 184 * (L + 0)) 184) μ' := fun μ' hk => by
+      have slotk : μ'.readN (q + 184 * L) 184 = μ1.readN (q + 184 * L) 184 :=
+        PVM.Memory.readN_congr fun j hj => hk C hCu1 hCu _ ⟨by omega, by omega⟩ (Or.inl (by omega))
+      rw [Nat.add_zero, slotk]
+      refine rep μ' fun c hc a ha => ?_
+      obtain ⟨hcm, hcu, hcf⟩ := fresh c hc
+      have hne : C ≠ c := hcf C hC hCu
+      have hap := Services.Bootstrap.Decode.LoopA.InData.apart H1.wf hcm hCu1 hne ha
+      unfold Services.Bootstrap.Decode.LoopA.InData at hap
+      exact hk c hcm hcu a ha (by omega)
+    by_cases htl : tail = []
+    · subst htl
+      simp only [List.length_cons, List.length_nil, Nat.zero_add] at a5 hLn
+      obtain ⟨ω2, μ2, r2, b0, b1, b5, b6, o0, o8, o16, fr2, rd2, wr2⟩ :=
+        lp_last (p := p) (P := P) (R := env.rel cap) x ω1 μ1 s out n q L a1 a5 a6
+          (by rw [kf _ (by omega) (by omega)]; exact m0) (by rw [kf _ (by omega) (by omega)]; exact m32)
+          (by rw [kf _ (by omega) (by omega)]; exact m40) s56 (by rw [kh _ (by omega) (by omega)]; exact m64)
+          (by rw [kh _ (by omega) (by omega)]; exact m72) (by omega) (by omega) ⟨by omega, by omega⟩
+          ⟨by omega, by omega⟩ (Or.inr hout.1) (fun a h1 h2 => hst a (by omega) (by omega))
+          (fun a h1 h2 => hst a (by omega) (by omega))
+      have lo2 : ∀ a, a < 2147483648 → μ2.read a = μ1.read a := fun a ha =>
+        fr2 a (by omega) (Or.inl (by omega)) (Or.inl (by omega)) (Or.inl (by omega))
+      refine Or.inl ⟨st1, ω2, μ2, (r1.trans r2).mono (by simp; try omega),
+        by rw [b0, kg _ (by omega) (by omega)], b1, by rw [b5, kg _ (by omega) (by omega)],
+        by rw [b6, kg _ (by omega) (by omega)], o0, o8, by rw [o16]; try omega,
+        HeapCtxC.keep_hi H1 lo2 wr2, keep1, fun c hc hu a ha hout' => ?_, fun j e' hj => ?_, ?_, ?_⟩
+      · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
+        unfold InDataA at ha
+        rw [lo2 a (by omega), keepd1 c hc hu a ha (by omega)]
+      · cases j with
+        | zero =>
+          simp only [List.getElem?_cons_zero, Option.some.injEq] at hj; subst hj
+          refine keepRep μ2 fun c hc hu a ha _ => ?_
+          have := Services.Bootstrap.Decode.VecU8.chunk_in H1.wf hc hu
+          have := H1.hbT
+          unfold InDataA at ha
+          exact lo2 a (by omega)
+        | succ j => simp at hj
+      · rw [PVM.Memory.readN_congr (μ := μ1) (fun j hj => fr2 _ (by omega) (by omega) (by omega) (by omega)), R0]
+        simp [encs]
+      · rw [PVM.Memory.readN_congr (μ := μ1) (fun j hj => fr2 _ (by omega) (by omega) (by omega) (by omega)), R8]
+        simp [encs]
+    · have hlen : 1 < (e :: tail).length := by
+        cases tail with
+        | nil => exact absurd rfl htl
+        | cons _ _ => simp
+      obtain ⟨ω2, μ2, r2, b0, b1, b5, b7, b8, s80, fr2, rd2, wr2⟩ :=
+        lp_next (p := p) (P := P) (R := env.rel cap) x ω1 μ1 s rd L (e :: tail).length a1 a5 a6
+          (by rw [kf _ (by omega) (by omega)]; exact m48) ⟨hlen, by simp only [List.length_cons]; omega⟩ (by omega) ⟨by omega, by omega⟩
+          (fun a h1 h2 => hst a (by omega) (by omega))
+      have lo2 : ∀ a, a < 2147483648 → μ2.read a = μ1.read a := fun a ha => fr2 a (by omega) (Or.inl (by omega))
+      have H2 : HeapCtxC env.code pb S0 S1 μ2 st1 := HeapCtxC.keep_hi H1 lo2 wr2
+      have k2 : ∀ o, s ≤ o → o + 8 ≤ s + 80 → rdN μ2 o 8 = rdN μ1 o 8 := fun o h1 h2 =>
+        rdN_frame fun j hj => fr2 _ (by omega) (Or.inl (by omega))
+      have k2' : ∀ o, s + 88 ≤ o → o + 8 ≤ 4294967296 → rdN μ2 o 8 = rdN μ1 o 8 := fun o h1 h2 =>
+        rdN_frame fun j hj => fr2 _ (by omega) (Or.inr (by omega))
+      have tailOk : ∀ e' ∈ tail, ItemOk env cap pb p P N e'.1 e'.2 := fun e' h => hok e' (by simp [h])
+      have hrd2 : μ2.readN rd 8 = Num.encodeLE 8 (ip + e.1.length) := by
+        rw [PVM.Memory.readN_congr (μ := μ1) (fun j hj => fr2 _ (by omega) (Or.inr (by omega))), R0]
+      have hrd8 : μ2.readN (rd + 8) 8 = Num.encodeLE 8 (rlen - e.1.length) := by
+        rw [PVM.Memory.readN_congr (μ := μ1) (fun j hj => fr2 _ (by omega) (Or.inr (by omega))), R8]
+      obtain ⟨Rb1, Rb2, Rb3⟩ := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hR hRu
+      have hencT : μ2.readN (ip + e.1.length) (encs tail).length = encs tail := by
+        rw [PVM.Memory.readN_congr (μ := μ1) (fun j hj => lo2 _ (by omega))]
+        rw [PVM.Memory.readN_congr (μ := μ) (fun j hj => keepd1 Rc hR hRu _ ⟨by omega, by omega⟩ (by
+          have := Services.Bootstrap.Decode.LoopA.InData.apart H.wf hR hC (Ne.symm hRC) (a := ip + e.1.length + j)
+            ⟨by omega, by omega⟩
+          unfold Services.Bootstrap.Decode.LoopA.InData at this; omega))]
+        exact ht
+      rcases ih ω2 μ2 st1 (L + 1) (ip + e.1.length) (rlen - e.1.length) tailOk htl H2 b0 b1
+          (by rw [b5]; simp) b7 b8
+          (by rw [k2 _ (by omega) (by omega), kf _ (by omega) (by omega)]; exact m0)
+          (by rw [k2 _ (by omega) (by omega), kf _ (by omega) (by omega)]; exact m32)
+          (by rw [k2 _ (by omega) (by omega), kf _ (by omega) (by omega)]; exact m40)
+          (by rw [k2 _ (by omega) (by omega), kf _ (by omega) (by omega)]; exact m48)
+          (by rw [k2 _ (by omega) (by omega)]; exact s56)
+          (by rw [k2 _ (by omega) (by omega), kh _ (by omega) (by omega)]; exact m64)
+          (by rw [k2 _ (by omega) (by omega), kh _ (by omega) (by omega)]; exact m72)
+          s80 (by simp at hLn; omega) hCu1 hCu hCq hCe hR1 hRu (by omega) (by omega) hrd2 hrd8 (by omega)
+          (by omega) hencT with
+        ⟨st', ω', μ', r3, c0, c1, c5, c6, o0, o8, o16, H', keep', keepd', reps, R0', R8'⟩ | ⟨ω', μ', r3⟩
+      · refine Or.inl ⟨st', ω', μ', ((r1.trans r2).trans r3).mono (by simp; rw [Nat.mul_succ]; omega),
+          by rw [c0, k2' _ (by omega) (by omega), kg _ (by omega) (by omega)], c1,
+          by rw [c5, k2' _ (by omega) (by omega), kg _ (by omega) (by omega)],
+          by rw [c6, k2' _ (by omega) (by omega), kg _ (by omega) (by omega)], o0, o8, o16, H',
+          fun c hc hu => keep' c (keep1 c hc hu) hu, fun c hc hu a ha hout' => ?_, fun j e' hj => ?_, ?_, ?_⟩
+        · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
+          unfold InDataA at ha
+          rw [keepd' c (keep1 c hc hu) hu a ha (by omega), lo2 a (by omega), keepd1 c hc hu a ha (by omega)]
+        · cases j with
+          | zero =>
+            simp only [List.getElem?_cons_zero, Option.some.injEq] at hj; subst hj
+            refine keepRep μ' fun c hc hu a ha hout' => ?_
+            have := Services.Bootstrap.Decode.VecU8.chunk_in H1.wf hc hu
+            have := H1.hbT
+            unfold InDataA at ha
+            rw [keepd' c hc hu a ha hout', lo2 a (by omega)]
+          | succ j =>
+            simp only [List.getElem?_cons_succ] at hj
+            have := reps j e' hj
+            rwa [show L + 1 + j = L + (j + 1) by omega] at this
+        · rw [R0', encs_cons, List.length_append, Nat.add_assoc]
+        · rw [R8', encs_cons, List.length_append, Nat.sub_add_eq]
+      · exact Or.inr ⟨ω', μ', ((r1.trans r2).trans r3).mono (by simp; rw [Nat.mul_succ]; omega)⟩
+  · exact Or.inr ⟨ω1, μ1, r1.mono (by simp; rw [Nat.mul_succ]; omega)⟩
+
 end Services.Bootstrap.Acc

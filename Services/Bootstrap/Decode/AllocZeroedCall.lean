@@ -100,6 +100,7 @@ theorem alloc_implZ_callG {X : Type} {p : ByteArray} {P : Program} [HasCode p P]
     (alloc (growTo pb) hb 1 req s = none ∧ ∃ ω' μ',
       FreeStepsH p (env.rel cap) 41177 ω μ x tg ω' μ' x (96 * req + 560) ∧ ω'[7] = UInt64.ofNat 0 ∧
       (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
+      (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧ μ'.writable 206848 = true ∧
       ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6]) := by
   obtain ⟨μ₀, H₀, hag, hwa⟩ := H
   obtain ⟨ph, h48, hhb, hp0, hHTs, hHT⟩ := H₀.pages
@@ -113,11 +114,12 @@ theorem alloc_implZ_callG {X : Type} {p : ByteArray} {P : Program} [HasCode p P]
   cases ha : alloc (growTo pb) hb 1 req s with
   | none =>
     right
-    obtain ⟨ω', μ', run, -, e7, e0, e5, e6, e1, -, -, efr⟩ := alloc_refines_failKG (p := p) (P := P)
+    obtain ⟨ω', μ', run, -, e7, e0, e5, e6, e1, hpg', hst', efr⟩ := alloc_refines_failKG (p := p) (P := P)
       (hb := hb) (S0 := S0) (S1 := S1) env cap hcap (by omega) x ω μ s sp req pb ph H₀.wf rep H₀.bd h48 hhb
       hbs ha hrq h1 h7 h8 h9 hsp hsp1 H₀.hb0 H₀.hbT H₀.hA hHTs hSTk H₀.hSb hp hst hHT
     exact ⟨rfl, ω', μ', (run.trans (ai_ret (R := env.rel cap) (p := p) (P := P) x ω' μ' ret tg (e0.trans h0) hret
-      hjt hbt)).mono (by omega), e7, efr, e0, e1, e5, e6⟩
+      hjt hbt)).mono (by omega), e7, efr, hst',
+      (HeapPages.wrAt hpg' hhb hst') 206848 (Or.inl ⟨by omega, by omega⟩), e0, e1, e5, e6⟩
   | some q =>
     obtain ⟨ptr, s'⟩ := q
     left
@@ -207,6 +209,7 @@ theorem alloc_impl0_callG {X : Type} {p : ByteArray} {P : Program} [HasCode p P]
     (alloc (growTo pb) hb 1 req s = none ∧ ∃ ω' μ',
       FreeStepsH p (env.rel cap) 41177 ω μ x tg ω' μ' x (96 * req + 560) ∧ ω'[7] = UInt64.ofNat 0 ∧
       (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
+      (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧ μ'.writable 206848 = true ∧
       ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6]) := by
   obtain ⟨μ₀, H₀, hag, hwa⟩ := H
   obtain ⟨ph, h48, hhb, hp0, hHTs, hHT⟩ := H₀.pages
@@ -220,11 +223,12 @@ theorem alloc_impl0_callG {X : Type} {p : ByteArray} {P : Program} [HasCode p P]
   cases ha : alloc (growTo pb) hb 1 req s with
   | none =>
     right
-    obtain ⟨ω', μ', run, -, e7, e0, e5, e6, e1, -, -, efr⟩ := alloc_refines_failKG (p := p) (P := P)
+    obtain ⟨ω', μ', run, -, e7, e0, e5, e6, e1, hpg', hst', efr⟩ := alloc_refines_failKG (p := p) (P := P)
       (hb := hb) (S0 := S0) (S1 := S1) env cap hcap (by omega) x ω μ s sp req pb ph H₀.wf rep H₀.bd h48 hhb
       hbs ha hrq h1 h7 h8 h9 hsp hsp1 H₀.hb0 H₀.hbT H₀.hA hHTs hSTk H₀.hSb hp hst hHT
     exact ⟨rfl, ω', μ', (run.trans (ai_ret (R := env.rel cap) (p := p) (P := P) x ω' μ' ret tg (e0.trans h0) hret
-      hjt hbt)).mono (by omega), e7, efr, e0, e1, e5, e6⟩
+      hjt hbt)).mono (by omega), e7, efr, hst',
+      (HeapPages.wrAt hpg' hhb hst') 206848 (Or.inl ⟨by omega, by omega⟩), e0, e1, e5, e6⟩
   | some q =>
     obtain ⟨ptr, s'⟩ := q
     left

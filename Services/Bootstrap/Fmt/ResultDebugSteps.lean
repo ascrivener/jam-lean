@@ -90,4 +90,39 @@ theorem rd_r {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X) 
     · refine ⟨?_, ?_, ?_, ?_, ?_⟩
       all_goals post_simp [h1, Nat.mod_eq_of_lt (show r0 < 18446744073709551616 by omega)]
 
+/-- 37312 … 37349, then `Formatter::write_str` (64485 … 64493): `<&HostCallError as Debug>::fmt`
+    with the slot v (ω₇) holding the error's address a and the `Formatter` F (ω₈): the error's tag t
+    at a; its name's length L (the word at 68944 + 8t) and offset (the i32 u at 69008 + 4t, negative:
+    the name at nm = 69008 + u − 2³²); on to the sink's `write_str` (the word at 77040, 2596 → 59959)
+    with the `String` W (the word at F), nm and L. ω₀, ω₁, ω₅, ω₆ are kept. -/
+theorem he_a {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X) (ω : Regs) (μ : Memory)
+    (v F W a t L u nm : Nat) (hv : v + 8 < 4294967296 ∧ F + 16 < 4294967296 ∧ a + 1 < 4294967296)
+    (h7 : ω[7] = UInt64.ofNat v) (h8 : ω[8] = UInt64.ofNat F)
+    (ra : rdN μ v 8 = a) (rt : rdN μ a 1 = t) (ht : t < 8)
+    (rL : rdN μ (68944 + 8 * t) 8 = L) (ru : rdN μ (69008 + 4 * t) 4 = u)
+    (hu : 2147483648 ≤ u ∧ u + 69008 = nm + 4294967296)
+    (rW : rdN μ F 8 = W) (rvt : rdN μ (F + 8) 8 = 77016) (rws : rdN μ 77040 8 = 2596)
+    (hro : ∀ b, 65536 ≤ b → b < 77144 → μ.readable b = true)
+    (hrv : ∀ b, v ≤ b → b < v + 8 → μ.readable b = true)
+    (hra : ∀ b, a ≤ b → b < a + 1 → μ.readable b = true)
+    (hrF : ∀ b, F ≤ b → b < F + 16 → μ.readable b = true) :
+    ∃ ω', FreeStepsH p R 37312 ω μ x 59959 ω' μ x 18 ∧
+      ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ ω'[7] = UInt64.ofNat W ∧
+      ω'[8] = UInt64.ofNat nm ∧ ω'[9] = UInt64.ofNat L := by
+  have hW : W < 18446744073709551616 := rW ▸ rdN_lt64 μ F
+  have hL : L < 18446744073709551616 := rL ▸ rdN_lt64 μ _
+  have hu4 : u < 4294967296 := by have := rdN_lt μ (69008 + 4 * t) 4; simp at this; omega
+  have ru' : rdN μ (t * 4 + 69008) 4 = u := by rw [show t * 4 + 69008 = 69008 + 4 * t by omega]; exact ru
+  have rL' : rdN μ (t * 8 + 68944) 8 = L := by rw [show t * 8 + 68944 = 68944 + 8 * t by omega]; exact rL
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?_, ?_, ?_⟩
+  rotate_left
+  · pvm_go [h7, h8, hv, ra, rt, ht, rL, ru, rL', ru', hu, hu4, rW, rvt, rws, hro, hrv, hra, hrF, ↓rdN_fold]
+  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+    rotate_left 5
+    · simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some']
+      exact congrArg UInt64.ofNat (by omega)
+    all_goals post_simp [h7, h8, Nat.mod_eq_of_lt hW, Nat.mod_eq_of_lt hL, rW, rL,
+      show 68944 + t * 8 = 68944 + 8 * t by omega]
+
 end Services.Bootstrap.Fmt

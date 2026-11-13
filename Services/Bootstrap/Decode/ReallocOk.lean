@@ -1,3 +1,4 @@
+import Services.Bootstrap.Alloc.HeapContract
 import Services.Bootstrap.Alloc.ReallocCases
 import Services.Bootstrap.Decode.VecU8Small
 
@@ -262,11 +263,125 @@ set_option maxHeartbeats 8000000
 set_option maxRecDepth 100000
 
 open Services.Bootstrap.Decode.VecU8 in
-/-- **`realloc_wrap_cases_data` with the heap bound**: as `Alloc.realloc_wrap_cases_data`, and for
+/-- **`realloc_wrap_cases_dataG` with the heap bound**: as `Alloc.realloc_wrap_cases_dataG`, and for
     each block `(r, s', _)` the model's `realloc` returns, `s'.base = s.base` and the h' whose pages
     the heap then has also bounds the allocated space: `s'.base + 32 · s'.allocated ≤ 4096 · h'`
     (h' = ph when nothing grew; the grown page count when `grow_heap` ran, in place or in the
     fallback's `alloc`). -/
+theorem realloc_wrap_cases_hdataG {X : Type} {p : ByteArray} {P : Program} [HasCode p P] (env : HeapHost X)
+    (x : X) (ω : Regs) (μ : Memory) {hb : Nat} (s : State) (sp ptr al size pb ph : Nat)
+    (hwf : WF s) (hrep : Rep μ s)
+    (hc : ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true)
+    (hr1 : (size + 31) / 32 < 33554431) (hz : size = 0 → usable s ptr ≠ 0)
+    (hbd : heapBounds env.code = (48, pb)) (h48 : 48 ≤ ph) (hhb : ph ≤ pb) (hbs : pb < 4294967296)
+    (hcost : pb ≤ ph + 14)
+    (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat ptr) (h9 : ω[9] = UInt64.ofNat al)
+    (h10 : ω[10] = UInt64.ofNat size) (hal1 : 1 ≤ al) (hal2 : al ≤ 32)
+    (hsp : 2147483968 ≤ sp) (hsp1 : sp < 4294967296) (hsp8 : sp % 8 = 0) (hba : s.base % 8 = 0)
+    (hb0 : 206864 ≤ s.base) (hbT : s.base + 1073741824 < 2147483648) (hA : s.allocated < 2147483648)
+    (hfo : FirstOk s) (hl : rdN μ 206848 1 = 0)
+    {S0 S1 : Nat} (hHTs : 208896 ≤ 4096 * ph) (hHT : s.base + 32 * s.allocated ≤ 4096 * ph)
+    (hS : S0 + 320 ≤ sp ∧ sp ≤ S1) (hSb : 4096 * pb ≤ S0) (hp : HeapPages μ 48 pb ph)
+    (hst : ∀ a, S0 ≤ a → a < S1 → μ.writable a = true) :
+    ∃ ω' μ', (∀ r s' b, realloc (growTo pb) hb s ptr ((al + 31) / 32) ((size + 31) / 32) = some (r, s', b) →
+        r ≠ 0 → μ'.readN r (32 * min (usable s ptr) ((size + 31) / 32)) =
+          μ.readN ptr (32 * min (usable s ptr) ((size + 31) / 32))) ∧
+      (∀ r s' b, realloc (growTo pb) hb s ptr ((al + 31) / 32) ((size + 31) / 32) = some (r, s', b) →
+        r ≠ ptr → r ≠ 0 → μ'.readN r (32 * usable s ptr) = μ.readN ptr (32 * usable s ptr)) ∧
+      FreeStepsH p (env.rel hostCostMax) 40701 ω μ x 40821 ω' μ' x (64 * usable s ptr + 1300) ∧
+      rdN μ' 206848 1 = 0 ∧ (∀ a, S0 ≤ a → a < S1 → μ'.writable a = true) ∧
+      (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
+      ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      (∀ r s' b, realloc (growTo pb) hb s ptr ((al + 31) / 32) ((size + 31) / 32) = some (r, s', b) →
+        ω'[7] = UInt64.ofNat r ∧ Rep μ' s' ∧ WF s' ∧ FirstOk s' ∧ s'.base = s.base ∧
+        ∃ h', HeapPages μ' 48 pb h' ∧ s'.base + 32 * s'.allocated ≤ 4096 * h' ∧ ph ≤ h' ∧ h' ≤ pb) ∧
+      (realloc (growTo pb) hb s ptr ((al + 31) / 32) ((size + 31) / 32) = none →
+        ω'[7] = UInt64.ofNat 0 ∧ Rep μ' s ∧ HeapPages μ' 48 pb ph) := by
+  have hwr := HeapPages.wrAt hp hhb hst
+  have hal : al + 31 < 68719476736 := by omega
+  by_cases hin : (size + 31) / 32 ≤ usable s ptr ∧ size ≠ 0
+  · -- in place (the same usable size, or shrunk)
+    obtain ⟨s', e, ω', μ', dat, run, rep, wf, fo, e7, cl, ww, stk, e0, e1, e5, e6⟩ :=
+      realloc_wrap_inplace_data (p := p) (P := P) (R := env.rel hostCostMax) (grow := growTo pb) (hb := hb) x ω μ s sp ptr al size hwf hrep hc
+        hin.2 hin.1 h1 h7 h9 h10 hal (by omega) (by omega) hsp1 hb0 hbT hfo hl hHT ⟨by omega, by omega⟩ hwr
+    exact ⟨ω', μ',
+      fun r s'' b hrr _ => by rw [e] at hrr; cases hrr; rw [Nat.min_eq_right hin.1]; exact dat,
+      fun r s'' b hrr hn1 _ => by rw [e] at hrr; cases hrr; exact absurd rfl hn1,
+      run.mono (by omega), cl, fun a h1 h2 => by rw [ww]; exact hst a h1 h2, stk, e0, e1, e5, e6,
+      fun r s'' b hrr => by
+        rw [e] at hrr; cases hrr; obtain ⟨eb, ea⟩ := realloc_inplace_state hin.1 (by omega) e; exact ⟨e7, rep, wf, fo, eb, ph, HeapPages.of_eq hp ww, by rw [eb, ea]; exact hHT, Nat.le_refl _, hhb⟩,
+      fun hrr => by rw [e] at hrr; cases hrr⟩
+  by_cases hs0 : size = 0
+  · -- to size 0: freed, null
+    subst hs0
+    obtain ⟨e, ω', μ', run, rep, wf, fo, e7, cl, ww, stk, e0, e1, e5, e6⟩ :=
+      realloc_wrap_zero (p := p) (P := P) (R := env.rel hostCostMax) (grow := growTo pb) (hb := hb) x ω μ s sp ptr al hwf hrep hc
+        (hz rfl) h1 h7 h9 h10 hal (by omega) hsp1 hb0 hbT hfo hl hHT ⟨by omega, by omega⟩ hwr
+    exact ⟨ω', μ',
+      fun r s'' b hrr hn => by
+        rw [show (0 + 31) / 32 = 0 from rfl, e] at hrr; cases hrr; exact absurd rfl hn,
+      fun r s'' b hrr _ hn2 => by
+        rw [show (0 + 31) / 32 = 0 from rfl, e] at hrr; cases hrr; exact absurd rfl hn2,
+      run.mono (by omega), cl, fun a h1 h2 => by rw [ww]; exact hst a h1 h2, stk, e0, e1, e5, e6,
+      fun r s'' b hrr => by
+        rw [show (0 + 31) / 32 = 0 from rfl, e] at hrr; cases hrr
+        exact ⟨e7, rep, wf, fo, free_base', ph, HeapPages.of_eq hp ww, by rw [free_base', free_allocated]; exact hHT, Nat.le_refl _, hhb⟩,
+      fun hrr => by rw [show (0 + 31) / 32 = 0 from rfl, e] at hrr; cases hrr⟩
+  have hr : usable s ptr < (size + 31) / 32 := by omega
+  cases hg : growInplace (growTo pb) s ptr ((size + 31) / 32) with
+  | some s' =>
+    by_cases hng : s'.allocated = s.allocated
+    · -- grown in place
+      obtain ⟨e, ω', μ', dat, run, rep, wf, fo, e7, cl, ww, stk, e0, e1, e5, e6⟩ :=
+        realloc_wrap_grow_data (p := p) (P := P) (R := env.rel hostCostMax) (hb := hb) x ω μ s s' sp ptr al size hwf hrep hc hr hr1 hg hng
+          h1 h7 h9 h10 hal (by omega) hsp1 hb0 hbT hA hfo hl hHT ⟨by omega, by omega⟩ hwr
+      exact ⟨ω', μ',
+      fun r s'' b hrr _ => by rw [e] at hrr; cases hrr; rw [Nat.min_eq_left (Nat.le_of_lt hr)]; exact dat,
+      fun r s'' b hrr hn1 _ => by rw [e] at hrr; cases hrr; exact absurd rfl hn1,
+      run.mono (by omega), cl, fun a h1 h2 => by rw [ww]; exact hst a h1 h2, stk, e0, e1, e5, e6,
+        fun r s'' b hrr => by
+          rw [e] at hrr; cases hrr; exact ⟨e7, rep, wf, fo, growInplace_base hg, ph, HeapPages.of_eq hp ww, by rw [growInplace_base hg, hng]; exact hHT, Nat.le_refl _, hhb⟩,
+        fun hrr => by rw [e] at hrr; cases hrr⟩
+    · -- grown in place, the heap grown
+      obtain ⟨e, ω', μ', dat, run, rep, wf, fo, e7, cl, ⟨h', hpH, hB, hph, hpb⟩, hst', stk, e0, e1, e5, e6⟩ :=
+        realloc_wrap_grow_heap_dataG (p := p) (P := P) (hb := hb) env x ω μ s s' sp ptr al size hwf hrep hc hr hr1 pb ph hbd h48 hhb hbs hg
+          hng h1 h7 h9 h10 hal (by omega) hsp1 hb0 hbT hA hfo
+          (Nat.le_trans (growInplace_pages hr hg hng) hcost) hl hHT ⟨by omega, by omega⟩ hSb hp hst
+      exact ⟨ω', μ',
+      fun r s'' b hrr _ => by rw [e] at hrr; cases hrr; rw [Nat.min_eq_left (Nat.le_of_lt hr)]; exact dat,
+      fun r s'' b hrr hn1 _ => by rw [e] at hrr; cases hrr; exact absurd rfl hn1,
+      run.mono (by omega), cl, hst', stk, e0, e1, e5, e6,
+        fun r s'' b hrr => by rw [e] at hrr; cases hrr; exact ⟨e7, rep, wf, fo, growInplace_base hg, h', hpH, hB, hph, hpb⟩,
+        fun hrr => by rw [e] at hrr; cases hrr⟩
+  | none =>
+    cases ha : alloc (growTo pb) hb 1 ((size + 31) / 32) s with
+    | some qs =>
+      obtain ⟨q, s1⟩ := qs
+      have hc1 : pagesOf (s.base + 32 * s1.allocated) ≤ ph + 14 := by
+        by_cases hng : s1.allocated = s.allocated
+        · rw [hng]; exact Nat.le_trans (pagesOf_le hHT) (by omega)
+        · exact Nat.le_trans (alloc_pages hwf ha hng) hcost
+      obtain ⟨e, ω', μ', dat, run, rep, wf, fo, e7, cl, ⟨h', hpH, hB, hph, hpb⟩, hst', stk, e0, e1, e5, e6⟩ :=
+        realloc_wrap_fallback_dataG (p := p) (P := P) (hb := hb) env x ω μ s s1 sp ptr al size q pb ph hwf hrep hc hr hr1 hbd h48 hhb hbs hg
+          ha hc1 h1 h7 h9 h10 hal1 hal2 hsp hsp1 hsp8 hba hb0 hbT hA hfo hl hHTs hHT hS hSb hp hst
+      exact ⟨ω', μ',
+      fun r s'' b hrr _ => by rw [e] at hrr; cases hrr; rw [Nat.min_eq_left (Nat.le_of_lt hr)]; exact dat,
+      fun r s'' b hrr _ _ => by rw [e] at hrr; cases hrr; exact dat,
+      run.mono (by omega), cl, hst', stk, e0, e1, e5, e6,
+        fun r s'' b hrr => by rw [e] at hrr; cases hrr; exact ⟨e7, rep, wf, fo, by rw [free_base', (alloc_block hwf hbT ha).1], h', hpH, by rw [free_base', free_allocated]; exact hB, hph, hpb⟩,
+        fun hrr => by rw [e] at hrr; cases hrr⟩
+    | none =>
+      obtain ⟨e, ω', μ', run, rep, e7, cl, hp', hst', fr, -, e0, e1, e5, e6⟩ :=
+        realloc_wrap_fallback_failG (p := p) (P := P) (hb := hb) env x ω μ s sp ptr al size pb ph hwf hrep hc hr hr1 hbd h48 hhb hbs hg
+          ha h1 h7 h9 h10 hal1 hal2 hsp hsp1 hb0 hbT hA hl hHTs hHT hS hSb hp hst
+      exact ⟨ω', μ',
+      fun r s'' b hrr => (by rw [e] at hrr; cases hrr),
+      fun r s'' b hrr => (by rw [e] at hrr; cases hrr),
+      run.mono (by omega), cl, hst',
+        fun a h1 h2 => fr a h1 (Or.inr h2) (Or.inr (by omega)) (Or.inr (by omega)), e0, e1, e5, e6,
+        fun r s'' b hrr => (by rw [e] at hrr; cases hrr), fun _ => ⟨e7, rep, hp'⟩⟩
+
+/-- `realloc_wrap_cases_hdataG` for the refine contract (`refineHeap env`). -/
 theorem realloc_wrap_cases_hdata {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env)
     (x : RefineCtx) (ω : Regs) (μ : Memory) {hb : Nat} (s : State) (sp ptr al size pb ph : Nat)
     (hwf : WF s) (hrep : Rep μ s)
@@ -295,90 +410,8 @@ theorem realloc_wrap_cases_hdata {p : ByteArray} {P : Program} [HasCode p P] (en
         ω'[7] = UInt64.ofNat r ∧ Rep μ' s' ∧ WF s' ∧ FirstOk s' ∧ s'.base = s.base ∧
         ∃ h', HeapPages μ' 48 pb h' ∧ s'.base + 32 * s'.allocated ≤ 4096 * h' ∧ ph ≤ h' ∧ h' ≤ pb) ∧
       (realloc (growTo pb) hb s ptr ((al + 31) / 32) ((size + 31) / 32) = none →
-        ω'[7] = UInt64.ofNat 0 ∧ Rep μ' s ∧ HeapPages μ' 48 pb ph) := by
-  have hwr := HeapPages.wrAt hp hhb hst
-  have hal : al + 31 < 68719476736 := by omega
-  by_cases hin : (size + 31) / 32 ≤ usable s ptr ∧ size ≠ 0
-  · -- in place (the same usable size, or shrunk)
-    obtain ⟨s', e, ω', μ', dat, run, rep, wf, fo, e7, cl, ww, stk, e0, e1, e5, e6⟩ :=
-      realloc_wrap_inplace_data (p := p) (P := P) (R := refineContract env) (grow := growTo pb) (hb := hb) x ω μ s sp ptr al size hwf hrep hc
-        hin.2 hin.1 h1 h7 h9 h10 hal (by omega) (by omega) hsp1 hb0 hbT hfo hl hHT ⟨by omega, by omega⟩ hwr
-    exact ⟨ω', μ',
-      fun r s'' b hrr _ => by rw [e] at hrr; cases hrr; rw [Nat.min_eq_right hin.1]; exact dat,
-      fun r s'' b hrr hn1 _ => by rw [e] at hrr; cases hrr; exact absurd rfl hn1,
-      run.mono (by omega), cl, fun a h1 h2 => by rw [ww]; exact hst a h1 h2, stk, e0, e1, e5, e6,
-      fun r s'' b hrr => by
-        rw [e] at hrr; cases hrr; obtain ⟨eb, ea⟩ := realloc_inplace_state hin.1 (by omega) e; exact ⟨e7, rep, wf, fo, eb, ph, HeapPages.of_eq hp ww, by rw [eb, ea]; exact hHT, Nat.le_refl _, hhb⟩,
-      fun hrr => by rw [e] at hrr; cases hrr⟩
-  by_cases hs0 : size = 0
-  · -- to size 0: freed, null
-    subst hs0
-    obtain ⟨e, ω', μ', run, rep, wf, fo, e7, cl, ww, stk, e0, e1, e5, e6⟩ :=
-      realloc_wrap_zero (p := p) (P := P) (R := refineContract env) (grow := growTo pb) (hb := hb) x ω μ s sp ptr al hwf hrep hc
-        (hz rfl) h1 h7 h9 h10 hal (by omega) hsp1 hb0 hbT hfo hl hHT ⟨by omega, by omega⟩ hwr
-    exact ⟨ω', μ',
-      fun r s'' b hrr hn => by
-        rw [show (0 + 31) / 32 = 0 from rfl, e] at hrr; cases hrr; exact absurd rfl hn,
-      fun r s'' b hrr _ hn2 => by
-        rw [show (0 + 31) / 32 = 0 from rfl, e] at hrr; cases hrr; exact absurd rfl hn2,
-      run.mono (by omega), cl, fun a h1 h2 => by rw [ww]; exact hst a h1 h2, stk, e0, e1, e5, e6,
-      fun r s'' b hrr => by
-        rw [show (0 + 31) / 32 = 0 from rfl, e] at hrr; cases hrr
-        exact ⟨e7, rep, wf, fo, free_base', ph, HeapPages.of_eq hp ww, by rw [free_base', free_allocated]; exact hHT, Nat.le_refl _, hhb⟩,
-      fun hrr => by rw [show (0 + 31) / 32 = 0 from rfl, e] at hrr; cases hrr⟩
-  have hr : usable s ptr < (size + 31) / 32 := by omega
-  cases hg : growInplace (growTo pb) s ptr ((size + 31) / 32) with
-  | some s' =>
-    by_cases hng : s'.allocated = s.allocated
-    · -- grown in place
-      obtain ⟨e, ω', μ', dat, run, rep, wf, fo, e7, cl, ww, stk, e0, e1, e5, e6⟩ :=
-        realloc_wrap_grow_data (p := p) (P := P) (R := refineContract env) (hb := hb) x ω μ s s' sp ptr al size hwf hrep hc hr hr1 hg hng
-          h1 h7 h9 h10 hal (by omega) hsp1 hb0 hbT hA hfo hl hHT ⟨by omega, by omega⟩ hwr
-      exact ⟨ω', μ',
-      fun r s'' b hrr _ => by rw [e] at hrr; cases hrr; rw [Nat.min_eq_left (Nat.le_of_lt hr)]; exact dat,
-      fun r s'' b hrr hn1 _ => by rw [e] at hrr; cases hrr; exact absurd rfl hn1,
-      run.mono (by omega), cl, fun a h1 h2 => by rw [ww]; exact hst a h1 h2, stk, e0, e1, e5, e6,
-        fun r s'' b hrr => by
-          rw [e] at hrr; cases hrr; exact ⟨e7, rep, wf, fo, growInplace_base hg, ph, HeapPages.of_eq hp ww, by rw [growInplace_base hg, hng]; exact hHT, Nat.le_refl _, hhb⟩,
-        fun hrr => by rw [e] at hrr; cases hrr⟩
-    · -- grown in place, the heap grown
-      obtain ⟨e, ω', μ', dat, run, rep, wf, fo, e7, cl, ⟨h', hpH, hB, hph, hpb⟩, hst', stk, e0, e1, e5, e6⟩ :=
-        realloc_wrap_grow_heap_data (p := p) (P := P) (hb := hb) env x ω μ s s' sp ptr al size hwf hrep hc hr hr1 pb ph hbd h48 hhb hbs hg
-          hng h1 h7 h9 h10 hal (by omega) hsp1 hb0 hbT hA hfo
-          (Nat.le_trans (growInplace_pages hr hg hng) hcost) hl hHT ⟨by omega, by omega⟩ hSb hp hst
-      exact ⟨ω', μ',
-      fun r s'' b hrr _ => by rw [e] at hrr; cases hrr; rw [Nat.min_eq_left (Nat.le_of_lt hr)]; exact dat,
-      fun r s'' b hrr hn1 _ => by rw [e] at hrr; cases hrr; exact absurd rfl hn1,
-      run.mono (by omega), cl, hst', stk, e0, e1, e5, e6,
-        fun r s'' b hrr => by rw [e] at hrr; cases hrr; exact ⟨e7, rep, wf, fo, growInplace_base hg, h', hpH, hB, hph, hpb⟩,
-        fun hrr => by rw [e] at hrr; cases hrr⟩
-  | none =>
-    cases ha : alloc (growTo pb) hb 1 ((size + 31) / 32) s with
-    | some qs =>
-      obtain ⟨q, s1⟩ := qs
-      have hc1 : pagesOf (s.base + 32 * s1.allocated) ≤ ph + 14 := by
-        by_cases hng : s1.allocated = s.allocated
-        · rw [hng]; exact Nat.le_trans (pagesOf_le hHT) (by omega)
-        · exact Nat.le_trans (alloc_pages hwf ha hng) hcost
-      obtain ⟨e, ω', μ', dat, run, rep, wf, fo, e7, cl, ⟨h', hpH, hB, hph, hpb⟩, hst', stk, e0, e1, e5, e6⟩ :=
-        realloc_wrap_fallback_data (p := p) (P := P) (hb := hb) env x ω μ s s1 sp ptr al size q pb ph hwf hrep hc hr hr1 hbd h48 hhb hbs hg
-          ha hc1 h1 h7 h9 h10 hal1 hal2 hsp hsp1 hsp8 hba hb0 hbT hA hfo hl hHTs hHT hS hSb hp hst
-      exact ⟨ω', μ',
-      fun r s'' b hrr _ => by rw [e] at hrr; cases hrr; rw [Nat.min_eq_left (Nat.le_of_lt hr)]; exact dat,
-      fun r s'' b hrr _ _ => by rw [e] at hrr; cases hrr; exact dat,
-      run.mono (by omega), cl, hst', stk, e0, e1, e5, e6,
-        fun r s'' b hrr => by rw [e] at hrr; cases hrr; exact ⟨e7, rep, wf, fo, by rw [free_base', (alloc_block hwf hbT ha).1], h', hpH, by rw [free_base', free_allocated]; exact hB, hph, hpb⟩,
-        fun hrr => by rw [e] at hrr; cases hrr⟩
-    | none =>
-      obtain ⟨e, ω', μ', run, rep, e7, cl, hp', hst', fr, -, e0, e1, e5, e6⟩ :=
-        realloc_wrap_fallback_fail (p := p) (P := P) (hb := hb) env x ω μ s sp ptr al size pb ph hwf hrep hc hr hr1 hbd h48 hhb hbs hg
-          ha h1 h7 h9 h10 hal1 hal2 hsp hsp1 hb0 hbT hA hl hHTs hHT hS hSb hp hst
-      exact ⟨ω', μ',
-      fun r s'' b hrr => (by rw [e] at hrr; cases hrr),
-      fun r s'' b hrr => (by rw [e] at hrr; cases hrr),
-      run.mono (by omega), cl, hst',
-        fun a h1 h2 => fr a h1 (Or.inr h2) (Or.inr (by omega)) (Or.inr (by omega)), e0, e1, e5, e6,
-        fun r s'' b hrr => (by rw [e] at hrr; cases hrr), fun _ => ⟨e7, rep, hp'⟩⟩
+        ω'[7] = UInt64.ofNat 0 ∧ Rep μ' s ∧ HeapPages μ' 48 pb ph) :=
+  realloc_wrap_cases_hdataG (p := p) (P := P) (refineHeap env) x ω μ (hb := hb) s sp ptr al size pb ph hwf hrep hc hr1 hz hbd h48 hhb hbs hcost h1 h7 h9 h10 hal1 hal2 hsp hsp1 hsp8 hba hb0 hbT hA hfo hl (S0 := S0) (S1 := S1) hHTs hHT hS hSb hp hst
 
 
 end Services.Bootstrap.Decode.ReallocOk

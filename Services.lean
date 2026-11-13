@@ -272,6 +272,7 @@ import Services.Bootstrap.Refine.PassLoop
 import Services.Bootstrap.Refine.LoopG
 import Services.Bootstrap.Refine.Exit
 import Services.Bootstrap.Refine.ExitEnc
+import Services.Bootstrap.Refine.DropOut
 import Services.Bootstrap.Spec
 import Services.Bootstrap.SpecLemmas.Codec
 import Services.Bootstrap.SpecLemmas.Refine

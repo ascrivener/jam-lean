@@ -1,4 +1,5 @@
 import Services.Bootstrap.Acc.Handlers.Checkpoint
+import Services.Bootstrap.Acc.ContractC
 
 /-!
 # The `Designate` handler (tag 13)
@@ -69,6 +70,38 @@ theorem toEntry {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {X : 
     all_goals post_simp
     all_goals try rfl
     simp only [List.mem_cons, List.not_mem_nil, or_false, forall_eq_or_imp, forall_eq] at hrs
+    post_simp
+
+/-- **HUH: between `alloc` and `dealloc`**, from `alloc`'s return (10092) with a block at
+    ω₇ = ptr ≠ 0: the 19-octet message (two words, and the low half of the word at sp + 24 at
+    + 15) is written at ptr and logged (`log`, 100: ω₇ := WHAT), then `dealloc(ptr, 19, 1)` (40613)
+    is called with return address ω₀ = 358 (10164). Memory changes only at ptr … ptr + 19. -/
+theorem huhMid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (cap : Nat)
+    (hcap : Constants.Cgasunknown ≤ cap) (hcap' : cap < 18446744073709551616) (env : AccEnv)
+    (x : AccCtx) (ω : Regs) (μ : Memory) (ptr : Nat) (h1 : ω[1] = UInt64.ofNat 4278057152)
+    (h7 : ω[7] = UInt64.ofNat ptr) (hp0 : ptr ≠ 0) (hp : ptr + 19 ≤ 4294967296)
+    (hw : ∀ a, ptr ≤ a → a < ptr + 19 → μ.writable a = true)
+    (hr24 : ∀ a, 4278057176 ≤ a → a < 4278057184 → μ.readable a = true) :
+    ∃ ω' μ', FreeStepsH p (accContractCK cap env) 10092 ω μ x 40613 ω' μ' x 30 ∧
+      ω'[0] = UInt64.ofNat 358 ∧ ω'[1] = ω[1] ∧ ω'[7] = UInt64.ofNat ptr ∧ ω'[8] = UInt64.ofNat 19 ∧
+      ω'[9] = UInt64.ofNat 1 ∧ KeepsExcept μ μ' [(ptr, 19)] ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have hr : ∀ a, ptr ≤ a → a < ptr + 19 → μ.readable a = true :=
+    fun a h1 h2 => Memory.readable_of_writable (hw a h1 h2)
+  have hp64 : ptr < 18446744073709551616 := by omega
+  obtain ⟨v24, hv24, m24⟩ := word_exists μ 4278057176
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?run, ?post⟩
+  case run =>
+    refine FreeStepsH.mono (FreeStepsH.trans (i' := 10148) (ω' := ?w1) (μ' := ?m1) (x' := x)
+      (n₁ := 20) (n₂ := 6) ?a (FreeStepsH.logAccK cap hcap hcap' env (d_10148 (p := p) (P := P)) ?b))
+      (by omega)
+    case a => pvm_go [h1, h7, hp0, hp64, hw, hr, m24, hv24, hr24]
+    case b => pvm_go [JAM.setR7, bs_40613]
+  case post =>
+    refine ⟨?_, ?_, ?_, ?_, ?_, fun a ha hrs => ?_, fun a => ?_, fun a => ?_⟩
+    all_goals post_simp
+    simp only [List.mem_cons, List.not_mem_nil, or_false, forall_eq] at hrs
     post_simp
 
 end Services.Bootstrap.Acc.Handlers.Designate

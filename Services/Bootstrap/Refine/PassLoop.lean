@@ -62,6 +62,9 @@ structure PInv (env : RefineHost.Env) (pb S0 S1 M E n : Nat) (ce : Chunk) (capI 
   c136 : μ.readN (M + 136) 8 = Num.encodeLE 8 9223372036854775809
   /-- `isize::MAX / 24`, `Import`'s bound on its item count. -/
   c48 : μ.readN (M + 48) 8 = Num.encodeLE 8 384307168202282325
+  /-- The mask of the dispatch indices whose staged element needs no drop after its handler
+      (bits 9, 10, 21), tested at 5950. -/
+  c40 : μ.readN (M + 40) 8 = Num.encodeLE 8 2098688
   /-- The input's `vec::IntoIter` at M + 272: `{buf, ptr, cap, end}`. -/
   i0 : μ.readN (M + 272) 8 = Num.encodeLE 8 (ce.addr + 32)
   i8 : μ.readN (M + 280) 8 = Num.encodeLE 8 (E + 232 * k)
@@ -138,6 +141,7 @@ theorem step_room {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
       (M + 272 ≤ a ∧ a + l ≤ M + 280) ∨ (M + 288 ≤ a ∧ a + l ≤ M + 304)) → μ'.readN a l = μ.readN a l :=
     fun a l _ h0 _ h => Memory.readN_congr (fun j hj => efr2 _ (by omega))
   refine ⟨ω', μ', run, ⟨e1, ?_, een, e128, e136, by rw [fr _ 8 (by omega) (by omega) (by omega) (by omega)]; exact st.c48,
+    by rw [fr _ 8 (by omega) (by omega) (by omega) (by omega)]; exact st.c40,
     by rw [fr _ 8 (by omega) (by omega) (by omega) (by omega)]; exact st.i0, ?_,
     by rw [fr _ 8 (by omega) (by omega) (by omega) (by omega)]; exact st.i16,
     by rw [fr _ 8 (by omega) (by omega) (by omega) (by omega)]; exact st.i24,
@@ -226,7 +230,8 @@ theorem step_full {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
         (M + 288 ≤ a ∧ a + l ≤ M + 304)) → μ'.readN a l = μ.readN a l :=
       fun a l h0 h => Memory.readN_congr (fun j hj => efr2 _ (by omega))
     refine Or.inl ⟨s', ω', μ', run.mono (by omega), ⟨e1, ?_, een, e128, e136,
-      by rw [fr _ 8 (by omega) (by omega)]; exact st.c48, by rw [fr _ 8 (by omega) (by omega)]; exact st.i0, ?_,
+      by rw [fr _ 8 (by omega) (by omega)]; exact st.c48, by rw [fr _ 8 (by omega) (by omega)]; exact st.c40,
+      by rw [fr _ 8 (by omega) (by omega)]; exact st.i0, ?_,
       by rw [fr _ 8 (by omega) (by omega)]; exact st.i16, by rw [fr _ 8 (by omega) (by omega)]; exact st.i24,
       ⟨max (2 * cap) 4, q, ecap, eptr, elen, by omega, by omega, by omega,
         Or.inr ⟨_, hnew, by simp; omega, rfl, rfl, fun h => hfr (by rw [← h]; simp; omega), ?_⟩, ?_⟩,

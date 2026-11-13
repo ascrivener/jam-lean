@@ -89,6 +89,7 @@ theorem item_op_ok {X : Type} {p : ByteArray} {P : Program} [HasCode p P] [HasCo
     (∃ po pt s1 s2 ω' μ', VAlloc pb hb no po s s1 ∧ VAlloc pb hb nt pt s1 s2 ∧
       FreeStepsH p (env.rel cap) 45126 ω μ x 47332 ω' μ' x (7 * no + 7 * nt + 7100) ∧
       HeapCtxC env.code pb S0 S1 μ' s2 ∧ (∀ c ∈ chunks s, c.used = true → c ∈ chunks s2) ∧
+      (∀ c ∈ chunks s, c.used = true → c ∈ chunks s1) ∧ (∀ c ∈ chunks s1, c.used = true → c ∈ chunks s2) ∧
       (∀ c ∈ chunks s, c.used = true → ∀ a, InDataA c a → μ'.read a = μ.read a) ∧
       ω'[0] = ω[0] ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       rdN μ' out 8 = nt ∧ rdN μ' (out + 8) 8 = pt ∧ rdN μ' (out + 16) 8 = nt ∧
@@ -129,14 +130,14 @@ theorem item_op_ok {X : Type} {p : ByteArray} {P : Program} [HasCode p P] [HasCo
       (by rw [kk _ _ (by omega)]; exact heg) (by rw [kk _ _ (by omega)]; exact ht0)
       (by rw [kk _ _ (by omega)]; exact heo) (by rw [kk _ _ (by omega)]; exact het)
       ⟨c, hcm, hcu, by omega, by omega⟩ with
-    ⟨po, pt, s1, s2, ω2, μ2, va1, va2, r2, H2, keep, keepd, e0, e1, e5, e6, x0, x8, x16, x24, x32, x40, X48, X80,
-      X112, X144, x176, od, td, R0f, R8f, fr2⟩ | ⟨ω2, μ2, r2⟩
+    ⟨po, pt, s1, s2, ω2, μ2, va1, va2, r2, H2, keep, keepa, keepb, keepd, e0, e1, e5, e6, x0, x8, x16, x24, x32, x40,
+      X48, X80, X112, X144, x176, od, td, R0f, R8f, fr2⟩ | ⟨ω2, μ2, r2⟩
   · have wk : ∀ i, i + 32 ≤ 2147483648 → ∀ j, j < 32 → μ1.read (i + j) = μ.read (i + j) :=
       fun i h j hj => lo1 _ (by omega)
     have wsame : ∀ {o i : Nat}, Words4 μ2 o μ1 i → i + 32 ≤ 2147483648 → Words4 μ2 o μ i :=
       fun w h => (w.trans' (μ1 := μ1) (fun j hj => rfl) (by
         refine ⟨?_, ?_, ?_, ?_⟩ <;> exact rdN_frame fun j hj => lo1 _ (by omega)))
-    refine Or.inl ⟨po, pt, s1, s2, ω2, μ2, va1, va2, (r1.trans r2).mono (by omega), H2, keep,
+    refine Or.inl ⟨po, pt, s1, s2, ω2, μ2, va1, va2, (r1.trans r2).mono (by omega), H2, keep, keepa, keepb,
       fun c hc hu a ha => ?_, by rw [e0, s416, UInt64.ofNat_toNat], by rw [e1, show sp - 424 + 424 = sp by omega],
       by rw [e5, s408, UInt64.ofNat_toNat], by rw [e6, s400, UInt64.ofNat_toNat], x0, x8, x16, x24, x32, x40,
       wsame X48 (by omega), wsame X80 (by omega), wsame X112 (by omega), wsame X144 (by omega), x176,

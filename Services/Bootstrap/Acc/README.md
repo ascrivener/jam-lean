@@ -253,6 +253,9 @@ corollaries.
   (2028 → 44632) of the fetched buffer, unlock (196792 + 8192 + 1864); then `Vec { cap, ptr, len }` at
   *(sp + 8) and the return through sp + 136 (226 → 6674). The free needs a `HeapCtxC`-level dealloc:
   handlers-a is writing `dealloc_callG` (`Decode/DeallocCall.lean`); use it.
+  Segments done (`Acc/Inputs/Glue.lean`): `g_pre` (44495 → 39710), `g_mid` (44527 → 44916), `g_ret`
+  (45613 → 44552), `g_post` (44552 → 44591, the lock about to be taken), `g_end` (44641 → 44674). Waiting
+  on the dealloc for 44591 … 44640.
   **(a′) `fetch_vec`'s zeroed allocation:** `alloc_impl` stores ω₁₀ (the zero flag) at its frame + 112;
   the tail (42074 … 42128) computes ω₁₀ := flag ∧ ω₁₀ and, when nonzero, tail-calls `memzero` 70133 on
   the block (returning to the caller), else returns at 41404. The existing proofs fix the flag 0

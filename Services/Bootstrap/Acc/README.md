@@ -245,6 +245,22 @@ corollaries.
   **Next:** 44495's glue (the fetched bytes unwrapped, the count by `decodeU32A`, `lp_call`, the fetched
   buffer freed at 42327 with the allocator's lock inline, the result stored, return 2022/226 → 6674),
   `fetch_vec`'s zeroed allocation (a′), then the 6630 → 6674 summary.
+  **44495's glue, as the code facts show it** (in 6630's 144-octet frame, sp): ω₆ = the fetched `Vec`'s
+  cap (sp + 56; −1 = the fetch's error niche → trap 44676); ptr at sp + 64, len at sp + 72; the reader
+  {ptr, len} at sp + 104 / + 112; `decodeU32A` (2024 → 44527; its error bit → trap); ω₉ = n,
+  ω₇ = sp + 80 (out), ω₈ = sp + 104, `lp_call` (2026 → 44552); the result's cap −1 (an error) → trap;
+  ptr, len to sp + 16 / + 24; if the fetched cap ≠ 0: the lock (196792 + 10056, spin), `dealloc` 42327
+  (2028 → 44632) of the fetched buffer, unlock (196792 + 8192 + 1864); then `Vec { cap, ptr, len }` at
+  *(sp + 8) and the return through sp + 136 (226 → 6674). The free needs a `HeapCtxC`-level dealloc:
+  handlers-a is writing `dealloc_callG` (`Decode/DeallocCall.lean`); use it.
+  **(a′) `fetch_vec`'s zeroed allocation:** `alloc_impl` stores ω₁₀ (the zero flag) at its frame + 112;
+  the tail (42074 … 42128) computes ω₁₀ := flag ∧ ω₁₀ and, when nonzero, tail-calls `memzero` 70133 on
+  the block (returning to the caller), else returns at 41404. The existing proofs fix the flag 0
+  (`h112 : rdN μ (sp + 112) 8 = 0`, `bitwise_and_zero` in `Alloc/AllocTail.lean`). Since `fetch` then
+  writes all L octets of the block, the zeroing does not affect the result: it suffices to show both
+  tail branches keep `HeapCtxC` (memzero writes only the block's data and its stack frame, so
+  `HeapCtxC.keep_data`). This means a flag-generic copy of the `alloc_impl` chain (`AllocTail`, then the
+  `alloc_callG` composition) in new `AllocZeroed*.lean` files, keeping the flag-0 lemmas as they are.
   **Link to the spec (planned).** The top-level T2 assembly instantiates the list from the model's
   accumulate inputs: for each of the paper's items (GP v0.8.0 §12: an operand 𝕌 or a deferred
   transfer 𝕏), `enc` is its ℰ encoding (Appendix C: tag 0 then ℰ(p, e, a, y, g, O(l), ↕t), or tag 1

@@ -306,6 +306,7 @@ import Services.Bootstrap.Acc.Wrappers.Remove
 import Services.Bootstrap.Acc.Items.Head
 import Services.Bootstrap.Acc.Items.End
 import Services.Bootstrap.Acc.Items.Disp
+import Services.Bootstrap.Acc.Items.Exit
 import Services.Bootstrap.Alloc.HeapContract
 import Services.Bootstrap.Decode.VecU8HeapBig
 import Services.Bootstrap.Decode.VecPairsBig

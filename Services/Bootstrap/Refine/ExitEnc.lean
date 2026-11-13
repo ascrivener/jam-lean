@@ -117,7 +117,10 @@ theorem enc_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env 
       cap' = 232 * n + 6 ∧ (⟨buf - 32, (232 * n + 6 + 31) / 32 + 1, true⟩ : Chunk) ∈ chunks s' ∧
       (∀ a, a < 4294967296 → M ≤ a → (a < M + 168 ∨ M + 194 ≤ a) → (a < M + 272 ∨ M + 296 ≤ a) →
         μ'.read a = μ.read a) ∧
-      (∀ d ∈ chunks s, d.used = true → d ∈ chunks s' ∧ ∀ a, InData d a → μ'.read a = μ.read a)) ∨
+      (∀ d ∈ chunks s, d.used = true → d ∈ chunks s' ∧ ∀ a, InData d a → μ'.read a = μ.read a) ∧
+      (∀ d ∈ chunks s, d.used = true → d ≠ ⟨buf - 32, (232 * n + 6 + 31) / 32 + 1, true⟩) ∧
+      μ'.readN (M + 168) 8 = Num.encodeLE 8 cap ∧ μ'.readN (M + 176) 8 = Num.encodeLE 8 E ∧
+      μ'.readN (M + 184) 8 = Num.encodeLE 8 n) ∨
     PassLoop.ExhaustsX env cap0 pb p 6209 ω μ x (4100 * n + 7 * off enc n + 2000) := by
   obtain ⟨hS0M, hMS1, hM2, hM8⟩ := hM
   obtain ⟨hcs, hcu, hcE0, hcE1⟩ := hc
@@ -203,7 +206,7 @@ theorem enc_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env 
     (fun a ha h => dfr a (by omega) (Or.inl (by omega)) (Or.inl (by omega)) (by simp at h; omega)) dwr
   refine Or.inl ⟨s2, ω4, μ4, 232 * n + 6, buf,
     ((run1.trans run2).trans (run3.trans run4)).mono (by omega), H4, by rw [d1]; congr 1; omega, dO, dO8, dO16,
-    ?_, rfl, hnew, fun a h0 h1 h2 h3 => ?_, fun d hd hu => ⟨keep2 d hd hu, fun a ha => ?_⟩⟩
+    ?_, rfl, hnew, fun a h0 h1 h2 h3 => ?_, fun d hd hu => ⟨keep2 d hd hu, fun a ha => ?_⟩, fresh2, ?_, ?_, ?_⟩
   · rw [dbuf, show M + 168 + 24 = M + 192 by omega,
       Memory.readN_congr (fun i hi => stk _ (by omega) (by omega)), a192]
   · rw [dfr a h0 (Or.inr (by omega)) (by omega) (Or.inr (by omega)), stk a h0 (by omega),
@@ -213,5 +216,14 @@ theorem enc_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env 
     simp only at hdj
     unfold InData at ha
     rw [dfr a (by omega) (Or.inl (by omega)) (Or.inl (by omega)) (by omega), dat d hd hu a ⟨ha.1, ha.2⟩]
+  · rw [show μ4.readN (M + 168) 8 = μ1.readN (M + 168) 8 from Memory.readN_congr (fun i hi => by
+      rw [dfr _ (by omega) (Or.inr (by omega)) (Or.inl (by omega)) (Or.inr (by omega)), stk _ (by omega) (by omega)])]
+    exact a168
+  · rw [show μ4.readN (M + 176) 8 = μ1.readN (M + 176) 8 from Memory.readN_congr (fun i hi => by
+      rw [dfr _ (by omega) (Or.inr (by omega)) (Or.inl (by omega)) (Or.inr (by omega)), stk _ (by omega) (by omega)])]
+    exact a176
+  · rw [show μ4.readN (M + 184) 8 = μ1.readN (M + 184) 8 from Memory.readN_congr (fun i hi => by
+      rw [dfr _ (by omega) (Or.inr (by omega)) (Or.inl (by omega)) (Or.inr (by omega)), stk _ (by omega) (by omega)])]
+    exact a184
 
 end Services.Bootstrap.Refine.ExitEnc

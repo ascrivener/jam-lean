@@ -125,7 +125,7 @@ theorem Impl.prefix {p : ByteArray} {R : HostRel (AccCtx × Qu)} (hR : R.Pins R)
   induction prog with
   | pure a =>
     intro s h c₀ hp
-    obtain ⟨s', ⟨n, h1⟩, h2, ω', μ', q', h3⟩ := h
+    obtain ⟨s', ⟨n, h1⟩, h2, ω', μ', q', h3, -⟩ := h
     rcases Pre.split hR keepR (fun c => c = s.c) (keepI s.c) h1 rfl hp with hc | hp'
     · exact .inl (by rw [hc])
     · have := Pre.split_run hR keepR (fun c => c = s'.c) (keepI s'.c) h3 rfl hp'

@@ -67,9 +67,10 @@ def Impl (p : ByteArray) (R : HostRel (AccCtx × Qu)) (env : AccEnv) {α : Type}
         | some (b, c₁) => ∃ s₂, Reaches p (YIn R s.c.2 c₁.2) s₁ s₂ ∧ s₂.c = c₁ ∧ Impl p R env (k b) Q s₂
         | none => Ends p (KeepCtx R) s₁ .panic s.c
 
-/-- The run halts from s, keeping (x, y): the post-condition of the whole program. -/
+/-- The run halts from s, keeping (x, y), with ω₈ = 0 (an empty output, so Ψ_A takes no yield
+    from it): the post-condition of the whole program. -/
 def Halts (p : ByteArray) (R : HostRel (AccCtx × Qu)) (_ : Unit) (s : St Qu) : Prop :=
-  Ends p (KeepCtx R) s .halt s.c
+  ∃ ω' μ' q', FreeRunH p (KeepCtx R) s.i s.ω s.μ (s.c, s.q) .halt ω' μ' (s.c, q') ∧ (ω'.get 8).toNat = 0
 
 theorem Reaches.trans {p : ByteArray} {R : HostRel (AccCtx × Qu)} {s s' s'' : St Qu}
     (h₁ : Reaches p R s s') (h₂ : Reaches p R s' s'') : Reaches p R s s'' := by
@@ -171,22 +172,24 @@ def runOutcome (ε : Status) (c' : AccCtx) :
   if ε = .halt then (c'.1.state, c'.1.xfers, c'.1.yield, c'.1.provisions)
   else (c'.2.state, c'.2.xfers, c'.2.yield, c'.2.provisions)
 
-/-- **A run exists, and it reports what some `ASem.run n` reports.** -/
+/-- **A run exists, and it reports what some `ASem.run n` reports**; a halt has ω₈ = 0. -/
 theorem Impl.run {p : ByteArray} {R : HostRel (AccCtx × Qu)} {env : AccEnv} :
     ∀ (prog : Prog AOp Unit) (s : St Qu), Impl p R env prog (Halts p R) s →
-      ∃ ε c', Ends p R s ε c' ∧ ∃ n, ASem.outcome (ASem.run n prog env s.c) = runOutcome ε c' := by
+      ∃ ε c' ω' μ' q', FreeRunH p R s.i s.ω s.μ (s.c, s.q) ε ω' μ' (c', q') ∧
+        (ε = .halt → (ω'.get 8).toNat = 0) ∧
+        ∃ n, ASem.outcome (ASem.run n prog env s.c) = runOutcome ε c' := by
   intro prog
   induction prog with
   | pure a =>
     intro s h
-    obtain ⟨s', h1, h2, h3⟩ := h
-    have h3' : Ends p R s' .halt s'.c := Ends.weaken h3
-    rw [h2] at h3'
-    refine ⟨.halt, s.c, Ends.prepend (h1.mono fun _ _ _ _ _ _ _ _ h => h.1) h3', 0, ?_⟩
-    simp [ASem.run, ASem.outcome, runOutcome]
+    obtain ⟨s', ⟨n₁, h1⟩, h2, ω', μ', q', h3, h8⟩ := h
+    refine ⟨.halt, s'.c, ω', μ', q', FreeRunH.prepend (h1.weaken fun _ _ _ _ _ _ _ h => h.1)
+      (FreeRunH.unkeep h3), fun _ => h8, 0, ?_⟩
+    simp [ASem.run, ASem.outcome, runOutcome, h2]
   | panic =>
     intro s h
-    refine ⟨.panic, s.c, Ends.weaken h, 0, ?_⟩
+    obtain ⟨ω', μ', q', h⟩ := h
+    refine ⟨.panic, s.c, ω', μ', q', FreeRunH.unkeep h, (fun h => by cases h), 0, ?_⟩
     simp [ASem.run, ASem.outcome, runOutcome]
   | call op k ih =>
     intro s h
@@ -198,14 +201,16 @@ theorem Impl.run {p : ByteArray} {R : HostRel (AccCtx × Qu)} {env : AccEnv} :
     | some bc =>
       intro h3
       obtain ⟨s₂, g1, g2, g3⟩ := h3
-      obtain ⟨ε, c', he, n, hn⟩ := ih bc.1 s₂ g3
-      refine ⟨ε, c', Ends.prepend (h1'.trans (g1.mono fun _ _ _ _ _ _ _ _ h => h.1)) he, n + 1, ?_⟩
+      obtain ⟨ε, c', ω', μ', q', he, h8, n, hn⟩ := ih bc.1 s₂ g3
+      obtain ⟨m, hm⟩ := h1'.trans (g1.mono fun _ _ _ _ _ _ _ _ h => h.1)
+      refine ⟨ε, c', ω', μ', q', FreeRunH.prepend hm he, h8, n + 1, ?_⟩
       simp only [ASem.run, hst]
       rw [← g2]; exact hn
     | none =>
       intro h3
-      have h3' : Ends p R s₁ .panic s.c := Ends.weaken h3
-      refine ⟨.panic, s.c, Ends.prepend h1' h3', 1, ?_⟩
+      obtain ⟨ω', μ', q', h3⟩ := h3
+      obtain ⟨m, hm⟩ := h1'
+      refine ⟨.panic, s.c, ω', μ', q', FreeRunH.prepend hm (FreeRunH.unkeep h3), (fun h => by cases h), 1, ?_⟩
       simp [ASem.run, hst, ASem.outcome, runOutcome]
 
 end Services.Bootstrap.Acc

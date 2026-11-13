@@ -39,7 +39,8 @@ theorem impl_psiM (b : ByteArray) (i : Nat) (gas : UInt64) (a : ByteArray) (env 
     (x₀ : AccCtx) (hx : x₀.1 = x₀.2) {p : ByteArray} {ω : Regs} {μ : Memory}
     (hY : standardInit b a = some (p, ω, μ)) (prog : Prog AOp Unit)
     (himpl : ∀ f : Stream, Impl p (accContractS env) env prog (Halts p (accContractS env)) ⟨i, ω, μ, x₀, f⟩) :
-    ∃ n, psiMOutcome (psiM b i gas a (accHostFn env) x₀) = ASem.outcome (ASem.run n prog env x₀) := by
+    (∃ n, psiMOutcome (psiM b i gas a (accHostFn env) x₀) = ASem.outcome (ASem.run n prog env x₀)) ∧
+      ∀ out, (psiM b i gas a (accHostFn env) x₀).2.1 = .ok out → out.size = 0 := by
   have hpin := accContractS_pins env
   cases hoog : (psiM b i gas a (accHostFn env) x₀).2.1 with
   | oog =>
@@ -48,6 +49,7 @@ theorem impl_psiM (b : ByteArray) (i : Nat) (gas : UInt64) (a : ByteArray) (env 
     have hout : psiMOutcome (psiM b i gas a (accHostFn env) x₀) = yOutcome c₀.2 := by
       simp only [psiMOutcome, hoog, hc]; rfl
     rw [hout]
+    refine ⟨?_, fun out h => by cases h⟩
     rcases Impl.prefix hpin prog _ (himpl f) c₀ hpre with h | ⟨n, hn⟩
     · exact ⟨0, by rw [run0_y env prog x₀ hx]; dsimp only at h; rw [h]⟩
     · exact ⟨n, hn.symm⟩
@@ -62,19 +64,31 @@ theorem impl_psiM (b : ByteArray) (i : Nat) (gas : UInt64) (a : ByteArray) (env 
         have hε : ε ≠ .oog := by
           intro he; rw [hres] at hoog; simp [freeOutput, he] at hoog
         obtain ⟨f, tl', hrunS⟩ := FreeRunH.toS env hrun hε (fun _ => 0)
-        obtain ⟨ε₂, c₂, ⟨ω₂, μ₂, q₂, he₂⟩, n, hn⟩ := Impl.run prog _ (himpl f)
-        obtain ⟨rfl, -, -, hxq⟩ := FreeRunH.det hpin he₂ hrunS
+        obtain ⟨ε₂, c₂, ω₂, μ₂, q₂, he₂, h8, n, hn⟩ := Impl.run prog _ (himpl f)
+        obtain ⟨rfl, rfl, rfl, hxq⟩ := FreeRunH.det hpin he₂ hrunS
         have hc₂ : c₂ = x' := congrArg Prod.fst hxq
         subst hc₂
-        refine ⟨n, ?_⟩
+        refine ⟨⟨n, ?_⟩, fun out hout => ?_⟩
+        rotate_left
+        · have hf : freeOutput ε₂ ω₂ μ₂ = .ok out := by
+            have := hoog; rw [hres] at this; exact this.trans hout
+          by_cases hh : ε₂ = .halt
+          · subst hh
+            have h8' := h8 rfl
+            by_cases hrd : μ₂.rangeReadable (ω₂.get 7).toNat (ω₂.get 8).toNat <;>
+              simp [freeOutput, hrd] at hf <;> subst hf
+            · show (List.toArray _).size = 0
+              simp [h8', Memory.readN]
+            · rfl
+          · cases ε₂ <;> simp [freeOutput] at hf hh
         rw [hn]
         unfold psiMOutcome
         rw [hres]
         simp only [runOutcome]
         by_cases hh : ε₂ = .halt
         · subst hh
-          by_cases hrd : μ'.rangeReadable (ω'.get 7).toNat (ω'.get 8).toNat <;> simp [freeOutput, hrd]
-        · rw [ite_cond_eq_false _ _ (eq_false hh)]
+          by_cases hrd : μ₂.rangeReadable (ω₂.get 7).toNat (ω₂.get 8).toNat <;> simp [freeOutput, hrd]
+        · rw [ite_eq_right_of_eq_false _ _ (eq_false hh)]
           cases ε₂ <;> first | exact absurd rfl hh | rfl | (exfalso; exact hε rfl)
 
 end Services.Bootstrap.Acc

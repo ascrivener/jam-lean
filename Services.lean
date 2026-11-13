@@ -20,6 +20,7 @@ import Services.Bootstrap.Fmt.OracleRefine
 import Services.Bootstrap.Fmt.Hex
 import Services.Bootstrap.Fmt.Dec4
 import Services.Bootstrap.Fmt.Du5
+import Services.Bootstrap.Fmt.Format
 import Services.Bootstrap.BParams
 import Services.Bootstrap.BParamsConsts
 import Services.Bootstrap.StartupConsts

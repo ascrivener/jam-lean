@@ -254,6 +254,8 @@ import Services.Bootstrap.Spec
 import Services.Bootstrap.SpecLemmas.Codec
 import Services.Bootstrap.SpecLemmas.Refine
 import Services.Bootstrap.SpecLemmas.Ring
+import Services.Bootstrap.SpecLemmas.Items
+import Services.Bootstrap.ASem
 import Services.Bootstrap.Alloc.HeapContract
 
 /-!
@@ -320,4 +322,9 @@ Built on `JAM`; nothing in `PVM` or `JAM` depends on this library.
   codec round trip of step 0 (`decode_payload`, `decode_output`), `refineInstr` keeping
   instructions well-formed (`refineInstr_wf`, `refine_output`), and the ring half of S1 kept by
   `addRecent` (`addRecent_ringInv`) in a minimal storage model.
+* `Services.Bootstrap.SpecLemmas.Items` — `Spec.accumulate`'s decode of the inputs: `decode_items`
+  reads ℰ(↕**i**) back as `specItem`s (`compact_run64` for gas limits below 2⁶⁴).
+* `Services.Bootstrap.ASem` — what T2 means: `ASem.run` / `ASem.outcome`, accumulate's host
+  operations as the model's host functions on a memory holding their arguments; `accEnv`, `credit`,
+  `codeOf`.
 -/

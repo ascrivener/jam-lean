@@ -1,5 +1,6 @@
 import Services.Bootstrap.Alloc.AllocZeroedTail
 import Services.Bootstrap.Alloc.AllocImpl
+import Services.Bootstrap.Alloc.AllocZeroedMemzero
 
 /-!
 # The binary's `alloc_impl` with the zero flag
@@ -184,5 +185,122 @@ theorem alloc_end1Z {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Re
           · exact Or.inl h0
           · have := h3 old (Or.inl (Or.inr (hOF h0))); right; omega
         rw [wf a (by omega) (by omega) (by omega) ho (by omega) (by omega), fr2 a (by omega) (by omega)]⟩
+
+/-- The representation is kept by a write to a region D … D + n above the allocator's globals that
+    meets no header (the zeroed block's data). -/
+theorem RepAt.congr_off {μ μ' : Memory} {t : State} {H F : Nat → Prop} {D n : Nat} (h : RepAt μ t H F)
+    (wf : ∀ b, b < 4294967296 → (b < D ∨ D + n ≤ b) → μ'.read b = μ.read b) (hD : 206864 ≤ D)
+    (hHa : ∀ b, H b ∨ F b → b + 16 ≤ D ∨ D + n ≤ b) (hHl : ∀ b, H b ∨ F b → b + 16 < 4294967296) :
+    RepAt μ' t H F := by
+  refine ⟨fun b hb => ?_, fun q hq => ?_, ?_, ?_, ?_, fun b hb => ?_, fun b hb => ?_, fun b hb => ?_,
+    fun b hb => ?_⟩
+  · rw [← h.heads b hb]; unfold A0; unfold binCount at hb; exact rdN_frame fun j hj => wf _ (by omega) (by omega)
+  · rw [← h.sec q hq]; unfold A0; exact rdN_frame fun j hj => wf _ (by omega) (by omega)
+  · rw [← h.pri]; unfold A0; exact rdN_frame fun j hj => wf _ (by omega) (by omega)
+  · rw [← h.base]; unfold A0; exact rdN_frame fun j hj => wf _ (by omega) (by omega)
+  · rw [← h.alloc]; unfold A0; exact rdN_frame fun j hj => wf _ (by omega) (by omega)
+  · have := hHa b (Or.inl hb); have := hHl b (Or.inl hb); rw [← h.prev b hb]; exact rdN_frame fun j hj => wf _ (by omega) (by omega)
+  · have := hHa b (Or.inl hb); have := hHl b (Or.inl hb); rw [← h.size b hb]; exact rdN_frame fun j hj => wf _ (by omega) (by omega)
+  · have := hHa b (Or.inr hb); have := hHl b (Or.inr hb); rw [← h.next b hb]; exact rdN_frame fun j hj => wf _ (by omega) (by omega)
+  · have := hHa b (Or.inr hb); have := hHl b (Or.inr hb); rw [← h.prevL b hb]; exact rdN_frame fun j hj => wf _ (by omega) (by omega)
+
+/-- **42054 … the caller's return target t**, the flag z generic: as `alloc_end2` (the final chunk F
+    records `pv` if below the heap's end, the data address D returned in ω₇), and when ω₁₀ ∧ z ≠ 0 the
+    block's 32·req data octets D … D + 32·req zeroed by `memzero`, which returns to t itself. The
+    memory is kept off the headers and off the block's data. -/
+theorem alloc_end2Z {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (t : State) (H F : Nat → Prop) (sp N rhs pv D req z ret tg : Nat) (hrep : RepAt μ t H F)
+    (hHF : ∀ a, H a ∨ F a → Al t.base a) (hb0 : 206864 ≤ t.base) (hbT : t.base + 1073741824 < 2147483648)
+    (hFin : N + 32 * rhs < t.base + 1073741824 → H (N + 32 * rhs))
+    (hNe : N + 32 * rhs ≤ t.base + 1073741824) (hNa : 206864 ≤ N)
+    (h1 : ω[1] = UInt64.ofNat sp) (h12 : ω[12] = UInt64.ofNat rhs) (h8 : ω[8] = UInt64.ofNat N)
+    (h3 : ω[3] = UInt64.ofNat pv) (h2 : ω[2] = UInt64.ofNat D) (h4 : ω[4] = UInt64.ofNat (32 * req))
+    (h120 : rdN μ (sp + 120) 8 = 204984) (hz : z < 18446744073709551616) (h112 : rdN μ (sp + 112) 8 = z)
+    (h144 : rdN μ (sp + 144) 8 = ret) (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0)
+    (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = tg) (hbt : P.isBlockStart tg = true)
+    (hpv : pv < 4294967296) (hD8 : D % 8 = 0) (hDa : 206864 ≤ D) (hreq : 1 ≤ req)
+    (hDT : D + 32 * req < 2147483648)
+    (hDH : ∀ a, H a ∨ F a → a + 16 ≤ D ∨ D + 32 * req ≤ a)
+    (hsp0 : 2147483648 ≤ sp) (hsp : sp + 152 < 4294967296) {HT S0 S1 : Nat} (hHTs : 208896 ≤ HT)
+    (hSTk : S0 ≤ sp ∧ sp + 152 ≤ S1) (hHFT : ∀ a, H a ∨ F a → a + 32 ≤ HT) (hDHT : D + 32 * req ≤ HT)
+    (hw : WrAt μ HT S0 S1) :
+    ∃ ω' μ', FreeStepsH p R 42054 ω μ x tg ω' μ' x (96 * req + 60) ∧
+      RepAt μ' (if N + 32 * rhs < t.base + 1073741824 then
+        setHdr t (N + 32 * rhs) (fun h => { h with prev := pv }) else t) H F ∧
+      ω'[7] = UInt64.ofNat D ∧ ω'[0] = UInt64.ofNat ret ∧
+      ω'[5] = UInt64.ofNat (rdN μ (sp + 136) 8) ∧ ω'[6] = UInt64.ofNat (rdN μ (sp + 128) 8) ∧
+      ω'[1] = UInt64.ofNat (sp + 152) ∧ (∀ a, μ'.writable a = μ.writable a) ∧
+      (∀ a, a < 4294967296 → 2147483648 ≤ a → μ'.read a = μ.read a) ∧
+      ∀ a, OffHdrG (fun a => H a ∨ F a) a → (a < D ∨ D + 32 * req ≤ a) → μ'.read a = μ.read a := by
+  have hb4 : rdN μ 206520 4 = t.base := by
+    rw [rdN_lo]; have := hrep.base; unfold A0 at this; rw [this]; omega
+  have hr := hw.rd
+  have hDl : D < 4294967296 := by omega
+  have hwl : Exec.bitwise (· && ·) ω[10].toNat z < 18446744073709551616 := by
+    rw [bitwise_and_land _ _ hz]
+    exact Nat.lt_of_le_of_lt Nat.and_le_left (UInt64.toNat_lt _)
+  have hHl : ∀ b, H b ∨ F b → b + 16 < 4294967296 := fun b hb => by have := hHF b hb; unfold Al at this; omega
+  -- the block's data is writable
+  have hwD : ∀ (μ1 : Memory), (∀ a, μ1.writable a = μ.writable a) →
+      ∀ a, D ≤ a → a < D + 32 * req → μ1.writable a = true := fun μ1 e a h h' => by
+    rw [e]; exact hw a (Or.inl ⟨by omega, by omega⟩)
+  -- the zeroing: memzero on D … D + 32·req from 70133, returning to tg
+  have mz : ∀ (ω1 : Regs) (μ1 : Memory), (∀ a, μ1.writable a = μ.writable a) →
+      ω1[0] = UInt64.ofNat ret → ω1[7] = UInt64.ofNat D → ω1[8] = UInt64.ofNat 0 →
+      ω1[9] = UInt64.ofNat (32 * req) →
+      ∃ ω2 μ2, FreeStepsH p R 70133 ω1 μ1 x tg ω2 μ2 x (96 * req + 20) ∧
+        ω2[0] = ω1[0] ∧ ω2[1] = ω1[1] ∧ ω2[5] = ω1[5] ∧ ω2[6] = ω1[6] ∧ ω2[7] = ω1[7] ∧
+        (∀ a, a < 4294967296 → (a < D ∨ D + 32 * req ≤ a) → μ2.read a = μ1.read a) ∧
+        (∀ a, μ2.writable a = μ1.writable a) := fun ω1 μ1 ww e0 e7 e8 e9 => by
+    obtain ⟨ω2, μ2, r2, f0, f1, f5, f6, f7, -, fr2, -, ww2⟩ := MZ.memzero (p := p) (P := P) (R := R) x ω1 μ1 D
+      (32 * req) ret tg hD8 ⟨by omega, by omega⟩ (by omega) e0 e7 e8 e9 hret hjt hbt (hwD μ1 ww)
+    exact ⟨ω2, μ2, r2.mono (by omega), f0, f1, f5, f6, f7, fr2, ww2⟩
+  by_cases hin : N + 32 * rhs < t.base + 1073741824
+  · rw [if_pos hin]
+    have hHF' := hFin hin
+    have hAF := hHF _ (Or.inl hHF')
+    unfold Al at hAF
+    have hNT : 196608 ≤ N + 32 * rhs ∧ N + 32 * rhs + 4 ≤ HT := ⟨by omega, by have := hHFT _ (Or.inl hHF'); omega⟩
+    by_cases hwz : Exec.bitwise (· && ·) ω[10].toNat z = 0
+    · obtain ⟨ω1, μ1, r1, w1, e11, fr1, ww1, g1⟩ := an_tail_inZ0 (p := p) (P := P) (R := R) x ω μ sp N rhs pv t.base D
+        h1 h12 h8 h3 h2 h120 z hz h112 hwz hb4 hbT hin hpv hDl hsp0 hsp hHTs hSTk hNT hw
+      have rep1 : RepAt μ1 (setHdr t (N + 32 * rhs) (fun h => { h with prev := pv })) H F :=
+        setPrev_rep hrep hHF' w1 fr1 (by omega) (fun b hb => by
+          have := hHF b hb; unfold Al at this; omega)
+      have tr : ∀ a, sp + 128 ≤ a → a + 8 ≤ sp + 152 → rdN μ1 a 8 = rdN μ a 8 := fun a h h' =>
+        rdN_frame fun j hj => fr1 _ (by omega) (by omega)
+      obtain ⟨ω2, r2, d7, d0, d5, d6, d1⟩ := an_retZ (p := p) (P := P) (R := R) x ω1 μ1 sp ret tg
+        (by rw [fget g1 1 (by decide) (by decide)]; exact h1) (by rw [tr _ (by omega) (by omega)]; exact h144)
+        hret hjt hbt hsp hHTs hSTk (hw.of_eq ww1).rd
+      exact ⟨ω2, μ1, (r1.trans r2).mono (by omega), rep1, by rw [d7, e11], d0,
+        by rw [d5, tr _ (by omega) (by omega)], by rw [d6, tr _ (by omega) (by omega)], d1, ww1,
+        fun a h h' => fr1 a h (by omega), fun a ha _ => fr1 a (by have := ha.2.1; omega) (by
+          have := ha.2.2 _ (Or.inl hHF'); omega)⟩
+    · obtain ⟨ω1, μ1, r1, w1, e7, e8, e9, e0, e5, e6, e1, fr1, ww1⟩ := an_tail_inZ1 (p := p) (P := P) (R := R) x ω μ
+        sp N rhs pv t.base D h1 h12 h8 h3 h2 h120 z hz h112 hwz hwl (32 * req) h4 (by omega) hb4 hbT hin hpv hDl
+        hsp0 hsp hHTs hSTk hNT hw
+      have rep1 : RepAt μ1 (setHdr t (N + 32 * rhs) (fun h => { h with prev := pv })) H F :=
+        setPrev_rep hrep hHF' w1 fr1 (by omega) (fun b hb => by
+          have := hHF b hb; unfold Al at this; omega)
+      obtain ⟨ω2, μ2, r2, f0, f1, f5, f6, f7, fr2, ww2⟩ := mz ω1 μ1 ww1 (by rw [e0, h144]) e7 e8 e9
+      refine ⟨ω2, μ2, (r1.trans r2).mono (by omega), rep1.congr_off fr2 hDa hDH hHl,
+        by rw [f7, e7], by rw [f0, e0, h144], by rw [f5, e5], by rw [f6, e6], by rw [f1, e1],
+        fun a => (ww2 a).trans (ww1 a), fun a h h' => (fr2 a h (Or.inr (by omega))).trans (fr1 a h (by omega)),
+        fun a ha hd => (fr2 a (by have := ha.2.1; omega) hd).trans (fr1 a (by have := ha.2.1; omega) (by
+          have := ha.2.2 _ (Or.inl hHF'); omega))⟩
+  · rw [if_neg hin]
+    by_cases hwz : Exec.bitwise (· && ·) ω[10].toNat z = 0
+    · obtain ⟨ω1, r1, e11, g1⟩ := an_tail_endZ0 (p := p) (P := P) (R := R) x ω μ sp N rhs t.base D
+        h1 h12 h8 h2 h120 z hz h112 hwz hb4 hbT (by omega) (by omega) hDl hsp hHTs hSTk hr
+      obtain ⟨ω2, r2, d7, d0, d5, d6, d1⟩ := an_retZ (p := p) (P := P) (R := R) x ω1 μ sp ret tg
+        (by rw [fget g1 1 (by decide) (by decide)]; exact h1) h144 hret hjt hbt hsp hHTs hSTk hr
+      exact ⟨ω2, μ, (r1.trans r2).mono (by omega), hrep, by rw [d7, e11], d0, d5, d6, d1, fun _ => rfl,
+        fun _ _ _ => rfl, fun _ _ _ => rfl⟩
+    · obtain ⟨ω1, r1, e7, e8, e9, e0, e5, e6, e1⟩ := an_tail_endZ1 (p := p) (P := P) (R := R) x ω μ sp N rhs t.base D
+        h1 h12 h8 h2 h120 z hz h112 hwz hwl (32 * req) h4 (by omega) hb4 hbT (by omega) (by omega) hDl hsp hHTs hSTk hr
+      obtain ⟨ω2, μ2, r2, f0, f1, f5, f6, f7, fr2, ww2⟩ := mz ω1 μ (fun _ => rfl) (by rw [e0, h144]) e7 e8 e9
+      exact ⟨ω2, μ2, (r1.trans r2).mono (by omega), hrep.congr_off fr2 hDa hDH hHl,
+        by rw [f7, e7], by rw [f0, e0, h144], by rw [f5, e5], by rw [f6, e6], by rw [f1, e1], ww2,
+        fun a h h' => fr2 a h (Or.inr (by omega)), fun a ha hd => fr2 a (by have := ha.2.1; omega) hd⟩
 
 end Services.Bootstrap.Alloc

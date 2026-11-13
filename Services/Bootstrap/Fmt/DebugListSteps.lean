@@ -216,4 +216,63 @@ theorem de_c {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ
       Nat.mod_eq_of_lt (show r0 < 18446744073709551616 by omega),
       Nat.mod_eq_of_lt (rdN_lt64 μ (T + 88)), Nat.mod_eq_of_lt (rdN_lt64 μ (T + 80))]
 
+/-- 66310 … 66362, `DebugList::finish` (D = ω₇) with result `Ok` (D + 8 = 0): the frame at
+    T = sp − 16 holds ω₀ and ω₅; `"]"` (72826, 1 octet) goes to the sink's `write_str` (2596 →
+    59959) with the `String` W = the word at F = the word at D, returning to 66367 (2782); D stays
+    in ω₅. -/
+theorem df_a {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X) (ω : Regs) (μ : Memory)
+    (sp D F W r0 v5 : Nat) (hsp : 196608 + 16 ≤ sp ∧ sp < 4294967296)
+    (h0 : ω[0] = UInt64.ofNat r0) (h1 : ω[1] = UInt64.ofNat sp) (h5 : ω[5] = UInt64.ofNat v5)
+    (h7 : ω[7] = UInt64.ofNat D)
+    (hv : r0 < 18446744073709551616 ∧ v5 < 18446744073709551616 ∧ D + 16 < 4294967296 ∧ F + 16 < 4294967296)
+    (hdis : (D + 16 ≤ sp - 16 ∨ sp ≤ D) ∧ (F + 16 ≤ sp - 16 ∨ sp ≤ F))
+    (rD : rdN μ D 8 = F) (rr : rdN μ (D + 8) 1 = 0)
+    (rW : rdN μ F 8 = W) (rvt : rdN μ (F + 8) 8 = 77016) (rws : rdN μ 77040 8 = 2596)
+    (hrD : ∀ a, D ≤ a → a < D + 16 → μ.readable a = true) (hrF : ∀ a, F ≤ a → a < F + 16 → μ.readable a = true)
+    (hrv : ∀ a, 77040 ≤ a → a < 77048 → μ.readable a = true)
+    (hw : ∀ a, sp - 16 ≤ a → a < sp → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 66310 ω μ x 59959 ω' μ' x 14 ∧
+      ω'[0] = UInt64.ofNat 2782 ∧ ω'[1] = UInt64.ofNat (sp - 16) ∧ ω'[5] = UInt64.ofNat D ∧
+      ω'[6] = ω[6] ∧ ω'[7] = UInt64.ofNat W ∧ ω'[8] = UInt64.ofNat 72826 ∧ ω'[9] = UInt64.ofNat 1 ∧
+      rdN μ' (sp - 16 + 8) 8 = r0 ∧ rdN μ' (sp - 16) 8 = v5 ∧
+      (∀ a, a < 4294967296 → (a < sp - 16 ∨ sp ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have hr : ∀ a, sp - 16 ≤ a → a < sp → μ.readable a = true := fun a h1 h2 => Memory.readable_of_writable (hw a h1 h2)
+  have hW : W < 18446744073709551616 := rW ▸ rdN_lt64 μ F
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?_, ?_, ?_, ?_⟩
+  rotate_left 2
+  · pvm_go [h0, h1, h5, h7, hsp, hv, hdis, rD, rr, rW, rvt, rws, hrD, hrF, hrv, hw, hr,
+      rdN_writeN_disjoint, ↓rdN_fold]
+  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
+    all_goals post_simp [rdN_writeN_disjoint, rdN_writeN_same8, Num.decodeLE_encodeLE, h0, h1, h5, h7,
+      Nat.mod_eq_of_lt hW, Nat.mod_eq_of_lt hv.1, Nat.mod_eq_of_lt hv.2.1,
+      Nat.mod_eq_of_lt (show D < 18446744073709551616 by omega), rD, rW]
+
+/-- 66367 … 66378, after the sink's `write_str` returned res (ω₇): D + 8 := res, ω₀ and ω₅ restored
+    from the frame at T, sp := T + 16, and return with res in ω₇. -/
+theorem df_b {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (T D r0 t v5 res : Nat) (hT : 65536 ≤ T ∧ T + 16 < 4294967296)
+    (h1 : ω[1] = UInt64.ofNat T) (h5 : ω[5] = UInt64.ofNat D) (h7 : ω[7] = UInt64.ofNat res) (hres : res < 256)
+    (hD : D + 16 < 4294967296 ∧ (D + 16 ≤ T ∨ T + 16 ≤ D))
+    (r0' : rdN μ (T + 8) 8 = r0) (r5 : rdN μ T 8 = v5)
+    (hret : 0 < r0 ∧ r0 ≤ 2806 ∧ r0 % 2 = 0) (hjt : P.jumpTable.getD (r0 / 2 - 1) 0 = t)
+    (hbt : P.isBlockStart t = true)
+    (hr : ∀ a, T ≤ a → a < T + 16 → μ.readable a = true)
+    (hw : ∀ a, D + 8 ≤ a → a < D + 9 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 66367 ω μ x t ω' μ' x 5 ∧
+      ω'[0] = UInt64.ofNat r0 ∧ ω'[1] = UInt64.ofNat (T + 16) ∧ ω'[5] = UInt64.ofNat v5 ∧
+      ω'[6] = ω[6] ∧ ω'[7] = UInt64.ofNat res ∧ rdN μ' (D + 8) 1 = res ∧
+      (∀ a, a < 4294967296 → (a < D + 8 ∨ D + 9 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have hrD : ∀ a, D + 8 ≤ a → a < D + 9 → μ.readable a = true := fun a h1 h2 => Memory.readable_of_writable (hw a h1 h2)
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?_, ?_, ?_, ?_⟩
+  rotate_left 2
+  · pvm_go [h1, h5, h7, hT, hres, hD, r0', r5, hret, hjt, hbt, hr, hw, hrD, rdN_writeN_disjoint, ↓rdN_fold]
+  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
+    all_goals post_simp [rdN_writeN_disjoint, rdN_lit1, dec1 res hres, Num.decodeLE_encodeLE, h1, h5, h7,
+      Nat.mod_eq_of_lt (show r0 < 18446744073709551616 by omega),
+      Nat.mod_eq_of_lt (show res < 18446744073709551616 by omega), Nat.mod_eq_of_lt (rdN_lt64 μ T)]
+
 end Services.Bootstrap.Fmt

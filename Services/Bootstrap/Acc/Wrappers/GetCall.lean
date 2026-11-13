@@ -367,16 +367,17 @@ theorem get_some (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
     exact Or.inr ⟨ω4, μ4, (((run1.trans (FreeStepsH.host_decode (d_47886 (p := p) (P := P)) hR1 run2)).trans
       run3).trans run4S).mono (by omega), e7', ω5, μ5, run5⟩
 
-/-- What `get` leaves at out for the value v, in the allocator's state s: `None` (the capacity word
-    −1), `Some(Vec { 0, 1, 0 })`, or `Some(Vec { |w|, ptr, |w| })` with w at ptr, the data of an
-    allocated chunk of ⌈|w|/32⌉ + 1 units. -/
-def GetOut (μ : Memory) (out : Nat) (s : State) : Option (List UInt8) → Prop
+/-- What `get` leaves at out for the value v, in the allocator's state s (from s₀ before the call):
+    `None` (the capacity word −1), `Some(Vec { 0, 1, 0 })`, or `Some(Vec { |w|, ptr, |w| })` with w at
+    ptr, the data of an allocated chunk of ⌈|w|/32⌉ + 1 units that was not allocated in s₀. -/
+def GetOut (μ : Memory) (out : Nat) (s₀ s : State) : Option (List UInt8) → Prop
   | none => μ.readN out 8 = Num.encodeLE 8 18446744073709551615
   | some [] => μ.readN out 8 = Num.encodeLE 8 0 ∧ μ.readN (out + 8) 8 = Num.encodeLE 8 1 ∧
       μ.readN (out + 16) 8 = Num.encodeLE 8 0
   | some w => ∃ ptr, μ.readN out 8 = Num.encodeLE 8 w.length ∧ μ.readN (out + 8) 8 = Num.encodeLE 8 ptr ∧
       μ.readN (out + 16) 8 = Num.encodeLE 8 w.length ∧ μ.readN ptr w.length = w ∧
-      (⟨ptr - 32, (w.length + 31) / 32 + 1, true⟩ : Chunk) ∈ chunks s
+      (⟨ptr - 32, (w.length + 31) / 32 + 1, true⟩ : Chunk) ∈ chunks s ∧ 32 ≤ ptr ∧
+      ∀ d ∈ chunks s₀, d.used = true → d ≠ ⟨ptr - 32, (w.length + 31) / 32 + 1, true⟩
 
 /-- **The SDK's `get`, 47857 → its return**, for the value v of the key in this service's storage
     (absent, empty, or |w| + 31 < 2³⁶), with the key on the stack above the frame or in an allocated
@@ -400,7 +401,7 @@ theorem get_call (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
     (∃ e s' ω' μ' n, (e = 47927 ∨ e = 47957 ∨ e = 48102) ∧
       FreeStepsH p (KeepCtx (accContractS env)) 47857 ω μ (c, f) e ω' μ' (c, f) n ∧
       ω'[0] = ω[0] ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
-      GetOut μ' out s' (c.1.self.storage.get? key) ∧
+      GetOut μ' out s s' (c.1.self.storage.get? key) ∧
       HeapCtxC env.code pb S0 S1 μ' s' ∧ (∀ c ∈ chunks s, c.used = true → c ∈ chunks s') ∧
       (∀ c ∈ chunks s, c.used = true → ∀ a, InDataA c a → μ'.read a = μ.read a) ∧
       (∀ a, a < 4294967296 → sp ≤ a → (a < out ∨ out + 24 ≤ a) → μ'.read a = μ.read a)) ∨
@@ -457,10 +458,15 @@ theorem get_call (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
     | cons b w =>
       rcases get_some (p := p) (P := P) (hb := hb) env cap pb hcap1 hcap c f ω μ s sp out kO kZ S0 S1 key (b :: w) H h1 h7 h8 h9 hkZ
           (by simp) (hfit _ hv) hsp hSTk hout hkO hkr hkey hv with
-        ⟨ptr, s', ω', μ', run, g0, g1, g5, g6, o0, o8, o16, od, H', keep, keepd, hnew, -, fr⟩ |
+        ⟨ptr, s', ω', μ', run, g0, g1, g5, g6, o0, o8, o16, od, H', keep, keepd, hnew, hfresh, fr⟩ |
         ⟨ω', μ', run, e7, ω'', μ'', run'⟩
-      · exact .inl ⟨48102, s', ω', μ', _, .inr (.inr rfl), run, g0, g1, g5, g6,
-          ⟨ptr, o0, o8, o16, od, hnew⟩, H', keep, keepd, fr⟩
+      · have hp32 : 32 ≤ ptr := by
+          have := Services.Bootstrap.Decode.VecU8.chunk_in H'.wf hnew rfl
+          have := H'.hb0
+          dsimp only at *
+          omega
+        exact .inl ⟨48102, s', ω', μ', _, .inr (.inr rfl), run, g0, g1, g5, g6,
+          ⟨ptr, o0, o8, o16, od, hnew, hp32, hfresh⟩, H', keep, keepd, fr⟩
       · exact .inr ⟨ω', μ', _, run, e7, ω'', μ'', run'⟩
 
 end Services.Bootstrap.Acc

@@ -182,7 +182,7 @@ theorem xf {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR 
     (μ : Memory) (M cap : Nat) (hM : M + 168 ≤ 4294967296) (hcap : cap ≠ 0) (hcap' : cap < 18446744073709551616)
     (h1 : ω[1] = UInt64.ofNat M) (s160 : μ.readN (M + 160) 8 = Num.encodeLE 8 cap)
     (hr : ∀ a, M + 160 ≤ a → a < M + 168 → μ.readable a = true) :
-    ∃ ω', FreeStepsH p R 5787 ω μ x 40613 ω' μ x 6 ∧ ω'[0] = UInt64.ofNat 186 ∧ ω'[1] = ω[1] ∧
+    ∃ ω', FreeStepsH p R 5786 ω μ x 40613 ω' μ x 7 ∧ ω'[0] = UInt64.ofNat 186 ∧ ω'[1] = ω[1] ∧
       ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ ω'[7] = ω[6] := by
   have rc := rd8 hcap' s160
   have hc0 : ¬ cap = 0 := hcap
@@ -200,7 +200,7 @@ theorem xf0 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR
     (μ : Memory) (M : Nat) (hM : M + 168 ≤ 4294967296) (h1 : ω[1] = UInt64.ofNat M)
     (s160 : μ.readN (M + 160) 8 = Num.encodeLE 8 0)
     (hr : ∀ a, M + 160 ≤ a → a < M + 168 → μ.readable a = true) :
-    ∃ ω', FreeStepsH p R 5787 ω μ x 5641 ω' μ x 2 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] := by
+    ∃ ω', FreeStepsH p R 5786 ω μ x 5641 ω' μ x 3 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] := by
   have rc := rd8 (by decide) s160
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?_, ?_, ?_⟩

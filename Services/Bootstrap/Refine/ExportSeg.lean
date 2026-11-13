@@ -94,4 +94,83 @@ def ExportFmtOk (p : ByteArray) (cap0 : Nat) (env : RefineHost.Env) (pb S0 S1 : 
       (cap = 0 ∨ ∃ c ∈ chunks s', c.used = true ∧ c.addr + 32 = ptr ∧ ∀ d ∈ chunks s, d.used = true → d ≠ c)) ∨
     ∃ N, ExhaustsX env cap0 pb p 59375 ω μ x N
 
+theorem setR7_getElem (ω : Regs) (v k : Nat) (hk : k < 13) (h7 : k ≠ 7) : (setR7 ω v)[k] = ω[k] := by
+  simp only [setR7, Vector.getElem_set]
+  split <;> simp_all
+
+theorem setR7_getElem7 (ω : Regs) (v : Nat) : (setR7 ω v)[7] = UInt64.ofNat v := by
+  simp [setR7, Vector.getElem_set]
+
+theorem expSeg_congr {env : RefineHost.Env} {sp sl : Nat} {μ μ' : Memory} {x : RefineCtx}
+    (h : ∀ a, sp ≤ a → a < sp + sl → μ'.read a = μ.read a) : expSeg env sp sl μ' x = expSeg env sp sl μ x := by
+  unfold expSeg
+  rw [Memory.readN_congr (fun j hj => h _ (by omega) (by omega))]
+
+/-- **One segment of `Export`** (5653 … 5653, or 5810 after the last): segment g (`{cap, sp, sl}`, its octets
+    readable) is exported (Ω_E: the context becomes `expSeg env sp sl μ x`), the result formatted
+    (`ExportFmtOk`) and logged, and the `String` freed; ω₅ := g + 24. The allocator's context holds for some
+    heap s' keeping every allocated chunk of s with its data, and the stack from M up is kept apart from
+    M + 160 … M + 200 and M + 552 … M + 608. Or an allocation fails. -/
+theorem seg {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] (env : RefineHost.Env)
+    (cap0 : Nat) (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616) {pb S0 S1 : Nat}
+    (fmt : ExportFmtOk p cap0 env pb S0 S1) (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State)
+    (H : HeapCtx env pb S0 S1 μ s) (M g sp sl en : Nat)
+    (hM : S0 + 456 ≤ M ∧ M + 648 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0)
+    (hg : g + 24 ≤ 2147483648) (hsp : sp + sl ≤ 2147483648) (hen : en < 18446744073709551616)
+    (hoff : env.exportOffset + x.2.length < 18446744073709551615)
+    (h1 : ω[1] = UInt64.ofNat M) (h5 : ω[5] = UInt64.ofNat g)
+    (s8 : μ.readN (g + 8) 8 = Num.encodeLE 8 sp) (s16 : μ.readN (g + 16) 8 = Num.encodeLE 8 sl)
+    (s152 : μ.readN (M + 152) 8 = Num.encodeLE 8 en)
+    (rg : ∀ a, g ≤ a → a < g + 24 → μ.readable a = true) (rd : ∀ a, sp ≤ a → a < sp + sl → μ.readable a = true) :
+    (∃ (ω' : Regs) (μ' : Memory) (s' : State) (N : Nat),
+      FreeStepsH p (refineContractK cap0 env) 5653 ω μ x (if g + 24 = en then 5810 else 5653) ω' μ'
+        (expSeg env sp sl μ x) N ∧ HeapCtx env pb S0 S1 μ' s' ∧
+      ω'[1] = UInt64.ofNat M ∧ ω'[5] = UInt64.ofNat (g + 24) ∧
+      (∀ a, a < 4294967296 → M ≤ a → (a < M + 160 ∨ M + 200 ≤ a) → (a < M + 552 ∨ M + 608 ≤ a) →
+        μ'.read a = μ.read a) ∧
+      (∀ d ∈ chunks s, d.used = true → d ∈ chunks s' ∧ ∀ a, InData d a → μ'.read a = μ.read a)) ∨
+    ∃ N, ExhaustsX env cap0 pb p 5653 ω μ x N := by
+  obtain ⟨hS0M, hMS1, hM2, hM8⟩ := hM
+  have hS1 := H.hS1
+  have wst := H.st
+  -- 1. the `export` call's arguments
+  obtain ⟨ω1, μ1, run1, a1, a5, a6, a7, a8, a552, afr, ard, awr⟩ := xs1 (p := p) (P := P)
+    (R := refineContractK cap0 env) x ω μ M g sp sl ⟨by omega, by omega, hM8⟩ (by omega) (Or.inl (by omega))
+    (by omega) (by omega) h1 h5 s8 s16 (fun a h1 h2 => rg a (by omega) (by omega))
+    (fun a h1 h2 => wst a (by omega) (by omega))
+  -- 2. `export` (Ω_E)
+  have hrr : μ1.rangeReadable (reg ω1 7) (min (reg ω1 8) Constants.Csegmentsize) = true := by
+    have e7 : reg ω1 7 = sp := by unfold reg; rw [show ω1.get 7 = ω1[7] from rfl, a7]; simp; omega
+    have e8 : reg ω1 8 = sl := by unfold reg; rw [show ω1.get 8 = ω1[8] from rfl, a8]; simp; omega
+    rw [e7, e8]
+    exact rangeReadable_of (fun a h1 h2 => by rw [ard]; exact rd a h1 (by omega)) (by omega)
+  have hx1 : exportCtx env ω1 μ1 x = expSeg env sp sl μ x := by
+    rw [exportCtx_eq a7 a8 (by omega) (by omega)]
+    exact expSeg_congr (fun a h1 h2 => afr a (by omega) (Or.inl (by omega)))
+  have hv : exportR7 env x < 18446744073709551615 := by
+    unfold exportR7; split
+    · unfold Result.FULL; decide
+    · omega
+  -- 3. the result laid out, and the `format!` call
+  obtain ⟨ω2, μ2, run2, b0, b1, b5, b6, b7, b8, b9, b168, b176, b184, b192, bok, berr, bfr, brd, bwr⟩ :=
+    xs2 (p := p) (P := P) (R := refineContractK cap0 env) (expSeg env sp sl μ x) (setR7 ω1 (exportR7 env x)) μ1 M
+    (exportR7 env x) ⟨by omega, by omega, hM8⟩ (by omega) (by omega)
+    (by rw [setR7_getElem _ _ 1 (by decide) (by decide), a1, h1]) (setR7_getElem7 _ _)
+    (fun a h1 h2 => by rw [awr]; exact wst a (by omega) (by omega))
+    (fun a h1 h2 => by rw [awr]; exact wst a (by omega) (by omega))
+  have pre2 : FreeStepsH p (refineContractK cap0 env) 5653 ω μ x 59375 ω2 μ2 (expSeg env sp sl μ x) _ :=
+    run1.trans (FreeStepsH.exportRef cap0 ⟨by omega, hcap0⟩ env (d_5664 (p := p) (P := P)) hrr (by rw [hx1]; exact run2))
+  have k2 : ∀ a, a < 4294967296 → (a < M + 168 ∨ M + 200 ≤ a) → (a < M + 552 ∨ M + 576 ≤ a) →
+      μ2.read a = μ.read a := fun a h0 h1 h2 => by
+    rw [bfr a h0 h1 (by omega), afr a h0 (by omega)]
+  have H2 : HeapCtx env pb S0 S1 μ2 s := Decode.GrowOne.ctx_high H (fun a ha => k2 a (by omega) (by omega)
+    (by omega)) (fun a => by rw [bwr, awr])
+  have hres : ResultAt μ2 (M + 560) := by
+    by_cases hok : exportR7 env x < 18446744073709551607
+    · exact Or.inl (bok hok).1
+    · obtain ⟨e0, e1⟩ := berr (by omega)
+      exact Or.inr ⟨18446744073709551614 - exportR7 env x, by omega, e0, e1⟩
+  sorry
+
 end Services.Bootstrap.Refine.ExportSeg
+

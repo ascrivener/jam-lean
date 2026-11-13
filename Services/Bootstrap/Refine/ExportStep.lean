@@ -123,4 +123,93 @@ theorem push_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     rw [bfr a (by omega) (by omega) (Or.inl (by omega)), hd a ⟨ha.1, ha.2⟩]
   · rw [bfr a h0 (Or.inr (by omega)) (by omega), stk a h0 h1 (by omega)]
 
+/-- **`Export`'s frees and return** (5868 / 5909 … 5042): the n segments' buffers are freed (`ExportSeg.frees`),
+    then the segments' `Vec` buffer co (capacity `capv` at M + 64, data `ptrv` at M + 104), then the handler
+    returns to the loop head without dropping the staged element. The allocator's context holds; every other
+    allocated chunk keeps its data; the stack from M up is kept. -/
+theorem tail {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] (env : RefineHost.Env)
+    (cap0 : Nat) {pb S0 S1 : Nat} (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State) (H : HeapCtx env pb S0 S1 μ s)
+    (M ptrv capv n : Nat) (co : Chunk) (capf qf : Nat → Nat)
+    (hM : S0 + 456 ≤ M ∧ M + 648 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0) (hp : ptrv + 24 * n + 8 ≤ 2147483648)
+    (hcv : 24 * capv < 18446744073709551616) (hnc : n ≤ capv)
+    (hco : capv ≠ 0 → co ∈ chunks s ∧ co.used = true ∧ co.addr + 32 = ptrv)
+    (hcoD : ∀ a, ptrv ≤ a → a < ptrv + 24 * n → InData co a)
+    (hq : ∀ i, i < n → capf i ≠ 0 → qf i ≠ co.addr + 32 ∧ ∀ j, j < n → j ≠ i → capf j ≠ 0 → qf j ≠ qf i)
+    (hcap : ∀ i, i < n → capf i < 18446744073709551616) (hq64 : ∀ i, i < n → qf i < 18446744073709551616)
+    (hcs : ∀ i, i < n → capf i ≠ 0 → ∃ c ∈ chunks s, c.used = true ∧ c.addr + 32 = qf i)
+    (hw : ∀ i, i < n → μ.readN (ptrv + 24 * i) 8 = Num.encodeLE 8 (capf i) ∧
+      μ.readN (ptrv + 24 * i + 8) 8 = Num.encodeLE 8 (qf i))
+    (h1 : ω[1] = UInt64.ofNat M)
+    (s104 : μ.readN (M + 104) 8 = Num.encodeLE 8 ptrv) (s96 : μ.readN (M + 96) 8 = Num.encodeLE 8 (24 * n))
+    (s64 : μ.readN (M + 64) 8 = Num.encodeLE 8 capv) (s72 : μ.readN (M + 72) 8 = Num.encodeLE 8 10)
+    (s40 : μ.readN (M + 40) 8 = Num.encodeLE 8 2098688) :
+    ∃ (ω' : Regs) (μ' : Memory) (s' : State) (N : Nat),
+      FreeStepsH p (refineContractK cap0 env) (if n = 0 then 5909 else 5868) ω μ x 5042 ω' μ' x N ∧
+      HeapCtx env pb S0 S1 μ' s' ∧ ω'[1] = UInt64.ofNat M ∧ (∀ a, a < 4294967296 → M ≤ a → μ'.read a = μ.read a) ∧
+      (∀ d ∈ chunks s, d.used = true → (capv ≠ 0 → d ≠ co) → (∀ i, i < n → capf i ≠ 0 → d.addr + 32 ≠ qf i) →
+        d ∈ chunks s' ∧ ∀ a, InData d a → μ'.read a = μ.read a) := by
+  obtain ⟨hS0M, hMS1, hM2, hM8⟩ := hM
+  have hS1 := H.hS1
+  have rM : ∀ a, S0 ≤ a → a < S1 → μ.readable a = true := fun a h1 h2 => Memory.readable_of_writable (H.st a h1 h2)
+  -- from 5909 on: the `Vec`'s buffer freed, and the return
+  have fin : ∀ (ω1 : Regs) (μ1 : Memory) (s1 : State), HeapCtx env pb S0 S1 μ1 s1 → ω1[1] = UInt64.ofNat M →
+      (∀ a, a < 4294967296 → M ≤ a → μ1.read a = μ.read a) → (capv ≠ 0 → co ∈ chunks s1) →
+      ∃ (ω' : Regs) (μ' : Memory) (s' : State) (N : Nat),
+        FreeStepsH p (refineContractK cap0 env) 5909 ω1 μ1 x 5042 ω' μ' x N ∧ HeapCtx env pb S0 S1 μ' s' ∧
+        ω'[1] = UInt64.ofNat M ∧ (∀ a, a < 4294967296 → M ≤ a → μ'.read a = μ1.read a) ∧
+        (∀ d ∈ chunks s1, d.used = true → (capv ≠ 0 → d ≠ co) → d ∈ chunks s' ∧
+          ∀ a, InData d a → μ'.read a = μ1.read a) := by
+    intro ω1 μ1 s1 H1 e1 k1 hco1
+    have r1 : ∀ a l, M ≤ a → a + l ≤ 4294967296 → μ1.readN a l = μ.readN a l :=
+      fun a l h h' => Memory.readN_congr (fun j hj => k1 _ (by omega) (by omega))
+    have rM1 : ∀ a, S0 ≤ a → a < S1 → μ1.readable a = true :=
+      fun a h1 h2 => Memory.readable_of_writable (H1.st a h1 h2)
+    have ret : ∀ (ω2 : Regs) (μ2 : Memory), ω2[1] = UInt64.ofNat M →
+        (∀ a, a < 4294967296 → M ≤ a → μ2.read a = μ.read a) → (∀ a, S0 ≤ a → a < S1 → μ2.readable a = true) →
+        ∃ ω3, FreeStepsH p (refineContractK cap0 env) 5938 ω2 μ2 x 5042 ω3 μ2 x 10 ∧ ω3[1] = UInt64.ofNat M :=
+      fun ω2 μ2 f1 f2 f3 => by
+        obtain ⟨ω3, run3, g1⟩ := xt1 (p := p) (P := P) (R := refineContractK cap0 env) x ω2 μ2 M (by omega) f1
+          (by rw [Memory.readN_congr (fun j hj => f2 _ (by omega) (by omega))]; exact s72)
+          (by rw [Memory.readN_congr (fun j hj => f2 _ (by omega) (by omega))]; exact s40)
+          (fun a h1 h2 => f3 a (by omega) (by omega))
+        exact ⟨ω3, run3, g1.trans f1⟩
+    by_cases hc0 : capv = 0
+    · subst hc0
+      obtain ⟨ω2, run2, f1⟩ := xt0z (p := p) (P := P) (R := refineContractK cap0 env) x ω1 μ1 M (by omega) e1
+        (by rw [r1 _ _ (by omega) (by omega)]; exact s64) (fun a h1 h2 => rM1 a (by omega) (by omega))
+      obtain ⟨ω3, run3, g1⟩ := ret ω2 μ1 (f1.trans e1) k1 rM1
+      exact ⟨ω3, μ1, s1, _, run2.trans run3, H1, g1, fun _ _ _ => rfl, fun d hd _ _ => ⟨hd, fun _ _ => rfl⟩⟩
+    · obtain ⟨-, hcou, hcoa⟩ := hco hc0
+      obtain ⟨ω2, run2, f0, f1, f5, f6, f7⟩ := xt0 (p := p) (P := P) (R := refineContractK cap0 env) x ω1 μ1 M capv
+        ptrv (by omega) hc0 hcv (by omega) e1 (by rw [r1 _ _ (by omega) (by omega)]; exact s64)
+        (by rw [r1 _ _ (by omega) (by omega)]; exact s104) (fun a h1 h2 => rM1 a (by omega) (by omega))
+      obtain ⟨ω3, μ3, run3, H3, -, -, -, stk3, -, keep3, g0, g1, g5, g6⟩ := Decode.DeallocCall.dealloc_call
+        (R := refineContractK cap0 env) (p := p) (P := P) env pb S0 S1 x ω2 μ1 s1 M ptrv 192 5938 co H1
+        (hco1 hc0) hcou hcoa f0 (by rw [f1, e1]) f7 ⟨by decide, by decide, by decide⟩ jte_95 bs_5938 (by omega)
+        ⟨by omega, by omega⟩
+      obtain ⟨ω4, run4, h41⟩ := ret ω3 μ3 (by rw [g1, f1, e1]) (fun a h0 h => by rw [stk3 a h0 h, k1 a h0 h])
+        (fun a h1 h2 => Memory.readable_of_writable (H3.st a h1 h2))
+      exact ⟨ω4, μ3, _, _, run2.trans (run3.trans run4), H3, h41, stk3,
+        fun d hd hu hne => keep3 d hd hu (hne hc0)⟩
+  by_cases hn0 : n = 0
+  · subst hn0
+    simp only [↓reduceIte]
+    obtain ⟨ω', μ', s', N, run, H', e1, k', keep'⟩ := fin ω μ s H h1 (fun _ _ _ => rfl) (fun h => (hco h).1)
+    exact ⟨ω', μ', s', N, run, H', e1, k', fun d hd hu hne _ => keep' d hd hu hne⟩
+  · have hn0' : ¬ n = 0 := hn0
+    simp only [hn0', ↓reduceIte]
+    have hcv0 : capv ≠ 0 := by omega
+    obtain ⟨hcos, hcou, hcoa⟩ := hco hcv0
+    obtain ⟨ω1, run1, a1, a5, a6⟩ := xr0 (p := p) (P := P) (R := refineContractK cap0 env) x ω μ M ptrv n (by omega)
+      (by omega) h1 s104 s96 (fun a h1 h2 => rM a (by omega) (by omega))
+    obtain ⟨ω2, μ2, s2, N2, run2, H2, b1, k2, hco2, keep2⟩ := ExportSeg.frees (p := p) (P := P) env cap0 x M ptrv n co
+      capf qf ⟨hS0M, hMS1, hM2, hM8⟩ hp hcoD hq hcap hq64 n 0 ω1 μ s (by omega) (by omega) H hcos hcou
+      (fun i _ hi hci => hcs i hi hci) hw (a1.trans h1) (by rw [a5]) (by rw [a6])
+    obtain ⟨ω', μ', s', N, run, H', e1, k', keep'⟩ := fin ω2 μ2 s2 H2 b1 k2 (fun _ => hco2)
+    refine ⟨ω', μ', s', _, run1.trans (run2.trans run), H', e1, fun a h0 h => by rw [k' a h0 h, k2 a h0 h],
+      fun d hd hu hne hne' => ?_⟩
+    obtain ⟨hd2, hk2⟩ := keep2 d hd hu (fun i _ hi hci => hne' i hi hci)
+    obtain ⟨hd', hk'⟩ := keep' d hd2 hu hne
+    exact ⟨hd', fun a ha => by rw [hk' a ha, hk2 a ha]⟩
+
 end Services.Bootstrap.Refine.ExportStep

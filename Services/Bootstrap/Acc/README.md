@@ -470,6 +470,33 @@ Lemmas under `accContractQ` (from (x, v :: qs) to (x', qs)) carry over to any st
   check land.
 - Keys must survive `get`'s allocation; the lemmas take them on the stack above the frame for now.
 
+## Brief: `add_recent_work_item` and the results tail (rows 8, 9, 11)
+
+These go to a separate session. Both run inside an operand's iteration of the items loop, in
+accumulate's 1856-octet frame (sp as at 6674). Both are stated in `Impl`'s call form: reach each
+wrapper's call keeping (x, y) (`KeepCtx`), run the wrapper under `YIn`, and continue.
+
+- **Row 8, `add_recent_work_item`** (spec `addRecent`):
+  - Entry: 8073, `loadImmJump` to 34377 with ω₀ = 280, so the return is jump-table entry 139, 8079.
+    The arguments: ω₇ = sp + 1144 (out), ω₈ = sp + 1568; 8061 stores the u32 at sp + 1572.
+  - The function reads and writes the ring and the counter with the SDK wrappers in
+    `Acc/Wrappers/`: `get_none` / `get_empty` / `get_some` (`GetCall.lean`), `set_call`
+    (`SetCall.lean`) and `remove` (`Remove.lean`, FULL pending).
+  - Exit: 8079 (the u16 result at sp + 1144), the allocator's context (`HeapCtxC`) for the new
+    state, x's account as the spec's writes leave it, y kept.
+  - Keys built with `format!` live in heap Strings: the `get` lemmas need a variant with the key in
+    an allocated chunk (alloc keeps used chunks' data). `set`'s error-table hypotheses come from
+    `Acc/RoData.lean` (`accRoBytes`) and `KeepsRO` (#165, `ROKeepS.lean`).
+- **Row 9, the empty results and the checkpoint** (spec `store …; op AOp.checkpoint`):
+  - 8471: `loadImmJump` to 36170 with ω₀ = 294 (the results store, a `set`). Then 8477 … 8481:
+    an `Err` byte (≠ 255) → 15361 (☇ via `orPanic`).
+  - 8490: `checkpoint` (18), under `accContractS`'s 0/18 case (the stream's head into ω₇, y := x).
+- **Row 11, the results write and the drops** (the tail of `onWorkItem`, unless a `Zombify`):
+  15032 → 33214 (ω₀ = 558), …, 15185 → 40613 (`dealloc`, ω₀ = 568), on to 15191 (the operand's
+  remaining drops) and back to the loop head 6766.
+- **Hypotheses to carry:** `ValuesFit` (values < 2⁶⁴ octets), the [2³⁶, 2³⁷ − 32] `get` band (TODO),
+  and the `heap` abort reason for every allocation.
+
 **Log sites** (the per-item line at 6955, the handlers' `format!`) are stated against a hypothesis of
 `acc_log_line`'s shape: the allocator's context in and out, the format!/String region kept, or
 Exhausts. They are marked "discharged by the fmt summaries". The migration session owns them.

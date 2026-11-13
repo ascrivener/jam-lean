@@ -247,5 +247,99 @@ theorem seg {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR
     obtain ⟨hd6, hk6⟩ := keep6 d hd3 hu (hcf d hd hu)
     exact ⟨hd6, fun a ha => by rw [hk6 a ha, hk4 a ha]⟩
 
+/-- The context after exporting segments 0 … j − 1 of the n at ptr (segment i a `Vec<u8>` whose data address
+    and length are the words at ptr + 24 i + 8 and ptr + 24 i + 16 of μ0). -/
+def expUpTo (env : RefineHost.Env) (μ0 : Memory) (ptr : Nat) (x : RefineCtx) : Nat → RefineCtx
+  | 0 => x
+  | j + 1 => expSeg env (rdN μ0 (ptr + 24 * j + 8) 8) (rdN μ0 (ptr + 24 * j + 16) 8) μ0 (expUpTo env μ0 ptr x j)
+
+/-- **The segment loop** (5653 … 5810): from segment k of the n ≥ 1 segments at ptr, each one's words and
+    octets in allocated chunks of s0 (readable, kept), all segments are exported in order: the context
+    becomes `expUpTo … n`. The allocator's context holds, the chunks of s0 keep their data, the stack from M up
+    is kept apart from M + 160 … M + 200 and M + 552 … M + 608. Or an allocation fails. -/
+theorem segs {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] (env : RefineHost.Env)
+    (cap0 : Nat) (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616) {pb S0 S1 : Nat}
+    (fmt : ExportFmtOk p cap0 env pb S0 S1) (x0 : RefineCtx) (μ0 : Memory) (s0 : State) (M ptr n : Nat)
+    (hM : S0 + 456 ≤ M ∧ M + 648 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0) (hn : 0 < n)
+    (hp : ptr + 24 * n ≤ 2147483648)
+    (hseg : ∀ j, j < n → rdN μ0 (ptr + 24 * j + 8) 8 + rdN μ0 (ptr + 24 * j + 16) 8 ≤ 2147483648)
+    (hoff : env.exportOffset + x0.2.length + n < 18446744073709551615)
+    (hin : ∀ a, (ptr ≤ a ∧ a < ptr + 24 * n) ∨ (∃ j, j < n ∧ rdN μ0 (ptr + 24 * j + 8) 8 ≤ a ∧
+      a < rdN μ0 (ptr + 24 * j + 8) 8 + rdN μ0 (ptr + 24 * j + 16) 8) → ∃ d ∈ chunks s0, d.used = true ∧ InData d a) :
+    ∀ m k (ω : Regs) (μ : Memory) (s : State), k + m = n → k < n → HeapCtx env pb S0 S1 μ s →
+      ω[1] = UInt64.ofNat M → ω[5] = UInt64.ofNat (ptr + 24 * k) →
+      μ.readN (M + 152) 8 = Num.encodeLE 8 (ptr + 24 * n) →
+      (∀ d ∈ chunks s0, d.used = true → d ∈ chunks s ∧ ∀ a, InData d a → μ.read a = μ0.read a) →
+      (∃ (ω' : Regs) (μ' : Memory) (s' : State) (N : Nat),
+        FreeStepsH p (refineContractK cap0 env) 5653 ω μ (expUpTo env μ0 ptr x0 k) 5810 ω' μ'
+          (expUpTo env μ0 ptr x0 n) N ∧ HeapCtx env pb S0 S1 μ' s' ∧ ω'[1] = UInt64.ofNat M ∧
+        (∀ a, a < 4294967296 → M ≤ a → (a < M + 160 ∨ M + 200 ≤ a) → (a < M + 552 ∨ M + 608 ≤ a) →
+          μ'.read a = μ.read a) ∧
+        (∀ d ∈ chunks s0, d.used = true → d ∈ chunks s' ∧ ∀ a, InData d a → μ'.read a = μ0.read a)) ∨
+      ∃ N, ExhaustsX env cap0 pb p 5653 ω μ (expUpTo env μ0 ptr x0 k) N := by
+  obtain ⟨hS0M, hMS1, hM2, hM8⟩ := hM
+  -- reading from μ0 where the chunks of s0 are kept
+  have rk : ∀ (μ : Memory) (s : State), (∀ d ∈ chunks s0, d.used = true → d ∈ chunks s ∧
+      ∀ a, InData d a → μ.read a = μ0.read a) → ∀ a, (ptr ≤ a ∧ a < ptr + 24 * n) ∨ (∃ j, j < n ∧
+      rdN μ0 (ptr + 24 * j + 8) 8 ≤ a ∧ a < rdN μ0 (ptr + 24 * j + 8) 8 + rdN μ0 (ptr + 24 * j + 16) 8) →
+      μ.read a = μ0.read a := fun μ s hk a ha => by
+    obtain ⟨d, hd, hu, hda⟩ := hin a ha
+    exact (hk d hd hu).2 a hda
+  have hlen : ∀ j, (expUpTo env μ0 ptr x0 j).2.length ≤ x0.2.length + j := by
+    intro j; induction j with
+    | zero => simp [expUpTo]
+    | succ j ih => simp only [expUpTo, expSeg]; split <;> (try simp only [List.length_append, List.length_singleton]) <;> omega
+  intro m
+  induction m with
+  | zero => intro k _ _ _ hkm hk; omega
+  | succ m ih =>
+    intro k ω μ s hkm hk H b1 b5 b152 bk
+    have hS1 := H.hS1
+    have hsl := hseg k hk
+    have rw0 : ∀ i, i < 8 → μ.read (ptr + 24 * k + 8 + i) = μ0.read (ptr + 24 * k + 8 + i) :=
+      fun i hi => rk μ s bk _ (Or.inl ⟨by omega, by omega⟩)
+    have rw1 : ∀ i, i < 8 → μ.read (ptr + 24 * k + 16 + i) = μ0.read (ptr + 24 * k + 16 + i) :=
+      fun i hi => rk μ s bk _ (Or.inl ⟨by omega, by omega⟩)
+    have s8 : μ.readN (ptr + 24 * k + 8) 8 = Num.encodeLE 8 (rdN μ0 (ptr + 24 * k + 8) 8) := by
+      rw [Memory.readN_congr rw0, encodeLE_rdN]
+    have s16 : μ.readN (ptr + 24 * k + 16) 8 = Num.encodeLE 8 (rdN μ0 (ptr + 24 * k + 16) 8) := by
+      rw [Memory.readN_congr rw1, encodeLE_rdN]
+    have rdk : ∀ a, rdN μ0 (ptr + 24 * k + 8) 8 ≤ a → a < rdN μ0 (ptr + 24 * k + 8) 8 + rdN μ0 (ptr + 24 * k + 16) 8 →
+        μ.readable a = true := fun a h1 h2 => by
+      obtain ⟨d, hd, hu, hda⟩ := hin a (Or.inr ⟨k, hk, h1, h2⟩)
+      exact Memory.readable_of_writable (Decode.VecU8.heap_writable H (bk d hd hu).1 hu hda)
+    have rgk : ∀ a, ptr + 24 * k ≤ a → a < ptr + 24 * k + 24 → μ.readable a = true := fun a h1 h2 => by
+      obtain ⟨d, hd, hu, hda⟩ := hin a (Or.inl ⟨by omega, by omega⟩)
+      exact Memory.readable_of_writable (Decode.VecU8.heap_writable H (bk d hd hu).1 hu hda)
+    have hlk := hlen k
+    rcases seg (p := p) (P := P) env cap0 hcap1 hcap0 fmt (expUpTo env μ0 ptr x0 k) ω μ s H M (ptr + 24 * k)
+        (rdN μ0 (ptr + 24 * k + 8) 8) (rdN μ0 (ptr + 24 * k + 16) 8) (ptr + 24 * n)
+        ⟨hS0M, hMS1, hM2, hM8⟩ (by omega) hsl (by omega) (by omega) b1 b5 s8 s16 b152 rgk rdk with
+      ⟨ω1, μ1, s1, N1, run1, H1, e1, e5, efr, ekeep⟩ | hx
+    · have hx1 : expSeg env (rdN μ0 (ptr + 24 * k + 8) 8) (rdN μ0 (ptr + 24 * k + 16) 8) μ
+          (expUpTo env μ0 ptr x0 k) = expUpTo env μ0 ptr x0 (k + 1) := by
+        simp only [expUpTo]
+        exact expSeg_congr (fun a h1 h2 => rk μ s bk a (Or.inr ⟨k, hk, h1, h2⟩))
+      rw [hx1] at run1
+      have bk1 : ∀ d ∈ chunks s0, d.used = true → d ∈ chunks s1 ∧ ∀ a, InData d a → μ1.read a = μ0.read a :=
+        fun d hd hu => by
+          obtain ⟨hd', hk'⟩ := bk d hd hu
+          obtain ⟨hd1, hk1⟩ := ekeep d hd' hu
+          exact ⟨hd1, fun a ha => by rw [hk1 a ha, hk' a ha]⟩
+      by_cases hl : k + 1 = n
+      · rw [show ptr + 24 * k + 24 = ptr + 24 * n by omega] at run1
+        simp only [↓reduceIte] at run1
+        subst hl
+        exact Or.inl ⟨ω1, μ1, s1, N1, run1, H1, e1, efr, bk1⟩
+      · have hne : ¬ ptr + 24 * k + 24 = ptr + 24 * n := by omega
+        simp only [hne, ↓reduceIte] at run1
+        rcases ih (k + 1) ω1 μ1 s1 (by omega) (by omega) H1 e1 (by rw [e5, show ptr + 24 * (k + 1) = ptr + 24 * k + 24 by omega])
+            (by rw [Memory.readN_congr (fun j hj => efr _ (by omega) (by omega) (by omega) (by omega))]; exact b152)
+            bk1 with ⟨ω', μ', s', N, run', H', e1', efr', bk'⟩ | ⟨N, hx⟩
+        · exact Or.inl ⟨ω', μ', s', _, run1.trans run', H', e1',
+            fun a h0 h1 h2 h3 => by rw [efr' a h0 h1 h2 h3, efr a h0 h1 h2 h3], bk'⟩
+        · exact Or.inr ⟨_, ExhaustsX.pre run1 hx⟩
+    · exact Or.inr hx
+
 end Services.Bootstrap.Refine.ExportSeg
 

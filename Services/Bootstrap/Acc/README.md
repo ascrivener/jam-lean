@@ -428,7 +428,21 @@ so runs exist and compose. The real run's answers, followed by 0s, form one such
 | `Prefix.lean` | `Pre` (contexts at host calls), `Pre.split` / `split_run`, and `Impl.prefix`: the out-of-gas case. |
 | `ContractS.lean` | `accContractS`, `accContractS_pins`, and `FreeRunH.toS`: every non-∞ handler run is an `accContractS` run. |
 | `OogPrefix.lean` | `psiM_oog_pre`: Ψ_M out of gas returns the y of a prefix of an `accContractS` run. |
-| `Lift.lean` | `impl_psiM` and `psiA_of_impl`. If `Impl … prog Halts` holds from instruction 5 with (x₀, x₀) for every stream, then Ψ_A's state, transfers, yield and provisions are `ASem.outcome (ASem.run n prog …)` for some n. That is T2's shape. |
+| `Lift.lean` | `impl_psiM` and `psiA_of_impl`. If `Impl … Ab prog Halts` holds from instruction 5 with (x₀, x₀) for every stream, then Ψ_A's state, transfers, yield and provisions are `ASem.outcome (ASem.run n prog …)` for some n, and either that run finished, or Ψ_M ran out of gas, or a run reached a state where a reason in `Ab` holds. That is T2's shape (the strengthened statement in `docs/bootstrap-target.md`). |
+| `QtoS.lean` | Handlers A's answer lists as streams: `qs ++ₛ g`, `accContractQ_S`, `FreeStepsH.qToS`. |
+
+**Early ☇, for a listed reason.** `Impl` takes a reason predicate `Ab`: an early ☇ needs a state on
+the run where `Ab` holds. For accumulate, `Ab := AccAbort`, defined from the code facts, with these
+cases:
+- `heap` (decision 4, Adam): an allocation returned null (for `get`: 48047 with ω₇ = 0), or the
+  size check before an allocation failed (`get`'s 47974 with the length above 2³⁷ − 32; Adam folded
+  "too long" into heap exhaustion). Both reach the allocation-failure trap.
+- one case per named quirk where the binary traps and the model goes on (none yet; `remove` on
+  FULL is pending with Adam).
+
+**Hypotheses on the state.** `ValuesFit (credit e s inputs) s` (`hvals`, Adam): storage values,
+preimages and the encoded inputs of s are shorter than 2⁶⁴ octets. Ω_R / Ω_Y return lengths in a
+64-bit register, so a longer one would wrap.
 
 **What remains for T2:** `∀ f, Impl (accContractS env) env (Spec.accumulate C t) Halts` from instruction 5. This is built:
 - from the segment lemmas: 1 → 6630 (start, `acc_log_line`), `inputs_decode`, and the items loop;
@@ -436,6 +450,25 @@ so runs exist and compose. The real run's answers, followed by 0s, form one such
   under `YIn`.
 Lemmas stated under `accContractK` (no `gas`/`checkpoint` call) carry over with the stream kept.
 Lemmas under `accContractQ` (from (x, v :: qs) to (x', qs)) carry over to any stream `cons v (qs ++ₛ g)`.
+
+**The SDK storage wrappers** (`Acc/Wrappers/`), as runs keeping the answer stream:
+- `get` (47857, `GetCall.lean`): `get_none`, `get_empty`, `get_some` (|w| + 31 < 2³⁶; or `alloc_impl`
+  returned null at 48047, then the trap 47977).
+- `set` (48104, `SetCall.lean`): `set_call`, one Ω_W (`write_stepS`), then `Ok(Some(len))`, `Ok(None)`
+  or `Err` at out. x's account becomes `writeSelf`; y is kept.
+- `remove` (48481, `Remove.lean`): segments for the old-length and NONE replies. The FULL reply
+  traps (48533) and is pending with Adam (model change plus quirk Q18, or an abort reason).
+- Helpers: `FreeStepsH.growS` (allocator runs under `accGrowK` keep the context), `HeapCtxL.of_lo` /
+  `keep_hi` (the locked heap context survives stack writes).
+
+**Named TODOs for the wrappers:**
+- `get` for 2³⁶ ≤ |w| + 31 ≤ 2³⁷ − 32: the 32-bit unit count sign-extends and `alloc_impl` gets a
+  request ≥ 2³¹ units. This needs the allocator lemma "a request ≥ 2³¹ units returns null, keeping
+  the context" (asked of the Vec session); then it is `heap`.
+- Read-only data: `set`'s error table (69056, 69072) and keys in rodata are hypotheses until
+  `ROKeep` (gas-free runs keep non-writable octets, contract-generic) and an accumulate `roBytes`
+  check land.
+- Keys must survive `get`'s allocation; the lemmas take them on the stack above the frame for now.
 
 **Log sites** (the per-item line at 6955, the handlers' `format!`) are stated against a hypothesis of
 `acc_log_line`'s shape: the allocator's context in and out, the format!/String region kept, or

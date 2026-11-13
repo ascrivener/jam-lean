@@ -194,6 +194,36 @@ An independent kernel, nanoda as vendored by
     (the payload in the heap, from 206864). Accumulate runs the same loop 1160 octets lower; refine's
     theorems (`ElemOk`, `pass`, `loop`, `ElemOkA`, `passA`, `loopA`, each adapter) are these at
     F = 4278057632, RD = 4278058648, P0 = 206913, with unchanged statements.
+- **Refine's output encoder: the writer, the dispatch and every variant of fixed width.**
+  `Encode.Writer.extend_ok`, `Encode.Enc.dispatch`, `EncOk`, and the variants `unit`, `zombify`,
+  `exported`, `yield`, `solicit`, `forget`, `eject`, `upgrade`, `lookup`, `transfer`,
+  `random_storage_refine` (`Services/Bootstrap/Encode/Writer.lean`, `Dispatch.lean`, `Segs.lean`,
+  `Fixed.lean`, `Variants.lean`, `Yield.lean`).
+  - *Statement:* `Vec<u8>::extend_from_slice` (58508) without growth appends n octets and stores
+    `len + n`. `Instruction::encode_to` (30145) dispatches on the value's discriminant word
+    2^63 + t − 1 (1 ≤ t ≤ 24) through its table at 67376 to the variant's arm. `EncOk p P enc Rep` is
+    the contract of one element at any frame base F: a value satisfying `Rep`, with room for `enc` in
+    the writer (`Lay`), is encoded by appending exactly `enc`. The function changes memory only in
+    [F − 136, F), in the octets it appends and in the writer's length, and returns with ω₁, ω₅, ω₆ as
+    they were. Each variant's `Rep` is the decode side's (`Decode.Elems`), so a value
+    `Instruction::decode` produced from an encoding is encoded back to the same octets.
+  - *Assumed:* the 100-octet table at 67376 as read-only data, F above it, and the value, the writer,
+    the appended octets and the stack below F apart (`Lay`).
+  - *Scope:* the variants with a `Vec` or `Option` field (Assign and the rest) are not done yet.
+    The encoder's code facts are in `CodeX` (`fnRangesX`, with `jumpRangesX` for the arms' jump-table
+    entries).
+- **Refine's output encoder, whole** (`Encode.Prefix.prefix_small`, `Encode.Loop.loop`,
+  `Encode.Loop.encode_ok`; `Services/Bootstrap/Encode/Prefix.lean`, `Top.lean`, `Loop.lean`).
+  - *Statement:* from 30073, where refine's body enters with a fresh buffer of 232 n + 6 octets, for
+    0 < n < 128 instructions at E each encoding to `enc j` by `EncOk`, the encoder writes
+    ℰ(n) = [n] (the length prefix, 30977), the n encodings in order (the element loop) and the work
+    item's 2-octet `work_item_index`, stores the result `{cap, buf, off + 3}` and returns. Memory changes
+    only in the stack around its frame, the result and the buffer.
+  - *Assumed:* `LayL`: the frame, the elements, the buffer and the work item apart (the buffer at least
+    24 octets from the elements), the output fitting the buffer, and each element's `Rep` at entry.
+  - *Scope:* the variants with a `Vec` or `Option` field (Assign and the rest) have no `EncOk` yet, so
+    `encode_ok` covers outputs of fixed-width instructions only; n = 0 and the allocation before 30073
+    are not done; the pass-through copy in refine's transform loop is next.
 - **`Instruction::decode`'s tag dispatch, for every tag.** `Decode.Tag.dispatch`, `reject` and
   `unit_variant` (`Services/Bootstrap/Decode/Tag.lean`).
   - *Statement:* from 20626, where the reader has just read the tag octet into the function's

@@ -254,8 +254,16 @@ corollaries.
   *(sp + 8) and the return through sp + 136 (226 → 6674). The free needs a `HeapCtxC`-level dealloc:
   handlers-a is writing `dealloc_callG` (`Decode/DeallocCall.lean`); use it.
   Segments done (`Acc/Inputs/Glue.lean`): `g_pre` (44495 → 39710), `g_mid` (44527 → 44916), `g_ret`
-  (45613 → 44552), `g_post` (44552 → 44591, the lock about to be taken), `g_end` (44641 → 44674). Waiting
-  on the dealloc for 44591 … 44640.
+  (45613 → 44552), `g_post` (44552 → 44591, the lock about to be taken), `g_end` (44641 → 44674).
+  The free (`GlueLock.lean`, `GlueFree.lean`): `g_lock` (44591 → 42327), `g_unlock` (44632 → 44641) and
+  `g_free` (44591 → 44641) over fmt's `free_callG` (the free path with the lock held, `HeapCtxL`),
+  giving `HeapCtxC` for `free s ptr` again (`heapL_release`).
+  **Composed** (`GlueCall.lean`): `g_call` (44495 → 44674, 0 < n ≤ 89, under `env.rel cap`) and
+  `g_call0` (n = 0, host-generic). `lp_items` / `lp_call` state each slot's `Rep` for any memory
+  agreeing on the final state's allocated data off the reader's chunk (it is freed next), and the
+  stack frame above sp. With `accHeapHost env` the runs lift to `accContractK` (`FreeStepsH.ofAccGrow`).
+  **Next:** 6630 → 47417 → 44495 (`fetch_vec`, waiting on the zeroed `alloc_impl` under `HeapCtxL`), then
+  the 6630 → 6674 summary.
   **(a′) `fetch_vec`'s zeroed allocation:** `alloc_impl` stores ω₁₀ (the zero flag) at its frame + 112;
   the tail (42074 … 42128) computes ω₁₀ := flag ∧ ω₁₀ and, when nonzero, tail-calls `memzero` 70133 on
   the block (returning to the caller), else returns at 41404. The existing proofs fix the flag 0

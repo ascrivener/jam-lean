@@ -106,4 +106,52 @@ theorem itemOk_opok {X : Type} (env : HeapHost X) (cap pb : Nat) (hcap1 : 134217
       · rw [wd_slot _ _ _ (by omega), x32]; exact ro
   · exact Or.inr ⟨ω', μ', run.mono (by omega)⟩
 
+/-- **An operand with a work error is an `ItemOk` item** (`item_op_err` and the return to 45168), for a
+    trace of at most 16384 octets (the temporary bound). -/
+theorem itemOk_operr {X : Type} (env : HeapHost X) (cap pb : Nat) (hcap1 : 134217728 ≤ cap)
+    (hcap : cap < 18446744073709551616) {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
+    (h : List UInt8) (g e : Nat) (t : List UInt8) (hh : h.length = 128) (hg : g < 18446744073709551616)
+    (he : 1 ≤ e ∧ e ≤ 6) (ht : t.length ≤ 16384) :
+    ItemOk env cap pb p P (7 * 16384 + 7101) (encOpErr h g e t) (RepOpErr h g e t) := by
+  intro x ω μ hb s sp rd ip rlen S0 S1 H h0 h1 h7 h8 hsp hsp8 hSTk hrdsp hrdS hR0 hR8 hrl hrl32 henc hsrc
+  have hL : (encOpErr h g e t).length = 1 + (128 + (Blob.encodeNat g).length + 1 +
+      (Blob.encodeNat t.length).length + t.length) := by simp [encOpErr, hh]; omega
+  unfold encOpErr at henc
+  obtain ⟨p0, r1⟩ := readN_app μ ip _ _ (by rw [← List.length_append]; exact henc)
+  obtain ⟨ph, r2⟩ := readN_app μ _ _ _ (by rw [← List.length_append]; exact r1)
+  obtain ⟨pg, r3⟩ := readN_app μ _ _ _ (by rw [← List.length_append]; exact r2)
+  obtain ⟨pe, r4⟩ := readN_app μ _ _ _ (by rw [← List.length_append]; exact r3)
+  obtain ⟨pet, pt'⟩ := readN_app μ _ _ _ (by rw [← List.length_append]; exact r4)
+  simp only [List.length_singleton, hh] at p0 ph pg pe pet pt'
+  rw [hL] at hrl hsrc
+  have pe' : rdN μ (ip + 1 + 128 + (Blob.encodeNat g).length) 1 = e := by
+    unfold rdN; rw [pe]; simp [Num.decodeLE]; omega
+  rcases item_op_err (p := p) (P := P) (hb := hb) env cap hcap1 hcap x ω μ s sp (sp + 88) rd ip rlen g e t.length
+      pb S0 S1 H h1 h7 h8 ⟨hsp, hsp8⟩ hSTk ⟨by omega, hrdS⟩ ⟨by omega, by omega⟩ (Or.inl (by omega)) hR0 hR8 hg he ht
+      hrl hrl32 p0 pg pe' pet
+      (by obtain ⟨c, c1, c2, c3, c4⟩ := hsrc; exact ⟨c, c1, c2, c3, by omega⟩) with
+    ⟨pt, s2, ω', μ', va2, run, H', keep, keepd, e0, e1, e5, e6, x0, x8, x16, x24, x32,
+      X48, X80, X112, X144, x176, td, R0f, R8f, fr⟩ | ⟨ω', μ', run⟩
+  · have mt := va2.blk_mem
+    have cst : ∀ c ∈ blk t.length pt, c ∈ chunks s2 := fun c hc => (mt c hc).1
+    refine Or.inl ⟨s2, ω', μ', (run.trans (lp_ret_op (p := p) (P := P) (R := env.rel cap) x ω' μ'
+        (by rw [e0, h0]))).mono (by omega), by rw [e0, h0], e1, e5, e6, by rw [x0]; omega, H', keep, keepd,
+      ⟨blk t.length pt, fun c hc => mt c hc, fun μ'' hag => ?_⟩,
+      by rw [R0f, hL]; all_goals (congr 1 <;> omega), by rw [R8f, hL]; all_goals (congr 1 <;> omega),
+      fun a h0 hs h1 h2 => fr a h0 hs (by omega) h2⟩
+    have rt : μ''.readN pt t.length = t := by
+      rw [blk_read H' cst μ'' μ' hag, td, pt']
+    refine ⟨⟨?_, ?_, ?_, ?_, ?_⟩, ?_, ?_⟩
+    · rw [wd_slot _ _ _ (by omega)]; simpa using x0
+    · rw [wd_slot _ _ _ (by omega)]; exact x16
+    · rw [wd_slot _ _ _ (by omega), x8]; exact rt
+    · rw [readN_drop_take μ' (sp + 88) 184 48 128 (by omega), readN128, ← ph, readN128,
+        show sp + 88 + 48 = sp + 88 + 48 by rfl, X48.readN, show sp + 88 + 48 + 32 = sp + 88 + 80 by omega, X80.readN,
+        show sp + 88 + 48 + 64 = sp + 88 + 112 by omega, X112.readN,
+        show sp + 88 + 48 + 96 = sp + 88 + 144 by omega, X144.readN]
+    · rw [wd_slot _ _ _ (by omega)]; exact x176
+    · rw [wd_slot _ _ _ (by omega)]; exact x24
+    · rw [wd_slot _ _ _ (by omega)]; exact x32
+  · exact Or.inr ⟨ω', μ', run.mono (by omega)⟩
+
 end Services.Bootstrap.Acc

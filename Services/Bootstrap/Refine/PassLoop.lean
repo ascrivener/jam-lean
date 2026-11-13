@@ -36,7 +36,7 @@ structure PInv (env : RefineHost.Env) (pb S0 S1 M E n : Nat) (ce : Chunk) (μ0 :
   c136 : μ.readN (M + 136) 8 = Num.encodeLE 8 9223372036854775809
   out : ∃ cap ptr, μ.readN (M + 248) 8 = Num.encodeLE 8 cap ∧ μ.readN (M + 256) 8 = Num.encodeLE 8 ptr ∧
     μ.readN (M + 264) 8 = Num.encodeLE 8 k ∧ k ≤ cap ∧ cap ≤ 2 * n + 4 ∧ ptr < 2147483648 ∧
-    (cap = 0 ∨ ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true ∧ c.size = (232 * cap + 31) / 32 + 1 ∧
+    ((cap = 0 ∧ ptr = 8) ∨ ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true ∧ c.size = (232 * cap + 31) / 32 + 1 ∧
       c ≠ ce) ∧
     μ.readN ptr (232 * k) = μ0.readN E (232 * k)
   H : HeapCtx env pb S0 S1 μ s
@@ -49,6 +49,7 @@ structure LayP (S0 S1 M E n : Nat) (ce : Chunk) (μ0 : Memory) : Prop where
   hM : S0 + 456 ≤ M ∧ M + 648 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0
   hn : n < 128
   hE : ce.addr + 32 ≤ E ∧ E + 232 * n ≤ ce.addr + 32 * ce.size
+  hEtop : E + 232 * n + 24 < 2147483648
   kinds : ∀ j, j < n → ∃ t, PassIdx t ∧ μ0.readN (E + 232 * j) 8 = Num.encodeLE 8 (9223372036854775807 + t)
 
 /-- **One instruction passed through, with room in the output** (`k ≠ cap`): `PInv k` at 5042 becomes
@@ -67,7 +68,7 @@ theorem step_room {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
   obtain ⟨hE0, hE1⟩ := L.hE
   obtain ⟨cap, ptr, vc, vp, vl, hkc, hcapn, hptr, hold, hout⟩ := st.out
   have hkc' := hroom cap vc
-  obtain ⟨co, hco, hcoa, hcou, hcos, hcoe⟩ := hold.resolve_left (by omega)
+  obtain ⟨co, hco, hcoa, hcou, hcos, hcoe⟩ := hold.resolve_left (fun h => hkc' (by omega))
   obtain ⟨hco0, -, hcoT⟩ := Decode.VecU8.chunk_in st.H.wf hco hcou
   obtain ⟨hce0, -, hceT⟩ := Decode.VecU8.chunk_in st.H.wf st.hce.1 st.hce.2
   have hap := chunk_apart st.H.wf hco st.hce.1 hcoe
@@ -93,5 +94,71 @@ theorem step_room {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
       Memory.readN_congr (fun j hj => st.data _ (inE _ (by omega) (by omega)))]
   · unfold InData at ha
     rw [efr a (by omega) (by omega) (by omega), st.data a ha]
+
+/-- **One instruction passed through, with the output full** (`k = cap`): `PInv k` at 5042 becomes
+    `PInv (k + 1)` at 5042 for a grown heap s', or the heap is exhausted. -/
+theorem step_full {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P]
+    (env : RefineHost.Env) (cap0 : Nat) (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616)
+    (x : RefineCtx) (ω : Regs) (μ μ0 : Memory) {hb : Nat} (s : State)
+    {pb S0 S1 M E n : Nat} {ce : Chunk} (L : LayP S0 S1 M E n ce μ0) (k : Nat) (hk : k < n)
+    (st : PInv env pb S0 S1 M E n ce μ0 k ω μ s)
+    (hfull : μ.readN (M + 248) 8 = Num.encodeLE 8 k) :
+    (∃ s' ω' μ', FreeStepsH p (refineContractK cap0 env) 5042 ω μ x 5042 ω' μ' x (512 * n + 6100) ∧
+      PInv env pb S0 S1 M E n ce μ0 (k + 1) ω' μ' s') ∨
+    Exhausts env cap0 pb p P 5042 ω μ x (512 * n + 6100) := by
+  obtain ⟨hS0M, hMS1, hM2, hM8⟩ := L.hM
+  have hn := L.hn
+  have hS1 := st.H.hS1
+  have hbT := st.H.hbT
+  have hb0 := st.H.hb0
+  obtain ⟨hE0, hE1⟩ := L.hE
+  have hEtop := L.hEtop
+  obtain ⟨cap, ptr, vc, vp, vl, hkc, hcapn, hptr, hold, hout⟩ := st.out
+  have hck : cap = k := by
+    have := vc.symm.trans hfull
+    have h1 := congrArg Num.decodeLE this
+    rw [Num.decodeLE_encodeLE, Num.decodeLE_encodeLE] at h1
+    omega
+  subst hck
+  obtain ⟨hce0, -, hceT⟩ := Decode.VecU8.chunk_in st.H.wf st.hce.1 st.hce.2
+  obtain ⟨t, ht, sD0⟩ := L.kinds cap hk
+  have inE : ∀ a, E ≤ a → a < E + 232 * n → InData ce a := fun a h1 h2 => ⟨by omega, by omega⟩
+  have sD : μ.readN (E + 232 * cap) 8 = Num.encodeLE 8 (9223372036854775807 + t) := by
+    rw [Memory.readN_congr (fun j hj => st.data _ (inE _ (by omega) (by omega)))]; exact sD0
+  -- the old buffer, and the instructions' chunk apart from it
+  have hold' : cap = 0 ∨ ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true ∧ c.size = (232 * cap + 31) / 32 + 1 := by
+    rcases hold with ⟨h0, _⟩ | ⟨c, hc, ha, hu, hs, _⟩
+    · exact Or.inl h0
+    · exact Or.inr ⟨c, hc, ha, hu, hs⟩
+  have hcep : ce.addr + 32 ≠ ptr := by
+    rcases hold with ⟨_, rfl⟩ | ⟨c, hc, ha, hu, hs, hne⟩
+    · omega
+    · intro h
+      have := chunk_apart st.H.wf hc st.hce.1 hne
+      omega
+  have hpl : ptr + 232 * cap < 2147483648 := by
+    rcases hold with ⟨h0, rfl⟩ | ⟨c, hc, ha, hu, hs, _⟩
+    · subst h0; omega
+    · obtain ⟨hc0, -, hcT⟩ := Decode.VecU8.chunk_in st.H.wf hc hu
+      rw [hs] at hcT; omega
+  rcases pass_elem_grow (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 x ω μ s M (E + 232 * cap) (E + 232 * n) t
+      cap ptr pb S0 S1 st.H ht hold' (by omega) ⟨by omega, by omega, hM2, hM8⟩ ⟨by omega, by omega⟩ (by omega)
+      (by omega) (by omega) hpl st.h1 st.cur st.en sD st.c128 st.c136 vc vp vl
+      (fun a h1 h2 => Memory.readable_of_writable (Decode.VecU8.heap_writable st.H st.hce.1 st.hce.2
+        (inE a (by omega) (by omega)))) with
+    ⟨q, s', ω', μ', run, e1, ecur, elen, ecap, eptr, hnew, emove, eslot, een, e128, e136, H', keep, fresh⟩ | hx
+  · obtain ⟨hq0, -, hqT⟩ := Decode.VecU8.chunk_in H'.wf hnew rfl
+    simp only at hq0 hqT
+    have hb0' := H'.hb0
+    have hbT' := H'.hbT
+    obtain ⟨hce', hkeep⟩ := keep ce st.hce.1 st.hce.2 hcep
+    have hfr := fresh ce st.hce.1 st.hce.2 hcep
+    refine Or.inl ⟨s', ω', μ', run.mono (by omega), ⟨e1, ecur, een, e128, e136,
+      ⟨max (2 * cap) 4, q, ecap, eptr, elen, by omega, by omega, by omega,
+        Or.inr ⟨_, hnew, by simp; omega, rfl, rfl, fun h => hfr (by rw [← h]; simp; omega)⟩, ?_⟩,
+      H', ⟨hce', st.hce.2⟩, fun a ha => by rw [hkeep a ha, st.data a ha]⟩⟩
+    rw [show 232 * (cap + 1) = 232 * cap + 232 by omega, readN_add2, readN_add2, emove, eslot, hout,
+      Memory.readN_congr (fun j hj => st.data _ (inE _ (by omega) (by omega)))]
+  · exact Or.inr (hx.mono (by omega))
 
 end Services.Bootstrap.Refine.PassLoop

@@ -150,23 +150,30 @@ theorem Words4.readN {μ μ' : Memory} {o i : Nat} (w : Words4 μ' o μ i) : μ'
 /-- The chunk a `Vec<u8>` of n octets at ptr lives in: none for n = 0, else ptr's block. -/
 def blk (n ptr : Nat) : List Chunk := if n = 0 then [] else [⟨ptr - 32, (n + 31) / 32 + 1, true⟩]
 
-/-- **What `VAlloc` allocates is fresh and holds the octets**: the block is in the new state, used and
-    distinct from every allocated chunk of the old one, and the n octets at ptr lie in its data. -/
-theorem VAlloc.blk_ok {code : ByteArray} {pb hb n ptr S0 S1 : Nat} {s s' : State} {μ : Memory}
-    (va : VAlloc pb hb n ptr s s') (H : HeapCtxC code pb S0 S1 μ s') :
-    (∀ c ∈ blk n ptr, c ∈ chunks s' ∧ c.used = true ∧ ∀ d ∈ chunks s, d.used = true → d ≠ c) ∧
+/-- **What `VAlloc` allocates is fresh**: the block is in the new state, used and distinct from every
+    allocated chunk of the old one. -/
+theorem VAlloc.blk_mem {pb hb n ptr : Nat} {s s' : State} (va : VAlloc pb hb n ptr s s') :
+    ∀ c ∈ blk n ptr, c ∈ chunks s' ∧ c.used = true ∧ ∀ d ∈ chunks s, d.used = true → d ≠ c := by
+  rcases va with ⟨rfl, -, -⟩ | ⟨hpos, -, hnew, hfresh⟩
+  · simp [blk]
+  · have hne : n ≠ 0 := by omega
+    intro c hc
+    simp only [blk, hne, ↓reduceIte, List.mem_singleton] at hc
+    subst hc; exact ⟨hnew, rfl, hfresh⟩
+
+/-- **The n octets at ptr lie in the block's data**, for a block allocated in some well-formed state. -/
+theorem blk_read {code : ByteArray} {pb n ptr S0 S1 : Nat} {s : State} {μ : Memory}
+    (H : HeapCtxC code pb S0 S1 μ s) (hc : ∀ c ∈ blk n ptr, c ∈ chunks s) :
     ∀ μ1 μ2 : Memory, (∀ c ∈ blk n ptr, ∀ a, InDataA c a → μ1.read a = μ2.read a) →
       μ1.readN ptr n = μ2.readN ptr n := by
-  rcases va with ⟨rfl, -, -⟩ | ⟨hpos, -, hnew, hfresh⟩
-  · exact ⟨by simp [blk], fun _ _ _ => by simp [PVM.Memory.readN]⟩
-  · have hne : n ≠ 0 := by omega
-    obtain ⟨c1, c2, c3⟩ := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hnew rfl
+  intro μ1 μ2 h
+  by_cases hne : n = 0
+  · subst hne; simp [PVM.Memory.readN]
+  · have hm := hc ⟨ptr - 32, (n + 31) / 32 + 1, true⟩ (by simp [blk, hne])
+    obtain ⟨c1, c2, c3⟩ := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hm rfl
     dsimp only at c1 c2 c3
     have := H.hb0
-    refine ⟨fun c hc => ?_, fun μ1 μ2 h => PVM.Memory.readN_congr fun j hj => ?_⟩
-    · simp only [blk, hne, ↓reduceIte, List.mem_singleton] at hc
-      subst hc; exact ⟨hnew, rfl, hfresh⟩
-    · exact h ⟨ptr - 32, (n + 31) / 32 + 1, true⟩ (by simp [blk, hne]) (ptr + j)
-        ⟨by dsimp only; omega, by dsimp only; omega⟩
+    exact PVM.Memory.readN_congr fun j hj => h ⟨ptr - 32, (n + 31) / 32 + 1, true⟩ (by simp [blk, hne]) (ptr + j)
+      ⟨by dsimp only; omega, by dsimp only; omega⟩
 
 end Services.Bootstrap.Acc

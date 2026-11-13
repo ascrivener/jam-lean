@@ -288,12 +288,41 @@ theorem ret_step {X : Type} {p : ByteArray} {R : HostRel X} {P : Program} {pc n 
     ↓reduceIte, hjt, hbt]
   rfl
 
+/-- A stretch ending in `trap` (GP §A.5.1): the run exits with ☇ and the state unchanged. -/
+theorem trap_exit {X : Type} {p : ByteArray} {R : HostRel X} {P : Program} {pc n : Nat}
+    {ω : Regs} {μ : Memory} {x : X}
+    (hd : deblob p pc = some P ∧ P.decode pc = some (.noArgs .trap) ∧ P.next pc = n ∧
+      P.blockCost (P.blockStartOf pc) ≤ stepCostCap) :
+    FreeRunH p R pc ω μ x .panic ω μ x := by
+  have hs : P.freeStep pc ω μ = (.panic, P.next pc, ω, μ) := by
+    rw [Program.freeStep_of_decode ω μ hd.2.1]; rfl
+  have := FreeExit.step (p := p) hd.1 hs (by simp)
+  simp only [or_true, ite_true] at this
+  exact .exit (.exit this) (by simp)
+
+/-- A stretch ending in `jump_ind r, 0` with ω_r = 2^32 − 2^16 (GP eq. `jumptablealignment`): the
+    run halts with the state unchanged. -/
+theorem halt_exit {X : Type} {p : ByteArray} {R : HostRel X} {P : Program} {pc n : Nat} {r : RegIdx}
+    {ω : Regs} {μ : Memory} {x : X}
+    (hd : deblob p pc = some P ∧ P.decode pc = some (.regImm .jumpInd r 0) ∧ P.next pc = n ∧
+      P.blockCost (P.blockStartOf pc) ≤ stepCostCap)
+    (hr : ω.get r = UInt64.ofNat (2 ^ 32 - 2 ^ 16)) :
+    FreeRunH p R pc ω μ x .halt ω μ x := by
+  have hrn : ((ω.get r).toNat + UInt64.toNat 0) % two32 = 2 ^ 32 - 2 ^ 16 := by
+    rw [hr]; rfl
+  have hs : P.freeStep pc ω μ = (.halt, pc, ω, μ) := by
+    rw [Program.freeStep_of_decode ω μ hd.2.1]
+    simp only [Program.exec, Program.djump, Program.finalState, memoryException, hrn, ↓reduceIte]
+    rfl
+  have := FreeExit.step (p := p) hd.1 hs (by simp)
+  simp only [true_or, ite_true] at this
+  exact .exit (.exit this) (by simp)
+
 /-- **The theorem of a stretch, from its check.** -/
 theorem check_sound {X : Type} {p : ByteArray} {R : HostRel X} {P : Program} {st : Static}
     {G : Prog} {A T : Spec} {frame : List (Aff × Nat)}
     {start tgt k : Nat} (h : check st G A T frame start tgt k = true)
-    (hcode : AllCodeT p P G.code) (hbs : AllBS P G.bs) (hjt : AllJT P G.jt)
-    (hjs : P.jumpTable.size = G.jsize) (vals : List Nat) (hB : BHold vals st.ub)
+    (hG : ProgHyp p P G) (vals : List Nat) (hB : BHold vals st.ub)
     (hLB : LBHold vals st.lb) (ω : Regs) (μ : Memory)
     (hrd : RdHold ⟨fun k => vals.getD k 0, ω, μ⟩ μ st.rd)
     (hwr : WrHold ⟨fun k => vals.getD k 0, ω, μ⟩ μ st.wr)
@@ -312,7 +341,7 @@ theorem check_sound {X : Type} {p : ByteArray} {R : HostRel X} {P : Program} {st
   obtain ⟨hok, h⟩ := h
   split at h
   · rename_i σ' hrun
-    obtain ⟨ω', μ', hsteps, hinv⟩ := srun_sound (E := E) ⟨hcode, hbs, hjt, hjs⟩ hpre x k start
+    obtain ⟨ω', μ', hsteps, hinv⟩ := srun_sound (E := E) hG hpre x k start
       (init A) ω μ σ' (init_inv (E := E) hpre hok hr hc) hrun
     exact ⟨ω', μ', hsteps, entails_sound hpre hinv h⟩
   · cases h

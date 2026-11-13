@@ -33,7 +33,7 @@ It has five parts:
   four test-only ones marked as such), the codec the binary actually runs, and every host call
   bootstrap makes, in order, except logging. It compiles, has no theorems and was checked by
   evaluation against the cases already proved.
-- **Quirks:** fifteen behaviours that may be surprising, from non-canonical lengths to a failed
+- **Quirks:** sixteen behaviours that may be surprising, from non-canonical lengths to a failed
   `Zombify` wiping the bookkeeping. Each is specified exactly and [listed](#quirks).
 - **Biggest risks:**
   - The logging code runs on every path and formats whole values with `core::fmt`.

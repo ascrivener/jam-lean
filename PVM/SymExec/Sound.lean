@@ -108,6 +108,24 @@ theorem disj_sound (hpre : Pre E st) {a : Aff} {n : Nat} {b : Aff} {m : Nat}
 
 /-! ## Values -/
 
+theorem alu_addImm32 (a b x : Nat) :
+    twoRegImmAlu .addImm32 a b x = some (sext 4 ((b + x) % two32)) := by
+  simp only [twoRegImmAlu]
+
+theorem alu_shloL (a b x : Nat) :
+    twoRegImmAlu .shloLImm64 a b x = some (sext 8 ((b * 2 ^ (x % 64)) % two64)) := by
+  simp only [twoRegImmAlu]
+
+theorem alu_shloR (a b x : Nat) :
+    twoRegImmAlu .shloRImm64 a b x = some (sext 8 (b / 2 ^ (x % 64))) := by
+  simp only [twoRegImmAlu]
+
+theorem sext8_lt (y : Nat) : sext 8 y < two64 := by
+  simp only [sext, two64, show (8:Nat) ≠ 0 by decide, show (4:Nat) ≠ 0 by decide, ↓reduceIte, Nat.reduceMul, Nat.reducePow, Nat.reduceSub]; omega
+
+theorem sext8_id {y : Nat} (h : y < two64) : sext 8 y = y := by
+  simp only [sext, two64, show (8:Nat) ≠ 0 by decide, show (4:Nat) ≠ 0 by decide, ↓reduceIte, Nat.reduceMul, Nat.reducePow, Nat.reduceSub] at *; omega
+
 theorem bnd_sound (hpre : Pre E st) : ∀ (v : SVal) b, v.bnd st = some b → v.eval E < b := by
   intro v b h
   cases v with
@@ -133,6 +151,14 @@ theorem bnd_sound (hpre : Pre E st) : ∀ (v : SVal) b, v.bnd st = some b → v.
         rw [hh] at h; simp only [Option.map, Option.some.injEq] at h; subst h
         have h1 := le_hi hpre hh; have h2 := lo_le hpre a
         simp only [SVal.eval]; omega
+    · cases h
+  | alu2i op a' w s =>
+    simp only [SVal.bnd] at h
+    split at h
+    · rename_i hop; subst hop; cases h
+      simp only [SVal.eval]
+      rw [alu_shloL, Option.getD_some]
+      exact sext8_lt _
     · cases h
   | sx k w =>
     simp only [SVal.bnd, Option.some.injEq] at h; subst h
@@ -256,9 +282,59 @@ theorem foldAlu3_eval (op : ThreeRegOp) (a b d : SVal) :
     (foldAlu3 op a b d).eval E = threeRegAlu op (a.eval E) (b.eval E) (d.eval E) := by
   unfold foldAlu3; split <;> rfl
 
+theorem sext4_small {v : Nat} (h : v < 2147483648) : sext 4 v = v := by
+  have h1 : v % 2 ^ (8 * 4) = v :=
+    Nat.mod_eq_of_lt (by rw [show 2 ^ (8 * 4) = 4294967296 from rfl]; omega)
+  have h2 : v / 2 ^ (8 * 4 - 1) = 0 :=
+    Nat.div_eq_of_lt (by rw [show 2 ^ (8 * 4 - 1) = 2147483648 from rfl]; omega)
+  unfold sext
+  simp only [h1, h2, Nat.zero_mul, Nat.add_zero, ite_self]
+
+theorem zextRule_sound (hpre : Pre E st) {op : TwoRegImmOp} {b v : SVal} {x : Nat}
+    (h : zextRule st op b x = some v) (A : Nat) :
+    v.eval E = (twoRegImmAlu op A (b.eval E) x).getD 0 := by
+  unfold zextRule at h
+  by_cases h1 : op = .addImm32
+  · subst h1
+    rw [if_pos rfl] at h
+    by_cases hc : x = 0 ∧ (b.bnd st).any (· ≤ 2 ^ 31) = true
+    · rw [if_pos hc] at h; cases h
+      obtain ⟨rfl, hb⟩ := hc
+      have := bnd_any hpre hb
+      rw [alu_addImm32, Option.getD_some, Nat.add_zero,
+        Nat.mod_eq_of_lt (show b.eval E < two32 by unfold two32; omega), sext4_small (by omega)]
+    · rw [if_neg hc] at h; cases h
+  rw [if_neg h1] at h
+  by_cases h2 : op = .shloRImm64
+  · subst h2
+    rw [if_pos rfl] at h
+    cases b with
+    | alu2i op' a' w s =>
+      simp only at h
+      by_cases hc : op' = .shloLImm64 ∧ s % 64 = x % 64 ∧
+          (w.bnd st).any (fun bw => bw * 2 ^ (x % 64) ≤ two64) = true
+      · rw [if_pos hc] at h; cases h
+        obtain ⟨rfl, hs, hb⟩ := hc
+        cases hbw : SVal.bnd st v with
+        | none => rw [hbw] at hb; cases hb
+        | some bw =>
+          rw [hbw] at hb; simp only [Option.any, decide_eq_true_eq] at hb
+          have hw := bnd_sound hpre v bw hbw
+          have hp : 0 < 2 ^ (x % 64) := Nat.pow_pos (by omega)
+          have hlt : v.eval E * 2 ^ (x % 64) < two64 :=
+            Nat.lt_of_lt_of_le (Nat.mul_lt_mul_of_pos_right hw hp) hb
+          simp only [SVal.eval]
+          rw [alu_shloL, Option.getD_some, alu_shloR, Option.getD_some, hs, Nat.mod_eq_of_lt hlt, sext8_id hlt, Nat.mul_div_cancel _ hp,
+            sext8_id (by have := Nat.le_mul_of_pos_right (v.eval E) hp; omega)]
+      · rw [if_neg hc] at h; cases h
+    | _ => simp at h
+  · rw [if_neg h2] at h; cases h
+
 theorem mkAlu2i_eval (hpre : Pre E st) (op : TwoRegImmOp) (a b : SVal) (x : Nat) :
     (mkAlu2i st op a b x).eval E = (twoRegImmAlu op (a.eval E) (b.eval E) x).getD 0 := by
   unfold mkAlu2i
+  split
+  · rename_i v hv; exact zextRule_sound hpre hv _
   split
   · rename_i hop; subst hop
     rw [addv_eval hpre]
@@ -321,6 +397,64 @@ theorem mkSx_eval (hpre : Pre E st) (k : Nat) (v : SVal) :
             (Nat.lt_of_lt_of_le (bnd_sound hpre _ _ hb) hc.1)).symm
         · rfl
       · rfl
+
+theorem lob_sound (hpre : Pre E st) (v : SVal) : v.lob st ≤ v.eval E := by
+  cases v with
+  | const n => exact Nat.le_refl _
+  | var k =>
+    simp only [SVal.lob, SVal.eval]
+    cases h : st.lb[k]? with
+    | none => simp
+    | some b => simpa using hpre.2.1 k b h
+  | _ => exact Nat.zero_le _
+
+theorem decideCond_sound {op : RegImmOffsetOp} {lo hi x v : Nat} {c : Bool} (h1 : lo ≤ v)
+    (h2 : v < hi) (h : decideCond op lo hi x = some c) : regImmBranchCond op v x = c := by
+  cases op
+  case branchEqImm =>
+    simp only [decideCond] at h; split at h
+    · cases h; simp only [regImmBranchCond, beq_eq_false_iff_ne]; omega
+    · cases h
+  case branchNeImm =>
+    simp only [decideCond] at h; split at h
+    · cases h; simp only [regImmBranchCond, bne_iff_ne, ne_eq]; omega
+    · cases h
+  case branchLtUImm =>
+    simp only [decideCond] at h; split at h
+    · cases h; simp only [regImmBranchCond, decide_eq_true_eq]; omega
+    · split at h
+      · cases h; simp only [regImmBranchCond, decide_eq_false_iff_not]; omega
+      · cases h
+  case branchLeUImm =>
+    simp only [decideCond] at h; split at h
+    · cases h; simp only [regImmBranchCond, decide_eq_true_eq]; omega
+    · split at h
+      · cases h; simp only [regImmBranchCond, decide_eq_false_iff_not]; omega
+      · cases h
+  case branchGeUImm =>
+    simp only [decideCond] at h; split at h
+    · cases h; simp only [regImmBranchCond, decide_eq_true_eq]; omega
+    · split at h
+      · cases h; simp only [regImmBranchCond, decide_eq_false_iff_not]; omega
+      · cases h
+  case branchGtUImm =>
+    simp only [decideCond] at h; split at h
+    · cases h; simp only [regImmBranchCond, decide_eq_true_eq]; omega
+    · split at h
+      · cases h; simp only [regImmBranchCond, decide_eq_false_iff_not]; omega
+      · cases h
+  all_goals simp [decideCond] at h
+
+theorem scond_sound (hpre : Pre E st) {op : RegImmOffsetOp} {v : SVal} {x : Nat} {c : Bool}
+    (h : scond st op v x = some c) : regImmBranchCond op (v.eval E) x = c := by
+  unfold scond at h
+  split at h
+  · cases h; rfl
+  · cases hb : v.bnd st with
+    | none => rw [hb] at h; cases h
+    | some hi =>
+      rw [hb] at h
+      exact decideCond_sound (lob_sound hpre v) (bnd_sound hpre v hi hb) h
 
 /-! ## Registers -/
 
@@ -661,27 +795,21 @@ theorem sload_sound (hpre : Pre E st) {σ σ' : SState} {ω : Regs} {μ : Memory
   · cases hl
 /-! ## Code -/
 
-theorem allCodeT_find {p : ByteArray} {P : Program} :
-    ∀ {t : CTree}, AllCodeT p P t → ∀ pc e, t.find pc = some e →
-      e.pc = pc ∧ deblob p e.pc = some P ∧ P.decode e.pc = some e.ins ∧ P.next e.pc = e.next ∧
-        P.blockCost (P.blockStartOf e.pc) ≤ stepCostCap
-  | .leaf, _, _, _, h => by simp [CTree.find] at h
-  | .node l e' r, ⟨he, hl, hr⟩, pc, e, h => by
-    simp only [CTree.find] at h
+theorem NTree.all_find {α : Type} {Q : Nat → α → Prop} :
+    ∀ {t : NTree α}, t.All Q → ∀ k v, t.find k = some v → Q k v
+  | .leaf, _, _, _, h => by simp [NTree.find] at h
+  | .node l k' v' r, ⟨he, hl, hr⟩, k, v, h => by
+    simp only [NTree.find] at h
     split at h
-    · exact allCodeT_find hl pc e h
+    · exact NTree.all_find hl k v h
     · split at h
-      · cases h; rename_i hpc; exact ⟨hpc.symm, he⟩
-      · exact allCodeT_find hr pc e h
+      · cases h; rename_i hk; subst hk; exact he
+      · exact NTree.all_find hr k v h
 
-theorem isBS_sound {P : Program} :
-    ∀ {bs : List (Nat × Bool)}, AllBS P bs → ∀ n, isBS bs n = true → P.isBlockStart n = true
-  | [], _, n, h => by simp [isBS] at h
-  | b :: bs, ⟨hb, hs⟩, n, h => by
-    simp only [isBS, List.any_cons, Bool.or_eq_true, Bool.and_eq_true, beq_iff_eq] at h
-    rcases h with ⟨rfl, h2⟩ | h
-    · rw [hb, h2]
-    · exact isBS_sound hs n h
+theorem isBS_sound {P : Program} {bs : NTree Bool} (hb : bs.All (fun n b => P.isBlockStart n = b))
+    (n : Nat) (h : isBS bs n = true) : P.isBlockStart n = true := by
+  simp only [isBS, beq_iff_eq] at h
+  exact NTree.all_find hb n true h
 
 /-! ## Steps -/
 
@@ -722,6 +850,14 @@ theorem exec_twoRegImm (P : Program) (i : Nat) (op : TwoRegImmOp) (a b : RegIdx)
     rfl
   all_goals rfl
 
+/-- 𝒳_k(v) = 𝒵⁻¹_8(𝒵_k(v)) for an octet string's value v < 2^(8k) (k = 1, 2, 4). -/
+theorem sext_eq (k v : Nat) (hk : k = 1 ∨ k = 2 ∨ k = 4) (hv : v < 2 ^ (8 * k)) :
+    sext k v = u64 (signed k v) := by
+  rcases hk with rfl | rfl | rfl <;>
+  · simp only [sext, u64, unsigned, signed, Nat.reduceMul, Nat.reducePow, Nat.reduceSub] at *
+    rw [Nat.mod_eq_of_lt hv]
+    split <;> omega
+
 theorem exec_regImm (P : Program) (i : Nat) (op : RegImmOp) (a : RegIdx) (x : UInt64)
     (ω : Regs) (μ : Memory) :
     P.exec i (.regImm op a x) ω μ =
@@ -729,16 +865,29 @@ theorem exec_regImm (P : Program) (i : Nat) (op : RegImmOp) (a : RegIdx) (x : UI
       | .store n => { status := .cont, pc := P.next i, regs := ω,
                       mem := μ.writeN x.toNat (encodeLE n ((ω.get a).toNat % 2 ^ (8 * n))),
                       writes := indices x.toNat n }
-      | .load n _ => { status := .cont, pc := P.next i, mem := μ,
-                       regs := ω.set a (UInt64.ofNat (decodeLE (μ.readN x.toNat n))),
+      | .load n k => { status := .cont, pc := P.next i, mem := μ,
+                       regs := ω.set a (UInt64.ofNat (if k = 0 then decodeLE (μ.readN x.toNat n) else
+                         u64 (signed k (decodeLE (μ.readN x.toNat n))))),
                        reads := indices x.toNat n }
       | .alu => P.exec i (.regImm op a x) ω μ := by
+  have hd : ∀ n, decodeLE (μ.readN x.toNat n) < 2 ^ (8 * n) := fun n => by
+    have := decodeLE_lt (μ.readN x.toNat n)
+    rw [Memory.length_readN] at this; rw [pow8]; exact this
   cases op
   case storeU64 =>
     simp only [rkind]
     rw [show (ω.get a).toNat % 2 ^ (8 * 8) = (ω.get a).toNat from
       Nat.mod_eq_of_lt (UInt64.toNat_lt _)]
     rfl
+  case loadI8 =>
+    simp only [rkind, Nat.one_ne_zero, ite_false]
+    rw [← sext_eq 1 _ (Or.inl rfl) (hd 1)]; rfl
+  case loadI16 =>
+    simp only [rkind, show (2:Nat) ≠ 0 by decide, show (4:Nat) ≠ 0 by decide, ↓reduceIte]
+    rw [← sext_eq 2 _ (Or.inr (Or.inl rfl)) (hd 2)]; rfl
+  case loadI32 =>
+    simp only [rkind, show (2:Nat) ≠ 0 by decide, show (4:Nat) ≠ 0 by decide, ↓reduceIte]
+    rw [← sext_eq 4 _ (Or.inr (Or.inr rfl)) (hd 4)]; rfl
   all_goals rfl
 
 theorem exec_regImmOffset (P : Program) (i : Nat) (op : RegImmOffsetOp) (a : RegIdx) (x : UInt64)
@@ -764,16 +913,6 @@ theorem sjump_eq {P : Program} {i : Nat} {y : Int} (hy : 0 ≤ y)
     simp only [Program.isBlockStartInt, h1]; split <;> simp_all; omega
   simp [Program.sjump, this]
 
-theorem allJT_lookup {P : Program} : ∀ {jt : List (Nat × Nat)}, AllJT P jt → ∀ k t,
-    jt.lookup k = some t → P.jumpTable.getD k 0 = t
-  | [], _, _, _, h => by simp at h
-  | (a, b) :: js, ⟨hj, hs⟩, k, t, h => by
-    simp only [List.lookup_cons] at h
-    by_cases hk : k = a
-    · subst hk; simp at h; subst h; exact hj
-    · rw [show (k == a) = false by simpa using hk] at h
-      exact allJT_lookup hs k t h
-
 theorem sdjump_sound {p : ByteArray} {P : Program} {G : Prog} (hG : ProgHyp p P G) {i a t : Nat}
     (h : sdjump G a = some t) : P.djump i a = (.cont, t) := by
   obtain ⟨_, hbs, hjt, hsz⟩ := hG
@@ -786,7 +925,7 @@ theorem sdjump_sound {p : ByteArray} {P : Program} {G : Prog} (hG : ProgHyp p P 
     split at h
     · cases h
       rename_i hb
-      have h1 := allJT_lookup hjt _ _ hl
+      have h1 := NTree.all_find hjt _ _ hl
       have h2 := isBS_sound hbs _ hb
       unfold Program.djump
       rw [ite_eq_right (by omega), ite_eq_right (by rw [hsz]; omega)]
@@ -840,11 +979,9 @@ theorem sstep_sound {p : ByteArray} {P : Program} {G : Prog}
   · cases h
   rename_i e hfe
   have hbs := hG.2.1
-  obtain ⟨hpc, hd⟩ := allCodeT_find hG.1 pc e hfe
-  rw [hpc] at hd
-  obtain ⟨hd1, hd2, hd3, hd4⟩ := hd
+  obtain ⟨hd1, hd2, hd3, hd4⟩ := NTree.all_find hG.1 pc e hfe
   -- the step through the mutation `m`, landing at `m.pc`
-  have go : ∀ (m : Mutation), P.exec pc e.ins ω μ = m → m.status = .cont →
+  have go : ∀ (m : Mutation), P.exec pc e.1 ω μ = m → m.status = .cont →
       memoryException μ m.reads m.writes = none → Inv E σ' m.regs m.mem → m.pc = pc' →
       ∃ ω' μ', FreeNext p pc ω μ pc' ω' μ' ∧ CostOk p pc ∧ Inv E σ' ω' μ' := by
     intro m hm hs hx hi hmpc
@@ -908,12 +1045,25 @@ theorem sstep_sound {p : ByteArray} {P : Program} {G : Prog}
     · rename_i n k hk; rw [hk] at hx
       obtain ⟨hs, rfl⟩ := map_pair h
       obtain ⟨hx2, hi⟩ := memLoad hpre hinv (rb := 0) rfl hs
-      simp only [ite_true, Nat.zero_add] at hi hx2
+      simp only [Nat.zero_add] at hi hx2
       exact go _ hx rfl hx2 hi hd3
     · cases h
   · -- load_imm_64
     rename_i a x hins; cases h
     exact go _ (by rw [hins]; try rfl) rfl rfl (setv_inv hinv a (.const x.toNat)) hd3
+  · -- store of an immediate at an immediate address
+    rename_i op x y hins
+    obtain ⟨hs, rfl⟩ := map_pair h
+    obtain ⟨hw, hi⟩ := memStore hpre hinv (rb := 0) rfl hs
+    rw [Nat.zero_add] at hw hi
+    refine go { status := .cont
+                pc := P.next pc
+                regs := ω
+                mem := μ.writeN x.toNat
+                  (encodeLE op.width (SVal.eval E (.const (y.toNat % 2 ^ (8 * op.width)))))
+                writes := indices x.toNat op.width }
+      (by rw [hins]; try rfl) rfl ?_ hi hd3
+    exact memEx_none (by simp) hw
   · -- two registers
     rename_i op d a hins; cases h
     refine go _ (by rw [hins]; try rfl) rfl rfl ?_ hd3
@@ -968,17 +1118,18 @@ theorem sstep_sound {p : ByteArray} {P : Program} {G : Prog}
       · cases h
     · rename_i hop
       split at h
-      · rename_i v hv
+      · rename_i c hc
         split at h
         · cases h
           rename_i hb
           simp only [Bool.and_eq_true, decide_eq_true_eq] at hb
-          have hav := hrd a
-          rw [hv] at hav; simp only [SVal.eval] at hav
-          have hbr := branch_eq (P := P) (i := pc) (c := regImmBranchCond op v x.toNat) hb.1.1
+          have hav := scond_sound hpre hc
+          rw [hrd a] at hav
+          have hbr := branch_eq (P := P) (i := pc) (c := regImmBranchCond op (ω.get a).toNat x.toNat) hb.1.1
             (isBS_sound hbs _ hb.1.2) (by rw [hd3]; exact isBS_sound hbs _ hb.2)
           have hx := exec_regImmOffset P pc op a x y ω μ hop
-          rw [← hins, ← hav] at hx
+          rw [← hins] at hx
+          rw [hav] at hbr hx
           refine go _ hx ?_ rfl hinv ?_ <;> simp [hbr, hd3]
         · cases h
       · cases h

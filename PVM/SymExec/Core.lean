@@ -337,6 +337,7 @@ variable (st : Static)
 def SVal.lob : SVal → Nat
   | .const n => n
   | .var k => st.lb[k]?.getD 0
+  | .addr a => (a.lo st).toNat
   | _ => 0
 
 /-- An unsigned comparison of a value in `[lo, hi)` with `x` (§A.5.8), when the interval decides it. -/
@@ -350,11 +351,69 @@ def decideCond (op : RegImmOffsetOp) (lo hi x : Nat) : Option Bool :=
   | .branchGtUImm => if x < lo then some true else if hi ≤ x + 1 then some false else none
   | _ => none
 
-/-- A branch condition against an immediate: computed on a literal, or decided by the bounds. -/
+/-- The unsigned comparison that a signed one (§A.5.8) equals on operands below 2^63. -/
+def toU : RegImmOffsetOp → Option RegImmOffsetOp
+  | .branchLtSImm => some .branchLtUImm
+  | .branchLeSImm => some .branchLeUImm
+  | .branchGeSImm => some .branchGeUImm
+  | .branchGtSImm => some .branchGtUImm
+  | _ => none
+
+/-- A signed comparison of a value below 2^63 with a negative immediate (2^63 ≤ x < 2^64). -/
+def negImm : RegImmOffsetOp → Bool
+  | .branchGeUImm | .branchGtUImm => true
+  | _ => false
+
+/-- A branch condition against an immediate: computed on a literal, or decided by the bounds;
+    a signed one on a value below 2^63. -/
 def scond (op : RegImmOffsetOp) (v : SVal) (x : Nat) : Option Bool :=
   match v with
   | .const c => some (regImmBranchCond op c x)
-  | v => (v.bnd st).bind fun hi => decideCond op (v.lob st) hi x
+  | v => (v.bnd st).bind fun hi =>
+    match toU op with
+    | none => decideCond op (v.lob st) hi x
+    | some u =>
+      if hi ≤ 2 ^ 63 then
+        if x < 2 ^ 63 then decideCond u (v.lob st) hi x
+        else if x < two64 then some (negImm u) else none
+      else none
+
+/-- Two addresses on a common base, both at least 0: their offsets. -/
+def sameBase (v w : SVal) : Option (Int × Int) :=
+  match v, w with
+  | .addr a, .addr b =>
+    if a.base == b.base && decide (0 ≤ a.lo st) && decide (0 ≤ b.lo st) then some (a.off, b.off)
+    else none
+  | _, _ => none
+
+/-- v < w, when a common base or the bounds decide it. -/
+def ltU (v w : SVal) : Option Bool :=
+  match sameBase st v w with
+  | some (p, q) => some (decide (p < q))
+  | none =>
+    if (v.bnd st).any (· ≤ w.lob st) then some true
+    else if (w.bnd st).any (· ≤ v.lob st + 1) then some false
+    else none
+
+/-- v = w, when equal values, a common base or the bounds decide it. -/
+def eqU (v w : SVal) : Option Bool :=
+  if v == w then some true else
+  match sameBase st v w with
+  | some (p, q) => some (p == q)
+  | none =>
+    if (v.bnd st).any (· ≤ w.lob st) || (w.bnd st).any (· ≤ v.lob st) then some false else none
+
+/-- A comparison of two registers (§A.5.11), when it is decided; signed ones on values below
+    2^63, where they equal the unsigned ones. -/
+def scond2 (op : TwoRegOffsetOp) (v w : SVal) : Option Bool :=
+  let nn := (v.bnd st).any (· ≤ 2 ^ 63) && (w.bnd st).any (· ≤ 2 ^ 63)
+  match op with
+  | .branchEq => eqU st v w
+  | .branchNe => (eqU st v w).map (!·)
+  | .branchLtU => ltU st v w
+  | .branchGeU => (ltU st v w).map (!·)
+  | .branchLtS => if nn then ltU st v w else none
+  | .branchGeS => if nn then (ltU st v w).map (!·) else none
 
 /-- The value of register `r`, as `(ω_r).toNat`. -/
 def rdv (σ : SState) (r : Nat) : SVal := mkMod st (σ.regs.getD r (.const 0)) two64
@@ -526,12 +585,12 @@ def sstep (G : Prog) (pc : Nat) (σ : SState) : Option (Nat × SState) :=
       | .const v => (sdjump G ((v + y.toNat) % two32)).map (·, setv σ a.val (.const x.toNat))
       | _ => none
     | .twoRegOffset op a b x =>
-      match rdv st σ a.val, rdv st σ b.val with
-      | .const va, .const vb =>
+      match scond2 st op (rdv st σ a.val) (rdv st σ b.val) with
+      | some c =>
         if 0 ≤ x && isBS G.bs x.toNat && isBS G.bs e.2 then
-          some (if twoRegBranchCond op va vb then x.toNat else e.2, σ)
+          some (if c then x.toNat else e.2, σ)
         else none
-      | _, _ => none
+      | none => none
     | _ => none
 
 /-- Run exactly `k` steps from `pc`, which must end at `target`: the final state. -/

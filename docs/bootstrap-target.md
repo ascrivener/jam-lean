@@ -347,7 +347,8 @@ theorem refine_spec (rk) (d : Accounts) (c i : Nat) (p : WorkPackage) (r : List 
     (imports extrinsics : List (List (List UInt8))) (off : Nat) (w : WorkItem) (l : List UInt8)
     (hw : p.items[i]? = some w)
     (hl : (d.get? w.service).bind (·.historicalLookup p.context.lookupAnchorSlot w.codeHash.toList) = some l)
-    (hboot : IsBootstrap l) (hc : c < 2^16) (hi : i < 2^16) (hs : w.service < 2^32) :
+    (hboot : IsBootstrap l) (hc : c < 2^16) (hi : i < 2^16) (hs : w.service < 2^32)
+    (hrsr : NoRandomStorageRefine w.payload.toList) :
     let o := psiR Params.full d c i p r imports extrinsics off
     let s := RSem.run (Spec.refine C i w.payload.toList) (RSem.Env.of d p imports i off)
     (o.result, o.exports) = (match s with
@@ -359,6 +360,13 @@ theorem refine_spec (rk) (d : Accounts) (c i : Nat) (p : WorkPackage) (r : List 
 
 The last disjunct is heap exhaustion (decision 4). It is not vacuous: it applies only to runs that
 actually reach the allocation-failure path.
+
+**Scope: no `RandomStorageRefine` (decision of 2026-11-13).** T1 is stated for payloads that contain
+no `RandomStorageRefine` instruction (`hrsr`). The instruction is test-only, and accumulate never sends
+it. Its keys come from `rand` 0.9's `SmallRng` (Xoshiro256++ seeded by SplitMix64). The binary computes
+them in the routine at 50409, and `Spec` leaves them as the parameter `randomKeys`. Modelling
+`SmallRng` in Lean and proving that 50409 computes it is a later, separate line of work. Until it is
+done, T1 and the theorems built on it say that they exclude the instruction.
 
 **T1c (canonical payloads, the first milestone).** T1 restricted to payloads
 `y = encodePayload is salt ++ rest` with every instruction `WF`, |salt| = 32 and fewer than 2³²

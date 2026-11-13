@@ -226,7 +226,7 @@ theorem vv_empty {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x :
     (h8 : ω[8] = UInt64.ofNat rd)
     (hR0 : μ.readN rd 8 = Num.encodeLE 8 ip) (hR8 : μ.readN (rd + 8) 8 = Num.encodeLE 8 rlen)
     (hrl : 1 ≤ rlen) (hrl32 : rlen < 4294967296) (hb0 : μ.readN ip 1 = [0])
-    (hip : 65536 ≤ ip ∧ ip + 32 < 2147483648) (hra : μ.readable ip = true)
+    (hip : 65536 ≤ ip ∧ ip < 2147483648) (hra : μ.readable ip = true)
     (hsp : 2147483960 ≤ sp ∧ sp < 4294967296) (hout : sp ≤ out ∧ out + 24 < 4294967296)
     (hrd : sp ≤ rd ∧ rd + 16 < 4294967296) (dor : out + 24 ≤ rd ∨ rd + 16 ≤ out)
     (hwf : ∀ a, sp - 160 ≤ a → a < sp → μ.writable a = true)

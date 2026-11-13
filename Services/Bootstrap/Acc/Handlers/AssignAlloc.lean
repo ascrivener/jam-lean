@@ -147,4 +147,56 @@ theorem preCall {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : 
   · refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
     all_goals simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h1]
 
+/-- **40400 … 42327**, back from `assign` with its result r in ω₇, ω₅ = 0 and ω₆ = ptr ≠ 0 (the
+    queue's buffer): r saved in ω₅, the lock taken (the scratch at 196608 … 196616 used) and the call
+    of `free_impl` with ω₇ = 196792, ω₈ = ptr, return address 1982 (40468); ω₆ = 196792. -/
+theorem freeLock {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
+    (μ : Memory) (S ptr r : Nat) (h1 : ω[1] = UInt64.ofNat S) (h5 : ω[5] = UInt64.ofNat 0)
+    (h6 : ω[6] = UInt64.ofNat ptr) (h7 : ω[7] = UInt64.ofNat r) (hp0 : ptr ≠ 0)
+    (hptr : ptr < 18446744073709551616) (hr64 : r < 18446744073709551616)
+    (m16 : μ.readN (S + 16) 8 = Num.encodeLE 8 196792)
+    (hl : rdN μ 206848 1 = 0) {HT S0 S1 : Nat} (hH : 206864 ≤ HT) (hwr : WrAt μ HT S0 S1)
+    (hS : S0 ≤ S ∧ S + 32 ≤ S1 ∧ HT ≤ S ∧ S1 < 4294967296) :
+    ∃ ω' μ', FreeStepsH p R 40400 ω μ x 42327 ω' μ' x 25 ∧
+      ω'[7] = UInt64.ofNat 196792 ∧ ω'[8] = UInt64.ofNat ptr ∧ ω'[0] = UInt64.ofNat 1982 ∧
+      ω'[6] = UInt64.ofNat 196792 ∧ ω'[5] = UInt64.ofNat r ∧ ω'[1] = ω[1] ∧
+      (∀ a, a < 4294967296 → (a < 196608 ∨ 196616 ≤ a) → (a < 206848 ∨ 206852 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.writable a = μ.writable a) := by
+  have hr := hwr.rd
+  have hand := lock_test (w := rdN μ 206848 4) (by rw [rdN4_mod]; exact hl)
+  have r16 := rd8 (by decide) m16
+  have hp0' : ptr % 18446744073709551616 ≠ 0 := by rw [Nat.mod_eq_of_lt hptr]; exact hp0
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?run, ?post⟩
+  case run => pvm_go [h1, h5, h6, h7, hp0', r16, hand, hwr, hr, rdN_writeN_disjoint, ↓rdN_fold, ↓loadI_fold]
+  case post =>
+    refine ⟨by reg_val, by reg_val, by reg_val, by reg_val, ?_, ?_, fun a ha h1 h2 => ?_, fun a => ?_⟩
+    · simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some']
+    · simp [PVM.getElem_regsNF, PVM.lookup_cons_nat]
+    all_goals rd_simp []
+
+/-- **40468 … 40492**, back from `free_impl` with ω₆ = 196792 and r in ω₅: the lock byte cleared,
+    ω₇ := r, and the epilogue: ω₀, ω₅, ω₆ restored from S + 72, S + 64, S + 56 and the frame closed
+    (ω₁ := S + 80), at the return's `jumpInd` (40492). -/
+theorem unlockRet {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
+    (μ : Memory) (S r r0 r5 r6 : Nat) (h1 : ω[1] = UInt64.ofNat S) (h5 : ω[5] = UInt64.ofNat r)
+    (h6 : ω[6] = UInt64.ofNat 196792) (hr : r < 18446744073709551616)
+    (hr0 : r0 < 18446744073709551616) (hr5 : r5 < 18446744073709551616) (hr6 : r6 < 18446744073709551616)
+    (m72 : μ.readN (S + 72) 8 = Num.encodeLE 8 r0) (m64 : μ.readN (S + 64) 8 = Num.encodeLE 8 r5)
+    (m56 : μ.readN (S + 56) 8 = Num.encodeLE 8 r6) (hS : 206852 ≤ S ∧ S + 80 < 4294967296)
+    (hrf : ∀ a, S + 56 ≤ a → a < S + 80 → μ.readable a = true) (hwl : μ.writable 206848 = true) :
+    ∃ ω', FreeStepsH p R 40468 ω μ x 40492 ω' (μ.writeN 206848 [UInt8.ofNat 0]) x 10 ∧
+      ω'[7] = UInt64.ofNat r ∧ ω'[0] = UInt64.ofNat r0 ∧ ω'[1] = UInt64.ofNat (S + 80) ∧
+      ω'[5] = UInt64.ofNat r5 ∧ ω'[6] = UInt64.ofNat r6 := by
+  have hrl : μ.readable 206848 = true := Memory.readable_of_writable hwl
+  have r72 := rd8 hr0 m72
+  have r64 := rd8 hr5 m64
+  have r56 := rd8 hr6 m56
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?_, ?_, ?_⟩
+  rotate_left
+  · pvm_go [h1, h5, h6, hS, hwl, hrl, hrf, rdN_writeN_disjoint, r72, r64, r56, ↓rdN_fold]
+  · refine ⟨by reg_val, by reg_val, ?_, by reg_val, by reg_val⟩
+    simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some']
+
 end Services.Bootstrap.Acc.Handlers.AssignAlloc

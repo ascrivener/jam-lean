@@ -84,6 +84,17 @@ mask at M + 40). Next: the segment loop (invariant at 5653: segment j, the conte
 `FmtCall` at 5744 as a hypothesis), the free loop, and the step 5042 → 5042 for `PInv` (`O k` = the
 `Exported(n)` slot). `PInv` gained `c40`, `c16`, `c24`, `c32` (Lookup's log constants) for the handlers.
 
+**Done (`ExportSeg.lean`)**: `ExportFmtOk` (the hypothesis for 5744's `format!`, `FmtCall`-shaped with the
+context kept: the Fmt session was asked to provide x' = x), `seg` (one segment: export, format, log, `String`
+freed, next), `expUpTo` (the context after j segments, read from μ0), `segs` (the whole segment loop
+5653 → 5810, all n ≥ 1 segments exported in order).
+**Next**: the full step 5042 → 5042 for index 10: stage (`Pass.pa` + `memcpy_any`, as in `pass_elem`) → `xd` →
+`xa` (or the n = 0 case straight to 5810: needs a `xa0` variant) → `segs` → `xp0`+`xps` or `xpg` +
+`Decode.GrowOne.grow_one_call` + `xps` (as in `PassGrow`) → the free loop (`xr0`, then per segment `xr1` +
+`dealloc_call` + `xr1r` or `xr1z`, then `xr2`; a small induction like `segs`) → `xt0` + `dealloc_call` or
+`xt0z` → `xt1`. The result: `PInv (k + 1)` with slot k `Exported(n)` (first word 2^63 + 19, count n), the
+context `expUpTo … n`; the segments' chunks and their `Vec`'s chunk freed (they must not be in `Kp`).
+
 Plan for the segment step (5653 … 5653 / 5810), one segment g = ptr + 24 j of the n:
 `xs1` → `HostSteps.FreeStepsH.exportRef` (needs `μ.rangeReadable sp (min sl 4104)`: the segment's data lies in an
 allocated chunk) → `xs2` (v = `exportR7 env x` ≠ 2^64 − 1, true while ς + 3072 < 2^64 − 9: take it as a

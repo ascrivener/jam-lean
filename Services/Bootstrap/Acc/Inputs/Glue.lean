@@ -137,4 +137,47 @@ theorem g_end {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X)
       | (simp only [Nat.reduceMul, Nat.reducePow]; rw [Nat.mod_eq_of_lt (UInt64.toNat_lt _)]; exact UInt64.ofNat_toNat)
       | rfl
 
+/-- **44552 … 44587**, the items decoded (`Vec { cap, ptr, len }` at sp + 80, cap ≠ −1) and the fetched
+    buffer's cap c ≠ 0 (ω₆): ptr and len saved at sp + 16 / + 24, and the allocator's lock about to be
+    taken (ω₆ = 196792, ω₇ = 206848, ω₈ = 1). -/
+theorem g_post {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
+    (sp c cap ptr len : Nat) (h1 : ω[1] = UInt64.ofNat sp) (h6 : ω[6] = UInt64.ofNat c)
+    (m80 : rdN μ (sp + 80) 8 = cap) (m88 : rdN μ (sp + 88) 8 = ptr) (m96 : rdN μ (sp + 96) 8 = len)
+    (hcap : cap ≠ 18446744073709551615) (hc : 0 < c ∧ c < 18446744073709551616)
+    (hsp : 65536 ≤ sp ∧ sp + 144 < 4294967296) (hwf : ∀ a, sp ≤ a → a < sp + 144 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 44552 ω μ x 44591 ω' μ' x 20 ∧
+      ω'[1] = UInt64.ofNat sp ∧ ω'[5] = UInt64.ofNat cap ∧ ω'[6] = UInt64.ofNat 196792 ∧
+      ω'[7] = UInt64.ofNat 206848 ∧ ω'[8] = UInt64.ofNat 1 ∧
+      rdN μ' (sp + 16) 8 = ptr ∧ rdN μ' (sp + 24) 8 = len ∧
+      (∀ a, a < 4294967296 → (a < sp + 16 ∨ sp + 32 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have hr : ∀ a, sp ≤ a → a < sp + 144 → μ.readable a = true :=
+    fun a h1 h2 => Memory.readable_of_writable (hwf a h1 h2)
+  have hcap64 : cap < 18446744073709551616 := by rw [← m80]; exact rdN_lt64 _ _
+  have hp : ptr < 18446744073709551616 := by rw [← m88]; exact rdN_lt64 _ _
+  have hl : len < 18446744073709551616 := by rw [← m96]; exact rdN_lt64 _ _
+  have hcap' : cap % 18446744073709551616 ≠ 18446744073709551615 := by rw [Nat.mod_eq_of_lt hcap64]; exact hcap
+  have hc' : c % 18446744073709551616 ≠ 0 := by omega
+  have e : Exec.bitwise (· && ·) ((196792 + 10056) % 18446744073709551616) 18446744073709551612 = 206848 := by decide
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?run, ?post⟩
+  case run => pvm_go [h1, h6, m80, m88, m96, hcap', hc', e, hwf, hr, rdN_writeN_disjoint, ↓rdN_fold, ↓loadI_fold]
+  case post =>
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha h1 => ?_, fun a => ?_, fun a => ?_⟩
+    all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+      ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, h1, h6]
+    all_goals try with_reducible rfl
+    all_goals try first
+      | (rd_simp []; done)
+      | rd_simp []
+    all_goals try first
+      | with_reducible rfl
+      | with_reducible exact Nat.mod_eq_of_lt (by omega)
+    all_goals first
+      | (congr 1; omega)
+      | (simp only [Nat.reduceMul, Nat.reducePow]; exact Nat.mod_eq_of_lt (by omega))
+      | (congr 1; exact Nat.mod_eq_of_lt (by omega))
+      | decide
+      | rfl
+
 end Services.Bootstrap.Acc

@@ -55,13 +55,13 @@ theorem call {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (cap : N
     (hcap : Constants.CgasA ≤ cap) (hcap' : cap < 18446744073709551616)
     (hr : μ.rangeReadable ptr (32 * env.params.authQueueSize) = true)
     (hq : μ.readN ptr (32 * env.params.authQueueSize) = q) :
-    FreeStepsH p (accContractCK cap env) 40397 ω μ x 40400 (assignOut env ω x core a q).1 μ
+    FreeStepsH p (accContractK cap env) 40397 ω μ x 40400 (assignOut env ω x core a q).1 μ
       (assignOut env ω x core a q).2 2 := by
   have r7 : reg ω 7 = core := by simp [reg, Regs.get, h7, Nat.mod_eq_of_lt hc]
   have r8 : reg ω 8 = ptr := by simp [reg, Regs.get, h8, Nat.mod_eq_of_lt hptr]
   have r9 : reg ω 9 = a := by simp [reg, Regs.get, h9, Nat.mod_eq_of_lt ha]
   obtain ⟨hs, hω, hμ, hx⟩ := assign_eq cap env ω μ x core ptr a q r7 r8 r9 hcap hcap' hr hq
-  refine FreeStepsH.accHostCK cap env (h := 16) (by unfold AccGasFreeId; decide)
+  refine FreeStepsH.accHostK cap env (h := 16) (by unfold AccGasFreeId; decide)
     (d_40397 (p := p) (P := P)) rfl hs ?_
   rw [hω, hμ, hx]
   pvm_go []

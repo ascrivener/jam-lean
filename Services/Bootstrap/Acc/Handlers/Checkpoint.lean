@@ -1,5 +1,6 @@
 import Services.Bootstrap.Acc.Handlers.Dispatch
 import Services.Bootstrap.Acc.ContractC
+import Services.Bootstrap.Acc.ContractQ
 
 /-!
 # The `Checkpoint` handler (tag 15)
@@ -66,17 +67,51 @@ theorem toAlloc {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (cap 
     simp only [List.mem_cons, List.not_mem_nil, or_false, forall_eq] at hrs
     post_simp
 
+/-- **`toAlloc` under the answer-queue contract**: as `toAlloc`, with `checkpoint` answering the
+    queue's head v (any value: ω₇ is overwritten at 9946 before it is read). -/
+theorem toAllocQ {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env : AccEnv) (x : AccCtx)
+    (v : Nat) (qs : List Nat) (ω : Regs)
+    (μ : Memory) (bs : List UInt8) (hD : AtDispatch ω μ bs)
+    (hdisc : bs.take 8 = Num.encodeLE 8 9223372036854775822) :
+    ∃ ω' μ', FreeStepsH p (accContractQ env) 8822 ω μ (x, v :: qs) 40494 ω' μ' ((x.1, x.1), qs) 30 ∧
+      ω'[0] = UInt64.ofNat 350 ∧ ω'[1] = ω[1] ∧ ω'[7] = UInt64.ofNat 13 ∧ ω'[8] = UInt64.ofNat 1 ∧
+      KeepsExcept μ μ' [(4278058532, 4)] ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have h1 := hD.sp
+  have h6 := hD.r6
+  have c216 := hD.c216
+  have hw := hD.frame
+  have hrt := hD.tabR
+  have hr : ∀ a, 4278057152 ≤ a → a < 4278059008 → μ.readable a = true :=
+    fun a h1 h2 => Memory.readable_of_writable (hw a h1 h2)
+  have disc := slot_word0 hD.slotB hdisc
+  have tab : μ.readN 65796 4 = [148, 0, 255, 255] := tab_entry hD.tab 15 (by decide)
+  clear hD hdisc
+  obtain ⟨v192, hv192, m192⟩ := word_exists μ 4278057344
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?run, ?post⟩
+  case run =>
+    refine FreeStepsH.mono (FreeStepsH.trans (i' := 9944) (ω' := ?w1) (μ' := ?m1) (x' := (x, v :: qs))
+      (n₁ := 15) (n₂ := 15) ?a (FreeStepsH.checkpointQ env v qs (d_9944 (p := p) (P := P)) ?b)) (by omega)
+    case a => pvm_go [m192, hv192, jts, h1, h6, c216, disc, tab, hw, hr, hrt]
+    case b => pvm_go [JAM.setR7, bs_40494]
+  case post =>
+    refine ⟨?_, ?_, ?_, ?_, fun a ha hrs => ?_, fun a => ?_, fun a => ?_⟩
+    all_goals post_simp
+    simp only [List.mem_cons, List.not_mem_nil, or_false, forall_eq] at hrs
+    post_simp
+
 /-- **Between `alloc` and `dealloc`**, from `alloc`'s return (9958) with a block at ω₇ = ptr ≠ 0:
     the 13-octet message is written at ptr and logged (`log`, 100, an id Ψ_A's dispatcher does not
     know, so ω₇ := WHAT and nothing else changes), then `dealloc(ptr, 13, 1)` (40613) is called
     with return address ω₀ = 432 (the jump table's entry for 11866). Memory changes only at
     ptr … ptr + 13; ω₁ is kept. -/
-theorem mid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (cap : Nat)
+theorem midK {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (cap : Nat)
     (hcap : Constants.Cgasunknown ≤ cap) (hcap' : cap < 18446744073709551616) (env : AccEnv) (x : AccCtx)
     (ω : Regs) (μ : Memory) (ptr : Nat) (h7 : ω[7] = UInt64.ofNat ptr) (hp0 : ptr ≠ 0)
     (hp : ptr + 13 ≤ 4294967296)
     (hw : ∀ a, ptr ≤ a → a < ptr + 13 → μ.writable a = true) :
-    ∃ ω' μ', FreeStepsH p (accContractCK cap env) 9958 ω μ x 40613 ω' μ' x 25 ∧
+    ∃ ω' μ', FreeStepsH p (accContractK cap env) 9958 ω μ x 40613 ω' μ' x 25 ∧
       ω'[0] = UInt64.ofNat 432 ∧ ω'[1] = ω[1] ∧ ω'[7] = UInt64.ofNat ptr ∧ ω'[8] = UInt64.ofNat 13 ∧
       ω'[9] = UInt64.ofNat 1 ∧ KeepsExcept μ μ' [(ptr, 13)] ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
@@ -87,7 +122,7 @@ theorem mid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (cap : Na
   refine ⟨?ω', ?μ', ?run, ?post⟩
   case run =>
     refine FreeStepsH.mono (FreeStepsH.trans (i' := 10009) (ω' := ?w1) (μ' := ?m1) (x' := x)
-      (n₁ := 12) (n₂ := 12) ?a (FreeStepsH.logAccK cap hcap hcap' env (d_10009 (p := p) (P := P)) ?b)) (by omega)
+      (n₁ := 12) (n₂ := 12) ?a (FreeStepsH.logK cap hcap hcap' env (d_10009 (p := p) (P := P)) ?b)) (by omega)
     case a => pvm_go [h7, hp0, hp64, hw, hr]
     case b => pvm_go [JAM.setR7, bs_40613, bs_11855]
   case post =>
@@ -95,6 +130,19 @@ theorem mid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (cap : Na
     all_goals post_simp
     simp only [List.mem_cons, List.not_mem_nil, or_false, forall_eq] at hrs
     post_simp
+
+/-- `midK` under `accContractCK cap`. -/
+theorem mid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (cap : Nat)
+    (hcap : Constants.Cgasunknown ≤ cap) (hcap' : cap < 18446744073709551616) (env : AccEnv)
+    (x : AccCtx) (ω : Regs) (μ : Memory) (ptr : Nat) (h7 : ω[7] = UInt64.ofNat ptr) (hp0 : ptr ≠ 0)
+    (hp : ptr + 13 ≤ 4294967296)
+    (hw : ∀ a, ptr ≤ a → a < ptr + 13 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p (accContractCK cap env) 9958 ω μ x 40613 ω' μ' x 25 ∧
+      ω'[0] = UInt64.ofNat 432 ∧ ω'[1] = ω[1] ∧ ω'[7] = UInt64.ofNat ptr ∧ ω'[8] = UInt64.ofNat 13 ∧
+      ω'[9] = UInt64.ofNat 1 ∧ KeepsExcept μ μ' [(ptr, 13)] ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  obtain ⟨ω', μ', run, rest⟩ := midK cap hcap hcap' env x ω μ ptr h7 hp0 hp hw (p := p) (P := P)
+  exact ⟨ω', μ', run.weaken (fun _ _ _ _ _ _ _ hk => accContractK_le_CK cap env hk), rest⟩
 
 /-- `drop_in_place::<Instruction>`'s jump table at 65536 (in the read-only data), the first 24
     entries. -/

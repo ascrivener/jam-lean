@@ -82,7 +82,7 @@ theorem huhMid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (cap :
     (h7 : ω[7] = UInt64.ofNat ptr) (hp0 : ptr ≠ 0) (hp : ptr + 19 ≤ 4294967296)
     (hw : ∀ a, ptr ≤ a → a < ptr + 19 → μ.writable a = true)
     (hr24 : ∀ a, 4278057176 ≤ a → a < 4278057184 → μ.readable a = true) :
-    ∃ ω' μ', FreeStepsH p (accContractCK cap env) 10092 ω μ x 40613 ω' μ' x 30 ∧
+    ∃ ω' μ', FreeStepsH p (accContractK cap env) 10092 ω μ x 40613 ω' μ' x 30 ∧
       ω'[0] = UInt64.ofNat 358 ∧ ω'[1] = ω[1] ∧ ω'[7] = UInt64.ofNat ptr ∧ ω'[8] = UInt64.ofNat 19 ∧
       ω'[9] = UInt64.ofNat 1 ∧ KeepsExcept μ μ' [(ptr, 19)] ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
@@ -94,7 +94,7 @@ theorem huhMid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (cap :
   refine ⟨?ω', ?μ', ?run, ?post⟩
   case run =>
     refine FreeStepsH.mono (FreeStepsH.trans (i' := 10148) (ω' := ?w1) (μ' := ?m1) (x' := x)
-      (n₁ := 20) (n₂ := 6) ?a (FreeStepsH.logAccK cap hcap hcap' env (d_10148 (p := p) (P := P)) ?b))
+      (n₁ := 20) (n₂ := 6) ?a (FreeStepsH.logK cap hcap hcap' env (d_10148 (p := p) (P := P)) ?b))
       (by omega)
     case a => pvm_go [h1, h7, hp0, hp64, hw, hr, m24, hv24, hr24]
     case b => pvm_go [JAM.setR7, bs_40613]

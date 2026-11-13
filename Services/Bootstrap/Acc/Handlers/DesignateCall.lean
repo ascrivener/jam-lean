@@ -48,12 +48,12 @@ theorem call {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (cap : N
     (hn : n < 18446744073709551616)
     (hcap : Constants.CgasDconst + n * Constants.CgasDlinear ≤ cap) (hcap' : cap < 18446744073709551616)
     (hr : μ.rangeReadable ptr (336 * n) = true) (hv : μ.readN ptr (336 * n) = v) :
-    FreeStepsH p (accContractCK cap env) 49874 ω μ x 49877 (designateOut env ω x n v).1 μ
+    FreeStepsH p (accContractK cap env) 49874 ω μ x 49877 (designateOut env ω x n v).1 μ
       (designateOut env ω x n v).2 2 := by
   have r7 : reg ω 7 = ptr := by simp [reg, Regs.get, h7, Nat.mod_eq_of_lt hptr]
   have r8 : reg ω 8 = n := by simp [reg, Regs.get, h8, Nat.mod_eq_of_lt hn]
   obtain ⟨hs, hω, hμ, hx⟩ := designate_eq cap env ω μ x ptr n v r7 r8 hcap hcap' hr hv
-  refine FreeStepsH.accHostCK cap env (h := 17) (by unfold AccGasFreeId; decide)
+  refine FreeStepsH.accHostK cap env (h := 17) (by unfold AccGasFreeId; decide)
     (d_49874 (p := p) (P := P)) rfl hs ?_
   rw [hω, hμ, hx]
   pvm_go []

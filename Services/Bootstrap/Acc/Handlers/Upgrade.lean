@@ -59,7 +59,7 @@ theorem toCheck {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (cap 
     (hdisc : bs.take 8 = Num.encodeLE 8 9223372036854775808) (hc : (bs.drop 8).take 32 = c)
     (hg : (bs.drop 40).take 8 = Num.encodeLE 8 g) (hm : (bs.drop 48).take 8 = Num.encodeLE 8 m)
     (hws : ∀ a, 4278057144 ≤ a → a < 4278057152 → μ.writable a = true) :
-    ∃ ω' μ', FreeStepsH p (accContractCK cap env) 8822 ω μ x 49541 ω' μ'
+    ∃ ω' μ', FreeStepsH p (accContractK cap env) 8822 ω μ x 49541 ω' μ'
       (x.1.setSelf { x.1.self with codeHash := c, minAccGas := g, minMemoGas := m }, x.2) 40 ∧
       ω'[1] = UInt64.ofNat 4278057144 ∧ ω'[7] = UInt64.ofNat 0 ∧
       μ'.readN 4278057144 8 = Num.encodeLE 8 428 ∧
@@ -91,7 +91,7 @@ theorem toCheck {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (cap 
   refine ⟨?ω', ?μ', ?run, ?post⟩
   case run =>
     refine FreeStepsH.mono (FreeStepsH.trans (i' := 11792) (ω' := ?w1) (μ' := ?m1) (x' := x)
-      (n₁ := 30) (n₂ := 2) ?a (FreeStepsH.accHostCK cap env (h := 20) (by unfold AccGasFreeId; decide)
+      (n₁ := 30) (n₂ := 2) ?a (FreeStepsH.accHostK cap env (h := 20) (by unfold AccGasFreeId; decide)
         (d_11792 (p := p) (P := P)) rfl ?hs ?b)) (by omega)
     case a => pvm_go [m192, hv192, m0, hw0, m1, hw1, m2, hw2, m3, hw3, jts, h1, h6, c216, disc, mg,
       mm, tab, hw, hr, hrt, hws, hrs]
@@ -186,7 +186,7 @@ theorem mid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (cap : Na
     (ω : Regs) (μ : Memory) (ptr : Nat) (h7 : ω[7] = UInt64.ofNat ptr) (hp0 : ptr ≠ 0)
     (hp : ptr + 9 ≤ 4294967296)
     (hw : ∀ a, ptr ≤ a → a < ptr + 9 → μ.writable a = true) :
-    ∃ ω' μ', FreeStepsH p (accContractCK cap env) 11810 ω μ x 40613 ω' μ' x 25 ∧
+    ∃ ω' μ', FreeStepsH p (accContractK cap env) 11810 ω μ x 40613 ω' μ' x 25 ∧
       ω'[0] = UInt64.ofNat 432 ∧ ω'[1] = ω[1] ∧ ω'[7] = UInt64.ofNat ptr ∧ ω'[8] = UInt64.ofNat 9 ∧
       ω'[9] = UInt64.ofNat 1 ∧ KeepsExcept μ μ' [(ptr, 9)] ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
@@ -197,7 +197,7 @@ theorem mid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (cap : Na
   refine ⟨?ω', ?μ', ?run, ?post⟩
   case run =>
     refine FreeStepsH.mono (FreeStepsH.trans (i' := 11849) (ω' := ?w1) (μ' := ?m1) (x' := x)
-      (n₁ := 12) (n₂ := 12) ?a (FreeStepsH.logAccK cap hcap hcap' env (d_11849 (p := p) (P := P)) ?b)) (by omega)
+      (n₁ := 12) (n₂ := 12) ?a (FreeStepsH.logK cap hcap hcap' env (d_11849 (p := p) (P := P)) ?b)) (by omega)
     case a => pvm_go [h7, hp0, hp64, hw, hr]
     case b => pvm_go [JAM.setR7, bs_40613, bs_11855]
   case post =>

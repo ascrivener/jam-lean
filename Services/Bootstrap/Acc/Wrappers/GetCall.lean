@@ -14,8 +14,8 @@ service's storage, then `Option<Vec<u8>>` at out, with the context and the answe
   under its lock, the second Ω_R into it, `Some(Vec { |w|, ptr, |w| })` (48102); or `alloc_impl`
   returned null (48047, ω₇ = 0) and the run reaches the allocation-failure trap 47977.
 
-The key is read twice, so it must survive the allocation: these lemmas take it on the stack above
-the frame. Values with |w| + 31 ≥ 2³⁶ (the 32-bit unit count overflows) and longer than 2³⁷ − 32
+The key is read twice, so it must survive the allocation: `get_some` takes it on the stack above
+the frame or in an allocated chunk's data (the allocator keeps both). Values with |w| + 31 ≥ 2³⁶ (the 32-bit unit count overflows) and longer than 2³⁷ − 32
 (the size check traps) are not covered yet.
 -/
 
@@ -152,7 +152,10 @@ theorem get_some (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
     (h9 : ω[9] = UInt64.ofNat kZ) (hkZ : kZ < 2 ^ 32)
     (hw0 : 0 < w.length) (hwL : w.length + 31 < 68719476736)
     (hsp : 2147483800 + 48 ≤ sp) (hSTk : S0 + 48 + 152 ≤ sp)
-    (hout : sp ≤ out ∧ out + 24 ≤ S1) (hkO : sp ≤ kO ∧ kO + kZ ≤ S1)
+    (hout : sp ≤ out ∧ out + 24 ≤ S1)
+    (hkO : (sp ≤ kO ∧ kO + kZ ≤ S1) ∨
+      ∃ d ∈ chunks s, d.used = true ∧ ∀ a, kO ≤ a → a < kO + kZ → InDataA d a)
+    (hkr : kO + kZ ≤ 4294967296)
     (hkey : μ.readN kO kZ = key) (hv : c.1.self.storage.get? key = some w) :
     (∃ ptr s' ω' μ', FreeStepsH p (KeepCtx (accContractS env)) 47857 ω μ (c, f) 48102 ω' μ' (c, f)
         (96 * ((w.length + 31) / 32) + 700) ∧
@@ -177,11 +180,30 @@ theorem get_some (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
       (fun a h1 h2 => hst a (by omega) (by omega))
   have lo1 : ∀ a, a < 2147483648 → μ1.read a = μ.read a := fun a ha => fr1 a (by omega) (Or.inl (by omega))
   have H1 : HeapCtxC env.code pb S0 S1 μ1 s := HeapCtxC.keep_hi H lo1 wr1
+  -- the key: on the stack above the frame, or in an allocated chunk's data (below 2³¹)
+  have hb0 := H.hb0
+  have hbT := H.hbT
+  have kloc : ∀ a, kO ≤ a → a < kO + kZ → (sp ≤ a ∧ a < S1) ∨
+      ∃ d ∈ chunks s, d.used = true ∧ InDataA d a ∧ a < 2147483648 ∧ 206852 ≤ a := by
+    intro a h1 h2
+    rcases hkO with ⟨k1, k2⟩ | ⟨d, hd, hu, hin⟩
+    · exact .inl ⟨by omega, by omega⟩
+    · refine .inr ⟨d, hd, hu, hin a h1 h2, ?_⟩
+      have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hd hu
+      have ha := hin a h1 h2
+      unfold InDataA at ha
+      omega
+  have kRd : ∀ a, kO ≤ a → a < kO + kZ → μ.readable a = true := fun a h1 h2 => by
+    rcases kloc a h1 h2 with ⟨k1, k2⟩ | ⟨d, hd, hu, hin, -⟩
+    · exact Memory.readable_of_writable (hst a (by omega) k2)
+    · exact Memory.readable_of_writable (heapC_writable_data H hd hu hin)
   have hk1 : μ1.rangeReadable kO kZ = true := Services.Witness.rangeReadable_of
-    (fun a h1 h2 => by rw [rd1]; exact Memory.readable_of_writable (hst a (by omega) (by omega))) (by omega)
+    (fun a h1 h2 => by rw [rd1]; exact kRd a h1 h2) hkr
   have hkey1 : μ1.readN kO kZ = key := by
     rw [← hkey]; apply PVM.Memory.readN_congr; intro j hj
-    exact fr1 _ (by omega) (Or.inr (by omega))
+    rcases kloc (kO + j) (by omega) (by omega) with ⟨k1, k2⟩ | ⟨-, -, -, -, k1, -⟩
+    · exact fr1 _ (by omega) (Or.inr k1)
+    · exact fr1 _ (by omega) (Or.inl (by omega))
   -- the first read: the length
   have hR1 : KeepCtx (accContractS env) 4 ω1 μ1 (c, f) .cont (readRegs ω1 (some w)) μ1 (c, f) := by
     have := read_stepS env ω1 μ1 (c, f) kO kZ 0 0 key (reg_of b7 (by decide))
@@ -246,11 +268,20 @@ theorem get_some (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
         fr1 a h0 (Or.inr ha)]
     have wr5 : ∀ a, (μ4.writeN 206848 [0]).writable a = μ4.writable a := fun a => Memory.writable_writeN _ _ _ _
     have hk5 : (μ4.writeN 206848 [0]).rangeReadable kO kZ = true := Services.Witness.rangeReadable_of
-      (fun a h1 h2 => by rw [Memory.readable_writeN]; exact Memory.readable_of_writable (hst4 a (by omega) (by omega)))
-      (by omega)
+      (fun a h1 h2 => by
+        rw [Memory.readable_writeN]
+        rcases kloc a h1 h2 with ⟨k1, k2⟩ | ⟨d, hd, hu, hin, -⟩
+        · exact Memory.readable_of_writable (hst4 a (by omega) k2)
+        · exact Memory.readable_of_writable (by rw [hwa]; exact heapC_writable_data H₀ (keep4 d hd hu) hu hin)) hkr
     have hkey5 : (μ4.writeN 206848 [0]).readN kO kZ = key := by
       rw [← hkey]; apply PVM.Memory.readN_congr; intro j hj
-      exact kμ5 _ (by omega) (by omega)
+      rcases kloc (kO + j) (by omega) (by omega) with ⟨k1, k2⟩ | ⟨d, hd, hu, hin, k1, k2⟩
+      · exact kμ5 _ (by omega) k1
+      · rw [PVM.Memory.read_writeN_of_not_mem _ _ _ _ (fun k hk => by
+          simp at hk; simp only [two32]; rw [Nat.mod_eq_of_lt (by omega), Nat.mod_eq_of_lt (by omega)]; omega)]
+        unfold InDataA at hin
+        rw [keepd4 d hd hu _ hin.1 hin.2, fr3 _ (by omega) (Or.inr (by omega)) (Or.inr (by omega)) (Or.inl (by omega)),
+          lo1 _ (by omega)]
     have e8 : ω5[8] = UInt64.ofNat kO := u8.trans (f5.trans (d5.trans ((bo2 5 (by decide)).trans
       ((readRegs_ne ω1 (some w) 5 (by decide) (by decide)).trans (b5.trans h8)))))
     have e12 : ω5[12] = UInt64.ofNat L := u12.trans (f6.trans (d6.trans c6))

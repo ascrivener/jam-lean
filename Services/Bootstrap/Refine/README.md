@@ -71,7 +71,18 @@ Build one file with
 
 ## Plan
 
-### Export handler (5587–5830), blocked on host 8
+### Export handler (5587–5960): pieces done, composition next
+On the wip branch (with #167 merged in): `HostSteps.lean` has `FreeStepsH.logRef` (100) and
+`FreeStepsH.exportRef` (8: `exportCtx`, `exportR7`). `Export.lean` has every straight-line piece:
+`xd` (5095 → 5587), `xa` (setup → 5653), `xs1` (→ the `export` call at 5664), `xs2` (5667 → `format!`, the
+`Result` at M + 560), `xl` (5751 → `log` at 5784), `xf`/`xf0`/`xf1` (the `String` freed → 5641), `xn` (next
+segment or 5810), `xp0`/`xpg` (room, or `grow_one` → 5832), `xps` (`Exported(n)` pushed), `xr0`/`xr1`/`xr1z`/
+`xr1r`/`xr2` (the segments freed), `xt0`/`xt0z` (their `Vec` freed), `xt1` (→ 5042, no drop: bit 10 of the
+mask at M + 40). Next: the segment loop (invariant at 5653: segment j, the context with j exports appended,
+`FmtCall` at 5744 as a hypothesis), the free loop, and the step 5042 → 5042 for `PInv` (`O k` = the
+`Exported(n)` slot). `PInv` gained `c40`, `c16`, `c24`, `c32` (Lookup's log constants) for the handlers.
+
+#### (old notes)
 Per segment of the element's `Vec<Vec<u8>>` (24-octet {cap, ptr, len} entries, loop 5641–5807):
 setup 5587–5664; **ecalli 8 at 5664**; result check 5667–5695 (≥ 2^64−9 is an error; 2^64−1 →
 trap 6377); per-segment `format!` at **5744** (→ 59375), log (host 100) at 5784, free at 5800

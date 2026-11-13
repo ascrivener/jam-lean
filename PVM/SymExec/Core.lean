@@ -59,6 +59,8 @@ inductive SVal where
   | alu2 (op : TwoRegOp) (a : SVal)
   /-- 𝒵⁻¹_8(𝒵_k(v)) (a signed load of `k` octets). -/
   | sx (k : Nat) (v : SVal)
+  /-- Entry `i` of a table of literals (0 past its end): an octet table the code indexes. -/
+  | tbl (vs : List Nat) (i : SVal)
   deriving DecidableEq, Repr
 
 def SVal.isConst : SVal → Bool
@@ -85,6 +87,7 @@ def SVal.eval (E : Env) : SVal → Nat
   | .alu3 op a b d => threeRegAlu op (a.eval E) (b.eval E) (d.eval E)
   | .alu2 op a => twoRegAlu op (a.eval E)
   | .sx k v => u64 (signed k (v.eval E))
+  | .tbl vs i => vs.getD (i.eval E) 0
 
 /-- `t` lies in the region of `n` octets at `a`. -/
 def InReg (E : Env) (r : Aff × Nat) (t : Nat) : Prop := r.1.eval E ≤ t ∧ (t : Int) < r.1.eval E + r.2
@@ -140,7 +143,9 @@ def SVal.bnd (st : Static) : SVal → Option Nat
   | .mod _ m => if 0 < m then some m else none
   | .addr a => if 0 ≤ a.lo st then (a.hi st).map fun h => (h + 1).toNat else none
   | .sx _ _ => some two64
-  | .alu2i op _ _ _ => if op = .shloLImm64 then some two64 else none
+  | .alu2i op _ _ x =>
+    if op = .shloLImm64 then some two64 else if op = .andImm then some (x + 1) else none
+  | .tbl vs _ => some (vs.foldr max 0 + 1)
   | _ => none
 
 /-- `v mod m`, simplified: folded on a literal, dropped when a bound shows it does nothing, and
@@ -417,6 +422,47 @@ def sload (σ : SState) (d : Nat) (a : Aff) (n k : Nat) : Option SState :=
     (loadVal st σ a n).map fun v => setv σ d (mkSx st k v)
   else none
 
+/-- A table address: v = c + i (mod 2^64) by `add_64` or `add_imm_64` (§A.5.10, §A.5.13). -/
+def idxOf1 : SVal → Option (Nat × SVal)
+  | .alu3 .add64 i (.const c) _ => some (c, i)
+  | .alu3 .add64 (.const c) i _ => some (c, i)
+  | .alu2i .addImm64 _ i c => some (c, i)
+  | _ => none
+
+/-- `idxOf1`, also under a reduction mod 2^64. -/
+def idxOf : SVal → Option (Nat × SVal)
+  | .mod v m => if m = two64 then idxOf1 v else none
+  | v => idxOf1 v
+
+/-- The literals of `n` octets at a, a + 1, …, a + b − 1. -/
+def tvals (σ : SState) (n : Nat) : Nat → Nat → Option (List Nat)
+  | _, 0 => some []
+  | a, b + 1 =>
+    match loadVal st σ ⟨none, a⟩ n, tvals σ n (a + 1) b with
+    | some (.const w), some vs => some (w :: vs)
+    | _, _ => none
+
+/-- Load `n` octets at v + x into `d` when v is a table base plus an index of at most 4096
+    values, and the table's entries are literals: entry `i` of the table. -/
+def tload (σ : SState) (d : Nat) (v : SVal) (x n k : Nat) : Option SState :=
+  match idxOf v with
+  | none => none
+  | some (c, i) =>
+    match i.bnd st with
+    | none => none
+    | some b =>
+      if 0 < b && b ≤ 4096 && decide (c + x + (b - 1) + n ≤ two32) &&
+          (st.rd.any (within st ⟨none, c + x⟩ (b - 1 + n)) ||
+            st.wr.any (within st ⟨none, c + x⟩ (b - 1 + n))) then
+        (tvals st σ n (c + x) b).map fun vs => setv σ d (mkSx st k (.tbl vs i))
+      else none
+
+/-- Load `n` octets at v + x into `d`: at an affine address, else from a table. -/
+def ldv (σ : SState) (d : Nat) (v : SVal) (x n k : Nat) : Option SState :=
+  match mkAddr st v x n with
+  | some ad => sload st σ d ad n k
+  | none => tload st σ d v x n k
+
 /-- djump(a) when it continues (GP eq. `jumptablealignment`): the target, if the facts show it. -/
 def sdjump (G : Prog) (a : Nat) : Option Nat :=
   if a = 2 ^ 32 - 2 ^ 16 ∨ a = 0 ∨ a > G.jsize * 2 ∨ a % 2 ≠ 0 then none else
@@ -445,7 +491,7 @@ def sstep (G : Prog) (pc : Nat) (σ : SState) : Option (Nat × SState) :=
         ((mkAddr st (.const 0) x.toNat n).bind fun ad =>
           sstore st σ ad n (mkMod st (rdv st σ a.val) (2 ^ (8 * n)))).map (e.2, ·)
       | .load n k =>
-        ((mkAddr st (.const 0) x.toNat n).bind fun ad => sload st σ a.val ad n k).map (e.2, ·)
+        (ldv st σ a.val (.const 0) x.toNat n k).map (e.2, ·)
       | .alu => none
     | .regExtImm .loadImm64 a x => some (e.2, setv σ a.val (.const x.toNat))
     | .twoImm op x y =>
@@ -461,8 +507,7 @@ def sstep (G : Prog) (pc : Nat) (σ : SState) : Option (Nat × SState) :=
         ((mkAddr st (rdv st σ b.val) x.toNat n).bind fun ad =>
           sstore st σ ad n (mkMod st (rdv st σ a.val) (2 ^ (8 * n)))).map (e.2, ·)
       | .load n k =>
-        ((mkAddr st (rdv st σ b.val) x.toNat n).bind fun ad =>
-          sload st σ a.val ad n k).map (e.2, ·)
+        (ldv st σ a.val (rdv st σ b.val) x.toNat n k).map (e.2, ·)
     | .regTwoImm op a x y =>
       ((mkAddr st (rdv st σ a.val) x.toNat op.width).bind fun ad =>
         sstore st σ ad op.width (.const (y.toNat % 2 ^ (8 * op.width)))).map (e.2, ·)

@@ -140,6 +140,7 @@ def SVal.bnd (st : Static) : SVal → Option Nat
   | .mod _ m => if 0 < m then some m else none
   | .addr a => if 0 ≤ a.lo st then (a.hi st).map fun h => (h + 1).toNat else none
   | .sx _ _ => some two64
+  | .alu2i op _ _ _ => if op = .shloLImm64 then some two64 else none
   | _ => none
 
 /-- `v mod m`, simplified: folded on a literal, dropped when a bound shows it does nothing, and
@@ -194,9 +195,25 @@ def foldAlu2i (op : TwoRegImmOp) (a b : SVal) (x : Nat) : SVal :=
   | .const p, .const q => .const ((twoRegImmAlu op p q x).getD 0)
   | a, b => .alu2i op a b x
 
+/-- The zero-extension idiom: `add_imm_32 0` of a value below 2^31 is the value, and
+    `shlo_r_imm_64 s` of `shlo_l_imm_64 s` of w is w when w·2^s < 2^64. -/
+def zextRule (st : Static) (op : TwoRegImmOp) (b : SVal) (x : Nat) : Option SVal :=
+  if op = .addImm32 then
+    (if x = 0 ∧ (b.bnd st).any (· ≤ 2 ^ 31) then some b else none)
+  else if op = .shloRImm64 then
+    match b with
+    | .alu2i op' _ w s =>
+      if op' = .shloLImm64 ∧ s % 64 = x % 64 ∧ (w.bnd st).any (fun bw => bw * 2 ^ (x % 64) ≤ two64)
+      then some w else none
+    | _ => none
+  else none
+
 def mkAlu2i (st : Static) (op : TwoRegImmOp) (a b : SVal) (x : Nat) : SVal :=
-  if op = .addImm64 then addv st b x (foldAlu2i op (.const 0) b x)
-  else foldAlu2i op (if usesA op then a else .const 0) b x
+  match zextRule st op b x with
+  | some v => v
+  | none =>
+    if op = .addImm64 then addv st b x (foldAlu2i op (.const 0) b x)
+    else foldAlu2i op (if usesA op then a else .const 0) b x
 
 def foldAlu3 (op : ThreeRegOp) (a b d : SVal) : SVal :=
   match a, b, d with
@@ -253,49 +270,37 @@ def Inv (E : Env) (σ : SState) (ω : Regs) (μ : Memory) : Prop :=
 
 /-! ## Code -/
 
-/-- An instruction fact: at `pc`, `ins`, and ı + 1 + skip(ı) = `next`. -/
-structure CEntry where
-  pc : Nat
-  ins : Instr
-  next : Nat
-
-/-- Instruction facts as a search tree on pc. -/
-inductive CTree where
+/-- A search tree keyed by naturals. -/
+inductive NTree (α : Type) where
   | leaf
-  | node (l : CTree) (e : CEntry) (r : CTree)
+  | node (l : NTree α) (k : Nat) (v : α) (r : NTree α)
 
-def CTree.find : CTree → Nat → Option CEntry
+def NTree.find {α : Type} : NTree α → Nat → Option α
   | .leaf, _ => none
-  | .node l e r, pc => if pc < e.pc then l.find pc else if pc = e.pc then some e else r.find pc
+  | .node l k v r, i => if i < k then l.find i else if i = k then some v else r.find i
 
-/-- The decode facts of a tree of entries (each a `d_i` of the code facts). -/
-def AllCodeT (p : ByteArray) (P : Program) : CTree → Prop
+/-- Every entry of a tree satisfies `Q`. -/
+def NTree.All {α : Type} (Q : Nat → α → Prop) : NTree α → Prop
   | .leaf => True
-  | .node l e r => (deblob p e.pc = some P ∧ P.decode e.pc = some e.ins ∧ P.next e.pc = e.next ∧
-      P.blockCost (P.blockStartOf e.pc) ≤ stepCostCap) ∧ AllCodeT p P l ∧ AllCodeT p P r
+  | .node l k v r => Q k v ∧ l.All Q ∧ r.All Q
 
-/-- The block-start facts of a list (each a `bs_i` of the code facts). -/
-def AllBS (P : Program) : List (Nat × Bool) → Prop
-  | [] => True
-  | b :: bs => P.isBlockStart b.1 = b.2 ∧ AllBS P bs
-
-/-- The jump-table entries of a list (each a `jte_k`): **j**_k = t. -/
-def AllJT (P : Program) : List (Nat × Nat) → Prop
-  | [] => True
-  | j :: js => P.jumpTable.getD j.1 0 = j.2 ∧ AllJT P js
-
-/-- The code a stretch runs through: instruction facts, block starts, jump-table entries and |**j**|. -/
+/-- The code a stretch runs through: at each pc its instruction and ı + 1 + skip(ı) (the `d_i` of
+    the code facts), block starts (`bs_i`), jump-table entries (`jte_k`) and |**j**| (`jts`). -/
 structure Prog where
-  code : CTree
-  bs : List (Nat × Bool)
-  jt : List (Nat × Nat)
+  code : NTree (Instr × Nat)
+  bs : NTree Bool
+  jt : NTree Nat
   jsize : Nat
 
 /-- The facts of a `Prog` hold of the program `p` deblobs to. -/
 def ProgHyp (p : ByteArray) (P : Program) (G : Prog) : Prop :=
-  AllCodeT p P G.code ∧ AllBS P G.bs ∧ AllJT P G.jt ∧ P.jumpTable.size = G.jsize
+  G.code.All (fun pc e => deblob p pc = some P ∧ P.decode pc = some e.1 ∧ P.next pc = e.2 ∧
+      P.blockCost (P.blockStartOf pc) ≤ stepCostCap) ∧
+  G.bs.All (fun n b => P.isBlockStart n = b) ∧
+  G.jt.All (fun k t => P.jumpTable.getD k 0 = t) ∧
+  P.jumpTable.size = G.jsize
 
-def isBS (bs : List (Nat × Bool)) (n : Nat) : Bool := bs.any fun b => b.1 == n && b.2
+def isBS (bs : NTree Bool) (n : Nat) : Bool := bs.find n == some true
 
 /-! ## One step -/
 
@@ -317,10 +322,34 @@ def tkind : TwoRegImmOp → TK
 /-- How §A.5.6 treats a memory operation at the absolute address ν_X. -/
 def rkind : RegImmOp → TK
   | .loadU8 => .load 1 0 | .loadU16 => .load 2 0 | .loadU32 => .load 4 0 | .loadU64 => .load 8 0
+  | .loadI8 => .load 1 1 | .loadI16 => .load 2 2 | .loadI32 => .load 4 4
   | .storeU8 => .store 1 | .storeU16 => .store 2 | .storeU32 => .store 4 | .storeU64 => .store 8
   | _ => .alu
 
 variable (st : Static)
+
+/-- A lower bound of a value. -/
+def SVal.lob : SVal → Nat
+  | .const n => n
+  | .var k => st.lb[k]?.getD 0
+  | _ => 0
+
+/-- An unsigned comparison of a value in `[lo, hi)` with `x` (§A.5.8), when the interval decides it. -/
+def decideCond (op : RegImmOffsetOp) (lo hi x : Nat) : Option Bool :=
+  match op with
+  | .branchEqImm => if x < lo ∨ hi ≤ x then some false else none
+  | .branchNeImm => if x < lo ∨ hi ≤ x then some true else none
+  | .branchLtUImm => if hi ≤ x then some true else if x ≤ lo then some false else none
+  | .branchLeUImm => if hi ≤ x + 1 then some true else if x < lo then some false else none
+  | .branchGeUImm => if x ≤ lo then some true else if hi ≤ x then some false else none
+  | .branchGtUImm => if x < lo then some true else if hi ≤ x + 1 then some false else none
+  | _ => none
+
+/-- A branch condition against an immediate: computed on a literal, or decided by the bounds. -/
+def scond (op : RegImmOffsetOp) (v : SVal) (x : Nat) : Option Bool :=
+  match v with
+  | .const c => some (regImmBranchCond op c x)
+  | v => (v.bnd st).bind fun hi => decideCond op (v.lob st) hi x
 
 /-- The value of register `r`, as `(ω_r).toNat`. -/
 def rdv (σ : SState) (r : Nat) : SVal := mkMod st (σ.regs.getD r (.const 0)) two64
@@ -391,7 +420,7 @@ def sload (σ : SState) (d : Nat) (a : Aff) (n k : Nat) : Option SState :=
 /-- djump(a) when it continues (GP eq. `jumptablealignment`): the target, if the facts show it. -/
 def sdjump (G : Prog) (a : Nat) : Option Nat :=
   if a = 2 ^ 32 - 2 ^ 16 ∨ a = 0 ∨ a > G.jsize * 2 ∨ a % 2 ≠ 0 then none else
-  match G.jt.lookup (a / 2 - 1) with
+  match G.jt.find (a / 2 - 1) with
   | some t => if isBS G.bs t then some t else none
   | none => none
 
@@ -400,12 +429,12 @@ def sstep (G : Prog) (pc : Nat) (σ : SState) : Option (Nat × SState) :=
   match G.code.find pc with
   | none => none
   | some e =>
-    match e.ins with
-    | .noArgs .unlikely => some (e.next, σ)
-    | .noArgs .fallthrough => if isBS G.bs e.next then some (e.next, σ) else none
+    match e.1 with
+    | .noArgs .unlikely => some (e.2, σ)
+    | .noArgs .fallthrough => if isBS G.bs e.2 then some (e.2, σ) else none
     | .oneOffset .jump x =>
       if 0 ≤ x && isBS G.bs x.toNat then some (x.toNat, σ) else none
-    | .regImm .loadImm a x => some (e.next, setv σ a.val (.const x.toNat))
+    | .regImm .loadImm a x => some (e.2, setv σ a.val (.const x.toNat))
     | .regImm .jumpInd a x =>
       match rdv st σ a.val with
       | .const v => (sdjump G ((v + x.toNat) % two32)).map (·, σ)
@@ -414,36 +443,39 @@ def sstep (G : Prog) (pc : Nat) (σ : SState) : Option (Nat × SState) :=
       match rkind op with
       | .store n =>
         ((mkAddr st (.const 0) x.toNat n).bind fun ad =>
-          sstore st σ ad n (mkMod st (rdv st σ a.val) (2 ^ (8 * n)))).map (e.next, ·)
-      | .load n _ =>
-        ((mkAddr st (.const 0) x.toNat n).bind fun ad => sload st σ a.val ad n 0).map (e.next, ·)
+          sstore st σ ad n (mkMod st (rdv st σ a.val) (2 ^ (8 * n)))).map (e.2, ·)
+      | .load n k =>
+        ((mkAddr st (.const 0) x.toNat n).bind fun ad => sload st σ a.val ad n k).map (e.2, ·)
       | .alu => none
-    | .regExtImm .loadImm64 a x => some (e.next, setv σ a.val (.const x.toNat))
-    | .twoReg op d a => some (e.next, setv σ d.val (mkAlu2 op (rdv st σ a.val)))
+    | .regExtImm .loadImm64 a x => some (e.2, setv σ a.val (.const x.toNat))
+    | .twoImm op x y =>
+      ((mkAddr st (.const 0) x.toNat op.width).bind fun ad =>
+        sstore st σ ad op.width (.const (y.toNat % 2 ^ (8 * op.width)))).map (e.2, ·)
+    | .twoReg op d a => some (e.2, setv σ d.val (mkAlu2 op (rdv st σ a.val)))
     | .threeReg op a b d =>
-      some (e.next, setv σ d.val (mkAlu3 st op (rdv st σ a.val) (rdv st σ b.val) (rdv st σ d.val)))
+      some (e.2, setv σ d.val (mkAlu3 st op (rdv st σ a.val) (rdv st σ b.val) (rdv st σ d.val)))
     | .twoRegImm op a b x =>
       match tkind op with
-      | .alu => some (e.next, setv σ a.val (mkAlu2i st op (rdv st σ a.val) (rdv st σ b.val) x.toNat))
+      | .alu => some (e.2, setv σ a.val (mkAlu2i st op (rdv st σ a.val) (rdv st σ b.val) x.toNat))
       | .store n =>
         ((mkAddr st (rdv st σ b.val) x.toNat n).bind fun ad =>
-          sstore st σ ad n (mkMod st (rdv st σ a.val) (2 ^ (8 * n)))).map (e.next, ·)
+          sstore st σ ad n (mkMod st (rdv st σ a.val) (2 ^ (8 * n)))).map (e.2, ·)
       | .load n k =>
         ((mkAddr st (rdv st σ b.val) x.toNat n).bind fun ad =>
-          sload st σ a.val ad n k).map (e.next, ·)
+          sload st σ a.val ad n k).map (e.2, ·)
     | .regTwoImm op a x y =>
       ((mkAddr st (rdv st σ a.val) x.toNat op.width).bind fun ad =>
-        sstore st σ ad op.width (.const (y.toNat % 2 ^ (8 * op.width)))).map (e.next, ·)
+        sstore st σ ad op.width (.const (y.toNat % 2 ^ (8 * op.width)))).map (e.2, ·)
     | .regImmOffset op a x y =>
       if op = .loadImmJump then
         if 0 ≤ y && isBS G.bs y.toNat then some (y.toNat, setv σ a.val (.const x.toNat)) else none
       else
-        match rdv st σ a.val with
-        | .const v =>
-          if 0 ≤ y && isBS G.bs y.toNat && isBS G.bs e.next then
-            some (if regImmBranchCond op v x.toNat then y.toNat else e.next, σ)
+        match scond st op (rdv st σ a.val) x.toNat with
+        | some c =>
+          if 0 ≤ y && isBS G.bs y.toNat && isBS G.bs e.2 then
+            some (if c then y.toNat else e.2, σ)
           else none
-        | _ => none
+        | none => none
     | .twoRegTwoImm .loadImmJumpInd a b x y =>
       match rdv st σ b.val with
       | .const v => (sdjump G ((v + y.toNat) % two32)).map (·, setv σ a.val (.const x.toNat))
@@ -451,8 +483,8 @@ def sstep (G : Prog) (pc : Nat) (σ : SState) : Option (Nat × SState) :=
     | .twoRegOffset op a b x =>
       match rdv st σ a.val, rdv st σ b.val with
       | .const va, .const vb =>
-        if 0 ≤ x && isBS G.bs x.toNat && isBS G.bs e.next then
-          some (if twoRegBranchCond op va vb then x.toNat else e.next, σ)
+        if 0 ≤ x && isBS G.bs x.toNat && isBS G.bs e.2 then
+          some (if twoRegBranchCond op va vb then x.toNat else e.2, σ)
         else none
       | _, _ => none
     | _ => none

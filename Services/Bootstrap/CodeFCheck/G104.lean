@@ -5,325 +5,1223 @@
 import Services.Bootstrap.CodeCheck
 import Services.Bootstrap.CodeF
 
-/-! # bootstrap's code facts, chunks 6656–6668 -/
+/-! # bootstrap's code facts, chunks 6656–6706 -/
 
 namespace Services.Bootstrap.CodeFCheck
 
 open PVM PVM.NatBlob Services.Bootstrap.Blob Services.Bootstrap.CodeCheck Services.Bootstrap.CodeF
 
-theorem jtw_6656_0 : jtW.getD 1362 0 = 64589 := by
+theorem jtw_6656_0 : jtW.getD 1233 0 = 55138 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6656_0 : (CodeFact.jumpEntry 1362 64589).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1362 64589 ((congrArg (fun a : Array Nat => a.getD 1362 0) jt_eq).trans jtw_6656_0 : jt.getD 1362 0 = 64589)
+theorem jte_6656_0 : (CodeFact.jumpEntry 1233 55138).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1233 55138 ((congrArg (fun a : Array Nat => a.getD 1233 0) jt_eq).trans jtw_6656_0 : jt.getD 1233 0 = 55138)
 
-theorem jtw_6656_1 : jtW.getD 1363 0 = 64633 := by
+theorem jtw_6656_1 : jtW.getD 1234 0 = 55212 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6656_1 : (CodeFact.jumpEntry 1363 64633).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1363 64633 ((congrArg (fun a : Array Nat => a.getD 1363 0) jt_eq).trans jtw_6656_1 : jt.getD 1363 0 = 64633)
+theorem jte_6656_1 : (CodeFact.jumpEntry 1234 55212).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1234 55212 ((congrArg (fun a : Array Nat => a.getD 1234 0) jt_eq).trans jtw_6656_1 : jt.getD 1234 0 = 55212)
 
-theorem jtw_6656_2 : jtW.getD 1364 0 = 64715 := by
+theorem jtw_6656_2 : jtW.getD 1235 0 = 55251 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6656_2 : (CodeFact.jumpEntry 1364 64715).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1364 64715 ((congrArg (fun a : Array Nat => a.getD 1364 0) jt_eq).trans jtw_6656_2 : jt.getD 1364 0 = 64715)
+theorem jte_6656_2 : (CodeFact.jumpEntry 1235 55251).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1235 55251 ((congrArg (fun a : Array Nat => a.getD 1235 0) jt_eq).trans jtw_6656_2 : jt.getD 1235 0 = 55251)
 
 theorem chunk_ok_6656 : facts_6656.all (·.holds prog) = true := by
   simp only [facts_6656, List.all_cons, List.all_nil, Bool.and_true, jte_6656_0, jte_6656_1, jte_6656_2]
 
-theorem jtw_6657_0 : jtW.getD 1365 0 = 64843 := by
+theorem jtw_6657_0 : jtW.getD 1236 0 = 55295 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6657_0 : (CodeFact.jumpEntry 1365 64843).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1365 64843 ((congrArg (fun a : Array Nat => a.getD 1365 0) jt_eq).trans jtw_6657_0 : jt.getD 1365 0 = 64843)
+theorem jte_6657_0 : (CodeFact.jumpEntry 1236 55295).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1236 55295 ((congrArg (fun a : Array Nat => a.getD 1236 0) jt_eq).trans jtw_6657_0 : jt.getD 1236 0 = 55295)
 
-theorem jtw_6657_1 : jtW.getD 1366 0 = 64937 := by
+theorem jtw_6657_1 : jtW.getD 1237 0 = 55408 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6657_1 : (CodeFact.jumpEntry 1366 64937).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1366 64937 ((congrArg (fun a : Array Nat => a.getD 1366 0) jt_eq).trans jtw_6657_1 : jt.getD 1366 0 = 64937)
+theorem jte_6657_1 : (CodeFact.jumpEntry 1237 55408).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1237 55408 ((congrArg (fun a : Array Nat => a.getD 1237 0) jt_eq).trans jtw_6657_1 : jt.getD 1237 0 = 55408)
 
-theorem jtw_6657_2 : jtW.getD 1367 0 = 65007 := by
+theorem jtw_6657_2 : jtW.getD 1238 0 = 55513 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6657_2 : (CodeFact.jumpEntry 1367 65007).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1367 65007 ((congrArg (fun a : Array Nat => a.getD 1367 0) jt_eq).trans jtw_6657_2 : jt.getD 1367 0 = 65007)
+theorem jte_6657_2 : (CodeFact.jumpEntry 1238 55513).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1238 55513 ((congrArg (fun a : Array Nat => a.getD 1238 0) jt_eq).trans jtw_6657_2 : jt.getD 1238 0 = 55513)
 
 theorem chunk_ok_6657 : facts_6657.all (·.holds prog) = true := by
   simp only [facts_6657, List.all_cons, List.all_nil, Bool.and_true, jte_6657_0, jte_6657_1, jte_6657_2]
 
-theorem jtw_6658_0 : jtW.getD 1368 0 = 65148 := by
+theorem jtw_6658_0 : jtW.getD 1239 0 = 55526 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6658_0 : (CodeFact.jumpEntry 1368 65148).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1368 65148 ((congrArg (fun a : Array Nat => a.getD 1368 0) jt_eq).trans jtw_6658_0 : jt.getD 1368 0 = 65148)
+theorem jte_6658_0 : (CodeFact.jumpEntry 1239 55526).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1239 55526 ((congrArg (fun a : Array Nat => a.getD 1239 0) jt_eq).trans jtw_6658_0 : jt.getD 1239 0 = 55526)
 
-theorem jtw_6658_1 : jtW.getD 1369 0 = 65179 := by
+theorem jtw_6658_1 : jtW.getD 1240 0 = 55538 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6658_1 : (CodeFact.jumpEntry 1369 65179).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1369 65179 ((congrArg (fun a : Array Nat => a.getD 1369 0) jt_eq).trans jtw_6658_1 : jt.getD 1369 0 = 65179)
+theorem jte_6658_1 : (CodeFact.jumpEntry 1240 55538).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1240 55538 ((congrArg (fun a : Array Nat => a.getD 1240 0) jt_eq).trans jtw_6658_1 : jt.getD 1240 0 = 55538)
 
-theorem jtw_6658_2 : jtW.getD 1370 0 = 65214 := by
+theorem jtw_6658_2 : jtW.getD 1241 0 = 55555 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6658_2 : (CodeFact.jumpEntry 1370 65214).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1370 65214 ((congrArg (fun a : Array Nat => a.getD 1370 0) jt_eq).trans jtw_6658_2 : jt.getD 1370 0 = 65214)
+theorem jte_6658_2 : (CodeFact.jumpEntry 1241 55555).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1241 55555 ((congrArg (fun a : Array Nat => a.getD 1241 0) jt_eq).trans jtw_6658_2 : jt.getD 1241 0 = 55555)
 
 theorem chunk_ok_6658 : facts_6658.all (·.holds prog) = true := by
   simp only [facts_6658, List.all_cons, List.all_nil, Bool.and_true, jte_6658_0, jte_6658_1, jte_6658_2]
 
-theorem jtw_6659_0 : jtW.getD 1371 0 = 65242 := by
+theorem jtw_6659_0 : jtW.getD 1242 0 = 55563 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6659_0 : (CodeFact.jumpEntry 1371 65242).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1371 65242 ((congrArg (fun a : Array Nat => a.getD 1371 0) jt_eq).trans jtw_6659_0 : jt.getD 1371 0 = 65242)
+theorem jte_6659_0 : (CodeFact.jumpEntry 1242 55563).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1242 55563 ((congrArg (fun a : Array Nat => a.getD 1242 0) jt_eq).trans jtw_6659_0 : jt.getD 1242 0 = 55563)
 
-theorem jtw_6659_1 : jtW.getD 1372 0 = 65282 := by
+theorem jtw_6659_1 : jtW.getD 1243 0 = 55571 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6659_1 : (CodeFact.jumpEntry 1372 65282).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1372 65282 ((congrArg (fun a : Array Nat => a.getD 1372 0) jt_eq).trans jtw_6659_1 : jt.getD 1372 0 = 65282)
+theorem jte_6659_1 : (CodeFact.jumpEntry 1243 55571).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1243 55571 ((congrArg (fun a : Array Nat => a.getD 1243 0) jt_eq).trans jtw_6659_1 : jt.getD 1243 0 = 55571)
 
-theorem jtw_6659_2 : jtW.getD 1373 0 = 65356 := by
+theorem jtw_6659_2 : jtW.getD 1244 0 = 55579 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6659_2 : (CodeFact.jumpEntry 1373 65356).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1373 65356 ((congrArg (fun a : Array Nat => a.getD 1373 0) jt_eq).trans jtw_6659_2 : jt.getD 1373 0 = 65356)
+theorem jte_6659_2 : (CodeFact.jumpEntry 1244 55579).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1244 55579 ((congrArg (fun a : Array Nat => a.getD 1244 0) jt_eq).trans jtw_6659_2 : jt.getD 1244 0 = 55579)
 
 theorem chunk_ok_6659 : facts_6659.all (·.holds prog) = true := by
   simp only [facts_6659, List.all_cons, List.all_nil, Bool.and_true, jte_6659_0, jte_6659_1, jte_6659_2]
 
-theorem jtw_6660_0 : jtW.getD 1374 0 = 65376 := by
+theorem jtw_6660_0 : jtW.getD 1245 0 = 55586 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6660_0 : (CodeFact.jumpEntry 1374 65376).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1374 65376 ((congrArg (fun a : Array Nat => a.getD 1374 0) jt_eq).trans jtw_6660_0 : jt.getD 1374 0 = 65376)
+theorem jte_6660_0 : (CodeFact.jumpEntry 1245 55586).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1245 55586 ((congrArg (fun a : Array Nat => a.getD 1245 0) jt_eq).trans jtw_6660_0 : jt.getD 1245 0 = 55586)
 
-theorem jtw_6660_1 : jtW.getD 1375 0 = 65397 := by
+theorem jtw_6660_1 : jtW.getD 1246 0 = 55643 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6660_1 : (CodeFact.jumpEntry 1375 65397).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1375 65397 ((congrArg (fun a : Array Nat => a.getD 1375 0) jt_eq).trans jtw_6660_1 : jt.getD 1375 0 = 65397)
+theorem jte_6660_1 : (CodeFact.jumpEntry 1246 55643).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1246 55643 ((congrArg (fun a : Array Nat => a.getD 1246 0) jt_eq).trans jtw_6660_1 : jt.getD 1246 0 = 55643)
 
-theorem jtw_6660_2 : jtW.getD 1376 0 = 65431 := by
+theorem jtw_6660_2 : jtW.getD 1247 0 = 55852 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6660_2 : (CodeFact.jumpEntry 1376 65431).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1376 65431 ((congrArg (fun a : Array Nat => a.getD 1376 0) jt_eq).trans jtw_6660_2 : jt.getD 1376 0 = 65431)
+theorem jte_6660_2 : (CodeFact.jumpEntry 1247 55852).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1247 55852 ((congrArg (fun a : Array Nat => a.getD 1247 0) jt_eq).trans jtw_6660_2 : jt.getD 1247 0 = 55852)
 
 theorem chunk_ok_6660 : facts_6660.all (·.holds prog) = true := by
   simp only [facts_6660, List.all_cons, List.all_nil, Bool.and_true, jte_6660_0, jte_6660_1, jte_6660_2]
 
-theorem jtw_6661_0 : jtW.getD 1377 0 = 65558 := by
+theorem jtw_6661_0 : jtW.getD 1248 0 = 55884 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6661_0 : (CodeFact.jumpEntry 1377 65558).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1377 65558 ((congrArg (fun a : Array Nat => a.getD 1377 0) jt_eq).trans jtw_6661_0 : jt.getD 1377 0 = 65558)
+theorem jte_6661_0 : (CodeFact.jumpEntry 1248 55884).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1248 55884 ((congrArg (fun a : Array Nat => a.getD 1248 0) jt_eq).trans jtw_6661_0 : jt.getD 1248 0 = 55884)
 
-theorem jtw_6661_1 : jtW.getD 1378 0 = 65659 := by
+theorem jtw_6661_1 : jtW.getD 1249 0 = 55930 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6661_1 : (CodeFact.jumpEntry 1378 65659).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1378 65659 ((congrArg (fun a : Array Nat => a.getD 1378 0) jt_eq).trans jtw_6661_1 : jt.getD 1378 0 = 65659)
+theorem jte_6661_1 : (CodeFact.jumpEntry 1249 55930).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1249 55930 ((congrArg (fun a : Array Nat => a.getD 1249 0) jt_eq).trans jtw_6661_1 : jt.getD 1249 0 = 55930)
 
-theorem jtw_6661_2 : jtW.getD 1379 0 = 65689 := by
+theorem jtw_6661_2 : jtW.getD 1250 0 = 56340 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6661_2 : (CodeFact.jumpEntry 1379 65689).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1379 65689 ((congrArg (fun a : Array Nat => a.getD 1379 0) jt_eq).trans jtw_6661_2 : jt.getD 1379 0 = 65689)
+theorem jte_6661_2 : (CodeFact.jumpEntry 1250 56340).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1250 56340 ((congrArg (fun a : Array Nat => a.getD 1250 0) jt_eq).trans jtw_6661_2 : jt.getD 1250 0 = 56340)
 
 theorem chunk_ok_6661 : facts_6661.all (·.holds prog) = true := by
   simp only [facts_6661, List.all_cons, List.all_nil, Bool.and_true, jte_6661_0, jte_6661_1, jte_6661_2]
 
-theorem jtw_6662_0 : jtW.getD 1380 0 = 65730 := by
+theorem jtw_6662_0 : jtW.getD 1251 0 = 57333 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6662_0 : (CodeFact.jumpEntry 1380 65730).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1380 65730 ((congrArg (fun a : Array Nat => a.getD 1380 0) jt_eq).trans jtw_6662_0 : jt.getD 1380 0 = 65730)
+theorem jte_6662_0 : (CodeFact.jumpEntry 1251 57333).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1251 57333 ((congrArg (fun a : Array Nat => a.getD 1251 0) jt_eq).trans jtw_6662_0 : jt.getD 1251 0 = 57333)
 
-theorem jtw_6662_1 : jtW.getD 1381 0 = 65803 := by
+theorem jtw_6662_1 : jtW.getD 1252 0 = 57393 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6662_1 : (CodeFact.jumpEntry 1381 65803).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1381 65803 ((congrArg (fun a : Array Nat => a.getD 1381 0) jt_eq).trans jtw_6662_1 : jt.getD 1381 0 = 65803)
+theorem jte_6662_1 : (CodeFact.jumpEntry 1252 57393).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1252 57393 ((congrArg (fun a : Array Nat => a.getD 1252 0) jt_eq).trans jtw_6662_1 : jt.getD 1252 0 = 57393)
 
-theorem jtw_6662_2 : jtW.getD 1382 0 = 65829 := by
+theorem jtw_6662_2 : jtW.getD 1253 0 = 57467 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6662_2 : (CodeFact.jumpEntry 1382 65829).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1382 65829 ((congrArg (fun a : Array Nat => a.getD 1382 0) jt_eq).trans jtw_6662_2 : jt.getD 1382 0 = 65829)
+theorem jte_6662_2 : (CodeFact.jumpEntry 1253 57467).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1253 57467 ((congrArg (fun a : Array Nat => a.getD 1253 0) jt_eq).trans jtw_6662_2 : jt.getD 1253 0 = 57467)
 
 theorem chunk_ok_6662 : facts_6662.all (·.holds prog) = true := by
   simp only [facts_6662, List.all_cons, List.all_nil, Bool.and_true, jte_6662_0, jte_6662_1, jte_6662_2]
 
-theorem jtw_6663_0 : jtW.getD 1383 0 = 65956 := by
+theorem jtw_6663_0 : jtW.getD 1254 0 = 57485 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6663_0 : (CodeFact.jumpEntry 1383 65956).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1383 65956 ((congrArg (fun a : Array Nat => a.getD 1383 0) jt_eq).trans jtw_6663_0 : jt.getD 1383 0 = 65956)
+theorem jte_6663_0 : (CodeFact.jumpEntry 1254 57485).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1254 57485 ((congrArg (fun a : Array Nat => a.getD 1254 0) jt_eq).trans jtw_6663_0 : jt.getD 1254 0 = 57485)
 
-theorem jtw_6663_1 : jtW.getD 1384 0 = 65989 := by
+theorem jtw_6663_1 : jtW.getD 1255 0 = 57562 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6663_1 : (CodeFact.jumpEntry 1384 65989).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1384 65989 ((congrArg (fun a : Array Nat => a.getD 1384 0) jt_eq).trans jtw_6663_1 : jt.getD 1384 0 = 65989)
+theorem jte_6663_1 : (CodeFact.jumpEntry 1255 57562).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1255 57562 ((congrArg (fun a : Array Nat => a.getD 1255 0) jt_eq).trans jtw_6663_1 : jt.getD 1255 0 = 57562)
 
-theorem jtw_6663_2 : jtW.getD 1385 0 = 66095 := by
+theorem jtw_6663_2 : jtW.getD 1256 0 = 57604 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6663_2 : (CodeFact.jumpEntry 1385 66095).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1385 66095 ((congrArg (fun a : Array Nat => a.getD 1385 0) jt_eq).trans jtw_6663_2 : jt.getD 1385 0 = 66095)
+theorem jte_6663_2 : (CodeFact.jumpEntry 1256 57604).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1256 57604 ((congrArg (fun a : Array Nat => a.getD 1256 0) jt_eq).trans jtw_6663_2 : jt.getD 1256 0 = 57604)
 
 theorem chunk_ok_6663 : facts_6663.all (·.holds prog) = true := by
   simp only [facts_6663, List.all_cons, List.all_nil, Bool.and_true, jte_6663_0, jte_6663_1, jte_6663_2]
 
-theorem jtw_6664_0 : jtW.getD 1386 0 = 66128 := by
+theorem jtw_6664_0 : jtW.getD 1257 0 = 57630 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6664_0 : (CodeFact.jumpEntry 1386 66128).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1386 66128 ((congrArg (fun a : Array Nat => a.getD 1386 0) jt_eq).trans jtw_6664_0 : jt.getD 1386 0 = 66128)
+theorem jte_6664_0 : (CodeFact.jumpEntry 1257 57630).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1257 57630 ((congrArg (fun a : Array Nat => a.getD 1257 0) jt_eq).trans jtw_6664_0 : jt.getD 1257 0 = 57630)
 
-theorem jtw_6664_1 : jtW.getD 1387 0 = 66172 := by
+theorem jtw_6664_1 : jtW.getD 1258 0 = 57679 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6664_1 : (CodeFact.jumpEntry 1387 66172).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1387 66172 ((congrArg (fun a : Array Nat => a.getD 1387 0) jt_eq).trans jtw_6664_1 : jt.getD 1387 0 = 66172)
+theorem jte_6664_1 : (CodeFact.jumpEntry 1258 57679).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1258 57679 ((congrArg (fun a : Array Nat => a.getD 1258 0) jt_eq).trans jtw_6664_1 : jt.getD 1258 0 = 57679)
 
-theorem jtw_6664_2 : jtW.getD 1388 0 = 66245 := by
+theorem jtw_6664_2 : jtW.getD 1259 0 = 57693 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6664_2 : (CodeFact.jumpEntry 1388 66245).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1388 66245 ((congrArg (fun a : Array Nat => a.getD 1388 0) jt_eq).trans jtw_6664_2 : jt.getD 1388 0 = 66245)
+theorem jte_6664_2 : (CodeFact.jumpEntry 1259 57693).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1259 57693 ((congrArg (fun a : Array Nat => a.getD 1259 0) jt_eq).trans jtw_6664_2 : jt.getD 1259 0 = 57693)
 
 theorem chunk_ok_6664 : facts_6664.all (·.holds prog) = true := by
   simp only [facts_6664, List.all_cons, List.all_nil, Bool.and_true, jte_6664_0, jte_6664_1, jte_6664_2]
 
-theorem jtw_6665_0 : jtW.getD 1389 0 = 66271 := by
+theorem jtw_6665_0 : jtW.getD 1260 0 = 57770 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6665_0 : (CodeFact.jumpEntry 1389 66271).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1389 66271 ((congrArg (fun a : Array Nat => a.getD 1389 0) jt_eq).trans jtw_6665_0 : jt.getD 1389 0 = 66271)
+theorem jte_6665_0 : (CodeFact.jumpEntry 1260 57770).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1260 57770 ((congrArg (fun a : Array Nat => a.getD 1260 0) jt_eq).trans jtw_6665_0 : jt.getD 1260 0 = 57770)
 
-theorem jtw_6665_1 : jtW.getD 1390 0 = 66367 := by
+theorem jtw_6665_1 : jtW.getD 1261 0 = 57812 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6665_1 : (CodeFact.jumpEntry 1390 66367).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1390 66367 ((congrArg (fun a : Array Nat => a.getD 1390 0) jt_eq).trans jtw_6665_1 : jt.getD 1390 0 = 66367)
+theorem jte_6665_1 : (CodeFact.jumpEntry 1261 57812).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1261 57812 ((congrArg (fun a : Array Nat => a.getD 1261 0) jt_eq).trans jtw_6665_1 : jt.getD 1261 0 = 57812)
 
-theorem jtw_6665_2 : jtW.getD 1393 0 = 66488 := by
+theorem jtw_6665_2 : jtW.getD 1262 0 = 57838 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6665_2 : (CodeFact.jumpEntry 1393 66488).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1393 66488 ((congrArg (fun a : Array Nat => a.getD 1393 0) jt_eq).trans jtw_6665_2 : jt.getD 1393 0 = 66488)
+theorem jte_6665_2 : (CodeFact.jumpEntry 1262 57838).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1262 57838 ((congrArg (fun a : Array Nat => a.getD 1262 0) jt_eq).trans jtw_6665_2 : jt.getD 1262 0 = 57838)
 
 theorem chunk_ok_6665 : facts_6665.all (·.holds prog) = true := by
   simp only [facts_6665, List.all_cons, List.all_nil, Bool.and_true, jte_6665_0, jte_6665_1, jte_6665_2]
 
-theorem jtw_6666_0 : jtW.getD 1394 0 = 66623 := by
+theorem jtw_6666_0 : jtW.getD 1263 0 = 57887 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6666_0 : (CodeFact.jumpEntry 1394 66623).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1394 66623 ((congrArg (fun a : Array Nat => a.getD 1394 0) jt_eq).trans jtw_6666_0 : jt.getD 1394 0 = 66623)
+theorem jte_6666_0 : (CodeFact.jumpEntry 1263 57887).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1263 57887 ((congrArg (fun a : Array Nat => a.getD 1263 0) jt_eq).trans jtw_6666_0 : jt.getD 1263 0 = 57887)
 
-theorem jtw_6666_1 : jtW.getD 1395 0 = 66959 := by
+theorem jtw_6666_1 : jtW.getD 1264 0 = 57901 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6666_1 : (CodeFact.jumpEntry 1395 66959).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1395 66959 ((congrArg (fun a : Array Nat => a.getD 1395 0) jt_eq).trans jtw_6666_1 : jt.getD 1395 0 = 66959)
+theorem jte_6666_1 : (CodeFact.jumpEntry 1264 57901).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1264 57901 ((congrArg (fun a : Array Nat => a.getD 1264 0) jt_eq).trans jtw_6666_1 : jt.getD 1264 0 = 57901)
 
-theorem jtw_6666_2 : jtW.getD 1396 0 = 67046 := by
+theorem jtw_6666_2 : jtW.getD 1265 0 = 57917 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6666_2 : (CodeFact.jumpEntry 1396 67046).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1396 67046 ((congrArg (fun a : Array Nat => a.getD 1396 0) jt_eq).trans jtw_6666_2 : jt.getD 1396 0 = 67046)
+theorem jte_6666_2 : (CodeFact.jumpEntry 1265 57917).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1265 57917 ((congrArg (fun a : Array Nat => a.getD 1265 0) jt_eq).trans jtw_6666_2 : jt.getD 1265 0 = 57917)
 
 theorem chunk_ok_6666 : facts_6666.all (·.holds prog) = true := by
   simp only [facts_6666, List.all_cons, List.all_nil, Bool.and_true, jte_6666_0, jte_6666_1, jte_6666_2]
 
-theorem jtw_6667_0 : jtW.getD 1397 0 = 67924 := by
+theorem jtw_6667_0 : jtW.getD 1266 0 = 57922 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6667_0 : (CodeFact.jumpEntry 1397 67924).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1397 67924 ((congrArg (fun a : Array Nat => a.getD 1397 0) jt_eq).trans jtw_6667_0 : jt.getD 1397 0 = 67924)
+theorem jte_6667_0 : (CodeFact.jumpEntry 1266 57922).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1266 57922 ((congrArg (fun a : Array Nat => a.getD 1266 0) jt_eq).trans jtw_6667_0 : jt.getD 1266 0 = 57922)
 
-theorem jtw_6667_1 : jtW.getD 1398 0 = 68138 := by
+theorem jtw_6667_1 : jtW.getD 1267 0 = 58012 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6667_1 : (CodeFact.jumpEntry 1398 68138).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1398 68138 ((congrArg (fun a : Array Nat => a.getD 1398 0) jt_eq).trans jtw_6667_1 : jt.getD 1398 0 = 68138)
+theorem jte_6667_1 : (CodeFact.jumpEntry 1267 58012).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1267 58012 ((congrArg (fun a : Array Nat => a.getD 1267 0) jt_eq).trans jtw_6667_1 : jt.getD 1267 0 = 58012)
 
-theorem jtw_6667_2 : jtW.getD 1399 0 = 68146 := by
+theorem jtw_6667_2 : jtW.getD 1268 0 = 58104 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6667_2 : (CodeFact.jumpEntry 1399 68146).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1399 68146 ((congrArg (fun a : Array Nat => a.getD 1399 0) jt_eq).trans jtw_6667_2 : jt.getD 1399 0 = 68146)
+theorem jte_6667_2 : (CodeFact.jumpEntry 1268 58104).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1268 58104 ((congrArg (fun a : Array Nat => a.getD 1268 0) jt_eq).trans jtw_6667_2 : jt.getD 1268 0 = 58104)
 
 theorem chunk_ok_6667 : facts_6667.all (·.holds prog) = true := by
   simp only [facts_6667, List.all_cons, List.all_nil, Bool.and_true, jte_6667_0, jte_6667_1, jte_6667_2]
 
-theorem jtw_6668_0 : jtW.getD 1400 0 = 68435 := by
+theorem jtw_6668_0 : jtW.getD 1269 0 = 58134 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6668_0 : (CodeFact.jumpEntry 1400 68435).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1400 68435 ((congrArg (fun a : Array Nat => a.getD 1400 0) jt_eq).trans jtw_6668_0 : jt.getD 1400 0 = 68435)
+theorem jte_6668_0 : (CodeFact.jumpEntry 1269 58134).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1269 58134 ((congrArg (fun a : Array Nat => a.getD 1269 0) jt_eq).trans jtw_6668_0 : jt.getD 1269 0 = 58134)
 
-theorem jtw_6668_1 : jtW.getD 1401 0 = 68449 := by
+theorem jtw_6668_1 : jtW.getD 1270 0 = 58203 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6668_1 : (CodeFact.jumpEntry 1401 68449).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1401 68449 ((congrArg (fun a : Array Nat => a.getD 1401 0) jt_eq).trans jtw_6668_1 : jt.getD 1401 0 = 68449)
+theorem jte_6668_1 : (CodeFact.jumpEntry 1270 58203).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1270 58203 ((congrArg (fun a : Array Nat => a.getD 1270 0) jt_eq).trans jtw_6668_1 : jt.getD 1270 0 = 58203)
 
-theorem jtw_6668_2 : jtW.getD 1402 0 = 68715 := by
+theorem jtw_6668_2 : jtW.getD 1278 0 = 58686 := by
   rw [jtW, getD_map_range _ _ _ (by decide)]
   decide +kernel
 
-theorem jte_6668_2 : (CodeFact.jumpEntry 1402 68715).holds prog = true :=
-  CodeFact.jumpEntry_holds prog 1402 68715 ((congrArg (fun a : Array Nat => a.getD 1402 0) jt_eq).trans jtw_6668_2 : jt.getD 1402 0 = 68715)
+theorem jte_6668_2 : (CodeFact.jumpEntry 1278 58686).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1278 58686 ((congrArg (fun a : Array Nat => a.getD 1278 0) jt_eq).trans jtw_6668_2 : jt.getD 1278 0 = 58686)
 
 theorem chunk_ok_6668 : facts_6668.all (·.holds prog) = true := by
   simp only [facts_6668, List.all_cons, List.all_nil, Bool.and_true, jte_6668_0, jte_6668_1, jte_6668_2]
 
+theorem jtw_6669_0 : jtW.getD 1279 0 = 58781 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6669_0 : (CodeFact.jumpEntry 1279 58781).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1279 58781 ((congrArg (fun a : Array Nat => a.getD 1279 0) jt_eq).trans jtw_6669_0 : jt.getD 1279 0 = 58781)
+
+theorem jtw_6669_1 : jtW.getD 1280 0 = 58817 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6669_1 : (CodeFact.jumpEntry 1280 58817).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1280 58817 ((congrArg (fun a : Array Nat => a.getD 1280 0) jt_eq).trans jtw_6669_1 : jt.getD 1280 0 = 58817)
+
+theorem jtw_6669_2 : jtW.getD 1291 0 = 59557 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6669_2 : (CodeFact.jumpEntry 1291 59557).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1291 59557 ((congrArg (fun a : Array Nat => a.getD 1291 0) jt_eq).trans jtw_6669_2 : jt.getD 1291 0 = 59557)
+
+theorem chunk_ok_6669 : facts_6669.all (·.holds prog) = true := by
+  simp only [facts_6669, List.all_cons, List.all_nil, Bool.and_true, jte_6669_0, jte_6669_1, jte_6669_2]
+
+theorem jtw_6670_0 : jtW.getD 1292 0 = 59619 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6670_0 : (CodeFact.jumpEntry 1292 59619).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1292 59619 ((congrArg (fun a : Array Nat => a.getD 1292 0) jt_eq).trans jtw_6670_0 : jt.getD 1292 0 = 59619)
+
+theorem jtw_6670_1 : jtW.getD 1293 0 = 59665 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6670_1 : (CodeFact.jumpEntry 1293 59665).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1293 59665 ((congrArg (fun a : Array Nat => a.getD 1293 0) jt_eq).trans jtw_6670_1 : jt.getD 1293 0 = 59665)
+
+theorem jtw_6670_2 : jtW.getD 1294 0 = 59732 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6670_2 : (CodeFact.jumpEntry 1294 59732).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1294 59732 ((congrArg (fun a : Array Nat => a.getD 1294 0) jt_eq).trans jtw_6670_2 : jt.getD 1294 0 = 59732)
+
+theorem chunk_ok_6670 : facts_6670.all (·.holds prog) = true := by
+  simp only [facts_6670, List.all_cons, List.all_nil, Bool.and_true, jte_6670_0, jte_6670_1, jte_6670_2]
+
+theorem jtw_6671_0 : jtW.getD 1295 0 = 59743 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6671_0 : (CodeFact.jumpEntry 1295 59743).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1295 59743 ((congrArg (fun a : Array Nat => a.getD 1295 0) jt_eq).trans jtw_6671_0 : jt.getD 1295 0 = 59743)
+
+theorem jtw_6671_1 : jtW.getD 1296 0 = 59840 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6671_1 : (CodeFact.jumpEntry 1296 59840).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1296 59840 ((congrArg (fun a : Array Nat => a.getD 1296 0) jt_eq).trans jtw_6671_1 : jt.getD 1296 0 = 59840)
+
+theorem jtw_6671_2 : jtW.getD 1297 0 = 59959 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6671_2 : (CodeFact.jumpEntry 1297 59959).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1297 59959 ((congrArg (fun a : Array Nat => a.getD 1297 0) jt_eq).trans jtw_6671_2 : jt.getD 1297 0 = 59959)
+
+theorem chunk_ok_6671 : facts_6671.all (·.holds prog) = true := by
+  simp only [facts_6671, List.all_cons, List.all_nil, Bool.and_true, jte_6671_0, jte_6671_1, jte_6671_2]
+
+theorem jtw_6672_0 : jtW.getD 1298 0 = 60005 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6672_0 : (CodeFact.jumpEntry 1298 60005).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1298 60005 ((congrArg (fun a : Array Nat => a.getD 1298 0) jt_eq).trans jtw_6672_0 : jt.getD 1298 0 = 60005)
+
+theorem jtw_6672_1 : jtW.getD 1299 0 = 60050 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6672_1 : (CodeFact.jumpEntry 1299 60050).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1299 60050 ((congrArg (fun a : Array Nat => a.getD 1299 0) jt_eq).trans jtw_6672_1 : jt.getD 1299 0 = 60050)
+
+theorem jtw_6672_2 : jtW.getD 1300 0 = 60125 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6672_2 : (CodeFact.jumpEntry 1300 60125).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1300 60125 ((congrArg (fun a : Array Nat => a.getD 1300 0) jt_eq).trans jtw_6672_2 : jt.getD 1300 0 = 60125)
+
+theorem chunk_ok_6672 : facts_6672.all (·.holds prog) = true := by
+  simp only [facts_6672, List.all_cons, List.all_nil, Bool.and_true, jte_6672_0, jte_6672_1, jte_6672_2]
+
+theorem jtw_6673_0 : jtW.getD 1301 0 = 60201 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6673_0 : (CodeFact.jumpEntry 1301 60201).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1301 60201 ((congrArg (fun a : Array Nat => a.getD 1301 0) jt_eq).trans jtw_6673_0 : jt.getD 1301 0 = 60201)
+
+theorem jtw_6673_1 : jtW.getD 1302 0 = 60209 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6673_1 : (CodeFact.jumpEntry 1302 60209).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1302 60209 ((congrArg (fun a : Array Nat => a.getD 1302 0) jt_eq).trans jtw_6673_1 : jt.getD 1302 0 = 60209)
+
+theorem jtw_6673_2 : jtW.getD 1303 0 = 60280 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6673_2 : (CodeFact.jumpEntry 1303 60280).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1303 60280 ((congrArg (fun a : Array Nat => a.getD 1303 0) jt_eq).trans jtw_6673_2 : jt.getD 1303 0 = 60280)
+
+theorem chunk_ok_6673 : facts_6673.all (·.holds prog) = true := by
+  simp only [facts_6673, List.all_cons, List.all_nil, Bool.and_true, jte_6673_0, jte_6673_1, jte_6673_2]
+
+theorem jtw_6674_0 : jtW.getD 1304 0 = 60359 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6674_0 : (CodeFact.jumpEntry 1304 60359).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1304 60359 ((congrArg (fun a : Array Nat => a.getD 1304 0) jt_eq).trans jtw_6674_0 : jt.getD 1304 0 = 60359)
+
+theorem jtw_6674_1 : jtW.getD 1305 0 = 60438 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6674_1 : (CodeFact.jumpEntry 1305 60438).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1305 60438 ((congrArg (fun a : Array Nat => a.getD 1305 0) jt_eq).trans jtw_6674_1 : jt.getD 1305 0 = 60438)
+
+theorem jtw_6674_2 : jtW.getD 1306 0 = 60517 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6674_2 : (CodeFact.jumpEntry 1306 60517).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1306 60517 ((congrArg (fun a : Array Nat => a.getD 1306 0) jt_eq).trans jtw_6674_2 : jt.getD 1306 0 = 60517)
+
+theorem chunk_ok_6674 : facts_6674.all (·.holds prog) = true := by
+  simp only [facts_6674, List.all_cons, List.all_nil, Bool.and_true, jte_6674_0, jte_6674_1, jte_6674_2]
+
+theorem jtw_6675_0 : jtW.getD 1307 0 = 60525 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6675_0 : (CodeFact.jumpEntry 1307 60525).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1307 60525 ((congrArg (fun a : Array Nat => a.getD 1307 0) jt_eq).trans jtw_6675_0 : jt.getD 1307 0 = 60525)
+
+theorem jtw_6675_1 : jtW.getD 1308 0 = 60595 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6675_1 : (CodeFact.jumpEntry 1308 60595).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1308 60595 ((congrArg (fun a : Array Nat => a.getD 1308 0) jt_eq).trans jtw_6675_1 : jt.getD 1308 0 = 60595)
+
+theorem jtw_6675_2 : jtW.getD 1309 0 = 60673 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6675_2 : (CodeFact.jumpEntry 1309 60673).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1309 60673 ((congrArg (fun a : Array Nat => a.getD 1309 0) jt_eq).trans jtw_6675_2 : jt.getD 1309 0 = 60673)
+
+theorem chunk_ok_6675 : facts_6675.all (·.holds prog) = true := by
+  simp only [facts_6675, List.all_cons, List.all_nil, Bool.and_true, jte_6675_0, jte_6675_1, jte_6675_2]
+
+theorem jtw_6676_0 : jtW.getD 1310 0 = 61746 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6676_0 : (CodeFact.jumpEntry 1310 61746).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1310 61746 ((congrArg (fun a : Array Nat => a.getD 1310 0) jt_eq).trans jtw_6676_0 : jt.getD 1310 0 = 61746)
+
+theorem jtw_6676_1 : jtW.getD 1311 0 = 61806 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6676_1 : (CodeFact.jumpEntry 1311 61806).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1311 61806 ((congrArg (fun a : Array Nat => a.getD 1311 0) jt_eq).trans jtw_6676_1 : jt.getD 1311 0 = 61806)
+
+theorem jtw_6676_2 : jtW.getD 1312 0 = 61836 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6676_2 : (CodeFact.jumpEntry 1312 61836).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1312 61836 ((congrArg (fun a : Array Nat => a.getD 1312 0) jt_eq).trans jtw_6676_2 : jt.getD 1312 0 = 61836)
+
+theorem chunk_ok_6676 : facts_6676.all (·.holds prog) = true := by
+  simp only [facts_6676, List.all_cons, List.all_nil, Bool.and_true, jte_6676_0, jte_6676_1, jte_6676_2]
+
+theorem jtw_6677_0 : jtW.getD 1313 0 = 62019 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6677_0 : (CodeFact.jumpEntry 1313 62019).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1313 62019 ((congrArg (fun a : Array Nat => a.getD 1313 0) jt_eq).trans jtw_6677_0 : jt.getD 1313 0 = 62019)
+
+theorem jtw_6677_1 : jtW.getD 1314 0 = 62058 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6677_1 : (CodeFact.jumpEntry 1314 62058).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1314 62058 ((congrArg (fun a : Array Nat => a.getD 1314 0) jt_eq).trans jtw_6677_1 : jt.getD 1314 0 = 62058)
+
+theorem jtw_6677_2 : jtW.getD 1315 0 = 62129 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6677_2 : (CodeFact.jumpEntry 1315 62129).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1315 62129 ((congrArg (fun a : Array Nat => a.getD 1315 0) jt_eq).trans jtw_6677_2 : jt.getD 1315 0 = 62129)
+
+theorem chunk_ok_6677 : facts_6677.all (·.holds prog) = true := by
+  simp only [facts_6677, List.all_cons, List.all_nil, Bool.and_true, jte_6677_0, jte_6677_1, jte_6677_2]
+
+theorem jtw_6678_0 : jtW.getD 1316 0 = 62173 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6678_0 : (CodeFact.jumpEntry 1316 62173).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1316 62173 ((congrArg (fun a : Array Nat => a.getD 1316 0) jt_eq).trans jtw_6678_0 : jt.getD 1316 0 = 62173)
+
+theorem jtw_6678_1 : jtW.getD 1317 0 = 62240 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6678_1 : (CodeFact.jumpEntry 1317 62240).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1317 62240 ((congrArg (fun a : Array Nat => a.getD 1317 0) jt_eq).trans jtw_6678_1 : jt.getD 1317 0 = 62240)
+
+theorem jtw_6678_2 : jtW.getD 1318 0 = 62329 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6678_2 : (CodeFact.jumpEntry 1318 62329).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1318 62329 ((congrArg (fun a : Array Nat => a.getD 1318 0) jt_eq).trans jtw_6678_2 : jt.getD 1318 0 = 62329)
+
+theorem chunk_ok_6678 : facts_6678.all (·.holds prog) = true := by
+  simp only [facts_6678, List.all_cons, List.all_nil, Bool.and_true, jte_6678_0, jte_6678_1, jte_6678_2]
+
+theorem jtw_6679_0 : jtW.getD 1319 0 = 62374 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6679_0 : (CodeFact.jumpEntry 1319 62374).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1319 62374 ((congrArg (fun a : Array Nat => a.getD 1319 0) jt_eq).trans jtw_6679_0 : jt.getD 1319 0 = 62374)
+
+theorem jtw_6679_1 : jtW.getD 1320 0 = 62398 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6679_1 : (CodeFact.jumpEntry 1320 62398).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1320 62398 ((congrArg (fun a : Array Nat => a.getD 1320 0) jt_eq).trans jtw_6679_1 : jt.getD 1320 0 = 62398)
+
+theorem jtw_6679_2 : jtW.getD 1321 0 = 62451 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6679_2 : (CodeFact.jumpEntry 1321 62451).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1321 62451 ((congrArg (fun a : Array Nat => a.getD 1321 0) jt_eq).trans jtw_6679_2 : jt.getD 1321 0 = 62451)
+
+theorem chunk_ok_6679 : facts_6679.all (·.holds prog) = true := by
+  simp only [facts_6679, List.all_cons, List.all_nil, Bool.and_true, jte_6679_0, jte_6679_1, jte_6679_2]
+
+theorem jtw_6680_0 : jtW.getD 1322 0 = 62513 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6680_0 : (CodeFact.jumpEntry 1322 62513).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1322 62513 ((congrArg (fun a : Array Nat => a.getD 1322 0) jt_eq).trans jtw_6680_0 : jt.getD 1322 0 = 62513)
+
+theorem jtw_6680_1 : jtW.getD 1323 0 = 62566 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6680_1 : (CodeFact.jumpEntry 1323 62566).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1323 62566 ((congrArg (fun a : Array Nat => a.getD 1323 0) jt_eq).trans jtw_6680_1 : jt.getD 1323 0 = 62566)
+
+theorem jtw_6680_2 : jtW.getD 1324 0 = 62588 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6680_2 : (CodeFact.jumpEntry 1324 62588).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1324 62588 ((congrArg (fun a : Array Nat => a.getD 1324 0) jt_eq).trans jtw_6680_2 : jt.getD 1324 0 = 62588)
+
+theorem chunk_ok_6680 : facts_6680.all (·.holds prog) = true := by
+  simp only [facts_6680, List.all_cons, List.all_nil, Bool.and_true, jte_6680_0, jte_6680_1, jte_6680_2]
+
+theorem jtw_6681_0 : jtW.getD 1325 0 = 62615 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6681_0 : (CodeFact.jumpEntry 1325 62615).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1325 62615 ((congrArg (fun a : Array Nat => a.getD 1325 0) jt_eq).trans jtw_6681_0 : jt.getD 1325 0 = 62615)
+
+theorem jtw_6681_1 : jtW.getD 1326 0 = 62680 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6681_1 : (CodeFact.jumpEntry 1326 62680).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1326 62680 ((congrArg (fun a : Array Nat => a.getD 1326 0) jt_eq).trans jtw_6681_1 : jt.getD 1326 0 = 62680)
+
+theorem jtw_6681_2 : jtW.getD 1327 0 = 62725 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6681_2 : (CodeFact.jumpEntry 1327 62725).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1327 62725 ((congrArg (fun a : Array Nat => a.getD 1327 0) jt_eq).trans jtw_6681_2 : jt.getD 1327 0 = 62725)
+
+theorem chunk_ok_6681 : facts_6681.all (·.holds prog) = true := by
+  simp only [facts_6681, List.all_cons, List.all_nil, Bool.and_true, jte_6681_0, jte_6681_1, jte_6681_2]
+
+theorem jtw_6682_0 : jtW.getD 1328 0 = 62772 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6682_0 : (CodeFact.jumpEntry 1328 62772).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1328 62772 ((congrArg (fun a : Array Nat => a.getD 1328 0) jt_eq).trans jtw_6682_0 : jt.getD 1328 0 = 62772)
+
+theorem jtw_6682_1 : jtW.getD 1329 0 = 62801 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6682_1 : (CodeFact.jumpEntry 1329 62801).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1329 62801 ((congrArg (fun a : Array Nat => a.getD 1329 0) jt_eq).trans jtw_6682_1 : jt.getD 1329 0 = 62801)
+
+theorem jtw_6682_2 : jtW.getD 1330 0 = 62850 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6682_2 : (CodeFact.jumpEntry 1330 62850).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1330 62850 ((congrArg (fun a : Array Nat => a.getD 1330 0) jt_eq).trans jtw_6682_2 : jt.getD 1330 0 = 62850)
+
+theorem chunk_ok_6682 : facts_6682.all (·.holds prog) = true := by
+  simp only [facts_6682, List.all_cons, List.all_nil, Bool.and_true, jte_6682_0, jte_6682_1, jte_6682_2]
+
+theorem jtw_6683_0 : jtW.getD 1331 0 = 62878 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6683_0 : (CodeFact.jumpEntry 1331 62878).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1331 62878 ((congrArg (fun a : Array Nat => a.getD 1331 0) jt_eq).trans jtw_6683_0 : jt.getD 1331 0 = 62878)
+
+theorem jtw_6683_1 : jtW.getD 1332 0 = 62955 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6683_1 : (CodeFact.jumpEntry 1332 62955).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1332 62955 ((congrArg (fun a : Array Nat => a.getD 1332 0) jt_eq).trans jtw_6683_1 : jt.getD 1332 0 = 62955)
+
+theorem jtw_6683_2 : jtW.getD 1333 0 = 63006 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6683_2 : (CodeFact.jumpEntry 1333 63006).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1333 63006 ((congrArg (fun a : Array Nat => a.getD 1333 0) jt_eq).trans jtw_6683_2 : jt.getD 1333 0 = 63006)
+
+theorem chunk_ok_6683 : facts_6683.all (·.holds prog) = true := by
+  simp only [facts_6683, List.all_cons, List.all_nil, Bool.and_true, jte_6683_0, jte_6683_1, jte_6683_2]
+
+theorem jtw_6684_0 : jtW.getD 1334 0 = 63034 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6684_0 : (CodeFact.jumpEntry 1334 63034).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1334 63034 ((congrArg (fun a : Array Nat => a.getD 1334 0) jt_eq).trans jtw_6684_0 : jt.getD 1334 0 = 63034)
+
+theorem jtw_6684_1 : jtW.getD 1335 0 = 63055 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6684_1 : (CodeFact.jumpEntry 1335 63055).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1335 63055 ((congrArg (fun a : Array Nat => a.getD 1335 0) jt_eq).trans jtw_6684_1 : jt.getD 1335 0 = 63055)
+
+theorem jtw_6684_2 : jtW.getD 1336 0 = 63132 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6684_2 : (CodeFact.jumpEntry 1336 63132).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1336 63132 ((congrArg (fun a : Array Nat => a.getD 1336 0) jt_eq).trans jtw_6684_2 : jt.getD 1336 0 = 63132)
+
+theorem chunk_ok_6684 : facts_6684.all (·.holds prog) = true := by
+  simp only [facts_6684, List.all_cons, List.all_nil, Bool.and_true, jte_6684_0, jte_6684_1, jte_6684_2]
+
+theorem jtw_6685_0 : jtW.getD 1337 0 = 63183 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6685_0 : (CodeFact.jumpEntry 1337 63183).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1337 63183 ((congrArg (fun a : Array Nat => a.getD 1337 0) jt_eq).trans jtw_6685_0 : jt.getD 1337 0 = 63183)
+
+theorem jtw_6685_1 : jtW.getD 1338 0 = 63211 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6685_1 : (CodeFact.jumpEntry 1338 63211).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1338 63211 ((congrArg (fun a : Array Nat => a.getD 1338 0) jt_eq).trans jtw_6685_1 : jt.getD 1338 0 = 63211)
+
+theorem jtw_6685_2 : jtW.getD 1339 0 = 63232 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6685_2 : (CodeFact.jumpEntry 1339 63232).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1339 63232 ((congrArg (fun a : Array Nat => a.getD 1339 0) jt_eq).trans jtw_6685_2 : jt.getD 1339 0 = 63232)
+
+theorem chunk_ok_6685 : facts_6685.all (·.holds prog) = true := by
+  simp only [facts_6685, List.all_cons, List.all_nil, Bool.and_true, jte_6685_0, jte_6685_1, jte_6685_2]
+
+theorem jtw_6686_0 : jtW.getD 1340 0 = 63253 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6686_0 : (CodeFact.jumpEntry 1340 63253).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1340 63253 ((congrArg (fun a : Array Nat => a.getD 1340 0) jt_eq).trans jtw_6686_0 : jt.getD 1340 0 = 63253)
+
+theorem jtw_6686_1 : jtW.getD 1341 0 = 63330 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6686_1 : (CodeFact.jumpEntry 1341 63330).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1341 63330 ((congrArg (fun a : Array Nat => a.getD 1341 0) jt_eq).trans jtw_6686_1 : jt.getD 1341 0 = 63330)
+
+theorem jtw_6686_2 : jtW.getD 1342 0 = 63381 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6686_2 : (CodeFact.jumpEntry 1342 63381).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1342 63381 ((congrArg (fun a : Array Nat => a.getD 1342 0) jt_eq).trans jtw_6686_2 : jt.getD 1342 0 = 63381)
+
+theorem chunk_ok_6686 : facts_6686.all (·.holds prog) = true := by
+  simp only [facts_6686, List.all_cons, List.all_nil, Bool.and_true, jte_6686_0, jte_6686_1, jte_6686_2]
+
+theorem jtw_6687_0 : jtW.getD 1343 0 = 63409 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6687_0 : (CodeFact.jumpEntry 1343 63409).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1343 63409 ((congrArg (fun a : Array Nat => a.getD 1343 0) jt_eq).trans jtw_6687_0 : jt.getD 1343 0 = 63409)
+
+theorem jtw_6687_1 : jtW.getD 1344 0 = 63430 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6687_1 : (CodeFact.jumpEntry 1344 63430).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1344 63430 ((congrArg (fun a : Array Nat => a.getD 1344 0) jt_eq).trans jtw_6687_1 : jt.getD 1344 0 = 63430)
+
+theorem jtw_6687_2 : jtW.getD 1345 0 = 63451 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6687_2 : (CodeFact.jumpEntry 1345 63451).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1345 63451 ((congrArg (fun a : Array Nat => a.getD 1345 0) jt_eq).trans jtw_6687_2 : jt.getD 1345 0 = 63451)
+
+theorem chunk_ok_6687 : facts_6687.all (·.holds prog) = true := by
+  simp only [facts_6687, List.all_cons, List.all_nil, Bool.and_true, jte_6687_0, jte_6687_1, jte_6687_2]
+
+theorem jtw_6688_0 : jtW.getD 1346 0 = 63476 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6688_0 : (CodeFact.jumpEntry 1346 63476).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1346 63476 ((congrArg (fun a : Array Nat => a.getD 1346 0) jt_eq).trans jtw_6688_0 : jt.getD 1346 0 = 63476)
+
+theorem jtw_6688_1 : jtW.getD 1347 0 = 63553 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6688_1 : (CodeFact.jumpEntry 1347 63553).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1347 63553 ((congrArg (fun a : Array Nat => a.getD 1347 0) jt_eq).trans jtw_6688_1 : jt.getD 1347 0 = 63553)
+
+theorem jtw_6688_2 : jtW.getD 1348 0 = 63606 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6688_2 : (CodeFact.jumpEntry 1348 63606).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1348 63606 ((congrArg (fun a : Array Nat => a.getD 1348 0) jt_eq).trans jtw_6688_2 : jt.getD 1348 0 = 63606)
+
+theorem chunk_ok_6688 : facts_6688.all (·.holds prog) = true := by
+  simp only [facts_6688, List.all_cons, List.all_nil, Bool.and_true, jte_6688_0, jte_6688_1, jte_6688_2]
+
+theorem jtw_6689_0 : jtW.getD 1349 0 = 63634 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6689_0 : (CodeFact.jumpEntry 1349 63634).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1349 63634 ((congrArg (fun a : Array Nat => a.getD 1349 0) jt_eq).trans jtw_6689_0 : jt.getD 1349 0 = 63634)
+
+theorem jtw_6689_1 : jtW.getD 1350 0 = 63655 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6689_1 : (CodeFact.jumpEntry 1350 63655).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1350 63655 ((congrArg (fun a : Array Nat => a.getD 1350 0) jt_eq).trans jtw_6689_1 : jt.getD 1350 0 = 63655)
+
+theorem jtw_6689_2 : jtW.getD 1351 0 = 63676 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6689_2 : (CodeFact.jumpEntry 1351 63676).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1351 63676 ((congrArg (fun a : Array Nat => a.getD 1351 0) jt_eq).trans jtw_6689_2 : jt.getD 1351 0 = 63676)
+
+theorem chunk_ok_6689 : facts_6689.all (·.holds prog) = true := by
+  simp only [facts_6689, List.all_cons, List.all_nil, Bool.and_true, jte_6689_0, jte_6689_1, jte_6689_2]
+
+theorem jtw_6690_0 : jtW.getD 1352 0 = 63701 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6690_0 : (CodeFact.jumpEntry 1352 63701).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1352 63701 ((congrArg (fun a : Array Nat => a.getD 1352 0) jt_eq).trans jtw_6690_0 : jt.getD 1352 0 = 63701)
+
+theorem jtw_6690_1 : jtW.getD 1353 0 = 63726 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6690_1 : (CodeFact.jumpEntry 1353 63726).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1353 63726 ((congrArg (fun a : Array Nat => a.getD 1353 0) jt_eq).trans jtw_6690_1 : jt.getD 1353 0 = 63726)
+
+theorem jtw_6690_2 : jtW.getD 1354 0 = 63803 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6690_2 : (CodeFact.jumpEntry 1354 63803).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1354 63803 ((congrArg (fun a : Array Nat => a.getD 1354 0) jt_eq).trans jtw_6690_2 : jt.getD 1354 0 = 63803)
+
+theorem chunk_ok_6690 : facts_6690.all (·.holds prog) = true := by
+  simp only [facts_6690, List.all_cons, List.all_nil, Bool.and_true, jte_6690_0, jte_6690_1, jte_6690_2]
+
+theorem jtw_6691_0 : jtW.getD 1355 0 = 63865 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6691_0 : (CodeFact.jumpEntry 1355 63865).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1355 63865 ((congrArg (fun a : Array Nat => a.getD 1355 0) jt_eq).trans jtw_6691_0 : jt.getD 1355 0 = 63865)
+
+theorem jtw_6691_1 : jtW.getD 1356 0 = 63921 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6691_1 : (CodeFact.jumpEntry 1356 63921).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1356 63921 ((congrArg (fun a : Array Nat => a.getD 1356 0) jt_eq).trans jtw_6691_1 : jt.getD 1356 0 = 63921)
+
+theorem jtw_6691_2 : jtW.getD 1357 0 = 64011 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6691_2 : (CodeFact.jumpEntry 1357 64011).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1357 64011 ((congrArg (fun a : Array Nat => a.getD 1357 0) jt_eq).trans jtw_6691_2 : jt.getD 1357 0 = 64011)
+
+theorem chunk_ok_6691 : facts_6691.all (·.holds prog) = true := by
+  simp only [facts_6691, List.all_cons, List.all_nil, Bool.and_true, jte_6691_0, jte_6691_1, jte_6691_2]
+
+theorem jtw_6692_0 : jtW.getD 1358 0 = 64216 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6692_0 : (CodeFact.jumpEntry 1358 64216).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1358 64216 ((congrArg (fun a : Array Nat => a.getD 1358 0) jt_eq).trans jtw_6692_0 : jt.getD 1358 0 = 64216)
+
+theorem jtw_6692_1 : jtW.getD 1359 0 = 64323 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6692_1 : (CodeFact.jumpEntry 1359 64323).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1359 64323 ((congrArg (fun a : Array Nat => a.getD 1359 0) jt_eq).trans jtw_6692_1 : jt.getD 1359 0 = 64323)
+
+theorem jtw_6692_2 : jtW.getD 1360 0 = 64368 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6692_2 : (CodeFact.jumpEntry 1360 64368).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1360 64368 ((congrArg (fun a : Array Nat => a.getD 1360 0) jt_eq).trans jtw_6692_2 : jt.getD 1360 0 = 64368)
+
+theorem chunk_ok_6692 : facts_6692.all (·.holds prog) = true := by
+  simp only [facts_6692, List.all_cons, List.all_nil, Bool.and_true, jte_6692_0, jte_6692_1, jte_6692_2]
+
+theorem jtw_6693_0 : jtW.getD 1361 0 = 64479 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6693_0 : (CodeFact.jumpEntry 1361 64479).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1361 64479 ((congrArg (fun a : Array Nat => a.getD 1361 0) jt_eq).trans jtw_6693_0 : jt.getD 1361 0 = 64479)
+
+theorem jtw_6693_1 : jtW.getD 1362 0 = 64589 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6693_1 : (CodeFact.jumpEntry 1362 64589).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1362 64589 ((congrArg (fun a : Array Nat => a.getD 1362 0) jt_eq).trans jtw_6693_1 : jt.getD 1362 0 = 64589)
+
+theorem jtw_6693_2 : jtW.getD 1363 0 = 64633 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6693_2 : (CodeFact.jumpEntry 1363 64633).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1363 64633 ((congrArg (fun a : Array Nat => a.getD 1363 0) jt_eq).trans jtw_6693_2 : jt.getD 1363 0 = 64633)
+
+theorem chunk_ok_6693 : facts_6693.all (·.holds prog) = true := by
+  simp only [facts_6693, List.all_cons, List.all_nil, Bool.and_true, jte_6693_0, jte_6693_1, jte_6693_2]
+
+theorem jtw_6694_0 : jtW.getD 1364 0 = 64715 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6694_0 : (CodeFact.jumpEntry 1364 64715).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1364 64715 ((congrArg (fun a : Array Nat => a.getD 1364 0) jt_eq).trans jtw_6694_0 : jt.getD 1364 0 = 64715)
+
+theorem jtw_6694_1 : jtW.getD 1365 0 = 64843 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6694_1 : (CodeFact.jumpEntry 1365 64843).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1365 64843 ((congrArg (fun a : Array Nat => a.getD 1365 0) jt_eq).trans jtw_6694_1 : jt.getD 1365 0 = 64843)
+
+theorem jtw_6694_2 : jtW.getD 1366 0 = 64937 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6694_2 : (CodeFact.jumpEntry 1366 64937).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1366 64937 ((congrArg (fun a : Array Nat => a.getD 1366 0) jt_eq).trans jtw_6694_2 : jt.getD 1366 0 = 64937)
+
+theorem chunk_ok_6694 : facts_6694.all (·.holds prog) = true := by
+  simp only [facts_6694, List.all_cons, List.all_nil, Bool.and_true, jte_6694_0, jte_6694_1, jte_6694_2]
+
+theorem jtw_6695_0 : jtW.getD 1367 0 = 65007 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6695_0 : (CodeFact.jumpEntry 1367 65007).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1367 65007 ((congrArg (fun a : Array Nat => a.getD 1367 0) jt_eq).trans jtw_6695_0 : jt.getD 1367 0 = 65007)
+
+theorem jtw_6695_1 : jtW.getD 1368 0 = 65148 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6695_1 : (CodeFact.jumpEntry 1368 65148).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1368 65148 ((congrArg (fun a : Array Nat => a.getD 1368 0) jt_eq).trans jtw_6695_1 : jt.getD 1368 0 = 65148)
+
+theorem jtw_6695_2 : jtW.getD 1369 0 = 65179 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6695_2 : (CodeFact.jumpEntry 1369 65179).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1369 65179 ((congrArg (fun a : Array Nat => a.getD 1369 0) jt_eq).trans jtw_6695_2 : jt.getD 1369 0 = 65179)
+
+theorem chunk_ok_6695 : facts_6695.all (·.holds prog) = true := by
+  simp only [facts_6695, List.all_cons, List.all_nil, Bool.and_true, jte_6695_0, jte_6695_1, jte_6695_2]
+
+theorem jtw_6696_0 : jtW.getD 1370 0 = 65214 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6696_0 : (CodeFact.jumpEntry 1370 65214).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1370 65214 ((congrArg (fun a : Array Nat => a.getD 1370 0) jt_eq).trans jtw_6696_0 : jt.getD 1370 0 = 65214)
+
+theorem jtw_6696_1 : jtW.getD 1371 0 = 65242 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6696_1 : (CodeFact.jumpEntry 1371 65242).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1371 65242 ((congrArg (fun a : Array Nat => a.getD 1371 0) jt_eq).trans jtw_6696_1 : jt.getD 1371 0 = 65242)
+
+theorem jtw_6696_2 : jtW.getD 1372 0 = 65282 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6696_2 : (CodeFact.jumpEntry 1372 65282).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1372 65282 ((congrArg (fun a : Array Nat => a.getD 1372 0) jt_eq).trans jtw_6696_2 : jt.getD 1372 0 = 65282)
+
+theorem chunk_ok_6696 : facts_6696.all (·.holds prog) = true := by
+  simp only [facts_6696, List.all_cons, List.all_nil, Bool.and_true, jte_6696_0, jte_6696_1, jte_6696_2]
+
+theorem jtw_6697_0 : jtW.getD 1373 0 = 65356 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6697_0 : (CodeFact.jumpEntry 1373 65356).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1373 65356 ((congrArg (fun a : Array Nat => a.getD 1373 0) jt_eq).trans jtw_6697_0 : jt.getD 1373 0 = 65356)
+
+theorem jtw_6697_1 : jtW.getD 1374 0 = 65376 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6697_1 : (CodeFact.jumpEntry 1374 65376).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1374 65376 ((congrArg (fun a : Array Nat => a.getD 1374 0) jt_eq).trans jtw_6697_1 : jt.getD 1374 0 = 65376)
+
+theorem jtw_6697_2 : jtW.getD 1375 0 = 65397 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6697_2 : (CodeFact.jumpEntry 1375 65397).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1375 65397 ((congrArg (fun a : Array Nat => a.getD 1375 0) jt_eq).trans jtw_6697_2 : jt.getD 1375 0 = 65397)
+
+theorem chunk_ok_6697 : facts_6697.all (·.holds prog) = true := by
+  simp only [facts_6697, List.all_cons, List.all_nil, Bool.and_true, jte_6697_0, jte_6697_1, jte_6697_2]
+
+theorem jtw_6698_0 : jtW.getD 1376 0 = 65431 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6698_0 : (CodeFact.jumpEntry 1376 65431).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1376 65431 ((congrArg (fun a : Array Nat => a.getD 1376 0) jt_eq).trans jtw_6698_0 : jt.getD 1376 0 = 65431)
+
+theorem jtw_6698_1 : jtW.getD 1377 0 = 65558 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6698_1 : (CodeFact.jumpEntry 1377 65558).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1377 65558 ((congrArg (fun a : Array Nat => a.getD 1377 0) jt_eq).trans jtw_6698_1 : jt.getD 1377 0 = 65558)
+
+theorem jtw_6698_2 : jtW.getD 1378 0 = 65659 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6698_2 : (CodeFact.jumpEntry 1378 65659).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1378 65659 ((congrArg (fun a : Array Nat => a.getD 1378 0) jt_eq).trans jtw_6698_2 : jt.getD 1378 0 = 65659)
+
+theorem chunk_ok_6698 : facts_6698.all (·.holds prog) = true := by
+  simp only [facts_6698, List.all_cons, List.all_nil, Bool.and_true, jte_6698_0, jte_6698_1, jte_6698_2]
+
+theorem jtw_6699_0 : jtW.getD 1379 0 = 65689 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6699_0 : (CodeFact.jumpEntry 1379 65689).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1379 65689 ((congrArg (fun a : Array Nat => a.getD 1379 0) jt_eq).trans jtw_6699_0 : jt.getD 1379 0 = 65689)
+
+theorem jtw_6699_1 : jtW.getD 1380 0 = 65730 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6699_1 : (CodeFact.jumpEntry 1380 65730).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1380 65730 ((congrArg (fun a : Array Nat => a.getD 1380 0) jt_eq).trans jtw_6699_1 : jt.getD 1380 0 = 65730)
+
+theorem jtw_6699_2 : jtW.getD 1381 0 = 65803 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6699_2 : (CodeFact.jumpEntry 1381 65803).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1381 65803 ((congrArg (fun a : Array Nat => a.getD 1381 0) jt_eq).trans jtw_6699_2 : jt.getD 1381 0 = 65803)
+
+theorem chunk_ok_6699 : facts_6699.all (·.holds prog) = true := by
+  simp only [facts_6699, List.all_cons, List.all_nil, Bool.and_true, jte_6699_0, jte_6699_1, jte_6699_2]
+
+theorem jtw_6700_0 : jtW.getD 1382 0 = 65829 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6700_0 : (CodeFact.jumpEntry 1382 65829).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1382 65829 ((congrArg (fun a : Array Nat => a.getD 1382 0) jt_eq).trans jtw_6700_0 : jt.getD 1382 0 = 65829)
+
+theorem jtw_6700_1 : jtW.getD 1383 0 = 65956 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6700_1 : (CodeFact.jumpEntry 1383 65956).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1383 65956 ((congrArg (fun a : Array Nat => a.getD 1383 0) jt_eq).trans jtw_6700_1 : jt.getD 1383 0 = 65956)
+
+theorem jtw_6700_2 : jtW.getD 1384 0 = 65989 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6700_2 : (CodeFact.jumpEntry 1384 65989).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1384 65989 ((congrArg (fun a : Array Nat => a.getD 1384 0) jt_eq).trans jtw_6700_2 : jt.getD 1384 0 = 65989)
+
+theorem chunk_ok_6700 : facts_6700.all (·.holds prog) = true := by
+  simp only [facts_6700, List.all_cons, List.all_nil, Bool.and_true, jte_6700_0, jte_6700_1, jte_6700_2]
+
+theorem jtw_6701_0 : jtW.getD 1385 0 = 66095 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6701_0 : (CodeFact.jumpEntry 1385 66095).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1385 66095 ((congrArg (fun a : Array Nat => a.getD 1385 0) jt_eq).trans jtw_6701_0 : jt.getD 1385 0 = 66095)
+
+theorem jtw_6701_1 : jtW.getD 1386 0 = 66128 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6701_1 : (CodeFact.jumpEntry 1386 66128).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1386 66128 ((congrArg (fun a : Array Nat => a.getD 1386 0) jt_eq).trans jtw_6701_1 : jt.getD 1386 0 = 66128)
+
+theorem jtw_6701_2 : jtW.getD 1387 0 = 66172 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6701_2 : (CodeFact.jumpEntry 1387 66172).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1387 66172 ((congrArg (fun a : Array Nat => a.getD 1387 0) jt_eq).trans jtw_6701_2 : jt.getD 1387 0 = 66172)
+
+theorem chunk_ok_6701 : facts_6701.all (·.holds prog) = true := by
+  simp only [facts_6701, List.all_cons, List.all_nil, Bool.and_true, jte_6701_0, jte_6701_1, jte_6701_2]
+
+theorem jtw_6702_0 : jtW.getD 1388 0 = 66245 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6702_0 : (CodeFact.jumpEntry 1388 66245).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1388 66245 ((congrArg (fun a : Array Nat => a.getD 1388 0) jt_eq).trans jtw_6702_0 : jt.getD 1388 0 = 66245)
+
+theorem jtw_6702_1 : jtW.getD 1389 0 = 66271 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6702_1 : (CodeFact.jumpEntry 1389 66271).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1389 66271 ((congrArg (fun a : Array Nat => a.getD 1389 0) jt_eq).trans jtw_6702_1 : jt.getD 1389 0 = 66271)
+
+theorem jtw_6702_2 : jtW.getD 1390 0 = 66367 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6702_2 : (CodeFact.jumpEntry 1390 66367).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1390 66367 ((congrArg (fun a : Array Nat => a.getD 1390 0) jt_eq).trans jtw_6702_2 : jt.getD 1390 0 = 66367)
+
+theorem chunk_ok_6702 : facts_6702.all (·.holds prog) = true := by
+  simp only [facts_6702, List.all_cons, List.all_nil, Bool.and_true, jte_6702_0, jte_6702_1, jte_6702_2]
+
+theorem jtw_6703_0 : jtW.getD 1393 0 = 66488 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6703_0 : (CodeFact.jumpEntry 1393 66488).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1393 66488 ((congrArg (fun a : Array Nat => a.getD 1393 0) jt_eq).trans jtw_6703_0 : jt.getD 1393 0 = 66488)
+
+theorem jtw_6703_1 : jtW.getD 1394 0 = 66623 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6703_1 : (CodeFact.jumpEntry 1394 66623).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1394 66623 ((congrArg (fun a : Array Nat => a.getD 1394 0) jt_eq).trans jtw_6703_1 : jt.getD 1394 0 = 66623)
+
+theorem jtw_6703_2 : jtW.getD 1395 0 = 66959 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6703_2 : (CodeFact.jumpEntry 1395 66959).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1395 66959 ((congrArg (fun a : Array Nat => a.getD 1395 0) jt_eq).trans jtw_6703_2 : jt.getD 1395 0 = 66959)
+
+theorem chunk_ok_6703 : facts_6703.all (·.holds prog) = true := by
+  simp only [facts_6703, List.all_cons, List.all_nil, Bool.and_true, jte_6703_0, jte_6703_1, jte_6703_2]
+
+theorem jtw_6704_0 : jtW.getD 1396 0 = 67046 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6704_0 : (CodeFact.jumpEntry 1396 67046).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1396 67046 ((congrArg (fun a : Array Nat => a.getD 1396 0) jt_eq).trans jtw_6704_0 : jt.getD 1396 0 = 67046)
+
+theorem jtw_6704_1 : jtW.getD 1397 0 = 67924 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6704_1 : (CodeFact.jumpEntry 1397 67924).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1397 67924 ((congrArg (fun a : Array Nat => a.getD 1397 0) jt_eq).trans jtw_6704_1 : jt.getD 1397 0 = 67924)
+
+theorem jtw_6704_2 : jtW.getD 1398 0 = 68138 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6704_2 : (CodeFact.jumpEntry 1398 68138).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1398 68138 ((congrArg (fun a : Array Nat => a.getD 1398 0) jt_eq).trans jtw_6704_2 : jt.getD 1398 0 = 68138)
+
+theorem chunk_ok_6704 : facts_6704.all (·.holds prog) = true := by
+  simp only [facts_6704, List.all_cons, List.all_nil, Bool.and_true, jte_6704_0, jte_6704_1, jte_6704_2]
+
+theorem jtw_6705_0 : jtW.getD 1399 0 = 68146 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6705_0 : (CodeFact.jumpEntry 1399 68146).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1399 68146 ((congrArg (fun a : Array Nat => a.getD 1399 0) jt_eq).trans jtw_6705_0 : jt.getD 1399 0 = 68146)
+
+theorem jtw_6705_1 : jtW.getD 1400 0 = 68435 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6705_1 : (CodeFact.jumpEntry 1400 68435).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1400 68435 ((congrArg (fun a : Array Nat => a.getD 1400 0) jt_eq).trans jtw_6705_1 : jt.getD 1400 0 = 68435)
+
+theorem jtw_6705_2 : jtW.getD 1401 0 = 68449 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6705_2 : (CodeFact.jumpEntry 1401 68449).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1401 68449 ((congrArg (fun a : Array Nat => a.getD 1401 0) jt_eq).trans jtw_6705_2 : jt.getD 1401 0 = 68449)
+
+theorem chunk_ok_6705 : facts_6705.all (·.holds prog) = true := by
+  simp only [facts_6705, List.all_cons, List.all_nil, Bool.and_true, jte_6705_0, jte_6705_1, jte_6705_2]
+
+theorem jtw_6706_0 : jtW.getD 1402 0 = 68715 := by
+  rw [jtW, getD_map_range _ _ _ (by decide)]
+  decide +kernel
+
+theorem jte_6706_0 : (CodeFact.jumpEntry 1402 68715).holds prog = true :=
+  CodeFact.jumpEntry_holds prog 1402 68715 ((congrArg (fun a : Array Nat => a.getD 1402 0) jt_eq).trans jtw_6706_0 : jt.getD 1402 0 = 68715)
+
+theorem chunk_ok_6706 : facts_6706.all (·.holds prog) = true := by
+  simp only [facts_6706, List.all_cons, List.all_nil, Bool.and_true, jte_6706_0]
+
 theorem chunks_104 : factGroup_104.all (fun c => c.all (·.holds prog)) = true := by
-  simp only [factGroup_104, List.all_cons, List.all_nil, Bool.and_true, chunk_ok_6656, chunk_ok_6657, chunk_ok_6658, chunk_ok_6659, chunk_ok_6660, chunk_ok_6661, chunk_ok_6662, chunk_ok_6663, chunk_ok_6664, chunk_ok_6665, chunk_ok_6666, chunk_ok_6667, chunk_ok_6668]
+  simp only [factGroup_104, List.all_cons, List.all_nil, Bool.and_true, chunk_ok_6656, chunk_ok_6657, chunk_ok_6658, chunk_ok_6659, chunk_ok_6660, chunk_ok_6661, chunk_ok_6662, chunk_ok_6663, chunk_ok_6664, chunk_ok_6665, chunk_ok_6666, chunk_ok_6667, chunk_ok_6668, chunk_ok_6669, chunk_ok_6670, chunk_ok_6671, chunk_ok_6672, chunk_ok_6673, chunk_ok_6674, chunk_ok_6675, chunk_ok_6676, chunk_ok_6677, chunk_ok_6678, chunk_ok_6679, chunk_ok_6680, chunk_ok_6681, chunk_ok_6682, chunk_ok_6683, chunk_ok_6684, chunk_ok_6685, chunk_ok_6686, chunk_ok_6687, chunk_ok_6688, chunk_ok_6689, chunk_ok_6690, chunk_ok_6691, chunk_ok_6692, chunk_ok_6693, chunk_ok_6694, chunk_ok_6695, chunk_ok_6696, chunk_ok_6697, chunk_ok_6698, chunk_ok_6699, chunk_ok_6700, chunk_ok_6701, chunk_ok_6702, chunk_ok_6703, chunk_ok_6704, chunk_ok_6705, chunk_ok_6706]
 
 end Services.Bootstrap.CodeFCheck

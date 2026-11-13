@@ -24,7 +24,11 @@ What the wip branch adds over `main`:
 | `Refine/PassGrow.lean` | `pass_elem_grow`: the same with the output full, via `grow_one` (32785) |
 | `Refine/PassLoop.lean` | `PInv` (with the iterator words M + 272 … M + 304, the M + 48 bound and a per-slot output predicate `O`), `LayP`, `ExhaustsX` (exhaustion with the context free), `step_room`, `step_full` (each for one pass-through kind, given as an argument), `loop` (pass-through only, via `LoopG`) |
 | `Refine/LoopG.lean` | `loop`, `loop_all`: a generic loop over per-iteration steps head → head, the context free, with a terminal outcome closed under `pre`/`mono` |
-| `Refine/Exit.lean` | `ex0` (5042 → 6120 at the end), `dr1`/`dr0` (the `IntoIter` drop to `dealloc` / to 6130), `ex1` (6130 → 59375, the Debug line's setup) |
+| `Refine/Exit.lean` | `ex0` (5042 → 6120 at the end), `dr1`/`dr0`, `drop` (the `IntoIter` drop, with `dealloc_call`, 6120 → 6130), `ex1` (6130 → 59375, the Debug line's setup) |
+| `Refine/ExitEnc.lean` | `en1` (6209 → `alloc`, the encoder's frame), `alloc_ret`, `enc_run` (6209 → 6295: `alloc(232n + 6)` then `Encode.Loop.encode_ok`) |
+| `Refine/DropOut.lean` | `NoDrop` (the variants whose drop does nothing: exactly the fixed-width ones), `dtable` (67760), `drop_vec` (29087 → ret: the output `Vec<Instruction>` walked) |
+| `Refine/Fin.lean` | `f1`–`f4`, `fin_run` (6295 → refine's return: drop, the two frees, ω₇ = buf, ω₈ = len) |
+| `Refine/ExitRun.lean` | `DebugLineOk` (the hypothesis for 59375 → 6209), `exit_run` (5042 at `PInv n` → refine's return, the encoded output in memory) |
 
 Build one file with
 `export PATH=/root/lean-dl/lean-4.36.0-rc1-linux/bin:$PATH; lake env lean Services/Bootstrap/Refine/PassLoop.lean`
@@ -99,21 +103,28 @@ per-index step. The per-step bound is currently `512n + 6100`; handler bounds wi
 added (Export scales with its segment count and lengths).
 
 ### Exit and encoder composition
-Done: `ex0`, `dr0`/`dr1`, `ex1`. Next: compose `dr1` with `Decode.DeallocCall.dealloc_call`; the Debug
-hypothesis 6159 → 6209; 6209 … 6291 (move the output to M + 168, the work-item index at M + 192, the encoder's
-frame at M − 80, `alloc(232n + 6, 1)` returning to 30073 (`jte_706`)); `Encode.Loop.encode_ok` from 30073
-(O = M + 272, S0 = M + 168, ret 204 → 6295); 6295 → 29087 (`drop_in_place::<Vec<Instruction>>`, a loop over
-the elements) → frees (6305, 6330) → return 6373.
+Done: `ExitRun.exit_run`, from `PInv n` at 5042 to refine's return (6373 → the caller), for 1 ≤ n < 128 output
+slots each satisfying `O`, from which the encoder's `rep`, the Debug line's `DR` and `NoDrop` follow.
+`PInv` now also carries `Kp` (chunks to keep, e.g. the payload's copy at M + 88 / M + 112) and `fr` (the frame
+words M + 80 … M + 120 and M + 600 … M + 632 as in μ0). The only hypothesis left is `DebugLineOk` (Fmt).
 
 5042 → 6120 → IntoIter drop (33214) → Debug line 6159 / log 6187 / free 6202 → encoder:
 `Encode.Loop.encode_ok` (n ≥ 1) and `encode_zero` (n = 0) with `Encode.Prefix.prefix_small` /
 `prefix_zero` → 29087 frees. Compose into a top-level T1 against `Spec.refine`.
 
+### Next
+- Top level: the prologue to 5042 with `PInv 0` (decode, `IntoIter` built, output `Vec::new`), the loop over
+  per-kind steps (`LoopG.loop` with the pass-through steps and, once unblocked, the handlers), `exit_run`, the
+  caller's halt, lifted to Ψ_R against `Bridge.RSem.run (Spec.refine …)`; for the milestone, with hypotheses for
+  n < 128 and every output fixed-width (parent's decision), and `hrsr`.
+- Handlers: Import (needs #143 / #150), Lookup and Export (need the host-ids PR).
+
 ### Fmt hypotheses (temporary, "discharged by the fmt summaries")
 Parent approved stating these against a `refine_debug_line`-shaped hypothesis, the same pattern as
 `FmtOk`. Each must be listed here until discharged:
 
-- **6159**: Debug line of the output instruction list (format 59375), before log 6187.
+- **6159**: Debug line of the output instruction list (format 59375), with log 6187 and free 6202: stated as
+  `ExitRun.DebugLineOk` (59375 → 6209).
 - **5744**: Export's per-segment `format!` (then log 5784, free 5800).
 - **5398**: Lookup's `format!` (then log 5428, free 5441).
 

@@ -16,11 +16,17 @@ import Services.Bootstrap.CodeAOk
 import Services.Bootstrap.CodeF
 import Services.Bootstrap.CodeFAll
 import Services.Bootstrap.CodeFOk
+import Services.Bootstrap.CodeR
+import Services.Bootstrap.CodeRAll
+import Services.Bootstrap.CodeROk
+import Services.Bootstrap.Bridge
 import Services.Bootstrap.Fmt.OracleRefine
 import Services.Bootstrap.Fmt.Hex
 import Services.Bootstrap.Fmt.Dec4
 import Services.Bootstrap.Fmt.Du5
 import Services.Bootstrap.Fmt.Format
+import Services.Bootstrap.Fmt.AccFmt
+import Services.Bootstrap.AccLog.ItemLog
 import Services.Bootstrap.BParams
 import Services.Bootstrap.BParamsConsts
 import Services.Bootstrap.StartupConsts
@@ -119,6 +125,11 @@ import Services.Bootstrap.Acc.Inputs.VecU8A
 import Services.Bootstrap.Acc.Inputs.Item
 import Services.Bootstrap.Acc.Inputs.CompactU64
 import Services.Bootstrap.Acc.Inputs.CompactU64Call
+import Services.Bootstrap.Acc.ContractC
+import Services.Bootstrap.Acc.CkSites
+import Services.Bootstrap.Acc.CkDead
+import Services.Bootstrap.Acc.CkLift
+import Services.Bootstrap.Acc.ContractQ
 import Services.Bootstrap.Acc.Inputs.ReaderAdj
 import Services.Bootstrap.Acc.Inputs.ItemOperand
 import Services.Bootstrap.Acc.Inputs.ItemOperandB
@@ -254,7 +265,20 @@ import Services.Bootstrap.Spec
 import Services.Bootstrap.SpecLemmas.Codec
 import Services.Bootstrap.SpecLemmas.Refine
 import Services.Bootstrap.SpecLemmas.Ring
+import Services.Bootstrap.SpecLemmas.Items
+import Services.Bootstrap.ASem
 import Services.Bootstrap.Alloc.HeapContract
+import Services.Bootstrap.Decode.VecU8HeapBig
+import Services.Bootstrap.Decode.VecPairsBig
+import Services.Bootstrap.Decode.VecU32U64Big
+import Services.Bootstrap.Decode.VecHashBig
+import Services.Bootstrap.Decode.VecHash32Big
+import Services.Bootstrap.Decode.GrowOne
+import Services.Bootstrap.Decode.VecKey336Big
+import Services.Bootstrap.Decode.VecVecU8Big
+import Services.Bootstrap.Decode.VariantsBig
+import Services.Bootstrap.Decode.VariantsBig2
+import Services.Bootstrap.Decode.ElemsBig
 import Services.Bootstrap.SymExec
 import Services.Witness.SymExec
 
@@ -322,4 +346,9 @@ Built on `JAM`; nothing in `PVM` or `JAM` depends on this library.
   codec round trip of step 0 (`decode_payload`, `decode_output`), `refineInstr` keeping
   instructions well-formed (`refineInstr_wf`, `refine_output`), and the ring half of S1 kept by
   `addRecent` (`addRecent_ringInv`) in a minimal storage model.
+* `Services.Bootstrap.SpecLemmas.Items` — `Spec.accumulate`'s decode of the inputs: `decode_items`
+  reads ℰ(↕**i**) back as `specItem`s (`compact_run64` for gas limits below 2⁶⁴).
+* `Services.Bootstrap.ASem` — what T2 means: `ASem.run` / `ASem.outcome`, accumulate's host
+  operations as the model's host functions on a memory holding their arguments; `accEnv`, `credit`,
+  `codeOf`.
 -/

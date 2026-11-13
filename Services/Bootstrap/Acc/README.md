@@ -116,3 +116,94 @@ From 6378, 18,050 instructions are reachable statically. 5,537 of them already h
 
 These are decoders over symbolic data, like T1's, at accumulate's stack. They should reuse T1's
 frame-base `ElemOkF` pattern (#120) where the code is shared.
+## The inputs decode, 6630 → 6674, as the code facts show it
+
+- **6630 … 6670** inline the prologue of the inputs function (frame 144, return address 226 → 6674,
+  the output at the caller's sp + 1568). It stores the kind 14 at sp + 32 and tail-calls the SDK's
+  `fetch_vec` at 47417 (out = sp + 56, its arguments at sp + 32), returning through entry 2022 to
+  44495.
+- **47417, `fetch_vec(kind)`**: kind 14 is in the no-argument mask 20359 (bits 0–2, 7–11, 14).
+  - First `fetch` (47490) with a null buffer, for the length L. NONE stores `None` (−1 at out);
+    any other error code traps (47844).
+  - L = 0 gives the dangling pointer 1. Otherwise L ≤ 2³⁷ − 32 (else trap), then the allocator's
+    lock (47578 … 47606), `alloc_impl` (41177) with ω₈ = 1, ω₉ = ⌈L/32⌉ and **ω₁₀ = 1 (zeroed)**,
+    and the unlock (47631 … 47635). A null block traps at 47554 (`handle_alloc_error`), so
+    allocation failure here is ☇.
+  - Second `fetch` (47690) into the block, then `Some(Vec { cap: L, ptr, len: L })`. The returned
+    length is not compared with L. After an error on the second call, the block is freed (lock,
+    42327, unlock) and the result is `None`.
+- **44495**: `None` traps (the `unwrap`). The reader over the bytes at sp + 104 gives the item count
+  by **39710**, a trap on error. 39710 … 39981 is refine's `u32` decoder 31894 … 32165 moved by 7816
+  (`DecodeU32A.lean`). Then **44916** decodes `Vec<AccumulateItem>` into sp + 80 (a trap on
+  error), frees the fetched bytes (lock, 42327, unlock) if L ≠ 0, stores the `Vec` at the caller's
+  sp + 1568 and returns to 6674. The reader is not checked to be empty, so trailing octets after
+  ℰ(↕**i**) are ignored.
+- **44916**: capacity min(n, 89) of 184-octet items, grown by 40852 / 41016. `AccumulateItem::decode`
+  is inlined at 45115 … 45254, using the reader 58434 and memcpy 68729. The `Vec<u8>` decoders are
+  45643, and 39634 (length by 39710, then 45643); 46040 decodes a `u64`, and 46856 is also called.
+  None of these is a copy of refine code that is already proved.
+- `alloc_impl` with ω₁₀ = 1 runs the zeroing paths (from 42098), which the refine proofs (all with
+  ω₁₀ = 0) do not cover.
+
+## Inputs decode: proved so far (branch `claude/bootstrap-t2-inputs`) and the plan
+
+Proved, complete (`Acc/DecodeU32A.lean`, `Acc/Inputs/*.lean`):
+- `decodeU32A`: 39710, refine's `u32` decoder moved by 7816.
+- `fetch14_step`: one `fetch` of kind 14 under `accContractK`. `rangeWritable_of`.
+- `fetch_vec` (47417), in segments: `fv_pre` (47417 → 47490), `fv_fetch1` (→ 47541), `fv_lock`
+  (→ 41177), and `fv_unlock` / `fv_store` / `fv_post` (47631 → 47722).
+  **Open:** `alloc_impl` with the zero flag between 41177 and 47631. Agreed: new `AllocZeroed*.lean`
+  files after the HeapHost PR lands. Generalized step lemmas keep their ω₁₀ = 0 forms as corollaries.
+- `finish_grow` (40852), no current block:
+  - the steps `fg_entry_new`, `fg_alloc_lock`, `fg_alloc_ok` / `fg_alloc_err` and `fg_ret_jump`;
+  - the paths `fg_new_hdr`, `fg_new_grow` and `fg_new_fail`;
+  - `fg_new_call` on `HeapCtxC`.
+
+Also proved since:
+- `finish_grow`'s alloc path, generic in the host: `fg_new_hdr`, `fg_new_grow`, `fg_new_fail` and
+  `fg_new_call`.
+- The `Vec<u8>` reader (45643), one chunk: `rv_entry`, `rv_mid`, `rv_exit`, `rv_fail`, `rv_empty`,
+  `read_any`, and `rv_call` on `HeapCtxC`.
+- 39634's segments: `vv_pre`, `vv_mid` and `vv_post`.
+
+**Decision (Adam via @parent):** prove 6630 → 6674 first for inputs whose `Vec`s never grow: at
+most 89 items, and each work output and auth trace at most 16384 octets. These bounds are explicit
+hypotheses, marked temporary. They are lifted by generalizing the realloc impl lemmas over the
+return address (they fix ω₀ = 1988 / 40805) after the HeapHost PR, keeping the ω₀ = 1988 forms as
+corollaries.
+
+- `AccumulateItem::decode` (45126, frame 424), its entry and the transfer arm (`Acc/Inputs/Item.lean`):
+  segments `it_pre` … `it_tr_fill`, stages `tr_s1` … `tr_s4`, and **`tr_call`** (45126 → 47072): a
+  deferred transfer's 153 octets at ip into the slot (−1 at + 0, memo at + 8, amount + 136, gas + 144,
+  source + 152, destination + 156).
+- The `u64` compact decoder 46856 (body 39982 … 40212; `Acc/Inputs/CompactU64*.lean`): segments
+  `cu_head`, `cu_mid` (the leading-ones cascade, l < 8), `cu_post`, `cu_zero`, `cu_ff`, `cu_ff_post`;
+  `cu_pre`, `cu_tail_mid`, `cu_tail_ff`; and **`cu_call`**: from ℰ(g) at the reader, ω₈ = g
+  (return address 2106 → 46889).
+- **Next, the operand arm** (tag 0, from 46344), as the code facts show it:
+  - 46344 … 46571: four hashes, each by `read_ok` (32 octets into b + 272, returns 2084 / 2086 / 2088 /
+    2090) and copied to b + 32, + 64, + 96 and (after the gas) + 136; a failed read goes to 46575 / 46579
+    (−2 at out + 0, the error);
+  - 46818 … 46852: the fourth hash to b + 136 and the call of 46856 (`cu_call`, the gas);
+  - 46889 … 46932: the gas's error bit, then the work result's tag octet read into b + 272 (2108);
+  - tag 0 (47074): the `Vec<u8>` by 39634 (2114) into b + 272, −1 there meaning an error;
+    then b + 8 = cap, b + 16 = the packed (ptr, len) words (47095 … 47143);
+  - tags 1 … 6 (46936 … 47007): the tag re-read from a one-octet reader at b + 135; 7 … 255 fail;
+    b + 8 = −1 (no `Vec`), b + 16 = the tag;
+  - 47136 … 47152: the auth trace, a `Vec<u8>` by 39634 (2116);
+  - 47158 … 47332: the 184-octet operand slot from b and the trace; 47334 … 47414: on a trace error,
+    the work output's buffer freed (42327, the allocator's lock inline) and the error.
+
+Plan:
+1. (After the bounds are lifted.) `finish_grow`'s realloc path (a current block, 40898 … 40995 → 42980 → 41109). It needs:
+   - the lock and unlock glue at these addresses, taking an `impl` run as `ReallocWrap.realloc_wrap`
+     and `ReallocKeepAll.realloc_wrap_keep` do;
+   - the per-case compositions with the impl-level lemmas (`realloc_inplace_refines_keep`, grow,
+     grow-heap, `fallback_refines_heap_keepG`);
+   - a case split as in `realloc_wrap_cases_keepG`.
+2. The `Vec<u8>` reader 45643 (16 KiB chunks; the reader 58434 and `finish_grow`), and 39634
+   (length, then 45643).
+3. `AccumulateItem::decode`, inlined at 45115 … 45254, with 46040 (`u64`) and 46856.
+4. The item loop 44916 (capacity min(n, 89), 184-octet slots), a LoopA-style proof at accumulate's
+   frame.
+5. 44495's glue (unwrap, count, free of the fetched bytes), then the summary 6630 → 6674.

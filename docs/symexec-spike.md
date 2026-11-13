@@ -268,8 +268,45 @@ Coverage work, approved after Phase 1. Each feature lands as its own PR.
     `refine_logHosts` and `acc_logHosts`. They prove that `refineContractK cap env` and
     `accContractK cap env` allow it for every 𝖬_∅ ≤ cap < 2^64.
   * Use `{ prog with hosts := logHosts }`; the existing `hyp` proves its `ProgHyp`. Example: `log4770`.
+* **`min_u` and `max_u`** of two values whose bounds order them simplify to one of them (`leB`).
+* **Zero offsets.** An affine value ρ_k + 0 is kept as `.var k` (`affVal`), so it matches a
+  target that names ρ_k.
   * Calls whose effect depends on the environment (`fetch`, `grow_heap`) are not covered. Such a
     call still ends a segment, and a hand-written summary takes over there.
+
+## Using the executor for a hand-written stretch
+
+A stretch currently proved with `pvm_go` can instead be checked by the executor. The template is
+`Services/Bootstrap/SymExec/FixedZ.lean`, which re-proves `Decode.Fixed.z1` and `z2` with the
+same statements.
+
+1. **Name the naturals** the statement quantifies over (sp, O, n, …) as ρ₀, ρ₁, … Write a
+   `Static` with:
+   * their exclusive upper bounds `ub` and lower bounds `lb`;
+   * the readable regions `rd` and writable regions `wr` the hypotheses give, as `(Aff, length)`,
+     e.g. `(⟨some 0, -120⟩, 120)` for [sp − 120, sp);
+   * the pairs `sep` the hypotheses make disjoint.
+2. **Write the start state** `A : Spec`:
+   * registers `(r, v)` with values `.var k`, `.const n` or `.addr ⟨some k, d⟩`;
+   * cells `(address, width, value)` for the octets the hypotheses fix.
+3. **Write the end state** `T : Spec`, the frame (the regions written) and the exact step count k.
+   `srun` runs exactly k steps; `FreeStepsH`'s bound is an upper bound, so the statement's count
+   can stay larger via `FreeStepsH.pad`.
+4. **Check** with `theorem ok : check st prog A T F start tgt k = true := by decide +kernel`.
+   While writing, `#eval traceCheck st prog A T F start tgt k` reports either the first step the
+   executor cannot follow or each wanted-versus-have mismatch. Write T with the shapes it prints.
+5. **Bridge.** `check_sound ok hyp vals hB hLB ω μ hrd hwr hsep hr hc x` gives the run, the
+   registers, the cells, the frame and the pages. Restate them in the statement's terms; see
+   `FixedZ.z1`. Typical steps are `simp only [SVal.eval, Aff.eval]` and one `omega` per address.
+
+**Case splits.** A branch the bounds do not decide (e.g. `n ≤ 1024`) needs one check per case,
+each with tighter bounds. Combine the cases in the bridge.
+
+**Host calls.** Use `{ prog with hosts := logHosts }` and pass `refine_logHosts …` or
+`acc_logHosts …` as the last argument of `check_sound`.
+
+**Measured.** `Decode/VecU32U64.p1` (pc 2727 to 32989, 28 steps, with a symbolic stack pointer,
+symbolic n and a `min_u`; case n ≤ 1024) checks in about 1 s.
 
 ## Generator interface
 

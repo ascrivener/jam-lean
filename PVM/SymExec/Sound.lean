@@ -273,6 +273,13 @@ theorem addAff_sound (hpre : Pre E st) {a a' : Aff} {x M : Nat} (hM : 0 < M)
             omega, Nat.add_mod_right, Nat.mod_eq_of_lt (by omega)]
   · rw [ite_eq_right hc] at h; cases h
 
+theorem affVal_eval (a : Aff) : (affVal a).eval E = (SVal.addr a).eval E := by
+  unfold affVal
+  split
+  · rename_i h
+    split <;> simp [SVal.eval, Aff.eval, h, *]
+  · rfl
+
 theorem addv_eval (hpre : Pre E st) (v : SVal) (x : Nat) (f : SVal)
     (hf : f.eval E = (v.eval E + x) % two64) : (addv st v x f).eval E = (v.eval E + x) % two64 := by
   unfold addv
@@ -287,6 +294,7 @@ theorem addv_eval (hpre : Pre E st) (v : SVal) (x : Nat) (f : SVal)
         simp only [Option.bind] at h
         obtain ⟨h1, h2, h3, h4, hlo⟩ := addAff_sound hpre (by decide) h
         have := asAff_sound ha hlo hpre
+        rw [affVal_eval]
         simp only [SVal.eval]
         rw [← h1]; congr 2; omega
     · exact hf
@@ -370,6 +378,24 @@ theorem mkAlu2i_eval (hpre : Pre E st) (op : TwoRegImmOp) (a b : SVal) (x : Nat)
     · simp only [Bool.false_eq_true, ite_false, SVal.eval]; rw [alu2i_noA op hu (a.eval E)]
     · simp
 
+theorem lob_sound (hpre : Pre E st) (v : SVal) : v.lob st ≤ v.eval E := by
+  cases v with
+  | const n => exact Nat.le_refl _
+  | var k =>
+    simp only [SVal.lob, SVal.eval]
+    cases h : st.lb[k]? with
+    | none => simp
+    | some b => simpa using hpre.2.1 k b h
+  | addr a =>
+    simp only [SVal.lob, SVal.eval]
+    exact Int.toNat_le_toNat (lo_le hpre a)
+  | _ => exact Nat.zero_le _
+
+
+theorem leB_sound (hpre : Pre E st) {v w : SVal} (h : leB st v w = true) : v.eval E ≤ w.eval E := by
+  unfold leB at h
+  have := bnd_any hpre h; have := lob_sound hpre w; omega
+
 theorem mkAlu3_eval (hpre : Pre E st) (op : ThreeRegOp) (a b d : SVal) :
     (mkAlu3 st op a b d).eval E = threeRegAlu op (a.eval E) (b.eval E) (d.eval E) := by
   have hf : (foldAlu3 op a b (if usesD op then d else .const 0)).eval E =
@@ -390,6 +416,20 @@ theorem mkAlu3_eval (hpre : Pre E st) (op : ThreeRegOp) (a b d : SVal) :
       simp only [threeRegAlu, SVal.eval]
       congr 1; omega
     · exact hf
+  · split
+    · rename_i h; have := leB_sound hpre h
+      simp only [threeRegAlu]; omega
+    · split
+      · rename_i _ h; have := leB_sound hpre h
+        simp only [threeRegAlu]; omega
+      · exact hf
+  · split
+    · rename_i h; have := leB_sound hpre h
+      simp only [threeRegAlu]; omega
+    · split
+      · rename_i _ h; have := leB_sound hpre h
+        simp only [threeRegAlu]; omega
+      · exact hf
   · exact hf
 
 theorem mkAlu2_eval (op : TwoRegOp) (a : SVal) :
@@ -422,19 +462,6 @@ theorem mkSx_eval (hpre : Pre E st) (k : Nat) (v : SVal) :
             (Nat.lt_of_lt_of_le (bnd_sound hpre _ _ hb) hc.1)).symm
         · rfl
       · rfl
-
-theorem lob_sound (hpre : Pre E st) (v : SVal) : v.lob st ≤ v.eval E := by
-  cases v with
-  | const n => exact Nat.le_refl _
-  | var k =>
-    simp only [SVal.lob, SVal.eval]
-    cases h : st.lb[k]? with
-    | none => simp
-    | some b => simpa using hpre.2.1 k b h
-  | addr a =>
-    simp only [SVal.lob, SVal.eval]
-    exact Int.toNat_le_toNat (lo_le hpre a)
-  | _ => exact Nat.zero_le _
 
 theorem decideCond_sound {op : RegImmOffsetOp} {lo hi x v : Nat} {c : Bool} (h1 : lo ≤ v)
     (h2 : v < hi) (h : decideCond op lo hi x = some c) : regImmBranchCond op v x = c := by

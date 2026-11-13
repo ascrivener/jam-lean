@@ -110,4 +110,39 @@ theorem retThunk {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {X :
     · refine ⟨?_, ?_⟩
       all_goals simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h1]
 
+/-- **The error result** (12198, b ≠ 255: CORE, HUH or WHO): `Err` with index 9 (the octets 255, 9
+    at `RES`); then, if the input `Vec`'s capacity c (its copy at sp + 1568) is not 0, on to 13579
+    (its buffer freed), else to the tail (14278). -/
+theorem errResult {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {X : Type}
+    {R : HostRel X} (x : X) (ω : Regs) (μ : Memory) (b c : Nat) (h1 : ω[1] = UInt64.ofNat 4278057152)
+    (h7 : ω[7] = UInt64.ofNat b) (hb : b < 255)
+    (hc : c < 18446744073709551616) (mc : μ.readN 4278058720 8 = Num.encodeLE 8 c)
+    (hw : ∀ a, 4278058152 ≤ a → a < 4278058154 → μ.writable a = true)
+    (hrc : ∀ a, 4278058720 ≤ a → a < 4278058728 → μ.readable a = true) :
+    ∃ ω', FreeStepsH p R 12198 ω μ x (if c = 0 then 14278 else 13579) ω'
+      ((μ.writeN 4278058153 [UInt8.ofNat 9]).writeN 4278058152 [UInt8.ofNat 255]) x 8 ∧
+      ω'[1] = ω[1] ∧ ω'[8] = UInt64.ofNat c := by
+  have hr : ∀ a, 4278058152 ≤ a → a < 4278058154 → μ.readable a = true :=
+    fun a h1 h2 => Memory.readable_of_writable (hw a h1 h2)
+  have rc : rdN μ 4278058720 8 = c := by
+    show Num.decodeLE _ = _
+    rw [mc, Num.decodeLE_encodeLE, Nat.mod_eq_of_lt hc]
+  have hb' : b % 256 ≠ 255 := by omega
+  rw [show ω = regsNF ω [] from rfl]
+  by_cases h0 : c = 0
+  · subst h0
+    refine ⟨?_, ?_, ?_⟩
+    rotate_left
+    · simp only [↓reduceIte]
+      pvm_go [h1, h7, bitwise_and_m255, hb', hw, hr, hrc, rc, rdN_writeN_disjoint, ↓rdN_fold]
+    · refine ⟨?_, ?_⟩
+      all_goals simp [PVM.getElem_regsNF, PVM.lookup_cons_nat]
+  · have h0' : c % 18446744073709551616 ≠ 0 := by rw [Nat.mod_eq_of_lt hc]; exact h0
+    refine ⟨?_, ?_, ?_⟩
+    rotate_left
+    · simp only [h0, ↓reduceIte]
+      pvm_go [h1, h7, bitwise_and_m255, hb', hw, hr, hrc, rc, h0', rdN_writeN_disjoint, ↓rdN_fold]
+    · refine ⟨?_, ?_⟩
+      all_goals simp [PVM.getElem_regsNF, PVM.lookup_cons_nat]
+
 end Services.Bootstrap.Acc.Handlers.Assign

@@ -84,10 +84,26 @@ theorem FreeStepsH.checkpointAcc (env : AccEnv)
     FreeStepsH p (accContractC env) i ω μ x i'' ω'' μ'' x'' (k + 1) :=
   FreeStepsH.checkpointAccK hostCostMax (by decide) env hd rest
 
-/-- **A host-call step at a gas-independent id** under `accContractC`: the call continues with
-    the registers, memory and context of Ψ_A's handler F (`accHostFn env`) at the largest gas,
-    when that continues. The state-changing accumulate functions (15–17, 19–27) are stepped
-    through this way; their outcomes are the model's (`JAM.AccHost.bless` … `provide`). -/
+/-- **A host-call step at a gas-independent id** under `accContractCK cap`: the call continues
+    with the registers, memory and context of Ψ_A's handler F (`accHostFn env`) at gas `cap`, when
+    that continues. The state-changing accumulate functions (15–17, 19–27) are stepped through
+    this way; their outcomes are the model's (`JAM.AccHost.bless` … `provide`). -/
+theorem FreeStepsH.accHostCK (cap : Nat) (env : AccEnv) {h : Nat} (hh : AccGasFreeId h)
+    {p : ByteArray} {P : Program} {i n : Nat} {hx : UInt64} {ω : Regs} {μ : Memory} {x : AccCtx}
+    {i'' : Nat} {ω'' : Regs} {μ'' : Memory} {x'' : AccCtx} {k : Nat}
+    (hd : deblob p i = some P ∧ P.decode i = some (.oneImm .ecalli hx) ∧ P.next i = n ∧
+      P.blockCost (P.blockStartOf i) ≤ stepCostCap) (hId : hx.toNat = h)
+    (hs : (accHostFn env h (UInt64.ofNat cap) ω μ x).status = .cont)
+    (rest : FreeStepsH p (accContractCK cap env) n (accHostFn env h (UInt64.ofNat cap) ω μ x).regs
+      (accHostFn env h (UInt64.ofNat cap) ω μ x).mem
+      (accHostFn env h (UInt64.ofNat cap) ω μ x).ctx i'' ω'' μ'' x'' k) :
+    FreeStepsH p (accContractCK cap env) i ω μ x i'' ω'' μ'' x'' (k + 1) := by
+  subst hId
+  refine FreeStepsH.host_decode hd (.inl ⟨hh, by simp, ?_⟩) rest
+  cases ho : accHostFn env hx.toNat (UInt64.ofNat cap) ω μ x
+  simp_all
+
+/-- `accHostCK` at `hostCostMax` (`accContractC`). -/
 theorem FreeStepsH.accHostC (env : AccEnv) {h : Nat} (hh : AccGasFreeId h)
     {p : ByteArray} {P : Program} {i n : Nat} {hx : UInt64} {ω : Regs} {μ : Memory} {x : AccCtx}
     {i'' : Nat} {ω'' : Regs} {μ'' : Memory} {x'' : AccCtx} {k : Nat}
@@ -97,22 +113,31 @@ theorem FreeStepsH.accHostC (env : AccEnv) {h : Nat} (hh : AccGasFreeId h)
     (rest : FreeStepsH p (accContractC env) n (accHostFn env h (UInt64.ofNat hostCostMax) ω μ x).regs
       (accHostFn env h (UInt64.ofNat hostCostMax) ω μ x).mem
       (accHostFn env h (UInt64.ofNat hostCostMax) ω μ x).ctx i'' ω'' μ'' x'' k) :
-    FreeStepsH p (accContractC env) i ω μ x i'' ω'' μ'' x'' (k + 1) := by
-  subst hId
-  refine FreeStepsH.host_decode hd (.inl ⟨hh, by simp, ?_⟩) rest
-  cases ho : accHostFn env hx.toNat (UInt64.ofNat hostCostMax) ω μ x
-  simp_all
+    FreeStepsH p (accContractC env) i ω μ x i'' ω'' μ'' x'' (k + 1) :=
+  FreeStepsH.accHostCK hostCostMax env hh hd hId hs rest
 
 /-- **A `log` step** (id 100, which Ψ_A's dispatcher does not know: 𝖬_∅ is charged and ω₇ := WHAT,
-    GP v0.8.0 eq. `accinvocation`) under `accContractC`. -/
+    GP v0.8.0 eq. `accinvocation`) under `accContractCK cap`, 𝖬_∅ ≤ cap < 2⁶⁴. -/
+theorem FreeStepsH.logAccK (cap : Nat) (hcap : Constants.Cgasunknown ≤ cap)
+    (hcap' : cap < 18446744073709551616) (env : AccEnv)
+    {p : ByteArray} {P : Program} {i n : Nat} {ω : Regs} {μ : Memory} {x : AccCtx}
+    {i'' : Nat} {ω'' : Regs} {μ'' : Memory} {x'' : AccCtx} {k : Nat}
+    (hd : deblob p i = some P ∧ P.decode i = some (.oneImm .ecalli 100) ∧ P.next i = n ∧
+      P.blockCost (P.blockStartOf i) ≤ stepCostCap)
+    (rest : FreeStepsH p (accContractCK cap env) n (setR7 ω Result.WHAT) μ x i'' ω'' μ'' x'' k) :
+    FreeStepsH p (accContractCK cap env) i ω μ x i'' ω'' μ'' x'' (k + 1) := by
+  refine FreeStepsH.host_decode hd (.inl ⟨by unfold AccGasFreeId; decide, by decide, ?_⟩) rest
+  simp [accHostFn, AccHost.dispatch, UInt64.toNat_ofNat, Nat.mod_eq_of_lt hcap']
+  exact hcap
+
+/-- `logAccK` at `hostCostMax` (`accContractC`). -/
 theorem FreeStepsH.logAcc (env : AccEnv)
     {p : ByteArray} {P : Program} {i n : Nat} {ω : Regs} {μ : Memory} {x : AccCtx}
     {i'' : Nat} {ω'' : Regs} {μ'' : Memory} {x'' : AccCtx} {k : Nat}
     (hd : deblob p i = some P ∧ P.decode i = some (.oneImm .ecalli 100) ∧ P.next i = n ∧
       P.blockCost (P.blockStartOf i) ≤ stepCostCap)
     (rest : FreeStepsH p (accContractC env) n (setR7 ω Result.WHAT) μ x i'' ω'' μ'' x'' k) :
-    FreeStepsH p (accContractC env) i ω μ x i'' ω'' μ'' x'' (k + 1) := by
-  refine FreeStepsH.host_decode hd (.inl ⟨by unfold AccGasFreeId; decide, by decide, ?_⟩) rest
-  simp [accHostFn, AccHost.dispatch, hostCostMax, Constants.Cgasunknown]
+    FreeStepsH p (accContractC env) i ω μ x i'' ω'' μ'' x'' (k + 1) :=
+  FreeStepsH.logAccK hostCostMax (by decide) (by decide) env hd rest
 
 end Services.Bootstrap.Acc

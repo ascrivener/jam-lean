@@ -6,7 +6,7 @@ import Services.Bootstrap.Acc.ContractC
 
 `Checkpoint`'s results write (36170) happens before the dispatch (8650 → 8710), so from the dispatch
 point the handler is short:
-1. `checkpoint` (Ω_C, id 18) at 9944: y := x (`accContractC` fixes ω₇ to 0; ω₇ is dead here,
+1. `checkpoint` (Ω_C, id 18) at 9944: y := x (`accContractCK` fixes ω₇ to 0; ω₇ is dead here,
    `Acc.CkDead`).
 2. `alloc(13, 1)` (40494) for a 13-octet log message, trapping at 15366 if it fails.
 3. The message is written and logged (`log`, 100, at 10009), and freed (`dealloc`, 40613).
@@ -35,10 +35,10 @@ macro "post_simp" : tactic => `(tactic| (
     dispatch reaches 9944. `checkpoint` (Ω_C, id 18) sets y := x there. Then the call to `alloc`
     (40494) is made with size ω₇ = 13, alignment ω₈ = 1 and return address ω₀ = 350 (the jump
     table's entry for 9958). Memory changes only at sp + 1380 (4 octets), and ω₁ = sp. -/
-theorem toAlloc {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env : AccEnv) (x : AccCtx) (ω : Regs)
+theorem toAlloc {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (cap : Nat) (hcap : Constants.CgasC ≤ cap) (env : AccEnv) (x : AccCtx) (ω : Regs)
     (μ : Memory) (bs : List UInt8) (hD : AtDispatch ω μ bs)
     (hdisc : bs.take 8 = Num.encodeLE 8 9223372036854775822) :
-    ∃ ω' μ', FreeStepsH p (accContractC env) 8822 ω μ x 40494 ω' μ' (x.1, x.1) 30 ∧
+    ∃ ω' μ', FreeStepsH p (accContractCK cap env) 8822 ω μ x 40494 ω' μ' (x.1, x.1) 30 ∧
       ω'[0] = UInt64.ofNat 350 ∧ ω'[1] = ω[1] ∧ ω'[7] = UInt64.ofNat 13 ∧ ω'[8] = UInt64.ofNat 1 ∧
       KeepsExcept μ μ' [(4278058532, 4)] ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
@@ -57,7 +57,7 @@ theorem toAlloc {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
   refine ⟨?ω', ?μ', ?run, ?post⟩
   case run =>
     refine FreeStepsH.mono (FreeStepsH.trans (i' := 9944) (ω' := ?w1) (μ' := ?m1) (x' := x) (n₁ := 15) (n₂ := 15) ?a
-      (FreeStepsH.checkpointAcc env (d_9944 (p := p) (P := P)) ?b)) (by omega)
+      (FreeStepsH.checkpointAccK cap hcap env (d_9944 (p := p) (P := P)) ?b)) (by omega)
     case a => pvm_go [m192, hv192, jts, h1, h6, c216, disc, tab, hw, hr, hrt]
     case b => pvm_go [JAM.setR7, bs_40494]
   case post =>
@@ -71,11 +71,12 @@ theorem toAlloc {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
     know, so ω₇ := WHAT and nothing else changes), then `dealloc(ptr, 13, 1)` (40613) is called
     with return address ω₀ = 432 (the jump table's entry for 11866). Memory changes only at
     ptr … ptr + 13; ω₁ is kept. -/
-theorem mid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env : AccEnv) (x : AccCtx)
+theorem mid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (cap : Nat)
+    (hcap : Constants.Cgasunknown ≤ cap) (hcap' : cap < 18446744073709551616) (env : AccEnv) (x : AccCtx)
     (ω : Regs) (μ : Memory) (ptr : Nat) (h7 : ω[7] = UInt64.ofNat ptr) (hp0 : ptr ≠ 0)
     (hp : ptr + 13 ≤ 4294967296)
     (hw : ∀ a, ptr ≤ a → a < ptr + 13 → μ.writable a = true) :
-    ∃ ω' μ', FreeStepsH p (accContractC env) 9958 ω μ x 40613 ω' μ' x 25 ∧
+    ∃ ω' μ', FreeStepsH p (accContractCK cap env) 9958 ω μ x 40613 ω' μ' x 25 ∧
       ω'[0] = UInt64.ofNat 432 ∧ ω'[1] = ω[1] ∧ ω'[7] = UInt64.ofNat ptr ∧ ω'[8] = UInt64.ofNat 13 ∧
       ω'[9] = UInt64.ofNat 1 ∧ KeepsExcept μ μ' [(ptr, 13)] ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
@@ -86,7 +87,7 @@ theorem mid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env : Ac
   refine ⟨?ω', ?μ', ?run, ?post⟩
   case run =>
     refine FreeStepsH.mono (FreeStepsH.trans (i' := 10009) (ω' := ?w1) (μ' := ?m1) (x' := x)
-      (n₁ := 12) (n₂ := 12) ?a (FreeStepsH.logAcc env (d_10009 (p := p) (P := P)) ?b)) (by omega)
+      (n₁ := 12) (n₂ := 12) ?a (FreeStepsH.logAccK cap hcap hcap' env (d_10009 (p := p) (P := P)) ?b)) (by omega)
     case a => pvm_go [h7, hp0, hp64, hw, hr]
     case b => pvm_go [JAM.setR7, bs_40613, bs_11855]
   case post =>

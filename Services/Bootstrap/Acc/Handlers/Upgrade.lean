@@ -36,14 +36,15 @@ theorem readMem_of {μ : Memory} {ω : Regs} {a n : Nat} {c : List UInt8} (hreg 
 
 /-- Ω_U (`upgrade`, id 20) when the 32 octets at ω₇ are readable, as Ψ_A's handler gives it at the
     contract's gas: OK, and x_s's code hash and gas limits set from them and ω₈, ω₉. -/
-theorem upgrade_eq (env : AccEnv) (ω : Regs) (μ : Memory) (x : AccCtx) (h : List UInt8)
+theorem upgrade_eq (cap : Nat) (hcap : Constants.CgasU ≤ cap) (hcap' : cap < 18446744073709551616)
+    (env : AccEnv) (ω : Regs) (μ : Memory) (x : AccCtx) (h : List UInt8)
     (hm : AccHost.readMem μ (reg ω 7) 32 = some h) :
-    accHostFn env 20 (UInt64.ofNat hostCostMax) ω μ x =
-      ⟨.cont, (accHostFn env 20 (UInt64.ofNat hostCostMax) ω μ x).gas, setR7 ω Result.OK, μ,
+    accHostFn env 20 (UInt64.ofNat cap) ω μ x =
+      ⟨.cont, (accHostFn env 20 (UInt64.ofNat cap) ω μ x).gas, setR7 ω Result.OK, μ,
         (x.1.setSelf { x.1.self with codeHash := h, minAccGas := reg ω 8, minMemoGas := reg ω 9 },
           x.2)⟩ := by
   simp [accHostFn, AccHost.dispatch, AccHost.upgrade, AccHost.charge, charged, hm, AccHost.r7,
-    AccHost.updX, hostCostMax, Constants.CgasU]
+    AccHost.updX, Nat.mod_eq_of_lt hcap', Nat.not_lt.mpr hcap]
 
 /-- **From the dispatch through `upgrade`**: for `Upgrade` (the discriminant 2⁶³, the code hash
     c at slot + 8, `min_item_gas` g at slot + 40, `min_memo_gas` m at slot + 48), the handler calls
@@ -51,13 +52,14 @@ theorem upgrade_eq (env : AccEnv) (ω : Regs) (μ : Memory) (x : AccCtx) (h : Li
     and m, and returns OK (ω₇ = 0). It reaches the check at 49541 with the return address 428 at
     sp − 8 and ω₁ = sp − 8. Memory changes only at sp + 1380 (4 octets), sp + 1568 (32) and
     sp − 8 (8). -/
-theorem toCheck {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env : AccEnv) (x : AccCtx)
+theorem toCheck {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (cap : Nat)
+    (hcap : Constants.CgasU ≤ cap) (hcap' : cap < 18446744073709551616) (env : AccEnv) (x : AccCtx)
     (ω : Regs) (μ : Memory) (bs : List UInt8) (hD : AtDispatch ω μ bs) (c : List UInt8) (g m : Nat)
     (hg64 : g < 18446744073709551616) (hm64 : m < 18446744073709551616)
     (hdisc : bs.take 8 = Num.encodeLE 8 9223372036854775808) (hc : (bs.drop 8).take 32 = c)
     (hg : (bs.drop 40).take 8 = Num.encodeLE 8 g) (hm : (bs.drop 48).take 8 = Num.encodeLE 8 m)
     (hws : ∀ a, 4278057144 ≤ a → a < 4278057152 → μ.writable a = true) :
-    ∃ ω' μ', FreeStepsH p (accContractC env) 8822 ω μ x 49541 ω' μ'
+    ∃ ω' μ', FreeStepsH p (accContractCK cap env) 8822 ω μ x 49541 ω' μ'
       (x.1.setSelf { x.1.self with codeHash := c, minAccGas := g, minMemoGas := m }, x.2) 40 ∧
       ω'[1] = UInt64.ofNat 4278057144 ∧ ω'[7] = UInt64.ofNat 0 ∧
       μ'.readN 4278057144 8 = Num.encodeLE 8 428 ∧
@@ -89,12 +91,12 @@ theorem toCheck {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
   refine ⟨?ω', ?μ', ?run, ?post⟩
   case run =>
     refine FreeStepsH.mono (FreeStepsH.trans (i' := 11792) (ω' := ?w1) (μ' := ?m1) (x' := x)
-      (n₁ := 30) (n₂ := 2) ?a (FreeStepsH.accHostC env (h := 20) (by unfold AccGasFreeId; decide)
+      (n₁ := 30) (n₂ := 2) ?a (FreeStepsH.accHostCK cap env (h := 20) (by unfold AccGasFreeId; decide)
         (d_11792 (p := p) (P := P)) rfl ?hs ?b)) (by omega)
     case a => pvm_go [m192, hv192, m0, hw0, m1, hw1, m2, hw2, m3, hw3, jts, h1, h6, c216, disc, mg,
       mm, tab, hw, hr, hrt, hws, hrs]
     case hs =>
-      rw [upgrade_eq env _ _ x c ?hread]
+      rw [upgrade_eq cap hcap hcap' env _ _ x c ?hread]
       case hread =>
         have hrr := rangeReadable_of' (μ := ((((((μ.writeN 4278058532 (Num.encodeLE 4 (v192 % 4294967296))).writeN 4278058720 (Num.encodeLE 8 w0)).writeN
                       4278058728 (Num.encodeLE 8 w1)).writeN 4278058736 (Num.encodeLE 8 w2)).writeN
@@ -107,7 +109,7 @@ theorem toCheck {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
         simp only [Nat.reduceAdd, m0, m1, m2, m3]
         simp (disch := pvm_arith) only [PVM.Memory.readN_writeN_same, PVM.Memory.readN_writeN_disjoint]
     case b =>
-      rw [upgrade_eq env _ _ x c ?hread]
+      rw [upgrade_eq cap hcap hcap' env _ _ x c ?hread]
       case hread =>
         have hrr := rangeReadable_of' (μ := ((((((μ.writeN 4278058532 (Num.encodeLE 4 (v192 % 4294967296))).writeN 4278058720 (Num.encodeLE 8 w0)).writeN
                       4278058728 (Num.encodeLE 8 w1)).writeN 4278058736 (Num.encodeLE 8 w2)).writeN
@@ -179,11 +181,12 @@ theorem checkFail {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {X 
     the 9-octet message is written at ptr and logged (`log`, 100: ω₇ := WHAT, nothing else
     changes), then `dealloc(ptr, 9, 1)` (40613) is called with return address ω₀ = 432 (11866, the
     tail shared with `Checkpoint`). Memory changes only at ptr … ptr + 9; ω₁ is kept. -/
-theorem mid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env : AccEnv) (x : AccCtx)
+theorem mid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (cap : Nat)
+    (hcap : Constants.Cgasunknown ≤ cap) (hcap' : cap < 18446744073709551616) (env : AccEnv) (x : AccCtx)
     (ω : Regs) (μ : Memory) (ptr : Nat) (h7 : ω[7] = UInt64.ofNat ptr) (hp0 : ptr ≠ 0)
     (hp : ptr + 9 ≤ 4294967296)
     (hw : ∀ a, ptr ≤ a → a < ptr + 9 → μ.writable a = true) :
-    ∃ ω' μ', FreeStepsH p (accContractC env) 11810 ω μ x 40613 ω' μ' x 25 ∧
+    ∃ ω' μ', FreeStepsH p (accContractCK cap env) 11810 ω μ x 40613 ω' μ' x 25 ∧
       ω'[0] = UInt64.ofNat 432 ∧ ω'[1] = ω[1] ∧ ω'[7] = UInt64.ofNat ptr ∧ ω'[8] = UInt64.ofNat 9 ∧
       ω'[9] = UInt64.ofNat 1 ∧ KeepsExcept μ μ' [(ptr, 9)] ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
@@ -194,7 +197,7 @@ theorem mid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env : Ac
   refine ⟨?ω', ?μ', ?run, ?post⟩
   case run =>
     refine FreeStepsH.mono (FreeStepsH.trans (i' := 11849) (ω' := ?w1) (μ' := ?m1) (x' := x)
-      (n₁ := 12) (n₂ := 12) ?a (FreeStepsH.logAcc env (d_11849 (p := p) (P := P)) ?b)) (by omega)
+      (n₁ := 12) (n₂ := 12) ?a (FreeStepsH.logAccK cap hcap hcap' env (d_11849 (p := p) (P := P)) ?b)) (by omega)
     case a => pvm_go [h7, hp0, hp64, hw, hr]
     case b => pvm_go [JAM.setR7, bs_40613, bs_11855]
   case post =>

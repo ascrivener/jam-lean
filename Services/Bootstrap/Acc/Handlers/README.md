@@ -38,3 +38,19 @@ and `log` is host call 100.
 `gas` (0) at 11330 and 13011 (in the `Transfer` and `CreateService` paths): ω₇, the gas left, is
 stored to sp + 1384 and sp + 1472 and used later. `checkpoint` at 8490 and 9944 is followed by an
 instruction that overwrites ω₇ without reading it. 11889 (`Benchmark`) is not checked yet.
+
+## The gas cap
+
+Host calls are stepped through under `accContractCK cap env`: each call's outcome is the model's
+(`accHostFn env`) at gas `cap`, which must cover the call's charge. So every summary that makes a
+host call takes the cap as a parameter, with only the bounds its calls need. The top-level
+statement picks one cap that covers all of them, and the allocator's summaries (`alloc_callG`:
+heap growth) need 2²⁷ ≤ cap anyway.
+
+| Summary | Calls | Cap needed |
+| --- | --- | --- |
+| `Checkpoint.toAlloc` | `checkpoint` (18) | 𝖬_C = 103 ≤ cap |
+| `Checkpoint.mid`, `Upgrade.mid` | `log` (100) | 𝖬_∅ = 1000 ≤ cap < 2⁶⁴ |
+| `Upgrade.toCheck` | `upgrade` (20) | 𝖬_U = 1028 ≤ cap < 2⁶⁴ |
+| Designate (in progress) | `designate` (17) | 1100 + 302 · z ≤ cap < 2⁶⁴, z keys |
+| Bless (to do) | `bless` (15) | 422 + 20 · z ≤ cap < 2⁶⁴ |

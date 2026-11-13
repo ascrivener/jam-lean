@@ -5,10 +5,12 @@ on:
     branches: [main]
   pull_request:
 
-# one run per branch or PR at a time: a new push cancels the run it replaces
+# One run per PR at a time: a new push cancels the run it replaces. On main every merge gets its own
+# complete run (one per commit, never cancelled), so a semantic clash between two separately green PRs
+# shows up on the commit that introduced it.
 concurrency:
-  group: ci-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.event.pull_request.number || (github.ref == 'refs/heads/main' && github.sha) || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   build-and-check:

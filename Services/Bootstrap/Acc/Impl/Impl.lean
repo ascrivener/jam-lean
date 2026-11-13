@@ -45,6 +45,11 @@ structure St where
 def KeepCtx (R : HostRel (AccCtx × List Nat)) : HostRel (AccCtx × List Nat) :=
   fun h ω μ xq s ω' μ' xq' => R h ω μ xq s ω' μ' xq' ∧ xq'.1 = xq.1
 
+/-- The steps of `R` after which y is a or b: an operation's wrapper, from context c to c₁, passes
+    only through y ∈ {c.y, c₁.y}, so running out of gas inside it reports one of them. -/
+def YIn (R : HostRel (AccCtx × List Nat)) (a b : JAM.Implications) : HostRel (AccCtx × List Nat) :=
+  fun h ω μ xq s ω' μ' xq' => R h ω μ xq s ω' μ' xq' ∧ (xq'.1.2 = a ∨ xq'.1.2 = b)
+
 /-- s reaches s' under R. -/
 def Reaches (p : ByteArray) (R : HostRel (AccCtx × List Nat)) (s s' : St) : Prop :=
   ∃ n, FreeStepsH p R s.i s.ω s.μ (s.c, s.q) s'.i s'.ω s'.μ (s'.c, s'.q) n
@@ -62,7 +67,7 @@ def Impl (p : ByteArray) (R : HostRel (AccCtx × List Nat)) (env : AccEnv) {α :
   | .call op k, Q, s => ∀ ε c', Ends p R s ε c' →
       ∃ s₁, Reaches p (KeepCtx R) s s₁ ∧ s₁.c = s.c ∧
         match ASem.step env op s.c with
-        | some (b, c₁) => ∃ s₂, Reaches p R s₁ s₂ ∧ s₂.c = c₁ ∧ Impl p R env (k b) Q s₂
+        | some (b, c₁) => ∃ s₂, Reaches p (YIn R s.c.2 c₁.2) s₁ s₂ ∧ s₂.c = c₁ ∧ Impl p R env (k b) Q s₂
         | none => ∀ ε' c'', Ends p R s₁ ε' c'' → ε' = .panic ∧ c'' = s.c
 
 theorem Reaches.trans {p : ByteArray} {R : HostRel (AccCtx × List Nat)} {s s' s'' : St}
@@ -71,6 +76,10 @@ theorem Reaches.trans {p : ByteArray} {R : HostRel (AccCtx × List Nat)} {s s' s
 
 theorem Reaches.weaken {p : ByteArray} {R : HostRel (AccCtx × List Nat)} {s s' : St}
     (h : Reaches p (KeepCtx R) s s') : Reaches p R s s' := by
+  obtain ⟨n, h⟩ := h; exact ⟨n, h.weaken fun _ _ _ _ _ _ _ hk => hk.1⟩
+
+theorem Reaches.weakenY {p : ByteArray} {R : HostRel (AccCtx × List Nat)} {a b : JAM.Implications}
+    {s s' : St} (h : Reaches p (YIn R a b) s s') : Reaches p R s s' := by
   obtain ⟨n, h⟩ := h; exact ⟨n, h.weaken fun _ _ _ _ _ _ _ hk => hk.1⟩
 
 /-- A run from s that is known to reach s' continues from s' with the same end. -/
@@ -99,7 +108,7 @@ theorem Impl.pre {p : ByteArray} {R : HostRel (AccCtx × List Nat)} (hR : R.Pins
     intro ε c' he
     obtain ⟨s₁, h1, h2, h3⟩ := h ε c' (he.of_reaches hR hs.weaken)
     refine ⟨s₁, hs.trans h1, h2.trans hc, ?_⟩
-    rw [hc] at h3
+    rw [← hc]
     exact h3
 
 /-- `Impl` is a statement about every run: it holds if it holds whenever there is a run. -/
@@ -131,7 +140,7 @@ theorem Impl.bind {p : ByteArray} {R : HostRel (AccCtx × List Nat)} (hR : R.Pin
     obtain ⟨s₁, h1, h2, h3⟩ := h ε c' he
     refine ⟨s₁, h1, h2, ?_⟩
     show match ASem.step env op s.c with
-      | some (b, c₁) => ∃ s₂, Reaches p R s₁ s₂ ∧ s₂.c = c₁ ∧ Impl p R env ((k b).bind f) Q s₂
+      | some (b, c₁) => ∃ s₂, Reaches p (YIn R s.c.2 c₁.2) s₁ s₂ ∧ s₂.c = c₁ ∧ Impl p R env ((k b).bind f) Q s₂
       | none => ∀ ε' c'', Ends p R s₁ ε' c'' → ε' = .panic ∧ c'' = s.c
     revert h3
     cases ASem.step env op s.c with
@@ -178,7 +187,7 @@ theorem Impl.outcome {p : ByteArray} {R : HostRel (AccCtx × List Nat)} (hR : R.
     | some bc =>
       intro h3
       obtain ⟨s₂, g1, g2, g3⟩ := h3
-      obtain ⟨n, hn⟩ := ih bc.1 s₂ ε c' g3 (he₁.of_reaches hR g1)
+      obtain ⟨n, hn⟩ := ih bc.1 s₂ ε c' g3 (he₁.of_reaches hR g1.weakenY)
       refine ⟨n + 1, ?_⟩
       simp only [ASem.run, hst]
       rw [← g2]; exact hn

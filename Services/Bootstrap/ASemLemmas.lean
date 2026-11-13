@@ -204,4 +204,46 @@ theorem hostWrite_eval (gas : Nat) (ω : Regs) (μ : Memory) (self : ServiceAcco
         ({ self with storage := self.storage.insert key value } : ServiceAccount).balance <;>
       simp [hb, h0] <;> (cases self.storage[key]? <;> rfl)
 
+/-- **`write`**: FULL (an error, the account kept) if the threshold balance would not be met; else
+    this service's account is written (`writeAcct`), for a key and value that fit the operation's
+    memory and an old value shorter than 2⁶³ octets. -/
+theorem step_write (env : AccEnv) (key value : Bytes) (c : AccCtx)
+    (hk : argBase + key.length + value.length ≤ outBase)
+    (hold : ∀ v, c.1.self.storage.get? key = some v → v.length < 2 ^ 63) :
+    step env (.write key value) c =
+      if (writeAcct c.1.self key value).minBalance > (writeAcct c.1.self key value).balance then
+        some (.error (), (c.1.setSelf c.1.self, c.2))
+      else some (.ok (), (c.1.setSelf (writeAcct c.1.self key value), c.2)) := by
+  have r7s : ∀ (ω : Regs) (n : Nat), n < 2 ^ 64 → reg (setR7 ω n) 7 = n := fun ω n hn => by
+    unfold reg setR7 Regs.get; simp; exact hn
+  have hfit : argBase + [key, value].flatten.length ≤ outBase := by simpa [Nat.add_assoc] using hk
+  have hA0 : argAt [key, value] 0 = argBase := by simp [argAt]
+  have hA1 : argAt [key, value] 1 = argBase + key.length := by simp [argAt]
+  have hkey : (argMem [key, value]).readN (argAt [key, value] 0) key.length = key :=
+    argMem_readN [key, value] 0 (by simp) hfit
+  have hval : (argMem [key, value]).readN (argAt [key, value] 1) value.length = value :=
+    argMem_readN [key, value] 1 (by simp) hfit
+  have hrd : ∀ o n, argBase ≤ o → o + n ≤ outBase → (argMem [key, value]).rangeReadable o n = true :=
+    fun o n h1 h2 => Services.Witness.rangeReadable_of (fun j a b => argMem_readable _ (Nat.le_trans h1 a)
+      (by unfold outBase at h2; omega)) (by unfold outBase at h2; omega)
+  have e := hostWrite_eval opGas (argRegs [argAt [key, value] 0, key.length, argAt [key, value] 1, value.length])
+    (argMem [key, value]) c.1.self (argAt [key, value] 0) key.length (argAt [key, value] 1) value.length key value
+    ((reg_argRegs _ 7 (by decide) (by simp [hA0, argBase])).trans (by simp))
+    ((reg_argRegs _ 8 (by decide) (by simp; unfold argBase outBase at hk; omega)).trans (by simp))
+    ((reg_argRegs _ 9 (by decide) (by show argAt [key, value] 1 < 2 ^ 64; rw [hA1]; unfold argBase outBase at *; omega)).trans (by simp))
+    ((reg_argRegs _ 10 (by decide) (by simp; unfold argBase outBase at hk; omega)).trans (by simp))
+    (by unfold opGas memGas Constants.CgasWconst Constants.CgasWkeylinear Constants.CgasWvallinear argBase outBase at *
+        omega)
+    (hrd _ _ (by rw [hA0]; exact Nat.le_refl _) (by rw [hA0]; omega)) hkey (hrd _ _ (by rw [hA1]; omega) (by rw [hA1]; omega)) hval rfl
+  simp only [step, call, AccHost.dispatch, AccHost.onSelf, e]
+  split
+  · simp [r7, r7s _ _ (by decide : Result.FULL < 2 ^ 64)]
+  · have hl : (c.1.self.storage.get? key |>.map List.length |>.getD Result.NONE) < 2 ^ 64 ∧
+        (c.1.self.storage.get? key |>.map List.length |>.getD Result.NONE) ≠ Result.FULL := by
+      cases hv : c.1.self.storage.get? key with
+      | none => simp [Result.NONE, Result.FULL]
+      | some v => have := hold v hv; simp [Result.FULL]; omega
+    simp only [ite_true, Option.bind_eq_bind, Option.bind_some, r7, r7s _ _ hl.1, hl.2, ite_false]
+    rfl
+
 end Services.Bootstrap.ASem

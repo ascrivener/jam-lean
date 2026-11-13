@@ -372,3 +372,44 @@ Proposal:
 
 Cost: small for 1 and 3, which are variants of #140's `ContractC` / `CkLift`. 2 is free once the handlers carry v as a parameter.
 Alternative: a data-flow `DeadAfter`-style check that ω₇'s value reaches only `format!` arguments. That is harder to state and to check.
+
+## Proposal: `Impl`, how a binary run implements a `Prog AOp`
+
+The items loop's body (`onWorkItem`, `onTransfer`) and everything after it interleave plain code
+with host calls. So these steps need a statement form that composes along `Prog.bind`, and the
+lift from it to `accumulate_spec` needs proving once.
+
+**`Impl R p Q (i, ω, μ, c)`.** From the PVM state (i, ω, μ) with context c, the gas-free run under R
+implements `p : Prog AOp α` and, when p returns a, reaches a state satisfying `Q a`. Defined by
+recursion on p:
+- **`pure a`:** a run to some state satisfying `Q a`, with c unchanged except by context-keeping
+  host calls (`log`, `gas`, `fetch`, `info`, `read`, `lookup`). Their effect on (x, y) is the
+  identity.
+- **`panic`:** a run to a trap, with c unchanged as above.
+- **`call op k`:** a run to the host call(s) implementing `op` (the SDK wrapper), with c unchanged up
+  to that point. Then one of:
+  - `ASem.step env op c = some (b, c')`, and the run continues to a state from which
+    `Impl R (k b) Q` holds with context c';
+  - `ASem.step env op c = none`, and the run traps.
+
+**Composition.**
+- `Impl_bind`: `Impl R p (fun a s => Impl R (f a) Q s) s → Impl R (p >>= f) Q s`.
+- `Impl_for`: the induction over `for it in rest`, with `Q` the loop invariant at 6782.
+- The per-wrapper lemmas (step 2 of the plan: one per `AOp`) are the `call` case.
+
+**The lift, proved once (`Impl_spec`).** Suppose `Impl (accContractG env) (Spec.accumulate C t)
+(fun _ s => s at the halt 15359)` holds from instruction 5. Then
+`∃ n, ASem.outcome (ASem.run n …) = (Ψ_A's state, transfers, yield, provisions)`:
+- A halt gives n = all operations, and the outcome is x.
+- A trap gives `panicked`, and the outcome is y.
+- Ψ_M running out of gas inside the k-th operation's host calls gives n = k − 1 (`stopped`), and
+  the outcome is y. This works because y changes only at `checkpoint`, which is itself an
+  operation, and the context-keeping calls between operations keep y (`dispatch_ctx_snd`).
+
+This uses `psiM_of_freeRunH_anyG` (the `gas` proposal) and `psiARun_eq`.
+
+**What is needed before the items loop.**
+- The `Impl` definition and `Impl_bind`, small.
+- `Impl_spec`, medium: an induction over p, alongside the run's host calls.
+- The wrapper lemmas for the `AOp`s the loop uses: `read`, `write`, `remove`, `checkpoint`. The loop
+  body then composes these with frame-only code.

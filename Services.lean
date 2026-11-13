@@ -215,6 +215,10 @@ import Services.Bootstrap.Alloc.ReallocFallbackHeap
 import Services.Bootstrap.Alloc.ReallocFallbackWrap
 import Services.Bootstrap.Alloc.ReallocCases
 import Services.Bootstrap.Alloc.Pages
+import Services.Bootstrap.Encode.Variants
+import Services.Bootstrap.Encode.Yield
+import Services.Bootstrap.Encode.Prefix
+import Services.Bootstrap.Encode.Loop
 import Services.Bootstrap.Spec
 import Services.Bootstrap.SpecLemmas.Codec
 import Services.Bootstrap.SpecLemmas.Refine

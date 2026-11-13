@@ -75,7 +75,7 @@ theorem vd_loop {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env 
       by rw [rdN_frame (fun j hj => fr1 _ (by omega) (by omega) (by omega))]; exact hd.has⟩
   have rvt1 : rdN μ1 (75976 + 24) 8 = 1788 := by
     rw [rdN_frame (fun j hj => k1 _ (by omega) (by omega))]; exact rvt
-  rcases debug_entry (p := p) (P := P) (R := R) env pb S0 S1 HA HR μA sA spA 37527 q 3 2300 1788
+  rcases debug_entry (p := p) (P := P) (R := R) env pb S0 S1 600 (Nat.le_refl _) HA HR μA sA spA 37527 q 3 2300 1788
       (ref_u8_ok env pb S0 S1 HA HR μA sA spA q hS (by simpa using helts 0 (by omega)))
       x ω1 μ1 s T F W (T + 16) (T + 32) 75976 cap len 1254 26872 q (k + 1) h H1 hba hf1 KA1 hd1 hh
       a0 (a1.trans h1) (a5.trans h5) (a6.trans h6) a7 a8 a9 ⟨by omega, by omega⟩ ⟨by decide, by decide⟩ rvt1
@@ -142,24 +142,40 @@ theorem ValAt.rdN {env : RefineHost.Env} {pb S0 S1 spA a o n : Nat} {sA s : Stat
     (K : Keeps pb spA (fun _ => False) sA μA μ s) (ho : o + 8 ≤ n) : rdN μ (a + o) 8 = rdN μA (a + o) 8 :=
   rdN_frame (fun j hj => by rw [show a + o + j = a + (o + j) by omega]; exact h.read H K _ (by omega))
 
-/-- **`<&Vec<u8> as Debug>::fmt`** (26807, plain options) as an argument: a reference at v (where
-    `ValAt` puts it) to a `Vec<u8>` (cap, ptr, len) whose words and len octets are where `ValAt`
-    puts them; at most 5·len + 2 octets. It needs 768 octets of stack below the caller (Z). -/
-theorem vec_u8_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
+/-- The body of `vec_u8_ok`, for a reference at v whose word (the `Vec`'s address vec) is read in
+    the memory the call starts from: readable there, above sp or below the heap's top. -/
+theorem vec_u8_core {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
     (pb S0 S1 Z : Nat) (hZ : 768 ≤ Z) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
     (μA : Memory) (sA : State) (spA v vec ptr len : Nat) (hS : S0 ≤ spA)
-    (hv : ValAt μA sA spA S1 v 8) (rv : rdN μA v 8 = vec) (hvec : ValAt μA sA spA S1 vec 24)
+    (hvec : ValAt μA sA spA S1 vec 24)
     (rp : rdN μA (vec + 8) 8 = ptr) (rl : rdN μA (vec + 16) 8 = len)
     (helts : ∀ j, j < len → ValAt μA sA spA S1 (ptr + j) 1) (hpl : ptr + len < 4294967296)
-    (hrvt : rdN μA 76000 8 = 1788) :
-    ArgOk p P R env pb S0 S1 Z μA sA spA 26807 v (5 * len + 2) (2147483648 + 4500 * len + 5000) := by
-  intro ω μ x s sp F W cap len0 ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hWA hF hn
+    (hrvt : rdN μA 76000 8 = 1788)
+    (ω : Regs) (μ : Memory) (x : X) (s : State) (sp F W cap len0 ret t v5 v6 : Nat)
+    (H : HeapCtx env pb S0 S1 μ s) (hba : s.base % 8 = 0) (K : Keeps pb spA (fun _ => False) sA μA μ s)
+    (hf : Fmtr sA s μ F W cap len0)
+    (h0 : ω[0] = UInt64.ofNat ret) (h1 : ω[1] = UInt64.ofNat sp) (h5 : ω[5] = UInt64.ofNat v5)
+    (h6 : ω[6] = UInt64.ofNat v6) (h7 : ω[7] = UInt64.ofNat v) (h8 : ω[8] = UInt64.ofNat F)
+    (hv5 : v5 < 18446744073709551616) (hv6 : v6 < 18446744073709551616)
+    (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t)
+    (hbt : P.isBlockStart t = true)
+    (hsp : S0 + Z ≤ sp ∧ sp % 8 = 0 ∧ 2147483648 + Z ≤ sp) (hspA : sp ≤ spA) (hW : sp ≤ W ∧ W + 24 ≤ S1)
+    (hWA : W + 24 ≤ spA) (hF : sp ≤ F ∧ F + 24 ≤ S1 ∧ (F + 24 ≤ W ∨ W + 24 ≤ F))
+    (hn : len0 + (5 * len + 2) < 134217728)
+    (hrv : ∀ b, v ≤ b → b < v + 8 → μ.readable b = true)
+    (hlv : (sp ≤ v ∧ v + 8 ≤ S1) ∨ v + 8 ≤ 2147483648) (rv' : rdN μ v 8 = vec) :
+    (∃ ω' μ' x' s' cap' n, n ≤ 5 * len + 2 ∧
+      FreeStepsH p R 26807 ω μ x t ω' μ' x' (7 * n + 2 * (cap' - cap) + (2147483648 + 4500 * len + 5000)) ∧
+      HeapCtx env pb S0 S1 μ' s' ∧ s'.base = s.base ∧ Fmtr sA s' μ' F W cap' (len0 + n) ∧ cap ≤ cap' ∧
+      cap' ≤ max cap (max 8 (2 * (len0 + n))) ∧
+      Keeps pb sp (fun a => W ≤ a ∧ a < W + 24) sA μ μ' s' ∧
+      ω'[0] = UInt64.ofNat ret ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = UInt64.ofNat v5 ∧
+      ω'[6] = UInt64.ofNat v6 ∧ ω'[7] = UInt64.ofNat 0) ∨
+    Exhausts p R pb 26807 ω μ x (1073741824 + (2147483648 + 4500 * len + 5000)) := by
   have hS1 := H.hS1
   have hSb := H.hSb
   have hst : ∀ a, S0 ≤ a → a < S1 → μ.writable a = true := H.st
-  obtain ⟨hrv, hlv⟩ := hv.readable (by decide) H hS hspA K
   obtain ⟨hrvec, hlvec⟩ := hvec.readable (by decide) H hS hspA K
-  have rv' : rdN μ v 8 = vec := by rw [show v = v + 0 by rfl, hv.rdN H K (by omega)]; exact rv
   have rp' : rdN μ (vec + 8) 8 = ptr := by rw [hvec.rdN H K (by omega)]; exact rp
   have rl' : rdN μ (vec + 16) 8 = len := by rw [hvec.rdN H K (by omega)]; exact rl
   have hptr : ptr < 18446744073709551616 := by omega
@@ -287,5 +303,43 @@ theorem vec_u8_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (en
   · rw [show len0 + (1 + n3 + 1) = len0 + 1 + n3 + 1 by omega]
     have : cap2 ≤ max cap (max 8 (2 * (len0 + 1))) := hc2
     omega
+
+
+/-- **`<&Vec<u8> as Debug>::fmt`** (26807, plain options) as an argument: a reference at v (where
+    `ValAt` puts it) to a `Vec<u8>` (cap, ptr, len) whose words and len octets are where `ValAt`
+    puts them; at most 5·len + 2 octets. It needs 768 octets of stack below the caller (Z). -/
+theorem vec_u8_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
+    (pb S0 S1 Z : Nat) (hZ : 768 ≤ Z) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
+    (μA : Memory) (sA : State) (spA v vec ptr len : Nat) (hS : S0 ≤ spA)
+    (hv : ValAt μA sA spA S1 v 8) (rv : rdN μA v 8 = vec) (hvec : ValAt μA sA spA S1 vec 24)
+    (rp : rdN μA (vec + 8) 8 = ptr) (rl : rdN μA (vec + 16) 8 = len)
+    (helts : ∀ j, j < len → ValAt μA sA spA S1 (ptr + j) 1) (hpl : ptr + len < 4294967296)
+    (hrvt : rdN μA 76000 8 = 1788) :
+    ArgOk p P R env pb S0 S1 Z μA sA spA 26807 v (5 * len + 2) (2147483648 + 4500 * len + 5000) := by
+  intro ω μ x s sp F W cap len0 ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hWA hF hn
+  intro ω μ x s sp F W cap len0 ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hWA hF hn
+  obtain ⟨hrv, hlv⟩ := hv.readable (by decide) H hS hspA K
+  exact vec_u8_core env pb S0 S1 Z hZ HA HR μA sA spA v vec ptr len hS hvec rp rl helts hpl hrvt ω μ x s sp F W
+    cap len0 ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hWA hF hn hrv hlv
+    (by rw [show v = v + 0 by rfl, hv.rdN H K (by omega)]; exact rv)
+
+/-- **`<&Vec<u8> as Debug>::fmt`** (26807, plain options) as an entry or field (`RefOk`): the slot
+    holds the address a of a `Vec<u8>` (cap, ptr, len) whose words and len octets are where `ValAt`
+    puts them; at most 5·len + 2 octets. -/
+theorem ref_vec_u8_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
+    (pb S0 S1 Z : Nat) (hZ : 768 ≤ Z) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
+    (μA : Memory) (sA : State) (spA a ptr len : Nat) (hS : S0 ≤ spA)
+    (hvec : ValAt μA sA spA S1 a 24)
+    (rp : rdN μA (a + 8) 8 = ptr) (rl : rdN μA (a + 16) 8 = len)
+    (helts : ∀ j, j < len → ValAt μA sA spA S1 (ptr + j) 1) (hpl : ptr + len < 4294967296)
+    (hrvt : rdN μA 76000 8 = 1788) :
+    RefOk p P R env pb S0 S1 Z μA sA spA 26807 a (5 * len + 2) (2147483648 + 4500 * len + 5000) := by
+  intro ω μ x s sp F W cap len0 ret t v5 v6 v H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hWA hF hn
+    hv ra
+  have hst : ∀ b, S0 ≤ b → b < S1 → μ.writable b = true := H.st
+  have := H.hS1
+  exact vec_u8_core env pb S0 S1 Z hZ HA HR μA sA spA v a ptr len hS hvec rp rl helts hpl hrvt ω μ x s sp F W
+    cap len0 ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hWA hF hn
+    (fun b h1 h2 => Memory.readable_of_writable (hst b (by omega) (by omega))) (Or.inl ⟨hv.1, hv.2.1⟩) ra
 
 end Services.Bootstrap.Fmt

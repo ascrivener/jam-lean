@@ -52,7 +52,7 @@ theorem ref_u64_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (e
     (pb S0 S1 : Nat) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
     (μA : Memory) (sA : State) (spA a : Nat) (hS : S0 ≤ spA) (ha : spA ≤ a ∧ a + 8 < 4294967296)
     (hra : ∀ b, a ≤ b → b < a + 8 → μA.readable b = true) :
-    RefOk p P R env pb S0 S1 μA sA spA 37589 a 20 2950 := by
+    RefOk p P R env pb S0 S1 600 μA sA spA 37589 a 20 2950 := by
   intro ω μ x s sp F W cap len ret t v5 v6 v H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hWA hF hn
     hv ra
   have hS1 := H.hS1
@@ -61,7 +61,7 @@ theorem ref_u64_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (e
     ⟨by omega, by omega⟩ h7 h8 hf.opts ra (fun b h1 h2 => Memory.readable_of_writable (hst b (by omega) (by omega)))
     (fun b h1 h2 => Memory.readable_of_writable (hst b (by omega) (by omega)))
   rcases dec64 (p := p) (P := P) (R := R) env pb S0 S1 HA HR x ω1 μ sA s sp F W a cap len ret t v5 v6 H hba hf
-      (a0.trans h0) (a1.trans h1) (a5.trans h5) (a6.trans h6) a7 a8 ⟨hv5, hv6⟩ hret hjt hbt hsp hW hF
+      (a0.trans h0) (a1.trans h1) (a5.trans h5) (a6.trans h6) a7 a8 ⟨hv5, hv6⟩ hret hjt hbt ⟨hsp.1, hsp.2.1, by omega⟩ hW hF
       ⟨by omega, ha.2⟩ (fun b h1 h2 => K.readable H hS (by omega) (hra b h1 h2)) (by omega) with
     ⟨ω2, μ2, x2, s2, cap2, n, hn', run2, rest⟩ | hx
   · exact Or.inl ⟨ω2, μ2, x2, s2, cap2, n, hn', (run1.trans run2).mono (by omega), rest⟩
@@ -73,7 +73,7 @@ theorem ref_hce_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (e
     (pb S0 S1 : Nat) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
     (μA : Memory) (sA : State) (spA a : Nat) (hS : S0 ≤ spA) (ha : ValAt μA sA spA S1 a 1)
     (htag : rdN μA a 1 < 8) (htab : HceTab μA) :
-    RefOk p P R env pb S0 S1 μA sA spA 37312 a 15 2200 := by
+    RefOk p P R env pb S0 S1 600 μA sA spA 37312 a 15 2200 := by
   intro ω μ x s sp F W cap len ret t v5 v6 v H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hWA hF hn
     hv ra
   have hS1 := H.hS1
@@ -106,7 +106,7 @@ theorem ref_hce_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (e
 theorem res_case {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
     (pb S0 S1 Z : Nat) (hZ : 744 ≤ Z) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
     (μA : Memory) (sA : State) (spA e a Mf Cf fn nm nl vt ret' i : Nat)
-    (hR : RefOk p P R env pb S0 S1 μA sA spA e a Mf Cf) (hMC : Mf ≤ 20 ∧ Cf ≤ 2950)
+    (hR : RefOk p P R env pb S0 S1 600 μA sA spA e a Mf Cf) (hMC : Mf ≤ 20 ∧ Cf ≤ 2950)
     (hnm : 65536 ≤ nm ∧ nm + nl + 24 ≤ 77144 ∧ 0 < nl ∧ nl ≤ 3)
     (hvt : 65536 ≤ vt ∧ vt + 32 ≤ 77144) (rfn : rdN μA (vt + 24) 8 = fn)
     (hfn : 0 < fn ∧ fn ≤ 2806 ∧ fn % 2 = 0) (hje : P.jumpTable.getD (fn / 2 - 1) 0 = e)
@@ -155,7 +155,7 @@ theorem res_case {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env
   have KA1 : Keeps pb spA (fun _ => False) sA μA μ1 s := by
     have := K.trans' (K1.lift (sp' := spA) hspA (fun b h hb => by omega))
     rwa [Nat.max_self] at this
-  rcases debug_tuple1 (p := p) (P := P) (R := R) env pb S0 S1 HA HR μA sA spA e a Mf Cf fn hR x ω1 μ1 s (sp - 16)
+  rcases debug_tuple1 (p := p) (P := P) (R := R) env pb S0 S1 600 (Nat.le_refl _) HA HR μA sA spA e a Mf Cf fn hR x ω1 μ1 s (sp - 16)
       F W nm nl (sp - 16) vt cap len ret' i v5 v6 H1 hba hf1 KA1 a0 a1 a5 a6 a7 a8 a9 a10 a11 hv5
       ⟨hnm.1, by omega, hnm.2.2.1⟩ (fun b h1 h2 => hf1.vrd b (by omega) (by omega)) hvt
       ((ro_keep H1 KA1 (by omega)).trans rfn) hfn hje hbe s0 hr' hjr hbr ⟨by omega, by omega, by omega⟩
@@ -163,7 +163,7 @@ theorem res_case {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env
       (by omega) with
     ⟨ω2, μ2, x2, s2, cap2, n, hn2, run2, H2, hb2, hf2, hc1, hc2, K2, b0, b1, b5, b6, b7⟩ | hx
   · have hst2 : ∀ a, S0 ≤ a → a < S1 → μ2.writable a = true := H2.st
-    obtain ⟨ω3, run3, c0, c1, c5, c6, c7⟩ := rd_r (p := p) (P := P) (R := R) x2 ω2 μ2 (sp - 16) ret t i hi
+    obtain ⟨ω3, run3, c0, c1, c5, c6, c7⟩ := rd_r (p := p) (P := P) (R := R) x2 ω2 μ2 (sp - 16) ret t i (hi.imp_right Or.inl)
       ⟨by omega, by omega⟩ b1
       (by rw [rdN_frame (fun j hj => K2.hi _ (by omega) (by omega) (by omega))]; exact s8) hret hjt hbt
       (fun b h1 h2 => Memory.readable_of_writable (hst2 b (by omega) (by omega)))

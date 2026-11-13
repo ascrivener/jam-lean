@@ -77,4 +77,76 @@ theorem xa {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR 
       ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1]
     post_simp
 
+/-- 5653 … 5661: segment g (a `Vec<u8>` `{cap, ptr, len}` at g, ω₅ = g): g is kept at M + 552 and the
+    `export` call gets ω₇ = ptr, ω₈ = len. Memory changes only at M + 552 … M + 560. -/
+theorem xs1 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] (x : X) (ω : Regs)
+    (μ : Memory) (M g sp sl : Nat) (hM : 65536 ≤ M ∧ M + 632 ≤ 4294967296 ∧ M % 8 = 0)
+    (hg : g + 24 ≤ 4294967296) (hgM : g + 24 ≤ M + 552 ∨ M + 560 ≤ g) (hsp : sp < 18446744073709551616)
+    (hsl : sl < 18446744073709551616)
+    (h1 : ω[1] = UInt64.ofNat M) (h5 : ω[5] = UInt64.ofNat g)
+    (s8 : μ.readN (g + 8) 8 = Num.encodeLE 8 sp) (s16 : μ.readN (g + 16) 8 = Num.encodeLE 8 sl)
+    (hr : ∀ a, g + 8 ≤ a → a < g + 24 → μ.readable a = true)
+    (hw : ∀ a, M + 552 ≤ a → a < M + 560 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 5653 ω μ x 5664 ω' μ' x 4 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      ω'[7] = UInt64.ofNat sp ∧ ω'[8] = UInt64.ofNat sl ∧ μ'.readN (M + 552) 8 = Num.encodeLE 8 g ∧
+      (∀ a, a < 4294967296 → (a < M + 552 ∨ M + 560 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  obtain ⟨hM0, hM1, hM8⟩ := hM
+  have rp := rd8 hsp s8
+  have rl := rd8 hsl s16
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?_, ?_, ?_, ?_⟩
+  rotate_left 2
+  · pvm_go [h1, h5, hM0, hM1, hM8, hg, hgM, hr, hw, rp, rl, rdN_writeN_disjoint, ↓rdN_fold]
+  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
+    all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+      ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, h5]
+    post_simp
+
+/-- 5667 … 5744, after `export` returned v ≠ 2^64 − 1 in ω₇: the `Result<u64, HostCallError>` goes to
+    M + 560 (tag 0 and v at M + 568 when v < 2^64 − 9; tag 1 and the code (2^64 − 2 − v) mod 2^8 at
+    M + 561 otherwise), the `format!` arguments [(M + 552, 1250), (M + 560, 692)] to M + 168 … M + 200, and
+    `alloc::fmt::format` (59375) is called for the `String` at M + 584 with template 66196 and return
+    address 182 (→ 5751). Memory changes only at M + 168 … M + 200 and M + 560 … M + 576. -/
+theorem xs2 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] (x : X) (ω : Regs)
+    (μ : Memory) (M v : Nat) (hM : 65536 ≤ M ∧ M + 632 ≤ 4294967296 ∧ M % 8 = 0)
+    (hv : v < 18446744073709551616) (hv1 : v ≠ 18446744073709551615)
+    (h1 : ω[1] = UInt64.ofNat M) (h7 : ω[7] = UInt64.ofNat v)
+    (hw : ∀ a, M + 168 ≤ a → a < M + 200 → μ.writable a = true)
+    (hw2 : ∀ a, M + 560 ≤ a → a < M + 576 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 5667 ω μ x 59375 ω' μ' x 24 ∧ ω'[0] = UInt64.ofNat 182 ∧ ω'[1] = ω[1] ∧
+      ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ ω'[7] = UInt64.ofNat (M + 584) ∧ ω'[8] = UInt64.ofNat 66196 ∧
+      ω'[9] = UInt64.ofNat (M + 168) ∧
+      μ'.readN (M + 168) 8 = Num.encodeLE 8 (M + 552) ∧ μ'.readN (M + 176) 8 = Num.encodeLE 8 1250 ∧
+      μ'.readN (M + 184) 8 = Num.encodeLE 8 (M + 560) ∧ μ'.readN (M + 192) 8 = Num.encodeLE 8 692 ∧
+      (v < 18446744073709551607 → μ'.readN (M + 560) 1 = [UInt8.ofNat 0] ∧ μ'.readN (M + 568) 8 = Num.encodeLE 8 v) ∧
+      (18446744073709551607 ≤ v → μ'.readN (M + 560) 1 = [UInt8.ofNat 1] ∧
+        μ'.readN (M + 561) 1 = [UInt8.ofNat (18446744073709551614 - v)]) ∧
+      (∀ a, a < 4294967296 → (a < M + 168 ∨ M + 200 ≤ a) → (a < M + 560 ∨ M + 576 ≤ a) →
+        μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  obtain ⟨hM0, hM1, hM8⟩ := hM
+  have hv1' : ¬ v = 18446744073709551615 := hv1
+  rw [show ω = regsNF ω [] from rfl]
+  by_cases hok : v < 18446744073709551607
+  · refine ⟨?_, ?_, ?_, ?_⟩
+    rotate_left 2
+    · pvm_go [h1, h7, hM0, hM1, hM8, hv, hok, hw, hw2, rdN_writeN_disjoint, ↓rdN_fold]
+    · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun _ => ?_, fun h => absurd h (by omega),
+        fun a ha0 ha1 ha2 => ?_, fun a => ?_, fun a => ?_⟩
+      all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+        ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1]
+      post_simp
+      all_goals try exact ⟨trivial, trivial⟩
+  · have hge : 18446744073709551607 ≤ v := by omega
+    refine ⟨?_, ?_, ?_, ?_⟩
+    rotate_left 2
+    · pvm_go [h1, h7, hM0, hM1, hM8, hv, hok, hge, hv1', hw, hw2, rdN_writeN_disjoint, ↓rdN_fold]
+    · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun h => absurd h hok, fun _ => ?_,
+        fun a ha0 ha1 ha2 => ?_, fun a => ?_, fun a => ?_⟩
+      all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+        ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1]
+      post_simp
+      all_goals try exact ⟨trivial, trivial⟩
+
 end Services.Bootstrap.Refine.Export

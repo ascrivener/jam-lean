@@ -14,6 +14,8 @@ service's storage, then `Option<Vec<u8>>` at out, with the context and the answe
   under its lock, the second Ω_R into it, `Some(Vec { |w|, ptr, |w| })` (48102); or `alloc_impl`
   returned null (48047, ω₇ = 0) and the run reaches the allocation-failure trap 47977.
 
+`get_call` puts the three together, with the output as `GetOut`.
+
 The key is read twice, so it must survive the allocation: `get_some` takes it on the stack above
 the frame or in an allocated chunk's data (the allocator keeps both). Values with |w| + 31 ≥ 2³⁶ (the 32-bit unit count overflows) and longer than 2³⁷ − 32
 (the size check traps) are not covered yet.
@@ -51,7 +53,7 @@ theorem get_none {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env
     (hwf : ∀ a, sp - 48 ≤ a → a < sp → μ.writable a = true)
     (hwo : ∀ a, out ≤ a → a < out + 8 → μ.writable a = true)
     (hk : μ.rangeReadable kO kZ = true) (hkey : μ.readN kO kZ = key)
-    (dk : kO + kZ ≤ sp - 48 ∨ sp ≤ kO) (hkr : kO + kZ ≤ 4294967296)
+    (dk : ∀ a, kO ≤ a → a < kO + kZ → a < sp - 48 ∨ sp ≤ a) (hkr : kO + kZ ≤ 4294967296)
     (hv : c.1.self.storage.get? key = none) :
     ∃ ω' μ', FreeStepsH p (KeepCtx (accContractS env)) 47857 ω μ (c, f) 47927 ω' μ' (c, f) 40 ∧
       ω'[0] = ω[0] ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
@@ -64,7 +66,7 @@ theorem get_none {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env
     rw [← hk]; unfold Memory.rangeReadable; simp only [rd1]
   have hkey1 : μ1.readN kO kZ = key := by
     rw [← hkey]; apply PVM.Memory.readN_congr; intro j hj
-    exact fr1 _ (by omega) (by omega)
+    exact fr1 _ (by omega) ((dk _ (by omega) (by omega)).imp (fun h => by omega) id)
   have hst : KeepCtx (accContractS env) 4 ω1 μ1 (c, f) .cont (readRegs ω1 none) (readMem μ1 0 0 none) (c, f) := by
     have := read_stepS env ω1 μ1 (c, f) kO kZ 0 0 key (reg_of b7 (by decide))
       (reg_of ((bo 8 (by decide)).trans h8) (by omega)) (reg_of ((bo 9 (by decide)).trans h9) (by omega))
@@ -99,7 +101,7 @@ theorem get_empty {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (en
     (hwf : ∀ a, sp - 48 ≤ a → a < sp → μ.writable a = true)
     (hwo : ∀ a, out ≤ a → a < out + 24 → μ.writable a = true)
     (hk : μ.rangeReadable kO kZ = true) (hkey : μ.readN kO kZ = key)
-    (dk : kO + kZ ≤ sp - 48 ∨ sp ≤ kO) (hkr : kO + kZ ≤ 4294967296)
+    (dk : ∀ a, kO ≤ a → a < kO + kZ → a < sp - 48 ∨ sp ≤ a) (hkr : kO + kZ ≤ 4294967296)
     (hv : c.1.self.storage.get? key = some []) :
     ∃ ω' μ', FreeStepsH p (KeepCtx (accContractS env)) 47857 ω μ (c, f) 47957 ω' μ' (c, f) 40 ∧
       ω'[0] = ω[0] ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
@@ -113,7 +115,7 @@ theorem get_empty {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (en
     rw [← hk]; unfold Memory.rangeReadable; simp only [rd1]
   have hkey1 : μ1.readN kO kZ = key := by
     rw [← hkey]; apply PVM.Memory.readN_congr; intro j hj
-    exact fr1 _ (by omega) (by omega)
+    exact fr1 _ (by omega) ((dk _ (by omega) (by omega)).imp (fun h => by omega) id)
   have hst : KeepCtx (accContractS env) 4 ω1 μ1 (c, f) .cont (readRegs ω1 (some [])) (readMem μ1 0 0 (some [])) (c, f) := by
     have := read_stepS env ω1 μ1 (c, f) kO kZ 0 0 key (reg_of b7 (by decide))
       (reg_of ((bo 8 (by decide)).trans h8) (by omega)) (reg_of ((bo 9 (by decide)).trans h9) (by omega))
@@ -364,5 +366,101 @@ theorem get_some (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
       (fun a h1 h2 => Memory.readable_of_writable (wst a (by omega) (by omega))) wl
     exact Or.inr ⟨ω4, μ4, (((run1.trans (FreeStepsH.host_decode (d_47886 (p := p) (P := P)) hR1 run2)).trans
       run3).trans run4S).mono (by omega), e7', ω5, μ5, run5⟩
+
+/-- What `get` leaves at out for the value v, in the allocator's state s: `None` (the capacity word
+    −1), `Some(Vec { 0, 1, 0 })`, or `Some(Vec { |w|, ptr, |w| })` with w at ptr, the data of an
+    allocated chunk of ⌈|w|/32⌉ + 1 units. -/
+def GetOut (μ : Memory) (out : Nat) (s : State) : Option (List UInt8) → Prop
+  | none => μ.readN out 8 = Num.encodeLE 8 18446744073709551615
+  | some [] => μ.readN out 8 = Num.encodeLE 8 0 ∧ μ.readN (out + 8) 8 = Num.encodeLE 8 1 ∧
+      μ.readN (out + 16) 8 = Num.encodeLE 8 0
+  | some w => ∃ ptr, μ.readN out 8 = Num.encodeLE 8 w.length ∧ μ.readN (out + 8) 8 = Num.encodeLE 8 ptr ∧
+      μ.readN (out + 16) 8 = Num.encodeLE 8 w.length ∧ μ.readN ptr w.length = w ∧
+      (⟨ptr - 32, (w.length + 31) / 32 + 1, true⟩ : Chunk) ∈ chunks s
+
+/-- **The SDK's `get`, 47857 → its return**, for the value v of the key in this service's storage
+    (absent, empty, or |w| + 31 < 2³⁶), with the key on the stack above the frame or in an allocated
+    chunk: either `GetOut` at out, at one of the three returns' `jumpInd` (47927, 47957, 48102), with ω₀,
+    ω₅, ω₆ as at the call, the allocator's context for a state keeping every allocated chunk and its
+    data, and the stack from sp kept off out; or `alloc_impl` returned null (48047, ω₇ = 0, the `heap`
+    reason) and the run reaches the trap 47977. The context and the stream are kept. -/
+theorem get_call (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap : cap < 18446744073709551616)
+    {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
+    (c : AccCtx) (f : Stream) (ω : Regs) (μ : Memory) {hb : Nat} (s : State) (sp out kO kZ S0 S1 : Nat)
+    (key : List UInt8) (H : HeapCtxC env.code pb S0 S1 μ s)
+    (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat out) (h8 : ω[8] = UInt64.ofNat kO)
+    (h9 : ω[9] = UInt64.ofNat kZ) (hkZ : kZ < 2 ^ 32)
+    (hsp : 2147483800 + 48 ≤ sp) (hSTk : S0 + 48 + 152 ≤ sp)
+    (hout : sp ≤ out ∧ out + 24 ≤ S1)
+    (hkO : (sp ≤ kO ∧ kO + kZ ≤ S1) ∨
+      ∃ d ∈ chunks s, d.used = true ∧ ∀ a, kO ≤ a → a < kO + kZ → InDataA d a)
+    (hkr : kO + kZ ≤ 4294967296)
+    (hkey : μ.readN kO kZ = key)
+    (hfit : ∀ w, c.1.self.storage.get? key = some w → w.length + 31 < 68719476736) :
+    (∃ e s' ω' μ' n, (e = 47927 ∨ e = 47957 ∨ e = 48102) ∧
+      FreeStepsH p (KeepCtx (accContractS env)) 47857 ω μ (c, f) e ω' μ' (c, f) n ∧
+      ω'[0] = ω[0] ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      GetOut μ' out s' (c.1.self.storage.get? key) ∧
+      HeapCtxC env.code pb S0 S1 μ' s' ∧ (∀ c ∈ chunks s, c.used = true → c ∈ chunks s') ∧
+      (∀ c ∈ chunks s, c.used = true → ∀ a, InDataA c a → μ'.read a = μ.read a) ∧
+      (∀ a, a < 4294967296 → sp ≤ a → (a < out ∨ out + 24 ≤ a) → μ'.read a = μ.read a)) ∨
+    (∃ ω' μ' n, FreeStepsH p (KeepCtx (accContractS env)) 47857 ω μ (c, f) 48047 ω' μ' (c, f) n ∧
+      ω'[7] = UInt64.ofNat 0 ∧
+      ∃ ω'' μ'', FreeStepsH p (KeepCtx (accContractS env)) 48047 ω' μ' (c, f) 47977 ω'' μ'' (c, f) 10) := by
+  have hst := H.st
+  have hS1 := H.hS1
+  have hb0 := H.hb0
+  have hbT := H.hbT
+  have kloc : ∀ a, kO ≤ a → a < kO + kZ → (sp ≤ a ∧ a < S1) ∨ (a < 2147483648 ∧ μ.readable a = true) := by
+    intro a h1 h2
+    rcases hkO with ⟨k1, k2⟩ | ⟨d, hd, hu, hin⟩
+    · exact .inl ⟨by omega, by omega⟩
+    · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hd hu
+      have ha := hin a h1 h2
+      refine .inr ⟨?_, Memory.readable_of_writable (heapC_writable_data H hd hu ha)⟩
+      unfold InDataA at ha; omega
+  have hk : μ.rangeReadable kO kZ = true := Services.Witness.rangeReadable_of (fun a h1 h2 => by
+    rcases kloc a h1 h2 with ⟨k1, k2⟩ | ⟨-, k⟩
+    · exact Memory.readable_of_writable (hst a (by omega) k2)
+    · exact k) hkr
+  have dk : ∀ a, kO ≤ a → a < kO + kZ → a < sp - 48 ∨ sp ≤ a := fun a h1 h2 => by
+    rcases kloc a h1 h2 with ⟨k1, -⟩ | ⟨k1, -⟩
+    · exact .inr k1
+    · exact .inl (by omega)
+  -- the stack-only cases keep the allocator's context
+  have stackOnly : ∀ μ' : Memory, (∀ a, a < 4294967296 → (a < sp - 48 ∨ sp ≤ a) → (a < out ∨ out + 24 ≤ a) →
+      μ'.read a = μ.read a) → (∀ a, μ'.writable a = μ.writable a) →
+      HeapCtxC env.code pb S0 S1 μ' s ∧ (∀ c ∈ chunks s, c.used = true → ∀ a, InDataA c a → μ'.read a = μ.read a) := by
+    intro μ' fr wr
+    have lo : ∀ a, a < 2147483648 → μ'.read a = μ.read a := fun a ha => fr a (by omega) (.inl (by omega)) (.inl (by omega))
+    refine ⟨HeapCtxC.keep_hi H lo wr, fun d hd hu a ha => lo a ?_⟩
+    have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hd hu
+    unfold InDataA at ha; omega
+  cases hv : c.1.self.storage.get? key with
+  | none =>
+    obtain ⟨ω', μ', run, g0, g1, g5, g6, o0, fr, rd, wr⟩ :=
+      get_none (p := p) (P := P) env c f ω μ sp out kO kZ key h1 h7 h8 h9 hkZ ⟨by omega, by omega⟩ ⟨hout.1, by omega⟩
+        (fun a h1 h2 => hst a (by omega) (by omega)) (fun a h1 h2 => hst a (by omega) (by omega)) hk hkey dk hkr hv
+    obtain ⟨H', kd⟩ := stackOnly μ' (fun a h0 hs ho => fr a h0 hs (by omega)) wr
+    exact .inl ⟨47927, s, ω', μ', _, .inl rfl, run, g0, g1, g5, g6, o0, H', fun _ h _ => h, kd,
+      fun a h0 hs ho => fr a h0 (.inr hs) (by omega)⟩
+  | some w =>
+    cases w with
+    | nil =>
+      obtain ⟨ω', μ', run, g0, g1, g5, g6, o0, o8, o16, fr, rd, wr⟩ :=
+        get_empty (p := p) (P := P) env c f ω μ sp out kO kZ key h1 h7 h8 h9 hkZ ⟨by omega, by omega⟩
+          ⟨hout.1, by omega⟩ (fun a h1 h2 => hst a (by omega) (by omega)) (fun a h1 h2 => hst a (by omega) (by omega))
+          hk hkey dk hkr hv
+      obtain ⟨H', kd⟩ := stackOnly μ' fr wr
+      exact .inl ⟨47957, s, ω', μ', _, .inr (.inl rfl), run, g0, g1, g5, g6, ⟨o0, o8, o16⟩, H',
+        fun _ h _ => h, kd, fun a h0 hs ho => fr a h0 (.inr hs) ho⟩
+    | cons b w =>
+      rcases get_some (p := p) (P := P) (hb := hb) env cap pb hcap1 hcap c f ω μ s sp out kO kZ S0 S1 key (b :: w) H h1 h7 h8 h9 hkZ
+          (by simp) (hfit _ hv) hsp hSTk hout hkO hkr hkey hv with
+        ⟨ptr, s', ω', μ', run, g0, g1, g5, g6, o0, o8, o16, od, H', keep, keepd, hnew, -, fr⟩ |
+        ⟨ω', μ', run, e7, ω'', μ'', run'⟩
+      · exact .inl ⟨48102, s', ω', μ', _, .inr (.inr rfl), run, g0, g1, g5, g6,
+          ⟨ptr, o0, o8, o16, od, hnew⟩, H', keep, keepd, fr⟩
+      · exact .inr ⟨ω', μ', _, run, e7, ω'', μ'', run'⟩
 
 end Services.Bootstrap.Acc

@@ -105,8 +105,7 @@ theorem toCheck {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
         refine readMem_of (a := 4278058720) (by simp [reg, Regs.get, PVM.getElem_regsNF, PVM.lookup_cons_nat]) hrr ?_
         rw [readN32_split, ← mc, readN32_split]
         simp only [Nat.reduceAdd, m0, m1, m2, m3]
-        simp (disch := pvm_arith) only [PVM.Memory.readN_writeN_same, PVM.Memory.readN_writeN_disjoint,
-          PVM.Num.length_encodeLE, List.length_cons, List.length_nil, PVM.two32]
+        simp (disch := pvm_arith) only [PVM.Memory.readN_writeN_same, PVM.Memory.readN_writeN_disjoint]
     case b =>
       rw [upgrade_eq env _ _ x c ?hread]
       case hread =>
@@ -119,8 +118,7 @@ theorem toCheck {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
         refine readMem_of (a := 4278058720) (by simp [reg, Regs.get, PVM.getElem_regsNF, PVM.lookup_cons_nat]) hrr ?_
         rw [readN32_split, ← mc, readN32_split]
         simp only [Nat.reduceAdd, m0, m1, m2, m3]
-        simp (disch := pvm_arith) only [PVM.Memory.readN_writeN_same, PVM.Memory.readN_writeN_disjoint,
-          PVM.Num.length_encodeLE, List.length_cons, List.length_nil, PVM.two32]
+        simp (disch := pvm_arith) only [PVM.Memory.readN_writeN_same, PVM.Memory.readN_writeN_disjoint]
       have r8 : reg (regsNF ω [(0, UInt64.ofNat 428), (1, UInt64.ofNat 4278057144), (7, UInt64.ofNat 4278058720),
           (8, UInt64.ofNat g), (9, UInt64.ofNat m), (10, UInt64.ofNat w1), (11, UInt64.ofNat w2),
           (12, UInt64.ofNat w3)]) 8 = g := by
@@ -136,14 +134,12 @@ theorem toCheck {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
   case post =>
     refine ⟨?_, ?_, ?_, fun a ha hrs => ?_, fun a => ?_, fun a => ?_⟩
     all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat,
-      Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none,
-      PVM.Memory.readN_writeN_same, PVM.Memory.read_writeN_disjoint, PVM.Memory.readable_writeN,
-      PVM.Memory.writable_writeN, PVM.Num.length_encodeLE, List.length_cons, List.length_nil, PVM.two32]
+      Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some',
+      PVM.Memory.readN_writeN_same, PVM.Memory.readable_writeN, PVM.Memory.writable_writeN]
     · rfl
     · rfl
     · simp only [List.mem_cons, List.not_mem_nil, or_false, forall_eq_or_imp, forall_eq] at hrs
-      simp (disch := pvm_arith) only [PVM.Memory.read_writeN_disjoint, PVM.Num.length_encodeLE,
-        List.length_cons, List.length_nil, PVM.two32]
+      simp (disch := pvm_arith) only [PVM.Memory.read_writeN_disjoint]
 
 /-- **After `upgrade`, on OK**: 49541 checks ω₇ = 0, pops the return address 428 from sp − 8 and
     returns to 11798, which calls `alloc(9, 1)` (40494) with return address ω₀ = 430. Memory is
@@ -206,5 +202,21 @@ theorem mid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env : Ac
     all_goals post_simp
     simp only [List.mem_cons, List.not_mem_nil, or_false, forall_eq] at hrs
     post_simp
+
+/-- **`alloc` returned null** (ω₇ = 0 at 11810): the branch goes to the trap at 15365, so
+    accumulate ends in ☇ (GP §A.5.1). Any `R`: no host call is made. -/
+theorem allocNull {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {X : Type}
+    {R : HostRel X} (x : X) (ω : Regs) (μ : Memory) (h7 : ω[7] = 0) :
+    ∃ ω' μ', FreeRunH p R 11810 ω μ x .panic ω' μ' x := by
+  have run : ∃ ω', FreeStepsH p R 11810 ω μ x 15365 ω' μ x 1 := by
+    rw [show ω = regsNF ω [] from rfl]
+    refine ⟨?ω', ?run⟩
+    case run => pvm_go [h7]
+  obtain ⟨ω', hs⟩ := run
+  have hd := d_15365 (p := p) (P := P)
+  have hst : P.freeStep 15365 ω' μ = (.panic, P.next 15365, ω', μ) := by
+    simp [Program.freeStep, hd.2.1, Program.exec, Program.finalState, memoryException]
+  have he := FreeExit.step (p := p) hd.1 hst (by decide)
+  exact ⟨ω', μ, hs.run (.exit (FreeRun.exit (by simpa using he)) (by simp))⟩
 
 end Services.Bootstrap.Acc.Handlers.Upgrade

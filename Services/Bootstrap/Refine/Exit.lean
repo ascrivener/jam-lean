@@ -103,4 +103,46 @@ theorem dr0 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ 
     all_goals try assumption
     all_goals try (congr 1; omega)
 
+/-- 5042 … 6120: at the loop head with the cursor at its end (M + 144 = M + 120), the loop ends. -/
+theorem ex0 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory) (M en : Nat)
+    (hM : M + 152 ≤ 4294967296) (hen : en < 18446744073709551616) (h1 : ω[1] = UInt64.ofNat M)
+    (s144 : μ.readN (M + 144) 8 = Num.encodeLE 8 en) (s120 : μ.readN (M + 120) 8 = Num.encodeLE 8 en)
+    (hr : ∀ a, M + 120 ≤ a → a < M + 152 → μ.readable a = true) :
+    ∃ ω', FreeStepsH p R 5042 ω μ x 6120 ω' μ x 4 ∧ ω'[1] = ω[1] ∧ ω'[5] = UInt64.ofNat en ∧
+      ω'[6] = ω[6] := by
+  have rc := rd8 hen s144
+  have re := rd8 hen s120
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?_, ?_, ?_⟩
+  rotate_left
+  · pvm_go [h1, hM, hr, rc, re, ↓rdN_fold]
+  · refine ⟨?_, ?_, ?_⟩
+    all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+      ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1]
+
+/-- 6130 … 6159: the `Debug` line's setup. The arguments at M + 272 are `(&out, 1382)` (the output
+    `Vec<Instruction>` at M + 248 and its `Debug` function), the template is at 66099, the `String` goes
+    to M + 168, and `alloc::fmt::format` (59375) is called with return address 200 (→ 6166). Memory
+    changes only at M + 272 … M + 288. -/
+theorem ex1 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory) (M : Nat)
+    (hM : 65536 ≤ M ∧ M + 304 ≤ 4294967296 ∧ M % 8 = 0) (h1 : ω[1] = UInt64.ofNat M)
+    (hw : ∀ a, M + 272 ≤ a → a < M + 288 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 6130 ω μ x 59375 ω' μ' x 10 ∧
+      ω'[0] = UInt64.ofNat 200 ∧ ω'[1] = UInt64.ofNat M ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      ω'[7] = UInt64.ofNat (M + 168) ∧ ω'[8] = UInt64.ofNat 66099 ∧ ω'[9] = UInt64.ofNat (M + 272) ∧
+      μ'.readN (M + 272) 8 = Num.encodeLE 8 (M + 248) ∧ μ'.readN (M + 280) 8 = Num.encodeLE 8 1382 ∧
+      (∀ a, a < 4294967296 → (a < M + 272 ∨ M + 288 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  obtain ⟨hM0, hM1, hM8⟩ := hM
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?_, ?_, ?_, ?_⟩
+  rotate_left 2
+  · pvm_go [h1, hM0, hM1, hM8, hw]
+  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
+    all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+      ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1]
+    post_simp
+    all_goals try assumption
+    all_goals try (congr 1; omega)
+
 end Services.Bootstrap.Refine.Exit

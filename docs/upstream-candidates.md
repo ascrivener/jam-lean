@@ -63,6 +63,15 @@ These cases have no test vector, so the readings above are untested:
 | 29 | Ed25519 verification is a parameter of the model, so the disputes, assurances and reports vectors' signatures are not verified; the runner rejects all of them exactly when a vector expects `bad_signature`. |
 | 32 | The lookup-anchor conditions of §11.4.1 (x_t ≥ H_T − 𝖫, and h, h' in the ancestor set A): the reports vectors carry no ancestor set and no case for `lookup_anchor_not_recent`. |
 
+## Bootstrap service binary
+
+Behaviour of the bootstrap service's PVM binary that differs from the instruction set it implements.
+These would go to the service's authors, not to the Gray Paper.
+
+| Where | Finding |
+|---|---|
+| `Designate` decode, 35300 … 35315 | The bound check on `keys: BoundedVec<[u8; 336], 3·𝖢>` loads 𝖢 sign-extended (`loadI16`), computes 3·𝖢 and zero-extends it from 16 bits, so the decoder accepts n ≤ (3·𝖢) mod 2¹⁶ instead of n ≤ 3·𝖢. The two agree for 𝖢 < 21846 (the full parameters' 𝖢 = 341 gives 1023); for 𝖢 ≥ 21846 the bound wraps and valid key lists are rejected. Proven as stated in `Decode.Designate.designate_heap` (`hnC : n ≤ 3 * C % 65536`). |
+
 ## Not for upstream
 
 - **The picoalloc model's alignment rounding.** A bug in this repository's own model, not in the

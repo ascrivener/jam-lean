@@ -57,7 +57,9 @@ theorem looked_up_heap {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
       (∀ c ∈ chunks s, c.used = true → ∀ a, InData c a → μ'.read a = μ.read a) ∧
       PagesOut 48 pb μ μ' ∧
       (∀ a, a < 4294967296 → A + 24 ≤ a → (a < rd ∨ rd + 16 ≤ a) → (a < O ∨ O + 32 ≤ a) →
-        μ'.read a = μ.read a)) ∨
+        μ'.read a = μ.read a) ∧
+      (∀ a, a < 196608 → μ'.read a = μ.read a ∧ μ'.readable a = μ.readable a) ∧
+      (∀ a, Glob a → μ'.read a = μ.read a) ∧ (∀ a, S0 ≤ a → μ'.writable a = μ.writable a)) ∨
     (alloc (growTo pb) hb 1 ((n + 31) / 32) s = none ∧ ∃ ω' μ',
       FreeStepsH p (refineContractK cap env) 20626 ω μ x 40611 ω' μ' x (2 * n + 2000) ∧
       ω'[7] = UInt64.ofNat 0) := by
@@ -132,7 +134,7 @@ theorem looked_up_heap {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
       (by rw [o1', d1, m1, k1', g1]) (by rw [o5, d5, m5, k5, g5]) hv6 o7 (by rw [o8, d6, m6, k6, g6]) o9
       (by decide) jte_842 bs_36016 (by omega) (by omega) hn (by omega) (by omega) ⟨by omega, by omega⟩
       ⟨Nat.le_refl _, by omega⟩ (by omega) dR0 dR8 with
-    ⟨q, s', ω8, μ8, ha, run8, v0, v1, v5', v6', vc, vp, vl, vdata, vR0, vR8, H8, keep, cm8, hfresh, kd8, pg8, vfr, -, -, -⟩ |
+    ⟨q, s', ω8, μ8, ha, run8, v0, v1, v5', v6', vc, vp, vl, vdata, vR0, vR8, H8, keep, cm8, hfresh, kd8, pg8, vfr, -, vgl, -⟩ |
     ⟨hna, ω8, μ8, run8, f7⟩
   rotate_left
   · exact Or.inr ⟨hna, ω8, μ8, (run07.trans run8).mono (by omega), f7⟩
@@ -175,7 +177,7 @@ theorem looked_up_heap {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
       unfold InData at hia
       rw [hlow a (by omega), kd8 c hc hu a ⟨hia.1, hia.2⟩]
       exact b6 a (by omega) (Or.inl (by omega)) (Or.inl (by omega)),
-    FreeStepsH.pagesOut H.bd run, ?_⟩
+    FreeStepsH.pagesOut H.bd run, ?_, ?_, ?_, ?_⟩
   · rw [Memory.readN_congr (fun j hj => hlow _ (by omega)), vdata]
     exact Memory.readN_congr (fun j hj => b6 _ (by omega) (by omega) (by omega))
   · have e : ∀ j, j < 8 → μ10.read (rd + j) = μ8.read (rd + j) := fun j hj =>
@@ -186,5 +188,20 @@ theorem looked_up_heap {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
     rw [Memory.readN_congr e, vR8]
   · intro a h0 h1 h2 h3
     rw [nfr a h0 h3]; exact hfar a h0 h1 h2
+  · intro a ha'
+    obtain ⟨kp, kr⟩ := FreeStepsH.keepRO H.bd run
+    refine ⟨kr a (by unfold two32; omega) (Or.inl (by unfold pageSize; omega)) (H.ro a ha'), ?_⟩
+    unfold Memory.readable
+    rw [kp _ (Or.inl (by unfold pageSize; omega))]
+  · intro a ha'
+    have hg := ha'
+    unfold Glob at hg
+    rw [hlow a (by omega), vgl a ha']
+    exact b6 a (by omega) (Or.inl (by omega)) (Or.inl (by omega))
+  · intro a ha'
+    obtain ⟨kp, -⟩ := FreeStepsH.keepRO H.bd run
+    have := H.hSb
+    unfold Memory.writable
+    rw [kp _ (Or.inr (by unfold pageSize; omega))]
 
 end Services.Bootstrap.Decode.LookedUp

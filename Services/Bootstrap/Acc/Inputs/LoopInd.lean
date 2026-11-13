@@ -175,7 +175,7 @@ theorem lp_items {X : Type} (env : HeapHost X) (cap pb N : Nat) {p : ByteArray} 
       (∀ c ∈ chunks st, c.used = true → ∀ a, InDataA c a → (a < q + 184 * L ∨ q + 184 * n ≤ a) →
         μ'.read a = μ.read a) ∧
       (∀ (j : Nat) (e : List UInt8 × (List UInt8 → Memory → Prop)), rest[j]? = some e →
-        ∀ μ'' : Memory, (∀ c ∈ chunks st', c.used = true → ∀ a, InDataA c a → μ''.read a = μ'.read a) →
+        ∀ μ'' : Memory, (∀ c ∈ chunks st', c.used = true → c ≠ Rc → ∀ a, InDataA c a → μ''.read a = μ'.read a) →
           e.2 (μ''.readN (q + 184 * (L + j)) 184) μ'') ∧
       μ'.readN rd 8 = Num.encodeLE 8 (ip + (encs rest).length) ∧
       μ'.readN (rd + 8) 8 = Num.encodeLE 8 (rlen - (encs rest).length)) ∨
@@ -207,18 +207,18 @@ theorem lp_items {X : Type} (env : HeapHost X) (cap pb N : Nat) {p : ByteArray} 
     have hCu1 : C ∈ chunks st1 := keep1 C hC hCu
     have hR1 : Rc ∈ chunks st1 := keep1 Rc hR hRu
     -- the item's slot and its fresh chunks, kept by any later step that keeps st1's chunks' data
-    have keepRep : ∀ μ' : Memory, (∀ c ∈ chunks st1, c.used = true → ∀ a, InDataA c a →
+    have keepRep : ∀ μ' : Memory, (∀ c ∈ chunks st1, c.used = true → c ≠ Rc → ∀ a, InDataA c a →
         (a < q + 184 * (L + 1) ∨ q + 184 * n ≤ a) → μ'.read a = μ1.read a) →
         e.2 (μ'.readN (q + 184 * (L + 0)) 184) μ' := fun μ' hk => by
       have slotk : μ'.readN (q + 184 * L) 184 = μ1.readN (q + 184 * L) 184 :=
-        PVM.Memory.readN_congr fun j hj => hk C hCu1 hCu _ ⟨by omega, by omega⟩ (Or.inl (by omega))
+        PVM.Memory.readN_congr fun j hj => hk C hCu1 hCu (Ne.symm hRC) _ ⟨by omega, by omega⟩ (Or.inl (by omega))
       rw [Nat.add_zero, slotk]
       refine rep μ' fun c hc a ha => ?_
       obtain ⟨hcm, hcu, hcf⟩ := fresh c hc
       have hne : C ≠ c := hcf C hC hCu
       have hap := Services.Bootstrap.Decode.LoopA.InData.apart H1.wf hcm hCu1 hne ha
       unfold Services.Bootstrap.Decode.LoopA.InData at hap
-      exact hk c hcm hcu a ha (by omega)
+      exact hk c hcm hcu (Ne.symm (hcf Rc hR hRu)) a ha (by omega)
     by_cases htl : tail = []
     · subst htl
       simp only [List.length_cons, List.length_nil, Nat.zero_add] at a5 hLn
@@ -242,10 +242,10 @@ theorem lp_items {X : Type} (env : HeapHost X) (cap pb N : Nat) {p : ByteArray} 
         | zero =>
           simp only [List.getElem?_cons_zero, Option.some.injEq] at hj; subst hj
           intro μ'' hag
-          refine keepRep μ'' fun c hc hu a ha _ => ?_
+          refine keepRep μ'' fun c hc hu hcR a ha _ => ?_
           have := Services.Bootstrap.Decode.VecU8.chunk_in H1.wf hc hu
           have := H1.hbT
-          rw [hag c hc hu a ha]
+          rw [hag c hc hu hcR a ha]
           unfold InDataA at ha
           exact lo2 a (by omega)
         | succ j => simp at hj
@@ -304,10 +304,10 @@ theorem lp_items {X : Type} (env : HeapHost X) (cap pb N : Nat) {p : ByteArray} 
           | zero =>
             simp only [List.getElem?_cons_zero, Option.some.injEq] at hj; subst hj
             intro μ'' hag
-            refine keepRep μ'' fun c hc hu a ha hout' => ?_
+            refine keepRep μ'' fun c hc hu hcR a ha hout' => ?_
             have := Services.Bootstrap.Decode.VecU8.chunk_in H1.wf hc hu
             have := H1.hbT
-            rw [hag c (keep' c hc hu) hu a ha]
+            rw [hag c (keep' c hc hu) hu hcR a ha]
             unfold InDataA at ha
             rw [keepd' c hc hu a ha hout', lo2 a (by omega)]
           | succ j =>
@@ -357,7 +357,7 @@ theorem lp_call {X : Type} (env : HeapHost X) (cap pb N : Nat) (hcap1 : 13421772
       (⟨q - 32, (rest.length * 184 + 31) / 32 + 1, true⟩ : Chunk) ∈ chunks st' ∧
       (∀ d ∈ chunks s0, d.used = true → d ≠ ⟨q - 32, (rest.length * 184 + 31) / 32 + 1, true⟩) ∧
       (∀ (j : Nat) (e : List UInt8 × (List UInt8 → Memory → Prop)), rest[j]? = some e →
-        ∀ μ'' : Memory, (∀ c ∈ chunks st', c.used = true → ∀ a, InDataA c a → μ''.read a = μ'.read a) →
+        ∀ μ'' : Memory, (∀ c ∈ chunks st', c.used = true → c ≠ Rc → ∀ a, InDataA c a → μ''.read a = μ'.read a) →
           e.2 (μ''.readN (q + 184 * j) 184) μ'') ∧
       μ'.readN rd 8 = Num.encodeLE 8 (ip + (encs rest).length) ∧
       μ'.readN (rd + 8) 8 = Num.encodeLE 8 (rlen - (encs rest).length)) ∨

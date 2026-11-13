@@ -126,6 +126,23 @@ theorem sext8_lt (y : Nat) : sext 8 y < two64 := by
 theorem sext8_id {y : Nat} (h : y < two64) : sext 8 y = y := by
   simp only [sext, two64, show (8:Nat) ≠ 0 by decide, show (4:Nat) ≠ 0 by decide, ↓reduceIte, Nat.reduceMul, Nat.reducePow, Nat.reduceSub] at *; omega
 
+theorem bitwise_and_eq (a x : Nat) : bitwise (· && ·) a x = (a &&& x) % 2 ^ 64 := by
+  apply Nat.eq_of_testBit_eq
+  intro i
+  simp only [bitwise, Num.testBit_ofBits, Num.bit_eq_testBit, Nat.testBit_mod_two_pow, Nat.testBit_and]
+
+theorem bitwise_and_le (a x : Nat) : bitwise (· && ·) a x ≤ x := by
+  rw [bitwise_and_eq]; exact Nat.le_trans (Nat.mod_le _ _) Nat.and_le_right
+
+theorem alu_andImm (a b x : Nat) : twoRegImmAlu .andImm a b x = some (bitwise (· && ·) b x) := rfl
+
+theorem getD_le_foldr_max : ∀ (l : List Nat) (j : Nat), l.getD j 0 ≤ l.foldr max 0
+  | [], _ => by simp
+  | a :: l, 0 => Nat.le_max_left _ _
+  | a :: l, j + 1 => by
+    simp only [List.getD_cons_succ, List.foldr_cons]
+    exact Nat.le_trans (getD_le_foldr_max l j) (Nat.le_max_right _ _)
+
 theorem bnd_sound (hpre : Pre E st) : ∀ (v : SVal) b, v.bnd st = some b → v.eval E < b := by
   intro v b h
   cases v with
@@ -159,7 +176,15 @@ theorem bnd_sound (hpre : Pre E st) : ∀ (v : SVal) b, v.bnd st = some b → v.
       simp only [SVal.eval]
       rw [alu_shloL, Option.getD_some]
       exact sext8_lt _
-    · cases h
+    · split at h
+      · rename_i hop; subst hop; cases h
+        simp only [SVal.eval]
+        rw [alu_andImm, Option.getD_some]
+        exact Nat.lt_succ_of_le (bitwise_and_le _ _)
+      · cases h
+  | tbl vs i =>
+    simp only [SVal.bnd, Option.some.injEq] at h; subst h
+    exact Nat.lt_succ_of_le (getD_le_foldr_max vs _)
   | sx k w =>
     simp only [SVal.bnd, Option.some.injEq] at h; subst h
     simp only [SVal.eval, u64, unsigned]
@@ -947,15 +972,97 @@ theorem memStore (hpre : Pre E st) {σ σ' : SState} {ω : Regs} {μ : Memory} (
     rw [hv] at h1
     exact sstore_sound hpre hinv h1 h
 
-/-- A load through `mkAddr`: the octets at rb + x are readable, and the new state is described. -/
-theorem memLoad (hpre : Pre E st) {σ σ' : SState} {ω : Regs} {μ : Memory} (hinv : Inv E σ ω μ)
+theorem idxOf1_sound {v i : SVal} {c : Nat} (h : idxOf1 v = some (c, i)) :
+    v.eval E = (c + i.eval E) % two64 := by
+  unfold idxOf1 at h
+  split at h <;> cases h
+  · simp only [SVal.eval, threeRegAlu]; rw [Nat.add_comm]
+  · simp only [SVal.eval, threeRegAlu]
+  · simp only [SVal.eval, twoRegImmAlu, Option.getD_some]; rw [Nat.add_comm]
+
+theorem idxOf_sound {v i : SVal} {c : Nat} (h : idxOf v = some (c, i)) :
+    v.eval E = (c + i.eval E) % two64 := by
+  unfold idxOf at h
+  split at h
+  · split at h
+    · rename_i hm; subst hm; simp only [SVal.eval]; rw [idxOf1_sound h, Nat.mod_mod]
+    · cases h
+  · exact idxOf1_sound h
+
+theorem tvals_sound (hpre : Pre E st) {σ : SState} {ω : Regs} {μ : Memory} (h : Inv E σ ω μ)
+    {n : Nat} : ∀ {b a : Nat} {vs : List Nat}, a + b - 1 + n ≤ two32 → tvals st σ n a b = some vs →
+      ∀ j, j < b → vs.getD j 0 = decodeLE (μ.readN (a + j) n)
+  | 0, _, _, _, _, j, hj => absurd hj (Nat.not_lt_zero j)
+  | b + 1, a, vs, hab, ht, j, hj => by
+    unfold tvals at ht
+    split at ht
+    · rename_i w vs' hw hvs
+      cases ht
+      cases j with
+      | zero =>
+        have := loadVal_sound hpre h (a := ⟨none, a⟩) (by simp [Aff.eval])
+          (by have := hab; simp only [two32] at this; simp [Aff.eval]; omega) hw
+        simp only [SVal.eval, Aff.eval, Int.zero_add, Int.toNat_natCast] at this
+        simpa using this
+      | succ j =>
+        simp only [List.getD_cons_succ]
+        rw [tvals_sound hpre h (by omega) hvs j (by omega)]
+        congr 2; omega
+    · cases ht
+
+theorem tload_sound (hpre : Pre E st) {σ σ' : SState} {ω : Regs} {μ : Memory} (hinv : Inv E σ ω μ)
     {v : SVal} {d : Fin 13} {x n k rb : Nat} (hv : v.eval E = rb)
-    (h : ((mkAddr st v x n).bind fun ad => sload st σ d.val ad n k) = some σ') :
+    (h : tload st σ d.val v x n k = some σ') :
     memoryException μ (indices (rb + x) n) [] = none ∧
       Inv E σ' (ω.set d (UInt64.ofNat (if k = 0 then decodeLE (μ.readN (rb + x) n) else
         u64 (signed k (decodeLE (μ.readN (rb + x) n)))))) μ := by
+  unfold tload at h
+  split at h
+  · cases h
+  rename_i c i hci
+  split at h
+  · cases h
+  rename_i b hb
+  split at h
+  · rename_i hok
+    simp only [Bool.and_eq_true, Bool.or_eq_true, List.any_eq_true, decide_eq_true_eq] at hok
+    obtain ⟨⟨⟨hb0, -⟩, hlim⟩, hrw⟩ := hok
+    have hib := bnd_sound hpre i b hb
+    have hvc := idxOf_sound (E := E) hci
+    rw [Nat.mod_eq_of_lt (by simp only [two32, two64] at hlim ⊢; omega)] at hvc
+    have hA : rb + x = c + x + i.eval E := by omega
+    cases ht : tvals st σ n (c + x) b
+    · rw [ht] at h; cases h
+    · rename_i vs
+      rw [ht] at h; cases h
+      have hval := tvals_sound hpre hinv (by omega) ht (i.eval E) hib
+      refine ⟨memEx_none ?_ (by simp), ?_⟩
+      · intro t ht'
+        obtain ⟨j, hj, htj⟩ := indices_mod (by rw [hA]; simp only [two32] at hlim ⊢; omega) t ht'
+        rw [htj, readable_pages hinv.2.2.2.2]
+        have hin : InReg E (⟨none, ((c + x : Nat) : Int)⟩, b - 1 + n) ((rb + x) % two32 + j) := by
+          simp only [InReg, Aff.eval]
+          rw [Nat.mod_eq_of_lt (by rw [hA]; simp only [two32] at hlim ⊢; omega)]
+          omega
+        rcases hrw with ⟨rg, hrg, hw⟩ | ⟨rg, hrg, hw⟩
+        · exact hpre.2.2.1 rg hrg _ (within_sound hpre hw _ hin)
+        · exact Memory.readable_of_writable (hpre.2.2.2.1 rg hrg _ (within_sound hpre hw _ hin))
+      · have := setv_inv hinv d (mkSx st k (.tbl vs i))
+        rw [mkSx_eval hpre] at this
+        simp only [SVal.eval] at this
+        rwa [hval, ← hA] at this
+  · cases h
+
+/-- A load through `ldv`: the octets at rb + x are readable, and the new state is described. -/
+theorem memLoad (hpre : Pre E st) {σ σ' : SState} {ω : Regs} {μ : Memory} (hinv : Inv E σ ω μ)
+    {v : SVal} {d : Fin 13} {x n k rb : Nat} (hv : v.eval E = rb)
+    (h : ldv st σ d.val v x n k = some σ') :
+    memoryException μ (indices (rb + x) n) [] = none ∧
+      Inv E σ' (ω.set d (UInt64.ofNat (if k = 0 then decodeLE (μ.readN (rb + x) n) else
+        u64 (signed k (decodeLE (μ.readN (rb + x) n)))))) μ := by
+  unfold ldv at h
   cases ha : mkAddr st v x n with
-  | none => rw [ha] at h; cases h
+  | none => rw [ha] at h; exact tload_sound hpre hinv hv h
   | some ad =>
     rw [ha] at h
     obtain ⟨h1, -, -⟩ := mkAddr_sound hpre ha

@@ -38,6 +38,7 @@ def SVal.closed : SVal → Bool
   | .const _ | .var _ | .addr _ => true
   | .mod v _ => v.closed
   | .sx _ v => v.closed
+  | .tbl _ i => i.closed
   | .alu2 _ a => a.closed
   | .alu2i _ a b _ => a.closed && b.closed
   | .alu3 _ a b d => a.closed && b.closed && d.closed
@@ -48,6 +49,7 @@ theorem SVal.eval_closed {ρ : Nat → Nat} {ω ω' : Regs} {μ μ' : Memory} :
   | .const _, _ | .var _, _ | .addr _, _ => rfl
   | .mod v _, h => by simp only [SVal.closed] at h; simp only [SVal.eval, eval_closed (ω' := ω') (μ' := μ') v h]
   | .sx _ v, h => by simp only [SVal.closed] at h; simp only [SVal.eval, eval_closed (ω' := ω') (μ' := μ') v h]
+  | .tbl _ i, h => by simp only [SVal.closed] at h; simp only [SVal.eval, eval_closed (ω' := ω') (μ' := μ') i h]
   | .alu2 _ a, h => by simp only [SVal.closed] at h; simp only [SVal.eval, eval_closed (ω' := ω') (μ' := μ') a h]
   | .alu2i _ a b _, h => by
     simp only [SVal.closed, Bool.and_eq_true] at h

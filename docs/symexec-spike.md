@@ -231,6 +231,22 @@ Integration work, on branch `claude/symexec-phase1`:
   executor cannot follow, or the target facts that do not entail. It uses the same tests as the
   check, so it reports nothing on a check the kernel accepts.
 
+## Phase 2 (in progress)
+
+Coverage work, approved after Phase 1. Each feature lands as its own PR.
+
+* **Table reads at a symbolic index.** A load at v + x where v is a literal base c plus an index i
+  (by `add_64` or `add_imm_64`, possibly under mod 2^64) is followed when:
+  * i's bound b is at most 4096;
+  * the table [c + x, c + x + b − 1 + n) lies in ℕ_{2^32} and in a readable or writable region;
+  * every entry is a literal in the state's cells.
+
+  The loaded value is the new `SVal.tbl vs i`, which denotes entry i of the literal list vs. The
+  rules are in `idxOf`, `tvals`, `tload` and `ldv`, and their proofs in `tload_sound`.
+  `and_imm` now has a bound (x + 1), so `v & 15` indexes a 16-entry table.
+  Example: `Services/Bootstrap/SymExec/Hex.lean` covers one iteration of the hex-digit loop
+  (pc 60553, `load_u8 r10, [71060 + (w & 15)]`) on a symbolic word w. It checks in about 1 s.
+
 ## Generator interface
 
 What a generator (e.g. `genwitnesssteps`) should emit to target the executor.
@@ -252,8 +268,8 @@ and `hyp : ProgHyp p P prog` from the binary's code facts. The code facts must i
   * `rd`, `wr`: regions, each `(address, length)`;
   * `frame`: every region written since the chain's start, cumulative. A cut's frame must cover the
     previous cut's frame.
-  * Values must be closed: `.const n`, `.var k`, `.addr ⟨some k, d⟩`, or `.const (Num.decodeLE
-    [bytes])` for literal octets. Addresses are `⟨none, n⟩` (literal) or `⟨some k, d⟩`
+  * Values must be closed: `.const n`, `.var k`, `.addr ⟨some k, d⟩`, `.const (Num.decodeLE
+    [bytes])` for literal octets, or `.tbl vs i` (entry i of the literals vs) for a closed i. Addresses are `⟨none, n⟩` (literal) or `⟨some k, d⟩`
     (ρ_k + d, with d an integer).
 * One theorem per segment. Its statement is
   `cut_a.Holds vals μ₀ ω μ → ∃ ω' μ', FreeStepsH p R start ω μ x tgt ω' μ' x k ∧ cut_b.Holds vals μ₀ ω' μ'`.
@@ -265,7 +281,7 @@ and `hyp : ProgHyp p P prog` from the binary's code facts. The code facts must i
 * A segment can be as long as the executor can follow it. Keep each check to 128–256 steps, so its
   memory stays around +0.3 GB.
 * A chain must also be cut wherever the executor cannot follow: host calls, branches on symbolic
-  conditions, table reads at a symbolic index, base + index·stride addresses, and regions of
+  conditions, base + index·stride addresses, and regions of
   symbolic length. A hand-written summary takes over there; its pre- and post-conditions are
   stated as, or converted to and from, `Cut.Holds`.
 

@@ -103,6 +103,18 @@ import Services.Bootstrap.Decode.ReallocCall
 import Services.Bootstrap.Acc.Checkpoint
 import Services.Bootstrap.Acc.Contract
 import Services.Bootstrap.Acc.HostSteps
+import Services.Bootstrap.Acc.HeapHost
+import Services.Bootstrap.Acc.DecodeU32A
+import Services.Bootstrap.Acc.Inputs.FetchStep
+import Services.Bootstrap.Acc.Inputs.FetchVec
+import Services.Bootstrap.Acc.Inputs.FinishGrow
+import Services.Bootstrap.Acc.Inputs.FinishGrowCall
+import Services.Bootstrap.Acc.Inputs.ReadVec
+import Services.Bootstrap.Acc.Inputs.ReadVecCall
+import Services.Bootstrap.Acc.Inputs.VecU8A
+import Services.Bootstrap.Acc.Inputs.Item
+import Services.Bootstrap.Acc.Inputs.CompactU64
+import Services.Bootstrap.Acc.Inputs.CompactU64Call
 import Services.Bootstrap.AccPrefixC
 import Services.Bootstrap.AccBParams
 import Services.Bootstrap.Acc.Args
@@ -208,10 +220,15 @@ import Services.Bootstrap.Alloc.ReallocFallbackHeap
 import Services.Bootstrap.Alloc.ReallocFallbackWrap
 import Services.Bootstrap.Alloc.ReallocCases
 import Services.Bootstrap.Alloc.Pages
+import Services.Bootstrap.Encode.Variants
+import Services.Bootstrap.Encode.Yield
+import Services.Bootstrap.Encode.Prefix
+import Services.Bootstrap.Encode.Loop
 import Services.Bootstrap.Spec
 import Services.Bootstrap.SpecLemmas.Codec
 import Services.Bootstrap.SpecLemmas.Refine
 import Services.Bootstrap.SpecLemmas.Ring
+import Services.Bootstrap.Alloc.HeapContract
 
 /-!
 # Results about specific services' deployed code

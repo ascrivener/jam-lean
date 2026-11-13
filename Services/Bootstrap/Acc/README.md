@@ -235,6 +235,18 @@ corollaries.
   state keeping the old chunks and their data, the reader advanced by |enc|; or Exhausts (an `alloc`
   failure reaching 45975). Instances: `tr_call` (no chunks), `item_op_ok`, `item_op_err`. The loop
   theorem then takes a list of (enc, Rep) with `ItemOk` each, n = the list's length ≤ 89.
+  Done (`Acc/Inputs/LoopItem.lean`, `LoopItemOp.lean`): `ItemOk`, and its instances `itemOk_tr`
+  (`encTr`, `RepTr`), `itemOk_opok` (`encOpOk`, `RepOpOk`), `itemOk_operr` (`encOpErr`, `RepOpErr`);
+  helpers `readN_app`, `Words4.readN`, `blk`, `VAlloc.blk_mem`, `blk_read`, `wd`.
+  **Next, the induction** (`lp_items`): invariant at 45126 before item i (i done): ω₀ = 2044, ω₁ = s,
+  ω₅ = n − i, ω₇ = s + 88, ω₈ = rd; s + 64 = n, + 72 = q, + 80 = i, + 56 = q, + 48 = rd, + 0 = out,
+  + 32 = n, + 40 = n; `HeapCtxC` for sᵢ with the buffer chunk C (allocated by `fg_new_call`) used;
+  slots j < i at q + 184·j satisfy Repⱼ (for memory agreeing on item j's fresh chunks); the reader at
+  ipᵢ. One step: `ItemOk` → `lp_chk` → `memcpy_big_aligned` (stack to stack, s + 88 → s + 272) →
+  `lp_step` → the copy into q + 184·i (q may be only 16-aligned: use `memcpy_big`, the gap is wide) →
+  `lp_next` / `lp_last`. Needs: `HeapCtxC` kept by a write inside an allocated chunk's data (as in
+  `rv_call`, `Rep.congr_data`), and distinct allocated chunks' data disjoint (from `WF`), so a slot write
+  keeps the items' fresh chunks and earlier slots.
   **Link to the spec (planned).** The top-level T2 assembly instantiates the list from the model's
   accumulate inputs: for each of the paper's items (GP v0.8.0 §12: an operand 𝕌 or a deferred
   transfer 𝕏), `enc` is its ℰ encoding (Appendix C: tag 0 then ℰ(p, e, a, y, g, O(l), ↕t), or tag 1

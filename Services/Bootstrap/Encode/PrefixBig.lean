@@ -31,29 +31,44 @@ theorem encodeNat_small (n : Nat) (hn : 0 < n ∧ n < 128) : Blob.encodeNat n = 
   rw [ite_eq_right_of_eq_false _ _ (eq_false (show n ≠ 0 by omega)),
     show List.range 8 = [0, 1, 2, 3, 4, 5, 6, 7] from rfl]
   simp [show 1 ≤ n by omega, hn.2]
-  sorry
+  done
 
 theorem u8_eq {a b : Nat} (h : a % 256 = b % 256) : UInt8.ofNat a = UInt8.ofNat b :=
   UInt8.toNat_inj.1 (by simpa [UInt8.toNat_ofNat] using h)
 
-/-- What `pvm_go` leaves of a run: memory goals through the writes, closed without unfolding the
-    (symbolic) octet arithmetic. -/
-macro "pg_fin" : tactic => `(tactic| (
-  all_goals try simp (disch := pvm_arith) only [PVM.Memory.readN_writeN_same,
-    PVM.Memory.readN_writeN_disjoint, PVM.Memory.read_writeN_disjoint, PVM.Memory.readable_writeN,
-    PVM.Memory.writable_writeN, PVM.Num.length_encodeLE, List.length_cons, List.length_nil, PVM.two32]
-  all_goals try decide))
+/-- A memory goal of `pg`/`ph`, through the writes. -/
+macro "pg_mem" : tactic => `(tactic| (
+  simp (disch := pvm_arith) only [PVM.Memory.readN_writeN_same, PVM.Memory.readN_writeN_disjoint,
+    PVM.Memory.read_writeN_disjoint, PVM.Memory.readable_writeN, PVM.Memory.writable_writeN,
+    PVM.Num.length_encodeLE, List.length_cons, List.length_nil, PVM.two32]
+  try decide))
 
 set_option hygiene false in
-/-- The register and memory goals `pvm_go` leaves for `pg`. -/
+/-- A register goal of `pg`. -/
+macro "pg_reg" : tactic => `(tactic| (
+  simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,
+    List.lookup_nil, Option.getD_none, PVM.getD_some', h1, r16]))
+
+set_option hygiene false in
+/-- The goals `pvm_go` leaves for `pg`: the octet first (its arithmetic by `u8_eq`, never unfolded),
+    then the memory goals, then the registers. -/
 macro "pg_post" : tactic => `(tactic| (
   refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
   rotate_left 6
   · refine (PVM.Memory.readN_writeN_same _ _ _ _ rfl (by simp [PVM.two32])).trans ?_
     exact congrArg (fun b => [b]) (u8_eq (by omega))
-  all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
-    ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, r16]
-  pg_fin))
+  · pg_mem
+  · pg_mem
+  · pg_mem
+  · pg_mem
+  · pg_mem
+  · pg_mem
+  · pg_reg
+  · pg_reg
+  · pg_reg
+  · pg_reg
+  · pg_reg
+  · pg_reg))
 
 theorem pg {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeA p P] (x : X) (ω : Regs)
     (μ : Memory) (sp v n l : Nat) (hl : l = 1 ∨ l = 2 ∨ l = 3 ∨ l = 4)

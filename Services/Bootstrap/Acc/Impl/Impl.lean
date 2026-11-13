@@ -17,10 +17,14 @@ How bootstrap's accumulate code is related to `Spec.accumulate` (T2, `docs/boots
   - if `ASem.step env op` gives (b, c₁), the run reaches a state s₂ with context c₁ (op's SDK wrapper).
     On the way, y is always c.y or c₁.y (`YIn`). `Impl … (k b)` holds from s₂.
   - if it gives `none`, the run ends ☇, keeping (x, y).
+- **Early ☇, for a listed reason.** For `pure` and `call`, the run may instead reach a state where
+  the reason predicate `Ab` holds and then end ☇ keeping (x, y); inside an operation's wrapper it may
+  do so with y ∈ {c.y, c₁.y} (`Aborts`). `Ab` is a parameter: for accumulate, heap exhaustion and
+  the named quirks. Ψ_A then reports y (GP eq. `accinvocation`), and `Impl.run` says a reason held.
 
 **Consequences** (for `Q` = `Halts`, "the run halts, keeping (x, y)"):
-- `Impl.run`: a run exists, and what it reports (x after a halt, y after ☇) is what some
-  `ASem.run n` reports.
+- `Impl.run` (in `Prefix.lean`): a run exists, and what it reports (x after a halt, y after ☇)
+  is what some `ASem.run n` reports, or the y it started with.
 - `Impl.prefix` (in `Prefix.lean`): the out-of-gas case.
 Composition: `Impl.pre`, `Impl.bind`.
 -/
@@ -56,15 +60,25 @@ def Reaches (p : ByteArray) (R : HostRel (AccCtx × Qu)) (s s' : St Qu) : Prop :
 def Ends (p : ByteArray) (R : HostRel (AccCtx × Qu)) (s : St Qu) (ε : Status) (c' : AccCtx) : Prop :=
   ∃ ω' μ' q', FreeRunH p R s.i s.ω s.μ (s.c, s.q) ε ω' μ' (c', q')
 
-/-- **A run from s implements `prog`** (see the module docstring). -/
-def Impl (p : ByteArray) (R : HostRel (AccCtx × Qu)) (env : AccEnv) {α : Type} :
+/-- **An early ☇ for an allowed reason**: the run from s reaches a state s' where the reason `Ab`
+    holds, and from there ends ☇ with context c'. -/
+def Aborts (p : ByteArray) (R : HostRel (AccCtx × Qu)) (Ab : St Qu → Prop) (s : St Qu) (c' : AccCtx) :
+    Prop :=
+  ∃ s', Reaches p R s s' ∧ Ab s' ∧ Ends p R s' .panic c'
+
+/-- **A run from s implements `prog`** (see the module docstring). `Ab` lists the reasons an early ☇
+    may have. -/
+def Impl (p : ByteArray) (R : HostRel (AccCtx × Qu)) (env : AccEnv) (Ab : St Qu → Prop) {α : Type} :
     Prog AOp α → (α → St Qu → Prop) → St Qu → Prop
-  | .pure a, Q, s => ∃ s', Reaches p (KeepCtx R) s s' ∧ s'.c = s.c ∧ Q a s'
+  | .pure a, Q, s => Aborts p (KeepCtx R) Ab s s.c ∨
+      ∃ s', Reaches p (KeepCtx R) s s' ∧ s'.c = s.c ∧ Q a s'
   | .panic, _, s => Ends p (KeepCtx R) s .panic s.c
-  | .call op k, Q, s =>
+  | .call op k, Q, s => Aborts p (KeepCtx R) Ab s s.c ∨
       ∃ s₁, Reaches p (KeepCtx R) s s₁ ∧ s₁.c = s.c ∧
         match ASem.step env op s.c with
-        | some (b, c₁) => ∃ s₂, Reaches p (YIn R s.c.2 c₁.2) s₁ s₂ ∧ s₂.c = c₁ ∧ Impl p R env (k b) Q s₂
+        | some (b, c₁) =>
+            (∃ c', (c'.2 = s.c.2 ∨ c'.2 = c₁.2) ∧ Aborts p (YIn R s.c.2 c₁.2) Ab s₁ c') ∨
+            ∃ s₂, Reaches p (YIn R s.c.2 c₁.2) s₁ s₂ ∧ s₂.c = c₁ ∧ Impl p R env Ab (k b) Q s₂
         | none => Ends p (KeepCtx R) s₁ .panic s.c
 
 /-- The run halts from s, keeping (x, y), with ω₈ = 0 (an empty output, so Ψ_A takes no yield
@@ -109,108 +123,93 @@ theorem FreeRunH.unkeep {p : ByteArray} {R : HostRel (AccCtx × Qu)} {i ω μ x 
   | host hr hR _ ih => exact .host hr hR.1 ih
   | hostStop hr hR hs => exact .hostStop hr hR.1 hs
 
+theorem FreeRunH.mono {p : ByteArray} {R R' : HostRel (AccCtx × Qu)}
+    (hR : ∀ h ω μ x s ω' μ' x', R h ω μ x s ω' μ' x' → R' h ω μ x s ω' μ' x') {i ω μ x ε ω' μ' x'}
+    (h : FreeRunH p R i ω μ x ε ω' μ' x') : FreeRunH p R' i ω μ x ε ω' μ' x' := by
+  induction h with
+  | exit hr hne => exact .exit hr hne
+  | host hr hR' _ ih => exact .host hr (hR _ _ _ _ _ _ _ _ hR') ih
+  | hostStop hr hR' hs => exact .hostStop hr (hR _ _ _ _ _ _ _ _ hR') hs
+
 theorem Ends.weaken {p : ByteArray} {R : HostRel (AccCtx × Qu)} {s : St Qu} {ε : Status} {c' : AccCtx}
     (h : Ends p (KeepCtx R) s ε c') : Ends p R s ε c' := by
   obtain ⟨ω', μ', q', h⟩ := h
   exact ⟨ω', μ', q', FreeRunH.unkeep h⟩
 
+theorem Aborts.prepend {p : ByteArray} {R : HostRel (AccCtx × Qu)} {Ab : St Qu → Prop} {s s' : St Qu}
+    {c' : AccCtx} (hs : Reaches p R s s') (h : Aborts p R Ab s' c') : Aborts p R Ab s c' := by
+  obtain ⟨s'', h1, h2, h3⟩ := h
+  exact ⟨s'', hs.trans h1, h2, h3⟩
+
+theorem Aborts.ends {p : ByteArray} {R : HostRel (AccCtx × Qu)} {Ab : St Qu → Prop} {s : St Qu}
+    {c' : AccCtx} (h : Aborts p R Ab s c') : Ends p R s .panic c' := by
+  obtain ⟨s', h1, -, h3⟩ := h
+  exact Ends.prepend h1 h3
+
+/-- **An early ☇ for an allowed reason, keeping (x, y), implements every program.** -/
+theorem Impl.abort {p : ByteArray} {R : HostRel (AccCtx × Qu)} {env : AccEnv} {Ab : St Qu → Prop} {α : Type}
+    (prog : Prog AOp α) (Q : α → St Qu → Prop) {s : St Qu} (h : Aborts p (KeepCtx R) Ab s s.c) :
+    Impl p R env Ab prog Q s := by
+  cases prog with
+  | pure a => exact .inl h
+  | panic => exact h.ends
+  | call op k => unfold Impl; exact .inl h
+
 /-- **A prefix that keeps the context can be added.** -/
-theorem Impl.pre {p : ByteArray} {R : HostRel (AccCtx × Qu)} {env : AccEnv} {α : Type}
+theorem Impl.pre {p : ByteArray} {R : HostRel (AccCtx × Qu)} {env : AccEnv} {Ab : St Qu → Prop} {α : Type}
     (prog : Prog AOp α) (Q : α → St Qu → Prop) {s s' : St Qu}
-    (hs : Reaches p (KeepCtx R) s s') (hc : s'.c = s.c) (h : Impl p R env prog Q s') :
-    Impl p R env prog Q s := by
+    (hs : Reaches p (KeepCtx R) s s') (hc : s'.c = s.c) (h : Impl p R env Ab prog Q s') :
+    Impl p R env Ab prog Q s := by
   cases prog with
   | pure a =>
-    obtain ⟨s'', h1, h2, h3⟩ := h
-    exact ⟨s'', hs.trans h1, h2.trans hc, h3⟩
+    rcases h with h | ⟨s'', h1, h2, h3⟩
+    · rw [hc] at h; exact .inl (Aborts.prepend hs h)
+    · exact .inr ⟨s'', hs.trans h1, h2.trans hc, h3⟩
   | panic =>
     have : Ends p (KeepCtx R) s' .panic s'.c := h
     rw [hc] at this
     exact Ends.prepend hs this
   | call op k =>
     unfold Impl at h ⊢
-    obtain ⟨s₁, h1, h2, h3⟩ := h
-    refine ⟨s₁, hs.trans h1, h2.trans hc, ?_⟩
+    rcases h with h | ⟨s₁, h1, h2, h3⟩
+    · rw [hc] at h; exact .inl (Aborts.prepend hs h)
+    refine .inr ⟨s₁, hs.trans h1, h2.trans hc, ?_⟩
     rw [← hc]
     exact h3
 
 /-- **`Impl` along `Prog.bind`**: implement p, then at each return a, implement `f a`. -/
-theorem Impl.bind {p : ByteArray} {R : HostRel (AccCtx × Qu)} {env : AccEnv}
+theorem Impl.bind {p : ByteArray} {R : HostRel (AccCtx × Qu)} {env : AccEnv} {Ab : St Qu → Prop}
     {α β : Type} (f : α → Prog AOp β) (Q : β → St Qu → Prop) :
-    ∀ (prog : Prog AOp α) (s : St Qu), Impl p R env prog (fun a s' => Impl p R env (f a) Q s') s →
-      Impl p R env (Prog.bind prog f) Q s := by
+    ∀ (prog : Prog AOp α) (s : St Qu), Impl p R env Ab prog (fun a s' => Impl p R env Ab (f a) Q s') s →
+      Impl p R env Ab (Prog.bind prog f) Q s := by
   intro prog
   induction prog with
   | pure a =>
     intro s h
-    obtain ⟨s', h1, h2, h3⟩ := h
-    exact Impl.pre (f a) Q h1 h2 h3
+    rcases h with h | ⟨s', h1, h2, h3⟩
+    · exact Impl.abort (f a) Q h
+    · exact Impl.pre (f a) Q h1 h2 h3
   | panic => intro s h; exact h
   | call op k ih =>
     intro s h
     unfold Impl at h
-    obtain ⟨s₁, h1, h2, h3⟩ := h
-    show Impl p R env (Prog.call op (fun b => (k b).bind f)) Q s
+    show Impl p R env Ab (Prog.call op (fun b => (k b).bind f)) Q s
     unfold Impl
-    refine ⟨s₁, h1, h2, ?_⟩
+    rcases h with h | ⟨s₁, h1, h2, h3⟩
+    · exact .inl h
+    refine .inr ⟨s₁, h1, h2, ?_⟩
     show match ASem.step env op s.c with
-      | some (b, c₁) => ∃ s₂, Reaches p (YIn R s.c.2 c₁.2) s₁ s₂ ∧ s₂.c = c₁ ∧
-          Impl p R env ((k b).bind f) Q s₂
+      | some (b, c₁) =>
+          (∃ c', (c'.2 = s.c.2 ∨ c'.2 = c₁.2) ∧ Aborts p (YIn R s.c.2 c₁.2) Ab s₁ c') ∨
+          ∃ s₂, Reaches p (YIn R s.c.2 c₁.2) s₁ s₂ ∧ s₂.c = c₁ ∧ Impl p R env Ab ((k b).bind f) Q s₂
       | none => Ends p (KeepCtx R) s₁ .panic s.c
     revert h3
     cases ASem.step env op s.c with
     | some bc =>
       intro h3
-      obtain ⟨s₂, g1, g2, g3⟩ := h3
-      exact ⟨s₂, g1, g2, ih bc.1 s₂ g3⟩
+      rcases h3 with h3 | ⟨s₂, g1, g2, g3⟩
+      · exact .inl h3
+      · exact .inr ⟨s₂, g1, g2, ih bc.1 s₂ g3⟩
     | none => exact id
-
-/-- What a run that ends with ε and context c' reports, as Ψ_A does (GP eq. `accinvocation`): x
-    after a halt, else y. -/
-def runOutcome (ε : Status) (c' : AccCtx) :
-    PartialState × List DeferredTransfer × Option (List UInt8) × Provisions :=
-  if ε = .halt then (c'.1.state, c'.1.xfers, c'.1.yield, c'.1.provisions)
-  else (c'.2.state, c'.2.xfers, c'.2.yield, c'.2.provisions)
-
-/-- **A run exists, and it reports what some `ASem.run n` reports**; a halt has ω₈ = 0. -/
-theorem Impl.run {p : ByteArray} {R : HostRel (AccCtx × Qu)} {env : AccEnv} :
-    ∀ (prog : Prog AOp Unit) (s : St Qu), Impl p R env prog (Halts p R) s →
-      ∃ ε c' ω' μ' q', FreeRunH p R s.i s.ω s.μ (s.c, s.q) ε ω' μ' (c', q') ∧
-        (ε = .halt → (ω'.get 8).toNat = 0) ∧
-        ∃ n, ASem.outcome (ASem.run n prog env s.c) = runOutcome ε c' := by
-  intro prog
-  induction prog with
-  | pure a =>
-    intro s h
-    obtain ⟨s', ⟨n₁, h1⟩, h2, ω', μ', q', h3, h8⟩ := h
-    refine ⟨.halt, s'.c, ω', μ', q', FreeRunH.prepend (h1.weaken fun _ _ _ _ _ _ _ h => h.1)
-      (FreeRunH.unkeep h3), fun _ => h8, 0, ?_⟩
-    simp [ASem.run, ASem.outcome, runOutcome, h2]
-  | panic =>
-    intro s h
-    obtain ⟨ω', μ', q', h⟩ := h
-    refine ⟨.panic, s.c, ω', μ', q', FreeRunH.unkeep h, (fun h => by cases h), 0, ?_⟩
-    simp [ASem.run, ASem.outcome, runOutcome]
-  | call op k ih =>
-    intro s h
-    unfold Impl at h
-    obtain ⟨s₁, h1, h2, h3⟩ := h
-    have h1' : Reaches p R s s₁ := h1.mono fun _ _ _ _ _ _ _ _ h => h.1
-    revert h3
-    cases hst : ASem.step env op s.c with
-    | some bc =>
-      intro h3
-      obtain ⟨s₂, g1, g2, g3⟩ := h3
-      obtain ⟨ε, c', ω', μ', q', he, h8, n, hn⟩ := ih bc.1 s₂ g3
-      obtain ⟨m, hm⟩ := h1'.trans (g1.mono fun _ _ _ _ _ _ _ _ h => h.1)
-      refine ⟨ε, c', ω', μ', q', FreeRunH.prepend hm he, h8, n + 1, ?_⟩
-      simp only [ASem.run, hst]
-      rw [← g2]; exact hn
-    | none =>
-      intro h3
-      obtain ⟨ω', μ', q', h3⟩ := h3
-      obtain ⟨m, hm⟩ := h1'
-      refine ⟨.panic, s.c, ω', μ', q', FreeRunH.prepend hm (FreeRunH.unkeep h3), (fun h => by cases h), 1, ?_⟩
-      simp [ASem.run, hst, ASem.outcome, runOutcome]
 
 end Services.Bootstrap.Acc

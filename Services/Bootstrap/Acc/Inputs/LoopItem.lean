@@ -124,4 +124,27 @@ theorem itemOk_tr {X : Type} (env : HeapHost X) (cap pb : Nat) {p : ByteArray} {
     · rw [slot 152 4 (by omega)]; unfold rdN at o152 fs; rw [Nat.add_assoc, o152, fs]
     · rw [slot 156 4 (by omega)]; unfold rdN at o156 fd; rw [Nat.add_assoc, o156, fd]
 
+/-- Peeling a read: a read of A ⌢ B is a read of A, then of B. -/
+theorem readN_app (μ : Memory) (a : Nat) (A B : List UInt8)
+    (h : μ.readN a (A.length + B.length) = A ++ B) :
+    μ.readN a A.length = A ∧ μ.readN (a + A.length) B.length = B := by
+  rw [PVM.Memory.readN_split] at h
+  exact List.append_inj h (by simp)
+
+/-- Equal words are equal octets. -/
+theorem readN8_of_rdN {μ μ' : Memory} {o i : Nat} (h : rdN μ' o 8 = rdN μ i 8) : μ'.readN o 8 = μ.readN i 8 := by
+  unfold rdN at h
+  have e1 := encodeLE_decodeLE (μ'.readN o 8)
+  have e2 := encodeLE_decodeLE (μ.readN i 8)
+  simp only [PVM.Memory.length_readN] at e1 e2
+  rw [← e1, ← e2, h]
+
+/-- Four equal words are 32 equal octets. -/
+theorem Words4.readN {μ μ' : Memory} {o i : Nat} (w : Words4 μ' o μ i) : μ'.readN o 32 = μ.readN i 32 := by
+  obtain ⟨w0, w1, w2, w3⟩ := w
+  have sp : ∀ (ν : Memory) (a : Nat), ν.readN a 32 =
+      ν.readN a 8 ++ (ν.readN (a + 8) 8 ++ (ν.readN (a + 16) 8 ++ ν.readN (a + 24) 8)) := fun ν a => by
+    rw [← PVM.Memory.readN_split, ← PVM.Memory.readN_split, ← PVM.Memory.readN_split]
+  rw [sp μ' o, sp μ i, readN8_of_rdN w0, readN8_of_rdN w1, readN8_of_rdN w2, readN8_of_rdN w3]
+
 end Services.Bootstrap.Acc

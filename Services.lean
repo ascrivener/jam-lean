@@ -98,6 +98,7 @@ import Services.Bootstrap.Decode.LookedUpSmall
 import Services.Bootstrap.Decode.VecU8Loop
 import Services.Bootstrap.Decode.ReallocOk
 import Services.Bootstrap.Decode.DeallocCall
+import Services.Bootstrap.Decode.AllocZeroedCall
 import Services.Bootstrap.Decode.VecU8Pass
 import Services.Bootstrap.Decode.LookedUpBig
 import Services.Bootstrap.Decode.ProvideInline
@@ -138,6 +139,18 @@ import Services.Bootstrap.Acc.Inputs.OperandHead
 import Services.Bootstrap.Acc.Inputs.OperandCall
 import Services.Bootstrap.Acc.Inputs.OperandArm
 import Services.Bootstrap.Acc.Inputs.ItemCall
+import Services.Bootstrap.Acc.Inputs.Loop
+import Services.Bootstrap.Acc.Inputs.LoopItem
+import Services.Bootstrap.Acc.Inputs.LoopItemOp
+import Services.Bootstrap.Acc.Inputs.LoopInd
+import Services.Bootstrap.Acc.Inputs.Glue
+import Services.Bootstrap.Acc.Inputs.GlueLock
+import Services.Bootstrap.Acc.Inputs.GlueFree
+import Services.Bootstrap.Acc.Inputs.GlueCall
+import Services.Bootstrap.Acc.Inputs.InputsPre
+import Services.Bootstrap.Acc.Inputs.InputsSpec
+import Services.Bootstrap.Acc.Inputs.FetchVecCall
+import Services.Bootstrap.Acc.Inputs.Inputs
 import Services.Bootstrap.AccPrefixC
 import Services.Bootstrap.AccBParams
 import Services.Bootstrap.Acc.Args
@@ -190,6 +203,10 @@ import Services.Bootstrap.Alloc.AllocWrite
 import Services.Bootstrap.Alloc.AllocRight
 import Services.Bootstrap.Alloc.AllocTail
 import Services.Bootstrap.Alloc.AllocImpl
+import Services.Bootstrap.Alloc.AllocZeroedTail
+import Services.Bootstrap.Alloc.AllocZeroedMemzero
+import Services.Bootstrap.Alloc.AllocZeroedImpl
+import Services.Bootstrap.Alloc.AllocZeroedGrow
 import Services.Bootstrap.Alloc.AllocRefines
 import Services.Bootstrap.Alloc.AllocWrap
 import Services.Bootstrap.Alloc.AllocGrow

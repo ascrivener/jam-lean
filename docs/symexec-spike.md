@@ -246,6 +246,30 @@ Coverage work, approved after Phase 1. Each feature lands as its own PR.
   `and_imm` now has a bound (x + 1), so `v & 15` indexes a 16-entry table.
   Example: `Services/Bootstrap/SymExec/Hex.lean` covers one iteration of the hex-digit loop
   (pc 60553, `load_u8 r10, [71060 + (w & 15)]`) on a symbolic word w. It checks in about 1 s.
+* **Symbolic branches.**
+  * A signed comparison against an immediate is decided on a value below 2^63:
+    * for an immediate below 2^63, it is the unsigned comparison;
+    * for a negative immediate, it is decided outright.
+  * A comparison of two registers is decided by any of:
+    * equal values;
+    * a common affine base (compare the offsets);
+    * the bounds.
+  * Signed two-register comparisons are decided on operands below 2^63.
+  * The rules are `scond` (with `toU` and `negImm`), `scond2`, `ltU`, `eqU` and `sameBase`.
+* **Host calls.**
+  * `Prog` has an optional table `hosts`, from host-call id to the registers the call sets to
+    literals. Memory and the context stay unchanged. The table is empty by default, so existing
+    code tables and instances are unchanged.
+  * `srun` follows `ecalli h` when h is in the table.
+  * `srun_sound`, `check_sound` and `seg_sound` take `hH : HostOk R G.hosts`. `HostOk` says the
+    contract R allows each listed call from any state. The argument is filled automatically
+    (`trivial`) when the table is empty.
+  * `Services/Bootstrap/SymExec/Hosts.lean` gives `logHosts` (`log`, id 100: ω₇ := WHAT), with
+    `refine_logHosts` and `acc_logHosts`. They prove that `refineContractK cap env` and
+    `accContractK cap env` allow it for every 𝖬_∅ ≤ cap < 2^64.
+  * Use `{ prog with hosts := logHosts }`; the existing `hyp` proves its `ProgHyp`. Example: `log4770`.
+  * Calls whose effect depends on the environment (`fetch`, `grow_heap`) are not covered. Such a
+    call still ends a segment, and a hand-written summary takes over there.
 
 ## Generator interface
 
@@ -280,8 +304,9 @@ and `hyp : ProgHyp p P prog` from the binary's code facts. The code facts must i
 **Where to cut.**
 * A segment can be as long as the executor can follow it. Keep each check to 128–256 steps, so its
   memory stays around +0.3 GB.
-* A chain must also be cut wherever the executor cannot follow: host calls, branches on symbolic
-  conditions, base + index·stride addresses, and regions of
+* A chain must also be cut wherever the executor cannot follow: host calls other than those in
+  `hosts` (e.g. `fetch`, `grow_heap`), branches the bounds do not decide, base + index·stride
+  addresses, and regions of
   symbolic length. A hand-written summary takes over there; its pre- and post-conditions are
   stated as, or converted to and from, `Cut.Holds`.
 

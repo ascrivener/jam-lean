@@ -132,13 +132,14 @@ theorem seg_sound {X : Type} {p : ByteArray} {R : HostRel X} {P : Program} {G : 
     (h : segCheck G ub lb sep A B start tgt k = true) (hG : ProgHyp p P G)
     {vals : List Nat} (hB : BHold vals ub) (hLB : LBHold vals lb)
     (hsep : ∀ ω μ, SepHold (env vals ω μ) sep)
-    {μ₀ : Memory} {ω : Regs} {μ : Memory} (hA : A.Holds vals μ₀ ω μ) (x : X) :
+    {μ₀ : Memory} {ω : Regs} {μ : Memory} (hA : A.Holds vals μ₀ ω μ) (x : X)
+    (hH : HostOk R G.hosts := by exact trivial) :
     ∃ ω' μ', FreeStepsH p R start ω μ x tgt ω' μ' x k ∧ B.Holds vals μ₀ ω' μ' := by
   simp only [segCheck, Cut.closed, Bool.and_eq_true, and_assoc] at h
   obtain ⟨-, -, hcb1, hcb2, hck, hrd, hwr, hfr⟩ := h
   obtain ⟨hr, hc, hrdA, hwrA, hfA, hpA⟩ := hA
   obtain ⟨ω', μ', hrun, hr', hc', hfr', hp'⟩ := check_sound (R := R) hck hG vals hB hLB ω μ
-    hrdA hwrA (hsep ω μ) hr hc x
+    hrdA hwrA (hsep ω μ) hr hc x hH
   have hpre : Pre (env vals ω μ) (segStatic ub lb sep A) :=
     ⟨bHold_get hB, lbHold_get hLB, rdHold_mem hrdA, wrHold_mem hwrA, sepHold_mem (hsep ω μ)⟩
   refine ⟨ω', μ', hrun, regsHold_env hcb1 hr', cellsHold_env hcb2 hc', ?_, ?_, ?_, ?_⟩

@@ -2,6 +2,7 @@ import Services.Bootstrap.SymExec.Prog
 import Services.Bootstrap.SymExec.ProgAll
 import Services.Bootstrap.SymExec.FixedZ
 import Services.Bootstrap.SymExec.Hex
+import Services.Bootstrap.SymExec.Hosts
 
 /-!
 # Bootstrap stretches by the symbolic executor

@@ -296,6 +296,9 @@ structure Prog where
   bs : NTree Bool
   jt : NTree Nat
   jsize : Nat
+  /-- Host calls the executor may follow, by id: each sets the listed registers to literals and
+      leaves memory and the context unchanged. Their outcomes are justified by `HostOk`. -/
+  hosts : NTree (List (Nat × Nat)) := .leaf
 
 /-- The facts of a `Prog` hold of the program `p` deblobs to. -/
 def ProgHyp (p : ByteArray) (P : Program) (G : Prog) : Prop :=
@@ -593,12 +596,29 @@ def sstep (G : Prog) (pc : Nat) (σ : SState) : Option (Nat × SState) :=
       | none => none
     | _ => none
 
+/-- Set registers to literals. -/
+def hset (σ : SState) : List (Nat × Nat) → SState
+  | [] => σ
+  | (r, v) :: rs => hset (setv σ r (.const v)) rs
+
+/-- A host call `ecalli h` (§A.5.2) whose id the host table lists: the next pc and state. -/
+def hstep (G : Prog) (pc : Nat) (σ : SState) : Option (Nat × SState) :=
+  match G.code.find pc with
+  | some (.oneImm .ecalli h, n) =>
+    match G.hosts.find h.toNat with
+    | some rs => if rs.all (·.1 < 13) then some (n, hset σ rs) else none
+    | none => none
+  | _ => none
+
 /-- Run exactly `k` steps from `pc`, which must end at `target`: the final state. -/
 def srun (G : Prog) (target : Nat) : Nat → Nat → SState → Option SState
   | 0, pc, σ => if pc = target then some σ else none
   | k + 1, pc, σ =>
     match sstep st G pc σ with
     | some (pc', σ') => srun G target k pc' σ'
-    | none => none
+    | none =>
+      match hstep G pc σ with
+      | some (pc', σ') => srun G target k pc' σ'
+      | none => none
 
 end PVM.SymExec

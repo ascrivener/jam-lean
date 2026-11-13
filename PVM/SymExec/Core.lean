@@ -177,12 +177,16 @@ def affOk (st : Static) (a a' : Aff) (M : Nat) : Bool :=
 def addAff (st : Static) (a : Aff) (x M : Nat) : Option Aff :=
   if affOk st a ⟨a.base, a.off + shift x M⟩ M = true then some ⟨a.base, a.off + shift x M⟩ else none
 
+/-- An affine value, as a named natural when its offset is 0. -/
+def affVal (a : Aff) : SVal :=
+  if a.off = 0 then (match a.base with | some k => .var k | none => .const 0) else .addr a
+
 /-- The value (v + x) mod 2^64 (`fallback` when it is not affine). -/
 def addv (st : Static) (v : SVal) (x : Nat) (fallback : SVal) : SVal :=
   match v with
   | .const c => .const ((c + x) % two64)
   | v => match (asAff v).bind fun a => addAff st a x two64 with
-    | some a' => .addr a'
+    | some a' => affVal a'
     | none => fallback
 
 /-- Whether §A.5.10's function reads ω_A (only `cmov_iz_imm`, `cmov_nz_imm`). -/
@@ -220,6 +224,16 @@ def mkAlu2i (st : Static) (op : TwoRegImmOp) (a b : SVal) (x : Nat) : SVal :=
     if op = .addImm64 then addv st b x (foldAlu2i op (.const 0) b x)
     else foldAlu2i op (if usesA op then a else .const 0) b x
 
+/-- A lower bound of a value. -/
+def SVal.lob (st : Static) : SVal → Nat
+  | .const n => n
+  | .var k => st.lb[k]?.getD 0
+  | .addr a => (a.lo st).toNat
+  | _ => 0
+
+/-- v ≤ w, by the bounds. -/
+def leB (st : Static) (v w : SVal) : Bool := (v.bnd st).any (· ≤ w.lob st + 1)
+
 def foldAlu3 (op : ThreeRegOp) (a b d : SVal) : SVal :=
   match a, b, d with
   | .const p, .const q, .const r => .const (threeRegAlu op p q r)
@@ -230,6 +244,8 @@ def mkAlu3 (st : Static) (op : ThreeRegOp) (a b d : SVal) : SVal :=
   match op, b with
   | .add64, .const q => addv st a q f
   | .sub64, .const q => if q < two64 then addv st a (two64 - q) f else f
+  | .minU, _ => if leB st a b then a else if leB st b a then b else f
+  | .maxU, _ => if leB st a b then b else if leB st b a then a else f
   | _, _ => f
 
 def mkAlu2 (op : TwoRegOp) (a : SVal) : SVal :=
@@ -335,13 +351,6 @@ def rkind : RegImmOp → TK
   | _ => .alu
 
 variable (st : Static)
-
-/-- A lower bound of a value. -/
-def SVal.lob : SVal → Nat
-  | .const n => n
-  | .var k => st.lb[k]?.getD 0
-  | .addr a => (a.lo st).toNat
-  | _ => 0
 
 /-- An unsigned comparison of a value in `[lo, hi)` with `x` (§A.5.8), when the interval decides it. -/
 def decideCond (op : RegImmOffsetOp) (lo hi x : Nat) : Option Bool :=

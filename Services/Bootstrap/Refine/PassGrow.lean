@@ -106,7 +106,7 @@ theorem pass_elem_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P
       hptr
       (by rw [Memory.readN_congr (fun j hj => k2 _ (by omega) (by omega))]; exact sc)
       (by rw [Memory.readN_congr (fun j hj => k2 _ (by omega) (by omega))]; exact sp) with
-    ⟨q, s', ω5, μ5, run5, e0, e1, e5, e6, eV, eV8, hnew, emove, H5, keep, fresh, _, stk, _, ewr⟩ | hx
+    ⟨q, s', ω5, μ5, run5, e0, e1, e5, e6, eV, eV8, hnew, emove, H5, keep, fresh, _, stk, _, _, ewr⟩ | hx
   rotate_left
   · exact Or.inr ((Exhausts.pre pre hx).mono (by omega))
   -- the copy into the grown output

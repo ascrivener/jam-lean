@@ -1,3 +1,4 @@
+import Services.Bootstrap.Alloc.HeapContract
 import Services.Bootstrap.Alloc.AllocGrowRefines
 
 /-!
@@ -46,28 +47,45 @@ theorem ii_pre {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (
     the first chunk's header, if its top h is below that, and returns the new top
     `growTop 51 h b` in ω₇.
     Under `refineContractK cap`: the `grow_heap` call may cost up to `cap`. -/
-theorem ii_callK {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env)
-    (cap : Nat) (hcap : cap < 18446744073709551616) (x : RefineCtx) (ω : Regs)
+theorem ii_callKG {p : ByteArray} {P : Program} [HasCode p P] (env : HeapHost X)
+    (cap : Nat) (hcap : cap < 18446744073709551616) (x : X) (ω : Regs)
     (μ : Memory) (b h : Nat) (hb : heapBounds env.code = (48, b)) (hp : HeapPages μ 48 b h) (h48 : 48 ≤ h)
     (hhb : h ≤ b) (hbs : b < 4294967296) (h7 : ω[7] = UInt64.ofNat 51) (hcost : 275 + 121 * (growTop 51 h b - h) ≤ cap) :
-    FreeStepsH p (refineContractK cap env) 42211 ω μ x 42213 (setR7 ω (growTop 51 h b))
+    FreeStepsH p (env.rel cap) 42211 ω μ x 42213 (setR7 ω (growTop 51 h b))
       (μ.setPages 48 (growTop 51 h b - 48) (some .write)) x 1 := by
   have hr7 : reg ω 7 = 51 := by
     unfold reg; have : ω.get 7 = ω[7] := rfl; rw [this, h7]; rfl
   have ht : growTop (reg ω 7) h b = growTop 51 h b := by rw [hr7]
   have hge : h ≤ growTop 51 h b := by unfold growTop; split <;> omega
-  exact FreeStepsH.growHeapK cap hcap env _ (d_42211 (p := p) (P := P)) hb hp h48 hhb hbs ht
+  exact HeapHost.growHeapK cap hcap env _ (d_42211 (p := p) (P := P)) hb hp h48 hhb hbs ht
     (by unfold Constants.CgasGeminiconst Constants.CgasGeminilinear; omega) FreeStepsH.refl
 
-/-- `ii_callK` at `hostCostMax`, the cap of `refineContract`: at most 14 pages a
+/-- `ii_callKG` for the refine contract (`refineHeap env`). -/
+theorem ii_callK {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env)
+    (cap : Nat) (hcap : cap < 18446744073709551616) (x : RefineCtx) (ω : Regs)
+    (μ : Memory) (b h : Nat) (hb : heapBounds env.code = (48, b)) (hp : HeapPages μ 48 b h) (h48 : 48 ≤ h)
+    (hhb : h ≤ b) (hbs : b < 4294967296) (h7 : ω[7] = UInt64.ofNat 51) (hcost : 275 + 121 * (growTop 51 h b - h) ≤ cap) :
+    FreeStepsH p (refineContractK cap env) 42211 ω μ x 42213 (setR7 ω (growTop 51 h b))
+      (μ.setPages 48 (growTop 51 h b - 48) (some .write)) x 1 :=
+  ii_callKG (p := p) (P := P) (refineHeap env) cap hcap x ω μ b h hb hp h48 hhb hbs h7 hcost
+
+/-- `ii_callKG` at `hostCostMax`, the cap of `refineContract`: at most 14 pages a
     `grow_heap` call. -/
+theorem ii_callG {p : ByteArray} {P : Program} [HasCode p P] (env : HeapHost X) (x : X) (ω : Regs)
+    (μ : Memory) (b h : Nat) (hb : heapBounds env.code = (48, b)) (hp : HeapPages μ 48 b h) (h48 : 48 ≤ h)
+    (hhb : h ≤ b) (hbs : b < 4294967296) (h7 : ω[7] = UInt64.ofNat 51) (hcost : growTop 51 h b ≤ h + 14) :
+    FreeStepsH p (env.rel hostCostMax) 42211 ω μ x 42213 (setR7 ω (growTop 51 h b))
+      (μ.setPages 48 (growTop 51 h b - 48) (some .write)) x 1 :=
+  ii_callKG (p := p) (P := P) env hostCostMax (by decide) x ω μ b h hb hp h48 hhb hbs h7
+    (by unfold hostCostMax; omega)
+
+/-- `ii_callG` for the refine contract (`refineHeap env`). -/
 theorem ii_call {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (x : RefineCtx) (ω : Regs)
     (μ : Memory) (b h : Nat) (hb : heapBounds env.code = (48, b)) (hp : HeapPages μ 48 b h) (h48 : 48 ≤ h)
     (hhb : h ≤ b) (hbs : b < 4294967296) (h7 : ω[7] = UInt64.ofNat 51) (hcost : growTop 51 h b ≤ h + 14) :
     FreeStepsH p (refineContract env) 42211 ω μ x 42213 (setR7 ω (growTop 51 h b))
       (μ.setPages 48 (growTop 51 h b - 48) (some .write)) x 1 :=
-  ii_callK (p := p) (P := P) env hostCostMax (by decide) x ω μ b h hb hp h48 hhb hbs h7
-    (by unfold hostCostMax; omega)
+  ii_callG (p := p) (P := P) (refineHeap env) x ω μ b h hb hp h48 hhb hbs h7 hcost
 
 /-- **42213 … 42325**, the heap reaching the 51 pages: the base, one unit allocated, the top bin
     (2431)'s head and bits, and the first chunk's header written; ω₇ = 1, the frame popped. -/

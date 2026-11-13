@@ -1,3 +1,4 @@
+import Services.Bootstrap.Alloc.HeapContract
 import Services.Bootstrap.Decode.HeapFrame
 import Services.Bootstrap.Decode.HeapWrap
 import Services.Bootstrap.Alloc.AllocWrap
@@ -21,8 +22,9 @@ namespace Services.Bootstrap.Decode.HeapCtx
 
 open PVM Picoalloc Services.Bootstrap.Code Services.Bootstrap.Alloc JAM
 
-/-- **The allocator's context**: picoalloc's state `s` in memory, its heap pages, and the stack. -/
-structure HeapCtx (env : RefineHost.Env) (pb S0 S1 : Nat) (μ : Memory) (s : State) : Prop where
+/-- **The allocator's context**, for code `code`: picoalloc's state `s` in memory, its heap pages,
+    and the stack. -/
+structure HeapCtxC (code : ByteArray) (pb S0 S1 : Nat) (μ : Memory) (s : State) : Prop where
   wf : WF s
   rep : Rep μ s
   fo : FirstOk s
@@ -30,7 +32,7 @@ structure HeapCtx (env : RefineHost.Env) (pb S0 S1 : Nat) (μ : Memory) (s : Sta
   hb0 : 206864 ≤ s.base
   hbT : s.base + 1073741824 < 2147483648
   hA : s.allocated < 2147483648
-  bd : heapBounds env.code = (48, pb)
+  bd : heapBounds code = (48, pb)
   pages : ∃ ph, 48 ≤ ph ∧ ph ≤ pb ∧ HeapPages μ 48 pb ph ∧ 208896 ≤ 4096 * ph ∧
     s.base + 32 * s.allocated ≤ 4096 * ph
   hSb : 4096 * pb ≤ S0
@@ -38,6 +40,10 @@ structure HeapCtx (env : RefineHost.Env) (pb S0 S1 : Nat) (μ : Memory) (s : Sta
   st : ∀ a, S0 ≤ a → a < S1 → μ.writable a = true
   /-- Below the read-write data (196608, page 48) nothing is writable: the code's read-only data. -/
   ro : ∀ a, a < 196608 → μ.writable a = false
+
+/-- **The allocator's context** under the refine host `env`: `HeapCtxC` for its code. -/
+abbrev HeapCtx (env : RefineHost.Env) (pb S0 S1 : Nat) (μ : Memory) (s : State) : Prop :=
+  HeapCtxC env.code pb S0 S1 μ s
 
 /-- Pages below 48 kept keep the read-only region read-only. -/
 theorem ro_of_pages {μ μ' : Memory} (h : ∀ a, a < 196608 → μ.writable a = false)
@@ -60,23 +66,23 @@ theorem alloc_base {grow : Grow} {hb r p : Nat} {s s' : State} (hwf : WF s)
     still allocated, the block a new allocated chunk at `ptr − 32` of ⌈size/32⌉ + 1 units, the heap
     off the new headers kept (`HKeepG`), the stack from sp up untouched and ω₀, ω₁, ω₅, ω₆ restored; or the model's
     `alloc` fails and the wrapper returns null. -/
-theorem alloc_call {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap : Nat)
+theorem alloc_callG {X : Type} {p : ByteArray} {P : Program} [HasCode p P] (env : HeapHost X) (cap : Nat)
     (hcap1 : 134217728 ≤ cap) (hcap : cap < 18446744073709551616)
-    (x : RefineCtx) (ω : Regs) (μ : Memory) {hb : Nat} (s : State) (sp size al pb S0 S1 : Nat)
-    (H : HeapCtx env pb S0 S1 μ s)
+    (x : X) (ω : Regs) (μ : Memory) {hb : Nat} (s : State) (sp size al pb S0 S1 : Nat)
+    (H : HeapCtxC env.code pb S0 S1 μ s)
     (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat size) (h8 : ω[8] = UInt64.ofNat al)
     (hal : 1 ≤ al) (hal1 : al ≤ 32) (hs : size + 31 < 68719476736)
     (hsp : 2147483816 ≤ sp) (hSTk : S0 + 168 ≤ sp ∧ sp ≤ S1) :
     (∃ ptr s' ω' μ', alloc (growTo pb) hb 1 ((size + 31) / 32) s = some (ptr, s') ∧
-      FreeStepsH p (refineContractK cap env) 40494 ω μ x 40611 ω' μ' x 540 ∧
-      HeapCtx env pb S0 S1 μ' s' ∧ (∀ c ∈ chunks s, c.used = true → c ∈ chunks s') ∧
+      FreeStepsH p (env.rel cap) 40494 ω μ x 40611 ω' μ' x 540 ∧
+      HeapCtxC env.code pb S0 S1 μ' s' ∧ (∀ c ∈ chunks s, c.used = true → c ∈ chunks s') ∧
       (⟨ptr - 32, (size + 31) / 32 + 1, true⟩ : Chunk) ∈ chunks s' ∧
       (∀ d ∈ chunks s, d.used = true → d ≠ ⟨ptr - 32, (size + 31) / 32 + 1, true⟩) ∧
       HKeepG μ μ' (fun a => ∃ c ∈ chunks s', c.addr = a) ∧ ω'[7] = UInt64.ofNat ptr ∧
       (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
       ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6]) ∨
     (alloc (growTo pb) hb 1 ((size + 31) / 32) s = none ∧ ∃ ω' μ',
-      FreeStepsH p (refineContractK cap env) 40494 ω μ x 40611 ω' μ' x 540 ∧ ω'[7] = UInt64.ofNat 0 ∧
+      FreeStepsH p (env.rel cap) 40494 ω μ x 40611 ω' μ' x 540 ∧ ω'[7] = UInt64.ofNat 0 ∧
       (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
       ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6]) := by
   obtain ⟨ph, h48, hhb, hp, hHTs, hHT⟩ := H.pages
@@ -85,7 +91,7 @@ theorem alloc_call {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost
   cases ha : alloc (growTo pb) hb 1 ((size + 31) / 32) s with
   | none =>
     right
-    obtain ⟨ω', μ', run, -, e7, -, -, -, efr, e0, e1, e5, e6⟩ := alloc_wrap_refines_failK (p := p) (P := P)
+    obtain ⟨ω', μ', run, -, e7, -, -, -, efr, e0, e1, e5, e6⟩ := alloc_wrap_refines_failKG (p := p) (P := P)
       (hb := hb) (S0 := S0) (S1 := S1) env cap hcap (by omega) x ω μ s sp size al pb ph H.wf H.rep H.bd h48 hhb
       hbs ha h1 h7 h8 hal hal1 hs hsp hsp1 H.hb0 H.hbT H.hA H.lock hHTs hSTk H.hSb hp H.st hHT
     exact ⟨rfl, ω', μ', run, e7, efr, e0, e1, e5, e6⟩
@@ -110,7 +116,7 @@ theorem alloc_call {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost
     by_cases hg : s'.allocated = s.allocated
     · obtain ⟨ω', μ', run, rep', wf', e7, lk, ww, efr, e0, e1, e5, e6, hk⟩ :=
         HeapWrap.alloc_wrap_refines_hdr (p := p) (P := P)
-        (R := refineContractK cap env) (HT := 4096 * ph) (S0 := S0) (S1 := S1) x ω μ s s' sp size al ptr H.wf
+        (R := env.rel cap) (HT := 4096 * ph) (S0 := S0) (S1 := S1) x ω μ s s' sp size al ptr H.wf
         H.rep ha hg h1 h7 h8 hal hal1 hs hsp hsp1 H.hb0 H.hbT H.hA H.fo H.lock hHTs hSTk hHT
         (HeapPages.wrAt hp hhb H.st)
       refine ⟨ptr, s', ω', μ', rfl, run.mono (by omega), ⟨wf', rep', fo', lk, by rw [hb']; exact H.hb0,
@@ -122,12 +128,34 @@ theorem alloc_call {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost
         rw [hs', allocPost_allocated]
         simpa [growTo] using hgrow
       obtain ⟨ω', μ', run, rep', wf', e7, lk, ⟨h', hp', hHT', hph', hh'b⟩, wst, efr, e0, e1, e5, e6, hk⟩ :=
-        HeapWrap.alloc_wrap_refines_growK_hdr (p := p) (P := P) (hb := hb) (S0 := S0) (S1 := S1) env cap hcap x ω μ s s'
+        HeapWrap.alloc_wrap_refines_growK_hdrG (p := p) (P := P) (hb := hb) (S0 := S0) (S1 := S1) env cap hcap x ω μ s s'
           sp size al ptr pb ph H.wf H.rep H.bd h48 hhb hbs ha hg h1 h7 h8 hal hal1 hs hsp hsp1 H.hb0 H.hbT H.hA
           H.fo H.lock (by have := H.hSb; omega) hHTs hSTk H.hSb hp H.st hHT
       refine ⟨ptr, s', ω', μ', rfl, run, ⟨wf', rep', fo', lk, by rw [hb']; exact H.hb0,
         by rw [hb']; exact H.hbT, by have := H.hSb; rw [hb'] at hHT'; omega, H.bd,
         ⟨h', by omega, hh'b, hp', by omega, hHT'⟩, H.hSb, H.hS1, wst,
-        ro_of_pages H.ro fun q hq => (FreeStepsH.keepRO H.bd run).1 q (Or.inl hq)⟩, keep, hnew, hfresh, hk, e7, efr, e0, e1, e5, e6⟩
+        ro_of_pages H.ro fun q hq => (HeapHost.keepRO H.bd run).1 q (Or.inl hq)⟩, keep, hnew, hfresh, hk, e7, efr, e0, e1, e5, e6⟩
+
+/-- `alloc_callG` for the refine contract (`refineHeap env`). -/
+theorem alloc_call {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap : Nat)
+    (hcap1 : 134217728 ≤ cap) (hcap : cap < 18446744073709551616)
+    (x : RefineCtx) (ω : Regs) (μ : Memory) {hb : Nat} (s : State) (sp size al pb S0 S1 : Nat)
+    (H : HeapCtx env pb S0 S1 μ s)
+    (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat size) (h8 : ω[8] = UInt64.ofNat al)
+    (hal : 1 ≤ al) (hal1 : al ≤ 32) (hs : size + 31 < 68719476736)
+    (hsp : 2147483816 ≤ sp) (hSTk : S0 + 168 ≤ sp ∧ sp ≤ S1) :
+    (∃ ptr s' ω' μ', alloc (growTo pb) hb 1 ((size + 31) / 32) s = some (ptr, s') ∧
+      FreeStepsH p (refineContractK cap env) 40494 ω μ x 40611 ω' μ' x 540 ∧
+      HeapCtx env pb S0 S1 μ' s' ∧ (∀ c ∈ chunks s, c.used = true → c ∈ chunks s') ∧
+      (⟨ptr - 32, (size + 31) / 32 + 1, true⟩ : Chunk) ∈ chunks s' ∧
+      (∀ d ∈ chunks s, d.used = true → d ≠ ⟨ptr - 32, (size + 31) / 32 + 1, true⟩) ∧
+      HKeepG μ μ' (fun a => ∃ c ∈ chunks s', c.addr = a) ∧ ω'[7] = UInt64.ofNat ptr ∧
+      (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
+      ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6]) ∨
+    (alloc (growTo pb) hb 1 ((size + 31) / 32) s = none ∧ ∃ ω' μ',
+      FreeStepsH p (refineContractK cap env) 40494 ω μ x 40611 ω' μ' x 540 ∧ ω'[7] = UInt64.ofNat 0 ∧
+      (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
+      ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6]) :=
+  alloc_callG (p := p) (P := P) (refineHeap env) cap hcap1 hcap x ω μ (hb := hb) s sp size al pb S0 S1 H h1 h7 h8 hal hal1 hs hsp hSTk
 
 end Services.Bootstrap.Decode.HeapCtx

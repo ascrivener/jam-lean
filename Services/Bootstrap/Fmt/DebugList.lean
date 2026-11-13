@@ -137,4 +137,91 @@ theorem debug_list_new {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P
       ⟨dF, d8, d9⟩, K, c0, by rw [c1]; congr 1; omega, c5, c6⟩
   · exact Or.inr ((Exhausts.pre run1 hx).mono (by omega))
 
+/-- **An entry's `Debug::fmt`, called through a reference**: as `ArgOk`, with ω₇ the address v of a
+    slot (at or above sp) holding the entry's address a. -/
+def RefOk (p : ByteArray) (P : Program) {X : Type} (R : HostRel X) (env : RefineHost.Env)
+    (pb S0 S1 : Nat) (μA : Memory) (sA : State) (spA e a M C : Nat) : Prop :=
+  ∀ (ω : Regs) (μ : Memory) (x : X) (s : State) (sp F W cap len ret t v5 v6 v : Nat),
+    HeapCtx env pb S0 S1 μ s → s.base % 8 = 0 → Keeps pb spA (fun _ => False) sA μA μ s →
+    Fmtr sA s μ F W cap len →
+    ω[0] = UInt64.ofNat ret → ω[1] = UInt64.ofNat sp → ω[5] = UInt64.ofNat v5 →
+    ω[6] = UInt64.ofNat v6 → ω[7] = UInt64.ofNat v → ω[8] = UInt64.ofNat F →
+    v5 < 18446744073709551616 → v6 < 18446744073709551616 →
+    (0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) → P.jumpTable.getD (ret / 2 - 1) 0 = t →
+    P.isBlockStart t = true →
+    (S0 + 600 ≤ sp ∧ sp % 8 = 0 ∧ 2147484248 ≤ sp) → sp ≤ spA → (sp ≤ W ∧ W + 24 ≤ S1) →
+    (sp ≤ F ∧ F + 24 ≤ S1 ∧ (F + 24 ≤ W ∨ W + 24 ≤ F)) → len + M < 134217728 →
+    (sp ≤ v ∧ v + 8 ≤ S1 ∧ (v + 8 ≤ W ∨ W + 24 ≤ v)) → rdN μ v 8 = a →
+    (∃ ω' μ' x' s' cap' n, n ≤ M ∧
+      FreeStepsH p R e ω μ x t ω' μ' x' (7 * n + 2 * (cap' - cap) + C) ∧
+      HeapCtx env pb S0 S1 μ' s' ∧ s'.base = s.base ∧ Fmtr sA s' μ' F W cap' (len + n) ∧ cap ≤ cap' ∧
+      cap' ≤ max cap (max 8 (2 * (len + n))) ∧
+      Keeps pb sp (fun a => W ≤ a ∧ a < W + 24) sA μ μ' s' ∧
+      ω'[0] = UInt64.ofNat ret ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = UInt64.ofNat v5 ∧
+      ω'[6] = UInt64.ofNat v6 ∧ ω'[7] = UInt64.ofNat 0) ∨
+    Exhausts p R pb e ω μ x (1073741824 + C)
+
+/-- **Where a value of n octets lies**, readable from the caller's (μA, sA, spA): at or above spA
+    and readable in μA, or in the data of an allocated chunk of sA. -/
+def ValAt (μA : Memory) (sA : State) (spA S1 a n : Nat) : Prop :=
+  (spA ≤ a ∧ a + n ≤ S1 ∧ ∀ b, a ≤ b → b < a + n → μA.readable b = true) ∨
+  (∃ c ∈ chunks sA, c.used = true ∧ ∀ j, j < n → InData c (a + j))
+
+/-- An allocated chunk's data is writable (as `LoopA.heap_writable_data`, for any S0, S1). -/
+theorem data_writable {env : RefineHost.Env} {pb S0 S1 : Nat} {μ : Memory} {s : State}
+    (H : HeapCtx env pb S0 S1 μ s) {c : Chunk} (hc : c ∈ chunks s) (hu : c.used = true) {a : Nat}
+    (ha : InData c a) : μ.writable a = true := by
+  obtain ⟨ph, h48, hhb, hp, hHTs, hHT⟩ := H.pages
+  have hsp := H.wf.2.2.2.2.2.2.2
+  unfold SpaceOk at hsp
+  have h1 := (hsp c hc).1 hu
+  have ht := H.wf.2.2.2.1
+  unfold TilesOk at ht
+  have hm := ht.mem_lt c hc
+  have := H.hb0
+  unfold InData at ha
+  have hq := hp (a / 4096) (by omega) (by omega)
+  unfold Memory.writable
+  rw [show pageSize = 4096 from rfl, hq]
+  simp only [decide_eq_true_eq]; omega
+
+/-- A value where `ValAt` puts it is readable, and lies above sp or below the heap's top, in every
+    memory a run reaches keeping the caller's frame. -/
+theorem ValAt.readable {env : RefineHost.Env} {pb S0 S1 spA sp a n : Nat} {sA s : State} {μA μ : Memory}
+    (h : ValAt μA sA spA S1 a n) (hn : 0 < n) (H : HeapCtx env pb S0 S1 μ s) (hS : S0 ≤ spA) (hsp : sp ≤ spA)
+    (K : Keeps pb spA (fun _ => False) sA μA μ s) :
+    (∀ b, a ≤ b → b < a + n → μ.readable b = true) ∧ ((sp ≤ a ∧ a + n ≤ S1) ∨ a + n ≤ 2147483648) := by
+  rcases h with ⟨h1, h2, h3⟩ | ⟨c, hc, hu, hd⟩
+  · exact ⟨fun b hb1 hb2 => K.readable H hS (by omega) (h3 b hb1 hb2), Or.inl ⟨by omega, h2⟩⟩
+  · have hc' := K.used c hc hu
+    refine ⟨fun b hb1 hb2 => Memory.readable_of_writable (data_writable H hc' hu (by
+      have := hd (b - a) (by omega); rwa [show a + (b - a) = b by omega] at this)), ?_⟩
+    have := chunk_bounds H.wf hc'
+    have := H.hbT
+    have h1 := hd (n - 1) (by omega)
+    unfold InData at h1
+    right; omega
+
+/-- **`<&u8 as Debug>::fmt`** (37527, plain options: the octet's decimal digits) as an entry, for an
+    octet where `ValAt` puts it. -/
+theorem ref_u8_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
+    (pb S0 S1 : Nat) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
+    (μA : Memory) (sA : State) (spA a : Nat) (hS : S0 ≤ spA) (ha : ValAt μA sA spA S1 a 1) :
+    RefOk p P R env pb S0 S1 μA sA spA 37527 a 3 2300 := by
+  intro ω μ x s sp F W cap len ret t v5 v6 v H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hF hn
+    hv ra
+  have hS1 := H.hS1
+  have hst : ∀ a, S0 ≤ a → a < S1 → μ.writable a = true := H.st
+  obtain ⟨hra, hloc⟩ := ha.readable (by omega) H hS hspA K
+  obtain ⟨ω1, run1, a0, a1, a5, a6, a7, a8⟩ := rf_u8 (p := p) (P := P) (R := R) x ω μ v F a
+    ⟨by omega, by omega⟩ h7 h8 hf.opts
+    ra (fun b h1 h2 => Memory.readable_of_writable (hst b (by omega) (by omega)))
+    (fun b h1 h2 => Memory.readable_of_writable (hst b (by omega) (by omega)))
+  rcases dec8 (p := p) (P := P) (R := R) env pb S0 S1 HA HR x ω1 μ sA s sp F W a cap len ret t v5 v6 H hba hf
+      (a0.trans h0) (a1.trans h1) (a5.trans h5) (a6.trans h6) a7 a8 ⟨hv5, hv6⟩ hret hjt hbt hsp hW hF
+      ⟨by omega, by omega⟩ hra (by omega) with
+    ⟨ω2, μ2, x2, s2, cap2, n, hn', run2, rest⟩ | hx
+  · exact Or.inl ⟨ω2, μ2, x2, s2, cap2, n, hn', (run1.trans run2).mono (by omega), rest⟩
+  · exact Or.inr ((Exhausts.pre run1 hx).mono (by omega))
+
 end Services.Bootstrap.Fmt

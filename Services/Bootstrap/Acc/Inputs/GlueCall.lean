@@ -162,4 +162,106 @@ theorem g_call {X : Type} (env : HeapHost X) (cap pb N : Nat) (hcap1 : 134217728
     · rw [fr8 a h0 ho', k7 a h0 (by omega)]
   · exact Or.inr ⟨j, ω4, μ4, hj, ((((r1.trans r2).trans r3).trans r4).mono (by omega))⟩
 
+/-- **The inputs' decode, 44495 → 44674, no items** (the fetched octets `[0]`, GP (C)'s ℰ(0)):
+    `Vec { 0, 8, 0 }` (the dangling pointer 8 of an empty `Vec`, alignment 8) stored at o, F freed, the
+    context for `free s0 ptr`, every other allocated chunk and its data kept, the caller's stack above
+    sp + 144 kept off o, and ω₀, ω₅, ω₆ restored at the return. -/
+theorem g_call0 {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
+    (code : ByteArray) (pb : Nat) (x : X) (ω : Regs) (μ : Memory) (s0 : State) (sp o fc ptr len S0 S1 : Nat)
+    (F : Chunk) (H : HeapCtxC code pb S0 S1 μ s0) (h1 : ω[1] = UInt64.ofNat sp)
+    (m8 : rdN μ (sp + 8) 8 = o) (m56 : rdN μ (sp + 56) 8 = fc) (m64 : rdN μ (sp + 64) 8 = ptr)
+    (m72 : rdN μ (sp + 72) 8 = len) (hfc : 0 < fc ∧ fc ≠ 18446744073709551615)
+    (hF : F ∈ chunks s0) (hFu : F.used = true) (hFa : F.addr + 32 = ptr)
+    (hFe : ptr + 1 ≤ F.addr + 32 * F.size) (hlen : 1 ≤ len ∧ len < 4294967296)
+    (henc : μ.read ptr = UInt8.ofNat 0)
+    (hsp : 2147483648 + 480 ≤ sp) (hSTk : S0 + 480 ≤ sp) (ho : sp + 144 ≤ o ∧ o + 24 ≤ S1) :
+    ∃ ω' μ', FreeStepsH p R 44495 ω μ x 44674 ω' μ' x 900 ∧
+      ω'[0] = UInt64.ofNat (rdN μ (sp + 136) 8) ∧ ω'[1] = UInt64.ofNat (sp + 144) ∧
+      ω'[5] = UInt64.ofNat (rdN μ (sp + 128) 8) ∧ ω'[6] = UInt64.ofNat (rdN μ (sp + 120) 8) ∧
+      rdN μ' o 8 = 0 ∧ rdN μ' (o + 8) 8 = 8 ∧ rdN μ' (o + 16) 8 = 0 ∧
+      HeapCtxC code pb S0 S1 μ' (free s0 ptr) ∧
+      (∀ c ∈ chunks s0, c.used = true → c ≠ F → c ∈ chunks (free s0 ptr) ∧
+        ∀ a, InDataA c a → μ'.read a = μ.read a) ∧
+      (∀ a, a < 4294967296 → sp + 144 ≤ a → (a < o ∨ o + 24 ≤ a) → μ'.read a = μ.read a) := by
+  have hbT := H.hbT
+  have hb0 := H.hb0
+  have hS1 := H.hS1
+  have hst := H.st
+  obtain ⟨Fb1, Fb2, Fb3⟩ := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hF hFu
+  obtain ⟨ω1, μ1, r1, a0, a1, a5, a6, a7, s0', R0, R8, fr1, rd1, wr1⟩ :=
+    g_pre (p := p) (P := P) (R := R) x ω μ sp fc ptr len h1 m56 m64 m72 hfc.2 ⟨by omega, by omega⟩
+      (fun a h1 h2 => hst a (by omega) (by omega))
+  have lo1 : ∀ a, a < 2147483648 → μ1.read a = μ.read a := fun a ha =>
+    fr1 a (by omega) (Or.inl (by omega)) (Or.inl (by omega))
+  have H1 : HeapCtxC code pb S0 S1 μ1 s0 := HeapCtxC.keep_hi H lo1 wr1
+  obtain ⟨ω2, μ2, r2, b0, b1, -, -, -, b5, b6, -, b7, b8, -, -, fr2, rd2, wr2⟩ :=
+    decodeU32A_zero (p := p) (P := P) (R := R) x ω1 μ1 2024 44527 sp (sp + 104) ptr len a0 a1 a7
+      ⟨by decide, by decide, by decide⟩ (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_1011]) bs_44527
+      ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ hlen (Or.inr (by omega))
+      (Or.inl (by omega)) (Or.inl (by omega)) (fun a h1 h2 => by rw [wr1]; exact hst a (by omega) (by omega))
+      (fun a h1 h2 => by rw [wr1]; exact hst a (by omega) (by omega))
+      (fun a h1 h2 => Memory.readable_of_writable (heapC_writable_data H1 hF hFu ⟨by omega, by omega⟩))
+      R0 R8 0 rfl (by rw [lo1 ptr (by omega)]; exact henc)
+  have lo2 : ∀ a, a < 2147483648 → μ2.read a = μ1.read a := fun a ha =>
+    fr2 a (by omega) (Or.inl (by omega)) (Or.inl (by omega))
+  have H2 : HeapCtxC code pb S0 S1 μ2 s0 := HeapCtxC.keep_hi H1 lo2 wr2
+  have hst2 := H2.st
+  obtain ⟨ω3, r3, c0, c1, c5, c6, c7, c8, c9⟩ :=
+    g_mid (p := p) (P := P) (R := R) x ω2 μ2 sp 0 (by rw [b1, a1]) b7 b8 (by omega) ⟨by omega, by omega⟩
+  obtain ⟨ω4, μ4, r4, d0, d1, d5, d6, v0, v8, v16, fr4, rd4, wr4⟩ :=
+    lp_empty (p := p) (P := P) (R := R) x ω3 μ2 sp (sp + 80) (sp + 104) c1 c7 c8 c9 ⟨by omega, by omega⟩
+      ⟨by omega, by omega⟩ (Or.inr (by omega)) (by omega) (fun a h1 h2 => hst2 a (by omega) (by omega))
+      (fun a h1 h2 => hst2 a (by omega) (by omega))
+  have lo4 : ∀ a, a < 2147483648 → μ4.read a = μ2.read a := fun a ha =>
+    fr4 a (by omega) (Or.inl (by omega)) (Or.inl (by omega))
+  have H4 : HeapCtxC code pb S0 S1 μ4 s0 := HeapCtxC.keep_hi H2 lo4 wr4
+  have hst4 := H4.st
+  have k4 : ∀ a, a < 4294967296 → sp ≤ a → (a < sp + 80 ∨ sp + 120 ≤ a) → (a < sp ∨ sp + 8 ≤ a) →
+      μ4.read a = μ.read a := fun a h0 ha h2 h3 => by
+    rw [fr4 a h0 (Or.inr ha) (by omega), fr2 a h0 (Or.inr ha) (by omega), fr1 a h0 h3 (by omega)]
+  have kw : ∀ o', sp + 8 ≤ o' → o' + 8 ≤ sp + 80 ∨ sp + 120 ≤ o' → o' + 8 ≤ 4294967296 →
+      rdN μ4 o' 8 = rdN μ o' 8 := fun o' h1 h2 h3 =>
+    rdN_frame fun j hj => k4 _ (by omega) (by omega) (by omega) (Or.inr (by omega))
+  have hsp4 : rdN μ4 sp 8 = ptr := by
+    rw [rdN_frame fun j hj => fr4 _ (by omega) (Or.inr (by omega)) (by omega),
+      rdN_frame fun j hj => fr2 _ (by omega) (Or.inr (by omega)) (by omega)]
+    exact s0'
+  have r5 := g_ret (p := p) (P := P) (R := R) x ω4 μ4 (by rw [d0, c0])
+  obtain ⟨ω6, μ6, r6, e1, e5, e6, e7, e8, p16, p24, fr6, rd6, wr6⟩ :=
+    g_post (p := p) (P := P) (R := R) x ω4 μ4 sp fc 0 8 0 (by rw [d1])
+      (by rw [d6, c6, b6, a6]) v0 v8 v16 (by omega) ⟨hfc.1, by rw [← m56]; exact rdN_lt64 _ _⟩ ⟨by omega, by omega⟩
+      (fun a h1 h2 => hst4 a (by omega) (by omega))
+  have lo6 : ∀ a, a < 2147483648 → μ6.read a = μ4.read a := fun a ha => fr6 a (by omega) (Or.inl (by omega))
+  have H6 : HeapCtxC code pb S0 S1 μ6 s0 := HeapCtxC.keep_hi H4 lo6 wr6
+  obtain ⟨ω7, μ7, r7, H7, -, wr7, stk7, kd7, f1, f5, f6⟩ :=
+    g_free (p := p) (P := P) (R := R) code pb S0 S1 x ω6 μ6 s0 sp ptr F H6 hF hFu hFa
+      e1 e6 e7 e8 (by rw [rdN_frame fun j hj => fr6 _ (by omega) (Or.inl (by omega))]; exact hsp4) (by omega)
+      ⟨by omega, by omega⟩
+  have hst7 := H7.st
+  obtain ⟨ω8, μ8, r8, z0, z1, z5, z6, o0, o8, o16, fr8, rd8, wr8⟩ :=
+    g_end (p := p) (P := P) (R := R) x ω7 μ7 sp o 0 8 0 f1 (by rw [f5, e5])
+      (by
+        rw [rdN_frame fun j hj => stk7 _ (by omega) (by omega),
+          rdN_frame fun j hj => fr6 _ (by omega) (Or.inl (by omega)), kw _ (by omega) (Or.inl (by omega)) (by omega)]
+        exact m8)
+      (by rw [rdN_frame fun j hj => stk7 _ (by omega) (by omega)]; exact p16)
+      (by rw [rdN_frame fun j hj => stk7 _ (by omega) (by omega)]; exact p24) (by omega)
+      ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ (Or.inr ho.1)
+      (fun a h1 h2 => Memory.readable_of_writable (hst7 a (by omega) (by omega)))
+      (fun a h1 h2 => hst7 a (by omega) (by omega))
+  have lo8 : ∀ a, a < 2147483648 → μ8.read a = μ7.read a := fun a ha => fr8 a (by omega) (Or.inl (by omega))
+  have k7 : ∀ a, a < 4294967296 → sp + 120 ≤ a → μ7.read a = μ.read a := fun a h0 ha => by
+    rw [stk7 a h0 (by omega), fr6 a h0 (Or.inr (by omega)), k4 a h0 (by omega) (Or.inr ha) (Or.inr (by omega))]
+  have rr : ∀ o', sp + 120 ≤ o' → o' + 8 ≤ sp + 144 → rdN μ7 o' 8 = rdN μ o' 8 := fun o' h1 h2 =>
+    rdN_frame fun j hj => k7 _ (by omega) (by omega)
+  refine ⟨ω8, μ8, (((((((r1.trans r2).trans r3).trans r4).trans r5).trans r6).trans r7).trans r8).mono (by omega),
+    by rw [z0, rr _ (by omega) (by omega)], by rw [z1], by rw [z5, rr _ (by omega) (by omega)],
+    by rw [z6, rr _ (by omega) (by omega)], o0, o8, o16, HeapCtxC.keep_hi H7 lo8 wr8,
+    fun c hc hu hcF => ⟨(kd7 c hc hu hcF).1, fun a ha => ?_⟩, fun a h0 ha ho' => ?_⟩
+  · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
+    unfold InDataA at ha
+    rw [lo8 a (by omega), (kd7 c hc hu hcF).2 a ha.1 ha.2, lo6 a (by omega), lo4 a (by omega), lo2 a (by omega),
+      lo1 a (by omega)]
+  · rw [fr8 a h0 ho', k7 a h0 (by omega)]
+
 end Services.Bootstrap.Acc

@@ -36,5 +36,7 @@ import Services.Bootstrap.CodeA.L30
 import Services.Bootstrap.CodeA.L31
 import Services.Bootstrap.CodeA.L32
 import Services.Bootstrap.CodeA.L33
+import Services.Bootstrap.CodeA.L34
+import Services.Bootstrap.CodeA.L35
 
 /-! # Every lemma of `CodeA.facts` -/

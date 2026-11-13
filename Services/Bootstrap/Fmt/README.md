@@ -124,7 +124,24 @@ allocated in s' and fresh against s. The text stays unstated.
    - The `FmtOk` site is the call at 6580 (return 6587); then the `log` host call (100) at 6608
      with the message unspecified, then the `String`'s dealloc.
    - Compose these into one frame-only summary 6501 → after the dealloc, for T2.
-4. **Refine's level-3 line** (6159 → 59375, return 6166; ω₇ = M + 168, ω₈ = 66099,
+4. **Refine's level-3 line** — in progress (`claude/bootstrap-fmt-4-wip`). Findings from the binary:
+   - No level check: 6159 always formats. The one argument (sp + 272) is (sp + 248, 1382 → 29675),
+     `<Vec<Instruction> as Debug>::fmt`: `debug_list` (61708: `write_str("[")`, then the DebugList
+     {fmt, result: u8 at +8, has_fields: u8 at +9}), per element `entry` (66019: `", "` when
+     has_fields, then the element's fmt through its vtable +24; the alternate path (flags byte at
+     F + 18, bit 7) is not taken with default options), and `finish` (66310: `write_str("]")`).
+     Elements are 232 octets; the loop at 29717 passes `&elem` (a frame slot holding the element's
+     address) with vtable 75784 (fmt 1264 → 26990, `<&Instruction as Debug>`).
+   - 26990: the niche tag (word at +0, 0x7fff… + t, jump table 67576), then per variant
+     `debug_struct_fields_finish` (63820), the `debug_tuple_field*_finish` builders, or
+     `write_str` (64485) for unit variants.
+   - Design: generalise `ArgOk` to a formatting function with a precondition on its value
+     (`FmtFnOk … e M C Pre`, Pre v μ s), so nested Debug calls (elements, fields) can state what
+     they need of their value (`ArgOk` is the case Pre v' μ s := v' = v ∧ Keeps from the caller).
+     Then the builders take `FmtFnOk` hypotheses for their entries/fields, and the 25 variants are
+     table-driven.
+   Original plan text:
+   **Refine's level-3 line** (6159 → 59375, return 6166; ω₇ = M + 168, ω₈ = 66099,
    ω₉ = M + 272; Debug fn 1382 → 29675): `Debug` of the output. That needs the `DebugStruct`,
    `DebugList` and `DebugTuple` builders and each `Instruction` variant's `Debug`.
 5. The `ReallocOk` refine instance, once `ReallocCall.realloc_call` gains its planned conjuncts

@@ -255,6 +255,8 @@ import Services.Bootstrap.SpecLemmas.Codec
 import Services.Bootstrap.SpecLemmas.Refine
 import Services.Bootstrap.SpecLemmas.Ring
 import Services.Bootstrap.Alloc.HeapContract
+import Services.Bootstrap.SymExec
+import Services.Witness.SymExec
 
 /-!
 # Results about specific services' deployed code

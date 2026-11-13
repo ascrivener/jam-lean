@@ -1,4 +1,4 @@
-import PVM.SymExec.Bootstrap.Prog
+import Services.Bootstrap.SymExec.Prog
 
 /-!
 EXPERIMENTAL (symexec spike, `docs/symexec-spike.md`): symbolic memory. The stretches `z1` and `z2`
@@ -7,9 +7,9 @@ slot `O` are symbolic, re-proved by the executor with the same statements. `z2` 
 through the jump table to a symbolic address (`ret_step`). Written by hand.
 -/
 
-namespace PVM.SymExec.FixedZ
+namespace Services.Bootstrap.SymExec.FixedZ
 
-open PVM Services.Bootstrap.Code
+open PVM PVM.SymExec Services.Bootstrap.Code
 
 variable {X : Type} {R : HostRel X}
 
@@ -27,7 +27,7 @@ def T1 : Spec :=
 
 def F1 : List (Aff × Nat) := [(⟨some 0, -12⟩, 12)]
 
-theorem ok1 : check st1 Bootstrap.prog A1 T1 F1 21219 58434 9 = true := by decide +kernel
+theorem ok1 : check st1 Services.Bootstrap.SymExec.prog A1 T1 F1 21219 58434 9 = true := by decide +kernel
 
 /-- The statement of `Services.Bootstrap.Decode.Fixed.z1`, by the executor. -/
 theorem z1 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory) (A : Nat)
@@ -40,7 +40,7 @@ theorem z1 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ :
       (∀ a, a < 4294967296 → (a < A - 12 ∨ A ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
   obtain ⟨ω', μ', hrun, ⟨r0, r1, r5, r6, r7, r8, r9, -⟩, ⟨c0, -⟩, hfr, hpg⟩ :=
-    check_sound (R := R) ok1 (Bootstrap.hyp (p := p) (P := P))
+    check_sound (R := R) ok1 (Services.Bootstrap.SymExec.hyp (p := p) (P := P))
       [A] ⟨hA.2, trivial⟩ ⟨hA.1, trivial⟩ ω μ trivial
       ⟨fun t ht => by simp only [InReg, Aff.eval] at ht; exact hw t (by simp at ht; omega) (by simp at ht; omega), trivial⟩
       trivial ⟨h1, trivial⟩ trivial x
@@ -78,7 +78,7 @@ def T2 : Spec :=
 
 def F2 : List (Aff × Nat) := [(⟨some 1, 0⟩, 12)]
 
-theorem ok2 : check st2 Bootstrap.prog A2 T2 F2 3780 21282 14 = true := by decide +kernel
+theorem ok2 : check st2 Services.Bootstrap.SymExec.prog A2 T2 F2 3780 21282 14 = true := by decide +kernel
 
 /-- The statement of `Services.Bootstrap.Decode.Fixed.z2`, by the executor (14 steps) and one
     return through the jump table. -/
@@ -101,7 +101,7 @@ theorem z2 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ :
       (∀ a, a < 4294967296 → (a < O ∨ O + 12 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
   obtain ⟨ω', μ', hrun, ⟨r0, r1, r5, r6, -⟩, ⟨c0, c1, -⟩, hfr, hpg⟩ :=
-    check_sound (R := R) ok2 (Bootstrap.hyp (p := p) (P := P))
+    check_sound (R := R) ok2 (Services.Bootstrap.SymExec.hyp (p := p) (P := P))
       [A, O, ret, v5, v6, v] ⟨by omega, by omega, by omega, hv5, hv6, hv, trivial⟩
       ⟨hA.1, Nat.zero_le _, hret.1, Nat.zero_le _, Nat.zero_le _, Nat.zero_le _, trivial⟩ ω μ
       ⟨fun t ht => by simp only [InReg, Aff.eval] at ht; exact hr t (by simp at ht; omega) (by simp at ht; omega), trivial⟩
@@ -128,4 +128,4 @@ theorem z2 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ :
   · exact readable_pages hpg a
   · exact writable_pages hpg a
 
-end PVM.SymExec.FixedZ
+end Services.Bootstrap.SymExec.FixedZ

@@ -480,4 +480,35 @@ theorem xt1 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR
   · simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
       ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1]
 
+/-- 5587 … 5621 with no segments (len = 0): as `xa`, then straight to 5810. -/
+theorem xa0 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] (x : X) (ω : Regs)
+    (μ : Memory) (M cur cap ptr : Nat) (hM : 65536 ≤ M ∧ M + 632 ≤ 4294967296 ∧ M % 8 = 0)
+    (hcur : cur + 32 ≤ 4294967296) (hcM : cur + 32 ≤ M + 56 ∨ M + 160 ≤ cur)
+    (hcap : cap < 18446744073709551616) (hptr : ptr < 18446744073709551616)
+    (h1 : ω[1] = UInt64.ofNat M) (h5 : ω[5] = UInt64.ofNat cur) (h8 : ω[8] = UInt64.ofNat 10)
+    (s8 : μ.readN (cur + 8) 8 = Num.encodeLE 8 cap) (s16 : μ.readN (cur + 16) 8 = Num.encodeLE 8 ptr)
+    (s24 : μ.readN (cur + 24) 8 = Num.encodeLE 8 0)
+    (hr : ∀ a, cur + 8 ≤ a → a < cur + 32 → μ.readable a = true)
+    (hw : ∀ a, M + 56 ≤ a → a < M + 160 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 5587 ω μ x 5810 ω' μ' x 16 ∧ ω'[1] = ω[1] ∧
+      μ'.readN (M + 72) 8 = Num.encodeLE 8 10 ∧ μ'.readN (M + 64) 8 = Num.encodeLE 8 cap ∧
+      μ'.readN (M + 104) 8 = Num.encodeLE 8 ptr ∧ μ'.readN (M + 96) 8 = Num.encodeLE 8 0 ∧
+      μ'.readN (M + 56) 8 = Num.encodeLE 8 0 ∧
+      (∀ a, a < 4294967296 → (a < M + 56 ∨ M + 112 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  obtain ⟨hM0, hM1, hM8⟩ := hM
+  have rc := rd8 hcap s8
+  have rp := rd8 hptr s16
+  have rl := rd8 (by decide) s24
+  have hr2 : ∀ a, M + 56 ≤ a → a < M + 160 → μ.readable a = true :=
+    fun a h1 h2 => Memory.readable_of_writable (hw a h1 h2)
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?_, ?_, ?_, ?_⟩
+  rotate_left 2
+  · pvm_go [h1, h5, h8, hM0, hM1, hM8, hcur, hcM, hr, hr2, hw, rc, rp, rl, rdN_writeN_disjoint, ↓rdN_fold]
+  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
+    all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+      ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1]
+    post_simp
+
 end Services.Bootstrap.Refine.Export

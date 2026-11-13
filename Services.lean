@@ -92,6 +92,7 @@ import Services.Bootstrap.Decode.LookedUpSmall
 import Services.Bootstrap.Decode.VecU8Loop
 import Services.Bootstrap.Decode.ReallocOk
 import Services.Bootstrap.Decode.DeallocCall
+import Services.Bootstrap.Decode.AllocZeroedCall
 import Services.Bootstrap.Decode.VecU8Pass
 import Services.Bootstrap.Decode.LookedUpBig
 import Services.Bootstrap.Decode.ProvideInline
@@ -163,6 +164,10 @@ import Services.Bootstrap.Alloc.AllocWrite
 import Services.Bootstrap.Alloc.AllocRight
 import Services.Bootstrap.Alloc.AllocTail
 import Services.Bootstrap.Alloc.AllocImpl
+import Services.Bootstrap.Alloc.AllocZeroedTail
+import Services.Bootstrap.Alloc.AllocZeroedMemzero
+import Services.Bootstrap.Alloc.AllocZeroedImpl
+import Services.Bootstrap.Alloc.AllocZeroedGrow
 import Services.Bootstrap.Alloc.AllocRefines
 import Services.Bootstrap.Alloc.AllocWrap
 import Services.Bootstrap.Alloc.AllocGrow

@@ -34,10 +34,10 @@ theorem Fmtr.flags {s₀ s : State} {μ : Memory} {F W cap len : Nat} (hf : Fmtr
 
 /-- A `String` write's frame (`Keeps` from T with only W changed), with the `Formatter` and the
     frame words at T … T + 128 other than those written, carried along. -/
-theorem keepT {pb S0 S1 T W : Nat} {env : RefineHost.Env} {s₀ s s' : State} {μ μ' : Memory}
+theorem keepT {pb S0 S1 T W : Nat} {env : RefineHost.Env} {s₀ s' : State} {μ μ' : Memory}
     (K : Keeps pb T (fun a => W ≤ a ∧ a < W + 24) s₀ μ μ' s') (H : HeapCtx env pb S0 S1 μ' s')
-    (hW : T + 128 ≤ W) : ∀ o, o + 8 ≤ 128 → rdN μ' (T + o) 8 = rdN μ (T + o) 8 := fun o ho =>
-  rdN_frame (fun j hj => K.hi _ (by omega) (by have := H.hS1; omega) (by omega))
+    (hW : T + 128 ≤ W ∧ W < 4294967296) : ∀ o, o + 8 ≤ 128 → rdN μ' (T + o) 8 = rdN μ (T + o) 8 := fun o ho =>
+  rdN_frame (fun j hj => K.hi _ (by omega) (by omega) (by omega))
 
 theorem debug_tuple1 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
     (pb S0 S1 : Nat) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
@@ -49,7 +49,7 @@ theorem debug_tuple1 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] 
     (h6 : ω[6] = UInt64.ofNat v6) (h7 : ω[7] = UInt64.ofNat F) (h8 : ω[8] = UInt64.ofNat nm)
     (h9 : ω[9] = UInt64.ofNat nl) (h10 : ω[10] = UInt64.ofNat v) (h11 : ω[11] = UInt64.ofNat vt)
     (hv5 : v5 < 18446744073709551616 ∧ v6 < 18446744073709551616)
-    (hnm : 65536 ≤ nm ∧ nm + nl + 24 ≤ 196608 ∧ 0 < nl)
+    (hnm : 65536 ≤ nm ∧ nm + nl + 24 ≤ 196608 ∧ 0 < nl) (hrn : ∀ a, nm ≤ a → a < nm + nl → μ.readable a = true)
     (hvt : 65536 ≤ vt ∧ vt + 32 ≤ 77144) (rfn : rdN μ (vt + 24) 8 = fn)
     (hfn : 0 < fn ∧ fn ≤ 2806 ∧ fn % 2 = 0) (hje : P.jumpTable.getD (fn / 2 - 1) 0 = e)
     (hbe : P.isBlockStart e = true) (hslot : rdN μ v 8 = a)
@@ -92,11 +92,11 @@ theorem debug_tuple1 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] 
   rcases write_str (p := p) (P := P) (R := R) env pb S0 S1 HA HR x ω1 μ1 sA s (sp - 128) W nm nl cap len 2646
       62513 2596 F H1 hba hf1.str a0 a1 a5 a6 a7 a8 a9 ⟨by omega, by omega⟩ (by decide) jte_1322 bs_62513
       ⟨by omega, by omega, by omega⟩ ⟨by omega, by omega⟩ (by omega) (Or.inl ⟨by omega, by omega⟩)
-      (fun a h1 h2 => by rw [rd1]; exact hf.vrd a (by omega) (by omega)) with
+      (fun a h1 h2 => by rw [rd1]; exact hrn a h1 h2) with
     ⟨ω2, μ2, x2, s2, cap2, run2, H2, hb2, hs2, hc1, hc2, K2, b0, b1, b5, b6, b7⟩ | hx
   rotate_left
   · exact Or.inr ((Exhausts.pre run1 hx).mono (by omega))
-  have kk2 := keepT K2 H2 (by omega)
+  have kk2 := keepT K2 H2 ⟨by omega, by omega⟩
   have K12 := K1.trans' (K2.lift (sp' := sp) (by omega) (fun a h _ => h))
   rw [Nat.max_self] at K12
   have hf2 : Fmtr sA s2 μ2 F W cap2 (len + nl) := Fmtr.of_keeps hf H K12 ⟨hF.1, by omega⟩ (fun a h1 h2 h => by omega) hs2
@@ -130,7 +130,7 @@ theorem debug_tuple1 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] 
   · refine Or.inr ((Exhausts.pre ((run1.trans run2).trans run3) hx).mono ?_)
     have : cap2 ≤ max cap (max 8 (2 * (len + nl))) := hc2
     omega
-  have kk4 := keepT K4 H4 (by omega)
+  have kk4 := keepT K4 H4 ⟨by omega, by omega⟩
   have hst4 : ∀ a, S0 ≤ a → a < S1 → μ4.writable a = true := H4.st
   have k3' : ∀ o, 8 ≤ o → o + 8 ≤ 128 → rdN μ3 (sp - 128 + o) 8 = rdN μ2 (sp - 128 + o) 8 := fun o h1 h2 =>
     rdN_frame (fun j hj => k3 _ (by omega) (Or.inr (by omega)))
@@ -169,7 +169,7 @@ theorem debug_tuple1 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] 
     have : cap4 ≤ max cap2 (max 8 (2 * (len + nl + 1))) := hc4
     have := hs4.lt
     omega
-  have kk6 := keepT K6 H6 (by omega)
+  have kk6 := keepT K6 H6 ⟨by omega, by omega⟩
   have hst6 : ∀ a, S0 ≤ a → a < S1 → μ6.writable a = true := H6.st
   -- ")"
   obtain ⟨ω7, run7, i0, i1, i5, i6, i7, i8, i9⟩ := dt_d (p := p) (P := P) (R := R) x6 ω6 μ6 (sp - 128) F W nl
@@ -188,10 +188,10 @@ theorem debug_tuple1 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] 
       hx).mono ?_)
     have : cap2 ≤ max cap (max 8 (2 * (len + nl))) := hc2
     have : cap4 ≤ max cap2 (max 8 (2 * (len + nl + 1))) := hc4
-    have := hs8.lt
+    have : cap6 ≤ max cap4 (max 8 (2 * (len + nl + 1 + n6))) := hc6
     have := hf6.str.lt
     omega
-  have kk8 := keepT K8 H8 (by omega)
+  have kk8 := keepT K8 H8 ⟨by omega, by omega⟩
   have hst8 : ∀ a, S0 ≤ a → a < S1 → μ8.writable a = true := H8.st
   have w18 : ∀ o, 8 ≤ o → o + 8 ≤ 128 → rdN μ8 (sp - 128 + o) 8 = rdN μ1 (sp - 128 + o) 8 := fun o h1 h2 => by
     rw [kk8 o (by omega), kk6 o (by omega), w14 o h1 h2]

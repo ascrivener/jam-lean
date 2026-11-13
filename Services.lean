@@ -104,6 +104,8 @@ import Services.Bootstrap.Decode.ReallocCall
 import Services.Bootstrap.Acc.Checkpoint
 import Services.Bootstrap.Acc.Contract
 import Services.Bootstrap.Acc.HostSteps
+import Services.Bootstrap.Acc.Handlers.Dispatch
+import Services.Bootstrap.Acc.Handlers.NoCall
 import Services.Bootstrap.Acc.HeapHost
 import Services.Bootstrap.Acc.DecodeU32A
 import Services.Bootstrap.Acc.Inputs.FetchStep

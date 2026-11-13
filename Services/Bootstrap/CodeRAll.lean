@@ -4,5 +4,7 @@
 -/
 import Services.Bootstrap.CodeR.L0
 import Services.Bootstrap.CodeR.L1
+import Services.Bootstrap.CodeR.L2
+import Services.Bootstrap.CodeR.L3
 
 /-! # Every lemma of `CodeR.facts` -/

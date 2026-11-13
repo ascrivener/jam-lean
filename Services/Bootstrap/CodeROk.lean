@@ -8,6 +8,12 @@ import Services.Bootstrap.CodeRCheck.G1
 import Services.Bootstrap.CodeRCheck.G2
 import Services.Bootstrap.CodeRCheck.G3
 import Services.Bootstrap.CodeRCheck.G4
+import Services.Bootstrap.CodeRCheck.G5
+import Services.Bootstrap.CodeRCheck.G6
+import Services.Bootstrap.CodeRCheck.G7
+import Services.Bootstrap.CodeRCheck.G8
+import Services.Bootstrap.CodeRCheck.G9
+import Services.Bootstrap.CodeRCheck.G10
 
 /-!
 # bootstrap's further code facts hold of the vendored blob, by the kernel
@@ -25,7 +31,7 @@ open PVM PVM.NatBlob Services.Bootstrap.Blob Services.Bootstrap.CodeR
 theorem checkCode_ok : checkCode (ba N 11888 83235) facts = true :=
   checkCode_of_chunks CodeCheck.parse CodeCheck.vBlob_ok (by
     simp only [factChunks, factGroups, List.flatten_cons, List.flatten_nil, List.all_append, List.all_nil,
-      Bool.and_true, chunks_0, chunks_1, chunks_2, chunks_3, chunks_4])
+      Bool.and_true, chunks_0, chunks_1, chunks_2, chunks_3, chunks_4, chunks_5, chunks_6, chunks_7, chunks_8, chunks_9, chunks_10])
 
 /-- The further code facts, wherever the base facts hold of the blob. -/
 theorem hasCodeR {P : Program} (h : CodeOk (ba N 11888 83235) Code.facts P) :

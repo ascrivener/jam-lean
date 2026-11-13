@@ -36,6 +36,8 @@ Build one file with
 
 ## Merged since the handoff
 
+- #168: the pass-through loop and the whole exit (`exit_run`), with `DebugLineOk` as the only hypothesis.
+
 - #157: `Services/Bootstrap/Bridge.lean` (`IsBootstrap`, `RSem`, `ExhaustsHeap` with `AllocNull` / `TooLong`)
   and `CodeR` regenerated with `fnRangesR = [(4046,6378), (30766,30977), (44677,44916), (49015,49201)]`
   (`drop_in_place::<Instruction>`, Import's collect loop, the SDK's import-segment fetch and
@@ -81,6 +83,17 @@ segment or 5810), `xp0`/`xpg` (room, or `grow_one` → 5832), `xps` (`Exported(n
 mask at M + 40). Next: the segment loop (invariant at 5653: segment j, the context with j exports appended,
 `FmtCall` at 5744 as a hypothesis), the free loop, and the step 5042 → 5042 for `PInv` (`O k` = the
 `Exported(n)` slot). `PInv` gained `c40`, `c16`, `c24`, `c32` (Lookup's log constants) for the handlers.
+
+Plan for the segment step (5653 … 5653 / 5810), one segment g = ptr + 24 j of the n:
+`xs1` → `HostSteps.FreeStepsH.exportRef` (needs `μ.rangeReadable sp (min sl 4104)`: the segment's data lies in an
+allocated chunk) → `xs2` (v = `exportR7 env x` ≠ 2^64 − 1, true while ς + 3072 < 2^64 − 9: take it as a
+hypothesis on ς) → the `format!` at 59375 as a hypothesis in Fmt's `FmtCall` shape (`Fmt/Format.lean`: from
+`HeapCtx`, `Keeps pb M (String at M + 584 … M + 608)`, `StrOut`, or `Fmt.Exhausts`, which `ExhaustsX.ofFmt`
+absorbs) → `xl` → `FreeStepsH.logRef` → `xf` + `Decode.DeallocCall.dealloc_call` + `xf1`, or `xf0` → `xn`.
+The context after segment j is `exportCtx` applied j times (`RSem.reply (.exportSeg d)` with
+`padSeg d = d.take 4104 ++ zeros`, matching `exportCtx`'s `min (reg ω 8) 4104`).
+`ExhaustsX` is now `Bridge.AllocFails` (any allocator's null return, or the size trap), so Fmt's exhaustion
+(40611 / 40821) folds in (`ExhaustsX.ofFmt`).
 
 #### (old notes)
 Per segment of the element's `Vec<Vec<u8>>` (24-octet {cap, ptr, len} entries, loop 5641–5807):

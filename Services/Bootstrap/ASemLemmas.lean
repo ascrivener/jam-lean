@@ -119,6 +119,55 @@ theorem hostRead_self {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (self : S
 theorem step_read (env : AccEnv) (key : Bytes) (c : AccCtx) (hk : argBase + key.length ≤ outBase)
     (hv : ∀ v, c.1.self.storage.get? key = some v → v.length < 2 ^ 31) :
     step env (.read key) c = some (c.1.self.storage.get? key, c) := by
-  sorry
+  have hkl : key.length < 2 ^ 31 := by unfold argBase outBase at hk; omega
+  have r7s : ∀ (ω : Regs) (n : Nat), n < 2 ^ 64 → reg (setR7 ω n) 7 = n := fun ω n hn => by
+    unfold reg setR7 Regs.get; simp; exact hn
+  have hkey : (argMem [key]).readN (argAt [key] 0) key.length = key :=
+    argMem_readN [key] 0 (by simp) (by simp only [List.flatten_cons, List.flatten_nil, List.append_nil]; exact hk)
+  have hrd : (argMem [key]).rangeReadable (argAt [key] 0) key.length = true :=
+    Services.Witness.rangeReadable_of (fun j h1 h2 => argMem_readable [key] (by unfold argAt at h1; simp at h1; omega)
+      (by unfold argAt at h2; simp at h2; unfold argBase at *; omega)) (by unfold argAt; simp; unfold argBase; omega)
+  have hA : argAt [key] 0 = argBase := by simp [argAt]
+  -- the first call: the length (an empty buffer)
+  have e1 := hostRead_self opGas (argRegs ([Result.NONE, argAt [key] 0, key.length] ++ [outBase, 0, 0] ++ []))
+    (argMem [key]) c.1.self c.1.id c.1.state.accounts () (argAt [key] 0) key.length outBase 0 key
+    ((reg_argRegs _ 7 (by decide) (by simp [Result.NONE])).trans (by simp [Result.NONE]))
+    ((reg_argRegs _ 8 (by decide) (by simp [hA, argBase])).trans (by simp [Result.NONE]))
+    ((reg_argRegs _ 9 (by decide) (by simp; omega)).trans (by simp [Result.NONE]))
+    ((reg_argRegs _ 10 (by decide) (by simp [outBase])).trans (by simp [Result.NONE]))
+    ((reg_argRegs _ 11 (by decide) (by simp)).trans (by simp [Result.NONE]))
+    ((reg_argRegs _ 12 (by decide) (by simp)).trans (by simp [Result.NONE]))
+    (by unfold opGas memGas Constants.CgasRconst Constants.CgasRkeylinear Constants.CgasRvallinear; omega)
+    hrd hkey (by simp [Memory.rangeWritable])
+  simp only [step, twoPhase, call, AccHost.dispatch]
+  rw [e1]
+  cases hv' : c.1.self.storage.get? key with
+  | none =>
+    simp only [hv']
+    simp [r7, r7s _ _ (by simp [Result.NONE] : Result.NONE < 2 ^ 64)]
+  | some v =>
+    simp only [hv']
+    have hvl := hv v hv'
+    have e2 := hostRead_self opGas (argRegs ([Result.NONE, argAt [key] 0, key.length] ++ [outBase, 0, v.length] ++ []))
+      (argMem [key]) c.1.self c.1.id c.1.state.accounts () (argAt [key] 0) key.length outBase v.length key
+      ((reg_argRegs _ 7 (by decide) (by simp [Result.NONE])).trans (by simp [Result.NONE]))
+      ((reg_argRegs _ 8 (by decide) (by simp [hA, argBase])).trans (by simp))
+      ((reg_argRegs _ 9 (by decide) (by simp; omega)).trans (by simp))
+      ((reg_argRegs _ 10 (by decide) (by simp [outBase])).trans (by simp))
+      ((reg_argRegs _ 11 (by decide) (by simp)).trans (by simp))
+      ((reg_argRegs _ 12 (by decide) (by simp; omega)).trans (by simp))
+      (by unfold opGas memGas Constants.CgasRconst Constants.CgasRkeylinear Constants.CgasRvallinear; omega)
+      hrd hkey (by
+        rw [hv']
+        simp only [Option.map_some, Option.getD_some, Nat.min_self]
+        exact Services.Bootstrap.Acc.rangeWritable_of (by unfold outBase; omega) (fun a h1 h2 =>
+          argMem_writable [key] (by unfold outBase argBase at *; omega) (by unfold outBase at *; omega)))
+    simp only [ite_true, Option.bind_eq_bind, Option.bind_some, r7, r7s _ _ (show v.length < 2 ^ 64 by omega)]
+    rw [if_neg (by unfold Result.NONE; omega)]
+    simp only [e2, hv', ite_true, Option.bind_some, Option.pure_def, Option.some.injEq, Prod.mk.injEq, and_true]
+    simp only [outValue, r7, r7s _ _ (show v.length < 2 ^ 64 by omega)]
+    rw [if_neg (by unfold Result.NONE; omega), List.take_length]
+    have := PVM.Memory.readN_writeN (argMem [key]) outBase v (by unfold two32; omega)
+    rw [this]
 
 end Services.Bootstrap.ASem

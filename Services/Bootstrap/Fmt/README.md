@@ -141,6 +141,10 @@ allocated in s' and fresh against s. The text stays unstated.
      or field is formatted through a slot holding its address: `RefOk` (as `ArgOk`, the value
      reached through the slot), with `ref_u8_ok`, `ref_u64_ok`, `ref_hce_ok`. `ValAt` says where a
      value may lie (at or above the caller's frame, or in an allocated chunk of the caller's state).
+   - Done (`OptionDebug`): `option_vec_ok`, `<Option<Vec<u8>> as Debug>` (17465, the `Lookup`
+     line's argument: `None` when the first word is 2⁶⁴ − 1, else `Some(…)`), with
+     `ref_vec_u8_ok` (`<&Vec<u8> as Debug>` as a `RefOk`). `RefOk`, `debug_entry` and
+     `debug_tuple1` take the field's stack depth Z too (600 ≤ Z; 768 for a `Vec`).
    - Interface: `ArgOk`, `ArgsAt`, `fmt_write` and `format_inner` take the stack depth Z a function
      may use below its caller (sp ≥ S0 + Z and 2³¹ + Z; the earlier statements are Z = 600), and
      `ArgOk` has the premise W + 24 ≤ spA (every caller had it), so nested calls keep the caller's

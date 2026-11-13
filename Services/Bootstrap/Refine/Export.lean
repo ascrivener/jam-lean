@@ -44,7 +44,7 @@ theorem xd {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR 
 /-- 5587 … 5639: the handler keeps the index 10 at M + 72 and the segments' `Vec` `{cap, ptr, len}` (from the
     element at `cur`, ω₅) at M + 64, M + 104, M + 56, with 24·len at M + 96; with len ≠ 0 it keeps the end
     ptr + 24·len at M + 152 and goes to the first segment (5653) with ω₅ = ptr. Memory changes only at
-    M + 56 … M + 112 and M + 152 … M + 160. -/
+    M + 56 … M + 80, M + 96 … M + 112 and M + 152 … M + 160. -/
 theorem xa {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] (x : X) (ω : Regs)
     (μ : Memory) (M cur cap ptr len : Nat) (hM : 65536 ≤ M ∧ M + 632 ≤ 4294967296 ∧ M % 8 = 0)
     (hcur : cur + 32 ≤ 4294967296) (hcM : cur + 32 ≤ M + 56 ∨ M + 160 ≤ cur)
@@ -58,7 +58,8 @@ theorem xa {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR 
       μ'.readN (M + 72) 8 = Num.encodeLE 8 10 ∧ μ'.readN (M + 64) 8 = Num.encodeLE 8 cap ∧
       μ'.readN (M + 104) 8 = Num.encodeLE 8 ptr ∧ μ'.readN (M + 96) 8 = Num.encodeLE 8 (24 * len) ∧
       μ'.readN (M + 56) 8 = Num.encodeLE 8 len ∧ μ'.readN (M + 152) 8 = Num.encodeLE 8 (ptr + 24 * len) ∧
-      (∀ a, a < 4294967296 → (a < M + 56 ∨ (M + 112 ≤ a ∧ a < M + 152) ∨ M + 160 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, a < 4294967296 → (a < M + 56 ∨ (M + 80 ≤ a ∧ a < M + 96) ∨ (M + 112 ≤ a ∧ a < M + 152) ∨ M + 160 ≤ a) →
+        μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
   obtain ⟨hM0, hM1, hM8⟩ := hM
   have rc := rd8 hcap s8
@@ -494,7 +495,7 @@ theorem xa0 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR
       μ'.readN (M + 72) 8 = Num.encodeLE 8 10 ∧ μ'.readN (M + 64) 8 = Num.encodeLE 8 cap ∧
       μ'.readN (M + 104) 8 = Num.encodeLE 8 ptr ∧ μ'.readN (M + 96) 8 = Num.encodeLE 8 0 ∧
       μ'.readN (M + 56) 8 = Num.encodeLE 8 0 ∧
-      (∀ a, a < 4294967296 → (a < M + 56 ∨ M + 112 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, a < 4294967296 → (a < M + 56 ∨ (M + 80 ≤ a ∧ a < M + 96) ∨ M + 112 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
   obtain ⟨hM0, hM1, hM8⟩ := hM
   have rc := rd8 hcap s8

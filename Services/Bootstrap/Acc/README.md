@@ -238,11 +238,13 @@ corollaries.
   Done (`Acc/Inputs/LoopItem.lean`, `LoopItemOp.lean`): `ItemOk`, and its instances `itemOk_tr`
   (`encTr`, `RepTr`), `itemOk_opok` (`encOpOk`, `RepOpOk`), `itemOk_operr` (`encOpErr`, `RepOpErr`);
   helpers `readN_app`, `Words4.readN`, `blk`, `VAlloc.blk_mem`, `blk_read`, `wd`.
-  Done (`Acc/Inputs/LoopInd.lean`): `HeapCtxC.keep_data`, `lp_body` (45126 → 45103: one item, its two
-  copies into the buffer's slot q + 184·L), and **`lp_items`** (45126 → 45613 by induction over the
-  remaining items, each with `ItemOk`; or exhausted). **Next:** `lp_call` (44916 → 45613): `lp_pre`,
-  `fg_new_call` (the buffer chunk C = ⟨q − 32, ⌈184n/32⌉ + 1⟩, fresh, so C ≠ the reader's chunk),
-  `lp_fg_ret`, `lp_buf`, `lp_items`; n = 0 by `lp_empty`; `fg_new_call`'s failure is Exhausts too.
+  Done (`Acc/Inputs/LoopInd.lean`): `HeapCtxC.keep_data`, `lp_body` (one item and its two copies),
+  `lp_items` (the induction), `lp_buf_err`, and **`lp_call`** (44916 → 45613, 0 < n ≤ 89): `Vec { n, q, n }`
+  at out with slot j satisfying item j's `Rep`, the buffer a fresh chunk, the context kept with every old
+  chunk and its data; or exhausted (45975, or the trap 45642 when `finish_grow` fails). n = 0: `lp_empty`.
+  **Next:** 44495's glue (the fetched bytes unwrapped, the count by `decodeU32A`, `lp_call`, the fetched
+  buffer freed at 42327 with the allocator's lock inline, the result stored, return 2022/226 → 6674),
+  `fetch_vec`'s zeroed allocation (a′), then the 6630 → 6674 summary.
   **Link to the spec (planned).** The top-level T2 assembly instantiates the list from the model's
   accumulate inputs: for each of the paper's items (GP v0.8.0 §12: an operand 𝕌 or a deferred
   transfer 𝕏), `enc` is its ℰ encoding (Appendix C: tag 0 then ℰ(p, e, a, y, g, O(l), ↕t), or tag 1

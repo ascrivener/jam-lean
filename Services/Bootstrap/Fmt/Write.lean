@@ -75,12 +75,12 @@ def wrE (T W : Nat) (a : Nat) : Prop :=
 /-- The arguments from index i on, for the items ts: each a pair (v, fn) at args + 16 i in the
     caller's memory μA, at or above spA, fn a jump-table address of an `ArgOk` function. -/
 def ArgsAt (p : ByteArray) (P : Program) {X : Type} (R : HostRel X) (env : RefineHost.Env)
-    (pb S0 S1 : Nat) (μA : Memory) (sA : State) (spA args i : Nat) (ts : List TItem) (M C : Nat) : Prop :=
+    (pb S0 S1 Z : Nat) (μA : Memory) (sA : State) (spA args i : Nat) (ts : List TItem) (M C : Nat) : Prop :=
   ∀ j, j < nargs ts → ∃ v fn e, spA ≤ args + 16 * (i + j) ∧ args + 16 * (i + j) + 16 < 4294967296 ∧
     (∀ a, args + 16 * (i + j) ≤ a → a < args + 16 * (i + j) + 16 → μA.readable a = true) ∧
     rdN μA (args + 16 * (i + j)) 8 = v ∧ rdN μA (args + 16 * (i + j) + 8) 8 = fn ∧
     (0 < fn ∧ fn ≤ 2806 ∧ fn % 2 = 0) ∧ P.jumpTable.getD (fn / 2 - 1) 0 = e ∧
-    P.isBlockStart e = true ∧ ArgOk p P R env pb S0 S1 μA sA spA e v M C
+    P.isBlockStart e = true ∧ ArgOk p P R env pb S0 S1 Z μA sA spA e v M C
 
 theorem exh_lit (n t c : Nat) (hc : c < 536870912) :
     0 + 8 + (7 * n + 1073741824 + 2000) ≤ 2147483648 + (7 * n + 2100 + t) - 4 - 2 * c := by omega
@@ -95,14 +95,14 @@ theorem tcost_ge (M C : Nat) (ts : List TItem) : 40 ≤ tcost M C ts := by
     within `tcost M C ts + 2(cap' − cap)` steps, the context kept and, from T up, only `wrE T W`
     changed; or it reaches a failed allocator call. -/
 def WrLoop (p : ByteArray) (P : Program) {X : Type} (R : HostRel X) (env : RefineHost.Env)
-    (pb S0 S1 : Nat) (μA : Memory) (sA : State) (spA T W args ret t v5 v6 M C : Nat)
+    (pb S0 S1 Z : Nat) (μA : Memory) (sA : State) (spA T W args ret t v5 v6 M C : Nat)
     (ts : List TItem) : Prop :=
   ∀ (c i cap len : Nat) (ω : Regs) (μ : Memory) (x : X) (s : State),
     HeapCtx env pb S0 S1 μ s → s.base % 8 = 0 → Str sA s μ W cap len →
     Keeps pb spA (fun _ => False) sA μA μ s → WFrame μ T W args i ret v5 v6 → RoW μ →
     Tmpl μ c ts → 65536 ≤ c → c + tsize ts + 24 ≤ 196608 →
     ω[1] = UInt64.ofNat T → ω[6] = UInt64.ofNat c →
-    ArgsAt p P R env pb S0 S1 μA sA spA args i ts M C → i + nargs ts < 268435456 →
+    ArgsAt p P R env pb S0 S1 Z μA sA spA args i ts M C → i + nargs ts < 268435456 →
     len + tlen M ts < 134217728 →
     (∃ ω' μ' x' s' cap' n, n ≤ tlen M ts ∧
       FreeStepsH p R 64600 ω μ x t ω' μ' x' (tcost M C ts + 2 * (cap' - cap)) ∧
@@ -120,18 +120,18 @@ def TItem.byte : TItem → Nat
 /-- **One item, then the rest of the loop** (from 64611, the item's byte b in ω₅, the cursor c in
     ω₉, W in ω₁₂): as `WrLoop`, 4 steps fewer. -/
 theorem wr_item {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
-    (pb S0 S1 : Nat) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
+    (pb S0 S1 Z : Nat) (hZ : 600 ≤ Z) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
     (μA : Memory) (sA : State) (spA T W args ret t v5 v6 M C : Nat)
-    (hT : S0 + 600 ≤ T ∧ T % 8 = 0 ∧ 2147484248 ≤ T) (hW : T + 96 ≤ W ∧ W + 24 ≤ spA ∧ W + 24 ≤ S1)
+    (hT : S0 + Z ≤ T ∧ T % 8 = 0 ∧ 2147483648 + Z ≤ T) (hW : T + 96 ≤ W ∧ W + 24 ≤ spA ∧ W + 24 ≤ S1)
     (hv : v5 < 18446744073709551616 ∧ v6 < 18446744073709551616)
-    (it : TItem) (ts : List TItem) (ih : WrLoop p P R env pb S0 S1 μA sA spA T W args ret t v5 v6 M C ts)
+    (it : TItem) (ts : List TItem) (ih : WrLoop p P R env pb S0 S1 Z μA sA spA T W args ret t v5 v6 M C ts)
     (c i cap len : Nat) (ω : Regs) (μ : Memory) (x : X) (s : State)
     (H : HeapCtx env pb S0 S1 μ s) (hba : s.base % 8 = 0) (hs : Str sA s μ W cap len)
     (KA : Keeps pb spA (fun _ => False) sA μA μ s) (hF : WFrame μ T W args i ret v5 v6) (hro : RoW μ)
     (hTm : Tmpl μ c (it :: ts)) (hc0 : 65536 ≤ c) (hc1 : c + tsize (it :: ts) + 24 ≤ 196608)
     (h1 : ω[1] = UInt64.ofNat T) (a5 : ω[5] = UInt64.ofNat it.byte) (a9 : ω[9] = UInt64.ofNat c)
     (a12 : ω[12] = UInt64.ofNat W)
-    (hA : ArgsAt p P R env pb S0 S1 μA sA spA args i (it :: ts) M C) (hi : i + nargs (it :: ts) < 268435456)
+    (hA : ArgsAt p P R env pb S0 S1 Z μA sA spA args i (it :: ts) M C) (hi : i + nargs (it :: ts) < 268435456)
     (hn : len + tlen M (it :: ts) < 134217728) :
     (∃ ω' μ' x' s' cap' n, n ≤ tlen M (it :: ts) ∧
       FreeStepsH p R 64611 ω μ x t ω' μ' x' (tcost M C (it :: ts) - 4 + 2 * (cap' - cap)) ∧
@@ -279,13 +279,13 @@ theorem wr_item {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env 
 
 /-- **The template loop** (from 64600): `WrLoop` for every template. -/
 theorem wr_loop {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
-    (pb S0 S1 : Nat) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
+    (pb S0 S1 Z : Nat) (hZ : 600 ≤ Z) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
     (μA : Memory) (sA : State) (spA T W args ret t v5 v6 M C : Nat)
-    (hT : S0 + 600 ≤ T ∧ T % 8 = 0 ∧ 2147484248 ≤ T) (hW : T + 96 ≤ W ∧ W + 24 ≤ spA ∧ W + 24 ≤ S1)
+    (hT : S0 + Z ≤ T ∧ T % 8 = 0 ∧ 2147483648 + Z ≤ T) (hW : T + 96 ≤ W ∧ W + 24 ≤ spA ∧ W + 24 ≤ S1)
     (hv : v5 < 18446744073709551616 ∧ v6 < 18446744073709551616)
     (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t)
     (hbt : P.isBlockStart t = true) :
-    ∀ ts, WrLoop p P R env pb S0 S1 μA sA spA T W args ret t v5 v6 M C ts := by
+    ∀ ts, WrLoop p P R env pb S0 S1 Z μA sA spA T W args ret t v5 v6 M C ts := by
   intro ts
 
   induction ts with
@@ -315,7 +315,7 @@ theorem wr_loop {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env 
     obtain ⟨ω1, run1, a0, a1, a5, a9, a12⟩ := wr_head (p := p) (P := P) (R := R) x ω μ T W c it.byte
       ⟨by omega, by omega⟩ (by omega) h1 h6 hb.1 (by omega) hF.str hb.2.1
       (fun a h1 h2 => Memory.readable_of_writable (hst a (by omega) (by omega)))
-    rcases wr_item (p := p) (P := P) (R := R) env pb S0 S1 HA HR μA sA spA T W args ret t v5 v6 M C hT hW hv
+    rcases wr_item (p := p) (P := P) (R := R) env pb S0 S1 Z hZ HA HR μA sA spA T W args ret t v5 v6 M C hT hW hv
         it ts ih c i cap len ω1 μ x s H hba hs KA hF hro hTm hc0 hc1 (a1.trans h1) a5 a9 a12 hA hi hn with
       ⟨ω', μ', x', s', cap', n, hn', run', rest⟩ | hx
     · have : 40 ≤ tcost M C (it :: ts) := tcost_ge M C _
@@ -335,7 +335,7 @@ theorem wr_loop {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env 
       context kept and, from sp up, only W … W + 24 changed; or
     - reaches a failed allocator call. -/
 theorem fmt_write {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
-    (pb S0 S1 : Nat) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
+    (pb S0 S1 Z : Nat) (hZ : 600 ≤ Z) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
     (μA : Memory) (sA : State) (spA S W tp args ret t v5 v6 M C : Nat) (ts : List TItem)
     (x : X) (ω : Regs) (μ : Memory) (s : State) (cap len : Nat)
     (H : HeapCtx env pb S0 S1 μ s) (hba : s.base % 8 = 0) (hs : Str sA s μ W cap len)
@@ -346,10 +346,10 @@ theorem fmt_write {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (en
     (hv : v5 < 18446744073709551616 ∧ v6 < 18446744073709551616)
     (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t)
     (hbt : P.isBlockStart t = true)
-    (hS : S0 + 696 ≤ S ∧ S % 8 = 0 ∧ 2147484344 ≤ S) (hW : S ≤ W ∧ W + 24 ≤ spA ∧ W + 24 ≤ S1)
+    (hS : S0 + Z + 96 ≤ S ∧ S % 8 = 0 ∧ 2147483648 + Z + 96 ≤ S) (hW : S ≤ W ∧ W + 24 ≤ spA ∧ W + 24 ≤ S1)
     (hro : RoW μ) (hTm : Tmpl μ tp ts) (htp : 65536 ≤ tp ∧ tp + tsize ts + 24 ≤ 196608)
     (hargs : args < 18446744073709551616 ∧ args % 2 = 0)
-    (hA : ArgsAt p P R env pb S0 S1 μA sA spA args 0 ts M C) (hi : nargs ts < 268435456)
+    (hA : ArgsAt p P R env pb S0 S1 Z μA sA spA args 0 ts M C) (hi : nargs ts < 268435456)
     (hn : len + tlen M ts < 134217728) :
     (∃ ω' μ' x' s' cap' n, n ≤ tlen M ts ∧
       FreeStepsH p R 64495 ω μ x t ω' μ' x' (tcost M C ts + 100 + 2 * (cap' - cap)) ∧
@@ -409,9 +409,9 @@ theorem fmt_write {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (en
       ((rdN_frame (μ := μ) (μ' := μ1) (fun j hj => by
         rw [show W + 16 + j = W + (16 + j) by omega, fr1 _ (by omega) (Or.inr (by omega))])).trans hs.rl) hs.le
     have hF1 : WFrame μ1 (S - 96) W args 0 ret v5 v6 := ⟨m0, m8, m16, m24, m32, m40, m72, m80, m88⟩
-    rcases wr_item (p := p) (P := P) (R := R) env pb S0 S1 HA HR μA sA spA (S - 96) W args ret t v5 v6 M C
+    rcases wr_item (p := p) (P := P) (R := R) env pb S0 S1 Z hZ HA HR μA sA spA (S - 96) W args ret t v5 v6 M C
         ⟨by omega, by omega, by omega⟩ ⟨by omega, hW.2.1, hW.2.2⟩ hv it ts
-        (wr_loop (p := p) (P := P) (R := R) env pb S0 S1 HA HR μA sA spA (S - 96) W args ret t v5 v6 M C
+        (wr_loop (p := p) (P := P) (R := R) env pb S0 S1 Z hZ HA HR μA sA spA (S - 96) W args ret t v5 v6 M C
           ⟨by omega, by omega, by omega⟩ ⟨by omega, hW.2.1, hW.2.2⟩ hv hret hjt hbt ts)
         tp 0 cap len ω1 μ1 x s H1 hba hs1 KA1 hF1 (hro.congr (fun a h1 h2 => hro1 a h2))
         (Tmpl.congr _ _ hTm (by omega) hro1) htp.1 htp.2 a1 a5 a9 a12

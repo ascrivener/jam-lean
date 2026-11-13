@@ -30,7 +30,7 @@ theorem d8_lo {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X)
     ∃ ω' μ', FreeStepsH p R 67812 ω μ x 61857 ω' μ' x 27 ∧
       ω'[0] = UInt64.ofNat 2796 ∧ ω'[1] = UInt64.ofNat (sp - 16) ∧ ω'[7] = UInt64.ofNat F ∧
       ω'[9] = UInt64.ofNat 1 ∧ ω'[10] = UInt64.ofNat 0 ∧ ω'[11] = UInt64.ofNat (sp - 16 + 7) ∧
-      ω'[12] = UInt64.ofNat 1 ∧ rdN μ' (sp - 16 + 8) 8 = r0 ∧
+      ω'[12] = UInt64.ofNat 1 ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ rdN μ' (sp - 16 + 8) 8 = r0 ∧
       (∀ a, a < 4294967296 → (a < sp - 16 ∨ sp ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
   have hr : ∀ a, sp - 16 ≤ a → a < sp → μ.readable a = true := fun a h1 h2 => Memory.readable_of_writable (hw a h1 h2)
@@ -40,13 +40,13 @@ theorem d8_lo {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X)
     rotate_left 2
     · apply FreeStepsH.pad
       pvm_go [h0, h1, h7, h8, hsp, hv, hdis, hn, hz, hrv, hro, hw, hr, rdN_writeN_disjoint, ↓rdN_fold]
-    · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
+    · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
       all_goals post_simp [rdN_writeN_disjoint, rdN_writeN_same8, Num.decodeLE_encodeLE, h0, h1, h7, h8,
         Nat.mod_eq_of_lt hv.1, Nat.mod_eq_of_lt hv.2.1]
   · refine ⟨?_, ?_, ?_, ?_⟩
     rotate_left 2
     · pvm_go [h0, h1, h7, h8, hsp, hv, hdis, hn, hz, hrv, hro, hw, hr, rdN_writeN_disjoint, ↓rdN_fold]
-    · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
+    · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
       all_goals post_simp [rdN_writeN_disjoint, rdN_writeN_same8, Num.decodeLE_encodeLE, h0, h1, h7, h8,
         Nat.mod_eq_of_lt hv.1, Nat.mod_eq_of_lt hv.2.1]
 
@@ -62,7 +62,7 @@ theorem d8_mid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X
     ∃ ω' μ', FreeStepsH p R 67812 ω μ x 61857 ω' μ' x 27 ∧
       ω'[0] = UInt64.ofNat 2796 ∧ ω'[1] = UInt64.ofNat (sp - 16) ∧ ω'[7] = UInt64.ofNat F ∧
       ω'[9] = UInt64.ofNat 1 ∧ ω'[10] = UInt64.ofNat 0 ∧ ω'[11] = UInt64.ofNat (sp - 16 + 6) ∧
-      ω'[12] = UInt64.ofNat 2 ∧ rdN μ' (sp - 16 + 8) 8 = r0 ∧
+      ω'[12] = UInt64.ofNat 2 ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ rdN μ' (sp - 16 + 8) 8 = r0 ∧
       (∀ a, a < 4294967296 → (a < sp - 16 ∨ sp ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
   have hr : ∀ a, sp - 16 ≤ a → a < sp → μ.readable a = true := fun a h1 h2 => Memory.readable_of_writable (hw a h1 h2)
@@ -71,7 +71,7 @@ theorem d8_mid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X
   refine ⟨?_, ?_, ?_, ?_⟩
   rotate_left 2
   · pvm_go [h0, h1, h7, h8, hsp, hv, hdis, hn, q8, hrv, hro, hw, hr, rdN_writeN_disjoint, ↓rdN_fold]
-  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
+  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
     all_goals post_simp [rdN_writeN_disjoint, rdN_writeN_same8, Num.decodeLE_encodeLE, h0, h1, h7, h8,
       Nat.mod_eq_of_lt hv.1, Nat.mod_eq_of_lt hv.2.1]
 
@@ -87,7 +87,7 @@ theorem d8_hi {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X)
     ∃ ω' μ', FreeStepsH p R 67812 ω μ x 61857 ω' μ' x 36 ∧
       ω'[0] = UInt64.ofNat 2796 ∧ ω'[1] = UInt64.ofNat (sp - 16) ∧ ω'[7] = UInt64.ofNat F ∧
       ω'[9] = UInt64.ofNat 1 ∧ ω'[10] = UInt64.ofNat 0 ∧ ω'[11] = UInt64.ofNat (sp - 16 + 5) ∧
-      ω'[12] = UInt64.ofNat 3 ∧ rdN μ' (sp - 16 + 8) 8 = r0 ∧
+      ω'[12] = UInt64.ofNat 3 ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ rdN μ' (sp - 16 + 8) 8 = r0 ∧
       (∀ a, a < 4294967296 → (a < sp - 16 ∨ sp ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
   have hr : ∀ a, sp - 16 ≤ a → a < sp → μ.readable a = true := fun a h1 h2 => Memory.readable_of_writable (hw a h1 h2)
@@ -96,7 +96,7 @@ theorem d8_hi {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X)
   refine ⟨?_, ?_, ?_, ?_⟩
   rotate_left 2
   · pvm_go [h0, h1, h7, h8, hsp, hv, hdis, hn, q8, hrv, hro, hw, hr, rdN_writeN_disjoint, ↓rdN_fold]
-  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
+  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
     all_goals post_simp [rdN_writeN_disjoint, rdN_writeN_same8, Num.decodeLE_encodeLE, h0, h1, h7, h8,
       Nat.mod_eq_of_lt hv.1, Nat.mod_eq_of_lt hv.2.1]
 

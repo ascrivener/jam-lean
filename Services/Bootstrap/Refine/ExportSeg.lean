@@ -62,4 +62,36 @@ theorem rangeReadable_of {μ : Memory} {a n : Nat} (h : ∀ j, a ≤ j → j < a
   rw [← hpage]
   simpa [hpg, Nat.mul_div_cancel] using hj
 
+/-- The `Result<u64, HostCallError>` at r as `xs2` lays it out: `Ok` (tag 0) or `Err` with a code below 8. -/
+def ResultAt (μ : Memory) (r : Nat) : Prop :=
+  μ.readN r 1 = [UInt8.ofNat 0] ∨ ∃ c, c < 8 ∧ μ.readN r 1 = [UInt8.ofNat 1] ∧ μ.readN (r + 1) 1 = [UInt8.ofNat c]
+
+/-- **`Export`'s log line** (59375 … 5751), as a hypothesis: `format!("Exported slice: {:?} -> {:?}", seg,
+    result)` (template 66196, arguments (M + 552, 1250) and (M + 560, 692)) into the `String` at M + 584, from
+    refine's frame at M with the allocator's context, the segment's `Vec<u8>` (address at M + 552) and its
+    octets readable, and the result laid out (`ResultAt`): the run returns to 5751 with the context unchanged,
+    ω₁, ω₅, ω₆ kept, the allocator's context for some heap s', every allocated chunk of s kept with its data,
+    the stack from M up kept apart from the `String`, and the `String` `{cap, ptr, len}` at M + 584, its buffer
+    a fresh chunk when cap ≠ 0; or an allocation fails. To be discharged by the fmt summaries (`FmtCall`,
+    `vec_u8_ok` and the `Result` argument). -/
+def ExportFmtOk (p : ByteArray) (cap0 : Nat) (env : RefineHost.Env) (pb S0 S1 : Nat) : Prop :=
+  ∀ (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State) (M g sp sl : Nat),
+    HeapCtx env pb S0 S1 μ s → S0 + 456 ≤ M → M + 648 ≤ S1 → M % 8 = 0 →
+    ω[0] = UInt64.ofNat 182 → ω[1] = UInt64.ofNat M → ω[7] = UInt64.ofNat (M + 584) →
+    ω[8] = UInt64.ofNat 66196 → ω[9] = UInt64.ofNat (M + 168) →
+    μ.readN (M + 168) 8 = Num.encodeLE 8 (M + 552) → μ.readN (M + 176) 8 = Num.encodeLE 8 1250 →
+    μ.readN (M + 184) 8 = Num.encodeLE 8 (M + 560) → μ.readN (M + 192) 8 = Num.encodeLE 8 692 →
+    μ.readN (M + 552) 8 = Num.encodeLE 8 g → μ.readN (g + 8) 8 = Num.encodeLE 8 sp →
+    μ.readN (g + 16) 8 = Num.encodeLE 8 sl → (∀ a, g ≤ a → a < g + 24 → μ.readable a = true) →
+    (∀ a, sp ≤ a → a < sp + sl → μ.readable a = true) → sp + sl < 4294967296 → ResultAt μ (M + 560) →
+    (∃ (ω' : Regs) (μ' : Memory) (s' : State) (N cap ptr len : Nat),
+      FreeStepsH p (refineContractK cap0 env) 59375 ω μ x 5751 ω' μ' x N ∧ HeapCtx env pb S0 S1 μ' s' ∧
+      ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      (∀ a, a < 4294967296 → M ≤ a → (a < M + 584 ∨ M + 608 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ d ∈ chunks s, d.used = true → d ∈ chunks s' ∧ ∀ a, InData d a → μ'.read a = μ.read a) ∧
+      μ'.readN (M + 584) 8 = Num.encodeLE 8 cap ∧ μ'.readN (M + 592) 8 = Num.encodeLE 8 ptr ∧
+      μ'.readN (M + 600) 8 = Num.encodeLE 8 len ∧ cap < 536870912 ∧ ptr < 4294967296 ∧ len ≤ cap ∧
+      (cap = 0 ∨ ∃ c ∈ chunks s', c.used = true ∧ c.addr + 32 = ptr ∧ ∀ d ∈ chunks s, d.used = true → d ≠ c)) ∨
+    ∃ N, ExhaustsX env cap0 pb p 59375 ω μ x N
+
 end Services.Bootstrap.Refine.ExportSeg

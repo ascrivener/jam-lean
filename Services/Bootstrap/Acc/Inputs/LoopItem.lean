@@ -54,4 +54,74 @@ def ItemOk {X : Type} (env : HeapHost X) (cap pb : Nat) (p : ByteArray) (P : Pro
         μ'.read a = μ.read a)) ∨
     (∃ ω' μ', FreeStepsH p (env.rel cap) 45126 ω μ x 45975 ω' μ' x N)
 
+/-- A deferred transfer's encoding (GP v0.8.0 Appendix C): the tag 1, then ℰ₄(s), ℰ₄(d), ℰ₈(a), the
+    128-octet memo m and ℰ₈(g). -/
+def encTr (src dst amt gas : Nat) (m : List UInt8) : List UInt8 :=
+  1 :: (Num.encodeLE 4 src ++ Num.encodeLE 4 dst ++ Num.encodeLE 8 amt ++ m ++ Num.encodeLE 8 gas)
+
+/-- A transfer's 184-octet slot (`tr_call`): −1 at + 0, m at + 8, a at + 136, g at + 144, s at + 152,
+    d at + 156. -/
+def RepTr (src dst amt gas : Nat) (m : List UInt8) (bs : List UInt8) (_ : Memory) : Prop :=
+  Num.decodeLE (bs.take 8) = 18446744073709551615 ∧ (bs.drop 8).take 128 = m ∧
+    Num.decodeLE ((bs.drop 136).take 8) = amt ∧ Num.decodeLE ((bs.drop 144).take 8) = gas ∧
+    Num.decodeLE ((bs.drop 152).take 4) = src ∧ Num.decodeLE ((bs.drop 156).take 4) = dst
+
+theorem encTr_length (src dst amt gas : Nat) (m : List UInt8) (hm : m.length = 128) :
+    (encTr src dst amt gas m).length = 153 := by
+  simp [encTr, hm]
+
+/-- **A deferred transfer is an `ItemOk` item**: `tr_call` (stack only) and the return to 45168. -/
+theorem itemOk_tr {X : Type} (env : HeapHost X) (cap pb : Nat) {p : ByteArray} {P : Program} [HasCode p P]
+    [HasCodeA p P] (src dst amt gas : Nat) (m : List UInt8) (hs : src < 4294967296) (hd : dst < 4294967296)
+    (ha : amt < 18446744073709551616) (hg : gas < 18446744073709551616) (hm : m.length = 128) :
+    ItemOk env cap pb p P 3821 (encTr src dst amt gas m) (RepTr src dst amt gas m) := by
+  intro x ω μ hb s sp rd ip rlen S0 S1 H h0 h1 h7 h8 hsp hsp8 hSTk hrdsp hrdS hR0 hR8 hrl hrl32 henc hsrc
+  rw [encTr_length _ _ _ _ _ hm] at hrl henc hsrc ⊢
+  obtain ⟨c, hcm, hcu, hci1, hci2⟩ := hsrc
+  have hcs := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hcm hcu
+  have hbT := H.hbT
+  have hb0 := H.hb0
+  have hS1 := H.hS1
+  have hst := H.st
+  -- the fields, from the encoding
+  have piece : ∀ k n, k + n ≤ 153 → μ.readN (ip + k) n = ((encTr src dst amt gas m).drop k).take n :=
+    fun k n h => by rw [← readN_drop_take μ ip 153 k n h, henc]
+  have f1 : rdN μ ip 1 = 1 := by unfold rdN; rw [show ip = ip + 0 by rfl, piece 0 1 (by omega)]; rfl
+  have fs : rdN μ (ip + 1) 4 = src := by
+    unfold rdN; rw [piece 1 4 (by omega)]; simp [encTr, Num.decodeLE_encodeLE, Nat.mod_eq_of_lt hs]
+  have fd : rdN μ (ip + 5) 4 = dst := by
+    unfold rdN; rw [piece 5 4 (by omega)]; simp [encTr, Num.decodeLE_encodeLE, Nat.mod_eq_of_lt hd]
+  have fa : rdN μ (ip + 9) 8 = amt := by
+    unfold rdN; rw [piece 9 8 (by omega)]; simp [encTr, Num.decodeLE_encodeLE, Nat.mod_eq_of_lt ha]
+  have fm : μ.readN (ip + 17) 128 = m := by
+    rw [piece 17 128 (by omega)]; simp [encTr, hm]
+  have fg : rdN μ (ip + 145) 8 = gas := by
+    unfold rdN; rw [piece 145 8 (by omega)]; simp [encTr, hm, Num.decodeLE_encodeLE, Nat.mod_eq_of_lt hg]
+  obtain ⟨ω1, μ1, r1, e0, e1, e5, e6, o0, o8, o136, o144, o152, o156, R0, R8, fr, rdf, wrf⟩ :=
+    tr_call (p := p) (P := P) (R := env.rel cap) x ω μ sp (sp + 88) rd ip rlen h1 h7 h8 hR0 hR8 hrl hrl32 f1
+      ⟨by omega, by omega⟩
+      (fun a h1 h2 => Memory.readable_of_writable (heapC_writable_data H hcm hcu ⟨by omega, by omega⟩))
+      ⟨by omega, by omega, hsp8⟩ ⟨by omega, by omega, by omega⟩ ⟨by omega, by omega⟩ (Or.inl (by omega))
+      (fun a h1 h2 => hst a (by omega) (by omega)) (fun a h1 h2 => hst a (by omega) (by omega))
+      (fun a h1 h2 => hst a (by omega) (by omega))
+  have lo : ∀ a, a < 2147483648 → μ1.read a = μ.read a := fun a ha' =>
+    fr a (by omega) (Or.inl (by omega)) (Or.inl (by omega)) (Or.inl (by omega))
+  have slot : ∀ k n, k + n ≤ 184 → ((μ1.readN (sp + 88) 184).drop k).take n = μ1.readN (sp + 88 + k) n :=
+    fun k n h => readN_drop_take μ1 (sp + 88) 184 k n h
+  refine Or.inl ⟨s, ω1, μ1, (r1.trans (lp_ret_tr (p := p) (P := P) (R := env.rel cap) x ω1 μ1
+      (by rw [e0, h0]))).mono (by omega), by rw [e0, h0], e1, e5, e6, by rw [o0]; decide,
+    HeapCtxC.keep_hi H lo wrf, fun c hc _ => hc, fun c hc hu a ha' => ?_, ⟨[], by simp, fun μ'' _ => ?_⟩,
+    R0, R8, fun a h0 hs h1 h2 => fr a h0 (Or.inr hs) (by omega) h2⟩
+  · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
+    unfold InDataA at ha'
+    exact lo a (by omega)
+  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
+    · have := slot 0 8 (by omega); simp only [List.drop_zero, Nat.add_zero] at this
+      rw [this]; exact o0
+    · rw [slot 8 128 (by omega), o8, fm]
+    · rw [slot 136 8 (by omega)]; unfold rdN at o136 fa; rw [Nat.add_assoc, o136, fa]
+    · rw [slot 144 8 (by omega)]; unfold rdN at o144 fg; rw [Nat.add_assoc, o144, fg]
+    · rw [slot 152 4 (by omega)]; unfold rdN at o152 fs; rw [Nat.add_assoc, o152, fs]
+    · rw [slot 156 4 (by omega)]; unfold rdN at o156 fd; rw [Nat.add_assoc, o156, fd]
+
 end Services.Bootstrap.Acc

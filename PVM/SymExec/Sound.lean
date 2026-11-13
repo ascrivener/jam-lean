@@ -1409,9 +1409,30 @@ theorem sstep_sound {p : ByteArray} {P : Program} {G : Prog}
     · cases h
   · cases h
 
+/-! ## Host calls -/
+
+/-- Registers set to literals (registers 13 and above are ignored). -/
+def hregs (ω : Regs) : List (Nat × Nat) → Regs
+  | [] => ω
+  | (r, v) :: rs => hregs (if h : r < 13 then ω.set r (UInt64.ofNat v) h else ω) rs
+
+/-- Every host call the table lists is one the contract `R` allows: from any state it continues,
+    with the listed registers set and memory and the context unchanged. Proved once per contract;
+    an empty table needs nothing. -/
+def HostOk {X : Type} (R : HostRel X) (hosts : NTree (List (Nat × Nat))) : Prop :=
+  hosts.All fun h rs => ∀ ω μ x, R h ω μ x .cont (hregs ω rs) μ x
+
+theorem hset_inv {μ : Memory} : ∀ (rs : List (Nat × Nat)) {σ : SState} {ω : Regs},
+    Inv E σ ω μ → rs.all (·.1 < 13) = true → Inv E (hset σ rs) (hregs ω rs) μ
+  | [], _, _, h, _ => h
+  | (r, v) :: rs, σ, ω, h, hall => by
+    simp only [List.all_cons, Bool.and_eq_true, decide_eq_true_eq] at hall
+    simp only [hset, hregs, dif_pos hall.1]
+    exact hset_inv rs (setv_inv h ⟨r, hall.1⟩ (.const v)) hall.2
+
 /-- **Soundness of `srun`.** -/
 theorem srun_sound {X : Type} {p : ByteArray} {R : HostRel X} {P : Program} {G : Prog}
-    (hG : ProgHyp p P G) (hpre : Pre E st) {target : Nat} (x : X) :
+    (hG : ProgHyp p P G) (hH : HostOk R G.hosts) (hpre : Pre E st) {target : Nat} (x : X) :
     ∀ (k pc : Nat) (σ : SState) (ω : Regs) (μ : Memory) (σ' : SState),
       Inv E σ ω μ → srun st G target k pc σ = some σ' →
       ∃ ω' μ', FreeStepsH p R pc ω μ x target ω' μ' x k ∧ Inv E σ' ω' μ' := by
@@ -1431,6 +1452,23 @@ theorem srun_sound {X : Type} {p : ByteArray} {R : HostRel X} {P : Program} {G :
       obtain ⟨ω₁, μ₁, hn, hc, hi₁⟩ := sstep_sound hG hpre hinv hs
       obtain ⟨ω', μ', hrun, hi'⟩ := ih pc₁ σ₁ ω₁ μ₁ σ' hi₁ h
       exact ⟨ω', μ', .next hn hc hrun, hi'⟩
-    · cases h
+    · split at h
+      · rename_i pc₁ σ₁ hs
+        unfold hstep at hs
+        split at hs
+        · rename_i hc n hfe
+          split at hs
+          · rename_i rs hrs
+            split at hs
+            · rename_i hall
+              cases hs
+              have hd := NTree.all_find hG.1 pc _ hfe
+              have hR := NTree.all_find hH _ rs hrs ω μ x
+              obtain ⟨ω', μ', hrun, hi'⟩ := ih _ _ _ _ σ' (hset_inv rs hinv hall) h
+              exact ⟨ω', μ', FreeStepsH.host_decode hd hR hrun, hi'⟩
+            · cases hs
+          · cases hs
+        · cases hs
+      · cases h
 
 end PVM.SymExec

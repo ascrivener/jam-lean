@@ -267,4 +267,79 @@ theorem iter {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) 
   · rw [ird, frd, drd, brd, rd0]
   · rw [iwr, fwr, dwr, bwr, wr0]
 
+/-- The serialisations of the k keys from s on (GP §6.3: the keys one after another). -/
+def keysBytes (μ : Memory) (s : Nat) : Nat → List UInt8
+  | 0 => []
+  | k + 1 => keyBytes μ s ++ keysBytes μ (s + 336) k
+
+theorem keyBytes_congr {μ μ' : Memory} {s : Nat} (h : ∀ a, s ≤ a → a < s + 336 → μ'.read a = μ.read a) :
+    keyBytes μ' s = keyBytes μ s := by
+  simp only [keyBytes]
+  rw [readN_keep (fun b h1 h2 => h b (by omega) (by omega)), readN_keep (fun b h1 h2 => h b (by omega) (by omega)),
+    readN_keep (fun b h1 h2 => h b (by omega) (by omega)), readN_keep (fun b h1 h2 => h b (by omega) (by omega))]
+
+theorem keysBytes_congr {μ μ' : Memory} : ∀ (k s : Nat),
+    (∀ a, s ≤ a → a < s + 336 * k → μ'.read a = μ.read a) → keysBytes μ' s k = keysBytes μ s k
+  | 0, _, _ => rfl
+  | k + 1, s, h => by
+    simp only [keysBytes]
+    rw [keyBytes_congr (fun a h1 h2 => h a h1 (by omega)),
+      keysBytes_congr k (s + 336) (fun a h1 h2 => h a (by omega) (by omega))]
+
+/-- **The loop** (49775 … 49856): k ≥ 1 keys from s (ω₆ = 336 · k octets), the vector at S + 24 with
+    room for them: their serialisations (`keysBytes`) are appended at q + L, and L := L + 336 · k.
+    Memory changes only in [S − 80, S), at S + 16 and S + 40 and in [q + L, q + L + 336 · k). -/
+theorem loop {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (S cap q : Nat)
+    (hS : 65536 + 128 ≤ S ∧ S + 48 < 4294967296 ∧ S % 8 = 0) (hcap : cap < 18446744073709551616) :
+    ∀ (k : Nat) (ω : Regs) (μ : Memory) (s L : Nat), 0 < k →
+    ω[1] = UInt64.ofNat S → ω[5] = UInt64.ofNat s → ω[6] = UInt64.ofNat (336 * k) →
+    336 * k < 18446744073709551616 →
+    μ.readN (S + 24) 8 = Num.encodeLE 8 cap → μ.readN (S + 32) 8 = Num.encodeLE 8 q →
+    μ.readN (S + 40) 8 = Num.encodeLE 8 L → L + 336 * k ≤ cap →
+    (65536 ≤ q + L ∧ q + L + 336 * k + 16 ≤ S - 80) → (65536 ≤ s ∧ s + 336 * k + 16 ≤ S - 80) →
+    (q + L + 336 * k + 24 ≤ s ∨ s + 336 * k + 24 ≤ q + L) →
+    (∀ a, s ≤ a → a < s + 336 * k → μ.readable a = true) →
+    (∀ a, q + L ≤ a → a < q + L + 336 * k → μ.writable a = true) →
+    (∀ a, S - 80 ≤ a → a < S + 48 → μ.writable a = true) →
+    ∃ ω' μ', FreeStepsH p R 49775 ω μ x 49856 ω' μ' x (4000 * k) ∧
+      ω'[1] = UInt64.ofNat S ∧
+      μ'.readN (q + L) (336 * k) = keysBytes μ s k ∧ μ'.readN (S + 40) 8 = Num.encodeLE 8 (L + 336 * k) ∧
+      (∀ a, a < 4294967296 → (a < S - 80 ∨ S ≤ a) → (a < S + 16 ∨ S + 24 ≤ a) →
+        (a < S + 40 ∨ S + 48 ≤ a) → (a < q + L ∨ q + L + 336 * k ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a)
+  | 0, _, _, _, _, hk, _, _, _, _, _, _, _, _, _, _, _, _, _, _ => absurd hk (by decide)
+  | k + 1, ω, μ, s, L, _, h1, h5, h6, hr64, vc, vq, vl, hroom, hdst, hsrc, hdj, hrs, hwd, hwf => by
+    obtain ⟨ω1, μ1, run1, a1, a5, a6, ad, al, afr, ard, awr⟩ := iter (p := p) (P := P) (R := R) x ω μ S s
+      (336 * (k + 1)) cap q L h1 h5 h6 (by omega) hr64 hS vc vq vl (by omega) hcap ⟨hdst.1, by omega⟩
+      ⟨hsrc.1, by omega⟩ (by omega) (fun a h1 h2 => hrs a h1 (by omega))
+      (fun a h1 h2 => hwd a h1 (by omega)) hwf
+    rcases Nat.eq_zero_or_pos k with rfl | hk
+    · refine ⟨ω1, μ1, ?_, a1, ?_, ?_, ?_, ard, awr⟩
+      · simpa using run1
+      · simpa [keysBytes] using ad
+      · simpa using al
+      · simpa using afr
+    · have hne : 336 * (k + 1) ≠ 336 := by omega
+      simp only [hne, ↓reduceIte] at run1
+      have keep1 : ∀ a, a < 4294967296 → (a < S - 80 ∨ S + 48 ≤ a) → (a < q + L ∨ q + L + 336 ≤ a) →
+          μ1.read a = μ.read a := fun a h0 h1 h2 => afr a h0 (by omega) (by omega) (by omega) h2
+      obtain ⟨ω2, μ2, run2, b1, bd, bl, bfr, brd, bwr⟩ := loop (p := p) (P := P) x S cap q hS hcap k ω1 μ1 (s + 336) (L + 336) hk
+        a1 a5 (by rw [a6]; congr 1) (by omega)
+        (by rw [readN_keep (fun b h1 h2 => afr b (by omega) (by omega) (by omega) (by omega) (by omega))]; exact vc)
+        (by rw [readN_keep (fun b h1 h2 => afr b (by omega) (by omega) (by omega) (by omega) (by omega))]; exact vq)
+        al (by omega) ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ (by omega)
+        (fun a h1 h2 => by rw [ard]; exact hrs a (by omega) (by omega))
+        (fun a h1 h2 => by rw [awr]; exact hwd a (by omega) (by omega))
+        (fun a h1 h2 => by rw [awr]; exact hwf a h1 h2)
+      refine ⟨ω2, μ2, ?_, b1, ?_, ?_, ?_, fun a => by rw [brd, ard], fun a => by rw [bwr, awr]⟩
+      · exact (run1.trans run2).mono (by omega)
+      · rw [show 336 * (k + 1) = 336 + 336 * k by omega, Memory.readN_split,
+          show q + L + 336 = q + (L + 336) by omega, bd,
+          readN_keep (fun b h1 h2 => bfr b (by omega) (by omega) (by omega) (by omega) (by omega)), ad,
+          keysBytes_congr k (s + 336) (fun a h1 h2 => keep1 a (by omega) (by omega) (by omega))]
+        rfl
+      · rw [bl]; congr 1; omega
+      · intro a h0 h1 h2 h3 h4
+        rw [bfr a h0 h1 h2 h3 (by omega), afr a h0 h1 h2 h3 (by omega)]
+
 end Services.Bootstrap.Acc.Handlers.DesignateLoop

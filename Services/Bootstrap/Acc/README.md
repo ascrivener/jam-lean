@@ -180,19 +180,31 @@ corollaries.
   `cu_head`, `cu_mid` (the leading-ones cascade, l < 8), `cu_post`, `cu_zero`, `cu_ff`, `cu_ff_post`;
   `cu_pre`, `cu_tail_mid`, `cu_tail_ff`; and **`cu_call`**: from ℰ(g) at the reader, ω₈ = g
   (return address 2106 → 46889).
-- **Next, the operand arm** (tag 0, from 46344), as the code facts show it:
-  - 46344 … 46571: four hashes, each by `read_ok` (32 octets into b + 272, returns 2084 / 2086 / 2088 /
-    2090) and copied to b + 32, + 64, + 96 and (after the gas) + 136; a failed read goes to 46575 / 46579
-    (−2 at out + 0, the error);
-  - 46818 … 46852: the fourth hash to b + 136 and the call of 46856 (`cu_call`, the gas);
-  - 46889 … 46932: the gas's error bit, then the work result's tag octet read into b + 272 (2108);
-  - tag 0 (47074): the `Vec<u8>` by 39634 (2114) into b + 272, −1 there meaning an error;
-    then b + 8 = cap, b + 16 = the packed (ptr, len) words (47095 … 47143);
-  - tags 1 … 6 (46936 … 47007): the tag re-read from a one-octet reader at b + 135; 7 … 255 fail;
-    b + 8 = −1 (no `Vec`), b + 16 = the tag;
-  - 47136 … 47152: the auth trace, a `Vec<u8>` by 39634 (2116);
-  - 47158 … 47332: the 184-octet operand slot from b and the trace; 47334 … 47414: on a trace error,
-    the work output's buffer freed (42327, the allocator's lock inline) and the error.
+- The operand arm's segments (tag 0; `Acc/Inputs/ItemOperand*.lean`, not yet imported by `Services.lean`):
+  - `op_h0` … `op_h4` (46300 → 46856): the four hashes, each read by `read_ok` (32 octets into b + 272,
+    returns 2084 / 2086 / 2088 / 2090) and copied to b + 32, + 64, + 96, + 136; `op_h4` calls 46856 (2106);
+  - `cu_call` (the gas g), then `op_res` (46889 → 58434): g to ω₅, the result's tag octet read (2108);
+  - tag 0: `op_t0` (46920 → 39634, `vv_call` for the output, 2114), `op_ret1` (39708 → 47086), `op_ok`
+    (47086 → 39634: output length, capacity, pointer to b, b + 8, b + 16, using `repack` / `rd8_split`;
+    `vv_call` for the trace, 2116);
+  - tags 1 … 6: `op_te1` (46920 → 58434; `read_ok` of t from the one-octet reader {b + 135, 1}, 2110),
+    `op_te2` (46974 → 39634: −1 at b + 8, t at b + 16; `vv_call` for the trace, 2116);
+  - `op_ret2` (39708 → 47158), then `op_fill1` … `op_fill3` (47158 → 47332): the slot. Operand slot:
+    + 0 trace capacity, + 8 trace pointer, + 16 trace length, + 24 the result's capacity (−1 for an
+    error), + 32 its pointer (the tag for an error), + 40 its length, + 48 p, + 80 e, + 112 a, + 144 y,
+    + 176 g.
+- The operand arm composed (`Acc/Inputs/Operand{Head,Call,Arm}.lean`, not yet imported by `Services.lean`):
+  - `op_head` (46300 → 46889, host-generic): the four hashes (as `Words4`) and the gas;
+  - `vv_any`: the `Vec<u8>` decoder for 0 … 16384 octets (`VAlloc`: nothing for 0, else a fresh block);
+  - `op_mid_ok` (heap contract), `op_mid_err` (stack only; `read_ok_adj` for the one-octet reader at
+    b + 272 with its buffer at b + 271), `op_end` (the trace and the slot, 39634 → 47332);
+  - **`op_call_ok`** and **`op_call_err`** (46300 → 47332): the slot from the reader's ℰ(p, e, a, y, g,
+    O(l), ↕t), or an allocation failure reaching 45975 (Exhausts). `HeapCtxC.keep_hi` carries the context
+    over stack-only steps.
+  - Checked against the loop: 44916 decodes each item into its own stack buffer (sp + 88), then copies the
+    184 octets into the `Vec` (memcpy at 45097), so `out` on the stack is right.
+- **Next:** the item decode from 45126 (it_pre, the tag read, then `tr_call` / `op_call_ok` / `op_call_err`,
+  with ω₀, ω₅, ω₆ restored to the caller's), then the loop 44916 (≤ 89 items), then 44495 and 6630 → 6674.
 
 Plan:
 1. (After the bounds are lifted.) `finish_grow`'s realloc path (a current block, 40898 … 40995 → 42980 → 41109). It needs:

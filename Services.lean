@@ -20,6 +20,7 @@ import Services.Bootstrap.Fmt.OracleRefine
 import Services.Bootstrap.Fmt.Hex
 import Services.Bootstrap.Fmt.Dec4
 import Services.Bootstrap.Fmt.Du5
+import Services.Bootstrap.Fmt.Format
 import Services.Bootstrap.BParams
 import Services.Bootstrap.BParamsConsts
 import Services.Bootstrap.StartupConsts
@@ -91,6 +92,7 @@ import Services.Bootstrap.Decode.VecU8Small
 import Services.Bootstrap.Decode.LookedUpSmall
 import Services.Bootstrap.Decode.VecU8Loop
 import Services.Bootstrap.Decode.ReallocOk
+import Services.Bootstrap.Decode.DeallocCall
 import Services.Bootstrap.Decode.VecU8Pass
 import Services.Bootstrap.Decode.LookedUpBig
 import Services.Bootstrap.Decode.ProvideInline
@@ -120,6 +122,15 @@ import Services.Bootstrap.Acc.ContractC
 import Services.Bootstrap.Acc.CkSites
 import Services.Bootstrap.Acc.CkDead
 import Services.Bootstrap.Acc.CkLift
+import Services.Bootstrap.Acc.Inputs.ReaderAdj
+import Services.Bootstrap.Acc.Inputs.ItemOperand
+import Services.Bootstrap.Acc.Inputs.ItemOperandB
+import Services.Bootstrap.Acc.Inputs.ItemOperandC
+import Services.Bootstrap.Acc.Inputs.ItemOperandFill
+import Services.Bootstrap.Acc.Inputs.OperandHead
+import Services.Bootstrap.Acc.Inputs.OperandCall
+import Services.Bootstrap.Acc.Inputs.OperandArm
+import Services.Bootstrap.Acc.Inputs.ItemCall
 import Services.Bootstrap.AccPrefixC
 import Services.Bootstrap.AccBParams
 import Services.Bootstrap.Acc.Args

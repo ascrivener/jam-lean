@@ -59,7 +59,7 @@ theorem pass_elem_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P
       (∀ d ∈ chunks s, d.used = true → d.addr + 32 ≠ ptr → d.addr + 32 ≠ q) ∧
       μ'.readN (M + 280) 8 = Num.encodeLE 8 (cur + 232) ∧
       (∀ a, (M ≤ a ∧ a < M + 144) ∨ (M + 152 ≤ a ∧ a < M + 248) ∨ (M + 272 ≤ a ∧ a < M + 280) ∨
-        (M + 288 ≤ a ∧ a < M + 304) → μ'.read a = μ.read a)) ∨
+        (M + 288 ≤ a ∧ a < M + 304) ∨ (M + 536 ≤ a ∧ a < M + 632) → μ'.read a = μ.read a)) ∨
     Exhausts env cap0 pb p P 5042 ω μ x (64 * ((232 * len + 31) / 32) + 6000) := by
   obtain ⟨hS0M, hMS1, hM2, hM8⟩ := hM
   have hS1 := H.hS1
@@ -176,10 +176,11 @@ theorem pass_elem_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P
       Memory.readN_congr (fun j hj => bfr _ (by omega) (by omega) (by omega))]; exact a280
   · have hqM : q + 232 * len + 232 ≤ M ∨ M + 632 ≤ q + 232 * len := by omega
     rw [k8 a (by omega) (by omega) (by omega) (by omega)]
-    rcases ha with h | h | h | h
+    rcases ha with h | h | h | h | h
     · exact k2 a (by omega) (by omega)
     · exact k2 a (by omega) (by omega)
     · exact k2 a (by omega) (by omega)
     · rw [bfr a (by omega) (by omega) (by omega), afr a (by omega) (by omega)]
+    · exact k2 a (by omega) (by omega)
 
 end Services.Bootstrap.Refine.PassGrow

@@ -213,7 +213,7 @@ theorem pass_elem {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) ∧
       μ'.readN (M + 280) 8 = Num.encodeLE 8 (cur + 232) ∧
       (∀ a, (M ≤ a ∧ a < M + 144) ∨ (M + 152 ≤ a ∧ a < M + 264) ∨ (M + 272 ≤ a ∧ a < M + 280) ∨
-        (M + 288 ≤ a ∧ a < M + 304) → μ'.read a = μ.read a) := by
+        (M + 288 ≤ a ∧ a < M + 304) ∨ (M + 536 ≤ a ∧ a < M + 632) → μ'.read a = μ.read a) := by
   obtain ⟨hM0, hM1, hM8⟩ := hM
   have hr : ∀ a, M - 48 ≤ a → a < M + 632 → μ.readable a = true :=
     fun a h1 h2 => Memory.readable_of_writable (hwM a h1 h2)
@@ -280,10 +280,11 @@ theorem pass_elem {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
   · rw [Memory.readN_congr (fun j hj => k6 _ (by omega) (by omega) (by omega) (by omega)),
       Memory.readN_congr (fun j hj => bfr _ (by omega) (by omega) (by omega))]; exact a280
   · rw [k6 a (by omega) (by omega) (by omega) (by omega)]
-    rcases ha with h | h | h | h
+    rcases ha with h | h | h | h | h
     · exact k2 a (by omega) (by omega)
     · exact k2 a (by omega) (by omega)
     · exact k2 a (by omega) (by omega)
     · rw [bfr a (by omega) (by omega) (by omega), afr a (by omega) (by omega)]
+    · exact k2 a (by omega) (by omega)
 
 end Services.Bootstrap.Refine.Pass

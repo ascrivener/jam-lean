@@ -1128,7 +1128,7 @@ def mode_codeRun (cx : Cx) : IO Unit := do
   -- `codea` / `codeacheck`: the same for `fnRangesA`, in the module `CodeA` (class `HasCodeA`),
   -- leaving out what `Code` or `CodeX` already has
   -- `codef` / `codefcheck`: the same for `fnRangesF`, in the module `CodeF` (class `HasCodeF`),
-  -- leaving out what `Code`, `CodeX` or `CodeA` already has
+  -- leaving out what `Code` or `CodeA` already has (its users never assume `HasCodeX`)
   let fmode := mode == "codef" || mode == "codefcheck"
   let amode := mode == "codea" || mode == "codeacheck" || fmode
   let xmode := mode == "codex" || mode == "codexcheck" || amode
@@ -1251,14 +1251,19 @@ def mode_codeRun (cx : Cx) : IO Unit := do
         fx := fx.push s!".block {st} {e}"
     return (fx, sx)
   let mut baseFacts := facts
+  let seenCode := seen
+  let factsCode := facts
   if amode then
     let (fX, sX) := extFacts cx.svc.fnRangesX seen
     baseFacts := baseFacts ++ fX
     seen := seen ++ sX
   if fmode then
     let (fA, sA) := extFacts cx.svc.fnRangesA seen
-    baseFacts := baseFacts ++ fA
-    seen := seen ++ sA
+    -- `codef`: the logging proofs assume `HasCode`, `HasCodeA` and `HasCodeF`, never `HasCodeX`, so
+    -- `CodeF` leaves out only what `Code` and `CodeA` have (`CodeA` itself is as generated: without
+    -- what `CodeX` has)
+    baseFacts := factsCode ++ fA
+    seen := seenCode ++ sA
   if xmode then
     let (fx, sx) := extFacts (if amode then rangesE else cx.svc.fnRangesX) seen
     -- `codea`: also every jump-table entry into `fnRangesA`. Accumulate also returns through
@@ -1844,7 +1849,7 @@ end Services.{NS}.CodeCheck
 # {if fmode then "Logging code facts" else if amode then "Accumulate code facts" else if xmode then "Further code facts" else "Code facts"} of {LBL}
 
 {if fmode then s!"Every instruction of {LBL}'s logging ranges (`fnRangesF`: `format!`, `core::fmt` and the
-`String` sink) that none of `Code.facts`, `CodeX.facts` and `CodeA.facts` has, with the block starts,
+`String` sink) that neither `Code.facts` nor `CodeA.facts` has, with the block starts,
 blocks and jump-table entries they need (every entry into the ranges), kept apart so that adding them
 rechecks nothing that uses only those. `Services.{NS}.CodeFOk` checks them against the blob by the
 kernel (`CodeFCheck.checkCode_ok`, `hasCodeF`); `HasCodeF p P` assumes them." else if amode then s!"Every instruction of {LBL}'s accumulate ranges (`fnRangesA`) that neither `Code.facts` nor

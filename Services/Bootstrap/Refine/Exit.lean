@@ -1,6 +1,7 @@
 import Services.Bootstrap.Encode.Writer
 import Services.Bootstrap.Decode.DeallocCall
 import Services.Bootstrap.Decode.HeapCtx
+import Services.Bootstrap.Decode.GrowOne
 
 /-!
 # Refine's transform loop: the exit and the `IntoIter` drop
@@ -144,5 +145,60 @@ theorem ex1 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ 
     post_simp
     all_goals try assumption
     all_goals try (congr 1; omega)
+
+/-- **The input's `IntoIter` drop** (6120 … 6130), the iterator empty: when its capacity is nonzero, the
+    instructions' chunk c (data at `buf`) is freed: the allocator's context holds for `free s buf`, every
+    other allocated chunk keeps its data, and the stack from M − 88 up is kept apart from the drop's frame.
+    With capacity 0 nothing is freed. -/
+theorem drop {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (x : X) (ω : Regs) (μ : Memory)
+    (s : State) {pb S0 S1 : Nat} (M buf cur cap : Nat) (c : Chunk) (H : HeapCtx env pb S0 S1 μ s)
+    (hM : S0 + 128 ≤ M ∧ M + 304 ≤ S1 ∧ 2147483804 ≤ M ∧ M % 8 = 0)
+    (hbuf : buf < 18446744073709551616) (hcur : cur < 18446744073709551616)
+    (hcap' : 232 * cap < 18446744073709551616)
+    (hc : cap ≠ 0 → c ∈ chunks s ∧ c.used = true ∧ c.addr + 32 = buf)
+    (h1 : ω[1] = UInt64.ofNat M)
+    (s272 : μ.readN (M + 272) 8 = Num.encodeLE 8 buf) (s280 : μ.readN (M + 280) 8 = Num.encodeLE 8 cur)
+    (s288 : μ.readN (M + 288) 8 = Num.encodeLE 8 cap) (s296 : μ.readN (M + 296) 8 = Num.encodeLE 8 cur) :
+    ∃ ω' μ' s', FreeStepsH p R 6120 ω μ x 6130 ω' μ' x 300 ∧ HeapCtx env pb S0 S1 μ' s' ∧
+      (s' = s ∨ (cap ≠ 0 ∧ s' = free s buf)) ∧ s'.base = s.base ∧
+      ω'[1] = UInt64.ofNat M ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      (∀ a, a < 4294967296 → M ≤ a → μ'.read a = μ.read a) ∧
+      (∀ d ∈ chunks s, d.used = true → (cap ≠ 0 → d ≠ c) → d ∈ chunks s' ∧
+        ∀ a, InData d a → μ'.read a = μ.read a) := by
+  obtain ⟨hS0M, hMS1, hM2, hM8⟩ := hM
+  have hS1 := H.hS1
+  have hw : ∀ a, M - 88 ≤ a → a < M → μ.writable a = true := fun a h1 h2 => H.st a (by omega) (by omega)
+  have hr : ∀ a, M + 272 ≤ a → a < M + 304 → μ.readable a = true :=
+    fun a h1 h2 => Memory.readable_of_writable (H.st a (by omega) (by omega))
+  by_cases h0 : cap = 0
+  · subst h0
+    obtain ⟨ω', μ', run, e1, e5, e6, efr, erd, ewr⟩ := dr0 (p := p) (P := P) (R := R) x ω μ M buf cur
+      ⟨by omega, by omega, hM8⟩ hbuf hcur h1 s272 s280 s288 s296 hr hw
+    have H' : HeapCtx env pb S0 S1 μ' s :=
+      Decode.GrowOne.ctx_high H (fun a ha => efr a (by omega) (by omega)) ewr
+    refine ⟨ω', μ', s, run.mono (by omega), H', Or.inl rfl, rfl, e1, e5, e6,
+      fun a h0 h1 => efr a h0 (by omega), fun d hd hu _ => ⟨hd, fun a ha => ?_⟩⟩
+    obtain ⟨hd0, -, hdT⟩ := Decode.VecU8.chunk_in H.wf hd hu
+    have := H.hbT
+    unfold InData at ha
+    exact efr a (by omega) (by omega)
+  · obtain ⟨hcs, hcu, hca⟩ := hc h0
+    obtain ⟨ω1, μ1, run1, e0, e1, e5, e6, e7, -, -, efr, erd, ewr⟩ := dr1 (p := p) (P := P) (R := R) x ω μ M buf
+      cur cap ⟨by omega, by omega, hM8⟩ hbuf hcur h0 hcap' h1 s272 s280 s288 s296 hr hw
+    have H1 : HeapCtx env pb S0 S1 μ1 s :=
+      Decode.GrowOne.ctx_high H (fun a ha => efr a (by omega) (by omega)) ewr
+    obtain ⟨ω2, μ2, run2, H2, hb2, -, -, stk, -, keep, f0, f1, f5, f6⟩ :=
+      Decode.DeallocCall.dealloc_call (R := R) (p := p) (P := P) env pb S0 S1 x ω1 μ1 s M buf 198 6130 c H1 hcs
+      hcu hca e0 e1 e7 ⟨by decide, by decide, by decide⟩ jte_98 bs_6130 (by omega) ⟨by omega, by omega⟩
+    refine ⟨ω2, μ2, free s buf, (run1.trans run2).mono (by omega), H2, Or.inr ⟨h0, rfl⟩, hb2,
+      by rw [f1, e1], by rw [f5, e5], by rw [f6, e6], fun a h0 h1 => by rw [stk a h0 h1, efr a h0 (by omega)],
+      fun d hd hu hne => ?_⟩
+    obtain ⟨hd', hk⟩ := keep d hd hu (hne h0)
+    refine ⟨hd', fun a ha => ?_⟩
+    obtain ⟨hd0, -, hdT⟩ := Decode.VecU8.chunk_in H.wf hd hu
+    have := H.hbT
+    rw [hk a ha]
+    unfold InData at ha
+    exact efr a (by omega) (by omega)
 
 end Services.Bootstrap.Refine.Exit

@@ -27,7 +27,7 @@ theorem g_lock {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X
     (hsp2 : 2147483648 ≤ sp ∧ sp + 8 < 4294967296) (hwr : WrAt μ HT S0 S1) :
     ∃ ω' μ', FreeStepsH p R 44591 ω μ x 42327 ω' μ' x 13 ∧
       ω'[0] = UInt64.ofNat 2028 ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[7] = UInt64.ofNat 196792 ∧
-      ω'[8] = UInt64.ofNat (rdN μ sp 8) ∧
+      ω'[8] = UInt64.ofNat (rdN μ sp 8) ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       (∀ a, a < 4294967296 → (a < 196608 ∨ 196616 ≤ a) → (a < 206848 ∨ 206852 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.writable a = μ.writable a) ∧
       ∀ j : Fin 13, j.val ∉ [0, 4, 7, 8, 9] → ω'[j] = ω[j] := by
@@ -37,7 +37,7 @@ theorem g_lock {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X
   refine ⟨?ω', ?μ', ?run, ?post⟩
   case run => pvm_go [h1, h6, h7, h8, hand, hwr, hr, rdN_writeN_disjoint, ↓rdN_fold, ↓loadI_fold]
   case post =>
-    refine ⟨by reg_val, by reg_val; simp [h1], by reg_val, ?_, fun a ha h1 h2 => ?_, fun a => ?_, by reg_frame⟩
+    refine ⟨by reg_val, by reg_val; simp [h1], by reg_val, ?_, by reg_val, by reg_val, fun a ha h1 h2 => ?_, fun a => ?_, by reg_frame⟩
     · reg_val
     · rd_simp []
     · rd_simp [hwr]
@@ -48,13 +48,13 @@ theorem g_unlock {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x :
     ∃ ω' μ', FreeStepsH p R 44632 ω μ x 44641 ω' μ' x 3 ∧ rdN μ' 206848 1 = 0 ∧
       (∀ a, a < 4294967296 → a ≠ 206848 → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) ∧
-      ω'[7] = UInt64.ofNat 204984 ∧ ∀ j : Fin 13, j.val ∉ [7] → ω'[j] = ω[j] := by
+      ω'[7] = UInt64.ofNat 204984 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ ∀ j : Fin 13, j.val ∉ [7] → ω'[j] = ω[j] := by
   have hrl : μ.readable 206848 = true := Memory.readable_of_writable hwl
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?ω', ?μ', ?run, ?post⟩
   case run => pvm_go [h6, hwl, hrl]
   case post =>
-    refine ⟨?_, fun a ha ha' => ?_, fun a => ?_, fun a => ?_, by reg_val, by reg_frame⟩
+    refine ⟨?_, fun a ha ha' => ?_, fun a => ?_, fun a => ?_, by reg_val, by reg_val, by reg_val, by reg_val, by reg_frame⟩
     · rd_simp []; rfl
     · simp only [PVM.Memory.writeN_cons, PVM.Memory.writeN_nil]
       exact PVM.read_write_ne' μ 206848 a _ ha' (by omega) ha

@@ -111,4 +111,40 @@ theorem allocNull {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x 
   have he := FreeExit.step (p := p) hd.1 hst (by decide)
   exact ⟨ω', μ', hs.run (.exit (FreeRun.exit (by simpa using he)) (by simp))⟩
 
+/-- **40365 … 40397**, after the loop: the `assign` call's registers (GP Ω_A: c = ω₇, o = ω₈,
+    a = ω₉): ω₇ := the u16 core index at cp (the word at S), ω₈ := ptr (the queue's
+    serialisation, the word at S + 40), ω₉ := the u32 assigner at ap (the word at S + 8); ω₅ := 0
+    (the capacity is not 0), ω₆ := ptr. -/
+theorem preCall {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
+    (μ : Memory) (S cap ptr cp ap core a : Nat) (h1 : ω[1] = UInt64.ofNat S)
+    (hS : S + 48 < 4294967296) (hcap : 0 < cap) (hcap' : cap < 18446744073709551616)
+    (hptr : ptr < 18446744073709551616) (hcp : cp + 2 < 4294967296) (hap : ap + 4 < 4294967296)
+    (m0 : μ.readN S 8 = Num.encodeLE 8 cp) (m8 : μ.readN (S + 8) 8 = Num.encodeLE 8 ap)
+    (m32 : μ.readN (S + 32) 8 = Num.encodeLE 8 cap) (m40 : μ.readN (S + 40) 8 = Num.encodeLE 8 ptr)
+    (mc : μ.readN cp 2 = Num.encodeLE 2 core) (ma : μ.readN ap 4 = Num.encodeLE 4 a)
+    (hc : core < 65536) (ha : a < 4294967296)
+    (hrf : ∀ a, S ≤ a → a < S + 48 → μ.readable a = true)
+    (hrc : ∀ a, cp ≤ a → a < cp + 2 → μ.readable a = true)
+    (hra : ∀ x, ap ≤ x → x < ap + 4 → μ.readable x = true) :
+    ∃ ω', FreeStepsH p R 40365 ω μ x 40397 ω' μ x 12 ∧
+      ω'[1] = UInt64.ofNat S ∧ ω'[7] = UInt64.ofNat core ∧ ω'[8] = UInt64.ofNat ptr ∧
+      ω'[9] = UInt64.ofNat a ∧ ω'[5] = UInt64.ofNat 0 ∧ ω'[6] = UInt64.ofNat ptr := by
+  have r0 := rd8 (by omega) m0
+  have r8 := rd8 (by omega) m8
+  have r32 := rd8 hcap' m32
+  have r40 := rd8 hptr m40
+  have rc : rdN μ cp 2 = core := by
+    show Num.decodeLE _ = _
+    rw [mc, Num.decodeLE_encodeLE, Nat.mod_eq_of_lt hc]
+  have ra : rdN μ ap 4 = a := by
+    show Num.decodeLE _ = _
+    rw [ma, Num.decodeLE_encodeLE, Nat.mod_eq_of_lt ha]
+  have hlt : ¬ cap % 18446744073709551616 < 1 := by rw [Nat.mod_eq_of_lt hcap']; omega
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?_, ?_, ?_⟩
+  rotate_left
+  · pvm_go [h1, hS, r0, r8, r32, r40, rc, ra, hlt, hrf, hrc, hra, hcp, hap, ↓rdN_fold]
+  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
+    all_goals simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h1]
+
 end Services.Bootstrap.Acc.Handlers.AssignAlloc

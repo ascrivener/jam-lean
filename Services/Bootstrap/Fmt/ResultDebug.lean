@@ -102,4 +102,113 @@ theorem ref_hce_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (e
   · refine Or.inr ((Exhausts.pre run1 hx).mono ?_)
     exact hce_exh EL b1
 
+/-- After `rd_ok` / `rd_err`: `debug_tuple_field1_finish` and the return, for either variant. -/
+theorem res_case {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
+    (pb S0 S1 Z : Nat) (hZ : 744 ≤ Z) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
+    (μA : Memory) (sA : State) (spA e a Mf Cf fn nm nl vt ret' i : Nat)
+    (hR : RefOk p P R env pb S0 S1 μA sA spA e a Mf Cf) (hMC : Mf ≤ 20 ∧ Cf ≤ 2950)
+    (hnm : 65536 ≤ nm ∧ nm + nl + 24 ≤ 77144 ∧ 0 < nl ∧ nl ≤ 3)
+    (hvt : 65536 ≤ vt ∧ vt + 32 ≤ 77144) (rfn : rdN μA (vt + 24) 8 = fn)
+    (hfn : 0 < fn ∧ fn ≤ 2806 ∧ fn % 2 = 0) (hje : P.jumpTable.getD (fn / 2 - 1) 0 = e)
+    (hbe : P.isBlockStart e = true)
+    (hr' : 0 < ret' ∧ ret' ≤ 2806 ∧ ret' % 2 = 0) (hjr : P.jumpTable.getD (ret' / 2 - 1) 0 = i)
+    (hbr : P.isBlockStart i = true) (hi : i = 17856 ∨ i = 17821)
+    (x : X) (ω : Regs) (μ : Memory) (s : State) (sp F W cap len ret t v5 v6 : Nat)
+    (ω1 : Regs) (μ1 : Memory) (run1 : FreeStepsH p R 17779 ω μ x 62471 ω1 μ1 x 13)
+    (H : HeapCtx env pb S0 S1 μ s) (hba : s.base % 8 = 0) (K : Keeps pb spA (fun _ => False) sA μA μ s)
+    (hf : Fmtr sA s μ F W cap len)
+    (a0 : ω1[0] = UInt64.ofNat ret') (a1 : ω1[1] = UInt64.ofNat (sp - 16)) (a5 : ω1[5] = UInt64.ofNat v5)
+    (a6 : ω1[6] = UInt64.ofNat v6) (a7 : ω1[7] = UInt64.ofNat F) (a8 : ω1[8] = UInt64.ofNat nm)
+    (a9 : ω1[9] = UInt64.ofNat nl) (a10 : ω1[10] = UInt64.ofNat (sp - 16)) (a11 : ω1[11] = UInt64.ofNat vt)
+    (s8 : rdN μ1 (sp - 16 + 8) 8 = ret) (s0 : rdN μ1 (sp - 16) 8 = a)
+    (fr1 : ∀ b, b < 4294967296 → (b < sp - 16 ∨ sp ≤ b) → μ1.read b = μ.read b)
+    (rd1 : ∀ b, μ1.readable b = μ.readable b) (wr1 : ∀ b, μ1.writable b = μ.writable b)
+    (hv5 : v5 < 18446744073709551616 ∧ v6 < 18446744073709551616)
+    (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t)
+    (hbt : P.isBlockStart t = true)
+    (hsp : S0 + Z ≤ sp ∧ sp % 8 = 0 ∧ 2147483648 + Z ≤ sp) (hspA : sp ≤ spA) (hW : sp ≤ W ∧ W + 24 ≤ S1)
+    (hWA : W + 24 ≤ spA) (hF : sp ≤ F ∧ F + 24 ≤ S1 ∧ (F + 24 ≤ W ∨ W + 24 ≤ F))
+    (hn : len + 25 < 134217728) :
+    (∃ ω' μ' x' s' cap' n, n ≤ 25 ∧
+      FreeStepsH p R 17779 ω μ x t ω' μ' x' (7 * n + 2 * (cap' - cap) + 536890000) ∧
+      HeapCtx env pb S0 S1 μ' s' ∧ s'.base = s.base ∧ Fmtr sA s' μ' F W cap' (len + n) ∧ cap ≤ cap' ∧
+      cap' ≤ max cap (max 8 (2 * (len + n))) ∧
+      Keeps pb sp (fun a => W ≤ a ∧ a < W + 24) sA μ μ' s' ∧
+      ω'[0] = UInt64.ofNat ret ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = UInt64.ofNat v5 ∧
+      ω'[6] = UInt64.ofNat v6 ∧ ω'[7] = UInt64.ofNat 0) ∨
+    Exhausts p R pb 17779 ω μ x (1073741824 + 536890000) := by
+  have hS1 := H.hS1
+  have hSb := H.hSb
+  have hst : ∀ a, S0 ≤ a → a < S1 → μ.writable a = true := H.st
+  have k1 : ∀ b, b < 4294967296 → (b < sp - 16 ∨ sp ≤ b) → μ1.read b = μ.read b := fr1
+  have H1 : HeapCtx env pb S0 S1 μ1 s := ctx_hi H (fun b hb => k1 b (by omega) (Or.inl (by omega))) wr1
+  have K1 : Keeps pb sp (fun a => W ≤ a ∧ a < W + 24) sA μ μ1 s :=
+    Keeps.of_frame (Z := fun b => sp - 16 ≤ b ∧ b < sp) hf.str.base
+      (fun b hb hz => k1 b hb (by omega)) rd1 wr1 (fun b hz => hst b (by omega) (by omega))
+      (fun b hz h => by omega) (fun b hz hg => by unfold Glob at hg; omega)
+      (fun c hc hu b hb => by
+        have := chunk_bounds H.wf (hf.str.base c hc hu)
+        have := H.hbT
+        unfold InData at hb; omega)
+  have hf1 : Fmtr sA s μ1 F W cap len := hf.congr (fun j hj => k1 _ (by omega) (Or.inr (by omega)))
+    (fun j hj => k1 _ (by omega) (Or.inr (by omega))) (fun b h1 h2 => ⟨k1 b (by omega) (Or.inl (by omega)), rd1 b⟩)
+  have KA1 : Keeps pb spA (fun _ => False) sA μA μ1 s := by
+    have := K.trans' (K1.lift (sp' := spA) hspA (fun b h hb => by omega))
+    rwa [Nat.max_self] at this
+  rcases debug_tuple1 (p := p) (P := P) (R := R) env pb S0 S1 HA HR μA sA spA e a Mf Cf fn hR x ω1 μ1 s (sp - 16)
+      F W nm nl (sp - 16) vt cap len ret' i v5 v6 H1 hba hf1 KA1 a0 a1 a5 a6 a7 a8 a9 a10 a11 hv5
+      ⟨hnm.1, by omega, hnm.2.2.1⟩ (fun b h1 h2 => hf1.vrd b (by omega) (by omega)) hvt
+      ((ro_keep H1 KA1 (by omega)).trans rfn) hfn hje hbe s0 hr' hjr hbr ⟨by omega, by omega, by omega⟩
+      ⟨by omega, hWA⟩ ⟨by omega, hW.2⟩ ⟨by omega, hF.2.1, hF.2.2⟩ ⟨by omega, by omega, Or.inl (by omega)⟩
+      (by omega) with
+    ⟨ω2, μ2, x2, s2, cap2, n, hn2, run2, H2, hb2, hf2, hc1, hc2, K2, b0, b1, b5, b6, b7⟩ | hx
+  · have hst2 : ∀ a, S0 ≤ a → a < S1 → μ2.writable a = true := H2.st
+    obtain ⟨ω3, run3, c0, c1, c5, c6, c7⟩ := rd_r (p := p) (P := P) (R := R) x2 ω2 μ2 (sp - 16) ret t i hi
+      ⟨by omega, by omega⟩ b1
+      (by rw [rdN_frame (fun j hj => K2.hi _ (by omega) (by omega) (by omega))]; exact s8) hret hjt hbt
+      (fun b h1 h2 => Memory.readable_of_writable (hst2 b (by omega) (by omega)))
+    have K := K1.trans' (K2.lift (sp' := sp) (by omega) (fun b h _ => h))
+    rw [Nat.max_self] at K
+    exact Or.inl ⟨ω3, μ2, x2, s2, cap2, n, by omega, (run1.trans (run2.trans run3)).mono (by omega), H2, hb2, hf2,
+      hc1, hc2, K, c0, by rw [c1]; congr 1; omega, c5.trans b5, c6.trans b6, c7.trans b7⟩
+  · exact Or.inr ((Exhausts.pre run1 hx).mono (by omega))
+
+/-- **`<Result<u64, HostCallError> as Debug>::fmt`** (17779, plain options) as an argument: the
+    `Result` at v (at or above spA, 16 octets readable in μA): its tag octet at v; if 0, `Ok` with the
+    u64 at v + 8; otherwise `Err` with the error code (below 8) at v + 1. At most 25 octets. Needs
+    the vtables' `fmt` words (74064: 1794, `&u64`; 74800: 1764, `&HostCallError`) and `HceTab`. -/
+theorem result_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
+    (pb S0 S1 Z : Nat) (hZ : 744 ≤ Z) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
+    (μA : Memory) (sA : State) (spA v : Nat) (hS : S0 ≤ spA) (hv : spA ≤ v ∧ v + 16 ≤ S1)
+    (hrv : ∀ b, v ≤ b → b < v + 16 → μA.readable b = true)
+    (herr : rdN μA v 1 ≠ 0 → rdN μA (v + 1) 1 < 8) (htab : HceTab μA)
+    (hv1 : rdN μA 74064 8 = 1794) (hv2 : rdN μA 74800 8 = 1764) :
+    ArgOk p P R env pb S0 S1 Z μA sA spA 17779 v 25 536890000 := by
+  intro ω μ x s sp F W cap len ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hWA hF hn
+  have hS1 := H.hS1
+  have hst : ∀ a, S0 ≤ a → a < S1 → μ.writable a = true := H.st
+  have rt : rdN μ v 1 = rdN μA v 1 := by
+    rw [show v = v + 0 by rfl]; exact rdN_frame (fun j hj => K.hi _ (by omega) (by omega) id)
+  have hrv' : ∀ b, v ≤ b → b < v + 1 → μ.readable b = true := fun b h1 h2 => K.readable H hS (by omega) (hrv b h1 (by omega))
+  by_cases h0t : rdN μA v 1 = 0
+  · obtain ⟨ω1, μ1, run1, a0, a1, a5, a6, a7, a8, a9, a10, a11, s8, s0, fr1, rd1, wr1⟩ := rd_ok (p := p) (P := P)
+      (R := R) x ω μ sp v F ret ⟨by omega, by omega⟩ h0 h1 h7 h8 ⟨by omega, by omega, by omega⟩ (Or.inr (by omega))
+      (rt.trans h0t) hrv' (fun b h1 h2 => hst b (by omega) (by omega))
+    exact res_case (p := p) (P := P) (R := R) env pb S0 S1 Z hZ HA HR μA sA spA 37589 (v + 8) 20 2950 1794 67359 2
+      74040 696 17856 (ref_u64_ok env pb S0 S1 HA HR μA sA spA (v + 8) hS ⟨by omega, by omega⟩
+        (fun b h1 h2 => hrv b (by omega) (by omega))) ⟨by omega, by omega⟩ (by decide) (by decide) hv1
+      (by decide) jte_896 bs_37589 (by decide) jte_347 bs_17856 (Or.inl rfl) x ω μ s sp F W cap len ret t v5 v6 ω1
+      μ1 run1 H hba K hf a0 a1 (a5.trans h5) (a6.trans h6) a7 a8 a9 a10 a11 s8 s0 fr1 rd1 wr1 ⟨hv5, hv6⟩ hret hjt
+      hbt hsp hspA hW hWA hF (by omega)
+  · obtain ⟨ω1, μ1, run1, a0, a1, a5, a6, a7, a8, a9, a10, a11, s8, s0, fr1, rd1, wr1⟩ := rd_err (p := p) (P := P)
+      (R := R) x ω μ sp v F ret ⟨by omega, by omega⟩ h0 h1 h7 h8 ⟨by omega, by omega, by omega⟩ (Or.inr (by omega))
+      (by rw [rt]; exact h0t) hrv' (fun b h1 h2 => hst b (by omega) (by omega))
+    exact res_case (p := p) (P := P) (R := R) env pb S0 S1 Z hZ HA HR μA sA spA 37312 (v + 1) 15 2200 1764 67361 3
+      74776 694 17821 (ref_hce_ok env pb S0 S1 HA HR μA sA spA (v + 1) hS
+        (Or.inl ⟨by omega, by omega, fun b h1 h2 => hrv b (by omega) (by omega)⟩) (herr h0t) htab)
+      ⟨by omega, by omega⟩ (by decide) (by decide) hv2
+      (by decide) jte_881 bs_37312 (by decide) jte_346 bs_17821 (Or.inr rfl) x ω μ s sp F W cap len ret t v5 v6 ω1
+      μ1 run1 H hba K hf a0 a1 (a5.trans h5) (a6.trans h6) a7 a8 a9 a10 a11 s8 s0 fr1 rd1 wr1 ⟨hv5, hv6⟩ hret hjt
+      hbt hsp hspA hW hWA hF (by omega)
+
 end Services.Bootstrap.Fmt

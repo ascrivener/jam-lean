@@ -56,7 +56,9 @@ theorem provide_inline_heap {p : ByteArray} {P : Program} [HasCode p P] (env : R
       (∀ c ∈ chunks s, c.used = true → ∀ a, InData c a → μ'.read a = μ.read a) ∧
       PagesOut 48 pb μ μ' ∧
       (∀ a, a < 4294967296 → A ≤ a → (a < rd ∨ rd + 16 ≤ a) → (a < O ∨ O + 52 ≤ a) →
-        μ'.read a = μ.read a)) ∨
+        μ'.read a = μ.read a) ∧
+      (∀ a, a < 196608 → μ'.read a = μ.read a ∧ μ'.readable a = μ.readable a) ∧
+      (∀ a, Glob a → μ'.read a = μ.read a) ∧ (∀ a, S0 ≤ a → μ'.writable a = μ.writable a)) ∨
     (alloc (growTo pb) hb 1 ((n + 31) / 32) s = none ∧ ∃ ω' μ',
       FreeStepsH p (refineContractK cap env) 20626 ω μ x 40611 ω' μ' x (2 * n + 2300) ∧
       ω'[7] = UInt64.ofNat 0) := by
@@ -88,7 +90,7 @@ theorem provide_inline_heap {p : ByteArray} {P : Program} [HasCode p P] (env : R
       (ptr + 5 + w) (len - 5 - w) n 1168 25153 O rd pb S0 S1 H1 ⟨cp, hcpm, hcpu, by omega, by omega⟩
       ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ a0 a1 a5 a6 a7 a8 a9 (by decide) jte_583 bs_25153 hO64 (by omega) hn
       (by omega) (by omega) ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ (by omega) aR0 aR8 with
-    ⟨q, s', ω2, μ2, ha, run2, v0, v1, v5', v6', vc, vp, vl, vdata, vR0, vR8, H2, keep, cm2, hfresh, kd2, pg2, vfr, -, -, -⟩ |
+    ⟨q, s', ω2, μ2, ha, run2, v0, v1, v5', v6', vc, vp, vl, vdata, vR0, vR8, H2, keep, cm2, hfresh, kd2, pg2, vfr, -, vgl, -⟩ |
     ⟨hna, ω2, μ2, run2, f7⟩
   rotate_left
   · exact Or.inr ⟨hna, ω2, μ2, (run1.trans run2).mono (by omega), f7⟩
@@ -127,7 +129,7 @@ theorem provide_inline_heap {p : ByteArray} {P : Program} [HasCode p P] (env : R
       unfold InData at hia
       rw [hlow a (by omega), kd2 c hc hu a ⟨hia.1, hia.2⟩]
       exact b1 a (by omega),
-    FreeStepsH.pagesOut H.bd run, ?_⟩
+    FreeStepsH.pagesOut H.bd run, ?_, ?_, ?_, ?_⟩
   · rw [zO48, ← take_encodeLE, encodeLE_rdN]; exact apark
   · rw [Memory.readN_congr (fun j hj => hlow _ (by omega)), vdata]
     exact Memory.readN_congr (fun j hj => afr _ (by omega) (by omega) (by omega))
@@ -135,5 +137,20 @@ theorem provide_inline_heap {p : ByteArray} {P : Program} [HasCode p P] (env : R
   · rw [Memory.readN_congr (fun j hj => zfr _ (by omega) (by omega) (by omega))]; exact vR8
   · intro a h0 h1 h2 h3
     rw [zfr a h0 (by omega) h3, vfr a h0 (by omega) h2 (by omega)]; exact afr a h0 (Or.inr h1) h2
+  · intro a ha'
+    obtain ⟨kp, kr⟩ := FreeStepsH.keepRO H.bd run
+    refine ⟨kr a (by unfold two32; omega) (Or.inl (by unfold pageSize; omega)) (H.ro a ha'), ?_⟩
+    unfold Memory.readable
+    rw [kp _ (Or.inl (by unfold pageSize; omega))]
+  · intro a ha'
+    have hg := ha'
+    unfold Glob at hg
+    rw [hlow a (by omega), vgl a ha']
+    exact b1 a (by omega)
+  · intro a ha'
+    obtain ⟨kp, -⟩ := FreeStepsH.keepRO H.bd run
+    have := H.hSb
+    unfold Memory.writable
+    rw [kp _ (Or.inr (by unfold pageSize; omega))]
 
 end Services.Bootstrap.Decode.Provide

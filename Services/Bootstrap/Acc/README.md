@@ -468,7 +468,8 @@ Lemmas under `accContractQ` (from (x, v :: qs) to (x', qs)) carry over to any st
 - Read-only data: `set`'s error table (69056, 69072) and keys in rodata are hypotheses until
   `ROKeep` (gas-free runs keep non-writable octets, contract-generic) and an accumulate `roBytes`
   check land.
-- Keys must survive `get`'s allocation; the lemmas take them on the stack above the frame for now.
+- Keys must survive `get`'s allocation: `get_some` takes them on the stack above the frame or in an
+  allocated chunk's data.
 
 ## Brief: `add_recent_work_item` and the results tail (rows 8, 9, 11)
 

@@ -1468,13 +1468,13 @@ theorem hset_inv {μ : Memory} : ∀ (rs : List (Nat × Nat)) {σ : SState} {ω 
     simp only [hset, hregs, dif_pos hall.1]
     exact hset_inv rs (setv_inv h ⟨r, hall.1⟩ (.const v)) hall.2
 
-theorem hpre_sound (hpre : Pre E st) {σ : SState} {ω : Regs} {μ : Memory} (hinv : Inv E σ ω μ)
+theorem hpre_sound (hP : Pre E st) {σ : SState} {ω : Regs} {μ : Memory} (hinv : Inv E σ ω μ)
     {e : HostEff} (h : hpre st σ e = true) :
     ∀ p ∈ e.pre, ∀ hr : p.1 < 13, (ω.get ⟨p.1, hr⟩).toNat = p.2 := by
   intro p hp hr
   have hp' := List.all_eq_true.1 h p hp
   simp only [Bool.and_eq_true, beq_iff_eq] at hp'
-  have := rdv_eval hpre hinv.2.1 ⟨p.1, hr⟩
+  have := rdv_eval hP hinv.2.1 ⟨p.1, hr⟩
   simp only at this
   rw [← this, hp'.2]; rfl
 
@@ -1482,7 +1482,7 @@ theorem hwr_sound (hpre : Pre E st) {σ σ' : SState} {ω : Regs} {μ : Memory} 
     ∀ {w : Option (Nat × Nat × Nat)}, hwr st σ w = some σ' →
       (∀ w', w = some w' → ∀ t, w'.1 ≤ t → t < w'.1 + w'.2.1 → μ.writable t = true) ∧
         Inv E σ' ω (hmem μ w)
-  | none, h => by cases h; exact ⟨fun _ h => by cases h, hinv⟩
+  | none, h => by cases h; exact ⟨fun _ h => (by cases h), hinv⟩
   | some (a, n, v), h => by
     simp only [hwr] at h
     split at h
@@ -1491,6 +1491,7 @@ theorem hwr_sound (hpre : Pre E st) {σ σ' : SState} {ω : Regs} {μ : Memory} 
         (by simp only [Aff.eval, Int.zero_add, Int.toNat_natCast]; exact Nat.mod_eq_of_lt ha.1) h
       refine ⟨fun w' hw' t h1 h2 => ?_, hi⟩
       cases hw'
+      simp only at h1 h2
       have := hw t (List.mem_map.2 ⟨t - a, List.mem_range.2 (by omega), by omega⟩)
       rwa [Nat.mod_eq_of_lt (by omega)] at this
     · cases h

@@ -310,6 +310,7 @@ import Services.Bootstrap.Acc.Items.Exit
 import Services.Bootstrap.Acc.Items.Operand
 import Services.Bootstrap.Acc.Transfer.GetKey
 import Services.Bootstrap.Acc.Transfer.Head
+import Services.Bootstrap.Acc.Transfer.GetKeyCall
 import Services.Bootstrap.Alloc.HeapContract
 import Services.Bootstrap.Decode.VecU8HeapBig
 import Services.Bootstrap.Decode.VecPairsBig

@@ -262,8 +262,15 @@ corollaries.
   `g_call0` (n = 0, host-generic). `lp_items` / `lp_call` state each slot's `Rep` for any memory
   agreeing on the final state's allocated data off the reader's chunk (it is freed next), and the
   stack frame above sp. With `accHeapHost env` the runs lift to `accContractK` (`FreeStepsH.ofAccGrow`).
-  **Next:** 6630 → 47417 → 44495 (`fetch_vec`, waiting on the zeroed `alloc_impl` under `HeapCtxL`), then
-  the 6630 → 6674 summary.
+  **The model link** (`InputsSpec.lean`): `itemOf` maps each of the model's accumulation inputs (GP v0.8.0
+  §12: an operand tuple 𝕌 or a deferred transfer 𝕏) to its loop item; `itemOf_enc` (its encoding is the
+  model's `AccumulateInput.encode`), `itemOf_ok` (an `InputSized` input is an `ItemOk` item),
+  `inputsEnc_items` (ℰ(↕**i**) is the one-octet count and the items' encodings, for < 128 inputs) and
+  `g_inputs` (44495 → 44674 stated for `aenv.inputs`).
+  **`fetch_vec`** (`InputsPre.lean`, `FetchVecCall.lean`): `in_pre` (6630 → 47417), `fv_call` (47417 → 47722
+  over the zeroed `alloc_implZ_callG`, the lock held as `HeapCtxL`; `heapL_release_data` gives `HeapCtxC`
+  back after the second `fetch`), `fv_null` (no block: the trap 47554), `fv_ret` and `in_ret`.
+  **The summary** (`Inputs.lean`): `inputs_decode`, 6630 → 6674 under `accContractK`.
   **(a′) `fetch_vec`'s zeroed allocation:** `alloc_impl` stores ω₁₀ (the zero flag) at its frame + 112;
   the tail (42074 … 42128) computes ω₁₀ := flag ∧ ω₁₀ and, when nonzero, tail-calls `memzero` 70133 on
   the block (returning to the caller), else returns at 41404. The existing proofs fix the flag 0

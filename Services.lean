@@ -314,6 +314,8 @@ import Services.Bootstrap.Acc.Transfer.Head
 import Services.Bootstrap.Acc.Transfer.GetKeyCall
 import Services.Bootstrap.Acc.Transfer.Count
 import Services.Bootstrap.Acc.Transfer.ReadShort
+import Services.Bootstrap.Acc.Transfer.SetKey
+import Services.Bootstrap.Acc.Transfer.SetKeyCall
 import Services.Bootstrap.Alloc.HeapContract
 import Services.Bootstrap.Decode.VecU8HeapBig
 import Services.Bootstrap.Decode.VecPairsBig

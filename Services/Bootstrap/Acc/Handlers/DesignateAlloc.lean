@@ -113,4 +113,52 @@ theorem allocNull {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x 
   have he := FreeExit.step (p := p) hd.1 hst (by decide)
   exact ⟨ω', μ', hs.run (.exit (FreeRun.exit (by simpa using he)) (by simp))⟩
 
+/-- **49856 … 49874**, after the loop: the `designate` call's registers, ω₇ = ptr (the keys'
+    serialisation) and ω₈ = n (GP Ω_D: o = ω₇, z = ω₈), return address 2212 in ω₀, ω₅ = 9. -/
+theorem preCall {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
+    (μ : Memory) (S n ptr : Nat) (h1 : ω[1] = UInt64.ofNat S) (hS : S + 48 < 4294967296)
+    (hn : n < 18446744073709551616) (hptr : ptr < 18446744073709551616)
+    (m8 : μ.readN (S + 8) 8 = Num.encodeLE 8 n) (m32 : μ.readN (S + 32) 8 = Num.encodeLE 8 ptr)
+    (hrf : ∀ a, S ≤ a → a < S + 48 → μ.readable a = true) :
+    ∃ ω', FreeStepsH p R 49856 ω μ x 49874 ω' μ x 8 ∧
+      ω'[1] = UInt64.ofNat S ∧ ω'[7] = UInt64.ofNat ptr ∧ ω'[8] = UInt64.ofNat n ∧
+      ω'[5] = UInt64.ofNat 9 ∧ ω'[0] = UInt64.ofNat 2212 := by
+  have r8 := rd8 hn m8
+  have r32 := rd8 hptr m32
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?run, ?post⟩
+  case run => pvm_go [h1, hS, r8, r32, hrf, ↓rdN_fold]
+  case post =>
+    refine ⟨?_, by reg_val, by reg_val, by reg_val, by reg_val⟩
+    simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h1]
+
+/-- **49877 … 49910**, `designate` returned r = OK (0) or HUH (2⁶⁴ − 9): the result's index b is
+    the octet at 69076 + (r + 9) mod 2⁶⁴ (a table in the read-only data), loaded into ω₅; the
+    vector's capacity L ≠ 0 sends it on to the free of the buffer (49910). -/
+theorem postCall {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
+    (μ : Memory) (S r L b : Nat) (h1 : ω[1] = UInt64.ofNat S) (h5 : ω[5] = UInt64.ofNat 9)
+    (h7 : ω[7] = UInt64.ofNat r)
+    (hr : r = 0 ∨ r = 18446744073709551607) (hS : S + 48 < 4294967296)
+    (hL : 0 < L) (hL64 : L < 18446744073709551616)
+    (m24 : μ.readN (S + 24) 8 = Num.encodeLE 8 L)
+    (htab : μ.readN (69076 + (r + 9) % 18446744073709551616) 1 = [UInt8.ofNat b]) (hb : b < 256)
+    (hrt : μ.readable (69076 + (r + 9) % 18446744073709551616) = true)
+    (hrf : ∀ a, S ≤ a → a < S + 48 → μ.readable a = true) :
+    ∃ ω', FreeStepsH p R 49877 ω μ x 49910 ω' μ x 12 ∧
+      ω'[1] = UInt64.ofNat S ∧ ω'[5] = UInt64.ofNat b ∧ ω'[8] = UInt64.ofNat L := by
+  have r24 := rd8 hL64 m24
+  have hL' : L % 18446744073709551616 ≠ 0 := by rw [Nat.mod_eq_of_lt hL64]; omega
+  have rt : rdN μ (69076 + (r + 9) % 18446744073709551616) 1 = b := by
+    show Num.decodeLE _ = _
+    rw [htab]; simp [Num.decodeLE, Nat.mod_eq_of_lt hb]
+  rcases hr with rfl | rfl
+  all_goals
+    simp only [Nat.reduceAdd, Nat.reduceMod] at rt hrt
+    rw [show ω = regsNF ω [] from rfl]
+    refine ⟨?_, ?_, ?_⟩
+    rotate_left
+    · pvm_go [h1, h5, h7, hS, r24, hL', rt, hrt, hrf, ↓rdN_fold]
+    · refine ⟨?_, by reg_val, by reg_val⟩
+      simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h1]
+
 end Services.Bootstrap.Acc.Handlers.DesignateAlloc

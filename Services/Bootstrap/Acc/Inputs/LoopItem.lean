@@ -88,15 +88,15 @@ theorem itemOk_tr {X : Type} (env : HeapHost X) (cap pb : Nat) {p : ByteArray} {
     fun k n h => by rw [← readN_drop_take μ ip 153 k n h, henc]
   have f1 : rdN μ ip 1 = 1 := by unfold rdN; rw [show ip = ip + 0 by rfl, piece 0 1 (by omega)]; rfl
   have fs : rdN μ (ip + 1) 4 = src := by
-    unfold rdN; rw [piece 1 4 (by omega)]; simp [encTr, Num.decodeLE_encodeLE, Nat.mod_eq_of_lt hs]
+    unfold rdN; rw [piece 1 4 (by omega)]; simp [encTr, List.drop_append, List.take_append, List.drop_eq_nil_of_le, List.take_of_length_le, Num.decodeLE_encodeLE, Nat.mod_eq_of_lt hs]
   have fd : rdN μ (ip + 5) 4 = dst := by
-    unfold rdN; rw [piece 5 4 (by omega)]; simp [encTr, Num.decodeLE_encodeLE, Nat.mod_eq_of_lt hd]
+    unfold rdN; rw [piece 5 4 (by omega)]; simp [encTr, List.drop_append, List.take_append, List.drop_eq_nil_of_le, List.take_of_length_le, Num.decodeLE_encodeLE, Nat.mod_eq_of_lt hd]
   have fa : rdN μ (ip + 9) 8 = amt := by
-    unfold rdN; rw [piece 9 8 (by omega)]; simp [encTr, Num.decodeLE_encodeLE, Nat.mod_eq_of_lt ha]
+    unfold rdN; rw [piece 9 8 (by omega)]; simp [encTr, List.drop_append, List.take_append, List.drop_eq_nil_of_le, List.take_of_length_le, Num.decodeLE_encodeLE, Nat.mod_eq_of_lt ha]
   have fm : μ.readN (ip + 17) 128 = m := by
-    rw [piece 17 128 (by omega)]; simp [encTr, hm]
+    rw [piece 17 128 (by omega)]; simp [encTr, List.drop_append, List.take_append, List.drop_eq_nil_of_le, List.take_of_length_le, hm]
   have fg : rdN μ (ip + 145) 8 = gas := by
-    unfold rdN; rw [piece 145 8 (by omega)]; simp [encTr, hm, Num.decodeLE_encodeLE, Nat.mod_eq_of_lt hg]
+    unfold rdN; rw [piece 145 8 (by omega)]; simp [encTr, List.drop_append, List.take_append, List.drop_eq_nil_of_le, List.take_of_length_le, hm, Num.decodeLE_encodeLE, Nat.mod_eq_of_lt hg]
   obtain ⟨ω1, μ1, r1, e0, e1, e5, e6, o0, o8, o136, o144, o152, o156, R0, R8, fr, rdf, wrf⟩ :=
     tr_call (p := p) (P := P) (R := env.rel cap) x ω μ sp (sp + 88) rd ip rlen h1 h7 h8 hR0 hR8 hrl hrl32 f1
       ⟨by omega, by omega⟩

@@ -21,8 +21,8 @@ and the payload survive; its new block is q's chunk grown in place or a block th
 Either `read_vec` returns, or the run reaches a failed allocator call (`LoopA.Exhausts`): the
 `alloc` of the first chunk or one of the `realloc`s fails (heap exhaustion, bootstrap decision 4).
 
-Not stated (unlike `vec_u8_heap`): the globals below the allocator (`Glob`) are kept. `realloc_call`
-does not record it, so the composed run cannot carry it through the `realloc`s.
+The globals below the allocator (`Glob`) are kept, as in `vec_u8_heap`: `alloc_call` and
+`realloc_call` both keep them.
 
 GP v0.8.0: the octets are read from the service's memory by the PVM (Appendix A); the
 `Vec<u8>` is the bootstrap service's own decoding of an argument blob.
@@ -36,54 +36,6 @@ open PVM Picoalloc Services.Bootstrap Services.Bootstrap.Code Services.Bootstrap
 
 set_option maxHeartbeats 8000000
 set_option maxRecDepth 100000
-
-/-- **`realloc`'s block is the old one or was free** (alignment one unit, a nonzero request, the
-    data address of an allocated chunk): no other allocated chunk of `s` has its data at the result. -/
-theorem realloc_fresh {grow : Grow} {hb : Nat} {s s' : State} {ptr newReq p : Nat} {cp : Bool} (hwf : WF s)
-    (hptr : ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true) (h0 : newReq ≠ 0)
-    (h : realloc grow hb s ptr 1 newReq = some (p, s', cp)) :
-    ∀ d ∈ chunks s, d.used = true → d.addr + 32 ≠ ptr → d.addr + 32 ≠ p := by
-  intro d hd hdu hda
-  obtain ⟨c, hc, h1, h2⟩ := hptr
-  have hcur : wordSize (s.hdr (ptr - 32)).size = c.size := by
-    have := chunks_hdr c hc
-    rw [show c.addr = ptr - 32 by omega, h2] at this
-    rw [this, wordSize_sizeWord]
-  unfold realloc usable at h
-  rw [hcur] at h
-  by_cases e1 : newReq = c.size - 1
-  · simp only [e1, ↓reduceIte, Option.pure_def, Option.some.injEq, Prod.mk.injEq] at h
-    obtain ⟨hp, -, -⟩ := h
-    rw [← hp]; exact hda
-  by_cases e3 : newReq < c.size - 1
-  · simp only [e1, h0, e3, ↓reduceIte, Option.pure_def, Option.some.injEq, Prod.mk.injEq] at h
-    obtain ⟨hp, -, -⟩ := h
-    rw [← hp]; exact hda
-  simp only [e1, h0, e3, ↓reduceIte] at h
-  cases hg : growInplace grow s ptr newReq with
-  | some s2 =>
-    simp only [hg, Option.pure_def, Option.some.injEq, Prod.mk.injEq] at h
-    obtain ⟨hp, -, -⟩ := h
-    rw [← hp]; exact hda
-  | none =>
-    simp only [hg] at h
-    cases ha : alloc grow hb 1 newReq s with
-    | none => simp [ha] at h
-    | some r =>
-      obtain ⟨p1, s1⟩ := r
-      simp only [ha, Option.bind_eq_bind, Option.bind_some, Option.pure_def, Option.some.injEq,
-        Prod.mk.injEq] at h
-      obtain ⟨hp, -, -⟩ := h
-      rw [← hp]
-      obtain ⟨pre, post, S, hcs, -, -⟩ := alloc_chunks hwf ha
-      intro e
-      have ht := hwf.2.2.2.1
-      unfold TilesOk at ht
-      rw [hcs] at ht hd
-      have hfree : (⟨p1 - 32, S, false⟩ : Chunk) ∈ pre ++ ⟨p1 - 32, S, false⟩ :: post :=
-        List.mem_append_right _ List.mem_cons_self
-      have := Tiles.addr_inj ht d hd _ hfree (by simp only; omega)
-      rw [this] at hdu; simp at hdu
 
 /-- **One pass of `read_vec`'s chunk loop, the payload in the heap** (3520 …): as `pass_ok` /
     `pass_fail`, on the allocator's context `HeapCtx` under `refineContractK cap`. From L ≥ 1 octets
@@ -122,7 +74,8 @@ theorem pass_heap {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (en
       HeapCtx env pb S0 S1 μ' s' ∧
       (∃ c ∈ chunks s', c.addr + 32 = r ∧ c.used = true ∧ c.size = (L + min left L + 31) / 32 + 1) ∧
       (∀ d, K d → d ∈ chunks s' ∧ d.used = true ∧ d.addr + 32 ≠ r ∧
-        ∀ a, InData d a → μ'.read a = μ.read a)) ∨
+        ∀ a, InData d a → μ'.read a = μ.read a) ∧
+      (∀ a, Glob a → μ'.read a = μ.read a)) ∨
     Exhausts env cap pb p P 3520 ω μ x (64 * ((L + 31) / 32) + 1400) := by
   generalize hcdef : min left L = c at *
   have hc1 : 1 ≤ c ∧ c ≤ left ∧ c ≤ L := by omega
@@ -158,8 +111,8 @@ theorem pass_heap {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (en
       ⟨cq, hcqm, hcqa, hcqu⟩ (by omega) (by omega) hba b1 b7 b9 b10 (by decide) (by decide)
       ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ with
     ⟨r, s', b, ω3, μ3, hR, run3, e7, H3, dat3, keep3, ⟨cr, hcrm, hcra, hcru, hcrs⟩, kp3, stk3, -, -, e0, e1,
-      e5, e6⟩ |
-    ⟨hR, ω3, μ3, run3, e7, -, -, e0, -, -, -⟩
+      e5, e6, gl3, -, -⟩ |
+    ⟨hR, ω3, μ3, run3, e7, -, -, e0, -, -, -, -⟩
   rotate_left
   · rw [hu] at run3
     have run4 := realloc_ret (p := p) (P := P) (R := refineContractK cap env) x ω3 μ3 (by rw [e0, b0])
@@ -239,7 +192,7 @@ theorem pass_heap {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (en
   refine Or.inl ⟨ω7, μ7, s', r, run17.mono (by omega), by rw [r1, d1], by rw [r5, d5], by rw [r6, d6], r7,
     ?_, ?_, ?_, ?_, rR0, rR8, ?_,
     ctx_congr_data H3 hcrm (fun a h1 h2 => hlowh a h1 (by rw [hcrs] at h2; omega)) wr73,
-    ⟨cr, hcrm, hcra, hcru, hcrs⟩, ?_⟩
+    ⟨cr, hcrm, hcra, hcru, hcrs⟩, ?_, ?_⟩
   · rw [Memory.readN_congr (fun j hj => h71 _ (by omega) (by omega) (by omega) (by omega) (by omega))]
     exact m32
   · rw [Memory.readN_congr (fun j hj => h76 _ (by omega) (by omega))]; exact dn
@@ -265,6 +218,11 @@ theorem pass_heap {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (en
     unfold InData at hca
     have := (chunk_in H.wf hdm hdu).2.2
     rw [hlowh a (by omega) (by omega), kp3 a ⟨d, hdm, hdu, hdq', ha⟩]
+    exact hlow a (by omega) (Or.inl (by omega))
+  · intro a ha
+    have hg := ha
+    unfold Glob at hg
+    rw [hlowh a (by omega) (Or.inl (by omega)), gl3 a ha]
     exact hlow a (by omega) (Or.inl (by omega))
 
 /-- **`read_vec`'s chunk loop, the payload in the heap** (from 3520 to `read_vec`'s return t): as
@@ -305,7 +263,8 @@ theorem loop_heap {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (en
       (∃ c ∈ chunks s', c.addr + 32 = q' ∧ c.used = true ∧ c.size = (L + left + 31) / 32 + 1) ∧
       (∀ d, K d → d ∈ chunks s' ∧ d.used = true ∧ d.addr + 32 ≠ q' ∧ ∀ a, InData d a → μ'.read a = μ.read a) ∧
       (∀ a, a < 4294967296 → S + 96 ≤ a → (a < rd ∨ rd + 16 ≤ a) → (a < O ∨ O + 24 ≤ a) →
-        μ'.read a = μ.read a)) ∨
+        μ'.read a = μ.read a) ∧
+      (∀ a, Glob a → μ'.read a = μ.read a)) ∨
     Exhausts env cap pb p P 3520 ω μ x (loopSteps L left) := by
   induction left using Nat.strongRecOn generalizing ω μ s q L len with
   | _ left ih =>
@@ -313,7 +272,7 @@ theorem loop_heap {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (en
   have hS1 := H.hS1
   rcases pass_heap (p := p) (P := P) env cap hcap1 hcap x ω μ hb s K S rd q L left ptr0 len pb S0 S1 H hcq hK hpay
       hS hsp h1 h5 h7 h8 h10 hL hl1 hn hlen s16 s24 hrd hR0 hR8 hdat with
-    ⟨ω1, μ1, s', r, run1, a1, a5, a6, a7, m32, m40, m24, fr1, rR0, rR8, dat1, H1, hc1, hK1⟩ | hex
+    ⟨ω1, μ1, s', r, run1, a1, a5, a6, a7, m32, m40, m24, fr1, rR0, rR8, dat1, H1, hc1, hK1, gl1⟩ | hex
   rotate_left
   · exact Or.inr (hex.mono (by unfold loopSteps; omega))
   obtain ⟨cp, hcpK, hcp1, hcp2⟩ := hpay
@@ -346,14 +305,15 @@ theorem loop_heap {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (en
     have hsteps : 64 * ((L + 31) / 32) + 2 * c + 1800 + (10 + loopSteps (L + c) (left - c)) ≤
         loopSteps L left := by
       subst hcL; unfold loopSteps; omega
-    rcases hrec with ⟨ω', μ', s'', q', run', z0, z1, z5, z6, zO, zO8, zO16, zdat, zR0, zR8, zH, zc, zK, zfr⟩ | hex
+    rcases hrec with ⟨ω', μ', s'', q', run', z0, z1, z5, z6, zO, zO8, zO16, zdat, zR0, zR8, zH, zc, zK, zfr, zgl⟩ | hex
     · refine Or.inl ⟨ω', μ', s'', q', (run1.trans (run2.trans run')).mono hsteps, z0, z1, z5, z6,
         by rw [← show L + c + (left - c) = L + left by omega]; exact zO, zO8,
         by rw [← show L + c + (left - c) = L + left by omega]; exact zO16, ?_,
         by rw [← show ptr0 + (L + c) + (left - c) = ptr0 + L + left by omega]; exact zR0,
         by rw [← show len - c - (left - c) = len - left by omega]; exact zR8, zH,
         by rw [show L + left = L + c + (left - c) by omega]; exact zc, fun d hd => ?_,
-        fun a h0 h1 h2 h3 => (zfr a h0 h1 h2 h3).trans (fr1 a h0 (Or.inr (by omega)) h2)⟩
+        fun a h0 h1 h2 h3 => (zfr a h0 h1 h2 h3).trans (fr1 a h0 (Or.inr (by omega)) h2),
+        fun a ha => (zgl a ha).trans (gl1 a ha)⟩
       · rw [show L + left = L + c + (left - c) by omega, zdat]
         exact Memory.readN_congr (fun j hj => hpay1 _ (by omega) (by omega))
       · obtain ⟨z1', z2', z3', z4'⟩ := zK d hd
@@ -380,7 +340,7 @@ theorem loop_heap {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (en
     have run12 := run1.trans run2
     refine Or.inl ⟨ω2, μ2, s', r, run12.mono (by unfold loopSteps; omega), z0, z1, z5, z6, zO, zO8, zO16,
       ?_, ?_, ?_, ctx_congr_data H1 hcrm (fun a h1 _ => hlowh a h1) wr2, ⟨cr, hcrm, hcra, hcru, hcrs⟩,
-      fun d hd => ?_, ?_⟩
+      fun d hd => ?_, ?_, fun a ha => (hlowh a (by unfold Glob at ha; omega)).trans (gl1 a ha)⟩
     · rw [Memory.readN_congr (fun j hj => hlowh _ (by omega))]; exact dat1
     · rw [Memory.readN_congr (fun j hj => fr2 _ (by omega) (by omega))]; exact rR0
     · rw [Memory.readN_congr (fun j hj => fr2 _ (by omega) (by omega))]; exact rR8
@@ -404,10 +364,8 @@ theorem loop_heap {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (en
     `s`, the context kept for the final state `s'`, every allocated chunk of `s` kept with its data,
     the reader advanced, the stack from sp up kept off the reader and O, memory below 196608 and the
     access of everything from S0 up kept; or the run reaches a failed allocator call (`Exhausts`):
-    the first chunk's `alloc` or one of the `realloc`s fails.
-
-    *Not stated:* that the globals below the allocator (`Glob`) are kept, as `vec_u8_heap` states;
-    `ReallocCall.realloc_call` does not record it. -/
+    the first chunk's `alloc` or one of the `realloc`s fails. The globals below the allocator
+    (`Glob`) are kept too, as `vec_u8_heap` states. -/
 theorem vec_u8_heap_big {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env : RefineHost.Env)
     (cap : Nat) (hcap1 : 134217728 ≤ cap) (hcap : cap < 18446744073709551616) (x : RefineCtx) (ω : Regs)
     (μ : Memory) (s : State) (sp O rd ptr len n ret t v5 v6 pb S0 S1 : Nat)
@@ -437,7 +395,7 @@ theorem vec_u8_heap_big {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p 
       PagesOut 48 pb μ μ' ∧
       (∀ a, a < 4294967296 → sp ≤ a → (a < rd ∨ rd + 16 ≤ a) → (a < O ∨ O + 24 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, a < 196608 → μ'.read a = μ.read a ∧ μ'.readable a = μ.readable a) ∧
-      (∀ a, S0 ≤ a → μ'.writable a = μ.writable a)) ∨
+      (∀ a, Glob a → μ'.read a = μ.read a) ∧ (∀ a, S0 ≤ a → μ'.writable a = μ.writable a)) ∨
     Exhausts env cap pb p P 3473 ω μ x (34000 + loopSteps 16384 (n - 16384)) := by
   obtain ⟨cp, hcpm, hcpu, hcp1, hcp2⟩ := hpay
   obtain ⟨hcpb, -, hcpT'⟩ := chunk_in H.wf hcpm hcpu
@@ -579,7 +537,7 @@ theorem vec_u8_heap_big {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p 
     (by rw [rbuf, Memory.readN_congr (fun j hj => hpay6 _ ⟨by omega, by omega⟩),
           Memory.readN_congr (fun j hj => kd7 cp hcpm hcpu _ ⟨by omega, by omega⟩)])
   rcases hrest with ⟨ω', μ', s', q', run', y0, y1, y5, y6, yO, yO8, yO16, ydat, yR0, yR8, yH,
-      ⟨cf, hcfm, hcfa, hcfu, hcfs⟩, yK, yfr⟩ | hex
+      ⟨cf, hcfm, hcfa, hcfu, hcfs⟩, yK, yfr, ygl⟩ | hex
   · have hn' : 16384 + (n - 16384) = n := by omega
     rw [hn'] at yO yO16 ydat hcfs
     have runAll := run18.trans run'
@@ -592,7 +550,7 @@ theorem vec_u8_heap_big {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p 
     refine Or.inl ⟨q', s', ω', μ', runAll.mono (by omega), y0, by rw [y1]; congr 1; omega, y5, y6, yO, yO8,
       yO16, ?_, by rw [← show ptr + 16384 + (n - 16384) = ptr + n by omega]; exact yR0,
       by rw [← show len - 16384 - (n - 16384) = len - n by omega]; exact yR8, yH,
-      fun c hc hu => (yK c ⟨hc, hu⟩).1, hcf ▸ hcfm, ?_, ?_, FreeStepsH.pagesOut H.bd runAll, ?_, ?_, ?_⟩
+      fun c hc hu => (yK c ⟨hc, hu⟩).1, hcf ▸ hcfm, ?_, ?_, FreeStepsH.pagesOut H.bd runAll, ?_, ?_, ?_, ?_⟩
     · rw [ydat]; exact Memory.readN_congr (fun j hj => kd7 cp hcpm hcpu _ ⟨by omega, by omega⟩)
     · intro d hd hu e
       have := (yK d ⟨hd, hu⟩).2.2.1
@@ -606,6 +564,14 @@ theorem vec_u8_heap_big {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p 
       refine ⟨kr a (by unfold two32; omega) (Or.inl (by unfold pageSize; omega)) (H.ro a ha'), ?_⟩
       unfold Memory.readable
       rw [kp _ (Or.inl (by unfold pageSize; omega))]
+    · intro a ha'
+      have hg := ha'
+      unfold Glob at hg
+      have ht3 := H3.wf.2.2.2.1
+      unfold TilesOk at ht3
+      rw [ygl a ha', hlowh a (by omega) (Or.inl (by omega)),
+        hk.glob (fun b ⟨c, hc, e⟩ => Or.inr (by have := (ht3.mem_lt c hc).1; omega)) a ha']
+      exact hlow a (by omega) (Or.inl (by omega))
     · intro a ha'
       obtain ⟨kp, -⟩ := FreeStepsH.keepRO H.bd runAll
       unfold Memory.writable

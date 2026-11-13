@@ -329,7 +329,8 @@ open Picoalloc Services.Bootstrap.Alloc JAM Services.Bootstrap.Decode.AllocOk Se
     max(2·oc, 4) at V and the new block q at V + 8, q the data of an allocated chunk of
     ⌈232·max(2·oc, 4)/32⌉ + 1 units holding the old buffer's 232·oc octets, the context kept for the
     new state `s'`, every other allocated chunk of `s` kept with its data, no such chunk with its data
-    at q, the stack from sp up kept except V … V + 16; or the run reaches a failed allocator call
+    at q, the stack from sp up kept except V … V + 16, the globals below the allocator (`Glob`) kept;
+    or the run reaches a failed allocator call
     (`Exhausts`: `alloc` for oc = 0, `realloc` otherwise). -/
 theorem grow_one_call {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env : RefineHost.Env)
     (cap : Nat) (hcap1 : 134217728 ≤ cap) (hcap : cap < 18446744073709551616) (x : RefineCtx) (ω : Regs)
@@ -358,15 +359,15 @@ theorem grow_one_call {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P]
       PagesOut 48 pb μ μ' ∧
       (∀ a, a < 4294967296 → sp ≤ a → (a < V ∨ V + 16 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, a < 196608 → μ'.read a = μ.read a ∧ μ'.readable a = μ.readable a) ∧
-      (∀ a, S0 ≤ a → μ'.writable a = μ.writable a)) ∨
+      (∀ a, Glob a → μ'.read a = μ.read a) ∧ (∀ a, S0 ≤ a → μ'.writable a = μ.writable a)) ∨
     Exhausts env cap pb p P 32785 ω μ x (64 * ((232 * oc + 31) / 32) + 1500) := by
   by_cases hz : oc = 0
   · subst hz
     rcases grow_one_first (hb := hb) env cap hcap1 hcap x ω μ s sp V op ret t v5 v6 pb S0 S1 H
         ⟨by omega, hS.2⟩ (by omega) hV h0 h1 h5 h6 h7 hret hjt hbt hv5 hv6 hop sV0 sV8 with
-      ⟨q, s', ω', μ', -, run, e0, e1, e5, e6, eV, eV8, H', keep, hnew, -, hfr, kd, po, stk, low, -, wr⟩ | hx
+      ⟨q, s', ω', μ', -, run, e0, e1, e5, e6, eV, eV8, H', keep, hnew, -, hfr, kd, po, stk, low, gl, wr⟩ | hx
     · exact Or.inl ⟨q, s', ω', μ', run.mono (by omega), e0, e1, e5, e6, eV, eV8, hnew, rfl, H',
-        fun c hc hu _ => ⟨keep c hc hu, kd c hc hu⟩, fun d hd hu _ => hfr d hd hu, po, stk, low, wr⟩
+        fun c hc hu _ => ⟨keep c hc hu, kd c hc hu⟩, fun d hd hu _ => hfr d hd hu, po, stk, low, gl, wr⟩
     · exact Or.inr (hx.mono (by omega))
   obtain ⟨cq, hcqm, hcqa, hcqu, hcqs⟩ := hold.resolve_left hz
   have hu : usable s op = (232 * oc + 31) / 32 := by rw [← hcqa, usable_of_chunk hcqm, hcqs]; rfl
@@ -400,8 +401,8 @@ theorem grow_one_call {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P]
       S0 S1 H2 ⟨cq, hcqm, hcqa, hcqu⟩ (by omega) (by omega) hba b1 b7 b9 b10 (by decide) (by decide)
       ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ with
     ⟨r, s', b, ω3, μ3, hR, run3, e7, H3, dat3, keep3, ⟨cr, hcrm, hcra, hcru, hcrs⟩, kp3, stk3, -, -, e0, e1,
-      e5, e6⟩ |
-    ⟨hR, ω3, μ3, run3, e7, -, -, e0, -, -, -⟩
+      e5, e6, gl3, -, -⟩ |
+    ⟨hR, ω3, μ3, run3, e7, -, -, e0, -, -, -, -⟩
   rotate_left
   · rw [hu] at run3
     have run4 := realloc_ret (p := p) (P := P) (R := refineContractK cap env) x ω3 μ3 (by rw [e0, b0])
@@ -444,7 +445,7 @@ theorem grow_one_call {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P]
   have wr63 : ∀ a, μ6.writable a = μ3.writable a := fun a => by rw [wr6, wr5]
   have run16 := run1.trans (run2.trans (run3.trans (run4.trans (run5.trans run6))))
   refine Or.inl ⟨r, s', ω6, μ6, run16.mono (by omega), d0, by rw [d1]; congr 1; omega, d5, d6, dV, dV8, ?_, ?_,
-    ctx_high H3 hlate wr63, ?_, hfr, FreeStepsH.pagesOut H.bd run16, ?_, ?_, ?_⟩
+    ctx_high H3 hlate wr63, ?_, hfr, FreeStepsH.pagesOut H.bd run16, ?_, ?_, ?_, ?_⟩
   · rcases cr with ⟨ca, csz, cu⟩
     simp only at hcra hcru hcrs
     subst hcru hcrs
@@ -468,6 +469,11 @@ theorem grow_one_call {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P]
     refine ⟨kr a (by unfold two32; omega) (Or.inl (by unfold pageSize; omega)) (H.ro a ha'), ?_⟩
     unfold Memory.readable
     rw [kp _ (Or.inl (by unfold pageSize; omega))]
+  · intro a ha'
+    have hg := ha'
+    unfold Glob at hg
+    rw [hlate a (by omega), gl3 a ha']
+    exact hlow a (by omega) (Or.inl (by omega))
   · intro a ha'
     obtain ⟨kp, -⟩ := FreeStepsH.keepRO H.bd run16
     unfold Memory.writable

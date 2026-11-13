@@ -235,6 +235,13 @@ corollaries.
   state keeping the old chunks and their data, the reader advanced by |enc|; or Exhausts (an `alloc`
   failure reaching 45975). Instances: `tr_call` (no chunks), `item_op_ok`, `item_op_err`. The loop
   theorem then takes a list of (enc, Rep) with `ItemOk` each, n = the list's length ≤ 89.
+  **Link to the spec (planned).** The top-level T2 assembly instantiates the list from the model's
+  accumulate inputs: for each of the paper's items (GP v0.8.0 §12: an operand 𝕌 or a deferred
+  transfer 𝕏), `enc` is its ℰ encoding (Appendix C: tag 0 then ℰ(p, e, a, y, g, O(l), ↕t), or tag 1
+  then ℰ(ℰ₄(s), ℰ₄(d), ℰ₈(a), m, ℰ₈(g))), so ℰ(↕**i**) = ℰ(n) ⌢ enc₁ ⌢ … ⌢ encₙ is what `fetch` kind 14
+  returns, and `Rep` is the slot layout of that item (the transfer layout of `tr_call`, the operand layout
+  of `item_op_ok` / `item_op_err`). The per-item `ItemOk` facts come from those three theorems; the
+  model-side function from items to (enc, Rep) is written there, next to the model's types.
   Then 44495's glue and the 6630 → 6674 summary.
 
 Plan:

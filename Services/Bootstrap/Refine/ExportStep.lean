@@ -212,4 +212,49 @@ theorem tail {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCode
     obtain ⟨hd', hk'⟩ := keep' d hd2 hu hne
     exact ⟨hd', fun a ha => by rw [hk' a ha, hk2 a ha]⟩
 
+/-- **`Export`'s head** (5042 … 5587): the element at `cur` (≠ end), of index 10 (`ExportSegs`), is staged at
+    M + 304 and dispatched to the handler, with ω₅ = cur and the cursor advanced (M + 144, M + 280). Memory
+    changes only in [M − 48, M), M + 144 … M + 152, M + 280 … M + 288 and M + 304 … M + 536. -/
+theorem xhead {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] {X : Type}
+    {R : HostRel X} (x : X) (ω : Regs) (μ : Memory) (M cur en : Nat)
+    (hM : 65536 + 48 ≤ M ∧ M + 632 + 16 < 4294967296 ∧ M % 8 = 0)
+    (hcur : 65536 ≤ cur ∧ cur + 232 + 24 < 4294967296) (hcM : cur + 232 + 24 ≤ M - 48 ∨ M + 632 ≤ cur)
+    (hne : cur ≠ en) (hen : en < 18446744073709551616) (h1 : ω[1] = UInt64.ofNat M)
+    (s144 : μ.readN (M + 144) 8 = Num.encodeLE 8 cur) (s120 : μ.readN (M + 120) 8 = Num.encodeLE 8 en)
+    (sD : μ.readN cur 8 = Num.encodeLE 8 (9223372036854775807 + 10))
+    (s128 : μ.readN (M + 128) 8 = Num.encodeLE 8 9223372036854775832)
+    (s136 : μ.readN (M + 136) 8 = Num.encodeLE 8 9223372036854775809)
+    (hrc : ∀ a, cur ≤ a → a < cur + 232 → μ.readable a = true)
+    (hwM : ∀ a, M - 48 ≤ a → a < M + 632 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 5042 ω μ x 5587 ω' μ' x 2000 ∧ ω'[1] = UInt64.ofNat M ∧
+      ω'[5] = UInt64.ofNat cur ∧ ω'[8] = UInt64.ofNat 10 ∧
+      μ'.readN (M + 144) 8 = Num.encodeLE 8 (cur + 232) ∧ μ'.readN (M + 280) 8 = Num.encodeLE 8 (cur + 232) ∧
+      (∀ a, a < 4294967296 → (a < M - 48 ∨ (M ≤ a ∧ a < M + 144) ∨ (M + 152 ≤ a ∧ a < M + 280) ∨
+        (M + 288 ≤ a ∧ a < M + 304) ∨ M + 536 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  obtain ⟨hM0, hM1, hM8⟩ := hM
+  have hr : ∀ a, M - 48 ≤ a → a < M + 632 → μ.readable a = true :=
+    fun a h1 h2 => Memory.readable_of_writable (hwM a h1 h2)
+  obtain ⟨ω1, μ1, run1, a0, a1, a5, a6, a7, a8, a9, a144, a304, a280, afr, ard, awr⟩ := Pass.pa (p := p) (P := P)
+    (R := R) x ω μ M cur en (9223372036854775807 + 10) (by omega) (by omega) (by omega) hne hen (by omega)
+    (by omega) h1 s144 s120 sD (fun a h1 h2 => hr a (by omega) (by omega))
+    (fun a h1 h2 => hrc a h1 (by omega)) (fun a h1 h2 => hwM a (by omega) (by omega))
+  obtain ⟨ω2, μ2, run2, b0, b1, b5, b6, bd, bfr, brd, bwr⟩ := memcpy_any (p := p) (P := P) (R := R) x ω1 μ1
+    162 5095 M (M + 312) (cur + 8) 224 a0 a1 a7 a8 a9 ⟨by decide, by decide, by decide⟩ jte_80 bs_5095
+    ⟨by omega, by omega, hM8⟩ ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ (by omega) (by omega) (by omega)
+    (fun a h1 h2 => by rw [ard]; exact hrc a (by omega) (by omega))
+    (fun a h1 h2 => by rw [awr]; exact hwM a (by omega) (by omega))
+    (fun a h1 h2 => by rw [awr]; exact hwM a (by omega) (by omega))
+  have k2 : ∀ a, a < 4294967296 → (a < M - 48 ∨ (M ≤ a ∧ a < M + 144) ∨ (M + 152 ≤ a ∧ a < M + 280) ∨
+      (M + 288 ≤ a ∧ a < M + 304) ∨ M + 536 ≤ a) → μ2.read a = μ.read a :=
+    fun a h0 h1 => by rw [bfr a h0 (by omega) (by omega), afr a h0 (by omega)]
+  obtain ⟨ω3, run3, c1, c5, c8⟩ := xd (p := p) (P := P) (R := R) x ω2 μ2 M (by omega) b1 (by rw [b6, a6])
+    (by rw [Memory.readN_congr (fun j hj => k2 _ (by omega) (by omega))]; exact s128)
+    (by rw [Memory.readN_congr (fun j hj => k2 _ (by omega) (by omega))]; exact s136)
+    (fun a h1 h2 => by rw [brd, ard]; exact hr a (by omega) (by omega))
+  refine ⟨ω3, μ2, (run1.trans (run2.trans run3)).mono (by omega), by rw [c1, b1], by rw [c5, b5, a5], c8,
+    ?_, ?_, k2, fun a => by rw [brd, ard], fun a => by rw [bwr, awr]⟩
+  · rw [Memory.readN_congr (fun j hj => bfr _ (by omega) (by omega) (by omega))]; exact a144
+  · rw [Memory.readN_congr (fun j hj => bfr _ (by omega) (by omega) (by omega))]; exact a280
+
 end Services.Bootstrap.Refine.ExportStep

@@ -85,15 +85,18 @@ def jt{suf} : NTree Nat := {tree(J, lambda v: str(v[0]))}
 /-- The code for the executor. -/
 def prog{suf} : Prog := {{ code := code{suf}, bs := bs{suf}, jt := jt{suf}, jsize := {jsize[0]} }}
 
+set_option maxHeartbeats 0 in
 theorem hyp_code{suf} {{p : ByteArray}} {{P : Program}} {insts} :
     code{suf}.All (fun pc e => deblob p pc = some P ∧ P.decode pc = some e.1 ∧ P.next pc = e.2 ∧
       P.blockCost (P.blockStartOf pc) ≤ stepCostCap) :=
   {proof(I, 'd')}
 
+set_option maxHeartbeats 0 in
 theorem hyp_bs{suf} {{p : ByteArray}} {{P : Program}} {insts} :
     bs{suf}.All (fun n b => P.isBlockStart n = b) :=
   {proof(B, 'bs')}
 
+set_option maxHeartbeats 0 in
 theorem hyp_jt{suf} {{p : ByteArray}} {{P : Program}} {insts} :
     jt{suf}.All (fun k t => P.jumpTable.getD k 0 = t) :=
   {proof(J, 'jte')}

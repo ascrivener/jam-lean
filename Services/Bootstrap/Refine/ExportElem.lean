@@ -278,4 +278,175 @@ theorem push {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCode
       have ha' := ha; unfold InData at ha'
       exact bfr a (by omega) (by omega) (Or.inl (by omega))
 
+/-- **One `ExportSegs` instruction** (5042 … 5042): instruction k is index 10, its `Vec<Vec<u8>>`
+    `{capv, ptrv, ns}` in the chunk co (to keep) and its segment i `{capf i, qf i, lf i}` with its octets in
+    chunks to keep, the buffers distinct. `PInv k` becomes `PInv (k + 1)` (the chunks to keep now `Kp'`, which
+    excludes the freed ones): slot k holds `Exported(ns)` (`hO`), and the host context is the ns segments
+    exported in order, `ExportSeg.expUpTo env μ0 ptrv x ns`. Or an allocation fails. -/
+theorem export_step {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P]
+    (env : RefineHost.Env) (cap0 : Nat) (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616)
+    {pb S0 S1 : Nat} (fmt : ExportSeg.ExportFmtOk p cap0 env pb S0 S1)
+    (x : RefineCtx) (ω : Regs) (μ μ0 : Memory) {hb : Nat} (s : State)
+    {M E n capI : Nat} {ce : Chunk} {Kp Kp' : Chunk → Prop} {O : Nat → List UInt8 → Prop}
+    (L : LayP S0 S1 M E n ce) (k : Nat) (hk : k < n)
+    (capv ptrv ns : Nat) (co : Chunk) (capf qf lf : Nat → Nat)
+    (sD0 : μ0.readN (E + 232 * k) 8 = Num.encodeLE 8 (9223372036854775807 + 10))
+    (sv8 : μ0.readN (E + 232 * k + 8) 8 = Num.encodeLE 8 capv)
+    (sv16 : μ0.readN (E + 232 * k + 16) 8 = Num.encodeLE 8 ptrv)
+    (sv24 : μ0.readN (E + 232 * k + 24) 8 = Num.encodeLE 8 ns)
+    (hcv : 24 * capv < 18446744073709551616) (hnc : ns ≤ capv) (hp : ptrv + 24 * ns + 8 ≤ 2147483648)
+    (hco : capv ≠ 0 → Kp co ∧ co ≠ ce ∧ co.addr + 32 = ptrv)
+    (hcoD : ∀ a, ptrv ≤ a → a < ptrv + 24 * ns → InData co a)
+    (hw0 : ∀ i, i < ns → μ0.readN (ptrv + 24 * i) 8 = Num.encodeLE 8 (capf i) ∧
+      μ0.readN (ptrv + 24 * i + 8) 8 = Num.encodeLE 8 (qf i) ∧ μ0.readN (ptrv + 24 * i + 16) 8 = Num.encodeLE 8 (lf i))
+    (hcap : ∀ i, i < ns → capf i < 18446744073709551616) (hql : ∀ i, i < ns → qf i + lf i ≤ 2147483648)
+    (hq : ∀ i, i < ns → capf i ≠ 0 → qf i ≠ co.addr + 32 ∧ ∀ j, j < ns → j ≠ i → capf j ≠ 0 → qf j ≠ qf i)
+    (hcs : ∀ i, i < ns → capf i ≠ 0 → ∃ c, Kp c ∧ c ≠ ce ∧ c.addr + 32 = qf i)
+    (hsd : ∀ i, i < ns → ∀ a, qf i ≤ a → a < qf i + lf i → ∃ d, Kp d ∧ InData d a)
+    (hoff : env.exportOffset + x.2.length + ns < 18446744073709551615)
+    (hK' : ∀ d, Kp' d → Kp d ∧ (capv ≠ 0 → d ≠ co) ∧ ∀ i, i < ns → capf i ≠ 0 → d.addr + 32 ≠ qf i)
+    (hO : ∀ (μ' : Memory) (a : Nat), μ'.readN a 8 = Num.encodeLE 8 (9223372036854775807 + 20) →
+      μ'.readN (a + 8) 8 = Num.encodeLE 8 ns → O k (μ'.readN a 232))
+    (st : PInv env pb S0 S1 M E n ce capI μ0 Kp O k ω μ s) :
+    (∃ (s' : State) (ω' : Regs) (μ' : Memory) (N : Nat),
+      FreeStepsH p (refineContractK cap0 env) 5042 ω μ x 5042 ω' μ' (ExportSeg.expUpTo env μ0 ptrv x ns) N ∧
+      PInv env pb S0 S1 M E n ce capI μ0 Kp' O (k + 1) ω' μ' s') ∨
+    ∃ N, ExhaustsX env cap0 pb p 5042 ω μ x N := by
+  obtain ⟨hS0M, hMS1, hM2, hM8⟩ := L.hM
+  have hn := L.hn
+  obtain ⟨hE0, hE1⟩ := L.hE
+  have hEtop := L.hEtop
+  have hb0 := st.H.hb0
+  have hbT := st.H.hbT
+  have hS1 := st.H.hS1
+  rcases mid (p := p) (P := P) env cap0 hcap1 hcap0 fmt x ω μ μ0 s L k hk capv ptrv ns co qf lf sD0 sv8 sv16 sv24
+      hcv hnc hp (fun h => (hco h).1) hcoD (fun i hi => ⟨(hw0 i hi).2.1, (hw0 i hi).2.2⟩) hql hsd hoff st with
+    ⟨ω3, μ3, s3, N3, run3, H3, c1, c144, c280, c56, c64, c72, c96, c104, cfr, ckeep⟩ | hx
+  rotate_left
+  · exact Or.inr hx
+  obtain ⟨cap, ptr, vc, vp, vl, hkc, hcapn, hptr, hold, hout⟩ := st.out
+  -- the chunks to keep are not the output's buffer
+  have nptr : ∀ d, Kp d → d.addr + 32 ≠ ptr := fun d hd => by
+    obtain ⟨hds, hdu, -⟩ := st.kp d hd
+    obtain ⟨hd0, -, -⟩ := Decode.VecU8.chunk_in st.H.wf hds hdu
+    rcases hold with ⟨-, rfl⟩ | ⟨c, hc, hca, -, -, -, hck⟩
+    · omega
+    · rw [← hca]; exact addr_ne st.H.wf hds hc (fun h => hck (h ▸ hd))
+  have hcep : ce.addr + 32 ≠ ptr := by
+    obtain ⟨hce0, -, -⟩ := Decode.VecU8.chunk_in st.H.wf st.hce.1 st.hce.2
+    rcases hold with ⟨-, rfl⟩ | ⟨c, hc, hca, -, -, hne, -⟩
+    · omega
+    · rw [← hca]; exact addr_ne st.H.wf st.hce.1 hc (fun h => hne h.symm)
+  -- the output as it was, in μ3 and s3
+  have hold3 : (cap = 0 ∧ ptr = 8) ∨ ∃ c ∈ chunks s3, c.addr + 32 = ptr ∧ c.used = true ∧
+      c.size = (232 * cap + 31) / 32 + 1 := by
+    rcases hold with h | ⟨c, hc, hca, hcu, hcs, -⟩
+    · exact Or.inl h
+    · exact Or.inr ⟨c, (ckeep c hc hcu).1, hca, hcu, hcs⟩
+  have hout3 : ∀ j, j < k → O j (μ3.readN (ptr + 232 * j) 232) := fun j hj => by
+    rcases hold with ⟨h0, -⟩ | ⟨c, hc, hca, hcu, hcs, -⟩
+    · omega
+    · have hcs' : 232 * cap + 32 ≤ 32 * c.size := by rw [hcs]; omega
+      rw [Memory.readN_congr (fun i hi => (ckeep c hc hcu).2 _ ⟨by omega, by omega⟩)]; exact hout j hj
+  have m3 : ∀ a l, M ≤ a → a + l ≤ M + 56 ∨ (M + 112 ≤ a ∧ a + l ≤ M + 144) ∨ (M + 200 ≤ a ∧ a + l ≤ M + 280) ∨
+      (M + 288 ≤ a ∧ a + l ≤ M + 304) → μ3.readN a l = μ.readN a l :=
+    fun a l h0 h => Memory.readN_congr (fun j hj => cfr _ (by omega) (by omega) (by omega))
+  rcases push (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 (ExportSeg.expUpTo env μ0 ptrv x ns) ω3 μ3 s3 ns
+      (O := O) k hk hn ⟨hS0M, hMS1, hM2, hM8⟩ H3 c1 (by omega)
+      (by rw [m3 _ _ (by omega) (by omega)]; exact st.c136) c56 cap ptr
+      (by rw [m3 _ _ (by omega) (by omega)]; exact vc) (by rw [m3 _ _ (by omega) (by omega)]; exact vp)
+      (by rw [m3 _ _ (by omega) (by omega)]; exact vl) hkc hcapn hptr hold3 hout3 hO with
+    ⟨ω4, μ4, s4, N4, cap', ptr', run4, H4, d1, vc4, vp4, vl4, hk4, hc4, hp4, ⟨c', hc', hca', hcu', hcs', hcd'⟩, hout4,
+      keep4, fr4⟩ | ⟨N, hx⟩
+  rotate_left
+  · exact Or.inr ⟨_, ExhaustsX.pre run3 hx⟩
+  -- the chunks of s kept, apart from the old output buffer
+  have ks4 : ∀ d ∈ chunks s, d.used = true → d.addr + 32 ≠ ptr → d ∈ chunks s4 ∧
+      ∀ a, InData d a → μ4.read a = μ.read a := fun d hd hu hne => by
+    obtain ⟨hd3, hk3⟩ := ckeep d hd hu
+    obtain ⟨hd4, hk4⟩ := keep4 d hd3 hu hne
+    exact ⟨hd4, fun a ha => by rw [hk4 a ha, hk3 a ha]⟩
+  have kpd : ∀ d, Kp d → d ∈ chunks s4 ∧ d.used = true ∧ d ≠ c' ∧ ∀ a, InData d a → μ4.read a = μ0.read a :=
+    fun d hd => by
+      obtain ⟨hds, hdu, hdd⟩ := st.kp d hd
+      obtain ⟨hd4, hk4⟩ := ks4 d hds hdu (nptr d hd)
+      exact ⟨hd4, hdu, hcd' d (ckeep d hds hdu).1 hdu (nptr d hd), fun a ha => by rw [hk4 a ha, hdd a ha]⟩
+  have hce4 := ks4 ce st.hce.1 st.hce.2 hcep
+  have hcec : ce ≠ c' := hcd' ce (ckeep ce st.hce.1 st.hce.2).1 st.hce.2 hcep
+  have hco4 : capv ≠ 0 → co ∈ chunks s4 ∧ co.used = true ∧ co.addr + 32 = ptrv := fun h => by
+    obtain ⟨hK, -, ha⟩ := hco h
+    obtain ⟨h4, hu, -, -⟩ := kpd co hK
+    exact ⟨h4, hu, ha⟩
+  have hcs4 : ∀ i, i < ns → capf i ≠ 0 → ∃ c ∈ chunks s4, c.used = true ∧ c.addr + 32 = qf i := fun i hi hc => by
+    obtain ⟨c, hK, -, ha⟩ := hcs i hi hc
+    obtain ⟨h4, hu, -, -⟩ := kpd c hK
+    exact ⟨c, h4, hu, ha⟩
+  have hw4 : ∀ i, i < ns → μ4.readN (ptrv + 24 * i) 8 = Num.encodeLE 8 (capf i) ∧
+      μ4.readN (ptrv + 24 * i + 8) 8 = Num.encodeLE 8 (qf i) := fun i hi => by
+    obtain ⟨hK, -, -⟩ := hco (by omega)
+    obtain ⟨-, -, -, hd⟩ := kpd co hK
+    exact ⟨by rw [Memory.readN_congr (fun j hj => hd _ (hcoD _ (by omega) (by omega)))]; exact (hw0 i hi).1,
+      by rw [Memory.readN_congr (fun j hj => hd _ (hcoD _ (by omega) (by omega)))]; exact (hw0 i hi).2.1⟩
+  have m4 : ∀ a l, M ≤ a → a + l ≤ M + 248 → μ4.readN a l = μ3.readN a l :=
+    fun a l h0 h => Memory.readN_congr (fun j hj => fr4 _ (by omega) (by omega) (by omega))
+  obtain ⟨ω5, μ5, s5, N5, run5, H5, f1, ffr, fkeep⟩ := tail (p := p) (P := P) env cap0
+    (ExportSeg.expUpTo env μ0 ptrv x ns) ω4 μ4 s4 H4 M ptrv capv ns co capf qf ⟨hS0M, hMS1, hM2, hM8⟩ hp hcv hnc
+    hco4 hcoD hq hcap (fun i hi => by have := hql i hi; omega) hcs4 hw4 d1
+    (by rw [m4 _ _ (by omega) (by omega)]; exact c104) (by rw [m4 _ _ (by omega) (by omega)]; exact c96)
+    (by rw [m4 _ _ (by omega) (by omega)]; exact c64) (by rw [m4 _ _ (by omega) (by omega)]; exact c72)
+    (by rw [m4 _ _ (by omega) (by omega), m3 _ _ (by omega) (by omega)]; exact st.c40)
+  -- the chunks that survive the frees: none of the freed buffers
+  have sv : ∀ d ∈ chunks s4, d.used = true → (capv ≠ 0 → d ≠ co) →
+      (∀ i, i < ns → capf i ≠ 0 → ∃ c, Kp c ∧ c.addr + 32 = qf i ∧ c ≠ d) →
+      d ∈ chunks s5 ∧ ∀ a, InData d a → μ5.read a = μ4.read a := fun d hd hu hco' hq' =>
+    fkeep d hd hu hco' (fun i hi hci => by
+      obtain ⟨c, hK, ha, hne⟩ := hq' i hi hci
+      obtain ⟨h4, -, -, -⟩ := kpd c hK
+      rw [← ha]; exact addr_ne H4.wf hd h4 (fun h => hne h.symm))
+  have hc'5 := sv c' hc' hcu' (fun h e => (kpd co (hco h).1).2.2.1 e.symm)
+    (fun i hi hci => by
+      obtain ⟨c, hK, -, ha⟩ := hcs i hi hci
+      exact ⟨c, hK, ha, (kpd c hK).2.2.1⟩)
+  have hce5 := sv ce hce4.1 st.hce.2 (fun h e => (hco h).2.1 e.symm)
+    (fun i hi hci => by
+      obtain ⟨c, hK, hne, ha⟩ := hcs i hi hci
+      exact ⟨c, hK, ha, hne⟩)
+  have m5 : ∀ a l, M ≤ a → a + l ≤ 4294967296 → μ5.readN a l = μ4.readN a l :=
+    fun a l h0 h => Memory.readN_congr (fun j hj => ffr _ (by omega) (by omega))
+  have m53 : ∀ a l, M ≤ a → a + l ≤ M + 248 → μ5.readN a l = μ3.readN a l :=
+    fun a l h0 h => by rw [m5 _ _ h0 (by omega), m4 _ _ h0 h]
+  have m53' : ∀ a l, M + 272 ≤ a → a + l ≤ 4294967296 → μ5.readN a l = μ3.readN a l :=
+    fun a l h0 h => by
+      rw [m5 _ _ (by omega) h]; exact Memory.readN_congr (fun j hj => fr4 _ (by omega) (by omega) (by omega))
+  refine Or.inl ⟨s5, ω5, μ5, _, run3.trans (run4.trans run5), ⟨f1, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_,
+    ⟨cap', ptr', by rw [m5 _ _ (by omega) (by omega)]; exact vc4, by rw [m5 _ _ (by omega) (by omega)]; exact vp4,
+      by rw [m5 _ _ (by omega) (by omega)]; exact vl4, hk4, hc4, hp4,
+      Or.inr ⟨c', hc'5.1, hca', hcu', hcs', fun h => hcec h.symm, fun hK => (kpd c' (hK' c' hK).1).2.2.1 rfl⟩, ?_⟩,
+    H5, ⟨hce5.1, st.hce.2⟩, fun a ha => ?_, fun d hd => ?_, fun a ha => ?_⟩⟩
+  · rw [m53 _ _ (by omega) (by omega), c144, show E + 232 * k + 232 = E + 232 * (k + 1) by omega]
+  · rw [m53 _ _ (by omega) (by omega), m3 _ _ (by omega) (by omega)]; exact st.en
+  · rw [m53 _ _ (by omega) (by omega), m3 _ _ (by omega) (by omega)]; exact st.c128
+  · rw [m53 _ _ (by omega) (by omega), m3 _ _ (by omega) (by omega)]; exact st.c136
+  · rw [m53 _ _ (by omega) (by omega), m3 _ _ (by omega) (by omega)]; exact st.c48
+  · rw [m53 _ _ (by omega) (by omega), m3 _ _ (by omega) (by omega)]; exact st.c40
+  · rw [m53 _ _ (by omega) (by omega), m3 _ _ (by omega) (by omega)]; exact st.c16
+  · rw [m53 _ _ (by omega) (by omega), m3 _ _ (by omega) (by omega)]; exact st.c24
+  · rw [m53 _ _ (by omega) (by omega), m3 _ _ (by omega) (by omega)]; exact st.c32
+  · rw [m53' _ _ (by omega) (by omega), m3 _ _ (by omega) (by omega)]; exact st.i0
+  · rw [m53' _ _ (by omega) (by omega), c280, show E + 232 * k + 232 = E + 232 * (k + 1) by omega]
+  · rw [m53' _ _ (by omega) (by omega), m3 _ _ (by omega) (by omega)]; exact st.i16
+  · rw [m53' _ _ (by omega) (by omega), m3 _ _ (by omega) (by omega)]; exact st.i24
+  · intro j hj
+    have hcs'' : 232 * cap' + 32 ≤ 32 * c'.size := by rw [hcs']; omega
+    rw [Memory.readN_congr (fun i hi => hc'5.2 _ ⟨by omega, by omega⟩)]; exact hout4 j hj
+  · have ha' := ha; unfold InData at ha'
+    rw [hce5.2 a ha, hce4.2 a ha, st.data a ha]
+  · obtain ⟨hK, hnco, hnq⟩ := hK' d hd
+    obtain ⟨hd4, hdu, -, hdd⟩ := kpd d hK
+    have h5 := fkeep d hd4 hdu hnco hnq
+    exact ⟨h5.1, hdu, fun a ha => by rw [h5.2 a ha, hdd a ha]⟩
+  · have e5 : μ5.read a = μ4.read a := ffr a (by omega) (by omega)
+    have e4 : μ4.read a = μ3.read a := fr4 a (by omega) (by omega) (by omega)
+    rw [e5, e4, cfr a (by omega) (by omega) (by omega), st.fr a ha]
+
 end Services.Bootstrap.Refine.ExportElem

@@ -88,12 +88,12 @@ mask at M + 40). Next: the segment loop (invariant at 5653: segment j, the conte
 context kept: the Fmt session was asked to provide x' = x), `seg` (one segment: export, format, log, `String`
 freed, next), `expUpTo` (the context after j segments, read from μ0), `segs` (the whole segment loop
 5653 → 5810, all n ≥ 1 segments exported in order).
-**Also done (`ExportStep.lean`)**: `xhead` (5042 → 5587), `push_room` / `push_grow` (5810 → 5868 / 5909, with
-`Exported(n)` in slot len), `tail` (5868 / 5909 → 5042: `frees`, the `Vec`'s buffer, `xt1`); `Export.xa0` (no
-segments). Every piece of the handler is proved; what is left is assembling `export_step`:
-`PInv k` (element k an `ExportSegs` whose `Vec<Vec<u8>>` and segment buffers are allocated chunks, none in `Kp`,
-all distinct from the output buffer and `ce`) → `xhead` → `xa`/`xa0` → `segs` → `push_room`/`push_grow` → `tail`
-→ `PInv (k + 1)` with the context `ExportSeg.expUpTo … n`, or `ExhaustsX`.
+**Done (`ExportStep.lean`, `ExportElem.lean`)**: `xhead`, `push_room` / `push_grow`, `tail`, and the whole
+instruction: `ExportElem.export_step`, `PInv k` → `PInv (k + 1)` (5042 … 5042) for an `ExportSegs` element whose
+`Vec<Vec<u8>>` buffer and segment buffers are chunks to keep (`Kp`), distinct; the chunks to keep afterwards
+(`Kp'`) exclude the freed ones; slot k holds `Exported(ns)`; the context becomes `ExportSeg.expUpTo env μ0 ptrv x ns`.
+Or an allocation fails (`ExhaustsX`, with an unbounded step count: the loop needs `LoopG`'s bound B replaced by
+an existential).
 **Old plan**: the full step 5042 → 5042 for index 10: stage (`Pass.pa` + `memcpy_any`, as in `pass_elem`) → `xd` →
 `xa` (or the n = 0 case straight to 5810: needs a `xa0` variant) → `segs` → `xp0`+`xps` or `xpg` +
 `Decode.GrowOne.grow_one_call` + `xps` (as in `PassGrow`) → the free loop (`xr0`, then per segment `xr1` +

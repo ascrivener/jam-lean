@@ -78,8 +78,10 @@ structure PInv (env : RefineHost.Env) (pb S0 S1 M E n : Nat) (ce : Chunk) (capI 
   /-- The chunks to keep (`Kp`), such as the payload's copy: allocated, with their data as in μ0. -/
   kp : ∀ d, Kp d → d ∈ chunks s ∧ d.used = true ∧ ∀ a, InData d a → μ.read a = μ0.read a
   /-- The frame's words refine's epilogue reads, as in μ0: the work item's index (M + 80), the payload's
-      `Vec` (M + 88 … M + 120) and the saved registers and return address (M + 600 … M + 632). -/
-  fr : ∀ a, (M + 80 ≤ a ∧ a < M + 120) ∨ (M + 600 ≤ a ∧ a < M + 632) → μ.read a = μ0.read a
+      `Vec`'s capacity and buffer (M + 88, M + 112) and the saved ω₆, ω₅ and return address
+      (M + 608 … M + 632). The handlers use the words between them. -/
+  fr : ∀ a, (M + 80 ≤ a ∧ a < M + 96) ∨ (M + 112 ≤ a ∧ a < M + 120) ∨ (M + 608 ≤ a ∧ a < M + 632) →
+    μ.read a = μ0.read a
 
 /-- What the loop needs of its layout: refine's frame M on the stack, the n < 128 instructions at E inside
     the allocated chunk `ce`. -/

@@ -79,4 +79,35 @@ theorem toEntry {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {X : 
     all_goals try (congr 1; omega)
     all_goals (congr 1; split <;> omega)
 
+/-- **Back from 40215 to the handler** (40492 → 49201 → 12198), with `assign`'s result r (OK, CORE,
+    HUH or WHO) in ω₇, ω₀ = 2186 and the frame at sp − 16 holding 448 at sp − 8: r is mapped to its
+    index b, the octet at 69076 + (r + 9) mod 2⁶⁴ (the table in the read-only data, as for
+    `Designate`), the frame is closed (ω₁ := sp) and the return reaches 12198 with ω₇ = b. -/
+theorem retThunk {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {X : Type}
+    {R : HostRel X} (x : X) (ω : Regs) (μ : Memory) (r b : Nat)
+    (h0 : ω[0] = UInt64.ofNat 2186) (h1 : ω[1] = UInt64.ofNat 4278057136)
+    (h7 : ω[7] = UInt64.ofNat r)
+    (hr : r = 0 ∨ r = 18446744073709551610 ∨ r = 18446744073709551607 ∨ r = 18446744073709551612)
+    (htab : μ.readN (69076 + (r + 9) % 18446744073709551616) 1 = [UInt8.ofNat b]) (hb : b < 256)
+    (hrt : μ.readable (69076 + (r + 9) % 18446744073709551616) = true)
+    (m8 : μ.readN 4278057144 8 = Num.encodeLE 8 448)
+    (hrf : ∀ a, 4278057144 ≤ a → a < 4278057152 → μ.readable a = true) :
+    ∃ ω', FreeStepsH p R 40492 ω μ x 12198 ω' μ x 14 ∧
+      ω'[1] = UInt64.ofNat 4278057152 ∧ ω'[7] = UInt64.ofNat b := by
+  have r8 : rdN μ 4278057144 8 = 448 := by
+    show Num.decodeLE _ = _
+    rw [m8, Num.decodeLE_encodeLE]
+  have rt : rdN μ (69076 + (r + 9) % 18446744073709551616) 1 = b := by
+    show Num.decodeLE _ = _
+    rw [htab]; simp [Num.decodeLE, Nat.mod_eq_of_lt hb]
+  rcases hr with rfl | rfl | rfl | rfl
+  all_goals
+    simp only [Nat.reduceAdd, Nat.reduceMod] at rt hrt
+    rw [show ω = regsNF ω [] from rfl]
+    refine ⟨?_, ?_, ?_⟩
+    rotate_left
+    · pvm_go [h0, h1, h7, r8, rt, hrt, hrf, jte_1092, jte_223, bs_49201, bs_12198, ↓rdN_fold]
+    · refine ⟨?_, ?_⟩
+      all_goals simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h1]
+
 end Services.Bootstrap.Acc.Handlers.Assign

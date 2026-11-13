@@ -141,4 +141,51 @@ theorem Impl.bind {p : ByteArray} {R : HostRel (AccCtx × List Nat)} (hR : R.Pin
       exact ⟨s₂, g1, g2, ih bc.1 s₂ g3⟩
     | none => exact id
 
+/-- What a run that ends with ε and context c' reports, as Ψ_A does (GP eq. `accinvocation`): x
+    after a halt, else y. -/
+def runOutcome (ε : Status) (c' : AccCtx) :
+    PartialState × List DeferredTransfer × Option (List UInt8) × Provisions :=
+  if ε = .halt then (c'.1.state, c'.1.xfers, c'.1.yield, c'.1.provisions)
+  else (c'.2.state, c'.2.xfers, c'.2.yield, c'.2.provisions)
+
+/-- **A run that implements a program reports what the program's `ASem` run does.** Suppose every
+    run from s implements `prog`, each return of `prog` leads only to halts that keep the context
+    (`hQ`), and a run from s ends with ε, context c'. Then some n operations of `ASem.run` give the
+    same outcome. -/
+theorem Impl.outcome {p : ByteArray} {R : HostRel (AccCtx × List Nat)} (hR : R.Pins R) {env : AccEnv}
+    (Q : Unit → St → Prop) (hQ : ∀ s, Q () s → ∀ ε c', Ends p R s ε c' → ε = .halt ∧ c' = s.c) :
+    ∀ (prog : Prog AOp Unit) (s : St) (ε : Status) (c' : AccCtx), Impl p R env prog Q s →
+      Ends p R s ε c' → ∃ n, ASem.outcome (ASem.run n prog env s.c) = runOutcome ε c' := by
+  intro prog
+  induction prog with
+  | pure a =>
+    intro s ε c' h he
+    obtain ⟨s', h1, h2, h3⟩ := h ε c' he
+    obtain ⟨rfl, rfl⟩ := hQ s' h3 ε c' (he.of_reaches hR h1.weaken)
+    refine ⟨0, ?_⟩
+    simp [ASem.run, ASem.outcome, runOutcome, h2]
+  | panic =>
+    intro s ε c' h he
+    obtain ⟨rfl, rfl⟩ := h ε c' he
+    refine ⟨0, ?_⟩
+    simp [ASem.run, ASem.outcome, runOutcome]
+  | call op k ih =>
+    intro s ε c' h he
+    obtain ⟨s₁, h1, h2, h3⟩ := h ε c' he
+    have he₁ := he.of_reaches hR h1.weaken
+    revert h3
+    cases hst : ASem.step env op s.c with
+    | some bc =>
+      intro h3
+      obtain ⟨s₂, g1, g2, g3⟩ := h3
+      obtain ⟨n, hn⟩ := ih bc.1 s₂ ε c' g3 (he₁.of_reaches hR g1)
+      refine ⟨n + 1, ?_⟩
+      simp only [ASem.run, hst]
+      rw [← g2]; exact hn
+    | none =>
+      intro h3
+      obtain ⟨rfl, rfl⟩ := h3 ε c' he₁
+      refine ⟨1, ?_⟩
+      simp [ASem.run, hst, ASem.outcome, runOutcome]
+
 end Services.Bootstrap.Acc

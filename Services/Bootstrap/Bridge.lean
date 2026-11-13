@@ -110,14 +110,16 @@ end RSem
     `fetch` (44741) and in `foreign_historical_lookup` (49149). -/
 def allocRets : List Nat := [40611, 40821, 33055, 44741, 49149]
 
-/-- A null allocation: the run is at one of `allocRets` with ω₇ = 0. -/
-def AllocNull (j : Nat) (ω : Regs) : Prop := j ∈ allocRets ∧ ω[7] = UInt64.ofNat 0
+/-- `foreign_historical_lookup`'s size check (49061): a preimage longer than 2^37 − 32 octets cannot
+    be allocated, and the wrapper traps at 49074 before allocating (it also goes there when its
+    `alloc_impl` call returns null). -/
+def sizeTrap : Nat := 49074
 
-/-- `foreign_historical_lookup`'s trap at 49074, where it goes when the preimage's length exceeds
-    2^37 − 32 octets (49061, before any allocation) or its `alloc_impl` fails. Kept as its own case
-    until it is settled whether a preimage too long to allocate counts as heap exhaustion or as a
-    named quirk. -/
-def TooLong (j : Nat) : Prop := j = 49074
+/-- **An allocation fails** at j: a null allocation (the run at one of `allocRets` with ω₇ = 0), or an
+    allocation too large to attempt, refused by the size check before it (`sizeTrap`). Both are heap
+    exhaustion (bootstrap decision 4; Adam's decision of 2026-11-13, recorded in
+    `docs/bootstrap-target.md`). -/
+def AllocFails (j : Nat) (ω : Regs) : Prop := (j ∈ allocRets ∧ ω[7] = UInt64.ofNat 0) ∨ j = sizeTrap
 
 /-- The arguments **a** Ψ_R passes for item i (GP eq. `refineinvocation`):
     ℰ(c, i, w_s, ↕w_y, ℋ(p)). -/
@@ -136,8 +138,8 @@ def psiREnv (params : Params) (d : Accounts) (i : Nat) (p : WorkPackage) (r : Li
                itemIndex := some i, imports := some imports, extrinsics := some extrinsics } }
 
 /-- **Ψ_R's run exhausts the heap** (bootstrap decision 4): item i's code, started as Ψ_M starts it
-    (Y, GP §A.7), reaches a null allocation (`AllocNull`) or the lookup's too-long trap (`TooLong`),
-    gas aside (a run under the refine dispatcher's contract, which pins down the real handler:
+    (Y, GP §A.7), reaches a failed allocation (`AllocFails`: a null allocation, or one refused by
+    the size check before it), gas aside (a run under the refine dispatcher's contract, which pins down the real handler:
     `refineContractK_pins`). -/
 def ExhaustsHeap (params : Params) (d : Accounts) (c i : Nat) (p : WorkPackage) (r : List UInt8)
     (imports extrinsics : List (List (List UInt8))) (off : Nat) : Prop :=
@@ -147,6 +149,6 @@ def ExhaustsHeap (params : Params) (d : Accounts) (c i : Nat) (p : WorkPackage) 
     splitMetadata l = some code ∧ standardInit code (psiRArgs c i w p) = some (P, ω, μ) ∧
     ∃ (cap j n : Nat) (ω' : Regs) (μ' : Memory) (x' : RefineCtx),
       FreeStepsH P (refineContractK cap (psiREnv params d i p r imports extrinsics off w code)) 0 ω μ
-        ((∅, []) : RefineCtx) j ω' μ' x' n ∧ (AllocNull j ω' ∨ TooLong j)
+        ((∅, []) : RefineCtx) j ω' μ' x' n ∧ AllocFails j ω'
 
 end Services.Bootstrap.Bridge

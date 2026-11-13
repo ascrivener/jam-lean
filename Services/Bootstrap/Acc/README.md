@@ -104,6 +104,29 @@ From 6378, 18,050 instructions are reachable statically. 5,537 of them already h
 - the `info` call (6501 → 6508, a frame-only summary);
 - the `format!` call (6580 → 6587) and other logging.
 
+**Log sites** (`AccLog/`, frame-only: termination and the frame, not the message):
+- `AccLog.ItemLog.item_fmt_site`: T2's item log line, 6955 → 7009 (`format!` of the template at 66266
+  "Accumulating work item from {}", `log` (100) at 6987, the `String`'s dealloc at 7002). Hypothesis `hA`
+  (`ArgsAt … itemTmpl`), the argument at sp + 1144: **discharged by ArgOk(56340)** (fmt-4).
+
+The `format!` (59375) sites of the handlers, the formatters their arguments need, and whether they
+already have `ArgOk`: hex32 60525, dec32 68146 and dec64 68449 do. The formatter addresses are read from
+the jump table at 11888 + 6 + 3i and loaded within 40 instructions before the call; "?" means none was
+found that close.
+
+| Site | `format!` pc | Template | Text | Formatters |
+|---|---|---|---|---|
+| Imported | 9116 | 66312 | "Imported data {}" | 37897 (no ArgOk) |
+| Yield | 9380 | 66083 | "Yielded hash {}" | 37996 (no ArgOk) |
+| Eject | 9527 | 66618 | "Ejecting service #{} with code_hash {}" | 56340 (fmt-4), ? |
+| Lookup | 11043 | 66297 | "Lookup, got {}" | ? |
+| Exported | 12414 | 66747 | "Exported {} items" | ? |
+| Import / RandomStorageRefine | 12535 | 66055 | "Instruction not handled: {}" | ? |
+| Designate | 13242 | 66555 | "Designated keys {}" | 38706 (no ArgOk) |
+| Solicit | 14062 | 66688 | "Solicited {} of length {}" | 56340 (fmt-4), ? |
+
+Each handler log-site lemma takes an `ArgsAt` hypothesis like `hA`, discharged by the formatters' `ArgOk`.
+
 **Next: the inputs**, from 6630 to the items loop at 6674. The traced call sequence is:
 1. 47541: `fetch` of kind 14, ℰ(↕**i**), in two phases (length, then data into a fresh buffer from 41177);
 2. 39710: the list length;

@@ -14,6 +14,20 @@ import Services.Bootstrap.CodeXCheck.G7
 import Services.Bootstrap.CodeXCheck.G8
 import Services.Bootstrap.CodeXCheck.G9
 import Services.Bootstrap.CodeXCheck.G10
+import Services.Bootstrap.CodeXCheck.G11
+import Services.Bootstrap.CodeXCheck.G12
+import Services.Bootstrap.CodeXCheck.G13
+import Services.Bootstrap.CodeXCheck.G14
+import Services.Bootstrap.CodeXCheck.G15
+import Services.Bootstrap.CodeXCheck.G16
+import Services.Bootstrap.CodeXCheck.G17
+import Services.Bootstrap.CodeXCheck.G18
+import Services.Bootstrap.CodeXCheck.G19
+import Services.Bootstrap.CodeXCheck.G20
+import Services.Bootstrap.CodeXCheck.G21
+import Services.Bootstrap.CodeXCheck.G22
+import Services.Bootstrap.CodeXCheck.G23
+import Services.Bootstrap.CodeXCheck.G24
 
 /-!
 # bootstrap's further code facts hold of the vendored blob, by the kernel
@@ -31,7 +45,7 @@ open PVM PVM.NatBlob Services.Bootstrap.Blob Services.Bootstrap.CodeX
 theorem checkCode_ok : checkCode (ba N 11888 83235) facts = true :=
   checkCode_of_chunks CodeCheck.parse CodeCheck.vBlob_ok (by
     simp only [factChunks, factGroups, List.flatten_cons, List.flatten_nil, List.all_append, List.all_nil,
-      Bool.and_true, chunks_0, chunks_1, chunks_2, chunks_3, chunks_4, chunks_5, chunks_6, chunks_7, chunks_8, chunks_9, chunks_10])
+      Bool.and_true, chunks_0, chunks_1, chunks_2, chunks_3, chunks_4, chunks_5, chunks_6, chunks_7, chunks_8, chunks_9, chunks_10, chunks_11, chunks_12, chunks_13, chunks_14, chunks_15, chunks_16, chunks_17, chunks_18, chunks_19, chunks_20, chunks_21, chunks_22, chunks_23, chunks_24])
 
 /-- The further code facts, wherever the base facts hold of the blob. -/
 theorem hasCodeX {P : Program} (h : CodeOk (ba N 11888 83235) Code.facts P) :

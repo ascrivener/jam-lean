@@ -124,8 +124,7 @@ def containing(rngs, names, a, b):
     raise SystemExit(f'no range for {a} {b}')
 
 o = []
-o.append(f'''import PVM.SymExec.Check
-import Services.Bootstrap.Code
+o.append(f'''import PVM.SymExec.Bootstrap.Prog
 import {chain_ns.replace('Services.Bootstrap.', 'Services.Bootstrap.')}.St
 
 /-!
@@ -145,15 +144,6 @@ def st : Static :=
     wr := {lst([f"(⟨none, {a}⟩, {b - a})" for a, b in wr0])}
     sep := [] }}
 
-def code : CTree :=
-  {tree(entries)}
-
-def G : Prog :=
-  {{ code := code
-    bs := {lst([f"({n}, true)" for n in bs])}
-    jt := {lst([f"({a}, {b})" for a, b in jt])}
-    jsize := {jsize} }}
-
 def A : Spec :=
   {{ regs := {lst(r0)}
     cells := {lst(c0)} }}
@@ -165,16 +155,14 @@ def T : Spec :=
 def frame : List (Aff × Nat) := {lst([f"(⟨none, {a}⟩, {b - a})" for a, b in frame])}
 
 set_option maxRecDepth 100000 in
-theorem ok : check st G A T frame {start} {end} {total} = true := by decide +kernel
+theorem ok : check st Bootstrap.prog A T frame {start} {end} {total} = true := by decide +kernel
 
 set_option maxRecDepth 100000 in
 /-- **Cut {k} to cut {l}** by the executor: the statement of the composed `S{k}.run` … `S{l-1}.run`. -/
 theorem run {sig} (h : St{k} {targs}) :
     ∃ ω' μ', FreeStepsH p (refineContract env) {start} ω μ x {end} ω' μ' x {total} ∧ St{l} {targs.replace('ω μ', "ω' μ'") if False else targs.rsplit(' ', 2)[0]} ω' μ' := by
   obtain ⟨ω', μ', hrun, hr, hc, hfr, hpg⟩ := check_sound (R := refineContract env) ok
-    {treeproof(entries)}
-    {tup([f"bs_{n} (p := p) (P := P)" for n in bs])}
-    {tup([f"jte_{a} (p := p) (P := P)" for a, b in jt])} (jts (p := p) (P := P))
+    (Bootstrap.hyp (p := p) (P := P))
     {'[' + ', '.join(vars_) + ']'} {tup(bproofs)} {tup(['Nat.zero_le _' for _ in vars_])} ω μ
     {tup([f"rng_rd (lo := {n.split('_')[1]}) (hi := {n.split('_')[2]}) h.{n}" for n in rdn0])}
     {tup([f"rng_wr (lo := {n.split('_')[1]}) (hi := {n.split('_')[2]}) h.{n}" for n in wrn0])} trivial

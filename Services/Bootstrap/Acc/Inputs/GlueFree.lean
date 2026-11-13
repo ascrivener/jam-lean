@@ -35,6 +35,42 @@ theorem heapL_release {code : ByteArray} {pb S0 S1 : Nat} {μ μ' : Memory} {s :
     unfold A0 at ha1
     rw [hr a (by omega) (by omega), hag a (by omega) (Or.inr (by omega)) ha3]
 
+/-- The lock released after writing into an allocated chunk: from the lock-held context, a memory that
+    agrees below 2³¹ off the lock byte 206848 and off c's data, with that byte 0 and the same pages,
+    is the allocator's context again. -/
+theorem heapL_release_data {code : ByteArray} {pb S0 S1 : Nat} {μ μ' : Memory} {s : State}
+    (H : HeapCtxL code pb S0 S1 μ s) {c : Chunk} (hc : c ∈ chunks s) (hl : rdN μ' 206848 1 = 0)
+    (hr : ∀ a, a < 2147483648 → a ≠ 206848 → (a < c.addr + 32 ∨ c.addr + 32 * c.size ≤ a) →
+      μ'.read a = μ.read a)
+    (hw : ∀ a, μ'.writable a = μ.writable a) : HeapCtxC code pb S0 S1 μ' s := by
+  obtain ⟨μ₀, H₀, hag, hwa⟩ := H
+  have hw' : ∀ a, μ'.writable a = μ₀.writable a := fun a => (hw a).trans (hwa a)
+  obtain ⟨ph, h48, hhb, hp, hHTs, hHT⟩ := H₀.pages
+  have hb0 := H₀.hb0
+  have hbT := H₀.hbT
+  -- μ' with μ₀'s lock word put back
+  let μm := μ'.writeN 206848 (μ₀.readN 206848 4)
+  have inw : ∀ k, k < 4 → μm.read (206848 + k) = μ₀.read (206848 + k) := fun k hk => by
+    have := PVM.Memory.read_writeN_at μ' 206848 (μ₀.readN 206848 4) (by simp [Memory.readN, two32]) k
+      (by simp [Memory.readN]; omega)
+    rw [this]; simp [Memory.readN]
+  have outw : ∀ a, a < 4294967296 → (a < 206848 ∨ 206852 ≤ a) → μm.read a = μ'.read a := fun a ha h =>
+    PVM.Memory.read_writeN_of_not_mem μ' 206848 _ a fun k hk => by
+      simp [Memory.readN] at hk; simp only [two32]; rw [Nat.mod_eq_of_lt (by omega), Nat.mod_eq_of_lt ha]; omega
+  have repm : Rep μm s := Services.Bootstrap.Alloc.Rep.congr_data H₀.rep H₀.wf hb0 hbT hc (Nat.le_refl _) (Nat.le_refl _)
+    fun a ha1 ha2 ha3 => by
+      unfold A0 at ha1
+      by_cases hlk : 206848 ≤ a ∧ a < 206852
+      · have := inw (a - 206848) (by omega); rwa [show 206848 + (a - 206848) = a by omega] at this
+      · rw [outw a (by omega) (by omega), hr a ha2 (by omega) (by omega), hag a (by omega) (Or.inr (by omega))
+          (by omega)]
+  have rep : Rep μ' s := repm.congr_lock H₀.wf hb0 hbT fun a ha1 ha2 ha3 => by
+    unfold A0 at ha1
+    exact (outw a (by omega) ha3).symm
+  exact ⟨H₀.wf, rep, H₀.fo, hl, hb0, hbT, H₀.hA, H₀.bd,
+    ⟨ph, h48, hhb, HeapPages.of_eq hp hw', hHTs, hHT⟩, H₀.hSb, H₀.hS1,
+    fun a h1 h2 => by rw [hw']; exact H₀.st a h1 h2, fun a ha => by rw [hw']; exact H₀.ro a ha⟩
+
 /-- **44591 … 44641**: the fetched buffer `ptr` (saved at sp, the data of the allocated chunk c) freed
     under the lock taken and released inline; the context for `free s ptr`, the stack from sp, the
     other allocated chunks' data and ω₁, ω₅, ω₆ kept. -/

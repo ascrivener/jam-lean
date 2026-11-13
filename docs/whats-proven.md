@@ -476,6 +476,37 @@ An independent kernel, nanoda as vendored by
     the copy into the slot (`e3`) and the return (`e4`).
   - *Assumed:* as `vec_pairs_heap` and `vec_vec_u8_heap` (n ≤ 1024, n ≤ 682, items ≤ 16384 octets).
 
+- **The element readers for large sizes, the payload in the heap.** `Decode.VecU8.vec_u8_heap_big`
+  (`VecU8HeapBig.lean`, more than 16384 octets), `VecPairs.vec_pairs_heap_big` (3100) and
+  `VecU32U64.vec_u32u64_heap_big` (2727), more than 1024 elements, `VecHash.vec_hash_heap_big` (1764)
+  and `VecHash32.vec_hash32_heap_big` (907), more than 512, `VecKey336.vec_key336_heap_big` (1300),
+  more than 48 keys, and `VecVecU8.vec_vec_u8_heap_big` (8), any element count and item length
+  (`Services/Bootstrap/Decode/*Big.lean`).
+  - *Statement:* as the small readers, under `HeapCtx` and `refineContractK cap` (cap ≥ 2²⁷), with the
+    globals kept; the buffer ends with capacity exactly n, in a fresh chunk of ⌈En/32⌉ + 1 units. Or an
+    `alloc` or `realloc` fails (`Exhausts`).
+  - *How:* read_vec's chunk loop and each reader's reserve loop grow the buffer by doubling: every later
+    batch is min(left, length so far), reserved through `finish_grow`'s realloc branch
+    (`ReallocCall.realloc_call`). The payload's chunk and the elements already read are other used
+    chunks, which realloc keeps; `realloc_fresh` shows the new buffer is none of them.
+  - *Assumed:* the total size stays below about 2³⁰ (realloc's unit bound), and the readers' frames
+    fit the larger realloc stack.
+- **`realloc_call` keeps the globals and the heap base, and returns the same block or a fresh one.**
+  `Decode.ReallocCall.realloc_call` and its host-generic `realloc_callG`, through every lemma of the
+  `ReallocKeepAll` chain (each only gains the conclusion).
+- **The large cases of every allocating variant.** `Decode.VariantsBig` and `VariantsBig2` (`Import`,
+  `DeleteItems`/`Export`/`Imported`, `Bless`, `RandomStorageAccumulate(Ok)`, `Designate`,
+  `AssignForGasCost`, and `LookedUp`/`Provide`/`CreateService` with more than 16384 octets) at the
+  variant level, and as decode-loop elements in `Decode.ElemsBig` (`*_elem_big`, `ElemOkAF` at any F).
+  `Assign`'s count is the global 𝖰 (80 under the full parameters), within its small reader.
+- **`RawVec::grow_one` (32785) for refine's output `Vec<Instruction>`.** `Decode.GrowOne.grow_one_first`
+  and `grow_one_call` (`GrowOne.lean`).
+  - *Statement:* elements of 232 octets at alignment 8. The capacity becomes max(2·cap, 4), the old
+    elements move to the new block, every other used chunk is kept with its data, and the context and
+    the globals are kept; or the `alloc` / `realloc` fails (`Exhausts`). The first push (cap 0) is
+    `grow_one_first`, which also states the model's `alloc` result.
+  - *Assumed:* the RawVec lies in the caller's frame (at or above sp), and cap ≤ 2²¹.
+
 - **`Vec<Vec<u8>>` with the payload in the heap (1 ≤ n ≤ 682 elements, each ≤ 16384 octets).**
   `Decode.VecVecU8.vec_vec_u8_heap` (`Services/Bootstrap/Decode/VecVecU8.lean`).
   - *Statement:* the element reader at 8, which reads the items of `DeleteItems`, `Export` and

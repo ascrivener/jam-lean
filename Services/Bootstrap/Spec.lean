@@ -507,7 +507,7 @@ structure Info where
     is the SDK's `Result<α, ApiError>`, with the error code forgotten: bootstrap only tests for
     success. -/
 inductive AOp : Type → Type where
-  /-- `fetch` (2), kind 15: the accumulate inputs, encoded. -/
+  /-- `fetch` (2), kind 14: the accumulate inputs, encoded as ℰ(↕**i**) (kind 15 is a single item). -/
   | fetchItems : AOp (Option Bytes)
   /-- `info` (6) of this service. -/
   | myInfo : AOp Info

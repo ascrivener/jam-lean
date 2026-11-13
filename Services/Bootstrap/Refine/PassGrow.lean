@@ -56,7 +56,10 @@ theorem pass_elem_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P
       HeapCtx env pb S0 S1 μ' s' ∧
       (∀ c ∈ chunks s, c.used = true → c.addr + 32 ≠ ptr →
         c ∈ chunks s' ∧ ∀ a, InData c a → μ'.read a = μ.read a) ∧
-      (∀ d ∈ chunks s, d.used = true → d.addr + 32 ≠ ptr → d.addr + 32 ≠ q)) ∨
+      (∀ d ∈ chunks s, d.used = true → d.addr + 32 ≠ ptr → d.addr + 32 ≠ q) ∧
+      μ'.readN (M + 280) 8 = Num.encodeLE 8 (cur + 232) ∧
+      (∀ a, (M ≤ a ∧ a < M + 144) ∨ (M + 152 ≤ a ∧ a < M + 248) ∨ (M + 272 ≤ a ∧ a < M + 280) ∨
+        (M + 288 ≤ a ∧ a < M + 304) → μ'.read a = μ.read a)) ∨
     Exhausts env cap0 pb p P 5042 ω μ x (64 * ((232 * len + 31) / 32) + 6000) := by
   obtain ⟨hS0M, hMS1, hM2, hM8⟩ := hM
   have hS1 := H.hS1
@@ -65,7 +68,7 @@ theorem pass_elem_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P
     fun a h1 h2 => Memory.readable_of_writable (wM a h1 h2)
   have hD : 9223372036854775807 + t < 18446744073709551616 := by unfold PassIdx at ht; omega
   -- the element staged at M + 304
-  obtain ⟨ω1, μ1, run1, a0, a1, a6, a7, a8, a9, a144, a304, afr, ard, awr⟩ := pa (p := p) (P := P)
+  obtain ⟨ω1, μ1, run1, a0, a1, a6, a7, a8, a9, a144, a304, a280, afr, ard, awr⟩ := pa (p := p) (P := P)
     (R := refineContractK cap0 env) x ω μ M cur en (9223372036854775807 + t) (by omega) (by omega) (by omega)
     hne hen hD (by unfold PassIdx at ht; omega) h1 s144 s120 sD (fun a h1 h2 => rM a (by omega) (by omega))
     (fun a h1 h2 => hrc a h1 (by omega)) (fun a h1 h2 => wM a (by omega) (by omega))
@@ -139,7 +142,7 @@ theorem pass_elem_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P
       (a < q + 232 * len ∨ q + 232 * len + 232 ≤ a) → μ8.read a = μ2.read a := fun a h0 h1 h2 h3 => by
     rw [ifr a h0 (by omega), gfr a h0 h3 (by omega), k5 a h0 h1 (by omega)]
   refine Or.inl ⟨q, s', ω8, μ8, (pre.trans (run5.trans (run6.trans (run7.trans run8)))).mono (by omega), i1,
-    ?_, i264, ?_, ?_, hnew, ?_, ?_, ?_, ?_, ?_, H8, fun c hc hu hne' => ?_, fresh⟩
+    ?_, i264, ?_, ?_, hnew, ?_, ?_, ?_, ?_, ?_, H8, fun c hc hu hne' => ?_, fresh, ?_, fun a ha => ?_⟩
   · rw [Memory.readN_congr (fun j hj => k8 _ (by omega) (by omega) (by omega) (by omega)),
       Memory.readN_congr (fun j hj => bfr _ (by omega) (by omega) (by omega))]; exact a144
   · rw [Memory.readN_congr (fun j hj => ifr _ (by omega) (by omega)),
@@ -169,5 +172,14 @@ theorem pass_elem_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P
     simp only at hdisj
     rw [ifr a (by omega) (by omega), gfr a (by omega) (by omega) (by omega), hd a ⟨ha.1, ha.2⟩,
       k2 a (by omega) (by omega)]
+  · rw [Memory.readN_congr (fun j hj => k8 _ (by omega) (by omega) (by omega) (by omega)),
+      Memory.readN_congr (fun j hj => bfr _ (by omega) (by omega) (by omega))]; exact a280
+  · have hqM : q + 232 * len + 232 ≤ M ∨ M + 632 ≤ q + 232 * len := by omega
+    rw [k8 a (by omega) (by omega) (by omega) (by omega)]
+    rcases ha with h | h | h | h
+    · exact k2 a (by omega) (by omega)
+    · exact k2 a (by omega) (by omega)
+    · exact k2 a (by omega) (by omega)
+    · rw [bfr a (by omega) (by omega) (by omega), afr a (by omega) (by omega)]
 
 end Services.Bootstrap.Refine.PassGrow

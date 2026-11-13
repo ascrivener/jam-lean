@@ -40,6 +40,7 @@ theorem pa {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR 
       ω'[0] = UInt64.ofNat 162 ∧ ω'[1] = UInt64.ofNat M ∧ ω'[6] = UInt64.ofNat D ∧
       ω'[7] = UInt64.ofNat (M + 312) ∧ ω'[8] = UInt64.ofNat (cur + 8) ∧ ω'[9] = UInt64.ofNat 224 ∧
       μ'.readN (M + 144) 8 = Num.encodeLE 8 (cur + 232) ∧ μ'.readN (M + 304) 8 = Num.encodeLE 8 D ∧
+      μ'.readN (M + 280) 8 = Num.encodeLE 8 (cur + 232) ∧
       (∀ a, a < 4294967296 → (a < M + 144 ∨ (M + 152 ≤ a ∧ a < M + 280) ∨ (M + 288 ≤ a ∧ a < M + 304) ∨
         M + 312 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
@@ -52,7 +53,7 @@ theorem pa {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR 
   refine ⟨?_, ?_, ?_, ?_⟩
   rotate_left 2
   · pvm_go [h1, hM, hcur, hcM, hne', hDe', hr, hrc, hw, rc, re, rD, rdN_writeN_disjoint, ↓rdN_fold]
-  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
+  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
     all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
       ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, Nat.mod_eq_of_lt hD]
     post_simp
@@ -209,11 +210,14 @@ theorem pass_elem {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
       μ'.readN (M + 248) 8 = Num.encodeLE 8 cap ∧ μ'.readN (M + 256) 8 = Num.encodeLE 8 ptr ∧
       (∀ a, a < 4294967296 → (a < M - 48 ∨ M + 632 ≤ a) → (a < ptr + 232 * len ∨ ptr + 232 * len + 232 ≤ a) →
         μ'.read a = μ.read a) ∧
-      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) ∧
+      μ'.readN (M + 280) 8 = Num.encodeLE 8 (cur + 232) ∧
+      (∀ a, (M ≤ a ∧ a < M + 144) ∨ (M + 152 ≤ a ∧ a < M + 264) ∨ (M + 272 ≤ a ∧ a < M + 280) ∨
+        (M + 288 ≤ a ∧ a < M + 304) → μ'.read a = μ.read a) := by
   obtain ⟨hM0, hM1, hM8⟩ := hM
   have hr : ∀ a, M - 48 ≤ a → a < M + 632 → μ.readable a = true :=
     fun a h1 h2 => Memory.readable_of_writable (hwM a h1 h2)
-  obtain ⟨ω1, μ1, run1, a0, a1, a6, a7, a8, a9, a144, a304, afr, ard, awr⟩ := pa (p := p) (P := P) (R := R) x ω μ
+  obtain ⟨ω1, μ1, run1, a0, a1, a6, a7, a8, a9, a144, a304, a280, afr, ard, awr⟩ := pa (p := p) (P := P) (R := R) x ω μ
     M cur en (9223372036854775807 + t) (by omega) (by omega) (by omega) hne hen (by unfold PassIdx at ht; omega)
     (by unfold PassIdx at ht; omega) h1 s144 s120 sD (fun a h1 h2 => hr a (by omega) (by omega))
     (fun a h1 h2 => hrc a h1 (by omega)) (fun a h1 h2 => hwM a (by omega) (by omega))
@@ -258,7 +262,7 @@ theorem pass_elem {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     rw [ffr a h0 h2, efr a h0 h3 (by omega)]
   refine ⟨ω6, μ6, (run1.trans (run2.trans (run3.trans (run4.trans (run5.trans run6))))).mono (by omega), f1,
     ?_, f264, ?_, ?_, ?_, ?_, ?_, ?_, fun a h0 h1 h2 => ?_, fun a => by rw [frd, erd, brd, ard],
-    fun a => by rw [fwr, ewr, bwr, awr]⟩
+    fun a => by rw [fwr, ewr, bwr, awr], ?_, fun a ha => ?_⟩
   · rw [Memory.readN_congr (fun j hj => k6 _ (by omega) (by omega) (by omega) (by omega)),
       Memory.readN_congr (fun j hj => bfr _ (by omega) (by omega) (by omega))]; exact a144
   · rw [Memory.readN_congr (fun j hj => ffr _ (by omega) (by omega)), ed]; exact stage
@@ -273,5 +277,13 @@ theorem pass_elem {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
   · rw [Memory.readN_congr (fun j hj => k6 _ (by omega) (by omega) (by omega) (by omega)),
       Memory.readN_congr (fun j hj => k2 _ (by omega) (by omega))]; exact sp
   · rw [k6 a h0 (by omega) (by omega) h2, k2 a h0 (by omega)]
+  · rw [Memory.readN_congr (fun j hj => k6 _ (by omega) (by omega) (by omega) (by omega)),
+      Memory.readN_congr (fun j hj => bfr _ (by omega) (by omega) (by omega))]; exact a280
+  · rw [k6 a (by omega) (by omega) (by omega) (by omega)]
+    rcases ha with h | h | h | h
+    · exact k2 a (by omega) (by omega)
+    · exact k2 a (by omega) (by omega)
+    · exact k2 a (by omega) (by omega)
+    · rw [bfr a (by omega) (by omega) (by omega), afr a (by omega) (by omega)]
 
 end Services.Bootstrap.Refine.Pass

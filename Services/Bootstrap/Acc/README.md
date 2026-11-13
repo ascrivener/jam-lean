@@ -301,3 +301,74 @@ Plan:
 4. The item loop 44916 (capacity min(n, 89), 184-octet slots), a LoopA-style proof at accumulate's
    frame.
 5. 44495's glue (unwrap, count, free of the fetched bytes), then the summary 6630 → 6674.
+
+## T2: the whole path, step by step (plan)
+
+The target is `accumulate_spec` (`docs/bootstrap-target.md`, T2). Ψ_A's state, transfers, yield and
+provisions are those of `Spec.accumulate C t` run for some n host operations under `ASem`, from
+I(**e**′, s), where **e**′ is **e** with the incoming transfers credited. The binary side is a
+chain of gas-free runs under the accumulate contract, lifted to Ψ_M at the end. Each step's run ends
+in one of three ways:
+- it reaches the next step's start;
+- it reaches the halt at 15359;
+- it traps (☇, the panic or exhaustion outcomes). The lift turns a trap into "the spec stopped at its
+  last checkpoint".
+
+| # | Binary | Statement (proved, or to prove) | Spec side | Owner | Status |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 5 → 6501 | `Start.start_to_6501`: the SDK setup and the decodes of t, s and \|**i**\| (`Args.args_run`) | none (no effect) | T2 start | merged (#122, #124) |
+| 2 | 6501 → 6630 | `acc_log_line`: `info` (6) of this service and the first log line; frame-only, with `info_self` | `myInfo` needs no `AOp`: the spec does not log | fmt | #145 open |
+| 3 | 6630 → 6674 | `inputs_decode`: `fetch_vec(14)`, the n items into 184-octet slots holding `itemOf` of each input, or Exhausts | `op AOp.fetchItems` and `decode (Dec.vec Dec.item)` | T2 inputs | #152 open (bounds: ≤ 89 inputs, blobs ≤ 16384 octets) |
+| 4 | 6674 … 6782 | **items loop**: the induction over the slots; the word at slot + 0 selects the transfer path (−1 → 7159), the end (−2 → 15215) or an operand. The invariant is the `Prog` continuation `for it in rest` | `for it in items` | unowned | gap |
+| 5 | 7159 … | **`on_transfer`**: the counter under "transfer-count" read and bumped, then ℰ(s, a, memo) written | `onTransfer` | unowned | gap |
+| 6 | 7009 | operand with a work error: skipped (15191) | `.work _ none => pure ()` | unowned (with 4) | gap, small |
+| 7 | 7073 → 31894 → 22145 → 482 | **the output decode** `BootstrapWorkOutput::decode`: refine's `Vec<Instruction>` loop at sp − 1160 (the frame-base `ElemOkF` pattern), then k as `u16` | `Dec.output`; undecodable → panic | T1 decoders (frame-moved) | gap: needs the frame-base `Loop`/`ElemOk` |
+| 8 | 8073 → 34377 | `add_recent_work_item`: `read` / `write` of the ring and counter | `addRecent` | unowned | gap |
+| 9 | 8471 → 36170, 8490 | empty results stored, then `checkpoint` | `store …; op AOp.checkpoint` | unowned (with 4) | gap; `checkpoint` is in `accContractC` (#140) |
+| 10 | 8490 … 15032 | **the instruction loop**: per instruction, the log line (`format!` 59375, `log`), the dispatch and its handler to the shared tail 14278, the result appended | `onWorkItem`'s loop, `onInstr` per `Instr` | Handlers A (handlers); fmt (log lines); loop itself unowned | handlers partly (#129, #131, #151); loop gap |
+| 11 | 15032 … 15185 | the results written (unless a `Zombify`), drops (dealloc) | the tail of `onWorkItem` | unowned (with 10) | gap |
+| 12 | 15215 … 15359 | the end: halt with (ω₇, ω₈) = (0, 0) | `pure ()` | unowned (with 4) | gap, small |
+| 13 | lift | Ψ_M = the free run's output (`psiM_of_freeRunH_accC`, `checkpoint`'s ω₇ dead: #140), Ψ_A's outcome from x or y (`psiARun_eq`) | `ASem.outcome (ASem.run n …)` | #140 (the lift); the rest unowned | partly |
+| 14 | spec | **`ASem`**, the semantics of `Prog AOp` against Ψ_A's host functions, plus `accEnv`, `credit` and `ASem.run` / `ASem.outcome` as `accumulate_spec` uses them | (all of it) | unowned | gap: not defined yet |
+
+**Cross-cutting gaps.**
+- **G1, `gas` (0) at 11330 and 13011.** See the proposal below.
+- **G2, the spec side, which does not exist yet.**
+  - `ASem`, `accEnv`, `credit`, `ASem.run` and `ASem.outcome` need defining (row 14).
+  - So does a spec-only lemma: `decode (Dec.vec Dec.item) (inputsEnc env)` is the inputs mapped to `Spec.Item`, matching `itemOf`'s slots (`itemOf_enc` gives the encoding side).
+  - `AOp.fetchItems`' docstring says kind 15, but the model's `fetch` (`JAM/Host/General.lean`) and the binary (47417 … 47722) use kind 14 for ℰ(↕**i**); kind 15 is one item. `ASem` must interpret `fetchItems` as kind 14.
+- **G3, the temporary bounds.** At most 89 inputs and blobs of at most 16384 octets (one chunk) come from the `Vec` decoders' no-growth assumption. Lifting them needs the realloc generalization.
+- **G4, the per-instruction log lines.** Each instruction is formatted and logged before it runs. They are frame-only (fmt), but a summary for each format is needed.
+- **G5, `Benchmark`'s `checkpoint` (11889).** Its ω₇ deadness is in #140; its handler is not proved yet.
+- **G6, the gas cap.** `fetch` costs 287 + 𝔊(400, L), and `hcost` is a hypothesis of `inputs_decode`. It becomes "or ∞" with the parametrized cap (#73), as for T1.
+
+### Proposal for G1: the `gas` host call
+
+What the code does with the result (code facts):
+- 11330 `ecalli 0`, then 11331 `store ω₇ → sp + 1384`, 11335 `ω₇ := sp + 1384`, 11339 `store → sp + 1416`;
+- 13011 / 13012 / 13016 / 13020: the same pattern, through sp + 1472.
+
+So the gas left is stored, and its *address* is put in a `format!` argument slot (sp + 1416). It is
+printed, nothing more. Neither transfer's gas limit comes from it:
+- `Transfer`'s `transfer` (11551) takes ω₉ from sp + 1472, which was stored at 11307 from the instruction;
+- `CreateService`'s `transfer` (13111) takes it from sp + 248.
+
+So the value affects only a log line, and `log` (100) changes nothing in Ψ_A's outcome. The spec has
+no gas operation, consistent with this. It cannot be pinned like `checkpoint`: the value is read
+afterwards (by `format!`), so ω₇ is not dead.
+
+Proposal:
+1. **Contract.** Extend `accContractC` with id 0 answering *any* ω₇ (`accContractG`: Ω_G's outcome
+   with ω₇ replaced by an arbitrary v, everything else pinned). As with `accContractCK_pins7`, it
+   pins the handler except in ω₇ at ids 0 and 18.
+2. **Handlers.** State the `Transfer` and `CreateService` handlers for every v. The logging
+   summaries are frame-only, so they already hold for any argument value. v flows only into the log
+   line, so the handlers' post-states don't mention it.
+3. **Lift.** `psiM_of_freeRunH_anyG`: the real Ψ_M run is a free run under `accContractG` (at each
+   `gas` call, v is the gas actually left). The free run is unique given the answers, since
+   everything else is pinned. So a statement proved for every choice of answers holds for Ψ_M. This
+   replaces the `DeadAfter` side condition for id 0 with "proved for all v", and no data-flow
+   analysis is needed.
+
+Cost: small for 1 and 3, which are variants of #140's `ContractC` / `CkLift`. 2 is free once the handlers carry v as a parameter.
+Alternative: a data-flow `DeadAfter`-style check that ω₇'s value reaches only `format!` arguments. That is harder to state and to check.

@@ -317,7 +317,6 @@ theorem vec_u8_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (en
     (hrvt : rdN μA 76000 8 = 1788) :
     ArgOk p P R env pb S0 S1 Z μA sA spA 26807 v (5 * len + 2) (2147483648 + 4500 * len + 5000) := by
   intro ω μ x s sp F W cap len0 ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hWA hF hn
-  intro ω μ x s sp F W cap len0 ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hWA hF hn
   obtain ⟨hrv, hlv⟩ := hv.readable (by decide) H hS hspA K
   exact vec_u8_core env pb S0 S1 Z hZ HA HR μA sA spA v vec ptr len hS hvec rp rl helts hpl hrvt ω μ x s sp F W
     cap len0 ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hWA hF hn hrv hlv

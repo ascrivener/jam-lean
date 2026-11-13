@@ -145,4 +145,38 @@ theorem toCheck {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
       simp (disch := pvm_arith) only [PVM.Memory.read_writeN_disjoint, PVM.Num.length_encodeLE,
         List.length_cons, List.length_nil, PVM.two32]
 
+/-- **After `upgrade`, on OK**: 49541 checks ω₇ = 0, pops the return address 428 from sp − 8 and
+    returns to 11798, which calls `alloc(9, 1)` (40494) with return address ω₀ = 430. Memory is
+    unchanged; ω₁ = sp again. Any host contract (no host call). -/
+theorem checkToAlloc {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {X : Type}
+    {R : HostRel X} (x : X) (ω : Regs) (μ : Memory)
+    (h1 : ω[1] = UInt64.ofNat 4278057144) (h7 : ω[7] = UInt64.ofNat 0)
+    (hret : μ.readN 4278057144 8 = Num.encodeLE 8 428)
+    (hr : ∀ a, 4278057144 ≤ a → a < 4278057152 → μ.readable a = true) :
+    ∃ ω', FreeStepsH p R 49541 ω μ x 40494 ω' μ x 10 ∧ ω'[0] = UInt64.ofNat 430 ∧
+      ω'[1] = UInt64.ofNat 4278057152 ∧ ω'[7] = UInt64.ofNat 9 ∧ ω'[8] = UInt64.ofNat 1 := by
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?run, ?post⟩
+  case run => pvm_go [h1, h7, hret, hr, jts, bs_40494]
+  case post =>
+    refine ⟨?_, ?_, ?_, ?_⟩ <;>
+      simp [PVM.getElem_regsNF, PVM.lookup_cons_nat]
+
+/-- **After `upgrade`, on failure** (ω₇ ≠ 0, the SDK's `expect`, Q8): 49541 traps at 49552, so
+    accumulate ends in ☇. -/
+theorem checkFail {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {X : Type}
+    {R : HostRel X} (x : X) (ω : Regs) (μ : Memory) (v : Nat) (h7 : ω[7] = UInt64.ofNat v)
+    (hv0 : v ≠ 0) (hv : v < 18446744073709551616) :
+    ∃ ω' μ', FreeRunH p R 49541 ω μ x .panic ω' μ' x := by
+  have run : ∃ ω', FreeStepsH p R 49541 ω μ x 49552 ω' μ x 2 := by
+    rw [show ω = regsNF ω [] from rfl]
+    refine ⟨?ω', ?run⟩
+    case run => pvm_go [h7, hv0, hv]
+  obtain ⟨ω', hs⟩ := run
+  have hd := d_49552 (p := p) (P := P)
+  have hst : P.freeStep 49552 ω' μ = (.panic, P.next 49552, ω', μ) := by
+    simp [Program.freeStep, hd.2.1, Program.exec, Program.finalState, memoryException]
+  have he := FreeExit.step (p := p) hd.1 hst (by decide)
+  exact ⟨ω', μ, hs.run (.exit (FreeRun.exit (by simpa using he)) (by simp))⟩
+
 end Services.Bootstrap.Acc.Handlers.Upgrade

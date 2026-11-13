@@ -199,4 +199,105 @@ theorem dealloc_call {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [H
   dealloc_callG (R := R) (p := p) (P := P) env.code pb S0 S1 x ω μ s sp ptr ret t c H hc hcu hca h0 h1 h7
     hret hjt hbt hsp hS
 
+/-! ## The free path (42327) with the lock held -/
+
+/-- **The allocator's context with the lock held**: μ is a memory holding the context (`HeapCtxC`)
+    but for the wrapper's lock word at 196608 … 196616 and the lock at 206848 … 206852, with the same
+    access everywhere. This is what the wrappers' lock steps (`al_lock`'s frame) leave. -/
+def HeapCtxL (code : ByteArray) (pb S0 S1 : Nat) (μ : Memory) (s : State) : Prop :=
+  ∃ μ₀, HeapCtxC code pb S0 S1 μ₀ s ∧
+    (∀ a, a < 4294967296 → (a < 196608 ∨ 196616 ≤ a) → (a < 206848 ∨ 206852 ≤ a) → μ.read a = μ₀.read a) ∧
+    (∀ a, μ.writable a = μ₀.writable a)
+
+/-- The context, held (unlocked) by μ itself, is the context with the lock held. -/
+theorem HeapCtxC.held {code : ByteArray} {pb S0 S1 : Nat} {μ : Memory} {s : State}
+    (H : HeapCtxC code pb S0 S1 μ s) : HeapCtxL code pb S0 S1 μ s :=
+  ⟨μ, H, fun _ _ _ _ => rfl, fun _ => rfl⟩
+
+/-- The free path's return (42978) to t, the address ω₀ resolves to. -/
+theorem fr_ret {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs)
+    (μ : Memory) (ret t : Nat) (h0 : ω[0] = UInt64.ofNat ret)
+    (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t)
+    (hbt : P.isBlockStart t = true) : FreeStepsH p R 42978 ω μ x t ω μ x 1 := by
+  rw [show ω = regsNF ω [] from rfl]
+  pvm_go [h0, hret, hjt, hbt]
+
+/-- **One call of the free path (42327) with the lock held, under any host relation**: with
+    ω₇ = 196792 (the allocator), ω₈ = ptr the data address of an allocated chunk c of s, and a return
+    address ω₀ that `djump` resolves to t, the call returns to t with the context, lock still held,
+    kept for `free s ptr` (same base), the pages, the octets that are not writable, the stack from sp
+    up and the globals kept, every other allocated chunk of s still allocated with its data, and
+    ω₀, ω₁, ω₅, ω₆ restored. -/
+theorem free_callG {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [HasCode p P]
+    (code : ByteArray) (pb S0 S1 : Nat) (x : X) (ω : Regs) (μ : Memory) (s : State) (sp ptr ret t : Nat)
+    (c : Chunk) (H : HeapCtxL code pb S0 S1 μ s) (hc : c ∈ chunks s) (hcu : c.used = true)
+    (hca : c.addr + 32 = ptr) (h0 : ω[0] = UInt64.ofNat ret) (h1 : ω[1] = UInt64.ofNat sp)
+    (h7 : ω[7] = UInt64.ofNat 196792) (h8 : ω[8] = UInt64.ofNat ptr)
+    (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t)
+    (hbt : P.isBlockStart t = true)
+    (hsp : 2147483700 ≤ sp) (hS : S0 + 24 ≤ sp ∧ sp ≤ S1) :
+    ∃ ω' μ', FreeStepsH p R 42327 ω μ x t ω' μ' x 221 ∧ HeapCtxL code pb S0 S1 μ' (free s ptr) ∧
+      (free s ptr).base = s.base ∧ μ'.pages = μ.pages ∧
+      (∀ b, b < two32 → μ.writable b = false → μ'.read b = μ.read b) ∧
+      (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧ (∀ a, Glob a → μ'.read a = μ.read a) ∧
+      (∀ d ∈ chunks s, d.used = true → d ≠ c → d ∈ chunks (free s ptr) ∧
+        ∀ a, InData d a → μ'.read a = μ.read a) ∧
+      ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
+  obtain ⟨μ₀, H₀, hag, hwa⟩ := H
+  obtain ⟨ph, h48, hhb, hp, hHTs, hHT⟩ := H₀.pages
+  have hsp1 : sp < 4294967296 := by have := H₀.hS1; omega
+  have rep : Rep μ s := H₀.rep.congr_lock H₀.wf H₀.hb0 H₀.hbT fun a ha1 ha2 ha3 => hag a (by omega) (Or.inr (by
+    unfold A0 at ha1; omega)) ha3
+  have hst : ∀ a, S0 ≤ a → a < S1 → μ.writable a = true := fun a h1 h2 => by rw [hwa]; exact H₀.st a h1 h2
+  obtain ⟨ω', μ', run, rep', wf', fo', ww, stk, e0, e1, e5, e6, hk⟩ :=
+    free_refines_hdr (R := NoHost X) (p := p) (P := P) (HT := 4096 * ph) (S0 := S0) (S1 := S1) x ω μ s sp ptr
+      H₀.wf rep ⟨c, hc, hca, hcu⟩ h1 h8 h7 hsp hsp1 H₀.hb0 H₀.hbT H₀.fo hHT hS
+      (HeapPages.wrAt (HeapPages.of_eq hp hwa) hhb hst)
+  obtain ⟨hpg, hro⟩ := keep_nohost run
+  have hb' : (free s ptr).base = s.base := free_base'
+  have hal : (free s ptr).allocated = s.allocated := free_allocated
+  have ht := H₀.wf.2.2.2.1
+  unfold TilesOk at ht
+  have hG : ∀ b, (fun a => ∃ c ∈ chunks s, c.addr = a) b → b + 16 ≤ 196616 ∨ 196792 ≤ b := by
+    rintro b ⟨d, hd, rfl⟩
+    have := ht.mem_lt d hd
+    have := H₀.hb0
+    right; omega
+  -- the twin of μ' with μ₀'s lock words
+  let μ₀' := (μ'.writeN 196608 (μ₀.readN 196608 8)).writeN 206848 (μ₀.readN 206848 4)
+  have ag' : ∀ a, a < 4294967296 → (a < 196608 ∨ 196616 ≤ a) → (a < 206848 ∨ 206852 ≤ a) →
+      μ'.read a = μ₀'.read a := fun a ha h1 h2 => by
+    simp only [μ₀']
+    rw [Memory.read_writeN_disjoint _ _ _ _ (by simp only [Memory.length_readN]; omega)
+        (by simp only [Memory.length_readN, two32]; omega) (by simp only [two32]; omega),
+      Memory.read_writeN_disjoint _ _ _ _ (by simp only [Memory.length_readN]; omega)
+        (by simp only [Memory.length_readN, two32]; omega) (by simp only [two32]; omega)]
+  have wa' : ∀ a, μ₀'.writable a = μ'.writable a := fun a => by
+    simp only [μ₀', Memory.writable_writeN]
+  have wa0 : ∀ a, μ₀'.writable a = μ₀.writable a := fun a => by rw [wa', ww, hwa]
+  have hlk : rdN μ₀' 206848 1 = 0 := by
+    rw [← H₀.lock]
+    apply rdN_frame
+    intro j hj
+    have hj0 : j = 0 := by omega
+    subst hj0
+    simp only [μ₀']
+    rw [show (206848 + 0 : Nat) = 206848 + 0 from rfl,
+      Memory.read_writeN_at _ _ _ (by simp only [Memory.length_readN, two32]; omega) 0
+        (by simp only [Memory.length_readN]; omega)]
+    simp [Memory.readN]
+  refine ⟨ω', μ', (run.weaken (fun _ _ _ _ _ _ _ h => absurd h id)).trans
+      (fr_ret (R := R) (p := p) (P := P) x ω' μ' ret t (e0.trans h0) hret hjt hbt),
+    ⟨μ₀', ⟨wf', rep'.congr_lock wf' (by rw [hb']; exact H₀.hb0) (by rw [hb']; exact H₀.hbT)
+        (fun a ha1 ha2 ha3 => (ag' a (by omega) (Or.inr (by unfold A0 at ha1; omega)) ha3).symm),
+      fo', hlk, by rw [hb']; exact H₀.hb0, by rw [hb']; exact H₀.hbT, by rw [hal]; exact H₀.hA, H₀.bd,
+      ⟨ph, h48, hhb, HeapPages.of_eq hp wa0, hHTs, by rw [hb', hal]; exact hHT⟩, H₀.hSb, H₀.hS1,
+      fun a h1 h2 => by rw [wa0]; exact H₀.st a h1 h2, fun a ha => by rw [wa0]; exact H₀.ro a ha⟩,
+      ag', fun a => (wa' a).symm⟩,
+    hb', hpg, hro, fun a ha hb => stk a ha hb, HKeepG.glob hk hG,
+    fun d hd hdu hdc => ⟨free_keeps_used H₀.wf hc hca hcu hd hdu hdc, fun a ha => ?_⟩, e0,
+    by rw [e1, h1], e5, e6⟩
+  unfold InData at ha
+  exact hk.hkeep a (off_hdr_data H₀.wf H₀.hb0 H₀.hbT hd ha.1 ha.2)
+
 end Services.Bootstrap.Decode.DeallocCall

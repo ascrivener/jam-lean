@@ -203,7 +203,7 @@ theorem seg_18743_last {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P
 
 /-- 18752 … 18774 (`AssignForGasCost`): the assigner's 4 octets at S + 32 (S from sp) to sp + 24 and the
     call for them (return 918 → 20383), the writer from sp + 16. -/
-theorem seg_18752 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X) (ω : Regs) (μ : Memory)
+theorem seg_18752g {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X) (ω : Regs) (μ : Memory)
     (sp v S : Nat) (hsp : sp + 32 ≤ 4294967296) (hS : S + 232 ≤ 4294967296)
     (hv : v < 18446744073709551616)
     (h1 : ω[1] = UInt64.ofNat sp)

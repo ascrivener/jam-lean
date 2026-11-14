@@ -14,7 +14,7 @@ sequences, each with its length prefix): the encoding is 5 :: ℰ(m) ++ (ℰ(n�
 octets read are `ImportedSrc` (the items' array [q, q + 24 m) and each item's padded stretch
 `VecSrc`). The code traps (20397) on lengths of 2^32 or more, hence m < 2^32 and every nⱼ < 2^32.
 
-`startD` is the dispatch into `StD []` for any variant with a discriminant word (index 1 … 24).
+`startD2` is the dispatch into `StD []` for any variant with a discriminant word (index 1 … 24).
 -/
 
 namespace Services.Bootstrap.Encode.Enc
@@ -29,7 +29,7 @@ variable {X : Type} {R : HostRel X}
 
 /-- From 30145 to the arm of the variant with discriminant word 2^63 + t − 1 (1 ≤ t ≤ 24), in `StD []`,
     with the writer in ω₁₀ and the value in ω₁₁ (`Fixed.start` with the stack [F − D, F)). -/
-theorem startD {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X) (ω : Regs) (μ : Memory)
+theorem startD2 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X) (ω : Regs) (μ : Memory)
     {D F S v cap ptr len N ret t' : Nat} (L : LayD P D F S v cap ptr len N ret t' μ) (hD : 136 ≤ D)
     (t : Nat) (ht : 1 ≤ t ∧ t < 25)
     (h0 : ω[0] = UInt64.ofNat ret) (h1 : ω[1] = UInt64.ofNat F) (h7 : ω[7] = UInt64.ofNat S)
@@ -216,7 +216,7 @@ theorem delete_items {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] 
   have hF := L.hF; have hF' := L.hF'; have hS := L.hS; have hS' := L.hS'; have hv := L.hv
   have hp0 := preDI_len es 0
   have hl0 : (preDI es 0).length = 1 + (Blob.encodeNat es.length).length := by simp [preDI, encs] <;> omega
-  obtain ⟨ω1, μ1, run1, st1, a10, a11⟩ := startD (p := p) (P := P) (R := R) x ω μ L (by decide) 5
+  obtain ⟨ω1, μ1, run1, st1, a10, a11⟩ := startD2 (p := p) (P := P) (R := R) x ω μ L (by decide) 5
     ⟨by decide, by decide⟩ h0 h1 h7 h8 hD8 tab hrt
   rw [show arm 5 = 19117 from rfl] at run1
   obtain ⟨ω2, μ2, run2, b0, b1, b5, b6, b7, b8, b9, bt, bfr, brd, bwr⟩ := seg_19117 (p := p) (P := P) (R := R)

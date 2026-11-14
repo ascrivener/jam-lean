@@ -148,7 +148,7 @@ theorem gas_tail {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x :
     ∃ ω' μ', FreeStepsH p R 18752 ω μ1 x 20383 ω' μ' x 400 ∧
       StD D F v ptr len ret r5 r6 μ (pre ++ g) ω' μ' := by
   have hF := L.hF; have hF' := L.hF'; have hv := L.hv; have hS := L.hS; have hS' := L.hS'
-  obtain ⟨ω2, μ2, run2, b0, b1, b5, b6, b7, b8, b9, bt, bfr, brd, bwr⟩ := seg_18752 (p := p) (P := P) (R := R)
+  obtain ⟨ω2, μ2, run2, b0, b1, b5, b6, b7, b8, b9, bt, bfr, brd, bwr⟩ := seg_18752g (p := p) (P := P) (R := R)
     x ω μ1 (F - 56) v S (by omega) (by omega) (by omega) st.h1 hS0
     (by rw [show F - 56 + 16 = F - 40 by omega]; exact st.sv)
     (fun a h1 h2 => by rw [st.rd]; exact L.hrS a (by omega) (by omega))
@@ -183,7 +183,7 @@ theorem assign_gas {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
       7 + (Blob.encodeNat n).length + 32 * n := by simp [hc, hh, hg] <;> omega
   have hln := preG_len c n hs n (by omega)
   have hl0 := preG_len c n hs 0 (by omega)
-  obtain ⟨ω1, μ1, run1, st1, a10, a11⟩ := startD (p := p) (P := P) (R := R) x ω μ L (by decide) 24
+  obtain ⟨ω1, μ1, run1, st1, a10, a11⟩ := startD2 (p := p) (P := P) (R := R) x ω μ L (by decide) 24
     ⟨by decide, by decide⟩ h0 h1 h7 h8 hD8 tab hrt
   rw [show arm 24 = 18639 from rfl] at run1
   -- the tag, and S to sp

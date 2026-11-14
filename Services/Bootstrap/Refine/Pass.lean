@@ -87,6 +87,47 @@ theorem pd {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR 
     · refine ⟨?_, ?_⟩ <;> simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,
         List.lookup_nil, Option.getD_none]
 
+/-- A stretch of a read: octets i … i + m of the n at a (as `Decode.Loop.readN_sub`). -/
+theorem readN_sub (μ : Memory) (a n i m : Nat) (l : List UInt8) (h : μ.readN a n = l) (hm : i + m ≤ n) :
+    μ.readN (a + i) m = (l.drop i).take m := by
+  subst h
+  apply List.ext_getElem
+  · simp [Memory.length_readN]; omega
+  · intro j h1 h2
+    simp [Memory.readN, Nat.add_assoc]
+
+/-- The instructions the loop passes through: an index of `PassIdx`, or a `Lookup` (8) whose flag
+    (`eager`, the staged element's octet 44) is 0, which `Lookup`'s handler (5278) sends on to 5561.
+    `Spec.refineInstr`'s `| i => pure i`. -/
+def PassK (t b : Nat) : Prop := PassIdx t ∨ (t = 8 ∧ b = 0)
+
+theorem PassK.bound {t b : Nat} (h : PassK t b) : 1 ≤ t ∧ t < 25 := by
+  rcases h with h | ⟨rfl, -⟩
+  · unfold PassIdx at h; omega
+  · omega
+
+/-- 5095 … 5561 for `PassK`: as `pd`, and for a `Lookup` with flag 0 (at M + 348, the staged copy) through
+    5278. -/
+theorem pdK {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] (x : X) (ω : Regs)
+    (μ : Memory) (M t : Nat) (ht : PassK t (rdN μ (M + 348) 1)) (hM : M + 632 ≤ 4294967296)
+    (h1 : ω[1] = UInt64.ofNat M) (h6 : ω[6] = UInt64.ofNat (9223372036854775807 + t))
+    (s128 : μ.readN (M + 128) 8 = Num.encodeLE 8 9223372036854775832)
+    (s136 : μ.readN (M + 136) 8 = Num.encodeLE 8 9223372036854775809)
+    (hr : ∀ a, M + 128 ≤ a → a < M + 144 → μ.readable a = true)
+    (hr2 : ∀ a, M + 348 ≤ a → a < M + 349 → μ.readable a = true) :
+    ∃ ω', FreeStepsH p R 5095 ω μ x 5561 ω' μ x 12 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] := by
+  rcases ht with ht | ⟨rfl, hb⟩
+  · obtain ⟨ω', run, e1, e5⟩ := pd (p := p) (P := P) (R := R) x ω μ M t ht hM h1 h6 s128 s136 hr
+    exact ⟨ω', run.mono (by omega), e1, e5⟩
+  · have r128 := rd8 (by decide) s128
+    have r136 := rd8 (by decide) s136
+    rw [show ω = regsNF ω [] from rfl]
+    refine ⟨?_, ?_, ?_⟩
+    rotate_left
+    · pvm_go [h1, h6, hM, hr, hr2, hb, r128, r136, ↓rdN_fold]
+    · refine ⟨?_, ?_⟩ <;> simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,
+        List.lookup_nil, Option.getD_none]
+
 /-- 5561 … 5027, with room in the output (`len ≠ cap`, at M + 264 and M + 248): the loop calls `memcpy` for
     the 232 staged octets, from M + 304 to `ptr + 232 len` (ptr at M + 256; return address 160 → 5034),
     with len in ω₅. -/
@@ -185,7 +226,7 @@ theorem readN_add2 (μ : Memory) (a n m : Nat) : μ.readN a (n + m) = μ.readN a
     octets unchanged to `ptr + 232 len`, and stores `cur + 232` and `len + 1`. Memory changes only in the
     frame [M − 48, M + 632) and the output slot. -/
 theorem pass_elem {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] (x : X)
-    (ω : Regs) (μ : Memory) (M cur en t cap ptr len : Nat) (ht : PassIdx t)
+    (ω : Regs) (μ : Memory) (M cur en t cap ptr len : Nat) (ht : PassK t (rdN μ (cur + 44) 1))
     (hM : 65536 + 48 ≤ M ∧ M + 632 + 16 < 4294967296 ∧ M % 8 = 0)
     (hcur : 65536 ≤ cur ∧ cur + 232 + 24 < 4294967296) (hcM : cur + 232 + 24 ≤ M - 48 ∨ M + 632 ≤ cur)
     (hne : cur ≠ en) (hen : en < 18446744073709551616) (hl : len ≠ cap) (hcap : cap < 18446744073709551616)
@@ -219,8 +260,8 @@ theorem pass_elem {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
   have hr : ∀ a, M - 48 ≤ a → a < M + 632 → μ.readable a = true :=
     fun a h1 h2 => Memory.readable_of_writable (hwM a h1 h2)
   obtain ⟨ω1, μ1, run1, a0, a1, -, a6, a7, a8, a9, a144, a304, a280, afr, ard, awr⟩ := pa (p := p) (P := P) (R := R) x ω μ
-    M cur en (9223372036854775807 + t) (by omega) (by omega) (by omega) hne hen (by unfold PassIdx at ht; omega)
-    (by unfold PassIdx at ht; omega) h1 s144 s120 sD (fun a h1 h2 => hr a (by omega) (by omega))
+    M cur en (9223372036854775807 + t) (by omega) (by omega) (by omega) hne hen (by have := ht.bound; omega)
+    (by have := ht.bound; omega) h1 s144 s120 sD (fun a h1 h2 => hr a (by omega) (by omega))
     (fun a h1 h2 => hrc a h1 (by omega)) (fun a h1 h2 => hwM a (by omega) (by omega))
   obtain ⟨ω2, μ2, run2, b0, b1, b5, b6, bd, bfr, brd, bwr⟩ := memcpy_any (p := p) (P := P) (R := R) x ω1 μ1
     162 5095 M (M + 312) (cur + 8) 224 a0 a1 a7 a8 a9 ⟨by decide, by decide, by decide⟩ jte_80 bs_5095
@@ -232,10 +273,16 @@ theorem pass_elem {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
   have k2 : ∀ a, a < 4294967296 → (a < M - 48 ∨ (M ≤ a ∧ a < M + 144) ∨ (M + 152 ≤ a ∧ a < M + 280) ∨
       M + 536 ≤ a) → μ2.read a = μ.read a :=
     fun a h0 h1 => by rw [bfr a h0 (by omega) (by omega), afr a h0 (by omega)]
-  obtain ⟨ω3, run3, c1, c5⟩ := pd (p := p) (P := P) (R := R) x ω2 μ2 M t ht (by omega) b1
+  have hb348 : rdN μ2 (M + 348) 1 = rdN μ (cur + 44) 1 := by
+    unfold rdN
+    rw [show M + 348 = M + 312 + 36 by omega, Pass.readN_sub μ2 (M + 312) 224 36 1 _ bd (by omega),
+      ← Pass.readN_sub μ1 (cur + 8) 224 36 1 _ rfl (by omega), show cur + 8 + 36 = cur + 44 by omega,
+      Memory.readN_congr (fun j hj => afr _ (by omega) (by omega))]
+  obtain ⟨ω3, run3, c1, c5⟩ := pdK (p := p) (P := P) (R := R) x ω2 μ2 M t (by rw [hb348]; exact ht) (by omega) b1
     (by rw [b6, a6])
     (by rw [Memory.readN_congr (fun j hj => k2 _ (by omega) (by omega))]; exact s128)
     (by rw [Memory.readN_congr (fun j hj => k2 _ (by omega) (by omega))]; exact s136)
+    (fun a h1 h2 => by rw [brd, ard]; exact hr a (by omega) (by omega))
     (fun a h1 h2 => by rw [brd, ard]; exact hr a (by omega) (by omega))
   obtain ⟨ω4, run4, d0, d1, d5, d7, d8, d9⟩ := pc (p := p) (P := P) (R := R) x ω3 μ2 M cap ptr len (by omega) hl hcap
     (by omega) (c1.trans b1)

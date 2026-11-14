@@ -123,7 +123,7 @@ theorem slot_eq {μ μ' : Memory} {a a' k j : Nat} (h : μ'.readN a' (232 * k) =
 theorem step_room {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P]
     {X : Type} {R : HostRel X} (env : RefineHost.Env) (x : X) (ω : Regs) (μ μ0 : Memory) (s : State)
     {pb S0 S1 M E n capI : Nat} {ce : Chunk} {Kp : Chunk → Prop} {O : Nat → List UInt8 → Prop} (L : LayP S0 S1 M E n ce)
-    (k : Nat) (hk : k < n) (t : Nat) (ht : PassIdx t)
+    (k : Nat) (hk : k < n) (t : Nat) (ht : PassK t (rdN μ0 (E + 232 * k + 44) 1))
     (sD0 : μ0.readN (E + 232 * k) 8 = Num.encodeLE 8 (9223372036854775807 + t))
     (hO : O k (μ0.readN (E + 232 * k) 232))
     (st : PInv env pb S0 S1 M E n ce capI μ0 Kp O k ω μ s)
@@ -145,8 +145,10 @@ theorem step_room {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
   have sD : μ.readN (E + 232 * k) 8 = Num.encodeLE 8 (9223372036854775807 + t) := by
     rw [Memory.readN_congr (fun j hj => st.data _ (inE _ (by omega) (by omega)))]; exact sD0
   have hcs : 232 * cap + 32 ≤ 32 * co.size := by rw [hcos]; omega
+  have hb : rdN μ (E + 232 * k + 44) 1 = rdN μ0 (E + 232 * k + 44) 1 := by
+    unfold rdN; rw [Memory.readN_congr (fun j hj => st.data _ (inE _ (by omega) (by omega)))]
   obtain ⟨ω', μ', run, e1, ecur, elen, eslot, een, e128, e136, ecap, eptr, efr, erd, ewr, e280, efr2⟩ :=
-    pass_elem (p := p) (P := P) (R := R) x ω μ M (E + 232 * k) (E + 232 * n) t cap ptr k ht
+    pass_elem (p := p) (P := P) (R := R) x ω μ M (E + 232 * k) (E + 232 * n) t cap ptr k (by rw [hb]; exact ht)
     ⟨by omega, by omega, hM8⟩ ⟨by omega, by omega⟩ (by omega) (by omega) (by omega) hkc' (by omega)
     ⟨by omega, by omega⟩ (by omega) (by omega) st.h1 st.cur st.en sD st.c128 st.c136 vc vp vl
     (fun a h1 h2 => Memory.readable_of_writable (Decode.VecU8.heap_writable st.H st.hce.1 st.hce.2
@@ -192,7 +194,7 @@ theorem step_full {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     (env : RefineHost.Env) (cap0 : Nat) (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616)
     (x : RefineCtx) (ω : Regs) (μ μ0 : Memory) {hb : Nat} (s : State)
     {pb S0 S1 M E n capI : Nat} {ce : Chunk} {Kp : Chunk → Prop} {O : Nat → List UInt8 → Prop} (L : LayP S0 S1 M E n ce)
-    (k : Nat) (hk : k < n) (t : Nat) (ht : PassIdx t)
+    (k : Nat) (hk : k < n) (t : Nat) (ht : PassK t (rdN μ0 (E + 232 * k + 44) 1))
     (sD0 : μ0.readN (E + 232 * k) 8 = Num.encodeLE 8 (9223372036854775807 + t))
     (hO : O k (μ0.readN (E + 232 * k) 232))
     (st : PInv env pb S0 S1 M E n ce capI μ0 Kp O k ω μ s)
@@ -234,8 +236,10 @@ theorem step_full {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     · subst h0; omega
     · obtain ⟨hc0, -, hcT⟩ := Decode.VecU8.chunk_in st.H.wf hc hu
       rw [hs] at hcT; omega
+  have hb44 : rdN μ (E + 232 * cap + 44) 1 = rdN μ0 (E + 232 * cap + 44) 1 := by
+    unfold rdN; rw [Memory.readN_congr (fun j hj => st.data _ (inE _ (by omega) (by omega)))]
   rcases pass_elem_grow (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 x ω μ s M (E + 232 * cap) (E + 232 * n) t
-      cap ptr pb S0 S1 st.H ht hold' (by omega) ⟨by omega, by omega, hM2, hM8⟩ ⟨by omega, by omega⟩ (by omega)
+      cap ptr pb S0 S1 st.H (by rw [hb44]; exact ht) hold' (by omega) ⟨by omega, by omega, hM2, hM8⟩ ⟨by omega, by omega⟩ (by omega)
       (by omega) (by omega) hpl st.h1 st.cur st.en sD st.c128 st.c136 vc vp vl
       (fun a h1 h2 => Memory.readable_of_writable (Decode.VecU8.heap_writable st.H st.hce.1 st.hce.2
         (inE a (by omega) (by omega)))) with
@@ -300,7 +304,8 @@ theorem loop {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCode
     (env : RefineHost.Env) (cap0 : Nat) (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616)
     (x : RefineCtx) (μ0 : Memory) {hb : Nat} {pb S0 S1 M E n capI : Nat} {ce : Chunk} {Kp : Chunk → Prop}
     (L : LayP S0 S1 M E n ce)
-    (kinds : ∀ j, j < n → ∃ t, PassIdx t ∧ μ0.readN (E + 232 * j) 8 = Num.encodeLE 8 (9223372036854775807 + t))
+    (kinds : ∀ j, j < n → ∃ t, PassK t (rdN μ0 (E + 232 * j + 44) 1) ∧
+      μ0.readN (E + 232 * j) 8 = Num.encodeLE 8 (9223372036854775807 + t))
     (m k : Nat) (ω : Regs) (μ : Memory) (s : State) (hkm : k + m = n)
     (st : PInv env pb S0 S1 M E n ce capI μ0 Kp (fun j bs => bs = μ0.readN (E + 232 * j) 232) k ω μ s) :
     (∃ s' ω' μ', FreeStepsH p (refineContractK cap0 env) 5042 ω μ x 5042 ω' μ' x (m * (512 * n + 6100)) ∧

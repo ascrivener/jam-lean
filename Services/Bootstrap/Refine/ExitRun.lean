@@ -80,9 +80,8 @@ theorem exit_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env
     (s624 : μ0.readN (M + 624) 8 = Num.encodeLE 8 ret) (s616 : μ0.readN (M + 616) 8 = Num.encodeLE 8 r5)
     (s608 : μ0.readN (M + 608) 8 = Num.encodeLE 8 r6)
     (hq' : c' < 18446744073709551616) (hcq : c' ≠ 0 → Kp cq ∧ cq.addr + 32 = q ∧ cq ≠ ce)
-    (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) (hr5 : r5 < 18446744073709551616)
-    (hr6 : r6 < 18446744073709551616) (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t)
-    (hbt : P.isBlockStart t = true)
+    (hret : Fin.RetTo P ret t) (hr5 : r5 < 18446744073709551616)
+    (hr6 : r6 < 18446744073709551616)
     (tab : μ.readN 67376 100 = table) (rtab : ∀ a, 67376 ≤ a → a < 67476 → μ.readable a = true)
     (dtab : μ.readN 67760 96 = DropOut.dtable) (rdtab : ∀ a, 67760 ≤ a → a < 67856 → μ.readable a = true) :
     (∃ (ω' : Regs) (μ' : Memory) (s' : State) (N buf : Nat),
@@ -186,7 +185,7 @@ theorem exit_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env
     hq' (by omega) (by omega) e1
     e168 e176 e184 (by rw [f5 _ _ (by omega)]; exact s88) (by rw [f5 _ _ (by omega)]; exact s112) e280 e288
     (by rw [f5 _ _ (by omega)]; exact s624) (by rw [f5 _ _ (by omega)]; exact s616)
-    (by rw [f5 _ _ (by omega)]; exact s608) hret hr5 hr6 hjt hbt
+    (by rw [f5 _ _ (by omega)]; exact s608) hret hr5 hr6
     (fun j hj => by
       obtain ⟨tj, htj, hD⟩ := hON j _ hj (hout j hj)
       refine ⟨tj, htj, ?_⟩

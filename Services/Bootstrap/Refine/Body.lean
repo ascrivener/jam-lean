@@ -82,9 +82,8 @@ theorem body {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCode
     (s624 : μ.readN (M + 624) 8 = Num.encodeLE 8 ret) (s616 : μ.readN (M + 616) 8 = Num.encodeLE 8 r5)
     (s608 : μ.readN (M + 608) 8 = Num.encodeLE 8 r6)
     (hq' : c' < 18446744073709551616) (hcq : c' ≠ 0 → Kp n cq ∧ cq.addr + 32 = q ∧ cq ≠ ce)
-    (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) (hr5 : r5 < 18446744073709551616)
-    (hr6 : r6 < 18446744073709551616) (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t)
-    (hbt : P.isBlockStart t = true)
+    (hret : Fin.RetTo P ret t) (hr5 : r5 < 18446744073709551616)
+    (hr6 : r6 < 18446744073709551616)
     (tab : μ.readN 67376 100 = table) (rtab : ∀ a, 67376 ≤ a → a < 67476 → μ.readable a = true)
     (dtab : μ.readN 67760 96 = DropOut.dtable) (rdtab : ∀ a, 67760 ≤ a → a < 67856 → μ.readable a = true) :
     (∃ (ω' : Regs) (μ' : Memory) (s' : State) (N buf : Nat),
@@ -115,7 +114,7 @@ theorem body {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCode
       (by rw [m1 _ _ (by omega)]; exact s80) (by rw [m1 _ _ (by omega)]; exact s88)
       (by rw [m1 _ _ (by omega)]; exact s112) (by rw [m1 _ _ (by omega)]; exact s624)
       (by rw [m1 _ _ (by omega)]; exact s616) (by rw [m1 _ _ (by omega)]; exact s608)
-      hq' hcq hret hr5 hr6 hjt hbt (by rw [tab2]; exact tab) (fun a h1 h2 => by rw [rtab2 a h1 h2]; exact rtab a h1 h2)
+      hq' hcq hret hr5 hr6 (by rw [tab2]; exact tab) (fun a h1 h2 => by rw [rtab2 a h1 h2]; exact rtab a h1 h2)
       (by rw [dtab2]; exact dtab) (fun a h1 h2 => by rw [rdtab2 a h1 h2]; exact rdtab a h1 h2) with
     ⟨ω3, μ3, s3, N3, buf, run3, H3, f0, f1, f5, f6, f7, f8, fo⟩ | ⟨N, hx⟩
   · exact Or.inl ⟨ω3, μ3, s3, _, buf, pre.trans run3, H3, f0, f1, f5, f6, f7, f8, fo⟩

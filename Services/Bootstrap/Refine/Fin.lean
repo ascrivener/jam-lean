@@ -107,7 +107,7 @@ theorem f3z {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ 
 
 /-- 6349 … 6373: refine returns ω₇ = buf (M + 280) and ω₈ = len (M + 288) to `ret` (from M + 624; → t),
     with ω₅, ω₆ from M + 616, M + 608 and ω₁ = M + 632. -/
-theorem f4 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory) (M buf len ret r5 r6 t : Nat)
+theorem f4j {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory) (M buf len ret r5 r6 t : Nat)
     (hM : M + 632 < 4294967296) (hbuf : buf < 18446744073709551616) (hlen : len < 18446744073709551616)
     (h1 : ω[1] = UInt64.ofNat M)
     (s280 : μ.readN (M + 280) 8 = Num.encodeLE 8 buf) (s288 : μ.readN (M + 288) 8 = Num.encodeLE 8 len)
@@ -132,6 +132,59 @@ theorem f4 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ :
   · refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
     all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
       ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1]
+
+/-- Where refine's return lands: a return address of the jump table (→ t), or the halt address 2³² − 2¹⁶, the
+    run then stopping at the `jump_ind` 6373 that halts (GP v0.8.0 §A.5.1). -/
+def RetTo (P : Program) (ret t : Nat) : Prop :=
+  (0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0 ∧ P.jumpTable.getD (ret / 2 - 1) 0 = t ∧ P.isBlockStart t = true) ∨
+  (ret = 4294901760 ∧ t = 6373)
+
+theorem RetTo.lt {P : Program} {ret t : Nat} (h : RetTo P ret t) : ret < 18446744073709551616 := by
+  rcases h with ⟨-, h, -⟩ | ⟨h, -⟩ <;> omega
+
+/-- 6349 … 6373 without the jump: ω₇ = buf, ω₈ = len, ω₀ = ret, ω₅, ω₆ restored, ω₁ = M + 632, at the
+    `jump_ind` 6373. -/
+theorem f4h {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory) (M buf len ret r5 r6 : Nat)
+    (hM : M + 632 < 4294967296) (hbuf : buf < 18446744073709551616) (hlen : len < 18446744073709551616)
+    (h1 : ω[1] = UInt64.ofNat M)
+    (s280 : μ.readN (M + 280) 8 = Num.encodeLE 8 buf) (s288 : μ.readN (M + 288) 8 = Num.encodeLE 8 len)
+    (s624 : μ.readN (M + 624) 8 = Num.encodeLE 8 ret) (s616 : μ.readN (M + 616) 8 = Num.encodeLE 8 r5)
+    (s608 : μ.readN (M + 608) 8 = Num.encodeLE 8 r6)
+    (hret : ret < 18446744073709551616) (hr5 : r5 < 18446744073709551616)
+    (hr6 : r6 < 18446744073709551616)
+    (hr : ∀ a, M + 280 ≤ a → a < M + 296 → μ.readable a = true)
+    (hr2 : ∀ a, M + 608 ≤ a → a < M + 632 → μ.readable a = true) :
+    ∃ ω', FreeStepsH p R 6349 ω μ x 6373 ω' μ x 8 ∧ ω'[0] = UInt64.ofNat ret ∧ ω'[1] = UInt64.ofNat (M + 632) ∧
+      ω'[5] = UInt64.ofNat r5 ∧ ω'[6] = UInt64.ofNat r6 ∧ ω'[7] = UInt64.ofNat buf ∧ ω'[8] = UInt64.ofNat len := by
+  have rb := rd8 hbuf s280
+  have rl := rd8 hlen s288
+  have rr := rd8 hret s624
+  have r5' := rd8 hr5 s616
+  have r6' := rd8 hr6 s608
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?_, ?_, ?_⟩
+  rotate_left
+  · pvm_go [h1, hM, hr, hr2, rb, rl, rr, r5', r6', ↓rdN_fold]
+  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
+    all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+      ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1]
+
+/-- 6349 … t: refine returns ω₇ = buf (M + 280) and ω₈ = len (M + 288) to `ret` (from M + 624; `RetTo`),
+    with ω₅, ω₆ from M + 616, M + 608 and ω₁ = M + 632. -/
+theorem f4 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory) (M buf len ret r5 r6 t : Nat)
+    (hM : M + 632 < 4294967296) (hbuf : buf < 18446744073709551616) (hlen : len < 18446744073709551616)
+    (h1 : ω[1] = UInt64.ofNat M)
+    (s280 : μ.readN (M + 280) 8 = Num.encodeLE 8 buf) (s288 : μ.readN (M + 288) 8 = Num.encodeLE 8 len)
+    (s624 : μ.readN (M + 624) 8 = Num.encodeLE 8 ret) (s616 : μ.readN (M + 616) 8 = Num.encodeLE 8 r5)
+    (s608 : μ.readN (M + 608) 8 = Num.encodeLE 8 r6)
+    (hret : RetTo P ret t) (hr5 : r5 < 18446744073709551616) (hr6 : r6 < 18446744073709551616)
+    (hr : ∀ a, M + 280 ≤ a → a < M + 296 → μ.readable a = true)
+    (hr2 : ∀ a, M + 608 ≤ a → a < M + 632 → μ.readable a = true) :
+    ∃ ω', FreeStepsH p R 6349 ω μ x t ω' μ x 8 ∧ ω'[0] = UInt64.ofNat ret ∧ ω'[1] = UInt64.ofNat (M + 632) ∧
+      ω'[5] = UInt64.ofNat r5 ∧ ω'[6] = UInt64.ofNat r6 ∧ ω'[7] = UInt64.ofNat buf ∧ ω'[8] = UInt64.ofNat len := by
+  rcases hret with ⟨h0, h2, h3, hjt, hbt⟩ | ⟨hr0, rfl⟩
+  · exact f4j (p := p) (P := P) (R := R) x ω μ M buf len ret r5 r6 t hM hbuf hlen h1 s280 s288 s624 s616 s608 ⟨h0, h2, h3⟩ hr5 hr6 hjt hbt hr hr2
+  · exact f4h (p := p) (P := P) (R := R) x ω μ M buf len ret r5 r6 hM hbuf hlen h1 s280 s288 s624 s616 s608 (by omega) hr5 hr6 hr hr2
 
 /-- One `dealloc` (40613) of an allocated chunk, or none: a free that may or may not happen. -/
 theorem free_opt {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) {pb S0 S1 : Nat} (x : X)
@@ -171,9 +224,8 @@ theorem fin_run {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.En
     (s280 : μ.readN (M + 280) 8 = Num.encodeLE 8 buf) (s288 : μ.readN (M + 288) 8 = Num.encodeLE 8 len)
     (s624 : μ.readN (M + 624) 8 = Num.encodeLE 8 ret) (s616 : μ.readN (M + 616) 8 = Num.encodeLE 8 r5)
     (s608 : μ.readN (M + 608) 8 = Num.encodeLE 8 r6)
-    (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) (hr5 : r5 < 18446744073709551616)
-    (hr6 : r6 < 18446744073709551616) (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t)
-    (hbt : P.isBlockStart t = true)
+    (hret : RetTo P ret t) (hr5 : r5 < 18446744073709551616)
+    (hr6 : r6 < 18446744073709551616)
     (kinds : ∀ j, j < n → ∃ t, DropOut.NoDrop t ∧ μ.readN (E + 232 * j) 8 = Num.encodeLE 8 (9223372036854775807 + t))
     (tab : μ.readN 67760 96 = DropOut.dtable) (hrt : ∀ a, 67760 ≤ a → a < 67856 → μ.readable a = true) :
     ∃ ω' μ' s', FreeStepsH p R 6295 ω μ x t ω' μ' x (32 * n + 600) ∧ HeapCtx env pb S0 S1 μ' s' ∧
@@ -224,7 +276,7 @@ theorem fin_run {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.En
       (by omega) hbuf hlen e1 (by rw [r5' _ _ (by omega) (by omega)]; exact s280)
       (by rw [r5' _ _ (by omega) (by omega)]; exact s288) (by rw [r5' _ _ (by omega) (by omega)]; exact s624)
       (by rw [r5' _ _ (by omega) (by omega)]; exact s616) (by rw [r5' _ _ (by omega) (by omega)]; exact s608)
-      hret hr5 hr6 hjt hbt (fun a h1 h2 => Memory.readable_of_writable (H5.st a (by omega) (by omega)))
+      hret hr5 hr6 (fun a h1 h2 => Memory.readable_of_writable (H5.st a (by omega) (by omega)))
       (fun a h1 h2 => Memory.readable_of_writable (H5.st a (by omega) (by omega)))
     exact ⟨ω6, μ5, (run5.trans run6).mono (by omega), g0, g1, g5, g6, g7, g8, rfl⟩
   have pre := run1.trans (run2.trans (run3.trans run4))

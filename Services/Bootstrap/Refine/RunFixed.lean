@@ -50,9 +50,8 @@ theorem run_fixed {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     (s624 : μ.readN (M + 624) 8 = Num.encodeLE 8 ret) (s616 : μ.readN (M + 616) 8 = Num.encodeLE 8 r5')
     (s608 : μ.readN (M + 608) 8 = Num.encodeLE 8 r6')
     (hc' : c' < 18446744073709551616)
-    (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) (hr5' : r5' < 18446744073709551616)
-    (hr6' : r6' < 18446744073709551616) (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t)
-    (hbt : P.isBlockStart t = true)
+    (hret : Fin.RetTo P ret t) (hr5' : r5' < 18446744073709551616)
+    (hr6' : r6' < 18446744073709551616)
     (tab : μ.readN 67476 100 = Decode.Tag.table) (rt : ∀ a, 67476 ≤ a → a < 67576 → μ.readable a = true)
     (tab2 : μ.readN 67376 100 = table) (rtab2 : ∀ a, 67376 ≤ a → a < 67476 → μ.readable a = true)
     (dtab : μ.readN 67760 96 = DropOut.dtable) (rdtab : ∀ a, 67760 ≤ a → a < 67856 → μ.readable a = true) :
@@ -120,7 +119,7 @@ theorem run_fixed {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
       (by rw [m1 _ _ (by omega) (by omega) (by omega) (by omega)]; exact s624)
       (by rw [m1 _ _ (by omega) (by omega) (by omega) (by omega)]; exact s616)
       (by rw [m1 _ _ (by omega) (by omega) (by omega) (by omega)]; exact s608)
-      hc' (fun _ => ⟨rfl, hcpq, fun e => fresh1 cp hcp.1 hcp.2.1 e⟩) hret hr5' hr6' hjt hbt
+      hc' (fun _ => ⟨rfl, hcpq, fun e => fresh1 cp hcp.1 hcp.2.1 e⟩) hret hr5' hr6'
       (by rw [tab1]; exact tab2) (fun a h1 h2 => by rw [rtab1 a h1 h2]; exact rtab2 a h1 h2)
       (by rw [dtab1]; exact dtab) (fun a h1 h2 => by rw [rdtab1 a h1 h2]; exact rdtab a h1 h2) with
     ⟨ω2, μ2, s2, N2, buf, run2, H2, e0, e1, e5, e6, e7, e8, eo⟩ | ⟨N, hx⟩

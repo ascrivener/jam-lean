@@ -320,6 +320,7 @@ import Services.Bootstrap.Acc.Transfer.Tail
 import Services.Bootstrap.Acc.Transfer.Encode
 import Services.Bootstrap.Acc.Transfer.Tail2
 import Services.Bootstrap.Acc.Transfer.EncodeCall
+import Services.Bootstrap.Acc.Transfer.Hyp
 import Services.Bootstrap.Alloc.HeapContract
 import Services.Bootstrap.Decode.VecU8HeapBig
 import Services.Bootstrap.Decode.VecPairsBig

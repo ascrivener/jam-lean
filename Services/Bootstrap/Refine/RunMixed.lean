@@ -95,13 +95,15 @@ theorem expTo_bound (env : RefineHost.Env) (is : List Spec.Instr) (x : RefineCtx
     intro y h
     apply ih
     unfold instrCtx
+    show env.exportOffset + (instrCtx env i y).2.length ≤ _
+    unfold instrCtx
     split
     · exact expDs_bound hB _ y h
     · exact h
 
 theorem encode_exportSegs (ds : List (List UInt8)) :
     (Spec.Instr.exportSegs ds).encode = UInt8.ofNat 10 :: (Blob.encodeNat ds.length ++ (Decode.VecVecU8.encs ds).flatten) := by
-  simp [Spec.Instr.encode, Spec.vec, Spec.bytes, Decode.VecVecU8.encs, JAM.Codec.nat]
+  simp [Spec.Instr.encode, Spec.vec, Decode.VecVecU8.encs, JAM.Codec.nat]; rfl
 
 /-- **Refine from the payload, fixed-width instructions passed through and `Export`** (interim: 1 ≤ n ≤ 70):
     as `RunFixed.run_fixed`, each instruction j either a `FixedKind` with its slot property `Rs j` (passed
@@ -157,13 +159,12 @@ theorem run_mixed {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hj]; rfl
   have hes : ∀ j (hj : j < (is.map Spec.Instr.encode).length),
       (is.map Spec.Instr.encode)[j] = (is.getD j .panic).encode := fun j hj => by
-    simp only [List.length_map] at hj
-    simp [hgd j hj]
+    rw [List.getElem_map, hgd j (by simpa using hj)]
   have hL : Lay (M - 744) (M + 272) := ⟨by omega, by omega, by omega, by omega⟩
   have hnone : ∀ j, segsOf (is.getD j .panic) = none → encOut is j = (is.getD j .panic).encode :=
-    fun j h => by simp [encOut, outI, h]
+    fun j h => by unfold encOut outI; rw [h]
   have hrn : ∀ j, segsOf (is.getD j .panic) = none → repsM Rs is j = fun _ bs _ => Rs j bs :=
-    fun j h => by simp [repsM, h]
+    fun j h => by unfold repsM; rw [h]
   have hne : ∀ j (hj : j < (is.map Spec.Instr.encode).length), 1 ≤ (is.map Spec.Instr.encode)[j].length := by
     intro j hj
     rw [hes j hj]
@@ -178,19 +179,19 @@ theorem run_mixed {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     rw [hes j hj]
     simp only [List.length_map] at hj
     rcases (hk j hj).2 with h | ⟨ds, hds, -, hb1, hb2⟩
-    · rw [hrn j h, show NsM is j = 4000 by simp [NsM, h], ← hnone j h]
+    · rw [hrn j h, show NsM is j = 4000 by unfold NsM; rw [h], ← hnone j h]
       exact ElemOkAF.toAFC (ElemOkAF.of_elemOkF hL ((hk j hj).1.dec _ _ hL))
     · rw [segsOf_some hds]
       rcases ds with _ | ⟨d0, ds'⟩
       · rw [show repsM Rs is j = fun _ bs _ => bs.take 8 = Num.encodeLE 8 9223372036854775817 ∧
             (bs.drop 8).take 8 = Num.encodeLE 8 0 ∧ (bs.drop 16).take 8 = Num.encodeLE 8 8 ∧
-            (bs.drop 24).take 8 = Num.encodeLE 8 0 by simp [repsM, hds],
-          show NsM is j = 4000 by simp [NsM, hds]]
+            (bs.drop 24).take 8 = Num.encodeLE 8 0 by unfold repsM; rw [hds],
+          show NsM is j = 4000 by unfold NsM; rw [hds]]
         exact ElemOkAF.toAFC (Decode.ExportEmpty.export_empty_elem _ _ hL)
       · rw [show repsM Rs is j = Decode.VecVecOwn.VecVecRepC (9223372036854775807 + 10) (d0 :: ds') by
-            simp [repsM, hds],
+            unfold repsM; rw [hds],
           show NsM is j = 9 * (Decode.VecVecU8.encs (d0 :: ds')).flatten.length + 70300 * (d0 :: ds').length + 41200 by
-            simp only [NsM, hds], encode_exportSegs]
+            unfold NsM; rw [hds], encode_exportSegs]
         exact Decode.VecVecOwn.export_elem_bigC env cap0 pb hcap1 hcap0 gl _ _ hL (d0 :: ds')
           ⟨by simp, hb1⟩ hb2
   rcases DecodeC.decode_oneC (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 gl x ω μ s H M q Ly r5
@@ -221,8 +222,8 @@ theorem run_mixed {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
   -- the chunks to keep before instruction k: the payload's and those of the instructions from k on
   let Kp : Nat → Chunk → Prop := fun k d => d = cp ∨ ∃ j, k ≤ j ∧ j < n ∧ d ∈ csOf j
   have hkp0 : ∀ d, Kp 0 d → d ∈ chunks s1 ∧ d.used = true := by
-    rintro d (rfl | ⟨j, -, hj, hd⟩)
-    · exact ⟨hcp1, (keep1 cp hcp.1 hcp.2.1).1 ▸ hcp.2.1⟩
+    rintro d (hd | ⟨j, -, hj, hd⟩)
+    · rw [hd]; exact ⟨hcp1, hcp.2.1⟩
     · exact ⟨((hcs j hj).1 d hd).1, ((hcs j hj).1 d hd).2.1⟩
   have hmono : ∀ k d, Kp (k + 1) d → Kp k d := by
     rintro k d (h | ⟨j, h1, h2, h3⟩)
@@ -244,19 +245,19 @@ theorem run_mixed {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     have hxs := expTo_succ env is x (k := k) (by omega)
     rcases (hk k hk').2 with h | ⟨ds, hds, hR, hb1, hb2⟩
     · have sl : Rs k (μ1.readN (E + 232 * k) 232) := by have := slot k hk'; rw [hrn k h] at this; exact this
-      refine Or.inl ⟨ts k, ?_, ?_, sl, hmono k, by rw [hxs]; simp [instrCtx, h]⟩
+      refine Or.inl ⟨ts k, ?_, ?_, sl, hmono k, by rw [hxs]; unfold instrCtx; rw [h]⟩
       · unfold rdN; rw [rsub k 44 1 (by omega)]; exact (hk k hk').1.pass _ sl
       · rw [← readN_take μ1 _ 232 8 (by omega)]; exact (hk k hk').1.tag _ sl
     · have sl := slot k hk'
       rcases ds with _ | ⟨d0, ds'⟩
       · simp only [repsM, hds] at sl
         exact Or.inr (export_ok_empty sl (hmono k) hR (by have := hbd k; omega)
-          (by rw [hxs]; simp [instrCtx, hds, expDs]))
+          (by rw [hxs]; unfold instrCtx; rw [hds]; rfl))
       · simp only [repsM, hds] at sl
         refine Or.inr (export_ok_big sl hb1 hb2 (fun c hc => ⟨Or.inr ⟨k, Nat.le_refl _, hk', hc⟩,
-          ((hcs k hk').1 c hc).2.2.1⟩) ?_ hR (by have := hbd k; omega) (by rw [hxs]; simp [instrCtx, hds]))
-        rintro d (rfl | ⟨j, hj1, hj2, hdj⟩)
-        · exact ⟨Or.inl rfl, fun h => ((hcs k hk').1 _ h).2.2.2 rfl, fun c hc e =>
+          ((hcs k hk').1 c hc).2.2.1⟩) ?_ hR (by have := hbd k; omega) (by rw [hxs]; unfold instrCtx; rw [hds]))
+        rintro d (hd | ⟨j, hj1, hj2, hdj⟩)
+        · rw [hd]; exact ⟨Or.inl rfl, fun h => ((hcs k hk').1 _ h).2.2.2 rfl, fun c hc e =>
             ((hcs k hk').1 c hc).2.2.2 (ainj c ((hcs k hk').1 c hc).1 _ hcp1 e.symm)⟩
         · refine ⟨Or.inr ⟨j, by omega, hj2, hdj⟩, hdisj j k hj2 hk' (by omega) d hdj, fun c hc e => ?_⟩
           have := ainj d ((hcs j hj2).1 d hdj).1 c ((hcs k hk').1 c hc).1 e

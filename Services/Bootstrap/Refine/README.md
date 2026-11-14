@@ -204,6 +204,16 @@ Left here: the second batch (70 < n < 128: `finish_grow` with the old buffer, an
 encode (`EncOk`). `RunFixed.run_fixed`: refine from 4792 to its return for 1 ≤ n ≤ 70 such instructions
 (`decode_one` + `Body.body`), returning n :: ℰ(is) ⌢ ℰ₂(w mod 2^16) with the context unchanged.
 
+### Export at the top level (`DecodeVecC.lean`, `DecodeC.lean`, `ExportOkOf.lean`, `RunMixed.lean`)
+`DecodeC.decode_oneC`: the decode with each instruction an `ElemOkAFC` (#178/#182), returning one `csOf`
+(the slots' chunks, pairwise disjoint, none the payload's or the instructions' buffer). `ExportOkOf`:
+`ExportOk` from the decoded slot (`export_ok_big` from `VecVecRepC`, `export_ok_empty` for `Export []`), the
+context afterwards `expDs` (Ω_E on the segments' octets). `RunMixed.run_mixed`: refine from 4792 to its
+return for 1 ≤ n ≤ 70 instructions, each a `FixedKind` passed through or `ExportSegs ds`, the chunks to keep
+before k being the payload's and those of instructions k…n−1; output ℰ of `outI` (`Exported |ds|`), the
+context `expTo` (segments exported in order). Hypotheses beyond `run_fixed`: the export count below 2⁶³ at
+the start; ≤ 2²⁶ segments of < 2³⁰ octets per `Export` (`export_elem_bigC`'s bounds).
+
 ### Next
 - Top level: the prologue to 5042 with `PInv 0` (decode, `IntoIter` built, output `Vec::new`), the loop over
   per-kind steps (`LoopG.loop` with the pass-through steps and, once unblocked, the handlers), `exit_run`, the

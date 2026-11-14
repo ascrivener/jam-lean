@@ -127,7 +127,7 @@ lp = rep(lp, '(μA : Memory) (sA : State) (spA T W args ret t v5 v6 M C : Nat)',
 lp = rep(lp, '∀ ts, WrLoop p P R env pb S0 S1 μA sA spA T W args ret t v5 v6 M C ts', '∀ ts, WrLoopT p P R env pb S0 S1 μA sA spA T W args ret t v5 v6 M C bsf ts')
 lp = rep(lp, 'intro c i cap len ω μ x s H hba hs KA hF hro hTm hc0 hc1 h1 h6 _ _ _', 'intro c i cap len ω μ x s H hba hs KA hF hro hTm hc0 hc1 h1 h6 _ _ _ txt htx')
 lp = rep(lp, """      e0, e1, e5, e6, e7⟩
-  | cons""", """      e0, e1, e5, e6, e7, by rw [Nat.add_zero, htx]; simp [ttext]⟩
+  | cons""", """      e0, e1, e5, e6, e7, by simp only [ttext, List.append_nil, Nat.add_zero]; exact htx⟩
   | cons""")
 lp = rep(lp, 'intro c i cap len ω μ x s H hba hs KA hF hro hTm hc0 hc1 h1 h6 hA hi hn', 'intro c i cap len ω μ x s H hba hs KA hF hro hTm hc0 hc1 h1 h6 hA hi hn txt htx')
 lp = rep(lp, 'rcases wr_item (p := p)', 'rcases wr_item_text (p := p)')
@@ -165,8 +165,8 @@ fw = rep(fw, """      ((rdN_frame (μ := μ) (μ' := μ1) (fun j hj => by
         rw [show W + 16 + j = W + (16 + j) by omega, fr1 _ (by omega) (Or.inr (by omega))])).trans hs.rl) hs.le
   | cons it ts =>""", """        ((rdN_frame (μ := μ) (μ' := μ1) (fun j hj => by
           rw [show W + 16 + j = W + (16 + j) by omega, fr1 _ (by omega) (Or.inr (by omega))])).trans hs.rl) hs.le
-    · rw [Nat.add_zero, rdN_frame (μ := μ) (μ' := μ1) (fun j hj => fr1 _ (by omega) (Or.inr (by omega))), ← htx]
-      simp only [ttext, List.append_nil]
+    · simp only [ttext, List.append_nil, Nat.add_zero]
+      rw [rdN_frame (μ := μ) (μ' := μ1) (fun j hj => fr1 _ (by omega) (Or.inr (by omega))), ← htx]
       exact readN_congr2 fun j hj => fr1 _ (by omega) (Or.inl (by omega))
   | cons it ts =>""")
 # cons
@@ -191,9 +191,15 @@ fw = rep(fw, """        (by omega) hn with
       ⟨ω', μ', x', s', cap', n, hn', run', H', hb', hs', hc1', hc2', K', g0, g1, g5, g6, g7, gT⟩ | hx
     · refine Or.inl ⟨ω', μ', x', s', cap', n, hn', (run1.trans run').mono (by omega), H', hb', hs', hc1', hc2',
         ?_, g0, by rw [g1, show S - 96 + 96 = S by omega], g5, g6, g7, ?_⟩
-      swap
+      · have := K1.trans'""")
+fw = rep(fw, """      · have := K1.trans' (K'.lift (sp' := S) (E' := fun a => W ≤ a ∧ a < W + 24) (by omega) (fun a h h' => by
+        unfold wrE at h; omega))
+      rwa [Nat.max_self] at this
+    · exact Or.inr ((Exhausts.pre run1 hx).mono (by omega))""", """      · have := K1.trans' (K'.lift (sp' := S) (E' := fun a => W ≤ a ∧ a < W + 24) (by omega) (fun a h h' => by
+          unfold wrE at h; omega))
+        rwa [Nat.max_self] at this
       · rw [gT, ttext_congr (it :: ts) _ (by omega) (fun a ha => fr1 a (by omega) (Or.inl (by omega)))]
-      have := K1.trans'""")
+    · exact Or.inr ((Exhausts.pre run1 hx).mono (by omega))""")
 fw = '''/-- **`core::fmt::write` into a `String`, with the text** (64495): `fmt_write` on `ReallocCopyOk`,
     the arguments' functions `ArgOkT` with texts `bsf`; the `String`, whose `len` octets were `txt`,
     then holds `txt ++ ttext μ tp ts bsf 0`: the template's literals and the arguments' texts in

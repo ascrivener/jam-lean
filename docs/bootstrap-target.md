@@ -600,6 +600,12 @@ Effort is relative: S < M < L < XL. Steps 0, 1 and 9 involve no binary.
   - **Later obligation: an allocation failure ends in ☇ with no exports.** The milestone's third outcome is
     `ExhaustsHeap` alone (the run reaches a failed allocation). That the run then traps (panic = abort: each null
     check falls into a `trap`), so Ψ_R's result is ☇ with no exports, is not yet proved; T1 keeps the full claim.
+    Two routes: (a) thread a stronger failure predicate (`ExhaustsT`: a failed allocation followed by the
+    caller's `trap`) through every lemma that now returns `ExhaustsX`, in the decoders, the arguments' parse,
+    the fmt summaries and refine's own pieces, with one short tail lemma per null-check site (about 12–15 sites
+    on the milestone path, plus the fmt summaries' own allocations): about 1–2 session-days; or (b) a
+    whole-program lemma that every return from 40611, 40821 or 33055 with ω₇ = 0 lands on a null check that
+    traps, from a kernel-checked table of the allocators' return sites (to be scoped).
 - **M2:** T1 for every payload (the real decoder, quirk Q1), then T1′ and S2–S4.
 - **M3:** T2 for operands whose instructions are among `Checkpoint`, `Solicit`, `Forget`,
   `DeleteItems`, `Yield` and `Transfer`, plus transfers. This brings in the ring, the results

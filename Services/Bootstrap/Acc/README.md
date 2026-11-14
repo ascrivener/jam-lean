@@ -1,5 +1,69 @@
 # Bootstrap's accumulate: entry, control flow and checkpoints
 
+## Handoff: T2 inputs, items loop and `on_transfer` (paused 2026-11-14)
+
+**State.** Branch `claude/bootstrap-t2-inputs-wip`, merged with main at 8d85577. All of the
+following was sorry-free with clean axioms on the branch before that merge. The rebuild of the WIP's
+33 own modules on the merged tree was still running at the pause. It is **not yet confirmed** after
+the merge, so the first step is to rebuild them (list below).
+
+**On main already.** #158 (`Acc/Impl/`: `Impl`, `psiA_of_impl`), #152 (inputs decode 6630 → 6674),
+#150 (zeroed alloc, `HeapCtxL`), #165 (`KeepROAcc`).
+
+**Open PR.** #166 (`claude/bootstrap-t2-wrappers` → main, head 090185b). It holds the SDK wrappers
+`get_call` / `set_call` / `remove`, `GrowS`, `HeapL`, `RoData` and the `Impl` loop and `QtoS`. Main is
+merged in and its 12 modules build locally. CI was running at the pause. When it is green: squash-merge
+it, then tell Handlers A (session_017ptjPAYQLcfsxukAeywyqn) that #186 can go.
+
+**Only on WIP (proved):**
+- `Acc/Items/`: Exit (`items_end`, `items_halt`), Operand (`op_pre`, `op_mid`).
+- `Acc/Start.lean`.
+- `Acc/Transfer/`, the whole of `on_transfer`'s segments. Composed calls:
+  - `gk_call` (copied-key `get`);
+  - `sk_call` (copied-key `set`, under `YIn`, with `FreeStepsH.keepY`);
+  - `enc_call` (the record ℰ₄(s) ++ ℰ₈(a) ++ memo).
+  
+  Straight-line segments: `Tail`, `Tail2`, `Tail3` (log line), `LogS` (`log` under accContractS),
+  Count / ReadShort.
+- "transfer-count" in `accRoBytes`; `bootstrapcheck` passes.
+
+**Named hypotheses (`Transfer/Hyp.lean`), owned by other sessions:**
+- `KeyFmt` (format! "transfer{n}" at 7792, text stated) and `Utf8Call` (from_utf8 at 7447): the
+  executor session (session_017ptjPEK6kFj3WH6ukoPJ2m). They asked for read-only data premises: the
+  template at 66607, the digit table at 70844 and the vtable. When they send the form, add it to
+  `KeyFmt` and `accRoBytes`.
+- `LogFmt` (the log format! at 7692): the log-sites handoff. Formatters 2800 → dec32, 2804 → dec64,
+  678 → 17596 (String Display, needs ArgOk).
+
+**Next steps, in order:**
+1. Rebuild the WIP modules on the merged tree and fix any breakage (`git diff --name-only origin/main`
+   → modules).
+2. Merge #166 when green, then notify Handlers A.
+3. `get`'s [2³⁶, 2³⁷ − 32] band. #169 is on main: `AllocHuge.alloc_impl_huge_callG`, which needs
+   `2^25 ≤ req % 2^32`. Prove this band as the `heap` abort in `GetCall` and drop the TODO.
+4. Compose `on_transfer` as `Impl … (Spec.onTransfer s a m)` from `gk_call`, the count decode, `sk_call`,
+   `Tail`, the log line (`Utf8Call`, `LogFmt`, `logS`), `KeyFmt`, `enc_call` and `Tail2`. Its aborts:
+   `heap` (allocations at 3820 / 48047 / 4002 / 15363 / 15362 / 34178 and Exhausts), and `orPanic`
+   (FULL at 7386 / 7919 → 15361).
+5. The items-loop skeleton (`Impl.forIn` over the inputs, loop head 6766, frame sp as at 6674). Its
+   operand arm calls the Vec session's output decode at 7073 (in progress; success and Exhausts; the
+   decode-error branch is the open obligation "output decode failure contract") and Handlers A's rows
+   8, 9 and 11.
+6. Define `AccAbort` (`heap` including tooLong; named quirks) and the `ValuesFit` WF predicate, then
+   state T2.
+
+**Open decisions:**
+- remove-on-FULL. Pending with Adam. Recommendation: `ASem.step .remove` panics on FULL, with quirk
+  Q18.
+- The output decode's failure branch. Decided: it is an open obligation to prove, not a T2
+  assumption. A local premise on the operand arm is allowed meanwhile.
+
+**Other sessions:**
+- Vec (session_017ptjPF1zNcwuoS6FTtV6ZC): 7073 decode, `claude/decode-heaphost`.
+- Executor: `KeyFmt`, `Utf8Call`.
+- Handlers A: rows 8, 9 and 11. Their copies of the heap lemmas live in `Handlers/HeapKeep.lean`.
+- Log sites: `LogFmt`.
+
 This page maps the accumulate entry of `services/bootstrap/jam-bootstrap-service.jam`, as
 groundwork for T2. Every address is a PVM instruction index in the blob. It was read off the
 blob as follows:

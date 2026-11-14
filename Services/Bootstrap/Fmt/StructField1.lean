@@ -5,9 +5,9 @@ import Services.Bootstrap.Fmt.DebugStruct
 # `Formatter::debug_struct_field1_finish` (62816), frame-only, plain options
 
 `debug_struct1`: `name { field: value }`. The struct's name is nl > 0 octets of read-only data at
-nm, the field's name fnl octets at fnm; the value is reached through a slot v holding its address a,
-with its `Debug` vtable vt passed on the caller's stack (the word at sp) and its `fmt` resolving to
-e with `RefOk`. At most nl + fnl + M + 7 octets; the text is not stated.
+nm, the field's name fnl octets at fnm; the value is passed as v (`ArgOk` at v: the value, or a slot holding
+its address, `RefOk.toArgOk`), with its `Debug` vtable vt on the caller's stack (the word at sp)
+and its `fmt` resolving to e. At most nl + fnl + M + 7 octets; the text is not stated.
 -/
 
 namespace Services.Bootstrap.Fmt
@@ -23,8 +23,8 @@ variable {X : Type} {R : HostRel X}
 /-- **`Formatter::debug_struct_field1_finish`** (62816, plain options). -/
 theorem debug_struct1 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
     (pb S0 S1 Z : Nat) (hZ : 600 ≤ Z) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
-    (μA : Memory) (sA : State) (spA e a M C fn : Nat) (hR : RefOk p P R env pb S0 S1 Z μA sA spA e a M C)
-    (x : X) (ω : Regs) (μ : Memory) (s : State) (sp F W nm nl fnm fnl v vt cap len ret t v5 v6 : Nat)
+    (μA : Memory) (sA : State) (spA e M C fn : Nat) (x : X) (ω : Regs) (μ : Memory) (s : State)
+    (sp F W nm nl fnm fnl v vt cap len ret t v5 v6 : Nat) (hV : ArgOk p P R env pb S0 S1 Z μA sA spA e v M C)
     (H : HeapCtx env pb S0 S1 μ s) (hba : s.base % 8 = 0) (hf : Fmtr sA s μ F W cap len)
     (KA : Keeps pb spA (fun _ => False) sA μA μ s)
     (h0 : ω[0] = UInt64.ofNat ret) (h1 : ω[1] = UInt64.ofNat sp) (h5 : ω[5] = UInt64.ofNat v5)
@@ -36,14 +36,14 @@ theorem debug_struct1 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P]
     (rvt : rdN μ sp 8 = vt)
     (hvt : 65536 ≤ vt ∧ vt + 32 ≤ 77144) (rfn : rdN μ (vt + 24) 8 = fn)
     (hfn : 0 < fn ∧ fn ≤ 2806 ∧ fn % 2 = 0) (hje : P.jumpTable.getD (fn / 2 - 1) 0 = e)
-    (hbe : P.isBlockStart e = true) (hslot : rdN μ v 8 = a)
+    (hbe : P.isBlockStart e = true)
     (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t)
     (hbt : P.isBlockStart t = true)
     (hsp : S0 + Z + 168 ≤ sp ∧ sp % 8 = 0 ∧ 2147483648 + Z + 168 ≤ sp) (hA : sp ≤ spA ∧ W + 24 ≤ spA)
     (hs8 : sp + 8 ≤ S1) (hW8 : sp + 8 ≤ W)
     (hW : sp ≤ W ∧ W + 24 ≤ S1)
     (hF : sp ≤ F ∧ F + 24 ≤ S1 ∧ (F + 24 ≤ W ∨ W + 24 ≤ F))
-    (hv : sp ≤ v ∧ v + 8 ≤ S1 ∧ (v + 8 ≤ W ∨ W + 24 ≤ v)) (hn : len + nl + fnl + M + 7 < 134217728) :
+    (hvv : v < 18446744073709551616) (hn : len + nl + fnl + M + 7 < 134217728) :
     (∃ ω' μ' x' s' cap' n, n ≤ nl + fnl + M + 7 ∧
       FreeStepsH p R 62816 ω μ x t ω' μ' x' (7 * n + 2 * (cap' - cap) + C + 10400) ∧
       HeapCtx env pb S0 S1 μ' s' ∧ s'.base = s.base ∧ Fmtr sA s' μ' F W cap' (len + n) ∧ cap ≤ cap' ∧
@@ -117,17 +117,15 @@ theorem debug_struct1 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P]
   have hro3 : ∀ a, a < 196608 → μ3.read a = μ.read a := fun a ha =>
     K13.ro a (by omega) (Or.inl (by unfold pageSize; omega)) (H.ro a ha)
   have rfn3 : rdN μ3 (vt + 24) 8 = fn := by rw [rdN_frame (fun j hj => hro3 _ (by omega))]; exact rfn
-  have hslot3 : rdN μ3 v 8 = a := by
-    rw [rdN_frame (fun j hj => K13.hi _ (by omega) (by omega) (by omega))]; exact hslot
   have hs3 : s2.base % 8 = 0 := hb2 ▸ hba
-  rcases debug_field (p := p) (P := P) (R := R) env pb S0 S1 Z hZ HA HR μA sA spA e a M C fn hR x2 ω3 μ3 s2
-      (sp - 56) F W (sp - 56 + 16) fnm fnl v vt cap2 (len + nl) 2664 62878 fnm F 0 H3 hs3 hf3 KA3
+  rcases debug_field (p := p) (P := P) (R := R) env pb S0 S1 Z hZ HA HR μA sA spA e M C fn x2 ω3 μ3 s2
+      (sp - 56) F W (sp - 56 + 16) fnm fnl v vt cap2 (len + nl) 2664 62878 fnm F 0 hV H3 hs3 hf3 KA3
       ⟨dF, by rw [show sp - 56 + 16 + 8 = sp - 56 + 24 by omega]; exact dr,
         by rw [show sp - 56 + 16 + 9 = sp - 56 + 25 by omega]; exact dh⟩
-      (Or.inl rfl) c0 c1 c5 c6 c7 c8 c9 c10 c11 ⟨by omega, by omega⟩ hfnm hvt rfn3 hfn hje hbe hslot3
+      (Or.inl rfl) c0 c1 c5 c6 c7 c8 c9 c10 c11 ⟨by omega, by omega⟩ hfnm hvt rfn3 hfn hje hbe
       (by decide) jte_1331 bs_62878 ⟨by omega, by omega, by omega⟩ ⟨by omega, hA.2, by omega⟩ ⟨by omega, hW.2⟩
       ⟨by omega, hF.2.1, hF.2.2⟩ ⟨by omega, by omega, Or.inl (by omega), Or.inl (by omega)⟩
-      ⟨by omega, hv.2.1, hv.2.2⟩ (by omega) with
+      hvv (by omega) with
     ⟨ω4, μ4, x4, s4, cap4, n4, hn4, run4, H4, hb4, hf4, hc3, hc4, hd4, K4, d0, d1, d5, d6, d7⟩ | hx
   rotate_left
   · refine Or.inr ((Exhausts.pre ((run1.trans run2).trans run3) hx).mono ?_)

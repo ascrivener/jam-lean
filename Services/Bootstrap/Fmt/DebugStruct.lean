@@ -6,7 +6,8 @@ import Services.Bootstrap.Fmt.DebugTuple
 
 `debug_field`: on a `DebugStruct` at D (laid out as a `DebugList`, `DL`) with h ∈ {0, 1} fields
 written, a field named by nl octets of read-only data at nm, with ω₁₀ the address v of a slot
-holding the field's address a and ω₁₁ its `Debug` vtable vt (`fmt` resolving to e with `RefOk`):
+the value's address v (as `ArgOk` states it: the value itself, or a slot holding its address, see
+`RefOk.toArgOk`) and ω₁₁ its `Debug` vtable vt (`fmt` resolving to e):
 `" { "` (h = 0) or `", "`, the name, `": "`, the value. The struct then has a field. At most
 nl + M + 5 octets; the text is not stated.
 -/
@@ -27,11 +28,21 @@ theorem keepT112 {pb S0 S1 T W : Nat} {env : RefineHost.Env} {s₀ s' : State} {
     (hW : T + 112 ≤ W ∧ W < 4294967296) : ∀ o, o + 8 ≤ 112 → rdN μ' (T + o) 8 = rdN μ (T + o) 8 := fun o ho =>
   rdN_frame (fun j hj => K.hi _ (by omega) (by omega) (by omega))
 
+/-- **A field reached through a slot** (`RefOk`): an `ArgOk` at the slot v, for a slot at or above
+    spA holding the field's address a in the caller's memory. -/
+theorem RefOk.toArgOk {p : ByteArray} {P : Program} {env : RefineHost.Env} {pb S0 S1 Z : Nat} {μA : Memory}
+    {sA : State} {spA e a M C v : Nat} (h : RefOk p P R env pb S0 S1 Z μA sA spA e a M C)
+    (hv : spA ≤ v ∧ v + 8 ≤ S1) (ra : rdN μA v 8 = a) : ArgOk p P R env pb S0 S1 Z μA sA spA e v M C := by
+  intro ω μ x s sp F W cap len ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hWA hF hn
+  have := H.hS1
+  exact h ω μ x s sp F W cap len ret t v5 v6 v H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hWA hF
+    hn ⟨by omega, hv.2, Or.inr (by omega)⟩ (by rw [rdN_frame (fun j hj => K.hi _ (by omega) (by omega) id)]; exact ra)
+
 /-- **`DebugStruct::field`** (65057, plain options). -/
 theorem debug_field {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
     (pb S0 S1 Z : Nat) (hZ : 600 ≤ Z) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
-    (μA : Memory) (sA : State) (spA e a M C fn : Nat) (hR : RefOk p P R env pb S0 S1 Z μA sA spA e a M C)
-    (x : X) (ω : Regs) (μ : Memory) (s : State) (sp F W D nm nl v vt cap len ret t v5 v6 h : Nat)
+    (μA : Memory) (sA : State) (spA e M C fn : Nat) (x : X) (ω : Regs) (μ : Memory) (s : State)
+    (sp F W D nm nl v vt cap len ret t v5 v6 h : Nat) (hV : ArgOk p P R env pb S0 S1 Z μA sA spA e v M C)
     (H : HeapCtx env pb S0 S1 μ s) (hba : s.base % 8 = 0) (hf : Fmtr sA s μ F W cap len)
     (KA : Keeps pb spA (fun _ => False) sA μA μ s) (hd : DL μ D F h) (hh : h = 0 ∨ h = 1)
     (h0 : ω[0] = UInt64.ofNat ret) (h1 : ω[1] = UInt64.ofNat sp) (h5 : ω[5] = UInt64.ofNat v5)
@@ -41,14 +52,14 @@ theorem debug_field {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (
     (hnm : 65536 ≤ nm ∧ nm + nl + 24 ≤ 77144)
     (hvt : 65536 ≤ vt ∧ vt + 32 ≤ 77144) (rfn : rdN μ (vt + 24) 8 = fn)
     (hfn : 0 < fn ∧ fn ≤ 2806 ∧ fn % 2 = 0) (hje : P.jumpTable.getD (fn / 2 - 1) 0 = e)
-    (hbe : P.isBlockStart e = true) (hslot : rdN μ v 8 = a)
+    (hbe : P.isBlockStart e = true)
     (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t)
     (hbt : P.isBlockStart t = true)
     (hsp : S0 + Z + 112 ≤ sp ∧ sp % 8 = 0 ∧ 2147483648 + Z + 112 ≤ sp) (hA : sp ≤ spA ∧ W + 24 ≤ spA ∧ D + 24 ≤ spA)
     (hW : sp ≤ W ∧ W + 24 ≤ S1)
     (hF : sp ≤ F ∧ F + 24 ≤ S1 ∧ (F + 24 ≤ W ∨ W + 24 ≤ F))
     (hD : sp ≤ D ∧ D + 24 ≤ S1 ∧ (D + 24 ≤ W ∨ W + 24 ≤ D) ∧ (D + 24 ≤ F ∨ F + 24 ≤ D))
-    (hv : sp ≤ v ∧ v + 8 ≤ S1 ∧ (v + 8 ≤ W ∨ W + 24 ≤ v)) (hn : len + nl + M + 5 < 134217728) :
+    (hvv : v < 18446744073709551616) (hn : len + nl + M + 5 < 134217728) :
     (∃ ω' μ' x' s' cap' n, n ≤ nl + M + 5 ∧
       FreeStepsH p R 65057 ω μ x t ω' μ' x' (7 * n + 2 * (cap' - cap) + C + 6200) ∧
       HeapCtx env pb S0 S1 μ' s' ∧ s'.base = s.base ∧ Fmtr sA s' μ' F W cap' (len + n) ∧ cap ≤ cap' ∧
@@ -158,12 +169,10 @@ theorem debug_field {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (
     ((w16 24 (by omega)).trans s24) rfn6 hfn hje hbe
     (fun a h1 h2 => Memory.readable_of_writable (hst6 a (by omega) (by omega)))
     (fun a h1 h2 => hf6.vrd a (by omega) (by omega))
-  have hslot6 : rdN μ6 v 8 = a := by
-    rw [rdN_frame (fun j hj => K16.hi _ (by omega) (by omega) (by omega))]; exact hslot
-  rcases hR ω7 μ6 x6 s6 (sp - 112) F W cap6 (len + (3 - h) + nl + 2) 2744 65242 D (ω7[6].toNat) v H6
+  rcases hV ω7 μ6 x6 s6 (sp - 112) F W cap6 (len + (3 - h) + nl + 2) 2744 65242 D (ω7[6].toNat) H6
       (hb6 ▸ hb4 ▸ hb2 ▸ hba) KA6 hf6 i0 i1 i5 (by simp) i7 i8 (by omega) (UInt64.toNat_lt _)
       (by decide) jte_1371 bs_65242 ⟨by omega, by omega, by omega⟩ (by omega) ⟨by omega, by omega⟩ hA.2.1
-      ⟨by omega, hF.2.1, hF.2.2⟩ (by omega) ⟨by omega, hv.2.1, hv.2.2⟩ hslot6 with
+      ⟨by omega, hF.2.1, hF.2.2⟩ (by omega) with
     ⟨ω8, μ8, x8, s8, cap8, n8, hn8, run8, H8, hb8, hf8, hc7, hc8, K8, j0, j1, j5, j6, j7⟩ | hx
   rotate_left
   · refine Or.inr ((Exhausts.pre ((((((run1.trans run2).trans run3).trans run4).trans run5).trans run6).trans run7)

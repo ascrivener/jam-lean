@@ -406,8 +406,10 @@ theorem run_args_gen (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHo
       exact hhp1 a h1 h2
     have sP10 : μ10.readN (4278124544 + (Blob.encodeNat C).length + (Blob.encodeNat I).length +
         (Blob.encodeNat S).length + (Blob.encodeNat Y).length) Y = y := by
-      rw [Memory.readN_congr (fun j hj => arg10 _ (by omega) (by omega)), ← hy]
-      exact sP
+      rw [Memory.readN_congr (fun j hj => arg10 _ (by omega) (by omega))]
+      have := sP
+      rw [hy] at this
+      exact this
     have r10 : μ10.readN 4278058304 8 = Num.encodeLE 8 (4278124544 + (Blob.encodeNat C).length +
         (Blob.encodeNat I).length + (Blob.encodeNat S).length + (Blob.encodeNat Y).length) := by
       rw [d10_r0]

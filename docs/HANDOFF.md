@@ -46,7 +46,7 @@ Next PRs to open, from wip branches:
 
 | Line | Branch @ commit | Handoff | State |
 |---|---|---|---|
-| T1 top level | `claude/bootstrap-t1-exec-wip` | `Services/Bootstrap/Refine/README.md` | `refine_milestone` proved. Edits in progress: `S0 + 7560 ≤ M` in the three Fmt hypotheses (3030563, building), and the `FmtRO` read-only premise. |
+| T1 top level | `claude/bootstrap-t1-exec-wip` @ 7632cf3 | `Services/Bootstrap/Refine/README.md` ("PAUSED 2026-11-14") | `refine_milestone` builds, with `S0 + 7560 ≤ M` and the read-only premise in the three Fmt hypotheses. To do: re-run `#print axioms refine_milestone`; add the `FmtRO vb.ro.toList` conjunct to `VendoredFacts` once fmt's FmtRO PR lands; open the milestone PR after #182. |
 | T2 inputs | `claude/bootstrap-t2-inputs-wip` @ ec034c3 | `Services/Bootstrap/Acc/README.md` ("Handoff: T2 inputs…") | Items loop and `on_transfer`. Main merged in; **33 modules not rebuilt**. |
 | T2 handlers A | `claude/bootstrap-t2-handlers-a-wip` @ f9b29af | `Services/Bootstrap/Acc/Handlers/README.md` | `kb_call` (33843) and `kf_call` (51243) built. `ResStore.lean` (36170) is an unchecked draft. Row 8 needs #166. |
 | Vec / Decode | `claude/decode-heaphost` @ 85782dd | `Services/Bootstrap/Decode/README.md` | Generalising Decode in place to HeapHost (refine statements unchanged); **not built**. Then Encode G names for Handlers A, then 7073. |

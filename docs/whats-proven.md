@@ -158,6 +158,22 @@ An independent kernel, nanoda as vendored by
   checked by the compiled `lake build bootstrapcheck`. Unlike witness's `refine_rejects`, no
   bootstrap theorem yet discharges these hypotheses for the vendored blob in a single statement,
   and there is no gas bound, so the "or ∞" remains.
+- **Pass-through and `Export` payloads (T1c, first milestone).** `refine_milestone`
+  (`Services/Bootstrap/Refine/Milestone.lean`).
+  - *Statement:* for a work item whose code is bootstrap (`IsBootstrap`), c < 2¹⁶, i < 2¹⁶, service id
+    < 2³², and payload y = ℰ(`Instructions { is, salt }`) ⌢ rest with 1 ≤ |is| < 128 well-formed
+    instructions, each passed through (fixed-width, `Lookup` only with eager = false) or `ExportSegs`, and
+    |y| + 48 ≤ 2²⁴: `Spec.refine` under the GP refine host functions (`RSem.run`) returns some output
+    and exports, and Ψ_R's result and exports are those; or ∞ with no exports; or the run reaches a
+    failed allocation (`ExhaustsHeap`; that it then ends in ☇ is not yet proved).
+  - *Assumed:* `VendoredFacts` (the vendored blob's layout and three read-only tables; step 10 of
+    `docs/bootstrap-target.md`) and `FmtHyps` (three log / `Debug` lines: `ArgsLineOk`, `ExportFmtOk`,
+    `DebugLineOk`; to be discharged by the fmt summaries).
+  - *Not covered:* eager `Lookup`, `Import`, `RandomStorageRefine`, the variable-width instructions,
+    n ≥ 128.
+  - *Built from:* `Refine/Top.lean` (`refine_core`: the arguments' parse `ArgsAll.refine_args`, then
+    `from4680`), `Refine/RunMixed.lean` (the decode, transform loop and output), `Refine/SpecRun.lean`
+    (`Spec.refine`'s run on these payloads).
 - **The `Instructions` decode loop, for lists of `Checkpoint`.** `DecodeLoop.loop` and
   `DecodeLoop.pass` (`Services/Bootstrap/DecodeLoop.lean`).
   - *Statement:* from the loop's state after k of n elements, the loop at pc 680 decodes the

@@ -35,7 +35,7 @@ theorem run_fixed {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     (dbg : ExitRun.DebugLineOk p cap0 env pb S0 S1 (fun j bs _ => Rs j bs))
     (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State) (H : HeapCtx env pb S0 S1 μ s)
     (M q Ly r5 : Nat) (salt : List UInt8) (cp : Chunk)
-    (hn : 1 ≤ is.length ∧ is.length ≤ 70) (hM : S0 + 2848 ≤ M ∧ M + 632 ≤ S1 ∧ M % 8 = 0)
+    (hn : 1 ≤ is.length ∧ is.length ≤ 70) (hM : S0 + 7560 ≤ M ∧ M + 632 ≤ S1 ∧ M % 8 = 0)
     (hr5 : r5 < 18446744073709551616)
     (hcp : cp ∈ chunks s ∧ cp.used = true ∧ cp.addr = s.base) (hcpq : cp.addr + 32 = q)
     (hcpd : ∀ a, q ≤ a → a < q + Ly → InData cp a)

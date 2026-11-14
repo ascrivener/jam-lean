@@ -90,7 +90,8 @@ theorem body {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCode
       FreeStepsH p (refineContractK cap0 env) 4842 ω μ (ctx 0) t ω' μ' (ctx n) N ∧ HeapCtx env pb S0 S1 μ' s' ∧
       ω'[0] = UInt64.ofNat ret ∧ ω'[1] = UInt64.ofNat (M + 632) ∧ ω'[5] = UInt64.ofNat r5 ∧
       ω'[6] = UInt64.ofNat r6 ∧ ω'[7] = UInt64.ofNat buf ∧ ω'[8] = UInt64.ofNat (off enc n + 3) ∧
-      μ'.readN buf (off enc n + 3) = UInt8.ofNat n :: (out enc n ++ Num.encodeLE 2 (w % 65536))) ∨
+      μ'.readN buf (off enc n + 3) = UInt8.ofNat n :: (out enc n ++ Num.encodeLE 2 (w % 65536)) ∧
+      (∀ a, buf ≤ a → a < buf + (off enc n + 3) → μ'.readable a = true)) ∨
     ∃ N, ExhaustsX env cap0 pb p 4842 ω μ (ctx 0) N := by
   obtain ⟨hS0M, hMS1, hM2, hM8⟩ := hM
   have hS1 := H.hS1
@@ -116,8 +117,8 @@ theorem body {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCode
       (by rw [m1 _ _ (by omega)]; exact s616) (by rw [m1 _ _ (by omega)]; exact s608)
       hq' hcq hret hr5 hr6 (by rw [tab2]; exact tab) (fun a h1 h2 => by rw [rtab2 a h1 h2]; exact rtab a h1 h2)
       (by rw [dtab2]; exact dtab) (fun a h1 h2 => by rw [rdtab2 a h1 h2]; exact rdtab a h1 h2) with
-    ⟨ω3, μ3, s3, N3, buf, run3, H3, f0, f1, f5, f6, f7, f8, fo⟩ | ⟨N, hx⟩
-  · exact Or.inl ⟨ω3, μ3, s3, _, buf, pre.trans run3, H3, f0, f1, f5, f6, f7, f8, fo⟩
+    ⟨ω3, μ3, s3, N3, buf, run3, H3, f0, f1, f5, f6, f7, f8, fo, frd⟩ | ⟨N, hx⟩
+  · exact Or.inl ⟨ω3, μ3, s3, _, buf, pre.trans run3, H3, f0, f1, f5, f6, f7, f8, fo, frd⟩
   · exact Or.inr ⟨_, ExhaustsX.pre pre hx⟩
 
 end Services.Bootstrap.Refine.Body

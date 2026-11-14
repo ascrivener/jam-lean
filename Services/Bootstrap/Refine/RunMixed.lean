@@ -148,7 +148,8 @@ theorem run_mixed {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
       ω'[0] = UInt64.ofNat ret ∧ ω'[1] = UInt64.ofNat (M + 632) ∧ ω'[5] = UInt64.ofNat r5' ∧
       ω'[6] = UInt64.ofNat r6' ∧ ω'[7] = UInt64.ofNat buf ∧ ω'[8] = UInt64.ofNat (off (encOut is) is.length + 3) ∧
       μ'.readN buf (off (encOut is) is.length + 3) =
-        UInt8.ofNat is.length :: (out (encOut is) is.length ++ Num.encodeLE 2 (w % 65536))) ∨
+        UInt8.ofNat is.length :: (out (encOut is) is.length ++ Num.encodeLE 2 (w % 65536)) ∧
+      (∀ a, buf ≤ a → a < buf + (off (encOut is) is.length + 3) → μ'.readable a = true)) ∨
     ∃ N, ExhaustsX env cap0 pb p 4792 ω μ x N := by
   obtain ⟨hM0, hM1, hM8⟩ := hM
   have hS0d : S0 = 4278050816 := rfl
@@ -276,8 +277,8 @@ theorem run_mixed {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
       hc' (fun _ => ⟨Or.inl rfl, hcpq, fun e => fresh1 cp hcp.1 hcp.2.1 e⟩) hret hr5' hr6'
       (by rw [tab1]; exact tab2) (fun a h1 h2 => by rw [rtab1 a h1 h2]; exact rtab2 a h1 h2)
       (by rw [dtab1]; exact dtab) (fun a h1 h2 => by rw [rdtab1 a h1 h2]; exact rdtab a h1 h2) with
-    ⟨ω2, μ2, s2, N2, buf, run2, H2, e0, e1, e5, e6, e7, e8, eo⟩ | ⟨N, hx⟩
-  · exact Or.inl ⟨ω2, μ2, s2, _, buf, run1.trans run2, H2, e0, e1, e5, e6, e7, e8, eo⟩
+    ⟨ω2, μ2, s2, N2, buf, run2, H2, e0, e1, e5, e6, e7, e8, eo, erd⟩ | ⟨N, hx⟩
+  · exact Or.inl ⟨ω2, μ2, s2, _, buf, run1.trans run2, H2, e0, e1, e5, e6, e7, e8, eo, erd⟩
   · exact Or.inr ⟨_, ExhaustsX.pre run1 hx⟩
 
 end Services.Bootstrap.Refine.RunMixed

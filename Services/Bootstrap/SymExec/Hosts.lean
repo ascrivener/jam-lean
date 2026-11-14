@@ -145,7 +145,7 @@ theorem acc_fetch0 {cap : Nat} (h1 : 390 ≤ cap) (h2 : cap < 2 ^ 64) (env : Acc
 def progLog : Prog := { prog with hosts := logHosts }
 
 /-- Example: the `log` call at pc 4770 (BTail1 S49), through refine's contract. -/
-theorem log4770_ok : check ⟨[], [], [], [], []⟩ progLog ⟨[], []⟩ ⟨[(7, .const Result.WHAT)], []⟩ []
+theorem log4770_ok : check ⟨[], [], [], [], [], []⟩ progLog ⟨[], []⟩ ⟨[(7, .const Result.WHAT)], []⟩ []
     4770 4772 1 = true := by decide +kernel
 
 theorem log4770 {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (x : RefineCtx)

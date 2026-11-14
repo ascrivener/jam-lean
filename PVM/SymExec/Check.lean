@@ -36,6 +36,18 @@ def WrHold (E : Env) (μ : Memory) : List (Aff × Nat) → Prop
   | [] => True
   | r :: rs => (∀ t, InReg E r t → μ.writable t = true) ∧ WrHold E μ rs
 
+/-- Each rewrite (p, q) holds: p and q have the same value. -/
+def RwHold (E : Env) : List (SVal × SVal) → Prop
+  | [] => True
+  | q :: qs => q.1.eval E = q.2.eval E ∧ RwHold E qs
+
+theorem rwHold_mem {E : Env} : ∀ {l : List (SVal × SVal)}, RwHold E l → ∀ q ∈ l, q.1.eval E = q.2.eval E
+  | [], _, _, h => by cases h
+  | _ :: _, ⟨h, hs⟩, _, hq => by
+    rcases List.mem_cons.1 hq with rfl | hq
+    · exact h
+    · exact rwHold_mem hs _ hq
+
 /-- The pairs of regions of a list are disjoint. -/
 def SepHold (E : Env) : List ((Aff × Nat) × (Aff × Nat)) → Prop
   | [] => True
@@ -329,7 +341,8 @@ theorem check_sound {X : Type} {p : ByteArray} {R : HostRel X} {P : Program} {st
     (hsep : SepHold ⟨fun k => vals.getD k 0, ω, μ⟩ st.sep)
     (hr : RegsHold ⟨fun k => vals.getD k 0, ω, μ⟩ ω A.regs)
     (hc : CellsHold ⟨fun k => vals.getD k 0, ω, μ⟩ μ A.cells) (x : X)
-    (hH : HostOk R G.hosts := by exact trivial) :
+    (hH : HostOk R G.hosts := by exact trivial)
+    (hrw : RwHold ⟨fun k => vals.getD k 0, ω, μ⟩ st.rw := by exact trivial) :
     ∃ ω' μ', FreeStepsH p R start ω μ x tgt ω' μ' x k ∧
       RegsHold ⟨fun k => vals.getD k 0, ω, μ⟩ ω' T.regs ∧
       CellsHold ⟨fun k => vals.getD k 0, ω, μ⟩ μ' T.cells ∧
@@ -337,7 +350,7 @@ theorem check_sound {X : Type} {p : ByteArray} {R : HostRel X} {P : Program} {st
         μ'.read t = μ.read t) ∧ μ'.pages = μ.pages := by
   let E : Env := ⟨fun k => vals.getD k 0, ω, μ⟩
   have hpre : Pre E st :=
-    ⟨bHold_get hB, lbHold_get hLB, rdHold_mem hrd, wrHold_mem hwr, sepHold_mem hsep⟩
+    ⟨bHold_get hB, lbHold_get hLB, rdHold_mem hrd, wrHold_mem hwr, sepHold_mem hsep, rwHold_mem hrw⟩
   simp only [check, Bool.and_eq_true] at h
   obtain ⟨hok, h⟩ := h
   split at h

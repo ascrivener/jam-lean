@@ -102,6 +102,9 @@ structure Static where
   rd : List (Aff × Nat)
   wr : List (Aff × Nat)
   sep : List ((Aff × Nat) × (Aff × Nat))
+  /-- Rewrites (p, q): p and q have the same value under the assumptions (e.g. a multiply-shift
+      and the quotient it computes). Each is proved separately (`RwHold`). -/
+  rw : List (SVal × SVal) := []
 
 /-- The least value an address can have. -/
 def Aff.lo (st : Static) (a : Aff) : Int :=
@@ -278,7 +281,8 @@ def Pre (E : Env) (st : Static) : Prop :=
   (∀ k b, st.lb[k]? = some b → b ≤ E.ρ k) ∧
   (∀ r ∈ st.rd, ∀ t, InReg E r t → E.μ.readable t = true) ∧
   (∀ r ∈ st.wr, ∀ t, InReg E r t → E.μ.writable t = true) ∧
-  (∀ p ∈ st.sep, ∀ t, InReg E p.1 t → ¬ InReg E p.2 t)
+  (∀ p ∈ st.sep, ∀ t, InReg E p.1 t → ¬ InReg E p.2 t) ∧
+  (∀ q ∈ st.rw, q.1.eval E = q.2.eval E)
 
 /-- A machine state (ω, μ) is described by σ. -/
 def Inv (E : Env) (σ : SState) (ω : Regs) (μ : Memory) : Prop :=
@@ -436,8 +440,14 @@ def scond2 (op : TwoRegOffsetOp) (v w : SVal) : Option Bool :=
   | .branchLtS => if nn then ltU st v w else none
   | .branchGeS => if nn then (ltU st v w).map (!·) else none
 
+/-- A value after the first rewrite of `st.rw` that applies to it. -/
+def rwv (v : SVal) : SVal :=
+  match st.rw.find? (·.1 == v) with
+  | some q => q.2
+  | none => v
+
 /-- The value of register `r`, as `(ω_r).toNat`. -/
-def rdv (σ : SState) (r : Nat) : SVal := mkMod st (σ.regs.getD r (.const 0)) two64
+def rdv (σ : SState) (r : Nat) : SVal := mkMod st (rwv st (σ.regs.getD r (.const 0))) two64
 
 def setv (σ : SState) (r : Nat) (v : SVal) : SState := { σ with regs := σ.regs.set r v }
 

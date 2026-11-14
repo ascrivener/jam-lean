@@ -94,7 +94,7 @@ theorem wrHold_env {vals : List Nat} {ω₁ ω₂ : Regs} {μ₁ μ₂ μ : Memo
 /-- The static part a segment runs under: the bounds and separations of the chain, the regions of
     the cut it starts from. -/
 def segStatic (ub lb : List Nat) (sep : List ((Aff × Nat) × (Aff × Nat))) (A : Cut) : Static :=
-  ⟨ub, lb, A.rd, A.wr, sep⟩
+  ⟨ub, lb, A.rd, A.wr, sep, []⟩
 
 /-- **The check of one segment** from cut `A` at `start` to cut `B` at `tgt`, `k` steps: both cuts
     closed, the run entails `B` within `B.frame`, `B`'s regions lie within `A`'s, and `B.frame`
@@ -141,7 +141,8 @@ theorem seg_sound {X : Type} {p : ByteArray} {R : HostRel X} {P : Program} {G : 
   obtain ⟨ω', μ', hrun, hr', hc', hfr', hp'⟩ := check_sound (R := R) hck hG vals hB hLB ω μ
     hrdA hwrA (hsep ω μ) hr hc x hH
   have hpre : Pre (env vals ω μ) (segStatic ub lb sep A) :=
-    ⟨bHold_get hB, lbHold_get hLB, rdHold_mem hrdA, wrHold_mem hwrA, sepHold_mem (hsep ω μ)⟩
+    ⟨bHold_get hB, lbHold_get hLB, rdHold_mem hrdA, wrHold_mem hwrA, sepHold_mem (hsep ω μ),
+      fun q hq => by simp [segStatic] at hq⟩
   refine ⟨ω', μ', hrun, regsHold_env hcb1 hr', cellsHold_env hcb2 hc', ?_, ?_, ?_, ?_⟩
   · -- B's readable regions: within A's, whose pages μ' keeps
     have : RdHold (env vals ω μ) μ' B.rd := rdHold_of_any (L := A.rd ++ A.wr) (fun r hr t ht => by

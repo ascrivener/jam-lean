@@ -26,7 +26,7 @@ theorem fin_0 {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [HasCode 
     (hrv : ∀ t, v ≤ t → t < v + 4 → μ.readable t = true)
     (hrt : ∀ t, 70844 ≤ t → t < 71044 → μ.readable t = true)
     (hw : ∀ t, sp - 72 ≤ t → t < sp → μ.writable t = true) (hs : v + 4 ≤ sp - 72 ∨ sp ≤ v) :
-    ∃ ω' μ', FreeStepsH p R 68146 ω μ x 61857 ω' μ' x 123 ∧
+    ∃ ω' μ', FreeStepsH p R 68146 ω μ x 61857 ω' μ' x 123 ∧ (decB y).length ≤ 10 ∧
       ω'[0] = UInt64.ofNat 2802 ∧ ω'[1] = UInt64.ofNat (sp - 72) ∧ ω'[7] = UInt64.ofNat F ∧
       ω'[11] = UInt64.ofNat (sp - 24 - (decB y).length) ∧ ω'[12] = UInt64.ofNat (decB y).length ∧
       μ'.readN (sp - 24 - (decB y).length) (decB y).length = decB y ∧
@@ -41,7 +41,7 @@ theorem fin_0 {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [HasCode 
   simp only [T_0, SVal.eval, Aff.eval, vals_0, List.getD_cons_succ, List.getD_cons_zero] at s8 s16 s24
   simp only [T_0, SVal.eval, Aff.eval, vals_0, List.getD_cons_succ, List.getD_cons_zero] at g0 g1 g7 g11 g12
   rw [hl]
-  refine ⟨ω', μ', run.mono (by decide), g0, ?_, g7, ?_, g12, by rw [show sp - 24 - 1 = sp - 25 by omega]; exact hd,
+  refine ⟨ω', μ', run.mono (by decide), by decide, g0, ?_, g7, ?_, g12, by rw [show sp - 24 - 1 = sp - 25 by omega]; exact hd,
     by rw [show sp - 8 = ((sp : Int) + -8).toNat by omega]; exact s8,
     by rw [show sp - 16 = ((sp : Int) + -16).toNat by omega]; exact s16,
     by rw [show sp - 24 = ((sp : Int) + -24).toNat by omega]; exact s24, hfr, hpg⟩
@@ -60,7 +60,7 @@ theorem fin_1 {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [HasCode 
     (hrv : ∀ t, v ≤ t → t < v + 4 → μ.readable t = true)
     (hrt : ∀ t, 70844 ≤ t → t < 71044 → μ.readable t = true)
     (hw : ∀ t, sp - 72 ≤ t → t < sp → μ.writable t = true) (hs : v + 4 ≤ sp - 72 ∨ sp ≤ v) :
-    ∃ ω' μ', FreeStepsH p R 68146 ω μ x 61857 ω' μ' x 123 ∧
+    ∃ ω' μ', FreeStepsH p R 68146 ω μ x 61857 ω' μ' x 123 ∧ (decB y).length ≤ 10 ∧
       ω'[0] = UInt64.ofNat 2802 ∧ ω'[1] = UInt64.ofNat (sp - 72) ∧ ω'[7] = UInt64.ofNat F ∧
       ω'[11] = UInt64.ofNat (sp - 24 - (decB y).length) ∧ ω'[12] = UInt64.ofNat (decB y).length ∧
       μ'.readN (sp - 24 - (decB y).length) (decB y).length = decB y ∧
@@ -75,7 +75,7 @@ theorem fin_1 {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [HasCode 
   simp only [T_1, SVal.eval, Aff.eval, vals_1, List.getD_cons_succ, List.getD_cons_zero] at s8 s16 s24
   simp only [T_1, SVal.eval, Aff.eval, vals_1, List.getD_cons_succ, List.getD_cons_zero] at g0 g1 g7 g11 g12
   rw [hl]
-  refine ⟨ω', μ', run.mono (by decide), g0, ?_, g7, ?_, g12, by rw [show sp - 24 - 1 = sp - 25 by omega]; exact hd,
+  refine ⟨ω', μ', run.mono (by decide), by decide, g0, ?_, g7, ?_, g12, by rw [show sp - 24 - 1 = sp - 25 by omega]; exact hd,
     by rw [show sp - 8 = ((sp : Int) + -8).toNat by omega]; exact s8,
     by rw [show sp - 16 = ((sp : Int) + -16).toNat by omega]; exact s16,
     by rw [show sp - 24 = ((sp : Int) + -24).toNat by omega]; exact s24, hfr, hpg⟩
@@ -94,7 +94,7 @@ theorem fin_10 {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [HasCode
     (hrv : ∀ t, v ≤ t → t < v + 4 → μ.readable t = true)
     (hrt : ∀ t, 70844 ≤ t → t < 71044 → μ.readable t = true)
     (hw : ∀ t, sp - 72 ≤ t → t < sp → μ.writable t = true) (hs : v + 4 ≤ sp - 72 ∨ sp ≤ v) :
-    ∃ ω' μ', FreeStepsH p R 68146 ω μ x 61857 ω' μ' x 123 ∧
+    ∃ ω' μ', FreeStepsH p R 68146 ω μ x 61857 ω' μ' x 123 ∧ (decB y).length ≤ 10 ∧
       ω'[0] = UInt64.ofNat 2802 ∧ ω'[1] = UInt64.ofNat (sp - 72) ∧ ω'[7] = UInt64.ofNat F ∧
       ω'[11] = UInt64.ofNat (sp - 24 - (decB y).length) ∧ ω'[12] = UInt64.ofNat (decB y).length ∧
       μ'.readN (sp - 24 - (decB y).length) (decB y).length = decB y ∧
@@ -105,11 +105,11 @@ theorem fin_10 {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [HasCode
   have hd := digits_10 hy hsp ht hc
   have hl : (decB y).length = 2 := by rw [← hd, Memory.length_readN]
   obtain ⟨g0, g1, g7, g11, g12, -⟩ := hr
-  obtain ⟨-, -, s8, s16, s24, -⟩ := hc
+  obtain ⟨-, s8, s16, s24, -⟩ := hc
   simp only [T_10, SVal.eval, Aff.eval, vals_10, List.getD_cons_succ, List.getD_cons_zero] at s8 s16 s24
   simp only [T_10, SVal.eval, Aff.eval, vals_10, List.getD_cons_succ, List.getD_cons_zero] at g0 g1 g7 g11 g12
   rw [hl]
-  refine ⟨ω', μ', run.mono (by decide), g0, ?_, g7, ?_, g12, by rw [show sp - 24 - 2 = sp - 26 by omega]; exact hd,
+  refine ⟨ω', μ', run.mono (by decide), by decide, g0, ?_, g7, ?_, g12, by rw [show sp - 24 - 2 = sp - 26 by omega]; exact hd,
     by rw [show sp - 8 = ((sp : Int) + -8).toNat by omega]; exact s8,
     by rw [show sp - 16 = ((sp : Int) + -16).toNat by omega]; exact s16,
     by rw [show sp - 24 = ((sp : Int) + -24).toNat by omega]; exact s24, hfr, hpg⟩
@@ -128,7 +128,7 @@ theorem fin_100 {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [HasCod
     (hrv : ∀ t, v ≤ t → t < v + 4 → μ.readable t = true)
     (hrt : ∀ t, 70844 ≤ t → t < 71044 → μ.readable t = true)
     (hw : ∀ t, sp - 72 ≤ t → t < sp → μ.writable t = true) (hs : v + 4 ≤ sp - 72 ∨ sp ≤ v) :
-    ∃ ω' μ', FreeStepsH p R 68146 ω μ x 61857 ω' μ' x 123 ∧
+    ∃ ω' μ', FreeStepsH p R 68146 ω μ x 61857 ω' μ' x 123 ∧ (decB y).length ≤ 10 ∧
       ω'[0] = UInt64.ofNat 2802 ∧ ω'[1] = UInt64.ofNat (sp - 72) ∧ ω'[7] = UInt64.ofNat F ∧
       ω'[11] = UInt64.ofNat (sp - 24 - (decB y).length) ∧ ω'[12] = UInt64.ofNat (decB y).length ∧
       μ'.readN (sp - 24 - (decB y).length) (decB y).length = decB y ∧
@@ -139,11 +139,11 @@ theorem fin_100 {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [HasCod
   have hd := digits_100 hy hsp ht hc
   have hl : (decB y).length = 3 := by rw [← hd, Memory.length_readN]
   obtain ⟨g0, g1, g7, g11, g12, -⟩ := hr
-  obtain ⟨-, -, -, s8, s16, s24, -⟩ := hc
+  obtain ⟨-, -, s8, s16, s24, -⟩ := hc
   simp only [T_100, SVal.eval, Aff.eval, vals_100, List.getD_cons_succ, List.getD_cons_zero] at s8 s16 s24
   simp only [T_100, SVal.eval, Aff.eval, vals_100, List.getD_cons_succ, List.getD_cons_zero] at g0 g1 g7 g11 g12
   rw [hl]
-  refine ⟨ω', μ', run.mono (by decide), g0, ?_, g7, ?_, g12, by rw [show sp - 24 - 3 = sp - 27 by omega]; exact hd,
+  refine ⟨ω', μ', run.mono (by decide), by decide, g0, ?_, g7, ?_, g12, by rw [show sp - 24 - 3 = sp - 27 by omega]; exact hd,
     by rw [show sp - 8 = ((sp : Int) + -8).toNat by omega]; exact s8,
     by rw [show sp - 16 = ((sp : Int) + -16).toNat by omega]; exact s16,
     by rw [show sp - 24 = ((sp : Int) + -24).toNat by omega]; exact s24, hfr, hpg⟩
@@ -162,7 +162,7 @@ theorem fin_1000 {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [HasCo
     (hrv : ∀ t, v ≤ t → t < v + 4 → μ.readable t = true)
     (hrt : ∀ t, 70844 ≤ t → t < 71044 → μ.readable t = true)
     (hw : ∀ t, sp - 72 ≤ t → t < sp → μ.writable t = true) (hs : v + 4 ≤ sp - 72 ∨ sp ≤ v) :
-    ∃ ω' μ', FreeStepsH p R 68146 ω μ x 61857 ω' μ' x 123 ∧
+    ∃ ω' μ', FreeStepsH p R 68146 ω μ x 61857 ω' μ' x 123 ∧ (decB y).length ≤ 10 ∧
       ω'[0] = UInt64.ofNat 2802 ∧ ω'[1] = UInt64.ofNat (sp - 72) ∧ ω'[7] = UInt64.ofNat F ∧
       ω'[11] = UInt64.ofNat (sp - 24 - (decB y).length) ∧ ω'[12] = UInt64.ofNat (decB y).length ∧
       μ'.readN (sp - 24 - (decB y).length) (decB y).length = decB y ∧
@@ -173,11 +173,11 @@ theorem fin_1000 {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [HasCo
   have hd := digits_1000 hy hsp ht hc
   have hl : (decB y).length = 4 := by rw [← hd, Memory.length_readN]
   obtain ⟨g0, g1, g7, g11, g12, -⟩ := hr
-  obtain ⟨-, -, -, -, -, -, -, -, s8, s16, s24, -⟩ := hc
+  obtain ⟨-, -, -, -, s8, s16, s24, -⟩ := hc
   simp only [T_1000, SVal.eval, Aff.eval, vals_1000, List.getD_cons_succ, List.getD_cons_zero] at s8 s16 s24
   simp only [T_1000, SVal.eval, Aff.eval, vals_1000, List.getD_cons_succ, List.getD_cons_zero] at g0 g1 g7 g11 g12
   rw [hl]
-  refine ⟨ω', μ', run.mono (by decide), g0, ?_, g7, ?_, g12, by rw [show sp - 24 - 4 = sp - 28 by omega]; exact hd,
+  refine ⟨ω', μ', run.mono (by decide), by decide, g0, ?_, g7, ?_, g12, by rw [show sp - 24 - 4 = sp - 28 by omega]; exact hd,
     by rw [show sp - 8 = ((sp : Int) + -8).toNat by omega]; exact s8,
     by rw [show sp - 16 = ((sp : Int) + -16).toNat by omega]; exact s16,
     by rw [show sp - 24 = ((sp : Int) + -24).toNat by omega]; exact s24, hfr, hpg⟩
@@ -196,7 +196,7 @@ theorem fin_10000 {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [HasC
     (hrv : ∀ t, v ≤ t → t < v + 4 → μ.readable t = true)
     (hrt : ∀ t, 70844 ≤ t → t < 71044 → μ.readable t = true)
     (hw : ∀ t, sp - 72 ≤ t → t < sp → μ.writable t = true) (hs : v + 4 ≤ sp - 72 ∨ sp ≤ v) :
-    ∃ ω' μ', FreeStepsH p R 68146 ω μ x 61857 ω' μ' x 123 ∧
+    ∃ ω' μ', FreeStepsH p R 68146 ω μ x 61857 ω' μ' x 123 ∧ (decB y).length ≤ 10 ∧
       ω'[0] = UInt64.ofNat 2802 ∧ ω'[1] = UInt64.ofNat (sp - 72) ∧ ω'[7] = UInt64.ofNat F ∧
       ω'[11] = UInt64.ofNat (sp - 24 - (decB y).length) ∧ ω'[12] = UInt64.ofNat (decB y).length ∧
       μ'.readN (sp - 24 - (decB y).length) (decB y).length = decB y ∧
@@ -207,11 +207,11 @@ theorem fin_10000 {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [HasC
   have hd := digits_10000 hy hsp ht hc
   have hl : (decB y).length = 5 := by rw [← hd, Memory.length_readN]
   obtain ⟨g0, g1, g7, g11, g12, -⟩ := hr
-  obtain ⟨-, -, -, -, -, -, -, -, -, s8, s16, s24, -⟩ := hc
+  obtain ⟨-, -, -, -, -, s8, s16, s24, -⟩ := hc
   simp only [T_10000, SVal.eval, Aff.eval, vals_10000, List.getD_cons_succ, List.getD_cons_zero] at s8 s16 s24
   simp only [T_10000, SVal.eval, Aff.eval, vals_10000, List.getD_cons_succ, List.getD_cons_zero] at g0 g1 g7 g11 g12
   rw [hl]
-  refine ⟨ω', μ', run.mono (by decide), g0, ?_, g7, ?_, g12, by rw [show sp - 24 - 5 = sp - 29 by omega]; exact hd,
+  refine ⟨ω', μ', run.mono (by decide), by decide, g0, ?_, g7, ?_, g12, by rw [show sp - 24 - 5 = sp - 29 by omega]; exact hd,
     by rw [show sp - 8 = ((sp : Int) + -8).toNat by omega]; exact s8,
     by rw [show sp - 16 = ((sp : Int) + -16).toNat by omega]; exact s16,
     by rw [show sp - 24 = ((sp : Int) + -24).toNat by omega]; exact s24, hfr, hpg⟩
@@ -230,7 +230,7 @@ theorem fin_100000 {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [Has
     (hrv : ∀ t, v ≤ t → t < v + 4 → μ.readable t = true)
     (hrt : ∀ t, 70844 ≤ t → t < 71044 → μ.readable t = true)
     (hw : ∀ t, sp - 72 ≤ t → t < sp → μ.writable t = true) (hs : v + 4 ≤ sp - 72 ∨ sp ≤ v) :
-    ∃ ω' μ', FreeStepsH p R 68146 ω μ x 61857 ω' μ' x 123 ∧
+    ∃ ω' μ', FreeStepsH p R 68146 ω μ x 61857 ω' μ' x 123 ∧ (decB y).length ≤ 10 ∧
       ω'[0] = UInt64.ofNat 2802 ∧ ω'[1] = UInt64.ofNat (sp - 72) ∧ ω'[7] = UInt64.ofNat F ∧
       ω'[11] = UInt64.ofNat (sp - 24 - (decB y).length) ∧ ω'[12] = UInt64.ofNat (decB y).length ∧
       μ'.readN (sp - 24 - (decB y).length) (decB y).length = decB y ∧
@@ -241,11 +241,11 @@ theorem fin_100000 {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [Has
   have hd := digits_100000 hy hsp ht hc
   have hl : (decB y).length = 6 := by rw [← hd, Memory.length_readN]
   obtain ⟨g0, g1, g7, g11, g12, -⟩ := hr
-  obtain ⟨-, -, -, -, -, -, -, -, -, -, s8, s16, s24, -⟩ := hc
+  obtain ⟨-, -, -, -, -, s8, s16, s24, -⟩ := hc
   simp only [T_100000, SVal.eval, Aff.eval, vals_100000, List.getD_cons_succ, List.getD_cons_zero] at s8 s16 s24
   simp only [T_100000, SVal.eval, Aff.eval, vals_100000, List.getD_cons_succ, List.getD_cons_zero] at g0 g1 g7 g11 g12
   rw [hl]
-  refine ⟨ω', μ', run.mono (by decide), g0, ?_, g7, ?_, g12, by rw [show sp - 24 - 6 = sp - 30 by omega]; exact hd,
+  refine ⟨ω', μ', run.mono (by decide), by decide, g0, ?_, g7, ?_, g12, by rw [show sp - 24 - 6 = sp - 30 by omega]; exact hd,
     by rw [show sp - 8 = ((sp : Int) + -8).toNat by omega]; exact s8,
     by rw [show sp - 16 = ((sp : Int) + -16).toNat by omega]; exact s16,
     by rw [show sp - 24 = ((sp : Int) + -24).toNat by omega]; exact s24, hfr, hpg⟩
@@ -264,7 +264,7 @@ theorem fin_1000000 {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [Ha
     (hrv : ∀ t, v ≤ t → t < v + 4 → μ.readable t = true)
     (hrt : ∀ t, 70844 ≤ t → t < 71044 → μ.readable t = true)
     (hw : ∀ t, sp - 72 ≤ t → t < sp → μ.writable t = true) (hs : v + 4 ≤ sp - 72 ∨ sp ≤ v) :
-    ∃ ω' μ', FreeStepsH p R 68146 ω μ x 61857 ω' μ' x 123 ∧
+    ∃ ω' μ', FreeStepsH p R 68146 ω μ x 61857 ω' μ' x 123 ∧ (decB y).length ≤ 10 ∧
       ω'[0] = UInt64.ofNat 2802 ∧ ω'[1] = UInt64.ofNat (sp - 72) ∧ ω'[7] = UInt64.ofNat F ∧
       ω'[11] = UInt64.ofNat (sp - 24 - (decB y).length) ∧ ω'[12] = UInt64.ofNat (decB y).length ∧
       μ'.readN (sp - 24 - (decB y).length) (decB y).length = decB y ∧
@@ -275,11 +275,11 @@ theorem fin_1000000 {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [Ha
   have hd := digits_1000000 hy hsp ht hc
   have hl : (decB y).length = 7 := by rw [← hd, Memory.length_readN]
   obtain ⟨g0, g1, g7, g11, g12, -⟩ := hr
-  obtain ⟨-, -, -, -, -, -, -, -, -, -, -, s8, s16, s24, -⟩ := hc
+  obtain ⟨-, -, -, -, -, -, s8, s16, s24, -⟩ := hc
   simp only [T_1000000, SVal.eval, Aff.eval, vals_1000000, List.getD_cons_succ, List.getD_cons_zero] at s8 s16 s24
   simp only [T_1000000, SVal.eval, Aff.eval, vals_1000000, List.getD_cons_succ, List.getD_cons_zero] at g0 g1 g7 g11 g12
   rw [hl]
-  refine ⟨ω', μ', run.mono (by decide), g0, ?_, g7, ?_, g12, by rw [show sp - 24 - 7 = sp - 31 by omega]; exact hd,
+  refine ⟨ω', μ', run.mono (by decide), by decide, g0, ?_, g7, ?_, g12, by rw [show sp - 24 - 7 = sp - 31 by omega]; exact hd,
     by rw [show sp - 8 = ((sp : Int) + -8).toNat by omega]; exact s8,
     by rw [show sp - 16 = ((sp : Int) + -16).toNat by omega]; exact s16,
     by rw [show sp - 24 = ((sp : Int) + -24).toNat by omega]; exact s24, hfr, hpg⟩
@@ -298,7 +298,7 @@ theorem fin_10000000 {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [H
     (hrv : ∀ t, v ≤ t → t < v + 4 → μ.readable t = true)
     (hrt : ∀ t, 70844 ≤ t → t < 71044 → μ.readable t = true)
     (hw : ∀ t, sp - 72 ≤ t → t < sp → μ.writable t = true) (hs : v + 4 ≤ sp - 72 ∨ sp ≤ v) :
-    ∃ ω' μ', FreeStepsH p R 68146 ω μ x 61857 ω' μ' x 123 ∧
+    ∃ ω' μ', FreeStepsH p R 68146 ω μ x 61857 ω' μ' x 123 ∧ (decB y).length ≤ 10 ∧
       ω'[0] = UInt64.ofNat 2802 ∧ ω'[1] = UInt64.ofNat (sp - 72) ∧ ω'[7] = UInt64.ofNat F ∧
       ω'[11] = UInt64.ofNat (sp - 24 - (decB y).length) ∧ ω'[12] = UInt64.ofNat (decB y).length ∧
       μ'.readN (sp - 24 - (decB y).length) (decB y).length = decB y ∧
@@ -309,11 +309,11 @@ theorem fin_10000000 {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [H
   have hd := digits_10000000 hy hsp ht hc
   have hl : (decB y).length = 8 := by rw [← hd, Memory.length_readN]
   obtain ⟨g0, g1, g7, g11, g12, -⟩ := hr
-  obtain ⟨-, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, s8, s16, s24, -⟩ := hc
+  obtain ⟨-, -, -, -, -, -, -, -, s8, s16, s24, -⟩ := hc
   simp only [T_10000000, SVal.eval, Aff.eval, vals_10000000, List.getD_cons_succ, List.getD_cons_zero] at s8 s16 s24
   simp only [T_10000000, SVal.eval, Aff.eval, vals_10000000, List.getD_cons_succ, List.getD_cons_zero] at g0 g1 g7 g11 g12
   rw [hl]
-  refine ⟨ω', μ', run.mono (by decide), g0, ?_, g7, ?_, g12, by rw [show sp - 24 - 8 = sp - 32 by omega]; exact hd,
+  refine ⟨ω', μ', run.mono (by decide), by decide, g0, ?_, g7, ?_, g12, by rw [show sp - 24 - 8 = sp - 32 by omega]; exact hd,
     by rw [show sp - 8 = ((sp : Int) + -8).toNat by omega]; exact s8,
     by rw [show sp - 16 = ((sp : Int) + -16).toNat by omega]; exact s16,
     by rw [show sp - 24 = ((sp : Int) + -24).toNat by omega]; exact s24, hfr, hpg⟩
@@ -332,7 +332,7 @@ theorem fin_100000000 {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [
     (hrv : ∀ t, v ≤ t → t < v + 4 → μ.readable t = true)
     (hrt : ∀ t, 70844 ≤ t → t < 71044 → μ.readable t = true)
     (hw : ∀ t, sp - 72 ≤ t → t < sp → μ.writable t = true) (hs : v + 4 ≤ sp - 72 ∨ sp ≤ v) :
-    ∃ ω' μ', FreeStepsH p R 68146 ω μ x 61857 ω' μ' x 123 ∧
+    ∃ ω' μ', FreeStepsH p R 68146 ω μ x 61857 ω' μ' x 123 ∧ (decB y).length ≤ 10 ∧
       ω'[0] = UInt64.ofNat 2802 ∧ ω'[1] = UInt64.ofNat (sp - 72) ∧ ω'[7] = UInt64.ofNat F ∧
       ω'[11] = UInt64.ofNat (sp - 24 - (decB y).length) ∧ ω'[12] = UInt64.ofNat (decB y).length ∧
       μ'.readN (sp - 24 - (decB y).length) (decB y).length = decB y ∧
@@ -343,11 +343,11 @@ theorem fin_100000000 {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [
   have hd := digits_100000000 hy hsp ht hc
   have hl : (decB y).length = 9 := by rw [← hd, Memory.length_readN]
   obtain ⟨g0, g1, g7, g11, g12, -⟩ := hr
-  obtain ⟨-, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, s8, s16, s24, -⟩ := hc
+  obtain ⟨-, -, -, -, -, -, -, -, -, s8, s16, s24, -⟩ := hc
   simp only [T_100000000, SVal.eval, Aff.eval, vals_100000000, List.getD_cons_succ, List.getD_cons_zero] at s8 s16 s24
   simp only [T_100000000, SVal.eval, Aff.eval, vals_100000000, List.getD_cons_succ, List.getD_cons_zero] at g0 g1 g7 g11 g12
   rw [hl]
-  refine ⟨ω', μ', run.mono (by decide), g0, ?_, g7, ?_, g12, by rw [show sp - 24 - 9 = sp - 33 by omega]; exact hd,
+  refine ⟨ω', μ', run.mono (by decide), by decide, g0, ?_, g7, ?_, g12, by rw [show sp - 24 - 9 = sp - 33 by omega]; exact hd,
     by rw [show sp - 8 = ((sp : Int) + -8).toNat by omega]; exact s8,
     by rw [show sp - 16 = ((sp : Int) + -16).toNat by omega]; exact s16,
     by rw [show sp - 24 = ((sp : Int) + -24).toNat by omega]; exact s24, hfr, hpg⟩
@@ -366,7 +366,7 @@ theorem fin_1000000000 {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} 
     (hrv : ∀ t, v ≤ t → t < v + 4 → μ.readable t = true)
     (hrt : ∀ t, 70844 ≤ t → t < 71044 → μ.readable t = true)
     (hw : ∀ t, sp - 72 ≤ t → t < sp → μ.writable t = true) (hs : v + 4 ≤ sp - 72 ∨ sp ≤ v) :
-    ∃ ω' μ', FreeStepsH p R 68146 ω μ x 61857 ω' μ' x 123 ∧
+    ∃ ω' μ', FreeStepsH p R 68146 ω μ x 61857 ω' μ' x 123 ∧ (decB y).length ≤ 10 ∧
       ω'[0] = UInt64.ofNat 2802 ∧ ω'[1] = UInt64.ofNat (sp - 72) ∧ ω'[7] = UInt64.ofNat F ∧
       ω'[11] = UInt64.ofNat (sp - 24 - (decB y).length) ∧ ω'[12] = UInt64.ofNat (decB y).length ∧
       μ'.readN (sp - 24 - (decB y).length) (decB y).length = decB y ∧
@@ -377,11 +377,11 @@ theorem fin_1000000000 {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} 
   have hd := digits_1000000000 hy hsp ht hc
   have hl : (decB y).length = 10 := by rw [← hd, Memory.length_readN]
   obtain ⟨g0, g1, g7, g11, g12, -⟩ := hr
-  obtain ⟨-, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, s8, s16, s24, -⟩ := hc
+  obtain ⟨-, -, -, -, -, -, -, -, -, s8, s16, s24, -⟩ := hc
   simp only [T_1000000000, SVal.eval, Aff.eval, vals_1000000000, List.getD_cons_succ, List.getD_cons_zero] at s8 s16 s24
   simp only [T_1000000000, SVal.eval, Aff.eval, vals_1000000000, List.getD_cons_succ, List.getD_cons_zero] at g0 g1 g7 g11 g12
   rw [hl]
-  refine ⟨ω', μ', run.mono (by decide), g0, ?_, g7, ?_, g12, by rw [show sp - 24 - 10 = sp - 34 by omega]; exact hd,
+  refine ⟨ω', μ', run.mono (by decide), by decide, g0, ?_, g7, ?_, g12, by rw [show sp - 24 - 10 = sp - 34 by omega]; exact hd,
     by rw [show sp - 8 = ((sp : Int) + -8).toNat by omega]; exact s8,
     by rw [show sp - 16 = ((sp : Int) + -16).toNat by omega]; exact s16,
     by rw [show sp - 24 = ((sp : Int) + -24).toNat by omega]; exact s24, hfr, hpg⟩
@@ -400,7 +400,7 @@ theorem fin_2147483648 {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} 
     (hrv : ∀ t, v ≤ t → t < v + 4 → μ.readable t = true)
     (hrt : ∀ t, 70844 ≤ t → t < 71044 → μ.readable t = true)
     (hw : ∀ t, sp - 72 ≤ t → t < sp → μ.writable t = true) (hs : v + 4 ≤ sp - 72 ∨ sp ≤ v) :
-    ∃ ω' μ', FreeStepsH p R 68146 ω μ x 61857 ω' μ' x 123 ∧
+    ∃ ω' μ', FreeStepsH p R 68146 ω μ x 61857 ω' μ' x 123 ∧ (decB y).length ≤ 10 ∧
       ω'[0] = UInt64.ofNat 2802 ∧ ω'[1] = UInt64.ofNat (sp - 72) ∧ ω'[7] = UInt64.ofNat F ∧
       ω'[11] = UInt64.ofNat (sp - 24 - (decB y).length) ∧ ω'[12] = UInt64.ofNat (decB y).length ∧
       μ'.readN (sp - 24 - (decB y).length) (decB y).length = decB y ∧
@@ -411,11 +411,11 @@ theorem fin_2147483648 {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} 
   have hd := digits_2147483648 hy hsp ht hc
   have hl : (decB y).length = 10 := by rw [← hd, Memory.length_readN]
   obtain ⟨g0, g1, g7, g11, g12, -⟩ := hr
-  obtain ⟨-, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, s8, s16, s24, -⟩ := hc
+  obtain ⟨-, -, -, -, -, -, -, -, -, s8, s16, s24, -⟩ := hc
   simp only [T_2147483648, SVal.eval, Aff.eval, vals_2147483648, List.getD_cons_succ, List.getD_cons_zero] at s8 s16 s24
   simp only [T_2147483648, SVal.eval, Aff.eval, vals_2147483648, List.getD_cons_succ, List.getD_cons_zero] at g0 g1 g7 g11 g12
   rw [hl]
-  refine ⟨ω', μ', run.mono (by decide), g0, ?_, g7, ?_, g12, by rw [show sp - 24 - 10 = sp - 34 by omega]; exact hd,
+  refine ⟨ω', μ', run.mono (by decide), by decide, g0, ?_, g7, ?_, g12, by rw [show sp - 24 - 10 = sp - 34 by omega]; exact hd,
     by rw [show sp - 8 = ((sp : Int) + -8).toNat by omega]; exact s8,
     by rw [show sp - 16 = ((sp : Int) + -16).toNat by omega]; exact s16,
     by rw [show sp - 24 = ((sp : Int) + -24).toNat by omega]; exact s24, hfr, hpg⟩
@@ -438,7 +438,7 @@ theorem dec32 {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [HasCode 
     (hrv : ∀ t, v ≤ t → t < v + 4 → μ.readable t = true)
     (hrt : ∀ t, 70844 ≤ t → t < 71044 → μ.readable t = true)
     (hw : ∀ t, sp - 72 ≤ t → t < sp → μ.writable t = true) (hs : v + 4 ≤ sp - 72 ∨ sp ≤ v) :
-    ∃ ω' μ', FreeStepsH p R 68146 ω μ x 61857 ω' μ' x 123 ∧
+    ∃ ω' μ', FreeStepsH p R 68146 ω μ x 61857 ω' μ' x 123 ∧ (decB y).length ≤ 10 ∧
       ω'[0] = UInt64.ofNat 2802 ∧ ω'[1] = UInt64.ofNat (sp - 72) ∧ ω'[7] = UInt64.ofNat F ∧
       ω'[11] = UInt64.ofNat (sp - 24 - (decB y).length) ∧ ω'[12] = UInt64.ofNat (decB y).length ∧
       μ'.readN (sp - 24 - (decB y).length) (decB y).length = decB y ∧

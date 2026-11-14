@@ -49,7 +49,7 @@ import re
 D32 = open(sys.argv[1].replace('Dec32All', 'Dec32')).read()
 def ncells(lo):
     m = re.search(r'def T_%d : Spec :=\n.*\n    cells := (.*) \}\n' % lo, D32)
-    return m.group(1).count('{ base :=')
+    return m.group(1).count('({ base :=')
 for lo, hi in R:
     n = ndig(lo)
     hy = f'{lo} ≤ y ∧ y < {hi}'

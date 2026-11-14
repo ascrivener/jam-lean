@@ -76,9 +76,9 @@ def Utf8Call (p : ByteArray) (env : AccEnv) (pb S0 S1 : Nat) : Prop :=
 
 /-- **The log line's `format!` at 7692** (`format_inner`, 59375, returning to 7699), frame-only:
     from the call's registers (ω₀ = 262, ω₁ = sp, ω₇ = sp + 744, ω₈ = 66221 the template, ω₉ =
-    sp + 1568 the argument pairs: (sp + 472, the formatter at sp + 208) for the u32 source,
-    (sp + 1000, the one at sp + 136) for the u64 amount, (sp + 512, the one at sp + 200) for the shown
-    `String`, whose `len` octets at its buffer are readable), either the run returns to 7699 with
+    sp + 1568 the argument pairs: (sp + 472, 2800) for the u32 source, (sp + 1000, 2804) for the u64
+    amount, (sp + 512, 678) for the shown `String` (the formatter words spilled at sp + 208, sp + 136 by
+    6547 / 6559 and at sp + 200 by 6782), whose `len` octets at its buffer are readable), either the run returns to 7699 with
     ω₁, ω₅, ω₆ kept, a `String` { kc, kp, _ } at sp + 744 whose buffer (if kc ≠ 0) is a chunk fresh
     against s₀, every allocated chunk of s₀ and its data kept, the allocator's context for the new
     state, and from sp up only sp + 744 … sp + 768 changed; or it reaches a failed allocator call. The
@@ -89,9 +89,9 @@ def LogFmt (p : ByteArray) (env : AccEnv) (pb S0 S1 : Nat) : Prop :=
     ω[0] = UInt64.ofNat 262 → ω[1] = UInt64.ofNat sp → ω[7] = UInt64.ofNat (sp + 744) →
     ω[8] = UInt64.ofNat 66221 → ω[9] = UInt64.ofNat (sp + 1568) →
     S0 + 4096 ≤ sp → sp + 1856 ≤ S1 → 2147483648 ≤ sp →
-    rdN μ (sp + 1568) 8 = sp + 472 → rdN μ (sp + 1576) 8 = rdN μ (sp + 208) 8 →
-    rdN μ (sp + 1584) 8 = sp + 1000 → rdN μ (sp + 1592) 8 = rdN μ (sp + 136) 8 →
-    rdN μ (sp + 1600) 8 = sp + 512 → rdN μ (sp + 1608) 8 = rdN μ (sp + 200) 8 →
+    rdN μ (sp + 1568) 8 = sp + 472 → rdN μ (sp + 1576) 8 = 2800 →
+    rdN μ (sp + 1584) 8 = sp + 1000 → rdN μ (sp + 1592) 8 = 2804 →
+    rdN μ (sp + 1600) 8 = sp + 512 → rdN μ (sp + 1608) 8 = 678 →
     (∀ a, rdN μ (sp + 520) 8 ≤ a → a < rdN μ (sp + 520) 8 + rdN μ (sp + 528) 8 → μ.readable a = true) →
     (∃ (s' : State) (ω' : Regs) (μ' : Memory) (N kc kp : Nat),
       FreeStepsH p (KeepCtx (accContractS env)) 59375 ω μ (c, f) 7699 ω' μ' (c, f) N ∧

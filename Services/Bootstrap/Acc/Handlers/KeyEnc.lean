@@ -413,4 +413,42 @@ theorem kb_body {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {code
   have e : ([] : List UInt8) ++ μ.readN (S + 44) 1 = keyEnc μA kp t := by rw [m44]; simp [keyEnc, t1, t2]
   exact e ▸ K1
 
+/-- `keyEnc` reads only the 36 octets at kp. -/
+theorem keyEnc_congr {μ μ' : Memory} {kp : Nat} (t : Nat) (h : ∀ a, kp ≤ a → a < kp + 36 → μ'.read a = μ.read a) :
+    keyEnc μ' kp t = keyEnc μ kp t := by
+  have e : ∀ b n, kp ≤ b → b + n ≤ kp + 36 → μ'.readN b n = μ.readN b n := fun b n h1 h2 =>
+    Memory.readN_congr fun j hj => h _ (by omega) (by omega)
+  unfold keyEnc
+  rw [e (kp + 4) 4 (by omega) (by omega), e (kp + 4) 32 (by omega) (by omega), e (kp + 2) 2 (by omega) (by omega)]
+
+open Picoalloc Services.Bootstrap.Decode.HeapCtx in
+/-- **The invariant after `kb_vec`**: `{c, ptr, 0}` at S + 16 and the tag octet at S + 44, over the
+    memory μA after `alloc`, the buffer the new chunk's data. -/
+theorem KVec.init {code : ByteArray} {pb S0 S1 : Nat} {μA : Memory} {st : Picoalloc.State} (S c ptr t : Nat)
+    (H : HeapCtxC code pb S0 S1 μA st) (hC : (⟨ptr - 32, (c + 31) / 32 + 1, true⟩ : Chunk) ∈ chunks st)
+    (hS : 2147483648 + 96 ≤ S ∧ S0 ≤ S - 80 ∧ S + 72 ≤ S1 ∧ S % 8 = 0) :
+    KVec code pb S0 S1 μA ((((μA.writeN (S + 16) (Num.encodeLE 8 c)).writeN (S + 24) (Num.encodeLE 8 ptr)).writeN
+      (S + 32) (Num.encodeLE 8 0)).writeN (S + 44) [UInt8.ofNat t]) st ⟨ptr - 32, (c + 31) / 32 + 1, true⟩
+      S c ptr [] := by
+  have hS1 := H.hS1
+  have hb0 := H.hb0
+  have hbT := H.hbT
+  obtain ⟨n1, n2, n3⟩ := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hC rfl
+  dsimp only at n1 n2 n3
+  have r1 : ∀ a, a < 4294967296 → (a < S + 16 ∨ S + 48 ≤ a) →
+      ((((μA.writeN (S + 16) (Num.encodeLE 8 c)).writeN (S + 24) (Num.encodeLE 8 ptr)).writeN
+        (S + 32) (Num.encodeLE 8 0)).writeN (S + 44) [UInt8.ofNat t]).read a = μA.read a := fun a h1 h2 => by
+    repeat rw [Memory.read_writeN_disjoint _ _ _ _ (by simp; omega) (by simp [two32]; omega) (by simp [two32]; omega)]
+  have e8 : ∀ (m : Memory) b v, (m.writeN b (Num.encodeLE 8 v)).readN b 8 = Num.encodeLE 8 v := fun m b v =>
+    Memory.readN_writeN_same _ _ _ _ (by simp) (by unfold two32; omega)
+  refine ⟨keepHi H (fun a ha => r1 a (by omega) (.inl (by omega))) (fun a => by simp), hC, rfl, by dsimp only; omega,
+    by dsimp only; omega, ⟨by omega, by omega⟩, hS, ?_, ?_, ?_, by simp [Memory.readN], Nat.zero_le _,
+    fun a h0 h1 h2 h3 => r1 a h0 h2, fun a => by simp, fun a => by simp⟩
+  · repeat rw [Memory.readN_writeN_disjoint _ _ _ _ _ (by simp; omega) (by simp [two32]; omega) (by simp [two32]; omega)]
+    exact e8 _ _ _
+  · repeat rw [Memory.readN_writeN_disjoint _ _ _ _ _ (by simp; omega) (by simp [two32]; omega) (by simp [two32]; omega)]
+    exact e8 _ _ _
+  · rw [Memory.readN_writeN_disjoint _ _ _ _ _ (by simp; omega) (by simp [two32]; omega) (by simp [two32]; omega)]
+    exact e8 _ _ _
+
 end Services.Bootstrap.Acc.Handlers.KeyEnc

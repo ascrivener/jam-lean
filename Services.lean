@@ -289,6 +289,14 @@ import Services.Bootstrap.Encode.PrefixH
 import Services.Bootstrap.Encode.EncMH
 import Services.Bootstrap.Encode.EncMHLoop
 import Services.Bootstrap.Encode.ArmsH
+import Services.Bootstrap.Encode.ArmsHVecCore
+import Services.Bootstrap.Encode.ArmsHVecAssign
+import Services.Bootstrap.Encode.ArmsHVecGas
+import Services.Bootstrap.Encode.ArmsHVecBless
+import Services.Bootstrap.Encode.ArmsHVecDesignate
+import Services.Bootstrap.Encode.ArmsHVecImported
+import Services.Bootstrap.Encode.ArmsHVecDeleteItems
+import Services.Bootstrap.Encode.ArmsHVecCS
 import Services.Bootstrap.Encode.ArmsHFixed
 import Services.Bootstrap.Encode.ArmsHFixed2
 import Services.Bootstrap.Encode.EncMHLift

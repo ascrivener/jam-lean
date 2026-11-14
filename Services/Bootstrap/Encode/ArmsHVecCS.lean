@@ -269,6 +269,20 @@ theorem cs_tailH {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Has
     · exact Or.inr ((ExhaustsW.pre (run2.trans (run3.trans (run4.trans (run5.trans run6)))) hx).mono
         (by unfold stepGas growGas; omega))
 
+/-- `create_service_noneH`'s gas, closed form. -/
+theorem cs_none_gas (L : Nat) (hL : L ≤ 5) :
+    4000 + 7 * growGas + (12 + (stepGas 1 + (1500 + 3 * growGas))) + 7 ≤
+      2000 * (202 + L) + 4000 + growGas * (202 + L) := by
+  unfold stepGas growGas; omega
+
+/-- `create_service_someH`'s gas, closed form. -/
+theorem cs_some_gas (n L : Nat) (hE : 1 ≤ (Blob.encodeNat n).length) (hL : L ≤ 5) :
+    4000 + 7 * growGas + (12 + (stepGas 1 + (20 + (prefixGas n + (6 + (stepGas n +
+        (1500 + 3 * growGas))))))) + 7 ≤
+      2000 * (202 + (Blob.encodeNat n).length + n + L) + 4000 +
+        growGas * (202 + (Blob.encodeNat n).length + n + L) := by
+  unfold stepGas prefixGas growGas; omega
+
 /-- **`CreateService` with `Option<Vec<u8>>` = `None` (index 0), with growth**
     (`Enc.create_service_none` as `EncOkMH`): no heap octets. -/
 theorem create_service_noneH {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeA p P]
@@ -323,8 +337,13 @@ theorem create_service_noneH {p : ByteArray} {P : Program} [HasCode p P] [HasCod
   rcases cs_tailH (p := p) (P := P) K hK1 hK x ω3 μ3 Fr (by decide) st3 S L.slot hS' u5 ou hou
       (by simp [hh, h1, h2, h3, h4, harr]; omega) (by rw [c5, b5]) m3 c224 c24 c28 with
     ⟨ω4, μ4, run4, st4⟩ | hx
-  · exact Or.inl (closeH L 20329 _ (by decide) (by unfold encGas stepGas growGas; rw [hN]; omega)
-      (run1.trans (run2.trans (run3.trans run4))) (st4.toStH.cast (by simp)))
+  · have run := run1.trans (run2.trans (run3.trans run4))
+    have st := st4.toStH.cast (pre' := 0 :: (h ++ u1 ++ u2 ++ u3 ++ u4 ++ arr ++ [0] ++ u5 ++ ou))
+      (by simp only [List.nil_append, List.cons_append, List.append_assoc] <;> rfl)
+    have hk : 4000 + 7 * growGas + (12 + (stepGas 1 + (1500 + 3 * growGas))) + 7 ≤
+        encGas (0 :: (h ++ u1 ++ u2 ++ u3 ++ u4 ++ arr ++ [0] ++ u5 ++ ou)) :=
+      Nat.le_trans (cs_none_gas _ hol.2) (Nat.le_of_eq (by unfold encGas; rw [hN]))
+    exact Or.inl (closeH L 20329 _ (by decide) hk run st)
   · exact Or.inr ((ExhaustsW.pre (run1.trans (run2.trans run3)) hx).mono
       (by unfold encGas stepGas growGas; rw [hN]; omega))
 
@@ -409,7 +428,7 @@ theorem create_service_someH {p : ByteArray} {P : Program} [HasCode p P] [HasCod
   have st4 := st3.scratch Fr d1 (fun a h0 h1 => dfr a h0 (by omega) (by omega)) drd dwr
   rcases prefixDH (p := p) (P := P) env K hK1 hK x ω4 μ4 Fr (by decide) st4 n 720 18117 d0
       (by rw [d7]; congr 1; omega) d8 (by rw [show F - 32 = F - 56 + 24 by omega]; exact dn)
-      ⟨by decide, by decide, by decide⟩ jte_359 bs_18117 (by simp [hL0]; omega) with
+      ⟨by decide, by decide, by decide⟩ jte_359 bs_18117 (by simp; omega) with
     ⟨ω5, μ5, run5, st5, e5, e6, eF⟩ | hx
   rotate_left
   · exact Or.inr ((ExhaustsW.pre (run1.trans (run2.trans (run3.trans run4))) hx).mono
@@ -423,7 +442,7 @@ theorem create_service_someH {p : ByteArray} {P : Program} [HasCode p P] [HasCod
     (fun a h1 h2 => Memory.readable_of_writable (W5.H.st a (by omega) (by omega)))
   rcases heapDH (p := p) (P := P) env K hK1 hK x ω6 μ5 Fr (by decide)
       ⟨⟨g1'.trans st5.h1, st5.w0, st5.w5, st5.w6, st5.buf⟩, st5.sv⟩ q n 910 20239 hbn rb g0' g7' g8' g9'
-      ⟨by decide, by decide, by decide⟩ jte_454 bs_20239 (by simp [hL0]; omega)
+      ⟨by decide, by decide, by decide⟩ jte_454 bs_20239 (by simp; omega)
       (by rcases Nat.eq_zero_or_pos n with h | h
           · exact Or.inl h
           · exact Or.inr (hsrc q n ⟨h, rfl, rfl⟩)) with
@@ -437,11 +456,15 @@ theorem create_service_someH {p : ByteArray} {P : Program} [HasCode p P] [HasCod
       Memory.readN_congr (fun j hj => dfr _ (by omega) (by omega) (by omega))]; exact m3
   -- u₅ and the `Option<u32>`
   rcases cs_tailH (p := p) (P := P) K hK1 hK x ω7 μ7 Fr (by decide) st7 S L.slot hS' u5 ou hou
-      (by simp [hL0, hbn]; omega) (by rw [k5, g5', e5, d5, c5, b5]) m7 c224 c24 c28 with
+      (by simp [hbn]; omega) (by rw [k5, g5', e5, d5, c5, b5]) m7 c224 c24 c28 with
     ⟨ω8, μ8, run8, st8⟩ | hx
-  · exact Or.inl (closeH L 20329 _ (by decide) (by unfold encGas stepGas prefixGas growGas; rw [hN]; omega)
+  · have hk : 4000 + 7 * growGas + (12 + (stepGas 1 + (20 + (prefixGas n + (6 + (stepGas n +
+        (1500 + 3 * growGas))))))) + 7 ≤
+        encGas (0 :: (h ++ u1 ++ u2 ++ u3 ++ u4 ++ arr ++ (1 :: (Blob.encodeNat n ++ bytes)) ++ u5 ++ ou)) :=
+      Nat.le_trans (cs_some_gas n _ hE hol.2) (Nat.le_of_eq (by unfold encGas; rw [hN]))
+    exact Or.inl (closeH L 20329 _ (by decide) hk
       (run1.trans (run2.trans (run3.trans (run4.trans (run5.trans (run6.trans (run7.trans run8)))))))
-      (st8.toStH.cast (by simp)))
+      (st8.toStH.cast (by simp only [List.nil_append, List.cons_append, List.append_assoc] <;> rfl)))
   · exact Or.inr ((ExhaustsW.pre (run1.trans (run2.trans (run3.trans (run4.trans (run5.trans (run6.trans
       run7)))))) hx).mono (by unfold encGas stepGas prefixGas growGas; rw [hN]; omega))
 

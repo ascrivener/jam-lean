@@ -90,7 +90,7 @@ theorem delete_items_loopH (K : Nat) (hK1 : 134217728 ≤ K) (hK : K < 184467440
       (by rw [Memory.readN_congr (fun j hj => cF _ (by omega) (by omega))]; exact be)
       (by rw [show F - 56 + 16 = F - 40 by omega]; exact st3.sv)
       (fun a h1 h2 => Memory.readable_of_writable (W3.H.st a (by omega) (by omega)))
-    rcases heapDH (p := p) (P := P) env K hK1 hK x ω4 μ3 Fr hD ⟨⟨d1.trans st3.h1, st3.w0, st3.w5, st3.w6, st3.buf⟩,
+    rcases heapDH (p := p) (P := P) env K hK1 hK x ω4 μ3 Fr (by omega) ⟨⟨d1.trans st3.h1, st3.w0, st3.w5, st3.w6, st3.buf⟩,
         st3.sv⟩ (qs k) es[k].length 826 19241 rfl arb d0 d7 d8 d9 ⟨by decide, by decide, by decide⟩ jte_412
         bs_19241 (by simp only [List.length_append]; omega)
         (by rcases Nat.eq_zero_or_pos es[k].length with h | h

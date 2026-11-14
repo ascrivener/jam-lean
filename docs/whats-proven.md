@@ -165,7 +165,9 @@ An independent kernel, nanoda as vendored by
     instructions, each passed through (fixed-width, `Lookup` only with eager = false) or `ExportSegs`, and
     |y| + 48 ≤ 2²⁴: `Spec.refine` under the GP refine host functions (`RSem.run`) returns some output
     and exports, and Ψ_R's result and exports are those; or ∞ with no exports; or the run reaches a
-    failed allocation (`ExhaustsHeap`; that it then ends in ☇ is not yet proved).
+    failed allocation (`ExhaustsHeap`).
+  - *Not yet proved:* that a failed allocation then ends in ☇ with no exports (a named later obligation;
+    T1 keeps the full claim).
   - *Assumed:* `VendoredFacts` (the vendored blob's layout and three read-only tables; step 10 of
     `docs/bootstrap-target.md`) and `FmtHyps` (three log / `Debug` lines: `ArgsLineOk`, `ExportFmtOk`,
     `DebugLineOk`; to be discharged by the fmt summaries).

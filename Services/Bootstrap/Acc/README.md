@@ -509,12 +509,12 @@ under "transfer{n}". Proved segments and calls:
 **Named hypotheses (`Transfer/Hyp.lean`)**, to be proved by the symbolic-executor session:
 - `KeyFmt`: `format!("transfer{}", n)` at 7792 leaves the `String` `s!"transfer{n}"` at sp + 512
   (the second write's key; its text is needed, unlike log lines).
+- `LogFmt`: the log line's `format!` at 7692 (template 66221), frame-only (for the log-sites work).
 - `Utf8Call`: `core::str::from_utf8` at 7447 on the memo's copy, frame-only plus its tag (0 with the
   input slice, or 1); it feeds only the log line.
 
-Still to do: the log line 7454 … 7741 (from `Utf8Call`'s result, `format_inner` of the template at
-66221, `log`, frees; frame-only, ArgsAt-style hypotheses for the log-sites work) and the composition
-of the whole of `on_transfer` as an `Impl` of `onTransfer`.
+The log line's segments 7454 … 7763 are proved (`Tail3`, with `FreeStepsH.logS`). Still to do: the
+composition of the whole of `on_transfer` as an `Impl` of `onTransfer`.
 
 ## Brief: `add_recent_work_item` and the results tail (rows 8, 9, 11)
 

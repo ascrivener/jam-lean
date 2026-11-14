@@ -312,6 +312,8 @@ import Services.Bootstrap.Refine.DecodeVec
 import Services.Bootstrap.Refine.Decode
 import Services.Bootstrap.Refine.Kinds
 import Services.Bootstrap.Refine.RunFixed
+import Services.Bootstrap.Refine.DecodeVecC
+import Services.Bootstrap.Refine.DecodeC
 import Services.Bootstrap.Spec
 import Services.Bootstrap.SpecLemmas.Codec
 import Services.Bootstrap.SpecLemmas.Refine

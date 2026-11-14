@@ -55,10 +55,11 @@ theorem decode_oneC {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHos
       HeapCtx env pb S0 S1 μ' s' ∧
       (⟨E - 32, (232 * es.length + 31) / 32 + 1, true⟩ : Chunk) ∈ chunks s' ∧
       (∀ a, E ≤ a → a < E + 232 * es.length → InData ⟨E - 32, (232 * es.length + 31) / 32 + 1, true⟩ a) ∧
-      (∀ j, j < es.length → ∃ cs : List Chunk, (∀ c ∈ cs, c ∈ chunks s' ∧ c.used = true ∧
-        c ≠ ⟨E - 32, (232 * es.length + 31) / 32 + 1, true⟩) ∧
-        ∀ μ'' : Memory, (∀ c ∈ cs, ∀ a, InData c a → μ''.read a = μ'.read a) →
-          reps j cs (μ'.readN (E + 232 * j) 232) μ'') ∧
+      (∃ csOf : Nat → List Chunk, (∀ j, j < es.length → (∀ c ∈ csOf j, c ∈ chunks s' ∧ c.used = true ∧
+        c ≠ ⟨E - 32, (232 * es.length + 31) / 32 + 1, true⟩ ∧ c ≠ cp) ∧
+        ∀ μ'' : Memory, (∀ c ∈ csOf j, ∀ a, InData c a → μ''.read a = μ'.read a) →
+          reps j (csOf j) (μ'.readN (E + 232 * j) 232) μ'') ∧
+        ∀ j j', j < es.length → j' < es.length → j ≠ j' → ∀ c ∈ csOf j, c ∉ csOf j') ∧
       (∀ c ∈ chunks s, c.used = true → c ∈ chunks s' ∧ ∀ a, InData c a → μ'.read a = μ.read a) ∧
       (∀ d ∈ chunks s, d.used = true → d ≠ ⟨E - 32, (232 * es.length + 31) / 32 + 1, true⟩) ∧
       (∀ a, a < 4294967296 → M ≤ a → (a < M + 168 ∨ M + 224 ≤ a) → (a < M + 272 ∨ M + 288 ≤ a) →
@@ -131,10 +132,11 @@ theorem decode_oneC {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHos
     (Or.inl (by omega)) (Or.inl (by omega))
   have H3 : HeapCtx env pb S0 S1 μ3 s2 := Decode.GrowOne.ctx_high H2 hlow3 cwr
   refine Or.inl ⟨ω3, μ3, s2, E, _, run1.trans (run2.trans run3), by rw [c1]; congr 1; omega, c5, c6, c0, c8, c16,
-    csalt, cR0, cR8, H3, hcb, hcbd, fun j hj => ?_,
+    csalt, cR0, cR8, H3, hcb, hcbd, ?_,
     fun c hc hu => ?_, fresh2, fun a h0 h1 h2 h3 => ?_, fun a ha => ?_⟩
-  · obtain ⟨cs, hcs, hr⟩ := hel2 j hj
-    refine ⟨cs, hcs, fun μ'' h => ?_⟩
+  · obtain ⟨csOf, hel, hdis⟩ := hel2
+    refine ⟨csOf, fun j hj => ⟨(hel j hj).1, fun μ'' h => ?_⟩, hdis⟩
+    obtain ⟨hcs, hr⟩ := hel j hj
     rw [Memory.readN_congr (fun i hi => hlow3 _ (by omega))]
     exact hr μ'' (fun c hc a ha => by
       obtain ⟨hc2, hcu, -⟩ := hcs c hc

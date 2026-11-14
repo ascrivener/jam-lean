@@ -57,10 +57,11 @@ theorem vec_oneC {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.E
       HeapCtx env pb S0 S1 μ' s' ∧
       (⟨q - 32, (232 * es.length + 31) / 32 + 1, true⟩ : Chunk) ∈ chunks s' ∧
       (∀ a, q ≤ a → a < q + 232 * es.length → InData ⟨q - 32, (232 * es.length + 31) / 32 + 1, true⟩ a) ∧
-      (∀ j, j < es.length → ∃ cs : List Chunk, (∀ c ∈ cs, c ∈ chunks s' ∧ c.used = true ∧
-        c ≠ ⟨q - 32, (232 * es.length + 31) / 32 + 1, true⟩) ∧
-        ∀ μ'' : Memory, (∀ c ∈ cs, ∀ a, InData c a → μ''.read a = μ'.read a) →
-          reps j cs (μ'.readN (q + 232 * j) 232) μ'') ∧
+      (∃ csOf : Nat → List Chunk, (∀ j, j < es.length → (∀ c ∈ csOf j, c ∈ chunks s' ∧ c.used = true ∧
+        c ≠ ⟨q - 32, (232 * es.length + 31) / 32 + 1, true⟩ ∧ c ≠ cp) ∧
+        ∀ μ'' : Memory, (∀ c ∈ csOf j, ∀ a, InData c a → μ''.read a = μ'.read a) →
+          reps j (csOf j) (μ'.readN (q + 232 * j) 232) μ'') ∧
+        ∀ j j', j < es.length → j' < es.length → j ≠ j' → ∀ c ∈ csOf j, c ∉ csOf j') ∧
       (∀ c ∈ chunks s, c.used = true → c ∈ chunks s' ∧ ∀ a, InData c a → μ'.read a = μ.read a) ∧
       (∀ d ∈ chunks s, d.used = true → d ≠ ⟨q - 32, (232 * es.length + 31) / 32 + 1, true⟩) ∧
       (∀ a, a < 4294967296 → S + 552 + 24 ≤ a → (a < rd ∨ rd + 16 ≤ a) → μ'.read a = μ.read a) ∧
@@ -116,13 +117,14 @@ theorem vec_oneC {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.E
   have hlow4 : ∀ a, a < 2147483648 → μ4.read a = μ2.read a := fun a h => k42 a (by omega) (by omega) (by omega)
   have H4 : HeapCtx env pb S0 S1 μ4 s2 := Decode.GrowOne.ctx_high inv2.heap hlow4 (fun a => by rw [dwr, cwr])
   refine Or.inl ⟨ω4, μ4, s2, q, _, run1.trans (run2.trans (run3.trans run4)), d1, d5, d6, d0, d8, d16, ?_, ?_, H4,
-    hcbm, inv2.cbd, fun j hj => ?_, fun c hc hu => ?_, fresh1, fun a h0 h1 h2 => ?_, fun a ha => ?_⟩
+    hcbm, inv2.cbd, ?_, fun c hc hu => ?_, fresh1, fun a h0 h1 h2 => ?_, fun a ha => ?_⟩
   · rw [Memory.readN_congr (fun j hj => k42 _ (by omega) (by omega) (by omega))]
     have := inv2.rP; rwa [hoffn] at this
   · rw [Memory.readN_congr (fun j hj => k42 _ (by omega) (by omega) (by omega))]
     have := inv2.rL; rwa [hoffn] at this
-  · obtain ⟨cs, hcs, hr⟩ := inv2.el j hj
-    refine ⟨cs, fun c hc => hcs c hc, fun μ'' h => ?_⟩
+  · obtain ⟨csOf, hel, hdis⟩ := inv2.el
+    refine ⟨csOf, fun j hj => ⟨(hel j hj).1, fun μ'' h => ?_⟩, hdis⟩
+    obtain ⟨hcs, hr⟩ := hel j hj
     rw [Memory.readN_congr (fun i hi => hlow4 _ (by omega))]
     exact hr μ'' (fun c hc a ha => by
       obtain ⟨hc2, hcu, -⟩ := hcs c hc

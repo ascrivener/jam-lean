@@ -195,7 +195,7 @@ theorem run_mixed {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
           ⟨by simp, hb1⟩ hb2
   rcases DecodeC.decode_oneC (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 gl x ω μ s H M q Ly r5
       (is.map Spec.Instr.encode) salt (repsM Rs is) cp (NsM is) hel hg (by simpa using hn) hne
-      ⟨hM0, by omega, hM8⟩ hr5 hcp hcpd hLy h1 h5 h6 s112 (by simpa using sb) pay ssalt tab rt with
+      ⟨by omega, by omega, hM8⟩ hr5 hcp hcpd hLy h1 h5 h6 s112 (by simpa using sb) pay ssalt tab rt with
     ⟨ω1, μ1, s1, E, N1, run1, b1, -, -, b168, b176, b184, -, -, -, H1, hcb, hcbd, ⟨csOf, hcs, hdisj⟩, keep1, fresh1,
       hi1, -⟩ | ⟨N, hx⟩
   rotate_left

@@ -75,7 +75,7 @@ theorem run_fixed {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
       (is.map Spec.Instr.encode) salt (fun j bs _ => Rs j bs) cp (fun _ => 4000)
       (fun j hj => by rw [hes j hj]; exact ElemOkAF.of_elemOkF hL ((hk j (by simpa using hj)).dec _ _ hL))
       hg (by simpa using hn) (fun j hj => by rw [hes j hj]; exact (hk j (by simpa using hj)).ne)
-      ⟨hM0, by omega, hM8⟩ hr5 hcp hcpd hLy h1 h5 h6 s112 (by simpa using sb) pay ssalt tab rt with
+      ⟨by omega, by omega, hM8⟩ hr5 hcp hcpd hLy h1 h5 h6 s112 (by simpa using sb) pay ssalt tab rt with
     ⟨ω1, μ1, s1, E, N1, run1, b1, -, -, b168, b176, b184, -, -, -, H1, hcb, hcbd, hel1, keep1, fresh1, hi1, -⟩ | ⟨N, hx⟩
   rotate_left
   · exact Or.inr ⟨_, ExhaustsX.of hx⟩

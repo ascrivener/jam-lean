@@ -153,6 +153,15 @@ words M + 80 … M + 120 and M + 600 … M + 632 as in μ0). The only hypothesis
 `Encode.Loop.encode_ok` (n ≥ 1) and `encode_zero` (n = 0) with `Encode.Prefix.prefix_small` /
 `prefix_zero` → 29087 frees. Compose into a top-level T1 against `Spec.refine`.
 
+### The loop over every milestone kind (`LoopAll.lean`)
+`LoopAll.loop_all`: from `PInv 0` to `PInv n` at 5042, each instruction passed through (`PassOk`: an index of
+`Pass.PassK`, which includes a `Lookup` with flag 0, sent by its handler 5278 to 5561) or exported (`ExportOk`),
+with the chunks to keep `Kp k` and the host context `ctx k` per instruction. `PInv` takes the entry pc: 5042
+(the cursor at M + 144) or 5054, where refine's prologue enters the loop past the end test with ω₅ = E (the
+cursor word not yet set). `Pass.pa`, `pass_elem`, `pass_elem_grow`, `ExportStep.xhead`, the steps and
+`export_step` run from either. Eager `Lookup` and `Import` give `lookedUp` / `imported`, which are not fixed-width,
+so the milestone excludes them.
+
 ### Next
 - Top level: the prologue to 5042 with `PInv 0` (decode, `IntoIter` built, output `Vec::new`), the loop over
   per-kind steps (`LoopG.loop` with the pass-through steps and, once unblocked, the handlers), `exit_run`, the

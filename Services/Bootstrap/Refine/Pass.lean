@@ -26,17 +26,19 @@ variable {X : Type} {R : HostRel X}
 
 /-- 5042 … 5088: with `cur ≠ end` (M + 144, M + 120) and the element's first word D at `cur` not the
     error word 2^64 − 2, the loop stores `cur + 232` at M + 280 and M + 144, D at M + 304, and calls
-    `memcpy` for the element's other 224 octets, from `cur + 8` to M + 312 (return address 162 → 5095). -/
+    `memcpy` for the element's other 224 octets, from `cur + 8` to M + 312 (return address 162 → 5095).
+    Or the same from 5054, where refine's prologue enters the loop with ω₅ = cur (`hi`). -/
 theorem pa {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] (x : X) (ω : Regs)
     (μ : Memory) (M cur en D : Nat) (hM : M + 632 ≤ 4294967296) (hcur : cur + 232 < 4294967296)
     (hcM : cur + 8 ≤ M + 120 ∨ M + 320 ≤ cur) (hne : cur ≠ en) (hen : en < 18446744073709551616)
     (hD : D < 18446744073709551616) (hDe : D ≠ 18446744073709551614)
-    (h1 : ω[1] = UInt64.ofNat M) (s144 : μ.readN (M + 144) 8 = Num.encodeLE 8 cur)
+    (h1 : ω[1] = UInt64.ofNat M) (i : Nat)
+    (hi : (i = 5042 ∧ μ.readN (M + 144) 8 = Num.encodeLE 8 cur) ∨ (i = 5054 ∧ ω[5] = UInt64.ofNat cur))
     (s120 : μ.readN (M + 120) 8 = Num.encodeLE 8 en) (sD : μ.readN cur 8 = Num.encodeLE 8 D)
     (hr : ∀ a, M + 120 ≤ a → a < M + 152 → μ.readable a = true)
     (hrc : ∀ a, cur ≤ a → a < cur + 8 → μ.readable a = true)
     (hw : ∀ a, M + 144 ≤ a → a < M + 312 → μ.writable a = true) :
-    ∃ ω' μ', FreeStepsH p R 5042 ω μ x 68729 ω' μ' x 20 ∧
+    ∃ ω' μ', FreeStepsH p R i ω μ x 68729 ω' μ' x 20 ∧
       ω'[0] = UInt64.ofNat 162 ∧ ω'[1] = UInt64.ofNat M ∧ ω'[5] = UInt64.ofNat cur ∧ ω'[6] = UInt64.ofNat D ∧
       ω'[7] = UInt64.ofNat (M + 312) ∧ ω'[8] = UInt64.ofNat (cur + 8) ∧ ω'[9] = UInt64.ofNat 224 ∧
       μ'.readN (M + 144) 8 = Num.encodeLE 8 (cur + 232) ∧ μ'.readN (M + 304) 8 = Num.encodeLE 8 D ∧
@@ -44,21 +46,32 @@ theorem pa {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR 
       (∀ a, a < 4294967296 → (a < M + 144 ∨ (M + 152 ≤ a ∧ a < M + 280) ∨ (M + 288 ≤ a ∧ a < M + 304) ∨
         M + 312 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
-  have rc := rd8 (by omega) s144
   have re := rd8 hen s120
   have rD := rd8 hD sD
   have hne' : ¬ cur = en := hne
   have hDe' : ¬ D = 18446744073709551614 := hDe
-  rw [show ω = regsNF ω [] from rfl]
-  refine ⟨?_, ?_, ?_, ?_⟩
-  rotate_left 2
-  · pvm_go [h1, hM, hcur, hcM, hne', hDe', hr, hrc, hw, rc, re, rD, rdN_writeN_disjoint, ↓rdN_fold]
-  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
-    all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
-      ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, Nat.mod_eq_of_lt hD]
-    all_goals try (congr 1; omega)
-    post_simp
-    all_goals try assumption
+  rcases hi with ⟨rfl, s144⟩ | ⟨rfl, h5⟩
+  · have rc := rd8 (by omega) s144
+    rw [show ω = regsNF ω [] from rfl]
+    refine ⟨?_, ?_, ?_, ?_⟩
+    rotate_left 2
+    · pvm_go [h1, hM, hcur, hcM, hne', hDe', hr, hrc, hw, rc, re, rD, rdN_writeN_disjoint, ↓rdN_fold]
+    · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
+      all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+        ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, Nat.mod_eq_of_lt hD]
+      all_goals try (congr 1; omega)
+      post_simp
+      all_goals try assumption
+  · rw [show ω = regsNF ω [] from rfl]
+    refine ⟨?_, ?_, ?_, ?_⟩
+    rotate_left 2
+    · pvm_go [h1, h5, hM, hcur, hcM, hDe', hr, hrc, hw, rD, rdN_writeN_disjoint, ↓rdN_fold]
+    · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
+      all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+        ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, h5, Nat.mod_eq_of_lt hD]
+      all_goals try (congr 1; omega)
+      post_simp
+      all_goals try assumption
 
 /-- The indices refine passes through unchanged: every index of a variant but `Lookup` (8), `Import`
     (9), `Export` (10) and `RandomStorageRefine` (21). -/
@@ -233,8 +246,9 @@ theorem pass_elem {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     (hd : 65536 ≤ ptr + 232 * len ∧ ptr + 232 * len + 232 + 24 < 4294967296)
     (hdM : ptr + 232 * len + 232 + 16 ≤ M - 48 ∨ M + 632 ≤ ptr + 232 * len)
     (hdc : ptr + 232 * len + 232 + 24 ≤ cur ∨ cur + 232 + 24 ≤ ptr + 232 * len)
-    (h1 : ω[1] = UInt64.ofNat M)
-    (s144 : μ.readN (M + 144) 8 = Num.encodeLE 8 cur) (s120 : μ.readN (M + 120) 8 = Num.encodeLE 8 en)
+    (h1 : ω[1] = UInt64.ofNat M) (i : Nat)
+    (hi : (i = 5042 ∧ μ.readN (M + 144) 8 = Num.encodeLE 8 cur) ∨ (i = 5054 ∧ ω[5] = UInt64.ofNat cur))
+    (s120 : μ.readN (M + 120) 8 = Num.encodeLE 8 en)
     (sD : μ.readN cur 8 = Num.encodeLE 8 (9223372036854775807 + t))
     (s128 : μ.readN (M + 128) 8 = Num.encodeLE 8 9223372036854775832)
     (s136 : μ.readN (M + 136) 8 = Num.encodeLE 8 9223372036854775809)
@@ -243,7 +257,7 @@ theorem pass_elem {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     (hrc : ∀ a, cur ≤ a → a < cur + 232 → μ.readable a = true)
     (hwM : ∀ a, M - 48 ≤ a → a < M + 632 → μ.writable a = true)
     (hwd : ∀ a, ptr + 232 * len ≤ a → a < ptr + 232 * len + 232 → μ.writable a = true) :
-    ∃ ω' μ', FreeStepsH p R 5042 ω μ x 5042 ω' μ' x 4000 ∧ ω'[1] = UInt64.ofNat M ∧
+    ∃ ω' μ', FreeStepsH p R i ω μ x 5042 ω' μ' x 4000 ∧ ω'[1] = UInt64.ofNat M ∧
       μ'.readN (M + 144) 8 = Num.encodeLE 8 (cur + 232) ∧ μ'.readN (M + 264) 8 = Num.encodeLE 8 (len + 1) ∧
       μ'.readN (ptr + 232 * len) 232 = μ.readN cur 232 ∧
       μ'.readN (M + 120) 8 = Num.encodeLE 8 en ∧
@@ -261,7 +275,7 @@ theorem pass_elem {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     fun a h1 h2 => Memory.readable_of_writable (hwM a h1 h2)
   obtain ⟨ω1, μ1, run1, a0, a1, -, a6, a7, a8, a9, a144, a304, a280, afr, ard, awr⟩ := pa (p := p) (P := P) (R := R) x ω μ
     M cur en (9223372036854775807 + t) (by omega) (by omega) (by omega) hne hen (by have := ht.bound; omega)
-    (by have := ht.bound; omega) h1 s144 s120 sD (fun a h1 h2 => hr a (by omega) (by omega))
+    (by have := ht.bound; omega) h1 i hi s120 sD (fun a h1 h2 => hr a (by omega) (by omega))
     (fun a h1 h2 => hrc a h1 (by omega)) (fun a h1 h2 => hwM a (by omega) (by omega))
   obtain ⟨ω2, μ2, run2, b0, b1, b5, b6, bd, bfr, brd, bwr⟩ := memcpy_any (p := p) (P := P) (R := R) x ω1 μ1
     162 5095 M (M + 312) (cur + 8) 224 a0 a1 a7 a8 a9 ⟨by decide, by decide, by decide⟩ jte_80 bs_5095

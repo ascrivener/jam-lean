@@ -34,15 +34,16 @@ theorem pass_elem_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P
     (hcur : 65536 ≤ cur ∧ cur + 232 + 24 < 2147483648)
     (hne : cur ≠ en) (hen : en < 18446744073709551616) (hptr : ptr < 18446744073709551616)
     (hpl : ptr + 232 * len < 2147483648)
-    (h1 : ω[1] = UInt64.ofNat M)
-    (s144 : μ.readN (M + 144) 8 = Num.encodeLE 8 cur) (s120 : μ.readN (M + 120) 8 = Num.encodeLE 8 en)
+    (h1 : ω[1] = UInt64.ofNat M) (i : Nat)
+    (hi : (i = 5042 ∧ μ.readN (M + 144) 8 = Num.encodeLE 8 cur) ∨ (i = 5054 ∧ ω[5] = UInt64.ofNat cur))
+    (s120 : μ.readN (M + 120) 8 = Num.encodeLE 8 en)
     (sD : μ.readN cur 8 = Num.encodeLE 8 (9223372036854775807 + t))
     (s128 : μ.readN (M + 128) 8 = Num.encodeLE 8 9223372036854775832)
     (s136 : μ.readN (M + 136) 8 = Num.encodeLE 8 9223372036854775809)
     (sc : μ.readN (M + 248) 8 = Num.encodeLE 8 len) (sp : μ.readN (M + 256) 8 = Num.encodeLE 8 ptr)
     (sl : μ.readN (M + 264) 8 = Num.encodeLE 8 len)
     (hrc : ∀ a, cur ≤ a → a < cur + 232 → μ.readable a = true) :
-    (∃ q s' ω' μ', FreeStepsH p (refineContractK cap0 env) 5042 ω μ x 5042 ω' μ' x
+    (∃ q s' ω' μ', FreeStepsH p (refineContractK cap0 env) i ω μ x 5042 ω' μ' x
         (64 * ((232 * len + 31) / 32) + 6000) ∧
       ω'[1] = UInt64.ofNat M ∧
       μ'.readN (M + 144) 8 = Num.encodeLE 8 (cur + 232) ∧ μ'.readN (M + 264) 8 = Num.encodeLE 8 (len + 1) ∧
@@ -60,7 +61,7 @@ theorem pass_elem_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P
       μ'.readN (M + 280) 8 = Num.encodeLE 8 (cur + 232) ∧
       (∀ a, (M ≤ a ∧ a < M + 144) ∨ (M + 152 ≤ a ∧ a < M + 248) ∨ (M + 272 ≤ a ∧ a < M + 280) ∨
         (M + 288 ≤ a ∧ a < M + 304) ∨ (M + 536 ≤ a ∧ a < M + 632) → μ'.read a = μ.read a)) ∨
-    Exhausts env cap0 pb p P 5042 ω μ x (64 * ((232 * len + 31) / 32) + 6000) := by
+    Exhausts env cap0 pb p P i ω μ x (64 * ((232 * len + 31) / 32) + 6000) := by
   obtain ⟨hS0M, hMS1, hM2, hM8⟩ := hM
   have hS1 := H.hS1
   have wM : ∀ a, M - 48 ≤ a → a < M + 632 → μ.writable a = true := fun a h1 h2 => H.st a (by omega) (by omega)
@@ -70,7 +71,7 @@ theorem pass_elem_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P
   -- the element staged at M + 304
   obtain ⟨ω1, μ1, run1, a0, a1, -, a6, a7, a8, a9, a144, a304, a280, afr, ard, awr⟩ := pa (p := p) (P := P)
     (R := refineContractK cap0 env) x ω μ M cur en (9223372036854775807 + t) (by omega) (by omega) (by omega)
-    hne hen hD (by have := ht.bound; omega) h1 s144 s120 sD (fun a h1 h2 => rM a (by omega) (by omega))
+    hne hen hD (by have := ht.bound; omega) h1 i hi s120 sD (fun a h1 h2 => rM a (by omega) (by omega))
     (fun a h1 h2 => hrc a h1 (by omega)) (fun a h1 h2 => wM a (by omega) (by omega))
   obtain ⟨ω2, μ2, run2, b0, b1, b5, b6, bd, bfr, brd, bwr⟩ := memcpy_any (p := p) (P := P)
     (R := refineContractK cap0 env) x ω1 μ1 162 5095 M (M + 312) (cur + 8) 224 a0 a1 a7 a8 a9

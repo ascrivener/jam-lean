@@ -70,7 +70,7 @@ theorem exit_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env
     (DR : Nat → List UInt8 → Memory → Prop) (enc : Nat → List UInt8) (rep : Nat → List UInt8 → Prop)
     (dbg : DebugLineOk p cap0 env pb S0 S1 DR)
     (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State) (L : LayP S0 S1 M E n ce) (hn : 0 < n)
-    (st : PInv env pb S0 S1 M E n ce capI μ0 Kp O n ω μ s) (hcapI : 232 * capI < 18446744073709551616)
+    (st : PInv env pb S0 S1 M E n ce capI μ0 Kp O 5042 n ω μ s) (hcapI : 232 * capI < 18446744073709551616)
     (hOD : ∀ j bs μ, j < n → O j bs → DR j bs μ) (hOR : ∀ j bs, j < n → O j bs → rep j bs)
     (hON : ∀ j bs, j < n → O j bs → ∃ t, DropOut.NoDrop t ∧ bs.take 8 = Num.encodeLE 8 (9223372036854775807 + t))
     (hok : ∀ j, j < n → EncOk p P (enc j) (rep j)) (hlen : ∀ j, j < n → (enc j).length ≤ 232)
@@ -105,7 +105,7 @@ theorem exit_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env
   have hcs : 232 * cap + 32 ≤ 32 * co.size := by rw [hcos]; omega
   -- 1. the loop's end
   obtain ⟨ω1, run1, a1, -, -⟩ := Exit.ex0 (p := p) (P := P) (R := refineContractK cap0 env) x ω μ M (E + 232 * n)
-    (by omega) (by omega) st.h1 st.cur st.en
+    (by omega) (by omega) st.h1 st.cur42 st.en
     (fun a h1 h2 => Memory.readable_of_writable (st.H.st a (by omega) (by omega)))
   -- 2. the input's `IntoIter` dropped
   obtain ⟨ω2, μ2, s2, run2, H2, -, -, b1, -, -, bfr, bkeep⟩ := Exit.drop (p := p) (P := P)

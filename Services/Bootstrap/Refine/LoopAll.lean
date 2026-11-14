@@ -21,9 +21,9 @@ set_option maxRecDepth 100000
 
 /-- Fewer chunks to keep: `PInv` holds for any `Kp'` within `Kp`. -/
 theorem PInv.mono_kp {env : RefineHost.Env} {pb S0 S1 M E n : Nat} {ce : Chunk} {capI : Nat} {μ0 : Memory}
-    {Kp Kp' : Chunk → Prop} {O : Nat → List UInt8 → Prop} {k : Nat} {ω : Regs} {μ : Memory} {s : State}
-    (st : PInv env pb S0 S1 M E n ce capI μ0 Kp O k ω μ s) (h : ∀ d, Kp' d → Kp d) :
-    PInv env pb S0 S1 M E n ce capI μ0 Kp' O k ω μ s where
+    {Kp Kp' : Chunk → Prop} {O : Nat → List UInt8 → Prop} {i k : Nat} {ω : Regs} {μ : Memory} {s : State}
+    (st : PInv env pb S0 S1 M E n ce capI μ0 Kp O i k ω μ s) (h : ∀ d, Kp' d → Kp d) :
+    PInv env pb S0 S1 M E n ce capI μ0 Kp' O i k ω μ s where
   h1 := st.h1
   cur := st.cur
   en := st.en
@@ -80,9 +80,9 @@ def ExportOk (env : RefineHost.Env) (μ0 : Memory) (E k : Nat) (ce : Chunk) (Kp 
       μ'.readN (a + 8) 8 = Num.encodeLE 8 ns → O k (μ'.readN a 232)) ∧
     x' = ExportSeg.expUpTo env μ0 ptrv x ns
 
-/-- **The transform loop** (5042 … 5042): from `PInv 0` with the context `ctx 0`, the n instructions, each
-    passed through or exported, reach `PInv n` (the chunks to keep `Kp n`) with the context `ctx n`; or an
-    allocation fails. -/
+/-- **The transform loop** (5042 … 5042, or from 5054 where refine's prologue enters it): from `PInv 0` with
+    the context `ctx 0`, the n instructions, each passed through or exported, reach `PInv n` at 5042 (the
+    chunks to keep `Kp n`) with the context `ctx n`; or an allocation fails. -/
 theorem loop_all {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P]
     (env : RefineHost.Env) (cap0 : Nat) (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616)
     {pb S0 S1 : Nat} (fmt : ExportSeg.ExportFmtOk p cap0 env pb S0 S1) (μ0 : Memory) {hb : Nat}
@@ -90,16 +90,18 @@ theorem loop_all {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Has
     (ctx : Nat → RefineCtx) (L : LayP S0 S1 M E n ce)
     (elem : ∀ k, k < n → PassOk μ0 E k (Kp k) (Kp (k + 1)) O (ctx k) (ctx (k + 1)) ∨
       ExportOk env μ0 E k ce (Kp k) (Kp (k + 1)) O (ctx k) (ctx (k + 1)))
-    (ω : Regs) (μ : Memory) (s : State) (st : PInv env pb S0 S1 M E n ce capI μ0 (Kp 0) O 0 ω μ s) :
+    (i : Nat) (hi : i = 5042 ∨ 0 < n)
+    (ω : Regs) (μ : Memory) (s : State) (st : PInv env pb S0 S1 M E n ce capI μ0 (Kp 0) O i 0 ω μ s) :
     (∃ (s' : State) (ω' : Regs) (μ' : Memory) (N : Nat),
-      FreeStepsH p (refineContractK cap0 env) 5042 ω μ (ctx 0) 5042 ω' μ' (ctx n) N ∧
-      PInv env pb S0 S1 M E n ce capI μ0 (Kp n) O n ω' μ' s') ∨
-    ∃ N, ExhaustsX env cap0 pb p 5042 ω μ (ctx 0) N := by
-  have step : ∀ k ω μ y, k < n → (y = ctx k ∧ ∃ s, PInv env pb S0 S1 M E n ce capI μ0 (Kp k) O k ω μ s) →
-      (∃ ω' μ' y' N, FreeStepsH p (refineContractK cap0 env) 5042 ω μ y 5042 ω' μ' y' N ∧
-        (y' = ctx (k + 1) ∧ ∃ s, PInv env pb S0 S1 M E n ce capI μ0 (Kp (k + 1)) O (k + 1) ω' μ' s)) ∨
-      ∃ N, ExhaustsX env cap0 pb p 5042 ω μ y N := by
-    intro k ω μ y hk ⟨hy, s, st⟩
+      FreeStepsH p (refineContractK cap0 env) i ω μ (ctx 0) 5042 ω' μ' (ctx n) N ∧
+      PInv env pb S0 S1 M E n ce capI μ0 (Kp n) O 5042 n ω' μ' s') ∨
+    ∃ N, ExhaustsX env cap0 pb p i ω μ (ctx 0) N := by
+  -- one instruction, from either entry
+  have step : ∀ j k ω μ y, k < n → (y = ctx k ∧ ∃ s, PInv env pb S0 S1 M E n ce capI μ0 (Kp k) O j k ω μ s) →
+      (∃ ω' μ' y' N, FreeStepsH p (refineContractK cap0 env) j ω μ y 5042 ω' μ' y' N ∧
+        (y' = ctx (k + 1) ∧ ∃ s, PInv env pb S0 S1 M E n ce capI μ0 (Kp (k + 1)) O 5042 (k + 1) ω' μ' s)) ∨
+      ∃ N, ExhaustsX env cap0 pb p j ω μ y N := by
+    intro j k ω μ y hk ⟨hy, s, st⟩
     subst hy
     rcases elem k hk with ⟨t, ht, sD0, hO, hK, hx⟩ | hex
     · obtain ⟨cap, ptr, vc, -, -, -, hcapn, -⟩ := st.out
@@ -124,12 +126,26 @@ theorem loop_all {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Has
         ⟨s1, ω1, μ1, N, run1, st1⟩ | hx'
       · exact Or.inl ⟨ω1, μ1, _, N, run1, hx.symm, s1, st1⟩
       · exact Or.inr hx'
-  rcases LoopG.loopE (p := p) (R := refineContractK cap0 env) 5042 n
-      (fun k ω μ y => y = ctx k ∧ ∃ s, PInv env pb S0 S1 M E n ce capI μ0 (Kp k) O k ω μ s)
+  -- the remaining instructions, from the loop head
+  have rest : ∀ m k ω μ y, k + m = n → (y = ctx k ∧ ∃ s, PInv env pb S0 S1 M E n ce capI μ0 (Kp k) O 5042 k ω μ s) →
+      (∃ ω' μ' y' N, FreeStepsH p (refineContractK cap0 env) 5042 ω μ y 5042 ω' μ' y' N ∧
+        (y' = ctx n ∧ ∃ s, PInv env pb S0 S1 M E n ce capI μ0 (Kp n) O 5042 n ω' μ' s)) ∨
+      ∃ N, ExhaustsX env cap0 pb p 5042 ω μ y N :=
+    LoopG.loopE (p := p) (R := refineContractK cap0 env) 5042 n
+      (fun k ω μ y => y = ctx k ∧ ∃ s, PInv env pb S0 S1 M E n ce capI μ0 (Kp k) O 5042 k ω μ s)
       (fun i ω μ y => ∃ N, ExhaustsX env cap0 pb p i ω μ y N)
-      (fun run ⟨N, h⟩ => ⟨_, ExhaustsX.pre run h⟩) step n 0 ω μ (ctx 0) (by omega) ⟨rfl, s, st⟩ with
-    ⟨ω', μ', y, N, run, rfl, s', st'⟩ | hx
-  · exact Or.inl ⟨s', ω', μ', N, run, st'⟩
-  · exact Or.inr hx
+      (fun run ⟨N, h⟩ => ⟨_, ExhaustsX.pre run h⟩) (fun k ω μ y hk q => step 5042 k ω μ y hk q)
+  by_cases hn : n = 0
+  · have hi' : i = 5042 := by omega
+    subst hi'
+    rcases rest 0 0 ω μ (ctx 0) (by omega) ⟨rfl, s, st⟩ with ⟨ω', μ', y, N, run, rfl, s', st'⟩ | hx
+    · exact Or.inl ⟨s', ω', μ', N, run, st'⟩
+    · exact Or.inr hx
+  · rcases step i 0 ω μ (ctx 0) (by omega) ⟨rfl, s, st⟩ with ⟨ω1, μ1, y1, N1, run1, rfl, s1, st1⟩ | hx
+    · rcases rest (n - 1) 1 ω1 μ1 (ctx 1) (by omega) ⟨rfl, s1, st1⟩ with ⟨ω', μ', y, N, run, rfl, s', st'⟩ | hx
+      · exact Or.inl ⟨s', ω', μ', _, run1.trans run, st'⟩
+      · obtain ⟨N, hx⟩ := hx
+        exact Or.inr ⟨_, ExhaustsX.pre run1 hx⟩
+    · exact Or.inr hx
 
 end Services.Bootstrap.Refine.LoopAll

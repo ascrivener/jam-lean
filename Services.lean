@@ -291,6 +291,13 @@ import Services.Bootstrap.Encode.VariantsVec
 import Services.Bootstrap.Encode.VariantsVecVec
 import Services.Bootstrap.Encode.VecSrcHeap
 import Services.Bootstrap.Encode.VariantsVec3
+import Services.Bootstrap.Encode.VariantsVec2Segs
+import Services.Bootstrap.Encode.VariantsVec2GasSegs
+import Services.Bootstrap.Encode.VariantsVec2CSSegs
+import Services.Bootstrap.Encode.VariantsVec2CSSegs2
+import Services.Bootstrap.Encode.VariantsVec2
+import Services.Bootstrap.Encode.VariantsVec2Gas
+import Services.Bootstrap.Encode.VariantsVec2CS
 import Services.Bootstrap.Refine.Pass
 import Services.Bootstrap.Refine.PassGrow
 import Services.Bootstrap.Refine.PassLoop

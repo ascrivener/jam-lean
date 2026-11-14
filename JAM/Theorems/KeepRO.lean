@@ -142,7 +142,7 @@ theorem refineContractK_keep {cap : Nat} {env : RefineHost.Env} {pb : Nat}
   simp only [toHostFn, HostResult.mk.injEq] at he
   obtain ⟨hs, -, -, hm, -⟩ := he
   subst hm
-  rcases hg with rfl | rfl | hg
+  rcases hg with rfl | rfl | ⟨h3, h8⟩ | hg
   · simp only [RefineHost.dispatch, hostGrowHeap, growHeapCore, hbd] at hs ⊢
     generalize hC : List.countP (fun k => μ.pages.get? (48 + k) == some Access.write) (List.range (pb - 48)) = C
       at hs ⊢
@@ -162,6 +162,30 @@ theorem refineContractK_keep {cap : Nat} {env : RefineHost.Env} {pb : Nat}
     · rw [if_pos hc] at hs; simp at hs
     · rw [if_neg hc] at hs ⊢
       exact (writeValue_keep _ _ _ _ _ hs).imp (fun e q _ => by rw [e]) id
+  · rcases (show h = 7 ∨ h = 8 ∨ (3 ≤ h ∧ h ≤ 6) by omega) with rfl | rfl | h36
+    · -- historical_lookup
+      simp only [RefineHost.dispatch, RefineHost.historicalLookup, charged] at hs ⊢
+      by_cases hc : (UInt64.ofNat cap).toNat < Constants.CgasHconst + memGas Constants.CgasHlinear (reg ω 11)
+      · rw [if_pos hc] at hs; simp at hs
+      · rw [if_neg hc] at hs ⊢
+        split at hs
+        · next hrd =>
+          rw [if_pos hrd] at ⊢
+          unfold writeValue at hs; simp at hs
+        · next hrd =>
+          rw [if_neg hrd] at ⊢
+          exact (writeValue_keep _ _ _ _ _ hs).imp (fun e q _ => by rw [e]) id
+    · -- export
+      simp only [RefineHost.dispatch, RefineHost.exportSeg, charged] at hs ⊢
+      by_cases hc : (UInt64.ofNat cap).toNat < Constants.CgasE
+      · rw [if_pos hc] at hs; simp at hs
+      · rw [if_neg hc] at hs ⊢
+        split <;> (try split) <;> simp_all [RefineHost.r7, RefineHost.panic]
+    · have e : ∀ g, RefineHost.dispatch env h g ω μ x = RefineHost.unknown g ω μ x := fun g => by
+        unfold RefineHost.dispatch
+        split <;> first | omega | rfl
+      rw [e]
+      exact ⟨fun _ _ => rfl, fun _ _ _ => rfl⟩
   · have e : ∀ g, RefineHost.dispatch env h g ω μ x = RefineHost.unknown g ω μ x := fun g => by
       unfold RefineHost.dispatch
       split <;> first | omega | rfl

@@ -94,7 +94,7 @@ theorem acc_fmt_site {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] 
   have hrd : ∀ a, S0 ≤ a → a < S1 → μ.readable a = true := fun a h1 h2 => Memory.readable_of_writable (hst a h1 h2)
   obtain ⟨ω1, run1, a0, a1, a5, a6, a7, a8, a9⟩ := site_call (p := p) (P := P) (R := accContractK cap env) x ω μ
   -- the arguments
-  have hA : ArgsAt p P (accContractK cap env) envH pb S0 S1 μ s S (S + 1144) 0 accTmpl 20 2900 := by
+  have hA : ArgsAt p P (accContractK cap env) envH pb S0 S1 600 μ s S (S + 1144) 0 accTmpl 20 2900 := by
     intro j hj
     simp only [accTmpl, nargs] at hj
     have hr16 : ∀ j, j < 3 → ∀ a, S + 1144 + 16 * (0 + j) ≤ a → a < S + 1144 + 16 * (0 + j) + 16 →
@@ -102,17 +102,17 @@ theorem acc_fmt_site {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] 
     rcases (show j = 0 ∨ j = 1 ∨ j = 2 by omega) with rfl | rfl | rfl
     · refine ⟨S + 260, 2616, 60525, by omega, by omega, hr16 0 (by omega), by simpa using p0,
         by simpa using p1, by decide, jte_1307, bs_60525, ?_⟩
-      exact (hex32_ok (p := p) (P := P) envH pb S0 S1 HA HR μ s S (S + 260) (by omega) ⟨by omega, by omega⟩
+      exact (hex32_ok (p := p) (P := P) envH pb S0 S1 600 (Nat.le_refl _) HA HR μ s S (S + 260) (by omega) ⟨by omega, by omega⟩
         (fun a h1 h2 => hrd a (by omega) (by omega))).mono (by omega) (by omega)
     · refine ⟨S + 256, 2800, 68146, by omega, by omega, hr16 1 (by omega), by simpa using p2,
         by simpa using p3, by decide, jte_1399, bs_68146, ?_⟩
-      exact (dec32_ok (p := p) (P := P) envH pb S0 S1 HA HR μ s S (S + 256) (by omega) ⟨by omega, by omega⟩
+      exact (dec32_ok (p := p) (P := P) envH pb S0 S1 600 (Nat.le_refl _) HA HR μ s S (S + 256) (by omega) ⟨by omega, by omega⟩
         (fun a h1 h2 => hrd a (by omega) (by omega))).mono (by omega) (by omega)
     · refine ⟨S + 1600, 2804, 68449, by omega, by omega, hr16 2 (by omega), by simpa using p4,
         by simpa using p5, by decide, jte_1401, bs_68449, ?_⟩
-      exact (dec64_ok (p := p) (P := P) envH pb S0 S1 HA HR μ s S (S + 1600) (by omega) ⟨by omega, by omega⟩
+      exact (dec64_ok (p := p) (P := P) envH pb S0 S1 600 (Nat.le_refl _) HA HR μ s S (S + 1600) (by omega) ⟨by omega, by omega⟩
         (fun a h1 h2 => hrd a (by omega) (by omega))).mono (by omega) (by omega)
-  rcases format_inner (p := p) (P := P) (R := accContractK cap env) envH pb S0 S1 HA HR S (S + 744) 66464
+  rcases format_inner (p := p) (P := P) (R := accContractK cap env) envH pb S0 S1 600 (Nat.le_refl _) HA HR S (S + 744) 66464
       (S + 1144) 222 6587 20 2900 accTmpl x ω1 μ s H hba a0 (a1.trans h1) (a7.trans h7) (a8.trans h8)
       (a9.trans h9) (by decide) jte_110 bs_6587 ⟨by omega, hS.2.1, by omega, by omega⟩ ⟨by omega, by omega⟩
       hro (tmpl_acc htm hrt) (by simp [accTmpl, tsize]) ⟨by omega, by omega⟩ hA (by simp [accTmpl, nargs])

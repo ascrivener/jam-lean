@@ -104,7 +104,7 @@ theorem fi_loop {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : 
     the `String` (capacity cap, length 0, fresh against s) at U + 24 and the frame at U = S − 72,
     `core::fmt::write` runs (`fmt_write`) and `fi_ret` moves the `String` to O. -/
 theorem fi_tail {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
-    (pb S0 S1 : Nat) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
+    (pb S0 S1 Z : Nat) (hZ : 600 ≤ Z) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
     (S O tp args ret t v5 v6 M C cap : Nat) (ts : List TItem)
     (x : X) (ω : Regs) (μ μ1 : Memory) (s s1 : State)
     (H1 : HeapCtx env pb S0 S1 μ1 s1) (hba : s1.base % 8 = 0) (hs : Str s s1 μ1 (S - 72 + 24) cap 0)
@@ -116,10 +116,10 @@ theorem fi_tail {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env 
     (r0 : rdN μ1 (S - 72 + 64) 8 = ret)
     (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t)
     (hbt : P.isBlockStart t = true)
-    (hS : S0 + 800 ≤ S ∧ S % 8 = 0 ∧ 2147484500 ≤ S ∧ S ≤ S1) (hO : S ≤ O ∧ O + 24 ≤ S1)
+    (hS : S0 + Z + 200 ≤ S ∧ S % 8 = 0 ∧ 2147483648 + Z + 252 ≤ S ∧ S ≤ S1) (hO : S ≤ O ∧ O + 24 ≤ S1)
     (hro : RoW μ1) (hTm : Tmpl μ1 tp ts) (htp : 65536 ≤ tp ∧ tp + tsize ts + 24 ≤ 196608)
     (hargs : args < 18446744073709551616 ∧ args % 2 = 0)
-    (hA : ArgsAt p P R env pb S0 S1 μ s S args 0 ts M C) (hi : nargs ts < 268435456)
+    (hA : ArgsAt p P R env pb S0 S1 Z μ s S args 0 ts M C) (hi : nargs ts < 268435456)
     (hn : tlen M ts < 134217728) :
     (∃ ω' μ' x' s', FreeStepsH p R 64495 ω μ1 x t ω' μ' x' (tcost M C ts + 1073741940) ∧
       HeapCtx env pb S0 S1 μ' s' ∧ s'.base = s1.base ∧ Keeps pb S (fun a => O ≤ a ∧ a < O + 24) s μ1 μ' s' ∧
@@ -129,7 +129,7 @@ theorem fi_tail {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env 
   have hst : ∀ a, S0 ≤ a → a < S1 → μ1.writable a = true := H1.st
   have hS1 := H1.hS1
   have hSb := H1.hSb
-  rcases fmt_write (p := p) (P := P) (R := R) env pb S0 S1 HA HR μ s S (S - 72) (S - 72 + 24) tp args 2588 59665
+  rcases fmt_write (p := p) (P := P) (R := R) env pb S0 S1 Z hZ HA HR μ s S (S - 72) (S - 72 + 24) tp args 2588 59665
       ω[5].toNat ω[6].toNat M C ts x ω μ1 s1 cap 0 H1 hba hs KA h0 h1 UInt64.ofNat_toNat.symm
       UInt64.ofNat_toNat.symm h7 h8 h9 h10 ⟨UInt64.toNat_lt _, UInt64.toNat_lt _⟩ (by decide) jte_1293 bs_59665
       ⟨by omega, by omega, by omega⟩ ⟨by omega, by omega, by omega⟩ hro hTm htp hargs hA hi (by omega) with
@@ -171,17 +171,17 @@ theorem fi_tail {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env 
     the text unspecified), the context kept, from S up only O … O + 24 changed, and ω₀, ω₁, ω₅, ω₆
     restored; or it reaches a failed allocator call. The bound is `fmtCost M C ts`. -/
 theorem format_inner {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
-    (pb S0 S1 : Nat) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
+    (pb S0 S1 Z : Nat) (hZ : 600 ≤ Z) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
     (S O tp args ret t M C : Nat) (ts : List TItem) (x : X) (ω : Regs) (μ : Memory) (s : State)
     (H : HeapCtx env pb S0 S1 μ s) (hba : s.base % 8 = 0)
     (h0 : ω[0] = UInt64.ofNat ret) (h1 : ω[1] = UInt64.ofNat S) (h7 : ω[7] = UInt64.ofNat O)
     (h8 : ω[8] = UInt64.ofNat tp) (h9 : ω[9] = UInt64.ofNat args)
     (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t)
     (hbt : P.isBlockStart t = true)
-    (hS : S0 + 800 ≤ S ∧ S % 8 = 0 ∧ 2147484500 ≤ S ∧ S ≤ S1) (hO : S ≤ O ∧ O + 24 ≤ S1)
+    (hS : S0 + Z + 200 ≤ S ∧ S % 8 = 0 ∧ 2147483648 + Z + 252 ≤ S ∧ S ≤ S1) (hO : S ≤ O ∧ O + 24 ≤ S1)
     (hro : RoW μ) (hTm : Tmpl μ tp ts) (htp : 65536 ≤ tp ∧ tp + tsize ts + 24 ≤ 196608)
     (hargs : args < 18446744073709551616 ∧ args % 2 = 0)
-    (hA : ArgsAt p P R env pb S0 S1 μ s S args 0 ts M C) (hi : nargs ts < 268435456)
+    (hA : ArgsAt p P R env pb S0 S1 Z μ s S args 0 ts M C) (hi : nargs ts < 268435456)
     (hn : tlen M ts < 134217728) :
     FmtCall p R env pb S0 S1 ω μ x s S O t (fmtCost M C ts) := by
   have hst : ∀ a, S0 ≤ a → a < S1 → μ.writable a = true := H.st
@@ -221,7 +221,7 @@ theorem format_inner {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] 
       rdN μ1 (S - 72 + 56) 8 = ω[5].toNat → rdN μ1 (S - 72 + 64) 8 = ret → RoW μ1 → Tmpl μ1 tp ts →
       FmtCall p R env pb S0 S1 ω μ x s S O t (fmtCost M C ts) := by
     intro ω1 μ1 x1 s1 cap n0 run1 hn0 H1 hb1 hs1 K1 a0 a1 a7 a8 a9 a10 rO r6 r5 r0 hro1 hTm1
-    rcases fi_tail (p := p) (P := P) (R := R) env pb S0 S1 HA HR S O tp args ret t ω[5].toNat ω[6].toNat M C cap
+    rcases fi_tail (p := p) (P := P) (R := R) env pb S0 S1 Z hZ HA HR S O tp args ret t ω[5].toNat ω[6].toNat M C cap
         ts x1 ω1 μ μ1 s s1 H1 (by rw [hb1]; exact hba) hs1 K1 a0 a1 a7 a8 a9 a10 rO r6 r5 r0 hret hjt hbt hS hO
         hro1 hTm1 htp hargs hA hi hn with
       ⟨ω', μ', x', s', run', H', hb', K', hso, g0, g1, g5, g6⟩ | hx

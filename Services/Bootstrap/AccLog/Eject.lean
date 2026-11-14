@@ -153,7 +153,7 @@ theorem eject_fmt_site {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P
     (hS : S0 + 800 ≤ S ∧ S % 8 = 0 ∧ 2147484500 ≤ S ∧ S + 1700 ≤ S1)
     (hro : RoW μ) (htm : μ.readN 66618 39 = ejectTmplBytes)
     (hrt : ∀ a, 66618 ≤ a → a < 66657 → μ.readable a = true)
-    (c d : Nat) (hc : c < 1048576) (hA : ArgsAt p P (accContractK cap env) envH pb S0 S1 μ s S (S + 1568) 0 ejectTmpl c d) :
+    (c d : Nat) (hc : c < 1048576) (hA : ArgsAt p P (accContractK cap env) envH pb S0 S1 600 μ s S (S + 1568) 0 ejectTmpl c d) :
     (∃ ω' μ' x' s', FreeStepsH p (accContractK cap env) 9527 ω μ x 9576 ω' μ' x'
         (1 + fmtCost c d ejectTmpl + 300) ∧
       HeapCtx envH pb S0 S1 μ' s' ∧ s'.base = s.base ∧
@@ -164,7 +164,7 @@ theorem eject_fmt_site {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P
   have hSb := H.hSb
   have hrd : ∀ a, S0 ≤ a → a < S1 → μ.readable a = true := fun a h1 h2 => Memory.readable_of_writable (hst a h1 h2)
   obtain ⟨ω1, run1, a0, a1, a5, a6, a7, a8, a9⟩ := eject_site_call (p := p) (P := P) (R := accContractK cap env) x ω μ
-  rcases format_inner (p := p) (P := P) (R := accContractK cap env) envH pb S0 S1 HA HR S (S + 1416) 66618
+  rcases format_inner (p := p) (P := P) (R := accContractK cap env) envH pb S0 S1 600 (Nat.le_refl _) HA HR S (S + 1416) 66618
       (S + 1568) 334 9534 c d ejectTmpl x ω1 μ s H hba a0 (a1.trans h1) (a7.trans h7) (a8.trans h8)
       (a9.trans h9) (by decide) jte_166 bs_9534 ⟨by omega, hS.2.1, by omega, by omega⟩ ⟨by omega, by omega⟩
       hro (tmpl_eject htm hrt) (by simp [ejectTmpl, tsize]) ⟨by omega, by omega⟩ hA (by simp [ejectTmpl, nargs])

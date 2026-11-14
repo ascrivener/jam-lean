@@ -18,7 +18,10 @@ def traceRun (st : Static) (G : Prog) : Nat → Nat → SState → List String �
     match sstep st G pc σ with
     | some (pc', σ') => let r := traceRun st G k pc' σ'; (s!"{pc}" :: r.1, r.2)
     | none =>
-      ([s!"cannot follow pc {pc}: {repr ((G.code.find pc).map (·.1))}; registers {repr σ.regs}"], none)
+      match hstep st G pc σ with
+      | some (pc', σ') => let r := traceRun st G k pc' σ'; (s!"{pc} (host)" :: r.1, r.2)
+      | none =>
+        ([s!"cannot follow pc {pc}: {repr ((G.code.find pc).map (·.1))}; registers {repr σ.regs}"], none)
 
 /-- What a failing `check st G A T frame start tgt k` trips on: the same tests as `entails`. -/
 def traceCheck (st : Static) (G : Prog) (A T : Spec) (frame : List (Aff × Nat))

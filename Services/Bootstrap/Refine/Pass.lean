@@ -37,7 +37,7 @@ theorem pa {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR 
     (hrc : ∀ a, cur ≤ a → a < cur + 8 → μ.readable a = true)
     (hw : ∀ a, M + 144 ≤ a → a < M + 312 → μ.writable a = true) :
     ∃ ω' μ', FreeStepsH p R 5042 ω μ x 68729 ω' μ' x 20 ∧
-      ω'[0] = UInt64.ofNat 162 ∧ ω'[1] = UInt64.ofNat M ∧ ω'[6] = UInt64.ofNat D ∧
+      ω'[0] = UInt64.ofNat 162 ∧ ω'[1] = UInt64.ofNat M ∧ ω'[5] = UInt64.ofNat cur ∧ ω'[6] = UInt64.ofNat D ∧
       ω'[7] = UInt64.ofNat (M + 312) ∧ ω'[8] = UInt64.ofNat (cur + 8) ∧ ω'[9] = UInt64.ofNat 224 ∧
       μ'.readN (M + 144) 8 = Num.encodeLE 8 (cur + 232) ∧ μ'.readN (M + 304) 8 = Num.encodeLE 8 D ∧
       μ'.readN (M + 280) 8 = Num.encodeLE 8 (cur + 232) ∧
@@ -53,9 +53,10 @@ theorem pa {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR 
   refine ⟨?_, ?_, ?_, ?_⟩
   rotate_left 2
   · pvm_go [h1, hM, hcur, hcM, hne', hDe', hr, hrc, hw, rc, re, rD, rdN_writeN_disjoint, ↓rdN_fold]
-  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
+  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
     all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
       ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, Nat.mod_eq_of_lt hD]
+    all_goals try (congr 1; omega)
     post_simp
     all_goals try assumption
 
@@ -217,7 +218,7 @@ theorem pass_elem {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
   obtain ⟨hM0, hM1, hM8⟩ := hM
   have hr : ∀ a, M - 48 ≤ a → a < M + 632 → μ.readable a = true :=
     fun a h1 h2 => Memory.readable_of_writable (hwM a h1 h2)
-  obtain ⟨ω1, μ1, run1, a0, a1, a6, a7, a8, a9, a144, a304, a280, afr, ard, awr⟩ := pa (p := p) (P := P) (R := R) x ω μ
+  obtain ⟨ω1, μ1, run1, a0, a1, -, a6, a7, a8, a9, a144, a304, a280, afr, ard, awr⟩ := pa (p := p) (P := P) (R := R) x ω μ
     M cur en (9223372036854775807 + t) (by omega) (by omega) (by omega) hne hen (by unfold PassIdx at ht; omega)
     (by unfold PassIdx at ht; omega) h1 s144 s120 sD (fun a h1 h2 => hr a (by omega) (by omega))
     (fun a h1 h2 => hrc a h1 (by omega)) (fun a h1 h2 => hwM a (by omega) (by omega))

@@ -431,3 +431,132 @@ Proposal:
 
 Cost: small for 1 and 3, which are variants of #140's `ContractC` / `CkLift`. 2 is free once the handlers carry v as a parameter.
 Alternative: a data-flow `DeadAfter`-style check that ω₇'s value reaches only `format!` arguments. That is harder to state and to check.
+
+## Proposal: `Impl`, how a binary run implements a `Prog AOp`
+
+The items loop's body (`onWorkItem`, `onTransfer`) and everything after it interleave plain code
+with host calls. So these steps need a statement form that composes along `Prog.bind`, and the
+lift from it to `accumulate_spec` needs proving once.
+
+**`Impl R p Q (i, ω, μ, c)`.** From the PVM state (i, ω, μ) with context c, the gas-free run under R
+implements `p : Prog AOp α` and, when p returns a, reaches a state satisfying `Q a`. Defined by
+recursion on p:
+- **`pure a`:** a run to some state satisfying `Q a`, with c unchanged except by context-keeping
+  host calls (`log`, `gas`, `fetch`, `info`, `read`, `lookup`). Their effect on (x, y) is the
+  identity.
+- **`panic`:** a run to a trap, with c unchanged as above.
+- **`call op k`:** a run to the host call(s) implementing `op` (the SDK wrapper), with c unchanged up
+  to that point. Then one of:
+  - `ASem.step env op c = some (b, c')`, and the run continues to a state from which
+    `Impl R (k b) Q` holds with context c';
+  - `ASem.step env op c = none`, and the run traps.
+
+**Composition.**
+- `Impl_bind`: `Impl R p (fun a s => Impl R (f a) Q s) s → Impl R (p >>= f) Q s`.
+- `Impl_for`: the induction over `for it in rest`, with `Q` the loop invariant at 6782.
+- The per-wrapper lemmas (step 2 of the plan: one per `AOp`) are the `call` case.
+
+**The lift, proved once (`Impl_spec`).** Suppose `Impl (accContractG env) (Spec.accumulate C t)
+(fun _ s => s at the halt 15359)` holds from instruction 5. Then
+`∃ n, ASem.outcome (ASem.run n …) = (Ψ_A's state, transfers, yield, provisions)`:
+- A halt gives n = all operations, and the outcome is x.
+- A trap gives `panicked`, and the outcome is y.
+- Ψ_M running out of gas inside the k-th operation's host calls gives n = k − 1 (`stopped`), and
+  the outcome is y. This works because y changes only at `checkpoint`, which is itself an
+  operation, and the context-keeping calls between operations keep y (`dispatch_ctx_snd`).
+
+This uses `psiM_of_freeRunH_anyG` (the `gas` proposal) and `psiARun_eq`.
+
+**What is needed before the items loop.**
+- The `Impl` definition and `Impl_bind`, small.
+- `Impl_spec`, medium: an induction over p, alongside the run's host calls.
+- The wrapper lemmas for the `AOp`s the loop uses: `read`, `write`, `remove`, `checkpoint`. The loop
+  body then composes these with frame-only code.
+
+## `Impl` and the lift: proved (`Acc/Impl/`)
+
+`Impl` is adopted as above, with one change: it is **existential, over an infinite answer stream**
+(`accContractS`, Handlers A's `accContractQ` with `Nat → Nat` for the list). A stream never runs out,
+so runs exist and compose. The real run's answers, followed by 0s, form one such stream.
+
+| File | What |
+| --- | --- |
+| `Split.lean` | `FreeRunH.of_steps`: under a self-pinning contract, a run through a known segment continues from its end. |
+| `StepSnd.lean` | `ASem.step_snd`: an operation keeps y, or leaves (x, x). Only `checkpoint` writes y. |
+| `Impl.lean` | `Impl` (pure / panic / call op k; wrappers pass only through y ∈ {c.y, c₁.y}, `YIn`), `Halts` (halt with ω₈ = 0), `Impl.pre`, `Impl.bind`, and `Impl.run`: a run exists and reports what some `ASem.run n` reports. |
+| `Prefix.lean` | `Pre` (contexts at host calls), `Pre.split` / `split_run`, and `Impl.prefix`: the out-of-gas case. |
+| `ContractS.lean` | `accContractS`, `accContractS_pins`, and `FreeRunH.toS`: every non-∞ handler run is an `accContractS` run. |
+| `OogPrefix.lean` | `psiM_oog_pre`: Ψ_M out of gas returns the y of a prefix of an `accContractS` run. |
+| `Lift.lean` | `impl_psiM` and `psiA_of_impl`. If `Impl … Ab prog Halts` holds from instruction 5 with (x₀, x₀) for every stream, then Ψ_A's state, transfers, yield and provisions are `ASem.outcome (ASem.run n prog …)` for some n, and either that run finished, or Ψ_M ran out of gas, or a run reached a state where a reason in `Ab` holds. That is T2's shape (the strengthened statement in `docs/bootstrap-target.md`). |
+| `QtoS.lean` | Handlers A's answer lists as streams: `qs ++ₛ g`, `accContractQ_S`, `FreeStepsH.qToS`. |
+
+**Early ☇, for a listed reason.** `Impl` takes a reason predicate `Ab`: an early ☇ needs a state on
+the run where `Ab` holds. For accumulate, `Ab := AccAbort`, defined from the code facts, with these
+cases:
+- `heap` (decision 4, Adam): an allocation returned null (for `get`: 48047 with ω₇ = 0), or the
+  size check before an allocation failed (`get`'s 47974 with the length above 2³⁷ − 32; Adam folded
+  "too long" into heap exhaustion). Both reach the allocation-failure trap.
+- one case per named quirk where the binary traps and the model goes on (none yet; `remove` on
+  FULL is pending with Adam).
+
+**Hypotheses on the state.** `ValuesFit (credit e s inputs) s` (`hvals`, Adam): storage values,
+preimages and the encoded inputs of s are shorter than 2⁶⁴ octets. Ω_R / Ω_Y return lengths in a
+64-bit register, so a longer one would wrap.
+
+**What remains for T2:** `∀ f, Impl (accContractS env) env (Spec.accumulate C t) Halts` from instruction 5. This is built:
+- from the segment lemmas: 1 → 6630 (start, `acc_log_line`), `inputs_decode`, and the items loop;
+- per `AOp`, from wrapper lemmas in the call-case form: keep (x, y) to the wrapper, then the wrapper
+  under `YIn`.
+Lemmas stated under `accContractK` (no `gas`/`checkpoint` call) carry over with the stream kept.
+Lemmas under `accContractQ` (from (x, v :: qs) to (x', qs)) carry over to any stream `cons v (qs ++ₛ g)`.
+
+**The SDK storage wrappers** (`Acc/Wrappers/`), as runs keeping the answer stream:
+- `get` (47857, `GetCall.lean`): `get_none`, `get_empty`, `get_some` (|w| + 31 < 2³⁶; or `alloc_impl`
+  returned null at 48047, then the trap 47977).
+- `set` (48104, `SetCall.lean`): `set_call`, one Ω_W (`write_stepS`), then `Ok(Some(len))`, `Ok(None)`
+  or `Err` at out. x's account becomes `writeSelf`; y is kept.
+- `remove` (48481, `Remove.lean`): segments for the old-length and NONE replies. The FULL reply
+  traps (48533) and is pending with Adam (model change plus quirk Q18, or an abort reason).
+- Helpers: `FreeStepsH.growS` (allocator runs under `accGrowK` keep the context), `HeapCtxL.of_lo` /
+  `keep_hi` (the locked heap context survives stack writes).
+
+**Named TODOs for the wrappers:**
+- `get` for 2³⁶ ≤ |w| + 31 ≤ 2³⁷ − 32: the 32-bit unit count sign-extends and `alloc_impl` gets a
+  request ≥ 2³¹ units. This needs the allocator lemma "a request ≥ 2³¹ units returns null, keeping
+  the context" (asked of the Vec session); then it is `heap`.
+- Read-only data: `set`'s error table (69056, 69072) and keys in rodata are hypotheses until
+  `ROKeep` (gas-free runs keep non-writable octets, contract-generic) and an accumulate `roBytes`
+  check land.
+- Keys must survive `get`'s allocation: `get_some` takes them on the stack above the frame or in an
+  allocated chunk's data.
+
+## Brief: `add_recent_work_item` and the results tail (rows 8, 9, 11)
+
+These go to a separate session. Both run inside an operand's iteration of the items loop, in
+accumulate's 1856-octet frame (sp as at 6674). Both are stated in `Impl`'s call form: reach each
+wrapper's call keeping (x, y) (`KeepCtx`), run the wrapper under `YIn`, and continue.
+
+- **Row 8, `add_recent_work_item`** (spec `addRecent`):
+  - Entry: 8073, `loadImmJump` to 34377 with ω₀ = 280, so the return is jump-table entry 139, 8079.
+    The arguments: ω₇ = sp + 1144 (out), ω₈ = sp + 1568; 8061 stores the u32 at sp + 1572.
+  - The function reads and writes the ring and the counter with the SDK wrappers in
+    `Acc/Wrappers/`: `get_none` / `get_empty` / `get_some` (`GetCall.lean`), `set_call`
+    (`SetCall.lean`) and `remove` (`Remove.lean`, FULL pending).
+  - Exit: 8079 (the u16 result at sp + 1144), the allocator's context (`HeapCtxC`) for the new
+    state, x's account as the spec's writes leave it, y kept.
+  - Keys built with `format!` live in heap Strings: the `get` lemmas need a variant with the key in
+    an allocated chunk (alloc keeps used chunks' data). `set`'s error-table hypotheses come from
+    `Acc/RoData.lean` (`accRoBytes`) and `KeepsRO` (#165, `ROKeepS.lean`).
+- **Row 9, the empty results and the checkpoint** (spec `store …; op AOp.checkpoint`):
+  - 8471: `loadImmJump` to 36170 with ω₀ = 294 (the results store, a `set`). Then 8477 … 8481:
+    an `Err` byte (≠ 255) → 15361 (☇ via `orPanic`).
+  - 8490: `checkpoint` (18), under `accContractS`'s 0/18 case (the stream's head into ω₇, y := x).
+- **Row 11, the results write and the drops** (the tail of `onWorkItem`, unless a `Zombify`):
+  15032 → 33214 (ω₀ = 558), …, 15185 → 40613 (`dealloc`, ω₀ = 568), on to 15191 (the operand's
+  remaining drops) and back to the loop head 6766.
+- **Hypotheses to carry:** `ValuesFit` (values < 2⁶⁴ octets), the [2³⁶, 2³⁷ − 32] `get` band (TODO),
+  and the `heap` abort reason for every allocation.
+
+**Log sites** (the per-item line at 6955, the handlers' `format!`) are stated against a hypothesis of
+`acc_log_line`'s shape: the allocator's context in and out, the format!/String region kept, or
+Exhausts. They are marked "discharged by the fmt summaries". The migration session owns them.

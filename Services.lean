@@ -32,6 +32,7 @@ import Services.Bootstrap.Fmt.OracleRefineK
 import Services.Bootstrap.Fmt.ReallocCopy
 import Services.Bootstrap.Fmt.ReallocCopyInst
 import Services.Bootstrap.Fmt.Text
+import Services.Bootstrap.Fmt.KeyFmt
 import Services.Bootstrap.AccLog.ItemLog
 import Services.Bootstrap.AccLog.Imported
 import Services.Bootstrap.AccLog.Yield

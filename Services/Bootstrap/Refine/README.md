@@ -229,6 +229,8 @@ Parent approved stating these against a `refine_debug_line`-shaped hypothesis, t
   `ExitRun.DebugLineOk` (59375 → 6209).
 - **5744**: Export's per-segment `format!` (then log 5784, free 5800).
 - **5398**: Lookup's `format!` (then log 5428, free 5441).
+- **4742**: the service id's log line in refine's prologue (template 66657, the u32 at M + 244 with `Display`
+  2616; then log 4770, free 40613 → 4792): stated as `Prologue.ArgsLineOk` (59375 → 4792, keeps x, ω₁, ω₆, Glob).
 
 Fmt's planned `refine_debug_line` covers 6159 → 6209 (format, log, free), from `HeapCtx` with the output
 `Vec` words and `DebugRep` slots. Export 5744's layout (from Fmt): template 66196, args at M + 168:

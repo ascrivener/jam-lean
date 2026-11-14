@@ -1,6 +1,7 @@
 import Services.Bootstrap.Refine.MixedKinds
 import Services.Bootstrap.Refine.SpecRun
 import Services.Bootstrap.Refine.Prologue
+import Services.Bootstrap.Refine.ArgsAll
 
 /-!
 # Refine from the arguments' decode to the halt, for the milestone's payloads
@@ -154,5 +155,54 @@ theorem from4680 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Has
   · refine Or.inl ⟨ω3, μ3, _, buf, _, run2.trans run3, f0, f7, f8, ?_, frd⟩
     rw [fo, SpecRun.output_eq is I hn hI]
   · exact Or.inr ⟨_, ExhaustsX.pre run2 hx3⟩
+
+/-- **Refine from Y's state to the halt, the milestone's payloads** (pc 0 … 6373): the arguments' parse
+    (`ArgsAll.refine_args`: ℰ(c) ⌢ ℰ(i) ⌢ ℰ(s) ⌢ ↕y ⌢ h, 1 ≤ |y| < 2^24) and `from4680`. The read-only tables
+    the run reads are given in the starting memory. -/
+theorem refine_core {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P]
+    (env : RefineHost.Env) (C : Spec.Consts) (henv : heapBounds env.code = (48, 1044430))
+    (hpar : env.fetch.params = Params.full)
+    (line : Prologue.ArgsLineOk p 134217728 env 1044430 S0 S1)
+    (fmt : ExportSeg.ExportFmtOk p 134217728 env 1044430 S0 S1)
+    (dbg : ExitRun.DebugLineOk p 134217728 env 1044430 S0 S1 (DRm C))
+    (is : List Spec.Instr) (salt rest : List UInt8) (hsalt : salt.length = 32)
+    (hn : 1 ≤ is.length ∧ is.length < 128) (hwf : ∀ x ∈ is, x.WF C)
+    (hk : ∀ x ∈ is, MFixed x ∨ ∃ ds, x = .exportSegs ds)
+    (μ : Memory) (hμ : Prefix.StartMem μ) (hz : Prefix.StartMemZ μ) (cc I S : Nat) (h y : List UInt8)
+    (hc : cc < 65536) (hI : I < 65536) (hS : S < 4294967296) (hh : h.length = 32)
+    (hy : y = Spec.encodePayload is salt ++ rest) (hY : y.length < 16777216) (L : Nat)
+    (hLdef : (Blob.encodeNat cc).length + (Blob.encodeNat I).length + (Blob.encodeNat S).length +
+      (Blob.encodeNat y.length).length + y.length + 32 = L) (hL : L < 16777217)
+    (hmem : μ.readN 4278124544 L = Blob.encodeNat cc ++ Blob.encodeNat I ++ Blob.encodeNat S ++
+      Blob.encodeNat y.length ++ y ++ h)
+    (hrd : ∀ j, 4278124544 ≤ j → j < 4278124544 + L → μ.readable j = true)
+    (tab : μ.readN 67476 100 = Decode.Tag.table) (rt : ∀ a, 67476 ≤ a → a < 67576 → μ.readable a = true)
+    (tab2 : μ.readN 67376 100 = Encode.Enc.table) (rtab2 : ∀ a, 67376 ≤ a → a < 67476 → μ.readable a = true)
+    (dtab : μ.readN 67760 96 = DropOut.dtable) (rdtab : ∀ a, 67760 ≤ a → a < 67856 → μ.readable a = true) :
+    (∃ (ω' : Regs) (μ' : Memory) (N buf len : Nat),
+      FreeStepsH p (refineContractK 134217728 env) 0 (Prefix.initRegs L) μ ((∅, []) : RefineCtx) 6373 ω' μ'
+        (expTo env is ((∅, []) : RefineCtx) is.length) N ∧
+      ω'[0] = UInt64.ofNat 4294901760 ∧ ω'[7] = UInt64.ofNat buf ∧ ω'[8] = UInt64.ofNat len ∧
+      μ'.readN buf len = Spec.encodeOutput (is.map outI) I ∧ (∀ a, buf ≤ a → a < buf + len → μ'.readable a = true)) ∨
+    ∃ N, ExhaustsX env 134217728 1044430 p 0 (Prefix.initRegs L) μ ((∅, []) : RefineCtx) N := by
+  have hYl : 1 ≤ y.length := by
+    rw [hy]; unfold Spec.encodePayload Spec.vec; simp only [List.length_append]
+    have := MixedKinds.encodeNat_pos is.length
+    simp only [Codec.nat] at *; omega
+  rcases ArgsAll.refine_args p P env 134217728 (by decide) (by decide) henv hpar μ hμ hz cc I S h hc hI hS y.length
+      hYl hY y rfl hh L hLdef hL hmem hrd with
+    ⟨q, s', ω1, μ1, N1, run1, a0, a1, a5, a6, b168, b176, b184, -, b224, b228, -, bpay, H1, hq, hbase,
+      ⟨cp, hcpm, hcpu, hcpb, hcpq, hcpd⟩, tk, -, b624, b616, b608, -, -, -⟩ | hx
+  rotate_left
+  · exact Or.inr hx
+  obtain ⟨t1, t2, t3, t4, t5, t6⟩ := tk
+  rcases from4680 (p := p) (P := P) env C line fmt dbg is salt rest hsalt hn hwf hk y.length I S q y hy rfl hY hI hS
+      ω1 μ1 s' H1 a1 b168 b176 b184 b224 b228 bpay cp ⟨hcpm, hcpu, hcpb, hcpq, hcpd⟩ b624 b616 b608
+      (by rw [t1]; exact tab) (fun a h1 h2 => by rw [t2 a h1 h2]; exact rt a h1 h2)
+      (by rw [t3]; exact tab2) (fun a h1 h2 => by rw [t4 a h1 h2]; exact rtab2 a h1 h2)
+      (by rw [t5]; exact dtab) (fun a h1 h2 => by rw [t6 a h1 h2]; exact rdtab a h1 h2) with
+    ⟨ω2, μ2, N2, buf, len, run2, e0, e7, e8, eo, erd⟩ | ⟨N, hx⟩
+  · exact Or.inl ⟨ω2, μ2, _, buf, len, run1.trans run2, e0, e7, e8, eo, erd⟩
+  · exact Or.inr ⟨_, ExhaustsX.pre run1 hx⟩
 
 end Services.Bootstrap.Refine.Top

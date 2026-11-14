@@ -34,6 +34,7 @@ import Services.Bootstrap.Fmt.StructField3
 import Services.Bootstrap.Fmt.StructField4
 import Services.Bootstrap.Fmt.InstrDebug
 import Services.Bootstrap.Fmt.VecInstr
+import Services.Bootstrap.Fmt.RefineDebugLine
 import Services.Bootstrap.Fmt.ReallocCopy
 import Services.Bootstrap.Fmt.ReallocCopyInst
 import Services.Bootstrap.Fmt.Text

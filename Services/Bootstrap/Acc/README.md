@@ -506,6 +506,12 @@ under "transfer{n}". Proved segments and calls:
   `EncodeCall.enc_call`); the second `set`, its `Ok` check and the frees back to 6766 (`Tail2`).
 "transfer-count" (65956) is in `accRoBytes` (checked by `bootstrapcheck`).
 
+**Open obligation: the output decode's failure branch (7073).** `BootstrapWorkOutput::decode` (7073,
+the Vec session) is proved for success (→ 7091, {cap, ptr, len} at sp + 1568, k at sp + 1592) and heap
+exhaustion. Its decode-error outcome (−1 at sp + 1568, then 7080 → 7088 → 15361, ☇) matches Spec
+`onWorkItem`'s `| none => Prog.panic` but has no failure contract yet: it is an open, named obligation
+(parent's decision), not an assumption. No statement here assumes that work outputs decode.
+
 **Named hypotheses (`Transfer/Hyp.lean`)**, to be proved by the symbolic-executor session:
 - `KeyFmt`: `format!("transfer{}", n)` at 7792 leaves the `String` `s!"transfer{n}"` at sp + 512
   (the second write's key; its text is needed, unlike log lines).

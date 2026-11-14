@@ -161,3 +161,59 @@ allocated in s' and fresh against s. The text stays unstated.
      (T1 proves `DebugRep` of its elements).
 5. The `ReallocOk` refine instance, once `ReallocCall.realloc_call` gains its planned conjuncts
    (Glob kept, base kept, block fresh or old); `realloc_fresh` already proves the last two.
+
+## Handoff (2026-11-14, work paused for the account move)
+
+### Done (on main)
+#170, #184 (DebugList, VecDebug, DebugTuple, Dec8, ResultDebug, OptionDebug, OracleRefineK, RefOk with Z),
+#187 (dec32/dec64 accept values in heap chunks; `ref_u64_okV`).
+
+### In flight
+- **#188**, branch `claude/bootstrap-fmt-6`, head 2524a6b (merged with main *before* #187). Open; CI was
+  running. Contents:
+  - DebugStruct (`FieldOk`, `debug_field`) and StructField1–4 (generator
+    `scripts/gen_struct_fields.py`);
+  - InstrDebug: the `<&Instruction as Debug>` (26990) arms for tags 15, 16, 20 and 23;
+    InstrDebugSteps holds the step lemmas for tags 1, 2, 3, 4, 6, 7, 8 and 14;
+  - VecInstr (`vec_instr_ok`, 29675);
+  - RefineDebugLine (`rdl_post`, 6166 → 6209);
+  - FmtRO.
+
+  A local full build reached 2602/2612 with no errors before it was stopped. Next step: merge
+  origin/main (it now has #187, which changed the imported Template and ResultDebug), full build,
+  and merge on green.
+- **Branch `claude/bootstrap-fmt-ro`**, 8c2561d: FmtRO.lean alone, plus its Services.lean import,
+  from main. No PR yet. T1 asked for it so Refine can import `FmtRO`. Open the PR (or let #188
+  carry it) after a full build.
+- **Branch `claude/bootstrap-fmt-sink-heap`**: `write_str_heap`, Sink.lean only (compiles; full build not yet run), this
+  note, and the C-looseness note above. hsrc gains a third disjunct: a source in an allocated chunk of s₀.
+  `write_str` is unchanged, as a corollary. The field-formatter session needs it for 56340/57485.
+  No PR yet.
+
+### Next steps (my assignment, parent's option B)
+1. The remaining 26990 arms, as their field formatters land:
+   - 56340: tags 1, 6, 7, 8;
+   - 28843/28822 (dec32/dec64 `ArgOk` at heap addresses, now possible after #187): tags 1, 2, 4, 8;
+   - 33162/33167: tags 2, 4;
+   - 37549: tag 3;
+   - 36529 (`ref_u8x32_ok`, #189, Z ≥ 752): tag 14;
+   - 37522 (`ref_bool_ok`, #189): tag 8.
+
+   The step lemmas are in InstrDebugSteps; compose with `debug_struct{1..4}` / `FieldOk` as
+   `instr20_ok` does.
+2. `refine_debug_line` (6159), discharging T1's `DebugLineOk`. Ingredients:
+   - the ro premise, via `FmtRO`;
+   - S0 + 7560 ≤ M;
+   - `refineKeep` → `refineContractK`;
+   - element `RefOk` from `DR` via the arms, with a uniform Ze and `RefOk.mono`.
+
+   Report the actual max stack depth to the parent and T1; above 7560 is a model/binary finding.
+3. The 4742 `ArgsLineOk` site (template 66657, arg fmt 2616; needs s'.base = s.base), then T1's
+   Export 5744 and Lookup 5398 sites (`ExportFmtOk`).
+
+### Open dependencies and decisions
+- The field-formatter session (session_017ptjPC1ZVytPi3sRR7WgBe) owns the field formatters,
+  #189, and an explicit-spec `fmt_write` in its own file (agreed). It will send exact RO slices:
+  70818, 70824, 70833, 71060, 71076, 71078. Add them to FmtRO as new conjuncts.
+- The C_ok / C_exh split is deferred to exact-gas time and will be additive (`ArgOk2`), as the
+  parent agreed.

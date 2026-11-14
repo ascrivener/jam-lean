@@ -289,6 +289,8 @@ import Services.Bootstrap.Encode.PrefixH
 import Services.Bootstrap.Encode.EncMH
 import Services.Bootstrap.Encode.EncMHLoop
 import Services.Bootstrap.Encode.ArmsH
+import Services.Bootstrap.Encode.ArmsHFixed
+import Services.Bootstrap.Encode.ArmsHFixed2
 import Services.Bootstrap.Encode.EncMHLift
 import Services.Bootstrap.Encode.HeapPad
 import Services.Bootstrap.Encode.VecSegs

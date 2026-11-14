@@ -268,6 +268,8 @@ import Services.Bootstrap.Encode.Variants
 import Services.Bootstrap.Encode.Yield
 import Services.Bootstrap.Encode.Prefix
 import Services.Bootstrap.Encode.Loop
+import Services.Bootstrap.Encode.EncM
+import Services.Bootstrap.Encode.PrefixBig
 import Services.Bootstrap.Refine.Pass
 import Services.Bootstrap.Refine.PassGrow
 import Services.Bootstrap.Refine.PassLoop

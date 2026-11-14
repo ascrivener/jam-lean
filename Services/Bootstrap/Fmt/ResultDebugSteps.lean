@@ -8,7 +8,7 @@ the steps
 frame T = sp − 16 holds ω₀ at T + 8 and the field's address at T + 0 (v + 8 for `Ok`, v + 1 for
 `Err`); `debug_tuple_field1_finish` (62471) is called with F, the name (`"Ok"` at 67359 or `"Err"`
 at 67361), T and the field's `Debug` vtable (74040: `&u64`; 74776: `&HostCallError`), returning to
-17856 (696) or 17821 (694). `rd_r`: the return.
+17856 (696) or 17821 (694). `rd_r`: the return (also from 17507, `Option`'s `Debug`).
 
 `he_a` (37312 … 37349): the error's name, from the tables at 68944 (lengths) and 69008 (offsets),
 to `Formatter::write_str` (64485), whose jump through the sink's vtable reaches 59959 (`he_b`).
@@ -74,7 +74,7 @@ theorem rd_err {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X
       Nat.mod_eq_of_lt hv.1, Nat.mod_eq_of_lt hv.2.1, Nat.mod_eq_of_lt (show v + 1 < 18446744073709551616 by omega)]
 
 theorem rd_r {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X) (ω : Regs) (μ : Memory)
-    (T r0 t i : Nat) (hi : i = 17856 ∨ i = 17821) (hT : 65536 ≤ T ∧ T + 16 < 4294967296)
+    (T r0 t i : Nat) (hi : i = 17856 ∨ i = 17821 ∨ i = 17507) (hT : 65536 ≤ T ∧ T + 16 < 4294967296)
     (h1 : ω[1] = UInt64.ofNat T) (r0' : rdN μ (T + 8) 8 = r0)
     (hret : 0 < r0 ∧ r0 ≤ 2806 ∧ r0 % 2 = 0) (hjt : P.jumpTable.getD (r0 / 2 - 1) 0 = t)
     (hbt : P.isBlockStart t = true) (hr : ∀ a, T ≤ a → a < T + 16 → μ.readable a = true) :
@@ -82,7 +82,7 @@ theorem rd_r {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X) 
       ω'[0] = UInt64.ofNat r0 ∧ ω'[1] = UInt64.ofNat (T + 16) ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = ω[7] := by
   rw [show ω = regsNF ω [] from rfl]
-  rcases hi with rfl | rfl
+  rcases hi with rfl | rfl | rfl
   all_goals
     refine ⟨?_, ?_, ?_⟩
     rotate_left

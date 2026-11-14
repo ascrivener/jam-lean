@@ -221,7 +221,7 @@ structure KVec (code : ByteArray) (pb S0 S1 : Nat) (μA μ : Memory) (s : Picoal
   hCu : C.used = true
   hCp : C.addr + 32 ≤ ptr
   hCe : ptr + c ≤ C.addr + 32 * C.size
-  hpb : 65536 ≤ ptr ∧ ptr + c + 16 < 2147483648
+  hpb : 65536 ≤ ptr ∧ ptr + c ≤ 2147483648
   hS : 2147483648 + 96 ≤ S ∧ S0 ≤ S - 80 ∧ S + 72 ≤ S1 ∧ S % 8 = 0
   vc : μ.readN (S + 16) 8 = Num.encodeLE 8 c
   vp : μ.readN (S + 24) 8 = Num.encodeLE 8 ptr
@@ -282,5 +282,135 @@ theorem kb_ext {p : ByteArray} {P : Program} [HasCode p P] {code : ByteArray} {p
     rw [fr a h0 h1 (by omega) h3]; exact keep a h0 h1 h2 h3
   · intro a; rw [wr', wr]
   · intro a; rw [rd', rd]
+
+open Picoalloc Services.Bootstrap.Decode.HeapCtx Services.Bootstrap.Acc.Handlers.HeapKeep in
+/-- A store of at most four octets at the tag slot S + 44 keeps the invariant. -/
+theorem KVec.store44 {code : ByteArray} {pb S0 S1 : Nat} {μA μ : Memory} {st : Picoalloc.State} {C : Chunk}
+    {S c ptr : Nat} {bs : List UInt8} (K : KVec code pb S0 S1 μA μ st C S c ptr bs) (l : List UInt8)
+    (hl : l.length ≤ 4) : KVec code pb S0 S1 μA (μ.writeN (S + 44) l) st C S c ptr bs := by
+  obtain ⟨H, hC, hCu, hCp, hCe, hpb, hS, vc, vp, vl, dat, len, keep, wr, rd⟩ := K
+  have hS1 := H.hS1
+  have rw1 : ∀ a, a < 4294967296 → (a < S + 44 ∨ S + 48 ≤ a) → (μ.writeN (S + 44) l).read a = μ.read a :=
+    fun a h1 h2 => Memory.read_writeN_disjoint _ _ _ _ (by omega) (by unfold two32; omega) (by unfold two32; omega)
+  have rwN : ∀ b n, b + n ≤ 4294967296 → (b + n ≤ S + 44 ∨ S + 48 ≤ b) →
+      (μ.writeN (S + 44) l).readN b n = μ.readN b n :=
+    fun b n h1 h2 => Memory.readN_writeN_disjoint _ _ _ _ _ (by omega) (by unfold two32; omega) (by unfold two32; omega)
+  refine ⟨keepHi H (fun a ha => rw1 a (by omega) (.inl (by omega))) (fun a => by simp), hC, hCu, hCp, hCe, hpb, hS,
+    by rw [rwN _ _ (by omega) (.inl (by omega))]; exact vc, by rw [rwN _ _ (by omega) (.inl (by omega))]; exact vp,
+    by rw [rwN _ _ (by omega) (.inl (by omega))]; exact vl, by rw [rwN _ _ (by omega) (.inl (by omega))]; exact dat,
+    len, fun a h0 h1 h2 h3 => by rw [rw1 a h0 (by omega)]; exact keep a h0 h1 h2 h3, fun a => by simp [wr],
+    fun a => by simp [rd]⟩
+
+open Picoalloc in
+/-- Reads in the frame off the `Vec` and the tag slot, or above it, are μA's. -/
+theorem KVec.readN_eq {code : ByteArray} {pb S0 S1 : Nat} {μA μ : Memory} {st : Picoalloc.State} {C : Chunk}
+    {S c ptr : Nat} {bs : List UInt8} (K : KVec code pb S0 S1 μA μ st C S c ptr bs) (b n : Nat)
+    (hb : S ≤ b) (hbn : b + n ≤ S + 16 ∨ S + 48 ≤ b) (hn : b + n ≤ 4294967296) :
+    μ.readN b n = μA.readN b n := by
+  have := K.hpb; have := K.hS
+  exact Memory.readN_congr fun j hj => K.keep _ (by omega) (.inr (by omega)) (by omega) (.inr (by omega))
+
+/-- **The key's encoding** from the key value at kp (tag t, the `u16` at kp): the tag octet, then for
+    t = 1 the four octets at kp + 4, for t = 2 the 32 octets at kp + 4 and the two at kp + 2. -/
+def keyEnc (μ : Memory) (kp t : Nat) : List UInt8 :=
+  UInt8.ofNat t :: (if t = 1 then μ.readN (kp + 4) 4
+    else if t = 2 then μ.readN (kp + 4) 32 ++ μ.readN (kp + 2) 2 else [])
+
+/-- `keyEnc`'s length: 5, 35 or 1 octets. -/
+theorem keyEnc_length (μ : Memory) (kp t : Nat) :
+    (keyEnc μ kp t).length = if t = 1 then 5 else if t = 2 then 35 else 1 := by
+  unfold keyEnc; by_cases h1 : t = 1 <;> by_cases h2 : t = 2 <;> simp [h1, h2]
+
+theorem readN_enc (μ : Memory) (b n : Nat) : μ.readN b n = Num.encodeLE n (Num.decodeLE (μ.readN b n)) := by
+  have := PVM.encodeLE_decodeLE (μ.readN b n); rw [Memory.length_readN] at this; exact this.symm
+
+theorem decodeLE_readN_lt (μ : Memory) (b n : Nat) : Num.decodeLE (μ.readN b n) < 256 ^ n := by
+  have := PVM.decodeLE_lt (μ.readN b n); rwa [Memory.length_readN] at this
+
+open Picoalloc Services.Bootstrap.Decode.HeapCtx in
+/-- **58508 … 34036, the key's octets** (after `kb_vec`, the tag octet at S + 44): the tag octet
+    appended, then t's payload (`kb_t1`, or `kb_t2a` and `kb_t2b`), each by `extend_from_slice`: the
+    `Vec` holds `keyEnc μA kp t`. -/
+theorem kb_body {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {code : ByteArray}
+    {pb S0 S1 : Nat} {μA : Memory} {st : Picoalloc.State} {C : Chunk} (x : X) (ω : Regs) (μ : Memory)
+    (S c ptr kp t : Nat) (K : KVec code pb S0 S1 μA μ st C S c ptr [])
+    (m44 : μ.readN (S + 44) 1 = [UInt8.ofNat t]) (ht : t < 4)
+    (h0 : ω[0] = UInt64.ofNat (if t = 2 then 1568 else if t = 1 then 1572 else 1574))
+    (h1 : ω[1] = UInt64.ofNat S) (h7 : ω[7] = UInt64.ofNat (S + 16)) (h8 : ω[8] = UInt64.ofNat (S + 44))
+    (h9 : ω[9] = UInt64.ofNat 1) (hroom : (keyEnc μA kp t).length ≤ c)
+    (m0 : μA.readN S 8 = Num.encodeLE 8 kp) (hkp : S + 72 ≤ kp ∧ kp + 64 < 4294967296)
+    (hrk : ∀ a, kp ≤ a → a < kp + 36 → μA.readable a = true) :
+    ∃ ω' μ' n, FreeStepsH p R 58508 ω μ x 34036 ω' μ' x n ∧
+      KVec code pb S0 S1 μA μ' st C S c ptr (keyEnc μA kp t) ∧ ω'[1] = UInt64.ofNat S := by
+  have hS := K.hS
+  have hS1 := K.H.hS1
+  have hst := K.H.st
+  have hr44 : ∀ a, S + 44 ≤ a → a < S + 44 + 1 → μ.readable a = true :=
+    fun a h1 h2 => Memory.readable_of_writable (hst a (by omega) (by omega))
+  rw [keyEnc_length] at hroom
+  by_cases t1 : t = 1
+  · subst t1
+    rw [show (if (1 : Nat) = 2 then 1568 else if (1 : Nat) = 1 then 1572 else 1574) = 1572 from rfl] at h0
+    simp only [↓reduceIte] at hroom
+    obtain ⟨ω1, μ1, run1, K1, -, e1, -, -, -⟩ := kb_ext (R := R) (P := P) x ω μ S c ptr (S + 44) 1 1572 33992 [] K
+      h0 h1 h7 h8 h9 (by simp; omega) ⟨by omega, by omega⟩ ⟨by decide, by decide, by decide⟩
+      (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_785]) bs_33992 hr44
+    have hv := decodeLE_readN_lt μA (kp + 4) 4
+    simp only [Nat.reducePow] at hv
+    obtain ⟨ω2, μ2, run2, eμ2, f0, f1, -, -, f7, f8, f9⟩ := kb_t1 (R := R) (P := P) x ω1 μ1 S kp _ e1 hv
+      (by omega) (by omega) ((K1.readN_eq S 8 (Nat.le_refl _) (.inl (by omega)) (by omega)).trans m0)
+      ((K1.readN_eq (kp + 4) 4 (by omega) (.inr (by omega)) (by omega)).trans (readN_enc _ _ _))
+      (fun a h1 h2 => by rw [K1.rd]; exact hrk a (by omega) (by omega))
+      (fun a h1 h2 => Memory.readable_of_writable (K1.H.st a (by omega) (by omega)))
+      (fun a h1 h2 => K1.H.st a (by omega) (by omega))
+    have K2 := eμ2 ▸ K1.store44 (Num.encodeLE 4 (Num.decodeLE (μA.readN (kp + 4) 4))) (by simp)
+    obtain ⟨ω3, μ3, run3, K3, -, e3, -, -, -⟩ := kb_ext (R := R) (P := P) x ω2 μ2 S c ptr (S + 44) 4 1574 34036 _ K2
+      f0 f1 f7 f8 f9 (by simp; omega) ⟨by omega, by omega⟩ ⟨by decide, by decide, by decide⟩
+      (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_786]) bs_34036
+      (fun a h1 h2 => Memory.readable_of_writable (K2.H.st a (by omega) (by omega)))
+    refine ⟨ω3, μ3, _, (run1.trans run2).trans run3, ?_, e3⟩
+    have e : ([] ++ μ.readN (S + 44) 1) ++ μ2.readN (S + 44) 4 = keyEnc μA kp 1 := by
+      rw [m44, eμ2, Memory.readN_writeN_same _ _ _ _ (by simp) (by unfold two32; omega), ← readN_enc]
+      simp [keyEnc]
+    exact e ▸ K3
+  by_cases t2 : t = 2
+  · subst t2
+    rw [show (if (2 : Nat) = 2 then 1568 else if (2 : Nat) = 1 then 1572 else 1574) = 1568 from rfl] at h0
+    rw [show (if (2 : Nat) = 1 then 5 else if (2 : Nat) = 2 then 35 else 1) = 35 from rfl] at hroom
+    obtain ⟨ω1, μ1, run1, K1, -, e1, -, -, -⟩ := kb_ext (R := R) (P := P) x ω μ S c ptr (S + 44) 1 1568 33934 [] K
+      h0 h1 h7 h8 h9 (by simp; omega) ⟨by omega, by omega⟩ ⟨by decide, by decide, by decide⟩
+      (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_783]) bs_33934 hr44
+    obtain ⟨ω2, run2, f0, f1, f5, -, f7, f8, f9⟩ := kb_t2a (R := R) (P := P) x ω1 μ1 S kp e1 (by omega) (by omega)
+      ((K1.readN_eq S 8 (Nat.le_refl _) (.inl (by omega)) (by omega)).trans m0)
+      (fun a h1 h2 => Memory.readable_of_writable (K1.H.st a (by omega) (by omega)))
+    obtain ⟨ω3, μ3, run3, K3, g0, g1, g5, -, -⟩ := kb_ext (R := R) (P := P) x ω2 μ1 S c ptr (kp + 4) 32 1570 33951 _ K1
+      f0 f1 f7 f8 f9 (by simp; omega) ⟨by omega, by omega⟩ ⟨by decide, by decide, by decide⟩
+      (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_784]) bs_33951
+      (fun a h1 h2 => by rw [K1.rd]; exact hrk a (by omega) (by omega))
+    have hv := decodeLE_readN_lt μA (kp + 2) 2
+    simp only [Nat.reducePow] at hv
+    obtain ⟨ω4, μ4, run4, eμ4, i0, i1, -, -, i7, i8, i9⟩ := kb_t2b (R := R) (P := P) x ω3 μ3 S kp _ g1 (g5.trans f5) hv
+      (by omega) (by omega) ((K3.readN_eq (kp + 2) 2 (by omega) (.inr (by omega)) (by omega)).trans (readN_enc _ _ _))
+      (fun a h1 h2 => by rw [K3.rd]; exact hrk a (by omega) (by omega))
+      (fun a h1 h2 => K3.H.st a (by omega) (by omega))
+    have K4 := eμ4 ▸ K3.store44 (Num.encodeLE 2 (Num.decodeLE (μA.readN (kp + 2) 2))) (by simp)
+    obtain ⟨ω5, μ5, run5, K5, -, e5, -, -, -⟩ := kb_ext (R := R) (P := P) x ω4 μ4 S c ptr (S + 44) 2 1574 34036 _ K4
+      i0 i1 i7 i8 i9 (by simp; omega) ⟨by omega, by omega⟩ ⟨by decide, by decide, by decide⟩
+      (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_786]) bs_34036
+      (fun a h1 h2 => Memory.readable_of_writable (K4.H.st a (by omega) (by omega)))
+    refine ⟨ω5, μ5, _, (((run1.trans run2).trans run3).trans run4).trans run5, ?_, e5⟩
+    have e : (([] ++ μ.readN (S + 44) 1) ++ μ1.readN (kp + 4) 32) ++ μ4.readN (S + 44) 2 = keyEnc μA kp 2 := by
+      rw [m44, eμ4, Memory.readN_writeN_same _ _ _ _ (by simp) (by unfold two32; omega), ← readN_enc,
+        K1.readN_eq (kp + 4) 32 (by omega) (.inr (by omega)) (by omega)]
+      simp [keyEnc]
+    exact e ▸ K5
+  -- t = 0, 3: the tag octet only
+  simp only [t1, t2, ↓reduceIte] at h0 hroom
+  obtain ⟨ω1, μ1, run1, K1, -, e1, -, -, -⟩ := kb_ext (R := R) (P := P) x ω μ S c ptr (S + 44) 1 1574 34036 [] K
+    h0 h1 h7 h8 h9 (by simp at hroom ⊢; omega) ⟨by omega, by omega⟩ ⟨by decide, by decide, by decide⟩
+    (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_786]) bs_34036 hr44
+  refine ⟨ω1, μ1, _, run1, ?_, e1⟩
+  have e : ([] : List UInt8) ++ μ.readN (S + 44) 1 = keyEnc μA kp t := by rw [m44]; simp [keyEnc, t1, t2]
+  exact e ▸ K1
 
 end Services.Bootstrap.Acc.Handlers.KeyEnc

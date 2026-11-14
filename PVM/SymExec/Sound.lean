@@ -469,11 +469,15 @@ theorem decideCond_sound {op : RegImmOffsetOp} {lo hi x v : Nat} {c : Bool} (h1 
   case branchEqImm =>
     simp only [decideCond] at h; split at h
     · cases h; simp only [regImmBranchCond, beq_eq_false_iff_ne]; omega
-    · cases h
+    · split at h
+      · cases h; simp only [regImmBranchCond, beq_iff_eq]; omega
+      · cases h
   case branchNeImm =>
     simp only [decideCond] at h; split at h
     · cases h; simp only [regImmBranchCond, bne_iff_ne, ne_eq]; omega
-    · cases h
+    · split at h
+      · cases h; simp only [regImmBranchCond, bne_eq_false_iff_eq]; omega
+      · cases h
   case branchLtUImm =>
     simp only [decideCond] at h; split at h
     · cases h; simp only [regImmBranchCond, decide_eq_true_eq]; omega

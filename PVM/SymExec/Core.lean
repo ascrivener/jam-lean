@@ -368,8 +368,8 @@ variable (st : Static)
 /-- An unsigned comparison of a value in `[lo, hi)` with `x` (§A.5.8), when the interval decides it. -/
 def decideCond (op : RegImmOffsetOp) (lo hi x : Nat) : Option Bool :=
   match op with
-  | .branchEqImm => if x < lo ∨ hi ≤ x then some false else none
-  | .branchNeImm => if x < lo ∨ hi ≤ x then some true else none
+  | .branchEqImm => if x < lo ∨ hi ≤ x then some false else if hi = lo + 1 ∧ x = lo then some true else none
+  | .branchNeImm => if x < lo ∨ hi ≤ x then some true else if hi = lo + 1 ∧ x = lo then some false else none
   | .branchLtUImm => if hi ≤ x then some true else if x ≤ lo then some false else none
   | .branchLeUImm => if hi ≤ x + 1 then some true else if x < lo then some false else none
   | .branchGeUImm => if x ≤ lo then some true else if hi ≤ x then some false else none

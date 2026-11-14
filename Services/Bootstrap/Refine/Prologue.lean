@@ -38,9 +38,9 @@ theorem sext_low {w : Nat} (h : w < 4294967296) :
     with the host context, ω₁ and ω₆ kept, the allocator's context for some heap s', every allocated chunk of s
     still allocated with its data, the globals (`Glob`) and the heap's base kept, and the stack from M up kept apart from the `String` at M + 168 … M + 192; or
     an allocation fails. To be discharged by the fmt summaries (`Services/Bootstrap/Fmt`). -/
-def ArgsLineOk (p : ByteArray) (cap0 : Nat) (env : RefineHost.Env) (pb S0 S1 : Nat) : Prop :=
+def ArgsLineOk (p : ByteArray) (cap0 : Nat) (env : RefineHost.Env) (pb S0 S1 : Nat) (ro : List UInt8) : Prop :=
   ∀ (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State) (M sv : Nat),
-    HeapCtx env pb S0 S1 μ s → S0 + 7560 ≤ M → M + 632 ≤ S1 → M % 8 = 0 → sv < 4294967296 →
+    HeapCtx env pb S0 S1 μ s → RoData.RoIs ro μ → S0 + 7560 ≤ M → M + 632 ≤ S1 → M % 8 = 0 → sv < 4294967296 →
     ω[0] = UInt64.ofNat 154 → ω[1] = UInt64.ofNat M → ω[7] = UInt64.ofNat (M + 168) →
     ω[8] = UInt64.ofNat 66657 → ω[9] = UInt64.ofNat (M + 272) →
     μ.readN (M + 272) 8 = Num.encodeLE 8 (M + 244) → μ.readN (M + 280) 8 = Num.encodeLE 8 2616 →
@@ -104,8 +104,8 @@ theorem pro1 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ
     chunk with its data, the globals, and the stack from M up apart from M + 80 … M + 96, M + 112 … M + 120,
     M + 168 … M + 192, M + 244 … M + 248 and M + 272 … M + 288; or an allocation fails. -/
 theorem tail4680 {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap0 : Nat) {pb : Nat}
-    (line : ArgsLineOk p cap0 env pb S0 S1) (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State)
-    (H : HeapCtx env pb S0 S1 μ s) (M cap q Ly w sv : Nat)
+    {ro : List UInt8} (line : ArgsLineOk p cap0 env pb S0 S1 ro) (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State)
+    (H : HeapCtx env pb S0 S1 μ s) (hro : RoData.RoIs ro μ) (M cap q Ly w sv : Nat)
     (hM : S0 + 7560 ≤ M ∧ M + 632 ≤ S1 ∧ M % 8 = 0) (hcap : cap < 18446744073709551616)
     (hq : q < 18446744073709551616) (hLy : Ly < 18446744073709551616) (hw : w < 2147483648)
     (hsv : sv < 4294967296) (h1 : ω[1] = UInt64.ofNat M)
@@ -130,7 +130,7 @@ theorem tail4680 {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.E
       hLy hw hsv h1 s168 s176 s184 s224 s228 (fun a h1 h2 => H.st a (by omega) (by omega))
   have lo : ∀ a, a < M → μ1.read a = μ.read a := fun a h => fr1 a (by omega) (Or.inl (by omega))
   have H1 : HeapCtx env pb S0 S1 μ1 s := Decode.GrowOne.ctx_high H (fun a h => lo a (by omega)) wr1
-  rcases line x ω1 μ1 s M sv H1 (by omega) (by omega) hM8 hsv a0 a1 a7 a8 a9 m272 m280 m244 with
+  rcases line x ω1 μ1 s M sv H1 (RoData.RoIs.keep H run1 hro) (by omega) (by omega) hM8 hsv a0 a1 a7 a8 a9 m272 m280 m244 with
     ⟨ω2, μ2, s2, N2, run2, H2, e1, e6, fr2, keep2, gl2, base2⟩ | ⟨N, hx⟩
   · have k21 : ∀ a l, M ≤ a → a + l ≤ 4294967296 → (a + l ≤ M + 168 ∨ M + 192 ≤ a) → μ2.readN a l = μ1.readN a l :=
       fun a l h0 h1 h2 => Memory.readN_congr (fun j hj => fr2 _ (by omega) (by omega) (by omega))

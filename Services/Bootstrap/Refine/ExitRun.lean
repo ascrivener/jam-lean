@@ -1,6 +1,7 @@
 import Services.Bootstrap.Refine.PassLoop
 import Services.Bootstrap.Refine.ExitEnc
 import Services.Bootstrap.Refine.Fin
+import Services.Bootstrap.Refine.RoData
 
 /-!
 # Refine's exit, whole: from the transform loop's end to refine's return
@@ -33,10 +34,10 @@ set_option maxRecDepth 100000
     `String` at M + 168 … M + 192; or an allocation fails. `DR j bs μ` is what the `Debug` arms need of slot j; the n
     slots at E lie in an allocated chunk. To be discharged by the fmt
     summaries (`Services/Bootstrap/Fmt`). -/
-def DebugLineOk (p : ByteArray) (cap0 : Nat) (env : RefineHost.Env) (pb S0 S1 : Nat)
+def DebugLineOk (p : ByteArray) (cap0 : Nat) (env : RefineHost.Env) (pb S0 S1 : Nat) (ro : List UInt8)
     (DR : Nat → List UInt8 → Memory → Prop) : Prop :=
   ∀ (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State) (M c E n : Nat),
-    HeapCtx env pb S0 S1 μ s → S0 + 7560 ≤ M → M + 632 ≤ S1 → M % 8 = 0 →
+    HeapCtx env pb S0 S1 μ s → RoData.RoIs ro μ → S0 + 7560 ≤ M → M + 632 ≤ S1 → M % 8 = 0 →
     ω[0] = UInt64.ofNat 200 → ω[1] = UInt64.ofNat M → ω[7] = UInt64.ofNat (M + 168) →
     ω[8] = UInt64.ofNat 66099 → ω[9] = UInt64.ofNat (M + 272) →
     μ.readN (M + 272) 8 = Num.encodeLE 8 (M + 248) → μ.readN (M + 280) 8 = Num.encodeLE 8 1382 →
@@ -70,8 +71,8 @@ theorem exit_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env
     (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616) {hb : Nat}
     {pb S0 S1 M E n capI : Nat} {ce : Chunk} {μ0 : Memory} {Kp : Chunk → Prop} {O : Nat → List UInt8 → Prop}
     (DR : Nat → List UInt8 → Memory → Prop) (enc : Nat → List UInt8) (rep : Nat → List UInt8 → Prop)
-    (dbg : DebugLineOk p cap0 env pb S0 S1 DR)
-    (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State) (L : LayP S0 S1 M E n ce) (hn : 0 < n)
+    {ro : List UInt8} (dbg : DebugLineOk p cap0 env pb S0 S1 ro DR)
+    (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State) (hro : RoData.RoIs ro μ) (L : LayP S0 S1 M E n ce) (hn : 0 < n)
     (st : PInv env pb S0 S1 M E n ce capI μ0 Kp O 5042 n ω μ s) (hcapI : 232 * capI < 18446744073709551616)
     (hOD : ∀ j bs μ, j < n → O j bs → DR j bs μ) (hOR : ∀ j bs, j < n → O j bs → rep j bs)
     (hON : ∀ j bs, j < n → O j bs → ∃ t, DropOut.NoDrop t ∧ bs.take 8 = Num.encodeLE 8 (9223372036854775807 + t))
@@ -129,7 +130,7 @@ theorem exit_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env
     rw [cfr a (by omega) (by omega), co2.2 a ha]
   have pre3 := run1.trans (run2.trans run3)
   -- 4. the `Debug` line
-  rcases dbg x ω3 μ3 s2 M cap ptr n H3 (by omega) (by omega) hM8 c0 c1 c7 c8 c9 c272 c280
+  rcases dbg x ω3 μ3 s2 M cap ptr n H3 (RoData.RoIs.keep st.H pre3 hro) (by omega) (by omega) hM8 c0 c1 c7 c8 c9 c272 c280
       (by rw [Memory.readN_congr (fun j hj => k3 _ (by omega) (by omega) (by omega))]; exact vc)
       (by rw [Memory.readN_congr (fun j hj => k3 _ (by omega) (by omega) (by omega))]; exact vp)
       (by rw [Memory.readN_congr (fun j hj => k3 _ (by omega) (by omega) (by omega))]; exact vl)

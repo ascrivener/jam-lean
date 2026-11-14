@@ -29,10 +29,10 @@ set_option maxRecDepth 100000
 def DRm (C : Spec.Consts) (_j : Nat) (bs : List UInt8) (_μ : Memory) : Prop :=
   ∃ x, MFixed x ∧ x.WF C ∧ kindRep x bs
 
-theorem DebugLineOk.mono {p : ByteArray} {cap0 : Nat} {env : RefineHost.Env} {pb S0 S1 : Nat}
-    {DR DR' : Nat → List UInt8 → Memory → Prop} (h : ExitRun.DebugLineOk p cap0 env pb S0 S1 DR)
-    (hD : ∀ j bs μ, DR' j bs μ → DR j bs μ) : ExitRun.DebugLineOk p cap0 env pb S0 S1 DR' :=
-  fun x ω μ s M c E n H a b d e f g i k l m o q r t u => h x ω μ s M c E n H a b d e f g i k l m o q r
+theorem DebugLineOk.mono {p : ByteArray} {cap0 : Nat} {env : RefineHost.Env} {pb S0 S1 : Nat} {ro : List UInt8}
+    {DR DR' : Nat → List UInt8 → Memory → Prop} (h : ExitRun.DebugLineOk p cap0 env pb S0 S1 ro DR)
+    (hD : ∀ j bs μ, DR' j bs μ → DR j bs μ) : ExitRun.DebugLineOk p cap0 env pb S0 S1 ro DR' :=
+  fun x ω μ s M c E n H hr a b d e f g i k l m o q r t u => h x ω μ s M c E n H hr a b d e f g i k l m o q r
     (fun j hj => hD j _ _ (t j hj)) u
 
 theorem outI_mfixed {x : Spec.Instr} (hx : MFixed x ∨ ∃ ds, x = .exportSegs ds) : MFixed (outI x) := by
@@ -59,15 +59,15 @@ theorem outI_wf {C : Spec.Consts} {x : Spec.Instr} (hx : MFixed x ∨ ∃ ds, x 
     in order (`expTo`); or an allocation fails. -/
 theorem from4680 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P]
     (env : RefineHost.Env) (C : Spec.Consts)
-    (line : Prologue.ArgsLineOk p 134217728 env 1044430 S0 S1)
-    (fmt : ExportSeg.ExportFmtOk p 134217728 env 1044430 S0 S1)
-    (dbg : ExitRun.DebugLineOk p 134217728 env 1044430 S0 S1 (DRm C))
+    {ro : List UInt8} (line : Prologue.ArgsLineOk p 134217728 env 1044430 S0 S1 ro)
+    (fmt : ExportSeg.ExportFmtOk p 134217728 env 1044430 S0 S1 ro)
+    (dbg : ExitRun.DebugLineOk p 134217728 env 1044430 S0 S1 ro (DRm C))
     (is : List Spec.Instr) (salt rest : List UInt8) (hsalt : salt.length = 32)
     (hn : 1 ≤ is.length ∧ is.length < 128) (hwf : ∀ x ∈ is, x.WF C)
     (hk : ∀ x ∈ is, MFixed x ∨ ∃ ds, x = .exportSegs ds)
     (Y I S q : Nat) (y : List UInt8) (hy : y = Spec.encodePayload is salt ++ rest) (hYl : y.length = Y)
     (hY : Y < 16777216) (hI : I < 65536) (hS : S < 4294967296)
-    (ω : Regs) (μ : Memory) (s : State) (H : HeapCtx env 1044430 S0 S1 μ s)
+    (ω : Regs) (μ : Memory) (s : State) (H : HeapCtx env 1044430 S0 S1 μ s) (hro : RoData.RoIs ro μ)
     (h1 : ω[1] = UInt64.ofNat 4278058376)
     (s168 : μ.readN 4278058544 8 = Num.encodeLE 8 Y) (s176 : μ.readN 4278058552 8 = Num.encodeLE 8 q)
     (s184 : μ.readN 4278058560 8 = Num.encodeLE 8 Y) (s224 : μ.readN 4278058600 4 = Num.encodeLE 4 I)
@@ -101,7 +101,7 @@ theorem from4680 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Has
   have hq1 : q + Y < 2147483648 := by
     have := hcpd (q + Y - 1) (by omega) (by omega); unfold InData at this; omega
   -- the log line
-  rcases Prologue.tail4680 (p := p) (P := P) env 134217728 line ((∅, []) : RefineCtx) ω μ s H 4278058376 Y q Y I S
+  rcases Prologue.tail4680 (p := p) (P := P) env 134217728 line ((∅, []) : RefineCtx) ω μ s H hro 4278058376 Y q Y I S
       ⟨by decide, by decide, by decide⟩ (by omega) (by omega) (by omega) (by omega) hS h1 s168 s176 s184 s224 s228 with
     ⟨ω2, μ2, s2, N2, run2, H2, e1, e6, m80, m88, m112, fr2, keep2, gl2, base2⟩ | ⟨N, hx⟩
   rotate_left
@@ -120,7 +120,7 @@ theorem from4680 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Has
     by_cases hj : j < is.length
     · left; rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hj]; exact List.getElem_mem hj
     · right; rw [List.getD_eq_getElem?_getD, List.getElem?_eq_none (by omega)]; rfl
-  have dbg' : ExitRun.DebugLineOk p 134217728 env 1044430 S0 S1
+  have dbg' : ExitRun.DebugLineOk p 134217728 env 1044430 S0 S1 ro
       (fun j bs _ => kindRep (outI (is.getD j .panic)) bs) := DebugLineOk.mono dbg (fun j bs μ hb => by
     rcases hx j with hm | hp
     · have hk' := hk _ hm
@@ -142,7 +142,7 @@ theorem from4680 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Has
     rw [Nat.add_assoc, rsub _ _ (by omega), hflat, Nat.add_comm 1, List.drop_succ_cons, List.append_assoc,
       List.drop_left, List.take_left' hsalt]
   rcases RunMixed.run_mixed (p := p) (P := P) (hb := 0) env 134217728 (by decide) (by decide) (fun a => μ2.read a) is
-      (fun j => kindRep (outI (is.getD j .panic))) ts hkk fmt dbg' ((∅, []) : RefineCtx) ω2 μ2 s2 H2
+      (fun j => kindRep (outI (is.getD j .panic))) ts hkk fmt dbg' ((∅, []) : RefineCtx) ω2 μ2 s2 H2 (RoData.RoIs.keep H run2 hro)
       4278058376 q Y (ω2[5]).toNat salt cp hn ⟨by decide, by decide, by decide⟩ (UInt64.toNat_lt _)
       ⟨hcp2, hcpu, by rw [base2]; exact hcpb⟩ hcpq (fun a h1 h2 => hcpd a h1 h2) ⟨by omega, by omega⟩
       (fun _ _ => rfl) e1 UInt64.ofNat_toNat.symm e6 m112 sb pay ssalt I Y 4294901760 0 0 6373 (by omega) m80 m88
@@ -162,13 +162,13 @@ theorem from4680 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Has
 theorem refine_core {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P]
     (env : RefineHost.Env) (C : Spec.Consts) (henv : heapBounds env.code = (48, 1044430))
     (hpar : env.fetch.params = Params.full)
-    (line : Prologue.ArgsLineOk p 134217728 env 1044430 S0 S1)
-    (fmt : ExportSeg.ExportFmtOk p 134217728 env 1044430 S0 S1)
-    (dbg : ExitRun.DebugLineOk p 134217728 env 1044430 S0 S1 (DRm C))
+    {ro : List UInt8} (line : Prologue.ArgsLineOk p 134217728 env 1044430 S0 S1 ro)
+    (fmt : ExportSeg.ExportFmtOk p 134217728 env 1044430 S0 S1 ro)
+    (dbg : ExitRun.DebugLineOk p 134217728 env 1044430 S0 S1 ro (DRm C))
     (is : List Spec.Instr) (salt rest : List UInt8) (hsalt : salt.length = 32)
     (hn : 1 ≤ is.length ∧ is.length < 128) (hwf : ∀ x ∈ is, x.WF C)
     (hk : ∀ x ∈ is, MFixed x ∨ ∃ ds, x = .exportSegs ds)
-    (μ : Memory) (hμ : Prefix.StartMem μ) (hz : Prefix.StartMemZ μ) (cc I S : Nat) (h y : List UInt8)
+    (μ : Memory) (hμ : Prefix.StartMem μ) (hz : Prefix.StartMemZ μ) (hro : RoData.RoIs ro μ) (cc I S : Nat) (h y : List UInt8)
     (hc : cc < 65536) (hI : I < 65536) (hS : S < 4294967296) (hh : h.length = 32)
     (hy : y = Spec.encodePayload is salt ++ rest) (hY : y.length < 16777216) (L : Nat)
     (hLdef : (Blob.encodeNat cc).length + (Blob.encodeNat I).length + (Blob.encodeNat S).length +
@@ -197,7 +197,7 @@ theorem refine_core {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [
   · exact Or.inr hx
   obtain ⟨t1, t2, t3, t4, t5, t6⟩ := tk
   rcases from4680 (p := p) (P := P) env C line fmt dbg is salt rest hsalt hn hwf hk y.length I S q y hy rfl hY hI hS
-      ω1 μ1 s' H1 a1 b168 b176 b184 b224 b228 bpay cp ⟨hcpm, hcpu, hcpb, hcpq, hcpd⟩ b624 b616 b608
+      ω1 μ1 s' H1 (RoData.RoIs.keep0 H1 run1 hro) a1 b168 b176 b184 b224 b228 bpay cp ⟨hcpm, hcpu, hcpb, hcpq, hcpd⟩ b624 b616 b608
       (by rw [t1]; exact tab) (fun a h1 h2 => by rw [t2 a h1 h2]; exact rt a h1 h2)
       (by rw [t3]; exact tab2) (fun a h1 h2 => by rw [t4 a h1 h2]; exact rtab2 a h1 h2)
       (by rw [t5]; exact dtab) (fun a h1 h2 => by rw [t6 a h1 h2]; exact rdtab a h1 h2) with

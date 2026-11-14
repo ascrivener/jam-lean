@@ -46,8 +46,8 @@ theorem expUpTo_congr {env : RefineHost.Env} {μ μ' : Memory} {ptr : Nat} {x : 
     data; the stack from M up is kept apart from the handler's words. Or an allocation fails. -/
 theorem mid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P]
     (env : RefineHost.Env) (cap0 : Nat) (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616)
-    {pb S0 S1 : Nat} (fmt : ExportSeg.ExportFmtOk p cap0 env pb S0 S1)
-    (x : RefineCtx) (ω : Regs) (μ μ0 : Memory) (s : State)
+    {pb S0 S1 : Nat} {ro : List UInt8} (fmt : ExportSeg.ExportFmtOk p cap0 env pb S0 S1 ro)
+    (x : RefineCtx) (ω : Regs) (μ μ0 : Memory) (s : State) (hro : RoData.RoIs ro μ)
     {M E n capI : Nat} {ce : Chunk} {Kp : Chunk → Prop} {O : Nat → List UInt8 → Prop} {i : Nat}
     (L : LayP S0 S1 M E n ce) (k : Nat) (hk : k < n)
     (capv ptrv ns : Nat) (co : Chunk) (qf lf : Nat → Nat)
@@ -163,7 +163,8 @@ theorem mid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR
           obtain ⟨d, hd, hda⟩ := hX a ha'
           obtain ⟨hds, hdu, -⟩ := st.kp d hd
           exact ⟨d, hds, hdu, hda⟩)
-        ns 0 ω2 μ2 s (by omega) (by omega) H2 (b1.trans a1) (by rw [b5, Nat.mul_zero, Nat.add_zero]) b152
+        ns 0 ω2 μ2 s (by omega) (by omega) H2
+        (hro.congr (fun a l h => Memory.readN_congr (fun j hj => k2 _ (by omega)))) (b1.trans a1) (by rw [b5, Nat.mul_zero, Nat.add_zero]) b152
         (fun d hd hu => ⟨hd, fun _ _ => rfl⟩) with
       ⟨ω3, μ3, s3, N3, run3, H3, c1, cfr, ckeep⟩ | ⟨N, hx⟩
     · have h0 : ExportSeg.expUpTo env μ2 ptrv x 0 = x := rfl
@@ -283,8 +284,8 @@ theorem push {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCode
     exported in order, `ExportSeg.expUpTo env μ0 ptrv x ns`. Or an allocation fails. -/
 theorem export_step {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P]
     (env : RefineHost.Env) (cap0 : Nat) (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616)
-    {pb S0 S1 : Nat} (fmt : ExportSeg.ExportFmtOk p cap0 env pb S0 S1)
-    (x : RefineCtx) (ω : Regs) (μ μ0 : Memory) {hb : Nat} (s : State)
+    {pb S0 S1 : Nat} {ro : List UInt8} (fmt : ExportSeg.ExportFmtOk p cap0 env pb S0 S1 ro)
+    (x : RefineCtx) (ω : Regs) (μ μ0 : Memory) {hb : Nat} (s : State) (hro : RoData.RoIs ro μ)
     {M E n capI : Nat} {ce : Chunk} {Kp Kp' : Chunk → Prop} {O : Nat → List UInt8 → Prop} {i : Nat}
     (L : LayP S0 S1 M E n ce) (k : Nat) (hk : k < n)
     (capv ptrv ns : Nat) (co : Chunk) (capf qf lf : Nat → Nat)
@@ -316,7 +317,7 @@ theorem export_step {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [
   have hb0 := st.H.hb0
   have hbT := st.H.hbT
   have hS1 := st.H.hS1
-  rcases mid (p := p) (P := P) env cap0 hcap1 hcap0 fmt x ω μ μ0 s L k hk capv ptrv ns co qf lf sD0 sv8 sv16 sv24
+  rcases mid (p := p) (P := P) env cap0 hcap1 hcap0 fmt x ω μ μ0 s hro L k hk capv ptrv ns co qf lf sD0 sv8 sv16 sv24
       hcv hnc hp (fun h => (hco h).1) hcoD (fun i hi => ⟨(hw0 i hi).2.1, (hw0 i hi).2.2⟩) hql hsd st with
     ⟨ω3, μ3, s3, N3, run3, H3, c1, c144, c280, c56, c64, c72, c96, c104, cfr, ckeep⟩ | hx
   rotate_left

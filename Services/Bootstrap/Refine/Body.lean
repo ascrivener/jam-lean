@@ -59,10 +59,10 @@ theorem ExportOk.congr {env : RefineHost.Env} {μ μ' : Memory} {E k : Nat} {ce 
     allocation fails. Hypotheses: `ExportFmtOk` and `DebugLineOk` (the fmt summaries). -/
 theorem body {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P]
     (env : RefineHost.Env) (cap0 : Nat) (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616)
-    {hb : Nat} {pb S0 S1 : Nat} (fmt : ExportSeg.ExportFmtOk p cap0 env pb S0 S1)
+    {hb : Nat} {pb S0 S1 : Nat} {ro : List UInt8} (fmt : ExportSeg.ExportFmtOk p cap0 env pb S0 S1 ro)
     (DR : Nat → List UInt8 → Memory → Prop) (enc : Nat → List UInt8) (rep : Nat → List UInt8 → Prop)
-    (dbg : ExitRun.DebugLineOk p cap0 env pb S0 S1 DR)
-    (ω : Regs) (μ : Memory) (s : State) (H : HeapCtx env pb S0 S1 μ s) (M cap n : Nat) (ce : Chunk)
+    (dbg : ExitRun.DebugLineOk p cap0 env pb S0 S1 ro DR)
+    (ω : Regs) (μ : Memory) (s : State) (H : HeapCtx env pb S0 S1 μ s) (hro : RoData.RoIs ro μ) (M cap n : Nat) (ce : Chunk)
     (Kp : Nat → Chunk → Prop) (O : Nat → List UInt8 → Prop) (ctx : Nat → RefineCtx)
     (hM : S0 + 7560 ≤ M ∧ M + 632 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0) (hn : 0 < n) (hn128 : n < 128)
     (hcap : 232 * cap < 18446744073709551616) (hce : cap ≠ 18446744073709551615)
@@ -102,7 +102,7 @@ theorem body {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCode
       ExportOk env μ1 (ce.addr + 32) k ce (Kp k) (Kp (k + 1)) O (ctx k) (ctx (k + 1)) := fun k hk =>
     (elem k hk).imp (PassOk.congr (by omega) lo) (ExportOk.congr (by omega) lo)
   rcases loop_all (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 fmt μ1 Kp O ctx L elem1 5054 (Or.inr hn)
-      ω1 μ1 s st with ⟨s2, ω2, μ2, N2, run2, st2⟩ | ⟨N, hx⟩
+      ω1 μ1 s (RoData.RoIs.keep H run1 hro) st with ⟨s2, ω2, μ2, N2, run2, st2⟩ | ⟨N, hx⟩
   rotate_left
   · exact Or.inr ⟨_, ExhaustsX.pre run1 hx⟩
   have pre := run1.trans run2
@@ -110,7 +110,7 @@ theorem body {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCode
   obtain ⟨dtab2, rdtab2⟩ := ExitRun.ro_keep H pre (a := 67760) (l := 96) (by omega)
   have m1 : ∀ a l, (M + 56 ≤ a ∧ a + l ≤ M + 120) ∨ (M + 304 ≤ a ∧ a + l ≤ 4294967296) →
       μ1.readN a l = μ.readN a l := fun a l h => Memory.readN_congr (fun j hj => efr _ (by omega) (by omega))
-  rcases ExitRun.exit_run (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 DR enc rep dbg (ctx n) ω2 μ2 s2 L hn
+  rcases ExitRun.exit_run (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 DR enc rep dbg (ctx n) ω2 μ2 s2 (RoData.RoIs.keep H pre hro) L hn
       st2 hcap hOD hOR hON hok hlen w c' q ret r5 r6 t cq hw64
       (by rw [m1 _ _ (by omega)]; exact s80) (by rw [m1 _ _ (by omega)]; exact s88)
       (by rw [m1 _ _ (by omega)]; exact s112) (by rw [m1 _ _ (by omega)]; exact s624)

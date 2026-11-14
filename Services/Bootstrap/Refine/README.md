@@ -4,6 +4,62 @@ State of the work on bootstrap's `refine` (T1), written for the next session to 
 Everything cites Gray Paper v0.8.0 via the docstrings of the files named here; the spec side is
 `Spec.refine` and `exportSeg` in `JAM/Refine.lean`.
 
+## PAUSED 2026-11-14: state at the project move (read this first)
+
+**Branch** `claude/bootstrap-t1-exec-wip`. The top commit is the read-only data change below, and its build
+**was not finished** when work paused. Everything up to 3407384 builds:
+`lake build Services.Bootstrap.Refine.Milestone` passed with no `sorry` and clean axioms for `refine_milestone`.
+
+**Done on the wip branch (not yet a PR):** `Refine/Milestone.lean` `refine_milestone`, T1c's first
+milestone M1. It covers pass-through (`MFixed`) plus `ExportSegs` instructions, 1 ≤ n < 128, Ψ_R against
+`Spec.refine`. Its hypotheses are `VendoredFacts` and `FmtHyps`, and its third outcome is `ExhaustsHeap`
+(interim; the ☇ obligation is in docs/bootstrap-target.md). See docs/whats-proven.md.
+
+**In flight on the wip branch, approved by the parent:**
+1. *Stack bound* (3030563, 0461b87, 3407384; builds). The three Fmt hypotheses (`ArgsLineOk`,
+   `ExportFmtOk`, `DebugLineOk`) and the Refine frame lemmas take `S0 + 7560 ≤ M` instead of `S0 + 456 ≤ M`.
+   7560 is refine's real stack below its frame: M = 4278058376, S0 = 4278050816. The Fmt session will
+   report the 6159 line's real maximum depth. If it exceeds 7560, that is a model/binary finding to report.
+2. *Read-only data* (top commit; build unverified).
+   - New `Refine/RoData.lean`: `RoIs ro μ` (memory holds `ro` over 65536 … 77144), `RoIs.congr`, `RoIs.keep`,
+     and `RoIs.keep0` (for the argument parse, from a start memory that has no allocator context yet).
+   - The three Fmt defs take `(ro : List UInt8)` and the premise `RoData.RoIs ro μ` right after `HeapCtx`.
+   - `hro : RoIs ro μ` is threaded through `ExportSeg.seg/segs` (in the loop statement), `ExportElem.mid/export_step`,
+     `LoopAll.loop_all` (in the loop invariant), `ExitRun.exit_run`, `Body.body`, `Prologue.tail4680`,
+     `RunFixed`, `RunMixed`, `Top.from4680/refine_core`.
+   - `FmtHyps C` is now `∀ vb, vendored = some vb → … ro := vb.ro.toList`, and `refine_milestone`'s conclusion
+     is unchanged. The milestone passes `tabR`, the whole read-only segment of the initial memory, as `hro`.
+   - **Next step:** finish `lake build Services.Bootstrap.Refine.Milestone` and fix any argument-order slips
+     at the edited call sites.
+3. *Still to add, parent-approved (c):* a `VendoredFacts` conjunct `Fmt.FmtRO.FmtRO vb.ro.toList`. FmtRO is
+   owned by the Fmt session (`Services/Bootstrap/Fmt/FmtRO.lean`, branch claude/bootstrap-fmt-6 at 53e1bef).
+   Fmt was asked to open it as a one-file PR. The parent's conditions:
+   - concrete slices only, `(ro.drop k).take m = [...]`, each with a comment;
+   - VendoredFacts' docstring must say that everything in it is about the constant blob, discharged in step 10;
+   - the definition is agreed once by Fmt, the field-formatter session (session_017ptjPC1ZVytPi3sRR7WgBe)
+     and T1, and later extended only by adding conjuncts.
+
+**PRs:**
+- #181 merged (c8410ff).
+- #179 (claude/codex-3716, CodeX regeneration, re-synced 3cf8203) is open. Its CI was running, and the
+  parent said to merge it when CI is green.
+- #182 (the Vec session's loopafc) is open, in CI.
+
+**Exact next steps:**
+1. Finish item 2 above and get the build green.
+2. Once FmtRO is on main, merge main into the wip branch and add item 3.
+3. Once #182 is on main, re-sync with main (plan A: one "T1 milestone" PR from this branch).
+4. Run the full `lake build` in the background, then open the PR. Its body lists:
+   - the statement;
+   - the named hypotheses (VendoredFacts, FmtHyps);
+   - the ExhaustsHeap-only weakening and its later obligation;
+   - the hypothesis changes (M + 632; DebugLineOk's precondition on the slots' chunk; ArgsLineOk keeps
+     the base; S0 + 7560; the `ro` premise);
+   - and no model/binary disagreements.
+
+**Later (not started):** the allocation-failure ☇ obligation; eager `Lookup` and `Import`; the
+variable-width instructions; n ≥ 128.
+
 ## Branches
 
 - `main` has #120 and #133 (61b6f44): the output encoder. `Encode/Dispatch`, `Segs`, `Fixed`,

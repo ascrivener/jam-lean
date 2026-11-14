@@ -117,10 +117,10 @@ theorem run_mixed {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
       (segsOf (is.getD j .panic) = none ∨ ∃ ds, segsOf (is.getD j .panic) = some ds ∧
         (∀ bs, bs.take 8 = Num.encodeLE 8 9223372036854775827 → (bs.drop 8).take 8 = Num.encodeLE 8 ds.length →
           Rs j bs) ∧ 24 * ds.length < 1073741760 ∧ ∀ d ∈ ds, d.length < 1073741760))
-    (fmt : ExportSeg.ExportFmtOk p cap0 env pb S0 S1)
-    (dbg : ExitRun.DebugLineOk p cap0 env pb S0 S1 (fun j bs _ => Rs j bs))
+    {ro : List UInt8} (fmt : ExportSeg.ExportFmtOk p cap0 env pb S0 S1 ro)
+    (dbg : ExitRun.DebugLineOk p cap0 env pb S0 S1 ro (fun j bs _ => Rs j bs))
     (x : RefineCtx)
-    (ω : Regs) (μ : Memory) (s : State) (H : HeapCtx env pb S0 S1 μ s)
+    (ω : Regs) (μ : Memory) (s : State) (H : HeapCtx env pb S0 S1 μ s) (hro : RoData.RoIs ro μ)
     (M q Ly r5 : Nat) (salt : List UInt8) (cp : Chunk)
     (hn : 1 ≤ is.length ∧ is.length < 128) (hM : S0 + 7560 ≤ M ∧ M + 632 ≤ S1 ∧ M % 8 = 0)
     (hr5 : r5 < 18446744073709551616)
@@ -260,7 +260,7 @@ theorem run_mixed {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
           have := ainj d ((hcs j hj2).1 d hdj).1 c ((hcs k hk').1 c hc).1 e
           exact hdisj j k hj2 hk' (by omega) d hdj (this ▸ hc)
   rcases Body.body (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 fmt (fun j bs _ => Rs j bs) (encOut is) Rs dbg
-      ω1 μ1 s1 H1 M n n ⟨E - 32, (232 * n + 31) / 32 + 1, true⟩ Kp Rs (expTo env is x)
+      ω1 μ1 s1 H1 (RoData.RoIs.keep H run1 hro) M n n ⟨E - 32, (232 * n + 31) / 32 + 1, true⟩ Kp Rs (expTo env is x)
       ⟨by omega, hM1, by omega, hM8⟩ (by omega) (by omega) (by omega) (by omega) ⟨hcb, rfl⟩
       (by simp only; omega) (by simp only; omega) hkp0 b1
       b168 (by simp only [hE32]; exact b176) b184 elem

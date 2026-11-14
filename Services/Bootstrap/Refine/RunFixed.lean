@@ -31,9 +31,9 @@ theorem run_fixed {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     {hb pb : Nat} (gl : Nat → UInt8)
     (is : List Spec.Instr) (Rs : Nat → List UInt8 → Prop) (ts : Nat → Nat)
     (hk : ∀ j, j < is.length → FixedKind p P (encAt is j) (Rs j) (ts j))
-    (fmt : ExportSeg.ExportFmtOk p cap0 env pb S0 S1)
-    (dbg : ExitRun.DebugLineOk p cap0 env pb S0 S1 (fun j bs _ => Rs j bs))
-    (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State) (H : HeapCtx env pb S0 S1 μ s)
+    {ro : List UInt8} (fmt : ExportSeg.ExportFmtOk p cap0 env pb S0 S1 ro)
+    (dbg : ExitRun.DebugLineOk p cap0 env pb S0 S1 ro (fun j bs _ => Rs j bs))
+    (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State) (H : HeapCtx env pb S0 S1 μ s) (hro : RoData.RoIs ro μ)
     (M q Ly r5 : Nat) (salt : List UInt8) (cp : Chunk)
     (hn : 1 ≤ is.length ∧ is.length ≤ 70) (hM : S0 + 7560 ≤ M ∧ M + 632 ≤ S1 ∧ M % 8 = 0)
     (hr5 : r5 < 18446744073709551616)
@@ -99,7 +99,7 @@ theorem run_fixed {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
   have rsub : ∀ j o l, o + l ≤ 232 → μ1.readN (E + 232 * j + o) l = ((μ1.readN (E + 232 * j) 232).drop o).take l :=
     fun j o l h => Decode.Loop.readN_sub μ1 _ 232 o l _ rfl h
   rcases Body.body (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 fmt (fun j bs _ => Rs j bs) (encAt is) Rs dbg
-      ω1 μ1 s1 H1 M n n ⟨E - 32, (232 * n + 31) / 32 + 1, true⟩ (fun _ d => d = cp) Rs (fun _ => x)
+      ω1 μ1 s1 H1 (RoData.RoIs.keep H run1 hro) M n n ⟨E - 32, (232 * n + 31) / 32 + 1, true⟩ (fun _ d => d = cp) Rs (fun _ => x)
       ⟨by omega, hM1, by omega, hM8⟩ (by omega) (by omega) (by omega) (by omega) ⟨hcb, rfl⟩
       (by simp only; omega) (by simp only; omega)
       (fun d hd => by rw [hd]; exact ⟨(keep1 cp hcp.1 hcp.2.1).1, hcp.2.1⟩) b1

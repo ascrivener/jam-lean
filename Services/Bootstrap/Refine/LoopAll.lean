@@ -84,23 +84,24 @@ def ExportOk (env : RefineHost.Env) (μ0 : Memory) (E k : Nat) (ce : Chunk) (Kp 
     chunks to keep `Kp n`) with the context `ctx n`; or an allocation fails. -/
 theorem loop_all {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P]
     (env : RefineHost.Env) (cap0 : Nat) (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616)
-    {pb S0 S1 : Nat} (fmt : ExportSeg.ExportFmtOk p cap0 env pb S0 S1) (μ0 : Memory) {hb : Nat}
+    {pb S0 S1 : Nat} {ro : List UInt8} (fmt : ExportSeg.ExportFmtOk p cap0 env pb S0 S1 ro) (μ0 : Memory) {hb : Nat}
     {M E n capI : Nat} {ce : Chunk} (Kp : Nat → Chunk → Prop) (O : Nat → List UInt8 → Prop)
     (ctx : Nat → RefineCtx) (L : LayP S0 S1 M E n ce)
     (elem : ∀ k, k < n → PassOk μ0 E k (Kp k) (Kp (k + 1)) O (ctx k) (ctx (k + 1)) ∨
       ExportOk env μ0 E k ce (Kp k) (Kp (k + 1)) O (ctx k) (ctx (k + 1)))
     (i : Nat) (hi : i = 5042 ∨ 0 < n)
-    (ω : Regs) (μ : Memory) (s : State) (st : PInv env pb S0 S1 M E n ce capI μ0 (Kp 0) O i 0 ω μ s) :
+    (ω : Regs) (μ : Memory) (s : State) (hro : RoData.RoIs ro μ)
+    (st : PInv env pb S0 S1 M E n ce capI μ0 (Kp 0) O i 0 ω μ s) :
     (∃ (s' : State) (ω' : Regs) (μ' : Memory) (N : Nat),
       FreeStepsH p (refineContractK cap0 env) i ω μ (ctx 0) 5042 ω' μ' (ctx n) N ∧
       PInv env pb S0 S1 M E n ce capI μ0 (Kp n) O 5042 n ω' μ' s') ∨
     ∃ N, ExhaustsX env cap0 pb p i ω μ (ctx 0) N := by
   -- one instruction, from either entry
-  have step : ∀ j k ω μ y, k < n → (y = ctx k ∧ ∃ s, PInv env pb S0 S1 M E n ce capI μ0 (Kp k) O j k ω μ s) →
+  have step : ∀ j k ω μ y, k < n → (y = ctx k ∧ RoData.RoIs ro μ ∧ ∃ s, PInv env pb S0 S1 M E n ce capI μ0 (Kp k) O j k ω μ s) →
       (∃ ω' μ' y' N, FreeStepsH p (refineContractK cap0 env) j ω μ y 5042 ω' μ' y' N ∧
-        (y' = ctx (k + 1) ∧ ∃ s, PInv env pb S0 S1 M E n ce capI μ0 (Kp (k + 1)) O 5042 (k + 1) ω' μ' s)) ∨
+        (y' = ctx (k + 1) ∧ RoData.RoIs ro μ' ∧ ∃ s, PInv env pb S0 S1 M E n ce capI μ0 (Kp (k + 1)) O 5042 (k + 1) ω' μ' s)) ∨
       ∃ N, ExhaustsX env cap0 pb p j ω μ y N := by
-    intro j k ω μ y hk ⟨hy, s, st⟩
+    intro j k ω μ y hk ⟨hy, hro, s, st⟩
     subst hy
     rcases elem k hk with ⟨t, ht, sD0, hO, hK, hx⟩ | hex
     · obtain ⟨cap, ptr, vc, -, -, -, hcapn, -⟩ := st.out
@@ -108,7 +109,7 @@ theorem loop_all {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Has
       · subst hkc
         rcases step_full (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 (ctx k) ω μ μ0 s L k hk t ht sD0 hO st
             vc with ⟨s1, ω1, μ1, run1, st1⟩ | hx'
-        · exact Or.inl ⟨ω1, μ1, ctx k, _, run1, hx.symm, s1, PInv.mono_kp st1 hK⟩
+        · exact Or.inl ⟨ω1, μ1, ctx k, _, run1, hx.symm, RoData.RoIs.keep st.H run1 hro, s1, PInv.mono_kp st1 hK⟩
         · exact Or.inr ⟨_, ExhaustsX.of hx'⟩
       · obtain ⟨ω1, μ1, run1, st1⟩ := step_room (p := p) (P := P) env (ctx k) ω μ μ0 s L k hk t ht sD0 hO st
           (fun c hc => by
@@ -117,31 +118,31 @@ theorem loop_all {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Has
             rw [Num.decodeLE_encodeLE, Num.decodeLE_encodeLE] at h1
             have := L.hn
             omega)
-        exact Or.inl ⟨ω1, μ1, ctx k, _, run1, hx.symm, s, PInv.mono_kp st1 hK⟩
+        exact Or.inl ⟨ω1, μ1, ctx k, _, run1, hx.symm, RoData.RoIs.keep st.H run1 hro, s, PInv.mono_kp st1 hK⟩
     · obtain ⟨capv, ptrv, ns, co, capf, qf, lf, sD0, sv8, sv16, sv24, hcv, hnc, hp, hco, hcoD, hw0, hcap, hql, hq,
         hcs, hsd, hK', hO, hx⟩ := hex
-      rcases ExportElem.export_step (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 fmt (ctx k) ω μ μ0 s L k hk
+      rcases ExportElem.export_step (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 fmt (ctx k) ω μ μ0 s hro L k hk
           capv ptrv ns co capf qf lf sD0 sv8 sv16 sv24 hcv hnc hp hco hcoD hw0 hcap hql hq hcs hsd hK' hO st with
         ⟨s1, ω1, μ1, N, run1, st1⟩ | hx'
-      · exact Or.inl ⟨ω1, μ1, _, N, run1, hx.symm, s1, st1⟩
+      · exact Or.inl ⟨ω1, μ1, _, N, run1, hx.symm, RoData.RoIs.keep st.H run1 hro, s1, st1⟩
       · exact Or.inr hx'
   -- the remaining instructions, from the loop head
-  have rest : ∀ m k ω μ y, k + m = n → (y = ctx k ∧ ∃ s, PInv env pb S0 S1 M E n ce capI μ0 (Kp k) O 5042 k ω μ s) →
+  have rest : ∀ m k ω μ y, k + m = n → (y = ctx k ∧ RoData.RoIs ro μ ∧ ∃ s, PInv env pb S0 S1 M E n ce capI μ0 (Kp k) O 5042 k ω μ s) →
       (∃ ω' μ' y' N, FreeStepsH p (refineContractK cap0 env) 5042 ω μ y 5042 ω' μ' y' N ∧
-        (y' = ctx n ∧ ∃ s, PInv env pb S0 S1 M E n ce capI μ0 (Kp n) O 5042 n ω' μ' s)) ∨
+        (y' = ctx n ∧ RoData.RoIs ro μ' ∧ ∃ s, PInv env pb S0 S1 M E n ce capI μ0 (Kp n) O 5042 n ω' μ' s)) ∨
       ∃ N, ExhaustsX env cap0 pb p 5042 ω μ y N :=
     LoopG.loopE (p := p) (R := refineContractK cap0 env) 5042 n
-      (fun k ω μ y => y = ctx k ∧ ∃ s, PInv env pb S0 S1 M E n ce capI μ0 (Kp k) O 5042 k ω μ s)
+      (fun k ω μ y => y = ctx k ∧ RoData.RoIs ro μ ∧ ∃ s, PInv env pb S0 S1 M E n ce capI μ0 (Kp k) O 5042 k ω μ s)
       (fun i ω μ y => ∃ N, ExhaustsX env cap0 pb p i ω μ y N)
       (fun run ⟨N, h⟩ => ⟨_, ExhaustsX.pre run h⟩) (fun k ω μ y hk q => step 5042 k ω μ y hk q)
   by_cases hn : n = 0
   · have hi' : i = 5042 := by omega
     subst hi'
-    rcases rest 0 0 ω μ (ctx 0) (by omega) ⟨rfl, s, st⟩ with ⟨ω', μ', y, N, run, rfl, s', st'⟩ | hx
+    rcases rest 0 0 ω μ (ctx 0) (by omega) ⟨rfl, hro, s, st⟩ with ⟨ω', μ', y, N, run, rfl, -, s', st'⟩ | hx
     · exact Or.inl ⟨s', ω', μ', N, run, st'⟩
     · exact Or.inr hx
-  · rcases step i 0 ω μ (ctx 0) (by omega) ⟨rfl, s, st⟩ with ⟨ω1, μ1, y1, N1, run1, rfl, s1, st1⟩ | hx
-    · rcases rest (n - 1) 1 ω1 μ1 (ctx 1) (by omega) ⟨rfl, s1, st1⟩ with ⟨ω', μ', y, N, run, rfl, s', st'⟩ | hx
+  · rcases step i 0 ω μ (ctx 0) (by omega) ⟨rfl, hro, s, st⟩ with ⟨ω1, μ1, y1, N1, run1, rfl, hro1, s1, st1⟩ | hx
+    · rcases rest (n - 1) 1 ω1 μ1 (ctx 1) (by omega) ⟨rfl, hro1, s1, st1⟩ with ⟨ω', μ', y, N, run, rfl, -, s', st'⟩ | hx
       · exact Or.inl ⟨s', ω', μ', _, run1.trans run, st'⟩
       · obtain ⟨N, hx⟩ := hx
         exact Or.inr ⟨_, ExhaustsX.pre run1 hx⟩

@@ -60,10 +60,11 @@ theorem initialMemory_readN_ro (jb : JamBlob) (a : ByteArray) (hl : layoutOk jb 
     `Export` segment's line (`ExportSeg.ExportFmtOk`, 5744) and the output's `Debug` line
     (`ExitRun.DebugLineOk` for `Top.DRm C`, 6159). -/
 def FmtHyps (C : Spec.Consts) : Prop :=
-  ∀ (p : ByteArray) (P : Program) [HasCode p P] [CodeX.HasCodeX p P] [CodeR.HasCodeR p P] [CodeF.HasCodeF p P]
+  ∀ vb : JamBlob, vendored = some vb → ∀ (p : ByteArray) (P : Program) [HasCode p P] [CodeX.HasCodeX p P] [CodeR.HasCodeR p P] [CodeF.HasCodeF p P]
     [CodeA.HasCodeA p P] (env : RefineHost.Env), heapBounds env.code = (48, 1044430) →
-    Prologue.ArgsLineOk p 134217728 env 1044430 S0 S1 ∧ ExportSeg.ExportFmtOk p 134217728 env 1044430 S0 S1 ∧
-    ExitRun.DebugLineOk p 134217728 env 1044430 S0 S1 (DRm C)
+    Prologue.ArgsLineOk p 134217728 env 1044430 S0 S1 vb.ro.toList ∧
+    ExportSeg.ExportFmtOk p 134217728 env 1044430 S0 S1 vb.ro.toList ∧
+    ExitRun.DebugLineOk p 134217728 env 1044430 S0 S1 vb.ro.toList (DRm C)
 
 /-- **T1c, first milestone** (`docs/bootstrap-target.md` M1; not T1c itself): for a work item whose code is
     bootstrap (`IsBootstrap`), core index c < 2^16, item index i < 2^16, service id < 2^32, and payload
@@ -167,9 +168,9 @@ theorem refine_milestone (C : Spec.Consts) (hvend : VendoredFacts) (hfmt : FmtHy
   have tabR : ∀ o l, o + l ≤ 11608 → (initialMemory jb a).readN (65536 + o) l = (vb'.ro.toList.drop o).take l :=
     fun o l h => by rw [initialMemory_readN_ro jb a hlay ha o l h, hro]
   have rdR : ∀ x, 65536 ≤ x → x < 77144 → (initialMemory jb a).readable x = true := hSM.ro
-  obtain ⟨hfA, hfE, hfD⟩ := hfmt jb.code P env (by rw [hcodeE, hheap])
+  obtain ⟨hfA, hfE, hfD⟩ := hfmt vb' hvb' jb.code P env (by rw [hcodeE, hheap])
   rcases Top.refine_core (p := jb.code) (P := P) env C (by rw [hcodeE, hheap]) hparE hfA hfE hfD is salt rest hsalt
-      hn hwf hk (initialMemory jb a) hSM hZ c i w.service (Blake2b.hash256 ⟨p.encode.toArray⟩).toList y hc hi hs hh hy
+      hn hwf hk (initialMemory jb a) hSM hZ tabR c i w.service (Blake2b.hash256 ⟨p.encode.toArray⟩).toList y hc hi hs hh hy
       (by omega) a.size hLsum.symm (by omega)
       (by simpa [argStart, zoneSize, inputSize] using hmem)
       (fun j h1 h2 => initialMemory_readable_args jb a j (by simp [argStart, zoneSize, inputSize]; omega)

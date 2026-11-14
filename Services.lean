@@ -27,6 +27,7 @@ import Services.Bootstrap.Fmt.Du5
 import Services.Bootstrap.Fmt.Format
 import Services.Bootstrap.Fmt.AccFmt
 import Services.Bootstrap.Fmt.ReallocCopy
+import Services.Bootstrap.Fmt.ReallocCopyInst
 import Services.Bootstrap.AccLog.ItemLog
 import Services.Bootstrap.BParams
 import Services.Bootstrap.BParamsConsts

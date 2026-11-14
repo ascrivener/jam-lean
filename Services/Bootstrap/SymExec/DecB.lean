@@ -1,3 +1,13 @@
+/-!
+# Decimal octets of a natural
+
+`decB n`: the UTF-8 octets of `Nat.repr n` (`repr_utf8`), by the recursion of `Nat.toDigits 10`:
+the decimal of n / 10, then the digit n mod 10. Used for strings that `format!` builds from a `{}`
+argument (storage keys).
+-/
+
+namespace Services.Bootstrap.SymExec
+
 /-- The decimal octets of n: Nat.repr's UTF-8 encoding, by its recursion. -/
 def decB (n : Nat) : List UInt8 :=
   if n < 10 then [UInt8.ofNat (48 + n)] else decB (n / 10) ++ [UInt8.ofNat (48 + n % 10)]
@@ -38,3 +48,5 @@ theorem toDigits_utf8 (n : Nat) : (Nat.toDigits 10 n).utf8Encode.data.toList = d
 
 theorem repr_utf8 (n : Nat) : (Nat.repr n).toUTF8.toList = decB n := by
   rw [ByteArray.toList_eq, String.toUTF8_eq_toByteArray, Nat.repr_eq_ofList_toDigits, String.toByteArray_ofList, toDigits_utf8]
+
+end Services.Bootstrap.SymExec

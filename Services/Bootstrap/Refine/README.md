@@ -162,6 +162,22 @@ cursor word not yet set). `Pass.pa`, `pass_elem`, `pass_elem_grow`, `ExportStep.
 `export_step` run from either. Eager `Lookup` and `Import` give `lookedUp` / `imported`, which are not fixed-width,
 so the milestone excludes them.
 
+### Refine's body, composed (`Entry.lean`, `Body.lean`)
+- `Entry.entry` (4842 … 5054): from the decode's `Vec<Instruction>` `{cap, E, n}` at M + 168, the output
+  `Vec::new()`, the `IntoIter`, the constants; `PInv` at 5054 for k = 0 with μ0 the memory there.
+- `Body.body` (4842 … refine's return): `entry`, `LoopAll.loop_all`, `ExitRun.exit_run`. The instructions'
+  facts (`PassOk` / `ExportOk`) are stated on the memory at 4842 and carried over (`PassOk.congr`,
+  `ExportOk.congr`); the result is ℰ(`BootstrapWorkOutput`) at buf with the host context `ctx n`.
+- `ExitRun.DebugLineOk` and `exit_run` now keep the host context (Fmt's `refineKeep` gives x' = x).
+
+Left for T1's milestone:
+1. Refine before 4842: the arguments, the payload's copy, the first log line (4742, a Fmt site) and
+   `Instructions::decode` (31894) with the heap: the decoded `Vec<Instruction>` in an allocated chunk, each
+   element's `Rep`, and for `ExportSegs` the `Vec<Vec<u8>>` and segment buffers as allocated chunks (`ExportOk`).
+2. From the decoded `Rep`s and `Spec.refineInstr` to `PassOk` / `ExportOk`, the output slots' `O`, the encodings
+   `enc` and `EncOk`; `ctx k` as the exports of the first k instructions.
+3. The caller's halt and the lift to Ψ_R against `Bridge.RSem.run (Spec.refine …)`.
+
 ### Next
 - Top level: the prologue to 5042 with `PInv 0` (decode, `IntoIter` built, output `Vec::new`), the loop over
   per-kind steps (`LoopG.loop` with the pass-through steps and, once unblocked, the handlers), `exit_run`, the

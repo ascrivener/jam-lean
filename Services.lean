@@ -28,6 +28,7 @@ import Services.Bootstrap.Fmt.Format
 import Services.Bootstrap.Fmt.AccFmt
 import Services.Bootstrap.Fmt.ReallocCopy
 import Services.Bootstrap.Fmt.ReallocCopyInst
+import Services.Bootstrap.Fmt.Text
 import Services.Bootstrap.AccLog.ItemLog
 import Services.Bootstrap.AccLog.Imported
 import Services.Bootstrap.AccLog.Yield

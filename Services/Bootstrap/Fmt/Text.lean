@@ -11,7 +11,8 @@ runs are stated with the text: the `String`'s buffer holds `txt` before and `txt
 after. The reserve path uses `ReallocCopyOk` (Fmt/ReallocCopy.lean): `realloc` keeps the old
 buffer's octets.
 
-The proofs follow Fmt/Sink.lean step for step, carrying the buffer's octets along.
+The proofs follow Fmt/Sink.lean and Fmt/Spec.lean step for step, carrying the buffer's octets
+along. `memcpy`'s octets come from `memcpy_small` / `memcpy_big`.
 -/
 
 namespace Services.Bootstrap.Fmt
@@ -141,8 +142,6 @@ theorem ws_copytail_text {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p
       fr2 a ha0 ha2 (by omega), m1 a ha0 (by omega)]
   · rw [Memory.readable_writeN, rd2, d1]
   · rw [Memory.writable_writeN, wr2, w1]
-
-/-- A chunk of a well-formed state lies in base … base + 2³⁰. -/
 
 /-- `ws_reserve` with the octets, on `ReallocCopyOk`: the new buffer starts with the old buffer's
     `len` octets. **The reserve path of `write_str`**, from 60030 when cap − len < n: `do_reserve_and_handle`
@@ -466,8 +465,8 @@ theorem write_str_text {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P
       rw [rdN_frame (μ := μ) (μ' := μ1) (fun j hj => by
         rw [show W + 8 + j = W + (8 + j) by omega, kW _ (by omega)]), ← htx]
       exact readN_congr2 fun j hj => fr1 _ (by omega) (Or.inl (by omega))
-    have srcK : ∀ μ2 : Memory, Keeps pb (sp - 32 + 8) (fun a => W ≤ a ∧ a < W + 16) s₀ μ1 μ2 s' →
-        μ2.readN src n = μ.readN src n := fun μ2 K2 => readN_congr2 fun j hj => by
+    have srcK : ∀ (μ2 : Memory) (s2 : State), Keeps pb (sp - 32 + 8) (fun a => W ≤ a ∧ a < W + 16) s₀ μ1 μ2 s2 →
+        μ2.readN src n = μ.readN src n := fun μ2 s2 K2 => readN_congr2 fun j hj => by
       rcases hsrc with h | h
       · rw [K2.ro _ (by omega) (Or.inl (by unfold pageSize; omega)) (by rw [wr1]; exact H.ro _ (by omega)),
           fr1 _ (by omega) (Or.inl (by omega))]
@@ -535,7 +534,7 @@ theorem write_str_text {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P
         rwa [Nat.max_self, Nat.max_self] at K123
       · have hp3 : rdN μ3 (W + 8) 8 = ptr := by
           rw [rdN_frame (fun j hj => fr3 _ (by omega) (by omega) (by omega) (by omega))]; exact hpd
-        rw [hp3, Memzero.readN_add', cp3, srcK μ2 K2, readN_congr2 (μ := μ2) (μ' := μ3) (a := ptr) (b := ptr)
+        rw [hp3, Memzero.readN_add', cp3, srcK μ2 s' K2, readN_congr2 (μ := μ2) (μ' := μ3) (a := ptr) (b := ptr)
           (n := len) (fun j hj => fr3 _ (by omega) (by omega) (by omega) (by omega)), tx2, tx1]
     · have : newcap (len + n) cap - cap < 536870912 := by
         unfold newcap; simp only [Nat.max_def]; split <;> split <;> omega
@@ -713,6 +712,7 @@ theorem pad_plain_text {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P
         unfold InData at ha; omega)
   have h1' : ω3[1] = UInt64.ofNat sp := by rw [c1, show sp - 104 + 104 = sp by omega]
   have hbl := buf_lt hf.str H
+  have hle := hf.str.le
   have hbT := H.hbT
   have htx2 : μ2.readN (rdN μ2 (W + 8) 8) len = txt := by
     rw [rdN_frame (μ := μ) (μ' := μ2) (fun j hj => by

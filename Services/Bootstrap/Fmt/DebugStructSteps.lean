@@ -116,7 +116,7 @@ theorem ds_c {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X) 
 
 /-- 65214 … 65237: after `": "`, the value's `fmt` (the word fn at vt + 24, vt the word at T + 16,
     resolving to e) with the value v (the word at T + 24) and F, returning to 65242 (2744). -/
-theorem ds_d {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+theorem ds_d {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X) (ω : Regs) (μ : Memory)
     (T D F v vt fn e : Nat) (hT : 65536 ≤ T ∧ T + 112 < 4294967296)
     (h1 : ω[1] = UInt64.ofNat T) (h5 : ω[5] = UInt64.ofNat D) (h7 : ω[7] = UInt64.ofNat 0)
     (hvt : vt + 32 < 4294967296) (rF : rdN μ (T + 8) 8 = F) (rvt : rdN μ (T + 16) 8 = vt)
@@ -140,7 +140,7 @@ theorem ds_d {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ
 
 /-- 65242 … 65464: after the value (its result res in ω₇), the result and "has fields" (1) stored at
     D (ω₅), ω₇ = D, and the return: ω₀, ω₅, ω₆ restored from T + 104, + 96, + 88. -/
-theorem ds_e {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+theorem ds_e {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X) (ω : Regs) (μ : Memory)
     (T D r0 t v5 v6 res : Nat) (hT : 65536 ≤ T ∧ T + 112 < 4294967296)
     (h1 : ω[1] = UInt64.ofNat T) (h5 : ω[5] = UInt64.ofNat D) (h7 : ω[7] = UInt64.ofNat res)
     (hres : res < 256) (hD : D + 16 < 4294967296 ∧ (D + 16 ≤ T ∨ T + 112 ≤ D))

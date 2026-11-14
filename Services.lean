@@ -273,6 +273,15 @@ import Services.Bootstrap.Encode.Prefix
 import Services.Bootstrap.Encode.Loop
 import Services.Bootstrap.Encode.EncM
 import Services.Bootstrap.Encode.PrefixBig
+import Services.Bootstrap.Encode.EncMD
+import Services.Bootstrap.Encode.HeapPad
+import Services.Bootstrap.Encode.VecSegs
+import Services.Bootstrap.Encode.VecSegs2
+import Services.Bootstrap.Encode.VecSegs3
+import Services.Bootstrap.Encode.VecCore
+import Services.Bootstrap.Encode.VariantsVec
+import Services.Bootstrap.Encode.VariantsVecVec
+import Services.Bootstrap.Encode.VecSrcHeap
 import Services.Bootstrap.Refine.Pass
 import Services.Bootstrap.Refine.PassGrow
 import Services.Bootstrap.Refine.PassLoop

@@ -479,4 +479,75 @@ theorem run_args_hdr (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHo
         | exact Memory.readable_of_writable (hhp1 a (by omega) (by omega))
         | exact Memory.readable_of_writable (hst1 a (by omega) (by omega)))
 
+
+open Picoalloc Services.Bootstrap.Alloc Services.Bootstrap.Alloc.AfterStart Services.Bootstrap.AllocStart
+  Services.Bootstrap.Decode.HeapCtx
+
+/-- **The allocator's context at 35130**: from Y's state (`StartMem`, `StartMemZ`) with the argument
+    blob ℰ(c) ⌢ ℰ(i) ⌢ ℰ(s) ⌢ ℰ(|y|) ⌢ y ⌢ h, refine reaches 35130 with `run_args_gen`'s post
+    (`ArgsPost`) and the allocator's context for picoalloc's start state `sStart`, heap bound
+    1044430 and the stack [4278050816, 4278059008). -/
+theorem args_ctx (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
+    (henv : heapBounds env.code = (48, 1044430)) (hpar : env.fetch.params = Params.full) (μ : Memory)
+    (hμ : StartMem μ) (C I S : Nat) (h : List UInt8) (hC : C < 65536) (hI : I < 65536)
+    (hS : S < 4294967296) (Y : Nat) (hY1 : 1 ≤ Y) (hY : Y < 16777216) (y : List UInt8) (hy : y.length = Y)
+    (hh : h.length = 32) (L : Nat)
+    (hLdef : (Blob.encodeNat C).length + (Blob.encodeNat I).length + (Blob.encodeNat S).length +
+      (Blob.encodeNat Y).length + Y + 32 = L) (hL : L < 16777217)
+    (hmem : μ.readN 4278124544 L = Blob.encodeNat C ++ Blob.encodeNat I ++ Blob.encodeNat S ++
+      Blob.encodeNat Y ++ y ++ h)
+    (hrd : ∀ j, 4278124544 ≤ j → j < 4278124544 + L → μ.readable j = true)
+    (hz : StartMemZ μ) :
+    ∃ ω' μ', FreeStepsH p (refineContract env) 0 (initRegs L) μ ((∅, []) : RefineCtx) 35130 ω' μ'
+      ((∅, []) : RefineCtx) 6000 ∧ ArgsPost p env μ C I S Y y L ω' μ' ∧
+      HeapCtx env 1044430 4278050816 4278059008 μ' sStart := by
+  obtain ⟨ω', μ', run, post, z⟩ := run_args_hdr p P env henv hpar μ hμ C I S h hC hI hS Y hY1 hY y hy hh L
+    hLdef hL hmem hrd
+  refine ⟨ω', μ', run, post, ?_⟩
+  obtain ⟨c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, c21, c22, c23, c24, c25, c26, c27, c28, c29, c30, c31, c32, c33, c34, c35, c36, c37, c38, c39, c40, c41, c42, c43, c44, c45, c46, c47, c48, c49, c50, c51, c52, c53, c54, c55, c56, c57, c58, c59, c60, c61, c62, c63, c64, c65, c66, c67, c68, c69, c70, c71, c72, c73, c74, c75, c76, c77, c78, c79, c80, c81, c82, c83, c84, c85, c86, c87, c88, c89, c90, c91, c92, c93, c94, c95, c96, c97, c98, c99, c100, c101, c102, c103, c104, c105, c106, c107, c108, c109, c110, c111, c112, c113, c114, c115, c116, c117, c118, c119, c120, c121, c122, c123, c124, c125, c126, c127, c128, c129, c130, c131⟩ := post
+  obtain ⟨kp, -⟩ := FreeStepsH.keepRO (cap := hostCostMax) henv run
+  -- Y's zeros, kept below the stack except at the prefix's and the chain's globals
+  have zr : ∀ a, (196792 ≤ a ∧ a < 206512 ∨ 206528 ≤ a ∧ a < 206824) → μ'.read a = 0 := fun a ha =>
+    (c130 a (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)
+      (by omega) (by omega)).trans (hz.zero a (by omega) (by omega))
+  have hw : AllocWords μ' := by
+    refine ⟨fun b hb => ?_, fun q hq => ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+    · unfold A0; unfold binCount at hb
+      by_cases e1 : b = 2431
+      · subst e1; simp only [↓reduceIte]; show rdN μ' 206516 4 = 206880
+        rw [rdN4_of (a := 206516) (Memory.read_of_readN c6 4 (by decide)) (Memory.read_of_readN c6 5 (by decide))
+          (Memory.read_of_readN c6 6 (by decide)) (Memory.read_of_readN c6 7 (by decide))]; rfl
+      · simp only [e1, ↓reduceIte]
+        by_cases e0 : b = 2430
+        · subst e0; show rdN μ' 206512 4 = 0
+          rw [rdN4_of (a := 206512) (Memory.read_of_readN c6 0 (by decide)) (Memory.read_of_readN c6 1 (by decide))
+            (Memory.read_of_readN c6 2 (by decide)) (Memory.read_of_readN c6 3 (by decide))]; rfl
+        · exact rdN4_zero fun j hj => zr _ (by omega)
+    · unfold A0
+      by_cases e1 : q = 37
+      · subst e1; simp only [↓reduceIte]; show rdN μ' 206824 8 = 2 ^ 63
+        unfold rdN; rw [c8]; rfl
+      · simp only [e1, ↓reduceIte]; exact rdN8_zero fun j hj => zr _ (by omega)
+    · unfold rdN; rw [c9]; rfl
+    · unfold rdN; rw [c7]; rfl
+    · unfold rdN; rw [c10]; rfl
+    · rw [rdN4_of (a := 206880) (Memory.read_of_readN c12 0 (by decide)) (Memory.read_of_readN c12 1 (by decide))
+        (Memory.read_of_readN c12 2 (by decide)) (Memory.read_of_readN c12 3 (by decide))]; rfl
+    · rw [rdN4_of (a := 206884) (Memory.read_of_readN c12 4 (by decide)) (Memory.read_of_readN c12 5 (by decide))
+        (Memory.read_of_readN c12 6 (by decide)) (Memory.read_of_readN c12 7 (by decide))]; rfl
+    · unfold rdN; rw [c13]; rfl
+    · unfold rdN; rw [z]; rfl
+  refine ⟨sStart_wf, hw.rep, sStart_first, ?_, by rw [sStart_base]; omega, by rw [sStart_base]; omega,
+    by rw [sStart_allocated]; omega, henv, ⟨51, by omega, by omega, c74, by omega,
+      by rw [sStart_base, sStart_allocated]; omega⟩, by omega, by omega, fun a h1 h2 => ?_, fun a ha => ?_⟩
+  · unfold rdN; rw [show μ'.readN 206848 1 = [μ'.read (206848 + 0)] from rfl, Memory.read_of_readN c11 0 (by decide)]; rfl
+  · have e := kp (a / pageSize) (Or.inr (by unfold pageSize; omega))
+    have := hμ.stack a (by omega) h2
+    unfold Memory.writable at this ⊢
+    rw [e]; exact this
+  · have e := kp (a / pageSize) (Or.inl (by unfold pageSize; omega))
+    have := hz.lowRO a ha
+    unfold Memory.writable at this ⊢
+    rw [e]; exact this
+
 end Services.Bootstrap.Refine.ArgsCtx

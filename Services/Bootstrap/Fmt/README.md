@@ -154,3 +154,90 @@ allocated in s' and fresh against s. The text stays unstated.
      (T1 proves `DebugRep` of its elements).
 5. The `ReallocOk` refine instance, once `ReallocCall.realloc_call` gains its planned conjuncts
    (Glob kept, base kept, block fresh or old); `realloc_fresh` already proves the last two.
+
+
+## Brief: the field formatters of refine's 6159 Debug line (for the field-formatter session)
+
+Refine's level-3 line at 6159 formats the `Vec` at sp + 248 with `<Vec<Instruction> as Debug>`
+(29675). Each 232-octet element goes through `<&Instruction as Debug>` (26990): the niche tag
+(the word at +0 minus 0x7fff…ff, 25 variants) indexes the jump table at 67576, and each arm calls a
+builder with its fields. **This session** does the builders (`DebugStruct::field` 65057,
+`debug_struct_field1..5_finish` 62816 / 62972 / 63149 / 63347 / 63570, `debug_struct_fields_finish`
+63820, the shared tails 28576 / 28280 / 27665 / 28458), the 25 arms, 29675 and
+`refine_debug_line`. **The field-formatter session** proves each field formatter below as a
+`RefOk` lemma in new files under `Fmt/` (e.g. `Fmt/Field<addr>.lean`), and edits no existing file.
+
+**Interface.** `RefOk p P R env pb S0 S1 Z μA sA spA e a M C` (`DebugList.lean`, with Z from #184):
+called at e with ω₇ = a slot v (sp ≤ v, v + 8 ≤ S1, disjoint from the `String` W) holding the field's
+address a, and ω₈ = the `Formatter` F (`Fmtr`, plain options). It returns `Ok` (ω₇ = 0) to the return
+address within 7n + 2·Δcap + C steps, having written n ≤ M octets (not stated), with the allocator's
+context kept, `Keeps` from sp up except W … W + 24, and ω₀, ω₁, ω₅, ω₆ restored. Otherwise it
+`Exhausts` within 2³⁰ + C. Where the field lies is a hypothesis via `ValAt` (on the caller's stack
+or in an allocated chunk). See `ref_u8_ok`, `ref_u64_ok` (37589, done), `ref_hce_ok` and
+`ref_vec_u8_ok` for worked examples; the composite ones reuse `debug_tuple1`, `debug_entry` /
+`vd_loop` and (soon) the struct builders. Statements take Z (600 ≤ Z, or more if the formatter
+nests) and say which read-only words they need (vtables' `fmt` words, as `option_vec_ok` does).
+Code facts: all of these lie in `fnRangesF` (`Tests/GenWitnessSteps.lean`), so `CodeF` has them.
+
+Field formatters (entry addresses; a vtable's `fmt` word resolves to them through the jump table):
+
+| formatter | ~instructions to its first return (callees not counted) | used by tags |
+|---|---|---|
+| 315 | ~52 | 0 |
+| 26397 | ~33 | 5, 10, 19 |
+| 26605 | ~31 | 11 |
+| 26706 | ~31 | 9 |
+| 26905 | ~16 | 17 |
+| 28739 | ~16 | 0 |
+| 28801 | ~99 | 12, 24 |
+| 28822 | ~93 | 2, 4, 8, 11, 17 |
+| 28843 | ~87 | 0, 1, 2 |
+| 29877 | ~30 | 24 |
+| 33162 | ~232 | 2 |
+| 33167 | ~230 | 4 |
+| 36529 | ~18 | 14 |
+| 36534 | ~16 | 18 |
+| 36594 | ~16 | 0 |
+| 36654 | ~15 | 22 |
+| 36732 | ~25 | 13 |
+| 36972 | ~29 | 21 |
+| 37522 | ~93 | 8 |
+| 37549 | ~84 | 3, 12, 24 |
+| 37589 | ~72 | 1, 6, 7, 20 |
+| 37611 | ~65 | 12 |
+| 56340 | ~359 | 0, 1, 6, 7, 8 |
+| 57485 | ~48 | 0 |
+
+Arms (tag → arm entry → builder, or the shared tail it jumps to → the formatters of its fields, in
+the order their vtables are loaded):
+
+| tag | arm | builder / tail | field formatters (fmt entry) |
+|---|---|---|---|
+| 0 | 27058 | 63820 | 56340, 28843, 57485, 28739, 36594, 315 |
+| 1 | 27937 | 63149 | 37589, 28843, 56340 |
+| 2 | 27685 | 63347 | 33162, 28843, 28822 |
+| 3 | 27852 | 28576 | 37549 |
+| 4 | 27451 | 28280 | 33167, 28822 |
+| 5 | 28134 | 28576 | 26397 |
+| 6 | 28228 | 62972 | 37589, 56340 |
+| 7 | 27883 | 28280 | 37589, 56340 |
+| 8 | 28378 | 63149 | 37522, 56340, 28822 |
+| 9 | 27570 | 28576 | 26706 |
+| 10 | 28347 | 28576 | 26397 |
+| 11 | 27294 | 63570 | 26605, 28822 |
+| 12 | 27505 | 27665 | 37549, 37611, 28801 |
+| 13 | 28197 | 28576 | 36732 |
+| 14 | 27263 | 28576 | 36529 |
+| 15 | 27824 | 64485 | — |
+| 16 | 27235 | 64485 | — |
+| 17 | 28049 | 28280 | 26905, 28822 |
+| 18 | 28316 | 28576 | 36534 |
+| 19 | 28547 | 62816 | 26397 |
+| 20 | 28103 | 28576 | 37589 |
+| 21 | 28165 | 62471 | 36972 |
+| 22 | 28498 | 62471 | 36654 |
+| 23 | 28607 | 64485 | — |
+| 24 | 27601 | 28458 | 37549, 29877, 28801 |
+
+Tags 15, 16 and 23 are unit variants (`write_str`, 64485). 37589 (`&u64`) is done (`ref_u64_ok`).
+56340 is shared with T2's accumulate log sites.

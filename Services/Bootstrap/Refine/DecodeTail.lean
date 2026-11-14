@@ -1,5 +1,6 @@
 import Services.Bootstrap.Refine.Entry
 import Services.Bootstrap.ReaderBig
+import Services.Bootstrap.DecodeU32
 
 /-!
 # `Instructions::decode` in refine: after the instruction list
@@ -237,5 +238,102 @@ theorem tail {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ
   · rw [Memory.readN_congr (fun j hj => dfr _ (by omega) (by omega)), Memory.readN_congr (fun j hj => cfr _ (by omega) (by omega))]
     exact bR8
   · rw [dfr a h0 h3, cfr a h0 (by omega), bfr a h0 (by omega) h2 (by omega), afr a h0 (by omega)]
+
+/-- 4792 … 4839: refine's reader `{q, Ly}` over the payload's copy (buffer q at M + 112, length in ω₆) at
+    M + 272, and the inlined `Instructions::decode`'s frame G = M − 136 (saving 158, ω₅, ω₆ at G + 128,
+    G + 120, G + 112), calling the compact length decoder (31894; return address 920 → 20398) with the reader.
+    Memory changes only at M + 272 … M + 288 and G + 112 … G + 136. -/
+theorem dh1 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory) (M q Ly r5 : Nat)
+    (hM : 65536 + 136 ≤ M ∧ M + 288 ≤ 4294967296 ∧ M % 8 = 0) (hq : q < 18446744073709551616)
+    (hLy : Ly < 18446744073709551616) (hr5 : r5 < 18446744073709551616)
+    (h1 : ω[1] = UInt64.ofNat M) (h5 : ω[5] = UInt64.ofNat r5) (h6 : ω[6] = UInt64.ofNat Ly)
+    (s112 : μ.readN (M + 112) 8 = Num.encodeLE 8 q)
+    (hr : ∀ a, M + 112 ≤ a → a < M + 120 → μ.readable a = true)
+    (hw : ∀ a, M + 272 ≤ a → a < M + 288 → μ.writable a = true)
+    (hwG : ∀ a, M - 24 ≤ a → a < M → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 4792 ω μ x 31894 ω' μ' x 20 ∧ ω'[0] = UInt64.ofNat 920 ∧
+      ω'[1] = UInt64.ofNat (M - 136) ∧ ω'[5] = UInt64.ofNat (M + 168) ∧ ω'[6] = UInt64.ofNat (M + 272) ∧
+      ω'[7] = UInt64.ofNat (M + 272) ∧
+      μ'.readN (M + 272) 8 = Num.encodeLE 8 q ∧ μ'.readN (M + 280) 8 = Num.encodeLE 8 Ly ∧
+      μ'.readN (M - 136 + 128) 8 = Num.encodeLE 8 158 ∧ μ'.readN (M - 136 + 120) 8 = Num.encodeLE 8 r5 ∧
+      μ'.readN (M - 136 + 112) 8 = Num.encodeLE 8 Ly ∧
+      (∀ a, a < 4294967296 → (a < M - 24 ∨ M ≤ a) → (a < M + 272 ∨ M + 288 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  obtain ⟨hM0, hM1, hM8⟩ := hM
+  have rq := rd8 hq s112
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?_, ?_, ?_, ?_⟩
+  rotate_left 2
+  · pvm_go [h1, h5, h6, hM0, hM1, hM8, hr, hw, hwG, rq, rdN_writeN_disjoint, ↓rdN_fold]
+  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 ha2 => ?_, fun a => ?_, fun a => ?_⟩
+    all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+      ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, Nat.mod_eq_of_lt hq,
+      Nat.mod_eq_of_lt hLy, Nat.mod_eq_of_lt hr5]
+    all_goals try (congr 1; omega)
+    post_simp
+
+/-- 20398 … 20414, the length n < 2³² decoded (ω₇ = 0, ω₈ = n): `Vec<Instruction>::decode` (482) is called
+    with the output at ω₁ (ω₇), the reader (ω₆, in ω₈) and n (ω₉); return address 922 → 20420. -/
+theorem dh2 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory) (G rd n : Nat)
+    (hn : n < 4294967296) (hG : G < 18446744073709551616) (hrd : rd < 18446744073709551616)
+    (h1 : ω[1] = UInt64.ofNat G) (h6 : ω[6] = UInt64.ofNat rd) (h7 : ω[7] = UInt64.ofNat 0)
+    (h8 : ω[8] = UInt64.ofNat n) :
+    ∃ ω', FreeStepsH p R 20398 ω μ x 482 ω' μ x 10 ∧ ω'[0] = UInt64.ofNat 922 ∧ ω'[1] = ω[1] ∧
+      ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ ω'[7] = UInt64.ofNat G ∧ ω'[8] = UInt64.ofNat rd ∧
+      ω'[9] = UInt64.ofNat n := by
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?_, ?_, ?_⟩
+  rotate_left
+  · pvm_go [h1, h6, h7, h8]
+  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+    all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+      ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, h6, Nat.mod_eq_of_lt hG,
+      Nat.mod_eq_of_lt hrd]
+    all_goals try (congr 1; omega)
+    post_simp
+
+/-- **`Instructions::decode`'s head** (4792 … 482): refine's reader over the payload's copy (q, Ly ≥ 1, its first
+    octet the compact length 1 ≤ n < 128), the length decoded (`decodeU32_len1`), and `Vec<Instruction>::decode`
+    called (return 922 → 20420) with the output at G = M − 136, the reader at M + 272 (now past the length) and
+    n. Memory changes only at [G − 128, G), [M − 24, M) and the reader. -/
+theorem head {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory) (M q Ly r5 n : Nat)
+    (hM : 65536 + 264 ≤ M ∧ M + 296 ≤ 4294967296 ∧ M % 8 = 0) (hq : 65536 ≤ q ∧ q + 32 + 128 ≤ M - 136)
+    (hLy : 1 ≤ Ly ∧ Ly < 4294967296) (hr5 : r5 < 18446744073709551616) (hn : 1 ≤ n ∧ n < 128)
+    (h1 : ω[1] = UInt64.ofNat M) (h5 : ω[5] = UInt64.ofNat r5) (h6 : ω[6] = UInt64.ofNat Ly)
+    (s112 : μ.readN (M + 112) 8 = Num.encodeLE 8 q) (sb : μ.read q = UInt8.ofNat n)
+    (hrq : ∀ a, q ≤ a → a < q + 1 → μ.readable a = true)
+    (hw : ∀ a, M - 264 ≤ a → a < M + 288 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 4792 ω μ x 482 ω' μ' x 600 ∧ ω'[0] = UInt64.ofNat 922 ∧
+      ω'[1] = UInt64.ofNat (M - 136) ∧ ω'[5] = UInt64.ofNat (M + 168) ∧ ω'[6] = UInt64.ofNat (M + 272) ∧
+      ω'[7] = UInt64.ofNat (M - 136) ∧ ω'[8] = UInt64.ofNat (M + 272) ∧ ω'[9] = UInt64.ofNat n ∧
+      μ'.readN (M + 272) 8 = Num.encodeLE 8 (q + 1) ∧ μ'.readN (M + 280) 8 = Num.encodeLE 8 (Ly - 1) ∧
+      μ'.readN (M - 136 + 128) 8 = Num.encodeLE 8 158 ∧ μ'.readN (M - 136 + 120) 8 = Num.encodeLE 8 r5 ∧
+      μ'.readN (M - 136 + 112) 8 = Num.encodeLE 8 Ly ∧
+      (∀ a, a < 4294967296 → (a < M - 264 ∨ M ≤ a) → (a < M + 272 ∨ M + 288 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  obtain ⟨hM0, hM1, hM8⟩ := hM
+  obtain ⟨hq0, hq1⟩ := hq
+  obtain ⟨ω1, μ1, run1, a0, a1, a5, a6, a7, a272, a280, a128, a120, a112, afr, ard, awr⟩ := dh1 (p := p) (P := P)
+    (R := R) x ω μ M q Ly r5 ⟨by omega, by omega, hM8⟩ (by omega) (by omega) hr5 h1 h5 h6 s112
+    (fun a h1 h2 => Memory.readable_of_writable (hw a (by omega) (by omega))) (fun a h1 h2 => hw a (by omega) (by omega))
+    (fun a h1 h2 => hw a (by omega) (by omega))
+  obtain ⟨ω2, μ2, run2, b0, b1, -, -, -, b5, b6, -, b7, b8, bR0, bR8, bfr, brd, bwr⟩ := decodeU32_len1 (p := p)
+    (P := P) (R := R) x ω1 μ1 920 20398 (M - 136) (M + 272) q Ly a0 a1 a7 ⟨by decide, by decide, by decide⟩
+    jte_459 bs_20398 ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ ⟨by omega, by omega⟩
+    (Or.inr (by omega)) (Or.inl (by omega)) (Or.inl (by omega))
+    (fun a h1 h2 => by rw [awr]; exact hw a (by omega) (by omega))
+    (fun a h1 h2 => by rw [awr]; exact hw a (by omega) (by omega))
+    (fun a h1 h2 => by rw [ard]; exact hrq a h1 h2) a272 a280 n hn
+    (by rw [afr q (by omega) (Or.inl (by omega)) (Or.inl (by omega))]; exact sb)
+  obtain ⟨ω3, run3, c0, c1, c5, c6, c7, c8, c9⟩ := dh2 (p := p) (P := P) (R := R) x ω2 μ2 (M - 136) (M + 272) n
+    (by omega) (by omega) (by omega) (b1.trans a1) (b6.trans a6) b7 b8
+  have k2 : ∀ a l, a + l ≤ 4294967296 → M - 136 ≤ a → a + l ≤ M → μ2.readN a l = μ1.readN a l :=
+    fun a l h h0 h' => Memory.readN_congr (fun j hj => bfr _ (by omega) (Or.inr (by omega)) (Or.inl (by omega)))
+  refine ⟨ω3, μ2, (run1.trans (run2.trans run3)).mono (by omega), c0, by rw [c1, b1, a1], by rw [c5, b5, a5],
+    by rw [c6, b6, a6], c7, c8, c9, bR0, bR8, by rw [k2 _ _ (by omega) (by omega) (by omega)]; exact a128,
+    by rw [k2 _ _ (by omega) (by omega) (by omega)]; exact a120,
+    by rw [k2 _ _ (by omega) (by omega) (by omega)]; exact a112, fun a h0 h h' => ?_,
+    fun a => by rw [brd, ard], fun a => by rw [bwr, awr]⟩
+  rw [bfr a h0 (by omega) (by omega), afr a h0 (by omega) h']
 
 end Services.Bootstrap.Refine.DecodeTail

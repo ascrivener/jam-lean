@@ -122,7 +122,7 @@ theorem run_mixed {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     (x : RefineCtx)
     (ω : Regs) (μ : Memory) (s : State) (H : HeapCtx env pb S0 S1 μ s)
     (M q Ly r5 : Nat) (salt : List UInt8) (cp : Chunk)
-    (hn : 1 ≤ is.length ∧ is.length < 128) (hM : S0 + 2848 ≤ M ∧ M + 648 ≤ S1 ∧ M % 8 = 0)
+    (hn : 1 ≤ is.length ∧ is.length < 128) (hM : S0 + 2848 ≤ M ∧ M + 632 ≤ S1 ∧ M % 8 = 0)
     (hr5 : r5 < 18446744073709551616)
     (hcp : cp ∈ chunks s ∧ cp.used = true ∧ cp.addr = s.base) (hcpq : cp.addr + 32 = q)
     (hcpd : ∀ a, q ≤ a → a < q + Ly → InData cp a)

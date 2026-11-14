@@ -76,7 +76,7 @@ def ResultAt (μ : Memory) (r : Nat) : Prop :=
     `vec_u8_ok` and the `Result` argument). -/
 def ExportFmtOk (p : ByteArray) (cap0 : Nat) (env : RefineHost.Env) (pb S0 S1 : Nat) : Prop :=
   ∀ (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State) (M g sp sl : Nat),
-    HeapCtx env pb S0 S1 μ s → S0 + 456 ≤ M → M + 648 ≤ S1 → M % 8 = 0 →
+    HeapCtx env pb S0 S1 μ s → S0 + 456 ≤ M → M + 632 ≤ S1 → M % 8 = 0 →
     ω[0] = UInt64.ofNat 182 → ω[1] = UInt64.ofNat M → ω[7] = UInt64.ofNat (M + 584) →
     ω[8] = UInt64.ofNat 66196 → ω[9] = UInt64.ofNat (M + 168) →
     μ.readN (M + 168) 8 = Num.encodeLE 8 (M + 552) → μ.readN (M + 176) 8 = Num.encodeLE 8 1250 →
@@ -115,7 +115,7 @@ theorem seg {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR
     (cap0 : Nat) (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616) {pb S0 S1 : Nat}
     (fmt : ExportFmtOk p cap0 env pb S0 S1) (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State)
     (H : HeapCtx env pb S0 S1 μ s) (M g sp sl en : Nat)
-    (hM : S0 + 456 ≤ M ∧ M + 648 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0)
+    (hM : S0 + 456 ≤ M ∧ M + 632 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0)
     (hg : g + 24 ≤ 2147483648) (hsp : sp + sl ≤ 2147483648) (hen : en < 18446744073709551616)
     (h1 : ω[1] = UInt64.ofNat M) (h5 : ω[5] = UInt64.ofNat g)
     (s8 : μ.readN (g + 8) 8 = Num.encodeLE 8 sp) (s16 : μ.readN (g + 16) 8 = Num.encodeLE 8 sl)
@@ -260,7 +260,7 @@ def expUpTo (env : RefineHost.Env) (μ0 : Memory) (ptr : Nat) (x : RefineCtx) : 
 theorem segs {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] (env : RefineHost.Env)
     (cap0 : Nat) (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616) {pb S0 S1 : Nat}
     (fmt : ExportFmtOk p cap0 env pb S0 S1) (x0 : RefineCtx) (μ0 : Memory) (s0 : State) (M ptr n : Nat)
-    (hM : S0 + 456 ≤ M ∧ M + 648 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0) (hn : 0 < n)
+    (hM : S0 + 456 ≤ M ∧ M + 632 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0) (hn : 0 < n)
     (hp : ptr + 24 * n ≤ 2147483648)
     (hseg : ∀ j, j < n → rdN μ0 (ptr + 24 * j + 8) 8 + rdN μ0 (ptr + 24 * j + 16) 8 ≤ 2147483648)
     (hin : ∀ a, (ptr ≤ a ∧ a < ptr + 24 * n) ∨ (∃ j, j < n ∧ rdN μ0 (ptr + 24 * j + 8) 8 ≤ a ∧
@@ -346,7 +346,7 @@ theorem segs {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCode
     allocator's context holds; every other allocated chunk keeps its data; the stack from M up is kept. -/
 theorem frees {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] (env : RefineHost.Env)
     (cap0 : Nat) {pb S0 S1 : Nat} (x : RefineCtx) (M ptr n : Nat) (co : Chunk) (capf qf : Nat → Nat)
-    (hM : S0 + 456 ≤ M ∧ M + 648 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0) (hp : ptr + 24 * n + 8 ≤ 2147483648)
+    (hM : S0 + 456 ≤ M ∧ M + 632 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0) (hp : ptr + 24 * n + 8 ≤ 2147483648)
     (hco : ∀ a, ptr ≤ a → a < ptr + 24 * n → InData co a)
     (hq : ∀ i, i < n → capf i ≠ 0 → qf i ≠ co.addr + 32 ∧ ∀ j, j < n → j ≠ i → capf j ≠ 0 → qf j ≠ qf i)
     (hcap : ∀ i, i < n → capf i < 18446744073709551616) (hq64 : ∀ i, i < n → qf i < 18446744073709551616) :

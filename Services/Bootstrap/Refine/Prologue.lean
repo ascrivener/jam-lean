@@ -40,7 +40,7 @@ theorem sext_low {w : Nat} (h : w < 4294967296) :
     an allocation fails. To be discharged by the fmt summaries (`Services/Bootstrap/Fmt`). -/
 def ArgsLineOk (p : ByteArray) (cap0 : Nat) (env : RefineHost.Env) (pb S0 S1 : Nat) : Prop :=
   ∀ (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State) (M sv : Nat),
-    HeapCtx env pb S0 S1 μ s → S0 + 456 ≤ M → M + 648 ≤ S1 → M % 8 = 0 → sv < 4294967296 →
+    HeapCtx env pb S0 S1 μ s → S0 + 456 ≤ M → M + 632 ≤ S1 → M % 8 = 0 → sv < 4294967296 →
     ω[0] = UInt64.ofNat 154 → ω[1] = UInt64.ofNat M → ω[7] = UInt64.ofNat (M + 168) →
     ω[8] = UInt64.ofNat 66657 → ω[9] = UInt64.ofNat (M + 272) →
     μ.readN (M + 272) 8 = Num.encodeLE 8 (M + 244) → μ.readN (M + 280) 8 = Num.encodeLE 8 2616 →
@@ -106,7 +106,7 @@ theorem pro1 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ
 theorem tail4680 {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap0 : Nat) {pb : Nat}
     (line : ArgsLineOk p cap0 env pb S0 S1) (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State)
     (H : HeapCtx env pb S0 S1 μ s) (M cap q Ly w sv : Nat)
-    (hM : S0 + 456 ≤ M ∧ M + 648 ≤ S1 ∧ M % 8 = 0) (hcap : cap < 18446744073709551616)
+    (hM : S0 + 456 ≤ M ∧ M + 632 ≤ S1 ∧ M % 8 = 0) (hcap : cap < 18446744073709551616)
     (hq : q < 18446744073709551616) (hLy : Ly < 18446744073709551616) (hw : w < 2147483648)
     (hsv : sv < 4294967296) (h1 : ω[1] = UInt64.ofNat M)
     (s168 : μ.readN (M + 168) 8 = Num.encodeLE 8 cap) (s176 : μ.readN (M + 176) 8 = Num.encodeLE 8 q)

@@ -55,7 +55,7 @@ theorem push_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     (H : HeapCtx env pb S0 S1 μ s)
     (hold : len = 0 ∨ ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true ∧ c.size = (232 * len + 31) / 32 + 1)
     (hlen : len ≤ 2097152) (hn : n < 18446744073709551616)
-    (hM : S0 + 456 ≤ M ∧ M + 648 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0) (hptr : ptr < 18446744073709551616)
+    (hM : S0 + 456 ≤ M ∧ M + 632 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0) (hptr : ptr < 18446744073709551616)
     (h1 : ω[1] = UInt64.ofNat M)
     (sc : μ.readN (M + 248) 8 = Num.encodeLE 8 len) (sp : μ.readN (M + 256) 8 = Num.encodeLE 8 ptr)
     (sl : μ.readN (M + 264) 8 = Num.encodeLE 8 len)
@@ -130,7 +130,7 @@ theorem push_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
 theorem tail {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] (env : RefineHost.Env)
     (cap0 : Nat) {pb S0 S1 : Nat} (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State) (H : HeapCtx env pb S0 S1 μ s)
     (M ptrv capv n : Nat) (co : Chunk) (capf qf : Nat → Nat)
-    (hM : S0 + 456 ≤ M ∧ M + 648 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0) (hp : ptrv + 24 * n + 8 ≤ 2147483648)
+    (hM : S0 + 456 ≤ M ∧ M + 632 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0) (hp : ptrv + 24 * n + 8 ≤ 2147483648)
     (hcv : 24 * capv < 18446744073709551616) (hnc : n ≤ capv)
     (hco : capv ≠ 0 → co ∈ chunks s ∧ co.used = true ∧ co.addr + 32 = ptrv)
     (hcoD : ∀ a, ptrv ≤ a → a < ptrv + 24 * n → InData co a)
@@ -217,7 +217,7 @@ theorem tail {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCode
     changes only in [M − 48, M), M + 144 … M + 152, M + 280 … M + 288 and M + 304 … M + 536. -/
 theorem xhead {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] {X : Type}
     {R : HostRel X} (x : X) (ω : Regs) (μ : Memory) (M cur en : Nat)
-    (hM : 65536 + 48 ≤ M ∧ M + 632 + 16 < 4294967296 ∧ M % 8 = 0)
+    (hM : 65536 + 48 ≤ M ∧ M + 632 < 4294967296 ∧ M % 8 = 0)
     (hcur : 65536 ≤ cur ∧ cur + 232 + 24 < 4294967296) (hcM : cur + 232 + 24 ≤ M - 48 ∨ M + 632 ≤ cur)
     (hne : cur ≠ en) (hen : en < 18446744073709551616) (h1 : ω[1] = UInt64.ofNat M) (i : Nat)
     (hi : (i = 5042 ∧ μ.readN (M + 144) 8 = Num.encodeLE 8 cur) ∨ (i = 5054 ∧ ω[5] = UInt64.ofNat cur))

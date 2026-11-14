@@ -215,7 +215,7 @@ theorem args_tail_hi {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHo
         hv6 hra hy hh s16 s24 s32 s88 s96 s104 (run1.trans run2) H b1 (b5.trans (by rfl)) bO bO8 bO16 bdat bR0
         bR8 hnew hq hbase bfr
     exact Or.inl ⟨q, s', ω', μ', _, run, out⟩
-  · exact Or.inr ⟨_, ω2, μ2, x, 40611, run1.trans run2, e7, Or.inl ⟨rfl, sStart, 0, _, hna⟩⟩
+  · exact Or.inr ⟨_, PassLoop.ExhaustsX.ofFmt ⟨ω2, μ2, x, 40611, run1.trans run2, e7, Or.inl rfl⟩⟩
 
 /-- **`args_tail_big_one` with the frame from O + 66 up** (16384 < Y < 2^30 − 64). -/
 theorem args_tail_big_hi {p : ByteArray} {P : Program} [HasCode p P] [CodeX.HasCodeX p P] (env : RefineHost.Env)

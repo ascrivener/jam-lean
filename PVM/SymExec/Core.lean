@@ -59,6 +59,8 @@ inductive SVal where
   | alu2 (op : TwoRegOp) (a : SVal)
   /-- 𝒵⁻¹_8(𝒵_k(v)) (a signed load of `k` octets). -/
   | sx (k : Nat) (v : SVal)
+  /-- Entry `i` of a table of literals (0 past its end): an octet table the code indexes. -/
+  | tbl (vs : List Nat) (i : SVal)
   deriving DecidableEq, Repr
 
 def SVal.isConst : SVal → Bool
@@ -85,6 +87,7 @@ def SVal.eval (E : Env) : SVal → Nat
   | .alu3 op a b d => threeRegAlu op (a.eval E) (b.eval E) (d.eval E)
   | .alu2 op a => twoRegAlu op (a.eval E)
   | .sx k v => u64 (signed k (v.eval E))
+  | .tbl vs i => vs.getD (i.eval E) 0
 
 /-- `t` lies in the region of `n` octets at `a`. -/
 def InReg (E : Env) (r : Aff × Nat) (t : Nat) : Prop := r.1.eval E ≤ t ∧ (t : Int) < r.1.eval E + r.2
@@ -140,7 +143,9 @@ def SVal.bnd (st : Static) : SVal → Option Nat
   | .mod _ m => if 0 < m then some m else none
   | .addr a => if 0 ≤ a.lo st then (a.hi st).map fun h => (h + 1).toNat else none
   | .sx _ _ => some two64
-  | .alu2i op _ _ _ => if op = .shloLImm64 then some two64 else none
+  | .alu2i op _ _ x =>
+    if op = .shloLImm64 then some two64 else if op = .andImm then some (x + 1) else none
+  | .tbl vs _ => some (vs.foldr max 0 + 1)
   | _ => none
 
 /-- `v mod m`, simplified: folded on a literal, dropped when a bound shows it does nothing, and
@@ -172,12 +177,16 @@ def affOk (st : Static) (a a' : Aff) (M : Nat) : Bool :=
 def addAff (st : Static) (a : Aff) (x M : Nat) : Option Aff :=
   if affOk st a ⟨a.base, a.off + shift x M⟩ M = true then some ⟨a.base, a.off + shift x M⟩ else none
 
+/-- An affine value, as a named natural when its offset is 0. -/
+def affVal (a : Aff) : SVal :=
+  if a.off = 0 then (match a.base with | some k => .var k | none => .const 0) else .addr a
+
 /-- The value (v + x) mod 2^64 (`fallback` when it is not affine). -/
 def addv (st : Static) (v : SVal) (x : Nat) (fallback : SVal) : SVal :=
   match v with
   | .const c => .const ((c + x) % two64)
   | v => match (asAff v).bind fun a => addAff st a x two64 with
-    | some a' => .addr a'
+    | some a' => affVal a'
     | none => fallback
 
 /-- Whether §A.5.10's function reads ω_A (only `cmov_iz_imm`, `cmov_nz_imm`). -/
@@ -215,6 +224,16 @@ def mkAlu2i (st : Static) (op : TwoRegImmOp) (a b : SVal) (x : Nat) : SVal :=
     if op = .addImm64 then addv st b x (foldAlu2i op (.const 0) b x)
     else foldAlu2i op (if usesA op then a else .const 0) b x
 
+/-- A lower bound of a value. -/
+def SVal.lob (st : Static) : SVal → Nat
+  | .const n => n
+  | .var k => st.lb[k]?.getD 0
+  | .addr a => (a.lo st).toNat
+  | _ => 0
+
+/-- v ≤ w, by the bounds. -/
+def leB (st : Static) (v w : SVal) : Bool := (v.bnd st).any (· ≤ w.lob st + 1)
+
 def foldAlu3 (op : ThreeRegOp) (a b d : SVal) : SVal :=
   match a, b, d with
   | .const p, .const q, .const r => .const (threeRegAlu op p q r)
@@ -225,6 +244,8 @@ def mkAlu3 (st : Static) (op : ThreeRegOp) (a b d : SVal) : SVal :=
   match op, b with
   | .add64, .const q => addv st a q f
   | .sub64, .const q => if q < two64 then addv st a (two64 - q) f else f
+  | .minU, _ => if leB st a b then a else if leB st b a then b else f
+  | .maxU, _ => if leB st a b then b else if leB st b a then a else f
   | _, _ => f
 
 def mkAlu2 (op : TwoRegOp) (a : SVal) : SVal :=
@@ -291,6 +312,9 @@ structure Prog where
   bs : NTree Bool
   jt : NTree Nat
   jsize : Nat
+  /-- Host calls the executor may follow, by id: each sets the listed registers to literals and
+      leaves memory and the context unchanged. Their outcomes are justified by `HostOk`. -/
+  hosts : NTree (List (Nat × Nat)) := .leaf
 
 /-- The facts of a `Prog` hold of the program `p` deblobs to. -/
 def ProgHyp (p : ByteArray) (P : Program) (G : Prog) : Prop :=
@@ -328,12 +352,6 @@ def rkind : RegImmOp → TK
 
 variable (st : Static)
 
-/-- A lower bound of a value. -/
-def SVal.lob : SVal → Nat
-  | .const n => n
-  | .var k => st.lb[k]?.getD 0
-  | _ => 0
-
 /-- An unsigned comparison of a value in `[lo, hi)` with `x` (§A.5.8), when the interval decides it. -/
 def decideCond (op : RegImmOffsetOp) (lo hi x : Nat) : Option Bool :=
   match op with
@@ -345,11 +363,69 @@ def decideCond (op : RegImmOffsetOp) (lo hi x : Nat) : Option Bool :=
   | .branchGtUImm => if x < lo then some true else if hi ≤ x + 1 then some false else none
   | _ => none
 
-/-- A branch condition against an immediate: computed on a literal, or decided by the bounds. -/
+/-- The unsigned comparison that a signed one (§A.5.8) equals on operands below 2^63. -/
+def toU : RegImmOffsetOp → Option RegImmOffsetOp
+  | .branchLtSImm => some .branchLtUImm
+  | .branchLeSImm => some .branchLeUImm
+  | .branchGeSImm => some .branchGeUImm
+  | .branchGtSImm => some .branchGtUImm
+  | _ => none
+
+/-- A signed comparison of a value below 2^63 with a negative immediate (2^63 ≤ x < 2^64). -/
+def negImm : RegImmOffsetOp → Bool
+  | .branchGeUImm | .branchGtUImm => true
+  | _ => false
+
+/-- A branch condition against an immediate: computed on a literal, or decided by the bounds;
+    a signed one on a value below 2^63. -/
 def scond (op : RegImmOffsetOp) (v : SVal) (x : Nat) : Option Bool :=
   match v with
   | .const c => some (regImmBranchCond op c x)
-  | v => (v.bnd st).bind fun hi => decideCond op (v.lob st) hi x
+  | v => (v.bnd st).bind fun hi =>
+    match toU op with
+    | none => decideCond op (v.lob st) hi x
+    | some u =>
+      if hi ≤ 2 ^ 63 then
+        if x < 2 ^ 63 then decideCond u (v.lob st) hi x
+        else if x < two64 then some (negImm u) else none
+      else none
+
+/-- Two addresses on a common base, both at least 0: their offsets. -/
+def sameBase (v w : SVal) : Option (Int × Int) :=
+  match v, w with
+  | .addr a, .addr b =>
+    if a.base == b.base && decide (0 ≤ a.lo st) && decide (0 ≤ b.lo st) then some (a.off, b.off)
+    else none
+  | _, _ => none
+
+/-- v < w, when a common base or the bounds decide it. -/
+def ltU (v w : SVal) : Option Bool :=
+  match sameBase st v w with
+  | some (p, q) => some (decide (p < q))
+  | none =>
+    if (v.bnd st).any (· ≤ w.lob st) then some true
+    else if (w.bnd st).any (· ≤ v.lob st + 1) then some false
+    else none
+
+/-- v = w, when equal values, a common base or the bounds decide it. -/
+def eqU (v w : SVal) : Option Bool :=
+  if v == w then some true else
+  match sameBase st v w with
+  | some (p, q) => some (p == q)
+  | none =>
+    if (v.bnd st).any (· ≤ w.lob st) || (w.bnd st).any (· ≤ v.lob st) then some false else none
+
+/-- A comparison of two registers (§A.5.11), when it is decided; signed ones on values below
+    2^63, where they equal the unsigned ones. -/
+def scond2 (op : TwoRegOffsetOp) (v w : SVal) : Option Bool :=
+  let nn := (v.bnd st).any (· ≤ 2 ^ 63) && (w.bnd st).any (· ≤ 2 ^ 63)
+  match op with
+  | .branchEq => eqU st v w
+  | .branchNe => (eqU st v w).map (!·)
+  | .branchLtU => ltU st v w
+  | .branchGeU => (ltU st v w).map (!·)
+  | .branchLtS => if nn then ltU st v w else none
+  | .branchGeS => if nn then (ltU st v w).map (!·) else none
 
 /-- The value of register `r`, as `(ω_r).toNat`. -/
 def rdv (σ : SState) (r : Nat) : SVal := mkMod st (σ.regs.getD r (.const 0)) two64
@@ -417,6 +493,47 @@ def sload (σ : SState) (d : Nat) (a : Aff) (n k : Nat) : Option SState :=
     (loadVal st σ a n).map fun v => setv σ d (mkSx st k v)
   else none
 
+/-- A table address: v = c + i (mod 2^64) by `add_64` or `add_imm_64` (§A.5.10, §A.5.13). -/
+def idxOf1 : SVal → Option (Nat × SVal)
+  | .alu3 .add64 i (.const c) _ => some (c, i)
+  | .alu3 .add64 (.const c) i _ => some (c, i)
+  | .alu2i .addImm64 _ i c => some (c, i)
+  | _ => none
+
+/-- `idxOf1`, also under a reduction mod 2^64. -/
+def idxOf : SVal → Option (Nat × SVal)
+  | .mod v m => if m = two64 then idxOf1 v else none
+  | v => idxOf1 v
+
+/-- The literals of `n` octets at a, a + 1, …, a + b − 1. -/
+def tvals (σ : SState) (n : Nat) : Nat → Nat → Option (List Nat)
+  | _, 0 => some []
+  | a, b + 1 =>
+    match loadVal st σ ⟨none, a⟩ n, tvals σ n (a + 1) b with
+    | some (.const w), some vs => some (w :: vs)
+    | _, _ => none
+
+/-- Load `n` octets at v + x into `d` when v is a table base plus an index of at most 4096
+    values, and the table's entries are literals: entry `i` of the table. -/
+def tload (σ : SState) (d : Nat) (v : SVal) (x n k : Nat) : Option SState :=
+  match idxOf v with
+  | none => none
+  | some (c, i) =>
+    match i.bnd st with
+    | none => none
+    | some b =>
+      if 0 < b && b ≤ 4096 && decide (c + x + (b - 1) + n ≤ two32) &&
+          (st.rd.any (within st ⟨none, c + x⟩ (b - 1 + n)) ||
+            st.wr.any (within st ⟨none, c + x⟩ (b - 1 + n))) then
+        (tvals st σ n (c + x) b).map fun vs => setv σ d (mkSx st k (.tbl vs i))
+      else none
+
+/-- Load `n` octets at v + x into `d`: at an affine address, else from a table. -/
+def ldv (σ : SState) (d : Nat) (v : SVal) (x n k : Nat) : Option SState :=
+  match mkAddr st v x n with
+  | some ad => sload st σ d ad n k
+  | none => tload st σ d v x n k
+
 /-- djump(a) when it continues (GP eq. `jumptablealignment`): the target, if the facts show it. -/
 def sdjump (G : Prog) (a : Nat) : Option Nat :=
   if a = 2 ^ 32 - 2 ^ 16 ∨ a = 0 ∨ a > G.jsize * 2 ∨ a % 2 ≠ 0 then none else
@@ -445,7 +562,7 @@ def sstep (G : Prog) (pc : Nat) (σ : SState) : Option (Nat × SState) :=
         ((mkAddr st (.const 0) x.toNat n).bind fun ad =>
           sstore st σ ad n (mkMod st (rdv st σ a.val) (2 ^ (8 * n)))).map (e.2, ·)
       | .load n k =>
-        ((mkAddr st (.const 0) x.toNat n).bind fun ad => sload st σ a.val ad n k).map (e.2, ·)
+        (ldv st σ a.val (.const 0) x.toNat n k).map (e.2, ·)
       | .alu => none
     | .regExtImm .loadImm64 a x => some (e.2, setv σ a.val (.const x.toNat))
     | .twoImm op x y =>
@@ -461,8 +578,7 @@ def sstep (G : Prog) (pc : Nat) (σ : SState) : Option (Nat × SState) :=
         ((mkAddr st (rdv st σ b.val) x.toNat n).bind fun ad =>
           sstore st σ ad n (mkMod st (rdv st σ a.val) (2 ^ (8 * n)))).map (e.2, ·)
       | .load n k =>
-        ((mkAddr st (rdv st σ b.val) x.toNat n).bind fun ad =>
-          sload st σ a.val ad n k).map (e.2, ·)
+        (ldv st σ a.val (rdv st σ b.val) x.toNat n k).map (e.2, ·)
     | .regTwoImm op a x y =>
       ((mkAddr st (rdv st σ a.val) x.toNat op.width).bind fun ad =>
         sstore st σ ad op.width (.const (y.toNat % 2 ^ (8 * op.width)))).map (e.2, ·)
@@ -481,13 +597,27 @@ def sstep (G : Prog) (pc : Nat) (σ : SState) : Option (Nat × SState) :=
       | .const v => (sdjump G ((v + y.toNat) % two32)).map (·, setv σ a.val (.const x.toNat))
       | _ => none
     | .twoRegOffset op a b x =>
-      match rdv st σ a.val, rdv st σ b.val with
-      | .const va, .const vb =>
+      match scond2 st op (rdv st σ a.val) (rdv st σ b.val) with
+      | some c =>
         if 0 ≤ x && isBS G.bs x.toNat && isBS G.bs e.2 then
-          some (if twoRegBranchCond op va vb then x.toNat else e.2, σ)
+          some (if c then x.toNat else e.2, σ)
         else none
-      | _, _ => none
+      | none => none
     | _ => none
+
+/-- Set registers to literals. -/
+def hset (σ : SState) : List (Nat × Nat) → SState
+  | [] => σ
+  | (r, v) :: rs => hset (setv σ r (.const v)) rs
+
+/-- A host call `ecalli h` (§A.5.2) whose id the host table lists: the next pc and state. -/
+def hstep (G : Prog) (pc : Nat) (σ : SState) : Option (Nat × SState) :=
+  match G.code.find pc with
+  | some (.oneImm .ecalli h, n) =>
+    match G.hosts.find h.toNat with
+    | some rs => if rs.all (·.1 < 13) then some (n, hset σ rs) else none
+    | none => none
+  | _ => none
 
 /-- Run exactly `k` steps from `pc`, which must end at `target`: the final state. -/
 def srun (G : Prog) (target : Nat) : Nat → Nat → SState → Option SState
@@ -495,6 +625,9 @@ def srun (G : Prog) (target : Nat) : Nat → Nat → SState → Option SState
   | k + 1, pc, σ =>
     match sstep st G pc σ with
     | some (pc', σ') => srun G target k pc' σ'
-    | none => none
+    | none =>
+      match hstep G pc σ with
+      | some (pc', σ') => srun G target k pc' σ'
+      | none => none
 
 end PVM.SymExec

@@ -165,7 +165,7 @@ theorem solicit_fmt_site {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p
     (hS : S0 + 800 ≤ S ∧ S % 8 = 0 ∧ 2147484500 ≤ S ∧ S + 1700 ≤ S1)
     (hro : RoW μ) (htm : μ.readN 66688 26 = solicitTmplBytes)
     (hrt : ∀ a, 66688 ≤ a → a < 66714 → μ.readable a = true)
-    (c d : Nat) (hc : c < 1048576) (hA : ArgsAt p P (accContractK cap env) envH pb S0 S1 μ s S (S + 1568) 0 solicitTmpl c d) :
+    (c d : Nat) (hc : c < 1048576) (hA : ArgsAt p P (accContractK cap env) envH pb S0 S1 600 μ s S (S + 1568) 0 solicitTmpl c d) :
     (∃ ω' μ' x' s', FreeStepsH p (accContractK cap env) 14062 ω μ x 14553 ω' μ' x'
         (1 + fmtCost c d solicitTmpl + 300) ∧
       HeapCtx envH pb S0 S1 μ' s' ∧ s'.base = s.base ∧
@@ -176,7 +176,7 @@ theorem solicit_fmt_site {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p
   have hSb := H.hSb
   have hrd : ∀ a, S0 ≤ a → a < S1 → μ.readable a = true := fun a h1 h2 => Memory.readable_of_writable (hst a h1 h2)
   obtain ⟨ω1, run1, a0, a1, a5, a6, a7, a8, a9⟩ := solicit_site_call (p := p) (P := P) (R := accContractK cap env) x ω μ
-  rcases format_inner (p := p) (P := P) (R := accContractK cap env) envH pb S0 S1 HA HR S (S + 1416) 66688
+  rcases format_inner (p := p) (P := P) (R := accContractK cap env) envH pb S0 S1 600 (Nat.le_refl _) HA HR S (S + 1416) 66688
       (S + 1568) 524 14069 c d solicitTmpl x ω1 μ s H hba a0 (a1.trans h1) (a7.trans h7) (a8.trans h8)
       (a9.trans h9) (by decide) jte_261 bs_14069 ⟨by omega, hS.2.1, by omega, by omega⟩ ⟨by omega, by omega⟩
       hro (tmpl_solicit htm hrt) (by simp [solicitTmpl, tsize]) ⟨by omega, by omega⟩ hA (by simp [solicitTmpl, nargs])

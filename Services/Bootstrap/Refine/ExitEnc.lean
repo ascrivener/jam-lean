@@ -142,8 +142,7 @@ theorem enc_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env 
       H1 a1 a7 a8 (by decide) (by decide) (by omega) (by omega) ⟨by omega, by omega⟩ with
     ⟨buf, s2, ω2, μ2, ha, run2, H2, keep2, hnew, fresh2, hk2, b7, stk2, b0, b1, b5, b6⟩ | ⟨hna, ω2, μ2, run2, b7, -⟩
   rotate_left
-  · exact Or.inr ⟨ω2, μ2, x, 40611, (run1.trans run2).mono (by omega), b7,
-      Or.inl ⟨rfl, s, hb, (232 * n + 6 + 31) / 32, hna⟩⟩
+  · exact Or.inr ⟨ω2, μ2, x, 40611, (run1.trans run2).mono (by omega), Or.inl ⟨by decide, b7⟩⟩
   -- `alloc`'s return into the encoder
   have run3 := alloc_ret (p := p) (P := P) (R := refineContractK cap0 env) x ω2 μ2 (b0.trans a0)
   obtain ⟨hq0, -, hqT⟩ := Decode.VecU8.chunk_in H2.wf hnew rfl

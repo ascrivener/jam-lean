@@ -26,6 +26,7 @@ import Services.Bootstrap.Fmt.Dec4
 import Services.Bootstrap.Fmt.Du5
 import Services.Bootstrap.Fmt.Format
 import Services.Bootstrap.Fmt.AccFmt
+import Services.Bootstrap.Fmt.ResultDebug
 import Services.Bootstrap.Fmt.ReallocCopy
 import Services.Bootstrap.Fmt.ReallocCopyInst
 import Services.Bootstrap.AccLog.ItemLog
@@ -325,12 +326,25 @@ import Services.Bootstrap.Refine.ExitEnc
 import Services.Bootstrap.Refine.DropOut
 import Services.Bootstrap.Refine.Fin
 import Services.Bootstrap.Refine.ExitRun
+import Services.Bootstrap.Refine.HostSteps
+import Services.Bootstrap.Refine.Export
+import Services.Bootstrap.Refine.ExportSeg
+import Services.Bootstrap.Refine.ExportStep
+import Services.Bootstrap.Refine.ExportElem
 import Services.Bootstrap.Spec
 import Services.Bootstrap.SpecLemmas.Codec
 import Services.Bootstrap.SpecLemmas.Refine
 import Services.Bootstrap.SpecLemmas.Ring
 import Services.Bootstrap.SpecLemmas.Items
 import Services.Bootstrap.ASem
+import Services.Bootstrap.ASemLemmas
+import Services.Bootstrap.Acc.Impl.Split
+import Services.Bootstrap.Acc.Impl.StepSnd
+import Services.Bootstrap.Acc.Impl.Impl
+import Services.Bootstrap.Acc.Impl.Prefix
+import Services.Bootstrap.Acc.Impl.ContractS
+import Services.Bootstrap.Acc.Impl.OogPrefix
+import Services.Bootstrap.Acc.Impl.Lift
 import Services.Bootstrap.Alloc.HeapContract
 import Services.Bootstrap.Decode.VecU8HeapBig
 import Services.Bootstrap.Decode.VecPairsBig
@@ -415,4 +429,8 @@ Built on `JAM`; nothing in `PVM` or `JAM` depends on this library.
 * `Services.Bootstrap.ASem` — what T2 means: `ASem.run` / `ASem.outcome`, accumulate's host
   operations as the model's host functions on a memory holding their arguments; `accEnv`, `credit`,
   `codeOf`.
+* `Services.Bootstrap.ASemLemmas` — `ASem.step` evaluated for `read` and `write`.
+* `Services.Bootstrap.Acc.Impl` — T2 reduced to the binary implementing `Spec.accumulate`
+  (`Impl`, early ☇ only for a listed reason `Ab`): `psiA_of_impl` gives Ψ_A's outcome as
+  `ASem.run`'s, and says why that run may have stopped early.
 -/

@@ -62,7 +62,28 @@ theorem ref_u64_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (e
     (fun b h1 h2 => Memory.readable_of_writable (hst b (by omega) (by omega)))
   rcases dec64 (p := p) (P := P) (R := R) env pb S0 S1 HA HR x ω1 μ sA s sp F W a cap len ret t v5 v6 H hba hf
       (a0.trans h0) (a1.trans h1) (a5.trans h5) (a6.trans h6) a7 a8 ⟨hv5, hv6⟩ hret hjt hbt ⟨hsp.1, hsp.2.1, by omega⟩ hW hF
-      ⟨by omega, ha.2⟩ (fun b h1 h2 => K.readable H hS (by omega) (hra b h1 h2)) (by omega) with
+      ⟨Or.inr (by omega), ha.2⟩ (fun b h1 h2 => K.readable H hS (by omega) (hra b h1 h2)) (by omega) with
+    ⟨ω2, μ2, x2, s2, cap2, n, hn', run2, rest⟩ | hx
+  · exact Or.inl ⟨ω2, μ2, x2, s2, cap2, n, hn', (run1.trans run2).mono (by omega), rest⟩
+  · exact Or.inr ((Exhausts.pre run1 hx).mono (by omega))
+
+/-- **`<&u64 as Debug>::fmt`** (37589) as an entry or field, for a u64 where `ValAt` puts it (on the
+    caller's stack or in an allocated chunk). -/
+theorem ref_u64_okV {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
+    (pb S0 S1 : Nat) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
+    (μA : Memory) (sA : State) (spA a : Nat) (hS : S0 ≤ spA) (ha : ValAt μA sA spA S1 a 8) :
+    RefOk p P R env pb S0 S1 600 μA sA spA 37589 a 20 2950 := by
+  intro ω μ x s sp F W cap len ret t v5 v6 v H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hWA hF hn
+    hv ra
+  have hS1 := H.hS1
+  have hst : ∀ a, S0 ≤ a → a < S1 → μ.writable a = true := H.st
+  obtain ⟨hra, hloc⟩ := ha.readable (by decide) H hS hspA K
+  obtain ⟨ω1, run1, a0, a1, a5, a6, a7, a8⟩ := rf_u64 (p := p) (P := P) (R := R) x ω μ v F a
+    ⟨by omega, by omega⟩ h7 h8 hf.opts ra (fun b h1 h2 => Memory.readable_of_writable (hst b (by omega) (by omega)))
+    (fun b h1 h2 => Memory.readable_of_writable (hst b (by omega) (by omega)))
+  rcases dec64 (p := p) (P := P) (R := R) env pb S0 S1 HA HR x ω1 μ sA s sp F W a cap len ret t v5 v6 H hba hf
+      (a0.trans h0) (a1.trans h1) (a5.trans h5) (a6.trans h6) a7 a8 ⟨hv5, hv6⟩ hret hjt hbt ⟨hsp.1, hsp.2.1, by omega⟩ hW hF
+      ⟨by omega, by omega⟩ hra (by omega) with
     ⟨ω2, μ2, x2, s2, cap2, n, hn', run2, rest⟩ | hx
   · exact Or.inl ⟨ω2, μ2, x2, s2, cap2, n, hn', (run1.trans run2).mono (by omega), rest⟩
   · exact Or.inr ((Exhausts.pre run1 hx).mono (by omega))

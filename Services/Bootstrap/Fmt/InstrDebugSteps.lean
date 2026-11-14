@@ -442,6 +442,7 @@ theorem ir_ret {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X
       all_goals post_simp [h1, Nat.mod_eq_of_lt (show r0 < 18446744073709551616 by omega),
         Nat.mod_eq_of_lt (rdN_lt64 μ (T + 304)), Nat.mod_eq_of_lt (rdN_lt64 μ (T + 296)), r5, r6]
 
+set_option maxHeartbeats 32000000 in
 /-- 26990 … 59959: `<&Instruction as Debug>` with tag 15 (a unit variant): the dispatch, the frame
     popped again, and its name (10 octets at 68154) to the sink's `write_str` (`Formatter::write_str`,
     64485) with the `String` W; ω₀, ω₁, ω₅, ω₆ as on entry. -/
@@ -475,6 +476,7 @@ theorem id_15 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X)
       Nat.mod_eq_of_lt hv.1, Nat.mod_eq_of_lt hv.2.1, Nat.mod_eq_of_lt hv.2.2.1, Nat.mod_eq_of_lt hW,
       Nat.mod_eq_of_lt (show F < 18446744073709551616 by omega), rv, rW]
 
+set_option maxHeartbeats 32000000 in
 /-- 26990 … 59959: `<&Instruction as Debug>` with tag 16 (a unit variant): the dispatch, the frame
     popped again, and its name (5 octets at 68164) to the sink's `write_str` (`Formatter::write_str`,
     64485) with the `String` W; ω₀, ω₁, ω₅, ω₆ as on entry. -/
@@ -508,6 +510,7 @@ theorem id_16 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X)
       Nat.mod_eq_of_lt hv.1, Nat.mod_eq_of_lt hv.2.1, Nat.mod_eq_of_lt hv.2.2.1, Nat.mod_eq_of_lt hW,
       Nat.mod_eq_of_lt (show F < 18446744073709551616 by omega), rv, rW]
 
+set_option maxHeartbeats 32000000 in
 /-- 26990 … 59959: `<&Instruction as Debug>` with tag 23 (a unit variant): the dispatch, the frame
     popped again, and its name (9 octets at 68233) to the sink's `write_str` (`Formatter::write_str`,
     64485) with the `String` W; ω₀, ω₁, ω₅, ω₆ as on entry. -/

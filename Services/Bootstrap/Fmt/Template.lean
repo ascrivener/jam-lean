@@ -196,7 +196,7 @@ theorem dec64_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env
     ArgOk p P R env pb S0 S1 Z μA sA spA 68449 v 20 2900 := by
   intro ω μ x s sp F W cap len ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hWA hF hn
   rcases dec64 (p := p) (P := P) (R := R) env pb S0 S1 HA HR x ω μ sA s sp F W v cap len ret t v5 v6 H hba hf
-      h0 h1 h5 h6 h7 h8 ⟨hv5, hv6⟩ hret hjt hbt ⟨by omega, hsp.2.1, by omega⟩ hW hF ⟨by omega, hv.2⟩
+      h0 h1 h5 h6 h7 h8 ⟨hv5, hv6⟩ hret hjt hbt ⟨by omega, hsp.2.1, by omega⟩ hW hF ⟨Or.inr (by omega), hv.2⟩
       (fun a h1 h2 => K.readable H hS (by omega) (hrv a h1 h2)) hn with
     ⟨ω', μ', x', s', cap', n, hn', run, rest⟩ | hx
   · exact Or.inl ⟨ω', μ', x', s', cap', n, hn', run.mono (by omega), rest⟩

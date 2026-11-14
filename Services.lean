@@ -282,6 +282,8 @@ import Services.Bootstrap.Encode.Loop
 import Services.Bootstrap.Encode.EncM
 import Services.Bootstrap.Encode.PrefixBig
 import Services.Bootstrap.Encode.EncMD
+import Services.Bootstrap.Encode.WriterGrowSteps
+import Services.Bootstrap.Encode.WriterGrow
 import Services.Bootstrap.Encode.HeapPad
 import Services.Bootstrap.Encode.VecSegs
 import Services.Bootstrap.Encode.VecSegs2

@@ -1,5 +1,6 @@
 import Services.Bootstrap.Encode.Writer
 import Services.Bootstrap.CodeAAll
+import Services.Bootstrap.CodeX
 
 /-!
 # `Vec<u8>::extend_from_slice` (58508), the grow path: the straight-line pieces
@@ -114,12 +115,25 @@ theorem g2 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (�
   have hr : ∀ a, S - 72 ≤ a → a < S → μ.readable a = true :=
     fun a h1 h2 => Memory.readable_of_writable (hw a h1 h2)
   have hcap0 : ¬ cap = 0 := by omega
+  have hm1 : (if n + len ≤ 8 then 8 else n + len) % 18446744073709551616 = (if n + len ≤ 8 then 8 else n + len) :=
+    Nat.mod_eq_of_lt (by split <;> omega)
+  have hm2 : (if (if n + len ≤ 8 then 8 else n + len) ≤ cap * 2 then cap * 2 else
+      (if n + len ≤ 8 then 8 else n + len)) % 18446744073709551616 =
+      (if (if n + len ≤ 8 then 8 else n + len) ≤ cap * 2 then cap * 2 else (if n + len ≤ 8 then 8 else n + len)) :=
+    Nat.mod_eq_of_lt (by split <;> split <;> omega)
+  have hm3 : (if (if n + len ≤ 8 then 8 else n + len) ≤ cap * 2 then cap * 2 else
+      (if n + len ≤ 8 then 8 else n + len)) < 9223372036854775808 := by split <;> split <;> omega
+  have hm4 : newCap cap len n = (if (if n + len ≤ 8 then 8 else n + len) ≤ cap * 2 then cap * 2 else
+      (if n + len ≤ 8 then 8 else n + len)) := by unfold newCap; split <;> split <;> omega
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?_, ?_, ?_, ?_⟩
   rotate_left 2
-  · pvm_go [h0, h1, h5, h6, h7, h8, h9, hS, hw, hr, hrv, rc, rp, hv, hvs, hcap, hcap0, hln,
+  · pvm_go [h0, h1, h5, h6, h7, h8, h9, hS, hw, hr, hrv, rc, rp, hv, hvs, hcap, hcap0, hln, hm1, hm2, hm3,
       rdN_writeN_disjoint, ↓rdN_fold, ↓loadI_fold]
   · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
+    all_goals try rw [hm4]
+    all_goals try simp only [show S - 48 + 40 = S - 8 by omega, show S - 48 + 32 = S - 16 by omega,
+      show S - 48 + 24 = S - 24 by omega, show S - 72 + 16 = S - 56 by omega, show S - 72 + 8 = S - 64 by omega]
     post_simp
     all_goals try assumption
 
@@ -203,7 +217,7 @@ theorem g5 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X) (�
     (h1 : ω[1] = UInt64.ofNat S) (h5 : ω[5] = UInt64.ofNat n) (h6 : ω[6] = UInt64.ofNat v)
     (hv : v + 24 ≤ 4294967296) (hvS : v + 24 ≤ S ∨ S + 8 ≤ v)
     (hsrc : src < 18446744073709551616) (hl : len < 18446744073709551616) (hr : r < 18446744073709551616)
-    (hrl : r + len < 18446744073709551616)
+    (hrl : r + len < 18446744073709551616) (hn : n < 18446744073709551616)
     (sS : μ.readN S 8 = Num.encodeLE 8 src) (vp : μ.readN (v + 8) 8 = Num.encodeLE 8 r)
     (vl : μ.readN (v + 16) 8 = Num.encodeLE 8 len)
     (hwS : ∀ a, S ≤ a → a < S + 8 → μ.writable a = true)
@@ -227,5 +241,6 @@ theorem g5 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X) (�
   · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
     post_simp
     all_goals try assumption
+    all_goals try rw [Nat.mod_eq_of_lt hn]
 
 end Services.Bootstrap.Encode.WriterGrow

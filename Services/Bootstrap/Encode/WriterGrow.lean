@@ -146,7 +146,7 @@ theorem extend_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [
   obtain ⟨hc0, -, hcT⟩ := chunk_in H.wf hc hcu
   have hu : usable s ptr = c.size - 1 := by rw [← hcp, usable_of_chunk hc]
   obtain ⟨hnc1, hnc2, hnc3⟩ := newCap_ge cap len n
-  have hncB : newCap cap len n < 1073741760 := newCap_le cap len n _ (by omega) (by omega) (by omega)
+  have hncB : newCap cap len n < 1073741760 := by unfold newCap; omega
   generalize hnc : newCap cap len n = nc at hnc1 hnc2 hnc3 hncB
   have h5 : ω[5] = UInt64.ofNat ω[5].toNat := UInt64.ofNat_toNat.symm
   have h6 : ω[6] = UInt64.ofNat ω[6].toNat := UInt64.ofNat_toNat.symm
@@ -206,7 +206,7 @@ theorem extend_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [
   -- finish_grow's success path
   obtain ⟨ω5, μ5, run5, c0, c1, c5, c6, cr0, cr8, fr5, rd5, wr5⟩ :=
     g3 (p := p) (P := P) (R := refineContractK K env) x ω3 μ3 (sp - 104) r nc v ⟨by omega, by omega⟩
-      (by rw [e1, b1]) (by rw [e5, b5]; congr 1; omega) (by rw [e6, b6]) e7 ⟨by omega, by omega⟩ (by omega)
+      (by rw [e1, b1]; congr 1 <;> omega) (by rw [e5, b5]; congr 1 <;> omega) (by rw [e6, b6]) e7 ⟨by omega, by omega⟩ (by omega)
       (by omega)
       (by rw [Memory.readN_congr (fun j hj => hF _ (by omega) (by omega))]
           rw [show sp - 104 + 16 = sp - 32 - 56 by omega]; exact m56)
@@ -237,7 +237,7 @@ theorem extend_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [
   obtain ⟨ω7, μ7, run7, f0, f1, f5, f6, f7, f8, f9, fl, fr7, rd7, wr7⟩ :=
     g5 (p := p) (P := P) (R := refineContractK K env) x ω6 μ6 (sp - 32) v src len r n ⟨by omega, by omega⟩
       (by rw [d1]; congr 1; omega) d5 d6 (by omega) (Or.inr (by omega)) (by omega) (by omega) (by omega)
-      (by omega)
+      (by omega) (by omega)
       (by rw [Memory.readN_congr (fun j hj => k61 _ (by omega) (by omega) (Or.inl (by omega)))]; exact aS)
       dv8
       (by rw [Memory.readN_congr (fun j hj => k61 _ (by omega) (by omega) (Or.inr (by omega))),
@@ -256,6 +256,7 @@ theorem extend_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [
         rw [po.readable (Or.inr (by omega)), rd12]
         exact hs4 a h1 h2
     · have hin : InData e a := ⟨by omega, by omega⟩
+      have hei := chunk_in H.wf he heu
       refine ⟨?_, ?_⟩
       · rw [fr7 a (by omega) (Or.inl (by omega)), fr6 a (by omega) (Or.inl (by omega)),
           fr5 a (by omega) (Or.inl (by omega)), kp3 a ⟨e, he, heu, hne, hin⟩]
@@ -275,9 +276,10 @@ theorem extend_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [
         · exact hr e he heu hea
       have ht := H3.wf.2.2.2.1
       unfold TilesOk at ht
-      rcases HeapFrame.Tiles.disjoint ht e he' d hdm hed with h | h
+      rcases Services.Bootstrap.Decode.HeapFrame.Tiles.disjoint ht e he' d hdm hed with h | h
       · right; omega
       · left; omega
+  clear hsrc
   obtain ⟨ω8, μ8, run8, k0, k1', k5, k6, kd, kfr, krd, kwr⟩ :=
     memcpy_any (p := p) (P := P) (R := refineContractK K env) x ω7 μ7 2552 58554 (sp - 32) (r + len) src n
       f0 f1 f7 f8 f9 (by decide) jte_1275 bs_58554 ⟨by omega, by omega, by omega⟩
@@ -334,7 +336,7 @@ theorem extend_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [
       · rw [Nat.min_eq_left h]; omega
       · rw [Nat.min_eq_right h]; omega
     rw [Memory.readN_congr (fun j hj => late _ (by omega) (Or.inl (by omega))), readN_prefix hmin dat3]
-    exact Memory.readN_congr (fun j hj => hlow _ (by omega) (Or.inl (by omega)))
+    exact Memory.readN_congr (fun j hj => hlow (ptr + j) (by omega) (Or.inl (by omega)))
   · rw [Memory.readN_congr (fun j hj => efr _ (by omega) (Or.inl (by omega))), kd]
     exact Memory.readN_congr (fun j hj => (ksrc _ (by omega) (by omega)).1)
   · exact ctx_congr_data H3 hdm (fun a h0 h1 => late a h0 (by omega)) wr10
@@ -412,7 +414,7 @@ theorem extend_any {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
       (∀ a, Glob a → μ'.read a = μ.read a) ∧ (∀ a, S0 ≤ a → μ'.writable a = μ.writable a)) ∨
     ExhaustsW env K pb p P 58508 ω μ x (7 * n + 64 * (c.size - 1) + 1800) := by
   by_cases hroom : len + n ≤ cap
-  swap
+  rotate_left
   · rcases extend_grow env K hK1 hK x ω μ s c sp v src n cap ptr len ret t pb S0 S1 H hc hcu hcp hcc hcap0 hlc
         (by omega) hbig hsp hv h0 h1 h7 h8 h9 vc vp vl hret hjt hbt hsrc with
       ⟨r, s', ω', μ', run, e0, e1, e5, e6, ev, ev8, el, eo, ed, H', ⟨d, hdm, hdu, hda, hds⟩, rest⟩ | hx
@@ -423,6 +425,7 @@ theorem extend_any {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
   have hb0 := H.hb0
   have hbT := H.hbT
   have hSb := H.hSb
+  have hS1 := H.hS1
   have hst := H.st
   obtain ⟨hc0, -, hcT⟩ := chunk_in H.wf hc hcu
   unfold StackSrc HeapSrc at hsrc
@@ -440,32 +443,41 @@ theorem extend_any {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
     · have hce : c ≠ e := fun h => hne (by rw [← h]; exact hcp)
       have ht := H.wf.2.2.2.1
       unfold TilesOk at ht
-      rcases HeapFrame.Tiles.disjoint ht c hc e he hce with h | h
+      rcases Services.Bootstrap.Decode.HeapFrame.Tiles.disjoint ht c hc e he hce with h | h
       · left; omega
       · right; omega
+  have hsp' : 65536 + 128 ≤ sp ∧ sp < 4294967296 ∧ sp % 8 = 0 := ⟨by omega, by omega, hsp.2.2.2⟩
+  have hdst : 65536 ≤ ptr + len ∧ ptr + len + n + 16 < 4294967296 := ⟨by omega, by omega⟩
+  have hsrc' : 65536 ≤ src ∧ src + n + 16 < 4294967296 := ⟨by rcases hsrcB with h | h <;> omega, hsrc64⟩
+  have hfs : sp ≤ src ∨ src + n + 16 ≤ sp - 80 := by rcases hsrcB with h | h <;> omega
+  have hrv : ∀ a, v ≤ a → a < v + 24 → μ.readable a = true := fun a h1 h2 =>
+    Memory.readable_of_writable (hst a (by omega) (by omega))
+  have hwv : ∀ a, v + 16 ≤ a → a < v + 24 → μ.writable a = true := fun a h1 h2 => hst a (by omega) (by omega)
+  have hr : ∀ a, src ≤ a → a < src + n → μ.readable a = true := by
+    intro a h1 h2
+    rcases hsrc with ⟨-, -, -, hs4⟩ | ⟨e, he, heu, -, he1, he2⟩
+    · exact hs4 a h1 h2
+    · exact Memory.readable_of_writable (heap_writable H he heu (show InData e a from ⟨by omega, by omega⟩))
+  clear hsrc
+  have hwd : ∀ a, ptr + len ≤ a → a < ptr + len + n → μ.writable a = true := fun a h1 h2 =>
+    heap_writable H hc hcu (show InData c a from ⟨by omega, by omega⟩)
+  have hw : ∀ a, sp - 80 ≤ a → a < sp → μ.writable a = true := fun a h1 h2 => hst a (by omega) (by omega)
   obtain ⟨ω', μ', run, e0, e1, e5, e6, ed, el, efr, erd, ewr⟩ :=
     extend_ok (p := p) (P := P) (R := refineContractK K env) x ω μ sp v src n cap ptr len ret t
-      ⟨by omega, by omega, hsp.2.2.2⟩ h0 h1 h7 h8 h9 hroom (by omega) vc vp vl (by omega) (Or.inr hv.1)
-      ⟨by omega, by omega⟩ ⟨by rcases hsrcB with h | h <;> omega, hsrc64⟩ hdj (Or.inr (by omega))
-      (by rcases hsrcB with h | h <;> omega) (Or.inr (by omega)) hret hjt hbt
-      (fun a h1 h2 => Memory.readable_of_writable (hst a (by omega) (by omega)))
-      (fun a h1 h2 => hst a (by omega) (by omega))
-      (fun a h1 h2 => by
-        rcases hsrc with ⟨-, -, -, hs4⟩ | ⟨e, he, heu, -, he1, he2⟩
-        · exact hs4 a h1 h2
-        · exact Memory.readable_of_writable (heap_writable H he heu ⟨by omega, by omega⟩))
-      (fun a h1 h2 => heap_writable H hc hcu ⟨by omega, by omega⟩)
-      (fun a h1 h2 => hst a (by omega) (by omega))
+      hsp' h0 h1 h7 h8 h9 hroom (by omega) vc vp vl (by omega) (Or.inr hv.1) hdst hsrc' hdj (Or.inr (by omega))
+      hfs (Or.inr (by omega)) hret hjt hbt hrv hwv hr hwd hw
   refine Or.inl ⟨cap, ptr, s, ω', μ', run.mono (by omega), e0, e1, e5, e6, ?_, ?_, el, hroom, ?_, ed,
     ctx_congr_data H hc (fun a h0 h1 => efr a (by omega) (Or.inl (by omega)) (by omega) (Or.inl (by omega)))
       ewr,
     ⟨c, hc, hcu, hcp, hcc⟩, ?_, Or.inl rfl, FreeStepsH.pagesOut H.bd run, ?_, ?_, ?_, fun a _ => ewr a⟩
-  · exact Memory.readN_congr (fun j hj => efr _ (by omega) (Or.inr (by omega)) (Or.inr (by omega))
-      (Or.inl (by omega)))
-  · exact Memory.readN_congr (fun j hj => efr _ (by omega) (Or.inr (by omega)) (Or.inr (by omega))
-      (Or.inl (by omega)))
-  · exact Memory.readN_congr (fun j hj => efr _ (by omega) (Or.inl (by omega)) (Or.inl (by omega))
-      (Or.inl (by omega)))
+  · rw [show μ'.readN v 8 = μ.readN v 8 from Memory.readN_congr (fun j hj => efr (v + j) (by omega)
+      (Or.inr (by omega)) (Or.inr (by omega)) (Or.inl (by omega)))]
+    exact vc
+  · rw [show μ'.readN (v + 8) 8 = μ.readN (v + 8) 8 from Memory.readN_congr (fun j hj => efr (v + 8 + j)
+      (by omega) (Or.inr (by omega)) (Or.inr (by omega)) (Or.inl (by omega)))]
+    exact vp
+  · apply Memory.readN_congr; intro j hj; exact efr (ptr + j) (by omega) (Or.inl (by omega)) (Or.inl (by omega))
+      (Or.inl (by omega))
   · intro e he heu hne
     have hec : e ≠ c := fun h => hne (by rw [h]; exact hcp)
     refine ⟨he, fun a ha => ?_⟩

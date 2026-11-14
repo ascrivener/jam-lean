@@ -40,6 +40,12 @@ So these proofs show only that each formatting function:
 | `hex32_ok`, `dec32_ok`, `dec64_ok` | `Template.lean` | the three above as `ArgOk` arguments |
 | `fmt_write` | `Write.lean` (steps in `WriteSteps.lean`) | `core::fmt::write` (64495) into a `String`, over a template `Tmpl` of literals and default-option arguments, each argument an `ArgOk`. Bound `tcost M C ts + 100 + 2(cap' − cap)`. |
 | `format_inner` | `Format.lean` (steps in `FormatSteps.lean`) | `alloc::fmt::format_inner` (59375): `FmtCall` within `fmtCost M C ts` steps |
+| `read_exact`, `rd_uN` | `ReadExact.lean` | a slice reader's `read_exact` (58434), `rd_u64` (46040), `rd_u32` (46008) |
+| `FreeStepsH.infoSelf` | `InfoStep.lean` | the `info` (6) host step on the service itself, from `accContractK` (Ω_I) |
+| `info_self` | `Info.lean` (steps in `InfoSteps.lean`) | accumulate's `info` call at 6501 (49454), frame-only, under `accContractK cap env` (703 ≤ cap) |
+| `FreeStepsH.logAcc`, `log_site` | `LogSteps.lean`, `LogSite.lean` | the `log` (100) step under `accContractK` (ω₇ := WHAT, the message unspecified), and 6587 … 6630: `log`, then the `String`'s `dealloc` (`Decode.DeallocCall.dealloc_call`) |
+| `acc_fmt_site` | `AccFmt.lean` | 6580 … 6630: `format!` of the template at 66464 (`accTmpl`) with its three arguments, `log`, `dealloc` |
+| `acc_log_line` | `AccFmt.lean` | **accumulate's first log line, 6501 … 6630** (sp = 4278057152): `info_self`, `Acc.fmt_setup`, `acc_fmt_site`; from sp up only `logE` changes |
 
 ### Templates and arguments (`Template.lean`)
 
@@ -98,7 +104,10 @@ allocated in s' and fresh against s. The text stays unstated.
    - The arguments are dispatched through jump-table addresses (`jte_k` facts in CodeF).
 2. **Done** (`format_inner`). `format_inner` (59375): the capacity estimate (a loop over the template), `alloc` through
    `AllocOk`, then `core::fmt::write` with the `String` vtable 77016. Gives `FmtCall`.
-3. **Accumulate's first log line** (T2's `Acc/Args.lean`, sp = 4278057152):
+3. **Done: accumulate's first log line** (`acc_log_line`) (T2's `Acc/Args.lean`, sp = 4278057152):
+   - **Done** (`info_self`). Its two preconditions on the context x, **for T2 to discharge** from
+     Ψ_A's setup and the paper's typing (the code hash is in ℍ, so the record is 96 octets):
+     `x.1.state.accounts.get? x.1.id = some a` and `(infoValue a).length < 2⁶⁴ − 9`.
    - `info(6)` summary at 6501 (→ 49454): the `info` host call that feeds the line. Logging only,
      so the summary keeps state and says only that the record at sp + 1600 is written.
      It has to be generic in R, with an `info` contract hypothesis like `AllocOk`.
@@ -106,11 +115,42 @@ allocated in s' and fresh against s. The text stays unstated.
      ω₈ = 66464 (pieces), ω₉ = sp + 1144, and the argument pairs
      (sp + 260, 2616 → 60525 `hex32`), (sp + 256, 2800 → 68146 `dec32`),
      (sp + 1600, 2804 → 68449 `dec64`).
+   - **For T2**: `acc_log_line` takes `AllocOk`/`ReallocOk` for `accContractK cap env` as hypotheses
+     (the interface every Fmt summary uses), the template's 42 octets at 66464 (`accTmplBytes`), its
+     readability, and `RoW` (the `String` vtable's words at 77040, 77048 and the read-only data's
+     readability), all to be discharged from the accumulate start state, plus the two `info`
+     preconditions above. Its context x' at 6630 is existential (the contract's `alloc` may in
+     principle change it).
    - The `FmtOk` site is the call at 6580 (return 6587); then the `log` host call (100) at 6608
      with the message unspecified, then the `String`'s dealloc.
    - Compose these into one frame-only summary 6501 → after the dealloc, for T2.
-4. **Refine's level-3 line** (6159 → 59375, return 6166; ω₇ = M + 168, ω₈ = 66099,
-   ω₉ = M + 272; Debug fn 1382 → 29675): `Debug` of the output. That needs the `DebugStruct`,
-   `DebugList` and `DebugTuple` builders and each `Instruction` variant's `Debug`.
+4. **Refine's level-3 line** — in progress. Findings from the binary:
+   - No level check: 6159 always formats. The one argument (sp + 272) is (sp + 248, 1382 → 29675),
+     `<Vec<Instruction> as Debug>::fmt`: `debug_list` (61708), per element `entry` (66019) and
+     `finish` (66310). Elements are 232 octets; the loop passes a frame slot holding the element's
+     address with vtable 75784 (fmt 1264 → 26990, `<&Instruction as Debug>`): the niche tag (word at
+     +0, 0x7fff… + t, jump table 67576), then per variant `debug_struct_fields_finish` (63820), the
+     `debug_tuple_field*_finish` builders, or `write_str` (64485) for unit variants.
+   - Refine's other `format!` sites: 4742 (covered by the generated BTail5 traces), the `Lookup`
+     handler's 5398 and the `Export` handler's 5744 (`"Exported slice: {:?} -> {:?}"`, a `Vec<u8>`
+     and a `Result<u64, HostCallError>`).
+   - Done (`DebugList`, `VecDebug`, `DebugTuple`, `Dec8`, `ResultDebug`): the `DebugList` builders
+     (`debug_list_new`, `debug_entry`, `debug_finish`), `debug_tuple1`
+     (`debug_tuple_field1_finish`), `dec8` (u8 `Display`), and as arguments `vec_u8_ok`
+     (`<&Vec<u8> as Debug>`) and `result_ok` (`<Result<u64, HostCallError> as Debug>`). An entry
+     or field is formatted through a slot holding its address: `RefOk` (as `ArgOk`, the value
+     reached through the slot), with `ref_u8_ok`, `ref_u64_ok`, `ref_hce_ok`. `ValAt` says where a
+     value may lie (at or above the caller's frame, or in an allocated chunk of the caller's state).
+   - Done (`OptionDebug`): `option_vec_ok`, `<Option<Vec<u8>> as Debug>` (17465, the `Lookup`
+     line's argument: `None` when the first word is 2⁶⁴ − 1, else `Some(…)`), with
+     `ref_vec_u8_ok` (`<&Vec<u8> as Debug>` as a `RefOk`). `RefOk`, `debug_entry` and
+     `debug_tuple1` take the field's stack depth Z too (600 ≤ Z; 768 for a `Vec`).
+   - Interface: `ArgOk`, `ArgsAt`, `fmt_write` and `format_inner` take the stack depth Z a function
+     may use below its caller (sp ≥ S0 + Z and 2³¹ + Z; the earlier statements are Z = 600), and
+     `ArgOk` has the premise W + 24 ≤ spA (every caller had it), so nested calls keep the caller's
+     frame.
+   - Next: `debug_struct_fields_finish`, the `Instruction` variants (table-driven), 29675, and
+     `refine_debug_line` (6159 → 6209) taking the `Vec` at M + 248 and a per-element `DebugRep`
+     (T1 proves `DebugRep` of its elements).
 5. The `ReallocOk` refine instance, once `ReallocCall.realloc_call` gains its planned conjuncts
    (Glob kept, base kept, block fresh or old); `realloc_fresh` already proves the last two.

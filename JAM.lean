@@ -31,6 +31,7 @@ import JAM.Theorems.HostGas
 import JAM.Theorems.Confinement
 import JAM.Theorems.RefineContract
 import JAM.Theorems.KeepRO
+import JAM.Theorems.KeepROAcc
 import JAM.Theorems.GrowHeap
 
 /-!

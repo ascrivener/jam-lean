@@ -104,6 +104,65 @@ From 6378, 18,050 instructions are reachable statically. 5,537 of them already h
 - the `info` call (6501 → 6508, a frame-only summary);
 - the `format!` call (6580 → 6587) and other logging.
 
+**Log sites** (`AccLog/`, frame-only: termination and the frame, not the message):
+- `AccLog.ItemLog.item_fmt_site`: T2's item log line, 6955 → 7009 (`format!` of the template at 66266
+  "Accumulating work item from {}", `log` (100) at 6987, the `String`'s dealloc at 7002). Hypothesis `hA`
+  (`ArgsAt … itemTmpl`), the argument at sp + 1144: **discharged by ArgOk(56340)** (fmt-4).
+
+The `format!` (59375) sites of the handlers, the formatters their arguments need, and whether they
+already have `ArgOk`: hex32 60525, dec32 68146 and dec64 68449 do. The formatter addresses are read from
+the jump table at 11888 + 6 + 3i and loaded within 40 instructions before the call; "?" means none was
+found that close.
+
+| Site | `format!` pc | Template | Text | Formatters |
+|---|---|---|---|---|
+| Imported | 9116 | 66312 | "Imported data {}" | 37897 (no ArgOk) |
+| Yield | 9380 | 66083 | "Yielded hash {}" | 37996 (no ArgOk) |
+| Eject | 9527 | 66618 | "Ejecting service #{} with code_hash {}" | 56340 (fmt-4), ? |
+| Lookup | 11043 | 66297 | "Lookup, got {}" | ? |
+| Exported | 12414 | 66747 | "Exported {} items" | ? |
+| Import / RandomStorageRefine | 12535 | 66055 | "Instruction not handled: {}" | ? |
+| Designate | 13242 | 66555 | "Designated keys {}" | 38706 (no ArgOk) |
+| Solicit | 14062 | 66688 | "Solicited {} of length {}" | 56340 (fmt-4), ? |
+
+Each handler log-site lemma takes an `ArgsAt` hypothesis like `hA`, discharged by the formatters' `ArgOk`.
+They are `AccLog.<Site>.lean`, theorem `<site>_fmt_site` (from the `format!` call to the end of the
+`String`'s dealloc: 9116 → 9165, 9380 → 9429, 9527 → 9576, 11043 → 11092, 12414 → 12463, 12535 → 12584,
+13242 → 13291, and 14062 → 14553 for Solicit). `scripts/gen_acc_log_site.py` writes them from
+`Imported.lean`; `Solicit.lean` is then edited by hand, since its dealloc returns to a jump to 14553.
+Their hypothesis `hA` is **discharged by ArgOk** of the formatters in the table above.
+
+**Handoff (2026-11-14): what is left for the log sites.**
+- **ArgOk(56340), and 57346, queued after fmt-4 (#170).** fmt-4 adds a stack depth Z to
+  `ArgOk`/`ArgsAt`/`format_inner` and a premise W + 24 ≤ spA. Then:
+  - prove `ArgOk … 56340 v M C` for v pointing at 32 readable stack octets (the `[u8; 32]` Debug, jump-table entry
+    2502), with constant M and C;
+  - add `argsAt_item`, which builds `item_fmt_site`'s `hA` from T2's facts at 6955.
+  - T2's facts come from `op_mid` (6866 → 6955, `Acc/Items/Operand.lean`, branch `claude/bootstrap-t2-inputs-wip`):
+    `rdN μ (S + 1144) 8 = S + 312`, `rdN μ (S + 1152) 8 = 2502`, readability of [S + 1144, S + 1160) (HeapCtx `st`),
+    and the 32 octets at S + 312 = the operand's first hash.
+  - Eject and Solicit (and Created service, 12789) need the same 56340.
+- **fmt-4's signature change.** Whichever of fmt-4 and the handler log sites lands second updates them:
+  - in `Imported.lean`: `ArgsAt … S0 S1 600 μ …` and `format_inner … S0 S1 600 (Nat.le_refl _) HA HR …`;
+  - then rerun `scripts/gen_acc_log_site.py` (the arguments are in each file's docstring and the table above);
+  - then re-edit `Solicit.lean` by hand.
+- **Formatters with no owner yet:**
+  - 37897 (Imported), 37996 (Yield) and 38706 (Designate);
+  - the formatters of Lookup (11043), Exported (12414) and Import (12535) are still to identify. Their argument
+    pair is set up more than 40 instructions before the call.
+- **on_transfer's log line (T2, `LogFmt p env pb S0 S1`, `Acc/Transfer/Hyp.lean` on `claude/bootstrap-t2-inputs-wip`).**
+  - The call: `format!` at 7692 (return 262 → 7699), template 66221 "Received transfer from {} of {} with memo {}",
+    ω₇ = sp + 744, ω₉ = sp + 1568.
+  - Three argument pairs, each with a constant formatter word read off the code:
+    - (sp + 472, 2800): u32 Display, entry 2800 → 68146 (dec32), which already has ArgOk;
+    - (sp + 1000, 2804): u64 Display, entry 2804 → 68449 (dec64), which already has ArgOk;
+    - (sp + 512, 678): `String` Display, entry 678 → **17596**, which has no ArgOk yet. This is not 57346.
+  - Premises: `HeapCtxC env.code pb S0 S1`, S0 + 4096 ≤ sp, sp + 1856 ≤ S1, 2^31 ≤ sp.
+  - T2 needs the out String's fresh chunk (for the dealloc at 7756), HeapCtxC kept, ω₁/ω₅/ω₆ kept, and only
+    [sp + 744, sp + 768) changed from sp up; or Exhausts.
+  - `format_inner` gives this given `ArgsAt`. After fmt-4, restate the premises in fmt-4's form and tell T2, who will
+    adapt the call site.
+
 **Next: the inputs**, from 6630 to the items loop at 6674. The traced call sequence is:
 1. 47541: `fetch` of kind 14, ℰ(↕**i**), in two phases (length, then data into a fresh buffer from 41177);
 2. 39710: the list length;

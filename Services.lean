@@ -286,6 +286,7 @@ import Services.Bootstrap.Refine.LoopAll
 import Services.Bootstrap.Refine.Entry
 import Services.Bootstrap.Refine.Body
 import Services.Bootstrap.Refine.DecodeTail
+import Services.Bootstrap.Refine.DecodeVec
 import Services.Bootstrap.Spec
 import Services.Bootstrap.SpecLemmas.Codec
 import Services.Bootstrap.SpecLemmas.Refine

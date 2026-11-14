@@ -26,7 +26,21 @@ import Services.Bootstrap.Fmt.Dec4
 import Services.Bootstrap.Fmt.Du5
 import Services.Bootstrap.Fmt.Format
 import Services.Bootstrap.Fmt.AccFmt
+import Services.Bootstrap.Fmt.ResultDebug
+import Services.Bootstrap.Fmt.OptionDebug
+import Services.Bootstrap.Fmt.OracleRefineK
+import Services.Bootstrap.Fmt.ReallocCopy
+import Services.Bootstrap.Fmt.ReallocCopyInst
+import Services.Bootstrap.Fmt.Text
 import Services.Bootstrap.AccLog.ItemLog
+import Services.Bootstrap.AccLog.Imported
+import Services.Bootstrap.AccLog.Yield
+import Services.Bootstrap.AccLog.Eject
+import Services.Bootstrap.AccLog.Lookup
+import Services.Bootstrap.AccLog.Exported
+import Services.Bootstrap.AccLog.Import
+import Services.Bootstrap.AccLog.Designate
+import Services.Bootstrap.AccLog.Solicit
 import Services.Bootstrap.BParams
 import Services.Bootstrap.BParamsConsts
 import Services.Bootstrap.StartupConsts
@@ -84,6 +98,7 @@ import Services.Bootstrap.Decode.LoopF
 import Services.Bootstrap.Decode.Loop
 import Services.Bootstrap.Decode.Elems
 import Services.Bootstrap.Decode.LoopAPass
+import Services.Bootstrap.Decode.LoopAPassLow
 import Services.Bootstrap.Decode.VecHash
 import Services.Bootstrap.Decode.Assign
 import Services.Bootstrap.Decode.VecU8
@@ -170,9 +185,16 @@ import Services.Bootstrap.Decode.CreateServiceRun
 import Services.Bootstrap.Decode.CreateServiceHeap
 import Services.Bootstrap.Decode.CreateServiceEmpty
 import Services.Bootstrap.Decode.CreateServiceElem
+import Services.Bootstrap.Decode.VecU8HeapBig
 import Services.Bootstrap.Decode.VecVecU8
 import Services.Bootstrap.Decode.ImportElem
 import Services.Bootstrap.Decode.VecVecElem
+import Services.Bootstrap.Decode.VecPairsBig
+import Services.Bootstrap.Decode.VecU32U64Big
+import Services.Bootstrap.Decode.VecHashBig
+import Services.Bootstrap.Decode.VecHash32Big
+import Services.Bootstrap.Decode.GrowOne
+import Services.Bootstrap.Decode.VecKey336Big
 import Services.Picoalloc.Model
 import Services.Picoalloc.Invariant
 import Services.Picoalloc.FreeLists
@@ -278,6 +300,65 @@ import Services.Bootstrap.Encode.Variants
 import Services.Bootstrap.Encode.Yield
 import Services.Bootstrap.Encode.Prefix
 import Services.Bootstrap.Encode.Loop
+import Services.Bootstrap.Encode.EncM
+import Services.Bootstrap.Encode.PrefixBig
+import Services.Bootstrap.Encode.EncMD
+import Services.Bootstrap.Encode.WriterGrowSteps
+import Services.Bootstrap.Encode.WriterGrow
+import Services.Bootstrap.Encode.GrowH
+import Services.Bootstrap.Encode.PrefixH
+import Services.Bootstrap.Encode.EncMH
+import Services.Bootstrap.Encode.EncMHLoop
+import Services.Bootstrap.Encode.ArmsH
+import Services.Bootstrap.Encode.ArmsHVecCore
+import Services.Bootstrap.Encode.ArmsHVecAssign
+import Services.Bootstrap.Encode.ArmsHVecGas
+import Services.Bootstrap.Encode.ArmsHVecBless
+import Services.Bootstrap.Encode.ArmsHVecDesignate
+import Services.Bootstrap.Encode.ArmsHVecImported
+import Services.Bootstrap.Encode.ArmsHVecDeleteItems
+import Services.Bootstrap.Encode.ArmsHVecCS
+import Services.Bootstrap.Encode.ArmsHFixed
+import Services.Bootstrap.Encode.ArmsHFixed2
+import Services.Bootstrap.Encode.EncMHLift
+import Services.Bootstrap.Encode.HeapPad
+import Services.Bootstrap.Encode.VecSegs
+import Services.Bootstrap.Encode.VecSegs2
+import Services.Bootstrap.Encode.VecSegs3
+import Services.Bootstrap.Encode.VecCore
+import Services.Bootstrap.Encode.VariantsVec
+import Services.Bootstrap.Encode.VariantsVecVec
+import Services.Bootstrap.Encode.VecSrcHeap
+import Services.Bootstrap.Encode.VariantsVec3
+import Services.Bootstrap.Encode.VariantsVec2Segs
+import Services.Bootstrap.Encode.VariantsVec2GasSegs
+import Services.Bootstrap.Encode.VariantsVec2CSSegs
+import Services.Bootstrap.Encode.VariantsVec2CSSegs2
+import Services.Bootstrap.Encode.VariantsVec2
+import Services.Bootstrap.Encode.VariantsVec2Gas
+import Services.Bootstrap.Encode.VariantsVec2CS
+import Services.Bootstrap.Refine.Pass
+import Services.Bootstrap.Refine.PassGrow
+import Services.Bootstrap.Refine.PassLoop
+import Services.Bootstrap.Refine.LoopG
+import Services.Bootstrap.Refine.Exit
+import Services.Bootstrap.Refine.ExitEnc
+import Services.Bootstrap.Refine.DropOut
+import Services.Bootstrap.Refine.Fin
+import Services.Bootstrap.Refine.ExitRun
+import Services.Bootstrap.Refine.HostSteps
+import Services.Bootstrap.Refine.Export
+import Services.Bootstrap.Refine.ExportSeg
+import Services.Bootstrap.Refine.ExportStep
+import Services.Bootstrap.Refine.ExportElem
+import Services.Bootstrap.Refine.LoopAll
+import Services.Bootstrap.Refine.Entry
+import Services.Bootstrap.Refine.Body
+import Services.Bootstrap.Refine.DecodeTail
+import Services.Bootstrap.Refine.DecodeVec
+import Services.Bootstrap.Refine.Decode
+import Services.Bootstrap.Refine.Kinds
+import Services.Bootstrap.Refine.RunFixed
 import Services.Bootstrap.Spec
 import Services.Bootstrap.SpecLemmas.Codec
 import Services.Bootstrap.SpecLemmas.Refine
@@ -335,8 +416,22 @@ import Services.Bootstrap.Decode.VecVecU8Big
 import Services.Bootstrap.Decode.VariantsBig
 import Services.Bootstrap.Decode.VariantsBig2
 import Services.Bootstrap.Decode.ElemsBig
+import Services.Bootstrap.Decode.VecVecOwn
 import Services.Bootstrap.SymExec
 import Services.Witness.SymExec
+import Services.Bootstrap.Alloc.AfterStart
+import Services.Bootstrap.StartMemZ
+import Services.Bootstrap.BParamsHdr
+import Services.Bootstrap.AllocStart
+import Services.Bootstrap.Decode.VecU8Args
+import Services.Bootstrap.Decode.VecU8ArgsBig
+import Services.Bootstrap.Decode.VecU8ArgsBigOne
+import Services.Bootstrap.Refine.ArgsRun
+import Services.Bootstrap.Refine.ArgsGlue
+import Services.Bootstrap.Refine.ArgsCtx
+import Services.Bootstrap.Refine.ArgsTail
+import Services.Bootstrap.Refine.ArgsTailBig
+import Services.Bootstrap.Refine.ArgsAll
 
 /-!
 # Results about specific services' deployed code
@@ -409,5 +504,6 @@ Built on `JAM`; nothing in `PVM` or `JAM` depends on this library.
   `codeOf`.
 * `Services.Bootstrap.ASemLemmas` — `ASem.step` evaluated for `read` and `write`.
 * `Services.Bootstrap.Acc.Impl` — T2 reduced to the binary implementing `Spec.accumulate`
-  (`Impl`): `psiA_of_impl` gives Ψ_A's outcome as `ASem.run`'s, from `Impl` under `accContractS`.
+  (`Impl`, early ☇ only for a listed reason `Ab`): `psiA_of_impl` gives Ψ_A's outcome as
+  `ASem.run`'s, and says why that run may have stopped early.
 -/

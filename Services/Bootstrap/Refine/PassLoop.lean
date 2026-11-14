@@ -1,5 +1,6 @@
 import Services.Bootstrap.Refine.PassGrow
 import Services.Bootstrap.Refine.LoopG
+import Services.Bootstrap.Bridge
 
 /-!
 # Refine's transform loop over instructions passed through unchanged
@@ -27,30 +28,42 @@ theorem chunk_apart {s : State} (hwf : WF s) {c d : Chunk} (hc : c ∈ chunks s)
   have ht := hwf.2.2.2.1; unfold TilesOk at ht
   exact Decode.HeapFrame.Tiles.disjoint ht c hc d hd hcd
 
-/-- **A failed allocator call** (`AllocFail`), reached by a run whose host context may change on the way:
-    `Exhausts` with the context left free, for loops whose steps make host calls. -/
+/-- **A failed allocation** (`Bridge.AllocFails`: a null allocation at one of the allocators' return
+    points, or the size check before one), reached by a run whose host context may change on the way: the
+    heap exhaustion of `Bridge.ExhaustsHeap`, for loops whose steps make host calls. -/
 def ExhaustsX (env : RefineHost.Env) (cap pb : Nat) (p : ByteArray) (i : Nat) (ω : Regs) (μ : Memory)
     (x : RefineCtx) (n : Nat) : Prop :=
   ∃ (ω' : Regs) (μ' : Memory) (x' : RefineCtx) (j : Nat),
-    FreeStepsH p (refineContractK cap env) i ω μ x j ω' μ' x' n ∧ ω'[7] = UInt64.ofNat 0 ∧ AllocFail pb j
+    FreeStepsH p (refineContractK cap env) i ω μ x j ω' μ' x' n ∧ Bridge.AllocFails j ω'
 
 theorem ExhaustsX.of {env : RefineHost.Env} {cap pb : Nat} {p : ByteArray} {P : Program} {i : Nat} {ω : Regs}
     {μ : Memory} {x : RefineCtx} {n : Nat} (h : Exhausts env cap pb p P i ω μ x n) : ExhaustsX env cap pb p i ω μ x n := by
   obtain ⟨ω', μ', j, run, e7, ha⟩ := h
-  exact ⟨ω', μ', x, j, run, e7, ha⟩
+  refine ⟨ω', μ', x, j, run, Or.inl ⟨?_, e7⟩⟩
+  rcases ha with ⟨rfl, -⟩ | ⟨rfl, -⟩ <;> decide
+
+/-- `Fmt.Exhausts` (the `alloc` or `realloc` wrapper returning null) under refine's contract is `ExhaustsX`. -/
+theorem ExhaustsX.ofFmt {env : RefineHost.Env} {cap pb : Nat} {p : ByteArray} {i : Nat} {ω : Regs}
+    {μ : Memory} {x : RefineCtx} {n : Nat}
+    (h : ∃ (ω' : Regs) (μ' : Memory) (x' : RefineCtx) (j : Nat),
+      FreeStepsH p (refineContractK cap env) i ω μ x j ω' μ' x' n ∧ ω'[7] = UInt64.ofNat 0 ∧ (j = 40611 ∨ j = 40821)) :
+    ExhaustsX env cap pb p i ω μ x n := by
+  obtain ⟨ω', μ', x', j, run, e7, hj⟩ := h
+  refine ⟨ω', μ', x', j, run, Or.inl ⟨?_, e7⟩⟩
+  rcases hj with rfl | rfl <;> decide
 
 theorem ExhaustsX.pre {env : RefineHost.Env} {cap pb : Nat} {p : ByteArray} {i j : Nat} {ω ω1 : Regs}
     {μ μ1 : Memory} {x x1 : RefineCtx} {n m : Nat}
     (run : FreeStepsH p (refineContractK cap env) i ω μ x j ω1 μ1 x1 n) (h : ExhaustsX env cap pb p j ω1 μ1 x1 m) :
     ExhaustsX env cap pb p i ω μ x (n + m) := by
-  obtain ⟨ω', μ', x', k, run', e7, ha⟩ := h
-  exact ⟨ω', μ', x', k, run.trans run', e7, ha⟩
+  obtain ⟨ω', μ', x', k, run', ha⟩ := h
+  exact ⟨ω', μ', x', k, run.trans run', ha⟩
 
 theorem ExhaustsX.mono {env : RefineHost.Env} {cap pb : Nat} {p : ByteArray} {i : Nat} {ω : Regs} {μ : Memory}
     {x : RefineCtx} {n m : Nat} (h : ExhaustsX env cap pb p i ω μ x n) (hnm : n ≤ m) :
     ExhaustsX env cap pb p i ω μ x m := by
-  obtain ⟨ω', μ', x', k, run', e7, ha⟩ := h
-  exact ⟨ω', μ', x', k, run'.mono hnm, e7, ha⟩
+  obtain ⟨ω', μ', x', k, run', ha⟩ := h
+  exact ⟨ω', μ', x', k, run'.mono hnm, ha⟩
 
 /-- **The transform loop's state at 5042 after k instructions passed through.** -/
 structure PInv (env : RefineHost.Env) (pb S0 S1 M E n : Nat) (ce : Chunk) (capI : Nat) (μ0 : Memory)
@@ -62,6 +75,14 @@ structure PInv (env : RefineHost.Env) (pb S0 S1 M E n : Nat) (ce : Chunk) (capI 
   c136 : μ.readN (M + 136) 8 = Num.encodeLE 8 9223372036854775809
   /-- `isize::MAX / 24`, `Import`'s bound on its item count. -/
   c48 : μ.readN (M + 48) 8 = Num.encodeLE 8 384307168202282325
+  /-- The mask of the dispatch indices whose staged element needs no drop after its handler
+      (bits 9, 10, 21), tested at 5950. -/
+  c40 : μ.readN (M + 40) 8 = Num.encodeLE 8 2098688
+  /-- The `Lookup` log line's constants: its target (66793), template (66506) and the argument's
+      `Debug` function (668). -/
+  c16 : μ.readN (M + 16) 8 = Num.encodeLE 8 66793
+  c24 : μ.readN (M + 24) 8 = Num.encodeLE 8 66506
+  c32 : μ.readN (M + 32) 8 = Num.encodeLE 8 668
   /-- The input's `vec::IntoIter` at M + 272: `{buf, ptr, cap, end}`. -/
   i0 : μ.readN (M + 272) 8 = Num.encodeLE 8 (ce.addr + 32)
   i8 : μ.readN (M + 280) 8 = Num.encodeLE 8 (E + 232 * k)
@@ -78,8 +99,10 @@ structure PInv (env : RefineHost.Env) (pb S0 S1 M E n : Nat) (ce : Chunk) (capI 
   /-- The chunks to keep (`Kp`), such as the payload's copy: allocated, with their data as in μ0. -/
   kp : ∀ d, Kp d → d ∈ chunks s ∧ d.used = true ∧ ∀ a, InData d a → μ.read a = μ0.read a
   /-- The frame's words refine's epilogue reads, as in μ0: the work item's index (M + 80), the payload's
-      `Vec` (M + 88 … M + 120) and the saved registers and return address (M + 600 … M + 632). -/
-  fr : ∀ a, (M + 80 ≤ a ∧ a < M + 120) ∨ (M + 600 ≤ a ∧ a < M + 632) → μ.read a = μ0.read a
+      `Vec`'s capacity and buffer (M + 88, M + 112) and the saved ω₆, ω₅ and return address
+      (M + 608 … M + 632). The handlers use the words between them. -/
+  fr : ∀ a, (M + 80 ≤ a ∧ a < M + 96) ∨ (M + 112 ≤ a ∧ a < M + 120) ∨ (M + 608 ≤ a ∧ a < M + 632) →
+    μ.read a = μ0.read a
 
 /-- What the loop needs of its layout: refine's frame M on the stack, the n < 128 instructions at E inside
     the allocated chunk `ce`. -/
@@ -136,6 +159,10 @@ theorem step_room {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
       (M + 272 ≤ a ∧ a + l ≤ M + 280) ∨ (M + 288 ≤ a ∧ a + l ≤ M + 304)) → μ'.readN a l = μ.readN a l :=
     fun a l _ h0 _ h => Memory.readN_congr (fun j hj => efr2 _ (by omega))
   refine ⟨ω', μ', run, ⟨e1, ?_, een, e128, e136, by rw [fr _ 8 (by omega) (by omega) (by omega) (by omega)]; exact st.c48,
+    by rw [fr _ 8 (by omega) (by omega) (by omega) (by omega)]; exact st.c40,
+    by rw [fr _ 8 (by omega) (by omega) (by omega) (by omega)]; exact st.c16,
+    by rw [fr _ 8 (by omega) (by omega) (by omega) (by omega)]; exact st.c24,
+    by rw [fr _ 8 (by omega) (by omega) (by omega) (by omega)]; exact st.c32,
     by rw [fr _ 8 (by omega) (by omega) (by omega) (by omega)]; exact st.i0, ?_,
     by rw [fr _ 8 (by omega) (by omega) (by omega) (by omega)]; exact st.i16,
     by rw [fr _ 8 (by omega) (by omega) (by omega) (by omega)]; exact st.i24,
@@ -224,7 +251,10 @@ theorem step_full {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
         (M + 288 ≤ a ∧ a + l ≤ M + 304)) → μ'.readN a l = μ.readN a l :=
       fun a l h0 h => Memory.readN_congr (fun j hj => efr2 _ (by omega))
     refine Or.inl ⟨s', ω', μ', run.mono (by omega), ⟨e1, ?_, een, e128, e136,
-      by rw [fr _ 8 (by omega) (by omega)]; exact st.c48, by rw [fr _ 8 (by omega) (by omega)]; exact st.i0, ?_,
+      by rw [fr _ 8 (by omega) (by omega)]; exact st.c48, by rw [fr _ 8 (by omega) (by omega)]; exact st.c40,
+      by rw [fr _ 8 (by omega) (by omega)]; exact st.c16, by rw [fr _ 8 (by omega) (by omega)]; exact st.c24,
+      by rw [fr _ 8 (by omega) (by omega)]; exact st.c32,
+      by rw [fr _ 8 (by omega) (by omega)]; exact st.i0, ?_,
       by rw [fr _ 8 (by omega) (by omega)]; exact st.i16, by rw [fr _ 8 (by omega) (by omega)]; exact st.i24,
       ⟨max (2 * cap) 4, q, ecap, eptr, elen, by omega, by omega, by omega,
         Or.inr ⟨_, hnew, by simp; omega, rfl, rfl, fun h => hfr (by rw [← h]; simp; omega), ?_⟩, ?_⟩,

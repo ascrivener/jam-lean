@@ -36,7 +36,7 @@ theorem a8_a {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X) 
       v + 8 < 4294967296)
     (ra : rdN μ v 8 = a) (hrv : ∀ c, v ≤ c → c < v + 8 → μ.readable c = true)
     (hw : ∀ c, sp - 48 ≤ c → c < sp → μ.writable c = true) :
-    ∃ ω' μ', FreeStepsH p R 36529 ω μ x 61708 ω' μ' x 8 ∧
+    ∃ ω' μ', FreeStepsH p R 36529 ω μ x 61708 ω' μ' x 9 ∧
       ω'[0] = UInt64.ofNat 1818 ∧ ω'[1] = UInt64.ofNat (sp - 48) ∧ ω'[5] = UInt64.ofNat a ∧
       ω'[6] = UInt64.ofNat v6 ∧ ω'[7] = UInt64.ofNat (sp - 48) ∧ ω'[8] = ω[8] ∧
       rdN μ' (sp - 48 + 40) 8 = r0 ∧ rdN μ' (sp - 48 + 32) 8 = v5 ∧ rdN μ' (sp - 48 + 24) 8 = v6 ∧
@@ -76,7 +76,7 @@ theorem a8_e1 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X)
     (T a : Nat) (hT : 65536 ≤ T ∧ T + 48 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h5 : ω[5] = UInt64.ofNat a) (h6 : ω[6] = UInt64.ofNat 75976) (ha : a + 31 < 18446744073709551616)
     (hw : ∀ c, T ≤ c → c < T + 48 → μ.writable c = true) :
-    ∃ ω' μ', FreeStepsH p R 38042 ω μ x 66019 ω' μ' x 5 ∧
+    ∃ ω' μ', FreeStepsH p R 38042 ω μ x 66019 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 1822 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat T ∧ ω'[8] = UInt64.ofNat (T + 16) ∧ ω'[9] = UInt64.ofNat 75976 ∧
       rdN μ' (T + 16) 8 = a + 1 ∧
@@ -95,7 +95,7 @@ theorem a8_e2 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X)
     (T a : Nat) (hT : 65536 ≤ T ∧ T + 48 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h5 : ω[5] = UInt64.ofNat a) (h6 : ω[6] = UInt64.ofNat 75976) (ha : a + 31 < 18446744073709551616)
     (hw : ∀ c, T ≤ c → c < T + 48 → μ.writable c = true) :
-    ∃ ω' μ', FreeStepsH p R 38061 ω μ x 66019 ω' μ' x 5 ∧
+    ∃ ω' μ', FreeStepsH p R 38061 ω μ x 66019 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 1824 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat T ∧ ω'[8] = UInt64.ofNat (T + 16) ∧ ω'[9] = UInt64.ofNat 75976 ∧
       rdN μ' (T + 16) 8 = a + 2 ∧
@@ -114,7 +114,7 @@ theorem a8_e3 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X)
     (T a : Nat) (hT : 65536 ≤ T ∧ T + 48 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h5 : ω[5] = UInt64.ofNat a) (h6 : ω[6] = UInt64.ofNat 75976) (ha : a + 31 < 18446744073709551616)
     (hw : ∀ c, T ≤ c → c < T + 48 → μ.writable c = true) :
-    ∃ ω' μ', FreeStepsH p R 38080 ω μ x 66019 ω' μ' x 5 ∧
+    ∃ ω' μ', FreeStepsH p R 38080 ω μ x 66019 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 1826 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat T ∧ ω'[8] = UInt64.ofNat (T + 16) ∧ ω'[9] = UInt64.ofNat 75976 ∧
       rdN μ' (T + 16) 8 = a + 3 ∧
@@ -133,7 +133,7 @@ theorem a8_e4 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X)
     (T a : Nat) (hT : 65536 ≤ T ∧ T + 48 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h5 : ω[5] = UInt64.ofNat a) (h6 : ω[6] = UInt64.ofNat 75976) (ha : a + 31 < 18446744073709551616)
     (hw : ∀ c, T ≤ c → c < T + 48 → μ.writable c = true) :
-    ∃ ω' μ', FreeStepsH p R 38099 ω μ x 66019 ω' μ' x 5 ∧
+    ∃ ω' μ', FreeStepsH p R 38099 ω μ x 66019 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 1828 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat T ∧ ω'[8] = UInt64.ofNat (T + 16) ∧ ω'[9] = UInt64.ofNat 75976 ∧
       rdN μ' (T + 16) 8 = a + 4 ∧
@@ -152,7 +152,7 @@ theorem a8_e5 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X)
     (T a : Nat) (hT : 65536 ≤ T ∧ T + 48 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h5 : ω[5] = UInt64.ofNat a) (h6 : ω[6] = UInt64.ofNat 75976) (ha : a + 31 < 18446744073709551616)
     (hw : ∀ c, T ≤ c → c < T + 48 → μ.writable c = true) :
-    ∃ ω' μ', FreeStepsH p R 38118 ω μ x 66019 ω' μ' x 5 ∧
+    ∃ ω' μ', FreeStepsH p R 38118 ω μ x 66019 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 1830 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat T ∧ ω'[8] = UInt64.ofNat (T + 16) ∧ ω'[9] = UInt64.ofNat 75976 ∧
       rdN μ' (T + 16) 8 = a + 5 ∧
@@ -171,7 +171,7 @@ theorem a8_e6 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X)
     (T a : Nat) (hT : 65536 ≤ T ∧ T + 48 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h5 : ω[5] = UInt64.ofNat a) (h6 : ω[6] = UInt64.ofNat 75976) (ha : a + 31 < 18446744073709551616)
     (hw : ∀ c, T ≤ c → c < T + 48 → μ.writable c = true) :
-    ∃ ω' μ', FreeStepsH p R 38137 ω μ x 66019 ω' μ' x 5 ∧
+    ∃ ω' μ', FreeStepsH p R 38137 ω μ x 66019 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 1832 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat T ∧ ω'[8] = UInt64.ofNat (T + 16) ∧ ω'[9] = UInt64.ofNat 75976 ∧
       rdN μ' (T + 16) 8 = a + 6 ∧
@@ -190,7 +190,7 @@ theorem a8_e7 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X)
     (T a : Nat) (hT : 65536 ≤ T ∧ T + 48 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h5 : ω[5] = UInt64.ofNat a) (h6 : ω[6] = UInt64.ofNat 75976) (ha : a + 31 < 18446744073709551616)
     (hw : ∀ c, T ≤ c → c < T + 48 → μ.writable c = true) :
-    ∃ ω' μ', FreeStepsH p R 38156 ω μ x 66019 ω' μ' x 5 ∧
+    ∃ ω' μ', FreeStepsH p R 38156 ω μ x 66019 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 1834 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat T ∧ ω'[8] = UInt64.ofNat (T + 16) ∧ ω'[9] = UInt64.ofNat 75976 ∧
       rdN μ' (T + 16) 8 = a + 7 ∧
@@ -209,7 +209,7 @@ theorem a8_e8 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X)
     (T a : Nat) (hT : 65536 ≤ T ∧ T + 48 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h5 : ω[5] = UInt64.ofNat a) (h6 : ω[6] = UInt64.ofNat 75976) (ha : a + 31 < 18446744073709551616)
     (hw : ∀ c, T ≤ c → c < T + 48 → μ.writable c = true) :
-    ∃ ω' μ', FreeStepsH p R 38175 ω μ x 66019 ω' μ' x 5 ∧
+    ∃ ω' μ', FreeStepsH p R 38175 ω μ x 66019 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 1836 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat T ∧ ω'[8] = UInt64.ofNat (T + 16) ∧ ω'[9] = UInt64.ofNat 75976 ∧
       rdN μ' (T + 16) 8 = a + 8 ∧
@@ -228,7 +228,7 @@ theorem a8_e9 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X)
     (T a : Nat) (hT : 65536 ≤ T ∧ T + 48 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h5 : ω[5] = UInt64.ofNat a) (h6 : ω[6] = UInt64.ofNat 75976) (ha : a + 31 < 18446744073709551616)
     (hw : ∀ c, T ≤ c → c < T + 48 → μ.writable c = true) :
-    ∃ ω' μ', FreeStepsH p R 38194 ω μ x 66019 ω' μ' x 5 ∧
+    ∃ ω' μ', FreeStepsH p R 38194 ω μ x 66019 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 1838 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat T ∧ ω'[8] = UInt64.ofNat (T + 16) ∧ ω'[9] = UInt64.ofNat 75976 ∧
       rdN μ' (T + 16) 8 = a + 9 ∧
@@ -247,7 +247,7 @@ theorem a8_e10 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X
     (T a : Nat) (hT : 65536 ≤ T ∧ T + 48 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h5 : ω[5] = UInt64.ofNat a) (h6 : ω[6] = UInt64.ofNat 75976) (ha : a + 31 < 18446744073709551616)
     (hw : ∀ c, T ≤ c → c < T + 48 → μ.writable c = true) :
-    ∃ ω' μ', FreeStepsH p R 38213 ω μ x 66019 ω' μ' x 5 ∧
+    ∃ ω' μ', FreeStepsH p R 38213 ω μ x 66019 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 1840 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat T ∧ ω'[8] = UInt64.ofNat (T + 16) ∧ ω'[9] = UInt64.ofNat 75976 ∧
       rdN μ' (T + 16) 8 = a + 10 ∧
@@ -266,7 +266,7 @@ theorem a8_e11 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X
     (T a : Nat) (hT : 65536 ≤ T ∧ T + 48 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h5 : ω[5] = UInt64.ofNat a) (h6 : ω[6] = UInt64.ofNat 75976) (ha : a + 31 < 18446744073709551616)
     (hw : ∀ c, T ≤ c → c < T + 48 → μ.writable c = true) :
-    ∃ ω' μ', FreeStepsH p R 38232 ω μ x 66019 ω' μ' x 5 ∧
+    ∃ ω' μ', FreeStepsH p R 38232 ω μ x 66019 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 1842 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat T ∧ ω'[8] = UInt64.ofNat (T + 16) ∧ ω'[9] = UInt64.ofNat 75976 ∧
       rdN μ' (T + 16) 8 = a + 11 ∧
@@ -285,7 +285,7 @@ theorem a8_e12 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X
     (T a : Nat) (hT : 65536 ≤ T ∧ T + 48 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h5 : ω[5] = UInt64.ofNat a) (h6 : ω[6] = UInt64.ofNat 75976) (ha : a + 31 < 18446744073709551616)
     (hw : ∀ c, T ≤ c → c < T + 48 → μ.writable c = true) :
-    ∃ ω' μ', FreeStepsH p R 38251 ω μ x 66019 ω' μ' x 5 ∧
+    ∃ ω' μ', FreeStepsH p R 38251 ω μ x 66019 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 1844 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat T ∧ ω'[8] = UInt64.ofNat (T + 16) ∧ ω'[9] = UInt64.ofNat 75976 ∧
       rdN μ' (T + 16) 8 = a + 12 ∧
@@ -304,7 +304,7 @@ theorem a8_e13 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X
     (T a : Nat) (hT : 65536 ≤ T ∧ T + 48 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h5 : ω[5] = UInt64.ofNat a) (h6 : ω[6] = UInt64.ofNat 75976) (ha : a + 31 < 18446744073709551616)
     (hw : ∀ c, T ≤ c → c < T + 48 → μ.writable c = true) :
-    ∃ ω' μ', FreeStepsH p R 38270 ω μ x 66019 ω' μ' x 5 ∧
+    ∃ ω' μ', FreeStepsH p R 38270 ω μ x 66019 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 1846 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat T ∧ ω'[8] = UInt64.ofNat (T + 16) ∧ ω'[9] = UInt64.ofNat 75976 ∧
       rdN μ' (T + 16) 8 = a + 13 ∧
@@ -323,7 +323,7 @@ theorem a8_e14 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X
     (T a : Nat) (hT : 65536 ≤ T ∧ T + 48 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h5 : ω[5] = UInt64.ofNat a) (h6 : ω[6] = UInt64.ofNat 75976) (ha : a + 31 < 18446744073709551616)
     (hw : ∀ c, T ≤ c → c < T + 48 → μ.writable c = true) :
-    ∃ ω' μ', FreeStepsH p R 38289 ω μ x 66019 ω' μ' x 5 ∧
+    ∃ ω' μ', FreeStepsH p R 38289 ω μ x 66019 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 1848 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat T ∧ ω'[8] = UInt64.ofNat (T + 16) ∧ ω'[9] = UInt64.ofNat 75976 ∧
       rdN μ' (T + 16) 8 = a + 14 ∧
@@ -342,7 +342,7 @@ theorem a8_e15 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X
     (T a : Nat) (hT : 65536 ≤ T ∧ T + 48 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h5 : ω[5] = UInt64.ofNat a) (h6 : ω[6] = UInt64.ofNat 75976) (ha : a + 31 < 18446744073709551616)
     (hw : ∀ c, T ≤ c → c < T + 48 → μ.writable c = true) :
-    ∃ ω' μ', FreeStepsH p R 38308 ω μ x 66019 ω' μ' x 5 ∧
+    ∃ ω' μ', FreeStepsH p R 38308 ω μ x 66019 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 1850 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat T ∧ ω'[8] = UInt64.ofNat (T + 16) ∧ ω'[9] = UInt64.ofNat 75976 ∧
       rdN μ' (T + 16) 8 = a + 15 ∧
@@ -361,7 +361,7 @@ theorem a8_e16 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X
     (T a : Nat) (hT : 65536 ≤ T ∧ T + 48 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h5 : ω[5] = UInt64.ofNat a) (h6 : ω[6] = UInt64.ofNat 75976) (ha : a + 31 < 18446744073709551616)
     (hw : ∀ c, T ≤ c → c < T + 48 → μ.writable c = true) :
-    ∃ ω' μ', FreeStepsH p R 38327 ω μ x 66019 ω' μ' x 5 ∧
+    ∃ ω' μ', FreeStepsH p R 38327 ω μ x 66019 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 1852 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat T ∧ ω'[8] = UInt64.ofNat (T + 16) ∧ ω'[9] = UInt64.ofNat 75976 ∧
       rdN μ' (T + 16) 8 = a + 16 ∧
@@ -380,7 +380,7 @@ theorem a8_e17 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X
     (T a : Nat) (hT : 65536 ≤ T ∧ T + 48 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h5 : ω[5] = UInt64.ofNat a) (h6 : ω[6] = UInt64.ofNat 75976) (ha : a + 31 < 18446744073709551616)
     (hw : ∀ c, T ≤ c → c < T + 48 → μ.writable c = true) :
-    ∃ ω' μ', FreeStepsH p R 38346 ω μ x 66019 ω' μ' x 5 ∧
+    ∃ ω' μ', FreeStepsH p R 38346 ω μ x 66019 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 1854 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat T ∧ ω'[8] = UInt64.ofNat (T + 16) ∧ ω'[9] = UInt64.ofNat 75976 ∧
       rdN μ' (T + 16) 8 = a + 17 ∧
@@ -399,7 +399,7 @@ theorem a8_e18 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X
     (T a : Nat) (hT : 65536 ≤ T ∧ T + 48 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h5 : ω[5] = UInt64.ofNat a) (h6 : ω[6] = UInt64.ofNat 75976) (ha : a + 31 < 18446744073709551616)
     (hw : ∀ c, T ≤ c → c < T + 48 → μ.writable c = true) :
-    ∃ ω' μ', FreeStepsH p R 38365 ω μ x 66019 ω' μ' x 5 ∧
+    ∃ ω' μ', FreeStepsH p R 38365 ω μ x 66019 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 1856 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat T ∧ ω'[8] = UInt64.ofNat (T + 16) ∧ ω'[9] = UInt64.ofNat 75976 ∧
       rdN μ' (T + 16) 8 = a + 18 ∧
@@ -418,7 +418,7 @@ theorem a8_e19 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X
     (T a : Nat) (hT : 65536 ≤ T ∧ T + 48 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h5 : ω[5] = UInt64.ofNat a) (h6 : ω[6] = UInt64.ofNat 75976) (ha : a + 31 < 18446744073709551616)
     (hw : ∀ c, T ≤ c → c < T + 48 → μ.writable c = true) :
-    ∃ ω' μ', FreeStepsH p R 38384 ω μ x 66019 ω' μ' x 5 ∧
+    ∃ ω' μ', FreeStepsH p R 38384 ω μ x 66019 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 1858 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat T ∧ ω'[8] = UInt64.ofNat (T + 16) ∧ ω'[9] = UInt64.ofNat 75976 ∧
       rdN μ' (T + 16) 8 = a + 19 ∧
@@ -437,7 +437,7 @@ theorem a8_e20 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X
     (T a : Nat) (hT : 65536 ≤ T ∧ T + 48 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h5 : ω[5] = UInt64.ofNat a) (h6 : ω[6] = UInt64.ofNat 75976) (ha : a + 31 < 18446744073709551616)
     (hw : ∀ c, T ≤ c → c < T + 48 → μ.writable c = true) :
-    ∃ ω' μ', FreeStepsH p R 38403 ω μ x 66019 ω' μ' x 5 ∧
+    ∃ ω' μ', FreeStepsH p R 38403 ω μ x 66019 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 1860 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat T ∧ ω'[8] = UInt64.ofNat (T + 16) ∧ ω'[9] = UInt64.ofNat 75976 ∧
       rdN μ' (T + 16) 8 = a + 20 ∧
@@ -456,7 +456,7 @@ theorem a8_e21 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X
     (T a : Nat) (hT : 65536 ≤ T ∧ T + 48 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h5 : ω[5] = UInt64.ofNat a) (h6 : ω[6] = UInt64.ofNat 75976) (ha : a + 31 < 18446744073709551616)
     (hw : ∀ c, T ≤ c → c < T + 48 → μ.writable c = true) :
-    ∃ ω' μ', FreeStepsH p R 38422 ω μ x 66019 ω' μ' x 5 ∧
+    ∃ ω' μ', FreeStepsH p R 38422 ω μ x 66019 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 1862 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat T ∧ ω'[8] = UInt64.ofNat (T + 16) ∧ ω'[9] = UInt64.ofNat 75976 ∧
       rdN μ' (T + 16) 8 = a + 21 ∧
@@ -475,7 +475,7 @@ theorem a8_e22 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X
     (T a : Nat) (hT : 65536 ≤ T ∧ T + 48 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h5 : ω[5] = UInt64.ofNat a) (h6 : ω[6] = UInt64.ofNat 75976) (ha : a + 31 < 18446744073709551616)
     (hw : ∀ c, T ≤ c → c < T + 48 → μ.writable c = true) :
-    ∃ ω' μ', FreeStepsH p R 38441 ω μ x 66019 ω' μ' x 5 ∧
+    ∃ ω' μ', FreeStepsH p R 38441 ω μ x 66019 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 1864 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat T ∧ ω'[8] = UInt64.ofNat (T + 16) ∧ ω'[9] = UInt64.ofNat 75976 ∧
       rdN μ' (T + 16) 8 = a + 22 ∧
@@ -494,7 +494,7 @@ theorem a8_e23 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X
     (T a : Nat) (hT : 65536 ≤ T ∧ T + 48 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h5 : ω[5] = UInt64.ofNat a) (h6 : ω[6] = UInt64.ofNat 75976) (ha : a + 31 < 18446744073709551616)
     (hw : ∀ c, T ≤ c → c < T + 48 → μ.writable c = true) :
-    ∃ ω' μ', FreeStepsH p R 38460 ω μ x 66019 ω' μ' x 5 ∧
+    ∃ ω' μ', FreeStepsH p R 38460 ω μ x 66019 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 1866 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat T ∧ ω'[8] = UInt64.ofNat (T + 16) ∧ ω'[9] = UInt64.ofNat 75976 ∧
       rdN μ' (T + 16) 8 = a + 23 ∧
@@ -513,7 +513,7 @@ theorem a8_e24 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X
     (T a : Nat) (hT : 65536 ≤ T ∧ T + 48 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h5 : ω[5] = UInt64.ofNat a) (h6 : ω[6] = UInt64.ofNat 75976) (ha : a + 31 < 18446744073709551616)
     (hw : ∀ c, T ≤ c → c < T + 48 → μ.writable c = true) :
-    ∃ ω' μ', FreeStepsH p R 38479 ω μ x 66019 ω' μ' x 5 ∧
+    ∃ ω' μ', FreeStepsH p R 38479 ω μ x 66019 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 1868 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat T ∧ ω'[8] = UInt64.ofNat (T + 16) ∧ ω'[9] = UInt64.ofNat 75976 ∧
       rdN μ' (T + 16) 8 = a + 24 ∧
@@ -532,7 +532,7 @@ theorem a8_e25 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X
     (T a : Nat) (hT : 65536 ≤ T ∧ T + 48 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h5 : ω[5] = UInt64.ofNat a) (h6 : ω[6] = UInt64.ofNat 75976) (ha : a + 31 < 18446744073709551616)
     (hw : ∀ c, T ≤ c → c < T + 48 → μ.writable c = true) :
-    ∃ ω' μ', FreeStepsH p R 38498 ω μ x 66019 ω' μ' x 5 ∧
+    ∃ ω' μ', FreeStepsH p R 38498 ω μ x 66019 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 1870 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat T ∧ ω'[8] = UInt64.ofNat (T + 16) ∧ ω'[9] = UInt64.ofNat 75976 ∧
       rdN μ' (T + 16) 8 = a + 25 ∧
@@ -551,7 +551,7 @@ theorem a8_e26 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X
     (T a : Nat) (hT : 65536 ≤ T ∧ T + 48 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h5 : ω[5] = UInt64.ofNat a) (h6 : ω[6] = UInt64.ofNat 75976) (ha : a + 31 < 18446744073709551616)
     (hw : ∀ c, T ≤ c → c < T + 48 → μ.writable c = true) :
-    ∃ ω' μ', FreeStepsH p R 38517 ω μ x 66019 ω' μ' x 5 ∧
+    ∃ ω' μ', FreeStepsH p R 38517 ω μ x 66019 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 1872 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat T ∧ ω'[8] = UInt64.ofNat (T + 16) ∧ ω'[9] = UInt64.ofNat 75976 ∧
       rdN μ' (T + 16) 8 = a + 26 ∧
@@ -570,7 +570,7 @@ theorem a8_e27 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X
     (T a : Nat) (hT : 65536 ≤ T ∧ T + 48 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h5 : ω[5] = UInt64.ofNat a) (h6 : ω[6] = UInt64.ofNat 75976) (ha : a + 31 < 18446744073709551616)
     (hw : ∀ c, T ≤ c → c < T + 48 → μ.writable c = true) :
-    ∃ ω' μ', FreeStepsH p R 38536 ω μ x 66019 ω' μ' x 5 ∧
+    ∃ ω' μ', FreeStepsH p R 38536 ω μ x 66019 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 1874 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat T ∧ ω'[8] = UInt64.ofNat (T + 16) ∧ ω'[9] = UInt64.ofNat 75976 ∧
       rdN μ' (T + 16) 8 = a + 27 ∧
@@ -589,7 +589,7 @@ theorem a8_e28 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X
     (T a : Nat) (hT : 65536 ≤ T ∧ T + 48 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h5 : ω[5] = UInt64.ofNat a) (h6 : ω[6] = UInt64.ofNat 75976) (ha : a + 31 < 18446744073709551616)
     (hw : ∀ c, T ≤ c → c < T + 48 → μ.writable c = true) :
-    ∃ ω' μ', FreeStepsH p R 38555 ω μ x 66019 ω' μ' x 5 ∧
+    ∃ ω' μ', FreeStepsH p R 38555 ω μ x 66019 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 1876 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat T ∧ ω'[8] = UInt64.ofNat (T + 16) ∧ ω'[9] = UInt64.ofNat 75976 ∧
       rdN μ' (T + 16) 8 = a + 28 ∧
@@ -608,7 +608,7 @@ theorem a8_e29 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X
     (T a : Nat) (hT : 65536 ≤ T ∧ T + 48 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h5 : ω[5] = UInt64.ofNat a) (h6 : ω[6] = UInt64.ofNat 75976) (ha : a + 31 < 18446744073709551616)
     (hw : ∀ c, T ≤ c → c < T + 48 → μ.writable c = true) :
-    ∃ ω' μ', FreeStepsH p R 38574 ω μ x 66019 ω' μ' x 5 ∧
+    ∃ ω' μ', FreeStepsH p R 38574 ω μ x 66019 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 1878 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat T ∧ ω'[8] = UInt64.ofNat (T + 16) ∧ ω'[9] = UInt64.ofNat 75976 ∧
       rdN μ' (T + 16) 8 = a + 29 ∧
@@ -627,7 +627,7 @@ theorem a8_e30 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X
     (T a : Nat) (hT : 65536 ≤ T ∧ T + 48 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h5 : ω[5] = UInt64.ofNat a) (h6 : ω[6] = UInt64.ofNat 75976) (ha : a + 31 < 18446744073709551616)
     (hw : ∀ c, T ≤ c → c < T + 48 → μ.writable c = true) :
-    ∃ ω' μ', FreeStepsH p R 38593 ω μ x 66019 ω' μ' x 5 ∧
+    ∃ ω' μ', FreeStepsH p R 38593 ω μ x 66019 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 1880 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat T ∧ ω'[8] = UInt64.ofNat (T + 16) ∧ ω'[9] = UInt64.ofNat 75976 ∧
       rdN μ' (T + 16) 8 = a + 30 ∧
@@ -648,7 +648,7 @@ theorem a8_e {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X) 
     (i T a : Nat) (hi : 1 ≤ i ∧ i ≤ 30) (hT : 65536 ≤ T ∧ T + 48 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h5 : ω[5] = UInt64.ofNat a) (h6 : ω[6] = UInt64.ofNat 75976) (ha : a + 31 < 18446744073709551616)
     (hw : ∀ c, T ≤ c → c < T + 48 → μ.writable c = true) :
-    ∃ ω' μ', FreeStepsH p R (38042 + 19 * (i - 1)) ω μ x 66019 ω' μ' x 5 ∧
+    ∃ ω' μ', FreeStepsH p R (38042 + 19 * (i - 1)) ω μ x 66019 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat (1820 + 2 * i) ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat T ∧ ω'[8] = UInt64.ofNat (T + 16) ∧ ω'[9] = UInt64.ofNat 75976 ∧
       rdN μ' (T + 16) 8 = a + i ∧
@@ -728,7 +728,7 @@ theorem a8_e31 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X
     (T a : Nat) (hT : 65536 ≤ T ∧ T + 48 < 4294967296) (h1 : ω[1] = UInt64.ofNat T)
     (h5 : ω[5] = UInt64.ofNat a) (h6 : ω[6] = UInt64.ofNat 75976) (ha : a + 31 < 18446744073709551616)
     (hw : ∀ c, T ≤ c → c < T + 48 → μ.writable c = true) :
-    ∃ ω' μ', FreeStepsH p R 38612 ω μ x 66019 ω' μ' x 5 ∧
+    ∃ ω' μ', FreeStepsH p R 38612 ω μ x 66019 ω' μ' x 6 ∧
       ω'[0] = UInt64.ofNat 1882 ∧ ω'[1] = ω[1] ∧ ω'[5] = UInt64.ofNat (a + 31) ∧ ω'[6] = ω[6] ∧
       ω'[7] = UInt64.ofNat T ∧ ω'[8] = UInt64.ofNat (T + 16) ∧ ω'[9] = UInt64.ofNat 75976 ∧
       rdN μ' (T + 16) 8 = a + 31 ∧

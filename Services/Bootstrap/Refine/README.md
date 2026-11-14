@@ -229,8 +229,7 @@ session's.
 context afterwards `expDs` (Ω_E on the segments' octets). `RunMixed.run_mixed`: refine from 4792 to its
 return for 1 ≤ n < 128 instructions, each a `FixedKind` passed through or `ExportSegs ds`, the chunks to keep
 before k being the payload's and those of instructions k…n−1; output ℰ of `outI` (`Exported |ds|`), the
-context `expTo` (segments exported in order). Hypotheses beyond `run_fixed`: the export count below 2⁶³ at
-the start; ≤ 2²⁶ segments of < 2³⁰ octets per `Export` (`export_elem_bigC`'s bounds).
+context `expTo` (segments exported in order). Hypotheses beyond `run_fixed`: ≤ 2²⁶ segments of < 2³⁰ octets per `Export` (`export_elem_bigC`'s bounds). No bound on ς is needed: when Ω_E doesn't return FULL, ω₇ = ς + |e| < 𝖶_X.
 
 ### Next
 - Top level: the prologue to 5042 with `PInv 0` (decode, `IntoIter` built, output `Vec::new`), the loop over

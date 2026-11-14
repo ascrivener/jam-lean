@@ -108,7 +108,7 @@ theorem encode_exportSegs (ds : List (List UInt8)) :
     as `RunFixed.run_fixed`, each instruction j either a `FixedKind` with its slot property `Rs j` (passed
     through), or `ExportSegs ds` (its `Rs j` that of `Exported |ds|`, ≤ 2²⁶ segments of < 2³⁰ octets): refine
     returns ℰ(`BootstrapWorkOutput`) of the instructions `outI`, the host context the segments exported in
-    order (`expTo`). Hypotheses: the export count below 2⁶³ at the start; `ExportFmtOk` and `DebugLineOk`. -/
+    order (`expTo`). Hypotheses: `ExportFmtOk` and `DebugLineOk`. -/
 theorem run_mixed {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P]
     (env : RefineHost.Env) (cap0 : Nat) (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616)
     {hb pb : Nat} (gl : Nat → UInt8)
@@ -119,7 +119,7 @@ theorem run_mixed {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
           Rs j bs) ∧ 24 * ds.length < 1073741760 ∧ ∀ d ∈ ds, d.length < 1073741760))
     (fmt : ExportSeg.ExportFmtOk p cap0 env pb S0 S1)
     (dbg : ExitRun.DebugLineOk p cap0 env pb S0 S1 (fun j bs _ => Rs j bs))
-    (x : RefineCtx) (hoff : env.exportOffset + x.2.length < 9223372036854775808)
+    (x : RefineCtx)
     (ω : Regs) (μ : Memory) (s : State) (H : HeapCtx env pb S0 S1 μ s)
     (M q Ly r5 : Nat) (salt : List UInt8) (cp : Chunk)
     (hn : 1 ≤ is.length ∧ is.length < 128) (hM : S0 + 2848 ≤ M ∧ M + 648 ≤ S1 ∧ M % 8 = 0)
@@ -231,8 +231,6 @@ theorem run_mixed {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     fun k hk' => (hcs k hk').2 μ1 (fun _ _ _ _ => rfl)
   have rsub : ∀ j o l, o + l ≤ 232 → μ1.readN (E + 232 * j + o) l = ((μ1.readN (E + 232 * j) 232).drop o).take l :=
     fun j o l h => Decode.Loop.readN_sub μ1 _ 232 o l _ rfl h
-  have hbd : ∀ k, env.exportOffset + (expTo env is x k).2.length < 9223372036854775808 := fun k => by
-    have := expTo_bound env is x k; omega
   have elem : ∀ k, k < n →
       PassOk μ1 ((⟨E - 32, (232 * n + 31) / 32 + 1, true⟩ : Chunk).addr + 32) k (Kp k) (Kp (k + 1)) Rs
         (expTo env is x k) (expTo env is x (k + 1)) ∨
@@ -249,11 +247,11 @@ theorem run_mixed {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     · have sl := slot k hk'
       rcases ds with _ | ⟨d0, ds'⟩
       · simp only [repsM, hds] at sl
-        exact Or.inr (export_ok_empty sl (hmono k) hR (by have := hbd k; omega)
+        exact Or.inr (export_ok_empty sl (hmono k) hR
           (by rw [hxs]; unfold instrCtx; rw [hds]; rfl))
       · simp only [repsM, hds] at sl
         refine Or.inr (export_ok_big sl hb1 hb2 (fun c hc => ⟨Or.inr ⟨k, Nat.le_refl _, hk', hc⟩,
-          ((hcs k hk').1 c hc).2.2.1⟩) ?_ hR (by have := hbd k; omega) (by rw [hxs]; unfold instrCtx; rw [hds]))
+          ((hcs k hk').1 c hc).2.2.1⟩) ?_ hR (by rw [hxs]; unfold instrCtx; rw [hds]))
         rintro d (hd | ⟨j, hj1, hj2, hdj⟩)
         · rw [hd]; exact ⟨Or.inl rfl, fun h => ((hcs k hk').1 _ h).2.2.2 rfl, fun c hc e =>
             ((hcs k hk').1 c hc).2.2.2 (ainj c ((hcs k hk').1 c hc).1 _ hcp1 e.symm)⟩

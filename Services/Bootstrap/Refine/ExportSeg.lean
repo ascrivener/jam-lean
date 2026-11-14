@@ -117,7 +117,6 @@ theorem seg {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR
     (H : HeapCtx env pb S0 S1 μ s) (M g sp sl en : Nat)
     (hM : S0 + 456 ≤ M ∧ M + 648 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0)
     (hg : g + 24 ≤ 2147483648) (hsp : sp + sl ≤ 2147483648) (hen : en < 18446744073709551616)
-    (hoff : env.exportOffset + x.2.length < 18446744073709551615)
     (h1 : ω[1] = UInt64.ofNat M) (h5 : ω[5] = UInt64.ofNat g)
     (s8 : μ.readN (g + 8) 8 = Num.encodeLE 8 sp) (s16 : μ.readN (g + 16) 8 = Num.encodeLE 8 sl)
     (s152 : μ.readN (M + 152) 8 = Num.encodeLE 8 en)
@@ -148,6 +147,7 @@ theorem seg {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR
     rw [exportCtx_eq a7 a8 (by omega) (by omega)]
     exact expSeg_congr (fun a h1 h2 => afr a (by omega) (Or.inl (by omega)))
   have hv : exportR7 env x < 18446744073709551615 := by
+    have hC : Constants.Cmaxpackageexports = 3072 := rfl
     unfold exportR7; split
     · unfold Result.FULL; decide
     · omega
@@ -263,7 +263,6 @@ theorem segs {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCode
     (hM : S0 + 456 ≤ M ∧ M + 648 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0) (hn : 0 < n)
     (hp : ptr + 24 * n ≤ 2147483648)
     (hseg : ∀ j, j < n → rdN μ0 (ptr + 24 * j + 8) 8 + rdN μ0 (ptr + 24 * j + 16) 8 ≤ 2147483648)
-    (hoff : env.exportOffset + x0.2.length + n < 18446744073709551615)
     (hin : ∀ a, (ptr ≤ a ∧ a < ptr + 24 * n) ∨ (∃ j, j < n ∧ rdN μ0 (ptr + 24 * j + 8) 8 ≤ a ∧
       a < rdN μ0 (ptr + 24 * j + 8) 8 + rdN μ0 (ptr + 24 * j + 16) 8) → ∃ d ∈ chunks s0, d.used = true ∧ InData d a) :
     ∀ m k (ω : Regs) (μ : Memory) (s : State), k + m = n → k < n → HeapCtx env pb S0 S1 μ s →
@@ -314,7 +313,7 @@ theorem segs {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCode
     have hlk := hlen k
     rcases seg (p := p) (P := P) env cap0 hcap1 hcap0 fmt (expUpTo env μ0 ptr x0 k) ω μ s H M (ptr + 24 * k)
         (rdN μ0 (ptr + 24 * k + 8) 8) (rdN μ0 (ptr + 24 * k + 16) 8) (ptr + 24 * n)
-        ⟨hS0M, hMS1, hM2, hM8⟩ (by omega) hsl (by omega) (by omega) b1 b5 s8 s16 b152 rgk rdk with
+        ⟨hS0M, hMS1, hM2, hM8⟩ (by omega) hsl (by omega) b1 b5 s8 s16 b152 rgk rdk with
       ⟨ω1, μ1, s1, N1, run1, H1, e1, e5, efr, ekeep⟩ | hx
     · have hx1 : expSeg env (rdN μ0 (ptr + 24 * k + 8) 8) (rdN μ0 (ptr + 24 * k + 16) 8) μ
           (expUpTo env μ0 ptr x0 k) = expUpTo env μ0 ptr x0 (k + 1) := by

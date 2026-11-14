@@ -36,7 +36,7 @@ theorem ExportOk.congr {env : RefineHost.Env} {μ μ' : Memory} {E k : Nat} {ce 
     (h : ∀ a, a < 2147483648 → μ'.read a = μ.read a)
     (ok : ExportOk env μ E k ce Kp Kp' O x x') : ExportOk env μ' E k ce Kp Kp' O x x' := by
   obtain ⟨capv, ptrv, ns, co, capf, qf, lf, sD0, sv8, sv16, sv24, hcv, hnc, hp, hco, hcoD, hw0, hcap, hql, hq,
-    hcs, hsd, hoff, hK', hO, hx⟩ := ok
+    hcs, hsd, hK', hO, hx⟩ := ok
   have r : ∀ a l, a + l ≤ 2147483648 → μ'.readN a l = μ.readN a l :=
     fun a l hl => Memory.readN_congr (fun j hj => h _ (by omega))
   have rq : ∀ j, j < ns → rdN μ (ptrv + 24 * j + 8) 8 = qf j ∧ rdN μ (ptrv + 24 * j + 16) 8 = lf j :=
@@ -44,7 +44,7 @@ theorem ExportOk.congr {env : RefineHost.Env} {μ μ' : Memory} {E k : Nat} {ce 
   refine ⟨capv, ptrv, ns, co, capf, qf, lf, by rw [r _ _ (by omega)]; exact sD0, by rw [r _ _ (by omega)]; exact sv8,
     by rw [r _ _ (by omega)]; exact sv16, by rw [r _ _ (by omega)]; exact sv24, hcv, hnc, hp, hco, hcoD,
     fun i hi => ⟨by rw [r _ _ (by omega)]; exact (hw0 i hi).1, by rw [r _ _ (by omega)]; exact (hw0 i hi).2.1,
-      by rw [r _ _ (by omega)]; exact (hw0 i hi).2.2⟩, hcap, hql, hq, hcs, hsd, hoff, hK', hO, ?_⟩
+      by rw [r _ _ (by omega)]; exact (hw0 i hi).2.2⟩, hcap, hql, hq, hcs, hsd, hK', hO, ?_⟩
   rw [hx, ExportElem.expUpTo_congr ns (fun a ha => h a (by
     rcases ha with ⟨-, h2⟩ | ⟨j, hj, -, h2⟩
     · omega

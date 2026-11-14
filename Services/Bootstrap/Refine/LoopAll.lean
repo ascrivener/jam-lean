@@ -74,7 +74,6 @@ def ExportOk (env : RefineHost.Env) (μ0 : Memory) (E k : Nat) (ce : Chunk) (Kp 
     (∀ i, i < ns → capf i ≠ 0 → qf i ≠ co.addr + 32 ∧ ∀ j, j < ns → j ≠ i → capf j ≠ 0 → qf j ≠ qf i) ∧
     (∀ i, i < ns → capf i ≠ 0 → ∃ c, Kp c ∧ c ≠ ce ∧ c.addr + 32 = qf i) ∧
     (∀ i, i < ns → ∀ a, qf i ≤ a → a < qf i + lf i → ∃ d, Kp d ∧ InData d a) ∧
-    env.exportOffset + x.2.length + ns < 18446744073709551615 ∧
     (∀ d, Kp' d → Kp d ∧ (capv ≠ 0 → d ≠ co) ∧ ∀ i, i < ns → capf i ≠ 0 → d.addr + 32 ≠ qf i) ∧
     (∀ (μ' : Memory) (a : Nat), μ'.readN a 8 = Num.encodeLE 8 (9223372036854775807 + 20) →
       μ'.readN (a + 8) 8 = Num.encodeLE 8 ns → O k (μ'.readN a 232)) ∧
@@ -120,9 +119,9 @@ theorem loop_all {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Has
             omega)
         exact Or.inl ⟨ω1, μ1, ctx k, _, run1, hx.symm, s, PInv.mono_kp st1 hK⟩
     · obtain ⟨capv, ptrv, ns, co, capf, qf, lf, sD0, sv8, sv16, sv24, hcv, hnc, hp, hco, hcoD, hw0, hcap, hql, hq,
-        hcs, hsd, hoff, hK', hO, hx⟩ := hex
+        hcs, hsd, hK', hO, hx⟩ := hex
       rcases ExportElem.export_step (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 fmt (ctx k) ω μ μ0 s L k hk
-          capv ptrv ns co capf qf lf sD0 sv8 sv16 sv24 hcv hnc hp hco hcoD hw0 hcap hql hq hcs hsd hoff hK' hO st with
+          capv ptrv ns co capf qf lf sD0 sv8 sv16 sv24 hcv hnc hp hco hcoD hw0 hcap hql hq hcs hsd hK' hO st with
         ⟨s1, ω1, μ1, N, run1, st1⟩ | hx'
       · exact Or.inl ⟨ω1, μ1, _, N, run1, hx.symm, s1, st1⟩
       · exact Or.inr hx'

@@ -76,7 +76,7 @@ theorem export_ok_empty {env : RefineHost.Env} {μ0 : Memory} {E k : Nat} {ce : 
         (bs.drop 16).take 8 = Num.encodeLE 8 8 ∧ (bs.drop 24).take 8 = Num.encodeLE 8 0)
     (hK : ∀ d, Kp' d → Kp d)
     (hO : ∀ bs, bs.take 8 = Num.encodeLE 8 9223372036854775827 → (bs.drop 8).take 8 = Num.encodeLE 8 0 → O k bs)
-    (hoff : env.exportOffset + x.2.length < 18446744073709551615) (hx : x' = x) :
+    (hx : x' = x) :
     ExportOk env μ0 E k ce Kp Kp' O x x' := by
   obtain ⟨s0, s8, s16, s24⟩ := hs
   have sub : ∀ o, o + 8 ≤ 232 → μ0.readN (E + 232 * k + o) 8 = ((μ0.readN (E + 232 * k) 232).drop o).take 8 :=
@@ -86,7 +86,7 @@ theorem export_ok_empty {env : RefineHost.Env} {μ0 : Memory} {E k : Nat} {ce : 
     by decide, fun h => absurd rfl h, fun a h1 h2 => by omega, fun i hi => absurd hi (Nat.not_lt_zero _),
     fun i hi => absurd hi (Nat.not_lt_zero _), fun i hi => absurd hi (Nat.not_lt_zero _),
     fun i hi => absurd hi (Nat.not_lt_zero _), fun i hi => absurd hi (Nat.not_lt_zero _),
-    fun i hi => absurd hi (Nat.not_lt_zero _), by omega,
+    fun i hi => absurd hi (Nat.not_lt_zero _),
     fun d h => ⟨hK d h, fun h => absurd rfl h, fun i hi => absurd hi (Nat.not_lt_zero _)⟩, ?_, by rw [hx]; rfl⟩
   · rw [← readN_take μ0 _ 232 8 (by omega)]; exact s0
   · intro μ' a h0 h8
@@ -106,7 +106,7 @@ theorem export_ok_big {env : RefineHost.Env} {μ0 : Memory} {E k : Nat} {ce : Ch
     (hK : ∀ d, Kp' d → Kp d ∧ d ∉ cs ∧ ∀ c ∈ cs, d.addr ≠ c.addr)
     (hO : ∀ bs, bs.take 8 = Num.encodeLE 8 9223372036854775827 → (bs.drop 8).take 8 = Num.encodeLE 8 ds.length →
       O k bs)
-    (hoff : env.exportOffset + x.2.length + ds.length < 18446744073709551615) (hx : x' = expDs env ds x) :
+    (hx : x' = expDs env ds x) :
     ExportOk env μ0 E k ce Kp Kp' O x x' := by
   obtain ⟨h0, q, qs, co, h8, h16, h24, hj, hco, hcou, hcoa, hcoe, hz, hne, hqne, hqd, hq8, hqs⟩ := hrep
   have sub : ∀ o, o + 8 ≤ 232 → μ0.readN (E + 232 * k + o) 8 = ((μ0.readN (E + 232 * k) 232).drop o).take 8 :=
@@ -118,7 +118,7 @@ theorem export_ok_big {env : RefineHost.Env} {μ0 : Memory} {E k : Nat} {ce : Ch
     ?_, by rw [sub 8 (by omega)]; exact h8, by rw [sub 16 (by omega)]; exact h16,
     by rw [sub 24 (by omega)]; exact h24, by omega, Nat.le_refl _, hq8,
     fun _ => ⟨(hcs co hco).1, (hcs co hco).2, hcoa⟩, inData_of hcoa hcoe, fun i hi => ?_, fun i hi => ?_,
-    fun i hi => ?_, fun i hi hc => ?_, fun i hi hc => ?_, fun i hi a ha1 ha2 => ?_, by omega,
+    fun i hi => ?_, fun i hi hc => ?_, fun i hi hc => ?_, fun i hi a ha1 ha2 => ?_,
     fun d hd => ?_, ?_, ?_⟩
   · rw [← readN_take μ0 _ 232 8 (by omega)]; exact h0
   · simp only [gl i hi]; exact ⟨(hj i hi).1, (hj i hi).2.1, (hj i hi).2.2.1⟩

@@ -62,7 +62,6 @@ theorem mid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR
       μ0.readN (ptrv + 24 * i + 16) 8 = Num.encodeLE 8 (lf i))
     (hql : ∀ i, i < ns → qf i + lf i ≤ 2147483648)
     (hsd : ∀ i, i < ns → ∀ a, qf i ≤ a → a < qf i + lf i → ∃ d, Kp d ∧ InData d a)
-    (hoff : env.exportOffset + x.2.length + ns < 18446744073709551615)
     (st : PInv env pb S0 S1 M E n ce capI μ0 Kp O i k ω μ s) :
     (∃ (ω' : Regs) (μ' : Memory) (s' : State) (N : Nat),
       FreeStepsH p (refineContractK cap0 env) i ω μ x 5810 ω' μ' (ExportSeg.expUpTo env μ0 ptrv x ns) N ∧
@@ -154,7 +153,6 @@ theorem mid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR
     rcases ExportSeg.segs (p := p) (P := P) env cap0 hcap1 hcap0 fmt x μ2 s M ptrv ns
         ⟨hS0M, hMS1, hM2, hM8⟩ (by omega) (by omega)
         (fun j hj => by rw [r2 j 8 hj (by omega), r2 j 16 hj (by omega), (rq j hj).1, (rq j hj).2]; exact hql j hj)
-        hoff
         (fun a ha => by
           have ha' : (ptrv ≤ a ∧ a < ptrv + 24 * ns) ∨ (∃ j, j < ns ∧ rdN μ0 (ptrv + 24 * j + 8) 8 ≤ a ∧
               a < rdN μ0 (ptrv + 24 * j + 8) 8 + rdN μ0 (ptrv + 24 * j + 16) 8) := by
@@ -303,7 +301,6 @@ theorem export_step {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [
     (hq : ∀ i, i < ns → capf i ≠ 0 → qf i ≠ co.addr + 32 ∧ ∀ j, j < ns → j ≠ i → capf j ≠ 0 → qf j ≠ qf i)
     (hcs : ∀ i, i < ns → capf i ≠ 0 → ∃ c, Kp c ∧ c ≠ ce ∧ c.addr + 32 = qf i)
     (hsd : ∀ i, i < ns → ∀ a, qf i ≤ a → a < qf i + lf i → ∃ d, Kp d ∧ InData d a)
-    (hoff : env.exportOffset + x.2.length + ns < 18446744073709551615)
     (hK' : ∀ d, Kp' d → Kp d ∧ (capv ≠ 0 → d ≠ co) ∧ ∀ i, i < ns → capf i ≠ 0 → d.addr + 32 ≠ qf i)
     (hO : ∀ (μ' : Memory) (a : Nat), μ'.readN a 8 = Num.encodeLE 8 (9223372036854775807 + 20) →
       μ'.readN (a + 8) 8 = Num.encodeLE 8 ns → O k (μ'.readN a 232))
@@ -320,7 +317,7 @@ theorem export_step {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [
   have hbT := st.H.hbT
   have hS1 := st.H.hS1
   rcases mid (p := p) (P := P) env cap0 hcap1 hcap0 fmt x ω μ μ0 s L k hk capv ptrv ns co qf lf sD0 sv8 sv16 sv24
-      hcv hnc hp (fun h => (hco h).1) hcoD (fun i hi => ⟨(hw0 i hi).2.1, (hw0 i hi).2.2⟩) hql hsd hoff st with
+      hcv hnc hp (fun h => (hco h).1) hcoD (fun i hi => ⟨(hw0 i hi).2.1, (hw0 i hi).2.2⟩) hql hsd st with
     ⟨ω3, μ3, s3, N3, run3, H3, c1, c144, c280, c56, c64, c72, c96, c104, cfr, ckeep⟩ | hx
   rotate_left
   · exact Or.inr hx

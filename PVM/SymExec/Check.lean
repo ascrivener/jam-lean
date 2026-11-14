@@ -328,7 +328,8 @@ theorem check_sound {X : Type} {p : ByteArray} {R : HostRel X} {P : Program} {st
     (hwr : WrHold ⟨fun k => vals.getD k 0, ω, μ⟩ μ st.wr)
     (hsep : SepHold ⟨fun k => vals.getD k 0, ω, μ⟩ st.sep)
     (hr : RegsHold ⟨fun k => vals.getD k 0, ω, μ⟩ ω A.regs)
-    (hc : CellsHold ⟨fun k => vals.getD k 0, ω, μ⟩ μ A.cells) (x : X) :
+    (hc : CellsHold ⟨fun k => vals.getD k 0, ω, μ⟩ μ A.cells) (x : X)
+    (hH : HostOk R G.hosts := by exact trivial) :
     ∃ ω' μ', FreeStepsH p R start ω μ x tgt ω' μ' x k ∧
       RegsHold ⟨fun k => vals.getD k 0, ω, μ⟩ ω' T.regs ∧
       CellsHold ⟨fun k => vals.getD k 0, ω, μ⟩ μ' T.cells ∧
@@ -341,7 +342,7 @@ theorem check_sound {X : Type} {p : ByteArray} {R : HostRel X} {P : Program} {st
   obtain ⟨hok, h⟩ := h
   split at h
   · rename_i σ' hrun
-    obtain ⟨ω', μ', hsteps, hinv⟩ := srun_sound (E := E) hG hpre x k start
+    obtain ⟨ω', μ', hsteps, hinv⟩ := srun_sound (E := E) hG hH hpre x k start
       (init A) ω μ σ' (init_inv (E := E) hpre hok hr hc) hrun
     exact ⟨ω', μ', hsteps, entails_sound hpre hinv h⟩
   · cases h

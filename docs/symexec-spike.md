@@ -231,6 +231,98 @@ Integration work, on branch `claude/symexec-phase1`:
   executor cannot follow, or the target facts that do not entail. It uses the same tests as the
   check, so it reports nothing on a check the kernel accepts.
 
+## Phase 2 (in progress)
+
+Coverage work, approved after Phase 1. Each feature lands as its own PR.
+
+* **Table reads at a symbolic index.** A load at v + x where v is a literal base c plus an index i
+  (by `add_64` or `add_imm_64`, possibly under mod 2^64) is followed when:
+  * i's bound b is at most 4096;
+  * the table [c + x, c + x + b − 1 + n) lies in ℕ_{2^32} and in a readable or writable region;
+  * every entry is a literal in the state's cells.
+
+  The loaded value is the new `SVal.tbl vs i`, which denotes entry i of the literal list vs. The
+  rules are in `idxOf`, `tvals`, `tload` and `ldv`, and their proofs in `tload_sound`.
+  `and_imm` now has a bound (x + 1), so `v & 15` indexes a 16-entry table.
+  Example: `Services/Bootstrap/SymExec/Hex.lean` covers one iteration of the hex-digit loop
+  (pc 60553, `load_u8 r10, [71060 + (w & 15)]`) on a symbolic word w. It checks in about 1 s.
+* **Symbolic branches.**
+  * A signed comparison against an immediate is decided on a value below 2^63:
+    * for an immediate below 2^63, it is the unsigned comparison;
+    * for a negative immediate, it is decided outright.
+  * A comparison of two registers is decided by any of:
+    * equal values;
+    * a common affine base (compare the offsets);
+    * the bounds.
+  * Signed two-register comparisons are decided on operands below 2^63.
+  * The rules are `scond` (with `toU` and `negImm`), `scond2`, `ltU`, `eqU` and `sameBase`.
+* **Host calls.**
+  * `Prog` has an optional table `hosts`, from host-call id to a list of host effects
+    (`HostEff`). The table is empty by default, so existing code tables and instances are
+    unchanged.
+  * A host effect has three parts:
+    * preconditions: registers that must hold given literals;
+    * an optional write of a literal at a literal address;
+    * registers set to literals.
+
+    Memory outside the write and the context stay unchanged. The executor takes the first listed
+    effect whose preconditions hold.
+  * `EffOk R h e` says the contract R allows effect e for id h. `HostOk R hosts` says this of
+    every listed effect.
+  * `fetch0Eff v o f z` is `fetch` of the parameters, kind 0. `refine_fetch0` and `acc_fetch0`
+    prove it for `Params.full`. Example: `prefixC2_ok`, PrefixC's steps 32 … 47 through the
+    `fetch` at pc 47490, in about 2 s.
+  * `srun` follows `ecalli h` when h is in the table.
+  * `srun_sound`, `check_sound` and `seg_sound` take `hH : HostOk R G.hosts`. `HostOk` says the
+    contract R allows each listed call from any state. The argument is filled automatically
+    (`trivial`) when the table is empty.
+  * `Services/Bootstrap/SymExec/Hosts.lean` gives `logHosts` (`log`, id 100: ω₇ := WHAT), with
+    `refine_logHosts` and `acc_logHosts`. They prove that `refineContractK cap env` and
+    `accContractK cap env` allow it for every 𝖬_∅ ≤ cap < 2^64.
+  * Use `{ prog with hosts := logHosts }`; the existing `hyp` proves its `ProgHyp`. Example: `log4770`.
+* **`min_u` and `max_u`** of two values whose bounds order them simplify to one of them (`leB`).
+* **Zero offsets.** An affine value ρ_k + 0 is kept as `.var k` (`affVal`), so it matches a
+  target that names ρ_k.
+  * Not covered:
+    * `fetch` of the other kinds, whose value depends on the environment;
+    * `grow_heap`, which changes the page map that the memory model keeps fixed.
+
+    Such a call still ends a segment, and a hand-written summary takes over there.
+
+## Using the executor for a hand-written stretch
+
+A stretch currently proved with `pvm_go` can instead be checked by the executor. The template is
+`Services/Bootstrap/SymExec/FixedZ.lean`, which re-proves `Decode.Fixed.z1` and `z2` with the
+same statements.
+
+1. **Name the naturals** the statement quantifies over (sp, O, n, …) as ρ₀, ρ₁, … Write a
+   `Static` with:
+   * their exclusive upper bounds `ub` and lower bounds `lb`;
+   * the readable regions `rd` and writable regions `wr` the hypotheses give, as `(Aff, length)`,
+     e.g. `(⟨some 0, -120⟩, 120)` for [sp − 120, sp);
+   * the pairs `sep` the hypotheses make disjoint.
+2. **Write the start state** `A : Spec`:
+   * registers `(r, v)` with values `.var k`, `.const n` or `.addr ⟨some k, d⟩`;
+   * cells `(address, width, value)` for the octets the hypotheses fix.
+3. **Write the end state** `T : Spec`, the frame (the regions written) and the exact step count k.
+   `srun` runs exactly k steps; `FreeStepsH`'s bound is an upper bound, so the statement's count
+   can stay larger via `FreeStepsH.pad`.
+4. **Check** with `theorem ok : check st prog A T F start tgt k = true := by decide +kernel`.
+   While writing, `#eval traceCheck st prog A T F start tgt k` reports either the first step the
+   executor cannot follow or each wanted-versus-have mismatch. Write T with the shapes it prints.
+5. **Bridge.** `check_sound ok hyp vals hB hLB ω μ hrd hwr hsep hr hc x` gives the run, the
+   registers, the cells, the frame and the pages. Restate them in the statement's terms; see
+   `FixedZ.z1`. Typical steps are `simp only [SVal.eval, Aff.eval]` and one `omega` per address.
+
+**Case splits.** A branch the bounds do not decide (e.g. `n ≤ 1024`) needs one check per case,
+each with tighter bounds. Combine the cases in the bridge.
+
+**Host calls.** Use `{ prog with hosts := logHosts }` and pass `refine_logHosts …` or
+`acc_logHosts …` as the last argument of `check_sound`.
+
+**Measured.** `Decode/VecU32U64.p1` (pc 2727 to 32989, 28 steps, with a symbolic stack pointer,
+symbolic n and a `min_u`; case n ≤ 1024) checks in about 1 s.
+
 ## Generator interface
 
 What a generator (e.g. `genwitnesssteps`) should emit to target the executor.
@@ -252,8 +344,8 @@ and `hyp : ProgHyp p P prog` from the binary's code facts. The code facts must i
   * `rd`, `wr`: regions, each `(address, length)`;
   * `frame`: every region written since the chain's start, cumulative. A cut's frame must cover the
     previous cut's frame.
-  * Values must be closed: `.const n`, `.var k`, `.addr ⟨some k, d⟩`, or `.const (Num.decodeLE
-    [bytes])` for literal octets. Addresses are `⟨none, n⟩` (literal) or `⟨some k, d⟩`
+  * Values must be closed: `.const n`, `.var k`, `.addr ⟨some k, d⟩`, `.const (Num.decodeLE
+    [bytes])` for literal octets, or `.tbl vs i` (entry i of the literals vs) for a closed i. Addresses are `⟨none, n⟩` (literal) or `⟨some k, d⟩`
     (ρ_k + d, with d an integer).
 * One theorem per segment. Its statement is
   `cut_a.Holds vals μ₀ ω μ → ∃ ω' μ', FreeStepsH p R start ω μ x tgt ω' μ' x k ∧ cut_b.Holds vals μ₀ ω' μ'`.
@@ -264,8 +356,9 @@ and `hyp : ProgHyp p P prog` from the binary's code facts. The code facts must i
 **Where to cut.**
 * A segment can be as long as the executor can follow it. Keep each check to 128–256 steps, so its
   memory stays around +0.3 GB.
-* A chain must also be cut wherever the executor cannot follow: host calls, branches on symbolic
-  conditions, table reads at a symbolic index, base + index·stride addresses, and regions of
+* A chain must also be cut wherever the executor cannot follow: host calls other than those in
+  `hosts` (e.g. `fetch`, `grow_heap`), branches the bounds do not decide, base + index·stride
+  addresses, and regions of
   symbolic length. A hand-written summary takes over there; its pre- and post-conditions are
   stated as, or converted to and from, `Cut.Holds`.
 

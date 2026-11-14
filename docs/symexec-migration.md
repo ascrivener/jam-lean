@@ -51,13 +51,36 @@ Lean time per module summed over the family (4 cores, `lake build`; before: the 
 | GlueY | 20 | — | ≈ 170 | ≈ 12 |
 | VTail1 … VTail8 | 70 … 83 | host calls; hex-digit loop (1–6 segments) | ≈ 5740 | ≈ 865 |
 | PrefixC | 38 | 4 host calls | ≈ 500 | ≈ 180 |
+| Witness ErrTail | — | host call | 687 | ≈ 40 |
+| Witness EmptyTail | — | host call | 615 | ≈ 38 |
+| Witness PrefixC | — | 4 host calls | 578 | ≈ 130 |
 
-The code tables are built once: `Prog` ≈ 140 s, `ProgAll` more.
+The code tables are built once: `Prog` ≈ 140 s, `ProgAll` more, the witness `Prog` ≈ 38 s.
+Witness chains use `prog=Services.Witness.SymExec.Prog,Services.Witness.SymExec.hyp`; they were
+generated without `frame`, so the converter takes all of ℕ_{2^32} as each cut's frame. AccPrefixC
+is converted too (on `progAll`).
 
-## Not migrated yet
+## Not migrated yet (handoff, 2026-11-14)
 
-* `AccPrefixC`: it runs accumulate code, so it needs `progAll`.
-* `GlueY2` (3 segments).
-* The `Services/Witness` chains: they need a code table of the witness binary.
-* Phase 2 of the executor: the hex-digit table read at a symbolic index (pc 60553, BTail and VTail
-  S35–S40).
+The parent session paused these: the remaining gains are small. In order of value:
+
+1. **Phase 2 features (#156, on main).** The executor now follows the hex-digit table read at a
+   symbolic index and `log` host calls; #164 (stacked on #156) adds `fetch` kind 0.
+   * Drop the default `nopc=60553` so BTail/VTail S35–S40 convert.
+   * Convert the kept host-call segments: build the table as
+     `{ prog with hosts := .node (.node .leaf 2 [fetch0Eff …] .leaf) 100 [logEff] .leaf }` (or
+     `logHosts`), a search tree keyed by host-call id, and pass `hH : HostOk R G.hosts` to
+     `seg_sound` (its last argument, default `trivial`). Example: `prefixC2_ok` in
+     `Services/Bootstrap/SymExec/Hosts.lean`. `fetch0Eff` takes the literal ω₇/ω₈/ω₉ at the call
+     (`traceRun` / `traceCheck` print them).
+   * `HeapPages` is not part of `Cut.Holds`: derive it in the bridge from `μ'.pages = μ.pages`.
+   * `grow_heap` is not supported by the executor.
+2. **OTail S87–S99**: states with byte-split cells (`I % 256`, `I / 256`). Converter work only:
+   emit `.mod (.var k) 256` and `mkMod (.alu2i .shloRImm64 (.const 0) (.var k) 8) 256` for them.
+3. **Witness Front3, Front4, EFront3**: states with derived values (Y + 32, Y − 1, a sign extension
+   of S) and the extra field `uk`. Converter work only: `.addr ⟨some k, off⟩` and `.sx 4 (.var k)`.
+4. **GlueY2** (3 segments): not worth it.
+
+Each converter change must keep CI's generated-files check: the `python3 scripts/gen_exec_chain.py`
+line after each chain's `genwitnesssteps` line in `.github/workflows/ci.yml` must reproduce the
+committed files exactly.

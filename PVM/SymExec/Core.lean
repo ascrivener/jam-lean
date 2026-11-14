@@ -305,6 +305,15 @@ def NTree.All {α : Type} (Q : Nat → α → Prop) : NTree α → Prop
   | .leaf => True
   | .node l k v r => Q k v ∧ l.All Q ∧ r.All Q
 
+/-- The effect of a host call when registers hold literals: when ω_r = v for each (r, v) in
+    `pre`, it writes ℰ_n(v) at the literal address a for `wr = some (a, n, v)`, sets the
+    registers in `out` to literals, and leaves the rest of memory and the context unchanged. -/
+structure HostEff where
+  pre : List (Nat × Nat) := []
+  wr : Option (Nat × Nat × Nat) := none
+  out : List (Nat × Nat)
+  deriving Repr
+
 /-- The code a stretch runs through: at each pc its instruction and ı + 1 + skip(ı) (the `d_i` of
     the code facts), block starts (`bs_i`), jump-table entries (`jte_k`) and |**j**| (`jts`). -/
 structure Prog where
@@ -312,9 +321,9 @@ structure Prog where
   bs : NTree Bool
   jt : NTree Nat
   jsize : Nat
-  /-- Host calls the executor may follow, by id: each sets the listed registers to literals and
-      leaves memory and the context unchanged. Their outcomes are justified by `HostOk`. -/
-  hosts : NTree (List (Nat × Nat)) := .leaf
+  /-- Host calls the executor may follow, by id: the effects (`HostEff`) it may take, the first
+      whose preconditions hold. Their outcomes are justified by `HostOk`. -/
+  hosts : NTree (List HostEff) := .leaf
 
 /-- The facts of a `Prog` hold of the program `p` deblobs to. -/
 def ProgHyp (p : ByteArray) (P : Program) (G : Prog) : Prop :=
@@ -610,12 +619,28 @@ def hset (σ : SState) : List (Nat × Nat) → SState
   | [] => σ
   | (r, v) :: rs => hset (setv σ r (.const v)) rs
 
+/-- The preconditions of a host effect hold of σ. -/
+def hpre (σ : SState) (e : HostEff) : Bool :=
+  e.pre.all fun p => decide (p.1 < 13) && rdv st σ p.1 == .const p.2
+
+/-- The write of a host effect. -/
+def hwr (σ : SState) : Option (Nat × Nat × Nat) → Option SState
+  | none => some σ
+  | some (a, n, v) => if a < two32 ∧ a + n ≤ two32 then sstore st σ ⟨none, a⟩ n (.const v) else none
+
+/-- A host effect applied to σ. -/
+def happly (σ : SState) (e : HostEff) : Option SState :=
+  if e.out.all (·.1 < 13) then (hwr st σ e.wr).map (hset · e.out) else none
+
 /-- A host call `ecalli h` (§A.5.2) whose id the host table lists: the next pc and state. -/
 def hstep (G : Prog) (pc : Nat) (σ : SState) : Option (Nat × SState) :=
   match G.code.find pc with
   | some (.oneImm .ecalli h, n) =>
     match G.hosts.find h.toNat with
-    | some rs => if rs.all (·.1 < 13) then some (n, hset σ rs) else none
+    | some es =>
+      match es.find? (hpre st σ) with
+      | some e => (happly st σ e).map (n, ·)
+      | none => none
     | none => none
   | _ => none
 
@@ -626,7 +651,7 @@ def srun (G : Prog) (target : Nat) : Nat → Nat → SState → Option SState
     match sstep st G pc σ with
     | some (pc', σ') => srun G target k pc' σ'
     | none =>
-      match hstep G pc σ with
+      match hstep st G pc σ with
       | some (pc', σ') => srun G target k pc' σ'
       | none => none
 

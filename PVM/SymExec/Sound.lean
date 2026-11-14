@@ -1443,11 +1443,22 @@ def hregs (ω : Regs) : List (Nat × Nat) → Regs
   | [] => ω
   | (r, v) :: rs => hregs (if h : r < 13 then ω.set r (UInt64.ofNat v) h else ω) rs
 
-/-- Every host call the table lists is one the contract `R` allows: from any state it continues,
-    with the listed registers set and memory and the context unchanged. Proved once per contract;
-    an empty table needs nothing. -/
-def HostOk {X : Type} (R : HostRel X) (hosts : NTree (List (Nat × Nat))) : Prop :=
-  hosts.All fun h rs => ∀ ω μ x, R h ω μ x .cont (hregs ω rs) μ x
+/-- The memory after a host effect's write. -/
+def hmem (μ : Memory) : Option (Nat × Nat × Nat) → Memory
+  | none => μ
+  | some (a, n, v) => μ.writeN a (encodeLE n v)
+
+/-- The contract `R` allows the host effect `e` for id `h`: from any state where its preconditions
+    hold and its write's octets are writable, the call continues with that effect. -/
+def EffOk {X : Type} (R : HostRel X) (h : Nat) (e : HostEff) : Prop :=
+  ∀ ω μ x, (∀ p ∈ e.pre, ∀ hr : p.1 < 13, (ω.get ⟨p.1, hr⟩).toNat = p.2) →
+    (∀ w, e.wr = some w → ∀ t, w.1 ≤ t → t < w.1 + w.2.1 → μ.writable t = true) →
+    R h ω μ x .cont (hregs ω e.out) (hmem μ e.wr) x
+
+/-- Every host effect the table lists is one the contract `R` allows (`EffOk`). Proved once per
+    contract; an empty table needs nothing. -/
+def HostOk {X : Type} (R : HostRel X) (hosts : NTree (List HostEff)) : Prop :=
+  hosts.All fun h es => ∀ e ∈ es, EffOk R h e
 
 theorem hset_inv {μ : Memory} : ∀ (rs : List (Nat × Nat)) {σ : SState} {ω : Regs},
     Inv E σ ω μ → rs.all (·.1 < 13) = true → Inv E (hset σ rs) (hregs ω rs) μ
@@ -1456,6 +1467,34 @@ theorem hset_inv {μ : Memory} : ∀ (rs : List (Nat × Nat)) {σ : SState} {ω 
     simp only [List.all_cons, Bool.and_eq_true, decide_eq_true_eq] at hall
     simp only [hset, hregs, dif_pos hall.1]
     exact hset_inv rs (setv_inv h ⟨r, hall.1⟩ (.const v)) hall.2
+
+theorem hpre_sound (hP : Pre E st) {σ : SState} {ω : Regs} {μ : Memory} (hinv : Inv E σ ω μ)
+    {e : HostEff} (h : hpre st σ e = true) :
+    ∀ p ∈ e.pre, ∀ hr : p.1 < 13, (ω.get ⟨p.1, hr⟩).toNat = p.2 := by
+  intro p hp hr
+  have hp' := List.all_eq_true.1 h p hp
+  simp only [Bool.and_eq_true, beq_iff_eq] at hp'
+  have := rdv_eval hP hinv.2.1 ⟨p.1, hr⟩
+  simp only at this
+  rw [← this, hp'.2]; rfl
+
+theorem hwr_sound (hpre : Pre E st) {σ σ' : SState} {ω : Regs} {μ : Memory} (hinv : Inv E σ ω μ) :
+    ∀ {w : Option (Nat × Nat × Nat)}, hwr st σ w = some σ' →
+      (∀ w', w = some w' → ∀ t, w'.1 ≤ t → t < w'.1 + w'.2.1 → μ.writable t = true) ∧
+        Inv E σ' ω (hmem μ w)
+  | none, h => by cases h; exact ⟨fun _ h => (by cases h), hinv⟩
+  | some (a, n, v), h => by
+    simp only [hwr] at h
+    split at h
+    · rename_i ha
+      obtain ⟨hw, hi⟩ := sstore_sound hpre hinv (A := a)
+        (by simp only [Aff.eval, Int.zero_add, Int.toNat_natCast]; exact Nat.mod_eq_of_lt ha.1) h
+      refine ⟨fun w' hw' t h1 h2 => ?_, hi⟩
+      cases hw'
+      simp only at h1 h2
+      have := hw t (List.mem_map.2 ⟨t - a, List.mem_range.2 (by omega), by omega⟩)
+      rwa [Nat.mod_eq_of_lt (by omega)] at this
+    · cases h
 
 /-- **Soundness of `srun`.** -/
 theorem srun_sound {X : Type} {p : ByteArray} {R : HostRel X} {P : Program} {G : Prog}
@@ -1485,14 +1524,26 @@ theorem srun_sound {X : Type} {p : ByteArray} {R : HostRel X} {P : Program} {G :
         split at hs
         · rename_i hc n hfe
           split at hs
-          · rename_i rs hrs
+          · rename_i es hes
             split at hs
-            · rename_i hall
-              cases hs
-              have hd := NTree.all_find hG.1 pc _ hfe
-              have hR := NTree.all_find hH _ rs hrs ω μ x
-              obtain ⟨ω', μ', hrun, hi'⟩ := ih _ _ _ _ σ' (hset_inv rs hinv hall) h
-              exact ⟨ω', μ', FreeStepsH.host_decode hd hR hrun, hi'⟩
+            · rename_i e hfind
+              have hpe := List.find?_some hfind
+              have hme := List.mem_of_find?_eq_some hfind
+              unfold happly at hs
+              split at hs
+              · rename_i hall
+                cases hw : hwr st σ e.wr with
+                | none => rw [hw] at hs; cases hs
+                | some σ₂ =>
+                  rw [hw] at hs
+                  simp only [Option.map, Option.some.injEq, Prod.mk.injEq] at hs
+                  obtain ⟨rfl, rfl⟩ := hs
+                  obtain ⟨hwt, hi₂⟩ := hwr_sound hpre hinv hw
+                  have hd := NTree.all_find hG.1 pc _ hfe
+                  have hR := NTree.all_find hH _ es hes e hme ω μ x (hpre_sound hpre hinv hpe) hwt
+                  obtain ⟨ω', μ', hrun, hi'⟩ := ih _ _ _ _ σ' (hset_inv e.out hi₂ hall) h
+                  exact ⟨ω', μ', FreeStepsH.host_decode hd hR hrun, hi'⟩
+              · cases hs
             · cases hs
           · cases hs
         · cases hs

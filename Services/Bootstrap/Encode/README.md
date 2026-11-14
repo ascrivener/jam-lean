@@ -28,6 +28,16 @@ must not be passed up as assumptions of the final theorem.
 2. **Writer capacity.** `encode_okM_big` / `encode_okMD_big` assume the output buffer holds
    |ℰ(n)| + the elements + 2 octets. Refine allocates exactly 232·n + 6 octets, so the writer's grow path
    (58615/58717 → realloc) must be proved, with an `Exhausts` outcome, before this hypothesis can go.
+3. **`hbig` (the output within `capBound`).** The growth path is proved (`WriterGrow.extend_grow` /
+   `extend_any`, from 58508 through `reserve` 58251 and `finish_grow` 58327 to `realloc` 40701), and the
+   encoder over `EncOkMH` elements (`EncMHLoop.encode_okMH_big`) has no capacity hypothesis; a failed
+   `realloc` ends the run in `ExhaustsW` (the wrapper's exit 40821, null in ω₇). What remains is
+   `hbig : 2 · (|ℰ(n)| + off enc n + 2) ≤ capBound` (2²⁸), and `hbig`-style bounds on each append.
+   The reason is `ReallocCall.realloc_call`, which covers a request below 2²⁵ − 1 units of 32 octets
+   (`(size + 31)/32 < 33554431`): a growth asks for max(len + n, 8, 2·cap), so the capacity is kept
+   within `capBound` and twice the output must stay within it for every growth's request to be below
+   that limit. The top level must discharge it from the size of refine's output (the payload's size),
+   as for `hlast`.
 
 ## Arms not yet proved
 - **Provide, Inline shape (17):** needs code facts for 3716–3790, which T1 is regenerating.

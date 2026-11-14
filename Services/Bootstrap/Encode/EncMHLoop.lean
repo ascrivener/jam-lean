@@ -115,7 +115,7 @@ theorem stepMH (x : RefineCtx) (ω : Regs) (μ μ0 : Memory) {pre : List UInt8}
       (fun a h1 h2 => by rw [(W.acc a (Or.inl (by omega))).1]; exact L.rtab a h1 h2)
       (fun q m h => (W.safe (L.hsrc k hk q m h)).mono (by omega)) with
     ⟨ω1, μ1, run1, -, e1, -, e6, cap2, ptr2, s2, W2⟩ | hx
-  · have W3 := (W.trans (W2.mono (B' := M + 56) (by omega))).cast
+  · have W3 := (W.trans (W2.mono (B' := M + 56) (by omega))).cast (pre' := pre ++ out enc (k + 1))
       (by rw [out_succ, List.append_assoc])
     have k1 : ∀ a, M ≤ a → a < M + 24 → μ1.read a = μ.read a := fun a h1 h2 =>
       W2.hi a (by have := L.fr.hvS1; have := L.H.hS1; omega) h1 (Or.inl h2)
@@ -140,6 +140,8 @@ theorem loopMH (x : RefineCtx) {pre : List UInt8} {Wi : Nat} (μ0 : Memory)
   have hM := L.fr.hF2; have hM8 := L.fr.hF8; have hvS := L.fr.hvS1; have hS1 := L.H.hS1; have h80 := L.hM80
   have hFS0 := L.fr.hFS0
   have hst := L.H.st
+  have hn31 : 232 * n < 2147483648 := by
+    obtain ⟨e, he, heu, -, h1, h2⟩ := L.arr; have := chunk_in L.H.wf he heu; have := L.H.hbT; omega
   intro m
   induction m with
   | zero => intro k ω μ _ h; omega
@@ -221,6 +223,7 @@ theorem restMH (x : RefineCtx) (ω : Regs) (μ0 μ2 : Memory) {pre : List UInt8}
   have hM := L.fr.hF2; have hM8 := L.fr.hF8; have hvS := L.fr.hvS1; have hS1 := L.H.hS1; have h80 := L.hM80
   have hFS0 := L.fr.hFS0
   have hon := off_le enc 0 n; simp only [Nat.zero_add] at hon
+  have hb := hbig; unfold capBound at hb
   -- the first element
   obtain ⟨ω3, μ3, run3, c0, c1, c5, c6, c7, c8, c16, cfr, crd, cwr⟩ := tA (p := p) (P := P)
     (R := refineContractK K env) x ω μ2 M E n (by omega)
@@ -243,10 +246,10 @@ theorem restMH (x : RefineCtx) (ω : Regs) (μ0 μ2 : Memory) {pre : List UInt8}
   obtain ⟨cap4, ptr4, s4, W4⟩ := fin.buf
   have hl4 : (pre ++ out enc n).length = pre.length + off enc n := by simp [length_out]
   -- `work_item_index`
-  rcases extendH env K hK1 hK x ω4 μ4 W4 M (M + 52) 2 1420 30250 ⟨by omega, by omega, hM8⟩ (by omega) (by omega)
+  rcases extendH (p := p) (P := P) env K hK1 hK x ω4 μ4 W4 M (M + 52) 2 1420 30250 ⟨by omega, by omega, hM8⟩ (by omega) (by omega)
       L.fr.hS1 fin.h0 fin.h1 fin.h7 fin.h8 fin.h9 ⟨by decide, by decide, by decide⟩ jte_709 bs_30250
       (by rw [hl4]; omega) (Or.inr (Or.inl ⟨by omega, by omega, Or.inr (by omega)⟩)) with
-    ⟨cap5, ptr5, s5, ω5, μ5, run5, e0, e1, e5, e6, W5, k5⟩ | hx
+    ⟨cap5, ptr5, s5', ω5, μ5, run5, e0, e1, e5, e6, W5, k5⟩ | hx
   rotate_left
   · exact Or.inr ((ExhaustsW.pre (run3.trans run4) hx).mono
       (by unfold stepGas growGas; simp only [off, Nat.sub_zero] at *; omega))
@@ -269,7 +272,7 @@ theorem restMH (x : RefineCtx) (ω : Regs) (μ0 μ2 : Memory) {pre : List UInt8}
     (by have := W5.cb; unfold capBound at this; omega) (by have := W5.buf_lt; omega) (by omega) hr5 hr6 hret hjt hbt
     (fun a h1 h2 => Memory.readable_of_writable (W5.H.st a (by omega) (by omega)))
     (fun a h1 h2 => W5.H.st a (by omega) (by omega))
-  exact Or.inl ⟨cap5, ptr5, s5, ω6, μ5, μ6,
+  exact Or.inl ⟨cap5, ptr5, s5', ω6, μ5, μ6,
     (run3.trans (run4.trans (run5.trans run6))).mono
       (by unfold stepGas growGas; simp only [off, Nat.sub_zero] at *; omega),
     f0, f1, f5, f6, fc, fp, fl, W5, ffr, frd, fwr⟩
@@ -286,9 +289,14 @@ theorem LayLMH.congr {env : RefineHost.Env} {K pb S0 S1 : Nat} {P : Program} {p 
     LayLMH env K pb S0 S1 P p M E n buf cap enc rep src s0 μ1 := by
   have hM := L.fr.hF2
   have kl : ∀ a, a < 2147483648 → μ1.read a = μ0.read a := fun a h => hk a (by omega) (Or.inl (by omega))
-  refine { L with H := ctx_high L.H kl hwr, rep0 := fun j hj => ?_,
-    tab := by rw [Memory.readN_congr (fun j hj => kl _ (by omega))]; exact L.tab,
-    rtab := fun a h1 h2 => by rw [hrd]; exact L.rtab a h1 h2 }
+  have tab' : μ1.readN 67376 100 = table := by
+    rw [Memory.readN_congr (fun j hj => kl _ (by omega))]; exact L.tab
+  refine
+    { L with
+        H := ctx_high L.H kl hwr
+        rep0 := fun j hj => ?_
+        tab := tab'
+        rtab := fun a h1 h2 => by rw [hrd]; exact L.rtab a h1 h2 }
   obtain ⟨e, he, heu, -, h1, h2⟩ := L.arr
   have := chunk_in L.H.wf he heu; have := L.H.hbT
   rw [Memory.readN_congr (fun j' hj' => kl _ (by omega))]
@@ -302,6 +310,17 @@ theorem LayLMH.congr {env : RefineHost.Env} {K pb S0 S1 : Nat} {P : Program} {p 
 /-- The gas of the encoder with growth. -/
 def bigGasH (n off : Nat) : Nat :=
   4100 * n + (2000 + growGas) * off + 2500 + growGas * ((Blob.encodeNat n).length + 1)
+
+theorem bigGasH_ge (n off : Nat) :
+    20 + (prefixGas n + (4100 * n + (2000 + growGas) * off + 400 + growGas)) ≤ bigGasH n off := by
+  unfold prefixGas bigGasH; generalize (Blob.encodeNat n).length = L; unfold growGas; omega
+
+theorem bigGasH_ge' (n off : Nat) :
+    20 + prefixGas n + (4100 * n + (2000 + growGas) * off + 400 + growGas) ≤ bigGasH n off := by
+  unfold prefixGas bigGasH; generalize (Blob.encodeNat n).length = L; unfold growGas; omega
+
+theorem bigGasH_ge1 (n off : Nat) : 20 + prefixGas n ≤ bigGasH n off := by
+  unfold prefixGas bigGasH; generalize (Blob.encodeNat n).length = L; unfold growGas; omega
 
 /-- **Refine's output encoder, for `EncOkMH` elements, with growth** (30073): for 0 < n < 2^32 instructions
     at E (in an allocated chunk), each encoding to `enc j` by `EncOkMH 232`, and the writer's buffer `buf`
@@ -362,17 +381,17 @@ theorem encode_okMH_big {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p 
   have W1 : BufH env pb S0 S1 (M + 56) (M + 24) 0 buf s μ1 [] cap buf s μ1 :=
     BufH.init (by omega) ac ap al (by omega) L.cpos L.cb L1.H ⟨c, hc, hcu, hcp, hcc⟩
   -- the length prefix
-  rcases prefix_anyH K hK1 hK x ω1 μ1 W1 M (M + 52) 1416 30122 E (232 * n) n ⟨by omega, by omega, hM8⟩
+  rcases prefix_anyH (p := p) (P := P) K hK1 hK x ω1 μ1 W1 M (M + 52) 1416 30122 E (232 * n) n ⟨by omega, by omega, hM8⟩
       (by omega) (by omega) L.fr.hS1 a0 a1 a5 (by rw [a6, h6]) a7 a8 (by omega) (by omega) (by omega)
       (Or.inr (by omega)) a52 (fun a h1 h2 => Memory.readable_of_writable (L1.H.st a (by omega) (by omega)))
       ⟨by decide, by decide, by decide⟩ jte_707 bs_30122 (by simp; omega) with
     ⟨cap2, ptr2, s2, ω2, μ2, run2, b0, b1, b5, b6, W2, k2⟩ | hx
   rotate_left
-  · exact Or.inr ((ExhaustsW.pre run1 hx).mono (by unfold prefixGas bigGasH growGas; omega))
+  · exact Or.inr ((ExhaustsW.pre run1 hx).mono (bigGasH_ge1 _ _))
   have kM : ∀ a, a < 4294967296 → (a < M + 24 ∨ M + 56 ≤ a) → M ≤ a → μ2.read a = μ.read a := fun a h0 h1 h2 =>
     (k2 a h0 h2 (by omega)).trans (afr a h0 h1)
-  rcases restMH (p := p) (P := P) x ω2 μ1 μ2 L1 hK1 hK (by simp; omega) O ret t r5 r6 hn b1 b5 b6
-      (W2.cast (by simp)) (fun a h1 h2 => k2 a (by omega) h1 (Or.inl h2))
+  rcases restMH (p := p) (P := P) x ω2 μ1 μ2 L1 hK1 hK hbig O ret t r5 r6 hn b1 b5 b6
+      (W2.cast (pre' := Blob.encodeNat n) (by simp)) (fun a h1 h2 => k2 a (by omega) h1 (Or.inl h2))
       (by rw [Memory.readN_congr (fun j hj => afr _ (by omega) (by omega))]; exact s0)
       (by rw [Memory.readN_congr (fun j hj => afr _ (by omega) (by omega))]; exact s8)
       (by rw [Memory.readN_congr (fun j hj => afr _ (by omega) (by omega))]; exact s16)
@@ -407,7 +426,7 @@ theorem encode_okMH_big {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p 
         glob := fun a ha => by have hg := ha; unfold Glob at hg; rw [W5.glob a ha, kl a (by omega)]
         hi := fun a h0 h1 h2 => by rw [W5.hi a h0 h1 h2, afr a h0 (Or.inr h1)] }
     exact Or.inl ⟨cap', ptr', s', ω', μ5, μ', (run1.trans (run2.trans run3)).mono
-      (by unfold prefixGas bigGasH growGas; omega), f0, f1, f5, f6, fc, fp, by simpa using fl, W6, ffr, frd, fwr⟩
-  · exact Or.inr ((ExhaustsW.pre (run1.trans run2) hx).mono (by unfold prefixGas bigGasH growGas; omega))
+      (bigGasH_ge _ _), f0, f1, f5, f6, fc, fp, by simpa using fl, W6, ffr, frd, fwr⟩
+  · exact Or.inr ((ExhaustsW.pre (run1.trans run2) hx).mono (bigGasH_ge' _ _))
 
 end Services.Bootstrap.Encode.GrowH

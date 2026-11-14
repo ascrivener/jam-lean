@@ -58,7 +58,7 @@ theorem prefix_smallH (K : Nat) (hK1 : 134217728 ≤ K) (hK : K < 18446744073709
     rw [bfr a h0 (by omega), afr a h0 h1]
   have W2 := W.frame (μ' := μ2) (F - 56) F (by omega) hB (Or.inl hv) k2 (fun a => by rw [brd, ard])
     (fun a => by rw [bwr, awr])
-  rcases extendH env K hK1 hK x ω2 μ2 W2 (F - 56) (F - 56 + 24) 1 1466 31106 ⟨by omega, by omega, by omega⟩
+  rcases extendH (p := p) (P := P) env K hK1 hK x ω2 μ2 W2 (F - 56) (F - 56 + 24) 1 1466 31106 ⟨by omega, by omega, by omega⟩
       (by omega) (by omega) hS1 b0 b1 b7 b8 b9 ⟨by decide, by decide, by decide⟩ jte_732 bs_31106 hlen
       (Or.inr (Or.inl ⟨by omega, by omega, Or.inl (by omega)⟩)) with
     ⟨cap3, ptr3, s3, ω3, μ3, run3, c0, c1, c5, c6, W3, k3⟩ | hx
@@ -74,7 +74,7 @@ theorem prefix_smallH (K : Nat) (hK1 : 134217728 ≤ K) (hK : K < 18446744073709
     (by rw [Memory.readN_congr (fun j hj => k3f _ (by omega) (by omega))]; exact bz)
     (fun a h1 h2 => W3.H.st a (by omega) (by omega))
   have W4 := W3.frame (μ' := μ4) (F - 56 + 24) (F - 56 + 32) (by omega) (by omega) (Or.inl (by omega)) dfr drd dwr
-  rcases extendH env K hK1 hK x ω4 μ4 W4 (F - 56) (F - 56 + 24) 0 1472 31348 ⟨by omega, by omega, by omega⟩
+  rcases extendH (p := p) (P := P) env K hK1 hK x ω4 μ4 W4 (F - 56) (F - 56 + 24) 0 1472 31348 ⟨by omega, by omega, by omega⟩
       (by omega) (by omega) hS1 d0 d1 d7 d8 d9 ⟨by decide, by decide, by decide⟩ jte_735 bs_31348
       (by simp; omega) (Or.inl rfl) with
     ⟨cap5, ptr5, s5, ω5, μ5, run5, e0, e1, e5, e6, W5, k5⟩ | hx
@@ -122,7 +122,7 @@ theorem prefix_zeroH (K : Nat) (hK1 : 134217728 ≤ K) (hK : K < 184467440737095
     (R := refineContractK K env) x ω μ F c v ret r5 r6 ⟨by omega, by omega⟩ h0 h1 h5 h6 h7 h8 hret' hr5 hr6
     (by omega) hc hcF hn hrc (fun a h1 h2 => hst a (by omega) (by omega))
   have W1 := W.frame (μ' := μ1) (F - 56) F (by omega) hB (Or.inl hv) afr ard awr
-  rcases extendH env K hK1 hK x ω1 μ1 W1 (F - 56) (F - 32) 1 1468 31129 ⟨by omega, by omega, by omega⟩
+  rcases extendH (p := p) (P := P) env K hK1 hK x ω1 μ1 W1 (F - 56) (F - 32) 1 1468 31129 ⟨by omega, by omega, by omega⟩
       (by omega) (by omega) hS1 a0 a1 a7 a8 a9 ⟨by decide, by decide, by decide⟩ jte_733 bs_31129 hlen
       (Or.inr (Or.inl ⟨by omega, by omega, Or.inl (by omega)⟩)) with
     ⟨cap2, ptr2, s2, ω2, μ2, run2, b0, b1, b5, b6, W2, k2⟩ | hx
@@ -188,7 +188,7 @@ theorem prefix_bigH (K : Nat) (hK1 : 134217728 ≤ K) (hK : K < 1844674407370955
     rw [bfr a h0 (by omega), afr a h0 h1]
   have W2 := W.frame (μ' := μ2) (F - 56) F (by omega) hB (Or.inl hv) k2 (fun a => by rw [brd, ard])
     (fun a => by rw [bwr, awr])
-  rcases extendH env K hK1 hK x ω2 μ2 W2 (F - 56) (F - 56 + 24) 1 1470 31291 ⟨by omega, by omega, by omega⟩
+  rcases extendH (p := p) (P := P) env K hK1 hK x ω2 μ2 W2 (F - 56) (F - 56 + 24) 1 1470 31291 ⟨by omega, by omega, by omega⟩
       (by omega) (by omega) hS1 b0 b1 b7 b8 b9 ⟨by decide, by decide, by decide⟩ jte_734 bs_31291 (by omega)
       (Or.inr (Or.inl ⟨by omega, by omega, Or.inl (by omega)⟩)) with
     ⟨cap3, ptr3, s3, ω3, μ3, run3, c0, c1, c5, c6, W3, k3⟩ | hx
@@ -204,13 +204,13 @@ theorem prefix_bigH (K : Nat) (hK1 : 134217728 ≤ K) (hK : K < 1844674407370955
     (by rw [Memory.readN_congr (fun j hj => k3f _ (by omega) (by omega))]; exact bv)
     (fun a h1 h2 => W3.H.st a (by omega) (by omega))
   have W4 := W3.frame (μ' := μ4) (F - 56 + 24) (F - 56 + 32) (by omega) (by omega) (Or.inl (by omega)) dfr drd dwr
-  rcases extendH env K hK1 hK x ω4 μ4 W4 (F - 56) (F - 56 + 24) l 1472 31348 ⟨by omega, by omega, by omega⟩
+  rcases extendH (p := p) (P := P) env K hK1 hK x ω4 μ4 W4 (F - 56) (F - 56 + 24) l 1472 31348 ⟨by omega, by omega, by omega⟩
       (by omega) (by omega) hS1 d0 d1 d7 d8 d9 ⟨by decide, by decide, by decide⟩ jte_735 bs_31348
       (by simp; omega) (Or.inr (Or.inl ⟨by omega, by omega, Or.inl (by omega)⟩)) with
     ⟨cap5, ptr5, s5, ω5, μ5, run5, e0, e1, e5, e6, W5, k5⟩ | hx
   rotate_left
   · exact Or.inr ((ExhaustsW.pre (run1.trans (run2.trans (run3.trans run4))) hx).mono
-      (by unfold stepGas growGas; rw [Nat.min_eq_right (by omega : 1 ≤ l)]; omega))
+      (by unfold stepGas growGas; omega))
   have kw : ∀ a, F - 24 ≤ a → a < F → μ5.read a = μ1.read a := fun a h1 h2 => by
     rw [k5 a (by omega) (by omega) (Or.inl (by omega)), dfr a (by omega) (by omega), k3f a (by omega) h2,
       bfr a (by omega) (by omega)]
@@ -228,7 +228,7 @@ theorem prefix_bigH (K : Nat) (hK1 : 134217728 ≤ K) (hK : K < 1844674407370955
   rw [hl8] at W5
   refine Or.inl ⟨cap5, ptr5, s5, ω6, μ5,
     (run1.trans (run2.trans (run3.trans (run4.trans (run5.trans run6))))).mono
-      (by unfold stepGas growGas; rw [Nat.min_eq_right (by omega : 1 ≤ l)]; omega),
+      (by unfold stepGas growGas; omega),
     f0, by rw [f1]; congr 1; omega, f5, f6, W5.cast (by rw [henc]; simp), fun a h0 h1 h2 => ?_⟩
   rw [k5 a h0 (by omega) h2, dfr a h0 (by omega), k3 a h0 (by omega) h2, k2 a h0 (Or.inr h1)]
 
@@ -253,7 +253,7 @@ theorem prefix_anyH (K : Nat) (hK1 : 134217728 ≤ K) (hK : K < 1844674407370955
   rcases Nat.eq_zero_or_pos n with rfl | hn1
   · have he : Blob.encodeNat 0 = [UInt8.ofNat 0] := rfl
     rw [he] at hlen
-    rcases prefix_zeroH K hK1 hK x ω μ W F c ret t r5 r6 hF hB hv hS1 h0 h1 h5 h6 h7 h8 hr5 hr6 hc hcF hn hrc
+    rcases prefix_zeroH (p := p) (P := P) K hK1 hK x ω μ W F c ret t r5 r6 hF hB hv hS1 h0 h1 h5 h6 h7 h8 hr5 hr6 hc hcF hn hrc
         hret hjt hbt (by simpa using hlen) with ⟨a, b, c', d, e, run, rest⟩ | hx
     · exact Or.inl ⟨a, b, c', d, e, run.mono (by unfold prefixGas; rw [he]; simp), rest.1, rest.2.1, rest.2.2.1,
         rest.2.2.2.1, by rw [he]; exact rest.2.2.2.2.1, rest.2.2.2.2.2⟩
@@ -263,14 +263,14 @@ theorem prefix_anyH (K : Nat) (hK1 : 134217728 ≤ K) (hK : K < 1844674407370955
     rw [he] at hlen
     have hg : 900 + growGas ≤ prefixGas n := by
       unfold prefixGas; rw [he, Nat.div_eq_of_lt hs]; simp
-    rcases prefix_smallH K hK1 hK x ω μ W F c ret t r5 r6 n hF hB hv hS1 h0 h1 h5 h6 h7 h8 hr5 hr6 hc hcF hn
+    rcases prefix_smallH (p := p) (P := P) K hK1 hK x ω μ W F c ret t r5 r6 n hF hB hv hS1 h0 h1 h5 h6 h7 h8 hr5 hr6 hc hcF hn
         ⟨hn1, hs⟩ hrc hret hjt hbt (by simpa using hlen) with ⟨a, b, c', d, e, run, rest⟩ | hx
     · exact Or.inl ⟨a, b, c', d, e, run.mono hg, rest.1, rest.2.1, rest.2.2.1, rest.2.2.2.1,
         by rw [he]; exact rest.2.2.2.2.1, rest.2.2.2.2.2⟩
     · exact Or.inr (hx.mono hg)
   · have hg : 2000 + growGas * (Blob.encodeNat n).length ≤ prefixGas n := by
       unfold prefixGas; rw [Nat.min_eq_right (by omega : 1 ≤ n / 128)]; omega
-    rcases prefix_bigH K hK1 hK x ω μ W F c ret t r5 r6 n hF hB hv hS1 h0 h1 h5 h6 h7 h8 hr5 hr6 hc hcF hn hs
+    rcases prefix_bigH (p := p) (P := P) K hK1 hK x ω μ W F c ret t r5 r6 n hF hB hv hS1 h0 h1 h5 h6 h7 h8 hr5 hr6 hc hcF hn hs
         hrc hret hjt hbt hlen with ⟨a, b, c', d, e, run, rest⟩ | hx
     · exact Or.inl ⟨a, b, c', d, e, run.mono hg, rest⟩
     · exact Or.inr (hx.mono hg)
@@ -294,11 +294,11 @@ theorem prefixH {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasC
       StH env pb S0 S1 F v len ptr0 ret r5 r6 s0 μ0 (pre ++ Blob.encodeNat n) ω' μ' ∧ ω'[5] = ω[5] ∧
       ω'[6] = ω[6] ∧ (∀ a, F - 56 ≤ a → a < F → μ'.read a = μ.read a)) ∨
     ExhaustsW env K pb p P 30977 ω μ x (prefixGas n) := by
-  have := Fr.hF8; have := Fr.hFS0; have := Fr.hF2; have := Fr.hFv; have := Fr.hvS1
+  have := Fr.hF8; have := Fr.hFS0; have := Fr.hF2; have := Fr.hFv; have := Fr.hvS1; have := Fr.hS1
   obtain ⟨cap, ptr, s, W⟩ := st.buf
   have h5 : ω[5] = UInt64.ofNat ω[5].toNat := UInt64.ofNat_toNat.symm
   have h6 : ω[6] = UInt64.ofNat ω[6].toNat := UInt64.ofNat_toNat.symm
-  rcases prefix_anyH K hK1 hK x ω μ W (F - 56) (F - 32) r e ω[5].toNat ω[6].toNat n
+  rcases prefix_anyH (p := p) (P := P) K hK1 hK x ω μ W (F - 56) (F - 32) r e ω[5].toNat ω[6].toNat n
       ⟨by omega, by omega, by omega⟩ (by omega) (by omega) Fr.hS1 h0 st.h1 h5 h6 h7 h8 (UInt64.toNat_lt _)
       (UInt64.toNat_lt _) (by omega) (Or.inr (by omega)) hn
       (fun a h1 h2 => Memory.readable_of_writable (W.H.st a (by omega) (by omega))) hr hje hbe hlen with
@@ -327,8 +327,8 @@ theorem prefixDH {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Has
       StDH env pb S0 S1 F v len ptr0 ret r5 r6 s0 μ0 (pre ++ Blob.encodeNat n) ω' μ' ∧ ω'[5] = ω[5] ∧
       ω'[6] = ω[6] ∧ (∀ a, F - 56 ≤ a → a < F → μ'.read a = μ.read a)) ∨
     ExhaustsW env K pb p P 30977 ω μ x (prefixGas n) := by
-  have := Fr.hF2
-  rcases prefixH env K hK1 hK x ω μ Fr hD st.toStH n r e h0 h7 h8 hn hr hje hbe hlen with
+  have := Fr.hF2; have := Fr.hFv; have := Fr.hvS1; have := Fr.hS1
+  rcases prefixH (p := p) (P := P) env K hK1 hK x ω μ Fr hD st.toStH n r e h0 h7 h8 hn hr hje hbe hlen with
     ⟨ω', μ', run, st', e5, e6, kF⟩ | hx
   · exact Or.inl ⟨ω', μ', run, ⟨st', by rw [Memory.readN_congr (fun j hj => kF _ (by omega) (by omega))]; exact st.sv⟩,
       e5, e6, kF⟩

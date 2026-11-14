@@ -87,7 +87,7 @@ theorem BufH.buf_lt (W : BufH env pb S0 S1 B v len ptr0 s0 μ0 pre cap ptr s μ)
     206896 ≤ ptr ∧ ptr + cap < 2147483648 := by
   obtain ⟨c, hc, hcu, hcp, hcc⟩ := W.chunk
   have := chunk_in W.H.wf hc hcu
-  have := W.H.hb0; have := W.H.hbT
+  have := W.H.hb0; have := W.H.hbT; have := W.cpos
   omega
 
 /-- **Writes in a stack stretch [lo, hi) below B and apart from the vector keep `BufH`.** -/
@@ -312,7 +312,7 @@ structure StDH (env : RefineHost.Env) (pb S0 S1 F v len ptr0 ret r5 r6 : Nat) (s
   sv : μ.readN (F - 40) 8 = Num.encodeLE 8 v
 
 section
-variable {env : RefineHost.Env} {pb S0 S1 F v len ptr0 ret r5 r6 : Nat} {s0 : State} {μ0 : Memory}
+variable {env : RefineHost.Env} {pb S0 S1 F v len ptr0 ret r5 r6 D : Nat} {s0 : State} {μ0 : Memory}
   {pre : List UInt8} {ω : Regs} {μ : Memory}
 
 theorem StH.cast (st : StH env pb S0 S1 F v len ptr0 ret r5 r6 s0 μ0 pre ω μ) {pre' : List UInt8}
@@ -350,7 +350,7 @@ theorem StDH.scratch (st : StDH env pb S0 S1 F v len ptr0 ret r5 r6 s0 μ0 pre �
     (hk : ∀ a, a < 4294967296 → (a < F - 56 ∨ (F - 40 ≤ a ∧ a < F - 32) ∨ F - 24 ≤ a) → μ'.read a = μ.read a)
     (hrd : ∀ a, μ'.readable a = μ.readable a) (hwr : ∀ a, μ'.writable a = μ.writable a) :
     StDH env pb S0 S1 F v len ptr0 ret r5 r6 s0 μ0 pre ω' μ' := by
-  have := Fr.hF2; have := Fr.hFv
+  have := Fr.hF2; have := Fr.hFv; have := Fr.hvS1; have := Fr.hS1
   have hk' : ∀ a, a < 4294967296 → (a < F - 56 ∨ F - 24 ≤ a) → μ'.read a = μ.read a :=
     fun a h0 h1 => hk a h0 (by omega)
   exact ⟨st.toStH.scratch Fr h1 hk' hrd hwr,
@@ -376,7 +376,7 @@ theorem ext_stepH {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
       StH env pb S0 S1 F v len ptr0 ret r5 r6 s0 μ0 (pre ++ μ.readN src n) ω' μ' ∧ ω'[5] = ω[5] ∧
       ω'[6] = ω[6] ∧ (∀ a, F - 56 ≤ a → a < F → μ'.read a = μ.read a)) ∨
     ExhaustsW env K pb p P 58508 ω μ x (stepGas n) := by
-  have := Fr.hF8; have := Fr.hFS0; have := Fr.hF2; have := Fr.hFv; have := Fr.hvS1
+  have := Fr.hF8; have := Fr.hFS0; have := Fr.hF2; have := Fr.hFv; have := Fr.hvS1; have := Fr.hS1
   obtain ⟨cap, ptr, s, W⟩ := st.buf
   rcases extendH env K hK1 hK x ω μ W (F - 56) src n r e ⟨by omega, by omega, by omega⟩ (by omega) (by omega)
       Fr.hS1 h0 st.h1 h7 h8 h9 hr hje hbe hlen hsrc with
@@ -404,7 +404,7 @@ theorem ext_stepDH {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
       StDH env pb S0 S1 F v len ptr0 ret r5 r6 s0 μ0 (pre ++ μ.readN src n) ω' μ' ∧ ω'[5] = ω[5] ∧
       ω'[6] = ω[6] ∧ (∀ a, F - 56 ≤ a → a < F → μ'.read a = μ.read a)) ∨
     ExhaustsW env K pb p P 58508 ω μ x (stepGas n) := by
-  have := Fr.hF2
+  have := Fr.hF2; have := Fr.hFv; have := Fr.hvS1; have := Fr.hS1
   rcases ext_stepH env K hK1 hK x ω μ Fr hD st.toStH src n r e h0 h7 h8 h9 hr hje hbe hlen hsrc with
     ⟨ω', μ', run, st', e5, e6, kF⟩ | hx
   · exact Or.inl ⟨ω', μ', run, ⟨st', by rw [Memory.readN_congr (fun j hj => kF _ (by omega) (by omega))]; exact st.sv⟩,
@@ -449,7 +449,7 @@ theorem heapDH {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCo
       StDH env pb S0 S1 F v len ptr0 ret r5 r6 s0 μ0 (pre ++ bytes) ω' μ' ∧ ω'[5] = ω[5] ∧
       ω'[6] = ω[6] ∧ (∀ a, F - 56 ≤ a → a < F → μ'.read a = μ.read a)) ∨
     ExhaustsW env K pb p P 58508 ω μ x (stepGas n) := by
-  have := Fr.hF2
+  have := Fr.hF2; have := Fr.hFv; have := Fr.hvS1; have := Fr.hS1
   have hq : μ.readN q n = bytes := by
     rcases hsrc with rfl | h
     · rw [← hb]; simp [Memory.readN]

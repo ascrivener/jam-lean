@@ -97,7 +97,7 @@ theorem LayDH.nums (L : LayDH env pb S0 S1 P D F S v cap ptr len ret t s μ) :
       S1 < 4294967296 ∧ S0 + D + 424 ≤ F ∧ F % 8 = 0 := by
   obtain ⟨c, hc, hcu, hcp, hcc⟩ := L.chunk
   have := chunk_in L.H.wf hc hcu
-  have := L.H.hb0; have := L.H.hbT; have := L.H.hS1; have := L.hlc
+  have := L.H.hb0; have := L.H.hbT; have := L.H.hS1; have := L.hlc; have := L.cpos
   have := L.fr.hF2; have := L.fr.hFv; have := L.fr.hvS1; have := L.fr.hFS0; have := L.fr.hF8
   have hS : S + 232 ≤ S1 := by
     rcases L.slot with ⟨h1, h2, h3⟩ | ⟨e, he, heu, -, h1, h2⟩
@@ -118,6 +118,8 @@ theorem LayDH.slot_apart (L : LayDH env pb S0 S1 P D F S v cap ptr len ret t s �
   · refine ⟨Or.inl (by omega), Or.inr h1, by omega⟩
   · obtain ⟨c, hc, hcu, hcp, hcc⟩ := L.chunk
     have hce : c ≠ e := fun h => hne (by rw [← h]; exact hcp)
+    have := chunk_in L.H.wf hc hcu
+    have := L.hlc; have := L.cpos
     have ht := L.H.wf.2.2.2.1
     unfold TilesOk at ht
     have := chunk_in L.H.wf he heu
@@ -141,14 +143,16 @@ theorem LayDH.toLay0 (L : LayDH env pb S0 S1 P D F S v cap ptr len ret t s μ) (
   obtain ⟨n1, n2, n3, n4, n5, n6, n7, n8, n9⟩ := L.nums
   obtain ⟨a1, a2, a3⟩ := L.slot_apart
   have hst := L.H.st
-  exact { hF := by omega, hF' := by omega, hF8 := n9, hS := L.hS, hS' := L.hS', hSF := by omega,
-    vc := L.vc, vp := L.vp, vl := L.vl, hroom := by have := L.hlc; omega, hcap := by have := L.hlc; omega,
-    hv := by omega, hvF := Or.inr n5, hvS := a3, hd := by omega, hd' := by omega, hdF := by omega,
-    hdS := by have := L.hlc; omega, hdv := by have := L.hlc; omega, hret := L.hret, hjt := L.hjt,
-    hbt := L.hbt, hrS := L.rS,
-    hrv := fun a h1 h2 => Memory.readable_of_writable (hst a (by omega) (by omega)),
-    hwv := fun a h1 h2 => hst a (by omega) (by omega), hwd := fun a h1 h2 => by omega,
-    hwF := fun a h1 h2 => hst a (by omega) (by omega) }
+  have hlc := L.hlc
+  exact
+    { hF := (by omega), hF' := (by omega), hF8 := n9, hS := L.hS, hS' := L.hS', hSF := (by omega),
+      vc := L.vc, vp := L.vp, vl := L.vl, hroom := (by have := L.hlc; omega), hcap := (by have := L.hlc; omega),
+      hv := (by omega), hvF := Or.inr n5, hvS := a3, hd := (by omega), hd' := (by omega), hdF := (by omega),
+      hdS := (by have := L.hlc; omega), hdv := (by have := L.hlc; omega), hret := L.hret, hjt := L.hjt,
+      hbt := L.hbt, hrS := L.rS,
+      hrv := fun a h1 h2 => Memory.readable_of_writable (hst a (by omega) (by omega)),
+      hwv := fun a h1 h2 => hst a (by omega) (by omega), hwd := fun a h1 h2 => by omega,
+      hwF := fun a h1 h2 => hst a (by omega) (by omega) }
 
 /-- **`LayDH` gives `LayD` for no octets**, for the dispatch (`VecCore.startV`). -/
 theorem LayDH.toLayD0 (L : LayDH env pb S0 S1 P D F S v cap ptr len ret t s μ) :
@@ -156,14 +160,16 @@ theorem LayDH.toLayD0 (L : LayDH env pb S0 S1 P D F S v cap ptr len ret t s μ) 
   obtain ⟨n1, n2, n3, n4, n5, n6, n7, n8, n9⟩ := L.nums
   obtain ⟨a1, a2, a3⟩ := L.slot_apart
   have hst := L.H.st
-  exact { hF := by omega, hF' := by omega, hF8 := n9, hS := L.hS, hS' := L.hS', hSF := a2,
-    vc := L.vc, vp := L.vp, vl := L.vl, hroom := by have := L.hlc; omega, hcap := by have := L.hlc; omega,
-    hv := by omega, hvF := Or.inr n5, hvS := a3, hd := by omega, hd' := by omega, hdF := by omega,
-    hdS := by have := L.hlc; omega, hdv := by have := L.hlc; omega, hret := L.hret, hjt := L.hjt,
-    hbt := L.hbt, hrS := L.rS,
-    hrv := fun a h1 h2 => Memory.readable_of_writable (hst a (by omega) (by omega)),
-    hwv := fun a h1 h2 => hst a (by omega) (by omega), hwd := fun a h1 h2 => by omega,
-    hwF := fun a h1 h2 => hst a (by omega) (by omega) }
+  have hlc := L.hlc
+  exact
+    { hF := (by omega), hF' := (by omega), hF8 := n9, hS := L.hS, hS' := L.hS', hSF := a2,
+      vc := L.vc, vp := L.vp, vl := L.vl, hroom := (by have := L.hlc; omega), hcap := (by have := L.hlc; omega),
+      hv := (by omega), hvF := Or.inr n5, hvS := a3, hd := (by omega), hd' := (by omega), hdF := (by omega),
+      hdS := (by have := L.hlc; omega), hdv := (by have := L.hlc; omega), hret := L.hret, hjt := L.hjt,
+      hbt := L.hbt, hrS := L.rS,
+      hrv := fun a h1 h2 => Memory.readable_of_writable (hst a (by omega) (by omega)),
+      hwv := fun a h1 h2 => hst a (by omega) (by omega), hwd := fun a h1 h2 => by omega,
+      hwF := fun a h1 h2 => hst a (by omega) (by omega) }
 
 end
 
@@ -196,7 +202,7 @@ theorem startH {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (K : N
   obtain ⟨ω1, μ1, run1, st1, a10, a11⟩ := start (p := p) (P := P) (R := refineContractK K env) x ω μ
     (L.toLay0 hD) t ht h0 h1 h7 h8 hD8 tab hrt
   have hk := keep_vl (Q := fun a => a < 4294967296 ∧ (a < F - 136 ∨ F ≤ a)) (by simpa using st1.vl) L.vl
-    (fun a ha h => st1.keep a ha.1 ha.2 (by simp) h)
+    (fun a ha h => st1.keep a ha.1 ha.2 (by simp; omega) h)
   exact ⟨ω1, μ1, run1, ⟨st1.h1, st1.s0, st1.s5, st1.s6, ⟨cap, ptr, s,
     L.init.frame (F - 136) F (by omega) (Nat.le_refl _) (Or.inl n5) (fun a h0 h1 => hk a ⟨h0, h1⟩) st1.rd st1.wr⟩⟩,
     a10, a11⟩
@@ -216,7 +222,7 @@ theorem startVH {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (K : 
   obtain ⟨ω1, μ1, run1, st1, a5, a10, a11⟩ := startV (p := p) (P := P) (R := refineContractK K env) x ω μ
     L.toLayD0 hD t ht h0 h1 h7 h8 hD8 tab hrt
   have hk := keep_vl (Q := fun a => a < 4294967296 ∧ (a < F - D ∨ F ≤ a)) (by simpa using st1.vl) L.vl
-    (fun a ha h => st1.keep a ha.1 ha.2 (by simp) h)
+    (fun a ha h => st1.keep a ha.1 ha.2 (by simp; omega) h)
   exact ⟨ω1, μ1, run1, ⟨⟨st1.h1, st1.s0, st1.s5, st1.s6, ⟨cap, ptr, s,
     L.init.frame (F - D) F (by omega) (Nat.le_refl _) (Or.inl n5) (fun a h0 h1 => hk a ⟨h0, h1⟩) st1.rd st1.wr⟩⟩,
     st1.sv⟩, a5, a10, a11⟩

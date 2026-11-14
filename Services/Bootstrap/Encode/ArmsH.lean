@@ -51,7 +51,7 @@ theorem pieceTagH (K : Nat) (hK1 : 134217728 ≤ K) (hK : K < 184467440737095516
     (R := refineContractK K env) x ω μ e tag r (F - 56) v S hc (by omega) (by omega) hS st.h1 h10 h11
     (fun a h1 h2 => W.H.st a (by omega) (by omega))
   have st2 := st.scratch Fr b1 (fun a h0 h1 => bfr a h0 (by omega)) brd bwr
-  rcases ext_stepH env K hK1 hK x ω2 μ2 Fr hD st2 (F - 32) 1 r e' b0 b7 (by rw [b8]; congr 1; omega) b9 hr hje
+  rcases ext_stepH (p := p) (P := P) env K hK1 hK x ω2 μ2 Fr hD st2 (F - 32) 1 r e' b0 b7 (by rw [b8]; congr 1; omega) b9 hr hje
       hbe hlen (Or.inr (Or.inl ⟨by omega, by omega, Or.inl (by omega)⟩)) with
     ⟨ω3, μ3, run3, st3, c5, c6, -⟩ | hx
   · rw [show F - 32 = F - 56 + 24 by omega, bt] at st3
@@ -78,7 +78,7 @@ theorem pieceFieldH (K : Nat) (hK1 : 134217728 ≤ K) (hK : K < 1844674407370955
     (fun a h1 h2 => W.safe_readable (by omega) (W.safe hslot) a (by omega) (by omega))
     (fun a h1 h2 => W.H.st a (by omega) (by omega))
   have st2 := st.scratch Fr b1 (fun a h0 h1 => bfr a h0 (by omega)) brd bwr
-  rcases ext_stepH env K hK1 hK x ω2 μ2 Fr hD st2 (F - 32) w r e' b0 b7 (by rw [b8]; congr 1; omega) b9 hr hje
+  rcases ext_stepH (p := p) (P := P) env K hK1 hK x ω2 μ2 Fr hD st2 (F - 32) w r e' b0 b7 (by rw [b8]; congr 1; omega) b9 hr hje
       hbe hlen (Or.inr (Or.inl ⟨by omega, by omega, Or.inl (by omega)⟩)) with
     ⟨ω3, μ3, run3, st3, c5, c6, -⟩ | hx
   · rw [show F - 32 = F - 56 + 24 by omega, bt, st.slot hslot (by omega)] at st3
@@ -97,7 +97,7 @@ theorem pieceDirectH (K : Nat) (hK1 : 134217728 ≤ K) (hK : K < 184467440737095
       StH env pb S0 S1 F v len ptr0 ret r5 r6 s0 μ0 (pre ++ μ0.readN (S + off) n) ω' μ' ∧
       ω'[5] = UInt64.ofNat v ∧ ω'[6] = UInt64.ofNat S) ∨
     ExhaustsW env K pb p P e ω μ x (stepGas n + 6) := by
-  have := Fr.hF2; have := Fr.hFv
+  have := Fr.hF2; have := Fr.hFv; have := Fr.hvS1; have := Fr.hS1
   have hle := hc.le
   have hr : 0 < r ∧ r ≤ 2806 ∧ r % 2 = 0 := by unfold DirectCase at hc; omega
   obtain ⟨ω2, run2, b0, b1, b5, b6, b7, b8, b9⟩ := directSeg (p := p) (P := P) (R := refineContractK K env) x ω μ
@@ -107,7 +107,7 @@ theorem pieceDirectH (K : Nat) (hK1 : 134217728 ≤ K) (hK : K < 184467440737095
     rcases hslot with ⟨h1, h2, h3⟩ | ⟨e, he, heu, hne, h1, h2⟩
     · exact Or.inr (Or.inl ⟨by omega, by omega, by omega⟩)
     · exact Or.inr (Or.inr ⟨e, he, heu, hne, by omega, by omega⟩)
-  rcases ext_stepH env K hK1 hK x ω2 μ Fr hD ⟨b1.trans st.h1, st.w0, st.w5, st.w6, st.buf⟩ (S + off) n r e' b0 b7
+  rcases ext_stepH (p := p) (P := P) env K hK1 hK x ω2 μ Fr hD ⟨b1.trans st.h1, st.w0, st.w5, st.w6, st.buf⟩ (S + off) n r e' b0 b7
       b8 b9 hr hje hbe hlen hsrc with
     ⟨ω3, μ3, run3, st3, c5, c6, -⟩ | hx
   · rw [st.slot hslot (by omega)] at st3
@@ -134,27 +134,27 @@ theorem transferH {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
   have c3 : μ.readN (S + 152) 4 = d := by rw [← slot_take μ S 152 4 (by decide)]; exact rep.2.2.2.2
   have Fr := L.fr
   have hS64 : S < 18446744073709551616 := by have := L.hS'; omega
-  obtain ⟨ω1, μ1, run1, st1, a10, a11⟩ := startH K x ω μ L (by decide) 2 (by decide) h0 h1 h7 h8 hD tab hrt
+  obtain ⟨ω1, μ1, run1, st1, a10, a11⟩ := startH (p := p) (P := P) K x ω μ L (by decide) 2 (by decide) h0 h1 h7 h8 hD tab hrt
   rw [show arm 2 = 18778 from rfl] at run1
-  rcases pieceTagH K hK1 hK x ω1 μ1 Fr (by decide) st1 S 18778 2 780 18801 (by unfold TagCase; decide) jte_389
+  rcases pieceTagH (p := p) (P := P) K hK1 hK x ω1 μ1 Fr (by decide) st1 S 18778 2 780 18801 (by unfold TagCase; decide) jte_389
       bs_18801 a10 a11 hS64 (by simp; omega) with ⟨ω2, μ2, run2, st2, b25, b26⟩ | hx
   rotate_left
   · exact Or.inr ((ExhaustsW.pre run1 hx).mono (by unfold encGas stepGas growGas; rw [hN]; omega))
-  rcases pieceFieldH K hK1 hK x ω2 μ2 Fr (by decide) st2 S 18801 782 18823 152 4 (by unfold FieldCase; decide)
+  rcases pieceFieldH (p := p) (P := P) K hK1 hK x ω2 μ2 Fr (by decide) st2 S 18801 782 18823 152 4 (by unfold FieldCase; decide)
       jte_390 bs_18823 b25 b26 L.hS' L.slot (by simp; omega) with ⟨ω3, μ3, run3, st3, b35, b36⟩ | hx
   rotate_left
   · exact Or.inr ((ExhaustsW.pre (run1.trans run2) hx).mono (by unfold encGas stepGas growGas; rw [hN]; omega))
-  rcases pieceFieldH K hK1 hK x ω3 μ3 Fr (by decide) st3 S 18823 784 18845 136 8 (by unfold FieldCase; decide)
+  rcases pieceFieldH (p := p) (P := P) K hK1 hK x ω3 μ3 Fr (by decide) st3 S 18823 784 18845 136 8 (by unfold FieldCase; decide)
       jte_391 bs_18845 b35 b36 L.hS' L.slot (by simp; omega) with ⟨ω4, μ4, run4, st4, b45, b46⟩ | hx
   rotate_left
   · exact Or.inr ((ExhaustsW.pre (run1.trans (run2.trans run3)) hx).mono
       (by unfold encGas stepGas growGas; rw [hN]; omega))
-  rcases pieceFieldH K hK1 hK x ω4 μ4 Fr (by decide) st4 S 18845 786 18867 144 8 (by unfold FieldCase; decide)
+  rcases pieceFieldH (p := p) (P := P) K hK1 hK x ω4 μ4 Fr (by decide) st4 S 18845 786 18867 144 8 (by unfold FieldCase; decide)
       jte_392 bs_18867 b45 b46 L.hS' L.slot (by simp; omega) with ⟨ω5, μ5, run5, st5, b55, b56⟩ | hx
   rotate_left
   · exact Or.inr ((ExhaustsW.pre (run1.trans (run2.trans (run3.trans run4))) hx).mono
       (by unfold encGas stepGas growGas; rw [hN]; omega))
-  rcases pieceDirectH K hK1 hK x ω5 μ5 Fr (by decide) st5 S 18867 916 20329 8 128 (by unfold DirectCase; decide)
+  rcases pieceDirectH (p := p) (P := P) K hK1 hK x ω5 μ5 Fr (by decide) st5 S 18867 916 20329 8 128 (by unfold DirectCase; decide)
       jte_457 bs_20329 b55 b56 L.hS' L.slot (by simp; omega) with ⟨ω6, μ6, run6, st6, b65, b66⟩ | hx
   rotate_left
   · exact Or.inr ((ExhaustsW.pre (run1.trans (run2.trans (run3.trans (run4.trans run5)))) hx).mono
@@ -162,7 +162,7 @@ theorem transferH {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
   rw [c0, c1, c2, c3] at st6
   exact Or.inl (closeH L 20329 _ (by decide) (by unfold encGas stepGas growGas; rw [hN]; omega)
     (run1.trans (run2.trans (run3.trans (run4.trans (run5.trans run6)))))
-    (st6.cast (by simp only [List.nil_append, List.singleton_append, List.cons_append, List.append_assoc])))
+    (st6.cast (by simp only [List.nil_append, List.cons_append, List.append_assoc]; rfl)))
 
 /-- The heap octets of a `Vec` of n octets at q, as `EncOkMH`'s stretches: (q, n). -/
 def SrcAt (q n : Nat) (q' m : Nat) : Prop := q' = q ∧ m = n
@@ -188,7 +188,7 @@ theorem looked_up_someH {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p 
   have hN : (18 :: 1 :: (Blob.encodeNat n ++ bytes) : List UInt8).length = 2 + (Blob.encodeNat n).length + n := by
     simp [hbn] <;> omega
   rw [hN] at hlen
-  obtain ⟨ω1, μ1, run1, st1, a5, a10, a11⟩ := startVH K x ω μ L (by decide) 18 (Or.inl rfl) h0 h1 h7 h8 hD8 tab hrt
+  obtain ⟨ω1, μ1, run1, st1, a5, a10, a11⟩ := startVH (p := p) (P := P) K x ω μ L (by decide) 18 (Or.inl rfl) h0 h1 h7 h8 hD8 tab hrt
   rw [show arm 18 = 19538 from rfl] at run1
   have wst : ∀ (μ' : Memory) (cap' ptr' : Nat) (s' : State) (pre : List UInt8),
       BufH env pb S0 S1 F v len ptr s μ pre cap' ptr' s' μ' → ∀ a, F - 56 ≤ a → a < F → μ'.writable a = true :=
@@ -198,7 +198,7 @@ theorem looked_up_someH {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p 
     (R := refineContractK K env) x ω1 μ1 (F - 56) v S (by omega) (by omega) (by omega) st1.h1 a10 a11
     (fun a h1 h2 => wst _ _ _ _ _ W1 a (by omega) (by omega))
   have st2 := st1.scratch Fr b1 (fun a h0 h1 => bfr a h0 (by omega)) brd bwr
-  rcases scratchDH env K hK1 hK x ω2 μ2 Fr (by decide) st2 [UInt8.ofNat 18] 1 856 19559 rfl (by decide) b0 b7 b8 b9
+  rcases scratchDH (p := p) (P := P) env K hK1 hK x ω2 μ2 Fr (by decide) st2 [UInt8.ofNat 18] 1 856 19559 rfl (by decide) b0 b7 b8 b9
       ⟨by decide, by decide, by decide⟩ jte_427 bs_19559 (by simp; omega) bt with
     ⟨ω3, μ3, run3, st3, c5, c6, -⟩ | hx
   rotate_left
@@ -212,7 +212,7 @@ theorem looked_up_someH {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p 
     (fun a h1 h2 => W3.safe_readable (by omega) (W3.safe L.slot) a (by omega) (by omega))
     (fun a h1 h2 => wst _ _ _ _ _ W3 a (by omega) (by omega))
   have st4 := st3.scratch Fr d1 (fun a h0 h1 => dfr a h0 (by omega)) drd dwr
-  rcases scratchDH env K hK1 hK x ω4 μ4 Fr (by decide) st4 [UInt8.ofNat 1] 1 858 19586 rfl (by decide) d0 d7 d8 d9
+  rcases scratchDH (p := p) (P := P) env K hK1 hK x ω4 μ4 Fr (by decide) st4 [UInt8.ofNat 1] 1 858 19586 rfl (by decide) d0 d7 d8 d9
       ⟨by decide, by decide, by decide⟩ jte_428 bs_19586 (by simp; omega) dt with
     ⟨ω5, μ5, run5, st5, e5, e6, -⟩ | hx
   rotate_left
@@ -229,7 +229,7 @@ theorem looked_up_someH {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p 
     (fun a h1 h2 => W5.safe_readable (by omega) (W5.safe L.slot) a (by omega) (by omega))
     (fun a h1 h2 => wst _ _ _ _ _ W5 a (by omega) (by omega))
   have st6 := st5.scratch Fr f1 (fun a h0 h1 => ffr a h0 (by omega) (by omega)) frd fwr
-  rcases prefixDH env K hK1 hK x ω6 μ6 Fr (by decide) st6 n 860 19622 f0 (by rw [f7]; congr 1; omega) f8
+  rcases prefixDH (p := p) (P := P) env K hK1 hK x ω6 μ6 Fr (by decide) st6 n 860 19622 f0 (by rw [f7]; congr 1; omega) f8
       (by rw [show F - 32 = F - 56 + 24 by omega]; exact fn) ⟨by decide, by decide, by decide⟩ jte_429 bs_19622
       (by simp; omega) with
     ⟨ω7, μ7, run7, st7, g5, g6, gF⟩ | hx
@@ -243,7 +243,7 @@ theorem looked_up_someH {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p 
     (fun a h1 h2 => by
       obtain ⟨cap7, ptr7, s7, W7⟩ := st7.buf
       exact Memory.readable_of_writable (W7.H.st a (by omega) (by omega)))
-  rcases heapDH env K hK1 hK x ω8 μ7 Fr (by decide) ⟨⟨h81.trans st7.h1, st7.w0, st7.w5, st7.w6, st7.buf⟩, st7.sv⟩
+  rcases heapDH (p := p) (P := P) env K hK1 hK x ω8 μ7 Fr (by decide) ⟨⟨h81.trans st7.h1, st7.w0, st7.w5, st7.w6, st7.buf⟩, st7.sv⟩
       q n 862 19636 hbn rb h80 h87 h88 h89 ⟨by decide, by decide, by decide⟩ jte_430 bs_19636 (by simp; omega)
       (by rcases Nat.eq_zero_or_pos n with h | h
           · exact Or.inl h

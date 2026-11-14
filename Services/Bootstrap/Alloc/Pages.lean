@@ -82,7 +82,7 @@ theorem refineContractK_pagesOut {cap : Nat} {env : RefineHost.Env} {pb : Nat}
   generalize (UInt64.ofNat cap).toNat = g at hm hs
   subst hm
   intro q hq
-  rcases hid with rfl | rfl | hlt
+  rcases hid with rfl | rfl | ⟨h3, h8⟩ | hlt
   · -- grow_heap
     simp only [RefineHost.dispatch] at hs ⊢
     unfold hostGrowHeap at hs ⊢
@@ -109,6 +109,25 @@ theorem refineContractK_pagesOut {cap : Nat} {env : RefineHost.Env} {pb : Nat}
     unfold hostFetch charged
     dsimp only
     split <;> (split <;> simp [writeValue_pages])
+  · rcases (show h = 7 ∨ h = 8 ∨ (3 ≤ h ∧ h ≤ 6) by omega) with rfl | rfl | h36
+    · -- historical_lookup
+      simp only [RefineHost.dispatch]
+      unfold RefineHost.historicalLookup charged
+      dsimp only
+      split <;> simp [writeValue_pages]
+    · -- export
+      simp only [RefineHost.dispatch]
+      unfold RefineHost.exportSeg charged
+      dsimp only
+      split
+      · rfl
+      · split
+        · rfl
+        · split <;> rfl
+    · have hu : RefineHost.dispatch env h g ω μ x = RefineHost.unknown g ω μ x := by
+        unfold RefineHost.dispatch; split <;> first | omega | rfl
+      rw [hu]
+      rfl
   · -- an unknown id
     have hu : RefineHost.dispatch env h g ω μ x = RefineHost.unknown g ω μ x := by
       unfold RefineHost.dispatch; split <;> first | omega | rfl

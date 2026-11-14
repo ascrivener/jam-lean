@@ -50,9 +50,10 @@ theorem writeValue_sameButGas {X : Type} (s : HostStatus) (a b : Int) (ω : Regs
   repeat' split
   all_goals simp
 
-/-- The host-call ids whose non-∞ outcome does not depend on the gas: `grow_heap`, `fetch`, and
-    any id the refine dispatcher does not know. -/
-def GasFreeId (h : Nat) : Prop := h = 1 ∨ h = 2 ∨ 14 < h
+/-- The host-call ids whose non-∞ outcome does not depend on the gas: `grow_heap` (1), `fetch` (2),
+    `historical_lookup` (7, Ω_H), `export` (8, Ω_E), and the ids the refine dispatcher does not know
+    (3 … 6 and above 14). -/
+def GasFreeId (h : Nat) : Prop := h = 1 ∨ h = 2 ∨ (3 ≤ h ∧ h ≤ 8) ∨ 14 < h
 
 
 /-- The protocol parameters always encode to 122 octets (`fetch` case 0). -/
@@ -71,7 +72,7 @@ theorem dispatch_sameButGas (env : Env) {h : Nat} (hh : GasFreeId h) (ω : Regs)
     (c : RefineCtx) {gas₁ gas₂ : Nat} (h₁ : (dispatch env h gas₁ ω μ c).status ≠ .oog)
     (h₂ : (dispatch env h gas₂ ω μ c).status ≠ .oog) :
     SameButGas (dispatch env h gas₁ ω μ c) (dispatch env h gas₂ ω μ c) := by
-  rcases hh with rfl | rfl | hlt
+  rcases hh with rfl | rfl | ⟨h3, h8⟩ | hlt
   · -- grow_heap
     simp only [dispatch] at *
     unfold hostGrowHeap SameButGas at *
@@ -87,6 +88,29 @@ theorem dispatch_sameButGas (env : Env) {h : Nat} (hh : GasFreeId h) (ω : Regs)
   · -- fetch
     simp only [dispatch] at *
     exact charged_sameButGas _ _ _ _ _ (fun a b => writeValue_sameButGas _ _ _ _ _ _ _ _ _ _) h₁ h₂
+  · rcases (show h = 7 ∨ h = 8 ∨ (3 ≤ h ∧ h ≤ 6) by omega) with rfl | rfl | h36
+    · -- historical_lookup
+      simp only [dispatch] at *
+      exact charged_sameButGas _ _ _ _ _
+        (fun a b => by dsimp only; exact writeValue_sameButGas _ _ _ _ _ _ _ _ _ _) h₁ h₂
+    · -- export
+      simp only [dispatch] at *
+      refine charged_sameButGas _ _ _ _ _ (fun a b => ?_) h₁ h₂
+      dsimp only
+      unfold SameButGas
+      split
+      · simp [panic]
+      · split <;> simp [r7]
+    · -- an id the dispatcher does not know
+      have hu : ∀ g, dispatch env h g ω μ c = unknown g ω μ c := by
+        intro g; unfold dispatch; split <;> first | omega | rfl
+      simp only [hu] at h₁ h₂ ⊢
+      unfold unknown at h₁ h₂ ⊢
+      unfold SameButGas
+      dsimp only at h₁ h₂ ⊢
+      split at h₁ <;> split at h₂ <;> simp_all
+      simp only [show ¬((gas₁ : Int) - Constants.Cgasunknown < 0) by omega,
+        show ¬((gas₂ : Int) - Constants.Cgasunknown < 0) by omega, ↓reduceIte]
   · -- an unknown id
     have hu : ∀ g, dispatch env h g ω μ c = unknown g ω μ c := by
       intro g; unfold dispatch; split <;> first | omega | rfl
@@ -172,7 +196,7 @@ theorem dispatch_cost (env : Env) {h : Nat} (hh : GasFreeId h) (ω : Regs) (μ :
       ((dispatch env h g ω μ c).status ≠ .oog → (dispatch env h g ω μ c).gas = (g : Int) - k) ∧
       (k ≤ g → (dispatch env h g ω μ c).status ≠ .oog) ∧
       ((dispatch env h g ω μ c).status ≠ .oog → k ≤ max g 275) := by
-  rcases hh with rfl | rfl | hlt
+  rcases hh with rfl | rfl | ⟨h3, h8⟩ | hlt
   · -- grow_heap
     simp only [dispatch]
     unfold hostGrowHeap
@@ -200,6 +224,35 @@ theorem dispatch_cost (env : Env) {h : Nat} (hh : GasFreeId h) (ω : Regs) (μ :
         (reg ω 7) (reg ω 8) (reg ω 9)) fun a =>
       ⟨writeValue_gas _ _ _ _ _, writeValue_status _ _ _ _ _ rfl⟩
     exact ⟨this.1, this.2.1, fun h => Nat.le_trans (this.2.2 h) (Nat.le_max_left _ _)⟩
+  · rcases (show h = 7 ∨ h = 8 ∨ (3 ≤ h ∧ h ≤ 6) by omega) with rfl | rfl | h36
+    · -- historical_lookup
+      simp only [dispatch, historicalLookup]
+      refine ⟨Constants.CgasHconst + memGas Constants.CgasHlinear (reg ω 11), fun g => ?_⟩
+      have := @charged_cost RefineCtx (Constants.CgasHconst + memGas Constants.CgasHlinear (reg ω 11)) g ω μ c
+      refine (fun H => ⟨H.1, H.2.1, fun h => Nat.le_trans (H.2.2 h) (Nat.le_max_left _ _)⟩) (this _ ?_)
+      intro a
+      exact ⟨writeValue_gas _ _ _ _ _, writeValue_status _ _ _ _ _ rfl⟩
+    · -- export
+      simp only [dispatch, exportSeg]
+      refine ⟨Constants.CgasE, fun g => ?_⟩
+      have := @charged_cost RefineCtx Constants.CgasE g ω μ c
+      refine (fun H => ⟨H.1, H.2.1, fun h => Nat.le_trans (H.2.2 h) (Nat.le_max_left _ _)⟩) (this _ ?_)
+      intro a
+      split
+      · simp [panic]
+      · split <;> simp [r7]
+    · -- an id the dispatcher does not know
+      have hu : ∀ g, dispatch env h g ω μ c = unknown g ω μ c := by
+        intro g; unfold dispatch; split <;> first | omega | rfl
+      refine ⟨Constants.Cgasunknown, fun g => ?_⟩
+      simp only [hu, unknown]
+      by_cases hg : (g : Int) - Constants.Cgasunknown < 0
+      · simp only [hg, ↓reduceIte]
+        refine ⟨fun h => absurd rfl h, fun h => ?_, fun h => absurd rfl h⟩
+        simp only [Constants.Cgasunknown] at hg h; omega
+      · simp only [hg, ↓reduceIte]
+        refine ⟨fun _ => trivial, fun _ => by simp, fun _ => ?_⟩
+        simp only [Constants.Cgasunknown] at hg ⊢; omega
   · -- an unknown id
     have hu : ∀ g, dispatch env h g ω μ c = unknown g ω μ c := by
       intro g; unfold dispatch; split <;> first | omega | rfl

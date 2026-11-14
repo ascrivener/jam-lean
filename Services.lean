@@ -26,7 +26,18 @@ import Services.Bootstrap.Fmt.Dec4
 import Services.Bootstrap.Fmt.Du5
 import Services.Bootstrap.Fmt.Format
 import Services.Bootstrap.Fmt.AccFmt
+import Services.Bootstrap.Fmt.ResultDebug
+import Services.Bootstrap.Fmt.ReallocCopy
+import Services.Bootstrap.Fmt.ReallocCopyInst
 import Services.Bootstrap.AccLog.ItemLog
+import Services.Bootstrap.AccLog.Imported
+import Services.Bootstrap.AccLog.Yield
+import Services.Bootstrap.AccLog.Eject
+import Services.Bootstrap.AccLog.Lookup
+import Services.Bootstrap.AccLog.Exported
+import Services.Bootstrap.AccLog.Import
+import Services.Bootstrap.AccLog.Designate
+import Services.Bootstrap.AccLog.Solicit
 import Services.Bootstrap.BParams
 import Services.Bootstrap.BParamsConsts
 import Services.Bootstrap.StartupConsts
@@ -84,6 +95,7 @@ import Services.Bootstrap.Decode.LoopF
 import Services.Bootstrap.Decode.Loop
 import Services.Bootstrap.Decode.Elems
 import Services.Bootstrap.Decode.LoopAPass
+import Services.Bootstrap.Decode.LoopAPassLow
 import Services.Bootstrap.Decode.VecHash
 import Services.Bootstrap.Decode.Assign
 import Services.Bootstrap.Decode.VecU8
@@ -268,6 +280,17 @@ import Services.Bootstrap.Encode.Variants
 import Services.Bootstrap.Encode.Yield
 import Services.Bootstrap.Encode.Prefix
 import Services.Bootstrap.Encode.Loop
+import Services.Bootstrap.Encode.EncM
+import Services.Bootstrap.Encode.PrefixBig
+import Services.Bootstrap.Encode.EncMD
+import Services.Bootstrap.Encode.HeapPad
+import Services.Bootstrap.Encode.VecSegs
+import Services.Bootstrap.Encode.VecSegs2
+import Services.Bootstrap.Encode.VecSegs3
+import Services.Bootstrap.Encode.VecCore
+import Services.Bootstrap.Encode.VariantsVec
+import Services.Bootstrap.Encode.VariantsVecVec
+import Services.Bootstrap.Encode.VecSrcHeap
 import Services.Bootstrap.Refine.Pass
 import Services.Bootstrap.Refine.PassGrow
 import Services.Bootstrap.Refine.PassLoop
@@ -277,12 +300,25 @@ import Services.Bootstrap.Refine.ExitEnc
 import Services.Bootstrap.Refine.DropOut
 import Services.Bootstrap.Refine.Fin
 import Services.Bootstrap.Refine.ExitRun
+import Services.Bootstrap.Refine.HostSteps
+import Services.Bootstrap.Refine.Export
+import Services.Bootstrap.Refine.ExportSeg
+import Services.Bootstrap.Refine.ExportStep
+import Services.Bootstrap.Refine.ExportElem
 import Services.Bootstrap.Spec
 import Services.Bootstrap.SpecLemmas.Codec
 import Services.Bootstrap.SpecLemmas.Refine
 import Services.Bootstrap.SpecLemmas.Ring
 import Services.Bootstrap.SpecLemmas.Items
 import Services.Bootstrap.ASem
+import Services.Bootstrap.ASemLemmas
+import Services.Bootstrap.Acc.Impl.Split
+import Services.Bootstrap.Acc.Impl.StepSnd
+import Services.Bootstrap.Acc.Impl.Impl
+import Services.Bootstrap.Acc.Impl.Prefix
+import Services.Bootstrap.Acc.Impl.ContractS
+import Services.Bootstrap.Acc.Impl.OogPrefix
+import Services.Bootstrap.Acc.Impl.Lift
 import Services.Bootstrap.Alloc.HeapContract
 import Services.Bootstrap.Decode.VecU8HeapBig
 import Services.Bootstrap.Decode.VecPairsBig
@@ -367,4 +403,8 @@ Built on `JAM`; nothing in `PVM` or `JAM` depends on this library.
 * `Services.Bootstrap.ASem` — what T2 means: `ASem.run` / `ASem.outcome`, accumulate's host
   operations as the model's host functions on a memory holding their arguments; `accEnv`, `credit`,
   `codeOf`.
+* `Services.Bootstrap.ASemLemmas` — `ASem.step` evaluated for `read` and `write`.
+* `Services.Bootstrap.Acc.Impl` — T2 reduced to the binary implementing `Spec.accumulate`
+  (`Impl`, early ☇ only for a listed reason `Ab`): `psiA_of_impl` gives Ψ_A's outcome as
+  `ASem.run`'s, and says why that run may have stopped early.
 -/

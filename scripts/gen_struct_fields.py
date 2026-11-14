@@ -94,7 +94,7 @@ def composed(K, pcA, retA, pcB, rets, after, glue, pcC, retC, pcD):
     I = range(1, K + 1)
     V56 = 'F fnm1' if K == 3 else 'fnm1 F'
     fp = ' '.join(f'e{i} M{i} C{i} fn{i}' for i in I)
-    hRs = '\n'.join(f'    (hV{i} : ArgOk p P R env pb S0 S1 Z μA sA spA e{i} v{i} M{i} C{i})' for i in I)
+    hRs = '\n'.join(f'    (hV{i} : FieldOk p P R env pb S0 S1 Z μA sA spA e{i} v{i} M{i} C{i} μ sp W)' for i in I)
     fv = ' '.join(f'fnm{i} fnl{i} v{i} vt{i}' for i in I)
     fh = []
     for i in I:
@@ -279,7 +279,8 @@ theorem debug_struct{K} {{p : ByteArray}} {{P : Program}} [HasCode p P] [HasCode
     KW{i - 1 if i > 1 else 0}.ro a (by omega) (Or.inl (by unfold pageSize; omega)) (H.ro a ha)
   rcases debug_field (p := p) (P := P) (R := R) env pb S0 S1 Z hZ HA HR μA sA spA e{i} M{i} C{i} fn{i}
       {prevx} {start} {prevμ} {prevs} (sp - 56) F W (sp - 56 + 16) fnm{i} fnl{i} v{i} vt{i} {prevcap} {prevlen} {rets[i - 1]}
-      {after[i - 1]} {V56} {h} hV{i} {prevs}H {prevs}B {prevs}F KA{i} {hd} {hh} {regs} ⟨by omega, by omega⟩ hfnm{i} hvt{i}
+      {after[i - 1]} {V56} {h}
+      (hV{i}.mono (by omega) (fun h1 h2 h3 => rdN_frame (fun j hj => KW{i - 1 if i > 1 else 0}.hi _ (by omega) (by omega) (by omega)))) {prevs}H {prevs}B {prevs}F KA{i} {hd} {hh} {regs} ⟨by omega, by omega⟩ hfnm{i} hvt{i}
       (by rw [rdN_frame (fun j hj => hro{i} _ (by omega))]; exact rfn{i}) hfn{i} hje{i} hbe{i}
       (by decide) {jte(rets[i - 1])} bs_{after[i - 1]} ⟨by omega, by omega, by omega⟩ ⟨by omega, hA.2, by omega⟩
       ⟨by omega, hW.2⟩ ⟨by omega, hF.2.1, hF.2.2⟩ ⟨by omega, by omega, Or.inl (by omega), Or.inl (by omega)⟩

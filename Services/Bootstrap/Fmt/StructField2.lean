@@ -24,8 +24,8 @@ theorem debug_struct2 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P]
     (pb S0 S1 Z : Nat) (hZ : 600 ≤ Z) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
     (μA : Memory) (sA : State) (spA e1 M1 C1 fn1 e2 M2 C2 fn2 : Nat)
     (x : X) (ω : Regs) (μ : Memory) (s : State) (sp F W nm nl fnm1 fnl1 v1 vt1 fnm2 fnl2 v2 vt2 cap len ret t v5 v6 : Nat)
-    (hV1 : ArgOk p P R env pb S0 S1 Z μA sA spA e1 v1 M1 C1)
-    (hV2 : ArgOk p P R env pb S0 S1 Z μA sA spA e2 v2 M2 C2)
+    (hV1 : FieldOk p P R env pb S0 S1 Z μA sA spA e1 v1 M1 C1 μ sp W)
+    (hV2 : FieldOk p P R env pb S0 S1 Z μA sA spA e2 v2 M2 C2 μ sp W)
     (H : HeapCtx env pb S0 S1 μ s) (hba : s.base % 8 = 0) (hf : Fmtr sA s μ F W cap len)
     (KA : Keeps pb spA (fun _ => False) sA μA μ s)
     (h0 : ω[0] = UInt64.ofNat ret) (h1 : ω[1] = UInt64.ofNat sp) (h5 : ω[5] = UInt64.ofNat v5)
@@ -136,7 +136,8 @@ theorem debug_struct2 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P]
     KW0.ro a (by omega) (Or.inl (by unfold pageSize; omega)) (H.ro a ha)
   rcases debug_field (p := p) (P := P) (R := R) env pb S0 S1 Z hZ HA HR μA sA spA e1 M1 C1 fn1
       x2 ω3 μ3 s2 (sp - 56) F W (sp - 56 + 16) fnm1 fnl1 v1 vt1 cap2 (len + nl) 2670
-      63034 fnm1 F 0 hV1 s2H s2B s2F KA1 hd3 (Or.inl rfl) c0 c1 c5 c6 c7 c8 c9 c10 c11 ⟨by omega, by omega⟩ hfnm1 hvt1
+      63034 fnm1 F 0
+      (hV1.mono (by omega) (fun h1 h2 h3 => rdN_frame (fun j hj => KW0.hi _ (by omega) (by omega) (by omega)))) s2H s2B s2F KA1 hd3 (Or.inl rfl) c0 c1 c5 c6 c7 c8 c9 c10 c11 ⟨by omega, by omega⟩ hfnm1 hvt1
       (by rw [rdN_frame (fun j hj => hro1 _ (by omega))]; exact rfn1) hfn1 hje1 hbe1
       (by decide) jte_1334 bs_63034 ⟨by omega, by omega, by omega⟩ ⟨by omega, hA.2, by omega⟩
       ⟨by omega, hW.2⟩ ⟨by omega, hF.2.1, hF.2.2⟩ ⟨by omega, by omega, Or.inl (by omega), Or.inl (by omega)⟩
@@ -175,7 +176,8 @@ theorem debug_struct2 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P]
     KW1.ro a (by omega) (Or.inl (by unfold pageSize; omega)) (H.ro a ha)
   rcases debug_field (p := p) (P := P) (R := R) env pb S0 S1 Z hZ HA HR μA sA spA e2 M2 C2 fn2
       xf1 ωg2 μf1 sf1 (sp - 56) F W (sp - 56 + 16) fnm2 fnl2 v2 vt2 capf1 (len + nl + nf1) 2672
-      63055 fnm1 F 1 hV2 sf1H sf1B sf1F KA2 hdf1 (Or.inr rfl) q0 q1 (q5.trans g5_1) (q6.trans g6_1) q7 q8 q9 q10 q11 ⟨by omega, by omega⟩ hfnm2 hvt2
+      63055 fnm1 F 1
+      (hV2.mono (by omega) (fun h1 h2 h3 => rdN_frame (fun j hj => KW1.hi _ (by omega) (by omega) (by omega)))) sf1H sf1B sf1F KA2 hdf1 (Or.inr rfl) q0 q1 (q5.trans g5_1) (q6.trans g6_1) q7 q8 q9 q10 q11 ⟨by omega, by omega⟩ hfnm2 hvt2
       (by rw [rdN_frame (fun j hj => hro2 _ (by omega))]; exact rfn2) hfn2 hje2 hbe2
       (by decide) jte_1335 bs_63055 ⟨by omega, by omega, by omega⟩ ⟨by omega, hA.2, by omega⟩
       ⟨by omega, hW.2⟩ ⟨by omega, hF.2.1, hF.2.2⟩ ⟨by omega, by omega, Or.inl (by omega), Or.inl (by omega)⟩

@@ -28,6 +28,25 @@ theorem keepT112 {pb S0 S1 T W : Nat} {env : RefineHost.Env} {s₀ s' : State} {
     (hW : T + 112 ≤ W ∧ W < 4294967296) : ∀ o, o + 8 ≤ 112 → rdN μ' (T + o) 8 = rdN μ (T + o) 8 := fun o ho =>
   rdN_frame (fun j hj => K.hi _ (by omega) (by omega) (by omega))
 
+/-- **How a field's value is passed**, as the builders need it at the call (stack pointer sp, the
+    `String` W, memory μ): its address v with an `ArgOk` there, or a slot v (at or above sp, apart
+    from W) holding the field's address a, with `RefOk` for a. -/
+def FieldOk (p : ByteArray) (P : Program) {X : Type} (R : HostRel X) (env : RefineHost.Env)
+    (pb S0 S1 Z : Nat) (μA : Memory) (sA : State) (spA e v M C : Nat) (μ : Memory) (sp W : Nat) : Prop :=
+  ArgOk p P R env pb S0 S1 Z μA sA spA e v M C ∨
+  ∃ a, RefOk p P R env pb S0 S1 Z μA sA spA e a M C ∧ rdN μ v 8 = a ∧ sp ≤ v ∧ v + 8 ≤ S1 ∧
+    (v + 8 ≤ W ∨ W + 24 ≤ v)
+
+/-- A field stays passable for a deeper stack pointer when its slot (if any) is kept. -/
+theorem FieldOk.mono {p : ByteArray} {P : Program} {env : RefineHost.Env} {pb S0 S1 Z : Nat} {μA : Memory}
+    {sA : State} {spA e v M C : Nat} {μ μ' : Memory} {sp sp' W : Nat}
+    (h : FieldOk p P R env pb S0 S1 Z μA sA spA e v M C μ sp W) (hsp : sp' ≤ sp)
+    (hk : sp ≤ v → v + 8 ≤ S1 → (v + 8 ≤ W ∨ W + 24 ≤ v) → rdN μ' v 8 = rdN μ v 8) :
+    FieldOk p P R env pb S0 S1 Z μA sA spA e v M C μ' sp' W := by
+  rcases h with h | ⟨a, hR, ha, h1, h2, h3⟩
+  · exact Or.inl h
+  · exact Or.inr ⟨a, hR, (hk h1 h2 h3).trans ha, by omega, h2, h3⟩
+
 /-- **A field reached through a slot** (`RefOk`): an `ArgOk` at the slot v, for a slot at or above
     spA holding the field's address a in the caller's memory. -/
 theorem RefOk.toArgOk {p : ByteArray} {P : Program} {env : RefineHost.Env} {pb S0 S1 Z : Nat} {μA : Memory}
@@ -42,7 +61,8 @@ theorem RefOk.toArgOk {p : ByteArray} {P : Program} {env : RefineHost.Env} {pb S
 theorem debug_field {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
     (pb S0 S1 Z : Nat) (hZ : 600 ≤ Z) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
     (μA : Memory) (sA : State) (spA e M C fn : Nat) (x : X) (ω : Regs) (μ : Memory) (s : State)
-    (sp F W D nm nl v vt cap len ret t v5 v6 h : Nat) (hV : ArgOk p P R env pb S0 S1 Z μA sA spA e v M C)
+    (sp F W D nm nl v vt cap len ret t v5 v6 h : Nat)
+    (hV : FieldOk p P R env pb S0 S1 Z μA sA spA e v M C μ sp W)
     (H : HeapCtx env pb S0 S1 μ s) (hba : s.base % 8 = 0) (hf : Fmtr sA s μ F W cap len)
     (KA : Keeps pb spA (fun _ => False) sA μA μ s) (hd : DL μ D F h) (hh : h = 0 ∨ h = 1)
     (h0 : ω[0] = UInt64.ofNat ret) (h1 : ω[1] = UInt64.ofNat sp) (h5 : ω[5] = UInt64.ofNat v5)
@@ -169,10 +189,26 @@ theorem debug_field {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (
     ((w16 24 (by omega)).trans s24) rfn6 hfn hje hbe
     (fun a h1 h2 => Memory.readable_of_writable (hst6 a (by omega) (by omega)))
     (fun a h1 h2 => hf6.vrd a (by omega) (by omega))
-  rcases hV ω7 μ6 x6 s6 (sp - 112) F W cap6 (len + (3 - h) + nl + 2) 2744 65242 D (ω7[6].toNat) H6
-      (hb6 ▸ hb4 ▸ hb2 ▸ hba) KA6 hf6 i0 i1 i5 (by simp) i7 i8 (by omega) (UInt64.toNat_lt _)
-      (by decide) jte_1371 bs_65242 ⟨by omega, by omega, by omega⟩ (by omega) ⟨by omega, by omega⟩ hA.2.1
-      ⟨by omega, hF.2.1, hF.2.2⟩ (by omega) with
+  have hV6 := hV.mono (μ' := μ6) (sp' := sp - 112) (by omega) (fun h1 h2 h3 =>
+    rdN_frame (fun j hj => K16.hi _ (by omega) (by omega) (by omega)))
+  have call : (∃ ω' μ' x' s' cap' n, n ≤ M ∧
+      FreeStepsH p R e ω7 μ6 x6 65242 ω' μ' x' (7 * n + 2 * (cap' - cap6) + C) ∧
+      HeapCtx env pb S0 S1 μ' s' ∧ s'.base = s6.base ∧ Fmtr sA s' μ' F W cap' (len + (3 - h) + nl + 2 + n) ∧
+      cap6 ≤ cap' ∧ cap' ≤ max cap6 (max 8 (2 * (len + (3 - h) + nl + 2 + n))) ∧
+      Keeps pb (sp - 112) (fun a => W ≤ a ∧ a < W + 24) sA μ6 μ' s' ∧
+      ω'[0] = UInt64.ofNat 2744 ∧ ω'[1] = UInt64.ofNat (sp - 112) ∧ ω'[5] = UInt64.ofNat D ∧
+      ω'[6] = UInt64.ofNat (ω7[6].toNat) ∧ ω'[7] = UInt64.ofNat 0) ∨
+      Exhausts p R pb e ω7 μ6 x6 (1073741824 + C) := by
+    rcases hV6 with hA' | ⟨a, hR, ha, hv1, hv2, hv3⟩
+    · exact hA' ω7 μ6 x6 s6 (sp - 112) F W cap6 (len + (3 - h) + nl + 2) 2744 65242 D (ω7[6].toNat) H6
+        (hb6 ▸ hb4 ▸ hb2 ▸ hba) KA6 hf6 i0 i1 i5 (by simp) i7 i8 (by omega) (UInt64.toNat_lt _)
+        (by decide) jte_1371 bs_65242 ⟨by omega, by omega, by omega⟩ (by omega) ⟨by omega, by omega⟩ hA.2.1
+        ⟨by omega, hF.2.1, hF.2.2⟩ (by omega)
+    · exact hR ω7 μ6 x6 s6 (sp - 112) F W cap6 (len + (3 - h) + nl + 2) 2744 65242 D (ω7[6].toNat) v H6
+        (hb6 ▸ hb4 ▸ hb2 ▸ hba) KA6 hf6 i0 i1 i5 (by simp) i7 i8 (by omega) (UInt64.toNat_lt _)
+        (by decide) jte_1371 bs_65242 ⟨by omega, by omega, by omega⟩ (by omega) ⟨by omega, by omega⟩ hA.2.1
+        ⟨by omega, hF.2.1, hF.2.2⟩ (by omega) ⟨by omega, hv2, hv3⟩ ha
+  rcases call with
     ⟨ω8, μ8, x8, s8, cap8, n8, hn8, run8, H8, hb8, hf8, hc7, hc8, K8, j0, j1, j5, j6, j7⟩ | hx
   rotate_left
   · refine Or.inr ((Exhausts.pre ((((((run1.trans run2).trans run3).trans run4).trans run5).trans run6).trans run7)

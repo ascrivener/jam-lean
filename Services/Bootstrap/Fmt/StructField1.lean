@@ -24,7 +24,8 @@ variable {X : Type} {R : HostRel X}
 theorem debug_struct1 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
     (pb S0 S1 Z : Nat) (hZ : 600 ≤ Z) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
     (μA : Memory) (sA : State) (spA e M C fn : Nat) (x : X) (ω : Regs) (μ : Memory) (s : State)
-    (sp F W nm nl fnm fnl v vt cap len ret t v5 v6 : Nat) (hV : ArgOk p P R env pb S0 S1 Z μA sA spA e v M C)
+    (sp F W nm nl fnm fnl v vt cap len ret t v5 v6 : Nat)
+    (hV : FieldOk p P R env pb S0 S1 Z μA sA spA e v M C μ sp W)
     (H : HeapCtx env pb S0 S1 μ s) (hba : s.base % 8 = 0) (hf : Fmtr sA s μ F W cap len)
     (KA : Keeps pb spA (fun _ => False) sA μA μ s)
     (h0 : ω[0] = UInt64.ofNat ret) (h1 : ω[1] = UInt64.ofNat sp) (h5 : ω[5] = UInt64.ofNat v5)
@@ -119,7 +120,9 @@ theorem debug_struct1 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P]
   have rfn3 : rdN μ3 (vt + 24) 8 = fn := by rw [rdN_frame (fun j hj => hro3 _ (by omega))]; exact rfn
   have hs3 : s2.base % 8 = 0 := hb2 ▸ hba
   rcases debug_field (p := p) (P := P) (R := R) env pb S0 S1 Z hZ HA HR μA sA spA e M C fn x2 ω3 μ3 s2
-      (sp - 56) F W (sp - 56 + 16) fnm fnl v vt cap2 (len + nl) 2664 62878 fnm F 0 hV H3 hs3 hf3 KA3
+      (sp - 56) F W (sp - 56 + 16) fnm fnl v vt cap2 (len + nl) 2664 62878 fnm F 0
+      (hV.mono (by omega) (fun h1 h2 h3 => rdN_frame (fun j hj => K13.hi _ (by omega) (by omega) (by omega))))
+      H3 hs3 hf3 KA3
       ⟨dF, by rw [show sp - 56 + 16 + 8 = sp - 56 + 24 by omega]; exact dr,
         by rw [show sp - 56 + 16 + 9 = sp - 56 + 25 by omega]; exact dh⟩
       (Or.inl rfl) c0 c1 c5 c6 c7 c8 c9 c10 c11 ⟨by omega, by omega⟩ hfnm hvt rfn3 hfn hje hbe

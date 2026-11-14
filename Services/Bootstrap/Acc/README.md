@@ -494,6 +494,28 @@ Lemmas under `accContractQ` (from (x, v :: qs) to (x', qs)) carry over to any st
 - Keys must survive `get`'s allocation: `get_some` takes them on the stack above the frame or in an
   allocated chunk's data.
 
+## `on_transfer` (`Acc/Transfer/`)
+
+Spec `onTransfer`: read "transfer-count", write n + 1 under it, write ℰ₄(source) ++ ℰ₈(amount) ++ memo
+under "transfer{n}". Proved segments and calls:
+- the head and the copied-key `get` (`Head`, `GetKey`, `GetKeyCall.gk_call`), the count's decode
+  (`Count`, `ReadShort`);
+- the copied-key `set` of n + 1 (`SetKey`, `SetKeyCall.sk_call`, 40494 → 7386 under `YIn`, with
+  `FreeStepsH.keepY` lifting the context-keeping steps), its prologue and `Ok` check (`Tail`);
+- `alloc(128)` and the memo's copy (`Tail`); the record's encoding helper 34071 … 34176 (`Encode`,
+  `EncodeCall.enc_call`); the second `set`, its `Ok` check and the frees back to 6766 (`Tail2`).
+"transfer-count" (65956) is in `accRoBytes` (checked by `bootstrapcheck`).
+
+**Named hypotheses (`Transfer/Hyp.lean`)**, to be proved by the symbolic-executor session:
+- `KeyFmt`: `format!("transfer{}", n)` at 7792 leaves the `String` `s!"transfer{n}"` at sp + 512
+  (the second write's key; its text is needed, unlike log lines).
+- `Utf8Call`: `core::str::from_utf8` at 7447 on the memo's copy, frame-only plus its tag (0 with the
+  input slice, or 1); it feeds only the log line.
+
+Still to do: the log line 7454 … 7741 (from `Utf8Call`'s result, `format_inner` of the template at
+66221, `log`, frees; frame-only, ArgsAt-style hypotheses for the log-sites work) and the composition
+of the whole of `on_transfer` as an `Impl` of `onTransfer`.
+
 ## Brief: `add_recent_work_item` and the results tail (rows 8, 9, 11)
 
 These go to a separate session. Both run inside an operand's iteration of the items loop, in

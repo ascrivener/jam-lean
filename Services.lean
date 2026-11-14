@@ -317,6 +317,7 @@ import Services.Bootstrap.Decode.VecVecU8Big
 import Services.Bootstrap.Decode.VariantsBig
 import Services.Bootstrap.Decode.VariantsBig2
 import Services.Bootstrap.Decode.ElemsBig
+import Services.Bootstrap.Decode.VecVecOwn
 import Services.Bootstrap.SymExec
 import Services.Witness.SymExec
 

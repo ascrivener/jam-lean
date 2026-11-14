@@ -121,7 +121,7 @@ structure LayP (S0 S1 M E n : Nat) (ce : Chunk) : Prop where
   hM : S0 + 456 ≤ M ∧ M + 648 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0
   hn : n < 128
   hE : ce.addr + 32 ≤ E ∧ E + 232 * n ≤ ce.addr + 32 * ce.size
-  hEtop : E + 232 * n + 24 < 2147483648
+  hEtop : E + 232 * n < 2147483648
 
 /-- Equal reads of 232·k octets are equal slot by slot. -/
 theorem slot_eq {μ μ' : Memory} {a a' k j : Nat} (h : μ'.readN a' (232 * k) = μ.readN a (232 * k)) (hj : j < k) :

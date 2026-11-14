@@ -67,7 +67,7 @@ theorem body {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCode
     (hM : S0 + 456 ≤ M ∧ M + 648 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0) (hn : 0 < n) (hn128 : n < 128)
     (hcap : 232 * cap < 18446744073709551616) (hce : cap ≠ 18446744073709551615)
     (hceC : ce ∈ chunks s ∧ ce.used = true) (hE : ce.addr + 32 + 232 * n ≤ ce.addr + 32 * ce.size)
-    (hEtop : ce.addr + 32 + 232 * n + 24 < 2147483648)
+    (hEtop : ce.addr + 32 + 232 * n < 2147483648)
     (hkp : ∀ d, Kp 0 d → d ∈ chunks s ∧ d.used = true) (h1 : ω[1] = UInt64.ofNat M)
     (s168 : μ.readN (M + 168) 8 = Num.encodeLE 8 cap) (s176 : μ.readN (M + 176) 8 = Num.encodeLE 8 (ce.addr + 32))
     (s184 : μ.readN (M + 184) 8 = Num.encodeLE 8 n)

@@ -31,7 +31,7 @@ theorem pass_elem_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P
     (hold : len = 0 ∨ ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true ∧ c.size = (232 * len + 31) / 32 + 1)
     (hlen : len ≤ 2097152)
     (hM : S0 + 456 ≤ M ∧ M + 632 + 16 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0)
-    (hcur : 65536 ≤ cur ∧ cur + 232 + 24 < 2147483648)
+    (hcur : 65536 ≤ cur ∧ cur + 232 < 2147483648)
     (hne : cur ≠ en) (hen : en < 18446744073709551616) (hptr : ptr < 18446744073709551616)
     (hpl : ptr + 232 * len < 2147483648)
     (h1 : ω[1] = UInt64.ofNat M) (i : Nat)

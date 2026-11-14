@@ -71,10 +71,14 @@ def st_{tag} : Static :=
     wr := [(⟨some 1, -72⟩, 72)]
     sep := [((⟨some 2, 0⟩, 4), (⟨some 1, -72⟩, 72))]
     rw := [{rws}] }}
-#eval ((List.range 140).find? fun k => (traceRun st_{tag} Services.Bootstrap.SymExec.progF k 68146 (init A)).2.map (·.1) == some 61857)
+#eval match (List.range 140).find? (fun k => (traceRun st_{tag} Services.Bootstrap.SymExec.progF k 68146 (init A)).2.map (·.1) == some 61857) with
+  | some k => match (traceRun st_{tag} Services.Bootstrap.SymExec.progF k 68146 (init A)).2 with
+    | some (_, σ) => s!"RANGE {tag} STEPS {{k}} R11 {{repr (σ.regs.getD 11 (.const 0))}} R12 {{repr (σ.regs.getD 12 (.const 0))}} CELLS {{repr (σ.cells.filter fun (c : Aff × Nat × SVal) => c.1.base == some 1 && decide ((-40 : Int) ≤ c.1.off) && decide (c.1.off < (-24 : Int)))}}"
+    | none => "none"
+  | none => "none"
 '''
 
-ranges = [(2**31, 2**32)]
+ranges = [(0,1),(1,10),(10,100),(100,1000),(1000,10000),(10000,100000),(100000,1000000),(1000000,10000000),(10000000,100000000),(100000000,1000000000),(1000000000,2**31),(2**31,2**32)]
 out = open(sys.argv[1]).read().split('-- GENERATED')[0] + '-- GENERATED\n'
 for lo, hi in ranges:
     g = Gen(lo, hi)

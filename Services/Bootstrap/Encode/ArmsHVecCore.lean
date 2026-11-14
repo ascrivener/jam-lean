@@ -5,8 +5,6 @@ import Services.Bootstrap.Encode.VariantsVec3Bless
 /-!
 # Shared pieces for the `Vec` arms with growth (`EncOkMH`)
 
-* `SrcAtP q n`: the stretch (q, n) when n > 0 (`ArmsH.SrcAt` with nothing for an empty `Vec`, whose
-  pointer is dangling and lies in no chunk).
 * `SafeR.sub`, `SafeR.ext`, `SafeR.bounds`: a sub-stretch of a kept stretch is kept; a kept stretch is
   a source for `ext_stepH`; its numeric bounds.
 * `startDH`: the dispatch (`Enc.startD`) into `StDH []` for any variant 1 ≤ t ≤ 24.
@@ -23,9 +21,6 @@ open PVM Picoalloc JAM Services.Bootstrap Services.Bootstrap.Code Services.Boots
 
 set_option maxHeartbeats 8000000
 set_option maxRecDepth 100000
-
-/-- The heap octets of a `Vec` of n octets at q when n > 0: the stretch (q, n). -/
-def SrcAtP (q n : Nat) (q' m : Nat) : Prop := 0 < n ∧ q' = q ∧ m = n
 
 /-- A sub-stretch of a kept stretch is kept. -/
 theorem SafeR.sub {s : State} {ptr B S1 v q m q' m' : Nat} (h : SafeR s ptr B S1 v q m) (h1 : q ≤ q')

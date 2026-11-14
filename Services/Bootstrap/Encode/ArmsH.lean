@@ -12,7 +12,7 @@ Templates for converting an arm of `Instruction::encode_to` from `EncOk`/`EncOkM
   each the same code segment (`Fixed.tagSeg`, `fieldSeg`, `directSeg`) and then `ext_stepH`.
 * `transferH`: `Variants.transfer` (a fixed-width arm, `EncOkMH … 136`).
 * `looked_up_someH`: `VariantsVec.looked_up_some` (a `Vec` arm, with the length prefix and heap octets,
-  `EncOkMH … 192`), its heap octets the stretch (q, n) (`SrcAt`).
+  `EncOkMH … 192`), its heap octets the stretch (q, n) when n > 0 (`SrcAtP`).
 
 The proofs follow the originals line by line: each append becomes an `rcases … with ⟨…⟩ | hx` whose
 second case closes with `Or.inr ((ExhaustsW.pre run_so_far hx).mono _)`.
@@ -167,6 +167,10 @@ theorem transferH {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
 /-- The heap octets of a `Vec` of n octets at q, as `EncOkMH`'s stretches: (q, n). -/
 def SrcAt (q n : Nat) (q' m : Nat) : Prop := q' = q ∧ m = n
 
+/-- The heap octets of a `Vec` of n octets at q when n > 0: the stretch (q, n) (an empty `Vec`'s pointer
+    is dangling and lies in no chunk, so it reads nothing). -/
+def SrcAtP (q n : Nat) (q' m : Nat) : Prop := 0 < n ∧ q' = q ∧ m = n
+
 /-- **`LookedUp { data: Some(bytes) }` (tag 18), with growth** (`VariantsVec.looked_up_some` as
     `EncOkMH`): encodes to 18 :: 1 :: ℰ(n) ++ bytes, the heap octets the stretch (q, n). -/
 theorem looked_up_someH {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeA p P]
@@ -174,7 +178,7 @@ theorem looked_up_someH {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p 
     (q n : Nat) (bytes : List UInt8) (hbn : bytes.length = n) (hn : n < 4294967296)
     (hq64 : q < 18446744073709551616) :
     EncOkMH env K pb p P 192 (18 :: 1 :: (Blob.encodeNat n ++ bytes)) (LookedUpSomeRepAt q n bytes)
-      (SrcAt q n) := by
+      (SrcAtP q n) := by
   intro x ω μ s S0 S1 F S v cap ptr len ret t h0 h1 h7 h8 rep L hlen tab hrt hsrc
   obtain ⟨r0, r8, r16, r24, rb⟩ := rep
   have hD8 : μ.readN S 8 = Num.encodeLE 8 (9223372036854775807 + 18) := by
@@ -247,7 +251,7 @@ theorem looked_up_someH {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p 
       q n 862 19636 hbn rb h80 h87 h88 h89 ⟨by decide, by decide, by decide⟩ jte_430 bs_19636 (by simp; omega)
       (by rcases Nat.eq_zero_or_pos n with h | h
           · exact Or.inl h
-          · exact Or.inr (hsrc q n ⟨rfl, rfl⟩)) with
+          · exact Or.inr (hsrc q n ⟨h, rfl, rfl⟩)) with
     ⟨ω9, μ9, run9, st9, -, -, -⟩ | hx
   rotate_left
   · exact Or.inr ((ExhaustsW.pre (run1.trans (run2.trans (run3.trans (run4.trans (run5.trans (run6.trans

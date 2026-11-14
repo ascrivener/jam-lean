@@ -55,4 +55,28 @@ theorem loop_all {X : Type} {p : ByteArray} {R : HostRel X} (l : Nat) (n B : Nat
     (∃ ω' μ' x', FreeStepsH p R l ω μ x l ω' μ' x' (n * B) ∧ Q n ω' μ' x') ∨ T l ω μ x (n * B) :=
   loop l n B Q T pre mono step n 0 ω μ x (Nat.zero_add n) q
 
+/-- **The loop, with unbounded steps**: as `loop`, each step taking some number of steps (an `Export`
+    runs one host call and one log line per segment). From `Q k`, `Q n` at the head, or a terminal outcome. -/
+theorem loopE {X : Type} {p : ByteArray} {R : HostRel X} (l : Nat) (n : Nat)
+    (Q : Nat → Regs → Memory → X → Prop) (T : Nat → Regs → Memory → X → Prop)
+    (pre : ∀ {i j : Nat} {ω ω1 : Regs} {μ μ1 : Memory} {x x1 : X} {a : Nat},
+      FreeStepsH p R i ω μ x j ω1 μ1 x1 a → T j ω1 μ1 x1 → T i ω μ x)
+    (step : ∀ k ω μ x, k < n → Q k ω μ x →
+      (∃ ω' μ' x' N, FreeStepsH p R l ω μ x l ω' μ' x' N ∧ Q (k + 1) ω' μ' x') ∨ T l ω μ x) :
+    ∀ m k ω μ x, k + m = n → Q k ω μ x →
+      (∃ ω' μ' x' N, FreeStepsH p R l ω μ x l ω' μ' x' N ∧ Q n ω' μ' x') ∨ T l ω μ x := by
+  intro m
+  induction m with
+  | zero =>
+    intro k ω μ x hk q
+    rw [show k = n by omega] at q
+    exact Or.inl ⟨ω, μ, x, 0, FreeStepsH.refl, q⟩
+  | succ m ih =>
+    intro k ω μ x hk q
+    rcases step k ω μ x (by omega) q with ⟨ω1, μ1, x1, N1, run1, q1⟩ | ht
+    · rcases ih (k + 1) ω1 μ1 x1 (by omega) q1 with ⟨ω', μ', x', N, run', q'⟩ | ht'
+      · exact Or.inl ⟨ω', μ', x', _, run1.trans run', q'⟩
+      · exact Or.inr (pre run1 ht')
+    · exact Or.inr ht
+
 end Services.Bootstrap.Refine.LoopG

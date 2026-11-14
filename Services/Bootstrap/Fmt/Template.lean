@@ -111,7 +111,7 @@ theorem Tmpl.congr {μ μ' : Memory} :
     unspecified) within 7n + 2(cap' − cap) + C steps, the context kept, ω₀, ω₁, ω₅, ω₆ restored and
     from sp up only W … W + 24 changed; or reaches a failed allocator call within 2³⁰ + C steps. -/
 def ArgOk (p : ByteArray) (P : Program) {X : Type} (R : HostRel X) (env : RefineHost.Env)
-    (pb S0 S1 : Nat) (μA : Memory) (sA : State) (spA e v M C : Nat) : Prop :=
+    (pb S0 S1 Z : Nat) (μA : Memory) (sA : State) (spA e v M C : Nat) : Prop :=
   ∀ (ω : Regs) (μ : Memory) (x : X) (s : State) (sp F W cap len ret t v5 v6 : Nat),
     HeapCtx env pb S0 S1 μ s → s.base % 8 = 0 → Keeps pb spA (fun _ => False) sA μA μ s →
     Fmtr sA s μ F W cap len →
@@ -120,7 +120,7 @@ def ArgOk (p : ByteArray) (P : Program) {X : Type} (R : HostRel X) (env : Refine
     v5 < 18446744073709551616 → v6 < 18446744073709551616 →
     (0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) → P.jumpTable.getD (ret / 2 - 1) 0 = t →
     P.isBlockStart t = true →
-    (S0 + 600 ≤ sp ∧ sp % 8 = 0 ∧ 2147484248 ≤ sp) → sp ≤ spA → (sp ≤ W ∧ W + 24 ≤ S1) →
+    (S0 + Z ≤ sp ∧ sp % 8 = 0 ∧ 2147483648 + Z ≤ sp) → sp ≤ spA → (sp ≤ W ∧ W + 24 ≤ S1) → W + 24 ≤ spA →
     (sp ≤ F ∧ F + 24 ≤ S1 ∧ (F + 24 ≤ W ∨ W + 24 ≤ F)) → len + M < 134217728 →
     (∃ ω' μ' x' s' cap' n, n ≤ M ∧
       FreeStepsH p R e ω μ x t ω' μ' x' (7 * n + 2 * (cap' - cap) + C) ∧
@@ -133,11 +133,11 @@ def ArgOk (p : ByteArray) (P : Program) {X : Type} (R : HostRel X) (env : Refine
 
 /-- An `ArgOk` holds for a larger M and C. -/
 theorem ArgOk.mono {p : ByteArray} {P : Program} {X : Type} {R : HostRel X} {env : RefineHost.Env}
-    {pb S0 S1 : Nat} {μA : Memory} {sA : State} {spA e v M C M' C' : Nat}
-    (h : ArgOk p P R env pb S0 S1 μA sA spA e v M C) (hM : M ≤ M') (hC : C ≤ C') :
-    ArgOk p P R env pb S0 S1 μA sA spA e v M' C' := by
-  intro ω μ x s sp F W cap len ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hF hn
-  rcases h ω μ x s sp F W cap len ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hF
+    {pb S0 S1 Z : Nat} {μA : Memory} {sA : State} {spA e v M C M' C' : Nat}
+    (h : ArgOk p P R env pb S0 S1 Z μA sA spA e v M C) (hM : M ≤ M') (hC : C ≤ C') :
+    ArgOk p P R env pb S0 S1 Z μA sA spA e v M' C' := by
+  intro ω μ x s sp F W cap len ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hWA hF hn
+  rcases h ω μ x s sp F W cap len ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hWA hF
       (by omega) with ⟨ω', μ', x', s', cap', n, hn', run, rest⟩ | hx
   · exact Or.inl ⟨ω', μ', x', s', cap', n, by omega, run.mono (by omega), rest⟩
   · exact Or.inr (hx.mono (by omega))
@@ -162,11 +162,11 @@ variable {X : Type} {R : HostRel X}
 /-- **`{:x}` of a u32** (60525, `hex32`) as an argument: a value at v (4 octets, at or above spA,
     readable in μA). -/
 theorem hex32_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
-    (pb S0 S1 : Nat) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
+    (pb S0 S1 Z : Nat) (hZ : 600 ≤ Z) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
     (μA : Memory) (sA : State) (spA v : Nat) (hS : S0 ≤ spA) (hv : spA ≤ v ∧ v + 4 < 4294967296)
     (hrv : ∀ a, v ≤ a → a < v + 4 → μA.readable a = true) :
-    ArgOk p P R env pb S0 S1 μA sA spA 60525 v 8 2500 := by
-  intro ω μ x s sp F W cap len ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hF hn
+    ArgOk p P R env pb S0 S1 Z μA sA spA 60525 v 8 2500 := by
+  intro ω μ x s sp F W cap len ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hWA hF hn
   rcases hex32 (p := p) (P := P) (R := R) env pb S0 S1 HA HR x ω μ sA s sp F W v cap len ret t v5 v6 H hba hf
       h0 h1 h5 h6 h7 h8 ⟨hv5, hv6⟩ hret hjt hbt ⟨by omega, hsp.2.1, by omega⟩ hW hF ⟨by omega, hv.2⟩
       (fun a h1 h2 => K.readable H hS (by omega) (hrv a h1 h2)) hn with
@@ -176,13 +176,13 @@ theorem hex32_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env
 
 /-- **`{}` of a u32** (68146, `dec32`) as an argument: a value at v (4 octets). -/
 theorem dec32_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
-    (pb S0 S1 : Nat) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
+    (pb S0 S1 Z : Nat) (hZ : 600 ≤ Z) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
     (μA : Memory) (sA : State) (spA v : Nat) (hS : S0 ≤ spA) (hv : spA ≤ v ∧ v + 4 < 4294967296)
     (hrv : ∀ a, v ≤ a → a < v + 4 → μA.readable a = true) :
-    ArgOk p P R env pb S0 S1 μA sA spA 68146 v 10 2700 := by
-  intro ω μ x s sp F W cap len ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hF hn
+    ArgOk p P R env pb S0 S1 Z μA sA spA 68146 v 10 2700 := by
+  intro ω μ x s sp F W cap len ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hWA hF hn
   rcases dec32 (p := p) (P := P) (R := R) env pb S0 S1 HA HR x ω μ sA s sp F W v cap len ret t v5 v6 H hba hf
-      h0 h1 h5 h6 h7 h8 ⟨hv5, hv6⟩ hret hjt hbt hsp hW hF ⟨by omega, hv.2⟩
+      h0 h1 h5 h6 h7 h8 ⟨hv5, hv6⟩ hret hjt hbt ⟨by omega, hsp.2.1, by omega⟩ hW hF ⟨by omega, hv.2⟩
       (fun a h1 h2 => K.readable H hS (by omega) (hrv a h1 h2)) hn with
     ⟨ω', μ', x', s', cap', n, hn', run, rest⟩ | hx
   · exact Or.inl ⟨ω', μ', x', s', cap', n, hn', run.mono (by omega), rest⟩
@@ -190,13 +190,13 @@ theorem dec32_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env
 
 /-- **`{}` of a u64** (68449, `dec64`) as an argument: a value at v (8 octets). -/
 theorem dec64_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
-    (pb S0 S1 : Nat) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
+    (pb S0 S1 Z : Nat) (hZ : 600 ≤ Z) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
     (μA : Memory) (sA : State) (spA v : Nat) (hS : S0 ≤ spA) (hv : spA ≤ v ∧ v + 8 < 4294967296)
     (hrv : ∀ a, v ≤ a → a < v + 8 → μA.readable a = true) :
-    ArgOk p P R env pb S0 S1 μA sA spA 68449 v 20 2900 := by
-  intro ω μ x s sp F W cap len ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hF hn
+    ArgOk p P R env pb S0 S1 Z μA sA spA 68449 v 20 2900 := by
+  intro ω μ x s sp F W cap len ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hWA hF hn
   rcases dec64 (p := p) (P := P) (R := R) env pb S0 S1 HA HR x ω μ sA s sp F W v cap len ret t v5 v6 H hba hf
-      h0 h1 h5 h6 h7 h8 ⟨hv5, hv6⟩ hret hjt hbt hsp hW hF ⟨by omega, hv.2⟩
+      h0 h1 h5 h6 h7 h8 ⟨hv5, hv6⟩ hret hjt hbt ⟨by omega, hsp.2.1, by omega⟩ hW hF ⟨by omega, hv.2⟩
       (fun a h1 h2 => K.readable H hS (by omega) (hrv a h1 h2)) hn with
     ⟨ω', μ', x', s', cap', n, hn', run, rest⟩ | hx
   · exact Or.inl ⟨ω', μ', x', s', cap', n, hn', run.mono (by omega), rest⟩

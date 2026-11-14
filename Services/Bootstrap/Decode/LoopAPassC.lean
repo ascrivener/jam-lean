@@ -49,6 +49,50 @@ structure InvAFC (env : RefineHost.Env) (pb : Nat) (F RD P0 Lt : Nat) (es : List
   cbm : cb ∈ chunks s ∧ cb.used = true
   cbd : ∀ a, B ≤ a → a < B + 232 * es.length → InData cb a
 
+/-- **The loop's invariant, with the slots' chunks** (`InvAFG`, each slot's `reps j cs` seeing the
+    chunks `cs` its element returned). Under any host fit for the allocator
+    (`InvAFC`'s host-generic form). -/
+structure InvAFCG {X : Type} (env : HeapHost X) (pb : Nat) (F RD P0 Lt : Nat) (es : List (List UInt8))
+    (reps : Nat → List Chunk → List UInt8 → Memory → Prop) (k B : Nat) (cp cb : Chunk) (ω : Regs) (μ : Memory)
+    (s : State) : Prop where
+  r1 : ω[1] = UInt64.ofNat (F + 56)
+  r5 : ω[5] = UInt64.ofNat (es.length - k)
+  m24 : μ.readN (F + 80) 8 = Num.encodeLE 8 RD
+  m40 : μ.readN (F + 96) 8 = Num.encodeLE 8 es.length
+  m48 : μ.readN (F + 104) 8 = Num.encodeLE 8 B
+  m56 : μ.readN (F + 112) 8 = Num.encodeLE 8 k
+  rP : μ.readN RD 8 = Num.encodeLE 8 (P0 + off es k)
+  rL : μ.readN (RD + 8) 8 = Num.encodeLE 8 (Lt - off es k)
+  pay : μ.readN P0 es.flatten.length = es.flatten
+  tab : μ.readN 67476 100 = Tag.table
+  el : ∃ csOf : Nat → List Chunk,
+    (∀ j, j < k → (∀ c ∈ csOf j, c ∈ chunks s ∧ c.used = true ∧ c ≠ cb ∧ c ≠ cp) ∧
+      ∀ μ'' : Memory, (∀ c ∈ csOf j, ∀ a, InData c a → μ''.read a = μ.read a) →
+        reps j (csOf j) (μ.readN (B + 232 * j) 232) μ'') ∧
+    (∀ j j', j < k → j' < k → j ≠ j' → ∀ c ∈ csOf j, c ∉ csOf j')
+  ws : ∀ a, 4278050816 ≤ a → a < (F + 584) → μ.writable a = true
+  wr : ∀ a, RD ≤ a → a < (RD + 16) → μ.writable a = true
+  rt : ∀ a, 67476 ≤ a → a < 67576 → μ.readable a = true
+  heap : HeapCtxC env.code pb S0 S1 μ s
+  cpm : cp ∈ chunks s ∧ cp.used = true
+  cpd : ∀ a, P0 ≤ a → a < P0 + es.flatten.length → InData cp a
+  cbm : cb ∈ chunks s ∧ cb.used = true
+  cbd : ∀ a, B ≤ a → a < B + 232 * es.length → InData cb a
+
+/-- `InvAFC` gives `InvAFCG` for the refine contract (`refineHeap env`). -/
+theorem InvAFC.toG {env : RefineHost.Env} {pb : Nat} {F : Nat} {RD : Nat} {P0 : Nat} {Lt : Nat} {es : List (List UInt8)} {reps : Nat → List Chunk → List UInt8 → Memory → Prop} {k : Nat} {B : Nat} {cp : Chunk} {cb : Chunk} {ω : Regs} {μ : Memory} {s : State}
+    (h : InvAFC env pb F RD P0 Lt es reps k B cp cb ω μ s) : InvAFCG (refineHeap env) pb F RD P0 Lt es reps k B cp cb ω μ s :=
+  ⟨h.r1, h.r5, h.m24, h.m40, h.m48, h.m56, h.rP, h.rL, h.pay, h.tab, h.el, h.ws, h.wr, h.rt, h.heap, h.cpm, h.cpd, h.cbm, h.cbd⟩
+
+/-- `InvAFCG` for the refine contract (`refineHeap env`) gives `InvAFC`. -/
+theorem InvAFCG.toR {env : RefineHost.Env} {pb : Nat} {F : Nat} {RD : Nat} {P0 : Nat} {Lt : Nat} {es : List (List UInt8)} {reps : Nat → List Chunk → List UInt8 → Memory → Prop} {k : Nat} {B : Nat} {cp : Chunk} {cb : Chunk} {ω : Regs} {μ : Memory} {s : State}
+    (h : InvAFCG (refineHeap env) pb F RD P0 Lt es reps k B cp cb ω μ s) : InvAFC env pb F RD P0 Lt es reps k B cp cb ω μ s :=
+  ⟨h.r1, h.r5, h.m24, h.m40, h.m48, h.m56, h.rP, h.rL, h.pay, h.tab, h.el, h.ws, h.wr, h.rt, h.heap, h.cpm, h.cpd, h.cbm, h.cbd⟩
+
+theorem InvAFC_iff {env : RefineHost.Env} {pb : Nat} {F : Nat} {RD : Nat} {P0 : Nat} {Lt : Nat} {es : List (List UInt8)} {reps : Nat → List Chunk → List UInt8 → Memory → Prop} {k : Nat} {B : Nat} {cp : Chunk} {cb : Chunk} {ω : Regs} {μ : Memory} {s : State} :
+    InvAFC env pb F RD P0 Lt es reps k B cp cb ω μ s ↔ InvAFCG (refineHeap env) pb F RD P0 Lt es reps k B cp cb ω μ s :=
+  ⟨InvAFC.toG, InvAFCG.toR⟩
+
 /-- **The loop's invariant, with the slots' chunks, after d earlier slots** (`InvAFC` for a loop
     appending es to a `Vec` already holding d slots): the length word d + k, the capacity word
     d + n, slot j (of this batch) at B + 232 (d + j), and cb's data covering this batch's slots. -/
@@ -79,29 +123,88 @@ structure InvAFCd (env : RefineHost.Env) (pb : Nat) (F RD P0 Lt : Nat) (es : Lis
   cbm : cb ∈ chunks s ∧ cb.used = true
   cbd : ∀ a, B + 232 * d ≤ a → a < B + 232 * (d + es.length) → InData cb a
 
-/-- `InvAFC` is `InvAFCd` with no earlier slots. -/
-theorem InvAFC.toD {env : RefineHost.Env} {pb F RD P0 Lt : Nat} {es : List (List UInt8)}
+/-- **The loop's invariant, with the slots' chunks, after d earlier slots** (`InvAFCG` for a loop
+    appending es to a `Vec` already holding d slots): the length word d + k, the capacity word
+    d + n, slot j (of this batch) at B + 232 (d + j), and cb's data covering this batch's slots. Under any host fit for the allocator
+    (`InvAFCd`'s host-generic form). -/
+structure InvAFCdG {X : Type} (env : HeapHost X) (pb : Nat) (F RD P0 Lt : Nat) (es : List (List UInt8))
+    (reps : Nat → List Chunk → List UInt8 → Memory → Prop) (d k B : Nat) (cp cb : Chunk) (ω : Regs)
+    (μ : Memory) (s : State) : Prop where
+  r1 : ω[1] = UInt64.ofNat (F + 56)
+  r5 : ω[5] = UInt64.ofNat (es.length - k)
+  m24 : μ.readN (F + 80) 8 = Num.encodeLE 8 RD
+  m40 : μ.readN (F + 96) 8 = Num.encodeLE 8 (d + es.length)
+  m48 : μ.readN (F + 104) 8 = Num.encodeLE 8 B
+  m56 : μ.readN (F + 112) 8 = Num.encodeLE 8 (d + k)
+  rP : μ.readN RD 8 = Num.encodeLE 8 (P0 + off es k)
+  rL : μ.readN (RD + 8) 8 = Num.encodeLE 8 (Lt - off es k)
+  pay : μ.readN P0 es.flatten.length = es.flatten
+  tab : μ.readN 67476 100 = Tag.table
+  el : ∃ csOf : Nat → List Chunk,
+    (∀ j, j < k → (∀ c ∈ csOf j, c ∈ chunks s ∧ c.used = true ∧ c ≠ cb ∧ c ≠ cp) ∧
+      ∀ μ'' : Memory, (∀ c ∈ csOf j, ∀ a, InData c a → μ''.read a = μ.read a) →
+        reps j (csOf j) (μ.readN (B + 232 * (d + j)) 232) μ'') ∧
+    (∀ j j', j < k → j' < k → j ≠ j' → ∀ c ∈ csOf j, c ∉ csOf j')
+  ws : ∀ a, 4278050816 ≤ a → a < (F + 584) → μ.writable a = true
+  wr : ∀ a, RD ≤ a → a < (RD + 16) → μ.writable a = true
+  rt : ∀ a, 67476 ≤ a → a < 67576 → μ.readable a = true
+  heap : HeapCtxC env.code pb S0 S1 μ s
+  cpm : cp ∈ chunks s ∧ cp.used = true
+  cpd : ∀ a, P0 ≤ a → a < P0 + es.flatten.length → InData cp a
+  cbm : cb ∈ chunks s ∧ cb.used = true
+  cbd : ∀ a, B + 232 * d ≤ a → a < B + 232 * (d + es.length) → InData cb a
+
+/-- `InvAFCd` gives `InvAFCdG` for the refine contract (`refineHeap env`). -/
+theorem InvAFCd.toG {env : RefineHost.Env} {pb : Nat} {F : Nat} {RD : Nat} {P0 : Nat} {Lt : Nat} {es : List (List UInt8)} {reps : Nat → List Chunk → List UInt8 → Memory → Prop} {d : Nat} {k : Nat} {B : Nat} {cp : Chunk} {cb : Chunk} {ω : Regs} {μ : Memory} {s : State}
+    (h : InvAFCd env pb F RD P0 Lt es reps d k B cp cb ω μ s) : InvAFCdG (refineHeap env) pb F RD P0 Lt es reps d k B cp cb ω μ s :=
+  ⟨h.r1, h.r5, h.m24, h.m40, h.m48, h.m56, h.rP, h.rL, h.pay, h.tab, h.el, h.ws, h.wr, h.rt, h.heap, h.cpm, h.cpd, h.cbm, h.cbd⟩
+
+/-- `InvAFCdG` for the refine contract (`refineHeap env`) gives `InvAFCd`. -/
+theorem InvAFCdG.toR {env : RefineHost.Env} {pb : Nat} {F : Nat} {RD : Nat} {P0 : Nat} {Lt : Nat} {es : List (List UInt8)} {reps : Nat → List Chunk → List UInt8 → Memory → Prop} {d : Nat} {k : Nat} {B : Nat} {cp : Chunk} {cb : Chunk} {ω : Regs} {μ : Memory} {s : State}
+    (h : InvAFCdG (refineHeap env) pb F RD P0 Lt es reps d k B cp cb ω μ s) : InvAFCd env pb F RD P0 Lt es reps d k B cp cb ω μ s :=
+  ⟨h.r1, h.r5, h.m24, h.m40, h.m48, h.m56, h.rP, h.rL, h.pay, h.tab, h.el, h.ws, h.wr, h.rt, h.heap, h.cpm, h.cpd, h.cbm, h.cbd⟩
+
+theorem InvAFCd_iff {env : RefineHost.Env} {pb : Nat} {F : Nat} {RD : Nat} {P0 : Nat} {Lt : Nat} {es : List (List UInt8)} {reps : Nat → List Chunk → List UInt8 → Memory → Prop} {d : Nat} {k : Nat} {B : Nat} {cp : Chunk} {cb : Chunk} {ω : Regs} {μ : Memory} {s : State} :
+    InvAFCd env pb F RD P0 Lt es reps d k B cp cb ω μ s ↔ InvAFCdG (refineHeap env) pb F RD P0 Lt es reps d k B cp cb ω μ s :=
+  ⟨InvAFCd.toG, InvAFCdG.toR⟩
+
+/-- `InvAFCG` is `InvAFCdG` with no earlier slots. -/
+theorem InvAFCG.toD {X : Type} {env : HeapHost X} {pb F RD P0 Lt : Nat} {es : List (List UInt8)}
     {reps : Nat → List Chunk → List UInt8 → Memory → Prop} {k B : Nat} {cp cb : Chunk} {ω : Regs} {μ : Memory}
-    {s : State} (h : InvAFC env pb F RD P0 Lt es reps k B cp cb ω μ s) :
-    InvAFCd env pb F RD P0 Lt es reps 0 k B cp cb ω μ s :=
+    {s : State} (h : InvAFCG env pb F RD P0 Lt es reps k B cp cb ω μ s) :
+    InvAFCdG env pb F RD P0 Lt es reps 0 k B cp cb ω μ s :=
   ⟨h.r1, h.r5, h.m24, by rw [Nat.zero_add]; exact h.m40, h.m48, by rw [Nat.zero_add]; exact h.m56, h.rP, h.rL,
     h.pay, h.tab, by obtain ⟨csOf, h1, h2⟩ := h.el; exact ⟨csOf, fun j hj => by simpa only [Nat.zero_add] using h1 j hj, h2⟩, h.ws, h.wr, h.rt, h.heap, h.cpm,
     h.cpd, h.cbm, fun a h1 h2 => h.cbd a (by omega) (by omega)⟩
 
-/-- `InvAFCd` with no earlier slots is `InvAFC`. -/
-theorem InvAFCd.toC {env : RefineHost.Env} {pb F RD P0 Lt : Nat} {es : List (List UInt8)}
+/-- `InvAFCG.toD` for the refine contract (`refineHeap env`). -/
+theorem InvAFC.toD {env : RefineHost.Env} {pb F RD P0 Lt : Nat} {es : List (List UInt8)}
     {reps : Nat → List Chunk → List UInt8 → Memory → Prop} {k B : Nat} {cp cb : Chunk} {ω : Regs} {μ : Memory}
-    {s : State} (h : InvAFCd env pb F RD P0 Lt es reps 0 k B cp cb ω μ s) :
-    InvAFC env pb F RD P0 Lt es reps k B cp cb ω μ s :=
+    {s : State} (h : InvAFC env pb F RD P0 Lt es reps k B cp cb ω μ s) :
+    InvAFCd env pb F RD P0 Lt es reps 0 k B cp cb ω μ s :=
+  (InvAFCG.toD h.toG).toR
+
+/-- `InvAFCdG` with no earlier slots is `InvAFCG`. -/
+theorem InvAFCdG.toC {X : Type} {env : HeapHost X} {pb F RD P0 Lt : Nat} {es : List (List UInt8)}
+    {reps : Nat → List Chunk → List UInt8 → Memory → Prop} {k B : Nat} {cp cb : Chunk} {ω : Regs} {μ : Memory}
+    {s : State} (h : InvAFCdG env pb F RD P0 Lt es reps 0 k B cp cb ω μ s) :
+    InvAFCG env pb F RD P0 Lt es reps k B cp cb ω μ s :=
   ⟨h.r1, h.r5, h.m24, by rw [← Nat.zero_add es.length]; exact h.m40, h.m48, by rw [← Nat.zero_add k]; exact h.m56,
     h.rP, h.rL, h.pay, h.tab, by obtain ⟨csOf, h1, h2⟩ := h.el; exact ⟨csOf, fun j hj => by simpa only [Nat.zero_add] using h1 j hj, h2⟩, h.ws, h.wr, h.rt, h.heap,
     h.cpm, h.cpd, h.cbm, fun a h1 h2 => h.cbd a (by omega) (by omega)⟩
 
-/-- `InvAFC` for representations ignoring the chunks is `InvAF`. -/
-theorem InvAFC.toAF {env : RefineHost.Env} {pb F RD P0 Lt : Nat} {es : List (List UInt8)}
+/-- `InvAFCdG.toC` for the refine contract (`refineHeap env`). -/
+theorem InvAFCd.toC {env : RefineHost.Env} {pb F RD P0 Lt : Nat} {es : List (List UInt8)}
+    {reps : Nat → List Chunk → List UInt8 → Memory → Prop} {k B : Nat} {cp cb : Chunk} {ω : Regs} {μ : Memory}
+    {s : State} (h : InvAFCd env pb F RD P0 Lt es reps 0 k B cp cb ω μ s) :
+    InvAFC env pb F RD P0 Lt es reps k B cp cb ω μ s :=
+  (InvAFCdG.toC h.toG).toR
+
+/-- `InvAFCG` for representations ignoring the chunks is `InvAFG`. -/
+theorem InvAFCG.toAF {X : Type} {env : HeapHost X} {pb F RD P0 Lt : Nat} {es : List (List UInt8)}
     {reps : Nat → List UInt8 → Memory → Prop} {k B : Nat} {cp cb : Chunk} {ω : Regs} {μ : Memory}
-    {s : State} (h : InvAFC env pb F RD P0 Lt es (fun j _ bs μ => reps j bs μ) k B cp cb ω μ s) :
-    InvAF env pb F RD P0 Lt es reps k B cp cb ω μ s :=
+    {s : State} (h : InvAFCG env pb F RD P0 Lt es (fun j _ bs μ => reps j bs μ) k B cp cb ω μ s) :
+    InvAFG env pb F RD P0 Lt es reps k B cp cb ω μ s :=
   ⟨h.r1, h.r5, h.m24, h.m40, h.m48, h.m56, h.rP, h.rL, h.pay, h.tab,
     fun j hj => by
       obtain ⟨csOf, h1, -⟩ := h.el
@@ -109,57 +212,87 @@ theorem InvAFC.toAF {env : RefineHost.Env} {pb F RD P0 Lt : Nat} {es : List (Lis
         (h1 j hj).2⟩, h.ws, h.wr, h.rt, h.heap, h.cpm,
     h.cpd, h.cbm, h.cbd⟩
 
-/-- At k = 0 the slots' representations play no part: an `InvAF` after no elements is an `InvAFC`
+/-- `InvAFCG.toAF` for the refine contract (`refineHeap env`). -/
+theorem InvAFC.toAF {env : RefineHost.Env} {pb F RD P0 Lt : Nat} {es : List (List UInt8)}
+    {reps : Nat → List UInt8 → Memory → Prop} {k B : Nat} {cp cb : Chunk} {ω : Regs} {μ : Memory}
+    {s : State} (h : InvAFC env pb F RD P0 Lt es (fun j _ bs μ => reps j bs μ) k B cp cb ω μ s) :
+    InvAF env pb F RD P0 Lt es reps k B cp cb ω μ s :=
+  (InvAFCG.toAF h.toG).toR
+
+/-- At k = 0 the slots' representations play no part: an `InvAFG` after no elements is an `InvAFCG`
     after none, for any representations. -/
+theorem InvAFG.toC_zero {X : Type} {env : HeapHost X} {pb F RD P0 Lt : Nat} {es : List (List UInt8)}
+    {reps : Nat → List UInt8 → Memory → Prop} (reps' : Nat → List Chunk → List UInt8 → Memory → Prop)
+    {B : Nat} {cp cb : Chunk} {ω : Regs} {μ : Memory}
+    {s : State} (h : InvAFG env pb F RD P0 Lt es reps 0 B cp cb ω μ s) :
+    InvAFCG env pb F RD P0 Lt es reps' 0 B cp cb ω μ s :=
+  ⟨h.r1, h.r5, h.m24, h.m40, h.m48, h.m56, h.rP, h.rL, h.pay, h.tab, ⟨fun _ => [], fun _ hj => absurd hj (Nat.not_lt_zero _), fun _ _ hj => absurd hj (Nat.not_lt_zero _)⟩,
+    h.ws, h.wr, h.rt, h.heap, h.cpm, h.cpd, h.cbm, h.cbd⟩
+
+/-- `InvAFG.toC_zero` for the refine contract (`refineHeap env`). -/
 theorem InvAF.toC_zero {env : RefineHost.Env} {pb F RD P0 Lt : Nat} {es : List (List UInt8)}
     {reps : Nat → List UInt8 → Memory → Prop} (reps' : Nat → List Chunk → List UInt8 → Memory → Prop)
     {B : Nat} {cp cb : Chunk} {ω : Regs} {μ : Memory}
     {s : State} (h : InvAF env pb F RD P0 Lt es reps 0 B cp cb ω μ s) :
     InvAFC env pb F RD P0 Lt es reps' 0 B cp cb ω μ s :=
+  (InvAFG.toC_zero reps' h.toG).toR
+
+/-- At k = 0 the slots' representations play no part (`InvAFCdG`). -/
+theorem InvAFCdG.reps_zero {X : Type} {env : HeapHost X} {pb F RD P0 Lt : Nat} {es : List (List UInt8)}
+    {reps : Nat → List Chunk → List UInt8 → Memory → Prop} (reps' : Nat → List Chunk → List UInt8 → Memory → Prop)
+    {d B : Nat} {cp cb : Chunk} {ω : Regs} {μ : Memory}
+    {s : State} (h : InvAFCdG env pb F RD P0 Lt es reps d 0 B cp cb ω μ s) :
+    InvAFCdG env pb F RD P0 Lt es reps' d 0 B cp cb ω μ s :=
   ⟨h.r1, h.r5, h.m24, h.m40, h.m48, h.m56, h.rP, h.rL, h.pay, h.tab, ⟨fun _ => [], fun _ hj => absurd hj (Nat.not_lt_zero _), fun _ _ hj => absurd hj (Nat.not_lt_zero _)⟩,
     h.ws, h.wr, h.rt, h.heap, h.cpm, h.cpd, h.cbm, h.cbd⟩
 
-/-- At k = 0 the slots' representations play no part (`InvAFCd`). -/
+/-- `InvAFCdG.reps_zero` for the refine contract (`refineHeap env`). -/
 theorem InvAFCd.reps_zero {env : RefineHost.Env} {pb F RD P0 Lt : Nat} {es : List (List UInt8)}
     {reps : Nat → List Chunk → List UInt8 → Memory → Prop} (reps' : Nat → List Chunk → List UInt8 → Memory → Prop)
     {d B : Nat} {cp cb : Chunk} {ω : Regs} {μ : Memory}
     {s : State} (h : InvAFCd env pb F RD P0 Lt es reps d 0 B cp cb ω μ s) :
     InvAFCd env pb F RD P0 Lt es reps' d 0 B cp cb ω μ s :=
-  ⟨h.r1, h.r5, h.m24, h.m40, h.m48, h.m56, h.rP, h.rL, h.pay, h.tab, ⟨fun _ => [], fun _ hj => absurd hj (Nat.not_lt_zero _), fun _ _ hj => absurd hj (Nat.not_lt_zero _)⟩,
-    h.ws, h.wr, h.rt, h.heap, h.cpm, h.cpd, h.cbm, h.cbd⟩
+  (InvAFCdG.reps_zero reps' h.toG).toR
 
-/-- **Every `ElemOkAF` is an `ElemOkAFC`** whose representation ignores the chunks (the returned
-    chunks are those `ElemOkAF` returns). -/
-theorem ElemOkAF.toAFC {env : RefineHost.Env} {cap pb : Nat} {gl : Nat → UInt8} {p : ByteArray} {P : Program}
+/-- **Every `ElemOkAFG` is an `ElemOkAFCG`** whose representation ignores the chunks (the returned
+    chunks are those `ElemOkAFG` returns). -/
+theorem ElemOkAFG.toAFC {X : Type} {env : HeapHost X} {cap pb : Nat} {gl : Nat → UInt8} {p : ByteArray} {P : Program}
     {F RD N : Nat} {enc : List UInt8} {Rep : List UInt8 → Memory → Prop}
-    (h : ElemOkAF env cap pb gl p P F RD N enc Rep) :
-    ElemOkAFC env cap pb gl p P F RD N enc (fun _ bs μ => Rep bs μ) := by
+    (h : ElemOkAFG env cap pb gl p P F RD N enc Rep) :
+    ElemOkAFCG env cap pb gl p P F RD N enc (fun _ bs μ => Rep bs μ) := by
   intro x ω μ ptr len v5 v6 s h1 h5 h6 h7 tag rP rL hl hl' hp hp' pay rpay s0 s5 s6 hv5 hv6 tab rt ws wr H hg hc
   rcases h x ω μ ptr len v5 v6 s h1 h5 h6 h7 tag rP rL hl hl' hp hp' pay rpay s0 s5 s6 hv5 hv6 tab rt ws wr H hg hc
     with ⟨ω', μ', s', a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, ⟨cs, hcs, hrep⟩, a12⟩ | ex
   · exact Or.inl ⟨ω', μ', s', a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, ⟨cs, hcs, hrep⟩, a12⟩
   · exact Or.inr ex
 
-/-- **One pass, with the slots' chunks, after d earlier slots** (`passAF_low` over `InvAFCd`, the
-    element given as `ElemOkAFC`): the written slot is d + k, and the chunks' data outside this batch's
+/-- `ElemOkAFG.toAFC` for the refine contract (`refineHeap env`). -/
+theorem ElemOkAF.toAFC {env : RefineHost.Env} {cap pb : Nat} {gl : Nat → UInt8} {p : ByteArray} {P : Program}
+    {F RD N : Nat} {enc : List UInt8} {Rep : List UInt8 → Memory → Prop}
+    (h : ElemOkAF env cap pb gl p P F RD N enc Rep) :
+    ElemOkAFC env cap pb gl p P F RD N enc (fun _ bs μ => Rep bs μ) :=
+  ElemOkAFG.toAFC (env := refineHeap env) (P := P) h
+
+/-- **One pass, with the slots' chunks, after d earlier slots** (`passAF_lowG` over `InvAFCdG`, the
+    element given as `ElemOkAFCG`): the written slot is d + k, and the chunks' data outside this batch's
     slots [B + 232 d, B + 232 (d + n)) is kept. -/
-theorem passAFCd_low {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap pb N : Nat)
+theorem passAFCd_lowG {p : ByteArray} {P : Program} [HasCode p P] {X : Type} (env : HeapHost X) (cap pb N : Nat)
     (gl : Nat → UInt8) (F RD P0 Lt : Nat)
-    (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State)
+    (x : X) (ω : Regs) (μ : Memory) (s : State)
     (es : List (List UInt8)) (reps : Nat → List Chunk → List UInt8 → Memory → Prop) (d k B : Nat) (cp cb : Chunk)
     (hk : k < es.length) (ok : OkF F RD P0 Lt es B) (hdB : B + 232 * (d + es.length) < 2147483648)
-    (hel : ElemOkAFC env cap pb gl p P F RD N es[k] (reps k))
-    (h : InvAFCd env pb F RD P0 Lt es reps d k B cp cb ω μ s) (hg : ∀ a, Glob a → μ.read a = gl a) :
-    (∃ ω' μ' s', FreeStepsH p (refineContractK cap env) 680 ω μ x (if k + 1 < es.length then 680 else 562)
-      ω' μ' x (N + 1700) ∧ InvAFCd env pb F RD P0 Lt es reps d (k + 1) B cp cb ω' μ' s' ∧
+    (hel : ElemOkAFCG env cap pb gl p P F RD N es[k] (reps k))
+    (h : InvAFCdG env pb F RD P0 Lt es reps d k B cp cb ω μ s) (hg : ∀ a, Glob a → μ.read a = gl a) :
+    (∃ ω' μ' s', FreeStepsH p (env.rel cap) 680 ω μ x (if k + 1 < es.length then 680 else 562)
+      ω' μ' x (N + 1700) ∧ InvAFCdG env pb F RD P0 Lt es reps d (k + 1) B cp cb ω' μ' s' ∧
       FrameAF F RD es.length (B + 232 * d) s μ s' μ' ∧
       (∀ a, F + 56 ≤ a → a < F + 80 → μ'.read a = μ.read a)) ∨
-    Exhausts env cap pb p P 680 ω μ x (N + 1700) := by
+    ExhaustsG env cap pb p P 680 ω μ x (N + 1700) := by
   obtain ⟨hn, hB1, hB2, hB3, hne, hP0, hLt, hLt', hF1, hF8, hRD1, hRD2⟩ := ok
   obtain ⟨r1, r5, m24, m40, m48, m56, rP, rL, pay, tab, el, ws, wr, rt, heap, ⟨hcp, hcpu⟩, cpd, ⟨hcb, hcbu⟩,
     cbd⟩ := h
   have rp : ∀ a, P0 ≤ a → a < P0 + es.flatten.length → μ.readable a = true := fun a h1 h2 =>
-    Memory.readable_of_writable (heap_writable_data heap hcp hcpu (cpd a h1 h2))
+    Memory.readable_of_writable (heap_writable_dataG heap hcp hcpu (cpd a h1 h2))
   have hL := hne k hk
   have hoff := off_lt es k hk
   have offk1 := off_succ es k hk
@@ -172,14 +305,14 @@ theorem passAFCd_low {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHo
     rw [readN_sub μ _ _ 1 _ _ ek (by omega), List.drop_one, List.take_of_length_le (by simp)]
   -- S1
   obtain ⟨ω1, μ1, run1, a0, a1, a5, a6, a7, a8, a9, as0, as5, as6, afr, ard, awr⟩ :=
-    LoopF.s1F (p := p) (P := P) (R := refineContractK cap env) x ω μ F RD ⟨by omega, by omega⟩ (by omega) r1 m24
+    LoopF.s1F (p := p) (P := P) (R := env.rel cap) x ω μ F RD ⟨by omega, by omega⟩ (by omega) r1 m24
       (fun a h1 h2 => ws a (by omega) (by omega))
       (fun a h1 h2 => Memory.readable_of_writable (ws a (by omega) (by omega)))
   have afr' : ∀ a, (decide (a < 4294967296) && !(decide (F ≤ a ∧ a < (F + 56)))) = true → μ1.read a = μ.read a :=
     fun a ha => afr a (by fr_conv) (by fr_conv)
   clear afr
   -- the tag
-  obtain ⟨ω2, μ2, run2, ok2⟩ := read_ok (p := p) (P := P) (R := refineContractK cap env) x ω1 μ1 930 20626
+  obtain ⟨ω2, μ2, run2, ok2⟩ := read_ok (p := p) (P := P) (R := env.rel cap) x ω1 μ1 930 20626
     F RD F (P0 + off es k) (Lt - off es k) 1 a0 a1 a7 a8 a9
     (by omega) (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_464]) bs_20626 (by omega) (by omega) (by omega)
     (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)
@@ -201,7 +334,7 @@ theorem passAFCd_low {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHo
     exact ek0
   have low2 : ∀ a, a < 2147483648 → μ2.read a = μ.read a := fun a ha =>
     (bfr' a (by fr_conv)).trans (afr' a (by fr_conv))
-  have heap2 : HeapCtx env pb S0 S1 μ2 s := heap_of_high heap low2 (fun a => by rw [bwr, awr])
+  have heap2 : HeapCtxC env.code pb S0 S1 μ2 s := heap_of_highG heap low2 (fun a => by rw [bwr, awr])
   -- the element
   have v5 : (ω[5]).toNat = es.length - k := by rw [r5]; simp; omega
   have cplo := cpd (P0 + off es k) (by omega) (by omega)
@@ -223,7 +356,7 @@ theorem passAFCd_low {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHo
       heap2 (fun a ha => by have hg' := ha; unfold Glob at hg'; rw [low2 a (by omega)]; exact hg a ha)
       ⟨cp, hcp, hcpu, by omega, by omega⟩ with hs | hx
   rotate_left
-  · exact Or.inr ((Exhausts.pre (run1.trans run2) hx).mono (by omega))
+  · exact Or.inr ((ExhaustsG.pre (run1.trans run2) hx).mono (by omega))
   obtain ⟨ω3, μ3, s', run3, c1, c5, c6, cR0, cR8, ⟨W, hW, cW, cne⟩, heap3, keepU, keepD, ⟨cs, hcs, crep⟩,
     cfr, clow, clowr, cglob, cwr⟩ := hs
   have cfr' : ∀ a, (F + 32) ≤ a → (decide (a < 4294967296) && !(decide (RD ≤ a ∧ a < (RD + 16))) && !(decide ((F + 120) ≤ a ∧ a < (F + 352)))) = true →
@@ -233,11 +366,11 @@ theorem passAFCd_low {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHo
   have hcb' := keepU cb hcb hcbu
   have hcp' := keepU cp hcp hcpu
   -- S3 and the first move
-  obtain ⟨ω4, run4, d0, d1, d5, d6, d7, d8, d9⟩ := LoopF.g3F (p := p) (P := P) (R := refineContractK cap env) x ω3 μ3
+  obtain ⟨ω4, run4, d0, d1, d5, d6, d7, d8, d9⟩ := LoopF.g3F (p := p) (P := P) (R := env.rel cap) x ω3 μ3
     F W ⟨by omega, by omega⟩ c1 cW hW cne
     (fun a h1 h2 => Memory.readable_of_writable (by rw [wr3 a (by omega)]; exact ws a (by omega) (by omega)))
   obtain ⟨ω5, μ5, run5, e0, e1, e5, e6, ecp, efr, erd, ewr⟩ := memcpy_big_aligned (p := p) (P := P)
-    (R := refineContractK cap env)
+    (R := env.rel cap)
     x ω4 μ3 20 749 (F + 56) (F + 352) (F + 120) 232 d0 d1 d7 d8 d9 (by omega)
     (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_9]) bs_749 (by omega) (by omega) (by omega)
     (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)
@@ -252,7 +385,7 @@ theorem passAFCd_low {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHo
     (efr' a (by fr_conv)).trans ((cfr' a (by omega) (by fr_conv)).trans ((bfr' a (by fr_conv)).trans
       (afr' a (by fr_conv))))
   obtain ⟨ω6, μ6, run6, f0, f1, f5, f6, f7, f8, f9, ffr, frd, fwr⟩ := LoopF.s4F (p := p) (P := P)
-    (R := refineContractK cap env)
+    (R := env.rel cap)
     x ω5 μ5 F (d + k) (d + es.length) B ⟨by omega, by omega⟩ (by omega) (by omega) (by omega) e1
     (by rw [Memory.readN_congr (fun j hj => keep _ (by omega) (by omega))]; exact m40)
     (by rw [Memory.readN_congr (fun j hj => keep _ (by omega) (by omega))]; exact m48)
@@ -263,12 +396,12 @@ theorem passAFCd_low {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHo
     fun a ha => ffr a (by fr_conv) (by fr_conv)
   clear ffr
   obtain ⟨ω7, μ7, run7, g0, g1, g5, g6, gcp, gfr, grd, gwr⟩ := memcpy_big_aligned (p := p) (P := P)
-    (R := refineContractK cap env)
+    (R := env.rel cap)
     x ω6 μ6 16 668 (F + 56) (B + 232 * (d + k)) (F + 352) 232 f0 f1 f7 f8 f9 (by omega)
     (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_7]) bs_668 (by omega) (by omega) (by omega)
     (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)
     (fun a h1 h2 => Memory.readable_of_writable (by rw [fwr, ewr, wr3 a (by omega)]; exact ws a (by omega) (by omega)))
-    (fun a h1 h2 => by rw [fwr, ewr]; exact heap_writable_data heap3 hcb' hcbu (cbd a (by omega) (by omega)))
+    (fun a h1 h2 => by rw [fwr, ewr]; exact heap_writable_dataG heap3 hcb' hcbu (cbd a (by omega) (by omega)))
     (fun a h1 h2 => by rw [fwr, ewr, wr3 a (by omega)]; exact ws a (by omega) (by omega))
   have gfr' : ∀ a, (decide (a < 4294967296) && !(decide (B + 232 * (d + k) ≤ a ∧ a < B + 232 * (d + k) + 232)) &&
       !(decide ((F + 8) ≤ a ∧ a < (F + 56)))) = true → μ7.read a = μ6.read a :=
@@ -317,14 +450,14 @@ theorem passAFCd_low {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHo
   have rd7 : ∀ a, RD ≤ a → a < (RD + 16) → μ7.read a = μ3.read a := fun a h1 h2 =>
     (gfr' a (by fr_conv)).trans ((ffr' a (by fr_conv)).trans (efr' a (by fr_conv)))
   -- the allocator's context after the moves
-  have heap7 : HeapCtx env pb S0 S1 μ7 s' := heap_of_data heap3 hcb'
+  have heap7 : HeapCtxC env.code pb S0 S1 μ7 s' := heap_of_dataG heap3 hcb'
     (fun a h0 h1 => low37 a h0 (by omega)) hwr73
   -- S5: count it, and loop or leave
-  have post : ∀ (t : Nat) (ω8 : Regs), FreeStepsH p (refineContractK cap env) 668 ω7 μ7 x t ω8
+  have post : ∀ (t : Nat) (ω8 : Regs), FreeStepsH p (env.rel cap) 668 ω7 μ7 x t ω8
       (μ7.writeN (F + 112) (Num.encodeLE 8 (d + k + 1))) x 4 →
       ω8[1] = UInt64.ofNat (F + 56) → ω8[5] = UInt64.ofNat (es.length - (k + 1)) →
-      (∃ ω' μ' s', FreeStepsH p (refineContractK cap env) 680 ω μ x t ω' μ' x (N + 1700) ∧
-        InvAFCd env pb F RD P0 Lt es reps d (k + 1) B cp cb ω' μ' s' ∧ FrameAF F RD es.length (B + 232 * d) s μ s' μ' ∧
+      (∃ ω' μ' s', FreeStepsH p (env.rel cap) 680 ω μ x t ω' μ' x (N + 1700) ∧
+        InvAFCdG env pb F RD P0 Lt es reps d (k + 1) B cp cb ω' μ' s' ∧ FrameAF F RD es.length (B + 232 * d) s μ s' μ' ∧
         (∀ a, F + 56 ≤ a → a < F + 80 → μ'.read a = μ.read a)) := by
     intro t ω8 run8 h1' h5'
     have wlow : ∀ a, a < 2147483648 → (μ7.writeN (F + 112) (Num.encodeLE 8 (d + k + 1))).read a = μ7.read a :=
@@ -411,7 +544,7 @@ theorem passAFCd_low {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHo
     · intro a h1 h2; rw [Memory.writable_writeN, hwrq a (by omega)]; exact ws a h1 h2
     · intro a h1 h2; rw [Memory.writable_writeN, hwrq a (by omega)]; exact wr a h1 h2
     · intro a h1 h2; rw [Memory.readable_writeN, hrdL a (by omega)]; exact rt a h1 h2
-    · exact heap_of_high heap7 wlow (fun a => Memory.writable_writeN _ _ _ _)
+    · exact heap_of_highG heap7 wlow (fun a => Memory.writable_writeN _ _ _ _)
     · intro a h h0 h2
       rw [Memory.read_writeN_disjoint _ _ _ _ (by simp <;> omega) (by simp [two32] <;> omega) (by simp [two32] <;> omega)]
       exact backH a h h0 h2
@@ -436,15 +569,31 @@ theorem passAFCd_low {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHo
         ((cfr' a (by omega) (by fr_conv)).trans ((bfr' a (by fr_conv)).trans (afr' a (by fr_conv))))))
   by_cases hmore : k + 1 < es.length
   · rw [if_pos hmore]
-    obtain ⟨ω8, run8, i1, i5⟩ := LoopF.s5_moreF (p := p) (P := P) (R := refineContractK cap env) x ω7 μ7 F (d + k)
+    obtain ⟨ω8, run8, i1, i5⟩ := LoopF.s5_moreF (p := p) (P := P) (R := env.rel cap) x ω7 μ7 F (d + k)
       (es.length - k) ⟨by omega, by omega⟩ (by omega) (by omega) (by omega) q1 q5 q6
       (fun a h1 h2 => by rw [hwrq a (by omega)]; exact ws a (by omega) (by omega))
     exact Or.inl (post 680 ω8 run8 i1 (i5.trans (by rw [show es.length - k - 1 = es.length - (k + 1) by omega])))
   · rw [if_neg hmore]
-    obtain ⟨ω8, run8, i1, i5⟩ := LoopF.s5_lastF (p := p) (P := P) (R := refineContractK cap env) x ω7 μ7 F (d + k) ⟨by omega, by omega⟩
+    obtain ⟨ω8, run8, i1, i5⟩ := LoopF.s5_lastF (p := p) (P := P) (R := env.rel cap) x ω7 μ7 F (d + k) ⟨by omega, by omega⟩
       (by omega) q1 (q5.trans (by rw [show es.length - k = 1 by omega])) q6
       (fun a h1 h2 => by rw [hwrq a (by omega)]; exact ws a (by omega) (by omega))
     exact Or.inl (post 562 ω8 run8 i1 (i5.trans (by rw [show es.length - (k + 1) = 0 by omega])))
+
+/-- `passAFCd_lowG` for the refine contract (`refineHeap env`). -/
+theorem passAFCd_low {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap pb N : Nat)
+    (gl : Nat → UInt8) (F RD P0 Lt : Nat)
+    (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State)
+    (es : List (List UInt8)) (reps : Nat → List Chunk → List UInt8 → Memory → Prop) (d k B : Nat) (cp cb : Chunk)
+    (hk : k < es.length) (ok : OkF F RD P0 Lt es B) (hdB : B + 232 * (d + es.length) < 2147483648)
+    (hel : ElemOkAFC env cap pb gl p P F RD N es[k] (reps k))
+    (h : InvAFCd env pb F RD P0 Lt es reps d k B cp cb ω μ s) (hg : ∀ a, Glob a → μ.read a = gl a) :
+    (∃ ω' μ' s', FreeStepsH p (refineContractK cap env) 680 ω μ x (if k + 1 < es.length then 680 else 562)
+      ω' μ' x (N + 1700) ∧ InvAFCd env pb F RD P0 Lt es reps d (k + 1) B cp cb ω' μ' s' ∧
+      FrameAF F RD es.length (B + 232 * d) s μ s' μ' ∧
+      (∀ a, F + 56 ≤ a → a < F + 80 → μ'.read a = μ.read a)) ∨
+    Exhausts env cap pb p P 680 ω μ x (N + 1700) :=
+  (passAFCd_lowG (p := p) (P := P) (refineHeap env) cap pb N gl F RD P0 Lt x ω μ s es reps d k B cp cb hk ok hdB hel h.toG hg).imp
+    (fun ⟨ω', μ', s', run, i, f⟩ => ⟨ω', μ', s', run, i.toR, f⟩) id
 
 /-- The slots' facts of `InvAFCd.el` for a named witness `csOf` of the slots' chunks. -/
 def ElCd (reps : Nat → List Chunk → List UInt8 → Memory → Prop) (d k B : Nat) (cp cb : Chunk)
@@ -504,33 +653,33 @@ theorem s5_lastF7 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs
 
 end steps
 
-/-- **One pass, with the slots' chunks named** (`passAFCd_low` for a given witness `csOf` of the slots'
+/-- **One pass, with the slots' chunks named** (`passAFCd_lowG` for a given witness `csOf` of the slots'
     chunks): also the next witness, the old one with slot k set to the element's chunks, fresh against
     the used chunks of s0 (if those are among s's used chunks); the buffer pointer B at F + 88; and, after
     the last element, ω₇ = d + n. -/
-theorem passAFCd_lowF {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap pb N : Nat)
+theorem passAFCd_lowFG {p : ByteArray} {P : Program} [HasCode p P] {X : Type} (env : HeapHost X) (cap pb N : Nat)
     (gl : Nat → UInt8) (F RD P0 Lt : Nat)
-    (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State)
+    (x : X) (ω : Regs) (μ : Memory) (s : State)
     (es : List (List UInt8)) (reps : Nat → List Chunk → List UInt8 → Memory → Prop) (d k B : Nat) (cp cb : Chunk)
     (hk : k < es.length) (ok : OkF F RD P0 Lt es B) (hdB : B + 232 * (d + es.length) < 2147483648)
-    (hel : ElemOkAFC env cap pb gl p P F RD N es[k] (reps k))
-    (h : InvAFCd env pb F RD P0 Lt es reps d k B cp cb ω μ s) (hg : ∀ a, Glob a → μ.read a = gl a)
+    (hel : ElemOkAFCG env cap pb gl p P F RD N es[k] (reps k))
+    (h : InvAFCdG env pb F RD P0 Lt es reps d k B cp cb ω μ s) (hg : ∀ a, Glob a → μ.read a = gl a)
     (s0 : State) (k0 : Nat) (csOf : Nat → List Chunk) (hE : ElCd reps d k B cp cb csOf μ s)
     (hfr : ∀ j, k0 ≤ j → j < k → ∀ c ∈ csOf j, ∀ e ∈ chunks s0, e.used = true → e ≠ c)
     (hs0 : ∀ e ∈ chunks s0, e.used = true → e ∈ chunks s) :
-    (∃ ω' μ' s', FreeStepsH p (refineContractK cap env) 680 ω μ x (if k + 1 < es.length then 680 else 562)
-      ω' μ' x (N + 1700) ∧ InvAFCd env pb F RD P0 Lt es reps d (k + 1) B cp cb ω' μ' s' ∧
+    (∃ ω' μ' s', FreeStepsH p (env.rel cap) 680 ω μ x (if k + 1 < es.length then 680 else 562)
+      ω' μ' x (N + 1700) ∧ InvAFCdG env pb F RD P0 Lt es reps d (k + 1) B cp cb ω' μ' s' ∧
       FrameAF F RD es.length (B + 232 * d) s μ s' μ' ∧
       (∀ a, F + 56 ≤ a → a < F + 80 → μ'.read a = μ.read a) ∧
       μ'.readN (F + 88) 8 = Num.encodeLE 8 B ∧ (k + 1 = es.length → ω'[7] = UInt64.ofNat (d + es.length)) ∧
       ∃ csOf' : Nat → List Chunk, ElCd reps d (k + 1) B cp cb csOf' μ' s' ∧
         ∀ j, k0 ≤ j → j < k + 1 → ∀ c ∈ csOf' j, ∀ e ∈ chunks s0, e.used = true → e ≠ c) ∨
-    Exhausts env cap pb p P 680 ω μ x (N + 1700) := by
+    ExhaustsG env cap pb p P 680 ω μ x (N + 1700) := by
   obtain ⟨hn, hB1, hB2, hB3, hne, hP0, hLt, hLt', hF1, hF8, hRD1, hRD2⟩ := ok
   obtain ⟨r1, r5, m24, m40, m48, m56, rP, rL, pay, tab, el, ws, wr, rt, heap, ⟨hcp, hcpu⟩, cpd, ⟨hcb, hcbu⟩,
     cbd⟩ := h
   have rp : ∀ a, P0 ≤ a → a < P0 + es.flatten.length → μ.readable a = true := fun a h1 h2 =>
-    Memory.readable_of_writable (heap_writable_data heap hcp hcpu (cpd a h1 h2))
+    Memory.readable_of_writable (heap_writable_dataG heap hcp hcpu (cpd a h1 h2))
   have hL := hne k hk
   have hoff := off_lt es k hk
   have offk1 := off_succ es k hk
@@ -543,14 +692,14 @@ theorem passAFCd_lowF {p : ByteArray} {P : Program} [HasCode p P] (env : RefineH
     rw [readN_sub μ _ _ 1 _ _ ek (by omega), List.drop_one, List.take_of_length_le (by simp)]
   -- S1
   obtain ⟨ω1, μ1, run1, a0, a1, a5, a6, a7, a8, a9, as0, as5, as6, afr, ard, awr⟩ :=
-    LoopF.s1F (p := p) (P := P) (R := refineContractK cap env) x ω μ F RD ⟨by omega, by omega⟩ (by omega) r1 m24
+    LoopF.s1F (p := p) (P := P) (R := env.rel cap) x ω μ F RD ⟨by omega, by omega⟩ (by omega) r1 m24
       (fun a h1 h2 => ws a (by omega) (by omega))
       (fun a h1 h2 => Memory.readable_of_writable (ws a (by omega) (by omega)))
   have afr' : ∀ a, (decide (a < 4294967296) && !(decide (F ≤ a ∧ a < (F + 56)))) = true → μ1.read a = μ.read a :=
     fun a ha => afr a (by fr_conv) (by fr_conv)
   clear afr
   -- the tag
-  obtain ⟨ω2, μ2, run2, ok2⟩ := read_ok (p := p) (P := P) (R := refineContractK cap env) x ω1 μ1 930 20626
+  obtain ⟨ω2, μ2, run2, ok2⟩ := read_ok (p := p) (P := P) (R := env.rel cap) x ω1 μ1 930 20626
     F RD F (P0 + off es k) (Lt - off es k) 1 a0 a1 a7 a8 a9
     (by omega) (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_464]) bs_20626 (by omega) (by omega) (by omega)
     (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)
@@ -572,7 +721,7 @@ theorem passAFCd_lowF {p : ByteArray} {P : Program} [HasCode p P] (env : RefineH
     exact ek0
   have low2 : ∀ a, a < 2147483648 → μ2.read a = μ.read a := fun a ha =>
     (bfr' a (by fr_conv)).trans (afr' a (by fr_conv))
-  have heap2 : HeapCtx env pb S0 S1 μ2 s := heap_of_high heap low2 (fun a => by rw [bwr, awr])
+  have heap2 : HeapCtxC env.code pb S0 S1 μ2 s := heap_of_highG heap low2 (fun a => by rw [bwr, awr])
   -- the element
   have v5 : (ω[5]).toNat = es.length - k := by rw [r5]; simp; omega
   have cplo := cpd (P0 + off es k) (by omega) (by omega)
@@ -594,7 +743,7 @@ theorem passAFCd_lowF {p : ByteArray} {P : Program} [HasCode p P] (env : RefineH
       heap2 (fun a ha => by have hg' := ha; unfold Glob at hg'; rw [low2 a (by omega)]; exact hg a ha)
       ⟨cp, hcp, hcpu, by omega, by omega⟩ with hs | hx
   rotate_left
-  · exact Or.inr ((Exhausts.pre (run1.trans run2) hx).mono (by omega))
+  · exact Or.inr ((ExhaustsG.pre (run1.trans run2) hx).mono (by omega))
   obtain ⟨ω3, μ3, s', run3, c1, c5, c6, cR0, cR8, ⟨W, hW, cW, cne⟩, heap3, keepU, keepD, ⟨cs, hcs, crep⟩,
     cfr, clow, clowr, cglob, cwr⟩ := hs
   have cfr' : ∀ a, (F + 32) ≤ a → (decide (a < 4294967296) && !(decide (RD ≤ a ∧ a < (RD + 16))) && !(decide ((F + 120) ≤ a ∧ a < (F + 352)))) = true →
@@ -604,11 +753,11 @@ theorem passAFCd_lowF {p : ByteArray} {P : Program} [HasCode p P] (env : RefineH
   have hcb' := keepU cb hcb hcbu
   have hcp' := keepU cp hcp hcpu
   -- S3 and the first move
-  obtain ⟨ω4, run4, d0, d1, d5, d6, d7, d8, d9⟩ := LoopF.g3F (p := p) (P := P) (R := refineContractK cap env) x ω3 μ3
+  obtain ⟨ω4, run4, d0, d1, d5, d6, d7, d8, d9⟩ := LoopF.g3F (p := p) (P := P) (R := env.rel cap) x ω3 μ3
     F W ⟨by omega, by omega⟩ c1 cW hW cne
     (fun a h1 h2 => Memory.readable_of_writable (by rw [wr3 a (by omega)]; exact ws a (by omega) (by omega)))
   obtain ⟨ω5, μ5, run5, e0, e1, e5, e6, ecp, efr, erd, ewr⟩ := memcpy_big_aligned (p := p) (P := P)
-    (R := refineContractK cap env)
+    (R := env.rel cap)
     x ω4 μ3 20 749 (F + 56) (F + 352) (F + 120) 232 d0 d1 d7 d8 d9 (by omega)
     (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_9]) bs_749 (by omega) (by omega) (by omega)
     (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)
@@ -623,7 +772,7 @@ theorem passAFCd_lowF {p : ByteArray} {P : Program} [HasCode p P] (env : RefineH
     (efr' a (by fr_conv)).trans ((cfr' a (by omega) (by fr_conv)).trans ((bfr' a (by fr_conv)).trans
       (afr' a (by fr_conv))))
   obtain ⟨ω6, μ6, run6, f0, f1, f5, f6, f7, f8, f9, ffr, frd, fwr, f88⟩ := s4FB (p := p) (P := P)
-    (R := refineContractK cap env)
+    (R := env.rel cap)
     x ω5 μ5 F (d + k) (d + es.length) B ⟨by omega, by omega⟩ (by omega) (by omega) (by omega) e1
     (by rw [Memory.readN_congr (fun j hj => keep _ (by omega) (by omega))]; exact m40)
     (by rw [Memory.readN_congr (fun j hj => keep _ (by omega) (by omega))]; exact m48)
@@ -634,12 +783,12 @@ theorem passAFCd_lowF {p : ByteArray} {P : Program} [HasCode p P] (env : RefineH
     fun a ha => ffr a (by fr_conv) (by fr_conv)
   clear ffr
   obtain ⟨ω7, μ7, run7, g0, g1, g5, g6, gcp, gfr, grd, gwr⟩ := memcpy_big_aligned (p := p) (P := P)
-    (R := refineContractK cap env)
+    (R := env.rel cap)
     x ω6 μ6 16 668 (F + 56) (B + 232 * (d + k)) (F + 352) 232 f0 f1 f7 f8 f9 (by omega)
     (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_7]) bs_668 (by omega) (by omega) (by omega)
     (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)
     (fun a h1 h2 => Memory.readable_of_writable (by rw [fwr, ewr, wr3 a (by omega)]; exact ws a (by omega) (by omega)))
-    (fun a h1 h2 => by rw [fwr, ewr]; exact heap_writable_data heap3 hcb' hcbu (cbd a (by omega) (by omega)))
+    (fun a h1 h2 => by rw [fwr, ewr]; exact heap_writable_dataG heap3 hcb' hcbu (cbd a (by omega) (by omega)))
     (fun a h1 h2 => by rw [fwr, ewr, wr3 a (by omega)]; exact ws a (by omega) (by omega))
   have gfr' : ∀ a, (decide (a < 4294967296) && !(decide (B + 232 * (d + k) ≤ a ∧ a < B + 232 * (d + k) + 232)) &&
       !(decide ((F + 8) ≤ a ∧ a < (F + 56)))) = true → μ7.read a = μ6.read a :=
@@ -688,15 +837,15 @@ theorem passAFCd_lowF {p : ByteArray} {P : Program} [HasCode p P] (env : RefineH
   have rd7 : ∀ a, RD ≤ a → a < (RD + 16) → μ7.read a = μ3.read a := fun a h1 h2 =>
     (gfr' a (by fr_conv)).trans ((ffr' a (by fr_conv)).trans (efr' a (by fr_conv)))
   -- the allocator's context after the moves
-  have heap7 : HeapCtx env pb S0 S1 μ7 s' := heap_of_data heap3 hcb'
+  have heap7 : HeapCtxC env.code pb S0 S1 μ7 s' := heap_of_dataG heap3 hcb'
     (fun a h0 h1 => low37 a h0 (by omega)) hwr73
   -- S5: count it, and loop or leave
-  have post : ∀ (t : Nat) (ω8 : Regs), FreeStepsH p (refineContractK cap env) 668 ω7 μ7 x t ω8
+  have post : ∀ (t : Nat) (ω8 : Regs), FreeStepsH p (env.rel cap) 668 ω7 μ7 x t ω8
       (μ7.writeN (F + 112) (Num.encodeLE 8 (d + k + 1))) x 4 →
       ω8[1] = UInt64.ofNat (F + 56) → ω8[5] = UInt64.ofNat (es.length - (k + 1)) →
       (k + 1 = es.length → ω8[7] = UInt64.ofNat (d + es.length)) →
-      (∃ ω' μ' s', FreeStepsH p (refineContractK cap env) 680 ω μ x t ω' μ' x (N + 1700) ∧
-        InvAFCd env pb F RD P0 Lt es reps d (k + 1) B cp cb ω' μ' s' ∧ FrameAF F RD es.length (B + 232 * d) s μ s' μ' ∧
+      (∃ ω' μ' s', FreeStepsH p (env.rel cap) 680 ω μ x t ω' μ' x (N + 1700) ∧
+        InvAFCdG env pb F RD P0 Lt es reps d (k + 1) B cp cb ω' μ' s' ∧ FrameAF F RD es.length (B + 232 * d) s μ s' μ' ∧
         (∀ a, F + 56 ≤ a → a < F + 80 → μ'.read a = μ.read a) ∧
         μ'.readN (F + 88) 8 = Num.encodeLE 8 B ∧ (k + 1 = es.length → ω'[7] = UInt64.ofNat (d + es.length)) ∧
         ∃ csOf' : Nat → List Chunk, ElCd reps d (k + 1) B cp cb csOf' μ' s' ∧
@@ -798,7 +947,7 @@ theorem passAFCd_lowF {p : ByteArray} {P : Program} [HasCode p P] (env : RefineH
     · intro a h1 h2; rw [Memory.writable_writeN, hwrq a (by omega)]; exact ws a h1 h2
     · intro a h1 h2; rw [Memory.writable_writeN, hwrq a (by omega)]; exact wr a h1 h2
     · intro a h1 h2; rw [Memory.readable_writeN, hrdL a (by omega)]; exact rt a h1 h2
-    · exact heap_of_high heap7 wlow (fun a => Memory.writable_writeN _ _ _ _)
+    · exact heap_of_highG heap7 wlow (fun a => Memory.writable_writeN _ _ _ _)
     · intro a h h0 h2
       rw [Memory.read_writeN_disjoint _ _ _ _ (by simp <;> omega) (by simp [two32] <;> omega) (by simp [two32] <;> omega)]
       exact backH a h h0 h2
@@ -825,20 +974,62 @@ theorem passAFCd_lowF {p : ByteArray} {P : Program} [HasCode p P] (env : RefineH
         Memory.readN_congr (fun j hj => gfr' _ (by fr_conv))]; exact f88
   by_cases hmore : k + 1 < es.length
   · rw [if_pos hmore]
-    obtain ⟨ω8, run8, i1, i5⟩ := LoopF.s5_moreF (p := p) (P := P) (R := refineContractK cap env) x ω7 μ7 F (d + k)
+    obtain ⟨ω8, run8, i1, i5⟩ := LoopF.s5_moreF (p := p) (P := P) (R := env.rel cap) x ω7 μ7 F (d + k)
       (es.length - k) ⟨by omega, by omega⟩ (by omega) (by omega) (by omega) q1 q5 q6
       (fun a h1 h2 => by rw [hwrq a (by omega)]; exact ws a (by omega) (by omega))
     exact Or.inl (post 680 ω8 run8 i1 (i5.trans (by rw [show es.length - k - 1 = es.length - (k + 1) by omega]))
       (fun he => absurd he (by omega)))
   · rw [if_neg hmore]
-    obtain ⟨ω8, run8, i1, i5, i7⟩ := s5_lastF7 (p := p) (P := P) (R := refineContractK cap env) x ω7 μ7 F (d + k) ⟨by omega, by omega⟩
+    obtain ⟨ω8, run8, i1, i5, i7⟩ := s5_lastF7 (p := p) (P := P) (R := env.rel cap) x ω7 μ7 F (d + k) ⟨by omega, by omega⟩
       (by omega) q1 (q5.trans (by rw [show es.length - k = 1 by omega])) q6
       (fun a h1 h2 => by rw [hwrq a (by omega)]; exact ws a (by omega) (by omega))
     exact Or.inl (post 562 ω8 run8 i1 (i5.trans (by rw [show es.length - (k + 1) = 0 by omega]))
       (fun _ => i7.trans (by rw [show d + k + 1 = d + es.length by omega])))
 
-/-- **One pass, with the slots' chunks** (`passAF_low` over `InvAFC`, the element given as
-    `ElemOkAFC`): `passAFCd_low` at d = 0. -/
+/-- `passAFCd_lowFG` for the refine contract (`refineHeap env`). -/
+theorem passAFCd_lowF {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap pb N : Nat)
+    (gl : Nat → UInt8) (F RD P0 Lt : Nat)
+    (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State)
+    (es : List (List UInt8)) (reps : Nat → List Chunk → List UInt8 → Memory → Prop) (d k B : Nat) (cp cb : Chunk)
+    (hk : k < es.length) (ok : OkF F RD P0 Lt es B) (hdB : B + 232 * (d + es.length) < 2147483648)
+    (hel : ElemOkAFC env cap pb gl p P F RD N es[k] (reps k))
+    (h : InvAFCd env pb F RD P0 Lt es reps d k B cp cb ω μ s) (hg : ∀ a, Glob a → μ.read a = gl a)
+    (s0 : State) (k0 : Nat) (csOf : Nat → List Chunk) (hE : ElCd reps d k B cp cb csOf μ s)
+    (hfr : ∀ j, k0 ≤ j → j < k → ∀ c ∈ csOf j, ∀ e ∈ chunks s0, e.used = true → e ≠ c)
+    (hs0 : ∀ e ∈ chunks s0, e.used = true → e ∈ chunks s) :
+    (∃ ω' μ' s', FreeStepsH p (refineContractK cap env) 680 ω μ x (if k + 1 < es.length then 680 else 562)
+      ω' μ' x (N + 1700) ∧ InvAFCd env pb F RD P0 Lt es reps d (k + 1) B cp cb ω' μ' s' ∧
+      FrameAF F RD es.length (B + 232 * d) s μ s' μ' ∧
+      (∀ a, F + 56 ≤ a → a < F + 80 → μ'.read a = μ.read a) ∧
+      μ'.readN (F + 88) 8 = Num.encodeLE 8 B ∧ (k + 1 = es.length → ω'[7] = UInt64.ofNat (d + es.length)) ∧
+      ∃ csOf' : Nat → List Chunk, ElCd reps d (k + 1) B cp cb csOf' μ' s' ∧
+        ∀ j, k0 ≤ j → j < k + 1 → ∀ c ∈ csOf' j, ∀ e ∈ chunks s0, e.used = true → e ≠ c) ∨
+    Exhausts env cap pb p P 680 ω μ x (N + 1700) :=
+  (passAFCd_lowFG (p := p) (P := P) (refineHeap env) cap pb N gl F RD P0 Lt x ω μ s es reps d k B cp cb hk ok hdB hel h.toG hg s0 k0 csOf hE hfr hs0).imp
+    (fun ⟨ω', μ', s', run, i, f⟩ => ⟨ω', μ', s', run, i.toR, f⟩) id
+
+/-- **One pass, with the slots' chunks** (`passAF_lowG` over `InvAFCG`, the element given as
+    `ElemOkAFCG`): `passAFCd_lowG` at d = 0. -/
+theorem passAFC_lowG {p : ByteArray} {P : Program} [HasCode p P] {X : Type} (env : HeapHost X) (cap pb N : Nat)
+    (gl : Nat → UInt8) (F RD P0 Lt : Nat)
+    (x : X) (ω : Regs) (μ : Memory) (s : State)
+    (es : List (List UInt8)) (reps : Nat → List Chunk → List UInt8 → Memory → Prop) (k B : Nat) (cp cb : Chunk)
+    (hk : k < es.length) (ok : OkF F RD P0 Lt es B)
+    (hel : ElemOkAFCG env cap pb gl p P F RD N es[k] (reps k))
+    (h : InvAFCG env pb F RD P0 Lt es reps k B cp cb ω μ s) (hg : ∀ a, Glob a → μ.read a = gl a) :
+    (∃ ω' μ' s', FreeStepsH p (env.rel cap) 680 ω μ x (if k + 1 < es.length then 680 else 562)
+      ω' μ' x (N + 1700) ∧ InvAFCG env pb F RD P0 Lt es reps (k + 1) B cp cb ω' μ' s' ∧
+      FrameAF F RD es.length B s μ s' μ' ∧
+      (∀ a, F + 56 ≤ a → a < F + 80 → μ'.read a = μ.read a)) ∨
+    ExhaustsG env cap pb p P 680 ω μ x (N + 1700) := by
+  have hB3 := ok.2.2.2.1
+  rcases passAFCd_lowG env cap pb N gl F RD P0 Lt x ω μ s es reps 0 k B cp cb hk ok (by omega) hel h.toD hg with
+    ⟨ω', μ', s', run, h', f, l⟩ | hx
+  · rw [Nat.mul_zero, Nat.add_zero] at f
+    exact Or.inl ⟨ω', μ', s', run, h'.toC, f, l⟩
+  · exact Or.inr hx
+
+/-- `passAFC_lowG` for the refine contract (`refineHeap env`). -/
 theorem passAFC_low {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap pb N : Nat)
     (gl : Nat → UInt8) (F RD P0 Lt : Nat)
     (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State)
@@ -850,16 +1041,45 @@ theorem passAFC_low {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHos
       ω' μ' x (N + 1700) ∧ InvAFC env pb F RD P0 Lt es reps (k + 1) B cp cb ω' μ' s' ∧
       FrameAF F RD es.length B s μ s' μ' ∧
       (∀ a, F + 56 ≤ a → a < F + 80 → μ'.read a = μ.read a)) ∨
-    Exhausts env cap pb p P 680 ω μ x (N + 1700) := by
-  have hB3 := ok.2.2.2.1
-  rcases passAFCd_low env cap pb N gl F RD P0 Lt x ω μ s es reps 0 k B cp cb hk ok (by omega) hel h.toD hg with
-    ⟨ω', μ', s', run, h', f, l⟩ | hx
-  · rw [Nat.mul_zero, Nat.add_zero] at f
-    exact Or.inl ⟨ω', μ', s', run, h'.toC, f, l⟩
-  · exact Or.inr hx
+    Exhausts env cap pb p P 680 ω μ x (N + 1700) :=
+  (passAFC_lowG (p := p) (P := P) (refineHeap env) cap pb N gl F RD P0 Lt x ω μ s es reps k B cp cb hk ok hel h.toG hg).imp
+    (fun ⟨ω', μ', s', run, i, f⟩ => ⟨ω', μ', s', run, i.toR, f⟩) id
 
-/-- **The decode loop, with the slots' chunks, after d earlier slots** (`loopAF_low` over `InvAFCd`,
-    the elements given as `ElemOkAFC`). -/
+/-- **The decode loop, with the slots' chunks, after d earlier slots** (`loopAF_lowG` over `InvAFCdG`,
+    the elements given as `ElemOkAFCG`). -/
+theorem loopAFCd_lowG {p : ByteArray} {P : Program} [HasCode p P] {X : Type} (env : HeapHost X) (cap pb : Nat)
+    (gl : Nat → UInt8) (F RD P0 Lt : Nat)
+    (Ns : Nat → Nat) (x : X) (es : List (List UInt8))
+    (reps : Nat → List Chunk → List UInt8 → Memory → Prop)
+    (d B : Nat) (cp cb : Chunk) (ok : OkF F RD P0 Lt es B) (hdB : B + 232 * (d + es.length) < 2147483648)
+    (hel : ∀ j (hj : j < es.length), ElemOkAFCG env cap pb gl p P F RD (Ns j) es[j] (reps j)) :
+    ∀ r k (ω : Regs) (μ : Memory) (s : State), es.length - k = r → k < es.length →
+      InvAFCdG env pb F RD P0 Lt es reps d k B cp cb ω μ s → (∀ a, Glob a → μ.read a = gl a) →
+      (∃ ω' μ' s', FreeStepsH p (env.rel cap) 680 ω μ x 562 ω' μ' x (bound Ns k r) ∧
+        InvAFCdG env pb F RD P0 Lt es reps d es.length B cp cb ω' μ' s' ∧
+        FrameAF F RD es.length (B + 232 * d) s μ s' μ' ∧
+        (∀ a, F + 56 ≤ a → a < F + 80 → μ'.read a = μ.read a)) ∨
+      ExhaustsG env cap pb p P 680 ω μ x (bound Ns k r) := by
+  intro r
+  induction r with
+  | zero => intro k ω μ s hr hk; omega
+  | succ r ih =>
+    intro k ω μ s hr hk h hg
+    rcases passAFCd_lowG (p := p) (P := P) env cap pb (Ns k) gl F RD P0 Lt x ω μ s es reps d k B cp cb hk ok hdB
+      (hel k hk) h hg with ⟨ω1, μ1, s1, run1, h1, f1, l1⟩ | hx
+    · by_cases hmore : k + 1 < es.length
+      · rw [if_pos hmore] at run1
+        rcases ih (k + 1) ω1 μ1 s1 (by omega) hmore h1 (fun a ha => (f1.2.2.2.2.1 a ha).trans (hg a ha)) with
+          ⟨ω2, μ2, s2, run2, h2, f2, l2⟩ | hx
+        · exact Or.inl ⟨ω2, μ2, s2, (run1.trans run2).mono (by simp only [bound]; omega), h2, f1.trans f2,
+            fun a ha1 ha2 => (l2 a ha1 ha2).trans (l1 a ha1 ha2)⟩
+        · exact Or.inr ((ExhaustsG.pre run1 hx).mono (by simp only [bound]; omega))
+      · rw [if_neg hmore] at run1
+        rw [show k + 1 = es.length by omega] at h1
+        exact Or.inl ⟨ω1, μ1, s1, run1.mono (by simp only [bound]; omega), h1, f1, l1⟩
+    · exact Or.inr (hx.mono (by simp only [bound]; omega))
+
+/-- `loopAFCd_lowG` for the refine contract (`refineHeap env`). -/
 theorem loopAFCd_low {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap pb : Nat)
     (gl : Nat → UInt8) (F RD P0 Lt : Nat)
     (Ns : Nat → Nat) (x : RefineCtx) (es : List (List UInt8))
@@ -872,28 +1092,54 @@ theorem loopAFCd_low {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHo
         InvAFCd env pb F RD P0 Lt es reps d es.length B cp cb ω' μ' s' ∧
         FrameAF F RD es.length (B + 232 * d) s μ s' μ' ∧
         (∀ a, F + 56 ≤ a → a < F + 80 → μ'.read a = μ.read a)) ∨
-      Exhausts env cap pb p P 680 ω μ x (bound Ns k r) := by
+      Exhausts env cap pb p P 680 ω μ x (bound Ns k r) := fun r k ω μ s hr hk h hg =>
+  (loopAFCd_lowG (p := p) (P := P) (refineHeap env) cap pb gl F RD P0 Lt Ns x es reps d B cp cb ok hdB hel r k ω μ s hr hk h.toG hg).imp
+    (fun ⟨ω', μ', s', run, i, f⟩ => ⟨ω', μ', s', run, i.toR, f⟩) id
+
+/-- The loop of `loopAFCd_lowFG`, for any reference state s0 whose used chunks are used chunks of the
+    current state, and slots from k0 on fresh against them. -/
+theorem loopAFCd_lowF_auxG {p : ByteArray} {P : Program} [HasCode p P] {X : Type} (env : HeapHost X) (cap pb : Nat)
+    (gl : Nat → UInt8) (F RD P0 Lt : Nat)
+    (Ns : Nat → Nat) (x : X) (es : List (List UInt8))
+    (reps : Nat → List Chunk → List UInt8 → Memory → Prop)
+    (d B : Nat) (cp cb : Chunk) (ok : OkF F RD P0 Lt es B) (hdB : B + 232 * (d + es.length) < 2147483648)
+    (hel : ∀ j (hj : j < es.length), ElemOkAFCG env cap pb gl p P F RD (Ns j) es[j] (reps j))
+    (s0 : State) (k0 : Nat) :
+    ∀ r k (ω : Regs) (μ : Memory) (s : State) (csOf : Nat → List Chunk), es.length - k = r → k < es.length →
+      InvAFCdG env pb F RD P0 Lt es reps d k B cp cb ω μ s → ElCd reps d k B cp cb csOf μ s →
+      (∀ j, k0 ≤ j → j < k → ∀ c ∈ csOf j, ∀ e ∈ chunks s0, e.used = true → e ≠ c) →
+      (∀ e ∈ chunks s0, e.used = true → e ∈ chunks s) →
+      (∀ a, Glob a → μ.read a = gl a) →
+      (∃ ω' μ' s', FreeStepsH p (env.rel cap) 680 ω μ x 562 ω' μ' x (bound Ns k r) ∧
+        InvAFCdG env pb F RD P0 Lt es reps d es.length B cp cb ω' μ' s' ∧
+        FrameAF F RD es.length (B + 232 * d) s μ s' μ' ∧
+        (∀ a, F + 56 ≤ a → a < F + 80 → μ'.read a = μ.read a) ∧
+        μ'.readN (F + 88) 8 = Num.encodeLE 8 B ∧ ω'[7] = UInt64.ofNat (d + es.length) ∧
+        ∃ csOf' : Nat → List Chunk, ElCd reps d es.length B cp cb csOf' μ' s' ∧
+          ∀ j, k0 ≤ j → j < es.length → ∀ c ∈ csOf' j, ∀ e ∈ chunks s0, e.used = true → e ≠ c) ∨
+      ExhaustsG env cap pb p P 680 ω μ x (bound Ns k r) := by
   intro r
   induction r with
-  | zero => intro k ω μ s hr hk; omega
+  | zero => intro k ω μ s csOf hr hk; omega
   | succ r ih =>
-    intro k ω μ s hr hk h hg
-    rcases passAFCd_low (p := p) (P := P) env cap pb (Ns k) gl F RD P0 Lt x ω μ s es reps d k B cp cb hk ok hdB
-      (hel k hk) h hg with ⟨ω1, μ1, s1, run1, h1, f1, l1⟩ | hx
+    intro k ω μ s csOf hr hk h hE hfr hs0 hg
+    rcases passAFCd_lowFG (p := p) (P := P) env cap pb (Ns k) gl F RD P0 Lt x ω μ s es reps d k B cp cb hk ok hdB
+      (hel k hk) h hg s0 k0 csOf hE hfr hs0 with ⟨ω1, μ1, s1, run1, h1, f1, l1, b1, w1, csOf1, e1, fr1⟩ | hx
     · by_cases hmore : k + 1 < es.length
       · rw [if_pos hmore] at run1
-        rcases ih (k + 1) ω1 μ1 s1 (by omega) hmore h1 (fun a ha => (f1.2.2.2.2.1 a ha).trans (hg a ha)) with
-          ⟨ω2, μ2, s2, run2, h2, f2, l2⟩ | hx
+        rcases ih (k + 1) ω1 μ1 s1 csOf1 (by omega) hmore h1 e1 fr1 (fun e he hu => f1.2.1 e (hs0 e he hu) hu)
+          (fun a ha => (f1.2.2.2.2.1 a ha).trans (hg a ha)) with
+          ⟨ω2, μ2, s2, run2, h2, f2, l2, b2, w2, cs2⟩ | hx
         · exact Or.inl ⟨ω2, μ2, s2, (run1.trans run2).mono (by simp only [bound]; omega), h2, f1.trans f2,
-            fun a ha1 ha2 => (l2 a ha1 ha2).trans (l1 a ha1 ha2)⟩
-        · exact Or.inr ((Exhausts.pre run1 hx).mono (by simp only [bound]; omega))
+            fun a ha1 ha2 => (l2 a ha1 ha2).trans (l1 a ha1 ha2), b2, w2, cs2⟩
+        · exact Or.inr ((ExhaustsG.pre run1 hx).mono (by simp only [bound]; omega))
       · rw [if_neg hmore] at run1
-        rw [show k + 1 = es.length by omega] at h1
-        exact Or.inl ⟨ω1, μ1, s1, run1.mono (by simp only [bound]; omega), h1, f1, l1⟩
+        have hkn : k + 1 = es.length := by omega
+        rw [hkn] at h1 e1 fr1
+        exact Or.inl ⟨ω1, μ1, s1, run1.mono (by simp only [bound]; omega), h1, f1, l1, b1, w1 hkn, csOf1, e1, fr1⟩
     · exact Or.inr (hx.mono (by simp only [bound]; omega))
 
-/-- The loop of `loopAFCd_lowF`, for any reference state s0 whose used chunks are used chunks of the
-    current state, and slots from k0 on fresh against them. -/
+/-- `loopAFCd_lowF_auxG` for the refine contract (`refineHeap env`). -/
 theorem loopAFCd_lowF_aux {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap pb : Nat)
     (gl : Nat → UInt8) (F RD P0 Lt : Nat)
     (Ns : Nat → Nat) (x : RefineCtx) (es : List (List UInt8))
@@ -913,32 +1159,36 @@ theorem loopAFCd_lowF_aux {p : ByteArray} {P : Program} [HasCode p P] (env : Ref
         μ'.readN (F + 88) 8 = Num.encodeLE 8 B ∧ ω'[7] = UInt64.ofNat (d + es.length) ∧
         ∃ csOf' : Nat → List Chunk, ElCd reps d es.length B cp cb csOf' μ' s' ∧
           ∀ j, k0 ≤ j → j < es.length → ∀ c ∈ csOf' j, ∀ e ∈ chunks s0, e.used = true → e ≠ c) ∨
-      Exhausts env cap pb p P 680 ω μ x (bound Ns k r) := by
-  intro r
-  induction r with
-  | zero => intro k ω μ s csOf hr hk; omega
-  | succ r ih =>
-    intro k ω μ s csOf hr hk h hE hfr hs0 hg
-    rcases passAFCd_lowF (p := p) (P := P) env cap pb (Ns k) gl F RD P0 Lt x ω μ s es reps d k B cp cb hk ok hdB
-      (hel k hk) h hg s0 k0 csOf hE hfr hs0 with ⟨ω1, μ1, s1, run1, h1, f1, l1, b1, w1, csOf1, e1, fr1⟩ | hx
-    · by_cases hmore : k + 1 < es.length
-      · rw [if_pos hmore] at run1
-        rcases ih (k + 1) ω1 μ1 s1 csOf1 (by omega) hmore h1 e1 fr1 (fun e he hu => f1.2.1 e (hs0 e he hu) hu)
-          (fun a ha => (f1.2.2.2.2.1 a ha).trans (hg a ha)) with
-          ⟨ω2, μ2, s2, run2, h2, f2, l2, b2, w2, cs2⟩ | hx
-        · exact Or.inl ⟨ω2, μ2, s2, (run1.trans run2).mono (by simp only [bound]; omega), h2, f1.trans f2,
-            fun a ha1 ha2 => (l2 a ha1 ha2).trans (l1 a ha1 ha2), b2, w2, cs2⟩
-        · exact Or.inr ((Exhausts.pre run1 hx).mono (by simp only [bound]; omega))
-      · rw [if_neg hmore] at run1
-        have hkn : k + 1 = es.length := by omega
-        rw [hkn] at h1 e1 fr1
-        exact Or.inl ⟨ω1, μ1, s1, run1.mono (by simp only [bound]; omega), h1, f1, l1, b1, w1 hkn, csOf1, e1, fr1⟩
-    · exact Or.inr (hx.mono (by simp only [bound]; omega))
+      Exhausts env cap pb p P 680 ω μ x (bound Ns k r) := fun r k ω μ s csOf hr hk h hE hfr hs0 hg =>
+  (loopAFCd_lowF_auxG (p := p) (P := P) (refineHeap env) cap pb gl F RD P0 Lt Ns x es reps d B cp cb ok hdB hel s0 k0 r k ω μ s csOf hr hk h.toG hE hfr hs0 hg).imp
+    (fun ⟨ω', μ', s', run, i, f⟩ => ⟨ω', μ', s', run, i.toR, f⟩) id
 
-/-- **The decode loop, with the slots' chunks named, after d earlier slots** (`loopAFCd_low`, and at
+/-- **The decode loop, with the slots' chunks named, after d earlier slots** (`loopAFCd_lowG`, and at
     the exit to 562): a witness `csOf` of all n slots' chunks (`ElCd`), the slots decoded by this run
     (from k on) holding chunks fresh against every used chunk of the starting state s; the buffer
     pointer B at F + 88; and ω₇ = d + n. -/
+theorem loopAFCd_lowFG {p : ByteArray} {P : Program} [HasCode p P] {X : Type} (env : HeapHost X) (cap pb : Nat)
+    (gl : Nat → UInt8) (F RD P0 Lt : Nat)
+    (Ns : Nat → Nat) (x : X) (es : List (List UInt8))
+    (reps : Nat → List Chunk → List UInt8 → Memory → Prop)
+    (d B : Nat) (cp cb : Chunk) (ok : OkF F RD P0 Lt es B) (hdB : B + 232 * (d + es.length) < 2147483648)
+    (hel : ∀ j (hj : j < es.length), ElemOkAFCG env cap pb gl p P F RD (Ns j) es[j] (reps j)) :
+    ∀ r k (ω : Regs) (μ : Memory) (s : State), es.length - k = r → k < es.length →
+      InvAFCdG env pb F RD P0 Lt es reps d k B cp cb ω μ s → (∀ a, Glob a → μ.read a = gl a) →
+      (∃ ω' μ' s', FreeStepsH p (env.rel cap) 680 ω μ x 562 ω' μ' x (bound Ns k r) ∧
+        InvAFCdG env pb F RD P0 Lt es reps d es.length B cp cb ω' μ' s' ∧
+        FrameAF F RD es.length (B + 232 * d) s μ s' μ' ∧
+        (∀ a, F + 56 ≤ a → a < F + 80 → μ'.read a = μ.read a) ∧
+        μ'.readN (F + 88) 8 = Num.encodeLE 8 B ∧ ω'[7] = UInt64.ofNat (d + es.length) ∧
+        ∃ csOf : Nat → List Chunk, ElCd reps d es.length B cp cb csOf μ' s' ∧
+          ∀ j, k ≤ j → j < es.length → ∀ c ∈ csOf j, ∀ e ∈ chunks s, e.used = true → e ≠ c) ∨
+      ExhaustsG env cap pb p P 680 ω μ x (bound Ns k r) := by
+  intro r k ω μ s hr hk h hg
+  obtain ⟨csOf, hE⟩ := h.el
+  exact loopAFCd_lowF_auxG env cap pb gl F RD P0 Lt Ns x es reps d B cp cb ok hdB hel s k r k ω μ s csOf hr hk h hE
+    (fun j h1 h2 => absurd h2 (by omega)) (fun e he _ => he) hg
+
+/-- `loopAFCd_lowFG` for the refine contract (`refineHeap env`). -/
 theorem loopAFCd_lowF {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap pb : Nat)
     (gl : Nat → UInt8) (F RD P0 Lt : Nat)
     (Ns : Nat → Nat) (x : RefineCtx) (es : List (List UInt8))
@@ -954,14 +1204,33 @@ theorem loopAFCd_lowF {p : ByteArray} {P : Program} [HasCode p P] (env : RefineH
         μ'.readN (F + 88) 8 = Num.encodeLE 8 B ∧ ω'[7] = UInt64.ofNat (d + es.length) ∧
         ∃ csOf : Nat → List Chunk, ElCd reps d es.length B cp cb csOf μ' s' ∧
           ∀ j, k ≤ j → j < es.length → ∀ c ∈ csOf j, ∀ e ∈ chunks s, e.used = true → e ≠ c) ∨
-      Exhausts env cap pb p P 680 ω μ x (bound Ns k r) := by
-  intro r k ω μ s hr hk h hg
-  obtain ⟨csOf, hE⟩ := h.el
-  exact loopAFCd_lowF_aux env cap pb gl F RD P0 Lt Ns x es reps d B cp cb ok hdB hel s k r k ω μ s csOf hr hk h hE
-    (fun j h1 h2 => absurd h2 (by omega)) (fun e he _ => he) hg
+      Exhausts env cap pb p P 680 ω μ x (bound Ns k r) := fun r k ω μ s hr hk h hg =>
+  (loopAFCd_lowFG (p := p) (P := P) (refineHeap env) cap pb gl F RD P0 Lt Ns x es reps d B cp cb ok hdB hel r k ω μ s hr hk h.toG hg).imp
+    (fun ⟨ω', μ', s', run, i, f⟩ => ⟨ω', μ', s', run, i.toR, f⟩) id
 
-/-- **The decode loop, with the slots' chunks** (`loopAF_low` over `InvAFC`, the elements given as
-    `ElemOkAFC`): `loopAFCd_low` at d = 0. -/
+/-- **The decode loop, with the slots' chunks** (`loopAF_lowG` over `InvAFCG`, the elements given as
+    `ElemOkAFCG`): `loopAFCd_lowG` at d = 0. -/
+theorem loopAFC_lowG {p : ByteArray} {P : Program} [HasCode p P] {X : Type} (env : HeapHost X) (cap pb : Nat)
+    (gl : Nat → UInt8) (F RD P0 Lt : Nat)
+    (Ns : Nat → Nat) (x : X) (es : List (List UInt8))
+    (reps : Nat → List Chunk → List UInt8 → Memory → Prop)
+    (B : Nat) (cp cb : Chunk) (ok : OkF F RD P0 Lt es B)
+    (hel : ∀ j (hj : j < es.length), ElemOkAFCG env cap pb gl p P F RD (Ns j) es[j] (reps j)) :
+    ∀ r k (ω : Regs) (μ : Memory) (s : State), es.length - k = r → k < es.length →
+      InvAFCG env pb F RD P0 Lt es reps k B cp cb ω μ s → (∀ a, Glob a → μ.read a = gl a) →
+      (∃ ω' μ' s', FreeStepsH p (env.rel cap) 680 ω μ x 562 ω' μ' x (bound Ns k r) ∧
+        InvAFCG env pb F RD P0 Lt es reps es.length B cp cb ω' μ' s' ∧ FrameAF F RD es.length B s μ s' μ' ∧
+        (∀ a, F + 56 ≤ a → a < F + 80 → μ'.read a = μ.read a)) ∨
+      ExhaustsG env cap pb p P 680 ω μ x (bound Ns k r) := by
+  intro r k ω μ s hr hk h hg
+  have hB3 := ok.2.2.2.1
+  rcases loopAFCd_lowG env cap pb gl F RD P0 Lt Ns x es reps 0 B cp cb ok (by omega) hel r k ω μ s hr hk h.toD hg with
+    ⟨ω', μ', s', run, h', f, l⟩ | hx
+  · rw [Nat.mul_zero, Nat.add_zero] at f
+    exact Or.inl ⟨ω', μ', s', run, h'.toC, f, l⟩
+  · exact Or.inr hx
+
+/-- `loopAFC_lowG` for the refine contract (`refineHeap env`). -/
 theorem loopAFC_low {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap pb : Nat)
     (gl : Nat → UInt8) (F RD P0 Lt : Nat)
     (Ns : Nat → Nat) (x : RefineCtx) (es : List (List UInt8))
@@ -973,14 +1242,9 @@ theorem loopAFC_low {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHos
       (∃ ω' μ' s', FreeStepsH p (refineContractK cap env) 680 ω μ x 562 ω' μ' x (bound Ns k r) ∧
         InvAFC env pb F RD P0 Lt es reps es.length B cp cb ω' μ' s' ∧ FrameAF F RD es.length B s μ s' μ' ∧
         (∀ a, F + 56 ≤ a → a < F + 80 → μ'.read a = μ.read a)) ∨
-      Exhausts env cap pb p P 680 ω μ x (bound Ns k r) := by
-  intro r k ω μ s hr hk h hg
-  have hB3 := ok.2.2.2.1
-  rcases loopAFCd_low env cap pb gl F RD P0 Lt Ns x es reps 0 B cp cb ok (by omega) hel r k ω μ s hr hk h.toD hg with
-    ⟨ω', μ', s', run, h', f, l⟩ | hx
-  · rw [Nat.mul_zero, Nat.add_zero] at f
-    exact Or.inl ⟨ω', μ', s', run, h'.toC, f, l⟩
-  · exact Or.inr hx
+      Exhausts env cap pb p P 680 ω μ x (bound Ns k r) := fun r k ω μ s hr hk h hg =>
+  (loopAFC_lowG (p := p) (P := P) (refineHeap env) cap pb gl F RD P0 Lt Ns x es reps B cp cb ok hel r k ω μ s hr hk h.toG hg).imp
+    (fun ⟨ω', μ', s', run, i, f⟩ => ⟨ω', μ', s', run, i.toR, f⟩) id
 
 /-- **`OkF` with the payload apart from this batch's slots**: as `OkF`, but instead of the payload
     ending before the buffer (P0 + |flatten es| ≤ B), the payload [P0, P0 + |flatten es|) lies outside
@@ -999,26 +1263,26 @@ theorem OkF.toD {F RD P0 Lt : Nat} {es : List (List UInt8)} {B : Nat} (d : Nat) 
   obtain ⟨hn, hB1, hB2, hB3, hne, hP0, hLt, hLt', hF1, hF8, hRD1, hRD2⟩ := h
   exact ⟨hn, ⟨Or.inl (by omega), by omega⟩, hB2, hB3, hne, hP0, hLt, hLt', hF1, hF8, hRD1, hRD2⟩
 
-/-- **One pass, with the slots' chunks, after d earlier slots** (`passAF_low` over `InvAFCd`, the
-    element given as `ElemOkAFC`): the written slot is d + k, and the chunks' data outside this batch's
+/-- **One pass, with the slots' chunks, after d earlier slots** (`passAF_lowG` over `InvAFCdG`, the
+    element given as `ElemOkAFCG`): the written slot is d + k, and the chunks' data outside this batch's
     slots [B + 232 d, B + 232 (d + n)) is kept. -/
-theorem passAFCd_lowD {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap pb N : Nat)
+theorem passAFCd_lowDG {p : ByteArray} {P : Program} [HasCode p P] {X : Type} (env : HeapHost X) (cap pb N : Nat)
     (gl : Nat → UInt8) (F RD P0 Lt : Nat)
-    (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State)
+    (x : X) (ω : Regs) (μ : Memory) (s : State)
     (es : List (List UInt8)) (reps : Nat → List Chunk → List UInt8 → Memory → Prop) (d k B : Nat) (cp cb : Chunk)
     (hk : k < es.length) (ok : OkFD F RD P0 Lt es d B) (hdB : B + 232 * (d + es.length) < 2147483648)
-    (hel : ElemOkAFC env cap pb gl p P F RD N es[k] (reps k))
-    (h : InvAFCd env pb F RD P0 Lt es reps d k B cp cb ω μ s) (hg : ∀ a, Glob a → μ.read a = gl a) :
-    (∃ ω' μ' s', FreeStepsH p (refineContractK cap env) 680 ω μ x (if k + 1 < es.length then 680 else 562)
-      ω' μ' x (N + 1700) ∧ InvAFCd env pb F RD P0 Lt es reps d (k + 1) B cp cb ω' μ' s' ∧
+    (hel : ElemOkAFCG env cap pb gl p P F RD N es[k] (reps k))
+    (h : InvAFCdG env pb F RD P0 Lt es reps d k B cp cb ω μ s) (hg : ∀ a, Glob a → μ.read a = gl a) :
+    (∃ ω' μ' s', FreeStepsH p (env.rel cap) 680 ω μ x (if k + 1 < es.length then 680 else 562)
+      ω' μ' x (N + 1700) ∧ InvAFCdG env pb F RD P0 Lt es reps d (k + 1) B cp cb ω' μ' s' ∧
       FrameAF F RD es.length (B + 232 * d) s μ s' μ' ∧
       (∀ a, F + 56 ≤ a → a < F + 80 → μ'.read a = μ.read a)) ∨
-    Exhausts env cap pb p P 680 ω μ x (N + 1700) := by
+    ExhaustsG env cap pb p P 680 ω μ x (N + 1700) := by
   obtain ⟨hn, ⟨hB1, hP31⟩, hB2, hB3, hne, hP0, hLt, hLt', hF1, hF8, hRD1, hRD2⟩ := ok
   obtain ⟨r1, r5, m24, m40, m48, m56, rP, rL, pay, tab, el, ws, wr, rt, heap, ⟨hcp, hcpu⟩, cpd, ⟨hcb, hcbu⟩,
     cbd⟩ := h
   have rp : ∀ a, P0 ≤ a → a < P0 + es.flatten.length → μ.readable a = true := fun a h1 h2 =>
-    Memory.readable_of_writable (heap_writable_data heap hcp hcpu (cpd a h1 h2))
+    Memory.readable_of_writable (heap_writable_dataG heap hcp hcpu (cpd a h1 h2))
   have hL := hne k hk
   have hoff := off_lt es k hk
   have offk1 := off_succ es k hk
@@ -1031,14 +1295,14 @@ theorem passAFCd_lowD {p : ByteArray} {P : Program} [HasCode p P] (env : RefineH
     rw [readN_sub μ _ _ 1 _ _ ek (by omega), List.drop_one, List.take_of_length_le (by simp)]
   -- S1
   obtain ⟨ω1, μ1, run1, a0, a1, a5, a6, a7, a8, a9, as0, as5, as6, afr, ard, awr⟩ :=
-    LoopF.s1F (p := p) (P := P) (R := refineContractK cap env) x ω μ F RD ⟨by omega, by omega⟩ (by omega) r1 m24
+    LoopF.s1F (p := p) (P := P) (R := env.rel cap) x ω μ F RD ⟨by omega, by omega⟩ (by omega) r1 m24
       (fun a h1 h2 => ws a (by omega) (by omega))
       (fun a h1 h2 => Memory.readable_of_writable (ws a (by omega) (by omega)))
   have afr' : ∀ a, (decide (a < 4294967296) && !(decide (F ≤ a ∧ a < (F + 56)))) = true → μ1.read a = μ.read a :=
     fun a ha => afr a (by fr_conv) (by fr_conv)
   clear afr
   -- the tag
-  obtain ⟨ω2, μ2, run2, ok2⟩ := read_ok (p := p) (P := P) (R := refineContractK cap env) x ω1 μ1 930 20626
+  obtain ⟨ω2, μ2, run2, ok2⟩ := read_ok (p := p) (P := P) (R := env.rel cap) x ω1 μ1 930 20626
     F RD F (P0 + off es k) (Lt - off es k) 1 a0 a1 a7 a8 a9
     (by omega) (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_464]) bs_20626 (by omega) (by omega) (by omega)
     (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)
@@ -1060,7 +1324,7 @@ theorem passAFCd_lowD {p : ByteArray} {P : Program} [HasCode p P] (env : RefineH
     exact ek0
   have low2 : ∀ a, a < 2147483648 → μ2.read a = μ.read a := fun a ha =>
     (bfr' a (by fr_conv)).trans (afr' a (by fr_conv))
-  have heap2 : HeapCtx env pb S0 S1 μ2 s := heap_of_high heap low2 (fun a => by rw [bwr, awr])
+  have heap2 : HeapCtxC env.code pb S0 S1 μ2 s := heap_of_highG heap low2 (fun a => by rw [bwr, awr])
   -- the element
   have v5 : (ω[5]).toNat = es.length - k := by rw [r5]; simp; omega
   have cplo := cpd (P0 + off es k) (by omega) (by omega)
@@ -1082,7 +1346,7 @@ theorem passAFCd_lowD {p : ByteArray} {P : Program} [HasCode p P] (env : RefineH
       heap2 (fun a ha => by have hg' := ha; unfold Glob at hg'; rw [low2 a (by omega)]; exact hg a ha)
       ⟨cp, hcp, hcpu, by omega, by omega⟩ with hs | hx
   rotate_left
-  · exact Or.inr ((Exhausts.pre (run1.trans run2) hx).mono (by omega))
+  · exact Or.inr ((ExhaustsG.pre (run1.trans run2) hx).mono (by omega))
   obtain ⟨ω3, μ3, s', run3, c1, c5, c6, cR0, cR8, ⟨W, hW, cW, cne⟩, heap3, keepU, keepD, ⟨cs, hcs, crep⟩,
     cfr, clow, clowr, cglob, cwr⟩ := hs
   have cfr' : ∀ a, (F + 32) ≤ a → (decide (a < 4294967296) && !(decide (RD ≤ a ∧ a < (RD + 16))) && !(decide ((F + 120) ≤ a ∧ a < (F + 352)))) = true →
@@ -1092,11 +1356,11 @@ theorem passAFCd_lowD {p : ByteArray} {P : Program} [HasCode p P] (env : RefineH
   have hcb' := keepU cb hcb hcbu
   have hcp' := keepU cp hcp hcpu
   -- S3 and the first move
-  obtain ⟨ω4, run4, d0, d1, d5, d6, d7, d8, d9⟩ := LoopF.g3F (p := p) (P := P) (R := refineContractK cap env) x ω3 μ3
+  obtain ⟨ω4, run4, d0, d1, d5, d6, d7, d8, d9⟩ := LoopF.g3F (p := p) (P := P) (R := env.rel cap) x ω3 μ3
     F W ⟨by omega, by omega⟩ c1 cW hW cne
     (fun a h1 h2 => Memory.readable_of_writable (by rw [wr3 a (by omega)]; exact ws a (by omega) (by omega)))
   obtain ⟨ω5, μ5, run5, e0, e1, e5, e6, ecp, efr, erd, ewr⟩ := memcpy_big_aligned (p := p) (P := P)
-    (R := refineContractK cap env)
+    (R := env.rel cap)
     x ω4 μ3 20 749 (F + 56) (F + 352) (F + 120) 232 d0 d1 d7 d8 d9 (by omega)
     (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_9]) bs_749 (by omega) (by omega) (by omega)
     (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)
@@ -1111,7 +1375,7 @@ theorem passAFCd_lowD {p : ByteArray} {P : Program} [HasCode p P] (env : RefineH
     (efr' a (by fr_conv)).trans ((cfr' a (by omega) (by fr_conv)).trans ((bfr' a (by fr_conv)).trans
       (afr' a (by fr_conv))))
   obtain ⟨ω6, μ6, run6, f0, f1, f5, f6, f7, f8, f9, ffr, frd, fwr⟩ := LoopF.s4F (p := p) (P := P)
-    (R := refineContractK cap env)
+    (R := env.rel cap)
     x ω5 μ5 F (d + k) (d + es.length) B ⟨by omega, by omega⟩ (by omega) (by omega) (by omega) e1
     (by rw [Memory.readN_congr (fun j hj => keep _ (by omega) (by omega))]; exact m40)
     (by rw [Memory.readN_congr (fun j hj => keep _ (by omega) (by omega))]; exact m48)
@@ -1122,12 +1386,12 @@ theorem passAFCd_lowD {p : ByteArray} {P : Program} [HasCode p P] (env : RefineH
     fun a ha => ffr a (by fr_conv) (by fr_conv)
   clear ffr
   obtain ⟨ω7, μ7, run7, g0, g1, g5, g6, gcp, gfr, grd, gwr⟩ := memcpy_big_aligned (p := p) (P := P)
-    (R := refineContractK cap env)
+    (R := env.rel cap)
     x ω6 μ6 16 668 (F + 56) (B + 232 * (d + k)) (F + 352) 232 f0 f1 f7 f8 f9 (by omega)
     (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_7]) bs_668 (by omega) (by omega) (by omega)
     (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)
     (fun a h1 h2 => Memory.readable_of_writable (by rw [fwr, ewr, wr3 a (by omega)]; exact ws a (by omega) (by omega)))
-    (fun a h1 h2 => by rw [fwr, ewr]; exact heap_writable_data heap3 hcb' hcbu (cbd a (by omega) (by omega)))
+    (fun a h1 h2 => by rw [fwr, ewr]; exact heap_writable_dataG heap3 hcb' hcbu (cbd a (by omega) (by omega)))
     (fun a h1 h2 => by rw [fwr, ewr, wr3 a (by omega)]; exact ws a (by omega) (by omega))
   have gfr' : ∀ a, (decide (a < 4294967296) && !(decide (B + 232 * (d + k) ≤ a ∧ a < B + 232 * (d + k) + 232)) &&
       !(decide ((F + 8) ≤ a ∧ a < (F + 56)))) = true → μ7.read a = μ6.read a :=
@@ -1182,14 +1446,14 @@ theorem passAFCd_lowD {p : ByteArray} {P : Program} [HasCode p P] (env : RefineH
   have rd7 : ∀ a, RD ≤ a → a < (RD + 16) → μ7.read a = μ3.read a := fun a h1 h2 =>
     (gfr' a (by fr_conv)).trans ((ffr' a (by fr_conv)).trans (efr' a (by fr_conv)))
   -- the allocator's context after the moves
-  have heap7 : HeapCtx env pb S0 S1 μ7 s' := heap_of_data heap3 hcb'
+  have heap7 : HeapCtxC env.code pb S0 S1 μ7 s' := heap_of_dataG heap3 hcb'
     (fun a h0 h1 => low37 a h0 (by omega)) hwr73
   -- S5: count it, and loop or leave
-  have post : ∀ (t : Nat) (ω8 : Regs), FreeStepsH p (refineContractK cap env) 668 ω7 μ7 x t ω8
+  have post : ∀ (t : Nat) (ω8 : Regs), FreeStepsH p (env.rel cap) 668 ω7 μ7 x t ω8
       (μ7.writeN (F + 112) (Num.encodeLE 8 (d + k + 1))) x 4 →
       ω8[1] = UInt64.ofNat (F + 56) → ω8[5] = UInt64.ofNat (es.length - (k + 1)) →
-      (∃ ω' μ' s', FreeStepsH p (refineContractK cap env) 680 ω μ x t ω' μ' x (N + 1700) ∧
-        InvAFCd env pb F RD P0 Lt es reps d (k + 1) B cp cb ω' μ' s' ∧ FrameAF F RD es.length (B + 232 * d) s μ s' μ' ∧
+      (∃ ω' μ' s', FreeStepsH p (env.rel cap) 680 ω μ x t ω' μ' x (N + 1700) ∧
+        InvAFCdG env pb F RD P0 Lt es reps d (k + 1) B cp cb ω' μ' s' ∧ FrameAF F RD es.length (B + 232 * d) s μ s' μ' ∧
         (∀ a, F + 56 ≤ a → a < F + 80 → μ'.read a = μ.read a)) := by
     intro t ω8 run8 h1' h5'
     have wlow : ∀ a, a < 2147483648 → (μ7.writeN (F + 112) (Num.encodeLE 8 (d + k + 1))).read a = μ7.read a :=
@@ -1276,7 +1540,7 @@ theorem passAFCd_lowD {p : ByteArray} {P : Program} [HasCode p P] (env : RefineH
     · intro a h1 h2; rw [Memory.writable_writeN, hwrq a (by omega)]; exact ws a h1 h2
     · intro a h1 h2; rw [Memory.writable_writeN, hwrq a (by omega)]; exact wr a h1 h2
     · intro a h1 h2; rw [Memory.readable_writeN, hrdL a (by omega)]; exact rt a h1 h2
-    · exact heap_of_high heap7 wlow (fun a => Memory.writable_writeN _ _ _ _)
+    · exact heap_of_highG heap7 wlow (fun a => Memory.writable_writeN _ _ _ _)
     · intro a h h0 h2
       rw [Memory.read_writeN_disjoint _ _ _ _ (by simp <;> omega) (by simp [two32] <;> omega) (by simp [two32] <;> omega)]
       exact backH a h h0 h2
@@ -1301,43 +1565,59 @@ theorem passAFCd_lowD {p : ByteArray} {P : Program} [HasCode p P] (env : RefineH
         ((cfr' a (by omega) (by fr_conv)).trans ((bfr' a (by fr_conv)).trans (afr' a (by fr_conv))))))
   by_cases hmore : k + 1 < es.length
   · rw [if_pos hmore]
-    obtain ⟨ω8, run8, i1, i5⟩ := LoopF.s5_moreF (p := p) (P := P) (R := refineContractK cap env) x ω7 μ7 F (d + k)
+    obtain ⟨ω8, run8, i1, i5⟩ := LoopF.s5_moreF (p := p) (P := P) (R := env.rel cap) x ω7 μ7 F (d + k)
       (es.length - k) ⟨by omega, by omega⟩ (by omega) (by omega) (by omega) q1 q5 q6
       (fun a h1 h2 => by rw [hwrq a (by omega)]; exact ws a (by omega) (by omega))
     exact Or.inl (post 680 ω8 run8 i1 (i5.trans (by rw [show es.length - k - 1 = es.length - (k + 1) by omega])))
   · rw [if_neg hmore]
-    obtain ⟨ω8, run8, i1, i5⟩ := LoopF.s5_lastF (p := p) (P := P) (R := refineContractK cap env) x ω7 μ7 F (d + k) ⟨by omega, by omega⟩
+    obtain ⟨ω8, run8, i1, i5⟩ := LoopF.s5_lastF (p := p) (P := P) (R := env.rel cap) x ω7 μ7 F (d + k) ⟨by omega, by omega⟩
       (by omega) q1 (q5.trans (by rw [show es.length - k = 1 by omega])) q6
       (fun a h1 h2 => by rw [hwrq a (by omega)]; exact ws a (by omega) (by omega))
     exact Or.inl (post 562 ω8 run8 i1 (i5.trans (by rw [show es.length - (k + 1) = 0 by omega])))
 
-/-- **One pass, with the slots' chunks named** (`passAFCd_lowD` for a given witness `csOf` of the slots'
-    chunks): also the next witness, the old one with slot k set to the element's chunks, fresh against
-    the used chunks of s0 (if those are among s's used chunks); the buffer pointer B at F + 88; and, after
-    the last element, ω₇ = d + n. -/
-theorem passAFCd_lowFD {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap pb N : Nat)
+/-- `passAFCd_lowDG` for the refine contract (`refineHeap env`). -/
+theorem passAFCd_lowD {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap pb N : Nat)
     (gl : Nat → UInt8) (F RD P0 Lt : Nat)
     (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State)
     (es : List (List UInt8)) (reps : Nat → List Chunk → List UInt8 → Memory → Prop) (d k B : Nat) (cp cb : Chunk)
     (hk : k < es.length) (ok : OkFD F RD P0 Lt es d B) (hdB : B + 232 * (d + es.length) < 2147483648)
     (hel : ElemOkAFC env cap pb gl p P F RD N es[k] (reps k))
-    (h : InvAFCd env pb F RD P0 Lt es reps d k B cp cb ω μ s) (hg : ∀ a, Glob a → μ.read a = gl a)
+    (h : InvAFCd env pb F RD P0 Lt es reps d k B cp cb ω μ s) (hg : ∀ a, Glob a → μ.read a = gl a) :
+    (∃ ω' μ' s', FreeStepsH p (refineContractK cap env) 680 ω μ x (if k + 1 < es.length then 680 else 562)
+      ω' μ' x (N + 1700) ∧ InvAFCd env pb F RD P0 Lt es reps d (k + 1) B cp cb ω' μ' s' ∧
+      FrameAF F RD es.length (B + 232 * d) s μ s' μ' ∧
+      (∀ a, F + 56 ≤ a → a < F + 80 → μ'.read a = μ.read a)) ∨
+    Exhausts env cap pb p P 680 ω μ x (N + 1700) :=
+  (passAFCd_lowDG (p := p) (P := P) (refineHeap env) cap pb N gl F RD P0 Lt x ω μ s es reps d k B cp cb hk ok hdB hel h.toG hg).imp
+    (fun ⟨ω', μ', s', run, i, f⟩ => ⟨ω', μ', s', run, i.toR, f⟩) id
+
+/-- **One pass, with the slots' chunks named** (`passAFCd_lowDG` for a given witness `csOf` of the slots'
+    chunks): also the next witness, the old one with slot k set to the element's chunks, fresh against
+    the used chunks of s0 (if those are among s's used chunks); the buffer pointer B at F + 88; and, after
+    the last element, ω₇ = d + n. -/
+theorem passAFCd_lowFDG {p : ByteArray} {P : Program} [HasCode p P] {X : Type} (env : HeapHost X) (cap pb N : Nat)
+    (gl : Nat → UInt8) (F RD P0 Lt : Nat)
+    (x : X) (ω : Regs) (μ : Memory) (s : State)
+    (es : List (List UInt8)) (reps : Nat → List Chunk → List UInt8 → Memory → Prop) (d k B : Nat) (cp cb : Chunk)
+    (hk : k < es.length) (ok : OkFD F RD P0 Lt es d B) (hdB : B + 232 * (d + es.length) < 2147483648)
+    (hel : ElemOkAFCG env cap pb gl p P F RD N es[k] (reps k))
+    (h : InvAFCdG env pb F RD P0 Lt es reps d k B cp cb ω μ s) (hg : ∀ a, Glob a → μ.read a = gl a)
     (s0 : State) (k0 : Nat) (csOf : Nat → List Chunk) (hE : ElCd reps d k B cp cb csOf μ s)
     (hfr : ∀ j, k0 ≤ j → j < k → ∀ c ∈ csOf j, ∀ e ∈ chunks s0, e.used = true → e ≠ c)
     (hs0 : ∀ e ∈ chunks s0, e.used = true → e ∈ chunks s) :
-    (∃ ω' μ' s', FreeStepsH p (refineContractK cap env) 680 ω μ x (if k + 1 < es.length then 680 else 562)
-      ω' μ' x (N + 1700) ∧ InvAFCd env pb F RD P0 Lt es reps d (k + 1) B cp cb ω' μ' s' ∧
+    (∃ ω' μ' s', FreeStepsH p (env.rel cap) 680 ω μ x (if k + 1 < es.length then 680 else 562)
+      ω' μ' x (N + 1700) ∧ InvAFCdG env pb F RD P0 Lt es reps d (k + 1) B cp cb ω' μ' s' ∧
       FrameAF F RD es.length (B + 232 * d) s μ s' μ' ∧
       (∀ a, F + 56 ≤ a → a < F + 80 → μ'.read a = μ.read a) ∧
       μ'.readN (F + 88) 8 = Num.encodeLE 8 B ∧ (k + 1 = es.length → ω'[7] = UInt64.ofNat (d + es.length)) ∧
       ∃ csOf' : Nat → List Chunk, ElCd reps d (k + 1) B cp cb csOf' μ' s' ∧
         ∀ j, k0 ≤ j → j < k + 1 → ∀ c ∈ csOf' j, ∀ e ∈ chunks s0, e.used = true → e ≠ c) ∨
-    Exhausts env cap pb p P 680 ω μ x (N + 1700) := by
+    ExhaustsG env cap pb p P 680 ω μ x (N + 1700) := by
   obtain ⟨hn, ⟨hB1, hP31⟩, hB2, hB3, hne, hP0, hLt, hLt', hF1, hF8, hRD1, hRD2⟩ := ok
   obtain ⟨r1, r5, m24, m40, m48, m56, rP, rL, pay, tab, el, ws, wr, rt, heap, ⟨hcp, hcpu⟩, cpd, ⟨hcb, hcbu⟩,
     cbd⟩ := h
   have rp : ∀ a, P0 ≤ a → a < P0 + es.flatten.length → μ.readable a = true := fun a h1 h2 =>
-    Memory.readable_of_writable (heap_writable_data heap hcp hcpu (cpd a h1 h2))
+    Memory.readable_of_writable (heap_writable_dataG heap hcp hcpu (cpd a h1 h2))
   have hL := hne k hk
   have hoff := off_lt es k hk
   have offk1 := off_succ es k hk
@@ -1350,14 +1630,14 @@ theorem passAFCd_lowFD {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
     rw [readN_sub μ _ _ 1 _ _ ek (by omega), List.drop_one, List.take_of_length_le (by simp)]
   -- S1
   obtain ⟨ω1, μ1, run1, a0, a1, a5, a6, a7, a8, a9, as0, as5, as6, afr, ard, awr⟩ :=
-    LoopF.s1F (p := p) (P := P) (R := refineContractK cap env) x ω μ F RD ⟨by omega, by omega⟩ (by omega) r1 m24
+    LoopF.s1F (p := p) (P := P) (R := env.rel cap) x ω μ F RD ⟨by omega, by omega⟩ (by omega) r1 m24
       (fun a h1 h2 => ws a (by omega) (by omega))
       (fun a h1 h2 => Memory.readable_of_writable (ws a (by omega) (by omega)))
   have afr' : ∀ a, (decide (a < 4294967296) && !(decide (F ≤ a ∧ a < (F + 56)))) = true → μ1.read a = μ.read a :=
     fun a ha => afr a (by fr_conv) (by fr_conv)
   clear afr
   -- the tag
-  obtain ⟨ω2, μ2, run2, ok2⟩ := read_ok (p := p) (P := P) (R := refineContractK cap env) x ω1 μ1 930 20626
+  obtain ⟨ω2, μ2, run2, ok2⟩ := read_ok (p := p) (P := P) (R := env.rel cap) x ω1 μ1 930 20626
     F RD F (P0 + off es k) (Lt - off es k) 1 a0 a1 a7 a8 a9
     (by omega) (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_464]) bs_20626 (by omega) (by omega) (by omega)
     (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)
@@ -1379,7 +1659,7 @@ theorem passAFCd_lowFD {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
     exact ek0
   have low2 : ∀ a, a < 2147483648 → μ2.read a = μ.read a := fun a ha =>
     (bfr' a (by fr_conv)).trans (afr' a (by fr_conv))
-  have heap2 : HeapCtx env pb S0 S1 μ2 s := heap_of_high heap low2 (fun a => by rw [bwr, awr])
+  have heap2 : HeapCtxC env.code pb S0 S1 μ2 s := heap_of_highG heap low2 (fun a => by rw [bwr, awr])
   -- the element
   have v5 : (ω[5]).toNat = es.length - k := by rw [r5]; simp; omega
   have cplo := cpd (P0 + off es k) (by omega) (by omega)
@@ -1401,7 +1681,7 @@ theorem passAFCd_lowFD {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
       heap2 (fun a ha => by have hg' := ha; unfold Glob at hg'; rw [low2 a (by omega)]; exact hg a ha)
       ⟨cp, hcp, hcpu, by omega, by omega⟩ with hs | hx
   rotate_left
-  · exact Or.inr ((Exhausts.pre (run1.trans run2) hx).mono (by omega))
+  · exact Or.inr ((ExhaustsG.pre (run1.trans run2) hx).mono (by omega))
   obtain ⟨ω3, μ3, s', run3, c1, c5, c6, cR0, cR8, ⟨W, hW, cW, cne⟩, heap3, keepU, keepD, ⟨cs, hcs, crep⟩,
     cfr, clow, clowr, cglob, cwr⟩ := hs
   have cfr' : ∀ a, (F + 32) ≤ a → (decide (a < 4294967296) && !(decide (RD ≤ a ∧ a < (RD + 16))) && !(decide ((F + 120) ≤ a ∧ a < (F + 352)))) = true →
@@ -1411,11 +1691,11 @@ theorem passAFCd_lowFD {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
   have hcb' := keepU cb hcb hcbu
   have hcp' := keepU cp hcp hcpu
   -- S3 and the first move
-  obtain ⟨ω4, run4, d0, d1, d5, d6, d7, d8, d9⟩ := LoopF.g3F (p := p) (P := P) (R := refineContractK cap env) x ω3 μ3
+  obtain ⟨ω4, run4, d0, d1, d5, d6, d7, d8, d9⟩ := LoopF.g3F (p := p) (P := P) (R := env.rel cap) x ω3 μ3
     F W ⟨by omega, by omega⟩ c1 cW hW cne
     (fun a h1 h2 => Memory.readable_of_writable (by rw [wr3 a (by omega)]; exact ws a (by omega) (by omega)))
   obtain ⟨ω5, μ5, run5, e0, e1, e5, e6, ecp, efr, erd, ewr⟩ := memcpy_big_aligned (p := p) (P := P)
-    (R := refineContractK cap env)
+    (R := env.rel cap)
     x ω4 μ3 20 749 (F + 56) (F + 352) (F + 120) 232 d0 d1 d7 d8 d9 (by omega)
     (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_9]) bs_749 (by omega) (by omega) (by omega)
     (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)
@@ -1430,7 +1710,7 @@ theorem passAFCd_lowFD {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
     (efr' a (by fr_conv)).trans ((cfr' a (by omega) (by fr_conv)).trans ((bfr' a (by fr_conv)).trans
       (afr' a (by fr_conv))))
   obtain ⟨ω6, μ6, run6, f0, f1, f5, f6, f7, f8, f9, ffr, frd, fwr, f88⟩ := s4FB (p := p) (P := P)
-    (R := refineContractK cap env)
+    (R := env.rel cap)
     x ω5 μ5 F (d + k) (d + es.length) B ⟨by omega, by omega⟩ (by omega) (by omega) (by omega) e1
     (by rw [Memory.readN_congr (fun j hj => keep _ (by omega) (by omega))]; exact m40)
     (by rw [Memory.readN_congr (fun j hj => keep _ (by omega) (by omega))]; exact m48)
@@ -1441,12 +1721,12 @@ theorem passAFCd_lowFD {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
     fun a ha => ffr a (by fr_conv) (by fr_conv)
   clear ffr
   obtain ⟨ω7, μ7, run7, g0, g1, g5, g6, gcp, gfr, grd, gwr⟩ := memcpy_big_aligned (p := p) (P := P)
-    (R := refineContractK cap env)
+    (R := env.rel cap)
     x ω6 μ6 16 668 (F + 56) (B + 232 * (d + k)) (F + 352) 232 f0 f1 f7 f8 f9 (by omega)
     (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_7]) bs_668 (by omega) (by omega) (by omega)
     (by omega) (by omega) (by omega) (by omega) (by omega) (by omega)
     (fun a h1 h2 => Memory.readable_of_writable (by rw [fwr, ewr, wr3 a (by omega)]; exact ws a (by omega) (by omega)))
-    (fun a h1 h2 => by rw [fwr, ewr]; exact heap_writable_data heap3 hcb' hcbu (cbd a (by omega) (by omega)))
+    (fun a h1 h2 => by rw [fwr, ewr]; exact heap_writable_dataG heap3 hcb' hcbu (cbd a (by omega) (by omega)))
     (fun a h1 h2 => by rw [fwr, ewr, wr3 a (by omega)]; exact ws a (by omega) (by omega))
   have gfr' : ∀ a, (decide (a < 4294967296) && !(decide (B + 232 * (d + k) ≤ a ∧ a < B + 232 * (d + k) + 232)) &&
       !(decide ((F + 8) ≤ a ∧ a < (F + 56)))) = true → μ7.read a = μ6.read a :=
@@ -1501,15 +1781,15 @@ theorem passAFCd_lowFD {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
   have rd7 : ∀ a, RD ≤ a → a < (RD + 16) → μ7.read a = μ3.read a := fun a h1 h2 =>
     (gfr' a (by fr_conv)).trans ((ffr' a (by fr_conv)).trans (efr' a (by fr_conv)))
   -- the allocator's context after the moves
-  have heap7 : HeapCtx env pb S0 S1 μ7 s' := heap_of_data heap3 hcb'
+  have heap7 : HeapCtxC env.code pb S0 S1 μ7 s' := heap_of_dataG heap3 hcb'
     (fun a h0 h1 => low37 a h0 (by omega)) hwr73
   -- S5: count it, and loop or leave
-  have post : ∀ (t : Nat) (ω8 : Regs), FreeStepsH p (refineContractK cap env) 668 ω7 μ7 x t ω8
+  have post : ∀ (t : Nat) (ω8 : Regs), FreeStepsH p (env.rel cap) 668 ω7 μ7 x t ω8
       (μ7.writeN (F + 112) (Num.encodeLE 8 (d + k + 1))) x 4 →
       ω8[1] = UInt64.ofNat (F + 56) → ω8[5] = UInt64.ofNat (es.length - (k + 1)) →
       (k + 1 = es.length → ω8[7] = UInt64.ofNat (d + es.length)) →
-      (∃ ω' μ' s', FreeStepsH p (refineContractK cap env) 680 ω μ x t ω' μ' x (N + 1700) ∧
-        InvAFCd env pb F RD P0 Lt es reps d (k + 1) B cp cb ω' μ' s' ∧ FrameAF F RD es.length (B + 232 * d) s μ s' μ' ∧
+      (∃ ω' μ' s', FreeStepsH p (env.rel cap) 680 ω μ x t ω' μ' x (N + 1700) ∧
+        InvAFCdG env pb F RD P0 Lt es reps d (k + 1) B cp cb ω' μ' s' ∧ FrameAF F RD es.length (B + 232 * d) s μ s' μ' ∧
         (∀ a, F + 56 ≤ a → a < F + 80 → μ'.read a = μ.read a) ∧
         μ'.readN (F + 88) 8 = Num.encodeLE 8 B ∧ (k + 1 = es.length → ω'[7] = UInt64.ofNat (d + es.length)) ∧
         ∃ csOf' : Nat → List Chunk, ElCd reps d (k + 1) B cp cb csOf' μ' s' ∧
@@ -1611,7 +1891,7 @@ theorem passAFCd_lowFD {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
     · intro a h1 h2; rw [Memory.writable_writeN, hwrq a (by omega)]; exact ws a h1 h2
     · intro a h1 h2; rw [Memory.writable_writeN, hwrq a (by omega)]; exact wr a h1 h2
     · intro a h1 h2; rw [Memory.readable_writeN, hrdL a (by omega)]; exact rt a h1 h2
-    · exact heap_of_high heap7 wlow (fun a => Memory.writable_writeN _ _ _ _)
+    · exact heap_of_highG heap7 wlow (fun a => Memory.writable_writeN _ _ _ _)
     · intro a h h0 h2
       rw [Memory.read_writeN_disjoint _ _ _ _ (by simp <;> omega) (by simp [two32] <;> omega) (by simp [two32] <;> omega)]
       exact backH a h h0 h2
@@ -1638,20 +1918,75 @@ theorem passAFCd_lowFD {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
         Memory.readN_congr (fun j hj => gfr' _ (by fr_conv))]; exact f88
   by_cases hmore : k + 1 < es.length
   · rw [if_pos hmore]
-    obtain ⟨ω8, run8, i1, i5⟩ := LoopF.s5_moreF (p := p) (P := P) (R := refineContractK cap env) x ω7 μ7 F (d + k)
+    obtain ⟨ω8, run8, i1, i5⟩ := LoopF.s5_moreF (p := p) (P := P) (R := env.rel cap) x ω7 μ7 F (d + k)
       (es.length - k) ⟨by omega, by omega⟩ (by omega) (by omega) (by omega) q1 q5 q6
       (fun a h1 h2 => by rw [hwrq a (by omega)]; exact ws a (by omega) (by omega))
     exact Or.inl (post 680 ω8 run8 i1 (i5.trans (by rw [show es.length - k - 1 = es.length - (k + 1) by omega]))
       (fun he => absurd he (by omega)))
   · rw [if_neg hmore]
-    obtain ⟨ω8, run8, i1, i5, i7⟩ := s5_lastF7 (p := p) (P := P) (R := refineContractK cap env) x ω7 μ7 F (d + k) ⟨by omega, by omega⟩
+    obtain ⟨ω8, run8, i1, i5, i7⟩ := s5_lastF7 (p := p) (P := P) (R := env.rel cap) x ω7 μ7 F (d + k) ⟨by omega, by omega⟩
       (by omega) q1 (q5.trans (by rw [show es.length - k = 1 by omega])) q6
       (fun a h1 h2 => by rw [hwrq a (by omega)]; exact ws a (by omega) (by omega))
     exact Or.inl (post 562 ω8 run8 i1 (i5.trans (by rw [show es.length - (k + 1) = 0 by omega]))
       (fun _ => i7.trans (by rw [show d + k + 1 = d + es.length by omega])))
 
-/-- **The decode loop, with the slots' chunks, after d earlier slots** (`loopAF_low` over `InvAFCd`,
-    the elements given as `ElemOkAFC`). -/
+/-- `passAFCd_lowFDG` for the refine contract (`refineHeap env`). -/
+theorem passAFCd_lowFD {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap pb N : Nat)
+    (gl : Nat → UInt8) (F RD P0 Lt : Nat)
+    (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State)
+    (es : List (List UInt8)) (reps : Nat → List Chunk → List UInt8 → Memory → Prop) (d k B : Nat) (cp cb : Chunk)
+    (hk : k < es.length) (ok : OkFD F RD P0 Lt es d B) (hdB : B + 232 * (d + es.length) < 2147483648)
+    (hel : ElemOkAFC env cap pb gl p P F RD N es[k] (reps k))
+    (h : InvAFCd env pb F RD P0 Lt es reps d k B cp cb ω μ s) (hg : ∀ a, Glob a → μ.read a = gl a)
+    (s0 : State) (k0 : Nat) (csOf : Nat → List Chunk) (hE : ElCd reps d k B cp cb csOf μ s)
+    (hfr : ∀ j, k0 ≤ j → j < k → ∀ c ∈ csOf j, ∀ e ∈ chunks s0, e.used = true → e ≠ c)
+    (hs0 : ∀ e ∈ chunks s0, e.used = true → e ∈ chunks s) :
+    (∃ ω' μ' s', FreeStepsH p (refineContractK cap env) 680 ω μ x (if k + 1 < es.length then 680 else 562)
+      ω' μ' x (N + 1700) ∧ InvAFCd env pb F RD P0 Lt es reps d (k + 1) B cp cb ω' μ' s' ∧
+      FrameAF F RD es.length (B + 232 * d) s μ s' μ' ∧
+      (∀ a, F + 56 ≤ a → a < F + 80 → μ'.read a = μ.read a) ∧
+      μ'.readN (F + 88) 8 = Num.encodeLE 8 B ∧ (k + 1 = es.length → ω'[7] = UInt64.ofNat (d + es.length)) ∧
+      ∃ csOf' : Nat → List Chunk, ElCd reps d (k + 1) B cp cb csOf' μ' s' ∧
+        ∀ j, k0 ≤ j → j < k + 1 → ∀ c ∈ csOf' j, ∀ e ∈ chunks s0, e.used = true → e ≠ c) ∨
+    Exhausts env cap pb p P 680 ω μ x (N + 1700) :=
+  (passAFCd_lowFDG (p := p) (P := P) (refineHeap env) cap pb N gl F RD P0 Lt x ω μ s es reps d k B cp cb hk ok hdB hel h.toG hg s0 k0 csOf hE hfr hs0).imp
+    (fun ⟨ω', μ', s', run, i, f⟩ => ⟨ω', μ', s', run, i.toR, f⟩) id
+
+/-- **The decode loop, with the slots' chunks, after d earlier slots** (`loopAF_lowG` over `InvAFCdG`,
+    the elements given as `ElemOkAFCG`). -/
+theorem loopAFCd_lowDG {p : ByteArray} {P : Program} [HasCode p P] {X : Type} (env : HeapHost X) (cap pb : Nat)
+    (gl : Nat → UInt8) (F RD P0 Lt : Nat)
+    (Ns : Nat → Nat) (x : X) (es : List (List UInt8))
+    (reps : Nat → List Chunk → List UInt8 → Memory → Prop)
+    (d B : Nat) (cp cb : Chunk) (ok : OkFD F RD P0 Lt es d B) (hdB : B + 232 * (d + es.length) < 2147483648)
+    (hel : ∀ j (hj : j < es.length), ElemOkAFCG env cap pb gl p P F RD (Ns j) es[j] (reps j)) :
+    ∀ r k (ω : Regs) (μ : Memory) (s : State), es.length - k = r → k < es.length →
+      InvAFCdG env pb F RD P0 Lt es reps d k B cp cb ω μ s → (∀ a, Glob a → μ.read a = gl a) →
+      (∃ ω' μ' s', FreeStepsH p (env.rel cap) 680 ω μ x 562 ω' μ' x (bound Ns k r) ∧
+        InvAFCdG env pb F RD P0 Lt es reps d es.length B cp cb ω' μ' s' ∧
+        FrameAF F RD es.length (B + 232 * d) s μ s' μ' ∧
+        (∀ a, F + 56 ≤ a → a < F + 80 → μ'.read a = μ.read a)) ∨
+      ExhaustsG env cap pb p P 680 ω μ x (bound Ns k r) := by
+  intro r
+  induction r with
+  | zero => intro k ω μ s hr hk; omega
+  | succ r ih =>
+    intro k ω μ s hr hk h hg
+    rcases passAFCd_lowDG (p := p) (P := P) env cap pb (Ns k) gl F RD P0 Lt x ω μ s es reps d k B cp cb hk ok hdB
+      (hel k hk) h hg with ⟨ω1, μ1, s1, run1, h1, f1, l1⟩ | hx
+    · by_cases hmore : k + 1 < es.length
+      · rw [if_pos hmore] at run1
+        rcases ih (k + 1) ω1 μ1 s1 (by omega) hmore h1 (fun a ha => (f1.2.2.2.2.1 a ha).trans (hg a ha)) with
+          ⟨ω2, μ2, s2, run2, h2, f2, l2⟩ | hx
+        · exact Or.inl ⟨ω2, μ2, s2, (run1.trans run2).mono (by simp only [bound]; omega), h2, f1.trans f2,
+            fun a ha1 ha2 => (l2 a ha1 ha2).trans (l1 a ha1 ha2)⟩
+        · exact Or.inr ((ExhaustsG.pre run1 hx).mono (by simp only [bound]; omega))
+      · rw [if_neg hmore] at run1
+        rw [show k + 1 = es.length by omega] at h1
+        exact Or.inl ⟨ω1, μ1, s1, run1.mono (by simp only [bound]; omega), h1, f1, l1⟩
+    · exact Or.inr (hx.mono (by simp only [bound]; omega))
+
+/-- `loopAFCd_lowDG` for the refine contract (`refineHeap env`). -/
 theorem loopAFCd_lowD {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap pb : Nat)
     (gl : Nat → UInt8) (F RD P0 Lt : Nat)
     (Ns : Nat → Nat) (x : RefineCtx) (es : List (List UInt8))
@@ -1664,28 +1999,54 @@ theorem loopAFCd_lowD {p : ByteArray} {P : Program} [HasCode p P] (env : RefineH
         InvAFCd env pb F RD P0 Lt es reps d es.length B cp cb ω' μ' s' ∧
         FrameAF F RD es.length (B + 232 * d) s μ s' μ' ∧
         (∀ a, F + 56 ≤ a → a < F + 80 → μ'.read a = μ.read a)) ∨
-      Exhausts env cap pb p P 680 ω μ x (bound Ns k r) := by
+      Exhausts env cap pb p P 680 ω μ x (bound Ns k r) := fun r k ω μ s hr hk h hg =>
+  (loopAFCd_lowDG (p := p) (P := P) (refineHeap env) cap pb gl F RD P0 Lt Ns x es reps d B cp cb ok hdB hel r k ω μ s hr hk h.toG hg).imp
+    (fun ⟨ω', μ', s', run, i, f⟩ => ⟨ω', μ', s', run, i.toR, f⟩) id
+
+/-- The loop of `loopAFCd_lowFDG`, for any reference state s0 whose used chunks are used chunks of the
+    current state, and slots from k0 on fresh against them. -/
+theorem loopAFCd_lowFD_auxG {p : ByteArray} {P : Program} [HasCode p P] {X : Type} (env : HeapHost X) (cap pb : Nat)
+    (gl : Nat → UInt8) (F RD P0 Lt : Nat)
+    (Ns : Nat → Nat) (x : X) (es : List (List UInt8))
+    (reps : Nat → List Chunk → List UInt8 → Memory → Prop)
+    (d B : Nat) (cp cb : Chunk) (ok : OkFD F RD P0 Lt es d B) (hdB : B + 232 * (d + es.length) < 2147483648)
+    (hel : ∀ j (hj : j < es.length), ElemOkAFCG env cap pb gl p P F RD (Ns j) es[j] (reps j))
+    (s0 : State) (k0 : Nat) :
+    ∀ r k (ω : Regs) (μ : Memory) (s : State) (csOf : Nat → List Chunk), es.length - k = r → k < es.length →
+      InvAFCdG env pb F RD P0 Lt es reps d k B cp cb ω μ s → ElCd reps d k B cp cb csOf μ s →
+      (∀ j, k0 ≤ j → j < k → ∀ c ∈ csOf j, ∀ e ∈ chunks s0, e.used = true → e ≠ c) →
+      (∀ e ∈ chunks s0, e.used = true → e ∈ chunks s) →
+      (∀ a, Glob a → μ.read a = gl a) →
+      (∃ ω' μ' s', FreeStepsH p (env.rel cap) 680 ω μ x 562 ω' μ' x (bound Ns k r) ∧
+        InvAFCdG env pb F RD P0 Lt es reps d es.length B cp cb ω' μ' s' ∧
+        FrameAF F RD es.length (B + 232 * d) s μ s' μ' ∧
+        (∀ a, F + 56 ≤ a → a < F + 80 → μ'.read a = μ.read a) ∧
+        μ'.readN (F + 88) 8 = Num.encodeLE 8 B ∧ ω'[7] = UInt64.ofNat (d + es.length) ∧
+        ∃ csOf' : Nat → List Chunk, ElCd reps d es.length B cp cb csOf' μ' s' ∧
+          ∀ j, k0 ≤ j → j < es.length → ∀ c ∈ csOf' j, ∀ e ∈ chunks s0, e.used = true → e ≠ c) ∨
+      ExhaustsG env cap pb p P 680 ω μ x (bound Ns k r) := by
   intro r
   induction r with
-  | zero => intro k ω μ s hr hk; omega
+  | zero => intro k ω μ s csOf hr hk; omega
   | succ r ih =>
-    intro k ω μ s hr hk h hg
-    rcases passAFCd_lowD (p := p) (P := P) env cap pb (Ns k) gl F RD P0 Lt x ω μ s es reps d k B cp cb hk ok hdB
-      (hel k hk) h hg with ⟨ω1, μ1, s1, run1, h1, f1, l1⟩ | hx
+    intro k ω μ s csOf hr hk h hE hfr hs0 hg
+    rcases passAFCd_lowFDG (p := p) (P := P) env cap pb (Ns k) gl F RD P0 Lt x ω μ s es reps d k B cp cb hk ok hdB
+      (hel k hk) h hg s0 k0 csOf hE hfr hs0 with ⟨ω1, μ1, s1, run1, h1, f1, l1, b1, w1, csOf1, e1, fr1⟩ | hx
     · by_cases hmore : k + 1 < es.length
       · rw [if_pos hmore] at run1
-        rcases ih (k + 1) ω1 μ1 s1 (by omega) hmore h1 (fun a ha => (f1.2.2.2.2.1 a ha).trans (hg a ha)) with
-          ⟨ω2, μ2, s2, run2, h2, f2, l2⟩ | hx
+        rcases ih (k + 1) ω1 μ1 s1 csOf1 (by omega) hmore h1 e1 fr1 (fun e he hu => f1.2.1 e (hs0 e he hu) hu)
+          (fun a ha => (f1.2.2.2.2.1 a ha).trans (hg a ha)) with
+          ⟨ω2, μ2, s2, run2, h2, f2, l2, b2, w2, cs2⟩ | hx
         · exact Or.inl ⟨ω2, μ2, s2, (run1.trans run2).mono (by simp only [bound]; omega), h2, f1.trans f2,
-            fun a ha1 ha2 => (l2 a ha1 ha2).trans (l1 a ha1 ha2)⟩
-        · exact Or.inr ((Exhausts.pre run1 hx).mono (by simp only [bound]; omega))
+            fun a ha1 ha2 => (l2 a ha1 ha2).trans (l1 a ha1 ha2), b2, w2, cs2⟩
+        · exact Or.inr ((ExhaustsG.pre run1 hx).mono (by simp only [bound]; omega))
       · rw [if_neg hmore] at run1
-        rw [show k + 1 = es.length by omega] at h1
-        exact Or.inl ⟨ω1, μ1, s1, run1.mono (by simp only [bound]; omega), h1, f1, l1⟩
+        have hkn : k + 1 = es.length := by omega
+        rw [hkn] at h1 e1 fr1
+        exact Or.inl ⟨ω1, μ1, s1, run1.mono (by simp only [bound]; omega), h1, f1, l1, b1, w1 hkn, csOf1, e1, fr1⟩
     · exact Or.inr (hx.mono (by simp only [bound]; omega))
 
-/-- The loop of `loopAFCd_lowFD`, for any reference state s0 whose used chunks are used chunks of the
-    current state, and slots from k0 on fresh against them. -/
+/-- `loopAFCd_lowFD_auxG` for the refine contract (`refineHeap env`). -/
 theorem loopAFCd_lowFD_aux {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap pb : Nat)
     (gl : Nat → UInt8) (F RD P0 Lt : Nat)
     (Ns : Nat → Nat) (x : RefineCtx) (es : List (List UInt8))
@@ -1705,32 +2066,36 @@ theorem loopAFCd_lowFD_aux {p : ByteArray} {P : Program} [HasCode p P] (env : Re
         μ'.readN (F + 88) 8 = Num.encodeLE 8 B ∧ ω'[7] = UInt64.ofNat (d + es.length) ∧
         ∃ csOf' : Nat → List Chunk, ElCd reps d es.length B cp cb csOf' μ' s' ∧
           ∀ j, k0 ≤ j → j < es.length → ∀ c ∈ csOf' j, ∀ e ∈ chunks s0, e.used = true → e ≠ c) ∨
-      Exhausts env cap pb p P 680 ω μ x (bound Ns k r) := by
-  intro r
-  induction r with
-  | zero => intro k ω μ s csOf hr hk; omega
-  | succ r ih =>
-    intro k ω μ s csOf hr hk h hE hfr hs0 hg
-    rcases passAFCd_lowFD (p := p) (P := P) env cap pb (Ns k) gl F RD P0 Lt x ω μ s es reps d k B cp cb hk ok hdB
-      (hel k hk) h hg s0 k0 csOf hE hfr hs0 with ⟨ω1, μ1, s1, run1, h1, f1, l1, b1, w1, csOf1, e1, fr1⟩ | hx
-    · by_cases hmore : k + 1 < es.length
-      · rw [if_pos hmore] at run1
-        rcases ih (k + 1) ω1 μ1 s1 csOf1 (by omega) hmore h1 e1 fr1 (fun e he hu => f1.2.1 e (hs0 e he hu) hu)
-          (fun a ha => (f1.2.2.2.2.1 a ha).trans (hg a ha)) with
-          ⟨ω2, μ2, s2, run2, h2, f2, l2, b2, w2, cs2⟩ | hx
-        · exact Or.inl ⟨ω2, μ2, s2, (run1.trans run2).mono (by simp only [bound]; omega), h2, f1.trans f2,
-            fun a ha1 ha2 => (l2 a ha1 ha2).trans (l1 a ha1 ha2), b2, w2, cs2⟩
-        · exact Or.inr ((Exhausts.pre run1 hx).mono (by simp only [bound]; omega))
-      · rw [if_neg hmore] at run1
-        have hkn : k + 1 = es.length := by omega
-        rw [hkn] at h1 e1 fr1
-        exact Or.inl ⟨ω1, μ1, s1, run1.mono (by simp only [bound]; omega), h1, f1, l1, b1, w1 hkn, csOf1, e1, fr1⟩
-    · exact Or.inr (hx.mono (by simp only [bound]; omega))
+      Exhausts env cap pb p P 680 ω μ x (bound Ns k r) := fun r k ω μ s csOf hr hk h hE hfr hs0 hg =>
+  (loopAFCd_lowFD_auxG (p := p) (P := P) (refineHeap env) cap pb gl F RD P0 Lt Ns x es reps d B cp cb ok hdB hel s0 k0 r k ω μ s csOf hr hk h.toG hE hfr hs0 hg).imp
+    (fun ⟨ω', μ', s', run, i, f⟩ => ⟨ω', μ', s', run, i.toR, f⟩) id
 
-/-- **The decode loop, with the slots' chunks named, after d earlier slots** (`loopAFCd_lowD`, and at
+/-- **The decode loop, with the slots' chunks named, after d earlier slots** (`loopAFCd_lowDG`, and at
     the exit to 562): a witness `csOf` of all n slots' chunks (`ElCd`), the slots decoded by this run
     (from k on) holding chunks fresh against every used chunk of the starting state s; the buffer
     pointer B at F + 88; and ω₇ = d + n. -/
+theorem loopAFCd_lowFDG {p : ByteArray} {P : Program} [HasCode p P] {X : Type} (env : HeapHost X) (cap pb : Nat)
+    (gl : Nat → UInt8) (F RD P0 Lt : Nat)
+    (Ns : Nat → Nat) (x : X) (es : List (List UInt8))
+    (reps : Nat → List Chunk → List UInt8 → Memory → Prop)
+    (d B : Nat) (cp cb : Chunk) (ok : OkFD F RD P0 Lt es d B) (hdB : B + 232 * (d + es.length) < 2147483648)
+    (hel : ∀ j (hj : j < es.length), ElemOkAFCG env cap pb gl p P F RD (Ns j) es[j] (reps j)) :
+    ∀ r k (ω : Regs) (μ : Memory) (s : State), es.length - k = r → k < es.length →
+      InvAFCdG env pb F RD P0 Lt es reps d k B cp cb ω μ s → (∀ a, Glob a → μ.read a = gl a) →
+      (∃ ω' μ' s', FreeStepsH p (env.rel cap) 680 ω μ x 562 ω' μ' x (bound Ns k r) ∧
+        InvAFCdG env pb F RD P0 Lt es reps d es.length B cp cb ω' μ' s' ∧
+        FrameAF F RD es.length (B + 232 * d) s μ s' μ' ∧
+        (∀ a, F + 56 ≤ a → a < F + 80 → μ'.read a = μ.read a) ∧
+        μ'.readN (F + 88) 8 = Num.encodeLE 8 B ∧ ω'[7] = UInt64.ofNat (d + es.length) ∧
+        ∃ csOf : Nat → List Chunk, ElCd reps d es.length B cp cb csOf μ' s' ∧
+          ∀ j, k ≤ j → j < es.length → ∀ c ∈ csOf j, ∀ e ∈ chunks s, e.used = true → e ≠ c) ∨
+      ExhaustsG env cap pb p P 680 ω μ x (bound Ns k r) := by
+  intro r k ω μ s hr hk h hg
+  obtain ⟨csOf, hE⟩ := h.el
+  exact loopAFCd_lowFD_auxG env cap pb gl F RD P0 Lt Ns x es reps d B cp cb ok hdB hel s k r k ω μ s csOf hr hk h hE
+    (fun j h1 h2 => absurd h2 (by omega)) (fun e he _ => he) hg
+
+/-- `loopAFCd_lowFDG` for the refine contract (`refineHeap env`). -/
 theorem loopAFCd_lowFD {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap pb : Nat)
     (gl : Nat → UInt8) (F RD P0 Lt : Nat)
     (Ns : Nat → Nat) (x : RefineCtx) (es : List (List UInt8))
@@ -1746,11 +2111,8 @@ theorem loopAFCd_lowFD {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
         μ'.readN (F + 88) 8 = Num.encodeLE 8 B ∧ ω'[7] = UInt64.ofNat (d + es.length) ∧
         ∃ csOf : Nat → List Chunk, ElCd reps d es.length B cp cb csOf μ' s' ∧
           ∀ j, k ≤ j → j < es.length → ∀ c ∈ csOf j, ∀ e ∈ chunks s, e.used = true → e ≠ c) ∨
-      Exhausts env cap pb p P 680 ω μ x (bound Ns k r) := by
-  intro r k ω μ s hr hk h hg
-  obtain ⟨csOf, hE⟩ := h.el
-  exact loopAFCd_lowFD_aux env cap pb gl F RD P0 Lt Ns x es reps d B cp cb ok hdB hel s k r k ω μ s csOf hr hk h hE
-    (fun j h1 h2 => absurd h2 (by omega)) (fun e he _ => he) hg
-
+      Exhausts env cap pb p P 680 ω μ x (bound Ns k r) := fun r k ω μ s hr hk h hg =>
+  (loopAFCd_lowFDG (p := p) (P := P) (refineHeap env) cap pb gl F RD P0 Lt Ns x es reps d B cp cb ok hdB hel r k ω μ s hr hk h.toG hg).imp
+    (fun ⟨ω', μ', s', run, i, f⟩ => ⟨ω', μ', s', run, i.toR, f⟩) id
 
 end Services.Bootstrap.Decode.LoopA

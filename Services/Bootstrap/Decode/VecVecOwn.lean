@@ -1538,17 +1538,68 @@ def ElemOkAFC (env : RefineHost.Env) (cap pb : Nat) (gl : Nat → UInt8) (p : By
       (∀ a, 4278050816 ≤ a → μ'.writable a = μ.writable a)) ∨
     Exhausts env cap pb p P 20626 ω μ x N
 
-/-- `ElemOkAFC` gives `ElemOkAF` for any representation its own implies, chunk by chunk. -/
-theorem ElemOkAFC.toAF {env : RefineHost.Env} {cap pb : Nat} {gl : Nat → UInt8} {p : ByteArray} {P : Program}
+/-- **`ElemOkAFG` with the representation seeing the returned chunks**: as `LoopA.ElemOkAF`, the
+    predicate `Rep cs` of the slot for the fresh allocated chunks `cs` the element returns; under any
+    host fit for the allocator (`ElemOkAFC`'s host-generic form). -/
+def ElemOkAFCG {X : Type} (env : HeapHost X) (cap pb : Nat) (gl : Nat → UInt8) (p : ByteArray) (P : Program) (F RD N : Nat)
+    (enc : List UInt8) (Rep : List Chunk → List UInt8 → Memory → Prop) : Prop :=
+  ∀ (x : X) (ω : Regs) (μ : Memory) (ptr len v5 v6 : Nat) (s : State),
+    ω[1] = UInt64.ofNat F → ω[5] = UInt64.ofNat (F + 120) → ω[6] = UInt64.ofNat RD →
+    ω[7] = UInt64.ofNat 0 → μ.read F = enc.headD 0 →
+    μ.readN RD 8 = Num.encodeLE 8 ptr → μ.readN (RD + 8) 8 = Num.encodeLE 8 len →
+    enc.length - 1 ≤ len → len < 4294967296 → 65536 ≤ ptr → ptr + enc.length + 72 ≤ 4278050816 →
+    μ.readN ptr (enc.length - 1) = enc.tail →
+    (∀ a, ptr ≤ a → a < ptr + (enc.length - 1) → μ.readable a = true) →
+    μ.readN (F + 48) 8 = Num.encodeLE 8 18 → μ.readN (F + 40) 8 = Num.encodeLE 8 v5 →
+    μ.readN (F + 32) 8 = Num.encodeLE 8 v6 → v5 < 18446744073709551616 → v6 < 18446744073709551616 →
+    μ.readN 67476 100 = Tag.table → (∀ a, 67476 ≤ a → a < 67576 → μ.readable a = true) →
+    (∀ a, 4278050816 ≤ a → a < (F + 584) → μ.writable a = true) →
+    (∀ a, RD ≤ a → a < (RD + 16) → μ.writable a = true) →
+    HeapCtxC env.code pb S0 S1 μ s → (∀ a, Glob a → μ.read a = gl a) →
+    (∃ c ∈ chunks s, c.used = true ∧ c.addr + 32 ≤ ptr ∧ ptr + (enc.length - 1) ≤ c.addr + 32 * c.size) →
+    (∃ ω' μ' s', FreeStepsH p (env.rel cap) 20626 ω μ x 723 ω' μ' x N ∧
+      ω'[1] = UInt64.ofNat (F + 56) ∧ ω'[5] = UInt64.ofNat v5 ∧ ω'[6] = UInt64.ofNat v6 ∧
+      μ'.readN RD 8 = Num.encodeLE 8 (ptr + (enc.length - 1)) ∧
+      μ'.readN (RD + 8) 8 = Num.encodeLE 8 (len - (enc.length - 1)) ∧
+      (∃ W, W < 18446744073709551616 ∧ μ'.readN (F + 120) 8 = Num.encodeLE 8 W ∧
+        W ≠ 18446744073709551614) ∧
+      HeapCtxC env.code pb S0 S1 μ' s' ∧
+      (∀ c ∈ chunks s, c.used = true → c ∈ chunks s') ∧
+      (∀ c ∈ chunks s, c.used = true → ∀ a, InData c a → μ'.read a = μ.read a) ∧
+      (∃ cs : List Chunk, (∀ c ∈ cs, c ∈ chunks s' ∧ c.used = true ∧ ∀ d ∈ chunks s, d.used = true → d ≠ c) ∧
+        ∀ μ'' : Memory, (∀ c ∈ cs, ∀ a, InData c a → μ''.read a = μ'.read a) →
+          Rep cs (μ'.readN (F + 120) 232) μ'') ∧
+      (∀ a, (F + 32) ≤ a → a < 4294967296 →
+        (a < RD ∨ (RD + 16) ≤ a) → (a < (F + 120) ∨ (F + 352) ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, a < 196608 → μ'.read a = μ.read a) ∧ (∀ a, a < 196608 → μ'.readable a = μ.readable a) ∧
+      (∀ a, Glob a → μ'.read a = μ.read a) ∧
+      (∀ a, 4278050816 ≤ a → μ'.writable a = μ.writable a)) ∨
+    ExhaustsG env cap pb p P 20626 ω μ x N
+
+/-- `ElemOkAFC` is `ElemOkAFCG` for the refine contract (`refineHeap env`). -/
+theorem ElemOkAFC_iff {env : RefineHost.Env} {cap pb : Nat} {gl : Nat → UInt8} {p : ByteArray} {P : Program}
+    {F RD N : Nat} {enc : List UInt8} {Rep : List Chunk → List UInt8 → Memory → Prop} :
+    ElemOkAFC env cap pb gl p P F RD N enc Rep ↔ ElemOkAFCG (refineHeap env) cap pb gl p P F RD N enc Rep :=
+  Iff.rfl
+
+/-- `ElemOkAFCG` gives `ElemOkAFG` for any representation its own implies, chunk by chunk. -/
+theorem ElemOkAFCG.toAF {X : Type} {env : HeapHost X} {cap pb : Nat} {gl : Nat → UInt8} {p : ByteArray} {P : Program}
     {F RD N : Nat} {enc : List UInt8} {Rep : List Chunk → List UInt8 → Memory → Prop}
-    {Rep' : List UInt8 → Memory → Prop} (h : ElemOkAFC env cap pb gl p P F RD N enc Rep)
-    (hR : ∀ cs bs μ, Rep cs bs μ → Rep' bs μ) : ElemOkAF env cap pb gl p P F RD N enc Rep' := by
+    {Rep' : List UInt8 → Memory → Prop} (h : ElemOkAFCG env cap pb gl p P F RD N enc Rep)
+    (hR : ∀ cs bs μ, Rep cs bs μ → Rep' bs μ) : ElemOkAFG env cap pb gl p P F RD N enc Rep' := by
   intro x ω μ ptr len v5 v6 s h1 h5 h6 h7 tag rP rL hl hl' hp hp' pay rpay s0 s5 s6 hv5 hv6 tab rt ws wr H hg hc
   rcases h x ω μ ptr len v5 v6 s h1 h5 h6 h7 tag rP rL hl hl' hp hp' pay rpay s0 s5 s6 hv5 hv6 tab rt ws wr H hg hc
     with ⟨ω', μ', s', a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, ⟨cs, hcs, hrep⟩, a12⟩ | ex
   · exact Or.inl ⟨ω', μ', s', a1, a2, a3, a4, a5, a6, a7, a8, a9, a10,
       ⟨cs, hcs, fun μ'' hag => hR _ _ _ (hrep μ'' hag)⟩, a12⟩
   · exact Or.inr ex
+
+/-- `ElemOkAFCG.toAF` for the refine contract (`refineHeap env`). -/
+theorem ElemOkAFC.toAF {env : RefineHost.Env} {cap pb : Nat} {gl : Nat → UInt8} {p : ByteArray} {P : Program}
+    {F RD N : Nat} {enc : List UInt8} {Rep : List Chunk → List UInt8 → Memory → Prop}
+    {Rep' : List UInt8 → Memory → Prop} (h : ElemOkAFC env cap pb gl p P F RD N enc Rep)
+    (hR : ∀ cs bs μ, Rep cs bs μ → Rep' bs μ) : ElemOkAF env cap pb gl p P F RD N enc Rep' :=
+  ElemOkAFCG.toAF (env := refineHeap env) (P := P) h hR
 
 /-- **`DeleteItems` (5), `Export` (10) or `Imported` (19), as an element of the decode loop, with any
     n ≥ 1 items of any length, with the chunks holding the buffers** (GP v0.8.0 B.7): as

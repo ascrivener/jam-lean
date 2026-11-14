@@ -66,4 +66,28 @@ theorem kb_pre {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X
       all_goals try rfl
       all_goals try (congr 1; omega)
 
+/-- **33886 … 58508**, `alloc` returned ptr ≠ 0 (ω₇) for the buffer of c octets (ω₅), with the tag t in
+    ω₆: the `Vec` `{c, ptr, 0}` at S + 16, the tag octet at S + 44, and the call
+    `extend(S + 16, S + 44, 1)`, return address 1568 (t = 2), 1572 (t = 1) or 1574 (t = 0, 3). -/
+theorem kb_vec {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
+    (μ : Memory) (S c ptr t : Nat) (h1 : ω[1] = UInt64.ofNat S) (h5 : ω[5] = UInt64.ofNat c)
+    (h6 : ω[6] = UInt64.ofNat t) (h7 : ω[7] = UInt64.ofNat ptr) (hp0 : ptr ≠ 0)
+    (hptr : ptr < 18446744073709551616) (hc : c < 18446744073709551616) (ht : t < 4)
+    (hS : S + 72 < 4294967296) (hw : ∀ a, S + 16 ≤ a → a < S + 48 → μ.writable a = true) :
+    ∃ ω', FreeStepsH p R 33886 ω μ x 58508 ω'
+      ((((μ.writeN (S + 16) (Num.encodeLE 8 c)).writeN (S + 24) (Num.encodeLE 8 ptr)).writeN (S + 32)
+        (Num.encodeLE 8 0)).writeN (S + 44) [UInt8.ofNat t]) x 12 ∧
+      ω'[0] = UInt64.ofNat (if t = 2 then 1568 else if t = 1 then 1572 else 1574) ∧
+      ω'[1] = UInt64.ofNat S ∧ ω'[5] = UInt64.ofNat c ∧ ω'[6] = UInt64.ofNat t ∧
+      ω'[7] = UInt64.ofNat (S + 16) ∧ ω'[8] = UInt64.ofNat (S + 44) ∧ ω'[9] = UInt64.ofNat 1 := by
+  have hp0' : ptr % 18446744073709551616 ≠ 0 := by rw [Nat.mod_eq_of_lt hptr]; exact hp0
+  rw [show ω = regsNF ω [] from rfl]
+  rcases (by omega : t = 0 ∨ t = 1 ∨ t = 2 ∨ t = 3) with rfl | rfl | rfl | rfl
+  all_goals
+    refine ⟨?_, ?_, ?_⟩
+    rotate_left
+    · pvm_go [h1, h5, h6, h7, hp0', hS, hw, bs_58508]
+    · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+      all_goals simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h1, h5, h6]
+
 end Services.Bootstrap.Acc.Handlers.KeyEnc

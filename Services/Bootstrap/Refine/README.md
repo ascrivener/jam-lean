@@ -190,6 +190,20 @@ Left for T1's milestone:
   as hypotheses.
 Left here: the second batch (70 < n < 128: `finish_grow` with the old buffer, an `InvAF` with an offset).
 
+### Obligations T1's top level must discharge (never assumed by the final theorem)
+- The payload's chunk is the heap's first chunk (`Decode.decode_one`'s `hcp`): from the prologue, the payload's
+  copy being the first allocation.
+- `hlast` and the writer's capacity, carried by the Vec encoder arms: see `Services/Bootstrap/Encode/README.md`,
+  "Obligations left to the top level". Route for `hlast`: refine's heap use is bounded by the payload's length,
+  so no used chunk reaches the allocator's 1 GiB top.
+- The Fmt sites (`ExportSeg.ExportFmtOk`, `ExitRun.DebugLineOk`, the first log line at 4742), discharged by
+  the fmt summaries.
+
+### Fixed-width instructions end to end (`Kinds.lean`, `RunFixed.lean`)
+`Kinds.kind_of`: one slot property per milestone fixed-width instruction, shared by its decode (`ElemOkF`) and
+encode (`EncOk`). `RunFixed.run_fixed`: refine from 4792 to its return for 1 ≤ n ≤ 70 such instructions
+(`decode_one` + `Body.body`), returning n :: ℰ(is) ⌢ ℰ₂(w mod 2^16) with the context unchanged.
+
 ### Next
 - Top level: the prologue to 5042 with `PInv 0` (decode, `IntoIter` built, output `Vec::new`), the loop over
   per-kind steps (`LoopG.loop` with the pass-through steps and, once unblocked, the handlers), `exit_run`, the

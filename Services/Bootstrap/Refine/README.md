@@ -178,6 +178,18 @@ Left for T1's milestone:
    `enc` and `EncOk`; `ctx k` as the exports of the first k instructions.
 3. The caller's halt and the lift to Ψ_R against `Bridge.RSem.run (Spec.refine …)`.
 
+### `Instructions::decode` in refine (`DecodeTail.lean`, `DecodeVec.lean`, `Decode.lean`), interim n ≤ 70
+- `DecodeTail.head` (4792 … 482): refine's reader `{q + 1, Ly − 1}` at M + 272 after `decodeU32_len1` of the
+  one-octet length 1 ≤ n < 128, the inlined frame G = M − 136 (158, ω₅, ω₆ saved), the call of
+  `Vec<Instruction>::decode` (return 922 → 20420).
+- `DecodeVec.vec_one` (482 … 20420), one reserve batch (n ≤ 70): `vec_pre` (frame S = G − 552, `finish_grow`
+  `g1x` for 232-octet elements, `alloc_call`, `InvAF` at k = 0 with F = S − 56, `OkF` from the payload's chunk
+  being the heap's first), the Vec session's `loopAF_low` (#174), `v3a` / `v3b` (the `Vec` to the output, return).
+- `DecodeTail.tail` (20420 … 4842): the salt (`read_big`), `Instructions` at M + 168, return.
+- `Decode.decode_one` (4792 … 4842): the three, with each instruction's `ElemOkAF` (frame M − 744, reader M + 272)
+  as hypotheses.
+Left here: the second batch (70 < n < 128: `finish_grow` with the old buffer, an `InvAF` with an offset).
+
 ### Next
 - Top level: the prologue to 5042 with `PInv 0` (decode, `IntoIter` built, output `Vec::new`), the loop over
   per-kind steps (`LoopG.loop` with the pass-through steps and, once unblocked, the handlers), `exit_run`, the

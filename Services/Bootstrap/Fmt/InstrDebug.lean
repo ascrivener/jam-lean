@@ -92,4 +92,124 @@ theorem instr20_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (e
       hc1, hc2, K', c0, by rw [c1]; congr 1; omega, c5, c6, c7.trans b7⟩
   · exact Or.inr ((Exhausts.pre run1 hx).mono (by omega))
 
+/-- After a unit arm's steps (`id_15`, `id_16`, `id_23`): the variant's name (nl octets of read-only
+    data at nm) through the sink's `write_str`, straight back to the caller. -/
+theorem unit_case {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
+    (pb S0 S1 : Nat) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
+    (sA : State) (nm nl : Nat) (hnm : 65536 ≤ nm ∧ nm + nl + 24 ≤ 77144) (hnl : nl ≤ 10)
+    (x : X) (ω : Regs) (μ : Memory) (s : State) (sp F W cap len ret t v5 v6 : Nat)
+    (ω1 : Regs) (μ1 : Memory) (run1 : FreeStepsH p R 26990 ω μ x 59959 ω1 μ1 x 29)
+    (H : HeapCtx env pb S0 S1 μ s) (hba : s.base % 8 = 0) (hf : Fmtr sA s μ F W cap len)
+    (a0 : ω1[0] = UInt64.ofNat ret) (a1 : ω1[1] = UInt64.ofNat sp) (a5 : ω1[5] = UInt64.ofNat v5)
+    (a6 : ω1[6] = UInt64.ofNat v6) (a7 : ω1[7] = UInt64.ofNat W) (a8 : ω1[8] = UInt64.ofNat nm)
+    (a9 : ω1[9] = UInt64.ofNat nl)
+    (fr1 : ∀ b, b < 4294967296 → (b < sp - 320 ∨ sp ≤ b) → μ1.read b = μ.read b)
+    (rd1 : ∀ b, μ1.readable b = μ.readable b) (wr1 : ∀ b, μ1.writable b = μ.writable b)
+    (hv5 : v5 < 18446744073709551616 ∧ v6 < 18446744073709551616)
+    (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t)
+    (hbt : P.isBlockStart t = true)
+    (hsp : S0 + 1088 ≤ sp ∧ sp % 8 = 0 ∧ 2147484736 ≤ sp) (hW : sp ≤ W ∧ W + 24 ≤ S1)
+    (hF : sp ≤ F ∧ F + 24 ≤ S1 ∧ (F + 24 ≤ W ∨ W + 24 ≤ F)) (hn : len + 10 < 134217728) :
+    (∃ ω' μ' x' s' cap' n, n ≤ 10 ∧
+      FreeStepsH p R 26990 ω μ x t ω' μ' x' (7 * n + 2 * (cap' - cap) + 2200) ∧
+      HeapCtx env pb S0 S1 μ' s' ∧ s'.base = s.base ∧ Fmtr sA s' μ' F W cap' (len + n) ∧ cap ≤ cap' ∧
+      cap' ≤ max cap (max 8 (2 * (len + n))) ∧
+      Keeps pb sp (fun a => W ≤ a ∧ a < W + 24) sA μ μ' s' ∧
+      ω'[0] = UInt64.ofNat ret ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = UInt64.ofNat v5 ∧
+      ω'[6] = UInt64.ofNat v6 ∧ ω'[7] = UInt64.ofNat 0) ∨
+    Exhausts p R pb 26990 ω μ x (1073741824 + 2200) := by
+  have hS1 := H.hS1
+  have hSb := H.hSb
+  have hst : ∀ b, S0 ≤ b → b < S1 → μ.writable b = true := H.st
+  have k1 : ∀ b, b < 4294967296 → (b < sp - 320 ∨ sp ≤ b) → μ1.read b = μ.read b := fr1
+  have H1 : HeapCtx env pb S0 S1 μ1 s := ctx_hi H (fun b hb => k1 b (by omega) (Or.inl (by omega))) wr1
+  have K1 : Keeps pb sp (fun a => W ≤ a ∧ a < W + 24) sA μ μ1 s :=
+    Keeps.of_frame (Z := fun b => sp - 320 ≤ b ∧ b < sp) hf.str.base
+      (fun b hb hz => k1 b hb (by omega)) rd1 wr1 (fun b hz => hst b (by omega) (by omega))
+      (fun b hz h => by omega) (fun b hz hg => by unfold Glob at hg; omega)
+      (fun c hc hu b hb => by
+        have := chunk_bounds H.wf (hf.str.base c hc hu)
+        have := H.hbT
+        unfold InData at hb; omega)
+  have hf1 : Fmtr sA s μ1 F W cap len := hf.congr (fun j hj => k1 _ (by omega) (Or.inr (by omega)))
+    (fun j hj => k1 _ (by omega) (Or.inr (by omega))) (fun b h1 h2 => ⟨k1 b (by omega) (Or.inl (by omega)), rd1 b⟩)
+  rcases write_str (p := p) (P := P) (R := R) env pb S0 S1 HA HR x ω1 μ1 sA s sp W nm nl cap len ret t v5 v6 H1 hba
+      hf1.str a0 a1 a5 a6 a7 a8 a9 hv5 hret hjt hbt ⟨by omega, hsp.2.1, by omega⟩ hW (by omega)
+      (Or.inl ⟨by omega, by omega⟩) (fun b h1 h2 => hf1.vrd b (by omega) (by omega)) with
+    ⟨ω2, μ2, x2, s2, cap2, run2, H2, hb2, hs2, hc1, hc2, K2, rest⟩ | hx
+  · have K := K1.trans' K2
+    rw [Nat.max_self] at K
+    exact Or.inl ⟨ω2, μ2, x2, s2, cap2, nl, by omega, (run1.trans run2).mono (by omega), H2, hb2,
+      Fmtr.of_keeps hf H K ⟨hF.1, by omega⟩ (fun b h1 h2 h => by omega) hs2, hc1, hc2, K, rest⟩
+  · exact Or.inr ((Exhausts.pre run1 hx).mono (by omega))
+
+/-- **Tag 15** (a unit variant: its name, 10 octets at 68154). -/
+theorem instr15_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
+    (pb S0 S1 : Nat) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
+    (μA : Memory) (sA : State) (spA a : Nat) (hS : S0 ≤ spA) (ha : ValAt μA sA spA S1 a 232)
+    (rt : rdN μA a 8 = 9223372036854775822) (rj : rdN μA 67636 4 = 4294901010) :
+    RefOk p P R env pb S0 S1 1088 μA sA spA 26990 a 10 2200 := by
+  intro ω μ x s sp F W cap len ret t v5 v6 v H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hWA hF hn
+    hv ra
+  have hS1 := H.hS1
+  have hst : ∀ b, S0 ≤ b → b < S1 → μ.writable b = true := H.st
+  obtain ⟨hra, hloc⟩ := ha.readable (by decide) H hS hspA K
+  have rt' : rdN μ a 8 = 9223372036854775822 := by
+    rw [show a = a + 0 by rfl, ha.rdN H K (by omega)]; exact rt
+  obtain ⟨ω1, μ1, run1, a0, a1, a5, a6, a7, a8, a9, fr1, rd1, wr1⟩ := id_15 (p := p) (P := P) (R := R) x ω μ sp v a
+    F W ret v5 v6 ⟨by omega, by omega⟩ h0 h1 h5 h6 h7 h8 ⟨by omega, hv5, hv6, by omega, by omega, by omega⟩
+    ⟨Or.inr hv.1, by omega, Or.inr hF.1⟩ ra rt' ((ro_keep H K (by omega)).trans rj) hf.buf hf.vt hf.vws hf.vrd
+    (fun b h1 h2 => Memory.readable_of_writable (hst b (by omega) (by omega)))
+    (fun b h1 h2 => hra b h1 (by omega)) (fun b h1 h2 => Memory.readable_of_writable (hst b (by omega) (by omega)))
+    (fun b h1 h2 => hst b (by omega) (by omega))
+  exact unit_case env pb S0 S1 HA HR sA 68154 10 ⟨by omega, by omega⟩ (by omega) x ω μ s sp F W cap len ret t v5 v6
+    ω1 μ1 run1 H hba hf a0 a1 a5 a6 a7 a8 a9 fr1 rd1 wr1 ⟨hv5, hv6⟩ hret hjt hbt ⟨by omega, hsp.2.1, by omega⟩ hW hF
+    (by omega)
+
+/-- **Tag 16** (a unit variant: its name, 5 octets at 68164). -/
+theorem instr16_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
+    (pb S0 S1 : Nat) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
+    (μA : Memory) (sA : State) (spA a : Nat) (hS : S0 ≤ spA) (ha : ValAt μA sA spA S1 a 232)
+    (rt : rdN μA a 8 = 9223372036854775823) (rj : rdN μA 67640 4 = 4294900990) :
+    RefOk p P R env pb S0 S1 1088 μA sA spA 26990 a 10 2200 := by
+  intro ω μ x s sp F W cap len ret t v5 v6 v H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hWA hF hn
+    hv ra
+  have hS1 := H.hS1
+  have hst : ∀ b, S0 ≤ b → b < S1 → μ.writable b = true := H.st
+  obtain ⟨hra, hloc⟩ := ha.readable (by decide) H hS hspA K
+  have rt' : rdN μ a 8 = 9223372036854775823 := by
+    rw [show a = a + 0 by rfl, ha.rdN H K (by omega)]; exact rt
+  obtain ⟨ω1, μ1, run1, a0, a1, a5, a6, a7, a8, a9, fr1, rd1, wr1⟩ := id_16 (p := p) (P := P) (R := R) x ω μ sp v a
+    F W ret v5 v6 ⟨by omega, by omega⟩ h0 h1 h5 h6 h7 h8 ⟨by omega, hv5, hv6, by omega, by omega, by omega⟩
+    ⟨Or.inr hv.1, by omega, Or.inr hF.1⟩ ra rt' ((ro_keep H K (by omega)).trans rj) hf.buf hf.vt hf.vws hf.vrd
+    (fun b h1 h2 => Memory.readable_of_writable (hst b (by omega) (by omega)))
+    (fun b h1 h2 => hra b h1 (by omega)) (fun b h1 h2 => Memory.readable_of_writable (hst b (by omega) (by omega)))
+    (fun b h1 h2 => hst b (by omega) (by omega))
+  exact unit_case env pb S0 S1 HA HR sA 68164 5 ⟨by omega, by omega⟩ (by omega) x ω μ s sp F W cap len ret t v5 v6
+    ω1 μ1 run1 H hba hf a0 a1 a5 a6 a7 a8 a9 fr1 rd1 wr1 ⟨hv5, hv6⟩ hret hjt hbt ⟨by omega, hsp.2.1, by omega⟩ hW hF
+    (by omega)
+
+/-- **Tag 23** (a unit variant: its name, 9 octets at 68233). -/
+theorem instr23_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
+    (pb S0 S1 : Nat) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
+    (μA : Memory) (sA : State) (spA a : Nat) (hS : S0 ≤ spA) (ha : ValAt μA sA spA S1 a 232)
+    (rt : rdN μA a 8 = 9223372036854775830) (rj : rdN μA 67668 4 = 4294901050) :
+    RefOk p P R env pb S0 S1 1088 μA sA spA 26990 a 10 2200 := by
+  intro ω μ x s sp F W cap len ret t v5 v6 v H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hWA hF hn
+    hv ra
+  have hS1 := H.hS1
+  have hst : ∀ b, S0 ≤ b → b < S1 → μ.writable b = true := H.st
+  obtain ⟨hra, hloc⟩ := ha.readable (by decide) H hS hspA K
+  have rt' : rdN μ a 8 = 9223372036854775830 := by
+    rw [show a = a + 0 by rfl, ha.rdN H K (by omega)]; exact rt
+  obtain ⟨ω1, μ1, run1, a0, a1, a5, a6, a7, a8, a9, fr1, rd1, wr1⟩ := id_23 (p := p) (P := P) (R := R) x ω μ sp v a
+    F W ret v5 v6 ⟨by omega, by omega⟩ h0 h1 h5 h6 h7 h8 ⟨by omega, hv5, hv6, by omega, by omega, by omega⟩
+    ⟨Or.inr hv.1, by omega, Or.inr hF.1⟩ ra rt' ((ro_keep H K (by omega)).trans rj) hf.buf hf.vt hf.vws hf.vrd
+    (fun b h1 h2 => Memory.readable_of_writable (hst b (by omega) (by omega)))
+    (fun b h1 h2 => hra b h1 (by omega)) (fun b h1 h2 => Memory.readable_of_writable (hst b (by omega) (by omega)))
+    (fun b h1 h2 => hst b (by omega) (by omega))
+  exact unit_case env pb S0 S1 HA HR sA 68233 9 ⟨by omega, by omega⟩ (by omega) x ω μ s sp F W cap len ret t v5 v6
+    ω1 μ1 run1 H hba hf a0 a1 a5 a6 a7 a8 a9 fr1 rd1 wr1 ⟨hv5, hv6⟩ hret hjt hbt ⟨by omega, hsp.2.1, by omega⟩ hW hF
+    (by omega)
+
 end Services.Bootstrap.Fmt

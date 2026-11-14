@@ -1,16 +1,16 @@
 import Services.Bootstrap.Refine.Decode
-import Services.Bootstrap.Refine.DecodeVecC
+import Services.Bootstrap.Refine.DecodeVec2C
 
 /-!
-# `Instructions::decode` in refine, the slots' chunks seen (interim: one batch)
+# `Instructions::decode` in refine, the slots' chunks seen
 
-`decode_oneC` is `Decode.decode_one` over `DecodeVecC.vec_oneC`: each instruction an `ElemOkAFC`, its slot
+`decode_oneC` is `Decode.decode_one` over `DecodeVec2C.vec_anyC` (one batch for n ≤ 70, two above): each instruction an `ElemOkAFC`, its slot
 property seeing the chunks it allocated. GP v0.8.0 Appendix B.4; `Spec.refine`'s `decode (Dec.payload C) y`.
 -/
 
 namespace Services.Bootstrap.Refine.DecodeC
 
-open PVM Picoalloc JAM Services.Bootstrap Services.Bootstrap.Code Services.Bootstrap.Encode.Writer
+open PVM Picoalloc JAM Services.Bootstrap Services.Bootstrap.Code Services.Bootstrap.CodeX Services.Bootstrap.Encode.Writer
   Services.Bootstrap.Decode.HeapCtx Services.Bootstrap.Decode.LoopA Services.Bootstrap.Decode.Loop
   Services.Bootstrap.Alloc
 
@@ -19,14 +19,14 @@ set_option maxRecDepth 100000
 
 /-- **`Instructions::decode`, one batch, the slots' chunks seen**: as `decode_one`, each instruction given as
     an `ElemOkAFC` (`DecodeVecC.vec_oneC`).
-    `Instructions::decode`, one batch (4792 … 4842, interim: 1 ≤ n ≤ 70): refine's frame M (its reader at
+    `Instructions::decode` (4792 … 4842, 1 ≤ n < 128): refine's frame M (its reader at
     M + 272, the payload's copy q at M + 112 and its length Ly in ω₆), the payload n :: es.flatten ⌢ salt ⌢ …
     in the heap's first chunk cp, each instruction decoded by its `ElemOkAF` (frame M − 744, reader M + 272).
     Result: `{n, E, n}` and the salt at M + 168 (the instructions' buffer E in the new chunk cb, element j
     satisfying `reps j`), the reader past the salt, ω₁ = M, ω₅ restored and ω₆ = Ly; the allocator's context
     for a heap s' keeping every allocated chunk of s with its data; refine's frame from M up kept apart from
     M + 168 … M + 224 and the reader. Or an allocation fails. -/
-theorem decode_oneC {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap0 : Nat)
+theorem decode_oneC {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env : RefineHost.Env) (cap0 : Nat)
     (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616) {hb pb : Nat} (gl : Nat → UInt8)
     (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State) (H : HeapCtx env pb S0 S1 μ s)
     (M q Ly r5 : Nat) (es : List (List UInt8)) (salt : List UInt8)
@@ -35,7 +35,7 @@ theorem decode_oneC {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHos
     (hel : ∀ j (hj : j < es.length), Decode.VecVecOwn.ElemOkAFC env cap0 pb gl p P (M - 744) (M + 272) (Ns j) es[j]
       (reps j))
     (hg : ∀ a, Glob a → μ.read a = gl a)
-    (hn : 1 ≤ es.length ∧ es.length ≤ 70) (hne : ∀ j (hj : j < es.length), 1 ≤ es[j].length)
+    (hn : 1 ≤ es.length ∧ es.length < 128) (hne : ∀ j (hj : j < es.length), 1 ≤ es[j].length)
     (hM : S0 + 2848 ≤ M ∧ M + 288 ≤ S1 ∧ M % 8 = 0) (hr5 : r5 < 18446744073709551616)
     (hcp : cp ∈ chunks s ∧ cp.used = true ∧ cp.addr = s.base)
     (hcpd : ∀ a, q ≤ a → a < q + Ly → InData cp a)
@@ -89,7 +89,7 @@ theorem decode_oneC {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHos
   have r1 : ∀ a l, a + l ≤ 2147483648 → μ1.readN a l = μ.readN a l :=
     fun a l h => Memory.readN_congr (fun j hj => hlow1 _ (by omega))
   obtain ⟨kp1, kr1⟩ := ExitRun.ro_keep H run1 (a := 67476) (l := 100) (by omega)
-  rcases DecodeVecC.vec_oneC (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 gl x ω1 μ1 s H1 (M - 688) (M + 272)
+  rcases DecodeVec2C.vec_anyC (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 gl x ω1 μ1 s H1 (M - 688) (M + 272)
       (q + 1) (Ly - 1) (M + 168) (M + 272) es reps cp Ns
       (by rw [show M - 688 - 56 = M - 744 by omega]; exact hel)
       (fun a ha => (hlow1 a (by unfold Glob at ha; omega)).trans (hg a ha)) hn hne

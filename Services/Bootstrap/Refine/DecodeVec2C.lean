@@ -400,4 +400,51 @@ theorem vec_twoC {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env
   · have hg' := ha; unfold Glob at hg'
     rw [hlow10 a (by omega), fr8e a ha, hg7 a ha]; exact (hg a ha).symm
 
+/-- **`Vec<Instruction>::decode`, the slots' chunks seen, 1 ≤ n < 128**: `vec_oneC` for n ≤ 70, `vec_twoC`
+    above. -/
+theorem vec_anyC {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env : RefineHost.Env) (cap0 : Nat)
+    (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616) {hb pb : Nat} (gl : Nat → UInt8)
+    (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State) (H : HeapCtx env pb S0 S1 μ s)
+    (S rd P0 Lt v5 v6 : Nat) (es : List (List UInt8)) (reps : Nat → List Chunk → List UInt8 → Memory → Prop)
+    (cp : Chunk) (Ns : Nat → Nat)
+    (hel : ∀ j (hj : j < es.length), Decode.VecVecOwn.ElemOkAFC env cap0 pb gl p P (S - 56) rd (Ns j) es[j] (reps j))
+    (hg : ∀ a, Glob a → μ.read a = gl a)
+    (hn : 1 ≤ es.length ∧ es.length < 128) (hne : ∀ j (hj : j < es.length), 1 ≤ es[j].length)
+    (hS : S0 + 2104 ≤ S ∧ S + 552 + 24 ≤ rd ∧ rd + 16 ≤ S1 ∧ S % 8 = 0)
+    (hv5 : v5 < 18446744073709551616) (hv6 : v6 < 18446744073709551616)
+    (hcp : cp ∈ chunks s ∧ cp.used = true ∧ cp.addr = s.base)
+    (hcpd : ∀ a, P0 ≤ a → a < P0 + es.flatten.length → InData cp a) (hP0 : 206864 ≤ P0)
+    (hLt : es.flatten.length ≤ Lt ∧ Lt < 4294967296)
+    (h0 : ω[0] = UInt64.ofNat 922) (h1 : ω[1] = UInt64.ofNat (S + 552)) (h5 : ω[5] = UInt64.ofNat v5)
+    (h6 : ω[6] = UInt64.ofNat v6) (h7 : ω[7] = UInt64.ofNat (S + 552)) (h8 : ω[8] = UInt64.ofNat rd)
+    (h9 : ω[9] = UInt64.ofNat es.length)
+    (sR0 : μ.readN rd 8 = Num.encodeLE 8 P0) (sR8 : μ.readN (rd + 8) 8 = Num.encodeLE 8 Lt)
+    (pay : μ.readN P0 es.flatten.length = es.flatten)
+    (tab : μ.readN 67476 100 = Decode.Tag.table) (rt : ∀ a, 67476 ≤ a → a < 67576 → μ.readable a = true) :
+    (∃ (ω' : Regs) (μ' : Memory) (s' : State) (q N : Nat),
+      FreeStepsH p (refineContractK cap0 env) 482 ω μ x 20420 ω' μ' x N ∧
+      ω'[1] = UInt64.ofNat (S + 552) ∧ ω'[5] = UInt64.ofNat v5 ∧ ω'[6] = UInt64.ofNat v6 ∧
+      μ'.readN (S + 552) 8 = Num.encodeLE 8 es.length ∧ μ'.readN (S + 552 + 8) 8 = Num.encodeLE 8 q ∧
+      μ'.readN (S + 552 + 16) 8 = Num.encodeLE 8 es.length ∧
+      μ'.readN rd 8 = Num.encodeLE 8 (P0 + es.flatten.length) ∧
+      μ'.readN (rd + 8) 8 = Num.encodeLE 8 (Lt - es.flatten.length) ∧
+      HeapCtx env pb S0 S1 μ' s' ∧
+      (⟨q - 32, (232 * es.length + 31) / 32 + 1, true⟩ : Chunk) ∈ chunks s' ∧
+      (∀ a, q ≤ a → a < q + 232 * es.length → InData ⟨q - 32, (232 * es.length + 31) / 32 + 1, true⟩ a) ∧
+      (∃ csOf : Nat → List Chunk, (∀ j, j < es.length → (∀ c ∈ csOf j, c ∈ chunks s' ∧ c.used = true ∧
+        c ≠ ⟨q - 32, (232 * es.length + 31) / 32 + 1, true⟩ ∧ c ≠ cp) ∧
+        ∀ μ'' : Memory, (∀ c ∈ csOf j, ∀ a, InData c a → μ''.read a = μ'.read a) →
+          reps j (csOf j) (μ'.readN (q + 232 * j) 232) μ'') ∧
+        ∀ j j', j < es.length → j' < es.length → j ≠ j' → ∀ c ∈ csOf j, c ∉ csOf j') ∧
+      (∀ c ∈ chunks s, c.used = true → c ∈ chunks s' ∧ ∀ a, InData c a → μ'.read a = μ.read a) ∧
+      (∀ d ∈ chunks s, d.used = true → d ≠ ⟨q - 32, (232 * es.length + 31) / 32 + 1, true⟩) ∧
+      (∀ a, a < 4294967296 → S + 552 + 24 ≤ a → (a < rd ∨ rd + 16 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, Glob a → μ'.read a = μ.read a)) ∨
+    ∃ N, Exhausts env cap0 pb p P 482 ω μ x N := by
+  by_cases h70 : es.length ≤ 70
+  · exact DecodeVecC.vec_oneC (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 gl x ω μ s H S rd P0 Lt v5 v6 es reps
+      cp Ns hel hg ⟨hn.1, h70⟩ hne hS hv5 hv6 hcp hcpd hP0 hLt h0 h1 h5 h6 h7 h8 h9 sR0 sR8 pay tab rt
+  · exact vec_twoC (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 gl x ω μ s H S rd P0 Lt v5 v6 es reps
+      cp Ns hel hg ⟨by omega, hn.2⟩ hne hS hv5 hv6 hcp hcpd hP0 hLt h0 h1 h5 h6 h7 h8 h9 sR0 sR8 pay tab rt
+
 end Services.Bootstrap.Refine.DecodeVec2C

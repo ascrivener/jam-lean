@@ -4,14 +4,13 @@ import Services.Bootstrap.Refine.ExportOkOf
 import Services.Bootstrap.Decode.ExportEmpty
 
 /-!
-# Refine from the payload to its return: fixed-width instructions passed through and `Export` (interim)
+# Refine from the payload to its return: fixed-width instructions passed through and `Export`
 
 `run_mixed` composes `DecodeC.decode_oneC` (4792 … 4842, the slots' chunks seen) and `Body.body` (4842 …
-refine's return) for a payload ℰ(`Instructions { is, salt }`) of 1 ≤ n ≤ 70 instructions, each either one the
+refine's return) for a payload ℰ(`Instructions { is, salt }`) of 1 ≤ n < 128 instructions, each either one the
 milestone passes through (a `Kinds.FixedKind`) or `ExportSegs ds`. Refine returns ℰ(`BootstrapWorkOutput`) =
 n :: ℰ(is'₀) … ℰ(is'ₙ₋₁) ⌢ ℰ₂(w mod 2^16), where is'ⱼ is isⱼ or `Exported |ds|` (`outI`), and the host
-context is the segments exported in order (`expTo`); or an allocation fails. Interim: n ≤ 70 (one reserve
-batch). GP v0.8.0 Appendix B.4 (Ψ_R running bootstrap's code), B.7 (export); `Spec.refineInstr`.
+context is the segments exported in order (`expTo`); or an allocation fails. GP v0.8.0 Appendix B.4 (Ψ_R running bootstrap's code), B.7 (export); `Spec.refineInstr`.
 -/
 
 namespace Services.Bootstrap.Refine.RunMixed
@@ -105,7 +104,7 @@ theorem encode_exportSegs (ds : List (List UInt8)) :
     (Spec.Instr.exportSegs ds).encode = UInt8.ofNat 10 :: (Blob.encodeNat ds.length ++ (Decode.VecVecU8.encs ds).flatten) := by
   simp [Spec.Instr.encode, Spec.vec, Decode.VecVecU8.encs, JAM.Codec.nat]; rfl
 
-/-- **Refine from the payload, fixed-width instructions passed through and `Export`** (interim: 1 ≤ n ≤ 70):
+/-- **Refine from the payload, fixed-width instructions passed through and `Export`** (1 ≤ n < 128):
     as `RunFixed.run_fixed`, each instruction j either a `FixedKind` with its slot property `Rs j` (passed
     through), or `ExportSegs ds` (its `Rs j` that of `Exported |ds|`, ≤ 2²⁶ segments of < 2³⁰ octets): refine
     returns ℰ(`BootstrapWorkOutput`) of the instructions `outI`, the host context the segments exported in
@@ -123,7 +122,7 @@ theorem run_mixed {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     (x : RefineCtx) (hoff : env.exportOffset + x.2.length < 9223372036854775808)
     (ω : Regs) (μ : Memory) (s : State) (H : HeapCtx env pb S0 S1 μ s)
     (M q Ly r5 : Nat) (salt : List UInt8) (cp : Chunk)
-    (hn : 1 ≤ is.length ∧ is.length ≤ 70) (hM : S0 + 2848 ≤ M ∧ M + 648 ≤ S1 ∧ M % 8 = 0)
+    (hn : 1 ≤ is.length ∧ is.length < 128) (hM : S0 + 2848 ≤ M ∧ M + 648 ≤ S1 ∧ M % 8 = 0)
     (hr5 : r5 < 18446744073709551616)
     (hcp : cp ∈ chunks s ∧ cp.used = true ∧ cp.addr = s.base) (hcpq : cp.addr + 32 = q)
     (hcpd : ∀ a, q ≤ a → a < q + Ly → InData cp a)

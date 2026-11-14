@@ -204,12 +204,30 @@ Left here: the second batch (70 < n < 128: `finish_grow` with the old buffer, an
 encode (`EncOk`). `RunFixed.run_fixed`: refine from 4792 to its return for 1 ≤ n ≤ 70 such instructions
 (`decode_one` + `Body.body`), returning n :: ℰ(is) ⌢ ℰ₂(w mod 2^16) with the context unchanged.
 
+### The second batch (`DecodeVec2.lean`, `DecodeVec2C.lean`)
+For 70 < n < 128 `Vec<Instruction>::decode` reserves 70 slots, decodes them, grows the buffer to n with
+`finish_grow` on the old buffer (`realloc`, 232-octet slots), and decodes the rest. `w1` (562 … 32989), `g3x`
+(`finish_grow` → `realloc`), `v2g` (607 … 680), `v1bG` / `vec_preG` (the first batch of min(n, 70) for any n),
+and `DecodeVec2C.vec_twoC` composing them with #182's `loopAFCd_lowF` (the slots' chunks fresh against the
+heap at the loop's start, so disjoint across batches) and `loopAFCd_lowFD` (the payload only disjoint from the
+batch's slots). `vec_anyC` is `vec_oneC` or `vec_twoC`; `DecodeC.decode_oneC` and `RunMixed.run_mixed` now take
+1 ≤ n < 128.
+
+### Refine's return (`Fin.RetTo`)
+`RetTo P ret t`: a jump-table return (→ t), or the halt address 2³² − 2¹⁶ with the run stopping at the
+`jump_ind` 6373 (`f4h`). `fin_run`, `exit_run`, `body`, `run_fixed`, `run_mixed` take it.
+
+### The prologue (`Prologue.lean`)
+`pro1` (4680 … 59375) and `tail4680` (4680 … 4792: `pro1`, then the service id's log line `ArgsLineOk`). The
+arguments' parse (pc 0 … 4680, general in the payload, the payload's chunk at the heap's base) is the Vec
+session's.
+
 ### Export at the top level (`DecodeVecC.lean`, `DecodeC.lean`, `ExportOkOf.lean`, `RunMixed.lean`)
 `DecodeC.decode_oneC`: the decode with each instruction an `ElemOkAFC` (#178/#182), returning one `csOf`
 (the slots' chunks, pairwise disjoint, none the payload's or the instructions' buffer). `ExportOkOf`:
 `ExportOk` from the decoded slot (`export_ok_big` from `VecVecRepC`, `export_ok_empty` for `Export []`), the
 context afterwards `expDs` (Ω_E on the segments' octets). `RunMixed.run_mixed`: refine from 4792 to its
-return for 1 ≤ n ≤ 70 instructions, each a `FixedKind` passed through or `ExportSegs ds`, the chunks to keep
+return for 1 ≤ n < 128 instructions, each a `FixedKind` passed through or `ExportSegs ds`, the chunks to keep
 before k being the payload's and those of instructions k…n−1; output ℰ of `outI` (`Exported |ds|`), the
 context `expTo` (segments exported in order). Hypotheses beyond `run_fixed`: the export count below 2⁶³ at
 the start; ≤ 2²⁶ segments of < 2³⁰ octets per `Export` (`export_elem_bigC`'s bounds).

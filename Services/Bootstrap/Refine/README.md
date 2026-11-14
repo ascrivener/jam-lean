@@ -193,7 +193,7 @@ Left here: the second batch (70 < n < 128: `finish_grow` with the old buffer, an
 ### Obligations T1's top level must discharge (never assumed by the final theorem)
 - The payload's chunk is the heap's first chunk (`Decode.decode_one`'s `hcp`): from the prologue, the payload's
   copy being the first allocation.
-- `hlast` and the writer's capacity, carried by the Vec encoder arms: see `Services/Bootstrap/Encode/README.md`,
+- `hlast`, `hbig` (each append's 2·cap, len + n < 2³⁰ − 64) and the writer's capacity, carried by the Vec encoder arms: see `Services/Bootstrap/Encode/README.md`,
   "Obligations left to the top level". Route for `hlast`: refine's heap use is bounded by the payload's length,
   so no used chunk reaches the allocator's 1 GiB top.
 - The Fmt sites (`ExportSeg.ExportFmtOk`, `ExitRun.DebugLineOk`, the first log line at 4742), discharged by

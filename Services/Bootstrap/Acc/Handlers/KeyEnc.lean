@@ -1,4 +1,6 @@
 import Services.Bootstrap.Acc.Handlers.DesignateAlloc
+import Services.Bootstrap.Acc.Handlers.HeapKeep
+import Services.Bootstrap.Encode.Writer
 
 /-!
 # The storage-key encoder (33843)
@@ -194,5 +196,91 @@ theorem kb_epi {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X
   · refine ⟨?_, ?_, ?_, ?_⟩
     all_goals simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h1]
     all_goals try (congr 1; omega)
+
+/-- `alloc`'s return (40611) to 33886 (ω₀ = 1566). -/
+theorem kb_j1 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
+    (h0 : ω[0] = UInt64.ofNat 1566) : FreeStepsH p R 40611 ω μ x 33886 ω μ x 1 := by
+  rw [show ω = regsNF ω [] from rfl]
+  pvm_go [h0]
+
+/-- **33886, `alloc` returned null**: the branch to 34070 (`handle_alloc_error`, a trap). -/
+theorem kb_null {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
+    (h7 : ω[7] = UInt64.ofNat 0) : FreeStepsH p R 33886 ω μ x 34070 ω μ x 1 := by
+  rw [show ω = regsNF ω [] from rfl]
+  pvm_go [h7]
+
+open Picoalloc Services.Bootstrap.Decode.HeapCtx Services.Bootstrap.Acc.Handlers.HeapKeep in
+/-- **The key's `Vec` while it is built** (frame at S, buffer of c octets at ptr in the allocated chunk
+    C): the allocator's context; `{c, ptr, bs.length}` at S + 16; the octets bs written at ptr; and,
+    against the memory μA after `alloc`, memory kept off the scratch frame [S − 80, S), the `Vec` and the
+    tag slot [S + 16, S + 48) and the buffer, with the same page access. -/
+structure KVec (code : ByteArray) (pb S0 S1 : Nat) (μA μ : Memory) (s : Picoalloc.State) (C : Chunk)
+    (S c ptr : Nat) (bs : List UInt8) : Prop where
+  H : HeapCtxC code pb S0 S1 μ s
+  hC : C ∈ chunks s
+  hCu : C.used = true
+  hCp : C.addr + 32 ≤ ptr
+  hCe : ptr + c ≤ C.addr + 32 * C.size
+  hpb : 65536 ≤ ptr ∧ ptr + c + 16 < 2147483648
+  hS : 2147483648 + 96 ≤ S ∧ S0 ≤ S - 80 ∧ S + 72 ≤ S1 ∧ S % 8 = 0
+  vc : μ.readN (S + 16) 8 = Num.encodeLE 8 c
+  vp : μ.readN (S + 24) 8 = Num.encodeLE 8 ptr
+  vl : μ.readN (S + 32) 8 = Num.encodeLE 8 bs.length
+  dat : μ.readN ptr bs.length = bs
+  len : bs.length ≤ c
+  keep : ∀ a, a < 4294967296 → (a < S - 80 ∨ S ≤ a) → (a < S + 16 ∨ S + 48 ≤ a) → (a < ptr ∨ ptr + c ≤ a) →
+    μ.read a = μA.read a
+  wr : ∀ a, μ.writable a = μA.writable a
+  rd : ∀ a, μ.readable a = μA.readable a
+
+open Picoalloc Services.Bootstrap.Decode.HeapCtx Services.Bootstrap.Acc.Handlers.HeapKeep in
+/-- **One `extend_from_slice` into the key's `Vec`** (58508 → t, the return address ret): the n octets
+    at src (in the frame from S + 40, or above it) appended, the invariant kept for `bs ++ ys`. -/
+theorem kb_ext {p : ByteArray} {P : Program} [HasCode p P] {code : ByteArray} {pb S0 S1 : Nat}
+    {μA : Memory} {st : Picoalloc.State} {C : Chunk} (x : X) (ω : Regs) (μ : Memory) (S c ptr src n ret t : Nat)
+    (bs : List UInt8) (K : KVec code pb S0 S1 μA μ st C S c ptr bs)
+    (h0 : ω[0] = UInt64.ofNat ret) (h1 : ω[1] = UInt64.ofNat S) (h7 : ω[7] = UInt64.ofNat (S + 16))
+    (h8 : ω[8] = UInt64.ofNat src) (h9 : ω[9] = UInt64.ofNat n) (hroom : bs.length + n ≤ c)
+    (hsrc : S + 40 ≤ src ∧ src + n + 16 < 4294967296)
+    (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t)
+    (hbt : P.isBlockStart t = true) (hr : ∀ a, src ≤ a → a < src + n → μ.readable a = true) :
+    ∃ ω' μ', FreeStepsH p R 58508 ω μ x t ω' μ' x (7 * n + 360) ∧
+      KVec code pb S0 S1 μA μ' st C S c ptr (bs ++ μ.readN src n) ∧
+      ω'[0] = UInt64.ofNat ret ∧ ω'[1] = UInt64.ofNat S ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      (∀ a, a < 4294967296 → (a < S - 80 ∨ S ≤ a) → (a < S + 32 ∨ S + 40 ≤ a) → (a < ptr ∨ ptr + c ≤ a) →
+        μ'.read a = μ.read a) := by
+  obtain ⟨H, hC, hCu, hCp, hCe, hpb, hS, vc, vp, vl, dat, len, keep, wr, rd⟩ := K
+  have hst := H.st
+  have hS1 := H.hS1
+  obtain ⟨ω', μ', run, e0, e1, e5, e6, edat, elen, frm, rd', wr'⟩ :=
+    Services.Bootstrap.Encode.Writer.extend_ok (p := p) (P := P) (R := R) x ω μ S (S + 16) src n c ptr
+      bs.length ret t ⟨by omega, by omega, hS.2.2.2⟩ h0 h1 h7 h8 h9 hroom (by omega) vc
+      (by rw [show S + 16 + 8 = S + 24 by omega]; exact vp)
+      (by rw [show S + 16 + 16 = S + 32 by omega]; exact vl) (by omega) (.inr (by omega))
+      ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ (.inl (by omega)) (.inr (by omega)) (.inl (by omega))
+      (.inr (by omega)) hret hjt hbt
+      (fun a h1 h2 => Memory.readable_of_writable (hst a (by omega) (by omega)))
+      (fun a h1 h2 => hst a (by omega) (by omega)) hr
+      (fun a h1 h2 => writableData H hC hCu ⟨by omega, by omega⟩)
+      (fun a h1 h2 => hst a (by omega) (by omega))
+  have fr : ∀ a, a < 4294967296 → (a < S - 80 ∨ S ≤ a) → (a < S + 32 ∨ S + 40 ≤ a) → (a < ptr ∨ ptr + c ≤ a) →
+      μ'.read a = μ.read a := fun a h0 h1 h2 h3 =>
+    frm a h0 h1 (by omega) (by omega)
+  refine ⟨ω', μ', run, ⟨?_, hC, hCu, hCp, hCe, hpb, hS, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩, e0, e1, e5, e6, fr⟩
+  · exact keepData H hC (fun a h1 h2 => frm a (by omega) (.inl (by omega)) (by omega) (.inl (by omega)))
+      (fun a => by rw [wr'])
+  · rw [← vc]; exact Memory.readN_congr fun j hj => fr _ (by omega) (.inr (by omega)) (.inl (by omega)) (.inr (by omega))
+  · rw [← vp]; exact Memory.readN_congr fun j hj => fr _ (by omega) (.inr (by omega)) (.inl (by omega)) (.inr (by omega))
+  · rw [List.length_append, Memory.length_readN]
+    rw [show S + 16 + 16 = S + 32 by omega] at elen; exact elen
+  · rw [List.length_append, Memory.length_readN, Services.Bootstrap.Decode.VecU8.readN_split, edat]
+    congr 1
+    refine (Memory.readN_congr fun j hj => ?_).trans dat
+    exact frm _ (by omega) (.inl (by omega)) (.inl (by omega)) (.inl (by omega))
+  · rw [List.length_append, Memory.length_readN]; exact hroom
+  · intro a h0 h1 h2 h3
+    rw [fr a h0 h1 (by omega) h3]; exact keep a h0 h1 h2 h3
+  · intro a; rw [wr', wr]
+  · intro a; rw [rd', rd]
 
 end Services.Bootstrap.Acc.Handlers.KeyEnc

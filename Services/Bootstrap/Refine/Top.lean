@@ -31,8 +31,8 @@ def DRm (C : Spec.Consts) (_j : Nat) (bs : List UInt8) (_μ : Memory) : Prop :=
 theorem DebugLineOk.mono {p : ByteArray} {cap0 : Nat} {env : RefineHost.Env} {pb S0 S1 : Nat}
     {DR DR' : Nat → List UInt8 → Memory → Prop} (h : ExitRun.DebugLineOk p cap0 env pb S0 S1 DR)
     (hD : ∀ j bs μ, DR' j bs μ → DR j bs μ) : ExitRun.DebugLineOk p cap0 env pb S0 S1 DR' :=
-  fun x ω μ s M c E n H a b d e f g i k l m o q r t => h x ω μ s M c E n H a b d e f g i k l m o q r
-    (fun j hj => hD j _ _ (t j hj))
+  fun x ω μ s M c E n H a b d e f g i k l m o q r t u => h x ω μ s M c E n H a b d e f g i k l m o q r
+    (fun j hj => hD j _ _ (t j hj)) u
 
 theorem outI_mfixed {x : Spec.Instr} (hx : MFixed x ∨ ∃ ds, x = .exportSegs ds) : MFixed (outI x) := by
   rcases hx with hm | ⟨ds, rfl⟩

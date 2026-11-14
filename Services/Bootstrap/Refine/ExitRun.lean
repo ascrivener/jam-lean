@@ -30,7 +30,8 @@ set_option maxRecDepth 100000
     1382), the `log` (6187) and the `String`'s `dealloc` (6202), from refine's frame at M with the allocator's
     context: the run reaches 6209 with the host context and ω₁ kept, the allocator's context for some heap s',
     every allocated chunk of s still allocated with its data, and the stack from M up kept apart from the
-    `String` at M + 168 … M + 192; or an allocation fails. `DR j bs μ` is what the `Debug` arms need of slot j. To be discharged by the fmt
+    `String` at M + 168 … M + 192; or an allocation fails. `DR j bs μ` is what the `Debug` arms need of slot j; the n
+    slots at E lie in an allocated chunk. To be discharged by the fmt
     summaries (`Services/Bootstrap/Fmt`). -/
 def DebugLineOk (p : ByteArray) (cap0 : Nat) (env : RefineHost.Env) (pb S0 S1 : Nat)
     (DR : Nat → List UInt8 → Memory → Prop) : Prop :=
@@ -41,6 +42,7 @@ def DebugLineOk (p : ByteArray) (cap0 : Nat) (env : RefineHost.Env) (pb S0 S1 : 
     μ.readN (M + 272) 8 = Num.encodeLE 8 (M + 248) → μ.readN (M + 280) 8 = Num.encodeLE 8 1382 →
     μ.readN (M + 248) 8 = Num.encodeLE 8 c → μ.readN (M + 256) 8 = Num.encodeLE 8 E →
     μ.readN (M + 264) 8 = Num.encodeLE 8 n → (∀ j, j < n → DR j (μ.readN (E + 232 * j) 232) μ) →
+    (n = 0 ∨ ∃ c ∈ chunks s, c.used = true ∧ ∀ k, k < 232 * n → InData c (E + k)) →
     (∃ (ω' : Regs) (μ' : Memory) (s' : State) (N : Nat),
       FreeStepsH p (refineContractK cap0 env) 59375 ω μ x 6209 ω' μ' x N ∧ HeapCtx env pb S0 S1 μ' s' ∧
       ω'[1] = ω[1] ∧ (∀ a, a < 4294967296 → M ≤ a → (a < M + 168 ∨ M + 192 ≤ a) → μ'.read a = μ.read a) ∧
@@ -132,7 +134,8 @@ theorem exit_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env
       (by rw [Memory.readN_congr (fun j hj => k3 _ (by omega) (by omega) (by omega))]; exact vp)
       (by rw [Memory.readN_congr (fun j hj => k3 _ (by omega) (by omega) (by omega))]; exact vl)
       (fun j hj => hOD j _ μ3 hj (by
-        rw [Memory.readN_congr (fun i hi => sl3 _ ⟨by omega, by omega⟩)]; exact hout j hj)) with
+        rw [Memory.readN_congr (fun i hi => sl3 _ ⟨by omega, by omega⟩)]; exact hout j hj))
+      (Or.inr ⟨co, co2.1, hcou, fun k hk => ⟨by omega, by omega⟩⟩) with
     ⟨ω4, μ4, s4, N4, run4, H4, d1, dfr, dkeep⟩ | ⟨N4, hx⟩
   rotate_left
   · exact Or.inr ⟨_, ExhaustsX.pre pre3 hx⟩

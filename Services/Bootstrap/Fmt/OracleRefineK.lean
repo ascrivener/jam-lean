@@ -1,4 +1,5 @@
 import Services.Bootstrap.Fmt.OracleRefine
+import Services.Bootstrap.Fmt.ReallocCopyInst
 
 /-!
 # The allocator interface under refine's contract, keeping the context
@@ -13,7 +14,8 @@ every continuing host call keeping the context.
   allocator.
 - `FreeStepsH.of_keepX`: a run under such a contract keeps the context and is a run under the
   original one.
-- `allocOk_refineK`: `AllocOk` under `refineKeep cap env`.
+- `allocOk_refineK`, `reallocCopyOk_refineK`, `reallocOk_refineK`: the allocator's call contracts under
+  `refineKeep cap env` (`allocOkC_heapHost` / `reallocCopyOkC_heapHost` at `(refineHeap env).keepX`).
 -/
 
 namespace Services.Bootstrap.Alloc
@@ -69,35 +71,19 @@ theorem refineKeep_run {p : ByteArray} {cap : Nat} {env : RefineHost.Env} {i i' 
 /-- **`AllocOk` under refine's contract keeping the context**, for any cap from 2²⁷. -/
 theorem allocOk_refineK {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap pb S0 S1 : Nat)
     (hcap1 : 134217728 ≤ cap) (hcap : cap < 18446744073709551616) :
-    AllocOk p (refineKeep cap env) env pb S0 S1 := by
-  intro ω μ x s sp size al H h1 h7 h8 hal hal1 hs hsp hS0 hS1
-  rcases alloc_callG (p := p) (P := P) (hb := 0) (refineHeap env).keepX cap hcap1 hcap x ω μ s sp size al pb
-      S0 S1 H h1 h7 h8 hal hal1 hs hsp ⟨hS0, hS1⟩ with
-    ⟨ptr, s', ω', μ', ha, run, H', keep, hnew, hfresh, hk, e7, efr, e0, e1, e5, e6⟩ |
-    ⟨ha, ω', μ', run, e7, -, -, -, -, -⟩
-  · left
-    have run0 := (refineKeep_run run).2
-    have hb' := alloc_base H.wf ha
-    have hwf' := H'.wf
-    have ht' := hwf'.2.2.2.1
-    unfold TilesOk at ht'
-    have hcb := ht'.mem_lt _ hnew
-    have hG : ∀ b, (fun a => ∃ c ∈ chunks s', c.addr = a) b → b + 16 ≤ 196616 ∨ 196792 ≤ b := by
-      rintro b ⟨c, hc, rfl⟩
-      have := ht'.mem_lt c hc
-      have := H'.hb0
-      right; omega
-    refine ⟨ptr, s', ω', μ', x, run, H', hb', ⟨⟨access_of_keepRO H.bd run0,
-      fun b hb hq hw => (FreeStepsH.keepRO H.bd run0).2 b hb hq hw,
-      fun a ha hb _ => efr a hb ha, HKeepG.glob hk hG⟩, keep, fun c hc hu a ha => ?_⟩,
-      hnew, fun d hd hu e => ?_, by simp only at hcb; have := H'.hb0; omega, e7, e0, e1, e5, e6⟩
-    · have hc' := keep c hc hu
-      unfold InData at ha
-      exact hk.hkeep a (off_hdr_data hwf' H'.hb0 H'.hbT hc' ha.1 ha.2)
-    · have hd' := keep d hd hu
-      have := Tiles.addr_inj ht' d hd' _ hnew (by simp only; exact e)
-      exact hfresh d hd hu this
-  · right
-    exact ⟨ω', μ', x, run, e7, 0, ha⟩
+    AllocOk p (refineKeep cap env) env pb S0 S1 :=
+  allocOkC_heapHost (p := p) (P := P) (refineHeap env).keepX cap pb S0 S1 hcap1 hcap
+
+/-- **`ReallocCopyOk` under refine's contract keeping the context.** -/
+theorem reallocCopyOk_refineK {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env)
+    (cap pb S0 S1 : Nat) (hcap1 : 134217728 ≤ cap) (hcap : cap < 18446744073709551616) :
+    ReallocCopyOk p (refineKeep cap env) env pb S0 S1 :=
+  reallocCopyOkC_heapHost (p := p) (P := P) (refineHeap env).keepX cap pb S0 S1 hcap1 hcap
+
+/-- **`ReallocOk` under refine's contract keeping the context.** -/
+theorem reallocOk_refineK {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env)
+    (cap pb S0 S1 : Nat) (hcap1 : 134217728 ≤ cap) (hcap : cap < 18446744073709551616) :
+    ReallocOk p (refineKeep cap env) env pb S0 S1 :=
+  (reallocCopyOk_refineK (p := p) (P := P) env cap pb S0 S1 hcap1 hcap).toReallocOk
 
 end Services.Bootstrap.Fmt

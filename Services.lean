@@ -29,6 +29,8 @@ import Services.Bootstrap.Fmt.AccFmt
 import Services.Bootstrap.Fmt.ResultDebug
 import Services.Bootstrap.Fmt.OptionDebug
 import Services.Bootstrap.Fmt.OracleRefineK
+import Services.Bootstrap.Fmt.ReallocCopy
+import Services.Bootstrap.Fmt.ReallocCopyInst
 import Services.Bootstrap.AccLog.ItemLog
 import Services.Bootstrap.BParams
 import Services.Bootstrap.BParamsConsts
@@ -87,6 +89,7 @@ import Services.Bootstrap.Decode.LoopF
 import Services.Bootstrap.Decode.Loop
 import Services.Bootstrap.Decode.Elems
 import Services.Bootstrap.Decode.LoopAPass
+import Services.Bootstrap.Decode.LoopAPassLow
 import Services.Bootstrap.Decode.VecHash
 import Services.Bootstrap.Decode.Assign
 import Services.Bootstrap.Decode.VecU8
@@ -271,6 +274,8 @@ import Services.Bootstrap.Encode.Variants
 import Services.Bootstrap.Encode.Yield
 import Services.Bootstrap.Encode.Prefix
 import Services.Bootstrap.Encode.Loop
+import Services.Bootstrap.Encode.EncM
+import Services.Bootstrap.Encode.PrefixBig
 import Services.Bootstrap.Refine.Pass
 import Services.Bootstrap.Refine.PassGrow
 import Services.Bootstrap.Refine.PassLoop

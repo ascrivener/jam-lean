@@ -126,6 +126,11 @@ found that close.
 | Solicit | 14062 | 66688 | "Solicited {} of length {}" | 56340 (fmt-4), ? |
 
 Each handler log-site lemma takes an `ArgsAt` hypothesis like `hA`, discharged by the formatters' `ArgOk`.
+They are `AccLog.<Site>.lean`, theorem `<site>_fmt_site` (from the `format!` call to the end of the
+`String`'s dealloc: 9116 → 9165, 9380 → 9429, 9527 → 9576, 11043 → 11092, 12414 → 12463, 12535 → 12584,
+13242 → 13291, and 14062 → 14553 for Solicit). `scripts/gen_acc_log_site.py` writes them from
+`Imported.lean`; `Solicit.lean` is then edited by hand, since its dealloc returns to a jump to 14553.
+Their hypothesis `hA` is **discharged by ArgOk** of the formatters in the table above.
 
 **Next: the inputs**, from 6630 to the items loop at 6674. The traced call sequence is:
 1. 47541: `fetch` of kind 14, ℰ(↕**i**), in two phases (length, then data into a fresh buffer from 41177);

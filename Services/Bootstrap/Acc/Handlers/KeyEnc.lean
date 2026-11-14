@@ -94,7 +94,7 @@ theorem kb_vec {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X
     `extend(S + 16, S + 44, 4)`, return address 1574. -/
 theorem kb_t1 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
     (μ : Memory) (S kp v : Nat) (h1 : ω[1] = UInt64.ofNat S) (hv : v < 4294967296)
-    (hS : S + 72 < 4294967296) (hkp : kp + 8 < 4294967296) (hkd : kp + 8 ≤ S + 44 ∨ S + 48 ≤ kp + 4)
+    (hS : S + 72 < 4294967296) (hkp : kp + 8 < 4294967296)
     (m0 : μ.readN S 8 = Num.encodeLE 8 kp) (mw : μ.readN (kp + 4) 4 = Num.encodeLE 4 v)
     (hrk : ∀ a, kp + 4 ≤ a → a < kp + 8 → μ.readable a = true)
     (hrf : ∀ a, S ≤ a → a < S + 8 → μ.readable a = true)
@@ -113,5 +113,86 @@ theorem kb_t1 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X)
   · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
     · congr 2; split <;> omega
     all_goals simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h1]
+
+/-- **33934 … 58508** (t = 2, after the tag octet): the call `extend(S + 16, kp + 4, 32)` (the key's
+    32-octet payload), return address 1570. -/
+theorem kb_t2a {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
+    (μ : Memory) (S kp : Nat) (h1 : ω[1] = UInt64.ofNat S) (hS : S + 72 < 4294967296)
+    (hkp : kp + 36 < 18446744073709551616) (m0 : μ.readN S 8 = Num.encodeLE 8 kp)
+    (hrf : ∀ a, S ≤ a → a < S + 8 → μ.readable a = true) :
+    ∃ ω', FreeStepsH p R 33934 ω μ x 58508 ω' μ x 5 ∧
+      ω'[0] = UInt64.ofNat 1570 ∧ ω'[1] = UInt64.ofNat S ∧ ω'[5] = UInt64.ofNat kp ∧ ω'[6] = ω[6] ∧
+      ω'[7] = UInt64.ofNat (S + 16) ∧ ω'[8] = UInt64.ofNat (kp + 4) ∧ ω'[9] = UInt64.ofNat 32 := by
+  have r0 := rd8 (by omega) m0
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?_, ?_, ?_⟩
+  rotate_left
+  · pvm_go [h1, hS, r0, hrf, bs_58508, ↓rdN_fold]
+  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+    all_goals simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h1]
+    all_goals try (congr 1; omega)
+
+/-- **33951 … 58508** (t = 2, after the payload): the `i16` at kp + 2 stored at S + 44 and the call
+    `extend(S + 16, S + 44, 2)`, return address 1574. -/
+theorem kb_t2b {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
+    (μ : Memory) (S kp v : Nat) (h1 : ω[1] = UInt64.ofNat S) (h5 : ω[5] = UInt64.ofNat kp)
+    (hv : v < 65536) (hS : S + 72 < 4294967296) (hkp : kp + 4 < 4294967296)
+    (mv : μ.readN (kp + 2) 2 = Num.encodeLE 2 v)
+    (hrk : ∀ a, kp + 2 ≤ a → a < kp + 4 → μ.readable a = true)
+    (hw : ∀ a, S + 44 ≤ a → a < S + 46 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 33951 ω μ x 58508 ω' μ' x 8 ∧ μ' = μ.writeN (S + 44) (Num.encodeLE 2 v) ∧
+      ω'[0] = UInt64.ofNat 1574 ∧ ω'[1] = UInt64.ofNat S ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      ω'[7] = UInt64.ofNat (S + 16) ∧ ω'[8] = UInt64.ofNat (S + 44) ∧ ω'[9] = UInt64.ofNat 2 := by
+  have rv : rdN μ (kp + 2) 2 = v := by
+    show Num.decodeLE _ = _
+    rw [mv, Num.decodeLE_encodeLE, Nat.mod_eq_of_lt hv]
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?_, ?_, ?_, ?_⟩
+  rotate_left 2
+  · pvm_go [h1, h5, hS, hkp, rv, hrk, hw, bs_58508, ↓rdN_fold]
+  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+    · congr 2; split <;> omega
+    all_goals simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h1]
+
+/-- **34036 … the return** (`jumpInd` at 34068): the `Vec` `{cap, ptr, len}` at S + 16 copied to out
+    (the word at S + 8), ω₀, ω₅, ω₆ restored from S + 64, S + 56, S + 48, the frame closed
+    (ω₁ := S + 72), and the return to t (the jump table's entry for ret). -/
+theorem kb_epi {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
+    (μ : Memory) (S out cap ptr len ret t r5 r6 : Nat) (h1 : ω[1] = UInt64.ofNat S)
+    (hS : S + 72 < 4294967296) (hout : out + 24 ≤ 4294967296)
+    (hod : out + 24 ≤ S + 16 ∨ S + 72 ≤ out)
+    (m8 : μ.readN (S + 8) 8 = Num.encodeLE 8 out) (m16 : μ.readN (S + 16) 8 = Num.encodeLE 8 cap)
+    (m24 : μ.readN (S + 24) 8 = Num.encodeLE 8 ptr) (m32 : μ.readN (S + 32) 8 = Num.encodeLE 8 len)
+    (m64 : μ.readN (S + 64) 8 = Num.encodeLE 8 ret) (m56 : μ.readN (S + 56) 8 = Num.encodeLE 8 r5)
+    (m48 : μ.readN (S + 48) 8 = Num.encodeLE 8 r6)
+    (hcap : cap < 18446744073709551616) (hptr : ptr < 18446744073709551616)
+    (hlen : len < 18446744073709551616) (hr5 : r5 < 18446744073709551616)
+    (hr6 : r6 < 18446744073709551616)
+    (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t)
+    (hbt : P.isBlockStart t = true)
+    (hrf : ∀ a, S ≤ a → a < S + 72 → μ.readable a = true)
+    (hwo : ∀ a, out ≤ a → a < out + 24 → μ.writable a = true) :
+    ∃ ω', FreeStepsH p R 34036 ω μ x t ω'
+      (((μ.writeN out (Num.encodeLE 8 cap)).writeN (out + 8) (Num.encodeLE 8 ptr)).writeN (out + 16)
+        (Num.encodeLE 8 len)) x 12 ∧
+      ω'[0] = UInt64.ofNat ret ∧ ω'[1] = UInt64.ofNat (S + 72) ∧ ω'[5] = UInt64.ofNat r5 ∧
+      ω'[6] = UInt64.ofNat r6 := by
+  have r8 := rd8 (by omega) m8
+  have r16 := rd8 hcap m16
+  have r24 := rd8 hptr m24
+  have r32 := rd8 hlen m32
+  have r64 := rd8 (by omega) m64
+  have r56 := rd8 hr5 m56
+  have r48 := rd8 hr6 m48
+  have hro : ∀ a, out ≤ a → a < out + 24 → μ.readable a = true :=
+    fun a h1 h2 => Memory.readable_of_writable (hwo a h1 h2)
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?_, ?_, ?_⟩
+  rotate_left
+  · pvm_go [h1, hS, hout, hod, r8, r16, r24, r32, r64, r56, r48, hret, hjt, hbt, hrf, hwo, hro,
+      rdN_writeN_disjoint, ↓rdN_fold]
+  · refine ⟨?_, ?_, ?_, ?_⟩
+    all_goals simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h1]
+    all_goals try (congr 1; omega)
 
 end Services.Bootstrap.Acc.Handlers.KeyEnc

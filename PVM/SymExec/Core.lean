@@ -232,6 +232,9 @@ def SVal.lob (st : Static) : SVal → Nat
   | .const n => n
   | .var k => st.lb[k]?.getD 0
   | .addr a => (a.lo st).toNat
+  | .sx k v =>
+    if k = 4 ∧ 2 ^ 31 ≤ v.lob st ∧ (v.bnd st).any (· ≤ 2 ^ 32) then v.lob st + 18446744069414584320
+    else 0
   | _ => 0
 
 /-- v ≤ w, by the bounds. -/

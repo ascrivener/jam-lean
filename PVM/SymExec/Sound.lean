@@ -389,6 +389,18 @@ theorem lob_sound (hpre : Pre E st) (v : SVal) : v.lob st ≤ v.eval E := by
   | addr a =>
     simp only [SVal.lob, SVal.eval]
     exact Int.toNat_le_toNat (lo_le hpre a)
+  | sx k w =>
+    simp only [SVal.lob]
+    split
+    · rename_i hc
+      obtain ⟨rfl, h1, h2⟩ := hc
+      have h3 := bnd_any hpre h2
+      have h4 := lob_sound hpre w
+      simp only [SVal.eval, u64, unsigned, signed]
+      rw [if_neg (by simp only [show 8 * 4 - 1 = 31 from rfl]; omega)]
+      simp only [show 8 * 4 = 32 from rfl, show 8 * 8 = 64 from rfl]
+      omega
+    · exact Nat.zero_le _
   | _ => exact Nat.zero_le _
 
 

@@ -68,7 +68,7 @@ theorem pass_elem_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P
     fun a h1 h2 => Memory.readable_of_writable (wM a h1 h2)
   have hD : 9223372036854775807 + t < 18446744073709551616 := by unfold PassIdx at ht; omega
   -- the element staged at M + 304
-  obtain ⟨ω1, μ1, run1, a0, a1, a6, a7, a8, a9, a144, a304, a280, afr, ard, awr⟩ := pa (p := p) (P := P)
+  obtain ⟨ω1, μ1, run1, a0, a1, -, a6, a7, a8, a9, a144, a304, a280, afr, ard, awr⟩ := pa (p := p) (P := P)
     (R := refineContractK cap0 env) x ω μ M cur en (9223372036854775807 + t) (by omega) (by omega) (by omega)
     hne hen hD (by unfold PassIdx at ht; omega) h1 s144 s120 sD (fun a h1 h2 => rM a (by omega) (by omega))
     (fun a h1 h2 => hrc a h1 (by omega)) (fun a h1 h2 => wM a (by omega) (by omega))

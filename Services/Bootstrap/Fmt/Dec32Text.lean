@@ -1,4 +1,4 @@
-import Services.Bootstrap.Fmt.Text
+import Services.Bootstrap.Fmt.WriteText
 import Services.Bootstrap.Fmt.Dec2
 import Services.Bootstrap.SymExec.Dec32All
 
@@ -124,5 +124,27 @@ theorem dec32_text {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (e
       hf3, hc1, hc2, K, f0, by rw [f1, show sp - 72 + 72 = sp by omega], f5, f6, f7.trans e7, ?_⟩
     rw [tx3, hd]
   · exact Or.inr ((Exhausts.pre run1 hx).mono (by omega))
+
+/-- **`{}` of a u32 with its text** (68146) as an argument: a value at v (4 octets, at or above
+    spA, readable in μA); the function appends `decB (rdN μA v 4)`, the decimal digits of the u32. -/
+theorem dec32T_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
+    (pb S0 S1 : Nat) (HA : AllocOk p R env pb S0 S1) (HR : ReallocCopyOk p R env pb S0 S1)
+    (μA : Memory) (sA : State) (spA v : Nat) (hS : S0 ≤ spA) (hv : spA ≤ v ∧ v + 4 < 4294967296)
+    (hrv : ∀ a, v ≤ a → a < v + 4 → μA.readable a = true) (htA : Dec32.Table μA) :
+    ArgOkT p P R env pb S0 S1 μA sA spA 68146 v (decB (rdN μA v 4)) 10 2700 := by
+  intro ω μ x s sp F W cap len ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hF hn
+    txt htx
+  have ht : Dec32.Table μ := fun j hj => by
+    rw [readN_congr2 (fun i hi => K.ro _ (by omega) (Or.inl (by unfold pageSize; omega))
+      (by rw [← (K.access _ (Or.inl (by unfold pageSize; omega))).2]; exact H.ro _ (by omega)))]
+    exact htA j hj
+  have hvA : rdN μ v 4 = rdN μA v 4 := rdN_frame (fun j hj => K.hi _ (by omega) (by omega) id)
+  rcases dec32_text (p := p) (P := P) (R := R) env pb S0 S1 HA HR x ω μ sA s sp F W v cap len ret t v5 v6 H hba hf
+      h0 h1 h5 h6 h7 h8 ⟨hv5, hv6⟩ hret hjt hbt hsp hW hF ⟨by omega, hv.2⟩
+      (fun a h1 h2 => K.readable H hS (by omega) (hrv a h1 h2)) hn ht txt htx with
+    ⟨ω', μ', x', s', cap', hn10, run, H', hb', hf', hc1, hc2, K', e0, e1, e5, e6, e7, tx⟩ | hx
+  · rw [hvA] at hn10 run hf' hc2 tx
+    exact Or.inl ⟨ω', μ', x', s', cap', _, hn10, run.mono (by omega), H', hb', hf', hc1, hc2, K', e0, e1, e5, e6, e7, rfl, tx⟩
+  · exact Or.inr hx
 
 end Services.Bootstrap.Fmt

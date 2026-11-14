@@ -17,15 +17,15 @@ wrapper (40701) for the old buffer (cap > 0; the `alloc` branch for cap = 0 is n
   of the new state s' with nc ≤ 32 · (d.size − 1), holding the old len octets followed by the n new ones;
   the context is kept for s', every other allocated chunk of s is kept with its data, and memory at or
   above sp is kept but for the vector; or
-* the model's `realloc` fails and the wrapper returns null to `finish_grow` (58363): `ExhaustsW`.
+* the model's `realloc` fails and the wrapper reaches its exit (40821) with null in ω₇: `ExhaustsW`.
   (`finish_grow` then returns `Err` and `reserve` traps at 58326, `handle_alloc_error`.)
 
 ## The failure predicate
 
 `LoopA.AllocFail` names the two return points where a run has seen a failed allocator call: 40611 (the
 `alloc` wrapper's return) and 33055 (`finish_grow<Instruction>`'s return from `realloc`). The writer's
-`realloc` returns to another point, 58363. `AllocFailW pb j` is `AllocFail pb j` or `j = 58363` with a
-failing model `realloc`; `ExhaustsW` is `LoopA.Exhausts` with `AllocFailW` (same shape: the run reaches
+run is stopped at the `realloc` wrapper's own exit, 40821 (as `Fmt.Exhausts` does). `AllocFailW pb j` is
+`AllocFail pb j` or `j = 40821` with a failing model `realloc`; `ExhaustsW` is `LoopA.Exhausts` with `AllocFailW` (same shape: the run reaches
 j with null in ω₇). `Exhausts.toW` lifts every `Exhausts` to it.
 
 The source octets lie at or above sp (`StackSrc`) or in the data of an allocated chunk of s other than
@@ -46,11 +46,11 @@ set_option maxRecDepth 100000
 /-! ## The failure predicate -/
 
 /-- **A failed allocator call**, generalising `LoopA.AllocFail` by the writer's `realloc`: one of
-    `AllocFail`'s points (40611, 33055), or the return of the `realloc` wrapper to the writer's
-    `finish_grow` (58363) where the model's `realloc` fails. At each the wrapper has returned null. -/
+    `AllocFail`'s points (40611, 33055), or the exit of the `realloc` wrapper (40821) where the model's
+    `realloc` fails. At each the wrapper has returned null (ω₇ = 0). -/
 def AllocFailW (pb j : Nat) : Prop :=
   AllocFail pb j ∨
-  (j = 58363 ∧ ∃ (s : State) (hb ptr al r : Nat), realloc (growTo pb) hb s ptr al r = none)
+  (j = 40821 ∧ ∃ (s : State) (hb ptr al r : Nat), realloc (growTo pb) hb s ptr al r = none)
 
 /-- The run reaches a failed allocator call (`AllocFailW`), the wrapper having returned null:
     `LoopA.Exhausts` with `AllocFailW` for `AllocFail`. -/
@@ -105,7 +105,7 @@ def HeapSrc (s : State) (ptr src n : Nat) : Prop :=
     allocated chunk of s kept with its data; r either ptr or the data of no allocated chunk of s; the pages
     outside the heap, memory at or above sp but for the vector, memory below 196608 (with its access), the
     allocator's globals and the stack's access kept; ω₀, ω₁, ω₅, ω₆ restored. Or the run reaches a failed
-    `realloc` (`ExhaustsW`, at 58363). Gas 7·n + 64·(c.size − 1) + 1800. -/
+    `realloc` (`ExhaustsW`, at the wrapper's exit 40821). Gas 7·n + 64·(c.size − 1) + 1800. -/
 theorem extend_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeA p P]
     (env : RefineHost.Env) (K : Nat) (hK1 : 134217728 ≤ K) (hK : K < 18446744073709551616)
     (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State) (c : Chunk)
@@ -192,8 +192,7 @@ theorem extend_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [
     ⟨hR, ω3, μ3, run3, e7, -, -, e0, -, -, -, -⟩
   rotate_left
   · rw [hu] at run3
-    have run4 := rret (p := p) (P := P) (R := refineContractK K env) x ω3 μ3 (by rw [e0, b0])
-    exact Or.inr ⟨ω3, μ3, 58363, (run1.trans (run2.trans (run3.trans run4))).mono (by omega), e7,
+    exact Or.inr ⟨ω3, μ3, 40821, (run1.trans (run2.trans run3)).mono (by omega), e7,
       Or.inr ⟨rfl, s, 0, ptr, (1 + 31) / 32, (nc + 31) / 32, hR⟩⟩
   rw [hu] at run3 dat3
   obtain ⟨hd0, -, hdT⟩ := chunk_in H3.wf hdm hdu
@@ -378,7 +377,7 @@ theorem extend_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [
 
 /-- **`Vec<u8>::extend_from_slice`, with or without growth** (58508): `extend_grow`'s hypotheses
     without cap − len < n. Either the function returns to t with the vector `{cap', r, len + n}`
-    (len + n ≤ cap'), r the data of an allocated chunk d of the new state s' with
+    (len + n ≤ cap'; cap' = cap, or cap < len + n and cap' = `newCap cap len n`), r the data of an allocated chunk d of the new state s' with
     cap' ≤ 32 · (d.size − 1), holding the old len octets then the n new ones, and the rest as in
     `extend_grow` (without growth: cap' = cap, r = ptr, s' = s, from `Writer.extend_ok`); or the run
     reaches a failed `realloc` (`ExhaustsW`). Gas 7·n + 64·(c.size − 1) + 1800. -/
@@ -402,6 +401,7 @@ theorem extend_any {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
       ω'[0] = UInt64.ofNat ret ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       μ'.readN v 8 = Num.encodeLE 8 cap' ∧ μ'.readN (v + 8) 8 = Num.encodeLE 8 r ∧
       μ'.readN (v + 16) 8 = Num.encodeLE 8 (len + n) ∧ len + n ≤ cap' ∧
+      (cap' = cap ∨ (cap < len + n ∧ cap' = newCap cap len n)) ∧
       μ'.readN r len = μ.readN ptr len ∧ μ'.readN (r + len) n = μ.readN src n ∧
       HeapCtx env pb S0 S1 μ' s' ∧
       (∃ d ∈ chunks s', d.used = true ∧ d.addr + 32 = r ∧ cap' ≤ 32 * (d.size - 1)) ∧
@@ -419,7 +419,7 @@ theorem extend_any {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
         (by omega) hbig hsp hv h0 h1 h7 h8 h9 vc vp vl hret hjt hbt hsrc with
       ⟨r, s', ω', μ', run, e0, e1, e5, e6, ev, ev8, el, eo, ed, H', ⟨d, hdm, hdu, hda, hds⟩, rest⟩ | hx
     · obtain ⟨hnc1, -, -⟩ := newCap_ge cap len n
-      refine Or.inl ⟨newCap cap len n, r, s', ω', μ', run, e0, e1, e5, e6, ev, ev8, el, hnc1, eo, ed, H',
+      refine Or.inl ⟨newCap cap len n, r, s', ω', μ', run, e0, e1, e5, e6, ev, ev8, el, hnc1, Or.inr ⟨by omega, rfl⟩, eo, ed, H',
         ⟨d, hdm, hdu, hda, by rw [hds]; omega⟩, rest⟩
     · exact Or.inr hx
   have hb0 := H.hb0
@@ -466,7 +466,7 @@ theorem extend_any {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
     extend_ok (p := p) (P := P) (R := refineContractK K env) x ω μ sp v src n cap ptr len ret t
       hsp' h0 h1 h7 h8 h9 hroom (by omega) vc vp vl (by omega) (Or.inr hv.1) hdst hsrc' hdj (Or.inr (by omega))
       hfs (Or.inr (by omega)) hret hjt hbt hrv hwv hr hwd hw
-  refine Or.inl ⟨cap, ptr, s, ω', μ', run.mono (by omega), e0, e1, e5, e6, ?_, ?_, el, hroom, ?_, ed,
+  refine Or.inl ⟨cap, ptr, s, ω', μ', run.mono (by omega), e0, e1, e5, e6, ?_, ?_, el, hroom, Or.inl rfl, ?_, ed,
     ctx_congr_data H hc (fun a h0 h1 => efr a (by omega) (Or.inl (by omega)) (by omega) (Or.inl (by omega)))
       ewr,
     ⟨c, hc, hcu, hcp, hcc⟩, ?_, Or.inl rfl, FreeStepsH.pagesOut H.bd run, ?_, ?_, ?_, fun a _ => ewr a⟩

@@ -32,19 +32,22 @@ theorem ref_bool_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (
   have hSb := H.hSb
   have hst : ∀ a, S0 ≤ a → a < S1 → μ.writable a = true := H.st
   obtain ⟨hra, hloc⟩ := ha.readable (by decide) H hS hspA K
-  obtain ⟨ω1, μ1, run1, a0, a1, a5, a6, a7, a8, a9, fr1, rd1, wr1⟩ := rf_bool (p := p) (P := P) (R := R)
-    x ω μ sp v F W a (rdN μ a 1) ret v5 v6 ⟨by omega, by omega⟩ h0 h1 h5 h6 h7 h8
-    ⟨by omega, hv5, hv6, by omega, by omega, by omega⟩ (Or.inr hF.1) ra rfl hf.buf hf.vt hf.opts hf.vws hf.vrd
+  obtain ⟨ω0, run0, z0, z1, z5, z6, z7, z8, z9⟩ := rf_bool (p := p) (P := P) (R := R) x ω μ v F a (rdN μ a 1)
+    ⟨by omega, by omega, by omega⟩ h7 h8 ra rfl
     (fun b h1 h2 => Memory.readable_of_writable (hst b (by omega) (by omega))) hra
-    (fun b h1 h2 => Memory.readable_of_writable (hst b (by omega) (by omega)))
-    (fun b h1 h2 => hst b (by omega) (by omega))
-  generalize hN : (if rdN μ a 1 = 0 then 72794 else 72799) = nm at a8
-  generalize hL : (if rdN μ a 1 = 0 then 5 else 4) = L at a9
+  generalize hN : (if rdN μ a 1 = 0 then 72794 else 72799) = nm at z8
+  generalize hL : (if rdN μ a 1 = 0 then 5 else 4) = L at z9
   have hNL : (nm = 72794 ∧ L = 5) ∨ (nm = 72799 ∧ L = 4) := by
     subst hN hL; split
     · exact Or.inl ⟨rfl, rfl⟩
     · exact Or.inr ⟨rfl, rfl⟩
   have hL5 : L ≤ 5 := by omega
+  obtain ⟨ω1, μ1, run1', a0, a1, a5, a6, a7, a8, a9, fr1, rd1, wr1⟩ := pad_str (p := p) (P := P) (R := R)
+    x ω0 μ sp F W ret v5 v6 nm L ⟨by omega, by omega⟩ (z0.trans h0) (z1.trans h1) (z5.trans h5) (z6.trans h6) z7 z8 z9
+    ⟨by omega, hv5, hv6, by omega, by omega, by omega⟩ (Or.inr hF.1) hf.buf hf.vt hf.opts hf.vws hf.vrd
+    (fun b h1 h2 => Memory.readable_of_writable (hst b (by omega) (by omega)))
+    (fun b h1 h2 => hst b (by omega) (by omega))
+  have run1 := run0.trans run1'
   have k1 : ∀ c, c < 4294967296 → (c < sp - 24 ∨ sp ≤ c) → μ1.read c = μ.read c := fr1
   have H1 : HeapCtx env pb S0 S1 μ1 s := ctx_hi H (fun c hc => k1 c (by omega) (Or.inl (by omega))) wr1
   have hs1 : Str sA s μ1 W cap len := (hf.congr (fun j hj => k1 _ (by omega) (Or.inr (by omega)))

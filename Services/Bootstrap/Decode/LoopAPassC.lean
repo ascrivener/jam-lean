@@ -35,9 +35,11 @@ structure InvAFC (env : RefineHost.Env) (pb : Nat) (F RD P0 Lt : Nat) (es : List
   rL : μ.readN (RD + 8) 8 = Num.encodeLE 8 (Lt - off es k)
   pay : μ.readN P0 es.flatten.length = es.flatten
   tab : μ.readN 67476 100 = Tag.table
-  el : ∀ j, j < k → ∃ cs : List Chunk, (∀ c ∈ cs, c ∈ chunks s ∧ c.used = true ∧ c ≠ cb) ∧
-    ∀ μ'' : Memory, (∀ c ∈ cs, ∀ a, InData c a → μ''.read a = μ.read a) →
-      reps j cs (μ.readN (B + 232 * j) 232) μ''
+  el : ∃ csOf : Nat → List Chunk,
+    (∀ j, j < k → (∀ c ∈ csOf j, c ∈ chunks s ∧ c.used = true ∧ c ≠ cb ∧ c ≠ cp) ∧
+      ∀ μ'' : Memory, (∀ c ∈ csOf j, ∀ a, InData c a → μ''.read a = μ.read a) →
+        reps j (csOf j) (μ.readN (B + 232 * j) 232) μ'') ∧
+    (∀ j j', j < k → j' < k → j ≠ j' → ∀ c ∈ csOf j, c ∉ csOf j')
   ws : ∀ a, 4278050816 ≤ a → a < (F + 584) → μ.writable a = true
   wr : ∀ a, RD ≤ a → a < (RD + 16) → μ.writable a = true
   rt : ∀ a, 67476 ≤ a → a < 67576 → μ.readable a = true
@@ -63,9 +65,11 @@ structure InvAFCd (env : RefineHost.Env) (pb : Nat) (F RD P0 Lt : Nat) (es : Lis
   rL : μ.readN (RD + 8) 8 = Num.encodeLE 8 (Lt - off es k)
   pay : μ.readN P0 es.flatten.length = es.flatten
   tab : μ.readN 67476 100 = Tag.table
-  el : ∀ j, j < k → ∃ cs : List Chunk, (∀ c ∈ cs, c ∈ chunks s ∧ c.used = true ∧ c ≠ cb) ∧
-    ∀ μ'' : Memory, (∀ c ∈ cs, ∀ a, InData c a → μ''.read a = μ.read a) →
-      reps j cs (μ.readN (B + 232 * (d + j)) 232) μ''
+  el : ∃ csOf : Nat → List Chunk,
+    (∀ j, j < k → (∀ c ∈ csOf j, c ∈ chunks s ∧ c.used = true ∧ c ≠ cb ∧ c ≠ cp) ∧
+      ∀ μ'' : Memory, (∀ c ∈ csOf j, ∀ a, InData c a → μ''.read a = μ.read a) →
+        reps j (csOf j) (μ.readN (B + 232 * (d + j)) 232) μ'') ∧
+    (∀ j j', j < k → j' < k → j ≠ j' → ∀ c ∈ csOf j, c ∉ csOf j')
   ws : ∀ a, 4278050816 ≤ a → a < (F + 584) → μ.writable a = true
   wr : ∀ a, RD ≤ a → a < (RD + 16) → μ.writable a = true
   rt : ∀ a, 67476 ≤ a → a < 67576 → μ.readable a = true
@@ -81,7 +85,7 @@ theorem InvAFC.toD {env : RefineHost.Env} {pb F RD P0 Lt : Nat} {es : List (List
     {s : State} (h : InvAFC env pb F RD P0 Lt es reps k B cp cb ω μ s) :
     InvAFCd env pb F RD P0 Lt es reps 0 k B cp cb ω μ s :=
   ⟨h.r1, h.r5, h.m24, by rw [Nat.zero_add]; exact h.m40, h.m48, by rw [Nat.zero_add]; exact h.m56, h.rP, h.rL,
-    h.pay, h.tab, fun j hj => by simpa only [Nat.zero_add] using h.el j hj, h.ws, h.wr, h.rt, h.heap, h.cpm,
+    h.pay, h.tab, by obtain ⟨csOf, h1, h2⟩ := h.el; exact ⟨csOf, fun j hj => by simpa only [Nat.zero_add] using h1 j hj, h2⟩, h.ws, h.wr, h.rt, h.heap, h.cpm,
     h.cpd, h.cbm, fun a h1 h2 => h.cbd a (by omega) (by omega)⟩
 
 /-- `InvAFCd` with no earlier slots is `InvAFC`. -/
@@ -90,23 +94,19 @@ theorem InvAFCd.toC {env : RefineHost.Env} {pb F RD P0 Lt : Nat} {es : List (Lis
     {s : State} (h : InvAFCd env pb F RD P0 Lt es reps 0 k B cp cb ω μ s) :
     InvAFC env pb F RD P0 Lt es reps k B cp cb ω μ s :=
   ⟨h.r1, h.r5, h.m24, by rw [← Nat.zero_add es.length]; exact h.m40, h.m48, by rw [← Nat.zero_add k]; exact h.m56,
-    h.rP, h.rL, h.pay, h.tab, fun j hj => by simpa only [Nat.zero_add] using h.el j hj, h.ws, h.wr, h.rt, h.heap,
+    h.rP, h.rL, h.pay, h.tab, by obtain ⟨csOf, h1, h2⟩ := h.el; exact ⟨csOf, fun j hj => by simpa only [Nat.zero_add] using h1 j hj, h2⟩, h.ws, h.wr, h.rt, h.heap,
     h.cpm, h.cpd, h.cbm, fun a h1 h2 => h.cbd a (by omega) (by omega)⟩
-
-/-- `InvAF` is `InvAFC` for representations ignoring the chunks. -/
-theorem InvAF.toC {env : RefineHost.Env} {pb F RD P0 Lt : Nat} {es : List (List UInt8)}
-    {reps : Nat → List UInt8 → Memory → Prop} {k B : Nat} {cp cb : Chunk} {ω : Regs} {μ : Memory}
-    {s : State} (h : InvAF env pb F RD P0 Lt es reps k B cp cb ω μ s) :
-    InvAFC env pb F RD P0 Lt es (fun j _ bs μ => reps j bs μ) k B cp cb ω μ s :=
-  ⟨h.r1, h.r5, h.m24, h.m40, h.m48, h.m56, h.rP, h.rL, h.pay, h.tab, h.el, h.ws, h.wr, h.rt, h.heap, h.cpm,
-    h.cpd, h.cbm, h.cbd⟩
 
 /-- `InvAFC` for representations ignoring the chunks is `InvAF`. -/
 theorem InvAFC.toAF {env : RefineHost.Env} {pb F RD P0 Lt : Nat} {es : List (List UInt8)}
     {reps : Nat → List UInt8 → Memory → Prop} {k B : Nat} {cp cb : Chunk} {ω : Regs} {μ : Memory}
     {s : State} (h : InvAFC env pb F RD P0 Lt es (fun j _ bs μ => reps j bs μ) k B cp cb ω μ s) :
     InvAF env pb F RD P0 Lt es reps k B cp cb ω μ s :=
-  ⟨h.r1, h.r5, h.m24, h.m40, h.m48, h.m56, h.rP, h.rL, h.pay, h.tab, h.el, h.ws, h.wr, h.rt, h.heap, h.cpm,
+  ⟨h.r1, h.r5, h.m24, h.m40, h.m48, h.m56, h.rP, h.rL, h.pay, h.tab,
+    fun j hj => by
+      obtain ⟨csOf, h1, -⟩ := h.el
+      exact ⟨csOf j, fun c hc => ⟨((h1 j hj).1 c hc).1, ((h1 j hj).1 c hc).2.1, ((h1 j hj).1 c hc).2.2.1⟩,
+        (h1 j hj).2⟩, h.ws, h.wr, h.rt, h.heap, h.cpm,
     h.cpd, h.cbm, h.cbd⟩
 
 /-- At k = 0 the slots' representations play no part: an `InvAF` after no elements is an `InvAFC`
@@ -116,7 +116,7 @@ theorem InvAF.toC_zero {env : RefineHost.Env} {pb F RD P0 Lt : Nat} {es : List (
     {B : Nat} {cp cb : Chunk} {ω : Regs} {μ : Memory}
     {s : State} (h : InvAF env pb F RD P0 Lt es reps 0 B cp cb ω μ s) :
     InvAFC env pb F RD P0 Lt es reps' 0 B cp cb ω μ s :=
-  ⟨h.r1, h.r5, h.m24, h.m40, h.m48, h.m56, h.rP, h.rL, h.pay, h.tab, fun _ hj => absurd hj (Nat.not_lt_zero _),
+  ⟨h.r1, h.r5, h.m24, h.m40, h.m48, h.m56, h.rP, h.rL, h.pay, h.tab, ⟨fun _ => [], fun _ hj => absurd hj (Nat.not_lt_zero _), fun _ _ hj => absurd hj (Nat.not_lt_zero _)⟩,
     h.ws, h.wr, h.rt, h.heap, h.cpm, h.cpd, h.cbm, h.cbd⟩
 
 /-- At k = 0 the slots' representations play no part (`InvAFCd`). -/
@@ -125,7 +125,7 @@ theorem InvAFCd.reps_zero {env : RefineHost.Env} {pb F RD P0 Lt : Nat} {es : Lis
     {d B : Nat} {cp cb : Chunk} {ω : Regs} {μ : Memory}
     {s : State} (h : InvAFCd env pb F RD P0 Lt es reps d 0 B cp cb ω μ s) :
     InvAFCd env pb F RD P0 Lt es reps' d 0 B cp cb ω μ s :=
-  ⟨h.r1, h.r5, h.m24, h.m40, h.m48, h.m56, h.rP, h.rL, h.pay, h.tab, fun _ hj => absurd hj (Nat.not_lt_zero _),
+  ⟨h.r1, h.r5, h.m24, h.m40, h.m48, h.m56, h.rP, h.rL, h.pay, h.tab, ⟨fun _ => [], fun _ hj => absurd hj (Nat.not_lt_zero _), fun _ _ hj => absurd hj (Nat.not_lt_zero _)⟩,
     h.ws, h.wr, h.rt, h.heap, h.cpm, h.cpd, h.cbm, h.cbd⟩
 
 /-- **Every `ElemOkAF` is an `ElemOkAFC`** whose representation ignores the chunks (the returned
@@ -349,48 +349,65 @@ theorem passAFCd_low {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHo
     · rw [Memory.readN_congr (fun j hj => (wlow _ (by omega)).trans
         (backD cp hcp hcpu _ (cpd _ (by omega) (by omega)) (by omega)))]; exact pay
     · rw [Memory.readN_congr (fun j hj => (wlow _ (by omega)).trans (backL _ (by omega)))]; exact tab
-    · intro j hj
-      rcases Nat.lt_or_ge j k with hj' | hj'
-      · obtain ⟨cs', hcs', hrep'⟩ := el j hj'
-        refine ⟨cs', fun c hc => ⟨keepU c (hcs' c hc).1 (hcs' c hc).2.1, (hcs' c hc).2.1, (hcs' c hc).2.2⟩,
-          fun μ'' hag => ?_⟩
-        have e1 : (μ7.writeN (F + 112) (Num.encodeLE 8 (d + k + 1))).readN (B + 232 * (d + j)) 232 =
-            μ.readN (B + 232 * (d + j)) 232 := by
-          rw [Memory.readN_congr (fun i hi => (wlow _ (by omega)).trans
-            (backD cb hcb hcbu _ (cbd _ (by omega) (by omega)) (by omega)))]
-        rw [e1]
-        refine hrep' μ'' (fun c hc a ha => (hag c hc a ha).trans ?_)
-        have hcm := hcs' c hc
-        have hna := InData.apart heap.wf hcm.1 hcb hcm.2.2.symm ha
-        have hd := ha
-        unfold InData at hna hd
-        have hm := heap.wf.2.2.2.1
-        unfold TilesOk at hm
-        have := hm.mem_lt c hcm.1
-        have := heap.hbT
-        have htop : s.top = s.base + 1073741824 := by unfold State.top; rw [maxSize_val]
-        exact (wlow a (by omega)).trans (backD c hcm.1 hcm.2.1 a ha (by omega))
-      · have hjk : j = k := by omega
-        subst hjk
-        refine ⟨cs, fun c hc => ⟨(hcs c hc).1, (hcs c hc).2.1, fun e => (hcs c hc).2.2 cb hcb hcbu e.symm⟩,
-          fun μ'' hag => ?_⟩
-        have e1 : (μ7.writeN (F + 112) (Num.encodeLE 8 (d + j + 1))).readN (B + 232 * (d + j)) 232 =
-            μ3.readN (F + 120) 232 := by
-          rw [Memory.readN_congr (fun i hi => wlow _ (by omega)), slot]
-        rw [e1]
-        refine crep μ'' (fun c hc a ha => (hag c hc a ha).trans ?_)
-        have hcm := hcs c hc
-        have hne' : cb ≠ c := (hcm.2.2 cb hcb hcbu)
-        have hna := InData.apart heap3.wf hcm.1 hcb' hne' ha
-        unfold InData at hna
-        have hd := ha
-        unfold InData at hd
-        have hm := heap3.wf.2.2.2.1
-        unfold TilesOk at hm
-        have := hm.mem_lt c hcm.1
-        have := heap3.hbT
-        have htop : s'.top = s'.base + 1073741824 := by unfold State.top; rw [maxSize_val]
-        exact (wlow a (by omega)).trans (low37 a (by omega) (by omega))
+    · obtain ⟨csOf, elA, elD⟩ := el
+      refine ⟨fun j => if j = k then cs else csOf j, fun j hj => ?_, fun j j' hj hj' hne c hc hc' => ?_⟩
+      · dsimp only
+        rcases Nat.lt_or_ge j k with hj' | hj'
+        · rw [if_neg (show j ≠ k by omega)]
+          obtain ⟨hcs', hrep'⟩ := elA j hj'
+          refine ⟨fun c hc => ⟨keepU c (hcs' c hc).1 (hcs' c hc).2.1, (hcs' c hc).2.1, (hcs' c hc).2.2⟩,
+            fun μ'' hag => ?_⟩
+          have e1 : (μ7.writeN (F + 112) (Num.encodeLE 8 (d + k + 1))).readN (B + 232 * (d + j)) 232 =
+              μ.readN (B + 232 * (d + j)) 232 := by
+            rw [Memory.readN_congr (fun i hi => (wlow _ (by omega)).trans
+              (backD cb hcb hcbu _ (cbd _ (by omega) (by omega)) (by omega)))]
+          rw [e1]
+          refine hrep' μ'' (fun c hc a ha => (hag c hc a ha).trans ?_)
+          have hcm := hcs' c hc
+          have hna := InData.apart heap.wf hcm.1 hcb hcm.2.2.1.symm ha
+          have hd := ha
+          unfold InData at hna hd
+          have hm := heap.wf.2.2.2.1
+          unfold TilesOk at hm
+          have := hm.mem_lt c hcm.1
+          have := heap.hbT
+          have htop : s.top = s.base + 1073741824 := by unfold State.top; rw [maxSize_val]
+          exact (wlow a (by omega)).trans (backD c hcm.1 hcm.2.1 a ha (by omega))
+        · have hjk : j = k := by omega
+          subst hjk
+          rw [if_pos rfl]
+          refine ⟨fun c hc => ⟨(hcs c hc).1, (hcs c hc).2.1, fun e => (hcs c hc).2.2 cb hcb hcbu e.symm,
+            fun e => (hcs c hc).2.2 cp hcp hcpu e.symm⟩, fun μ'' hag => ?_⟩
+          have e1 : (μ7.writeN (F + 112) (Num.encodeLE 8 (d + j + 1))).readN (B + 232 * (d + j)) 232 =
+              μ3.readN (F + 120) 232 := by
+            rw [Memory.readN_congr (fun i hi => wlow _ (by omega)), slot]
+          rw [e1]
+          refine crep μ'' (fun c hc a ha => (hag c hc a ha).trans ?_)
+          have hcm := hcs c hc
+          have hne' : cb ≠ c := (hcm.2.2 cb hcb hcbu)
+          have hna := InData.apart heap3.wf hcm.1 hcb' hne' ha
+          unfold InData at hna
+          have hd := ha
+          unfold InData at hd
+          have hm := heap3.wf.2.2.2.1
+          unfold TilesOk at hm
+          have := hm.mem_lt c hcm.1
+          have := heap3.hbT
+          have htop : s'.top = s'.base + 1073741824 := by unfold State.top; rw [maxSize_val]
+          exact (wlow a (by omega)).trans (low37 a (by omega) (by omega))
+      · dsimp only at hc hc'
+        by_cases hjk : j = k
+        · rw [if_pos hjk] at hc
+          rw [if_neg (show j' ≠ k by omega)] at hc'
+          have hm := (elA j' (by omega)).1 c hc'
+          exact (hcs c hc).2.2 c hm.1 hm.2.1 rfl
+        · rw [if_neg hjk] at hc
+          by_cases hjk' : j' = k
+          · rw [if_pos hjk'] at hc'
+            have hm := (elA j (by omega)).1 c hc
+            exact (hcs c hc').2.2 c hm.1 hm.2.1 rfl
+          · rw [if_neg hjk'] at hc'
+            exact elD j j' (by omega) (by omega) hne c hc hc'
     · intro a h1 h2; rw [Memory.writable_writeN, hwrq a (by omega)]; exact ws a h1 h2
     · intro a h1 h2; rw [Memory.writable_writeN, hwrq a (by omega)]; exact wr a h1 h2
     · intro a h1 h2; rw [Memory.readable_writeN, hrdL a (by omega)]; exact rt a h1 h2

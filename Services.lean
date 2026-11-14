@@ -334,6 +334,7 @@ import Services.Bootstrap.Decode.VariantsBig2
 import Services.Bootstrap.Decode.ElemsBig
 import Services.Bootstrap.Decode.VecVecOwn
 import Services.Bootstrap.Decode.LoopAPassC
+import Services.Bootstrap.Decode.ExportEmpty
 import Services.Bootstrap.SymExec
 import Services.Witness.SymExec
 

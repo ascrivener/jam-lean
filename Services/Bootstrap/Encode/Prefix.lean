@@ -282,4 +282,65 @@ theorem prefix_small {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : R
     rw [show F - 32 = F - 56 + 24 by omega]; exact bo
   · rw [efr a h0' (by omega) (by omega) h3', dfr a h0' (by omega), cfr a h0' (by omega) h2' h3', k2 a h0' (by omega)]
 
+/-- **The length prefix of no elements** (30977, n = 0): as `prefix_small`, appending the one octet 0
+    (ℰ(0) = [0]). -/
+theorem prefix_zero {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory)
+    (F c v cap ptr len ret t r5 r6 : Nat) (hF : 65536 + 256 ≤ F ∧ F < 4294967296 ∧ F % 8 = 0)
+    (h0 : ω[0] = UInt64.ofNat ret) (h1 : ω[1] = UInt64.ofNat F) (h5 : ω[5] = UInt64.ofNat r5)
+    (h6 : ω[6] = UInt64.ofNat r6) (h7 : ω[7] = UInt64.ofNat c) (h8 : ω[8] = UInt64.ofNat v)
+    (hr5 : r5 < 18446744073709551616) (hr6 : r6 < 18446744073709551616)
+    (hc : c + 4 ≤ 4294967296) (hcF : c + 4 ≤ F - 136 ∨ F ≤ c) (hn : rdN μ c 4 = 0)
+    (hrc : ∀ a, c ≤ a → a < c + 4 → μ.readable a = true)
+    (vc : μ.readN v 8 = Num.encodeLE 8 cap) (vp : μ.readN (v + 8) 8 = Num.encodeLE 8 ptr)
+    (vl : μ.readN (v + 16) 8 = Num.encodeLE 8 len) (hroom : len + 1 ≤ cap) (hcap : cap < 18446744073709551616)
+    (hv : v + 24 ≤ 4294967296) (hvF : v + 24 ≤ F - 136 ∨ F ≤ v)
+    (hd : 65536 ≤ ptr + len ∧ ptr + len + 17 < 4294967296) (hdF : F ≤ ptr + len ∨ ptr + len + 17 ≤ F - 136)
+    (hdv : v + 24 ≤ ptr + len ∨ ptr + len + 1 ≤ v)
+    (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t)
+    (hbt : P.isBlockStart t = true)
+    (hrv : ∀ a, v ≤ a → a < v + 24 → μ.readable a = true)
+    (hwv : ∀ a, v + 16 ≤ a → a < v + 24 → μ.writable a = true)
+    (hwd : ∀ a, ptr + len ≤ a → a < ptr + len + 1 → μ.writable a = true)
+    (hwF : ∀ a, F - 136 ≤ a → a < F → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 30977 ω μ x t ω' μ' x 900 ∧
+      ω'[0] = UInt64.ofNat ret ∧ ω'[1] = UInt64.ofNat F ∧ ω'[5] = UInt64.ofNat r5 ∧
+      ω'[6] = UInt64.ofNat r6 ∧
+      μ'.readN (ptr + len) 1 = [UInt8.ofNat 0] ∧ μ'.readN (v + 16) 8 = Num.encodeLE 8 (len + 1) ∧
+      (∀ a, a < 4294967296 → (a < F - 136 ∨ F ≤ a) → (a < ptr + len ∨ ptr + len + 1 ≤ a) →
+        (a < v + 16 ∨ v + 24 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  obtain ⟨hF0, hF1, hF8⟩ := hF
+  have hret' : ret < 18446744073709551616 := by omega
+  obtain ⟨ω1, μ1, run1, a0, a1, a7, a8, a9, ao, a0', a5', a6', afr, ard, awr⟩ := pz (p := p) (P := P) (R := R) x ω μ
+    F c v ret r5 r6 ⟨by omega, hF1⟩ h0 h1 h5 h6 h7 h8 hret' hr5 hr6 (by omega) hc (by omega) hn hrc
+    (fun a h1 h2 => hwF a (by omega) h2)
+  have k1v : ∀ a, v ≤ a → a < v + 24 → μ1.read a = μ.read a := fun a h1 h2 => afr a (by omega) (by omega)
+  obtain ⟨ω2, μ2, run2, b0, b1, b5, b6, bd, bl, bfr, brd, bwr⟩ := extend_ok (p := p) (P := P) (R := R) x ω1 μ1
+    (F - 56) v (F - 32) 1 cap ptr len 1468 31129 ⟨by omega, by omega, by omega⟩ a0 a1 a7 a8 a9 hroom hcap
+    (by rw [Memory.readN_congr (fun j hj => k1v _ (by omega) (by omega))]; exact vc)
+    (by rw [Memory.readN_congr (fun j hj => k1v _ (by omega) (by omega))]; exact vp)
+    (by rw [Memory.readN_congr (fun j hj => k1v _ (by omega) (by omega))]; exact vl)
+    hv (by omega) ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ (by omega) (by omega) (by omega) hdv
+    ⟨by decide, by decide, by decide⟩ jte_733 bs_31129
+    (fun a h1 h2 => by rw [ard]; exact hrv a h1 h2)
+    (fun a h1 h2 => by rw [awr]; exact hwv a h1 h2)
+    (fun a h1 h2 => by rw [ard]; exact Memory.readable_of_writable (hwF a (by omega) (by omega)))
+    (fun a h1 h2 => by rw [awr]; exact hwd a h1 h2)
+    (fun a h1 h2 => by rw [awr]; exact hwF a (by omega) (by omega))
+  have k2 : ∀ a, F - 24 ≤ a → a < F → μ2.read a = μ1.read a := fun a h1 h2 =>
+    bfr a (by omega) (by omega) (by omega) (by omega)
+  obtain ⟨ω3, run3, c0, c1, c5, c6⟩ := pt (p := p) (P := P) (R := R) x ω2 μ2 31129 (F - 56) ret t r5 r6
+    (Or.inl rfl) (by omega) b1
+    (by rw [show F - 56 + 48 = F - 8 by omega, Memory.readN_congr (fun j hj => k2 _ (by omega) (by omega))]
+        exact a0')
+    (by rw [show F - 56 + 40 = F - 16 by omega, Memory.readN_congr (fun j hj => k2 _ (by omega) (by omega))]
+        exact a5')
+    (by rw [show F - 56 + 32 = F - 24 by omega, Memory.readN_congr (fun j hj => k2 _ (by omega) (by omega))]
+        exact a6')
+    hr5 hr6 hret hjt hbt
+    (fun a h1 h2 => by rw [brd, ard]; exact Memory.readable_of_writable (hwF a (by omega) (by omega)))
+  refine ⟨ω3, μ2, (run1.trans (run2.trans run3)).mono (by omega), c0, by rw [c1]; congr 1; omega, c5, c6,
+    by rw [bd]; exact ao, bl, fun a h0' h1' h2' h3' => ?_, fun a => by rw [brd, ard], fun a => by rw [bwr, awr]⟩
+  rw [bfr a h0' (by omega) (by omega) h3', afr a h0' (by omega)]
+
 end Services.Bootstrap.Encode.Prefix

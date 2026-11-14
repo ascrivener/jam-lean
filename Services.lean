@@ -16,11 +16,17 @@ import Services.Bootstrap.CodeAOk
 import Services.Bootstrap.CodeF
 import Services.Bootstrap.CodeFAll
 import Services.Bootstrap.CodeFOk
+import Services.Bootstrap.CodeR
+import Services.Bootstrap.CodeRAll
+import Services.Bootstrap.CodeROk
+import Services.Bootstrap.Bridge
 import Services.Bootstrap.Fmt.OracleRefine
 import Services.Bootstrap.Fmt.Hex
 import Services.Bootstrap.Fmt.Dec4
 import Services.Bootstrap.Fmt.Du5
 import Services.Bootstrap.Fmt.Format
+import Services.Bootstrap.Fmt.AccFmt
+import Services.Bootstrap.AccLog.ItemLog
 import Services.Bootstrap.BParams
 import Services.Bootstrap.BParamsConsts
 import Services.Bootstrap.StartupConsts
@@ -123,6 +129,7 @@ import Services.Bootstrap.Acc.ContractC
 import Services.Bootstrap.Acc.CkSites
 import Services.Bootstrap.Acc.CkDead
 import Services.Bootstrap.Acc.CkLift
+import Services.Bootstrap.Acc.ContractQ
 import Services.Bootstrap.Acc.Inputs.ReaderAdj
 import Services.Bootstrap.Acc.Inputs.ItemOperand
 import Services.Bootstrap.Acc.Inputs.ItemOperandB
@@ -150,9 +157,16 @@ import Services.Bootstrap.Decode.CreateServiceRun
 import Services.Bootstrap.Decode.CreateServiceHeap
 import Services.Bootstrap.Decode.CreateServiceEmpty
 import Services.Bootstrap.Decode.CreateServiceElem
+import Services.Bootstrap.Decode.VecU8HeapBig
 import Services.Bootstrap.Decode.VecVecU8
 import Services.Bootstrap.Decode.ImportElem
 import Services.Bootstrap.Decode.VecVecElem
+import Services.Bootstrap.Decode.VecPairsBig
+import Services.Bootstrap.Decode.VecU32U64Big
+import Services.Bootstrap.Decode.VecHashBig
+import Services.Bootstrap.Decode.VecHash32Big
+import Services.Bootstrap.Decode.GrowOne
+import Services.Bootstrap.Decode.VecKey336Big
 import Services.Picoalloc.Model
 import Services.Picoalloc.Invariant
 import Services.Picoalloc.FreeLists
@@ -254,11 +268,35 @@ import Services.Bootstrap.Encode.Variants
 import Services.Bootstrap.Encode.Yield
 import Services.Bootstrap.Encode.Prefix
 import Services.Bootstrap.Encode.Loop
+import Services.Bootstrap.Refine.Pass
+import Services.Bootstrap.Refine.PassGrow
+import Services.Bootstrap.Refine.PassLoop
+import Services.Bootstrap.Refine.LoopG
+import Services.Bootstrap.Refine.Exit
+import Services.Bootstrap.Refine.ExitEnc
+import Services.Bootstrap.Refine.DropOut
+import Services.Bootstrap.Refine.Fin
+import Services.Bootstrap.Refine.ExitRun
 import Services.Bootstrap.Spec
 import Services.Bootstrap.SpecLemmas.Codec
 import Services.Bootstrap.SpecLemmas.Refine
 import Services.Bootstrap.SpecLemmas.Ring
+import Services.Bootstrap.SpecLemmas.Items
+import Services.Bootstrap.ASem
 import Services.Bootstrap.Alloc.HeapContract
+import Services.Bootstrap.Decode.VecU8HeapBig
+import Services.Bootstrap.Decode.VecPairsBig
+import Services.Bootstrap.Decode.VecU32U64Big
+import Services.Bootstrap.Decode.VecHashBig
+import Services.Bootstrap.Decode.VecHash32Big
+import Services.Bootstrap.Decode.GrowOne
+import Services.Bootstrap.Decode.VecKey336Big
+import Services.Bootstrap.Decode.VecVecU8Big
+import Services.Bootstrap.Decode.VariantsBig
+import Services.Bootstrap.Decode.VariantsBig2
+import Services.Bootstrap.Decode.ElemsBig
+import Services.Bootstrap.SymExec
+import Services.Witness.SymExec
 
 /-!
 # Results about specific services' deployed code
@@ -324,4 +362,9 @@ Built on `JAM`; nothing in `PVM` or `JAM` depends on this library.
   codec round trip of step 0 (`decode_payload`, `decode_output`), `refineInstr` keeping
   instructions well-formed (`refineInstr_wf`, `refine_output`), and the ring half of S1 kept by
   `addRecent` (`addRecent_ringInv`) in a minimal storage model.
+* `Services.Bootstrap.SpecLemmas.Items` — `Spec.accumulate`'s decode of the inputs: `decode_items`
+  reads ℰ(↕**i**) back as `specItem`s (`compact_run64` for gas limits below 2⁶⁴).
+* `Services.Bootstrap.ASem` — what T2 means: `ASem.run` / `ASem.outcome`, accumulate's host
+  operations as the model's host functions on a memory holding their arguments; `accEnv`, `credit`,
+  `codeOf`.
 -/

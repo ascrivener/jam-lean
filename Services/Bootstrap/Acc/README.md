@@ -509,8 +509,9 @@ under "transfer{n}". Proved segments and calls:
 **Open obligation: the output decode's failure branch (7073).** `BootstrapWorkOutput::decode` (7073,
 the Vec session) is proved for success (→ 7091, {cap, ptr, len} at sp + 1568, k at sp + 1592) and heap
 exhaustion. Its decode-error outcome (−1 at sp + 1568, then 7080 → 7088 → 15361, ☇) matches Spec
-`onWorkItem`'s `| none => Prog.panic` but has no failure contract yet: it is an open, named obligation
-(parent's decision), not an assumption. No statement here assumes that work outputs decode.
+`onWorkItem`'s `| none => Prog.panic` but has no failure contract yet. It is the named TODO "output
+decode failure contract", to be proved (parent's decision). Until then the operand arm may carry a local
+premise `decode (Dec.output C) o = some (is, k)`, which must not reach the stated T2 theorem.
 
 **Named hypotheses (`Transfer/Hyp.lean`)**, to be proved by the symbolic-executor session:
 - `KeyFmt`: `format!("transfer{}", n)` at 7792 leaves the `String` `s!"transfer{n}"` at sp + 512

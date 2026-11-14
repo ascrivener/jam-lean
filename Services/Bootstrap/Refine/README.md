@@ -36,6 +36,8 @@ Build one file with
 
 ## Merged since the handoff
 
+- #168: the pass-through loop and the whole exit (`exit_run`), with `DebugLineOk` as the only hypothesis.
+
 - #157: `Services/Bootstrap/Bridge.lean` (`IsBootstrap`, `RSem`, `ExhaustsHeap` with `AllocNull` / `TooLong`)
   and `CodeR` regenerated with `fnRangesR = [(4046,6378), (30766,30977), (44677,44916), (49015,49201)]`
   (`drop_in_place::<Instruction>`, Import's collect loop, the SDK's import-segment fetch and
@@ -71,7 +73,46 @@ Build one file with
 
 ## Plan
 
-### Export handler (5587–5830), blocked on host 8
+### Export handler (5587–5960): pieces done, composition next
+On the wip branch (with #167 merged in): `HostSteps.lean` has `FreeStepsH.logRef` (100) and
+`FreeStepsH.exportRef` (8: `exportCtx`, `exportR7`). `Export.lean` has every straight-line piece:
+`xd` (5095 → 5587), `xa` (setup → 5653), `xs1` (→ the `export` call at 5664), `xs2` (5667 → `format!`, the
+`Result` at M + 560), `xl` (5751 → `log` at 5784), `xf`/`xf0`/`xf1` (the `String` freed → 5641), `xn` (next
+segment or 5810), `xp0`/`xpg` (room, or `grow_one` → 5832), `xps` (`Exported(n)` pushed), `xr0`/`xr1`/`xr1z`/
+`xr1r`/`xr2` (the segments freed), `xt0`/`xt0z` (their `Vec` freed), `xt1` (→ 5042, no drop: bit 10 of the
+mask at M + 40). Next: the segment loop (invariant at 5653: segment j, the context with j exports appended,
+`FmtCall` at 5744 as a hypothesis), the free loop, and the step 5042 → 5042 for `PInv` (`O k` = the
+`Exported(n)` slot). `PInv` gained `c40`, `c16`, `c24`, `c32` (Lookup's log constants) for the handlers.
+
+**Done (`ExportSeg.lean`)**: `ExportFmtOk` (the hypothesis for 5744's `format!`, `FmtCall`-shaped with the
+context kept: the Fmt session was asked to provide x' = x), `seg` (one segment: export, format, log, `String`
+freed, next), `expUpTo` (the context after j segments, read from μ0), `segs` (the whole segment loop
+5653 → 5810, all n ≥ 1 segments exported in order).
+**Done (`ExportStep.lean`, `ExportElem.lean`)**: `xhead`, `push_room` / `push_grow`, `tail`, and the whole
+instruction: `ExportElem.export_step`, `PInv k` → `PInv (k + 1)` (5042 … 5042) for an `ExportSegs` element whose
+`Vec<Vec<u8>>` buffer and segment buffers are chunks to keep (`Kp`), distinct; the chunks to keep afterwards
+(`Kp'`) exclude the freed ones; slot k holds `Exported(ns)`; the context becomes `ExportSeg.expUpTo env μ0 ptrv x ns`.
+Or an allocation fails (`ExhaustsX`, with an unbounded step count: the loop needs `LoopG`'s bound B replaced by
+an existential).
+**Old plan**: the full step 5042 → 5042 for index 10: stage (`Pass.pa` + `memcpy_any`, as in `pass_elem`) → `xd` →
+`xa` (or the n = 0 case straight to 5810: needs a `xa0` variant) → `segs` → `xp0`+`xps` or `xpg` +
+`Decode.GrowOne.grow_one_call` + `xps` (as in `PassGrow`) → the free loop (`xr0`, then per segment `xr1` +
+`dealloc_call` + `xr1r` or `xr1z`, then `xr2`; a small induction like `segs`) → `xt0` + `dealloc_call` or
+`xt0z` → `xt1`. The result: `PInv (k + 1)` with slot k `Exported(n)` (first word 2^63 + 19, count n), the
+context `expUpTo … n`; the segments' chunks and their `Vec`'s chunk freed (they must not be in `Kp`).
+
+Plan for the segment step (5653 … 5653 / 5810), one segment g = ptr + 24 j of the n:
+`xs1` → `HostSteps.FreeStepsH.exportRef` (needs `μ.rangeReadable sp (min sl 4104)`: the segment's data lies in an
+allocated chunk) → `xs2` (v = `exportR7 env x` ≠ 2^64 − 1, true while ς + 3072 < 2^64 − 9: take it as a
+hypothesis on ς) → the `format!` at 59375 as a hypothesis in Fmt's `FmtCall` shape (`Fmt/Format.lean`: from
+`HeapCtx`, `Keeps pb M (String at M + 584 … M + 608)`, `StrOut`, or `Fmt.Exhausts`, which `ExhaustsX.ofFmt`
+absorbs) → `xl` → `FreeStepsH.logRef` → `xf` + `Decode.DeallocCall.dealloc_call` + `xf1`, or `xf0` → `xn`.
+The context after segment j is `exportCtx` applied j times (`RSem.reply (.exportSeg d)` with
+`padSeg d = d.take 4104 ++ zeros`, matching `exportCtx`'s `min (reg ω 8) 4104`).
+`ExhaustsX` is now `Bridge.AllocFails` (any allocator's null return, or the size trap), so Fmt's exhaustion
+(40611 / 40821) folds in (`ExhaustsX.ofFmt`).
+
+#### (old notes)
 Per segment of the element's `Vec<Vec<u8>>` (24-octet {cap, ptr, len} entries, loop 5641–5807):
 setup 5587–5664; **ecalli 8 at 5664**; result check 5667–5695 (≥ 2^64−9 is an error; 2^64−1 →
 trap 6377); per-segment `format!` at **5744** (→ 59375), log (host 100) at 5784, free at 5800

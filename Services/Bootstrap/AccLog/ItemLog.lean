@@ -154,7 +154,7 @@ theorem item_fmt_site {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P]
     (hS : S0 + 800 ≤ S ∧ S % 8 = 0 ∧ 2147484500 ≤ S ∧ S + 1700 ≤ S1)
     (hro : RoW μ) (htm : μ.readN 66266 31 = itemTmplBytes)
     (hrt : ∀ a, 66266 ≤ a → a < 66297 → μ.readable a = true)
-    (c d : Nat) (hc : c < 1048576) (hA : ArgsAt p P (accContractK cap env) envH pb S0 S1 μ s S (S + 1144) 0 itemTmpl c d) :
+    (c d : Nat) (hc : c < 1048576) (hA : ArgsAt p P (accContractK cap env) envH pb S0 S1 600 μ s S (S + 1144) 0 itemTmpl c d) :
     (∃ ω' μ' x' s', FreeStepsH p (accContractK cap env) 6955 ω μ x 7009 ω' μ' x'
         (1 + fmtCost c d itemTmpl + 300) ∧
       HeapCtx envH pb S0 S1 μ' s' ∧ s'.base = s.base ∧
@@ -165,7 +165,7 @@ theorem item_fmt_site {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P]
   have hSb := H.hSb
   have hrd : ∀ a, S0 ≤ a → a < S1 → μ.readable a = true := fun a h1 h2 => Memory.readable_of_writable (hst a h1 h2)
   obtain ⟨ω1, run1, a0, a1, a5, a6, a7, a8, a9⟩ := item_site_call (p := p) (P := P) (R := accContractK cap env) x ω μ
-  rcases format_inner (p := p) (P := P) (R := accContractK cap env) envH pb S0 S1 HA HR S (S + 1568) 66266
+  rcases format_inner (p := p) (P := P) (R := accContractK cap env) envH pb S0 S1 600 (Nat.le_refl _) HA HR S (S + 1568) 66266
       (S + 1144) 232 6962 c d itemTmpl x ω1 μ s H hba a0 (a1.trans h1) (a7.trans h7) (a8.trans h8)
       (a9.trans h9) (by decide) jte_115 bs_6962 ⟨by omega, hS.2.1, by omega, by omega⟩ ⟨by omega, by omega⟩
       hro (tmpl_item htm hrt) (by simp [itemTmpl, tsize]) ⟨by omega, by omega⟩ hA (by simp [itemTmpl, nargs])

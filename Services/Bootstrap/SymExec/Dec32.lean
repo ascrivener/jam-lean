@@ -120,7 +120,7 @@ def st_0 : Static :=
 
 def T_0 : Spec :=
   { regs := [(0, .const 2802), (1, .addr ⟨some 1, -72⟩), (7, .var 3), (11, PVM.SymExec.SVal.addr { base := some 1, off := -25 }), (12, PVM.SymExec.SVal.const 1)]
-    cells := [({ base := some 1, off := -25 }, 1, PVM.SymExec.SVal.tbl [48] (PVM.SymExec.SVal.var 7))] }
+    cells := [({ base := some 1, off := -25 }, 1, PVM.SymExec.SVal.tbl [48] (PVM.SymExec.SVal.var 7)), (⟨some 1, -8⟩, 8, .var 4), (⟨some 1, -16⟩, 8, .var 5), (⟨some 1, -24⟩, 8, .var 6)] }
 
 set_option maxRecDepth 100000 in
 theorem ok_0 : check st_0 Services.Bootstrap.SymExec.progF A T_0 [(⟨some 1, -72⟩, 72)] 68146 61857 28 = true := by
@@ -199,7 +199,7 @@ def st_1 : Static :=
 
 def T_1 : Spec :=
   { regs := [(0, .const 2802), (1, .addr ⟨some 1, -72⟩), (7, .var 3), (11, PVM.SymExec.SVal.addr { base := some 1, off := -25 }), (12, PVM.SymExec.SVal.const 1)]
-    cells := [({ base := some 1, off := -25 }, 1, PVM.SymExec.SVal.tbl [48, 48, 49, 48, 50, 48, 51, 48, 52, 48, 53, 48, 54, 48, 55, 48, 56, 48, 57] (PVM.SymExec.SVal.var 7))] }
+    cells := [({ base := some 1, off := -25 }, 1, PVM.SymExec.SVal.tbl [48, 48, 49, 48, 50, 48, 51, 48, 52, 48, 53, 48, 54, 48, 55, 48, 56, 48, 57] (PVM.SymExec.SVal.var 7)), (⟨some 1, -8⟩, 8, .var 4), (⟨some 1, -16⟩, 8, .var 5), (⟨some 1, -24⟩, 8, .var 6)] }
 
 set_option maxRecDepth 100000 in
 theorem ok_1 : check st_1 Services.Bootstrap.SymExec.progF A T_1 [(⟨some 1, -72⟩, 72)] 68146 61857 29 = true := by
@@ -285,7 +285,7 @@ def st_10 : Static :=
 
 def T_10 : Spec :=
   { regs := [(0, .const 2802), (1, .addr ⟨some 1, -72⟩), (7, .var 3), (11, PVM.SymExec.SVal.addr { base := some 1, off := -26 }), (12, PVM.SymExec.SVal.const 2)]
-    cells := [({ base := some 1, off := -26 }, 2, PVM.SymExec.SVal.mem0 { base := some 14, off := 70844 } 2)] }
+    cells := [({ base := some 1, off := -26 }, 2, PVM.SymExec.SVal.mem0 { base := some 14, off := 70844 } 2), (⟨some 1, -8⟩, 8, .var 4), (⟨some 1, -16⟩, 8, .var 5), (⟨some 1, -24⟩, 8, .var 6)] }
 
 set_option maxRecDepth 100000 in
 theorem ok_10 : check st_10 Services.Bootstrap.SymExec.progF A T_10 [(⟨some 1, -72⟩, 72)] 68146 61857 37 = true := by
@@ -394,7 +394,7 @@ def st_100 : Static :=
 
 def T_100 : Spec :=
   { regs := [(0, .const 2802), (1, .addr ⟨some 1, -72⟩), (7, .var 3), (11, PVM.SymExec.SVal.addr { base := some 1, off := -27 }), (12, PVM.SymExec.SVal.const 3)]
-    cells := [({ base := some 1, off := -27 }, 1, PVM.SymExec.SVal.tbl [48, 48, 49, 48, 50, 48, 51, 48, 52, 48, 53, 48, 54, 48, 55, 48, 56, 48, 57] (PVM.SymExec.SVal.var 15)), ({ base := some 1, off := -26 }, 2, PVM.SymExec.SVal.mem0 { base := some 14, off := 70844 } 2)] }
+    cells := [({ base := some 1, off := -27 }, 1, PVM.SymExec.SVal.tbl [48, 48, 49, 48, 50, 48, 51, 48, 52, 48, 53, 48, 54, 48, 55, 48, 56, 48, 57] (PVM.SymExec.SVal.var 15)), ({ base := some 1, off := -26 }, 2, PVM.SymExec.SVal.mem0 { base := some 14, off := 70844 } 2), (⟨some 1, -8⟩, 8, .var 4), (⟨some 1, -16⟩, 8, .var 5), (⟨some 1, -24⟩, 8, .var 6)] }
 
 set_option maxRecDepth 100000 in
 theorem ok_100 : check st_100 Services.Bootstrap.SymExec.progF A T_100 [(⟨some 1, -72⟩, 72)] 68146 61857 46 = true := by
@@ -513,7 +513,7 @@ def st_1000 : Static :=
 
 def T_1000 : Spec :=
   { regs := [(0, .const 2802), (1, .addr ⟨some 1, -72⟩), (7, .var 3), (11, PVM.SymExec.SVal.addr { base := some 1, off := -28 }), (12, PVM.SymExec.SVal.const 4)]
-    cells := [({ base := some 1, off := -25 }, 1, PVM.SymExec.SVal.mem0 { base := some 21, off := 70845 } 1), ({ base := some 1, off := -26 }, 1, PVM.SymExec.SVal.mem0 { base := some 21, off := 70844 } 1), ({ base := some 1, off := -27 }, 1, PVM.SymExec.SVal.mem0 { base := some 16, off := 70845 } 1), ({ base := some 1, off := -28 }, 1, PVM.SymExec.SVal.mem0 { base := some 16, off := 70844 } 1)] }
+    cells := [({ base := some 1, off := -25 }, 1, PVM.SymExec.SVal.mem0 { base := some 21, off := 70845 } 1), ({ base := some 1, off := -26 }, 1, PVM.SymExec.SVal.mem0 { base := some 21, off := 70844 } 1), ({ base := some 1, off := -27 }, 1, PVM.SymExec.SVal.mem0 { base := some 16, off := 70845 } 1), ({ base := some 1, off := -28 }, 1, PVM.SymExec.SVal.mem0 { base := some 16, off := 70844 } 1), (⟨some 1, -8⟩, 8, .var 4), (⟨some 1, -16⟩, 8, .var 5), (⟨some 1, -24⟩, 8, .var 6)] }
 
 set_option maxRecDepth 100000 in
 theorem ok_1000 : check st_1000 Services.Bootstrap.SymExec.progF A T_1000 [(⟨some 1, -72⟩, 72)] 68146 61857 69 = true := by
@@ -645,7 +645,7 @@ def st_10000 : Static :=
 
 def T_10000 : Spec :=
   { regs := [(0, .const 2802), (1, .addr ⟨some 1, -72⟩), (7, .var 3), (11, PVM.SymExec.SVal.addr { base := some 1, off := -29 }), (12, PVM.SymExec.SVal.const 5)]
-    cells := [({ base := some 1, off := -29 }, 1, PVM.SymExec.SVal.tbl [48, 48, 49, 48, 50, 48, 51, 48, 52, 48, 53, 48, 54, 48, 55, 48, 56, 48, 57] (PVM.SymExec.SVal.var 22)), ({ base := some 1, off := -25 }, 1, PVM.SymExec.SVal.mem0 { base := some 21, off := 70845 } 1), ({ base := some 1, off := -26 }, 1, PVM.SymExec.SVal.mem0 { base := some 21, off := 70844 } 1), ({ base := some 1, off := -27 }, 1, PVM.SymExec.SVal.mem0 { base := some 16, off := 70845 } 1), ({ base := some 1, off := -28 }, 1, PVM.SymExec.SVal.mem0 { base := some 16, off := 70844 } 1)] }
+    cells := [({ base := some 1, off := -29 }, 1, PVM.SymExec.SVal.tbl [48, 48, 49, 48, 50, 48, 51, 48, 52, 48, 53, 48, 54, 48, 55, 48, 56, 48, 57] (PVM.SymExec.SVal.var 22)), ({ base := some 1, off := -25 }, 1, PVM.SymExec.SVal.mem0 { base := some 21, off := 70845 } 1), ({ base := some 1, off := -26 }, 1, PVM.SymExec.SVal.mem0 { base := some 21, off := 70844 } 1), ({ base := some 1, off := -27 }, 1, PVM.SymExec.SVal.mem0 { base := some 16, off := 70845 } 1), ({ base := some 1, off := -28 }, 1, PVM.SymExec.SVal.mem0 { base := some 16, off := 70844 } 1), (⟨some 1, -8⟩, 8, .var 4), (⟨some 1, -16⟩, 8, .var 5), (⟨some 1, -24⟩, 8, .var 6)] }
 
 set_option maxRecDepth 100000 in
 theorem ok_10000 : check st_10000 Services.Bootstrap.SymExec.progF A T_10000 [(⟨some 1, -72⟩, 72)] 68146 61857 78 = true := by
@@ -788,7 +788,7 @@ def st_100000 : Static :=
 
 def T_100000 : Spec :=
   { regs := [(0, .const 2802), (1, .addr ⟨some 1, -72⟩), (7, .var 3), (11, PVM.SymExec.SVal.addr { base := some 1, off := -30 }), (12, PVM.SymExec.SVal.const 6)]
-    cells := [({ base := some 1, off := -30 }, 2, PVM.SymExec.SVal.mem0 { base := some 29, off := 70844 } 2), ({ base := some 1, off := -25 }, 1, PVM.SymExec.SVal.mem0 { base := some 21, off := 70845 } 1), ({ base := some 1, off := -26 }, 1, PVM.SymExec.SVal.mem0 { base := some 21, off := 70844 } 1), ({ base := some 1, off := -27 }, 1, PVM.SymExec.SVal.mem0 { base := some 16, off := 70845 } 1), ({ base := some 1, off := -28 }, 1, PVM.SymExec.SVal.mem0 { base := some 16, off := 70844 } 1)] }
+    cells := [({ base := some 1, off := -30 }, 2, PVM.SymExec.SVal.mem0 { base := some 29, off := 70844 } 2), ({ base := some 1, off := -25 }, 1, PVM.SymExec.SVal.mem0 { base := some 21, off := 70845 } 1), ({ base := some 1, off := -26 }, 1, PVM.SymExec.SVal.mem0 { base := some 21, off := 70844 } 1), ({ base := some 1, off := -27 }, 1, PVM.SymExec.SVal.mem0 { base := some 16, off := 70845 } 1), ({ base := some 1, off := -28 }, 1, PVM.SymExec.SVal.mem0 { base := some 16, off := 70844 } 1), (⟨some 1, -8⟩, 8, .var 4), (⟨some 1, -16⟩, 8, .var 5), (⟨some 1, -24⟩, 8, .var 6)] }
 
 set_option maxRecDepth 100000 in
 theorem ok_100000 : check st_100000 Services.Bootstrap.SymExec.progF A T_100000 [(⟨some 1, -72⟩, 72)] 68146 61857 85 = true := by
@@ -954,7 +954,7 @@ def st_1000000 : Static :=
 
 def T_1000000 : Spec :=
   { regs := [(0, .const 2802), (1, .addr ⟨some 1, -72⟩), (7, .var 3), (11, PVM.SymExec.SVal.addr { base := some 1, off := -31 }), (12, PVM.SymExec.SVal.const 7)]
-    cells := [({ base := some 1, off := -31 }, 1, PVM.SymExec.SVal.tbl [48, 48, 49, 48, 50, 48, 51, 48, 52, 48, 53, 48, 54, 48, 55, 48, 56, 48, 57] (PVM.SymExec.SVal.var 30)), ({ base := some 1, off := -30 }, 2, PVM.SymExec.SVal.mem0 { base := some 29, off := 70844 } 2), ({ base := some 1, off := -25 }, 1, PVM.SymExec.SVal.mem0 { base := some 21, off := 70845 } 1), ({ base := some 1, off := -26 }, 1, PVM.SymExec.SVal.mem0 { base := some 21, off := 70844 } 1), ({ base := some 1, off := -27 }, 1, PVM.SymExec.SVal.mem0 { base := some 16, off := 70845 } 1), ({ base := some 1, off := -28 }, 1, PVM.SymExec.SVal.mem0 { base := some 16, off := 70844 } 1)] }
+    cells := [({ base := some 1, off := -31 }, 1, PVM.SymExec.SVal.tbl [48, 48, 49, 48, 50, 48, 51, 48, 52, 48, 53, 48, 54, 48, 55, 48, 56, 48, 57] (PVM.SymExec.SVal.var 30)), ({ base := some 1, off := -30 }, 2, PVM.SymExec.SVal.mem0 { base := some 29, off := 70844 } 2), ({ base := some 1, off := -25 }, 1, PVM.SymExec.SVal.mem0 { base := some 21, off := 70845 } 1), ({ base := some 1, off := -26 }, 1, PVM.SymExec.SVal.mem0 { base := some 21, off := 70844 } 1), ({ base := some 1, off := -27 }, 1, PVM.SymExec.SVal.mem0 { base := some 16, off := 70845 } 1), ({ base := some 1, off := -28 }, 1, PVM.SymExec.SVal.mem0 { base := some 16, off := 70844 } 1), (⟨some 1, -8⟩, 8, .var 4), (⟨some 1, -16⟩, 8, .var 5), (⟨some 1, -24⟩, 8, .var 6)] }
 
 set_option maxRecDepth 100000 in
 theorem ok_1000000 : check st_1000000 Services.Bootstrap.SymExec.progF A T_1000000 [(⟨some 1, -72⟩, 72)] 68146 61857 94 = true := by
@@ -1130,7 +1130,7 @@ def st_10000000 : Static :=
 
 def T_10000000 : Spec :=
   { regs := [(0, .const 2802), (1, .addr ⟨some 1, -72⟩), (7, .var 3), (11, PVM.SymExec.SVal.addr { base := some 1, off := -32 }), (12, PVM.SymExec.SVal.const 8)]
-    cells := [({ base := some 1, off := -29 }, 1, PVM.SymExec.SVal.mem0 { base := some 36, off := 70845 } 1), ({ base := some 1, off := -30 }, 1, PVM.SymExec.SVal.mem0 { base := some 36, off := 70844 } 1), ({ base := some 1, off := -31 }, 1, PVM.SymExec.SVal.mem0 { base := some 31, off := 70845 } 1), ({ base := some 1, off := -32 }, 1, PVM.SymExec.SVal.mem0 { base := some 31, off := 70844 } 1), ({ base := some 1, off := -25 }, 1, PVM.SymExec.SVal.mem0 { base := some 21, off := 70845 } 1), ({ base := some 1, off := -26 }, 1, PVM.SymExec.SVal.mem0 { base := some 21, off := 70844 } 1), ({ base := some 1, off := -27 }, 1, PVM.SymExec.SVal.mem0 { base := some 16, off := 70845 } 1), ({ base := some 1, off := -28 }, 1, PVM.SymExec.SVal.mem0 { base := some 16, off := 70844 } 1)] }
+    cells := [({ base := some 1, off := -29 }, 1, PVM.SymExec.SVal.mem0 { base := some 36, off := 70845 } 1), ({ base := some 1, off := -30 }, 1, PVM.SymExec.SVal.mem0 { base := some 36, off := 70844 } 1), ({ base := some 1, off := -31 }, 1, PVM.SymExec.SVal.mem0 { base := some 31, off := 70845 } 1), ({ base := some 1, off := -32 }, 1, PVM.SymExec.SVal.mem0 { base := some 31, off := 70844 } 1), ({ base := some 1, off := -25 }, 1, PVM.SymExec.SVal.mem0 { base := some 21, off := 70845 } 1), ({ base := some 1, off := -26 }, 1, PVM.SymExec.SVal.mem0 { base := some 21, off := 70844 } 1), ({ base := some 1, off := -27 }, 1, PVM.SymExec.SVal.mem0 { base := some 16, off := 70845 } 1), ({ base := some 1, off := -28 }, 1, PVM.SymExec.SVal.mem0 { base := some 16, off := 70844 } 1), (⟨some 1, -8⟩, 8, .var 4), (⟨some 1, -16⟩, 8, .var 5), (⟨some 1, -24⟩, 8, .var 6)] }
 
 set_option maxRecDepth 100000 in
 theorem ok_10000000 : check st_10000000 Services.Bootstrap.SymExec.progF A T_10000000 [(⟨some 1, -72⟩, 72)] 68146 61857 107 = true := by
@@ -1319,7 +1319,7 @@ def st_100000000 : Static :=
 
 def T_100000000 : Spec :=
   { regs := [(0, .const 2802), (1, .addr ⟨some 1, -72⟩), (7, .var 3), (11, PVM.SymExec.SVal.addr { base := some 1, off := -33 }), (12, PVM.SymExec.SVal.const 9)]
-    cells := [({ base := some 1, off := -33 }, 1, PVM.SymExec.SVal.tbl [48, 48, 49, 48, 50, 48, 51, 48, 52, 48, 53, 48, 54, 48, 55, 48, 56, 48, 57] (PVM.SymExec.SVal.var 37)), ({ base := some 1, off := -29 }, 1, PVM.SymExec.SVal.mem0 { base := some 36, off := 70845 } 1), ({ base := some 1, off := -30 }, 1, PVM.SymExec.SVal.mem0 { base := some 36, off := 70844 } 1), ({ base := some 1, off := -31 }, 1, PVM.SymExec.SVal.mem0 { base := some 31, off := 70845 } 1), ({ base := some 1, off := -32 }, 1, PVM.SymExec.SVal.mem0 { base := some 31, off := 70844 } 1), ({ base := some 1, off := -25 }, 1, PVM.SymExec.SVal.mem0 { base := some 21, off := 70845 } 1), ({ base := some 1, off := -26 }, 1, PVM.SymExec.SVal.mem0 { base := some 21, off := 70844 } 1), ({ base := some 1, off := -27 }, 1, PVM.SymExec.SVal.mem0 { base := some 16, off := 70845 } 1), ({ base := some 1, off := -28 }, 1, PVM.SymExec.SVal.mem0 { base := some 16, off := 70844 } 1)] }
+    cells := [({ base := some 1, off := -33 }, 1, PVM.SymExec.SVal.tbl [48, 48, 49, 48, 50, 48, 51, 48, 52, 48, 53, 48, 54, 48, 55, 48, 56, 48, 57] (PVM.SymExec.SVal.var 37)), ({ base := some 1, off := -29 }, 1, PVM.SymExec.SVal.mem0 { base := some 36, off := 70845 } 1), ({ base := some 1, off := -30 }, 1, PVM.SymExec.SVal.mem0 { base := some 36, off := 70844 } 1), ({ base := some 1, off := -31 }, 1, PVM.SymExec.SVal.mem0 { base := some 31, off := 70845 } 1), ({ base := some 1, off := -32 }, 1, PVM.SymExec.SVal.mem0 { base := some 31, off := 70844 } 1), ({ base := some 1, off := -25 }, 1, PVM.SymExec.SVal.mem0 { base := some 21, off := 70845 } 1), ({ base := some 1, off := -26 }, 1, PVM.SymExec.SVal.mem0 { base := some 21, off := 70844 } 1), ({ base := some 1, off := -27 }, 1, PVM.SymExec.SVal.mem0 { base := some 16, off := 70845 } 1), ({ base := some 1, off := -28 }, 1, PVM.SymExec.SVal.mem0 { base := some 16, off := 70844 } 1), (⟨some 1, -8⟩, 8, .var 4), (⟨some 1, -16⟩, 8, .var 5), (⟨some 1, -24⟩, 8, .var 6)] }
 
 set_option maxRecDepth 100000 in
 theorem ok_100000000 : check st_100000000 Services.Bootstrap.SymExec.progF A T_100000000 [(⟨some 1, -72⟩, 72)] 68146 61857 116 = true := by
@@ -1519,7 +1519,7 @@ def st_1000000000 : Static :=
 
 def T_1000000000 : Spec :=
   { regs := [(0, .const 2802), (1, .addr ⟨some 1, -72⟩), (7, .var 3), (11, PVM.SymExec.SVal.addr { base := some 1, off := -34 }), (12, PVM.SymExec.SVal.const 10)]
-    cells := [({ base := some 1, off := -34 }, 2, PVM.SymExec.SVal.mem0 { base := some 44, off := 70844 } 2), ({ base := some 1, off := -29 }, 1, PVM.SymExec.SVal.mem0 { base := some 36, off := 70845 } 1), ({ base := some 1, off := -30 }, 1, PVM.SymExec.SVal.mem0 { base := some 36, off := 70844 } 1), ({ base := some 1, off := -31 }, 1, PVM.SymExec.SVal.mem0 { base := some 31, off := 70845 } 1), ({ base := some 1, off := -32 }, 1, PVM.SymExec.SVal.mem0 { base := some 31, off := 70844 } 1), ({ base := some 1, off := -25 }, 1, PVM.SymExec.SVal.mem0 { base := some 21, off := 70845 } 1), ({ base := some 1, off := -26 }, 1, PVM.SymExec.SVal.mem0 { base := some 21, off := 70844 } 1), ({ base := some 1, off := -27 }, 1, PVM.SymExec.SVal.mem0 { base := some 16, off := 70845 } 1), ({ base := some 1, off := -28 }, 1, PVM.SymExec.SVal.mem0 { base := some 16, off := 70844 } 1)] }
+    cells := [({ base := some 1, off := -34 }, 2, PVM.SymExec.SVal.mem0 { base := some 44, off := 70844 } 2), ({ base := some 1, off := -29 }, 1, PVM.SymExec.SVal.mem0 { base := some 36, off := 70845 } 1), ({ base := some 1, off := -30 }, 1, PVM.SymExec.SVal.mem0 { base := some 36, off := 70844 } 1), ({ base := some 1, off := -31 }, 1, PVM.SymExec.SVal.mem0 { base := some 31, off := 70845 } 1), ({ base := some 1, off := -32 }, 1, PVM.SymExec.SVal.mem0 { base := some 31, off := 70844 } 1), ({ base := some 1, off := -25 }, 1, PVM.SymExec.SVal.mem0 { base := some 21, off := 70845 } 1), ({ base := some 1, off := -26 }, 1, PVM.SymExec.SVal.mem0 { base := some 21, off := 70844 } 1), ({ base := some 1, off := -27 }, 1, PVM.SymExec.SVal.mem0 { base := some 16, off := 70845 } 1), ({ base := some 1, off := -28 }, 1, PVM.SymExec.SVal.mem0 { base := some 16, off := 70844 } 1), (⟨some 1, -8⟩, 8, .var 4), (⟨some 1, -16⟩, 8, .var 5), (⟨some 1, -24⟩, 8, .var 6)] }
 
 set_option maxRecDepth 100000 in
 theorem ok_1000000000 : check st_1000000000 Services.Bootstrap.SymExec.progF A T_1000000000 [(⟨some 1, -72⟩, 72)] 68146 61857 123 = true := by
@@ -1741,7 +1741,7 @@ def st_2147483648 : Static :=
 
 def T_2147483648 : Spec :=
   { regs := [(0, .const 2802), (1, .addr ⟨some 1, -72⟩), (7, .var 3), (11, PVM.SymExec.SVal.addr { base := some 1, off := -34 }), (12, PVM.SymExec.SVal.const 10)]
-    cells := [({ base := some 1, off := -34 }, 2, PVM.SymExec.SVal.mem0 { base := some 44, off := 70844 } 2), ({ base := some 1, off := -29 }, 1, PVM.SymExec.SVal.mem0 { base := some 36, off := 70845 } 1), ({ base := some 1, off := -30 }, 1, PVM.SymExec.SVal.mem0 { base := some 36, off := 70844 } 1), ({ base := some 1, off := -31 }, 1, PVM.SymExec.SVal.mem0 { base := some 31, off := 70845 } 1), ({ base := some 1, off := -32 }, 1, PVM.SymExec.SVal.mem0 { base := some 31, off := 70844 } 1), ({ base := some 1, off := -25 }, 1, PVM.SymExec.SVal.mem0 { base := some 21, off := 70845 } 1), ({ base := some 1, off := -26 }, 1, PVM.SymExec.SVal.mem0 { base := some 21, off := 70844 } 1), ({ base := some 1, off := -27 }, 1, PVM.SymExec.SVal.mem0 { base := some 16, off := 70845 } 1), ({ base := some 1, off := -28 }, 1, PVM.SymExec.SVal.mem0 { base := some 16, off := 70844 } 1)] }
+    cells := [({ base := some 1, off := -34 }, 2, PVM.SymExec.SVal.mem0 { base := some 44, off := 70844 } 2), ({ base := some 1, off := -29 }, 1, PVM.SymExec.SVal.mem0 { base := some 36, off := 70845 } 1), ({ base := some 1, off := -30 }, 1, PVM.SymExec.SVal.mem0 { base := some 36, off := 70844 } 1), ({ base := some 1, off := -31 }, 1, PVM.SymExec.SVal.mem0 { base := some 31, off := 70845 } 1), ({ base := some 1, off := -32 }, 1, PVM.SymExec.SVal.mem0 { base := some 31, off := 70844 } 1), ({ base := some 1, off := -25 }, 1, PVM.SymExec.SVal.mem0 { base := some 21, off := 70845 } 1), ({ base := some 1, off := -26 }, 1, PVM.SymExec.SVal.mem0 { base := some 21, off := 70844 } 1), ({ base := some 1, off := -27 }, 1, PVM.SymExec.SVal.mem0 { base := some 16, off := 70845 } 1), ({ base := some 1, off := -28 }, 1, PVM.SymExec.SVal.mem0 { base := some 16, off := 70844 } 1), (⟨some 1, -8⟩, 8, .var 4), (⟨some 1, -16⟩, 8, .var 5), (⟨some 1, -24⟩, 8, .var 6)] }
 
 set_option maxRecDepth 100000 in
 theorem ok_2147483648 : check st_2147483648 Services.Bootstrap.SymExec.progF A T_2147483648 [(⟨some 1, -72⟩, 72)] 68146 61857 123 = true := by

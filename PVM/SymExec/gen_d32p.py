@@ -55,6 +55,9 @@ theorem rw_{tag} {{{args} : Nat}} (ω : Regs) (μ : Memory) (hy : {g.lo} ≤ y �
   exact ⟨{rw_items}, trivial⟩
 '''
 
+# the caller's ω₀, ω₅, ω₆ (ret, v5, v6), saved at sp − 8, sp − 16, sp − 24 (fmt's T + 64, T + 56, T + 48)
+SAVED = ', (⟨some 1, -8⟩, 8, .var 4), (⟨some 1, -16⟩, 8, .var 5), (⟨some 1, -24⟩, 8, .var 6)]'
+
 def main(out, ranges, ends_file):
     import re
     ends = open(ends_file).read().replace('\\n', ' ')
@@ -75,7 +78,7 @@ def A : Spec :=
   { regs := [(0, .var 4), (1, .var 1), (5, .var 5), (6, .var 6), (7, .var 2), (8, .var 3)]
     cells := (⟨some 2, 0⟩, 4, .var 0) :: (List.range 200).map fun j => (⟨none, (70844 + j : Nat)⟩, 1, .const (pairs.getD j 0)) }
 '''
-    src += '\nopen Num\n\n' + open(sys.argv[0].rsplit('/',1)[0] + '/dhelp_generic.lean').read()
+    src += '\nopen Num\n\n' + open(sys.argv[0].rsplit('/',1)[0] + '/d32_helpers.lean.in').read()
     for n in range(1, 11): src += emit_decB(n)
     for lo, hi in ranges:
         g = build(lo, hi)
@@ -86,7 +89,7 @@ def A : Spec :=
         src += f'''
 def T_{tag} : Spec :=
   {{ regs := [(0, .const 2802), (1, .addr ⟨some 1, -72⟩), (7, .var 3), (11, {' '.join(r11.split())}), (12, {' '.join(r12.split())})]
-    cells := {cells} }}
+    cells := {cells[:cells.rindex(']')] + SAVED} }}
 
 set_option maxRecDepth 100000 in
 theorem ok_{tag} : check st_{tag} Services.Bootstrap.SymExec.progF A T_{tag} [(⟨some 1, -72⟩, 72)] 68146 61857 {steps} = true := by

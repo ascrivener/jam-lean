@@ -17,10 +17,12 @@ HYPS = '''{X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [HasCode p P]
     (hrv : ∀ t, v ≤ t → t < v + 4 → μ.readable t = true)
     (hrt : ∀ t, 70844 ≤ t → t < 71044 → μ.readable t = true)
     (hw : ∀ t, sp - 72 ≤ t → t < sp → μ.writable t = true) (hs : v + 4 ≤ sp - 72 ∨ sp ≤ v) :
-    ∃ ω' μ', FreeStepsH p R 68146 ω μ x 61857 ω' μ' x STEPS ∧
+    ∃ ω' μ', FreeStepsH p R 68146 ω μ x 61857 ω' μ' x STEPS ∧ (decB y).length ≤ 10 ∧
       ω'[0] = UInt64.ofNat 2802 ∧ ω'[1] = UInt64.ofNat (sp - 72) ∧ ω'[7] = UInt64.ofNat F ∧
       ω'[11] = UInt64.ofNat (sp - 24 - (decB y).length) ∧ ω'[12] = UInt64.ofNat (decB y).length ∧
       μ'.readN (sp - 24 - (decB y).length) (decB y).length = decB y ∧
+      μ'.readN (sp - 8) 8 = encodeLE 8 ret ∧ μ'.readN (sp - 16) 8 = encodeLE 8 v5 ∧
+      μ'.readN (sp - 24) 8 = encodeLE 8 v6 ∧
       (∀ t, t < two32 → (t < sp - 72 ∨ sp ≤ t) → μ'.read t = μ.read t) ∧ μ'.pages = μ.pages'''.replace('STEPS', str(STEPS))
 ARGS = 'x ω μ y sp v F ret v5 v6 HYV hsp hv hF hret h5 h6 r0 r1 r5 r6 r7 r8 hY ht hrv hrt hw hs'
 
@@ -43,6 +45,11 @@ namespace Services.Bootstrap.SymExec.Dec32
 
 open PVM PVM.SymExec Num Services.Bootstrap.Code Services.Bootstrap.CodeF
 ''']
+import re
+D32 = open(sys.argv[1].replace('Dec32All', 'Dec32')).read()
+def ncells(lo):
+    m = re.search(r'def T_%d : Spec :=\n.*\n    cells := (.*) \}\n' % lo, D32)
+    return m.group(1).count('{ base :=')
 for lo, hi in R:
     n = ndig(lo)
     hy = f'{lo} ≤ y ∧ y < {hi}'
@@ -52,10 +59,14 @@ theorem fin_{lo} {HYPS.replace('HY', hy)} := by
   have hd := digits_{lo} hy hsp ht hc
   have hl : (decB y).length = {n} := by rw [← hd, Memory.length_readN]
   obtain ⟨g0, g1, g7, g11, g12, -⟩ := hr
+  obtain ⟨{', '.join('-' for _ in range(ncells(lo)))}, s8, s16, s24, -⟩ := hc
+  simp only [T_{lo}, SVal.eval, Aff.eval, vals_{lo}, List.getD_cons_succ, List.getD_cons_zero] at s8 s16 s24
   simp only [T_{lo}, SVal.eval, Aff.eval, vals_{lo}, List.getD_cons_succ, List.getD_cons_zero] at g0 g1 g7 g11 g12
   rw [hl]
-  refine ⟨ω', μ', run.mono (by decide), g0, ?_, g7, ?_, g12, by rw [show sp - 24 - {n} = sp - {24 + n} by omega]; exact hd,
-    hfr, hpg⟩
+  refine ⟨ω', μ', run.mono (by decide), by decide, g0, ?_, g7, ?_, g12, by rw [show sp - 24 - {n} = sp - {24 + n} by omega]; exact hd,
+    by rw [show sp - 8 = ((sp : Int) + -8).toNat by omega]; exact s8,
+    by rw [show sp - 16 = ((sp : Int) + -16).toNat by omega]; exact s16,
+    by rw [show sp - 24 = ((sp : Int) + -24).toNat by omega]; exact s24, hfr, hpg⟩
   · rw [show sp - 72 = ((sp : Int) + -72).toNat by omega]; exact g1
   · rw [show sp - 24 - {n} = ((sp : Int) + -{24 + n}).toNat by omega]; exact g11
 ''')

@@ -162,7 +162,8 @@ theorem exit_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env
   have k5 : ∀ a, a < 4294967296 → M ≤ a → (a < M + 168 ∨ M + 194 ≤ a) → (a < M + 272 ∨ M + 296 ≤ a) →
       μ5.read a = μ.read a := fun a h0 h1 h2 h3 => by
     rw [efr a h0 h1 h2 h3, k4 a h0 h1 (by omega) (by omega)]
-  have f5 : ∀ a l, (M + 80 ≤ a ∧ a + l ≤ M + 120) ∨ (M + 600 ≤ a ∧ a + l ≤ M + 632) →
+  have f5 : ∀ a l, (M + 80 ≤ a ∧ a + l ≤ M + 96) ∨ (M + 112 ≤ a ∧ a + l ≤ M + 120) ∨
+      (M + 608 ≤ a ∧ a + l ≤ M + 632) →
       μ5.readN a l = μ0.readN a l := fun a l h => Memory.readN_congr (fun j hj => by
     rw [k5 _ (by omega) (by omega) (by omega) (by omega), st.fr _ (by omega)])
   have pre5 := pre4.trans run5

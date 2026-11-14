@@ -257,9 +257,21 @@ Coverage work, approved after Phase 1. Each feature lands as its own PR.
   * Signed two-register comparisons are decided on operands below 2^63.
   * The rules are `scond` (with `toU` and `negImm`), `scond2`, `ltU`, `eqU` and `sameBase`.
 * **Host calls.**
-  * `Prog` has an optional table `hosts`, from host-call id to the registers the call sets to
-    literals. Memory and the context stay unchanged. The table is empty by default, so existing
-    code tables and instances are unchanged.
+  * `Prog` has an optional table `hosts`, from host-call id to a list of host effects
+    (`HostEff`). The table is empty by default, so existing code tables and instances are
+    unchanged.
+  * A host effect has three parts:
+    * preconditions: registers that must hold given literals;
+    * an optional write of a literal at a literal address;
+    * registers set to literals.
+
+    Memory outside the write and the context stay unchanged. The executor takes the first listed
+    effect whose preconditions hold.
+  * `EffOk R h e` says the contract R allows effect e for id h. `HostOk R hosts` says this of
+    every listed effect.
+  * `fetch0Eff v o f z` is `fetch` of the parameters, kind 0. `refine_fetch0` and `acc_fetch0`
+    prove it for `Params.full`. Example: `prefixC2_ok`, PrefixC's steps 32 … 47 through the
+    `fetch` at pc 47490, in about 2 s.
   * `srun` follows `ecalli h` when h is in the table.
   * `srun_sound`, `check_sound` and `seg_sound` take `hH : HostOk R G.hosts`. `HostOk` says the
     contract R allows each listed call from any state. The argument is filled automatically
@@ -271,8 +283,11 @@ Coverage work, approved after Phase 1. Each feature lands as its own PR.
 * **`min_u` and `max_u`** of two values whose bounds order them simplify to one of them (`leB`).
 * **Zero offsets.** An affine value ρ_k + 0 is kept as `.var k` (`affVal`), so it matches a
   target that names ρ_k.
-  * Calls whose effect depends on the environment (`fetch`, `grow_heap`) are not covered. Such a
-    call still ends a segment, and a hand-written summary takes over there.
+  * Not covered:
+    * `fetch` of the other kinds, whose value depends on the environment;
+    * `grow_heap`, which changes the page map that the memory model keeps fixed.
+
+    Such a call still ends a segment, and a hand-written summary takes over there.
 
 ## Using the executor for a hand-written stretch
 

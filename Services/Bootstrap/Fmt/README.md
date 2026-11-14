@@ -124,8 +124,29 @@ allocated in s' and fresh against s. The text stays unstated.
    - The `FmtOk` site is the call at 6580 (return 6587); then the `log` host call (100) at 6608
      with the message unspecified, then the `String`'s dealloc.
    - Compose these into one frame-only summary 6501 → after the dealloc, for T2.
-4. **Refine's level-3 line** (6159 → 59375, return 6166; ω₇ = M + 168, ω₈ = 66099,
-   ω₉ = M + 272; Debug fn 1382 → 29675): `Debug` of the output. That needs the `DebugStruct`,
-   `DebugList` and `DebugTuple` builders and each `Instruction` variant's `Debug`.
+4. **Refine's level-3 line** — in progress. Findings from the binary:
+   - No level check: 6159 always formats. The one argument (sp + 272) is (sp + 248, 1382 → 29675),
+     `<Vec<Instruction> as Debug>::fmt`: `debug_list` (61708), per element `entry` (66019) and
+     `finish` (66310). Elements are 232 octets; the loop passes a frame slot holding the element's
+     address with vtable 75784 (fmt 1264 → 26990, `<&Instruction as Debug>`): the niche tag (word at
+     +0, 0x7fff… + t, jump table 67576), then per variant `debug_struct_fields_finish` (63820), the
+     `debug_tuple_field*_finish` builders, or `write_str` (64485) for unit variants.
+   - Refine's other `format!` sites: 4742 (covered by the generated BTail5 traces), the `Lookup`
+     handler's 5398 and the `Export` handler's 5744 (`"Exported slice: {:?} -> {:?}"`, a `Vec<u8>`
+     and a `Result<u64, HostCallError>`).
+   - Done (`DebugList`, `VecDebug`, `DebugTuple`, `Dec8`, `ResultDebug`): the `DebugList` builders
+     (`debug_list_new`, `debug_entry`, `debug_finish`), `debug_tuple1`
+     (`debug_tuple_field1_finish`), `dec8` (u8 `Display`), and as arguments `vec_u8_ok`
+     (`<&Vec<u8> as Debug>`) and `result_ok` (`<Result<u64, HostCallError> as Debug>`). An entry
+     or field is formatted through a slot holding its address: `RefOk` (as `ArgOk`, the value
+     reached through the slot), with `ref_u8_ok`, `ref_u64_ok`, `ref_hce_ok`. `ValAt` says where a
+     value may lie (at or above the caller's frame, or in an allocated chunk of the caller's state).
+   - Interface: `ArgOk`, `ArgsAt`, `fmt_write` and `format_inner` take the stack depth Z a function
+     may use below its caller (sp ≥ S0 + Z and 2³¹ + Z; the earlier statements are Z = 600), and
+     `ArgOk` has the premise W + 24 ≤ spA (every caller had it), so nested calls keep the caller's
+     frame.
+   - Next: `debug_struct_fields_finish`, the `Instruction` variants (table-driven), 29675, and
+     `refine_debug_line` (6159 → 6209) taking the `Vec` at M + 248 and a per-element `DebugRep`
+     (T1 proves `DebugRep` of its elements).
 5. The `ReallocOk` refine instance, once `ReallocCall.realloc_call` gains its planned conjuncts
    (Glob kept, base kept, block fresh or old); `realloc_fresh` already proves the last two.

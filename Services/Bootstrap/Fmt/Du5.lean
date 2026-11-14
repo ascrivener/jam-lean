@@ -32,7 +32,7 @@ theorem dec64 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : 
     (hbt : P.isBlockStart t = true)
     (hsp : S0 + 600 ≤ sp ∧ sp % 8 = 0 ∧ 2147484248 ≤ sp) (hW : sp ≤ W ∧ W + 24 ≤ S1)
     (hF : sp ≤ F ∧ F + 24 ≤ S1 ∧ (F + 24 ≤ W ∨ W + 24 ≤ F))
-    (hvv : sp ≤ v ∧ v + 8 < 4294967296) (hrv : ∀ a, v ≤ a → a < v + 8 → μ.readable a = true)
+    (hvv : (v + 8 ≤ sp - 80 ∨ sp ≤ v) ∧ v + 8 < 4294967296) (hrv : ∀ a, v ≤ a → a < v + 8 → μ.readable a = true)
     (hn : len + 20 < 134217728) :
     (∃ ω' μ' x' s' cap' n, n ≤ 20 ∧
       FreeStepsH p R 68449 ω μ x t ω' μ' x' (7 * n + 2 * (cap' - cap) + 2700) ∧
@@ -48,7 +48,7 @@ theorem dec64 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : 
   have hX := rdN_lt64 μ v
   obtain ⟨ω1, μ1, run1, a1, a10, a3, a2, sv0, sv5, sv6, fr1, rd1, wr1⟩ := du_entry (p := p) (P := P) (R := R)
     x ω μ sp v F ret v5 v6 ⟨by omega, by omega⟩ h0 h1 h5 h6 h7 h8 ⟨by omega, hv.1, hv.2, by omega⟩
-    (by omega) (Or.inr hvv.1) hrv (fun a h1 h2 => hst a (by omega) (by omega))
+    (by omega) hvv.1 hrv (fun a h1 h2 => hst a (by omega) (by omega))
   generalize hXd : rdN μ v 8 = Xv at run1 a2 hX
   have k1 : ∀ a, a < 4294967296 → (a < sp - 80 ∨ sp ≤ a) → μ1.read a = μ.read a := fun a h1 h2 =>
     fr1 a h1 (by omega)

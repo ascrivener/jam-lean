@@ -1,6 +1,7 @@
 import Services.Bootstrap.Refine.RunMixed
 import Services.Bootstrap.SpecLemmas.Codec
 import Services.Bootstrap.Bridge
+import Services.Bootstrap.Encode.PrefixBig
 
 /-!
 # `Spec.refine` under the GP refine host functions, for the milestone's instructions
@@ -129,5 +130,24 @@ theorem expTo_eq (env : RefineHost.Env) (is : List Instr) (x : RefineCtx) (k : N
   | cons i l ih =>
     simp only [List.foldl_cons]
     rw [ih, instrCtx_eq]
+
+theorem map_range_getD {β : Type} (is : List Instr) (f : Instr → β) :
+    (List.range is.length).map (fun j => f (is.getD j .panic)) = is.map f := by
+  apply List.ext_getElem
+  · simp
+  · intro j h1 h2
+    simp only [List.length_map, List.length_range] at h1
+    simp [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem h1]
+
+/-- **The binary's output is ℰ(`BootstrapWorkOutput { outI is, item }`)**: for 1 ≤ n < 128 instructions and
+    an item index below 2^16, n :: (the encodings of `outI` of each) ⌢ ℰ₂(item mod 2^16). -/
+theorem output_eq (is : List Instr) (item : Nat) (hn : 1 ≤ is.length ∧ is.length < 128) (hi : item < 65536) :
+    UInt8.ofNat is.length :: (Encode.Loop.out (encOut is) is.length ++ PVM.Num.encodeLE 2 (item % 65536)) =
+      encodeOutput (is.map outI) item := by
+  unfold encodeOutput vec Encode.Loop.out encOut
+  rw [map_range_getD is (fun x => (outI x).encode), List.length_map, Nat.mod_eq_of_lt hi,
+    show Codec.nat is.length = [UInt8.ofNat is.length] from
+      Services.Bootstrap.Encode.PrefixBig.encodeNat_small _ ⟨by omega, hn.2⟩]
+  simp [List.map_map, Codec.nat, Codec.fixed, Function.comp_def]
 
 end Services.Bootstrap.Refine.SpecRun

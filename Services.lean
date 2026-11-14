@@ -86,6 +86,7 @@ import Services.Bootstrap.Decode.LoopF
 import Services.Bootstrap.Decode.Loop
 import Services.Bootstrap.Decode.Elems
 import Services.Bootstrap.Decode.LoopAPass
+import Services.Bootstrap.Decode.LoopAPassLow
 import Services.Bootstrap.Decode.VecHash
 import Services.Bootstrap.Decode.Assign
 import Services.Bootstrap.Decode.VecU8

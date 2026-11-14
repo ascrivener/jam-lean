@@ -91,7 +91,7 @@ theorem body {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCode
       ω'[0] = UInt64.ofNat ret ∧ ω'[1] = UInt64.ofNat (M + 632) ∧ ω'[5] = UInt64.ofNat r5 ∧
       ω'[6] = UInt64.ofNat r6 ∧ ω'[7] = UInt64.ofNat buf ∧ ω'[8] = UInt64.ofNat (off enc n + 3) ∧
       μ'.readN buf (off enc n + 3) = UInt8.ofNat n :: (out enc n ++ Num.encodeLE 2 (w % 65536)) ∧
-      (∀ a, buf ≤ a → a < buf + (off enc n + 3) → μ'.readable a = true)) ∨
+      ((∀ a, buf ≤ a → a < buf + (off enc n + 3) → μ'.readable a = true) ∧ buf + (off enc n + 3) < 2147483648)) ∨
     ∃ N, ExhaustsX env cap0 pb p 4842 ω μ (ctx 0) N := by
   obtain ⟨hS0M, hMS1, hM2, hM8⟩ := hM
   have hS1 := H.hS1

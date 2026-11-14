@@ -84,7 +84,7 @@ theorem from4680 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Has
       FreeStepsH p (refineContractK 134217728 env) 4680 ω μ ((∅, []) : RefineCtx) 6373 ω' μ'
         (expTo env is ((∅, []) : RefineCtx) is.length) N ∧
       ω'[0] = UInt64.ofNat 4294901760 ∧ ω'[7] = UInt64.ofNat buf ∧ ω'[8] = UInt64.ofNat len ∧
-      μ'.readN buf len = Spec.encodeOutput (is.map outI) I ∧ (∀ a, buf ≤ a → a < buf + len → μ'.readable a = true)) ∨
+      μ'.readN buf len = Spec.encodeOutput (is.map outI) I ∧ ((∀ a, buf ≤ a → a < buf + len → μ'.readable a = true) ∧ buf + len < 2147483648)) ∨
     ∃ N, ExhaustsX env 134217728 1044430 p 4680 ω μ ((∅, []) : RefineCtx) N := by
   have hS0d : S0 = 4278050816 := rfl
   have hS1d : S1 = 4278059008 := rfl
@@ -183,7 +183,7 @@ theorem refine_core {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [
       FreeStepsH p (refineContractK 134217728 env) 0 (Prefix.initRegs L) μ ((∅, []) : RefineCtx) 6373 ω' μ'
         (expTo env is ((∅, []) : RefineCtx) is.length) N ∧
       ω'[0] = UInt64.ofNat 4294901760 ∧ ω'[7] = UInt64.ofNat buf ∧ ω'[8] = UInt64.ofNat len ∧
-      μ'.readN buf len = Spec.encodeOutput (is.map outI) I ∧ (∀ a, buf ≤ a → a < buf + len → μ'.readable a = true)) ∨
+      μ'.readN buf len = Spec.encodeOutput (is.map outI) I ∧ ((∀ a, buf ≤ a → a < buf + len → μ'.readable a = true) ∧ buf + len < 2147483648)) ∨
     ∃ N, ExhaustsX env 134217728 1044430 p 0 (Prefix.initRegs L) μ ((∅, []) : RefineCtx) N := by
   have hYl : 1 ≤ y.length := by
     rw [hy]; unfold Spec.encodePayload Spec.vec; simp only [List.length_append]

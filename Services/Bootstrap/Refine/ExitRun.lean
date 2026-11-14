@@ -91,7 +91,7 @@ theorem exit_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env
       ω'[0] = UInt64.ofNat ret ∧ ω'[1] = UInt64.ofNat (M + 632) ∧ ω'[5] = UInt64.ofNat r5 ∧
       ω'[6] = UInt64.ofNat r6 ∧ ω'[7] = UInt64.ofNat buf ∧ ω'[8] = UInt64.ofNat (off enc n + 3) ∧
       μ'.readN buf (off enc n + 3) = UInt8.ofNat n :: (out enc n ++ Num.encodeLE 2 (w % 65536)) ∧
-      (∀ a, buf ≤ a → a < buf + (off enc n + 3) → μ'.readable a = true)) ∨
+      ((∀ a, buf ≤ a → a < buf + (off enc n + 3) → μ'.readable a = true) ∧ buf + (off enc n + 3) < 2147483648)) ∨
     ∃ N, ExhaustsX env cap0 pb p 5042 ω μ x N := by
   obtain ⟨hS0M, hMS1, hM2, hM8⟩ := L.hM
   have hn' := L.hn
@@ -206,8 +206,8 @@ theorem exit_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env
     have q2 := bkeep cq hq hqu (fun _ => hqce)
     exact efresh cq (dkeep cq q2.1 hqu).1 hqu e.symm
   obtain ⟨nm, nk⟩ := fkeep _ hnew rfl hnco hncq
-  refine Or.inl ⟨ω6, μ6, s6, _, buf, pre5.trans run6, H6, f0, f1, f5', f6, f7, f8, ?_, fun a h1 h2 =>
-    Memory.readable_of_writable (Decode.VecU8.heap_writable H6 nm rfl ⟨by simp; omega, by simp; omega⟩)⟩
+  refine Or.inl ⟨ω6, μ6, s6, _, buf, pre5.trans run6, H6, f0, f1, f5', f6, f7, f8, ?_, ⟨fun a h1 h2 =>
+    Memory.readable_of_writable (Decode.VecU8.heap_writable H6 nm rfl ⟨by simp; omega, by simp; omega⟩), by omega⟩⟩
   rw [Memory.readN_congr (fun i hi => nk _ ⟨by simp; omega, by simp; omega⟩)]
   exact ebuf
 

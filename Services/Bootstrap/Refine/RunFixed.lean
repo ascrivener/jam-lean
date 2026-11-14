@@ -61,7 +61,7 @@ theorem run_fixed {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
       ω'[6] = UInt64.ofNat r6' ∧ ω'[7] = UInt64.ofNat buf ∧ ω'[8] = UInt64.ofNat (off (encAt is) is.length + 3) ∧
       μ'.readN buf (off (encAt is) is.length + 3) =
         UInt8.ofNat is.length :: (out (encAt is) is.length ++ Num.encodeLE 2 (w % 65536)) ∧
-      (∀ a, buf ≤ a → a < buf + (off (encAt is) is.length + 3) → μ'.readable a = true)) ∨
+      ((∀ a, buf ≤ a → a < buf + (off (encAt is) is.length + 3) → μ'.readable a = true) ∧ buf + (off (encAt is) is.length + 3) < 2147483648)) ∨
     ∃ N, ExhaustsX env cap0 pb p 4792 ω μ x N := by
   obtain ⟨hM0, hM1, hM8⟩ := hM
   have hS0d : S0 = 4278050816 := rfl

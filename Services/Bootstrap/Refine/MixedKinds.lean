@@ -52,43 +52,44 @@ theorem mixed_kinds {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (
     (is : List Spec.Instr) (hwf : ∀ x ∈ is, x.WF C)
     (hk : ∀ x ∈ is, MFixed x ∨ ∃ ds, x = .exportSegs ds)
     (hlen : (is.map Spec.Instr.encode).flatten.length < 16777216) :
-    ∃ (Rs : Nat → List UInt8 → Prop) (ts : Nat → Nat), ∀ j, j < is.length →
-      FixedKind p P (encOut is j) (Rs j) (ts j) ∧
+    ∃ (ts : Nat → Nat), ∀ j, j < is.length →
+      FixedKind p P (encOut is j) (kindRep (outI (is.getD j .panic))) (ts j) ∧
       (segsOf (is.getD j .panic) = none ∨ ∃ ds, segsOf (is.getD j .panic) = some ds ∧
         (∀ bs, bs.take 8 = Num.encodeLE 8 9223372036854775827 → (bs.drop 8).take 8 = Num.encodeLE 8 ds.length →
-          Rs j bs) ∧ 24 * ds.length < 1073741760 ∧ ∀ d ∈ ds, d.length < 1073741760) := by
-  have key : ∀ j, ∃ (R : List UInt8 → Prop) (t : Nat), j < is.length →
-      FixedKind p P (encOut is j) R t ∧
+          kindRep (outI (is.getD j .panic)) bs) ∧ 24 * ds.length < 1073741760 ∧ ∀ d ∈ ds, d.length < 1073741760) := by
+  have key : ∀ j, ∃ (t : Nat), j < is.length →
+      FixedKind p P (encOut is j) (kindRep (outI (is.getD j .panic))) t ∧
       (segsOf (is.getD j .panic) = none ∨ ∃ ds, segsOf (is.getD j .panic) = some ds ∧
         (∀ bs, bs.take 8 = Num.encodeLE 8 9223372036854775827 → (bs.drop 8).take 8 = Num.encodeLE 8 ds.length →
-          R bs) ∧ 24 * ds.length < 1073741760 ∧ ∀ d ∈ ds, d.length < 1073741760) := by
+          kindRep (outI (is.getD j .panic)) bs) ∧ 24 * ds.length < 1073741760 ∧ ∀ d ∈ ds, d.length < 1073741760) := by
     intro j
     by_cases hj : j < is.length
     rotate_left
-    · exact ⟨fun _ => True, 0, fun h => absurd h hj⟩
+    · exact ⟨0, fun h => absurd h hj⟩
     have hg : is.getD j .panic = is[j] := by rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hj]; rfl
     have hx : is.getD j .panic ∈ is := by rw [hg]; exact List.getElem_mem hj
     rcases hk _ hx with hm | ⟨ds, hds⟩
-    · obtain ⟨R, t, hK⟩ := kind_of (p := p) (P := P) C (is.getD j .panic) hm (hwf _ hx)
-      refine ⟨R, t, fun _ => ⟨?_, Or.inl (segsOf_fixed' hm)⟩⟩
-      have e : encOut is j = (is.getD j .panic).encode := by unfold encOut outI; rw [segsOf_fixed' hm]
-      rw [e]; exact hK
+    · obtain ⟨t, hK⟩ := kind_of (p := p) (P := P) C (is.getD j .panic) hm (hwf _ hx)
+      have eo : outI (is.getD j .panic) = is.getD j .panic := by unfold outI; rw [segsOf_fixed' hm]
+      refine ⟨t, fun _ => ⟨?_, Or.inl (segsOf_fixed' hm)⟩⟩
+      have e : encOut is j = (is.getD j .panic).encode := by unfold encOut; rw [eo]
+      rw [e, eo]; exact hK
     · have hle : (is.getD j .panic).encode.length < 16777216 :=
         Nat.lt_of_le_of_lt (len_le_flatten (List.mem_map.mpr ⟨_, hx, rfl⟩)) hlen
       rw [hds, encode_exportSegs] at hle
       simp only [List.length_cons, List.length_append] at hle
       have h1 := encs_len ds
-      refine ⟨fun bs => bs.take 8 = Num.encodeLE 8 9223372036854775827 ∧ (bs.drop 8).take 8 = Codec.fixed 8 ds.length,
-        20, fun _ => ⟨?_, Or.inr ⟨ds, by rw [hds]; rfl, fun bs h1 h2 => ⟨h1, h2⟩, by omega, fun d hd => ?_⟩⟩⟩
-      · have e : encOut is j = (Spec.Instr.exported ds.length).encode := by unfold encOut outI; rw [hds]; rfl
-        rw [e]
+      have eo : outI (is.getD j .panic) = .exported ds.length := by unfold outI; rw [hds]; rfl
+      refine ⟨20, fun _ => ⟨?_, Or.inr ⟨ds, by rw [hds]; rfl, fun bs h1 h2 => by rw [eo]; exact ⟨h1, h2⟩, by omega,
+        fun d hd => ?_⟩⟩⟩
+      · have e : encOut is j = (Spec.Instr.exported ds.length).encode := by unfold encOut; rw [eo]
+        rw [e, eo]
         exact FixedKind.of (by simp [Spec.Instr.encode])
           (fun F RD hL => Decode.Elems.exportedF F RD hL (Codec.fixed 8 ds.length) (by simp [Codec.fixed]))
           (Encode.Enc.exported (Codec.fixed 8 ds.length) (by simp [Codec.fixed]))
           (fun bs h => h.1) (by unfold DropOut.NoDrop; omega) (fun bs _ => Or.inl (by unfold PassIdx; omega))
           (by simp [Codec.fixed]) (by simp)
       · have := encs_item ds d hd; omega
-  exact ⟨fun j => Classical.choose (key j), fun j => Classical.choose (Classical.choose_spec (key j)),
-    fun j hj => Classical.choose_spec (Classical.choose_spec (key j)) hj⟩
+  exact ⟨fun j => Classical.choose (key j), fun j hj => Classical.choose_spec (key j) hj⟩
 
 end Services.Bootstrap.Refine.MixedKinds

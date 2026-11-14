@@ -316,6 +316,7 @@ import Services.Bootstrap.Refine.DecodeVecC
 import Services.Bootstrap.Refine.DecodeC
 import Services.Bootstrap.Refine.ExportOkOf
 import Services.Bootstrap.Refine.RunMixed
+import Services.Bootstrap.Refine.DecodeVec2
 import Services.Bootstrap.Spec
 import Services.Bootstrap.SpecLemmas.Codec
 import Services.Bootstrap.SpecLemmas.Refine

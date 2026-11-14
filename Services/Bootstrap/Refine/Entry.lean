@@ -91,7 +91,7 @@ theorem e2 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR 
 theorem entry {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] (env : RefineHost.Env)
     (x : X) (ω : Regs) (μ : Memory) (s : State) {pb S0 S1 : Nat} (M cap n : Nat) (ce : Chunk)
     (Kp : Chunk → Prop) (O : Nat → List UInt8 → Prop) (H : HeapCtx env pb S0 S1 μ s)
-    (hM : S0 + 456 ≤ M ∧ M + 632 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0) (hn : 0 < n) (hn128 : n < 128)
+    (hM : S0 + 7560 ≤ M ∧ M + 632 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0) (hn : 0 < n) (hn128 : n < 128)
     (hcap : cap < 18446744073709551616) (hce : cap ≠ 18446744073709551615)
     (hceC : ce ∈ chunks s ∧ ce.used = true) (hE : ce.addr + 32 + 232 * n ≤ ce.addr + 32 * ce.size)
     (hEtop : ce.addr + 32 + 232 * n < 2147483648)

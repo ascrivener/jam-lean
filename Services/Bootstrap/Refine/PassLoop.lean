@@ -118,7 +118,7 @@ theorem PInv.cur42 {env : RefineHost.Env} {pb S0 S1 M E n : Nat} {ce : Chunk} {c
 /-- What the loop needs of its layout: refine's frame M on the stack, the n < 128 instructions at E inside
     the allocated chunk `ce`. -/
 structure LayP (S0 S1 M E n : Nat) (ce : Chunk) : Prop where
-  hM : S0 + 456 ≤ M ∧ M + 632 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0
+  hM : S0 + 7560 ≤ M ∧ M + 632 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0
   hn : n < 128
   hE : ce.addr + 32 ≤ E ∧ E + 232 * n ≤ ce.addr + 32 * ce.size
   hEtop : E + 232 * n < 2147483648

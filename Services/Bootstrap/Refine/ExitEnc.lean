@@ -99,7 +99,7 @@ theorem enc_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env 
     (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616) (x : RefineCtx) (ω : Regs) (μ : Memory)
     {hb : Nat} (s : State) {pb S0 S1 : Nat} (H : HeapCtx env pb S0 S1 μ s) (M cap E n w : Nat) (c : Chunk)
     (enc : Nat → List UInt8) (rep : Nat → List UInt8 → Prop)
-    (hM : S0 + 456 ≤ M ∧ M + 632 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0) (hn : 0 < n ∧ n < 128)
+    (hM : S0 + 7560 ≤ M ∧ M + 632 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0) (hn : 0 < n ∧ n < 128)
     (hcap : cap < 18446744073709551616) (hw64 : w < 18446744073709551616)
     (hc : c ∈ chunks s ∧ c.used = true ∧ c.addr + 32 ≤ E ∧ E + 232 * n ≤ c.addr + 32 * c.size)
     (h1 : ω[1] = UInt64.ofNat M)

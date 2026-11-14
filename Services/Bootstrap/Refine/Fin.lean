@@ -212,7 +212,7 @@ theorem free_opt {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.E
 theorem fin_run {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) {pb S0 S1 : Nat} (x : X)
     (ω : Regs) (μ : Memory) (s : State) (H : HeapCtx env pb S0 S1 μ s) (M c E n c' q buf len ret r5 r6 t : Nat)
     (co cq : Chunk)
-    (hM : S0 + 456 ≤ M ∧ M + 632 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0) (hn : 0 < n) (hnc : n ≤ c)
+    (hM : S0 + 7560 ≤ M ∧ M + 632 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0) (hn : 0 < n) (hnc : n ≤ c)
     (hc : co ∈ chunks s ∧ co.used = true ∧ co.addr + 32 = E ∧ E + 232 * n ≤ co.addr + 32 * co.size)
     (hc'' : 232 * c < 18446744073709551616)
     (hq : c' ≠ 0 → cq ∈ chunks s ∧ cq.used = true ∧ cq.addr + 32 = q ∧ cq ≠ co) (hq' : c' < 18446744073709551616)

@@ -36,7 +36,7 @@ set_option maxRecDepth 100000
 def DebugLineOk (p : ByteArray) (cap0 : Nat) (env : RefineHost.Env) (pb S0 S1 : Nat)
     (DR : Nat → List UInt8 → Memory → Prop) : Prop :=
   ∀ (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State) (M c E n : Nat),
-    HeapCtx env pb S0 S1 μ s → S0 + 456 ≤ M → M + 632 ≤ S1 → M % 8 = 0 →
+    HeapCtx env pb S0 S1 μ s → S0 + 7560 ≤ M → M + 632 ≤ S1 → M % 8 = 0 →
     ω[0] = UInt64.ofNat 200 → ω[1] = UInt64.ofNat M → ω[7] = UInt64.ofNat (M + 168) →
     ω[8] = UInt64.ofNat 66099 → ω[9] = UInt64.ofNat (M + 272) →
     μ.readN (M + 272) 8 = Num.encodeLE 8 (M + 248) → μ.readN (M + 280) 8 = Num.encodeLE 8 1382 →

@@ -64,7 +64,7 @@ theorem body {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCode
     (dbg : ExitRun.DebugLineOk p cap0 env pb S0 S1 DR)
     (ω : Regs) (μ : Memory) (s : State) (H : HeapCtx env pb S0 S1 μ s) (M cap n : Nat) (ce : Chunk)
     (Kp : Nat → Chunk → Prop) (O : Nat → List UInt8 → Prop) (ctx : Nat → RefineCtx)
-    (hM : S0 + 456 ≤ M ∧ M + 632 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0) (hn : 0 < n) (hn128 : n < 128)
+    (hM : S0 + 7560 ≤ M ∧ M + 632 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0) (hn : 0 < n) (hn128 : n < 128)
     (hcap : 232 * cap < 18446744073709551616) (hce : cap ≠ 18446744073709551615)
     (hceC : ce ∈ chunks s ∧ ce.used = true) (hE : ce.addr + 32 + 232 * n ≤ ce.addr + 32 * ce.size)
     (hEtop : ce.addr + 32 + 232 * n < 2147483648)

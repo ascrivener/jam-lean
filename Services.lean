@@ -29,6 +29,13 @@ import Services.Bootstrap.Fmt.AccFmt
 import Services.Bootstrap.Fmt.ResultDebug
 import Services.Bootstrap.Fmt.OptionDebug
 import Services.Bootstrap.Fmt.OracleRefineK
+import Services.Bootstrap.Fmt.StructField2
+import Services.Bootstrap.Fmt.StructField3
+import Services.Bootstrap.Fmt.StructField4
+import Services.Bootstrap.Fmt.InstrDebug
+import Services.Bootstrap.Fmt.VecInstr
+import Services.Bootstrap.Fmt.RefineDebugLine
+import Services.Bootstrap.Fmt.FmtRO
 import Services.Bootstrap.Fmt.ReallocCopy
 import Services.Bootstrap.Fmt.ReallocCopyInst
 import Services.Bootstrap.Fmt.Text

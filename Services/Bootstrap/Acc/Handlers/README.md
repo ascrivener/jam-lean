@@ -75,3 +75,65 @@ heap growth) need 2²⁷ ≤ cap anyway.
 | `Upgrade.toCheck` | `upgrade` (20) | 𝖬_U = 1028 ≤ cap < 2⁶⁴ |
 | Designate (in progress) | `designate` (17) | 1100 + 302 · z ≤ cap < 2⁶⁴, z keys |
 | Bless (to do) | `bless` (15) | 422 + 20 · z ≤ cap < 2⁶⁴ |
+
+## Handoff (T2 handlers-a, paused 2026-11-14)
+
+**Branch:** `claude/bootstrap-t2-handlers-a-wip`. Main and #186's branch are merged in, so CodeA has the
+51243 facts. Everything below is pushed.
+
+### Done on the branch (builds, no sorry, axioms only propext / Classical.choice / Quot.sound)
+- `Handlers/KeyEnc.lean`, the storage-key encoder (33843):
+  - `kb_call`: one call under any `HeapHost` at cap ≥ 2²⁷. Either `alloc` gives a block ptr and the
+    run returns with `Vec {c, ptr, keyEnc.len}` at out, the octets `keyEnc μ kp t` at ptr, and
+    `HeapCtxC` kept for the new state; or `alloc` fails and the run reaches the trap at 34070.
+  - Pieces: `kb_pre`, `kb_vec`, `kb_t1`, `kb_t2a`, `kb_t2b`, `kb_epi`, `KVec` / `kb_ext` /
+    `KVec.store44` / `KVec.init`, `kb_body`.
+- `Handlers/KeyBuf.lean`, the fixed-buffer encoder (51243):
+  - `kf_call` writes the same `keyEnc` octets into a 35-octet buffer and returns ω₇ = buf and
+    ω₈ = len. The trap at 51348 is dead.
+- `Handlers/HeapKeep.lean`: local copies of `keep_hi`, `keep_data` and `heapC_writable_data`, so KeyEnc
+  doesn't import the Inputs modules. Switch to T2-inputs' versions after #152 if the import cost is
+  fine; T2-inputs offered to move them to a shared `Acc/HeapKeep.lean`.
+- Earlier work on this branch: the Checkpoint, Upgrade, Designate* and Assign* pieces, `HeapLock`,
+  `DesignateFree`, `AssignFree` and `PVM/Logic/HostBound.lean` (possibly to drop).
+
+### In flight
+- **#186** (`claude/bootstrap-t2-codea-51243`, 81464e1): `fnRangesA += (51243, 51349)`. CI is green.
+  The parent said: hold it until #166 has merged, then re-sync and merge. Don't merge before.
+- **`Handlers/ResStore.lean`, `rs_pre`** (36170's prologue): the draft is **unchecked**. Its import,
+  `Encode.VecCore`, wasn't built locally. Build that, then check `rs_pre`.
+
+### Next steps (the approved order: rows 8, 9, 11)
+1. **36170, the results store** (rows 9 and 11 call it the same way):
+   - The arguments: ω₇ = [sp+456] points to the results (144-octet items), ω₈ = [sp+464] is n, and
+     ω₉ = sp+1568 is a tag-2 key.
+   - The segments, with return addresses and their jump-table entries:
+     - `rs_pre`, then `alloc` (ret 1692 → 36217, null → 36528);
+     - 36217 → `prefix_any` (30977, ret 1694 → 36263);
+     - n = 0 → 36405;
+     - otherwise the loop 36346, per item:
+       - byte 255 → extends [1] and [item+1] (ret 1700 / 1702 → 36373 / 36394);
+       - otherwise extend [0] (ret 1696 → 36290), then 36299 (ret 1698 → 36335);
+     - 36405 → key via `kb_call` (ret 1704 → 36432);
+     - `set` 48104 (ret 1706 → 36456);
+     - dealloc ×2 (1708, 1710), then the return. ω₇ is the `set` outcome's tag octet (S + 64).
+2. **36299, `WorkExecResult`'s encoder.** It dispatches on the tag through the i32 table at 68264
+   (target = 68264 + entry). The arms are at 30374 / 30512 / 30433 / 30438 / 30392 / 30567 / 30640
+   (tags 0–6), per the Vec session's parse; CodeA has them.
+   - Use the Vec session's HeapHost Encode names (`extendHG`, `prefixHG`, `encode_okMH_bigG`, …),
+     coming on `claude/decode-heaphost`.
+   - Take the RO words 68264…68291 as T1's vendored-blob facts (VendoredFacts / FmtRO). Ask T1
+     (session_017ptjPBNFBKAwfdirTGg1oY) for the definition, and T2-inputs for accumulate's carriage.
+3. **Row 8 (8040 … 8471):** 33843 (`kb_call`) → 34377, the typed get (`get_call` on a heap key) →
+   51243 (`kf_call`) → `remove` 48481 → alloc → `set` 48104 → dealloc. Needs #166.
+4. **Row 9:** 8471 → 36170; on Err → 15361 (☇); 8490 is checkpoint, under accContractS's 0/18 case.
+5. **Row 11 (15032 … 15198):** the drops 33214 (ret 558/560) and 28864 (ret 564); 15115 → 36170;
+   dealloc at 15166 and 15185; back to 6766.
+6. When #150 lands: the allocation side of Designate and Assign (lock → `toL` →
+   `alloc_impl0_callG` → unlock). When #163 lands: the fmt-group handlers.
+
+### Dependencies and open decisions
+- #150 → #152 → #166 (get, set, remove) → then #186.
+- The Vec session: HeapHost versions of the Encode primitives (the parent chose option (a)).
+- T1: the RO-data facts pattern for the table at 68264.
+- Bless's scope is still to be agreed with the parent.

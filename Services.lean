@@ -283,6 +283,7 @@ import Services.Bootstrap.Refine.ExportSeg
 import Services.Bootstrap.Refine.ExportStep
 import Services.Bootstrap.Refine.ExportElem
 import Services.Bootstrap.Refine.LoopAll
+import Services.Bootstrap.Refine.Entry
 import Services.Bootstrap.Spec
 import Services.Bootstrap.SpecLemmas.Codec
 import Services.Bootstrap.SpecLemmas.Refine

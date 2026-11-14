@@ -52,10 +52,11 @@ theorem op_call_ok {X : Type} {p : ByteArray} {P : Program} [HasCode p P] [HasCo
       (Blob.encodeNat nt).length = Blob.encodeNat nt)
     (hsrc : ∃ c ∈ chunks s, c.used = true ∧ c.addr + 32 ≤ ip ∧
       ip + (128 + (Blob.encodeNat g).length + 1 + (Blob.encodeNat no).length + no +
-        (Blob.encodeNat nt).length + nt) + 32 ≤ c.addr + 32 * c.size) :
+        (Blob.encodeNat nt).length + nt) ≤ c.addr + 32 * c.size) :
     (∃ po pt s1 s2 ω' μ', VAlloc pb hb no po s s1 ∧ VAlloc pb hb nt pt s1 s2 ∧
       FreeStepsH p (env.rel cap) 46300 ω μ x 47332 ω' μ' x (7 * no + 7 * nt + 7000) ∧
       HeapCtxC env.code pb S0 S1 μ' s2 ∧ (∀ c ∈ chunks s, c.used = true → c ∈ chunks s2) ∧
+      (∀ c ∈ chunks s, c.used = true → c ∈ chunks s1) ∧ (∀ c ∈ chunks s1, c.used = true → c ∈ chunks s2) ∧
       (∀ c ∈ chunks s, c.used = true → ∀ a, InDataA c a → μ'.read a = μ.read a) ∧
       ω'[0] = UInt64.ofNat (rdN μ (b + 416) 8) ∧ ω'[1] = UInt64.ofNat (b + 424) ∧
       ω'[5] = UInt64.ofNat (rdN μ (b + 408) 8) ∧ ω'[6] = UInt64.ofNat (rdN μ (b + 400) 8) ∧
@@ -123,7 +124,7 @@ theorem op_call_ok {X : Type} {p : ByteArray} {P : Program} [HasCode p P] [HasCo
       have kw : ∀ i, b + 32 ≤ i → i + 32 ≤ b + 272 → ∀ j, j < 32 → μ2.read (i + j) = μ1.read (i + j) :=
         fun i h1 h2 j hj => k2 _ (by omega) (by omega) (by omega)
       refine Or.inl ⟨po, pt, s1, s2, ω3, μ3, va1, va2,
-        (((r1.trans r2).trans r3)).mono (by omega), H3, fun c hc hu => keep2 c (keep1 c hc hu) hu,
+        (((r1.trans r2).trans r3)).mono (by omega), H3, fun c hc hu => keep2 c (keep1 c hc hu) hu, keep1, keep2,
         fun c hc hu a ha => ?_, by rw [e0, kb _ (by omega) (by omega)], e1,
         by rw [e5, kb _ (by omega) (by omega)], by rw [e6, kb _ (by omega) (by omega)], x0, x8, x16,
         by rw [x24, m8], by rw [x32, m16], by rw [x40, m0],
@@ -169,7 +170,7 @@ theorem op_call_err {X : Type} {p : ByteArray} {P : Program} [HasCode p P] [HasC
     (htt : rdN μ (ip + 128 + (Blob.encodeNat g).length) 1 = t)
     (het : μ.readN (ip + 128 + (Blob.encodeNat g).length + 1) (Blob.encodeNat nt).length = Blob.encodeNat nt)
     (hsrc : ∃ c ∈ chunks s, c.used = true ∧ c.addr + 32 ≤ ip ∧
-      ip + (128 + (Blob.encodeNat g).length + 1 + (Blob.encodeNat nt).length + nt) + 32 ≤
+      ip + (128 + (Blob.encodeNat g).length + 1 + (Blob.encodeNat nt).length + nt) ≤
         c.addr + 32 * c.size) :
     (∃ pt s2 ω' μ', VAlloc pb hb nt pt s s2 ∧
       FreeStepsH p (env.rel cap) 46300 ω μ x 47332 ω' μ' x (7 * nt + 7000) ∧

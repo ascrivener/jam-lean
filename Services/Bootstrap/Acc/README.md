@@ -262,8 +262,90 @@ corollaries.
     over stack-only steps.
   - Checked against the loop: 44916 decodes each item into its own stack buffer (sp + 88), then copies the
     184 octets into the `Vec` (memcpy at 45097), so `out` on the stack is right.
-- **Next:** the item decode from 45126 (it_pre, the tag read, then `tr_call` / `op_call_ok` / `op_call_err`,
-  with ω₀, ω₅, ω₆ restored to the caller's), then the loop 44916 (≤ 89 items), then 44495 and 6630 → 6674.
+- The item decode for operands from 45126 (`Acc/Inputs/ItemCall.lean`): `item_pre0`, **`item_op_ok`**,
+  **`item_op_err`** (ω₀, ω₁, ω₅, ω₆ as at the call). With `tr_call` (transfers, stack only, host-generic)
+  both arms are covered. PR #141.
+- **Next: the loop 44916** (frame 480; `Vec<AccumulateItem>::decode` with the count n from 39710), as the
+  code facts show it:
+  - 44916 … 44964: prologue (ω₀, ω₅, ω₆ at sp + 472, + 464, + 456; out at sp + 0, reader at sp + 48;
+    `Vec { cap 0, ptr 8, len 0 }` at sp + 64 … + 88); n = 0 → 45556 (the empty `Vec`);
+  - 44965 … 45036: capacity min(n, 89) (ω₁₂ = 89), `finish_grow` 40852 (2040 → 45042) for cap·184 octets,
+    align 8 (`fg_new_call`); an error → 45642 (trap);
+  - 45042 … 45126: cap and ptr stored at sp + 64 / + 72, then per item: ω₇ = sp + 88 (the stack slot),
+    ω₈ = the reader (sp + 48), the item decode 45126 (2044 → 45168);
+  - 45168: slot word −2 (an error) → 45257 (drop the decoded items, free, error out); else memcpy
+    184 octets sp + 88 → sp + 272 (2046 → 45192); len = cap → 45201: grow (`finish_grow` with a current
+    block, 1990; only when n > 89, excluded by the temporary bound); 45075: memcpy sp + 272 → ptr + 184·len
+    (2042 → 45103), len += 1, count −= 1, loop to 44996 / 45115;
+  - 45593 … 45613: the `Vec` (cap, ptr, len) written to out, epilogue, return.
+  Segments done (`Acc/Inputs/Loop.lean`): `lp_pre` (44916 → 40852, n > 0), `lp_fg_ret` (41175 → 45042),
+  `lp_buf` (45042 → 45126), `lp_ret_tr` / `lp_ret_op` (47072 / 47332 → 45168), `lp_chk` (45168 → 68729,
+  then `memcpy_big_aligned` 184 octets, 2046 → 45192), `lp_step` (45192 → 68729, then memcpy into
+  q + 184·L, 2042 → 45103), `lp_next` (45103 → 45126, count > 1), `lp_last` (45103 → 45613, count 1:
+  `Vec { n, q, L + 1 }` at out). **Next:** n = 0 (44952 → 45556 → 45613); then the induction over the
+  items: an invariant "after L items, len L at s + 80, the buffer's first L slots hold the decoded
+  items, the reader past them, `HeapCtxC` for the current state", one step = item decode (`tr_call` lifted
+  by `keep_hi`, or `item_op_ok` / `item_op_err`) + `lp_ret_*` + `lp_chk` + memcpy + `lp_step` + memcpy.
+  Statement plan for the induction, in T1's `ElemOkAF` style (`Decode/LoopA.lean`): a per-item contract
+  `ItemOk env cap pb enc Rep` = from 45126 with the reader holding `enc` (inside an allocated chunk), the
+  stack slot `out` and `HeapCtxC`, either the run reaches the item's `jumpInd` (47072 / 47332, so a
+  `Fin 2`/address parameter or an existential end point) with ω₀, ω₁, ω₅, ω₆ restored, the slot's first word
+  ≠ −2, `Rep (slot octets) μ''` for every μ'' agreeing on the item's fresh chunks, the context for a new
+  state keeping the old chunks and their data, the reader advanced by |enc|; or Exhausts (an `alloc`
+  failure reaching 45975). Instances: `tr_call` (no chunks), `item_op_ok`, `item_op_err`. The loop
+  theorem then takes a list of (enc, Rep) with `ItemOk` each, n = the list's length ≤ 89.
+  Done (`Acc/Inputs/LoopItem.lean`, `LoopItemOp.lean`): `ItemOk`, and its instances `itemOk_tr`
+  (`encTr`, `RepTr`), `itemOk_opok` (`encOpOk`, `RepOpOk`), `itemOk_operr` (`encOpErr`, `RepOpErr`);
+  helpers `readN_app`, `Words4.readN`, `blk`, `VAlloc.blk_mem`, `blk_read`, `wd`.
+  Done (`Acc/Inputs/LoopInd.lean`): `HeapCtxC.keep_data`, `lp_body` (one item and its two copies),
+  `lp_items` (the induction), `lp_buf_err`, and **`lp_call`** (44916 → 45613, 0 < n ≤ 89): `Vec { n, q, n }`
+  at out with slot j satisfying item j's `Rep`, the buffer a fresh chunk, the context kept with every old
+  chunk and its data; or exhausted (45975, or the trap 45642 when `finish_grow` fails). n = 0: `lp_empty`.
+  **Next:** 44495's glue (the fetched bytes unwrapped, the count by `decodeU32A`, `lp_call`, the fetched
+  buffer freed at 42327 with the allocator's lock inline, the result stored, return 2022/226 → 6674),
+  `fetch_vec`'s zeroed allocation (a′), then the 6630 → 6674 summary.
+  **44495's glue, as the code facts show it** (in 6630's 144-octet frame, sp): ω₆ = the fetched `Vec`'s
+  cap (sp + 56; −1 = the fetch's error niche → trap 44676); ptr at sp + 64, len at sp + 72; the reader
+  {ptr, len} at sp + 104 / + 112; `decodeU32A` (2024 → 44527; its error bit → trap); ω₉ = n,
+  ω₇ = sp + 80 (out), ω₈ = sp + 104, `lp_call` (2026 → 44552); the result's cap −1 (an error) → trap;
+  ptr, len to sp + 16 / + 24; if the fetched cap ≠ 0: the lock (196792 + 10056, spin), `dealloc` 42327
+  (2028 → 44632) of the fetched buffer, unlock (196792 + 8192 + 1864); then `Vec { cap, ptr, len }` at
+  *(sp + 8) and the return through sp + 136 (226 → 6674). The free needs a `HeapCtxC`-level dealloc:
+  handlers-a is writing `dealloc_callG` (`Decode/DeallocCall.lean`); use it.
+  Segments done (`Acc/Inputs/Glue.lean`): `g_pre` (44495 → 39710), `g_mid` (44527 → 44916), `g_ret`
+  (45613 → 44552), `g_post` (44552 → 44591, the lock about to be taken), `g_end` (44641 → 44674).
+  The free (`GlueLock.lean`, `GlueFree.lean`): `g_lock` (44591 → 42327), `g_unlock` (44632 → 44641) and
+  `g_free` (44591 → 44641) over fmt's `free_callG` (the free path with the lock held, `HeapCtxL`),
+  giving `HeapCtxC` for `free s ptr` again (`heapL_release`).
+  **Composed** (`GlueCall.lean`): `g_call` (44495 → 44674, 0 < n ≤ 89, under `env.rel cap`) and
+  `g_call0` (n = 0, host-generic). `lp_items` / `lp_call` state each slot's `Rep` for any memory
+  agreeing on the final state's allocated data off the reader's chunk (it is freed next), and the
+  stack frame above sp. With `accHeapHost env` the runs lift to `accContractK` (`FreeStepsH.ofAccGrow`).
+  **The model link** (`InputsSpec.lean`): `itemOf` maps each of the model's accumulation inputs (GP v0.8.0
+  §12: an operand tuple 𝕌 or a deferred transfer 𝕏) to its loop item; `itemOf_enc` (its encoding is the
+  model's `AccumulateInput.encode`), `itemOf_ok` (an `InputSized` input is an `ItemOk` item),
+  `inputsEnc_items` (ℰ(↕**i**) is the one-octet count and the items' encodings, for < 128 inputs) and
+  `g_inputs` (44495 → 44674 stated for `aenv.inputs`).
+  **`fetch_vec`** (`InputsPre.lean`, `FetchVecCall.lean`): `in_pre` (6630 → 47417), `fv_call` (47417 → 47722
+  over the zeroed `alloc_implZ_callG`, the lock held as `HeapCtxL`; `heapL_release_data` gives `HeapCtxC`
+  back after the second `fetch`), `fv_null` (no block: the trap 47554), `fv_ret` and `in_ret`.
+  **The summary** (`Inputs.lean`): `inputs_decode`, 6630 → 6674 under `accContractK`.
+  **(a′) `fetch_vec`'s zeroed allocation:** `alloc_impl` stores ω₁₀ (the zero flag) at its frame + 112;
+  the tail (42074 … 42128) computes ω₁₀ := flag ∧ ω₁₀ and, when nonzero, tail-calls `memzero` 70133 on
+  the block (returning to the caller), else returns at 41404. The existing proofs fix the flag 0
+  (`h112 : rdN μ (sp + 112) 8 = 0`, `bitwise_and_zero` in `Alloc/AllocTail.lean`). Since `fetch` then
+  writes all L octets of the block, the zeroing does not affect the result: it suffices to show both
+  tail branches keep `HeapCtxC` (memzero writes only the block's data and its stack frame, so
+  `HeapCtxC.keep_data`). This means a flag-generic copy of the `alloc_impl` chain (`AllocTail`, then the
+  `alloc_callG` composition) in new `AllocZeroed*.lean` files, keeping the flag-0 lemmas as they are.
+  **Link to the spec (planned).** The top-level T2 assembly instantiates the list from the model's
+  accumulate inputs: for each of the paper's items (GP v0.8.0 §12: an operand 𝕌 or a deferred
+  transfer 𝕏), `enc` is its ℰ encoding (Appendix C: tag 0 then ℰ(p, e, a, y, g, O(l), ↕t), or tag 1
+  then ℰ(ℰ₄(s), ℰ₄(d), ℰ₈(a), m, ℰ₈(g))), so ℰ(↕**i**) = ℰ(n) ⌢ enc₁ ⌢ … ⌢ encₙ is what `fetch` kind 14
+  returns, and `Rep` is the slot layout of that item (the transfer layout of `tr_call`, the operand layout
+  of `item_op_ok` / `item_op_err`). The per-item `ItemOk` facts come from those three theorems; the
+  model-side function from items to (enc, Rep) is written there, next to the model's types.
+  Then 44495's glue and the 6630 → 6674 summary.
 
 Plan:
 1. (After the bounds are lifted.) `finish_grow`'s realloc path (a current block, 40898 … 40995 → 42980 → 41109). It needs:
@@ -278,3 +360,74 @@ Plan:
 4. The item loop 44916 (capacity min(n, 89), 184-octet slots), a LoopA-style proof at accumulate's
    frame.
 5. 44495's glue (unwrap, count, free of the fetched bytes), then the summary 6630 → 6674.
+
+## T2: the whole path, step by step (plan)
+
+The target is `accumulate_spec` (`docs/bootstrap-target.md`, T2). Ψ_A's state, transfers, yield and
+provisions are those of `Spec.accumulate C t` run for some n host operations under `ASem`, from
+I(**e**′, s), where **e**′ is **e** with the incoming transfers credited. The binary side is a
+chain of gas-free runs under the accumulate contract, lifted to Ψ_M at the end. Each step's run ends
+in one of three ways:
+- it reaches the next step's start;
+- it reaches the halt at 15359;
+- it traps (☇, the panic or exhaustion outcomes). The lift turns a trap into "the spec stopped at its
+  last checkpoint".
+
+| # | Binary | Statement (proved, or to prove) | Spec side | Owner | Status |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 5 → 6501 | `Start.start_to_6501`: the SDK setup and the decodes of t, s and \|**i**\| (`Args.args_run`) | none (no effect) | T2 start | merged (#122, #124) |
+| 2 | 6501 → 6630 | `acc_log_line`: `info` (6) of this service and the first log line; frame-only, with `info_self` | `myInfo` needs no `AOp`: the spec does not log | fmt | #145 open |
+| 3 | 6630 → 6674 | `inputs_decode`: `fetch_vec(14)`, the n items into 184-octet slots holding `itemOf` of each input, or Exhausts | `op AOp.fetchItems` and `decode (Dec.vec Dec.item)` | T2 inputs | #152 open (bounds: ≤ 89 inputs, blobs ≤ 16384 octets) |
+| 4 | 6674 … 6782 | **items loop**: the induction over the slots; the word at slot + 0 selects the transfer path (−1 → 7159), the end (−2 → 15215) or an operand. The invariant is the `Prog` continuation `for it in rest` | `for it in items` | unowned | gap |
+| 5 | 7159 … | **`on_transfer`**: the counter under "transfer-count" read and bumped, then ℰ(s, a, memo) written | `onTransfer` | unowned | gap |
+| 6 | 7009 | operand with a work error: skipped (15191) | `.work _ none => pure ()` | unowned (with 4) | gap, small |
+| 7 | 7073 → 31894 → 22145 → 482 | **the output decode** `BootstrapWorkOutput::decode`: refine's `Vec<Instruction>` loop at sp − 1160 (the frame-base `ElemOkF` pattern), then k as `u16` | `Dec.output`; undecodable → panic | T1 decoders (frame-moved) | gap: needs the frame-base `Loop`/`ElemOk` |
+| 8 | 8073 → 34377 | `add_recent_work_item`: `read` / `write` of the ring and counter | `addRecent` | unowned | gap |
+| 9 | 8471 → 36170, 8490 | empty results stored, then `checkpoint` | `store …; op AOp.checkpoint` | unowned (with 4) | gap; `checkpoint` is in `accContractC` (#140) |
+| 10 | 8490 … 15032 | **the instruction loop**: per instruction, the log line (`format!` 59375, `log`), the dispatch and its handler to the shared tail 14278, the result appended | `onWorkItem`'s loop, `onInstr` per `Instr` | Handlers A (handlers); fmt (log lines); loop itself unowned | handlers partly (#129, #131, #151); loop gap |
+| 11 | 15032 … 15185 | the results written (unless a `Zombify`), drops (dealloc) | the tail of `onWorkItem` | unowned (with 10) | gap |
+| 12 | 15215 … 15359 | the end: halt with (ω₇, ω₈) = (0, 0) | `pure ()` | unowned (with 4) | gap, small |
+| 13 | lift | Ψ_M = the free run's output (`psiM_of_freeRunH_accC`, `checkpoint`'s ω₇ dead: #140), Ψ_A's outcome from x or y (`psiARun_eq`) | `ASem.outcome (ASem.run n …)` | #140 (the lift); the rest unowned | partly |
+| 14 | spec | **`ASem`**, the semantics of `Prog AOp` against Ψ_A's host functions, plus `accEnv`, `credit` and `ASem.run` / `ASem.outcome` as `accumulate_spec` uses them | (all of it) | unowned | gap: not defined yet |
+
+**Cross-cutting gaps.**
+- **G1, `gas` (0) at 11330 and 13011.** See the proposal below.
+- **G2, the spec side, which does not exist yet.**
+  - `ASem`, `accEnv`, `credit`, `ASem.run` and `ASem.outcome` need defining (row 14).
+  - So does a spec-only lemma: `decode (Dec.vec Dec.item) (inputsEnc env)` is the inputs mapped to `Spec.Item`, matching `itemOf`'s slots (`itemOf_enc` gives the encoding side).
+  - `AOp.fetchItems`' docstring says kind 15, but the model's `fetch` (`JAM/Host/General.lean`) and the binary (47417 … 47722) use kind 14 for ℰ(↕**i**); kind 15 is one item. `ASem` must interpret `fetchItems` as kind 14.
+- **G3, the temporary bounds.** At most 89 inputs and blobs of at most 16384 octets (one chunk) come from the `Vec` decoders' no-growth assumption. Lifting them needs the realloc generalization.
+- **G4, the per-instruction log lines.** Each instruction is formatted and logged before it runs. They are frame-only (fmt), but a summary for each format is needed.
+- **G5, `Benchmark`'s `checkpoint` (11889).** Its ω₇ deadness is in #140; its handler is not proved yet.
+- **G6, the gas cap.** `fetch` costs 287 + 𝔊(400, L), and `hcost` is a hypothesis of `inputs_decode`. It becomes "or ∞" with the parametrized cap (#73), as for T1.
+
+### Proposal for G1: the `gas` host call
+
+What the code does with the result (code facts):
+- 11330 `ecalli 0`, then 11331 `store ω₇ → sp + 1384`, 11335 `ω₇ := sp + 1384`, 11339 `store → sp + 1416`;
+- 13011 / 13012 / 13016 / 13020: the same pattern, through sp + 1472.
+
+So the gas left is stored, and its *address* is put in a `format!` argument slot (sp + 1416). It is
+printed, nothing more. Neither transfer's gas limit comes from it:
+- `Transfer`'s `transfer` (11551) takes ω₉ from sp + 1472, which was stored at 11307 from the instruction;
+- `CreateService`'s `transfer` (13111) takes it from sp + 248.
+
+So the value affects only a log line, and `log` (100) changes nothing in Ψ_A's outcome. The spec has
+no gas operation, consistent with this. It cannot be pinned like `checkpoint`: the value is read
+afterwards (by `format!`), so ω₇ is not dead.
+
+Proposal:
+1. **Contract.** Extend `accContractC` with id 0 answering *any* ω₇ (`accContractG`: Ω_G's outcome
+   with ω₇ replaced by an arbitrary v, everything else pinned). As with `accContractCK_pins7`, it
+   pins the handler except in ω₇ at ids 0 and 18.
+2. **Handlers.** State the `Transfer` and `CreateService` handlers for every v. The logging
+   summaries are frame-only, so they already hold for any argument value. v flows only into the log
+   line, so the handlers' post-states don't mention it.
+3. **Lift.** `psiM_of_freeRunH_anyG`: the real Ψ_M run is a free run under `accContractG` (at each
+   `gas` call, v is the gas actually left). The free run is unique given the answers, since
+   everything else is pinned. So a statement proved for every choice of answers holds for Ψ_M. This
+   replaces the `DeadAfter` side condition for id 0 with "proved for all v", and no data-flow
+   analysis is needed.
+
+Cost: small for 1 and 3, which are variants of #140's `ContractC` / `CkLift`. 2 is free once the handlers carry v as a parameter.
+Alternative: a data-flow `DeadAfter`-style check that ω₇'s value reaches only `format!` arguments. That is harder to state and to check.

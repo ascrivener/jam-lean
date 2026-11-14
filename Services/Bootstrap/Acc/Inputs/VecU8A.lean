@@ -118,7 +118,7 @@ theorem vv_call {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
     (hn : 0 < n ∧ n ≤ 16384) (hrl : (Blob.encodeNat n).length + n ≤ rlen) (hrl32 : rlen < 4294967296)
     (henc : μ.readN ip (Blob.encodeNat n).length = Blob.encodeNat n)
     (hsrc : ∃ c ∈ chunks s, c.used = true ∧ c.addr + 32 ≤ ip ∧
-      ip + (Blob.encodeNat n).length + n + 32 ≤ c.addr + 32 * c.size)
+      ip + (Blob.encodeNat n).length + n ≤ c.addr + 32 * c.size)
     (hsp : 2147483960 ≤ sp ∧ sp % 8 = 0) (hSTk : S0 + 440 ≤ sp)
     (hout : sp ≤ out ∧ out + 24 ≤ S1) (hrd : sp ≤ rd ∧ rd + 16 ≤ S1)
     (dor : out + 24 ≤ rd ∨ rd + 16 ≤ out) :
@@ -226,7 +226,7 @@ theorem vv_empty {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x :
     (h8 : ω[8] = UInt64.ofNat rd)
     (hR0 : μ.readN rd 8 = Num.encodeLE 8 ip) (hR8 : μ.readN (rd + 8) 8 = Num.encodeLE 8 rlen)
     (hrl : 1 ≤ rlen) (hrl32 : rlen < 4294967296) (hb0 : μ.readN ip 1 = [0])
-    (hip : 65536 ≤ ip ∧ ip + 32 < 2147483648) (hra : μ.readable ip = true)
+    (hip : 65536 ≤ ip ∧ ip < 2147483648) (hra : μ.readable ip = true)
     (hsp : 2147483960 ≤ sp ∧ sp < 4294967296) (hout : sp ≤ out ∧ out + 24 < 4294967296)
     (hrd : sp ≤ rd ∧ rd + 16 < 4294967296) (dor : out + 24 ≤ rd ∨ rd + 16 ≤ out)
     (hwf : ∀ a, sp - 160 ≤ a → a < sp → μ.writable a = true)

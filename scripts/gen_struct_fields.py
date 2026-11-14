@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Write `Services/Bootstrap/Fmt/StructField<K>Steps.lean` and `StructField<K>.lean`: frame-only
-summaries of `Formatter::debug_struct_field<K>_finish` (K = 2 … 5), following `StructField1Steps`
+summaries of `Formatter::debug_struct_field<K>_finish` (K = 2 … 4), following `StructField1Steps`
 and `StructField1` (K = 1, written by hand).
 
 usage: gen_struct_fields.py K pcA retA pcB ret1 [pcG_i ret_i]*(K-1) pcC retC pcD
@@ -8,6 +8,9 @@ usage: gen_struct_fields.py K pcA retA pcB ret1 [pcG_i ret_i]*(K-1) pcC retC pcD
   pcB  after the name; ret1 the return of the first `DebugStruct::field` call (→ pcG_2, or pcC)
   pcG_i the glue before field i (i = 2 … K), ret_i its call's return (→ the next glue, or pcC)
   pcC  `DebugStruct::finish`; retC its `write_str`'s return (→ pcD); pcD the return
+
+`debug_struct_field5_finish` (63570) is specialised to its one caller (it saves the constants 6 and
+7 in place of ω₆ and the first name's length) and is not generated; refine's milestone does not reach it.
 
 Field 1 comes in registers (name ω₁₀, ω₁₁; slot ω₁₂) with its vtable at the caller's sp; field
 i ≥ 2 at the caller's sp + 8 + 32 (i − 2) (name, length, slot, vtable).
@@ -48,12 +51,6 @@ def main():
         st = st.replace('ω\'[5] = UInt64.ofNat fnm ∧\n      ω\'[6] = UInt64.ofNat F', 'ω\'[5] = UInt64.ofNat F ∧\n      ω\'[6] = UInt64.ofNat fnm')
         st = st.replace('(h5 : ω[5] = UInt64.ofNat fnm) (h6 : ω[6] = UInt64.ofNat F)', '(h5 : ω[5] = UInt64.ofNat F) (h6 : ω[6] = UInt64.ofNat fnm)')
         st = st.replace('ω\'[5] = UInt64.ofNat fnm ∧\n      ω\'[6] = UInt64.ofNat F ∧', 'ω\'[5] = UInt64.ofNat F ∧\n      ω\'[6] = UInt64.ofNat fnm ∧')
-    if K == 5:   # specialised to its one caller: it saves 6 for ω₆ and 7 for the first field's name length
-        st = st.replace('    (hdis : F + 24 ≤ sp - 56 ∨ sp ≤ F)\n', '    (hdis : F + 24 ≤ sp - 56 ∨ sp ≤ F) (e6 : v6 = 6) (e11 : fnl = 7)\n', 1)
-        st = st.replace('  have hr : ∀ a, sp - 56 ≤ a → a < sp → μ.readable a = true := fun a h1 h2 => Memory.readable_of_writable (hw a h1 h2)\n  have hW',
-                        '  subst e6 e11\n  have hr : ∀ a, sp - 56 ≤ a → a < sp → μ.readable a = true := fun a h1 h2 => Memory.readable_of_writable (hw a h1 h2)\n  have hW', 1)
-        st = st.replace('all_goals post_simp [rdN_writeN_disjoint, rdN_writeN_same8, Num.decodeLE_encodeLE, h0, h1, h5, h6, h7, h10,',
-                        'all_goals post_simp [rdN_writeN_disjoint, rdN_writeN_same8, rdN_lit8, Num.decodeLE_encodeLE, h0, h1, h5, h6, h7, h10,', 1)
     st = re.sub(r'/-!.*?-/', f'''/-!
 # `Formatter::debug_struct_field{K}_finish` ({pcA}): steps
 
@@ -96,8 +93,6 @@ theorem sf{K}_g{i} {{p : ByteArray}} {{P : Program}} [HasCode p P] [HasCodeF p P
 def composed(K, pcA, retA, pcB, rets, after, glue, pcC, retC, pcD):
     I = range(1, K + 1)
     V56 = 'F fnm1' if K == 3 else 'fnm1 F'
-    spec = ' (e6 : v6 = 6) (e11 : fnl1 = 7)' if K == 5 else ''
-    specArg = ' e6 e11' if K == 5 else ''
     fp = ' '.join(f'e{i} ad{i} M{i} C{i} fn{i}' for i in I)
     hRs = '\n'.join(f'    (hR{i} : RefOk p P R env pb S0 S1 Z μA sA spA e{i} ad{i} M{i} C{i})' for i in I)
     fv = ' '.join(f'fnm{i} fnl{i} v{i} vt{i}' for i in I)
@@ -155,7 +150,7 @@ theorem debug_struct{K} {{p : ByteArray}} {{P : Program}} [HasCode p P] [HasCode
     (h6 : ω[6] = UInt64.ofNat v6) (h7 : ω[7] = UInt64.ofNat F) (h8 : ω[8] = UInt64.ofNat nm)
     (h9 : ω[9] = UInt64.ofNat nl) (h10 : ω[10] = UInt64.ofNat fnm1) (h11 : ω[11] = UInt64.ofNat fnl1)
     (h12 : ω[12] = UInt64.ofNat v1)
-    (hv5 : v5 < 18446744073709551616 ∧ v6 < 18446744073709551616){spec}
+    (hv5 : v5 < 18446744073709551616 ∧ v6 < 18446744073709551616)
     (hnm : 65536 ≤ nm ∧ nm + nl + 24 ≤ 77144)
 {fh}
     (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t)
@@ -180,7 +175,7 @@ theorem debug_struct{K} {{p : ByteArray}} {{P : Program}} [HasCode p P] [HasCode
   -- the struct's name
   obtain ⟨ω1, μ1, run1, a0, a1, a5, a6, a7, a8, a9, s48, s40, s32, s8, s0, fr1, rd1, wr1⟩ :=
     sf{K}_a (p := p) (P := P) (R := R) x ω μ sp F W fnm1 fnl1 v1 ret v5 v6 ⟨by omega, by omega⟩ h0 h1 h5 h6 h7 h10 h11
-      h12 ⟨by omega, hv5.1, hv5.2, by omega, by omega, by omega, by omega⟩ (Or.inr hF.1){specArg} hf.buf hf.vt hf.vws
+      h12 ⟨by omega, hv5.1, hv5.2, by omega, by omega, by omega, by omega⟩ (Or.inr hF.1) hf.buf hf.vt hf.vws
       (fun a h1 h2 => Memory.readable_of_writable (hst a (by omega) (by omega)))
       (fun a h1 h2 => hf.vrd a (by omega) (by omega)) (fun a h1 h2 => hst a (by omega) (by omega))
   have k1 : ∀ a, a < 4294967296 → (a < sp - 56 ∨ sp ≤ a) → μ1.read a = μ.read a := fr1

@@ -254,7 +254,7 @@ theorem args_tail {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.
         hnew bfr
     refine Or.inl ⟨q, s', ω', μ', run.mono (by omega), o0, o1, o5, o6, oc, oq, ol, oh, oI, oS, oC, odat, H', hq, hbase,
       ⟨_, hmem, rfl, by simp only; omega, by simp only; omega, hin⟩, tk, wst⟩
-  · exact Or.inr ⟨_, ω2, μ2, x, 40611, run1.trans run2, e7, Or.inl ⟨rfl, sStart, 0, _, hna⟩⟩
+  · exact Or.inr ⟨_, PassLoop.ExhaustsX.ofFmt ⟨ω2, μ2, x, 40611, run1.trans run2, e7, Or.inl rfl⟩⟩
 
 /-- **Refine's argument parse from 35130 to 4680, 16384 < Y < 2^30 − 64**: as `args_tail`, through
     `vec_u8_args_big`, except that the payload's chunk is only an allocated chunk of ⌈Y/32⌉ + 1 units

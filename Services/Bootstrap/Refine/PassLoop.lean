@@ -67,9 +67,11 @@ theorem ExhaustsX.mono {env : RefineHost.Env} {cap pb : Nat} {p : ByteArray} {i 
 
 /-- **The transform loop's state at 5042 after k instructions passed through.** -/
 structure PInv (env : RefineHost.Env) (pb S0 S1 M E n : Nat) (ce : Chunk) (capI : Nat) (μ0 : Memory)
-    (Kp : Chunk → Prop) (O : Nat → List UInt8 → Prop) (k : Nat) (ω : Regs) (μ : Memory) (s : State) : Prop where
+    (Kp : Chunk → Prop) (O : Nat → List UInt8 → Prop) (i k : Nat) (ω : Regs) (μ : Memory) (s : State) : Prop where
   h1 : ω[1] = UInt64.ofNat M
-  cur : μ.readN (M + 144) 8 = Num.encodeLE 8 (E + 232 * k)
+  /-- The cursor: at the loop head 5042, the word at M + 144; at 5054, where refine's prologue enters the
+      loop past the end test, ω₅. -/
+  cur : (i = 5042 ∧ μ.readN (M + 144) 8 = Num.encodeLE 8 (E + 232 * k)) ∨ (i = 5054 ∧ ω[5] = UInt64.ofNat (E + 232 * k))
   en : μ.readN (M + 120) 8 = Num.encodeLE 8 (E + 232 * n)
   c128 : μ.readN (M + 128) 8 = Num.encodeLE 8 9223372036854775832
   c136 : μ.readN (M + 136) 8 = Num.encodeLE 8 9223372036854775809
@@ -104,13 +106,22 @@ structure PInv (env : RefineHost.Env) (pb S0 S1 M E n : Nat) (ce : Chunk) (capI 
   fr : ∀ a, (M + 80 ≤ a ∧ a < M + 96) ∨ (M + 112 ≤ a ∧ a < M + 120) ∨ (M + 608 ≤ a ∧ a < M + 632) →
     μ.read a = μ0.read a
 
+/-- At the loop head 5042, the cursor is the word at M + 144. -/
+theorem PInv.cur42 {env : RefineHost.Env} {pb S0 S1 M E n : Nat} {ce : Chunk} {capI : Nat} {μ0 : Memory}
+    {Kp : Chunk → Prop} {O : Nat → List UInt8 → Prop} {k : Nat} {ω : Regs} {μ : Memory} {s : State}
+    (st : PInv env pb S0 S1 M E n ce capI μ0 Kp O 5042 k ω μ s) :
+    μ.readN (M + 144) 8 = Num.encodeLE 8 (E + 232 * k) := by
+  rcases st.cur with ⟨-, h⟩ | ⟨h, -⟩
+  · exact h
+  · exact absurd h (by decide)
+
 /-- What the loop needs of its layout: refine's frame M on the stack, the n < 128 instructions at E inside
     the allocated chunk `ce`. -/
 structure LayP (S0 S1 M E n : Nat) (ce : Chunk) : Prop where
   hM : S0 + 456 ≤ M ∧ M + 648 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0
   hn : n < 128
   hE : ce.addr + 32 ≤ E ∧ E + 232 * n ≤ ce.addr + 32 * ce.size
-  hEtop : E + 232 * n + 24 < 2147483648
+  hEtop : E + 232 * n < 2147483648
 
 /-- Equal reads of 232·k octets are equal slot by slot. -/
 theorem slot_eq {μ μ' : Memory} {a a' k j : Nat} (h : μ'.readN a' (232 * k) = μ.readN a (232 * k)) (hj : j < k) :
@@ -122,14 +133,14 @@ theorem slot_eq {μ μ' : Memory} {a a' k j : Nat} (h : μ'.readN a' (232 * k) =
     `PInv (k + 1)` at 5042, the new output slot holding instruction k's octets as they were in μ0. -/
 theorem step_room {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P]
     {X : Type} {R : HostRel X} (env : RefineHost.Env) (x : X) (ω : Regs) (μ μ0 : Memory) (s : State)
-    {pb S0 S1 M E n capI : Nat} {ce : Chunk} {Kp : Chunk → Prop} {O : Nat → List UInt8 → Prop} (L : LayP S0 S1 M E n ce)
-    (k : Nat) (hk : k < n) (t : Nat) (ht : PassIdx t)
+    {pb S0 S1 M E n capI : Nat} {ce : Chunk} {Kp : Chunk → Prop} {O : Nat → List UInt8 → Prop} {i : Nat} (L : LayP S0 S1 M E n ce)
+    (k : Nat) (hk : k < n) (t : Nat) (ht : PassK t (rdN μ0 (E + 232 * k + 44) 1))
     (sD0 : μ0.readN (E + 232 * k) 8 = Num.encodeLE 8 (9223372036854775807 + t))
     (hO : O k (μ0.readN (E + 232 * k) 232))
-    (st : PInv env pb S0 S1 M E n ce capI μ0 Kp O k ω μ s)
+    (st : PInv env pb S0 S1 M E n ce capI μ0 Kp O i k ω μ s)
     (hroom : ∀ cap, μ.readN (M + 248) 8 = Num.encodeLE 8 cap → k ≠ cap) :
-    ∃ ω' μ', FreeStepsH p R 5042 ω μ x 5042 ω' μ' x 4000 ∧
-      PInv env pb S0 S1 M E n ce capI μ0 Kp O (k + 1) ω' μ' s := by
+    ∃ ω' μ', FreeStepsH p R i ω μ x 5042 ω' μ' x 4000 ∧
+      PInv env pb S0 S1 M E n ce capI μ0 Kp O 5042 (k + 1) ω' μ' s := by
   obtain ⟨hS0M, hMS1, hM2, hM8⟩ := L.hM
   have hS1 := st.H.hS1
   have hbT := st.H.hbT
@@ -145,10 +156,12 @@ theorem step_room {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
   have sD : μ.readN (E + 232 * k) 8 = Num.encodeLE 8 (9223372036854775807 + t) := by
     rw [Memory.readN_congr (fun j hj => st.data _ (inE _ (by omega) (by omega)))]; exact sD0
   have hcs : 232 * cap + 32 ≤ 32 * co.size := by rw [hcos]; omega
+  have hb : rdN μ (E + 232 * k + 44) 1 = rdN μ0 (E + 232 * k + 44) 1 := by
+    unfold rdN; rw [Memory.readN_congr (fun j hj => st.data _ (inE _ (by omega) (by omega)))]
   obtain ⟨ω', μ', run, e1, ecur, elen, eslot, een, e128, e136, ecap, eptr, efr, erd, ewr, e280, efr2⟩ :=
-    pass_elem (p := p) (P := P) (R := R) x ω μ M (E + 232 * k) (E + 232 * n) t cap ptr k ht
+    pass_elem (p := p) (P := P) (R := R) x ω μ M (E + 232 * k) (E + 232 * n) t cap ptr k (by rw [hb]; exact ht)
     ⟨by omega, by omega, hM8⟩ ⟨by omega, by omega⟩ (by omega) (by omega) (by omega) hkc' (by omega)
-    ⟨by omega, by omega⟩ (by omega) (by omega) st.h1 st.cur st.en sD st.c128 st.c136 vc vp vl
+    ⟨by omega, by omega⟩ (by omega) (by omega) st.h1 i st.cur st.en sD st.c128 st.c136 vc vp vl
     (fun a h1 h2 => Memory.readable_of_writable (Decode.VecU8.heap_writable st.H st.hce.1 st.hce.2
       (inE a (by omega) (by omega))))
     (fun a h1 h2 => st.H.st a (by omega) (by omega))
@@ -168,7 +181,7 @@ theorem step_room {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     by rw [fr _ 8 (by omega) (by omega) (by omega) (by omega)]; exact st.i24,
     ⟨cap, ptr, ecap, eptr, elen, by omega, hcapn, hptr, Or.inr ⟨co, hco, hcoa, hcou, hcos, hcoe, hcok⟩, ?_⟩, H', st.hce,
     fun a ha => ?_, fun d hd => ?_, fun a ha => ?_⟩⟩
-  · rw [ecur]; congr 1 <;> omega
+  · exact Or.inl ⟨rfl, by rw [ecur]; congr 1 <;> omega⟩
   · rw [e280]; congr 1 <;> omega
   · intro j hj
     rcases Nat.lt_succ_iff_lt_or_eq.mp hj with hj | rfl
@@ -191,15 +204,15 @@ theorem step_room {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
 theorem step_full {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P]
     (env : RefineHost.Env) (cap0 : Nat) (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616)
     (x : RefineCtx) (ω : Regs) (μ μ0 : Memory) {hb : Nat} (s : State)
-    {pb S0 S1 M E n capI : Nat} {ce : Chunk} {Kp : Chunk → Prop} {O : Nat → List UInt8 → Prop} (L : LayP S0 S1 M E n ce)
-    (k : Nat) (hk : k < n) (t : Nat) (ht : PassIdx t)
+    {pb S0 S1 M E n capI : Nat} {ce : Chunk} {Kp : Chunk → Prop} {O : Nat → List UInt8 → Prop} {i : Nat} (L : LayP S0 S1 M E n ce)
+    (k : Nat) (hk : k < n) (t : Nat) (ht : PassK t (rdN μ0 (E + 232 * k + 44) 1))
     (sD0 : μ0.readN (E + 232 * k) 8 = Num.encodeLE 8 (9223372036854775807 + t))
     (hO : O k (μ0.readN (E + 232 * k) 232))
-    (st : PInv env pb S0 S1 M E n ce capI μ0 Kp O k ω μ s)
+    (st : PInv env pb S0 S1 M E n ce capI μ0 Kp O i k ω μ s)
     (hfull : μ.readN (M + 248) 8 = Num.encodeLE 8 k) :
-    (∃ s' ω' μ', FreeStepsH p (refineContractK cap0 env) 5042 ω μ x 5042 ω' μ' x (512 * n + 6100) ∧
-      PInv env pb S0 S1 M E n ce capI μ0 Kp O (k + 1) ω' μ' s') ∨
-    Exhausts env cap0 pb p P 5042 ω μ x (512 * n + 6100) := by
+    (∃ s' ω' μ', FreeStepsH p (refineContractK cap0 env) i ω μ x 5042 ω' μ' x (512 * n + 6100) ∧
+      PInv env pb S0 S1 M E n ce capI μ0 Kp O 5042 (k + 1) ω' μ' s') ∨
+    Exhausts env cap0 pb p P i ω μ x (512 * n + 6100) := by
   obtain ⟨hS0M, hMS1, hM2, hM8⟩ := L.hM
   have hn := L.hn
   have hS1 := st.H.hS1
@@ -234,9 +247,11 @@ theorem step_full {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     · subst h0; omega
     · obtain ⟨hc0, -, hcT⟩ := Decode.VecU8.chunk_in st.H.wf hc hu
       rw [hs] at hcT; omega
+  have hb44 : rdN μ (E + 232 * cap + 44) 1 = rdN μ0 (E + 232 * cap + 44) 1 := by
+    unfold rdN; rw [Memory.readN_congr (fun j hj => st.data _ (inE _ (by omega) (by omega)))]
   rcases pass_elem_grow (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 x ω μ s M (E + 232 * cap) (E + 232 * n) t
-      cap ptr pb S0 S1 st.H ht hold' (by omega) ⟨by omega, by omega, hM2, hM8⟩ ⟨by omega, by omega⟩ (by omega)
-      (by omega) (by omega) hpl st.h1 st.cur st.en sD st.c128 st.c136 vc vp vl
+      cap ptr pb S0 S1 st.H (by rw [hb44]; exact ht) hold' (by omega) ⟨by omega, by omega, hM2, hM8⟩ ⟨by omega, by omega⟩ (by omega)
+      (by omega) (by omega) hpl st.h1 i st.cur st.en sD st.c128 st.c136 vc vp vl
       (fun a h1 h2 => Memory.readable_of_writable (Decode.VecU8.heap_writable st.H st.hce.1 st.hce.2
         (inE a (by omega) (by omega)))) with
     ⟨q, s', ω', μ', run, e1, ecur, elen, ecap, eptr, hnew, emove, eslot, een, e128, e136, H', keep, fresh, e280,
@@ -259,7 +274,7 @@ theorem step_full {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
       ⟨max (2 * cap) 4, q, ecap, eptr, elen, by omega, by omega, by omega,
         Or.inr ⟨_, hnew, by simp; omega, rfl, rfl, fun h => hfr (by rw [← h]; simp; omega), ?_⟩, ?_⟩,
       H', ⟨hce', st.hce.2⟩, fun a ha => by rw [hkeep a ha, st.data a ha], fun d hd => ?_, fun a ha => ?_⟩⟩
-    · rw [ecur]; congr 1 <;> omega
+    · exact Or.inl ⟨rfl, by rw [ecur]; congr 1 <;> omega⟩
     · rw [e280]; congr 1 <;> omega
     · -- the new buffer is none of the chunks to keep
       intro hK
@@ -300,17 +315,18 @@ theorem loop {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCode
     (env : RefineHost.Env) (cap0 : Nat) (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616)
     (x : RefineCtx) (μ0 : Memory) {hb : Nat} {pb S0 S1 M E n capI : Nat} {ce : Chunk} {Kp : Chunk → Prop}
     (L : LayP S0 S1 M E n ce)
-    (kinds : ∀ j, j < n → ∃ t, PassIdx t ∧ μ0.readN (E + 232 * j) 8 = Num.encodeLE 8 (9223372036854775807 + t))
+    (kinds : ∀ j, j < n → ∃ t, PassK t (rdN μ0 (E + 232 * j + 44) 1) ∧
+      μ0.readN (E + 232 * j) 8 = Num.encodeLE 8 (9223372036854775807 + t))
     (m k : Nat) (ω : Regs) (μ : Memory) (s : State) (hkm : k + m = n)
-    (st : PInv env pb S0 S1 M E n ce capI μ0 Kp (fun j bs => bs = μ0.readN (E + 232 * j) 232) k ω μ s) :
+    (st : PInv env pb S0 S1 M E n ce capI μ0 Kp (fun j bs => bs = μ0.readN (E + 232 * j) 232) 5042 k ω μ s) :
     (∃ s' ω' μ', FreeStepsH p (refineContractK cap0 env) 5042 ω μ x 5042 ω' μ' x (m * (512 * n + 6100)) ∧
-      PInv env pb S0 S1 M E n ce capI μ0 Kp (fun j bs => bs = μ0.readN (E + 232 * j) 232) n ω' μ' s') ∨
+      PInv env pb S0 S1 M E n ce capI μ0 Kp (fun j bs => bs = μ0.readN (E + 232 * j) 232) 5042 n ω' μ' s') ∨
     ExhaustsX env cap0 pb p 5042 ω μ x (m * (512 * n + 6100)) := by
   have step : ∀ k ω μ y, k < n → (y = x ∧ ∃ s, PInv env pb S0 S1 M E n ce capI μ0 Kp
-      (fun j bs => bs = μ0.readN (E + 232 * j) 232) k ω μ s) →
+      (fun j bs => bs = μ0.readN (E + 232 * j) 232) 5042 k ω μ s) →
       (∃ ω' μ' y', FreeStepsH p (refineContractK cap0 env) 5042 ω μ y 5042 ω' μ' y' (512 * n + 6100) ∧
         (y' = x ∧ ∃ s, PInv env pb S0 S1 M E n ce capI μ0 Kp (fun j bs => bs = μ0.readN (E + 232 * j) 232)
-          (k + 1) ω' μ' s)) ∨ ExhaustsX env cap0 pb p 5042 ω μ y (512 * n + 6100) := by
+          5042 (k + 1) ω' μ' s)) ∨ ExhaustsX env cap0 pb p 5042 ω μ y (512 * n + 6100) := by
     intro k ω μ y hk ⟨hy, s, st⟩
     subst hy
     obtain ⟨t, ht, sD0⟩ := kinds k hk
@@ -331,7 +347,7 @@ theorem loop {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCode
       exact Or.inl ⟨ω1, μ1, y, run1.mono (by omega), rfl, s, st1⟩
   rcases LoopG.loop (p := p) (R := refineContractK cap0 env) 5042 n (512 * n + 6100)
       (fun k ω μ y => y = x ∧ ∃ s, PInv env pb S0 S1 M E n ce capI μ0 Kp
-        (fun j bs => bs = μ0.readN (E + 232 * j) 232) k ω μ s)
+        (fun j bs => bs = μ0.readN (E + 232 * j) 232) 5042 k ω μ s)
       (fun i ω μ y b => ExhaustsX env cap0 pb p i ω μ y b)
       (fun run h => ExhaustsX.pre run h) (fun h hab => h.mono hab) step m k ω μ x hkm ⟨rfl, s, st⟩ with
     ⟨ω', μ', y, run, rfl, s', st'⟩ | hx

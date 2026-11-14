@@ -43,3 +43,14 @@ Order: the 56340 string path, then the hex path, then a PR for 56340 + 33167, th
 ## Tooling notes
 - `gen/dis.py` prints instructions from the code facts (`python3 gen/dis.py <pc> <n>`).
 - `pvm_go` runs fast; the generic `post_simp` can blow up after stack stores, and explicit `rw`/`simp only` per goal fixes it.
+
+## Updates received just before the pause
+- #187 is merged (squash 12a33d0), so `FieldInt.lean` is unblocked. `ref_u64_okV` (37589) is on main and belongs to the fmt session.
+- `write_str_heap` is on branch `claude/bootstrap-fmt-sink-heap` (1d10116; the fmt session opens its PR after the full build).
+  - Its third `hsrc` disjunct is `∃ d ∈ chunks s₀, d.used = true ∧ d.addr + 32 ≤ src ∧ src + n ≤ d.addr + 32 * d.size`.
+  - Once it merges, P4a is unblocked.
+- The fmt session agreed that the explicit-spec fmt_write goes in a new file of ours.
+- The parent accepted the ≈7-day plan.
+  - Until fmt answers on C_ok/C_exh, keep C as it is.
+  - Note the real Ok-path bound (~148,100 for `ref_u8x32_ok`) in each docstring, so it's easy to restate later. This is not yet done in #189.
+- Send fmt the exact (address, length) slices for 70818, 70824, 70833, 71060, 71076 and 71078 once those lemmas are stated (FmtRO is on `claude/bootstrap-fmt-ro`).

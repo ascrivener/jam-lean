@@ -90,4 +90,28 @@ theorem kb_vec {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X
     · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
       all_goals simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h1, h5, h6]
 
+/-- **33992 … 58508** (t = 1, after the tag octet): the `i32` at kp + 4 stored at S + 44 and the call
+    `extend(S + 16, S + 44, 4)`, return address 1574. -/
+theorem kb_t1 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
+    (μ : Memory) (S kp v : Nat) (h1 : ω[1] = UInt64.ofNat S) (hv : v < 4294967296)
+    (hS : S + 72 < 4294967296) (hkp : kp + 8 < 4294967296) (hkd : kp + 8 ≤ S + 44 ∨ S + 48 ≤ kp + 4)
+    (m0 : μ.readN S 8 = Num.encodeLE 8 kp) (mw : μ.readN (kp + 4) 4 = Num.encodeLE 4 v)
+    (hrk : ∀ a, kp + 4 ≤ a → a < kp + 8 → μ.readable a = true)
+    (hrf : ∀ a, S ≤ a → a < S + 8 → μ.readable a = true)
+    (hw : ∀ a, S + 44 ≤ a → a < S + 48 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 33992 ω μ x 58508 ω' μ' x 8 ∧ μ' = μ.writeN (S + 44) (Num.encodeLE 4 v) ∧
+      ω'[0] = UInt64.ofNat 1574 ∧ ω'[1] = UInt64.ofNat S ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      ω'[7] = UInt64.ofNat (S + 16) ∧ ω'[8] = UInt64.ofNat (S + 44) ∧ ω'[9] = UInt64.ofNat 4 := by
+  have r0 := rd8 (by omega) m0
+  have rv : rdN μ (kp + 4) 4 = v := by
+    show Num.decodeLE _ = _
+    rw [mw, Num.decodeLE_encodeLE, Nat.mod_eq_of_lt hv]
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?_, ?_, ?_, ?_⟩
+  rotate_left 2
+  · pvm_go [h1, hS, hkp, r0, rv, hrk, hrf, hw, bs_58508, ↓rdN_fold]
+  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+    · congr 2; split <;> omega
+    all_goals simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h1]
+
 end Services.Bootstrap.Acc.Handlers.KeyEnc

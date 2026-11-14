@@ -36,7 +36,7 @@ theorem sext_low {w : Nat} (h : w < 4294967296) :
     argument at M + 272 (the u32 at M + 244, `Display` 2616) into the `String` at M + 168, the `log` (4770) and the
     `String`'s free (40613 → 4792), from refine's frame at M with the allocator's context: the run reaches 4792
     with the host context, ω₁ and ω₆ kept, the allocator's context for some heap s', every allocated chunk of s
-    still allocated with its data, the globals (`Glob`) kept, and the stack from M up kept apart from the `String` at M + 168 … M + 192; or
+    still allocated with its data, the globals (`Glob`) and the heap's base kept, and the stack from M up kept apart from the `String` at M + 168 … M + 192; or
     an allocation fails. To be discharged by the fmt summaries (`Services/Bootstrap/Fmt`). -/
 def ArgsLineOk (p : ByteArray) (cap0 : Nat) (env : RefineHost.Env) (pb S0 S1 : Nat) : Prop :=
   ∀ (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State) (M sv : Nat),
@@ -50,7 +50,7 @@ def ArgsLineOk (p : ByteArray) (cap0 : Nat) (env : RefineHost.Env) (pb S0 S1 : N
       ω'[1] = ω[1] ∧ ω'[6] = ω[6] ∧
       (∀ a, a < 4294967296 → M ≤ a → (a < M + 168 ∨ M + 192 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ d ∈ chunks s, d.used = true → d ∈ chunks s' ∧ ∀ a, InData d a → μ'.read a = μ.read a) ∧
-      (∀ a, Glob a → μ'.read a = μ.read a)) ∨
+      (∀ a, Glob a → μ'.read a = μ.read a) ∧ s'.base = s.base) ∨
     ∃ N, ExhaustsX env cap0 pb p 59375 ω μ x N
 
 /-- 4680 … 4742 → 59375: from the arguments decoded at M + 168 (the payload's `Vec<u8>` {cap, q, Ly} at M + 168,
@@ -120,7 +120,7 @@ theorem tail4680 {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.E
       (∀ a, a < 4294967296 → M ≤ a → (a < M + 80 ∨ (M + 96 ≤ a ∧ a < M + 112) ∨ (M + 120 ≤ a ∧ a < M + 168) ∨
         (M + 192 ≤ a ∧ a < M + 244) ∨ (M + 248 ≤ a ∧ a < M + 272) ∨ M + 288 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ d ∈ chunks s, d.used = true → d ∈ chunks s' ∧ ∀ a, InData d a → μ'.read a = μ.read a) ∧
-      (∀ a, Glob a → μ'.read a = μ.read a)) ∨
+      (∀ a, Glob a → μ'.read a = μ.read a) ∧ s'.base = s.base) ∨
     ∃ N, ExhaustsX env cap0 pb p 4680 ω μ x N := by
   obtain ⟨hM0, hM1, hM8⟩ := hM
   have hS0d : S0 = 4278050816 := rfl
@@ -131,7 +131,7 @@ theorem tail4680 {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.E
   have lo : ∀ a, a < M → μ1.read a = μ.read a := fun a h => fr1 a (by omega) (Or.inl (by omega))
   have H1 : HeapCtx env pb S0 S1 μ1 s := Decode.GrowOne.ctx_high H (fun a h => lo a (by omega)) wr1
   rcases line x ω1 μ1 s M sv H1 (by omega) (by omega) hM8 hsv a0 a1 a7 a8 a9 m272 m280 m244 with
-    ⟨ω2, μ2, s2, N2, run2, H2, e1, e6, fr2, keep2, gl2⟩ | ⟨N, hx⟩
+    ⟨ω2, μ2, s2, N2, run2, H2, e1, e6, fr2, keep2, gl2, base2⟩ | ⟨N, hx⟩
   · have k21 : ∀ a l, M ≤ a → a + l ≤ 4294967296 → (a + l ≤ M + 168 ∨ M + 192 ≤ a) → μ2.readN a l = μ1.readN a l :=
       fun a l h0 h1 h2 => Memory.readN_congr (fun j hj => fr2 _ (by omega) (by omega) (by omega))
     refine Or.inl ⟨ω2, μ2, s2, _, run1.trans run2, H2, by rw [e1, a1], by rw [e6, a6],
@@ -139,7 +139,7 @@ theorem tail4680 {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.E
       by rw [k21 _ _ (by omega) (by omega) (by omega)]; exact m88,
       by rw [k21 _ _ (by omega) (by omega) (by omega)]; exact m112,
       fun a h0 h1 h2 => (fr2 a h0 h1 (by omega)).trans (fr1 a h0 (by omega)), fun d hd hu => ?_,
-      fun a ha => ?_⟩
+      fun a ha => ?_, base2⟩
     · obtain ⟨hd2, hdd⟩ := keep2 d hd hu
       have := (Decode.VecU8.chunk_in H.wf hd hu).2.2
       have hbT := H.hbT

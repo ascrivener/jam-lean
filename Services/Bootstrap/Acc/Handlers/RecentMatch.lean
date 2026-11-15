@@ -153,4 +153,42 @@ theorem rm_some {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : 
       rfl
     all_goals simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h1]
 
+/-- The trap at 47977 (`get`'s allocation failure): ☇ (GP §A.5.1). -/
+theorem trap_47977 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (ω : Regs) (μ : Memory) :
+    FreeExit p 47977 ω μ .panic ω μ := by
+  have hd := d_47977 (p := p) (P := P)
+  have hs : P.freeStep 47977 ω μ = (.panic, P.next 47977, ω, μ) := by
+    simp [Program.freeStep, hd.2.1, Program.exec, Program.finalState, memoryException]
+  have := FreeExit.step (p := p) hd.1 hs (by decide)
+  simpa using this
+
+/-- The trap at 48533 (`remove`'s FULL, quirk Q18): ☇ (GP §A.5.1). -/
+theorem trap_48533 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (ω : Regs) (μ : Memory) :
+    FreeExit p 48533 ω μ .panic ω μ := by
+  have hd := d_48533 (p := p) (P := P)
+  have hs : P.freeStep 48533 ω μ = (.panic, P.next 48533, ω, μ) := by
+    simp [Program.freeStep, hd.2.1, Program.exec, Program.finalState, memoryException]
+  have := FreeExit.step (p := p) hd.1 hs (by decide)
+  simpa using this
+
+/-- **8165**: the call of `remove` (48481) with return address 284; the other registers kept. -/
+theorem rm_j {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory) :
+    ∃ ω', FreeStepsH p R 8165 ω μ x 48481 ω' μ x 1 ∧ ω'[0] = UInt64.ofNat 284 ∧
+      ∀ j : Nat, (hj : j < 13) → j ≠ 0 → ω'[j] = ω[j] := by
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?_, ?_, ?_⟩
+  rotate_left
+  · pvm_go []
+  · refine ⟨by simp [PVM.getElem_regsNF, PVM.lookup_cons_nat], fun j hj h0 => ?_⟩
+    simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h0]
+
+/-- **`remove`'s returns** (the `jumpInd` at 48514 or 48531) with ω₀ = 284: on to 8172. -/
+theorem rm_back {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
+    (μ : Memory) (e : Nat) (he : e = 48514 ∨ e = 48531) (h0 : ω[0] = UInt64.ofNat 284) :
+    FreeStepsH p R e ω μ x 8172 ω μ x 1 := by
+  rcases he with rfl | rfl
+  all_goals
+    rw [show ω = regsNF ω [] from rfl]
+    pvm_go [h0]
+
 end Services.Bootstrap.Acc.Handlers.RecentMatch

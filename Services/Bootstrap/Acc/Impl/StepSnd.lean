@@ -69,5 +69,9 @@ theorem step_snd (env : AccEnv) {β : Type} (op : AOp β) (c : AccCtx) {b : β} 
          have e := (Prod.mk.inj (Option.some.inj hb')).2
          rw [hk] at ho'
          rw [← e, call_keep (by decide) ho']; exact .inl rfl)
+    | (split at hb  -- `remove`: panics on FULL (quirk Q18)
+       · cases hb
+       · have e := (Prod.mk.inj (Option.some.inj hb)).2
+         rw [← e]; exact call_snd ho)
 
 end Services.Bootstrap.ASem

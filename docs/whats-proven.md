@@ -168,7 +168,8 @@ An independent kernel, nanoda as vendored by
     failed allocation (`ExhaustsHeap`).
   - *Not yet proved:* that a failed allocation then ends in ☇ with no exports (a named later obligation;
     T1 keeps the full claim).
-  - *Assumed:* `VendoredFacts` (the vendored blob's layout and three read-only tables; step 10 of
+  - *Assumed:* `VendoredFacts` (the vendored blob's layout, three read-only tables and `Fmt.FmtRO`, the
+    read-only slices the Fmt summaries read; all about the constant blob, discharged in step 10 of
     `docs/bootstrap-target.md`) and `FmtHyps` (three log / `Debug` lines: `ArgsLineOk`, `ExportFmtOk`,
     `DebugLineOk`; to be discharged by the fmt summaries).
   - *Not covered:* eager `Lookup`, `Import`, `RandomStorageRefine`, the variable-width instructions,

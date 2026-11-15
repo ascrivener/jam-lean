@@ -16,15 +16,18 @@ jobs:
   # A cold build needs more than one job's time: each attempt that runs out of budget saves .lake and the
   # next one resumes from it (see build.yml). Three attempts cover a cold build (about 4.5–5 h of building).
   attempt-1:
+    permissions: { contents: write }  # publish .lake to the lake-cache release (main only)
     uses: ./.github/workflows/build.yml
     with: { attempt: 1, last: false }
   attempt-2:
     needs: attempt-1
     if: needs.attempt-1.outputs.timed_out == 'true'
+    permissions: { contents: write }  # publish .lake to the lake-cache release (main only)
     uses: ./.github/workflows/build.yml
     with: { attempt: 2, last: false }
   attempt-3:
     needs: attempt-2
     if: needs.attempt-2.outputs.timed_out == 'true'
+    permissions: { contents: write }  # publish .lake to the lake-cache release (main only)
     uses: ./.github/workflows/build.yml
     with: { attempt: 3, last: true }

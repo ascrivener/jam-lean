@@ -102,6 +102,9 @@ so CI and `scripts/CheckAxioms.lean` cover them. Everything below is pushed.
   (unused) was dropped.
 
 ### In flight
+- **#208** (`claude/bootstrap-t2-handlers-a-1`): this branch's pieces + Services.lean imports. CI
+  re-running after a fix (the forbidden-word grep also scans .md files: never write that word).
+- **#209** = the Q18 PR below. Both: merge on green (parent-approved).
 - **Q18 PR** (`claude/bootstrap-t2-q18`): `ASem.step .remove` panics on FULL (Adam, 2026-11-15), the
   Q18 rows in `docs/bootstrap-target.md` and `docs/upstream-candidates.md`, `StepSnd` adjusted.
   Not built yet. The `ValuesFit` < 2⁶³ doc edits belong to T2-inputs, not here.
@@ -150,7 +153,13 @@ so CI and `scripts/CheckAxioms.lean` cover them. Everything below is pushed.
    - 8376 … 8412: dealloc the key buffer if its cap ≠ 0 (40613, ret 292 → 8402); `set`'s result must
      not be Err (−1) else panic (15361).
    - 8416 … 8471: row 9 begins: the tag-2 key K at sp+1568, results ptr/len from sp+456/464, 36170.
-   Needs RO facts for 196616/196696 (Consts) — ask T2-inputs' `Acc/RoData.lean` pattern via @parent.
+   **196616 / 196696 are NOT blob data**: they are statics written at runtime by the entry prologue's
+   `apply()` of the fetched protocol parameters (fetch kind 0): `storeU16 3 196616` at 56279,
+   `storeU64 11 196696` at 56205 (Code.lean; outside every fnRangesA range). The rw statics
+   196616 … 196791 are written only there (other absolute stores: 196608, the allocator word, and
+   206848). So no `accRwOk`/initial-memory fact applies. Reported to @parent 2026-11-15 with options
+   (a) a premise `ParamStatics μ C I` on row 8's summary, established by the T2 composition (prologue +
+   frames), or (b) prove apply()'s stores now (needs a CodeA range). **Await the parent's answer.**
 4. **Row 9:** 8471 → 36170; on Err → 15361 (☇); 8490 is checkpoint, under accContractS's 0/18 case.
 5. **Row 11 (15032 … 15198):** the drops 33214 (ret 558/560) and 28864 (ret 564); 15115 → 36170;
    dealloc at 15166 and 15185; back to 6766.

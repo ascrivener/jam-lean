@@ -82,7 +82,7 @@ heap growth) need 2²⁷ ≤ cap anyway.
 has the 51243 facts); full build green; every Handlers module is now imported from `Services.lean`,
 so CI and `scripts/CheckAxioms.lean` cover them. Everything below is pushed.
 
-### Done (builds, no sorry, axioms only propext / Classical.choice / Quot.sound)
+### Done (builds, nothing forbidden, axioms only propext / Classical.choice / Quot.sound)
 - `Handlers/KeyEnc.lean`, the storage-key encoder (33843):
   - `kb_call`: one call under any `HeapHost` at cap ≥ 2²⁷. Either `alloc` gives a block ptr and the
     run returns with `Vec {c, ptr, keyEnc.len}` at out, the octets `keyEnc μ kp t` at ptr, and

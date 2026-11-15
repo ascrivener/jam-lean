@@ -61,10 +61,39 @@ Contents:
 4. After merging, send T2 (session_017ptjPC2RqWsJBhwvgtGRLf) `key_fmt`'s exact statement and its
    read-only data hypotheses (above), so T2 can discharge them from the program blob.
 
+## Loops in the executor (branch `claude/symexec-loops`, stacked on `claude/keyfmt` / #192)
+
+Adam decided on 2026-11-15: forking and loop induction in the executor. The parent approved the
+design note, including one more core change (the `facts` field). Merge order set by the parent:
+T1 milestone PR, then #192, then this PR. Don't merge either yourself.
+
+Done (all compile; axioms propext, Classical.choice, Quot.sound):
+- Core: `Fact` (lt/ge/ne on SVals, `le` on Affs, `rd`/`wr` regions [lo, hi)), `Static.facts := []`,
+  `Pre`'s 7th conjunct, `check_sound`'s autoParam `hfacts`. `SVal.bnd`/`lob` are now `bnd0`/`lob0`
+  combined with the facts (`fub`, `flb`). `scond` uses `ne` facts. `ltU` on two addresses uses `le`
+  facts (`leA`). `sload`/`sstore` accept regions from `rd`/`wr` facts (`inRd`, `inWr`). With no facts
+  the executor behaves exactly as before, and no existing theorem's type changed. No downstream file
+  uses these definitions directly (checked by grep).
+- `PVM/SymExec/Fork.lean`: `splitB` (the facts for a branch holding or failing: unsigned/eq against an
+  immediate; unsigned on two addresses), `srunF` (splits at undecided branches, stops at a stop pc),
+  `srunF_sound`. `Leaf` = pc, path facts, target cut `B`, `sub` (B's named naturals as SVals over the
+  start env). `forkCheck`, `fork_sound`.
+- `PVM/SymExec/Loop.lean`: `loop_sound` (generic well-founded induction on a measure), `LoopObl`
+  (per-leaf Lean obligation: back edge keeps `I`, bounds and `asm`, and lowers the measure; exit leaf
+  implies `Q`), `loop_fork_sound`.
+
+Not done yet / next:
+- No consumer yet: no `#eval` of `srunF` on a real loop. Next: from_utf8 (60681). Find its loops, write
+  header cuts, get the leaves by `#eval`, discharge the obligations. Expect the fixes to be in
+  `splitB` coverage (signed branches, two-register eq/ne and non-address operands are not split).
+- Symbolic-position writes in loops: frames have literal lengths (`Cut.frame : List (Aff × Nat)`), so
+  a loop that writes at a moving cursor can't state its frame yet. The field formatters will need
+  this. Option: add a `Fact`-style frame region or a symbolic-length frame (another core change, so
+  check with the parent first).
+
 ## Open decisions and dependencies
 
-- `core::str::from_utf8` (60681): the parent took the choice of route to Adam. Don't start either
-  route until he answers.
+- `core::str::from_utf8` (60681): Adam chose the executor-loops route (2026-11-15).
 - No discrepancies with the paper or vectors were found in this work.
 - grow_heap host calls are deliberately left out (parent decision (b): build only what has a
   consumer).

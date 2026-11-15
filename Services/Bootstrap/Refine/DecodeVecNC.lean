@@ -450,4 +450,186 @@ theorem vec_exit {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.E
     Decode.GrowOne.ctx_high H hlow (fun a => by rw [wr2, wr1]), hlow,
     fun a h0 h1 h2 => k21 a h0 (by omega) (by omega)⟩
 
+/-- **The first batch** (482 … 562): `Vec<Instruction>::decode` called with n ≥ 1 (its encodings at P0 in the
+    payload's chunk cp, the heap's first chunk, the reader at rd over them): the frame, `finish_grow` for
+    L = min(n, 70) slots (`vec_preG`) and the first L elements decoded (`loopAFCd_lowF` at d = 0), giving `BInv`
+    after L elements with the count n and the batch L, μ0 and s0 the call's start. Or an allocation fails. -/
+theorem first_batch {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env : RefineHost.Env) (cap0 : Nat)
+    (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616) {hb pb : Nat} (gl : Nat → UInt8)
+    (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State) (H : HeapCtx env pb S0 S1 μ s)
+    (S rd P0 Lt v5 v6 : Nat) (es : List (List UInt8)) (reps : Nat → List Chunk → List UInt8 → Memory → Prop)
+    (cp : Chunk) (Ns : Nat → Nat)
+    (hel : ∀ j (hj : j < es.length), Decode.VecVecOwn.ElemOkAFC env cap0 pb gl p P (S - 56) rd (Ns j) es[j] (reps j))
+    (hg : ∀ a, Glob a → μ.read a = gl a)
+    (hn : 1 ≤ es.length ∧ es.length < 4294967296) (hne : ∀ j (hj : j < es.length), 1 ≤ es[j].length)
+    (hS : S0 + 2104 ≤ S ∧ S + 552 + 24 ≤ rd ∧ rd + 16 ≤ S1 ∧ S % 8 = 0)
+    (hv5 : v5 < 18446744073709551616) (hv6 : v6 < 18446744073709551616)
+    (hcp : cp ∈ chunks s ∧ cp.used = true ∧ cp.addr = s.base)
+    (hcpd : ∀ a, P0 ≤ a → a < P0 + es.flatten.length → InData cp a) (hP0 : 206864 ≤ P0)
+    (hLt : es.flatten.length ≤ Lt ∧ Lt < 4294967296)
+    (h0 : ω[0] = UInt64.ofNat 922) (h1 : ω[1] = UInt64.ofNat (S + 552)) (h5 : ω[5] = UInt64.ofNat v5)
+    (h6 : ω[6] = UInt64.ofNat v6) (h7 : ω[7] = UInt64.ofNat (S + 552)) (h8 : ω[8] = UInt64.ofNat rd)
+    (h9 : ω[9] = UInt64.ofNat es.length)
+    (sR0 : μ.readN rd 8 = Num.encodeLE 8 P0) (sR8 : μ.readN (rd + 8) 8 = Num.encodeLE 8 Lt)
+    (pay : μ.readN P0 es.flatten.length = es.flatten)
+    (tab : μ.readN 67476 100 = Decode.Tag.table) (rt : ∀ a, 67476 ≤ a → a < 67576 → μ.readable a = true) :
+    (∃ (ω' : Regs) (μ' : Memory) (s' : State) (q N : Nat),
+      FreeStepsH p (refineContractK cap0 env) 482 ω μ x 562 ω' μ' x N ∧
+      BInv env pb gl S rd P0 Lt es reps cp μ s (S + 552) v5 v6 (min es.length 70) es.length (min es.length 70) q
+        ω' μ' s') ∨
+    ∃ N, Exhausts env cap0 pb p P 482 ω μ x N := by
+  obtain ⟨hS0, hSr, hrS, hS8⟩ := hS
+  have hS0d : S0 = 4278050816 := rfl
+  have hS1d : S1 = 4278059008 := rfl
+  obtain ⟨hcpm, hcpu, hcpa⟩ := hcp
+  obtain ⟨n, hN⟩ : ∃ n, es.length = n := ⟨_, rfl⟩
+  obtain ⟨L, hLd⟩ : ∃ L, L = min n 70 := ⟨_, rfl⟩
+  rw [hN, ← hLd]
+  have hL1 : 1 ≤ L ∧ L ≤ 70 ∧ L ≤ n := by omega
+  let es1 := es.take L
+  have hl1 : es1.length = L := by simp [es1]; omega
+  have hg1 : ∀ j (hj : j < es1.length), es1[j] = es[j]'(by simp [es1] at hj; omega) :=
+    fun j hj => List.getElem_take
+  have hfl : es.flatten = es1.flatten ++ (es.drop L).flatten := by
+    rw [← List.flatten_append, List.take_append_drop]
+  have hfll : es1.flatten.length ≤ es.flatten.length := by rw [hfl, List.length_append]; omega
+  have pay1 : μ.readN P0 es1.flatten.length = es1.flatten := by
+    rw [← readN_take μ P0 es.flatten.length _ hfll, pay, hfl, List.take_left' rfl]
+  have hP1 : ∀ a, P0 ≤ a → a < P0 + es1.flatten.length → InData cp a :=
+    fun a h1 h2 => hcpd a h1 (by omega)
+  have hne1 : ∀ j (hj : j < es1.length), 1 ≤ es1[j].length := fun j hj => by rw [hg1 j hj]; exact hne j _
+  have hel1 : ∀ j (hj : j < es1.length), Decode.VecVecOwn.ElemOkAFC env cap0 pb gl p P (S - 56) rd (Ns j)
+      es1[j] (reps j) := fun j hj => by rw [hg1 j hj]; exact hel j _
+  rcases vec_preG (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 x ω μ s H S (S + 552) rd P0 Lt v5 v6
+      es1 (fun _ _ _ => True) cp n (by rw [hl1, hLd]) (by omega) ⟨by omega, by omega⟩ hne1
+      ⟨hS0, by omega, hrS, hS8⟩ (by omega) hv5 hv6 ⟨hcpm, hcpu, hcpa⟩ hP1 hP0 ⟨by omega, hLt.2⟩ h0 h1 h5 h6 h7 h8
+      (by rw [h9, hN]) sR0 sR8 pay1 tab rt with
+    ⟨ω1, μ1, s1, q, N1, run1, inv1, ok1, w0, w8, w16, w544, w536, w528, keep1, fresh1, hi1, hgl1⟩ | hx
+  rotate_left
+  · exact Or.inr hx
+  rw [hl1] at inv1 fresh1 w16
+  rcases loopAFCd_lowF (p := p) (P := P) env cap0 pb gl (S - 56) rd P0 Lt Ns x es1 reps 0 q cp _ ok1
+      (by rw [hl1]; have := ok1.2.2.2.1; omega) hel1 es1.length 0 ω1 μ1 s1 (by omega) (by omega)
+      (InvAF.toC_zero reps inv1).toD (fun a ha => (hgl1 a ha).trans (hg a ha)) with
+    ⟨ω2, μ2, s2, run2, inv2, fr2, low2, b88, w7, csOf1, el1, fr1'⟩ | hx
+  rotate_left
+  · exact Or.inr ⟨_, Exhausts.pre run1 hx⟩
+  obtain ⟨fr2a, fr2b, fr2c, fr2d, fr2e, fr2f⟩ := fr2
+  have hF : S - 56 + 56 = S := by omega
+  have l2 : ∀ a l, S ≤ a → a + l ≤ S + 24 → μ2.readN a l = μ1.readN a l :=
+    fun a l h0 h1 => Memory.readN_congr (fun j hj => low2 _ (by omega) (by omega))
+  have k2 : ∀ a l, S + 528 ≤ a → a + l ≤ rd → μ2.readN a l = μ1.readN a l :=
+    fun a l h0 h1 => Memory.readN_congr (fun j hj => fr2a _ (by omega) (by omega) (Or.inl (by omega)))
+  have hoff : (es.take L).flatten.length = off es1 es1.length := by
+    unfold off; rw [hl1, List.take_take, Nat.min_self]
+  obtain ⟨hcbm, -⟩ := inv2.cbm
+  refine Or.inl ⟨ω2, μ2, s2, q, _, run1.trans run2, ⟨⟨hL1.1, by omega⟩, ⟨by omega, by omega, by omega⟩,
+    by rw [inv2.r1, hF], by rw [w7, hl1, Nat.zero_add],
+    by rw [l2 _ _ (by omega) (by omega)]; exact w8, by rw [l2 _ _ (by omega) (by omega)]; exact w16,
+    by have := inv2.m24; rwa [show S - 56 + 80 = S + 24 by omega] at this,
+    by rw [show S + 32 = S - 56 + 88 by omega]; exact b88,
+    by have := inv2.m40; rwa [show S - 56 + 96 = S + 40 by omega, hl1, Nat.zero_add] at this,
+    by have := inv2.m48; rwa [show S - 56 + 104 = S + 48 by omega] at this,
+    by have := inv2.m56; rwa [show S - 56 + 112 = S + 56 by omega, hl1, Nat.zero_add] at this,
+    by rw [hoff]; exact inv2.rP, by rw [hoff]; exact inv2.rL,
+    inv2.heap, hcbm, ⟨csOf1, fun j hj => ?_, fun j j' hj hj' => el1.2 j j' (by omega) (by omega)⟩,
+    fun c hc hu => ?_, fun d hd hu => fresh1 d hd hu,
+    by rw [l2 _ _ (by omega) (by omega)]; exact w0, by rw [k2 _ _ (by omega) (by omega)]; exact w528,
+    by rw [k2 _ _ (by omega) (by omega)]; exact w536, by rw [k2 _ _ (by omega) (by omega)]; exact w544,
+    fun a h0 h1 h2 => by rw [fr2a a (by omega) h0 h2]; exact hi1 a h0 h1,
+    fun a ha => by rw [fr2e a ha, hgl1 a ha]; exact hg a ha, inv2.tab, inv2.rt⟩⟩
+  · obtain ⟨hcs, hrep⟩ := el1.1 j (by omega)
+    refine ⟨fun c hc => ?_, fun μ'' hag => ?_⟩
+    · obtain ⟨hc2, hcu, hcb, hcp'⟩ := hcs c hc
+      exact ⟨hc2, hcu, hcb, hcp'⟩
+    · have := hrep μ'' hag; rwa [Nat.zero_add] at this
+  · obtain ⟨hc1, hd1⟩ := keep1 c hc hu
+    have hcb := fresh1 c hc hu
+    have hc2 := fr2b c hc1 hu
+    refine ⟨hc2, fun a ha => ?_⟩
+    have ha' := ha; unfold InData at ha'
+    have hdj := Decode.VecU8.data_disj inv2.heap.wf hc2 hcbm hcb ha
+    simp only at hdj
+    rw [fr2c c hc1 hu a ha (by omega), hd1 a ha]
+
+/-- **`Vec<Instruction>::decode`, the slots' chunks seen, any n ≥ 1** (482 … 20420): `DecodeVec2C.vec_anyC` with
+    1 ≤ n < 128 replaced by n < 2³², 232 n < 2³⁰ − 64 (`realloc_call`'s range) and `hbatch` (every batch after the
+    second below 128 elements, the decode loop's `OkFD`). Same conclusion. -/
+theorem vec_allC {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env : RefineHost.Env) (cap0 : Nat)
+    (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616) {hb pb : Nat} (gl : Nat → UInt8)
+    (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State) (H : HeapCtx env pb S0 S1 μ s)
+    (S rd P0 Lt v5 v6 : Nat) (es : List (List UInt8)) (reps : Nat → List Chunk → List UInt8 → Memory → Prop)
+    (cp : Chunk) (Ns : Nat → Nat)
+    (hel : ∀ j (hj : j < es.length), Decode.VecVecOwn.ElemOkAFC env cap0 pb gl p P (S - 56) rd (Ns j) es[j] (reps j))
+    (hg : ∀ a, Glob a → μ.read a = gl a)
+    (hn : 1 ≤ es.length ∧ es.length < 4294967296) (hbig : 232 * es.length < 1073741760)
+    (hbatch : ∀ L', 1 ≤ L' → L' < es.length → min (es.length - L') L' < 128)
+    (hne : ∀ j (hj : j < es.length), 1 ≤ es[j].length)
+    (hS : S0 + 2104 ≤ S ∧ S + 552 + 24 ≤ rd ∧ rd + 16 ≤ S1 ∧ S % 8 = 0)
+    (hv5 : v5 < 18446744073709551616) (hv6 : v6 < 18446744073709551616)
+    (hcp : cp ∈ chunks s ∧ cp.used = true ∧ cp.addr = s.base)
+    (hcpd : ∀ a, P0 ≤ a → a < P0 + es.flatten.length → InData cp a) (hP0 : 206864 ≤ P0)
+    (hLt : es.flatten.length ≤ Lt ∧ Lt < 4294967296)
+    (h0 : ω[0] = UInt64.ofNat 922) (h1 : ω[1] = UInt64.ofNat (S + 552)) (h5 : ω[5] = UInt64.ofNat v5)
+    (h6 : ω[6] = UInt64.ofNat v6) (h7 : ω[7] = UInt64.ofNat (S + 552)) (h8 : ω[8] = UInt64.ofNat rd)
+    (h9 : ω[9] = UInt64.ofNat es.length)
+    (sR0 : μ.readN rd 8 = Num.encodeLE 8 P0) (sR8 : μ.readN (rd + 8) 8 = Num.encodeLE 8 Lt)
+    (pay : μ.readN P0 es.flatten.length = es.flatten)
+    (tab : μ.readN 67476 100 = Decode.Tag.table) (rt : ∀ a, 67476 ≤ a → a < 67576 → μ.readable a = true) :
+    (∃ (ω' : Regs) (μ' : Memory) (s' : State) (q N : Nat),
+      FreeStepsH p (refineContractK cap0 env) 482 ω μ x 20420 ω' μ' x N ∧
+      ω'[1] = UInt64.ofNat (S + 552) ∧ ω'[5] = UInt64.ofNat v5 ∧ ω'[6] = UInt64.ofNat v6 ∧
+      μ'.readN (S + 552) 8 = Num.encodeLE 8 es.length ∧ μ'.readN (S + 552 + 8) 8 = Num.encodeLE 8 q ∧
+      μ'.readN (S + 552 + 16) 8 = Num.encodeLE 8 es.length ∧
+      μ'.readN rd 8 = Num.encodeLE 8 (P0 + es.flatten.length) ∧
+      μ'.readN (rd + 8) 8 = Num.encodeLE 8 (Lt - es.flatten.length) ∧
+      HeapCtx env pb S0 S1 μ' s' ∧
+      (⟨q - 32, (232 * es.length + 31) / 32 + 1, true⟩ : Chunk) ∈ chunks s' ∧
+      (∀ a, q ≤ a → a < q + 232 * es.length → InData ⟨q - 32, (232 * es.length + 31) / 32 + 1, true⟩ a) ∧
+      (∃ csOf : Nat → List Chunk, (∀ j, j < es.length → (∀ c ∈ csOf j, c ∈ chunks s' ∧ c.used = true ∧
+        c ≠ ⟨q - 32, (232 * es.length + 31) / 32 + 1, true⟩ ∧ c ≠ cp) ∧
+        ∀ μ'' : Memory, (∀ c ∈ csOf j, ∀ a, InData c a → μ''.read a = μ'.read a) →
+          reps j (csOf j) (μ'.readN (q + 232 * j) 232) μ'') ∧
+        ∀ j j', j < es.length → j' < es.length → j ≠ j' → ∀ c ∈ csOf j, c ∉ csOf j') ∧
+      (∀ c ∈ chunks s, c.used = true → c ∈ chunks s' ∧ ∀ a, InData c a → μ'.read a = μ.read a) ∧
+      (∀ d ∈ chunks s, d.used = true → d ≠ ⟨q - 32, (232 * es.length + 31) / 32 + 1, true⟩) ∧
+      (∀ a, a < 4294967296 → S + 552 + 24 ≤ a → (a < rd ∨ rd + 16 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, Glob a → μ'.read a = μ.read a)) ∨
+    ∃ N, Exhausts env cap0 pb p P 482 ω μ x N := by
+  rcases first_batch (hb := hb) env cap0 hcap1 hcap0 gl x ω μ s H S rd P0 Lt v5 v6 es reps cp Ns hel hg hn hne hS
+      hv5 hv6 hcp hcpd hP0 hLt h0 h1 h5 h6 h7 h8 h9 sR0 sR8 pay tab rt with
+    ⟨ω1, μ1, s1, q1, N1, run1, I1⟩ | hx
+  rotate_left
+  · exact Or.inr hx
+  rcases batches (hb := hb) env cap0 hcap1 hcap0 gl x S rd P0 Lt es reps cp Ns μ s (S + 552) v5 v6 hel hne hS
+      ⟨hcp.1, hcp.2.1⟩ hcpd hP0 hLt pay hbig hbatch _ _ _ _ _ ω1 μ1 s1 rfl I1 with
+    ⟨ω2, μ2, s2, Rc, b, q, N2, run2, I⟩ | ⟨N2, hx⟩
+  rotate_left
+  · exact Or.inr ⟨_, Exhausts.pre run1 hx⟩
+  obtain ⟨ω3, μ3, N3, run3, c1, c5, c6, c0, c8, c16, crP, crL, H3, hlow3, hhi3⟩ :=
+    vec_exit (cap0 := cap0) (p := p) (P := P) env gl x S rd P0 Lt es reps cp μ s v5 v6 hS hv5 hv6 Rc b q ω2 μ2 s2 I
+  have H2 := I.heap
+  obtain ⟨hq0, -, hqT⟩ := Decode.VecU8.chunk_in H2.wf I.cbm rfl
+  simp only [bufC] at hq0 hqT
+  have hbT := H2.hbT
+  have hb0 := H2.hb0
+  obtain ⟨csOf, ela, elb⟩ := I.el
+  refine Or.inl ⟨ω3, μ3, s2, q, _, run1.trans (run2.trans run3), c1, c5, c6, c0, c8, c16, crP, crL, H3, I.cbm,
+    fun a h1 h2 => ⟨by simp only; omega, by simp only; omega⟩,
+    ⟨csOf, fun j hj => ⟨(ela j hj).1, fun μ'' hag => ?_⟩, elb⟩, fun c hc hu => ?_, I.fresh0,
+    fun a h0 h1 h2 => (hhi3 a h0 h1 h2).trans (I.hi a h0 (by omega) h2), fun a ha => ?_⟩
+  · have hr := (ela j hj).2 μ'' (fun c hc a ha => by
+      obtain ⟨hc2, hcu, -⟩ := (ela j hj).1 c hc
+      obtain ⟨hc0, -, hcT⟩ := Decode.VecU8.chunk_in H2.wf hc2 hcu
+      have ha' := ha; unfold InData at ha'
+      rw [hag c hc a ha, hlow3 a (by omega)])
+    rw [Memory.readN_congr (fun i hi => hlow3 _ (by omega))]; exact hr
+  · obtain ⟨hc2, hd2⟩ := I.keep c hc hu
+    refine ⟨hc2, fun a ha => ?_⟩
+    obtain ⟨hc0, -, hcT⟩ := Decode.VecU8.chunk_in H2.wf hc2 hu
+    have ha' := ha; unfold InData at ha'
+    rw [hlow3 a (by omega), hd2 a ha]
+  · have hg' := ha; unfold Glob at hg'
+    rw [hlow3 a (by omega), I.glob a ha, hg a ha]
+
 end Services.Bootstrap.Refine.DecodeVecNC

@@ -30,7 +30,27 @@ on 2026-11-15:
   panics).
 - **E. The allocation-failure ☇ obligation.**
 
-Waiting on the coordinator: the Debug line for the new kinds (a wider `DRm`), a `LookupFmtOk` hypothesis,
+**Progress on A (2026-11-15):**
+- `DecodeHeadG.headG`: `Instructions::decode`'s head for any n < 2^32 (general `decodeU32`).
+- `DecodeVecN.w1G`, `v2gG`: the grow step between batches for any length and batch. The batches are 70, then
+  min(remaining, length): 70, 70, 140, 280, …; every batch after the first grows the buffer to exactly
+  length + batch with `finish_grow` → `realloc`.
+- `DecodeVecNC`: `BInv` (the state at 562 after L elements), `batch_step`, `batches` (induction), `first_batch`,
+  `vec_exit` and `vec_allC`, which is `vec_anyC` for any 1 ≤ n < 2^32. Two internal hypotheses remain:
+  - `hbatch` (each batch below 128): the decode loop's `OkFD` (Decode/LoopAPassC.lean) requires it. It is unused
+    there: a scratch copy with the conjunct removed builds. Dropping it is a two-line weakening of another
+    session's file and is waiting on the coordinator.
+  - `hbig` (232 n < 2^30 − 64, `realloc_call`'s range): n ≤ |y| ≤ 2^24 does not imply it, since up to about 16.7M
+    one-octet instructions fit in a payload and 232 n < 2^30 needs n < about 4.6M. The top level needs the failure
+    path of a `realloc` request at or above 2^25 − 1 units (heap exhaustion). Not done yet.
+- Next: switch `DecodeC`/`RunMixed` to `vec_allC`, `headG`; lift `LayP.hn` (part A3) and the exit encoder.
+
+Decided by the coordinator on 2026-11-15:
+- the new theorem `refine_t1c` is added in T1's match form, and `refine_milestone` stays unchanged;
+- the wider `DRm` and the new `LookupFmtOk` go on `refine_t1c` only;
+- E (the ☇ obligation) takes route (b), the table, after A and B. The sizing is in `scripts/allocfail/`.
+
+Earlier open questions (now decided as above): the Debug line for the new kinds (a wider `DRm`), a `LookupFmtOk` hypothesis,
 the successor theorem's shape (T1's match form, for Import's panic), and the route for E.
 The executor PRs #192/#194 (loops, forking) are not needed. The loop-heavy pieces (decode batches, the drop of
 `Vec<Vec<u8>>`, Import's loops) come last, and use #194 if it has landed by then.

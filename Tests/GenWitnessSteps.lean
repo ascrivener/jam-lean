@@ -1,4 +1,11 @@
-import JAM
+import JAM.Accumulate
+import JAM.Refine
+import JAM.Theorems.GrowHeap
+import JAM.Theorems.HostGas
+import JAM.Theorems.KeepRO
+import JAM.Theorems.NatBlob
+import JAM.Theorems.RefineContract
+import JAM.Theorems.Confinement
 import PVM.Logic.FastCheck
 import Services.Picoalloc.Invariant
 open PVM JAM

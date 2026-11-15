@@ -28,6 +28,8 @@ import Services.Bootstrap.Fmt.Format
 import Services.Bootstrap.Fmt.AccFmt
 import Services.Bootstrap.Fmt.ResultDebug
 import Services.Bootstrap.Fmt.OptionDebug
+import Services.Bootstrap.Fmt.Field
+import Services.Bootstrap.Fmt.U8x32
 import Services.Bootstrap.Fmt.OracleRefineK
 import Services.Bootstrap.Fmt.ReallocCopy
 import Services.Bootstrap.Fmt.ReallocCopyInst
@@ -115,6 +117,7 @@ import Services.Bootstrap.Decode.VecU8Loop
 import Services.Bootstrap.Decode.ReallocOk
 import Services.Bootstrap.Decode.DeallocCall
 import Services.Bootstrap.Decode.AllocZeroedCall
+import Services.Bootstrap.Decode.AllocHuge
 import Services.Bootstrap.Decode.VecU8Pass
 import Services.Bootstrap.Decode.LookedUpBig
 import Services.Bootstrap.Decode.ProvideInline
@@ -375,7 +378,10 @@ import Services.Bootstrap.Acc.Impl.OogPrefix
 import Services.Bootstrap.Acc.Impl.Lift
 import Services.Bootstrap.Acc.Impl.QtoS
 import Services.Bootstrap.Acc.Impl.Loop
+<<<<<<< HEAD
 import Services.Bootstrap.Acc.Impl.ROKeepS
+=======
+>>>>>>> origin/main
 import Services.Bootstrap.Acc.RoData
 import Services.Bootstrap.Acc.Wrappers.ReadHost
 import Services.Bootstrap.Acc.Wrappers.Get
@@ -385,6 +391,7 @@ import Services.Bootstrap.Acc.Wrappers.GetCall
 import Services.Bootstrap.Acc.Wrappers.Set
 import Services.Bootstrap.Acc.Wrappers.SetCall
 import Services.Bootstrap.Acc.Wrappers.Remove
+<<<<<<< HEAD
 import Services.Bootstrap.Acc.Items.Head
 import Services.Bootstrap.Acc.Items.End
 import Services.Bootstrap.Acc.Items.Disp
@@ -404,6 +411,8 @@ import Services.Bootstrap.Acc.Transfer.EncodeCall
 import Services.Bootstrap.Acc.Transfer.Hyp
 import Services.Bootstrap.Acc.Transfer.LogS
 import Services.Bootstrap.Acc.Transfer.Tail3
+=======
+>>>>>>> origin/main
 import Services.Bootstrap.Alloc.HeapContract
 import Services.Bootstrap.Decode.VecU8HeapBig
 import Services.Bootstrap.Decode.VecPairsBig
@@ -417,6 +426,8 @@ import Services.Bootstrap.Decode.VariantsBig
 import Services.Bootstrap.Decode.VariantsBig2
 import Services.Bootstrap.Decode.ElemsBig
 import Services.Bootstrap.Decode.VecVecOwn
+import Services.Bootstrap.Decode.LoopAPassC
+import Services.Bootstrap.Decode.ExportEmpty
 import Services.Bootstrap.SymExec
 import Services.Witness.SymExec
 import Services.Bootstrap.Alloc.AfterStart

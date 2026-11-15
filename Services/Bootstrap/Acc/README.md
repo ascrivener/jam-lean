@@ -594,6 +594,7 @@ Lemmas under `accContractQ` (from (x, v :: qs) to (x', qs)) carry over to any st
 - Keys must survive `get`'s allocation: `get_some` takes them on the stack above the frame or in an
   allocated chunk's data.
 
+<<<<<<< HEAD
 ## `on_transfer` (`Acc/Transfer/`)
 
 Spec `onTransfer`: read "transfer-count", write n + 1 under it, write ℰ₄(source) ++ ℰ₈(amount) ++ memo
@@ -623,6 +624,8 @@ premise `decode (Dec.output C) o = some (is, k)`, which must not reach the state
 The log line's segments 7454 … 7763 are proved (`Tail3`, with `FreeStepsH.logS`). Still to do: the
 composition of the whole of `on_transfer` as an `Impl` of `onTransfer`.
 
+=======
+>>>>>>> origin/main
 ## Brief: `add_recent_work_item` and the results tail (rows 8, 9, 11)
 
 These go to a separate session. Both run inside an operand's iteration of the items loop, in

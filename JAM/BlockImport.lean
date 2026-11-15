@@ -66,13 +66,15 @@ def Extrinsic.hash (x : Extrinsic) : List UInt8 :=
   let a := [encodeTickets x.tickets, p, g, encodeAssurances x.assurances, x.disputes.encode]
   hashL (a.flatMap hashL)
 
-/-- The ancestor-set condition of §11.4.1 for a refinement context x: some h, h' ∈ 𝒜 with
-    h_T = x_t, ℋ(h) = x_l, h'_P = ℋ(h) and h'_R = x_s. 𝒜 is the retained headers together with
-    the block's own header, so that the parent can be a lookup anchor. -/
+/-- The ancestor-set condition of §11.4.1 (GP eq. 11.36) for a refinement context x: some
+    h, h' ∈ 𝒜 with h_T = x_lookupanchortime, ℋ(h) = x_lookupanchor, h'_P = ℋ(h) and
+    h'_R = x_lookupanchorpoststate: the lookup anchor's posterior state root, the prior state root
+    of its child (not the anchor's x_stateroot). 𝒜 is the retained headers together with the block's
+    own header, so that the parent can be a lookup anchor. -/
 def lookupAnchorKnown (anc : List Header) (x : RefineContext) : Bool :=
   anc.any fun h =>
     h.slot == x.lookupAnchorSlot && h.hash == x.lookupAnchorHash.toList &&
-      anc.any fun h' => h'.parent.toList == h.hash && h'.priorStateRoot == x.anchorStateRoot
+      anc.any fun h' => h'.parent.toList == h.hash && h'.priorStateRoot == x.lookupAnchorStateRoot
 
 /-- The intermediate values of Υ that are not part of σ', for inspection. -/
 structure ImportTrace where

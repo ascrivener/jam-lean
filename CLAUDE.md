@@ -34,10 +34,11 @@ the real compiled service binaries in `services/`. Read `docs/whats-proven.md` f
 
 - Bounds:
   - A cold full build takes about 4.5–5 h.
-  - The build step is bounded at 290 min, inside a 355-min job.
-  - A partial build is saved to the cache.
-- **A timed-out run (exit 137 at ~module 2280) is not a proof error.** Re-run it once; it resumes
-  from the cache.
+  - Each attempt's build steps are bounded at 300 min, inside a 355-min job.
+- **Timeouts resume on their own.** An attempt that runs out of time saves its partial build, skips
+  the checks and ends green; the next attempt job (`attempt-2`, `attempt-3`) resumes from it. Only
+  `attempt-3` running out fails the run; re-run it and it resumes from the cache. See
+  `docs/BUILD-INFRA.md`.
 - Runs on `main` are never cancelled, and they save the cache.
 - **Re-sync rule.** After a PR that regenerates code facts (`Services/Bootstrap/Code*`) lands on
   `main`, re-sync an open PR only if it imports the regenerated module, directly or transitively.
@@ -54,7 +55,8 @@ the real compiled service binaries in `services/`. Read `docs/whats-proven.md` f
   `ExhaustsHeap` disjunct, and T2 as "some n".
 - **T1 excludes `RandomStorageRefine`** (`hrsr`). Modelling `SmallRng` comes later.
 - **T2 assumes `ValuesFit`** (`hvals`): storage values, preimages and encoded inputs are shorter
-  than 2^64 octets.
+  than 2^63 octets (decided 2026-11-15, tightened from 2^64: a value of 2^64 − 1 octets collides with
+  NONE in the SDK's `get`, and lengths in [2^63, 2^64 − 1) trap at 47901 / 47929).
 - **First milestone: T1c for canonical payloads** (M1), via an interim milestone covering only the
   fixed-width and Export instructions.
 - **The findings report** for Parity waits until full T1 and T2 are proved.
@@ -74,5 +76,5 @@ the real compiled service binaries in `services/`. Read `docs/whats-proven.md` f
   - weakening a hypothesis;
   - adding a lemma;
   - generalising a statement in place while keeping every existing statement unchanged.
-- **Usage limits.** Keep the number of parallel sessions small, at most 3. Restart sessions fresh,
+- **Usage limits.** Keep the number of parallel sessions small: at most 5 (Adam, 2026-11-15; was 3). Restart sessions fresh,
   with a handoff note, before their context gets large: the cost of each turn grows with context.

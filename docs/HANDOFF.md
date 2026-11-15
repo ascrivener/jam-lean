@@ -54,15 +54,14 @@ Next PRs to open, from wip branches:
 | Field formatters | `claude/bootstrap-fields-wip` @ ae682db | `Services/Bootstrap/Fmt/FIELDS-HANDOFF.md` | `FieldInt.lean` and `N56Steps.lean` **not built**. 56340/57485 estimated at ~7 days: the string path, then hex, then 57485. |
 | Executor / KeyFmt | `claude/fmt-text-wip` @ 59986bd | `Services/Bootstrap/SymExec/README.md` | Full build stopped at 2164/2596 with 0 errors. Next: full build, then a PR flagged "executor core changed". |
 
-## Open questions for Adam
+## Decisions on the former open questions (Adam, 2026-11-15)
 
-1. **`remove` on a FULL result.** Either (a) the spec panics like the binary, recorded as quirk
-   Q18 (recommended), or (b) it becomes a named reason in T2 for stopping early.
-2. **Loops in the symbolic executor.** Either (a) extend the executor with forking and loop
-   induction, about 2–3 days and reusable (recommended), or (b) prove `from_utf8` by hand, about
-   2–4 days. The field formatters' loops would benefit too.
-3. **CI continuation job.** Should a second job automatically resume a build that hit the 290-min
-   limit from the cache, so nobody has to re-run it by hand?
+1. **`remove` on a FULL result:** the spec panics like the binary, recorded as quirk Q18.
+2. **Loops in the symbolic executor:** extend the executor with forking and loop induction
+   (about 2–3 days, reusable by the field formatters), rather than proving `from_utf8` by hand.
+   Not started yet; it waits for a free session slot.
+3. **CI continuation job:** yes. Add a second job that resumes, from the cache, a build that hit
+   the 290-min limit. Not started yet.
 
 ## Recorded obligations (not assumptions of the final theorems)
 

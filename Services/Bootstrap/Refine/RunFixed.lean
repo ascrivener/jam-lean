@@ -31,11 +31,11 @@ theorem run_fixed {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     {hb pb : Nat} (gl : Nat → UInt8)
     (is : List Spec.Instr) (Rs : Nat → List UInt8 → Prop) (ts : Nat → Nat)
     (hk : ∀ j, j < is.length → FixedKind p P (encAt is j) (Rs j) (ts j))
-    (fmt : ExportSeg.ExportFmtOk p cap0 env pb S0 S1)
-    (dbg : ExitRun.DebugLineOk p cap0 env pb S0 S1 (fun j bs _ => Rs j bs))
-    (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State) (H : HeapCtx env pb S0 S1 μ s)
+    {ro : List UInt8} (fmt : ExportSeg.ExportFmtOk p cap0 env pb S0 S1 ro)
+    (dbg : ExitRun.DebugLineOk p cap0 env pb S0 S1 ro (fun j bs _ => Rs j bs))
+    (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State) (H : HeapCtx env pb S0 S1 μ s) (hro : RoData.RoIs ro μ)
     (M q Ly r5 : Nat) (salt : List UInt8) (cp : Chunk)
-    (hn : 1 ≤ is.length ∧ is.length ≤ 70) (hM : S0 + 2848 ≤ M ∧ M + 648 ≤ S1 ∧ M % 8 = 0)
+    (hn : 1 ≤ is.length ∧ is.length ≤ 70) (hM : S0 + 7560 ≤ M ∧ M + 632 ≤ S1 ∧ M % 8 = 0)
     (hr5 : r5 < 18446744073709551616)
     (hcp : cp ∈ chunks s ∧ cp.used = true ∧ cp.addr = s.base) (hcpq : cp.addr + 32 = q)
     (hcpd : ∀ a, q ≤ a → a < q + Ly → InData cp a)
@@ -50,9 +50,8 @@ theorem run_fixed {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     (s624 : μ.readN (M + 624) 8 = Num.encodeLE 8 ret) (s616 : μ.readN (M + 616) 8 = Num.encodeLE 8 r5')
     (s608 : μ.readN (M + 608) 8 = Num.encodeLE 8 r6')
     (hc' : c' < 18446744073709551616)
-    (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) (hr5' : r5' < 18446744073709551616)
-    (hr6' : r6' < 18446744073709551616) (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t)
-    (hbt : P.isBlockStart t = true)
+    (hret : Fin.RetTo P ret t) (hr5' : r5' < 18446744073709551616)
+    (hr6' : r6' < 18446744073709551616)
     (tab : μ.readN 67476 100 = Decode.Tag.table) (rt : ∀ a, 67476 ≤ a → a < 67576 → μ.readable a = true)
     (tab2 : μ.readN 67376 100 = table) (rtab2 : ∀ a, 67376 ≤ a → a < 67476 → μ.readable a = true)
     (dtab : μ.readN 67760 96 = DropOut.dtable) (rdtab : ∀ a, 67760 ≤ a → a < 67856 → μ.readable a = true) :
@@ -61,7 +60,8 @@ theorem run_fixed {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
       ω'[0] = UInt64.ofNat ret ∧ ω'[1] = UInt64.ofNat (M + 632) ∧ ω'[5] = UInt64.ofNat r5' ∧
       ω'[6] = UInt64.ofNat r6' ∧ ω'[7] = UInt64.ofNat buf ∧ ω'[8] = UInt64.ofNat (off (encAt is) is.length + 3) ∧
       μ'.readN buf (off (encAt is) is.length + 3) =
-        UInt8.ofNat is.length :: (out (encAt is) is.length ++ Num.encodeLE 2 (w % 65536))) ∨
+        UInt8.ofNat is.length :: (out (encAt is) is.length ++ Num.encodeLE 2 (w % 65536)) ∧
+      ((∀ a, buf ≤ a → a < buf + (off (encAt is) is.length + 3) → μ'.readable a = true) ∧ buf + (off (encAt is) is.length + 3) < 2147483648)) ∨
     ∃ N, ExhaustsX env cap0 pb p 4792 ω μ x N := by
   obtain ⟨hM0, hM1, hM8⟩ := hM
   have hS0d : S0 = 4278050816 := rfl
@@ -75,7 +75,7 @@ theorem run_fixed {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
       (is.map Spec.Instr.encode) salt (fun j bs _ => Rs j bs) cp (fun _ => 4000)
       (fun j hj => by rw [hes j hj]; exact ElemOkAF.of_elemOkF hL ((hk j (by simpa using hj)).dec _ _ hL))
       hg (by simpa using hn) (fun j hj => by rw [hes j hj]; exact (hk j (by simpa using hj)).ne)
-      ⟨hM0, by omega, hM8⟩ hr5 hcp hcpd hLy h1 h5 h6 s112 (by simpa using sb) pay ssalt tab rt with
+      ⟨by omega, by omega, hM8⟩ hr5 hcp hcpd hLy h1 h5 h6 s112 (by simpa using sb) pay ssalt tab rt with
     ⟨ω1, μ1, s1, E, N1, run1, b1, -, -, b168, b176, b184, -, -, -, H1, hcb, hcbd, hel1, keep1, fresh1, hi1, -⟩ | ⟨N, hx⟩
   rotate_left
   · exact Or.inr ⟨_, ExhaustsX.of hx⟩
@@ -99,7 +99,7 @@ theorem run_fixed {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
   have rsub : ∀ j o l, o + l ≤ 232 → μ1.readN (E + 232 * j + o) l = ((μ1.readN (E + 232 * j) 232).drop o).take l :=
     fun j o l h => Decode.Loop.readN_sub μ1 _ 232 o l _ rfl h
   rcases Body.body (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 fmt (fun j bs _ => Rs j bs) (encAt is) Rs dbg
-      ω1 μ1 s1 H1 M n n ⟨E - 32, (232 * n + 31) / 32 + 1, true⟩ (fun _ d => d = cp) Rs (fun _ => x)
+      ω1 μ1 s1 H1 (RoData.RoIs.keep H run1 hro) M n n ⟨E - 32, (232 * n + 31) / 32 + 1, true⟩ (fun _ d => d = cp) Rs (fun _ => x)
       ⟨by omega, hM1, by omega, hM8⟩ (by omega) (by omega) (by omega) (by omega) ⟨hcb, rfl⟩
       (by simp only; omega) (by simp only; omega)
       (fun d hd => by rw [hd]; exact ⟨(keep1 cp hcp.1 hcp.2.1).1, hcp.2.1⟩) b1
@@ -120,11 +120,11 @@ theorem run_fixed {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
       (by rw [m1 _ _ (by omega) (by omega) (by omega) (by omega)]; exact s624)
       (by rw [m1 _ _ (by omega) (by omega) (by omega) (by omega)]; exact s616)
       (by rw [m1 _ _ (by omega) (by omega) (by omega) (by omega)]; exact s608)
-      hc' (fun _ => ⟨rfl, hcpq, fun e => fresh1 cp hcp.1 hcp.2.1 e⟩) hret hr5' hr6' hjt hbt
+      hc' (fun _ => ⟨rfl, hcpq, fun e => fresh1 cp hcp.1 hcp.2.1 e⟩) hret hr5' hr6'
       (by rw [tab1]; exact tab2) (fun a h1 h2 => by rw [rtab1 a h1 h2]; exact rtab2 a h1 h2)
       (by rw [dtab1]; exact dtab) (fun a h1 h2 => by rw [rdtab1 a h1 h2]; exact rdtab a h1 h2) with
-    ⟨ω2, μ2, s2, N2, buf, run2, H2, e0, e1, e5, e6, e7, e8, eo⟩ | ⟨N, hx⟩
-  · exact Or.inl ⟨ω2, μ2, s2, _, buf, run1.trans run2, H2, e0, e1, e5, e6, e7, e8, eo⟩
+    ⟨ω2, μ2, s2, N2, buf, run2, H2, e0, e1, e5, e6, e7, e8, eo, erd⟩ | ⟨N, hx⟩
+  · exact Or.inl ⟨ω2, μ2, s2, _, buf, run1.trans run2, H2, e0, e1, e5, e6, e7, e8, eo, erd⟩
   · exact Or.inr ⟨_, ExhaustsX.pre run1 hx⟩
 
 end Services.Bootstrap.Refine.RunFixed

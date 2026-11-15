@@ -158,6 +158,24 @@ An independent kernel, nanoda as vendored by
   checked by the compiled `lake build bootstrapcheck`. Unlike witness's `refine_rejects`, no
   bootstrap theorem yet discharges these hypotheses for the vendored blob in a single statement,
   and there is no gas bound, so the "or ∞" remains.
+- **Pass-through and `Export` payloads (T1c, first milestone).** `refine_milestone`
+  (`Services/Bootstrap/Refine/Milestone.lean`).
+  - *Statement:* for a work item whose code is bootstrap (`IsBootstrap`), c < 2¹⁶, i < 2¹⁶, service id
+    < 2³², and payload y = ℰ(`Instructions { is, salt }`) ⌢ rest with 1 ≤ |is| < 128 well-formed
+    instructions, each passed through (fixed-width, `Lookup` only with eager = false) or `ExportSegs`, and
+    |y| + 48 ≤ 2²⁴: `Spec.refine` under the GP refine host functions (`RSem.run`) returns some output
+    and exports, and Ψ_R's result and exports are those; or ∞ with no exports; or the run reaches a
+    failed allocation (`ExhaustsHeap`).
+  - *Not yet proved:* that a failed allocation then ends in ☇ with no exports (a named later obligation;
+    T1 keeps the full claim).
+  - *Assumed:* `VendoredFacts` (the vendored blob's layout and three read-only tables; step 10 of
+    `docs/bootstrap-target.md`) and `FmtHyps` (three log / `Debug` lines: `ArgsLineOk`, `ExportFmtOk`,
+    `DebugLineOk`; to be discharged by the fmt summaries).
+  - *Not covered:* eager `Lookup`, `Import`, `RandomStorageRefine`, the variable-width instructions,
+    n ≥ 128.
+  - *Built from:* `Refine/Top.lean` (`refine_core`: the arguments' parse `ArgsAll.refine_args`, then
+    `from4680`), `Refine/RunMixed.lean` (the decode, transform loop and output), `Refine/SpecRun.lean`
+    (`Spec.refine`'s run on these payloads).
 - **The `Instructions` decode loop, for lists of `Checkpoint`.** `DecodeLoop.loop` and
   `DecodeLoop.pass` (`Services/Bootstrap/DecodeLoop.lean`).
   - *Statement:* from the loop's state after k of n elements, the loop at pc 680 decodes the
@@ -900,6 +918,10 @@ What you trust beyond the kernel:
   `psiM_of_freeRunH` turns such a run into a statement about Ψ_M, of the form "this result, or ∞".
   Only witness's `refine_rejects` also carries a gas bound that removes the ∞. The allocator
   theorems say nothing about gas.
+- **Storage value lengths (T2, planned `ValuesFit`).** The accumulate wrapper theorems assume storage
+  values shorter than 2⁶³ octets (`get_call`'s `hfit`); T2 will carry this as `ValuesFit` (decided
+  2026-11-15). The SDK's `get` reads a length of 2⁶⁴ − 1 as NONE and traps on lengths from 2⁶³; see
+  [Findings](#findings).
 - **Refinement of a fragment, not of a whole program.** The allocator theorems are about the
   allocator's entry points called with the stated registers and memory. They are not yet composed
   into a Ψ_R or Ψ_A theorem about a bootstrap run that allocates.
@@ -926,6 +948,13 @@ Disagreements between the model and the binary, found by the refinement proofs a
     fails.
   - *Why it is unreachable:* the public `alloc` wrapper only passes `req = ⌈size/32⌉ < 2³¹`.
   - *Resolution:* `alloc_refines_fail` assumes `req < 2³¹`.
+- **The SDK's `get` and lengths near 2⁶⁴.**
+  - *Disagreement:* Ω_R returns a value's length in ω₇, and `get` (47888 …) first compares it with
+    the host error codes. A value of 2⁶⁴ − 1 octets reads as NONE, so `get` returns `None` where
+    the model returns the value; lengths in [2⁶³, 2⁶⁴ − 1) trap (47901, 47929).
+  - *Resolution:* such values cannot exist physically. T2 assumes values shorter than 2⁶³ octets
+    (`ValuesFit`, decided 2026-11-15). Below that, `get_call` proves `get` returns the value or
+    reaches the allocation-failure trap 47977 (`get_huge` for |w| + 31 ≥ 2³⁶).
 - **Noted, not a disagreement (#65).** `realloc` with a null address returns null rather than
   allocating, unlike C's `realloc(NULL, n)`. The model's `realloc` is only defined for allocated
   chunks, so this is behaviour of the wrapper alone.

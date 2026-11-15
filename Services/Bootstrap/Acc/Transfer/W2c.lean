@@ -37,7 +37,7 @@ theorem tr_w2c (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap :
     (m208 : rdN μ (sp + 208) 8 = 2800) (m1496 : rdN μ (sp + 1496) 4 = n) (hn : n < 4294967296)
     (m472 : rdN μ (sp + 472) 4 = src) (m1000 : rdN μ (sp + 1000) 8 = am)
     (mmemo : μ.readN (sp + 1144) 128 = memo) :
-    (∃ s' ω' μ' N kc kp vp (kch vch : Chunk),
+    (∃ s' ω' μ' N kc kp vp, ∃ kch vch : Chunk,
       FreeStepsH p (KeepCtx (accContractS env)) 7763 ω μ (c, f) 48104 ω' μ' (c, f) N ∧
       ω'[0] = UInt64.ofNat 274 ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[7] = UInt64.ofNat (sp + 264) ∧
       ω'[8] = UInt64.ofNat kp ∧ ω'[9] = UInt64.ofNat (trKey2 n).length ∧ ω'[10] = UInt64.ofNat vp ∧
@@ -103,7 +103,7 @@ theorem tr_w2c (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap :
   have fr53 : ∀ a, a < 4294967296 → sp ≤ a → (a < sp + 1580 ∨ sp + 1708 ≤ a) → μ5.read a = μ3.read a :=
     fun a h0 ha hb => by rw [fr5 a h0 (.inr ha), fr4 a h0 hb (.inr ha)]
   have hkp : kp < 18446744073709551616 := mkp ▸ rdN_lt64 _ _
-  have hkp5 : ω4[5].toNat = kp := by rw [d5, b5]; simp only [UInt64.toNat_ofNat]; omega
+  have hkp5 : ω4[5].toNat = kp := by rw [d5, b5, UInt64.toNat_ofNat_of_lt' (show kp < 2 ^ 64 by omega)]
   -- 40494 → 7888: the encoding
   rcases enc_call env cap pb hcap1 hcap (p := p) (P := P) (hb := 0) c f ω5 μ5 s2 (sp - 64) (sp + 1568) (sp + 744)
       src am ω4[5].toNat ω4[6].toNat S0 S1 memo H5 g0 g1 g7 g8 g5 g6 ⟨by omega, by omega⟩ ⟨by omega, by omega⟩
@@ -125,6 +125,7 @@ theorem tr_w2c (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap :
   have hst6 := H6.st
   obtain ⟨Nv1, Nv2, Nv3⟩ := Services.Bootstrap.Decode.VecU8.chunk_in H6.wf hvch rfl
   dsimp only at Nv1 Nv2 Nv3
+  have hb6 := H6.hb0
   have e1' : ω6[1] = UInt64.ofNat sp := by rw [e1]; congr 1; omega
   have k63 : ∀ o n, sp ≤ o → o + n ≤ 4294967296 → (o + n ≤ sp + 744 ∨ sp + 768 ≤ o) →
       (o + n ≤ sp + 1580 ∨ sp + 1708 ≤ o) → rdN μ6 o n = rdN μ3 o n := fun o n h1 h2 h3 h4 =>
@@ -142,7 +143,7 @@ theorem tr_w2c (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap :
   have keyD : ∀ a, kp ≤ a → a < kp + (trKey2 n).length → μ6.read a = μ2.read a := fun a h1 h2 => by
     have ha := hkin a h1 h2
     have hlt := heapC_data_lt H2 hkch ha
-    rw [kdat6 kch hkch hkcu a ha, fr52 a hlt]
+    rw [kdat6 kch hkch hkcu a ha, fr52 a hlt.2]
   refine .inl ⟨s3, ω7, μ6, _, kc, kp, vp, kch, ⟨vp - 32, (140 + 31) / 32 + 1, true⟩,
     (run1.trans run2).trans (run3.trans (run4.trans (run5.trans (run6.trans run7)))),
     j0, j1, j7, ?_, j9, j10, j11, j6, ?_, H6, ?_, hkch6, hkcu, hkca, hkin, ?_, o0, ?_, hvch, rfl,

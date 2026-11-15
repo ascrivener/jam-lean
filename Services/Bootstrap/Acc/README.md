@@ -54,7 +54,7 @@ the same `Get.lean` / `GetCall.lean` and `gk_call` adapted to them (its abort: r
    - `Hyp.ExhaustsP`: KeyFmt/LogFmt's failure disjunct ("Exhausts, then ☇", a blob obligation; Adam
      chose option (a)).
 
-   **Session 3 (2026-11-15), written, NOT YET BUILT:**
+   **Session 3 (2026-11-15), built locally (exit 0; axioms propext, Classical.choice, Quot.sound):**
    - `Transfer/ImplW1.lean`: `tr_w1` (7326 → 7399 as the counter's `orPanic` write), post `W1Post`.
    - `Transfer/Tail4.lean`: gap segments `tr_u8_pre` (7437), `lg_log_b0` (7743, message cap 0),
      `t2_kfmt_pre` (7763 → 59375).

@@ -28,7 +28,7 @@ theorem tr_u8_pre {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x 
   case run => pvm_go [h1]
   case post =>
     exact ⟨by reg_val, (by reg_val <;> exact h1), (by reg_val <;> (rw [h1]; simp; omega)),
-      (by reg_val <;> rfl), by reg_val, by reg_frame⟩
+      (by reg_val <;> simp [List.lookup]), by reg_val, by reg_frame⟩
 
 /-- **7743 … 7763**, the message's capacity 0 (at sp + 744): no free. -/
 theorem lg_log_b0 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)

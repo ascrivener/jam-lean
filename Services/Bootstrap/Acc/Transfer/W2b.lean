@@ -1,4 +1,5 @@
 import Services.Bootstrap.Acc.Transfer.W2a
+import Services.Bootstrap.Acc.Transfer.Read
 
 /-!
 # `on_transfer`'s log line, composed (7454 → 7763), frame-only
@@ -49,7 +50,7 @@ theorem lg_part1 (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
     (hch : (⟨ptr - 32, (128 + 31) / 32 + 1, true⟩ : Chunk) ∈ chunks s₀)
     (tag : (rdN μ (sp + 744) 8 = 0 ∧ rdN μ (sp + 752) 8 = ptr ∧ rdN μ (sp + 760) 8 = 128) ∨
       rdN μ (sp + 744) 8 = 1) :
-    (∃ s' ω' μ' N (chq : Chunk) cp q len, FreeStepsH p (KeepCtx (accContractS env)) 7454 ω μ (c, f) 7631 ω' μ' (c, f) N ∧
+    (∃ s' ω' μ' N, ∃ chq : Chunk, ∃ cp q len, FreeStepsH p (KeepCtx (accContractS env)) 7454 ω μ (c, f) 7631 ω' μ' (c, f) N ∧
       ω'[1] = UInt64.ofNat sp ∧ HeapCtxC env.code pb S0 S1 μ' s' ∧
       chq ∈ chunks s' ∧ chq.used = true ∧ chq.addr + 32 = q ∧
       rdN μ' (sp + 512) 8 = cp ∧ cp ≠ 0 ∧ rdN μ' (sp + 520) 8 = q ∧ rdN μ' (sp + 528) 8 = len ∧
@@ -278,7 +279,7 @@ theorem lg_part2 (env : AccEnv) {p : ByteArray} {P : Program} [HasCode p P] [Has
         sp kp 266 7763 chk H4 hk4 hcku hcka d0 d1 d7 ⟨by decide, by decide, by decide⟩
         (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_132]) bs_7763 (by omega) ⟨by omega, by omega⟩
     have runL := FreeStepsH.logS env (d_7741 (p := p) (P := P)) (run6.trans run7)
-    refine .inl ⟨free (free s2 q) kp, ω7, μ7, _, runA.trans runL, g1.trans (d1.trans w1), H7,
+    refine .inl ⟨free (free s2 q) kp, ω7, μ7, _, runA.trans runL, g1.trans d1, H7,
       fun d hd hu hne => ?_, fun a h0 ha hb hc => by rw [stk7 a h0 ha]; exact frA a h0 ha hb hc⟩
     obtain ⟨hd4, hda⟩ := keepA d hd hu hne
     have hne' : d ≠ chk := hckf d hd hu

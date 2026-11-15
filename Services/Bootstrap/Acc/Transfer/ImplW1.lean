@@ -22,6 +22,8 @@ The state at 7399 is described by `W1Post`.
 namespace Services.Bootstrap.Acc
 open PVM JAM Services.Bootstrap Services.Bootstrap.Code Services.Bootstrap.CodeA Services.Bootstrap.Alloc
   Picoalloc Services.Bootstrap.Decode.HeapCtx Services.Bootstrap.Spec
+open JAM.Codec (fixed)
+open Services.Bootstrap.ASem (argBase outBase writeAcct)
 set_option maxHeartbeats 8000000
 set_option maxRecDepth 100000
 
@@ -106,7 +108,8 @@ theorem tr_w1 (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap : 
     (UInt64.toNat_lt _) (Nat.mod_lt _ (by decide)) hkey1 hkr1 hval ht81 ht41 htr1 hold
   -- the operation's step
   have hk : argBase + trKey.length + (fixed 4 ((n + 1) % 2 ^ 32)).length ≤ outBase := by
-    rw [show (fixed 4 ((n + 1) % 2 ^ 32)).length = 4 from Num.length_encodeLE _ _]; decide
+    rw [show (fixed 4 ((n + 1) % 2 ^ 32)).length = 4 from Num.length_encodeLE _ _,
+      show trKey.length = 14 by rw [← hkey]; exact Memory.length_readN _ _ _]; unfold argBase outBase; omega
   have estep := ASem.step_write env trKey (fixed 4 ((n + 1) % 2 ^ 32)) c hk hold
   have h1R : Reaches p (KeepCtx (accContractS env)) ⟨7326, ω, μ, c, f⟩ ⟨40494, ω1, μ1, c, f⟩ := ⟨18, run1⟩
   -- the null allocation: the trap at 4002
@@ -171,7 +174,7 @@ theorem tr_w1 (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap : 
           (a < sp + 1568 ∨ sp + 1572 ≤ a) → μ2.read a = μ.read a := fun a h0 ha hb hc => by
         rw [khi a h0 (by omega), fr1 a h0 (.inr ha) hb hc]
       have k2 : ∀ a, sp ≤ a → a < 4294967296 → μ2.read a = μ1.read a := fun a ha h0 => khi a h0 (by omega)
-      refine ⟨rfl, (j3 1 (by decide)).trans (by rw [e1]; congr 1; omega), (j3 5 (by decide)).trans e5,
+      refine ⟨rfl, (j3 1 (by decide)).trans (e1.trans (by congr 1; omega)), (j3 5 (by decide)).trans e5,
         (j3 6 (by decide)).trans e6, ⟨s', H2, fun d hd hu => ⟨kch d hd hu, fun a ha => ?_⟩⟩, ?_, ?_, kSp,
         fun a ha => roK2 a ha⟩
       · have hlt := heapC_data_lt H hd ha

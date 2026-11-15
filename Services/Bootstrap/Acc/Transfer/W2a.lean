@@ -1,4 +1,5 @@
 import Services.Bootstrap.Acc.Transfer.Tail4
+import Services.Bootstrap.Acc.Transfer.Tail
 import Services.Bootstrap.Acc.Transfer.CopyVal
 import Services.Bootstrap.Acc.Transfer.Trap
 import Services.Bootstrap.Acc.Transfer.SetKeyCall
@@ -89,8 +90,8 @@ theorem tr_w2a (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap :
   have run := (run1.trans run2').trans (run3.trans (run4.trans (run5.trans run6)))
   refine .inl ⟨s1, ω6, μ6, _, ptr, run, k1.trans g1, ?_, ?_, by omega, by omega, H6, hnew, hfresh,
     fun d hd hu => ⟨keep2 d hd hu, fun a ha => ?_⟩, tag, fun a h0 ha hb => ?_, fun a ha => ⟨?_, ?_⟩⟩
-  · rw [k5, (gj 5 (by decide)), d5, (cj 5 (by decide)), f5, (bj 5 (by decide))]
-  · rw [k6, (gj 6 (by decide)), d6, c6]
+  · exact k5.trans ((gj 5 (by decide)).trans (d5.trans ((cj 5 (by decide)).trans (f5.trans (bj 5 (by decide))))))
+  · exact k6.trans ((gj 6 (by decide)).trans (d6.trans c6))
   · -- a chunk of s₀: its data is apart from the new block
     have hd2 := keep2 d hd hu
     have hne := hfresh d hd hu
@@ -98,6 +99,8 @@ theorem tr_w2a (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap :
     unfold Services.Bootstrap.Decode.LoopA.InData at hap
     dsimp only at hap
     have := Services.Bootstrap.Decode.VecU8.chunk_in H2.wf hd2 hu
+    obtain ⟨ph, -, hph, -, -, hph2⟩ := H2.pages
+    have hSb := H2.hSb
     unfold InDataA at ha
     rw [fr6 a (by omega) (.inl (by omega)) (.inl (by omega)), fr4 a (by omega) (by omega) (.inl (by omega))]
     exact HKeepG.data H2.wf H2.hb0 H2.hbT hkg hd2 ha

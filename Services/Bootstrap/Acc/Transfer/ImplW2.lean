@@ -21,6 +21,8 @@ Named hypotheses: `Utf8Call`, `LogFmt`, `KeyFmt`.
 namespace Services.Bootstrap.Acc
 open PVM JAM Services.Bootstrap Services.Bootstrap.Code Services.Bootstrap.CodeA Services.Bootstrap.Alloc
   Picoalloc Services.Bootstrap.Decode.HeapCtx Services.Bootstrap.Decode.DeallocCall Services.Bootstrap.Spec
+open JAM.Codec (fixed)
+open Services.Bootstrap.ASem (argBase outBase writeAcct)
 set_option maxHeartbeats 8000000
 set_option maxRecDepth 100000
 
@@ -127,9 +129,12 @@ theorem tr_w2 (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap : 
   -- the key's octets lie in kch's data, the value's in vch's
   have hkl : kp + (trKey2 n).length ≤ 2147483648 := by
     by_cases h0 : (trKey2 n).length = 0
-    · omega
-    · have := hkin (kp + (trKey2 n).length - 1) (by omega) (by omega)
-      unfold InDataA at this; omega
+    · have ht := HD.wf.2.2.2.1
+      unfold TilesOk at ht
+      have := (ht.mem_lt kch hkch).2.2
+      omega
+    · have := heapC_data_lt HD hkch (hkin (kp + (trKey2 n).length - 1) (by omega) (by omega))
+      omega
   have hkl1 : kp ≤ kp + (trKey2 n).length := Nat.le_add_right _ _
   have hkb : 65536 ≤ kp := by omega
   have hvb : 65536 ≤ vp ∧ vp + 140 ≤ 2147483648 := by
@@ -182,7 +187,7 @@ theorem tr_w2 (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap : 
     refine ⟨⟨7915, ω8, μ8, (c.1.setSelf c.1.self, c.2), f⟩, ⟨_, run8'⟩, rfl, ?_⟩
     obtain ⟨ω9, run9⟩ := t2_chk_full (p := p) (P := P) (R := KeepCtx (accContractS env))
       ((c.1.setSelf c.1.self, c.2), f) ω8 μ8 sp i1 ⟨by omega, by omega⟩ hrf8
-      (by unfold rdN; rw [sout.1, Num.decodeLE_encodeLE]; rfl)
+      (by unfold rdN; rw [sout.1, Num.decodeLE_encodeLE])
     exact ends_of_15361 (P := P) ⟨7915, ω8, μ8, (c.1.setSelf c.1.self, c.2), f⟩ run9
   · -- the write succeeded: free the value and the key, back to 6766
     rw [if_neg hF] at estep
@@ -198,8 +203,9 @@ theorem tr_w2 (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap : 
         writeAcct c.1.self (trKey2 n) (fixed 4 src ++ fixed 8 am ++ memo) := by
       unfold writeSelf; rw [if_neg hF]
     rw [hS] at run8'
-    generalize hc1 : ((c.1.setSelf (writeAcct c.1.self (trKey2 n) (fixed 4 src ++ fixed 8 am ++ memo)), c.2) :
-      AccCtx) = c₁ at run8'
+    obtain ⟨c₁, hc1⟩ : ∃ c₁ : AccCtx,
+        (c.1.setSelf (writeAcct c.1.self (trKey2 n) (fixed 4 src ++ fixed 8 am ++ memo)), c.2) = c₁ := ⟨_, rfl⟩
+    rw [hc1] at run8'
     -- the reply word is not −1
     have hw : rdN μ8 (sp + 264) 8 ≠ 18446744073709551615 := by
       unfold SetOut at sout
@@ -208,7 +214,7 @@ theorem tr_w2 (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap : 
       · unfold rdN; rw [sout, Num.decodeLE_encodeLE]; decide
       · unfold rdN; rw [sout.1, Num.decodeLE_encodeLE]; decide
     have roY := ro_keep (yIn_keepsRO env H.bd c.2 c.2) run8 HD.ro
-    refine ⟨⟨7915, ω8, μ8, c₁, f⟩, ⟨_, run8'⟩, rfl, .inr ?_⟩
+    refine ⟨⟨7915, ω8, μ8, c₁, f⟩, ⟨_, run8'⟩, hc1.symm, .inr ?_⟩
     obtain ⟨ω9, run9, b0, b1, b7, b8, b5⟩ := t2_chk_ok (p := p) (P := P) (R := KeepCtx (accContractS env))
       (c₁, f) ω8 μ8 sp _ 140 vp i1 (i6.trans D6) ⟨by omega, by omega⟩ hrf8 rfl hw
       (by rw [k8 _ _ (by omega) (by omega) (.inr (by omega))]; exact m744) (by decide) (by omega)

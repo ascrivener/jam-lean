@@ -43,12 +43,33 @@ the same `Get.lean` / `GetCall.lean` and `gk_call` adapted to them (its abort: r
    `Tail`, the log line (`Utf8Call`, `LogFmt`, `logS`), `KeyFmt`, `enc_call` and `Tail2`. Its aborts:
    `heap` (allocations at 3820 / 48047 / 4002 / 15363 / 15362 / 34178, `get`'s 47977, and Exhausts), and
    `orPanic` (FULL at 7386 / 7919 → 15361).
+   **Progress (builds, sorry-free, axioms clean):**
+   - `Transfer/Trap.lean`: `HeapTrapT` / `HeapFailT`, `aborts_of_trap`, `aborts_of_exhaustsP` and
+     `ends_of_15361`.
+   - `Transfer/CopyVal.lean`: `memcpy_val` and `read_exact_val`, which state the copied octets.
+   - `Transfer/Read.lean`: `tr_read`, 7159 → 7326, with ω₆ = `sxw 4 (trCount v)` or a heap trap.
+   - `Tail.tr_sk_pre_sx`: 7326 → 40494 for any ω₆ (the sign-extended counter).
+   - `Hyp.ExhaustsP`: KeyFmt/LogFmt's failure disjunct ("Exhausts, then ☇", a blob obligation; Adam
+     chose option (a)).
+
+   **Next:** 7326 → 7799, then 7799 → 6766, then the `Impl` theorem, with `Ab` a parameter under
+   `hAb : ∀ s, HeapFailT s → Ab s`.
+
+   **Open point:** `ASemLemmas.step_read` needs the value under the key to be < 2³¹. Carry the read
+   step's result as a premise (`hstep`) and flag it in the PR body.
 3. The items-loop skeleton (`Impl.forIn` over the inputs, loop head 6766, frame sp as at 6674). Its
    operand arm calls the Vec session's output decode at 7073 (in progress; success and Exhausts; the
    decode-error branch is the open obligation "output decode failure contract") and Handlers A's rows
    8, 9 and 11.
 4. Define `AccAbort` (`heap` including tooLong; named quirks, Q18 = `remove` on FULL panics) and the
    `ValuesFit` WF predicate (storage values, preimages, encoded inputs < 2⁶³ octets), then state T2.
+5. **Queued (parent, 2026-11-15): the accumulate prologue's protocol-parameter statics.**
+   - `apply()` of the fetched params (fetch kind 0) stores the u16 C at 196616 (storeU16 at 56279) and
+     the u64 I at 196696 (storeU64 at 56205). The rw statics 196616…196791 are written only there.
+   - Handlers A's row 8 (at 8280) takes these as the premise `ParamStatics μ C I`. The prologue proof
+     must show that `apply()` establishes it.
+   - 56205…56279 lie outside every fnRangesA range, so this needs a CodeA range. Tell @parent before
+     pushing a CodeA regeneration: it forces re-syncs.
 
 **Decisions (settled):**
 - remove-on-FULL: `ASem.step .remove` panics on FULL, as in the binary; quirk Q18 (Adam, 2026-11-15).

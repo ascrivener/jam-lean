@@ -50,9 +50,9 @@ theorem eval_sub {a b : Aff} (h : a.base = b.base) : a.eval E - b.eval E = a.off
   simp only at h; subst h
   cases ba <;> simp [Aff.eval] <;> omega
 
-theorem valid_sound (hpre : Pre E st) {a : Aff} {n : Nat} (h : valid st a n = true) :
+theorem valid0_sound (hpre : Pre E st) {a : Aff} {n : Nat} (h : valid0 st a n = true) :
     0 ≤ a.eval E ∧ a.eval E + n ≤ two32 ∧ a.eval E < two32 := by
-  simp only [valid, Bool.and_eq_true, decide_eq_true_eq] at h
+  simp only [valid0, Bool.and_eq_true, decide_eq_true_eq] at h
   obtain ⟨h1, h2⟩ := h
   have := lo_le hpre a
   split at h2
@@ -299,6 +299,39 @@ theorem leA_sound (hpre : Pre E st) {a b : Aff} (h : leA st a b = true) : a.eval
               omega
             | _ => simp at h
           | _ => simp at h
+
+
+theorem validF_sound (hpre : Pre E st) {a : Aff} {n : Nat} (h : validF st a n = true) :
+    0 ≤ a.eval E ∧ a.eval E + n ≤ two32 ∧ a.eval E < two32 := by
+  simp only [validF, Bool.and_eq_true, decide_eq_true_eq, List.any_eq_true] at h
+  obtain ⟨⟨hn, hlo⟩, f, -, hf⟩ := h
+  have hl := lo_le hpre a
+  have he : (⟨a.base, a.off + n⟩ : Aff).eval E = a.eval E + n := by
+    obtain ⟨b, o⟩ := a; cases b <;> simp [Aff.eval] <;> omega
+  have key : ∀ hi : Aff, (leA st ⟨a.base, a.off + n⟩ hi && match hi.hi st with
+      | some h => decide (h ≤ two32) | none => false) = true →
+      0 ≤ a.eval E ∧ a.eval E + n ≤ two32 ∧ a.eval E < two32 := by
+    intro hi hh
+    simp only [Bool.and_eq_true] at hh
+    obtain ⟨h1, h2⟩ := hh
+    have h3 := leA_sound hpre h1
+    split at h2
+    · rename_i hv hhv
+      have := le_hi hpre hhv
+      simp only [decide_eq_true_eq] at h2
+      omega
+    · cases h2
+  cases f with
+  | rd lo hi => exact key hi hf
+  | wr lo hi => exact key hi hf
+  | _ => simp at hf
+
+theorem valid_sound (hpre : Pre E st) {a : Aff} {n : Nat} (h : valid st a n = true) :
+    0 ≤ a.eval E ∧ a.eval E + n ≤ two32 ∧ a.eval E < two32 := by
+  simp only [valid, Bool.or_eq_true] at h
+  rcases h with h | h
+  · exact valid0_sound hpre h
+  · exact validF_sound hpre h
 
 theorem bnd_sound (hpre : Pre E st) (v : SVal) (b : Nat) (h : v.bnd st = some b) : v.eval E < b := by
   unfold SVal.bnd at h

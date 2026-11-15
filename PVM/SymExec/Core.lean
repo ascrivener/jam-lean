@@ -150,8 +150,8 @@ def Aff.hi (st : Static) (a : Aff) : Option Int :=
   | some k => st.ub[k]?.map fun u => (u : Int) - 1 + a.off
   | none => some a.off
 
-/-- `n` octets at `a` lie within ℕ_{2^32}. -/
-def valid (st : Static) (a : Aff) (n : Nat) : Bool :=
+/-- `n` octets at `a` lie within ℕ_{2^32}, by the bounds. -/
+def valid0 (st : Static) (a : Aff) (n : Nat) : Bool :=
   decide (0 ≤ a.lo st) && match a.hi st with
     | some h => decide (h + n ≤ two32) && decide (h < two32)
     | none => false
@@ -198,6 +198,17 @@ def leA (st : Static) (a b : Aff) : Bool :=
         | _ => false
       | _ => false
   | _, _ => false
+
+/-- `n > 0` octets at `a` end at or below the end of a region of an `rd` or `wr` fact, and the
+    bounds put that end at or below 2^32. -/
+def validF (st : Static) (a : Aff) (n : Nat) : Bool :=
+  decide (0 < n) && decide (0 ≤ a.lo st) && st.facts.any fun f => match f with
+    | .rd _ hi | .wr _ hi => leA st ⟨a.base, a.off + n⟩ hi &&
+        match hi.hi st with | some h => decide (h ≤ two32) | none => false
+    | _ => false
+
+/-- `n` octets at `a` lie within ℕ_{2^32}: by the bounds (`valid0`) or by a fact (`validF`). -/
+def valid (st : Static) (a : Aff) (n : Nat) : Bool := valid0 st a n || validF st a n
 
 /-- The `n` octets at `a` lie in a region that a fact `rd` says is readable. -/
 def inRd (st : Static) (a : Aff) (n : Nat) : Bool :=

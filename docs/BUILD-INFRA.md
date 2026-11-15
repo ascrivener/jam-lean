@@ -45,8 +45,13 @@ without a token. So:
 - **`scripts/fetch-lake.sh [--force]`** installs the pinned toolchain under `~/.lean` (from the Lean
   GitHub release; no elan needed) and unpacks the published `.lake`. It uses Python's `zstandard`
   if the `zstd` binary is missing. Then `lake build` rebuilds only what differs from that commit.
+  - The session proxy can reset a long download, so each part is downloaded to a file with
+    `curl -C -` (resume), checked against the release's asset size, unpacked, then deleted.
+  - Measured on a fresh clone at fef9243 (15 Nov 2026): 2 min 17 s for 2.76 GB, including one
+    reset; the unpacked `.lake` is 11 GB. `lake build --no-build` then reports all 2670 jobs
+    up to date, so the traces carry no runner paths.
 
-## Profiling (in progress)
+## Profiling
 
 From the import graph (1340 modules, 138 MB of source):
 
@@ -55,16 +60,13 @@ From the import graph (1340 modules, 138 MB of source):
 - `CodeA` has 278 transitive dependents, `CodeF` 218, `CodeX` 215 and `Services.Witness.Code` 147.
 - The `PVM.*` base modules have about 1300 dependents each, which is expected.
 
-Per-module build times will come from a full cold build log; see the proposal in the PR or the
-handoff below once it is written.
+Per-module build times from a full cold build (1305 modules, 18.1 h serial) are on branch
+`claude/profiling-data`; the analysis is in `docs/profiling/` (#203). The longest import chain takes about 2 h even with unlimited cores.
 
 ## Handoff
 
-- Done: the continuation job and the `lake-cache` publish/fetch scripts (PR #193; mock-tested,
-  because the publish step only runs on main).
-- Pending after merge:
-  - check that the first main run publishes;
-  - check that a fresh checkout plus `fetch-lake.sh` causes no rebuild (traces must not hold the
-    runner's absolute paths);
-  - then add a start-of-session line to `CLAUDE.md`.
-- Pending: the profiling proposal (task 3).
+- Done: the continuation job and the `lake-cache` publish/fetch scripts (PR #193). The first
+  publish came from main at fef9243 and a fresh checkout restores it without rebuilding. A
+  start-of-session line in `CLAUDE.md` points sessions to `fetch-lake.sh`.
+- Done: per-module build times on branch `claude/profiling-data` (`docs/profiling/`), analysed in
+  the build-time profiling proposal (#203).

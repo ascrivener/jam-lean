@@ -61,7 +61,24 @@ echo "published build: main@${sha:0:12} ($(get time))"
 git cat-file -e "$sha^{commit}" 2>/dev/null && ! git merge-base --is-ancestor "$sha" HEAD \
   && echo "note: HEAD does not contain main@${sha:0:12}; lake rebuilds whatever differs" >&2
 
-rm -rf .lake.partial; mkdir .lake.partial
-for p in $parts; do curl -sSfL --retry 5 "$base/$p"; done | unzstd | tar -x -C .lake.partial
+# Each part goes to a file first: a proxy can reset a long transfer, and only a file can resume
+# (`curl -C -`). Its size is checked against the release, then it is fed to the unpacker and deleted,
+# so the disk holds at most one part (< 2 GiB) next to the growing .lake (~11 GB).
+asset_size() {  # size of release asset $1, from the release JSON
+  printf '%s' "$rel" | python3 -c 'import json,sys; print(next(a["size"] for a in json.load(sys.stdin)["assets"] if a["name"]==sys.argv[1]))' "$1"
+}
+fetch_part() {  # download part $1 to file $2, resuming after resets
+  local want n=0; want=$(asset_size "$1"); rm -f "$2"
+  while [ "$(stat -c %s "$2" 2>/dev/null || echo 0)" -lt "$want" ]; do
+    [ "$n" -ge 30 ] && { echo "download of $1 kept failing" >&2; return 1; }
+    [ "$n" -gt 0 ] && { echo "resuming $1 ($n)" >&2; sleep 2; }
+    curl -sSfL --retry 5 -C - -o "$2" "$base/$1" || true
+    n=$((n+1))
+  done
+  [ "$(stat -c %s "$2")" -eq "$want" ] || { echo "$1: size mismatch" >&2; return 1; }
+}
+rm -rf .lake.partial .lake.dl; mkdir .lake.partial
+for p in $parts; do fetch_part "$p" .lake.dl; cat .lake.dl; rm -f .lake.dl; done \
+  | unzstd | tar -x -C .lake.partial
 rm -rf .lake; mv .lake.partial/.lake .lake; rmdir .lake.partial
 echo "unpacked .lake ($(du -sh .lake | cut -f1)); now: lake build"

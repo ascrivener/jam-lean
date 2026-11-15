@@ -5,6 +5,10 @@ the real compiled service binaries in `services/`. Read `docs/whats-proven.md` f
 `docs/bootstrap-target.md` for the Bootstrap targets (T1 refine, T2 accumulate), and
 `docs/HANDOFF.md` for the state of work in flight.
 
+**Start of session:** run `scripts/fetch-lake.sh` before building. It installs the toolchain and
+unpacks main's latest CI build (about 2–3 min; needs about 13 GB of free disk), so `lake build`
+rebuilds only what changed since then instead of building cold for 4.5–5 h.
+
 ## Rules
 
 - **Source.** Model only from the Gray Paper v0.8.0. Don't copy other implementations, especially

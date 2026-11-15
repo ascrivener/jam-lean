@@ -38,7 +38,13 @@ structure Crypto where
   /-- Y(p) (GP Appendix G): the 32-octet VRF output of a Ring VRF proof. -/
   bsRingOut : (proof : List UInt8) → List UInt8 := fun _ => []
 
-/-- The ASCII octets of a context string such as `$jam_valid` (GP §3.8.2, Appendix I.4.5). -/
-def contextString (s : String) : List UInt8 := s.toUTF8.toList
+/-- The octets of a context string such as `$jam_valid` (GP §3.8.2, Appendix I.4.5). The leading
+    `$` is the GP's notation for a member of the set of ASCII strings (GP §3, `notation.tex`), not
+    an octet of the string: `$jam_valid` is the 9 octets of "jam_valid". The paper's wording leaves
+    this open; the v0.8.0 vectors settle it (their ticket proofs verify only with "jam_ticket_seal"). -/
+def contextString (s : String) : List UInt8 := (s.dropPrefix? "$" |>.map (·.toString) |>.getD s).toUTF8.toList
+
+#guard contextString "$jam_valid" = "jam_valid".toUTF8.toList
+#guard contextString "jam_valid" = "jam_valid".toUTF8.toList
 
 end JAM

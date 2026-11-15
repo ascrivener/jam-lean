@@ -83,5 +83,11 @@ These would go to the service's authors, not to the Gray Paper.
   anchor's child to have h'_R = x_lookupanchorpoststate; the model compared it with the anchor's
   x_stateroot, rejecting valid blocks whose lookup anchor differs from their anchor. Fixed in
   `JAM/BlockImport.lean`, with a regression test in `Tests/TraceTest.lean`.
+- **The `$` of the context strings.** A bug in this repository's own model, reported by the
+  jam-lean-target crypto work. The model kept the GP's `$` as the first octet of `$jam_ticket_seal`
+  and the other context strings. In the paper `$` only marks the set of ASCII strings
+  (`notation.tex`), though its wording leaves this open; the v0.8.0 vectors settle it: their 58
+  ticket proofs verify only with "jam_ticket_seal" ⌢ …. Fixed in `JAM.contextString` (it drops a
+  leading `$`), with `#guard`s on X_T, X_E and X_G.
 - **Notes 6–10, 14, 16 and 22.** Points where the vectors confirm a subtle reading, or observations
   that need no change.

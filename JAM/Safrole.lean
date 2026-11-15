@@ -116,6 +116,9 @@ def Xfallback : List UInt8 := contextString "$jam_fallback_seal"
 /-- $jam_entropy (GP §6.4, X_E). -/
 def Xentropy : List UInt8 := contextString "$jam_entropy"
 
+#guard Xticket = "jam_ticket_seal".toUTF8.toList
+#guard Xentropy = "jam_entropy".toUTF8.toList
+
 /-- The context of a ticket's ring proof, and of a ticket-sealed block's seal:
     $jam_ticket_seal ⌢ η ⌢ e, the entry index appended as one octet (e < n ≤ 2𝖤/6 + 1). -/
 def ticketContext (eta : List UInt8) (attempt : Nat) : List UInt8 :=

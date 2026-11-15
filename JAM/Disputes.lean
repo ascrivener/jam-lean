@@ -64,6 +64,8 @@ def Xinvalid : List UInt8 := contextString "$jam_invalid"
 /-- X_G = `$jam_guarantee` (GP eq. `guarantorsig`). -/
 def Xguarantee : List UInt8 := contextString "$jam_guarantee"
 
+#guard Xguarantee = "jam_guarantee".toUTF8.toList
+
 /-- X_v: X_V for ⊤ and X_I for ⊥. -/
 def Xvalidif (v : Bool) : List UInt8 := if v then Xvalid else Xinvalid
 

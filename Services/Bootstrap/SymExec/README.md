@@ -291,6 +291,42 @@ Next (fifth session): the final theorem (new file or in Utf8Fn).
    docstring and in docs/whats-proven.md.
 5. Then the CodeF callers (55106/57327/57556/57624): confirm they are log-only (parent's request).
 
+### Update 2026-11-15 (fifth session): from_utf8 assembled
+
+Done, in `Utf8Final.lean` (added to `Services.lean`; axioms propext, Classical.choice and
+Quot.sound only):
+- **`from_utf8_call`** (plan (c)) and **`from_utf8_ascii`** (plan (b)), with the premises in the
+  structure `Pre`.
+- Results: `Utf8Res` (Ok (0, p, len), or Err (1, v, tag, value) with v < len, the octet at p + v
+  ≥ 0x80, and (tag, value) ∈ {(0, 1), (1, 1), (1, 2), (1, 3)}); `Utf8Ret` (r0, r1, r5, r6
+  restored, memory equal outside the frame and the result, pages kept).
+- Chain: `check0` → (len = 0) `finish_ok`, or → `outer_loop` → `hoke_of` + `finish_ok` /
+  `hee_of` + `finish_err`. `finish_*` run `checkOk`/`checkErr`, then `ret_step` at 61107/61164.
+- **Premises beyond the list confirmed earlier** (sent to the parent for a decision; the proof
+  assumes them):
+  - the input is disjoint from the frame (`I1` needs it);
+  - the strict bounds p < 2^32, len < 2^32, sp + 32 < 2^32 and O + 24 < 2^32, from `ub0`/`ubE`;
+    writability does not bound addresses.
+- **Build pitfall (memory).** A definitional check that unfolds `x + 2^64` (for example `rfl` for
+  `twoRegImmAlu .negAddImm64 …` with a `getD` on the left, `simp [twoRegImmAlu]`, `rw`/`simp`
+  closing a goal by `rfl` after rewriting an ALU value, or `omega` with an `SVal.eval` atom) can
+  use all 15 GB and get the process killed silently (exit 137). Use `rfl` lemmas whose right side
+  is a constructor or matches the definition syntactically (`add64_eq`, `nadd64_eq`, `maxU_eq`),
+  rewrite in hypotheses (`mT_closed`, `r11T_closed`), and always check the exit code. Keep side
+  goals such as `BHold`/`SepHold` as separate `have`s, not inline `by` blocks in a `fork_sound`
+  application.
+- Step 5 (the CodeF callers), from tracing the code (read-only):
+  - 57327, 57556 and 57624 sit in Display impls for NUL-padded name fields (32 and 128 octets).
+    On Ok they print the text (`{}` through `<str as Display>`); on Err or a non-printable octet
+    they print a hex dump (`0x{}…`). They are format-only, and (c) suffices.
+  - 55106 sits in a Debug impl for `&[u8]` (55075–55928, a `fmt::Argument`). On Err it prints a
+    hex dump. On Ok it walks the octets char by char (escape_debug: 67074 grapheme_extend, 61166
+    is_printable) until ptr == end. Proving that walk terminates and stays in bounds needs
+    "Ok ⇒ well-formed UTF-8", which is spec (a) or an Ok ⇒ valid predicate. It is format-only, but
+    (c) alone does not cover it. Reported to the parent.
+  - There are two more from_utf8 calls in a sibling function, 57764 and 57832 (57693–57899, a
+    144-octet field). They follow the same pattern, and no caller of that function was found.
+
 ## Open decisions and dependencies
 
 - `core::str::from_utf8` (60681): Adam chose the executor-loops route (2026-11-15).

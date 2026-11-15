@@ -1,6 +1,6 @@
 import Services.Bootstrap.Alloc.HeapContract
-import Services.Bootstrap.Alloc.ReallocGrow
 import Services.Bootstrap.Alloc.AllocGrow
+import Services.Bootstrap.Alloc.ReallocEntry
 
 /-!
 # The binary's `grow_inplace`: growing the heap

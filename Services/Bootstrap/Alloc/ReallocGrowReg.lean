@@ -1,4 +1,4 @@
-import Services.Bootstrap.Alloc.ReallocGrow
+import Services.Bootstrap.Alloc.ReallocEntry
 
 /-!
 # The binary's `grow_inplace`: the new size and the free tail

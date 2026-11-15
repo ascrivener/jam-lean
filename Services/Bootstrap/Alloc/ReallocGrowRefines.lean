@@ -1,5 +1,5 @@
 import Services.Bootstrap.Alloc.ReallocGrowImpl
-import Services.Bootstrap.Alloc.ReallocRefines
+import Services.Bootstrap.Alloc.ReallocImpl
 
 /-!
 # The binary's grow in place on a well-formed heap

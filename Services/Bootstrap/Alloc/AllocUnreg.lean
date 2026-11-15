@@ -1,4 +1,4 @@
-import Services.Bootstrap.Alloc.AllocSplit
+import Services.Bootstrap.Alloc.AllocSearch
 
 /-!
 # The binary's `alloc_impl`: the chunk leaves its bin

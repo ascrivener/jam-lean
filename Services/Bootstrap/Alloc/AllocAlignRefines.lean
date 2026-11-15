@@ -1,4 +1,5 @@
 import Services.Bootstrap.Alloc.AllocAlignImpl
+import Services.Bootstrap.Alloc.RegisterRep
 
 /-!
 # The binary's `alloc` with any alignment, on a well-formed heap

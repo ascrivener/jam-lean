@@ -1,5 +1,6 @@
 import Services.Bootstrap.Alloc.ReallocShrink
 import Services.Bootstrap.Alloc.ReallocReg
+import Services.Bootstrap.Alloc.RegisterRep
 
 /-!
 # The binary's `shrink_inplace`, stage by stage

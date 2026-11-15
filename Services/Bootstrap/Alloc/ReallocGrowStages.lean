@@ -1,6 +1,9 @@
 import Services.Bootstrap.Alloc.ReallocGrowUnreg
 import Services.Bootstrap.Alloc.ReallocGrowReg
-import Services.Bootstrap.Alloc.ReallocStages
+import Services.Bootstrap.Alloc.ReallocShrink
+import Services.Bootstrap.Alloc.ReallocReg
+import Services.Bootstrap.Alloc.ReallocGrow
+import Services.Bootstrap.Alloc.RegisterRep
 
 /-!
 # The binary's `grow_inplace`, stage by stage

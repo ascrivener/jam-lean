@@ -1,6 +1,7 @@
 import Services.Bootstrap.Alloc.HeapContract
-import Services.Bootstrap.Alloc.AllocWrapGrow
 import Services.Bootstrap.Alloc.AllocInit
+import Services.Bootstrap.Alloc.AllocGrowRefines
+import Services.Bootstrap.Alloc.AllocSearch
 
 /-!
 # The binary's `alloc` on the allocator's first use

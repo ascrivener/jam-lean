@@ -1,4 +1,4 @@
-import Services.Bootstrap.Alloc.AllocUnreg
+import Services.Bootstrap.Alloc.AllocSplit
 
 /-!
 # The binary's `alloc_impl`: the allocated chunk and the rest

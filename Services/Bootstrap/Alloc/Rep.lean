@@ -1,5 +1,5 @@
-import Services.Picoalloc.Init
 import PVM.Logic.Words
+import Services.Picoalloc.Realloc
 
 /-!
 # The allocator's state in memory

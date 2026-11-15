@@ -1,4 +1,4 @@
-import Services.Bootstrap.Alloc.RegisterRep
+import Services.Bootstrap.Alloc.Rep
 
 /-!
 # `unregister` against memory

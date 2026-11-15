@@ -2,6 +2,9 @@ import Services.Bootstrap.Alloc.AllocZeroedTail
 import Services.Bootstrap.Alloc.AllocImpl
 import Services.Bootstrap.Alloc.AllocZeroedMemzero
 import Services.Bootstrap.Alloc.AllocRefines
+import Services.Bootstrap.Alloc.AllocWrite
+import Services.Bootstrap.Alloc.AllocRight
+import Services.Bootstrap.Alloc.RegisterRep
 
 /-!
 # The binary's `alloc_impl` with the zero flag

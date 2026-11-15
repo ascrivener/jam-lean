@@ -1,4 +1,4 @@
-import Services.Bootstrap.Alloc.AllocWrite
+import Services.Bootstrap.Alloc.AllocUnreg
 
 /-!
 # The binary's `alloc_impl`: the free space on the right

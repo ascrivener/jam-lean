@@ -1,5 +1,5 @@
 import Services.Bootstrap.Alloc.ReallocGrowStages
-import Services.Bootstrap.Alloc.ReallocImpl
+import Services.Bootstrap.Alloc.ReallocGrow
 
 /-!
 # The binary's `realloc_impl`: the growth in place, whole

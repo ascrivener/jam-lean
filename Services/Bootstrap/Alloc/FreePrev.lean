@@ -1,4 +1,5 @@
 import Services.Bootstrap.Alloc.FreeNext
+import Services.Bootstrap.Alloc.Rep
 
 /-!
 # `free`'s prologue and merge with the previous chunk in the binary

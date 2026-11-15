@@ -2,6 +2,7 @@ import Services.Bootstrap.Alloc.HeapContract
 import Services.Bootstrap.Alloc.ReallocGrowHeap
 import Services.Bootstrap.Alloc.ReallocGrowPost
 import Services.Bootstrap.Alloc.ReallocGrowRefines
+import Services.Bootstrap.Alloc.ReallocGrow
 
 /-!
 # The binary's `realloc_impl`, growing in place with the heap grown

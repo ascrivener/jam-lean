@@ -1,5 +1,5 @@
-import Services.Bootstrap.Alloc.AllocWrap
 import Services.Bootstrap.Alloc.Writable
+import Services.Bootstrap.Alloc.AllocRefines
 
 /-!
 # The binary's `realloc_impl`: entry

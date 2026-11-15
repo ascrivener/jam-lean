@@ -1,5 +1,7 @@
 import Services.Bootstrap.Alloc.HeapContract
 import Services.Bootstrap.Alloc.AllocGrow
+import Services.Bootstrap.Alloc.AllocSearch
+import Services.Bootstrap.Alloc.AllocSplit
 
 /-!
 # The binary's `alloc_impl` from the chosen chunk through its unlink, the heap grown

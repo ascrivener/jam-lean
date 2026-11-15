@@ -1,5 +1,4 @@
 import Services.Bootstrap.Memcpy
-import PVM.Logic.Bits
 
 /-!
 # Bootstrap's argument reader, summarized

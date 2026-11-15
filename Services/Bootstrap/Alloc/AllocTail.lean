@@ -1,4 +1,4 @@
-import Services.Bootstrap.Alloc.AllocRight
+import Services.Bootstrap.Alloc.AllocWrite
 
 /-!
 # The binary's `alloc_impl`: the next chunk's `prev` and the return

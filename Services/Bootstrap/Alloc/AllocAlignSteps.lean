@@ -1,4 +1,6 @@
 import Services.Bootstrap.Alloc.AllocWrap
+import Services.Bootstrap.Alloc.AllocRight
+import Services.Bootstrap.Alloc.AllocSplit
 
 /-!
 # The binary's `alloc_impl` with any alignment: the blocks

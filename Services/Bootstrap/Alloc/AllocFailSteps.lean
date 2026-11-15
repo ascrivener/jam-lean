@@ -1,4 +1,5 @@
 import Services.Bootstrap.Alloc.AllocImpl
+import Services.Bootstrap.Alloc.AllocSearch
 
 /-!
 # The binary's `alloc_impl` failing, without growth

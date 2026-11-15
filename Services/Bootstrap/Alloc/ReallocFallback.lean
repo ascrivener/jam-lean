@@ -1,5 +1,5 @@
 import Services.Bootstrap.Alloc.ReallocEntry
-import Services.Bootstrap.MemcpyBig
+import Services.Bootstrap.DecodeU16
 
 /-!
 # The binary's `realloc_impl`: the fallback

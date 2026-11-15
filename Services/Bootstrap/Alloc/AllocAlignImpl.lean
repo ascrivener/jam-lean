@@ -1,5 +1,10 @@
 import Services.Bootstrap.Alloc.AllocAlignSteps
 import Services.Picoalloc.AllocAlign
+import Services.Bootstrap.Alloc.AllocWrite
+import Services.Bootstrap.Alloc.AllocSearch
+import Services.Bootstrap.Alloc.AllocRight
+import Services.Bootstrap.Alloc.AllocSplit
+import Services.Bootstrap.Alloc.RegisterRep
 
 /-!
 # The binary's `alloc_impl` with any alignment, composed

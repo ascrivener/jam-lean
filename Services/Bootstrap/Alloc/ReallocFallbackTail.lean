@@ -1,6 +1,7 @@
 import Services.Bootstrap.Alloc.ReallocFallback
 import Services.Bootstrap.Alloc.AllocRefines
 import Services.Bootstrap.Alloc.FreeRefines
+import Services.Bootstrap.MemcpyBig
 
 /-!
 # The binary's `realloc_impl`: the fallback, composed

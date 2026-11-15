@@ -1,5 +1,6 @@
 import Services.Bootstrap.Alloc.HeapContract
-import Services.Bootstrap.Alloc.AllocGrowRefines
+import Services.Bootstrap.Alloc.AllocGrowImpl
+import Services.Bootstrap.Alloc.AllocRight
 
 /-!
 # The binary's `initialize`

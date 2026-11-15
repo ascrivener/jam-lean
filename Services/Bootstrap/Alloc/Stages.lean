@@ -1,5 +1,6 @@
 import Services.Bootstrap.Alloc.FreePrev
 import Services.Bootstrap.Alloc.UnregisterRep
+import Services.Bootstrap.Alloc.RegisterRep
 
 /-!
 # The binary's `free`, stage by stage

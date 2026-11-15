@@ -1,5 +1,6 @@
-import Services.Bootstrap.Alloc.Rep
 import PVM.Logic.Bits
+import Services.Picoalloc.Init
+import PVM.Logic.Words
 
 /-!
 # The allocator's arithmetic in the binary

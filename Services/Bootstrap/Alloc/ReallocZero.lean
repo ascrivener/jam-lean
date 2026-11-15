@@ -1,4 +1,4 @@
-import Services.Bootstrap.Alloc.ReallocInplace
+import Services.Bootstrap.Alloc.ReallocRefines
 
 /-!
 # The binary's `realloc_impl` for a request of 0 units

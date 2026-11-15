@@ -1,6 +1,6 @@
 import Services.Bootstrap.Alloc.HeapContract
 import Services.Bootstrap.Alloc.ReallocFallbackHeap
-import Services.Bootstrap.Alloc.ReallocGrowHeapRefines
+import Services.Bootstrap.Alloc.ReallocWrap
 
 /-!
 # The binary's `realloc` refines the model's `realloc`: the fallback, through the wrapper

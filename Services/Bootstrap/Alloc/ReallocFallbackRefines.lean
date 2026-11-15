@@ -1,6 +1,7 @@
 import Services.Bootstrap.Alloc.ReallocFallbackPre
 import Services.Bootstrap.Alloc.ReallocFallbackTail
-import Services.Bootstrap.Alloc.ReallocGrowRefines
+import Services.Bootstrap.Alloc.ReallocGrowImpl
+import Services.Bootstrap.Alloc.ReallocRefines
 
 /-!
 # The binary's `realloc_impl` refines the model's `realloc`: the fallback

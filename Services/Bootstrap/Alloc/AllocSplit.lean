@@ -1,4 +1,4 @@
-import Services.Bootstrap.Alloc.AllocSearch
+import Services.Bootstrap.Alloc.AllocFind
 
 /-!
 # The binary's `alloc_impl`: the chunk's offsets

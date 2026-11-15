@@ -1,6 +1,7 @@
 import Services.Bootstrap.Alloc.HeapContract
 import Services.Bootstrap.Alloc.AllocFailSteps
 import Services.Bootstrap.Alloc.AllocGrow
+import Services.Bootstrap.Alloc.AllocSplit
 
 /-!
 # The binary's `alloc_impl` failing to grow the heap

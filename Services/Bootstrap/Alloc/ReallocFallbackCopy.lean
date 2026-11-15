@@ -1,5 +1,6 @@
 import Services.Bootstrap.Alloc.ReallocFallbackTail
 import Services.Bootstrap.Memcpy
+import Services.Bootstrap.MemcpyBig
 
 /-!
 # The binary's `realloc_impl`: the fallback's copy and free, for any usable size

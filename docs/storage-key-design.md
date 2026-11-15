@@ -316,3 +316,16 @@ restatements. (C) leaves the 52 traces broken.
 
 Blocked meanwhile: replaying the 52 traces in jam-lean-target. Genesis-based fuzzing and all T1/T2
 work proceed unaffected.
+
+## Decision (Adam, 2026-11-15)
+
+- **Option (A), in stages**, as sequenced in §4.
+  - Stage 1: accessors on the current representation, with no claim changes.
+  - Stage 2: the representation switch. It waits until T2's storage wrappers settle.
+  - Stage 3: the optional bridging theorem.
+- **The no-collision assumption is accepted.** It is the paper's own (merklization.tex:19, 116).
+  - It is listed in `docs/whats-proven.md`.
+  - It appears as a hypothesis only on the optional bridging theorem, never on T1 or T2.
+- **Undecodable request values** (§2(A), open point): the default is **"absent"**. A request
+  lookup whose `entries` value does not decode as ⟦ℕ_T⟧_{:3} behaves as if no request exists. Only
+  an invalid loaded state can contain such a value.

@@ -43,11 +43,12 @@ theorem ro_keep {X : Type} {R : HostRel X} {p : ByteArray} {pb : Nat} (hR : Keep
 def TrW2 (sp a : Nat) : Prop := LgW sp a ∨ T2W sp a ∨ (sp + 264 ≤ a ∧ a < sp + 280)
 
 /-- **The state at the items loop's head 6766 after the record's write**, from s at 7399 with memory μ
-    and allocator state s₀: sp in ω₁; the allocator's context for some state keeping every allocated
+    and allocator state s₀: context c and stream f; sp in ω₁; the allocator's context for some state keeping every allocated
     chunk of s₀ and its data; from sp up only `TrW2` changed; below 196608 the memory reads and is
     readable as before. -/
-def W2Post (env : AccEnv) (pb S0 S1 sp : Nat) (s₀ : State) (μ : Memory) (s' : St Stream) : Prop :=
-  s'.i = 6766 ∧ s'.ω[1] = UInt64.ofNat sp ∧
+def W2Post (env : AccEnv) (pb S0 S1 sp : Nat) (s₀ : State) (μ : Memory) (c : AccCtx) (f : Stream)
+    (s' : St Stream) : Prop :=
+  s'.i = 6766 ∧ s'.c = c ∧ s'.q = f ∧ s'.ω[1] = UInt64.ofNat sp ∧
   (∃ st, HeapCtxC env.code pb S0 S1 s'.μ st ∧
     ∀ d ∈ chunks s₀, d.used = true → d ∈ chunks st ∧ ∀ a, InDataA d a → s'.μ.read a = μ.read a) ∧
   (∀ a, a < 4294967296 → sp ≤ a → ¬ TrW2 sp a → s'.μ.read a = μ.read a) ∧
@@ -73,7 +74,8 @@ theorem tr_w2 (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap : 
     (ht8 : rdN μ 69072 4 = 4294900408) (ht4 : rdN μ 69056 4 = 4294900402)
     (htr : ∀ a, 69056 ≤ a → a < 69076 → μ.readable a = true)
     (hold : ∀ v, c.1.self.storage.get? (trKey2 n) = some v → v.length < 2 ^ 63)
-    (Q : Unit → St Stream → Prop) (hQ : ∀ s', W2Post env pb S0 S1 sp s₀ μ s' → Q () s') :
+    (Q : Unit → St Stream → Prop) (hQ : ∀ s', W2Post env pb S0 S1 sp s₀ μ
+      (c.1.setSelf (writeAcct c.1.self (trKey2 n) (fixed 4 src ++ fixed 8 am ++ memo)), c.2) f s' → Q () s') :
     Impl p (accContractS env) env Ab
       (orPanic (.write (trKey2 n) (fixed 4 src ++ fixed 8 am ++ memo))) Q ⟨7399, ω, μ, c, f⟩ := by
   have hS1 := H.hS1
@@ -240,7 +242,7 @@ theorem tr_w2 (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap : 
         (∀ a, a < 196608 → μ'.read a = μ10.read a ∧ μ'.readable a = μ10.readable a) →
         Q () ⟨6766, ω', μ', c₁, f⟩ := by
       intro ω' μ' st e1'' H' kp' fr' ro'
-      refine hQ _ ⟨rfl, e1'', ⟨st, H', fun d hd hu => ?_⟩, fun a h0 ha hW => ?_, fun a ha => ?_⟩
+      refine hQ _ ⟨rfl, hc1.symm, rfl, e1'', ⟨st, H', fun d hd hu => ?_⟩, fun a h0 ha hW => ?_, fun a ha => ?_⟩
       · obtain ⟨hdA, hdatA⟩ := keepA d hd hu
         have hneA := hfrA d hd hu
         obtain ⟨-, hdB, hdatB⟩ := keepB d hdA hu hneA

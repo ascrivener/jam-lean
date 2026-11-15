@@ -64,6 +64,17 @@ the same `Get.lean` / `GetCall.lean` and `gk_call` adapted to them (its abort: r
      2804, 678) and |key| fits from the chunk bounds.
    - `KeyFmt` now states the key's len octets lie in a live fresh chunk's data (replacing "kc = 0 ∨
      chunk"; Adam approved, 2026-11-15): `set` needs them readable and below the stack.
+   - `W1Post` / `W2Post` also state the context and stream (needed to continue a bind).
+   - **`Transfer/ImplTr.lean`: `tr_impl`**, the whole of `on_transfer` (7159 → 6766) as
+     `Impl … (onTransfer src am memo)`, post `TrPost` (context `trCtx c src am memo`, frame ¬`TrW`).
+     Premises: `hfit` for every key (< 2⁶³, from `ValuesFit`), the RO facts (key at 65956, error table),
+     the prologue's words at sp + 208 / 136 / 200, `Utf8Call` / `LogFmt` / `KeyFmt`.
+     It needs `maxRecDepth 20000` (elaborating the goal).
+   - Fixed: conflict markers left in `Services.lean` and this README by the earlier merge 97b8f56
+     (CI could not parse `Services.lean`); `Services.lean` now imports `Transfer.ImplTr`.
+
+   **Next: the items-loop skeleton (step 3 below), then step 4 (AccAbort / ValuesFit / T2) and step 5.**
+   The plan notes below for `tr_w1` / `tr_w2` / `tr_impl` are done; kept for reference.
 
    **Next (the composition, as `Impl` pieces rather than long runs):**
    - **`tr_w1`** (new file `Transfer/ImplW1.lean`), from s at 7326:
@@ -651,7 +662,6 @@ Lemmas under `accContractQ` (from (x, v :: qs) to (x', qs)) carry over to any st
 - Keys must survive `get`'s allocation: `get_some` takes them on the stack above the frame or in an
   allocated chunk's data.
 
-<<<<<<< HEAD
 ## `on_transfer` (`Acc/Transfer/`)
 
 Spec `onTransfer`: read "transfer-count", write n + 1 under it, write ℰ₄(source) ++ ℰ₈(amount) ++ memo
@@ -678,11 +688,10 @@ premise `decode (Dec.output C) o = some (is, k)`, which must not reach the state
 - `Utf8Call`: `core::str::from_utf8` at 7447 on the memo's copy, frame-only plus its tag (0 with the
   input slice, or 1); it feeds only the log line.
 
-The log line's segments 7454 … 7763 are proved (`Tail3`, with `FreeStepsH.logS`). Still to do: the
-composition of the whole of `on_transfer` as an `Impl` of `onTransfer`.
+The log line's segments 7454 … 7763 are proved (`Tail3`, with `FreeStepsH.logS`). The whole of
+`on_transfer` is composed as an `Impl` of `onTransfer`: `ImplTr.tr_impl` (7159 → 6766, post-state
+`TrPost`), from `tr_read`, `ImplW1.tr_w1` and `ImplW2.tr_w2`.
 
-=======
->>>>>>> origin/main
 ## Brief: `add_recent_work_item` and the results tail (rows 8, 9, 11)
 
 These go to a separate session. Both run inside an operand's iteration of the items loop, in

@@ -378,10 +378,7 @@ import Services.Bootstrap.Acc.Impl.OogPrefix
 import Services.Bootstrap.Acc.Impl.Lift
 import Services.Bootstrap.Acc.Impl.QtoS
 import Services.Bootstrap.Acc.Impl.Loop
-<<<<<<< HEAD
 import Services.Bootstrap.Acc.Impl.ROKeepS
-=======
->>>>>>> origin/main
 import Services.Bootstrap.Acc.RoData
 import Services.Bootstrap.Acc.Wrappers.ReadHost
 import Services.Bootstrap.Acc.Wrappers.Get
@@ -391,7 +388,6 @@ import Services.Bootstrap.Acc.Wrappers.GetCall
 import Services.Bootstrap.Acc.Wrappers.Set
 import Services.Bootstrap.Acc.Wrappers.SetCall
 import Services.Bootstrap.Acc.Wrappers.Remove
-<<<<<<< HEAD
 import Services.Bootstrap.Acc.Items.Head
 import Services.Bootstrap.Acc.Items.End
 import Services.Bootstrap.Acc.Items.Disp
@@ -411,8 +407,7 @@ import Services.Bootstrap.Acc.Transfer.EncodeCall
 import Services.Bootstrap.Acc.Transfer.Hyp
 import Services.Bootstrap.Acc.Transfer.LogS
 import Services.Bootstrap.Acc.Transfer.Tail3
-=======
->>>>>>> origin/main
+import Services.Bootstrap.Acc.Transfer.ImplTr
 import Services.Bootstrap.Alloc.HeapContract
 import Services.Bootstrap.Decode.VecU8HeapBig
 import Services.Bootstrap.Decode.VecPairsBig

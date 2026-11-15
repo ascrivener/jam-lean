@@ -38,13 +38,15 @@ theorem sxw4_succ_mod (n : Nat) (hn : n < 4294967296) :
   omega
 
 /-- **The state at 7399 after the counter's write**, from s at 7326 with memory μ and registers ω
-    (counter n, allocator state s₀): sp in ω₁, ω₅ and ω₆ (= (sxw 4 n + 1) mod 2⁶⁴) as the helper
+    (counter n, allocator state s₀, context c, stream f): the context with the counter written, stream f;
+    sp in ω₁, ω₅ and ω₆ (= (sxw 4 n + 1) mod 2⁶⁴) as the helper
     restores them; the allocator's context for some state keeping every allocated chunk of s₀ and its
     data; n at sp + 1496 and (n + 1) mod 2³² at sp + 1568 (u32); from sp up nothing else changed; below
     the read-write data (196608) the memory reads and is readable as before. -/
-def W1Post (env : AccEnv) (pb S0 S1 sp : Nat) (s₀ : State) (μ : Memory) (ω : Regs) (n : Nat)
-    (s' : St Stream) : Prop :=
-  s'.i = 7399 ∧ s'.ω[1] = UInt64.ofNat sp ∧ s'.ω[5] = UInt64.ofNat ω[5].toNat ∧
+def W1Post (env : AccEnv) (pb S0 S1 sp : Nat) (s₀ : State) (μ : Memory) (ω : Regs) (c : AccCtx)
+    (f : Stream) (n : Nat) (s' : St Stream) : Prop :=
+  s'.i = 7399 ∧ s'.c = (c.1.setSelf (writeAcct c.1.self trKey (fixed 4 ((n + 1) % 2 ^ 32))), c.2) ∧
+  s'.q = f ∧ s'.ω[1] = UInt64.ofNat sp ∧ s'.ω[5] = UInt64.ofNat ω[5].toNat ∧
   s'.ω[6] = UInt64.ofNat ((sxw 4 n + 1) % 18446744073709551616) ∧
   (∃ st, HeapCtxC env.code pb S0 S1 s'.μ st ∧
     ∀ d ∈ chunks s₀, d.used = true → d ∈ chunks st ∧ ∀ a, InDataA d a → s'.μ.read a = μ.read a) ∧
@@ -71,7 +73,7 @@ theorem tr_w1 (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap : 
     (htr : ∀ a, 69056 ≤ a → a < 69076 → μ.readable a = true)
     (hfit : ∀ w, c.1.self.storage.get? trKey = some w → w.length < 9223372036854775808)
     (Q : Unit → St Stream → Prop)
-    (hQ : ∀ s', W1Post env pb S0 S1 sp s₀ μ ω (trCount (c.1.self.storage.get? trKey)) s' → Q () s') :
+    (hQ : ∀ s', W1Post env pb S0 S1 sp s₀ μ ω c f (trCount (c.1.self.storage.get? trKey)) s' → Q () s') :
     Impl p (accContractS env) env Ab
       (orPanic (.write trKey (fixed 4 ((trCount (c.1.self.storage.get? trKey) + 1) % 2 ^ 32)))) Q
       ⟨7326, ω, μ, c, f⟩ := by
@@ -174,7 +176,7 @@ theorem tr_w1 (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap : 
           (a < sp + 1568 ∨ sp + 1572 ≤ a) → μ2.read a = μ.read a := fun a h0 ha hb hc => by
         rw [khi a h0 (by omega), fr1 a h0 (.inr ha) hb hc]
       have k2 : ∀ a, sp ≤ a → a < 4294967296 → μ2.read a = μ1.read a := fun a ha h0 => khi a h0 (by omega)
-      refine ⟨rfl, (j3 1 (by decide)).trans (e1.trans (by congr 1; omega)), (j3 5 (by decide)).trans e5,
+      refine ⟨rfl, rfl, rfl, (j3 1 (by decide)).trans (e1.trans (by congr 1; omega)), (j3 5 (by decide)).trans e5,
         (j3 6 (by decide)).trans e6, ⟨s', H2, fun d hd hu => ⟨kch d hd hu, fun a ha => ?_⟩⟩, ?_, ?_, kSp,
         fun a ha => roK2 a ha⟩
       · have hlt := heapC_data_lt H hd ha

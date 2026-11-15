@@ -106,6 +106,11 @@ macro "omega15" : tactic =>
   `(tactic| exact ⟨by omega, by omega, by omega, by omega, by omega, by omega, by omega, by omega,
     by omega, by omega, by omega, by omega, by omega, by omega, by omega, trivial⟩)
 
+/-- Sixteen omega goals. -/
+macro "omega16" : tactic =>
+  `(tactic| exact ⟨by omega, by omega, by omega, by omega, by omega, by omega, by omega, by omega,
+    by omega, by omega, by omega, by omega, by omega, by omega, by omega, by omega, trivial⟩)
+
 theorem ub1_of_ub3x {vals : List Nat} (hB : BHold vals ub3x) (h3 : vals.getD 3 0 < 2 ^ 32) :
     BHold vals ub1 := by
   rcases vals with _ | ⟨a0, _ | ⟨a1, _ | ⟨a2, _ | ⟨a3, _ | ⟨a4, _ | ⟨a5, _ | ⟨a6, _ | ⟨a7, _ | ⟨a8, _ | ⟨a9, _ | ⟨a10, _ | ⟨a11, _ | ⟨a12, _ | ⟨a13, _ | ⟨a14, _ | ⟨_, _⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩ <;>
@@ -252,6 +257,25 @@ theorem asm4_of' {μ₀ μ : Memory} {ω : Regs} {v₀ vals : List Nat} (hR : Rd
   obtain ⟨r1, r2, r3⟩ := hR
   simp only [asm4, FactsHold, Fact.Holds, Aff.eval, env, af, readable_pages hp]
   exact ⟨h1, by omega, h3, fun t ht1 ht2 => r1 t (by omega) (by omega), trivial⟩
+
+/-- `H1` does not mention q (named natural 3). -/
+theorem h1_q {a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 b : Nat} {μ₀ μ : Memory} {ω : Regs}
+    (h : H1.Holds [a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14] μ₀ ω μ) :
+    H1.Holds [a0, a1, a2, b, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14] μ₀ ω μ := by
+  simp only [Cut.Holds, H1, H1b, H2, regs1, cells1, RegsHold, CellsHold, RdHold, WrHold, InReg,
+    SVal.eval, Aff.eval, env, af, List.getD_cons_succ, List.getD_cons_zero, List.mem_cons,
+    List.not_mem_nil, or_false, forall_eq, List.cons_append, List.nil_append] at h ⊢
+  exact h
+
+/-- `H1b` does not mention the named natural 15. -/
+theorem h1b_15 {a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 c c' : Nat} {μ₀ μ : Memory}
+    {ω : Regs}
+    (h : H1b.Holds [a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, c] μ₀ ω μ) :
+    H1b.Holds [a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, c'] μ₀ ω μ := by
+  simp only [Cut.Holds, H1, H1b, H2, regs1, cells1, RegsHold, CellsHold, RdHold, WrHold, InReg,
+    SVal.eval, Aff.eval, env, af, List.getD_cons_succ, List.getD_cons_zero, List.mem_cons,
+    List.not_mem_nil, or_false, forall_eq, List.cons_append, List.nil_append] at h ⊢
+  exact h
 
 section
 variable {X : Type} {p : ByteArray} {R : HostRel X}
@@ -588,6 +612,90 @@ theorem seg7 {P : Program} [Services.Bootstrap.CodeF.HasCodeF p P]
       simp only [meas1, BHold, ub1, List.getD_cons_succ, List.getD_cons_zero]
     · omega
     · omega15
+    all_goals omega
+
+/-- 61079 (after k continuation octets, j = i + k) → 60738 (i := j + 1) or 61086. -/
+theorem seg6 {P : Program} [Services.Bootstrap.CodeF.HasCodeF p P]
+    [Services.Bootstrap.Code.HasCode p P] {x : X} {μ₀ : Memory} {v₀ : List Nat} {n : Nat}
+    {vals : List Nat} {ω : Regs} {μ : Memory} (hR : RdO μ₀ v₀) (hH : H6.Holds vals μ₀ ω μ)
+    (hB : BHold vals ub6) (hI : I1 v₀ vals) (hF : FactsHold (env vals ω μ) asm1)
+    (hj : vals.getD 2 0 + 1 ≤ vals.getD 13 0) (hm : meas1 vals ≤ n) :
+    Reach p R x μ₀ v₀ n 61079 ω μ := by
+  have hl := bhold_length hB
+  obtain ⟨ℓ, hℓ, k, ω', μ', hrun, hf, hBℓ⟩ :=
+    fork_sound check6 (hypU (p := p) (P := P)) trivial hB (lb1_of hl) (fun _ _ => trivial) hH hF x
+  have hp' := hBℓ.2.2.2.2.2
+  simp only [leaves6, List.mem_cons, List.not_mem_nil, or_false] at hℓ
+  rcases hℓ with rfl | rfl
+  · simp only [FactsHold, Fact.Holds, Aff.eval, env, af] at hf
+    obtain ⟨g1, -⟩ := hf
+    obtain ⟨i7, idj, i6, iK⟩ := hI
+    simp only [asm1, FactsHold, Fact.Holds, Aff.eval, env, af] at hF
+    obtain ⟨f1, f2, f3, -⟩ := hF
+    rcases vals with _ | ⟨a0, _ | ⟨a1, _ | ⟨a2, _ | ⟨a3, _ | ⟨a4, _ | ⟨a5, _ | ⟨a6, _ | ⟨a7, _ | ⟨a8, _ | ⟨a9, _ | ⟨a10, _ | ⟨a11, _ | ⟨a12, _ | ⟨a13, _ | ⟨a14, _ | ⟨_, _⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩ <;> simp [ub6] at hl
+    simp only [meas1, List.getD_cons_succ, List.getD_cons_zero] at hm hj i7 idj i6 g1 f1 f2 f3
+    simp only [BHold, ub6] at hB
+    obtain ⟨b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13, b14, -⟩ := hB
+    simp only [svals, nxtI, List.map, SVal.eval, Aff.eval, env, af, List.getD_cons_succ,
+      List.getD_cons_zero] at hBℓ
+    have hBq := h1_q (b := a0 + ((a13 : Int) + 1).toNat) hBℓ
+    have hK' := keep_of (l' := [a0, a1, ((a13 : Int) + 1).toNat, a0 + ((a13 : Int) + 1).toNat, a4, a5,
+      a6, a7, a8, a9, a10, a11, a12, a13, a14]) iK (by simp [keepO])
+    refine reach_back hrun _ ?_ ⟨⟨by simpa using i7, by simpa using idj, by simpa using i6, hK'⟩,
+      ?_, lb1_of rfl, asm1_of hR hK' hp' ?_ ?_ ?_, hBq⟩ <;>
+      simp only [meas1, BHold, ub1, List.getD_cons_succ, List.getD_cons_zero]
+    · omega
+    · omega15
+    all_goals omega
+  · rw [show svals (env vals ω μ) idsub15 = vals from svals_idsub15 hl] at hBℓ
+    exact reach_q hrun (Or.inl ⟨rfl, vals, hBℓ, hI.2.2.2⟩)
+
+/-- 60829 (a first octet b ≥ 0x80 at i < len, the table base loaded) → the error exit 61138 or
+    61079 (then `seg6`). -/
+theorem seg1b {P : Program} [Services.Bootstrap.CodeF.HasCodeF p P]
+    [Services.Bootstrap.Code.HasCode p P] {x : X} {μ₀ : Memory} {v₀ : List Nat} {n : Nat}
+    {a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 b c : Nat} {ω : Regs} {μ : Memory}
+    (hR : RdO μ₀ v₀)
+    (hH : H1b.Holds [a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, 71078, b, c] μ₀ ω μ)
+    (hb : b < 256) (hB : BHold [a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14] ub1)
+    (hI : I1 v₀ [a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14])
+    (f1 : a0 + a2 = a3) (f2 : a2 + 1 ≤ a1) (f3 : a0 + a1 = a12)
+    (hoct : 128 ≤ decodeLE (μ₀.readN (a0 + a2) 1)) (hm : a1 - a2 ≤ n) :
+    Reach p R x μ₀ v₀ n 60829 ω μ := by
+  have hH' := h1b_15 (c' := 71078 + b) hH
+  have hp := hH.2.2.2.2.2
+  obtain ⟨i7, idj, i6, iK⟩ := hI
+  simp only [List.getD_cons_succ, List.getD_cons_zero] at i7 idj i6
+  simp only [BHold, ub1] at hB
+  obtain ⟨b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13, b14, -⟩ := hB
+  have hK16 := keep_of (l' := [a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, 71078, b,
+    71078 + b]) iK (by simp [keepO])
+  have hF := asm1_of (ω := ω) hR hK16 hp (by simpa using f1) (by simpa using f2) (by simpa using f3)
+  have hF' : FactsHold (env [a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, 71078, b,
+      71078 + b] ω μ) asm1b := by
+    simp only [asm1, FactsHold] at hF
+    obtain ⟨g1, g2, g3, g4, g5, g6, -⟩ := hF
+    simp only [asm1b, asm1, List.cons_append, List.nil_append, FactsHold]
+    exact ⟨g1, g2, g3, g4, g5, g6, by simp [Fact.Holds, env], trivial⟩
+  obtain ⟨ℓ, hℓ, k, ω', μ', hrun, hBℓ⟩ :=
+    fork_soundW check1b (hypU (p := p) (P := P)) trivial
+      (by simp only [BHold, ub1b]; omega16) (by simp only [LBHold, lb1b]; omega16)
+      (fun _ _ => trivial) hH' hF' x
+  have hp' := hBℓ.2.2.2.2.2
+  simp only [leaves1b, List.mem_cons, List.not_mem_nil, or_false] at hℓ
+  rcases hℓ with rfl | rfl | rfl | rfl | rfl | rfl | rfl <;>
+    simp only [svals, idsub15, sub6, List.map, SVal.eval, Aff.eval, env, af, List.getD_cons_succ,
+      List.getD_cons_zero] at hBℓ
+  all_goals first
+    | exact reach_q hrun (Or.inr ⟨rfl, _, _, _, hBℓ, keep_of iK (by simp [keepO]), by decide,
+        by simp only [List.getD_cons_succ, List.getD_cons_zero]; omega,
+        by simp only [List.getD_cons_succ, List.getD_cons_zero]; exact hoct⟩)
+    | skip
+  all_goals
+    refine reach_pre hrun (seg6 (P := P) hR hBℓ ?_ ⟨?_, ?_, ?_, keep_of iK (by simp [keepO])⟩
+      (asm1_of hR (keep_of iK (by simp [keepO])) hp' ?_ ?_ ?_) ?_ ?_) <;>
+      simp only [meas1, BHold, ub6, List.getD_cons_succ, List.getD_cons_zero]
+    · exact ⟨b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12, by omega, by omega, trivial⟩
     all_goals omega
 
 end

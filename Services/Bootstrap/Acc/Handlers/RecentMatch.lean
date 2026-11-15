@@ -272,4 +272,76 @@ theorem rm_to_remove {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
   · rw [wr2, wr1]
 
 
+/-- **8056 … 8079**: the slot's key {1, c} at sp + 1568 and its typed get (`slot_get`) into
+    sp + 1144, under `accContractS` with the context kept. Either the run reaches 8079 with ω₁, ω₅, ω₆
+    kept, `SlotOut` of the decoded value of `recent c` at sp + 1144, the allocator's context for some
+    st′ keeping st's chunks and their data, memory kept from sp on off sp + 1144 … 1180 and
+    sp + 1568 … 1576, at the globals and below 196608, and the value (if any) shorter than 2³¹; or
+    it reaches the trap at 34070 or 47977 (an `alloc` failed: heap exhaustion). -/
+theorem rm_head {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env : AccEnv) (cap : Nat)
+    (hcap1 : 134217728 ≤ cap) (hcap : cap < 18446744073709551616)
+    (c0 : AccCtx) (f : Stream) (ω : Regs) (μ : Memory) (st : State) (sp c kc pb S0 S1 : Nat)
+    (H : HeapCtxC env.code pb S0 S1 μ st) (h1 : ω[1] = UInt64.ofNat sp) (h5 : ω[5] = UInt64.ofNat c)
+    (hc : c < 18446744073709551616)
+    (hsp : 2147483648 + 352 ≤ sp ∧ sp % 8 = 0) (hS0 : S0 + 352 ≤ sp) (hS1 : sp + 1632 ≤ S1)
+    (mc : μ.readN 68688 8 = Num.encodeLE 8 kc) (hkc : 5 ≤ kc ∧ kc + 31 < 68719476736)
+    (hrt : ∀ a, 68688 ≤ a → a < 68696 → μ.readable a = true)
+    (hfit : ∀ w, c0.1.self.storage.get? (Key.recent c).encode = some w → w.length < 9223372036854775808) :
+    (∃ st' ω' μ' n, FreeStepsH p (KeepCtx (accContractS env)) 8056 ω μ (c0, f) 8079 ω' μ' (c0, f) n ∧
+      ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      RecentSlot.SlotOut μ' (sp + 1144)
+        ((c0.1.self.storage.get? (Key.recent c).encode).bind (decode RecentSlot.slotDec)) ∧
+      HeapCtxC env.code pb S0 S1 μ' st' ∧
+      (∀ d ∈ chunks st, d.used = true → d ∈ chunks st' ∧ ∀ a, InData d a → μ'.read a = μ.read a) ∧
+      (∀ a, a < 4294967296 → sp ≤ a → (a < sp + 1144 ∨ sp + 1180 ≤ a) → (a < sp + 1568 ∨ sp + 1576 ≤ a) →
+        μ'.read a = μ.read a) ∧
+      (∀ a, Glob a → μ'.read a = μ.read a) ∧ (∀ a, a < 196608 → μ'.read a = μ.read a) ∧
+      (∀ w, c0.1.self.storage.get? (Key.recent c).encode = some w → w.length < 2 ^ 31)) ∨
+    (∃ e ω' μ' n, (e = 34070 ∨ e = 47977) ∧
+      FreeStepsH p (KeepCtx (accContractS env)) 8056 ω μ (c0, f) e ω' μ' (c0, f) n) := by
+  have hSt := H.st
+  have hS1' := H.hS1
+  obtain ⟨ωA, runA, a0, a1, a5, a6, a7, a8⟩ := rm_pre (P := P) (R := KeepCtx (accContractS env)) (c0, f)
+    ω μ sp c h1 h5 hc (by omega) (fun a h1 h2 => hSt a (by omega) (by omega))
+  have l2 : (Num.encodeLE 2 1).length = 2 := Num.length_encodeLE ..
+  have l4 : (Num.encodeLE 4 c).length = 4 := Num.length_encodeLE ..
+  generalize hμA : (μ.writeN (sp + 1568) (Num.encodeLE 2 1)).writeN (sp + 1572) (Num.encodeLE 4 c) = μA at runA
+  have frA : ∀ a, a < 4294967296 → (a < sp + 1568 ∨ sp + 1576 ≤ a) → μA.read a = μ.read a := fun a h0 ha => by
+    rw [← hμA, rd_wr _ _ _ _ 4 l4 (by omega) (by omega) h0, rd_wr _ _ _ _ 2 l2 (by omega) (by omega) h0]
+  have wrA : ∀ a, μA.writable a = μ.writable a := fun a => by
+    rw [← hμA, Memory.writable_writeN, Memory.writable_writeN]
+  have rdA : ∀ a, μA.readable a = μ.readable a := fun a => by
+    rw [← hμA, Memory.readable_writeN, Memory.readable_writeN]
+  have HA : HeapCtxC env.code pb S0 S1 μA st :=
+    HeapKeep.keepHi H (fun a ha => frA a (by omega) (.inl (by omega))) wrA
+  have mtA : μA.readN (sp + 1568) 2 = Num.encodeLE 2 1 := by
+    rw [← hμA, Memory.readN_congr (μ' := (μ.writeN (sp + 1568) (Num.encodeLE 2 1)).writeN (sp + 1572) _)
+      (μ := μ.writeN (sp + 1568) (Num.encodeLE 2 1)) (fun j hj => rd_wr _ _ _ _ 4 l4 (by omega) (by omega) (by omega))]
+    exact Memory.readN_writeN_same _ _ _ _ l2 (by unfold two32; omega)
+  have mcA : μA.readN 68688 8 = Num.encodeLE 8 kc := by
+    rw [← mc]; exact Memory.readN_congr fun j hj => frA _ (by omega) (.inl (by omega))
+  have hkA : keyEnc μA (sp + 1568) 1 = (Key.recent c).encode := by
+    unfold keyEnc Key.encode
+    rw [if_pos rfl, show sp + 1568 + 4 = sp + 1572 by omega, ← hμA,
+      Memory.readN_writeN_same _ _ _ _ l4 (by unfold two32; omega)]
+    rfl
+  rcases RecentSlot.slot_get (P := P) env cap hcap1 hcap c0 f ωA μA st sp (sp + 1144) (sp + 1568) kc 280 8079
+      pb S0 S1 HA a0 a1 a7 a8 hsp hS0 ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ mtA mcA hkc
+      (fun a h1 h2 => by rw [rdA]; exact hrt a h1 h2) ⟨by decide, by decide, by decide⟩
+      (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_139]) bs_8079 (by rw [hkA]; exact hfit) with
+    ⟨st', ωB, μB, nB, runB, b0, b1, b5, b6, soB, HB, keepB, frB, glB, loB, bdB⟩ | ⟨e, ωB, μB, nB, he, runB⟩
+  · rw [hkA] at soB bdB
+    refine .inl ⟨st', ωB, μB, _, runA.trans runB, b1.trans a1, b5.trans a5, b6.trans a6, soB, HB,
+      fun d hd hu => ⟨(keepB d hd hu).1, fun a ha => ?_⟩, fun a h0 ha hb hc => ?_, fun a ha => ?_,
+      fun a ha => ?_, bdB⟩
+    · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hd hu
+      have := H.hb0
+      have := H.hbT
+      unfold InData at ha
+      rw [(keepB d hd hu).2 a ha, frA a (by omega) (.inl (by omega))]
+    · rw [frB a h0 ha (by omega), frA a h0 hc]
+    · have ha' := ha; unfold Glob at ha'; rw [glB a ha, frA a (by omega) (.inl (by omega))]
+    · rw [loB a ha, frA a (by omega) (.inl (by omega))]
+  · exact .inr ⟨e, ωB, μB, _, he, runA.trans runB⟩
+
 end Services.Bootstrap.Acc.Handlers.RecentMatch

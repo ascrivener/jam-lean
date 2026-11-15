@@ -62,14 +62,17 @@ def splitImm (st : Static) (op : RegImmOffsetOp) (v : SVal) (x : Nat) : Option (
     else some ([.lt v (2 ^ 63)], [.ge v (2 ^ 63)])
   | none => splitU op v x
 
-/-- The facts that an unsigned comparison of two addresses holds and fails (§A.5.11). -/
+/-- The facts that an unsigned or equality comparison of two addresses or named naturals holds
+    and fails (§A.5.11). -/
 def splitAddr (st : Static) (op : TwoRegOffsetOp) (v w : SVal) : Option (List Fact × List Fact) :=
-  match v, w with
-  | .addr a, .addr b =>
+  match asAffV v, asAffV w with
+  | some a, some b =>
     if decide (0 ≤ a.lo st) && decide (0 ≤ b.lo st) then
       match op with
       | .branchLtU => some ([.le ⟨a.base, a.off + 1⟩ b], [.le b a])
       | .branchGeU => some ([.le b a], [.le ⟨a.base, a.off + 1⟩ b])
+      | .branchEq => some ([.le a b, .le b a], [.neA a b])
+      | .branchNe => some ([.neA a b], [.le a b, .le b a])
       | _ => none
     else none
   | _, _ => none
@@ -119,12 +122,12 @@ theorem splitAddr_sound {E : Env} {st : Static} {op : TwoRegOffsetOp} {v w : SVa
     (∀ f ∈ ft, f.Holds E) ∨ (∀ f ∈ ff, f.Holds E) := by
   unfold splitAddr at h
   split at h
-  · rename_i a b
+  · rename_i a b _ _
     split at h
     · have h1 := aff_shift (E := E) a 1
       cases op <;> simp only [Option.some.injEq, Prod.mk.injEq, reduceCtorEq] at h <;>
         obtain ⟨rfl, rfl⟩ := h <;> simp only [List.mem_cons, List.not_mem_nil, or_false,
-          forall_eq, Fact.Holds] <;> omega
+          forall_eq, forall_eq_or_imp, Fact.Holds] <;> omega
     · cases h
   · cases h
 

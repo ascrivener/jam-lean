@@ -109,6 +109,10 @@ inductive Fact where
   | rd (lo hi : Aff)
   /-- Every address in [lo, hi) is writable in the start memory. -/
   | wr (lo hi : Aff)
+  /-- ρ_x + ρ_y = ρ_z (e.g. a cursor `p + i`). -/
+  | sum (x y z : Nat)
+  /-- a ≠ b, as integers. -/
+  | neA (a b : Aff)
   deriving DecidableEq, Repr
 
 /-- What a fact asserts of an environment. -/
@@ -119,6 +123,8 @@ def Fact.Holds (E : Env) : Fact → Prop
   | .le a b => a.eval E ≤ b.eval E
   | .rd lo hi => ∀ t : Nat, lo.eval E ≤ t → (t : Int) < hi.eval E → E.μ.readable t = true
   | .wr lo hi => ∀ t : Nat, lo.eval E ≤ t → (t : Int) < hi.eval E → E.μ.writable t = true
+  | .sum x y z => E.ρ x + E.ρ y = E.ρ z
+  | .neA a b => a.eval E ≠ b.eval E
 
 /-- Bounds of the named naturals (`lb[k] ≤ ρ_k < ub[k]`), readable and writable regions of the
     start memory, and declared pairs of disjoint regions. -/
@@ -166,12 +172,32 @@ def disj (st : Static) (a : Aff) (n : Nat) (b : Aff) (m : Nat) : Bool :=
   st.sep.any fun p => (within st a n p.1 && within st b m p.2) || (within st a n p.2 && within st b m p.1)
 
 /-- a ≤ b, as integers: on a common base, by the bounds, or by a fact `a' ≤ b'` on the same bases. -/
-def leA (st : Static) (a b : Aff) : Bool :=
+def leA0 (st : Static) (a b : Aff) : Bool :=
   (a.base == b.base && decide (a.off ≤ b.off)) ||
   (match a.hi st with | some h => decide (h ≤ b.lo st) | none => false) ||
   st.facts.any fun f => match f with
     | .le a' b' => a'.base == a.base && b'.base == b.base && decide (a.off - a'.off ≤ b.off - b'.off)
     | _ => false
+
+/-- Some fact says ρ_z = ρ_x + ρ_y or ρ_z = ρ_y + ρ_x. -/
+def hasSum (st : Static) (x z : Nat) : Bool :=
+  st.facts.any fun f => match f with
+    | .sum x' y' z' => z' == z && (x' == x || y' == x)
+    | _ => false
+
+/-- a ≤ b, as integers: by `leA0`; or a summand below its sum (ρ_x ≤ ρ_x + ρ_y); or through two
+    sums with a shared first summand (ρ_s + ρ_x ≤ ρ_s + ρ_y when ρ_x ≤ ρ_y, by `leA0`). -/
+def leA (st : Static) (a b : Aff) : Bool :=
+  leA0 st a b ||
+  match a.base, b.base with
+  | some x, some z =>
+    (decide (a.off ≤ b.off) && hasSum st x z) ||
+    st.facts.any fun f => match f with
+      | .sum s u za => za == x && st.facts.any fun g => match g with
+        | .sum s' w zb => zb == z && s' == s && leA0 st ⟨some u, a.off⟩ ⟨some w, b.off⟩
+        | _ => false
+      | _ => false
+  | _, _ => false
 
 /-- The `n` octets at `a` lie in a region that a fact `rd` says is readable. -/
 def inRd (st : Static) (a : Aff) (n : Nat) : Bool :=
@@ -319,6 +345,26 @@ def foldAlu3 (op : ThreeRegOp) (a b d : SVal) : SVal :=
   | .const p, .const q, .const r => .const (threeRegAlu op p q r)
   | a, b, d => .alu3 op a b d
 
+/-- An affine reading of a named natural or an address (not of a literal). -/
+def asAffV : SVal → Option Aff
+  | .var k => some ⟨some k, 0⟩
+  | .addr a => some a
+  | _ => none
+
+/-- (v + w) mod 2^64 as an address on ρ_z, when v and w are affine on ρ_x and ρ_y, a fact says
+    ρ_x + ρ_y = ρ_z (or ρ_y + ρ_x = ρ_z), and the bounds show that nothing wraps. -/
+def addSum (st : Static) (v w : SVal) : Option SVal :=
+  match asAffV v, asAffV w with
+  | some ⟨some x, o1⟩, some ⟨some y, o2⟩ =>
+    match st.facts.find? (fun f => match f with
+        | .sum x' y' _ => (x' == x && y' == y) || (x' == y && y' == x) | _ => false) with
+    | some (.sum _ _ z) =>
+      if affOk st ⟨some x, o1⟩ ⟨some z, o1 + o2⟩ two64 && decide (0 ≤ Aff.lo st ⟨some y, o2⟩) then
+        some (affVal ⟨some z, o1 + o2⟩)
+      else none
+    | _ => none
+  | _, _ => none
+
 def mkAlu3 (st : Static) (op : ThreeRegOp) (a b d : SVal) : SVal :=
   let f := foldAlu3 op a b (if usesD op then d else .const 0)
   match op, b with
@@ -326,6 +372,7 @@ def mkAlu3 (st : Static) (op : ThreeRegOp) (a b d : SVal) : SVal :=
   | .sub64, .const q => if q < two64 then addv st a (two64 - q) f else f
   | .minU, _ => if leB st a b then a else if leB st b a then b else f
   | .maxU, _ => if leB st a b then b else if leB st b a then a else f
+  | .add64, _ => (addSum st a b).getD f
   | _, _ => f
 
 def mkAlu2 (op : TwoRegOp) (a : SVal) : SVal :=
@@ -500,21 +547,30 @@ def ltU (v w : SVal) : Option Bool :=
   | none =>
     if (v.bnd st).any (· ≤ w.lob st) then some true
     else if (w.bnd st).any (· ≤ v.lob st + 1) then some false
-    else match v, w with
-    | .addr a, .addr b =>
+    else match asAffV v, asAffV w with
+    | some a, some b =>
       if decide (0 ≤ a.lo st) && decide (0 ≤ b.lo st) then
         if leA st ⟨a.base, a.off + 1⟩ b then some true
         else if leA st b a then some false else none
       else none
     | _, _ => none
 
-/-- v = w, when equal values, a common base or the bounds decide it. -/
+/-- v = w, when equal values, a common base or the bounds decide it; or, on two affine values, `le`
+    facts both ways or a `neA` fact. -/
 def eqU (v w : SVal) : Option Bool :=
   if v == w then some true else
   match sameBase st v w with
   | some (p, q) => some (p == q)
   | none =>
-    if (v.bnd st).any (· ≤ w.lob st) || (w.bnd st).any (· ≤ v.lob st) then some false else none
+    if (v.bnd st).any (· ≤ w.lob st) || (w.bnd st).any (· ≤ v.lob st) then some false else
+    match asAffV v, asAffV w with
+    | some a, some b =>
+      if decide (0 ≤ a.lo st) && decide (0 ≤ b.lo st) then
+        if leA st a b && leA st b a then some true
+        else if st.facts.contains (.neA a b) || st.facts.contains (.neA b a) then some false
+        else none
+      else none
+    | _, _ => none
 
 /-- A comparison of two registers (§A.5.11), when it is decided; signed ones on values below
     2^63, where they equal the unsigned ones. -/

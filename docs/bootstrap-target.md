@@ -241,6 +241,7 @@ and its definitions mark them with `-- quirk Qn`. Whether each was intended is n
 | Q14 | **The transfer counter wraps** at 2³² ([A2]); the next transfer then overwrites `"transfer0"`. | `onTransfer` |
 | Q15 | **Trailing octets after the accumulate inputs are ignored.** Accumulate decodes ℰ(↕**i**) (fetch kind 14) as a `Vec<AccumulateItem>` and never checks that the reader is empty afterwards (44495 … 44659), so octets after the items are accepted. This does not contradict the model, whose `fetch` returns exactly ℰ(↕**i**). | (binary-side; the inputs decode at 6630 → 6674) |
 | Q16 | **`Designate`'s key bound is computed in 16 bits.** The decoder loads 𝖢 sign-extended (`loadI16`), computes 3·𝖢 and zero-extends it from 16 bits, so it accepts n ≤ (3·𝖢) mod 2¹⁶ keys rather than n ≤ 3·𝖢. The two agree for 𝖢 < 21846 (the full parameters' 𝖢 = 341); beyond that, valid key lists are rejected. The spec's bound is 3·𝖢, exact for every 𝖢 bootstrap is built for. Proven as the code does it in `Decode.Designate.designate_heap`. | `Consts.maxValCount` |
+| Q18 | **`remove` panics on FULL.** The SDK's `remove` (48481) traps (48533) on any `write` reply other than NONE or a length, and for this service that is FULL: the account's threshold after the removal is still above its balance (Ω_W, B.7). So every removal (the ring's replaced results, `Zombify`'s key wipe, `DeleteItems`) can abort the whole accumulate rather than go on. The spec panics there too (decision of 2026-11-15). | `ASem.step` `.remove` |
 
 ---
 

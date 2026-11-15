@@ -36,7 +36,7 @@ theorem ExportOk.congr {env : RefineHost.Env} {μ μ' : Memory} {E k : Nat} {ce 
     (h : ∀ a, a < 2147483648 → μ'.read a = μ.read a)
     (ok : ExportOk env μ E k ce Kp Kp' O x x') : ExportOk env μ' E k ce Kp Kp' O x x' := by
   obtain ⟨capv, ptrv, ns, co, capf, qf, lf, sD0, sv8, sv16, sv24, hcv, hnc, hp, hco, hcoD, hw0, hcap, hql, hq,
-    hcs, hsd, hoff, hK', hO, hx⟩ := ok
+    hcs, hsd, hK', hO, hx⟩ := ok
   have r : ∀ a l, a + l ≤ 2147483648 → μ'.readN a l = μ.readN a l :=
     fun a l hl => Memory.readN_congr (fun j hj => h _ (by omega))
   have rq : ∀ j, j < ns → rdN μ (ptrv + 24 * j + 8) 8 = qf j ∧ rdN μ (ptrv + 24 * j + 16) 8 = lf j :=
@@ -44,7 +44,7 @@ theorem ExportOk.congr {env : RefineHost.Env} {μ μ' : Memory} {E k : Nat} {ce 
   refine ⟨capv, ptrv, ns, co, capf, qf, lf, by rw [r _ _ (by omega)]; exact sD0, by rw [r _ _ (by omega)]; exact sv8,
     by rw [r _ _ (by omega)]; exact sv16, by rw [r _ _ (by omega)]; exact sv24, hcv, hnc, hp, hco, hcoD,
     fun i hi => ⟨by rw [r _ _ (by omega)]; exact (hw0 i hi).1, by rw [r _ _ (by omega)]; exact (hw0 i hi).2.1,
-      by rw [r _ _ (by omega)]; exact (hw0 i hi).2.2⟩, hcap, hql, hq, hcs, hsd, hoff, hK', hO, ?_⟩
+      by rw [r _ _ (by omega)]; exact (hw0 i hi).2.2⟩, hcap, hql, hq, hcs, hsd, hK', hO, ?_⟩
   rw [hx, ExportElem.expUpTo_congr ns (fun a ha => h a (by
     rcases ha with ⟨-, h2⟩ | ⟨j, hj, -, h2⟩
     · omega
@@ -59,12 +59,12 @@ theorem ExportOk.congr {env : RefineHost.Env} {μ μ' : Memory} {E k : Nat} {ce 
     allocation fails. Hypotheses: `ExportFmtOk` and `DebugLineOk` (the fmt summaries). -/
 theorem body {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P]
     (env : RefineHost.Env) (cap0 : Nat) (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616)
-    {hb : Nat} {pb S0 S1 : Nat} (fmt : ExportSeg.ExportFmtOk p cap0 env pb S0 S1)
+    {hb : Nat} {pb S0 S1 : Nat} {ro : List UInt8} (fmt : ExportSeg.ExportFmtOk p cap0 env pb S0 S1 ro)
     (DR : Nat → List UInt8 → Memory → Prop) (enc : Nat → List UInt8) (rep : Nat → List UInt8 → Prop)
-    (dbg : ExitRun.DebugLineOk p cap0 env pb S0 S1 DR)
-    (ω : Regs) (μ : Memory) (s : State) (H : HeapCtx env pb S0 S1 μ s) (M cap n : Nat) (ce : Chunk)
+    (dbg : ExitRun.DebugLineOk p cap0 env pb S0 S1 ro DR)
+    (ω : Regs) (μ : Memory) (s : State) (H : HeapCtx env pb S0 S1 μ s) (hro : RoData.RoIs ro μ) (M cap n : Nat) (ce : Chunk)
     (Kp : Nat → Chunk → Prop) (O : Nat → List UInt8 → Prop) (ctx : Nat → RefineCtx)
-    (hM : S0 + 456 ≤ M ∧ M + 648 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0) (hn : 0 < n) (hn128 : n < 128)
+    (hM : S0 + 7560 ≤ M ∧ M + 632 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0) (hn : 0 < n) (hn128 : n < 128)
     (hcap : 232 * cap < 18446744073709551616) (hce : cap ≠ 18446744073709551615)
     (hceC : ce ∈ chunks s ∧ ce.used = true) (hE : ce.addr + 32 + 232 * n ≤ ce.addr + 32 * ce.size)
     (hEtop : ce.addr + 32 + 232 * n < 2147483648)
@@ -82,16 +82,16 @@ theorem body {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCode
     (s624 : μ.readN (M + 624) 8 = Num.encodeLE 8 ret) (s616 : μ.readN (M + 616) 8 = Num.encodeLE 8 r5)
     (s608 : μ.readN (M + 608) 8 = Num.encodeLE 8 r6)
     (hq' : c' < 18446744073709551616) (hcq : c' ≠ 0 → Kp n cq ∧ cq.addr + 32 = q ∧ cq ≠ ce)
-    (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) (hr5 : r5 < 18446744073709551616)
-    (hr6 : r6 < 18446744073709551616) (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t)
-    (hbt : P.isBlockStart t = true)
+    (hret : Fin.RetTo P ret t) (hr5 : r5 < 18446744073709551616)
+    (hr6 : r6 < 18446744073709551616)
     (tab : μ.readN 67376 100 = table) (rtab : ∀ a, 67376 ≤ a → a < 67476 → μ.readable a = true)
     (dtab : μ.readN 67760 96 = DropOut.dtable) (rdtab : ∀ a, 67760 ≤ a → a < 67856 → μ.readable a = true) :
     (∃ (ω' : Regs) (μ' : Memory) (s' : State) (N buf : Nat),
       FreeStepsH p (refineContractK cap0 env) 4842 ω μ (ctx 0) t ω' μ' (ctx n) N ∧ HeapCtx env pb S0 S1 μ' s' ∧
       ω'[0] = UInt64.ofNat ret ∧ ω'[1] = UInt64.ofNat (M + 632) ∧ ω'[5] = UInt64.ofNat r5 ∧
       ω'[6] = UInt64.ofNat r6 ∧ ω'[7] = UInt64.ofNat buf ∧ ω'[8] = UInt64.ofNat (off enc n + 3) ∧
-      μ'.readN buf (off enc n + 3) = UInt8.ofNat n :: (out enc n ++ Num.encodeLE 2 (w % 65536))) ∨
+      μ'.readN buf (off enc n + 3) = UInt8.ofNat n :: (out enc n ++ Num.encodeLE 2 (w % 65536)) ∧
+      ((∀ a, buf ≤ a → a < buf + (off enc n + 3) → μ'.readable a = true) ∧ buf + (off enc n + 3) < 2147483648)) ∨
     ∃ N, ExhaustsX env cap0 pb p 4842 ω μ (ctx 0) N := by
   obtain ⟨hS0M, hMS1, hM2, hM8⟩ := hM
   have hS1 := H.hS1
@@ -102,7 +102,7 @@ theorem body {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCode
       ExportOk env μ1 (ce.addr + 32) k ce (Kp k) (Kp (k + 1)) O (ctx k) (ctx (k + 1)) := fun k hk =>
     (elem k hk).imp (PassOk.congr (by omega) lo) (ExportOk.congr (by omega) lo)
   rcases loop_all (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 fmt μ1 Kp O ctx L elem1 5054 (Or.inr hn)
-      ω1 μ1 s st with ⟨s2, ω2, μ2, N2, run2, st2⟩ | ⟨N, hx⟩
+      ω1 μ1 s (RoData.RoIs.keep H run1 hro) st with ⟨s2, ω2, μ2, N2, run2, st2⟩ | ⟨N, hx⟩
   rotate_left
   · exact Or.inr ⟨_, ExhaustsX.pre run1 hx⟩
   have pre := run1.trans run2
@@ -110,15 +110,15 @@ theorem body {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCode
   obtain ⟨dtab2, rdtab2⟩ := ExitRun.ro_keep H pre (a := 67760) (l := 96) (by omega)
   have m1 : ∀ a l, (M + 56 ≤ a ∧ a + l ≤ M + 120) ∨ (M + 304 ≤ a ∧ a + l ≤ 4294967296) →
       μ1.readN a l = μ.readN a l := fun a l h => Memory.readN_congr (fun j hj => efr _ (by omega) (by omega))
-  rcases ExitRun.exit_run (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 DR enc rep dbg (ctx n) ω2 μ2 s2 L hn
+  rcases ExitRun.exit_run (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 DR enc rep dbg (ctx n) ω2 μ2 s2 (RoData.RoIs.keep H pre hro) L hn
       st2 hcap hOD hOR hON hok hlen w c' q ret r5 r6 t cq hw64
       (by rw [m1 _ _ (by omega)]; exact s80) (by rw [m1 _ _ (by omega)]; exact s88)
       (by rw [m1 _ _ (by omega)]; exact s112) (by rw [m1 _ _ (by omega)]; exact s624)
       (by rw [m1 _ _ (by omega)]; exact s616) (by rw [m1 _ _ (by omega)]; exact s608)
-      hq' hcq hret hr5 hr6 hjt hbt (by rw [tab2]; exact tab) (fun a h1 h2 => by rw [rtab2 a h1 h2]; exact rtab a h1 h2)
+      hq' hcq hret hr5 hr6 (by rw [tab2]; exact tab) (fun a h1 h2 => by rw [rtab2 a h1 h2]; exact rtab a h1 h2)
       (by rw [dtab2]; exact dtab) (fun a h1 h2 => by rw [rdtab2 a h1 h2]; exact rdtab a h1 h2) with
-    ⟨ω3, μ3, s3, N3, buf, run3, H3, f0, f1, f5, f6, f7, f8, fo⟩ | ⟨N, hx⟩
-  · exact Or.inl ⟨ω3, μ3, s3, _, buf, pre.trans run3, H3, f0, f1, f5, f6, f7, f8, fo⟩
+    ⟨ω3, μ3, s3, N3, buf, run3, H3, f0, f1, f5, f6, f7, f8, fo, frd⟩ | ⟨N, hx⟩
+  · exact Or.inl ⟨ω3, μ3, s3, _, buf, pre.trans run3, H3, f0, f1, f5, f6, f7, f8, fo, frd⟩
   · exact Or.inr ⟨_, ExhaustsX.pre pre hx⟩
 
 end Services.Bootstrap.Refine.Body

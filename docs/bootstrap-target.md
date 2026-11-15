@@ -420,12 +420,19 @@ spec's run may stop early:
    - There is one further constructor per binary quirk where the binary panics and the model goes on,
      each listed under Quirks.
 
-**`hvals` (decision of 2026-11-13).** `ValuesFit` says every storage value, preimage and encoded input
-of service s is shorter than 2⁶⁴ octets. Ω_R and Ω_Y report a length in a 64-bit register, which the
-model wraps mod 2⁶⁴. A longer value could wrap to NONE, and bootstrap would then report it absent where
-the model returns it. No trap occurs, so no abort reason can cover this case. Such values cannot exist
-physically, and bootstrap itself only writes values shorter than 2³² octets, but the model does not
-exclude them, so T2 assumes it.
+**`hvals` (decisions of 2026-11-13 and 2026-11-15).** `ValuesFit` says every storage value, preimage
+and encoded input of service s is shorter than 2⁶³ octets. Ω_R and Ω_Y report a length in a 64-bit
+register, which the model wraps mod 2⁶⁴. A longer value could wrap to NONE, and bootstrap would then
+report it absent where the model returns it. The bound was first 2⁶⁴ (2026-11-13). It was tightened to
+2⁶³ on 2026-11-15, because the SDK's `get` (47888 … 47974) also misreads lengths below 2⁶⁴:
+- a value of exactly 2⁶⁴ − 1 octets reads as NONE, and `get` returns `None` (47907) where the model
+  returns the value. No trap occurs, so no abort reason can cover it;
+- lengths in [2⁶⁴ − 9, 2⁶⁴ − 2] trap at 47929, and lengths in [2⁶³, 2⁶⁴ − 9) trap at 47901 (a
+  negative `isize`). No abort reason covers these either.
+
+Below 2⁶³, `get` either returns the value or reaches the allocation-failure trap 47977 (`heap`).
+Such values cannot exist physically, and bootstrap itself only writes values shorter than 2³² octets,
+but the model does not exclude them, so T2 assumes it.
 
 **T2′ (exact).** With `g ≥ Spec.accGas …`, n can be taken as the full run's length, so the outcome
 is `done` or `panicked` and does not depend on gas. Useful, but lower priority than T1′: on chain,
@@ -590,6 +597,22 @@ Effort is relative: S < M < L < XL. Steps 0, 1 and 9 involve no binary.
   the top-level structure first, building on `DecodeLoop`, `NoInstr*` and the allocator theorems on
   main. Allocator facts not yet on main (the 14-page cap, alignment > 1, `realloc` preserving the
   copied data) are named hypotheses until they land.
+  - **M1, first step (proved: `Refine.Milestone.refine_milestone`).** T1c for payloads of 1 ≤ n < 128 well-formed
+    instructions, each passed through (`Upgrade`, `Transfer`, `Zombify`, `Eject`, `Solicit`, `Forget`, `Lookup` with
+    eager = false, `Yield`, `Checkpoint`, `Panic`, `Benchmark`, `Exported`) or `ExportSegs`, with |y| + 48 ≤ 2²⁴
+    (Ψ_M's argument limit Z_I = 2²⁴; W_B is far smaller). Named hypotheses: `VendoredFacts` (layoutOk and the three
+    read-only tables of the vendored blob; step 10) and `FmtHyps` (the log lines at 4742 and 5744 and the `Debug` line
+    at 6159; the fmt summaries). Not yet covered: eager `Lookup`, `Import`, `RandomStorageRefine`, the
+    variable-width instructions and n ≥ 128.
+  - **Later obligation: an allocation failure ends in ☇ with no exports.** The milestone's third outcome is
+    `ExhaustsHeap` alone (the run reaches a failed allocation). That the run then traps (panic = abort: each null
+    check falls into a `trap`), so Ψ_R's result is ☇ with no exports, is not yet proved; T1 keeps the full claim.
+    Two routes: (a) thread a stronger failure predicate (`ExhaustsT`: a failed allocation followed by the
+    caller's `trap`) through every lemma that now returns `ExhaustsX`, in the decoders, the arguments' parse,
+    the fmt summaries and refine's own pieces, with one short tail lemma per null-check site (about 12–15 sites
+    on the milestone path, plus the fmt summaries' own allocations): about 1–2 session-days; or (b) a
+    whole-program lemma that every return from 40611, 40821 or 33055 with ω₇ = 0 lands on a null check that
+    traps, from a kernel-checked table of the allocators' return sites (to be scoped).
 - **M2:** T1 for every payload (the real decoder, quirk Q1), then T1′ and S2–S4.
 - **M3:** T2 for operands whose instructions are among `Checkpoint`, `Solicit`, `Forget`,
   `DeleteItems`, `Yield` and `Transfer`, plus transfers. This brings in the ring, the results

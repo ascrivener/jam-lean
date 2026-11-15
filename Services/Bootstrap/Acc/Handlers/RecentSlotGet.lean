@@ -41,7 +41,7 @@ open Services.Bootstrap.Decode.DeallocCall in
     1 ‖ the 4 octets at kp + 4), return address ret (ω₀, resolving to t), the caller's frame at
     SP (ω₁). Either the run returns to t with ω₀, ω₁, ω₅, ω₆ as they were and `SlotOut` at out of the
     slot's value, decoded (`slotDec`), the allocator's context for some st′ keeping st's allocated
-    chunks and their data, and memory kept from SP on off out … out + 36; or it reaches the trap at
+    chunks and their data, memory kept from SP on off out … out + 36, at the globals (`Glob`) and below 196608; or it reaches the trap at
     34070 or 47977 (an `alloc` failed). Hypotheses: the key-size word kc for tag 1 at 68688
     (5 ≤ kc, kc + 31 < 2³⁶), readable; the frame [SP − 352, SP) in the stack; the slot's value
     shorter than 2⁶³ octets (`ValuesFit`). -/
@@ -64,7 +64,8 @@ theorem slot_get {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env
       SlotOut μ' out ((c.1.self.storage.get? (keyEnc μ kp 1)).bind (decode slotDec)) ∧
       HeapCtxC env.code pb S0 S1 μ' st' ∧
       (∀ d ∈ chunks st, d.used = true → d ∈ chunks st' ∧ ∀ a, InData d a → μ'.read a = μ.read a) ∧
-      (∀ a, a < 4294967296 → SP ≤ a → (a < out ∨ out + 36 ≤ a) → μ'.read a = μ.read a)) ∨
+      (∀ a, a < 4294967296 → SP ≤ a → (a < out ∨ out + 36 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, Glob a → μ'.read a = μ.read a) ∧ (∀ a, a < 196608 → μ'.read a = μ.read a)) ∨
     (∃ e ω' μ' n, (e = 34070 ∨ e = 47977) ∧
       FreeStepsH p (KeepCtx (accContractS env)) 34377 ω μ (c, f) e ω' μ' (c, f) n) := by
   have hSt := H.st
@@ -100,6 +101,7 @@ theorem slot_get {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env
   case inr =>
     obtain ⟨-, runBS⟩ := FreeStepsH.growS f runB
     exact .inr ⟨34070, ωB, μB, _, .inl rfl, runA.trans runBS⟩
+  obtain ⟨-, roB⟩ := HeapHost.keepRO (env := accHeapHost env) HA.bd runB
   obtain ⟨-, runBS⟩ := FreeStepsH.growS f runB
   rw [hkA, hkl] at oB16 oBk
   have hS1B := HB.hS1
@@ -118,7 +120,7 @@ theorem slot_get {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env
       (keyEnc μ kp 1) HB c1 c7 c8 c9 (by decide) (by omega) (by omega) ⟨by omega, by omega⟩
       (.inr ⟨_, hnewK, rfl, fun a h1 h2 => ⟨by dsimp only; omega, by dsimp only; omega⟩⟩) (by omega)
       (by rw [← hkl]; exact oBk) hfit with
-    ⟨e, s2, ωD, μD, nD, he, runD, d0, d1, d5, d6, gO, HD, keepD, dataD, stkD⟩ | ⟨ωD, μD, nD, runD⟩
+    ⟨e, s2, ωD, μD, nD, he, runD, d0, d1, d5, d6, gO, HD, keepD, dataD, stkD, glD, loD⟩ | ⟨ωD, μD, nD, runD⟩
   case inr =>
     exact .inr ⟨47977, ωD, μD, _, .inr rfl, (runA.trans runBS).trans (runC.trans runD)⟩
   have runD' := sg_gret (P := P) (R := KeepCtx (accContractS env)) (c, f) ωD μD e he (d0.trans c0)
@@ -154,6 +156,16 @@ theorem slot_get {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env
   have frF : ∀ a, a < 4294967296 → S + 112 ≤ a → μF.read a = μ.read a := fun a h0 ha => by
     rw [stkF a h0 (by omega), stkD a h0 (by omega) (.inr (by omega)), stkB a h0 (by omega) (.inr (by omega)),
       frA a h0 (.inr ha)]
+  -- the globals and the read-only data, up to μF
+  have glF0 : ∀ a, Glob a → μF.read a = μ.read a := fun a ha => by
+    have ha' := ha; unfold Glob at ha'
+    rw [glF a ha, glD a ha, hgB a ⟨.inl ha, by omega, fun b ⟨d, hd, hdb⟩ => .inl (by
+        have ht := HB.wf.2.2.2.1; unfold TilesOk at ht; have := (ht.mem_lt _ hd).1; omega)⟩ (.inl (by omega)),
+      frA a (by omega) (.inl (by omega))]
+  have loF0 : ∀ a, a < 196608 → μF.read a = μ.read a := fun a ha => by
+    rw [roF a (by unfold two32; omega) (HD.ro a ha), loD a ha,
+      roB a (by unfold two32; omega) (.inl (by unfold pageSize; omega)) (by rw [wrA]; exact H.ro a ha),
+      frA a (by omega) (.inl (by omega))]
   -- st's chunks: kept, and their data, up to μF
   have keep0 : ∀ d ∈ chunks st, d.used = true → d ∈ chunks (free s2 kptr) ∧ d ∈ chunks s1 ∧
       ∀ a, InData d a → μF.read a = μ.read a := by
@@ -184,7 +196,11 @@ theorem slot_get {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env
     refine .inl ⟨free s2 kptr, ωG, _, _, run0.trans runG, g0.trans UInt64.ofNat_toNat, g1.trans h1.symm,
       g5.trans UInt64.ofNat_toNat, g6.trans UInt64.ofNat_toNat, ?_,
       HeapKeep.keepHi HF (fun a ha => frG a (by omega) (.inl (by omega))) (fun a => Memory.writable_writeN _ _ _ _),
-      fun d hd hu => ⟨(keep0 d hd hu).1, fun a ha => ?_⟩, fun a h0 ha hb => ?_⟩
+      fun d hd hu => ⟨(keep0 d hd hu).1, fun a ha => ?_⟩, fun a h0 ha hb => ?_,
+      fun a ha => ?_, fun a ha => ?_⟩
+    rotate_left 3
+    · have ha' := ha; unfold Glob at ha'; rw [frG a (by omega) (.inl (by omega)), glF0 a ha]
+    · rw [frG a (by omega) (.inl (by omega)), loF0 a ha]
     · unfold SlotOut; exact Memory.readN_writeN_same _ _ _ _ l2 (by unfold two32; omega)
     · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hd hu
       unfold InData at ha
@@ -206,7 +222,12 @@ theorem slot_get {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env
       refine .inl ⟨free s2 kptr, ωG, μG, _, run0.trans runG, g0.trans UInt64.ofNat_toNat, g1.trans h1.symm,
         g5.trans UInt64.ofNat_toNat, g6.trans UInt64.ofNat_toNat, slG,
         HeapKeep.keepHi HF (fun a ha => frG a (by omega) (.inl (by omega)) (.inl (by omega))) wrG,
-        fun d hd hu => ⟨(keep0 d hd hu).1, fun a ha => ?_⟩, fun a h0 ha hb => ?_⟩
+        fun d hd hu => ⟨(keep0 d hd hu).1, fun a ha => ?_⟩, fun a h0 ha hb => ?_,
+        fun a ha => ?_, fun a ha => ?_⟩
+      rotate_left 2
+      · have ha' := ha; unfold Glob at ha'
+        rw [frG a (by omega) (.inl (by omega)) (.inl (by omega)), glF0 a ha]
+      · rw [frG a (by omega) (.inl (by omega)) (.inl (by omega)), loF0 a ha]
       · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hd hu
         unfold InData at ha
         rw [frG a (by omega) (.inl (by omega)) (.inl (by omega)), (keep0 d hd hu).2.2 a ha]
@@ -222,7 +243,7 @@ theorem slot_get {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env
         have hdivV : bs.length + 1 ≤ 32 * ((bs.length + 1 + 31) / 32) := by omega
         simp only [InData, List.length_cons] at hj ⊢
         omega
-      obtain ⟨ωG, μG, nG, runG, g0, g1, g5, g6, slG, HG, frG, -, -, keepG⟩ := sg_tailW (P := P)
+      obtain ⟨ωG, μG, nG, runG, g0, g1, g5, g6, slG, HG, frG, glG, loG, keepG⟩ := sg_tailW (P := P)
         (R := KeepCtx (accContractS env)) env.code pb S0 S1 (c, f) ωF μF (free s2 kptr) S out vptr ω[0].toNat
         ω[5].toNat ω[6].toNat t (b :: bs) HF hV1 hvp (List.cons_ne_nil b bs) eF1 eF5 ⟨by omega, by omega⟩
         ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ (by rw [kFv _ _ (by omega) (by omega)]; exact g24)
@@ -231,7 +252,8 @@ theorem slot_get {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env
         m104 m96 m88 hr0 hv5 hv6 (by rw [eret]; exact hret) (by rw [eret]; exact hjt) hbt
       refine .inl ⟨free (free s2 kptr) vptr, ωG, μG, _, run0.trans runG, g0.trans UInt64.ofNat_toNat,
         g1.trans h1.symm, g5.trans UInt64.ofNat_toNat, g6.trans UInt64.ofNat_toNat, slG, HG,
-        fun d hd hu => ?_, fun a h0 ha hb => ?_⟩
+        fun d hd hu => ?_, fun a h0 ha hb => ?_, fun a ha => by rw [glG a ha, glF0 a ha],
+        fun a ha => by rw [loG a ha, loF0 a ha]⟩
       · obtain ⟨k0, k1, k2⟩ := keep0 d hd hu
         obtain ⟨k3, k4⟩ := keepG d k0 hu (hfreshV d k1 hu)
         exact ⟨k3, fun a ha => by rw [k4 a ha, k2 a ha]⟩

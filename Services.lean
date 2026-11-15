@@ -28,6 +28,8 @@ import Services.Bootstrap.Fmt.Format
 import Services.Bootstrap.Fmt.AccFmt
 import Services.Bootstrap.Fmt.ResultDebug
 import Services.Bootstrap.Fmt.OptionDebug
+import Services.Bootstrap.Fmt.Field
+import Services.Bootstrap.Fmt.U8x32
 import Services.Bootstrap.Fmt.OracleRefineK
 import Services.Bootstrap.Fmt.ReallocCopy
 import Services.Bootstrap.Fmt.ReallocCopyInst

@@ -1,0 +1,309 @@
+name: Build and check
+
+# One attempt at the whole CI job, called by ci.yml. A cold build takes longer than a GitHub-hosted job
+# may run, so the build steps stop at a budget (scripts/ci-bounded.sh), the attempt saves .lake and ends
+# green with timed_out=true, skipping the checks, and ci.yml starts the next attempt, which resumes from
+# the saved .lake. Only the last attempt fails when the budget runs out.
+on:
+  workflow_call:
+    inputs:
+      attempt:
+        description: which attempt this is (1, 2, ...); part of the .lake cache key
+        type: number
+        required: true
+      last:
+        description: whether this is the last attempt (running out of budget then fails the run)
+        type: boolean
+        required: true
+    outputs:
+      timed_out:
+        description: '"true" when the build budget ran out before the build finished'
+        value: ${{ jobs.build-and-check.outputs.timed_out }}
+
+jobs:
+  build-and-check:
+    runs-on: ubuntu-latest
+    # GitHub-hosted jobs stop at 360 min. The build steps below stop themselves well before that, so the
+    # .lake save at the end always runs on a quiescent tree.
+    timeout-minutes: 355
+    outputs:
+      timed_out: ${{ steps.report.outputs.timed_out }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Every build step must stop by this deadline (300 min after the job starts), leaving time to save .lake.
+      - name: Set the build budget
+        run: echo "CI_DEADLINE=$(( $(date +%s) + 300 * 60 ))" >> "$GITHUB_ENV"
+
+      - name: Install elan
+        run: |
+          curl -sSfL --retry 5 --retry-all-errors https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh \
+            | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+          # Download the pinned toolchain up front, retrying transient download errors (e.g. HTTP 504).
+          for i in 1 2 3 4 5; do
+            "$HOME/.elan/bin/elan" toolchain install "$(cat lean-toolchain)" && break
+            echo "toolchain download failed (attempt $i); retrying" >&2
+            sleep $((i * 15))
+          done
+          "$HOME/.elan/bin/elan" toolchain list | grep -q "$(cut -d: -f2 lean-toolchain)"
+
+      # Restore the newest build of this commit (an earlier attempt of this run, or an earlier run), else of
+      # this toolchain; lake rebuilds only what changed since. The build is saved after every attempt that
+      # did not finish, so no attempt's work is lost.
+      - name: Restore .lake
+        uses: actions/cache/restore@v4
+        with:
+          path: .lake
+          key: lake-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}-${{ inputs.attempt }}
+          restore-keys: |
+            lake-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}-
+            lake-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
+            lake-${{ runner.os }}-
+
+      - name: Generated tables and constants match the pinned paper
+        run: scripts/check-tables.sh
+
+      - name: No forbidden constructs
+        run: |
+          if grep -rnE '\bsorry\b|partial def|implemented_by|native_decide|bv_decide' PVM JAM Services Tests PVM.lean JAM.lean Services.lean; then
+            echo "forbidden construct found" >&2; exit 1
+          fi
+
+      - name: Build the largest proofs one at a time (each needs most of the runner's memory)
+        if: env.CI_TIMED_OUT != 'true'
+        run: |
+          scripts/ci-bounded.sh lake build Services.Witness.ErrTail
+          scripts/ci-bounded.sh lake build Services.Witness.BadPayload
+          scripts/ci-bounded.sh lake build Services.Witness.EmptyTail
+          scripts/ci-bounded.sh lake build Services.Witness.EmptyPayload
+
+      - name: Build the model and its theorems
+        id: build
+        if: env.CI_TIMED_OUT != 'true'
+        # bounded so a cold build ends here, with time left to save .lake for the next attempt to resume from
+        run: scripts/ci-bounded.sh lake build
+
+      - name: Kernel-checked Ψ_H, Y and Ψ_M examples
+        if: env.CI_TIMED_OUT != 'true'
+        run: lake build Tests.Invocation
+
+      - name: Worked proof with the gas-free logic
+        if: env.CI_TIMED_OUT != 'true'
+        run: lake build Tests.LogicExample
+
+      - name: Theorems use only propext, Classical.choice and Quot.sound
+        if: env.CI_TIMED_OUT != 'true'
+        run: lake env lean scripts/CheckAxioms.lean
+
+      - name: Fetch the pinned test vectors
+        if: env.CI_TIMED_OUT != 'true'
+        run: scripts/fetch-vectors.sh
+
+      - name: Vector runner (programs/)
+        if: env.CI_TIMED_OUT != 'true'
+        run: lake build pvmtest
+
+      - name: Block gas checker (programs/ and gas-tests/)
+        if: env.CI_TIMED_OUT != 'true'
+        run: lake build gascheck
+
+      - name: Blake2b vectors
+        if: env.CI_TIMED_OUT != 'true'
+        run: lake build Tests.Blake2bTest
+
+      - name: General host functions
+        if: env.CI_TIMED_OUT != 'true'
+        run: lake build Tests.HostGeneralTest
+
+      - name: Keccak and SHA3 vectors
+        if: env.CI_TIMED_OUT != 'true'
+        run: lake build Tests.KeccakTest
+
+      - name: SHA-512 vectors (FIPS 180-2 and hashlib) and one trace block's VRF output
+        if: env.CI_TIMED_OUT != 'true'
+        run: lake build Tests.Sha512Test
+
+      - name: Refine host functions, Ψ_R and Ψ_I (hand-written; no vectors exist)
+        if: env.CI_TIMED_OUT != 'true'
+        run: lake build Tests.RefineTest
+
+      - name: The vendored witness blob names only the host calls, and has the code facts, its theorems assume
+        if: env.CI_TIMED_OUT != 'true'
+        run: lake build witnesscheck
+
+      - name: The vendored bootstrap blob has the code facts and layout its theorems assume
+        if: env.CI_TIMED_OUT != 'true'
+        run: lake build bootstrapcheck
+
+      - name: the generated bootstrap files are what their generator produces
+        if: env.CI_TIMED_OUT != 'true'
+        run: |
+          lake exe genwitnesssteps --service bootstrap code 7463 | diff - Services/Bootstrap/Code.lean
+          lake exe genwitnesssteps --service bootstrap blob | diff - Services/Bootstrap/Blob.lean
+          lake exe genwitnesssteps --service bootstrap codecheck 7463
+          lake exe genwitnesssteps --service bootstrap cut0 38875 BParams 0 2829 every=16 frame
+          python3 scripts/gen_exec_chain.py Services/Bootstrap/BParams keep=174,175,176 prefix=174
+          WITNESS_WILD=1 WITNESS_INPUT=3,0,7,0 WITNESS_CLASS="5,1,9,0;100,3,12,0;2,0,0,0;7,2,15,0;65535,65535,9,0;300,20000,12,0;40000,129,5,0" WITNESS_SBOUND=0,16 WITNESS_SIMP=PVM.bitwise_and_m15,PVM.bitwise_and_m7,PVM.bitwise_and_m255 lake exe genwitnesssteps --service bootstrap cut0 35202 BTail1 0 1003 every=16 frame
+          python3 scripts/gen_exec_chain.py Services/Bootstrap/BTail1
+          WITNESS_WILD=1 WITNESS_INPUT=3,0,19,0 WITNESS_CLASS="5,1,16,0;100,3,255,0;65535,65535,136,0;300,20000,96,0;40000,129,25,0;7,2,249,0" WITNESS_SBOUND=16,256 WITNESS_SIMP=PVM.bitwise_and_m15,PVM.bitwise_and_m7,PVM.bitwise_and_m255 lake exe genwitnesssteps --service bootstrap cut0 35202 BTail2 0 1020 every=16 frame
+          python3 scripts/gen_exec_chain.py Services/Bootstrap/BTail2
+          WITNESS_WILD=1 WITNESS_INPUT=3,0,259,0 WITNESS_CLASS="5,1,256,0;100,3,4095,0;65535,65535,2176,0;300,20000,1536,0;40000,129,265,0;7,2,4089,0" WITNESS_SBOUND=256,4096 WITNESS_SIMP=PVM.bitwise_and_m15,PVM.bitwise_and_m7,PVM.bitwise_and_m255 lake exe genwitnesssteps --service bootstrap cut0 35202 BTail3 0 1037 every=16 frame
+          python3 scripts/gen_exec_chain.py Services/Bootstrap/BTail3
+          WITNESS_WILD=1 WITNESS_INPUT=3,0,4099,0 WITNESS_CLASS="5,1,4096,0;100,3,65535,0;65535,65535,34816,0;300,20000,24576,0;40000,129,4105,0;7,2,65529,0" WITNESS_SBOUND=4096,65536 WITNESS_SIMP=PVM.bitwise_and_m15,PVM.bitwise_and_m7,PVM.bitwise_and_m255 lake exe genwitnesssteps --service bootstrap cut0 35202 BTail4 0 1054 every=16 frame
+          python3 scripts/gen_exec_chain.py Services/Bootstrap/BTail4
+          WITNESS_WILD=1 WITNESS_INPUT=3,0,65539,0 WITNESS_CLASS="5,1,65536,0;100,3,1048575,0;65535,65535,557056,0;300,20000,393216,0;40000,129,65545,0;7,2,1048569,0" WITNESS_SBOUND=65536,1048576 WITNESS_SIMP=PVM.bitwise_and_m15,PVM.bitwise_and_m7,PVM.bitwise_and_m255 lake exe genwitnesssteps --service bootstrap cut0 35202 BTail5 0 1071 every=16 frame
+          python3 scripts/gen_exec_chain.py Services/Bootstrap/BTail5
+          WITNESS_WILD=1 WITNESS_INPUT=3,0,1048579,0 WITNESS_CLASS="5,1,1048576,0;100,3,16777215,0;65535,65535,8912896,0;300,20000,6291456,0;40000,129,1048585,0;7,2,16777209,0" WITNESS_SBOUND=1048576,16777216 WITNESS_SIMP=PVM.bitwise_and_m15,PVM.bitwise_and_m7,PVM.bitwise_and_m255 lake exe genwitnesssteps --service bootstrap cut0 35202 BTail6 0 1088 every=16 frame
+          python3 scripts/gen_exec_chain.py Services/Bootstrap/BTail6
+          WITNESS_WILD=1 WITNESS_INPUT=3,0,16777219,0 WITNESS_CLASS="5,1,16777216,0;100,3,268435455,0;65535,65535,142606336,0;300,20000,100663296,0;40000,129,16777225,0;7,2,268435449,0" WITNESS_SBOUND=16777216,268435456 WITNESS_SIMP=PVM.bitwise_and_m15,PVM.bitwise_and_m7,PVM.bitwise_and_m255 lake exe genwitnesssteps --service bootstrap cut0 35202 BTail7 0 1105 every=16 frame
+          python3 scripts/gen_exec_chain.py Services/Bootstrap/BTail7
+          WITNESS_WILD=1 WITNESS_INPUT=3,0,268435459,0 WITNESS_CLASS="5,1,268435456,0;100,3,4294967295,0;65535,65535,2281701376,0;300,20000,1610612736,0;40000,129,268435465,0;7,2,4294967289,0" WITNESS_SBOUND=268435456,4294967296 WITNESS_SIMP=PVM.bitwise_and_m15,PVM.bitwise_and_m7,PVM.bitwise_and_m255 lake exe genwitnesssteps --service bootstrap cut0 35202 BTail8 0 1122 every=16 frame
+          python3 scripts/gen_exec_chain.py Services/Bootstrap/BTail8
+          WITNESS_WILD=1 WITNESS_INPUT=3,0,7,33,0,0 WITNESS_CLASS="5,1,9,33,0,7;100,3,300,33,0,255;65535,65535,4294967295,33,0,1;300,20000,70000,33,0,77;40000,129,16,33,0,3" lake exe genwitnesssteps --service bootstrap cut0 35130 GlueY 0 310 every=16 frame
+          python3 scripts/gen_exec_chain.py Services/Bootstrap/GlueY
+          WITNESS_WILD=1 WITNESS_INPUT=3,0,7,33,0,0 WITNESS_CLASS="5,1,9,33,0,7;100,3,300,33,0,255;65535,65535,4294967295,33,0,1;300,20000,70000,33,0,77;40000,129,16,33,0,3" lake exe genwitnesssteps --service bootstrap cut0 3635 GlueY2 0 35 every=16 frame
+          WITNESS_WILD=1 WITNESS_INPUT=3,0,7,33,0,0 WITNESS_CLASS="5,1,9,33,0,7;100,3,300,33,0,255;65535,65535,4294967295,33,0,1;300,20000,70000,33,0,77;40000,129,16,33,0,3" lake exe genwitnesssteps --service bootstrap cut0 20473 OTail 0 1596 every=16 frame out
+          python3 scripts/gen_exec_chain.py Services/Bootstrap/OTail
+          WITNESS_WILD=1 WITNESS_INPUT=3,0,7,33,0,0 WITNESS_CLASS="5,1,9,33,0,7;100,3,12,33,0,255;2,0,0,33,0,1;7,2,15,33,0,77;65535,65535,9,33,0,3;300,20000,12,33,0,9" WITNESS_SBOUND=0,16 WITNESS_SIMP=PVM.bitwise_and_m15,PVM.bitwise_and_m7,PVM.bitwise_and_m255 lake exe genwitnesssteps --service bootstrap cut0 35202 VTail1 0 1120 every=16 frame
+          python3 scripts/gen_exec_chain.py Services/Bootstrap/VTail1
+          WITNESS_WILD=1 WITNESS_INPUT=3,0,19,33,0,0 WITNESS_CLASS="5,1,16,33,0,7;100,3,255,33,0,255;65535,65535,136,33,0,1;300,20000,96,33,0,77;40000,129,25,33,0,3;7,2,249,33,0,9" WITNESS_SBOUND=16,256 WITNESS_SIMP=PVM.bitwise_and_m15,PVM.bitwise_and_m7,PVM.bitwise_and_m255 lake exe genwitnesssteps --service bootstrap cut0 35202 VTail2 0 1137 every=15 frame
+          python3 scripts/gen_exec_chain.py Services/Bootstrap/VTail2
+          WITNESS_WILD=1 WITNESS_INPUT=3,0,259,33,0,0 WITNESS_CLASS="5,1,256,33,0,7;100,3,4095,33,0,255;65535,65535,2176,33,0,1;300,20000,1536,33,0,77;40000,129,265,33,0,3;7,2,4089,33,0,9" WITNESS_SBOUND=256,4096 WITNESS_SIMP=PVM.bitwise_and_m15,PVM.bitwise_and_m7,PVM.bitwise_and_m255 lake exe genwitnesssteps --service bootstrap cut0 35202 VTail3 0 1154 every=15 frame
+          python3 scripts/gen_exec_chain.py Services/Bootstrap/VTail3
+          WITNESS_WILD=1 WITNESS_INPUT=3,0,4099,33,0,0 WITNESS_CLASS="5,1,4096,33,0,7;100,3,65535,33,0,255;65535,65535,34816,33,0,1;300,20000,24576,33,0,77;40000,129,4105,33,0,3;7,2,65529,33,0,9" WITNESS_SBOUND=4096,65536 WITNESS_SIMP=PVM.bitwise_and_m15,PVM.bitwise_and_m7,PVM.bitwise_and_m255 lake exe genwitnesssteps --service bootstrap cut0 35202 VTail4 0 1171 every=15 frame
+          python3 scripts/gen_exec_chain.py Services/Bootstrap/VTail4
+          WITNESS_WILD=1 WITNESS_INPUT=3,0,65539,33,0,0 WITNESS_CLASS="5,1,65536,33,0,7;100,3,1048575,33,0,255;65535,65535,557056,33,0,1;300,20000,393216,33,0,77;40000,129,65545,33,0,3;7,2,1048569,33,0,9" WITNESS_SBOUND=65536,1048576 WITNESS_SIMP=PVM.bitwise_and_m15,PVM.bitwise_and_m7,PVM.bitwise_and_m255 lake exe genwitnesssteps --service bootstrap cut0 35202 VTail5 0 1188 every=15 frame
+          python3 scripts/gen_exec_chain.py Services/Bootstrap/VTail5
+          WITNESS_WILD=1 WITNESS_INPUT=3,0,1048579,33,0,0 WITNESS_CLASS="5,1,1048576,33,0,7;100,3,16777215,33,0,255;65535,65535,8912896,33,0,1;300,20000,6291456,33,0,77;40000,129,1048585,33,0,3;7,2,16777209,33,0,9" WITNESS_SBOUND=1048576,16777216 WITNESS_SIMP=PVM.bitwise_and_m15,PVM.bitwise_and_m7,PVM.bitwise_and_m255 lake exe genwitnesssteps --service bootstrap cut0 35202 VTail6 0 1205 every=15 frame
+          python3 scripts/gen_exec_chain.py Services/Bootstrap/VTail6
+          WITNESS_WILD=1 WITNESS_INPUT=3,0,16777219,33,0,0 WITNESS_CLASS="5,1,16777216,33,0,7;100,3,268435455,33,0,255;65535,65535,142606336,33,0,1;300,20000,100663296,33,0,77;40000,129,16777225,33,0,3;7,2,268435449,33,0,9" WITNESS_SBOUND=16777216,268435456 WITNESS_SIMP=PVM.bitwise_and_m15,PVM.bitwise_and_m7,PVM.bitwise_and_m255 lake exe genwitnesssteps --service bootstrap cut0 35202 VTail7 0 1222 every=15 frame
+          python3 scripts/gen_exec_chain.py Services/Bootstrap/VTail7
+          WITNESS_WILD=1 WITNESS_INPUT=3,0,268435459,33,0,0 WITNESS_CLASS="5,1,268435456,33,0,7;100,3,4294967295,33,0,255;65535,65535,2281701376,33,0,1;300,20000,1610612736,33,0,77;40000,129,268435465,33,0,3;7,2,4294967289,33,0,9" WITNESS_SBOUND=268435456,4294967296 WITNESS_SIMP=PVM.bitwise_and_m15,PVM.bitwise_and_m7,PVM.bitwise_and_m255 lake exe genwitnesssteps --service bootstrap cut0 35202 VTail8 0 1239 every=15 frame
+          python3 scripts/gen_exec_chain.py Services/Bootstrap/VTail8
+          test -z "$(git status --porcelain -- Services/Bootstrap)"
+          lake exe genwitnesssteps --service bootstrap allocck 0 | tail -1 | grep -q " 0 mismatches"
+          lake exe genwitnesssteps --service bootstrap cut 0 PrefixC 0 600 every=16 frame words
+          python3 scripts/gen_exec_chain.py Services/Bootstrap/PrefixC
+          lake exe genwitnesssteps --service bootstrap run 600 cut=PrefixC | diff - Services/Bootstrap/Prefix.lean
+          lake exe genwitnesssteps --service bootstrap memcpy | diff - Services/Bootstrap/Memcpy.lean
+
+      - name: the generated witness files are what their generator produces
+        if: env.CI_TIMED_OUT != 'true'
+        run: |
+          lake exe genwitnesssteps code 2835 | diff - Services/Witness/Code.lean
+          lake exe genwitnesssteps blob | diff - Services/Witness/Blob.lean
+          lake exe genwitnesssteps codecheck 2835
+          lake exe genwitnesssteps cut 0 PrefixC 0 702 every=16 frame words
+          python3 scripts/gen_exec_chain.py Services/Witness/PrefixC prog=Services.Witness.SymExec.Prog,Services.Witness.SymExec.hyp
+          lake exe genwitnesssteps run 702 cut=PrefixC | diff - Services/Witness/Prefix.lean
+          lake exe genwitnesssteps cut 74620 ErrTail 0 1542 every=16 out
+          python3 scripts/gen_exec_chain.py Services/Witness/ErrTail prog=Services.Witness.SymExec.Prog,Services.Witness.SymExec.hyp
+          lake exe genwitnesssteps cut0 74620 EmptyTail 0 1445 every=16 out
+          python3 scripts/gen_exec_chain.py Services/Witness/EmptyTail prog=Services.Witness.SymExec.Prog,Services.Witness.SymExec.hyp
+          lake exe genwitnesssteps cut 23809 Front3 0 275 every=16 frame keep=0,1,5,6,7,8
+          lake exe genwitnesssteps cut 23918 Front4 0 68 every=16 frame keep=0,1,2,3,4,5,6,7,12
+          lake exe genwitnesssteps cut0 23809 EFront3 0 60 every=16 frame keep=0,1,5,6,7,8
+          test -z "$(git status --porcelain -- Services)"
+          lake exe genwitnesssteps segx 43495 0 5 Front1 keep=0,1,5,6,7,8 | diff - Services/Witness/Front1.lean
+          lake exe genwitnesssteps segx 43514 0 14 Front2 keep=0,1,5,6,7,8 | diff - Services/Witness/Front2.lean
+
+      - name: The real witness binary rejects malformed payloads (a test, not a proof)
+        if: env.CI_TIMED_OUT != 'true'
+        run: lake build witnessrun
+
+      - name: Fetch the Gray Paper v0.8.0 JAM vectors
+        if: env.CI_TIMED_OUT != 'true'
+        run: scripts/fetch-jam-vectors.sh
+
+      - name: Codec vectors, tiny and full (encode from JSON, decode and re-encode)
+        if: env.CI_TIMED_OUT != 'true'
+        run: lake build codectest
+
+      - name: State trie vectors (Appendix D)
+        if: env.CI_TIMED_OUT != 'true'
+        run: lake build trietest
+
+      - name: Shuffle vectors (Appendix F)
+        if: env.CI_TIMED_OUT != 'true'
+        run: lake build shuffletest
+
+      - name: Erasure-coding vectors, tiny and full (all listed as deviating from GP 0.8.0)
+        if: env.CI_TIMED_OUT != 'true'
+        run: lake build erasuretest
+
+      - name: Accumulate vectors (all but the listed deviations from GP 0.8.0)
+        if: env.CI_TIMED_OUT != 'true'
+        run: lake build acctest
+
+      - name: Recent-history vectors (tiny and full)
+        if: env.CI_TIMED_OUT != 'true'
+        run: lake build historytest
+
+      - name: Authorizations vectors (tiny and full)
+        if: env.CI_TIMED_OUT != 'true'
+        run: lake build authtest
+
+      - name: Statistics vectors (tiny and full)
+        if: env.CI_TIMED_OUT != 'true'
+        run: lake build statstest
+
+      - name: Preimages vectors (tiny and full)
+        if: env.CI_TIMED_OUT != 'true'
+        run: lake build preimagestest
+
+      - name: Disputes vectors (tiny and full)
+        if: env.CI_TIMED_OUT != 'true'
+        run: lake build disputestest
+
+      - name: Assurances vectors (tiny and full)
+        if: env.CI_TIMED_OUT != 'true'
+        run: lake build assurancestest
+
+      - name: Reports vectors (tiny and full)
+        if: env.CI_TIMED_OUT != 'true'
+        run: lake build reportstest
+
+      - name: Safrole vectors (tiny and full; Bandersnatch primitives as an oracle read from the vectors)
+        if: env.CI_TIMED_OUT != 'true'
+        run: lake build safroletest
+
+      - name: Fetch four block-import traces (fallback, safrole, storage_light, preimages_light)
+        if: env.CI_TIMED_OUT != 'true'
+        run: scripts/fetch-trace-vectors.sh fallback safrole storage_light preimages_light
+
+      - name: Block import Υ over those traces, state compared after every block
+        if: env.CI_TIMED_OUT != 'true'
+        run: lake build tracetest
+
+      # Make sure no lake/lean process is still writing into .lake while it is archived.
+      - name: Stop build processes
+        if: always()
+        run: |
+          pkill -INT -x lake || true
+          pkill -INT -x lean || true
+          sleep 5
+          pkill -KILL -x lake || true
+          pkill -KILL -x lean || true
+          find .lake -name '*.tmp.*' -delete 2>/dev/null || true
+
+      # Main always saves. A PR saves only when its build did not finish (e.g. it hit the time bound), so the
+      # next attempt (or a re-run) can resume; finished PR builds don't save, since their caches (several GB each) would evict
+      # main's from the 10 GB repository cache and leave every run to start cold.
+      - name: Save .lake
+        if: always() && (github.ref == 'refs/heads/main' || env.CI_TIMED_OUT == 'true' || steps.build.outcome != 'success')
+        uses: actions/cache/save@v4
+        with:
+          path: .lake
+          key: lake-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}-${{ inputs.attempt }}
+
+      - name: Report whether the build budget ran out
+        id: report
+        if: always()
+        run: echo "timed_out=${CI_TIMED_OUT:-false}" >> "$GITHUB_OUTPUT"
+
+      - name: The last attempt did not finish the build
+        if: always() && inputs.last && env.CI_TIMED_OUT == 'true'
+        run: |
+          echo "::error::the build did not finish within ${{ inputs.attempt }} attempts; re-run the workflow to resume from the saved .lake"
+          exit 1

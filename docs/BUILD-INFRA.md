@@ -84,12 +84,31 @@ From the import graph (1340 modules, 138 MB of source):
 - The `PVM.*` base modules have about 1300 dependents each, which is expected.
 
 Per-module build times from a full cold build (1305 modules, 18.1 h serial) are on branch
-`claude/profiling-data`; the analysis is in `docs/profiling/` (#203). The longest import chain takes about 2 h even with unlimited cores.
+`claude/profiling-data`; the analysis is in `docs/profiling/` (#203).
+
+- The longest import chain takes about 2 h locally (about 78 min on CI) even with unlimited cores.
+  A simulation of Lake's scheduling on the import graph gives a cold build of about 125 min on 8
+  cores and about 110 min on 16 or more, against about 217 min today (P6).
+- Larger GitHub runners need an organization on the Team plan and are billed even for public
+  repositories. At mid-November volume they would cost about $3.6k (8-core) to $6.4k (16-core) a
+  month. Shortening the chain helps every runner instead.
 
 ## Handoff
 
-- Done: the continuation job and the `lake-cache` publish/fetch scripts (PR #193). The first
-  publish came from main at fef9243 and a fresh checkout restores it without rebuilding. A
-  start-of-session line in `CLAUDE.md` points sessions to `fetch-lake.sh`.
-- Done: per-module build times on branch `claude/profiling-data` (`docs/profiling/`), analysed in
-  the build-time profiling proposal (#203).
+State on 15 Nov 2026. Everything below is merged; nothing is in flight.
+
+- **CI resumes and publishes** (#193). The first `lake-cache` publish came from main at fef9243.
+  A fresh checkout restores it in about 2–3 min and `lake build` then rebuilds nothing.
+- **`fetch-lake.sh` resumes downloads** that the session proxy resets (#211). `CLAUDE.md` tells
+  sessions to run it first.
+- **The CI split** (#202). The first main run after it (dd373c2):
+  - `model` passed in 15 min and saved `lake-model-…` (627 MB, without Services);
+  - the proofs ran as `attempt-1`, as they always do on main.
+- **Fast Ψ_H** (`PVM/FastHost.lean`, #201 inside #204). It parses and prepares the blob once per
+  Ψ_H instead of at every host call. `@[csimp]` swaps it in for `psiHStar`, `psiH` and `psiM` in
+  compiled code. Locally, the storage_light trace went from 300 s to 64 s.
+- **Profiling**: the data are on `claude/profiling-data` and the proposal is #203.
+- **Open ideas, not started:**
+  - shorten the critical chain (split the 10–12 min modules on it, make the Code regeneration fan
+    out less);
+  - in `model`, use a narrower target than `lake build PVM JAM` if its cache misses become common.

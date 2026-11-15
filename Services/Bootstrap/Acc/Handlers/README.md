@@ -159,7 +159,12 @@ so CI and `scripts/CheckAxioms.lean` cover them. Everything below is pushed.
    196616 … 196791 are written only there (other absolute stores: 196608, the allocator word, and
    206848). So no `accRwOk`/initial-memory fact applies. Reported to @parent 2026-11-15 with options
    (a) a premise `ParamStatics μ C I` on row 8's summary, established by the T2 composition (prologue +
-   frames), or (b) prove apply()'s stores now (needs a CodeA range). **Await the parent's answer.**
+   frames), or (b) prove apply()'s stores now (needs a CodeA range). **Decided (parent, 2026-11-15): (a).**
+   Row 8's summary takes `ParamStatics μ C I` ([196616]₂ = C, [196696]₈ = I) as a premise in the style
+   of its other memory premises; every later summary's frame must keep 196616 … 196791. The discharge
+   (apply()'s stores at 56205/56279, then preserved) is an **obligation**, not an assumption of the
+   final T2 theorem: record it in `docs/whats-proven.md` (in the PR that introduces `ParamStatics`) and
+   here. (b), apply()'s stores and the CodeA range for 56205 … 56279, went to the T2-inputs session.
 4. **Row 9:** 8471 → 36170; on Err → 15361 (☇); 8490 is checkpoint, under accContractS's 0/18 case.
 5. **Row 11 (15032 … 15198):** the drops 33214 (ret 558/560) and 28864 (ret 564); 15115 → 36170;
    dealloc at 15166 and 15185; back to 6766.

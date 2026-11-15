@@ -165,6 +165,35 @@ def runTrace (dir : System.FilePath) (name : String) : IO Summary := do
           break
   return sum
 
+/-! ## `lookupAnchorKnown` (§11.4.1, GP eq. 11.36)
+
+Regression test: the lookup anchor's child must carry the lookup anchor's posterior state root
+x_lookupanchorpoststate as its prior state root, not the anchor's x_stateroot. Here the two roots
+differ, so a context that names the lookup anchor's root is accepted and one that names the
+anchor's root is rejected. -/
+
+/-- 32 copies of `b`, a stand-in hash. -/
+def h32 (b : UInt8) : ByteArray := ⟨(List.replicate 32 b).toArray⟩
+
+/-- A header with only the fields `lookupAnchorKnown` reads set. -/
+def hdrLA (parent root : ByteArray) (slot : Nat) : Header :=
+  { parent, priorStateRoot := root, extrinsicHash := h32 0, slot, epochMark := none,
+    winnersMark := none, offendersMark := [], authorIndex := 0, vrfSig := .empty, sealSig := .empty }
+
+/-- The lookup anchor (slot 7, posterior state root 0xbb…) and its child. -/
+def laAnchor : Header := hdrLA (h32 1) (h32 2) 7
+def laChild : Header := hdrLA ⟨laAnchor.hash.toArray⟩ (h32 0xbb) 8
+
+/-- A context whose anchor root (0xaa…) differs from its lookup anchor's root `lookupRoot`. -/
+def laCtx (lookupRoot : ByteArray) : RefineContext :=
+  { anchorHash := h32 3, anchorSlot := 8, anchorStateRoot := h32 0xaa, anchorAccOutLog := h32 4,
+    lookupAnchorHash := ⟨laAnchor.hash.toArray⟩, lookupAnchorSlot := 7,
+    lookupAnchorStateRoot := lookupRoot }
+
+#guard lookupAnchorKnown [laAnchor, laChild] (laCtx (h32 0xbb))
+#guard !lookupAnchorKnown [laAnchor, laChild] (laCtx (h32 0xaa))
+#guard !lookupAnchorKnown [laAnchor, laChild] { laCtx (h32 0xbb) with anchorStateRoot := h32 0xbb, lookupAnchorStateRoot := h32 0xaa }
+
 def main (args : List String) : IO UInt32 := do
   let dir : System.FilePath := args.headD "vendor/jam-traces/traces"
   let all := ["fallback", "safrole", "storage", "storage_light", "preimages", "preimages_light",

@@ -302,8 +302,7 @@ Quot.sound only):
   restored, memory equal outside the frame and the result, pages kept).
 - Chain: `check0` → (len = 0) `finish_ok`, or → `outer_loop` → `hoke_of` + `finish_ok` /
   `hee_of` + `finish_err`. `finish_*` run `checkOk`/`checkErr`, then `ret_step` at 61107/61164.
-- **Premises beyond the list confirmed earlier** (sent to the parent for a decision; the proof
-  assumes them):
+- **Premises beyond the list confirmed earlier** (accepted by the parent on 2026-11-15):
   - the input is disjoint from the frame (`I1` needs it);
   - the strict bounds p < 2^32, len < 2^32, sp + 32 < 2^32 and O + 24 < 2^32, from `ub0`/`ubE`;
     writability does not bound addresses.
@@ -323,9 +322,32 @@ Quot.sound only):
     hex dump. On Ok it walks the octets char by char (escape_debug: 67074 grapheme_extend, 61166
     is_printable) until ptr == end. Proving that walk terminates and stays in bounds needs
     "Ok ⇒ well-formed UTF-8", which is spec (a) or an Ok ⇒ valid predicate. It is format-only, but
-    (c) alone does not cover it. Reported to the parent.
+    (c) alone does not cover it. Parent decision: option (B). That Debug site gets its own named Fmt
+    log-site hypothesis, listed in the caller theorem's docstring and in `docs/whats-proven.md`.
+    Add the hypothesis only when a caller theorem actually needs that site.
   - There are two more from_utf8 calls in a sibling function, 57764 and 57832 (57693–57899, a
     144-octet field). They follow the same pattern, and no caller of that function was found.
+
+- **The real caller 7447 (CodeA, accumulate) can discharge every premise.** This was checked by
+  reading the code, with nothing proved yet:
+  - r1 in the body is 4278057152, so sp = 4278057120.
+  - O = r1 + 744 is in the caller's stack frame, which is writable.
+  - p comes from `alloc(128)`, so it is in the heap: p + 128 ≤ S0 ≤ sp.
+  - len = 128.
+  - The table lies inside the RO data [65536, 77144). Accumulate has no `ro` conjunct like refine's
+    `Prefix.lean` one, so one has to be added; that is additive.
+  - A caller proof also needs summaries for alloc (40494) and memcpy (68729) that keep r6, restore
+    r1 and keep the frame, plus the outlined code at 7346–7382, which moves r1 by 64 and must
+    restore it.
+
+**Obligation (recorded, not started):** "Ok ⇒ the input is well-formed UTF-8" (spec (a)). The
+Debug site at 55106 would need it to drop its named hypothesis.
+
+**Next (sixth session): the CodeF callers.** These are 55106, 57327, 57556 and 57624, plus 57764
+and 57832 if a caller turns up. Use `from_utf8_call` at each site. The Display sites (57327,
+57556, 57624) need only (c). Handle 55106 with a named log-site hypothesis as above. When writing
+or touching fmt summaries, use the parent's new failure shape: "`Fmt.Exhausts`, and from that state
+the run ends ☇ keeping (x, y)".
 
 ## Open decisions and dependencies
 

@@ -18,11 +18,30 @@ against these:
 
 Both are stated for the call sites' registers, under `KeepCtx (accContractS env)` (no context
 change), with the allocator's context `HeapCtxC`.
+
+**Allocation failure** (`ExhaustsP`, Adam's decision 2026-11-15): the failure disjunct of `KeyFmt` and
+`LogFmt` is `Fmt.Exhausts` (a failed allocator call, the run at 40611 with ω₇ = 0) *strengthened* by
+"from that state the run ends ☇, keeping (x, y)" — `handle_alloc_error`'s path to a trap. This is a blob
+obligation for whoever discharges these hypotheses (as T1's "allocation failure ends in ☇"); it lets
+`Impl` count the failure as an early ☇ for the `heap` reason.
 -/
 
 namespace Services.Bootstrap.Acc
 open PVM JAM Services.Bootstrap Services.Bootstrap.Code Services.Bootstrap.CodeA Services.Bootstrap.Alloc
   Picoalloc Services.Bootstrap.Decode.HeapCtx
+
+/-- **A failed allocation inside a call, then ☇**: from (i, ω, μ) the run reaches a failed allocator
+    call (as `Fmt.Exhausts`: 40611 with ω₇ = 0 after a failed `alloc`, or 40821 after a failed
+    `realloc`), keeping the context, and from that state the run ends ☇, keeping the context. -/
+def ExhaustsP (p : ByteArray) (env : AccEnv) (pb i : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) (f : Stream) :
+    Prop :=
+  ∃ (ω' : Regs) (μ' : Memory) (q' : Stream) (j N : Nat),
+    FreeStepsH p (KeepCtx (accContractS env)) i ω μ (c, f) j ω' μ' (c, q') N ∧
+    ω'[7] = UInt64.ofNat 0 ∧
+    ((j = 40611 ∧ ∃ (s : State) (hb r : Nat), alloc (growTo pb) hb 1 r s = none) ∨
+     (j = 40821 ∧ ∃ (s : State) (hb ptr al r : Nat), realloc (growTo pb) hb s ptr al r = none)) ∧
+    ∃ (ω'' : Regs) (μ'' : Memory) (q'' : Stream),
+      FreeRunH p (KeepCtx (accContractS env)) j ω' μ' (c, q') .panic ω'' μ'' (c, q'')
 
 /-- **`format!("transfer{}", n)` at 7792** (`format_inner`, 59375, returning to 7799): from the
     call's registers (ω₀ = 268, ω₁ = sp, ω₇ = sp + 512, ω₈ = 66607 the template, ω₉ = sp + 1568 the
@@ -30,7 +49,7 @@ open PVM JAM Services.Bootstrap Services.Bootstrap.Code Services.Bootstrap.CodeA
     ω₁, ω₅, ω₆ kept, the `String` { kc, kp, len } at sp + 512 holding `s!"transfer{n}"`, its buffer
     (if kc ≠ 0) a chunk fresh against s₀, every allocated chunk of s₀ and its data kept, the
     allocator's context for the new state, and from sp up only sp + 512 … sp + 536 changed; or it
-    reaches a failed allocator call (`Fmt.Exhausts`). The context and the stream are kept. -/
+    reaches a failed allocator call and then ends ☇ (`ExhaustsP`, a blob obligation). The context and the stream are kept. -/
 def KeyFmt (p : ByteArray) (env : AccEnv) (pb S0 S1 : Nat) : Prop :=
   ∀ (c : AccCtx) (f : Stream) (ω : Regs) (μ : Memory) (s₀ : State) (sp n : Nat),
     HeapCtxC env.code pb S0 S1 μ s₀ →
@@ -50,7 +69,7 @@ def KeyFmt (p : ByteArray) (env : AccEnv) (pb S0 S1 : Nat) : Prop :=
         ∀ d ∈ chunks s₀, d.used = true → d ≠ ch) ∧
       (∀ d ∈ chunks s₀, d.used = true → d ∈ chunks s' ∧ ∀ a, InDataA d a → μ'.read a = μ.read a) ∧
       (∀ a, a < 4294967296 → sp ≤ a → (a < sp + 512 ∨ sp + 536 ≤ a) → μ'.read a = μ.read a)) ∨
-    ∃ N, Fmt.Exhausts p (KeepCtx (accContractS env)) pb 59375 ω μ (c, f) N
+    ExhaustsP p env pb 59375 ω μ c f
 
 /-- **`core::str::from_utf8` at 7447** (60681, returning to 7454): from the call's registers
     (ω₀ = 256, ω₁ = sp, ω₇ = out = sp + 744, ω₈ = ptr, ω₉ = 128) with the 128 octets at ptr
@@ -81,7 +100,8 @@ def Utf8Call (p : ByteArray) (env : AccEnv) (pb S0 S1 : Nat) : Prop :=
     6547 / 6559 and at sp + 200 by 6782), whose `len` octets at its buffer are readable), either the run returns to 7699 with
     ω₁, ω₅, ω₆ kept, a `String` { kc, kp, _ } at sp + 744 whose buffer (if kc ≠ 0) is a chunk fresh
     against s₀, every allocated chunk of s₀ and its data kept, the allocator's context for the new
-    state, and from sp up only sp + 744 … sp + 768 changed; or it reaches a failed allocator call. The
+    state, and from sp up only sp + 744 … sp + 768 changed; or it reaches a failed allocator call and
+    then ends ☇ (`ExhaustsP`, a blob obligation). The
     message's text is not stated (logging is frame-only). -/
 def LogFmt (p : ByteArray) (env : AccEnv) (pb S0 S1 : Nat) : Prop :=
   ∀ (c : AccCtx) (f : Stream) (ω : Regs) (μ : Memory) (s₀ : State) (sp : Nat),
@@ -102,6 +122,6 @@ def LogFmt (p : ByteArray) (env : AccEnv) (pb S0 S1 : Nat) : Prop :=
         ∀ d ∈ chunks s₀, d.used = true → d ≠ ch) ∧
       (∀ d ∈ chunks s₀, d.used = true → d ∈ chunks s' ∧ ∀ a, InDataA d a → μ'.read a = μ.read a) ∧
       (∀ a, a < 4294967296 → sp ≤ a → (a < sp + 744 ∨ sp + 768 ≤ a) → μ'.read a = μ.read a)) ∨
-    ∃ N, Fmt.Exhausts p (KeepCtx (accContractS env)) pb 59375 ω μ (c, f) N
+    ExhaustsP p env pb 59375 ω μ c f
 
 end Services.Bootstrap.Acc

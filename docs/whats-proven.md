@@ -904,6 +904,13 @@ What you trust beyond the kernel:
   values shorter than 2⁶³ octets (`get_call`'s `hfit`); T2 will carry this as `ValuesFit` (decided
   2026-11-15). The SDK's `get` reads a length of 2⁶⁴ − 1 as NONE and traps on lengths from 2⁶³; see
   [Findings](#findings).
+- **Allocation failure ends in ☇ (a blob obligation).** The binary follows a failed allocation with
+  `handle_alloc_error`, which traps. Wherever a theorem only reaches the failed allocator call
+  (`Fmt.Exhausts`: 40611 / 40821 with ω₇ = 0), this last stretch to the trap is still to be proved;
+  T1 needs it for its `ExhaustsHeap` disjunct. For T2, `on_transfer`'s named hypotheses `KeyFmt` and
+  `LogFmt` (`Acc/Transfer/Hyp.lean`, on the T2 inputs branch) state their failure case as `ExhaustsP`:
+  the failed call is reached *and from there the run ends ☇*, keeping (x, y) (Adam, 2026-11-15).
+  Whoever discharges them, and the fmt summaries used under T2, proves that path too.
 - **Refinement of a fragment, not of a whole program.** The allocator theorems are about the
   allocator's entry points called with the stated registers and memory. They are not yet composed
   into a Ψ_R or Ψ_A theorem about a bootstrap run that allocates.

@@ -191,4 +191,85 @@ theorem rm_back {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : 
     rw [show ω = regsNF ω [] from rfl]
     pvm_go [h0]
 
+/-- The 32 octets at a + 0 … a + 32, as four words. -/
+theorem readN_32 (μ : Memory) (a : Nat) :
+    μ.readN a 32 = μ.readN a 8 ++ μ.readN (a + 8) 8 ++ μ.readN (a + 16) 8 ++ μ.readN (a + 24) 8 := by
+  rw [show 32 = 8 + 8 + 8 + 8 from rfl, Services.Bootstrap.Decode.VecU8.readN_split,
+    Services.Bootstrap.Decode.VecU8.readN_split, Services.Bootstrap.Decode.VecU8.readN_split]
+
+/-- **8079 … 48481, an occupied slot (q, k)**: the results key ℰ(`results q k`) = [2] ++ q ++ ℰ₂(k)
+    (35 octets) written by the fixed-buffer encoder into sp + 744, then the call of `remove` with
+    ω₇ = sp + 744, ω₈ = 35 and return address 284. Memory is kept off sp + 744 … 780 and
+    sp + 1568 … 1604. -/
+theorem rm_to_remove {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
+    (μ : Memory) (sp k : Nat) (q : Bytes) (h1 : ω[1] = UInt64.ofNat sp) (hsp : sp + 1604 < 4294967296)
+    (so : RecentSlot.SlotOut μ (sp + 1144) (some (q, k)))
+    (hr : ∀ a, sp + 1144 ≤ a → a < sp + 1180 → μ.readable a = true)
+    (hw1 : ∀ a, sp + 744 ≤ a → a < sp + 780 → μ.writable a = true)
+    (hw2 : ∀ a, sp + 1568 ≤ a → a < sp + 1604 → μ.writable a = true) :
+    ∃ ω' μ' n, FreeStepsH p R 8079 ω μ x 48481 ω' μ' x n ∧
+      ω'[0] = UInt64.ofNat 284 ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      ω'[7] = UInt64.ofNat (sp + 744) ∧ ω'[8] = UInt64.ofNat 35 ∧
+      μ'.readN (sp + 744) 35 = (Key.results q k).encode ∧
+      (∀ a, a < 4294967296 → (a < sp + 744 ∨ sp + 780 ≤ a) → (a < sp + 1568 ∨ sp + 1604 ≤ a) →
+        μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  obtain ⟨mt, mq, mk⟩ := so
+  have e8 : ∀ b, μ.readN b 8 = Num.encodeLE 8 (rdN μ b 8) := fun b => readN_enc μ b 8
+  have lt8 : ∀ b, rdN μ b 8 < 2 ^ 64 := fun b => decodeLE_readN_lt μ b 8
+  have mv : μ.readN (sp + 1178) 2 = Num.encodeLE 2 (k % 65536) := by
+    rw [show (65536 : Nat) = 256 ^ 2 from rfl, encodeLE_mod, ← mk]
+  obtain ⟨ω1, μ1, run1, hμ1, a0, a1, a5, a6, a7, a8⟩ := rm_some (P := P) (R := R) x ω μ sp
+    (rdN μ (sp + 1146) 8) (rdN μ (sp + 1154) 8) (rdN μ (sp + 1162) 8) (rdN μ (sp + 1170) 8) (k % 65536)
+    h1 hsp mt (e8 _) (e8 _) (e8 _) (e8 _) (lt8 _) (lt8 _) (lt8 _) (lt8 _) mv (Nat.mod_lt _ (by decide))
+    hr hw1 hw2
+  have l8 : ∀ v, (Num.encodeLE 8 v).length = 8 := fun v => Num.length_encodeLE ..
+  -- what the chain leaves at sp + 1568 … 1604
+  have c2 : μ1.readN (sp + 1568) 2 = Num.encodeLE 2 2 := by
+    rw [hμ1]
+    simp (disch := pvm_arith) only [PVM.Memory.readN_writeN_same, PVM.Memory.readN_writeN_disjoint,
+      PVM.Num.length_encodeLE, PVM.two32]
+  have c34 : μ1.readN (sp + 1570) 2 = Num.encodeLE 2 (k % 65536) := by
+    rw [hμ1]
+    simp (disch := pvm_arith) only [PVM.Memory.readN_writeN_same, PVM.Memory.readN_writeN_disjoint,
+      PVM.Num.length_encodeLE, PVM.two32]
+  have cq : μ1.readN (sp + 1572) 32 = q := by
+    rw [← mq, readN_32, readN_32, hμ1, show sp + 1572 + 8 = sp + 1580 by omega,
+      show sp + 1572 + 16 = sp + 1588 by omega, show sp + 1572 + 24 = sp + 1596 by omega,
+      show sp + 1144 + 2 = sp + 1146 by omega, show sp + 1146 + 8 = sp + 1154 by omega,
+      show sp + 1146 + 16 = sp + 1162 by omega, show sp + 1146 + 24 = sp + 1170 by omega,
+      e8 (sp + 1146), e8 (sp + 1154), e8 (sp + 1162), e8 (sp + 1170)]
+    simp (disch := pvm_arith) only [PVM.Memory.readN_writeN_same, PVM.Memory.readN_writeN_disjoint,
+      PVM.Num.length_encodeLE, PVM.two32]
+  have rd1 : ∀ a, μ1.readable a = μ.readable a := fun a => by rw [hμ1]; simp only [Memory.readable_writeN]
+  have wr1 : ∀ a, μ1.writable a = μ.writable a := fun a => by rw [hμ1]; simp only [Memory.writable_writeN]
+  have fr1 : ∀ a, a < 4294967296 → (a < sp + 744 ∨ sp + 780 ≤ a) → (a < sp + 1568 ∨ sp + 1604 ≤ a) →
+      μ1.read a = μ.read a := fun a h0 ha hb => by
+    rw [hμ1]
+    simp (disch := pvm_arith) only [PVM.Memory.read_writeN_disjoint, PVM.Num.length_encodeLE, PVM.two32]
+  obtain ⟨ω2, μ2, run2, ok2, fr2, rd2, wr2, g0, g1, g5, g6, g7, g8⟩ := KeyBuf.kf_call (P := P) (R := R) x ω1 μ1
+    (sp + 1568) (sp + 744) 2 282 8165 a0 a7 a8 (by omega) (by omega) (.inl (by omega)) (by decide) c2
+    (fun a h1 h2 => by rw [rd1]; exact Memory.readable_of_writable (hw2 a h1 h2))
+    (fun a h1 h2 => by rw [wr1]; exact hw1 a h1 (by omega)) ⟨by decide, by decide, by decide⟩
+    (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_140]) bs_8165
+  have hkey : keyEnc μ1 (sp + 1568) 2 = (Key.results q k).encode := by
+    unfold keyEnc Key.encode
+    simp only [show (2 : Nat) = 1 ↔ False by decide, if_false, if_true, show sp + 1568 + 4 = sp + 1572 by omega,
+      show sp + 1568 + 2 = sp + 1570 by omega, cq, c34, JAM.Codec.fixed]
+    rw [show (65536 : Nat) = 256 ^ 2 from rfl, encodeLE_mod]
+    rfl
+  have hkl : (keyEnc μ1 (sp + 1568) 2).length = 35 := by rw [keyEnc_length]; rfl
+  obtain ⟨ω3, run3, j0, jo⟩ := rm_j (P := P) (R := R) x ω2 μ2
+  refine ⟨ω3, μ2, _, (run1.trans run2).trans run3, j0, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a => ?_, fun a => ?_⟩
+  · rw [jo 1 (by decide) (by decide), g1, a1]
+  · rw [jo 5 (by decide) (by decide), g5, a5]
+  · rw [jo 6 (by decide) (by decide), g6, a6]
+  · rw [jo 7 (by decide) (by decide), g7]
+  · rw [jo 8 (by decide) (by decide), g8, hkl]
+  · rw [← hkey, ← hkl]; exact ok2
+  · intro a h0 ha hb; rw [fr2 a h0 (by omega), fr1 a h0 ha hb]
+  · rw [rd2, rd1]
+  · rw [wr2, wr1]
+
+
 end Services.Bootstrap.Acc.Handlers.RecentMatch

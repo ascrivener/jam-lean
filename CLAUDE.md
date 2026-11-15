@@ -75,5 +75,5 @@ the real compiled service binaries in `services/`. Read `docs/whats-proven.md` f
   - weakening a hypothesis;
   - adding a lemma;
   - generalising a statement in place while keeping every existing statement unchanged.
-- **Usage limits.** Keep the number of parallel sessions small, at most 3. Restart sessions fresh,
+- **Usage limits.** Keep the number of parallel sessions small: at most 5 (Adam, 2026-11-15; was 3). Restart sessions fresh,
   with a handoff note, before their context gets large: the cost of each turn grows with context.

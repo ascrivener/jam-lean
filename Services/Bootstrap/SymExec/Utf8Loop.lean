@@ -533,6 +533,63 @@ theorem segWord {P : Program} [Services.Bootstrap.CodeF.HasCodeF p P]
       have k0 : vals2.getD 0 0 = a0 := hK2 0 (by decide)
       rw [k0] at hoct; rw [k1]; exact hprog j (by omega) hoct)
 
+/-- 60756 (aligned, octet < 0x80) → 60793 (i ≥ m) or the word loop 60759. -/
+theorem seg8 {P : Program} [Services.Bootstrap.CodeF.HasCodeF p P]
+    [Services.Bootstrap.Code.HasCode p P] {x : X} {μ₀ : Memory} {v₀ : List Nat} {n : Nat}
+    {vals : List Nat} {ω : Regs} {μ : Memory} (hR : RdO μ₀ v₀) (hH : H1.Holds vals μ₀ ω μ)
+    (hB : BHold vals ub1) (hI : I1 v₀ vals) (hF : FactsHold (env vals ω μ) asm1)
+    (hprog : ∀ j, vals.getD 2 0 ≤ j → 128 ≤ decodeLE (μ₀.readN (vals.getD 0 0 + j) 1) →
+      vals.getD 1 0 - j < n) : Reach p R x μ₀ v₀ n 60756 ω μ := by
+  have hl := bhold_length hB
+  obtain ⟨ℓ, hℓ, k, ω', μ', hrun, hf, hBℓ⟩ :=
+    fork_sound check8 (hypU (p := p) (P := P)) trivial hB (lb1_of hl) (fun _ _ => trivial) hH hF x
+  refine reach_pre hrun ?_
+  have hp' := hBℓ.2.2.2.2.2
+  have hF' := hF
+  simp only [asm1, FactsHold, Fact.Holds, Aff.eval, env, af] at hF'
+  obtain ⟨f1, f2, f3, -⟩ := hF'
+  simp only [leaves8, List.mem_cons, List.not_mem_nil, or_false] at hℓ
+  rcases hℓ with rfl | rfl <;>
+    rw [show svals (env vals ω μ) idsub15 = vals from svals_idsub15 hl] at hBℓ
+  · exact seg4 (P := P) hR hBℓ (bhold_mono hB (by decide)) hI
+      (asm4_of' hR hI.2.2.2 hp' f1 (by omega) f3) hprog
+  · simp only [FactsHold, Fact.Holds, Aff.eval, env, af] at hf
+    exact segWord (P := P) hR hBℓ hB hI (asm1_of hR hI.2.2.2 hp' f1 (by omega) f3) (by omega) hprog
+
+/-- 60731 (misaligned, octet < 0x80) → 60738 (i + 1) or 61086. -/
+theorem seg7 {P : Program} [Services.Bootstrap.CodeF.HasCodeF p P]
+    [Services.Bootstrap.Code.HasCode p P] {x : X} {μ₀ : Memory} {v₀ : List Nat} {n : Nat}
+    {vals : List Nat} {ω : Regs} {μ : Memory} (hR : RdO μ₀ v₀) (hH : H1.Holds vals μ₀ ω μ)
+    (hB : BHold vals ub1) (hI : I1 v₀ vals) (hF : FactsHold (env vals ω μ) asm1)
+    (hm : meas1 vals ≤ n) : Reach p R x μ₀ v₀ n 60731 ω μ := by
+  have hl := bhold_length hB
+  obtain ⟨ℓ, hℓ, k, ω', μ', hrun, hf, hBℓ⟩ :=
+    fork_sound check7 (hypU (p := p) (P := P)) trivial hB (lb1_of hl) (fun _ _ => trivial) hH hF x
+  have hp' := hBℓ.2.2.2.2.2
+  simp only [leaves7, List.mem_cons, List.not_mem_nil, or_false] at hℓ
+  rcases hℓ with rfl | rfl
+  · rw [show svals (env vals ω μ) idsub15 = vals from svals_idsub15 hl] at hBℓ
+    exact reach_q hrun (Or.inl ⟨rfl, vals, hBℓ, hI.2.2.2⟩)
+  · simp only [FactsHold, Fact.Holds, Aff.eval, env, af] at hf
+    obtain ⟨g1, -⟩ := hf
+    obtain ⟨i7, idj, i6, iK⟩ := hI
+    simp only [asm1, FactsHold, Fact.Holds, Aff.eval, env, af] at hF
+    obtain ⟨f1, f2, f3, -⟩ := hF
+    rcases vals with _ | ⟨a0, _ | ⟨a1, _ | ⟨a2, _ | ⟨a3, _ | ⟨a4, _ | ⟨a5, _ | ⟨a6, _ | ⟨a7, _ | ⟨a8, _ | ⟨a9, _ | ⟨a10, _ | ⟨a11, _ | ⟨a12, _ | ⟨a13, _ | ⟨a14, _ | ⟨_, _⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩ <;> simp [ub1] at hl
+    simp only [meas1, List.getD_cons_succ, List.getD_cons_zero] at hm i7 idj i6 g1 f1 f2 f3
+    simp only [BHold, ub1] at hB
+    obtain ⟨b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13, b14, -⟩ := hB
+    simp only [svals, nxtI, List.map, SVal.eval, Aff.eval, env, af, List.getD_cons_succ,
+      List.getD_cons_zero] at hBℓ
+    have hK' := keep_of (l' := [a0, a1, ((a2 : Int) + 1).toNat, ((a3 : Int) + 1).toNat, a4, a5, a6,
+      a7, a8, a9, a10, a11, a12, a13, a14]) iK (by simp [keepO])
+    refine reach_back hrun _ ?_ ⟨⟨by simpa using i7, by simpa using idj, by simpa using i6, hK'⟩,
+      ?_, lb1_of rfl, asm1_of hR hK' hp' ?_ ?_ ?_, hBℓ⟩ <;>
+      simp only [meas1, BHold, ub1, List.getD_cons_succ, List.getD_cons_zero]
+    · omega
+    · omega15
+    all_goals omega
+
 end
 
 end Services.Bootstrap.SymExec.Utf8

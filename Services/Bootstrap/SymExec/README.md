@@ -244,6 +244,53 @@ Next (for the next session):
 6. (b) on top: mask lemma ((w0 | w1) & 0x8080…80 = 0 when the 16 octets are < 0x80), byte ≥ 0x80
    exits unreachable under ASCII.
 
+### Update 2026-11-15 (fourth session): outer loop proved; pre-loop and epilogue checks pass
+
+Done (all compile; axioms propext, Classical.choice, Quot.sound; all in `Services.lean`):
+- Inner loops (README step 2): `I3`/`Q3`, `I2`/`Q2` take a ghost start state v₀ (`Keep ks v₀ vals`:
+  every named natural but i, q (and r6) unchanged; v₀'s i ≤ i). `byte_loop`/`word_loop` take v₀.
+  `Q3` now gives `J3` (r6 + i ≡ 0 mod 2^64) and no `LBHold lb3`.
+- **Gap found and fixed:** the byte loop can be entered at i = 0 (aligned, len ≤ 15), where r6 = 0,
+  not 2^64 − i, so `I3` fails. `check3z` (Utf8Loop) runs that first iteration from `H3z`
+  (r6 = const 0); `segByte0` composes it with `byte_loop` from i = 1. `check5a'` = `check5a`
+  without the lower bound on r6.
+- `Utf8Loop.lean`: **`outer_loop`** (60738), via `loop_soundX` and a hand-composed body.
+  - Invariant `Inv1 μ₀ v₀` = `I1` (r11 + len = 2^64, input/frame disjoint, m + 15 = max len 15,
+    `Keep keepO v₀`) ∧ `BHold ub1` ∧ `LBHold lb1` ∧ `asm1` ∧ `H1.Holds`. Measure len − i. Constant
+    readability is the premise `RdO μ₀ v₀` (input, table, frame readable in μ₀).
+  - Postcondition `QO`: at 61086 `HOk.Holds` with `Keep keepO v₀`; at 61138 `HE c2 c3` with
+    (c2, c3) ∈ {(0,1), (1,1), (1,2), (1,3)}, i < len, and the octet at p + i in μ₀ ≥ 0x80. The witness
+    gives (b) directly (all octets < 0x80 ⇒ never Err), so the mask lemma is not needed.
+  - Segments (`Reach … n pc`: back at the header with measure < n, or `QO`): `seg5b` 60946,
+    `seg5a` 60943, `q3_reach`, `segByte1`/`segByte0` 60803, `seg4` 60793, `segWord` 60759,
+    `seg8` 60756, `seg7` 60731, `seg6` 61079, `seg1b` 60829, `body`. Progress on the aligned
+    path: `hprog` (∀ j ≥ i, octet(p + j) ≥ 0x80 ⇒ len − j < n), from check1F's fact octet(q) < 0x80.
+  - `check1F` = `check1` with path facts (README step 1).
+- `Utf8Fn.lean`: `check0` (60681 → 61086 if len = 0 (`HOkE`), or 60738 `H1` via `sub0`: i = 0,
+  align = `alignT`, m = `mT`, r11 = `r11T`); `checkOk` (61086 `HOkE` → 61107 `HOkX`: result
+  0, p, len at r7, r0/r1/r5/r6 restored); `checkErr` (61138 `HEE` → 61164 `HEX`: 1, i, r2 (u8),
+  r3 (u8)). Both 61107 and 61164 are `jump_ind r0` → use `ret_step` (PVM/SymExec/Check.lean).
+  The epilogue checks need sep (r7 region apart from the frame) and the frame in `rd`.
+
+Next (fifth session): the final theorem (new file or in Utf8Fn).
+1. Entry: vals0 = [p, len, _, _, sp, _, _, _, ret, s5, s6, O, p + len, _, _]; `H0.Holds vals0 μ μ`
+   from ω (r1 = sp + 32 etc.) and the writability premises; `fork_sound check0`.
+2. Leaf 60738: v₀ := svals sub0. `Inv1`: needs eval lemmas: `alignT` < 8 (bitwise and with
+   2^64 − 8 clears the low 3 bits: `bitwise_and_eq` in Sound.lean, then a Nat.and lemma),
+   `mT` = max(len, 15) − 15, `r11T` = 2^64 − len (len ≠ 0). `RdO μ v₀` from the premises
+   (frame: writable ⇒ readable, `Memory.readable`/`writable` in PVM/Memory.lean). Then `outer_loop`.
+3. From `QO`: Ok → `HOkE.Holds` (HOk minus the sp+0 cell, plus rd frame / wr result from the
+   premises; pages unchanged) → `fork_sound checkOk` → `ret_step` 61107. Err → `HEE.Holds` with
+   vals.set 13 c2, 14 c3 (`HE` has r2/r3 as constants) → `checkErr` → `ret_step` 61164.
+   Leaf 61086 of check0 (len = 0) goes straight to `checkOk`.
+4. Statement (as agreed): terminates (returns to t, ret conditions as in `key_fmt`), r0/r1/r5/r6
+   restored, memory changed only in [sp, sp + 32) and [O, O + 24), pages kept; Ok writes (0, p, len),
+   Err writes (1, v, c2, c3) with v < len, (c2, c3) as above. (b): all octets < 0x80 ⇒ Ok.
+   Premises (confirmed by the parent): [p, p + len) readable, p + len ≤ 2^32; [O, O + 24) writable
+   and disjoint from [sp, sp + 32); that frame writable; [71078, 71334) readable. List them in the
+   docstring and in docs/whats-proven.md.
+5. Then the CodeF callers (55106/57327/57556/57624): confirm they are log-only (parent's request).
+
 ## Open decisions and dependencies
 
 - `core::str::from_utf8` (60681): Adam chose the executor-loops route (2026-11-15).

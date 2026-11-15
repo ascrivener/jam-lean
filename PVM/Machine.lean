@@ -1,5 +1,10 @@
-import PVM.Exec
-import PVM.Gas
+module
+
+public import PVM.Exec
+public import PVM.Gas
+
+@[expose] public section
+
 
 /-!
 # Single-step Ψ₁ and the full PVM Ψ (GP v0.8.0 §A.1, §A.4)

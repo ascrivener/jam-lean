@@ -1,5 +1,10 @@
-import PVM.Instr
-import PVM.Memory
+module
+
+public import PVM.Instr
+public import PVM.Memory
+
+@[expose] public section
+
 
 /-!
 # Instruction semantics: the mutation tables of GP v0.8.0 §A.5

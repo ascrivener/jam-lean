@@ -1,5 +1,10 @@
-import PVM.Logic.Words
-import PVM.Logic.StepsH
+module
+
+public import PVM.Logic.Words
+public import PVM.Logic.StepsH
+
+@[expose] public section
+
 
 /-!
 # `pvm_go`: stepping a run through decoded code facts

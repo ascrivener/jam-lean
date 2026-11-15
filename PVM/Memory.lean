@@ -1,5 +1,10 @@
-import Std.Data.ExtTreeMap
-import PVM.Basic
+module
+
+public import Std.Data.ExtTreeMap
+public import PVM.Basic
+
+@[expose] public section
+
 
 /-!
 # RAM (GP v0.8.0 §4.7, eq. `pvmmemory`) and the memory-access exception ε^μ (§A.4)

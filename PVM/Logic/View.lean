@@ -1,4 +1,9 @@
-import PVM.Gas
+module
+
+public import PVM.Gas
+
+@[expose] public section
+
 
 /-!
 # A program's code, seen through its reads

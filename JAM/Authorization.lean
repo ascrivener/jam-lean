@@ -1,4 +1,9 @@
-import JAM.Params
+module
+
+public import JAM.Params
+
+@[expose] public section
+
 
 /-!
 # Authorization (GP v0.8.0 §8, `sec:authorization`)

@@ -1,8 +1,13 @@
-import JAM.Refine
-import JAM.Theorems.HostGas
-import PVM.Logic.Det
-import PVM.Logic.StepsH
-import PVM.Logic.GasBound
+module
+
+public import JAM.Refine
+public import JAM.Theorems.HostGas
+public import PVM.Logic.Det
+public import PVM.Logic.StepsH
+public import PVM.Logic.GasBound
+
+@[expose] public section
+
 
 /-!
 # A contract for the refine dispatcher that pins down its outcomes

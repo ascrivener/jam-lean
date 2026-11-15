@@ -1,5 +1,10 @@
-import JAM.Theorems.RefineContract
-import JAM.Theorems.Confinement
+module
+
+public import JAM.Theorems.RefineContract
+public import JAM.Theorems.Confinement
+
+@[expose] public section
+
 
 /-!
 # Gas-free runs keep what is not writable
@@ -113,8 +118,9 @@ theorem writeValue_keep {X : Type} (out : HostOut X) (v : Option (List UInt8)) (
       ∀ b, b < two32 → out.mem.writable b = false → (writeValue out (.ok v) o f z).mem.read b = out.mem.read b := by
   unfold writeValue at hs ⊢
   simp only at hs ⊢
-  generalize hl : min z ((match Except.ok (ε := Unit) v with | .ok (some v) => v.length | _ => 0) -
-    min f (match Except.ok (ε := Unit) v with | .ok (some v) => v.length | _ => 0)) = l at hs ⊢
+  -- (holes, not the `match` spelled out: inside a module a spelled-out `match` elaborates to a fresh
+  -- matcher rather than `writeValue`'s, and would not be found)
+  generalize hl : min z (_ - min f _) = l at hs ⊢
   by_cases hw : out.mem.rangeWritable o l = true
   · simp only [hw, Bool.not_true, Bool.false_eq_true, ↓reduceIte] at hs ⊢
     cases v with

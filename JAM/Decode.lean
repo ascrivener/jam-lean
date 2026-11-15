@@ -1,4 +1,9 @@
-import JAM.Work
+module
+
+public import JAM.Work
+
+@[expose] public section
+
 
 /-!
 # The deserialization function ℰ⁻¹ (GP v0.8.0 Appendix C)

@@ -1,3 +1,8 @@
+module
+
+
+@[expose] public section
+
 /-!
 # SHA-512 (FIPS 180-4 §5.1.2, §5.3.5, §6.4)
 

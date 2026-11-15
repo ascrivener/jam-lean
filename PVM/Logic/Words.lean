@@ -1,6 +1,11 @@
-import PVM.Logic.Steps
-import PVM.Logic.Bits
-import PVM.Logic.Chase
+module
+
+public import PVM.Logic.Steps
+public import PVM.Logic.Bits
+public import PVM.Logic.Chase
+
+@[expose] public section
+
 
 /-!
 # Words, octets and folded loads for summaries

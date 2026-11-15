@@ -1,4 +1,9 @@
-import PVM.Blob
+module
+
+public import PVM.Blob
+
+@[expose] public section
+
 
 /-!
 # Facts about skip, ϖ and 𝔳_blob

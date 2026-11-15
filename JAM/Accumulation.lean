@@ -1,5 +1,10 @@
-import JAM.Accumulate
-import JAM.Merkle
+module
+
+public import JAM.Accumulate
+public import JAM.Merkle
+
+@[expose] public section
+
 
 /-!
 # Accumulation (GP v0.8.0 §12, `sec:accumulation`)

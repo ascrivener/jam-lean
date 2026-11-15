@@ -1,5 +1,10 @@
-import JAM.Codec
-import JAM.Constants
+module
+
+public import JAM.Codec
+public import JAM.Constants
+
+@[expose] public section
+
 
 /-!
 # Erasure coding (GP v0.8.0 Appendix H)

@@ -1,6 +1,11 @@
-import JAM.Accumulate
-import JAM.Refine
-import PVM.Theorems.HostIds
+module
+
+public import JAM.Accumulate
+public import JAM.Refine
+public import PVM.Theorems.HostIds
+
+@[expose] public section
+
 
 /-!
 # Confinement: what a service's host calls can reach

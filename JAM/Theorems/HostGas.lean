@@ -1,6 +1,11 @@
-import JAM.Accumulate
-import JAM.Refine
-import PVM.Theorems.Termination
+module
+
+public import JAM.Accumulate
+public import JAM.Refine
+public import PVM.Theorems.Termination
+
+@[expose] public section
+
 
 /-!
 # The host-call dispatchers never add gas

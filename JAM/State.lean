@@ -1,9 +1,14 @@
-import JAM.Safrole
-import JAM.Disputes
-import JAM.History
-import JAM.Statistics
-import JAM.Accumulation
-import JAM.Trie
+module
+
+public import JAM.Safrole
+public import JAM.Disputes
+public import JAM.History
+public import JAM.Statistics
+public import JAM.Accumulation
+public import JAM.Trie
+
+@[expose] public section
+
 
 /-!
 # The state σ and its serialization T(σ) (GP v0.8.0 §4.2, Appendix D)

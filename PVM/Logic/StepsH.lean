@@ -1,4 +1,9 @@
-import PVM.Logic.Steps
+module
+
+public import PVM.Logic.Steps
+
+@[expose] public section
+
 
 /-!
 # Chains of gas-free steps through host calls

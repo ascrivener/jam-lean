@@ -1,6 +1,11 @@
-import PVM.Logic.ChunkBlob
-import PVM.Logic.Code
-import PVM.Theorems.HostIds
+module
+
+public import PVM.Logic.ChunkBlob
+public import PVM.Logic.Code
+public import PVM.Theorems.HostIds
+
+@[expose] public section
+
 
 /-!
 # Checking 𝔳_blob a stretch at a time

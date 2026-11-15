@@ -1,5 +1,10 @@
-import JAM.Decode
-import JAM.Params
+module
+
+public import JAM.Decode
+public import JAM.Params
+
+@[expose] public section
+
 
 /-!
 # Blocks, headers and extrinsics (GP v0.8.0 §4, §5, §6, §10, §11, §12) and their codec

@@ -1,6 +1,11 @@
-import JAM.Merkle
-import JAM.Codec
-import JAM.Params
+module
+
+public import JAM.Merkle
+public import JAM.Codec
+public import JAM.Params
+
+@[expose] public section
+
 
 /-!
 # Recent history (GP v0.8.0 §7, `sec:recenthistory`)

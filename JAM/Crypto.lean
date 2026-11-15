@@ -1,3 +1,8 @@
+module
+
+
+@[expose] public section
+
 /-!
 # Cryptographic primitives as parameters (GP v0.8.0 §3.8)
 

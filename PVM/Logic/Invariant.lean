@@ -1,4 +1,9 @@
-import PVM.Logic.Host
+module
+
+public import PVM.Logic.Host
+
+@[expose] public section
+
 
 /-!
 # Invariant rules for gas-free runs

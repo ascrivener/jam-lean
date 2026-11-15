@@ -1,38 +1,43 @@
-import JAM.Codec
-import JAM.Constants
-import JAM.Account
-import JAM.Blake2b
-import JAM.Keccak
-import JAM.Sha512
-import JAM.Work
-import JAM.Decode
-import JAM.Block
-import JAM.Trie
-import JAM.Shuffle
-import JAM.Erasure
-import JAM.Params
-import JAM.Host.General
-import JAM.Merkle
-import JAM.Accumulate
-import JAM.Accumulation
-import JAM.History
-import JAM.Authorization
-import JAM.Statistics
-import JAM.Preimages
-import JAM.Crypto
-import JAM.Disputes
-import JAM.Assurances
-import JAM.Reports
-import JAM.Safrole
-import JAM.State
-import JAM.BlockImport
-import JAM.Refine
-import JAM.Theorems.HostGas
-import JAM.Theorems.Confinement
-import JAM.Theorems.RefineContract
-import JAM.Theorems.KeepRO
-import JAM.Theorems.KeepROAcc
-import JAM.Theorems.GrowHeap
+module
+
+public import JAM.Codec
+public import JAM.Constants
+public import JAM.Account
+public import JAM.Blake2b
+public import JAM.Keccak
+public import JAM.Sha512
+public import JAM.Work
+public import JAM.Decode
+public import JAM.Block
+public import JAM.Trie
+public import JAM.Shuffle
+public import JAM.Erasure
+public import JAM.Params
+public import JAM.Host.General
+public import JAM.Merkle
+public import JAM.Accumulate
+public import JAM.Accumulation
+public import JAM.History
+public import JAM.Authorization
+public import JAM.Statistics
+public import JAM.Preimages
+public import JAM.Crypto
+public import JAM.Disputes
+public import JAM.Assurances
+public import JAM.Reports
+public import JAM.Safrole
+public import JAM.State
+public import JAM.BlockImport
+public import JAM.Refine
+public import JAM.Theorems.HostGas
+public import JAM.Theorems.Confinement
+public import JAM.Theorems.RefineContract
+public import JAM.Theorems.KeepRO
+public import JAM.Theorems.KeepROAcc
+public import JAM.Theorems.GrowHeap
+
+@[expose] public section
+
 
 /-!
 # Gray Paper v0.8.0, Appendix B and the protocol terms it needs

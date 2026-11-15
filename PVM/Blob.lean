@@ -1,5 +1,10 @@
-import PVM.Basic
-import PVM.Tables
+module
+
+public import PVM.Basic
+public import PVM.Tables
+
+@[expose] public section
+
 
 /-!
 # Program blobs, skip, ζ and basic blocks

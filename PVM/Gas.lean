@@ -1,4 +1,9 @@
-import PVM.Instr
+module
+
+public import PVM.Instr
+
+@[expose] public section
+
 
 /-!
 # The gas cost model ϱ^Δ (GP v0.8.0 §A.9 `sec:gascostmodel`, §A.10 `sec:gascosttables`)

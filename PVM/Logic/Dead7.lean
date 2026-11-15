@@ -1,7 +1,12 @@
-import PVM.Logic.Det
-import PVM.Theorems.Host
-import PVM.Theorems.HostIds
-import PVM.Logic.FastCheck
+module
+
+public import PVM.Logic.Det
+public import PVM.Theorems.Host
+public import PVM.Theorems.HostIds
+public import PVM.Logic.FastCheck
+
+@[expose] public section
+
 
 /-!
 # Host calls whose ω₇ the program ignores

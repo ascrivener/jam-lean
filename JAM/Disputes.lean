@@ -1,6 +1,12 @@
-import JAM.Block
-import JAM.Blake2b
-import JAM.Crypto
+module
+
+public import JAM.Block
+public import JAM.Blake2b
+public import JAM.Crypto
+meta import JAM.Crypto
+
+@[expose] public section
+
 
 /-!
 # Disputes, verdicts and judgments (GP v0.8.0 §10, `sec:disputes`)

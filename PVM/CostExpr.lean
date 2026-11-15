@@ -1,3 +1,8 @@
+module
+
+
+@[expose] public section
+
 /-!
 # Cells of the gas cost tables (GP v0.8.0 §A.10)
 

@@ -1,3 +1,8 @@
+module
+
+
+@[expose] public section
+
 /-!
 # Keccak-256 (GP v0.8.0 §3.8: ℋ_K, used for the accumulation output root and BEEFY)
 

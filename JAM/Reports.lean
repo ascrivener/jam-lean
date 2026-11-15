@@ -1,7 +1,12 @@
-import JAM.Assurances
-import JAM.History
-import JAM.Shuffle
-import JAM.Account
+module
+
+public import JAM.Assurances
+public import JAM.History
+public import JAM.Shuffle
+public import JAM.Account
+
+@[expose] public section
+
 
 /-!
 # Guarantor assignments and work-report guarantees (GP v0.8.0 §11.3–§11.5)

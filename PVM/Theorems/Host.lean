@@ -1,5 +1,10 @@
-import PVM.Machine
-import PVM.Theorems.Decode
+module
+
+public import PVM.Machine
+public import PVM.Theorems.Decode
+
+@[expose] public section
+
 
 /-!
 # Only `ecalli` exits with a host call

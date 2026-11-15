@@ -1,4 +1,9 @@
-import JAM.Theorems.RefineContract
+module
+
+public import JAM.Theorems.RefineContract
+
+@[expose] public section
+
 
 /-!
 # `grow_heap` in gas-free runs

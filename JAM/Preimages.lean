@@ -1,4 +1,9 @@
-import JAM.Accumulation
+module
+
+public import JAM.Accumulation
+
+@[expose] public section
+
 
 /-!
 # Preimage integration (GP v0.8.0 §12.4, `Preimage Integration`)

@@ -1,7 +1,16 @@
-import PVM.Logic.Code
-import PVM.Logic.Attr
-import PVM.Theorems.InitMem
-import PVM.Logic.Bits
+module
+
+public import PVM.Logic.Code
+public import PVM.Logic.Attr
+public import PVM.Theorems.InitMem
+public import PVM.Logic.Bits
+public meta import PVM.Logic.Bits
+public meta import PVM.Basic
+public meta import PVM.Exec
+public meta import Lean.Meta.Tactic.Simp.BuiltinSimprocs.Nat
+
+@[expose] public section
+
 
 /-!
 # Chains of gas-free steps
@@ -214,7 +223,7 @@ dsimproc reduceBitwise (PVM.Exec.bitwise _ _ _) := fun e => do
 open Lean Meta Simp in
 /-- Evaluate a PVM bit helper on literal arguments by calling the model's own definition; the
     kernel re-checks the literal by evaluating the definition. -/
-def evalNatFn2 (f : Nat → Nat → Nat) (e : Expr) : SimpM DStep := do
+meta def evalNatFn2 (f : Nat → Nat → Nat) (e : Expr) : SimpM DStep := do
   let args := e.getAppArgs
   if args.size != 2 then return .continue
   let some a ← Nat.fromExpr? args[0]! | return .continue
@@ -222,7 +231,7 @@ def evalNatFn2 (f : Nat → Nat → Nat) (e : Expr) : SimpM DStep := do
   return .done (toExpr (f a b))
 
 open Lean Meta Simp in
-def evalNatFn3 (f : Nat → Nat → Nat → Nat) (e : Expr) : SimpM DStep := do
+meta def evalNatFn3 (f : Nat → Nat → Nat → Nat) (e : Expr) : SimpM DStep := do
   let args := e.getAppArgs
   if args.size != 3 then return .continue
   let some a ← Nat.fromExpr? args[0]! | return .continue

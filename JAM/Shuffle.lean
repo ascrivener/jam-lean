@@ -1,5 +1,10 @@
-import JAM.Blake2b
-import JAM.Codec
+module
+
+public import JAM.Blake2b
+public import JAM.Codec
+
+@[expose] public section
+
 
 /-!
 # The Fisher–Yates shuffle (GP v0.8.0 Appendix F)

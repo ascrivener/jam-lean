@@ -1,8 +1,13 @@
-import JAM.State
-import JAM.Reports
-import JAM.Assurances
-import JAM.Preimages
-import JAM.Authorization
+module
+
+public import JAM.State
+public import JAM.Reports
+public import JAM.Assurances
+public import JAM.Preimages
+public import JAM.Authorization
+
+@[expose] public section
+
 
 /-!
 # The block-level state transition Υ(σ, B) = σ' (GP v0.8.0 §4, §5)

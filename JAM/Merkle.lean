@@ -1,5 +1,10 @@
-import JAM.Blake2b
-import JAM.Keccak
+module
+
+public import JAM.Blake2b
+public import JAM.Keccak
+
+@[expose] public section
+
 
 /-!
 # Binary Merkle trees (GP v0.8.0 Appendix E, "Binary Merkle Trees")

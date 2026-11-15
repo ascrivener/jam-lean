@@ -1,5 +1,10 @@
-import JAM.Work
-import JAM.Accumulation
+module
+
+public import JAM.Work
+public import JAM.Accumulation
+
+@[expose] public section
+
 
 /-!
 # Statistics (GP v0.8.0 §13, `sec:bookkeeping`)

@@ -1,6 +1,11 @@
-import PVM.Invocation
-import PVM.Theorems.Host
-import PVM.Theorems.Termination
+module
+
+public import PVM.Invocation
+public import PVM.Theorems.Host
+public import PVM.Theorems.Termination
+
+@[expose] public section
+
 
 /-!
 # A program's host calls are bounded by its `ecalli` immediates

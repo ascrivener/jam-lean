@@ -1,7 +1,12 @@
-import PVM.Invocation
-import JAM.Account
-import JAM.Params
-import JAM.Work
+module
+
+public import PVM.Invocation
+public import JAM.Account
+public import JAM.Params
+public import JAM.Work
+
+@[expose] public section
+
 
 /-!
 # General host functions (GP v0.8.0 Appendix B, `sec:generalfunctions`)

@@ -1,5 +1,10 @@
-import JAM.Theorems.KeepRO
-import JAM.Theorems.HostGas
+module
+
+public import JAM.Theorems.KeepRO
+public import JAM.Theorems.HostGas
+
+@[expose] public section
+
 
 /-!
 # Gas-free runs keep what is not writable, for any contract; the accumulate host calls

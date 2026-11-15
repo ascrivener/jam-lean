@@ -1,5 +1,10 @@
-import PVM.Logic.View
-import PVM.Invocation
+module
+
+public import PVM.Logic.View
+public import PVM.Invocation
+
+@[expose] public section
+
 
 /-!
 # Blobs the kernel can read

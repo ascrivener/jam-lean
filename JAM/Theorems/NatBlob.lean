@@ -1,5 +1,10 @@
-import JAM.Refine
-import PVM.Logic.ChunkBlob
+module
+
+public import JAM.Refine
+public import PVM.Logic.ChunkBlob
+
+@[expose] public section
+
 
 /-!
 # A code preimage given as a number

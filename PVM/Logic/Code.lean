@@ -1,4 +1,9 @@
-import PVM.Logic.Det
+module
+
+public import PVM.Logic.Det
+
+@[expose] public section
+
 
 /-!
 # Code facts: what a proof needs to know about a program, as one checkable list

@@ -1,4 +1,9 @@
-import PVM.Machine
+module
+
+public import PVM.Machine
+
+@[expose] public section
+
 
 /-!
 # A fast Ψ, proved equal to the paper's

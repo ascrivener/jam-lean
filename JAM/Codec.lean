@@ -1,6 +1,11 @@
-import PVM.Blob
-import Std.Data.ExtTreeSet
-import Std.Data.ExtTreeMap
+module
+
+public import PVM.Blob
+public import Std.Data.ExtTreeSet
+public import Std.Data.ExtTreeMap
+
+@[expose] public section
+
 
 /-!
 # The serialization codec ℰ (GP v0.8.0 Appendix C)

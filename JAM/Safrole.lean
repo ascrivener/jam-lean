@@ -1,7 +1,13 @@
-import JAM.Blake2b
-import JAM.Block
-import JAM.Crypto
-import JAM.Params
+module
+
+public import JAM.Blake2b
+public import JAM.Block
+public import JAM.Crypto
+meta import JAM.Crypto
+public import JAM.Params
+
+@[expose] public section
+
 
 /-!
 # Safrole: block production and chain growth (GP v0.8.0 §6, `sec:blockproduction`)

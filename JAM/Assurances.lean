@@ -1,4 +1,9 @@
-import JAM.Disputes
+module
+
+public import JAM.Disputes
+
+@[expose] public section
+
 
 /-!
 # Package availability assurances (GP v0.8.0 §11.2)

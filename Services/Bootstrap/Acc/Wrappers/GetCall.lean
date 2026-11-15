@@ -2,6 +2,7 @@ import Services.Bootstrap.Acc.Wrappers.Get
 import Services.Bootstrap.Acc.Wrappers.GrowS
 import Services.Bootstrap.Acc.Wrappers.HeapL
 import Services.Bootstrap.Acc.Inputs.FetchVecCall
+import Services.Bootstrap.Decode.AllocHuge
 
 /-!
 # The SDK's `get` (47857) as runs of `accContractS`
@@ -14,11 +15,12 @@ service's storage, then `Option<Vec<u8>>` at out, with the context and the answe
   under its lock, the second Ω_R into it, `Some(Vec { |w|, ptr, |w| })` (48102); or `alloc_impl`
   returned null (48047, ω₇ = 0) and the run reaches the allocation-failure trap 47977.
 
-`get_call` puts the three together, with the output as `GetOut`.
+`get_call` puts them together, with the output as `GetOut`.
 
 The key is read twice, so it must survive the allocation: `get_some` takes it on the stack above
-the frame or in an allocated chunk's data (the allocator keeps both). Values with |w| + 31 ≥ 2³⁶ (the 32-bit unit count overflows) and longer than 2³⁷ − 32
-(the size check traps) are not covered yet.
+the frame or in an allocated chunk's data (the allocator keeps both). `get_huge` covers values with
+|w| + 31 ≥ 2³⁶: the 32-bit unit count is negative and `alloc_impl` returns null, or above 2³⁷ − 32 the
+size check traps; both reach 47977 (the `heap` reason). Values of 2⁶³ octets or more are not covered.
 -/
 
 namespace Services.Bootstrap.Acc
@@ -379,12 +381,86 @@ def GetOut (μ : Memory) (out : Nat) (s₀ s : State) : Option (List UInt8) → 
       (⟨ptr - 32, (w.length + 31) / 32 + 1, true⟩ : Chunk) ∈ chunks s ∧ 32 ≤ ptr ∧
       ∀ d ∈ chunks s₀, d.used = true → d ≠ ⟨ptr - 32, (w.length + 31) / 32 + 1, true⟩
 
+/-- **The SDK's `get`, 47857 → 47977, for a value w with 2³⁶ ≤ |w| + 31 and |w| < 2⁶³**: the run
+    reaches the allocation-failure trap 47977, either because the size check at 47974 fails
+    (|w| > 2³⁷ − 32) or because the 32-bit unit count is negative and `alloc_impl` returns null
+    (`alloc_impl_huge_callG`, then 48047 with ω₇ = 0). Both count as the `heap` reason. The context
+    and the stream are kept. -/
+theorem get_huge (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap : cap < 18446744073709551616)
+    {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
+    (c : AccCtx) (f : Stream) (ω : Regs) (μ : Memory) (s : State) (sp kO kZ S0 S1 : Nat)
+    (key w : List UInt8) (H : HeapCtxC env.code pb S0 S1 μ s)
+    (h1 : ω[1] = UInt64.ofNat sp) (h8 : ω[8] = UInt64.ofNat kO)
+    (h9 : ω[9] = UInt64.ofNat kZ) (hkZ : kZ < 2 ^ 32)
+    (hwL1 : 68719476736 ≤ w.length + 31) (hwL : w.length < 9223372036854775808)
+    (hsp : 2147483800 + 48 ≤ sp) (hSTk : S0 + 48 + 152 ≤ sp)
+    (hkR : ∀ a, kO ≤ a → a < kO + kZ → μ.readable a = true)
+    (dk : ∀ a, kO ≤ a → a < kO + kZ → a < sp - 48 ∨ sp ≤ a)
+    (hkr : kO + kZ ≤ 4294967296)
+    (hkey : μ.readN kO kZ = key) (hv : c.1.self.storage.get? key = some w) :
+    ∃ ω' μ' n, FreeStepsH p (KeepCtx (accContractS env)) 47857 ω μ (c, f) 47977 ω' μ' (c, f) n := by
+  have hS1 := H.hS1
+  have hst := H.st
+  generalize hLd : w.length = L at hwL1 hwL
+  -- 47857 → 47886
+  obtain ⟨ω1, μ1, run1, b1, b5, b7, b10, b11, b12, m40, m32, m24, m16, m8, fr1, rd1, wr1, bo1⟩ :=
+    gr_pre (p := p) (P := P) (R := KeepCtx (accContractS env)) (c, f) ω μ sp h1 ⟨by omega, by omega⟩
+      (fun a h1 h2 => hst a (by omega) (by omega))
+  have lo1 : ∀ a, a < 2147483648 → μ1.read a = μ.read a := fun a ha => fr1 a (by omega) (Or.inl (by omega))
+  have H1 : HeapCtxC env.code pb S0 S1 μ1 s := HeapCtxC.keep_hi H lo1 wr1
+  have hk1 : μ1.rangeReadable kO kZ = true := Services.Witness.rangeReadable_of
+    (fun a h1 h2 => by rw [rd1]; exact hkR a h1 h2) hkr
+  have hkey1 : μ1.readN kO kZ = key := by
+    rw [← hkey]; apply PVM.Memory.readN_congr; intro j hj
+    exact fr1 _ (by omega) (dk _ (by omega) (by omega))
+  -- the first read: the length
+  have hR1 : KeepCtx (accContractS env) 4 ω1 μ1 (c, f) .cont (readRegs ω1 (some w)) μ1 (c, f) := by
+    have := read_stepS env ω1 μ1 (c, f) kO kZ 0 0 key (reg_of b7 (by decide))
+      (reg_of ((bo1 8 (by decide)).trans h8) (by omega)) (reg_of ((bo1 9 (by decide)).trans h9) (by omega))
+      (reg_of b10 (by decide)) (reg_of b11 (by decide)) (reg_of b12 (by decide)) hkZ (by decide) hk1 hkey1
+      (by simp [Memory.rangeWritable])
+    rw [hv] at this
+    simp only [readMem, List.take_zero, PVM.Memory.writeN_nil] at this
+    exact ⟨this, rfl⟩
+  have e7 : (readRegs ω1 (some w))[7] = UInt64.ofNat L := by rw [readRegs_7]; simp [hLd]
+  -- 47888 → 47974
+  obtain ⟨ω2, run2, c6, c7, c0, bo2⟩ :=
+    gr_mid (p := p) (P := P) (R := KeepCtx (accContractS env)) (c, f) (readRegs ω1 (some w)) μ1 L e7 (by omega) hwL
+  have run12 := run1.trans (FreeStepsH.host_decode (d_47886 (p := p) (P := P)) hR1 run2)
+  by_cases hbig : 137438953440 < L
+  · -- the size check fails
+    exact ⟨ω2, μ1, _, run12.trans (gr_big (p := p) (P := P) (c, f) ω2 μ1 L c6 c7 hbig (by omega))⟩
+  have c1 : ω2[1] = UInt64.ofNat (sp - 48) :=
+    (bo2 1 (by decide)).trans ((readRegs_ne ω1 (some w) 1 (by decide) (by decide)).trans b1)
+  obtain ⟨ph, h48, hhb, hp, hHTs, hHT⟩ := H1.pages
+  obtain ⟨ω3, μ3, run3, d7, d8, d9, d10, d0, d6, d5, d1, -, m0, fr3, rd3, wr3, bo3⟩ :=
+    gr_lock_huge (p := p) (P := P) (R := KeepCtx (accContractS env)) (c, f) ω2 μ1 (sp - 48) L c1 c6 c7 hwL1
+      (by omega) ⟨by omega, by omega⟩ (fun a h1 h2 => by rw [wr1]; exact hst a (by omega) (by omega)) H1.lock
+      (HT := 4096 * ph) (by omega) (HeapPages.wrAt hp hhb H1.st) (by omega)
+  have HL : HeapCtxL env.code pb S0 S1 μ3 s :=
+    HeapCtxL.of_lo H1 (fun a ha h1 h2 => fr3 a (by omega) h1 h2 (Or.inl (by omega))) wr3
+  have e1 : ω3[1] = UInt64.ofNat (sp - 48) := d1.trans c1
+  -- 41177 → 48047: `alloc_impl` returns null
+  obtain ⟨s', ω4, μ4, run4, e7', -, -, -, stk4, wst, wl, -, f1, -, -⟩ :=
+    Services.Bootstrap.Decode.AllocHuge.alloc_impl_huge_callG (p := p) (P := P) (accHeapHost env) cap hcap1 hcap c
+      ω3 μ3 s (sp - 48) (18446744069414584320 + (L + 31) / 32) 1 2132 48047 pb S0 S1 HL e1 d7 d8 d9 d10 (by decide)
+      d0 ⟨by decide, by decide, by decide⟩ (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_1065]) bs_48047
+      (by omega) (by omega) (by omega) (by omega) ⟨by omega, by omega⟩
+  obtain ⟨-, run4S⟩ := FreeStepsH.growS f run4
+  have m0' : μ4.readN (sp - 48) 8 = Num.encodeLE 8 196792 := by
+    rw [← m0]; exact PVM.Memory.readN_congr fun j hj => stk4 _ (by omega) (by omega)
+  obtain ⟨ω5, μ5, run5⟩ := gr_null (p := p) (P := P) (R := KeepCtx (accContractS env)) (c, f) ω4 μ4 (sp - 48)
+    (f1.trans e1) e7' ⟨by omega, by omega⟩ m0'
+    (fun a h1 h2 => Memory.readable_of_writable (wst a (by omega) (by omega))) wl
+  exact ⟨ω5, μ5, _, ((run12.trans run3).trans run4S).trans run5⟩
+
 /-- **The SDK's `get`, 47857 → its return**, for the value v of the key in this service's storage
-    (absent, empty, or |w| + 31 < 2³⁶), with the key on the stack above the frame or in an allocated
-    chunk: either `GetOut` at out, at one of the three returns' `jumpInd` (47927, 47957, 48102), with ω₀,
-    ω₅, ω₆ as at the call, the allocator's context for a state keeping every allocated chunk and its
-    data, and the stack from sp kept off out; or `alloc_impl` returned null (48047, ω₇ = 0, the `heap`
-    reason) and the run reaches the trap 47977. The context and the stream are kept. -/
+    (absent, or |w| < 2⁶³), with the key on the stack above the frame or in an allocated chunk: either
+    `GetOut` at out, at one of the three returns' `jumpInd` (47927, 47957, 48102), with ω₀, ω₅, ω₆ as at
+    the call, the allocator's context for a state keeping every allocated chunk and its data, and the
+    stack from sp kept off out; or the run reaches the allocation-failure trap 47977 (the `heap` reason:
+    `alloc_impl` returned null, or |w| > 2³⁷ − 32 failed the size check). The context and the stream
+    are kept. -/
 theorem get_call (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap : cap < 18446744073709551616)
     {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
     (c : AccCtx) (f : Stream) (ω : Regs) (μ : Memory) {hb : Nat} (s : State) (sp out kO kZ S0 S1 : Nat)
@@ -397,7 +473,7 @@ theorem get_call (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
       ∃ d ∈ chunks s, d.used = true ∧ ∀ a, kO ≤ a → a < kO + kZ → InDataA d a)
     (hkr : kO + kZ ≤ 4294967296)
     (hkey : μ.readN kO kZ = key)
-    (hfit : ∀ w, c.1.self.storage.get? key = some w → w.length + 31 < 68719476736) :
+    (hfit : ∀ w, c.1.self.storage.get? key = some w → w.length < 9223372036854775808) :
     (∃ e s' ω' μ' n, (e = 47927 ∨ e = 47957 ∨ e = 48102) ∧
       FreeStepsH p (KeepCtx (accContractS env)) 47857 ω μ (c, f) e ω' μ' (c, f) n ∧
       ω'[0] = ω[0] ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
@@ -405,9 +481,7 @@ theorem get_call (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
       HeapCtxC env.code pb S0 S1 μ' s' ∧ (∀ c ∈ chunks s, c.used = true → c ∈ chunks s') ∧
       (∀ c ∈ chunks s, c.used = true → ∀ a, InDataA c a → μ'.read a = μ.read a) ∧
       (∀ a, a < 4294967296 → sp ≤ a → (a < out ∨ out + 24 ≤ a) → μ'.read a = μ.read a)) ∨
-    (∃ ω' μ' n, FreeStepsH p (KeepCtx (accContractS env)) 47857 ω μ (c, f) 48047 ω' μ' (c, f) n ∧
-      ω'[7] = UInt64.ofNat 0 ∧
-      ∃ ω'' μ'', FreeStepsH p (KeepCtx (accContractS env)) 48047 ω' μ' (c, f) 47977 ω'' μ'' (c, f) 10) := by
+    (∃ ω' μ' n, FreeStepsH p (KeepCtx (accContractS env)) 47857 ω μ (c, f) 47977 ω' μ' (c, f) n) := by
   have hst := H.st
   have hS1 := H.hS1
   have hb0 := H.hb0
@@ -420,10 +494,11 @@ theorem get_call (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
       have ha := hin a h1 h2
       refine .inr ⟨?_, Memory.readable_of_writable (heapC_writable_data H hd hu ha)⟩
       unfold InDataA at ha; omega
-  have hk : μ.rangeReadable kO kZ = true := Services.Witness.rangeReadable_of (fun a h1 h2 => by
+  have hkR : ∀ a, kO ≤ a → a < kO + kZ → μ.readable a = true := fun a h1 h2 => by
     rcases kloc a h1 h2 with ⟨k1, k2⟩ | ⟨-, k⟩
     · exact Memory.readable_of_writable (hst a (by omega) k2)
-    · exact k) hkr
+    · exact k
+  have hk : μ.rangeReadable kO kZ = true := Services.Witness.rangeReadable_of hkR hkr
   have dk : ∀ a, kO ≤ a → a < kO + kZ → a < sp - 48 ∨ sp ≤ a := fun a h1 h2 => by
     rcases kloc a h1 h2 with ⟨k1, -⟩ | ⟨k1, -⟩
     · exact .inr k1
@@ -456,8 +531,12 @@ theorem get_call (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
       exact .inl ⟨47957, s, ω', μ', _, .inr (.inl rfl), run, g0, g1, g5, g6, ⟨o0, o8, o16⟩, H',
         fun _ h _ => h, kd, fun a h0 hs ho => fr a h0 (.inr hs) ho⟩
     | cons b w =>
+      by_cases hsm : (b :: w).length + 31 < 68719476736
+      swap
+      · exact .inr (get_huge env cap pb hcap1 hcap c f ω μ s sp kO kZ S0 S1 key (b :: w) H h1 h8 h9 hkZ
+          (by omega) (hfit _ hv) hsp hSTk hkR dk hkr hkey hv)
       rcases get_some (p := p) (P := P) (hb := hb) env cap pb hcap1 hcap c f ω μ s sp out kO kZ S0 S1 key (b :: w) H h1 h7 h8 h9 hkZ
-          (by simp) (hfit _ hv) hsp hSTk hout hkO hkr hkey hv with
+          (by simp) hsm hsp hSTk hout hkO hkr hkey hv with
         ⟨ptr, s', ω', μ', run, g0, g1, g5, g6, o0, o8, o16, od, H', keep, keepd, hnew, hfresh, fr⟩ |
         ⟨ω', μ', run, e7, ω'', μ'', run'⟩
       · have hp32 : 32 ≤ ptr := by
@@ -467,6 +546,6 @@ theorem get_call (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
           omega
         exact .inl ⟨48102, s', ω', μ', _, .inr (.inr rfl), run, g0, g1, g5, g6,
           ⟨ptr, o0, o8, o16, od, hnew, hp32, hfresh⟩, H', keep, keepd, fr⟩
-      · exact .inr ⟨ω', μ', _, run, e7, ω'', μ'', run'⟩
+      · exact .inr ⟨ω'', μ'', _, run.trans run'⟩
 
 end Services.Bootstrap.Acc

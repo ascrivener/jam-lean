@@ -170,6 +170,71 @@ theorem gr_lock {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : 
     · rd_simp [hwr]
     · rd_simp [hwr]
 
+/-- **47974 → 47977**, a value longer than 2³⁷ − 32 (picoalloc's largest request): the size check
+    fails and the run reaches the allocation-failure trap 47977. -/
+theorem gr_big {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
+    (μ : Memory) (L : Nat) (h6 : ω[6] = UInt64.ofNat L) (h7 : ω[7] = UInt64.ofNat 137438953440)
+    (hL : 137438953440 < L) (hL1 : L < 18446744073709551616) :
+    FreeStepsH p R 47974 ω μ x 47977 ω μ x 1 := by
+  have hm : L % 18446744073709551616 = L := Nat.mod_eq_of_lt hL1
+  rw [show ω = regsNF ω [] from rfl]
+  pvm_go [h6, h7, hm, show ¬ 137438953440 ≥ L by omega]
+
+/-- The unit count ⌈L/32⌉ of a value with 2³⁶ ≤ L + 31 < 2³⁷, sign-extended from 32 bits by 48031's
+    `add_imm_32`: 2⁶⁴ − 2³² + ⌈L/32⌉. -/
+theorem sext4_huge (q : Nat) (h1 : 2147483648 ≤ q) (h2 : q < 4294967296) :
+    sext 4 q = 18446744069414584320 + q := by
+  unfold sext
+  rw [show 2 ^ (8 * 4) = 4294967296 from rfl, Nat.mod_eq_of_lt h2, if_neg (by decide),
+    show 8 * 4 - 1 = 31 from rfl, show q / 2 ^ 31 = 1 by rw [show 2 ^ 31 = 2147483648 from rfl]; omega]
+  omega
+
+/-- **47974 … 41177**, 2³⁶ ≤ L + 31 and L ≤ 2³⁷ − 32: as `gr_lock`, but the 32-bit add of the unit
+    count goes negative, so `alloc_impl` is called with ω₉ = 2⁶⁴ − 2³² + ⌈L/32⌉. -/
+theorem gr_lock_huge {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
+    (μ : Memory) (sp L : Nat) (h1 : ω[1] = UInt64.ofNat sp) (h6 : ω[6] = UInt64.ofNat L)
+    (h7 : ω[7] = UInt64.ofNat 137438953440) (hL1 : 68719476736 ≤ L + 31) (hL : L ≤ 137438953440)
+    (hsp : 65536 ≤ sp ∧ sp + 8 < 4294967296) (hwf : ∀ a, sp ≤ a → a < sp + 8 → μ.writable a = true)
+    (hl : rdN μ 206848 1 = 0) {HT S0 S1 : Nat} (hH : 206864 ≤ HT) (hwr : WrAt μ HT S0 S1)
+    (dsp : 206852 ≤ sp) :
+    ∃ ω' μ', FreeStepsH p R 47974 ω μ x 41177 ω' μ' x 30 ∧
+      ω'[7] = UInt64.ofNat 196792 ∧ ω'[8] = UInt64.ofNat 1 ∧
+      ω'[9] = UInt64.ofNat (18446744069414584320 + (L + 31) / 32) ∧ ω'[10] = UInt64.ofNat 1 ∧
+      ω'[0] = UInt64.ofNat 2132 ∧
+      ω'[6] = ω[6] ∧ ω'[5] = ω[5] ∧ ω'[1] = ω[1] ∧ ω'[4] = ω[4] ∧
+      μ'.readN sp 8 = Num.encodeLE 8 196792 ∧
+      (∀ a, a < 4294967296 → (a < 196608 ∨ 196616 ≤ a) → (a < 206848 ∨ 206852 ≤ a) → (a < sp ∨ sp + 8 ≤ a) →
+        μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) ∧
+      ∀ j : Fin 13, j.val ∉ [0, 4, 7, 8, 9, 10, 11] → ω'[j] = ω[j] := by
+  have hr := hwr.rd
+  have hrf : ∀ a, sp ≤ a → a < sp + 8 → μ.readable a = true :=
+    fun a h1 h2 => Memory.readable_of_writable (hwf a h1 h2)
+  have hand := lock_test (w := rdN μ 206848 4) (by rw [rdN4_mod]; exact hl)
+  have hq : sext 4 (((L + 31) % 18446744073709551616 / 32 + 0) % 4294967296) =
+      18446744069414584320 + (L + 31) / 32 := by
+    rw [Nat.mod_eq_of_lt (show L + 31 < 18446744073709551616 by omega), Nat.add_zero,
+      Nat.mod_eq_of_lt (show (L + 31) / 32 < 4294967296 by omega)]
+    exact sext4_huge _ (by omega) (by omega)
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?run, ?post⟩
+  case run => pvm_go [h1, h6, h7, hand, show 137438953440 ≥ L by omega, hwr, hr, hwf, hrf, rdN_writeN_disjoint,
+    ↓rdN_fold, ↓loadI_fold]
+  case post =>
+    refine ⟨by reg_val, by reg_val, ?_, by reg_val, by reg_val, by reg_val, by reg_val, by reg_val, ?_,
+      ?_, fun a ha h1 h2 h3 => ?_, fun a => ?_, fun a => ?_, by reg_frame⟩
+    · simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some',
+        List.lookup_nil, Option.getD_none, h6, UInt64.toNat_ofNat]
+      rw [hq]
+    · simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some',
+        List.lookup_nil, Option.getD_none]
+      rd_simp []
+      simp
+    · simp (disch := pvm_arith) only [PVM.Memory.readN_writeN_same]; decide
+    · rd_simp []
+    · rd_simp [hwr]
+    · rd_simp [hwr]
+
 /-- **48047 … 48077**, after `alloc_impl` returned a block `ptr` ≠ 0: the allocator's lock byte
     (206848) cleared, and the second `read`'s registers: ω₇ = NONE (this service), the key at ω₈ = ω₅
     (ω₉ = its length, from sp + 8), the buffer ω₁₀ = ptr, offset ω₁₁ = 0, length ω₁₂ = L; ptr also in

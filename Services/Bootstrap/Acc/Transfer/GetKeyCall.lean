@@ -9,7 +9,8 @@ import Services.Bootstrap.Acc.Inputs.LoopInd
 
 `gk_call`: from `alloc(14, 1)` at the helper's entry, the key "transfer-count" copied into a fresh
 `Vec` (`extend_from_slice`), `get_call` on it, the copy freed (`dealloc_callG`), and the return to
-7237; or an allocation failed (the `heap` abort: null at 3820, or `get`'s at 48047).
+7237; or an allocation failed and the run reaches a trap (the `heap` abort: null at 3820, or `get`'s
+trap 47977).
 
 Helpers: `HKeepG.data` (the heap off the headers kept keeps every chunk's data), `GetOut.mono` and
 `GetOut.base` (transporting `get`'s output), and the three returns' steps (`gk_j1`, `gk_j2`,
@@ -104,8 +105,9 @@ open Picoalloc Services.Bootstrap.Decode.HeapCtx Services.Bootstrap.Decode.Deall
     65956: either the key is copied into a fresh `Vec`, `get` stores `GetOut` at out for the key's value
     v, the copy is freed, and the run returns to 7237 with ω₁ = s + 56, ω₅, ω₆ restored, the
     allocator's context for a state keeping every allocated chunk and its data, and the stack above
-    the frame kept off out; or an allocation failed: `alloc` returned null at 3820, or `get`'s at 48047, and the
-    run reaches a trap. The context and the stream are kept. -/
+    the frame kept off out; or an allocation failed (the `heap` reason) and the run reaches a trap:
+    `alloc` returned null at 3820 (trap 3895), or `get` reached its allocation-failure trap 47977. The
+    context and the stream are kept. -/
 theorem gk_call (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap : cap < 18446744073709551616)
     {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
     (c : AccCtx) (f : Stream) (ω : Regs) (μ : Memory) {hb : Nat} (s₀ : State) (s out r5 r6 S0 S1 : Nat)
@@ -118,16 +120,15 @@ theorem gk_call (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap 
     (m40 : μ.readN (s + 40) 8 = Num.encodeLE 8 r5) (m32 : μ.readN (s + 32) 8 = Num.encodeLE 8 r6)
     (hr5 : r5 < 18446744073709551616) (hr6 : r6 < 18446744073709551616)
     (hkey : μ.readN 65956 14 = key) (hkr : ∀ a, 65956 ≤ a → a < 65970 → μ.readable a = true)
-    (hfit : ∀ w, c.1.self.storage.get? key = some w → w.length + 31 < 68719476736) :
+    (hfit : ∀ w, c.1.self.storage.get? key = some w → w.length < 9223372036854775808) :
     (∃ s' ω' μ' n, FreeStepsH p (KeepCtx (accContractS env)) 40494 ω μ (c, f) 7237 ω' μ' (c, f) n ∧
       ω'[1] = UInt64.ofNat (s + 56) ∧ ω'[5] = UInt64.ofNat r5 ∧ ω'[6] = UInt64.ofNat r6 ∧
       GetOut μ' out s₀ s' (c.1.self.storage.get? key) ∧
       HeapCtxC env.code pb S0 S1 μ' s' ∧ (∀ c ∈ chunks s₀, c.used = true → c ∈ chunks s') ∧
       (∀ c ∈ chunks s₀, c.used = true → ∀ a, InDataA c a → μ'.read a = μ.read a) ∧
       (∀ a, a < 4294967296 → s + 56 ≤ a → (a < out ∨ out + 24 ≤ a) → μ'.read a = μ.read a)) ∨
-    (∃ e ω' μ' n, (e = 3820 ∨ e = 48047) ∧ FreeStepsH p (KeepCtx (accContractS env)) 40494 ω μ (c, f) e ω' μ' (c, f) n ∧
-      ω'[7] = UInt64.ofNat 0 ∧ ∃ t ω'' μ'' m, (t = 3895 ∨ t = 47977) ∧
-        FreeStepsH p (KeepCtx (accContractS env)) e ω' μ' (c, f) t ω'' μ'' (c, f) m) := by
+    (∃ t ω' μ' n, (t = 3895 ∨ t = 47977) ∧
+      FreeStepsH p (KeepCtx (accContractS env)) 40494 ω μ (c, f) t ω' μ' (c, f) n) := by
   have hst := H.st
   have hS1 := H.hS1
   rcases alloc_callG (p := p) (P := P) (hb := hb) (accHeapHost env) cap hcap1 hcap c ω μ s₀ s 14 1 pb S0 S1 H
@@ -194,7 +195,7 @@ theorem gk_call (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap 
         c1 c7 c8 c9 (by decide) (by omega) (by omega) ⟨by omega, hout.2⟩
         (.inr ⟨_, hnew, rfl, fun a h1 h2 => ⟨by dsimp only; omega, by dsimp only; omega⟩⟩) (by omega) hkey3 hfit with
       ⟨e, s3, ω5, μ5, n5, he, run5, g0, g1, g5, g6, gout, H5, keep5, keepd5, fr5⟩ |
-      ⟨ω5, μ5, n5, run5, e7', ω'', μ'', run''⟩
+      ⟨ω5, μ5, n5, run5⟩
     · -- 3865: the copy freed
       have run5' := run5.trans (gk_j2 (p := p) (P := P) _ ω5 μ5 e he (g0.trans c0))
       obtain ⟨ω6, run6, d0, d7, d1⟩ := gk_free (p := p) (P := P) (R := KeepCtx (accContractS env)) (c, f) ω5 μ5 14 ptr
@@ -244,9 +245,9 @@ theorem gk_call (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap 
       · intro a h0 ha ho
         rw [stk7 a h0 (by omega), fr5 a h0 (by omega) ho]
         exact keep13 a h0 (by omega) (.inr (by omega))
-    · exact .inr ⟨48047, ω5, μ5, _, .inr rfl, runA.trans run5, e7', 47977, ω'', μ'', _, .inr rfl, run''⟩
+    · exact .inr ⟨47977, ω5, μ5, _, .inr rfl, runA.trans run5⟩
   · obtain ⟨-, run1S⟩ := FreeStepsH.growS f run1
-    refine .inr ⟨3820, ω1, μ1, _, .inl rfl, run1S.trans (gk_j1 (p := p) (P := P) _ ω1 μ1 (f0.trans h0)), e7,
-      3895, ω1, μ1, _, .inl rfl, gk_null (p := p) (P := P) _ ω1 μ1 e7⟩
+    refine .inr ⟨3895, ω1, μ1, _, .inl rfl,
+      (run1S.trans (gk_j1 (p := p) (P := P) _ ω1 μ1 (f0.trans h0))).trans (gk_null (p := p) (P := P) _ ω1 μ1 e7)⟩
 
 end Services.Bootstrap.Acc

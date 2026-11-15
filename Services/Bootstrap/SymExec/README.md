@@ -82,6 +82,43 @@ Done (all compile; axioms propext, Classical.choice, Quot.sound):
   (per-leaf Lean obligation: back edge keeps `I`, bounds and `asm`, and lowers the measure; exit leaf
   implies `Q`), `loop_fork_sound`.
 
+Also done (commit "signed branches…"): `scond` decides signed comparisons of a value ≥ 2^63; `scond2`
+falls back to an immediate comparison when one operand is a literal (`imm2`); `splitImm` splits a
+signed comparison on the sign first; `split2` = `splitAddr` or `splitVia` (literal operand).
+
+### from_utf8 (60681–61140): what it is and what the executor still lacks
+
+Rust's run_utf8_validation. Registers at entry: r7 result ptr, r8 ptr p, r9 len, r1 sp, r0 ret
+(saved on the stack; r0 is then scratch = align offset). Outer loop header 60738 (r5 = index i).
+- 60739: r10 := p + i; signed byte load; negative (≥ 0x80) → 60822 (multi-byte arms, table
+  UTF8_CHAR_WIDTH at 71078, address kept in stack slot sp+0). Else (align − i) & 7 ≠ 0 → 60731
+  (i += 1; i ≥ len → 61086 Ok; else 60738).
+- Aligned: 60756 i ≥ r4 (r4 = max(len,15) − 15, from 60714/60720) → 60793; else word loop
+  60759–60790: two u64 loads at p + i, (w0 | w1) & 0x8080…80 ≠ 0 → 60793; i += 16; i < r4 → 60759.
+- 60793–60819: byte loop (r10 pointer, r6 = −remaining counter), then 60946 / 61086.
+- 61086: Ok exit (stores at r7+8, r7+16, r7+0 = 0), restores and returns via jumpInd r0. 61109+:
+  error paths (r2 = error_len, r3).
+Callers: 7447 (CodeA, len 128 literal), 55106/57327/57556/57624 (CodeF, len loaded from memory:
+symbolic). Spec question (full UTF-8 vs ASCII-only first) sent to the parent; recommendation:
+ASCII-only first.
+
+Gaps found (each an additive executor change in #194; check with the parent if any would change an
+existing statement):
+1. Two-base addresses: loads at p + i with p and i both symbolic. `asAff` takes one base. Plan: a
+   `Fact.sum a b c` (ρ_a + ρ_b = ρ_c) and a case in `mkAlu3` add64 giving `addr ⟨c, off⟩`.
+2. Bounds through max/saturating arithmetic: r4 = max(len,15) − 15. Plan: `mkAlu3 maxU/minU`
+   simplified when `leB` decides it (facts can make len ≥ 15 known), and a split on `len ≥ 15` when
+   the branch is undecided (generic split for two-register compares of non-affine values: new
+   `Fact` comparing two SVals, used syntactically by `ltU`).
+3. Readability of [q, q+16) at a symbolic cursor: `inRd` needs q + 16 ≤ e from i + 16 ≤ len with
+   q = p + i, e = p + len. Plan: `leA` reduces through two `sum` facts with a shared summand.
+4. Signed-byte facts: path facts are on `.sx 1 (mem0 q 1)`; obligations need
+   `sx 1 b ≥ 2^63 ↔ b ≥ 128` (a small lemma, user side).
+5. A named read-only-data hypothesis for the 256-octet table at 71078 (like `Dec32.Table`).
+Tooling: `/tmp`-free disassembly is easy from the code facts (regex over `theorem d_…` in
+`Services/Bootstrap/Code*/L*.lean`, as `PVM/SymExec/gen_prog.py` does). For `#eval` experiments,
+generate a scratch `Prog` for 60681–61145 (code + bs facts) that imports only `PVM.SymExec.Fork`.
+
 Not done yet / next:
 - No consumer yet: no `#eval` of `srunF` on a real loop. Next: from_utf8 (60681). Find its loops, write
   header cuts, get the leaves by `#eval`, discharge the obligations. Expect the fixes to be in

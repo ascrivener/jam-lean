@@ -644,7 +644,27 @@ theorem scond_sound (hpre : Pre E st) {op : RegImmOffsetOp} {v : SVal} {x : Nat}
                  simp only [decide_eq_true_eq, decide_eq_false_iff_not]
                  omega
                · cases h
-           · cases h)
+           · split at h
+             · rename_i hneg
+               split at h
+               · rename_i hx
+                 cases h
+                 simp only [regImmBranchCond, negImm]
+                 simp only [two64] at hneg
+                 rw [s64_neg (by omega), s64_small hx]
+                 simp only [Bool.not_true, Bool.not_false, decide_eq_true_eq, decide_eq_false_iff_not]
+                 omega
+               · split at h
+                 · rename_i hx hx2
+                   have := decideCond_sound h1 h2 h
+                   rw [← this]
+                   simp only [regImmBranchCond]
+                   simp only [two64] at hneg hx2
+                   rw [s64_neg (by omega), s64_neg (by omega)]
+                   simp only [decide_eq_decide]
+                   omega
+                 · cases h
+             · cases h)
 
 theorem sameBase_sound (hpre : Pre E st) {v w : SVal} {p q : Int}
     (h : sameBase st v w = some (p, q)) : (v.eval E : Int) - w.eval E = p - q := by
@@ -720,9 +740,9 @@ theorem eqU_sound (hpre : Pre E st) {v w : SVal} {c : Bool} (h : eqU st v w = so
         · have := bnd_any hpre h1; have := lob_sound hpre v; omega
       · cases h
 
-theorem scond2_sound (hpre : Pre E st) {op : TwoRegOffsetOp} {v w : SVal} {c : Bool}
-    (h : scond2 st op v w = some c) : twoRegBranchCond op (v.eval E) (w.eval E) = c := by
-  unfold scond2 at h
+theorem scond2a_sound (hpre : Pre E st) {op : TwoRegOffsetOp} {v w : SVal} {c : Bool}
+    (h : scond2a st op v w = some c) : twoRegBranchCond op (v.eval E) (w.eval E) = c := by
+  unfold scond2a at h
   cases op
   · exact eqU_sound hpre h
   · cases he : eqU st v w with
@@ -761,6 +781,30 @@ theorem scond2_sound (hpre : Pre E st) {op : TwoRegOffsetOp} {v w : SVal} {c : B
     · cases h
 
 /-! ## Registers -/
+
+theorem nat_beq_comm (a b : Nat) : (a == b) = (b == a) := by
+  rcases Nat.lt_trichotomy a b with h | rfl | h
+  · rw [beq_eq_false_iff_ne.2 (Nat.ne_of_lt h), beq_eq_false_iff_ne.2 (Nat.ne_of_gt h)]
+  · rfl
+  · rw [beq_eq_false_iff_ne.2 (Nat.ne_of_gt h), beq_eq_false_iff_ne.2 (Nat.ne_of_lt h)]
+
+theorem imm2_sound {op : TwoRegOffsetOp} {v w u : SVal} {op' : RegImmOffsetOp} {c : Nat}
+    (h : imm2 op v w = some (op', u, c)) :
+    twoRegBranchCond op (v.eval E) (w.eval E) = regImmBranchCond op' (u.eval E) c := by
+  unfold imm2 at h
+  split at h <;> (try cases h) <;> first
+    | rfl
+    | (simp only [twoRegBranchCond, regImmBranchCond, SVal.eval, bne]; rw [nat_beq_comm])
+
+theorem scond2_sound (hpre : Pre E st) {op : TwoRegOffsetOp} {v w : SVal} {c : Bool}
+    (h : scond2 st op v w = some c) : twoRegBranchCond op (v.eval E) (w.eval E) = c := by
+  unfold scond2 at h
+  split at h
+  · rename_i c' hc; cases h; exact scond2a_sound hpre hc
+  · split at h
+    · rename_i op' u x hi
+      rw [imm2_sound hi]; exact scond_sound hpre h
+    · cases h
 
 theorem rwv_eval (hpre : Pre E st) (v : SVal) : (rwv st v).eval E = v.eval E := by
   unfold rwv

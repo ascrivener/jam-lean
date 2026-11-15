@@ -41,9 +41,9 @@ theorem pre_of_addF {E : Env} {st : Static} {path : List Fact} (hp : Pre E (addF
 
 /-! ## Splits -/
 
-/-- The facts that a branch on `v` against the immediate `x` holds, and that it fails
-    (§A.5.8, unsigned and equality comparisons). -/
-def splitImm (op : RegImmOffsetOp) (v : SVal) (x : Nat) : Option (List Fact × List Fact) :=
+/-- The facts that an unsigned or equality comparison of `v` with the immediate `x` holds, and that
+    it fails (§A.5.8). -/
+def splitU (op : RegImmOffsetOp) (v : SVal) (x : Nat) : Option (List Fact × List Fact) :=
   match op with
   | .branchEqImm => some ([.ge v x, .lt v (x + 1)], [.ne v x])
   | .branchNeImm => some ([.ne v x], [.ge v x, .lt v (x + 1)])
@@ -53,8 +53,17 @@ def splitImm (op : RegImmOffsetOp) (v : SVal) (x : Nat) : Option (List Fact × L
   | .branchGtUImm => some ([.ge v (x + 1)], [.lt v (x + 1)])
   | _ => none
 
+/-- A split for a comparison with an immediate: a signed one first on the sign of `v`
+    (v < 2^63 or not), then as the unsigned comparison it equals on that side. -/
+def splitImm (st : Static) (op : RegImmOffsetOp) (v : SVal) (x : Nat) : Option (List Fact × List Fact) :=
+  match toU op with
+  | some u =>
+    if (v.bnd st).any (· ≤ 2 ^ 63) || decide (2 ^ 63 ≤ v.lob st) then splitU u v x
+    else some ([.lt v (2 ^ 63)], [.ge v (2 ^ 63)])
+  | none => splitU op v x
+
 /-- The facts that an unsigned comparison of two addresses holds and fails (§A.5.11). -/
-def split2 (st : Static) (op : TwoRegOffsetOp) (v w : SVal) : Option (List Fact × List Fact) :=
+def splitAddr (st : Static) (op : TwoRegOffsetOp) (v w : SVal) : Option (List Fact × List Fact) :=
   match v, w with
   | .addr a, .addr b =>
     if decide (0 ≤ a.lo st) && decide (0 ≤ b.lo st) then
@@ -65,25 +74,50 @@ def split2 (st : Static) (op : TwoRegOffsetOp) (v w : SVal) : Option (List Fact 
     else none
   | _, _ => none
 
+/-- A comparison of two registers with a literal operand, split as one with an immediate. -/
+def splitVia (st : Static) (op : TwoRegOffsetOp) (v w : SVal) : Option (List Fact × List Fact) :=
+  match imm2 op v w with
+  | some (op', u, c) => splitImm st op' u c
+  | none => none
+
+/-- The facts that a comparison of two registers holds and fails. -/
+def split2 (st : Static) (op : TwoRegOffsetOp) (v w : SVal) : Option (List Fact × List Fact) :=
+  match splitAddr st op v w with
+  | some r => some r
+  | none => splitVia st op v w
+
 /-- A split at the branch at `pc`: two lists of facts, one of which holds. -/
 def splitB (st : Static) (G : Prog) (pc : Nat) (σ : SState) : Option (List Fact × List Fact) :=
   match G.code.find pc with
   | some (.regImmOffset op a x _, _) =>
-    if op = .loadImmJump then none else splitImm op (rdv st σ a.val) x.toNat
+    if op = .loadImmJump then none else splitImm st op (rdv st σ a.val) x.toNat
   | some (.twoRegOffset op a b _, _) => split2 st op (rdv st σ a.val) (rdv st σ b.val)
   | _ => none
 
-theorem splitImm_sound {E : Env} {op : RegImmOffsetOp} {v : SVal} {x : Nat} {ft ff : List Fact}
-    (h : splitImm op v x = some (ft, ff)) :
+theorem splitU_sound {E : Env} {op : RegImmOffsetOp} {v : SVal} {x : Nat} {ft ff : List Fact}
+    (h : splitU op v x = some (ft, ff)) :
     (∀ f ∈ ft, f.Holds E) ∨ (∀ f ∈ ff, f.Holds E) := by
-  cases op <;> simp only [splitImm, Option.some.injEq, Prod.mk.injEq, reduceCtorEq] at h <;>
+  cases op <;> simp only [splitU, Option.some.injEq, Prod.mk.injEq, reduceCtorEq] at h <;>
     obtain ⟨rfl, rfl⟩ := h <;> simp only [List.mem_cons, List.not_mem_nil, or_false, forall_eq_or_imp,
       forall_eq, Fact.Holds] <;> omega
 
-theorem split2_sound {E : Env} {st : Static} {op : TwoRegOffsetOp} {v w : SVal}
-    {ft ff : List Fact} (h : split2 st op v w = some (ft, ff)) :
+theorem splitImm_sound {E : Env} {st : Static} {op : RegImmOffsetOp} {v : SVal} {x : Nat}
+    {ft ff : List Fact} (h : splitImm st op v x = some (ft, ff)) :
     (∀ f ∈ ft, f.Holds E) ∨ (∀ f ∈ ff, f.Holds E) := by
-  unfold split2 at h
+  unfold splitImm at h
+  split at h
+  · split at h
+    · exact splitU_sound h
+    · simp only [Option.some.injEq, Prod.mk.injEq] at h
+      obtain ⟨rfl, rfl⟩ := h
+      simp only [List.mem_cons, List.not_mem_nil, or_false, forall_eq, Fact.Holds]
+      omega
+  · exact splitU_sound h
+
+theorem splitAddr_sound {E : Env} {st : Static} {op : TwoRegOffsetOp} {v w : SVal}
+    {ft ff : List Fact} (h : splitAddr st op v w = some (ft, ff)) :
+    (∀ f ∈ ft, f.Holds E) ∨ (∀ f ∈ ff, f.Holds E) := by
+  unfold splitAddr at h
   split at h
   · rename_i a b
     split at h
@@ -93,6 +127,17 @@ theorem split2_sound {E : Env} {st : Static} {op : TwoRegOffsetOp} {v w : SVal}
           forall_eq, Fact.Holds] <;> omega
     · cases h
   · cases h
+
+theorem split2_sound {E : Env} {st : Static} {op : TwoRegOffsetOp} {v w : SVal}
+    {ft ff : List Fact} (h : split2 st op v w = some (ft, ff)) :
+    (∀ f ∈ ft, f.Holds E) ∨ (∀ f ∈ ff, f.Holds E) := by
+  unfold split2 at h
+  split at h
+  · rename_i r hr; cases h; exact splitAddr_sound hr
+  · unfold splitVia at h
+    split at h
+    · exact splitImm_sound h
+    · cases h
 
 theorem splitB_sound {E : Env} {st : Static} {G : Prog} {pc : Nat} {σ : SState}
     {ft ff : List Fact} (h : splitB st G pc σ = some (ft, ff)) :

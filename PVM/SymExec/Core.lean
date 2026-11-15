@@ -480,6 +480,9 @@ def scond (op : RegImmOffsetOp) (v : SVal) (x : Nat) : Option Bool :=
       if hi ≤ 2 ^ 63 then
         if x < 2 ^ 63 then decideCond u (v.lob st) hi x
         else if x < two64 then some (negImm u) else none
+      else if 2 ^ 63 ≤ v.lob st ∧ hi ≤ two64 then
+        if x < 2 ^ 63 then some (!negImm u)
+        else if x < two64 then decideCond u (v.lob st) hi x else none
       else none
 
 /-- Two addresses on a common base, both at least 0: their offsets. -/
@@ -515,7 +518,7 @@ def eqU (v w : SVal) : Option Bool :=
 
 /-- A comparison of two registers (§A.5.11), when it is decided; signed ones on values below
     2^63, where they equal the unsigned ones. -/
-def scond2 (op : TwoRegOffsetOp) (v w : SVal) : Option Bool :=
+def scond2a (op : TwoRegOffsetOp) (v w : SVal) : Option Bool :=
   let nn := (v.bnd st).any (· ≤ 2 ^ 63) && (w.bnd st).any (· ≤ 2 ^ 63)
   match op with
   | .branchEq => eqU st v w
@@ -524,6 +527,33 @@ def scond2 (op : TwoRegOffsetOp) (v w : SVal) : Option Bool :=
   | .branchGeU => (ltU st v w).map (!·)
   | .branchLtS => if nn then ltU st v w else none
   | .branchGeS => if nn then (ltU st v w).map (!·) else none
+
+/-- A comparison of two registers, one of them a literal, as a comparison with an immediate. -/
+def imm2 (op : TwoRegOffsetOp) (v w : SVal) : Option (RegImmOffsetOp × SVal × Nat) :=
+  match op, v, w with
+  | .branchEq, v, .const c => some (.branchEqImm, v, c)
+  | .branchEq, .const c, w => some (.branchEqImm, w, c)
+  | .branchNe, v, .const c => some (.branchNeImm, v, c)
+  | .branchNe, .const c, w => some (.branchNeImm, w, c)
+  | .branchLtU, v, .const c => some (.branchLtUImm, v, c)
+  | .branchLtU, .const c, w => some (.branchGtUImm, w, c)
+  | .branchGeU, v, .const c => some (.branchGeUImm, v, c)
+  | .branchGeU, .const c, w => some (.branchLeUImm, w, c)
+  | .branchLtS, v, .const c => some (.branchLtSImm, v, c)
+  | .branchLtS, .const c, w => some (.branchGtSImm, w, c)
+  | .branchGeS, v, .const c => some (.branchGeSImm, v, c)
+  | .branchGeS, .const c, w => some (.branchLeSImm, w, c)
+  | _, _, _ => none
+
+/-- A comparison of two registers (§A.5.11), when it is decided: by `scond2a`, or, with a literal
+    operand, as a comparison with an immediate (`scond`). -/
+def scond2 (op : TwoRegOffsetOp) (v w : SVal) : Option Bool :=
+  match scond2a st op v w with
+  | some c => some c
+  | none =>
+    match imm2 op v w with
+    | some (op', u, c) => scond st op' u c
+    | none => none
 
 /-- A value after the first rewrite of `st.rw` that applies to it. -/
 def rwv (v : SVal) : SVal :=

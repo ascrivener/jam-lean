@@ -1,4 +1,9 @@
-import Services.Picoalloc.Alloc
+module
+
+public import Services.Picoalloc.Alloc
+
+@[expose] public section
+
 
 /-!
 # `free`

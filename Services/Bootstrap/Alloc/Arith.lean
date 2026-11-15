@@ -1,5 +1,10 @@
-import Services.Bootstrap.Alloc.Rep
-import PVM.Logic.Bits
+module
+
+public import Services.Bootstrap.Alloc.Rep
+public import PVM.Logic.Bits
+
+@[expose] public section
+
 
 /-!
 # The allocator's arithmetic in the binary

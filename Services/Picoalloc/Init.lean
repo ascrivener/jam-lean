@@ -1,4 +1,9 @@
-import Services.Picoalloc.Realloc
+module
+
+public import Services.Picoalloc.Realloc
+
+@[expose] public section
+
 
 /-!
 # `init`

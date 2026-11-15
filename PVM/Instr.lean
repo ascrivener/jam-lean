@@ -1,4 +1,9 @@
-import PVM.Blob
+module
+
+public import PVM.Blob
+
+@[expose] public section
+
 
 /-!
 # Typed instructions and decoding

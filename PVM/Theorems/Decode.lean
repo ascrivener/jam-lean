@@ -1,4 +1,9 @@
-import PVM.Instr
+module
+
+public import PVM.Instr
+
+@[expose] public section
+
 
 /-!
 # Decoding agrees with the opcode

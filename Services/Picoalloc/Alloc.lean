@@ -1,5 +1,10 @@
-import Services.Picoalloc.Walk
-import Services.Picoalloc.FreeLists
+module
+
+public import Services.Picoalloc.Walk
+public import Services.Picoalloc.FreeLists
+
+@[expose] public section
+
 
 /-!
 # `alloc`, on a well-formed heap

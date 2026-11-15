@@ -1,3 +1,8 @@
+module
+
+
+@[expose] public section
+
 /-!
 # picoalloc, as a functional model
 

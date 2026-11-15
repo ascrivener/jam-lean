@@ -1,4 +1,9 @@
-import PVM.Invocation
+module
+
+public import PVM.Invocation
+
+@[expose] public section
+
 
 /-!
 # The RAM Y builds, region by region

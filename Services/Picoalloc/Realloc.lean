@@ -1,4 +1,9 @@
-import Services.Picoalloc.Free
+module
+
+public import Services.Picoalloc.Free
+
+@[expose] public section
+
 
 /-!
 # `realloc`

@@ -1,6 +1,11 @@
-import Std.Data.ExtTreeMap
-import JAM.Codec
-import JAM.Constants
+module
+
+public import Std.Data.ExtTreeMap
+public import JAM.Codec
+public import JAM.Constants
+
+@[expose] public section
+
 
 /-!
 # Service accounts (GP v0.8.0 §9, `sec:accounts`)

@@ -1,5 +1,10 @@
-import Services.Picoalloc.Lists
-import Services.Picoalloc.Bits
+module
+
+public import Services.Picoalloc.Lists
+public import Services.Picoalloc.Bits
+
+@[expose] public section
+
 
 /-!
 # The free lists against a membership predicate

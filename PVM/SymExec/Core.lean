@@ -1,5 +1,10 @@
-import PVM.Logic.StepsH
-import PVM.Logic.Words
+module
+
+public import PVM.Logic.StepsH
+public import PVM.Logic.Words
+
+@[expose] public section
+
 
 /-!
 # A reflective symbolic executor for PVM code (spike)

@@ -1,4 +1,9 @@
-import PVM.Theorems.Termination
+module
+
+public import PVM.Theorems.Termination
+
+@[expose] public section
+
 
 /-!
 # Gas-free execution

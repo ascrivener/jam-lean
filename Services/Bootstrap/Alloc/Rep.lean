@@ -1,5 +1,10 @@
-import Services.Picoalloc.Init
-import PVM.Logic.Words
+module
+
+public import Services.Picoalloc.Init
+public import PVM.Logic.Words
+
+@[expose] public section
+
 
 /-!
 # The allocator's state in memory

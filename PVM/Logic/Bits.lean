@@ -1,4 +1,9 @@
-import PVM.Exec
+module
+
+public import PVM.Exec
+
+@[expose] public section
+
 
 /-!
 # Bitwise operations on symbolic values

@@ -1,4 +1,9 @@
-import PVM.SymExec.Sound
+module
+
+public import PVM.SymExec.Sound
+
+@[expose] public section
+
 
 /-!
 # One Boolean check per stretch (spike)

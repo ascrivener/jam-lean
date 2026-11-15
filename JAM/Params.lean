@@ -1,5 +1,10 @@
-import JAM.Constants
-import JAM.Codec
+module
+
+public import JAM.Constants
+public import JAM.Codec
+
+@[expose] public section
+
 
 /-!
 # Chain parameters

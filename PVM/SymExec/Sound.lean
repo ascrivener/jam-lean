@@ -1,4 +1,9 @@
-import PVM.SymExec.Core
+module
+
+public import PVM.SymExec.Core
+
+@[expose] public section
+
 
 /-!
 # Soundness of the symbolic executor (spike)

@@ -1,6 +1,11 @@
-import PVM.Logic.Det
-import PVM.Logic.StepsH
-import PVM.Theorems.Invocation
+module
+
+public import PVM.Logic.Det
+public import PVM.Logic.StepsH
+public import PVM.Theorems.Invocation
+
+@[expose] public section
+
 
 /-!
 # Enough gas: a gas-free run is Ψ's run

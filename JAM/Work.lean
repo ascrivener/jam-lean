@@ -1,4 +1,9 @@
-import JAM.Codec
+module
+
+public import JAM.Codec
+
+@[expose] public section
+
 
 /-!
 # Work packages, work items and work reports (GP v0.8.0 §11, §14) and their encodings (Appendix C)

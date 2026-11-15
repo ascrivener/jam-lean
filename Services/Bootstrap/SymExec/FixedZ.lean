@@ -1,4 +1,9 @@
-import Services.Bootstrap.SymExec.Prog
+module
+
+public import Services.Bootstrap.SymExec.Prog
+
+@[expose] public section
+
 
 /-!
 EXPERIMENTAL (symexec spike, `docs/symexec-spike.md`): symbolic memory. The stretches `z1` and `z2`

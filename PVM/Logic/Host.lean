@@ -1,5 +1,10 @@
-import PVM.Logic.Free
-import PVM.Theorems.Invocation
+module
+
+public import PVM.Logic.Free
+public import PVM.Theorems.Invocation
+
+@[expose] public section
+
 
 /-!
 # Gas-free runs with abstract host calls

@@ -1,4 +1,9 @@
-import Services.Picoalloc.Model
+module
+
+public import Services.Picoalloc.Model
+
+@[expose] public section
+
 
 /-!
 # picoalloc's heap invariant

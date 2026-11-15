@@ -1,3 +1,8 @@
+module
+
+
+@[expose] public section
+
 /-
   GENERATED FILE: do not edit by hand.
   Produced by `scripts/gen_constants.py` from the Gray Paper v0.8.0, `text/definitions.tex`.

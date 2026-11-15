@@ -1,5 +1,10 @@
-import PVM.Machine
-import PVM.Fast
+module
+
+public import PVM.Machine
+public import PVM.Fast
+
+@[expose] public section
+
 
 /-!
 # Host-call invocation Ψ_H, standard initialization Y and argument invocation Ψ_M

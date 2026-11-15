@@ -1,4 +1,9 @@
-import Services.Picoalloc.Invariant
+module
+
+public import Services.Picoalloc.Invariant
+
+@[expose] public section
+
 
 /-!
 # The free lists under the operations' writes

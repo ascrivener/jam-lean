@@ -34,10 +34,11 @@ the real compiled service binaries in `services/`. Read `docs/whats-proven.md` f
 
 - Bounds:
   - A cold full build takes about 4.5–5 h.
-  - The build step is bounded at 290 min, inside a 355-min job.
-  - A partial build is saved to the cache.
-- **A timed-out run (exit 137 at ~module 2280) is not a proof error.** Re-run it once; it resumes
-  from the cache.
+  - Each attempt's build steps are bounded at 300 min, inside a 355-min job.
+- **Timeouts resume on their own.** An attempt that runs out of time saves its partial build, skips
+  the checks and ends green; the next attempt job (`attempt-2`, `attempt-3`) resumes from it. Only
+  `attempt-3` running out fails the run; re-run it and it resumes from the cache. See
+  `docs/BUILD-INFRA.md`.
 - Runs on `main` are never cancelled, and they save the cache.
 - **Re-sync rule.** After a PR that regenerates code facts (`Services/Bootstrap/Code*`) lands on
   `main`, re-sync an open PR only if it imports the regenerated module, directly or transitively.

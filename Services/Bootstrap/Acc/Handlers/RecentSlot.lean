@@ -56,10 +56,12 @@ theorem re_short {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs)
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?_, ?_, ?_, ?_⟩
   rotate_left 2
-  · pvm_go [h1, h7, h9, hsp, hn64, hRd, hRd1, rl, hn, hrR, hw, hr, hl64, q0, hret, hjt, hbt,
-      rdN_writeN_disjoint, ↓rdN_fold]
+  · pvm_go [h0, h1, h7, h9, hsp, hn64, hRd, hRd1, rl, hn, hrR, hw, hr, hl64, hret, hjt, hbt,
+      Nat.mod_eq_of_lt hr0, Nat.mod_eq_of_lt hn64, Nat.mod_eq_of_lt hl64,
+      Nat.mod_eq_of_lt (UInt64.toNat_lt ω[5]), Nat.mod_eq_of_lt (UInt64.toNat_lt ω[6]),
+      rdN_writeN_disjoint, Fmt.rdN_writeN_same8, Num.decodeLE_encodeLE, ↓rdN_fold]
   · refine ⟨?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
-    all_goals post_simp [rdN_writeN_disjoint, rdN_writeN_same8, Num.decodeLE_encodeLE, h0, h1, h7, h9,
+    all_goals post_simp [rdN_writeN_disjoint, Fmt.rdN_writeN_same8, Num.decodeLE_encodeLE, h0, h1, h7, h9,
       Nat.mod_eq_of_lt hn64, Nat.mod_eq_of_lt hl64, rl, UInt64.ofNat_toNat]
 
 /-- **34377 … 34394**: the 112-octet frame at S = sp − 112 (ω₀, ω₅, ω₆ saved at sp − 8, − 16, − 24),
@@ -67,7 +69,7 @@ theorem re_short {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs)
     value ω₈ as it was and return address 1598. -/
 theorem sg_pre {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
     (sp out : Nat) (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat out)
-    (hsp : 65536 + 112 ≤ sp ∧ sp < 4294967296) (hw : ∀ a, sp - 24 ≤ a → a < sp → μ.writable a = true) :
+    (hout : out < 18446744073709551616) (hsp : 65536 + 112 ≤ sp ∧ sp < 4294967296) (hw : ∀ a, sp - 24 ≤ a → a < sp → μ.writable a = true) :
     ∃ ω' μ', FreeStepsH p R 34377 ω μ x 33843 ω' μ' x 7 ∧
       ω'[0] = UInt64.ofNat 1598 ∧ ω'[1] = UInt64.ofNat (sp - 112) ∧ ω'[5] = UInt64.ofNat out ∧
       ω'[7] = UInt64.ofNat (sp - 56) ∧ ω'[8] = ω[8] ∧
@@ -82,7 +84,7 @@ theorem sg_pre {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X
   · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
     all_goals try simp only [show sp - 112 + 104 = sp - 8 by omega, show sp - 112 + 96 = sp - 16 by omega,
       show sp - 112 + 88 = sp - 24 by omega, show sp - 112 + 56 = sp - 56 by omega]
-    all_goals post_simp [h1, h7]
+    all_goals post_simp [h1, h7, Nat.mod_eq_of_lt hout]
 
 /-- **34400 … 34411**: the key's `Vec` `{cap, ptr, len}` at S + 56; the call of `get` (47857) with out
     ω₇ = S + 24, the key ω₈ = ptr (ω₉ = len octets), ptr kept in ω₆ and return address 1600. -/
@@ -134,7 +136,7 @@ theorem sg_none {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : 
     (hbt : P.isBlockStart t = true)
     (hr : ∀ a, S + 24 ≤ a → a < S + 112 → μ.readable a = true)
     (hw : ∀ a, out ≤ a → a < out + 2 → μ.writable a = true) :
-    ∃ ω', FreeStepsH p R 34434 ω μ x t ω' (μ.writeN out (Num.encodeLE 2 0)) x 9 ∧
+    ∃ ω', FreeStepsH p R 34434 ω μ x t ω' (μ.writeN out (Num.encodeLE 2 0)) x 10 ∧
       ω'[0] = UInt64.ofNat r0 ∧ ω'[1] = UInt64.ofNat (S + 112) ∧ ω'[5] = UInt64.ofNat v5 ∧
       ω'[6] = UInt64.ofNat v6 := by
   have q24 := Handlers.DesignateAlloc.rd8 (by decide) m24

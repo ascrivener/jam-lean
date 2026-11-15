@@ -76,6 +76,50 @@ heap growth) need 2²⁷ ≤ cap anyway.
 | Designate (in progress) | `designate` (17) | 1100 + 302 · z ≤ cap < 2⁶⁴, z keys |
 | Bless (to do) | `bless` (15) | 422 + 20 · z ≤ cap < 2⁶⁴ |
 
+## Session 2 progress (2026-11-15, row 8)
+
+Toolchain: no lake-cache release yet, so a local build (`lake build <module>`; a cold build of the
+Handlers dependencies takes ~2 h on 4 cores). Use `ulimit -v 12000000` when compiling single files.
+
+**Done (compile; axioms only propext / Classical.choice / Quot.sound; not yet imported from
+`Services.lean`, so not in CI):**
+- `RecentCounter.lean`: the counter write's segments `cw_pre` (8326 → 33843), `cw_mid` (8348 → 48104),
+  `cw_ret` (set's returns → 8376), `cw_dl` (8376 → 40613), `cw_ok` (8402 → 8416), `cw_err` (→ 15361).
+- `RecentCounterImpl.lean`: `trap_34070`, `keep_yin`, `cw_free` (set's return → `dealloc` → 8402,
+  any host relation) and **`counter_write`**: from 8326 the run implements
+  `store .counter (fixed 4 w)` in `Impl` form under `accContractS`, with any `Ab` covering the trap at
+  34070 (alloc failure = heap). Post `CwPost` at 8416: ω₁ = sp, `HeapCtxC` for some st′ keeping st's
+  chunks and their data, memory kept above sp off `CwOut`, at `Glob` (196616 … 196791, so the
+  `ParamStatics` words) and below 196608. Hypotheses: the tag-0 size word kc at 68680 (1 ≤ kc,
+  kc + 31 < 2³⁶), `set`'s error-table entries (69056, 69072), 68680 … 69076 readable, the frame
+  S0 + 240 ≤ sp, sp + 1856 ≤ S1, the old value under `[0]` < 2⁶³ (`ValuesFit`).
+- `RecentSlot.lean` (34377, the slot's typed get): `re_short` (58434 with len < n returns ω₇ = 1),
+  `sg_pre` (34377 → 33843), `sg_get` (34400 → 47857), `sg_dl` (34417 → 40613, cap ≠ 0), `sg_none`
+  (34434 → return when get gave `None`).
+
+**Pitfalls found:**
+- Never `dsimp only` / `generalize` / `rw` a goal whose `match` scrutinee is `ASem.step … s.c` with
+  `s` a structure literal: Lean whnf's `ASem.step` and runs out of memory. First
+  `rw [show ({ i := …, c := c, q := f } : St Stream).c = c from rfl, hstep]` (exact syntactic form),
+  then `dsimp only` once the scrutinee is `some …`.
+- `pvm_go` needs `↓rdN_fold` for loads; for a return through a saved ω₀ add `rdN_writeN_same8`
+  (`Fmt.`), `Num.decodeLE_encodeLE` and the `Nat.mod_eq_of_lt` facts.
+- `refine ⟨?ω', ?run⟩; case run => pvm_go …` for a one-witness existential.
+
+**Next (row 8):**
+1. 34377's remaining segments: `sg_some` (34434 → 58434, 32-octet read), `sg_r2` (34485 → 58434,
+   2-octet read; copy S + 56 → S + 24), `sg_bad` (34534: u16 0 at out, then 34610 or 34539),
+   `sg_ok` (34571: payload to out + 2, u16 at out + 34, tag 1), `sg_free` (34610 → 40613, ret 1608),
+   `sg_ret` (34623) / `sg_ret0` (34539); then the composition with `kb_call`, `get_call` (Some w /
+   None / trap 47977), `read_exact` / `re_short`, `dealloc_callG`. Statement: out gets
+   `load (.recent c) (take 32, fixedN 2)`'s result (0 = None; 1, p at +2, k at +34).
+2. 8056 … 8172 composed: key {1, c} at sp + 1568, 34377, then (slot present) the results key,
+   `kf_call` (51243) and `remove_call` (48481), as `Impl` of the `match` in `addRecent`.
+3. 8172 … 8326 (slot write, inlined alloc + encoder 32414) and 8266 … 8326 (`ParamStatics`, c′).
+4. 8031 … 8049: the counter's typed get at 34637 (u32 decode).
+5. Add the modules to `Services.lean`, record `ParamStatics`' discharge obligation in
+   `docs/whats-proven.md`.
+
 ## Handoff (T2 handlers-a, paused 2026-11-14)
 
 **Branch:** `claude/bootstrap-t2-handlers-a-wip`. Resumed 2026-11-15: main merged in (with #186, so CodeA

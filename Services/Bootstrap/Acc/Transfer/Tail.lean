@@ -49,6 +49,38 @@ theorem tr_sk_pre {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x 
     all_goals try (simp only [Memory.readable_writeN, Memory.writable_writeN])
     all_goals first | rfl | decide | exact Nat.mod_eq_of_lt (UInt64.toNat_lt _) | exact Nat.mod_eq_of_lt (Nat.mod_lt _ (by decide)) | exact Nat.mod_eq_of_lt (by omega) | skip
 
+/-- **7326 … 40494, ω₆ any word** (`tr_sk_pre` for the sign-extended counter `sxw 4 n`): with
+    ω₆ = v, the u32 words get v mod 2³² and (v + 1) mod 2³², and the helper's frame gets
+    (v + 1) mod 2⁶⁴. -/
+theorem tr_sk_pre_sx {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
+    (μ : Memory) (sp v : Nat) (h1 : ω[1] = UInt64.ofNat sp) (h6 : ω[6] = UInt64.ofNat v)
+    (hv : v < 18446744073709551616) (hsp : 65536 + 64 ≤ sp ∧ sp + 1856 < 4294967296)
+    (hwf : ∀ a, sp - 64 ≤ a → a < sp + 1856 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 7326 ω μ x 40494 ω' μ' x 18 ∧
+      ω'[0] = UInt64.ofNat 110 ∧ ω'[1] = UInt64.ofNat (sp - 64) ∧ ω'[7] = UInt64.ofNat 14 ∧
+      ω'[8] = UInt64.ofNat 1 ∧ ω'[5] = UInt64.ofNat 65956 ∧ ω'[6] = UInt64.ofNat 14 ∧
+      rdN μ' (sp + 1496) 4 = v % 4294967296 ∧ rdN μ' (sp + 1568) 4 = (v + 1) % 4294967296 ∧
+      rdN μ' (sp - 64) 8 = sp + 1568 ∧ rdN μ' (sp - 64 + 8) 8 = 4 ∧ rdN μ' (sp - 64 + 56) 8 = 250 ∧
+      rdN μ' (sp - 64 + 48) 8 = ω[5].toNat ∧ rdN μ' (sp - 64 + 40) 8 = (v + 1) % 18446744073709551616 ∧
+      (∀ a, a < 4294967296 → (a < sp - 64 ∨ sp ≤ a) → (a < sp + 1496 ∨ sp + 1500 ≤ a) →
+        (a < sp + 1568 ∨ sp + 1572 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have hr : ∀ a, sp - 64 ≤ a → a < sp + 1856 → μ.readable a = true :=
+    fun a h1 h2 => Memory.readable_of_writable (hwf a h1 h2)
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?run, ?post⟩
+  case run => pvm_go [h1, h6, hwf, hr, rdN_writeN_disjoint, ↓rdN_fold, ↓loadI_fold]
+  case post =>
+    refine ⟨by reg_val, by reg_val, by reg_val, by reg_val, by reg_val, by reg_val, ?_, ?_, ?_, ?_, ?_, ?_, ?_,
+      fun a ha h1 h2 h3 => ?_, fun a => ?_, fun a => ?_⟩
+    all_goals try simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some']
+    all_goals try (simp (disch := pvm_arith) only [rdN, PVM.Memory.readN_writeN_disjoint, PVM.Memory.readN_writeN_same,
+      Num.decodeLE_encodeLE])
+    all_goals try (simp (disch := pvm_arith) only [PVM.Memory.read_writeN_disjoint]; done)
+    all_goals try (simp only [Memory.readable_writeN, Memory.writable_writeN])
+    all_goals first | rfl | decide | exact Nat.mod_eq_of_lt (UInt64.toNat_lt _) | exact Nat.mod_eq_of_lt (Nat.mod_lt _ (by decide)) | exact Nat.mod_eq_of_lt (by omega) | skip
+    all_goals (simp only [show 2 ^ (8 * 4) = 4294967296 from rfl]; omega)
+
 /-- **7386 … 7399**, the helper returned `Ok` (2⁶⁴ − 1): on to the memo's copy. -/
 theorem tr_chk_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
     (μ : Memory) (h7 : ω[7] = UInt64.ofNat 18446744073709551615) :

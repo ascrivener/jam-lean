@@ -27,7 +27,7 @@ address 65956 at sp + 512, and from sp up nothing else changed but scratch words
 
 namespace Services.Bootstrap.Acc
 open PVM JAM Services.Bootstrap Services.Bootstrap.Code Services.Bootstrap.CodeA Services.Bootstrap.Alloc
-  Picoalloc Services.Bootstrap.Decode.HeapCtx Services.Bootstrap.Spec
+  Picoalloc Services.Bootstrap.Decode.HeapCtx Services.Bootstrap.Decode.DeallocCall Services.Bootstrap.Spec
 set_option maxHeartbeats 8000000
 set_option maxRecDepth 100000
 
@@ -233,6 +233,7 @@ theorem tr_read (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap 
     have hWl : W.length < 9223372036854775808 := hfit W rfl
     generalize hch : (⟨ptr - 32, (W.length + 31) / 32 + 1, true⟩ : Chunk) = ch at gch gfr
     have hchA : ch.addr + 32 = ptr := by rw [← hch]; dsimp only; omega
+    have hchU : ch.used = true := by rw [← hch]
     have hchD : ∀ a, ptr ≤ a → a < ptr + W.length → InDataA ch a := fun a h1 h2 => by
       rw [← hch]; unfold InDataA; dsimp only; omega
     have hpb := heapC_data_lt H4 gch (hchD ptr (by omega) (by omega))
@@ -259,7 +260,7 @@ theorem tr_read (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap 
             r744 r752 h4 (.inr (by omega)) (by omega) ⟨by omega, by omega⟩ ⟨by omega, by omega⟩
             (.inr (by omega)) (.inl (by omega)) (.inr (by omega)) (.inl (by omega))
             (fun a h1 h2 => by
-              rw [rd5]; exact Memory.readable_of_writable (heapC_writable_data H4 gch rfl (hchD a h1 (by omega))))
+              rw [rd5]; exact Memory.readable_of_writable (heapC_writable_data H4 gch hchU (hchD a h1 (by omega))))
             (fun a h1 h2 => by rw [wr5]; exact H4.st a (by omega) (by omega))
             (fun a h1 h2 => by rw [wr5]; exact H4.st a (by omega) (by omega))
             (fun a h1 h2 => by rw [wr5]; exact H4.st a (by omega) (by omega))
@@ -314,7 +315,11 @@ theorem tr_read (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap 
     refine .inl (fin (free s4 ptr) ω10 μ8 _ (run5.trans (run6.trans (run7.trans (run8.trans (run9.trans run10)))))
       ((kj 1 (by decide)).trans ((ij 1 (by decide)).trans (h1'.trans g1'))) ?_ H8
       (fun d hd hu => ?_) (fun a ha0 ha1 ha2 ha3 ha4 => ?_))
-    · rw [k6, ij 6 (by decide), h6', g6', ← hrv]; split <;> rfl
+    · have e6 := (ij 6 (by decide)).trans (h6'.trans g6')
+      rw [k6, ← hrv]
+      by_cases hr0 : r = 0
+      · simp only [hr0, ↓reduceIte]; exact e6
+      · simp [hr0]
     · have hd4 := keep4 d hd hu
       have hne := gfr d hd hu
       obtain ⟨hdm, hdd⟩ := dat8 d hd4 hu hne

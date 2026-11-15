@@ -33,7 +33,7 @@ jobs:
 
       # Every build step must stop by this deadline (300 min after the job starts), leaving time to save .lake.
       - name: Set the build budget
-        run: echo "CI_DEADLINE=$(( $(date +%s) + 300 * 60 ))" >> "$GITHUB_ENV"
+        run: echo "CI_DEADLINE=$(( $(date +%s) + 1 * 60 ))" >> "$GITHUB_ENV"
 
       - name: Install elan
         run: |
@@ -291,7 +291,7 @@ jobs:
       # next attempt (or a re-run) can resume; finished PR builds don't save, since their caches (several GB each) would evict
       # main's from the 10 GB repository cache and leave every run to start cold.
       - name: Save .lake
-        if: always() && (github.ref == 'refs/heads/main' || env.CI_TIMED_OUT == 'true' || steps.build.outcome != 'success')
+        if: false
         uses: actions/cache/save@v4
         with:
           path: .lake

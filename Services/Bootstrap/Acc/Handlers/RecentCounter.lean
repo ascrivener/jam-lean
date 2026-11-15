@@ -120,10 +120,10 @@ theorem cw_err {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X
     (μ : Memory) (sp : Nat) (h1 : ω[1] = UInt64.ofNat sp) (hsp : sp + 1576 < 4294967296)
     (mr : μ.readN (sp + 232) 8 = Num.encodeLE 8 18446744073709551615)
     (hrr : ∀ a, sp + 232 ≤ a → a < sp + 240 → μ.readable a = true) :
-    ∃ ω', FreeStepsH p R 8402 ω μ x 15361 ω' μ x 4 := by
+    ∃ ω', FreeStepsH p R 8402 ω μ x 15361 ω' μ x 5 := by
   have rr := Handlers.DesignateAlloc.rd8 (by decide) mr
   rw [show ω = regsNF ω [] from rfl]
-  refine ⟨?_, ?_⟩
-  pvm_go [h1, hsp, rr, hrr, ↓rdN_fold]
+  refine ⟨?ω', ?run⟩
+  case run => pvm_go [h1, hsp, rr, hrr, ↓rdN_fold]
 
 end Services.Bootstrap.Acc.Handlers.RecentCounter

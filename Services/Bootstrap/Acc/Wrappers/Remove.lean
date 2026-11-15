@@ -8,7 +8,7 @@ empty value (ω₉ = ω₁₀ = 0), then returns whether a value was removed:
 - a reply below 2⁶⁴ − 9 (the old value's length): 1;
 - NONE: 0;
 - any other reply traps (48533). For this service that is FULL (the threshold after the removal still
-  above the balance); `ASem.step .remove` does not panic there (reported, pending).
+  above the balance); `ASem.step .remove` panics there too (quirk Q18).
 The frame is 16 octets (s = sp − 16): ω₅, ω₀ at s, + 8.
 -/
 

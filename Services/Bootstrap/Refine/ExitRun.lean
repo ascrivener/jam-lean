@@ -1,6 +1,7 @@
 import Services.Bootstrap.Refine.PassLoop
 import Services.Bootstrap.Refine.ExitEnc
 import Services.Bootstrap.Refine.Fin
+import Services.Bootstrap.Refine.RoData
 
 /-!
 # Refine's exit, whole: from the transform loop's end to refine's return
@@ -30,17 +31,19 @@ set_option maxRecDepth 100000
     1382), the `log` (6187) and the `String`'s `dealloc` (6202), from refine's frame at M with the allocator's
     context: the run reaches 6209 with the host context and ω₁ kept, the allocator's context for some heap s',
     every allocated chunk of s still allocated with its data, and the stack from M up kept apart from the
-    `String` at M + 168 … M + 192; or an allocation fails. `DR j bs μ` is what the `Debug` arms need of slot j. To be discharged by the fmt
+    `String` at M + 168 … M + 192; or an allocation fails. `DR j bs μ` is what the `Debug` arms need of slot j; the n
+    slots at E lie in an allocated chunk. To be discharged by the fmt
     summaries (`Services/Bootstrap/Fmt`). -/
-def DebugLineOk (p : ByteArray) (cap0 : Nat) (env : RefineHost.Env) (pb S0 S1 : Nat)
+def DebugLineOk (p : ByteArray) (cap0 : Nat) (env : RefineHost.Env) (pb S0 S1 : Nat) (ro : List UInt8)
     (DR : Nat → List UInt8 → Memory → Prop) : Prop :=
   ∀ (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State) (M c E n : Nat),
-    HeapCtx env pb S0 S1 μ s → S0 + 456 ≤ M → M + 648 ≤ S1 → M % 8 = 0 →
+    HeapCtx env pb S0 S1 μ s → RoData.RoIs ro μ → S0 + 7560 ≤ M → M + 632 ≤ S1 → M % 8 = 0 →
     ω[0] = UInt64.ofNat 200 → ω[1] = UInt64.ofNat M → ω[7] = UInt64.ofNat (M + 168) →
     ω[8] = UInt64.ofNat 66099 → ω[9] = UInt64.ofNat (M + 272) →
     μ.readN (M + 272) 8 = Num.encodeLE 8 (M + 248) → μ.readN (M + 280) 8 = Num.encodeLE 8 1382 →
     μ.readN (M + 248) 8 = Num.encodeLE 8 c → μ.readN (M + 256) 8 = Num.encodeLE 8 E →
     μ.readN (M + 264) 8 = Num.encodeLE 8 n → (∀ j, j < n → DR j (μ.readN (E + 232 * j) 232) μ) →
+    (n = 0 ∨ ∃ c ∈ chunks s, c.used = true ∧ ∀ k, k < 232 * n → InData c (E + k)) →
     (∃ (ω' : Regs) (μ' : Memory) (s' : State) (N : Nat),
       FreeStepsH p (refineContractK cap0 env) 59375 ω μ x 6209 ω' μ' x N ∧ HeapCtx env pb S0 S1 μ' s' ∧
       ω'[1] = ω[1] ∧ (∀ a, a < 4294967296 → M ≤ a → (a < M + 168 ∨ M + 192 ≤ a) → μ'.read a = μ.read a) ∧
@@ -68,8 +71,8 @@ theorem exit_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env
     (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616) {hb : Nat}
     {pb S0 S1 M E n capI : Nat} {ce : Chunk} {μ0 : Memory} {Kp : Chunk → Prop} {O : Nat → List UInt8 → Prop}
     (DR : Nat → List UInt8 → Memory → Prop) (enc : Nat → List UInt8) (rep : Nat → List UInt8 → Prop)
-    (dbg : DebugLineOk p cap0 env pb S0 S1 DR)
-    (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State) (L : LayP S0 S1 M E n ce) (hn : 0 < n)
+    {ro : List UInt8} (dbg : DebugLineOk p cap0 env pb S0 S1 ro DR)
+    (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State) (hro : RoData.RoIs ro μ) (L : LayP S0 S1 M E n ce) (hn : 0 < n)
     (st : PInv env pb S0 S1 M E n ce capI μ0 Kp O 5042 n ω μ s) (hcapI : 232 * capI < 18446744073709551616)
     (hOD : ∀ j bs μ, j < n → O j bs → DR j bs μ) (hOR : ∀ j bs, j < n → O j bs → rep j bs)
     (hON : ∀ j bs, j < n → O j bs → ∃ t, DropOut.NoDrop t ∧ bs.take 8 = Num.encodeLE 8 (9223372036854775807 + t))
@@ -80,16 +83,16 @@ theorem exit_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env
     (s624 : μ0.readN (M + 624) 8 = Num.encodeLE 8 ret) (s616 : μ0.readN (M + 616) 8 = Num.encodeLE 8 r5)
     (s608 : μ0.readN (M + 608) 8 = Num.encodeLE 8 r6)
     (hq' : c' < 18446744073709551616) (hcq : c' ≠ 0 → Kp cq ∧ cq.addr + 32 = q ∧ cq ≠ ce)
-    (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) (hr5 : r5 < 18446744073709551616)
-    (hr6 : r6 < 18446744073709551616) (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t)
-    (hbt : P.isBlockStart t = true)
+    (hret : Fin.RetTo P ret t) (hr5 : r5 < 18446744073709551616)
+    (hr6 : r6 < 18446744073709551616)
     (tab : μ.readN 67376 100 = table) (rtab : ∀ a, 67376 ≤ a → a < 67476 → μ.readable a = true)
     (dtab : μ.readN 67760 96 = DropOut.dtable) (rdtab : ∀ a, 67760 ≤ a → a < 67856 → μ.readable a = true) :
     (∃ (ω' : Regs) (μ' : Memory) (s' : State) (N buf : Nat),
       FreeStepsH p (refineContractK cap0 env) 5042 ω μ x t ω' μ' x N ∧ HeapCtx env pb S0 S1 μ' s' ∧
       ω'[0] = UInt64.ofNat ret ∧ ω'[1] = UInt64.ofNat (M + 632) ∧ ω'[5] = UInt64.ofNat r5 ∧
       ω'[6] = UInt64.ofNat r6 ∧ ω'[7] = UInt64.ofNat buf ∧ ω'[8] = UInt64.ofNat (off enc n + 3) ∧
-      μ'.readN buf (off enc n + 3) = UInt8.ofNat n :: (out enc n ++ Num.encodeLE 2 (w % 65536))) ∨
+      μ'.readN buf (off enc n + 3) = UInt8.ofNat n :: (out enc n ++ Num.encodeLE 2 (w % 65536)) ∧
+      ((∀ a, buf ≤ a → a < buf + (off enc n + 3) → μ'.readable a = true) ∧ buf + (off enc n + 3) < 2147483648)) ∨
     ∃ N, ExhaustsX env cap0 pb p 5042 ω μ x N := by
   obtain ⟨hS0M, hMS1, hM2, hM8⟩ := L.hM
   have hn' := L.hn
@@ -127,12 +130,13 @@ theorem exit_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env
     rw [cfr a (by omega) (by omega), co2.2 a ha]
   have pre3 := run1.trans (run2.trans run3)
   -- 4. the `Debug` line
-  rcases dbg x ω3 μ3 s2 M cap ptr n H3 (by omega) (by omega) hM8 c0 c1 c7 c8 c9 c272 c280
+  rcases dbg x ω3 μ3 s2 M cap ptr n H3 (RoData.RoIs.keep st.H pre3 hro) (by omega) (by omega) hM8 c0 c1 c7 c8 c9 c272 c280
       (by rw [Memory.readN_congr (fun j hj => k3 _ (by omega) (by omega) (by omega))]; exact vc)
       (by rw [Memory.readN_congr (fun j hj => k3 _ (by omega) (by omega) (by omega))]; exact vp)
       (by rw [Memory.readN_congr (fun j hj => k3 _ (by omega) (by omega) (by omega))]; exact vl)
       (fun j hj => hOD j _ μ3 hj (by
-        rw [Memory.readN_congr (fun i hi => sl3 _ ⟨by omega, by omega⟩)]; exact hout j hj)) with
+        rw [Memory.readN_congr (fun i hi => sl3 _ ⟨by omega, by omega⟩)]; exact hout j hj))
+      (Or.inr ⟨co, co2.1, hcou, fun k hk => ⟨by omega, by omega⟩⟩) with
     ⟨ω4, μ4, s4, N4, run4, H4, d1, dfr, dkeep⟩ | ⟨N4, hx⟩
   rotate_left
   · exact Or.inr ⟨_, ExhaustsX.pre pre3 hx⟩
@@ -186,7 +190,7 @@ theorem exit_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env
     hq' (by omega) (by omega) e1
     e168 e176 e184 (by rw [f5 _ _ (by omega)]; exact s88) (by rw [f5 _ _ (by omega)]; exact s112) e280 e288
     (by rw [f5 _ _ (by omega)]; exact s624) (by rw [f5 _ _ (by omega)]; exact s616)
-    (by rw [f5 _ _ (by omega)]; exact s608) hret hr5 hr6 hjt hbt
+    (by rw [f5 _ _ (by omega)]; exact s608) hret hr5 hr6
     (fun j hj => by
       obtain ⟨tj, htj, hD⟩ := hON j _ hj (hout j hj)
       refine ⟨tj, htj, ?_⟩
@@ -202,8 +206,9 @@ theorem exit_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env
     obtain ⟨hq, hqu, -⟩ := st.kp cq hK
     have q2 := bkeep cq hq hqu (fun _ => hqce)
     exact efresh cq (dkeep cq q2.1 hqu).1 hqu e.symm
-  obtain ⟨-, nk⟩ := fkeep _ hnew rfl hnco hncq
-  refine Or.inl ⟨ω6, μ6, s6, _, buf, pre5.trans run6, H6, f0, f1, f5', f6, f7, f8, ?_⟩
+  obtain ⟨nm, nk⟩ := fkeep _ hnew rfl hnco hncq
+  refine Or.inl ⟨ω6, μ6, s6, _, buf, pre5.trans run6, H6, f0, f1, f5', f6, f7, f8, ?_, ⟨fun a h1 h2 =>
+    Memory.readable_of_writable (Decode.VecU8.heap_writable H6 nm rfl ⟨by simp; omega, by simp; omega⟩), by omega⟩⟩
   rw [Memory.readN_congr (fun i hi => nk _ ⟨by simp; omega, by simp; omega⟩)]
   exact ebuf
 

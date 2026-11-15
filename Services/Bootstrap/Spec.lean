@@ -566,7 +566,7 @@ def load {α : Type} (k : Key) (p : Dec α) : Prog AOp (Option α) := do
 def addRecent (C : Consts) (package : Bytes) (item : Nat) : Prog AOp Unit := do
   let c := (← load .counter (Dec.fixedN 4)).getD 0  -- quirk Q12: undecodable reads as 0
   match ← load (.recent c) (do return (← Dec.take 32, ← Dec.fixedN 2)) with
-  | some (p, i) => op (AOp.remove (Key.results p i).encode)
+  | some (p, i) => op (AOp.remove (Key.results p i).encode)  -- quirk Q18: panics on FULL
   | none => pure ()
   store (.recent c) (encodeRecent package item)
   store .counter (fixed 4 ((c + 1) % C.maxRecent))
@@ -578,14 +578,14 @@ def removeRecentFrom : List Nat → Prog AOp Unit
     match ← load (.recent i) (do return (← Dec.take 32, ← Dec.fixedN 2)) with
     | none => pure ()
     | some (p, it) =>
-      op (AOp.remove (Key.results p it).encode)
+      op (AOp.remove (Key.results p it).encode)  -- quirk Q18 (both removes)
       op (AOp.remove (Key.recent i).encode)
       removeRecentFrom is
 
 /-- `remove_all_keys`: the ring and its results, the counter and the registry. -/
 def removeAllKeys (C : Consts) : Prog AOp Unit := do
   removeRecentFrom (List.range C.maxRecent)
-  op (AOp.remove Key.counter.encode)
+  op (AOp.remove Key.counter.encode)  -- quirk Q18 (both removes)
   op (AOp.remove Key.registry.encode)
 
 /-- Succeed with `r` if the operation succeeds, else fail with `e`. -/
@@ -633,7 +633,7 @@ def onInstr (C : Consts) (now : Nat) : Instr → Prog AOp Result
         pure (.ok .unit)
   | .eject t h => check (.eject t h) .eject .unit
   | .deleteItems ks => do
-    for k in ks do op (AOp.remove k)  -- quirk Q6: own keys included
+    for k in ks do op (AOp.remove k)  -- quirks Q6 (own keys included), Q18
     pure (.ok .unit)
   | .imported ds => pure (.ok (.dataVec ds))
   | .exported n => pure (.ok (.length (n % 2 ^ 32)))  -- quirk Q9

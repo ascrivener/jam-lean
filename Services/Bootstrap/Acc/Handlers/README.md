@@ -146,9 +146,6 @@ so CI and `scripts/CheckAxioms.lean` cover them. Everything below is pushed.
   (unused) was dropped.
 
 ### In flight
-- **#208** (`claude/bootstrap-t2-handlers-a-1`): this branch's pieces + Services.lean imports. CI
-  re-running after a fix (the forbidden-word grep also scans .md files: never write that word).
-- **#209** = the Q18 PR below. Both: merge on green (parent-approved).
 - **Q18 PR** (`claude/bootstrap-t2-q18`): `ASem.step .remove` panics on FULL (Adam, 2026-11-15), the
   Q18 rows in `docs/bootstrap-target.md` and `docs/upstream-candidates.md`, `StepSnd` adjusted.
   Not built yet. The `ValuesFit` < 2⁶³ doc edits belong to T2-inputs, not here.

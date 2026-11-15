@@ -240,7 +240,7 @@ theorem readN_add2 (μ : Memory) (a n m : Nat) : μ.readN a (n + m) = μ.readN a
     frame [M − 48, M + 632) and the output slot. -/
 theorem pass_elem {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] (x : X)
     (ω : Regs) (μ : Memory) (M cur en t cap ptr len : Nat) (ht : PassK t (rdN μ (cur + 44) 1))
-    (hM : 65536 + 48 ≤ M ∧ M + 632 + 16 < 4294967296 ∧ M % 8 = 0)
+    (hM : 65536 + 48 ≤ M ∧ M + 632 < 4294967296 ∧ M % 8 = 0)
     (hcur : 65536 ≤ cur ∧ cur + 232 + 24 < 4294967296) (hcM : cur + 232 + 24 ≤ M - 48 ∨ M + 632 ≤ cur)
     (hne : cur ≠ en) (hen : en < 18446744073709551616) (hl : len ≠ cap) (hcap : cap < 18446744073709551616)
     (hd : 65536 ≤ ptr + 232 * len ∧ ptr + 232 * len + 232 + 24 < 4294967296)

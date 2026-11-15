@@ -54,6 +54,17 @@ the same `Get.lean` / `GetCall.lean` and `gk_call` adapted to them (its abort: r
    - `Hyp.ExhaustsP`: KeyFmt/LogFmt's failure disjunct ("Exhausts, then ☇", a blob obligation; Adam
      chose option (a)).
 
+   **Session 3 (2026-11-15), written, NOT YET BUILT:**
+   - `Transfer/ImplW1.lean`: `tr_w1` (7326 → 7399 as the counter's `orPanic` write), post `W1Post`.
+   - `Transfer/Tail4.lean`: gap segments `tr_u8_pre` (7437), `lg_log_b0` (7743, message cap 0),
+     `t2_kfmt_pre` (7763 → 59375).
+   - `Transfer/W2a.lean` (7399 → 7454), `W2b.lean` (`lg_part1` 7454 → 7631, `lg_part2` 7631 → 7763),
+     `W2c.lean` (7763 → 48104), `ImplW2.lean`: `tr_w2` (7399 → 6766 as the record's `orPanic` write),
+     post `W2Post`. `tr_w2` also needs the prologue's formatter words at sp + 208 / 136 / 200 (2800,
+     2804, 678) and |key| fits from the chunk bounds.
+   - `KeyFmt` now states the key's len octets lie in a live fresh chunk's data (replacing "kc = 0 ∨
+     chunk"; Adam approved, 2026-11-15): `set` needs them readable and below the stack.
+
    **Next (the composition, as `Impl` pieces rather than long runs):**
    - **`tr_w1`** (new file `Transfer/ImplW1.lean`), from s at 7326:
      - Goal: `Impl p (accContractS env) env Ab (orPanic (.write trKey (fixed 4 ((n+1) % 2^32)))) Q s`,

@@ -911,6 +911,11 @@ What you trust beyond the kernel:
   `LogFmt` (`Acc/Transfer/Hyp.lean`, on the T2 inputs branch) state their failure case as `ExhaustsP`:
   the failed call is reached *and from there the run ends ☇*, keeping (x, y) (Adam, 2026-11-15).
   Whoever discharges them, and the fmt summaries used under T2, proves that path too.
+- **`KeyFmt`'s key buffer (T2, named hypothesis).** `KeyFmt` (`format!("transfer{}", n)`) states, in
+  its success case, that the key's len octets lie in the data of a live heap chunk at kp − 32, fresh
+  against the allocator's earlier state (Adam, 2026-11-15; it replaced "kc = 0 ∨ the buffer is a fresh
+  chunk"). `set` needs the key's octets readable and below the stack; whoever discharges `KeyFmt`
+  proves this too.
 - **Refinement of a fragment, not of a whole program.** The allocator theorems are about the
   allocator's entry points called with the stated registers and memory. They are not yet composed
   into a Ψ_R or Ψ_A theorem about a bootstrap run that allocates.

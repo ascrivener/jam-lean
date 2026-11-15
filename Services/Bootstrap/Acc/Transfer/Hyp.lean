@@ -46,8 +46,9 @@ def ExhaustsP (p : ByteArray) (env : AccEnv) (pb i : Nat) (ω : Regs) (μ : Memo
 /-- **`format!("transfer{}", n)` at 7792** (`format_inner`, 59375, returning to 7799): from the
     call's registers (ω₀ = 268, ω₁ = sp, ω₇ = sp + 512, ω₈ = 66607 the template, ω₉ = sp + 1568 the
     argument pair (sp + 1496, 2800), n the u32 at sp + 1496), either the run returns to 7799 with
-    ω₁, ω₅, ω₆ kept, the `String` { kc, kp, len } at sp + 512 holding `s!"transfer{n}"`, its buffer
-    (if kc ≠ 0) a chunk fresh against s₀, every allocated chunk of s₀ and its data kept, the
+    ω₁, ω₅, ω₆ kept, the `String` { kc, kp, len } at sp + 512 holding `s!"transfer{n}"`, its len
+    octets the data of a live chunk (at kp − 32) fresh against s₀ (so readable and below 2³¹, as
+    `set` needs; Adam, 2026-11-15), every allocated chunk of s₀ and its data kept, the
     allocator's context for the new state, and from sp up only sp + 512 … sp + 536 changed; or it
     reaches a failed allocator call and then ends ☇ (`ExhaustsP`, a blob obligation). The context and the stream are kept. -/
 def KeyFmt (p : ByteArray) (env : AccEnv) (pb S0 S1 : Nat) : Prop :=
@@ -65,8 +66,9 @@ def KeyFmt (p : ByteArray) (env : AccEnv) (pb S0 S1 : Nat) : Prop :=
       rdN μ' (sp + 512) 8 = kc ∧ rdN μ' (sp + 520) 8 = kp ∧
       rdN μ' (sp + 528) 8 = (s!"transfer{n}").toUTF8.toList.length ∧
       μ'.readN kp (s!"transfer{n}").toUTF8.toList.length = (s!"transfer{n}").toUTF8.toList ∧
-      (kc = 0 ∨ ∃ ch ∈ chunks s', ch.used = true ∧ ch.addr + 32 = kp ∧
-        ∀ d ∈ chunks s₀, d.used = true → d ≠ ch) ∧
+      (∃ ch ∈ chunks s', ch.used = true ∧ ch.addr + 32 = kp ∧
+        (∀ d ∈ chunks s₀, d.used = true → d ≠ ch) ∧
+        ∀ a, kp ≤ a → a < kp + (s!"transfer{n}").toUTF8.toList.length → InDataA ch a) ∧
       (∀ d ∈ chunks s₀, d.used = true → d ∈ chunks s' ∧ ∀ a, InDataA d a → μ'.read a = μ.read a) ∧
       (∀ a, a < 4294967296 → sp ≤ a → (a < sp + 512 ∨ sp + 536 ≤ a) → μ'.read a = μ.read a)) ∨
     ExhaustsP p env pb 59375 ω μ c f

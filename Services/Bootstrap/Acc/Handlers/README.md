@@ -128,12 +128,15 @@ Lean fails with "failed to create thread".
   on off out … out + 36; or reaches 34070 / 47977 (heap). Hypotheses: the tag-1 size word kc at 68688
   (5 ≤ kc, kc + 31 < 2³⁶), the frame [SP − 352, SP) in the stack, the value < 2⁶³ (`ValuesFit`).
 
-**Open decision (asked @parent 2026-11-15):** `get_call` (Acc/Wrappers/GetCall.lean, not ours) has
-no `Glob` / below-196608 frame facts, so `slot_get` doesn't state them either. Row 8 needs them
-(`ParamStatics` must survive to 8266). Recommended: (a) add both conclusions to `get_call` in place.
+**Decided (parent, 2026-11-15): (a).** `get_call` (Acc/Wrappers/GetCall.lean, T2-inputs' wrapper
+area; the parent told them not to edit it meanwhile) gets two extra conclusions in place: `Glob` kept
+and memory below 196608 kept (and `get_some` / `get_empty` / `get_none` as needed). Every existing
+conclusion stays. Mention it in the PR body. Code facts: if new ones are needed, add a tier per
+`docs/code-fact-tiers.md` (#205), don't regenerate CodeA, and tell @parent before pushing anything
+touching `Code*`.
 
 **Next (row 8):**
-1. If (a) is approved: extend `get_call` (and `get_some` / `get_empty` / `get_none`), then add the
+1. Extend `get_call` (and `get_some` / `get_empty` / `get_none`), then add the
    `Glob` and `< 196608` conclusions to `slot_get` (`sg_tailW` / `sg_fret` already have them).
 2. 8056 … 8172 as `Impl` of `addRecent`'s `match ← load (.recent c) slotDec with …`:
    - 8056 … 8073: u16 1 at sp + 1568, u32 c (ω₅) at sp + 1572, then 34377 with out sp + 1144 and

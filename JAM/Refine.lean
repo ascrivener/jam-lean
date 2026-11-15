@@ -1,5 +1,6 @@
 import JAM.Host.General
 import JAM.Blake2b
+import PVM.FastHost
 
 /-!
 # The refine and is-authorized invocations Ψ_R and Ψ_I (GP v0.8.0 Appendix B)

@@ -100,7 +100,7 @@ theorem disj_sound (hpre : Pre E st) {a : Aff} {n : Nat} {b : Aff} {m : Nat}
       have := le_hi hpre hh; have := lo_le hpre a
       simp only [decide_eq_true_eq] at h; omega
     · cases h
-  · have hs := hpre.2.2.2.2 p hp t
+  · have hs := hpre.2.2.2.2.1 p hp t
     rcases h with ⟨h1, h2⟩ | ⟨h1, h2⟩
     · exact hs (within_sound hpre h1 t ha) (within_sound hpre h2 t hb)
     · exact hs (within_sound hpre h2 t hb) (within_sound hpre h1 t ha)
@@ -389,6 +389,18 @@ theorem lob_sound (hpre : Pre E st) (v : SVal) : v.lob st ≤ v.eval E := by
   | addr a =>
     simp only [SVal.lob, SVal.eval]
     exact Int.toNat_le_toNat (lo_le hpre a)
+  | sx k w =>
+    simp only [SVal.lob]
+    split
+    · rename_i hc
+      obtain ⟨rfl, h1, h2⟩ := hc
+      have h3 := bnd_any hpre h2
+      have h4 := lob_sound hpre w
+      simp only [SVal.eval, u64, unsigned, signed]
+      rw [if_neg (by simp only [show 8 * 4 - 1 = 31 from rfl]; omega)]
+      simp only [show 8 * 4 = 32 from rfl, show 8 * 8 = 64 from rfl]
+      omega
+    · exact Nat.zero_le _
   | _ => exact Nat.zero_le _
 
 
@@ -469,11 +481,15 @@ theorem decideCond_sound {op : RegImmOffsetOp} {lo hi x v : Nat} {c : Bool} (h1 
   case branchEqImm =>
     simp only [decideCond] at h; split at h
     · cases h; simp only [regImmBranchCond, beq_eq_false_iff_ne]; omega
-    · cases h
+    · split at h
+      · cases h; simp only [regImmBranchCond, beq_iff_eq]; omega
+      · cases h
   case branchNeImm =>
     simp only [decideCond] at h; split at h
     · cases h; simp only [regImmBranchCond, bne_iff_ne, ne_eq]; omega
-    · cases h
+    · split at h
+      · cases h; simp only [regImmBranchCond, bne_eq_false_iff_eq]; omega
+      · cases h
   case branchLtUImm =>
     simp only [decideCond] at h; split at h
     · cases h; simp only [regImmBranchCond, decide_eq_true_eq]; omega
@@ -641,10 +657,20 @@ theorem scond2_sound (hpre : Pre E st) {op : TwoRegOffsetOp} {v w : SVal} {c : B
 
 /-! ## Registers -/
 
+theorem rwv_eval (hpre : Pre E st) (v : SVal) : (rwv st v).eval E = v.eval E := by
+  unfold rwv
+  split
+  · rename_i q hq
+    have hm := List.mem_of_find?_eq_some hq
+    have he := List.find?_some hq
+    simp only [beq_iff_eq] at he
+    rw [← he]; exact (hpre.2.2.2.2.2 q hm).symm
+  · rfl
+
 theorem rdv_eval (hpre : Pre E st) {σ : SState} {ω : Regs}
     (hr : ∀ r : Fin 13, ω.get r = UInt64.ofNat ((σ.regs.getD r.val (.const 0)).eval E))
     (r : Fin 13) : (rdv st σ r.val).eval E = (ω.get r).toNat := by
-  rw [rdv, mkMod_eval hpre, hr r]
+  rw [rdv, mkMod_eval hpre, rwv_eval hpre, hr r]
   simp
 
 theorem setv_inv {σ : SState} {ω : Regs} {μ : Memory} (h : Inv E σ ω μ) (r : Fin 13) (v : SVal) :

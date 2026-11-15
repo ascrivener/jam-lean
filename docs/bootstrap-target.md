@@ -421,12 +421,19 @@ spec's run may stop early:
    - There is one further constructor per binary quirk where the binary panics and the model goes on,
      each listed under Quirks.
 
-**`hvals` (decision of 2026-11-13).** `ValuesFit` says every storage value, preimage and encoded input
-of service s is shorter than 2⁶⁴ octets. Ω_R and Ω_Y report a length in a 64-bit register, which the
-model wraps mod 2⁶⁴. A longer value could wrap to NONE, and bootstrap would then report it absent where
-the model returns it. No trap occurs, so no abort reason can cover this case. Such values cannot exist
-physically, and bootstrap itself only writes values shorter than 2³² octets, but the model does not
-exclude them, so T2 assumes it.
+**`hvals` (decisions of 2026-11-13 and 2026-11-15).** `ValuesFit` says every storage value, preimage
+and encoded input of service s is shorter than 2⁶³ octets. Ω_R and Ω_Y report a length in a 64-bit
+register, which the model wraps mod 2⁶⁴. A longer value could wrap to NONE, and bootstrap would then
+report it absent where the model returns it. The bound was first 2⁶⁴ (2026-11-13). It was tightened to
+2⁶³ on 2026-11-15, because the SDK's `get` (47888 … 47974) also misreads lengths below 2⁶⁴:
+- a value of exactly 2⁶⁴ − 1 octets reads as NONE, and `get` returns `None` (47907) where the model
+  returns the value. No trap occurs, so no abort reason can cover it;
+- lengths in [2⁶⁴ − 9, 2⁶⁴ − 2] trap at 47929, and lengths in [2⁶³, 2⁶⁴ − 9) trap at 47901 (a
+  negative `isize`). No abort reason covers these either.
+
+Below 2⁶³, `get` either returns the value or reaches the allocation-failure trap 47977 (`heap`).
+Such values cannot exist physically, and bootstrap itself only writes values shorter than 2³² octets,
+but the model does not exclude them, so T2 assumes it.
 
 **T2′ (exact).** With `g ≥ Spec.accGas …`, n can be taken as the full run's length, so the outcome
 is `done` or `panicked` and does not depend on gas. Useful, but lower priority than T1′: on chain,

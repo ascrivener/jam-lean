@@ -40,8 +40,8 @@ theorem keepT {pb S0 S1 T W : Nat} {env : RefineHost.Env} {s₀ s' : State} {μ 
   rdN_frame (fun j hj => K.hi _ (by omega) (by omega) (by omega))
 
 theorem debug_tuple1 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
-    (pb S0 S1 : Nat) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
-    (μA : Memory) (sA : State) (spA e a M C fn : Nat) (hR : RefOk p P R env pb S0 S1 μA sA spA e a M C)
+    (pb S0 S1 Z : Nat) (hZ : 600 ≤ Z) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
+    (μA : Memory) (sA : State) (spA e a M C fn : Nat) (hR : RefOk p P R env pb S0 S1 Z μA sA spA e a M C)
     (x : X) (ω : Regs) (μ : Memory) (s : State) (sp F W nm nl v vt cap len ret t v5 v6 : Nat)
     (H : HeapCtx env pb S0 S1 μ s) (hba : s.base % 8 = 0) (hf : Fmtr sA s μ F W cap len)
     (KA : Keeps pb spA (fun _ => False) sA μA μ s)
@@ -55,7 +55,7 @@ theorem debug_tuple1 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] 
     (hbe : P.isBlockStart e = true) (hslot : rdN μ v 8 = a)
     (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t)
     (hbt : P.isBlockStart t = true)
-    (hsp : S0 + 728 ≤ sp ∧ sp % 8 = 0 ∧ 2147484376 ≤ sp) (hA : sp ≤ spA ∧ W + 24 ≤ spA)
+    (hsp : S0 + Z + 128 ≤ sp ∧ sp % 8 = 0 ∧ 2147483648 + Z + 128 ≤ sp) (hA : sp ≤ spA ∧ W + 24 ≤ spA)
     (hW : sp ≤ W ∧ W + 24 ≤ S1)
     (hF : sp ≤ F ∧ F + 24 ≤ S1 ∧ (F + 24 ≤ W ∨ W + 24 ≤ F))
     (hv : sp ≤ v ∧ v + 8 ≤ S1 ∧ (v + 8 ≤ W ∨ W + 24 ≤ v)) (hn : len + nl + M + 2 < 134217728) :

@@ -28,9 +28,9 @@ set_option maxRecDepth 100000
 /-- **The `Debug` line of the output** (59375 … 6209), as a hypothesis: `format!("Returning {:?} into
     accumulate", out)` (template 66099, the output `Vec<Instruction>` at M + 248 with its `Debug` function
     1382), the `log` (6187) and the `String`'s `dealloc` (6202), from refine's frame at M with the allocator's
-    context: the run reaches 6209 with ω₁ kept, the context for some heap s', every allocated chunk of s
-    still allocated with its data, and the stack from M up kept apart from the `String` at M + 168 … M + 192;
-    or an allocation fails. `DR j bs μ` is what the `Debug` arms need of slot j. To be discharged by the fmt
+    context: the run reaches 6209 with the host context and ω₁ kept, the allocator's context for some heap s',
+    every allocated chunk of s still allocated with its data, and the stack from M up kept apart from the
+    `String` at M + 168 … M + 192; or an allocation fails. `DR j bs μ` is what the `Debug` arms need of slot j. To be discharged by the fmt
     summaries (`Services/Bootstrap/Fmt`). -/
 def DebugLineOk (p : ByteArray) (cap0 : Nat) (env : RefineHost.Env) (pb S0 S1 : Nat)
     (DR : Nat → List UInt8 → Memory → Prop) : Prop :=
@@ -41,8 +41,8 @@ def DebugLineOk (p : ByteArray) (cap0 : Nat) (env : RefineHost.Env) (pb S0 S1 : 
     μ.readN (M + 272) 8 = Num.encodeLE 8 (M + 248) → μ.readN (M + 280) 8 = Num.encodeLE 8 1382 →
     μ.readN (M + 248) 8 = Num.encodeLE 8 c → μ.readN (M + 256) 8 = Num.encodeLE 8 E →
     μ.readN (M + 264) 8 = Num.encodeLE 8 n → (∀ j, j < n → DR j (μ.readN (E + 232 * j) 232) μ) →
-    (∃ (ω' : Regs) (μ' : Memory) (x' : RefineCtx) (s' : State) (N : Nat),
-      FreeStepsH p (refineContractK cap0 env) 59375 ω μ x 6209 ω' μ' x' N ∧ HeapCtx env pb S0 S1 μ' s' ∧
+    (∃ (ω' : Regs) (μ' : Memory) (s' : State) (N : Nat),
+      FreeStepsH p (refineContractK cap0 env) 59375 ω μ x 6209 ω' μ' x N ∧ HeapCtx env pb S0 S1 μ' s' ∧
       ω'[1] = ω[1] ∧ (∀ a, a < 4294967296 → M ≤ a → (a < M + 168 ∨ M + 192 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ d ∈ chunks s, d.used = true → d ∈ chunks s' ∧ ∀ a, InData d a → μ'.read a = μ.read a)) ∨
     ∃ N, ExhaustsX env cap0 pb p 59375 ω μ x N
@@ -62,7 +62,7 @@ theorem ro_keep {p : ByteArray} {cap0 : Nat} {env : RefineHost.Env} {pb S0 S1 : 
     variant whose drop does nothing), refine returns to the return address `ret` saved at M + 624 (→ t) with
     ω₇ = buf and ω₈ = len, where the len octets at buf are
     ℰ(`BootstrapWorkOutput`) = n :: (the n encodings) ⌢ ℰ₂(w mod 2^16), w the work item's index word at
-    M + 80; and the allocator's context holds. Or an allocation fails. The payload's `Vec<u8>` at
+    M + 80; the host context x is kept and the allocator's context holds. Or an allocation fails. The payload's `Vec<u8>` at
     M + 88 / M + 112 (capacity c', buffer cq, kept by the loop) is freed on the way. -/
 theorem exit_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env : RefineHost.Env) (cap0 : Nat)
     (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616) {hb : Nat}
@@ -70,7 +70,7 @@ theorem exit_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env
     (DR : Nat → List UInt8 → Memory → Prop) (enc : Nat → List UInt8) (rep : Nat → List UInt8 → Prop)
     (dbg : DebugLineOk p cap0 env pb S0 S1 DR)
     (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State) (L : LayP S0 S1 M E n ce) (hn : 0 < n)
-    (st : PInv env pb S0 S1 M E n ce capI μ0 Kp O n ω μ s) (hcapI : 232 * capI < 18446744073709551616)
+    (st : PInv env pb S0 S1 M E n ce capI μ0 Kp O 5042 n ω μ s) (hcapI : 232 * capI < 18446744073709551616)
     (hOD : ∀ j bs μ, j < n → O j bs → DR j bs μ) (hOR : ∀ j bs, j < n → O j bs → rep j bs)
     (hON : ∀ j bs, j < n → O j bs → ∃ t, DropOut.NoDrop t ∧ bs.take 8 = Num.encodeLE 8 (9223372036854775807 + t))
     (hok : ∀ j, j < n → EncOk p P (enc j) (rep j)) (hlen : ∀ j, j < n → (enc j).length ≤ 232)
@@ -85,8 +85,8 @@ theorem exit_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env
     (hbt : P.isBlockStart t = true)
     (tab : μ.readN 67376 100 = table) (rtab : ∀ a, 67376 ≤ a → a < 67476 → μ.readable a = true)
     (dtab : μ.readN 67760 96 = DropOut.dtable) (rdtab : ∀ a, 67760 ≤ a → a < 67856 → μ.readable a = true) :
-    (∃ (ω' : Regs) (μ' : Memory) (x' : RefineCtx) (s' : State) (N buf : Nat),
-      FreeStepsH p (refineContractK cap0 env) 5042 ω μ x t ω' μ' x' N ∧ HeapCtx env pb S0 S1 μ' s' ∧
+    (∃ (ω' : Regs) (μ' : Memory) (s' : State) (N buf : Nat),
+      FreeStepsH p (refineContractK cap0 env) 5042 ω μ x t ω' μ' x N ∧ HeapCtx env pb S0 S1 μ' s' ∧
       ω'[0] = UInt64.ofNat ret ∧ ω'[1] = UInt64.ofNat (M + 632) ∧ ω'[5] = UInt64.ofNat r5 ∧
       ω'[6] = UInt64.ofNat r6 ∧ ω'[7] = UInt64.ofNat buf ∧ ω'[8] = UInt64.ofNat (off enc n + 3) ∧
       μ'.readN buf (off enc n + 3) = UInt8.ofNat n :: (out enc n ++ Num.encodeLE 2 (w % 65536))) ∨
@@ -105,7 +105,7 @@ theorem exit_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env
   have hcs : 232 * cap + 32 ≤ 32 * co.size := by rw [hcos]; omega
   -- 1. the loop's end
   obtain ⟨ω1, run1, a1, -, -⟩ := Exit.ex0 (p := p) (P := P) (R := refineContractK cap0 env) x ω μ M (E + 232 * n)
-    (by omega) (by omega) st.h1 st.cur st.en
+    (by omega) (by omega) st.h1 st.cur42 st.en
     (fun a h1 h2 => Memory.readable_of_writable (st.H.st a (by omega) (by omega)))
   -- 2. the input's `IntoIter` dropped
   obtain ⟨ω2, μ2, s2, run2, H2, -, -, b1, -, -, bfr, bkeep⟩ := Exit.drop (p := p) (P := P)
@@ -133,7 +133,7 @@ theorem exit_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env
       (by rw [Memory.readN_congr (fun j hj => k3 _ (by omega) (by omega) (by omega))]; exact vl)
       (fun j hj => hOD j _ μ3 hj (by
         rw [Memory.readN_congr (fun i hi => sl3 _ ⟨by omega, by omega⟩)]; exact hout j hj)) with
-    ⟨ω4, μ4, x4, s4, N4, run4, H4, d1, dfr, dkeep⟩ | ⟨N4, hx⟩
+    ⟨ω4, μ4, s4, N4, run4, H4, d1, dfr, dkeep⟩ | ⟨N4, hx⟩
   rotate_left
   · exact Or.inr ⟨_, ExhaustsX.pre pre3 hx⟩
   have co4 := dkeep co co2.1 hcou
@@ -144,7 +144,7 @@ theorem exit_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env
   -- the read-only tables, kept
   obtain ⟨tab4, rtab4⟩ := ro_keep st.H pre4 (a := 67376) (l := 100) (by omega)
   -- 5. the output encoded
-  rcases ExitEnc.enc_run (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 x4 ω4 μ4 s4 H4 M cap ptr n w co enc rep
+  rcases ExitEnc.enc_run (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 x ω4 μ4 s4 H4 M cap ptr n w co enc rep
       ⟨by omega, by omega, by omega, hM8⟩ ⟨hn, hn'⟩ (by omega) hw64
       ⟨co4.1, hcou, by omega, by omega⟩ (d1.trans c1)
       (by rw [Memory.readN_congr (fun j hj => k4 _ (by omega) (by omega) (by omega) (by omega))]; exact vc)
@@ -175,7 +175,7 @@ theorem exit_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env
   simp only at hq0 hqT
   -- 6. the epilogue
   obtain ⟨ω6, μ6, s6, run6, H6, f0, f1, f5', f6, f7, f8, ffr, fkeep⟩ := Fin.fin_run (p := p) (P := P)
-    (R := refineContractK cap0 env) env x4 ω5 μ5 s5 H5 M cap ptr n c' q buf (off enc n + 3) ret r5 r6 t co cq
+    (R := refineContractK cap0 env) env x ω5 μ5 s5 H5 M cap ptr n c' q buf (off enc n + 3) ret r5 r6 t co cq
     ⟨by omega, by omega, by omega, hM8⟩ hn hkc ⟨co5.1, hcou, by omega, by omega⟩ (by omega)
     (fun h => by
       obtain ⟨hK, hqa, hqce⟩ := hcq h
@@ -203,7 +203,7 @@ theorem exit_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env
     have q2 := bkeep cq hq hqu (fun _ => hqce)
     exact efresh cq (dkeep cq q2.1 hqu).1 hqu e.symm
   obtain ⟨-, nk⟩ := fkeep _ hnew rfl hnco hncq
-  refine Or.inl ⟨ω6, μ6, x4, s6, _, buf, pre5.trans run6, H6, f0, f1, f5', f6, f7, f8, ?_⟩
+  refine Or.inl ⟨ω6, μ6, s6, _, buf, pre5.trans run6, H6, f0, f1, f5', f6, f7, f8, ?_⟩
   rw [Memory.readN_congr (fun i hi => nk _ ⟨by simp; omega, by simp; omega⟩)]
   exact ebuf
 

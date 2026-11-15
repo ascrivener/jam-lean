@@ -12,5 +12,6 @@ result ends in a `trap`" (`docs/bootstrap-target.md`, M1's later obligation). No
 
 Result (2026-11-15): 32 return sites (28 alloc, 4 realloc). 24 trap within 2–4 instructions; 8 sit in 4
 helpers (32989, 50146, 58327, 58717) whose callers trap at most 2 calls up, at most 30 instructions after the
-failed allocation. No non-trapping site was found. Open: the SDK's finish_grow at 40852 (which calls the core
-routine 41177 directly) and its callers 45036, 45251, 45767 are not traced yet.
+failed allocation. No non-trapping site was found. The SDK's finish_grow at 40852 and the nine other direct
+callers of the core routine 41177 also trap on every null path (`chains2.py 40852` → `chains2.tsv`: finish_grow's
+three callers 44916, 45168, 45643 trap within 21 steps; the nine direct callers within 4–7 steps).

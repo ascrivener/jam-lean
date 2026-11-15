@@ -218,7 +218,7 @@ def bootstrapSvc : Svc where
   -- and refine's output encoding: `Instruction::encode_to`'s per-variant arms and their shared tails (17905–20398), the
   -- element loop and its dispatch (30073–30286), the length prefix (30977–31362) and
   -- `Vec<u8>::extend_from_slice` (58508–58615)
-  fnRangesX := [(8, 482), (907, 2200), (2727, 3716), (23303, 25588), (32727, 33152), (35293, 36170),
+  fnRangesX := [(8, 482), (907, 2200), (2727, 3716), (3716, 3791), (23303, 25588), (32727, 33152), (35293, 36170),
     (50078, 50409), (70133, 70239), (17905, 20398), (30073, 30286), (30977, 31362), (58508, 58615)]
   -- `Instruction::encode_to` dispatches through its table at 67376 to the arms' jump-table entries
   jumpRangesX := [(17905, 20398)]

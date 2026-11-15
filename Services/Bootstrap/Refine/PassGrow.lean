@@ -27,22 +27,23 @@ set_option maxRecDepth 100000
 theorem pass_elem_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P]
     (env : RefineHost.Env) (cap0 : Nat) (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616)
     (x : RefineCtx) (ω : Regs) (μ : Memory) {hb : Nat} (s : State) (M cur en t len ptr pb S0 S1 : Nat)
-    (H : HeapCtx env pb S0 S1 μ s) (ht : PassIdx t)
+    (H : HeapCtx env pb S0 S1 μ s) (ht : PassK t (rdN μ (cur + 44) 1))
     (hold : len = 0 ∨ ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true ∧ c.size = (232 * len + 31) / 32 + 1)
     (hlen : len ≤ 2097152)
     (hM : S0 + 456 ≤ M ∧ M + 632 + 16 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0)
-    (hcur : 65536 ≤ cur ∧ cur + 232 + 24 < 2147483648)
+    (hcur : 65536 ≤ cur ∧ cur + 232 < 2147483648)
     (hne : cur ≠ en) (hen : en < 18446744073709551616) (hptr : ptr < 18446744073709551616)
     (hpl : ptr + 232 * len < 2147483648)
-    (h1 : ω[1] = UInt64.ofNat M)
-    (s144 : μ.readN (M + 144) 8 = Num.encodeLE 8 cur) (s120 : μ.readN (M + 120) 8 = Num.encodeLE 8 en)
+    (h1 : ω[1] = UInt64.ofNat M) (i : Nat)
+    (hi : (i = 5042 ∧ μ.readN (M + 144) 8 = Num.encodeLE 8 cur) ∨ (i = 5054 ∧ ω[5] = UInt64.ofNat cur))
+    (s120 : μ.readN (M + 120) 8 = Num.encodeLE 8 en)
     (sD : μ.readN cur 8 = Num.encodeLE 8 (9223372036854775807 + t))
     (s128 : μ.readN (M + 128) 8 = Num.encodeLE 8 9223372036854775832)
     (s136 : μ.readN (M + 136) 8 = Num.encodeLE 8 9223372036854775809)
     (sc : μ.readN (M + 248) 8 = Num.encodeLE 8 len) (sp : μ.readN (M + 256) 8 = Num.encodeLE 8 ptr)
     (sl : μ.readN (M + 264) 8 = Num.encodeLE 8 len)
     (hrc : ∀ a, cur ≤ a → a < cur + 232 → μ.readable a = true) :
-    (∃ q s' ω' μ', FreeStepsH p (refineContractK cap0 env) 5042 ω μ x 5042 ω' μ' x
+    (∃ q s' ω' μ', FreeStepsH p (refineContractK cap0 env) i ω μ x 5042 ω' μ' x
         (64 * ((232 * len + 31) / 32) + 6000) ∧
       ω'[1] = UInt64.ofNat M ∧
       μ'.readN (M + 144) 8 = Num.encodeLE 8 (cur + 232) ∧ μ'.readN (M + 264) 8 = Num.encodeLE 8 (len + 1) ∧
@@ -60,17 +61,17 @@ theorem pass_elem_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P
       μ'.readN (M + 280) 8 = Num.encodeLE 8 (cur + 232) ∧
       (∀ a, (M ≤ a ∧ a < M + 144) ∨ (M + 152 ≤ a ∧ a < M + 248) ∨ (M + 272 ≤ a ∧ a < M + 280) ∨
         (M + 288 ≤ a ∧ a < M + 304) ∨ (M + 536 ≤ a ∧ a < M + 632) → μ'.read a = μ.read a)) ∨
-    Exhausts env cap0 pb p P 5042 ω μ x (64 * ((232 * len + 31) / 32) + 6000) := by
+    Exhausts env cap0 pb p P i ω μ x (64 * ((232 * len + 31) / 32) + 6000) := by
   obtain ⟨hS0M, hMS1, hM2, hM8⟩ := hM
   have hS1 := H.hS1
   have wM : ∀ a, M - 48 ≤ a → a < M + 632 → μ.writable a = true := fun a h1 h2 => H.st a (by omega) (by omega)
   have rM : ∀ a, M - 48 ≤ a → a < M + 632 → μ.readable a = true :=
     fun a h1 h2 => Memory.readable_of_writable (wM a h1 h2)
-  have hD : 9223372036854775807 + t < 18446744073709551616 := by unfold PassIdx at ht; omega
+  have hD : 9223372036854775807 + t < 18446744073709551616 := by have := ht.bound; omega
   -- the element staged at M + 304
   obtain ⟨ω1, μ1, run1, a0, a1, -, a6, a7, a8, a9, a144, a304, a280, afr, ard, awr⟩ := pa (p := p) (P := P)
     (R := refineContractK cap0 env) x ω μ M cur en (9223372036854775807 + t) (by omega) (by omega) (by omega)
-    hne hen hD (by unfold PassIdx at ht; omega) h1 s144 s120 sD (fun a h1 h2 => rM a (by omega) (by omega))
+    hne hen hD (by have := ht.bound; omega) h1 i hi s120 sD (fun a h1 h2 => rM a (by omega) (by omega))
     (fun a h1 h2 => hrc a h1 (by omega)) (fun a h1 h2 => wM a (by omega) (by omega))
   obtain ⟨ω2, μ2, run2, b0, b1, b5, b6, bd, bfr, brd, bwr⟩ := memcpy_any (p := p) (P := P)
     (R := refineContractK cap0 env) x ω1 μ1 162 5095 M (M + 312) (cur + 8) 224 a0 a1 a7 a8 a9
@@ -89,10 +90,17 @@ theorem pass_elem_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P
       Memory.readN_congr (fun j hj => bfr _ (by omega) (by omega) (by omega)), a304, ← sD,
       Memory.readN_congr (fun j hj => afr _ (by omega) (by omega))]
   -- the dispatch, and the call of `grow_one`
-  obtain ⟨ω3, run3, c1, c5⟩ := pd (p := p) (P := P) (R := refineContractK cap0 env) x ω2 μ2 M t ht (by omega) b1
+  have hb348 : rdN μ2 (M + 348) 1 = rdN μ (cur + 44) 1 := by
+    unfold rdN
+    rw [show M + 348 = M + 312 + 36 by omega, Pass.readN_sub μ2 (M + 312) 224 36 1 _ bd (by omega),
+      ← Pass.readN_sub μ1 (cur + 8) 224 36 1 _ rfl (by omega), show cur + 8 + 36 = cur + 44 by omega,
+      Memory.readN_congr (fun j hj => afr _ (by omega) (by omega))]
+  obtain ⟨ω3, run3, c1, c5⟩ := pdK (p := p) (P := P) (R := refineContractK cap0 env) x ω2 μ2 M t
+    (by rw [hb348]; exact ht) (by omega) b1
     (by rw [b6, a6])
     (by rw [Memory.readN_congr (fun j hj => k2 _ (by omega) (by omega))]; exact s128)
     (by rw [Memory.readN_congr (fun j hj => k2 _ (by omega) (by omega))]; exact s136)
+    (fun a h1 h2 => by rw [brd, ard]; exact rM a (by omega) (by omega))
     (fun a h1 h2 => by rw [brd, ard]; exact rM a (by omega) (by omega))
   obtain ⟨ω4, run4, d0, d1, d5, d6, d7⟩ := pg (p := p) (P := P) (R := refineContractK cap0 env) x ω3 μ2 M len
     (by omega) (by omega) (c1.trans b1)

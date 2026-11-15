@@ -393,7 +393,7 @@ theorem get_huge (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
     (h1 : ω[1] = UInt64.ofNat sp) (h8 : ω[8] = UInt64.ofNat kO)
     (h9 : ω[9] = UInt64.ofNat kZ) (hkZ : kZ < 2 ^ 32)
     (hwL1 : 68719476736 ≤ w.length + 31) (hwL : w.length < 9223372036854775808)
-    (hsp : 2147483800 + 48 ≤ sp) (hSTk : S0 + 48 + 152 ≤ sp)
+    (hsp : 2147483800 + 48 ≤ sp) (hSTk : S0 + 48 + 152 ≤ sp) (hspS : sp ≤ S1)
     (hkR : ∀ a, kO ≤ a → a < kO + kZ → μ.readable a = true)
     (dk : ∀ a, kO ≤ a → a < kO + kZ → a < sp - 48 ∨ sp ≤ a)
     (hkr : kO + kZ ≤ 4294967296)
@@ -412,7 +412,7 @@ theorem get_huge (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
     (fun a h1 h2 => by rw [rd1]; exact hkR a h1 h2) hkr
   have hkey1 : μ1.readN kO kZ = key := by
     rw [← hkey]; apply PVM.Memory.readN_congr; intro j hj
-    exact fr1 _ (by omega) (dk _ (by omega) (by omega))
+    exact fr1 _ (by omega) ((dk _ (by omega) (by omega)).imp (fun h => by omega) id)
   -- the first read: the length
   have hR1 : KeepCtx (accContractS env) 4 ω1 μ1 (c, f) .cont (readRegs ω1 (some w)) μ1 (c, f) := by
     have := read_stepS env ω1 μ1 (c, f) kO kZ 0 0 key (reg_of b7 (by decide))
@@ -532,10 +532,10 @@ theorem get_call (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
       exact .inl ⟨47957, s, ω', μ', _, .inr (.inl rfl), run, g0, g1, g5, g6, ⟨o0, o8, o16⟩, H',
         fun _ h _ => h, kd, fun a h0 hs ho => fr a h0 (.inr hs) ho⟩
     | cons b w =>
-      by_cases hsm : (b :: w).length + 31 < 68719476736
-      swap
-      · exact .inr (get_huge env cap pb hcap1 hcap c f ω μ s sp kO kZ S0 S1 key (b :: w) H h1 h8 h9 hkZ
-          (by omega) (hfit _ hv) hsp hSTk hkR dk hkr hkey hv)
+      by_cases hbig : 68719476736 ≤ (b :: w).length + 31
+      · exact .inr (get_huge (p := p) (P := P) env cap pb hcap1 hcap c f ω μ s sp kO kZ S0 S1 key (b :: w) H h1 h8 h9 hkZ
+          hbig (hfit _ hv) hsp hSTk (by omega) hkR dk hkr hkey hv)
+      have hsm : (b :: w).length + 31 < 68719476736 := by omega
       rcases get_some (p := p) (P := P) (hb := hb) env cap pb hcap1 hcap c f ω μ s sp out kO kZ S0 S1 key (b :: w) H h1 h7 h8 h9 hkZ
           (by simp) hsm hsp hSTk hout hkO hkr hkey hv with
         ⟨ptr, s', ω', μ', run, g0, g1, g5, g6, o0, o8, o16, od, H', keep, keepd, hnew, hfresh, fr⟩ |

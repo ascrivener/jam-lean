@@ -77,5 +77,11 @@ These would go to the service's authors, not to the Gray Paper.
 - **The picoalloc model's alignment rounding.** A bug in this repository's own model, not in the
   paper or the vectors. The model rounded the data unit from the heap base; the binary rounds it
   in the address space. Fixed in `Services/Picoalloc/Model.lean`.
+- **The `$` of the context strings.** A bug in this repository's own model, reported by the
+  jam-lean-target crypto work. The model kept the GP's `$` as the first octet of `$jam_ticket_seal`
+  and the other context strings. In the paper `$` only marks the set of ASCII strings
+  (`notation.tex`), though its wording leaves this open; the v0.8.0 vectors settle it: their 58
+  ticket proofs verify only with "jam_ticket_seal" ⌢ …. Fixed in `JAM.contextString` (it drops a
+  leading `$`), with `#guard`s on X_T, X_E and X_G.
 - **Notes 6–10, 14, 16 and 22.** Points where the vectors confirm a subtle reading, or observations
   that need no change.

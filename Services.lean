@@ -408,6 +408,7 @@ import Services.Bootstrap.SymExec.ProgU
 import Services.Bootstrap.SymExec.Utf8Byte
 import Services.Bootstrap.SymExec.Utf8Word
 import Services.Bootstrap.SymExec.Utf8Outer
+import Services.Bootstrap.SymExec.Utf8Loop
 import Services.Witness.SymExec
 import Services.Bootstrap.Alloc.AfterStart
 import Services.Bootstrap.StartMemZ

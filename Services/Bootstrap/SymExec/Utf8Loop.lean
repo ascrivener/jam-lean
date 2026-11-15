@@ -698,6 +698,60 @@ theorem seg1b {P : Program} [Services.Bootstrap.CodeF.HasCodeF p P]
     · exact ⟨b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12, by omega, by omega, trivial⟩
     all_goals omega
 
+/-- **The outer body**: from the header, back to it with a smaller measure, or an exit. -/
+theorem body {P : Program} [Services.Bootstrap.CodeF.HasCodeF p P]
+    [Services.Bootstrap.Code.HasCode p P] {x : X} {μ₀ : Memory} {v₀ : List Nat}
+    (hR : RdO μ₀ v₀) {vals : List Nat} {ω : Regs} {μ : Memory} (hinv : Inv1 μ₀ v₀ vals ω μ) :
+    Reach p R x μ₀ v₀ (meas1 vals) 60738 ω μ := by
+  obtain ⟨hI, hB, hLB, hF, hH⟩ := hinv
+  have hl := bhold_length hB
+  obtain ⟨ℓ, hℓ, k, ω', μ', hrun, hf, hBℓ⟩ :=
+    fork_sound check1F (hypU (p := p) (P := P)) trivial hB hLB (fun _ _ => trivial) hH hF x
+  refine reach_pre hrun ?_
+  have hF' := factsHold_env (ω' := ω') (pages_of hH hBℓ) (by decide) hF
+  have hF0 := hF
+  simp only [asm1, FactsHold, Fact.Holds, Aff.eval, env, af] at hF0
+  obtain ⟨f1, f2, f3, -⟩ := hF0
+  have hb3 : vals.getD 3 0 < 2 ^ 32 := bget hB 3
+  have hdj : vals.getD 3 0 < vals.getD 4 0 ∨ vals.getD 4 0 + 32 ≤ vals.getD 3 0 := by
+    have := hI.2.1; omega
+  simp only [leaves1F, List.mem_cons, List.not_mem_nil, or_false] at hℓ
+  rcases hℓ with rfl | rfl | rfl
+  · rw [show svals (env vals ω μ) idsub15 = vals from svals_idsub15 hl] at hBℓ
+    exact seg7 (P := P) hR hBℓ hB hI hF' (Nat.le_refl _)
+  · rw [show svals (env vals ω μ) idsub15 = vals from svals_idsub15 hl] at hBℓ
+    simp only [FactsHold, Fact.Holds, env, byteQ, SVal.eval, Aff.eval, af] at hf
+    obtain ⟨-, -, g3, -⟩ := hf
+    have hlt := sx1_lt (decodeLE_one_lt μ _) g3
+    rw [show ((vals.getD 3 0 : Int) + 0).toNat = vals.getD 3 0 by omega,
+      octet_frame hH rfl hb3 hdj] at hlt
+    refine seg8 (P := P) hR hBℓ hB hI hF' fun j hj hoct => ?_
+    have hne : j ≠ vals.getD 2 0 := by
+      rintro rfl; rw [f1] at hoct; omega
+    simp only [meas1]; omega
+  · simp only [FactsHold, Fact.Holds, env, byteQ, SVal.eval, Aff.eval, af] at hf
+    obtain ⟨g1, -⟩ := hf
+    have hge := sx1_ge (decodeLE_one_lt μ _) g1
+    rw [show ((vals.getD 3 0 : Int) + 0).toNat = vals.getD 3 0 by omega,
+      octet_frame hH rfl hb3 hdj] at hge
+    rcases vals with _ | ⟨a0, _ | ⟨a1, _ | ⟨a2, _ | ⟨a3, _ | ⟨a4, _ | ⟨a5, _ | ⟨a6, _ | ⟨a7, _ | ⟨a8, _ | ⟨a9, _ | ⟨a10, _ | ⟨a11, _ | ⟨a12, _ | ⟨a13, _ | ⟨a14, _ | ⟨_, _⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩ <;> simp [ub1] at hl
+    simp only [List.getD_cons_succ, List.getD_cons_zero] at f1 f2 f3 hge
+    simp only [svals, sub1b, bterm, List.map, SVal.eval, env, List.getD_cons_succ,
+      List.getD_cons_zero] at hBℓ
+    refine seg1b (P := P) hR hBℓ ?_ hB hI f1 (by omega) f3 (by rw [f1]; exact hge)
+      (by simp [meas1])
+    simp only [twoRegImmAlu, Option.getD_some]
+    exact Nat.lt_succ_of_le (bitwise_and_le _ _)
+
+/-- **The outer loop of `from_utf8`** (60738): from the header (invariant `Inv1`, with the input,
+    the table and the stack frame readable, `RdO`) the machine reaches the Ok exit 61086 or the
+    error exit 61138 (`QO`). -/
+theorem outer_loop {P : Program} [Services.Bootstrap.CodeF.HasCodeF p P]
+    [Services.Bootstrap.Code.HasCode p P] {μ₀ : Memory} {v₀ : List Nat} (hR : RdO μ₀ v₀) (x : X) :
+    ∀ vals ω μ, Inv1 μ₀ v₀ vals ω μ →
+      ∃ xpc k ω' μ', FreeStepsH p R 60738 ω μ x xpc ω' μ' x k ∧ QO μ₀ v₀ xpc ω' μ' :=
+  loop_soundX (Inv1 μ₀ v₀) (QO μ₀ v₀) meas1 fun _ _ _ h => body (P := P) hR h
+
 end
 
 end Services.Bootstrap.SymExec.Utf8

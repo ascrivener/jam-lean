@@ -49,6 +49,8 @@ the same `Get.lean` / `GetCall.lean` and `gk_call` adapted to them (its abort: r
    - `Transfer/CopyVal.lean`: `memcpy_val` and `read_exact_val`, which state the copied octets.
    - `Transfer/Read.lean`: `tr_read`, 7159 → 7326, with ω₆ = `sxw 4 (trCount v)` or a heap trap.
    - `Tail.tr_sk_pre_sx`: 7326 → 40494 for any ω₆ (the sign-extended counter).
+   - `Transfer/OrPanic.lean`: `impl_call_keep` (`op o >>= f` for a context-keeping op such as `read`) and
+     `impl_orPanic` (an `orPanic` call: abort, or `ok` → `pure`, `error` → ☇).
    - `Hyp.ExhaustsP`: KeyFmt/LogFmt's failure disjunct ("Exhausts, then ☇", a blob obligation; Adam
      chose option (a)).
 

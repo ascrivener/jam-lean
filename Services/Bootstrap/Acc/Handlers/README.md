@@ -78,10 +78,11 @@ heap growth) need 2²⁷ ≤ cap anyway.
 
 ## Handoff (T2 handlers-a, paused 2026-11-14)
 
-**Branch:** `claude/bootstrap-t2-handlers-a-wip`. Main and #186's branch are merged in, so CodeA has the
-51243 facts. Everything below is pushed.
+**Branch:** `claude/bootstrap-t2-handlers-a-wip`. Resumed 2026-11-15: main merged in (with #186, so CodeA
+has the 51243 facts); full build green; every Handlers module is now imported from `Services.lean`,
+so CI and `scripts/CheckAxioms.lean` cover them. Everything below is pushed.
 
-### Done on the branch (builds, no sorry, axioms only propext / Classical.choice / Quot.sound)
+### Done (builds, no sorry, axioms only propext / Classical.choice / Quot.sound)
 - `Handlers/KeyEnc.lean`, the storage-key encoder (33843):
   - `kb_call`: one call under any `HeapHost` at cap ≥ 2²⁷. Either `alloc` gives a block ptr and the
     run returns with `Vec {c, ptr, keyEnc.len}` at out, the octets `keyEnc μ kp t` at ptr, and
@@ -91,17 +92,21 @@ heap growth) need 2²⁷ ≤ cap anyway.
 - `Handlers/KeyBuf.lean`, the fixed-buffer encoder (51243):
   - `kf_call` writes the same `keyEnc` octets into a 35-octet buffer and returns ω₇ = buf and
     ω₈ = len. The trap at 51348 is dead.
+- `Handlers/RemoveCall.lean`, the SDK's `remove` (48481) as an `accContractS` run: `rm_full` (FULL →
+  the trap at 48533, quirk Q18) and `remove_call` (FULL traps; otherwise ω₇ = 1/0 for a removed/absent
+  value, account := `writeSelf self key []`). Assumes old values < 2⁶³ octets (`ValuesFit`).
+- `Handlers/ResStore.lean`, `rs_pre` (36170's prologue, to the `alloc` call).
 - `Handlers/HeapKeep.lean`: local copies of `keep_hi`, `keep_data` and `heapC_writable_data`, so KeyEnc
-  doesn't import the Inputs modules. Switch to T2-inputs' versions after #152 if the import cost is
-  fine; T2-inputs offered to move them to a shared `Acc/HeapKeep.lean`.
-- Earlier work on this branch: the Checkpoint, Upgrade, Designate* and Assign* pieces, `HeapLock`,
-  `DesignateFree`, `AssignFree` and `PVM/Logic/HostBound.lean` (possibly to drop).
+  doesn't import the Inputs modules. T2-inputs offered to move them to a shared `Acc/HeapKeep.lean`.
+- Earlier: the Checkpoint, Upgrade, Designate* and Assign* pieces, `HeapLock`. `PVM/Logic/HostBound.lean`
+  (unused) was dropped.
 
 ### In flight
-- **#186** (`claude/bootstrap-t2-codea-51243`, 81464e1): `fnRangesA += (51243, 51349)`. CI is green.
-  The parent said: hold it until #166 has merged, then re-sync and merge. Don't merge before.
-- **`Handlers/ResStore.lean`, `rs_pre`** (36170's prologue): the draft is **unchecked**. Its import,
-  `Encode.VecCore`, wasn't built locally. Build that, then check `rs_pre`.
+- **Q18 PR** (`claude/bootstrap-t2-q18`): `ASem.step .remove` panics on FULL (Adam, 2026-11-15), the
+  Q18 rows in `docs/bootstrap-target.md` and `docs/upstream-candidates.md`, `StepSnd` adjusted.
+  Not built yet. The `ValuesFit` < 2⁶³ doc edits belong to T2-inputs, not here.
+- After #200 merges, prefer the `storageGet`/`storageWrite` accessors (JAM/Account.lean) in new
+  statements (storage-key re-keying, `docs/storage-key-design.md`).
 
 ### Next steps (the approved order: rows 8, 9, 11)
 1. **36170, the results store** (rows 9 and 11 call it the same way):
@@ -125,7 +130,7 @@ heap growth) need 2²⁷ ≤ cap anyway.
    - Take the RO words 68264…68291 as T1's vendored-blob facts (VendoredFacts / FmtRO). Ask T1
      (session_017ptjPBNFBKAwfdirTGg1oY) for the definition, and T2-inputs for accumulate's carriage.
 3. **Row 8 (8040 … 8471):** 33843 (`kb_call`) → 34377, the typed get (`get_call` on a heap key) →
-   51243 (`kf_call`) → `remove` 48481 → alloc → `set` 48104 → dealloc. Needs #166.
+   51243 (`kf_call`) → `remove` 48481 (`remove_call`, done) → alloc → `set` 48104 (`set_call`) → dealloc.
 4. **Row 9:** 8471 → 36170; on Err → 15361 (☇); 8490 is checkpoint, under accContractS's 0/18 case.
 5. **Row 11 (15032 … 15198):** the drops 33214 (ret 558/560) and 28864 (ret 564); 15115 → 36170;
    dealloc at 15166 and 15185; back to 6766.
@@ -133,7 +138,6 @@ heap growth) need 2²⁷ ≤ cap anyway.
    `alloc_impl0_callG` → unlock). When #163 lands: the fmt-group handlers.
 
 ### Dependencies and open decisions
-- #150 → #152 → #166 (get, set, remove) → then #186.
 - The Vec session: HeapHost versions of the Encode primitives (the parent chose option (a)).
 - T1: the RO-data facts pattern for the table at 68264.
 - Bless's scope is still to be agreed with the parent.

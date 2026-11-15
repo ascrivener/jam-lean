@@ -81,9 +81,11 @@ theorem remove_call {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (
       rw [← hr] at hF ⊢; unfold writeR7 at hF ⊢
       split at hF
       · exact absurd rfl hF
-      · cases hg : c.1.self.storage.get? key with
-        | none => exact .inl ⟨rfl, by simp⟩
-        | some v => exact .inr ⟨by simp, by simpa using hold v hg⟩
+      · rename_i hb
+        rw [if_neg hb]
+        cases hg : c.1.self.storage.get? key with
+          | none => exact .inl ⟨rfl, by simp⟩
+          | some v => exact .inr ⟨by simp, by simpa using hold v hg⟩
     have e1 : (setR7 ω1 r)[1] = UInt64.ofNat (sp - 16) := (sr 1 (by decide) (by decide)).trans b1
     have n0 : μ1.readN (sp - 16) 8 = Num.encodeLE 8 ω[5].toNat := readN_of_rdN m0
     have n8 : μ1.readN (sp - 16 + 8) 8 = Num.encodeLE 8 ω[0].toNat := readN_of_rdN m8
@@ -92,12 +94,14 @@ theorem remove_call {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (
     obtain ⟨e, ω2, run2, hlt, hnone, g0, g1, g5⟩ :=
       rm_ret (p := p) (P := P) (R := YIn (accContractS env) c.2 c.2) c' (setR7 ω1 r) μ1 (sp - 16) r
         ω[0].toNat ω[5].toNat e1 e7
-        (by rcases hrv with ⟨-, rfl⟩ | ⟨-, h⟩ <;> [right; left] <;> first | rfl | omega)
+        (by rcases hrv with ⟨-, h⟩ | ⟨-, h⟩
+            · exact .inr (by rw [h]; rfl)
+            · exact .inl (by omega))
         ⟨by omega, by omega⟩ n0 n8 hrf (UInt64.toNat_lt _) (UInt64.toNat_lt _)
     have he : (e = 48514 ∨ e = 48531) ∧
         ω2[7] = UInt64.ofNat (if c.1.self.storage.get? key = none then 0 else 1) := by
       rcases hrv with ⟨hg, rfl⟩ | ⟨hg, h⟩
-      · obtain ⟨ee, ew⟩ := hnone rfl; rw [if_pos hg]; exact ⟨.inr ee, ew⟩
+      · obtain ⟨ee, ew⟩ := hnone (by rfl); rw [if_pos hg]; exact ⟨.inr ee, ew⟩
       · obtain ⟨ee, ew⟩ := hlt (by omega); rw [if_neg hg]; exact ⟨.inl ee, ew⟩
     exact ⟨e, ω2, μ1, he.1, (run1.trans (FreeStepsH.host_decode (d_48493 (p := p) (P := P)) hst run2)).mono
       (by omega), he.2, by rw [g0, UInt64.ofNat_toNat], by rw [g1, show sp - 16 + 16 = sp by omega],

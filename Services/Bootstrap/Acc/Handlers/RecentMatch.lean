@@ -59,3 +59,98 @@ theorem step_remove (env : AccEnv) (key : Bytes) (c : AccCtx) (hk : argBase + ke
     rw [if_neg hl.2]; rfl
 
 end Services.Bootstrap.ASem
+
+namespace Services.Bootstrap.Acc.Handlers.RecentMatch
+
+open PVM JAM Picoalloc Services.Bootstrap Services.Bootstrap.Code Services.Bootstrap.CodeA
+  Services.Bootstrap.Alloc Services.Bootstrap.Acc Services.Bootstrap.Spec
+  Services.Bootstrap.Decode.HeapCtx Services.Bootstrap.Decode.LoopA
+  Services.Bootstrap.Acc.Handlers.KeyEnc
+
+set_option maxHeartbeats 8000000
+set_option maxRecDepth 100000
+
+variable {X : Type} {R : HostRel X}
+
+/-- **8056 … 8073**: the tag-1 key value {1, c} at sp + 1568 (the u16 1, then c as a u32 at sp + 1572),
+    and the call of the ring slot's typed get (34377) with out ω₇ = sp + 1144, the key value
+    ω₈ = sp + 1568 and return address 280. -/
+theorem rm_pre {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
+    (μ : Memory) (sp c : Nat) (h1 : ω[1] = UInt64.ofNat sp) (h5 : ω[5] = UInt64.ofNat c)
+    (hc : c < 18446744073709551616) (hsp : sp + 1576 < 4294967296)
+    (hw : ∀ a, sp + 1568 ≤ a → a < sp + 1576 → μ.writable a = true) :
+    ∃ ω', FreeStepsH p R 8056 ω μ x 34377 ω'
+      ((μ.writeN (sp + 1568) (Num.encodeLE 2 1)).writeN (sp + 1572) (Num.encodeLE 4 c)) x 5 ∧
+      ω'[0] = UInt64.ofNat 280 ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      ω'[7] = UInt64.ofNat (sp + 1144) ∧ ω'[8] = UInt64.ofNat (sp + 1568) := by
+  rw [show ω = regsNF ω [] from rfl, show Num.encodeLE 2 1 = [UInt8.ofNat 1, UInt8.ofNat 0] from rfl,
+    ← encodeLE_mod 4 c, show (256 : Nat) ^ 4 = 4294967296 from rfl]
+  refine ⟨?_, ?_, ?_⟩
+  rotate_left
+  · pvm_go [h1, h5, hsp, hw]
+  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
+    all_goals simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h1]
+
+/-- **8079 … 8083, an empty slot**: the u16 0 at sp + 1144 sends the run to 8172 (ω₇ := 0). -/
+theorem rm_none {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
+    (μ : Memory) (sp : Nat) (h1 : ω[1] = UInt64.ofNat sp) (hsp : sp + 1576 < 4294967296)
+    (m : μ.readN (sp + 1144) 2 = Num.encodeLE 2 0)
+    (hr : ∀ a, sp + 1144 ≤ a → a < sp + 1146 → μ.readable a = true) :
+    ∃ ω', FreeStepsH p R 8079 ω μ x 8172 ω' μ x 2 ∧
+      ω'[0] = ω[0] ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
+  have r0 : rdN μ (sp + 1144) 2 = 0 := by
+    show Num.decodeLE _ = _; rw [m]; rfl
+  have b0 : ((μ.read (sp + 1144)).toNat + 256 * (μ.read (sp + 1144 + 1)).toNat) % 18446744073709551616 = 0 := by
+    have := r0; unfold rdN at this
+    simp [Memory.readN, List.range_succ, Num.decodeLE] at this
+    omega
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?_, ?_, ?_⟩
+  rotate_left
+  · pvm_go [h1, hsp, hr, b0]
+  · refine ⟨?_, ?_, ?_, ?_⟩
+    all_goals simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h1]
+
+/-- **8079 … 8158, an occupied slot** (the u16 1 at sp + 1144): the slot's 32 octets (the words q₀ … q₃
+    at sp + 1146 …) copied to sp + 1572, the zero u32 at sp + 775, the tag u16 2 at sp + 1568, the
+    slot's u16 v (at sp + 1178) at sp + 1570, sp + 744 … 776 zeroed; then the call of the fixed-buffer
+    key encoder (51243) with the key value ω₇ = sp + 1568, the buffer ω₈ = sp + 744 and return
+    address 282. -/
+theorem rm_some {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
+    (μ : Memory) (sp q0 q1 q2 q3 v : Nat) (h1 : ω[1] = UInt64.ofNat sp) (hsp : sp + 1604 < 4294967296)
+    (mt : μ.readN (sp + 1144) 2 = Num.encodeLE 2 1)
+    (m0 : μ.readN (sp + 1146) 8 = Num.encodeLE 8 q0) (m1 : μ.readN (sp + 1154) 8 = Num.encodeLE 8 q1)
+    (m2 : μ.readN (sp + 1162) 8 = Num.encodeLE 8 q2) (m3 : μ.readN (sp + 1170) 8 = Num.encodeLE 8 q3)
+    (hq0 : q0 < 2 ^ 64) (hq1 : q1 < 2 ^ 64) (hq2 : q2 < 2 ^ 64) (hq3 : q3 < 2 ^ 64)
+    (mv : μ.readN (sp + 1178) 2 = Num.encodeLE 2 v) (hv : v < 65536)
+    (hr : ∀ a, sp + 1144 ≤ a → a < sp + 1180 → μ.readable a = true)
+    (hw1 : ∀ a, sp + 744 ≤ a → a < sp + 780 → μ.writable a = true)
+    (hw2 : ∀ a, sp + 1568 ≤ a → a < sp + 1604 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 8079 ω μ x 51243 ω' μ' x 24 ∧
+      μ' = ((((((((((μ.writeN (sp + 1572) (Num.encodeLE 8 q0)).writeN (sp + 1580) (Num.encodeLE 8 q1)).writeN
+        (sp + 1588) (Num.encodeLE 8 q2)).writeN (sp + 1596) (Num.encodeLE 8 q3)).writeN (sp + 775)
+        (Num.encodeLE 4 0)).writeN (sp + 1568) (Num.encodeLE 2 2)).writeN (sp + 1570) (Num.encodeLE 2 v)).writeN
+        (sp + 744) (Num.encodeLE 8 0)).writeN (sp + 752) (Num.encodeLE 8 0)).writeN (sp + 760)
+        (Num.encodeLE 8 0)).writeN (sp + 768) (Num.encodeLE 8 0) ∧
+      ω'[0] = UInt64.ofNat 282 ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      ω'[7] = UInt64.ofNat (sp + 1568) ∧ ω'[8] = UInt64.ofNat (sp + 744) := by
+  have rt : rdN μ (sp + 1144) 2 = 1 := by show Num.decodeLE _ = _; rw [mt]; rfl
+  have rv : rdN μ (sp + 1178) 2 = v := by
+    show Num.decodeLE _ = _; rw [mv, Num.decodeLE_encodeLE, Nat.mod_eq_of_lt hv]
+  have r0 := Handlers.DesignateAlloc.rd8 hq0 m0
+  have r1 := Handlers.DesignateAlloc.rd8 hq1 m1
+  have r2 := Handlers.DesignateAlloc.rd8 hq2 m2
+  have r3 := Handlers.DesignateAlloc.rd8 hq3 m3
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?_, ?_, ?_, ?_⟩
+  rotate_left 2
+  · pvm_go [h1, hsp, rt, rv, r0, r1, r2, r3, hr, hw1, hw2, bs_51243, ↓rdN_fold]
+  · have hsx : ((if v < 32768 then (v : Int) else (v : Int) - 65536) % 18446744073709551616).toNat % 65536 = v := by
+      split <;> omega
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+    · simp only [hsx, show sp + 1572 + 8 = sp + 1580 by omega, show sp + 1572 + 16 = sp + 1588 by omega,
+        show sp + 1572 + 24 = sp + 1596 by omega]
+      rfl
+    all_goals simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h1]
+
+end Services.Bootstrap.Acc.Handlers.RecentMatch

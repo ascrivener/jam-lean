@@ -33,7 +33,7 @@ abbrev vr (k : Nat) : SVal := .var k
 /-- ρ_k + o. -/
 abbrev af (k : Nat) (o : Int) : Aff := ⟨some k, o⟩
 
-/-- The identity substitution on `n` named naturals. -/
+/-- The identity substitution on the 15 named naturals. -/
 def idsub15 : List SVal :=
   [vr 0, vr 1, vr 2, vr 3, vr 4, vr 5, vr 6, vr 7, vr 8, vr 9, vr 10, vr 11, vr 12, vr 13, vr 14]
 
@@ -102,7 +102,8 @@ theorem readN_one_frame {μ μ₀ : Memory} {a : Nat} (h : μ.read a = μ₀.rea
 theorem obl3 (μ₀ : Memory) : ∀ ℓ ∈ leaves3, LoopOblX ub3 lb3 H3 asm3 μ₀ I3 meas3 60803 (Q3 μ₀) ℓ := by
   simp only [leaves3, List.mem_cons, List.not_mem_nil, or_false]
   rintro ℓ (rfl | rfl | rfl) <;> intro vals ω μ hI hB hLB hF hH hf <;>
-    rcases vals with _ | ⟨a0, _ | ⟨a1, _ | ⟨a2, _ | ⟨a3, _ | ⟨a4, _ | ⟨a5, _ | ⟨a6, _ | ⟨a7, _ | ⟨a8, _ | ⟨a9, _ | ⟨a10, _ | ⟨a11, _ | ⟨a12, _ | ⟨a13, _ | ⟨a14, _ | ⟨_, _⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩ <;> simp only [BHold, ub3] at hB <;>
+    rcases vals with _ | ⟨a0, _ | ⟨a1, _ | ⟨a2, _ | ⟨a3, _ | ⟨a4, _ | ⟨a5, _ | ⟨a6, _ | ⟨a7, _ | ⟨a8, _ | ⟨a9, _ | ⟨a10, _ | ⟨a11, _ | ⟨a12, _ | ⟨a13, _ | ⟨a14, _ | ⟨_, _⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩ <;>
+    (try (simp [BHold, ub3] at hB; done)) <;> simp only [BHold, ub3] at hB <;>
     simp only [LBHold, lb3] at hLB <;>
     simp only [I3, List.getD_cons_succ, List.getD_cons_zero] at hI <;>
     simp only [asm3, FactsHold, Fact.Holds, Aff.eval, env, List.getD_cons_succ,
@@ -143,6 +144,6 @@ theorem byte_loop {X : Type} {p : ByteArray} {R : HostRel X} {P : Program}
     ∀ vals ω μ, I3 vals → BHold vals ub3 → LBHold vals lb3 → FactsHold (env vals ω μ) asm3 →
       H3.Holds vals μ₀ ω μ →
       ∃ xpc k ω' μ', FreeStepsH p R 60803 ω μ x xpc ω' μ' x k ∧ Q3 μ₀ xpc ω' μ' :=
-  loop_fork_soundX check3 (by decide) hypU trivial (fun _ _ _ _ => trivial) (obl3 μ₀) x
+  loop_fork_soundX check3 (by decide) (hypU (p := p) (P := P)) trivial (fun _ _ _ _ => trivial) (obl3 μ₀) x
 
 end Services.Bootstrap.SymExec.Utf8

@@ -26,6 +26,29 @@ still open.
   saves only when its build did not finish, so that finished PR builds don't evict main's caches
   from the 10 GB repository cache.
 
+## CI: the model job and the proofs
+
+- `ci.yml` runs two lines of jobs:
+  - **`model`**, on every run: tables, forbidden constructs, `lake build PVM JAM`, the kernel-checked
+    examples, `scripts/CheckAxiomsModel.lean`, and every vector suite (PVM programs, gas, codec,
+    trie, shuffle, erasure, the STF suites, the hash vectors, Ψ_R/Ψ_I, witnessrun and the four
+    block-import traces). It restores the model's own cache (`lake-model-…`, saved by main without
+    Services), else the newest full build.
+  - **the proofs** (`attempt-1..3`, `build.yml`): the largest proofs, the full `lake build`,
+    `scripts/CheckAxioms.lean`, witnesscheck, bootstrapcheck and the generated-file checks, then the
+    cache save and (main) the `lake-cache` publish.
+- The proofs run on `main` always. On a PR they run only when the `changes` job
+  (`scripts/services-affected.py`) finds that the PR can affect Services. A path counts when it is
+  under `Services/` or `services/`, is `Services.lean` or build configuration (`lakefile.lean`,
+  `lean-toolchain`, `lake-manifest.json`, `.github/`), is a script other than the model-only ones,
+  or is a module that a Services module, `Tests.WitnessCheck`, `Tests.BootstrapCheck` or
+  `Tests.GenWitnessSteps` imports, directly or transitively. Errors count as affected.
+- In the current import graph, Services imports 15 of JAM's modules (Codec, Accumulate, Refine, …)
+  and every PVM base module, but not BlockImport, Safrole, Disputes, Crypto or the other STF modules.
+  Changes to those, to tests and to docs get a verdict from `model` alone.
+- A PR may merge when `model` is green and the attempts are green or skipped. If `main`'s proofs fail
+  after a PR merged with `affected=false`, fix the detector.
+
 ## Cloud sessions: start from main's latest build
 
 Cloud sessions can't reach the Actions cache or artifacts: the proxy refuses `/actions/` API paths,

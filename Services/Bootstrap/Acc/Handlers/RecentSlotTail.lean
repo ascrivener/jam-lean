@@ -346,4 +346,51 @@ theorem sg_tailW {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
     simp only [List.append_assoc, show S + 56 + 8 = S + 64 by omega, show S + 64 + 8 = S + 72 by omega,
       show S + 72 + 8 = S + 80 by omega]
 
+/-- **34434 … the return, `get` gave the empty value** (its `Vec` {0, 1, 0} at S + 24): the first
+    read is short, so the `u16` 0 (`None`) at out and the return to t, with no `dealloc`. Under any
+    host relation; memory changes only at S − 88 … S + 88 and out … out + 2. -/
+theorem sg_tailE {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
+    (x : X) (ω : Regs) (μ : Memory) (S out r0 v5 v6 t : Nat)
+    (h1 : ω[1] = UInt64.ofNat S) (h5 : ω[5] = UInt64.ofNat out)
+    (hS : 65536 + 88 ≤ S ∧ S + 112 < 4294967296) (hout : S + 112 ≤ out ∧ out + 36 < 4294967296)
+    (mc : μ.readN (S + 24) 8 = Num.encodeLE 8 0) (mp : μ.readN (S + 32) 8 = Num.encodeLE 8 1)
+    (ml : μ.readN (S + 40) 8 = Num.encodeLE 8 0)
+    (m104 : μ.readN (S + 104) 8 = Num.encodeLE 8 r0) (m96 : μ.readN (S + 96) 8 = Num.encodeLE 8 v5)
+    (m88 : μ.readN (S + 88) 8 = Num.encodeLE 8 v6)
+    (hr0 : r0 < 18446744073709551616) (hv5 : v5 < 18446744073709551616) (hv6 : v6 < 18446744073709551616)
+    (hret : 0 < r0 ∧ r0 ≤ 2806 ∧ r0 % 2 = 0) (hjt : P.jumpTable.getD (r0 / 2 - 1) 0 = t)
+    (hbt : P.isBlockStart t = true)
+    (hw : ∀ a, S - 88 ≤ a → a < S + 112 → μ.writable a = true)
+    (hwo : ∀ a, out ≤ a → a < out + 2 → μ.writable a = true) :
+    ∃ ω' μ' n, FreeStepsH p R 34434 ω μ x t ω' μ' x n ∧
+      ω'[0] = UInt64.ofNat r0 ∧ ω'[1] = UInt64.ofNat (S + 112) ∧ ω'[5] = UInt64.ofNat v5 ∧
+      ω'[6] = UInt64.ofNat v6 ∧ SlotOut μ' out (decode slotDec []) ∧
+      (∀ a, a < 4294967296 → (a < S - 88 ∨ S + 88 ≤ a) → (a < out ∨ out + 2 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.writable a = μ.writable a) := by
+  obtain ⟨ω1, μ1, run1, a0, a1, a5, a6, a7, a8, a9, mS, mS8, mS16, fr1, rd1, wr1⟩ :=
+    sg_some (P := P) (R := R) x ω μ S 0 1 0 h1 ⟨by omega, by omega⟩ (by decide) (by decide)
+      (by decide) (by decide) mc mp ml (fun a h1 h2 => hw a (by omega) h2)
+  obtain ⟨ω2, μ2, run2, b0, b1, b5, b6, b7, fr2, rd2, wr2⟩ := re_short (P := P) (R := R) x ω1 μ1 S (S + 8) 32
+    0 1604 34485 ⟨by omega, by omega⟩ a0 a1 a7 a9 (by decide) ⟨by decide, by decide, by decide⟩
+    (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_801]) bs_34485
+    (by rw [show S + 8 + 8 = S + 16 by omega]; exact rdN_of_readN mS16 (by decide))
+    (by decide) (by omega) (.inr (by omega))
+    (fun a h1 h2 => by rw [rd1]; exact Memory.readable_of_writable (hw a (by omega) (by omega)))
+    (fun a h1 h2 => by rw [wr1]; exact hw a (by omega) (by omega))
+  have kf : ∀ o, S + 88 ≤ o → o + 8 ≤ S + 112 → μ2.readN o 8 = μ.readN o 8 := fun o h1 h2 =>
+    Memory.readN_congr fun j hj => by
+      rw [fr2 _ (by omega) (.inr (by omega)), fr1 _ (by omega) (.inr (by omega)) (.inr (by omega))]
+  obtain ⟨ω3, run3, c0, c1, c5, c6⟩ := sg_short0 (P := P) (R := R) x ω2 μ2 34485 S out 1 r0 v5 v6 t (.inl rfl)
+    (b1.trans a1) (b5.trans (a5.trans h5)) (b6.trans a6) b7 (by decide) (by decide) ⟨by omega, by omega⟩
+    ⟨by omega, by omega⟩ (by rw [kf _ (by omega) (by omega)]; exact m104) (by rw [kf _ (by omega) (by omega)]; exact m96)
+    (by rw [kf _ (by omega) (by omega)]; exact m88) hr0 hv5 hv6 hret hjt hbt
+    (fun a h1 h2 => by rw [rd2, rd1]; exact Memory.readable_of_writable (hw a (by omega) (by omega)))
+    (fun a h1 h2 => by rw [wr2, wr1]; exact hwo a h1 h2)
+  have l2 : (Num.encodeLE 2 0).length = 2 := Num.length_encodeLE ..
+  refine ⟨ω3, _, _, (run1.trans run2).trans run3, c0, c1, c5, c6, ?_, fun a h0 ha hb => ?_, fun a => ?_⟩
+  · rw [slotDec_short [] (by decide)]; unfold SlotOut
+    exact Memory.readN_writeN_same _ _ _ _ l2 (by unfold two32; omega)
+  · rw [rd_wr _ _ _ _ 2 l2 (by omega) (by omega) h0, fr2 a h0 (by omega), fr1 a h0 (by omega) (by omega)]
+  · rw [Memory.writable_writeN, wr2, wr1]
+
 end Services.Bootstrap.Acc.Handlers.RecentSlot

@@ -329,3 +329,16 @@ work proceed unaffected.
 - **Undecodable request values** (§2(A), open point): the default is **"absent"**. A request
   lookup whose `entries` value does not decode as ⟦ℕ_T⟧_{:3} behaves as if no request exists. Only
   an invalid loaded state can contain such a value.
+
+### Status
+
+**Stage 1 is PR #200.** It adds `storageKey` and `requestKey`, `storageGet`, `storageWrite`,
+`requestGet`, `requestSet` and `requestErase`, with their lemmas, to `JAM/Account.lean`. Its merge
+is timed with the full-rebuild PRs.
+
+**Deferred to stage 2 (parent's decision):** restating `ASemLemmas.lean` and Acc/Wrappers
+`ReadHost.lean`, `GetCall.lean` and `SetCall.lean` through the accessors.
+- Reason: Handlers A's statements use `storage.get?` directly, so restating now would break its
+  in-flight proofs.
+- Stage 2 restates them together with Handlers.
+- Meanwhile, new statements use the accessors. `storageGet_eq` (`rfl`) bridges the two forms.

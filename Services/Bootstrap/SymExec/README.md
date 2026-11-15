@@ -349,6 +349,13 @@ and 57832 if a caller turns up. Use `from_utf8_call` at each site. The Display s
 or touching fmt summaries, use the parent's new failure shape: "`Fmt.Exhausts`, and from that state
 the run ends ☇ keeping (x, y)".
 
+**Note for KeyFmt (Adam, 2026-11-15).** The T2-inputs branch strengthens its `KeyFmt`
+hypothesis (Transfer/Hyp.lean). The success case now places the key text in the data of a live
+chunk allocated during the call:
+∃ ch ∈ chunks s', ch.used ∧ ch.addr + 32 = kp ∧ (fresh w.r.t. s₀) ∧ ∀ a ∈ [kp, kp+len), InDataA ch a.
+The `kc = 0 ∨ …` disjunct is dropped. Prove this version when `key_fmt` is discharged against it,
+or when it is revised with the RO-data premises.
+
 ## Open decisions and dependencies
 
 - `core::str::from_utf8` (60681): Adam chose the executor-loops route (2026-11-15).

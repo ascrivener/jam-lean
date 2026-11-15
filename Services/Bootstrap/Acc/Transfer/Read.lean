@@ -50,7 +50,7 @@ theorem trCount_lt (v : Option Bytes) : trCount v < 4294967296 := by
     simp only [Option.bind_some, decode_fixedN4]
     split
     · simp only [Option.getD_some]
-      have := Num.decodeLE_lt (w.take 4)
+      have := PVM.decodeLE_lt (w.take 4)
       have hl : (w.take 4).length = 4 := by simp; omega
       rw [hl] at this; exact this
     · simp
@@ -128,13 +128,13 @@ theorem tr_read (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap 
   have rd13 : ∀ a, μ3.readable a = μ.readable a := fun a => by rw [rd3, rd2]
   have H3 : HeapCtxC env.code pb S0 S1 μ3 s₀ := HeapCtxC.keep_hi H fr13 wr13
   have hkey3 : μ3.readN 65956 14 = trKey := by
-    rw [readN_frame fun j hj => fr13 _ (by omega)]; exact hkey
-  rcases gk_call (hb := hb) env cap pb hcap1 hcap (c := c) (f := f) ω3 μ3 s₀ (sp - 56) (sp + 1568)
+    rw [readN_congr2 fun j hj => fr13 _ (by omega)]; exact hkey
+  rcases gk_call (p := p) (P := P) (hb := hb) env cap pb hcap1 hcap (c := c) (f := f) ω3 μ3 s₀ (sp - 56) (sp + 1568)
       ω[10].toNat ω[6].toNat S0 S1 trKey H3 c0 c1 c7 c8 c5 c6 ⟨by omega, by omega⟩ ⟨by omega, by omega⟩
       ⟨by omega, by omega⟩ (readN_of_rdN m0) (readN_of_rdN m48) (readN_of_rdN m40) (readN_of_rdN m32)
       (UInt64.toNat_lt _) (UInt64.toNat_lt _) hkey3 (fun a h1 h2 => by rw [rd13]; exact hkr a h1 h2) hfit with
     ⟨s4, ω4, μ4, n4, run4, d1, d5, d6, gout, H4, keep4, dat4, fr4⟩ | ⟨t, ω4, μ4, n4, ht, run4⟩
-  swap
+  rotate_left
   · exact .inr ⟨t, ω4, μ4, _, by rcases ht with rfl | rfl <;> simp [HeapTrapT],
       run1.trans (run2.trans (run3.trans run4))⟩
   have d1' : ω4[1] = UInt64.ofNat sp := by rw [d1, show sp - 56 + 56 = sp by omega]
@@ -181,7 +181,7 @@ theorem tr_read (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap 
       fun d hd hu => ⟨(dat5 d hd hu).1, fun a ha => ?_⟩, ?_, ?_, ?_, ?_, memo4 μ5 fr5⟩
     · rw [(dat5 d hd hu).2 a ha, dat4 d hd hu a ha]
       exact fr13 a (heapC_data_lt H hd ha).2
-    · rw [readN_frame (μ := μ2) fun j hj => by
+    · rw [readN_congr2 (μ := μ2) fun j hj => by
         rw [to3' μ5 fr5 _ (by omega) (by omega),
           fr3 _ (by omega) (.inr (by omega)) (.inr (by omega)) (.inr (by omega)) (.inr (by omega))]]
       exact cp2
@@ -268,7 +268,7 @@ theorem tr_read (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap 
         rw [if_pos h4]
         refine ⟨f7, ?_⟩
         unfold rdN
-        rw [cp6, readN_frame (μ := μ4) fun j hj => k45 _ (by omega), ← readN_take μ4 ptr W.length 4 h4, gW]
+        rw [cp6, readN_congr2 (μ := μ4) fun j hj => k45 _ (by omega), ← readN_take μ4 ptr W.length 4 h4, gW]
       · obtain ⟨ω6, μ6, run6, f0, f1, f5, f6, f7, fr6, rd6, wr6⟩ :=
           read_exact_short (p := p) (P := P) (R := KeepCtx (accContractS env)) (c, f) ω5 μ5 sp (sp + 744) 4
             W.length 246 7288 ⟨by omega, by omega⟩ e0 e1 e7 e9 (by omega) (by decide) (by decide) jte_122

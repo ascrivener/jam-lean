@@ -50,12 +50,9 @@ theorem memcpy_val {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Reg
       h0 h1 h7 h8 h9 hn hret hjt hbt ⟨hsp.1, hsp.2.1⟩ ⟨hd.1, by omega⟩ ⟨hs.1, by omega⟩ (by omega)
       (by omega) (by omega) hwf hr hw
     refine ⟨ω', _, run.mono (by omega), e0, e1, e5, e6, ?_, fun a ha0 ha1 ha2 => ?_, fun a => ?_, fun a => ?_⟩
-    · have hl : ((memcpyFrame μ ω sp).readN src n).length = n := Memory.length_readN
-      have := Memory.readN_writeN (memcpyFrame μ ω sp) dst ((memcpyFrame μ ω sp).readN src n)
-        (by rw [hl]; unfold two32; omega)
-      rw [hl] at this
-      rw [this]
-      exact readN_frame fun j hj => mF _ (by omega) (by omega)
+    · have := Memory.readN_writeN (memcpyFrame μ ω sp) dst (μ.readN src n)
+        (by rw [Memory.length_readN]; unfold two32; omega)
+      rwa [Memory.length_readN] at this
     · rw [Memory.read_writeN_disjoint _ _ _ _ (by simp only [Memory.length_readN]; omega)
         (by simp only [Memory.length_readN, two32]; omega) (by simp only [two32]; omega)]
       exact mF a ha0 ha2
@@ -119,8 +116,8 @@ theorem read_exact_val {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω :
   refine ⟨ω3, μ3, ((run1.trans run2).trans run3).mono (by omega), c0.trans h0.symm,
     by rw [c1, h1, show sp - 40 + 40 = sp by omega], c5.trans UInt64.ofNat_toNat,
     c6.trans UInt64.ofNat_toNat, c7, ?_, cp, cl, fun a ha hd' hf hR => ?_, fun a => ?_, fun a => ?_⟩
-  · rw [readN_frame (fun j hj => fr3 _ (by omega) (by omega)), cp2]
-    exact readN_frame fun j hj => fr1 _ (by omega) (by omega)
+  · rw [readN_congr2 (fun j hj => fr3 _ (by omega) (by omega)), cp2]
+    exact readN_congr2 fun j hj => fr1 _ (by omega) (by omega)
   · rw [fr3 a ha hR, fr2 a ha hd' (by omega), fr1 a ha (by omega)]
   · rw [rd3, rd2, rd1]
   · rw [wr3, wr2, wr1]

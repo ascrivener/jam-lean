@@ -1,0 +1,33 @@
+call_site	kind	callee	ret_addr	return_block	class	outcome	trap_pc	steps_to_trap_or_ret
+5183	load_imm_jump	40494	164	5190	a	trap	6376	2
+6291	load_imm ω0;jump	40494	1414	30073	a	trap	30284	2
+7138	load_imm_jump	40494	240	7145	a	trap	15364	4
+7233	load_imm ω0;jump	40494	102	3820	a	trap	3895	2
+7382	load_imm ω0;jump	40494	110	3896	a	trap	4002	2
+7406	load_imm_jump	40494	252	7413	a	trap	15363	4
+7537	load_imm_jump	40494	258	7544	a	trap	15362	4
+7885	load_imm ω0;jump	40494	1576	34071	a	trap	34178	2
+8263	load_imm ω0;jump	40494	1490	32414	a	trap	32584	2
+9952	load_imm_jump	40494	350	9958	a	trap	15366	4
+10086	load_imm_jump	40494	356	10092	a	trap	15367	4
+11260	load_imm ω0;jump	40494	1504	32585	a	trap	32726	2
+11804	load_imm_jump	40494	430	11810	a	trap	15365	2
+13771	load_imm_jump	40494	514	13777	a	trap	15368	2
+14649	load_imm_jump	40494	546	14655	a	trap	15365	2
+14916	load_imm ω0;jump	40494	1046	22571	a	trap	22838	2
+25742	load_imm_jump	40494	1190	25748	a	trap	25652	2
+26129	load_imm_jump	40494	1204	26135	a	trap	26396	2
+26270	load_imm_jump	40494	1212	26276	a	trap	26396	2
+33049	load_imm_jump	40701	1524	33055	c	ret	33150	17
+33084	load_imm_jump	40494	1526	33090	c	ret	33150	16
+33880	load_imm_jump	40494	1566	33886	a	trap	34070	2
+34803	load_imm_jump	40494	1622	34809	a	trap	35072	2
+34869	load_imm_jump	40494	1624	34875	a	trap	35071	2
+36211	load_imm_jump	40494	1692	36217	a	trap	36528	2
+50206	load_imm_jump	40701	2222	50212	c	ret	50307	17
+50241	load_imm_jump	40494	2224	50247	c	ret	50307	16
+58357	load_imm_jump	40701	2546	58363	c	ret	58432	11
+58400	load_imm_jump	40494	2548	58406	c	ret	58432	11
+58775	load_imm_jump	40701	2560	58781	c	ret	58876	17
+58811	load_imm_jump	40494	2562	58817	c	ret	58876	16
+59551	load_imm_jump	40494	2584	59557	a	trap	59710	4

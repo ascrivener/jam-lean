@@ -143,23 +143,23 @@ theorem getD_le_foldr_max : ∀ (l : List Nat) (j : Nat), l.getD j 0 ≤ l.foldr
     simp only [List.getD_cons_succ, List.foldr_cons]
     exact Nat.le_trans (getD_le_foldr_max l j) (Nat.le_max_right _ _)
 
-theorem bnd_sound (hpre : Pre E st) : ∀ (v : SVal) b, v.bnd st = some b → v.eval E < b := by
+theorem bnd0_sound (hpre : Pre E st) : ∀ (v : SVal) b, v.bnd0 st = some b → v.eval E < b := by
   intro v b h
   cases v with
-  | const n => simp only [SVal.bnd, Option.some.injEq] at h; subst h; simp [SVal.eval]
+  | const n => simp only [SVal.bnd0, Option.some.injEq] at h; subst h; simp [SVal.eval]
   | var k => exact hpre.1 k b h
-  | reg0 r => simp only [SVal.bnd, Option.some.injEq] at h; subst h; exact UInt64.toNat_lt _
+  | reg0 r => simp only [SVal.bnd0, Option.some.injEq] at h; subst h; exact UInt64.toNat_lt _
   | mem0 a n =>
-    simp only [SVal.bnd, Option.some.injEq] at h; subst h
+    simp only [SVal.bnd0, Option.some.injEq] at h; subst h
     have := decodeLE_lt (E.μ.readN (a.eval E).toNat n)
     simpa [SVal.eval] using this
   | mod v m =>
-    simp only [SVal.bnd] at h
+    simp only [SVal.bnd0] at h
     split at h
     · cases h; exact Nat.mod_lt _ ‹_›
     · cases h
   | addr a =>
-    simp only [SVal.bnd] at h
+    simp only [SVal.bnd0] at h
     split at h
     · rename_i hl
       cases hh : a.hi st with
@@ -170,7 +170,7 @@ theorem bnd_sound (hpre : Pre E st) : ∀ (v : SVal) b, v.bnd st = some b → v.
         simp only [SVal.eval]; omega
     · cases h
   | alu2i op a' w s =>
-    simp only [SVal.bnd] at h
+    simp only [SVal.bnd0] at h
     split at h
     · rename_i hop; subst hop; cases h
       simp only [SVal.eval]
@@ -183,16 +183,93 @@ theorem bnd_sound (hpre : Pre E st) : ∀ (v : SVal) b, v.bnd st = some b → v.
         exact Nat.lt_succ_of_le (bitwise_and_le _ _)
       · cases h
   | tbl vs i =>
-    simp only [SVal.bnd, Option.some.injEq] at h; subst h
+    simp only [SVal.bnd0, Option.some.injEq] at h; subst h
     exact Nat.lt_succ_of_le (getD_le_foldr_max vs _)
   | sx k w =>
-    simp only [SVal.bnd, Option.some.injEq] at h; subst h
+    simp only [SVal.bnd0, Option.some.injEq] at h; subst h
     simp only [SVal.eval, u64, unsigned]
     have h1 := Int.emod_lt_of_pos (2 ^ (8 * 8) + signed k (w.eval E)) (show (0 : Int) < 2 ^ (8 * 8) by decide)
     have h0 := Int.emod_nonneg (2 ^ (8 * 8) + signed k (w.eval E)) (show (2 ^ (8 * 8) : Int) ≠ 0 by decide)
     simp only [two64]
     omega
-  | _ => simp [SVal.bnd] at h
+  | _ => simp [SVal.bnd0] at h
+
+theorem facts_hold (hpre : Pre E st) : ∀ f ∈ st.facts, f.Holds E := hpre.2.2.2.2.2.2
+
+theorem fub_sound {v : SVal} : ∀ {fs : List Fact}, (∀ f ∈ fs, f.Holds E) →
+    ∀ b, fub fs v = some b → v.eval E < b
+  | [], _, b, h => by simp [fub] at h
+  | f :: fs, hf, b, h => by
+    have ih := fub_sound (v := v) (fs := fs) (fun g hg => hf g (List.mem_cons_of_mem _ hg))
+    have hf0 := hf f (List.mem_cons_self ..)
+    cases f with
+    | lt w c =>
+      simp only [fub] at h
+      split at h
+      · rename_i hw
+        have hw : w = v := by simpa using hw
+        subst hw
+        simp only [Fact.Holds] at hf0
+        cases hq : fub fs w with
+        | none => rw [hq] at h; simp only [minO, Option.some.injEq] at h; omega
+        | some q =>
+          rw [hq] at h; simp only [minO, Option.some.injEq] at h
+          have := ih q hq; omega
+      · exact ih b h
+    | _ => simp only [fub] at h; exact ih b h
+
+theorem flb_sound {v : SVal} : ∀ {fs : List Fact}, (∀ f ∈ fs, f.Holds E) → flb fs v ≤ v.eval E
+  | [], _ => by simp [flb]
+  | f :: fs, hf => by
+    have ih := flb_sound (v := v) (fs := fs) (fun g hg => hf g (List.mem_cons_of_mem _ hg))
+    have hf0 := hf f (List.mem_cons_self ..)
+    cases f with
+    | ge w c =>
+      simp only [flb]
+      split
+      · rename_i hw
+        have hw : w = v := by simpa using hw
+        subst hw
+        simp only [Fact.Holds] at hf0
+        omega
+      · exact ih
+    | _ => simp only [flb]; exact ih
+
+theorem aff_shift (a : Aff) (d : Int) : Aff.eval E ⟨a.base, a.off + d⟩ = a.eval E + d := by
+  obtain ⟨b, o⟩ := a; cases b <;> simp [Aff.eval] <;> omega
+
+theorem leA_sound (hpre : Pre E st) {a b : Aff} (h : leA st a b = true) : a.eval E ≤ b.eval E := by
+  unfold leA at h
+  simp only [Bool.or_eq_true, Bool.and_eq_true, beq_iff_eq, decide_eq_true_eq, List.any_eq_true] at h
+  rcases h with (⟨hb, ho⟩ | h) | ⟨f, hf, h⟩
+  · have := eval_sub (E := E) hb; omega
+  · split at h
+    · rename_i hv hh; have := le_hi hpre hh; have := lo_le hpre b
+      simp only [decide_eq_true_eq] at h; omega
+    · cases h
+  · cases f with
+    | le a' b' =>
+      simp only [Bool.and_eq_true, beq_iff_eq, decide_eq_true_eq] at h
+      obtain ⟨⟨h1, h2⟩, h3⟩ := h
+      have hl : a'.eval E ≤ b'.eval E := facts_hold hpre _ hf
+      have := eval_sub (E := E) h1
+      have := eval_sub (E := E) h2
+      omega
+    | _ => simp at h
+
+theorem bnd_sound (hpre : Pre E st) (v : SVal) (b : Nat) (h : v.bnd st = some b) : v.eval E < b := by
+  unfold SVal.bnd at h
+  have h1 := bnd0_sound hpre v
+  have h2 := fub_sound (v := v) (facts_hold hpre)
+  cases hq : v.bnd0 st with
+  | none => rw [hq] at h; simp only [minO] at h; exact h2 b h
+  | some q =>
+    rw [hq] at h
+    cases hr : fub st.facts v with
+    | none => rw [hr] at h; simp only [minO, Option.some.injEq] at h; subst h; exact h1 q hq
+    | some r =>
+      rw [hr] at h; simp only [minO, Option.some.injEq] at h
+      have := h1 q hq; have := h2 r hr; omega
 
 theorem bnd_any (hpre : Pre E st) {v : SVal} {m : Nat} (h : (v.bnd st).any (· ≤ m) = true) :
     v.eval E < m := by
@@ -378,30 +455,34 @@ theorem mkAlu2i_eval (hpre : Pre E st) (op : TwoRegImmOp) (a b : SVal) (x : Nat)
     · simp only [Bool.false_eq_true, ite_false, SVal.eval]; rw [alu2i_noA op hu (a.eval E)]
     · simp
 
-theorem lob_sound (hpre : Pre E st) (v : SVal) : v.lob st ≤ v.eval E := by
+theorem lob0_sound (hpre : Pre E st) (v : SVal) : v.lob0 st ≤ v.eval E := by
   cases v with
   | const n => exact Nat.le_refl _
   | var k =>
-    simp only [SVal.lob, SVal.eval]
+    simp only [SVal.lob0, SVal.eval]
     cases h : st.lb[k]? with
     | none => simp
     | some b => simpa using hpre.2.1 k b h
   | addr a =>
-    simp only [SVal.lob, SVal.eval]
+    simp only [SVal.lob0, SVal.eval]
     exact Int.toNat_le_toNat (lo_le hpre a)
   | sx k w =>
-    simp only [SVal.lob]
+    simp only [SVal.lob0]
     split
     · rename_i hc
       obtain ⟨rfl, h1, h2⟩ := hc
       have h3 := bnd_any hpre h2
-      have h4 := lob_sound hpre w
+      have h4 := lob0_sound hpre w
       simp only [SVal.eval, u64, unsigned, signed]
       rw [if_neg (by simp only [show 8 * 4 - 1 = 31 from rfl]; omega)]
       simp only [show 8 * 4 = 32 from rfl, show 8 * 8 = 64 from rfl]
       omega
     · exact Nat.zero_le _
   | _ => exact Nat.zero_le _
+
+theorem lob_sound (hpre : Pre E st) (v : SVal) : v.lob st ≤ v.eval E := by
+  unfold SVal.lob
+  have := lob0_sound hpre v; have := flb_sound (v := v) (facts_hold hpre); omega
 
 
 theorem leB_sound (hpre : Pre E st) {v w : SVal} (h : leB st v w = true) : v.eval E ≤ w.eval E := by
@@ -527,7 +608,15 @@ theorem scond_sound (hpre : Pre E st) {op : RegImmOffsetOp} {v : SVal} {x : Nat}
   unfold scond at h
   split at h
   · cases h; rfl
-  · cases hb : v.bnd st with
+  · split at h
+    · rename_i hc
+      simp only [Bool.and_eq_true, Bool.or_eq_true, beq_iff_eq] at hc
+      obtain ⟨hm, hop⟩ := hc
+      have hne : v.eval E ≠ x := facts_hold hpre (.ne v x) (by simpa using hm)
+      cases h
+      rcases hop with rfl | rfl <;> simp only [regImmBranchCond] <;> (try rw [beq_false_of_ne hne]) <;>
+        (try simp [hne]) <;> (try rfl)
+    cases hb : v.bnd st with
     | none => rw [hb] at h; cases h
     | some hi =>
       rw [hb] at h
@@ -591,7 +680,23 @@ theorem ltU_sound (hpre : Pre E st) {v w : SVal} {c : Bool} (h : ltU st v w = so
       · rename_i _ h1; cases h
         have := bnd_any hpre h1; have := lob_sound hpre v
         simp only [decide_eq_false_iff_not]; omega
-      · cases h
+      · split at h
+        · rename_i a b _ _ _
+          split at h
+          · rename_i hlo
+            simp only [Bool.and_eq_true, decide_eq_true_eq] at hlo
+            have ha := lo_le hpre a; have hb := lo_le hpre b
+            split at h
+            · rename_i hl; cases h
+              have := leA_sound hpre hl; rw [aff_shift] at this
+              exact decide_eq_true (by show (a.eval E).toNat < (b.eval E).toNat; omega)
+            · split at h
+              · rename_i _ hl; cases h
+                have := leA_sound hpre hl
+                exact decide_eq_false (by show ¬ (a.eval E).toNat < (b.eval E).toNat; omega)
+              · cases h
+          · cases h
+        · cases h
 
 theorem eqU_sound (hpre : Pre E st) {v w : SVal} {c : Bool} (h : eqU st v w = some c) :
     (v.eval E == w.eval E) = c := by
@@ -664,7 +769,7 @@ theorem rwv_eval (hpre : Pre E st) (v : SVal) : (rwv st v).eval E = v.eval E := 
     have hm := List.mem_of_find?_eq_some hq
     have he := List.find?_some hq
     simp only [beq_iff_eq] at he
-    rw [← he]; exact (hpre.2.2.2.2.2 q hm).symm
+    rw [← he]; exact (hpre.2.2.2.2.2.1 q hm).symm
   · rfl
 
 theorem rdv_eval (hpre : Pre E st) {σ : SState} {ω : Regs}
@@ -903,6 +1008,30 @@ theorem loadVal_sound (hpre : Pre E st) {σ : SState} {ω : Regs} {μ : Memory} 
       exact disj_sound hpre this _ (by simp only [InReg]; omega) hin
     · cases hv
 
+theorem inWr_sound (hpre : Pre E st) {a : Aff} {n : Nat} (h : inWr st a n = true) :
+    ∀ t, InReg E (a, n) t → E.μ.writable t = true := by
+  unfold inWr at h
+  obtain ⟨f, hf, h⟩ := List.any_eq_true.1 h
+  cases f with
+  | wr lo hi =>
+    simp only [Bool.and_eq_true] at h
+    have h1 := leA_sound hpre h.1; have h2 := leA_sound hpre h.2; rw [aff_shift] at h2
+    have hh : (Fact.wr lo hi).Holds E := facts_hold hpre _ hf
+    intro t ht; simp only [InReg] at ht; exact hh t (by omega) (by omega)
+  | _ => simp at h
+
+theorem inRd_sound (hpre : Pre E st) {a : Aff} {n : Nat} (h : inRd st a n = true) :
+    ∀ t, InReg E (a, n) t → E.μ.readable t = true := by
+  unfold inRd at h
+  obtain ⟨f, hf, h⟩ := List.any_eq_true.1 h
+  cases f with
+  | rd lo hi =>
+    simp only [Bool.and_eq_true] at h
+    have h1 := leA_sound hpre h.1; have h2 := leA_sound hpre h.2; rw [aff_shift] at h2
+    have hh : (Fact.rd lo hi).Holds E := facts_hold hpre _ hf
+    intro t ht; simp only [InReg] at ht; exact hh t (by omega) (by omega)
+  | _ => simp at h
+
 /-- A store `sstore` allows: the octets are writable, and the new state is described. -/
 theorem sstore_sound (hpre : Pre E st) {σ σ' : SState} {ω : Regs} {μ : Memory} (h : Inv E σ ω μ)
     {a : Aff} {A n : Nat} {v : SVal} (hA : A % two32 = (a.eval E).toNat)
@@ -914,8 +1043,12 @@ theorem sstore_sound (hpre : Pre E st) {σ σ' : SState} {ω : Regs} {μ : Memor
   split at hs
   · rename_i hok
     cases hs
-    simp only [Bool.and_eq_true, List.any_eq_true] at hok
-    obtain ⟨hval, rg, hrg, hw⟩ := hok
+    simp only [Bool.and_eq_true, Bool.or_eq_true, List.any_eq_true] at hok
+    obtain ⟨hval, hW⟩ := hok
+    have hW' : ∀ t, InReg E (a, n) t → E.μ.writable t = true := by
+      rcases hW with ⟨rg, hrg, hw⟩ | hw
+      · exact fun t ht => hpre.2.2.2.1 rg hrg t (within_sound hpre hw t ht)
+      · exact inWr_sound hpre hw
     obtain ⟨ha0, han, hlt'⟩ := valid_sound hpre hval
     have hlt : (a.eval E).toNat < two32 := by omega
     have hwA : μ.writeN A (encodeLE n (v.eval E)) =
@@ -927,7 +1060,7 @@ theorem sstore_sound (hpre : Pre E st) {σ σ' : SState} {ω : Regs} {μ : Memor
     · intro i hi
       obtain ⟨k, hk, hik⟩ := indices_mod (by omega) i hi
       rw [hik, writable_pages hp]
-      exact hpre.2.2.2.1 rg hrg _ (within_sound hpre hw _ (by simp only [InReg]; omega))
+      exact hW' _ (by simp only [InReg]; omega)
     · intro c hcm
       rw [hwA]
       rcases List.mem_cons.1 hcm with rfl | hcm
@@ -996,9 +1129,11 @@ theorem sload_sound (hpre : Pre E st) {σ σ' : SState} {ω : Regs} {μ : Memory
         obtain ⟨j, hj, hij⟩ := indices_mod (by omega) i hi
         rw [hij, readable_pages hinv.2.2.2.2]
         have hin : InReg E (a, n) (A % two32 + j) := by simp only [InReg]; omega
-        rcases hrw with ⟨rg, hrg, hw⟩ | ⟨rg, hrg, hw⟩
+        rcases hrw with ((⟨rg, hrg, hw⟩ | ⟨rg, hrg, hw⟩) | hw) | hw
         · exact hpre.2.2.1 rg hrg _ (within_sound hpre hw _ hin)
         · exact Memory.readable_of_writable (hpre.2.2.2.1 rg hrg _ (within_sound hpre hw _ hin))
+        · exact inRd_sound hpre hw _ hin
+        · exact Memory.readable_of_writable (inWr_sound hpre hw _ hin)
       · have := setv_inv hinv d (mkSx st k v)
         rwa [mkSx_eval hpre, hval'] at this
   · cases hl

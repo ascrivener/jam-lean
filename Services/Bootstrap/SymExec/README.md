@@ -128,6 +128,33 @@ Not done yet / next:
   this. Option: add a `Fact`-style frame region or a symbolic-length frame (another core change, so
   check with the parent first).
 
+### Update 2026-11-15 (second session): gaps 1–3 closed
+
+Commit "sum and neA facts, two-variable adds…" on this branch (all additive):
+- `Fact.sum x y z` (ρx + ρy = ρz), `Fact.neA a b`. `addSum`: add64 of values affine on ρx, ρy gives
+  `addr ⟨z, o1+o2⟩` under a sum fact. `leA` = `leA0` (old) or ρx ≤ ρx+ρy (`hasSum`) or through two
+  sums with a shared first summand. `asAffV` lets `ltU`/`eqU`/`splitAddr` take `.var` too; Eq/Ne
+  split on two affine values.
+- `loop_soundX`, `LoopOblX`, `loop_fork_soundX` (Loop.lean): leaves may exit at any pc (`Q pc`).
+- Gap 2 handled without executor change: split on len ≥ 15 in the pre-loop segment (lb[len] = 15
+  gives r4 = ⟨len, −15⟩; otherwise r4 = 0).
+- `#eval` on the real code works (scratch Prog from the code facts 60681–61147, see below):
+  L1 60738 → {60822 (byte ≥ 0x80), 61086, 60738, 60756}; L2 60759 → {60759, 60793 ×2};
+  L3 60803 → {60803, 61086, 60943}. Named naturals used: 0 p, 1 len, 2 i, 3 q = p+i, 4 sp, 5 align,
+  6 m (r4), 7 w (r11 = −len), 8 ret, 9/10 saved r5/r6, 11 r7, 12 e = p+len, 13 u (r6 in L3, lb
+  2^64−2^32), 14 i0 (r5 in L3). asm: sum 0 2 3, sum 0 1 12, rd ⟨0,0⟩ ⟨12,0⟩, le ⟨2,1⟩ ⟨1,0⟩ (L2: le
+  ⟨2,1⟩ ⟨1,−15⟩ with ub[q] = 2^32−15). Stack cells at sp+0/8/16/24 (71078, s6, s5, ret), frame (sp,32).
+- Under ASCII the control flow is sequential: pre → L1 → (61086 | 60756 → [L2] → 60793 → L3 → 61086).
+
+Caller 7447 (on_transfer) passes the 128-octet transfer memo (arbitrary octets) and uses the result
+only for the log line at 7692; Err takes a lossy path at 7465. Sent to the parent: recommend spec (c)
+(all inputs: terminates, frame-only, Ok/Err shape) plus the ASCII implication. Awaiting decision.
+
+Scratch tooling (not committed): a generator printing `def code/bs` NTrees for 60681–61147 from
+`Services/Bootstrap/Code*/L*.lean` (same regexes as gen_prog.py) into a file with
+`import PVM.SymExec.Loop`, then `#eval srunF (forkStatic ub lb [] H asm) G stops 300 [] pc (init ⟨H.regs, H.cells⟩)`
+via `lake env lean`.
+
 ## Open decisions and dependencies
 
 - `core::str::from_utf8` (60681): Adam chose the executor-loops route (2026-11-15).

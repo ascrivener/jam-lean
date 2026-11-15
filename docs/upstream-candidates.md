@@ -78,5 +78,10 @@ These would go to the service's authors, not to the Gray Paper.
 - **The picoalloc model's alignment rounding.** A bug in this repository's own model, not in the
   paper or the vectors. The model rounded the data unit from the heap base; the binary rounds it
   in the address space. Fixed in `Services/Picoalloc/Model.lean`.
+- **The lookup anchor's state root in `lookupAnchorKnown`.** A bug in this repository's own
+  model, found by the jam-lean-target fuzzing work. §11.4.1 (GP eq. 11.36) requires the lookup
+  anchor's child to have h'_R = x_lookupanchorpoststate; the model compared it with the anchor's
+  x_stateroot, rejecting valid blocks whose lookup anchor differs from their anchor. Fixed in
+  `JAM/BlockImport.lean`, with a regression test in `Tests/TraceTest.lean`.
 - **Notes 6–10, 14, 16 and 22.** Points where the vectors confirm a subtle reading, or observations
   that need no change.

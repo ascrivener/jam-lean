@@ -29,6 +29,8 @@ the real compiled service binaries in `services/`. Read `docs/whats-proven.md` f
   - Pass `(S0 := S0) (S1 := S1)` explicitly.
   - Elaboration can die silently, so check exit codes.
   - Run the full `lake build` in the background before each PR.
+  - New code facts go in a new append-only tier, not a regeneration of an existing one: see
+    `docs/code-fact-tiers.md`.
 
 ## CI
 

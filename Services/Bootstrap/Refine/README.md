@@ -7,7 +7,7 @@ Everything cites Gray Paper v0.8.0 via the docstrings of the files named here; t
 ## PAUSED 2026-11-14: state at the project move (read this first)
 
 **Branch** `claude/bootstrap-t1-exec-wip`. Everything, including the read-only data change below, builds:
-`lake build Services.Bootstrap.Refine.Milestone` completed successfully with no `sorry`. Re-run `#print axioms refine_milestone`
+`lake build Services.Bootstrap.Refine.Milestone` completed successfully with no placeholder proofs. Re-run `#print axioms refine_milestone`
 before the PR: it was last checked clean before the read-only change.
 
 **Done on the wip branch (not yet a PR):** `Refine/Milestone.lean` `refine_milestone`, T1c's first

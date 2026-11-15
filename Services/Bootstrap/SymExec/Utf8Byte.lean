@@ -73,20 +73,36 @@ def leaves3 : List Leaf :=
 theorem check3 : forkCheck progU ub3 lb3 [] H3 asm3 leaves3 60803 100 = true := by
   decide +kernel
 
+/-- The named naturals `vals` agree with `v₀` at the indices `ks`. -/
+def Keep (ks : List Nat) (v₀ vals : List Nat) : Prop := ∀ k ∈ ks, vals.getD k 0 = v₀.getD k 0
+
+/-- The named naturals the byte loop does not change (all but i, q and r6). -/
+def keep3 : List Nat := [0, 1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14]
+
 /-- What the loop keeps that the executor does not track: r6 = 2^64 − i, r11 = 2^64 − len, and the
-    input [p, p + len) apart from the stack frame [sp, sp + 32). -/
-def I3 (vals : List Nat) : Prop :=
+    input [p, p + len) apart from the stack frame [sp, sp + 32); and, against the named naturals
+    `v₀` at the loop's start (a ghost), every named natural but i, q, r6 unchanged and i not
+    below its start. -/
+def I3 (v₀ vals : List Nat) : Prop :=
   vals.getD 13 0 + vals.getD 2 0 = 2 ^ 64 ∧ vals.getD 7 0 + vals.getD 1 0 = 2 ^ 64 ∧
-  (vals.getD 0 0 + vals.getD 1 0 ≤ vals.getD 4 0 ∨ vals.getD 4 0 + 32 ≤ vals.getD 0 0)
+  (vals.getD 0 0 + vals.getD 1 0 ≤ vals.getD 4 0 ∨ vals.getD 4 0 + 32 ≤ vals.getD 0 0) ∧
+  Keep keep3 v₀ vals ∧ v₀.getD 2 0 ≤ vals.getD 2 0
+
+/-- What holds at the loop's exits: as `I3`, with r6 + i = 0 only modulo 2^64 (r6 = 0 when the
+    loop is entered at i = 0, see `byte_loop'`). -/
+def J3 (v₀ vals : List Nat) : Prop :=
+  (vals.getD 13 0 + vals.getD 2 0) % 2 ^ 64 = 0 ∧ vals.getD 7 0 + vals.getD 1 0 = 2 ^ 64 ∧
+  (vals.getD 0 0 + vals.getD 1 0 ≤ vals.getD 4 0 ∨ vals.getD 4 0 + 32 ≤ vals.getD 0 0) ∧
+  Keep keep3 v₀ vals ∧ v₀.getD 2 0 ≤ vals.getD 2 0
 
 /-- The measure: len − i. -/
 def meas3 (vals : List Nat) : Nat := vals.getD 1 0 - vals.getD 2 0
 
-/-- Where the loop ends: the header cut with some named naturals satisfying `I3`, the bounds `ub3x` and
+/-- Where the loop ends: the header cut with some named naturals satisfying `J3`, the bounds `ub3x` and
     q = p + i, e = p + len; at 61086 with i = len, at 60943 with i < len and the octet at q (in the
     start memory μ₀) at least 0x80. -/
-def Q3 (μ₀ : Memory) (pc : Nat) (ω : Regs) (μ : Memory) : Prop :=
-  ∃ vals, H3.Holds vals μ₀ ω μ ∧ BHold vals ub3x ∧ LBHold vals lb3 ∧ I3 vals ∧
+def Q3 (μ₀ : Memory) (v₀ : List Nat) (pc : Nat) (ω : Regs) (μ : Memory) : Prop :=
+  ∃ vals, H3.Holds vals μ₀ ω μ ∧ BHold vals ub3x ∧ J3 v₀ vals ∧
     vals.getD 0 0 + vals.getD 2 0 = vals.getD 3 0 ∧ vals.getD 0 0 + vals.getD 1 0 = vals.getD 12 0 ∧
     ((pc = 61086 ∧ vals.getD 2 0 = vals.getD 1 0) ∨
      (pc = 60943 ∧ vals.getD 2 0 < vals.getD 1 0 ∧ 128 ≤ decodeLE (μ₀.readN (vals.getD 3 0) 1)))
@@ -102,7 +118,11 @@ theorem readN_one_frame {μ μ₀ : Memory} {a : Nat} (h : μ.read a = μ₀.rea
     μ.readN a 1 = μ₀.readN a 1 := by
   simp [Memory.readN, h]
 
-theorem obl3 (μ₀ : Memory) : ∀ ℓ ∈ leaves3, LoopOblX ub3 lb3 H3 asm3 μ₀ I3 meas3 60803 (Q3 μ₀) ℓ := by
+theorem keep_of {ks v₀ l l' : List Nat} (hK : Keep ks v₀ l) (h : ∀ k ∈ ks, l'.getD k 0 = l.getD k 0) :
+    Keep ks v₀ l' := fun k hk => (h k hk).trans (hK k hk)
+
+theorem obl3 (μ₀ : Memory) (v₀ : List Nat) :
+    ∀ ℓ ∈ leaves3, LoopOblX ub3 lb3 H3 asm3 μ₀ (I3 v₀) meas3 60803 (Q3 μ₀ v₀) ℓ := by
   simp only [leaves3, List.mem_cons, List.not_mem_nil, or_false]
   rintro ℓ (rfl | rfl | rfl) <;> intro vals ω μ hI hB hLB hF hH hf <;>
     rcases vals with _ | ⟨a0, _ | ⟨a1, _ | ⟨a2, _ | ⟨a3, _ | ⟨a4, _ | ⟨a5, _ | ⟨a6, _ | ⟨a7, _ | ⟨a8, _ | ⟨a9, _ | ⟨a10, _ | ⟨a11, _ | ⟨a12, _ | ⟨a13, _ | ⟨a14, _ | ⟨_, _⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩ <;>
@@ -116,7 +136,7 @@ theorem obl3 (μ₀ : Memory) : ∀ ℓ ∈ leaves3, LoopOblX ub3 lb3 H3 asm3 μ
   all_goals
     obtain ⟨b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13, b14, -⟩ := hB
     obtain ⟨-, -, -, -, -, -, -, -, -, -, -, -, -, l13, -, -⟩ := hLB
-    obtain ⟨h1, h2, h3⟩ := hI
+    obtain ⟨h1, h2, h3, hK, h5⟩ := hI
     obtain ⟨f1, f2, f3, f4, -⟩ := hF
   · -- the back edge
     obtain ⟨g1, -⟩ := hf
@@ -124,7 +144,7 @@ theorem obl3 (μ₀ : Memory) : ∀ ℓ ∈ leaves3, LoopOblX ub3 lb3 H3 asm3 μ
     refine ⟨rfl, rfl, ?_, ?_, ?_, ?_, ?_⟩ <;>
       simp only [svals, nxt3, List.map, SVal.eval, Aff.eval, af, I3, BHold, ub3, LBHold, lb3, asm3,
         FactsHold, Fact.Holds, env, meas3, List.getD_cons_succ, List.getD_cons_zero]
-    · exact ⟨by omega, h2, h3⟩
+    · exact ⟨by omega, h2, h3, keep_of hK (by simp [keep3]), by omega⟩
     · exact ⟨b0, b1, by omega, by omega, b4, b5, b6, b7, b8, b9, b10, b11, b12, by omega, b14, trivial⟩
     · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, trivial⟩ <;> omega
     · exact ⟨by omega, by omega, f3, f4, trivial⟩
@@ -135,11 +155,10 @@ theorem obl3 (μ₀ : Memory) : ∀ ℓ ∈ leaves3, LoopOblX ub3 lb3 H3 asm3 μ
     right
     intro ω' μ' hB'
     refine ⟨_, hB', ?_⟩
-    simp only [svals, nxt3, List.map, SVal.eval, Aff.eval, af, I3, BHold, ub3x, LBHold, lb3, env,
+    simp only [svals, nxt3, List.map, SVal.eval, Aff.eval, af, J3, BHold, ub3x, env,
       List.getD_cons_succ, List.getD_cons_zero]
     refine ⟨⟨b0, b1, by omega, by omega, b4, b5, b6, b7, b8, b9, b10, b11, b12, by omega, b14, trivial⟩,
-      ?_, ⟨by omega, h2, h3⟩, by omega, f3, Or.inl ⟨trivial, by omega⟩⟩
-    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, trivial⟩ <;> omega
+      ⟨by omega, h2, h3, keep_of hK (by simp [keep3]), by omega⟩, by omega, f3, Or.inl ⟨trivial, by omega⟩⟩
   · -- an octet ≥ 0x80
     obtain ⟨g1, -⟩ := hf
     right
@@ -152,22 +171,20 @@ theorem obl3 (μ₀ : Memory) : ∀ ℓ ∈ leaves3, LoopOblX ub3 lb3 H3 asm3 μ
         List.getD_cons_succ, List.getD_cons_zero, af]
       omega)
     rw [readN_one_frame hfr] at hb
-    simp only [svals, idsub15, List.map, SVal.eval, I3, BHold, ub3x, LBHold, lb3, env,
+    simp only [svals, idsub15, List.map, SVal.eval, J3, BHold, ub3x, env,
       List.getD_cons_succ, List.getD_cons_zero]
     exact ⟨⟨b0, b1, b2, by omega, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13, b14, trivial⟩,
-      ⟨Nat.zero_le _, Nat.zero_le _, Nat.zero_le _, Nat.zero_le _, Nat.zero_le _, Nat.zero_le _,
-        Nat.zero_le _, Nat.zero_le _, Nat.zero_le _, Nat.zero_le _, Nat.zero_le _, Nat.zero_le _,
-        Nat.zero_le _, l13, Nat.zero_le _, trivial⟩,
-      ⟨h1, h2, h3⟩, f1, f3, Or.inr ⟨trivial, by omega, hb⟩⟩
+      ⟨by omega, h2, h3, keep_of hK (by simp [keep3]), h5⟩, f1, f3, Or.inr ⟨trivial, by omega, hb⟩⟩
 
 /-- **The byte loop of `from_utf8`** (60803): from its header the machine reaches 61086 with
     i = len, or 60943 at an index i < len whose octet is at least 0x80 (`Q3`). -/
 theorem byte_loop {X : Type} {p : ByteArray} {R : HostRel X} {P : Program}
     [Services.Bootstrap.CodeF.HasCodeF p P] [Services.Bootstrap.Code.HasCode p P]
-    {μ₀ : Memory} (x : X) :
-    ∀ vals ω μ, I3 vals → BHold vals ub3 → LBHold vals lb3 → FactsHold (env vals ω μ) asm3 →
+    {μ₀ : Memory} (v₀ : List Nat) (x : X) :
+    ∀ vals ω μ, I3 v₀ vals → BHold vals ub3 → LBHold vals lb3 → FactsHold (env vals ω μ) asm3 →
       H3.Holds vals μ₀ ω μ →
-      ∃ xpc k ω' μ', FreeStepsH p R 60803 ω μ x xpc ω' μ' x k ∧ Q3 μ₀ xpc ω' μ' :=
-  loop_fork_soundX check3 (by decide) (hypU (p := p) (P := P)) trivial (fun _ _ _ _ => trivial) (obl3 μ₀) x
+      ∃ xpc k ω' μ', FreeStepsH p R 60803 ω μ x xpc ω' μ' x k ∧ Q3 μ₀ v₀ xpc ω' μ' :=
+  loop_fork_soundX check3 (by decide) (hypU (p := p) (P := P)) trivial (fun _ _ _ _ => trivial)
+    (obl3 μ₀ v₀) x
 
 end Services.Bootstrap.SymExec.Utf8

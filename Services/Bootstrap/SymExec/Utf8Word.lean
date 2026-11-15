@@ -70,11 +70,17 @@ def leaves2 : List Leaf :=
 theorem check2 : forkCheck progU ub2 lb2 [] H2 asm2 leaves2 60759 100 = true := by
   decide +kernel
 
+/-- The named naturals the word loop does not change (all but i and q). -/
+def keep2 : List Nat := [0, 1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+
 /-- What the loop keeps that the executor does not track: r11 = 2^64 − len, and the input
-    [p, p + len) apart from the stack frame [sp, sp + 32). -/
-def I2 (vals : List Nat) : Prop :=
+    [p, p + len) apart from the stack frame [sp, sp + 32); and, against the named naturals `v₀` at
+    the loop's start (a ghost), every named natural but i and q unchanged and i not below its
+    start. -/
+def I2 (v₀ vals : List Nat) : Prop :=
   vals.getD 7 0 + vals.getD 1 0 = 2 ^ 64 ∧
-  (vals.getD 0 0 + vals.getD 1 0 ≤ vals.getD 4 0 ∨ vals.getD 4 0 + 32 ≤ vals.getD 0 0)
+  (vals.getD 0 0 + vals.getD 1 0 ≤ vals.getD 4 0 ∨ vals.getD 4 0 + 32 ≤ vals.getD 0 0) ∧
+  Keep keep2 v₀ vals ∧ v₀.getD 2 0 ≤ vals.getD 2 0
 
 /-- The measure: len − i. -/
 def meas2 (vals : List Nat) : Nat := vals.getD 1 0 - vals.getD 2 0
@@ -82,8 +88,8 @@ def meas2 (vals : List Nat) : Nat := vals.getD 1 0 - vals.getD 2 0
 /-- Where the loop ends: at 60793, the header cut with some named naturals satisfying `I2`, the
     bounds `ub2x`, q = p + i, e = p + len and i ≤ len; either len ≤ i + 15, or i + 16 ≤ len and the
     16 octets at q in the start memory μ₀ have a set top bit. -/
-def Q2 (μ₀ : Memory) (pc : Nat) (ω : Regs) (μ : Memory) : Prop :=
-  ∃ vals, H2.Holds vals μ₀ ω μ ∧ BHold vals ub2x ∧ LBHold vals lb2 ∧ I2 vals ∧
+def Q2 (μ₀ : Memory) (v₀ : List Nat) (pc : Nat) (ω : Regs) (μ : Memory) : Prop :=
+  ∃ vals, H2.Holds vals μ₀ ω μ ∧ BHold vals ub2x ∧ LBHold vals lb2 ∧ I2 v₀ vals ∧
     vals.getD 0 0 + vals.getD 2 0 = vals.getD 3 0 ∧ vals.getD 0 0 + vals.getD 1 0 = vals.getD 12 0 ∧
     pc = 60793 ∧ vals.getD 2 0 ≤ vals.getD 1 0 ∧
     (vals.getD 1 0 ≤ vals.getD 2 0 + 15 ∨
@@ -94,7 +100,8 @@ theorem readN_frame {μ μ₀ : Memory} {a n : Nat} (h : ∀ k, k < n → μ.rea
   simp only [Memory.readN]
   exact List.map_congr_left (fun k hk => h k (List.mem_range.mp hk))
 
-theorem obl2 (μ₀ : Memory) : ∀ ℓ ∈ leaves2, LoopOblX ub2 lb2 H2 asm2 μ₀ I2 meas2 60759 (Q2 μ₀) ℓ := by
+theorem obl2 (μ₀ : Memory) (v₀ : List Nat) :
+    ∀ ℓ ∈ leaves2, LoopOblX ub2 lb2 H2 asm2 μ₀ (I2 v₀) meas2 60759 (Q2 μ₀ v₀) ℓ := by
   simp only [leaves2, List.mem_cons, List.not_mem_nil, or_false]
   rintro ℓ (rfl | rfl | rfl) <;> intro vals ω μ hI hB hLB hF hH hf <;>
     rcases vals with _ | ⟨a0, _ | ⟨a1, _ | ⟨a2, _ | ⟨a3, _ | ⟨a4, _ | ⟨a5, _ | ⟨a6, _ | ⟨a7, _ | ⟨a8, _ | ⟨a9, _ | ⟨a10, _ | ⟨a11, _ | ⟨a12, _ | ⟨a13, _ | ⟨a14, _ | ⟨_, _⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩ <;>
@@ -106,7 +113,7 @@ theorem obl2 (μ₀ : Memory) : ∀ ℓ ∈ leaves2, LoopOblX ub2 lb2 H2 asm2 μ
   all_goals
     obtain ⟨b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13, b14, -⟩ := hB
     obtain ⟨-, l1, -⟩ := hLB
-    obtain ⟨h2, h3⟩ := hI
+    obtain ⟨h2, h3, hK, h5⟩ := hI
     obtain ⟨f1, f2, f3, f4, -⟩ := hF
   · -- a set top bit
     simp only [FactsHold, Fact.Holds] at hf
@@ -135,7 +142,7 @@ theorem obl2 (μ₀ : Memory) : ∀ ℓ ∈ leaves2, LoopOblX ub2 lb2 H2 asm2 μ
       ⟨Nat.zero_le _, l1, Nat.zero_le _, Nat.zero_le _, Nat.zero_le _, Nat.zero_le _,
         Nat.zero_le _, Nat.zero_le _, Nat.zero_le _, Nat.zero_le _, Nat.zero_le _, Nat.zero_le _,
         Nat.zero_le _, Nat.zero_le _, Nat.zero_le _, trivial⟩,
-      ⟨h2, h3⟩, f1, f3, trivial, by omega, Or.inr ⟨by omega, g1⟩⟩
+      ⟨h2, h3, keep_of hK (by simp [keep2]), by omega⟩, f1, f3, trivial, by omega, Or.inr ⟨by omega, g1⟩⟩
   · -- the back edge
     simp only [FactsHold, Fact.Holds, Aff.eval, env, List.getD_cons_succ, List.getD_cons_zero] at hf
     obtain ⟨g1, -⟩ := hf
@@ -143,7 +150,7 @@ theorem obl2 (μ₀ : Memory) : ∀ ℓ ∈ leaves2, LoopOblX ub2 lb2 H2 asm2 μ
     refine ⟨rfl, rfl, ?_, ?_, ?_, ?_, ?_⟩ <;>
       simp only [svals, nxt2, List.map, SVal.eval, Aff.eval, af, I2, BHold, ub2, LBHold, lb2, asm2,
         FactsHold, Fact.Holds, env, meas2, List.getD_cons_succ, List.getD_cons_zero]
-    · exact ⟨h2, h3⟩
+    · exact ⟨h2, h3, keep_of hK (by simp [keep2]), by omega⟩
     · exact ⟨b0, b1, by omega, by omega, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13, b14, trivial⟩
     · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, trivial⟩ <;> omega
     · exact ⟨by omega, by omega, f3, f4, trivial⟩
@@ -157,17 +164,18 @@ theorem obl2 (μ₀ : Memory) : ∀ ℓ ∈ leaves2, LoopOblX ub2 lb2 H2 asm2 μ
     simp only [svals, nxt2, List.map, SVal.eval, Aff.eval, af, I2, BHold, ub2x, LBHold, lb2, env,
       List.getD_cons_succ, List.getD_cons_zero]
     refine ⟨⟨b0, b1, by omega, by omega, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13, b14, trivial⟩,
-      ?_, ⟨h2, h3⟩, by omega, f3, trivial, by omega, Or.inl (by omega)⟩
+      ?_, ⟨h2, h3, keep_of hK (by simp [keep2]), by omega⟩, by omega, f3, trivial, by omega, Or.inl (by omega)⟩
     refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, trivial⟩ <;> omega
 
 /-- **The word loop of `from_utf8`** (60759): from its header (with i + 16 ≤ len) the machine reaches
     60793 with i ≤ len, and either len ≤ i + 15 or the 16 octets at q have a set top bit (`Q2`). -/
 theorem word_loop {X : Type} {p : ByteArray} {R : HostRel X} {P : Program}
     [Services.Bootstrap.CodeF.HasCodeF p P] [Services.Bootstrap.Code.HasCode p P]
-    {μ₀ : Memory} (x : X) :
-    ∀ vals ω μ, I2 vals → BHold vals ub2 → LBHold vals lb2 → FactsHold (env vals ω μ) asm2 →
+    {μ₀ : Memory} (v₀ : List Nat) (x : X) :
+    ∀ vals ω μ, I2 v₀ vals → BHold vals ub2 → LBHold vals lb2 → FactsHold (env vals ω μ) asm2 →
       H2.Holds vals μ₀ ω μ →
-      ∃ xpc k ω' μ', FreeStepsH p R 60759 ω μ x xpc ω' μ' x k ∧ Q2 μ₀ xpc ω' μ' :=
-  loop_fork_soundX check2 (by decide) (hypU (p := p) (P := P)) trivial (fun _ _ _ _ => trivial) (obl2 μ₀) x
+      ∃ xpc k ω' μ', FreeStepsH p R 60759 ω μ x xpc ω' μ' x k ∧ Q2 μ₀ v₀ xpc ω' μ' :=
+  loop_fork_soundX check2 (by decide) (hypU (p := p) (P := P)) trivial (fun _ _ _ _ => trivial)
+    (obl2 μ₀ v₀) x
 
 end Services.Bootstrap.SymExec.Utf8

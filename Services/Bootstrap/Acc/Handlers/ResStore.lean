@@ -40,8 +40,8 @@ theorem rs_pre {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X
       (∀ a, a < 4294967296 → (a < sp - 96 ∨ sp ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
   rw [show ω = regsNF ω [] from rfl]
-  refine ⟨?_, ?_, ?_⟩
-  rotate_left
+  refine ⟨?_, ?_, ?_, ?_⟩
+  rotate_left 2
   · pvm_go [h1, h7, h8, h9, hsp, hrp, hn, hkp, hw, bs_40494, rdN_writeN_disjoint, ↓rdN_fold]
   · refine ⟨by reg_val, ?_, ?_, by reg_val, ?_, by reg_val, ?_, ?_, ?_, ?_, ?_, ?_,
       fun a ha h1' => ?_, fun a => ?_, fun a => ?_⟩

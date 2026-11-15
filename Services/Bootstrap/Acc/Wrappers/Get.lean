@@ -175,19 +175,11 @@ theorem gr_lock {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : 
 theorem gr_big {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
     (μ : Memory) (L : Nat) (h6 : ω[6] = UInt64.ofNat L) (h7 : ω[7] = UInt64.ofNat 137438953440)
     (hL : 137438953440 < L) (hL1 : L < 18446744073709551616) :
-    FreeStepsH p R 47974 ω μ x 47977 ω μ x 1 := by
+    ∃ ω', FreeStepsH p R 47974 ω μ x 47977 ω' μ x 1 := by
   have hm : L % 18446744073709551616 = L := Nat.mod_eq_of_lt hL1
   rw [show ω = regsNF ω [] from rfl]
-  pvm_go [h6, h7, hm, show ¬ 137438953440 ≥ L by omega]
-
-/-- The unit count ⌈L/32⌉ of a value with 2³⁶ ≤ L + 31 < 2³⁷, sign-extended from 32 bits by 48031's
-    `add_imm_32`: 2⁶⁴ − 2³² + ⌈L/32⌉. -/
-theorem sext4_huge (q : Nat) (h1 : 2147483648 ≤ q) (h2 : q < 4294967296) :
-    sext 4 q = 18446744069414584320 + q := by
-  unfold sext
-  rw [show 2 ^ (8 * 4) = 4294967296 from rfl, Nat.mod_eq_of_lt h2, if_neg (by decide),
-    show 8 * 4 - 1 = 31 from rfl, show q / 2 ^ 31 = 1 by rw [show 2 ^ 31 = 2147483648 from rfl]; omega]
-  omega
+  refine ⟨?ω', ?run⟩
+  case run => pvm_go [h6, h7, hm, show ¬ 137438953440 ≥ L by omega]
 
 /-- **47974 … 41177**, 2³⁶ ≤ L + 31 and L ≤ 2³⁷ − 32: as `gr_lock`, but the 32-bit add of the unit
     count goes negative, so `alloc_impl` is called with ω₉ = 2⁶⁴ − 2³² + ⌈L/32⌉. -/
@@ -211,11 +203,6 @@ theorem gr_lock_huge {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
   have hrf : ∀ a, sp ≤ a → a < sp + 8 → μ.readable a = true :=
     fun a h1 h2 => Memory.readable_of_writable (hwf a h1 h2)
   have hand := lock_test (w := rdN μ 206848 4) (by rw [rdN4_mod]; exact hl)
-  have hq : sext 4 (((L + 31) % 18446744073709551616 / 32 + 0) % 4294967296) =
-      18446744069414584320 + (L + 31) / 32 := by
-    rw [Nat.mod_eq_of_lt (show L + 31 < 18446744073709551616 by omega), Nat.add_zero,
-      Nat.mod_eq_of_lt (show (L + 31) / 32 < 4294967296 by omega)]
-    exact sext4_huge _ (by omega) (by omega)
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?ω', ?μ', ?run, ?post⟩
   case run => pvm_go [h1, h6, h7, hand, show 137438953440 ≥ L by omega, hwr, hr, hwf, hrf, rdN_writeN_disjoint,
@@ -225,7 +212,9 @@ theorem gr_lock_huge {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
       ?_, fun a ha h1 h2 h3 => ?_, fun a => ?_, fun a => ?_, by reg_frame⟩
     · simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some',
         List.lookup_nil, Option.getD_none, h6, UInt64.toNat_ofNat]
-      rw [hq]
+      rw [show (L + 31) / 32 / 2147483648 = 1 by omega]
+      congr 1
+      omega
     · simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some',
         List.lookup_nil, Option.getD_none]
       rd_simp []

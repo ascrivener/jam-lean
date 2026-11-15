@@ -429,7 +429,8 @@ theorem get_huge (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
   have run12 := run1.trans (FreeStepsH.host_decode (d_47886 (p := p) (P := P)) hR1 run2)
   by_cases hbig : 137438953440 < L
   · -- the size check fails
-    exact ⟨ω2, μ1, _, run12.trans (gr_big (p := p) (P := P) (c, f) ω2 μ1 L c6 c7 hbig (by omega))⟩
+    obtain ⟨ω2', run2'⟩ := gr_big (p := p) (P := P) (R := KeepCtx (accContractS env)) (c, f) ω2 μ1 L c6 c7 hbig (by omega)
+    exact ⟨ω2', μ1, _, run12.trans run2'⟩
   have c1 : ω2[1] = UInt64.ofNat (sp - 48) :=
     (bo2 1 (by decide)).trans ((readRegs_ne ω1 (some w) 1 (by decide) (by decide)).trans b1)
   obtain ⟨ph, h48, hhb, hp, hHTs, hHT⟩ := H1.pages

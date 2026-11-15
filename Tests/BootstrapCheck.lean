@@ -1,5 +1,6 @@
 import Services.Bootstrap.Prefix
 import Services.Bootstrap.CodeX
+import Services.Bootstrap.Acc.RoData
 
 /-!
 # `lake build bootstrapcheck`: the vendored bootstrap blob meets the facts its proofs assume
@@ -7,7 +8,8 @@ import Services.Bootstrap.CodeX
 Checks `checkCode` of the PVM code of `services/bootstrap/jam-bootstrap-service.jam` against
 `Services.Bootstrap.Code.facts` and `Services.Bootstrap.CodeX.facts`, and the section sizes and data octets of
 `Services.Bootstrap.Prefix.layoutOk`: the hypotheses `Services.Bootstrap.Prefix.prefix_from_Y`
-makes about the bytes. Like `witnesscheck`, this runs compiled code over the blob; everything
+makes about the bytes, and the read-only octets accumulate's wrappers read
+(`Services.Bootstrap.Acc.accRoOk`). Like `witnesscheck`, this runs compiled code over the blob; everything
 else is checked by the kernel.
 -/
 
@@ -31,5 +33,8 @@ def main (args : List String) : IO UInt32 := do
   if !Services.Bootstrap.Prefix.layoutOk jb then
     IO.eprintln "the section sizes differ from Services.Bootstrap.Prefix.layoutOk"
     return 1
-  IO.println s!"bootstrapcheck: the blob passes 𝔳_blob, the {n} + {nx} code facts and the section sizes and data octets of Services.Bootstrap.Prefix, so `prefix_from_Y` applies"
+  if !Services.Bootstrap.Acc.accRoOk jb then
+    IO.eprintln "the read-only octets differ from Services.Bootstrap.Acc.accRoBytes"
+    return 1
+  IO.println s!"bootstrapcheck: the blob passes 𝔳_blob, the {n} + {nx} code facts and the section sizes and data octets of Services.Bootstrap.Prefix, so `prefix_from_Y` applies, and accumulate's read-only octets (`accRoOk`)"
   return 0

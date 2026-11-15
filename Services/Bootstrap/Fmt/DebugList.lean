@@ -141,7 +141,7 @@ theorem debug_list_new {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P
 /-- **An entry's `Debug::fmt`, called through a reference**: as `ArgOk`, with ω₇ the address v of a
     slot (at or above sp) holding the entry's address a. -/
 def RefOk (p : ByteArray) (P : Program) {X : Type} (R : HostRel X) (env : RefineHost.Env)
-    (pb S0 S1 : Nat) (μA : Memory) (sA : State) (spA e a M C : Nat) : Prop :=
+    (pb S0 S1 Z : Nat) (μA : Memory) (sA : State) (spA e a M C : Nat) : Prop :=
   ∀ (ω : Regs) (μ : Memory) (x : X) (s : State) (sp F W cap len ret t v5 v6 v : Nat),
     HeapCtx env pb S0 S1 μ s → s.base % 8 = 0 → Keeps pb spA (fun _ => False) sA μA μ s →
     Fmtr sA s μ F W cap len →
@@ -150,7 +150,7 @@ def RefOk (p : ByteArray) (P : Program) {X : Type} (R : HostRel X) (env : Refine
     v5 < 18446744073709551616 → v6 < 18446744073709551616 →
     (0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) → P.jumpTable.getD (ret / 2 - 1) 0 = t →
     P.isBlockStart t = true →
-    (S0 + 600 ≤ sp ∧ sp % 8 = 0 ∧ 2147484248 ≤ sp) → sp ≤ spA → (sp ≤ W ∧ W + 24 ≤ S1) → W + 24 ≤ spA →
+    (S0 + Z ≤ sp ∧ sp % 8 = 0 ∧ 2147483648 + Z ≤ sp) → sp ≤ spA → (sp ≤ W ∧ W + 24 ≤ S1) → W + 24 ≤ spA →
     (sp ≤ F ∧ F + 24 ≤ S1 ∧ (F + 24 ≤ W ∨ W + 24 ≤ F)) → len + M < 134217728 →
     (sp ≤ v ∧ v + 8 ≤ S1 ∧ (v + 8 ≤ W ∨ W + 24 ≤ v)) → rdN μ v 8 = a →
     (∃ ω' μ' x' s' cap' n, n ≤ M ∧
@@ -208,7 +208,7 @@ theorem ValAt.readable {env : RefineHost.Env} {pb S0 S1 spA sp a n : Nat} {sA s 
 theorem ref_u8_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
     (pb S0 S1 : Nat) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
     (μA : Memory) (sA : State) (spA a : Nat) (hS : S0 ≤ spA) (ha : ValAt μA sA spA S1 a 1) :
-    RefOk p P R env pb S0 S1 μA sA spA 37527 a 3 2300 := by
+    RefOk p P R env pb S0 S1 600 μA sA spA 37527 a 3 2300 := by
   intro ω μ x s sp F W cap len ret t v5 v6 v H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hWA hF hn
     hv ra
   have hS1 := H.hS1
@@ -219,16 +219,16 @@ theorem ref_u8_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (en
     ra (fun b h1 h2 => Memory.readable_of_writable (hst b (by omega) (by omega)))
     (fun b h1 h2 => Memory.readable_of_writable (hst b (by omega) (by omega)))
   rcases dec8 (p := p) (P := P) (R := R) env pb S0 S1 HA HR x ω1 μ sA s sp F W a cap len ret t v5 v6 H hba hf
-      (a0.trans h0) (a1.trans h1) (a5.trans h5) (a6.trans h6) a7 a8 ⟨hv5, hv6⟩ hret hjt hbt hsp hW hF
-      ⟨by omega, by omega⟩ hra (by omega) with
+      (a0.trans h0) (a1.trans h1) (a5.trans h5) (a6.trans h6) a7 a8 ⟨hv5, hv6⟩ hret hjt hbt
+      ⟨hsp.1, hsp.2.1, by omega⟩ hW hF ⟨by omega, by omega⟩ hra (by omega) with
     ⟨ω2, μ2, x2, s2, cap2, n, hn', run2, rest⟩ | hx
   · exact Or.inl ⟨ω2, μ2, x2, s2, cap2, n, hn', (run1.trans run2).mono (by omega), rest⟩
   · exact Or.inr ((Exhausts.pre run1 hx).mono (by omega))
 
 /-- The entry's call and the end of `DebugList::entry` (from the call of the entry's `fmt` e at
     T = sp − 104, the frame holding ret, v5, v6 and D), given how the run so far reached it. -/
-theorem entry_tail {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (pb S0 S1 : Nat)
-    (μA : Memory) (sA : State) (spA e a M C : Nat) (hR : RefOk p P R env pb S0 S1 μA sA spA e a M C)
+theorem entry_tail {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (pb S0 S1 Z : Nat)
+    (μA : Memory) (sA : State) (spA e a M C : Nat) (hR : RefOk p P R env pb S0 S1 Z μA sA spA e a M C)
     (x : X) (ω : Regs) (μ : Memory) (s : State) (sp F W D v cap len ret t v5 v6 h : Nat)
     (ω1 : Regs) (μ1 : Memory) (x1 : X) (s1 : State) (cap1 d N0 : Nat)
     (run0 : FreeStepsH p R 66019 ω μ x e ω1 μ1 x1 N0)
@@ -243,7 +243,7 @@ theorem entry_tail {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost
     (hslot : rdN μ1 v 8 = a)
     (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t)
     (hbt : P.isBlockStart t = true)
-    (hsp : S0 + 704 ≤ sp ∧ sp % 8 = 0 ∧ 2147484352 ≤ sp) (hA : sp ≤ spA ∧ W + 24 ≤ spA ∧ D + 24 ≤ spA)
+    (hsp : S0 + Z + 104 ≤ sp ∧ sp % 8 = 0 ∧ 2147483648 + Z + 104 ≤ sp) (hA : sp ≤ spA ∧ W + 24 ≤ spA ∧ D + 24 ≤ spA)
     (hW : sp ≤ W ∧ W + 24 ≤ S1)
     (hF : sp ≤ F ∧ F + 24 ≤ S1 ∧ (F + 24 ≤ W ∨ W + 24 ≤ F))
     (hD : sp ≤ D ∧ D + 24 ≤ S1 ∧ (D + 24 ≤ W ∨ W + 24 ≤ D) ∧ (D + 24 ≤ F ∨ F + 24 ≤ D))
@@ -306,8 +306,8 @@ theorem entry_tail {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost
     (in read-only data; its `fmt` the word at vt + 24, resolving to e with `RefOk`): `", "` if h = 1,
     then the entry; the `DebugList` then has an entry. -/
 theorem debug_entry {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
-    (pb S0 S1 : Nat) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
-    (μA : Memory) (sA : State) (spA e a M C fn : Nat) (hR : RefOk p P R env pb S0 S1 μA sA spA e a M C)
+    (pb S0 S1 Z : Nat) (hZ : 600 ≤ Z) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
+    (μA : Memory) (sA : State) (spA e a M C fn : Nat) (hR : RefOk p P R env pb S0 S1 Z μA sA spA e a M C)
     (x : X) (ω : Regs) (μ : Memory) (s : State) (sp F W D v vt cap len ret t v5 v6 h : Nat)
     (H : HeapCtx env pb S0 S1 μ s) (hba : s.base % 8 = 0) (hf : Fmtr sA s μ F W cap len)
     (KA : Keeps pb spA (fun _ => False) sA μA μ s) (hd : DL μ D F h) (hh : h = 0 ∨ h = 1)
@@ -320,7 +320,7 @@ theorem debug_entry {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (
     (hbe : P.isBlockStart e = true) (hslot : rdN μ v 8 = a)
     (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t)
     (hbt : P.isBlockStart t = true)
-    (hsp : S0 + 704 ≤ sp ∧ sp % 8 = 0 ∧ 2147484352 ≤ sp) (hA : sp ≤ spA ∧ W + 24 ≤ spA ∧ D + 24 ≤ spA)
+    (hsp : S0 + Z + 104 ≤ sp ∧ sp % 8 = 0 ∧ 2147483648 + Z + 104 ≤ sp) (hA : sp ≤ spA ∧ W + 24 ≤ spA ∧ D + 24 ≤ spA)
     (hW : sp ≤ W ∧ W + 24 ≤ S1)
     (hF : sp ≤ F ∧ F + 24 ≤ S1 ∧ (F + 24 ≤ W ∨ W + 24 ≤ F))
     (hD : sp ≤ D ∧ D + 24 ≤ S1 ∧ (D + 24 ≤ W ∨ W + 24 ≤ D) ∧ (D + 24 ≤ F ∨ F + 24 ≤ D))
@@ -368,7 +368,7 @@ theorem debug_entry {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (
     have hf1 : Fmtr sA s μ1 F W cap (len + 0) := hf.congr (fun j hj => k1 _ (by omega) (Or.inr (by omega)))
       (fun j hj => k1 _ (by omega) (Or.inr (by omega)))
       (fun a h1 h2 => ⟨k1 a (by omega) (Or.inl (by omega)), rd1 a⟩)
-    rcases entry_tail (p := p) (P := P) (R := R) env pb S0 S1 μA sA spA e a M C hR x ω μ s sp F W D v cap len
+    rcases entry_tail (p := p) (P := P) (R := R) env pb S0 S1 Z μA sA spA e a M C hR x ω μ s sp F W D v cap len
         ret t v5 v6 0 ω1 μ1 x s cap 0 22 run1 H H1 rfl hba hf1 (Nat.le_refl _) (by omega) KA K1 hd
         (fun a h1 h2 => k1 a (by omega) (Or.inr (by omega))) a0 a1 a7 a8 s96 s88 s80 s16
         (by rw [rdN_frame (fun j hj => k1 _ (by omega) (Or.inr (by omega)))]; exact hslot)
@@ -417,7 +417,7 @@ theorem debug_entry {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (
         (fun a h1 h2 => Memory.readable_of_writable (hst2 a (by omega) (by omega))) hrv2
       have hf2 : Fmtr sA s2 μ2 F W cap2 (len + 2) :=
         Fmtr.of_keeps hf H K12 ⟨hF.1, by omega⟩ (fun a h1 h2 h => by omega) hs2
-      rcases entry_tail (p := p) (P := P) (R := R) env pb S0 S1 μA sA spA e a M C hR x ω μ s sp F W D v cap len
+      rcases entry_tail (p := p) (P := P) (R := R) env pb S0 S1 Z μA sA spA e a M C hR x ω μ s sp F W D v cap len
           ret t v5 v6 1 ω3 μ2 x2 s2 cap2 2 (26 + (7 * 2 + 2 * (cap2 - cap) + 2000) + 12)
           ((run1.trans run2).trans run3) H H2 hb2 hba hf2 hc1 hc2 KA K12 hd
           (fun a h1 h2 => K12.hi a (by omega) (by omega) (by omega))

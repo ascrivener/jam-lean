@@ -32,7 +32,7 @@ theorem dec32 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : 
     (hbt : P.isBlockStart t = true)
     (hsp : S0 + 600 ≤ sp ∧ sp % 8 = 0 ∧ 2147484248 ≤ sp) (hW : sp ≤ W ∧ W + 24 ≤ S1)
     (hF : sp ≤ F ∧ F + 24 ≤ S1 ∧ (F + 24 ≤ W ∨ W + 24 ≤ F))
-    (hvv : sp ≤ v ∧ v + 4 < 4294967296) (hrv : ∀ a, v ≤ a → a < v + 4 → μ.readable a = true)
+    (hvv : (v + 4 ≤ sp - 72 ∨ sp ≤ v) ∧ v + 4 < 4294967296) (hrv : ∀ a, v ≤ a → a < v + 4 → μ.readable a = true)
     (hn : len + 10 < 134217728) :
     (∃ ω' μ' x' s' cap' n, n ≤ 10 ∧
       FreeStepsH p R 68146 ω μ x t ω' μ' x' (7 * n + 2 * (cap' - cap) + 2500) ∧
@@ -50,7 +50,7 @@ theorem dec32 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : 
   -- the entry
   obtain ⟨ω1, μ1, run1, a1, a6, a7, a12, sv0, sv5, sv6, fr1, rd1, wr1⟩ := dl_entry (p := p) (P := P) (R := R)
     x ω μ sp v F ret v5 v6 ⟨by omega, by omega⟩ h0 h1 h5 h6 h7 h8 ⟨by omega, hv.1, hv.2, by omega⟩
-    (by omega) (Or.inr hvv.1) hrv (fun a h1 h2 => hst a (by omega) (by omega))
+    (by omega) hvv.1 hrv (fun a h1 h2 => hst a (by omega) (by omega))
   generalize hXd : rdN μ v 4 = Xv at run1 a12 hX'
   -- everything from here keeps the memory outside the frame T … sp
   have k1 : ∀ a, a < 4294967296 → (a < sp - 72 ∨ sp ≤ a) → μ1.read a = μ.read a := fun a h1 h2 =>

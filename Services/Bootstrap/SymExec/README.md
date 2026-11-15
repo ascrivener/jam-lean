@@ -192,6 +192,58 @@ Next (spec c):
 4. The exits 61086 (Ok) and 61138 (Err) → 61107 (jumpInd r0), stating the result struct at r7.
 5. (b) on top: under ASCII, 60822 and 60943 are unreachable (byte_loop's Q3 gives the octet ≥ 0x80).
 
+### Update 2026-11-15 (third session): word loop proved; outer-loop checks all pass
+
+Done (all compile; axioms propext, Classical.choice, Quot.sound; all in `Services.lean`):
+- `Utf8Word.lean`: `word_loop` (60759), template of `Utf8Byte`. Header `H2` has r4 = `.addr ⟨len, −15⟩`
+  (lb[len] = 15), asm i + 16 ≤ len. Exit `Q2` at 60793: i ≤ len, and len ≤ i + 15 or (i + 16 ≤ len and
+  `maskV` ≠ 0 over μ₀, for (b)).
+- Executor (additive, no statement changed):
+  - `valid` = `valid0` (old, by bounds) || `validF`: n > 0 octets ending at or below the end `hi` of an
+    `rd`/`wr` fact region, with hi's bound ≤ 2^32 (`leA`). Needed for the continuation loads at q+1…q+3.
+  - `mkAddr`: when `addAff` fails and the offset is 0, accept the affine address if `validF` holds.
+  - `forkCheckW`/`fork_soundW` (Fork.lean): leaves matched by pc and `leafOk` only, no path facts
+    (`Leaf.facts` ignored). `leafOk_sound` was split out of `fork_sound`'s proof.
+- `Utf8Outer.lean`: eight checks, all `decide +kernel`, a few seconds each:
+  - `check1` (W) 60738 → 60731 (misaligned, octet < 0x80) | 60756 (aligned) | 60829 (octet ≥ 0x80, after
+    the table base load; `H1b` has r10 = b (named 14), r12 = t (named 13, pinned 71078 by ub/lb), fact
+    sum 13 14 15, so the table load 60832 is at the affine ⟨15, 0⟩, readable by `rd 71078 71334`; no
+    table contents assumed). The literal-first `add64` at 60829 is why t is a named natural.
+  - `check1b` (W) 60829 → 61138 error exit `HE c2 c3` for (r2, r3) ∈ {(0,1) none, (1,1), (1,2), (1,3)}, or
+    61079 `H6` (r6 = j, named 13) with j = i + k, k ∈ {1, 2, 3} (`sub6 k`). 66 paths, 7 leaves.
+  - `check6` 61079 → 60738 (i := j + 1, j + 2 ≤ len) | 61086 (`HOk`).
+  - `check7` 60731 → 60738 (i + 1) | 61086. `check8` 60756 → 60793 (m ≤ i) | 60759 (i + 1 ≤ m).
+  - `check4` 60793 (asm i ≤ len, ub[q] = 2^32 + 1) → 61086 (i = len) | 60803 = `H3` (r6 = 2^64 − i
+    as `.alu2i .negAddImm64 (.const 0) (vr 2) 0`, r5 = i0 = i).
+  - `check5a` (W) 60943 (from `H3`, ub3x/lb3/asm3) → 60946 `H5a` (r5 = the negAdd term over vr 13).
+  - `check5b` 60946 → 60738 (i < len is already decided by asm1).
+
+Next (for the next session):
+1. **check1 must become a `forkCheck` with facts** (3 leaves; get the exact facts by `#eval` of
+   `srunF`, see the scratch method above): the 60756 leaf needs the path fact "octet at q < 0x80"
+   (`.lt (.sx 1 (.mem0 ⟨3,0⟩ 1)) (2^63)`) for the measure on the aligned path: the byte loop's exit
+   octet (≥ 0x80 in μ₀, `Q3`) then differs from i's, so i_b > i. The 60731 leaf's facts are harmless.
+2. **Ghost start index** for the inner loops: add a parameter i₀ to `I3`/`Q3` (`Utf8Byte`) and `I2`/`Q2`
+   (`Utf8Word`) with i₀ ≤ i, so exits give i_exit ≥ i_start (both are only on this branch; no
+   consumer).
+3. **The outer loop** (new file): `loop_soundX` with a hand-written body. Inv: H1.Holds ∧ BHold ub1 ∧
+   asm1 ∧ I1, I1 = r11 + len = 2^64 ∧ input/frame disjoint ∧ m + 15 = max len 15 (named 6) ∧ align < 8.
+   Body: `fork_sound check1`, then per leaf: 60731 → check7; 60829 → `fork_soundW check1b` (choose vals
+   with 15 := 71078 + b; b < 256 from the andImm) → error exit (Q) or check6; 60756 → check8 → (60759:
+   convert H1 → H2 (same vals; r4: ρ6 = len − 15 since m ≥ i + 1 > 0), `word_loop`, then re-choose vals
+   with 6 := len − 15 back to an H1-shaped cut at 60793) → check4 → `byte_loop` → 61086 (Q) or 60943 →
+   check5a → convert H5a → H1 (r5: 2^64 − ρ13 = i) → check5b. Measure len − i. Q = at 61086 `HOk`, or at
+   61138 `HE c2 c3` with i < len.
+   Cut conversions with concrete vals lists: `simp [Cut.Holds, RegsHold, CellsHold, SVal.eval, …]`.
+4. Pre-loop 60681 → 61086 (len = 0) | 60738, split on len ≥ 15 (two statics; r4 = ⟨len, −15⟩ or 0).
+5. Exits: 61086 → 61107 (Ok: stores p, len at r7+8, r7+16, 0 at r7) and 61138 → 61164 (Err: i at r7+8,
+   r2 at r7+16, r3 at r7+17, 1 at r7), both then restore r0/r5/r6, sp += 32, jumpInd r0.
+   Premises the final theorem will need, beyond the table's readability (to confirm with @parent):
+   input [p, p + len) readable with p + len ≤ 2^32, result [r7, r7 + 24) writable and disjoint from
+   the frame [sp − 32, sp), stack frame writable.
+6. (b) on top: mask lemma ((w0 | w1) & 0x8080…80 = 0 when the 16 octets are < 0x80), byte ≥ 0x80
+   exits unreachable under ASCII.
+
 ## Open decisions and dependencies
 
 - `core::str::from_utf8` (60681): Adam chose the executor-loops route (2026-11-15).

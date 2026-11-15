@@ -1,6 +1,6 @@
 # Bootstrap's accumulate: entry, control flow and checkpoints
 
-## Handoff: T2 inputs, items loop and `on_transfer` (updated 2026-11-15)
+## Handoff: T2 inputs, items loop and `on_transfer` (updated 2026-11-15, second session of the day)
 
 **State.** Branch `claude/bootstrap-t2-inputs-wip`, main (bda9d74) merged in. **All 22 WIP modules
 build** on the merged tree (`git diff --name-only origin/main -- '*.lean'`), sorry-free, axioms clean.
@@ -54,8 +54,30 @@ the same `Get.lean` / `GetCall.lean` and `gk_call` adapted to them (its abort: r
    - `Hyp.ExhaustsP`: KeyFmt/LogFmt's failure disjunct ("Exhausts, then ☇", a blob obligation; Adam
      chose option (a)).
 
-   **Next:** 7326 → 7799, then 7799 → 6766, then the `Impl` theorem, with `Ab` a parameter under
-   `hAb : ∀ s, HeapFailT s → Ab s`.
+   **Next (the composition, as `Impl` pieces rather than long runs):**
+   - **`tr_w1`** (new file `Transfer/ImplW1.lean`), from s at 7326:
+     - Goal: `Impl p (accContractS env) env Ab (orPanic (.write trKey (fixed 4 ((n+1) % 2^32)))) Q s`,
+       with n = `trCount (get? trKey)`, given `hQ : ∀ s' at 7399 with the frame facts, Q () s'`.
+     - Proof via `impl_orPanic`, with s₁ at 40494: `tr_sk_pre_sx` with v = `sxw 4 n`, so v % 2³² = n.
+     - Step: `step_write` with hk by `decide` on argBase/outBase, and hold from `hfit` (< 2⁶³).
+     - `sk_call` cases:
+       - FULL: `writeSelf` = self and ω₇ = 3, then `tr_chk_full` → `ends_of_15361`;
+       - Ok: `writeAcct`, then `tr_chk_ok` → 7399 and `.inr ⟨s', run, rfl, hQ …⟩`;
+       - alloc null: the 4002 trap, `aborts_of_trap`, with the run moved to `YIn` by `keepY`.
+     - The value: `JAM.Codec.fixed l x = Num.encodeLE l x`; `hval` comes from
+       `rdN μ' (sp+1568) 4 = (v+1) % 2³²` via `readN_of_rdN`.
+     - `writeR7 = FULL` ↔ the minBalance condition, because the old length is < 2⁶³ ≠ FULL.
+     - Premises `sk_call` needs that tr_read doesn't give:
+       - the error table: `ht8`, `ht4`, `htr`, read-only data at 69056…69076;
+       - `hkey` (65956) and `hkr`.
+       Carry them as premises of the final theorem (they hold of the blob's RO data; see `accRoBytes`).
+   - **`tr_w2`**, from 7399: `tr_a128` → alloc (null → 15363 trap) → `tr_a128_cpy` → `memcpy_val` →
+     `Utf8Call` → the log line (`lg_*`, `LogFmt`, `logS`) → `KeyFmt` (7792 → 7799) → `t2_rec` →
+     `enc_call` → `t2_set` (48104, `set` with the formatted key) → `t2_chk_*` → `t2_kfree`/`t2_knofree`
+     → 6766. The second `orPanic`; its s₁ is the state where `set` is entered.
+   - **`tr_impl`**: `impl_call_keep` with `step_read` (hk by `decide`; hv from `tr_read`'s new
+     `|w| < 2³¹` conjunct) and s₂ = tr_read's 7326 state, then `Impl.bind`, `tr_w1` and `tr_w2`.
+     `Ab` is a parameter with `hAb : ∀ s, HeapFailT s → Ab s`.
 
    **`step_read`'s bound (value < 2³¹ octets) is discharged.** `tr_read`'s success disjunct states
    it: a value the binary reads was allocated on the heap, which ends below 2³¹. Longer values take

@@ -241,6 +241,7 @@ and its definitions mark them with `-- quirk Qn`. Whether each was intended is n
 | Q14 | **The transfer counter wraps** at 2³² ([A2]); the next transfer then overwrites `"transfer0"`. | `onTransfer` |
 | Q15 | **Trailing octets after the accumulate inputs are ignored.** Accumulate decodes ℰ(↕**i**) (fetch kind 14) as a `Vec<AccumulateItem>` and never checks that the reader is empty afterwards (44495 … 44659), so octets after the items are accepted. This does not contradict the model, whose `fetch` returns exactly ℰ(↕**i**). | (binary-side; the inputs decode at 6630 → 6674) |
 | Q16 | **`Designate`'s key bound is computed in 16 bits.** The decoder loads 𝖢 sign-extended (`loadI16`), computes 3·𝖢 and zero-extends it from 16 bits, so it accepts n ≤ (3·𝖢) mod 2¹⁶ keys rather than n ≤ 3·𝖢. The two agree for 𝖢 < 21846 (the full parameters' 𝖢 = 341); beyond that, valid key lists are rejected. The spec's bound is 3·𝖢, exact for every 𝖢 bootstrap is built for. Proven as the code does it in `Decode.Designate.designate_heap`. | `Consts.maxValCount` |
+| Q18 | **`remove` panics on FULL.** The SDK's `remove` (48481) traps (48533) on any `write` reply other than NONE or a length, and for this service that is FULL: the account's threshold after the removal is still above its balance (Ω_W, B.7). So every removal (the ring's replaced results, `Zombify`'s key wipe, `DeleteItems`) can abort the whole accumulate rather than go on. The spec panics there too (decision of 2026-11-15). | `ASem.step` `.remove` |
 
 ---
 
@@ -597,6 +598,22 @@ Effort is relative: S < M < L < XL. Steps 0, 1 and 9 involve no binary.
   the top-level structure first, building on `DecodeLoop`, `NoInstr*` and the allocator theorems on
   main. Allocator facts not yet on main (the 14-page cap, alignment > 1, `realloc` preserving the
   copied data) are named hypotheses until they land.
+  - **M1, first step (proved: `Refine.Milestone.refine_milestone`).** T1c for payloads of 1 ≤ n < 128 well-formed
+    instructions, each passed through (`Upgrade`, `Transfer`, `Zombify`, `Eject`, `Solicit`, `Forget`, `Lookup` with
+    eager = false, `Yield`, `Checkpoint`, `Panic`, `Benchmark`, `Exported`) or `ExportSegs`, with |y| + 48 ≤ 2²⁴
+    (Ψ_M's argument limit Z_I = 2²⁴; W_B is far smaller). Named hypotheses: `VendoredFacts` (layoutOk and the three
+    read-only tables of the vendored blob; step 10) and `FmtHyps` (the log lines at 4742 and 5744 and the `Debug` line
+    at 6159; the fmt summaries). Not yet covered: eager `Lookup`, `Import`, `RandomStorageRefine`, the
+    variable-width instructions and n ≥ 128.
+  - **Later obligation: an allocation failure ends in ☇ with no exports.** The milestone's third outcome is
+    `ExhaustsHeap` alone (the run reaches a failed allocation). That the run then traps (panic = abort: each null
+    check falls into a `trap`), so Ψ_R's result is ☇ with no exports, is not yet proved; T1 keeps the full claim.
+    Two routes: (a) thread a stronger failure predicate (`ExhaustsT`: a failed allocation followed by the
+    caller's `trap`) through every lemma that now returns `ExhaustsX`, in the decoders, the arguments' parse,
+    the fmt summaries and refine's own pieces, with one short tail lemma per null-check site (about 12–15 sites
+    on the milestone path, plus the fmt summaries' own allocations): about 1–2 session-days; or (b) a
+    whole-program lemma that every return from 40611, 40821 or 33055 with ω₇ = 0 lands on a null check that
+    traps, from a kernel-checked table of the allocators' return sites (to be scoped).
 - **M2:** T1 for every payload (the real decoder, quirk Q1), then T1′ and S2–S4.
 - **M3:** T2 for operands whose instructions are among `Checkpoint`, `Solicit`, `Forget`,
   `DeleteItems`, `Yield` and `Transfer`, plus transfers. This brings in the ring, the results

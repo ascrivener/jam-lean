@@ -109,6 +109,37 @@ theorem word_exists (μ : Memory) (a : Nat) :
 theorem bytes_exist (μ : Memory) (a n : Nat) : ∃ v, v < 256 ^ n ∧ μ.readN a n = Num.encodeLE n v :=
   ⟨rdN μ a n, rdN_lt μ a n, (encodeLE_rdN μ a n).symm⟩
 
+/-- ℕ_{a…+n} ⊆ 𝕍_μ (`Memory.rangeReadable`, as Ω's `readMem` checks it) from readability octet by
+    octet. (The same as `Services.Witness.rangeReadable_of`, which lives behind witness's imports.) -/
+theorem rangeReadable_of' {μ : Memory} {a n : Nat} (h : ∀ j, a ≤ j → j < a + n → μ.readable j = true)
+    (hb : a + n ≤ 2 ^ 32) : μ.rangeReadable a n = true := by
+  unfold Memory.rangeReadable
+  by_cases hn : n = 0
+  · simp [hn]
+  have hn' : (n == 0) = false := by simp [hn]
+  rw [hn', Bool.false_or, Bool.and_eq_true, List.all_eq_true]
+  refine ⟨by simp [hb], fun k hk => ?_⟩
+  simp only [List.mem_range] at hk
+  have hpg : pageSize = 4096 := rfl
+  have hk' : (a / pageSize + k) * pageSize ≤ a + n - 1 := by
+    rw [hpg] at hk ⊢
+    have := Nat.div_mul_le_self (a + n - 1) 4096
+    have : a / 4096 + k ≤ (a + n - 1) / 4096 := by omega
+    calc (a / 4096 + k) * 4096 ≤ (a + n - 1) / 4096 * 4096 := Nat.mul_le_mul_right _ this
+      _ ≤ a + n - 1 := by omega
+  let j := max a ((a / pageSize + k) * pageSize)
+  have hj : μ.readable j = true := h j (Nat.le_max_left _ _) (by simp only [j]; omega)
+  have hpage : j / pageSize = a / pageSize + k := by
+    simp only [j, hpg] at hk' ⊢
+    rcases Nat.le_total a ((a / 4096 + k) * 4096) with h1 | h1
+    · rw [Nat.max_eq_right h1]; simp
+    · rw [Nat.max_eq_left h1]
+      have : k = 0 := by omega
+      subst this; simp
+  simp only [Memory.readable] at hj ⊢
+  rw [← hpage]
+  simpa [hpg, Nat.mul_div_cancel] using hj
+
 /-- The jump table's entry for tag t. -/
 theorem tab_entry {μ : Memory} (h : μ.readN 65736 100 = jumpTab) (t : Nat) (ht : t < 25) :
     μ.readN (65736 + 4 * t) 4 = (jumpTab.drop (4 * t)).take 4 :=

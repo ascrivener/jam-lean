@@ -71,6 +71,7 @@ These would go to the service's authors, not to the Gray Paper.
 | Where | Finding |
 |---|---|
 | `Designate` decode, 35300 … 35315 | The bound check on `keys: BoundedVec<[u8; 336], 3·𝖢>` loads 𝖢 sign-extended (`loadI16`), computes 3·𝖢 and zero-extends it from 16 bits, so the decoder accepts n ≤ (3·𝖢) mod 2¹⁶ instead of n ≤ 3·𝖢. The two agree for 𝖢 < 21846 (the full parameters' 𝖢 = 341 gives 1023); for 𝖢 ≥ 21846 the bound wraps and valid key lists are rejected. Proven as stated in `Decode.Designate.designate_heap` (`hnC : n ≤ 3 * C % 65536`). |
+| `remove`, 48481 … 48533 | A removal (`write` of an empty value) panics when the host replies FULL, i.e. when the account's threshold balance after the removal still exceeds its balance. A removal only lowers the threshold, so failing it rolls back the whole accumulate where going on would be harmless. Quirk Q18 in `docs/bootstrap-target.md`. |
 | SDK `get` (`read` wrapper), 47888 … 47907 | The length returned by Ω_R in ω₇ is compared against the host error codes (≥ 2⁶⁴ − 9) before it is used. A value of exactly 2⁶⁴ − 1 octets is therefore indistinguishable from NONE and `get` returns `None` for a key that is present; lengths in [2⁶⁴ − 9, 2⁶⁴ − 2] trap (47929), and lengths in [2⁶³, 2⁶⁴ − 9) trap as a negative `isize` (47901). The same ambiguity is in Ω_R's interface itself (GP Appendix B: a length and an error code share ω₇), so it may also be a note for the paper. Unreachable in practice; T2 assumes values shorter than 2⁶³ octets (`ValuesFit`). |
 
 ## Not for upstream
@@ -83,5 +84,11 @@ These would go to the service's authors, not to the Gray Paper.
   anchor's child to have h'_R = x_lookupanchorpoststate; the model compared it with the anchor's
   x_stateroot, rejecting valid blocks whose lookup anchor differs from their anchor. Fixed in
   `JAM/BlockImport.lean`, with a regression test in `Tests/TraceTest.lean`.
+- **The `$` of the context strings.** A bug in this repository's own model, reported by the
+  jam-lean-target crypto work. The model kept the GP's `$` as the first octet of `$jam_ticket_seal`
+  and the other context strings. In the paper `$` only marks the set of ASCII strings
+  (`notation.tex`), though its wording leaves this open; the v0.8.0 vectors settle it: their 58
+  ticket proofs verify only with "jam_ticket_seal" ⌢ …. Fixed in `JAM.contextString` (it drops a
+  leading `$`), with `#guard`s on X_T, X_E and X_G.
 - **Notes 6–10, 14, 16 and 22.** Points where the vectors confirm a subtle reading, or observations
   that need no change.

@@ -5,6 +5,10 @@ the real compiled service binaries in `services/`. Read `docs/whats-proven.md` f
 `docs/bootstrap-target.md` for the Bootstrap targets (T1 refine, T2 accumulate), and
 `docs/HANDOFF.md` for the state of work in flight.
 
+**Start of session:** run `scripts/fetch-lake.sh` before building. It installs the toolchain and
+unpacks main's latest CI build (about 2–3 min; needs about 13 GB of free disk), so `lake build`
+rebuilds only what changed since then instead of building cold for 4.5–5 h.
+
 ## Rules
 
 - **Source.** Model only from the Gray Paper v0.8.0. Don't copy other implementations, especially
@@ -29,16 +33,27 @@ the real compiled service binaries in `services/`. Read `docs/whats-proven.md` f
   - Pass `(S0 := S0) (S1 := S1)` explicitly.
   - Elaboration can die silently, so check exit codes.
   - Run the full `lake build` in the background before each PR.
+  - New code facts go in a new append-only tier, not a regeneration of an existing one: see
+    `docs/code-fact-tiers.md`.
 
 ## CI
 
 - Bounds:
-  - A cold full build takes about 4.5–5 h.
-  - The build step is bounded at 290 min, inside a 355-min job.
-  - A partial build is saved to the cache.
-- **A timed-out run (exit 137 at ~module 2280) is not a proof error.** Re-run it once; it resumes
-  from the cache.
+  - A cold full build takes about 4.5–5 h; the model alone takes minutes.
+  - Each attempt's build steps are bounded at 300 min, inside a 355-min job.
+- **Timeouts resume on their own.** An attempt that runs out of time saves its partial build, skips
+  the checks and ends green; the next attempt job (`attempt-2`, `attempt-3`) resumes from it. Only
+  `attempt-3` running out fails the run; re-run it and it resumes from the cache. See
+  `docs/BUILD-INFRA.md`.
 - Runs on `main` are never cancelled, and they save the cache.
+- **Two lines of jobs.** `model` builds PVM, JAM and the tests and runs every vector suite, in
+  minutes, on every run. The proofs (`attempt-1..3`) build everything, including Services, and run on
+  `main` always and on a PR only when `changes` (`scripts/services-affected.py`) finds that it can
+  affect Services: a path under `Services/` or `services/`, build configuration, a proofs script, or
+  a module the Services proofs import.
+- **Merge rule.** A PR may merge when `model` is green and the attempts are green or skipped.
+- **Detector bugs.** If `main`'s proofs fail after a PR merged with `affected=false`, the detector
+  missed a dependency: fix `scripts/services-affected.py`, don't work around it.
 - **Re-sync rule.** After a PR that regenerates code facts (`Services/Bootstrap/Code*`) lands on
   `main`, re-sync an open PR only if it imports the regenerated module, directly or transitively.
   Otherwise merge it on its own green CI. Sequence code-fact regenerations after the PRs that
@@ -75,5 +90,5 @@ the real compiled service binaries in `services/`. Read `docs/whats-proven.md` f
   - weakening a hypothesis;
   - adding a lemma;
   - generalising a statement in place while keeping every existing statement unchanged.
-- **Usage limits.** Keep the number of parallel sessions small: at most 5 (Adam, 2026-11-15; was 3). Restart sessions fresh,
+- **Usage limits.** Keep the number of parallel sessions within the limit Adam sets (see docs/HANDOFF.md). Restart sessions fresh,
   with a handoff note, before their context gets large: the cost of each turn grows with context.

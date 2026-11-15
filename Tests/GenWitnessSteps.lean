@@ -1,4 +1,11 @@
-import JAM
+import JAM.Accumulate
+import JAM.Refine
+import JAM.Theorems.GrowHeap
+import JAM.Theorems.HostGas
+import JAM.Theorems.KeepRO
+import JAM.Theorems.NatBlob
+import JAM.Theorems.RefineContract
+import JAM.Theorems.Confinement
 import PVM.Logic.FastCheck
 import Services.Picoalloc.Invariant
 open PVM JAM
@@ -69,6 +76,17 @@ def leanInstr (ins : Instr) : String :=
    |>.replace "PVM.RegImmOffsetOp." "." |>.replace "PVM.TwoRegOp." "." |>.replace "PVM.TwoRegImmOp." "." |>.replace "PVM.TwoRegOffsetOp." "."
    |>.replace "PVM.TwoRegTwoImmOp." "." |>.replace "PVM.ThreeRegOp." "."
 
+/-- An append-only code-fact tier (`tier` / `tiercheck`, `docs/code-fact-tiers.md`): the facts of
+    `ranges` that neither `Code` nor any tier of `excludes` has, in the module `Code<name>` (class
+    `HasCode<name>`), checked by `Code<name>Check.G*` and `Code<name>Ok`. `excludes` names the built-in
+    tiers `X`, `A`, `F`, `R` or tiers listed earlier; the users of the tier must also assume those. -/
+structure Tier where
+  name : String
+  ranges : List (Nat × Nat)
+  excludes : List String := []
+  /-- What the ranges are, for the module docstring (e.g. "accumulate's `transfer` handler"). -/
+  doc : String := ""
+
 /-- A service the generator works on: its blob, the Lean namespace and name of its files, the
     base input of the traced run and the classes of inputs of the segment analysis, and the
     functions whose code facts are emitted in full for summaries. Inputs are refine's
@@ -110,6 +128,9 @@ structure Svc where
       in the module `CodeR` (class `HasCodeR`), holding what neither `Code` nor `CodeX` has, so that the
       proofs about refine's body import only `Code`, `CodeX` and `CodeR`. -/
   fnRangesR : List (Nat × Nat) := []
+  /-- `tier` / `tiercheck`: the append-only tiers, oldest first. Add facts in a new tier at the end;
+      never extend a tier already generated (`docs/code-fact-tiers.md`). -/
+  tiers : List Tier := []
   /-- Whether `Services/<name>/Memcpy.lean` exists (`memcpy_small` at the head of `fnRanges`):
       the prefix then calls it for each `memcpy` of fewer than 16 octets instead of stepping. -/
   memcpySummary : Bool := false
@@ -1138,14 +1159,30 @@ def mode_codeRun (cx : Cx) : IO Unit := do
   -- leaving out what `Code` or `CodeX` already has
   -- `codef` / `codefcheck`: the same for `fnRangesF`, in the module `CodeF` (class `HasCodeF`),
   -- leaving out what `Code` or `CodeA` already has (its users never assume `HasCodeX`)
+  -- `tier <n> <Name>` / `tiercheck <n> <Name>`: the same for the append-only tier `Name` of
+  -- `cx.svc.tiers`, in the module `Code<Name>` (class `HasCode<Name>`), leaving out what `Code` or the
+  -- tiers it excludes already have
+  let tmode := mode == "tier" || mode == "tiercheck"
+  let tier? : Option Tier := if tmode then cx.svc.tiers.find? (·.name == args.getD 2 "") else none
+  if tmode && tier?.isNone then
+    throw (IO.userError s!"no tier named '{args.getD 2 ""}' in the service's `tiers`")
   let fmode := mode == "codef" || mode == "codefcheck"
   let rmode := mode == "coder" || mode == "codercheck"
-  let amode := mode == "codea" || mode == "codeacheck" || fmode || rmode
+  let amode := mode == "codea" || mode == "codeacheck" || fmode || rmode || tmode
   let xmode := mode == "codex" || mode == "codexcheck" || amode
-  let E := if fmode then "F" else if rmode then "R" else if amode then "A" else "X"
-  let rangesE := if fmode then cx.svc.fnRangesF else if rmode then cx.svc.fnRangesR else cx.svc.fnRangesA
-  let mode := if mode == "codex" || mode == "codea" || mode == "codef" || mode == "coder" then "code"
-    else if mode == "codexcheck" || mode == "codeacheck" || mode == "codefcheck" || mode == "codercheck" then "codecheck"
+  let E := match tier? with
+    | some t => t.name
+    | none => if fmode then "F" else if rmode then "R" else if amode then "A" else "X"
+  let rangesE := match tier? with
+    | some t => t.ranges
+    | none => if fmode then cx.svc.fnRangesF else if rmode then cx.svc.fnRangesR else cx.svc.fnRangesA
+  -- the command that generates this module, for the headers
+  -- (`old` is the command the built-in modes name, kept as it is)
+  let genCmd (check : Bool) (old : String) : String := match tier? with
+    | some t => s!"{cx.svc.flag}tier{if check then "check" else ""} {n} {t.name}"
+    | none => old
+  let mode := if mode == "codex" || mode == "codea" || mode == "codef" || mode == "coder" || mode == "tier" then "code"
+    else if mode == "codexcheck" || mode == "codeacheck" || mode == "codefcheck" || mode == "codercheck" || mode == "tiercheck" then "codecheck"
     else mode
   let CN := if xmode then s!"Code{E}" else "Code"
   let CC := if xmode then s!"Code{E}Check" else "CodeCheck"
@@ -1264,7 +1301,7 @@ def mode_codeRun (cx : Cx) : IO Unit := do
   let mut baseFacts := facts
   let seenCode := seen
   let factsCode := facts
-  if amode then
+  if amode && !tmode then
     let (fX, sX) := extFacts cx.svc.fnRangesX seen
     baseFacts := baseFacts ++ fX
     seen := seen ++ sX
@@ -1275,6 +1312,43 @@ def mode_codeRun (cx : Cx) : IO Unit := do
     -- what `CodeX` has)
     baseFacts := factsCode ++ fA
     seen := seenCode ++ sA
+  -- `tier`: leave out what `Code` and the tiers `t.excludes` have, each tier's facts and instructions
+  -- computed as its own mode generates them (tiers listed after `t` play no part)
+  if let some t := tier? then
+    let jumpsIn (jr : List (Nat × Nat)) (skip : Array String) : Array String := Id.run do
+      let mut fx : Array String := #[]
+      for k in [0:P.jumpTable.size] do
+        let tg := P.jumpTable.getD k 0
+        if jr.any (fun (lo, hi) => lo ≤ tg ∧ tg < hi) && !skip.contains s!".jumpEntry {k} {tg}" then
+          fx := fx.push s!".jumpTableSize {P.jumpTable.size}"
+          fx := fx.push s!".jumpEntry {k} {tg}"
+          fx := fx.push s!".blockStart {tg} {P.isBlockStart tg}"
+      return fx
+    let earlier := cx.svc.tiers.takeWhile (·.name != t.name)
+    let basesOf (nm : String) : List String :=
+      if nm == "X" then [] else if nm == "A" || nm == "R" then ["X"] else if nm == "F" then ["A"]
+      else ((earlier.find? (·.name == nm)).map (·.excludes)).getD []
+    for b in t.excludes do
+      unless b == "X" || b == "A" || b == "F" || b == "R" || earlier.any (·.name == b) do
+        throw (IO.userError s!"tier {t.name} excludes {b}, which is neither X, A, F, R nor an earlier tier")
+    -- the tiers needed, latest first: `t.excludes` and, transitively, what they exclude
+    let order : List String := (earlier.map (·.name)).reverse ++ ["F", "R", "A", "X"]
+    let needed : List String := order.foldl (fun acc nm =>
+      if acc.contains nm then acc ++ basesOf nm else acc) t.excludes
+    let mut env : List (String × Array String × List Nat) := []
+    for nm in order.reverse do
+      unless needed.contains nm do continue
+      let bs := basesOf nm
+      let bF := (bs.filterMap fun b => (env.lookup b).map (·.1)).foldl (· ++ ·) #[]
+      let bS := (bs.filterMap fun b => (env.lookup b).map (·.2)).flatten
+      let rs := if nm == "X" then cx.svc.fnRangesX else if nm == "A" then cx.svc.fnRangesA
+        else if nm == "F" then cx.svc.fnRangesF else if nm == "R" then cx.svc.fnRangesR
+        else ((earlier.find? (·.name == nm)).map (·.ranges)).getD []
+      let (f, sx) := extFacts rs (seenCode ++ bS)
+      let j := if nm == "X" then jumpsIn cx.svc.jumpRangesX (factsCode ++ bF) else jumpsIn rs #[]
+      env := (nm, f ++ j, sx) :: env
+    baseFacts := factsCode ++ (t.excludes.filterMap fun b => (env.lookup b).map (·.1)).foldl (· ++ ·) #[]
+    seen := seenCode ++ (t.excludes.filterMap fun b => (env.lookup b).map (·.2)).flatten
   if xmode then
     let (fx, sx) := extFacts (if amode then rangesE else cx.svc.fnRangesX) seen
     -- `codea`: also every jump-table entry into `fnRangesA`. Accumulate also returns through
@@ -1292,6 +1366,8 @@ def mode_codeRun (cx : Cx) : IO Unit := do
           fx := fx.push s!".jumpEntry {k} {t}"
           fx := fx.push s!".blockStart {t} {P.isBlockStart t}"
       return fx
+    if tmode && !fx.any (·.startsWith ".instr ") then
+      throw (IO.userError s!"tier {E} has no instruction that `Code` and the tiers it excludes lack")
     facts := fx
     seen := sx
   -- sorted by index, so each chunk of 64 reads a short stretch of the code (`codecheck`)
@@ -1426,7 +1502,7 @@ def hostIds : List Nat := {idsL}
     unless xmode do IO.FS.writeFile s!"Services/{NS}/CodeCheck.lean" ((out.drop 1).toString)
     IO.FS.createDirAll s!"Services/{NS}/{CC}"
     let modHead (what : String) : String := s!"/-
-  GENERATED by `lake exe genwitnesssteps {FLAG}codecheck {n}` from {BLOB}.
+  GENERATED by `lake exe genwitnesssteps {genCmd true s!"{FLAG}codecheck {n}"}` from {BLOB}.
   Do not edit by hand.
 -/
 import Services.{NS}.CodeCheck{if xmode then s!"\nimport Services.{NS}.Code{E}" else ""}
@@ -1704,7 +1780,7 @@ theorem hostsG_{g} : {hostQ ga gb} :=
     let hcover := hostGroups.toList.tail.foldl (fun acc x => s!"(range_cover {acc} {x})") hostGroups[0]!
     if xmode then
       IO.FS.writeFile s!"Services/{NS}/Code{E}Ok.lean" (s!"/-
-  GENERATED by `lake exe genwitnesssteps {FLAG}code{E.toLower}check {n}` from {BLOB}.
+  GENERATED by `lake exe genwitnesssteps {genCmd true s!"{FLAG}code{E.toLower}check {n}"}` from {BLOB}.
   Do not edit by hand.
 -/
 import Services.{NS}.CodeOk
@@ -1851,15 +1927,20 @@ end Services.{NS}.CodeCheck
   let rwHi := rwStart jb + roundPage jb.rw.size + jb.heapPages * pageSize
   if mode == "code" then
     IO.println s!"/-
-  GENERATED by `lake exe genwitnesssteps {FLAG}code{if amode then E.toLower else ""} {n}` from {BLOB}.
+  GENERATED by `lake exe genwitnesssteps {genCmd false s!"{FLAG}code{if amode then E.toLower else ""} {n}"}` from {BLOB}.
   Do not edit by hand.
 -/
 {if xmode then s!"import Services.{NS}.Code" else "import JAM.Theorems.GrowHeap"}
 
 /-!
-# {if fmode then "Logging code facts" else if rmode then "Refine body code facts" else if amode then "Accumulate code facts" else if xmode then "Further code facts" else "Code facts"} of {LBL}
+# {if tmode then s!"Code facts of tier {E}" else if fmode then "Logging code facts" else if rmode then "Refine body code facts" else if amode then "Accumulate code facts" else if xmode then "Further code facts" else "Code facts"} of {LBL}
 
-{if fmode then s!"Every instruction of {LBL}'s logging ranges (`fnRangesF`: `format!`, `core::fmt` and the
+{if let some t := tier? then s!"Every instruction of {LBL}'s ranges of the append-only tier `{E}` ({if t.doc.isEmpty then "`tiers`" else t.doc})
+that none of `Code.facts`{String.join (t.excludes.map fun b => s!", `Code{b}.facts`")} has, with the block starts, blocks and
+jump-table entries they need (every entry into the ranges), kept apart so that adding them rechecks
+nothing that does not import this module (`docs/code-fact-tiers.md`). `Services.{NS}.Code{E}Ok` checks
+them against the blob by the kernel (`Code{E}Check.checkCode_ok`, `hasCode{E}`); `HasCode{E} p P`
+assumes them." else if fmode then s!"Every instruction of {LBL}'s logging ranges (`fnRangesF`: `format!`, `core::fmt` and the
 `String` sink) that neither `Code.facts` nor `CodeA.facts` has, with the block starts,
 blocks and jump-table entries they need (every entry into the ranges), kept apart so that adding them
 rechecks nothing that uses only those. `Services.{NS}.CodeFOk` checks them against the blob by the
@@ -1913,7 +1994,7 @@ theorem HasCode{E}.of \{p : ByteArray} \{P : Program} \{fs : List CodeFact} (h :
       for k in [0:nS] do
         let part := (lemmasL.toList.drop (k * sl)).take sl
         IO.FS.writeFile s!"Services/{NS}/{CN}/L{k}.lean" (s!"/-
-  GENERATED by `lake exe genwitnesssteps {FLAG}code{E.toLower} {n}` from {BLOB}.
+  GENERATED by `lake exe genwitnesssteps {genCmd false s!"{FLAG}code{E.toLower} {n}"}` from {BLOB}.
   Do not edit by hand.
 -/
 import Services.{NS}.{CN}
@@ -1926,7 +2007,7 @@ open PVM
 
 " ++ "\n\n".intercalate part ++ s!"\n\nend Services.{NS}.{CN}\n")
       IO.FS.writeFile s!"Services/{NS}/{CN}All.lean" (s!"/-
-  GENERATED by `lake exe genwitnesssteps {FLAG}code{E.toLower} {n}` from {BLOB}.
+  GENERATED by `lake exe genwitnesssteps {genCmd false s!"{FLAG}code{E.toLower} {n}"}` from {BLOB}.
   Do not edit by hand.
 -/
 " ++ String.join ((List.range nS).map fun k => s!"import Services.{NS}.{CN}.L{k}\n") ++ s!"
@@ -3184,6 +3265,10 @@ def main (args0 : List String) : IO Unit := do
   let mode1 := if empty then (mode0.toList.dropLast).asString else mode0
   let mode := if mode1 == "segx" then "seg" else mode1
   let n := (args.getD 1 "39").toNat!
+  -- `tiers`: the names of the service's append-only tiers, oldest first (for CI's generated-files check)
+  if mode == "tiers" then
+    for t in svc.tiers do IO.println t.name
+    return
   let bytes ← IO.FS.readBinFile svc.blob
   let some code := splitMetadata bytes.toList | return
   let h := (Blake2b.hash256 bytes).toList

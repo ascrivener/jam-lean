@@ -7,6 +7,7 @@ import PVM.Exec
 import PVM.Gas
 import PVM.Machine
 import PVM.Fast
+import PVM.FastHost
 import PVM.Invocation
 import PVM.Theorems.Blob
 import PVM.Theorems.Decode
@@ -41,6 +42,7 @@ import PVM.SymExec.Trace
 * `PVM.Gas`      — the gas cost model ϱ^Δ (§A.9–A.10)
 * `PVM.Machine`  — Ψ₁ and Ψ (§A.1, §A.4)
 * `PVM.Invocation` — Ψ_H, Y and Ψ_M (§A.6–A.8)
+* `PVM.FastHost` — a fast Ψ_H and Ψ_M, proved equal to the paper's and used by compiled code (`@[csimp]`)
 * `PVM.Tables`   — generated from the paper's LaTeX: opcodes, T, the gas cost table
 * `PVM.Theorems` — host calls and their ids, termination and Ψ's and Ψ_H's equations, decoding, blobs
 -/

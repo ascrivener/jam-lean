@@ -637,7 +637,9 @@ def setv (σ : SState) (r : Nat) (v : SVal) : SState := { σ with regs := σ.reg
 def mkAddr (v : SVal) (x n : Nat) : Option Aff :=
   let a? : Option Aff := match v with
     | .const c => some ⟨none, ((c + x) % two32 : Nat)⟩
-    | v => (asAff v).bind fun a => addAff st a x two32
+    | v => (asAff v).bind fun a => match addAff st a x two32 with
+      | some a' => some a'
+      | none => if x = 0 ∧ validF st a n = true then some a else none
   match a? with
   | some a => if valid st a n then some a else none
   | none => none

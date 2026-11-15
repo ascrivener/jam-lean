@@ -1059,9 +1059,22 @@ theorem mkAddr_sound (hpre : Pre E st) {v : SVal} {x n : Nat} {a : Aff}
         | none => rw [hb] at ha'; cases ha'
         | some b =>
           rw [hb] at ha'; simp only [Option.bind] at ha'
-          obtain ⟨e1, -, -, -, hlo⟩ := addAff_sound hpre (by decide) ha'
-          have := asAff_sound hb hlo hpre
-          rw [← e1]; congr 2; omega
+          split at ha'
+          · rename_i a'' hadd
+            cases ha'
+            obtain ⟨e1, -, -, -, hlo⟩ := addAff_sound hpre (by decide) hadd
+            have := asAff_sound hb hlo hpre
+            rw [← e1]; congr 2; omega
+          · split at ha'
+            · rename_i hx
+              obtain ⟨rfl, hF⟩ := hx
+              cases ha'
+              simp only [validF, Bool.and_eq_true, decide_eq_true_eq] at hF
+              have := asAff_sound hb hF.1.2 hpre
+              have hv := valid_sound hpre hv
+              have : v.eval E < two32 := by omega
+              rw [Nat.add_zero, Nat.mod_eq_of_lt this]; omega
+            · cases ha'
     · cases h
   · cases h
 

@@ -447,6 +447,80 @@ theorem inReg_subst {E : Env} {st : Static} {sub : List SVal} {ω' : Regs} {μ' 
     rw [ha] at h; cases h
     simp only [InReg]; rw [substAff_eval (ω' := ω') (μ' := μ') hpre ha]
 
+/-- The target cut of a leaf that `leafOk` accepts holds at the end of its path. -/
+theorem leafOk_sound {st : Static} {A : Cut} {σ : SState} {ℓ : Leaf} {vals : List Nat}
+    {μ₀ : Memory} {ω ω' : Regs} {μ μ' : Memory} (hA : A.Holds vals μ₀ ω μ)
+    (hpl : Pre (env vals ω μ) st) (hil : Inv (env vals ω μ) σ ω' μ')
+    (hok' : leafOk st A σ ℓ = true) :
+    ℓ.B.Holds (svals (env vals ω μ) ℓ.sub) μ₀ ω' μ' := by
+  let E := env vals ω μ
+  obtain ⟨hr, hc, hrdA, hwrA, hfA, hpA⟩ := hA
+  unfold leafOk at hok'
+  split at hok'
+  · rename_i regs cells rd wr frame hregs hcells hrd hwr hframe
+    simp only [Bool.and_eq_true] at hok'
+    obtain ⟨⟨⟨⟨hBc, hent⟩, hrdin⟩, hwrin⟩, hfrin⟩ := hok'
+    obtain ⟨hR, hC, hF, hP⟩ := entails_sound hpl hil hent
+    have hpre' : Pre E st := hpl
+    let E' : Env := ⟨fun k => (svals E ℓ.sub).getD k 0, ω', μ'⟩
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
+    · apply regsHold_of_mem
+      intro r hrm
+      obtain ⟨r', hr'm, hsr⟩ := (omap_mem hregs).1 r hrm
+      unfold substRegs at hsr
+      cases hv : r.2.subst st ℓ.sub with
+      | none => rw [hv] at hsr; cases hsr
+      | some v' =>
+        rw [hv] at hsr; cases hsr
+        have := regsHold_mem hR _ hr'm
+        simp only at this
+        rw [this, subst_eval (ω' := ω') (μ' := μ') hpre' r.2 hv]
+        rfl
+    · apply cellsHold_of_mem
+      intro c hcm
+      obtain ⟨c', hc'm, hsc⟩ := (omap_mem hcells).1 c hcm
+      unfold substCell at hsc
+      split at hsc
+      · rename_i a v ha hv
+        cases hsc
+        have := cellsHold_mem hC _ hc'm
+        simp only at this
+        rw [substAff_eval (ω' := ω') (μ' := μ') hpre' ha,
+          subst_eval (ω' := ω') (μ' := μ') hpre' _ hv] at this
+        exact this
+      · cases hsc
+    · apply rdHold_of_mem
+      intro r hrm t ht
+      obtain ⟨r', hr'm, hsr⟩ := (omap_mem hrd).1 r hrm
+      have ht' := (inReg_subst hpre' hsr t).1 ht
+      obtain ⟨q, hq, hw⟩ := List.any_eq_true.1 (List.all_eq_true.1 hrdin r' hr'm)
+      have hin := within_sound hpre' hw t ht'
+      rw [readable_pages hP t]
+      rcases List.mem_append.1 hq with hq | hq
+      · exact rdHold_mem hrdA q hq t hin
+      · exact Memory.readable_of_writable (wrHold_mem hwrA q hq t hin)
+    · apply wrHold_of_mem
+      intro r hrm t ht
+      obtain ⟨r', hr'm, hsr⟩ := (omap_mem hwr).1 r hrm
+      have ht' := (inReg_subst hpre' hsr t).1 ht
+      obtain ⟨q, hq, hw⟩ := List.any_eq_true.1 (List.all_eq_true.1 hwrin r' hr'm)
+      have hin := within_sound hpre' hw t ht'
+      rw [writable_pages hP t]
+      exact wrHold_mem hwrA q hq t hin
+    · intro t ht hout
+      rw [hF t ht ?_]
+      · apply hfA t ht
+        intro f hf hin
+        obtain ⟨g, hg, hw⟩ := List.any_eq_true.1 (List.all_eq_true.1 hfrin f hf)
+        have hin' := within_sound hpre' hw t hin
+        obtain ⟨g0, hg0, hsg⟩ := (omap_mem hframe).2 g hg
+        exact hout g0 hg0 ((inReg_subst hpre' hsg t).2 hin')
+      · intro f hf hin
+        obtain ⟨g0, hg0, hsg⟩ := (omap_mem hframe).2 f hf
+        exact hout g0 hg0 ((inReg_subst hpre' hsg t).2 hin)
+    · exact hP.trans hpA
+  · cases hok'
+
 /-- **Soundness of a forking segment**: some leaf's path facts hold at the start, and the machine
     reaches its pc in a state its target cut describes, with the named naturals `sub`. -/
 theorem fork_sound {X : Type} {p : ByteArray} {R : HostRel X} {P : Program} {G : Prog}
@@ -479,72 +553,50 @@ theorem fork_sound {X : Type} {p : ByteArray} {R : HostRel X} {P : Program} {G :
     simp only [Bool.and_eq_true, beq_iff_eq] at hm
     obtain ⟨⟨hpc, hfs⟩, hok'⟩ := hm
     refine ⟨ℓ, hℓ, k, ω', μ', hpc ▸ hsteps, factsHold_of_mem (hfs ▸ pre_of_addF hpl), ?_⟩
-    -- the leaf's target cut
-    unfold leafOk at hok'
-    split at hok'
-    · rename_i regs cells rd wr frame hregs hcells hrd hwr hframe
-      simp only [Bool.and_eq_true] at hok'
-      obtain ⟨⟨⟨⟨hBc, hent⟩, hrdin⟩, hwrin⟩, hfrin⟩ := hok'
-      obtain ⟨hR, hC, hF, hP⟩ := entails_sound hpl hil hent
-      have hpre' : Pre E (addF st l.2.1) := hpl
-      let E' : Env := ⟨fun k => (svals E ℓ.sub).getD k 0, ω', μ'⟩
-      refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
-      · apply regsHold_of_mem
-        intro r hrm
-        obtain ⟨r', hr'm, hsr⟩ := (omap_mem hregs).1 r hrm
-        unfold substRegs at hsr
-        cases hv : r.2.subst (addF st l.2.1) ℓ.sub with
-        | none => rw [hv] at hsr; cases hsr
-        | some v' =>
-          rw [hv] at hsr; cases hsr
-          have := regsHold_mem hR _ hr'm
-          simp only at this
-          rw [this, subst_eval (ω' := ω') (μ' := μ') hpre' r.2 hv]
-          rfl
-      · apply cellsHold_of_mem
-        intro c hcm
-        obtain ⟨c', hc'm, hsc⟩ := (omap_mem hcells).1 c hcm
-        unfold substCell at hsc
-        split at hsc
-        · rename_i a v ha hv
-          cases hsc
-          have := cellsHold_mem hC _ hc'm
-          simp only at this
-          rw [substAff_eval (ω' := ω') (μ' := μ') hpre' ha,
-            subst_eval (ω' := ω') (μ' := μ') hpre' _ hv] at this
-          exact this
-        · cases hsc
-      · apply rdHold_of_mem
-        intro r hrm t ht
-        obtain ⟨r', hr'm, hsr⟩ := (omap_mem hrd).1 r hrm
-        have ht' := (inReg_subst hpre' hsr t).1 ht
-        obtain ⟨q, hq, hw⟩ := List.any_eq_true.1 (List.all_eq_true.1 hrdin r' hr'm)
-        have hin := within_sound hpre' hw t ht'
-        rw [readable_pages hP t]
-        rcases List.mem_append.1 hq with hq | hq
-        · exact rdHold_mem hrdA q hq t hin
-        · exact Memory.readable_of_writable (wrHold_mem hwrA q hq t hin)
-      · apply wrHold_of_mem
-        intro r hrm t ht
-        obtain ⟨r', hr'm, hsr⟩ := (omap_mem hwr).1 r hrm
-        have ht' := (inReg_subst hpre' hsr t).1 ht
-        obtain ⟨q, hq, hw⟩ := List.any_eq_true.1 (List.all_eq_true.1 hwrin r' hr'm)
-        have hin := within_sound hpre' hw t ht'
-        rw [writable_pages hP t]
-        exact wrHold_mem hwrA q hq t hin
-      · intro t ht hout
-        rw [hF t ht ?_]
-        · apply hfA t ht
-          intro f hf hin
-          obtain ⟨g, hg, hw⟩ := List.any_eq_true.1 (List.all_eq_true.1 hfrin f hf)
-          have hin' := within_sound hpre' hw t hin
-          obtain ⟨g0, hg0, hsg⟩ := (omap_mem hframe).2 g hg
-          exact hout g0 hg0 ((inReg_subst hpre' hsg t).2 hin')
-        · intro f hf hin
-          obtain ⟨g0, hg0, hsg⟩ := (omap_mem hframe).2 f hf
-          exact hout g0 hg0 ((inReg_subst hpre' hsg t).2 hin)
-      · exact hP.trans hpA
-    · cases hok'
+    exact leafOk_sound ⟨hr, hc, hrdA, hwrA, hfA, hpA⟩ hpl hil hok'
+  · cases h
+
+/-- **The check of a forking segment, without path facts at the leaves**: every path of `srunF`
+    ends at a listed leaf's pc and meets that leaf's target cut (`Leaf.facts` is not used). -/
+def forkCheckW (G : Prog) (ub lb : List Nat) (sep : List ((Aff × Nat) × (Aff × Nat))) (A : Cut)
+    (asm : List Fact) (leaves : List Leaf) (start fuel : Nat) : Bool :=
+  let st := forkStatic ub lb sep A asm
+  A.closed && initOk st ⟨A.regs, A.cells⟩ &&
+  match srunF st G (leaves.map (·.pc)) fuel [] start (init ⟨A.regs, A.cells⟩) with
+  | some ls => ls.all fun l => leaves.any fun ℓ => ℓ.pc == l.1 && leafOk (addF st l.2.1) A l.2.2 ℓ
+  | none => false
+
+/-- **Soundness of `forkCheckW`**: the machine reaches some leaf's pc in a state meeting its target
+    cut. -/
+theorem fork_soundW {X : Type} {p : ByteArray} {R : HostRel X} {P : Program} {G : Prog}
+    {ub lb : List Nat} {sep : List ((Aff × Nat) × (Aff × Nat))} {A : Cut} {asm : List Fact}
+    {leaves : List Leaf} {start fuel : Nat}
+    (h : forkCheckW G ub lb sep A asm leaves start fuel = true) (hG : ProgHyp p P G)
+    (hH : HostOk R G.hosts)
+    {vals : List Nat} (hB : BHold vals ub) (hLB : LBHold vals lb)
+    (hsep : ∀ ω μ, SepHold (env vals ω μ) sep)
+    {μ₀ : Memory} {ω : Regs} {μ : Memory} (hA : A.Holds vals μ₀ ω μ)
+    (hasm : FactsHold (env vals ω μ) asm) (x : X) :
+    ∃ ℓ ∈ leaves, ∃ k ω' μ', FreeStepsH p R start ω μ x ℓ.pc ω' μ' x k ∧
+      ℓ.B.Holds (svals (env vals ω μ) ℓ.sub) μ₀ ω' μ' := by
+  simp only [forkCheckW, Bool.and_eq_true] at h
+  obtain ⟨⟨hAc, hok⟩, h⟩ := h
+  split at h
+  · rename_i ls hrun
+    let E := env vals ω μ
+    let st := forkStatic ub lb sep A asm
+    obtain ⟨hr, hc, hrdA, hwrA, hfA, hpA⟩ := hA
+    have hpre : Pre E st :=
+      ⟨bHold_get hB, lbHold_get hLB, rdHold_mem hrdA, wrHold_mem hwrA, sepHold_mem (hsep ω μ),
+        fun q hq => by simp [st, forkStatic] at hq, factsHold_mem hasm⟩
+    have hpre0 : Pre E (addF st []) := by simpa [addF] using hpre
+    have hinv := init_inv (E := E) hpre hok hr hc
+    obtain ⟨l, hl, k, ω', μ', hsteps, hpl, hil⟩ :=
+      srunF_sound (E := E) (stops := leaves.map (·.pc)) hG hH x fuel [] start _ ω μ ls hpre0 hinv hrun
+    obtain ⟨ℓ, hℓ, hm⟩ := List.any_eq_true.1 (List.all_eq_true.1 h l hl)
+    simp only [Bool.and_eq_true, beq_iff_eq] at hm
+    obtain ⟨hpc, hok'⟩ := hm
+    exact ⟨ℓ, hℓ, k, ω', μ', hpc ▸ hsteps, leafOk_sound ⟨hr, hc, hrdA, hwrA, hfA, hpA⟩ hpl hil hok'⟩
   · cases h
 
 end PVM.SymExec

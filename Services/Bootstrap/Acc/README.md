@@ -564,8 +564,9 @@ cases:
   FULL is pending with Adam).
 
 **Hypotheses on the state.** `ValuesFit (credit e s inputs) s` (`hvals`, Adam): storage values,
-preimages and the encoded inputs of s are shorter than 2⁶⁴ octets. Ω_R / Ω_Y return lengths in a
-64-bit register, so a longer one would wrap.
+preimages and the encoded inputs of s are shorter than 2⁶³ octets (2026-11-15; first 2⁶⁴). Ω_R / Ω_Y
+return lengths in a 64-bit register, and `get` reads 2⁶⁴ − 1 as NONE and traps at 47901 / 47929 on
+lengths from 2⁶³ (`docs/bootstrap-target.md`).
 
 **What remains for T2:** `∀ f, Impl (accContractS env) env (Spec.accumulate C t) Halts` from instruction 5. This is built:
 - from the segment lemmas: 1 → 6630 (start, `acc_log_line`), `inputs_decode`, and the items loop;
@@ -650,8 +651,8 @@ wrapper's call keeping (x, y) (`KeepCtx`), run the wrapper under `YIn`, and cont
 - **Row 11, the results write and the drops** (the tail of `onWorkItem`, unless a `Zombify`):
   15032 → 33214 (ω₀ = 558), …, 15185 → 40613 (`dealloc`, ω₀ = 568), on to 15191 (the operand's
   remaining drops) and back to the loop head 6766.
-- **Hypotheses to carry:** `ValuesFit` (values < 2⁶⁴ octets), the [2³⁶, 2³⁷ − 32] `get` band (TODO),
-  and the `heap` abort reason for every allocation.
+- **Hypotheses to carry:** `ValuesFit` (values < 2⁶³ octets) and the `heap` abort reason for every
+  allocation. `get`'s band from 2³⁶ (`get_huge`) reaches the trap 47977, so it is the `heap` reason.
 
 **Log sites** (the per-item line at 6955, the handlers' `format!`) are stated against a hypothesis of
 `acc_log_line`'s shape: the allocator's context in and out, the format!/String region kept, or

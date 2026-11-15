@@ -27,6 +27,8 @@ open PVM JAM Picoalloc Services.Bootstrap Services.Bootstrap.Code Services.Boots
   Services.Bootstrap.Decode.HeapCtx Services.Bootstrap.Decode.LoopA
   Services.Bootstrap.Acc.Handlers.KeyEnc
 
+open JAM.Codec (fixed)
+
 set_option maxHeartbeats 8000000
 set_option maxRecDepth 100000
 
@@ -107,11 +109,11 @@ theorem cw_free {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [HasCod
     HeapKeep.keepHi H (fun a ha => fr6 a (by omega) (.inl (by omega))) wr6
   obtain ⟨ω7, μ7, run7, H7, -, -, ro7, stk7, gl7, keep7, g0, g1, -, -⟩ :=
     dealloc_callG (R := R) (p := p) (P := P) code pb S0 S1 x ω6 _ s sp ptr 292 8402 _ H6 hnew rfl
-      (by dsimp only; omega) e0 (e1.trans h1) (e7.trans h5) ⟨by decide, by decide, by decide⟩
+      (by dsimp only; omega) e0 e1 (e7.trans h5) ⟨by decide, by decide, by decide⟩
       (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_145]) bs_8402 hsp.1 ⟨hS.1, by omega⟩
   have m232 : (μ.writeN (sp + 232) (Num.encodeLE 8 r)).readN (sp + 232) 8 = Num.encodeLE 8 r :=
     Memory.readN_writeN_same _ _ _ _ l8 (by unfold two32; omega)
-  refine ⟨ω7, μ7, ((run5.trans run6).trans run7).mono (by omega), g1.trans (e1.trans h1), H7, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  refine ⟨ω7, μ7, ((run5.trans run6).trans run7).mono (by omega), g1.trans e1, H7, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · rw [← m232]; exact Memory.readN_congr fun j hj => stk7 _ (by omega) (by omega)
   · intro a h1 h2; exact Memory.readable_of_writable (H7.st a (by omega) (by omega))
   · intro a h0 ha hb; rw [stk7 a h0 ha, fr6 a h0 hb]
@@ -211,7 +213,6 @@ theorem counter_write {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
     (by rw [show sp + 1160 = sp + 1144 + 16 by omega]; exact oB16)
     (fun a h1 h2 => Memory.readable_of_writable (HB.st a (by omega) (by omega)))
   refine .inr ⟨⟨48104, ωC, μB, c, f⟩, ⟨_, (runA.trans runBS).trans runC⟩, rfl, ?_⟩
-  dsimp only
   -- `set`
   have hkB : μB.readN ptr 1 = [0] := oBk
   have hvB : μB.readN (sp + 1000) 4 = Num.encodeLE 4 w := by
@@ -274,17 +275,23 @@ theorem counter_write {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
       unfold Glob at hg
       rw [glG a ha, kD a (by omega) (.inl (by omega)) (.inl (by omega)),
         hgB a ⟨.inl ha, by omega, fun h ⟨d, hd, hda⟩ => by
-          have := (HB.wf.2.2.2.1).mem_lt d hd; subst hda; omega⟩ (.inl (by omega)),
+          have ht := HB.wf.2.2.2.1
+          unfold TilesOk at ht
+          have := ht.mem_lt d hd; subst hda; omega⟩ (.inl (by omega)),
         frA a (by omega) (.inl (by omega)) (.inl (by omega))]
     · intro a ha
       rw [roG a ha, kD a (by omega) (.inl (by omega)) (.inl (by omega)), kROB a ha]
   -- Ω_W's outcome
-  rw [show Key.counter.encode = [0] from rfl,
-    ASem.step_write env [0] (fixed 4 w) c (by simp [fixed, Num.length_encodeLE, argBase, outBase]) hold]
+  have hfit : ASem.argBase + [(0 : UInt8)].length + (fixed 4 w).length ≤ ASem.outBase := by
+    simp only [fixed, Num.length_encodeLE, List.length_cons, List.length_nil]; decide
+  have hsw := ASem.step_write env [0] (fixed 4 w) c hfit hold
+  rw [show Key.counter.encode = [0] from rfl]
+  rw [show ({ i := 8326, ω := ω, μ := μ, c := c, q := f } : St Stream).c = c from rfl, hsw]
   by_cases hF : (ASem.writeAcct c.1.self [0] (fixed 4 w)).minBalance >
       (ASem.writeAcct c.1.self [0] (fixed 4 w)).balance
   · -- FULL: `Err`, then ☇ at 15361
     rw [if_pos hF]
+    dsimp only
     have hS : writeSelf c.1.self [0] (fixed 4 w) = c.1.self := by unfold writeSelf; rw [if_pos hF]
     have hR : writeR7 c.1.self [0] (fixed 4 w) = Result.FULL := by unfold writeR7; rw [if_pos hF]
     rw [hR] at sO
@@ -297,6 +304,7 @@ theorem counter_write {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
     exact ⟨ωE, μG, f, (runG.trans runE).run (.exit (FreeRun.exit (Handlers.trap_15361 (P := P) ωE μG)) (by simp))⟩
   · -- `Ok`: on to 8416
     rw [if_neg hF]
+    dsimp only
     have hR : writeR7 c.1.self [0] (fixed 4 w) ≠ Result.FULL ∧
         (writeR7 c.1.self [0] (fixed 4 w) = Result.NONE ∨ writeR7 c.1.self [0] (fixed 4 w) < 2 ^ 63) := by
       unfold writeR7; rw [if_neg hF]

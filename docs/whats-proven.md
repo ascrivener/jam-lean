@@ -900,6 +900,10 @@ What you trust beyond the kernel:
   `psiM_of_freeRunH` turns such a run into a statement about Ψ_M, of the form "this result, or ∞".
   Only witness's `refine_rejects` also carries a gas bound that removes the ∞. The allocator
   theorems say nothing about gas.
+- **Storage value lengths (T2, planned `ValuesFit`).** The accumulate wrapper theorems assume storage
+  values shorter than 2⁶³ octets (`get_call`'s `hfit`); T2 will carry this as `ValuesFit` (decided
+  2026-11-15). The SDK's `get` reads a length of 2⁶⁴ − 1 as NONE and traps on lengths from 2⁶³; see
+  [Findings](#findings).
 - **Refinement of a fragment, not of a whole program.** The allocator theorems are about the
   allocator's entry points called with the stated registers and memory. They are not yet composed
   into a Ψ_R or Ψ_A theorem about a bootstrap run that allocates.
@@ -926,6 +930,13 @@ Disagreements between the model and the binary, found by the refinement proofs a
     fails.
   - *Why it is unreachable:* the public `alloc` wrapper only passes `req = ⌈size/32⌉ < 2³¹`.
   - *Resolution:* `alloc_refines_fail` assumes `req < 2³¹`.
+- **The SDK's `get` and lengths near 2⁶⁴.**
+  - *Disagreement:* Ω_R returns a value's length in ω₇, and `get` (47888 …) first compares it with
+    the host error codes. A value of 2⁶⁴ − 1 octets reads as NONE, so `get` returns `None` where
+    the model returns the value; lengths in [2⁶³, 2⁶⁴ − 1) trap (47901, 47929).
+  - *Resolution:* such values cannot exist physically. T2 assumes values shorter than 2⁶³ octets
+    (`ValuesFit`, decided 2026-11-15). Below that, `get_call` proves `get` returns the value or
+    reaches the allocation-failure trap 47977 (`get_huge` for |w| + 31 ≥ 2³⁶).
 - **Noted, not a disagreement (#65).** `realloc` with a null address returns null rather than
   allocating, unlike C's `realloc(NULL, n)`. The model's `realloc` is only defined for allocated
   chunks, so this is behaviour of the wrapper alone.

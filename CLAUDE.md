@@ -63,7 +63,8 @@ the real compiled service binaries in `services/`. Read `docs/whats-proven.md` f
   `ExhaustsHeap` disjunct, and T2 as "some n".
 - **T1 excludes `RandomStorageRefine`** (`hrsr`). Modelling `SmallRng` comes later.
 - **T2 assumes `ValuesFit`** (`hvals`): storage values, preimages and encoded inputs are shorter
-  than 2^64 octets.
+  than 2^63 octets (decided 2026-11-15, tightened from 2^64: a value of 2^64 − 1 octets collides with
+  NONE in the SDK's `get`, and lengths in [2^63, 2^64 − 1) trap at 47901 / 47929).
 - **First milestone: T1c for canonical payloads** (M1), via an interim milestone covering only the
   fixed-width and Export instructions.
 - **The findings report** for Parity waits until full T1 and T2 are proved.
@@ -83,5 +84,5 @@ the real compiled service binaries in `services/`. Read `docs/whats-proven.md` f
   - weakening a hypothesis;
   - adding a lemma;
   - generalising a statement in place while keeping every existing statement unchanged.
-- **Usage limits.** Keep the number of parallel sessions small, at most 3. Restart sessions fresh,
+- **Usage limits.** Keep the number of parallel sessions small: at most 5 (Adam, 2026-11-15; was 3). Restart sessions fresh,
   with a handoff note, before their context gets large: the cost of each turn grows with context.

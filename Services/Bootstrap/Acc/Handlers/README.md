@@ -107,6 +107,46 @@ Handlers dependencies takes ~2 h on 4 cores). Use `ulimit -v 12000000` when comp
 - `refine ⟨?ω', ?run⟩; case run => pvm_go …` for a one-witness existential.
 
 
+## Session 4 progress (2026-11-15, row 8)
+
+**Done (compile; RecentMatch not yet imported from `Services.lean`):**
+- Step 1 of "Next (row 8)" below: `get_call` and `get_some` (Acc/Wrappers/GetCall.lean) gained two
+  conclusions, `∀ a, Glob a → μ'.read a = μ.read a` and `∀ a, a < 196608 → μ'.read a = μ.read a`
+  (from alloc's `HKeepGD` and `HeapHost.keepRO`); every old conclusion unchanged. `get_none` /
+  `get_empty` already had a frame covering both. `slot_get` gained the same two, plus
+  `∀ w, storage(keyEnc μ kp 1) = some w → w.length < 2³¹` (from the value's chunk, < 2³⁰) for
+  `ASem.step_read`.
+- `RecentMatch.lean`: `ASem.step_remove` (`.remove` evaluates to `none` on FULL, else the account
+  := `writeSelf self key []`; stated with `writeR7`/`writeSelf` to match `remove_call`).
+
+**Next: `recent_match` in RecentMatch.lean** (step 2):
+`Impl p (accContractS env) env Ab (Prog.bind (load (.recent c) slotDec) (fun v => match v with
+| some (p, i) => op (AOp.remove (Key.results p i).encode) | none => pure ())) (fun _ => RmPost …) s`,
+s at 8056 with ω₅ = c (c < 2³²), ω₁ = sp. `RmPost` (like `CwPost`): i = 8172, ω₁ = sp, ω₅ = c (8177
+stores ω₅ again), `HeapCtxC` for some st′ keeping st's chunks and data, memory kept above sp off
+sp + 744 … 780, sp + 1144 … 1180, sp + 1568 … 1604 (and the frames below sp the calls use), `Glob`,
+< 196608. Ab must hold at 34070 and 47977. Code (CodeA/L2.lean):
+- 8056 storeImmU16 [sp+1568] = 1; 8061 storeU32 [sp+1572] = ω₅; 8065 ω₇ = sp+1144; 8069 ω₈ = sp+1568;
+  8073 loadImmJump ω₀ = 280 → 34377. Then `slot_get` with t = jte(280) = 8079.
+- 8079 ω₇ = u16 [sp+1144]; 8083 branchEqImm ω₇ 0 → 8172.
+- 8086 … 8106: ω₁₀ = sp+1146, ω₇…ω₁₀ = the 4 u64 at sp+1146…, ω₁₁ = i16 [sp+1178], ω₁₂ = sp+1572;
+  8110 … 8118: 4 u64 stores at sp+1572…; 8121 storeImmU32 [sp+775] = 0; 8125 storeImmU16 [sp+1568] =
+  2; 8130 storeU16 [sp+1570] = ω₁₁; 8134 … 8146: [sp+744 … 776) = 0; 8150 ω₇ = sp+1568; 8154 ω₈ =
+  sp+744; 8158 ω₀ = 282 → 51243 (`kf_call`, tr = 8165, t = 2, buf = sp+744); 8165 ω₀ = 284 → 48481.
+  Split 8079 … 8158 in two for `pvm_go` (≤ ~25 instructions with stores).
+Proof plan: `unfold load`, `Impl.bind`, `unfold Prog.op Impl`. The pre-segment and `slot_get` run
+under KeepCtx; if `slot_get` aborts → `.inl` (Aborts, Ab at 34070/47977, `trap_34070`; 47977 via
+`get`'s trap lemma). Otherwise `.inr ⟨s, ⟨0, .refl⟩, rfl, _⟩` with `ASem.step_read` (key = [1] ++
+fixed 4 c = `keyEnc μ (sp+1568) 1`, the < 2³¹ bound from `slot_get`), c₁ = s.c; s₂ = the state at
+8079 via `keep_yin`. Then the match on the decoded value (`SlotOut` at sp+1144):
+- none: 8079/8083 → 8172, `Impl` of `pure ()`.
+- some (p, i): segments, `kf_call`, then `remove`'s call form with s₁ at 48481 and `step_remove`
+  (`Key.results p i` = [2] ++ p ++ fixed 2 i = `keyEnc μ' (sp+1568) 2`; `hold` from `ValuesFit`).
+  FULL: `remove_call`'s run to the trap 48533 is under `YIn` with c′ = (c.1.setSelf c.1.self, c.2)
+  (writeSelf = self on FULL); `Impl` needs `Ends p (KeepCtx R) s₁ .panic s.c`: needs a
+  `setSelf self = c` fact and a YIn → KeepCtx conversion for a run whose context does not change.
+  Non-FULL: `remove_call` to 48514/48531, then a return step (ω₀ = 284 → jte = 8172, like `sg_gret`).
+
 ## Session 3 progress (2026-11-15, row 8)
 
 Toolchain: `scripts/fetch-lake.sh` works (main's built `.lake`); then `lake build <module>` for the

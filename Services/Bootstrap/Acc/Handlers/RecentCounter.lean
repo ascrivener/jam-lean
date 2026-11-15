@@ -40,7 +40,8 @@ theorem cw_pre {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X
       ω'[8] = UInt64.ofNat (sp + 1568) := by
   have hw1 : ∀ a, sp + 1568 ≤ a → a < sp + 1570 → μ.writable a = true := fun a h1 h2 => hw a (.inl ⟨h1, h2⟩)
   have hw2 : ∀ a, sp + 1000 ≤ a → a < sp + 1004 → μ.writable a = true := fun a h1 h2 => hw a (.inr ⟨h1, h2⟩)
-  rw [show ω = regsNF ω [] from rfl]
+  rw [show ω = regsNF ω [] from rfl, show Num.encodeLE 2 0 = [UInt8.ofNat 0, UInt8.ofNat 0] from rfl,
+    ← encodeLE_mod 4 w, show (256 : Nat) ^ 4 = 4294967296 from rfl]
   refine ⟨?_, ?_, ?_⟩
   rotate_left
   · pvm_go [h1, h7, hsp, hw1, hw2]
@@ -64,7 +65,7 @@ theorem cw_mid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?_, ?_, ?_⟩
   rotate_left
-  · pvm_go [h1, hsp, rp, rl, hr]
+  · pvm_go [h1, hsp, rp, rl, hr, ↓rdN_fold]
   · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
     all_goals simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h1]
 
@@ -72,8 +73,10 @@ theorem cw_mid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X
 theorem cw_ret {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
     (μ : Memory) (e : Nat) (he : e = 48158 ∨ e = 48250 ∨ e = 48235) (h0 : ω[0] = UInt64.ofNat 290) :
     FreeStepsH p R e ω μ x 8376 ω μ x 1 := by
-  rw [show ω = regsNF ω [] from rfl]
-  rcases he with rfl | rfl | rfl <;> pvm_go [h0]
+  rcases he with rfl | rfl | rfl
+  all_goals
+    rw [show ω = regsNF ω [] from rfl]
+    pvm_go [h0]
 
 /-- **8376 … 8396**, the key's capacity cap ≠ 0 (the word at sp + 1144): `set`'s result word r (at
     sp + 744) saved at sp + 232, and the call of `dealloc` (40613) with ω₇ = ω₅ and return address
@@ -93,7 +96,7 @@ theorem cw_dl {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X)
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?_, ?_, ?_⟩
   rotate_left
-  · pvm_go [h1, hsp, rc, rr, hc0', hrc, hrr, hw]
+  · pvm_go [h1, hsp, rc, rr, hc0', hrc, hrr, hw, ↓rdN_fold]
   · refine ⟨?_, ?_, ?_, ?_⟩
     all_goals simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h1]
 
@@ -109,7 +112,7 @@ theorem cw_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X)
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?_, ?_, ?_⟩
   rotate_left
-  · pvm_go [h1, hsp, rr, hne', hrr]
+  · pvm_go [h1, hsp, rr, hne', hrr, ↓rdN_fold]
   · simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h1]
 
 /-- **8402 … 8412**, `set`'s result word −1 (`Err`, saved at sp + 232): on to the trap at 15361. -/
@@ -121,6 +124,6 @@ theorem cw_err {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X
   have rr := Handlers.DesignateAlloc.rd8 (by decide) mr
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?_, ?_⟩
-  pvm_go [h1, hsp, rr, hrr]
+  pvm_go [h1, hsp, rr, hrr, ↓rdN_fold]
 
 end Services.Bootstrap.Acc.Handlers.RecentCounter

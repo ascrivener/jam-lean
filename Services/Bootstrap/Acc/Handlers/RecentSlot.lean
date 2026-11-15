@@ -99,7 +99,7 @@ theorem sg_get {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?_, ?_, ?_⟩
   rotate_left
-  · pvm_go [h1, hS, rp, rl, hr]
+  · pvm_go [h1, hS, rp, rl, hr, ↓rdN_fold]
   · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
     all_goals simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h1]
 
@@ -116,7 +116,7 @@ theorem sg_dl {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X)
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?_, ?_, ?_⟩
   rotate_left
-  · pvm_go [h1, hS, rc, hc0', hr]
+  · pvm_go [h1, hS, rc, hc0', hr, ↓rdN_fold]
   · refine ⟨?_, ?_, ?_, ?_, ?_⟩
     all_goals simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h1]
 

@@ -142,6 +142,11 @@ jobs:
           lake exe genwitnesssteps --service bootstrap code 7463 | diff - Services/Bootstrap/Code.lean
           lake exe genwitnesssteps --service bootstrap blob | diff - Services/Bootstrap/Blob.lean
           lake exe genwitnesssteps --service bootstrap codecheck 7463
+          # the append-only code-fact tiers (docs/code-fact-tiers.md)
+          for t in $(lake exe genwitnesssteps --service bootstrap tiers); do
+            lake exe genwitnesssteps --service bootstrap tier 7463 "$t" | diff - "Services/Bootstrap/Code$t.lean"
+            lake exe genwitnesssteps --service bootstrap tiercheck 7463 "$t"
+          done
           lake exe genwitnesssteps --service bootstrap cut0 38875 BParams 0 2829 every=16 frame
           python3 scripts/gen_exec_chain.py Services/Bootstrap/BParams keep=174,175,176 prefix=174
           WITNESS_WILD=1 WITNESS_INPUT=3,0,7,0 WITNESS_CLASS="5,1,9,0;100,3,12,0;2,0,0,0;7,2,15,0;65535,65535,9,0;300,20000,12,0;40000,129,5,0" WITNESS_SBOUND=0,16 WITNESS_SIMP=PVM.bitwise_and_m15,PVM.bitwise_and_m7,PVM.bitwise_and_m255 lake exe genwitnesssteps --service bootstrap cut0 35202 BTail1 0 1003 every=16 frame

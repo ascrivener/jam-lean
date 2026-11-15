@@ -5,6 +5,10 @@ the real compiled service binaries in `services/`. Read `docs/whats-proven.md` f
 `docs/bootstrap-target.md` for the Bootstrap targets (T1 refine, T2 accumulate), and
 `docs/HANDOFF.md` for the state of work in flight.
 
+**Start of session:** run `scripts/fetch-lake.sh` before building. It installs the toolchain and
+unpacks main's latest CI build (about 2–3 min; needs about 13 GB of free disk), so `lake build`
+rebuilds only what changed since then instead of building cold for 4.5–5 h.
+
 ## Rules
 
 - **Source.** Model only from the Gray Paper v0.8.0. Don't copy other implementations, especially
@@ -29,6 +33,8 @@ the real compiled service binaries in `services/`. Read `docs/whats-proven.md` f
   - Pass `(S0 := S0) (S1 := S1)` explicitly.
   - Elaboration can die silently, so check exit codes.
   - Run the full `lake build` in the background before each PR.
+  - New code facts go in a new append-only tier, not a regeneration of an existing one: see
+    `docs/code-fact-tiers.md`.
 
 ## CI
 
@@ -76,5 +82,5 @@ the real compiled service binaries in `services/`. Read `docs/whats-proven.md` f
   - weakening a hypothesis;
   - adding a lemma;
   - generalising a statement in place while keeping every existing statement unchanged.
-- **Usage limits.** Keep the number of parallel sessions small: at most 5 (Adam, 2026-11-15; was 3). Restart sessions fresh,
+- **Usage limits.** Keep the number of parallel sessions within the limit Adam sets (see docs/HANDOFF.md). Restart sessions fresh,
   with a handoff note, before their context gets large: the cost of each turn grows with context.

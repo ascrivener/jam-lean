@@ -2,6 +2,7 @@ import Services.Bootstrap.Refine.Top
 import Services.Bootstrap.NoInstr
 import Services.Bootstrap.StartMemZ
 import Services.Bootstrap.Bridge
+import Services.Bootstrap.Fmt.FmtRO
 import Services.Bootstrap.CodeA
 import Services.Bootstrap.CodeF
 
@@ -25,14 +26,16 @@ set_option maxHeartbeats 8000000
 set_option maxRecDepth 100000
 
 /-- **Facts about the vendored blob** (a named hypothesis until step 10 of `docs/bootstrap-target.md` discharges
-    it): a closed statement about the constant `Bridge.vendored` alone, no free variables. Its section sizes and the
-    data octets the paths read are as deployed (`Prefix.layoutOk`), and its read-only data holds, at their offsets
-    from 65536, the three tables refine reads: the decoder's variant table (67476, 100 octets), the encoder's
-    dispatch table (67376, 100 octets) and the drop dispatch table (67760, 96 octets). -/
+    it): a closed statement about the constant `Bridge.vendored` alone, no free variables. Everything in it is about
+    that constant blob, and step 10 discharges all of it. Its section sizes and the data octets the paths read are
+    as deployed (`Prefix.layoutOk`); its read-only data holds, at their offsets from 65536, the three tables refine
+    reads: the decoder's variant table (67476, 100 octets), the encoder's dispatch table (67376, 100 octets) and the
+    drop dispatch table (67760, 96 octets); and it holds the slices the Fmt summaries read (`Fmt.FmtRO`: the
+    `format!` templates, vtables, jump table and name tables, each a concrete `(ro.drop k).take m = […]`). -/
 def VendoredFacts : Prop :=
   ∃ vb : JamBlob, vendored = some vb ∧ layoutOk vb = true ∧
     (vb.ro.toList.drop 1940).take 100 = Decode.Tag.table ∧ (vb.ro.toList.drop 1840).take 100 = Encode.Enc.table ∧
-    (vb.ro.toList.drop 2224).take 96 = DropOut.dtable
+    (vb.ro.toList.drop 2224).take 96 = DropOut.dtable ∧ Fmt.FmtRO vb.ro.toList
 
 /-- Y's RAM holds the read-only data at 65536 (for a blob with the deployed layout, any arguments). -/
 theorem initialMemory_readN_ro (jb : JamBlob) (a : ByteArray) (hl : layoutOk jb = true)
@@ -98,7 +101,7 @@ theorem refine_milestone (C : Spec.Consts) (hvend : VendoredFacts) (hfmt : FmtHy
   intro o
   refine ⟨_, _, by rw [hy]; exact SpecRun.run_refine C _ i is salt rest hwf (by omega) hsalt hk, ?_⟩
   obtain ⟨hsize, code, jb, vb, hcode, hjb, hvb, hro, hrw, hhp, hss, hheap, hcc, hccX, hccA, hccF, hccR⟩ := hboot
-  obtain ⟨vb', hvb', hlay', t1, t2, t3⟩ := hvend
+  obtain ⟨vb', hvb', hlay', t1, t2, t3, -⟩ := hvend
   obtain rfl : vb' = vb := Option.some.inj (hvb'.symm.trans hvb)
   have hlay : layoutOk jb = true := by unfold layoutOk; rw [hro, hrw, hhp, hss]; exact hlay'
   obtain ⟨P, hP⟩ := checkCode_sound hcc

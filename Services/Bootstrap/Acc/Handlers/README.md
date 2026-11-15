@@ -106,18 +106,48 @@ Handlers dependencies takes ~2 h on 4 cores). Use `ulimit -v 12000000` when comp
   (`Fmt.`), `Num.decodeLE_encodeLE` and the `Nat.mod_eq_of_lt` facts.
 - `refine ⟨?ω', ?run⟩; case run => pvm_go …` for a one-witness existential.
 
+
+## Session 3 progress (2026-11-15, row 8)
+
+Toolchain: `scripts/fetch-lake.sh` works (main's built `.lake`); then `lake build <module>` for the
+dependencies and `lake env lean <file>` for one file. Use `ulimit -v 40000000` or more: with 12 GB
+Lean fails with "failed to create thread".
+
+**Done (compile; not yet imported from `Services.lean`):**
+- `RecentSlotSeg.lean`: 34377's segments after `get`: `sg_some` (34434 → 58434), `sg_r2` (34485 →
+  58434), `sg_short0` / `sg_shortD` (a short read: `None`, then return or `dealloc`), `okMem`,
+  `sg_ok0` / `sg_okD` (the `Some` record), `sg_ret` (34623).
+- `ReadExactText.lean`: `read_exact_text`, `Fmt.read_exact` plus the copied octets (via `memcpy_text`).
+- `RecentSlotTail.lean`: `slotDec` (addRecent's decoder, `rfl`-equal to the one in `Spec.addRecent`),
+  `slotDec_long` / `slotDec_short`, `SlotOut`, `sg_fret` (`dealloc` + return), `okMem_slot`,
+  `sg_tailW` (34434 → return for a value w ≠ [] in a fresh chunk: three read-length cases),
+  `sg_tailE` (the empty value).
+- `RecentSlotGet.lean`: `sg_gret` (`get`'s exits → 34417) and **`slot_get`**: 34377 under
+  `KeepCtx (accContractS env)` either returns with `SlotOut μ' out ((storage (keyEnc μ kp 1)).bind
+  (decode slotDec))`, `HeapCtxC` for some st′ keeping st's chunks and their data, memory kept from SP
+  on off out … out + 36; or reaches 34070 / 47977 (heap). Hypotheses: the tag-1 size word kc at 68688
+  (5 ≤ kc, kc + 31 < 2³⁶), the frame [SP − 352, SP) in the stack, the value < 2⁶³ (`ValuesFit`).
+
+**Open decision (asked @parent 2026-11-15):** `get_call` (Acc/Wrappers/GetCall.lean, not ours) has
+no `Glob` / below-196608 frame facts, so `slot_get` doesn't state them either. Row 8 needs them
+(`ParamStatics` must survive to 8266). Recommended: (a) add both conclusions to `get_call` in place.
+
 **Next (row 8):**
-1. 34377's remaining segments: `sg_some` (34434 → 58434, 32-octet read), `sg_r2` (34485 → 58434,
-   2-octet read; copy S + 56 → S + 24), `sg_bad` (34534: u16 0 at out, then 34610 or 34539),
-   `sg_ok` (34571: payload to out + 2, u16 at out + 34, tag 1), `sg_free` (34610 → 40613, ret 1608),
-   `sg_ret` (34623) / `sg_ret0` (34539); then the composition with `kb_call`, `get_call` (Some w /
-   None / trap 47977), `read_exact` / `re_short`, `dealloc_callG`. Statement: out gets
-   `load (.recent c) (take 32, fixedN 2)`'s result (0 = None; 1, p at +2, k at +34).
-2. 8056 … 8172 composed: key {1, c} at sp + 1568, 34377, then (slot present) the results key,
-   `kf_call` (51243) and `remove_call` (48481), as `Impl` of the `match` in `addRecent`.
+1. If (a) is approved: extend `get_call` (and `get_some` / `get_empty` / `get_none`), then add the
+   `Glob` and `< 196608` conclusions to `slot_get` (`sg_tailW` / `sg_fret` already have them).
+2. 8056 … 8172 as `Impl` of `addRecent`'s `match ← load (.recent c) slotDec with …`:
+   - 8056 … 8073: u16 1 at sp + 1568, u32 c (ω₅) at sp + 1572, then 34377 with out sp + 1144 and
+     ret 280 → 8079. `Key.recent c` = [1] ++ fixed 4 c = `keyEnc μ (sp + 1568) 1` (c < 2³²).
+   - 8079: u16 at sp + 1144 = 0 → 8172 (None).
+   - 8086 … 8158: the 32 octets sp + 1146 → sp + 1572, the i16 at sp + 1178 → sp + 1570, tag u16 2
+     at sp + 1568, sp + 744 … 780 zeroed; `kf_call` (51243, ω₇ = sp + 1568, ω₈ = sp + 744; ret 282 →
+     8165), then 8165 jumps straight to `remove` 48481 (`remove_call`, ret 284 → 8172).
+     `Key.results p i` = [2] ++ p ++ fixed 2 i = `keyEnc μ (sp + 1568) 2`.
+   - The read is `Impl`'s call form with s₁ = s (KeepCtx run, `keep_yin` for the YIn part);
+     `ASem.step_read` needs the value < 2³¹: get it from the chunk bound (data below base + 2³⁰).
 3. 8172 … 8326 (slot write, inlined alloc + encoder 32414) and 8266 … 8326 (`ParamStatics`, c′).
 4. 8031 … 8049: the counter's typed get at 34637 (u32 decode).
-5. Add the modules to `Services.lean`, record `ParamStatics`' discharge obligation in
+5. Add the modules to `Services.lean`; record `ParamStatics`' discharge obligation in
    `docs/whats-proven.md`.
 
 ## Handoff (T2 handlers-a, paused 2026-11-14)

@@ -1,5 +1,6 @@
 import Services.Bootstrap.Acc.Impl.Impl
 import Services.Bootstrap.Acc.Inputs.FetchVec
+import Services.Bootstrap.Acc.Transfer.Hyp
 
 /-!
 # `on_transfer`'s traps and its `heap` abort sites
@@ -53,6 +54,23 @@ theorem aborts_of_trap {Qu : Type} {p : ByteArray} {P : Program} [HasCodeA p P]
     (run : FreeStepsH p (KeepCtx R) s.i s.ω s.μ (s.c, s.q) t ω' μ' (s.c, q') n) :
     Aborts p (KeepCtx R) Ab s s.c :=
   ⟨⟨t, ω', μ', s.c, q'⟩, ⟨n, run⟩, hAb _ ht, ⟨ω', μ', q', heapTrapT_run (P := P) ht _ ω' μ'⟩⟩
+
+/-- **`on_transfer`'s `heap` abort states**: a heap trap, or a failed allocator call (40611 / 40821 with
+    ω₇ = 0) inside a formatting call (`ExhaustsP`). -/
+def HeapFailT {Qu : Type} (s : St Qu) : Prop :=
+  HeapTrapT s.i ∨ ((s.i = 40611 ∨ s.i = 40821) ∧ s.ω[7] = UInt64.ofNat 0)
+
+/-- **A formatting call's allocation failure (`ExhaustsP`) is an allowed early ☇**, if the abort
+    reason holds at the failed call. -/
+theorem aborts_of_exhaustsP {p : ByteArray} {env : AccEnv} {pb : Nat}
+    {Ab : St Stream → Prop} (hAb : ∀ s : St Stream, HeapFailT s → Ab s)
+    (s : St Stream) (h : ExhaustsP p env pb s.i s.ω s.μ s.c s.q) :
+    Aborts p (KeepCtx (accContractS env)) Ab s s.c := by
+  obtain ⟨ω', μ', q', j, N, run, h7, hj, ω'', μ'', q'', hr⟩ := h
+  refine ⟨⟨j, ω', μ', s.c, q'⟩, ⟨N, run⟩, hAb _ (.inr ⟨?_, h7⟩), ⟨ω'', μ'', q'', hr⟩⟩
+  rcases hj with ⟨rfl, -⟩ | ⟨rfl, -⟩
+  · exact .inl rfl
+  · exact .inr rfl
 
 /-- **A run reaching 15361, keeping the context, ends ☇ with it.** -/
 theorem ends_of_15361 {Qu : Type} {p : ByteArray} {P : Program} [HasCodeA p P]

@@ -119,7 +119,17 @@ Handlers dependencies takes ~2 h on 4 cores). Use `ulimit -v 12000000` when comp
 - `RecentMatch.lean`: `ASem.step_remove` (`.remove` evaluates to `none` on FULL, else the account
   := `writeSelf self key []`; stated with `writeR7`/`writeSelf` to match `remove_call`).
 
-**Next: `recent_match` in RecentMatch.lean** (step 2):
+- `RecentMatch.lean` also has (all compile): `rm_pre` (8056 → 34377), `rm_none` (8079 → 8172),
+  `rm_some` (8079 → 51243), `rm_j` (8165 → 48481), `rm_back` (48514/48531 → 8172), `trap_47977`,
+  `trap_48533`, `readN_32`, **`rm_to_remove`** (8079 → 48481 for `SlotOut … (some (q, k))`, the
+  35 octets `(Key.results q k).encode` at sp + 744, ω₇/ω₈ set, frame off sp + 744 … 780 and
+  sp + 1568 … 1604) and **`rm_head`** (8056 → 8079 via `slot_get`, or the traps 34070 / 47977).
+- **Blocked (asked @parent 2026-11-15):** `remove`'s FULL case. `ASem.step` gives `none`, so `Impl`
+  needs `Ends p (KeepCtx R) s₁ .panic s.c`, but the binary's host step sets x := `setSelf self`
+  (≠ x: `self` is `getD … default`; HashMap has no ext equality). Recommended fix: `Impl`'s none
+  branch takes `∃ c', c'.2 = s.c.2 ∧ Ends p (YIn R s.c.2 s.c.2) s₁ .panic c'`.
+
+**Next: `recent_match` in RecentMatch.lean** (step 2; only the glue is left):
 `Impl p (accContractS env) env Ab (Prog.bind (load (.recent c) slotDec) (fun v => match v with
 | some (p, i) => op (AOp.remove (Key.results p i).encode) | none => pure ())) (fun _ => RmPost …) s`,
 s at 8056 with ω₅ = c (c < 2³²), ω₁ = sp. `RmPost` (like `CwPost`): i = 8172, ω₁ = sp, ω₅ = c (8177

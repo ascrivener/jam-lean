@@ -203,6 +203,56 @@ theorem h3_h3z {vals : List Nat} {μ₀ μ : Memory} {ω : Regs} (h : H3.Holds v
   obtain ⟨r0, r1, r3, r4, r5, r6, r7, r8, r9, r10, r11, -⟩ := hr
   exact ⟨r0, r1, r3, r4, r5, by rw [r6, h13], r7, r8, r9, r10, r11, trivial⟩
 
+/-- `H2` (r4 = len − 15) as `H1` (r4 = ρ6) when ρ6 = len − 15. -/
+theorem h2_h1 {vals : List Nat} {μ₀ μ : Memory} {ω : Regs} (h : H2.Holds vals μ₀ ω μ)
+    (h6 : vals.getD 6 0 + 15 = vals.getD 1 0) : H1.Holds vals μ₀ ω μ := by
+  obtain ⟨hr, hc, hrd, hwr, hf, hp⟩ := h
+  refine ⟨?_, hc, hrd, hwr, hf, hp⟩
+  simp only [H2, H1, regs1, RegsHold, SVal.eval, Aff.eval, env, af] at hr ⊢
+  obtain ⟨r0, r1, r3, r4, r5, r7, r8, r9, r11, -⟩ := hr
+  refine ⟨r0, r1, r3, ?_, r5, r7, r8, r9, r11, trivial⟩
+  rw [r4]; congr 1; omega
+
+
+/-- `H1` as `H2` (with ρ14 := 0) when ρ6 = len − 15. -/
+theorem h1_h2 {a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 : Nat} {μ₀ μ : Memory}
+    {ω : Regs}
+    (h : H1.Holds [a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14] μ₀ ω μ)
+    (h6 : a6 + 15 = a1) :
+    H2.Holds [a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, 0] μ₀ ω μ := by
+  simp only [Cut.Holds, H1, H2, regs1, cells1, RegsHold, CellsHold, RdHold, WrHold, InReg,
+    SVal.eval, Aff.eval, env, af, List.getD_cons_succ, List.getD_cons_zero, List.mem_cons,
+    List.not_mem_nil, or_false, forall_eq] at h ⊢
+  obtain ⟨⟨r0, r1, r3, r4, r5, r7, r8, r9, r11, -⟩, hc, hrd, hwr, hf, hp⟩ := h
+  refine ⟨⟨r0, r1, r3, ?_, r5, r7, r8, r9, r11, trivial⟩, hc, hrd, hwr, hf, hp⟩
+  rw [r4]; congr 1; omega
+
+/-- Entrywise ≤ of two bound lists. -/
+def leL : List Nat → List Nat → Bool
+  | a :: as, b :: bs => a ≤ b && leL as bs
+  | [], [] => true
+  | _, _ => false
+
+theorem bhold_mono : ∀ {vals ub ub' : List Nat}, BHold vals ub → leL ub ub' = true → BHold vals ub'
+  | [], [], [], _, _ => trivial
+  | _ :: _, _ :: _, _ :: _, h, hl => by
+    simp only [leL, Bool.and_eq_true, decide_eq_true_eq] at hl
+    exact ⟨Nat.lt_of_lt_of_le h.1 hl.1, bhold_mono h.2 hl.2⟩
+  | [], _ :: _, _, h, _ => h.elim
+  | _ :: _, [], _, h, _ => h.elim
+  | [], [], _ :: _, _, hl => by simp [leL] at hl
+  | _ :: _, _ :: _, [], _, hl => by simp [leL] at hl
+
+/-- `asm4` from the arithmetic facts and `RdO`. -/
+theorem asm4_of' {μ₀ μ : Memory} {ω : Regs} {v₀ vals : List Nat} (hR : RdO μ₀ v₀)
+    (hK : Keep keepO v₀ vals) (hp : μ.pages = μ₀.pages)
+    (h1 : vals.getD 0 0 + vals.getD 2 0 = vals.getD 3 0) (h2 : vals.getD 2 0 ≤ vals.getD 1 0)
+    (h3 : vals.getD 0 0 + vals.getD 1 0 = vals.getD 12 0) : FactsHold (env vals ω μ) asm4 := by
+  obtain ⟨k0, -, k4, k12⟩ := keepO_get hK
+  obtain ⟨r1, r2, r3⟩ := hR
+  simp only [asm4, FactsHold, Fact.Holds, Aff.eval, env, af, readable_pages hp]
+  exact ⟨h1, by omega, h3, fun t ht1 ht2 => r1 t (by omega) (by omega), trivial⟩
+
 section
 variable {X : Type} {p : ByteArray} {R : HostRel X}
 
@@ -439,6 +489,49 @@ theorem seg4 {P : Program} [Services.Bootstrap.CodeF.HasCodeF p P]
       · omega
       · omega
       · exact hprog
+
+/-- 60759 (i + 1 ≤ m): the word loop, then 60793. -/
+theorem segWord {P : Program} [Services.Bootstrap.CodeF.HasCodeF p P]
+    [Services.Bootstrap.Code.HasCode p P] {x : X} {μ₀ : Memory} {v₀ : List Nat} {n : Nat}
+    {vals : List Nat} {ω : Regs} {μ : Memory} (hR : RdO μ₀ v₀) (hH : H1.Holds vals μ₀ ω μ)
+    (hB : BHold vals ub1) (hI : I1 v₀ vals) (hF : FactsHold (env vals ω μ) asm1)
+    (hm : vals.getD 2 0 + 1 ≤ vals.getD 6 0)
+    (hprog : ∀ j, vals.getD 2 0 ≤ j → 128 ≤ decodeLE (μ₀.readN (vals.getD 0 0 + j) 1) →
+      vals.getD 1 0 - j < n) : Reach p R x μ₀ v₀ n 60759 ω μ := by
+  have hl := bhold_length hB
+  have hpg := hH.2.2.2.2.2
+  obtain ⟨i7, idj, i6, iK⟩ := hI
+  rcases vals with _ | ⟨a0, _ | ⟨a1, _ | ⟨a2, _ | ⟨a3, _ | ⟨a4, _ | ⟨a5, _ | ⟨a6, _ | ⟨a7, _ | ⟨a8, _ | ⟨a9, _ | ⟨a10, _ | ⟨a11, _ | ⟨a12, _ | ⟨a13, _ | ⟨a14, _ | ⟨_, _⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩ <;> simp [ub1] at hl
+  simp only [List.getD_cons_succ, List.getD_cons_zero] at hm hprog i7 idj i6
+  simp only [BHold, ub1] at hB
+  obtain ⟨b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13, b14, -⟩ := hB
+  simp only [asm1, FactsHold, Fact.Holds, Aff.eval, env, List.getD_cons_succ,
+    List.getD_cons_zero, af] at hF
+  obtain ⟨f1, f2, f3, f4, -⟩ := hF
+  have e6 : a6 + 15 = a1 := by omega
+  have hK0 : Keep keepO v₀ [a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, 0] :=
+    keep_of iK (by simp [keepO])
+  obtain ⟨xpc, k, ω', μ', hrun, hq⟩ := word_loop (p := p) (R := R) (P := P) (μ₀ := μ₀)
+    [a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, 0] x _ ω μ
+    ⟨by simp only [List.getD_cons_succ, List.getD_cons_zero]; omega,
+     by simp only [List.getD_cons_succ, List.getD_cons_zero]; omega, fun _ _ => rfl, Nat.le_refl _⟩
+    (by simp only [BHold, ub2]; omega15)
+    (by simp only [LBHold, lb2]; omega15)
+    (by simp only [asm2, FactsHold, Fact.Holds, Aff.eval, env, List.getD_cons_succ,
+          List.getD_cons_zero, af]
+        exact ⟨f1, by omega, f3, f4, trivial⟩)
+    (h1_h2 hH e6)
+  refine reach_pre hrun ?_
+  obtain ⟨vals2, hH2, hB2, -, ⟨i7', idj', hK2, hge⟩, h1', h3', rfl, hle, -⟩ := hq
+  have k1 : vals2.getD 1 0 = a1 := hK2 1 (by decide)
+  have k6 : vals2.getD 6 0 = a6 := hK2 6 (by decide)
+  have hKO : Keep keepO v₀ vals2 := keep_trans (by decide) hK2 hK0
+  simp only [List.getD_cons_succ, List.getD_cons_zero] at hge
+  exact seg4 (P := P) hR (h2_h1 hH2 (by omega)) (bhold_mono hB2 (by decide))
+    ⟨i7', idj', by rw [k6, k1]; omega, hKO⟩ (asm4_of' hR hKO hH2.2.2.2.2.2 h1' hle h3')
+    (fun j hj hoct => by
+      have k0 : vals2.getD 0 0 = a0 := hK2 0 (by decide)
+      rw [k0] at hoct; rw [k1]; exact hprog j (by omega) hoct)
 
 end
 

@@ -96,6 +96,7 @@ theorem tr_read (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap 
       μ'.readN (sp + 1144) 128 = μ.readN ms 128 ∧
       rdN μ' (sp + 472) 4 = ω[10].toNat % 4294967296 ∧ rdN μ' (sp + 1000) 8 = ω[6].toNat ∧
       rdN μ' (sp + 512) 8 = 65956 ∧
+      (∀ w, c.1.self.storage.get? trKey = some w → w.length < 2147483648) ∧
       (∀ a, a < 4294967296 → sp ≤ a → ¬ TrRdW sp a → μ'.read a = μ.read a)) ∨
     (∃ t ω' μ' N, HeapTrapT t ∧
       FreeStepsH p (KeepCtx (accContractS env)) 7159 ω μ (c, f) t ω' μ' (c, f) N) := by
@@ -168,6 +169,7 @@ theorem tr_read (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap 
       (∀ d ∈ chunks s₀, d.used = true → d ∈ chunks s5 ∧ ∀ a, InDataA d a → μ5.read a = μ4.read a) →
       (∀ a, a < 4294967296 → sp ≤ a → (a < sp + 240 ∨ sp + 256 ≤ a) →
         (a < sp + 744 ∨ sp + 760 ≤ a) → (a < sp + 1568 ∨ sp + 1592 ≤ a) → μ5.read a = μ4.read a) →
+      (∀ w, c.1.self.storage.get? trKey = some w → w.length < 2147483648) →
       ∃ s' ω' μ' N, FreeStepsH p (KeepCtx (accContractS env)) 7159 ω μ (c, f) 7326 ω' μ' (c, f) N ∧
         ω'[1] = UInt64.ofNat sp ∧ ω'[6] = UInt64.ofNat (sxw 4 (trCount (c.1.self.storage.get? trKey))) ∧
         HeapCtxC env.code pb S0 S1 μ' s' ∧
@@ -175,10 +177,11 @@ theorem tr_read (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap 
         μ'.readN (sp + 1144) 128 = μ.readN ms 128 ∧
         rdN μ' (sp + 472) 4 = ω[10].toNat % 4294967296 ∧ rdN μ' (sp + 1000) 8 = ω[6].toNat ∧
         rdN μ' (sp + 512) 8 = 65956 ∧
+        (∀ w, c.1.self.storage.get? trKey = some w → w.length < 2147483648) ∧
         (∀ a, a < 4294967296 → sp ≤ a → ¬ TrRdW sp a → μ'.read a = μ.read a) := by
-    intro s5 ω5 μ5 N run5 e1 e6 H5 dat5 fr5
+    intro s5 ω5 μ5 N run5 e1 e6 H5 dat5 fr5 hlt
     refine ⟨s5, ω5, μ5, _, run1.trans (run2.trans (run3.trans (run4.trans run5))), e1, e6, H5,
-      fun d hd hu => ⟨(dat5 d hd hu).1, fun a ha => ?_⟩, ?_, ?_, ?_, ?_, memo4 μ5 fr5⟩
+      fun d hd hu => ⟨(dat5 d hd hu).1, fun a ha => ?_⟩, ?_, ?_, ?_, ?_, hlt, memo4 μ5 fr5⟩
     · rw [(dat5 d hd hu).2 a ha, dat4 d hd hu a ha]
       exact fr13 a (heapC_data_lt H hd ha).2
     · rw [readN_congr2 (μ := μ2) fun j hj => by
@@ -195,7 +198,8 @@ theorem tr_read (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap 
     obtain ⟨ω5, run5, e6, ej⟩ := trd_none (p := p) (P := P) (R := KeepCtx (accContractS env)) (c, f) ω4 μ4 sp
       d1' ⟨by omega, by omega⟩ gout (fun a h1 h2 => hrS4 a (by omega) (by omega))
     exact .inl (fin s4 ω5 μ4 _ run5 ((ej 1 (by decide)).trans d1') (by rw [e6]; rfl) H4
-      (fun d hd hu => ⟨keep4 d hd hu, fun a _ => rfl⟩) (fun a _ _ _ _ _ => rfl))
+      (fun d hd hu => ⟨keep4 d hd hu, fun a _ => rfl⟩) (fun a _ _ _ _ _ => rfl)
+      (fun w hw => by cases hw))
   · -- empty: `read_exact` fails, the counter is 0
     obtain ⟨g0, g8, g16⟩ := gout
     obtain ⟨ω5, μ5, run5, e0, e1, e5, e7, e8, e9, r744, r752, r248, fr5, rd5, wr5, ej⟩ :=
@@ -222,7 +226,8 @@ theorem tr_read (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap 
     refine .inl (fin s4 ω8 μ6 _ (run5.trans (run6.trans (run7.trans run8)))
       ((hj 1 (by decide)).trans ((gj 1 (by decide)).trans (f1.trans e1))) ?_ H6
       (fun d hd hu => ⟨keep4 d hd hu, fun a ha => ?_⟩)
-      (fun a ha0 ha1 ha2 ha3 ha4 => fr46 a ha0 ha1 (by omega) ha3 (by omega)))
+      (fun a ha0 ha1 ha2 ha3 ha4 => fr46 a ha0 ha1 (by omega) ha3 (by omega))
+      (fun w hw => by cases hw; decide))
     · rw [h6']; simp [trCount, decode_fixedN4]; rfl
     · have := heapC_data_lt H4 (keep4 d hd hu) ha
       rw [fr6 a (by omega) (.inl (by omega)), fr5 a (by omega) (.inl (by omega)) (.inl (by omega)) (.inl (by omega))]
@@ -314,7 +319,7 @@ theorem tr_read (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap 
       (by rw [i7, r240]) (by omega)
     refine .inl (fin (free s4 ptr) ω10 μ8 _ (run5.trans (run6.trans (run7.trans (run8.trans (run9.trans run10)))))
       ((kj 1 (by decide)).trans ((ij 1 (by decide)).trans (h1'.trans g1'))) ?_ H8
-      (fun d hd hu => ?_) (fun a ha0 ha1 ha2 ha3 ha4 => ?_))
+      (fun d hd hu => ?_) (fun a ha0 ha1 ha2 ha3 ha4 => ?_) (fun w hw => by cases hw; omega))
     · have e6 := (ij 6 (by decide)).trans (h6'.trans g6')
       rw [k6, ← hrv]
       by_cases hr0 : r = 0

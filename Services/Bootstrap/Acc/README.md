@@ -55,8 +55,9 @@ the same `Get.lean` / `GetCall.lean` and `gk_call` adapted to them (its abort: r
    **Next:** 7326 → 7799, then 7799 → 6766, then the `Impl` theorem, with `Ab` a parameter under
    `hAb : ∀ s, HeapFailT s → Ab s`.
 
-   **Open point:** `ASemLemmas.step_read` needs the value under the key to be < 2³¹. Carry the read
-   step's result as a premise (`hstep`) and flag it in the PR body.
+   **`step_read`'s bound (value < 2³¹ octets) is discharged.** `tr_read`'s success disjunct states
+   it: a value the binary reads was allocated on the heap, which ends below 2³¹. Longer values take
+   the heap-trap disjunct. `HeapTrapT` now includes 4002 (the trap of `set`'s copied-key alloc).
 3. The items-loop skeleton (`Impl.forIn` over the inputs, loop head 6766, frame sp as at 6674). Its
    operand arm calls the Vec session's output decode at 7073 (in progress; success and Exhausts; the
    decode-error branch is the open obligation "output decode failure contract") and Handlers A's rows

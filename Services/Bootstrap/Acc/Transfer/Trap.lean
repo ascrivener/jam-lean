@@ -6,7 +6,7 @@ import Services.Bootstrap.Acc.Transfer.Hyp
 # `on_transfer`'s traps and its `heap` abort sites
 
 Every failed allocation on `on_transfer`'s path ends at a `trap` (GP v0.8.0 §A.5.1, ☇):
-- 3895: `alloc` returned null in the copied-key helpers (`get` at 40494 → 3820, `set` → 3896);
+- 3895, 4002: `alloc` returned null in the copied-key helpers (`get`: 3820 → 3895; `set`: 3896 → 4002);
 - 47977: `get`'s own allocation failed (`get_call`, `get_huge`);
 - 15362, 15363: `alloc` of the memo copy (7413) and of the log line's buffer (7544) returned null;
 - 34178: `alloc` in the record encoder (`enc_call`) returned null.
@@ -20,7 +20,7 @@ namespace Services.Bootstrap.Acc
 open PVM JAM Services.Bootstrap Services.Bootstrap.Code Services.Bootstrap.CodeA
 
 /-- The pcs of `on_transfer`'s allocation-failure traps (the `heap` abort reason). -/
-def HeapTrapT (i : Nat) : Prop := i = 3895 ∨ i = 47977 ∨ i = 15362 ∨ i = 15363 ∨ i = 34178
+def HeapTrapT (i : Nat) : Prop := i = 3895 ∨ i = 4002 ∨ i = 47977 ∨ i = 15362 ∨ i = 15363 ∨ i = 34178
 
 /-- A `trap` at t: the run ends ☇ there, registers, memory and context as they are. -/
 theorem trap_run {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} (t : Nat)
@@ -34,8 +34,9 @@ theorem trap_run {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} (t : N
 /-- Each of `HeapTrapT`'s pcs is a `trap`. -/
 theorem heapTrapT_run {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [HasCodeA p P] {t : Nat}
     (ht : HeapTrapT t) (x : X) (ω : Regs) (μ : Memory) : FreeRunH p R t ω μ x .panic ω μ x := by
-  rcases ht with rfl | rfl | rfl | rfl | rfl
+  rcases ht with rfl | rfl | rfl | rfl | rfl | rfl
   · exact trap_run _ ⟨(d_3895 (p := p) (P := P)).1, (d_3895 (p := p) (P := P)).2.1⟩ x ω μ
+  · exact trap_run _ ⟨(d_4002 (p := p) (P := P)).1, (d_4002 (p := p) (P := P)).2.1⟩ x ω μ
   · exact trap_run _ ⟨(d_47977 (p := p) (P := P)).1, (d_47977 (p := p) (P := P)).2.1⟩ x ω μ
   · exact trap_run _ ⟨(d_15362 (p := p) (P := P)).1, (d_15362 (p := p) (P := P)).2.1⟩ x ω μ
   · exact trap_run _ ⟨(d_15363 (p := p) (P := P)).1, (d_15363 (p := p) (P := P)).2.1⟩ x ω μ

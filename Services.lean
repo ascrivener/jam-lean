@@ -47,6 +47,7 @@ import Services.Bootstrap.Fmt.FieldCode
 import Services.Bootstrap.Fmt.FieldOptU32
 import Services.Bootstrap.Fmt.FieldInput
 import Services.Bootstrap.Fmt.Dec16
+import Services.Bootstrap.Fmt.FieldVecVec
 import Services.Bootstrap.Fmt.U8x32
 import Services.Bootstrap.Fmt.OracleRefineK
 import Services.Bootstrap.Fmt.StructField2

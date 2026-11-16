@@ -15,7 +15,7 @@
   | 36594 | `&Option<u32>` (`maybe_id`, 0); Some → 37549 | ref_u32_ok (#213) | S | **done** `ref_opt_u32_36594_ok` |
   | 36972 | `&Input { seed: u64 (37857), nb_items: u8 (37527) }` (21) | debug_struct2 | S–M | **done** `ref_input_36972_ok` (+ `u64b_ok`, 37857) |
   | 28801 | `<u16 as Debug>` → `<u16 as Display>` 67932 (12, 24) | new `dec16` | M | **done** `u16_ok` (ArgOk), `dec16` |
-  | 26397 | `&Vec<Vec<u8>>` (elements 24 octets, 26807) (5, 10, 19) | vd_loop for stride 24 | M | |
+  | 26397 | `&Vec<Vec<u8>>` (elements 24 octets, 26807) (5, 10, 19) | VecInstr template | M | **done** `ref_vecvec_26397_ok` (elements ≤ L octets), `ref_vecvec_core` (any RefOk elements at 26807) |
   | 26605 / 26706 | `&Vec<(u32, u64)>`-like, 16-octet elements via 37352 / 37436: a tuple builder (61767 `debug_tuple` new, 65573 `DebugTuple::field`, 65868 finish: **not proved anywhere**) with 37549 (&u32) and 37589 (&u64) (11 / 9) | DebugTuple builder API | M–L | |
   | 36654 | `&Result<Output, ()>` (22): Err → 37571 (`"()"` via pad); Ok → 37067 = struct1 `Output { items }`, items → 26504 (`&Vec<32-octet>` via 36917) | 36917 unknown | L | |
   | 36732 | `BoundedVec(Vec<336-octet struct 37158, ≥ 4 fields>, u64 const)` via the tuple builder (13) | tuple builder + 37158 | XL | |

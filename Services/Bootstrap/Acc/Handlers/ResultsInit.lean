@@ -17,11 +17,12 @@ sp + 176:
 
 namespace Services.Bootstrap.Acc.Handlers.ResultsInit
 
-open PVM JAM Picoalloc Services.Bootstrap Services.Bootstrap.Code Services.Bootstrap.CodeA
+open PVM JAM Picoalloc Services.Bootstrap Services.Bootstrap.Code Services.Bootstrap.CodeA Services.Bootstrap.CodeX
   Services.Bootstrap.Alloc Services.Bootstrap.Acc Services.Bootstrap.Spec
   Services.Bootstrap.Decode.HeapCtx Services.Bootstrap.Decode.LoopA
   Services.Bootstrap.Acc.Handlers.KeyEnc Services.Bootstrap.Acc.Handlers.RecentSlotWrite
   Services.Bootstrap.Acc.Handlers.ResStore
+open JAM.Codec (fixed)
 
 set_option maxHeartbeats 8000000
 set_option maxRecDepth 100000
@@ -243,7 +244,9 @@ theorem results_init {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] 
     obtain ⟨ωK, runK, k1⟩ := r9_ok (P := P) (R := KeepCtx (accContractS env)) (c1, f) ωG μG g7
     refine .inr ⟨⟨8490, ωK, μG, c1, f⟩, ⟨_, runG.trans runK⟩, rfl, ?_⟩
     -- the checkpoint
-    unfold Prog.op Impl
+    show Impl p (accContractS env) env Ab (Prog.call AOp.checkpoint Prog.pure) _
+      { i := 8490, ω := ωK, μ := μG, c := c1, q := f }
+    unfold Impl
     refine .inr ⟨⟨8490, ωK, μG, c1, f⟩, ⟨0, .refl⟩, rfl, ?_⟩
     rw [show ({ i := 8490, ω := ωK, μ := μG, c := c1, q := f } : St Stream).c = c1 from rfl,
       ASem.step_checkpoint]

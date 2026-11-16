@@ -122,8 +122,32 @@ Handlers dependencies takes ~2 h on 4 cores). Use `ulimit -v 12000000` when comp
   row 9 needs it.
 - Tip: foreground `sleep` loops return at once in this environment; wait with a background until-loop.
   To compile a new module before `lake build` reaches it: `lake env lean F.lean -o <olean> -i <ilean>`.
-- **Next:** full build green → row-8 PR (body: Q19, RingFits, ParamStatics obligation, the additive
-  get_call conclusions, `add_recent`). Then rows 9 and 11 (see "Row 9" / "Row 11" in the plan below).
+- Row 8 is **PR #224** (opened 2026-11-16; `model` green, attempts running). Merge on green.
+- **Row 9 started (local commits on this branch, pushed only after #224 merges, since a push restarts its CI):**
+  - `ResStoreSeg.lean` (all compile): 36170's n = 0 path in the callee frame S = sp − 96: `rs_null` +
+    `trap_36528` (alloc null → ☇, a heap-exhaustion reason), `rs_vec` (36217 → 30977, Vec {144n+4, ptr, 0}
+    at S+32, n u32 at S+56, ret 1694 → 36263), `rs_zero` (36263 → 33843 for n = 0: value cap → S+24, len →
+    S+8, ptr in ω₆; key encoder with out S+32, kp from S+16, ret 1704 → 36432), `rs_set` (36432 → 48104:
+    out S+56, key ptr/len S+40/S+48, value ω₆ / [S+8], vp saved at S; ret 1706), `rs_ret` (set's returns →
+    36456), `rs_d1` (36456 → 40613: r saved at S+16, b = u8 [S+64] in ω₆, dealloc key buffer ω₅, ret 1708 →
+    36482), `rs_d2` (36482 → 40613: dealloc [S], ret 1710 → 36499), `rs_end` (36499 → 8477, ret 294
+    hard-wired: ω₇ = −1 if r ≠ −1 else b; ω₀/ω₅/ω₆ restored).
+  - `ResultsInitSeg.lean` (all compile): `ASem.step_checkpoint` (y := x), `r9_pre` (8416 → 36170: tag-2 key
+    value at sp+1568 from the package copy at **sp + 312** (not sp + 512) and the item u16 at sp+176;
+    ω₇ = [sp+456] results ptr, ω₈ = [sp+464] n; ret 294), `r9_ok` (ω₇ = −1 → 8490), `r9_err` (ω₇ = 3 →
+    15361), `r9_ck` (8490 → 8492 as a `YIn (accContractS env) c.2 c.1` step).
+  - **Next for row 9:**
+    1. `res_store0` (36170 → 8477, n = 0), composing exactly like `sw_head` + `sw_free`
+       (RecentSlotWriteImpl.lean): `rs_pre`, `alloc_callG` (4 octets; null → `rs_null`), `rs_vec`,
+       `Encode.VecCore.prefix_any` (needs `[HasCodeX p P]`, available at top level as in Acc/Start.lean;
+       ℰ(0) = [0]), `rs_zero`, `kb_call` (tag 2, key size word at 68696, `keyEnc μ (sp+1568) 2` =
+       `(Key.results pkg item).encode`), `rs_set`, `set_call` (value [0], length 1), `rs_ret`, `rs_d1`,
+       `dealloc_callG`, `rs_d2`, `dealloc_callG`, `rs_end`. Ab gets 36528 and 34070.
+    2. Row 9 as `Impl` of `Prog.bind (store (.results pkg item) (encodeResults [])) (fun _ => op .checkpoint)`
+       from 8416 (check `encodeResults [] = [0]`), with hypotheses: [sp+464] = 0, μ[sp+312..+32] = package.
+       Post at 8492 (after the checkpoint, ω₇ = stream head). The checkpoint's ASem step is
+       `step_checkpoint`; the run is `r9_ck` (no Reaches before it beyond `r9_ok`).
+    3. Then compose rows 8 + 9 if useful, and row 11 (15032 … 15198, see the plan below).
 
 ## Session 5 progress (2026-11-16, row 8)
 

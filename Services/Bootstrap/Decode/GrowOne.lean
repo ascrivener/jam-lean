@@ -111,7 +111,7 @@ theorem g3i {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X) (
     (h9 : ω[9] = UInt64.ofNat q) (h10 : ω[10] = UInt64.ofNat N) (h11 : ω[11] = UInt64.ofNat 8)
     (h12 : ω[12] = UInt64.ofNat 232)
     (hr0 : r0 < 18446744073709551616) (hv5 : v5 < 18446744073709551616) (hv6 : v6 < 18446744073709551616)
-    (hres : res < 18446744073709551616) (hL : 1 ≤ L ∧ L < 4294967296) (hN : 1 ≤ N ∧ N ≤ 4194304)
+    (hres : res < 18446744073709551616) (hL : 1 ≤ L ∧ L < 4294967296) (hN : 1 ≤ N ∧ N ≤ 134217728)
     (hq : q < 18446744073709551616)
     (hw : ∀ a, F ≤ a → a < F + 40 → μ.writable a = true) :
     ∃ ω' μ', FreeStepsH p R 32989 ω μ x 40701 ω' μ' x 25 ∧

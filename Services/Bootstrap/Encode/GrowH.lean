@@ -67,7 +67,7 @@ structure BufH (env : RefineHost.Env) (pb S0 S1 B v len ptr0 : Nat) (s0 : State)
   cb : cap ≤ capBound
   H : HeapCtx env pb S0 S1 μ s
   chunk : ∃ c ∈ chunks s, c.used = true ∧ c.addr + 32 = ptr ∧ cap ≤ 32 * (c.size - 1)
-  oth : ∃ e ∈ chunks s, e.used = true ∧ e.addr + 32 ≠ ptr
+  oth : Decode.ReallocBig.OtherUsed s ptr
   others : ∀ e ∈ chunks s0, e.used = true → e.addr + 32 ≠ ptr0 →
     e ∈ chunks s ∧ e.addr + 32 ≠ ptr ∧ ∀ a, InData e a → μ.read a = μ0.read a
   acc : ∀ a, (a < 196608 ∨ 4096 * pb ≤ a) → μ.readable a = μ0.readable a ∧ μ.writable a = μ0.writable a
@@ -182,7 +182,7 @@ theorem BufH.init {env : RefineHost.Env} {pb S0 S1 B v len cap ptr : Nat} {s : S
     (vl : μ.readN (v + 16) 8 = Num.encodeLE 8 len) (hlc : len ≤ cap) (cpos : 0 < cap)
     (cb : cap ≤ capBound) (H : HeapCtx env pb S0 S1 μ s)
     (chunk : ∃ c ∈ chunks s, c.used = true ∧ c.addr + 32 = ptr ∧ cap ≤ 32 * (c.size - 1))
-    (oth : ∃ e ∈ chunks s, e.used = true ∧ e.addr + 32 ≠ ptr) :
+    (oth : Decode.ReallocBig.OtherUsed s ptr) :
     BufH env pb S0 S1 B v len ptr s μ [] cap ptr s μ :=
   ⟨vS, vc, vp, by simpa using vl, by simp, by simpa using hlc, cpos, cb, H, chunk, oth,
     fun e he _ hne => ⟨he, hne, fun _ _ => rfl⟩, fun _ _ => ⟨rfl, rfl⟩, fun _ _ => rfl, fun _ _ => rfl,

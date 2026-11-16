@@ -22,9 +22,12 @@ set_option maxRecDepth 100000
 
 variable {X : Type} {R : HostRel X}
 
+/-- Some allocated chunk other than the one with data at ptr. -/
+def OtherUsed (s : State) (ptr : Nat) : Prop := ∃ d ∈ chunks s, d.used = true ∧ d.addr + 32 ≠ ptr
+
 /-- The request's case split: at least 2^25 units, or 2^25 − 1 units with some other chunk in use. -/
 def BigReq (s : State) (ptr req : Nat) : Prop :=
-  33554432 ≤ req ∨ (req = 33554431 ∧ ∃ d ∈ chunks s, d.used = true ∧ d.addr + 32 ≠ ptr)
+  33554432 ≤ req ∨ (req = 33554431 ∧ OtherUsed s ptr)
 
 theorem third_lt {B x n y m : Nat} (h1 : y + 32 * m ≤ x ∨ x + 32 * n ≤ y)
     (hx : B ≤ x ∧ x + 32 * n ≤ B + 1073741824 ∧ 0 < n) (hy : B ≤ y ∧ y + 32 * m ≤ B + 1073741824 ∧ 0 < m) :

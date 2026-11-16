@@ -49,7 +49,7 @@ structure LayDH (env : RefineHost.Env) (pb S0 S1 : Nat) (P : Program) (D F S v c
   cb : cap ≤ capBound
   H : HeapCtx env pb S0 S1 μ s
   chunk : ∃ c ∈ chunks s, c.used = true ∧ c.addr + 32 = ptr ∧ cap ≤ 32 * (c.size - 1)
-  oth : ∃ e ∈ chunks s, e.used = true ∧ e.addr + 32 ≠ ptr
+  oth : Decode.ReallocBig.OtherUsed s ptr
   hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0
   hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t
   hbt : P.isBlockStart t = true

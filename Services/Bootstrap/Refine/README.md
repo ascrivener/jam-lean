@@ -57,6 +57,34 @@ length prefix ℰ(n) and output ℰ(n) ⌢ encodings ⌢ ℰ₂(w)). Builds, axi
   to the halt with ℰ(`BootstrapWorkOutput { outI is, I }`).
 - Next: part B; then refine_t1c (T1's match form) once the bound question is settled.
 
+**Progress (2026-11-16, sixth instance; branch `claude/bootstrap-t1-m1d`).** Every file below builds; axioms clean.
+- **Drop arms done** (`DropArms`): `ArmOk` (what the drop of an element reads and whether it frees a buffer), the dispatch
+  `dd0`/`dd11`/`dd12`/`dd13`/`dd17`/`dd22`/`dd24` and the arms (`aC*` CreateService, `aB*` Bless, `aA*` Assign and
+  AssignForGasCost, `aD*` Designate, `aP*` Provide, `aR*` RandomStorageAccumulate), `run_buf`, `drop_buf` (one element
+  dropped, as `drop_lu`). **AssignForGasCost (tag 24)** has index 24, past the table's 24 entries: the dispatch's
+  `branchLtU 23 < idx` at 29221 goes straight to 29153, the arm it shares with `Assign` (`dd24`).
+- **New append-only tier `T1C`** (`Tests/GenWitnessSteps.lean`, range 29153 … 29181, excludes X, R, T1B): jump entry 676
+  (index 12 → 29153) and the arm 29153 … 29181, which no tier had. Say so in the PR.
+- `DropVecW`: `BufEl` (an `ArmOk` element owning its buffer's chunk), `HeapElW = HeapEl ∨ BufEl` (+ `congr`), `drop_vecW`;
+  `FinW.fin_runW`, `ExitRunW.exit_runW`: `fin_runH` / `exit_runH` over `HeapElW` (copies; the H files are unchanged).
+- **Encoder arms** (`EncOkMH`) existing in `Encode/`: 0 (`ArmsHVecCS`, None / Some / empty), 5, 11, 12, 13, 18, 19, 24.
+  Missing were 22 and 17-inline. **22 done** (`EncRSA`): `rsa_okH(_232)` (`RSAOkRepAt q n hs` → 22 :: 0 :: ℰ(n) ++ hs,
+  n < 2^32) and `rsa_errH(_232)` (`RSAErrRep` → [22, 1]); `rsaOkRep_iff` links the decode side's `RandomStorageOkRep`. It
+  needed ω₅ = 2^64 − 1 from the dispatch (19894 compares the word at S + 8 with ω₅): `dispatch22` / `startV22` /
+  `startVH22` are `dispatchV` / `startV` / `startVH` for index 22. The binary traps at 20397 for n ≥ 2^32 (unreachable:
+  |y| ≤ 2^24).
+- **Next: Provide inline (17)**, a new file `Refine/EncProvide.lean`. From the disassembly: arm 18990 (tag 17, ω₅ = S,
+  ω₆ = v, return 806 → 19013), 19013 (the service's u32 at S + 48 via sp + 24, as `seg_18752`; return 808 → 19034), 19034
+  (octet at S + 8 ≠ 0 → the octet 1; return 810 → 19060; 0 → by hash 20169, `provide_hashH`), 19060 (ω₇ = q at S + 24,
+  ω₈ = n at S + 32, ω₉ = v, call 3716, return 812 → 19074). The helper 3716 opens a frame at sp' = sp − 40 (saves ω₀, ω₅,
+  ω₆ at sp' + 32/24/16), traps for n ≥ 2^32 (3779), stores n (u32) at sp' + 12 and q at sp', calls the prefix 30977
+  (`prefix_anyH` with F := sp', c := sp' + 12; return 94 → 3753), then 3753 extend(q, n) (`extendH` with sp := sp'; return
+  96 → 3765), 3765 closes its frame and returns to 19074, the arm's own tail (19074 … 19086: ω₀, ω₅, ω₆ from sp + 48/40/32,
+  sp + 56). `closeH`'s ends exclude 19074: copy `closeH` with a `tailAt`-like lemma for 19074. Depth 232 (`EncOkMH 232`).
+  The StH/StDH states assume ω₁ = F − 56, so carry the `BufH` across the helper's frame (it writes only [F − 96, F − 56)).
+- Then: `DRm` widened — define it with refine_t1c, from the slot predicates (the `rep j` of each output kind) — then step 3
+  (thread `realloc_call_big`) and refine_t1c.
+
 **Handoff (2026-11-16, end of the fifth instance).** Read this first.
 - **PR #217** (parts B/C, branch `claude/bootstrap-t1-m1c` at 69626f5): `model` green, `attempt-1` still running at
   handoff. Merge it (squash) on green (the parent approved). Then restart `claude/bootstrap-t1-m1c` from main and bring

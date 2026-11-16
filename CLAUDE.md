@@ -39,13 +39,21 @@ rebuilds only what changed since then instead of building cold for 4.5–5 h.
 ## CI
 
 - Bounds:
-  - A cold full build takes about 4.5–5 h.
+  - A cold full build takes about 4.5–5 h; the model alone takes minutes.
   - Each attempt's build steps are bounded at 300 min, inside a 355-min job.
 - **Timeouts resume on their own.** An attempt that runs out of time saves its partial build, skips
   the checks and ends green; the next attempt job (`attempt-2`, `attempt-3`) resumes from it. Only
   `attempt-3` running out fails the run; re-run it and it resumes from the cache. See
   `docs/BUILD-INFRA.md`.
 - Runs on `main` are never cancelled, and they save the cache.
+- **Two lines of jobs.** `model` builds PVM, JAM and the tests and runs every vector suite, in
+  minutes, on every run. The proofs (`attempt-1..3`) build everything, including Services, and run on
+  `main` always and on a PR only when `changes` (`scripts/services-affected.py`) finds that it can
+  affect Services: a path under `Services/` or `services/`, build configuration, a proofs script, or
+  a module the Services proofs import.
+- **Merge rule.** A PR may merge when `model` is green and the attempts are green or skipped.
+- **Detector bugs.** If `main`'s proofs fail after a PR merged with `affected=false`, the detector
+  missed a dependency: fix `scripts/services-affected.py`, don't work around it.
 - **Re-sync rule.** After a PR that regenerates code facts (`Services/Bootstrap/Code*`) lands on
   `main`, re-sync an open PR only if it imports the regenerated module, directly or transitively.
   Otherwise merge it on its own green CI. Sequence code-fact regenerations after the PRs that

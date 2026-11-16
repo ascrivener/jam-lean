@@ -1,5 +1,6 @@
 import JAM.Host.General
 import JAM.Blake2b
+import PVM.FastHost
 
 /-!
 # The accumulate invocation Ψ_A and its host functions (GP v0.8.0 Appendix B)

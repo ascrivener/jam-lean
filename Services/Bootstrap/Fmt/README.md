@@ -55,6 +55,13 @@ So these proofs show only that each formatting function:
 - `ArgOk … μA sA spA e v M C`: an argument's function e with value v, from any memory reached from
   the caller's (μA, sA) keeping its frame at or above spA, returns `Ok` with the `String` at most M
   octets longer within 7n + 2(cap' − cap) + C steps, or `Exhausts`.
+  **Known looseness:** one constant C serves as both the `Ok` step bound (7n + 2(cap' − cap) + C)
+  and the `Exhausts` budget (2³⁰ + C). Exhaust budgets compound across nested allocations (for
+  example, 1.5 · 2³⁰ in `debug_entry`), so C, and with it the `Ok` bound, ends up near 2³¹ even
+  where the `Ok` path takes far fewer steps. The same holds for `RefOk` and `vec_u8_ok`. This is
+  sound but useless for exact gas. Planned fix, at exact-gas time and additive only: an `ArgOk2`
+  with separate C_ok and C_exh, with the leaves and composition lemmas re-proved against it and
+  `ArgOk` derived as a corollary (C := max). Nothing existing changes.
 - `ArgsAt … args i ts M C`: the (value, function) pairs at args + 16 j, in the caller's memory.
 
 ### `FmtCall` (`Format.lean`)

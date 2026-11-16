@@ -4,114 +4,76 @@ State of the work on bootstrap's `refine` (T1), written for the next session to 
 Everything cites Gray Paper v0.8.0 via the docstrings of the files named here; the spec side is
 `Spec.refine` and `exportSeg` in `JAM/Refine.lean`.
 
-## PAUSED 2026-11-14: state at the project move (read this first)
+## Current state (2026-11-16, read this first)
 
-**Branch** `claude/bootstrap-t1-exec-wip`. Everything, including the read-only data change below, builds:
-`lake build Services.Bootstrap.Refine.Milestone` completed successfully with no placeholder proofs. Re-run `#print axioms refine_milestone`
-before the PR: it was last checked clean before the read-only change.
+**On `main`:** `Refine/Milestone.lean` `refine_milestone` (#197, with the `Fmt.FmtRO` conjunct of
+`VendoredFacts` from #207), T1c's first milestone M1. Ψ_R against `Spec.refine` for payloads of 1 ≤ n < 128
+well-formed instructions, each passed through (`Kinds.MFixed`) or `ExportSegs`, with |y| + 48 ≤ 2^24.
+- Named hypotheses: `VendoredFacts` (layoutOk, the three read-only tables and `FmtRO`; step 10) and `FmtHyps`
+  (`ArgsLineOk` 4742, `ExportFmtOk` 5744, `DebugLineOk` 6159 for `Top.DRm`; the fmt summaries).
+- Third outcome: `ExhaustsHeap` alone. That the run then ends in ☇ with no exports is a recorded obligation
+  (`docs/bootstrap-target.md`, M1).
+- Stack: the Fmt hypotheses and the frame lemmas take `S0 + 7560 ≤ M` (refine's real stack below its frame).
+- Everything in the old "PAUSED 2026-11-14" list has landed (#179, #181, #182, #188, #197, #207).
 
-**Done on the wip branch (not yet a PR):** `Refine/Milestone.lean` `refine_milestone`, T1c's first
-milestone M1. It covers pass-through (`MFixed`) plus `ExportSegs` instructions, 1 ≤ n < 128, Ψ_R against
-`Spec.refine`. Its hypotheses are `VendoredFacts` and `FmtHyps`, and its third outcome is `ExhaustsHeap`
-(interim; the ☇ obligation is in docs/bootstrap-target.md). See docs/whats-proven.md.
+**In progress:** the rest of M1 (T1c), on `claude/bootstrap-t1-m1-wip`. The plan went to the coordinator
+on 2026-11-15:
+- **A. n ≥ 128** for the existing kinds. The multi-octet length prefix, `Vec<Instruction>::decode`'s batches
+  after the second (a loop over `finish_grow` batches), the loop's `LayP.hn`, and the exit encoder via
+  `encode_okMH_big`. None of the Fmt hypotheses has n < 128 built in, so this only weakens `hn`.
+- **B. The variable-width pass-through kinds** (`CreateService`, `DeleteItems`, `Bless`, `Assign`,
+  `Designate`, `Provide`, `LookedUp`, `Imported`, `RandomStorageAccumulate`, `AssignForGasCost`). Each kind's
+  `ElemOkAFC` from the Decode session's `*_elem_big`, the inner chunks in `Kp`, the heap encoder arms
+  (`EncOkMH`), and the output drop of heap variants (`DropOut.NoDrop` generalised).
+- **C. Eager `Lookup`** (host 7 is gas-free on main; handler 5278–5427, wrapper 49015, format at 5398).
+- **D. `Import`** (fetch wrapper 44677, collect loop 30766; a missing segment traps, so `Spec.refine`
+  panics).
+- **E. The allocation-failure ☇ obligation.**
 
-**In flight on the wip branch, approved by the parent:**
-1. *Stack bound* (3030563, 0461b87, 3407384; builds). The three Fmt hypotheses (`ArgsLineOk`,
-   `ExportFmtOk`, `DebugLineOk`) and the Refine frame lemmas take `S0 + 7560 ≤ M` instead of `S0 + 456 ≤ M`.
-   7560 is refine's real stack below its frame: M = 4278058376, S0 = 4278050816. The Fmt session will
-   report the 6159 line's real maximum depth. If it exceeds 7560, that is a model/binary finding to report.
-2. *Read-only data* (82574d2; builds).
-   - New `Refine/RoData.lean`: `RoIs ro μ` (memory holds `ro` over 65536 … 77144), `RoIs.congr`, `RoIs.keep`,
-     and `RoIs.keep0` (for the argument parse, from a start memory that has no allocator context yet).
-   - The three Fmt defs take `(ro : List UInt8)` and the premise `RoData.RoIs ro μ` right after `HeapCtx`.
-   - `hro : RoIs ro μ` is threaded through `ExportSeg.seg/segs` (in the loop statement), `ExportElem.mid/export_step`,
-     `LoopAll.loop_all` (in the loop invariant), `ExitRun.exit_run`, `Body.body`, `Prologue.tail4680`,
-     `RunFixed`, `RunMixed`, `Top.from4680/refine_core`.
-   - `FmtHyps C` is now `∀ vb, vendored = some vb → … ro := vb.ro.toList`, and `refine_milestone`'s conclusion
-     is unchanged. The milestone passes `tabR`, the whole read-only segment of the initial memory, as `hro`.
-3. *Still to add, parent-approved (c):* a `VendoredFacts` conjunct `Fmt.FmtRO.FmtRO vb.ro.toList`. FmtRO is
-   owned by the Fmt session (`Services/Bootstrap/Fmt/FmtRO.lean`, branch claude/bootstrap-fmt-6 at 53e1bef).
-   Fmt was asked to open it as a one-file PR. The parent's conditions:
-   - concrete slices only, `(ro.drop k).take m = [...]`, each with a comment;
-   - VendoredFacts' docstring must say that everything in it is about the constant blob, discharged in step 10;
-   - the definition is agreed once by Fmt, the field-formatter session (session_017ptjPC1ZVytPi3sRR7WgBe)
-     and T1, and later extended only by adding conjuncts.
+**Progress on A (2026-11-16):** A1–A3 done for 1 ≤ n ≤ 2²¹, as `RunMixedG.run_mixedG` (`run_mixed` for any
+length prefix ℰ(n) and output ℰ(n) ⌢ encodings ⌢ ℰ₂(w)). Builds, axioms clean.
+- `DecodeHeadG.headG`: `Instructions::decode`'s head for any n < 2^32 (general `decodeU32`).
+- `DecodeVecN.w1G`, `v2gG`: the grow step between batches. Batches: 70, then min(remaining, length) (70, 70, 140,
+  280, …); each later batch grows the buffer to length + batch by `finish_grow` → `realloc`.
+- `DecodeVecNC`: `BInv`, `batch_step`, `batches`, `first_batch`, `vec_exit`, `vec_allC` (= `vec_anyC` for any
+  1 ≤ n < 2^32, with `hbig`: 232 n < 2^30 − 64). `hbatch` is gone: OkFD's unused `es.length < 128` was dropped
+  (Decode/LoopAPassC.lean, approved option (i); noted in Decode/README.md).
+- `DecodeCG.decode_allC`: `decode_oneC` for any n (headG + vec_allC).
+- `PassLoop.LayP.hn` is now n ≤ 2²¹ (was n < 128); `Entry.entry`, `Body.body`, `ExportElem.push` take n ≤ 2²¹.
+- Exit encoder: `ExitEnc.enc_run` now runs `Encode.EncMD.encode_okMD_big` (no growth: |ℰ(n)| ≤ 4 for n ≤ 2²¹, so the
+  232 n + 6 octets suffice for `EncOk` elements of ≤ 232 octets). Its output is ℰ(n) ⌢ out ⌢ ℰ₂(w), and the chain
+  enc_run → exit_run → body → run_fixed/run_mixed/from4680/refine_core takes `[HasCodeA p P]`.
+  `ExitEnc.out_small` turns that back into n :: … for n < 128, so `run_fixed`, `run_mixed` and `refine_milestone`
+  keep their statements.
+- **Open: where n ≤ 2²¹ comes from** (asked the coordinator, 2026-11-16). Every bound traces to
+  `ReallocCall.realloc_call`'s hr1 (request < 2^25 − 1 units = 2^30 octets), which runs through the whole Alloc
+  realloc chain. It is needed by: decode's realloc (232 n < 2^30 − 64, implied by n ≤ 2²¹); the output `grow_one`
+  (`pass_elem_grow`'s len ≤ 2²¹); and, for part B's heap elements, `encode_okMH_big`'s `cap ≤ capBound` (2^28) and
+  `hbig`. The payload bound |y| ≤ 2^24 allows n up to 2^24. Model side: the heap is 1 GiB (`maxSize`), so requests
+  of ≥ 2^25 units fail in `growInplace` and `alloc`. `alloc_call` already covers sizes up to 2^36. What's missing is the
+  binary's `realloc_impl` null path for 2^25 ≤ units < 2^32. Options sent: (a) T1 proves it in a new file
+  (recommended); (b) Alloc generalises hr1; (c) bound n in refine_t1c (Adam).
+- `TopG.from4680G`, `refine_coreG` (with `SpecRun.output_eqG`): `from4680`/`refine_core` for 1 ≤ n ≤ 2²¹, from pc 0
+  to the halt with ℰ(`BootstrapWorkOutput { outI is, I }`).
+- Next: part B; then refine_t1c (T1's match form) once the bound question is settled.
 
-**PRs:**
-- #181 merged (c8410ff).
-- #179 (claude/codex-3716, CodeX regeneration, re-synced 3cf8203) is open. Its CI was running, and the
-  parent said to merge it when CI is green.
-- #182 (the Vec session's loopafc) is open, in CI.
+Decided by the coordinator on 2026-11-15:
+- the new theorem `refine_t1c` is added in T1's match form, and `refine_milestone` stays unchanged;
+- the wider `DRm` and the new `LookupFmtOk` go on `refine_t1c` only;
+- E (the ☇ obligation) takes route (b), the table, after A and B. The sizing is in `scripts/allocfail/`.
 
-**Exact next steps:**
-1. Check `#print axioms refine_milestone`.
-2. Once FmtRO is on main, merge main into the wip branch and add item 3.
-3. Once #182 is on main, re-sync with main (plan A: one "T1 milestone" PR from this branch).
-4. Run the full `lake build` in the background, then open the PR. Its body lists:
-   - the statement;
-   - the named hypotheses (VendoredFacts, FmtHyps);
-   - the ExhaustsHeap-only weakening and its later obligation;
-   - the hypothesis changes (M + 632; DebugLineOk's precondition on the slots' chunk; ArgsLineOk keeps
-     the base; S0 + 7560; the `ro` premise);
-   - and no model/binary disagreements.
-
-**Later (not started):** the allocation-failure ☇ obligation; eager `Lookup` and `Import`; the
-variable-width instructions; n ≥ 128.
-
-## Branches
-
-- `main` has #120 and #133 (61b6f44): the output encoder. `Encode/Dispatch`, `Segs`, `Fixed`,
-  `Variants`, `Yield`, `Top`, `Loop.encode_ok`: `EncOk` for every fixed-width `Instruction` variant
-  and the encoder loop over `n ≥ 1` instructions.
-- `claude/bootstrap-t1-exec-wip` (0569bf3) holds the unmerged work below. It already contains `main`
-  and the Vec session's GrowOne WIP. Open the T1 PR from `claude/bootstrap-t1-exec` (restart it from
-  `main`) once the Vec PR has landed, merging `main` in first.
-
-What the wip branch adds over `main`:
-
-| File | Content |
-|---|---|
-| `Encode/Prefix.lean` | length-prefix writer at 30977: `pa pb pc pz pt`, `prefix_small`, `prefix_zero` |
-| `Encode/Loop.lean` | `encode_zero` (the n = 0 encoder) |
-| `CodeR.lean`, `CodeR/L0,L1`, `CodeRAll`, `CodeRCheck/G*`, `CodeROk` | code facts for refine's body, `fnRangesR = [(4568, 6378)]`, generated by `genwitnesssteps` mode `coder` / `codercheck` (see `Tests/GenWitnessSteps.lean`) |
-| `Refine/Pass.lean` | one pass-through element with room in the output: `pa pd pc pi pg pc2`, `pass_elem`; `PassIdx t` = the 20 dispatch indices passed through unchanged |
-| `Refine/PassGrow.lean` | `pass_elem_grow`: the same with the output full, via `grow_one` (32785) |
-| `Refine/PassLoop.lean` | `PInv` (with the iterator words M + 272 … M + 304, the M + 48 bound and a per-slot output predicate `O`), `LayP`, `ExhaustsX` (exhaustion with the context free), `step_room`, `step_full` (each for one pass-through kind, given as an argument), `loop` (pass-through only, via `LoopG`) |
-| `Refine/LoopG.lean` | `loop`, `loop_all`: a generic loop over per-iteration steps head → head, the context free, with a terminal outcome closed under `pre`/`mono` |
-| `Refine/Exit.lean` | `ex0` (5042 → 6120 at the end), `dr1`/`dr0`, `drop` (the `IntoIter` drop, with `dealloc_call`, 6120 → 6130), `ex1` (6130 → 59375, the Debug line's setup) |
-| `Refine/ExitEnc.lean` | `en1` (6209 → `alloc`, the encoder's frame), `alloc_ret`, `enc_run` (6209 → 6295: `alloc(232n + 6)` then `Encode.Loop.encode_ok`) |
-| `Refine/DropOut.lean` | `NoDrop` (the variants whose drop does nothing: exactly the fixed-width ones), `dtable` (67760), `drop_vec` (29087 → ret: the output `Vec<Instruction>` walked) |
-| `Refine/Fin.lean` | `f1`–`f4`, `fin_run` (6295 → refine's return: drop, the two frees, ω₇ = buf, ω₈ = len) |
-| `Refine/ExitRun.lean` | `DebugLineOk` (the hypothesis for 59375 → 6209), `exit_run` (5042 at `PInv n` → refine's return, the encoded output in memory) |
-
-Build one file with
-`export PATH=/root/lean-dl/lean-4.36.0-rc1-linux/bin:$PATH; lake env lean Services/Bootstrap/Refine/PassLoop.lean`
-(after `lake build Services` for the dependencies).
-
-## Merged since the handoff
-
-- #168: the pass-through loop and the whole exit (`exit_run`), with `DebugLineOk` as the only hypothesis.
-
-- #157: `Services/Bootstrap/Bridge.lean` (`IsBootstrap`, `RSem`, `ExhaustsHeap` with `AllocNull` / `TooLong`)
-  and `CodeR` regenerated with `fnRangesR = [(4046,6378), (30766,30977), (44677,44916), (49015,49201)]`
-  (`drop_in_place::<Instruction>`, Import's collect loop, the SDK's import-segment fetch and
-  `foreign_historical_lookup`).
-- #155 (Vec): GrowOne; `grow_one_call` now also keeps `Glob`.
+Earlier open questions (now decided as above): the Debug line for the new kinds (a wider `DRm`), a `LookupFmtOk` hypothesis,
+the successor theorem's shape (T1's match form, for Import's panic), and the route for E.
+The executor PRs #192/#194 (loops, forking) are not needed. The loop-heavy pieces (decode batches, the drop of
+`Vec<Vec<u8>>`, Import's loops) come last, and use #194 if it has landed by then.
 
 ## Dependencies on other sessions
 
-1. **Vec session (session_017ptjPF1zNcwuoS6FTtV6ZC), GrowOne PR.** `PassGrow`/`PassLoop` use
-   `Decode.GrowOne.{ctx_high, grow_one_call, grow_one_first}`, `Decode.VecU8.{chunk_in, data_disj,
-   heap_writable, ctx_congr_data}`, `Decode.LoopA.Exhausts`. Their PR must land on `main` first.
-2. **Vec session, refine host contract.** `refineContractK` (`JAM/Theorems/RefineContract.lean` ~l.55)
-   has `GasFreeId h := h = 1 ∨ h = 2 ∨ 14 < h`, so the handlers' host calls cannot be stepped yet.
-   Parent decided (a): the Vec session extends `GasFreeId`, `dispatch_sameButGas` and `dispatch_cost`
-   for refine's handler host ids in a small PR, as #127 did for accumulate. Refine's body
-   (4568–6378) makes exactly these ecallis: 100 (log; already gas-free) at 4770, 5428, 5784, 6187;
-   **7** (historical_lookup) at 5366; **8** (export) at 5664. Import (5125) makes no direct host call
-   (it calls alloc). So only ids **7 and 8** are needed. Export and Lookup are blocked on this PR.
-3. **Fmt session (session_017ptjPErJihRRT9DcJGwVrx).** Formatting sites are stated against
-   temporary hypotheses (below), discharged by Fmt's summaries later.
+- **Fmt.** The Fmt sites are named hypotheses (below) until the fmt summaries discharge them.
+- **Decode (Vec) session.** The element decoders (`Decode/*Elem*.lean`, `ElemsBig.lean`) and `ElemOkAFC`
+  (`VecVecOwn.lean`) are theirs. T1 only lifts them.
+- **Executor.** `PVM/SymExec` core is on main. Use it for straight-line stretches longer than about 25
+  instructions with stores.
 
 ## Layout of the transform loop (refine frame `M = ω[1]`)
 
@@ -174,11 +136,27 @@ trap 6377); per-segment `format!` at **5744** (→ 59375), log (host 100) at 578
 32785 at 5826). Spec side: `exportSeg` in `JAM/Refine.lean` — the context x's export list grows by
 each segment.
 
-### Lookup handler (5278–5427), blocked on host 7
-The b = 1 path: host 7 called twice through 49015 (length query, then fetch; ecalli at 5366),
-failure path formats at **5398** and logs at 5428. Pushes the looked-up preimage element.
+### Lookup handler (5278–5558), part C (host 7 is gas-free on main)
+Disassembly read 2026-11-16 (`python3 -I scripts/allocfail/dis.py services/bootstrap/jam-bootstrap-service.jam`):
+- 5279: the eager flag at M + 348; 0 → pass-through 5561 (lazy Lookup is passed through unchanged).
+- 5288–5364: the hash (4 words from the element at ω₅ + 12 … 36) to M + 168 … 192, service id (i32 at M + 312) as
+  u64, out = M + 560; frame M − 48 (ret 170 at M − 8, ω₅/ω₆/out saved); ecalli 7 (ω₉ = buf 0, ω₁₀ = 0, ω₁₁ = 0:
+  the length query), then the wrapper 49015.
+- Wrapper 49015 on r = ω₇: r = 2^64 − 1 (NONE) → `None` (−1 stored at out), return; other r ≥ 2^64 − 9, or
+  r ≥ 2^63 → trap. r = 0 → buf 1 (dangling). Otherwise r > 2^37 − 32 → trap 49074 (counts as heap exhaustion,
+  standing decision), else the allocator's spin lock (196608 / 196792 + 10056), `alloc_impl` 41177 for (r + 31)/32
+  units, align 1 (cf. `Decode/AllocHuge.alloc_impl_huge_callG`), lock cleared (store_u8 at 196792 + 8192 + 1864),
+  null → trap 49074. Then ecalli 7 again (buf, offset 0, len r; result unchecked) and out = {r, buf, r}
+  (`Some(Vec)`), return to 5372.
+- 5372–5428: `format!` at **5398** (template args at M + 536: (M + 560, saved fmt fn)), string at M + 584, log
+  (host 100) at 5428; free 5441 if cap ≠ 0.
+- 5448–5545: the result {M + 560 … 576} copied to M + 584; push into the output `Vec` at M + 248 (grow_one 32785
+  when len = cap); slot = {element word at M + 8 (the LookedUp discriminant), the three words}; len + 1; drop of
+  the input element via 4046 (frame M + 304), → 5042.
+- Output kind `LookedUp(Option<Vec<u8>>)`: a heap variant, so its encoding is an `EncOkMH` arm (growth) and its
+  slot owns the preimage's chunk (Kp), like part B.
 
-### Import handler (5125–5210), needs #143 / #150
+### Import handler (5125–5210), part D
 Its fetch wrapper 44677 takes the allocator's lock, calls `alloc_impl` (41177, flag 0) for 129 units,
 `memzero`s 4104 octets (70133), calls `fetch` (host 2, kind 6, index at sp + 16), keeps the whole 4104-octet
 buffer on success; NONE → the locked free path (42327) and `None`; any other error → trap 44915. The collect
@@ -300,11 +278,7 @@ before k being the payload's and those of instructions k…n−1; output ℰ of 
 context `expTo` (segments exported in order). Hypotheses beyond `run_fixed`: ≤ 2²⁶ segments of < 2³⁰ octets per `Export` (`export_elem_bigC`'s bounds). No bound on ς is needed: when Ω_E doesn't return FULL, ω₇ = ς + |e| < 𝖶_X.
 
 ### Next
-- Top level: the prologue to 5042 with `PInv 0` (decode, `IntoIter` built, output `Vec::new`), the loop over
-  per-kind steps (`LoopG.loop` with the pass-through steps and, once unblocked, the handlers), `exit_run`, the
-  caller's halt, lifted to Ψ_R against `Bridge.RSem.run (Spec.refine …)`; for the milestone, with hypotheses for
-  n < 128 and every output fixed-width (parent's decision), and `hrsr`.
-- Handlers: Import (needs #143 / #150), Lookup and Export (need the host-ids PR).
+See "Current state" at the top: parts A–E.
 
 ### Fmt hypotheses (temporary, "discharged by the fmt summaries")
 Parent approved stating these against a `refine_debug_line`-shaped hypothesis, the same pattern as

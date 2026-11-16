@@ -107,6 +107,66 @@ Handlers dependencies takes ~2 h on 4 cores). Use `ulimit -v 12000000` when comp
 - `refine ⟨?ω', ?run⟩; case run => pvm_go …` for a one-witness existential.
 
 
+## Session 8 handoff (2026-11-16, for the 9th session)
+
+**PRs.** #224 (row 8) merged. **#228** (row 9 `results_init`, R4 `ResultsAt`, `ResStoreLoopSeg`,
+`docs/t2-remaining.md`; branch `claude/bootstrap-t2-handlers-a-row9`, rebased on main, local full build green)
+is open and subscribed: `model` green, attempts running. **Merge it on green** (squash), tell @parent.
+
+**Branch `claude/bootstrap-t2-handlers-a-r5`** (pushed; = old row-9 branch + #222's head + this work; no PR).
+Rebase onto main once #222 and #228 merge, before opening its PR (#228's commits are the pre-rebase row-9
+commits: `git rebase --onto origin/main <old row-9 tip 6450fb4>`; #222's own commits drop out once it merges).
+New this session (all compile, axioms clean, imported from `Services.lean`):
+- `ResStoreLoop.lean`: **`rl_loop`** (36346 → 36405, induction on n − k with `rl_item`).
+- `ResStoreImpl.lean`: `RetOK ret t` (294 → 8477 row 9, 300 → 8716 Checkpoint instr, 562 → 15121 row 11),
+  `rs_endG`, **`res_freeG`** (any value chunk dv with cap vc, any `RetOK` return); `res_free` now a corollary
+  (statement unchanged).
+- `ResStoreGen.lean`: `res_enter` (36170 → 36346, `LoopInv 0`), `res_exit` (36405 → 48104), `SetPre` (the
+  state at `set`'s call, with |val| ≤ vc ≤ 32·(dv.size − 1)), `SetPre.mono`, **`res_store`** (36170 → 48104,
+  any n; aborts 36528 / 34070 / `ExhaustsP`; value `encodeResults rs`).
+- `ResStoreCall.lean`: `ExhaustsP.aborts` (an `ExhaustsP` is an `Aborts` when `Ab` covers 40611/40821),
+  `StorePost`, **`store_core`**: 36170 → caller t (`RetOK`) is `Impl` of
+  `orPanic (write (keyEnc μ (sp+1568) 2) (encodeResults rs))` against `ExtendH`/`OkEncH`; FULL continues at t
+  with ω₇ = 3 where the caller's `herr` ends ☇. Usable for row 11 and for the Checkpoint instruction (R5).
+- `RowElevenSeg.lean`: `r11_flag0/1` (15038: [sp+160] & 1), `r11_pre` (15060 → 36170, ret 562), `r11_ok`
+  (15121 → 15133), `r11_err` (→ 15361).
+- `ResultsDropSeg.lean`: every straight-line segment of the results drop 28864 (see its module doc), incl.
+  `back8` (the [ω₅ − 8] load: keep ω₅ = q opaque, never `r + 8`, or the kernel recurses on the folded 2⁶⁴ literal).
+- `ResultsDrop.lean`: `innerPtrs`, `itemPtrs`, `resPtrs`, **`ResultsOwn`** (decided by @parent: option (A),
+  additive next to `ResultsAt`; R5 must produce it), `innerPtrs_succ/split`, `resPtrs_succ/split`, `nodup_next`.
+
+**Decision this session (@parent, option A for R7's drops):** `ResultsOwn` additive; prove 28864 and the
+deallocs (15166 results buffer, 15185 [sp+104]/[sp+128], 15201 [sp+272]/[sp+264]); 33214 (drop of the
+`IntoIter<Instr>` at sp+472, per-kind drops via the table at 68312) is a named frame-only hypothesis
+**`DropInstrsH`** over an InstrRep footprint. `InstrRep` doesn't exist yet: define the bundle (parameter shared
+by R3/R6, with a footprint field and `DropInstrsH`) on r5 yourself; list `DropInstrsH` in
+`docs/whats-proven.md` and `docs/t2-remaining.md`. @parent tells T2 inputs (R2 passes it through).
+
+**Row 11 map** (jte: 558 → 15038, 560 → 15060, 562 → 15121, 564 → 15143, 566 → 15172, 568 → 15191, 228 → 6766):
+15028: ω₇ = sp+472, call 33214 (ret 558) [15050: same, ret 560 → 15060, skipping the flag]; 15038 flag;
+15060 … 15115 key + call 36170 (ret 562); 15121 Ok check (else ☇ 15361); 15133: ω₇ = sp+448, call 28864
+(ret 564); 15143: if [sp+448] ≠ 0, dealloc([sp+456], 144·cap, 8) ret 566; 15172: if [sp+128] ≠ 0,
+dealloc([sp+104], …, 1) ret 568; 15191: if [sp+264] = 0 → 6766, else dealloc([sp+272], …, 1) with ω₀ = 228
+(→ 6766). The last two buffers' chunk facts are premises of R7 (from R2's state).
+
+**Next, in order:**
+1. Merge #228 on green.
+2. `drop_results` (in `ResultsDrop.lean`), generic in R (all segments and `dealloc_callG` are): plan —
+   - `Kept s0 μ0 FR μ s` := ∀ d ∈ chunks s0 used, d.addr + 32 ∉ FR → d ∈ chunks s ∧ data kept vs μ0;
+     `Frm`: memory from S up, `Glob`, non-writable octets kept vs μ0; readable/writable equal.
+   - helper `sk` (a stack write in [F, F+56) keeps HeapCtxC/Kept/Frm; F = S − 56 ≥ 2³¹) and `dk` (a dealloc
+     call of q ∉ FR whose chunk is in s0: `dealloc_callG` → HeapCtxC (free s q), Kept (FR ++ [q])).
+   - outer invariant at 28929 for item k with FR = `resPtrs μ0 rp k` (ω₁ = F, ω₅ = n, ω₆ = k, F = n,
+     F+8 = rp, F+48/40/32 = ret/v5/v6); item step to 28922 with FR = resPtrs (k+1), by tag (255, < 5, 5,
+     6 … 254); then `dr_next0/1`; end `dr_end`. Item reads: octets in a chunk ∉ resPtrs (ResultsOwn.3) → kept.
+   - inner invariant at 29014 for j with FR = resPtrs k ++ innerPtrs q j, ω₅ = q + 8 + 24j, F+24 = end; reads
+     in the outer chunk (∉ FR by `nodup_next` on resPtrs n = resPtrs k ++ innerPtrs q j ++ w :: …).
+   - result: HeapCtxC μ' s', Kept (resPtrs μ0 rp n), Frm, ω₁ = S, ω₅/ω₆ restored, at t.
+3. `ResultsOwn.keep` (store_core keeps st's chunks with data, so resPtrs and ResultsOwn survive).
+4. R7 (`RowEleven.lean`): DropInstrsH + flag + `store_core` (or skip) + `drop_results` + the three deallocs →
+   6766, as `Impl` of `unless (is.any zombify) (store key (encodeResults rs))`.
+5. R5 (the instruction loop) as before; it must produce `ResultsVec`, `ResultsOwn`, [sp+160] ↔ Zombify.
+
 ## Session 7 handoff (2026-11-16, for the 8th session)
 
 **Branches.**

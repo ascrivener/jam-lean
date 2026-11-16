@@ -184,6 +184,7 @@ import Services.Bootstrap.Acc.Handlers.ResStoreGen
 import Services.Bootstrap.Acc.Handlers.ResStoreCall
 import Services.Bootstrap.Acc.Handlers.RowElevenSeg
 import Services.Bootstrap.Acc.Handlers.ResultsDropSeg
+import Services.Bootstrap.Acc.Handlers.ResultsDrop
 import Services.Bootstrap.Acc.Handlers.Upgrade
 import Services.Bootstrap.Acc.HeapHost
 import Services.Bootstrap.Acc.DecodeU32A

@@ -33,8 +33,10 @@ Run long `lake build`s with `run_in_background` (a foreground call is cut at 10 
 - R12: `Acc/Abort.lean`: `HeapTrapPc` (every allocation-failure trap of the blob, from
   `scripts/allocfail/`; 59710 excluded since a formatter `Err` also reaches it), `AccAbort` (a heap
   trap, or a failed allocator call 40611 / 40821 with ω₇ = 0), `accAbort_of_heapFailT`, `ValuesFit`
-  (self storage values, every service's preimages, ℰ(↕**i**), all < 2⁶³). **To do:** `ValuesFit` is
-  kept by every `ASem.step` (writes are bounded by `argMem`; check each host in `AccHost.dispatch`).
+  (self storage values, every service's preimages, ℰ(↕**i**), all < 2⁶³). **Done (session 4):**
+  `Acc/ValuesFitStep.lean`: `dispatch_keeps` (every host call of `AccHost.dispatch`, any id / gas /
+  registers / memory, keeps self's storage and every preimage < 2⁶³: stored values are read from a
+  readable range, < 2³²), `ValuesFit.step` (every `ASem.step`) and `ValuesFit.run` (the end of a run).
 
 **Plan (Adam's decision 23, option B: a T2 skeleton with named hypotheses; map:
 `docs/t2-remaining.md` on `claude/bootstrap-t2-handlers-a-row9`).** My rows, in order: R11, R12

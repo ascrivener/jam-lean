@@ -18,6 +18,27 @@ Everything cites Gray Paper v0.8.0 via the docstrings of the files named here; t
   `slotOK_deleteItemsEmpty`, `slotOK_importedEmpty` (via `vv_facts`, `vvAt_empty`). Pass-through `LookedUp None` is
   `SlotLU.slotW_lu` with v = none.
 
+- `EmptyElems` (build, axioms clean): `ElemOkF` wrappers `bless_emptyF`, `looked_up_emptyF`, `random_storage_errF`, and
+  `designate_emptyF` in the form `ElemOkFG` (it reads 196616; `of_elemOkFG` gives the `ElemOkAF`), with reps
+  `VecNilRep W q` / `BlessEmptyRep` / `RSAErrRep0`. `SlotEmpty` (build): `slotOK_blessEmpty`, `slotOK_designateEmpty`,
+  `slotOK_luEmpty`. (RSA(Err)'s slot: `SlotHeap.slotOK_rsaErr`.)
+- **Gap 1 (decoders, parent told; plan (A) = prove):** no decoder at all for `Provide(s, Inline [])`,
+  `AssignForGasCost` with q = [], `RandomStorageAccumulate(Some [])`. Paths: read_vec n = 0 (`VecU8.vec_u8_empty`
+  exists; compose as `provide_inline_small` does) and the hash reader 1764 with n = 0 (no proof yet). Encoders and
+  drops handle n = 0 (`*H_232` take any n; `ArmOk` with capacity 0 frees nothing).
+- **Gap 2 (loop):** the pass step (`Pass.pd`/`pdK`, `PassK t`, word 2^63 − 1 + t, t ∈ `PassIdx` or Lookup-flag-0)
+  does not cover `CreateService`, whose word 0 is the niche (code length < 2^63, or 2^64 − 1 for None); the binary
+  maps those to index 0 → 5561. `PassCS.pdCS` (build) is that dispatch. Still to do: generalise the word in
+  `pdK`, `pass_elem` (Pass.lean), `PassGrow`, `PassLoop` (139, 211, 321), `LoopAll.PassOk`, `LoopT` to
+  `PassW D b := (∃ t, PassK t b ∧ D = 2^63 − 1 + t) ∨ D < 2^63 ∨ D = 2^64 − 1` (only `D < 2^64` is used of
+  `PassK.bound`); RunMixedG / LoopT callers wrap `Or.inl ⟨t, ht, rfl⟩`.
+- **Package design (step 1):** `PassSlot x cs bs μr := ∃ D own, PassW D (bs[44]) ∧ bs.take 8 = ℰ₈ D ∧
+  SlotOK … x.encode bs own μr ∧ own ⊆ cs`; `DecPkg x Step := ∃ N Rd, (∀ F RD, Lay F RD → ElemOkAFC … N x.encode Rd) ∧
+  ∀ cs bs μr, (∀ μ'' keeping cs as μr, Rd cs bs μ'') → Step cs bs μr`. Per kind: `MFixed` via `FixedKind.dec` +
+  `slotOK_fixed`; heap kinds via `ElemsSmallC`/`ElemsBigC` (sizes: small ≤ 512/1024/48/16384, else big) + `SlotHeap`;
+  vec-vec via `VecVecOwn.vecvec_elem_bigC` (any n ≥ 1) + `SlotVV`, n = 0 via `ExportEmpty.vec_emptyF` +
+  `slotOK_*Empty`; Assign: `gl` at 196680 = ℰ₈(80) (`StartupConsts`), Designate: 196616 = ℰ₂(341).
+
 **Handoff (end of the eighth instance).** Read this first.
 - **#217** (parts B/C): attempt-1 timed out green as designed, attempt-2 was still running at handoff (started 12:15).
   Subscribe, merge (squash) on green. Then the m1d PR exactly as the seventh instance's handoff says (restart `claude/bootstrap-t1-m1c` from main, merge

@@ -54,7 +54,7 @@ theorem push_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     (x : RefineCtx) (ω : Regs) (μ : Memory) {hb : Nat} (s : State) (M ptr len n pb S0 S1 : Nat)
     (H : HeapCtx env pb S0 S1 μ s)
     (hold : len = 0 ∨ ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true ∧ c.size = (232 * len + 31) / 32 + 1)
-    (hlen : len ≤ 2097152) (hn : n < 18446744073709551616)
+    (hlen : len ≤ 16777216) (hn : n < 18446744073709551616)
     (hM : S0 + 7560 ≤ M ∧ M + 632 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0) (hptr : ptr < 18446744073709551616)
     (h1 : ω[1] = UInt64.ofNat M)
     (sc : μ.readN (M + 248) 8 = Num.encodeLE 8 len) (sp : μ.readN (M + 256) 8 = Num.encodeLE 8 ptr)

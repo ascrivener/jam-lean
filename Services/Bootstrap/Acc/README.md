@@ -24,6 +24,13 @@
   `HandlerPost` keeps every chunk but the current instruction's buffers. Row 11's `LoopHyp` carries
   `hB : 2·(144n+4) + 4·|encodeResults rs| + 64 < 2³⁰ − 64` up to R2: at R2 / R16 it must become a case
   split (hB, or the run exhausts the heap), never an unconditional assumption.
+- R2 interface (@parent, 2026-11-16 evening): build R2 against Handlers A's `loop_row11`
+  (`InstrLoopRowEleven.lean` on `claude/bootstrap-t2-handlers-a-r5`, 4a9f542): R5 + R7 as one `Impl`,
+  8492 → 6766, of `for i in is do …; unless is.any isZomb (store key (encodeResults results))`, post
+  `R57Post` (ω₁ = sp, allocator context, old chunks kept but the instructions' buffers and the frame
+  buffers at sp + 104 / 272, the StableKeep words). Coming: Glob kept in R57Post, ω₆ in R9Post, hb8 from
+  an allocator lemma, an `hBall` "fits or exhausts" design. Full local build of this branch green at
+  534ab23 (2892 jobs). Session 4 asked for a restart at this point (context).
 - **Next (session 4 or 5):** (1) when @parent says the ruleset is fixed: merge #222, merge main here,
   full build, open the statics PR (ParamStatics, R11, R12 + R1 now too; body per the third session's
   notes plus R1 / `ItemsOwn` / `ItemLogFmt`), merge on green. (2) R2 = prove `OpArm` (operand with

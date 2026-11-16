@@ -20,7 +20,7 @@
   → dealloc of the trace). `Inv.lean` now has `slotFoot` / `footL` / `ItemsOwn`, `itemOf_local`,
   `rest_keep` (slots and ownership carried to the rest under a frame).
 - Asked Handlers A (via @parent) to add sp + 16…24, 32…40, 136…152 to `LoopKeep`, which R2 needs across R5.
-- Handlers A (2026-11-16): `LoopKeep` keeps sp + 104…152 (asked to confirm sp + 16…40 too);
+- Handlers A (2026-11-16): `LoopKeep` keeps sp + 104…152 (confirmed final: [16,40) [104,152) [160,224) [264,280) [312,344) [448,512) [736,744) [976,1000) [1632,∞) from sp — covers every word `ItemsInv` reads);
   `HandlerPost` keeps every chunk but the current instruction's buffers. Row 11's `LoopHyp` carries
   `hB : 2·(144n+4) + 4·|encodeResults rs| + 64 < 2³⁰ − 64` up to R2: at R2 / R16 it must become a case
   split (hB, or the run exhausts the heap), never an unconditional assumption.

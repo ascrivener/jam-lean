@@ -23,12 +23,12 @@ open PVM JAM Picoalloc Services.Bootstrap Services.Bootstrap.Code Services.Boots
 set_option maxHeartbeats 8000000
 set_option maxRecDepth 100000
 
-/-- `ExhaustsP` is an allowed early ☇ when `Ab` covers the failed allocator calls. -/
+/-- `ExhaustsP` is an allowed early ☇ when `Ab` covers the failed allocator calls (ω₇ = 0 there). -/
 theorem ExhaustsP.aborts {p : ByteArray} {env : AccEnv} {pb : Nat} {Ab : St Stream → Prop}
-    (hAbX : ∀ s : St Stream, s.i = 40611 ∨ s.i = 40821 → Ab s) {s : St Stream}
+    (hAbX : ∀ s : St Stream, (s.i = 40611 ∨ s.i = 40821) ∧ s.ω[7] = UInt64.ofNat 0 → Ab s) {s : St Stream}
     (h : ExhaustsP p env pb s.i s.ω s.μ s.c s.q) : Aborts p (KeepCtx (accContractS env)) Ab s s.c := by
-  obtain ⟨ω', μ', q', j, N, run, -, hj, ω'', μ'', q'', fin⟩ := h
-  refine ⟨⟨j, ω', μ', s.c, q'⟩, ⟨N, run⟩, hAbX _ ?_, ω'', μ'', q'', fin⟩
+  obtain ⟨ω', μ', q', j, N, run, h7, hj, ω'', μ'', q'', fin⟩ := h
+  refine ⟨⟨j, ω', μ', s.c, q'⟩, ⟨N, run⟩, hAbX _ ⟨?_, h7⟩, ω'', μ'', q'', fin⟩
   rcases hj with ⟨e, -⟩ | ⟨e, -⟩
   · exact .inl e
   · exact .inr e
@@ -59,7 +59,7 @@ theorem store_core {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
     {pb S0 S1 : Nat} (hE : ExtendH p P env pb S0 S1) (hO : OkEncH p P env pb S0 S1)
     (cap : Nat) (hcap1 : 134217728 ≤ cap) (hcap : cap < 18446744073709551616)
     (Ab : St Stream → Prop) (hAb1 : ∀ s : St Stream, s.i = 36528 → Ab s)
-    (hAb2 : ∀ s : St Stream, s.i = 34070 → Ab s) (hAbX : ∀ s : St Stream, s.i = 40611 ∨ s.i = 40821 → Ab s)
+    (hAb2 : ∀ s : St Stream, s.i = 34070 → Ab s) (hAbX : ∀ s : St Stream, (s.i = 40611 ∨ s.i = 40821) ∧ s.ω[7] = UInt64.ofNat 0 → Ab s)
     (ret t : Nat) (hrt : RetOK ret t)
     (herr : ∀ (c : AccCtx) (q : Stream) (ω : Regs) (μ : Memory), ω[7] = UInt64.ofNat 3 →
       ∃ ω' μ' q', FreeRunH p (KeepCtx (accContractS env)) t ω μ (c, q) .panic ω' μ' (c, q'))

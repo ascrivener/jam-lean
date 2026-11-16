@@ -186,7 +186,7 @@ theorem row_eleven {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
     (B : InstrRep) (hD : DropInstrsH B p P env.code pb S0 S1)
     (cap : Nat) (hcap1 : 134217728 ≤ cap) (hcap : cap < 18446744073709551616)
     (Ab : St Stream → Prop) (hAb1 : ∀ s : St Stream, s.i = 36528 → Ab s)
-    (hAb2 : ∀ s : St Stream, s.i = 34070 → Ab s) (hAbX : ∀ s : St Stream, s.i = 40611 ∨ s.i = 40821 → Ab s)
+    (hAb2 : ∀ s : St Stream, s.i = 34070 → Ab s) (hAbX : ∀ s : St Stream, (s.i = 40611 ∨ s.i = 40821) ∧ s.ω[7] = UInt64.ofNat 0 → Ab s)
     (s : St Stream) (st : State) (sp z item kc : Nat) (rs : List Spec.Result) (is : List Spec.Instr) (b : Bool)
     (hi : s.i = 15028) (h1 : s.ω[1] = UInt64.ofNat sp)
     (hspD : 2147483648 + 4096 ≤ sp) (hS0D : S0 + 4096 ≤ sp)

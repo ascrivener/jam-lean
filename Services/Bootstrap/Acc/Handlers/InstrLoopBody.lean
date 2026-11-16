@@ -175,7 +175,7 @@ theorem il_front_any {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
 theorem il_after_log {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env : AccEnv) (B : InstrRep)
     {C : Consts} {now pb S0 S1 : Nat} {Ab : St Stream → Prop}
     (hL : InstrLogH B p env pb S0 S1) (hR : ResultLogH p env pb S0 S1) (hH : HandlerH B p env C now pb S0 S1 Ab)
-    (hP : PushH p env pb S0 S1) (hAbX : ∀ s : St Stream, s.i = 40611 ∨ s.i = 40821 → Ab s)
+    (hP : PushH p env pb S0 S1) (hAbX : ∀ s : St Stream, (s.i = 40611 ∨ s.i = 40821) ∧ s.ω[7] = UInt64.ofNat 0 → Ab s)
     (s : St Stream) (μ : Memory) (st : State) (sp : Nat) (i : Spec.Instr) (is : List Spec.Instr)
     (rs : List Spec.Result) (zs zs' : Bool) (hs8 : sp % 8 = 0)
     (LA : LoopAt B env.code pb S0 S1 sp (i :: is) rs zs μ st) (A : AtLog env.code pb S0 S1 sp μ st zs' s)
@@ -520,7 +520,7 @@ theorem il_after_log {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
 theorem il_body {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env : AccEnv) (B : InstrRep)
     {C : Consts} {now pb S0 S1 : Nat} {Ab : St Stream → Prop}
     (hL : InstrLogH B p env pb S0 S1) (hR : ResultLogH p env pb S0 S1) (hH : HandlerH B p env C now pb S0 S1 Ab)
-    (hP : PushH p env pb S0 S1) (hAbX : ∀ s : St Stream, s.i = 40611 ∨ s.i = 40821 → Ab s)
+    (hP : PushH p env pb S0 S1) (hAbX : ∀ s : St Stream, (s.i = 40611 ∨ s.i = 40821) ∧ s.ω[7] = UInt64.ofNat 0 → Ab s)
     (s : St Stream) (st : State) (sp : Nat) (i : Spec.Instr) (is : List Spec.Instr) (rs : List Spec.Result)
     (zs : Bool) (hi : s.i = 8540 ∨ (s.i = 8554 ∧ s.ω[6] = UInt64.ofNat (rdN s.μ (sp + 480) 8)))
     (h1 : s.ω[1] = UInt64.ofNat sp) (hs8 : sp % 8 = 0)
@@ -557,7 +557,7 @@ theorem il_body_ck {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
     (hP : PushH p env pb S0 S1) (hE : ExtendH p P env pb S0 S1) (hO : OkEncH p P env pb S0 S1)
     (cap : Nat) (hcap1 : 134217728 ≤ cap) (hcap : cap < 18446744073709551616)
     (hAb1 : ∀ s : St Stream, s.i = 36528 → Ab s) (hAb2 : ∀ s : St Stream, s.i = 34070 → Ab s)
-    (hAbX : ∀ s : St Stream, s.i = 40611 ∨ s.i = 40821 → Ab s)
+    (hAbX : ∀ s : St Stream, (s.i = 40611 ∨ s.i = 40821) ∧ s.ω[7] = UInt64.ofNat 0 → Ab s)
     (Inv : AccCtx → Prop)
     (hIst : ∀ {β : Type} (o : AOp β) (c c₁ : AccCtx) (b : β), Inv c → ASem.step env o c = some (b, c₁) → Inv c₁)
     (hIfit : ∀ c, Inv c → StoreFit c)

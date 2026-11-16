@@ -1,0 +1,45 @@
+theorem pairs_hi : ∀ k, k < 100 → pairs.getD (2 * k) 0 = 48 + k / 10 := by decide
+theorem pairs_lo : ∀ k, k < 100 → pairs.getD (2 * k + 1) 0 = 48 + k % 10 := by decide
+
+theorem cellsHold_map {E : Env} {μ : Memory} {f : Nat → Aff × Nat × SVal} :
+    ∀ (l : List Nat), (∀ j ∈ l, μ.readN ((f j).1.eval E).toNat (f j).2.1 = encodeLE (f j).2.1 ((f j).2.2.eval E)) →
+      CellsHold E μ (l.map f)
+  | [], _ => trivial
+  | j :: l, h => ⟨h j (List.mem_cons_self ..), cellsHold_map l fun i hi => h i (List.mem_cons_of_mem _ hi)⟩
+
+/-- The digit-pair table at 70844, as the start memory holds it. -/
+def Table (μ : Memory) : Prop := ∀ j, j < 200 → μ.readN (70844 + j) 1 = encodeLE 1 (pairs.getD j 0)
+
+theorem tableHold {E : Env} {μ : Memory} (ht : Table μ) :
+    CellsHold E μ ((List.range 200).map fun j => (⟨none, ((70844 + j : Nat) : Int)⟩, 1, .const (pairs.getD j 0))) :=
+  cellsHold_map _ fun j hj => by
+    simp only [Aff.eval, SVal.eval, Int.zero_add, Int.toNat_natCast]
+    exact ht j (List.mem_range.1 hj)
+
+
+theorem rd1 {μ : Memory} {a v : Nat} (h : μ.readN a 1 = encodeLE 1 v) : μ.read a = UInt8.ofNat (v % 256) := by
+  simpa [Memory.readN, encodeLE] using h
+
+set_option maxRecDepth 10000 in
+theorem pairs_lt : ∀ j, j < 200 → pairs.getD j 0 < 256 := by decide
+
+theorem tab1 {μ : Memory} (ht : Table μ) {j : Nat} (hj : j < 200) :
+    decodeLE (μ.readN (70844 + j) 1) = pairs.getD j 0 := by
+  rw [ht j hj, decodeLE_encodeLE]
+  have : pairs.getD j 0 < 256 := pairs_lt j hj
+  simpa [pow8] using Nat.mod_eq_of_lt this
+
+theorem tabR {μ : Memory} (ht : Table μ) {j : Nat} (hj : j < 200) :
+    μ.read (70844 + j) = UInt8.ofNat (pairs.getD j 0 % 256) := rd1 (ht j hj)
+
+theorem rd2 {μ μ' : Memory} {a b : Nat} (h : μ'.readN a 2 = μ.readN b 2) :
+    μ'.read (a + 0) = μ.read (b + 0) ∧ μ'.read (a + 1) = μ.read (b + 1) := by
+  simp only [Memory.readN, List.range_succ, List.range_zero, List.nil_append, List.map_cons, List.map_nil,
+    List.cons_append, List.cons.injEq] at h
+  exact ⟨h.1, h.2.1⟩
+
+theorem enc2 (μ : Memory) (a : Nat) : encodeLE 2 (decodeLE (μ.readN a 2)) = μ.readN a 2 := by
+  have := encodeLE_decodeLE (μ.readN a 2); rwa [Memory.length_readN] at this
+
+theorem tblL : ∀ k, k < 10 → [48, 48, 49, 48, 50, 48, 51, 48, 52, 48, 53, 48, 54, 48, 55, 48, 56, 48, 57].getD (2 * k) 0 = 48 + k := by decide
+theorem tbl0 : ∀ k, k < 1 → [48].getD (2 * k) 0 = 48 + k := by decide

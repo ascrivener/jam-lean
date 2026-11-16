@@ -1,6 +1,8 @@
-name: Build and check
+name: Proofs
 
-# One attempt at the whole CI job, called by ci.yml. A cold build takes longer than a GitHub-hosted job
+# One attempt at the proofs job (everything `lake build` builds, including Services, and the checks that
+# need Services), called by ci.yml when the change can affect Services. The model and its vector suites run
+# in ci.yml's `model` job. A cold build takes longer than a GitHub-hosted job
 # may run, so the build steps stop at a budget (scripts/ci-bounded.sh), the attempt saves .lake and ends
 # green with timed_out=true, skipping the checks, and ci.yml starts the next attempt, which resumes from
 # the saved .lake. Only the last attempt fails when the budget runs out.
@@ -61,15 +63,6 @@ jobs:
             lake-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
             lake-${{ runner.os }}-
 
-      - name: Generated tables and constants match the pinned paper
-        run: scripts/check-tables.sh
-
-      - name: No forbidden constructs
-        run: |
-          if grep -rnE '\bsorry\b|partial def|implemented_by|native_decide|bv_decide' PVM JAM Services Tests PVM.lean JAM.lean Services.lean; then
-            echo "forbidden construct found" >&2; exit 1
-          fi
-
       - name: Build the largest proofs one at a time (each needs most of the runner's memory)
         if: env.CI_TIMED_OUT != 'true'
         run: |
@@ -84,49 +77,9 @@ jobs:
         # bounded so a cold build ends here, with time left to save .lake for the next attempt to resume from
         run: scripts/ci-bounded.sh lake build
 
-      - name: Kernel-checked Ψ_H, Y and Ψ_M examples
-        if: env.CI_TIMED_OUT != 'true'
-        run: lake build Tests.Invocation
-
-      - name: Worked proof with the gas-free logic
-        if: env.CI_TIMED_OUT != 'true'
-        run: lake build Tests.LogicExample
-
       - name: Theorems use only propext, Classical.choice and Quot.sound
         if: env.CI_TIMED_OUT != 'true'
         run: lake env lean scripts/CheckAxioms.lean
-
-      - name: Fetch the pinned test vectors
-        if: env.CI_TIMED_OUT != 'true'
-        run: scripts/fetch-vectors.sh
-
-      - name: Vector runner (programs/)
-        if: env.CI_TIMED_OUT != 'true'
-        run: lake build pvmtest
-
-      - name: Block gas checker (programs/ and gas-tests/)
-        if: env.CI_TIMED_OUT != 'true'
-        run: lake build gascheck
-
-      - name: Blake2b vectors
-        if: env.CI_TIMED_OUT != 'true'
-        run: lake build Tests.Blake2bTest
-
-      - name: General host functions
-        if: env.CI_TIMED_OUT != 'true'
-        run: lake build Tests.HostGeneralTest
-
-      - name: Keccak and SHA3 vectors
-        if: env.CI_TIMED_OUT != 'true'
-        run: lake build Tests.KeccakTest
-
-      - name: SHA-512 vectors (FIPS 180-2 and hashlib) and one trace block's VRF output
-        if: env.CI_TIMED_OUT != 'true'
-        run: lake build Tests.Sha512Test
-
-      - name: Refine host functions, Ψ_R and Ψ_I (hand-written; no vectors exist)
-        if: env.CI_TIMED_OUT != 'true'
-        run: lake build Tests.RefineTest
 
       - name: The vendored witness blob names only the host calls, and has the code facts, its theorems assume
         if: env.CI_TIMED_OUT != 'true'
@@ -142,6 +95,11 @@ jobs:
           lake exe genwitnesssteps --service bootstrap code 7463 | diff - Services/Bootstrap/Code.lean
           lake exe genwitnesssteps --service bootstrap blob | diff - Services/Bootstrap/Blob.lean
           lake exe genwitnesssteps --service bootstrap codecheck 7463
+          # the append-only code-fact tiers (docs/code-fact-tiers.md)
+          for t in $(lake exe genwitnesssteps --service bootstrap tiers); do
+            lake exe genwitnesssteps --service bootstrap tier 7463 "$t" | diff - "Services/Bootstrap/Code$t.lean"
+            lake exe genwitnesssteps --service bootstrap tiercheck 7463 "$t"
+          done
           lake exe genwitnesssteps --service bootstrap cut0 38875 BParams 0 2829 every=16 frame
           python3 scripts/gen_exec_chain.py Services/Bootstrap/BParams keep=174,175,176 prefix=174
           WITNESS_WILD=1 WITNESS_INPUT=3,0,7,0 WITNESS_CLASS="5,1,9,0;100,3,12,0;2,0,0,0;7,2,15,0;65535,65535,9,0;300,20000,12,0;40000,129,5,0" WITNESS_SBOUND=0,16 WITNESS_SIMP=PVM.bitwise_and_m15,PVM.bitwise_and_m7,PVM.bitwise_and_m255 lake exe genwitnesssteps --service bootstrap cut0 35202 BTail1 0 1003 every=16 frame
@@ -207,74 +165,6 @@ jobs:
           test -z "$(git status --porcelain -- Services)"
           lake exe genwitnesssteps segx 43495 0 5 Front1 keep=0,1,5,6,7,8 | diff - Services/Witness/Front1.lean
           lake exe genwitnesssteps segx 43514 0 14 Front2 keep=0,1,5,6,7,8 | diff - Services/Witness/Front2.lean
-
-      - name: The real witness binary rejects malformed payloads (a test, not a proof)
-        if: env.CI_TIMED_OUT != 'true'
-        run: lake build witnessrun
-
-      - name: Fetch the Gray Paper v0.8.0 JAM vectors
-        if: env.CI_TIMED_OUT != 'true'
-        run: scripts/fetch-jam-vectors.sh
-
-      - name: Codec vectors, tiny and full (encode from JSON, decode and re-encode)
-        if: env.CI_TIMED_OUT != 'true'
-        run: lake build codectest
-
-      - name: State trie vectors (Appendix D)
-        if: env.CI_TIMED_OUT != 'true'
-        run: lake build trietest
-
-      - name: Shuffle vectors (Appendix F)
-        if: env.CI_TIMED_OUT != 'true'
-        run: lake build shuffletest
-
-      - name: Erasure-coding vectors, tiny and full (all listed as deviating from GP 0.8.0)
-        if: env.CI_TIMED_OUT != 'true'
-        run: lake build erasuretest
-
-      - name: Accumulate vectors (all but the listed deviations from GP 0.8.0)
-        if: env.CI_TIMED_OUT != 'true'
-        run: lake build acctest
-
-      - name: Recent-history vectors (tiny and full)
-        if: env.CI_TIMED_OUT != 'true'
-        run: lake build historytest
-
-      - name: Authorizations vectors (tiny and full)
-        if: env.CI_TIMED_OUT != 'true'
-        run: lake build authtest
-
-      - name: Statistics vectors (tiny and full)
-        if: env.CI_TIMED_OUT != 'true'
-        run: lake build statstest
-
-      - name: Preimages vectors (tiny and full)
-        if: env.CI_TIMED_OUT != 'true'
-        run: lake build preimagestest
-
-      - name: Disputes vectors (tiny and full)
-        if: env.CI_TIMED_OUT != 'true'
-        run: lake build disputestest
-
-      - name: Assurances vectors (tiny and full)
-        if: env.CI_TIMED_OUT != 'true'
-        run: lake build assurancestest
-
-      - name: Reports vectors (tiny and full)
-        if: env.CI_TIMED_OUT != 'true'
-        run: lake build reportstest
-
-      - name: Safrole vectors (tiny and full; Bandersnatch primitives as an oracle read from the vectors)
-        if: env.CI_TIMED_OUT != 'true'
-        run: lake build safroletest
-
-      - name: Fetch four block-import traces (fallback, safrole, storage_light, preimages_light)
-        if: env.CI_TIMED_OUT != 'true'
-        run: scripts/fetch-trace-vectors.sh fallback safrole storage_light preimages_light
-
-      - name: Block import Υ over those traces, state compared after every block
-        if: env.CI_TIMED_OUT != 'true'
-        run: lake build tracetest
 
       # Make sure no lake/lean process is still writing into .lake while it is archived.
       - name: Stop build processes

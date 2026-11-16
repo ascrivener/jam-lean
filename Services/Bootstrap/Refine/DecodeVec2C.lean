@@ -241,7 +241,7 @@ theorem vec_twoC {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env
   obtain ⟨hcp0, -, hcpT⟩ := Decode.VecU8.chunk_in H.wf hcpm hcpu
   have hbT0 := H.hbT
   have ok2 : OkFD (S - 56) rd (P0 + f1) (Lt - f1) (es.drop 70) 70 r :=
-    ⟨by omega, ⟨by rcases hapart with h | h <;> omega, by omega⟩, hr8, by omega,
+    ⟨⟨by rcases hapart with h | h <;> omega, by omega⟩, hr8, by omega,
       fun j hj => by rw [hg2 j hj]; exact hne _ _, by omega, by omega, by omega,
       by omega, by omega, by omega, by omega⟩
   have inv7 : InvAFCd env pb (S - 56) rd (P0 + f1) (Lt - f1) (es.drop 70) (fun j => reps (70 + j)) 70 0 r cp

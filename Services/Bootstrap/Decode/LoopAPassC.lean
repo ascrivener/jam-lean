@@ -984,9 +984,8 @@ theorem loopAFC_low {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHos
 
 /-- **`OkF` with the payload apart from this batch's slots**: as `OkF`, but instead of the payload
     ending before the buffer (P0 + |flatten es| ≤ B), the payload [P0, P0 + |flatten es|) lies outside
-    the slots [B + 232 d, B + 232 (d + n)) and below 2^31. -/
+    the slots [B + 232 d, B + 232 (d + n)) and below 2^31. No bound on the batch length n. -/
 def OkFD (F RD P0 Lt : Nat) (es : List (List UInt8)) (d B : Nat) : Prop :=
-  es.length < 128 ∧
     ((P0 + es.flatten.length ≤ B + 232 * d ∨ B + 232 * (d + es.length) ≤ P0) ∧
       P0 + es.flatten.length < 2147483648) ∧
     B % 8 = 0 ∧ B + 232 * es.length < 2147483648 ∧
@@ -996,8 +995,8 @@ def OkFD (F RD P0 Lt : Nat) (es : List (List UInt8)) (d B : Nat) : Prop :=
 /-- `OkF` gives `OkFD` for any number d of earlier slots. -/
 theorem OkF.toD {F RD P0 Lt : Nat} {es : List (List UInt8)} {B : Nat} (d : Nat) (h : OkF F RD P0 Lt es B) :
     OkFD F RD P0 Lt es d B := by
-  obtain ⟨hn, hB1, hB2, hB3, hne, hP0, hLt, hLt', hF1, hF8, hRD1, hRD2⟩ := h
-  exact ⟨hn, ⟨Or.inl (by omega), by omega⟩, hB2, hB3, hne, hP0, hLt, hLt', hF1, hF8, hRD1, hRD2⟩
+  obtain ⟨-, hB1, hB2, hB3, hne, hP0, hLt, hLt', hF1, hF8, hRD1, hRD2⟩ := h
+  exact ⟨⟨Or.inl (by omega), by omega⟩, hB2, hB3, hne, hP0, hLt, hLt', hF1, hF8, hRD1, hRD2⟩
 
 /-- **One pass, with the slots' chunks, after d earlier slots** (`passAF_low` over `InvAFCd`, the
     element given as `ElemOkAFC`): the written slot is d + k, and the chunks' data outside this batch's
@@ -1014,7 +1013,7 @@ theorem passAFCd_lowD {p : ByteArray} {P : Program} [HasCode p P] (env : RefineH
       FrameAF F RD es.length (B + 232 * d) s μ s' μ' ∧
       (∀ a, F + 56 ≤ a → a < F + 80 → μ'.read a = μ.read a)) ∨
     Exhausts env cap pb p P 680 ω μ x (N + 1700) := by
-  obtain ⟨hn, ⟨hB1, hP31⟩, hB2, hB3, hne, hP0, hLt, hLt', hF1, hF8, hRD1, hRD2⟩ := ok
+  obtain ⟨⟨hB1, hP31⟩, hB2, hB3, hne, hP0, hLt, hLt', hF1, hF8, hRD1, hRD2⟩ := ok
   obtain ⟨r1, r5, m24, m40, m48, m56, rP, rL, pay, tab, el, ws, wr, rt, heap, ⟨hcp, hcpu⟩, cpd, ⟨hcb, hcbu⟩,
     cbd⟩ := h
   have rp : ∀ a, P0 ≤ a → a < P0 + es.flatten.length → μ.readable a = true := fun a h1 h2 =>
@@ -1333,7 +1332,7 @@ theorem passAFCd_lowFD {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
       ∃ csOf' : Nat → List Chunk, ElCd reps d (k + 1) B cp cb csOf' μ' s' ∧
         ∀ j, k0 ≤ j → j < k + 1 → ∀ c ∈ csOf' j, ∀ e ∈ chunks s0, e.used = true → e ≠ c) ∨
     Exhausts env cap pb p P 680 ω μ x (N + 1700) := by
-  obtain ⟨hn, ⟨hB1, hP31⟩, hB2, hB3, hne, hP0, hLt, hLt', hF1, hF8, hRD1, hRD2⟩ := ok
+  obtain ⟨⟨hB1, hP31⟩, hB2, hB3, hne, hP0, hLt, hLt', hF1, hF8, hRD1, hRD2⟩ := ok
   obtain ⟨r1, r5, m24, m40, m48, m56, rP, rL, pay, tab, el, ws, wr, rt, heap, ⟨hcp, hcpu⟩, cpd, ⟨hcb, hcbu⟩,
     cbd⟩ := h
   have rp : ∀ a, P0 ≤ a → a < P0 + es.flatten.length → μ.readable a = true := fun a h1 h2 =>

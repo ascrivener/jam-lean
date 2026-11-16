@@ -60,14 +60,14 @@ theorem ro_keep {p : ByteArray} {cap0 : Nat} {env : RefineHost.Env} {pb S0 S1 : 
     (H.ro _ (by omega))), fun b h1 h2 => ?_⟩
   unfold Memory.readable; rw [kp _ (Or.inl (by unfold pageSize; omega))]
 
-/-- **Refine's exit** (5042 … t): from the loop's state after all n instructions (`PInv n`, 1 ≤ n < 128),
+/-- **Refine's exit** (5042 … t): from the loop's state after all n instructions (`PInv n`, 1 ≤ n ≤ 2²¹),
     where each output slot j satisfies `O j` (so `rep j` for the encoder, `DR j` for the `Debug` line and a
     variant whose drop does nothing), refine returns to the return address `ret` saved at M + 624 (→ t) with
     ω₇ = buf and ω₈ = len, where the len octets at buf are
-    ℰ(`BootstrapWorkOutput`) = n :: (the n encodings) ⌢ ℰ₂(w mod 2^16), w the work item's index word at
+    ℰ(`BootstrapWorkOutput`) = ℰ(n) ⌢ (the n encodings) ⌢ ℰ₂(w mod 2^16), w the work item's index word at
     M + 80; the host context x is kept and the allocator's context holds. Or an allocation fails. The payload's `Vec<u8>` at
     M + 88 / M + 112 (capacity c', buffer cq, kept by the loop) is freed on the way. -/
-theorem exit_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env : RefineHost.Env) (cap0 : Nat)
+theorem exit_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Services.Bootstrap.CodeA.HasCodeA p P] (env : RefineHost.Env) (cap0 : Nat)
     (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616) {hb : Nat}
     {pb S0 S1 M E n capI : Nat} {ce : Chunk} {μ0 : Memory} {Kp : Chunk → Prop} {O : Nat → List UInt8 → Prop}
     (DR : Nat → List UInt8 → Memory → Prop) (enc : Nat → List UInt8) (rep : Nat → List UInt8 → Prop)
@@ -90,9 +90,9 @@ theorem exit_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env
     (∃ (ω' : Regs) (μ' : Memory) (s' : State) (N buf : Nat),
       FreeStepsH p (refineContractK cap0 env) 5042 ω μ x t ω' μ' x N ∧ HeapCtx env pb S0 S1 μ' s' ∧
       ω'[0] = UInt64.ofNat ret ∧ ω'[1] = UInt64.ofNat (M + 632) ∧ ω'[5] = UInt64.ofNat r5 ∧
-      ω'[6] = UInt64.ofNat r6 ∧ ω'[7] = UInt64.ofNat buf ∧ ω'[8] = UInt64.ofNat (off enc n + 3) ∧
-      μ'.readN buf (off enc n + 3) = UInt8.ofNat n :: (out enc n ++ Num.encodeLE 2 (w % 65536)) ∧
-      ((∀ a, buf ≤ a → a < buf + (off enc n + 3) → μ'.readable a = true) ∧ buf + (off enc n + 3) < 2147483648)) ∨
+      ω'[6] = UInt64.ofNat r6 ∧ ω'[7] = UInt64.ofNat buf ∧ ω'[8] = UInt64.ofNat ((Blob.encodeNat n).length + off enc n + 2) ∧
+      μ'.readN buf ((Blob.encodeNat n).length + off enc n + 2) = Blob.encodeNat n ++ out enc n ++ Num.encodeLE 2 (w % 65536) ∧
+      ((∀ a, buf ≤ a → a < buf + ((Blob.encodeNat n).length + off enc n + 2) → μ'.readable a = true) ∧ buf + ((Blob.encodeNat n).length + off enc n + 2) < 2147483648)) ∨
     ∃ N, ExhaustsX env cap0 pb p 5042 ω μ x N := by
   obtain ⟨hS0M, hMS1, hM2, hM8⟩ := L.hM
   have hn' := L.hn
@@ -172,6 +172,7 @@ theorem exit_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env
     rw [k5 _ (by omega) (by omega) (by omega) (by omega), st.fr _ (by omega)])
   have pre5 := pre4.trans run5
   have hoff := ExitEnc.off_le_232 enc n hlen
+  have hl4 := ExitEnc.encodeNat_len_le4 n (by omega)
   have hbT5 := H5.hbT
   have hb05 := H5.hb0
   obtain ⟨dtab5, rdtab5⟩ := ro_keep st.H pre5 (a := 67760) (l := 96) (by omega)
@@ -179,7 +180,7 @@ theorem exit_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env
   simp only at hq0 hqT
   -- 6. the epilogue
   obtain ⟨ω6, μ6, s6, run6, H6, f0, f1, f5', f6, f7, f8, ffr, fkeep⟩ := Fin.fin_run (p := p) (P := P)
-    (R := refineContractK cap0 env) env x ω5 μ5 s5 H5 M cap ptr n c' q buf (off enc n + 3) ret r5 r6 t co cq
+    (R := refineContractK cap0 env) env x ω5 μ5 s5 H5 M cap ptr n c' q buf ((Blob.encodeNat n).length + off enc n + 2) ret r5 r6 t co cq
     ⟨by omega, by omega, by omega, hM8⟩ hn hkc ⟨co5.1, hcou, by omega, by omega⟩ (by omega)
     (fun h => by
       obtain ⟨hK, hqa, hqce⟩ := hcq h

@@ -91,7 +91,7 @@ theorem e2 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR 
 theorem entry {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] (env : RefineHost.Env)
     (x : X) (ω : Regs) (μ : Memory) (s : State) {pb S0 S1 : Nat} (M cap n : Nat) (ce : Chunk)
     (Kp : Chunk → Prop) (O : Nat → List UInt8 → Prop) (H : HeapCtx env pb S0 S1 μ s)
-    (hM : S0 + 7560 ≤ M ∧ M + 632 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0) (hn : 0 < n) (hn128 : n < 128)
+    (hM : S0 + 7560 ≤ M ∧ M + 632 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0) (hn : 0 < n) (hn128 : n ≤ 2097152)
     (hcap : cap < 18446744073709551616) (hce : cap ≠ 18446744073709551615)
     (hceC : ce ∈ chunks s ∧ ce.used = true) (hE : ce.addr + 32 + 232 * n ≤ ce.addr + 32 * ce.size)
     (hEtop : ce.addr + 32 + 232 * n < 2147483648)
@@ -116,7 +116,7 @@ theorem entry {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCod
     fun a l h0 h => Memory.readN_congr (fun j hj => bfr _ (by omega) (by omega))
   have H2 : HeapCtx env pb S0 S1 μ2 s := Decode.GrowOne.ctx_high (Decode.GrowOne.ctx_high H
     (fun a ha => afr a (by omega) (Or.inl (by omega))) awr) (fun a ha => bfr a (by omega) (Or.inl (by omega))) bwr
-  refine ⟨ω2, μ2, (run1.trans run2).mono (by omega), ⟨⟨hS0M, hMS1, hM2, hM8⟩, hn128, ⟨by omega, hE⟩, hEtop⟩,
+  refine ⟨ω2, μ2, (run1.trans run2).mono (by omega), ⟨⟨hS0M, hMS1, hM2, hM8⟩, by omega, ⟨by omega, hE⟩, hEtop⟩,
     ⟨by rw [b1, a1, h1], Or.inr ⟨rfl, by rw [b5]⟩,
       by rw [Memory.readN_congr (fun j hj => bfr _ (by omega) (by omega))]; exact a120,
       b128, b136, b48, b40, b16, b24, b32, by rw [k2 _ _ (by omega) (by omega)]; exact a272,

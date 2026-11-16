@@ -26,7 +26,7 @@ set_option maxRecDepth 100000
 /-- The instruction j's encoding (`Spec.Instr.encode`), `Panic`'s past the end. -/
 def encAt (is : List Spec.Instr) (j : Nat) : List UInt8 := (is.getD j .panic).encode
 
-theorem run_fixed {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P]
+theorem run_fixed {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Services.Bootstrap.CodeA.HasCodeA p P] [HasCodeR p P]
     (env : RefineHost.Env) (cap0 : Nat) (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616)
     {hb pb : Nat} (gl : Nat → UInt8)
     (is : List Spec.Instr) (Rs : Nat → List UInt8 → Prop) (ts : Nat → Nat)
@@ -124,7 +124,9 @@ theorem run_fixed {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
       (by rw [tab1]; exact tab2) (fun a h1 h2 => by rw [rtab1 a h1 h2]; exact rtab2 a h1 h2)
       (by rw [dtab1]; exact dtab) (fun a h1 h2 => by rw [rdtab1 a h1 h2]; exact rdtab a h1 h2) with
     ⟨ω2, μ2, s2, N2, buf, run2, H2, e0, e1, e5, e6, e7, e8, eo, erd⟩ | ⟨N, hx⟩
-  · exact Or.inl ⟨ω2, μ2, s2, _, buf, run1.trans run2, H2, e0, e1, e5, e6, e7, e8, eo, erd⟩
+  · obtain ⟨hl, hc⟩ := ExitEnc.out_small (n := n) (o := Encode.Loop.off _ n) (Encode.Loop.out _ n ++ Num.encodeLE 2 (w % 65536)) (by omega)
+    rw [hl] at e8 eo erd; rw [List.append_assoc, hc] at eo
+    exact Or.inl ⟨ω2, μ2, s2, _, buf, run1.trans run2, H2, e0, e1, e5, e6, e7, e8, eo, erd⟩
   · exact Or.inr ⟨_, ExhaustsX.pre run1 hx⟩
 
 end Services.Bootstrap.Refine.RunFixed

@@ -20,10 +20,32 @@ as option (A), in-place edits of Decode/Encode files used only by T1's chain:
   - `Refine/DecodeVecNC` (`batch_step`, `batches`, `vec_allC`), `DecodeCG.decode_allC`: `hbig : 232 n < 2^30 − 64` → `< 2^32`.
 - Omega pitfall: omega builds an ill-typed proof when it case-splits a hypothesis `… ∨ ∃ …` (e.g. `StackSrc ∨ HeapSrc`
   unfolded). Keep such hypotheses folded (a `def`), or wrap them in `Nonempty`.
-- Open questions to the parent: does refine_t1c exclude `Import` (recommended, like `hrsr`), and may it require 1 ≤ n?
-- Next: re-thread the callers' own bounds (PassLoop's n ≤ 2²¹, `hcapB`/`hbig` in ExitEncH, now dischargeable), then
-  `slotRep` (each output kind's slot predicate: `kindRep` or the decode side's `*Rep`), `DRt` from it (the named
-  `DebugLineOk … DRt`), the loop over pass / Export / eager Lookup steps, and refine_t1c.
+  - `Refine/DecodeVec2.g3x`: `hN : 232 N < 2^30 − 64` → `< 2^32`.
+  - Refine's n ≤ 2²¹ → n ≤ 2²⁴ everywhere (`PassLoop.LayP.hn`, `Entry`, `Body`, `ExportElem.push`, `ExportStep`,
+    `PassGrow`, `LookupStep2.lpush`, `ExitEnc(H)`, `RunMixedG.run_mixedG`, `TopG`): |y| ≤ 2²⁴ gives n < 2²⁴.
+  - A full `lake build` passed after the threading; axioms clean (`realloc_call_any`, `grow_one_call`,
+    `refine_milestone`, `refine_coreG`).
+- Scope (parent, 2026-11-16): refine_t1c keeps 1 ≤ n (n = 0 is not a small lemma: `psiR_noinstr` fixes |y| = 33 and says
+  nothing of exports). Import: Adam decides; meanwhile state refine_t1c with an `hnoimport`-style hypothesis (as `hrsr`)
+  and do not start Import's handler.
+
+**Handoff (end of the seventh instance).**
+- #217 (parts B/C): attempt-1 still running at handoff. Merge it (squash) on green. Then restart
+  `claude/bootstrap-t1-m1c` from main, merge `claude/bootstrap-t1-m1d` into it, full `lake build`, and open the m1d PR.
+  PR body: the drop arms, encoder arms (22, 17-inline), ElemsSmallC, the big `realloc` (every changed statement listed
+  above), the new append-only tier T1C (jump entry 676 and 29153 … 29181; T1B untouched); no new findings. Check first
+  that build-items' post_simp PR (≈21 Decode files) doesn't conflict.
+- Then refine_t1c (the only remaining step):
+  1. `hcapB` / `hbig` in `ExitEncH.enc_runH` / `ExitRunW.exit_runW` are now dischargeable (capBound = 2^60; each output
+     element's data lies in a chunk below 2^30 and n ≤ 2²⁴); discharge them where refine_t1c calls `exit_runW`.
+  2. `slotRep : Spec.Instr → List UInt8 → Memory → Prop`: `kindRep` for the fixed kinds, `VecEmptyRep` / `VecVecRep` for
+     the vector ones, and the decode side's `CreateService{None,Some,Empty}Rep`, `BlessRep`, `AssignRep`,
+     `AssignGasRep`, `DesignateRep`, `ProvideInlineRep`, `LookedUpSomeRep`, `RandomStorageOkRep` (Decode/*.lean), with
+     the arguments as the decode lemmas instantiate them. `DRt C j bs μ := ∃ x, x.WF C ∧ … ∧ slotRep (outI x) bs μ`;
+     the named hypothesis is `DebugLineOk … DRt` (in place of `DRm`, on refine_t1c only).
+  3. The loop over pass (fixed and heap kinds) / Export / eager Lookup steps (`loop_all` with a third alternative from
+     `LookupStep2.lookup_step`; μ0 / Kp carried existentially), the decode of the heap kinds (`ElemsBigC` / `ElemsSmallC`
+     per kind into `decode_allC`), `exit_runW`, and the top as `TopG.refine_coreG` / `Milestone.refine_milestone`.
 
 **On `main`:** `Refine/Milestone.lean` `refine_milestone` (#197, with the `Fmt.FmtRO` conjunct of
 `VendoredFacts` from #207), T1c's first milestone M1. Ψ_R against `Spec.refine` for payloads of 1 ≤ n < 128

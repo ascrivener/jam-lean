@@ -103,15 +103,25 @@ def ResultLogH (p : ByteArray) (env : AccEnv) (pb S0 S1 : Nat) : Prop :=
 def ResC (st st' : State) (F : List Nat) (d : Chunk) : Prop :=
   d ∈ chunks st' ∧ d.used = true ∧ ((∀ d0 ∈ chunks st, d0.used = true → d0 ≠ d) ∨ d.addr + 32 ∈ F)
 
+/-- **The item at a owns its buffers** (`ResultsOwn`'s clauses for one item, against the chunks C):
+    the buffers it owns (`itemPtrs`) are pairwise distinct, each the data of a chunk satisfying C; a
+    `dataVec` with len ≠ 0 has cap ≠ 0, and its inner array lies in its buffer's chunk. -/
+def ItemOwn (μ : Memory) (C : Chunk → Prop) (a : Nat) : Prop :=
+  (ResultsDrop.itemPtrs μ a).Nodup ∧ (∀ q ∈ ResultsDrop.itemPtrs μ a, ∃ d, C d ∧ d.addr + 32 = q) ∧
+  (6 ≤ rdN μ a 1 → rdN μ a 1 < 255 → rdN μ (a + 24) 8 ≠ 0 →
+    rdN μ (a + 8) 8 ≠ 0 ∧ ∃ d, C d ∧ d.addr + 32 = rdN μ (a + 16) 8 ∧
+      rdN μ (a + 16) 8 + 24 * rdN μ (a + 24) 8 ≤ d.addr + 32 * d.size)
+
 /-- The state a handler ends in (14278), against the dispatch state (memory μ, allocator state st,
     stack pointer sp, the instruction's buffers F): ω₁ = sp; the allocator's context for some st′; the
-    result r at sp + 1000 in chunks `ResC`; every allocated chunk of st not in F kept with its data;
+    result r at sp + 1000 in chunks `ResC`, owning its buffers (`ItemOwn`, against `ResC`); every allocated chunk of st not in F kept with its data;
     the frame words `LoopKeep` and the globals kept; the octets below 196608 kept, and every octet's
     access kept. -/
 def HandlerPost (code : ByteArray) (pb S0 S1 sp : Nat) (st : State) (μ : Memory) (F : List Nat)
     (r : Spec.Result) (s' : St Stream) : Prop :=
   s'.i = 14278 ∧ s'.ω[1] = UInt64.ofNat sp ∧
   ∃ st', HeapCtxC code pb S0 S1 s'.μ st' ∧ ResultAtP s'.μ (ResC st st' F) (sp + 1000) r ∧
+    ItemOwn s'.μ (ResC st st' F) (sp + 1000) ∧
     (∀ d ∈ chunks st, d.used = true → d.addr + 32 ∉ F → d ∈ chunks st' ∧
       ∀ a, InData d a → s'.μ.read a = μ.read a) ∧
     (∀ a, a < 4294967296 → LoopKeep sp a → s'.μ.read a = μ.read a) ∧

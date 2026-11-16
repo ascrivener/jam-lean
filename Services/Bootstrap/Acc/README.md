@@ -1,21 +1,25 @@
 # Bootstrap's accumulate: entry, control flow and checkpoints
 
-## Handoff: T2 inputs, items loop and `on_transfer` (updated 2026-11-15, second session of the day)
+## Handoff: T2 inputs, items loop and `on_transfer` (updated 2026-11-16, third session)
 
-**State.** Branch `claude/bootstrap-t2-inputs-wip`, main (bda9d74) merged in. **All 22 WIP modules
-build** on the merged tree (`git diff --name-only origin/main -- '*.lean'`), sorry-free, axioms clean.
-The container needs Lean v4.36.0-rc1 installed by hand if elan's self-update check fails: download
-`lean-4.36.0-rc1-linux.tar.zst` from the lean4 releases, unpack (python `zstandard` if no `zstd`), and
-`elan toolchain link leanprover/lean4:v4.36.0-rc1 <dir>`. A cold build of the WIP modules takes > 2 h on
-4 cores; build named targets so a run fits in the 2 h background limit.
+**State.** PR #222 (`claude/bootstrap-t2-inputs-wip`) is open: `tr_impl` and everything below. Main
+(d6b9533, with #215's weaker `none` branch) was merged in, and nothing here needed changes. A full
+`lake build` passed (2802 jobs); `tr_impl`'s axioms are propext, Classical.choice and Quot.sound. Get a
+built tree with `scripts/fetch-lake.sh --force`, then `lake build`. The toolchain lands in
+`/root/.lean/lean-4.36.0-rc1-linux/bin`.
 
-**On main already.** #158 (`Acc/Impl/`), #152 (inputs decode), #150, #165 (`KeepROAcc`), #166 (the
-storage wrappers).
+**Step 5 (ParamStatics): proved, on branch `claude/bootstrap-t2-statics`, not yet a PR.** It needs
+`Start.lean` from #222. `Acc/Statics.lean`: `chain` / `start_to_6429_statics` state, at 6429,
+[196616]₂ = 𝖢 and [196696]₈ = 𝖨 (341 and 16 for `Params.full`). **No code-fact tier is needed:** `Code`
+already has the facts for 56205 and 56279, because refine runs the same prologue. `AccBParams`'s last two
+executor pieces are re-checked with cuts that also carry the two cells (16 s). To do: import it from
+`Services.lean`, add a whats-proven entry, and open the PR after #222 merges. `apply()` checks
+2 ≤ 𝖢 ≤ 341 and stores 𝖨 as a u16, so 2·𝖢·𝖨 < 2³² always holds. 𝖨 > 0 is not checked by the binary.
 
-**Open PR.** #198 (`claude/bootstrap-t2-get-huge`): `get`'s long-value band (`get_huge`, `gr_big`,
-`gr_lock_huge`); `get_call` now needs only |w| < 2⁶³ and its abort is "reaches the trap 47977" (the `heap`
-reason); the `ValuesFit` < 2⁶³ docs (Adam, 2026-11-15). Merge on green. The WIP branch already carries
-the same `Get.lean` / `GetCall.lean` and `gk_call` adapted to them (its abort: reaches 3895 or 47977).
+**Waiting on @parent:** `TrPost` does not yet keep 196616…196791 (Handlers A's later summaries need
+that). The frames of `KeyFmt` / `Utf8Call` / `LogFmt` don't cover that region. Options sent: (a)
+strengthen the three hypotheses' frames and thread the region through (recommended), (b) a
+whole-program write analysis later.
 
 **Only on WIP (proved):**
 - `Acc/Items/`: Exit (`items_end`, `items_halt`), Operand (`op_pre`, `op_mid`), Disp, End, Head.
@@ -43,7 +47,7 @@ the same `Get.lean` / `GetCall.lean` and `gk_call` adapted to them (its abort: r
    `Tail`, the log line (`Utf8Call`, `LogFmt`, `logS`), `KeyFmt`, `enc_call` and `Tail2`. Its aborts:
    `heap` (allocations at 3820 / 48047 / 4002 / 15363 / 15362 / 34178, `get`'s 47977, and Exhausts), and
    `orPanic` (FULL at 7386 / 7919 → 15361).
-   **Progress (builds, sorry-free, axioms clean):**
+   **Progress (builds, no forbidden constructs, axioms clean):**
    - `Transfer/Trap.lean`: `HeapTrapT` / `HeapFailT`, `aborts_of_trap`, `aborts_of_exhaustsP` and
      `ends_of_15361`.
    - `Transfer/CopyVal.lean`: `memcpy_val` and `read_exact_val`, which state the copied octets.

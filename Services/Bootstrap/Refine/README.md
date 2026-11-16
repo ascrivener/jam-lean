@@ -7,6 +7,8 @@ Everything cites Gray Paper v0.8.0 via the docstrings of the files named here; t
 ## Current state (2026-11-16, read this first)
 
 **Eighth instance (2026-11-16, branch `claude/bootstrap-t1c`, on top of m1d).** refine_t1c, in progress.
+- Scope (Adam, 2026-11-16): Import excluded by a named hypothesis `hnoimport` (like `hrsr`), recorded as deferred;
+  1 ≤ n kept (n = 0 is the existing NoInstr theorem). Both go in the docstring and `docs/whats-proven.md`.
 - Done (build, axioms clean): `LoopT.loop_t` (the loop over pass / Export / eager Lookup steps; μ0, `Kp` and the written
   slots' octets `B` carried existentially with a caller's invariant `Inv k μ0 Kp B`; obligations `PassOkT`, `ExportOkT`,
   `LookupOk`; `PInv.mono_O`, `PInv.exact`, `LUSlotB`), `SpecRunT` (`NoImpRsr`, `outT lk`, `rsemLk`, `run_refineT`).

@@ -59,6 +59,18 @@ proved later without changing T2):
 - **R8, the HeapHost writer step;**
 - the per-instruction log lines (G4) as Fmt hypotheses, like `LogFmt`.
 
+Interfaces (parent, 2026-11-16):
+- `InstrRep : Spec.Instr → List UInt8 → Memory → Prop` (the 232-octet slot and its heap buffers) is a
+  parameter shared by the R3 and R6 hypotheses, with a copy/frame field in the bundle (equivalent to
+  ∃ InstrRep with R3 ∧ R6, so nothing is weakened). **Obligation:** T1's per-kind `Rep`s (`kindRep`,
+  `AssignRep`, `BlessRep`, …) discharge it.
+- The Debug log lines of the instruction (8772) and the result (the tail at 14278) are G4 Fmt
+  hypotheses, stated by Handlers A, minimal and frame-only like `LogFmt`, and listed in
+  `docs/whats-proven.md`.
+- R5's result is the contract R2 consumes: from 8493 with `InstrRep` for each item, `ResultsVec []` and
+  `HeapCtxC`, `Impl` of the spec's instruction loop, post at 15028 / 15050 with `ResultsVec results`,
+  [sp+160] = 1 ↔ a `Zombify` is present, `HeapCtxC` keeping old chunks, and the frame.
+
 Split: Handlers A does R4 (`ResultsAt`), R5 (the instruction loop as `Impl.forIn` against the
 per-handler hypotheses) and R7 (row 11 against the R8/R9 hypotheses). T2 inputs does R1, R2, R12,
 R15 and R16 (the final statement). R2's operand arm consumes R5's and R7's results; the interfaces

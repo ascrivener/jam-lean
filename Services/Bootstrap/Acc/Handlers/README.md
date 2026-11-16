@@ -135,7 +135,15 @@ Handlers dependencies takes ~2 h on 4 cores). Use `ulimit -v 12000000` when comp
   `wordTag` = `InstrLoop.slotTag`) and `notNone`. Listed in whats-proven / t2-remaining.
   **Pending with @parent:** the `ItemOwn` amendment to `HandlerPost` (the pushed item's buffer ownership, needed for
   `ResultsOwn` and so for the results drop). It is already in the file.
-- `InstrLoopInv.lean`: **`LoopAt`**, the invariant at 8540, and `LoopAt.nil_of_end`.
+- `InstrLoopInv.lean`: **`LoopAt`**, the invariant at 8540, `LoopAt.nil_of_end`, and **`loop_exit`**: from `LoopAt`
+  with cur = end, 8540 → 15028 → `row_eleven`. Axioms clean. Still to do for R5:
+  - the body from 8540 back to 8540 for one instruction, composing the segments, the hypotheses, `memcpy_val`, the
+    deallocs (40613) and `store_core` for Checkpoint;
+  - `LoopAt` maintained: the new item's ownership comes from `ItemOwn`; `iterFree` shrinks by the consumed slot's
+    `foot`; `ResultsAvoid` extends to the new item;
+  - the entry `il_setup1` → `LoopAt`; the `Impl.forIn` wrapping; the empty case (15050, `r11_di1`).
+  - `LoopHyp`'s size bound `hB` on `encodeResults rs` is open: decide with @parent who supplies it (R2 or a
+    `ValuesFit` consequence).
 
 ## Session 9 handoff (2026-11-16, for the 10th session)
 

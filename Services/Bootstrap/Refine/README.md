@@ -136,9 +136,25 @@ trap 6377); per-segment `format!` at **5744** (→ 59375), log (host 100) at 578
 32785 at 5826). Spec side: `exportSeg` in `JAM/Refine.lean` — the context x's export list grows by
 each segment.
 
-### Lookup handler (5278–5427), part C (host 7 is gas-free on main)
-The b = 1 path: host 7 called twice through 49015 (length query, then fetch; ecalli at 5366),
-failure path formats at **5398** and logs at 5428. Pushes the looked-up preimage element.
+### Lookup handler (5278–5558), part C (host 7 is gas-free on main)
+Disassembly read 2026-11-16 (`python3 -I scripts/allocfail/dis.py services/bootstrap/jam-bootstrap-service.jam`):
+- 5279: the eager flag at M + 348; 0 → pass-through 5561 (lazy Lookup is passed through unchanged).
+- 5288–5364: the hash (4 words from the element at ω₅ + 12 … 36) to M + 168 … 192, service id (i32 at M + 312) as
+  u64, out = M + 560; frame M − 48 (ret 170 at M − 8, ω₅/ω₆/out saved); ecalli 7 (ω₉ = buf 0, ω₁₀ = 0, ω₁₁ = 0:
+  the length query), then the wrapper 49015.
+- Wrapper 49015 on r = ω₇: r = 2^64 − 1 (NONE) → `None` (−1 stored at out), return; other r ≥ 2^64 − 9, or
+  r ≥ 2^63 → trap. r = 0 → buf 1 (dangling). Otherwise r > 2^37 − 32 → trap 49074 (counts as heap exhaustion,
+  standing decision), else the allocator's spin lock (196608 / 196792 + 10056), `alloc_impl` 41177 for (r + 31)/32
+  units, align 1 (cf. `Decode/AllocHuge.alloc_impl_huge_callG`), lock cleared (store_u8 at 196792 + 8192 + 1864),
+  null → trap 49074. Then ecalli 7 again (buf, offset 0, len r; result unchecked) and out = {r, buf, r}
+  (`Some(Vec)`), return to 5372.
+- 5372–5428: `format!` at **5398** (template args at M + 536: (M + 560, saved fmt fn)), string at M + 584, log
+  (host 100) at 5428; free 5441 if cap ≠ 0.
+- 5448–5545: the result {M + 560 … 576} copied to M + 584; push into the output `Vec` at M + 248 (grow_one 32785
+  when len = cap); slot = {element word at M + 8 (the LookedUp discriminant), the three words}; len + 1; drop of
+  the input element via 4046 (frame M + 304), → 5042.
+- Output kind `LookedUp(Option<Vec<u8>>)`: a heap variant, so its encoding is an `EncOkMH` arm (growth) and its
+  slot owns the preimage's chunk (Kp), like part B.
 
 ### Import handler (5125–5210), part D
 Its fetch wrapper 44677 takes the allocator's lock, calls `alloc_impl` (41177, flag 0) for 129 units,

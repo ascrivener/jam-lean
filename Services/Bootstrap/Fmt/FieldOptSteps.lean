@@ -227,7 +227,7 @@ theorem e26_hash {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x :
       Nat.mod_eq_of_lt (show a + 1 < 18446744073709551616 by omega)]
 
 theorem fo_r {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X) (ω : Regs) (μ : Memory)
-    (T r0 t i : Nat) (hi : i = 28781 ∨ i = 36575 ∨ i = 36635 ∨ i = 26947 ∨ i = 26982) (hT : 65536 ≤ T ∧ T + 16 < 4294967296)
+    (T r0 t i : Nat) (hi : i = 28781 ∨ i = 36575 ∨ i = 36635 ∨ i = 26947 ∨ i = 26982 ∨ i = 36693 ∨ i = 36724) (hT : 65536 ≤ T ∧ T + 16 < 4294967296)
     (h1 : ω[1] = UInt64.ofNat T) (r0' : rdN μ (T + 8) 8 = r0)
     (hret : 0 < r0 ∧ r0 ≤ 2806 ∧ r0 % 2 = 0) (hjt : P.jumpTable.getD (r0 / 2 - 1) 0 = t)
     (hbt : P.isBlockStart t = true) (hr : ∀ a, T ≤ a → a < T + 16 → μ.readable a = true) :
@@ -235,7 +235,7 @@ theorem fo_r {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X) 
       ω'[0] = UInt64.ofNat r0 ∧ ω'[1] = UInt64.ofNat (T + 16) ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       ω'[7] = ω[7] := by
   rw [show ω = regsNF ω [] from rfl]
-  rcases hi with rfl | rfl | rfl | rfl | rfl
+  rcases hi with rfl | rfl | rfl | rfl | rfl | rfl | rfl
   all_goals
     refine ⟨?_, ?_, ?_⟩
     rotate_left

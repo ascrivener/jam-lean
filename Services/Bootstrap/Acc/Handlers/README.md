@@ -124,38 +124,23 @@ Handlers dependencies takes ~2 h on 4 cores). Use `ulimit -v 12000000` when comp
   `trap_48533`, `readN_32`, **`rm_to_remove`** (8079 → 48481 for `SlotOut … (some (q, k))`, the
   35 octets `(Key.results q k).encode` at sp + 744, ω₇/ω₈ set, frame off sp + 744 … 780 and
   sp + 1568 … 1604) and **`rm_head`** (8056 → 8079 via `slot_get`, or the traps 34070 / 47977).
-- **Blocked (asked @parent 2026-11-15):** `remove`'s FULL case. `ASem.step` gives `none`, so `Impl`
-  needs `Ends p (KeepCtx R) s₁ .panic s.c`, but the binary's host step sets x := `setSelf self`
-  (≠ x: `self` is `getD … default`; HashMap has no ext equality). Recommended fix: `Impl`'s none
-  branch takes `∃ c', c'.2 = s.c.2 ∧ Ends p (YIn R s.c.2 s.c.2) s₁ .panic c'`.
+- **`recent_match` done** (step 2): `RmOut`, `RmPost` and `recent_match`, the `Impl` of
+  `Prog.bind (load (.recent c) slotDec) (match · with | some (q, k) => op (remove (results q k)) |
+  none => pure ())` from 8056 to `RmPost` at 8172. Hypotheses: H, ω₁ = sp, ω₅ = c, the stack frame
+  (S0 + 352 ≤ sp, sp + 1632 ≤ S1), the tag-1 key-size word at 68688, `hvals` (all this service's
+  values < 2⁶³). Ab at 34070 and 47977.
+- The FULL case needed `Impl`'s none branch weakened (parent approved option A): **PR #215**
+  (`claude/t2-impl-none-y`, Impl.lean + Prefix.lean only), now `∃ c', c'.2 = s.c.2 ∧ Ends p (YIn R
+  s.c.2 s.c.2) s₁ .panic c'`. This branch carries the identical patch; merge main after #215 lands.
+- Tip: `rw [ASem.step_… ]` on a goal mentioning `{ i := …, c := c0, … }.c` ran out of memory; first
+  `rw [show ({ … } : St Stream).c = c0 from rfl]` (as counter_write does).
 
-**Next: `recent_match` in RecentMatch.lean** (step 2; only the glue is left):
-`Impl p (accContractS env) env Ab (Prog.bind (load (.recent c) slotDec) (fun v => match v with
-| some (p, i) => op (AOp.remove (Key.results p i).encode) | none => pure ())) (fun _ => RmPost …) s`,
-s at 8056 with ω₅ = c (c < 2³²), ω₁ = sp. `RmPost` (like `CwPost`): i = 8172, ω₁ = sp, ω₅ = c (8177
-stores ω₅ again), `HeapCtxC` for some st′ keeping st's chunks and data, memory kept above sp off
-sp + 744 … 780, sp + 1144 … 1180, sp + 1568 … 1604 (and the frames below sp the calls use), `Glob`,
-< 196608. Ab must hold at 34070 and 47977. Code (CodeA/L2.lean):
-- 8056 storeImmU16 [sp+1568] = 1; 8061 storeU32 [sp+1572] = ω₅; 8065 ω₇ = sp+1144; 8069 ω₈ = sp+1568;
-  8073 loadImmJump ω₀ = 280 → 34377. Then `slot_get` with t = jte(280) = 8079.
-- 8079 ω₇ = u16 [sp+1144]; 8083 branchEqImm ω₇ 0 → 8172.
-- 8086 … 8106: ω₁₀ = sp+1146, ω₇…ω₁₀ = the 4 u64 at sp+1146…, ω₁₁ = i16 [sp+1178], ω₁₂ = sp+1572;
-  8110 … 8118: 4 u64 stores at sp+1572…; 8121 storeImmU32 [sp+775] = 0; 8125 storeImmU16 [sp+1568] =
-  2; 8130 storeU16 [sp+1570] = ω₁₁; 8134 … 8146: [sp+744 … 776) = 0; 8150 ω₇ = sp+1568; 8154 ω₈ =
-  sp+744; 8158 ω₀ = 282 → 51243 (`kf_call`, tr = 8165, t = 2, buf = sp+744); 8165 ω₀ = 284 → 48481.
-  Split 8079 … 8158 in two for `pvm_go` (≤ ~25 instructions with stores).
-Proof plan: `unfold load`, `Impl.bind`, `unfold Prog.op Impl`. The pre-segment and `slot_get` run
-under KeepCtx; if `slot_get` aborts → `.inl` (Aborts, Ab at 34070/47977, `trap_34070`; 47977 via
-`get`'s trap lemma). Otherwise `.inr ⟨s, ⟨0, .refl⟩, rfl, _⟩` with `ASem.step_read` (key = [1] ++
-fixed 4 c = `keyEnc μ (sp+1568) 1`, the < 2³¹ bound from `slot_get`), c₁ = s.c; s₂ = the state at
-8079 via `keep_yin`. Then the match on the decoded value (`SlotOut` at sp+1144):
-- none: 8079/8083 → 8172, `Impl` of `pure ()`.
-- some (p, i): segments, `kf_call`, then `remove`'s call form with s₁ at 48481 and `step_remove`
-  (`Key.results p i` = [2] ++ p ++ fixed 2 i = `keyEnc μ' (sp+1568) 2`; `hold` from `ValuesFit`).
-  FULL: `remove_call`'s run to the trap 48533 is under `YIn` with c′ = (c.1.setSelf c.1.self, c.2)
-  (writeSelf = self on FULL); `Impl` needs `Ends p (KeepCtx R) s₁ .panic s.c`: needs a
-  `setSelf self = c` fact and a YIn → KeepCtx conversion for a run whose context does not change.
-  Non-FULL: `remove_call` to 48514/48531, then a return step (ω₀ = 284 → jte = 8172, like `sg_gret`).
+**Next (row 8, steps 3 and 4 of the old list):** the slot write 8172 … 8326 (key {1, c} again,
+(package, k) copied to sp + 1144, the inlined alloc of 34 octets and the encoder 32414, then `set`,
+the 255 check, `ParamStatics` for 2·C·I and c′ := (c + 1) mod 2·C·I), the counter's typed get at
+34637 (8031 … 8049; a separate function, u32 decode), then compose row 8 from the counter get,
+`recent_match`, the slot write and `counter_write` (8326 → 8416) with `Impl.bind`. Then the row-8 PR
+(imports in `Services.lean`, `ParamStatics` in docs/whats-proven.md as an obligation).
 
 ## Session 3 progress (2026-11-15, row 8)
 

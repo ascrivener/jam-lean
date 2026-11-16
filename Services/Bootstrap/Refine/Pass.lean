@@ -168,7 +168,7 @@ theorem pdK {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR
     (hr2 : ∀ a, M + 348 ≤ a → a < M + 349 → μ.readable a = true) :
     ∃ ω', FreeStepsH p R 5095 ω μ x 5561 ω' μ x 12 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] := by
   rcases ht with ⟨t, ht, rfl⟩ | hcs
-  swap
+  rotate_left
   · obtain ⟨ω', run, e1, e5⟩ := pdCS (p := p) (P := P) (R := R) x ω μ M D hcs hM h1 h6 s128 s136 hr
     exact ⟨ω', run.mono (by omega), e1, e5⟩
   rcases ht with ht | ⟨rfl, hb⟩

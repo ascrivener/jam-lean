@@ -10,8 +10,7 @@ below 196608, their readability, and their non-writability, as at the start: eac
 under `KeepCtx` or `YIn` of the contract, both of which keep what is not writable (`keepCtx_keepsRO`,
 `yIn_keepsRO`, `ro_keep`).
 
-`OpRO`: the read-only facts the operand arm reads besides `TrRO` (the key-size words at 68680 / 68688 /
-68696, the read-only range 68680 … 69076, the dispatch table at 65736), all below 196608.
+(`OpRO`, the operand arm's read-only facts, is in `Inv.lean`, a field of `ItemsInv`.)
 -/
 
 namespace Services.Bootstrap.Acc
@@ -58,26 +57,5 @@ theorem Impl.keepRO {p : ByteArray} {env : AccEnv} {pb : Nat} (hbd : heapBounds 
         exact Impl.mono_post (fun _ _ ⟨hq, hk⟩ => ⟨hq, LoKept.trans k12 hk⟩) _ _
           (ih bc.1 s₂ (fun a ha => (k12 a ha).2.2) g3)
     | none => exact id
-
-/-- The operand arm's read-only facts besides `TrRO` (see the module doc). -/
-def OpRO (μ : Memory) : Prop :=
-  (∃ k, μ.readN 68680 8 = Num.encodeLE 8 k ∧ 1 ≤ k ∧ k + 31 < 68719476736) ∧
-  (∃ k, μ.readN 68688 8 = Num.encodeLE 8 k ∧ 5 ≤ k ∧ k + 31 < 68719476736) ∧
-  (∃ k, μ.readN 68696 8 = Num.encodeLE 8 k ∧ 35 ≤ k ∧ k + 31 < 68719476736) ∧
-  (∀ a, 68680 ≤ a → a < 69076 → μ.readable a = true) ∧
-  μ.readN 65736 100 = Services.Bootstrap.Acc.Handlers.jumpTab ∧
-  (∀ a, 65736 ≤ a → a < 65836 → μ.readable a = true)
-
-/-- `OpRO` reads only below 196608. -/
-theorem OpRO.keep {μ μ' : Memory} (h : OpRO μ)
-    (hk : ∀ a, a < 196608 → μ'.read a = μ.read a ∧ μ'.readable a = μ.readable a) : OpRO μ' := by
-  obtain ⟨⟨k0, e0, b0⟩, ⟨k1, e1, b1⟩, ⟨k2, e2, b2⟩, r1, ej, r2⟩ := h
-  refine ⟨⟨k0, ?_, b0⟩, ⟨k1, ?_, b1⟩, ⟨k2, ?_, b2⟩, fun a h1 h2 => ?_, ?_, fun a h1 h2 => ?_⟩
-  · rw [Memory.readN_congr fun j hj => (hk _ (by omega)).1]; exact e0
-  · rw [Memory.readN_congr fun j hj => (hk _ (by omega)).1]; exact e1
-  · rw [Memory.readN_congr fun j hj => (hk _ (by omega)).1]; exact e2
-  · rw [(hk a (by omega)).2]; exact r1 a h1 h2
-  · rw [Memory.readN_congr fun j hj => (hk _ (by omega)).1]; exact ej
-  · rw [(hk a (by omega)).2]; exact r2 a h1 h2
 
 end Services.Bootstrap.Acc

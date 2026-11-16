@@ -261,6 +261,7 @@ import Services.Bootstrap.Acc.ItemsLoop.OpDec
 import Services.Bootstrap.Acc.ItemsLoop.OpHead
 import Services.Bootstrap.Acc.ItemsLoop.OpSpec
 import Services.Bootstrap.Acc.ItemsLoop.ImplRO
+import Services.Bootstrap.Acc.ItemsLoop.Op
 import Services.Bootstrap.Decode.VecPairs
 import Services.Bootstrap.Decode.VecU32U64
 import Services.Bootstrap.Decode.BlessHeap

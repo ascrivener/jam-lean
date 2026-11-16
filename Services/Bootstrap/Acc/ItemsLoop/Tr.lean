@@ -154,7 +154,8 @@ theorem loop_tr (env : AccEnv) (gcap pb : Nat) (hcap1 : 134217728 ≤ gcap)
     have dat : ∀ d0 ∈ chunks st, d0.used = true → ∀ a, InDataA d0 a → s'.μ.read a = s.μ.read a :=
       fun d0 h0 hu a ha => by
         rw [(keep' d0 h0 hu).2 a ha, lo2 a (by have := heapC_data_lt H h0 ha; omega)]
-    refine ⟨.inl hi, h1', hsp, hstk, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ro2.keep lo', ?_, ?_, ?_⟩
+    refine ⟨.inl hi, h1', hsp, hstk, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ro2.keep lo',
+      (hI.ro2.keep fun a ha => ⟨lo2 a (by omega), rd2 a⟩).keep lo', ?_, ?_, ?_⟩
     · rw [hcur']; omega
     · rw [kw 144 (by omega)]; exact hI.m144
     · rw [kw 16 (by omega)]; exact hI.m16

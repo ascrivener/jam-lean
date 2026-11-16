@@ -224,6 +224,7 @@ theorem err_arm {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
       · rw [hcur']; exact sl'
       · rw [hcur']; exact own'
     · exact hI.ro.keep fun a ha => ⟨(roAll a ha).1, (roAll a ha).2.1⟩
+    · exact hI.ro2.keep fun a ha => ⟨(roAll a ha).1, (roAll a ha).2.1⟩
     · intro a ha
       have hg : a < 196792 := by unfold Glob at ha; omega
       rw [glf a ha, gle a ha, lod a (by omega)]; exact hI.glob a ha

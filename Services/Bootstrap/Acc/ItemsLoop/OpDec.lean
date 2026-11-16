@@ -134,8 +134,7 @@ theorem op_dec {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env :
     (m288 : rdN s₁.μ (sp + 288) 8 = cp) (hcp : cp ≠ 18446744073709551615)
     (m296 : rdN s₁.μ (sp + 296) 8 = ptr) (m304 : rdN s₁.μ (sp + 304) 8 = out.length)
     (hout : s₁.μ.readN ptr out.length = out)
-    (hrd : ∀ a, ptr ≤ a → a < ptr + out.length → s₁.μ.readable a = true)
-    (hpo : ptr + out.length ≤ 2147483648) :
+    (hrd : ∀ a, ptr ≤ a → a < ptr + out.length → s₁.μ.readable a = true) :
     Aborts p (KeepCtx (accContractS env)) Ab s₁ s₁.c ∨
     (Spec.decode (Spec.Dec.output C) out = none ∧ Ends p (KeepCtx (accContractS env)) s₁ .panic s₁.c) ∨
     ∃ is item, Spec.decode (Spec.Dec.output C) out = some (is, item) ∧

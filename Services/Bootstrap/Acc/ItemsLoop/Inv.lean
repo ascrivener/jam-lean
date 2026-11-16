@@ -4,6 +4,7 @@ import Services.Bootstrap.Acc.Items.Disp
 import Services.Bootstrap.Acc.Items.Exit
 import Services.Bootstrap.Acc.ValuesFitStep
 import Services.Bootstrap.SpecLemmas.Items
+import Services.Bootstrap.Acc.Handlers.Dispatch
 
 /-!
 # The items loop's invariant (R1)
@@ -23,7 +24,7 @@ arm needs and keeps:
 - each slot left holds its input (`itemOf`), and the slots' buffers are distinct allocated chunks
   (`ItemsOwn`, an obligation on `inputs_decode`), so a frame that keeps those chunks keeps the slots
   (`itemOf_local`);
-- the read-only data `tr_impl` reads (`TrRO`), the parameter statics (`Glob`, equal to a base memory
+- the read-only data `tr_impl` and the operand arm read (`TrRO`, `OpRO`), the parameter statics (`Glob`, equal to a base memory
   μ₀'s), and `ValuesFit` of the context (T2's premise, kept by every operation: `ValuesFit.step`).
 -/
 
@@ -49,6 +50,27 @@ theorem TrRO.keep {μ μ' : Memory} (h : TrRO μ)
   · rw [rdN_frame fun j hj => (hk _ (by omega)).1]; exact h3
   · rw [rdN_frame fun j hj => (hk _ (by omega)).1]; exact h4
   · rw [(hk a (by omega)).2]; exact h5 a ha hb
+
+/-- The operand arm's read-only facts besides `TrRO` (see the module doc). -/
+def OpRO (μ : Memory) : Prop :=
+  (∃ k, μ.readN 68680 8 = Num.encodeLE 8 k ∧ 1 ≤ k ∧ k + 31 < 68719476736) ∧
+  (∃ k, μ.readN 68688 8 = Num.encodeLE 8 k ∧ 5 ≤ k ∧ k + 31 < 68719476736) ∧
+  (∃ k, μ.readN 68696 8 = Num.encodeLE 8 k ∧ 35 ≤ k ∧ k + 31 < 68719476736) ∧
+  (∀ a, 68680 ≤ a → a < 69076 → μ.readable a = true) ∧
+  μ.readN 65736 100 = Services.Bootstrap.Acc.Handlers.jumpTab ∧
+  (∀ a, 65736 ≤ a → a < 65836 → μ.readable a = true)
+
+/-- `OpRO` reads only below 196608. -/
+theorem OpRO.keep {μ μ' : Memory} (h : OpRO μ)
+    (hk : ∀ a, a < 196608 → μ'.read a = μ.read a ∧ μ'.readable a = μ.readable a) : OpRO μ' := by
+  obtain ⟨⟨k0, e0, b0⟩, ⟨k1, e1, b1⟩, ⟨k2, e2, b2⟩, r1, ej, r2⟩ := h
+  refine ⟨⟨k0, ?_, b0⟩, ⟨k1, ?_, b1⟩, ⟨k2, ?_, b2⟩, fun a h1 h2 => ?_, ?_, fun a h1 h2 => ?_⟩
+  · rw [Memory.readN_congr fun j hj => (hk _ (by omega)).1]; exact e0
+  · rw [Memory.readN_congr fun j hj => (hk _ (by omega)).1]; exact e1
+  · rw [Memory.readN_congr fun j hj => (hk _ (by omega)).1]; exact e2
+  · rw [(hk a (by omega)).2]; exact r1 a h1 h2
+  · rw [Memory.readN_congr fun j hj => (hk _ (by omega)).1]; exact ej
+  · rw [(hk a (by omega)).2]; exact r2 a h1 h2
 
 /-- **The buffers a slot owns** (pointer, length): an operand's trace (capacity at + 0, pointer + 8,
     length + 16) when its capacity is not 0, and its work output's (+ 24 / + 32 / + 40) likewise; a
@@ -235,7 +257,7 @@ structure ItemsInv (env : AccEnv) (pb S0 S1 sp q cap e : Nat) (μ₀ : Memory)
     (ins : List AccumulateInput) (s : St Stream) : Prop where
   pc : s.i = 6766 ∨ (s.i = 6782 ∧ ins ≠ [])
   r1 : s.ω[1] = UInt64.ofNat sp
-  hsp : 2147483992 ≤ sp ∧ sp % 8 = 0
+  hsp : 2147487744 ≤ sp ∧ sp % 8 = 0
   hstk : S0 + 4096 ≤ sp ∧ sp + 1856 ≤ S1
   cur : curAt sp s + 184 * ins.length = e
   m144 : rdN s.μ (sp + 144) 8 = e
@@ -254,6 +276,7 @@ structure ItemsInv (env : AccEnv) (pb S0 S1 sp q cap e : Nat) (μ₀ : Memory)
       (itemOf i).2 (s.μ.readN (curAt sp s + 184 * j) 184) s.μ) ∧
     ItemsOwn st s.μ (curAt sp s) q ins
   ro : TrRO s.μ
+  ro2 : OpRO s.μ
   glob : ∀ a, Glob a → s.μ.read a = μ₀.read a
   fit : ValuesFit env s.c.1
   sized : ∀ i ∈ ins, InputSized i

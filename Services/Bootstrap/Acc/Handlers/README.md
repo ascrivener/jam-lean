@@ -120,7 +120,19 @@ Handlers dependencies takes ~2 h on 4 cores). Use `ulimit -v 12000000` when comp
   predicate), `AvoidC`, **`ResultsAvoid`**, `ResultsAtP.mono`, `ResultsAvoid.toAt`, `ResultsAvoid.keep`.
 - Fix: `Impl.then` in `RowElevenCore.lean` didn't bind `Qu`, and the module failed to build. It is now
   `{Qu : Type}`.
-- Next: R5 (the instruction loop). Entry 15050 (`r11_di1`) is still unexplained.
+- R5 map (from `scripts/allocfail/dis.py`). 15050 is the loop's exit when there are no instructions (len = 0):
+  [sp+160] is never set, so 15050 skips the flag.
+- R5 straight-line segments, all compiling:
+  - `InstrLoopSeg.lean`: `il_setup0`/`il_setup1` (8493), `il_head_end`/`il_head` (8540), `il_next_none`/`il_next` (8554),
+    `il_copy2` (8589), `slotTag`, `il_tag_other`/`il_tag_zomb`/`il_tag_ck` (8627), `il_ck_ok`/`il_ck_err` (8716),
+    `il_log_pre` (8735), `il_log_post` (8779), `il_res_log_pre` (14278).
+  - `InstrLoopTail.lean`: `FreeStepsH.logS` (log under the stream contract), `il_tail_a`/`il_tail_b0`/`il_tail_b1`
+    (14376/14403), `il_push` (14420, room), `il_post0`/`il_post1` (14516), `il_back` (14546).
+  - Pitfall: a symbolic slot word through the signed compare at 8634 hits a kernel deep recursion; the niche
+    tags are enumerated concretely instead.
+- **Pending with @parent:** the R5 hypotheses `InstrLogH` (8772), `ResultLogH` (14369), `HandlerH` (8822 → 14278,
+  R6), `PushH` (finish_grow with an old buffer, 14431 → 14485, R8), and two new `InstrRep` fields (`tag`, `notNone`).
+  Next, once approved: state them (a new `InstrLoopHyp.lean`), the loop invariant, and the body as `Impl` via `Impl.forIn`.
 
 ## Session 9 handoff (2026-11-16, for the 10th session)
 

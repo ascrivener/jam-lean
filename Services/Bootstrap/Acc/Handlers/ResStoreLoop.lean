@@ -99,7 +99,8 @@ structure LoopHyp (pb S0 S1 sp rp n : Nat) (rs : List Spec.Result) (st : State) 
   hsp : S0 + 520 ≤ sp ∧ 2147484168 ≤ sp ∧ sp % 8 = 0 ∧ sp ≤ S1
   hS1 : S1 < 4294967296
   hn : rs.length = n
-  hrp : 65536 ≤ rp ∧ rp + 144 * n < 2147483648
+  /-- The items' octets lie in [2¹⁶, 2³¹) (only when there are items: an empty `Vec`'s pointer dangles). -/
+  hrp : rp < 18446744073709551616 ∧ (n ≠ 0 → 65536 ≤ rp ∧ rp + 144 * n < 2147483648)
   hB : 2 * (144 * n + 4) + 4 * (encodeResults rs).length + 64 < 1073741760
   hR : ResultsAt μ₀ st rp rs
 
@@ -180,7 +181,8 @@ theorem rl_item {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {env 
       LoopInv env.code pb S0 S1 sp rp n rs st μ₀ (k + 1) ω' μ' s') ∨
     ExhaustsP p env pb 36346 ω μ c f := by
   obtain ⟨h1, h5, h6, H, ⟨cap, ptr, WP, mout, hcapb, hst⟩, hfr, hlo, hgl⟩ := I
-  obtain ⟨hsp, hS1, hn, ⟨hrp1, hrp2⟩, hB, hR⟩ := L
+  obtain ⟨hsp, hS1, hn, hrp, hB, hR⟩ := L
+  obtain ⟨hrp1, hrp2⟩ := hrp.2 (by omega)
   have hSt := H.st
   have hk' : k < rs.length := hn ▸ hk
   have hlen := encK_len_le n rs (k + 1) hn

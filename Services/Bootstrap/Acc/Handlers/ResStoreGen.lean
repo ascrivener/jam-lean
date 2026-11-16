@@ -59,7 +59,8 @@ theorem res_enter {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
       (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
       (∀ a, Glob a → μ'.read a = μ.read a) ∧ (∀ a, a < 196608 → μ'.read a = μ.read a) ∧
       (∀ a, a < 196608 → μ'.readable a = μ.readable a) := by
-  obtain ⟨hsp, hS1, hn, ⟨hrp1, hrp2⟩, hB, hR⟩ := L
+  obtain ⟨hsp, hS1, hn, hrp, hB, hR⟩ := L
+  have hrp64 := hrp.1
   have hSt := H.st
   have hS1' := H.hS1
   have hSb := H.hSb
@@ -388,7 +389,8 @@ theorem res_store {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
       μ'.readN (sp - 96 + 80) 8 = Num.encodeLE 8 ω[5].toNat ∧
       μ'.readN (sp - 96 + 72) 8 = Num.encodeLE 8 ω[6].toNat := by
   have L0 := L
-  obtain ⟨hsp, hS1, hn, ⟨hrp1, hrp2⟩, hB, hR⟩ := L0
+  obtain ⟨hsp, hS1, hn, hrp, hB, hR⟩ := L0
+  have hrp64 := hrp.1
   rcases Nat.eq_zero_or_pos n with rfl | hn1
   · -- n = 0: `res_head`
     have hrs : rs = [] := List.eq_nil_of_length_eq_zero hn
@@ -412,7 +414,7 @@ theorem res_store {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     ⟨ω', μ', N, run⟩ | ⟨ω1, μ1, s1, N1, run1, I0, mk1, mn1, m01, m51, m61, hd1, hsp1, hg1, hro1, hrd1⟩
   · exact .inl ⟨ω', μ', N, run⟩
   have L1 : LoopHyp pb S0 S1 sp rp n rs st μ1 :=
-    ⟨hsp, hS1, hn, ⟨hrp1, hrp2⟩, hB, ResultsAt.keep (fun d hd hu => ⟨hd, hd1 d hd hu⟩) hR⟩
+    ⟨hsp, hS1, hn, hrp, hB, ResultsAt.keep (fun d hd hu => ⟨hd, hd1 d hd hu⟩) hR⟩
   rcases rl_loop hE hO c f sp rp n rs st μ1 L1 0 ω1 μ1 s1 (by omega) I0 with
     ⟨ω2, μ2, s2, N2, run2, In⟩ | hx
   rotate_left

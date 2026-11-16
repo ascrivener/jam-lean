@@ -63,7 +63,9 @@ Interfaces (parent, 2026-11-16):
 - `InstrRep : Spec.Instr → List UInt8 → Memory → Prop` (the 232-octet slot and its heap buffers) is a
   parameter shared by the R3 and R6 hypotheses, with a copy/frame field in the bundle (equivalent to
   ∃ InstrRep with R3 ∧ R6, so nothing is weakened). **Obligation:** T1's per-kind `Rep`s (`kindRep`,
-  `AssignRep`, `BlessRep`, …) discharge it.
+  `AssignRep`, `BlessRep`, …) discharge it, including the fields `tag` (the slot's first word decodes
+  to the instruction's index, `wordTag`) and `notNone` (that word is not 2⁶⁴ − 2), added for R5
+  (parent, 2026-11-16).
 - The Debug log lines of the instruction (8772) and the result (the tail at 14278) are G4 Fmt
   hypotheses, stated by Handlers A, minimal and frame-only like `LogFmt`, and listed in
   `docs/whats-proven.md`.
@@ -77,6 +79,13 @@ R15 and R16 (the final statement). R2's operand arm consumes R5's and R7's resul
 are agreed through the parent.
 
 ## Named hypotheses the statement would carry, as things stand
+
+Added for R5 (parent, 2026-11-16; `Acc/Handlers/InstrLoopHyp.lean`): **`InstrLogH`** and
+**`ResultLogH`** (G4, the two `format!` calls at 8772 and 14369), **`HandlerH`** (R6, one hypothesis
+over every instruction: 8822 → 14278 implements `onInstr C now i`, ending in `HandlerPost`), and
+**`PushH`** (R8, `finish_grow` with an old buffer, 14431 → 14485). R5's precondition from R2 includes
+[sp + 184] = 2⁶³, [sp + 216] = 2⁶³ + 1, [sp + 200] = 678, and the decoded `Vec` at sp + 240 / sp + 248
+(ptr in ω₆) with `IterOwn`.
 
 Added for R7 (parent, option (A)): **`DropInstrsH`** over the `InstrRep` bundle's `foot`
 (`Acc/Handlers/InstrRep.lean`), frame-only, for the instructions' `IntoIter` drop (33214).

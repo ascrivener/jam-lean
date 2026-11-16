@@ -8,7 +8,9 @@ the R3 (output decode) and R6 (per-handler) hypotheses and by R5/R7: how a decod
 its 232-octet slot of the instructions' `Vec` (GP v0.8.0 Appendix B, Ω_W's input `is`), with the heap
 buffers the slot owns. Its fields: `rep` (the representation), `foot` (the buffers' data addresses,
 in the order the slot's drop frees them) and `frame` (`rep` survives any change that keeps those
-buffers' chunks with their data). **Obligation:** T1's per-kind `Rep`s discharge it.
+buffers' chunks with their data), `tag` (the slot's first word decodes to the instruction's index) and
+`notNone` (that word is not `Option::None`'s niche). **Obligation:** T1's per-kind `Rep`s discharge
+it, `tag` and `notNone` included.
 
 `DropInstrsH` (decided by the parent, option (A) for R7's drops) is the named, frame-only hypothesis
 for 33214, the drop of the instructions' `IntoIter` (buf at v, cur at v + 8, cap at v + 16, end at
@@ -26,6 +28,21 @@ open PVM JAM Picoalloc Services.Bootstrap Services.Bootstrap.Alloc Services.Boot
 /-- The buffer freed at a cap word c with pointer q: none if c = 0. -/
 def optBuf (c q : Nat) : List Nat := if c = 0 then [] else [q]
 
+/-- The constructor index of an instruction (`Instruction`'s codec tag, GP v0.8.0 Appendix B;
+    bootstrap's declaration order, `Spec.Instr`): `createService` = 0, …, `assignForGasCost` = 24. -/
+def instrIdx : Spec.Instr → Nat
+  | .createService .. => 0 | .upgrade .. => 1 | .transfer .. => 2 | .zombify .. => 3 | .eject .. => 4
+  | .deleteItems .. => 5 | .solicit .. => 6 | .forget .. => 7 | .lookup .. => 8 | .importSegs .. => 9
+  | .exportSegs .. => 10 | .bless .. => 11 | .assign .. => 12 | .designate .. => 13 | .yield .. => 14
+  | .checkpoint => 15 | .panic => 16 | .provide .. => 17 | .lookedUp .. => 18 | .imported .. => 19
+  | .exported .. => 20 | .randomStorageRefine .. => 21 | .randomStorageAccumulate .. => 22
+  | .benchmark => 23 | .assignForGasCost .. => 24
+
+/-- The tag the instruction loop decodes from a slot's first word w (8627, `InstrLoop.slotTag`):
+    w − 2⁶³ + 1 for w in the niche [2⁶³, 2⁶³ + 24), else 0 (the dataful variant). -/
+def wordTag (w : Nat) : Nat :=
+  if 9223372036854775808 ≤ w ∧ w < 9223372036854775832 then w - 9223372036854775807 else 0
+
 /-- **The instructions' representation** (see the module doc). -/
 structure InstrRep where
   /-- The slot's 232 octets b, with the heap buffers they point to in μ, represent the instruction. -/
@@ -38,6 +55,12 @@ structure InstrRep where
     (∀ q ∈ foot b, ∃ d ∈ chunks st, d.used = true ∧ d.addr + 32 = q ∧
       ∀ a, InData d a → μ'.read a = μ.read a) →
     rep i b μ'
+  /-- The slot's first word decodes to the instruction's index (the loop's tag decode, 8627, and the
+      dispatch, 8822). -/
+  tag : ∀ (i : Spec.Instr) (b : List UInt8) (μ : Memory), rep i b μ → wordTag (Num.decodeLE (b.take 8)) = instrIdx i
+  /-- The slot's first word is not `Option::None`'s niche 2⁶⁴ − 2 (the loop's end test, 8564). -/
+  notNone : ∀ (i : Spec.Instr) (b : List UInt8) (μ : Memory), rep i b μ →
+    Num.decodeLE (b.take 8) ≠ 18446744073709551614
 
 /-- The slot of the k-th remaining instruction (cursor cur). -/
 def slot (μ : Memory) (cur k : Nat) : List UInt8 := μ.readN (cur + 232 * k) 232

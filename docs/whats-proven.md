@@ -984,10 +984,25 @@ What you trust beyond the kernel:
 - **`DropInstrsH` and `InstrRep` (T2, named hypothesis; parent's option (A) for row 11's drops).** The drop
   of the instructions' `IntoIter` (33214, per-kind drops through the table at 68312) is assumed frame-only:
   it frees each remaining slot's `foot` and then its buffer, keeps every other allocated chunk with its data
-  and the memory from sp up (`Acc/Handlers/InstrRep.lean`). `InstrRep` (`rep`, `foot`, `frame`) is the
-  parameter shared by the R3/R6 hypotheses; *obligation:* T1's per-kind `Rep`s discharge it and the drop's
-  proof discharges `DropInstrsH`. Row 11's `row_eleven_core` (15038 → 6766) and `r11_tail` (the results drop
-  `drop_results` and the three deallocs) are proved without it.
+  and the memory from sp up (`Acc/Handlers/InstrRep.lean`). `InstrRep` (`rep`, `foot`, `frame`, `tag`,
+  `notNone`) is the parameter shared by the R3/R6 hypotheses and R5. *Obligation:* T1's per-kind `Rep`s
+  discharge it, `tag` (the slot's first word decodes to the instruction's index) and `notNone` (that word
+  is not 2⁶⁴ − 2) included; the drop's proof discharges `DropInstrsH`. Row 11's `row_eleven_core`
+  (15038 → 6766) and `r11_tail` (the results drop `drop_results` and the three deallocs) are proved without
+  it. **`row_eleven`** (15028 → 6766, `Acc/Handlers/RowElevenFront.lean`) uses it, with the premises R5 must
+  supply: `IterOwn`, `(iterFree ++ tailFree).Nodup`, `ResultsAvoid` and the stack room.
+- **R5's named hypotheses (T2, Plan B, approved by the parent 2026-11-16; `Acc/Handlers/InstrLoopHyp.lean`).**
+  Each is minimal and frame-only, and keeps sp + 184 … sp + 224:
+  - `InstrLogH` (G4): the instruction's Debug log line, `format!` at 8772 (59375 → 8779): a fresh `String`
+    at sp + 1568, the allocator's chunks kept, or `ExhaustsP`; the text is not stated;
+  - `ResultLogH` (G4): the result's log line, `format!` at 14369 (59375 → 14376), the same shape with the
+    `String` at sp + 1144;
+  - `HandlerH` (R6): one hypothesis over every instruction i: from the dispatch at 8822, the handler
+    implements `onInstr C now i` under `accContractS` and ends at 14278 in `HandlerPost` (the result at
+    sp + 1000 in fresh chunks or the instruction's own buffers, other chunks kept, `LoopKeep` frame words
+    kept);
+  - `PushH` (R8): `finish_grow` with an old buffer for the results `Vec` (14431 → 14485), or `ExhaustsP`.
+  The loop's straight-line segments (`InstrLoopSeg.lean`, `InstrLoopTail.lean`) are proved without them.
 - **Refinement of a fragment, not of a whole program.** The allocator theorems are about the
   allocator's entry points called with the stated registers and memory. They are not yet composed
   into a Ψ_R or Ψ_A theorem about a bootstrap run that allocates.

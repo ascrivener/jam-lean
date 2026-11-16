@@ -23,6 +23,8 @@ open PVM JAM Picoalloc Services.Bootstrap Services.Bootstrap.Code Services.Boots
   Services.Bootstrap.Alloc Services.Bootstrap.Acc Services.Bootstrap.Spec Services.Bootstrap.Decode.HeapCtx
   Services.Bootstrap.Decode.LoopA Services.Bootstrap.Acc.Handlers.Results Services.Bootstrap.Acc.Handlers.InstrRep
   Services.Bootstrap.Acc.Handlers.RowEleven Services.Bootstrap.Acc.Handlers.ResultsDrop
+  Services.Bootstrap.Acc.Handlers.KeyEnc Services.Bootstrap.Acc.Handlers.ResStore Services.Bootstrap.CodeX
+open JAM.Codec (fixed)
 
 set_option maxHeartbeats 8000000
 set_option maxRecDepth 100000
@@ -506,5 +508,189 @@ theorem il_body {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
   obtain ⟨ω₁, μ₁, N₁, run1, A⟩ := il_front_any (P := P) env B c f ω μ st sp i is rs zs h1 hs8 LA hal hk hck
   exact Impl.pre _ _ (s' := ⟨8735, ω₁, μ₁, c, f⟩) ⟨_, run1⟩ rfl
     (il_after_log (P := P) env B hL hR hH hP hAbX _ μ st sp i is rs zs _ hs8 LA A hjt hjr hfit)
+
+/-- Every operation of every program satisfies `True`. -/
+theorem Prog.all_true {α : Type} : ∀ prog : Prog AOp α, Acc.Prog.All (fun _ => True) prog
+  | .pure _ => trivial
+  | .call _ k => ⟨trivial, fun b => Prog.all_true (k b)⟩
+  | .panic => trivial
+
+/-- **One `Checkpoint` body, 8540 → 8540**: from the head with `LoopAt` for `checkpoint :: is` and rs, the run
+    implements `store (results package item) (encodeResults rs)` (Ω_W of ℰ(↕rs), the store before the
+    instruction; GP v0.8.0 Appendix B, bootstrap's `onWorkItem`) and then `onInstr C now checkpoint`
+    (through `HandlerH`), and returns to the head in `BodyPost` for is and rs ++ [r]. The front reaches the
+    tag decode (`il_front8627`), the key is written (`il_tag_ck`), the results store runs (`store_core`,
+    returning to 8716: `Ok` → 8735 by `il_ck_ok`, FULL → ☇ at 15361), then `il_after_log`. A context
+    invariant Inv kept by every operation and giving `StoreFit` carries `StoreFit` across the store.
+    Premises beyond `il_body`'s: `ExtendH`/`OkEncH` and the store's abort reasons, the item index at
+    sp + 176, the read-only key-size word and `set`'s error table, and the size bound hB on rs's encoding. -/
+theorem il_body_ck {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeA p P] (env : AccEnv)
+    (B : InstrRep) {C : Consts} {now pb S0 S1 : Nat} {Ab : St Stream → Prop}
+    (hL : InstrLogH B p env pb S0 S1) (hR : ResultLogH p env pb S0 S1) (hH : HandlerH B p env C now pb S0 S1 Ab)
+    (hP : PushH p env pb S0 S1) (hE : ExtendH p P env pb S0 S1) (hO : OkEncH p P env pb S0 S1)
+    (cap : Nat) (hcap1 : 134217728 ≤ cap) (hcap : cap < 18446744073709551616)
+    (hAb1 : ∀ s : St Stream, s.i = 36528 → Ab s) (hAb2 : ∀ s : St Stream, s.i = 34070 → Ab s)
+    (hAbX : ∀ s : St Stream, s.i = 40611 ∨ s.i = 40821 → Ab s)
+    (Inv : AccCtx → Prop)
+    (hIst : ∀ {β : Type} (o : AOp β) (c c₁ : AccCtx) (b : β), Inv c → ASem.step env o c = some (b, c₁) → Inv c₁)
+    (hIfit : ∀ c, Inv c → StoreFit c)
+    (s : St Stream) (st : State) (sp item kc : Nat) (is : List Spec.Instr) (rs : List Spec.Result) (zs : Bool)
+    (hi : s.i = 8540) (h1 : s.ω[1] = UInt64.ofNat sp) (hs8 : sp % 8 = 0)
+    (LA : LoopAt B env.code pb S0 S1 sp (.checkpoint :: is) rs zs s.μ st)
+    (hal : rdN s.μ (sp + 480) 8 % 8 = 0) (hk : rdN s.μ (sp + 504) 8 + 1 < 2 ^ 64)
+    (hjt : s.μ.readN 65736 100 = jumpTab) (hjr : ∀ a, 65736 ≤ a → a < 65836 → s.μ.readable a = true)
+    (hinv : Inv s.c) (hitem : s.μ.readN (sp + 176) 2 = fixed 2 item)
+    (mkc : s.μ.readN 68696 8 = Num.encodeLE 8 kc) (hkc : 35 ≤ kc ∧ kc + 31 < 68719476736)
+    (ht8 : rdN s.μ 69072 4 = 4294900408) (ht4 : rdN s.μ 69056 4 = 4294900402)
+    (hro : ∀ a, 68680 ≤ a → a < 69076 → s.μ.readable a = true)
+    (hB : 2 * (144 * rs.length + 4) + 4 * (encodeResults rs).length + 64 < 1073741760) :
+    Impl p (accContractS env) env Ab
+      (Prog.bind (store (.results (s.μ.readN (sp + 312) 32) item) (encodeResults rs))
+        (fun _ => onInstr C now .checkpoint))
+      (BodyPost B env.code pb S0 S1 sp is rs zs s.μ) s := by
+  obtain ⟨i0, ω, μ, c, f⟩ := s
+  dsimp only at hi h1 LA hal hk hjt hjr hinv hitem mkc ht8 ht4 hro ⊢
+  subst hi
+  have LA0 := LA
+  have H := LA.H
+  have hT := H.hS1
+  have hSt := H.st
+  obtain ⟨hs1, hs2, hs3⟩ := LA.hsp
+  have I := LA.I
+  have hEe := I.hend
+  have hR0 := I.rep 0 (by simp)
+  obtain ⟨-, d, hd, hu, hdq, hbc, hed⟩ := I.slots (List.cons_ne_nil _ _)
+  have hfoot0 : ∀ q ∈ B.foot (μ.readN (rdN μ (sp + 480) 8) 232), ∃ d ∈ chunks st, d.used = true ∧ d.addr + 32 = q :=
+    fun q hq => I.owned q (foot_mem_iterFree hq)
+  simp only [List.length_cons, List.getElem_cons_zero] at hEe hR0
+  rw [show sp + 472 + 8 = sp + 480 by omega] at hEe hR0 hbc
+  rw [show sp + 472 + 24 = sp + 496 by omega] at hEe hed
+  generalize hcur : rdN μ (sp + 480) 8 = cur at hEe hR0 hbc hal hfoot0
+  generalize hk0 : rdN μ (sp + 504) 8 = k at hk
+  have hlo := Handlers.InstrLoop.data_ge H hd hu (a := cur) ⟨by omega, by omega⟩
+  have hhi := ResultsDrop.data_lt H hd (a := cur + 231) ⟨by omega, by omega⟩
+  have hrs : ∀ a, cur ≤ a → a < cur + 232 → μ.readable a = true := fun a h1 h2 =>
+    Memory.readable_of_writable (HeapKeep.writableData H hd hu ⟨by omega, by omega⟩)
+  have hws : ∀ a, sp - 48 ≤ a → a < sp + 1632 → μ.writable a = true := fun a h1 h2 => hSt a (by omega) (by omega)
+  have esl : slot μ cur 0 = μ.readN cur 232 := by simp [slot]
+  rw [esl] at hR0
+  have e8 : (μ.readN cur 232).take 8 = μ.readN cur 8 := PVM.readN_take μ cur 232 8 (by omega)
+  have htag := B.tag .checkpoint _ μ hR0
+  have hnn := B.notNone .checkpoint _ μ hR0
+  rw [e8] at htag hnn
+  have hw64 : rdN μ cur 8 < 2 ^ 64 := ResultsDrop.rdN_lt8 μ cur
+  have mw : μ.readN cur 8 = Num.encodeLE 8 (rdN μ cur 8) := KeyEnc.readN_enc μ cur 8
+  have mc : μ.readN (sp + 480) 8 = Num.encodeLE 8 cur := by rw [← hcur]; exact KeyEnc.readN_enc μ _ 8
+  have me : μ.readN (sp + 496) 8 = Num.encodeLE 8 (rdN μ (sp + 496) 8) := KeyEnc.readN_enc μ _ 8
+  have mk : μ.readN (sp + 504) 8 = Num.encodeLE 8 k := by rw [← hk0]; exact KeyEnc.readN_enc μ _ 8
+  have m184 : μ.readN (sp + 184) 8 = Num.encodeLE 8 9223372036854775808 := by
+    rw [← LA.c184]; exact KeyEnc.readN_enc μ _ 8
+  have m216 : μ.readN (sp + 216) 8 = Num.encodeLE 8 9223372036854775809 := by
+    rw [← LA.c216]; exact KeyEnc.readN_enc μ _ 8
+  have hst : slotTag (rdN μ cur 8) = instrIdx .checkpoint := htag
+  have ht15 : slotTag (rdN μ cur 8) = 15 := hst
+  -- the front, 8540 → 8627
+  obtain ⟨ω₅, μ₅, N₅, run5, a51, a55, m744, m480, m504, -, fr5, rd5, wr5⟩ := il_front8627
+    (R := KeepCtx (accContractS env)) (P := P) (c, f) ω μ sp cur (rdN μ (sp + 496) 8) k (rdN μ cur 8) h1
+    ⟨by omega, by omega, hs8⟩ ⟨by omega, by omega, hal⟩ (ResultsDrop.rdN_lt8 μ _) (by omega) hk hw64 hnn
+    mc me mw mk m184 m216 hrs hws
+  have e5 : ∀ b, sp ≤ b → b + 8 ≤ sp + 480 → μ₅.readN b 8 = μ.readN b 8 := fun b h h' =>
+    Memory.readN_congr fun j hj => fr5 _ (by omega) (.inr (by omega)) (.inl (by omega))
+  have e8' : ∀ b, μ.readN b 8 = Num.encodeLE 8 (rdN μ b 8) := fun b => KeyEnc.readN_enc μ b 8
+  have lt8 : ∀ b, rdN μ b 8 < 2 ^ 64 := fun b => ResultsDrop.rdN_lt8 μ b
+  -- 8627 → 36170 (the key, the store's call)
+  obtain ⟨ωT, μT, runT, t0, t1, t7, t8, t9, mt, mt2, mq0, mq1, mq2, mq3, frT, rdT, wrT⟩ := il_tag_ck
+    (R := KeepCtx (accContractS env)) (P := P) (c, f) ω₅ μ₅ sp (rdN μ cur 8) (rdN μ (sp + 312) 8)
+    (rdN μ (sp + 320) 8) (rdN μ (sp + 328) 8) (rdN μ (sp + 336) 8) (rdN μ (sp + 176) 8) (rdN μ (sp + 456) 8)
+    (rdN μ (sp + 464) 8) (a51.trans h1) a55 ⟨by omega, by omega⟩ hw64 ht15
+    ((e5 _ (by omega) (by omega)).trans m184) ((e5 _ (by omega) (by omega)).trans m216)
+    ((e5 _ (by omega) (by omega)).trans (e8' _)) ((e5 _ (by omega) (by omega)).trans (e8' _))
+    ((e5 _ (by omega) (by omega)).trans (e8' _)) ((e5 _ (by omega) (by omega)).trans (e8' _))
+    (lt8 _) (lt8 _) (lt8 _) (lt8 _) ((e5 _ (by omega) (by omega)).trans (e8' _)) (lt8 _)
+    ((e5 _ (by omega) (by omega)).trans (e8' _)) (lt8 _) ((e5 _ (by omega) (by omega)).trans (e8' _)) (lt8 _)
+    (fun a h1 h2 => by rw [rd5]; exact Memory.readable_of_writable (hSt a (by omega) (by omega)))
+    (fun a h1 h2 => by rw [wr5]; exact hSt a (by omega) (by omega))
+  have heapT : ∀ a, a < 2147483648 → μT.read a = μ.read a := fun a ha =>
+    (frT a (by omega) (.inl (by omega))).trans (fr5 a (by omega) (.inl (by omega)) (.inl (by omega)))
+  have HT : HeapCtxC env.code pb S0 S1 μT st :=
+    HeapKeep.keepHi H heapT fun a => (wrT a).trans (wr5 a)
+  have hkH : ∀ d ∈ chunks st, d.used = true → d ∈ chunks st ∧ ∀ a, InData d a → μT.read a = μ.read a :=
+    fun d hd _ => ⟨hd, fun a ha => heapT a (ResultsDrop.data_lt H hd ha)⟩
+  have frT' : ∀ a, a < 4294967296 → sp ≤ a → (a < sp + 160 ∨ (sp + 168 ≤ a ∧ a < sp + 480) ∨
+      (sp + 488 ≤ a ∧ a < sp + 504) ∨ (sp + 976 ≤ a ∧ a < sp + 1568) ∨ sp + 1632 ≤ a) → μT.read a = μ.read a :=
+    fun a h0 hsp h3 => (frT a h0 (by omega)).trans (fr5 a h0 (.inr hsp) (by omega))
+  have roT : ∀ a, a < 196608 → μT.read a = μ.read a ∧ μT.readable a = μ.readable a := fun a ha =>
+    ⟨heapT a (by omega), (rdT a).trans (rd5 a)⟩
+  -- the key
+  have cq : μT.readN (sp + 1572) 32 = μ.readN (sp + 312) 32 := by
+    rw [RecentMatch.readN_32, RecentMatch.readN_32 μ, show sp + 1572 + 8 = sp + 1580 by omega,
+      show sp + 1572 + 16 = sp + 1588 by omega, show sp + 1572 + 24 = sp + 1596 by omega,
+      show sp + 312 + 8 = sp + 320 by omega, show sp + 312 + 16 = sp + 328 by omega,
+      show sp + 312 + 24 = sp + 336 by omega, mq0, mq1, mq2, mq3, ← e8', ← e8', ← e8', ← e8']
+  have c34 : μT.readN (sp + 1570) 2 = fixed 2 item := by
+    rw [mt2, ← hitem, RecentSlotWrite.readN_2of8 (e8' (sp + 176))]
+  have hkE : keyEnc μT (sp + 1568) 2 = (Key.results (μ.readN (sp + 312) 32) item).encode := by
+    unfold keyEnc Key.encode
+    simp only [show (2 : Nat) = 1 ↔ False by decide, if_false, if_true, show sp + 1568 + 4 = sp + 1572 by omega,
+      show sp + 1568 + 2 = sp + 1570 by omega, cq, c34]
+    rfl
+  -- the store's premises at 36170
+  obtain ⟨cp, hcp⟩ : ∃ cp, rdN μ (sp + 448) 8 = cp := ⟨_, rfl⟩
+  have LH : LoopHyp pb S0 S1 sp (rdN μ (sp + 456) 8) (rdN μ (sp + 464) 8) rs st μT := by
+    refine ⟨⟨by omega, by omega, hs8, by omega⟩, hT, LA.hn.symm, ⟨lt8 _, fun hn0 => ?_⟩, by rw [LA.hn]; exact hB,
+      ResultsAt.keep hkH LA.hav.toAt⟩
+    have hcap0 := LA.hcap
+    rw [hcp] at hcap0
+    have hn' := LA.hn
+    have hc0 : cp ≠ 0 := by omega
+    obtain ⟨dr, hdr, hur, hdra, hdrr⟩ := LA.hroom (by rw [hcp]; exact hc0)
+    rw [hcp] at hdrr
+    have := data_ge H hdr hur (a := rdN μ (sp + 456) 8) ⟨by omega, by omega⟩
+    have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hdr hur
+    have := H.hbT
+    have : 144 * rdN μ (sp + 464) 8 ≤ 144 * cp := by omega
+    exact ⟨by omega, by omega⟩
+  have herr : ∀ (c : AccCtx) (q : Stream) (ω : Regs) (μ : Memory), ω[7] = UInt64.ofNat 3 →
+      ∃ ω' μ' q', FreeRunH p (KeepCtx (accContractS env)) 8716 ω μ (c, q) .panic ω' μ' (c, q') := by
+    intro c q ω μ h7
+    obtain ⟨ω', run⟩ := il_ck_err (R := KeepCtx (accContractS env)) (P := P) (c, q) ω μ h7
+    exact ⟨ω', μ, q, FreeRunH.prepend run (.exit (FreeRun.exit (trap_15361 (P := P) ω' μ)) (by simp))⟩
+  have SC := ResStore.store_core (P := P) env hE hO cap hcap1 hcap Ab hAb1 hAb2 hAbX 300 8716
+    (.inr (.inl ⟨rfl, rfl⟩)) herr ⟨36170, ωT, μT, c, f⟩ st sp (rdN μ (sp + 456) 8) (rdN μ (sp + 464) 8) kc rs
+    HT rfl t0 t1 t7 t8 t9 LH hs3 mt (by rw [← mkc]; exact Memory.readN_congr fun j hj => (roT _ (by omega)).1) hkc
+    (by rw [← ht8]; exact rdN_frame fun j hj => (roT _ (by omega)).1)
+    (by rw [← ht4]; exact rdN_frame fun j hj => (roT _ (by omega)).1)
+    (fun a h1 h2 => by rw [(roT a (by omega)).2]; exact hro a h1 h2) (hIfit c hinv)
+  dsimp only at SC
+  rw [hkE] at SC
+  have SCi := Impl.inv (fun _ => True) Inv (fun o c c₁ b _ => hIst o c c₁ b) _ _ (Prog.all_true _) hinv SC
+  refine Impl.bind _ _ _ _ ?_
+  unfold store
+  refine Impl.pre _ _ (s' := ⟨36170, ωT, μT, c, f⟩) ⟨_, run5.trans runT⟩ rfl ?_
+  refine Impl.mono_post ?_ _ _ SCi
+  -- after the store (8716): `Ok` → 8735, then `il_after_log`
+  rintro _ ⟨i', ω', μ', c', f'⟩ ⟨⟨hi', h7', h1', -, -, st', H', hk', stk', -, ro', rd'⟩, hinv'⟩
+  dsimp only at hi' h7' h1' H' hk' stk' ro' rd' hinv' ⊢
+  subst hi'
+  obtain ⟨ω₈, run8, g1, -, -⟩ := il_ck_ok (R := KeepCtx (accContractS env)) (P := P) (c', f') ω' μ' h7'
+  refine Impl.pre _ _ (s' := ⟨8735, ω₈, μ', c', f'⟩) ⟨_, run8⟩ rfl ?_
+  have A : AtLog env.code pb S0 S1 sp μ st zs ⟨8735, ω₈, μ', c', f'⟩ := by
+    unfold AtLog
+    rw [hcur, hk0]
+    refine ⟨rfl, g1.trans h1', st', H', fun d hd hu => ⟨(hk' d hd hu).1, fun a ha =>
+      ((hk' d hd hu).2 a ha).trans ((hkH d hd hu).2 a ha)⟩, ?_, ?_, ?_, ?_,
+      fun a h0 hsp h3 => (stk' a h0 hsp).trans (frT' a h0 hsp h3), fun a ha => ⟨(ro' a ha).trans (roT a ha).1,
+        (rd' a ha).trans (roT a ha).2⟩⟩
+    · rw [Memory.readN_congr fun j hj => (stk' _ (by omega) (by omega)).trans (frT _ (by omega) (.inl (by omega)))]
+      exact m744
+    · rw [rdN_frame fun j hj => (stk' _ (by omega) (by omega)).trans (frT _ (by omega) (.inl (by omega)))]
+      exact DesignateAlloc.rd8 (by omega) m480
+    · rw [rdN_frame fun j hj => (stk' _ (by omega) (by omega)).trans (frT _ (by omega) (.inl (by omega)))]
+      exact DesignateAlloc.rd8 hk m504
+    · rw [rdN_frame fun j hj => (stk' _ (by omega) (by omega)).trans ((frT _ (by omega) (.inl (by omega))).trans
+        (fr5 _ (by omega) (.inr (by omega)) (.inl (by omega))))]
+      exact LA0.flag
+  exact il_after_log (P := P) env B hL hR hH hP hAbX _ μ st sp .checkpoint is rs zs zs hs8 LA0 A hjt hjr
+    (hIfit c' hinv')
 
 end Services.Bootstrap.Acc.Handlers.InstrLoop

@@ -51,6 +51,12 @@ Update 3: row 11 (from 15028) takes `IterOwn` for the `IntoIter` at sp + 472, `(
 tailFree).Nodup`, `ResultsAvoid` (the results' octets outside iterator-freed chunks) and the stack room;
 R5 produces them; R2 passes them through (definitions: `docs/t2-remaining.md`, `Acc/Handlers` on
 `claude/bootstrap-t2-handlers-a-r5`).
+Update 4 (R5's precondition at 8493, each pass): [sp + 184] = 2⁶³ and [sp + 216] = 2⁶³ + 1 (stored
+once before the loop head at 6746 / 6760; R1's invariant carries them; `TrPost` keeps them, `TrW` misses
+sp + 184 … 224); [sp + 200] = 678 (rewritten every iteration at 6804); the decoded `Vec<Instr>` at
+sp + 240 / 248 (written by the decode at 7092 / 7116) turned into the `IntoIter` at sp + 472 with
+`IterOwn`; stack room 2³¹ + 4096 ≤ sp, S0 + 4096 ≤ sp. R5's named hypotheses `InstrLogH`, `ResultLogH`
+(G4), `HandlerH` (R6), `PushH` (R8) are carried as parameters.
 
 **Only on WIP (proved):**
 - `Acc/Items/`: Exit (`items_end`, `items_halt`), Operand (`op_pre`, `op_mid`), Disp, End, Head.

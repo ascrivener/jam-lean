@@ -32,6 +32,11 @@
 - **Hex path progress.** `FieldWriteSpec.lean` (builds, axioms clean): `FmtrO` / `ArgOkO` (a
   Formatter with options o, width w, precision 0), `SpecAt`, `wr_spec` (64611 → fn), `wr_spec_ret`
   (64843 → 64600), `wr_item_spec`, and `fmt_write_spec` (template = one 0xC3 item, then plain items).
+- `FieldWriteChar.lean` (builds, axioms clean): **`write_char`** (59743, the `String` sink's
+  write_char for c < 128): `Ok` with the `String` one octet longer within 2(cap' − cap) + 1600 steps,
+  frame-only, or a failed allocator call. Pieces: `rt2g` / `wc_back` (reserve's end, any caller),
+  `wc1` and `wc_reserve` (as Sink's `ws_reserve`, from 59815 to 59840), `wc_entry`, `wc_fast`,
+  `wc_after` and `wc_post`.
 - **Hex path, what remains:**
   - RO bytes (RO base in the .jam file at offset 92; RO starts at 65536): 70818 = `"{}"`
     (01 22 C0 01 22 00); 70824 = `0x{}...` (02 30 78 C0 03 2E2E2E 00); 70833 = C3, o = 0x69000020,

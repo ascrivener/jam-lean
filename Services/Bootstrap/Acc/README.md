@@ -2,6 +2,20 @@
 
 ## Handoff: T2 inputs (updated 2026-11-16 evening, end of the third session)
 
+**Session 4 (2026-11-16, later), on `claude/bootstrap-t2-statics`:**
+- R12 done: `Acc/ValuesFitStep.lean` (`dispatch_keeps`, `ValuesFit.step`, `ValuesFit.run`).
+- R1 skeleton done: `Acc/ItemsLoop/` — `Inv.lean` (`ItemsInv`, the loop-head invariant: iterator words
+  sp + 168 / 144, buffer sp + 16 / 32, formatter words sp + 208 / 136, sp + 184 / 216, return address
+  sp + 1848, `HeapCtxC` with the slot buffer a chunk, slots as `itemOf` for chunk-agreeing memories,
+  `TrRO`, statics equal to μ₀'s, `ValuesFit`, `InputSized`); `Tr.lean` (`loop_tr`, the transfer arm via
+  `tr_impl`); `Loop.lean` (`accBody` = the spec's loop body, `loop_end` (halt), `items_loop`: `Impl` of
+  `forIn (ins.map specItem) () accBody` then `pure ()`, post `Halts`, with premises `OpArm` (R2) and
+  `ErrArm`). `il_disp_tr` also states ω₁₀.
+- Asked @parent: (1) item buffer ownership `ItemsOwn` (the frees at 15201 / 15166 / 15185 need it;
+  `inputs_decode` does not state it); (2) `ItemLogFmt` hypothesis for the item log line 6955 → 7009.
+  `ErrArm`'s proof waits on these.
+- #222: merge refused by the ruleset (required check names); reported to @parent.
+
 **Read this from `claude/bootstrap-t2-statics`** (it has everything; `claude/bootstrap-t2-inputs-wip`'s
 README is older, and pushing to that branch restarts #222's CI).
 

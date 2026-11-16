@@ -107,6 +107,25 @@ Handlers dependencies takes ~2 h on 4 cores). Use `ulimit -v 12000000` when comp
 - `refine ⟨?ω', ?run⟩; case run => pvm_go …` for a one-witness existential.
 
 
+## Session 5 progress (2026-11-16, row 8)
+
+Adam decided both row-8 questions (2026-11-16): ring size (a), counter wrap (a).
+- **Q19** in `Spec.addRecent`: the counter is stored as `fixed 4 (((c + 1) % 2^32) % C.maxRecent)`;
+  `SpecLemmas/Ring.lean` adapted (`addRecent_counter'` exact, `addRecent_counter` for c < maxRecent).
+  Rows in docs/bootstrap-target.md (Q19) and docs/upstream-candidates.md.
+- `RecentSlotWrite.lean`: `ParamStatics μ C I`, `RingFits C I` (0 < 2·C·I < 2³²), `rw_writable`, and the
+  segments `sw_pre1`, `sw_pre2`, `sw_j1`, `sw_null`, `trap_32584`, `sw_v1` … `sw_v4`, `sw_ret`, `sw_d1`,
+  `sw_d2`, `sw_end`, `sw_ok1` (8266 → 8312), `sw_ok2` (8312 → 8326), `sw_err`. docs/whats-proven.md lists
+  `RingFits` (assumption of T2, possible discharge from fetched parameters) and `ParamStatics` (obligation).
+- `RecentSlotWriteImpl.lean`: `sw_head` (8172 → `set` at 48104), `sw_free` (`set`'s return → 8266),
+  **`slot_write`** (8172 → `SwPost` at 8326 as `Impl` of `store (.recent c) (μ[sp+512..+32] ++ μ[sp+176..+2])`;
+  Ab at 32584 and 34070; ω₇'s low 32 bits = ((c + 1) mod 2³²) mod 2·C·I). The counter register c may be
+  any 64-bit value (the binary's counter is a sign-extended `i32`).
+- `RecentCounterGet.lean`: segments `cg_pre`, `cg_g`, `cg_gret`, `cg_dk`, `cg_none`, `cg_some`, `cg_fin0`,
+  `cg_finD`, `cg_finR` (the counter's typed get, 8013 … 8056; 34637 is the get's continuation).
+- Next: `counter_get` (composite, like `slot_get`), then compose row 8 (counter get → `recent_match` →
+  `slot_write` → `counter_write`), imports in `Services.lean`, PR.
+
 ## Session 4 progress (2026-11-15, row 8)
 
 **Done (compile; RecentMatch not yet imported from `Services.lean`):**

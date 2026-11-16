@@ -53,7 +53,9 @@ length prefix ℰ(n) and output ℰ(n) ⌢ encodings ⌢ ℰ₂(w)). Builds, axi
   of ≥ 2^25 units fail in `growInplace` and `alloc`. `alloc_call` already covers sizes up to 2^36. What's missing is the
   binary's `realloc_impl` null path for 2^25 ≤ units < 2^32. Options sent: (a) T1 proves it in a new file
   (recommended); (b) Alloc generalises hr1; (c) bound n in refine_t1c (Adam).
-- Next: from4680/refine_core for n ≤ 2²¹ (`run_mixedG`); then part B; refine_t1c once the bound question is settled.
+- `TopG.from4680G`, `refine_coreG` (with `SpecRun.output_eqG`): `from4680`/`refine_core` for 1 ≤ n ≤ 2²¹, from pc 0
+  to the halt with ℰ(`BootstrapWorkOutput { outI is, I }`).
+- Next: part B; then refine_t1c (T1's match form) once the bound question is settled.
 
 Decided by the coordinator on 2026-11-15:
 - the new theorem `refine_t1c` is added in T1's match form, and `refine_milestone` stays unchanged;

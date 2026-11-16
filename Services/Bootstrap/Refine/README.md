@@ -57,6 +57,17 @@ length prefix ℰ(n) and output ℰ(n) ⌢ encodings ⌢ ℰ₂(w)). Builds, axi
   to the halt with ℰ(`BootstrapWorkOutput { outI is, I }`).
 - Next: part B; then refine_t1c (T1's match form) once the bound question is settled.
 
+**Handoff (2026-11-16, end of the sixth instance).** Read this first.
+- **PR #217** (parts B/C, `claude/bootstrap-t1-m1c` at 69626f5): `model` green, `attempt-1` still running at handoff
+  (started 07:14). Subscribe to it, merge (squash) on green. Then restart `claude/bootstrap-t1-m1c` from main and merge
+  **`claude/bootstrap-t1-m1d`** into it (pushed, no PR), then open the PR for it.
+- m1d = #217 + ReallocBig, ElemsSmallC (fifth instance) + this instance's work below. **A full `lake build` of m1d passed**
+  (then `Refine.EncProvide` added and rebuilt, exit 0); axioms clean.
+- For the PR body: the new append-only tier **T1C** (jump entry 676 and the arm 29153 … 29181; T1B is untouched, per
+  `docs/code-fact-tiers.md`, which forbids adding a range to an existing tier); no new findings (the encoder traps for vector
+  lengths ≥ 2^32 at 20397 / 3779 are unreachable from |y| ≤ 2^24).
+- Next steps: step 3 (thread `realloc_call_big`), then refine_t1c with `DRm` widened (see "Next" below).
+
 **Progress (2026-11-16, sixth instance; branch `claude/bootstrap-t1-m1d`).** Every file below builds; axioms clean.
 - **Drop arms done** (`DropArms`): `ArmOk` (what the drop of an element reads and whether it frees a buffer), the dispatch
   `dd0`/`dd11`/`dd12`/`dd13`/`dd17`/`dd22`/`dd24` and the arms (`aC*` CreateService, `aB*` Bless, `aA*` Assign and

@@ -441,6 +441,7 @@ import Services.Bootstrap.Refine.SlotEmpty
 import Services.Bootstrap.Refine.PkgT
 import Services.Bootstrap.Refine.PkgH
 import Services.Bootstrap.Refine.ProvideEmpty
+import Services.Bootstrap.Refine.HashEmpty
 import Services.Bootstrap.Refine.EncRSA
 import Services.Bootstrap.Refine.EncProvide
 import Services.Bootstrap.Refine.Prologue

@@ -130,9 +130,12 @@ Handlers dependencies takes ~2 h on 4 cores). Use `ulimit -v 12000000` when comp
     (14376/14403), `il_push` (14420, room), `il_post0`/`il_post1` (14516), `il_back` (14546).
   - Pitfall: a symbolic slot word through the signed compare at 8634 hits a kernel deep recursion; the niche
     tags are enumerated concretely instead.
-- **Pending with @parent:** the R5 hypotheses `InstrLogH` (8772), `ResultLogH` (14369), `HandlerH` (8822 → 14278,
-  R6), `PushH` (finish_grow with an old buffer, 14431 → 14485, R8), and two new `InstrRep` fields (`tag`, `notNone`).
-  Next, once approved: state them (a new `InstrLoopHyp.lean`), the loop invariant, and the body as `Impl` via `Impl.forIn`.
+- **R5 hypotheses stated** (parent approved 2026-11-16) in `InstrLoopHyp.lean`: `InstrLogH`, `ResultLogH`, `HandlerH`
+  (with `HandlerPost`, `ResC`, `LoopKeep`), `PushH`, plus `FreshBuf`. `InstrRep` gained `tag` (via `instrIdx`,
+  `wordTag` = `InstrLoop.slotTag`) and `notNone`. Listed in whats-proven / t2-remaining.
+  **Pending with @parent:** the `ItemOwn` amendment to `HandlerPost` (the pushed item's buffer ownership, needed for
+  `ResultsOwn` and so for the results drop). It is already in the file.
+- `InstrLoopInv.lean`: **`LoopAt`**, the invariant at 8540, and `LoopAt.nil_of_end`.
 
 ## Session 9 handoff (2026-11-16, for the 10th session)
 

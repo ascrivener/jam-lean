@@ -195,6 +195,7 @@ import Services.Bootstrap.Acc.Handlers.RowElevenFront
 import Services.Bootstrap.Acc.Handlers.InstrLoopSeg
 import Services.Bootstrap.Acc.Handlers.InstrLoopTail
 import Services.Bootstrap.Acc.Handlers.InstrLoopHyp
+import Services.Bootstrap.Acc.Handlers.InstrLoopInv
 import Services.Bootstrap.Acc.Handlers.Upgrade
 import Services.Bootstrap.Acc.HeapHost
 import Services.Bootstrap.Acc.DecodeU32A

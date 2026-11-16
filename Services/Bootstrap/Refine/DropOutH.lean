@@ -1,5 +1,7 @@
 import Services.Bootstrap.Refine.DropOut
 import Services.Bootstrap.CodeT1BAll
+import Services.Bootstrap.CodeX
+import Services.Bootstrap.CodeRAll
 
 /-!
 # Refine's exit: the drop arms of `DeleteItems` and `Imported`
@@ -14,7 +16,8 @@ GP v0.8.0 Appendix B.4 (Ψ_R running bootstrap's code).
 
 namespace Services.Bootstrap.Refine.DropOutH
 
-open PVM Services.Bootstrap Services.Bootstrap.Code Services.Bootstrap.CodeR Services.Bootstrap.CodeT1B
+open PVM Services.Bootstrap Services.Bootstrap.Code Services.Bootstrap.CodeX Services.Bootstrap.CodeR
+  Services.Bootstrap.CodeT1B
   Services.Bootstrap.Encode.Writer Services.Bootstrap.Refine.DropOut
 
 set_option maxHeartbeats 8000000
@@ -51,7 +54,6 @@ theorem ddV {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR
   have r32 := rd8 (by decide) s32
   have r24 := rd8 (by decide) s24
   have r16 := rd8 (by decide) s16
-  have rD0 := rd8 (by omega) hD
   have hrE' : ∀ a, k * 232 + E ≤ a → a < k * 232 + E + 8 → μ.readable a = true :=
     fun a h1 h2 => hrE a (by omega) (by omega)
   have hr : ∀ a, F ≤ a → a < F + 80 → μ.readable a = true :=
@@ -59,7 +61,8 @@ theorem ddV {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR
   have e1 : (E + 232 * k) % 18446744073709551616 = E + 232 * k := Nat.mod_eq_of_lt (by omega)
   rw [show ω = regsNF ω [] from rfl]
   rcases hv with ⟨rfl, rfl, rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl, rfl, rfl⟩
-  · have rD : rdN μ (k * 232 + E) 8 = 9223372036854775807 + 5 := by
+  · have rD0 := rd8 (by decide) hD
+    have rD : rdN μ (k * 232 + E) 8 = 9223372036854775807 + 5 := by
       rw [show k * 232 + E = E + 232 * k by omega]; exact rD0
     have rt : rdN μ 67780 4 = 4294900896 := by
       show Num.decodeLE (μ.readN _ 4) = _
@@ -74,7 +77,8 @@ theorem ddV {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR
       all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
         ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, h6, Nat.mul_comm k 232]
       post_simp
-  · have rD : rdN μ (k * 232 + E) 8 = 9223372036854775807 + 19 := by
+  · have rD0 := rd8 (by decide) hD
+    have rD : rdN μ (k * 232 + E) 8 = 9223372036854775807 + 19 := by
       rw [show k * 232 + E = E + 232 * k by omega]; exact rD0
     have rt : rdN μ 67836 4 = 4294900908 := by
       show Num.decodeLE (μ.readN _ 4) = _
@@ -101,7 +105,7 @@ theorem va {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR 
     (s16 : μ.readN (el + 16) 8 = Num.encodeLE 8 ptr) (s24 : μ.readN (el + 24) 8 = Num.encodeLE 8 len)
     (hr : ∀ a, el + 16 ≤ a → a < el + 32 → μ.readable a = true)
     (hw : ∀ a, F ≤ a → a < F + 80 → μ.writable a = true) :
-    ∃ ω' μ', FreeStepsH p R arm ω μ x head ω' μ' x 12 ∧ ω'[1] = ω[1] ∧ ω'[5] = UInt64.ofNat (ptr + 8) ∧
+    ∃ ω' μ', FreeStepsH p R arm ω μ x head ω' μ' x 13 ∧ ω'[1] = ω[1] ∧ ω'[5] = UInt64.ofNat (ptr + 8) ∧
       ω'[6] = ω[6] ∧ μ'.readN (F + 8) 8 = Num.encodeLE 8 (ptr + 8 + 24 * len) ∧
       (∀ a, a < 4294967296 → (a < F + 8 ∨ F + 16 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
@@ -142,85 +146,121 @@ theorem va0 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR
       all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
         ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1]
 
-/-- head … (head or 29542): the item at g (ω₅ = g + 8) has capacity 0: on to the next item, g + 24 (back to head
-    while g + 32 ≠ the end at F + 8, else 29542). -/
-theorem vi0 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] [HasCodeT1B p P] (x : X)
-    (ω : Regs) (μ : Memory) (F g en t arm head nxt back ret : Nat) (hv : VK t arm head nxt back ret)
-    (hF : F + 80 ≤ 4294967296) (hg : g + 32 ≤ 4294967296) (hen : en < 18446744073709551616)
-    (h1 : ω[1] = UInt64.ofNat F) (h5 : ω[5] = UInt64.ofNat (g + 8))
-    (s0 : μ.readN g 8 = Num.encodeLE 8 0) (s8 : μ.readN (F + 8) 8 = Num.encodeLE 8 en)
-    (hr : ∀ a, g ≤ a → a < g + 8 → μ.readable a = true)
-    (hr2 : ∀ a, F + 8 ≤ a → a < F + 16 → μ.readable a = true) :
-    ∃ ω', FreeStepsH p R head ω μ x (if g + 32 = en then 29542 else head) ω' μ x 6 ∧ ω'[1] = ω[1] ∧
-      ω'[5] = UInt64.ofNat (g + 32) ∧ ω'[6] = ω[6] := by
+/-- head … nxt: the item whose buffer word is at w (ω₅ = w; its capacity at w − 8) has capacity 0. -/
+theorem vz {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] [HasCodeT1B p P] (x : X)
+    (ω : Regs) (μ : Memory) (w t arm head nxt back ret : Nat) (hv : VK t arm head nxt back ret)
+    (hw : 8 ≤ w ∧ w + 24 ≤ 4294967296) (h5 : ω[5] = UInt64.ofNat w)
+    (s0 : μ.readN (w - 8) 8 = Num.encodeLE 8 0) (hr : ∀ a, w - 8 ≤ a → a < w → μ.readable a = true) :
+    ∃ ω', FreeStepsH p R head ω μ x nxt ω' μ x 3 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
   have rc := rd8 (by decide) s0
-  have re := rd8 hen s8
-  have hrg : ∀ a, g + 8 - 8 ≤ a → a < g + 8 - 8 + 8 → μ.readable a = true := fun a h1 h2 => hr a (by omega) (by omega)
-  rw [show ω = regsNF ω [] from rfl]
-  rcases hv with ⟨rfl, rfl, rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl, rfl, rfl⟩ <;>
-  · by_cases he : g + 32 = en
-    · rw [if_pos he]
-      refine ⟨?_, ?_, ?_⟩
-      rotate_left
-      · pvm_go [h1, h5, hF, hg, hen, he, hr, hrg, hr2, rc, re, ↓rdN_fold]
-      · refine ⟨?_, ?_, ?_⟩
-        all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
-          ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, h5]
-    · rw [if_neg he]
-      refine ⟨?_, ?_, ?_⟩
-      rotate_left
-      · pvm_go [h1, h5, hF, hg, hen, he, hr, hrg, hr2, rc, re, ↓rdN_fold]
-      · refine ⟨?_, ?_, ?_⟩
-        all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
-          ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, h5]
-
-/-- head … 40613: the item at g (ω₅ = g + 8) has capacity c ≠ 0: `dealloc(q, c, 1)` with q its buffer (word 1),
-    return address `ret` (→ back). -/
-theorem vi1 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] [HasCodeT1B p P] (x : X)
-    (ω : Regs) (μ : Memory) (g c q t arm head nxt back ret : Nat) (hv : VK t arm head nxt back ret)
-    (hg : g + 16 ≤ 4294967296) (hc : c ≠ 0) (hc1 : c < 18446744073709551616) (hq : q < 18446744073709551616)
-    (h5 : ω[5] = UInt64.ofNat (g + 8))
-    (s0 : μ.readN g 8 = Num.encodeLE 8 c) (s8 : μ.readN (g + 8) 8 = Num.encodeLE 8 q)
-    (hr : ∀ a, g ≤ a → a < g + 16 → μ.readable a = true) :
-    ∃ ω', FreeStepsH p R head ω μ x 40613 ω' μ x 5 ∧ ω'[0] = UInt64.ofNat ret ∧ ω'[1] = ω[1] ∧
-      ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ ω'[7] = UInt64.ofNat q ∧ ω'[8] = UInt64.ofNat c := by
-  have rc := rd8 hc1 s0
-  have rq := rd8 hq s8
-  have hc0 : ¬ c = 0 := hc
-  have hrg : ∀ a, g + 8 - 8 ≤ a → a < g + 8 - 8 + 8 → μ.readable a = true := fun a h1 h2 => hr a (by omega) (by omega)
+  have rc2 : rdN μ (w + 18446744073709551608) 8 = 0 := by
+    have hrd : μ.readN (w + 18446744073709551608) 8 = μ.readN (w - 8) 8 := readN_congr2 (fun j hj => by
+      unfold Memory.read
+      rw [show (w + 18446744073709551608 + j) % two32 = (w - 8 + j) % two32 by unfold two32; omega])
+    unfold rdN; rw [hrd]; exact rc
   rw [show ω = regsNF ω [] from rfl]
   rcases hv with ⟨rfl, rfl, rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl, rfl, rfl⟩ <;>
   · refine ⟨?_, ?_, ?_⟩
     rotate_left
-    · pvm_go [h5, hg, hc0, hr, hrg, rc, rq, ↓rdN_fold]
+    · pvm_go [h5, hw, hr, rc2, ↓rdN_fold]
+    · refine ⟨?_, ?_, ?_⟩
+      all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+        ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some']
+
+/-- nxt … (head or 29542): on to the next item, w + 24 (back to head while w + 24 ≠ the end en at F + 8). -/
+theorem vn {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] [HasCodeT1B p P] (x : X)
+    (ω : Regs) (μ : Memory) (F w en t arm head nxt back ret : Nat) (hv : VK t arm head nxt back ret)
+    (hF : F + 80 ≤ 4294967296) (hw : w + 24 ≤ 4294967296) (hen : en < 18446744073709551616)
+    (h1 : ω[1] = UInt64.ofNat F) (h5 : ω[5] = UInt64.ofNat w)
+    (s8 : μ.readN (F + 8) 8 = Num.encodeLE 8 en)
+    (hr2 : ∀ a, F + 8 ≤ a → a < F + 16 → μ.readable a = true) :
+    ∃ ω', FreeStepsH p R nxt ω μ x (if w + 24 = en then 29542 else head) ω' μ x 4 ∧ ω'[1] = ω[1] ∧
+      ω'[5] = UInt64.ofNat (w + 24) ∧ ω'[6] = ω[6] := by
+  have re := rd8 hen s8
+  rw [show ω = regsNF ω [] from rfl]
+  rcases hv with ⟨rfl, rfl, rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl, rfl, rfl⟩ <;>
+  · by_cases he : w + 24 = en
+    · rw [if_pos he]
+      refine ⟨?_, ?_, ?_⟩
+      rotate_left
+      · pvm_go [h1, h5, hF, hw, hen, he, hr2, re, ↓rdN_fold]
+      · refine ⟨?_, ?_, ?_⟩
+        all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+          ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, h5, he]
+    · rw [if_neg he]
+      refine ⟨?_, ?_, ?_⟩
+      rotate_left
+      · pvm_go [h1, h5, hF, hw, hen, he, hr2, re, ↓rdN_fold]
+      · refine ⟨?_, ?_, ?_⟩
+        all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
+          ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, h5]
+
+/-- head … (head or 29542): an item of capacity 0 (`vz`), then on to the next (`vn`). -/
+theorem vi0 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] [HasCodeT1B p P] (x : X)
+    (ω : Regs) (μ : Memory) (F w en t arm head nxt back ret : Nat) (hv : VK t arm head nxt back ret)
+    (hF : F + 80 ≤ 4294967296) (hw : 8 ≤ w ∧ w + 24 ≤ 4294967296) (hen : en < 18446744073709551616)
+    (h1 : ω[1] = UInt64.ofNat F) (h5 : ω[5] = UInt64.ofNat w)
+    (s0 : μ.readN (w - 8) 8 = Num.encodeLE 8 0) (s8 : μ.readN (F + 8) 8 = Num.encodeLE 8 en)
+    (hr : ∀ a, w - 8 ≤ a → a < w → μ.readable a = true)
+    (hr2 : ∀ a, F + 8 ≤ a → a < F + 16 → μ.readable a = true) :
+    ∃ ω', FreeStepsH p R head ω μ x (if w + 24 = en then 29542 else head) ω' μ x 7 ∧ ω'[1] = ω[1] ∧
+      ω'[5] = UInt64.ofNat (w + 24) ∧ ω'[6] = ω[6] := by
+  obtain ⟨ω1, r1, a1, a5, a6⟩ := vz (p := p) (P := P) (R := R) x ω μ w t arm head nxt back ret hv hw h5 s0 hr
+  obtain ⟨ω2, r2, b1, b5, b6⟩ := vn (p := p) (P := P) (R := R) x ω1 μ F w en t arm head nxt back ret hv hF hw.2 hen
+    (a1.trans h1) (a5.trans h5) s8 hr2
+  exact ⟨ω2, r1.trans r2, b1.trans a1, b5, b6.trans a6⟩
+
+/-- head … 40613: the item at w (ω₅ = w) has capacity c ≠ 0 (at w − 8): `dealloc(q, c, 1)` with q its buffer (at w),
+    return address `ret` (→ back). -/
+theorem vi1 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] [HasCodeT1B p P] (x : X)
+    (ω : Regs) (μ : Memory) (w c q t arm head nxt back ret : Nat) (hv : VK t arm head nxt back ret)
+    (hw : 8 ≤ w ∧ w + 8 ≤ 4294967296) (hc : c ≠ 0) (hc1 : c < 18446744073709551616) (hq : q < 18446744073709551616)
+    (h5 : ω[5] = UInt64.ofNat w)
+    (s0 : μ.readN (w - 8) 8 = Num.encodeLE 8 c) (s8 : μ.readN w 8 = Num.encodeLE 8 q)
+    (hr : ∀ a, w - 8 ≤ a → a < w + 8 → μ.readable a = true) :
+    ∃ ω', FreeStepsH p R head ω μ x 40613 ω' μ x 6 ∧ ω'[0] = UInt64.ofNat ret ∧ ω'[1] = ω[1] ∧
+      ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ ω'[7] = UInt64.ofNat q ∧ ω'[8] = UInt64.ofNat c := by
+  have rc := rd8 hc1 s0
+  have rq := rd8 hq s8
+  have hc0 : ¬ c = 0 := hc
+  have rc2 : rdN μ (w + 18446744073709551608) 8 = c := by
+    have hrd : μ.readN (w + 18446744073709551608) 8 = μ.readN (w - 8) 8 := readN_congr2 (fun j hj => by
+      unfold Memory.read
+      rw [show (w + 18446744073709551608 + j) % two32 = (w - 8 + j) % two32 by unfold two32; omega])
+    unfold rdN; rw [hrd]; exact rc
+  rw [show ω = regsNF ω [] from rfl]
+  rcases hv with ⟨rfl, rfl, rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl, rfl, rfl⟩ <;>
+  · refine ⟨?_, ?_, ?_⟩
+    rotate_left
+    · pvm_go [h5, hw, hc0, hr, rc2, rq, ↓rdN_fold]
     · refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
       all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
         ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h5]
 
 /-- back … (head or 29542): after an item's `dealloc`, on to the next item, as `vi0`. -/
 theorem vb {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] [HasCodeT1B p P] (x : X)
-    (ω : Regs) (μ : Memory) (F g en t arm head nxt back ret : Nat) (hv : VK t arm head nxt back ret)
-    (hF : F + 80 ≤ 4294967296) (hg : g + 32 ≤ 4294967296) (hen : en < 18446744073709551616)
-    (h1 : ω[1] = UInt64.ofNat F) (h5 : ω[5] = UInt64.ofNat (g + 8))
+    (ω : Regs) (μ : Memory) (F w en t arm head nxt back ret : Nat) (hv : VK t arm head nxt back ret)
+    (hF : F + 80 ≤ 4294967296) (hw : w + 24 ≤ 4294967296) (hen : en < 18446744073709551616)
+    (h1 : ω[1] = UInt64.ofNat F) (h5 : ω[5] = UInt64.ofNat w)
     (s8 : μ.readN (F + 8) 8 = Num.encodeLE 8 en)
     (hr2 : ∀ a, F + 8 ≤ a → a < F + 16 → μ.readable a = true) :
-    ∃ ω', FreeStepsH p R back ω μ x (if g + 32 = en then 29542 else head) ω' μ x 5 ∧ ω'[1] = ω[1] ∧
-      ω'[5] = UInt64.ofNat (g + 32) ∧ ω'[6] = ω[6] := by
+    ∃ ω', FreeStepsH p R back ω μ x (if w + 24 = en then 29542 else head) ω' μ x 5 ∧ ω'[1] = ω[1] ∧
+      ω'[5] = UInt64.ofNat (w + 24) ∧ ω'[6] = ω[6] := by
   have re := rd8 hen s8
   rw [show ω = regsNF ω [] from rfl]
   rcases hv with ⟨rfl, rfl, rfl, rfl, rfl, rfl⟩ | ⟨rfl, rfl, rfl, rfl, rfl, rfl⟩ <;>
-  · by_cases he : g + 32 = en
+  · by_cases he : w + 24 = en
     · rw [if_pos he]
       refine ⟨?_, ?_, ?_⟩
       rotate_left
-      · pvm_go [h1, h5, hF, hg, hen, he, hr2, re, ↓rdN_fold]
+      · pvm_go [h1, h5, hF, hw, hen, he, hr2, re, ↓rdN_fold]
       · refine ⟨?_, ?_, ?_⟩
         all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
-          ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, h5]
+          ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, h5, he]
     · rw [if_neg he]
       refine ⟨?_, ?_, ?_⟩
       rotate_left
-      · pvm_go [h1, h5, hF, hg, hen, he, hr2, re, ↓rdN_fold]
+      · pvm_go [h1, h5, hF, hw, hen, he, hr2, re, ↓rdN_fold]
       · refine ⟨?_, ?_, ?_⟩
         all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
           ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, h5]
@@ -255,7 +295,7 @@ theorem vo1 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR
     (s16 : μ.readN (el + 16) 8 = Num.encodeLE 8 ptr)
     (hr : ∀ a, el + 8 ≤ a → a < el + 24 → μ.readable a = true)
     (hr2 : ∀ a, F ≤ a → a < F + 80 → μ.readable a = true) :
-    ∃ ω', FreeStepsH p R 29542 ω μ x 40613 ω' μ x 12 ∧ ω'[0] = UInt64.ofNat 1356 ∧ ω'[1] = ω[1] ∧
+    ∃ ω', FreeStepsH p R 29542 ω μ x 40613 ω' μ x 14 ∧ ω'[0] = UInt64.ofNat 1356 ∧ ω'[1] = ω[1] ∧
       ω'[5] = UInt64.ofNat n ∧ ω'[6] = ω[6] ∧ ω'[7] = UInt64.ofNat ptr := by
   have re := rd8 (by omega) s48
   have rn := rd8 hn s0

@@ -411,6 +411,7 @@ import Services.Bootstrap.Refine.Lookup
 import Services.Bootstrap.Refine.LookupWrap
 import Services.Bootstrap.Refine.LookupRun
 import Services.Bootstrap.Refine.LookupFmt
+import Services.Bootstrap.Refine.DropOutH
 import Services.Bootstrap.Refine.Prologue
 import Services.Bootstrap.Spec
 import Services.Bootstrap.SpecLemmas.Codec

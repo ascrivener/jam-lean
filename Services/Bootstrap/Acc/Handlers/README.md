@@ -124,9 +124,9 @@ inputs asked for sp+16, 32, 136…152, added); hB carried as a premise up to R2.
 becomes a case split with heap exhaustion.
 
 **Next, in order (R5's body):**
-1. **A memcpy lemma with a 16-octet gap.** The copy at 8620 (sp+512 → sp+752, 224 octets) has src + n + 16 = dst,
-   but `memcpy_val`/`memcpy_frame` need a 24-octet gap (`hdj`). Find why in `MemcpyBig.lean` (a read-ahead of the
-   shift loop?) and prove a variant for dst = src + n + 16, or a direct one for this call.
+1. **The copy at 8620** (sp+512 → sp+752, 224 octets, a 16-octet gap) is out of `memcpy_val`'s reach (it needs a 24-octet
+   gap). Use **`memcpy_big_aligned`** (`MemcpyBig.lean`: both ends 8-aligned, exact disjointness, sp % 8 = 0) instead.
+   The slot copy c+8 → sp+512 is aligned too (cur = buf + 232·k).
 2. The body's front, 8540 → 8735, for tags other than 15: `il_head`, `il_next`, `memcpy_val` (c+8 → sp+512, ret 296),
    `il_copy2`, memcpy (ret 298), `il_tag_other`/`il_tag_zomb`. Jump-table facts `jte_*`/`bs_*` are in `CodeA/`.
    Tag 15: `il_tag_ck` → `store_core` (ret 300; `RetOK` already has 300 → 8716) → `il_ck_ok`.

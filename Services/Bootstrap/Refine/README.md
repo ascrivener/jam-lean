@@ -8,6 +8,31 @@ Everything cites Gray Paper v0.8.0 via the docstrings of the files named here; t
 
 **Eighth instance (2026-11-16, branch `claude/bootstrap-t1c`, on top of m1d).** refine_t1c, in progress.
 
+**Handoff (tenth instance, 2026-11-16, branch `claude/bootstrap-t1c`).** Read this first.
+- **#226** (m1d) is green (model, attempt-1 success) but the squash merge is refused by the ruleset ("Required status
+  check build-and-check is expected"); the parent knows, Adam must update the ruleset. Do not work around it. Merge
+  it once the ruleset is fixed, then merge main into `claude/bootstrap-t1c`.
+- Done this instance (all build, axioms clean):
+  - `GapEmpty` (Gap 1 closed): `rsa_emptyF` ([22, 0, 0]) and `assign_gas_emptyF` (24 :: c ++ 0 :: g) as `ElemOkF`,
+    their slots `slotOK_rsaEmpty`, `slotOK_assignGasEmpty` (encoder arms with n = 0, `ArmOk` with capacity 0) and
+    packages `pkg_rsaEmpty`, `pkg_assignGasEmpty`.
+  - `PkgAll.pkg_all`: every `PassKind` instruction (all but Import, RSR, Export, eager Lookup) with WF, |enc| ≤ 2^24,
+    globals 𝖢 = 341 at 196616 and 𝖰 = 80 at 196680, `C.maxValCount ≤ 1023`, `C.authQueueLen = 80`.
+  - `InvT`: the loop invariant `Inv` (μ1 := the memory after `Entry.entry`) and its steps `inv_pass`,
+    `inv_export_big`, `inv_export_empty`, `inv_lookup` (+ `inv_noown`, `lu_len`, `exported_slot`).
+  - `LoopT.LookupOk`: the adopted chunk's condition gained `∀ d, Kp d → d.addr ≠ c.addr` (weaker obligation for
+    callers; `loop_t` proves it via `Tiles.addr_inj`). Needed by `export_ok_big`'s address clause.
+  - `RunT`: `StepT`, `pkg_step` (every T1c instruction's package), and **`run_t`** (4792 → return: `decode_allC` with
+    the packages, `Entry.entry`, `loop_t` with `Inv`, `exit_runW` with per-slot rep/DR/src chosen from `SlotW`).
+    Hypotheses beyond run_mixedG's: hgD/hgA (globals), hmax/hQ, NoImpRsr, |enc| ≤ 2^24 per instruction, `hlenL`
+    (preimages < 2^63), `hgas` (eager Lookup gas ≤ cap0), `LookupFmtOk`, `htab`, `DebugLineOk … (fun _ => DRt C 0)`,
+    `rltab` (65568 … 65572 readable). Output: ℰ(n) ⌢ `out (fun j => (outT (lookupOf env) is[j]).encode) n` ⌢ ℰ₂(w).
+- **Next:** `TopT` (as `TopG.from4680G` / `refine_coreG`, with `run_t`; the output equation as
+  `SpecRun.output_eqG` for `outT`; gl at 196616 / 196680 from `StartupConsts.startup_decoder_facts` carried
+  4642 → 4792 as Glob words; `hgas` from K = 2^62 and `hlenL`), then `T1c.refine_t1c` (as
+  `Milestone.refine_milestone`, `SpecRunT.run_refineT`, `rsemLk` = `LookupStep.lookupOf`), docs, full `lake build`,
+  PR, message the parent the statement and hypothesis list.
+
 **Handoff (end of the ninth instance).** Read this first.
 - **#217 merged** (90f7bf2). **#226** (the m1d PR: branch `claude/bootstrap-t1-m1c`, restarted from main with m1d merged)
   was open with `model` green and attempt-1 running (started 13:34). Subscribe, merge (squash) on green, tell the parent.

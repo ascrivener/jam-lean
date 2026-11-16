@@ -25,7 +25,9 @@ Everything cites Gray Paper v0.8.0 via the docstrings of the files named here; t
   drop is `VVAt` with c0 = 0, len = 0), pass-through `LookedUp` (`SlotLU.slotW_lu` with own = (· ∈ cs), `OwnsBuf … 16`).
 - **Decode gaps found:** the vector kinds with 0 elements other than DeleteItems / Imported / Export (`Bless` with z = [],
   `Designate []`, `AssignForGasCost` with q = [], `RandomStorageAccumulate (some [])`) have no `ElemOkAFC` here yet
-  (ElemsSmallC needs n ≥ 1; check `Decode/` for `vec_emptyF`-style lemmas); `RandomStorageAccumulate(None)` ([22, 1])
+  (ElemsSmallC needs n ≥ 1). Frame-level decoders exist and need `ElemOkF` wrappers as `ExportEmpty.vec_emptyF`:
+  `Decode.Bless.bless_empty`, `Decode.Designate.designate_empty`, `Decode.VecEmpty.vec_empty`, and for `LookedUp(Some [])`
+  `Decode.LookedUp.looked_up_empty`; `RandomStorageAccumulate(None)` ([22, 1])
   has only the frame-level `Decode.RandomStorage.random_storage_err`. `Assign`'s decode (`assign_elemFC`) takes the
   queue length from the global word at 196680 (`gv`, G % 2^32 = |q|): T1c needs it equal to `C.authQueueLen`, a fact
   about the vendored blob's globals (a `VendoredFactsC`-style conjunct, or a hypothesis relating C to the blob; ask the

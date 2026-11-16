@@ -1,4 +1,4 @@
-import Services.Bootstrap.Acc.Handlers.InstrLoopHyp
+import Services.Bootstrap.Acc.Handlers.InstrLoopOwn
 import Services.Bootstrap.Acc.Handlers.RowElevenFront
 
 /-!
@@ -13,6 +13,8 @@ split into the instructions done and the instructions left `is`, and `rs` the re
 - row 11's premises for the results so far: `TailHyp` (the results owned as `ResultsOwn`, the frame's
   three buffers), `ResultsAvoid` against the `IntoIter`'s buffers, and `(iterFree ++ tailFree).Nodup`;
   the results' count at sp + 464, within the cap at sp + 448;
+- the results' payloads avoid those buffers and the results buffer (`PayAvoid`, for the push), and an empty
+  results `Vec`'s pointer is no chunk's data address;
 - the `Zombify` flag at sp + 160 is 1 iff a `Zombify` was among the instructions done (zs);
 - the frame constants (2⁶³ at sp + 184, 2⁶³ + 1 at sp + 216, the formatter word 678 at sp + 200).
 
@@ -42,6 +44,11 @@ structure LoopAt (B : InstrRep) (code : ByteArray) (pb S0 S1 sp : Nat) (is : Lis
   hcap : rs.length ≤ rdN μ (sp + 448) 8
   hav : ResultsAvoid μ st (rdN μ (sp + 456) 8) rs (iterFree B μ (sp + 472) is.length)
   hnd : (iterFree B μ (sp + 472) is.length ++ tailFree μ sp).Nodup
+  /-- The results' payloads avoid the `IntoIter`'s buffers and the results buffer (the push writes there). -/
+  hpay : PayAvoid μ st (rdN μ (sp + 456) 8) rs
+    (iterFree B μ (sp + 472) is.length ++ optBuf (rdN μ (sp + 448) 8) (rdN μ (sp + 456) 8))
+  /-- An empty results `Vec`'s dangling pointer is no allocated chunk's data address. -/
+  hrp0 : rdN μ (sp + 448) 8 = 0 → ∀ d ∈ chunks st, d.used = true → d.addr + 32 ≠ rdN μ (sp + 456) 8
   flag : rdN μ (sp + 160) 8 = if zs then 1 else 0
   c184 : rdN μ (sp + 184) 8 = 9223372036854775808
   c216 : rdN μ (sp + 216) 8 = 9223372036854775809

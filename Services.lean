@@ -201,6 +201,7 @@ import Services.Bootstrap.Acc.Handlers.InstrLoopMid
 import Services.Bootstrap.Acc.Handlers.InstrLoopPush
 import Services.Bootstrap.Acc.Handlers.InstrLoopOwn
 import Services.Bootstrap.Acc.Handlers.InstrLoopTailRun
+import Services.Bootstrap.Acc.Handlers.InstrLoopStep
 import Services.Bootstrap.Acc.Handlers.Upgrade
 import Services.Bootstrap.Acc.HeapHost
 import Services.Bootstrap.Acc.DecodeU32A

@@ -2,7 +2,7 @@
 
 ## Current state (session 2, branch `claude/bootstrap-fields-2`, from 2026-11-15)
 - Step 1: `FieldInt.lean` (`u32_ok`, `u64_ok`, `ref_u32_ok`) builds, axioms clean; PR opened.
-- Step 2 (P1, `N56Steps.lean`): building.
+- Step 2 (P1, `N56Steps.lean`): builds (3 min). Fix: the store octets (8–30) read back the stack slot, so `pvm_go` needs `rdN_writeN_same8, rdN_zero, rdN_lit8` (added in `gen_n56.py`).
 - Plan and open decisions (D1 write_str heap source, D2 explicit-spec fmt_write / pad width path,
   D3 FmtRO slices) were sent to the parent on 2026-11-15; see the plan there.
 - Local builds use a base matching the latest published `lake-cache` (`fetch-lake.sh` prints it);

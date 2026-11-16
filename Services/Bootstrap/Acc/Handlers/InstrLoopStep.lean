@@ -58,13 +58,14 @@ theorem LoopAt.step {B : InstrRep} {code : ByteArray} {pb S0 S1 sp : Nat} {i : S
       d ∈ chunks st' ∧ ∀ a, InData d a → μ'.read a = μ.read a)
     (hmv : ∀ k, k < 144 * rs.length → μ'.read (rp' + k) = μ.read (rdN μ (sp + 456) 8 + k))
     (hd' : ∃ d' ∈ chunks st', d'.used = true ∧ d'.addr + 32 = rp' ∧ rp' + 144 * cp' ≤ d'.addr + 32 * d'.size ∧
-      ∀ d ∈ chunks st, d.used = true → d.addr + 32 ∉ optBuf (rdN μ (sp + 448) 8) (rdN μ (sp + 456) 8) → d ≠ d')
+      ∀ d ∈ chunks st, d.used = true → d.addr + 32 ∉ B.foot (slot μ (rdN μ (sp + 472 + 8) 8) 0) →
+        d.addr + 32 ∉ optBuf (rdN μ (sp + 448) 8) (rdN μ (sp + 456) 8) → d ≠ d')
     (hres : ResultAtP μ' (NewC st st' (B.foot (slot μ (rdN μ (sp + 472 + 8) 8) 0)) rp') (rp' + 144 * rs.length) r)
     (hown : ItemOwn μ' (NewC st st' (B.foot (slot μ (rdN μ (sp + 472 + 8) 8) 0)) rp') (rp' + 144 * rs.length)) :
     LoopAt B code pb S0 S1 sp is (rs ++ [r]) zs' μ' st' := by
   -- names
   have hT := L.T
-  generalize hF : B.foot (slot μ (rdN μ (sp + 472 + 8) 8) 0) = F at hkeep hres hown
+  generalize hF : B.foot (slot μ (rdN μ (sp + 472 + 8) 8) 0) = F at hkeep hres hown hd'
   generalize hrp : rdN μ (sp + 456) 8 = rp at hkeep hmv hd'
   generalize hcp : rdN μ (sp + 448) 8 = cp at hkeep hd'
   have hn := L.hn
@@ -130,7 +131,7 @@ theorem LoopAt.step {B : InstrRep} {code : ByteArray} {pb S0 S1 sp : Nat} {i : S
     intro q hq
     obtain ⟨e, he, heu, heq⟩ := liveC q hq
     obtain ⟨he', hke⟩ := hkeep e he heu (heq ▸ liveF q hq) (heq ▸ liveOB q hq)
-    refine ⟨e, he, heu, heq, he', hke, fun h => hd'n e he heu (heq ▸ liveOB q hq) ?_⟩
+    refine ⟨e, he, heu, heq, he', hke, fun h => hd'n e he heu (heq ▸ liveF q hq) (heq ▸ liveOB q hq) ?_⟩
     exact chunk_addr H' he' hd'm (by rw [heq, h, hd'a])
   have liveN : ∀ q, q ∈ IF ∨ q ∈ (resPtrs μ rp rs.length) ∨ q ∈ B2 ∨ q ∈ B3 → ∀ d, NewC st st' F rp' d → d.addr + 32 ≠ q := by
     intro q hq d hd h
@@ -184,7 +185,7 @@ theorem LoopAt.step {B : InstrRep} {code : ByteArray} {pb S0 S1 sp : Nat} {i : S
     rcases List.mem_append.1 h with h | h
     · exact h2 h
     · rw [ob'] at h; simp at h
-      exact hd'n d hd hu h3 (chunk_addr H' hd2 hd'm (by rw [h, hd'a]))
+      exact hd'n d hd hu h1 h3 (chunk_addr H' hd2 hd'm (by rw [h, hd'a]))
   have hr' : ResultAtP μ' (AvoidC st' (IF ++ optBuf cp' rp')) (rp' + 144 * rs.length) r :=
     ResultAtP.copy (μ' := μ') (fun d hd => ⟨⟨hd.1, hd.2.1, fun h => by
       rcases List.mem_append.1 h with h | h
@@ -197,7 +198,7 @@ theorem LoopAt.step {B : InstrRep} {code : ByteArray} {pb S0 S1 sp : Nat} {i : S
   have hpay' : PayAvoid μ' st' rp' (rs ++ [r]) (IF ++ optBuf cp' rp') := PayAvoid.push hp0 hmv hC' hr'
   have hrpIF : rp' ∉ IF := fun h => by
     obtain ⟨-, -, -, -, -, -, hne⟩ := liveK rp' (.inl h); exact hne rfl
-  refine ⟨H', L.hsp, I', ⟨H', hT.hsp, ?_, ?_, ?_, ?_⟩, ?_, ?_, ?_, ?_, ?_, ?_, hflag, c184, c216, c200⟩
+  refine ⟨H', L.hsp, I', ⟨H', hT.hsp, ?_, ?_, ?_, ?_⟩, ?_, ?_, ?_, ?_, ?_, ?_, ?_, hflag, c184, c216, c200⟩
   · rw [w456, m464]; exact O'
   · rw [w456, m464, w448, eRP]
     intro _
@@ -266,5 +267,6 @@ theorem LoopAt.step {B : InstrRep} {code : ByteArray} {pb S0 S1 sp : Nat} {i : S
       · exact (List.nodup_append.1 hnd).2.2 x (List.mem_append_right _ hx) y (by simp [hy])
   · rw [w456, w448, hIF']; exact hpay'
   · rw [w448]; intro h; omega
+  · rw [w448, w456]; exact fun _ => ⟨d', hd'm, hd'u, hd'a, hd'e⟩
 
 end Services.Bootstrap.Acc.Handlers.InstrLoop

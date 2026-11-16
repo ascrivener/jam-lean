@@ -26,7 +26,7 @@ variable {X : Type} {R : HostRel X}
 /-- **8540 … 8735, a slot whose tag is neither 3 nor 15**: from the head with cur c ≠ end e (at sp + 480,
     sp + 496), the slot's word0 w (not `None`'s niche), the counter k at sp + 504: on to 8735 with
     the slot's 232 octets copied to sp + 744, cur = c + 232, the counter k + 1 at sp + 504 and k at
-    sp + 736; the memory from sp up kept outside sp + 480 … sp + 976, and below sp − 48. -/
+    sp + 736; the memory from sp up kept outside sp + 480 … sp + 488 and sp + 504 … sp + 976, and below sp − 48. -/
 theorem il_front {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
     (sp c e k w : Nat) (h1 : ω[1] = UInt64.ofNat sp)
     (hsp : 2147483648 ≤ sp ∧ sp + 1632 < 4294967296 ∧ sp % 8 = 0)
@@ -42,7 +42,8 @@ theorem il_front {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x :
       μ'.readN (sp + 744) 232 = μ.readN c 232 ∧
       μ'.readN (sp + 480) 8 = Num.encodeLE 8 (c + 232) ∧
       μ'.readN (sp + 504) 8 = Num.encodeLE 8 (k + 1) ∧ μ'.readN (sp + 736) 8 = Num.encodeLE 8 k ∧
-      (∀ a, a < 4294967296 → (a < sp - 48 ∨ sp ≤ a) → (a < sp + 480 ∨ sp + 976 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, a < 4294967296 → (a < sp - 48 ∨ sp ≤ a) → (a < sp + 480 ∨ (sp + 488 ≤ a ∧ a < sp + 504) ∨ sp + 976 ≤ a) →
+        μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
   obtain ⟨hs1, hs2, hs3⟩ := hsp
   have rd : ∀ a, sp - 48 ≤ a → a < sp + 1632 → μ.readable a = true := fun a h1 h2 =>
@@ -84,7 +85,8 @@ theorem il_front {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x :
     fun a h1 h2 h3 => fr5 a h1 h3 (.inr h2)
   have fr4' : ∀ a, a < 4294967296 → (a < sp + 504 ∨ sp + 512 ≤ a) → (a < sp + 736 ∨ sp + 752 ≤ a) →
       μ4.read a = μ3.read a := fr4
-  have fr_hi : ∀ a, a < 4294967296 → sp ≤ a → (a < sp + 480 ∨ sp + 976 ≤ a) → μ5.read a = μ.read a :=
+  have fr_hi : ∀ a, a < 4294967296 → sp ≤ a → (a < sp + 480 ∨ (sp + 488 ≤ a ∧ a < sp + 504) ∨ sp + 976 ≤ a) →
+      μ5.read a = μ.read a :=
     fun a h1 h2 h3 => by
       rw [fr5' a h1 h2 (by omega), fr4' a h1 (by omega) (by omega), fr32 a h1 h2 (by omega),
         fr2 a h1 (by omega)]
@@ -121,7 +123,7 @@ theorem il_front {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x :
 /-- **8540 … 8735, a `Zombify` slot** (tag 3): as `il_front`, and the flag [sp + 160] := 1. The front: from the head with cur c ≠ end e (at sp + 480,
     sp + 496), the slot's word0 w (not `None`'s niche), the counter k at sp + 504: on to 8735 with
     the slot's 232 octets copied to sp + 744, cur = c + 232, the counter k + 1 at sp + 504 and k at
-    sp + 736; the memory from sp up kept outside sp + 480 … sp + 976, and below sp − 48. -/
+    sp + 736; the memory from sp up kept outside sp + 480 … sp + 488 and sp + 504 … sp + 976, and below sp − 48. -/
 theorem il_front_zomb {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
     (sp c e k w : Nat) (h1 : ω[1] = UInt64.ofNat sp)
     (hsp : 2147483648 ≤ sp ∧ sp + 1632 < 4294967296 ∧ sp % 8 = 0)
@@ -137,7 +139,7 @@ theorem il_front_zomb {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
       μ'.readN (sp + 160) 8 = Num.encodeLE 8 1 ∧ μ'.readN (sp + 744) 232 = μ.readN c 232 ∧
       μ'.readN (sp + 480) 8 = Num.encodeLE 8 (c + 232) ∧
       μ'.readN (sp + 504) 8 = Num.encodeLE 8 (k + 1) ∧ μ'.readN (sp + 736) 8 = Num.encodeLE 8 k ∧
-      (∀ a, a < 4294967296 → (a < sp - 48 ∨ sp ≤ a) → (a < sp + 480 ∨ sp + 976 ≤ a) →
+      (∀ a, a < 4294967296 → (a < sp - 48 ∨ sp ≤ a) → (a < sp + 480 ∨ (sp + 488 ≤ a ∧ a < sp + 504) ∨ sp + 976 ≤ a) →
         (a < sp + 160 ∨ sp + 168 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
   obtain ⟨hs1, hs2, hs3⟩ := hsp
@@ -180,7 +182,8 @@ theorem il_front_zomb {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
     fun a h1 h2 h3 => fr5 a h1 h3 (.inr h2)
   have fr4' : ∀ a, a < 4294967296 → (a < sp + 504 ∨ sp + 512 ≤ a) → (a < sp + 736 ∨ sp + 752 ≤ a) →
       μ4.read a = μ3.read a := fr4
-  have fr_hi : ∀ a, a < 4294967296 → sp ≤ a → (a < sp + 480 ∨ sp + 976 ≤ a) → μ5.read a = μ.read a :=
+  have fr_hi : ∀ a, a < 4294967296 → sp ≤ a → (a < sp + 480 ∨ (sp + 488 ≤ a ∧ a < sp + 504) ∨ sp + 976 ≤ a) →
+      μ5.read a = μ.read a :=
     fun a h1 h2 h3 => by
       rw [fr5' a h1 h2 (by omega), fr4' a h1 (by omega) (by omega), fr32 a h1 h2 (by omega),
         fr2 a h1 (by omega)]

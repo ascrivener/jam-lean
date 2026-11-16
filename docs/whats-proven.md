@@ -994,7 +994,9 @@ What you trust beyond the kernel:
 - **R5's named hypotheses (T2, Plan B, approved by the parent 2026-11-16; `Acc/Handlers/InstrLoopHyp.lean`).**
   Each is minimal and frame-only, and keeps sp + 184 … sp + 224:
   - `InstrLogH` (G4): the instruction's Debug log line, `format!` at 8772 (59375 → 8779): a fresh `String`
-    at sp + 1568, the allocator's chunks kept, or `ExhaustsP`; the text is not stated;
+    { kc, kp, kl } at sp + 1568 with its kl octets at kp readable (option A, approved by the parent
+    2026-11-16: `ResultLogH`'s readability premise needs it), the allocator's chunks kept, or `ExhaustsP`;
+    the text is not stated;
   - `ResultLogH` (G4): the result's log line, `format!` at 14369 (59375 → 14376), the same shape with the
     `String` at sp + 1144;
   - `HandlerH` (R6): one hypothesis over every instruction i: from the dispatch at 8822, the handler

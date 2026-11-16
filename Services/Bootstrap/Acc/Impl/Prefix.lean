@@ -187,9 +187,12 @@ theorem Impl.prefix {p : ByteArray} {R : HostRel (AccCtx × Qu)} (hR : R.Pins R)
           rw [← g2]; exact hn
     | none =>
       intro h3
-      obtain ⟨ω', μ', q', h3⟩ := h3
-      have := Pre.split_run hR keepR (fun c => c = s.c) (keepI s.c) h3 h2 hp₁
-      exact .inl (by rw [this])
+      obtain ⟨c', -, ω', μ', q', h3⟩ := h3
+      have yin : ∀ h ω μ (x : AccCtx × Qu) st ω' μ' (x' : AccCtx × Qu),
+          YIn R s.c.2 s.c.2 h ω μ x st ω' μ' x' → x.1.2 = s.c.2 → x'.1.2 = s.c.2 :=
+        fun _ _ _ _ _ _ _ _ h _ => h.2.elim id id
+      exact .inl (Pre.split_run hR (fun _ _ _ _ _ _ _ _ h => h.1) (fun c => c.2 = s.c.2) yin h3
+        (by rw [h2]) hp₁)
 
 /-- What a run that ends with ε and context c' reports, as Ψ_A does (GP eq. `accinvocation`): x
     after a halt, else y. -/
@@ -283,10 +286,10 @@ theorem Impl.run {p : ByteArray} {R : HostRel (AccCtx × Qu)} {env : AccEnv} {Ab
         · exact .inr ⟨hne, e⟩
     | none =>
       intro h3
-      obtain ⟨ω', μ', q', h3⟩ := h3
+      obtain ⟨c', hc', ω', μ', q', h3⟩ := h3
       obtain ⟨m, hm⟩ := h1'
-      refine ⟨.panic, s.c, ω', μ', q', FreeRunH.prepend hm (FreeRunH.unkeep h3), (fun h => by cases h),
-        .inl ⟨1, ?_, by simp [ASem.run, hst]⟩⟩
-      simp [ASem.run, hst, ASem.outcome, runOutcome]
+      refine ⟨.panic, c', ω', μ', q', FreeRunH.prepend hm (FreeRunH.mono (fun _ _ _ _ _ _ _ _ h => h.1) h3),
+        (fun h => by cases h), .inl ⟨1, ?_, by simp [ASem.run, hst]⟩⟩
+      simp [ASem.run, hst, ASem.outcome, runOutcome, hc']
 
 end Services.Bootstrap.Acc

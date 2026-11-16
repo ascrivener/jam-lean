@@ -16,7 +16,9 @@ How bootstrap's accumulate code is related to `Spec.accumulate` (T2, `docs/boots
 - **`call op k`**: the run reaches a state s₁, keeping (x, y). Then:
   - if `ASem.step env op` gives (b, c₁), the run reaches a state s₂ with context c₁ (op's SDK wrapper).
     On the way, y is always c.y or c₁.y (`YIn`). `Impl … (k b)` holds from s₂.
-  - if it gives `none`, the run ends ☇, keeping (x, y).
+  - if it gives `none`, the run ends ☇ with y kept (steps under `YIn` with y = c.y); x may change
+    (e.g. `remove` on FULL, quirk Q18: the host step writes x's account back before the trap).
+    Ψ_A reports only y after ☇, so x is not constrained.
 - **Early ☇, for a listed reason.** For `pure` and `call`, the run may instead reach a state where
   the reason predicate `Ab` holds and then end ☇ keeping (x, y); inside an operation's wrapper it may
   do so with y ∈ {c.y, c₁.y} (`Aborts`). `Ab` is a parameter: for accumulate, heap exhaustion and
@@ -79,7 +81,7 @@ def Impl (p : ByteArray) (R : HostRel (AccCtx × Qu)) (env : AccEnv) (Ab : St Qu
         | some (b, c₁) =>
             (∃ c', (c'.2 = s.c.2 ∨ c'.2 = c₁.2) ∧ Aborts p (YIn R s.c.2 c₁.2) Ab s₁ c') ∨
             ∃ s₂, Reaches p (YIn R s.c.2 c₁.2) s₁ s₂ ∧ s₂.c = c₁ ∧ Impl p R env Ab (k b) Q s₂
-        | none => Ends p (KeepCtx R) s₁ .panic s.c
+        | none => ∃ c', c'.2 = s.c.2 ∧ Ends p (YIn R s.c.2 s.c.2) s₁ .panic c'
 
 /-- The run halts from s, keeping (x, y), with ω₈ = 0 (an empty output, so Ψ_A takes no yield
     from it): the post-condition of the whole program. -/
@@ -202,7 +204,7 @@ theorem Impl.bind {p : ByteArray} {R : HostRel (AccCtx × Qu)} {env : AccEnv} {A
       | some (b, c₁) =>
           (∃ c', (c'.2 = s.c.2 ∨ c'.2 = c₁.2) ∧ Aborts p (YIn R s.c.2 c₁.2) Ab s₁ c') ∨
           ∃ s₂, Reaches p (YIn R s.c.2 c₁.2) s₁ s₂ ∧ s₂.c = c₁ ∧ Impl p R env Ab ((k b).bind f) Q s₂
-      | none => Ends p (KeepCtx R) s₁ .panic s.c
+      | none => ∃ c', c'.2 = s.c.2 ∧ Ends p (YIn R s.c.2 s.c.2) s₁ .panic c'
     revert h3
     cases ASem.step env op s.c with
     | some bc =>

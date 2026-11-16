@@ -6,6 +6,36 @@ Everything cites Gray Paper v0.8.0 via the docstrings of the files named here; t
 
 ## Current state (2026-11-16, read this first)
 
+**Eighth instance (2026-11-16, branch `claude/bootstrap-t1c`, on top of m1d).** refine_t1c, in progress.
+- Done (build, axioms clean): `LoopT.loop_t` (the loop over pass / Export / eager Lookup steps; μ0, `Kp` and the written
+  slots' octets `B` carried existentially with a caller's invariant `Inv k μ0 Kp B`; obligations `PassOkT`, `ExportOkT`,
+  `LookupOk`; `PInv.mono_O`, `PInv.exact`, `LUSlotB`), `SpecRunT` (`NoImpRsr`, `outT lk`, `rsemLk`, `run_refineT`).
+- `LookupStep2.lookup_step` now also exports `ptr' < 2^31` and that the adopted chunk is not `ce` (strengthening only).
+- Written, being checked: `SlotT` (`slotRep`, `DRt C` ⊇ `Top.DRm C`, `SlotW` = what `exit_runW` needs of one slot,
+  `SlotOK` = `SlotW` for every memory keeping the owned chunks as in μr), `SlotFixed` (`kind_okH`, `slotOK_fixed`),
+  `SlotLU` (`slotW_lu`, for pass-through `LookedUp` and the eager Lookup's slot).
+- **Gas cap.** `lookup_step`'s internal `hgas` (1125 + ⌈264 |d| / 1024⌉ ≤ cap) cannot hold at cap 2^27 for preimages up
+  to 2^63 octets; refine_t1c runs under `refineContractK K` with K = 2^62 (any cap works for Ψ_M's lift), so its Fmt
+  hypotheses are stated at that cap (report to the parent with the statement).
+- **Plan for the rest** (in order):
+  1. Per kind (input x, `WF`, `NoImpRsr`), a decode package: `∃ N Rd, (∀ F RD, Lay F RD → ElemOkAFC … N x.encode Rd) ∧
+     ∀ cs bs μr, (∀ μ'' agreeing with μr on cs, Rd cs bs μ'') → Step x cs bs μr`, where `Step` is: pass kinds — tag t,
+     `PassK t flag`, `SlotOK (x.encode) bs (· ∈ cs) μr`, |x.encode| bound; eager Lookup — the `LookupOk` field facts
+     from bs, cs = []; Export — `VecVecRepC` (as `RunMixedG`, via `ExportOkOf.export_ok_big` / `export_ok_empty`).
+     Small and big sizes combine `ElemsSmallC` / `ElemsBigC` (and the Decode `*_elem*` lemmas); gaps: an `ElemOkF`
+     wrapper for `RandomStorageAccumulate(None)` ([22, 1], `Decode.RandomStorage.random_storage_err`) may be missing.
+     The `SlotOK` of each heap kind mirrors `slotW_lu`: rep = the encoder's `…RepAt q` (q the slot's buffer word),
+     src = `SrcAtP q m` / `VecVecSrcH`, DR = rep (⊆ `DRt` by the `…Rep_iff` lemmas), drop by `HeapElW`
+     (`VVAt` for DeleteItems / Imported, `BufEl` + `ArmOk` for 0, 11, 12, 13, 17, 22, 24).
+  2. `Inv k μ0 Kp B` for `loop_t`: μ0 = μ1 (after decode) on ce's data and on the frame words; `Kp cp`; for j ≥ k the
+     chunks `csOf j` kept with data as μ1; ∃ ownF, for j < k `SlotOK (outT lk x_j).encode (B j) (ownF j) μ0`, ownF j ⊆
+     Kp, ≠ ce, ≠ cp, disjoint from `csOf j'` (j' ≥ k) and between slots, |enc| < 2^33. Steps: pass — Kp' = Kp, ownF k
+     = (· ∈ csOf k); Export — Kp' = Kp minus `csOf k`; Lookup — `LUOwn` (ownF k = (· = ch) or none), old `SlotOK`s by
+     `SlotOK.congr` (ch apart from kept chunks).
+  3. `RunT` (as `RunMixedG`: decode_allC with the packages, `loop_t`, then `exit_runW` with rep/src/own/DR chosen from
+     `SlotW` per slot; `hcapB`, `hbig` from n ≤ 2^24 and |enc| < 2^33), `TopT` (as `TopG`), `T1c.refine_t1c` (as
+     `Milestone.refine_milestone`, match form, with `SpecRunT.run_refineT` and `rsemLk` = `LookupStep.lookupOf`).
+
 **Seventh instance (2026-11-16, branch `claude/bootstrap-t1-m1d`).** Step 2 (the big `realloc`), approved by the parent
 as option (A), in-place edits of Decode/Encode files used only by T1's chain:
 - `Decode/ReallocBig.lean` (moved from `Refine/`): `OtherUsed s ptr` (another allocated chunk), `BigReq` (units ≥ 2^25,

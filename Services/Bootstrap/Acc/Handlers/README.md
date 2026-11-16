@@ -118,7 +118,19 @@ Handlers dependencies takes ~2 h on 4 cores). Use `ulimit -v 12000000` when comp
   Hypotheses: [sp+464] = 0, kc at 68696 (35 ≤ kc), set's error table, 68680 … 69076 readable, frame
   [sp − 352, sp + 1632), ℰ₂(item) = μ[sp+176..+2], `StoreFit`; `[HasCodeX p P]`. Ab covers 36528, 34070.
   Axioms clean. Both imported from `Services.lean`.
-- **Next:** rebase onto main once #224 merges, full build, PR, merge on green; then row 11.
+- Row 11 parked; **plan B** (Adam, decision 23): T2 as a skeleton with named hypotheses. Handlers A does R4,
+  R5, R7 of `docs/t2-remaining.md` (map written this session).
+- **R4 done:** `ResultsAt.lean`: `InHeap`, `VecAt`, `OkAt`, `ResultAt`, `ResultsAt`, `ResultsVec` (cap/ptr/len at
+  sp+448/456/464), `KeepsHeap`, `ResultsAt.keep` (frames keeping st's chunks with data keep it), `ResultsAt.nil`.
+  Layout read off the encoder arms (36346 … 36394, 30374 … 30640).
+- `ResStoreLoopSeg.lean` (compiles): 36170's loop for n ≥ 1: `rl_enter`, `rl_ok`, `rl_okenc`, `rl_err`,
+  `rl_errcode`, `rl_next`, `rl_tail`. Return addresses: 1696 → 36290, 1698 → 36335, 1700 → 36373, 1702 → 36394.
+- **Waiting on @parent** (sent 2026-11-16): InstrRep as a hypothesis parameter vs T1 export; who states the Debug
+  log-line Fmt hypotheses; using `memcpy_val`/`ExhaustsP` from #222 (R8/R9 hypotheses use `ExhaustsP`).
+- **Next:** R8 hypothesis (`extend` at 58508 under HeapHost, shaped like refine's `extend_any`) and R9 (36299 per
+  Ok item appends `(Result.encode (.ok r)).drop 1`), both with `ExhaustsP` failure; then the general-n 36170
+  (`res_store`), R7 (15032 … 15198), R5 (loop 8493 … 15028, see the map in the parent message).
+- Row 9: rebase onto main once #224 merges, full build, PR, merge on green.
 
 ## Session 6 progress (2026-11-16, row 8 composed)
 

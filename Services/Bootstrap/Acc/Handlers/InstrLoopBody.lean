@@ -89,9 +89,10 @@ def AtLog (code : ByteArray) (pb S0 S1 sp : Nat) (μ₀ : Memory) (st : State) (
 theorem il_front_any {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env : AccEnv) (B : InstrRep)
     {pb S0 S1 : Nat} (c : AccCtx) (f : Stream) (ω : Regs) (μ : Memory)
     (st : State) (sp : Nat) (i : Spec.Instr) (is : List Spec.Instr) (rs : List Spec.Result) (zs : Bool)
-    (h1 : ω[1] = UInt64.ofNat sp) (hs8 : sp % 8 = 0) (LA : LoopAt B env.code pb S0 S1 sp (i :: is) rs zs μ st)
+    (h1 : ω[1] = UInt64.ofNat sp) (i0 : Nat) (hstart : i0 = 8540 ∨ (i0 = 8554 ∧ ω[6] = UInt64.ofNat (rdN μ (sp + 480) 8)))
+    (hs8 : sp % 8 = 0) (LA : LoopAt B env.code pb S0 S1 sp (i :: is) rs zs μ st)
     (hal : rdN μ (sp + 480) 8 % 8 = 0) (hk : rdN μ (sp + 504) 8 + 1 < 2 ^ 64) (hck : instrIdx i ≠ 15) :
-    ∃ ω₁ μ₁ N, FreeStepsH p (KeepCtx (accContractS env)) 8540 ω μ (c, f) 8735 ω₁ μ₁ (c, f) N ∧
+    ∃ ω₁ μ₁ N, FreeStepsH p (KeepCtx (accContractS env)) i0 ω μ (c, f) 8735 ω₁ μ₁ (c, f) N ∧
       AtLog env.code pb S0 S1 sp μ st (zs || instrIdx i == 3) ⟨8735, ω₁, μ₁, c, f⟩ := by
   have H := LA.H
   have hT := H.hS1
@@ -106,7 +107,7 @@ theorem il_front_any {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
   simp only [List.length_cons, List.getElem_cons_zero] at hE hR0
   rw [show sp + 472 + 8 = sp + 480 by omega] at hE hR0 hbc
   rw [show sp + 472 + 24 = sp + 496 by omega] at hE hed
-  generalize hcur : rdN μ (sp + 480) 8 = cur at hE hR0 hbc hal hfoot0 ⊢
+  generalize hcur : rdN μ (sp + 480) 8 = cur at hE hR0 hbc hal hfoot0 hstart ⊢
   generalize hk0 : rdN μ (sp + 504) 8 = k at hk ⊢
   have hlo := Handlers.InstrLoop.data_ge H hd hu (a := cur) ⟨by omega, by omega⟩
   have hhi := ResultsDrop.data_lt H hd (a := cur + 231) ⟨by omega, by omega⟩
@@ -130,7 +131,7 @@ theorem il_front_any {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
     rw [← LA.c216]; exact KeyEnc.readN_enc μ _ 8
   have hst : slotTag (rdN μ cur 8) = instrIdx i := htag
   -- the front, 8540 → 8735
-  have hfront : ∃ ω₁ μ₁ N, FreeStepsH p (KeepCtx (accContractS env)) 8540 ω μ (c, f) 8735 ω₁ μ₁ (c, f) N ∧
+  have hfront : ∃ ω₁ μ₁ N, FreeStepsH p (KeepCtx (accContractS env)) i0 ω μ (c, f) 8735 ω₁ μ₁ (c, f) N ∧
       ω₁[1] = ω[1] ∧ rdN μ₁ (sp + 160) 8 = (if (zs || instrIdx i == 3) then 1 else 0) ∧
       μ₁.readN (sp + 744) 232 = μ.readN cur 232 ∧ μ₁.readN (sp + 480) 8 = Num.encodeLE 8 (cur + 232) ∧
       μ₁.readN (sp + 504) 8 = Num.encodeLE 8 (k + 1) ∧
@@ -139,13 +140,13 @@ theorem il_front_any {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
       (∀ a, μ₁.readable a = μ.readable a) ∧ (∀ a, μ₁.writable a = μ.writable a) := by
     by_cases hz : instrIdx i = 3
     · obtain ⟨ω₁, μ₁, N, run, a1, m160, m744, m480, m504, -, fr, rd, wr⟩ := il_front_zomb
-        (R := KeepCtx (accContractS env)) (P := P) (c, f) ω μ sp cur (rdN μ (sp + 496) 8) k (rdN μ cur 8) h1
+        (R := KeepCtx (accContractS env)) (P := P) (c, f) ω μ sp cur (rdN μ (sp + 496) 8) k (rdN μ cur 8) h1 hstart
         ⟨by omega, by omega, hs8⟩ ⟨by omega, by omega, hal⟩ (ResultsDrop.rdN_lt8 μ _) (by omega) hk hw64 hnn
         (by rw [hst, hz]) mc me mw mk m184 m216 hrs hws
       refine ⟨ω₁, μ₁, N, run, a1, ?_, m744, m480, m504, fr, rd, wr⟩
       rw [DesignateAlloc.rd8 (by decide) m160]; simp [hz]
     · obtain ⟨ω₁, μ₁, N, run, a1, m744, m480, m504, -, fr, rd, wr⟩ := il_front
-        (R := KeepCtx (accContractS env)) (P := P) (c, f) ω μ sp cur (rdN μ (sp + 496) 8) k (rdN μ cur 8) h1
+        (R := KeepCtx (accContractS env)) (P := P) (c, f) ω μ sp cur (rdN μ (sp + 496) 8) k (rdN μ cur 8) h1 hstart
         ⟨by omega, by omega, hs8⟩ ⟨by omega, by omega, hal⟩ (ResultsDrop.rdN_lt8 μ _) (by omega) hk hw64 hnn
         (by rw [hst]; exact hz) (by rw [hst]; exact hck) mc me mw mk m184 m216 hrs hws
       refine ⟨ω₁, μ₁, N, run, a1, ?_, m744, m480, m504, fun a h0 h2 h3 _ => fr a h0 h2 h3, rd, wr⟩
@@ -495,7 +496,8 @@ theorem il_body {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
     (hL : InstrLogH B p env pb S0 S1) (hR : ResultLogH p env pb S0 S1) (hH : HandlerH B p env C now pb S0 S1 Ab)
     (hP : PushH p env pb S0 S1) (hAbX : ∀ s : St Stream, s.i = 40611 ∨ s.i = 40821 → Ab s)
     (s : St Stream) (st : State) (sp : Nat) (i : Spec.Instr) (is : List Spec.Instr) (rs : List Spec.Result)
-    (zs : Bool) (hi : s.i = 8540) (h1 : s.ω[1] = UInt64.ofNat sp) (hs8 : sp % 8 = 0)
+    (zs : Bool) (hi : s.i = 8540 ∨ (s.i = 8554 ∧ s.ω[6] = UInt64.ofNat (rdN s.μ (sp + 480) 8)))
+    (h1 : s.ω[1] = UInt64.ofNat sp) (hs8 : sp % 8 = 0)
     (LA : LoopAt B env.code pb S0 S1 sp (i :: is) rs zs s.μ st)
     (hal : rdN s.μ (sp + 480) 8 % 8 = 0) (hk : rdN s.μ (sp + 504) 8 + 1 < 2 ^ 64)
     (hjt : s.μ.readN 65736 100 = jumpTab) (hjr : ∀ a, 65736 ≤ a → a < 65836 → s.μ.readable a = true)
@@ -504,8 +506,7 @@ theorem il_body {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
       (BodyPost B env.code pb S0 S1 sp is rs (zs || instrIdx i == 3) s.μ) s := by
   obtain ⟨i0, ω, μ, c, f⟩ := s
   dsimp only at hi h1 LA hal hk hjt hjr hfit ⊢
-  subst hi
-  obtain ⟨ω₁, μ₁, N₁, run1, A⟩ := il_front_any (P := P) env B c f ω μ st sp i is rs zs h1 hs8 LA hal hk hck
+  obtain ⟨ω₁, μ₁, N₁, run1, A⟩ := il_front_any (P := P) env B c f ω μ st sp i is rs zs h1 i0 hi hs8 LA hal hk hck
   exact Impl.pre _ _ (s' := ⟨8735, ω₁, μ₁, c, f⟩) ⟨_, run1⟩ rfl
     (il_after_log (P := P) env B hL hR hH hP hAbX _ μ st sp i is rs zs _ hs8 LA A hjt hjr hfit)
 
@@ -535,7 +536,8 @@ theorem il_body_ck {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
     (hIst : ∀ {β : Type} (o : AOp β) (c c₁ : AccCtx) (b : β), Inv c → ASem.step env o c = some (b, c₁) → Inv c₁)
     (hIfit : ∀ c, Inv c → StoreFit c)
     (s : St Stream) (st : State) (sp item kc : Nat) (is : List Spec.Instr) (rs : List Spec.Result) (zs : Bool)
-    (hi : s.i = 8540) (h1 : s.ω[1] = UInt64.ofNat sp) (hs8 : sp % 8 = 0)
+    (hi : s.i = 8540 ∨ (s.i = 8554 ∧ s.ω[6] = UInt64.ofNat (rdN s.μ (sp + 480) 8)))
+    (h1 : s.ω[1] = UInt64.ofNat sp) (hs8 : sp % 8 = 0)
     (LA : LoopAt B env.code pb S0 S1 sp (.checkpoint :: is) rs zs s.μ st)
     (hal : rdN s.μ (sp + 480) 8 % 8 = 0) (hk : rdN s.μ (sp + 504) 8 + 1 < 2 ^ 64)
     (hjt : s.μ.readN 65736 100 = jumpTab) (hjr : ∀ a, 65736 ≤ a → a < 65836 → s.μ.readable a = true)
@@ -550,7 +552,7 @@ theorem il_body_ck {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
       (BodyPost B env.code pb S0 S1 sp is rs zs s.μ) s := by
   obtain ⟨i0, ω, μ, c, f⟩ := s
   dsimp only at hi h1 LA hal hk hjt hjr hinv hitem mkc ht8 ht4 hro ⊢
-  subst hi
+  have hstart := hi
   have LA0 := LA
   have H := LA.H
   have hT := H.hS1
@@ -565,7 +567,7 @@ theorem il_body_ck {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
   simp only [List.length_cons, List.getElem_cons_zero] at hEe hR0
   rw [show sp + 472 + 8 = sp + 480 by omega] at hEe hR0 hbc
   rw [show sp + 472 + 24 = sp + 496 by omega] at hEe hed
-  generalize hcur : rdN μ (sp + 480) 8 = cur at hEe hR0 hbc hal hfoot0
+  generalize hcur : rdN μ (sp + 480) 8 = cur at hEe hR0 hbc hal hfoot0 hstart
   generalize hk0 : rdN μ (sp + 504) 8 = k at hk
   have hlo := Handlers.InstrLoop.data_ge H hd hu (a := cur) ⟨by omega, by omega⟩
   have hhi := ResultsDrop.data_lt H hd (a := cur + 231) ⟨by omega, by omega⟩
@@ -591,7 +593,7 @@ theorem il_body_ck {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
   have ht15 : slotTag (rdN μ cur 8) = 15 := hst
   -- the front, 8540 → 8627
   obtain ⟨ω₅, μ₅, N₅, run5, a51, a55, m744, m480, m504, -, fr5, rd5, wr5⟩ := il_front8627
-    (R := KeepCtx (accContractS env)) (P := P) (c, f) ω μ sp cur (rdN μ (sp + 496) 8) k (rdN μ cur 8) h1
+    (R := KeepCtx (accContractS env)) (P := P) (c, f) ω μ sp cur (rdN μ (sp + 496) 8) k (rdN μ cur 8) h1 hstart
     ⟨by omega, by omega, hs8⟩ ⟨by omega, by omega, hal⟩ (ResultsDrop.rdN_lt8 μ _) (by omega) hk hw64 hnn
     mc me mw mk m184 m216 hrs hws
   have e5 : ∀ b, sp ≤ b → b + 8 ≤ sp + 480 → μ₅.readN b 8 = μ.readN b 8 := fun b h h' =>

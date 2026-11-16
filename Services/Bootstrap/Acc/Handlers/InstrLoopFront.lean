@@ -23,12 +23,14 @@ set_option maxRecDepth 100000
 
 variable {X : Type} {R : HostRel X}
 
-/-- **8540 … 8735, a slot whose tag is neither 3 nor 15**: from the head with cur c ≠ end e (at sp + 480,
+/-- **8540 … 8735, a slot whose tag is neither 3 nor 15**: from the head (or from 8554 with ω₆ = c, where
+    the loop's entry falls through) with cur c ≠ end e (at sp + 480,
     sp + 496), the slot's word0 w (not `None`'s niche), the counter k at sp + 504: on to 8735 with
     the slot's 232 octets copied to sp + 744, cur = c + 232, the counter k + 1 at sp + 504 and k at
     sp + 736; the memory from sp up kept outside sp + 480 … sp + 488 and sp + 504 … sp + 976, and below sp − 48. -/
 theorem il_front {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
     (sp c e k w : Nat) (h1 : ω[1] = UInt64.ofNat sp)
+    {i0 : Nat} (hstart : i0 = 8540 ∨ (i0 = 8554 ∧ ω[6] = UInt64.ofNat c))
     (hsp : 2147483648 ≤ sp ∧ sp + 1632 < 4294967296 ∧ sp % 8 = 0)
     (hc : 65536 ≤ c ∧ c + 512 ≤ sp ∧ c % 8 = 0) (he : e < 2 ^ 64) (hce : c ≠ e) (hk : k + 1 < 2 ^ 64)
     (hw64 : w < 2 ^ 64) (hwN : w ≠ 18446744073709551614) (ht3 : slotTag w ≠ 3) (ht15 : slotTag w ≠ 15)
@@ -38,7 +40,7 @@ theorem il_front {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x :
     (m216 : μ.readN (sp + 216) 8 = Num.encodeLE 8 9223372036854775809)
     (hrs : ∀ a, c ≤ a → a < c + 232 → μ.readable a = true)
     (hws : ∀ a, sp - 48 ≤ a → a < sp + 1632 → μ.writable a = true) :
-    ∃ ω' μ' N, FreeStepsH p R 8540 ω μ x 8735 ω' μ' x N ∧ ω'[1] = ω[1] ∧
+    ∃ ω' μ' N, FreeStepsH p R i0 ω μ x 8735 ω' μ' x N ∧ ω'[1] = ω[1] ∧
       μ'.readN (sp + 744) 232 = μ.readN c 232 ∧
       μ'.readN (sp + 480) 8 = Num.encodeLE 8 (c + 232) ∧
       μ'.readN (sp + 504) 8 = Num.encodeLE 8 (k + 1) ∧ μ'.readN (sp + 736) 8 = Num.encodeLE 8 k ∧
@@ -49,8 +51,13 @@ theorem il_front {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x :
   have rd : ∀ a, sp - 48 ≤ a → a < sp + 1632 → μ.readable a = true := fun a h1 h2 =>
     Memory.readable_of_writable (hws a h1 h2)
   -- 8540 → 8554
-  obtain ⟨ω1, run1, a1, -, a6⟩ := il_head (R := R) (P := P) x ω μ sp c e h1 ⟨by omega, by omega⟩ (by omega) he hce
-    mc me (fun a h1 h2 => rd a (by omega) (by omega))
+  obtain ⟨ω1, n1, run1, a1, a6⟩ : ∃ ω1 n1, FreeStepsH p R i0 ω μ x 8554 ω1 μ x n1 ∧ ω1[1] = ω[1] ∧
+      ω1[6] = UInt64.ofNat c := by
+    rcases hstart with rfl | ⟨rfl, h6⟩
+    · obtain ⟨ω1, run1, a1, -, a6⟩ := il_head (R := R) (P := P) x ω μ sp c e h1 ⟨by omega, by omega⟩ (by omega) he
+        hce mc me (fun a h1 h2 => rd a (by omega) (by omega))
+      exact ⟨ω1, _, run1, a1, a6⟩
+    · exact ⟨ω, 0, .refl, rfl, h6⟩
   -- 8554 → 68729 (memcpy c + 8 → sp + 512)
   obtain ⟨ω2, μ2, run2, b0, b1, b5, b7, b8, b9, m2, fr2, rd2, wr2⟩ := il_next (R := R) (P := P) x ω1 μ sp c w
     (a1.trans h1) a6 ⟨by omega, by omega⟩ ⟨hc.1, by omega⟩ hw64 hwN mw (fun a h1 h2 => hrs a h1 (by omega))
@@ -124,6 +131,7 @@ theorem il_front {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x :
     `il_front`, ending at 8627 with the slot's word0 w in ω₅. -/
 theorem il_front8627 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
     (sp c e k w : Nat) (h1 : ω[1] = UInt64.ofNat sp)
+    {i0 : Nat} (hstart : i0 = 8540 ∨ (i0 = 8554 ∧ ω[6] = UInt64.ofNat c))
     (hsp : 2147483648 ≤ sp ∧ sp + 1632 < 4294967296 ∧ sp % 8 = 0)
     (hc : 65536 ≤ c ∧ c + 512 ≤ sp ∧ c % 8 = 0) (he : e < 2 ^ 64) (hce : c ≠ e) (hk : k + 1 < 2 ^ 64)
     (hw64 : w < 2 ^ 64) (hwN : w ≠ 18446744073709551614)
@@ -133,7 +141,7 @@ theorem il_front8627 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
     (m216 : μ.readN (sp + 216) 8 = Num.encodeLE 8 9223372036854775809)
     (hrs : ∀ a, c ≤ a → a < c + 232 → μ.readable a = true)
     (hws : ∀ a, sp - 48 ≤ a → a < sp + 1632 → μ.writable a = true) :
-    ∃ ω' μ' N, FreeStepsH p R 8540 ω μ x 8627 ω' μ' x N ∧ ω'[1] = ω[1] ∧ ω'[5] = UInt64.ofNat w ∧
+    ∃ ω' μ' N, FreeStepsH p R i0 ω μ x 8627 ω' μ' x N ∧ ω'[1] = ω[1] ∧ ω'[5] = UInt64.ofNat w ∧
       μ'.readN (sp + 744) 232 = μ.readN c 232 ∧
       μ'.readN (sp + 480) 8 = Num.encodeLE 8 (c + 232) ∧
       μ'.readN (sp + 504) 8 = Num.encodeLE 8 (k + 1) ∧ μ'.readN (sp + 736) 8 = Num.encodeLE 8 k ∧
@@ -144,8 +152,13 @@ theorem il_front8627 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
   have rd : ∀ a, sp - 48 ≤ a → a < sp + 1632 → μ.readable a = true := fun a h1 h2 =>
     Memory.readable_of_writable (hws a h1 h2)
   -- 8540 → 8554
-  obtain ⟨ω1, run1, a1, -, a6⟩ := il_head (R := R) (P := P) x ω μ sp c e h1 ⟨by omega, by omega⟩ (by omega) he hce
-    mc me (fun a h1 h2 => rd a (by omega) (by omega))
+  obtain ⟨ω1, n1, run1, a1, a6⟩ : ∃ ω1 n1, FreeStepsH p R i0 ω μ x 8554 ω1 μ x n1 ∧ ω1[1] = ω[1] ∧
+      ω1[6] = UInt64.ofNat c := by
+    rcases hstart with rfl | ⟨rfl, h6⟩
+    · obtain ⟨ω1, run1, a1, -, a6⟩ := il_head (R := R) (P := P) x ω μ sp c e h1 ⟨by omega, by omega⟩ (by omega) he
+        hce mc me (fun a h1 h2 => rd a (by omega) (by omega))
+      exact ⟨ω1, _, run1, a1, a6⟩
+    · exact ⟨ω, 0, .refl, rfl, h6⟩
   -- 8554 → 68729 (memcpy c + 8 → sp + 512)
   obtain ⟨ω2, μ2, run2, b0, b1, b5, b7, b8, b9, m2, fr2, rd2, wr2⟩ := il_next (R := R) (P := P) x ω1 μ sp c w
     (a1.trans h1) a6 ⟨by omega, by omega⟩ ⟨hc.1, by omega⟩ hw64 hwN mw (fun a h1 h2 => hrs a h1 (by omega))
@@ -215,6 +228,7 @@ theorem il_front8627 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
     sp + 736; the memory from sp up kept outside sp + 480 … sp + 488 and sp + 504 … sp + 976, and below sp − 48. -/
 theorem il_front_zomb {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
     (sp c e k w : Nat) (h1 : ω[1] = UInt64.ofNat sp)
+    {i0 : Nat} (hstart : i0 = 8540 ∨ (i0 = 8554 ∧ ω[6] = UInt64.ofNat c))
     (hsp : 2147483648 ≤ sp ∧ sp + 1632 < 4294967296 ∧ sp % 8 = 0)
     (hc : 65536 ≤ c ∧ c + 512 ≤ sp ∧ c % 8 = 0) (he : e < 2 ^ 64) (hce : c ≠ e) (hk : k + 1 < 2 ^ 64)
     (hw64 : w < 2 ^ 64) (hwN : w ≠ 18446744073709551614) (ht : slotTag w = 3)
@@ -224,7 +238,7 @@ theorem il_front_zomb {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
     (m216 : μ.readN (sp + 216) 8 = Num.encodeLE 8 9223372036854775809)
     (hrs : ∀ a, c ≤ a → a < c + 232 → μ.readable a = true)
     (hws : ∀ a, sp - 48 ≤ a → a < sp + 1632 → μ.writable a = true) :
-    ∃ ω' μ' N, FreeStepsH p R 8540 ω μ x 8735 ω' μ' x N ∧ ω'[1] = ω[1] ∧
+    ∃ ω' μ' N, FreeStepsH p R i0 ω μ x 8735 ω' μ' x N ∧ ω'[1] = ω[1] ∧
       μ'.readN (sp + 160) 8 = Num.encodeLE 8 1 ∧ μ'.readN (sp + 744) 232 = μ.readN c 232 ∧
       μ'.readN (sp + 480) 8 = Num.encodeLE 8 (c + 232) ∧
       μ'.readN (sp + 504) 8 = Num.encodeLE 8 (k + 1) ∧ μ'.readN (sp + 736) 8 = Num.encodeLE 8 k ∧
@@ -235,8 +249,13 @@ theorem il_front_zomb {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
   have rd : ∀ a, sp - 48 ≤ a → a < sp + 1632 → μ.readable a = true := fun a h1 h2 =>
     Memory.readable_of_writable (hws a h1 h2)
   -- 8540 → 8554
-  obtain ⟨ω1, run1, a1, -, a6⟩ := il_head (R := R) (P := P) x ω μ sp c e h1 ⟨by omega, by omega⟩ (by omega) he hce
-    mc me (fun a h1 h2 => rd a (by omega) (by omega))
+  obtain ⟨ω1, n1, run1, a1, a6⟩ : ∃ ω1 n1, FreeStepsH p R i0 ω μ x 8554 ω1 μ x n1 ∧ ω1[1] = ω[1] ∧
+      ω1[6] = UInt64.ofNat c := by
+    rcases hstart with rfl | ⟨rfl, h6⟩
+    · obtain ⟨ω1, run1, a1, -, a6⟩ := il_head (R := R) (P := P) x ω μ sp c e h1 ⟨by omega, by omega⟩ (by omega) he
+        hce mc me (fun a h1 h2 => rd a (by omega) (by omega))
+      exact ⟨ω1, _, run1, a1, a6⟩
+    · exact ⟨ω, 0, .refl, rfl, h6⟩
   -- 8554 → 68729 (memcpy c + 8 → sp + 512)
   obtain ⟨ω2, μ2, run2, b0, b1, b5, b7, b8, b9, m2, fr2, rd2, wr2⟩ := il_next (R := R) (P := P) x ω1 μ sp c w
     (a1.trans h1) a6 ⟨by omega, by omega⟩ ⟨hc.1, by omega⟩ hw64 hwN mw (fun a h1 h2 => hrs a h1 (by omega))

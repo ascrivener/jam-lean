@@ -57,7 +57,8 @@ theorem Prog.bind_assoc' {E : Type → Type} {α β γ : Type} (k : β → Prog 
     n₀ its length. -/
 structure LoopInv (B : InstrRep) (code : ByteArray) (pb S0 S1 sp : Nat) (Inv : AccCtx → Prop) (μ₀ : Memory)
     (Z : Bool) (n₀ : Nat) (xs : List Spec.Instr) (rs : List Spec.Result) (s : St Stream) : Prop where
-  hi : s.i = 8540
+  /-- At the head, or at 8554 with ω₆ = cur where the loop's entry falls through (some instruction left). -/
+  hi : s.i = 8540 ∨ (s.i = 8554 ∧ s.ω[6] = UInt64.ofNat (rdN s.μ (sp + 480) 8) ∧ xs ≠ [])
   h1 : s.ω[1] = UInt64.ofNat sp
   inv : Inv s.c
   la : ∃ st zs, LoopAt B code pb S0 S1 sp xs rs zs s.μ st ∧ (zs || xs.any isZomb) = Z
@@ -81,7 +82,7 @@ theorem LoopInv.of_post {B : InstrRep} {code : ByteArray} {pb S0 S1 sp : Nat} {I
   simp only [List.length_cons] at hk hlen
   have hl' : (rs ++ [r]).length + xs.length = n₀ := by
     simp only [List.length_append, List.length_singleton]; omega
-  refine ⟨hi, h1, hinv, ⟨st', zs', LA', ?_⟩, by omega, by omega, hl', fun a ha => ⟨(ro a ha).1.trans (I.ro a ha).1, (ro a ha).2.trans (I.ro a ha).2⟩,
+  refine ⟨.inl hi, h1, hinv, ⟨st', zs', LA', ?_⟩, by omega, by omega, hl', fun a ha => ⟨(ro a ha).1.trans (I.ro a ha).1, (ro a ha).2.trans (I.ro a ha).2⟩,
     fun a h0 h => (stab a h0 h).trans (I.stab a h0 h)⟩
   rw [hz', ← hz, List.any_cons, Bool.or_assoc]
 
@@ -151,7 +152,7 @@ theorem il_loop {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasC
     have hpk : s.μ.readN (sp + 312) 32 = μ₀.readN (sp + 312) 32 :=
       Memory.readN_congr fun j hj => I.stab _ (by omega) (by unfold StableKeep; omega)
     have B1 := il_body_ck (P := P) env B hL hR hH hP hE hO cap hcap1 hcap hAb1 hAb2 hAbX Inv hIst hIfit s st sp item
-      kc xs rs zs I.hi I.h1 hs8 LA I.hal hk1 hjt' hjr' hinvS hitem'
+      kc xs rs zs (I.hi.imp_right fun h => ⟨h.1, h.2.1⟩) I.h1 hs8 LA I.hal hk1 hjt' hjr' hinvS hitem'
       (by rw [← mkc]; exact Memory.readN_congr fun j hj => (I.ro _ (by omega)).1) hkc
       (by rw [← ht8]; exact rdN_frame fun j hj => (I.ro _ (by omega)).1)
       (by rw [← ht4]; exact rdN_frame fun j hj => (I.ro _ (by omega)).1)
@@ -161,7 +162,7 @@ theorem il_loop {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasC
     exact Impl.mono_post (fun r s' h => post zs (by simp [isZomb]) r s' h) _ _ B2
   · rw [hother x rs hx]
     refine Impl.bind _ _ _ _ ?_
-    have B1 := il_body (P := P) env B hL hR hH hP hAbX s st sp x xs rs zs I.hi I.h1 hs8 LA I.hal hk1 hjt' hjr' hfit
+    have B1 := il_body (P := P) env B hL hR hH hP hAbX s st sp x xs rs zs (I.hi.imp_right fun h => ⟨h.1, h.2.1⟩) I.h1 hs8 LA I.hal hk1 hjt' hjr' hfit
       (fun h => hx (idx15 h))
     have B2 := Impl.inv (fun _ => True) Inv (fun o c c₁ b _ => hIst o c c₁ b) _ _ (Prog.all_true _) hinvS B1
     exact Impl.mono_post (fun r s' h => post _ (by rw [idx3]) r s' h) _ _ B2

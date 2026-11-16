@@ -65,7 +65,7 @@ variable {X : Type}
 theorem sw_head {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env : HeapHost X) (cap : Nat)
     (hcap1 : 134217728 ≤ cap) (hcap : cap < 18446744073709551616) (x : X) (ω : Regs) (μ : Memory) {hb : Nat}
     (st : State) (sp c kc pb S0 S1 : Nat) (H : HeapCtxC env.code pb S0 S1 μ st)
-    (h1 : ω[1] = UInt64.ofNat sp) (h5 : ω[5] = UInt64.ofNat c) (hc : c < 2 ^ 32)
+    (h1 : ω[1] = UInt64.ofNat sp) (h5 : ω[5] = UInt64.ofNat c) (hc : c < 2 ^ 64)
     (hsp : 2147483648 + 352 ≤ sp ∧ sp % 8 = 0) (hS0 : S0 + 352 ≤ sp) (hS1 : sp + 1632 ≤ S1)
     (mc : μ.readN 68688 8 = Num.encodeLE 8 kc) (hkc : 5 ≤ kc ∧ kc + 31 < 68719476736)
     (hrt : ∀ a, 68688 ≤ a → a < 68696 → μ.readable a = true) :
@@ -466,14 +466,14 @@ def SwPost (code : ByteArray) (pb S0 S1 sp c C I : Nat) (st : State) (μ₀ : Me
     `Ok` ends in `SwPost` (8326, the new counter in ω₇); FULL ends ☇ at 15361, as `orPanic` does.
     Hypotheses: the key-size word kc for tag 1 at 68688 (5 ≤ kc, kc + 31 < 2³⁶) and `set`'s
     error-table entries at 69056 and 69072, read-only data, readable; the stack frame
-    [sp − 352, sp + 1632); the counter c < 2³²; `ParamStatics μ C I` and `RingFits C I` (0 < 2·𝖢·𝖨 < 2³²);
+    [sp − 352, sp + 1632); the counter's register value c < 2⁶⁴ (the keys and the new counter use c mod 2³²); `ParamStatics μ C I` and `RingFits C I` (0 < 2·𝖢·𝖨 < 2³²);
     the old value under ℰ(`recent c`) shorter than 2⁶³ octets (`ValuesFit`). -/
 theorem slot_write {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env : AccEnv) (cap : Nat)
     (hcap1 : 134217728 ≤ cap) (hcap : cap < 18446744073709551616)
     (Ab : St Stream → Prop) (hAb1 : ∀ s : St Stream, s.i = 32584 → Ab s)
     (hAb2 : ∀ s : St Stream, s.i = 34070 → Ab s)
     (s : St Stream) (st : State) (sp c kc C I pb S0 S1 : Nat) (H : HeapCtxC env.code pb S0 S1 s.μ st)
-    (hi : s.i = 8172) (h1 : s.ω[1] = UInt64.ofNat sp) (h5 : s.ω[5] = UInt64.ofNat c) (hc : c < 2 ^ 32)
+    (hi : s.i = 8172) (h1 : s.ω[1] = UInt64.ofNat sp) (h5 : s.ω[5] = UInt64.ofNat c) (hc : c < 2 ^ 64)
     (hsp : 2147483648 + 352 ≤ sp ∧ sp % 8 = 0) (hS0 : S0 + 352 ≤ sp) (hS1 : sp + 1632 ≤ S1)
     (mc : s.μ.readN 68688 8 = Num.encodeLE 8 kc) (hkc : 5 ≤ kc ∧ kc + 31 < 68719476736)
     (ht8 : rdN s.μ 69072 4 = 4294900408) (ht4 : rdN s.μ 69056 4 = 4294900402)

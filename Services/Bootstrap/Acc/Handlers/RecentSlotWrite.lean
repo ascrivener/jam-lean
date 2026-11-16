@@ -403,11 +403,11 @@ theorem sw_ok1 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X
     all_goals try rd_simp []
     all_goals try rfl
 
-/-- **8312 … 8323**: ω₇ = w with w mod 2³² ≠ 0, so no trap; ω₅ := c + 1 and ω₇ := ((c + 1) mod 2³²)
-    mod (w mod 2³²) in its low 32 bits (`remU32`). -/
+/-- **8312 … 8323**: ω₇ = w with w mod 2³² ≠ 0, so no trap; ω₅ := c + 1 (64-bit) and ω₇ :=
+    ((c + 1) mod 2³²) mod (w mod 2³²) in its low 32 bits (`remU32`). -/
 theorem sw_ok2 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
     (μ : Memory) (c w : Nat) (h5 : ω[5] = UInt64.ofNat c) (h7 : ω[7] = UInt64.ofNat w)
-    (hc : c < 2 ^ 32) (hw : w < 2 ^ 64) (hw0 : w % 4294967296 ≠ 0) :
+    (hc : c < 2 ^ 64) (hw : w < 2 ^ 64) (hw0 : w % 4294967296 ≠ 0) :
     ∃ ω', FreeStepsH p R 8312 ω μ x 8326 ω' μ x 4 ∧ ω'[1] = ω[1] ∧
       ω'[7].toNat % 4294967296 = (c + 1) % 4294967296 % (w % 4294967296) := by
   have hw0' : w % 18446744073709551616 ≠ 0 := by rw [Nat.mod_eq_of_lt hw]; omega
@@ -419,7 +419,9 @@ theorem sw_ok2 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X
     · simp [PVM.getElem_regsNF, PVM.lookup_cons_nat]
     · have hy : (c + 1) % 4294967296 % (w % 4294967296) < 4294967296 :=
         Nat.lt_of_le_of_lt (Nat.mod_le _ _) (Nat.mod_lt _ (by decide))
-      simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h7, Num.sext, Nat.mod_eq_of_lt hw]
+      have hm : (c + 1) % 18446744073709551616 % 4294967296 = (c + 1) % 4294967296 :=
+        Nat.mod_mod_of_dvd _ (by decide)
+      simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h7, Num.sext, Nat.mod_eq_of_lt hw, hm]
       generalize (c + 1) % 4294967296 % (w % 4294967296) = y at hy ⊢
       omega
 

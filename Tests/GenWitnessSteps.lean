@@ -248,7 +248,7 @@ def bootstrapSvc : Svc where
   -- collect loop (30766), the SDK's import-segment `fetch` (44677) and `foreign_historical_lookup` (49015)
   fnRangesR := [(4046, 6378), (30766, 30977), (44677, 44916), (49015, 49201)]
   tiers := [
-    { name := "T1B", ranges := [(29176, 29675)], excludes := ["X", "R"],
+    { name := "T1B", ranges := [(29181, 29675)], excludes := ["X", "R"],
       doc := "refine's output drop (drop_in_place::<[Instruction]>): the heap variants' drop arms" }]
   -- accumulate (`Services/Bootstrap/Acc/README.md`, tier A): the entry 6378 … 15368, the inputs fetch
   -- and `AccumulateItem` decode, `BootstrapWorkOutput::decode`, the ring and results helpers, the

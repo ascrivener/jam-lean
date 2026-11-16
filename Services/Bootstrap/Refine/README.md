@@ -76,7 +76,7 @@ proved up to the composition with `PInv`. All files build, axioms clean.
 - Next for C: the step 5042 → 5042 for an eager `Lookup` on `PInv`. It needs `PInv` to carry the chunks owned by
   output slots (the preimage's buffer), with their data, as part B does for the heap kinds: do it together with B.
 - Notes from the previous instance (part B): a new append-only code-fact tier "T1B" (approved; `Tests/GenWitnessSteps.lean`,
-  `bootstrapSvc` after `fnRangesR`: `tiers := [{ name := "T1B", ranges := [(29176, 29675)], excludes := ["X", "R"], doc
+  `bootstrapSvc` after `fnRangesR`: `tiers := [{ name := "T1B", ranges := [(29181, 29675)], excludes := ["X", "R"], doc
   := "refine's output drop (drop_in_place::<[Instruction]>): the heap variants' drop arms" }]`). Drop arms: jump entries
   679 → 29270 (DeleteItems, 5), 685 → 29476 (Imported, 19); the drop table at 67760 maps index t to entry
   (67760 + offset_t)/2 − 1. The encoder with growth needs H arms for every fixed kind (`ArmsHFixed` etc.). `LayLMH`

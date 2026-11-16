@@ -22,797 +22,789 @@ open PVM
 
 /-- Code facts, chunk 0. -/
 def facts_0 : List CodeFact := [
-  .blockStart 29162 true]
-
-/-- Code facts, chunk 1. -/
-def facts_1 : List CodeFact := [
-  .block 29162 29181]
-
-/-- Code facts, chunk 2. -/
-def facts_2 : List CodeFact := [
-  .instr 29176 (.twoImm (.storeImmU32) 18446744071917317637 0) 29181,
+  .blockStart 29162 true,
   .blockStart 29181 true,
   .instr 29241 (.twoRegImm (.loadIndU64) 7 1 48) 29244]
 
-/-- Code facts, chunk 3. -/
-def facts_3 : List CodeFact := [
+/-- Code facts, chunk 1. -/
+def facts_1 : List CodeFact := [
   .block 29241 29250]
 
-/-- Code facts, chunk 4. -/
-def facts_4 : List CodeFact := [
+/-- Code facts, chunk 2. -/
+def facts_2 : List CodeFact := [
   .blockStart 29241 true,
   .blockStart 29244 false,
   .instr 29244 (.twoRegImm (.loadIndU64) 8 7 8) 29247]
 
-/-- Code facts, chunk 5. -/
-def facts_5 : List CodeFact := [
+/-- Code facts, chunk 3. -/
+def facts_3 : List CodeFact := [
   .blockStart 29247 false,
   .instr 29247 (.regImmOffset (.branchEqImm) 8 0 29181) 29250,
   .blockStart 29250 true]
 
-/-- Code facts, chunk 6. -/
-def facts_6 : List CodeFact := [
+/-- Code facts, chunk 4. -/
+def facts_4 : List CodeFact := [
   .instr 29250 (.noArgs (.unlikely)) 29251]
 
-/-- Code facts, chunk 7. -/
-def facts_7 : List CodeFact := [
+/-- Code facts, chunk 5. -/
+def facts_5 : List CodeFact := [
   .block 29250 29270]
 
-/-- Code facts, chunk 8. -/
-def facts_8 : List CodeFact := [
+/-- Code facts, chunk 6. -/
+def facts_6 : List CodeFact := [
   .blockStart 29251 false,
   .instr 29251 (.twoRegImm (.loadIndU64) 7 1 48) 29254,
   .blockStart 29254 false]
 
-/-- Code facts, chunk 9. -/
-def facts_9 : List CodeFact := [
+/-- Code facts, chunk 7. -/
+def facts_7 : List CodeFact := [
   .instr 29254 (.twoRegImm (.loadIndU64) 7 7 16) 29257,
   .blockStart 29257 false,
   .instr 29257 (.twoRegImm (.shloLImm64) 8 8 4) 29260]
 
-/-- Code facts, chunk 10. -/
-def facts_10 : List CodeFact := [
+/-- Code facts, chunk 8. -/
+def facts_8 : List CodeFact := [
   .blockStart 29260 false,
   .instr 29260 (.regImm (.loadImm) 9 8) 29263,
   .blockStart 29263 false]
 
-/-- Code facts, chunk 11. -/
-def facts_11 : List CodeFact := [
+/-- Code facts, chunk 9. -/
+def facts_9 : List CodeFact := [
   .instr 29263 (.regImm (.loadImm) 0 1356) 29267,
   .blockStart 29267 false,
   .instr 29267 (.oneOffset (.jump) 40613) 29270]
 
-/-- Code facts, chunk 12. -/
-def facts_12 : List CodeFact := [
+/-- Code facts, chunk 10. -/
+def facts_10 : List CodeFact := [
   .blockStart 29270 true,
   .instr 29270 (.twoRegImm (.loadIndU64) 7 1 48) 29273]
 
-/-- Code facts, chunk 13. -/
-def facts_13 : List CodeFact := [
+/-- Code facts, chunk 11. -/
+def facts_11 : List CodeFact := [
   .block 29270 29280]
 
-/-- Code facts, chunk 14. -/
-def facts_14 : List CodeFact := [
+/-- Code facts, chunk 12. -/
+def facts_12 : List CodeFact := [
   .blockStart 29273 false,
   .instr 29273 (.twoRegImm (.loadIndU64) 7 7 24) 29276,
   .blockStart 29276 false]
 
-/-- Code facts, chunk 15. -/
-def facts_15 : List CodeFact := [
+/-- Code facts, chunk 13. -/
+def facts_13 : List CodeFact := [
   .instr 29276 (.regImmOffset (.branchEqImm) 7 0 29542) 29280,
   .blockStart 29280 true,
   .instr 29280 (.noArgs (.unlikely)) 29281]
 
-/-- Code facts, chunk 16. -/
-def facts_16 : List CodeFact := [
+/-- Code facts, chunk 14. -/
+def facts_14 : List CodeFact := [
   .block 29280 29307]
 
-/-- Code facts, chunk 17. -/
-def facts_17 : List CodeFact := [
+/-- Code facts, chunk 15. -/
+def facts_15 : List CodeFact := [
   .blockStart 29281 false,
   .instr 29281 (.twoRegImm (.loadIndU64) 8 1 48) 29284,
   .blockStart 29284 false]
 
-/-- Code facts, chunk 18. -/
-def facts_18 : List CodeFact := [
+/-- Code facts, chunk 16. -/
+def facts_16 : List CodeFact := [
   .instr 29284 (.twoRegImm (.loadIndU64) 5 8 16) 29287,
   .blockStart 29287 false,
   .instr 29287 (.twoRegImm (.shloLImm64) 8 7 3) 29290]
 
-/-- Code facts, chunk 19. -/
-def facts_19 : List CodeFact := [
+/-- Code facts, chunk 17. -/
+def facts_17 : List CodeFact := [
   .blockStart 29290 false,
   .instr 29290 (.twoRegImm (.shloLImm64) 7 7 4) 29293,
   .blockStart 29293 false]
 
-/-- Code facts, chunk 20. -/
-def facts_20 : List CodeFact := [
+/-- Code facts, chunk 18. -/
+def facts_18 : List CodeFact := [
   .instr 29293 (.twoRegImm (.addImm64) 5 5 8) 29296,
   .blockStart 29296 false,
   .instr 29296 (.threeReg (.add64) 7 8 7) 29299]
 
-/-- Code facts, chunk 21. -/
-def facts_21 : List CodeFact := [
+/-- Code facts, chunk 19. -/
+def facts_19 : List CodeFact := [
   .blockStart 29299 false,
   .instr 29299 (.threeReg (.add64) 7 5 7) 29302,
   .blockStart 29302 false]
 
-/-- Code facts, chunk 22. -/
-def facts_22 : List CodeFact := [
+/-- Code facts, chunk 20. -/
+def facts_20 : List CodeFact := [
   .instr 29302 (.twoRegImm (.storeIndU64) 7 1 8) 29305,
   .blockStart 29305 false,
   .instr 29305 (.oneOffset (.jump) 29318) 29307]
 
-/-- Code facts, chunk 23. -/
-def facts_23 : List CodeFact := [
+/-- Code facts, chunk 21. -/
+def facts_21 : List CodeFact := [
   .blockStart 29307 true,
   .instr 29307 (.noArgs (.unlikely)) 29308]
 
-/-- Code facts, chunk 24. -/
-def facts_24 : List CodeFact := [
+/-- Code facts, chunk 22. -/
+def facts_22 : List CodeFact := [
   .block 29307 29318]
 
-/-- Code facts, chunk 25. -/
-def facts_25 : List CodeFact := [
+/-- Code facts, chunk 23. -/
+def facts_23 : List CodeFact := [
   .blockStart 29308 false,
   .instr 29308 (.twoRegImm (.addImm64) 5 5 24) 29311,
   .blockStart 29311 false]
 
-/-- Code facts, chunk 26. -/
-def facts_26 : List CodeFact := [
+/-- Code facts, chunk 24. -/
+def facts_24 : List CodeFact := [
   .instr 29311 (.twoRegImm (.loadIndU64) 7 1 8) 29314,
   .blockStart 29314 false,
   .instr 29314 (.twoRegOffset (.branchEq) 5 7 29542) 29318]
 
-/-- Code facts, chunk 27. -/
-def facts_27 : List CodeFact := [
+/-- Code facts, chunk 25. -/
+def facts_25 : List CodeFact := [
   .blockStart 29318 true,
   .instr 29318 (.noArgs (.unlikely)) 29319]
 
-/-- Code facts, chunk 28. -/
-def facts_28 : List CodeFact := [
+/-- Code facts, chunk 26. -/
+def facts_26 : List CodeFact := [
   .block 29318 29325]
 
-/-- Code facts, chunk 29. -/
-def facts_29 : List CodeFact := [
+/-- Code facts, chunk 27. -/
+def facts_27 : List CodeFact := [
   .blockStart 29319 false,
   .instr 29319 (.twoRegImm (.loadIndU64) 8 5 18446744073709551608) 29322,
   .blockStart 29322 false]
 
-/-- Code facts, chunk 30. -/
-def facts_30 : List CodeFact := [
+/-- Code facts, chunk 28. -/
+def facts_28 : List CodeFact := [
   .instr 29322 (.regImmOffset (.branchEqImm) 8 0 29307) 29325,
   .blockStart 29325 true,
   .instr 29325 (.twoRegImm (.loadIndU64) 7 5 0) 29327]
 
-/-- Code facts, chunk 31. -/
-def facts_31 : List CodeFact := [
+/-- Code facts, chunk 29. -/
+def facts_29 : List CodeFact := [
   .block 29325 29336]
 
-/-- Code facts, chunk 32. -/
-def facts_32 : List CodeFact := [
+/-- Code facts, chunk 30. -/
+def facts_30 : List CodeFact := [
   .blockStart 29327 false,
   .instr 29327 (.regImm (.loadImm) 9 1) 29330,
   .blockStart 29330 false]
 
-/-- Code facts, chunk 33. -/
-def facts_33 : List CodeFact := [
+/-- Code facts, chunk 31. -/
+def facts_31 : List CodeFact := [
   .instr 29330 (.regImmOffset (.loadImmJump) 0 1362 40613) 29336,
   .blockStart 29336 true,
   .instr 29336 (.oneOffset (.jump) 29307) 29338]
 
-/-- Code facts, chunk 34. -/
-def facts_34 : List CodeFact := [
+/-- Code facts, chunk 32. -/
+def facts_32 : List CodeFact := [
   .block 29336 29338]
 
-/-- Code facts, chunk 35. -/
-def facts_35 : List CodeFact := [
+/-- Code facts, chunk 33. -/
+def facts_33 : List CodeFact := [
   .blockStart 29338 true,
   .instr 29338 (.twoRegImm (.loadIndU64) 7 1 48) 29341]
 
-/-- Code facts, chunk 36. -/
-def facts_36 : List CodeFact := [
+/-- Code facts, chunk 34. -/
+def facts_34 : List CodeFact := [
   .block 29338 29348]
 
-/-- Code facts, chunk 37. -/
-def facts_37 : List CodeFact := [
+/-- Code facts, chunk 35. -/
+def facts_35 : List CodeFact := [
   .blockStart 29341 false,
   .instr 29341 (.twoRegImm (.loadIndU8) 7 7 8) 29344,
   .blockStart 29344 false]
 
-/-- Code facts, chunk 38. -/
-def facts_38 : List CodeFact := [
+/-- Code facts, chunk 36. -/
+def facts_36 : List CodeFact := [
   .instr 29344 (.regImmOffset (.branchEqImm) 7 0 29181) 29348,
   .blockStart 29348 true,
   .instr 29348 (.noArgs (.unlikely)) 29349]
 
-/-- Code facts, chunk 39. -/
-def facts_39 : List CodeFact := [
+/-- Code facts, chunk 37. -/
+def facts_37 : List CodeFact := [
   .block 29348 29359]
 
-/-- Code facts, chunk 40. -/
-def facts_40 : List CodeFact := [
+/-- Code facts, chunk 38. -/
+def facts_38 : List CodeFact := [
   .blockStart 29349 false,
   .instr 29349 (.twoRegImm (.loadIndU64) 7 1 48) 29352,
   .blockStart 29352 false]
 
-/-- Code facts, chunk 41. -/
-def facts_41 : List CodeFact := [
+/-- Code facts, chunk 39. -/
+def facts_39 : List CodeFact := [
   .instr 29352 (.twoRegImm (.loadIndU64) 8 7 16) 29355,
   .blockStart 29355 false,
   .instr 29355 (.regImmOffset (.branchEqImm) 8 0 29181) 29359]
 
-/-- Code facts, chunk 42. -/
-def facts_42 : List CodeFact := [
+/-- Code facts, chunk 40. -/
+def facts_40 : List CodeFact := [
   .blockStart 29359 true,
   .instr 29359 (.noArgs (.unlikely)) 29360]
 
-/-- Code facts, chunk 43. -/
-def facts_43 : List CodeFact := [
+/-- Code facts, chunk 41. -/
+def facts_41 : List CodeFact := [
   .block 29359 29376]
 
-/-- Code facts, chunk 44. -/
-def facts_44 : List CodeFact := [
+/-- Code facts, chunk 42. -/
+def facts_42 : List CodeFact := [
   .blockStart 29360 false,
   .instr 29360 (.twoRegImm (.loadIndU64) 7 1 48) 29363,
   .blockStart 29363 false]
 
-/-- Code facts, chunk 45. -/
-def facts_45 : List CodeFact := [
+/-- Code facts, chunk 43. -/
+def facts_43 : List CodeFact := [
   .instr 29363 (.twoRegImm (.loadIndU64) 7 7 24) 29366,
   .blockStart 29366 false,
   .instr 29366 (.regImm (.loadImm) 9 1) 29369]
 
-/-- Code facts, chunk 46. -/
-def facts_46 : List CodeFact := [
+/-- Code facts, chunk 44. -/
+def facts_44 : List CodeFact := [
   .blockStart 29369 false,
   .instr 29369 (.regImm (.loadImm) 0 1356) 29373,
   .blockStart 29373 false]
 
-/-- Code facts, chunk 47. -/
-def facts_47 : List CodeFact := [
+/-- Code facts, chunk 45. -/
+def facts_45 : List CodeFact := [
   .instr 29373 (.oneOffset (.jump) 40613) 29376,
   .blockStart 29376 true,
   .instr 29376 (.twoRegImm (.loadIndU64) 7 1 48) 29379]
 
-/-- Code facts, chunk 48. -/
-def facts_48 : List CodeFact := [
+/-- Code facts, chunk 46. -/
+def facts_46 : List CodeFact := [
   .block 29376 29389]
 
-/-- Code facts, chunk 49. -/
-def facts_49 : List CodeFact := [
+/-- Code facts, chunk 47. -/
+def facts_47 : List CodeFact := [
   .blockStart 29379 false,
   .instr 29379 (.twoRegImm (.loadIndU64) 8 7 8) 29382,
   .blockStart 29382 false]
 
-/-- Code facts, chunk 50. -/
-def facts_50 : List CodeFact := [
+/-- Code facts, chunk 48. -/
+def facts_48 : List CodeFact := [
   .instr 29382 (.regImm (.loadImm) 7 18446744073709551615) 29385,
   .blockStart 29385 false,
   .instr 29385 (.twoRegOffset (.branchEq) 8 7 29181) 29389]
 
-/-- Code facts, chunk 51. -/
-def facts_51 : List CodeFact := [
+/-- Code facts, chunk 49. -/
+def facts_49 : List CodeFact := [
   .blockStart 29389 true,
   .instr 29389 (.regImmOffset (.branchEqImm) 8 0 29181) 29393]
 
-/-- Code facts, chunk 52. -/
-def facts_52 : List CodeFact := [
+/-- Code facts, chunk 50. -/
+def facts_50 : List CodeFact := [
   .block 29389 29393]
 
-/-- Code facts, chunk 53. -/
-def facts_53 : List CodeFact := [
+/-- Code facts, chunk 51. -/
+def facts_51 : List CodeFact := [
   .blockStart 29393 true,
   .instr 29393 (.noArgs (.unlikely)) 29394]
 
-/-- Code facts, chunk 54. -/
-def facts_54 : List CodeFact := [
+/-- Code facts, chunk 52. -/
+def facts_52 : List CodeFact := [
   .block 29393 29410]
 
-/-- Code facts, chunk 55. -/
-def facts_55 : List CodeFact := [
+/-- Code facts, chunk 53. -/
+def facts_53 : List CodeFact := [
   .blockStart 29394 false,
   .instr 29394 (.twoRegImm (.loadIndU64) 7 1 48) 29397,
   .blockStart 29397 false]
 
-/-- Code facts, chunk 56. -/
-def facts_56 : List CodeFact := [
+/-- Code facts, chunk 54. -/
+def facts_54 : List CodeFact := [
   .instr 29397 (.twoRegImm (.loadIndU64) 7 7 16) 29400,
   .blockStart 29400 false,
   .instr 29400 (.regImm (.loadImm) 9 1) 29403]
 
-/-- Code facts, chunk 57. -/
-def facts_57 : List CodeFact := [
+/-- Code facts, chunk 55. -/
+def facts_55 : List CodeFact := [
   .blockStart 29403 false,
   .instr 29403 (.regImm (.loadImm) 0 1356) 29407,
   .blockStart 29407 false]
 
-/-- Code facts, chunk 58. -/
-def facts_58 : List CodeFact := [
+/-- Code facts, chunk 56. -/
+def facts_56 : List CodeFact := [
   .instr 29407 (.oneOffset (.jump) 40613) 29410,
   .blockStart 29410 true,
   .instr 29410 (.twoRegImm (.loadIndU64) 7 1 48) 29413]
 
-/-- Code facts, chunk 59. -/
-def facts_59 : List CodeFact := [
+/-- Code facts, chunk 57. -/
+def facts_57 : List CodeFact := [
   .block 29410 29419]
 
-/-- Code facts, chunk 60. -/
-def facts_60 : List CodeFact := [
+/-- Code facts, chunk 58. -/
+def facts_58 : List CodeFact := [
   .blockStart 29413 false,
   .instr 29413 (.twoRegImm (.loadIndU64) 7 7 24) 29416,
   .blockStart 29416 false]
 
-/-- Code facts, chunk 61. -/
-def facts_61 : List CodeFact := [
+/-- Code facts, chunk 59. -/
+def facts_59 : List CodeFact := [
   .instr 29416 (.regImmOffset (.branchEqImm) 7 0 29542) 29419,
   .blockStart 29419 true,
   .instr 29419 (.noArgs (.unlikely)) 29420]
 
-/-- Code facts, chunk 62. -/
-def facts_62 : List CodeFact := [
+/-- Code facts, chunk 60. -/
+def facts_60 : List CodeFact := [
   .block 29419 29446]
 
-/-- Code facts, chunk 63. -/
-def facts_63 : List CodeFact := [
+/-- Code facts, chunk 61. -/
+def facts_61 : List CodeFact := [
   .blockStart 29420 false,
   .instr 29420 (.twoRegImm (.loadIndU64) 8 1 48) 29423,
   .blockStart 29423 false]
 
-/-- Code facts, chunk 64. -/
-def facts_64 : List CodeFact := [
+/-- Code facts, chunk 62. -/
+def facts_62 : List CodeFact := [
   .instr 29423 (.twoRegImm (.loadIndU64) 5 8 16) 29426,
   .blockStart 29426 false,
   .instr 29426 (.twoRegImm (.shloLImm64) 8 7 3) 29429]
 
-/-- Code facts, chunk 65. -/
-def facts_65 : List CodeFact := [
+/-- Code facts, chunk 63. -/
+def facts_63 : List CodeFact := [
   .blockStart 29429 false,
   .instr 29429 (.twoRegImm (.shloLImm64) 7 7 4) 29432,
   .blockStart 29432 false]
 
-/-- Code facts, chunk 66. -/
-def facts_66 : List CodeFact := [
+/-- Code facts, chunk 64. -/
+def facts_64 : List CodeFact := [
   .instr 29432 (.twoRegImm (.addImm64) 5 5 8) 29435,
   .blockStart 29435 false,
   .instr 29435 (.threeReg (.add64) 7 8 7) 29438]
 
-/-- Code facts, chunk 67. -/
-def facts_67 : List CodeFact := [
+/-- Code facts, chunk 65. -/
+def facts_65 : List CodeFact := [
   .blockStart 29438 false,
   .instr 29438 (.threeReg (.add64) 7 5 7) 29441,
   .blockStart 29441 false]
 
-/-- Code facts, chunk 68. -/
-def facts_68 : List CodeFact := [
+/-- Code facts, chunk 66. -/
+def facts_66 : List CodeFact := [
   .instr 29441 (.twoRegImm (.storeIndU64) 7 1 8) 29444,
   .blockStart 29444 false,
   .instr 29444 (.oneOffset (.jump) 29456) 29446]
 
-/-- Code facts, chunk 69. -/
-def facts_69 : List CodeFact := [
+/-- Code facts, chunk 67. -/
+def facts_67 : List CodeFact := [
   .blockStart 29446 true,
   .instr 29446 (.noArgs (.unlikely)) 29447]
 
-/-- Code facts, chunk 70. -/
-def facts_70 : List CodeFact := [
+/-- Code facts, chunk 68. -/
+def facts_68 : List CodeFact := [
   .block 29446 29456]
 
-/-- Code facts, chunk 71. -/
-def facts_71 : List CodeFact := [
+/-- Code facts, chunk 69. -/
+def facts_69 : List CodeFact := [
   .blockStart 29447 false,
   .instr 29447 (.twoRegImm (.addImm64) 5 5 24) 29450,
   .blockStart 29450 false]
 
-/-- Code facts, chunk 72. -/
-def facts_72 : List CodeFact := [
+/-- Code facts, chunk 70. -/
+def facts_70 : List CodeFact := [
   .instr 29450 (.twoRegImm (.loadIndU64) 7 1 8) 29453,
   .blockStart 29453 false,
   .instr 29453 (.twoRegOffset (.branchEq) 5 7 29542) 29456]
 
-/-- Code facts, chunk 73. -/
-def facts_73 : List CodeFact := [
+/-- Code facts, chunk 71. -/
+def facts_71 : List CodeFact := [
   .blockStart 29456 true,
   .instr 29456 (.noArgs (.unlikely)) 29457]
 
-/-- Code facts, chunk 74. -/
-def facts_74 : List CodeFact := [
+/-- Code facts, chunk 72. -/
+def facts_72 : List CodeFact := [
   .block 29456 29463]
 
-/-- Code facts, chunk 75. -/
-def facts_75 : List CodeFact := [
+/-- Code facts, chunk 73. -/
+def facts_73 : List CodeFact := [
   .blockStart 29457 false,
   .instr 29457 (.twoRegImm (.loadIndU64) 8 5 18446744073709551608) 29460,
   .blockStart 29460 false]
 
-/-- Code facts, chunk 76. -/
-def facts_76 : List CodeFact := [
+/-- Code facts, chunk 74. -/
+def facts_74 : List CodeFact := [
   .instr 29460 (.regImmOffset (.branchEqImm) 8 0 29446) 29463,
   .blockStart 29463 true,
   .instr 29463 (.twoRegImm (.loadIndU64) 7 5 0) 29465]
 
-/-- Code facts, chunk 77. -/
-def facts_77 : List CodeFact := [
+/-- Code facts, chunk 75. -/
+def facts_75 : List CodeFact := [
   .block 29463 29474]
 
-/-- Code facts, chunk 78. -/
-def facts_78 : List CodeFact := [
+/-- Code facts, chunk 76. -/
+def facts_76 : List CodeFact := [
   .blockStart 29465 false,
   .instr 29465 (.regImm (.loadImm) 9 1) 29468,
   .blockStart 29468 false]
 
-/-- Code facts, chunk 79. -/
-def facts_79 : List CodeFact := [
+/-- Code facts, chunk 77. -/
+def facts_77 : List CodeFact := [
   .instr 29468 (.regImmOffset (.loadImmJump) 0 1370 40613) 29474,
   .blockStart 29474 true,
   .instr 29474 (.oneOffset (.jump) 29446) 29476]
 
-/-- Code facts, chunk 80. -/
-def facts_80 : List CodeFact := [
+/-- Code facts, chunk 78. -/
+def facts_78 : List CodeFact := [
   .block 29474 29476]
 
-/-- Code facts, chunk 81. -/
-def facts_81 : List CodeFact := [
+/-- Code facts, chunk 79. -/
+def facts_79 : List CodeFact := [
   .blockStart 29476 true,
   .instr 29476 (.twoRegImm (.loadIndU64) 7 1 48) 29479]
 
-/-- Code facts, chunk 82. -/
-def facts_82 : List CodeFact := [
+/-- Code facts, chunk 80. -/
+def facts_80 : List CodeFact := [
   .block 29476 29485]
 
-/-- Code facts, chunk 83. -/
-def facts_83 : List CodeFact := [
+/-- Code facts, chunk 81. -/
+def facts_81 : List CodeFact := [
   .blockStart 29479 false,
   .instr 29479 (.twoRegImm (.loadIndU64) 7 7 24) 29482,
   .blockStart 29482 false]
 
-/-- Code facts, chunk 84. -/
-def facts_84 : List CodeFact := [
+/-- Code facts, chunk 82. -/
+def facts_82 : List CodeFact := [
   .instr 29482 (.regImmOffset (.branchEqImm) 7 0 29542) 29485,
   .blockStart 29485 true,
   .instr 29485 (.noArgs (.unlikely)) 29486]
 
-/-- Code facts, chunk 85. -/
-def facts_85 : List CodeFact := [
+/-- Code facts, chunk 83. -/
+def facts_83 : List CodeFact := [
   .block 29485 29512]
 
-/-- Code facts, chunk 86. -/
-def facts_86 : List CodeFact := [
+/-- Code facts, chunk 84. -/
+def facts_84 : List CodeFact := [
   .blockStart 29486 false,
   .instr 29486 (.twoRegImm (.loadIndU64) 8 1 48) 29489,
   .blockStart 29489 false]
 
-/-- Code facts, chunk 87. -/
-def facts_87 : List CodeFact := [
+/-- Code facts, chunk 85. -/
+def facts_85 : List CodeFact := [
   .instr 29489 (.twoRegImm (.loadIndU64) 5 8 16) 29492,
   .blockStart 29492 false,
   .instr 29492 (.twoRegImm (.shloLImm64) 8 7 3) 29495]
 
-/-- Code facts, chunk 88. -/
-def facts_88 : List CodeFact := [
+/-- Code facts, chunk 86. -/
+def facts_86 : List CodeFact := [
   .blockStart 29495 false,
   .instr 29495 (.twoRegImm (.shloLImm64) 7 7 4) 29498,
   .blockStart 29498 false]
 
-/-- Code facts, chunk 89. -/
-def facts_89 : List CodeFact := [
+/-- Code facts, chunk 87. -/
+def facts_87 : List CodeFact := [
   .instr 29498 (.twoRegImm (.addImm64) 5 5 8) 29501,
   .blockStart 29501 false,
   .instr 29501 (.threeReg (.add64) 7 8 7) 29504]
 
-/-- Code facts, chunk 90. -/
-def facts_90 : List CodeFact := [
+/-- Code facts, chunk 88. -/
+def facts_88 : List CodeFact := [
   .blockStart 29504 false,
   .instr 29504 (.threeReg (.add64) 7 5 7) 29507,
   .blockStart 29507 false]
 
-/-- Code facts, chunk 91. -/
-def facts_91 : List CodeFact := [
+/-- Code facts, chunk 89. -/
+def facts_89 : List CodeFact := [
   .instr 29507 (.twoRegImm (.storeIndU64) 7 1 8) 29510,
   .blockStart 29510 false,
   .instr 29510 (.oneOffset (.jump) 29522) 29512]
 
-/-- Code facts, chunk 92. -/
-def facts_92 : List CodeFact := [
+/-- Code facts, chunk 90. -/
+def facts_90 : List CodeFact := [
   .blockStart 29512 true,
   .instr 29512 (.noArgs (.unlikely)) 29513]
 
-/-- Code facts, chunk 93. -/
-def facts_93 : List CodeFact := [
+/-- Code facts, chunk 91. -/
+def facts_91 : List CodeFact := [
   .block 29512 29522]
 
-/-- Code facts, chunk 94. -/
-def facts_94 : List CodeFact := [
+/-- Code facts, chunk 92. -/
+def facts_92 : List CodeFact := [
   .blockStart 29513 false,
   .instr 29513 (.twoRegImm (.addImm64) 5 5 24) 29516,
   .blockStart 29516 false]
 
-/-- Code facts, chunk 95. -/
-def facts_95 : List CodeFact := [
+/-- Code facts, chunk 93. -/
+def facts_93 : List CodeFact := [
   .instr 29516 (.twoRegImm (.loadIndU64) 7 1 8) 29519,
   .blockStart 29519 false,
   .instr 29519 (.twoRegOffset (.branchEq) 5 7 29542) 29522]
 
-/-- Code facts, chunk 96. -/
-def facts_96 : List CodeFact := [
+/-- Code facts, chunk 94. -/
+def facts_94 : List CodeFact := [
   .blockStart 29522 true,
   .instr 29522 (.noArgs (.unlikely)) 29523]
 
-/-- Code facts, chunk 97. -/
-def facts_97 : List CodeFact := [
+/-- Code facts, chunk 95. -/
+def facts_95 : List CodeFact := [
   .block 29522 29529]
 
-/-- Code facts, chunk 98. -/
-def facts_98 : List CodeFact := [
+/-- Code facts, chunk 96. -/
+def facts_96 : List CodeFact := [
   .blockStart 29523 false,
   .instr 29523 (.twoRegImm (.loadIndU64) 8 5 18446744073709551608) 29526,
   .blockStart 29526 false]
 
-/-- Code facts, chunk 99. -/
-def facts_99 : List CodeFact := [
+/-- Code facts, chunk 97. -/
+def facts_97 : List CodeFact := [
   .instr 29526 (.regImmOffset (.branchEqImm) 8 0 29512) 29529,
   .blockStart 29529 true,
   .instr 29529 (.twoRegImm (.loadIndU64) 7 5 0) 29531]
 
-/-- Code facts, chunk 100. -/
-def facts_100 : List CodeFact := [
+/-- Code facts, chunk 98. -/
+def facts_98 : List CodeFact := [
   .block 29529 29540]
 
-/-- Code facts, chunk 101. -/
-def facts_101 : List CodeFact := [
+/-- Code facts, chunk 99. -/
+def facts_99 : List CodeFact := [
   .blockStart 29531 false,
   .instr 29531 (.regImm (.loadImm) 9 1) 29534,
   .blockStart 29534 false]
 
-/-- Code facts, chunk 102. -/
-def facts_102 : List CodeFact := [
+/-- Code facts, chunk 100. -/
+def facts_100 : List CodeFact := [
   .instr 29534 (.regImmOffset (.loadImmJump) 0 1374 40613) 29540,
   .blockStart 29540 true,
   .instr 29540 (.oneOffset (.jump) 29512) 29542]
 
-/-- Code facts, chunk 103. -/
-def facts_103 : List CodeFact := [
+/-- Code facts, chunk 101. -/
+def facts_101 : List CodeFact := [
   .block 29540 29542]
 
-/-- Code facts, chunk 104. -/
-def facts_104 : List CodeFact := [
+/-- Code facts, chunk 102. -/
+def facts_102 : List CodeFact := [
   .blockStart 29542 true,
   .instr 29542 (.noArgs (.unlikely)) 29543]
 
-/-- Code facts, chunk 105. -/
-def facts_105 : List CodeFact := [
+/-- Code facts, chunk 103. -/
+def facts_103 : List CodeFact := [
   .block 29542 29555]
 
-/-- Code facts, chunk 106. -/
-def facts_106 : List CodeFact := [
+/-- Code facts, chunk 104. -/
+def facts_104 : List CodeFact := [
   .blockStart 29543 false,
   .instr 29543 (.twoRegImm (.loadIndU64) 7 1 48) 29546,
   .blockStart 29546 false]
 
-/-- Code facts, chunk 107. -/
-def facts_107 : List CodeFact := [
+/-- Code facts, chunk 105. -/
+def facts_105 : List CodeFact := [
   .instr 29546 (.twoRegImm (.loadIndU64) 8 7 8) 29549,
   .blockStart 29549 false,
   .instr 29549 (.twoRegImm (.loadIndU64) 5 1 0) 29551]
 
-/-- Code facts, chunk 108. -/
-def facts_108 : List CodeFact := [
+/-- Code facts, chunk 106. -/
+def facts_106 : List CodeFact := [
   .blockStart 29551 false,
   .instr 29551 (.regImmOffset (.branchEqImm) 8 0 29181) 29555,
   .blockStart 29555 true]
 
-/-- Code facts, chunk 109. -/
-def facts_109 : List CodeFact := [
+/-- Code facts, chunk 107. -/
+def facts_107 : List CodeFact := [
   .instr 29555 (.noArgs (.unlikely)) 29556]
 
-/-- Code facts, chunk 110. -/
-def facts_110 : List CodeFact := [
+/-- Code facts, chunk 108. -/
+def facts_108 : List CodeFact := [
   .block 29555 29581]
 
-/-- Code facts, chunk 111. -/
-def facts_111 : List CodeFact := [
+/-- Code facts, chunk 109. -/
+def facts_109 : List CodeFact := [
   .blockStart 29556 false,
   .instr 29556 (.twoRegImm (.loadIndU64) 7 1 48) 29559,
   .blockStart 29559 false]
 
-/-- Code facts, chunk 112. -/
-def facts_112 : List CodeFact := [
+/-- Code facts, chunk 110. -/
+def facts_110 : List CodeFact := [
   .instr 29559 (.twoRegImm (.loadIndU64) 7 7 16) 29562,
   .blockStart 29562 false,
   .instr 29562 (.twoRegImm (.shloLImm64) 9 8 3) 29565]
 
-/-- Code facts, chunk 113. -/
-def facts_113 : List CodeFact := [
+/-- Code facts, chunk 111. -/
+def facts_111 : List CodeFact := [
   .blockStart 29565 false,
   .instr 29565 (.twoRegImm (.shloLImm64) 8 8 4) 29568,
   .blockStart 29568 false]
 
-/-- Code facts, chunk 114. -/
-def facts_114 : List CodeFact := [
+/-- Code facts, chunk 112. -/
+def facts_112 : List CodeFact := [
   .instr 29568 (.threeReg (.add64) 8 9 8) 29571,
   .blockStart 29571 false,
   .instr 29571 (.regImm (.loadImm) 9 8) 29574]
 
-/-- Code facts, chunk 115. -/
-def facts_115 : List CodeFact := [
+/-- Code facts, chunk 113. -/
+def facts_113 : List CodeFact := [
   .blockStart 29574 false,
   .instr 29574 (.regImm (.loadImm) 0 1356) 29578,
   .blockStart 29578 false]
 
-/-- Code facts, chunk 116. -/
-def facts_116 : List CodeFact := [
+/-- Code facts, chunk 114. -/
+def facts_114 : List CodeFact := [
   .instr 29578 (.oneOffset (.jump) 40613) 29581,
   .blockStart 29581 true,
   .instr 29581 (.regImm (.loadImm) 7 18446744073709551615) 29584]
 
-/-- Code facts, chunk 117. -/
-def facts_117 : List CodeFact := [
+/-- Code facts, chunk 115. -/
+def facts_115 : List CodeFact := [
   .block 29581 29588]
 
-/-- Code facts, chunk 118. -/
-def facts_118 : List CodeFact := [
+/-- Code facts, chunk 116. -/
+def facts_116 : List CodeFact := [
   .blockStart 29584 false,
   .instr 29584 (.twoRegOffset (.branchEq) 8 7 29181) 29588,
   .blockStart 29588 true]
 
-/-- Code facts, chunk 119. -/
-def facts_119 : List CodeFact := [
+/-- Code facts, chunk 117. -/
+def facts_117 : List CodeFact := [
   .instr 29588 (.regImmOffset (.branchEqImm) 8 0 29181) 29592]
 
-/-- Code facts, chunk 120. -/
-def facts_120 : List CodeFact := [
+/-- Code facts, chunk 118. -/
+def facts_118 : List CodeFact := [
   .block 29588 29592]
 
-/-- Code facts, chunk 121. -/
-def facts_121 : List CodeFact := [
+/-- Code facts, chunk 119. -/
+def facts_119 : List CodeFact := [
   .blockStart 29592 true,
   .instr 29592 (.noArgs (.unlikely)) 29593]
 
-/-- Code facts, chunk 122. -/
-def facts_122 : List CodeFact := [
+/-- Code facts, chunk 120. -/
+def facts_120 : List CodeFact := [
   .block 29592 29609]
 
-/-- Code facts, chunk 123. -/
-def facts_123 : List CodeFact := [
+/-- Code facts, chunk 121. -/
+def facts_121 : List CodeFact := [
   .blockStart 29593 false,
   .instr 29593 (.twoRegImm (.loadIndU64) 7 1 48) 29596,
   .blockStart 29596 false]
 
-/-- Code facts, chunk 124. -/
-def facts_124 : List CodeFact := [
+/-- Code facts, chunk 122. -/
+def facts_122 : List CodeFact := [
   .instr 29596 (.twoRegImm (.loadIndU64) 7 7 8) 29599,
   .blockStart 29599 false,
   .instr 29599 (.regImm (.loadImm) 9 1) 29602]
 
-/-- Code facts, chunk 125. -/
-def facts_125 : List CodeFact := [
+/-- Code facts, chunk 123. -/
+def facts_123 : List CodeFact := [
   .blockStart 29602 false,
   .instr 29602 (.regImm (.loadImm) 0 1356) 29606,
   .blockStart 29606 false]
 
-/-- Code facts, chunk 126. -/
-def facts_126 : List CodeFact := [
+/-- Code facts, chunk 124. -/
+def facts_124 : List CodeFact := [
   .instr 29606 (.oneOffset (.jump) 40613) 29609,
   .blockStart 29609 true,
   .instr 29609 (.twoRegImm (.loadIndU64) 7 1 48) 29612]
 
-/-- Code facts, chunk 127. -/
-def facts_127 : List CodeFact := [
+/-- Code facts, chunk 125. -/
+def facts_125 : List CodeFact := [
   .block 29609 29619]
 
-/-- Code facts, chunk 128. -/
-def facts_128 : List CodeFact := [
+/-- Code facts, chunk 126. -/
+def facts_126 : List CodeFact := [
   .blockStart 29612 false,
   .instr 29612 (.twoRegImm (.loadIndU64) 8 7 8) 29615,
   .blockStart 29615 false]
 
-/-- Code facts, chunk 129. -/
-def facts_129 : List CodeFact := [
+/-- Code facts, chunk 127. -/
+def facts_127 : List CodeFact := [
   .instr 29615 (.regImmOffset (.branchEqImm) 8 0 29181) 29619,
   .blockStart 29619 true,
   .instr 29619 (.noArgs (.unlikely)) 29620]
 
-/-- Code facts, chunk 130. -/
-def facts_130 : List CodeFact := [
+/-- Code facts, chunk 128. -/
+def facts_128 : List CodeFact := [
   .block 29619 29640]
 
-/-- Code facts, chunk 131. -/
-def facts_131 : List CodeFact := [
+/-- Code facts, chunk 129. -/
+def facts_129 : List CodeFact := [
   .blockStart 29620 false,
   .instr 29620 (.twoRegImm (.loadIndU64) 7 1 48) 29623,
   .blockStart 29623 false]
 
-/-- Code facts, chunk 132. -/
-def facts_132 : List CodeFact := [
+/-- Code facts, chunk 130. -/
+def facts_130 : List CodeFact := [
   .instr 29623 (.twoRegImm (.loadIndU64) 7 7 16) 29626,
   .blockStart 29626 false,
   .instr 29626 (.twoRegImm (.mulImm64) 8 8 336) 29630]
 
-/-- Code facts, chunk 133. -/
-def facts_133 : List CodeFact := [
+/-- Code facts, chunk 131. -/
+def facts_131 : List CodeFact := [
   .blockStart 29630 false,
   .instr 29630 (.regImm (.loadImm) 9 1) 29633,
   .blockStart 29633 false]
 
-/-- Code facts, chunk 134. -/
-def facts_134 : List CodeFact := [
+/-- Code facts, chunk 132. -/
+def facts_132 : List CodeFact := [
   .instr 29633 (.regImm (.loadImm) 0 1356) 29637,
   .blockStart 29637 false,
   .instr 29637 (.oneOffset (.jump) 40613) 29640]
 
-/-- Code facts, chunk 135. -/
-def facts_135 : List CodeFact := [
+/-- Code facts, chunk 133. -/
+def facts_133 : List CodeFact := [
   .blockStart 29640 true,
   .instr 29640 (.twoRegImm (.loadIndU64) 7 1 48) 29643]
 
-/-- Code facts, chunk 136. -/
-def facts_136 : List CodeFact := [
+/-- Code facts, chunk 134. -/
+def facts_134 : List CodeFact := [
   .block 29640 29653]
 
-/-- Code facts, chunk 137. -/
-def facts_137 : List CodeFact := [
+/-- Code facts, chunk 135. -/
+def facts_135 : List CodeFact := [
   .blockStart 29643 false,
   .instr 29643 (.twoRegImm (.loadIndU64) 8 7 8) 29646,
   .blockStart 29646 false]
 
-/-- Code facts, chunk 138. -/
-def facts_138 : List CodeFact := [
+/-- Code facts, chunk 136. -/
+def facts_136 : List CodeFact := [
   .instr 29646 (.regImm (.loadImm) 7 18446744073709551615) 29649,
   .blockStart 29649 false,
   .instr 29649 (.twoRegOffset (.branchEq) 8 7 29181) 29653]
 
-/-- Code facts, chunk 139. -/
-def facts_139 : List CodeFact := [
+/-- Code facts, chunk 137. -/
+def facts_137 : List CodeFact := [
   .blockStart 29653 true,
   .instr 29653 (.regImmOffset (.branchNeImm) 8 0 29162) 29657]
 
-/-- Code facts, chunk 140. -/
-def facts_140 : List CodeFact := [
+/-- Code facts, chunk 138. -/
+def facts_138 : List CodeFact := [
   .block 29653 29657]
 
-/-- Code facts, chunk 141. -/
-def facts_141 : List CodeFact := [
+/-- Code facts, chunk 139. -/
+def facts_139 : List CodeFact := [
   .blockStart 29657 true,
   .instr 29657 (.oneOffset (.jump) 29181) 29660]
 
+/-- Code facts, chunk 140. -/
+def facts_140 : List CodeFact := [
+  .block 29657 29660]
+
+/-- Code facts, chunk 141. -/
+def facts_141 : List CodeFact := [
+  .blockStart 29660 true]
+
 /-- Code facts, chunk 142. -/
 def facts_142 : List CodeFact := [
-  .block 29657 29660]
+  .blockStart 40613 true]
 
 /-- Code facts, chunk 143. -/
 def facts_143 : List CodeFact := [
-  .blockStart 29660 true]
-
-/-- Code facts, chunk 144. -/
-def facts_144 : List CodeFact := [
-  .blockStart 40613 true]
-
-/-- Code facts, chunk 145. -/
-def facts_145 : List CodeFact := [
   .jumpTableSize 1403,
   .jumpEntry 677 29181,
   .jumpEntry 678 29241]
 
-/-- Code facts, chunk 146. -/
-def facts_146 : List CodeFact := [
+/-- Code facts, chunk 144. -/
+def facts_144 : List CodeFact := [
   .jumpEntry 679 29270,
   .jumpEntry 680 29336,
   .jumpEntry 681 29338]
 
-/-- Code facts, chunk 147. -/
-def facts_147 : List CodeFact := [
+/-- Code facts, chunk 145. -/
+def facts_145 : List CodeFact := [
   .jumpEntry 682 29376,
   .jumpEntry 683 29410,
   .jumpEntry 684 29474]
 
-/-- Code facts, chunk 148. -/
-def facts_148 : List CodeFact := [
+/-- Code facts, chunk 146. -/
+def facts_146 : List CodeFact := [
   .jumpEntry 685 29476,
   .jumpEntry 686 29540,
   .jumpEntry 687 29581]
 
-/-- Code facts, chunk 149. -/
-def facts_149 : List CodeFact := [
+/-- Code facts, chunk 147. -/
+def facts_147 : List CodeFact := [
   .jumpEntry 688 29609,
   .jumpEntry 689 29640]
 
@@ -822,8 +814,8 @@ def factGroup_0 : List (List CodeFact) := [facts_0, facts_1, facts_2, facts_3, f
 /-- Chunks 64–127 of `facts`. -/
 def factGroup_1 : List (List CodeFact) := [facts_64, facts_65, facts_66, facts_67, facts_68, facts_69, facts_70, facts_71, facts_72, facts_73, facts_74, facts_75, facts_76, facts_77, facts_78, facts_79, facts_80, facts_81, facts_82, facts_83, facts_84, facts_85, facts_86, facts_87, facts_88, facts_89, facts_90, facts_91, facts_92, facts_93, facts_94, facts_95, facts_96, facts_97, facts_98, facts_99, facts_100, facts_101, facts_102, facts_103, facts_104, facts_105, facts_106, facts_107, facts_108, facts_109, facts_110, facts_111, facts_112, facts_113, facts_114, facts_115, facts_116, facts_117, facts_118, facts_119, facts_120, facts_121, facts_122, facts_123, facts_124, facts_125, facts_126, facts_127]
 
-/-- Chunks 128–149 of `facts`. -/
-def factGroup_2 : List (List CodeFact) := [facts_128, facts_129, facts_130, facts_131, facts_132, facts_133, facts_134, facts_135, facts_136, facts_137, facts_138, facts_139, facts_140, facts_141, facts_142, facts_143, facts_144, facts_145, facts_146, facts_147, facts_148, facts_149]
+/-- Chunks 128–147 of `facts`. -/
+def factGroup_2 : List (List CodeFact) := [facts_128, facts_129, facts_130, facts_131, facts_132, facts_133, facts_134, facts_135, facts_136, facts_137, facts_138, facts_139, facts_140, facts_141, facts_142, facts_143, facts_144, facts_145, facts_146, facts_147]
 
 /-- The groups of chunks of `facts`. -/
 def factGroups : List (List (List CodeFact)) := [factGroup_0, factGroup_1, factGroup_2]

@@ -182,7 +182,7 @@ theorem il_copy2 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x :
     (hw : ∀ a, sp + 504 ≤ a → a < sp + 512 → μ.writable a = true)
     (hw2 : ∀ a, sp + 736 ≤ a → a < sp + 752 → μ.writable a = true) :
     ∃ ω' μ', FreeStepsH p R 8589 ω μ x 68729 ω' μ' x 9 ∧ ω'[0] = UInt64.ofNat 298 ∧ ω'[1] = ω[1] ∧
-      ω'[6] = ω[6] ∧ ω'[7] = UInt64.ofNat (sp + 752) ∧ ω'[8] = UInt64.ofNat (sp + 512) ∧
+      ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ ω'[7] = UInt64.ofNat (sp + 752) ∧ ω'[8] = UInt64.ofNat (sp + 512) ∧
       ω'[9] = UInt64.ofNat 224 ∧
       μ'.readN (sp + 504) 8 = Num.encodeLE 8 (k + 1) ∧ μ'.readN (sp + 736) 8 = Num.encodeLE 8 k ∧
       μ'.readN (sp + 744) 8 = Num.encodeLE 8 w ∧
@@ -194,7 +194,7 @@ theorem il_copy2 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x :
   refine ⟨?_, ?_, ?_, ?_⟩
   rotate_left 2
   · pvm_go [h1, h5, hsp, rk, hr, hw, hw2, rdN_writeN_disjoint, ↓rdN_fold]
-  · refine ⟨by reg_val, by reg_val, by reg_val, ?_, ?_, by reg_val, ?_, ?_, ?_, fun a ha h1' h2' => ?_,
+  · refine ⟨by reg_val, by reg_val, by reg_val, by reg_val, ?_, ?_, by reg_val, ?_, ?_, ?_, fun a ha h1' h2' => ?_,
       fun a => ?_, fun a => ?_⟩
     all_goals try simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,
       PVM.getD_some', List.lookup_nil, Option.getD_none]

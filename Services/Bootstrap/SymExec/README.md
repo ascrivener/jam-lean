@@ -302,6 +302,11 @@ to finish within a fixed number of steps. The change is additive and keeps every
 
 This comes before the CodeF callers below.
 
+An observation that hasn't been checked: `fork_sound` / `fork_soundW` / `check_sound` conclude
+∃ k with no bound on k. The first step is probably a variant of each that gives k ≤ fuel, if the
+path length of `srunF` is bounded by its fuel. Then thread that through the segments and `body`,
+so that each iteration takes at most a constant number of steps.
+
 ### Update 2026-11-15 (fifth session): from_utf8 assembled
 
 Done, in `Utf8Final.lean` (added to `Services.lean`; axioms propext, Classical.choice and

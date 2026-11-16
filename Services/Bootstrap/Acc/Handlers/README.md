@@ -135,6 +135,17 @@ Handlers dependencies takes ~2 h on 4 cores). Use `ulimit -v 12000000` when comp
 - Tip: `rw [ASem.step_… ]` on a goal mentioning `{ i := …, c := c0, … }.c` ran out of memory; first
   `rw [show ({ … } : St Stream).c = c0 from rfl]` (as counter_write does).
 
+**Open questions for Adam (sent 2026-11-16; parent recommends 1(a), 2(a)); they block the slot write.**
+Code: 8293 C = u16 [196616]; 8301 I = u64 [196696]; 8306 mul64; 8309 shloLImm32 by 1 (2·C·I mod 2³²,
+sign-extended); 8312 panic (15361) if 0; 8320 ω₅ := c + 1 (64-bit); 8323 remU32 (low 32 bits). Spec:
+`fixed 4 ((c + 1) % C.maxRecent)`, maxRecent = 2·C·I unbounded.
+1. Ring size: the binary agrees only if 0 < 2·C·I < 2³² (C = 341, I = 16 gives 10912). (a) Premise
+   `ParamStatics μ C I ∧ 0 < 2·C·I < 2³²` (named hypothesis on the chain parameters); (b) model the
+   wrap and the panic in Spec.
+2. Counter wrap: for a stored counter c = 2³² − 1 the binary stores 0, the spec 2³² mod 10912 = 5440.
+   (a) New quirk: Spec `fixed 4 (((c + 1) % 2^32) % C.maxRecent)`, recorded in bootstrap-target.md and
+   upstream-candidates.md; (b) hypothesis c ≠ 2³² − 1; (c) hypothesis c < maxRecent.
+
 **Next (row 8, steps 3 and 4 of the old list):** the slot write 8172 … 8326 (key {1, c} again,
 (package, k) copied to sp + 1144, the inlined alloc of 34 octets and the encoder 32414, then `set`,
 the 255 check, `ParamStatics` for 2·C·I and c′ := (c + 1) mod 2·C·I), the counter's typed get at

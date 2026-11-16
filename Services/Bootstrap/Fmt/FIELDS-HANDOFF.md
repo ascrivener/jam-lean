@@ -1,7 +1,18 @@
 # Handoff: field formatters of refine's 6159 Debug line
 
 ## Current state (session 2, branch `claude/bootstrap-fields-2`, 2026-11-16)
-- **PR #213** (FieldInt: `u32_ok`, `u64_ok`, `ref_u32_ok`; gen/; this note): open, CI running. Merge on green.
+- **Open PRs (2026-11-16 ~03:00 UTC)**: #213 (FieldInt) and #216 (write_str_heap, D1). For both, the `model`
+  job is green and the proofs build is running. Subscribe and merge each on green.
+- **Branch layout**: `claude/bootstrap-fields-2-wip` = main@16b767f + write_str_heap (a81005a, = #216) + the
+  FieldInt commit (= #213) + the N56* commits + FieldWriteSpec + FieldWriteChar + this note. After #213 and
+  #216 merge, cherry-pick the rest onto main for the next PRs: PR 2 = N56Steps / N56Len / N56Checks
+  (+ imports); PR 3 = FieldWriteSpec + FieldWriteChar (+ imports), once the hex-path pieces below are
+  done or as they stand.
+- **Next steps, in order**: FieldPadWidth (pad_integral with o = 0x69000020, w = 2: the plain path for 2
+  digits, the zero-pad path for 1 digit using `write_char`); `<u8 as LowerHex>` 60209 as an `ArgOkO`;
+  the 57922 slice loop (8 octets, `fmt_write_spec` per octet); 57346 (`fmt_write` 70824 with that arg);
+  then, once the executor's from_utf8 step bound is on main, the string path and 56340 / 33167 as `RefOk`;
+  then 57485 / 33162. After that, step 8 (non-M1 formatters).
 - **Ready for PR 2**, on `claude/bootstrap-fields-2-wip` (based on main@16b767f, the published cache;
   cherry-pick onto main after #213 merges), full `lake build` green locally, axioms clean:
   - `N56Steps.lean` (P1): the 32 octet checks build (3 min). The store octets (8–30) read back their

@@ -3,6 +3,7 @@ import Services.Bootstrap.Refine.PassLoop
 import Services.Bootstrap.Encode.Loop
 import Services.Bootstrap.Decode.LoopA
 import Services.Bootstrap.Alloc.ReallocFallbackTail
+import Services.Bootstrap.Encode.EncMD
 
 /-!
 # Refine's exit: the output handed to the encoder
@@ -87,19 +88,40 @@ theorem off_le_232 (enc : Nat → List UInt8) (n : Nat) (h : ∀ j, j < n → (e
     have := h n (by omega)
     omega
 
+/-- |ℰ(n)| for n < 2^28: one to four octets (GP v0.8.0 Appendix C). -/
+theorem encodeNat_len_le4 (n : Nat) (h : n < 268435456) : (Blob.encodeNat n).length ≤ 4 := by
+  rcases Nat.eq_zero_or_pos n with h0 | h0
+  · subst h0; simp [Blob.encodeNat]
+  have : n < 128 ∨ (128 ≤ n ∧ n < 16384) ∨ (16384 ≤ n ∧ n < 2097152) ∨ 2097152 ≤ n := by omega
+  rcases this with h1 | h1 | h1 | h1
+  · rw [encodeNat_of_lt n 0 (by decide) h0 (by simp; omega) (by simp; omega)]; simp
+  · rw [encodeNat_of_lt n 1 (by decide) h0 (by simp; omega) (by simp; omega)]; simp
+  · rw [encodeNat_of_lt n 2 (by decide) h0 (by simp; omega) (by simp; omega)]; simp
+  · rw [encodeNat_of_lt n 3 (by decide) h0 (by simp; omega) (by simp; omega)]; simp
+
+/-- ℰ(n) for n < 128 is the single octet n (GP v0.8.0 Appendix C): the output's length and prefix in that case. -/
+theorem out_small {n o : Nat} (l : List UInt8) (hn : n < 128) :
+    (Blob.encodeNat n).length + o + 2 = o + 3 ∧ Blob.encodeNat n ++ l = UInt8.ofNat n :: l := by
+  have he : Blob.encodeNat n = [UInt8.ofNat n] := by
+    rcases Nat.eq_zero_or_pos n with rfl | h0
+    · rfl
+    · rw [encodeNat_of_lt n 0 (by decide) h0 (by simp; omega) (by simpa using hn)]
+      simp [Num.encodeLE]
+  rw [he]; exact ⟨by simp; omega, rfl⟩
+
 /-- **The output encoded** (6209 … 6295): from the allocator's context, with the output `Vec<Instruction>`
-    `{cap, E, n}` at M + 248 (0 < n < 128, its n slots inside the used chunk c, each slot j satisfying
+    `{cap, E, n}` at M + 248 (0 < n ≤ 2²¹, its n slots inside the used chunk c, each slot j satisfying
     `rep j` and encoding by `EncOk` to `enc j` of at most 232 octets) and the work item's index w at
     M + 80, refine allocates a buffer `buf` of 232 n + 6 octets and encodes into it
     ℰ(`BootstrapWorkOutput`) = ↕ the n encodings ⌢ ℰ₂(w): `{cap', buf, |ℰ| }` at M + 272, the octets
-    `n :: out enc n ++ ℰ₂(w mod 2^16)`. Memory changes only below M (the frames), at M + 168 … M + 194 and
+    `ℰ(n) ++ out enc n ++ ℰ₂(w mod 2^16)` (`Encode.EncMD.encode_okMD_big`; |ℰ(n)| ≤ 4, so they fit). Memory changes only below M (the frames), at M + 168 … M + 194 and
     M + 272 … M + 296, in the new buffer and in the allocator's headers: every other used chunk keeps its
     data. Or the allocation fails (`ExhaustsX`). -/
-theorem enc_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env : RefineHost.Env) (cap0 : Nat)
+theorem enc_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Services.Bootstrap.CodeA.HasCodeA p P] (env : RefineHost.Env) (cap0 : Nat)
     (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616) (x : RefineCtx) (ω : Regs) (μ : Memory)
     {hb : Nat} (s : State) {pb S0 S1 : Nat} (H : HeapCtx env pb S0 S1 μ s) (M cap E n w : Nat) (c : Chunk)
     (enc : Nat → List UInt8) (rep : Nat → List UInt8 → Prop)
-    (hM : S0 + 7560 ≤ M ∧ M + 632 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0) (hn : 0 < n ∧ n < 128)
+    (hM : S0 + 7560 ≤ M ∧ M + 632 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0) (hn : 0 < n ∧ n ≤ 2097152)
     (hcap : cap < 18446744073709551616) (hw64 : w < 18446744073709551616)
     (hc : c ∈ chunks s ∧ c.used = true ∧ c.addr + 32 ≤ E ∧ E + 232 * n ≤ c.addr + 32 * c.size)
     (h1 : ω[1] = UInt64.ofNat M)
@@ -109,11 +131,12 @@ theorem enc_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env 
     (hrep : ∀ j, j < n → rep j (μ.readN (E + 232 * j) 232))
     (tab : μ.readN 67376 100 = table) (rtab : ∀ a, 67376 ≤ a → a < 67476 → μ.readable a = true) :
     (∃ s' ω' μ' cap' buf, FreeStepsH p (refineContractK cap0 env) 6209 ω μ x 6295 ω' μ' x
-        (4100 * n + 7 * off enc n + 2000) ∧ HeapCtx env pb S0 S1 μ' s' ∧
+        (4100 * n + 2000 * off enc n + 3100) ∧ HeapCtx env pb S0 S1 μ' s' ∧
       ω'[1] = UInt64.ofNat M ∧
       μ'.readN (M + 272) 8 = Num.encodeLE 8 cap' ∧ μ'.readN (M + 280) 8 = Num.encodeLE 8 buf ∧
-      μ'.readN (M + 288) 8 = Num.encodeLE 8 (off enc n + 3) ∧
-      μ'.readN buf (off enc n + 3) = UInt8.ofNat n :: (out enc n ++ Num.encodeLE 2 (w % 65536)) ∧
+      μ'.readN (M + 288) 8 = Num.encodeLE 8 ((Blob.encodeNat n).length + off enc n + 2) ∧
+      μ'.readN buf ((Blob.encodeNat n).length + off enc n + 2) =
+        Blob.encodeNat n ++ out enc n ++ Num.encodeLE 2 (w % 65536) ∧
       cap' = 232 * n + 6 ∧ (⟨buf - 32, (232 * n + 6 + 31) / 32 + 1, true⟩ : Chunk) ∈ chunks s' ∧
       (∀ a, a < 4294967296 → M ≤ a → (a < M + 168 ∨ M + 194 ≤ a) → (a < M + 272 ∨ M + 296 ≤ a) →
         μ'.read a = μ.read a) ∧
@@ -121,7 +144,7 @@ theorem enc_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env 
       (∀ d ∈ chunks s, d.used = true → d ≠ ⟨buf - 32, (232 * n + 6 + 31) / 32 + 1, true⟩) ∧
       μ'.readN (M + 168) 8 = Num.encodeLE 8 cap ∧ μ'.readN (M + 176) 8 = Num.encodeLE 8 E ∧
       μ'.readN (M + 184) 8 = Num.encodeLE 8 n) ∨
-    PassLoop.ExhaustsX env cap0 pb p 6209 ω μ x (4100 * n + 7 * off enc n + 2000) := by
+    PassLoop.ExhaustsX env cap0 pb p 6209 ω μ x (4100 * n + 2000 * off enc n + 3100) := by
   obtain ⟨hS0M, hMS1, hM2, hM8⟩ := hM
   obtain ⟨hcs, hcu, hcE0, hcE1⟩ := hc
   have hS1 := H.hS1
@@ -163,7 +186,8 @@ theorem enc_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env 
     rw [hk2.hkeep a (Alloc.off_hdr_data H2.wf H2.hb0 H2.hbT hd2 ha.1 ha.2),
       afr a (by omega) (by omega) (by omega)]
   have stk : ∀ a, a < 4294967296 → M - 80 ≤ a → μ2.read a = μ1.read a := fun a h0 h1 => stk2 a h0 h1
-  have L : LayL P p (M - 80) E n buf (232 * n + 6) enc rep μ2 :=
+  have hl4 := encodeNat_len_le4 n (by omega)
+  have L : Encode.EncMD.LayLMD P p (M - 80) E n buf (232 * n + 6) enc (fun j bs _ => rep j bs) (fun _ _ => False) μ2 :=
     { hM := ⟨by omega, by omega, by omega⟩
       hE := ⟨by omega, by omega⟩
       hEM := Or.inl (by omega)
@@ -173,9 +197,12 @@ theorem enc_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env 
                 · exact Or.inr (by omega)
                 · exact Or.inl (by omega)
       hcap := ⟨by omega, by omega⟩
-      ok := hok
+      ok := fun j hj => Encode.EncMD.EncOkM.toMD232 (Encode.EncM.EncOkM.of_encOk (hok j hj))
       rep0 := fun j hj => by
+        show rep j _
         rw [Memory.readN_congr (fun i hi => dat c hcs hcu _ ⟨by omega, by omega⟩)]; exact hrep j hj
+      rcong := fun j hj bs μ' _ _ h => h
+      hsrc := fun j hj a h => h.elim
       tab := by
         rw [Memory.readN_congr (fun i hi => kr _ (by unfold two32; omega) (Or.inl (by unfold pageSize; omega))
           (H.ro _ (by omega)))]; exact tab
@@ -186,8 +213,9 @@ theorem enc_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env 
       rM := fun a h1 h2 => Memory.readable_of_writable (H2.st a (by omega) (by omega))
       wM := fun a h1 h2 => H2.st a (by omega) (by omega)
       wbuf := fun a h1 h2 => Decode.VecU8.heap_writable H2 hnew rfl ⟨by simp; omega, by simp; omega⟩ }
-  obtain ⟨ω4, μ4, run4, d0, d1, d5, d6, dO, dO8, dO16, dbuf, dfr, drd, dwr⟩ := encode_ok (p := p) (P := P)
-    (R := refineContractK cap0 env) x ω2 μ2 L (M + 272) 204 6295 ω[5].toNat ω[6].toNat hn
+  obtain ⟨ω4, μ4, run4, d0, d1, d5, d6, dO, dO8, dO16, dbuf, dfr, drd, dwr⟩ := Encode.EncMD.encode_okMD_big (p := p)
+    (P := P) (R := refineContractK cap0 env) x ω2 μ2 L (M + 272) 204 6295 ω[5].toNat ω[6].toNat ⟨hn.1, by omega⟩
+    (by omega)
     (by rw [b1, a1]) (by rw [b5, a5]) (by rw [b6, a6]) b7
     (by rw [Memory.readN_congr (fun i hi => stk _ (by omega) (by omega))]; exact a80)
     (by rw [Memory.readN_congr (fun i hi => stk _ (by omega) (by omega))]; exact a72)

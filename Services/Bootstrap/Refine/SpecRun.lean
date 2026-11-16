@@ -150,4 +150,13 @@ theorem output_eq (is : List Instr) (item : Nat) (hn : 1 ≤ is.length ∧ is.le
       Services.Bootstrap.Encode.PrefixBig.encodeNat_small _ ⟨by omega, hn.2⟩]
   simp [List.map_map, Codec.nat, Codec.fixed, Function.comp_def]
 
+/-- **The binary's output is ℰ(`BootstrapWorkOutput { outI is, item }`), any n**: ℰ(n) ⌢ (the encodings of
+    `outI` of each) ⌢ ℰ₂(item mod 2^16), for an item index below 2^16 (GP v0.8.0 Appendix C). -/
+theorem output_eqG (is : List Instr) (item : Nat) (hi : item < 65536) :
+    PVM.Blob.encodeNat is.length ++ Encode.Loop.out (encOut is) is.length ++ PVM.Num.encodeLE 2 (item % 65536) =
+      encodeOutput (is.map outI) item := by
+  unfold encodeOutput vec Encode.Loop.out encOut
+  rw [map_range_getD is (fun x => (outI x).encode), List.length_map, Nat.mod_eq_of_lt hi]
+  simp [List.map_map, Codec.nat, Codec.fixed, Function.comp_def]
+
 end Services.Bootstrap.Refine.SpecRun

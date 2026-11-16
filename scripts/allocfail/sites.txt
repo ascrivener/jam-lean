@@ -1,0 +1,382 @@
+CALL 40494 at 5183 ret=164 -> 5190 (next=5190)
+  5190	branch_eq_imm 7 0 6376
+  5194	load_ind_u64 9 1 152
+  5198	load_ind_u64 10 1 104
+  5201	load_ind_u64 8 1 96
+  5204	jump 5967
+  5207	branch_eq_imm 8 10 5587
+  5212	branch_ne_imm 8 21 5561
+  5217	load_ind_u64 8 1 312
+  5221	load_ind_u8 9 1 320
+  5225	add_imm_64 7 1 168
+  5229	load_imm_jump 0 166 50409
+  5236	load_ind_u64 7 1 248
+  5240	load_ind_u64 5 1 264
+  5244	branch_ne 5 7 5257
+TAILJUMP 40494 at 6291
+CALL 40494 at 7138 ret=240 -> 7145 (next=7145)
+  7145	branch_ne_imm 7 0 7152
+  7148	unlikely 
+  7149	jump 15364
+  7152	load_ind_u64 8 1 248
+  7156	jump 7970
+  7159	add_imm_64 7 1 1144
+  7163	load_imm 9 128
+  7167	move_reg 5 10
+  7169	load_imm_jump 0 242 68729
+  7176	store_ind_u32 5 1 472
+  7180	store_ind_u64 6 1 1000
+  7184	load_imm 7 65956
+  7189	store_ind_u64 7 1 512
+  7193	add_imm_64 7 1 1568
+TAILJUMP 40494 at 7233
+TAILJUMP 40494 at 7382
+CALL 40494 at 7406 ret=252 -> 7413 (next=7413)
+  7413	branch_ne_imm 7 0 7420
+  7416	unlikely 
+  7417	jump 15363
+  7420	move_reg 6 7
+  7422	add_imm_64 8 1 1144
+  7426	load_imm 9 128
+  7430	load_imm_jump 0 254 68729
+  7437	add_imm_64 7 1 744
+  7441	load_imm 9 128
+  7445	move_reg 8 6
+  7447	load_imm_jump 0 256 60681
+  7454	load_ind_u64 7 1 744
+  7458	store_ind_u64 7 1 248
+  7462	branch_eq_imm 7 0 7502
+CALL 40494 at 7537 ret=258 -> 7544 (next=7544)
+  7544	branch_ne_imm 7 0 7551
+  7547	unlikely 
+  7548	jump 15362
+  7551	unlikely 
+  7552	store_imm_ind_u64 1 744 3
+  7557	store_ind_u64 7 1 752
+  7561	store_imm_ind_u64 1 760 3
+  7566	add_imm_64 8 1 744
+  7570	add_imm_64 9 1 1576
+  7574	load_ind_u64 12 1 248
+  7578	cmov_iz 9 12 8
+  7581	load_ind_u64 9 8 0
+  7583	load_ind_u64 10 8 8
+  7586	load_ind_u64 8 8 16
+TAILJUMP 40494 at 7885
+TAILJUMP 40494 at 8263
+CALL 40494 at 9952 ret=350 -> 9958 (next=9958)
+  9958	branch_ne_imm 7 0 9965
+  9961	unlikely 
+  9962	jump 15366
+  9965	unlikely 
+  9966	move_reg 5 7
+  9968	load_imm_64 10 7597414702928717891
+  9978	load_imm_64 11 2406159651665702768
+  9988	load_imm 8 66793
+  9993	load_imm 7 2
+  9996	load_imm 9 4
+  9999	store_ind_u64 11 5 5
+  10002	store_ind_u64 10 5 0
+  10004	load_imm 11 13
+  10007	move_reg 10 5
+CALL 40494 at 10086 ret=356 -> 10092 (next=10092)
+  10092	branch_ne_imm 7 0 10099
+  10095	unlikely 
+  10096	jump 15367
+  10099	unlikely 
+  10100	load_imm_64 10 8367798494427701574
+  10110	load_imm_64 11 7955443211116486767
+  10120	load_imm 8 66793
+  10125	load_imm 9 4
+  10128	store_ind_u64 10 7 0
+  10130	store_ind_u64 11 7 8
+  10133	load_ind_u64 10 1 24
+  10136	store_ind_u32 10 7 15
+  10139	load_imm 11 19
+  10142	move_reg 5 7
+TAILJUMP 40494 at 11260
+CALL 40494 at 11804 ret=430 -> 11810 (next=11810)
+  11810	branch_eq_imm 7 0 15365
+  11814	unlikely 
+  11815	move_reg 5 7
+  11817	load_imm_64 10 7234298746134556757
+  11827	load_imm 8 66793
+  11832	load_imm 7 2
+  11835	load_imm 9 4
+  11838	store_ind_u64 10 5 0
+  11840	store_imm_ind_u8 5 8 33
+  11844	load_imm 11 9
+  11847	move_reg 10 5
+  11849	ecalli 100
+  11851	load_imm 8 9
+  11854	fallthrough 
+CALL 40494 at 13771 ret=514 -> 13777 (next=13777)
+  13777	branch_eq_imm 7 0 15368
+  13781	store_imm_ind_u64 1 1568 8
+  13786	store_ind_u64 7 1 1576
+  13790	store_imm_ind_u64 1 1584 0
+  13794	store_ind_u64 6 1 1496
+  13798	add_imm_64 7 1 1568
+  13802	add_imm_64 8 1 1496
+  13806	load_imm 9 8
+  13809	load_imm_jump 0 516 58508
+  13816	load_ind_u64 5 1 1568
+  13820	load_ind_u64 6 1 1576
+  13824	load_ind_u64 11 1 1584
+  13828	load_imm 8 66813
+  13833	add_imm_64 7 1 1568
+CALL 40494 at 14649 ret=546 -> 14655 (next=14655)
+  14655	branch_eq_imm 7 0 15365
+  14659	unlikely 
+  14660	move_reg 5 7
+  14662	load_imm_64 10 7307484473194278746
+  14672	load_imm 8 66793
+  14677	load_imm 7 2
+  14680	load_imm 9 4
+  14683	store_ind_u64 10 5 0
+  14685	store_imm_ind_u8 5 8 100
+  14689	load_imm 11 9
+  14692	move_reg 10 5
+  14694	ecalli 100
+  14696	load_imm 8 9
+  14699	load_imm 9 1
+TAILJUMP 40494 at 14916
+CALL 40494 at 25742 ret=1190 -> 25748 (next=25748)
+  25748	branch_eq_imm 7 0 25652
+  25751	unlikely 
+  25752	move_reg 8 7
+  25754	load_ind_u64 7 1 16
+  25757	store_ind_u8 7 8 0
+  25759	load_imm 5 1
+  25762	store_ind_u64 6 1 24
+  25765	move_reg 6 8
+  25767	store_ind_u64 8 1 32
+  25770	store_ind_u64 5 1 40
+  25773	add_imm_64 7 1 48
+  25776	load_imm 9 88
+  25779	load_ind_u64 8 1 0
+  25781	load_imm_jump 0 1192 68729
+CALL 40494 at 26129 ret=1204 -> 26135 (next=26135)
+  26135	branch_eq_imm 7 0 26396
+  26139	store_imm_ind_u64 1 24 12
+  26143	store_ind_u64 7 1 32
+  26146	store_imm_ind_u64 1 40 0
+  26149	load_ind_u64 7 1 0
+  26151	load_ind_i32 7 7 0
+  26153	store_ind_u32 7 1 48
+  26156	add_imm_64 7 1 24
+  26159	add_imm_64 8 1 48
+  26162	load_imm 9 4
+  26165	load_imm_jump 0 1206 58508
+  26171	load_ind_u64 7 1 0
+  26173	load_ind_u64 7 7 8
+  26176	fallthrough 
+CALL 40494 at 26270 ret=1212 -> 26276 (next=26276)
+  26276	branch_eq_imm 7 0 26396
+  26279	store_imm_ind_u64 1 24 12
+  26283	store_ind_u64 7 1 32
+  26286	store_imm_ind_u64 1 40 0
+  26289	load_ind_i32 7 6 -16
+  26292	store_ind_u32 7 1 48
+  26295	add_imm_64 7 1 24
+  26298	add_imm_64 8 1 48
+  26301	load_imm 9 4
+  26304	load_imm_jump 0 1214 58508
+  26310	load_ind_u64 7 6 -8
+  26313	jump 26177
+  26316	unlikely 
+  26317	load_ind_u64 7 5 32
+CALL 40494 at 33084 ret=1526 -> 33090 (next=33090)
+  33090	load_imm 2 1
+  33093	load_ind_u64 10 1 8
+  33096	branch_ne_imm 7 0 33122
+  33099	unlikely 
+  33100	load_ind_u64 7 1 0
+  33102	store_ind_u64 7 6 8
+  33105	load_imm 7 16
+  33108	jump 33131
+  33110	move_reg 7 11
+  33112	load_imm 2 0
+  33114	store_ind_u64 7 6 8
+  33117	load_imm 7 16
+  33120	jump 33131
+  33122	load_imm 2 0
+CALL 40494 at 33880 ret=1566 -> 33886 (next=33886)
+  33886	branch_eq_imm 7 0 34070
+  33890	store_ind_u64 5 1 16
+  33893	store_ind_u64 7 1 24
+  33896	store_imm_ind_u64 1 32 0
+  33899	branch_gt_s_imm 6 1 33911
+  33903	branch_ne_imm 6 0 33973
+  33906	store_imm_ind_u8 1 44 0
+  33909	jump 34021
+  33911	branch_ne_imm 6 2 34016
+  33915	store_imm_ind_u8 1 44 2
+  33919	add_imm_64 7 1 16
+  33922	add_imm_64 8 1 44
+  33925	load_imm 9 1
+  33928	load_imm_jump 0 1568 58508
+CALL 40494 at 34803 ret=1622 -> 34809 (next=34809)
+  34809	branch_eq_imm 7 0 35072
+  34813	add_64 7 6 9
+  34816	store_ind_u64 7 1 40
+  34819	move_reg 8 7
+  34821	fallthrough 
+  34822	store_ind_u32 5 8 0
+  34824	add_imm_64 8 8 4
+  34827	branch_ne 8 9 34822
+  34830	unlikely 
+  34831	load_ind_u64 9 1 56
+  34834	jump 34841
+  34836	store_imm_ind_u64 1 40 4
+  34840	fallthrough 
+  34841	load_ind_i16 7 9 0
+CALL 40494 at 34869 ret=1624 -> 34875 (next=34875)
+  34875	branch_eq_imm 7 0 35071
+  34879	move_reg 5 7
+  34881	load_ind_u64 7 1 56
+  34884	store_ind_u64 7 1 96
+  34887	store_ind_u64 5 1 104
+  34890	store_imm_ind_u64 1 112 0
+  34893	load_ind_u64 8 1 40
+  34896	load_ind_u64 9 1 8
+  34899	branch_eq_imm 9 0 34949
+  34902	move_reg 7 8
+  34904	fallthrough 
+  34905	unlikely 
+  34906	load_ind_i32 8 7 0
+  34908	add_imm_64 5 7 4
+CALL 40494 at 36211 ret=1692 -> 36217 (next=36217)
+  36217	branch_eq_imm 7 0 36528
+  36221	unlikely 
+  36222	load_ind_u64 8 1 24
+  36225	shlo_r_imm_64 8 8 32
+  36228	add_imm_64 9 5 4
+  36231	store_ind_u64 9 1 32
+  36234	store_ind_u64 7 1 40
+  36237	store_imm_ind_u64 1 48 0
+  36240	branch_ne_imm 8 0 36527
+  36244	unlikely 
+  36245	load_ind_u64 7 1 24
+  36248	store_ind_u32 7 1 56
+  36251	add_imm_64 7 1 56
+  36254	add_imm_64 8 1 32
+CALL 40494 at 50241 ret=2224 -> 50247 (next=50247)
+  50247	load_imm 2 1
+  50250	load_ind_u64 10 1 8
+  50253	branch_ne_imm 7 0 50279
+  50256	unlikely 
+  50257	load_ind_u64 7 1 0
+  50259	store_ind_u64 7 6 8
+  50262	load_imm 7 16
+  50265	jump 50288
+  50267	move_reg 7 11
+  50269	load_imm 2 0
+  50271	store_ind_u64 7 6 8
+  50274	load_imm 7 16
+  50277	jump 50288
+  50279	load_imm 2 0
+CALL 40494 at 58400 ret=2548 -> 58406 (next=58406)
+  58406	branch_ne_imm 7 0 58366
+  58409	load_imm 8 1
+  58412	store_ind_u64 8 5 8
+  58415	fallthrough 
+  58416	store_ind_u64 6 5 16
+  58419	store_ind_u64 8 5 0
+  58421	load_ind_u64 0 1 16
+  58424	load_ind_u64 5 1 8
+  58427	load_ind_u64 6 1 0
+  58429	add_imm_64 1 1 24
+  58432	jump_ind 0 0
+  58434	add_imm_64 1 1 -40
+  58437	store_ind_u64 0 1 32
+  58440	store_ind_u64 5 1 24
+CALL 40494 at 58811 ret=2562 -> 58817 (next=58817)
+  58817	load_imm 2 1
+  58820	load_ind_u64 10 1 8
+  58823	branch_ne_imm 7 0 58848
+  58826	unlikely 
+  58827	load_ind_u64 7 1 0
+  58829	store_ind_u64 7 6 8
+  58832	load_imm 7 16
+  58835	jump 58857
+  58837	load_imm 2 0
+  58839	store_imm_ind_u64 6 8 1
+  58843	load_imm 7 16
+  58846	jump 58857
+  58848	load_imm 2 0
+  58850	store_ind_u64 7 6 8
+CALL 40494 at 59551 ret=2584 -> 59557 (next=59557)
+  59557	load_ind_u64 3 1 0
+  59559	load_ind_u64 2 1 8
+  59562	branch_eq_imm 7 0 59710
+  59566	store_ind_u64 6 1 24
+  59569	store_ind_u64 7 1 32
+  59572	store_imm_ind_u64 1 40 0
+  59575	branch_ne_imm 5 0 59595
+  59578	jump 59647
+  59580	load_imm 7 1
+  59583	store_ind_u64 6 1 24
+  59586	store_ind_u64 7 1 32
+  59589	store_imm_ind_u64 1 40 0
+  59592	branch_eq_imm 4 0 59647
+  59595	shlo_r_imm_64 5 3 1
+CALL 40701 at 33049 ret=1524 -> 33055 (next=33055)
+  33055	load_imm 2 1
+  33058	load_ind_u64 10 1 8
+  33061	branch_ne_imm 7 0 33122
+  33064	jump 33099
+  33066	load_imm 10 0
+  33068	jump 33131
+  33070	branch_eq_imm 10 0 33110
+  33073	move_reg 5 10
+  33075	store_ind_u64 11 1 0
+  33077	store_ind_u64 5 1 8
+  33080	move_reg 7 5
+  33082	load_ind_u64 8 1 0
+  33084	load_imm_jump 0 1526 40494
+  33090	load_imm 2 1
+CALL 40701 at 50206 ret=2222 -> 50212 (next=50212)
+  50212	load_imm 2 1
+  50215	load_ind_u64 10 1 8
+  50218	branch_ne_imm 7 0 50279
+  50221	jump 50256
+  50223	load_imm 10 0
+  50225	jump 50288
+  50227	branch_eq_imm 10 0 50267
+  50230	move_reg 5 10
+  50232	store_ind_u64 11 1 0
+  50234	store_ind_u64 5 1 8
+  50237	move_reg 7 5
+  50239	load_ind_u64 8 1 0
+  50241	load_imm_jump 0 2224 40494
+  50247	load_imm 2 1
+CALL 40701 at 58357 ret=2546 -> 58363 (next=58363)
+  58363	branch_eq_imm 7 0 58409
+  58366	load_imm 8 0
+  58368	store_ind_u64 7 5 8
+  58371	jump 58416
+  58373	unlikely 
+  58374	store_imm_ind_u64 5 8 0
+  58377	load_imm 8 1
+  58380	store_ind_u64 8 5 0
+  58382	load_ind_u64 0 1 16
+  58385	load_ind_u64 5 1 8
+  58388	load_ind_u64 6 1 0
+  58390	add_imm_64 1 1 24
+  58393	jump_ind 0 0
+  58395	load_imm 8 1
+CALL 40701 at 58775 ret=2560 -> 58781 (next=58781)
+  58781	load_imm 2 1
+  58784	load_ind_u64 10 1 8
+  58787	branch_ne_imm 7 0 58848
+  58790	jump 58826
+  58792	load_imm 10 0
+  58794	jump 58857
+  58796	branch_eq_imm 10 0 58837
+  58799	move_reg 5 10
+  58801	store_imm_ind_u64 1 0 1
+  58804	store_ind_u64 5 1 8
+  58807	move_reg 7 5
+  58809	load_ind_u64 8 1 0
+  58811	load_imm_jump 0 2562 40494
+  58817	load_imm 2 1

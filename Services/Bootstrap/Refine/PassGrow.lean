@@ -109,7 +109,7 @@ theorem pass_elem_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P
     (fun a h1 h2 => by rw [brd, ard]; exact rM a (by omega) (by omega))
   have pre := run1.trans (run2.trans (run3.trans run4))
   rcases Decode.GrowOne.grow_one_call (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 x ω4 μ2 s M (M + 248) len ptr 180 5584 len
-      ω4[6].toNat pb S0 S1 H2 hold hlen ⟨by omega, by omega⟩ ⟨by omega, hM8⟩ ⟨by omega, by omega⟩ d0 d1 d5
+      ω4[6].toNat pb S0 S1 H2 hold (Nat.le_trans hlen (by decide)) ⟨by omega, by omega⟩ ⟨by omega, hM8⟩ ⟨by omega, by omega⟩ d0 d1 d5
       UInt64.ofNat_toNat.symm d7 ⟨by decide, by decide, by decide⟩ jte_89 bs_5584 (by omega) (UInt64.toNat_lt _)
       hptr
       (by rw [Memory.readN_congr (fun j hj => k2 _ (by omega) (by omega))]; exact sc)

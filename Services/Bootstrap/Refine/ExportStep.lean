@@ -80,7 +80,7 @@ theorem push_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
   obtain ⟨ω1, run1, a0, a1, a5, a6, a7⟩ := xpg (p := p) (P := P) (R := refineContractK cap0 env) x ω μ M len
     (by omega) (by omega) h1 sc sl (fun a h1 h2 => Memory.readable_of_writable (H.st a (by omega) (by omega)))
   rcases Decode.GrowOne.grow_one_call (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 x ω1 μ s M (M + 248) len ptr
-      188 5832 len ω1[6].toNat pb S0 S1 H hold hlen ⟨by omega, by omega⟩ ⟨by omega, hM8⟩ ⟨by omega, by omega⟩ a0
+      188 5832 len ω1[6].toNat pb S0 S1 H hold (Nat.le_trans hlen (by decide)) ⟨by omega, by omega⟩ ⟨by omega, hM8⟩ ⟨by omega, by omega⟩ a0
       (a1.trans h1) a5 UInt64.ofNat_toNat.symm a7 ⟨by decide, by decide, by decide⟩ jte_93 bs_5832 (by omega)
       (UInt64.toNat_lt _) hptr sc sp with
     ⟨q, s', ω2, μ2, run2, e0, e1, e5, e6, eV, eV8, hnew, emove, H2, keep, fresh, _, stk, _, _, ewr⟩ | hx

@@ -6,6 +6,25 @@ Everything cites Gray Paper v0.8.0 via the docstrings of the files named here; t
 
 ## Current state (2026-11-16, read this first)
 
+**Seventh instance (2026-11-16, branch `claude/bootstrap-t1-m1d`).** Step 2 (the big `realloc`), approved by the parent
+as option (A), in-place edits of Decode/Encode files used only by T1's chain:
+- `Decode/ReallocBig.lean` (moved from `Refine/`): `OtherUsed s ptr` (another allocated chunk), `BigReq` (units ≥ 2^25,
+  or = 2^25 − 1 with `OtherUsed`: **the gap is closed**, model `growInplace_none_big` / `alloc_none_big` via
+  `bin_chunk` and `HeapFrame.Tiles.disjoint`, binary `fallback_entryB`), `realloc_call_big` for `BigReq`, and
+  `realloc_call_any` (units < 2^25 − 1 ∨ `BigReq`, in `realloc_call`'s form).
+- Changed statements (all weakenings, except the two new `oth` fields):
+  - `Decode/GrowOne.grow_one_call`: `hoc : oc ≤ 2^21` → `oc ≤ 2^26`; `g3i`'s `hN : N ≤ 2^22` → `N ≤ 2^27`.
+  - `Encode/WriterGrow.extend_grow`, `extend_any`: `hbig : 2·cap < 2^30 − 64 ∧ len + n < 2^30 − 64` → that `∨ OtherUsed s ptr`.
+  - `Encode/GrowH.capBound`: 2^28 → 2^60 (every `hlen ≤ capBound` stays, now dischargeable from crude bounds).
+  - New fields `BufH.oth` and `LayDH.oth : OtherUsed s ptr` (`BufH.init` takes it; `EncMHLoop` gets it from `LayLMH.arr`).
+  - `Refine/DecodeVecNC` (`batch_step`, `batches`, `vec_allC`), `DecodeCG.decode_allC`: `hbig : 232 n < 2^30 − 64` → `< 2^32`.
+- Omega pitfall: omega builds an ill-typed proof when it case-splits a hypothesis `… ∨ ∃ …` (e.g. `StackSrc ∨ HeapSrc`
+  unfolded). Keep such hypotheses folded (a `def`), or wrap them in `Nonempty`.
+- Open questions to the parent: does refine_t1c exclude `Import` (recommended, like `hrsr`), and may it require 1 ≤ n?
+- Next: re-thread the callers' own bounds (PassLoop's n ≤ 2²¹, `hcapB`/`hbig` in ExitEncH, now dischargeable), then
+  `slotRep` (each output kind's slot predicate: `kindRep` or the decode side's `*Rep`), `DRt` from it (the named
+  `DebugLineOk … DRt`), the loop over pass / Export / eager Lookup steps, and refine_t1c.
+
 **On `main`:** `Refine/Milestone.lean` `refine_milestone` (#197, with the `Fmt.FmtRO` conjunct of
 `VendoredFacts` from #207), T1c's first milestone M1. Ψ_R against `Spec.refine` for payloads of 1 ≤ n < 128
 well-formed instructions, each passed through (`Kinds.MFixed`) or `ExportSegs`, with |y| + 48 ≤ 2^24.

@@ -57,6 +57,31 @@ length prefix ℰ(n) and output ℰ(n) ⌢ encodings ⌢ ℰ₂(w)). Builds, axi
   to the halt with ℰ(`BootstrapWorkOutput { outI is, I }`).
 - Next: part B; then refine_t1c (T1's match form) once the bound question is settled.
 
+**Progress on C (2026-11-16, third instance, branch `claude/bootstrap-t1-m1c`):** the handler and the wrapper are
+proved up to the composition with `PInv`. All files build, axioms clean.
+- `LookupHost.FreeStepsH.lookupRef`: one Ω_H step under `refineContractK cap` (cap ≥ 1125 + ⌈264·ω₁₁/1024⌉; the gas cap
+  stays internal, coordinator 2026-11-16), `lookupVal` / `lookupR7` / `lookupMem`.
+- `Lookup`: `ld` (5095 → 5288, flag set), `la` (5288 → 5366, the frame G = M − 48), `lf` (5372 → `format!`), `ll` (→ log
+  5428), `lfr` / `lfz` (free or not), `lp0` / `lpg` (room, or `grow_one`), `lps` (the `LookedUp` slot {2^63 + 17 from
+  M + 8, the result's three words}, len + 1, → 4046), `ldrop` (4046 → 5042 for index 8, given the ro table entry
+  `dropEntry8` at 65568).
+- `LookupWrap`: `wn`, `wz`, `wbig`, `wl` / `wlh` (lock + `alloc_impl`, units < 2^31 / ≥ 2^31), `wu`, `wr`.
+- `LookupRun.lookup_wrap`: 5366 → 5372 with `ResAt` (`None`, `Some []` with buf 1, or `Some d` in a fresh chunk), or
+  `Bridge.AllocFails` (null at 49149, or `sizeTrap`). Internal hypotheses: preimages < 2^63 octets (`hlen`; Adam
+  decides whether refine_t1c assumes it, recommended (a)), and the cap covering the second Ω_H (`hgas`).
+- `LookupFmt.LookupFmtOk`: the named hypothesis for 5398's `format!` (with `OptVecAt` for the argument).
+- Approved: `VendoredFactsC` = `VendoredFacts` ∧ the 96-octet 4046 drop table at ro offset 0 (for refine_t1c only).
+  The table (ro[0 … 96)): index 8 → jump entry 122 → 4115 (return), 9 → 4129, 10 → 4302, 0 → 4463, 5 → 4169, 12 → 4160,
+  13 → 4496, 17 → 4231, 18 → 4266, 19 → 4362, 22 → 4529; all others → 4115.
+- Next for C: the step 5042 → 5042 for an eager `Lookup` on `PInv`. It needs `PInv` to carry the chunks owned by
+  output slots (the preimage's buffer), with their data, as part B does for the heap kinds: do it together with B.
+- Notes from the previous instance (part B): a new append-only code-fact tier "T1B" (approved; `Tests/GenWitnessSteps.lean`,
+  `bootstrapSvc` after `fnRangesR`: `tiers := [{ name := "T1B", ranges := [(29176, 29675)], excludes := ["X", "R"], doc
+  := "refine's output drop (drop_in_place::<[Instruction]>): the heap variants' drop arms" }]`). Drop arms: jump entries
+  679 → 29270 (DeleteItems, 5), 685 → 29476 (Imported, 19); the drop table at 67760 maps index t to entry
+  (67760 + offset_t)/2 − 1. The encoder with growth needs H arms for every fixed kind (`ArmsHFixed` etc.). `LayLMH`
+  needs cap = 232n + 6 ≤ capBound (2^28), i.e. n ≲ 1.157M internally until ReallocBig.
+
 Decided by the coordinator on 2026-11-15:
 - the new theorem `refine_t1c` is added in T1's match form, and `refine_milestone` stays unchanged;
 - the wider `DRm` and the new `LookupFmtOk` go on `refine_t1c` only;

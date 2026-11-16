@@ -434,6 +434,7 @@ import Services.Bootstrap.Refine.SpecRunT
 import Services.Bootstrap.Refine.SlotT
 import Services.Bootstrap.Refine.SlotFixed
 import Services.Bootstrap.Refine.SlotLU
+import Services.Bootstrap.Refine.SlotHeap
 import Services.Bootstrap.Refine.EncRSA
 import Services.Bootstrap.Refine.EncProvide
 import Services.Bootstrap.Refine.Prologue

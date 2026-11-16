@@ -1,4 +1,25 @@
-# Build items: state (2026-11-16)
+# Build items: state (2026-11-16, paused overnight by Adam's decision)
+
+## Branches (all pushed; no PRs open) and the agreed order
+1. `claude/codef-regen`: regenerates CodeF; `build.yml` diffs codex/codea/codef/coder. Open it as soon as
+   #200, #201 and #204 have merged (the parent says when).
+2. `claude/p3-module-stage1`: P3 stage 1 (PVM and JAM to modules, minus SymExec and `PVM.lean`). Open it
+   right behind (1), so the two cold rebuilds run back to back. Rebase onto main first and re-check
+   clashing PVM/JAM files.
+3. `claude/post-simp-fast`: the `post_simp` pass. 21 Decode files (LoopAPassC excluded); tactics only.
+   - Before the PR: diff the file list against `claude/bootstrap-t1-m1-wip` and the open PRs, send the
+     list to the parent, run CheckAxioms, and time every file. The timing run was stopped by the
+     pause; only U32Hash (221 s -> 64 s) and Lookup (569 s -> 123 s) are measured.
+   - Acc/Handlers is out of scope: the parent passes the fix to the Handlers A session.
+   - The slow Alloc proofs (`nx_clear`, `alloc_impl`, `rs_clear`) do not contain this step; profile
+     their `congr` use separately.
+4. Re-profile, then the remaining splits:
+   - Alloc (ReallocShrink, FreePrev), together with the P4 trims from `claude/p4-trim-imports-1`;
+   - then Decode (HashU64, MemcpyBig); keep the Decode *_elem_big names stable (T1 uses them).
+5. ProgAll in 8 shards (gen_prog.py): after P3 stage 2, #192 and #194.
+6. P3 stage 2 (`PVM/SymExec/*` and `PVM.lean`): after #192 and #194.
+- `claude/build-items-state`: this note and `docs/profiling/tools/` (no PR).
+
 
 This is the handoff for the session that works on the build items (P1, P3, P4, decision 15). The
 branch `claude/build-items-state` carries it, with no PR. The scripts are in `docs/profiling/tools/`.
@@ -9,8 +30,7 @@ branch `claude/build-items-state` carries it, with no PR. The scripts are in `do
   `docs/profiling/p3-module-spike.md`. Adam chose option (a): convert PVM and JAM only.
 
 ## Waiting on parent signals (do not push PRs before them)
-1. **CodeF regeneration**: branch `claude/codef-regen`, committed **locally only** (container). If it
-   is lost, redo it from main:
+1. **CodeF regeneration**: branch `claude/codef-regen` (pushed). To redo it from main:
    - `codef 7463 > Services/Bootstrap/CodeF.lean` and `codefcheck 7463`;
    - add to `build.yml`, after the `codecheck` line, a diff of `code{x,a,f,r} 7463` against
      `Code{X,A,F,R}.lean`, and a run of `code{x,a,f,r}check 7463`.

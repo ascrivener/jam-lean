@@ -119,6 +119,19 @@ Handlers dependencies takes ~2 h on 4 cores). Use `ulimit -v 12000000` when comp
 - `ResultsDropRun.lean` (end): `ChunksKept μ st μ' st'` (= `StorePost`'s chunk clause) and **`ResultsOwn.keep`**
   (with `resPtrs_keep`, `itemPtrs_keep`, `item_keep`, `innerPtrs_congr`). Axioms clean. Avoid `congr 1` on
   goals with `rdN` (whnf timeout).
+- `RowElevenTail.lean`: row 11's straight-line tail segments (15028/15050 → 33214, 15133 → 28864, the three
+  dealloc sites 15143/15172/15191 → 6766).
+- `InstrRep.lean`: the `InstrRep` bundle (`rep`, `foot`, `frame`), `iterFree`, `IterOwn`, **`DropInstrsH`**
+  (named hypothesis for 33214). IntoIter layout: buf v, cur v+8, cap v+16, end v+24, 232-octet slots.
+  Sent to @parent for confirmation: the stack premise (2³¹ + 4096 ≤ sp, S0 + 4096 ≤ sp) and `IterOwn`.
+- `RowEleven.lean`: `KF`, `KF.dk`, `KF.opt`, `tailBufs`, `tailFree`, `TailHyp`, **`r11_tail`** (15133 → 6766).
+- `RowElevenCore.lean`: `Impl.then`, `BufOK.keep`, `TailHyp.keep`, `R7Post`, **`row_eleven_core`**: from 15038
+  (after the instructions' drop) `Impl` of `if b then pure () else store (Key.results pkg item) (encodeResults rs)`
+  ending in `R7Post` at 6766. Axioms clean.
+- **R7 left:** the instructions' drop (15028 → 15038 via `DropInstrsH`) composed in front: carry `TailHyp`,
+  `LoopHyp` (`ResultsAt`) and the key/flag words across it. Needs a disjointness premise (the chunks
+  `iterFree` frees are none of the results' chunks: items, `resPtrs`, the data buffers in `ResultsAt`,
+  `tailBufs`); `ResultsAt.keep` needs a variant with an excluded set (`KeepsHeap` minus F).
 
 ## Session 8 handoff (2026-11-16, for the 9th session)
 

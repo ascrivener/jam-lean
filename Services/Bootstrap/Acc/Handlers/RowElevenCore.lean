@@ -1,6 +1,7 @@
 import Services.Bootstrap.Acc.Handlers.RowEleven
 import Services.Bootstrap.Acc.Handlers.ResStoreCall
 import Services.Bootstrap.Acc.Handlers.NoCall
+import Services.Bootstrap.Acc.Handlers.RowElevenSeg
 
 /-!
 # Row 11 (R7): the final results write, from the `Zombify` flag (15038) to 6766
@@ -118,7 +119,7 @@ theorem row_eleven_core {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p 
     (ht8 : rdN s.μ 69072 4 = 4294900408) (ht4 : rdN s.μ 69056 4 = 4294900402)
     (hro : ∀ a, 68680 ≤ a → a < 69076 → s.μ.readable a = true) (hvals : StoreFit s.c) :
     Impl p (accContractS env) env Ab
-      (unless b (store (.results (s.μ.readN (sp + 312) 32) item) (encodeResults rs)))
+      (if b then pure () else store (.results (s.μ.readN (sp + 312) 32) item) (encodeResults rs))
       (fun _ => R7Post env.code pb S0 S1 sp s.ω[5] st s.μ (tailFree s.μ sp)) s := by
   obtain ⟨i, ω, μ, c0, f⟩ := s
   dsimp only at hi h1 T L mz hitem mc ht8 ht4 hro hvals ⊢

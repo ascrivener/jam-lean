@@ -429,6 +429,7 @@ import Services.Bootstrap.Refine.DropArms
 import Services.Bootstrap.Refine.DropVecW
 import Services.Bootstrap.Refine.FinW
 import Services.Bootstrap.Refine.ExitRunW
+import Services.Bootstrap.Refine.EncRSA
 import Services.Bootstrap.Refine.Prologue
 import Services.Bootstrap.Spec
 import Services.Bootstrap.SpecLemmas.Codec

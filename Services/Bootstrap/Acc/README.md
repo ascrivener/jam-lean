@@ -42,6 +42,11 @@ Update: the `InstrRep` bundle gains a footprint (the chunks the instruction list
 `DropInstrsH` (33214 frees exactly that footprint, otherwise frame-only); Handlers A adds `ResultsOwn`
 (ownership next to `ResultsVec`, produced by R5, consumed by row 11). R2 passes them through from R3
 into R5 and R7.
+Update 2 (`Acc/Handlers/InstrRep.lean` on `claude/bootstrap-t2-handlers-a-r5`): R3's output-decode
+hypothesis concludes `IterOwn B μ st v`, the `Vec<Instr>` `IntoIter` at v (buf v, cur v + 8, cap
+v + 16, end v + 24), each 232-octet slot satisfying `InstrRep.rep`, the owned buffers allocated chunks.
+Row 11 (R7) needs 2³¹ + 4096 ≤ sp and S0 + 4096 ≤ sp; R2 supplies that and passes `IterOwn` from R3
+into R5 / R7.
 
 **Only on WIP (proved):**
 - `Acc/Items/`: Exit (`items_end`, `items_halt`), Operand (`op_pre`, `op_mid`), Disp, End, Head.

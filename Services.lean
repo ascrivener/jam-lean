@@ -176,6 +176,8 @@ import Services.Bootstrap.Acc.Handlers.RemoveCall
 import Services.Bootstrap.Acc.Handlers.ResStore
 import Services.Bootstrap.Acc.Handlers.ResStoreSeg
 import Services.Bootstrap.Acc.Handlers.ResultsInitSeg
+import Services.Bootstrap.Acc.Handlers.ResStoreImpl
+import Services.Bootstrap.Acc.Handlers.ResultsInit
 import Services.Bootstrap.Acc.Handlers.Upgrade
 import Services.Bootstrap.Acc.HeapHost
 import Services.Bootstrap.Acc.DecodeU32A

@@ -1,5 +1,6 @@
 import Services.Bootstrap.Acc.Handlers.ResStoreSeg
 import Services.Bootstrap.Acc.Handlers.RecentSlotWriteImpl
+import Services.Bootstrap.Encode.VecCore
 
 /-!
 # The results store (36170) for n = 0: up to `set` and after it
@@ -15,7 +16,7 @@ callee frame S = sp − 96, composed like the slot write's `sw_head` / `sw_free`
 
 namespace Services.Bootstrap.Acc.Handlers.ResStore
 
-open PVM JAM Picoalloc Services.Bootstrap Services.Bootstrap.Code Services.Bootstrap.CodeA
+open PVM JAM Picoalloc Services.Bootstrap Services.Bootstrap.Code Services.Bootstrap.CodeA Services.Bootstrap.CodeX
   Services.Bootstrap.Alloc Services.Bootstrap.Acc Services.Bootstrap.Spec
   Services.Bootstrap.Decode.HeapCtx Services.Bootstrap.Decode.LoopA
   Services.Bootstrap.Acc.Handlers.KeyEnc Services.Bootstrap.Acc.Handlers.RecentSlotWrite
@@ -114,7 +115,7 @@ theorem res_head {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Has
   have hn0 : rdN μ2 (sp - 96 + 56) 4 = 0 := by
     show Num.decodeLE _ = _; rw [mV56, Num.decodeLE_encodeLE]
   obtain ⟨ω3, μ3, run3, d0, d1, d5, d6, dval, dlen, fr3, rd3, wr3⟩ :=
-    Services.Bootstrap.Encode.VecCore.prefix_any (p := p) (P := P) (R := env.rel cap) x ω2 μ2 (sp - 96)
+    Services.Bootstrap.Encode.Enc.prefix_any (p := p) (P := P) (R := env.rel cap) x ω2 μ2 (sp - 96)
       (sp - 96 + 56) (sp - 96 + 32) 4 vp 0 1694 36263 0 ω2[6].toNat 0 ⟨by omega, by omega, by omega⟩ c0 c1
       (by rw [c5, f5, a5]) UInt64.ofNat_toNat.symm c7 c8 (by decide) (UInt64.toNat_lt _) (by omega) (.inr (by omega))
       hn0 (fun a h1 h2 => Memory.readable_of_writable (H2.st a (by omega) (by omega))) mV32 mV40 mV48
@@ -165,9 +166,12 @@ theorem res_head {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Has
     unfold Memory.readable; rw [ro1 (a / pageSize) (.inl (by unfold pageSize; omega))]
   -- F: the key encoder
   have hkE : keyEnc μ4 kp 2 = keyEnc μ kp 2 := by
+    have e1 : μ4.readN (kp + 4) 32 = μ.readN (kp + 4) 32 :=
+      Memory.readN_congr (fun j hj => k4A (kp + 4 + j) (by omega) (by omega))
+    have e2 : μ4.readN (kp + 2) 2 = μ.readN (kp + 2) 2 :=
+      Memory.readN_congr (fun j hj => k4A (kp + 2 + j) (by omega) (by omega))
     unfold keyEnc
-    rw [Memory.readN_congr (fun j hj => k4A (kp + 4 + j) (by omega) (by omega)),
-      Memory.readN_congr (fun j hj => k4A (kp + 2 + j) (by omega) (by omega))]
+    simp only [show (2 : Nat) = 1 ↔ False by decide, ite_false, ite_true, e1, e2]
   rcases kb_call (P := P) (hb := hb) env cap hcap1 hcap x ω4 μ4 s1 (sp - 96) kp (sp - 96 + 32) 2 kc
       1704 36432 pb S0 S1 H4 g0 g1 g7 g8 ⟨by omega, by omega⟩ ⟨by omega, by omega⟩
       ⟨by omega, by omega, by omega⟩ ⟨by omega, by omega⟩ (by decide)
@@ -223,9 +227,9 @@ theorem res_head {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Has
           k31 _ (by omega) (by omega) (.inr (by omega))]
   refine .inr (.inr ⟨vp, kp', s2, ω6, μ6, _, run06, H6, fun d hd hu => keep5 d (keep1 d hd hu) hu, hCv, hnew5,
     fun d hd hu => ⟨hfresh1 d hd hu, hfresh5 d (keep1 d hd hu) hu⟩, hCvk, by omega, by omega, by omega, by omega,
-    r0, r1, r5, r6, r7, r8, r9, r10, r11, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩)
+    r0, r1, r5, r6.trans (q6.trans g6), r7, r8, r9, r10, r11, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩)
   · rw [← okey]; exact Memory.readN_congr fun j hj => k65 _ (by omega)
-  · rw [← dval]
+  · rw [show ([0] : List UInt8) = [UInt8.ofNat 0] from rfl, ← dval]
     refine Memory.readN_congr fun j hj => ?_
     have hin : InData ⟨vp - 32, 2, true⟩ (vp + j) := ⟨by dsimp only; omega, by dsimp only; omega⟩
     have hap := InData.apart H5.wf hCv hnew5 (Ne.symm hCvk) hin

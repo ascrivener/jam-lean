@@ -242,7 +242,7 @@ theorem run_mixed {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Se
     have hxs := expTo_succ env is x (k := k) (by omega)
     rcases (hk k hk').2 with h | ⟨ds, hds, hR, hb1, hb2⟩
     · have sl : Rs k (μ1.readN (E + 232 * k) 232) := by have := slot k hk'; rw [hrn k h] at this; exact this
-      refine Or.inl ⟨_, PassW.ofK ?_, ?_, sl, hmono k, by rw [hxs]; unfold instrCtx; rw [h]⟩
+      refine Or.inl ⟨_, PassW.ofK (t := ts k) ?_, ?_, sl, hmono k, by rw [hxs]; unfold instrCtx; rw [h]⟩
       · unfold rdN; rw [rsub k 44 1 (by omega)]; exact (hk k hk').1.pass _ sl
       · rw [← readN_take μ1 _ 232 8 (by omega)]; exact (hk k hk').1.tag _ sl
     · have sl := slot k hk'

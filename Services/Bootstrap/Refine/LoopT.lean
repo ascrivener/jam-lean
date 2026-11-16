@@ -185,11 +185,11 @@ theorem loop_t {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCo
       obtain ⟨cap, ptr, vc, -, -, -, hcapn, -⟩ := st.out
       by_cases hkc : k = cap
       · subst hkc
-        rcases step_full (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 (ctx k) ω μ μ0 s L k hk t ht sD0 hO stO
+        rcases step_full (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 (ctx k) ω μ μ0 s L k hk _ ht sD0 hO stO
             vc with ⟨s1, ω1, μ1, run1, st1⟩ | hx'
         · exact Or.inl (fin k ω μ ω1 μ1 s s1 μ0 Kp' Q B _ j hI' (PInv.mono_kp st1 hK) _ run1 hx.symm hro hrt st.H)
         · exact Or.inr ⟨_, ExhaustsX.of hx'⟩
-      · obtain ⟨ω1, μ1, run1, st1⟩ := step_room (p := p) (P := P) env (ctx k) ω μ μ0 s L k hk t ht sD0 hO stO
+      · obtain ⟨ω1, μ1, run1, st1⟩ := step_room (p := p) (P := P) env (ctx k) ω μ μ0 s L k hk _ ht sD0 hO stO
           (fun c hc => by
             intro h; subst h
             have h1 := congrArg Num.decodeLE (vc.symm.trans hc)

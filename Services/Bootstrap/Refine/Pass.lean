@@ -119,16 +119,58 @@ theorem PassK.bound {t b : Nat} (h : PassK t b) : 1 ≤ t ∧ t < 25 := by
   · unfold PassIdx at h; omega
   · omega
 
+/-- **The words the loop passes through**: a discriminant 2^63 − 1 + t of `PassK`, or `CreateService`'s niche word
+    (its code's length, < 2^63, or 2^64 − 1 for `None`), which the dispatch maps to index 0. -/
+def PassW (D b : Nat) : Prop :=
+  (∃ t, PassK t b ∧ D = 9223372036854775807 + t) ∨ D < 9223372036854775808 ∨ D = 18446744073709551615
+
+theorem PassW.lt {D b : Nat} (h : PassW D b) : D < 18446744073709551616 ∧ D ≠ 18446744073709551614 := by
+  rcases h with ⟨t, ht, rfl⟩ | h | rfl
+  · have := ht.bound; omega
+  · omega
+  · omega
+
+theorem PassW.ofK {t b : Nat} (h : PassK t b) : PassW (9223372036854775807 + t) b := Or.inl ⟨t, h, rfl⟩
+
+set_option maxHeartbeats 8000000 in
+/-- 5095 … 5561 for a word D < 2^63 or D = 2^64 − 1 (`CreateService`'s niche): index 0, passed through. -/
+theorem pdCS {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] (x : X) (ω : Regs)
+    (μ : Memory) (M D : Nat) (hD : D < 9223372036854775808 ∨ D = 18446744073709551615) (hM : M + 632 ≤ 4294967296)
+    (h1 : ω[1] = UInt64.ofNat M) (h6 : ω[6] = UInt64.ofNat D)
+    (s128 : μ.readN (M + 128) 8 = Num.encodeLE 8 9223372036854775832)
+    (s136 : μ.readN (M + 136) 8 = Num.encodeLE 8 9223372036854775809)
+    (hr : ∀ a, M + 128 ≤ a → a < M + 144 → μ.readable a = true) :
+    ∃ ω', FreeStepsH p R 5095 ω μ x 5561 ω' μ x 10 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] := by
+  have r128 := rd8 (by decide) s128
+  have r136 := rd8 (by decide) s136
+  rw [show ω = regsNF ω [] from rfl]
+  rcases hD with hD | rfl
+  · refine ⟨?_, ?_, ?_⟩
+    rotate_left
+    · pvm_go [h1, h6, hM, hr, r128, r136, hD, ↓rdN_fold]
+    · refine ⟨?_, ?_⟩ <;> simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,
+        List.lookup_nil, Option.getD_none]
+  · refine ⟨?_, ?_, ?_⟩
+    rotate_left
+    · pvm_go [h1, h6, hM, hr, r128, r136, ↓rdN_fold]
+    · refine ⟨?_, ?_⟩ <;> simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,
+        List.lookup_nil, Option.getD_none]
+
+
 /-- 5095 … 5561 for `PassK`: as `pd`, and for a `Lookup` with flag 0 (at M + 348, the staged copy) through
     5278. -/
 theorem pdK {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] (x : X) (ω : Regs)
-    (μ : Memory) (M t : Nat) (ht : PassK t (rdN μ (M + 348) 1)) (hM : M + 632 ≤ 4294967296)
-    (h1 : ω[1] = UInt64.ofNat M) (h6 : ω[6] = UInt64.ofNat (9223372036854775807 + t))
+    (μ : Memory) (M D : Nat) (ht : PassW D (rdN μ (M + 348) 1)) (hM : M + 632 ≤ 4294967296)
+    (h1 : ω[1] = UInt64.ofNat M) (h6 : ω[6] = UInt64.ofNat D)
     (s128 : μ.readN (M + 128) 8 = Num.encodeLE 8 9223372036854775832)
     (s136 : μ.readN (M + 136) 8 = Num.encodeLE 8 9223372036854775809)
     (hr : ∀ a, M + 128 ≤ a → a < M + 144 → μ.readable a = true)
     (hr2 : ∀ a, M + 348 ≤ a → a < M + 349 → μ.readable a = true) :
     ∃ ω', FreeStepsH p R 5095 ω μ x 5561 ω' μ x 12 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] := by
+  rcases ht with ⟨t, ht, rfl⟩ | hcs
+  swap
+  · obtain ⟨ω', run, e1, e5⟩ := pdCS (p := p) (P := P) (R := R) x ω μ M D hcs hM h1 h6 s128 s136 hr
+    exact ⟨ω', run.mono (by omega), e1, e5⟩
   rcases ht with ht | ⟨rfl, hb⟩
   · obtain ⟨ω', run, e1, e5⟩ := pd (p := p) (P := P) (R := R) x ω μ M t ht hM h1 h6 s128 s136 hr
     exact ⟨ω', run.mono (by omega), e1, e5⟩
@@ -239,7 +281,7 @@ theorem readN_add2 (μ : Memory) (a n m : Nat) : μ.readN a (n + m) = μ.readN a
     octets unchanged to `ptr + 232 len`, and stores `cur + 232` and `len + 1`. Memory changes only in the
     frame [M − 48, M + 632) and the output slot. -/
 theorem pass_elem {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] (x : X)
-    (ω : Regs) (μ : Memory) (M cur en t cap ptr len : Nat) (ht : PassK t (rdN μ (cur + 44) 1))
+    (ω : Regs) (μ : Memory) (M cur en D cap ptr len : Nat) (ht : PassW D (rdN μ (cur + 44) 1))
     (hM : 65536 + 48 ≤ M ∧ M + 632 < 4294967296 ∧ M % 8 = 0)
     (hcur : 65536 ≤ cur ∧ cur + 232 + 24 < 4294967296) (hcM : cur + 232 + 24 ≤ M - 48 ∨ M + 632 ≤ cur)
     (hne : cur ≠ en) (hen : en < 18446744073709551616) (hl : len ≠ cap) (hcap : cap < 18446744073709551616)
@@ -249,7 +291,7 @@ theorem pass_elem {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     (h1 : ω[1] = UInt64.ofNat M) (i : Nat)
     (hi : (i = 5042 ∧ μ.readN (M + 144) 8 = Num.encodeLE 8 cur) ∨ (i = 5054 ∧ ω[5] = UInt64.ofNat cur))
     (s120 : μ.readN (M + 120) 8 = Num.encodeLE 8 en)
-    (sD : μ.readN cur 8 = Num.encodeLE 8 (9223372036854775807 + t))
+    (sD : μ.readN cur 8 = Num.encodeLE 8 D)
     (s128 : μ.readN (M + 128) 8 = Num.encodeLE 8 9223372036854775832)
     (s136 : μ.readN (M + 136) 8 = Num.encodeLE 8 9223372036854775809)
     (sc : μ.readN (M + 248) 8 = Num.encodeLE 8 cap) (sp : μ.readN (M + 256) 8 = Num.encodeLE 8 ptr)
@@ -274,8 +316,7 @@ theorem pass_elem {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
   have hr : ∀ a, M - 48 ≤ a → a < M + 632 → μ.readable a = true :=
     fun a h1 h2 => Memory.readable_of_writable (hwM a h1 h2)
   obtain ⟨ω1, μ1, run1, a0, a1, -, a6, a7, a8, a9, a144, a304, a280, afr, ard, awr⟩ := pa (p := p) (P := P) (R := R) x ω μ
-    M cur en (9223372036854775807 + t) (by omega) (by omega) (by omega) hne hen (by have := ht.bound; omega)
-    (by have := ht.bound; omega) h1 i hi s120 sD (fun a h1 h2 => hr a (by omega) (by omega))
+    M cur en D (by omega) (by omega) (by omega) hne hen ht.lt.1 ht.lt.2 h1 i hi s120 sD (fun a h1 h2 => hr a (by omega) (by omega))
     (fun a h1 h2 => hrc a h1 (by omega)) (fun a h1 h2 => hwM a (by omega) (by omega))
   obtain ⟨ω2, μ2, run2, b0, b1, b5, b6, bd, bfr, brd, bwr⟩ := memcpy_any (p := p) (P := P) (R := R) x ω1 μ1
     162 5095 M (M + 312) (cur + 8) 224 a0 a1 a7 a8 a9 ⟨by decide, by decide, by decide⟩ jte_80 bs_5095
@@ -292,7 +333,7 @@ theorem pass_elem {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     rw [show M + 348 = M + 312 + 36 by omega, Pass.readN_sub μ2 (M + 312) 224 36 1 _ bd (by omega),
       ← Pass.readN_sub μ1 (cur + 8) 224 36 1 _ rfl (by omega), show cur + 8 + 36 = cur + 44 by omega,
       Memory.readN_congr (fun j hj => afr _ (by omega) (by omega))]
-  obtain ⟨ω3, run3, c1, c5⟩ := pdK (p := p) (P := P) (R := R) x ω2 μ2 M t (by rw [hb348]; exact ht) (by omega) b1
+  obtain ⟨ω3, run3, c1, c5⟩ := pdK (p := p) (P := P) (R := R) x ω2 μ2 M D (by rw [hb348]; exact ht) (by omega) b1
     (by rw [b6, a6])
     (by rw [Memory.readN_congr (fun j hj => k2 _ (by omega) (by omega))]; exact s128)
     (by rw [Memory.readN_congr (fun j hj => k2 _ (by omega) (by omega))]; exact s136)

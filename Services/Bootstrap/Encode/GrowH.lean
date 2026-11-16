@@ -35,9 +35,10 @@ set_option maxRecDepth 100000
 
 /-! ## Bounds -/
 
-/-- The bound kept on the writer's capacity (2²⁸): with twice the output below it, a growth's request
-    stays below `realloc_call`'s 2²⁵ units (`extend_any`'s `hbig`). -/
-def capBound : Nat := 268435456
+/-- The bound kept on the writer's capacity (2⁶⁰). It was 2²⁸, to keep a growth's request below
+    `realloc_call`'s 2²⁵ units; growths of any size are now covered (`Decode.ReallocBig.realloc_call_any`, with
+    `BufH.oth`), and the bound only keeps the arithmetic finite. -/
+def capBound : Nat := 1152921504606846976
 
 /-- The extra steps an append may take for a growth: `realloc` on a chunk of at most 2²⁵ units
     (64 · 2²⁵) and the grow path's own steps. -/
@@ -66,6 +67,7 @@ structure BufH (env : RefineHost.Env) (pb S0 S1 B v len ptr0 : Nat) (s0 : State)
   cb : cap ≤ capBound
   H : HeapCtx env pb S0 S1 μ s
   chunk : ∃ c ∈ chunks s, c.used = true ∧ c.addr + 32 = ptr ∧ cap ≤ 32 * (c.size - 1)
+  oth : ∃ e ∈ chunks s, e.used = true ∧ e.addr + 32 ≠ ptr
   others : ∀ e ∈ chunks s0, e.used = true → e.addr + 32 ≠ ptr0 →
     e ∈ chunks s ∧ e.addr + 32 ≠ ptr ∧ ∀ a, InData e a → μ.read a = μ0.read a
   acc : ∀ a, (a < 196608 ∨ 4096 * pb ≤ a) → μ.readable a = μ0.readable a ∧ μ.writable a = μ0.writable a
@@ -101,7 +103,7 @@ theorem BufH.frame (W : BufH env pb S0 S1 B v len ptr0 s0 μ0 pre cap ptr s μ) 
   obtain ⟨hp0, hp1⟩ := W.buf_lt
   have room := W.room
   have kl : ∀ a, a < 2147483648 → μ'.read a = μ.read a := fun a ha => hk a (by omega) (Or.inl (by omega))
-  refine ⟨vS, ?_, ?_, ?_, ?_, room, W.cpos, W.cb, ctx_high W.H kl hwr, W.chunk, ?_, ?_, ?_, ?_, ?_⟩
+  refine ⟨vS, ?_, ?_, ?_, ?_, room, W.cpos, W.cb, ctx_high W.H kl hwr, W.chunk, W.oth, ?_, ?_, ?_, ?_, ?_⟩
   · rw [Memory.readN_congr (fun j hj => hk _ (by omega) (by omega))]; exact W.vc
   · rw [Memory.readN_congr (fun j hj => hk _ (by omega) (by omega))]; exact W.vp
   · rw [Memory.readN_congr (fun j hj => hk _ (by omega) (by omega))]; exact W.vl
@@ -159,7 +161,7 @@ theorem BufH.trans (W : BufH env pb S0 S1 B v len ptr0 s0 μ0 pre cap ptr s μ)
     BufH env pb S0 S1 B v len ptr0 s0 μ0 (pre ++ pre2) cap2 ptr2 s2 μ2 := by
   have hl : len + (pre ++ pre2).length = len + pre.length + pre2.length := by simp; omega
   refine ⟨W.vS, W2.vc, W2.vp, by rw [hl]; exact W2.vl, by rw [hl, W2.out, W.out, List.append_assoc],
-    by rw [hl]; exact W2.room, W2.cpos, W2.cb, W2.H, W2.chunk, ?_, ?_, ?_, ?_, ?_⟩
+    by rw [hl]; exact W2.room, W2.cpos, W2.cb, W2.H, W2.chunk, W2.oth, ?_, ?_, ?_, ?_, ?_⟩
   · intro e he heu hne
     obtain ⟨h1, h2, h3⟩ := W.others e he heu hne
     obtain ⟨g1, g2, g3⟩ := W2.others e h1 heu h2
@@ -179,9 +181,10 @@ theorem BufH.init {env : RefineHost.Env} {pb S0 S1 B v len cap ptr : Nat} {s : S
     (vS : v + 24 ≤ S1) (vc : μ.readN v 8 = Num.encodeLE 8 cap) (vp : μ.readN (v + 8) 8 = Num.encodeLE 8 ptr)
     (vl : μ.readN (v + 16) 8 = Num.encodeLE 8 len) (hlc : len ≤ cap) (cpos : 0 < cap)
     (cb : cap ≤ capBound) (H : HeapCtx env pb S0 S1 μ s)
-    (chunk : ∃ c ∈ chunks s, c.used = true ∧ c.addr + 32 = ptr ∧ cap ≤ 32 * (c.size - 1)) :
+    (chunk : ∃ c ∈ chunks s, c.used = true ∧ c.addr + 32 = ptr ∧ cap ≤ 32 * (c.size - 1))
+    (oth : ∃ e ∈ chunks s, e.used = true ∧ e.addr + 32 ≠ ptr) :
     BufH env pb S0 S1 B v len ptr s μ [] cap ptr s μ :=
-  ⟨vS, vc, vp, by simpa using vl, by simp, by simpa using hlc, cpos, cb, H, chunk,
+  ⟨vS, vc, vp, by simpa using vl, by simp, by simpa using hlc, cpos, cb, H, chunk, oth,
     fun e he _ hne => ⟨he, hne, fun _ _ => rfl⟩, fun _ _ => ⟨rfl, rfl⟩, fun _ _ => rfl, fun _ _ => rfl,
     fun _ _ _ _ => rfl⟩
 
@@ -192,7 +195,8 @@ theorem BufH.init {env : RefineHost.Env} {pb S0 S1 B v len cap ptr : Nat} {s : S
     of an allocated chunk of s0 other than the entry buffer's (`HeapSrc`). Either the octets are appended
     (`BufH (pre ++ μ.readN src n)`), ω₀, ω₁, ω₅, ω₆ kept and memory at or above sp kept but for the
     vector; or the run reaches a failed `realloc` (`ExhaustsW`). The capacity stays within `capBound`
-    while twice the output does. Gas `stepGas n`. -/
+    while twice the output does. A growth of any size is covered, since another chunk is in use (`BufH.oth`).
+    Gas `stepGas n`. -/
 theorem extendH {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeA p P]
     (env : RefineHost.Env) (K : Nat) (hK1 : 134217728 ≤ K) (hK : K < 18446744073709551616)
     (x : RefineCtx) (ω : Regs) (μ : Memory)
@@ -251,19 +255,25 @@ theorem extendH {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasC
       · obtain ⟨g1, g2, -⟩ := W.others e he heu hne
         exact Or.inr ⟨e, g1, heu, g2, h1, h2⟩
     rcases extend_any env K hK1 hK x ω μ s c sp v src n cap ptr (len + pre.length) ret t pb S0 S1 W.H hc hcu hcp
-        hcc W.cpos room ⟨by omega, by omega⟩ ⟨by omega, by omega, hsp.2.1, hsp.2.2⟩ ⟨hv, vS⟩ h0 h1 h7 h8 h9
+        hcc W.cpos room (Or.inr W.oth) ⟨by omega, by omega, hsp.2.1, hsp.2.2⟩ ⟨hv, vS⟩ h0 h1 h7 h8 h9
         W.vc W.vp W.vl hret hjt hbt hsrc' with
       ⟨cap', r, s', ω', μ', run, e0, e1, e5, e6, ev, ev8, el, hroom', hcap', eo, ed, H', hd, oth, fresh, po,
         stk, low, gl, -⟩ | hx
     · have hlen' : (pre ++ μ.readN src n).length = pre.length + n := by simp [Memory.readN]
       refine Or.inl ⟨cap', r, s', ω', μ', run.mono (by unfold stepGas growGas; rw [Nat.min_eq_right hn]; omega),
-        e0, e1, e5, e6, ⟨vS, ev, ev8, ?_, ?_, by rw [hlen']; omega, by omega, ?_, H', hd, ?_, ?_, ?_, ?_, ?_⟩,
+        e0, e1, e5, e6, ⟨vS, ev, ev8, ?_, ?_, by rw [hlen']; omega, by omega, ?_, H', hd, ?_, ?_, ?_, ?_, ?_, ?_⟩,
         stk⟩
       · rw [hlen', ← Nat.add_assoc]; exact el
       · rw [hlen', ← Nat.add_assoc, Services.Bootstrap.Encode.Enc.readN_add', eo, ed, W.out, List.append_assoc]
       · rcases hcap' with h | ⟨h1, h2⟩
         · unfold capBound; omega
         · rw [h2]; unfold capBound; exact newCap_le _ _ _ _ (by omega) (by omega) (by omega)
+      · obtain ⟨e, he, heu, hne⟩ := W.oth
+        obtain ⟨g1, -⟩ := oth e he heu hne
+        refine ⟨e, g1, heu, ?_⟩
+        rcases fresh with hr | hr
+        · rw [hr]; exact hne
+        · exact hr e he heu
       · intro e he heu hne
         obtain ⟨h1, h2, h3⟩ := W.others e he heu hne
         obtain ⟨g1, g3⟩ := oth e h1 heu h2

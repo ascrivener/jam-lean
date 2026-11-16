@@ -1,4 +1,5 @@
 import Services.Bootstrap.Decode.VecPairsBig
+import Services.Bootstrap.Decode.ReallocBig
 
 /-!
 # `RawVec::grow_one` for refine's output `Vec<Instruction>` (32785)
@@ -323,7 +324,7 @@ theorem grow_one_first {p : ByteArray} {P : Program} [HasCode p P] (env : Refine
 open Picoalloc Services.Bootstrap.Alloc JAM Services.Bootstrap.Decode.AllocOk Services.Bootstrap.Decode.HeapCtx
   Services.Bootstrap.Decode.LoopA Services.Bootstrap.Decode.ReallocCall Services.Bootstrap.Decode.ReallocKeepAll in
 /-- **`grow_one` on a `RawVec<Instruction>`** (32785; GP v0.8.0 §B.7, refine's output): with ω₇ = V, the
-    `RawVec` at V holding capacity oc ≤ 2²¹ and pointer op (at V + 8), op the data address of an
+    `RawVec` at V holding capacity oc ≤ 2²⁶ and pointer op (at V + 8), op the data address of an
     allocated chunk of ⌈232·oc/32⌉ + 1 units when oc ≥ 1, and the allocator's context `HeapCtx` under
     `refineContractK cap` (cap ≥ 2²⁷): either `grow_one` returns to t with the new capacity
     max(2·oc, 4) at V and the new block q at V + 8, q the data of an allocated chunk of
@@ -337,7 +338,7 @@ theorem grow_one_call {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P]
     (μ : Memory) {hb : Nat} (s : State) (sp V oc op ret t v5 v6 pb S0 S1 : Nat)
     (H : HeapCtx env pb S0 S1 μ s)
     (hold : oc = 0 ∨ ∃ c ∈ chunks s, c.addr + 32 = op ∧ c.used = true ∧ c.size = (232 * oc + 31) / 32 + 1)
-    (hoc : oc ≤ 2097152)
+    (hoc : oc ≤ 67108864)
     (hS : S0 + 408 ≤ sp ∧ sp ≤ S1) (hsp : 2147484056 ≤ sp ∧ sp % 8 = 0) (hV : sp ≤ V ∧ V + 16 ≤ S1)
     (h0 : ω[0] = UInt64.ofNat ret) (h1 : ω[1] = UInt64.ofNat sp) (h5 : ω[5] = UInt64.ofNat v5)
     (h6 : ω[6] = UInt64.ofNat v6) (h7 : ω[7] = UInt64.ofNat V)
@@ -379,7 +380,7 @@ theorem grow_one_call {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P]
   have hst := H.st
   have hba : s.base % 8 = 0 := by have := H.wf.2.1; omega
   generalize hnc : max (2 * oc) 4 = nc
-  have hnc1 : 2 * oc ≤ nc ∧ 4 ≤ nc ∧ nc ≤ 4194304 := by omega
+  have hnc1 : 2 * oc ≤ nc ∧ 4 ≤ nc ∧ nc ≤ 134217728 := by omega
   -- the frame S = sp − 48 and the call of finish_grow
   obtain ⟨ω1, μ1, run1, a0, a1, a5, a6, a7, a8, a9, a10, a11, a12, m40, m32, m24, fr1, rd1, wr1⟩ :=
     q1 (p := p) (P := P) (R := refineContractK cap env) x ω μ (sp - 48) V oc op ret v5 v6 ⟨by omega, by omega⟩
@@ -397,8 +398,12 @@ theorem grow_one_call {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P]
   have wr12 : ∀ a, μ2.writable a = μ.writable a := fun a => by rw [wr2, wr1]
   have H2 : HeapCtx env pb S0 S1 μ2 s := ctx_high H (fun a h => hlow a (by omega) (Or.inl (by omega))) wr12
   -- realloc
-  rcases realloc_call (p := p) (P := P) (hb := hb) env cap hcap1 hcap x ω2 μ2 s (sp - 88) op 8 (232 * nc) pb
-      S0 S1 H2 ⟨cq, hcqm, hcqa, hcqu⟩ (by omega) (by omega) hba b1 b7 b9 b10 (by decide) (by decide)
+  have hrq : (232 * nc + 31) / 32 < 33554431 ∨ ReallocBig.BigReq s op ((232 * nc + 31) / 32) := by
+    by_cases h : (232 * nc + 31) / 32 < 33554431
+    · exact Or.inl h
+    · exact Or.inr (Or.inl (by omega))
+  rcases ReallocBig.realloc_call_any (p := p) (P := P) (hb := hb) env cap hcap1 hcap x ω2 μ2 s (sp - 88) op 8 (232 * nc) pb
+      S0 S1 H2 ⟨cq, hcqm, hcqa, hcqu⟩ (by omega) hrq (by omega) hba b1 b7 b9 b10 (by decide) (by decide)
       ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ with
     ⟨r, s', b, ω3, μ3, hR, run3, e7, H3, dat3, keep3, ⟨cr, hcrm, hcra, hcru, hcrs⟩, kp3, stk3, -, -, e0, e1,
       e5, e6, gl3, -, -⟩ |

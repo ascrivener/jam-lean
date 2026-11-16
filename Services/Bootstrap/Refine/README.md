@@ -57,6 +57,122 @@ length prefix ℰ(n) and output ℰ(n) ⌢ encodings ⌢ ℰ₂(w)). Builds, axi
   to the halt with ℰ(`BootstrapWorkOutput { outI is, I }`).
 - Next: part B; then refine_t1c (T1's match form) once the bound question is settled.
 
+**Progress (2026-11-16, fifth instance; branch `claude/bootstrap-t1-m1c`).** Main (#214) merged in. Every file below builds
+with `lake env lean`; axioms clean.
+- `LookupStep2.lookup_step`: the whole eager `Lookup` step, `PInv k` at i → `PInv (k + 1)` at 5042: `lmid`, then `lfmt`
+  (5372 → 5448: `LookupFmtOk`, log, `String` freed), `lpush` (5448 → 4046: `LookedUp(result)` pushed, with room or
+  `grow_one`), `Lookup.ldrop` (→ 5042). Slot k satisfies `LUSlot` (so `O k` via `hO`); `LUOwn` says what happens to μ0 and
+  `Kp`: unchanged for `None` and `Some []` (buffer 1), else the preimage's chunk is adopted (`PInv.adopt`, μ0 rebased by
+  `snapWith`). Named hypotheses: `LookupFmtOk` and `htab` (`(ro.drop 32).take 4 = dropEntry8`, part of `VendoredFactsC`);
+  the step also takes `rtab` (65568 … 65572 readable at its start). Internal: `hlen`, `hgas`.
+- `ElemsBigC`: the 8 `*_elem_bigC` (`import`, `bless`, `random_storage_ok`, `designate`, `looked_up_some`,
+  `provide_inline`, `create_service_some`, `assign_gas`): `ElemsBig.*_elem_big` as `ElemOkAFC`, the slot's buffer word
+  naming a returned chunk that holds the buffer (`OwnsBuf cs bs off m`: off 16, except `provide_inline` 24 and
+  `create_service_some` 8). These cover only the large sizes (> 1024 pairs / > 512 hashes / > 48 keys / > 16384 octets);
+  the small adapters (`ElemsBig`'s counterparts in `Decode/*Elem*.lean`, and `assign_elem`) need the same `C` form for
+  refine_t1c. Not done yet.
+- Still open for part B: the output drop arms of the other heap kinds (indices 0, 11, 12, 13, 17, 22, 24; `DropOut.NoDrop`
+  excludes them and `HeapEl` covers only 5, 18, 19), the encoder arms `EncOkMH` and `DRm` for them.
+- **Debug field formatters the new kinds reach** (for the field-formatter session; from `Fmt/README.md`'s arm table): the
+  output kinds refine_t1c adds are tags 0, 5, 11, 12, 13, 17, 18, 19, 22, 24. Beyond the milestone's formatters (28822,
+  28843, 37549, 56340) they reach **315, 26397, 26605, 26905, 28739, 28801, 29877, 36534, 36594, 36654, 36732, 37611,
+  57485**, through the builders/tails 63820 (tag 0), 28576 (5, 13, 18), 63570 (11), 27665 (12), 28280 (17), 62816 (19),
+  62471 (22) and 28458 (24). Not needed: 26706 (tag 9, `Import`, never an output) and 36972 (tag 21, RSR, excluded).
+
+**Handoff (2026-11-16, end of the fourth instance; branch `claude/bootstrap-t1-m1c`, pushed, no PR yet).** Every file
+below builds; axioms clean. #214 (part A) was still in attempt-1 at handoff (`model` green): merge it on green, then merge
+main into this branch before opening its PR. A full `lake build` of this branch was started but not finished (the cache
+from main@dd373c2 predates #201, so everything rebuilds cold); run it before the PR.
+- Changed existing files (all T1's): `DropOut.dh` also exports n at the frame base; `DropOutH.items_loop` also keeps pages
+  and read-only bytes; **`PInv` has a new field `c8`** (M + 8 = 2^63 + 17, `LookedUp`'s discriminant, which `Lookup.lps`
+  reads), exported by `Entry.e2` and kept by `PassLoop` / `ExportElem` / `LoopAll` / `PInvAdopt`.
+- `DropOutH.drop_vv`: one `DeleteItems` / `Imported` element dropped (29188 → 29181).
+- `DropOutL`: `LookedUp`'s arm (index 18, jump entry 682 → 29376, tier T1B; `None` = cap 2^64 − 1): `ddL`, `lo0`, `lo1`,
+  `drop_lu`.
+- `DropVecH`: `VVAt`, `LUAt`, `HeapEl` (+ `congr`); `drop_vecH` (29087 → ret, elements `NoDrop` or `HeapEl`).
+- `FinH.fin_runH`: the epilogue with `drop_vecH`.
+- `ExitEncH.enc_runH`: the encoder via `encode_okMH_big`. Internal hypotheses, never in refine_t1c's statement: `hcapB`
+  (232 n + 6 ≤ 2^28) and `hbig` (twice the output ≤ 2^28) until ReallocBig; the growth encoder's `FrH` also needs
+  `2147484384 ≤ M` (LayP has 2147484104) and `S1 + 16 < 2^32`: both true of refine's real stack, to discharge where
+  `LayP` is.
+- `ExitRunH.exit_runH`: refine's exit (5042 → ret) with heap elements (slots at the end state, output buffer Eo; `rep` /
+  `DR` depend on memory only through `src` in kept chunks; owned chunks kept, `Kp`, not `ce`).
+- `PInvAdopt.PInv.adopt`: a fresh allocated chunk joins the kept chunks, rebasing μ0 on its data (`snapWith`).
+- `LookupStep.lhead` (i → 5288: stage, `ld`), `lookupOf` (Ω_H's 𝐯 for service svc and hash h), `lmid` (i → 5372: `la`,
+  `lookup_wrap`; result `ResAt μ' (M + 560) (lookupOf env svc h) s s'`; internal `hlen` (Adam's pending decision) and
+  `hgas`).
+- **Next, the second half of the Lookup step** (5372 → 5042, a new file `LookupStep2.lean` or appended): `Lookup.lf`
+  (5372 → 59375) → `LookupFmt.LookupFmtOk` (needs `OptVecAt μ (M + 560)` from `ResAt`: `None` is the first disjunct;
+  `Some d` gives cap = len = |d| < 2^63 and the buffer readable: chunk data, or buf = 1 with len 0) → `Lookup.ll` →
+  `lfr` + `Decode.DeallocCall.dealloc_call` (return 174 → 5448) or `lfz` → `lp0` (room) or `lpg` +
+  `Decode.GrowOne.grow_one_call` (return 176 → 5493; see `PassGrow` / `ExportElem.push` for the pattern) → `lps` (slot k
+  = {2^63 + 17 from `st.c8`, the result's three words}) → `ldrop` (needs `dropEntry8` at 65568, from `VendoredFactsC`)
+  → `PInv (k + 1)` at 5042 with O k for the `LookedUp` slot; for `Some d` with d ≠ [] apply `PInv.adopt` to its chunk
+  (fresh: `ResAt`'s `∀ e ∈ chunks s, e ≠ c` gives ≠ ce, ∉ Kp, ≠ the output buffer). Then the 8 `*_elem_bigC` lemmas,
+  ReallocBig, refine_t1c (the loop's induction must carry μ0 / Kp existentially, since Lookup steps rebase them).
+- The pass-through heap kinds need no `PInv` change: their chunks come from the decoder, so they are `Kp` chunks with
+  data as in μ0, and `HeapEl` at the loop's end follows by `VVAt.congr`.
+- Debug field formatters the new kinds reach: not yet determined (the widened `DRm` is still to be written; candidates
+  as listed in the third instance's handoff).
+
+**Handoff (2026-11-16, end of the third instance; branch `claude/bootstrap-t1-m1c`, pushed, no PR yet):**
+- The branch is `claude/bootstrap-t1-m1-wip` (#214) plus main merged plus parts C/B below. #214 (part A) was still in
+  CI (attempt-1) at handoff: merge it on green (brief), then rebase or merge main into this branch before opening its PR.
+- Open decision with Adam (via the coordinator): whether refine_t1c assumes looked-up preimages < 2^63 octets
+  (recommended (a)). Approved: `VendoredFactsC` (the 4046 table), tier T1B, the gas cap as an internal choice (it must
+  not surface in refine_t1c's statement).
+- All new files build locally (`lake build Services.Bootstrap.Refine.LookupRun Services.Bootstrap.Refine.LookupFmt
+  Services.Bootstrap.Refine.DropOutH`, `CodeT1BAll`, `CodeT1BOk`); axioms checked for `lookup_wrap`. A full `lake build`
+  has not been run on this branch yet.
+- When a PR goes up: add the binary-vs-spec note for preimages ≥ 2^63 octets (the wrapper traps; `Spec.refine` returns
+  `lookedUp (some d)`) to `docs/upstream-candidates.md` and the PR body.
+- Order still to do: `drop_vv`, `drop_vecH`, `exit_runH`, `PInv` with slot-owned chunks and the Lookup step, the 8
+  `*_elem_bigC` lemmas (new files, mirroring `vecvec_elem_bigC`), ReallocBig, refine_t1c. When `DRm` is widened, list
+  here which Debug field formatters the new kinds reach (candidates 315, 26397, 26605, 26706, 26905, 28739, 28801, 29877,
+  36534, 36594, 36654, 36732, 36972, 37611).
+
+**Progress on C (2026-11-16, third instance, branch `claude/bootstrap-t1-m1c`):** the handler and the wrapper are
+proved up to the composition with `PInv`. All files build, axioms clean.
+- `LookupHost.FreeStepsH.lookupRef`: one Ω_H step under `refineContractK cap` (cap ≥ 1125 + ⌈264·ω₁₁/1024⌉; the gas cap
+  stays internal, coordinator 2026-11-16), `lookupVal` / `lookupR7` / `lookupMem`.
+- `Lookup`: `ld` (5095 → 5288, flag set), `la` (5288 → 5366, the frame G = M − 48), `lf` (5372 → `format!`), `ll` (→ log
+  5428), `lfr` / `lfz` (free or not), `lp0` / `lpg` (room, or `grow_one`), `lps` (the `LookedUp` slot {2^63 + 17 from
+  M + 8, the result's three words}, len + 1, → 4046), `ldrop` (4046 → 5042 for index 8, given the ro table entry
+  `dropEntry8` at 65568).
+- `LookupWrap`: `wn`, `wz`, `wbig`, `wl` / `wlh` (lock + `alloc_impl`, units < 2^31 / ≥ 2^31), `wu`, `wr`.
+- `LookupRun.lookup_wrap`: 5366 → 5372 with `ResAt` (`None`, `Some []` with buf 1, or `Some d` in a fresh chunk), or
+  `Bridge.AllocFails` (null at 49149, or `sizeTrap`). Internal hypotheses: preimages < 2^63 octets (`hlen`; Adam
+  decides whether refine_t1c assumes it, recommended (a)), and the cap covering the second Ω_H (`hgas`).
+- `LookupFmt.LookupFmtOk`: the named hypothesis for 5398's `format!` (with `OptVecAt` for the argument).
+- Approved: `VendoredFactsC` = `VendoredFacts` ∧ the 96-octet 4046 drop table at ro offset 0 (for refine_t1c only).
+  The table (ro[0 … 96)): index 8 → jump entry 122 → 4115 (return), 9 → 4129, 10 → 4302, 0 → 4463, 5 → 4169, 12 → 4160,
+  13 → 4496, 17 → 4231, 18 → 4266, 19 → 4362, 22 → 4529; all others → 4115.
+- Next for C: the step 5042 → 5042 for an eager `Lookup` on `PInv`. It needs `PInv` to carry the chunks owned by
+  output slots (the preimage's buffer), with their data, as part B does for the heap kinds: do it together with B.
+- Notes from the previous instance (part B): a new append-only code-fact tier "T1B" (approved; `Tests/GenWitnessSteps.lean`,
+  `bootstrapSvc` after `fnRangesR`: `tiers := [{ name := "T1B", ranges := [(29181, 29675)], excludes := ["X", "R"], doc
+  := "refine's output drop (drop_in_place::<[Instruction]>): the heap variants' drop arms" }]`). Drop arms: jump entries
+  679 → 29270 (DeleteItems, 5), 685 → 29476 (Imported, 19); the drop table at 67760 maps index t to entry
+  (67760 + offset_t)/2 − 1. The encoder with growth needs H arms for every fixed kind (`ArmsHFixed` etc.). `LayLMH`
+  needs cap = 232n + 6 ≤ capBound (2^28), i.e. n ≲ 1.157M internally until ReallocBig.
+
+**Progress on B (2026-11-16, third instance):**
+- Tier T1B generated and kernel-checked (`CodeT1B*`, range (29181, 29675); the previous note's 29176 starts inside the
+  instruction at 29175 and gave a false fact).
+- `DropOutH`: the drop arms of `DeleteItems` (5, arm 29270) and `Imported` (19, arm 29476), straight-line: `ddV`
+  (dispatch 29188 → arm; table entries 1360 / 1372), `va` / `va0` (items or none), `vz` + `vn` = `vi0` (an item of
+  capacity 0, on to the next), `vi1` (an item's `dealloc(q, c, 1)`, return 1362 → 29336 / 1374 → 29540), `vb` (after
+  it), `vo0` / `vo1` (the outer buffer, `dealloc(ptr, 24·cap, 8)`, return 1356 → 29181). All build.
+- `DropOutH.items_loop`: the item loop (head → 29542) by induction, each nonzero item freed by
+  `Decode.DeallocCall.dealloc_call` (any host relation); proved.
+- Next for B: `drop_vv` (one heap element, 29188 → 29181: `ddV`, then `va` + `items_loop` or `va0`, then `vo0` or
+  `vo1` + `dealloc_call` of the outer buffer (return 1356 → 29181: `jte_677`, `bs_29181` are in `Code`)), then `drop_vecH` (the whole output drop with the
+  heap context, `NoDrop` elements by `DropOut.dd`), then `exit_runH` (encoder with growth via
+  `Encode.EncMHLoop.encode_okMH_big` and the arms `delete_itemsH_232` / `importedH_232` / `looked_up_someH`, the wider
+  `DRm`, `drop_vecH`), then `PInv` carrying chunks owned by output slots (for Lookup), then refine_t1c.
+- pvm_go pitfall: a piece whose start pc equals its target (a loop head reached again) can stop at once; split it
+  (`vi0` = `vz` + `vn`). Negative offsets: read as `w + 2^64 − 8` and convert as in `Export.xr1`.
+
 Decided by the coordinator on 2026-11-15:
 - the new theorem `refine_t1c` is added in T1's match form, and `refine_milestone` stays unchanged;
 - the wider `DRm` and the new `LookupFmtOk` go on `refine_t1c` only;

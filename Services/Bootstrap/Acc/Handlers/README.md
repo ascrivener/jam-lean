@@ -107,6 +107,42 @@ Handlers dependencies takes ~2 h on 4 cores). Use `ulimit -v 12000000` when comp
 - `refine ⟨?ω', ?run⟩; case run => pvm_go …` for a one-witness existential.
 
 
+## Session 7 handoff (2026-11-16, for the 8th session)
+
+**Branches.**
+- `claude/bootstrap-t2-handlers-a-row9` (based on #224's branch): row 9 (`ResStoreImpl`, `ResultsInit`), R4
+  (`ResultsAt`), 36170's loop segments (`ResStoreLoopSeg`), `docs/t2-remaining.md`. All compile locally; imported
+  from `Services.lean`. **To do:** once #224 merges, rebase onto main, full `lake build` in the background, open
+  the PR (body: row 9, R4, the map, plan B; the GetCall/GetKeyCall note below), merge on green.
+- `claude/bootstrap-t2-handlers-a-r5` = row9 branch + #222's head (`claude/bootstrap-t2-inputs-wip`) merged in
+  (parent's answer (c)). Adds `ResultsHyp.lean` (R8 `ExtendH`, R9 `OkEncH`, `WriterPre`, `WriterPost`) and
+  `ResStoreLoop.lean` (`ExhaustsP.pre`, `encK`, `LoopInv`, `LoopHyp`, `writer_chain`, `ext_step`, **`rl_item`**:
+  one pass of the loop, Ok and Err, axioms clean). It also carries a one-line fix in #222's
+  `Acc/Transfer/GetKeyCall.lean:197` (`fr5⟩` → `fr5, -, -, -⟩`), needed because #224's `get_some` has more
+  conclusions; the parent is sequencing #224/#222 (whichever merges second needs that line). Rebase this
+  branch onto main once #222 (and the row-9 PR) merge, before opening its PR.
+
+**Decisions this session (parent):** park row 11 as such; plan B (Adam, decision 23): T2 as a skeleton with named
+hypotheses (R6 per handler, R3 decode success, R9 encoder per item, R8 writer step, G4 log lines as Fmt
+hypotheses). `InstrRep` is a parameter shared by R3/R6 with a copy/frame field (obligation: T1's per-kind Reps
+discharge it). Handlers A states the G4 Debug log-line hypotheses itself (minimal, frame-only, like `LogFmt`;
+list in whats-proven.md). R5's result is the contract T2 inputs' R2 consumes (see `docs/t2-remaining.md`).
+
+**Next, in order (Handlers A):**
+1. `rl_loop`: induction on k with `rl_item` (n − k passes; `rl_enter` first; ends at 36405 with `LoopInv n`).
+2. `res_store` (general n ≥ 0): from 36170 like `res_head` (rs_pre, alloc 144n+4, rs_vec, prefix_any) to
+   `LoopInv 0` (μ₀ := memory after prefix_any; ℰ(n) = encK n rs 0; buffer chunk fresh vs st), then `rl_loop`,
+   `rl_tail`, `kb_call`, `rs_set`, `set_call`, and a `res_free` generalised to any value chunk (the buffer may have
+   grown: chunk `d` with d.addr + 32 = r). Convert the HeapHost runs with `FreeStepsH.growS`. For n = 0 reuse
+   `res_head`. Aborts: 36528, 34070, and `ExhaustsP` (T2 inputs' `AccAbort` must cover its state).
+3. R7: row 11 (15032 … 15198): unless [sp+160] = 1, `res_store` with the final results; drops 33214 (ret 558/560),
+   28864 (ret 564), deallocs at 15166 / 15185, back to 6766.
+4. R5: the instruction loop (map in this README's parent message; 8493 setup, head 8540, end 15028/15050; per item:
+   copy to sp+744 (memcpy 68729, `memcpy_val`), Zombify flag [sp+160] for tag 3, Checkpoint (tag 15) pre-write via
+   36170 at 8655 → 8716 (use `res_store`), Debug log line at 8772 (G4 hypothesis), copy to sp+1144, dispatch 8822,
+   handler hypothesis `HandlerImpl` (R6) to 14278, the tail (result log line, G4; push with growth, R8-style
+   hypothesis or `ExtendH`-like for the 144-octet push), back to 8540), as `Impl.forIn` with `ResultsVec`.
+
 ## Session 7 progress (2026-11-16, row 9 composed)
 
 - `ResStoreImpl.lean`: `rs_j1` (40611 → 36217), **`res_head`** (36170 → `set` at 48104, n = 0, any `HeapHost`;

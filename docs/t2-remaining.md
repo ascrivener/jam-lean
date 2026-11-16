@@ -90,6 +90,13 @@ buffers, and the item frame's words `LoopKeep` (sp + 16, 32, 104 … 152, 160 �
 [sp + 184] = 2⁶³, [sp + 216] = 2⁶³ + 1, [sp + 200] = 678, and the decoded `Vec` at sp + 240 / sp + 248
 (ptr in ω₆) with `IterOwn`.
 
+Open point for R2/R16 (parent, 2026-11-16): `LoopHyp.hB`, the size bound on `encodeResults rs` that row
+11 needs (2·(144n + 4) + 4·|encodeResults rs| + 64 < 2³⁰ − 64), is carried as a premise of `row_eleven`
+and `loop_exit` up to R2. It must not end up as an unconditional T2 assumption. If the bound fails,
+the binary should run out of heap, which is an allowed outcome. So at R2/R16 it becomes a case split:
+hB holds, or the run exhausts the heap (`ExhaustsP`). That requires the failure branches of
+`ExtendH`/`PushH` to cover the oversize case.
+
 Added for R7 (parent, option (A)): **`DropInstrsH`** over the `InstrRep` bundle's `foot`
 (`Acc/Handlers/InstrRep.lean`), frame-only, for the instructions' `IntoIter` drop (33214).
 

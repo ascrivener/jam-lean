@@ -40,12 +40,29 @@ allows) could stand in for the item for now.
 | R8 | **HeapHost growing writer** (`extend`/`prefix` with realloc under `HeapHost`, accumulate's counterpart of refine's `BufH`/`EncMH` under `refineContractK`). Needed because `Result.encode` of `.data`/`.dataVec` is unbounded, and for the results Vec's pushes in R5. Also lifts G3 (≤ 89 inputs, ≤ 16384-octet blobs) | refine's WriterGrow/EncMH as a template; allocator realloc lemmas (main) | Vec / Decode-HeapHost session | M–L | Yes, as a named "writer step" hypothesis; but it would sit under many lemmas, so proving it is preferable |
 | R9 | **36299, the `Result` encoder**: dispatch through the i32 table at 68264 to the arms 30374 / 30512 / 30433 / 30438 / 30392 / 30567 / 30640 (tags 0–6) | R8 (for `.data`, `.dataVec`); R10 | Handlers A or Vec | M | Yes (per-arm or whole-encoder hypothesis) |
 | R10 | **RO-data facts** for accumulate: the table at 68264 … 68291, key-size words 68680 … 68704, `set`'s error table 69056 / 69072, keys/templates in rodata | `VendoredFacts`/`FmtRO`-style definition (T1); an accumulate `roBytes` check (`Acc/RoData.lean`, `accRoBytes`) and `KeepsRO` | T1 (definition) + T2 inputs (carriage) | S–M | Yes: already carried as hypotheses (decided: allowed until step 10 of `bootstrap-target.md`) |
-| R11 | **Frames keep the statics** 196616 … 196791 through `TrPost` and the fmt hypotheses (`KeyFmt`, `Utf8Call`, `LogFmt`), so `ParamStatics` reaches row 8 | parent's decision (options sent by T2 inputs: (a) strengthen the three frames, recommended) | T2 inputs | S | Yes (ParamStatics is already a premise; this discharges it) |
+| R11 | **Frames keep the statics** (decided: Adam approved option (a)) 196616 … 196791 through `TrPost` and the fmt hypotheses (`KeyFmt`, `Utf8Call`, `LogFmt`), so `ParamStatics` reaches row 8 | decided (a): strengthen the three frames and thread the region through | T2 inputs | S | Yes (ParamStatics is already a premise; this discharges it) |
 | R12 | **`AccAbort` and `ValuesFit`**: `AccAbort` = heap exhaustion (alloc null, > 2³⁷ − 32, Exhausts) and named quirks (Q18 remove-on-FULL panics; `orPanic` FULL is a spec panic, not an abort); the WF predicate `ValuesFit` (< 2⁶³) and its consequences (`StoreFit` for every intermediate context) | the list of trap addresses from every summary (36528, 34070, 32584, 47977, 3820, 4002, 15362, 15363, 34178, 48047 …) | T2 inputs | S | No (definitions) |
 | R13 | **Remaining `get` band** 2³⁶ ≤ \|w\| + 31 ≤ 2³⁷ − 32 (32-bit unit count sign-extends) | allocator lemma "a request ≥ 2³¹ units returns null, keeping the context" | Vec / allocator | S | Yes (or excluded by `ValuesFit`-style bound) |
 | R14 | **G1 `gas`** (0) at 11330 and 13011 (Transfer, CreateService) and **G5** Benchmark's `checkpoint` (11889) | the Acc/README.md G1 proposal; `accContractS`'s 0/18 case | Handlers A (with R6) | S each | No (small) |
 | R15 | **The end** 15215 … 15359: halt with (ω₇, ω₈) = (0, 0) as `Halts` | — | T2 inputs (`items_halt` exists) | S | No |
 | R16 | **Final composition and statement**: chain start → `inputs_decode` → R1 → `Halts`, pick one gas cap ≥ every summary's bound (2²⁷ for the allocator), discharge `ParamStatics` (statics branch), state `accumulate_spec` with its named hypotheses, list them in `docs/whats-proven.md` | everything above | T2 inputs (or parent's pick) | M | — |
+
+## Plan B (Adam, decision 23, 2026-11-16): a T2 skeleton with named hypotheses
+
+T2 is stated soon, with the plumbing proved and these named hypotheses (each in the theorem's
+docstring and in `docs/whats-proven.md`, stated minimally and close to `Spec`, so that each can be
+proved later without changing T2):
+- **R6, per handler:** "the handler at tag k implements `onInstr C now i`, or aborts for `AccAbort`",
+  for every tag except what is already proved (rows 8 and 9, the wrappers);
+- **R3, the output decode's success path;**
+- **R9, the results encoder 36299, per item:** "appends `Result.encode r`, or exhausts";
+- **R8, the HeapHost writer step;**
+- the per-instruction log lines (G4) as Fmt hypotheses, like `LogFmt`.
+
+Split: Handlers A does R4 (`ResultsAt`), R5 (the instruction loop as `Impl.forIn` against the
+per-handler hypotheses) and R7 (row 11 against the R8/R9 hypotheses). T2 inputs does R1, R2, R12,
+R15 and R16 (the final statement). R2's operand arm consumes R5's and R7's results; the interfaces
+are agreed through the parent.
 
 ## Named hypotheses the statement would carry, as things stand
 

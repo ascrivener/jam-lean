@@ -107,6 +107,37 @@ Handlers dependencies takes ~2 h on 4 cores). Use `ulimit -v 12000000` when comp
 - `refine ⟨?ω', ?run⟩; case run => pvm_go …` for a one-witness existential.
 
 
+## Session 9 handoff (2026-11-16, for the 10th session)
+
+**PRs.** **#228** (row 9) still open: `model`/`changes` green, `attempt-1` was still running after ~3 h at
+handoff. Re-subscribe (`subscribe_pr_activity` #228) and **merge on green** (squash), tell @parent. The parent
+warned main's ruleset may still require the removed `build-and-check` check: if a merge is refused for that,
+tell @parent and carry on (don't work around it).
+
+**Branch `claude/bootstrap-t2-handlers-a-r5`** (pushed, no PR; CI runs only on PRs/main, so pushes are free).
+Everything below compiles locally, axioms clean, imported from `Services.lean`. Rebase onto main once #222 and
+#228 merge, before opening its PR (see session 8's note on `git rebase --onto`). Run the full `lake build` in
+the background before the PR. Local tip: build deps with `lake build <Module>`, then check one file with
+`lake env lean <file>` under a memory watch (a runaway `rfl`/`congr` can eat >9 GB).
+
+**Pending with @parent** (sent this session): confirm `DropInstrsH`'s premises — the stack room
+(2³¹ + 4096 ≤ sp, S0 + 4096 ≤ sp) and `IterOwn` (see `InstrRep.lean`). Proceeding on that basis.
+
+**Next, in order:**
+1. Merge #228 on green.
+2. R7's front: compose `DropInstrsH` (15028 → 33214 → 15038, `r11_di0`, return 558 = jte 278 → 15038) before
+   `row_eleven_core`. Carry across the drop (`Kept st μ (iterFree …)`, `Frm μ sp`): `TailHyp` (needs every
+   tail/results chunk ∉ `iterFree`: `ResultsOwn.keep`/`BufOK.keep` variants with an excluded set), `LoopHyp`'s
+   `ResultsAt` (`ResultsAt.keep` needs all chunks kept; add a variant: generalize `InHeap.keep` … `ResultsAt.keep`
+   in `ResultsAt.lean` to `hk` over the witness chunks only, with an "avoid F" premise), the flag/key words
+   (above sp, kept by `Frm`). Interface choice to send @parent: the disjointness premise R5 must supply
+   (recommend: `(iterFree ++ tailFree μ sp).Nodup` plus "every chunk holding a results octet is ∉ iterFree",
+   phrased via a `ResultsAvoid` predicate mirroring `ResultsAt`). Then the final R7 statement from 15028 as
+   `Impl` of `unless (is.any zombify) (store …)` with `R7Post` (freed: `iterFree ++ tailFree`). Entry 15050
+   (`r11_di1`, ret 560 → 15060, skipping the flag) is unexplained: find who jumps there before using it.
+3. R5 (the instruction loop) as in `docs/t2-remaining.md`; it must produce `IterOwn`, `ResultsOwn`,
+   `TailHyp`'s buffer facts, `LoopHyp`, [sp+160] ↔ Zombify.
+
 ## Session 9 progress (2026-11-16)
 
 - `ResultsDropRun.lean`: **`drop_results`** (28864 → caller t, any n, generic in R): every buffer in

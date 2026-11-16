@@ -116,6 +116,9 @@ Handlers dependencies takes ~2 h on 4 cores). Use `ulimit -v 12000000` when comp
   Pieces: `Core` (invariant), `Core.sk/dk/rd/item/inr`, `dv_cell`, `dv_inner`, `dv_out`, `dr_data`, `dr_vec`,
   `dr_item`, `dr_loop`, `init3`. Axioms clean. Pitfall: never close `free s w = (FR ++ [w]).foldl free s₀` by
   `rfl` (the kernel unfolds `free`, OOM); rewrite with `List.foldl_append/cons/nil`.
+- `ResultsDropRun.lean` (end): `ChunksKept μ st μ' st'` (= `StorePost`'s chunk clause) and **`ResultsOwn.keep`**
+  (with `resPtrs_keep`, `itemPtrs_keep`, `item_keep`, `innerPtrs_congr`). Axioms clean. Avoid `congr 1` on
+  goals with `rdN` (whnf timeout).
 
 ## Session 8 handoff (2026-11-16, for the 9th session)
 

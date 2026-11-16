@@ -25,7 +25,7 @@ macro "post_simp" : tactic => `(tactic| (
     ↓reduceIte, PVM.getD_some', List.lookup_nil, Option.getD_none, PVM.Memory.readN_writeN_same,
     PVM.Memory.readN_writeN_disjoint, PVM.Memory.read_writeN_disjoint, PVM.Memory.readable_writeN,
     PVM.Memory.writable_writeN, PVM.Num.length_encodeLE, List.length_cons, List.length_nil, PVM.two32]
-  all_goals try (congr 1; omega)
+  all_goals try (first | omega | (apply congrArg; omega))
   all_goals try rfl))
 
 /-- 680 … 719 (`DecodeLoop.s1` at frame base F): spill ω₀ = 18, ω₅, ω₆ at F + 48, F + 40, F + 32,

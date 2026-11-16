@@ -212,7 +212,7 @@ theorem bkb {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ 
     post_simp
     all_goals try assumption
     all_goals try (congr 1; split <;> omega)
-    all_goals try (congr 1; omega)
+    all_goals try (first | omega | (apply congrArg; omega))
 
 /-- 983 … 998, 1271 … 1297, 1238 … 1269, every element read (S + 24 and S + 16 both hold the
     last batch c): the function stores the `Vec` {cap, ptr q, len} (from S + 40, S + 48, S + 56) at the

@@ -63,7 +63,7 @@ theorem v1g {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ 
       show sp - 96 + 8 = sp - 88 by omega, show sp - 96 + 32 = sp - 64 by omega,
       show sp - 96 + 24 = sp - 72 by omega, show sp - 96 + 48 = sp - 48 by omega]); post_simp
     all_goals try decide
-    all_goals try (congr 1; omega)
+    all_goals try (first | omega | (apply congrArg; omega))
 
 /-- 3520 … 3595, the loop's head with L ≥ 1 octets read into a buffer of capacity L and `left` ≥ 1 to
     go (ω₅ = ω₇ = ω₈ = L, ω₁₀ = left): the chunk c = min(left, L) does not fit, so `read_vec` stores
@@ -95,7 +95,7 @@ theorem lh {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X) (�
     post_simp
     all_goals try assumption
     all_goals try (congr 1; split <;> omega)
-    all_goals try (congr 1; omega)
+    all_goals try (first | omega | (apply congrArg; omega))
 
 /-- 32989 … 33049: `finish_grow` with an old buffer q of capacity L ≥ 1 (ω₈ = L, ω₉ = q) and the new
     capacity N ≥ 1 (ω₁₀), one-octet elements at alignment 1: it opens its frame at F = ω₁ − 40 (its
@@ -127,7 +127,7 @@ theorem g3 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X) (�
   · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
     post_simp
     all_goals (try simp only [show F + 40 - 40 = F by omega]); post_simp
-    all_goals try (congr 1; omega)
+    all_goals try (first | omega | (apply congrArg; omega))
 
 /-- 40821: `realloc`'s return, to `finish_grow` (return address 1524, the jump-table entry 33055). -/
 theorem realloc_ret {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X) (ω : Regs) (μ : Memory)
@@ -199,7 +199,7 @@ theorem v2g {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ 
   · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 ha2 => ?_, fun a => ?_, fun a => ?_⟩
     post_simp
     all_goals try assumption
-    all_goals try (congr 1; omega)
+    all_goals try (first | omega | (apply congrArg; omega))
 
 /-- 3635 … 3570, the loop's back edge: the read of the chunk c succeeded (ω₇ = 0) after L octets
     (ω₅ = L), and more than c were left (S + 32 holds left > c): `read_vec` goes back to 3520 with
@@ -223,7 +223,7 @@ theorem v5 {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ :
   · refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
     post_simp
     all_goals try assumption
-    all_goals try (congr 1; omega)
+    all_goals try (first | omega | (apply congrArg; omega))
 
 /-- 3635 … 3713, the loop's exit: the read of the last chunk c succeeded (ω₇ = 0) after L octets
     (ω₅ = L, S + 32 holds c): `read_vec` stores the `Vec` `{cap N (S + 40), ptr q (S + 24), len L + c}`
@@ -264,6 +264,6 @@ theorem v3g {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ 
       rdN_writeN_disjoint, ↓rdN_fold]
   · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
     post_simp
-    all_goals try (congr 1; omega)
+    all_goals try (first | omega | (apply congrArg; omega))
 
 end Services.Bootstrap.Decode.VecU8

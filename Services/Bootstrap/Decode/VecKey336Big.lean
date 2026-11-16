@@ -110,7 +110,7 @@ theorem g3k {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X) (
   · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
     post_simp
     all_goals (try simp only [show F + 40 - 40 = F by omega]); post_simp
-    all_goals try (congr 1; omega)
+    all_goals try (first | omega | (apply congrArg; omega))
 
 /-- 1424 … 1450, as `p5` for any batch: `finish_grow` returned `Ok` (0 at S + 64) with the block q
     (S + 72), the new capacity N in ω₆, the batch c at S + 16 and the bound B ≠ 0 at S + 32: the
@@ -238,7 +238,7 @@ theorem bkk {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ 
     post_simp
     all_goals try assumption
     all_goals try (congr 1; split <;> omega)
-    all_goals try (congr 1; omega)
+    all_goals try (first | omega | (apply congrArg; omega))
 
 /-- 1483 … 1492, 1380 … 1398, 1736 … 1758, 1703 … 1734: the last key was copied (ω₅ = 1, ω₆ = j)
     and nothing is left (S + 8 and S + 16 both hold the last batch c): the length becomes j + 1, and

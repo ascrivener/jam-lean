@@ -73,7 +73,7 @@ theorem g3e {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X) (
   · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
     post_simp
     all_goals (try simp only [show F + 40 - 40 = F by omega]); post_simp
-    all_goals try (congr 1; omega)
+    all_goals try (first | omega | (apply congrArg; omega))
 
 /-- 3169 … 3208, the batch end with more to read: the batch of c elements is read (ω₇ = L, the
     length; S + 16 holds c + left, S + 8 holds c, left ≥ 1), and the buffer is full (S + 48, the
@@ -113,7 +113,7 @@ theorem bk {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ :
     post_simp
     all_goals try assumption
     all_goals try (congr 1; split <;> omega)
-    all_goals try (congr 1; omega)
+    all_goals try (first | omega | (apply congrArg; omega))
 
 /-- 3213 … 3242, as `p4` for any batch: `finish_grow` returned `Ok` with the buffer q (S + 72 holds 0,
     S + 80 holds q), the capacity N at S + 24, the batch c in ω₆ and the bound M ≠ 0 at S + 40: the

@@ -133,7 +133,7 @@ theorem finish {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (
     · refine ⟨?_, ?_, ?_, ?_⟩
       all_goals simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
         ↓reduceIte, PVM.getD_some', h1]
-      all_goals try (congr 1; omega)
+      all_goals try (first | omega | (apply congrArg; omega))
 
 /-- To the error exit: from 20626, the reader failed (ω₇ ≠ 0), or it read a tag t ≥ 25. -/
 theorem to_error {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ : Memory) (A t : Nat)

@@ -581,7 +581,7 @@ theorem bkv {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ 
     post_simp
     all_goals try assumption
     all_goals try (congr 1; split <;> omega)
-    all_goals try (congr 1; omega)
+    all_goals try (first | omega | (apply congrArg; omega))
 
 open Picoalloc Services.Bootstrap.Alloc JAM Services.Bootstrap.Decode.HeapCtx Services.Bootstrap.Decode.LoopA
   Services.Bootstrap.Decode.ReallocCall Services.Bootstrap.Decode.ReallocKeepAll Services.Bootstrap.Decode.Loop in

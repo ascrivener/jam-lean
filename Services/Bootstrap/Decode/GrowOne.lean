@@ -132,7 +132,7 @@ theorem g3i {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (x : X) (
   · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
     post_simp
     all_goals (try simp only [show F + 40 - 40 = F by omega]); post_simp
-    all_goals try (congr 1; omega)
+    all_goals try (first | omega | (apply congrArg; omega))
 
 /-- 32830 … 32856: `finish_grow` returned `Ok` (0 at S) with the block q at S + 8: `grow_one` stores
     the new capacity N (ω₆) at V (ω₅) and q at V + 8, restores ω₀, ω₅, ω₆ from its frame and returns

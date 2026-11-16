@@ -83,7 +83,7 @@ theorem bk {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ :
     post_simp
     all_goals try assumption
     all_goals try (congr 1; split <;> omega)
-    all_goals try (congr 1; omega)
+    all_goals try (first | omega | (apply congrArg; omega))
 
 /-- 2840 … 2869, as `p4` for any batch: `finish_grow` returned `Ok` with the buffer q (S + 72 holds 0,
     S + 80 holds q), the capacity N at S + 24, the batch c in ω₆ and the bound M ≠ 0 at S + 40: the

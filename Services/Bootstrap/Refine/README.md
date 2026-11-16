@@ -8,6 +8,16 @@ Everything cites Gray Paper v0.8.0 via the docstrings of the files named here; t
 
 **Eighth instance (2026-11-16, branch `claude/bootstrap-t1c`, on top of m1d).** refine_t1c, in progress.
 
+**Ninth instance (2026-11-16, branch `claude/bootstrap-t1c`).**
+- `Assign`'s word at 196680 is written by the start-up's parameter chain (56253 `store_u64`, BParams segment 174), and
+  its value ℰ₈(80) is already proved: `StartupConsts.startup_consts` (under `env.fetch.params = Params.full`). No
+  `VendoredFactsC` conjunct; carry it from 4642 to the decode as a frame fact (Glob words kept), into `gl`.
+- **Adam decided (A):** refine_t1c takes C := `Spec.Consts.ofParams Params.full rk`, rk free (no new hypothesis;
+  refine_milestone keeps C free). The docstring must say so, and that randomKeys is irrelevant since RSR is excluded.
+- `SlotVV` (DeleteItems / Imported slots, and their empty forms): `slotOK_deleteItems`, `slotOK_imported`,
+  `slotOK_deleteItemsEmpty`, `slotOK_importedEmpty` (via `vv_facts`, `vvAt_empty`). Pass-through `LookedUp None` is
+  `SlotLU.slotW_lu` with v = none.
+
 **Handoff (end of the eighth instance).** Read this first.
 - **#217** (parts B/C): attempt-1 timed out green as designed, attempt-2 was still running at handoff (started 12:15).
   Subscribe, merge (squash) on green. Then the m1d PR exactly as the seventh instance's handoff says (restart `claude/bootstrap-t1-m1c` from main, merge

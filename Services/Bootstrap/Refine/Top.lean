@@ -57,7 +57,7 @@ theorem outI_wf {C : Spec.Consts} {x : Spec.Instr} (hx : MFixed x ∨ ∃ ds, x 
     instructions each passed through or `ExportSegs`: the run reaches the halting `jump_ind` at 6373 with ω₇, ω₈
     the octets ℰ(`BootstrapWorkOutput { outI is, I }`), readable, and the host context the segments exported
     in order (`expTo`); or an allocation fails. -/
-theorem from4680 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P]
+theorem from4680 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Services.Bootstrap.CodeA.HasCodeA p P] [HasCodeR p P]
     (env : RefineHost.Env) (C : Spec.Consts)
     {ro : List UInt8} (line : Prologue.ArgsLineOk p 134217728 env 1044430 S0 S1 ro)
     (fmt : ExportSeg.ExportFmtOk p 134217728 env 1044430 S0 S1 ro)
@@ -159,7 +159,7 @@ theorem from4680 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Has
 /-- **Refine from Y's state to the halt, the milestone's payloads** (pc 0 … 6373): the arguments' parse
     (`ArgsAll.refine_args`: ℰ(c) ⌢ ℰ(i) ⌢ ℰ(s) ⌢ ↕y ⌢ h, 1 ≤ |y| < 2^24) and `from4680`. The read-only tables
     the run reads are given in the starting memory. -/
-theorem refine_core {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P]
+theorem refine_core {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Services.Bootstrap.CodeA.HasCodeA p P] [HasCodeR p P]
     (env : RefineHost.Env) (C : Spec.Consts) (henv : heapBounds env.code = (48, 1044430))
     (hpar : env.fetch.params = Params.full)
     {ro : List UInt8} (line : Prologue.ArgsLineOk p 134217728 env 1044430 S0 S1 ro)

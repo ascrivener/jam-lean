@@ -8,6 +8,26 @@ Everything cites Gray Paper v0.8.0 via the docstrings of the files named here; t
 
 **Eighth instance (2026-11-16, branch `claude/bootstrap-t1c`, on top of m1d).** refine_t1c, in progress.
 
+**Handoff (end of the ninth instance).** Read this first.
+- **#217 merged** (90f7bf2). **#226** (the m1d PR: branch `claude/bootstrap-t1-m1c`, restarted from main with m1d merged)
+  was open with `model` green and attempt-1 running (started 13:34). Subscribe, merge (squash) on green, tell the parent.
+  Then merge main into `claude/bootstrap-t1c` (expect README / Services.lean conflicts only; t1c already contains m1d).
+- `claude/bootstrap-t1c` (pushed, 5a2bf43): a full `lake build` passed at 7c8acf4+PkgH (2830 jobs). Since then
+  only new files were added (PkgH csNone/csEmpty, ProvideEmpty, HashEmpty), each built alone.
+- Done this instance (all build, axioms clean): `SlotVV`, `EmptyElems`, `SlotEmpty`, `PassW` refactor (Gap 2),
+  `PkgT` + `PkgH` (packages), `ProvideEmpty` (decoder + slot + `pkg_provideInlineEmpty`), `HashEmpty`
+  (`VecHash.vec_hash_empty` at 1764, `VecHash32.vec_hash32_empty` at 907, both n = 0).
+- **Gap 1 remaining:** `AssignForGasCost` with q = [] and `RandomStorageAccumulate(Some [])`: compose the callers'
+  paths with n = 0 (as `ProvideEmpty.provide_inline_emptyF` does from `pi_pre` / `vec_u8_empty` / `pi_post`): for
+  AssignGas, the pieces of `Decode/AssignGas.lean` around 25408 → 1764 (`assign_gas_elemF`'s proof, with
+  `vec_hash_empty` in place of `vec_hash`); for RSA, `Decode/RandomStorageOk.lean` (`random_storage_ok_heap`'s
+  pieces, with `vec_hash32_empty` in place of `vec_hash32_heap`). Then their slots (as `slotOK_provideInlineEmpty`:
+  encoder arm with n = 0, ArmOk capacity 0) and packages.
+- **Then:** `pkg_all` (dispatch on x), `Inv`, `RunT`, `TopT`, `T1c.refine_t1c` (C := `Consts.ofParams Params.full
+  rk`; gl at 196616 / 196680 from `StartupConsts.startup_decoder_facts`, carried 4642 → 4792), docs, PR, message the
+  parent the statement and hypothesis list (gas cap K = 2^62 for the Fmt hypotheses, differing from
+  refine_milestone's).
+
 **Ninth instance (2026-11-16, branch `claude/bootstrap-t1c`).**
 - `Assign`'s word at 196680 is written by the start-up's parameter chain (56253 `store_u64`, BParams segment 174), and
   its value ℰ₈(80) is already proved: `StartupConsts.startup_consts` (under `env.fetch.params = Params.full`). No

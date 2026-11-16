@@ -87,7 +87,7 @@ theorem pkg_luNone {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
     DecPkg env K pb gl p P (.lookedUp none) (PassSlot env K pb p P C (.lookedUp none)) := by
   have he : (Spec.Instr.lookedUp none).encode = [18, 0] := by simp [Spec.Instr.encode, Spec.opt]
   refine pkg_ofF (fun F RD hL => he ▸ Decode.LookupProvideElem.looked_up_noneF F RD hL) (fun cs bs μr h => ?_)
-  refine ⟨9223372036854775807 + 18, fun _ => False, passW_idx (by unfold PassIdx; omega), h.1, ?_, fun _ h => h.elim⟩
+  refine ⟨9223372036854775807 + 18, fun _ => False, passW_idx (t := 18) (by unfold PassIdx; omega), h.1, ?_, fun _ h => h.elim⟩
   intro μ s el hel _
   exact SlotLU.slotW_lu env K pb hK1 hK C none (fun d e => by cases e) 0 (by decide) el μ s _
     ⟨by rw [hel]; exact h.1, by rw [hel]; exact h.2⟩ (fun d e => by cases e)
@@ -103,7 +103,7 @@ theorem pkg_provideHash {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p 
     simp [Spec.Instr.encode]
   refine pkg_ofF (fun F RD hL => he ▸ Decode.LookupProvideElem.provide_hashF F RD hL (Codec.fixed 4 sv) h
     (by simp [Codec.fixed]) hh) (fun cs bs μr hb => ?_)
-  exact passSlot_noown _ (passW_idx (by unfold PassIdx; omega)) hb.1
+  exact passSlot_noown _ (passW_idx (t := 17) (by unfold PassIdx; omega)) hb.1
     (slotOK_provideHash env K pb hK1 hK C sv h hw _ bs hb μr)
 
 /-- **`RandomStorageAccumulate(Err)`** ([22, 1]). -/
@@ -114,7 +114,7 @@ theorem pkg_rsaErr {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
       (PassSlot env K pb p P C (.randomStorageAccumulate none)) := by
   have he : (Spec.Instr.randomStorageAccumulate none).encode = [22, 1] := by simp [Spec.Instr.encode]
   refine pkg_ofF (fun F RD hL => he ▸ random_storage_errF F RD hL) (fun cs bs μr hb => ?_)
-  exact passSlot_noown _ (passW_idx (by unfold PassIdx; omega)) hb.1 (slotOK_rsaErr env K pb hK1 hK C _ bs hb μr)
+  exact passSlot_noown _ (passW_idx (t := 22) (by unfold PassIdx; omega)) hb.1 (slotOK_rsaErr env K pb hK1 hK C _ bs hb μr)
 
 /-- **`LookedUp(Some [])`** ([18, 1, 0]). -/
 theorem pkg_luEmpty {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeA p P]
@@ -124,7 +124,7 @@ theorem pkg_luEmpty {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [
   have he : (Spec.Instr.lookedUp (some [])).encode = [18, 1, 0] := by
     simp [Spec.Instr.encode, Spec.opt, Spec.bytes, Codec.nat]; rfl
   refine pkg_ofF (fun F RD hL => he ▸ looked_up_emptyF F RD hL) (fun cs bs μr hb => ?_)
-  exact passSlot_noown _ (passW_idx (by unfold PassIdx; omega)) hb.1
+  exact passSlot_noown _ (passW_idx (t := 18) (by unfold PassIdx; omega)) hb.1
     (SlotEmpty.slotOK_luEmpty env K pb hK1 hK C bs μr hb)
 
 /-- **`Designate([])`** ([13, 0]; it reads the core count, `ElemOkFG`). -/
@@ -135,7 +135,7 @@ theorem pkg_designateEmpty {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX
   have he : (Spec.Instr.designate []).encode = [13, 0] := by
     simp [Spec.Instr.encode, Spec.vec, Codec.nat]; rfl
   refine pkg_ofAF (fun F RD hL => he ▸ of_elemOkFG hL (designate_emptyF F RD hL)) (fun cs bs μr hb => ?_)
-  exact passSlot_noown _ (passW_idx (by unfold PassIdx; omega)) hb.1
+  exact passSlot_noown _ (passW_idx (t := 13) (by unfold PassIdx; omega)) hb.1
     (SlotEmpty.slotOK_designateEmpty env K pb hK1 hK C hw bs μr hb)
 
 /-- **`Bless(m, a, v, r, [])`**. -/
@@ -148,7 +148,7 @@ theorem pkg_blessEmpty {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P
     simp [Spec.Instr.encode, Spec.vec, Codec.nat]; rfl
   refine pkg_ofF (fun F RD hL => he ▸ bless_emptyF F RD hL _ _ _ _ (by simp [Codec.fixed]) (by simp [Codec.fixed])
     (by simp [Codec.fixed]) (by simp [Codec.fixed])) (fun cs bs μr hb => ?_)
-  exact passSlot_noown _ (passW_idx (by unfold PassIdx; omega)) hb.1.1
+  exact passSlot_noown _ (passW_idx (t := 11) (by unfold PassIdx; omega)) hb.1.1
     (SlotEmpty.slotOK_blessEmpty env K pb hK1 hK C m a v r hw bs μr hb)
 
 /-- **`DeleteItems([])`** ([5, 0]). -/
@@ -159,7 +159,7 @@ theorem pkg_deleteItemsEmpty {p : ByteArray} {P : Program} [HasCode p P] [HasCod
   have he : (Spec.Instr.deleteItems []).encode = [5, 0] := by
     simp [Spec.Instr.encode, Spec.vec, Codec.nat]; rfl
   refine pkg_ofF (fun F RD hL => he ▸ Decode.ExportEmpty.delete_items_emptyF F RD hL) (fun cs bs μr hb => ?_)
-  exact passSlot_noown _ (passW_idx (by unfold PassIdx; omega)) hb.1
+  exact passSlot_noown _ (passW_idx (t := 5) (by unfold PassIdx; omega)) hb.1
     (SlotVV.slotOK_deleteItemsEmpty env K pb hK1 hK C bs μr hb)
 
 /-- **`Imported([])`** ([19, 0]). -/
@@ -170,7 +170,7 @@ theorem pkg_importedEmpty {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX 
   have he : (Spec.Instr.imported []).encode = [19, 0] := by
     simp [Spec.Instr.encode, Spec.vec, Codec.nat]; rfl
   refine pkg_ofF (fun F RD hL => he ▸ Decode.ExportEmpty.imported_emptyF F RD hL) (fun cs bs μr hb => ?_)
-  exact passSlot_noown _ (passW_idx (by unfold PassIdx; omega)) hb.1
+  exact passSlot_noown _ (passW_idx (t := 19) (by unfold PassIdx; omega)) hb.1
     (SlotVV.slotOK_importedEmpty env K pb hK1 hK C bs μr hb)
 
 end Services.Bootstrap.Refine.PkgT

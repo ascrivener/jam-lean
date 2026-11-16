@@ -2,6 +2,27 @@
 
 ## Handoff: T2 inputs (updated 2026-11-16 evening, end of the third session)
 
+**Session 5 (2026-11-16, night), on `claude/bootstrap-t2-r2`** (= `claude/bootstrap-t2-statics` + Handlers A's
+`claude/bootstrap-t2-handlers-a-r5` at 4a9f542, merged locally; full build green after the merge):
+- R2 pieces, sorry-free: `ItemsLoop/OpHead.lean` (`opArm_head`, 6766 → 7009 for any operand, `OpHeadPost`),
+  `OpSeg.lean` (7009 → 7050, 7080 → 15361 / 8013 / 40494, 40611 → 7145, 7145 → 15364 / 8013),
+  `OutDec.lean` (**`OutDecH`**, R3 as a named hypothesis: the inlined `BootstrapWorkOutput::decode`
+  7050 → 7080; draft sent to @parent, awaiting OK), `OpSpec.lean` (`onWorkItem_some` / `_none`),
+  `OpDec.lean` (`op_dec`, 7009 → 8013: ExhaustsP / trap 15364 / decode error ☇ 15361 / `At8013`;
+  `VecOwn.keep`).
+- Found (reported to @parent for Handlers A): `EntryHyp` assumes the empty results `Vec`, but for n > 0
+  instructions the binary does `Vec::with_capacity(n)` (7120 … 7970: alloc 144·n, align 8, trap 15364);
+  `AddPost` / `R9Post` must keep ω₆ (= the instructions' pointer, set at 7100); `R57Post` lacks `Glob`.
+  Extra abort pcs for the arm: 34070, 32584, 47977, 36528, 15364.
+- Obligation (A) done: `ItemOk` carries `FootIn` (`uFoot`, `Inputs/LoopItem.lean`), threaded through
+  `lp_body` / `lp_items` (`FeetOwn`) / `lp_call` / `g_call` / `g_inputs` to `inputs_decode`, which now states
+  `SlotsOwn st' μ' q n` (buffer chunk + slots' buffers owned); `itemsOwn_of_slots` (`ItemsLoop/Inv.lean`)
+  gives `ItemsOwn` and the slot-buffer chunk for `ItemsInv`.
+- **Next:** when Handlers A lands the three interface changes: 8013 → `add_recent` → `results_init` →
+  `loop_row11` → `ItemsInv` for the rest (R57Post → ItemsInv: StableKeep covers every word ItemsInv
+  reads; the rest's chunks survive since they are neither `vecFree` (fresh), the results buffer (fresh)
+  nor this item's trace / output buffers (`ItemsOwn` nodup)). Then R15/R16.
+
 **Session 4 (2026-11-16, later), on `claude/bootstrap-t2-statics`:**
 - R12 done: `Acc/ValuesFitStep.lean` (`dispatch_keeps`, `ValuesFit.step`, `ValuesFit.run`).
 - R1 skeleton done: `Acc/ItemsLoop/` — `Inv.lean` (`ItemsInv`, the loop-head invariant: iterator words

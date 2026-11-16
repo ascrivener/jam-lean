@@ -94,6 +94,21 @@ units ≥ 2^31 arrive as 2^64 − 2^32 + units), `realloc_impl` 42980, unlock, 4
 - Model side: check `realloc (growTo pb)` is `none` for these units (heap 2^30 octets).
 New file `Refine/ReallocBig.lean`; the Alloc files are not changed (their `hr1` stays).
 
+**ReallocBig done for 2^25 ≤ units < 2^31 − 1** (sizes < 2^36 − 32; every T1 request stays below 2^31 units, since
+232·(2n + 4) octets for n ≤ 2^24 is about 2.4·10^8 units). `ReallocBig.realloc_call_big` (and `…G`): the model's
+`realloc` is `none` (`growInplace_none_big`, `alloc_none_big`) and the binary returns null at 40821 with `HeapCtx` for
+the same state, stack and globals kept. Proof: copies of `Alloc.fallback_pre` / `fallback_entryG` /
+`fallback_refines_failG` with req < 2^31 − 1 (all their 32-bit arithmetic needs; the grow-heap branch is impossible for
+req ≥ 2^25) and the fallback's general alloc tail (`fallback_tail_failG`, no size bound), inside `rw_lock` / `rw_unlock`.
+- Tried and reverted: weakening `hr1` in the Alloc files in place to req < 2^31 − 1 fails in `ReallocGrowImpl` (the
+  in-place merge's success path) at req = 2^25 − 1.
+- **Gap: units = 2^25 − 1 exactly** (sizes 2^30 − 63 … 2^30 − 32) is covered by neither `realloc_call` (units < 2^25 − 1)
+  nor `realloc_call_big`. There the merge with the next free chunk can only succeed when the chunk and its neighbour
+  span the whole heap. To close it: either a case lemma for that value, or keep requests off it internally (232-octet
+  multiples never land on it; the encoder's writer growth needs a check).
+- Next: thread `realloc_call` ∨ `realloc_call_big` through `ReallocCall.realloc_call`'s users in T1 (decode's
+  `finish_grow`, `grow_one`, the encoder's writer growth) so n ≤ 2²¹, `hbig` and `capBound` can go.
+
 **Handoff (2026-11-16, end of the fourth instance; branch `claude/bootstrap-t1-m1c`, pushed, no PR yet).** Every file
 below builds; axioms clean. #214 (part A) was still in attempt-1 at handoff (`model` green): merge it on green, then merge
 main into this branch before opening its PR. A full `lake build` of this branch was started but not finished (the cache

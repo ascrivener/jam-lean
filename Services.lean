@@ -421,6 +421,7 @@ import Services.Bootstrap.Refine.PInvAdopt
 import Services.Bootstrap.Refine.LookupStep
 import Services.Bootstrap.Refine.LookupStep2
 import Services.Bootstrap.Refine.ElemsBigC
+import Services.Bootstrap.Refine.ReallocBig
 import Services.Bootstrap.Refine.Prologue
 import Services.Bootstrap.Spec
 import Services.Bootstrap.SpecLemmas.Codec

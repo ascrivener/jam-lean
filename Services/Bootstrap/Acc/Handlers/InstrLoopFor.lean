@@ -52,16 +52,46 @@ theorem Prog.bind_assoc' {E : Type → Type} {α β γ : Type} (k : β → Prog 
     congr 1; funext b; exact Prog.bind_assoc' k f (k' b)
   | .panic => rfl
 
+/-- **The entry's chunks outside G**, at the head (memory μ, state st, the instructions left xs, n results),
+    against the entry's state st₀ and memory μ₀: each allocated chunk of st₀ whose data address is not in G
+    is allocated in st with its data kept, and its data address is none of the buffers the `IntoIter`'s
+    drop frees, not the results buffer and none of the results' buffers. -/
+def OldKeep (B : InstrRep) (sp : Nat) (st₀ : State) (μ₀ : Memory) (G : List Nat) (xs : List Spec.Instr)
+    (n : Nat) (μ : Memory) (st : State) : Prop :=
+  ∀ d ∈ chunks st₀, d.used = true → d.addr + 32 ∉ G →
+    d ∈ chunks st ∧ (∀ a, InData d a → μ.read a = μ₀.read a) ∧
+    d.addr + 32 ∉ iterFree B μ (sp + 472) xs.length ∧
+    d.addr + 32 ∉ optBuf (rdN μ (sp + 448) 8) (rdN μ (sp + 456) 8) ∧
+    d.addr + 32 ∉ resPtrs μ (rdN μ (sp + 456) 8) n
+
+/-- `OldKeep` after one body (`StepKeep`). -/
+theorem OldKeep.step {B : InstrRep} {sp : Nat} {st₀ : State} {μ₀ : Memory} {G : List Nat} {x : Spec.Instr}
+    {xs : List Spec.Instr} {n : Nat} {μ μ' : Memory} {st st' : State}
+    (K : OldKeep B sp st₀ μ₀ G (x :: xs) n μ st) (S : StepKeep B sp xs n μ st μ' st') :
+    OldKeep B sp st₀ μ₀ G xs (n + 1) μ' st' := by
+  intro d hd hu hG
+  obtain ⟨k1, k2, k3, k4, k5⟩ := K d hd hu hG
+  have hf : d.addr + 32 ∉ B.foot (slot μ (rdN μ (sp + 480) 8) 0) := fun h => k3 (by
+    refine foot_mem_iterFree (v := sp + 472) (i := x) (is := xs) ?_
+    rw [show sp + 472 + 8 = sp + 480 by omega]; simpa [slot] using h)
+  obtain ⟨s1, s2, s3, s4⟩ := S.2 d k1 hu hf k4 k5
+  refine ⟨s1, fun a ha => (s2 a ha).trans (k2 a ha), fun h => k3 (S.1 _ h), fun h => ?_, s3⟩
+  unfold optBuf at h; split at h
+  · simp at h
+  · simp at h; exact s4 h
+
 /-- **The instruction loop's invariant at the head 8540** (see the module doc), against the entry's memory
-    μ₀, for the instructions left xs and the results so far rs; Z is the whole list's `Zombify` flag and
-    n₀ its length. -/
+    μ₀ and allocator state st₀, for the instructions left xs and the results so far rs; Z is the whole
+    list's `Zombify` flag and n₀ its length; G the buffers the entry's `IntoIter` frees (`OldKeep`). -/
 structure LoopInv (B : InstrRep) (code : ByteArray) (pb S0 S1 sp : Nat) (Inv : AccCtx → Prop) (μ₀ : Memory)
+    (st₀ : State) (G : List Nat)
     (Z : Bool) (n₀ : Nat) (xs : List Spec.Instr) (rs : List Spec.Result) (s : St Stream) : Prop where
   /-- At the head, or at 8554 with ω₆ = cur where the loop's entry falls through (some instruction left). -/
   hi : s.i = 8540 ∨ (s.i = 8554 ∧ s.ω[6] = UInt64.ofNat (rdN s.μ (sp + 480) 8) ∧ xs ≠ [])
   h1 : s.ω[1] = UInt64.ofNat sp
   inv : Inv s.c
-  la : ∃ st zs, LoopAt B code pb S0 S1 sp xs rs zs s.μ st ∧ (zs || xs.any isZomb) = Z
+  la : ∃ st zs, LoopAt B code pb S0 S1 sp xs rs zs s.μ st ∧ (zs || xs.any isZomb) = Z ∧
+    OldKeep B sp st₀ μ₀ G xs rs.length s.μ st
   hal : rdN s.μ (sp + 480) 8 % 8 = 0
   hk : rdN s.μ (sp + 504) 8 + xs.length < 2 ^ 64
   hlen : rs.length + xs.length = n₀
@@ -70,19 +100,22 @@ structure LoopInv (B : InstrRep) (code : ByteArray) (pb S0 S1 sp : Nat) (Inv : A
 
 /-- `BodyPost` gives the invariant for the instructions left. -/
 theorem LoopInv.of_post {B : InstrRep} {code : ByteArray} {pb S0 S1 sp : Nat} {Inv : AccCtx → Prop}
-    {μ₀ : Memory} {Z : Bool} {n₀ : Nat} {x : Spec.Instr} {xs : List Spec.Instr} {rs : List Spec.Result}
-    {s : St Stream} {zs zs' : Bool} {r : Spec.Result} {s' : St Stream}
-    (I : LoopInv B code pb S0 S1 sp Inv μ₀ Z n₀ (x :: xs) rs s) (hz : (zs || (x :: xs).any isZomb) = Z)
-    (hz' : zs' = (zs || isZomb x)) (P : BodyPost B code pb S0 S1 sp xs rs zs' s.μ r s') (hinv : Inv s'.c) :
-    LoopInv B code pb S0 S1 sp Inv μ₀ Z n₀ xs (rs ++ [r]) s' := by
-  obtain ⟨hi, h1, ⟨st', LA'⟩, m480, m504, ro, stab⟩ := P
+    {μ₀ : Memory} {st₀ : State} {G : List Nat} {Z : Bool} {n₀ : Nat} {x : Spec.Instr} {xs : List Spec.Instr} {rs : List Spec.Result}
+    {s : St Stream} {st : State} {zs zs' : Bool} {r : Spec.Result} {s' : St Stream}
+    (I : LoopInv B code pb S0 S1 sp Inv μ₀ st₀ G Z n₀ (x :: xs) rs s) (hz : (zs || (x :: xs).any isZomb) = Z)
+    (K : OldKeep B sp st₀ μ₀ G (x :: xs) rs.length s.μ st)
+    (hz' : zs' = (zs || isZomb x)) (P : BodyPost B code pb S0 S1 sp xs rs zs' s.μ st r s') (hinv : Inv s'.c) :
+    LoopInv B code pb S0 S1 sp Inv μ₀ st₀ G Z n₀ xs (rs ++ [r]) s' := by
+  obtain ⟨hi, h1, ⟨st', LA', SK⟩, m480, m504, ro, stab⟩ := P
   have hk := I.hk
   have hal := I.hal
   have hlen := I.hlen
   simp only [List.length_cons] at hk hlen
   have hl' : (rs ++ [r]).length + xs.length = n₀ := by
     simp only [List.length_append, List.length_singleton]; omega
-  refine ⟨.inl hi, h1, hinv, ⟨st', zs', LA', ?_⟩, by omega, by omega, hl', fun a ha => ⟨(ro a ha).1.trans (I.ro a ha).1, (ro a ha).2.trans (I.ro a ha).2⟩,
+  have K' := K.step SK
+  rw [show rs.length + 1 = (rs ++ [r]).length by simp] at K'
+  refine ⟨.inl hi, h1, hinv, ⟨st', zs', LA', ?_, K'⟩, by omega, by omega, hl', fun a ha => ⟨(ro a ha).1.trans (I.ro a ha).1, (ro a ha).2.trans (I.ro a ha).2⟩,
     fun a h0 h => (stab a h0 h).trans (I.stab a h0 h)⟩
   rw [hz', ← hz, List.any_cons, Bool.or_assoc]
 
@@ -105,7 +138,7 @@ theorem il_loop {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasC
     (Inv : AccCtx → Prop)
     (hIst : ∀ {β : Type} (o : AOp β) (c c₁ : AccCtx) (b : β), Inv c → ASem.step env o c = some (b, c₁) → Inv c₁)
     (hIfit : ∀ c, Inv c → StoreFit c)
-    (sp item kc : Nat) (μ₀ : Memory) (Z : Bool) (n₀ : Nat) (hs8 : sp % 8 = 0)
+    (sp item kc : Nat) (μ₀ : Memory) (st₀ : State) (G : List Nat) (Z : Bool) (n₀ : Nat) (hs8 : sp % 8 = 0)
     (f : Spec.Instr → List Spec.Result → Prog AOp (ForInStep (List Spec.Result)))
     (hck : ∀ rs, f .checkpoint rs = Prog.bind (store (.results (μ₀.readN (sp + 312) 32) item) (encodeResults rs))
       (fun _ => Prog.bind (onInstr C now .checkpoint) (fun r => Prog.pure (.yield (rs ++ [r])))))
@@ -118,12 +151,12 @@ theorem il_loop {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasC
     (hBall : ∀ rs : List Spec.Result, rs.length ≤ n₀ →
       2 * (144 * rs.length + 4) + 4 * (encodeResults rs).length + 64 < 1073741760) :
     ∀ (xs : List Spec.Instr) (rs : List Spec.Result) (s : St Stream),
-      LoopInv B env.code pb S0 S1 sp Inv μ₀ Z n₀ xs rs s →
+      LoopInv B env.code pb S0 S1 sp Inv μ₀ st₀ G Z n₀ xs rs s →
       Impl p (accContractS env) env Ab (forIn xs rs f)
-        (fun rs' s' => LoopInv B env.code pb S0 S1 sp Inv μ₀ Z n₀ [] rs' s') s := by
-  refine Impl.forIn f _ (LoopInv B env.code pb S0 S1 sp Inv μ₀ Z n₀) ?_ (fun _ _ h => h)
+        (fun rs' s' => LoopInv B env.code pb S0 S1 sp Inv μ₀ st₀ G Z n₀ [] rs' s') s := by
+  refine Impl.forIn f _ (LoopInv B env.code pb S0 S1 sp Inv μ₀ st₀ G Z n₀) ?_ (fun _ _ h => h)
   intro x xs rs s I
-  obtain ⟨st, zs, LA, hz⟩ := I.la
+  obtain ⟨st, zs, LA, hz, KO⟩ := I.la
   have hk1 : rdN s.μ (sp + 504) 8 + 1 < 2 ^ 64 := by have := I.hk; simp only [List.length_cons] at this; omega
   have hlen := I.hlen
   simp only [List.length_cons] at hlen
@@ -137,12 +170,12 @@ theorem il_loop {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasC
   have hfit := hIfit _ hinvS
   -- the post-condition of one body, back to the invariant
   have post : ∀ (zs' : Bool), zs' = (zs || isZomb x) → ∀ (r : Spec.Result) (s' : St Stream),
-      BodyPost B env.code pb S0 S1 sp xs rs zs' s.μ r s' ∧ Inv s'.c →
+      BodyPost B env.code pb S0 S1 sp xs rs zs' s.μ st r s' ∧ Inv s'.c →
       Impl p (accContractS env) env Ab (Prog.pure (ForInStep.yield (rs ++ [r])))
         (fun r s' => match r with
-          | .yield b' => LoopInv B env.code pb S0 S1 sp Inv μ₀ Z n₀ xs b' s'
-          | .done b' => LoopInv B env.code pb S0 S1 sp Inv μ₀ Z n₀ [] b' s') s' :=
-    fun zs' hz' r s' ⟨hp, hi'⟩ => Impl.pure_of (I.of_post hz hz' hp hi')
+          | .yield b' => LoopInv B env.code pb S0 S1 sp Inv μ₀ st₀ G Z n₀ xs b' s'
+          | .done b' => LoopInv B env.code pb S0 S1 sp Inv μ₀ st₀ G Z n₀ [] b' s') s' :=
+    fun zs' hz' r s' ⟨hp, hi'⟩ => Impl.pure_of (I.of_post hz KO hz' hp hi')
   by_cases hx : x = .checkpoint
   · subst hx
     rw [hck, ← Prog.bind_assoc']

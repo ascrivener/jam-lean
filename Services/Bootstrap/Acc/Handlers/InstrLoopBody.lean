@@ -1,4 +1,4 @@
-import Services.Bootstrap.Acc.Handlers.InstrLoopStep
+import Services.Bootstrap.Acc.Handlers.InstrLoopStepKeep
 import Services.Bootstrap.Acc.Handlers.InstrLoopTailRun
 import Services.Bootstrap.Acc.Impl.ROKeepS
 
@@ -60,10 +60,12 @@ def StableKeep (sp a : Nat) : Prop :=
 
 /-- The state after one body, against the head's memory μ₀: back at 8540 with ω₁ = sp, `LoopAt` for the
     instructions left `is` and rs ++ [r] (flag zs), the cursor advanced by a slot, the counter by one,
-    the octets below 196608 and their access kept, and the words `StableKeep` kept. -/
+    the octets below 196608 and their access kept, and the words `StableKeep` kept; and what the body keeps
+    of the head's chunks (state st, `StepKeep`). -/
 def BodyPost (B : InstrRep) (code : ByteArray) (pb S0 S1 sp : Nat) (is : List Spec.Instr)
-    (rs : List Spec.Result) (zs : Bool) (μ₀ : Memory) (r : Spec.Result) (s' : St Stream) : Prop :=
-  s'.i = 8540 ∧ s'.ω[1] = UInt64.ofNat sp ∧ (∃ st', LoopAt B code pb S0 S1 sp is (rs ++ [r]) zs s'.μ st') ∧
+    (rs : List Spec.Result) (zs : Bool) (μ₀ : Memory) (st : State) (r : Spec.Result) (s' : St Stream) : Prop :=
+  s'.i = 8540 ∧ s'.ω[1] = UInt64.ofNat sp ∧
+  (∃ st', LoopAt B code pb S0 S1 sp is (rs ++ [r]) zs s'.μ st' ∧ StepKeep B sp is rs.length μ₀ st s'.μ st') ∧
   rdN s'.μ (sp + 480) 8 = rdN μ₀ (sp + 480) 8 + 232 ∧ rdN s'.μ (sp + 504) 8 = rdN μ₀ (sp + 504) 8 + 1 ∧
   (∀ a, a < 196608 → s'.μ.read a = μ₀.read a ∧ s'.μ.readable a = μ₀.readable a) ∧
   (∀ a, a < 4294967296 → StableKeep sp a → s'.μ.read a = μ₀.read a)
@@ -176,7 +178,7 @@ theorem il_after_log {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
     (LA : LoopAt B env.code pb S0 S1 sp (i :: is) rs zs μ st) (A : AtLog env.code pb S0 S1 sp μ st zs' s)
     (hjt : μ.readN 65736 100 = jumpTab) (hjr : ∀ a, 65736 ≤ a → a < 65836 → μ.readable a = true)
     (hfit : StoreFit s.c) :
-    Impl p (accContractS env) env Ab (onInstr C now i) (BodyPost B env.code pb S0 S1 sp is rs zs' μ) s := by
+    Impl p (accContractS env) env Ab (onInstr C now i) (BodyPost B env.code pb S0 S1 sp is rs zs' μ st) s := by
   obtain ⟨i0, ω₁, μ₁, c, f⟩ := s
   obtain ⟨hi, h1, st₁, H1, hk1, m744, m480a, m504a, m160a, fr1, ro1⟩ := A
   dsimp only at hi h1 H1 hk1 m744 m480a m504a m160a fr1 ro1 hfit ⊢
@@ -449,7 +451,27 @@ theorem il_after_log {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
     exact ⟨by rw [r6, r5, r4, hro3 a ha, (ro2 a ha).1], by rw [q6, q5, q4, hrd3, (ro2 a ha).2]⟩
   refine Impl.pre _ _ (s' := ⟨8540, ω₆, μ₆, c₃, f₃⟩) ⟨_, run4.trans (run5.trans run6)⟩ rfl (Impl.pure_of
     ⟨rfl, e61.trans (d51.trans (c41.trans h31)), ⟨_, LoopAt.step LA H6 ?_ ?_ ?_ ?_ ?_ ?_ m464'' hlt ?_ ?_ ?_ ?_ ?_
-      ?_ ?_ ?_ ?_ hmv ?_ ?_ ?_⟩, ?_, ?_, ro, fun a h0 hs => ?_⟩)
+      ?_ ?_ ?_ ?_ hmv ?_ ?_ ?_, ?K⟩, ?_, ?_, ro, fun a h0 hs => ?_⟩)
+  case K =>
+    refine LoopAt.stepKeep LA H6 ?_ ?_ ?_ ?_ ?_ ?_ hmv ?_ ?_
+    · rw [show sp + 472 + 8 = sp + 480 by omega, rdN_frame fun j hj => w62 _ (by omega) (by omega) (by omega)
+        (by unfold LoopKeep; omega), m480, hcur]
+    · rw [show sp + 472 + 24 = sp + 496 by omega]
+      exact rdN_frame fun j hj => w6 _ (by omega) (by omega) (by omega) (by unfold LoopKeep; omega) (by omega)
+    · exact rdN_frame fun j hj => w6 _ (by omega) (by omega) (by omega) (by unfold LoopKeep; omega) (by omega)
+    · rw [show sp + 472 + 16 = sp + 488 by omega]
+      exact rdN_frame fun j hj => w6 _ (by omega) (by omega) (by omega) (by unfold LoopKeep; omega) (by omega)
+    · rw [rdN_frame fun j hj => fr6 _ (by omega) (by omega) (by omega)]; exact m456'
+    · rw [show sp + 472 + 8 = sp + 480 by omega, hcur, eF, hcp, hrp]
+      intro d hd hu hF hO
+      obtain ⟨d4, k4, hne, hnk⟩ := kst d hd hu hF hO
+      obtain ⟨-, d5, k5⟩ := hNBk d d4 hu hne
+      obtain ⟨d6, k6⟩ := hkeep6 d d5 hu hnk
+      exact ⟨d6, fun a ha => (k6 a ha).trans ((k5 a ha).trans (k4 a ha))⟩
+    · rw [show sp + 472 + 8 = sp + 480 by omega, hcur, eF, hcp, hrp]
+      exact ⟨d', hd'6, hd'u, hd'a, fun d hd hu hF hO =>
+        (hNBk d (kst d hd hu hF hO).1 hu (kst d hd hu hF hO).2.2.1).1⟩
+    · rw [show sp + 472 + 8 = sp + 480 by omega, hcur, eF]; exact hown'
   · rw [show sp + 472 + 8 = sp + 480 by omega, rdN_frame fun j hj => w62 _ (by omega) (by omega) (by omega)
       (by unfold LoopKeep; omega), m480, hcur]
   · rw [show sp + 472 + 24 = sp + 496 by omega]
@@ -503,7 +525,7 @@ theorem il_body {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
     (hjt : s.μ.readN 65736 100 = jumpTab) (hjr : ∀ a, 65736 ≤ a → a < 65836 → s.μ.readable a = true)
     (hfit : StoreFit s.c) (hck : instrIdx i ≠ 15) :
     Impl p (accContractS env) env Ab (onInstr C now i)
-      (BodyPost B env.code pb S0 S1 sp is rs (zs || instrIdx i == 3) s.μ) s := by
+      (BodyPost B env.code pb S0 S1 sp is rs (zs || instrIdx i == 3) s.μ st) s := by
   obtain ⟨i0, ω, μ, c, f⟩ := s
   dsimp only at hi h1 LA hal hk hjt hjr hfit ⊢
   obtain ⟨ω₁, μ₁, N₁, run1, A⟩ := il_front_any (P := P) env B c f ω μ st sp i is rs zs h1 i0 hi hs8 LA hal hk hck
@@ -549,7 +571,7 @@ theorem il_body_ck {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
     Impl p (accContractS env) env Ab
       (Prog.bind (store (.results (s.μ.readN (sp + 312) 32) item) (encodeResults rs))
         (fun _ => onInstr C now .checkpoint))
-      (BodyPost B env.code pb S0 S1 sp is rs zs s.μ) s := by
+      (BodyPost B env.code pb S0 S1 sp is rs zs s.μ st) s := by
   obtain ⟨i0, ω, μ, c, f⟩ := s
   dsimp only at hi h1 LA hal hk hjt hjr hinv hitem mkc ht8 ht4 hro ⊢
   have hstart := hi

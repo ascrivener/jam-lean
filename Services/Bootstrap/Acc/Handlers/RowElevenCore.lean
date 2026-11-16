@@ -96,6 +96,108 @@ def R7Post (code : ByteArray) (pb S0 S1 sp : Nat) (v5 : UInt64) (st : State) (μ
     (∀ a, a < 4294967296 → sp ≤ a → ¬ R9Out sp a → s'.μ.read a = μ₀.read a) ∧
     (∀ a, Glob a → s'.μ.read a = μ₀.read a)
 
+/-- **Row 11's store and drops (15060 → 6766)** implement `store (Key.results package item) (encodeResults rs)`
+    (GP v0.8.0 Appendix B, Ω_W), as `row_eleven_core`'s branch without a `Zombify`, entered here directly
+    too (the loop's empty case, `r11_di1`'s return 560). Same hypotheses as `row_eleven_core` but the
+    flag; it ends in `R7Post` with `tailFree` freed. -/
+theorem row_eleven_store {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeA p P]
+    (env : AccEnv) {pb S0 S1 : Nat} (hE : ExtendH p P env pb S0 S1) (hO : OkEncH p P env pb S0 S1)
+    (cap : Nat) (hcap1 : 134217728 ≤ cap) (hcap : cap < 18446744073709551616)
+    (Ab : St Stream → Prop) (hAb1 : ∀ s : St Stream, s.i = 36528 → Ab s)
+    (hAb2 : ∀ s : St Stream, s.i = 34070 → Ab s) (hAbX : ∀ s : St Stream, s.i = 40611 ∨ s.i = 40821 → Ab s)
+    (s : St Stream) (st : State) (sp item kc : Nat) (rs : List Spec.Result)
+    (hi : s.i = 15060) (h1 : s.ω[1] = UInt64.ofNat sp)
+    (T : TailHyp env.code pb S0 S1 s.μ st sp)
+    (L : LoopHyp pb S0 S1 sp (rdN s.μ (sp + 456) 8) (rdN s.μ (sp + 464) 8) rs st s.μ) (hS1 : sp + 1632 ≤ S1)
+    (hitem : s.μ.readN (sp + 176) 2 = fixed 2 item)
+    (mc : s.μ.readN 68696 8 = Num.encodeLE 8 kc) (hkc : 35 ≤ kc ∧ kc + 31 < 68719476736)
+    (ht8 : rdN s.μ 69072 4 = 4294900408) (ht4 : rdN s.μ 69056 4 = 4294900402)
+    (hro : ∀ a, 68680 ≤ a → a < 69076 → s.μ.readable a = true) (hvals : StoreFit s.c) :
+    Impl p (accContractS env) env Ab (store (.results (s.μ.readN (sp + 312) 32) item) (encodeResults rs))
+      (fun _ => R7Post env.code pb S0 S1 sp s.ω[5] st s.μ (tailFree s.μ sp)) s := by
+  obtain ⟨i, ω, μ, c0, f⟩ := s
+  dsimp only at hi h1 T L hitem mc ht8 ht4 hro hvals ⊢
+  subst hi
+  have H := T.H
+  have hSt := H.st
+  have hT := H.hS1
+  obtain ⟨hs1, hs2, hs3⟩ := T.hsp
+  have hspL := L.hsp
+  have e8 : ∀ b, μ.readN b 8 = Num.encodeLE 8 (rdN μ b 8) := fun b => readN_enc μ b 8
+  have lt8 : ∀ b, rdN μ b 8 < 2 ^ 64 := fun b => rdN_lt8 μ b
+  have rd0 : ∀ a, sp ≤ a → a < sp + 1632 → μ.readable a = true := fun a h1 h2 =>
+    Memory.readable_of_writable (hSt a (by omega) (by omega))
+  obtain ⟨ωA, μA, runA, c0', cA1, cA5, cA6, cA7, cA8, cA9, mk0, mk1, mq0, mq1, mq2, mq3, frA, rdA, wrA⟩ :=
+    r11_pre (R := KeepCtx (accContractS env)) (P := P) (c0, f) ω1 μ sp _ _ _ _ _ _ _ h1
+      ⟨by omega, by omega⟩ (e8 (sp + 312)) (e8 (sp + 320)) (e8 (sp + 328)) (e8 (sp + 336)) (lt8 _) (lt8 _)
+      (lt8 _) (lt8 _) (e8 (sp + 176)) (lt8 _) (e8 (sp + 456)) (lt8 _) (e8 (sp + 464)) (lt8 _)
+      (fun a h1 h2 => rd0 a (by omega) (by omega)) (fun a h1 h2 => hSt a (by omega) (by omega))
+  have HA : HeapCtxC env.code pb S0 S1 μA st :=
+    HeapKeep.keepHi H (fun a ha => frA a (by omega) (.inl (by omega))) wrA
+  -- the key
+  have cq : μA.readN (sp + 1572) 32 = μ.readN (sp + 312) 32 := by
+    rw [RecentMatch.readN_32, RecentMatch.readN_32 μ, show sp + 1572 + 8 = sp + 1580 by omega,
+      show sp + 1572 + 16 = sp + 1588 by omega, show sp + 1572 + 24 = sp + 1596 by omega,
+      show sp + 312 + 8 = sp + 320 by omega, show sp + 312 + 16 = sp + 328 by omega,
+      show sp + 312 + 24 = sp + 336 by omega, mq0, mq1, mq2, mq3, ← e8, ← e8, ← e8, ← e8]
+  have c34 : μA.readN (sp + 1570) 2 = fixed 2 item := by
+    rw [mk1, ← hitem, readN_2of8 (e8 (sp + 176))]
+  have hkE : keyEnc μA (sp + 1568) 2 = (Key.results (μ.readN (sp + 312) 32) item).encode := by
+    unfold keyEnc Key.encode
+    simp only [show (2 : Nat) = 1 ↔ False by decide, if_false, if_true, show sp + 1568 + 4 = sp + 1572 by omega,
+      show sp + 1568 + 2 = sp + 1570 by omega, cq, c34]
+    rfl
+  -- the store's premises at 36170
+  have hkH : ∀ d ∈ chunks st, d.used = true → d ∈ chunks st ∧ ∀ a, InData d a → μA.read a = μ.read a :=
+    fun d hd _ => ⟨hd, fun a ha => frA a (by have := data_lt H hd ha; omega)
+      (.inl (by have := data_lt H hd ha; omega))⟩
+  have LA : LoopHyp pb S0 S1 sp (rdN μ (sp + 456) 8) (rdN μ (sp + 464) 8) rs st μA :=
+    { L with hR := ResultsAt.keep hkH L.hR }
+  have hrA : ∀ a, a < 196608 → μA.read a = μ.read a := fun a ha => frA a (by omega) (.inl (by omega))
+  have mcA : μA.readN 68696 8 = Num.encodeLE 8 kc := by
+    rw [← mc]; exact Memory.readN_congr fun j hj => hrA _ (by omega)
+  have ht8A : rdN μA 69072 4 = 4294900408 := by
+    rw [← ht8]; exact rdN_frame fun j hj => hrA _ (by omega)
+  have ht4A : rdN μA 69056 4 = 4294900402 := by
+    rw [← ht4]; exact rdN_frame fun j hj => hrA _ (by omega)
+  have herr : ∀ (c : AccCtx) (q : Stream) (ω : Regs) (μ : Memory), ω[7] = UInt64.ofNat 3 →
+      ∃ ω' μ' q', FreeRunH p (KeepCtx (accContractS env)) 15121 ω μ (c, q) .panic ω' μ' (c, q') := by
+    intro c q ω μ h7
+    obtain ⟨ω', run⟩ := r11_err (R := KeepCtx (accContractS env)) (P := P) (c, q) ω μ h7
+    exact ⟨ω', μ, q, FreeRunH.prepend run (.exit (FreeRun.exit (trap_15361 (P := P) ω' μ)) (by simp))⟩
+  have SC := store_core (P := P) env hE hO cap hcap1 hcap Ab hAb1 hAb2 hAbX 562 15121
+    (.inr (.inr ⟨rfl, rfl⟩)) herr ⟨36170, ωA, μA, c0, f⟩ st sp (rdN μ (sp + 456) 8) (rdN μ (sp + 464) 8) kc rs
+    HA rfl c0' cA1 cA7 cA8 cA9 LA hS1 mk0 mcA hkc ht8A ht4A (fun a h1 h2 => by rw [rdA]; exact hro a h1 h2)
+    hvals
+  dsimp only at SC
+  rw [hkE] at SC
+  show Impl p (accContractS env) env Ab (store (.results (μ.readN (sp + 312) 32) item) (encodeResults rs)) _ _
+  unfold store
+  refine Impl.pre _ _ (s' := ⟨36170, ωA, μA, c0, f⟩) ⟨_, runA⟩ rfl ?_
+  refine Impl.then ?_ _ _ SC
+  -- after the store: 15121 → 15133 → 6766
+  rintro _ ⟨i', ω', μ', c', f'⟩ ⟨hi', h7', h1', h5', -, st', H', hk', stk', gl', -, -⟩
+  dsimp only at hi' h7' h1' h5' H' hk' stk' gl' ⊢
+  subst hi'
+  obtain ⟨ω3, run3, d1, d5, -⟩ := r11_ok (R := KeepCtx (accContractS env)) (P := P) (c', f') ω' μ' h7'
+  have hk2 : ChunksKept μ st μ' st' := fun d hd hu =>
+    ⟨(hk' d hd hu).1, fun a ha => ((hk' d hd hu).2 a ha).trans ((hkH d hd hu).2 a ha)⟩
+  obtain ⟨T', tf⟩ := T.keep H' hk2 fun a h1 h2 =>
+    (stk' a (by omega) h1).trans (frA a (by omega) (.inl (by omega)))
+  obtain ⟨ω4, μ4, s4, N4, run4, C4, e1, e5, -⟩ :=
+    r11_tail (R := KeepCtx (accContractS env)) (P := P) (c', f') ω3 μ' st' sp T' (d1.trans h1')
+  refine .inr ⟨⟨6766, ω4, μ4, c', f'⟩, ⟨_, run3.trans run4⟩, rfl, rfl, e1,
+    e5.trans (d5.trans (h5'.trans cA5)), s4, C4.H, fun d hd hu hn => ?_, fun a h1 h2 h3 => ?_,
+    fun a ha => ?_⟩
+  · rw [← tf] at hn
+    obtain ⟨g1, g2⟩ := hk2 d hd hu
+    obtain ⟨g3, g4⟩ := C4.K d g1 hu hn
+    exact ⟨g3, fun a ha => (g4 a ha).trans (g2 a ha)⟩
+  · unfold R9Out at h3
+    exact (C4.Fm.1 a h1 h2).trans ((stk' a h1 h2).trans (frA a h1 (by omega)))
+  · have := ha.2
+    exact (C4.Fm.2.1 a ha).trans ((gl' a ha).trans (frA a (by omega) (.inl (by unfold Glob at ha; omega))))
+
 /-- **Row 11 from the `Zombify` flag (15038 → 6766) implements
     `unless b (store (Key.results package item) (encodeResults rs))`** (GP v0.8.0 Appendix B, Ω_W;
     quirk Q4), with b ↔ the low bit of the word z at sp + 160, the package hash at sp + 312 and the item
@@ -150,75 +252,11 @@ theorem row_eleven_core {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p 
       · exact absurd (hz.1 h) (by decide)
     obtain ⟨ω1, run1, a1, a5, -⟩ := r11_flag0 (R := KeepCtx (accContractS env)) (P := P) (c0, f) ω μ sp z h1
       (by omega) (mz ▸ lt8 _) hz0 (by rw [← mz]; exact e8 _) (fun a h1 h2 => rd0 a (by omega) (by omega))
-    obtain ⟨ωA, μA, runA, c0', cA1, cA5, cA6, cA7, cA8, cA9, mk0, mk1, mq0, mq1, mq2, mq3, frA, rdA, wrA⟩ :=
-      r11_pre (R := KeepCtx (accContractS env)) (P := P) (c0, f) ω1 μ sp _ _ _ _ _ _ _ (a1.trans h1)
-        ⟨by omega, by omega⟩ (e8 (sp + 312)) (e8 (sp + 320)) (e8 (sp + 328)) (e8 (sp + 336)) (lt8 _) (lt8 _)
-        (lt8 _) (lt8 _) (e8 (sp + 176)) (lt8 _) (e8 (sp + 456)) (lt8 _) (e8 (sp + 464)) (lt8 _)
-        (fun a h1 h2 => rd0 a (by omega) (by omega)) (fun a h1 h2 => hSt a (by omega) (by omega))
-    have HA : HeapCtxC env.code pb S0 S1 μA st :=
-      HeapKeep.keepHi H (fun a ha => frA a (by omega) (.inl (by omega))) wrA
-    -- the key
-    have cq : μA.readN (sp + 1572) 32 = μ.readN (sp + 312) 32 := by
-      rw [RecentMatch.readN_32, RecentMatch.readN_32 μ, show sp + 1572 + 8 = sp + 1580 by omega,
-        show sp + 1572 + 16 = sp + 1588 by omega, show sp + 1572 + 24 = sp + 1596 by omega,
-        show sp + 312 + 8 = sp + 320 by omega, show sp + 312 + 16 = sp + 328 by omega,
-        show sp + 312 + 24 = sp + 336 by omega, mq0, mq1, mq2, mq3, ← e8, ← e8, ← e8, ← e8]
-    have c34 : μA.readN (sp + 1570) 2 = fixed 2 item := by
-      rw [mk1, ← hitem, readN_2of8 (e8 (sp + 176))]
-    have hkE : keyEnc μA (sp + 1568) 2 = (Key.results (μ.readN (sp + 312) 32) item).encode := by
-      unfold keyEnc Key.encode
-      simp only [show (2 : Nat) = 1 ↔ False by decide, if_false, if_true, show sp + 1568 + 4 = sp + 1572 by omega,
-        show sp + 1568 + 2 = sp + 1570 by omega, cq, c34]
-      rfl
-    -- the store's premises at 36170
-    have hkH : ∀ d ∈ chunks st, d.used = true → d ∈ chunks st ∧ ∀ a, InData d a → μA.read a = μ.read a :=
-      fun d hd _ => ⟨hd, fun a ha => frA a (by have := data_lt H hd ha; omega)
-        (.inl (by have := data_lt H hd ha; omega))⟩
-    have LA : LoopHyp pb S0 S1 sp (rdN μ (sp + 456) 8) (rdN μ (sp + 464) 8) rs st μA :=
-      { L with hR := ResultsAt.keep hkH L.hR }
-    have hrA : ∀ a, a < 196608 → μA.read a = μ.read a := fun a ha => frA a (by omega) (.inl (by omega))
-    have mcA : μA.readN 68696 8 = Num.encodeLE 8 kc := by
-      rw [← mc]; exact Memory.readN_congr fun j hj => hrA _ (by omega)
-    have ht8A : rdN μA 69072 4 = 4294900408 := by
-      rw [← ht8]; exact rdN_frame fun j hj => hrA _ (by omega)
-    have ht4A : rdN μA 69056 4 = 4294900402 := by
-      rw [← ht4]; exact rdN_frame fun j hj => hrA _ (by omega)
-    have herr : ∀ (c : AccCtx) (q : Stream) (ω : Regs) (μ : Memory), ω[7] = UInt64.ofNat 3 →
-        ∃ ω' μ' q', FreeRunH p (KeepCtx (accContractS env)) 15121 ω μ (c, q) .panic ω' μ' (c, q') := by
-      intro c q ω μ h7
-      obtain ⟨ω', run⟩ := r11_err (R := KeepCtx (accContractS env)) (P := P) (c, q) ω μ h7
-      exact ⟨ω', μ, q, FreeRunH.prepend run (.exit (FreeRun.exit (trap_15361 (P := P) ω' μ)) (by simp))⟩
-    have SC := store_core (P := P) env hE hO cap hcap1 hcap Ab hAb1 hAb2 hAbX 562 15121
-      (.inr (.inr ⟨rfl, rfl⟩)) herr ⟨36170, ωA, μA, c0, f⟩ st sp (rdN μ (sp + 456) 8) (rdN μ (sp + 464) 8) kc rs
-      HA rfl c0' cA1 cA7 cA8 cA9 LA hS1 mk0 mcA hkc ht8A ht4A (fun a h1 h2 => by rw [rdA]; exact hro a h1 h2)
-      hvals
-    dsimp only at SC
-    rw [hkE] at SC
+    have SS := row_eleven_store env hE hO cap hcap1 hcap Ab hAb1 hAb2 hAbX ⟨15060, ω1, μ, c0, f⟩ st sp item kc rs
+      rfl (a1.trans h1) T L hS1 hitem mc hkc ht8 ht4 hro hvals
+    dsimp only at SS
+    rw [a5] at SS
     show Impl p (accContractS env) env Ab (store (.results (μ.readN (sp + 312) 32) item) (encodeResults rs)) _ _
-    unfold store
-    refine Impl.pre _ _ (s' := ⟨36170, ωA, μA, c0, f⟩) ⟨_, run1.trans runA⟩ rfl ?_
-    refine Impl.then ?_ _ _ SC
-    -- after the store: 15121 → 15133 → 6766
-    rintro _ ⟨i', ω', μ', c', f'⟩ ⟨hi', h7', h1', h5', -, st', H', hk', stk', gl', -, -⟩
-    dsimp only at hi' h7' h1' h5' H' hk' stk' gl' ⊢
-    subst hi'
-    obtain ⟨ω3, run3, d1, d5, -⟩ := r11_ok (R := KeepCtx (accContractS env)) (P := P) (c', f') ω' μ' h7'
-    have hk2 : ChunksKept μ st μ' st' := fun d hd hu =>
-      ⟨(hk' d hd hu).1, fun a ha => ((hk' d hd hu).2 a ha).trans ((hkH d hd hu).2 a ha)⟩
-    obtain ⟨T', tf⟩ := T.keep H' hk2 fun a h1 h2 =>
-      (stk' a (by omega) h1).trans (frA a (by omega) (.inl (by omega)))
-    obtain ⟨ω4, μ4, s4, N4, run4, C4, e1, e5, -⟩ :=
-      r11_tail (R := KeepCtx (accContractS env)) (P := P) (c', f') ω3 μ' st' sp T' (d1.trans h1')
-    refine .inr ⟨⟨6766, ω4, μ4, c', f'⟩, ⟨_, run3.trans run4⟩, rfl, rfl, e1,
-      e5.trans (d5.trans (h5'.trans (cA5.trans a5))), s4, C4.H, fun d hd hu hn => ?_, fun a h1 h2 h3 => ?_,
-      fun a ha => ?_⟩
-    · rw [← tf] at hn
-      obtain ⟨g1, g2⟩ := hk2 d hd hu
-      obtain ⟨g3, g4⟩ := C4.K d g1 hu hn
-      exact ⟨g3, fun a ha => (g4 a ha).trans (g2 a ha)⟩
-    · unfold R9Out at h3
-      exact (C4.Fm.1 a h1 h2).trans ((stk' a h1 h2).trans (frA a h1 (by omega)))
-    · have := ha.2
-      exact (C4.Fm.2.1 a ha).trans ((gl' a ha).trans (frA a (by omega) (.inl (by unfold Glob at ha; omega))))
+    exact Impl.pre _ _ (s' := ⟨15060, ω1, μ, c0, f⟩) ⟨_, run1⟩ rfl SS
 
 end Services.Bootstrap.Acc.Handlers.RowEleven

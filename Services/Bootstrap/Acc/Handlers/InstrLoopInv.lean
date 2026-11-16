@@ -75,7 +75,7 @@ theorem loop_exit {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     (B : InstrRep) (hD : DropInstrsH B p P env.code pb S0 S1)
     (cap : Nat) (hcap1 : 134217728 ≤ cap) (hcap : cap < 18446744073709551616)
     (Ab : St Stream → Prop) (hAb1 : ∀ s : St Stream, s.i = 36528 → Ab s)
-    (hAb2 : ∀ s : St Stream, s.i = 34070 → Ab s) (hAbX : ∀ s : St Stream, s.i = 40611 ∨ s.i = 40821 → Ab s)
+    (hAb2 : ∀ s : St Stream, s.i = 34070 → Ab s) (hAbX : ∀ s : St Stream, (s.i = 40611 ∨ s.i = 40821) ∧ s.ω[7] = UInt64.ofNat 0 → Ab s)
     (s : St Stream) (st : State) (sp item kc : Nat) (is : List Spec.Instr) (rs : List Spec.Result) (zs : Bool)
     (hi : s.i = 8540) (h1 : s.ω[1] = UInt64.ofNat sp)
     (LA : LoopAt B env.code pb S0 S1 sp is rs zs s.μ st)

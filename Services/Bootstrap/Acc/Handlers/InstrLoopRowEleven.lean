@@ -81,7 +81,7 @@ theorem loop_row11 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
     (hD : DropInstrsH B p P env.code pb S0 S1)
     (cap : Nat) (hcap1 : 134217728 ≤ cap) (hcap : cap < 18446744073709551616)
     (hAb1 : ∀ s : St Stream, s.i = 36528 → Ab s) (hAb2 : ∀ s : St Stream, s.i = 34070 → Ab s)
-    (hAbX : ∀ s : St Stream, s.i = 40611 ∨ s.i = 40821 → Ab s)
+    (hAbX : ∀ s : St Stream, (s.i = 40611 ∨ s.i = 40821) ∧ s.ω[7] = UInt64.ofNat 0 → Ab s)
     (Inv : AccCtx → Prop)
     (hIst : ∀ {β : Type} (o : AOp β) (c c₁ : AccCtx) (b : β), Inv c → ASem.step env o c = some (b, c₁) → Inv c₁)
     (hIfit : ∀ c, Inv c → StoreFit c)

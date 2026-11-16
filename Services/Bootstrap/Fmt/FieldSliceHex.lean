@@ -1,4 +1,5 @@
 import Services.Bootstrap.Fmt.FieldSliceHexSteps
+import Services.Bootstrap.Fmt.FieldWriteNestedPlain
 
 /-!
 # 57922, a slice of octets in hex, as an argument
@@ -75,12 +76,12 @@ theorem sh_loop {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env 
     (pb S0 S1 Z : Nat) (hZ : 600 ≤ Z) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
     (μA : Memory) (sA : State) (spA T W a len r0 v5 v6 : Nat) (hS : S0 ≤ spA)
     (hT : S0 + Z + 96 ≤ T ∧ T % 8 = 0 ∧ 2147483648 + Z + 96 ≤ T ∧ T + 104 ≤ spA)
-    (hW : T + 104 ≤ W ∧ W + 24 ≤ S1 ∧ W + 24 ≤ spA) (hlen : len < 1027)
+    (hW : T + 104 ≤ W ∧ W + 24 ≤ S1) (hlen : len < 1027)
     (helts : ∀ j, j < len → ValAt μA sA spA S1 (a + j) 1) (ha : a + len < 18446744073709551616)
     (hRO : RO70833 μA) :
     ∀ m, 1 ≤ m → m ≤ len → ∀ (ω : Regs) (μ : Memory) (x : X) (s : State) (cap ln : Nat),
     HeapCtx env pb S0 S1 μ s → s.base % 8 = 0 → Str sA s μ W cap ln →
-    Keeps pb spA (fun _ => False) sA μA μ s → RoW μ → SH μ T W r0 v5 v6 →
+    Keeps pb spA (fun a => W ≤ a ∧ a < W + 24) sA μA μ s → RoW μ → SH μ T W r0 v5 v6 →
     ω[1] = UInt64.ofNat T → ω[5] = UInt64.ofNat m → ω[9] = UInt64.ofNat (a + (len - m)) →
     ln + 2 * m < 134217728 →
     (∃ ω' μ' x' s' cap' n, n ≤ 2 * m ∧
@@ -113,8 +114,8 @@ theorem sh_loop {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env 
     Keeps.of_frame (Z := fun c => T + 56 ≤ c ∧ c < T + 80) hs.base (fun c hc hz => fr1 c hc (by omega)) rd1 wr1
       (fun c hz => hst c (by omega) (by omega)) (fun c hz h => Or.inr hz)
       (fun c hz hg => by unfold Glob at hg; omega) (hzd _ (fun c hz => by omega))
-  have KA1 : Keeps pb spA (fun _ => False) sA μA μ1 s := by
-    have := KA.trans' (K1.lift (sp' := spA) (E' := fun _ => False) (by omega) (fun c h h' => by
+  have KA1 : Keeps pb spA (fun a => W ≤ a ∧ a < W + 24) sA μA μ1 s := by
+    have := KA.trans' (K1.lift (sp' := spA) (E' := fun a => W ≤ a ∧ a < W + 24) (by omega) (fun c h h' => by
       unfold shE at h; omega))
     rwa [Nat.max_self] at this
   have hro1 := K1.ro_low H
@@ -134,7 +135,7 @@ theorem sh_loop {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env 
   rcases fmt_write_c3 (p := p) (P := P) (R := R) env pb S0 S1 Z hZ T W 70833 (T + 64) 2536 58012 (k + 1)
       (a + (len - (k + 1))) 1761607712 2 (T + 56) 2532 57917 2 536875002 x ω1 μ1 sA s cap ln H1 hba hs1 a0 a1 a5
       a6 a7 a8 a9 a10 ⟨by omega, by omega⟩ (by omega) jte_1267 bs_58012 ⟨by omega, hT.2.1, by omega⟩
-      ⟨by omega, hW.2.1⟩ hro1'
+      ⟨by omega, hW.2⟩ hro1'
       ⟨q0, q1, by omega, q2, fun c h1 h2 => hro1'.vrd c (by omega) (by omega)⟩
       ⟨q3, hro1'.vrd _ (by omega) (by omega)⟩ ⟨by omega, by omega⟩ (by omega) ⟨by omega, by omega, Or.inl (by omega)⟩
       (fun c h1 h2 => Memory.readable_of_writable (by rw [wr1]; exact hst c (by omega) (by omega))) m64 m72
@@ -151,8 +152,8 @@ theorem sh_loop {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env 
       exact Or.inl ⟨ω3, μ2, x2, s2, cap2, n, by omega, ((run1.trans run2).trans run3).mono (by omega), H2, hb2, hs2,
         hc21, by omega, K12, c1.trans e1⟩
     · rw [if_neg hz] at run3
-      have KA2 : Keeps pb spA (fun _ => False) sA μA μ2 s2 := by
-        have := KA.trans' (K12.lift (sp' := spA) (E' := fun _ => False) (by omega) (fun c h h' => by
+      have KA2 : Keeps pb spA (fun a => W ≤ a ∧ a < W + 24) sA μA μ2 s2 := by
+        have := KA.trans' (K12.lift (sp' := spA) (E' := fun a => W ≤ a ∧ a < W + 24) (by omega) (fun c h h' => by
           unfold shE at h; omega))
         rwa [Nat.max_self] at this
       have hsh2 : SH μ2 T W r0 v5 v6 := hsh.congr (fun c hc => K12.hi c (by omega) (by omega) (by unfold shE; omega))
@@ -169,26 +170,26 @@ theorem sh_loop {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env 
         exact Or.inr ((Exhausts.pre ((run1.trans run2).trans run3) hx).mono (by omega))
   · exact Or.inr ((Exhausts.pre run1 hx).mono (by omega))
 
-/-- **A slice of octets in hex** (57922) as an argument: v the address of the slice's (pointer a,
-    length len) pair (16 octets at or above spA, readable), 1 ≤ len < 1027, each octet where `ValAt`
+/-- **A slice of octets in hex** (57922) for the `String` W: v the address of the slice's (pointer a,
+    length len) pair (16 octets at or above spA, apart from W, readable), 1 ≤ len < 1027, each octet where `ValAt`
     puts it, and the template 70833 (`RO70833`): 2·len octets written. It needs 800 octets of stack.
     The Ok path takes at most 2(cap' − cap) + 536875500·len + 100 steps; the constant also carries the
     2³⁰ steps a failed allocator call may need beyond it. -/
-theorem slice_hex_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
+theorem slice_hex_okW {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
     (pb S0 S1 Z : Nat) (hZ : 800 ≤ Z) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
-    (μA : Memory) (sA : State) (spA v a len : Nat) (hS : S0 ≤ spA)
-    (hv : spA ≤ v ∧ v + 16 ≤ S1) (hrv : ∀ b, v ≤ b → b < v + 16 → μA.readable b = true)
+    (μA : Memory) (sA : State) (spA W v a len : Nat) (hS : S0 ≤ spA)
+    (hv : spA ≤ v ∧ v + 16 ≤ S1 ∧ (v + 16 ≤ W ∨ W + 24 ≤ v)) (hrv : ∀ b, v ≤ b → b < v + 16 → μA.readable b = true)
     (rp : rdN μA v 8 = a) (rl : rdN μA (v + 8) 8 = len) (hl : 1 ≤ len ∧ len < 1027)
     (helts : ∀ j, j < len → ValAt μA sA spA S1 (a + j) 1) (ha : a + len < 18446744073709551616)
     (hRO : RO70833 μA) :
-    ArgOk p P R env pb S0 S1 Z μA sA spA 57922 v (2 * len) (1073741924 + len * 536875500) := by
-  intro ω μ x s sp F W cap ln ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hWA hF hn
+    ArgOkWp p P R env pb S0 S1 Z μA sA spA W 57922 v (2 * len) (1073741924 + len * 536875500) := by
+  intro ω μ x s sp F cap ln ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hF hn
   have hS1 := H.hS1
   have hSb := H.hSb
   have hst : ∀ c, S0 ≤ c → c < S1 → μ.writable c = true := H.st
   have hro : ∀ c, c < 196608 → μ.writable c = false := H.ro
   have hcap := hf.str.lt
-  have kv : ∀ j, j < 16 → μ.read (v + j) = μA.read (v + j) := fun j hj => K.hi _ (by omega) (by omega) id
+  have kv : ∀ j, j < 16 → μ.read (v + j) = μA.read (v + j) := fun j hj => K.hi _ (by omega) (by omega) (by omega)
   -- 57922 … 57975
   obtain ⟨ω1, μ1, run1, a1, a5, a9, s96, s88, s80, s48, s40, s32, s24, fr1, rd1, wr1⟩ := sh_entry (p := p)
     (P := P) (R := R) x ω μ sp v F ret v5 v6 a len W 77016 ⟨by omega, by omega⟩ h0 h1 h5 h6 h7 h8
@@ -208,8 +209,8 @@ theorem slice_hex_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] 
         have := chunk_bounds H.wf (hf.str.base d hd hu)
         have := H.hbT
         unfold InData at hc; omega)
-  have KA1 : Keeps pb spA (fun _ => False) sA μA μ1 s := by
-    have := K.trans' (K1.lift (sp' := spA) (E' := fun _ => False) (by omega) (fun c h h' => by omega))
+  have KA1 : Keeps pb spA (fun a => W ≤ a ∧ a < W + 24) sA μA μ1 s := by
+    have := K.trans' (K1.lift (sp' := spA) (E' := fun a => W ≤ a ∧ a < W + 24) (by omega) (fun c h h' => h))
     rwa [Nat.max_self] at this
   have hro1 := K1.ro_low H
   have hrow : RoW μ1 := (RoW.mk hf.vws hf.vwc hf.vrd).congr (fun c h1 h2 => hro1 c h2)
@@ -219,7 +220,7 @@ theorem slice_hex_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] 
     hf.str.le
   -- the loop
   rcases sh_loop (p := p) (P := P) (R := R) env pb S0 S1 600 (Nat.le_refl _) HA HR μA sA spA (sp - 104) W a len ret
-      v5 v6 hS ⟨by omega, by omega, by omega, by omega⟩ ⟨by omega, hW.2, hWA⟩ hl.2 helts ha hRO len hl.1
+      v5 v6 hS ⟨by omega, by omega, by omega, by omega⟩ ⟨by omega, hW.2⟩ hl.2 helts ha hRO len hl.1
       (Nat.le_refl _) ω1 μ1 x s cap ln H1 hba hs1 KA1 hrow ⟨s96, s88, s80, s48, s40, s32, s24⟩ a1 a5
       (by rw [a9, Nat.sub_self, Nat.add_zero]) (by omega) with
     ⟨ω2, μ2, x2, s2, cap2, n, hn2, run2, H2, hb2, hs2, hc21, hc22, K2, g1⟩ | hx
@@ -250,5 +251,19 @@ theorem slice_hex_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] 
     · rw [rdN_frame (fun j hj => kro _ (by omega) (by omega))]; exact hf.vwc
     · rw [(Kf.access c (Or.inl (by unfold pageSize; omega))).1]; exact hf.vrd c h1 h2
   · exact Or.inr ((Exhausts.pre run1 hx).mono (by omega))
+
+/-- **A slice of octets in hex** (57922) as an argument (`ArgOk`), from `slice_hex_okW`. -/
+theorem slice_hex_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
+    (pb S0 S1 Z : Nat) (hZ : 800 ≤ Z) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
+    (μA : Memory) (sA : State) (spA v a len : Nat) (hS : S0 ≤ spA)
+    (hv : spA ≤ v ∧ v + 16 ≤ S1) (hrv : ∀ b, v ≤ b → b < v + 16 → μA.readable b = true)
+    (rp : rdN μA v 8 = a) (rl : rdN μA (v + 8) 8 = len) (hl : 1 ≤ len ∧ len < 1027)
+    (helts : ∀ j, j < len → ValAt μA sA spA S1 (a + j) 1) (ha : a + len < 18446744073709551616)
+    (hRO : RO70833 μA) :
+    ArgOk p P R env pb S0 S1 Z μA sA spA 57922 v (2 * len) (1073741924 + len * 536875500) := by
+  intro ω μ x s sp F W cap ln ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hWA hF hn
+  exact slice_hex_okW (p := p) (P := P) (R := R) env pb S0 S1 Z hZ HA HR μA sA spA W v a len hS
+    ⟨hv.1, hv.2, Or.inr (by omega)⟩ hrv rp rl hl helts ha hRO ω μ x s sp F cap ln ret t v5 v6 H hba
+    (K.mono (Nat.le_refl _) (fun a e => e.elim)) hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hF hn
 
 end Services.Bootstrap.Fmt

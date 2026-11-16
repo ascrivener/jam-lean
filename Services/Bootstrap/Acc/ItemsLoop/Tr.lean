@@ -71,13 +71,13 @@ theorem loop_tr (env : AccEnv) (gcap pb : Nat) (hcap1 : 134217728 ≤ gcap)
     Impl p (accContractS env) env Ab
       (Spec.Prog.bind (Spec.onTransfer x.source x.amount x.memo.toList)
         fun _ => pure (ForInStep.yield PUnit.unit)) Q s := by
-  obtain ⟨st, H, hbuf, hslots⟩ := hI.heap
+  obtain ⟨st, H, hbuf, hslots, hown⟩ := hI.heap
   have hS1 := H.hS1
   have hsp := hI.hsp
   have hstk := hI.hstk
   have hl := hI.cur
   simp only [List.length_cons] at hl
-  generalize hc : rdN s.μ (sp + 168) 8 = cur at hl hbuf hslots
+  generalize hc : rdN s.μ (sp + 168) 8 = cur at hl hbuf hslots hown
   have hnc : nc ≠ 0 := by have := hI.hcap; simp only [List.length_cons] at this; omega
   obtain ⟨d, hd, hdu, hdq, hdata⟩ := hbuf hnc
   have hin : ∀ a, cur ≤ a → a < cur + 184 → InDataA d a := fun a h1 h2 => hdata a h1 (by omega)
@@ -89,7 +89,7 @@ theorem loop_tr (env : AccEnv) (gcap pb : Nat) (hcap1 : 134217728 ≤ gcap)
     H.st a (by omega) (by omega)
   have hrf : ∀ a, sp ≤ a → a < sp + 1856 → s.μ.readable a = true := fun a h1 h2 =>
     Memory.readable_of_writable (hwf a h1 h2)
-  have hslot := hslots 0 (.transfer x) rfl s.μ (fun _ _ _ _ _ => rfl)
+  have hslot := hslots 0 (.transfer x) rfl
   simp only [itemOf, RepTr, Nat.mul_zero, Nat.add_zero] at hslot
   obtain ⟨w0, wm, wa, -, ws, -⟩ := hslot
   have hsz := hI.sized (.transfer x) (by simp)
@@ -165,12 +165,13 @@ theorem loop_tr (env : AccEnv) (gcap pb : Nat) (hcap1 : 134217728 ≤ gcap)
     · rw [kw 216 (by omega)]; exact hI.m216
     · rw [kw 1848 (by omega)]; exact hI.m1848
     · have := hI.hcap; simp only [List.length_cons] at this; omega
-    · refine ⟨st', H', fun _ => ⟨d, (keep' d hd hdu).1, hdu, hdq, fun a h1 h2 => ?_⟩, ?_⟩
+    · obtain ⟨sl', own'⟩ := rest_keep (st' := st') (μ' := s'.μ) (db := d) hslots hown
+        (fun a h1 h2 => hdata a h1 (by omega)) (fun a ha => dat d hd hdu a ha)
+        (fun d0 h0 hu _ => ⟨(keep' d0 h0 hu).1, dat d0 h0 hu⟩)
+      refine ⟨st', H', fun _ => ⟨d, (keep' d hd hdu).1, hdu, hdq, fun a h1 h2 => ?_⟩, ?_, ?_⟩
       · rw [hcur'] at h1; exact hdata a (by omega) h2
-      · intro j i hj μ'' hag
-        have := hslots (j + 1) i (by simpa using hj) μ'' (fun d0 h0 hu a ha => by
-          rw [hag d0 (keep' d0 h0 hu).1 hu a ha, dat d0 h0 hu a ha])
-        rw [hcur', show cur + 184 + 184 * j = cur + 184 * (j + 1) by omega]; exact this
+      · rw [hcur']; exact sl'
+      · rw [hcur']; exact own'
     · intro a ha
       rw [gl' a ha, lo2 a (by unfold Glob at ha; omega)]; exact hI.glob a ha
     · rw [hcx]; exact valuesFit_trCtx hI.fit _ _ _ (by rw [ByteArray.length_toList']; exact hsz.2.2.2.2)

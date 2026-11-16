@@ -20,8 +20,9 @@ arm needs and keeps:
   `tr_impl`), the saved return address (sp + 1848, the halt), and the words R5 reads at sp + 184 /
   216 (stored once at 6746 / 6760);
 - the allocator's context `HeapCtxC` for some state st, with the slot buffer an allocated chunk;
-- each slot left holds its input (`itemOf`) for any memory agreeing with this one on the allocated
-  chunks' data (as `inputs_decode` states it), so a frame that keeps those chunks keeps the slots;
+- each slot left holds its input (`itemOf`), and the slots' buffers are distinct allocated chunks
+  (`ItemsOwn`, an obligation on `inputs_decode`), so a frame that keeps those chunks keeps the slots
+  (`itemOf_local`);
 - the read-only data `tr_impl` reads (`TrRO`), the parameter statics (`Glob`, equal to a base memory
   μ₀'s), and `ValuesFit` of the context (T2's premise, kept by every operation: `ValuesFit.step`).
 -/
@@ -49,6 +50,128 @@ theorem TrRO.keep {μ μ' : Memory} (h : TrRO μ)
   · rw [rdN_frame fun j hj => (hk _ (by omega)).1]; exact h4
   · rw [(hk a (by omega)).2]; exact h5 a ha hb
 
+/-- **The buffers a slot owns** (pointer, length): an operand's trace (capacity at + 0, pointer + 8,
+    length + 16) when its capacity is not 0, and its work output's (+ 24 / + 32 / + 40) likewise; a
+    transfer owns none. -/
+def slotFoot : AccumulateInput → List UInt8 → List (Nat × Nat)
+  | .operand o, bs => (if wd bs 0 = 0 then [] else [(wd bs 8, wd bs 16)]) ++
+      (match o.result with
+       | .ok _ => if wd bs 24 = 0 then [] else [(wd bs 32, wd bs 40)]
+       | .err _ => [])
+  | .transfer _, _ => []
+
+/-- The buffers the slots from c on own, for the inputs `ins`. -/
+def footL : List AccumulateInput → Nat → Memory → List (Nat × Nat)
+  | [], _, _ => []
+  | i :: r, c, μ => slotFoot i (μ.readN c 184) ++ footL r (c + 184) μ
+
+/-- **Ownership of the slots' buffers** (obligation: `inputs_decode` is to be strengthened to state
+    it; decided 2026-11-16, option (C)): the slots' buffers have distinct pointers, none the slot
+    buffer q's, and each is the data of an allocated chunk of st covering its length. -/
+def ItemsOwn (st : State) (μ : Memory) (c q : Nat) (ins : List AccumulateInput) : Prop :=
+  ((footL ins c μ).map Prod.fst).Nodup ∧ q ∉ (footL ins c μ).map Prod.fst ∧
+  ∀ pl ∈ footL ins c μ, ∃ d ∈ chunks st, d.used = true ∧ d.addr + 32 = pl.1 ∧
+    ∀ a, pl.1 ≤ a → a < pl.1 + pl.2 → InDataA d a
+
+/-- `footL` reads only the slots. -/
+theorem footL_congr {μ μ' : Memory} : ∀ (ins : List AccumulateInput) (c : Nat),
+    (∀ a, c ≤ a → a < c + 184 * ins.length → μ'.read a = μ.read a) →
+    footL ins c μ' = footL ins c μ
+  | [], _, _ => rfl
+  | i :: r, c, h => by
+    simp only [footL, List.length_cons] at h ⊢
+    rw [Memory.readN_congr fun j hj => h _ (by omega) (by omega),
+      footL_congr r (c + 184) fun a h1 h2 => h a (by omega) (by omega)]
+
+/-- **A slot's input reads only the slot and the buffers it owns.** -/
+theorem itemOf_local {i : AccumulateInput} {c : Nat} {μ μ' : Memory}
+    (h : (itemOf i).2 (μ.readN c 184) μ)
+    (hf : ∀ pl ∈ slotFoot i (μ.readN c 184), ∀ a, pl.1 ≤ a → a < pl.1 + pl.2 → μ'.read a = μ.read a)
+    (hs : μ'.readN c 184 = μ.readN c 184) : (itemOf i).2 (μ'.readN c 184) μ' := by
+  rw [hs]
+  cases i with
+  | transfer x => exact h
+  | operand o =>
+    have tr : ∀ t : List UInt8, RepOpBase (opHashes o) o.gasLimit t (μ.readN c 184) μ →
+        RepOpBase (opHashes o) o.gasLimit t (μ.readN c 184) μ' := by
+      intro t ⟨b0, b16, b8, bh, bg⟩
+      refine ⟨b0, b16, ?_, bh, bg⟩
+      by_cases ht : t.length = 0
+      · rw [ht]; rw [ht] at b8; exact b8
+      · refine (Memory.readN_congr fun j hj => ?_).trans b8
+        exact hf (wd (μ.readN c 184) 8, wd (μ.readN c 184) 16)
+          (by simp [slotFoot, b0, ht]) _ (by omega) (by rw [b16]; omega)
+    simp only [itemOf] at h ⊢
+    split
+    · next b hb =>
+      simp only [slotFoot] at hf
+      rw [hb] at h hf
+      obtain ⟨hb0, h24, h40, ho⟩ := h
+      refine ⟨tr _ hb0, h24, h40, ?_⟩
+      by_cases hl : b.toList.length = 0
+      · rw [hl]; rw [hl] at ho; exact ho
+      · refine (Memory.readN_congr fun j hj => ?_).trans ho
+        exact hf (wd (μ.readN c 184) 32, wd (μ.readN c 184) 40)
+          (by simp [h24, hl]) _ (by omega) (by rw [h40]; omega)
+    · next er he =>
+      rw [he] at h
+      obtain ⟨hb0, h24, h32⟩ := h
+      exact ⟨tr _ hb0, h24, h32⟩
+
+/-- A slot's buffers are among `footL`'s. -/
+theorem mem_footL {μ : Memory} : ∀ (ins : List AccumulateInput) (c j : Nat) (i : AccumulateInput)
+    (pl : Nat × Nat), ins[j]? = some i → pl ∈ slotFoot i (μ.readN (c + 184 * j) 184) →
+    pl ∈ footL ins c μ
+  | [], _, _, _, _, h, _ => by simp at h
+  | i0 :: r, c, 0, i, pl, h, hp => by
+    simp only [List.getElem?_cons_zero, Option.some.injEq] at h
+    subst h
+    simp only [footL, List.mem_append]
+    left; simpa using hp
+  | i0 :: r, c, j + 1, i, pl, h, hp => by
+    simp only [List.getElem?_cons_succ] at h
+    simp only [footL, List.mem_append]
+    right
+    exact mem_footL r (c + 184) j i pl h (by rw [show c + 184 + 184 * j = c + 184 * (j + 1) by omega]; exact hp)
+
+/-- **The slots and their ownership for the inputs after the first**, under a frame that keeps the
+    slot buffer's data and every chunk the later slots own, with its data. -/
+theorem rest_keep {st st' : State} {μ μ' : Memory} {cur q : Nat} {i : AccumulateInput}
+    {rest : List AccumulateInput} {db : Chunk}
+    (hslots : ∀ (j : Nat) (i' : AccumulateInput), (i :: rest)[j]? = some i' →
+      (itemOf i').2 (μ.readN (cur + 184 * j) 184) μ)
+    (hown : ItemsOwn st μ cur q (i :: rest))
+    (hdb : ∀ a, cur ≤ a → a < cur + 184 * (rest.length + 1) → InDataA db a)
+    (kb : ∀ a, InDataA db a → μ'.read a = μ.read a)
+    (kf : ∀ d ∈ chunks st, d.used = true → d.addr + 32 ∈ (footL rest (cur + 184) μ).map Prod.fst →
+      d ∈ chunks st' ∧ ∀ a, InDataA d a → μ'.read a = μ.read a) :
+    (∀ (j : Nat) (i' : AccumulateInput), rest[j]? = some i' →
+      (itemOf i').2 (μ'.readN (cur + 184 + 184 * j) 184) μ') ∧ ItemsOwn st' μ' (cur + 184) q rest := by
+  have hfeq : footL rest (cur + 184) μ' = footL rest (cur + 184) μ :=
+    footL_congr rest _ (fun a h1 h2 => kb a (hdb a (by omega) (by omega)))
+  obtain ⟨hnd, hq, hch⟩ := hown
+  simp only [footL, List.map_append] at hnd hq hch
+  have hch' : ∀ pl ∈ footL rest (cur + 184) μ, ∃ d ∈ chunks st, d.used = true ∧ d.addr + 32 = pl.1 ∧
+      ∀ a, pl.1 ≤ a → a < pl.1 + pl.2 → InDataA d a := fun pl hp =>
+    hch pl (List.mem_append_right _ hp)
+  refine ⟨fun j i' hj => ?_, ?_, ?_, ?_⟩
+  · have hjl : j < rest.length := by
+      have := List.getElem?_eq_some_iff.1 hj; exact this.1
+    have h1 := hslots (j + 1) i' (by simpa using hj)
+    rw [show cur + 184 + 184 * j = cur + 184 * (j + 1) by omega]
+    refine itemOf_local h1 (fun pl hp a ha1 ha2 => ?_) (Memory.readN_congr fun k hk =>
+      kb _ (hdb _ (by omega) (by omega)))
+    have hm := mem_footL rest (cur + 184) j i' pl hj
+      (by rw [show cur + 184 + 184 * j = cur + 184 * (j + 1) by omega]; exact hp)
+    obtain ⟨d, hd, hdu, hda, hdr⟩ := hch' pl hm
+    exact (kf d hd hdu (by rw [hda]; exact List.mem_map_of_mem hm)).2 a (hdr a ha1 ha2)
+  · rw [hfeq]; exact (List.nodup_append.1 hnd).2.1
+  · rw [hfeq]; exact fun h => hq (List.mem_append_right _ h)
+  · intro pl hp
+    rw [hfeq] at hp
+    obtain ⟨d, hd, hdu, hda, hdr⟩ := hch' pl hp
+    exact ⟨d, (kf d hd hdu (by rw [hda]; exact List.mem_map_of_mem hp)).1, hdu, hda, hdr⟩
+
 /-- **The items loop's state at its head 6766** with the inputs `ins` still to run (see the module
     docstring). The frame: sp, the slot buffer q of capacity cap, the end e; μ₀ fixes the statics. -/
 structure ItemsInv (env : AccEnv) (pb S0 S1 sp q cap e : Nat) (μ₀ : Memory)
@@ -71,8 +194,8 @@ structure ItemsInv (env : AccEnv) (pb S0 S1 sp q cap e : Nat) (μ₀ : Memory)
     (cap ≠ 0 → ∃ d ∈ chunks st, d.used = true ∧ d.addr + 32 = q ∧
       ∀ a, rdN s.μ (sp + 168) 8 ≤ a → a < e → InDataA d a) ∧
     (∀ (j : Nat) (i : AccumulateInput), ins[j]? = some i →
-      ∀ μ'' : Memory, (∀ d ∈ chunks st, d.used = true → ∀ a, InDataA d a → μ''.read a = s.μ.read a) →
-        (itemOf i).2 (μ''.readN (rdN s.μ (sp + 168) 8 + 184 * j) 184) μ'')
+      (itemOf i).2 (s.μ.readN (rdN s.μ (sp + 168) 8 + 184 * j) 184) s.μ) ∧
+    ItemsOwn st s.μ (rdN s.μ (sp + 168) 8) q ins
   ro : TrRO s.μ
   glob : ∀ a, Glob a → s.μ.read a = μ₀.read a
   fit : ValuesFit env s.c.1

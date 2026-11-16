@@ -73,6 +73,13 @@ the same `Get.lean` / `GetCall.lean` and `gk_call` adapted to them (its abort: r
    - Fixed: conflict markers left in `Services.lean` and this README by the earlier merge 97b8f56
      (CI could not parse `Services.lean`); `Services.lean` now imports `Transfer.ImplTr`.
 
+   **State at the overnight pause (2026-11-16):** no PR open yet. A full `lake build` passed at 2bbbd16
+   (before merging main); main was then merged (c3ba1fd, clean) and the post-merge full build was stopped
+   at the pause, unfinished. To resume: `scripts/fetch-lake.sh --force` (lake-cache), `lake build`, then
+   open the PR for `tr_impl` (body: the conflict-marker fix, `W1Post`/`W2Post` additions, `KeyFmt` (b)).
+   Parent notes: don't edit `Acc/Wrappers/GetCall.lean` or `Acc/Impl/Impl.lean` (Handlers A); for step 5
+   add a code-fact tier (docs/code-fact-tiers.md) instead of regenerating CodeA, and tell the parent first.
+
    **Next: the items-loop skeleton (step 3 below), then step 4 (AccAbort / ValuesFit / T2) and step 5.**
    The plan notes below for `tr_w1` / `tr_w2` / `tr_impl` are done; kept for reference.
 

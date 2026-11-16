@@ -193,6 +193,7 @@ import Services.Bootstrap.Acc.Handlers.RowElevenCore
 import Services.Bootstrap.Acc.Handlers.ResultsAvoid
 import Services.Bootstrap.Acc.Handlers.RowElevenFront
 import Services.Bootstrap.Acc.Handlers.InstrLoopSeg
+import Services.Bootstrap.Acc.Handlers.InstrLoopTail
 import Services.Bootstrap.Acc.Handlers.Upgrade
 import Services.Bootstrap.Acc.HeapHost
 import Services.Bootstrap.Acc.DecodeU32A

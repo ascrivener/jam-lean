@@ -60,8 +60,9 @@ structure VecOwn (B : InstrRep) (μ : Memory) (st : State) (b c : Nat) (is : Lis
 
 /-- **The loop's entry state** (8492, memory μ, allocator state st), for the instructions `is` in the
     `Vec` { cap c at sp + 240, ptr b, len |is| at sp + 248 }: the allocator's context and the stack room;
-    the `Vec` owns is (`VecOwn`), its slots below 2⁶⁴; row 11's `TailHyp` with the empty
-    results `Vec` (cap 0, a dangling pointer below 32, len 0); the instructions' buffers and `tailFree`
+    the `Vec` owns is (`VecOwn`), its slots below 2⁶⁴; row 11's `TailHyp` with no results
+    (len 0) and the results buffer either none (cap 0, a dangling pointer below 32) or an allocated chunk
+    with room for cap items (`hres`; the binary's `Vec::with_capacity(|is|)`, 7970); the instructions' buffers and `tailFree`
     pairwise distinct; the frame constants 2⁶³ at sp + 184, 2⁶³ + 1 at sp + 216, 678 at sp + 200. -/
 structure EntryHyp (B : InstrRep) (code : ByteArray) (pb S0 S1 sp b c : Nat) (is : List Spec.Instr)
     (μ : Memory) (st : State) : Prop where
@@ -73,8 +74,11 @@ structure EntryHyp (B : InstrRep) (code : ByteArray) (pb S0 S1 sp b c : Nat) (is
   V : VecOwn B μ st b c is
   hb : b + 232 * is.length < 2 ^ 64
   T : TailHyp code pb S0 S1 μ st sp
-  h448 : rdN μ (sp + 448) 8 = 0
-  h456 : rdN μ (sp + 456) 8 < 32
+  /-- The results `Vec`'s buffer: none (cap 0, a dangling pointer below 32), or (`Vec::with_capacity`) the
+      data of an allocated chunk with room for cap items. -/
+  hres : (rdN μ (sp + 448) 8 = 0 ∧ rdN μ (sp + 456) 8 < 32) ∨
+    (rdN μ (sp + 448) 8 ≠ 0 ∧ ∃ d ∈ chunks st, d.used = true ∧ d.addr + 32 = rdN μ (sp + 456) 8 ∧
+      rdN μ (sp + 456) 8 + 144 * rdN μ (sp + 448) 8 ≤ d.addr + 32 * d.size)
   h464 : rdN μ (sp + 464) 8 = 0
   hnd : (vecFree B μ b c is.length ++ tailFree μ sp).Nodup
   c184 : rdN μ (sp + 184) 8 = 9223372036854775808
@@ -119,7 +123,9 @@ theorem il_entry {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (B :
     (E : EntryHyp B code pb S0 S1 sp b c is μ st) :
     ∃ ω' μ' N, FreeStepsH p R 8492 ω μ x 8554 ω' μ' x N ∧ ω'[5] = ω[5] ∧
       ∀ (c0 : AccCtx) (f : Stream), Inv c0 →
-        LoopInv B code pb S0 S1 sp Inv μ st (vecFree B μ b c is.length) (is.any isZomb) is.length is []
+        LoopInv B code pb S0 S1 sp Inv μ st
+          (vecFree B μ b c is.length ++ optBuf (rdN μ (sp + 448) 8) (rdN μ (sp + 456) 8)) (is.any isZomb)
+          is.length is []
           ⟨8554, ω', μ', c0, f⟩ := by
   have H := E.H
   have hT := H.hS1
@@ -174,24 +180,32 @@ theorem il_entry {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (B :
         show sp + 472 + 24 = sp + 496 by omega, r488, r472, r480, r496]
       exact ⟨hc0, d, hd, hu, hda, Nat.le_refl _, hde⟩
   obtain ⟨T', tf⟩ := E.T.keepW H' hk fun a h1 h2 h3 => fr a (by omega) (.inl h2) h3
-  have w448 : rdN μ' (sp + 448) 8 = 0 := (frw 448 (by omega) (by omega) (by omega)).trans E.h448
+  have w448 : rdN μ' (sp + 448) 8 = rdN μ (sp + 448) 8 := frw 448 (by omega) (by omega) (by omega)
   have w456 : rdN μ' (sp + 456) 8 = rdN μ (sp + 456) 8 := frw 456 (by omega) (by omega) (by omega)
   have w464 : rdN μ' (sp + 464) 8 = 0 := (frw 464 (by omega) (by omega) (by omega)).trans E.h464
   have LA : LoopAt B code pb S0 S1 sp is [] false μ' st := by
     refine ⟨H', ⟨by omega, by omega, by omega⟩, I, T', w464, Nat.zero_le _, ⟨fun k hk' => absurd hk' (by simp),
-      fun j hj => absurd hj (by simp)⟩, ?_, fun j hj => absurd hj (by simp), fun _ => by rw [w456]; exact E.h456,
-      fun h => absurd w448 h, r160, ?_, ?_, ?_⟩
+      fun j hj => absurd hj (by simp)⟩, ?_, fun j hj => absurd hj (by simp), fun h => ?_, fun h => ?_, r160, ?_, ?_, ?_⟩
     · rw [hIF, tf]; exact E.hnd
+    · rw [w448] at h; rw [w456]
+      rcases E.hres with h' | h'
+      · exact h'.2
+      · exact absurd h h'.1
+    · rw [w448] at h ⊢; rw [w456]
+      rcases E.hres with h' | h'
+      · exact absurd h'.1 h
+      · exact h'.2
     · rw [frw 184 (by omega) (by omega) (by omega)]; exact E.c184
     · rw [frw 216 (by omega) (by omega) (by omega)]; exact E.c216
     · rw [frw 200 (by omega) (by omega) (by omega)]; exact E.c200
   have hstab : ∀ a, a < 4294967296 → StableKeep sp a → μ'.read a = μ.read a := fun a h0 h => by
     unfold StableKeep at h; exact fr a h0 (by omega) (by omega)
   refine ⟨.inr ⟨rfl, by rw [a6, e6, h6, r480], hn0⟩, a1.trans (e1.trans h1), hinv,
-    ⟨st, false, LA, by simp, fun d hd hu hG => ⟨hd, (hk d hd hu).2, by rw [hIF]; exact hG, ?_, ?_⟩⟩,
+    ⟨st, false, LA, by simp, fun d hd hu hG => ⟨hd, (hk d hd hu).2, by
+      rw [hIF]; exact fun h => hG (List.mem_append_left _ h), by
+      rw [w448, w456]; exact fun h => hG (List.mem_append_right _ h), ?_⟩⟩,
     by rw [r480, ← hda]; exact Picoalloc.chunk_data_mod8 H.wf hd, by rw [r504]; omega, by simp, fun a ha => ⟨fr a (by omega) (.inl (by omega))
       (.inl (by omega)), rd a⟩, hstab⟩
-  · rw [w448]; simp [optBuf]
-  · simp [resPtrs]
+  simp [resPtrs]
 
 end Services.Bootstrap.Acc.Handlers.InstrLoop

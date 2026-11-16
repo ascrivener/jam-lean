@@ -602,6 +602,8 @@ An independent kernel, nanoda as vendored by
     With cap ≥ 2²⁷ the growth cost fits, since 4096·pb ≤ S0 < 2³² gives pb < 2²⁰.
   - *Assumed:* the heap base is 8-aligned (`s.base % 8 = 0`), which `HeapCtx` does not record; the
     stack frame below sp (S0 + 320 ≤ sp, 2147483968 ≤ sp, 8-aligned).
+    (Pointer for later: `WF` records `s.base % 32 = 0`, so this is likely dischargeable; see
+    `Acc/Handlers/ChunkAlign.lean`.)
 
 - **The allocator under any host fit for it, refine's or accumulate's.** `Alloc.HeapHost`,
   `Alloc.refineHeap`, `Acc.accHeapHost` (`Services/Bootstrap/Alloc/HeapContract.lean`,

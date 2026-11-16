@@ -753,7 +753,8 @@ Pieces of T2 (`docs/bootstrap-target.md`): parts of bootstrap's accumulate code 
     under "transfer-count", writes it back incremented (mod 2³²), logs a line, formats the key
     "transfer{n}" and writes the record ℰ₄(src) ⌢ ℰ₈(am) ⌢ memo under it, then reaches the items
     loop's head 6766 (`TrPost`: context `trCtx`, every earlier heap chunk and its data kept, from sp
-    up only the octets `TrW` changed, memory below 196608 unchanged). Each `set` that returns FULL
+    up only the octets `TrW` changed, memory below 196608 unchanged, the statics 196616 … 196791
+    (`Glob`, where the prologue stored the chain parameters) unchanged). Each `set` that returns FULL
     ends ☇ (`orPanic`, 15361); a failed allocation (3820, 48047, 4002, 15363, 15362, 34178, `get`'s
     47977) is an early ☇ for the reason `heap` (`HeapFailT`).
   - *Assumed:*
@@ -766,10 +767,13 @@ Pieces of T2 (`docs/bootstrap-target.md`): parts of bootstrap's accumulate code 
     - `KeyFmt`: `format!("transfer{}", n)` at 7792 returns the key's octets, stated as text, in the
       data of a live heap chunk fresh against the allocator's earlier state (strengthened from
       "kc = 0 or a fresh chunk", Adam, 2026-11-15), or exhausts the heap and then ends ☇ (`ExhaustsP`);
-    - `Utf8Call`: `core::str::from_utf8` at 7447 on the memo;
+    - `Utf8Call`: `core::str::from_utf8` at 7447 on the memo (its frame, all memory below sp − 4096,
+      covers the statics);
     - `LogFmt`: the log line's `format!` at 7692, frame-only (formatters 2800 → dec32, 2804 → dec64,
       678 → String Display), or `ExhaustsP`.
-  - *Scope:* the frame does not yet state that the parameter statics 196616 … 196791 are kept.
+    - `KeyFmt` and `LogFmt` also state, in their success case, that the statics 196616 … 196791 are
+      unchanged (Adam, 2026-11-16, so that `ParamStatics` reaches row 8). Whoever discharges them
+      proves this too; the formatters write only the stack and the heap.
 
 - **The accumulate prologue stores 𝖢 and 𝖨.** `Acc.Statics.start_to_6429_statics` and
   `Acc.Statics.chain` (`Acc/Statics.lean`).
@@ -779,9 +783,24 @@ Pieces of T2 (`docs/bootstrap-target.md`): parts of bootstrap's accumulate code 
     (`store_u16` at 56279 after the check 2 ≤ 𝖢 ≤ 341, `store_u64` at 56205 of a u16 field). They
     are the words Handlers A's row 8 takes as `ParamStatics μ 𝖢 𝖨` (the ring size 2·𝖢·𝖨).
   - *Assumed:* as `Acc.start_to_6429`, including `env.params = Params.full`. So 𝖢 = 341 and 𝖨 = 16.
-  - *Scope:* the facts hold at 6429. That the later code keeps 196616 … 196791 until row 8 is
-    still to be proved. The binary does not check 𝖨 > 0; 2·𝖢·𝖨 < 2³² follows from 𝖢 ≤ 341 and
+  - *Scope:* the facts hold at 6429. `on_transfer` keeps 196616 … 196791 (`TrPost`); the rest of
+    the way to row 8 (the argument decodes, the inputs decode, the items loop) is still to be shown.
+    The binary does not check 𝖨 > 0; 2·𝖢·𝖨 < 2³² follows from 𝖢 ≤ 341 and
     𝖨 < 2¹⁶.
+
+- **T2's abort reason and length premise (definitions).** `Acc.AccAbort`, `Acc.HeapTrapPc`,
+  `Acc.ValuesFit` (`Acc/Abort.lean`).
+  - `AccAbort s`: heap exhaustion. Either a failed allocator call (the `alloc` wrapper's return 40611 or
+    `realloc`'s 40821 with ω₇ = 0), or one of the blob's 53 allocation-failure traps (`HeapTrapPc`,
+    found from the disassembly with `scripts/allocfail/`). Each listed trap is reached only by the
+    null test after an allocation (or a growth helper's `Err`, which means a null allocation or an
+    overflowing size), or by an allocation-size check failing (a request above 2³⁷ − 32), both heap
+    exhaustion under Adam's decision. `format_inner`'s trap 59710 is left out, because a formatter
+    returning `Err` also reaches it. `accAbort_of_heapFailT`: `on_transfer`'s abort states are
+    `AccAbort` states.
+  - `ValuesFit env x`: this service's storage values, every service's preimages and ℰ(↕**i**)
+    (`fetch` kind 14) are shorter than 2⁶³ octets (decided 2026-11-15).
+  - *To do:* `ValuesFit` is kept by every operation (`ASem.step`).
 
 ### picoalloc: the model (`Services/Picoalloc/`)
 

@@ -16,10 +16,7 @@ built tree with `scripts/fetch-lake.sh --force`, then `lake build`. The toolchai
 - R11 (Adam, option (a), 2026-11-16): `KeyFmt` and `LogFmt` also keep `Glob` (196616 … 196791);
   `Utf8Call`'s frame already implies it. **Whoever discharges `KeyFmt` / `LogFmt` must prove this
   too.** Threaded through `sk_call`, `enc_call`, `tr_w2a`, `lg_part1/2`, `tr_w2c`, `W1Post`, `W2Post`
-  (helper `Transfer/Glob.lean`: `glob_of_hkeepC`). **Left:** `gk_call`, `tr_read`, then `TrPost`'s
-  `Glob` conjunct, using `get_call`'s new `Glob` conclusion from Handlers A's PR #224 (merge main
-  after #224 lands; don't edit `GetCall.lean`). Then the PR (whats-proven: the strengthened
-  `KeyFmt`/`LogFmt`, `TrPost`'s new conjunct).
+  (helper `Transfer/Glob.lean`: `glob_of_hkeepC`). Also `gk_call`, `tr_read` and `TrPost` (with `get_call`'s `Glob` conclusion from #224): done.
 - R12: `Acc/Abort.lean`: `HeapTrapPc` (every allocation-failure trap of the blob, from
   `scripts/allocfail/`; 59710 excluded since a formatter `Err` also reaches it), `AccAbort` (a heap
   trap, or a failed allocator call 40611 / 40821 with ω₇ = 0), `accAbort_of_heapFailT`, `ValuesFit`
@@ -41,6 +38,10 @@ decoded item, `ResultsVec []` and `HeapCtxC`, the `Impl` of the spec's `for i in
 (15050 when n = 0): `ResultsVec results`, [sp + 160] = 1 ↔ `is.any zombify`, `HeapCtxC st'` keeping old
 chunks, the frame. `InstrRep` is a parameter of the hypothesis bundle, shared by R3 (the output decode
 yields items with `InstrRep`) and R6 (the handlers consume it). R7 (row 11) starts from 15028.
+Update: the `InstrRep` bundle gains a footprint (the chunks the instruction list owns) and
+`DropInstrsH` (33214 frees exactly that footprint, otherwise frame-only); Handlers A adds `ResultsOwn`
+(ownership next to `ResultsVec`, produced by R5, consumed by row 11). R2 passes them through from R3
+into R5 and R7.
 
 **Only on WIP (proved):**
 - `Acc/Items/`: Exit (`items_end`, `items_halt`), Operand (`op_pre`, `op_mid`), Disp, End, Head.

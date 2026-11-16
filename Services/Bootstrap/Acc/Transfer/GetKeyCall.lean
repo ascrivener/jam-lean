@@ -1,4 +1,5 @@
 import Services.Bootstrap.Acc.Transfer.GetKey
+import Services.Bootstrap.Acc.Transfer.Glob
 import Services.Bootstrap.Acc.Wrappers.GetCall
 import Services.Bootstrap.Encode.Writer
 import Services.Bootstrap.Decode.LoopAPass
@@ -126,7 +127,8 @@ theorem gk_call (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap 
       GetOut μ' out s₀ s' (c.1.self.storage.get? key) ∧
       HeapCtxC env.code pb S0 S1 μ' s' ∧ (∀ c ∈ chunks s₀, c.used = true → c ∈ chunks s') ∧
       (∀ c ∈ chunks s₀, c.used = true → ∀ a, InDataA c a → μ'.read a = μ.read a) ∧
-      (∀ a, a < 4294967296 → s + 56 ≤ a → (a < out ∨ out + 24 ≤ a) → μ'.read a = μ.read a)) ∨
+      (∀ a, a < 4294967296 → s + 56 ≤ a → (a < out ∨ out + 24 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, Glob a → μ'.read a = μ.read a)) ∨
     (∃ t ω' μ' n, (t = 3895 ∨ t = 47977) ∧
       FreeStepsH p (KeepCtx (accContractS env)) 40494 ω μ (c, f) t ω' μ' (c, f) n) := by
   have hst := H.st
@@ -194,14 +196,14 @@ theorem gk_call (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap 
     rcases get_call (p := p) (P := P) (hb := hb) env cap pb hcap1 hcap c f ω4 μ3 s1 s out ptr 14 S0 S1 key H3
         c1 c7 c8 c9 (by decide) (by omega) (by omega) ⟨by omega, hout.2⟩
         (.inr ⟨_, hnew, rfl, fun a h1 h2 => ⟨by dsimp only; omega, by dsimp only; omega⟩⟩) (by omega) hkey3 hfit with
-      ⟨e, s3, ω5, μ5, n5, he, run5, g0, g1, g5, g6, gout, H5, keep5, keepd5, fr5, -, -, -⟩ |
+      ⟨e, s3, ω5, μ5, n5, he, run5, g0, g1, g5, g6, gout, H5, keep5, keepd5, fr5, glob5, -, -⟩ |
       ⟨ω5, μ5, n5, run5⟩
     · -- 3865: the copy freed
       have run5' := run5.trans (gk_j2 (p := p) (P := P) _ ω5 μ5 e he (g0.trans c0))
       obtain ⟨ω6, run6, d0, d7, d1⟩ := gk_free (p := p) (P := P) (R := KeepCtx (accContractS env)) (c, f) ω5 μ5 14 ptr
         (g5.trans c5) (g6.trans c6) (by decide) (by decide) (by omega)
       have hk5 := keep5 _ hnew rfl
-      obtain ⟨ω7, μ7, run7, H7, -, -, -, stk7, -, oth7, -, b1', -, -⟩ :=
+      obtain ⟨ω7, μ7, run7, H7, -, -, -, stk7, glob7, oth7, -, b1', -, -⟩ :=
         dealloc_callG (R := KeepCtx (accContractS env)) (p := p) (P := P) env.code pb S0 S1 (c, f) ω6 μ5 s3 s ptr
           108 3881 _ H5 hk5 rfl (by dsimp only; omega) d0 (d1.trans g1) d7 ⟨by decide, by decide, by decide⟩
           (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_53]) bs_3881 (by omega) ⟨by omega, by omega⟩
@@ -220,7 +222,7 @@ theorem gk_call (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap 
       -- chunks other than the key's copy
       have hfr1 : ∀ d ∈ chunks s₀, d.used = true → d ≠ (⟨ptr - 32, (14 + 31) / 32 + 1, true⟩ : Chunk) := hfresh
       refine .inl ⟨Picoalloc.free s3 ptr, ω8, μ7, _,
-        (((runA.trans run5').trans run6).trans run7).trans (run8.trans run9), i1, i5, i6, ?_, H7, ?_, ?_, ?_⟩
+        (((runA.trans run5').trans run6).trans run7).trans (run8.trans run9), i1, i5, i6, ?_, H7, ?_, ?_, ?_, ?_⟩
       · refine GetOut.base (fun d hd hu => keep1 d hd hu) (GetOut.mono gout ?_ ?_ ?_)
         · intro a h1 h2; exact stk7 a (by omega) (by omega)
         · intro d hd hu hf a ha
@@ -245,6 +247,13 @@ theorem gk_call (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap 
       · intro a h0 ha ho
         rw [stk7 a h0 (by omega), fr5 a h0 (by omega) ho]
         exact keep13 a h0 (by omega) (.inr (by omega))
+      · intro a hg
+        have ha := hg; unfold Glob at ha
+        have := Services.Bootstrap.Decode.VecU8.chunk_in H1.wf hnew rfl
+        dsimp only at this
+        rw [glob7 a hg, glob5 a hg, frm a (by omega) (.inl (by omega)) (.inl (by omega)) (.inl (by omega)),
+          fr2 a (by omega) (.inl (by omega))]
+        exact glob_of_hkeepC H1.wf H1.hb0 hkg a hg
     · exact .inr ⟨47977, ω5, μ5, _, .inr rfl, runA.trans run5⟩
   · obtain ⟨-, run1S⟩ := FreeStepsH.growS f run1
     refine .inr ⟨3895, ω1, μ1, _, .inl rfl,

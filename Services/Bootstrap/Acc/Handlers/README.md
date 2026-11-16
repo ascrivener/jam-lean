@@ -107,6 +107,53 @@ Handlers dependencies takes ~2 h on 4 cores). Use `ulimit -v 12000000` when comp
 - `refine ⟨?ω', ?run⟩; case run => pvm_go …` for a one-witness existential.
 
 
+## Session 14 progress and handoff (2026-11-16, for the 15th session)
+
+**PRs.** #228 (row 9): green, merges blocked by main's ruleset; subscribed; merge when @parent says.
+After #222 merges: rebase r5 (`git rebase --onto origin/main 6450fb4`), full build, open the r5 PR.
+
+**Done this session** (parent-approved items 1–3 of part 2 below; all compile):
+1. ω₆ in `AddPost` (`add_recent`, row 8): threaded through `RmPost`, `SwPost`, `CwPost` (each takes a
+   `w6`), `remove_call`/`rm_ret`, `sw_free`/`sw_ok1`/`sw_ok2`, `cw_pre`/`cw_mid`/`cw_dl`/`cw_free`/`cw_ok`.
+2. Glob (196616 … 196791) kept: `il_mid`, `il_tail_log`, `il_tail_push`, `il_tail_post` (new `glob_lt`:
+   a global lies below every allocated chunk), `AtLog`, `BodyPost`, `LoopInv.glob`, `il_entry`, `R57Post`.
+3. hB/hBall removed: `ExtendH`/`OkEncH` lost `len + n < 2³⁰ − 64`; `WriterPre` lost `2·cap < 2³⁰ − 64`
+   (needed: after a grow, cap′ ≤ max cap 8 2(len+n) is otherwise unbounded; it was derivable-only-by-hB);
+   `LoopHyp.hB` gone (the `alloc(144n + 4)` bound already came from `hrp`); `il_body_ck`, `il_loop`,
+   `loop_row11` lost hB/hBall. Docs updated (whats-proven, t2-remaining: the open point is closed).
+
+**Next:** the PR flow above; whatever @parent assigns.
+
+## Session 13, part 2: handoff (2026-11-16, for the 14th session)
+
+**PRs.** As in part 1 below: #228 green, blocked on main's ruleset (subscribe and merge on green when
+@parent says); after #222 merges, rebase r5 (`git rebase --onto origin/main 6450fb4`), full build, open the
+r5 PR. Tell T2 inputs (via @parent) the final `EntryHyp` shape when items 1–3 below are done.
+
+**Parent decisions (2026-11-16), all approved:**
+- Alignment: done (`ChunkAlign.lean`, `chunk_data_mod8`; `EntryHyp.hb8` removed, derived in `il_entry`).
+- `EntryHyp` results buffer: done (`hres`: cap 0 with a pointer below 32, or an allocated chunk with room
+  for cap items, as `Vec::with_capacity(|is|)` at 7970). `LoopInv`'s G is now `vecFree ++ optBuf cap rp`.
+- ω₆ in `R9Post`: done (`R9Post … v6`, `results_init` posts `s.ω[6]`; `r9_ok` keeps ω₆, `setR7_6`).
+- Globals: `PushH`, `InstrLogH`, `ResultLogH` now keep Glob 196616 … 196791 (done, docs updated).
+
+**Next, in order:**
+1. **ω₆ in `AddPost`** (row 8, `RecentAdd.lean`): add `s'.ω[6] = v6` like `R9Post`. The segment lemmas
+   already track ω₆ (`RecentCounterGet`, `RecentMatch`, `RecentSlot*`); the composite posts
+   (`counter_get`'s, `recent_match`'s, `slot_write`'s, `counter_write`'s) need an ω₆ conjunct threaded.
+2. **Thread Glob to `R57Post`**: each body stage must give Glob kept: `il_front_any` / segments (Glob
+   < 2³¹ ≤ sp, so the stack frames cover it), `il_mid` (InstrLogH's new last conjunct, now `-` in its
+   rcases), `HandlerPost` (has Glob), `il_tail_log` (ResultLogH's, `-` in its rcases), `il_tail_push`
+   (PushH's, `-`; the memcpy copy), `il_tail_post` (free), the `Checkpoint` store (`store_core`'s post
+   has Glob). Add Glob to `BodyPost`, to `LoopInv` (vs μ₀), then to `R57Post` (row 11's `R7Post` has it;
+   the empty case: `DropInstrsH`'s `Frm` has it).
+3. **Remove hB / hBall** (parent-approved design A–D, 2026-11-16; reported to Adam): drop
+   `len + n < 1073741760` from `ExtendH` and `OkEncH` (`ResultsHyp.lean`); the `alloc(144n + 4)` at 36170:
+   bound from the results Vec's own footprint (144n octets already in a heap chunk) or a HeapHost
+   "too big → null" lemma, whichever needs no new hypothesis; remove `LoopHyp.hB`, `hBall` (il_loop,
+   il_body_ck, loop_row11), `hB` in `store_core`/`row_eleven*`. Then update whats-proven and
+   t2-remaining (the hBall open point is closed; ExtendH/OkEncH lose their length precondition).
+
 ## Session 13 progress and handoff (2026-11-16, for the 14th session)
 
 **PRs.** **#228** (row 9): green, merges blocked by main's ruleset; subscribed; merge on green once @parent

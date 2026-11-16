@@ -78,7 +78,7 @@ theorem store_core {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
   dsimp only at hi h0 h1 h7 h8 h9 H L mt mc ht8 ht4 hro hvals ⊢
   subst hi
   have L0 := L
-  obtain ⟨hsp, hS1', hn, -, hB, -⟩ := L0
+  obtain ⟨hsp, hS1', hn, -, -⟩ := L0
   generalize hkey : keyEnc μ (sp + 1568) 2 = key
   have hkl : key.length = 35 := by
     rw [← hkey, keyEnc_length]; simp only [show (2 : Nat) ≠ 1 from by decide, if_false, if_true]
@@ -110,7 +110,7 @@ theorem store_core {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
     (fun a h1 h2 => Memory.readable_of_writable (HeapKeep.writableData HB hCk rfl
       (by unfold HeapKeep.InData; dsimp only; omega))) (by omega)
   have hdi := Services.Bootstrap.Decode.VecU8.chunk_in HB.wf hCv hdu
-  generalize hval : encodeResults rs = val at hB mval b11 hv2 hlv
+  generalize hval : encodeResults rs = val at mval b11 hv2 hlv
   have hvr : μB.rangeReadable vp val.length = true := Services.Witness.rangeReadable_of
     (fun a h1 h2 => Memory.readable_of_writable (HeapKeep.writableData HB hCv hdu
       (by unfold HeapKeep.InData; omega))) (by omega)

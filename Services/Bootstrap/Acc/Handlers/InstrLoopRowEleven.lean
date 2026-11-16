@@ -38,13 +38,15 @@ set_option maxRecDepth 100000
 /-- **The state after the instruction loop and row 11** (6766), against the entry's memory μ₀ and
     allocator state st₀ (8492), with G the instructions' buffers: ω₁ = sp; the allocator's context for some
     st′; every allocated chunk of st₀ whose data address is neither in G nor in row 11's `tailFree` (the
-    buffers at sp + 104 and sp + 272) kept with its data; the frame words `StableKeep` kept. -/
+    buffers at sp + 104 and sp + 272) kept with its data; the frame words `StableKeep` and the globals
+    196616 … 196791 kept. -/
 def R57Post (code : ByteArray) (pb S0 S1 sp : Nat) (st₀ : State) (μ₀ : Memory) (G : List Nat)
     (s' : St Stream) : Prop :=
   s'.i = 6766 ∧ s'.ω[1] = UInt64.ofNat sp ∧ ∃ st', HeapCtxC code pb S0 S1 s'.μ st' ∧
     (∀ d ∈ chunks st₀, d.used = true → d.addr + 32 ∉ G ++ tailFree μ₀ sp → d ∈ chunks st' ∧
       ∀ a, InData d a → s'.μ.read a = μ₀.read a) ∧
-    (∀ a, a < 4294967296 → StableKeep sp a → s'.μ.read a = μ₀.read a)
+    (∀ a, a < 4294967296 → StableKeep sp a → s'.μ.read a = μ₀.read a) ∧
+    (∀ a, Glob a → s'.μ.read a = μ₀.read a)
 
 /-- The two frame buffers of `tailBufs` agree when their words do. -/
 theorem tailBufs23 {μ μ' : Memory} {sp : Nat} (h : ∀ a, a < 4294967296 → StableKeep sp a → μ'.read a = μ.read a)
@@ -55,15 +57,13 @@ theorem tailBufs23 {μ μ' : Memory} {sp : Nat} (h : ∀ a, a < 4294967296 → S
     fun o ho => rdN_frame fun j hj => h _ (by omega) (by unfold StableKeep; omega)
   rw [e 128 (by omega), e 104 (by omega), e 264 (by omega), e 272 (by omega)]
 
-/-- An address outside the empty results' `tailFree` (cap 0, len 0) is outside the frame buffers. -/
-theorem not_tailFree0 {μ : Memory} {sp q : Nat} (h448 : rdN μ (sp + 448) 8 = 0) (h464 : rdN μ (sp + 464) 8 = 0)
-    (h : q ∉ tailFree μ sp) :
+/-- An address outside `tailFree` is outside the frame buffers and the results buffer. -/
+theorem not_tailFree0 {μ : Memory} {sp q : Nat} (h : q ∉ tailFree μ sp) :
+    q ∉ optBuf (rdN μ (sp + 448) 8) (rdN μ (sp + 456) 8) ∧
     q ∉ optBuf (rdN μ (sp + 128) 8) (rdN μ (sp + 104) 8) ++ optBuf (rdN μ (sp + 264) 8) (rdN μ (sp + 272) 8) := by
-  intro hq; apply h
-  unfold tailFree tailBufs
-  rw [h448, h464]
-  simp only [optBuf, if_true, List.nil_append, List.mem_append] at hq ⊢
-  right; simpa [List.mem_append] using hq
+  unfold tailFree tailBufs at h
+  simp only [List.mem_append, not_or] at h ⊢
+  exact ⟨h.2.1.1, h.2.1.2, h.2.2⟩
 
 /-- **R5 and R7, 8492 → 6766** (see the module doc): from row 9's end with `EntryHyp` for the instructions
     is in the `Vec` { cap c, ptr b = ω₆ }, the run implements the loop over is with body f (through its
@@ -73,7 +73,7 @@ theorem not_tailFree0 {μ : Memory} {sp q : Nat} (h448 : rdN μ (sp + 448) 8 = 0
     exhaustion, and ends in `R57Post`. Named hypotheses: `InstrLogH`, `ResultLogH`, `HandlerH`, `PushH`,
     `ExtendH`, `OkEncH`, `DropInstrsH`. Premises: the context invariant Inv (kept by every operation,
     giving `StoreFit`); the read-only facts (the key-size word, `set`'s error table, the dispatch table);
-    `hBall` (open: the size bound on the results' encoding, see `docs/t2-remaining.md`). -/
+    nothing on the results' size (a too-large encoding is heap exhaustion). -/
 theorem loop_row11 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeA p P] (env : AccEnv)
     (B : InstrRep) {C : Consts} {now pb S0 S1 : Nat} {Ab : St Stream → Prop}
     (hL : InstrLogH B p env pb S0 S1) (hR : ResultLogH p env pb S0 S1) (hH : HandlerH B p env C now pb S0 S1 Ab)
@@ -96,9 +96,7 @@ theorem loop_row11 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
     (mkc : s.μ.readN 68696 8 = Num.encodeLE 8 kc) (hkc : 35 ≤ kc ∧ kc + 31 < 68719476736)
     (ht8 : rdN s.μ 69072 4 = 4294900408) (ht4 : rdN s.μ 69056 4 = 4294900402)
     (hro : ∀ a, 68680 ≤ a → a < 69076 → s.μ.readable a = true)
-    (hjt : s.μ.readN 65736 100 = jumpTab) (hjr : ∀ a, 65736 ≤ a → a < 65836 → s.μ.readable a = true)
-    (hBall : ∀ rs : List Spec.Result, rs.length ≤ is.length →
-      2 * (144 * rs.length + 4) + 4 * (encodeResults rs).length + 64 < 1073741760) :
+    (hjt : s.μ.readN 65736 100 = jumpTab) (hjr : ∀ a, 65736 ≤ a → a < 65836 → s.μ.readable a = true) :
     Impl p (accContractS env) env Ab
       (Prog.bind (forIn is [] f) (fun rs =>
         if is.any isZomb then pure () else store (.results (s.μ.readN (sp + 312) 32) item) (encodeResults rs)))
@@ -160,11 +158,10 @@ theorem loop_row11 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
       (fun k hk => by rw [h464] at hk; omega) fun a h1 h2 => fr3 a h1 (by omega)
     have L3 : LoopHyp pb S0 S1 sp (rdN μ3 (sp + 456) 8) (rdN μ3 (sp + 464) 8) []
         ((vecFree B μ b c 0).foldl free st) μ3 := by
-      refine ⟨⟨by omega, by omega, hs8, by omega⟩, hT, ?_, ⟨rdN_lt8 _ _, fun h => absurd ?_ h⟩, ?_,
+      refine ⟨⟨by omega, by omega, hs8, by omega⟩, hT, ?_, ⟨rdN_lt8 _ _, fun h => absurd ?_ h⟩,
         ⟨fun k hk => absurd hk (by simp), fun j hj => absurd hj (by simp)⟩⟩
       · rw [rdN_frame fun j hj => fr3 _ (by omega) (by omega), h464]; rfl
       · rw [rdN_frame fun j hj => fr3 _ (by omega) (by omega), h464]
-      · rw [rdN_frame fun j hj => fr3 _ (by omega) (by omega), h464]; decide
     have hro3 : ∀ a, a < 196608 → μ3.read a = μ.read a := fun a ha =>
       (Fm3.2.2.1 a (by unfold two32; omega) (H1.ro a ha)).trans (heap1 a (by omega))
     have SS := row_eleven_store env hE hO cap hcap1 hcap Ab hAb1 hAb2 hAbX ⟨15060, ω3, μ3, c0, f0⟩ _ sp item kc []
@@ -181,8 +178,9 @@ theorem loop_row11 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
     rw [hq] at SS
     refine Impl.pre _ _ (s' := ⟨15060, ω3, μ3, c0, f0⟩) ⟨_, run0.trans (run1.trans (run2.trans run3))⟩ rfl ?_
     refine Impl.then ?_ _ _ SS
-    rintro _ s' ⟨hi', h1', -, st', H', hk', stk', -⟩
-    refine Impl.pure_of ⟨hi', h1', st', H', fun d hd hu hn => ?_, fun a h0 hs => ?_⟩
+    rintro _ s' ⟨hi', h1', -, st', H', hk', stk', gl'⟩
+    refine Impl.pure_of ⟨hi', h1', st', H', fun d hd hu hn => ?_, fun a h0 hs => ?_,
+      fun a ha => (gl' a ha).trans ((Fm3.2.1 a ha).trans (heap1 a (by unfold Glob at ha; omega)))⟩
     · have hn1 : d.addr + 32 ∉ vecFree B μ b c 0 := fun h => hn (List.mem_append_left _ (by simpa using h))
       have hn2 : d.addr + 32 ∉ tailFree μ3 sp := fun h => hn (List.mem_append_right _ (by rw [tf3, tf1] at h; exact h))
       obtain ⟨g1, g2⟩ := K3 d hd hu hn1
@@ -197,7 +195,8 @@ theorem loop_row11 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
     refine Impl.pre _ _ (s' := ⟨8554, ω', μ', c0, f0⟩) ⟨_, run⟩ rfl ?_
     refine Impl.bind _ _ _ _ ?_
     have LP := il_loop (P := P) env B hL hR hH hP hE hO cap hcap1 hcap hAb1 hAb2 hAbX Inv hIst hIfit sp item kc μ st
-      (vecFree B μ b c is.length) (is.any isZomb) is.length hs8 f hck hother hitem mkc hkc ht8 ht4 hro hjt hjr hBall
+      (vecFree B μ b c is.length ++ optBuf (rdN μ (sp + 448) 8) (rdN μ (sp + 456) 8)) (is.any isZomb) is.length hs8
+      f hck hother hitem mkc hkc ht8 ht4 hro hjt hjr
       is [] _ (LI c0 f0 hinv)
     refine Impl.mono_post ?_ _ _ LP
     rintro rs ⟨i', ω'', μ'', c'', f''⟩ LIe
@@ -215,7 +214,8 @@ theorem loop_row11 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
     dsimp only at h1' LA KO
     have stab := LIe.stab
     have ro := LIe.ro
-    dsimp only at stab ro
+    have glob := LIe.glob
+    dsimp only at stab ro glob
     have hT' := LA.H.hS1
     have he : rdN μ'' (sp + 480) 8 = rdN μ'' (sp + 496) 8 := by
       have := LA.I.hend
@@ -224,7 +224,7 @@ theorem loop_row11 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
     have lt8 : ∀ b, rdN μ'' b 8 < 2 ^ 64 := fun b => rdN_lt8 μ'' b
     have LH : LoopHyp pb S0 S1 sp (rdN μ'' (sp + 456) 8) (rdN μ'' (sp + 464) 8) rs st' μ'' := by
       refine ⟨⟨by omega, by omega, hs8, by omega⟩, hT', LA.hn.symm, ⟨lt8 _, fun hn0 => ?_⟩,
-        by rw [LA.hn]; exact hBall rs (by omega), LA.hav.toAt⟩
+        LA.hav.toAt⟩
       have hcap0 := LA.hcap
       have hn' := LA.hn
       have hc0 : rdN μ'' (sp + 448) 8 ≠ 0 := by omega
@@ -246,10 +246,14 @@ theorem loop_row11 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
     dsimp only at LX
     rw [hq] at LX
     refine Impl.mono_post ?_ _ _ LX
-    rintro _ s' ⟨hi', h1'', -, st'', H'', hk'', stk'', -⟩
-    refine ⟨hi', h1'', st'', H'', fun d hd hu hn => ?_, fun a h0 hs => ?_⟩
-    · have hG : d.addr + 32 ∉ vecFree B μ b c is.length := fun h => hn (List.mem_append_left _ h)
-      have hTF : d.addr + 32 ∉ tailFree μ sp := fun h => hn (List.mem_append_right _ h)
+    rintro _ s' ⟨hi', h1'', -, st'', H'', hk'', stk'', gl''⟩
+    refine ⟨hi', h1'', st'', H'', fun d hd hu hn => ?_, fun a h0 hs => ?_, fun a ha => (gl'' a ha).trans (glob a ha)⟩
+    · have hTF : d.addr + 32 ∉ tailFree μ sp := fun h => hn (List.mem_append_right _ h)
+      have hG : d.addr + 32 ∉ vecFree B μ b c is.length ++ optBuf (rdN μ (sp + 448) 8) (rdN μ (sp + 456) 8) :=
+        fun h => by
+          rcases List.mem_append.1 h with h | h
+          · exact hn (List.mem_append_left _ h)
+          · exact (not_tailFree0 hTF).1 h
       obtain ⟨k1, k2, k3, k4, k5⟩ := KO d hd hu hG
       have hTF' : d.addr + 32 ∉ tailFree μ'' sp := by
         unfold tailFree tailBufs
@@ -260,8 +264,8 @@ theorem loop_row11 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
         rcases h with h | h | h | h
         · exact k5 h
         · exact k4 h
-        · exact not_tailFree0 E.h448 E.h464 hTF (by rw [← e]; exact List.mem_append.2 (.inl h))
-        · exact not_tailFree0 E.h448 E.h464 hTF (by rw [← e]; exact List.mem_append.2 (.inr h))
+        · exact (not_tailFree0 hTF).2 (by rw [← e]; exact List.mem_append.2 (.inl h))
+        · exact (not_tailFree0 hTF).2 (by rw [← e]; exact List.mem_append.2 (.inr h))
       obtain ⟨g3, g4⟩ := hk'' d k1 hu (fun h => by
         rcases List.mem_append.1 h with h | h
         · exact k3 h

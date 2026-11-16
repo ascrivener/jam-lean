@@ -363,7 +363,7 @@ theorem sw_free {R : HostRel X} {p : ByteArray} {P : Program} [HasCode p P] [Has
     (mv : μ.readN (sp - 96) 8 = Num.encodeLE 8 vp) (m0 : μ.readN (sp - 8) 8 = Num.encodeLE 8 286)
     (m5 : μ.readN (sp - 16) 8 = Num.encodeLE 8 c) (m6 : μ.readN (sp - 24) 8 = Num.encodeLE 8 v6) :
     ∃ ω' μ' n, FreeStepsH p R e ω μ x 8266 ω' μ' x n ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = UInt64.ofNat c ∧
-      ω'[7] = (if r = 18446744073709551615 then UInt64.ofNat b else UInt64.ofNat 18446744073709551615) ∧
+      ω'[6] = UInt64.ofNat v6 ∧ ω'[7] = (if r = 18446744073709551615 then UInt64.ofNat b else UInt64.ofNat 18446744073709551615) ∧
       HeapCtxC code pb S0 S1 μ' (free (free s kp) vp) ∧
       (∀ d ∈ chunks s, d.used = true → d ≠ ⟨vp - 32, 3, true⟩ → d ≠ ⟨kp - 32, (kc + 31) / 32 + 1, true⟩ →
         d ∈ chunks (free (free s kp) vp) ∧ ∀ a, InData d a → μ'.read a = μ.read a) ∧
@@ -421,7 +421,7 @@ theorem sw_free {R : HostRel X} {p : ByteArray} {P : Program} [HasCode p P] [Has
       (by rw [k4 _ _ (by omega) (by omega) (.inr (by omega)), show sp - 96 + 72 = sp - 24 by omega]; exact m6)
       (fun a h1 h2 => Memory.readable_of_writable (H4.st a (by omega) (by omega)))
   refine ⟨ω5, μ4, _, (((run0.trans run1).trans run2).trans run3).trans (run4.trans run5),
-    by rw [e1]; congr 1; omega, e5, e7, H4, ?_, ?_, ?_, ?_, ?_⟩
+    by rw [e1]; congr 1; omega, e5, e6, e7, H4, ?_, ?_, ?_, ?_, ?_⟩
   · intro d hd hu hv hk
     obtain ⟨k1, k2⟩ := keep2 d hd hu hk
     obtain ⟨k3, k4'⟩ := keep4 d k1 hu hv
@@ -446,12 +446,13 @@ theorem sw_free {R : HostRel X} {p : ByteArray} {P : Program} [HasCode p P] [Has
     rw [show μ4.readable a = μ1.readable a by unfold Memory.readable; rw [pg4, pg2], rd1]
 
 /-- **The state after the slot write** (8326), against the memory μ₀ and allocator state st at 8172:
-    ω₁ = sp; the new counter ((c + 1) mod 2³²) mod 2·𝖢·𝖨 in ω₇'s low 32 bits (quirk Q19); the
+    ω₁ = sp, ω₆ = w6 (kept from 8172); the new counter ((c + 1) mod 2³²) mod 2·𝖢·𝖨 in ω₇'s low 32 bits (quirk Q19); the
     allocator's context for some st′ keeping every allocated chunk of st with its data; memory kept
     above sp off `SwOut`, at the globals 196616 … 196791 (the protocol parameters' statics among them)
     and below 196608 (read-only data, with its access). -/
-def SwPost (code : ByteArray) (pb S0 S1 sp c C I : Nat) (st : State) (μ₀ : Memory) (s' : St Stream) : Prop :=
-  s'.i = 8326 ∧ s'.ω[1] = UInt64.ofNat sp ∧
+def SwPost (code : ByteArray) (pb S0 S1 sp c C I : Nat) (w6 : UInt64) (st : State) (μ₀ : Memory)
+    (s' : St Stream) : Prop :=
+  s'.i = 8326 ∧ s'.ω[1] = UInt64.ofNat sp ∧ s'.ω[6] = w6 ∧
   s'.ω[7].toNat % 4294967296 = (c + 1) % 4294967296 % (2 * C * I) ∧
   ∃ st', HeapCtxC code pb S0 S1 s'.μ st' ∧
     (∀ d ∈ chunks st, d.used = true → d ∈ chunks st' ∧ ∀ a, InData d a → s'.μ.read a = μ₀.read a) ∧
@@ -481,7 +482,7 @@ theorem slot_write {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (e
     (hPS : ParamStatics s.μ C I) (hR : RingFits C I)
     (hold : ∀ v, s.c.1.self.storage.get? (Key.recent c).encode = some v → v.length < 2 ^ 63) :
     Impl p (accContractS env) env Ab (store (.recent c) (s.μ.readN (sp + 512) 32 ++ s.μ.readN (sp + 176) 2))
-      (fun _ => SwPost env.code pb S0 S1 sp c C I st s.μ) s := by
+      (fun _ => SwPost env.code pb S0 S1 sp c C I s.ω[6] st s.μ) s := by
   obtain ⟨i, ω, μ, c0, f⟩ := s
   dsimp only at hi h1 h5 H mc ht8 ht4 hro hPS hold ⊢
   subst hi
@@ -534,7 +535,7 @@ theorem slot_write {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (e
   have rest : ∀ (x : AccCtx × Stream) r b, r < 2 ^ 64 → b < 256 → μD.readN (sp - 40) 8 = Num.encodeLE 8 r →
       μD.readN (sp - 32) 1 = Num.encodeLE 1 b →
       ∃ ω' μ' n, FreeStepsH p (KeepCtx (accContractS env)) e ωD μD x 8266 ω' μ' x n ∧
-        ω'[1] = UInt64.ofNat sp ∧ ω'[5] = UInt64.ofNat c ∧
+        ω'[1] = UInt64.ofNat sp ∧ ω'[5] = UInt64.ofNat c ∧ ω'[6] = ω[6] ∧
         ω'[7] = (if r = 18446744073709551615 then UInt64.ofNat b else UInt64.ofNat 18446744073709551615) ∧
         HeapCtxC env.code pb S0 S1 μ' (free (free s2 kp) vp) ∧
         (∀ d ∈ chunks st, d.used = true → d ∈ chunks (free (free s2 kp) vp) ∧ ∀ a, InData d a → μ'.read a = μ.read a) ∧
@@ -542,7 +543,7 @@ theorem slot_write {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (e
         (∀ a, Glob a → μ'.read a = μ.read a) ∧ (∀ a, a < 196608 → μ'.read a = μ.read a) ∧
         (∀ a, a < 196608 → μ'.readable a = μ.readable a) := by
     intro x r b hr hb mr mb
-    obtain ⟨ωG, μG, nG, runG, g1, g5, g7, HG, keepG, stkG, glG, roG, rdG⟩ := sw_free (P := P)
+    obtain ⟨ωG, μG, nG, runG, g1, g5, g6, g7, HG, keepG, stkG, glG, roG, rdG⟩ := sw_free (P := P)
       (R := KeepCtx (accContractS env)) env.code pb S0 S1 x ωD μD s2 sp vp kp kc r b c ω[6].toNat e HD hCv hCk
       hne (by omega) (by omega) he (d0.trans b0) d1 (d5.trans b5) (d6.trans b6) hsp.1 ⟨hS0, hS1⟩ (by omega)
       (by omega) hr hb (by omega) (UInt64.toNat_lt _)
@@ -552,7 +553,7 @@ theorem slot_write {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (e
       (by rw [kD _ _ (by omega) (by omega) (.inr (by omega))]; exact m286)
       (by rw [kD _ _ (by omega) (by omega) (.inr (by omega))]; exact mcc)
       (by rw [kD _ _ (by omega) (by omega) (.inr (by omega))]; exact m6)
-    refine ⟨ωG, μG, nG, runG, g1, g5, g7, HG, ?_, ?_, ?_, ?_, ?_⟩
+    refine ⟨ωG, μG, nG, runG, g1, g5, by rw [g6, UInt64.ofNat_toNat], g7, HG, ?_, ?_, ?_, ?_, ?_⟩
     · intro d hd hu
       obtain ⟨k1, k2⟩ := keepG d (keepB d hd hu) hu (hfr d hd hu).1 (hfr d hd hu).2
       refine ⟨k1, fun a ha => ?_⟩
@@ -586,7 +587,7 @@ theorem slot_write {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (e
     unfold SetOut at sO
     rw [if_pos rfl] at sO
     rw [hS] at runD
-    obtain ⟨ωG, μG, nG, runG, -, -, g7, -⟩ := rest ((c0.1.setSelf c0.1.self, c0.2), f) _ 3 (by decide) (by decide)
+    obtain ⟨ωG, μG, nG, runG, -, -, -, g7, -⟩ := rest ((c0.1.setSelf c0.1.self, c0.2), f) _ 3 (by decide) (by decide)
       sO.1 (by rw [show sp - 32 = sp - 40 + 8 by omega]; exact sO.2)
     refine .inr ⟨⟨e, ωD, μD, (c0.1.setSelf c0.1.self, c0.2), f⟩, ⟨_, runD⟩, rfl, .inr ⟨_, ⟨0, .refl⟩, rfl, ?_⟩⟩
     obtain ⟨ωE, runE⟩ := sw_err (P := P) (R := KeepCtx (accContractS env)) ((c0.1.setSelf c0.1.self, c0.2), f)
@@ -611,7 +612,7 @@ theorem slot_write {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (e
     obtain ⟨r, hr, hr1, mr⟩ := hrw
     rw [hS] at runD
     have mb := readN_enc μD (sp - 32) 1
-    obtain ⟨ωG, μG, nG, runG, g1, g5, g7, HG, keepG, stkG, glG, roG, rdG⟩ :=
+    obtain ⟨ωG, μG, nG, runG, g1, g5, g6, g7, HG, keepG, stkG, glG, roG, rdG⟩ :=
       rest ((c0.1.setSelf (ASem.writeAcct c0.1.self (Key.recent c).encode value), c0.2), f) r _ hr
         (decodeLE_readN_lt μD (sp - 32) 1) mr mb
     rw [if_neg hr1] at g7
@@ -624,15 +625,15 @@ theorem slot_write {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (e
       refine ⟨?_, p2, ?_, p4⟩
       · rw [← p1]; exact Memory.readN_congr fun j hj => glG _ (by unfold Glob; omega)
       · rw [← p3]; exact Memory.readN_congr fun j hj => glG _ (by unfold Glob; omega)
-    obtain ⟨ωH, μH, runH, k1, k5, k7, frH, rdH, wrH⟩ := sw_ok1 (P := P) (R := KeepCtx (accContractS env)) _ ωG μG
+    obtain ⟨ωH, μH, runH, k1, k5, k6, k7, frH, rdH, wrH⟩ := sw_ok1 (P := P) (R := KeepCtx (accContractS env)) _ ωG μG
       sp C I g1 g7 ⟨by omega, by omega⟩ hPSG hR
       (fun a h1 h2 => Memory.readable_of_writable (rw_writable HG a (by omega) (by omega)))
       (fun a h1 h2 => hSG a (by omega) (by omega))
     obtain ⟨hR0, hR1⟩ := hR
-    obtain ⟨ωK, runK, l1, l7⟩ := sw_ok2 (P := P) (R := KeepCtx (accContractS env)) _ ωH μH c ωH[7].toNat
+    obtain ⟨ωK, runK, l1, l6, l7⟩ := sw_ok2 (P := P) (R := KeepCtx (accContractS env)) _ ωH μH c ωH[7].toNat
       (k5.trans g5) UInt64.ofNat_toNat.symm hc (UInt64.toNat_lt _) (by rw [k7]; omega)
     rw [k7] at l7
-    refine .inr ⟨⟨8326, ωK, μH, _, f⟩, ⟨_, (runG.trans runH).trans runK⟩, rfl, rfl, l1.trans k1, l7,
+    refine .inr ⟨⟨8326, ωK, μH, _, f⟩, ⟨_, (runG.trans runH).trans runK⟩, rfl, rfl, l1.trans k1, l6.trans (k6.trans g6), l7,
       free (free s2 kp) vp, HeapKeep.keepHi HG (fun a ha => frH a (by omega) (.inl (by omega))) wrH, ?_, ?_, ?_, ?_, ?_⟩
     · intro d hd hu
       obtain ⟨k1', k2'⟩ := keepG d hd hu

@@ -60,7 +60,7 @@ def StableKeep (sp a : Nat) : Prop :=
 
 /-- The state after one body, against the head's memory μ₀: back at 8540 with ω₁ = sp, `LoopAt` for the
     instructions left `is` and rs ++ [r] (flag zs), the cursor advanced by a slot, the counter by one,
-    the octets below 196608 and their access kept, and the words `StableKeep` kept; and what the body keeps
+    the octets below 196608 and their access kept, the words `StableKeep` and the globals kept; and what the body keeps
     of the head's chunks (state st, `StepKeep`). -/
 def BodyPost (B : InstrRep) (code : ByteArray) (pb S0 S1 sp : Nat) (is : List Spec.Instr)
     (rs : List Spec.Result) (zs : Bool) (μ₀ : Memory) (st : State) (r : Spec.Result) (s' : St Stream) : Prop :=
@@ -68,13 +68,14 @@ def BodyPost (B : InstrRep) (code : ByteArray) (pb S0 S1 sp : Nat) (is : List Sp
   (∃ st', LoopAt B code pb S0 S1 sp is (rs ++ [r]) zs s'.μ st' ∧ StepKeep B sp is rs.length μ₀ st s'.μ st') ∧
   rdN s'.μ (sp + 480) 8 = rdN μ₀ (sp + 480) 8 + 232 ∧ rdN s'.μ (sp + 504) 8 = rdN μ₀ (sp + 504) 8 + 1 ∧
   (∀ a, a < 196608 → s'.μ.read a = μ₀.read a ∧ s'.μ.readable a = μ₀.readable a) ∧
-  (∀ a, a < 4294967296 → StableKeep sp a → s'.μ.read a = μ₀.read a)
+  (∀ a, a < 4294967296 → StableKeep sp a → s'.μ.read a = μ₀.read a) ∧
+  (∀ a, Glob a → s'.μ.read a = μ₀.read a)
 
 /-- **The state at 8735** (before the instruction's log line), against the head's memory μ₀ and allocator
     state st: ω₁ = sp; the allocator's context for some st₁ keeping st's allocated chunks with their data;
     the instruction's slot (at the head's cursor) copied to sp + 744; the cursor advanced by a slot and the
     counter by one; the flag for zs′ at sp + 160; from sp up the memory kept but at sp + 160 … 168,
-    480 … 488, 504 … 976 and 1568 … 1632; the octets below 196608 and their access kept. -/
+    480 … 488, 504 … 976 and 1568 … 1632; the octets below 196608 and their access, and the globals, kept. -/
 def AtLog (code : ByteArray) (pb S0 S1 sp : Nat) (μ₀ : Memory) (st : State) (zs' : Bool) (s : St Stream) : Prop :=
   s.i = 8735 ∧ s.ω[1] = UInt64.ofNat sp ∧ ∃ st₁, HeapCtxC code pb S0 S1 s.μ st₁ ∧
     (∀ d ∈ chunks st, d.used = true → d ∈ chunks st₁ ∧ ∀ a, InData d a → s.μ.read a = μ₀.read a) ∧
@@ -83,7 +84,8 @@ def AtLog (code : ByteArray) (pb S0 S1 sp : Nat) (μ₀ : Memory) (st : State) (
     rdN s.μ (sp + 160) 8 = (if zs' then 1 else 0) ∧
     (∀ a, a < 4294967296 → sp ≤ a → (a < sp + 160 ∨ (sp + 168 ≤ a ∧ a < sp + 480) ∨
       (sp + 488 ≤ a ∧ a < sp + 504) ∨ (sp + 976 ≤ a ∧ a < sp + 1568) ∨ sp + 1632 ≤ a) → s.μ.read a = μ₀.read a) ∧
-    (∀ a, a < 196608 → s.μ.read a = μ₀.read a ∧ s.μ.readable a = μ₀.readable a)
+    (∀ a, a < 196608 → s.μ.read a = μ₀.read a ∧ s.μ.readable a = μ₀.readable a) ∧
+    (∀ a, Glob a → s.μ.read a = μ₀.read a)
 
 /-- **8540 … 8735, the front** (an instruction other than `Checkpoint`): from the head with `LoopAt` for
     i :: is, the cursor 8-aligned and the counter below 2⁶⁴ − 1, the run reaches 8735 in `AtLog` with the
@@ -161,7 +163,8 @@ theorem il_front_any {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
   rw [hcur, hk0]
   refine ⟨ω₁, μ₁, N₁, run1, rfl, a1.trans h1, st, HeapKeep.keepHi H heap1 wr1,
     fun d hd hu => ⟨hd, fun a ha => heap1 a (ResultsDrop.data_lt H hd ha)⟩, m744, ?_, ?_, m160,
-    fun a h0 hsp h3 => fr1 a h0 (.inr hsp) (by omega) (by omega), fun a ha => ⟨heap1 a (by omega), rd1 a⟩⟩
+    fun a h0 hsp h3 => fr1 a h0 (.inr hsp) (by omega) (by omega), fun a ha => ⟨heap1 a (by omega), rd1 a⟩,
+    fun a ha => heap1 a (by unfold Glob at ha; omega)⟩
   · exact DesignateAlloc.rd8 (by omega) m480
   · exact DesignateAlloc.rd8 hk m504
 
@@ -180,8 +183,8 @@ theorem il_after_log {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
     (hfit : StoreFit s.c) :
     Impl p (accContractS env) env Ab (onInstr C now i) (BodyPost B env.code pb S0 S1 sp is rs zs' μ st) s := by
   obtain ⟨i0, ω₁, μ₁, c, f⟩ := s
-  obtain ⟨hi, h1, st₁, H1, hk1, m744, m480a, m504a, m160a, fr1, ro1⟩ := A
-  dsimp only at hi h1 H1 hk1 m744 m480a m504a m160a fr1 ro1 hfit ⊢
+  obtain ⟨hi, h1, st₁, H1, hk1, m744, m480a, m504a, m160a, fr1, ro1, gl1⟩ := A
+  dsimp only at hi h1 H1 hk1 m744 m480a m504a m160a fr1 ro1 gl1 hfit ⊢
   subst hi
   have H := LA.H
   have hT := H.hS1
@@ -201,7 +204,7 @@ theorem il_after_log {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
     exact ⟨d, hd, hu, hq, (hk1 d hd hu).2⟩
   rcases il_mid (P := P) env B hL c f ω₁ μ₁ st₁ sp i H1 h1 hs1 hs2 hs3 hs8 hrep1
       (by rw [m744]; intro q hq; obtain ⟨d, hd, hu, hq⟩ := hF0 q hq; exact ⟨d, (hk1 d hd hu).1, hu, hq⟩) with
-    ⟨s₂, ω₂, μ₂, N₂, kc, kp, kl, run2, H2, b1, -, -, m1144', m976, m984, m992, hfb', hrd, hkeep2', fr2'⟩ | hX
+    ⟨s₂, ω₂, μ₂, N₂, kc, kp, kl, run2, H2, b1, -, -, m1144', m976, m984, m992, hfb', hrd, hkeep2', fr2', gl2'⟩ | hX
   rotate_left
   · exact Impl.abort _ _ (ResStore.ExhaustsP.aborts hAbX hX)
   -- the dispatch's facts against the head's memory μ
@@ -273,8 +276,8 @@ theorem il_after_log {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
   -- the tail, from the handler's end
   intro r s' hp
   obtain ⟨i3, ω₃, μ₃, c₃, f₃⟩ := s'
-  obtain ⟨hi3, h31, st₃, H3, hres3, hown3, hkeep3, hLK3, -, hro3, hrd3, -⟩ := hp
-  dsimp only at hi3 h31 H3 hres3 hown3 hkeep3 hLK3 hro3 hrd3 ⊢
+  obtain ⟨hi3, h31, st₃, H3, hres3, hown3, hkeep3, hLK3, gl3, hro3, hrd3, -⟩ := hp
+  dsimp only at hi3 h31 H3 hres3 hown3 hkeep3 hLK3 gl3 hro3 hrd3 ⊢
   subst hi3
   have e3 : ∀ a, a < 4294967296 → sp ≤ a → LoopKeep sp a → (a < sp + 160 ∨ (sp + 168 ≤ a ∧ a < sp + 480) ∨
       (sp + 488 ≤ a ∧ a < sp + 504) ∨ (sp + 1008 ≤ a ∧ a < sp + 1144) ∨ (sp + 1376 ≤ a ∧ a < sp + 1568) ∨
@@ -287,7 +290,7 @@ theorem il_after_log {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
     rw [rdN_frame fun j hj => hLK3 _ (by omega) (by unfold LoopKeep; omega)]; exact m992
   rcases il_tail_log (P := P) env hR c₃ f₃ ω₃ μ₃ st₃ sp r (ResC s₂ st₃ F0) H3 h31 hs1 hs2 hs3 hres3
       (fun d hd => ⟨hd.1, hd.2.1⟩) v200 (by rw [v984, v992]; intro a h1 h2; rw [hrd3]; exact hrd a h1 h2) with
-    ⟨st₄, ω₄, μ₄, N₄, run4, H4, c41, hkeep4, fr4⟩ | hX
+    ⟨st₄, ω₄, μ₄, N₄, run4, H4, c41, hkeep4, fr4, gl4⟩ | hX
   rotate_left
   · exact Impl.abort _ _ (ResStore.ExhaustsP.aborts hAbX hX)
   -- the results `Vec`
@@ -325,7 +328,7 @@ theorem il_after_log {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
     exact ⟨d, hd, hu, hda, hdr, d2, d3, d4, fun a ha => (k4 a ha).trans ((k3 a ha).trans (k2 a ha))⟩
   rcases il_tail_push (P := P) env hP c₃ f₃ ω₄ μ₄ st₄ sp cp rp rs.length H4 (c41.trans h31) hs1 hs2 hs3 hs8 v448 v456 v464
       hncp (fun hc => by obtain ⟨d, -, hu, hda, hdr, -, -, d4, -⟩ := kR hc; exact ⟨d, d4, hu, hda, hdr⟩) with
-    ⟨st₅, ω₅, μ₅, N₅, cp', rp', run5, H5, d51, d55, m448', m456', m464', hlt, hNB, hmv5, hcopy, fr5⟩ | hX
+    ⟨st₅, ω₅, μ₅, N₅, cp', rp', run5, H5, d51, d55, m448', m456', m464', hlt, hNB, hmv5, hcopy, fr5, gl5⟩ | hX
   rotate_left
   · exact Impl.abort _ _ (ResStore.ExhaustsP.aborts hAbX (ResStore.ExhaustsP.pre run4 hX))
   obtain ⟨d', hd'5, hd'u, hd'a, hd'r, hNBk⟩ := hNB
@@ -357,7 +360,7 @@ theorem il_after_log {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
     rw [rdN_frame fun j hj => fr5 _ (by omega) (by omega) (by omega),
       rdN_frame fun j hj => fr4 _ (by omega) (by omega) (by omega) (by omega) (by omega)]; exact v984
   have hcp' : cp' < 2 ^ 64 := by have := ResultsDrop.rdN_lt8 μ₅ (sp + 448); rw [m448'] at this; exact this
-  obtain ⟨ω₆, μ₆, N₆, run6, H6, e61, m464'', hkeep6, fr6⟩ := il_tail_post (P := P) env c₃ f₃ ω₅ μ₅ st₅ sp rs.length kc kp H5
+  obtain ⟨ω₆, μ₆, N₆, run6, H6, e61, m464'', hkeep6, fr6, gl6⟩ := il_tail_post (P := P) env c₃ f₃ ω₅ μ₅ st₅ sp rs.length kc kp H5
     (d51.trans (c41.trans h31)) d55 hs1 hs2 hs3 (by omega) v976 v984'
     (fun hc => by obtain ⟨ch, -, hchu, hcha, d5, -⟩ := kch hc; exact ⟨ch, d5, hchu, hcha⟩)
   -- the new buffer, kept by the back edge
@@ -451,7 +454,8 @@ theorem il_after_log {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
     exact ⟨by rw [r6, r5, r4, hro3 a ha, (ro2 a ha).1], by rw [q6, q5, q4, hrd3, (ro2 a ha).2]⟩
   refine Impl.pre _ _ (s' := ⟨8540, ω₆, μ₆, c₃, f₃⟩) ⟨_, run4.trans (run5.trans run6)⟩ rfl (Impl.pure_of
     ⟨rfl, e61.trans (d51.trans (c41.trans h31)), ⟨_, LoopAt.step LA H6 ?_ ?_ ?_ ?_ ?_ ?_ m464'' hlt ?_ ?_ ?_ ?_ ?_
-      ?_ ?_ ?_ ?_ hmv ?_ ?_ ?_, ?K⟩, ?_, ?_, ro, fun a h0 hs => ?_⟩)
+      ?_ ?_ ?_ ?_ hmv ?_ ?_ ?_, ?K⟩, ?_, ?_, ro, fun a h0 hs => ?_,
+      fun a ha => by rw [gl6 a ha, gl5 a ha, gl4 a ha, gl3 a ha, gl2' a ha, gl1 a ha]⟩)
   case K =>
     refine LoopAt.stepKeep LA H6 ?_ ?_ ?_ ?_ ?_ ?_ hmv ?_ ?_
     · rw [show sp + 472 + 8 = sp + 480 by omega, rdN_frame fun j hj => w62 _ (by omega) (by omega) (by omega)
@@ -546,7 +550,7 @@ theorem Prog.all_true {α : Type} : ∀ prog : Prog AOp α, Acc.Prog.All (fun _ 
     returning to 8716: `Ok` → 8735 by `il_ck_ok`, FULL → ☇ at 15361), then `il_after_log`. A context
     invariant Inv kept by every operation and giving `StoreFit` carries `StoreFit` across the store.
     Premises beyond `il_body`'s: `ExtendH`/`OkEncH` and the store's abort reasons, the item index at
-    sp + 176, the read-only key-size word and `set`'s error table, and the size bound hB on rs's encoding. -/
+    sp + 176, the read-only key-size word and `set`'s error table. -/
 theorem il_body_ck {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeA p P] (env : AccEnv)
     (B : InstrRep) {C : Consts} {now pb S0 S1 : Nat} {Ab : St Stream → Prop}
     (hL : InstrLogH B p env pb S0 S1) (hR : ResultLogH p env pb S0 S1) (hH : HandlerH B p env C now pb S0 S1 Ab)
@@ -566,8 +570,7 @@ theorem il_body_ck {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
     (hinv : Inv s.c) (hitem : s.μ.readN (sp + 176) 2 = fixed 2 item)
     (mkc : s.μ.readN 68696 8 = Num.encodeLE 8 kc) (hkc : 35 ≤ kc ∧ kc + 31 < 68719476736)
     (ht8 : rdN s.μ 69072 4 = 4294900408) (ht4 : rdN s.μ 69056 4 = 4294900402)
-    (hro : ∀ a, 68680 ≤ a → a < 69076 → s.μ.readable a = true)
-    (hB : 2 * (144 * rs.length + 4) + 4 * (encodeResults rs).length + 64 < 1073741760) :
+    (hro : ∀ a, 68680 ≤ a → a < 69076 → s.μ.readable a = true) :
     Impl p (accContractS env) env Ab
       (Prog.bind (store (.results (s.μ.readN (sp + 312) 32) item) (encodeResults rs))
         (fun _ => onInstr C now .checkpoint))
@@ -661,7 +664,7 @@ theorem il_body_ck {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
   -- the store's premises at 36170
   obtain ⟨cp, hcp⟩ : ∃ cp, rdN μ (sp + 448) 8 = cp := ⟨_, rfl⟩
   have LH : LoopHyp pb S0 S1 sp (rdN μ (sp + 456) 8) (rdN μ (sp + 464) 8) rs st μT := by
-    refine ⟨⟨by omega, by omega, hs8, by omega⟩, hT, LA.hn.symm, ⟨lt8 _, fun hn0 => ?_⟩, by rw [LA.hn]; exact hB,
+    refine ⟨⟨by omega, by omega, hs8, by omega⟩, hT, LA.hn.symm, ⟨lt8 _, fun hn0 => ?_⟩,
       ResultsAt.keep hkH LA.hav.toAt⟩
     have hcap0 := LA.hcap
     rw [hcp] at hcap0
@@ -693,8 +696,8 @@ theorem il_body_ck {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
   refine Impl.pre _ _ (s' := ⟨36170, ωT, μT, c, f⟩) ⟨_, run5.trans runT⟩ rfl ?_
   refine Impl.mono_post ?_ _ _ SCi
   -- after the store (8716): `Ok` → 8735, then `il_after_log`
-  rintro _ ⟨i', ω', μ', c', f'⟩ ⟨⟨hi', h7', h1', -, -, st', H', hk', stk', -, ro', rd'⟩, hinv'⟩
-  dsimp only at hi' h7' h1' H' hk' stk' ro' rd' hinv' ⊢
+  rintro _ ⟨i', ω', μ', c', f'⟩ ⟨⟨hi', h7', h1', -, -, st', H', hk', stk', gl', ro', rd'⟩, hinv'⟩
+  dsimp only at hi' h7' h1' H' hk' stk' gl' ro' rd' hinv' ⊢
   subst hi'
   obtain ⟨ω₈, run8, g1, -, -⟩ := il_ck_ok (R := KeepCtx (accContractS env)) (P := P) (c', f') ω' μ' h7'
   refine Impl.pre _ _ (s' := ⟨8735, ω₈, μ', c', f'⟩) ⟨_, run8⟩ rfl ?_
@@ -704,7 +707,7 @@ theorem il_body_ck {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
     refine ⟨rfl, g1.trans h1', st', H', fun d hd hu => ⟨(hk' d hd hu).1, fun a ha =>
       ((hk' d hd hu).2 a ha).trans ((hkH d hd hu).2 a ha)⟩, ?_, ?_, ?_, ?_,
       fun a h0 hsp h3 => (stk' a h0 hsp).trans (frT' a h0 hsp h3), fun a ha => ⟨(ro' a ha).trans (roT a ha).1,
-        (rd' a ha).trans (roT a ha).2⟩⟩
+        (rd' a ha).trans (roT a ha).2⟩, fun a ha => (gl' a ha).trans (heapT a (by unfold Glob at ha; omega))⟩
     · rw [Memory.readN_congr fun j hj => (stk' _ (by omega) (by omega)).trans (frT _ (by omega) (.inl (by omega)))]
       exact m744
     · rw [rdN_frame fun j hj => (stk' _ (by omega) (by omega)).trans (frT _ (by omega) (.inl (by omega)))]

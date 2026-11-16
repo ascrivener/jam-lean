@@ -45,10 +45,10 @@ def WriterPost (code : ByteArray) (pb S0 S1 : Nat) (μ : Memory) (s : State) (sp
     (∀ a, Glob a → μ'.read a = μ.read a)
 
 /-- The vector `{cap, ptr, len}` at v (on the stack at or above sp), its buffer the data of an
-    allocated chunk ch of s with room for cap octets, len ≤ cap, 0 < cap, and both below 2³⁰. -/
+    allocated chunk ch of s with room for cap octets, len ≤ cap and 0 < cap. -/
 def WriterPre (μ : Memory) (s : State) (sp v cap ptr len S1 : Nat) : Prop :=
   sp ≤ v ∧ v + 24 ≤ S1 ∧ μ.readN v 8 = Num.encodeLE 8 cap ∧ μ.readN (v + 8) 8 = Num.encodeLE 8 ptr ∧
-    μ.readN (v + 16) 8 = Num.encodeLE 8 len ∧ len ≤ cap ∧ 0 < cap ∧ 2 * cap < 1073741760 ∧
+    μ.readN (v + 16) 8 = Num.encodeLE 8 len ∧ len ≤ cap ∧ 0 < cap ∧
     ∃ ch ∈ chunks s, ch.used = true ∧ ch.addr + 32 = ptr ∧ cap ≤ 32 * (ch.size - 1)
 
 /-- **R8, the HeapHost writer step (named hypothesis).** From 58508 with ω₀ = ret (resolved by the jump
@@ -58,7 +58,7 @@ def WriterPre (μ : Memory) (s : State) (sp v cap ptr len S1 : Nat) : Prop :=
     exhausts the heap (`ExhaustsP`). -/
 def ExtendH (p : ByteArray) (P : Program) (env : AccEnv) (pb S0 S1 : Nat) : Prop :=
   ∀ (c : AccCtx) (f : Stream) (ω : Regs) (μ : Memory) (s : State) (sp v src n cap ptr len ret t : Nat),
-    HeapCtxC env.code pb S0 S1 μ s → WriterPre μ s sp v cap ptr len S1 → len + n < 1073741760 →
+    HeapCtxC env.code pb S0 S1 μ s → WriterPre μ s sp v cap ptr len S1 →
     S0 + 424 ≤ sp ∧ sp ≤ S1 ∧ 2147484072 ≤ sp ∧ sp % 8 = 0 →
     ω[0] = UInt64.ofNat ret → ω[1] = UInt64.ofNat sp → ω[7] = UInt64.ofNat v → ω[8] = UInt64.ofNat src →
     ω[9] = UInt64.ofNat n →
@@ -72,13 +72,12 @@ def ExtendH (p : ByteArray) (P : Program) (env : AccEnv) (pb S0 S1 : Nat) : Prop
 /-- **R9, the results encoder 36299, per `Ok` item (named hypothesis).** From 36299 with ω₀ = ret
     (resolved to t), ω₁ = sp, ω₇ = a, ω₈ = v, the item at a holding `Ok r` against an allocator state st₀
     whose allocated chunks are all still allocated in s and none is the vector's buffer, and the vector
-    at v (`WriterPre`, len + |ℰ| < 2³⁰): the call returns to t with ω₁, ω₅, ω₆ kept and `WriterPost` for
+    at v (`WriterPre`): the call returns to t with ω₁, ω₅, ω₆ kept and `WriterPost` for
     the octets `(Result.encode (.ok r)).drop 1`, or exhausts the heap (`ExhaustsP`). -/
 def OkEncH (p : ByteArray) (P : Program) (env : AccEnv) (pb S0 S1 : Nat) : Prop :=
   ∀ (c : AccCtx) (f : Stream) (ω : Regs) (μ : Memory) (s st₀ : State) (r : Ret)
     (sp v a cap ptr len ret t : Nat),
     HeapCtxC env.code pb S0 S1 μ s → WriterPre μ s sp v cap ptr len S1 →
-    len + (Spec.Result.encode (.ok r)).length < 1073741760 →
     S0 + 424 ≤ sp ∧ sp ≤ S1 ∧ 2147484072 ≤ sp ∧ sp % 8 = 0 →
     OkAt μ st₀ a r → InHeap st₀ a 144 →
     (∀ d ∈ chunks st₀, d.used = true → d ∈ chunks s ∧ d.addr + 32 ≠ ptr) →

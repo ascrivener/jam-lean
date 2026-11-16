@@ -81,15 +81,15 @@ theorem r9_pre {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X
     all_goals try (congr 1; omega)
     all_goals try exact PVM.encodeLE_mod 2 v
 
-/-- **8477 … 8481, `Ok`**: ω₇'s low octet is 255; on to 8490. -/
+/-- **8477 … 8481, `Ok`**: ω₇'s low octet is 255; on to 8490, ω₁ and ω₆ kept. -/
 theorem r9_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
     (h7 : ω[7] = UInt64.ofNat 18446744073709551615) :
-    ∃ ω', FreeStepsH p R 8477 ω μ x 8490 ω' μ x 2 ∧ ω'[1] = ω[1] := by
+    ∃ ω', FreeStepsH p R 8477 ω μ x 8490 ω' μ x 2 ∧ ω'[1] = ω[1] ∧ ω'[6] = ω[6] := by
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?_, ?_, ?_⟩
   rotate_left
   · pvm_go [h7, bs_8490]
-  · simp [PVM.getElem_regsNF, PVM.lookup_cons_nat]
+  · exact ⟨by reg_val, by reg_val⟩
 
 /-- **8477 … 8487, `Err`** (ω₇ = 3, `set`'s code for FULL): on to the trap at 15361. -/
 theorem r9_err {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)

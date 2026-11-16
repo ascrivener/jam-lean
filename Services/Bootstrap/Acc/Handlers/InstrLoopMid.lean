@@ -24,7 +24,7 @@ set_option maxRecDepth 100000
     dispatch 8822 with ω₁, ω₅, ω₆ kept, the copy also at sp + 1144, the log line's `String`
     { kc, kp, kl } at sp + 976 (`FreshBuf`, its kl octets readable), the allocator's context for some
     s′ keeping s₀'s allocated chunks with their data, and from sp up only sp + 976 … sp + 1008,
-    sp + 1144 … sp + 1376 and sp + 1568 … sp + 1592 changed; or the log line's
+    sp + 1144 … sp + 1376 and sp + 1568 … sp + 1592 changed, the globals 196616 … 196791 kept; or the log line's
     allocation fails (`ExhaustsP`). -/
 theorem il_mid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env : AccEnv) (B : InstrRep)
     {pb S0 S1 : Nat} (hL : InstrLogH B p env pb S0 S1) (c : AccCtx) (f : Stream) (ω : Regs) (μ : Memory)
@@ -41,7 +41,8 @@ theorem il_mid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env :
       FreshBuf s₀ s' kc kp ∧ (∀ a, kp ≤ a → a < kp + kl → μ'.readable a = true) ∧
       (∀ d ∈ chunks s₀, d.used = true → d ∈ chunks s' ∧ ∀ a, InData d a → μ'.read a = μ.read a) ∧
       (∀ a, a < 4294967296 → sp ≤ a → (a < sp + 976 ∨ sp + 1008 ≤ a) → (a < sp + 1144 ∨ sp + 1376 ≤ a) →
-        (a < sp + 1568 ∨ sp + 1592 ≤ a) → μ'.read a = μ.read a)) ∨
+        (a < sp + 1568 ∨ sp + 1592 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, Glob a → μ'.read a = μ.read a)) ∨
     ExhaustsP p env pb 8735 ω μ c f := by
   have hT := H.hS1
   have hSt := H.st
@@ -63,7 +64,7 @@ theorem il_mid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env :
   rcases hL c f ω1 μ1 s₀ sp i H1 a0 (a1.trans h1) a7 a8 a9 hs2 hs3 hs1
     (DesignateAlloc.rd8 (by omega) m1b) (DesignateAlloc.rd8 (by omega) m1c)
     (DesignateAlloc.rd8 (by omega) m1a) hrep1 with
-    ⟨s', ω2, μ2, N2, kc, kp, kl, run2, H2, b1, b5, b6, m2c, m2p, hfb, m2l, hrd, hkeep, fr2⟩ | hX
+    ⟨s', ω2, μ2, N2, kc, kp, kl, run2, H2, b1, b5, b6, m2c, m2p, hfb, m2l, hrd, hkeep, fr2, gl2⟩ | hX
   rotate_left
   · exact .inr (ResStore.ExhaustsP.pre run1 hX)
   have hSt2 := H2.st
@@ -96,7 +97,7 @@ theorem il_mid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env :
   refine .inl ⟨s', ω4, μ4, _, kc, kp, kl, run1.trans (run2.trans (run3.trans run4)), H4,
     d1.trans (c1.trans (b1.trans a1)), d5.trans (c5.trans (b5.trans a5)), d6.trans (c6.trans (b6.trans a6)),
     ?_, ?_, ?_, ?_, hfb, fun a h1 h2 => by rw [rd4, rd3]; exact hrd a h1 h2, fun d hd hu => ?_,
-    fun a h0 ha hb hc hd => ?_⟩
+    fun a h0 ha hb hc hd => ?_, fun a ha => ?_⟩
   · rw [m4, ← e744]
     exact Memory.readN_congr fun j hj => (fr3 _ (by omega) (.inl (by omega))).trans
       (fr2 _ (by omega) (by omega) (.inl (by omega)))
@@ -112,5 +113,8 @@ theorem il_mid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env :
     rw [fr4 a (by omega) (.inl (by omega)) (.inl (by omega)), fr3 a (by omega) (.inl (by omega)), hk a ha,
       fr1 a (by omega) (.inl (by omega)) (.inl (by omega))]
   · rw [k4 a h0 ha hc, fr3 a h0 (by omega), fr2 a h0 ha hd, fr1 a h0 (by omega) (by omega)]
+  · have hg := ha; unfold Glob at hg
+    rw [fr4 a (by omega) (.inl (by omega)) (.inl (by omega)), fr3 a (by omega) (.inl (by omega)), gl2 a ha,
+      fr1 a (by omega) (.inl (by omega)) (.inl (by omega))]
 
 end Services.Bootstrap.Acc.Handlers.InstrLoop

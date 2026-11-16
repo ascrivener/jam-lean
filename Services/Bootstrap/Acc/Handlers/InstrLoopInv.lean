@@ -19,7 +19,7 @@ split into the instructions done and the instructions left `is`, and `rs` the re
 - the frame constants (2⁶³ at sp + 184, 2⁶³ + 1 at sp + 216, the formatter word 678 at sp + 200).
 
 At the exit (15028, `il_head_end`: cur = end, so `is = []` by `IterOwn.hend`) these are `row_eleven`'s
-premises, except `LoopHyp`'s size bounds.
+premises.
 -/
 
 namespace Services.Bootstrap.Acc.Handlers.InstrLoop

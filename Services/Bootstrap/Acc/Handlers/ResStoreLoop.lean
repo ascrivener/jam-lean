@@ -101,7 +101,6 @@ structure LoopHyp (pb S0 S1 sp rp n : Nat) (rs : List Spec.Result) (st : State) 
   hn : rs.length = n
   /-- The items' octets lie in [2¹⁶, 2³¹) (only when there are items: an empty `Vec`'s pointer dangles). -/
   hrp : rp < 18446744073709551616 ∧ (n ≠ 0 → 65536 ≤ rp ∧ rp + 144 * n < 2147483648)
-  hB : 2 * (144 * n + 4) + 4 * (encodeResults rs).length + 64 < 1073741760
   hR : ResultsAt μ₀ st rp rs
 
 /-- One `extend` call's outcome folded into the invariant's buffer facts (used twice per item). -/
@@ -109,9 +108,8 @@ theorem writer_chain {code : ByteArray} {pb S0 S1 sp : Nat} {μ μ' : Memory} {s
     {cap ptr len : Nat} {bs : List UInt8} {st : State} {μ₀ : Memory}
     (hpost : WriterPost code pb S0 S1 μ s (sp - 96) (sp - 96 + 32) cap ptr len bs μ' s')
     (hst : ∀ d ∈ chunks st, d.used = true → d ∈ chunks s ∧ d.addr + 32 ≠ ptr ∧ ∀ a, InData d a → μ.read a = μ₀.read a)
-    (hpre : WriterPre μ s (sp - 96) (sp - 96 + 32) cap ptr len S1) (hbig : 4 * (len + bs.length) + 16 < 1073741760)
-    (hbs : 0 < bs.length)
-    (hcapb : 2 * cap < 1073741760) :
+    (hpre : WriterPre μ s (sp - 96) (sp - 96 + 32) cap ptr len S1)
+    (hbs : 0 < bs.length) :
     ∃ cap' r, WriterPre μ' s' (sp - 96) (sp - 96 + 32) cap' r (len + bs.length) S1 ∧
       μ'.readN r (len + bs.length) = μ.readN ptr len ++ bs ∧ cap' ≤ max cap (max 8 (2 * (len + bs.length))) ∧
       HeapCtxC code pb S0 S1 μ' s' ∧
@@ -120,10 +118,10 @@ theorem writer_chain {code : ByteArray} {pb S0 S1 sp : Nat} {μ μ' : Memory} {s
       (∀ a, a < 196608 → μ'.read a = μ.read a ∧ μ'.readable a = μ.readable a) ∧
       (∀ a, Glob a → μ'.read a = μ.read a) := by
   obtain ⟨cap', r, m0, m8, m16, hroom, hcap', eo, en, H', ⟨d, hd, hdu, hda, hds⟩, others, hr, stk, lo, gl⟩ := hpost
-  obtain ⟨hv1, hv2, -, -, -, -, -, -, -⟩ := hpre
+  obtain ⟨hv1, hv2, -, -, -, -, -, -⟩ := hpre
   have hc2 : cap' ≤ cap ∨ cap' ≤ 8 ∨ cap' ≤ 2 * (len + bs.length) := by
     omega
-  refine ⟨cap', r, ⟨hv1, hv2, m0, m8, m16, hroom, by omega, by omega, d, hd, hdu, hda, hds⟩, ?_, hcap', H', ?_,
+  refine ⟨cap', r, ⟨hv1, hv2, m0, m8, m16, hroom, by omega, d, hd, hdu, hda, hds⟩, ?_, hcap', H', ?_,
     fun a h0 h1 h2 => stk a h0 h1 (by omega), lo, gl⟩
   · rw [Services.Bootstrap.Decode.VecU8.readN_split, eo, en]
   · intro e he hu
@@ -140,7 +138,6 @@ theorem ext_step {p : ByteArray} {P : Program} {env : AccEnv} {pb S0 S1 : Nat} (
     (c : AccCtx) (f : Stream) (ω : Regs) (μ : Memory) (s st : State) (μ₀ : Memory) (sp cap ptr len ret t : Nat)
     (H : HeapCtxC env.code pb S0 S1 μ s) (WP : WriterPre μ s (sp - 96) (sp - 96 + 32) cap ptr len S1)
     (hst : ∀ d ∈ chunks st, d.used = true → d ∈ chunks s ∧ d.addr + 32 ≠ ptr ∧ ∀ a, InData d a → μ.read a = μ₀.read a)
-    (hbig : 4 * (len + 1) + 16 < 1073741760)
     (hsp : S0 + 520 ≤ sp ∧ 2147484168 ≤ sp ∧ sp % 8 = 0 ∧ sp ≤ S1) (hS1 : S1 < 4294967296)
     (h0 : ω[0] = UInt64.ofNat ret) (h1 : ω[1] = UInt64.ofNat (sp - 96)) (h7 : ω[7] = UInt64.ofNat (sp - 96 + 32))
     (h8 : ω[8] = UInt64.ofNat (sp - 96 + 56)) (h9 : ω[9] = UInt64.ofNat 1)
@@ -157,14 +154,14 @@ theorem ext_step {p : ByteArray} {P : Program} {env : AccEnv} {pb S0 S1 : Nat} (
         (∀ a, Glob a → μ'.read a = μ.read a)) ∨
     ExhaustsP p env pb 58508 ω μ c f := by
   have hSt := H.st
-  obtain ⟨hv1, hv2, -, -, -, -, -, hcb, -⟩ := id WP
-  rcases hE c f ω μ s (sp - 96) (sp - 96 + 32) (sp - 96 + 56) 1 cap ptr len ret t H WP (by omega)
+  obtain ⟨hv1, hv2, -, -, -, -, -, -⟩ := id WP
+  rcases hE c f ω μ s (sp - 96) (sp - 96 + 32) (sp - 96 + 56) 1 cap ptr len ret t H WP
       ⟨by omega, by omega, by omega, by omega⟩ h0 h1 h7 h8 h9 hret hjt hbt
       (.inl ⟨by omega, by omega, .inr (by omega),
         fun a h1 h2 => Memory.readable_of_writable (hSt a (by omega) (by omega))⟩) with
     ⟨ω', μ', s', N, run, e0, e1, e5, e6, post⟩ | hx
   · obtain ⟨cap', r, WP', out, hc', H', hst', stk, lo, gl⟩ :=
-      writer_chain post hst WP (by rw [Memory.length_readN]; omega) (by rw [Memory.length_readN]; omega) hcb
+      writer_chain post hst WP (by rw [Memory.length_readN]; omega)
     rw [Memory.length_readN] at WP' out hc'
     exact .inl ⟨ω', μ', s', N, run, e1.trans h1.symm, e5, e6, cap', r, WP', out, hc', H', hst', stk, lo, gl⟩
   · exact .inr hx
@@ -181,13 +178,12 @@ theorem rl_item {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {env 
       LoopInv env.code pb S0 S1 sp rp n rs st μ₀ (k + 1) ω' μ' s') ∨
     ExhaustsP p env pb 36346 ω μ c f := by
   obtain ⟨h1, h5, h6, H, ⟨cap, ptr, WP, mout, hcapb, hst⟩, hfr, hlo, hgl⟩ := I
-  obtain ⟨hsp, hS1, hn, hrp, hB, hR⟩ := L
+  obtain ⟨hsp, hS1, hn, hrp, hR⟩ := L
   obtain ⟨hrp1, hrp2⟩ := hrp.2 (by omega)
   have hSt := H.st
   have hk' : k < rs.length := hn ▸ hk
   have hlen := encK_len_le n rs (k + 1) hn
   rw [encK_succ n rs k hk', List.length_append] at hlen
-  have hcb : 2 * cap < 1073741760 := WP.2.2.2.2.2.2.2.1
   -- the item, against μ₀, and its octets in st's heap
   have hitem0 := hR.2 k hk'
   have hIH : InHeap st (rp + 144 * k) 144 := hR.1.sub (by omega) (by
@@ -209,7 +205,7 @@ theorem rl_item {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {env 
       μ1.readN ptr (encK n rs k).length = encK n rs k ∧
       (∀ d ∈ chunks st, d.used = true → d ∈ chunks s ∧ d.addr + 32 ≠ ptr ∧ ∀ a, InData d a → μ1.read a = μ₀.read a) :=
     fun μ1 fr1 wr1 => by
-      obtain ⟨-, -, -, -, -, -, -, -, ch, hch, hchu, hcha, hchs⟩ := id WP
+      obtain ⟨-, -, -, -, -, -, -, ch, hch, hchu, hcha, hchs⟩ := id WP
       have hci := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hch hchu
       have hbT := H.hbT
       have hlc : (encK n rs k).length ≤ cap := WP.2.2.2.2.2.1
@@ -235,7 +231,7 @@ theorem rl_item {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {env 
         (by omega) (by rw [hi.1]; rfl) (by have := rdI μ s H (fun d hd hu => (hst d hd hu).1) 0 (by omega); simpa using this)
         hS56
     obtain ⟨H1, WP1, mout1, hst1⟩ := stage μ1 fr1 wr1
-    rcases ext_step hE c f ω1 μ1 s st μ₀ sp cap ptr (encK n rs k).length 1700 36373 H1 WP1 hst1 (by omega) hsp hS1
+    rcases ext_step hE c f ω1 μ1 s st μ₀ sp cap ptr (encK n rs k).length 1700 36373 H1 WP1 hst1 hsp hS1
         a0 (a1.trans h1) a7 a8 a9 ⟨by decide, by decide, by decide⟩
         (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_849]) bs_36373 with
       ⟨ω2, μ2, s2, N2, run2, b1, b5, b6, cap2, r2, WP2, out2, hc2, H2, hst2, stk2, lo2, gl2⟩ | hx
@@ -249,7 +245,7 @@ theorem rl_item {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {env 
         (rdI μ2 s2 H2 (fun d hd hu => (hst2 d hd hu).1) 1 (by omega))
         (H2.st _ (by omega) (by omega))
     have H3 : HeapCtxC env.code pb S0 S1 μ3 s2 := HeapKeep.keepHi H2 (fun a ha => fr3 a (by omega) (by omega)) wr3
-    obtain ⟨-, -, -, -, -, hl2, -, -, ch2, hch2, hchu2, hcha2, hchs2⟩ := id WP2
+    obtain ⟨-, -, -, -, -, hl2, -, ch2, hch2, hchu2, hcha2, hchs2⟩ := id WP2
     have := Services.Bootstrap.Decode.VecU8.chunk_in H2.wf hch2 hchu2
     have := H2.hbT
     have WP3 := WriterPre.congr WP2 (fun b h1 h2 => fr3 b (by omega) (by omega))
@@ -261,7 +257,7 @@ theorem rl_item {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {env 
       unfold InData at ha
       rw [fr3 a (by omega) (by omega)]; exact k3 a ⟨ha.1, ha.2⟩
     rcases ext_step hE c f ω3 μ3 s2 st μ₀ sp cap2 r2 ((encK n rs k).length + 1) 1702 36394 H3 WP3 hst3
-        (by rw [hrk, encode_error] at hlen; simp at hlen; omega) hsp hS1
+        hsp hS1
         c0 (c1.trans (b1.trans (a1.trans h1))) c7 c8 c9 ⟨by decide, by decide, by decide⟩
         (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_850]) bs_36394 with
       ⟨ω4, μ4, s4, N4, run4, d1, d5, d6, cap4, r4, WP4, out4, hc4, H4, hst4, stk4, lo4, gl4⟩ | hx
@@ -303,8 +299,7 @@ theorem rl_item {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {env 
         (by omega) (by omega) (by omega) mt
         (by have := rdI μ s H (fun d hd hu => (hst d hd hu).1) 0 (by omega); simpa using this) hS56
     obtain ⟨H1, WP1, mout1, hst1⟩ := stage μ1 fr1 wr1
-    rcases ext_step hE c f ω1 μ1 s st μ₀ sp cap ptr (encK n rs k).length 1696 36290 H1 WP1 hst1 (by
-          have := encode_ok_len r; rw [hrk] at hlen; omega) hsp hS1
+    rcases ext_step hE c f ω1 μ1 s st μ₀ sp cap ptr (encK n rs k).length 1696 36290 H1 WP1 hst1 hsp hS1
         a0 (a1.trans h1) a7 a8 a9 ⟨by decide, by decide, by decide⟩
         (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_847]) bs_36290 with
       ⟨ω2, μ2, s2, N2, run2, b1, b5, b6, cap2, r2, WP2, out2, hc2, H2, hst2, stk2, lo2, gl2⟩ | hx
@@ -314,7 +309,7 @@ theorem rl_item {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {env 
       rl_okenc (R := KeepCtx (accContractS env)) (P := P) (c, f) ω2 μ2 (sp - 96) (b1.trans (a1.trans h1)) (by omega)
     have hi2 := itemAt μ2 (fun d hd hu => (hst2 d hd hu).2.2)
     rcases hO c f ω3 μ2 s2 st r (sp - 96) (sp - 96 + 32) (rp + 144 * k) cap2 r2 ((encK n rs k).length + 1)
-        1698 36335 H2 WP2 (by rw [hrk] at hlen; omega) ⟨by omega, by omega, by omega, by omega⟩ hi2 hIH
+        1698 36335 H2 WP2 ⟨by omega, by omega, by omega, by omega⟩ hi2 hIH
         (fun d hd hu => ⟨(hst2 d hd hu).1, (hst2 d hd hu).2.1⟩) c0 (c1.trans (b1.trans (a1.trans h1)))
         (c7.trans (b6.trans (a6.trans h6))) c8 ⟨by decide, by decide, by decide⟩
         (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_848]) bs_36335 with
@@ -323,8 +318,7 @@ theorem rl_item {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {env 
     · exact .inr (ExhaustsP.pre ((run1.trans run2).trans run3) hx)
     have hbs : 0 < ((Spec.Result.encode (.ok r)).drop 1).length := by
       have := encode_ok_len r; simp; omega
-    obtain ⟨cap4, r4, WP4, out4, hc4, H4, hst4, stk4, lo4, gl4⟩ := writer_chain post4 hst2 WP2
-      (by rw [hrk] at hlen; simp only [List.length_drop]; have := encode_ok_len r; omega) hbs WP2.2.2.2.2.2.2.2.1
+    obtain ⟨cap4, r4, WP4, out4, hc4, H4, hst4, stk4, lo4, gl4⟩ := writer_chain post4 hst2 WP2 hbs
     obtain ⟨ω5, run5, g1, g5, g6, -⟩ := rl_next (R := KeepCtx (accContractS env)) (P := P) (c, f) ω4 μ4 36335
       (n - k - 1) (rp + 144 * k) (.inl rfl)
       (by rw [d5, c5, b5, a5, h5]; congr 1; omega) (by rw [d6, c6, b6, a6, h6]) (by omega) (by omega)

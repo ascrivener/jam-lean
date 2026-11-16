@@ -34,7 +34,7 @@ allows) could stand in for the item for now.
 | R2 | **Operand arm composition**: item log line (6955, `item_fmt_site`), output decode (R3), row 8, row 9, instruction loop (R5), row 11 (R7), the operand's drops (15191) back to 6766 | R3, R5, R7; rows 8 and 9 | T2 inputs or Handlers A | M | Partly: each sub-piece can be a hypothesis while it lands |
 | R3 | **Output decode** at 7073 (`BootstrapWorkOutput::decode`, `Vec<Instruction>` at sp − 1160, then the `u16` item) under HeapHost: success, Exhausts, and the decode-error branch (→ ☇) | frame-base `ElemOkF`/`Loop` (T1 decoders); HeapHost decoders | Vec / Decode-HeapHost (`claude/decode-heaphost`, paused) | L | Yes for the error branch (decided: an open obligation, local premise allowed); the success path could also be a hypothesis ("decodes to `Dec.output`") |
 | R4 | **Results representation** `ResultsAt μ rp n rs`: the `Vec<Result>` at [sp+456] (144-octet items, count [sp+464]) built by the instruction loop, related to the spec's `results : List Result` | agreement on the item layout (the 144-octet `WorkExecResult`-like enum; tag octet, payload) | whoever owns R5 (Handlers A) | S–M | It is a definition, not a hypothesis; needs agreeing first |
-| R5 | **Done with R7 as `loop_row11`** (8492 → 6766, `Acc/Handlers/InstrLoopRowEleven.lean`; open premise `hBall`, see below). **Instruction loop** 8490 … 15032: per instruction the log line (`format!` 59375, `log`), the dispatch, the handler (R6) to the shared tail 14278, the result pushed onto the results Vec (growth: R8), the `Checkpoint` instruction's early results write (8650 → 8710, via 36170: R7) | R4, R6, R8; `Impl.forIn` | Handlers A (loop itself unowned today) | L | The per-instruction log lines (G4) can be fmt hypotheses, like `LogFmt` |
+| R5 | **Done with R7 as `loop_row11`** (8492 → 6766, `Acc/Handlers/InstrLoopRowEleven.lean`; no size premise since 2026-11-16). **Instruction loop** 8490 … 15032: per instruction the log line (`format!` 59375, `log`), the dispatch, the handler (R6) to the shared tail 14278, the result pushed onto the results Vec (growth: R8), the `Checkpoint` instruction's early results write (8650 → 8710, via 36170: R7) | R4, R6, R8; `Impl.forIn` | Handlers A (loop itself unowned today) | L | The per-instruction log lines (G4) can be fmt hypotheses, like `LogFmt` |
 | R6 | **Handlers as `Impl … (onInstr C now i)`**, one per instruction (≈ 24 tags). Today only segment summaries exist, under `accContractK`/`Q` (Upgrade, Checkpoint, Designate, Assign, LookedUp, AssignForGasCost-empty, Panic); none is an `Impl`. To do: lift those to `accContractS`/`Impl`, then the rest: CreateService, Transfer (G1 `gas`), Zombify, Eject, DeleteItems, Solicit, Forget, Lookup, Import/Export, Bless, Yield, Provide, LookedUp, Imported, Exported, RandomStorageAccumulate, Benchmark (G5), AssignForGasCost (non-empty) | the wrappers (main); the Designate/Assign allocation side (#150); fmt summaries for each handler's `format!` (log-sites table in Acc/README.md; formatters 37897, 37996, 38706, Lookup/Exported/Import ones unidentified); the Encode arms for `Result` payloads (R9) | Handlers A (+ fmt for log sites) | L (the biggest item) | Yes per handler: "the handler at tag k implements `onInstr` … or aborts for `AccAbort`". Log sites already are hypotheses (`ArgsAt`, frame-only) |
 | R7 | **Row 11**: 15032 … 15198, `store key (encodeResults results)` unless a `Zombify` (Q4), via 36170 for general n (the loop 36346, per item byte 255 → [1, e] else [0] ++ 36299), then the drops (33214 ret 558/560, 28864 ret 564, deallocs 15166 / 15185) and back to 6766 | R4; R8; R9 (36299); RO table at 68264 (R10); `res_head`/`res_free` generalised from n = 0 | Handlers A | M (given R8, R9) | Yes: 36299 per item as a hypothesis "appends `Result.encode r` or Exhausts" |
 | R8 | **HeapHost growing writer** (`extend`/`prefix` with realloc under `HeapHost`, accumulate's counterpart of refine's `BufH`/`EncMH` under `refineContractK`). Needed because `Result.encode` of `.data`/`.dataVec` is unbounded, and for the results Vec's pushes in R5. Also lifts G3 (≤ 89 inputs, ≤ 16384-octet blobs) | refine's WriterGrow/EncMH as a template; allocator realloc lemmas (main) | Vec / Decode-HeapHost session | M–L | Yes, as a named "writer step" hypothesis; but it would sit under many lemmas, so proving it is preferable |
@@ -70,8 +70,8 @@ Interfaces (parent, 2026-11-16):
   hypotheses, stated by Handlers A, minimal and frame-only like `LogFmt`, and listed in
   `docs/whats-proven.md`.
 - R5's result is the contract R2 consumes (proved as `loop_row11`, R5 and R7 together, ending at 6766 in
-  `R57Post`; R2 provides `EntryHyp` at 8492, ω₆ = the instructions' pointer, which `R9Post` does not yet
-  record): from 8493 with `InstrRep` for each item, `ResultsVec []` and
+  `R57Post`, which keeps the globals 196616 … 196791; R2 provides `EntryHyp` at 8492, ω₆ = the
+  instructions' pointer, which `R9Post` records): from 8493 with `InstrRep` for each item, `ResultsVec []` and
   `HeapCtxC`, `Impl` of the spec's instruction loop, post at 15028 / 15050 with `ResultsVec results`,
   [sp+160] = 1 ↔ a `Zombify` is present, `HeapCtxC` keeping old chunks, and the frame.
 
@@ -92,16 +92,12 @@ buffers, and the item frame's words `LoopKeep` (sp + 16 … 40, 104 … 152, 160
 [sp + 184] = 2⁶³, [sp + 216] = 2⁶³ + 1, [sp + 200] = 678, and the decoded `Vec` at sp + 240 / sp + 248
 (ptr in ω₆) with `IterOwn`.
 
-Open point for R2/R16 (parent, 2026-11-16): `LoopHyp.hB`, the size bound on `encodeResults rs` that row
-11 needs (2·(144n + 4) + 4·|encodeResults rs| + 64 < 2³⁰ − 64), is carried as a premise of `row_eleven`
-and `loop_exit` up to R2. It must not end up as an unconditional T2 assumption. If the bound fails,
-the binary should run out of heap, which is an allowed outcome. So at R2/R16 it becomes a case split:
-hB holds, or the run exhausts the heap (`ExhaustsP`). That requires the failure branches of
-`ExtendH`/`PushH` to cover the oversize case.
-R5's `il_loop` (and `loop_row11`) carries it as `hBall` (for every results list no longer than the instructions), which
-cannot be discharged at R16 as it stands; the open design issue (parent, 2026-11-16) is to turn it into
-"the bound holds for the actual results, or the run exhausts the heap", likely through `PushH`'s and
-`ExtendH`'s `ExhaustsP` branches. The loop uses it only at a `Checkpoint`, on the results so far.
+**Closed (2026-11-16, parent-approved design A–D):** the size bound on `encodeResults rs` (`LoopHyp.hB`,
+R5's `hBall`) is gone. `ExtendH` and `OkEncH` no longer take `len + n < 2³⁰ − 64`, and `WriterPre` no
+longer takes `2·cap < 2³⁰ − 64` (a too-large encoding is heap exhaustion, inside their `ExhaustsP`
+branch); the results store's `alloc(144n + 4)` is bounded by the results' heap footprint (`LoopHyp.hrp`);
+the lengths after the loop come from `WriterPost`. `row_eleven`, `loop_exit`, `il_loop` and `loop_row11`
+have no size premise.
 
 `StoreStep` (parent, 2026-11-16): R5 takes a context invariant `Inv` kept by every `ASem.step` (`hIst`)
 that gives `StoreFit` (`hIfit`). R2 discharges it with `Inv c := ValuesFit env c.1`, `ValuesFit.step`

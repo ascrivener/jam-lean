@@ -26,13 +26,22 @@ Everything cites Gray Paper v0.8.0 via the docstrings of the files named here; t
   `AssignForGasCost` with q = [], `RandomStorageAccumulate(Some [])`. Paths: read_vec n = 0 (`VecU8.vec_u8_empty`
   exists; compose as `provide_inline_small` does) and the hash reader 1764 with n = 0 (no proof yet). Encoders and
   drops handle n = 0 (`*H_232` take any n; `ArmOk` with capacity 0 frees nothing).
-- **Gap 2 (loop):** the pass step (`Pass.pd`/`pdK`, `PassK t`, word 2^63 − 1 + t, t ∈ `PassIdx` or Lookup-flag-0)
-  does not cover `CreateService`, whose word 0 is the niche (code length < 2^63, or 2^64 − 1 for None); the binary
-  maps those to index 0 → 5561. `PassCS.pdCS` (build) is that dispatch. Still to do: generalise the word in
-  `pdK`, `pass_elem` (Pass.lean), `PassGrow`, `PassLoop` (139, 211, 321), `LoopAll.PassOk`, `LoopT` to
-  `PassW D b := (∃ t, PassK t b ∧ D = 2^63 − 1 + t) ∨ D < 2^63 ∨ D = 2^64 − 1` (only `D < 2^64` is used of
-  `PassK.bound`); RunMixedG / LoopT callers wrap `Or.inl ⟨t, ht, rfl⟩`.
-- **Package design (step 1):** `PassSlot x cs bs μr := ∃ D own, PassW D (bs[44]) ∧ bs.take 8 = ℰ₈ D ∧
+- **Gap 2 (loop), closed:** `CreateService`'s word 0 is the niche (code length < 2^63, or 2^64 − 1 for None),
+  which the dispatch maps to index 0 → 5561. `Pass.PassW D b := (∃ t, PassK t b ∧ D = 2^63 − 1 + t) ∨ D < 2^63 ∨
+  D = 2^64 − 1`, `Pass.pdCS`; `pdK`, `pass_elem`, `PassGrow.pass_elem_grow`, `PassLoop.step_room/step_full` and
+  `LoopAll.PassOk` now take the word D with `PassW` (weakened hypotheses; `PassLoop.loop_pass`'s `kinds` and every
+  milestone statement unchanged; callers wrap `PassW.ofK`).
+- **Packages (step 1), done (build, axioms clean):** `PkgT.PassSlot`, `PkgT.DecPkg`; `PkgT`: `pkg_fixed` (MFixed),
+  `pkg_luNone`, `pkg_provideHash`, `pkg_rsaErr`, `pkg_luEmpty`, `pkg_designateEmpty`, `pkg_blessEmpty`,
+  `pkg_deleteItemsEmpty`, `pkg_importedEmpty`; `PkgH`: `pkg_rsaOk`, `pkg_designate` (Cc at 196616, C.maxValCount ≤
+  3 Cc mod 2^16), `pkg_bless`, `pkg_luSome`, `pkg_provideInline`, `pkg_assignGas`, `pkg_assign` (G at 196680,
+  C.authQueueLen = G mod 2^32), `pkg_csSome`, `pkg_csNone`, `pkg_csEmpty`, `pkg_deleteItems`, `pkg_imported` (each
+  needing |x.encode| ≤ 2^24 where sizes matter). Missing: the three n = 0 gaps (Gap 1), and the Export / eager
+  Lookup steps (they use `RunMixedG`'s Export path and `LoopT.LookupOk`, not `PassSlot`).
+- **Next:** a `pkg_all` dispatching on x (WF, NoImpRsr, not Export / eager Lookup, |enc| ≤ 2^24); then step 2
+  (`Inv`), step 3 (`RunT`, `TopT`, `T1c.refine_t1c` with C := `Consts.ofParams Params.full rk`; gl from
+  `StartupConsts.startup_decoder_facts` carried 4642 → 4792 as Glob words); then Gap 1's three decoders; docs.
+- Package design notes (step 1): `PassSlot x cs bs μr := ∃ D own, PassW D (bs[44]) ∧ bs.take 8 = ℰ₈ D ∧
   SlotOK … x.encode bs own μr ∧ own ⊆ cs`; `DecPkg x Step := ∃ N Rd, (∀ F RD, Lay F RD → ElemOkAFC … N x.encode Rd) ∧
   ∀ cs bs μr, (∀ μ'' keeping cs as μr, Rd cs bs μ'') → Step cs bs μr`. Per kind: `MFixed` via `FixedKind.dec` +
   `slotOK_fixed`; heap kinds via `ElemsSmallC`/`ElemsBigC` (sizes: small ≤ 512/1024/48/16384, else big) + `SlotHeap`;

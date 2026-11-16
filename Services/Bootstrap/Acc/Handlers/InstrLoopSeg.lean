@@ -205,4 +205,67 @@ theorem il_copy2 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x :
       Nat.mod_eq_of_lt (show k < 2 ^ 64 by omega), Nat.mod_eq_of_lt hk]
     all_goals try (congr 1; omega)
 
+/-- The tag the loop decodes from a slot's word0 w (with the frame constants 2⁶³ at sp + 184 and 2⁶³ + 1
+    at sp + 216): w − 2⁶³ + 1 for w in the niche [2⁶³, 2⁶³ + 24), else 0 (the dataful variant
+    `CreateService`). -/
+def slotTag (w : Nat) : Nat := if 9223372036854775808 ≤ w ∧ w < 9223372036854775832 then w - 9223372036854775807 else 0
+
+/-- **8627 … 8650, another tag** (neither 3 = `Zombify` nor 15 = `Checkpoint`): on to 8735. -/
+theorem il_tag_other {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
+    (sp w : Nat) (h1 : ω[1] = UInt64.ofNat sp) (h5 : ω[5] = UInt64.ofNat w)
+    (hsp : 65536 ≤ sp ∧ sp + 1632 < 4294967296) (hw64 : w < 2 ^ 64) (ht3 : slotTag w ≠ 3) (ht15 : slotTag w ≠ 15)
+    (m184 : μ.readN (sp + 184) 8 = Num.encodeLE 8 9223372036854775808)
+    (m216 : μ.readN (sp + 216) 8 = Num.encodeLE 8 9223372036854775809)
+    (hr : ∀ a, sp + 184 ≤ a → a < sp + 224 → μ.readable a = true) :
+    ∃ ω', FreeStepsH p R 8627 ω μ x 8735 ω' μ x 8 ∧ ω'[1] = ω[1] := by
+  have r184 := Handlers.DesignateAlloc.rd8 (by decide) m184
+  have r216 := Handlers.DesignateAlloc.rd8 (by decide) m216
+  unfold slotTag at ht3 ht15
+  rw [show ω = regsNF ω [] from rfl]
+  by_cases hn : 9223372036854775808 ≤ w ∧ w < 9223372036854775832
+  · rw [if_pos hn] at ht3 ht15
+    obtain ⟨t, rfl⟩ : ∃ t, w = 9223372036854775807 + t := ⟨w - 9223372036854775807, by omega⟩
+    have ht : t = 1 ∨ t = 2 ∨ t = 4 ∨ t = 5 ∨ t = 6 ∨ t = 7 ∨ t = 8 ∨ t = 9 ∨ t = 10 ∨ t = 11 ∨ t = 12 ∨ t = 13 ∨ t = 14 ∨ t = 16 ∨ t = 17 ∨ t = 18 ∨ t = 19 ∨ t = 20 ∨ t = 21 ∨ t = 22 ∨ t = 23 ∨ t = 24 := by omega
+    rcases ht with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl <;>
+    · refine ⟨?_, ?_, ?_⟩
+      rotate_left
+      · pvm_go [h1, h5, hsp, r184, r216, hr, ↓rdN_fold]
+      · exact by reg_val
+  · have hc7 : (if (if w < 9223372036854775808 then (w : Int) else (w : Int) - 18446744073709551616) <
+        -9223372036854775784 then 1 else 0 : Nat) = 0 := by
+      have : ¬ ((if w < 9223372036854775808 then (w : Int) else (w : Int) - 18446744073709551616) <
+          -9223372036854775784) := by split <;> omega
+      rw [if_neg this]
+    refine ⟨?_, ?_, ?_⟩
+    rotate_left
+    · pvm_go [h1, h5, hsp, r184, r216, hr, hc7, ↓rdN_fold]
+    · exact by reg_val
+
+/-- **8627 … 8734, `Zombify`** (tag 3): the flag [sp + 160] := 1, on to 8735. -/
+theorem il_tag_zomb {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs) (μ : Memory)
+    (sp w : Nat) (h1 : ω[1] = UInt64.ofNat sp) (h5 : ω[5] = UInt64.ofNat w)
+    (hsp : 65536 ≤ sp ∧ sp + 1632 < 4294967296) (hw64 : w < 2 ^ 64) (ht : slotTag w = 3)
+    (m184 : μ.readN (sp + 184) 8 = Num.encodeLE 8 9223372036854775808)
+    (m216 : μ.readN (sp + 216) 8 = Num.encodeLE 8 9223372036854775809)
+    (hr : ∀ a, sp + 184 ≤ a → a < sp + 224 → μ.readable a = true)
+    (hw : ∀ a, sp + 160 ≤ a → a < sp + 168 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 8627 ω μ x 8735 ω' μ' x 9 ∧ ω'[1] = ω[1] ∧
+      μ'.readN (sp + 160) 8 = Num.encodeLE 8 1 ∧
+      (∀ a, a < 4294967296 → (a < sp + 160 ∨ sp + 168 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have r184 := Handlers.DesignateAlloc.rd8 (by decide) m184
+  have r216 := Handlers.DesignateAlloc.rd8 (by decide) m216
+  have hw' : w = 9223372036854775810 := by unfold slotTag at ht; split at ht <;> omega
+  subst hw'
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?_, ?_, ?_, ?_⟩
+  rotate_left 2
+  · pvm_go [h1, h5, hsp, r184, r216, hr, hw, rdN_writeN_disjoint, ↓rdN_fold]
+  · refine ⟨by reg_val, ?_, fun a ha h1' => ?_, fun a => ?_, fun a => ?_⟩
+    all_goals try simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,
+      PVM.getD_some', List.lookup_nil, Option.getD_none]
+    all_goals try rd_simp []
+    all_goals try rfl
+    all_goals try (congr 1; omega)
+
 end Services.Bootstrap.Acc.Handlers.InstrLoop

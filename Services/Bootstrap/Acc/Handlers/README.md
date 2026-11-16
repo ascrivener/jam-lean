@@ -109,7 +109,8 @@ Handlers dependencies takes ~2 h on 4 cores). Use `ulimit -v 12000000` when comp
 
 ## Session 10 handoff (2026-11-16, for the 11th session)
 
-**PRs.** **#228** (row 9): `model`/`changes` green. `attempt-1` was still running at 17:40 (started 14:15).
+**PRs.** **#228** (row 9): `model`/`changes` green. `attempt-1` was still running at 17:50 (started 14:15; the attempts resume
+on their own after a timeout).
 Re-subscribe and **merge on green** (squash), then tell @parent. If the merge is refused over the removed
 `build-and-check` check, tell @parent and carry on. **#222** is still open. Once it merges (and #228), rebase r5 onto
 main (`git rebase --onto origin/main <old row-9 tip 6450fb4>`, see session 8), run the full `lake build` in the

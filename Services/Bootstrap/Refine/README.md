@@ -72,6 +72,15 @@ with `lake env lean`; axioms clean.
   the small adapters are in `ElemsSmallC` (`bless_elemC`, `random_storage_ok_elemC`, `designate_elemC`,
   `looked_up_some_elemC`, `provide_inline_elemC`, `create_service_some_elemC`, `assign_gas_elemFC`, `assign_elemFC`;
   same `OwnsBuf` offsets). `import_elem` (part D's input, not an output) has no `C` form yet.
+- **Drop arms still to do** (from the disassembly and the table at 67760; each mirrors `DropOutL`: the element at the
+  frame word sp + 48, a capacity test, `dealloc(ptr, cap·size, align)` returning via jump entry 1356 → 29181, else
+  straight to 29181). Index → jump entry → arm:
+  0 (CreateService) → 687 → 29581: cap = ω₈ (the discriminant word; 2^64 − 1 = `None`, 0 = empty → 29181), ptr at +8,
+  align 1. 11 (Bless; also 9, Import) → 678 → 29241: cap at +8 (0 → 29181), ptr at +16, size 16·cap, align 8.
+  12 (Assign) → 676 → 29153 (below T1B's range, in `Code`). 13 (Designate) → 688 → 29609: cap at +8, ptr at +16,
+  336·cap, align 1. 17 (Provide) → 681 → 29338: the octet at +8 (0 = by hash → 29181), cap at +16, ptr at +24,
+  align 1. 22 (RandomStorageAccumulate) → 689 → 29640: cap at +8 (2^64 − 1 = `Err`, 0 → 29181), else → 29162 (12's
+  arm's tail, in `Code`). AssignForGasCost (tag 24) is not among the table's 24 indices: check its dispatch index.
 - Still open for part B: the output drop arms of the other heap kinds (indices 0, 11, 12, 13, 17, 22, 24; `DropOut.NoDrop`
   excludes them and `HeapEl` covers only 5, 18, 19), the encoder arms `EncOkMH` and `DRm` for them.
 - **Debug field formatters the new kinds reach** (for the field-formatter session; from `Fmt/README.md`'s arm table): the

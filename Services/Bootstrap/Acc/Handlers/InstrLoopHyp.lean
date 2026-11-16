@@ -158,7 +158,8 @@ def HandlerH (B : InstrRep) (p : ByteArray) (env : AccEnv) (C : Consts) (now pb 
     returns to 14485 with ω₁ = sp, ω₅ = n, a new cap cp > n and buffer rp′ at sp + 448 / sp + 456 (len
     kept), the 144·n octets moved to rp′, rp′ the data of an allocated chunk d′ of the new state with
     room for cp items, every other allocated chunk of st kept with its data and none equal to d′, the
-    allocator's context, the memory from sp up kept but at sp + 448 … sp + 464; or `ExhaustsP`. -/
+    allocator's context, the memory from sp up kept but at sp + 448 … sp + 464, the globals 196616 … 196791
+    kept (the allocator writes only heap memory and its word at 196608); or `ExhaustsP`. -/
 def PushH (p : ByteArray) (env : AccEnv) (pb S0 S1 : Nat) : Prop :=
   ∀ (c : AccCtx) (f : Stream) (ω : Regs) (μ : Memory) (st : State) (sp rp n : Nat),
     HeapCtxC env.code pb S0 S1 μ st → ω[1] = UInt64.ofNat sp → ω[5] = UInt64.ofNat n →
@@ -173,7 +174,8 @@ def PushH (p : ByteArray) (env : AccEnv) (pb S0 S1 : Nat) : Prop :=
       (∃ d' ∈ chunks st', d'.used = true ∧ d'.addr + 32 = rp' ∧ rp' + 144 * cp ≤ d'.addr + 32 * d'.size ∧
         ∀ d ∈ chunks st, d.used = true → d.addr + 32 ≠ rp → d ≠ d' ∧ d ∈ chunks st' ∧
           ∀ a, InData d a → μ'.read a = μ.read a) ∧
-      (∀ a, a < 4294967296 → sp ≤ a → (a < sp + 448 ∨ sp + 464 ≤ a) → μ'.read a = μ.read a)) ∨
+      (∀ a, a < 4294967296 → sp ≤ a → (a < sp + 448 ∨ sp + 464 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, Glob a → μ'.read a = μ.read a)) ∨
     ExhaustsP p env pb 14431 ω μ c f
 
 end Services.Bootstrap.Acc.Handlers.InstrLoop

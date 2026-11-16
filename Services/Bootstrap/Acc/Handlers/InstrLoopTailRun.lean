@@ -228,7 +228,7 @@ theorem il_tail_push {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
     obtain ⟨ω1, run1, a1, a5, a6⟩ := il_full (R := KeepCtx (accContractS env)) (P := P) (c, f) ω μ sp cp h1
       ⟨by omega, by omega⟩ bcp ecp en hrd
     rcases hP c f ω1 μ st sp rp cp H (a1.trans h1) a5 hs2 hs3 hs1 mcp mrp mn (fun h => hbuf h) with
-      ⟨st', ω2, μ2, N2, cp', rp', run2, H2, b1, b5, m2cp, hlt, m2rp, mv, ⟨d', hd', hu', hq', hk', hkeep⟩, fr2⟩ | hX
+      ⟨st', ω2, μ2, N2, cp', rp', run2, H2, b1, b5, m2cp, hlt, m2rp, mv, ⟨d', hd', hu', hq', hk', hkeep⟩, fr2, -⟩ | hX
     rotate_left
     · exact .inr (ResStore.ExhaustsP.pre run1 hX)
     have hhi := ResultsDrop.data_lt H2 hd' (a := rp' + 144 * cp) ⟨by omega, by omega⟩

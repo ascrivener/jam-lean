@@ -1005,7 +1005,8 @@ What you trust beyond the kernel:
     item's `itemPtrs` distinct and in `ResC` chunks, a `dataVec`'s inner array in its buffer; approved by the
     parent 2026-11-16), other chunks kept, `LoopKeep` frame words
     kept);
-  - `PushH` (R8): `finish_grow` with an old buffer for the results `Vec` (14431 → 14485), or `ExhaustsP`.
+  - `PushH` (R8): `finish_grow` with an old buffer for the results `Vec` (14431 → 14485), keeping the frame
+    and the globals 196616 … 196791 (added 2026-11-16, parent-approved), or `ExhaustsP`.
   The loop's straight-line segments (`InstrLoopSeg.lean`, `InstrLoopTail.lean`) are proved without them.
 - **R5, the instruction loop (T2, Handlers A; `Acc/Handlers/InstrLoopBody.lean`, `InstrLoopFor.lean`).**
   `il_body` (an instruction other than `Checkpoint`) and `il_body_ck` (`Checkpoint`: the results store
@@ -1029,7 +1030,7 @@ What you trust beyond the kernel:
   stays allocated with its data and is none of the buffers freed later (`StepKeep`, from each body).
 - **R5 and R7 composed (T2, Handlers A; `Acc/Handlers/InstrLoopEntry.lean`, `InstrLoopRowEleven.lean`).**
   **`loop_row11`**: from row 9's end (8492) with `EntryHyp` (the decoded instructions' `Vec` owned as
-  `VecOwn`, its pointer in ω₆ and 8-aligned; the empty results `Vec` (cap 0, dangling pointer below 32,
+  `VecOwn`, its pointer in ω₆; the empty results `Vec` (cap 0, dangling pointer below 32,
   len 0) with row 11's `TailHyp`; the instructions' buffers distinct from `tailFree`; the frame constants),
   the run implements the spec's loop followed by `unless is.any isZomb (store key (encodeResults results))`
   and reaches the items loop's head 6766 in `R57Post`: the allocator's context, every allocated chunk of
@@ -1037,8 +1038,8 @@ What you trust beyond the kernel:
   data, the frame words `StableKeep` kept. Both cases: some instructions (`il_entry`, `il_loop`,
   `loop_exit`) and none (8492 → 15050, the empty `IntoIter`'s drop, `row_eleven_store` from 15060).
   Named hypotheses: those of `il_loop` plus `DropInstrsH`. Premises as `il_loop`'s (`Inv`, `hBall`, the
-  read-only facts), now at the entry. Not promised: the globals 196616 … 196791 (`PushH` does not keep
-  them) and the registers but ω₁.
+  read-only facts), now at the entry. Not promised yet: the globals 196616 … 196791 (`InstrLogH`/`ResultLogH` do not keep
+  them; asked) and the registers but ω₁.
   `LoopHyp.hrp` (the results' addresses in [2¹⁶, 2³¹)) now applies only when there are results: an
   empty `Vec`'s pointer dangles.
 - **Refinement of a fragment, not of a whole program.** The allocator theorems are about the

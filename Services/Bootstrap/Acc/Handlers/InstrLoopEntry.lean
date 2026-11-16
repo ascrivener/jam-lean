@@ -1,4 +1,5 @@
 import Services.Bootstrap.Acc.Handlers.InstrLoopFor
+import Services.Bootstrap.Acc.Handlers.ChunkAlign
 
 /-!
 # R5, the instruction loop's entry (8492 → 8554)
@@ -59,7 +60,7 @@ structure VecOwn (B : InstrRep) (μ : Memory) (st : State) (b c : Nat) (is : Lis
 
 /-- **The loop's entry state** (8492, memory μ, allocator state st), for the instructions `is` in the
     `Vec` { cap c at sp + 240, ptr b, len |is| at sp + 248 }: the allocator's context and the stack room;
-    the `Vec` owns is (`VecOwn`), b 8-aligned with the slots below 2⁶⁴; row 11's `TailHyp` with the empty
+    the `Vec` owns is (`VecOwn`), its slots below 2⁶⁴; row 11's `TailHyp` with the empty
     results `Vec` (cap 0, a dangling pointer below 32, len 0); the instructions' buffers and `tailFree`
     pairwise distinct; the frame constants 2⁶³ at sp + 184, 2⁶³ + 1 at sp + 216, 678 at sp + 200. -/
 structure EntryHyp (B : InstrRep) (code : ByteArray) (pb S0 S1 sp b c : Nat) (is : List Spec.Instr)
@@ -70,7 +71,6 @@ structure EntryHyp (B : InstrRep) (code : ByteArray) (pb S0 S1 sp b c : Nat) (is
   mc : rdN μ (sp + 240) 8 = c
   ml : rdN μ (sp + 248) 8 = is.length
   V : VecOwn B μ st b c is
-  hb8 : b % 8 = 0
   hb : b + 232 * is.length < 2 ^ 64
   T : TailHyp code pb S0 S1 μ st sp
   h448 : rdN μ (sp + 448) 8 = 0
@@ -189,7 +189,7 @@ theorem il_entry {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (B :
     unfold StableKeep at h; exact fr a h0 (by omega) (by omega)
   refine ⟨.inr ⟨rfl, by rw [a6, e6, h6, r480], hn0⟩, a1.trans (e1.trans h1), hinv,
     ⟨st, false, LA, by simp, fun d hd hu hG => ⟨hd, (hk d hd hu).2, by rw [hIF]; exact hG, ?_, ?_⟩⟩,
-    by rw [r480]; exact E.hb8, by rw [r504]; omega, by simp, fun a ha => ⟨fr a (by omega) (.inl (by omega))
+    by rw [r480, ← hda]; exact Picoalloc.chunk_data_mod8 H.wf hd, by rw [r504]; omega, by simp, fun a ha => ⟨fr a (by omega) (.inl (by omega))
       (.inl (by omega)), rd a⟩, hstab⟩
   · rw [w448]; simp [optBuf]
   · simp [resPtrs]

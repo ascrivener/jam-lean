@@ -771,6 +771,18 @@ Pieces of T2 (`docs/bootstrap-target.md`): parts of bootstrap's accumulate code 
       678 → String Display), or `ExhaustsP`.
   - *Scope:* the frame does not yet state that the parameter statics 196616 … 196791 are kept.
 
+- **The accumulate prologue stores 𝖢 and 𝖨.** `Acc.Statics.start_to_6429_statics` and
+  `Acc.Statics.chain` (`Acc/Statics.lean`).
+  - *Statement:* from Y's state at instruction 5, the run reaches 6429 (the first argument decode) in
+    3420 steps with `AccBParams.St177`, and also [196616]₂ = ℰ₂(𝖢) and [196696]₈ = ℰ₈(𝖨), where
+    𝖢 = `coreCount` and 𝖨 = `maxPackageItems` of `env.params`. The SDK's `apply()` stores them
+    (`store_u16` at 56279 after the check 2 ≤ 𝖢 ≤ 341, `store_u64` at 56205 of a u16 field). They
+    are the words Handlers A's row 8 takes as `ParamStatics μ 𝖢 𝖨` (the ring size 2·𝖢·𝖨).
+  - *Assumed:* as `Acc.start_to_6429`, including `env.params = Params.full`. So 𝖢 = 341 and 𝖨 = 16.
+  - *Scope:* the facts hold at 6429. That the later code keeps 196616 … 196791 until row 8 is
+    still to be proved. The binary does not check 𝖨 > 0; 2·𝖢·𝖨 < 2³² follows from 𝖢 ≤ 341 and
+    𝖨 < 2¹⁶.
+
 ### picoalloc: the model (`Services/Picoalloc/`)
 
 `Services/Picoalloc/Model.lean` is picoalloc 5.2, the SDK's heap allocator, written as Lean

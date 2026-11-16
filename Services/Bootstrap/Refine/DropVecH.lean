@@ -1,4 +1,4 @@
-import Services.Bootstrap.Refine.DropOutH
+import Services.Bootstrap.Refine.DropOutL
 
 /-!
 # Refine's exit: the output `Vec<Instruction>` dropped, with heap elements
@@ -14,7 +14,7 @@ namespace Services.Bootstrap.Refine.DropVecH
 
 open PVM JAM Services.Bootstrap Services.Bootstrap.Code Services.Bootstrap.CodeX Services.Bootstrap.CodeR
   Services.Bootstrap.CodeT1B
-  Services.Bootstrap.Encode.Writer Services.Bootstrap.Refine.DropOut Services.Bootstrap.Refine.DropOutH
+  Services.Bootstrap.Encode.Writer Services.Bootstrap.Refine.DropOut Services.Bootstrap.Refine.DropOutH Services.Bootstrap.Refine.DropOutL
   Services.Bootstrap.Decode.HeapCtx Services.Bootstrap.Decode.LoopA Picoalloc
 
 set_option maxHeartbeats 8000000
@@ -66,9 +66,45 @@ theorem VVAt.congr {μ μ' : Memory} {s s' : State} {el : Nat} {own : Chunk → 
   · obtain ⟨a, hm, hu, ho, hne⟩ := hcs i hi hci
     exact ⟨a, (kp _ hm hu ho).1, hu, ho, hne⟩
 
+/-- **A `LookedUp` element at el**: index 18, its `Option<Vec<u8>>` capacity c (2^64 − 1 for `None`) and buffer ptr at
+    el + 8, el + 16; when c is neither 2^64 − 1 nor 0, the buffer is the data of an allocated chunk `ch` it owns. -/
+def LUAt (μ : Memory) (s : State) (el : Nat) (own : Chunk → Prop) : Prop :=
+  ∃ (c ptr : Nat) (ch : Chunk), μ.readN el 8 = Num.encodeLE 8 (9223372036854775807 + 18) ∧
+    μ.readN (el + 8) 8 = Num.encodeLE 8 c ∧ μ.readN (el + 16) 8 = Num.encodeLE 8 ptr ∧ ptr < 18446744073709551616 ∧
+    (c = 18446744073709551615 ∨ c = 0 ∨
+      (c < 18446744073709551615 ∧ ch ∈ chunks s ∧ ch.used = true ∧ ch.addr + 32 = ptr ∧ own ch))
+
+/-- An output element owning heap memory: a `DeleteItems` / `Imported` (`VVAt`) or a `LookedUp` (`LUAt`). -/
+def HeapEl (μ : Memory) (s : State) (el : Nat) (own : Chunk → Prop) : Prop :=
+  VVAt μ s el own ∨ LUAt μ s el own
+
+theorem LUAt.congr {μ μ' : Memory} {s s' : State} {el : Nat} {own : Chunk → Prop} {cb : Chunk}
+    (hv : LUAt μ s el own) (hcbD : ∀ a, el ≤ a → a < el + 32 → InData cb a)
+    (kcb : ∀ a, InData cb a → μ'.read a = μ.read a)
+    (kp : ∀ d ∈ chunks s, d.used = true → own d → d ∈ chunks s' ∧ ∀ a, InData d a → μ'.read a = μ.read a) :
+    LUAt μ' s' el own := by
+  obtain ⟨c, ptr, ch, e0, e8, e16, hp, hc⟩ := hv
+  have rc : ∀ a l, el ≤ a → a + l ≤ el + 32 → μ'.readN a l = μ.readN a l :=
+    fun a l h h' => Memory.readN_congr (fun j hj => kcb _ (hcbD _ (by omega) (by omega)))
+  refine ⟨c, ptr, ch, by rw [rc _ _ (by omega) (by omega)]; exact e0, by rw [rc _ _ (by omega) (by omega)]; exact e8,
+    by rw [rc _ _ (by omega) (by omega)]; exact e16, hp, ?_⟩
+  rcases hc with h | h | ⟨h1, hm, hu, ha, ho⟩
+  · exact Or.inl h
+  · exact Or.inr (Or.inl h)
+  · exact Or.inr (Or.inr ⟨h1, (kp ch hm hu ho).1, hu, ha, ho⟩)
+
+theorem HeapEl.congr {μ μ' : Memory} {s s' : State} {el : Nat} {own : Chunk → Prop} {cb : Chunk}
+    (hv : HeapEl μ s el own) (hcbD : ∀ a, el ≤ a → a < el + 32 → InData cb a)
+    (kcb : ∀ a, InData cb a → μ'.read a = μ.read a)
+    (kp : ∀ d ∈ chunks s, d.used = true → own d → d ∈ chunks s' ∧ ∀ a, InData d a → μ'.read a = μ.read a) :
+    HeapEl μ' s' el own := by
+  rcases hv with h | h
+  · exact Or.inl (h.congr hcbD kcb kp)
+  · exact Or.inr (h.congr hcbD kcb kp)
+
 /-- **The output `Vec<Instruction>` dropped, with heap elements** (29087 … t): the slice of n ≥ 1 elements at E (from
     V + 8, V + 16), in the data of the allocated chunk `cb`, each of a variant whose drop does nothing or a heap element
-    (`VVAt`, owning `own j`; no chunk is owned by two elements, none is `cb`). Every owned chunk is freed; the function
+    (`HeapEl`, owning `own j`; no chunk is owned by two elements, none is `cb`). Every owned chunk is freed; the function
     returns to `ret` (→ t) with ω₁, ω₅, ω₆ as they were. The heap context holds after; every allocated chunk owned by no
     element stays, with its data; the stack from sp up, the pages and the read-only bytes are kept. -/
 theorem drop_vecH {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] [HasCodeT1B p P]
@@ -83,7 +119,7 @@ theorem drop_vecH {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     (h0 : ω[0] = UInt64.ofNat ret) (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat V)
     (sV8 : μ.readN (V + 8) 8 = Num.encodeLE 8 E) (sV16 : μ.readN (V + 16) 8 = Num.encodeLE 8 n)
     (kinds : ∀ j, j < n → (∃ t, NoDrop t ∧ μ.readN (E + 232 * j) 8 = Num.encodeLE 8 (9223372036854775807 + t)) ∨
-      VVAt μ s (E + 232 * j) (own j))
+      HeapEl μ s (E + 232 * j) (own j))
     (tab : μ.readN 67760 96 = dtable) (hrt : ∀ a, 67760 ≤ a → a < 67856 → μ.readable a = true)
     (hrV : ∀ a, V + 8 ≤ a → a < V + 24 → μ.readable a = true)
     (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t)
@@ -112,7 +148,7 @@ theorem drop_vecH {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     · omega
   -- the hypotheses, in μ1
   have kinds1 : ∀ j, j < n → (∃ t, NoDrop t ∧ μ1.readN (E + 232 * j) 8 = Num.encodeLE 8 (9223372036854775807 + t)) ∨
-      VVAt μ1 s (E + 232 * j) (own j) := fun j hj => by
+      HeapEl μ1 s (E + 232 * j) (own j) := fun j hj => by
     rcases kinds j hj with ⟨tk, htk, hD⟩ | hvv
     · exact Or.inl ⟨tk, htk, by rw [Memory.readN_congr (fun i hi => lo1 _ (by omega))]; exact hD⟩
     · exact Or.inr (hvv.congr (cb := cb) (fun a h1 h2 => hcbD a (by omega) (by omega))
@@ -219,9 +255,27 @@ theorem drop_vecH {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
         by_cases h : sp - 80 + 48 ≤ b ∧ b < sp - 80 + 56
         · have := H2.st b (by omega) (by omega); rw [hwb] at this; exact absurd this (by decide)
         · omega
-      · have hvv2 : VVAt μ2 s2 (E + 232 * k) (own k) := hvv.congr (cb := cb)
+      · have hel2 : HeapEl μ2 s2 (E + 232 * k) (own k) := hvv.congr (cb := cb)
           (fun a h1 h2 => hcbD a (by omega) (by omega)) kcb.2
           (fun d hd hu ho => bkp d hd hu (fun j hj hoj => hown j k d (by omega) hk (by omega) hoj ho))
+        rcases hel2 with hvv2 | hlu2
+        rotate_left
+        · obtain ⟨c, ptr, ch, l0, l8, l16, lp, lc⟩ := hlu2
+          have hco : c ≠ 0 → c ≠ 18446744073709551615 → own k ch := fun h0 hm => by
+            rcases lc with h | h | ⟨-, -, -, -, ho⟩
+            · exact absurd h hm
+            · exact absurd h h0
+            · exact ho
+          obtain ⟨ω3, μ3, s3, N3, run3, c1, c5, c6, H3, cfr, ckp, crd, cwr, cro⟩ := drop_lu (p := p) (P := P) (R := R)
+            env pb S0 S1 x ω2 μ2 s2 (sp - 80) E k c ptr ch cb ⟨by omega, by omega, by omega, by omega⟩ (by omega) lp
+            (by rcases lc with h | h | ⟨h1, h2, h3, h4, -⟩
+                · exact Or.inl h
+                · exact Or.inr (Or.inl h)
+                · exact Or.inr (Or.inr ⟨h1, h2, h3, h4⟩))
+            (fun a h1 h2 => hcbD a (by omega) (by omega)) (fun h0 hm he => hcbo k hk (he ▸ hco h0 hm))
+            b1 b6 H2 kcb.1 cbu f40 f32 f24 f16 l0 l8 l16 tab2 hrt2
+          exact next ω3 μ3 s3 N3 run3 c1 c5 c6 H3 (fun a h0 h1 h2 h3 => cfr a h0 h1 h2 h3)
+            (fun d hd hu hno => ckp d hd hu (fun h0 hm he => hno (he ▸ hco h0 hm))) crd cwr cro
         obtain ⟨tv, arm, head, nxt, back, rt, c0, ptr, len, c, q, cs, co, hv, e0, e8, e16, e24, hw, hco, hc01, hl0, hptr,
           hcq, hcs, hdist, hcoD⟩ := hvv2
         obtain ⟨ω3, μ3, s3, N3, run3, c1, c5, c6, H3, cfr, ckp, crd, cwr, cro⟩ := drop_vv (p := p) (P := P) (R := R)

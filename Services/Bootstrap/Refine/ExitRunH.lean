@@ -7,7 +7,7 @@ import Services.Bootstrap.Refine.FinH
 
 `ExitRun.exit_run` where an output element may own heap memory: the encoder is `ExitEncH.enc_runH` (elements
 `EncOkMH 232`, reading heap octets `src`, the writer regrown as needed), and the drop is `FinH.fin_runH` (an element is
-of a variant whose drop does nothing, or a `DeleteItems` / `Imported` element owning the chunks `own j`, `VVAt`). The
+of a variant whose drop does nothing, or a `DeleteItems` / `Imported` / `LookedUp` element owning the chunks `own j`, `HeapEl`). The
 output's slots are described at the loop's end state directly, the output buffer being at Eo (from M + 256). The owned
 chunks and the heap octets read are chunks the loop keeps (`Kp`, not the input's chunk `ce`).
 Internal hypotheses (until `ReallocBig`): `hcapB`, `hbig`; and the frame bounds `2147484384 ≤ M`, `S1 + 16 < 2^32`.
@@ -28,7 +28,7 @@ set_option maxRecDepth 100000
 /-- **Refine's exit, with heap elements** (5042 … t): `ExitRun.exit_run` where output slot j (at Eo + 232 j) satisfies
     `rep j` (with memory) for the encoder (`EncOkMH 232` to `enc j`) and `DR j` for the `Debug` line, both depending on
     memory only through the octets `src j` (in chunks the loop keeps), and is of a variant whose drop does nothing or a
-    heap element owning `own j` (kept chunks, disjoint between slots). Refine returns ℰ(`BootstrapWorkOutput`) as in
+    heap element (`HeapEl`) owning `own j` (kept chunks, disjoint between slots). Refine returns ℰ(`BootstrapWorkOutput`) as in
     `exit_run`, or an allocation fails. -/
 theorem exit_runH {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] [HasCodeT1B p P]
     [Services.Bootstrap.CodeA.HasCodeA p P] (env : RefineHost.Env) (cap0 : Nat)
@@ -53,7 +53,7 @@ theorem exit_runH {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     (hownK : ∀ j d, j < n → own j d → Kp d ∧ d ≠ ce)
     (hown : ∀ j j' d, j < n → j' < n → j ≠ j' → own j d → own j' d → False)
     (hV : ∀ j, j < n → (∃ t, DropOut.NoDrop t ∧ μ.readN (Eo + 232 * j) 8 = Num.encodeLE 8 (9223372036854775807 + t)) ∨
-      VVAt μ s (Eo + 232 * j) (own j))
+      HeapEl μ s (Eo + 232 * j) (own j))
     (w c' q ret r5 r6 t : Nat) (cq : Chunk) (hw64 : w < 18446744073709551616)
     (s80 : μ0.readN (M + 80) 8 = Num.encodeLE 8 w)
     (s88 : μ0.readN (M + 88) 8 = Num.encodeLE 8 c') (s112 : μ0.readN (M + 112) 8 = Num.encodeLE 8 q)

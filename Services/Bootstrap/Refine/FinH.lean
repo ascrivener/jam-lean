@@ -21,7 +21,7 @@ set_option maxRecDepth 100000
 variable {X : Type} {R : HostRel X}
 
 /-- **Refine's epilogue, with heap elements** (6295 … t): `Fin.fin_run` where each output element is of a variant whose
-    drop does nothing or a heap element (`VVAt`, owning `own j`; the owned chunks are disjoint between elements and are
+    drop does nothing or a heap element (`HeapEl`, owning `own j`; the owned chunks are disjoint between elements and are
     neither the output buffer `co` nor the payload buffer `cq`). The owned chunks are freed too; every allocated chunk
     owned by no element, other than `co` and `cq`, keeps its data. -/
 theorem fin_runH {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] [HasCodeT1B p P]
@@ -45,7 +45,7 @@ theorem fin_runH {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Has
     (hret : RetTo P ret t) (hr5 : r5 < 18446744073709551616)
     (hr6 : r6 < 18446744073709551616)
     (kinds : ∀ j, j < n → (∃ t, DropOut.NoDrop t ∧ μ.readN (E + 232 * j) 8 = Num.encodeLE 8 (9223372036854775807 + t)) ∨
-      VVAt μ s (E + 232 * j) (own j))
+      HeapEl μ s (E + 232 * j) (own j))
     (tab : μ.readN 67760 96 = DropOut.dtable) (hrt : ∀ a, 67760 ≤ a → a < 67856 → μ.readable a = true) :
     ∃ ω' μ' s' N, FreeStepsH p R 6295 ω μ x t ω' μ' x N ∧ HeapCtx env pb S0 S1 μ' s' ∧
       ω'[0] = UInt64.ofNat ret ∧ ω'[1] = UInt64.ofNat (M + 632) ∧ ω'[5] = UInt64.ofNat r5 ∧

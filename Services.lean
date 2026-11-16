@@ -438,7 +438,6 @@ import Services.Bootstrap.Refine.SlotHeap
 import Services.Bootstrap.Refine.SlotVV
 import Services.Bootstrap.Refine.EmptyElems
 import Services.Bootstrap.Refine.SlotEmpty
-import Services.Bootstrap.Refine.PassCS
 import Services.Bootstrap.Refine.EncRSA
 import Services.Bootstrap.Refine.EncProvide
 import Services.Bootstrap.Refine.Prologue

@@ -82,6 +82,21 @@ proved up to the composition with `PInv`. All files build, axioms clean.
   (67760 + offset_t)/2 − 1. The encoder with growth needs H arms for every fixed kind (`ArmsHFixed` etc.). `LayLMH`
   needs cap = 232n + 6 ≤ capBound (2^28), i.e. n ≲ 1.157M internally until ReallocBig.
 
+**Progress on B (2026-11-16, third instance):**
+- Tier T1B generated and kernel-checked (`CodeT1B*`, range (29181, 29675); the previous note's 29176 starts inside the
+  instruction at 29175 and gave a false fact).
+- `DropOutH`: the drop arms of `DeleteItems` (5, arm 29270) and `Imported` (19, arm 29476), straight-line: `ddV`
+  (dispatch 29188 → arm; table entries 1360 / 1372), `va` / `va0` (items or none), `vz` + `vn` = `vi0` (an item of
+  capacity 0, on to the next), `vi1` (an item's `dealloc(q, c, 1)`, return 1362 → 29336 / 1374 → 29540), `vb` (after
+  it), `vo0` / `vo1` (the outer buffer, `dealloc(ptr, 24·cap, 8)`, return 1356 → 29181). All build.
+- Next for B: `drop_vv` (one heap element, 29188 → 29181: the item loop by induction with
+  `Decode.DeallocCall.dealloc_call`, which is for any host relation), then `drop_vecH` (the whole output drop with the
+  heap context, `NoDrop` elements by `DropOut.dd`), then `exit_runH` (encoder with growth via
+  `Encode.EncMHLoop.encode_okMH_big` and the arms `delete_itemsH_232` / `importedH_232` / `looked_up_someH`, the wider
+  `DRm`, `drop_vecH`), then `PInv` carrying chunks owned by output slots (for Lookup), then refine_t1c.
+- pvm_go pitfall: a piece whose start pc equals its target (a loop head reached again) can stop at once; split it
+  (`vi0` = `vz` + `vn`). Negative offsets: read as `w + 2^64 − 8` and convert as in `Export.xr1`.
+
 Decided by the coordinator on 2026-11-15:
 - the new theorem `refine_t1c` is added in T1's match form, and `refine_milestone` stays unchanged;
 - the wider `DRm` and the new `LookupFmtOk` go on `refine_t1c` only;

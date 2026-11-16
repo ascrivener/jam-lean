@@ -81,6 +81,18 @@ are agreed through the parent.
 Added for R7 (parent, option (A)): **`DropInstrsH`** over the `InstrRep` bundle's `foot`
 (`Acc/Handlers/InstrRep.lean`), frame-only, for the instructions' `IntoIter` drop (33214).
 
+R7's interface with R5 (accepted by the parent on 2026-11-16). These are premises of `row_eleven`
+(`Acc/Handlers/RowElevenFront.lean`, from 15028), and R5 must prove them, so they add no
+assumption. The IntoIter is at sp + 472, and F := `iterFree B μ (sp + 472) is.length`:
+- `IterOwn B μ st (sp + 472) is`;
+- `(F ++ tailFree μ sp).Nodup`;
+- `ResultsAvoid μ st (rdN μ (sp + 456) 8) rs F` (`Acc/Handlers/ResultsAvoid.lean`): `ResultsAt` with
+  `InHeap st` replaced by `InHeapP (AvoidC st F)`, so every octet the results occupy lies in an
+  allocated chunk whose data address is not in F. It implies `ResultsAt` (`ResultsAvoid.toAt`);
+- DropInstrsH's stack room: 2³¹ + 4096 ≤ sp and S0 + 4096 ≤ sp;
+- `row_eleven_core`'s premises (`TailHyp`, `LoopHyp`, and b ↔ the low bit of [sp + 160]); R5 links b to
+  `is.any` Zombify.
+
 
 Already accepted or decided: `ValuesFit` (< 2⁶³); `ParamStatics` (an obligation, proved on the
 statics branch); RO-data facts (R10); the fmt hypotheses `KeyFmt`, `Utf8Call`, `LogFmt` and the

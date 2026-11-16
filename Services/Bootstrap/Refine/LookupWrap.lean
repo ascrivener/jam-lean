@@ -120,6 +120,37 @@ theorem wl {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR 
     · rd_simp []
     · rd_simp [hwr]
 
+/-- As `wl`, with ⌈r/32⌉ ≥ 2^31 units: ω₉ is the units' low word sign-extended, ⌈r/32⌉ + 2^64 − 2^32.
+    `wl`'s text: the allocator's lock is taken (ω₄ parked at 196608,
+    the lock word at 206848 or-ed with 1) and `alloc_impl` is called for ⌈r/32⌉ units, align 1, zeroed (ω₁₀ = 1),
+    return address 2184, with ω₅ = r and ω₆ = 196792. Memory changes only at 196608 … 196616 and 206848 … 206852. -/
+theorem wlh {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] (x : X) (ω : Regs)
+    (μ : Memory) (r : Nat) (hr0 : r ≠ 0) (hr1 : r ≤ 137438953440) (hu : 2147483648 ≤ (r + 31) / 32)
+    (h7 : ω[7] = UInt64.ofNat r) (hl : rdN μ 206848 1 = 0) {HT S0 S1 : Nat} (hH : 206864 ≤ HT)
+    (hwr : WrAt μ HT S0 S1) :
+    ∃ ω' μ', FreeStepsH p R 5368 ω μ x 41177 ω' μ' x 30 ∧ ω'[1] = ω[1] ∧
+      ω'[0] = UInt64.ofNat 2184 ∧ ω'[5] = UInt64.ofNat r ∧ ω'[6] = UInt64.ofNat 196792 ∧
+      ω'[7] = UInt64.ofNat 196792 ∧ ω'[8] = UInt64.ofNat 1 ∧ ω'[9] = UInt64.ofNat ((r + 31) / 32 + 18446744069414584320) ∧
+      ω'[10] = UInt64.ofNat 1 ∧
+      (∀ a, a < 4294967296 → (a < 196608 ∨ 196616 ≤ a) → (a < 206848 ∨ 206852 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.writable a = μ.writable a) := by
+  have hr := hwr.rd
+  have hq : (r + 31) / 32 / 2147483648 = 1 := by omega
+  have hand := Alloc.lock_test (w := rdN μ 206848 4) (by rw [Alloc.rdN4_mod]; exact hl)
+  have hr0' : ¬ r = 0 := hr0
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?μ', ?run, ?post⟩
+  case run => pvm_go [h7, hr0', hr1, hu, hand, hwr, hr, rdN_writeN_disjoint, ↓rdN_fold, ↓loadI_fold]
+  case post =>
+    refine ⟨by reg_val, by reg_val, by reg_val, by reg_val, by reg_val, by reg_val, ?_, by reg_val,
+      fun a ha h1 h2 => ?_, fun a => ?_⟩
+    · simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some',
+        List.lookup_nil, Option.getD_none]
+      try rd_simp []
+      try simp [hq]
+    · rd_simp []
+    · rd_simp [hwr]
+
 /-- 49149 … 49174, back from `alloc_impl` with a block buf ≠ 0 (ω₇): the lock octet 206848 cleared, then Ω_H again
     into the block: ω₇ = the service id (G), ω₈ = the hash's address (G + 8), ω₉ = buf, ω₁₀ = 0, ω₁₁ = r (ω₅), with
     ω₆ = buf. Memory changes only at 206848. -/

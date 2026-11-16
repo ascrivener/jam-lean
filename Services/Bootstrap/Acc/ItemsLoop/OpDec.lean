@@ -96,7 +96,6 @@ structure At8013 (env : AccEnv) (B : InstrRep) (pb S0 S1 sp cp ptr : Nat) (st₁
   H : HeapCtxC env.code pb S0 S1 s₂.μ st₂
   keep : ∀ d ∈ chunks st₁, d.used = true → d ∈ chunks st₂ ∧ ∀ a, InData d a → s₂.μ.read a = μ₁.read a
   V : VecOwn B s₂.μ st₂ b c is
-  hb8 : b % 8 = 0
   hb : b + 232 * is.length < 2 ^ 64
   fresh : ∀ q ∈ vecFree B s₂.μ b c is.length, ∀ d ∈ chunks st₁, d.used = true → d.addr + 32 ≠ q
   res : (is = [] ∧ rdN s₂.μ (sp + 448) 8 = 0 ∧ rp = 8) ∨
@@ -191,7 +190,7 @@ theorem op_dec {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env :
       ⟨by omega, by omega⟩ res2 hrf2
     exact .inr (.inl ⟨hdec, ends_of_15361 (P := P) ⟨7009, ω, μ, cx, f⟩ (run2.trans r3)⟩)
   next is item hdec =>
-  obtain ⟨b, c, e1568, hc, e1576, e1584, e1592, V, hb8, hb, hfr⟩ := res2
+  obtain ⟨b, c, e1568, hc, e1576, e1584, e1592, V, hb, hfr⟩ := res2
   suffices hs : Aborts p (KeepCtx (accContractS env)) Ab ⟨7009, ω, μ, cx, f⟩ cx ∨
       ∃ b c rp st₂ s₂, Reaches p (KeepCtx (accContractS env)) ⟨7009, ω, μ, cx, f⟩ s₂ ∧ s₂.c = cx ∧
         At8013 env B pb S0 S1 sp cp ptr st₁ μ is item b c rp st₂ s₂ by
@@ -222,7 +221,7 @@ theorem op_dec {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env :
     intro rp st₃ ω3 μ3 N3 r3 H3 kp3 h31 h36 m240 m128 m176 m248 m456 m464 p0 p1 p2 p3 fr3 gl3 lo3 res3
     obtain ⟨V3, hvf⟩ := VecOwn.keep V kp3
     refine ⟨b, c, rp, st₃, ⟨8013, ω3, μ3, cx, f⟩, ⟨_, run2.trans r3⟩, rfl, ⟨rfl, h31, h36, H3,
-      fun d hd hu => ?_, V3, hb8, hb, ?_, ?_, m456, m464, m240, m248, ?_, m128, ?_, ?_, ?_, ?_, ?_⟩⟩
+      fun d hd hu => ?_, V3, hb, ?_, ?_, m456, m464, m240, m248, ?_, m128, ?_, ?_, ?_, ?_, ?_⟩⟩
     · obtain ⟨h2, k2⟩ := kp2 d hd hu
       obtain ⟨h3, k3⟩ := kp3 d h2 hu
       exact ⟨h3, fun a ha => (k3 a ha).trans (k2 a ha)⟩

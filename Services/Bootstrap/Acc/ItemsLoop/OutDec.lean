@@ -18,7 +18,7 @@ allocator's context (for some state keeping every allocated chunk of the old one
 memory from sp up but the reader (sp + 1144 … 1160) and the result (sp + 1568 … 1600), the statics
 and the octets below 196608 with their access; and
 - if `decode (Dec.output C) out = some (is, item)`: the result is the `Vec` { c ≠ −1, b, |is| } with
-  `VecOwn` (each 232-octet slot represents its instruction, `InstrRep`), b 8-aligned, the slots below
+  `VecOwn` (each 232-octet slot represents its instruction, `InstrRep`), the slots below
   2⁶⁴, the instructions' buffers fresh (none an old allocated chunk), and ℰ₂(item) at sp + 1592;
 - if it is `none`: −1 at sp + 1568;
 
@@ -38,7 +38,7 @@ def OutDecRes (B : InstrRep) (C : Spec.Consts) (out : List UInt8) (μ : Memory) 
   match Spec.decode (Spec.Dec.output C) out with
   | some (is, item) => ∃ b c, rdN μ (sp + 1568) 8 = c ∧ c ≠ 18446744073709551615 ∧
       rdN μ (sp + 1576) 8 = b ∧ rdN μ (sp + 1584) 8 = is.length ∧
-      μ.readN (sp + 1592) 2 = fixed 2 item ∧ VecOwn B μ st b c is ∧ b % 8 = 0 ∧
+      μ.readN (sp + 1592) 2 = fixed 2 item ∧ VecOwn B μ st b c is ∧
       b + 232 * is.length < 2 ^ 64 ∧
       ∀ q ∈ vecFree B μ b c is.length, ∀ d ∈ chunks st₀, d.used = true → d.addr + 32 ≠ q
   | none => rdN μ (sp + 1568) 8 = 18446744073709551615

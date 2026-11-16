@@ -18,7 +18,32 @@
   `lp_body` / `lp_items` (`FeetOwn`) / `lp_call` / `g_call` / `g_inputs` to `inputs_decode`, which now states
   `SlotsOwn st' μ' q n` (buffer chunk + slots' buffers owned); `itemsOwn_of_slots` (`ItemsLoop/Inv.lean`)
   gives `ItemsOwn` and the slot-buffer chunk for `ItemsInv`.
-- **Next:** when Handlers A lands the three interface changes: 8013 → `add_recent` → `results_init` →
+- Later in session 5: merged Handlers A 5a3c238 (EntryHyp `hres` with cap = n, ω₆ in AddPost / R9Post, Glob in
+  R57Post, hBall gone; hb8 from `ChunkAlign`); dropped `b % 8 = 0` from `OutDecH` (@parent approved `OutDecH`
+  as drafted otherwise; note it and the decode-failure branch in whats-proven). `ItemsInv` now also holds at
+  6782 (first entry; cursor `curAt`, `ItemsInv.to6782`). `ItemsLoop/ImplRO.lean`: `Impl.keepRO` (octets
+  < 196608 and their access kept along any `Impl`; needed since AddPost has no readability conjunct) and
+  `OpRO` (kc words 68680/68688/68696, RO range 68680…69076, jump table 65736).
+- **op_arm plan (next session):** (1) add `ro2 : OpRO s.μ` to `ItemsInv` (arms re-establish it with
+  `OpRO.keep` like `TrRO.keep`); (2) new file `ItemsLoop/Op.lean`, `op_arm : OpArm …` with premises
+  `ItemLogFmt`, `OutDecH`, Handlers A's `InstrLogH ResultLogH HandlerH PushH ExtendH OkEncH DropInstrsH`,
+  `ParamStatics μ₀ C I`, `RingFits`, `hmax`, Ab covering HeapFailT, 34070 / 47977 / 32584 / 36528 / 15364 and
+  40611 / 40821 (any ω₇). Chain: `opArm_head` → slot facts (cpy gives [sp+288] = |b| ≠ −1, [296] = ptr,
+  [304] = |b|, readN (sp+312) 32 = packageHash) → `op_dec` → case decode: none → `onWorkItem_none` (panic);
+  some → `onWorkItem_some`, `Impl.pre` to 8013, `Impl.bind` `add_recent` (AddPost, ω₆ kept), `Impl.bind`
+  `results_init` (R9Post) with `Prog.bind_assoc'`, then `loop_row11` with `EntryHyp` built from `At8013` +
+  frames (TailHyp: results buffer chunk, sp+104 output buffer and sp+272 trace buffer from `ItemsOwn`;
+  `hnd` from freshness), `f := wiBody` (`wiBody_ck` / `wiBody_other`), Inv := `ValuesFit env c.1`; then
+  R57Post → `ItemsInv rest` (StableKeep covers the words; rest's chunks are outside vecFree / tailFree by
+  freshness and ItemsOwn nodup); use `Impl.keepRO` and `Impl.inv` for RO / ValuesFit at the end.
+- **R16 map** (survey, 2026-11-16): `accumulate_spec` not stated yet; final step is `psiA_of_impl`
+  (`Acc/Impl/Lift.lean:120`). Missing links: 5 → 6501 with statics (rebuild `start_to_6501` with
+  `Statics.chain`); `HeapCtxC` before 6501 (analogue of refine's `args_ctx`, `Refine/ArgsCtx.lean:490`);
+  6501 → 6630 is `acc_log_line` (`Fmt/AccFmt.lean:157`, accContractK, HeapCtx in, x' existential);
+  accContractK → KeepCtx (accContractS) via `FreeStepsH.pairS` (`Wrappers/GrowS.lean:51`); n = 0 path
+  6674 → 15215 → halt (no lemma yet); glue `inputs_decode` + `il_head` → `ItemsInv` at 6782
+  (`itemsOwn_of_slots`). Template: `Refine/Milestone.lean` `refine_milestone`.
+- **Next:** when Handlers A lands the three interface changes (done, see above): 8013 → `add_recent` → `results_init` →
   `loop_row11` → `ItemsInv` for the rest (R57Post → ItemsInv: StableKeep covers every word ItemsInv
   reads; the rest's chunks survive since they are neither `vecFree` (fresh), the results buffer (fresh)
   nor this item's trace / output buffers (`ItemsOwn` nodup)). Then R15/R16.

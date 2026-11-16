@@ -57,6 +57,28 @@ length prefix ℰ(n) and output ℰ(n) ⌢ encodings ⌢ ℰ₂(w)). Builds, axi
   to the halt with ℰ(`BootstrapWorkOutput { outI is, I }`).
 - Next: part B; then refine_t1c (T1's match form) once the bound question is settled.
 
+**Progress (2026-11-16, fifth instance; branch `claude/bootstrap-t1-m1c`).** Main (#214) merged in. Every file below builds
+with `lake env lean`; axioms clean.
+- `LookupStep2.lookup_step`: the whole eager `Lookup` step, `PInv k` at i → `PInv (k + 1)` at 5042: `lmid`, then `lfmt`
+  (5372 → 5448: `LookupFmtOk`, log, `String` freed), `lpush` (5448 → 4046: `LookedUp(result)` pushed, with room or
+  `grow_one`), `Lookup.ldrop` (→ 5042). Slot k satisfies `LUSlot` (so `O k` via `hO`); `LUOwn` says what happens to μ0 and
+  `Kp`: unchanged for `None` and `Some []` (buffer 1), else the preimage's chunk is adopted (`PInv.adopt`, μ0 rebased by
+  `snapWith`). Named hypotheses: `LookupFmtOk` and `htab` (`(ro.drop 32).take 4 = dropEntry8`, part of `VendoredFactsC`);
+  the step also takes `rtab` (65568 … 65572 readable at its start). Internal: `hlen`, `hgas`.
+- `ElemsBigC`: the 8 `*_elem_bigC` (`import`, `bless`, `random_storage_ok`, `designate`, `looked_up_some`,
+  `provide_inline`, `create_service_some`, `assign_gas`): `ElemsBig.*_elem_big` as `ElemOkAFC`, the slot's buffer word
+  naming a returned chunk that holds the buffer (`OwnsBuf cs bs off m`: off 16, except `provide_inline` 24 and
+  `create_service_some` 8). These cover only the large sizes (> 1024 pairs / > 512 hashes / > 48 keys / > 16384 octets);
+  the small adapters (`ElemsBig`'s counterparts in `Decode/*Elem*.lean`, and `assign_elem`) need the same `C` form for
+  refine_t1c. Not done yet.
+- Still open for part B: the output drop arms of the other heap kinds (indices 0, 11, 12, 13, 17, 22, 24; `DropOut.NoDrop`
+  excludes them and `HeapEl` covers only 5, 18, 19), the encoder arms `EncOkMH` and `DRm` for them.
+- **Debug field formatters the new kinds reach** (for the field-formatter session; from `Fmt/README.md`'s arm table): the
+  output kinds refine_t1c adds are tags 0, 5, 11, 12, 13, 17, 18, 19, 22, 24. Beyond the milestone's formatters (28822,
+  28843, 37549, 56340) they reach **315, 26397, 26605, 26905, 28739, 28801, 29877, 36534, 36594, 36654, 36732, 37611,
+  57485**, through the builders/tails 63820 (tag 0), 28576 (5, 13, 18), 63570 (11), 27665 (12), 28280 (17), 62816 (19),
+  62471 (22) and 28458 (24). Not needed: 26706 (tag 9, `Import`, never an output) and 36972 (tag 21, RSR, excluded).
+
 **Handoff (2026-11-16, end of the fourth instance; branch `claude/bootstrap-t1-m1c`, pushed, no PR yet).** Every file
 below builds; axioms clean. #214 (part A) was still in attempt-1 at handoff (`model` green): merge it on green, then merge
 main into this branch before opening its PR. A full `lake build` of this branch was started but not finished (the cache

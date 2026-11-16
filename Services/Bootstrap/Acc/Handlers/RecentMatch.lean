@@ -344,4 +344,135 @@ theorem rm_head {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
     · rw [loB a ha, frA a (by omega) (.inl (by omega))]
   · exact .inr ⟨e, ωB, μB, _, he, runA.trans runB⟩
 
+/-- The octets above sp the slot read and removal may change: the key buffer (sp + 744, 36), the
+    slot's `Option<(H, u16)>` (sp + 1144, 36) and the key value (sp + 1568, 36). -/
+def RmOut (sp a : Nat) : Prop :=
+  (sp + 744 ≤ a ∧ a < sp + 780) ∨ (sp + 1144 ≤ a ∧ a < sp + 1180) ∨ (sp + 1568 ≤ a ∧ a < sp + 1604)
+
+/-- **The state after the slot read and removal** (8172), against the memory μ₀ and allocator state
+    st at 8056: ω₁ = sp, ω₅ = c (the counter, stored again at 8177); the allocator's context for
+    some st′ keeping every allocated chunk of st with its data; memory kept above sp off `RmOut`,
+    at the globals 196616 … 196791 and below 196608. -/
+def RmPost (code : ByteArray) (pb S0 S1 sp c : Nat) (st : State) (μ₀ : Memory) (s' : St Stream) : Prop :=
+  s'.i = 8172 ∧ s'.ω[1] = UInt64.ofNat sp ∧ s'.ω[5] = UInt64.ofNat c ∧
+  ∃ st', HeapCtxC code pb S0 S1 s'.μ st' ∧
+    (∀ d ∈ chunks st, d.used = true → d ∈ chunks st' ∧ ∀ a, InData d a → s'.μ.read a = μ₀.read a) ∧
+    (∀ a, a < 4294967296 → sp ≤ a → ¬ RmOut sp a → s'.μ.read a = μ₀.read a) ∧
+    (∀ a, Glob a → s'.μ.read a = μ₀.read a) ∧ (∀ a, a < 196608 → s'.μ.read a = μ₀.read a)
+
+/-- **`addRecent`'s slot read and removal** (8056 → 8172): from 8056 with ω₁ = sp and the counter c
+    in ω₅, the run implements `match ← load (.recent c) slotDec with | some (p, i) => remove
+    (results p i) | none => pure ()` (GP v0.8.0 Appendix B: Ω_R, then Ω_W with an empty value; quirk
+    Q18: `remove` panics on FULL) in `Impl`'s form, ending in `RmPost`. Early ☇ (`Ab`) happens only at
+    the allocation-failure traps 34070 and 47977 (heap exhaustion). Hypotheses: the key-size word
+    for tag 1 at 68688 (5 ≤ kc, kc + 31 < 2³⁶), readable; this service's storage values shorter than
+    2⁶³ octets (`ValuesFit`). -/
+theorem recent_match {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env : AccEnv) (cap : Nat)
+    (hcap1 : 134217728 ≤ cap) (hcap : cap < 18446744073709551616)
+    (Ab : St Stream → Prop) (hAb1 : ∀ s : St Stream, s.i = 34070 → Ab s)
+    (hAb2 : ∀ s : St Stream, s.i = 47977 → Ab s)
+    (s : St Stream) (st : State) (sp c kc pb S0 S1 : Nat) (H : HeapCtxC env.code pb S0 S1 s.μ st)
+    (hi : s.i = 8056) (h1 : s.ω[1] = UInt64.ofNat sp) (h5 : s.ω[5] = UInt64.ofNat c)
+    (hc : c < 18446744073709551616)
+    (hsp : 2147483648 + 352 ≤ sp ∧ sp % 8 = 0) (hS0 : S0 + 352 ≤ sp) (hS1 : sp + 1632 ≤ S1)
+    (mc : s.μ.readN 68688 8 = Num.encodeLE 8 kc) (hkc : 5 ≤ kc ∧ kc + 31 < 68719476736)
+    (hrt : ∀ a, 68688 ≤ a → a < 68696 → s.μ.readable a = true)
+    (hvals : ∀ key v, s.c.1.self.storage.get? key = some v → v.length < 9223372036854775808) :
+    Impl p (accContractS env) env Ab
+      (Prog.bind (load (.recent c) RecentSlot.slotDec) (fun v => match v with
+        | some (q, k) => Prog.op (AOp.remove (Key.results q k).encode)
+        | none => Prog.pure ()))
+      (fun _ => RmPost env.code pb S0 S1 sp c st s.μ) s := by
+  obtain ⟨i, ω, μ, c0, f⟩ := s
+  dsimp only at hi h1 h5 H mc hrt hvals ⊢
+  subst hi
+  have hSt := H.st
+  have hS1' := H.hS1
+  have hb0 := H.hb0
+  have hbT := H.hbT
+  show Impl p (accContractS env) env Ab (Prog.call (AOp.read (Key.recent c).encode) (fun v =>
+      match v.bind (decode RecentSlot.slotDec) with
+      | some (q, k) => Prog.op (AOp.remove (Key.results q k).encode)
+      | none => Prog.pure ())) _ _
+  unfold Impl
+  rcases rm_head (P := P) env cap hcap1 hcap c0 f ω μ st sp c kc pb S0 S1 H h1 h5 hc hsp hS0 hS1 mc hkc hrt
+      (hvals _) with
+    ⟨st', ωB, μB, nB, runB, b1, b5, b6, soB, HB, keepB, frB, glB, loB, bdB⟩ | ⟨e, ωB, μB, nB, he, runB⟩
+  rotate_left
+  · rcases he with rfl | rfl
+    · exact .inl ⟨⟨34070, ωB, μB, c0, f⟩, ⟨nB, runB⟩, hAb1 _ rfl, ωB, μB, f,
+        .exit (FreeRun.exit (RecentCounter.trap_34070 (P := P) ωB μB)) (by simp)⟩
+    · exact .inl ⟨⟨47977, ωB, μB, c0, f⟩, ⟨nB, runB⟩, hAb2 _ rfl, ωB, μB, f,
+        .exit (FreeRun.exit (trap_47977 (P := P) ωB μB)) (by simp)⟩
+  refine .inr ⟨⟨8056, ω, μ, c0, f⟩, ⟨0, .refl⟩, rfl, ?_⟩
+  have hkr : ASem.argBase + (Key.recent c).encode.length ≤ ASem.outBase := by
+    simp only [Key.encode, JAM.Codec.fixed, List.length_append, PVM.Num.length_encodeLE, List.length_cons,
+      List.length_nil, ASem.argBase, ASem.outBase]; decide
+  rw [show ({ i := 8056, ω := ω, μ := μ, c := c0, q := f } : St Stream).c = c0 from rfl,
+    ASem.step_read env (Key.recent c).encode c0 hkr bdB]
+  try dsimp only
+  refine .inr ⟨⟨8079, ωB, μB, c0, f⟩, ⟨nB, RecentCounter.keep_yin runB rfl⟩, rfl, ?_⟩
+  try dsimp only
+  have hS1B := HB.hS1
+  -- memory facts up to 8079, against μ
+  have kB : ∀ a, a < 4294967296 → sp ≤ a → (a < sp + 1144 ∨ sp + 1180 ≤ a) →
+      (a < sp + 1568 ∨ sp + 1576 ≤ a) → μB.read a = μ.read a := frB
+  have dataB : ∀ d ∈ chunks st, d.used = true → ∀ a, InData d a → a < 2147483648 := fun d hd hu a ha => by
+    have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hd hu
+    unfold InData at ha; omega
+  generalize hv : (c0.1.self.storage.get? (Key.recent c).encode).bind (decode RecentSlot.slotDec) = v at soB
+  cases v with
+  | none =>
+    obtain ⟨ωC, runC, g0, g1, g5, g6⟩ := rm_none (P := P) (R := KeepCtx (accContractS env)) (c0, f) ωB μB sp b1
+      (by omega) soB (fun a h1 h2 => Memory.readable_of_writable (HB.st a (by omega) (by omega)))
+    refine .inr ⟨⟨8172, ωC, μB, c0, f⟩, ⟨_, runC⟩, rfl, rfl, g1, g5.trans (b5.trans h5), st', HB,
+      keepB, fun a h0 ha hn => ?_, glB, loB⟩
+    unfold RmOut at hn
+    exact kB a h0 ha (by omega) (by omega)
+  | some qk =>
+    obtain ⟨q, k⟩ := qk
+    obtain ⟨ω2, μ2, n2, run2, a0, a1, a5, a6, a7, a8, ok2, fr2, rd2, wr2⟩ :=
+      rm_to_remove (P := P) (R := KeepCtx (accContractS env)) (c0, f) ωB μB sp k q b1 (by omega) soB
+        (fun a h1 h2 => Memory.readable_of_writable (HB.st a (by omega) (by omega)))
+        (fun a h1 h2 => HB.st a (by omega) (by omega)) (fun a h1 h2 => HB.st a (by omega) (by omega))
+    show Impl p (accContractS env) env Ab (Prog.call (AOp.remove (Key.results q k).encode) Prog.pure) _ _
+    unfold Impl
+    refine .inr ⟨⟨48481, ω2, μ2, c0, f⟩, ⟨n2, run2⟩, rfl, ?_⟩
+    have hkl : (Key.results q k).encode.length = 35 := by rw [← ok2, Memory.length_readN]
+    have hkr2 : ASem.argBase + (Key.results q k).encode.length ≤ ASem.outBase := by
+      rw [hkl]; decide
+    try dsimp only
+    rw [ASem.step_remove env (Key.results q k).encode c0 hkr2 (hvals _)]
+    have hwf : ∀ a, sp - 16 ≤ a → a < sp → μ2.writable a = true := fun a h1 h2 => by
+      rw [wr2]; exact HB.st a (by omega) (by omega)
+    have hk2 : μ2.rangeReadable (sp + 744) 35 = true := Services.Witness.rangeReadable_of
+      (fun a h1 h2 => by rw [rd2]; exact Memory.readable_of_writable (HB.st a (by omega) (by omega))) (by omega)
+    rcases remove_call (P := P) env c0 f ω2 μ2 sp (sp + 744) 35 (Key.results q k).encode a1 a7 a8
+        (by decide) (by omega) ⟨by omega, by omega⟩ hwf hk2 ok2 (.inr (by omega)) (hvals _) with
+      ⟨hF, ω3, μ3, run3⟩ | ⟨hF, e, ω3, μ3, he, run3, -, g0, g1, g5, fr3, -, wr3⟩
+    · rw [if_pos hF]
+      exact ⟨(c0.1.setSelf (writeSelf c0.1.self (Key.results q k).encode []), c0.2), rfl, ω3, μ3, f, run3.run (.exit (FreeRun.exit (trap_48533 (P := P) ω3 μ3)) (by simp))⟩
+    · rw [if_neg hF]
+      try dsimp only
+      have run4 := rm_back (P := P) (R := YIn (accContractS env) c0.2 c0.2)
+        ((c0.1.setSelf (writeSelf c0.1.self (Key.results q k).encode []), c0.2), f) ω3 μ3 e he (g0.trans a0)
+      refine .inr ⟨⟨8172, ω3, μ3, (c0.1.setSelf (writeSelf c0.1.self (Key.results q k).encode []), c0.2), f⟩,
+        ⟨_, run3.trans run4⟩, rfl, .inr ⟨_, ⟨0, .refl⟩, rfl, rfl, g1, ?_, st', ?_, ?_, ?_, ?_, ?_⟩⟩
+      · rw [g5, a5, b5, h5]
+      · exact HeapKeep.keepHi HB (fun a ha => by rw [fr3 a (by omega) (.inl (by omega)),
+          fr2 a (by omega) (.inl (by omega)) (.inl (by omega))]) (fun a => by rw [wr3, wr2])
+      · intro d hd hu
+        refine ⟨(keepB d hd hu).1, fun a ha => ?_⟩
+        have := dataB d hd hu a ha
+        rw [fr3 a (by omega) (.inl (by omega)), fr2 a (by omega) (.inl (by omega)) (.inl (by omega)),
+          (keepB d hd hu).2 a ha]
+      · intro a h0 ha hn
+        unfold RmOut at hn
+        rw [fr3 a h0 (.inr ha), fr2 a h0 (by omega) (by omega), kB a h0 ha (by omega) (by omega)]
+      · intro a hg
+        have hg' := hg; unfold Glob at hg'
+        rw [fr3 a (by omega) (.inl (by omega)), fr2 a (by omega) (.inl (by omega)) (.inl (by omega)), glB a hg]
+      · intro a ha
+        rw [fr3 a (by omega) (.inl (by omega)), fr2 a (by omega) (.inl (by omega)) (.inl (by omega)), loB a ha]
+
 end Services.Bootstrap.Acc.Handlers.RecentMatch

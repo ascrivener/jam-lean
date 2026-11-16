@@ -16,9 +16,6 @@ open PVM JAM Picoalloc Services.Bootstrap Services.Bootstrap.Code Services.Boots
 set_option maxHeartbeats 8000000
 set_option maxRecDepth 100000
 
-/-- The 8-octet word at offset k of a slot's octets. -/
-def wd (bs : List UInt8) (k : Nat) : Nat := Num.decodeLE ((bs.drop k).take 8)
-
 /-- An operand with a work output: tag 0, h, ℰ(g), 0, ↕o, ↕t. -/
 def encOpOk (h : List UInt8) (g : Nat) (o t : List UInt8) : List UInt8 :=
   [0] ++ (h ++ (Blob.encodeNat g ++ ([0] ++ (Blob.encodeNat o.length ++ (o ++ (Blob.encodeNat t.length ++ t))))))
@@ -49,6 +46,19 @@ theorem wd_slot (μ : Memory) (o k : Nat) (h : k + 8 ≤ 184) : wd (μ.readN o 1
 theorem readN128 (ν : Memory) (a : Nat) : ν.readN a 128 =
     ν.readN a 32 ++ (ν.readN (a + 32) 32 ++ (ν.readN (a + 64) 32 ++ ν.readN (a + 96) 32)) := by
   rw [← PVM.Memory.readN_split, ← PVM.Memory.readN_split, ← PVM.Memory.readN_split]
+
+/-- **A `Vec<u8>`'s block covers its octets**: for n ≠ 0, the chunk `blk n ptr` (allocated) has its data
+    at ptr and covers ptr … ptr + n. -/
+theorem blk_cover {code : ByteArray} {pb S0 S1 : Nat} {μ : Memory} {s : State} (H : HeapCtxC code pb S0 S1 μ s)
+    {n ptr : Nat} (hc : (⟨ptr - 32, (n + 31) / 32 + 1, true⟩ : Chunk) ∈ chunks s) :
+    ptr - 32 + 32 = ptr ∧ ∀ a, ptr ≤ a → a < ptr + n → InDataA ⟨ptr - 32, (n + 31) / 32 + 1, true⟩ a := by
+  have hci := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc rfl
+  dsimp only at hci
+  have := H.hb0
+  refine ⟨by omega, fun a h1 h2 => ⟨by dsimp only; omega, by dsimp only; omega⟩⟩
+
+theorem mem_blk {n ptr : Nat} (hn : n ≠ 0) : (⟨ptr - 32, (n + 31) / 32 + 1, true⟩ : Chunk) ∈ blk n ptr := by
+  simp [blk, hn]
 
 /-- **An operand with a work output is an `ItemOk` item** (`item_op_ok` and the return to 45168), for
     an output and a trace of at most 16384 octets each (the temporary bound). -/
@@ -83,7 +93,7 @@ theorem itemOk_opok {X : Type} (env : HeapHost X) (cap pb : Nat) (hcap1 : 134217
     have cst : ∀ c ∈ blk t.length pt, c ∈ chunks s2 := fun c hc => (mt c hc).1
     refine Or.inl ⟨s2, ω', μ', (run.trans (lp_ret_op (p := p) (P := P) (R := env.rel cap) x ω' μ'
         (by rw [e0, h0]))).mono (by omega), by rw [e0, h0], e1, e5, e6, by rw [x0]; omega, H', keep, keepd,
-      ⟨blk o.length po ++ blk t.length pt, fun c hc => ?_, fun μ'' hag => ?_⟩,
+      ⟨blk o.length po ++ blk t.length pt, fun c hc => ?_, fun μ'' hag => ?_, ?_⟩,
       by rw [R0f, hL]; all_goals (congr 1 <;> omega), by rw [R8f, hL]; all_goals (congr 1 <;> omega), fun a h0 hs h1 h2 => fr a h0 hs (by omega) h2⟩
     · rcases List.mem_append.mp hc with hc | hc
       · exact ⟨cso c hc, (mo c hc).2.1, (mo c hc).2.2⟩
@@ -104,6 +114,50 @@ theorem itemOk_opok {X : Type} (env : HeapHost X) (cap pb : Nat) (hcap1 : 134217
       · rw [wd_slot _ _ _ (by omega)]; exact x24
       · rw [wd_slot _ _ _ (by omega)]; exact x40
       · rw [wd_slot _ _ _ (by omega), x32]; exact ro
+    · have w0 : wd (μ'.readN (sp + 88) 184) 0 = t.length := by rw [wd_slot _ _ _ (by omega)]; simpa using x0
+      have w8 : wd (μ'.readN (sp + 88) 184) 8 = pt := by rw [wd_slot _ _ _ (by omega), x8]
+      have w16 : wd (μ'.readN (sp + 88) 184) 16 = t.length := by rw [wd_slot _ _ _ (by omega)]; exact x16
+      have w24 : wd (μ'.readN (sp + 88) 184) 24 = o.length := by rw [wd_slot _ _ _ (by omega)]; exact x24
+      have w32 : wd (μ'.readN (sp + 88) 184) 32 = po := by rw [wd_slot _ _ _ (by omega), x32]
+      have w40 : wd (μ'.readN (sp + 88) 184) 40 = o.length := by rw [wd_slot _ _ _ (by omega)]; exact x40
+      have hu : uFoot (μ'.readN (sp + 88) 184) =
+          (if t.length = 0 then [] else [(pt, t.length)]) ++ (if o.length = 0 then [] else [(po, o.length)]) := by
+        simp only [uFoot, w0, w8, w16, w24, w32, w40, show t.length ≠ 18446744073709551615 by omega,
+          show o.length ≠ 18446744073709551615 by omega, if_false, or_false]
+      unfold FootIn
+      rw [hu]
+      refine ⟨fun pl hpl => ?_, ?_⟩
+      · rcases List.mem_append.1 hpl with h | h
+        · by_cases h0 : t.length = 0
+          · simp [h0] at h
+          · simp only [h0, if_false, List.mem_singleton] at h
+            subst h
+            have hm := mem_blk (ptr := pt) h0
+            obtain ⟨e1, e2⟩ := blk_cover H' (cst _ hm)
+            exact ⟨_, List.mem_append_right _ hm, e1, e2⟩
+        · by_cases h0 : o.length = 0
+          · simp [h0] at h
+          · simp only [h0, if_false, List.mem_singleton] at h
+            subst h
+            have hm := mem_blk (ptr := po) h0
+            obtain ⟨e1, e2⟩ := blk_cover H' (cso _ hm)
+            exact ⟨_, List.mem_append_left _ hm, e1, e2⟩
+      · by_cases h0 : t.length = 0
+        · by_cases h1 : o.length = 0 <;> simp [h0, h1]
+        · by_cases h1 : o.length = 0
+          · simp [h0, h1]
+          · simp only [h0, h1, if_false, List.singleton_append, List.map_cons, List.map_nil,
+              List.nodup_cons, List.mem_singleton, List.not_mem_nil, not_false_eq_true, List.nodup_nil, and_true]
+            intro e
+            have hmt := mem_blk (ptr := pt) h0
+            have hmo := mem_blk (ptr := po) h1
+            have ne := (mt _ hmt).2.2 _ (mo _ hmo).1 (mo _ hmo).2.1
+            have ht := H'.wf.2.2.2.1
+            unfold TilesOk at ht
+            refine ne (Tiles.addr_inj ht _ (cso _ hmo) _ (cst _ hmt) ?_)
+            have := (blk_cover H' (cso _ hmo)).1
+            have := (blk_cover H' (cst _ hmt)).1
+            dsimp only; omega
   · exact Or.inr ⟨ω', μ', run.mono (by omega)⟩
 
 /-- **An operand with a work error is an `ItemOk` item** (`item_op_err` and the return to 45168), for a
@@ -136,7 +190,7 @@ theorem itemOk_operr {X : Type} (env : HeapHost X) (cap pb : Nat) (hcap1 : 13421
     have cst : ∀ c ∈ blk t.length pt, c ∈ chunks s2 := fun c hc => (mt c hc).1
     refine Or.inl ⟨s2, ω', μ', (run.trans (lp_ret_op (p := p) (P := P) (R := env.rel cap) x ω' μ'
         (by rw [e0, h0]))).mono (by omega), by rw [e0, h0], e1, e5, e6, by rw [x0]; omega, H', keep, keepd,
-      ⟨blk t.length pt, fun c hc => mt c hc, fun μ'' hag => ?_⟩,
+      ⟨blk t.length pt, fun c hc => mt c hc, fun μ'' hag => ?_, ?_⟩,
       by rw [R0f, hL]; all_goals (congr 1 <;> omega), by rw [R8f, hL]; all_goals (congr 1 <;> omega),
       fun a h0 hs h1 h2 => fr a h0 hs (by omega) h2⟩
     have rt : μ''.readN pt t.length = t := by
@@ -152,6 +206,22 @@ theorem itemOk_operr {X : Type} (env : HeapHost X) (cap pb : Nat) (hcap1 : 13421
     · rw [wd_slot _ _ _ (by omega)]; exact x176
     · rw [wd_slot _ _ _ (by omega)]; exact x24
     · rw [wd_slot _ _ _ (by omega)]; exact x32
+    · have w0 : wd (μ'.readN (sp + 88) 184) 0 = t.length := by rw [wd_slot _ _ _ (by omega)]; simpa using x0
+      have w8 : wd (μ'.readN (sp + 88) 184) 8 = pt := by rw [wd_slot _ _ _ (by omega), x8]
+      have w16 : wd (μ'.readN (sp + 88) 184) 16 = t.length := by rw [wd_slot _ _ _ (by omega)]; exact x16
+      have w24 : wd (μ'.readN (sp + 88) 184) 24 = 18446744073709551615 := by rw [wd_slot _ _ _ (by omega)]; exact x24
+      have hu : uFoot (μ'.readN (sp + 88) 184) = (if t.length = 0 then [] else [(pt, t.length)]) := by
+        simp only [uFoot, w0, w8, w16, w24, show t.length ≠ 18446744073709551615 by omega, if_false, or_true,
+          if_true, List.append_nil]
+      unfold FootIn
+      rw [hu]
+      by_cases h0 : t.length = 0
+      · simp [h0]
+      · simp only [h0, if_false, List.mem_singleton, forall_eq, List.map_cons, List.map_nil, List.nodup_cons,
+          List.not_mem_nil, not_false_eq_true, List.nodup_nil, and_true]
+        have hm := mem_blk (ptr := pt) h0
+        obtain ⟨e1, e2⟩ := blk_cover H' (cst _ hm)
+        exact ⟨_, hm, e1, e2⟩
   · exact Or.inr ⟨ω', μ', run.mono (by omega)⟩
 
 end Services.Bootstrap.Acc

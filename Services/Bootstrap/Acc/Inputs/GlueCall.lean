@@ -52,6 +52,10 @@ theorem g_call {X : Type} (env : HeapHost X) (cap pb N : Nat) (hcap1 : 134217728
       (∀ (j : Nat) (e : List UInt8 × (List UInt8 → Memory → Prop)), rest[j]? = some e →
         ∀ μ'' : Memory, (∀ c ∈ chunks st', c.used = true → ∀ a, InDataA c a → μ''.read a = μ'.read a) →
           e.2 (μ''.readN (q + 184 * j) 184) μ'') ∧
+      ((feetL μ' q 0 rest.length).map Prod.fst).Nodup ∧
+      (∀ pl ∈ feetL μ' q 0 rest.length, ∃ c ∈ chunks st', c.used = true ∧ c.addr + 32 = pl.1 ∧
+        (∀ a, pl.1 ≤ a → a < pl.1 + pl.2 → InDataA c a) ∧ (∀ d ∈ chunks s0, d.used = true → d ≠ c) ∧
+        c ≠ ⟨q - 32, (rest.length * 184 + 31) / 32 + 1, true⟩) ∧
       (∀ a, a < 4294967296 → sp + 144 ≤ a → (a < o ∨ o + 24 ≤ a) → μ'.read a = μ.read a)) ∨
     (∃ j ω' μ', (j = 45975 ∨ j = 45642) ∧
       FreeStepsH p (env.rel cap) 44495 ω μ x j ω' μ' x ((N + 2100) * rest.length + 1900)) := by
@@ -92,7 +96,7 @@ theorem g_call {X : Type} (env : HeapHost X) (cap pb N : Nat) (hcap1 : 134217728
       (by
         rw [PVM.Memory.readN_congr (μ := μ) (fun j hj => by rw [lo2 _ (by omega), lo1 _ (by omega)])]
         exact hB) with
-    ⟨q, s2, ω4, μ4, r4, d0, d1, d5, d6, v0, v8, v16, H4, keep4, keepd4, hnew, hfresh, reps, -, -, fr4⟩ |
+    ⟨q, s2, ω4, μ4, r4, d0, d1, d5, d6, v0, v8, v16, H4, keep4, keepd4, hnew, hfresh, reps, ond, opl, -, -, fr4⟩ |
     ⟨j, ω4, μ4, hj, r4⟩
   · have hst4 := H4.st
     -- the stack above sp, from μ to μ4, off out (sp + 80 … + 104), the reader (… + 120), and sp itself
@@ -147,18 +151,31 @@ theorem g_call {X : Type} (env : HeapHost X) (cap pb N : Nat) (hcap1 : 134217728
       unfold InDataA at ha
       rw [lo8 a (by omega), (kd7 c hc hu hcF).2 a ha.1 ha.2, lo6 a (by omega)]
     have hNF : (⟨q - 32, (rest.length * 184 + 31) / 32 + 1, true⟩ : Chunk) ≠ F := Ne.symm (hfresh F hF hFu)
+    -- the slots, μ8 to μ4: in the buffer's chunk
+    have hfe : feetL μ8 q 0 rest.length = feetL μ4 q 0 rest.length := by
+      obtain ⟨Nb1, Nb2, Nb3⟩ := Services.Bootstrap.Decode.VecU8.chunk_in H4.wf hnew rfl
+      dsimp only at Nb1 Nb2 Nb3
+      have hb04 := H4.hb0
+      refine feetL_congr _ _ fun a h1 h2 => kd8 _ hnew rfl hNF a ⟨?_, ?_⟩
+      · dsimp only; omega
+      · dsimp only
+        have : 184 * (0 + rest.length) = rest.length * 184 := by omega
+        omega
     refine Or.inl ⟨q, free s2 ptr, ω8, μ8,
       (((((((r1.trans r2).trans r3).trans r4).trans r5).trans r6).trans r7).trans r8).mono (by omega),
       by rw [z0, rr _ (by omega) (by omega)], by rw [z1], by rw [z5, rr _ (by omega) (by omega)],
       by rw [z6, rr _ (by omega) (by omega)], o0, o8, o16, HeapCtxC.keep_hi H7 lo8 wr8,
       fun c hc hu hcF => ⟨(kd7 c (keep4 c hc hu) hu hcF).1, fun a ha => ?_⟩,
       (kd7 _ hnew rfl hNF).1, hfresh, fun j e hj μ'' hag => reps j e hj μ'' fun c hc hu hcF a ha => ?_,
-      fun a h0 ha ho' => ?_⟩
+      by rw [hfe]; exact ond, fun pl hpl => ?_, fun a h0 ha ho' => ?_⟩
     · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
       rw [kd8 c (keep4 c hc hu) hu hcF a ha, keepd4 c hc hu a ha]
       unfold InDataA at ha
       rw [lo2 a (by omega), lo1 a (by omega)]
     · rw [hag c (kd7 c hc hu hcF).1 hu a ha, kd8 c hc hu hcF a ha]
+    · rw [hfe] at hpl
+      obtain ⟨c, hc, hcu, hca, hcov, hfr, hne⟩ := opl pl hpl
+      exact ⟨c, (kd7 c hc hcu (Ne.symm (hfr F hF hFu))).1, hcu, hca, hcov, hfr, hne⟩
     · rw [fr8 a h0 ho', k7 a h0 (by omega)]
   · exact Or.inr ⟨j, ω4, μ4, hj, ((((r1.trans r2).trans r3).trans r4).mono (by omega))⟩
 

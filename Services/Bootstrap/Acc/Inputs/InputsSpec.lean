@@ -159,7 +159,7 @@ theorem g_inputs (aenv : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap)
       (∀ c ∈ chunks s0, c.used = true → c ≠ F → c ∈ chunks st' ∧ ∀ a, InDataA c a → μ'.read a = μ.read a) ∧
       (∀ (j : Nat) (i : AccumulateInput), aenv.inputs[j]? = some i →
         ∀ μ'' : Memory, (∀ c ∈ chunks st', c.used = true → ∀ a, InDataA c a → μ''.read a = μ'.read a) →
-          (itemOf i).2 (μ''.readN (q + 184 * j) 184) μ'') ∧
+          (itemOf i).2 (μ''.readN (q + 184 * j) 184) μ'') ∧ SlotsOwn st' μ' q aenv.inputs.length ∧
       (∀ a, a < 4294967296 → sp + 144 ≤ a → (a < o ∨ o + 24 ≤ a) → μ'.read a = μ.read a)) ∨
     (∃ j ω' μ', (j = 45975 ∨ j = 45642) ∧
       FreeStepsH p (accGrowK cap aenv) 44495 ω μ x j ω' μ' x ((itemSteps + 2100) * aenv.inputs.length + 1900)) := by
@@ -174,7 +174,7 @@ theorem g_inputs (aenv : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap)
       g_call0 (R := accGrowK cap aenv) (p := p) (P := P) aenv.code pb x ω μ s0 sp o fc ptr len S0 S1 F H h1 m8 m56
         m64 m72 hfc hF hFu hFa (by simpa using hFe) ⟨by simpa using hlen.1, hlen.2⟩ hr (by omega) (by omega) ho
     refine Or.inl ⟨8, free s0 ptr, ω', μ', r.mono (by omega), z0, z1, z5, z6, by rw [o0, h0], o8,
-      by rw [o16, h0], H', kd, fun j i hj => ?_, fr⟩
+      by rw [o16, h0], H', kd, fun j i hj => ?_, by rw [h0]; simp [SlotsOwn, feetL_zero], fr⟩
     rw [hnil] at hj; simp at hj
   · -- the items
     have hrest : (aenv.inputs.map itemOf).length = aenv.inputs.length := List.length_map _
@@ -187,9 +187,21 @@ theorem g_inputs (aenv : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap)
           exact itemOf_ok (p := p) (P := P) (accHeapHost aenv) cap pb hcap1 hcap i (hsz i hi))
         ⟨by omega, by omega⟩ H h1 m8 m56 m64 m72 hfc hF hFu hFa (by omega) ⟨by omega, hlen.2⟩
         (by rw [hrest]; exact henc) hsp hSTk ho with
-      ⟨q, st', ω', μ', r, z0, z1, z5, z6, o0, o8, o16, H', kd, -, -, reps, fr⟩ | ⟨j, ω', μ', hj, r⟩
-    · refine Or.inl ⟨q, st', ω', μ', by simpa [hrest, accHeapHost] using r, z0, z1, z5, z6, by rw [o0, hrest],
-        o8, by rw [o16, hrest], H', kd, fun j i hj μ'' hag => reps j (itemOf i) (by simp [hj]) μ'' hag, fr⟩
+      ⟨q, st', ω', μ', r, z0, z1, z5, z6, o0, o8, o16, H', kd, hbuf, -, reps, ond, opl, fr⟩ | ⟨j, ω', μ', hj, r⟩
+    · rw [hrest] at hbuf ond opl
+      have ht := H'.wf.2.2.2.1
+      unfold TilesOk at ht
+      obtain ⟨Nb1, Nb2, Nb3⟩ := Services.Bootstrap.Decode.VecU8.chunk_in H'.wf hbuf rfl
+      dsimp only at Nb1 Nb2 Nb3
+      have hb0 := H'.hb0
+      refine Or.inl ⟨q, st', ω', μ', by simpa [hrest, accHeapHost] using r, z0, z1, z5, z6, by rw [o0, hrest],
+        o8, by rw [o16, hrest], H', kd, fun j i hj μ'' hag => reps j (itemOf i) (by simp [hj]) μ'' hag,
+        ⟨fun _ => ⟨_, hbuf, rfl, by dsimp only; omega, by dsimp only; omega⟩, ond, fun hq => ?_, fun pl hpl => ?_⟩, fr⟩
+      · obtain ⟨pl, hpl, e⟩ := List.mem_map.1 hq
+        obtain ⟨c, hc, hcu, hca, -, -, hne⟩ := opl pl hpl
+        exact hne (Tiles.addr_inj ht c hc _ hbuf (by dsimp only; omega))
+      · obtain ⟨c, hc, hcu, hca, hcov, -, -⟩ := opl pl hpl
+        exact ⟨c, hc, hcu, hca, hcov⟩
     · exact Or.inr ⟨j, ω', μ', hj, by simpa [hrest, accHeapHost] using r⟩
 
 end Services.Bootstrap.Acc

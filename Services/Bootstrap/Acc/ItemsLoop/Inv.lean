@@ -172,6 +172,53 @@ theorem rest_keep {st st' : State} {μ μ' : Memory} {cur q : Nat} {i : Accumula
     obtain ⟨d, hd, hdu, hda, hdr⟩ := hch' pl hp
     exact ⟨d, (kf d hd hdu (by rw [hda]; exact List.mem_map_of_mem hp)).1, hdu, hda, hdr⟩
 
+/-- **A decoded slot's buffers are `uFoot`'s** (for a sized input). -/
+theorem slotFoot_eq {i : AccumulateInput} {bs : List UInt8} {μ : Memory} (h : (itemOf i).2 bs μ)
+    (hs : InputSized i) : slotFoot i bs = uFoot bs := by
+  cases i with
+  | transfer x =>
+    simp only [itemOf, RepTr] at h
+    have w0 : wd bs 0 = 18446744073709551615 := by unfold wd; simpa using h.1
+    simp [slotFoot, uFoot, w0]
+  | operand o =>
+    simp only [InputSized] at hs
+    have htl : o.authTrace.toList.length ≤ 16384 := by rw [ByteArray.length_toList']; exact hs.2.2.2.2.2.1
+    cases hr : o.result with
+    | ok b =>
+      simp only [itemOf, hr] at h
+      obtain ⟨⟨b0, -⟩, b24, -⟩ := h
+      have hbl : b.toList.length ≤ 16384 := by rw [ByteArray.length_toList']; exact hs.2.2.2.2.2.2 b hr
+      simp only [slotFoot, uFoot, hr, b0, b24, show o.authTrace.toList.length ≠ 18446744073709551615 by omega,
+        show b.toList.length ≠ 18446744073709551615 by omega, if_false, or_false]
+    | err e =>
+      simp only [itemOf, hr] at h
+      obtain ⟨⟨b0, -⟩, b24, -⟩ := h
+      simp only [slotFoot, uFoot, hr, b0, b24, show o.authTrace.toList.length ≠ 18446744073709551615 by omega,
+        if_false, or_true, if_true, List.append_nil]
+
+/-- The slots' buffers, `footL` against `feetL`. -/
+theorem footL_eq_feetL {μ : Memory} {q : Nat} : ∀ (ins : List AccumulateInput) (L : Nat),
+    (∀ (j : Nat) (i : AccumulateInput), ins[j]? = some i → (itemOf i).2 (μ.readN (q + 184 * (L + j)) 184) μ) →
+    (∀ i ∈ ins, InputSized i) → footL ins (q + 184 * L) μ = feetL μ q L ins.length
+  | [], _, _, _ => rfl
+  | i :: r, L, h, hs => by
+    rw [footL, List.length_cons, feetL_succ, slotFoot_eq (by simpa using h 0 i rfl) (hs i (by simp)),
+      show q + 184 * L + 184 = q + 184 * (L + 1) by omega,
+      footL_eq_feetL r (L + 1) (fun j i' hj => by
+        have := h (j + 1) i' (by simpa using hj); rwa [show L + (j + 1) = L + 1 + j by omega] at this)
+        (fun i' hi' => hs i' (by simp [hi']))]
+
+/-- **`ItemsOwn` from the decode's `SlotsOwn`** (the cursor at the buffer q, before the loop). -/
+theorem itemsOwn_of_slots {st : State} {μ : Memory} {q : Nat} {ins : List AccumulateInput}
+    (h : ∀ (j : Nat) (i : AccumulateInput), ins[j]? = some i → (itemOf i).2 (μ.readN (q + 184 * j) 184) μ)
+    (hs : ∀ i ∈ ins, InputSized i) (hS : SlotsOwn st μ q ins.length) : ItemsOwn st μ q q ins := by
+  have e : footL ins q μ = feetL μ q 0 ins.length := by
+    have := footL_eq_feetL (μ := μ) (q := q) ins 0 (fun j i hj => by simpa using h j i hj) hs
+    simpa using this
+  obtain ⟨-, hnd, hq, hpl⟩ := hS
+  rw [ItemsOwn, e]
+  exact ⟨hnd, hq, hpl⟩
+
 /-- **The items loop's state at its head 6766** with the inputs `ins` still to run (see the module
     docstring). The frame: sp, the slot buffer q of capacity cap, the end e; μ₀ fixes the statics. -/
 structure ItemsInv (env : AccEnv) (pb S0 S1 sp q cap e : Nat) (μ₀ : Memory)

@@ -168,6 +168,8 @@ import Services.Bootstrap.Acc.Handlers.RecentSlotSeg
 import Services.Bootstrap.Acc.Handlers.RecentSlotTail
 import Services.Bootstrap.Acc.Handlers.RecentSlotWrite
 import Services.Bootstrap.Acc.Handlers.RecentSlotWriteImpl
+import Services.Bootstrap.Acc.Handlers.RecentAddGen
+import Services.Bootstrap.Acc.Handlers.RecentAdd
 import Services.Bootstrap.Acc.Handlers.RemoveCall
 import Services.Bootstrap.Acc.Handlers.ResStore
 import Services.Bootstrap.Acc.Handlers.Upgrade

@@ -107,6 +107,24 @@ Handlers dependencies takes ~2 h on 4 cores). Use `ulimit -v 12000000` when comp
 - `refine ⟨?ω', ?run⟩; case run => pvm_go …` for a one-witness existential.
 
 
+## Session 6 progress (2026-11-16, row 8 composed)
+
+- `RecentAddGen.lean`: `Prog.bind_assoc`, **`addRecent_eq`** (spec `addRecent` as four binds: counter get,
+  slot read + removal, slot write, counter write), `ASem.step_read_ctx` (`read` keeps the context),
+  `Prog.All`, **`Impl.inv`** (a context invariant through `Impl` along a program whose operations keep it),
+  `StoreFit` (all storage values < 2⁶³), `SmallOp` and `storeFit_step`.
+- `RecentAdd.lean`: **`add_recent`** (8013 → `AddPost` at 8416, `Impl` of `addRecent Cs (μ[sp+512..+32]) item`
+  with ℰ₂(item) = μ[sp+176..+2]). Hypotheses: kc₀ at 68680, kc₁ at 68688, the `set` error table, 68680 … 69076
+  readable, frame [sp − 352, sp + 1856), `ParamStatics`, `RingFits`, `Cs.maxRecent = 2·C·I`, `StoreFit`.
+  Ab covers 34070, 47977, 32584. `AddPost`: ω₁ = sp, HeapCtxC for some st′ keeping st's chunks and data,
+  memory kept above sp off `AddOut` (= RmOut ∨ SwOut ∨ CwOut), at Glob and below 196608. Axioms clean.
+  Not in `AddPost`: readability below 196608 (`counter_write`/`CwPost` don't state it); add it there if
+  row 9 needs it.
+- Tip: foreground `sleep` loops return at once in this environment; wait with a background until-loop.
+  To compile a new module before `lake build` reaches it: `lake env lean F.lean -o <olean> -i <ilean>`.
+- **Next:** full build green → row-8 PR (body: Q19, RingFits, ParamStatics obligation, the additive
+  get_call conclusions, `add_recent`). Then rows 9 and 11 (see "Row 9" / "Row 11" in the plan below).
+
 ## Session 5 progress (2026-11-16, row 8)
 
 Adam decided both row-8 questions (2026-11-16): ring size (a), counter wrap (a).

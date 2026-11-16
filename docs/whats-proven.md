@@ -934,6 +934,12 @@ What you trust beyond the kernel:
   - `ParamStatics` is not an assumption of T2. *Obligation (open):* the T2 composition discharges it from the entry
     prologue's `apply()` (the stores at 56205 and 56279) and from the frames of the later steps, which keep
     196616 … 196791.
+  - Row 8 is composed: `add_recent` (`Acc/Handlers/RecentAdd.lean`) states that the run from 8013 to 8416
+    implements spec `addRecent` in `Impl`'s form. Early ☇ happens only at the allocation-failure traps 34070,
+    47977 and 32584 (heap exhaustion). Its hypotheses are `ParamStatics` (an obligation), `RingFits`,
+    maxRecent = 2·𝖢·𝖨, the read-only words it reads (key sizes, `set`'s error table) and `ValuesFit` for
+    this service's storage at the start (`StoreFit`). `Impl.inv` carries `StoreFit` past the removal and the
+    slot write.
 - **Refinement of a fragment, not of a whole program.** The allocator theorems are about the
   allocator's entry points called with the stated registers and memory. They are not yet composed
   into a Ψ_R or Ψ_A theorem about a bootstrap run that allocates.

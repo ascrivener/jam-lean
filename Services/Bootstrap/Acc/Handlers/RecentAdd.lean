@@ -17,7 +17,7 @@ namespace Services.Bootstrap.Acc.Handlers.RecentAdd
 
 open PVM JAM Picoalloc Services.Bootstrap Services.Bootstrap.Code Services.Bootstrap.CodeA
 open Services.Bootstrap.Spec Services.Bootstrap.Acc Services.Bootstrap.Decode.HeapCtx
-open Services.Bootstrap.Acc.Handlers
+open Services.Bootstrap.Acc.Handlers Services.Bootstrap.Alloc Services.Bootstrap.Acc.Handlers.HeapKeep
 open JAM.Codec (fixed)
 
 set_option maxHeartbeats 8000000
@@ -120,6 +120,7 @@ theorem add_recent {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (e
   dsimp only at hi h1 H mc0 mc1 ht8 ht4 hro hPS hitem hvals ⊢
   subst hi
   have hb0 := H.hb0
+  have hS1H := H.hS1
   rw [addRecent_eq]
   refine Impl.bind _ _ _ _ ?_
   show Impl p (accContractS env) env Ab (Prog.call (AOp.read Key.counter.encode)

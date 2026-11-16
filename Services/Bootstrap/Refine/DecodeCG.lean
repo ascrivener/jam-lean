@@ -20,7 +20,7 @@ set_option maxHeartbeats 8000000
 set_option maxRecDepth 100000
 
 /-- **`Instructions::decode`, any n, the slots' chunks seen** (4792 … 4842): `decode_oneC` with 1 ≤ n < 128 replaced
-    by 1 ≤ n < 2³² and 232 n < 2³⁰ − 64 (`realloc_call`'s range); the payload starts with ℰ(n) (ℓ = |ℰ(n)| octets,
+    by 1 ≤ n < 2³² and 232 n < 2³²; the payload starts with ℰ(n) (ℓ = |ℰ(n)| octets,
     GP v0.8.0 Appendix C) in place of the single octet n. Same conclusion with the reader past ℓ + |es| + 32. -/
 theorem decode_allC {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env : RefineHost.Env) (cap0 : Nat)
     (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616) {hb pb : Nat} (gl : Nat → UInt8)
@@ -31,7 +31,7 @@ theorem decode_allC {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (
     (hel : ∀ j (hj : j < es.length), Decode.VecVecOwn.ElemOkAFC env cap0 pb gl p P (M - 744) (M + 272) (Ns j) es[j]
       (reps j))
     (hg : ∀ a, Glob a → μ.read a = gl a)
-    (hn : 1 ≤ es.length ∧ es.length < 4294967296) (hbig : 232 * es.length < 1073741760) (hne : ∀ j (hj : j < es.length), 1 ≤ es[j].length)
+    (hn : 1 ≤ es.length ∧ es.length < 4294967296) (hbig : 232 * es.length < 4294967296) (hne : ∀ j (hj : j < es.length), 1 ≤ es[j].length)
     (hM : S0 + 2848 ≤ M ∧ M + 288 ≤ S1 ∧ M % 8 = 0) (hr5 : r5 < 18446744073709551616)
     (hcp : cp ∈ chunks s ∧ cp.used = true ∧ cp.addr = s.base)
     (hcpd : ∀ a, q ≤ a → a < q + Ly → InData cp a)

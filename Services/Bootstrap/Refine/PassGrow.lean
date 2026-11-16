@@ -29,7 +29,7 @@ theorem pass_elem_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P
     (x : RefineCtx) (ω : Regs) (μ : Memory) {hb : Nat} (s : State) (M cur en t len ptr pb S0 S1 : Nat)
     (H : HeapCtx env pb S0 S1 μ s) (ht : PassK t (rdN μ (cur + 44) 1))
     (hold : len = 0 ∨ ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true ∧ c.size = (232 * len + 31) / 32 + 1)
-    (hlen : len ≤ 2097152)
+    (hlen : len ≤ 16777216)
     (hM : S0 + 7560 ≤ M ∧ M + 632 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0)
     (hcur : 65536 ≤ cur ∧ cur + 232 < 2147483648)
     (hne : cur ≠ en) (hen : en < 18446744073709551616) (hptr : ptr < 18446744073709551616)
@@ -109,7 +109,7 @@ theorem pass_elem_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P
     (fun a h1 h2 => by rw [brd, ard]; exact rM a (by omega) (by omega))
   have pre := run1.trans (run2.trans (run3.trans run4))
   rcases Decode.GrowOne.grow_one_call (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 x ω4 μ2 s M (M + 248) len ptr 180 5584 len
-      ω4[6].toNat pb S0 S1 H2 hold hlen ⟨by omega, by omega⟩ ⟨by omega, hM8⟩ ⟨by omega, by omega⟩ d0 d1 d5
+      ω4[6].toNat pb S0 S1 H2 hold (Nat.le_trans hlen (by decide)) ⟨by omega, by omega⟩ ⟨by omega, hM8⟩ ⟨by omega, by omega⟩ d0 d1 d5
       UInt64.ofNat_toNat.symm d7 ⟨by decide, by decide, by decide⟩ jte_89 bs_5584 (by omega) (UInt64.toNat_lt _)
       hptr
       (by rw [Memory.readN_congr (fun j hj => k2 _ (by omega) (by omega))]; exact sc)

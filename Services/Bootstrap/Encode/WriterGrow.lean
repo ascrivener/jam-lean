@@ -112,7 +112,7 @@ theorem extend_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [
     (sp v src n cap ptr len ret t pb S0 S1 : Nat)
     (H : HeapCtx env pb S0 S1 μ s) (hc : c ∈ chunks s) (hcu : c.used = true) (hcp : c.addr + 32 = ptr)
     (hcc : cap ≤ 32 * (c.size - 1)) (hcap0 : 0 < cap) (hlc : len ≤ cap) (hgrow : cap < len + n)
-    (hbig : 2 * cap < 1073741760 ∧ len + n < 1073741760)
+    (hbig : (2 * cap < 1073741760 ∧ len + n < 1073741760) ∨ Decode.ReallocBig.OtherUsed s ptr)
     (hsp : S0 + 424 ≤ sp ∧ sp ≤ S1 ∧ 2147484072 ≤ sp ∧ sp % 8 = 0) (hv : sp ≤ v ∧ v + 24 ≤ S1)
     (h0 : ω[0] = UInt64.ofNat ret) (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat v)
     (h8 : ω[8] = UInt64.ofNat src) (h9 : ω[9] = UInt64.ofNat n)
@@ -137,6 +137,7 @@ theorem extend_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [
       (∀ a, a < 196608 → μ'.read a = μ.read a ∧ μ'.readable a = μ.readable a) ∧
       (∀ a, Glob a → μ'.read a = μ.read a) ∧ (∀ a, S0 ≤ a → μ'.writable a = μ.writable a)) ∨
     ExhaustsW env K pb p P 58508 ω μ x (7 * n + 64 * (c.size - 1) + 1800) := by
+  replace hbig := Nonempty.intro hbig
   have hb0 := H.hb0
   have hbT := H.hbT
   have hS1 := H.hS1
@@ -146,13 +147,11 @@ theorem extend_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [
   obtain ⟨hc0, -, hcT⟩ := chunk_in H.wf hc hcu
   have hu : usable s ptr = c.size - 1 := by rw [← hcp, usable_of_chunk hc]
   obtain ⟨hnc1, hnc2, hnc3⟩ := newCap_ge cap len n
-  have hncB : newCap cap len n < 1073741760 := by unfold newCap; omega
-  generalize hnc : newCap cap len n = nc at hnc1 hnc2 hnc3 hncB
   have h5 : ω[5] = UInt64.ofNat ω[5].toNat := UInt64.ofNat_toNat.symm
   have h6 : ω[6] = UInt64.ofNat ω[6].toNat := UInt64.ofNat_toNat.symm
   have h5' := UInt64.toNat_lt ω[5]
   have h6' := UInt64.toNat_lt ω[6]
-  unfold StackSrc HeapSrc at hsrc
+  -- (hsrc stays folded: omega mis-handles a split of its `∃`)
   have hsrcB : (65536 ≤ src ∧ src + n < 2147483648) ∨ sp ≤ src := by
     rcases hsrc with ⟨h, -⟩ | ⟨e, he, heu, -, h1, h2⟩
     · exact Or.inr h
@@ -161,6 +160,18 @@ theorem extend_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [
     rcases hsrc with ⟨-, h, -⟩ | ⟨e, he, heu, -, -, h2⟩
     · exact h
     · have := (chunk_in H.wf he heu).2.2; omega
+  have hncB : newCap cap len n < 8589934592 := Nat.lt_succ_of_le (newCap_le cap len n 8589934591 (by omega) (by omega) (by omega))
+  have hrq0 : (newCap cap len n + 31) / 32 < 33554431 ∨ Decode.ReallocBig.BigReq s ptr ((newCap cap len n + 31) / 32) := by
+    obtain ⟨hbig⟩ := hbig
+    rcases hbig with hb | hoth
+    · have := newCap_le cap len n 1073741759 (by omega) (by omega) (by omega)
+      exact Or.inl (by omega)
+    · by_cases h : (newCap cap len n + 31) / 32 < 33554431
+      · exact Or.inl h
+      · by_cases h2 : (newCap cap len n + 31) / 32 = 33554431
+        · exact Or.inr (Or.inr ⟨h2, hoth⟩)
+        · exact Or.inr (Or.inl (by omega))
+  generalize hnc : newCap cap len n = nc at hnc1 hnc2 hnc3 hncB hrq0
   -- 58508 … 58586: the room test fails, reserve called
   obtain ⟨ω1, μ1, run1, a0, a1, a5, a6, a7, a8, a9, aS, a0', a5', a6', fr1, rd1, wr1⟩ :=
     g1 (p := p) (P := P) (R := refineContractK K env) x ω μ sp v src n cap len ret ω[5].toNat ω[6].toNat
@@ -184,8 +195,8 @@ theorem extend_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [
   have rd12 : ∀ a, μ2.readable a = μ.readable a := fun a => by rw [rd2, rd1]
   have H2 : HeapCtx env pb S0 S1 μ2 s := ctx_high H (fun a h => hlow a (by omega) (Or.inl (by omega))) wr12
   -- realloc
-  rcases realloc_call (p := p) (P := P) (hb := 0) env K hK1 hK x ω2 μ2 s (sp - 104) ptr 1 nc pb S0 S1 H2
-      ⟨c, hc, hcp, hcu⟩ (by omega) (by omega) hba b1 b7 b9 b10 (Nat.le_refl _) (by decide)
+  rcases Decode.ReallocBig.realloc_call_any (p := p) (P := P) (hb := 0) env K hK1 hK x ω2 μ2 s (sp - 104) ptr 1 nc pb S0 S1 H2
+      ⟨c, hc, hcp, hcu⟩ (by omega) hrq0 (by omega) hba b1 b7 b9 b10 (Nat.le_refl _) (by decide)
       ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ with
     ⟨r, s', bb, ω3, μ3, hR, run3, e7, H3, dat3, keep3, ⟨d, hdm, hda, hdu, hds⟩, kp3, stk3, -, wst3, e0, e1,
       e5, e6, gl3, hbase, fresh⟩ |
@@ -198,6 +209,8 @@ theorem extend_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [
   obtain ⟨hd0, -, hdT⟩ := chunk_in H3.wf hdm hdu
   rw [hbase] at hd0 hdT
   have hdn : nc ≤ 32 * (d.size - 1) := by rw [hds]; omega
+  clear hncB
+  have hncB : nc ≤ 1073741792 := by omega
   have run4 := rret (p := p) (P := P) (R := refineContractK K env) x ω3 μ3 (by rw [e0, b0])
   have hF : ∀ a, sp - 104 ≤ a → a < 4294967296 → μ3.read a = μ2.read a := fun a h1 h2 => stk3 a h2 h1
   have wst : ∀ a, S0 ≤ a → a < S1 → μ3.writable a = true := fun a h1 h2 => by
@@ -387,7 +400,7 @@ theorem extend_any {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
     (sp v src n cap ptr len ret t pb S0 S1 : Nat)
     (H : HeapCtx env pb S0 S1 μ s) (hc : c ∈ chunks s) (hcu : c.used = true) (hcp : c.addr + 32 = ptr)
     (hcc : cap ≤ 32 * (c.size - 1)) (hcap0 : 0 < cap) (hlc : len ≤ cap)
-    (hbig : 2 * cap < 1073741760 ∧ len + n < 1073741760)
+    (hbig : (2 * cap < 1073741760 ∧ len + n < 1073741760) ∨ Decode.ReallocBig.OtherUsed s ptr)
     (hsp : S0 + 424 ≤ sp ∧ sp ≤ S1 ∧ 2147484072 ≤ sp ∧ sp % 8 = 0) (hv : sp ≤ v ∧ v + 24 ≤ S1)
     (h0 : ω[0] = UInt64.ofNat ret) (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat v)
     (h8 : ω[8] = UInt64.ofNat src) (h9 : ω[9] = UInt64.ofNat n)
@@ -413,10 +426,11 @@ theorem extend_any {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
       (∀ a, a < 196608 → μ'.read a = μ.read a ∧ μ'.readable a = μ.readable a) ∧
       (∀ a, Glob a → μ'.read a = μ.read a) ∧ (∀ a, S0 ≤ a → μ'.writable a = μ.writable a)) ∨
     ExhaustsW env K pb p P 58508 ω μ x (7 * n + 64 * (c.size - 1) + 1800) := by
+  replace hbig := Nonempty.intro hbig
   by_cases hroom : len + n ≤ cap
   rotate_left
   · rcases extend_grow env K hK1 hK x ω μ s c sp v src n cap ptr len ret t pb S0 S1 H hc hcu hcp hcc hcap0 hlc
-        (by omega) hbig hsp hv h0 h1 h7 h8 h9 vc vp vl hret hjt hbt hsrc with
+        (by omega) (Classical.choice hbig) hsp hv h0 h1 h7 h8 h9 vc vp vl hret hjt hbt hsrc with
       ⟨r, s', ω', μ', run, e0, e1, e5, e6, ev, ev8, el, eo, ed, H', ⟨d, hdm, hdu, hda, hds⟩, rest⟩ | hx
     · obtain ⟨hnc1, -, -⟩ := newCap_ge cap len n
       refine Or.inl ⟨newCap cap len n, r, s', ω', μ', run, e0, e1, e5, e6, ev, ev8, el, hnc1, Or.inr ⟨by omega, rfl⟩, eo, ed, H',
@@ -428,7 +442,7 @@ theorem extend_any {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
   have hS1 := H.hS1
   have hst := H.st
   obtain ⟨hc0, -, hcT⟩ := chunk_in H.wf hc hcu
-  unfold StackSrc HeapSrc at hsrc
+  -- (hsrc stays folded: omega mis-handles a split of its `∃`)
   have hsrcB : (65536 ≤ src ∧ src + n < 2147483648) ∨ sp ≤ src := by
     rcases hsrc with ⟨h, -⟩ | ⟨e, he, heu, -, h1, h2⟩
     · exact Or.inr h

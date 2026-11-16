@@ -746,7 +746,8 @@ theorem itemPtrs_keep (O : ResultsOwn μ st rp n) (hk : ChunksKept μ st μ' st'
   · rw [if_neg h5, if_neg h5]
     by_cases hv : 6 ≤ rdN μ (rp + 144 * i) 1 ∧ rdN μ (rp + 144 * i) 1 < 255
     · rw [if_pos hv, if_pos hv]
-      congr 1
+      suffices hin : innerPtrs μ' (rdN μ (rp + 144 * i + 16) 8) (rdN μ (rp + 144 * i + 24) 8) =
+          innerPtrs μ (rdN μ (rp + 144 * i + 16) 8) (rdN μ (rp + 144 * i + 24) 8) by rw [hin]
       by_cases hL : rdN μ (rp + 144 * i + 24) 8 = 0
       · rw [hL]; simp [innerPtrs]
       · obtain ⟨-, d, hd, hu, hq, hend⟩ := O.2.2.2 i hi hv.1 hv.2 hL

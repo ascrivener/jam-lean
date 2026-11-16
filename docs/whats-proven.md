@@ -742,6 +742,35 @@ An independent kernel, nanoda as vendored by
   - *Scope:* the facts hold at 4642. That the later code until each decoder keeps these globals is a
     separate matter (`HKeepG` and the decoders' own statements).
 
+### Bootstrap service: accumulate (`Services/Bootstrap/Acc/`)
+
+Pieces of T2 (`docs/bootstrap-target.md`): parts of bootstrap's accumulate code shown to implement
+`Spec.accumulate`'s operations in the sense of `Acc.Impl` (`Acc/Impl/Impl.lean`).
+
+- **`on_transfer` implements `Spec.onTransfer`.** `Acc.tr_impl` (`Acc/Transfer/ImplTr.lean`).
+  - *Statement:* from the transfer arm at 7159 (an incoming transfer: source ω₁₀ mod 2³², amount
+    ω₆, the 128-octet memo at ω₈), the run implements `onTransfer src am memo`: it reads the counter
+    under "transfer-count", writes it back incremented (mod 2³²), logs a line, formats the key
+    "transfer{n}" and writes the record ℰ₄(src) ⌢ ℰ₈(am) ⌢ memo under it, then reaches the items
+    loop's head 6766 (`TrPost`: context `trCtx`, every earlier heap chunk and its data kept, from sp
+    up only the octets `TrW` changed, memory below 196608 unchanged). Each `set` that returns FULL
+    ends ☇ (`orPanic`, 15361); a failed allocation (3820, 48047, 4002, 15363, 15362, 34178, `get`'s
+    47977) is an early ☇ for the reason `heap` (`HeapFailT`).
+  - *Assumed:*
+    - every value in the service's storage is shorter than 2⁶³ octets (`hfit`; T2's `ValuesFit`);
+    - the blob's read-only data: the key "transfer-count" at 65956 and `set`'s error table at
+      69056 … 69076 (`accRoBytes`);
+    - the prologue's formatter words at sp + 208 / 136 / 200 (2800, 2804, 678);
+    - the heap context `HeapCtxC` and the stack bounds of the accumulate frame.
+  - *Named hypotheses* (`Acc/Transfer/Hyp.lean`; to be discharged by the executor and log-site work):
+    - `KeyFmt`: `format!("transfer{}", n)` at 7792 returns the key's octets, stated as text, in the
+      data of a live heap chunk fresh against the allocator's earlier state (strengthened from
+      "kc = 0 or a fresh chunk", Adam, 2026-11-15), or exhausts the heap and then ends ☇ (`ExhaustsP`);
+    - `Utf8Call`: `core::str::from_utf8` at 7447 on the memo;
+    - `LogFmt`: the log line's `format!` at 7692, frame-only (formatters 2800 → dec32, 2804 → dec64,
+      678 → String Display), or `ExhaustsP`.
+  - *Scope:* the frame does not yet state that the parameter statics 196616 … 196791 are kept.
+
 ### picoalloc: the model (`Services/Picoalloc/`)
 
 `Services/Picoalloc/Model.lean` is picoalloc 5.2, the SDK's heap allocator, written as Lean

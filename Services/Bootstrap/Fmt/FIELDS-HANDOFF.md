@@ -24,16 +24,30 @@
     `claude/bootstrap-fmt-sink-heap` (unmerged, old base). Recommended: rebase it and open its PR.
   - D2: explicit-spec `fmt_write` and pad_integral's width path, in new files of ours (recommended).
   - D3: FmtRO slices 70818, 70824, 70833, 71060, 71076, 71078 as named hypotheses (recommended).
-- **Hex path, surveyed** (needs D2):
-  - 57346 calls `core::fmt::write` (64495), template 70824, with the arg (slice, 2534).
-  - 2534 resolves to 57922, which takes a slice (ptr ω₉ = [ω₇], len ω₅ = [ω₇ + 8]). For len < 1027 it
-    loops at 57976: per octet, 64495 with template 70833 and fn 2532 (`<u8 as LowerHex>`, 60209).
-    Then 58215 is the end; an error goes to 58233.
-  - 60209: a digit loop (at most 2 iterations for a u8, table 71060), then pad_integral 61857 with
-    prefix (71076, 2). With `{:02x}`, the Formatter carries width 2 and the zero flag. That needs an
-    options-carrying ArgOk and the explicit-spec template item (not 0xC0) in a new `Tmpl` variant.
-  - 57485 has the same shape over 128 octets: its own loops at 57511 (checks) and 57537 (trailing-NUL
-    length); then `from_utf8` at 57556 / 57624; hex path 57567 with the same template 70824 and arg 2534.
+- **Decisions (parent, 2026-11-15)**: D1 (a), the write_str_heap PR is **#216**. D2: new files of ours
+  (FieldWriteSpec, FieldPadWidth); leave Write.lean and PadIntegral.lean alone. D3 (a): named RO
+  hypotheses with exact (address, length), listed in docstrings, in `docs/whats-proven.md` and in the
+  PR body (discharged in step 10, like FmtRO); don't edit FmtRO. from_utf8 step bound: the executor
+  line adds it as a follow-up PR after #194, and the parent will say when it lands.
+- **Hex path progress.** `FieldWriteSpec.lean` (builds, axioms clean): `FmtrO` / `ArgOkO` (a
+  Formatter with options o, width w, precision 0), `SpecAt`, `wr_spec` (64611 → fn), `wr_spec_ret`
+  (64843 → 64600), `wr_item_spec`, and `fmt_write_spec` (template = one 0xC3 item, then plain items).
+- **Hex path, what remains:**
+  - RO bytes (RO base in the .jam file at offset 92; RO starts at 65536): 70818 = `"{}"`
+    (01 22 C0 01 22 00); 70824 = `0x{}...` (02 30 78 C0 03 2E2E2E 00); 70833 = C3, o = 0x69000020,
+    w = 2, end byte at 70840; 71060 = "0123456789abcdef"; 71076 = "0x" (the prefix, unused without `#`).
+  - 57346: `core::fmt::write`(70824) with the arg (slice (a, 8), 2534 → 57922). The hex path
+    prints only the first 8 octets.
+  - 57922 (slice Debug-as-hex): for len < 1027, a loop at 57976 over the octets: 64495(70833) with
+    (&octet, 2532 → `<u8 as LowerHex>` 60209); an error goes to 58233, the end to 58215.
+  - 60209: the digit loop (1 or 2 iterations), then pad_integral 61857 (digits at sp + 7 − k).
+  - pad_integral with o = 0x69000020, w = 2: bit 21 (+) and bit 23 (#) are clear, so no sign and no
+    prefix. With 2 digits (len ≥ w) it is the plain path (61994 → write_prefix → write_str), as
+    `pi_a`/`pi_b`/`pi_c` but with o. With 1 digit, bit 24 (zero pad) gives 62076: the options are
+    saved and set to fill '0'; write_prefix; a fill loop of w − len = 1 `write_char` (vtable +32 =
+    2592 → jt 1295 → **59743**, String push; it grows through reserve 58615 like write_str, so it
+    needs a `wc_reserve` like Sink's `ws_reserve`, reusing `rs2a`/`rs2b` with return 2594); then
+    the digits via write_str (62219); the options are restored at 62248.
 - Local builds: use a base matching the latest published `lake-cache` (`fetch-lake.sh` prints it;
   main after #192/#201/#204 is near-cold against it), and cherry-pick onto main before pushing.
 

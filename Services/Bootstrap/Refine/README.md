@@ -6,6 +6,18 @@ Everything cites Gray Paper v0.8.0 via the docstrings of the files named here; t
 
 ## Current state (2026-11-16, read this first)
 
+**Eleventh instance (2026-11-16, branch `claude/bootstrap-t1c`).** refine_t1c stated and proved.
+- `T1c.refine_t1c` (`Refine/T1c.lean`): the headline, in `refine_milestone`'s form, C := `Consts.ofParams Params.full rk`.
+  Hypotheses: `VendoredFactsC` (`VendoredFacts` ∧ drop-table entry 8 at ro offset 32), `FmtHypsC C` (ArgsLineOk,
+  ExportFmtOk, LookupFmtOk, DebugLineOk for `DRt C`, all at gas cap K = 2^62), `IsBootstrapC l` (`IsBootstrap` ∧
+  `checkCode` for `CodeT1B`, `CodeT1C`: IsBootstrap lacked the newer tiers; parent asked, option (A)), `hnoimport`,
+  `hrsr`, `hpre` (preimages < 2^63), 1 ≤ |is|, |y| + 48 ≤ 2^24 (gives |is| ≤ 2^24 via `length_le_flatten`).
+- `TopT.refine_coreT` (pc 0 → 6373 at K = 2^62), `rd_kept0`, `gas_cap62` (eager Lookup gas ≤ 2^62 for |d| < 2^63).
+- 𝖢/𝖰 at 4680: `ArgsCtx.ArgsPost`'s "state at 4642" conjunct now also records ℰ₂(341) at 196616 and ℰ₈(80) at 196680
+  (from `BParamsHdr.run_hdr`, previously discarded); `ArgsAll.TailOut` gains a Glob frame (35130 → 4680, from
+  `vec_u8_args`' Glob frame and `tail_core_hi`'s low frame; `from_vec_hi` takes it as `bgl`); `ArgsAll.refine_args`
+  appends the two words at 4680 to its conclusion (callers' patterns unchanged). Strengthenings only.
+
 **Eighth instance (2026-11-16, branch `claude/bootstrap-t1c`, on top of m1d).** refine_t1c, in progress.
 
 **Handoff (tenth instance, 2026-11-16, branch `claude/bootstrap-t1c`).** Read this first.

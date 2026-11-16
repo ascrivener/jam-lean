@@ -605,6 +605,13 @@ Effort is relative: S < M < L < XL. Steps 0, 1 and 9 involve no binary.
     read-only tables of the vendored blob; step 10) and `FmtHyps` (the log lines at 4742 and 5744 and the `Debug` line
     at 6159; the fmt summaries). Not yet covered: eager `Lookup`, `Import`, `RandomStorageRefine`, the
     variable-width instructions and n ≥ 128.
+  - **M1, T1c for all but `Import` and `RandomStorageRefine` (proved: `Refine.T1c.refine_t1c`).** T1c for
+    1 ≤ n instructions, every kind but `Import` (`hnoimport`, deferred) and `RandomStorageRefine` (`hrsr`), with
+    C = `Consts.ofParams Params.full rk` and |y| + 48 ≤ 2²⁴. Named hypotheses: `VendoredFactsC` (`VendoredFacts`
+    and the drop table's entry 8), `IsBootstrapC` (`IsBootstrap` and `checkCode` for the tiers `CodeT1B`,
+    `CodeT1C`; both discharged in step 10), `FmtHypsC` (the four log / `Debug` lines at gas cap 2⁶²) and `hpre`
+    (preimages < 2⁶³ octets). Third outcome `ExhaustsHeap`, as for the first step. Remaining for full T1c:
+    `Import`; then M2 (non-canonical payloads).
   - **Later obligation: an allocation failure ends in ☇ with no exports.** The milestone's third outcome is
     `ExhaustsHeap` alone (the run reaches a failed allocation). That the run then traps (panic = abort: each null
     check falls into a `trap`), so Ψ_R's result is ☇ with no exports, is not yet proved; T1 keeps the full claim.

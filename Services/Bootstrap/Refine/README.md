@@ -79,6 +79,21 @@ with `lake env lean`; axioms clean.
   57485**, through the builders/tails 63820 (tag 0), 28576 (5, 13, 18), 63570 (11), 27665 (12), 28280 (17), 62816 (19),
   62471 (22) and 28458 (24). Not needed: 26706 (tag 9, `Import`, never an output) and 36972 (tag 21, RSR, excluded).
 
+**ReallocBig plan (fifth instance, from the disassembly).** Goal: `realloc_call`'s null outcome for
+2^25 − 1 ≤ units, so n ≤ 2²¹, `hbig` and `capBound` can go. The wrapper 40701: size > 2^37 − 32 → ω₇ = 0 and return at
+40724 (no lock). Otherwise lock (as `alloc_call`), units = (size + 31) >> 5 passed through `add_imm_32` (sign-extended:
+units ≥ 2^31 arrive as 2^64 − 2^32 + units), `realloc_impl` 42980, unlock, 40821. In 42980 for units req ≥ 2^25 − 1:
+- 42996 cur = header(ptr − 32).size >> 1; req ≠ cur − 1, req ≠ 0; 43023 req ≥ cur − 1 (unsigned) → grow path 43169.
+- 43169: req = 2^64 − 1 (units 2^32 − 1) → fallback 43259. Otherwise ω₅ = req + 1 (32-bit, sign-extended), cur < ω₅;
+  next = chunk + 32·cur (32-bit add): next ≥ heap top + 2^30 → 43259; next used → 43259; next free and
+  cur + next.size < req + 1 (always: the heap has < 2^25 units) → 43259. The merge path 43375 (with `ecalli 1`) is
+  never reached.
+- 43259: `alloc_impl` 41177 (ω₈ = align, ω₉ = req, ω₁₀ = 0) returns null for these sizes (`Decode/AllocHuge`'s
+  `alloc_impl_huge_callG`, both units < 2^31 and ≥ 2^31, as `LookupWrap.wl` / `wlh` use) → 43326: ω₇ = 0, return to
+  40805 → unlock → 40821.
+- Model side: check `realloc (growTo pb)` is `none` for these units (heap 2^30 octets).
+New file `Refine/ReallocBig.lean`; the Alloc files are not changed (their `hr1` stays).
+
 **Handoff (2026-11-16, end of the fourth instance; branch `claude/bootstrap-t1-m1c`, pushed, no PR yet).** Every file
 below builds; axioms clean. #214 (part A) was still in attempt-1 at handoff (`model` green): merge it on green, then merge
 main into this branch before opening its PR. A full `lake build` of this branch was started but not finished (the cache

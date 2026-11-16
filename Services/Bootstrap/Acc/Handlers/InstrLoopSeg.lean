@@ -401,4 +401,61 @@ theorem il_log_post {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (
       Nat.mod_eq_of_lt hq, Nat.mod_eq_of_lt hl]
     all_goals try (congr 1; omega)
 
+/-- **14278 … 14369, the result's log line**: the argument pairs at sp + 1568: (sp + 736, 2804) the
+    index, (sp + 976, f) the instruction's `String` (f the formatter word at sp + 200), and (sp + 1496,
+    680) the `Result` { is_err, payload } at sp + 1496 (is_err = 1 iff the octet b at sp + 1000 is 255,
+    payload sp + 1001 for `Err`, sp + 1000 for `Ok`); the call of `format!` (59375, return 534) with
+    ω₇ = sp + 1144, ω₈ = 66359 (the template), ω₉ = sp + 1568. -/
+theorem il_res_log_pre {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
+    (μ : Memory) (sp b f : Nat) (h1 : ω[1] = UInt64.ofNat sp) (hsp : 65536 ≤ sp ∧ sp + 1632 < 4294967296)
+    (hb : b < 256) (hf : f < 2 ^ 64)
+    (mb : μ.readN (sp + 1000) 1 = Num.encodeLE 1 b) (mf : μ.readN (sp + 200) 8 = Num.encodeLE 8 f)
+    (hr : ∀ a, sp + 200 ≤ a → a < sp + 208 → μ.readable a = true)
+    (hr2 : ∀ a, sp + 1000 ≤ a → a < sp + 1001 → μ.readable a = true)
+    (hw : ∀ a, sp + 1496 ≤ a → a < sp + 1512 → μ.writable a = true)
+    (hw2 : ∀ a, sp + 1568 ≤ a → a < sp + 1616 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 14278 ω μ x 59375 ω' μ' x 24 ∧
+      ω'[0] = UInt64.ofNat 534 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      ω'[7] = UInt64.ofNat (sp + 1144) ∧ ω'[8] = UInt64.ofNat 66359 ∧ ω'[9] = UInt64.ofNat (sp + 1568) ∧
+      μ'.readN (sp + 1568) 8 = Num.encodeLE 8 (sp + 736) ∧ μ'.readN (sp + 1576) 8 = Num.encodeLE 8 2804 ∧
+      μ'.readN (sp + 1584) 8 = Num.encodeLE 8 (sp + 976) ∧ μ'.readN (sp + 1592) 8 = Num.encodeLE 8 f ∧
+      μ'.readN (sp + 1600) 8 = Num.encodeLE 8 (sp + 1496) ∧ μ'.readN (sp + 1608) 8 = Num.encodeLE 8 680 ∧
+      μ'.readN (sp + 1496) 8 = Num.encodeLE 8 (if b = 255 then 1 else 0) ∧
+      μ'.readN (sp + 1504) 8 = Num.encodeLE 8 (if b = 255 then sp + 1001 else sp + 1000) ∧
+      (∀ a, a < 4294967296 → (a < sp + 1496 ∨ sp + 1512 ≤ a) → (a < sp + 1568 ∨ sp + 1616 ≤ a) →
+        μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+  have rb : rdN μ (sp + 1000) 1 = b := by
+    show Num.decodeLE _ = _; rw [mb, Num.decodeLE_encodeLE, Nat.mod_eq_of_lt (by simpa using hb)]
+  have rf := Handlers.DesignateAlloc.rd8 hf mf
+  rw [show ω = regsNF ω [] from rfl]
+  by_cases h255 : b = 255
+  · subst h255
+    refine ⟨?_, ?_, ?_, ?_⟩
+    rotate_left 2
+    · pvm_go [h1, hsp, rb, rf, hr, hr2, hw, hw2, rdN_writeN_disjoint, ↓rdN_fold]
+    · refine ⟨by reg_val, by reg_val, by reg_val, by reg_val, ?_, by reg_val, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_,
+        fun a ha h1' h2' => ?_, fun a => ?_, fun a => ?_⟩
+      all_goals try simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,
+        PVM.getD_some', List.lookup_nil, Option.getD_none]
+      all_goals try rd_simp []
+      all_goals try rfl
+      all_goals try (congr 1; omega)
+      all_goals try simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h1, Nat.mod_eq_of_lt hf]
+      all_goals try (congr 1; omega)
+  · have hb' : (b + 18446744073709551361) % 18446744073709551616 ≠ 0 := by omega
+    have hb'' : ¬ (b + 18446744073709551361) % 18446744073709551616 < 1 := by omega
+    refine ⟨?_, ?_, ?_, ?_⟩
+    rotate_left 2
+    · pvm_go [h1, hsp, rb, rf, hr, hr2, hw, hw2, hb', hb'', rdN_writeN_disjoint, ↓rdN_fold]
+    · refine ⟨by reg_val, by reg_val, by reg_val, by reg_val, ?_, by reg_val, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_,
+        fun a ha h1' h2' => ?_, fun a => ?_, fun a => ?_⟩
+      all_goals try simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,
+        PVM.getD_some', List.lookup_nil, Option.getD_none, h255, hb', hb'']
+      all_goals try rd_simp []
+      all_goals try rfl
+      all_goals try (congr 1; omega)
+      all_goals try simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h1, Nat.mod_eq_of_lt hf, h255, hb', hb'']
+      all_goals try (congr 1; omega)
+
 end Services.Bootstrap.Acc.Handlers.InstrLoop

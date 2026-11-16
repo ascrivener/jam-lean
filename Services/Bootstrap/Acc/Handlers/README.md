@@ -128,7 +128,7 @@ becomes a case split with heap exhaustion.
    gap). Use **`memcpy_big_aligned`** (`MemcpyBig.lean`: both ends 8-aligned, exact disjointness, sp % 8 = 0) instead.
    The slot copy c+8 → sp+512 is aligned too (cur = buf + 232·k).
 2. ~~The body's front for tags other than 3/15~~: **done**, `il_front` (`InstrLoopFront.lean`, 8540 → 8735, axioms clean;
-   `il_copy2` now also keeps ω₅). Still to do: the Zombify variant (with `il_tag_zomb`) and the Checkpoint one. Pieces: `il_head`, `il_next`, `memcpy_val` (c+8 → sp+512, ret 296),
+   `il_copy2` now also keeps ω₅). `il_front_zomb` (tag 3, flag := 1) done too. Still to do: the Checkpoint variant. Pieces: `il_head`, `il_next`, `memcpy_val` (c+8 → sp+512, ret 296),
    `il_copy2`, memcpy (ret 298), `il_tag_other`/`il_tag_zomb`. Jump-table facts `jte_*`/`bs_*` are in `CodeA/`.
    Tag 15: `il_tag_ck` → `store_core` (ret 300; `RetOK` already has 300 → 8716) → `il_ck_ok`.
 3. 8735 → 8822: `il_log_pre`, `InstrLogH`, `il_log_post`, memcpy (ret 304, sp+744 → sp+1144). Then `HandlerH`

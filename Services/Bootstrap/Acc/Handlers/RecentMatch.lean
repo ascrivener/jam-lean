@@ -296,6 +296,7 @@ theorem rm_head {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
       (∀ a, a < 4294967296 → sp ≤ a → (a < sp + 1144 ∨ sp + 1180 ≤ a) → (a < sp + 1568 ∨ sp + 1576 ≤ a) →
         μ'.read a = μ.read a) ∧
       (∀ a, Glob a → μ'.read a = μ.read a) ∧ (∀ a, a < 196608 → μ'.read a = μ.read a) ∧
+      (∀ a, a < 196608 → μ'.readable a = μ.readable a) ∧
       (∀ w, c0.1.self.storage.get? (Key.recent c).encode = some w → w.length < 2 ^ 31)) ∨
     (∃ e ω' μ' n, (e = 34070 ∨ e = 47977) ∧
       FreeStepsH p (KeepCtx (accContractS env)) 8056 ω μ (c0, f) e ω' μ' (c0, f) n) := by
@@ -329,11 +330,11 @@ theorem rm_head {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
       pb S0 S1 HA a0 a1 a7 a8 hsp hS0 ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ mtA mcA hkc
       (fun a h1 h2 => by rw [rdA]; exact hrt a h1 h2) ⟨by decide, by decide, by decide⟩
       (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_139]) bs_8079 (by rw [hkA]; exact hfit) with
-    ⟨st', ωB, μB, nB, runB, b0, b1, b5, b6, soB, HB, keepB, frB, glB, loB, bdB⟩ | ⟨e, ωB, μB, nB, he, runB⟩
+    ⟨st', ωB, μB, nB, runB, b0, b1, b5, b6, soB, HB, keepB, frB, glB, loB, rdB, bdB⟩ | ⟨e, ωB, μB, nB, he, runB⟩
   · rw [hkA] at soB bdB
     refine .inl ⟨st', ωB, μB, _, runA.trans runB, b1.trans a1, b5.trans a5, b6.trans a6, soB, HB,
       fun d hd hu => ⟨(keepB d hd hu).1, fun a ha => ?_⟩, fun a h0 ha hb hc => ?_, fun a ha => ?_,
-      fun a ha => ?_, bdB⟩
+      fun a ha => ?_, fun a ha => by rw [rdB a ha, rdA], bdB⟩
     · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hd hu
       have := H.hb0
       have := H.hbT
@@ -352,13 +353,14 @@ def RmOut (sp a : Nat) : Prop :=
 /-- **The state after the slot read and removal** (8172), against the memory μ₀ and allocator state
     st at 8056: ω₁ = sp, ω₅ = c (the counter, stored again at 8177); the allocator's context for
     some st′ keeping every allocated chunk of st with its data; memory kept above sp off `RmOut`,
-    at the globals 196616 … 196791 and below 196608. -/
+    at the globals 196616 … 196791 and below 196608 (with its access). -/
 def RmPost (code : ByteArray) (pb S0 S1 sp c : Nat) (st : State) (μ₀ : Memory) (s' : St Stream) : Prop :=
   s'.i = 8172 ∧ s'.ω[1] = UInt64.ofNat sp ∧ s'.ω[5] = UInt64.ofNat c ∧
   ∃ st', HeapCtxC code pb S0 S1 s'.μ st' ∧
     (∀ d ∈ chunks st, d.used = true → d ∈ chunks st' ∧ ∀ a, InData d a → s'.μ.read a = μ₀.read a) ∧
     (∀ a, a < 4294967296 → sp ≤ a → ¬ RmOut sp a → s'.μ.read a = μ₀.read a) ∧
-    (∀ a, Glob a → s'.μ.read a = μ₀.read a) ∧ (∀ a, a < 196608 → s'.μ.read a = μ₀.read a)
+    (∀ a, Glob a → s'.μ.read a = μ₀.read a) ∧ (∀ a, a < 196608 → s'.μ.read a = μ₀.read a) ∧
+    (∀ a, a < 196608 → s'.μ.readable a = μ₀.readable a)
 
 /-- **`addRecent`'s slot read and removal** (8056 → 8172): from 8056 with ω₁ = sp and the counter c
     in ω₅, the run implements `match ← load (.recent c) slotDec with | some (p, i) => remove
@@ -397,7 +399,7 @@ theorem recent_match {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
   unfold Impl
   rcases rm_head (P := P) env cap hcap1 hcap c0 f ω μ st sp c kc pb S0 S1 H h1 h5 hc hsp hS0 hS1 mc hkc hrt
       (hvals _) with
-    ⟨st', ωB, μB, nB, runB, b1, b5, b6, soB, HB, keepB, frB, glB, loB, bdB⟩ | ⟨e, ωB, μB, nB, he, runB⟩
+    ⟨st', ωB, μB, nB, runB, b1, b5, b6, soB, HB, keepB, frB, glB, loB, rdB, bdB⟩ | ⟨e, ωB, μB, nB, he, runB⟩
   rotate_left
   · rcases he with rfl | rfl
     · exact .inl ⟨⟨34070, ωB, μB, c0, f⟩, ⟨nB, runB⟩, hAb1 _ rfl, ωB, μB, f,
@@ -426,7 +428,7 @@ theorem recent_match {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
     obtain ⟨ωC, runC, g0, g1, g5, g6⟩ := rm_none (P := P) (R := KeepCtx (accContractS env)) (c0, f) ωB μB sp b1
       (by omega) soB (fun a h1 h2 => Memory.readable_of_writable (HB.st a (by omega) (by omega)))
     refine .inr ⟨⟨8172, ωC, μB, c0, f⟩, ⟨_, runC⟩, rfl, rfl, g1, g5.trans (b5.trans h5), st', HB,
-      keepB, fun a h0 ha hn => ?_, glB, loB⟩
+      keepB, fun a h0 ha hn => ?_, glB, loB, rdB⟩
     unfold RmOut at hn
     exact kB a h0 ha (by omega) (by omega)
   | some qk =>
@@ -449,7 +451,7 @@ theorem recent_match {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
       (fun a h1 h2 => by rw [rd2]; exact Memory.readable_of_writable (HB.st a (by omega) (by omega))) (by omega)
     rcases remove_call (P := P) env c0 f ω2 μ2 sp (sp + 744) 35 (Key.results q k).encode a1 a7 a8
         (by decide) (by omega) ⟨by omega, by omega⟩ hwf hk2 ok2 (.inr (by omega)) (hvals _) with
-      ⟨hF, ω3, μ3, run3⟩ | ⟨hF, e, ω3, μ3, he, run3, -, g0, g1, g5, fr3, -, wr3⟩
+      ⟨hF, ω3, μ3, run3⟩ | ⟨hF, e, ω3, μ3, he, run3, -, g0, g1, g5, fr3, rd3, wr3⟩
     · rw [if_pos hF]
       exact ⟨(c0.1.setSelf (writeSelf c0.1.self (Key.results q k).encode []), c0.2), rfl, ω3, μ3, f, run3.run (.exit (FreeRun.exit (trap_48533 (P := P) ω3 μ3)) (by simp))⟩
     · rw [if_neg hF]
@@ -457,7 +459,8 @@ theorem recent_match {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
       have run4 := rm_back (P := P) (R := YIn (accContractS env) c0.2 c0.2)
         ((c0.1.setSelf (writeSelf c0.1.self (Key.results q k).encode []), c0.2), f) ω3 μ3 e he (g0.trans a0)
       refine .inr ⟨⟨8172, ω3, μ3, (c0.1.setSelf (writeSelf c0.1.self (Key.results q k).encode []), c0.2), f⟩,
-        ⟨_, run3.trans run4⟩, rfl, .inr ⟨_, ⟨0, .refl⟩, rfl, rfl, g1, ?_, st', ?_, ?_, ?_, ?_, ?_⟩⟩
+        ⟨_, run3.trans run4⟩, rfl, .inr ⟨_, ⟨0, .refl⟩, rfl, rfl, g1, ?_, st', ?_, ?_, ?_, ?_, ?_,
+          fun a ha => by rw [rd3, rd2, rdB a ha]⟩⟩
       · rw [g5, a5, b5, h5]
       · exact HeapKeep.keepHi HB (fun a ha => by rw [fr3 a (by omega) (.inl (by omega)),
           fr2 a (by omega) (.inl (by omega)) (.inl (by omega))]) (fun a => by rw [wr3, wr2])

@@ -66,6 +66,7 @@ theorem slot_get {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env
       (∀ d ∈ chunks st, d.used = true → d ∈ chunks st' ∧ ∀ a, InData d a → μ'.read a = μ.read a) ∧
       (∀ a, a < 4294967296 → SP ≤ a → (a < out ∨ out + 36 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, Glob a → μ'.read a = μ.read a) ∧ (∀ a, a < 196608 → μ'.read a = μ.read a) ∧
+      (∀ a, a < 196608 → μ'.readable a = μ.readable a) ∧
       (∀ w, c.1.self.storage.get? (keyEnc μ kp 1) = some w → w.length < 2 ^ 31)) ∨
     (∃ e ω' μ' n, (e = 34070 ∨ e = 47977) ∧
       FreeStepsH p (KeepCtx (accContractS env)) 34377 ω μ (c, f) e ω' μ' (c, f) n) := by
@@ -102,7 +103,7 @@ theorem slot_get {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env
   case inr =>
     obtain ⟨-, runBS⟩ := FreeStepsH.growS f runB
     exact .inr ⟨34070, ωB, μB, _, .inl rfl, runA.trans runBS⟩
-  obtain ⟨-, roB⟩ := HeapHost.keepRO (env := accHeapHost env) HA.bd runB
+  obtain ⟨pgB, roB⟩ := HeapHost.keepRO (env := accHeapHost env) HA.bd runB
   obtain ⟨-, runBS⟩ := FreeStepsH.growS f runB
   rw [hkA, hkl] at oB16 oBk
   have hS1B := HB.hS1
@@ -132,7 +133,7 @@ theorem slot_get {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env
     d1 (by omega) (by omega) (by omega) (by rw [kD _ _ (by omega) (by omega)]; exact oB0)
     (fun a h1 h2 => Memory.readable_of_writable (HD.st a (by omega) (by omega)))
   have hKD := keepD _ hnewK rfl
-  obtain ⟨ωF, μF, runF, HF, -, -, roF, stkF, glF, keepF, f0, f1, f5, f6⟩ :=
+  obtain ⟨ωF, μF, runF, HF, -, pgF, roF, stkF, glF, keepF, f0, f1, f5, f6⟩ :=
     dealloc_callG (R := KeepCtx (accContractS env)) (p := p) (P := P) env.code pb S0 S1 (c, f) ωE μD s2 S kptr
       1602 34434 _ HD hKD rfl (by dsimp only; omega) e0 e1 (e7.trans (d6.trans c6)) ⟨by decide, by decide, by decide⟩
       (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_800]) bs_34434 (by omega) ⟨by omega, by omega⟩
@@ -167,6 +168,10 @@ theorem slot_get {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env
     rw [roF a (by unfold two32; omega) (HD.ro a ha), loD a ha,
       roB a (by unfold two32; omega) (.inl (by unfold pageSize; omega)) (by rw [wrA]; exact H.ro a ha),
       frA a (by omega) (.inl (by omega))]
+  have rdF0 : ∀ a, a < 196608 → μF.readable a = μ.readable a := fun a ha => by
+    rw [show μF.readable a = μD.readable a by unfold Memory.readable; rw [pgF], rdD a ha,
+      show μB.readable a = μA.readable a by
+        unfold Memory.readable; rw [pgB (a / pageSize) (.inl (by unfold pageSize; omega))], rdA]
   -- st's chunks: kept, and their data, up to μF
   have keep0 : ∀ d ∈ chunks st, d.used = true → d ∈ chunks (free s2 kptr) ∧ d ∈ chunks s1 ∧
       ∀ a, InData d a → μF.read a = μ.read a := by
@@ -198,7 +203,8 @@ theorem slot_get {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env
       g5.trans UInt64.ofNat_toNat, g6.trans UInt64.ofNat_toNat, ?_,
       HeapKeep.keepHi HF (fun a ha => frG a (by omega) (.inl (by omega))) (fun a => Memory.writable_writeN _ _ _ _),
       fun d hd hu => ⟨(keep0 d hd hu).1, fun a ha => ?_⟩, fun a h0 ha hb => ?_,
-      fun a ha => ?_, fun a ha => ?_, fun w hw => by simp at hw⟩
+      fun a ha => ?_, fun a ha => ?_, fun a ha => by rw [Memory.readable_writeN, rdF0 a ha],
+      fun w hw => by simp at hw⟩
     rotate_left 3
     · have ha' := ha; unfold Glob at ha'; rw [frG a (by omega) (.inl (by omega)), glF0 a ha]
     · rw [frG a (by omega) (.inl (by omega)), loF0 a ha]
@@ -213,7 +219,7 @@ theorem slot_get {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env
     | nil =>
       unfold GetOut at gO
       obtain ⟨g24, g32, g40⟩ := gO
-      obtain ⟨ωG, μG, nG, runG, g0, g1, g5, g6, slG, frG, wrG⟩ := sg_tailE (P := P)
+      obtain ⟨ωG, μG, nG, runG, g0, g1, g5, g6, slG, frG, wrG, rdG⟩ := sg_tailE (P := P)
         (R := KeepCtx (accContractS env)) (c, f) ωF μF S out ω[0].toNat ω[5].toNat ω[6].toNat t eF1 eF5
         ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ (by rw [kFv _ _ (by omega) (by omega)]; exact g24)
         (by rw [kFv _ _ (by omega) (by omega), show S + 32 = S + 24 + 8 by omega]; exact g32)
@@ -224,7 +230,7 @@ theorem slot_get {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env
         g5.trans UInt64.ofNat_toNat, g6.trans UInt64.ofNat_toNat, slG,
         HeapKeep.keepHi HF (fun a ha => frG a (by omega) (.inl (by omega)) (.inl (by omega))) wrG,
         fun d hd hu => ⟨(keep0 d hd hu).1, fun a ha => ?_⟩, fun a h0 ha hb => ?_,
-        fun a ha => ?_, fun a ha => ?_, fun w hw => by cases hw; simp⟩
+        fun a ha => ?_, fun a ha => ?_, fun a ha => by rw [rdG, rdF0 a ha], fun w hw => by cases hw; simp⟩
       rotate_left 2
       · have ha' := ha; unfold Glob at ha'
         rw [frG a (by omega) (.inl (by omega)) (.inl (by omega)), glF0 a ha]
@@ -244,7 +250,7 @@ theorem slot_get {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env
         have hdivV : bs.length + 1 ≤ 32 * ((bs.length + 1 + 31) / 32) := by omega
         simp only [InData, List.length_cons] at hj ⊢
         omega
-      obtain ⟨ωG, μG, nG, runG, g0, g1, g5, g6, slG, HG, frG, glG, loG, keepG⟩ := sg_tailW (P := P)
+      obtain ⟨ωG, μG, nG, runG, g0, g1, g5, g6, slG, HG, frG, glG, loG, keepG, rdG⟩ := sg_tailW (P := P)
         (R := KeepCtx (accContractS env)) env.code pb S0 S1 (c, f) ωF μF (free s2 kptr) S out vptr ω[0].toNat
         ω[5].toNat ω[6].toNat t (b :: bs) HF hV1 hvp (List.cons_ne_nil b bs) eF1 eF5 ⟨by omega, by omega⟩
         ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ (by rw [kFv _ _ (by omega) (by omega)]; exact g24)
@@ -254,7 +260,7 @@ theorem slot_get {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env
       refine .inl ⟨free (free s2 kptr) vptr, ωG, μG, _, run0.trans runG, g0.trans UInt64.ofNat_toNat,
         g1.trans h1.symm, g5.trans UInt64.ofNat_toNat, g6.trans UInt64.ofNat_toNat, slG, HG,
         fun d hd hu => ?_, fun a h0 ha hb => ?_, fun a ha => by rw [glG a ha, glF0 a ha],
-        fun a ha => by rw [loG a ha, loF0 a ha], fun w' hw' => ?_⟩
+        fun a ha => by rw [loG a ha, loF0 a ha], fun a ha => by rw [rdG, rdF0 a ha], fun w' hw' => ?_⟩
       rotate_left 2
       · cases hw'
         have := Services.Bootstrap.Decode.VecU8.chunk_in HD.wf hnewV rfl

@@ -81,10 +81,11 @@ theorem sg_fret {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
       ω'[6] = UInt64.ofNat v6 ∧ HeapCtxC code pb S0 S1 μ' (free s vptr) ∧
       (∀ a, a < 4294967296 → S ≤ a → μ'.read a = μ.read a) ∧
       (∀ a, Glob a → μ'.read a = μ.read a) ∧ (∀ a, a < 196608 → μ'.read a = μ.read a) ∧
-      (∀ d ∈ chunks s, d.used = true → d ≠ V → d ∈ chunks (free s vptr) ∧ ∀ a, InData d a → μ'.read a = μ.read a) := by
+      (∀ d ∈ chunks s, d.used = true → d ≠ V → d ∈ chunks (free s vptr) ∧ ∀ a, InData d a → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) := by
   have hst := H.st
   have hS1 := H.hS1
-  obtain ⟨ω1, μ1, run1, H1, -, -, ro1, stk1, gl1, keep1, g0, g1, -, -⟩ :=
+  obtain ⟨ω1, μ1, run1, H1, -, pg1, ro1, stk1, gl1, keep1, g0, g1, -, -⟩ :=
     dealloc_callG (R := R) (p := p) (P := P) code pb S0 S1 x ω μ s S vptr 1608 34623 V H hV hVu hVa h0 h1 h7
       ⟨by decide, by decide, by decide⟩ (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_803]) bs_34623 hS.1
       ⟨hSS.1, by omega⟩
@@ -95,7 +96,8 @@ theorem sg_fret {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
     (by rw [kf _ (by omega) (by omega)]; exact m88) hr0 hv5 hv6 hret hjt hbt
     (fun a h1 h2 => Memory.readable_of_writable (H1.st a (by omega) (by omega)))
   refine ⟨ω2, μ1, (run1.trans run2).mono (by omega), e0, e1, e5, e6, H1, fun a h0 ha => stk1 a h0 ha,
-    gl1, fun a ha => ro1 a (by unfold two32; omega) (H.ro a ha), fun d hd hu hne => keep1 d hd hu hne⟩
+    gl1, fun a ha => ro1 a (by unfold two32; omega) (H.ro a ha), fun d hd hu hne => keep1 d hd hu hne,
+    fun a => by unfold Memory.readable; rw [pg1]⟩
 
 theorem okMem_read (μ : Memory) (out w0 w1 w2 w3 k a : Nat) (hout : out + 36 < 4294967296) (ha : a < 4294967296)
     (hoff : a < out ∨ out + 36 ≤ a) : (okMem μ out w0 w1 w2 w3 k).read a = μ.read a := by
@@ -110,6 +112,10 @@ theorem okMem_read (μ : Memory) (out w0 w1 w2 w3 k a : Nat) (hout : out + 36 < 
 theorem okMem_writable (μ : Memory) (out w0 w1 w2 w3 k a : Nat) :
     (okMem μ out w0 w1 w2 w3 k).writable a = μ.writable a := by
   unfold okMem; simp only [Memory.writable_writeN]
+
+theorem okMem_readable (μ : Memory) (out w0 w1 w2 w3 k a : Nat) :
+    (okMem μ out w0 w1 w2 w3 k).readable a = μ.readable a := by
+  unfold okMem; simp only [Memory.readable_writeN]
 
 theorem okMem_slot (μ : Memory) (out w0 w1 w2 w3 k : Nat) (hout : out + 36 < 4294967296)
     (hw0 : w0 < 18446744073709551616) (hw1 : w1 < 18446744073709551616)
@@ -161,7 +167,8 @@ theorem sg_tailW {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
       (∀ a, a < 4294967296 → S + 112 ≤ a → (a < out ∨ out + 36 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, Glob a → μ'.read a = μ.read a) ∧ (∀ a, a < 196608 → μ'.read a = μ.read a) ∧
       (∀ d ∈ chunks s, d.used = true → d ≠ ⟨vptr - 32, (w.length + 31) / 32 + 1, true⟩ →
-        d ∈ chunks (free s vptr) ∧ ∀ a, InData d a → μ'.read a = μ.read a) := by
+        d ∈ chunks (free s vptr) ∧ ∀ a, InData d a → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) := by
   have hst := H.st
   have hS1 := H.hS1
   have hb0 := H.hb0
@@ -178,7 +185,7 @@ theorem sg_tailW {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
   have fin : ∀ ωX μX nX, FreeStepsH p R 34434 ω μ x 40613 ωX μX x nX → ωX[0] = UInt64.ofNat 1608 →
       ωX[1] = UInt64.ofNat S → ωX[7] = UInt64.ofNat vptr →
       (∀ a, a < 4294967296 → (a < S - 88 ∨ S + 88 ≤ a) → (a < out ∨ out + 36 ≤ a) → μX.read a = μ.read a) →
-      (∀ a, μX.writable a = μ.writable a) → SlotOut μX out (decode slotDec w) →
+      (∀ a, μX.writable a = μ.writable a) → (∀ a, μX.readable a = μ.readable a) → SlotOut μX out (decode slotDec w) →
       ∃ ω' μ' n, FreeStepsH p R 34434 ω μ x t ω' μ' x n ∧
         ω'[0] = UInt64.ofNat r0 ∧ ω'[1] = UInt64.ofNat (S + 112) ∧ ω'[5] = UInt64.ofNat v5 ∧
         ω'[6] = UInt64.ofNat v6 ∧ SlotOut μ' out (decode slotDec w) ∧
@@ -186,20 +193,21 @@ theorem sg_tailW {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
         (∀ a, a < 4294967296 → S + 112 ≤ a → (a < out ∨ out + 36 ≤ a) → μ'.read a = μ.read a) ∧
         (∀ a, Glob a → μ'.read a = μ.read a) ∧ (∀ a, a < 196608 → μ'.read a = μ.read a) ∧
         (∀ d ∈ chunks s, d.used = true → d ≠ ⟨vptr - 32, (w.length + 31) / 32 + 1, true⟩ →
-          d ∈ chunks (free s vptr) ∧ ∀ a, InData d a → μ'.read a = μ.read a) := by
-    intro ωX μX nX runX x0 x1 x7 frX wrX slX
+          d ∈ chunks (free s vptr) ∧ ∀ a, InData d a → μ'.read a = μ.read a) ∧
+        (∀ a, μ'.readable a = μ.readable a) := by
+    intro ωX μX nX runX x0 x1 x7 frX wrX rdX slX
     have HX : HeapCtxC code pb S0 S1 μX s :=
       HeapKeep.keepHi H (fun a ha => frX a (by omega) (.inl (by omega)) (.inl (by omega))) wrX
     have kX : ∀ o, S + 88 ≤ o → o + 8 ≤ S + 112 → μX.readN o 8 = μ.readN o 8 := fun o h1 h2 =>
       Memory.readN_congr fun j hj => frX _ (by omega) (.inr (by omega)) (.inl (by omega))
-    obtain ⟨ωF, μF, runF, f0, f1, f5, f6, HF, stkF, glF, roF, keepF⟩ :=
+    obtain ⟨ωF, μF, runF, f0, f1, f5, f6, HF, stkF, glF, roF, keepF, rdF⟩ :=
       sg_fret (R := R) (P := P) code pb S0 S1 x ωX μX s S vptr r0 v5 v6 t _ HX hV rfl (by dsimp only; omega)
         x0 x1 x7 ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ (by rw [kX _ (by omega) (by omega)]; exact m104)
         (by rw [kX _ (by omega) (by omega)]; exact m96) (by rw [kX _ (by omega) (by omega)]; exact m88)
         hr0 hv5 hv6 hret hjt hbt
     have kF : ∀ o n, S ≤ o → o + n ≤ 4294967296 → μF.readN o n = μX.readN o n := fun o n h1 h2 =>
       Memory.readN_congr fun j hj => stkF _ (by omega) (by omega)
-    refine ⟨ωF, μF, _, runX.trans runF, f0, f1, f5, f6, ?_, HF, ?_, ?_, ?_, ?_⟩
+    refine ⟨ωF, μF, _, runX.trans runF, f0, f1, f5, f6, ?_, HF, ?_, ?_, ?_, ?_, fun a => by rw [rdF, rdX]⟩
     · cases hd : decode slotDec w with
       | none => rw [hd] at slX; unfold SlotOut at slX ⊢; rw [kF _ _ (by omega) (by omega)]; exact slX
       | some qk =>
@@ -237,7 +245,8 @@ theorem sg_tailW {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
       (by omega) (by omega) ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ mp2
       (fun a h1 h2 => by rw [rd2, rd1]; exact Memory.readable_of_writable (hst a (by omega) (by omega)))
       (fun a h1 h2 => by rw [wr2, wr1]; exact hst a (by omega) (by omega))
-    refine fin ω3 _ _ ((run1.trans run2).trans run3) c0 c1 c7 (fun a h0 ha hb => ?_) (fun a => ?_) ?_
+    refine fin ω3 _ _ ((run1.trans run2).trans run3) c0 c1 c7 (fun a h0 ha hb => ?_) (fun a => ?_)
+      (fun a => by rw [Memory.readable_writeN, rd2, rd1]) ?_
     · rw [rd_wr _ _ _ _ 2 l2 (by omega) (by omega) h0, fr2 a h0 (by omega), fr1 a h0 (by omega) (by omega)]
     · rw [Memory.writable_writeN, wr2, wr1]
     · rw [slotDec_short w (by omega)]; unfold SlotOut
@@ -296,7 +305,7 @@ theorem sg_tailW {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
       (fun a h1 h2 => by rw [rd4]; exact Memory.readable_of_writable (hrS3 a (by omega) (by omega)))
       (fun a h1 h2 => by rw [wr4, wr13]; exact hst a (by omega) (by omega))
     refine fin ω5 _ _ ((((run1.trans run2).trans run3).trans run4).trans run5) e0 e1 e7
-      (fun a h0 ha hb => ?_) (fun a => ?_) ?_
+      (fun a h0 ha hb => ?_) (fun a => ?_) (fun a => by rw [Memory.readable_writeN, rd4, rd13]) ?_
     · rw [rd_wr _ _ _ _ 2 l2 (by omega) (by omega) h0, fr4 a h0 (by omega), fr13 a h0 ha]
     · rw [Memory.writable_writeN, wr4, wr13]
     · rw [slotDec_short w hB]; unfold SlotOut
@@ -335,7 +344,7 @@ theorem sg_tailW {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
   obtain ⟨o0, o1, o2⟩ := okMem_slot μ4 out (rdN μ2 (S + 56) 8) (rdN μ2 (S + 64) 8) (rdN μ2 (S + 72) 8)
     (rdN μ2 (S + 80) 8) _ (by omega) (rdN_lt64 ..) (rdN_lt64 ..) (rdN_lt64 ..) (rdN_lt64 ..) hk
   refine fin ω5 _ _ ((((run1.trans run2).trans run3).trans run4).trans run5) e0 e1 e7
-    (fun a h0 ha hb => ?_) (fun a => ?_) ?_
+    (fun a h0 ha hb => ?_) (fun a => ?_) (fun a => by rw [okMem_readable, rd4, rd13]) ?_
   · rw [okMem_read _ _ _ _ _ _ _ _ (by omega) h0 hb, fr4 a h0 (by omega) (by omega) (by omega), fr13 a h0 ha]
   · rw [okMem_writable, wr4, wr13]
   · rw [slotDec_long w (by omega)]; unfold SlotOut
@@ -366,7 +375,7 @@ theorem sg_tailE {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
       ω'[0] = UInt64.ofNat r0 ∧ ω'[1] = UInt64.ofNat (S + 112) ∧ ω'[5] = UInt64.ofNat v5 ∧
       ω'[6] = UInt64.ofNat v6 ∧ SlotOut μ' out (decode slotDec []) ∧
       (∀ a, a < 4294967296 → (a < S - 88 ∨ S + 88 ≤ a) → (a < out ∨ out + 2 ≤ a) → μ'.read a = μ.read a) ∧
-      (∀ a, μ'.writable a = μ.writable a) := by
+      (∀ a, μ'.writable a = μ.writable a) ∧ (∀ a, μ'.readable a = μ.readable a) := by
   obtain ⟨ω1, μ1, run1, a0, a1, a5, a6, a7, a8, a9, mS, mS8, mS16, fr1, rd1, wr1⟩ :=
     sg_some (P := P) (R := R) x ω μ S 0 1 0 h1 ⟨by omega, by omega⟩ (by decide) (by decide)
       (by decide) (by decide) mc mp ml (fun a h1 h2 => hw a (by omega) h2)
@@ -387,7 +396,8 @@ theorem sg_tailE {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
     (fun a h1 h2 => by rw [rd2, rd1]; exact Memory.readable_of_writable (hw a (by omega) (by omega)))
     (fun a h1 h2 => by rw [wr2, wr1]; exact hwo a h1 h2)
   have l2 : (Num.encodeLE 2 0).length = 2 := Num.length_encodeLE ..
-  refine ⟨ω3, _, _, (run1.trans run2).trans run3, c0, c1, c5, c6, ?_, fun a h0 ha hb => ?_, fun a => ?_⟩
+  refine ⟨ω3, _, _, (run1.trans run2).trans run3, c0, c1, c5, c6, ?_, fun a h0 ha hb => ?_, fun a => ?_,
+    fun a => by rw [Memory.readable_writeN, rd2, rd1]⟩
   · rw [slotDec_short [] (by decide)]; unfold SlotOut
     exact Memory.readN_writeN_same _ _ _ _ l2 (by unfold two32; omega)
   · rw [rd_wr _ _ _ _ 2 l2 (by omega) (by omega) h0, fr2 a h0 (by omega), fr1 a h0 (by omega) (by omega)]

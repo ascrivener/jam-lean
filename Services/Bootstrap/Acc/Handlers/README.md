@@ -129,10 +129,8 @@ Adam decided both row-8 questions (2026-11-16): ring size (a), counter wrap (a).
 - **Read-only access** (parent approved (a), 2026-11-16): `get_call` / `get_some` (GetCall.lean) gained
   `∀ a < 196608, μ'.readable a = μ.readable a`. Row 8 needs 68680 … 69076 readable at every stage.
 - **Next (in order):**
-  1. Thread the same readability conclusion through `sg_fret` (dealloc_callG's `μ'.pages = μ.pages`),
-     `sg_tailW` (its `fin` takes `∀ a, μX.readable a = μ.readable a`; the segments give rd facts), `sg_tailE`
-     (`Memory.readable_writeN, rd2, rd1`), `slot_get`, `rm_head`, `recent_match` (add to `RmPost`; `remove_call`
-     and `kf_call` already state readability).
+  1. Done: `sg_fret`, `sg_tailW`, `sg_tailE`, `slot_get`, `rm_head`, `recent_match` (`RmPost`), `counter_get` all
+     state that memory access below 196608 is kept. Every Handlers module is imported from `Services.lean`.
   2. Compose row 8 from 8013: `addRecent` elaborates with a join point, so first prove
      `addRecent C pk it = Prog.bind (load .counter (fixedN 4)) (fun o => Prog.bind (Prog.bind (load (.recent
      (o.getD 0)) slotDec) (match …)) (fun _ => Prog.bind (store (.recent (o.getD 0)) (encodeRecent pk it)) (fun _ =>

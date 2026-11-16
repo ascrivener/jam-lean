@@ -73,17 +73,14 @@ length prefix ℰ(n) and output ℰ(n) ⌢ encodings ⌢ ℰ₂(w)). Builds, axi
   needed ω₅ = 2^64 − 1 from the dispatch (19894 compares the word at S + 8 with ω₅): `dispatch22` / `startV22` /
   `startVH22` are `dispatchV` / `startV` / `startVH` for index 22. The binary traps at 20397 for n ≥ 2^32 (unreachable:
   |y| ≤ 2^24).
-- **Next: Provide inline (17)**, a new file `Refine/EncProvide.lean`. From the disassembly: arm 18990 (tag 17, ω₅ = S,
-  ω₆ = v, return 806 → 19013), 19013 (the service's u32 at S + 48 via sp + 24, as `seg_18752`; return 808 → 19034), 19034
-  (octet at S + 8 ≠ 0 → the octet 1; return 810 → 19060; 0 → by hash 20169, `provide_hashH`), 19060 (ω₇ = q at S + 24,
-  ω₈ = n at S + 32, ω₉ = v, call 3716, return 812 → 19074). The helper 3716 opens a frame at sp' = sp − 40 (saves ω₀, ω₅,
-  ω₆ at sp' + 32/24/16), traps for n ≥ 2^32 (3779), stores n (u32) at sp' + 12 and q at sp', calls the prefix 30977
-  (`prefix_anyH` with F := sp', c := sp' + 12; return 94 → 3753), then 3753 extend(q, n) (`extendH` with sp := sp'; return
-  96 → 3765), 3765 closes its frame and returns to 19074, the arm's own tail (19074 … 19086: ω₀, ω₅, ω₆ from sp + 48/40/32,
-  sp + 56). `closeH`'s ends exclude 19074: copy `closeH` with a `tailAt`-like lemma for 19074. Depth 232 (`EncOkMH 232`).
-  The StH/StDH states assume ω₁ = F − 56, so carry the `BufH` across the helper's frame (it writes only [F − 96, F − 56)).
-- Then: `DRm` widened — define it with refine_t1c, from the slot predicates (the `rep j` of each output kind) — then step 3
-  (thread `realloc_call_big`) and refine_t1c.
+- **17-inline done** (`EncProvide`): `provide_inlineH` (`ProvideInlineRepAt s n q bytes` → 17 :: s ++ 1 :: ℰ(n) ++ bytes,
+  n < 2^32, `EncOkMH 232`; `provideInlineRep_iff` links the decode side). The `[u8]` encoder 3716 runs in its own frame at
+  F − 96: the `BufH` is carried across it by `BufH.frame`, with `prefix_anyH` / `extendH` at sp' = F − 96, and the arm's
+  tail 19074 is `seg_3765` (the helper's return and `encode_to`'s epilogue). The binary traps at 3779 for n ≥ 2^32
+  (unreachable). **Every output kind now has its `EncOkMH` arm.**
+- **Next**, in order: step 3 (thread `realloc_call_big` into decode's `finish_grow`, `grow_one` and the writer's growth;
+  close units = 2^25 − 1), then refine_t1c, with `DRm` widened there (define it from the slot predicates, the `rep j` of
+  each output kind, as a named Fmt hypothesis `DebugLineOk … DRt`).
 
 **Handoff (2026-11-16, end of the fifth instance).** Read this first.
 - **PR #217** (parts B/C, branch `claude/bootstrap-t1-m1c` at 69626f5): `model` green, `attempt-1` still running at

@@ -46,7 +46,8 @@ theorem il_tail_log {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (
       HeapCtxC env.code pb S0 S1 μ' st' ∧ ω'[1] = ω[1] ∧
       (∀ d ∈ chunks st, d.used = true → d ∈ chunks st' ∧ ∀ a, InData d a → μ'.read a = μ.read a) ∧
       (∀ a, a < 4294967296 → sp ≤ a → (a < sp + 1144 ∨ sp + 1168 ≤ a) → (a < sp + 1496 ∨ sp + 1512 ≤ a) →
-        (a < sp + 1568 ∨ sp + 1616 ≤ a) → μ'.read a = μ.read a)) ∨
+        (a < sp + 1568 ∨ sp + 1616 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, Glob a → μ'.read a = μ.read a)) ∨
     ExhaustsP p env pb 14278 ω μ c f := by
   have hT := H.hS1
   have hSt := H.st
@@ -80,7 +81,7 @@ theorem il_tail_log {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (
     (fun a h1 h2 => by rw [rd1]; rw [e984, e992] at *; exact hstr a h1 h2) hr1
     (by rw [e1000]; exact DesignateAlloc.rd8 (by split <;> omega) n7)
     (by rw [e1000]; exact DesignateAlloc.rd8 (by split <;> omega) n8) with
-    ⟨s', ω2, μ2, N2, kc, kp, run2, H2, b1, b5, b6, m2c, m2p, hfb, hkeep, fr2, -⟩ | hX
+    ⟨s', ω2, μ2, N2, kc, kp, run2, H2, b1, b5, b6, m2c, m2p, hfb, hkeep, fr2, gl2⟩ | hX
   rotate_left
   · exact .inr (ResStore.ExhaustsP.pre run1 hX)
   have hSt2 := H2.st
@@ -111,21 +112,25 @@ theorem il_tail_log {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (
     obtain ⟨ω4, run4, d1⟩ := il_tail_b0 (R := KeepCtx (accContractS env)) (P := P) (c, f) (setR7 ω3 Result.WHAT)
       μ2 g5
     exact .inl ⟨s', ω4, μ2, _, run1.trans (run2.trans (run3.trans (FreeStepsH.logS env f (d_14401 (P := P)) run4))), H2,
-      d1.trans g1, kA, frA⟩
+      d1.trans g1, kA, frA, fun a ha => by
+        have hg := ha; unfold Glob at hg
+        rw [gl2 a ha, f1 a (by omega) (.inl (by omega)) (.inl (by omega))]⟩
   · -- 14403 → 40613 → 14420
     obtain ⟨ω4, run4, d0, d1, d5, d6, d7, d8, d9⟩ := il_tail_b1 (R := KeepCtx (accContractS env)) (P := P) (c, f)
       (setR7 ω3 Result.WHAT) μ2 kc kp g5 g6 bc hc0 bp
     obtain ⟨ch, hch, hcu, hca, hfr⟩ := hfb.resolve_left hc0
-    obtain ⟨ω5, μ5, run5, H5, -, -, -, k5, -, kd5, e0, e1, -, -⟩ := Decode.DeallocCall.dealloc_callG (R := KeepCtx (accContractS env))
+    obtain ⟨ω5, μ5, run5, H5, -, -, -, k5, gl5, kd5, e0, e1, -, -⟩ := Decode.DeallocCall.dealloc_callG (R := KeepCtx (accContractS env))
       (P := P) env.code pb S0 S1 (c, f) ω4 μ2 s' sp kp 536 14420 ch H2 hch hcu hca d0 (d1.trans (g1.trans h1)) d7
       (by decide) jte_267 bs_14420 (by omega) ⟨by omega, by omega⟩
     refine .inl ⟨free s' kp, ω5, μ5, _,
       run1.trans (run2.trans (run3.trans (FreeStepsH.logS env f (d_14401 (P := P)) (run4.trans run5)))), H5,
-      e1.trans (d1.trans g1), fun d hd hu => ?_, fun a h0 ha hb hc hd => ?_⟩
+      e1.trans (d1.trans g1), fun d hd hu => ?_, fun a h0 ha hb hc hd => ?_, fun a ha => ?_⟩
     · obtain ⟨hd2, hk⟩ := kA d hd hu
       obtain ⟨hd5, hk5⟩ := kd5 d hd2 hu (hfr d hd hu)
       exact ⟨hd5, fun a ha => (hk5 a ha).trans (hk a ha)⟩
     · rw [k5 a h0 ha, frA a h0 ha hb hc hd]
+    · have hg := ha; unfold Glob at hg
+      rw [gl5 a ha, gl2 a ha, f1 a (by omega) (.inl (by omega)) (.inl (by omega))]
 
 /-- An allocated chunk's data lies at or above 196608 (the read-only octets below are not writable). -/
 theorem data_ge {code : ByteArray} {pb S0 S1 : Nat} {μ : Memory} {s : State}
@@ -135,6 +140,15 @@ theorem data_ge {code : ByteArray} {pb S0 S1 : Nat} {μ : Memory} {s : State}
   have h1 := HeapKeep.writableData H hd hu ha
   rw [H.ro a (by omega)] at h1
   exact absurd h1 (by decide)
+
+/-- A global (196616 … 196791) lies below every allocated chunk (the heap's base is 206864 or above). -/
+theorem glob_lt {code : ByteArray} {pb S0 S1 : Nat} {μ : Memory} {s : State}
+    (H : HeapCtxC code pb S0 S1 μ s) {d : Chunk} (hd : d ∈ chunks s) (hu : d.used = true) {a : Nat}
+    (ha : Glob a) : a < d.addr := by
+  have := (Services.Bootstrap.Decode.VecU8.chunk_in H.wf hd hu).1
+  have := H.hb0
+  unfold Glob at ha
+  omega
 
 /-- The new buffer d′ of the results `Vec` (data rp′, room for cp′ items) against st: allocated in st′,
     and every other allocated chunk of st (data address ≠ rp) is not d′ and is kept with its data. -/
@@ -162,7 +176,8 @@ theorem il_tail_push {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
       rdN μ' (sp + 448) 8 = cp' ∧ rdN μ' (sp + 456) 8 = rp' ∧ rdN μ' (sp + 464) 8 = n ∧ n < cp' ∧
       NewBuf st st' μ μ' rp rp' cp' ∧
       μ'.readN rp' (144 * n) = μ.readN rp (144 * n) ∧ μ'.readN (rp' + 144 * n) 144 = μ.readN (sp + 1000) 144 ∧
-      (∀ a, a < 4294967296 → sp ≤ a → (a < sp + 448 ∨ sp + 464 ≤ a) → μ'.read a = μ.read a)) ∨
+      (∀ a, a < 4294967296 → sp ≤ a → (a < sp + 448 ∨ sp + 464 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, Glob a → μ'.read a = μ.read a)) ∨
     ExhaustsP p env pb 14420 ω μ c f := by
   have hT := H.hS1
   have hSt := H.st
@@ -218,7 +233,10 @@ theorem il_tail_push {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
       ⟨d, hd, hu, hq, hk, fun e he heu hne => ⟨fun h => hne (by subst h; exact hq), he,
         ke2 e he heu (fun h => hne (by subst h; exact hq))⟩⟩,
       Memory.readN_congr fun j hj => fr2 _ (by omega) (.inl (by omega)) (.inl (by omega)), m2,
-      fun a h0 ha _ => fhi a h0 ha⟩
+      fun a h0 ha _ => fhi a h0 ha, fun a ha => by
+        have hg := ha; unfold Glob at hg
+        have := glob_lt H hd hu ha
+        exact fr2 a (by omega) (.inl (by omega)) (.inl (by omega))⟩
     · rw [rdN_frame fun j hj => fhi _ (by omega) (by omega)]; exact mcp
     · rw [rdN_frame fun j hj => fhi _ (by omega) (by omega)]; exact mrp
     · rw [rdN_frame fun j hj => fhi _ (by omega) (by omega)]; exact mn
@@ -228,7 +246,7 @@ theorem il_tail_push {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
     obtain ⟨ω1, run1, a1, a5, a6⟩ := il_full (R := KeepCtx (accContractS env)) (P := P) (c, f) ω μ sp cp h1
       ⟨by omega, by omega⟩ bcp ecp en hrd
     rcases hP c f ω1 μ st sp rp cp H (a1.trans h1) a5 hs2 hs3 hs1 mcp mrp mn (fun h => hbuf h) with
-      ⟨st', ω2, μ2, N2, cp', rp', run2, H2, b1, b5, m2cp, hlt, m2rp, mv, ⟨d', hd', hu', hq', hk', hkeep⟩, fr2, -⟩ | hX
+      ⟨st', ω2, μ2, N2, cp', rp', run2, H2, b1, b5, m2cp, hlt, m2rp, mv, ⟨d', hd', hu', hq', hk', hkeep⟩, fr2, gl2⟩ | hX
     rotate_left
     · exact .inr (ResStore.ExhaustsP.pre run1 hX)
     have hhi := ResultsDrop.data_lt H2 hd' (a := rp' + 144 * cp) ⟨by omega, by omega⟩
@@ -245,7 +263,7 @@ theorem il_tail_push {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
       fun a h0 ha hb => (fhi a h0 ha).trans (fr2 a h0 ha hb)
     refine .inl ⟨st', ω4, μ4, _, cp', rp', run1.trans (run2.trans (run3.trans run4)), H4,
       e1.trans (c1.trans (b1.trans a1)), e5.trans (c5.trans (b5.trans a5)), ?_, ?_, ?_, hlt,
-      ⟨d', hd', hu', hq', hk', fun e he heu hne => ?_⟩, ?_, ?_, fhi2⟩
+      ⟨d', hd', hu', hq', hk', fun e he heu hne => ?_⟩, ?_, ?_, fhi2, fun a ha => ?_⟩
     · rw [rdN_frame fun j hj => fhi _ (by omega) (by omega)]; exact m2cp
     · rw [rdN_frame fun j hj => fhi _ (by omega) (by omega)]; exact m2rp
     · rw [rdN_frame fun j hj => fhi2 _ (by omega) (by omega) (.inr (by omega))]; exact mn
@@ -253,6 +271,9 @@ theorem il_tail_push {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
       exact ⟨hne', he', fun a ha => (ke4 e he' heu hne' a ha).trans (hk2 a ha)⟩
     · rw [← mv]; exact Memory.readN_congr fun j hj => fr4 _ (by omega) (.inl (by omega)) (.inl (by omega))
     · rw [m4]; exact Memory.readN_congr fun j hj => fr2 _ (by omega) (by omega) (.inr (by omega))
+    · have hg := ha; unfold Glob at hg
+      have := glob_lt H2 hd' hu' ha
+      rw [fr4 a (by omega) (.inl (by omega)) (.inl (by omega)), gl2 a ha]
 
 /-- **14516 … 8540, the loop's back edge**: with ω₅ = n, the instruction's `String` { kc, kp, _ } at
     sp + 976 (kp the data of an allocated chunk ch if kc ≠ 0): len := n + 1 at sp + 464, the `String`
@@ -271,7 +292,8 @@ theorem il_tail_post {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
       rdN μ' (sp + 464) 8 = n + 1 ∧
       (∀ d ∈ chunks st, d.used = true → d.addr + 32 ∉ InstrRep.optBuf kc kp →
         d ∈ chunks ((InstrRep.optBuf kc kp).foldl free st) ∧ ∀ a, InData d a → μ'.read a = μ.read a) ∧
-      (∀ a, a < 4294967296 → sp ≤ a → (a < sp + 464 ∨ sp + 472 ≤ a) → μ'.read a = μ.read a) := by
+      (∀ a, a < 4294967296 → sp ≤ a → (a < sp + 464 ∨ sp + 472 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, Glob a → μ'.read a = μ.read a) := by
   have hT := H.hS1
   have hSt := H.st
   have bc := ResultsDrop.rdN_lt8 μ (sp + 976)
@@ -286,7 +308,8 @@ theorem il_tail_post {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
       sp n h1 h5 ⟨by omega, by omega⟩ hn ec (fun a h1 h2 => Memory.readable_of_writable (hSt a (by omega) (by omega)))
       (fun a h1 h2 => hSt a (by omega) (by omega))
     refine ⟨ω1, μ1, _, run1, HeapKeep.keepHi H (fun a ha => fr1 a (by omega) (.inl (by omega))) wr1, a1,
-      DesignateAlloc.rd8 hn m1, fun d hd hu _ => ⟨hd, fun a ha => ?_⟩, fun a h0 _ hb => fr1 a h0 hb⟩
+      DesignateAlloc.rd8 hn m1, fun d hd hu _ => ⟨hd, fun a ha => ?_⟩, fun a h0 _ hb => fr1 a h0 hb,
+      fun a ha => by have hg := ha; unfold Glob at hg; exact fr1 a (by omega) (.inl (by omega))⟩
     have := ResultsDrop.data_lt H hd ha
     exact fr1 a (by omega) (.inl (by omega))
   · obtain ⟨ch, hch, hcu, hca⟩ := hstr hc0
@@ -295,13 +318,13 @@ theorem il_tail_post {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
       (fun a h1 h2 => Memory.readable_of_writable (hSt a (by omega) (by omega)))
       (fun a h1 h2 => hSt a (by omega) (by omega))
     have H1 : HeapCtxC env.code pb S0 S1 μ1 st := HeapKeep.keepHi H (fun a ha => fr1 a (by omega) (.inl (by omega))) wr1
-    obtain ⟨ω2, μ2, run2, H2, -, -, -, k2, -, kd2, e0, e1, -, -⟩ := Decode.DeallocCall.dealloc_callG
+    obtain ⟨ω2, μ2, run2, H2, -, -, -, k2, gl2, kd2, e0, e1, -, -⟩ := Decode.DeallocCall.dealloc_callG
       (R := KeepCtx (accContractS env)) (P := P) env.code pb S0 S1 (c, f) ω1 μ1 st sp kp 542 14546 ch H1 hch hcu hca
       a0 (a1.trans h1) a7 (by decide) jte_270 bs_14546 (by omega) ⟨by omega, by omega⟩
     have ob : InstrRep.optBuf kc kp = [kp] := by unfold InstrRep.optBuf; simp [hc0]
     rw [ob, List.foldl_cons, List.foldl_nil]
     refine ⟨ω2, μ2, _, run1.trans (run2.trans (il_back (R := KeepCtx (accContractS env)) (P := P) (c, f) ω2 μ2)), H2,
-      e1.trans a1, ?_, fun d hd hu hnot => ?_, fun a h0 ha hb => ?_⟩
+      e1.trans a1, ?_, fun d hd hu hnot => ?_, fun a h0 ha hb => ?_, fun a ha => ?_⟩
     · rw [rdN_frame fun j hj => k2 _ (by omega) (by omega)]; exact DesignateAlloc.rd8 hn m1
     · have hne : d ≠ ch := fun h => hnot (by subst h; simp [hca])
       obtain ⟨hd2, hk2⟩ := kd2 d hd hu hne
@@ -309,5 +332,7 @@ theorem il_tail_post {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
       have := ResultsDrop.data_lt H hd ha
       rw [hk2 a ha, fr1 a (by omega) (.inl (by omega))]
     · rw [k2 a h0 ha, fr1 a h0 hb]
+    · have hg := ha; unfold Glob at hg
+      rw [gl2 a ha, fr1 a (by omega) (.inl (by omega))]
 
 end Services.Bootstrap.Acc.Handlers.InstrLoop

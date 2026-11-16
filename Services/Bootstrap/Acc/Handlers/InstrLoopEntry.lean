@@ -205,7 +205,8 @@ theorem il_entry {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (B :
       rw [hIF]; exact fun h => hG (List.mem_append_left _ h), by
       rw [w448, w456]; exact fun h => hG (List.mem_append_right _ h), ?_⟩⟩,
     by rw [r480, ← hda]; exact Picoalloc.chunk_data_mod8 H.wf hd, by rw [r504]; omega, by simp, fun a ha => ⟨fr a (by omega) (.inl (by omega))
-      (.inl (by omega)), rd a⟩, hstab⟩
+      (.inl (by omega)), rd a⟩, hstab, fun a ha => by
+        unfold Glob at ha; exact fr a (by omega) (.inl (by omega)) (.inl (by omega))⟩
   simp [resPtrs]
 
 end Services.Bootstrap.Acc.Handlers.InstrLoop

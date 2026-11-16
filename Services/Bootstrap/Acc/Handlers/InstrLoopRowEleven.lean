@@ -38,13 +38,15 @@ set_option maxRecDepth 100000
 /-- **The state after the instruction loop and row 11** (6766), against the entry's memory μ₀ and
     allocator state st₀ (8492), with G the instructions' buffers: ω₁ = sp; the allocator's context for some
     st′; every allocated chunk of st₀ whose data address is neither in G nor in row 11's `tailFree` (the
-    buffers at sp + 104 and sp + 272) kept with its data; the frame words `StableKeep` kept. -/
+    buffers at sp + 104 and sp + 272) kept with its data; the frame words `StableKeep` and the globals
+    196616 … 196791 kept. -/
 def R57Post (code : ByteArray) (pb S0 S1 sp : Nat) (st₀ : State) (μ₀ : Memory) (G : List Nat)
     (s' : St Stream) : Prop :=
   s'.i = 6766 ∧ s'.ω[1] = UInt64.ofNat sp ∧ ∃ st', HeapCtxC code pb S0 S1 s'.μ st' ∧
     (∀ d ∈ chunks st₀, d.used = true → d.addr + 32 ∉ G ++ tailFree μ₀ sp → d ∈ chunks st' ∧
       ∀ a, InData d a → s'.μ.read a = μ₀.read a) ∧
-    (∀ a, a < 4294967296 → StableKeep sp a → s'.μ.read a = μ₀.read a)
+    (∀ a, a < 4294967296 → StableKeep sp a → s'.μ.read a = μ₀.read a) ∧
+    (∀ a, Glob a → s'.μ.read a = μ₀.read a)
 
 /-- The two frame buffers of `tailBufs` agree when their words do. -/
 theorem tailBufs23 {μ μ' : Memory} {sp : Nat} (h : ∀ a, a < 4294967296 → StableKeep sp a → μ'.read a = μ.read a)
@@ -179,8 +181,9 @@ theorem loop_row11 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
     rw [hq] at SS
     refine Impl.pre _ _ (s' := ⟨15060, ω3, μ3, c0, f0⟩) ⟨_, run0.trans (run1.trans (run2.trans run3))⟩ rfl ?_
     refine Impl.then ?_ _ _ SS
-    rintro _ s' ⟨hi', h1', -, st', H', hk', stk', -⟩
-    refine Impl.pure_of ⟨hi', h1', st', H', fun d hd hu hn => ?_, fun a h0 hs => ?_⟩
+    rintro _ s' ⟨hi', h1', -, st', H', hk', stk', gl'⟩
+    refine Impl.pure_of ⟨hi', h1', st', H', fun d hd hu hn => ?_, fun a h0 hs => ?_,
+      fun a ha => (gl' a ha).trans ((Fm3.2.1 a ha).trans (heap1 a (by unfold Glob at ha; omega)))⟩
     · have hn1 : d.addr + 32 ∉ vecFree B μ b c 0 := fun h => hn (List.mem_append_left _ (by simpa using h))
       have hn2 : d.addr + 32 ∉ tailFree μ3 sp := fun h => hn (List.mem_append_right _ (by rw [tf3, tf1] at h; exact h))
       obtain ⟨g1, g2⟩ := K3 d hd hu hn1
@@ -214,7 +217,8 @@ theorem loop_row11 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
     dsimp only at h1' LA KO
     have stab := LIe.stab
     have ro := LIe.ro
-    dsimp only at stab ro
+    have glob := LIe.glob
+    dsimp only at stab ro glob
     have hT' := LA.H.hS1
     have he : rdN μ'' (sp + 480) 8 = rdN μ'' (sp + 496) 8 := by
       have := LA.I.hend
@@ -245,8 +249,8 @@ theorem loop_row11 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
     dsimp only at LX
     rw [hq] at LX
     refine Impl.mono_post ?_ _ _ LX
-    rintro _ s' ⟨hi', h1'', -, st'', H'', hk'', stk'', -⟩
-    refine ⟨hi', h1'', st'', H'', fun d hd hu hn => ?_, fun a h0 hs => ?_⟩
+    rintro _ s' ⟨hi', h1'', -, st'', H'', hk'', stk'', gl''⟩
+    refine ⟨hi', h1'', st'', H'', fun d hd hu hn => ?_, fun a h0 hs => ?_, fun a ha => (gl'' a ha).trans (glob a ha)⟩
     · have hTF : d.addr + 32 ∉ tailFree μ sp := fun h => hn (List.mem_append_right _ h)
       have hG : d.addr + 32 ∉ vecFree B μ b c is.length ++ optBuf (rdN μ (sp + 448) 8) (rdN μ (sp + 456) 8) :=
         fun h => by

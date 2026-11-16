@@ -37,7 +37,7 @@ theorem cw_pre {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X
     ∃ ω', FreeStepsH p R 8326 ω μ x 33843 ω'
       ((μ.writeN (sp + 1568) (Num.encodeLE 2 0)).writeN (sp + 1000) (Num.encodeLE 4 w)) x 5 ∧
       ω'[0] = UInt64.ofNat 288 ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[7] = UInt64.ofNat (sp + 1144) ∧
-      ω'[8] = UInt64.ofNat (sp + 1568) := by
+      ω'[8] = UInt64.ofNat (sp + 1568) ∧ ω'[6] = ω[6] := by
   have hw1 : ∀ a, sp + 1568 ≤ a → a < sp + 1570 → μ.writable a = true := fun a h1 h2 => hw a (.inl ⟨h1, h2⟩)
   have hw2 : ∀ a, sp + 1000 ≤ a → a < sp + 1004 → μ.writable a = true := fun a h1 h2 => hw a (.inr ⟨h1, h2⟩)
   rw [show ω = regsNF ω [] from rfl, show Num.encodeLE 2 0 = [UInt8.ofNat 0, UInt8.ofNat 0] from rfl,
@@ -45,7 +45,7 @@ theorem cw_pre {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X
   refine ⟨?_, ?_, ?_⟩
   rotate_left
   · pvm_go [h1, h7, hsp, hw1, hw2]
-  · refine ⟨?_, ?_, ?_, ?_⟩
+  · refine ⟨?_, ?_, ?_, ?_, ?_⟩
     all_goals simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h1]
 
 /-- **8348 … 8369**: the key's `Vec` `{cap, ptr, len}` at sp + 1144; the call of `set` (48104) with out
@@ -59,14 +59,14 @@ theorem cw_mid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X
     ∃ ω', FreeStepsH p R 8348 ω μ x 48104 ω' μ x 7 ∧
       ω'[0] = UInt64.ofNat 290 ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = UInt64.ofNat ptr ∧
       ω'[7] = UInt64.ofNat (sp + 744) ∧ ω'[8] = UInt64.ofNat ptr ∧ ω'[9] = UInt64.ofNat len ∧
-      ω'[10] = UInt64.ofNat (sp + 1000) ∧ ω'[11] = UInt64.ofNat 4 := by
+      ω'[10] = UInt64.ofNat (sp + 1000) ∧ ω'[11] = UInt64.ofNat 4 ∧ ω'[6] = ω[6] := by
   have rp := Handlers.DesignateAlloc.rd8 hptr mp
   have rl := Handlers.DesignateAlloc.rd8 hlen ml
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?_, ?_, ?_⟩
   rotate_left
   · pvm_go [h1, hsp, rp, rl, hr, ↓rdN_fold]
-  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
     all_goals simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h1]
 
 /-- **`set`'s returns** (the `jumpInd` at 48158, 48250 or 48235) with ω₀ = 290: on to 8376. -/
@@ -89,7 +89,7 @@ theorem cw_dl {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X)
     (hrr : ∀ a, sp + 744 ≤ a → a < sp + 752 → μ.readable a = true)
     (hw : ∀ a, sp + 232 ≤ a → a < sp + 240 → μ.writable a = true) :
     ∃ ω', FreeStepsH p R 8376 ω μ x 40613 ω' (μ.writeN (sp + 232) (Num.encodeLE 8 r)) x 7 ∧
-      ω'[0] = UInt64.ofNat 292 ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[7] = ω[5] := by
+      ω'[0] = UInt64.ofNat 292 ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[7] = ω[5] ∧ ω'[6] = ω[6] := by
   have rc := Handlers.DesignateAlloc.rd8 hcap mc
   have rr := Handlers.DesignateAlloc.rd8 hr64 mr
   have hc0' : cap % 18446744073709551616 ≠ 0 := by rw [Nat.mod_eq_of_lt hcap]; exact hc0
@@ -97,7 +97,7 @@ theorem cw_dl {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X)
   refine ⟨?_, ?_, ?_⟩
   rotate_left
   · pvm_go [h1, hsp, rc, rr, hc0', hrc, hrr, hw, ↓rdN_fold]
-  · refine ⟨?_, ?_, ?_, ?_⟩
+  · refine ⟨?_, ?_, ?_, ?_, ?_⟩
     all_goals simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h1]
 
 /-- **8402 … 8416**, `set`'s result word r (saved at sp + 232) not −1 (`Ok`): on to 8416. -/
@@ -106,14 +106,14 @@ theorem cw_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X)
     (hr64 : r < 18446744073709551616) (hne : r ≠ 18446744073709551615)
     (mr : μ.readN (sp + 232) 8 = Num.encodeLE 8 r)
     (hrr : ∀ a, sp + 232 ≤ a → a < sp + 240 → μ.readable a = true) :
-    ∃ ω', FreeStepsH p R 8402 ω μ x 8416 ω' μ x 4 ∧ ω'[1] = UInt64.ofNat sp := by
+    ∃ ω', FreeStepsH p R 8402 ω μ x 8416 ω' μ x 4 ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[6] = ω[6] := by
   have rr := Handlers.DesignateAlloc.rd8 hr64 mr
   have hne' : r % 18446744073709551616 ≠ 18446744073709551615 := by rw [Nat.mod_eq_of_lt hr64]; exact hne
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?_, ?_, ?_⟩
   rotate_left
   · pvm_go [h1, hsp, rr, hne', hrr, ↓rdN_fold]
-  · simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h1]
+  · refine ⟨?_, ?_⟩ <;> simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h1]
 
 /-- **8402 … 8412**, `set`'s result word −1 (`Err`, saved at sp + 232): on to the trap at 15361. -/
 theorem cw_err {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)

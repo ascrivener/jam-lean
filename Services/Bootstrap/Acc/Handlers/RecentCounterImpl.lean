@@ -40,11 +40,12 @@ def CwOut (sp a : Nat) : Prop :=
     (sp + 1144 ≤ a ∧ a < sp + 1168) ∨ (sp + 1568 ≤ a ∧ a < sp + 1570)
 
 /-- **The state after the counter write** (8416), against the memory μ₀ and allocator state st at
-    8326: ω₁ = sp; the allocator's context for some state st′ keeping every allocated chunk of st
+    8326: ω₁ = sp, ω₆ = w6 (kept from 8326); the allocator's context for some state st′ keeping every allocated chunk of st
     with its data; memory kept above sp off `CwOut`, at the globals 196616 … 196791 (the protocol
     parameters' statics among them) and below 196608 (read-only data). -/
-def CwPost (code : ByteArray) (pb S0 S1 sp : Nat) (st : State) (μ₀ : Memory) (s' : St Stream) : Prop :=
-  s'.i = 8416 ∧ s'.ω[1] = UInt64.ofNat sp ∧
+def CwPost (code : ByteArray) (pb S0 S1 sp : Nat) (w6 : UInt64) (st : State) (μ₀ : Memory)
+    (s' : St Stream) : Prop :=
+  s'.i = 8416 ∧ s'.ω[1] = UInt64.ofNat sp ∧ s'.ω[6] = w6 ∧
   ∃ st', HeapCtxC code pb S0 S1 s'.μ st' ∧
     (∀ d ∈ chunks st, d.used = true → d ∈ chunks st' ∧ ∀ a, InData d a → s'.μ.read a = μ₀.read a) ∧
     (∀ a, a < 4294967296 → sp ≤ a → ¬ CwOut sp a → s'.μ.read a = μ₀.read a) ∧
@@ -85,7 +86,7 @@ theorem cw_free {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [HasCod
     (hsp : 2147483716 ≤ sp ∧ sp + 1576 < 4294967296) (hS : S0 + 40 ≤ sp ∧ sp + 1576 ≤ S1)
     (hkc : kc < 18446744073709551616) (hc0 : kc ≠ 0) (hr64 : r < 18446744073709551616)
     (mc : μ.readN (sp + 1144) 8 = Num.encodeLE 8 kc) (mr : μ.readN (sp + 744) 8 = Num.encodeLE 8 r) :
-    ∃ ω' μ', FreeStepsH p R e ω μ x 8402 ω' μ' x 257 ∧ ω'[1] = UInt64.ofNat sp ∧
+    ∃ ω' μ', FreeStepsH p R e ω μ x 8402 ω' μ' x 257 ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[6] = ω[6] ∧
       HeapCtxC code pb S0 S1 μ' (free s ptr) ∧ μ'.readN (sp + 232) 8 = Num.encodeLE 8 r ∧
       (∀ a, sp + 232 ≤ a → a < sp + 240 → μ'.readable a = true) ∧
       (∀ a, a < 4294967296 → sp ≤ a → (a < sp + 232 ∨ sp + 240 ≤ a) → μ'.read a = μ.read a) ∧
@@ -95,7 +96,7 @@ theorem cw_free {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [HasCod
   have hst := H.st
   have hS1 := H.hS1
   have run5 := cw_ret (P := P) (R := R) x ω μ e he h0
-  obtain ⟨ω6, run6, e0, e1, e5, e7⟩ := cw_dl (P := P) (R := R) x ω μ sp kc r h1 hsp.2 hkc hc0 hr64 mc mr
+  obtain ⟨ω6, run6, e0, e1, e5, e7, e6⟩ := cw_dl (P := P) (R := R) x ω μ sp kc r h1 hsp.2 hkc hc0 hr64 mc mr
     (fun a h1 h2 => Memory.readable_of_writable (hst a (by omega) (by omega)))
     (fun a h1 h2 => Memory.readable_of_writable (hst a (by omega) (by omega)))
     (fun a h1 h2 => hst a (by omega) (by omega))
@@ -107,13 +108,13 @@ theorem cw_free {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [HasCod
     Memory.writable_writeN _ _ _ _
   have H6 : HeapCtxC code pb S0 S1 (μ.writeN (sp + 232) (Num.encodeLE 8 r)) s :=
     HeapKeep.keepHi H (fun a ha => fr6 a (by omega) (.inl (by omega))) wr6
-  obtain ⟨ω7, μ7, run7, H7, -, -, ro7, stk7, gl7, keep7, g0, g1, -, -⟩ :=
+  obtain ⟨ω7, μ7, run7, H7, -, -, ro7, stk7, gl7, keep7, g0, g1, -, g6⟩ :=
     dealloc_callG (R := R) (p := p) (P := P) code pb S0 S1 x ω6 _ s sp ptr 292 8402 _ H6 hnew rfl
       (by dsimp only; omega) e0 e1 (e7.trans h5) ⟨by decide, by decide, by decide⟩
       (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_145]) bs_8402 hsp.1 ⟨hS.1, by omega⟩
   have m232 : (μ.writeN (sp + 232) (Num.encodeLE 8 r)).readN (sp + 232) 8 = Num.encodeLE 8 r :=
     Memory.readN_writeN_same _ _ _ _ l8 (by unfold two32; omega)
-  refine ⟨ω7, μ7, ((run5.trans run6).trans run7).mono (by omega), g1.trans e1, H7, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  refine ⟨ω7, μ7, ((run5.trans run6).trans run7).mono (by omega), g1.trans e1, g6.trans e6, H7, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · rw [← m232]; exact Memory.readN_congr fun j hj => stk7 _ (by omega) (by omega)
   · intro a h1 h2; exact Memory.readable_of_writable (H7.st a (by omega) (by omega))
   · intro a h0 ha hb; rw [stk7 a h0 ha, fr6 a h0 hb]
@@ -147,7 +148,7 @@ theorem counter_write {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
     (hro : ∀ a, 68680 ≤ a → a < 69076 → s.μ.readable a = true)
     (hold : ∀ v, s.c.1.self.storage.get? [0] = some v → v.length < 2 ^ 63) :
     Impl p (accContractS env) env Ab (store .counter (fixed 4 w))
-      (fun _ => CwPost env.code pb S0 S1 sp st s.μ) s := by
+      (fun _ => CwPost env.code pb S0 S1 sp s.ω[6] st s.μ) s := by
   obtain ⟨i, ω, μ, c, f⟩ := s
   dsimp only at hi h1 h7 H mc ht8 ht4 hro hold ⊢
   subst hi
@@ -156,7 +157,7 @@ theorem counter_write {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
   have hb0 := H.hb0
   have hbT := H.hbT
   -- 8326 → 33843
-  obtain ⟨ωA, runA, a0, a1, a7, a8⟩ := cw_pre (P := P) (R := KeepCtx (accContractS env)) (c, f) ω μ sp w
+  obtain ⟨ωA, runA, a0, a1, a7, a8, a6⟩ := cw_pre (P := P) (R := KeepCtx (accContractS env)) (c, f) ω μ sp w
     h1 h7 hw64 (by omega) (fun a ha => hSt a (by omega) (by omega))
   have l2 : (Num.encodeLE 2 0).length = 2 := Num.length_encodeLE ..
   have l4 : (Num.encodeLE 4 w).length = 4 := Num.length_encodeLE ..
@@ -207,7 +208,7 @@ theorem counter_write {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
   dsimp only at n1 n2 n3
   have hdiv : kc ≤ 32 * ((kc + 31) / 32) := by omega
   -- 8348 → 48104
-  obtain ⟨ωC, runC, c0, c1, c5, c7, c8, c9, c10, c11⟩ := cw_mid (P := P) (R := KeepCtx (accContractS env)) (c, f)
+  obtain ⟨ωC, runC, c0, c1, c5, c7, c8, c9, c10, c11, c6⟩ := cw_mid (P := P) (R := KeepCtx (accContractS env)) (c, f)
     ωB μB sp ptr 1 (b1.trans a1) (by omega) (by omega) (by decide)
     (by rw [show sp + 1152 = sp + 1144 + 8 by omega]; exact oB8)
     (by rw [show sp + 1160 = sp + 1144 + 16 by omega]; exact oB16)
@@ -249,12 +250,12 @@ theorem counter_write {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
         ((c.1.setSelf (writeSelf c.1.self [0] (fixed 4 w)), c.2), f) 8402 ω' μ'
         ((c.1.setSelf (writeSelf c.1.self [0] (fixed 4 w)), c.2), f) 257 ∧ ω'[1] = UInt64.ofNat sp ∧
         μ'.readN (sp + 232) 8 = Num.encodeLE 8 r ∧ (∀ a, sp + 232 ≤ a → a < sp + 240 → μ'.readable a = true) ∧
-        CwPost env.code pb S0 S1 sp st μ ⟨8416, ω', μ', c, f⟩ := by
+        CwPost env.code pb S0 S1 sp ω[6] st μ ⟨8416, ω', μ', c, f⟩ := by
     intro r hr mr
-    obtain ⟨ωG, μG, runG, g1, HG, mG, rG, stkG, glG, roG, keepG⟩ := cw_free (P := P)
+    obtain ⟨ωG, μG, runG, g1, g6, HG, mG, rG, stkG, glG, roG, keepG⟩ := cw_free (P := P)
       (R := KeepCtx (accContractS env)) env.code pb S0 S1 _ ωD μD s1 sp ptr kc r e HD hnew (by omega) he
       (d0.trans c0) (d1) (d5.trans c5) ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ (by omega) (by omega) hr mcD mr
-    refine ⟨ωG, μG, runG, g1, mG, rG, rfl, g1, free s1 ptr, HG, ?_, ?_, ?_, ?_⟩
+    refine ⟨ωG, μG, runG, g1, mG, rG, rfl, g1, g6.trans (d6.trans (c6.trans (b6.trans a6))), free s1 ptr, HG, ?_, ?_, ?_, ?_⟩
     · intro d hd hu
       have hd1 := keepB d hd hu
       obtain ⟨k1, k2⟩ := keepG d hd1 hu (hfresh d hd hu)
@@ -325,9 +326,9 @@ theorem counter_write {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
     rw [hS] at runD runG
     refine .inr ⟨⟨e, ωD, μD, (c.1.setSelf (ASem.writeAcct c.1.self [0] (fixed 4 w)), c.2), f⟩, ⟨_, runD⟩, rfl,
       .inr ⟨_, ⟨0, .refl⟩, rfl, ?_⟩⟩
-    obtain ⟨ωH, runH, h1H⟩ := cw_ok (P := P) (R := KeepCtx (accContractS env)) _ ωG μG sp r g1 (by omega) hr hr1 mG rG
+    obtain ⟨ωH, runH, h1H, h6H⟩ := cw_ok (P := P) (R := KeepCtx (accContractS env)) _ ωG μG sp r g1 (by omega) hr hr1 mG rG
     refine .inr ⟨⟨8416, ωH, μG, _, f⟩, ⟨_, runG.trans runH⟩, rfl, ?_⟩
-    obtain ⟨-, -, rest'⟩ := post
-    exact ⟨rfl, h1H, rest'⟩
+    obtain ⟨-, -, p6, rest'⟩ := post
+    exact ⟨rfl, h1H, h6H.trans p6, rest'⟩
 
 end Services.Bootstrap.Acc.Handlers.RecentCounter

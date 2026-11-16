@@ -97,6 +97,8 @@ structure LoopInv (B : InstrRep) (code : ByteArray) (pb S0 S1 sp : Nat) (Inv : A
   hlen : rs.length + xs.length = n₀
   ro : ∀ a, a < 196608 → s.μ.read a = μ₀.read a ∧ s.μ.readable a = μ₀.readable a
   stab : ∀ a, a < 4294967296 → StableKeep sp a → s.μ.read a = μ₀.read a
+  /-- The globals 196616 … 196791 kept. -/
+  glob : ∀ a, Glob a → s.μ.read a = μ₀.read a
 
 /-- `BodyPost` gives the invariant for the instructions left. -/
 theorem LoopInv.of_post {B : InstrRep} {code : ByteArray} {pb S0 S1 sp : Nat} {Inv : AccCtx → Prop}
@@ -106,7 +108,7 @@ theorem LoopInv.of_post {B : InstrRep} {code : ByteArray} {pb S0 S1 sp : Nat} {I
     (K : OldKeep B sp st₀ μ₀ G (x :: xs) rs.length s.μ st)
     (hz' : zs' = (zs || isZomb x)) (P : BodyPost B code pb S0 S1 sp xs rs zs' s.μ st r s') (hinv : Inv s'.c) :
     LoopInv B code pb S0 S1 sp Inv μ₀ st₀ G Z n₀ xs (rs ++ [r]) s' := by
-  obtain ⟨hi, h1, ⟨st', LA', SK⟩, m480, m504, ro, stab⟩ := P
+  obtain ⟨hi, h1, ⟨st', LA', SK⟩, m480, m504, ro, stab, gl⟩ := P
   have hk := I.hk
   have hal := I.hal
   have hlen := I.hlen
@@ -116,7 +118,7 @@ theorem LoopInv.of_post {B : InstrRep} {code : ByteArray} {pb S0 S1 sp : Nat} {I
   have K' := K.step SK
   rw [show rs.length + 1 = (rs ++ [r]).length by simp] at K'
   refine ⟨.inl hi, h1, hinv, ⟨st', zs', LA', ?_, K'⟩, by omega, by omega, hl', fun a ha => ⟨(ro a ha).1.trans (I.ro a ha).1, (ro a ha).2.trans (I.ro a ha).2⟩,
-    fun a h0 h => (stab a h0 h).trans (I.stab a h0 h)⟩
+    fun a h0 h => (stab a h0 h).trans (I.stab a h0 h), fun a ha => (gl a ha).trans (I.glob a ha)⟩
   rw [hz', ← hz, List.any_cons, Bool.or_assoc]
 
 /-- **R5, the instruction loop** (8540 → 8540 with no instruction left): from `LoopInv` for the instructions

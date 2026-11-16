@@ -30,10 +30,11 @@ def AddOut (sp a : Nat) : Prop :=
   RecentMatch.RmOut sp a ∨ RecentSlotWrite.SwOut sp a ∨ RecentCounter.CwOut sp a
 
 /-- **The state after row 8** (8416), against the memory μ₀ and allocator state st at 8013: ω₁ = sp;
-    the allocator's context for some st′ keeping every allocated chunk of st with its data; memory
-    kept above sp off `AddOut`, at the globals 196616 … 196791 and below 196608. -/
-def AddPost (code : ByteArray) (pb S0 S1 sp : Nat) (st : State) (μ₀ : Memory) (s' : St Stream) : Prop :=
-  s'.i = 8416 ∧ s'.ω[1] = UInt64.ofNat sp ∧
+    ω₆ = v6 (kept from 8013); the allocator's context for some st′ keeping every allocated chunk of
+    st with its data; memory kept above sp off `AddOut`, at the globals 196616 … 196791 and below 196608. -/
+def AddPost (code : ByteArray) (pb S0 S1 sp : Nat) (v6 : UInt64) (st : State) (μ₀ : Memory)
+    (s' : St Stream) : Prop :=
+  s'.i = 8416 ∧ s'.ω[1] = UInt64.ofNat sp ∧ s'.ω[6] = v6 ∧
   ∃ st', HeapCtxC code pb S0 S1 s'.μ st' ∧
     (∀ d ∈ chunks st, d.used = true → d ∈ chunks st' ∧ ∀ a, InData d a → s'.μ.read a = μ₀.read a) ∧
     (∀ a, a < 4294967296 → sp ≤ a → ¬ AddOut sp a → s'.μ.read a = μ₀.read a) ∧
@@ -115,7 +116,7 @@ theorem add_recent {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (e
     (hitem : s.μ.readN (sp + 176) 2 = fixed 2 item)
     (hvals : StoreFit s.c) :
     Impl p (accContractS env) env Ab (addRecent Cs (s.μ.readN (sp + 512) 32) item)
-      (fun _ => AddPost env.code pb S0 S1 sp st s.μ) s := by
+      (fun _ => AddPost env.code pb S0 S1 sp s.ω[6] st s.μ) s := by
   obtain ⟨i, ω, μ, c0, f⟩ := s
   dsimp only at hi h1 H mc0 mc1 ht8 ht4 hro hPS hitem hvals ⊢
   subst hi
@@ -128,7 +129,7 @@ theorem add_recent {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (e
   unfold Impl
   rcases RecentCounterGet.counter_get (P := P) env cap hcap1 hcap c0 f ω μ st sp kc0 pb S0 S1 H h1 hsp hS0
       (by omega) mc0 hkc0 (fun a h1 h2 => hro a h1 (by omega)) (fun w hw => hvals _ w hw) with
-    ⟨st₁, ω₁, μ₁, n₁, run₁, b1, -, b5, H₁, keep₁, fr₁, gl₁, lo₁, rd₁, bd₁⟩ | ⟨e, ωB, μB, nB, he, runB⟩
+    ⟨st₁, ω₁, μ₁, n₁, run₁, b1, b6, b5, H₁, keep₁, fr₁, gl₁, lo₁, rd₁, bd₁⟩ | ⟨e, ωB, μB, nB, he, runB⟩
   rotate_left
   · rcases he with rfl | rfl
     · exact .inl ⟨⟨34070, ωB, μB, c0, f⟩, ⟨nB, runB⟩, hAb1 _ rfl, ωB, μB, f,
@@ -158,8 +159,8 @@ theorem add_recent {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (e
     cv kc1 pb S0 S1 H₁ rfl b1 h5₁ hcv64 hsp hS0 (by omega) mc1₁ hkc1
     (fun a h1 h2 => by rw [rd₁ a (by omega)]; exact hro a (by omega) (by omega)) hvals
   refine Impl.mono_post ?_ _ _ (Impl.inv SmallOp StoreFit (storeFit_step env) _ _ (all_match cv) hvals RM)
-  rintro - ⟨i₃, ω₃, μ₃, c₃, f₃⟩ ⟨⟨hi₃, b31, b35, st₃, H₃, keep₃, fr₃, gl₃, lo₃, rd₃⟩, sf₃⟩
-  dsimp only at hi₃ b31 b35 H₃ keep₃ fr₃ gl₃ lo₃ rd₃ sf₃ ⊢
+  rintro - ⟨i₃, ω₃, μ₃, c₃, f₃⟩ ⟨⟨hi₃, b31, b35, b36, st₃, H₃, keep₃, fr₃, gl₃, lo₃, rd₃⟩, sf₃⟩
+  dsimp only at hi₃ b31 b35 b36 H₃ keep₃ fr₃ gl₃ lo₃ rd₃ sf₃ ⊢
   subst hi₃
   -- the slot write
   have hpk : μ₃.readN (sp + 512) 32 = μ.readN (sp + 512) 32 := Memory.readN_congr fun j hj => by
@@ -189,8 +190,8 @@ theorem add_recent {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (e
     (fun a h1 h2 => by rw [rd31 a (by omega)]; exact hro a h1 h2) hPS₃ hR (sf₃ _)
   refine Impl.mono_post ?_ _ _ (Impl.inv SmallOp StoreFit (storeFit_step env) _ _
     (all_store cv _ (by rw [List.length_append, Memory.length_readN, Memory.length_readN])) sf₃ SW)
-  rintro - ⟨i₄, ω₄, μ₄, c₄, f₄⟩ ⟨⟨hi₄, b41, b47, st₄, H₄, keep₄, fr₄, gl₄, lo₄, rd₄⟩, sf₄⟩
-  dsimp only at hi₄ b41 b47 H₄ keep₄ fr₄ gl₄ lo₄ rd₄ sf₄ ⊢
+  rintro - ⟨i₄, ω₄, μ₄, c₄, f₄⟩ ⟨⟨hi₄, b41, b46, b47, st₄, H₄, keep₄, fr₄, gl₄, lo₄, rd₄⟩, sf₄⟩
+  dsimp only at hi₄ b41 b46 b47 H₄ keep₄ fr₄ gl₄ lo₄ rd₄ sf₄ ⊢
   subst hi₄
   -- the counter write
   have hw : fixed 4 ((cv % 4294967296 + 1) % 2 ^ 32 % Cs.maxRecent) = fixed 4 ω₄[7].toNat := by
@@ -208,9 +209,9 @@ theorem add_recent {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (e
     (by unfold rdN; rw [rn41 _ _ (by omega)]; exact ht8) (by unfold rdN; rw [rn41 _ _ (by omega)]; exact ht4)
     (fun a h1 h2 => by rw [rd41 a (by omega)]; exact hro a h1 h2) (sf₄ _)
   refine Impl.mono_post ?_ _ _ CW
-  rintro - ⟨i₅, ω₅, μ₅, c₅, f₅⟩ ⟨hi₅, b51, st₅, H₅, keep₅, fr₅, gl₅, lo₅⟩
-  dsimp only at hi₅ b51 H₅ keep₅ fr₅ gl₅ lo₅ ⊢
-  refine ⟨hi₅, b51, st₅, H₅, fun d hd hu => ?_, fun a h0 ha hn => ?_, fun a ha => ?_, fun a ha => ?_⟩
+  rintro - ⟨i₅, ω₅, μ₅, c₅, f₅⟩ ⟨hi₅, b51, b56, st₅, H₅, keep₅, fr₅, gl₅, lo₅⟩
+  dsimp only at hi₅ b51 b56 H₅ keep₅ fr₅ gl₅ lo₅ ⊢
+  refine ⟨hi₅, b51, b56.trans (b46.trans (b36.trans b6)), st₅, H₅, fun d hd hu => ?_, fun a h0 ha hn => ?_, fun a ha => ?_, fun a ha => ?_⟩
   · obtain ⟨d1, e1⟩ := keep₁ d hd hu
     obtain ⟨d3, e3⟩ := keep₃ d d1 hu
     obtain ⟨d4, e4⟩ := keep₄ d d3 hu

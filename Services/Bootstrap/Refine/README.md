@@ -16,6 +16,20 @@ Everything cites Gray Paper v0.8.0 via the docstrings of the files named here; t
 - Done too (build, axioms clean): `SlotT` (`slotRep`, `DRt C` ⊇ `Top.DRm C`, `SlotW` = what `exit_runW` needs of one slot,
   `SlotOK` = `SlotW` for every memory keeping the owned chunks as in μr), `SlotFixed` (`kind_okH`, `slotOK_fixed`),
   `SlotLU` (`slotW_lu`, for pass-through `LookedUp` and the eager Lookup's slot).
+- `SlotHeap` (build, axioms not yet printed): `slotOK_rsaOk`, `slotOK_designate`, `slotOK_assignGas`,
+  `slotOK_provideInline`, `slotOK_bless`, `slotOK_assign`, `slotOK_csSome` (each: the decoded `…Rep ∧ OwnsBuf` for
+  every memory keeping cs as μr ⟹ `SlotOK` owning `(· ∈ cs)`; helpers `readN_mod64(o)`, `buf_of(O)`, `src_keep`,
+  `sub_keep`, `flatten_len`), and the no-buffer drop-arm kinds via `slotOK_nobuf`: `slotOK_csNone`, `slotOK_csEmpty`,
+  `slotOK_provideHash`, `slotOK_rsaErr`.
+- Slots still to do: `DeleteItems` / `Imported` (`VVAt`, from `VecVecRepC`; and their empty forms, `VecEmptyRep`, whose
+  drop is `VVAt` with c0 = 0, len = 0), pass-through `LookedUp` (`SlotLU.slotW_lu` with own = (· ∈ cs), `OwnsBuf … 16`).
+- **Decode gaps found:** the vector kinds with 0 elements other than DeleteItems / Imported / Export (`Bless` with z = [],
+  `Designate []`, `AssignForGasCost` with q = [], `RandomStorageAccumulate (some [])`) have no `ElemOkAFC` here yet
+  (ElemsSmallC needs n ≥ 1; check `Decode/` for `vec_emptyF`-style lemmas); `RandomStorageAccumulate(None)` ([22, 1])
+  has only the frame-level `Decode.RandomStorage.random_storage_err`. `Assign`'s decode (`assign_elemFC`) takes the
+  queue length from the global word at 196680 (`gv`, G % 2^32 = |q|): T1c needs it equal to `C.authQueueLen`, a fact
+  about the vendored blob's globals (a `VendoredFactsC`-style conjunct, or a hypothesis relating C to the blob; ask the
+  parent before adding it to the statement).
 - **Gas cap.** `lookup_step`'s internal `hgas` (1125 + ⌈264 |d| / 1024⌉ ≤ cap) cannot hold at cap 2^27 for preimages up
   to 2^63 octets; refine_t1c runs under `refineContractK K` with K = 2^62 (any cap works for Ψ_M's lift), so its Fmt
   hypotheses are stated at that cap (report to the parent with the statement).

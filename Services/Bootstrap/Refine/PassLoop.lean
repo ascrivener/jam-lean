@@ -85,6 +85,8 @@ structure PInv (env : RefineHost.Env) (pb S0 S1 M E n : Nat) (ce : Chunk) (capI 
   c16 : μ.readN (M + 16) 8 = Num.encodeLE 8 66793
   c24 : μ.readN (M + 24) 8 = Num.encodeLE 8 66506
   c32 : μ.readN (M + 32) 8 = Num.encodeLE 8 668
+  /-- `LookedUp`'s discriminant word (2^63 + 17), which the eager `Lookup` handler stores into its slot. -/
+  c8 : μ.readN (M + 8) 8 = Num.encodeLE 8 9223372036854775825
   /-- The input's `vec::IntoIter` at M + 272: `{buf, ptr, cap, end}`. -/
   i0 : μ.readN (M + 272) 8 = Num.encodeLE 8 (ce.addr + 32)
   i8 : μ.readN (M + 280) 8 = Num.encodeLE 8 (E + 232 * k)
@@ -176,6 +178,7 @@ theorem step_room {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     by rw [fr _ 8 (by omega) (by omega) (by omega) (by omega)]; exact st.c16,
     by rw [fr _ 8 (by omega) (by omega) (by omega) (by omega)]; exact st.c24,
     by rw [fr _ 8 (by omega) (by omega) (by omega) (by omega)]; exact st.c32,
+    by rw [fr _ 8 (by omega) (by omega) (by omega) (by omega)]; exact st.c8,
     by rw [fr _ 8 (by omega) (by omega) (by omega) (by omega)]; exact st.i0, ?_,
     by rw [fr _ 8 (by omega) (by omega) (by omega) (by omega)]; exact st.i16,
     by rw [fr _ 8 (by omega) (by omega) (by omega) (by omega)]; exact st.i24,
@@ -268,7 +271,7 @@ theorem step_full {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     refine Or.inl ⟨s', ω', μ', run.mono (by omega), ⟨e1, ?_, een, e128, e136,
       by rw [fr _ 8 (by omega) (by omega)]; exact st.c48, by rw [fr _ 8 (by omega) (by omega)]; exact st.c40,
       by rw [fr _ 8 (by omega) (by omega)]; exact st.c16, by rw [fr _ 8 (by omega) (by omega)]; exact st.c24,
-      by rw [fr _ 8 (by omega) (by omega)]; exact st.c32,
+      by rw [fr _ 8 (by omega) (by omega)]; exact st.c32, by rw [fr _ 8 (by omega) (by omega)]; exact st.c8,
       by rw [fr _ 8 (by omega) (by omega)]; exact st.i0, ?_,
       by rw [fr _ 8 (by omega) (by omega)]; exact st.i16, by rw [fr _ 8 (by omega) (by omega)]; exact st.i24,
       ⟨max (2 * cap) 4, q, ecap, eptr, elen, by omega, by omega, by omega,

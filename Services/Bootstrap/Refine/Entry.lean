@@ -69,7 +69,7 @@ theorem e2 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR 
     ∃ ω' μ', FreeStepsH p R 4903 ω μ x 5054 ω' μ' x 30 ∧ ω'[1] = ω[1] ∧ ω'[5] = UInt64.ofNat ptr ∧
       μ'.readN (M + 16) 8 = Num.encodeLE 8 66793 ∧ μ'.readN (M + 24) 8 = Num.encodeLE 8 66506 ∧
       μ'.readN (M + 32) 8 = Num.encodeLE 8 668 ∧ μ'.readN (M + 40) 8 = Num.encodeLE 8 2098688 ∧
-      μ'.readN (M + 48) 8 = Num.encodeLE 8 384307168202282325 ∧
+      μ'.readN (M + 48) 8 = Num.encodeLE 8 384307168202282325 ∧ μ'.readN (M + 8) 8 = Num.encodeLE 8 9223372036854775825 ∧
       μ'.readN (M + 128) 8 = Num.encodeLE 8 9223372036854775832 ∧
       μ'.readN (M + 136) 8 = Num.encodeLE 8 9223372036854775809 ∧
       (∀ a, a < 4294967296 → (a < M ∨ (M + 56 ≤ a ∧ a < M + 128) ∨ M + 144 ≤ a) → μ'.read a = μ.read a) ∧
@@ -79,7 +79,7 @@ theorem e2 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR 
   refine ⟨?_, ?_, ?_, ?_⟩
   rotate_left 2
   · pvm_go [h1, h10, hM0, hM1, hM8, hw, rdN_writeN_disjoint, ↓rdN_fold]
-  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
+  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
     all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
       ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, Nat.mod_eq_of_lt hp]
     post_simp
@@ -109,7 +109,7 @@ theorem entry {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCod
     (P := P) (R := R) x ω μ M cap (ce.addr + 32) n ⟨by omega, by omega, hM8⟩ hcap hce (by omega) (by omega) h1
     s168 s176 s184 (fun a h1 h2 => Memory.readable_of_writable (wM a (by omega) (by omega)))
     (fun a h1 h2 => wM a (by omega) (by omega))
-  obtain ⟨ω2, μ2, run2, b1, b5, b16, b24, b32, b40, b48, b128, b136, bfr, brd, bwr⟩ := e2 (p := p) (P := P)
+  obtain ⟨ω2, μ2, run2, b1, b5, b16, b24, b32, b40, b48, b8, b128, b136, bfr, brd, bwr⟩ := e2 (p := p) (P := P)
     (R := R) x ω1 μ1 M (ce.addr + 32) ⟨by omega, by omega, hM8⟩ (a1.trans h1) a10 (by omega)
     (fun a h1 h2 => by rw [awr]; exact wM a h1 (by omega))
   have k2 : ∀ a l, M + 144 ≤ a → a + l ≤ 4294967296 → μ2.readN a l = μ1.readN a l :=
@@ -119,7 +119,7 @@ theorem entry {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCod
   refine ⟨ω2, μ2, (run1.trans run2).mono (by omega), ⟨⟨hS0M, hMS1, hM2, hM8⟩, by omega, ⟨by omega, hE⟩, hEtop⟩,
     ⟨by rw [b1, a1, h1], Or.inr ⟨rfl, by rw [b5]⟩,
       by rw [Memory.readN_congr (fun j hj => bfr _ (by omega) (by omega))]; exact a120,
-      b128, b136, b48, b40, b16, b24, b32, by rw [k2 _ _ (by omega) (by omega)]; exact a272,
+      b128, b136, b48, b40, b16, b24, b32, b8, by rw [k2 _ _ (by omega) (by omega)]; exact a272,
       by rw [k2 _ _ (by omega) (by omega)]; simpa using a280, by rw [k2 _ _ (by omega) (by omega)]; exact a288,
       by rw [k2 _ _ (by omega) (by omega)]; exact a296,
       ⟨0, 8, by rw [k2 _ _ (by omega) (by omega)]; exact a248, by rw [k2 _ _ (by omega) (by omega)]; exact a256,

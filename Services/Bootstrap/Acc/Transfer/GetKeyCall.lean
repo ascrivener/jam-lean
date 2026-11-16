@@ -194,7 +194,7 @@ theorem gk_call (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap 
     rcases get_call (p := p) (P := P) (hb := hb) env cap pb hcap1 hcap c f ω4 μ3 s1 s out ptr 14 S0 S1 key H3
         c1 c7 c8 c9 (by decide) (by omega) (by omega) ⟨by omega, hout.2⟩
         (.inr ⟨_, hnew, rfl, fun a h1 h2 => ⟨by dsimp only; omega, by dsimp only; omega⟩⟩) (by omega) hkey3 hfit with
-      ⟨e, s3, ω5, μ5, n5, he, run5, g0, g1, g5, g6, gout, H5, keep5, keepd5, fr5⟩ |
+      ⟨e, s3, ω5, μ5, n5, he, run5, g0, g1, g5, g6, gout, H5, keep5, keepd5, fr5, -, -, -⟩ |
       ⟨ω5, μ5, n5, run5⟩
     · -- 3865: the copy freed
       have run5' := run5.trans (gk_j2 (p := p) (P := P) _ ω5 μ5 e he (g0.trans c0))

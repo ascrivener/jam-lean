@@ -130,7 +130,8 @@ theorem decode_counter (x : Nat) (hx : x < 2 ^ 32) : decode (Dec.fixedN 4) (fixe
 /-! ### `addRecent` -/
 
 /-- What a completed `addRecent` leaves: the replaced entry's results removed (if slot c was
-    occupied), slot c holding the new entry, and the counter at c + 1 mod `maxRecent`. -/
+    occupied), slot c holding the new entry, and the counter at ((c + 1) mod 2^32) mod `maxRecent`
+    (quirk Q19). -/
 theorem addRecent_run (C : Consts) (p : Bytes) (it : Nat) (σ σ' : Store) (u : Unit)
     (h : Store.run (addRecent C p it) σ = some (u, σ')) :
     let c := counter σ
@@ -138,7 +139,7 @@ theorem addRecent_run (C : Consts) (p : Bytes) (it : Nat) (σ σ' : Store) (u : 
       | some (q, j) => σ.set (Key.results q j).encode none
       | none => σ
     σ' = (σ₁.set (Key.recent c).encode (some (encodeRecent p it))).set Key.counter.encode
-      (some (fixed 4 ((c + 1) % C.maxRecent))) := by
+      (some (fixed 4 (((c + 1) % 2 ^ 32) % C.maxRecent))) := by
   intro c σ₁
   simp only [addRecent, load, store, orPanic, Store.run_bind, Prog.op, Store.run, Option.bind_some,
     Store.run_pure] at h
@@ -158,15 +159,28 @@ theorem set_eq (σ : Store) (k : Bytes) (v : Option Bytes) : σ.set k v k = v :=
   simp [Store.set]
 
 /-- The storage `addRecent` leaves, read under bootstrap's own keys. -/
-theorem addRecent_counter (C : Consts) (p : Bytes) (it : Nat) (σ σ' : Store) (u : Unit)
+theorem addRecent_counter' (C : Consts) (p : Bytes) (it : Nat) (σ σ' : Store) (u : Unit)
     (hM0 : 0 < C.maxRecent) (hM : C.maxRecent ≤ 2 ^ 32)
     (h : Store.run (addRecent C p it) σ = some (u, σ')) :
-    counter σ' = (counter σ + 1) % C.maxRecent := by
-  have : (counter σ + 1) % C.maxRecent < 2 ^ 32 := by
-    have := Nat.mod_lt (counter σ + 1) hM0; omega
+    counter σ' = ((counter σ + 1) % 2 ^ 32) % C.maxRecent := by
+  have : ((counter σ + 1) % 2 ^ 32) % C.maxRecent < 2 ^ 32 := by
+    have := Nat.mod_lt ((counter σ + 1) % 2 ^ 32) hM0; omega
   rw [addRecent_run C p it σ σ' u h]
   show ((Store.set _ Key.counter.encode _ Key.counter.encode).bind _).getD 0 = _
   rw [set_eq, Option.bind_some, decode_counter _ this]; rfl
+
+/-- The counter after `addRecent`, when it was a slot (c < `maxRecent` ≤ 2^32): the wrap at 2^32
+    (quirk Q19) then changes nothing. -/
+theorem addRecent_counter (C : Consts) (p : Bytes) (it : Nat) (σ σ' : Store) (u : Unit)
+    (hM0 : 0 < C.maxRecent) (hM : C.maxRecent ≤ 2 ^ 32) (hc : counter σ < C.maxRecent)
+    (h : Store.run (addRecent C p it) σ = some (u, σ')) :
+    counter σ' = (counter σ + 1) % C.maxRecent := by
+  rw [addRecent_counter' C p it σ σ' u hM0 hM h]
+  by_cases hl : counter σ + 1 < 2 ^ 32
+  · rw [Nat.mod_eq_of_lt hl]
+  · have h1 : counter σ + 1 = 2 ^ 32 := by omega
+    have h2 : C.maxRecent = 2 ^ 32 := by omega
+    rw [h1, h2]
 
 /-- Slot i after `addRecent`: the new entry at the old counter, every other slot below 2^32 as it
     was. -/
@@ -194,7 +208,7 @@ theorem addRecent_ringInv (C : Consts) (p : Bytes) (it : Nat) (σ σ' : Store) (
     (hM0 : 0 < C.maxRecent) (hM : C.maxRecent ≤ 2 ^ 32) (hp : p.length = 32)
     (hinv : RingInv C σ) (h : Store.run (addRecent C p it) σ = some (u, σ')) : RingInv C σ' := by
   obtain ⟨hc, hocc⟩ := hinv
-  have hcnt := addRecent_counter C p it σ σ' u hM0 hM h
+  have hcnt := addRecent_counter C p it σ σ' u hM0 hM hc h
   have hslot : ∀ i < C.maxRecent, occupied σ' i ↔ i = counter σ ∨ occupied σ i := by
     intro i hi
     simp only [occupied, addRecent_slot C p it σ σ' u hp h i (by omega) (by omega)]

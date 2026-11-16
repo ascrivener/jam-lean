@@ -57,7 +57,8 @@ theorem lg_part1 (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
       (∀ a, q ≤ a → a < q + len → InDataA chq a) ∧
       (∀ d ∈ chunks s₀, d.used = true → d ≠ ⟨ptr - 32, (128 + 31) / 32 + 1, true⟩ →
         d ≠ chq ∧ d ∈ chunks s' ∧ ∀ a, InDataA d a → μ'.read a = μ.read a) ∧
-      (∀ a, a < 4294967296 → sp ≤ a → ¬ LgW sp a → μ'.read a = μ.read a)) ∨
+      (∀ a, a < 4294967296 → sp ≤ a → ¬ LgW sp a → μ'.read a = μ.read a) ∧
+      (∀ a, Glob a → μ'.read a = μ.read a)) ∨
     Aborts p (KeepCtx (accContractS env)) Ab ⟨7454, ω, μ, c, f⟩ c := by
   have hst := H.st
   have hS1 := H.hS1
@@ -101,7 +102,7 @@ theorem lg_part1 (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
     have H3 : HeapCtxC env.code pb S0 S1 μ3 s2 :=
       HeapCtxC.keep_data H2 hnew (fun a ha hc => fr3 a (by omega) (by dsimp only at hc; omega) (.inl (by omega))
         (.inl (by omega))) wr3
-    obtain ⟨ω4, μ4, run4, H4, -, -, -, stk4, -, oth4, e0, e1, -, -⟩ :=
+    obtain ⟨ω4, μ4, run4, H4, -, -, -, stk4, glob4, oth4, e0, e1, -, -⟩ :=
       dealloc_callG (R := KeepCtx (accContractS env)) (p := p) (P := P) env.code pb S0 S1 (c, f) ω3 μ3 s2 sp p3
         260 7631 _ H3 hnew rfl (by dsimp only; omega) g0 g1 g7 ⟨by decide, by decide, by decide⟩
         (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_129]) bs_7631 (by omega) ⟨by omega, by omega⟩
@@ -115,7 +116,8 @@ theorem lg_part1 (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
       e1.trans g1, H4, (oth4 _ hchs2 rfl hne3).1, rfl, by dsimp only; omega,
       by rw [k43 _ _ (by omega) (by omega)]; exact r512, by decide,
       by rw [k43 _ _ (by omega) (by omega)]; exact r520, by rw [k43 _ _ (by omega) (by omega)]; exact r528,
-      fun a h1 h2 => ⟨by dsimp only; omega, by dsimp only; omega⟩, fun d hd hu hne => ?_, fun a h0 ha hW => ?_⟩
+      fun a h1 h2 => ⟨by dsimp only; omega, by dsimp only; omega⟩, fun d hd hu hne => ?_, fun a h0 ha hW => ?_,
+      fun a hg => ?_⟩
     · have hd2 := keep2 d hd hu
       have hne' := hfresh d hd hu
       refine ⟨hne, (oth4 d hd2 hu hne').1, fun a ha => ?_⟩
@@ -127,6 +129,9 @@ theorem lg_part1 (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
     · unfold LgW at hW
       rw [stk4 a h0 ha, fr3 a h0 (.inr (by omega)) (by omega) (by omega), stk2 a h0 ha,
         fr1 a h0 (by omega) (by omega)]
+    · have ha := hg; unfold Glob at ha
+      rw [glob4 a hg, fr3 a (by omega) (by omega) (.inl (by omega)) (.inl (by omega)),
+        glob_of_hkeepC H2.wf H2.hb0 hkg a hg, fr1 a (by omega) (.inl (by omega)) (.inl (by omega))]
   · -- `Err`: a 3-octet `String` is shown, the memo's block freed
     obtain ⟨ω1, μ1, run1, a0, a1, a7, a8, a5, r248, r240, fr1, rd1, wr1⟩ :=
       lg_err (p := p) (P := P) (R := KeepCtx (accContractS env)) (c, f) ω μ sp ptr h1 h6 (by omega)
@@ -163,7 +168,7 @@ theorem lg_part1 (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
     have hchs2 := keep2 _ hch rfl
     have hne3 : (⟨ptr - 32, (128 + 31) / 32 + 1, true⟩ : Chunk) ≠ ⟨p3 - 32, (3 + 31) / 32 + 1, true⟩ :=
       hfresh _ hch rfl
-    obtain ⟨ω4, μ4, run4, H4, -, -, -, stk4, -, oth4, e0, e1, -, -⟩ :=
+    obtain ⟨ω4, μ4, run4, H4, -, -, -, stk4, glob4, oth4, e0, e1, -, -⟩ :=
       dealloc_callG (R := KeepCtx (accContractS env)) (p := p) (P := P) env.code pb S0 S1 (c, f) ω3 μ3 s2 sp ptr
         260 7631 _ H3 hchs2 rfl (by dsimp only; omega) g0 g1 g7 ⟨by decide, by decide, by decide⟩
         (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_129]) bs_7631 (by omega) ⟨by omega, by omega⟩
@@ -174,7 +179,8 @@ theorem lg_part1 (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
       e1.trans g1, H4, (oth4 _ hnew rfl (Ne.symm hne3)).1, rfl, by dsimp only; omega,
       by rw [k43 _ _ (by omega) (by omega)]; exact r512, by decide,
       by rw [k43 _ _ (by omega) (by omega)]; exact r520, by rw [k43 _ _ (by omega) (by omega)]; exact r528,
-      fun a h1 h2 => ⟨by dsimp only; omega, by dsimp only; omega⟩, fun d hd hu hne => ?_, fun a h0 ha hW => ?_⟩
+      fun a h1 h2 => ⟨by dsimp only; omega, by dsimp only; omega⟩, fun d hd hu hne => ?_, fun a h0 ha hW => ?_,
+      fun a hg => ?_⟩
     · have hd2 := keep2 d hd hu
       have hne' := hfresh d hd hu
       refine ⟨hne', (oth4 d hd2 hu hne).1, fun a ha => ?_⟩
@@ -186,10 +192,14 @@ theorem lg_part1 (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
     · unfold LgW at hW
       rw [stk4 a h0 ha, fr3 a h0 (.inr (by omega)) (by omega) (by omega), stk2 a h0 ha,
         fr1 a h0 (by omega) (by omega)]
+    · have ha := hg; unfold Glob at ha
+      rw [glob4 a hg, fr3 a (by omega) (by omega) (.inl (by omega)) (.inl (by omega)),
+        glob_of_hkeepC H2.wf H2.hb0 hkg a hg, fr1 a (by omega) (.inl (by omega)) (.inl (by omega))]
 
 /-- **7631 → 7763**: the log line formatted (`LogFmt`), the shown buffer and the message freed, `log`
     called. Every allocated chunk of s₀ but chq kept, with its data; from sp up only sp + 744 … sp + 768
-    and sp + 1568 … sp + 1616 changed. Or a formatting allocation failed (`ExhaustsP`). -/
+    and sp + 1568 … sp + 1616 changed; the statics 196616 … 196791 (`Glob`) kept. Or a formatting allocation
+    failed (`ExhaustsP`). -/
 theorem lg_part2 (env : AccEnv) {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
     {Ab : St Stream → Prop} {pb S0 S1 : Nat}
     (hAb : ∀ s : St Stream, HeapFailT s → Ab s) (hL : LogFmt p env pb S0 S1)
@@ -204,7 +214,8 @@ theorem lg_part2 (env : AccEnv) {p : ByteArray} {P : Program} [HasCode p P] [Has
       ω'[1] = UInt64.ofNat sp ∧ HeapCtxC env.code pb S0 S1 μ' s' ∧
       (∀ d ∈ chunks s₀, d.used = true → d ≠ chq → d ∈ chunks s' ∧ ∀ a, InDataA d a → μ'.read a = μ.read a) ∧
       (∀ a, a < 4294967296 → sp ≤ a → (a < sp + 744 ∨ sp + 768 ≤ a) → (a < sp + 1568 ∨ sp + 1616 ≤ a) →
-        μ'.read a = μ.read a)) ∨
+        μ'.read a = μ.read a) ∧
+      (∀ a, Glob a → μ'.read a = μ.read a)) ∨
     Aborts p (KeepCtx (accContractS env)) Ab ⟨7631, ω, μ, c, f⟩ c := by
   have hst := H.st
   have hS1 := H.hS1
@@ -223,7 +234,7 @@ theorem lg_part2 (env : AccEnv) {p : ByteArray} {P : Program} [HasCode p P] [Has
         rw [k10 _ _ (by omega), m520] at h1
         rw [k10 _ _ (by omega), m520, k10 _ _ (by omega), m528] at h2
         rw [rd1]; exact Memory.readable_of_writable (heapC_writable_data H hq hqu (hql a h1 h2))) with
-    ⟨s2, ω2, μ2, N2, kc, kp, run2, H2, k1, k5, k6, mkc, mkp, hkc, keep2, fr2⟩ | hx
+    ⟨s2, ω2, μ2, N2, kc, kp, run2, H2, k1, k5, k6, mkc, mkp, hkc, keep2, fr2, g2⟩ | hx
   rotate_left
   · exact .inr (Aborts.prepend ⟨16, run1⟩ (aborts_of_exhaustsP hAb ⟨59375, ω1, μ1, c, f⟩ hx))
   have hst2 := H2.st
@@ -235,7 +246,7 @@ theorem lg_part2 (env : AccEnv) {p : ByteArray} {P : Program} [HasCode p P] [Has
     ω2 μ2 sp cp q (k1.trans a1) ⟨by omega, by omega⟩
     (fun a h1 h2 => Memory.readable_of_writable (hst2 a (by omega) (by omega)))
     (by rw [k20 _ _ (by omega) (by omega)]; exact m512) hcp (by rw [k20 _ _ (by omega) (by omega)]; exact m520)
-  obtain ⟨ω4, μ4, run4, H4, -, -, -, stk4, -, oth4, e0, e1, -, -⟩ :=
+  obtain ⟨ω4, μ4, run4, H4, -, -, -, stk4, glob4, oth4, e0, e1, -, -⟩ :=
     dealloc_callG (R := KeepCtx (accContractS env)) (p := p) (P := P) env.code pb S0 S1 (c, f) ω3 μ2 s2 sp q
       264 7720 chq H2 hq2 hqu hqa b0 b1 b7 ⟨by decide, by decide, by decide⟩
       (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_131]) bs_7720 (by omega) ⟨by omega, by omega⟩
@@ -262,11 +273,14 @@ theorem lg_part2 (env : AccEnv) {p : ByteArray} {P : Program} [HasCode p P] [Has
   have frA : ∀ a, a < 4294967296 → sp ≤ a → (a < sp + 744 ∨ sp + 768 ≤ a) → (a < sp + 1568 ∨ sp + 1616 ≤ a) →
       μ4.read a = μ.read a := fun a h0 ha hb hc => by
     rw [stk4 a h0 ha, fr2 a h0 ha hb, fr1 a h0 hc]
+  have gA : ∀ a, Glob a → μ4.read a = μ.read a := fun a hg => by
+    have ha := hg; unfold Glob at ha
+    rw [glob4 a hg, g2 a hg, fr1 a (by omega) (.inl (by omega))]
   by_cases hk0 : kc = 0
   · obtain ⟨ω6, run6, j6⟩ := lg_log_b0 (p := p) (P := P) (R := KeepCtx (accContractS env)) (c, f)
       (setR7 ω5 Result.WHAT) μ4 sp w1 ⟨by omega, by omega⟩ hrf4 (by rw [mkc4, hk0])
     have runL := FreeStepsH.logS env (d_7741 (p := p) (P := P)) run6
-    exact .inl ⟨free s2 q, ω6, μ4, _, runA.trans runL, (j6 1 (by decide)).trans w1, H4, keepA, frA⟩
+    exact .inl ⟨free s2 q, ω6, μ4, _, runA.trans runL, (j6 1 (by decide)).trans w1, H4, keepA, frA, gA⟩
   · rcases hkc with h | ⟨chk, hck, hcku, hcka, hckf⟩
     · exact absurd h hk0
     have hkq : chq ≠ chk := hckf chq hq hqu
@@ -274,13 +288,14 @@ theorem lg_part2 (env : AccEnv) {p : ByteArray} {P : Program} [HasCode p P] [Has
     obtain ⟨ω6, run6, d0, d1, d7, d8, -⟩ := lg_log_b (p := p) (P := P) (R := KeepCtx (accContractS env)) (c, f)
       (setR7 ω5 Result.WHAT) μ4 sp kc kp w1 w5 (by rw [← mkp]; exact rdN_lt64 _ _) ⟨by omega, by omega⟩ hrf4
       mkc4 hk0
-    obtain ⟨ω7, μ7, run7, H7, -, -, -, stk7, -, oth7, -, g1, -, -⟩ :=
+    obtain ⟨ω7, μ7, run7, H7, -, -, -, stk7, glob7, oth7, -, g1, -, -⟩ :=
       dealloc_callG (R := KeepCtx (accContractS env)) (p := p) (P := P) env.code pb S0 S1 (c, f) ω6 μ4 (free s2 q)
         sp kp 266 7763 chk H4 hk4 hcku hcka d0 d1 d7 ⟨by decide, by decide, by decide⟩
         (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_132]) bs_7763 (by omega) ⟨by omega, by omega⟩
     have runL := FreeStepsH.logS env (d_7741 (p := p) (P := P)) (run6.trans run7)
     refine .inl ⟨free (free s2 q) kp, ω7, μ7, _, runA.trans runL, g1.trans d1, H7,
-      fun d hd hu hne => ?_, fun a h0 ha hb hc => by rw [stk7 a h0 ha]; exact frA a h0 ha hb hc⟩
+      fun d hd hu hne => ?_, fun a h0 ha hb hc => by rw [stk7 a h0 ha]; exact frA a h0 ha hb hc,
+      fun a hg => by rw [glob7 a hg]; exact gA a hg⟩
     obtain ⟨hd4, hda⟩ := keepA d hd hu hne
     have hne' : d ≠ chk := hckf d hd hu
     exact ⟨(oth7 d hd4 hu hne').1, fun a ha => by rw [(oth7 d hd4 hu hne').2 a ha]; exact hda a ha⟩

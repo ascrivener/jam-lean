@@ -45,14 +45,15 @@ def TrW2 (sp a : Nat) : Prop := LgW sp a ∨ T2W sp a ∨ (sp + 264 ≤ a ∧ a 
 /-- **The state at the items loop's head 6766 after the record's write**, from s at 7399 with memory μ
     and allocator state s₀: context c and stream f; sp in ω₁; the allocator's context for some state keeping every allocated
     chunk of s₀ and its data; from sp up only `TrW2` changed; below 196608 the memory reads and is
-    readable as before. -/
+    readable as before; the statics 196616 … 196791 (`Glob`) kept. -/
 def W2Post (env : AccEnv) (pb S0 S1 sp : Nat) (s₀ : State) (μ : Memory) (c : AccCtx) (f : Stream)
     (s' : St Stream) : Prop :=
   s'.i = 6766 ∧ s'.c = c ∧ s'.q = f ∧ s'.ω[1] = UInt64.ofNat sp ∧
   (∃ st, HeapCtxC env.code pb S0 S1 s'.μ st ∧
     ∀ d ∈ chunks s₀, d.used = true → d ∈ chunks st ∧ ∀ a, InDataA d a → s'.μ.read a = μ.read a) ∧
   (∀ a, a < 4294967296 → sp ≤ a → ¬ TrW2 sp a → s'.μ.read a = μ.read a) ∧
-  (∀ a, a < 196608 → s'.μ.read a = μ.read a ∧ s'.μ.readable a = μ.readable a)
+  (∀ a, a < 196608 → s'.μ.read a = μ.read a ∧ s'.μ.readable a = μ.readable a) ∧
+  (∀ a, Glob a → s'.μ.read a = μ.read a)
 
 /-- **`on_transfer`'s record write implements
     `orPanic (.write s!"transfer{n}" (fixed 4 src ++ fixed 8 am ++ memo))`** from 7399, with n the u32 at
@@ -82,13 +83,13 @@ theorem tr_w2 (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap : 
   have hmemo : memo.length = 128 := by rw [← mmemo, Memory.length_readN]
   -- 7399 → 7454
   rcases tr_w2a env cap pb hcap1 hcap (p := p) (P := P) hAb hU c f ω μ s₀ sp H h1 hsp hSTk with
-    ⟨sA, ωA, μA, NA, ptr, runA, A1, -, A6, hp1, hp2, HA, hch, hfrA, keepA, tagA, frA, -⟩ | hab
+    ⟨sA, ωA, μA, NA, ptr, runA, A1, -, A6, hp1, hp2, HA, hch, hfrA, keepA, tagA, frA, -, gA⟩ | hab
   rotate_left
   · exact Impl.abort _ Q hab
   -- 7454 → 7631
   rcases lg_part1 env cap pb hcap1 hcap (p := p) (P := P) hAb c f ωA μA sA sp ptr HA A1 A6 hsp hSTk ⟨hp1, hp2⟩
       hch tagA with
-    ⟨sB, ωB, μB, NB, chq, cp, q, len, runB, B1, HB, hq, hqu, hqa, mB512, hcp, mB520, mB528, hql, keepB, frB⟩ | hab
+    ⟨sB, ωB, μB, NB, chq, cp, q, len, runB, B1, HB, hq, hqu, hqa, mB512, hcp, mB520, mB528, hql, keepB, frB, gB⟩ | hab
   rotate_left
   · exact Impl.abort _ Q (Aborts.prepend ⟨NA, runA⟩ hab)
   -- frames from 7399 to 7631
@@ -102,7 +103,7 @@ theorem tr_w2 (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap : 
       mB520 mB528 hql (by rw [kB _ _ (by omega) (by omega) (fun j hj => by unfold LgW; omega)]; exact m208)
       (by rw [kB _ _ (by omega) (by omega) (fun j hj => by unfold LgW; omega)]; exact m136)
       (by rw [kB _ _ (by omega) (by omega) (fun j hj => by unfold LgW; omega)]; exact m200) with
-    ⟨sC, ωC, μC, NC, runC, C1, HC, keepC, frC⟩ | hab
+    ⟨sC, ωC, μC, NC, runC, C1, HC, keepC, frC, gC⟩ | hab
   rotate_left
   · exact Impl.abort _ Q (Aborts.prepend ⟨NA + NB, runA.trans runB⟩ hab)
   have frAC : ∀ a, a < 4294967296 → sp ≤ a → ¬ LgW sp a → μC.read a = μ.read a := fun a h0 ha hW => by
@@ -118,7 +119,7 @@ theorem tr_w2 (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap : 
       (by rw [kC _ _ (by omega) (by omega) (fun j hj => by unfold LgW; omega)]; exact m1000)
       (by rw [Memory.readN_congr fun j hj => frAC _ (by omega) (by omega) (by unfold LgW; omega)]; exact mmemo) with
     ⟨sD, ωD, μD, ND, kc, kp, vp, kch, vch, runD, D0, D1, D7, D8, D9, D10, D11, D6, D5, HD, mkc, hkch, hkcu, hkca,
-      hkin, mkey, m744, m752, hvch, hvcu, hvca, hvk, hvin, vdat, keepD, frD⟩ | hab
+      hkin, mkey, m744, m752, hvch, hvcu, hvca, hvk, hvin, vdat, keepD, frD, gD⟩ | hab
   rotate_left
   · exact Impl.abort _ Q (Aborts.prepend ⟨NA + NB + NC, (runA.trans runB).trans runC⟩ hab)
   have runK := ((runA.trans runB).trans runC).trans runD
@@ -220,7 +221,7 @@ theorem tr_w2 (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap : 
     obtain ⟨ω9, run9, b0, b1, b7, b8, b5⟩ := t2_chk_ok (p := p) (P := P) (R := KeepCtx (accContractS env))
       (c₁, f) ω8 μ8 sp _ 140 vp i1 (i6.trans D6) ⟨by omega, by omega⟩ hrf8 rfl hw
       (by rw [k8 _ _ (by omega) (by omega) (.inr (by omega))]; exact m744) (by decide) (by omega)
-    obtain ⟨ω10, μ10, run10, H10, -, -, -, stk10, -, oth10, -, e1, e5, -⟩ :=
+    obtain ⟨ω10, μ10, run10, H10, -, -, -, stk10, glob10, oth10, -, e1, e5, -⟩ :=
       dealloc_callG (R := KeepCtx (accContractS env)) (p := p) (P := P) env.code pb S0 S1 (c₁, f) ω9 μ8 sD sp vp
         276 7946 vch H8 hvch hvcu hvca b0 b1 b7 ⟨by decide, by decide, by decide⟩
         (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_137]) bs_7946 (by omega) ⟨by omega, by omega⟩
@@ -240,9 +241,11 @@ theorem tr_w2 (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap : 
           ∀ a, InDataA d a → μ'.read a = μ10.read a) →
         (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ10.read a) →
         (∀ a, a < 196608 → μ'.read a = μ10.read a ∧ μ'.readable a = μ10.readable a) →
+        (∀ a, Glob a → μ'.read a = μ10.read a) →
         Q () ⟨6766, ω', μ', c₁, f⟩ := by
-      intro ω' μ' st e1'' H' kp' fr' ro'
-      refine hQ _ ⟨rfl, hc1.symm, rfl, e1'', ⟨st, H', fun d hd hu => ?_⟩, fun a h0 ha hW => ?_, fun a ha => ?_⟩
+      intro ω' μ' st e1'' H' kp' fr' ro' gl'
+      refine hQ _ ⟨rfl, hc1.symm, rfl, e1'', ⟨st, H', fun d hd hu => ?_⟩, fun a h0 ha hW => ?_, fun a ha => ?_,
+        fun a hg => ?_⟩
       · obtain ⟨hdA, hdatA⟩ := keepA d hd hu
         have hneA := hfrA d hd hu
         obtain ⟨-, hdB, hdatB⟩ := keepB d hdA hu hneA
@@ -266,21 +269,24 @@ theorem tr_w2 (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap : 
         obtain ⟨rY, rdY, -⟩ := roY a ha
         obtain ⟨rD, rdD, -⟩ := roD a ha
         exact ⟨by rw [r', r10, rY, rD], by rw [rd', rd10, rdY, rdD]⟩
+      · have ha := hg; unfold Glob at ha
+        rw [gl' a hg, glob10 a hg, fr8 a (by omega) (.inl (by omega)) (.inl (by omega)), gD a hg, gC a hg,
+          gB a hg, gA a hg]
     by_cases hk0 : kc = 0
     · obtain ⟨ω11, run11, j11⟩ := t2_knofree (p := p) (P := P) (R := KeepCtx (accContractS env)) (c₁, f) ω10 μ10 sp
         e1' ⟨by omega, by omega⟩ hrf10 (by rw [mkc10, hk0])
       refine ⟨⟨6766, ω11, μ10, c₁, f⟩, ⟨_, (run9.trans run10).trans run11⟩, rfl, ?_⟩
       exact post ω11 μ10 (free sD vp) ((j11 1 (by decide)).trans e1') H10
-        (fun d hd hu _ => ⟨hd, fun a _ => rfl⟩) (fun a _ _ => rfl) (fun a _ => ⟨rfl, rfl⟩)
+        (fun d hd hu _ => ⟨hd, fun a _ => rfl⟩) (fun a _ _ => rfl) (fun a _ => ⟨rfl, rfl⟩) (fun a _ => rfl)
     · obtain ⟨ω11, run11, c0, c1, c7, c8⟩ := t2_kfree (p := p) (P := P) (R := KeepCtx (accContractS env)) (c₁, f)
         ω10 μ10 sp kc kp e1' e5' ⟨by omega, by omega⟩ hrf10 mkc10 hk0 (by omega)
-      obtain ⟨ω12, μ12, run12, H12, -, -, -, stk12, -, oth12, -, g1, -, -⟩ :=
+      obtain ⟨ω12, μ12, run12, H12, -, -, -, stk12, glob12, oth12, -, g1, -, -⟩ :=
         dealloc_callG (R := KeepCtx (accContractS env)) (p := p) (P := P) env.code pb S0 S1 (c₁, f) ω11 μ10
           (free sD vp) sp kp 228 6766 kch H10 hkch10 hkcu hkca c0 c1 c7 ⟨by decide, by decide, by decide⟩
           (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_113]) bs_6766 (by omega) ⟨by omega, by omega⟩
       have roK3 := ro_keep (keepCtx_keepsRO env H.bd) run12 H10.ro
       refine ⟨⟨6766, ω12, μ12, c₁, f⟩, ⟨_, (run9.trans run10).trans (run11.trans run12)⟩, rfl, ?_⟩
       exact post ω12 μ12 _ (g1.trans c1) H12 (fun d hd hu hne => oth12 d hd hu hne)
-        (fun a h0 ha => stk12 a h0 ha) (fun a ha => ⟨(roK3 a ha).1, (roK3 a ha).2.1⟩)
+        (fun a h0 ha => stk12 a h0 ha) (fun a ha => ⟨(roK3 a ha).1, (roK3 a ha).2.1⟩) glob12
 
 end Services.Bootstrap.Acc

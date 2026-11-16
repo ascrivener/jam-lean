@@ -42,7 +42,8 @@ theorem sxw4_succ_mod (n : Nat) (hn : n < 4294967296) :
     sp in ω₁, ω₅ and ω₆ (= (sxw 4 n + 1) mod 2⁶⁴) as the helper
     restores them; the allocator's context for some state keeping every allocated chunk of s₀ and its
     data; n at sp + 1496 and (n + 1) mod 2³² at sp + 1568 (u32); from sp up nothing else changed; below
-    the read-write data (196608) the memory reads and is readable as before. -/
+    the read-write data (196608) the memory reads and is readable as before; the statics 196616 … 196791
+    (`Glob`) kept. -/
 def W1Post (env : AccEnv) (pb S0 S1 sp : Nat) (s₀ : State) (μ : Memory) (ω : Regs) (c : AccCtx)
     (f : Stream) (n : Nat) (s' : St Stream) : Prop :=
   s'.i = 7399 ∧ s'.c = (c.1.setSelf (writeAcct c.1.self trKey (fixed 4 ((n + 1) % 2 ^ 32))), c.2) ∧
@@ -53,7 +54,8 @@ def W1Post (env : AccEnv) (pb S0 S1 sp : Nat) (s₀ : State) (μ : Memory) (ω :
   rdN s'.μ (sp + 1496) 4 = n ∧ rdN s'.μ (sp + 1568) 4 = (n + 1) % 4294967296 ∧
   (∀ a, a < 4294967296 → sp ≤ a → (a < sp + 1496 ∨ sp + 1500 ≤ a) → (a < sp + 1568 ∨ sp + 1572 ≤ a) →
     s'.μ.read a = μ.read a) ∧
-  (∀ a, a < 196608 → s'.μ.read a = μ.read a ∧ s'.μ.readable a = μ.readable a)
+  (∀ a, a < 196608 → s'.μ.read a = μ.read a ∧ s'.μ.readable a = μ.readable a) ∧
+  (∀ a, Glob a → s'.μ.read a = μ.read a)
 
 /-- **`on_transfer`'s counter write implements `orPanic (.write "transfer-count" (fixed 4 ((n+1) % 2³²)))`**
     from 7326, with ω₆ = `sxw 4 n` (n = `trCount` of the stored value, as `tr_read` leaves it).
@@ -153,7 +155,7 @@ theorem tr_w1 (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap : 
   · -- the write succeeded
     rw [if_neg hF] at estep
     refine impl_orPanic _ Q ⟨7326, ω, μ, c, f⟩ ⟨40494, ω1, μ1, c, f⟩ h1R rfl estep ?_
-    rcases hsk with ⟨s', ω2, μ2, n2, run2, e7, e1, e5, e6, H2, kch, kdat, khi⟩ | hn0
+    rcases hsk with ⟨s', ω2, μ2, n2, run2, e7, e1, e5, e6, H2, kch, kdat, khi, kgl⟩ | hn0
     · have hR7 : writeR7 c.1.self trKey (fixed 4 ((n + 1) % 2 ^ 32)) ≠ Result.FULL := by
         unfold writeR7; rw [if_neg hF]
         cases hv : c.1.self.storage.get? trKey with
@@ -178,7 +180,7 @@ theorem tr_w1 (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap : 
       have k2 : ∀ a, sp ≤ a → a < 4294967296 → μ2.read a = μ1.read a := fun a ha h0 => khi a h0 (by omega)
       refine ⟨rfl, rfl, rfl, (j3 1 (by decide)).trans (e1.trans (by congr 1; omega)), (j3 5 (by decide)).trans e5,
         (j3 6 (by decide)).trans e6, ⟨s', H2, fun d hd hu => ⟨kch d hd hu, fun a ha => ?_⟩⟩, ?_, ?_, kSp,
-        fun a ha => roK2 a ha⟩
+        fun a ha => roK2 a ha, fun a hg => ?_⟩
       · have hlt := heapC_data_lt H hd ha
         rw [kdat d hd hu a ha, fr1' a (by omega)]
       · have e : rdN μ2 (sp + 1496) 4 = rdN μ1 (sp + 1496) 4 := by
@@ -188,6 +190,8 @@ theorem tr_w1 (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap : 
         rw [e, r1496, this, Nat.mod_eq_of_lt hn32]
       · rw [← hmod, ← r1568]; unfold rdN; congr 1
         exact Memory.readN_congr fun j hj => k2 _ (by omega) (by omega)
+      · have ha := hg; unfold Glob at ha
+        rw [kgl a hg, fr1' a (by omega)]
     · exact .inl (hnull _ hn0)
 
 end Services.Bootstrap.Acc

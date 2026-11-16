@@ -124,8 +124,8 @@ theorem tr_impl (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap 
   rw [hn] at tw1
   refine tw1 _ fun s' hW => ?_
   obtain ⟨i2, ω2, μ2, c2, f2⟩ := s'
-  obtain ⟨hi, hc, hq, w1, -, -, ⟨st, H2, keep2⟩, r1496, -, fr2, ro2⟩ := hW
-  dsimp only at hi hc hq w1 H2 keep2 r1496 fr2 ro2
+  obtain ⟨hi, hc, hq, w1, -, -, ⟨st, H2, keep2⟩, r1496, -, fr2, ro2, g2⟩ := hW
+  dsimp only at hi hc hq w1 H2 keep2 r1496 fr2 ro2 g2
   subst hi c2 f2
   -- from 7326's memory back to μ
   have k21 : ∀ a, a < 4294967296 → sp ≤ a → ¬ TrRdW sp a → (a < sp + 1496 ∨ sp + 1500 ≤ a) →
@@ -156,7 +156,7 @@ theorem tr_impl (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap 
     (by rw [rdN_frame fun j hj => (ro21 _ (by omega)).1]; exact ht4)
     (fun a h1 h2 => by rw [(ro21 a (by omega)).2]; exact htr a h1 h2)
     hold Q fun s' hW => ?_
-  obtain ⟨hi3, hc3, hq3, w13, ⟨st3, H3, keep3⟩, fr3, ro3⟩ := hW
+  obtain ⟨hi3, hc3, hq3, w13, ⟨st3, H3, keep3⟩, fr3, ro3, g3⟩ := hW
   refine hQ s' ⟨hi3, by rw [hc3, ← hn]; rfl, hq3, w13, ⟨st3, H3, fun d hd hu => ?_⟩,
     fun a h0 ha hW => ?_, fun a ha => ⟨(ro3 a ha).1.trans (ro21 a ha).1, (ro3 a ha).2.trans (ro21 a ha).2⟩⟩
   · obtain ⟨hd1, hdat1⟩ := keep1 d hd hu

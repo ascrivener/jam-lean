@@ -2,6 +2,8 @@ import Services.Bootstrap.Refine.SlotT
 import Services.Bootstrap.Refine.ElemsSmallC
 import Services.Bootstrap.Encode.ArmsHVecDesignate
 import Services.Bootstrap.Encode.ArmsHVecGas
+import Services.Bootstrap.Encode.ArmsHVecBless
+import Services.Bootstrap.Encode.ArmsHVecAssign
 
 /-!
 # T1c's output slots of the heap kinds passed through
@@ -234,6 +236,80 @@ theorem slotOK_provideInline {p : ByteArray} {P : Program} [HasCode p P] [HasCod
   · refine Or.inr (Or.inr (Or.inl ⟨1, d.length, by omega, by omega, by rw [r0]; exact h0,
       by rw [r 8 1 (by omega)]; exact h8, by rw [r 16 8 (by omega)]; exact h16,
       by rw [r 24 8 (by omega)]; exact hb24, ?_⟩))
+    simp only [true_iff]; omega
+
+theorem readN_mod64o (μ : Memory) (q o m : Nat) :
+    μ.readN (q % 18446744073709551616 + o) m = μ.readN (q + o) m := by
+  unfold Memory.readN Memory.read
+  congr 1; funext k
+  rw [show (q % 18446744073709551616 + o + k) % two32 = (q + o + k) % two32 by unfold two32; omega]
+
+/-- Equal reads of the heap octets (q, m) give equal reads of any stretch inside them. -/
+theorem sub_keep {q m o l : Nat} {μ μ' : Memory} (hk : ∀ q' m', SrcAtP q m q' m' → μ'.readN q' m' = μ.readN q' m')
+    (hol : o + l ≤ m) : μ'.readN (q + o) l = μ.readN (q + o) l := by
+  rcases Nat.eq_zero_or_pos l with h0 | h0
+  · subst h0; rfl
+  · rw [Decode.Loop.readN_sub μ' q m o l _ rfl hol, Decode.Loop.readN_sub μ q m o l _ rfl hol,
+      hk q m ⟨by omega, rfl, rfl⟩]
+
+/-- **`Bless(m, a, v, r, z)`'s decoded slot is good**: 1 ≤ n = |z| < 2^32 pairs, the slot `BlessRep` with its buffer
+    (word 16) a chunk of cs holding the 16 n octets. -/
+theorem slotOK_bless {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeA p P]
+    (env : RefineHost.Env) (K pb : Nat) (hK1 : 134217728 ≤ K) (hK : K < 18446744073709551616)
+    (C : Spec.Consts) (m a v r : Nat) (z : List (Nat × Nat)) (hw : (Spec.Instr.bless m a v r z).WF C)
+    (hn1 : 1 ≤ z.length) (cs : List Chunk) (bs : List UInt8) (μr : Memory)
+    (hR : ∀ μ : Memory, (∀ c ∈ cs, ∀ a, InData c a → μ.read a = μr.read a) →
+      Decode.Bless.BlessRep (Codec.fixed 4 m) (Codec.fixed 4 a) (Codec.fixed 4 v) (Codec.fixed 4 r) z.length
+        (z.map (fun (s, g) => Codec.fixed 4 s ++ Codec.fixed 8 g)).flatten bs μ ∧ OwnsBuf cs bs 16 (16 * z.length)) :
+    SlotOK env K pb p P (DRt C 0) (Spec.Instr.bless m a v r z).encode bs (· ∈ cs) μr := by
+  intro μ s el hel ho
+  have hw0 := hw
+  obtain ⟨hm4, ha4, hv4, hr4, hnb, hz⟩ := hw
+  have hnb : z.length < 4294967296 := hnb
+  generalize hit : (z.map (fun (s, g) => Codec.fixed 4 s ++ Codec.fixed 8 g)).flatten = items at hR
+  have hil : items.length = 12 * z.length := by
+    rw [← hit]
+    have := flatten_len 12 (z.map (fun (s, g) => Codec.fixed 4 s ++ Codec.fixed 8 g))
+      (fun k hk => by
+        obtain ⟨⟨s, g⟩, -, rfl⟩ := List.mem_map.mp hk
+        simp [Codec.fixed])
+    simpa using this
+  obtain ⟨⟨h0, hm, ha, hd, hr, q, h8, h16, h24, hq⟩, co, hco, hcou, hb16, hcoS, hcoT⟩ :=
+    hR μ (fun c hc a ha => (ho c hc).2.2 a ha)
+  have hqa : co.addr + 32 = q % 18446744073709551616 := by
+    have := congrArg Num.decodeLE (h16.symm.trans hb16)
+    simp only [Num.decodeLE_encodeLE] at this; omega
+  have hq' : ∀ j, j < z.length → μ.readN (co.addr + 32 + 16 * j) 4 = (items.drop (12 * j)).take 4 ∧
+      μ.readN (co.addr + 32 + 16 * j + 8) 8 = (items.drop (12 * j + 4)).take 8 := fun j hj => by
+    rw [hqa, readN_mod64o, Nat.add_assoc, readN_mod64o, ← Nat.add_assoc]; exact hq j hj
+  let R := Encode.Enc.BlessRepAt (co.addr + 32) (Codec.fixed 4 m) (Codec.fixed 4 a) (Codec.fixed 4 v)
+    (Codec.fixed 4 r) z.length items
+  have hloc : ∀ (bs : List UInt8) (μ μ' : Memory), (∀ q m, SrcAtP (co.addr + 32) (16 * z.length) q m →
+      μ'.readN q m = μ.readN q m) → R bs μ → R bs μ' :=
+    fun bs μ μ' hk ⟨e0, e1, e2, e3, e4, e8, e16, e24, e⟩ => ⟨e0, e1, e2, e3, e4, e8, e16, e24, fun j hj =>
+      ⟨by rw [sub_keep hk (by omega)]; exact (e j hj).1,
+       by rw [Nat.add_assoc, sub_keep hk (by omega), ← Nat.add_assoc]; exact (e j hj).2⟩⟩
+  have hrep : R (μ.readN el 232) μ :=
+    ⟨by rw [hel]; exact h0, by rw [hel]; exact hm, by rw [hel]; exact ha, by rw [hel]; exact hd, by rw [hel]; exact hr,
+      by rw [hel]; exact h8, by rw [hel]; exact hb16, by rw [hel]; exact h24, hq'⟩
+  have henc : (Spec.Instr.bless m a v r z).encode = 11 :: (Codec.fixed 4 m ++ Codec.fixed 4 a ++ Codec.fixed 4 v ++
+      Codec.fixed 4 r ++ Blob.encodeNat z.length ++ items) := by
+    rw [← hit]; simp [Spec.Instr.encode, Spec.vec, Codec.nat]
+  have rd := fun o l (hol : o + l ≤ 232) => Decode.Loop.readN_sub μ el 232 o l _ hel hol
+  have r0 := rd 0 8 (by omega)
+  simp only [Nat.add_zero, List.drop_zero] at r0
+  rw [henc]
+  refine ⟨R, R, SrcAtP (co.addr + 32) (16 * z.length),
+    blessH_232 env K pb hK1 hK (co.addr + 32) _ _ _ _ z.length items (by simp [Codec.fixed]) (by simp [Codec.fixed])
+      (by simp [Codec.fixed]) (by simp [Codec.fixed]) hil hnb (by omega), hrep, hrep,
+    fun bs μ h => ⟨.bless m a v r z, hw0, by
+      show Decode.Bless.BlessRep _ _ _ _ _ _ bs μ
+      rw [hit]; exact (Encode.Enc.blessRep_iff _ _ _ _ z.length items bs μ).mpr ⟨_, h⟩⟩,
+    hloc, hloc, ?_, Or.inr (Or.inr ⟨true, co.addr + 32, co, ?_, by omega, fun _ => ⟨(ho co hco).1, hcou, rfl, hco⟩⟩)⟩
+  · rintro q m ⟨-, rfl, rfl⟩
+    exact ⟨co, hco, by omega, by omega⟩
+  · refine Or.inr (Or.inl ⟨11, z.length, by omega, by omega, by rw [r0]; exact h0, by rw [rd 8 8 (by omega)]; exact h8,
+      by rw [rd 16 8 (by omega)]; exact hb16, ?_⟩)
     simp only [true_iff]; omega
 
 end Services.Bootstrap.Refine.SlotHeap

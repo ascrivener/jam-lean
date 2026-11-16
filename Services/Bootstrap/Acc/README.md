@@ -47,6 +47,10 @@ hypothesis concludes `IterOwn B μ st v`, the `Vec<Instr>` `IntoIter` at v (buf 
 v + 16, end v + 24), each 232-octet slot satisfying `InstrRep.rep`, the owned buffers allocated chunks.
 Row 11 (R7) needs 2³¹ + 4096 ≤ sp and S0 + 4096 ≤ sp; R2 supplies that and passes `IterOwn` from R3
 into R5 / R7.
+Update 3: row 11 (from 15028) takes `IterOwn` for the `IntoIter` at sp + 472, `(iterFree ++
+tailFree).Nodup`, `ResultsAvoid` (the results' octets outside iterator-freed chunks) and the stack room;
+R5 produces them; R2 passes them through (definitions: `docs/t2-remaining.md`, `Acc/Handlers` on
+`claude/bootstrap-t2-handlers-a-r5`).
 
 **Only on WIP (proved):**
 - `Acc/Items/`: Exit (`items_end`, `items_halt`), Operand (`op_pre`, `op_mid`), Disp, End, Head.

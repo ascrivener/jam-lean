@@ -123,8 +123,27 @@ Adam decided both row-8 questions (2026-11-16): ring size (a), counter wrap (a).
   any 64-bit value (the binary's counter is a sign-extended `i32`).
 - `RecentCounterGet.lean`: segments `cg_pre`, `cg_g`, `cg_gret`, `cg_dk`, `cg_none`, `cg_some`, `cg_fin0`,
   `cg_finD`, `cg_finR` (the counter's typed get, 8013 … 8056; 34637 is the get's continuation).
-- Next: `counter_get` (composite, like `slot_get`), then compose row 8 (counter get → `recent_match` →
-  `slot_write` → `counter_write`), imports in `Services.lean`, PR.
+- `RecentCounterGetCall.lean`: **`counter_get`** (8013 → 8056 under `KeepCtx (accContractS env)`): ω₅'s low 32 bits
+  = `ctrVal (storage [0])` (= `((·).bind (decode (fixedN 4))).getD 0`), or the traps 34070 / 47977; keeps
+  memory and its access below 196608.
+- **Read-only access** (parent approved (a), 2026-11-16): `get_call` / `get_some` (GetCall.lean) gained
+  `∀ a < 196608, μ'.readable a = μ.readable a`. Row 8 needs 68680 … 69076 readable at every stage.
+- **Next (in order):**
+  1. Thread the same readability conclusion through `sg_fret` (dealloc_callG's `μ'.pages = μ.pages`),
+     `sg_tailW` (its `fin` takes `∀ a, μX.readable a = μ.readable a`; the segments give rd facts), `sg_tailE`
+     (`Memory.readable_writeN, rd2, rd1`), `slot_get`, `rm_head`, `recent_match` (add to `RmPost`; `remove_call`
+     and `kf_call` already state readability).
+  2. Compose row 8 from 8013: `addRecent` elaborates with a join point, so first prove
+     `addRecent C pk it = Prog.bind (load .counter (fixedN 4)) (fun o => Prog.bind (Prog.bind (load (.recent
+     (o.getD 0)) slotDec) (match …)) (fun _ => Prog.bind (store (.recent (o.getD 0)) (encodeRecent pk it)) (fun _ =>
+     store .counter …)))` with a local `Prog.bind_assoc` (the match branches are `bind (op remove) jp` / `jp ()`).
+     Then `Impl.bind` four times: `counter_get` (call form with s₁ = s, `ASem.step_read`, `keep_yin`), `recent_match`
+     with c := ω₅.toNat (`Key.recent` only uses c mod 2³²; spec c = `ctrVal`), `slot_write`, `counter_write` with
+     w := ω₇.toNat (`fixed 4 w = fixed 4 (w mod 2³²)`). Needs `C.maxRecent = 2·𝖢·𝖨`, package = μ[sp+512..+32],
+     ℰ₂(item) = μ[sp+176..+2] (both kept by counter_get / recent_match frames), `hvals` for the storage after each
+     write (`writeSelf` keeps other keys; written values are short).
+  3. Import every new module from `Services.lean`; full `lake build` in the background; PR (body: Q19, RingFits,
+     the GetCall addition, ParamStatics obligation).
 
 ## Session 4 progress (2026-11-15, row 8)
 

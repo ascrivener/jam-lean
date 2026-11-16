@@ -928,7 +928,9 @@ What you trust beyond the kernel:
   `ParamStatics μ C I ∧ RingFits C I`: the protocol parameters' statics hold 𝖢 (the `u16` at 196616) and 𝖨 (the
   `u64` at 196696), and 0 < 2·𝖢·𝖨 < 2³² (decided 2026-11-16). The full parameters give 2·341·16 = 10912.
   - `RingFits` is a named hypothesis on the chain parameters and an assumption of T2. *Obligation (open):* it may
-    later be discharged from the fetched parameters (fetch kind 0) instead.
+    later be discharged from the fetched parameters (fetch kind 0) instead. The upper bound already follows from
+    `apply()`'s checks (2 ≤ 𝖢 ≤ 341, 𝖨 stored as a `u16`, so 2·𝖢·𝖨 < 2³²); only positivity (𝖨 ≥ 1) is not checked
+    by the binary and remains a real assumption on the chain parameters.
   - `ParamStatics` is not an assumption of T2. *Obligation (open):* the T2 composition discharges it from the entry
     prologue's `apply()` (the stores at 56205 and 56279) and from the frames of the later steps, which keep
     196616 … 196791.

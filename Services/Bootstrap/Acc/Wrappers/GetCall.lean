@@ -145,8 +145,8 @@ theorem get_empty {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (en
 /-- **The SDK's `get`, 47857 → 48102, for a value w with 0 < |w|, |w| + 31 < 2³⁶**: either a zeroed
     block `ptr` (the data of a fresh chunk of ⌈|w|/32⌉ + 1 units) holds w and `Some(Vec { |w|, ptr,
     |w| })` is at out, the allocator's context holds for the new state keeping every allocated chunk
-    and its data, the stack from sp is kept off out, and ω₀, ω₅, ω₆ are as at the call (at the
-    return's `jumpInd`); or `alloc_impl` returned null (48047, ω₇ = 0) and the run reaches the
+    and its data, the stack from sp is kept off out, memory and its access below 196608 are kept, and
+    ω₀, ω₅, ω₆ are as at the call (at the return's `jumpInd`); or `alloc_impl` returned null (48047, ω₇ = 0) and the run reaches the
     allocation-failure trap 47977. The context and the stream are kept. -/
 theorem get_some (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap : cap < 18446744073709551616)
     {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
@@ -171,7 +171,8 @@ theorem get_some (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
       (⟨ptr - 32, (w.length + 31) / 32 + 1, true⟩ : Chunk) ∈ chunks s' ∧
       (∀ d ∈ chunks s, d.used = true → d ≠ ⟨ptr - 32, (w.length + 31) / 32 + 1, true⟩) ∧
       (∀ a, a < 4294967296 → sp ≤ a → (a < out ∨ out + 24 ≤ a) → μ'.read a = μ.read a) ∧
-      (∀ a, Glob a → μ'.read a = μ.read a) ∧ (∀ a, a < 196608 → μ'.read a = μ.read a)) ∨
+      (∀ a, Glob a → μ'.read a = μ.read a) ∧ (∀ a, a < 196608 → μ'.read a = μ.read a) ∧
+      (∀ a, a < 196608 → μ'.readable a = μ.readable a)) ∨
     (∃ ω' μ', FreeStepsH p (KeepCtx (accContractS env)) 47857 ω μ (c, f) 48047 ω' μ' (c, f)
         (96 * ((w.length + 31) / 32) + 700) ∧ ω'[7] = UInt64.ofNat 0 ∧
       ∃ ω'' μ'', FreeStepsH p (KeepCtx (accContractS env)) 48047 ω' μ' (c, f) 47977 ω'' μ'' (c, f) 10) := by
@@ -239,7 +240,7 @@ theorem get_some (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
       ⟨by omega, by omega⟩ with
     ⟨ptr, s', ω4, μ4, -, run4, HL4, keep4, hnew, hfresh, hkg4, keepd4, e7', stk4, -, f1, f5, f6⟩ |
     ⟨-, ω4, μ4, run4, e7', stk4, wst, wl, -, f1, f5, f6⟩
-  · obtain ⟨-, roK4⟩ := HeapHost.keepRO (env := accHeapHost env) H.bd run4
+  · obtain ⟨pgK4, roK4⟩ := HeapHost.keepRO (env := accHeapHost env) H.bd run4
     obtain ⟨-, run4S⟩ := FreeStepsH.growS f run4
     have HL4' := HL4
     obtain ⟨μ₀, H₀, hag, hwa⟩ := HL4'
@@ -346,7 +347,8 @@ theorem get_some (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
       by rw [g5, UInt64.ofNat_toNat], by rw [g6, UInt64.ofNat_toNat], o0, o8, o16, ?_,
       heapL_release_data HL4 hnew lk6 (fun a ha ha' hc => k6 a (by omega) (Or.inl (by omega)) ha'
         (by dsimp only at hc; omega)) (fun a => (wr6 a).trans (wrW a)),
-      keep4, fun d hd hu a ha => ?_, hnew, hfresh, fun a h0 ha ho => ?_, fun a ha => ?_, fun a ha => ?_⟩
+      keep4, fun d hd hu a ha => ?_, hnew, hfresh, fun a h0 ha ho => ?_, fun a ha => ?_, fun a ha => ?_,
+      fun a ha => ?_⟩
     rotate_left 3
     · unfold Glob at ha
       rw [k6 a (by omega) (Or.inl (by omega)) (by omega) (Or.inl (by omega)),
@@ -356,6 +358,9 @@ theorem get_some (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
     · rw [k6 a (by omega) (Or.inl (by omega)) (by omega) (Or.inl (by omega)),
         roK4 a (by unfold two32; omega) (Or.inl (by unfold pageSize; omega)) (by rw [wr3, wr1]; exact H.ro a ha),
         fr3 a (by omega) (Or.inl ha) (Or.inl (by omega)) (Or.inl (by omega)), fr1 a (by omega) (Or.inl (by omega))]
+    · rw [rd6 a, Memory.readable_writeN, Memory.readable_writeN,
+        show μ4.readable a = μ3.readable a by
+          unfold Memory.readable; rw [pgK4 (a / pageSize) (.inl (by unfold pageSize; omega))], rd3, rd1]
     · rw [PVM.Memory.readN_congr (μ' := μ6) (μ := (μ4.writeN 206848 [0]).writeN ptr w) (a := ptr) (n := L)
         (fun j hj => fr6 (ptr + j) (by omega) (Or.inl (by omega)))]
       rw [← hLd]; exact PVM.Memory.readN_writeN_same _ _ _ _ rfl (by unfold PVM.two32; omega)
@@ -471,7 +476,7 @@ theorem get_huge (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
     `GetOut` at out, at one of the three returns' `jumpInd` (47927, 47957, 48102), with ω₀, ω₅, ω₆ as at
     the call, the allocator's context for a state keeping every allocated chunk and its data, the
     stack from sp kept off out, and memory kept at the globals (`Glob`, 196616 … 196791) and below
-    196608; or the run reaches the allocation-failure trap 47977 (the `heap` reason:
+    196608, with the same access below 196608; or the run reaches the allocation-failure trap 47977 (the `heap` reason:
     `alloc_impl` returned null, or |w| > 2³⁷ − 32 failed the size check). The context and the stream
     are kept. -/
 theorem get_call (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap : cap < 18446744073709551616)
@@ -494,7 +499,8 @@ theorem get_call (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
       HeapCtxC env.code pb S0 S1 μ' s' ∧ (∀ c ∈ chunks s, c.used = true → c ∈ chunks s') ∧
       (∀ c ∈ chunks s, c.used = true → ∀ a, InDataA c a → μ'.read a = μ.read a) ∧
       (∀ a, a < 4294967296 → sp ≤ a → (a < out ∨ out + 24 ≤ a) → μ'.read a = μ.read a) ∧
-      (∀ a, Glob a → μ'.read a = μ.read a) ∧ (∀ a, a < 196608 → μ'.read a = μ.read a)) ∨
+      (∀ a, Glob a → μ'.read a = μ.read a) ∧ (∀ a, a < 196608 → μ'.read a = μ.read a) ∧
+      (∀ a, a < 196608 → μ'.readable a = μ.readable a)) ∨
     (∃ ω' μ' n, FreeStepsH p (KeepCtx (accContractS env)) 47857 ω μ (c, f) 47977 ω' μ' (c, f) n) := by
   have hst := H.st
   have hS1 := H.hS1
@@ -535,7 +541,7 @@ theorem get_call (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
     exact .inl ⟨47927, s, ω', μ', _, .inl rfl, run, g0, g1, g5, g6, o0, H', fun _ h _ => h, kd,
       fun a h0 hs ho => fr a h0 (.inr hs) (by omega),
       fun a ha => by unfold Glob at ha; exact fr a (by omega) (.inl (by omega)) (.inl (by omega)),
-      fun a ha => fr a (by omega) (.inl (by omega)) (.inl (by omega))⟩
+      fun a ha => fr a (by omega) (.inl (by omega)) (.inl (by omega)), fun a _ => rd a⟩
   | some w =>
     cases w with
     | nil =>
@@ -547,7 +553,7 @@ theorem get_call (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
       exact .inl ⟨47957, s, ω', μ', _, .inr (.inl rfl), run, g0, g1, g5, g6, ⟨o0, o8, o16⟩, H',
         fun _ h _ => h, kd, fun a h0 hs ho => fr a h0 (.inr hs) ho,
         fun a ha => by unfold Glob at ha; exact fr a (by omega) (.inl (by omega)) (.inl (by omega)),
-        fun a ha => fr a (by omega) (.inl (by omega)) (.inl (by omega))⟩
+        fun a ha => fr a (by omega) (.inl (by omega)) (.inl (by omega)), fun a _ => rd a⟩
     | cons b w =>
       by_cases hbig : 68719476736 ≤ (b :: w).length + 31
       · exact .inr (get_huge (p := p) (P := P) env cap pb hcap1 hcap c f ω μ s sp kO kZ S0 S1 key (b :: w) H h1 h8 h9 hkZ
@@ -555,7 +561,7 @@ theorem get_call (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
       have hsm : (b :: w).length + 31 < 68719476736 := by omega
       rcases get_some (p := p) (P := P) (hb := hb) env cap pb hcap1 hcap c f ω μ s sp out kO kZ S0 S1 key (b :: w) H h1 h7 h8 h9 hkZ
           (by simp) hsm hsp hSTk hout hkO hkr hkey hv with
-        ⟨ptr, s', ω', μ', run, g0, g1, g5, g6, o0, o8, o16, od, H', keep, keepd, hnew, hfresh, fr, gl, lo⟩ |
+        ⟨ptr, s', ω', μ', run, g0, g1, g5, g6, o0, o8, o16, od, H', keep, keepd, hnew, hfresh, fr, gl, lo, rdl⟩ |
         ⟨ω', μ', run, e7, ω'', μ'', run'⟩
       · have hp32 : 32 ≤ ptr := by
           have := Services.Bootstrap.Decode.VecU8.chunk_in H'.wf hnew rfl
@@ -563,7 +569,7 @@ theorem get_call (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
           dsimp only at *
           omega
         exact .inl ⟨48102, s', ω', μ', _, .inr (.inr rfl), run, g0, g1, g5, g6,
-          ⟨ptr, o0, o8, o16, od, hnew, hp32, hfresh⟩, H', keep, keepd, fr, gl, lo⟩
+          ⟨ptr, o0, o8, o16, od, hnew, hp32, hfresh⟩, H', keep, keepd, fr, gl, lo, rdl⟩
       · exact .inr ⟨ω'', μ'', _, run.trans run'⟩
 
 end Services.Bootstrap.Acc

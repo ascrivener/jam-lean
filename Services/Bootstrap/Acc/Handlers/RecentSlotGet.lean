@@ -121,7 +121,7 @@ theorem slot_get {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env
       (keyEnc μ kp 1) HB c1 c7 c8 c9 (by decide) (by omega) (by omega) ⟨by omega, by omega⟩
       (.inr ⟨_, hnewK, rfl, fun a h1 h2 => ⟨by dsimp only; omega, by dsimp only; omega⟩⟩) (by omega)
       (by rw [← hkl]; exact oBk) hfit with
-    ⟨e, s2, ωD, μD, nD, he, runD, d0, d1, d5, d6, gO, HD, keepD, dataD, stkD, glD, loD⟩ | ⟨ωD, μD, nD, runD⟩
+    ⟨e, s2, ωD, μD, nD, he, runD, d0, d1, d5, d6, gO, HD, keepD, dataD, stkD, glD, loD, rdD⟩ | ⟨ωD, μD, nD, runD⟩
   case inr =>
     exact .inr ⟨47977, ωD, μD, _, .inr rfl, (runA.trans runBS).trans (runC.trans runD)⟩
   have runD' := sg_gret (P := P) (R := KeepCtx (accContractS env)) (c, f) ωD μD e he (d0.trans c0)

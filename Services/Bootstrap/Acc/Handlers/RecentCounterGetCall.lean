@@ -53,6 +53,7 @@ theorem counter_get {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (
       (∀ d ∈ chunks st, d.used = true → d ∈ chunks st' ∧ ∀ a, InData d a → μ'.read a = μ.read a) ∧
       (∀ a, a < 4294967296 → sp ≤ a → (a < sp + 1568 ∨ sp + 1570 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, Glob a → μ'.read a = μ.read a) ∧ (∀ a, a < 196608 → μ'.read a = μ.read a) ∧
+      (∀ a, a < 196608 → μ'.readable a = μ.readable a) ∧
       (∀ w, c.1.self.storage.get? [0] = some w → w.length < 2 ^ 31)) ∨
     (∃ e ω' μ' n, (e = 34070 ∨ e = 47977) ∧
       FreeStepsH p (KeepCtx (accContractS env)) 8013 ω μ (c, f) e ω' μ' (c, f) n) := by
@@ -81,7 +82,7 @@ theorem counter_get {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (
   case inr =>
     obtain ⟨-, runBS⟩ := FreeStepsH.growS f runB
     exact .inr ⟨34070, ωB, μB, _, .inl rfl, runA.trans runBS⟩
-  obtain ⟨-, roB⟩ := HeapHost.keepRO (env := accHeapHost env) HA.bd runB
+  obtain ⟨pgB, roB⟩ := HeapHost.keepRO (env := accHeapHost env) HA.bd runB
   obtain ⟨-, runBS⟩ := FreeStepsH.growS f runB
   rw [hk0] at oB16 oBk
   simp only [List.length_cons, List.length_nil, Nat.zero_add] at oB16 oBk
@@ -102,7 +103,7 @@ theorem counter_get {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (
       [0] HB c1 (by rw [c7]; congr 1; omega) c8 c9 (by decide) (by omega) (by omega) ⟨by omega, by omega⟩
       (.inr ⟨_, hnewK, rfl, fun a h1 h2 => ⟨by dsimp only; omega, by dsimp only; omega⟩⟩) (by omega)
       oBk hfit with
-    ⟨e, s2, ωD, μD, nD, he, runD, d0, d1, d5, d6, gO, HD, keepD, dataD, stkD, glD, loD⟩ | ⟨ωD, μD, nD, runD⟩
+    ⟨e, s2, ωD, μD, nD, he, runD, d0, d1, d5, d6, gO, HD, keepD, dataD, stkD, glD, loD, rdD⟩ | ⟨ωD, μD, nD, runD⟩
   case inr =>
     exact .inr ⟨47977, ωD, μD, _, .inr rfl, (runA.trans runBS).trans (runC.trans runD)⟩
   have runD' := cg_gret (P := P) (R := KeepCtx (accContractS env)) (c, f) ωD μD e he (d0.trans c0)
@@ -113,7 +114,7 @@ theorem counter_get {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (
         exact Memory.readN_congr fun j hj => stkD _ (by omega) (by omega) (.inr (by omega)))
     (fun a h1 h2 => Memory.readable_of_writable (HD.st a (by omega) (by omega)))
   have hKD := keepD _ hnewK rfl
-  obtain ⟨ωF, μF, runF, HF, -, -, roF, stkF, glF, keepF, f0, f1, f5, f6⟩ :=
+  obtain ⟨ωF, μF, runF, HF, -, pgF, roF, stkF, glF, keepF, f0, f1, f5, f6⟩ :=
     dealloc_callG (R := KeepCtx (accContractS env)) (p := p) (P := P) env.code pb S0 S1 (c, f) ωE μD s2 (sp - 80)
       kptr 1614 34671 _ HD hKD rfl (by dsimp only; omega) e0 e1 (e7.trans (d5.trans c5))
       ⟨by decide, by decide, by decide⟩ (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_806]) bs_34671
@@ -146,6 +147,10 @@ theorem counter_get {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (
     rw [roF a (by unfold two32; omega) (HD.ro a ha), loD a ha,
       roB a (by unfold two32; omega) (.inl (by unfold pageSize; omega)) (by rw [wrA]; exact H.ro a ha),
       frA a (by omega) (.inl (by omega)) (.inl (by omega))]
+  have rdF0 : ∀ a, a < 196608 → μF.readable a = μ.readable a := fun a ha => by
+    rw [show μF.readable a = μD.readable a by unfold Memory.readable; rw [pgF], rdD a ha,
+      show μB.readable a = μA.readable a by
+        unfold Memory.readable; rw [pgB (a / pageSize) (.inl (by unfold pageSize; omega))], rdA]
   have keep0 : ∀ d ∈ chunks st, d.used = true → d ∈ chunks (free s2 kptr) ∧ d ∈ chunks s1 ∧
       ∀ a, InData d a → μF.read a = μ.read a := by
     intro d hd hu
@@ -171,7 +176,7 @@ theorem counter_get {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (
       (fun a h1 h2 => Memory.readable_of_writable (HF.st a (by omega) (by omega)))
     refine .inl ⟨free s2 kptr, ωG, μF, _, run0.trans runG, by rw [g1]; congr 1; omega,
       g6.trans UInt64.ofNat_toNat, by rw [g5]; simp [ctrVal], HF, fun d hd hu => ⟨(keep0 d hd hu).1, (keep0 d hd hu).2.2⟩,
-      frF, glF0, loF0, fun w hw => by simp at hw⟩
+      frF, glF0, loF0, rdF0, fun w hw => by simp at hw⟩
   | some w =>
     rw [hv] at gO
     -- the reads: `Some(Vec { cap, ptr, len })`, the slice reader, `read_exact` of 4 octets
@@ -253,7 +258,7 @@ theorem counter_get {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (
         i6.trans UInt64.ofNat_toNat, by rw [i5]; simp [ctrVal, ctrDec_short [] (by simp)],
         HeapKeep.keepHi HF (fun a ha => frH a (by omega) (.inl (by omega))) wrH,
         fun d hd hu => ⟨(keep0 d hd hu).1, fun a ha => ?_⟩, fun a h0 ha hb => ?_, fun a ha => ?_, fun a ha => ?_,
-        fun w hw => by cases hw; simp⟩
+        fun a ha => by rw [rdH, rdF0 a ha], fun w hw => by cases hw; simp⟩
       · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hd hu
         have ha' := ha; unfold InData at ha'
         rw [frH a (by omega) (.inl (by omega)), (keep0 d hd hu).2.2 a ha]
@@ -291,7 +296,7 @@ theorem counter_get {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (
           (by omega) (by omega) (by omega) (by omega) mv hv32 mT (fun a h1 h2 => HH.st a (by omega) (by omega))
       have HJ : HeapCtxC env.code pb S0 S1 μJ (free s2 kptr) :=
         HeapKeep.keepHi HH (fun a ha => frJ a (by omega) (.inl (by omega))) wrJ
-      obtain ⟨ωK, μK, runK, HK, -, -, roK, stkK, glK, keepK, k0, k1, k5, k6⟩ :=
+      obtain ⟨ωK, μK, runK, HK, -, pgK, roK, stkK, glK, keepK, k0, k1, k5, k6⟩ :=
         dealloc_callG (R := KeepCtx (accContractS env)) (p := p) (P := P) env.code pb S0 S1 (c, f) ωJ μJ
           (free s2 kptr) (sp - 80) vptr 1618 34735 _ HJ hV1 rfl (by dsimp only; omega) j0 j1 j7
           ⟨by decide, by decide, by decide⟩ (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_808]) bs_34735
@@ -319,7 +324,9 @@ theorem counter_get {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (
           rw [ctrDec_short _ (by rw [hL]; exact h4)]; rfl
       refine .inl ⟨free (free s2 kptr) vptr, ωL, μK, _, (((run0.trans runH).trans runJ).trans runK).trans runL,
         by rw [l1]; congr 1; omega, l6.trans UInt64.ofNat_toNat, hval, HK, fun d hd hu => ?_, fun a h0 ha hb => ?_,
-        fun a ha => ?_, fun a ha => ?_, fun w hw => by cases hw; rw [hL]; omega⟩
+        fun a ha => ?_, fun a ha => ?_,
+        fun a ha => by rw [show μK.readable a = μJ.readable a by unfold Memory.readable; rw [pgK], rdJ, rdH, rdF0 a ha],
+        fun w hw => by cases hw; rw [hL]; omega⟩
       · obtain ⟨k0', k1', k2'⟩ := keep0 d hd hu
         obtain ⟨k3, k4⟩ := keepK d k0' hu (by rw [← hL]; exact hfreshV d k1' hu)
         refine ⟨k3, fun a ha => ?_⟩

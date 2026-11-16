@@ -4,6 +4,7 @@ import Services.Bootstrap.Encode.ArmsHVecDesignate
 import Services.Bootstrap.Encode.ArmsHVecGas
 import Services.Bootstrap.Encode.ArmsHVecBless
 import Services.Bootstrap.Encode.ArmsHVecAssign
+import Services.Bootstrap.Encode.ArmsHVecCS
 
 /-!
 # T1c's output slots of the heap kinds passed through
@@ -356,6 +357,57 @@ theorem slotOK_assign {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P]
     exact ⟨co, hco, by omega, by omega⟩
   · refine Or.inr (Or.inl ⟨12, qs.length, by omega, by omega, by rw [r0]; exact h0, by rw [rd 8 8 (by omega)]; exact h8,
       by rw [rd 16 8 (by omega)]; exact hb16, ?_⟩)
+    simp only [true_iff]; omega
+
+theorem optU32_of (id : Option Nat) : Decode.CreateServiceElem.OptU32Enc (Spec.opt (Codec.fixed 4) id) := by
+  cases id with
+  | none => exact Or.inl rfl
+  | some s => exact Or.inr ⟨Codec.fixed 4 s, by simp [Codec.fixed], rfl⟩
+
+/-- **`CreateService` with registration `Some(d)`, decoded slot good**: 1 ≤ n = |d| < 2^32 octets, the slot
+    `CreateServiceSomeRep` with its buffer (word 8) a chunk of cs holding them. -/
+theorem slotOK_csSome {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeA p P]
+    (env : RefineHost.Env) (K pb : Nat) (hK1 : 134217728 ≤ K) (hK : K < 18446744073709551616)
+    (C : Spec.Consts) (h : List UInt8) (l g m b : Nat) (memo d : List UInt8) (f : Nat) (id : Option Nat)
+    (hw : (Spec.Instr.createService h l g m b memo (some d) f id).WF C)
+    (hn1 : 1 ≤ d.length) (cs : List Chunk) (bs : List UInt8) (μr : Memory)
+    (hR : ∀ μ : Memory, (∀ c ∈ cs, ∀ a, InData c a → μ.read a = μr.read a) →
+      Decode.CreateServiceElem.CreateServiceSomeRep d.length d h (Codec.fixed 8 l) (Codec.fixed 8 g)
+        (Codec.fixed 8 m) (Codec.fixed 8 b) memo (Codec.fixed 8 f) (Spec.opt (Codec.fixed 4) id) bs μ ∧
+      OwnsBuf cs bs 8 d.length) :
+    SlotOK env K pb p P (DRt C 0) (Spec.Instr.createService h l g m b memo (some d) f id).encode bs (· ∈ cs) μr := by
+  intro μ s el hel ho
+  have hw0 := hw
+  obtain ⟨hh, -, -, -, -, hmemo, hd, -, -⟩ := hw
+  have hnb : d.length < 4294967296 := hd d rfl
+  obtain ⟨⟨⟨q, h0, h8, h16, hq⟩, hF⟩, co, hco, hcou, hb8, hcoS, hcoT⟩ :=
+    hR μ (fun c hc a ha => (ho c hc).2.2 a ha)
+  have hq' := buf_ofO h8 hb8 (by omega) hq
+  let R := Encode.Enc.CSSomeRepAt (co.addr + 32) d.length d h (Codec.fixed 8 l) (Codec.fixed 8 g) (Codec.fixed 8 m)
+    (Codec.fixed 8 b) memo (Codec.fixed 8 f) (Spec.opt (Codec.fixed 4) id)
+  have hloc : ∀ (bs : List UInt8) (μ μ' : Memory), (∀ q m, SrcAtP (co.addr + 32) d.length q m →
+      μ'.readN q m = μ.readN q m) → R bs μ → R bs μ' :=
+    fun bs μ μ' hk ⟨e0, e8, e16, e, eF⟩ => ⟨e0, e8, e16, src_keep hk e, eF⟩
+  have hrep : R (μ.readN el 232) μ :=
+    ⟨by rw [hel]; exact h0, by rw [hel]; exact hb8, by rw [hel]; exact h16, hq', by rw [hel]; exact hF⟩
+  have henc : (Spec.Instr.createService h l g m b memo (some d) f id).encode =
+      0 :: (h ++ Codec.fixed 8 l ++ Codec.fixed 8 g ++ Codec.fixed 8 m ++ Codec.fixed 8 b ++ memo ++
+        (1 :: (Blob.encodeNat d.length ++ d)) ++ Codec.fixed 8 f ++ Spec.opt (Codec.fixed 4) id) := by
+    simp [Spec.Instr.encode, Spec.opt, Spec.bytes, Codec.nat]
+  have rd := fun o l (hol : o + l ≤ 232) => Decode.Loop.readN_sub μ el 232 o l _ hel hol
+  have r0 := rd 0 8 (by omega)
+  simp only [Nat.add_zero, List.drop_zero] at r0
+  rw [henc]
+  refine ⟨R, R, SrcAtP (co.addr + 32) d.length,
+    create_service_someH_232 env K pb hK1 hK (co.addr + 32) d.length d rfl hnb (by omega) _ _ _ _ _ _ _ _ hh
+      (by simp [Codec.fixed]) (by simp [Codec.fixed]) (by simp [Codec.fixed]) (by simp [Codec.fixed]) hmemo
+      (by simp [Codec.fixed]) (optU32_of id), hrep, hrep,
+    fun bs μ h => ⟨_, hw0, (Encode.Enc.createServiceSomeRep_iff d.length d _ _ _ _ _ _ _ _ bs μ).mpr ⟨_, h⟩⟩,
+    hloc, hloc, ?_, Or.inr (Or.inr ⟨true, co.addr + 32, co, ?_, by omega, fun _ => ⟨(ho co hco).1, hcou, rfl, hco⟩⟩)⟩
+  · rintro q m ⟨-, rfl, rfl⟩
+    exact ⟨co, hco, by omega, by omega⟩
+  · refine Or.inl ⟨d.length, by omega, Or.inl (by omega), by rw [r0]; exact h0, by rw [rd 8 8 (by omega)]; exact hb8,
+      ?_⟩
     simp only [true_iff]; omega
 
 end Services.Bootstrap.Refine.SlotHeap

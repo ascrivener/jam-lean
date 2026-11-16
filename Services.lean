@@ -40,6 +40,8 @@ import Services.Bootstrap.Fmt.FieldWriteNested
 import Services.Bootstrap.Fmt.FieldWriteNestedPlain
 import Services.Bootstrap.Fmt.FieldSliceHex
 import Services.Bootstrap.Fmt.FieldN56Hex
+import Services.Bootstrap.Fmt.FieldN57Hex
+import Services.Bootstrap.Fmt.FieldMemoScan
 import Services.Bootstrap.Fmt.U8x32
 import Services.Bootstrap.Fmt.OracleRefineK
 import Services.Bootstrap.Fmt.StructField2

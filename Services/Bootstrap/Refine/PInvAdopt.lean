@@ -71,6 +71,7 @@ theorem PInv.adopt {env : RefineHost.Env} {pb S0 S1 M E n : Nat} {ce : Chunk} {c
       c16 := st.c16
       c24 := st.c24
       c32 := st.c32
+      c8 := st.c8
       i0 := st.i0
       i8 := st.i8
       i16 := st.i16

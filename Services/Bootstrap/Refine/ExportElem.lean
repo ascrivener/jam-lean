@@ -416,7 +416,7 @@ theorem export_step {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [
   have m53' : ∀ a l, M + 272 ≤ a → a + l ≤ 4294967296 → μ5.readN a l = μ3.readN a l :=
     fun a l h0 h => by
       rw [m5 _ _ (by omega) h]; exact Memory.readN_congr (fun j hj => fr4 _ (by omega) (by omega) (by omega))
-  refine Or.inl ⟨s5, ω5, μ5, _, run3.trans (run4.trans run5), ⟨f1, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_,
+  refine Or.inl ⟨s5, ω5, μ5, _, run3.trans (run4.trans run5), ⟨f1, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_,
     ⟨cap', ptr', by rw [m5 _ _ (by omega) (by omega)]; exact vc4, by rw [m5 _ _ (by omega) (by omega)]; exact vp4,
       by rw [m5 _ _ (by omega) (by omega)]; exact vl4, hk4, hc4, hp4,
       Or.inr ⟨c', hc'5.1, hca', hcu', hcs', fun h => hcec h.symm, fun hK => (kpd c' (hK' c' hK).1).2.2.1 rfl⟩, ?_⟩,
@@ -431,6 +431,7 @@ theorem export_step {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [
   · rw [m53 _ _ (by omega) (by omega), m3 _ _ (by omega) (by omega)]; exact st.c16
   · rw [m53 _ _ (by omega) (by omega), m3 _ _ (by omega) (by omega)]; exact st.c24
   · rw [m53 _ _ (by omega) (by omega), m3 _ _ (by omega) (by omega)]; exact st.c32
+  · rw [m53 _ _ (by omega) (by omega), m3 _ _ (by omega) (by omega)]; exact st.c8
   · rw [m53' _ _ (by omega) (by omega), m3 _ _ (by omega) (by omega)]; exact st.i0
   · rw [m53' _ _ (by omega) (by omega), c280, show E + 232 * k + 232 = E + 232 * (k + 1) by omega]
   · rw [m53' _ _ (by omega) (by omega), m3 _ _ (by omega) (by omega)]; exact st.i16

@@ -107,6 +107,19 @@ Handlers dependencies takes ~2 h on 4 cores). Use `ulimit -v 12000000` when comp
 - `refine ⟨?ω', ?run⟩; case run => pvm_go …` for a one-witness existential.
 
 
+## Session 7 progress (2026-11-16, row 9 composed)
+
+- `ResStoreImpl.lean`: `rs_j1` (40611 → 36217), **`res_head`** (36170 → `set` at 48104, n = 0, any `HeapHost`;
+  traps 36528 / 34070; key `keyEnc μ kp 2` in a chunk of (kc+31)/32+1 units, value [0] in a 2-unit chunk;
+  memory from sp up kept) and **`res_free`** (`set`'s return → 8477; ω₇ = −1 for `Ok`, else the error octet).
+- `ResultsInit.lean`: **`results_init`**, the `Impl` of `store (.results (μ[sp+312..+32]) item) (encodeResults [])`
+  then `op .checkpoint` from 8416 to `R9Post` at 8492 (ω₁ = sp, HeapCtxC for some st′ keeping st's chunks with
+  data, memory above sp kept off `R9Out` = [sp+1568, sp+1604), Glob, below 196608 with readability).
+  Hypotheses: [sp+464] = 0, kc at 68696 (35 ≤ kc), set's error table, 68680 … 69076 readable, frame
+  [sp − 352, sp + 1632), ℰ₂(item) = μ[sp+176..+2], `StoreFit`; `[HasCodeX p P]`. Ab covers 36528, 34070.
+  Axioms clean. Both imported from `Services.lean`.
+- **Next:** rebase onto main once #224 merges, full build, PR, merge on green; then row 11.
+
 ## Session 6 progress (2026-11-16, row 8 composed)
 
 - `RecentAddGen.lean`: `Prog.bind_assoc`, **`addRecent_eq`** (spec `addRecent` as four binds: counter get,

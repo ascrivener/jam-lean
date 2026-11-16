@@ -115,6 +115,7 @@ theorem fin_runH {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Has
     exact ⟨ω', μ', _, _, run', H4, g0, g1, g5, g6, g7, g8, fun a h0 h => by rw [k4 a h0 h, k2 a h0 h],
       fun d hd hu hne _ hno => kd2 d hd hu hne hno⟩
   · obtain ⟨hcq, hcqu, hcqa, hcqo⟩ := hq hq0
+    obtain ⟨-, -, hcqT⟩ := Decode.VecU8.chunk_in H.wf hcq hcqu
     obtain ⟨ω5, run5, e0, e1, e5, e6, e7⟩ := f3 (p := p) (P := P) (R := R) x ω4 μ4 M c' q (by omega) hq0 hq'
       (by omega) h1' (by rw [r4 _ _ (by omega) (by omega)]; exact s88)
       (by rw [r4 _ _ (by omega) (by omega)]; exact s112)

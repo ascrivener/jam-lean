@@ -53,7 +53,7 @@ theorem enc_runH {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ser
     (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616) (x : RefineCtx) (ω : Regs) (μ : Memory)
     {hb : Nat} (s : State) {pb S0 S1 : Nat} (H : HeapCtx env pb S0 S1 μ s) (M cap E n w : Nat) (c : Chunk)
     (enc : Nat → List UInt8) (rep : Nat → List UInt8 → Memory → Prop) (src : Nat → Nat → Nat → Prop)
-    (hM : S0 + 7560 ≤ M ∧ M + 632 ≤ S1 ∧ 2147484384 ≤ M ∧ M % 8 = 0) (hn : 0 < n ∧ n ≤ 2097152)
+    (hM : S0 + 7560 ≤ M ∧ M + 632 ≤ S1 ∧ 2147484384 ≤ M ∧ M % 8 = 0) (hn : 0 < n ∧ n ≤ 2097152) (hS1' : S1 + 16 < 4294967296)
     (hcapB : 232 * n + 6 ≤ capBound) (hbig : 2 * ((Blob.encodeNat n).length + off enc n + 2) ≤ capBound)
     (hcap : cap < 18446744073709551616) (hw64 : w < 18446744073709551616)
     (hc : c ∈ chunks s ∧ c.used = true ∧ c.addr + 32 ≤ E ∧ E + 232 * n ≤ c.addr + 32 * c.size)
@@ -173,9 +173,11 @@ theorem enc_runH {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ser
     rw [show M + 168 + 24 = M + 192 by omega, Memory.readN_congr (fun i hi => stk _ (by omega) (by omega)), a192]
   have hlenp : (Blob.encodeNat n ++ out enc n ++ Num.encodeLE 2 (w % 65536)).length =
       (Blob.encodeNat n).length + off enc n + 2 := by
-    simp [length_out, Num.encodeLE]
+    simp [length_out, Num.encodeLE]; omega
   rw [hpre] at W
   obtain ⟨hp0, hp1⟩ := W.buf_lt
+  have hroom := W.room
+  rw [hlenp] at hroom
   have W4 : ∀ a, a < 4294967296 → (a < M + 272 ∨ M + 296 ≤ a) → μ4.read a = μ5.read a := fun a h0 h => dfr a h0 h
   have H4 : HeapCtx env pb S0 S1 μ4 s' := Decode.GrowOne.ctx_high W.H (fun a ha => W4 a (by omega) (Or.inl (by omega)))
     (fun a => dwr a)
@@ -183,13 +185,13 @@ theorem enc_runH {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ser
     W.hi a h0 (by omega) (Or.inr (by omega))
   obtain ⟨cb, hcb, hcbu, hcba, hcbc⟩ := W.chunk
   refine Or.inl ⟨s', ω4, μ4, cap', ptr', _, (run1.trans run2).trans (run3.trans run4), H4,
-    by rw [d1]; congr 1; omega, dO, dO8, by rw [dO16, hlenp], ?_, ⟨cb, hcb, hcbu, hcba, ?_, fun d hd hu => ?_⟩,
+    by rw [d1]; congr 1; omega, dO, dO8, dO16, ?_, ⟨cb, hcb, hcbu, hcba, ?_, fun d hd hu => ?_⟩,
     fun a h0 h1 h2 h3 => ?_, fun d hd hu => ?_, ?_, ?_, ?_⟩
   · have e := W.out
     rw [Nat.zero_add, show μ2.readN buf 0 = [] by simp [Memory.readN], List.nil_append] at e
     rw [← hlenp, Memory.readN_congr (fun i hi => W4 _ (by omega) (Or.inl (by omega)))]
     exact e
-  · have := W.room; rw [hlenp] at this; omega
+  · omega
   · intro e
     subst e
     exact (W.others d (keep2 d hd hu) hu (apart d hd hu)).2.1 hcba
@@ -198,14 +200,14 @@ theorem enc_runH {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ser
     refine ⟨hd', fun a ha => ?_⟩
     have hdl := data_lo' H hd hu ha
     rw [W4 a (by omega) (Or.inl (by omega)), kd' a ha, dat d hd hu a ha]
-  · rw [Memory.readN_congr (fun i hi => by
-      rw [W4 _ (by omega) (Or.inr (by omega)), hi5 _ (by omega) (by omega), stk _ (by omega) (by omega)])]
+  · rw [show μ4.readN (M + 168) 8 = μ1.readN (M + 168) 8 from Memory.readN_congr (fun i hi => by
+      rw [W4 _ (by omega) (Or.inl (by omega)), hi5 _ (by omega) (by omega), stk _ (by omega) (by omega)])]
     exact a168
-  · rw [Memory.readN_congr (fun i hi => by
-      rw [W4 _ (by omega) (Or.inr (by omega)), hi5 _ (by omega) (by omega), stk _ (by omega) (by omega)])]
+  · rw [show μ4.readN (M + 176) 8 = μ1.readN (M + 176) 8 from Memory.readN_congr (fun i hi => by
+      rw [W4 _ (by omega) (Or.inl (by omega)), hi5 _ (by omega) (by omega), stk _ (by omega) (by omega)])]
     exact a176
-  · rw [Memory.readN_congr (fun i hi => by
-      rw [W4 _ (by omega) (Or.inr (by omega)), hi5 _ (by omega) (by omega), stk _ (by omega) (by omega)])]
+  · rw [show μ4.readN (M + 184) 8 = μ1.readN (M + 184) 8 from Memory.readN_congr (fun i hi => by
+      rw [W4 _ (by omega) (Or.inl (by omega)), hi5 _ (by omega) (by omega), stk _ (by omega) (by omega)])]
     exact a184
 
 end Services.Bootstrap.Refine.ExitEncH

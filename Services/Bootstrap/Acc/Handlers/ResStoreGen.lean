@@ -190,7 +190,7 @@ theorem res_enter {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
 /-- **The state at `set`'s call (48104)**, against the memory μ at an earlier point: `set`'s arguments (the
     key `key` (35 octets) in a new chunk at kp′, the value `val` the data of an allocated chunk dv at vp,
     out S + 56, S = sp − 96, return address 1706), the callee frame (vp at S, the value's capacity vc ≠ 0 at
-    S + 24, the key's kc at S + 32), every allocated chunk of st kept, neither dv nor the key's, with its
+    S + 24, |val| ≤ vc ≤ 32 · (dv.size − 1), the key's kc at S + 32), every allocated chunk of st kept, neither dv nor the key's, with its
     data; memory kept where `Fr` holds, at the globals and below 196608 (with its access). -/
 def SetPre (code : ByteArray) (pb S0 S1 sp kc : Nat) (st : State) (μ : Memory) (Fr : Nat → Prop)
     (key val : List UInt8) (ω' : Regs) (μ' : Memory) : Prop :=
@@ -200,6 +200,7 @@ def SetPre (code : ByteArray) (pb S0 S1 sp kc : Nat) (st : State) (μ : Memory) 
     dv ∈ chunks s' ∧ dv.used = true ∧ dv.addr + 32 = vp ∧
     (⟨kp' - 32, (kc + 31) / 32 + 1, true⟩ : Chunk) ∈ chunks s' ∧ dv ≠ ⟨kp' - 32, (kc + 31) / 32 + 1, true⟩ ∧
     65536 ≤ vp ∧ vp + val.length ≤ 2147483648 ∧ 65536 ≤ kp' ∧ kp' + 35 ≤ 2147483648 ∧ 0 < vc ∧ vc < 2 ^ 64 ∧
+    val.length ≤ vc ∧ vc ≤ 32 * (dv.size - 1) ∧
     ω'[0] = UInt64.ofNat 1706 ∧ ω'[1] = UInt64.ofNat (sp - 96) ∧ ω'[5] = UInt64.ofNat kp' ∧
     ω'[6] = UInt64.ofNat vp ∧ ω'[7] = UInt64.ofNat (sp - 96 + 56) ∧ ω'[8] = UInt64.ofNat kp' ∧
     ω'[9] = UInt64.ofNat 35 ∧ ω'[10] = UInt64.ofNat vp ∧ ω'[11] = UInt64.ofNat val.length ∧
@@ -308,7 +309,7 @@ theorem res_exit {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Has
     have ha' := ha; unfold InData at ha'
     rw [k65 _ (by omega), hg5 _ (data_off H5.wf hb05 hbT5 hd2 ha) (by omega), k4 _ (by omega) (.inl (by omega))]
   refine .inr ⟨ω6, μ6, _, runS, ptr, kp', vc, ch, s2, H6, fun d hd hu => ?_, hCv, hchu, hcha, hnew5, hCvk,
-    by omega, by omega, by omega, by omega, hc0, by omega, r0, r1, r5, r6.trans (q6.trans g6), r7, r8, r9, r10,
+    by omega, by omega, by omega, by omega, hc0, by omega, by rw [hlen]; exact hlc, hchs, r0, r1, r5, r6.trans (q6.trans g6), r7, r8, r9, r10,
     by rw [r11, hlen], ?_, ?_, ?_, ?_, mT, ?_, ?_, ?_⟩
   · obtain ⟨k1, k2, k3⟩ := hst d hd hu
     have hne := hfresh5 d k1 hu
@@ -347,10 +348,11 @@ theorem SetPre.mono {code : ByteArray} {pb S0 S1 sp kc : Nat} {st : State} {μ �
     (hg : ∀ a, Glob a → μ.read a = μ₀.read a)
     (hr : ∀ a, a < 196608 → μ.read a = μ₀.read a ∧ μ.readable a = μ₀.readable a) :
     SetPre code pb S0 S1 sp kc st μ₀ Fr' key val ω' μ' := by
-  obtain ⟨vp, kp', vc, dv, s', H, hst, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15, r16, r17,
-    r18, r19, r20, r21, r22, r23, r24, r25, fr, gl, ro⟩ := h
-  refine ⟨vp, kp', vc, dv, s', H, fun d hd' hu => ?_, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14,
-    r15, r16, r17, r18, r19, r20, r21, r22, r23, r24, r25, fun a h0 ha => ?_, fun a ha => ?_, fun a ha => ?_⟩
+  obtain ⟨vp, kp', vc, dv, s', H, hst, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r12a, r12b, r13, r14, r15,
+    r16, r17, r18, r19, r20, r21, r22, r23, r24, r25, fr, gl, ro⟩ := h
+  refine ⟨vp, kp', vc, dv, s', H, fun d hd' hu => ?_, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r12a, r12b,
+    r13, r14, r15, r16, r17, r18, r19, r20, r21, r22, r23, r24, r25, fun a h0 ha => ?_, fun a ha => ?_,
+    fun a ha => ?_⟩
   · obtain ⟨k1, k2, k3, k4⟩ := hst d hd' hu
     exact ⟨k1, k2, k3, fun a ha => (k4 a ha).trans (hd d hd' hu a ha)⟩
   · obtain ⟨h1, h2⟩ := hf a h0 ha
@@ -401,6 +403,7 @@ theorem res_store {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     refine .inr (.inr (.inr ⟨ω', μ', N, (FreeStepsH.growS f run).2, ⟨vp, kp', 4, _, s', H',
       fun d hd hu => ⟨keep d hd hu, (hfr d hd hu).1, (hfr d hd hu).2, data d hd hu⟩, hCv, rfl,
       by dsimp only; omega, hCk, hne, hv1, by simp [encodeResults_nil']; omega, hk1, hk2, by decide, by decide,
+      by simp [encodeResults_nil'], by dsimp only; omega,
       b0, b1, b5, b6, b7, b8, b9, b10, by rw [b11]; rfl, mkey, by rw [encodeResults_nil']; exact mval, mkc, m4,
       mvp, frs, gl, fun a ha => ⟨ro a ha, rd a ha⟩⟩, m0, m5, m6⟩))
   -- n ≥ 1: into the loop
@@ -441,7 +444,7 @@ theorem res_store {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     (fun a h0 (ha : sp ≤ a) => ⟨show sp - 96 + 56 ≤ a by omega, k2 a h0 ha⟩)
     (fun a ha => by rw [gl2 a ha, hg1 a ha])
     (fun a ha => ⟨by rw [(lo2 a ha).1, hro1 a ha], by rw [(lo2 a ha).2, hrd1 a ha]⟩)
-  obtain ⟨_, _, _, _, _, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, fr3, -, -⟩ :=
+  obtain ⟨_, _, _, _, _, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, -, fr3, -, -⟩ :=
     SP
   have mF : ∀ b v, sp - 96 + 57 ≤ b → b + 8 ≤ sp → μ1.readN b 8 = Num.encodeLE 8 v →
       μ3.readN b 8 = Num.encodeLE 8 v := fun b v h1 h2 hv => by

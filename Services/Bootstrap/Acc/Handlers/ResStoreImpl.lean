@@ -265,8 +265,46 @@ theorem res_head {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Has
   · intro a ha
     unfold Memory.readable; rw [ro1' (a / pageSize) (.inl (by unfold pageSize; omega))]
 
+/-- The return addresses of 36170's callers: row 9 (294 → 8477), the `Checkpoint` instruction
+    (300 → 8716) and row 11 (562 → 15121). -/
+def RetOK (ret t : Nat) : Prop := (ret = 294 ∧ t = 8477) ∨ (ret = 300 ∧ t = 8716) ∨ (ret = 562 ∧ t = 15121)
+
+/-- **36499 … 36525, the return** (`rs_end`) for any of 36170's callers (`RetOK`). -/
+theorem rs_endG {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X)
+    (ω : Regs) (μ : Memory) (S r b v5 v6 ret t : Nat) (hrt : RetOK ret t) (h1 : ω[1] = UInt64.ofNat S)
+    (h6 : ω[6] = UInt64.ofNat b)
+    (hS : S + 96 < 4294967296) (hb : b < 2 ^ 64) (hr64 : r < 2 ^ 64) (hv5 : v5 < 2 ^ 64) (hv6 : v6 < 2 ^ 64)
+    (mr : μ.readN (S + 16) 8 = Num.encodeLE 8 r) (m0 : μ.readN (S + 88) 8 = Num.encodeLE 8 ret)
+    (m5 : μ.readN (S + 80) 8 = Num.encodeLE 8 v5) (m6 : μ.readN (S + 72) 8 = Num.encodeLE 8 v6)
+    (hr : ∀ a, S + 16 ≤ a → a < S + 96 → μ.readable a = true) :
+    ∃ ω', FreeStepsH p R 36499 ω μ x t ω' μ x 10 ∧
+      ω'[1] = UInt64.ofNat (S + 96) ∧ ω'[5] = UInt64.ofNat v5 ∧ ω'[6] = UInt64.ofNat v6 ∧
+      ω'[7] = (if r = 18446744073709551615 then UInt64.ofNat b else UInt64.ofNat 18446744073709551615) := by
+  have rr := Handlers.DesignateAlloc.rd8 hr64 mr
+  have r5 := Handlers.DesignateAlloc.rd8 hv5 m5
+  have r6 := Handlers.DesignateAlloc.rd8 hv6 m6
+  rw [show ω = regsNF ω [] from rfl]
+  rcases hrt with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩ <;>
+  · have r0 := Handlers.DesignateAlloc.rd8 (by decide) m0
+    by_cases hr1 : r = 18446744073709551615
+    · subst hr1
+      refine ⟨?_, ?_, ?_⟩
+      rotate_left
+      · pvm_go [h1, h6, hS, rr, r0, r5, r6, hr, ↓rdN_fold]
+      · refine ⟨?_, by reg_val, by reg_val, ?_⟩
+        all_goals simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h1, h6]
+        all_goals try (congr 1; omega)
+        all_goals try rw [Nat.mod_eq_of_lt hb]
+    · have hr1' : (r + 1) % 18446744073709551616 ≠ 0 := by omega
+      refine ⟨?_, ?_, ?_⟩
+      rotate_left
+      · pvm_go [h1, h6, hS, rr, r0, r5, r6, hr, hr1', ↓rdN_fold]
+      · refine ⟨?_, by reg_val, by reg_val, ?_⟩
+        all_goals simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h1, h6, hr1]
+        all_goals try (congr 1; omega)
+
 open Services.Bootstrap.Decode.DeallocCall in
-/-- **From `set`'s return to 8477, any value chunk** (`res_free` for a value buffer that is the data of
+/-- **From `set`'s return to the caller (`RetOK`), any value chunk** (`res_free` for a value buffer that is the data of
     an allocated chunk dv, dv.addr + 32 = vp, with capacity vc ≠ 0 at S + 24), under any host relation: `set`'s return (ω₀ = 1706) to 36456, the
     result word r (at S + 56, S = sp − 96) saved at S + 16, `dealloc` of the key's buffer (the chunk at
     kp − 32) and of the value's (at vp − 32), and the return to 8477 with ω₇ = −1 if r ≠ −1, else the
@@ -275,7 +313,7 @@ open Services.Bootstrap.Decode.DeallocCall in
     other allocated chunk's data. -/
 theorem res_freeG {R : HostRel X} {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
     (code : ByteArray) (pb S0 S1 : Nat) (x : X) (ω : Regs) (μ : Memory) (s : State)
-    (sp vp kp kc r b v5 v6 e vc : Nat) (dv : Chunk) (H : HeapCtxC code pb S0 S1 μ s)
+    (sp vp kp kc r b v5 v6 e vc ret t : Nat) (hrt : RetOK ret t) (dv : Chunk) (H : HeapCtxC code pb S0 S1 μ s)
     (hCv : dv ∈ chunks s) (hdu : dv.used = true) (hda : dv.addr + 32 = vp)
     (hCk : (⟨kp - 32, (kc + 31) / 32 + 1, true⟩ : Chunk) ∈ chunks s)
     (hne : dv ≠ ⟨kp - 32, (kc + 31) / 32 + 1, true⟩) (hkp : 32 ≤ kp) (hvc : vc < 2 ^ 64) (hvc0 : vc ≠ 0)
@@ -285,9 +323,9 @@ theorem res_freeG {R : HostRel X} {p : ByteArray} {P : Program} [HasCode p P] [H
     (hkc : kc < 2 ^ 64) (hk0 : kc ≠ 0) (hr64 : r < 2 ^ 64) (hb : b < 256) (hv5 : v5 < 2 ^ 64) (hv6 : v6 < 2 ^ 64)
     (mk : μ.readN (sp - 96 + 32) 8 = Num.encodeLE 8 kc) (mr : μ.readN (sp - 96 + 56) 8 = Num.encodeLE 8 r)
     (mb : μ.readN (sp - 96 + 64) 1 = Num.encodeLE 1 b) (mc : μ.readN (sp - 96 + 24) 8 = Num.encodeLE 8 vc)
-    (mv : μ.readN (sp - 96) 8 = Num.encodeLE 8 vp) (m0 : μ.readN (sp - 96 + 88) 8 = Num.encodeLE 8 294)
+    (mv : μ.readN (sp - 96) 8 = Num.encodeLE 8 vp) (m0 : μ.readN (sp - 96 + 88) 8 = Num.encodeLE 8 ret)
     (m5 : μ.readN (sp - 96 + 80) 8 = Num.encodeLE 8 v5) (m6 : μ.readN (sp - 96 + 72) 8 = Num.encodeLE 8 v6) :
-    ∃ ω' μ' n, FreeStepsH p R e ω μ x 8477 ω' μ' x n ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = UInt64.ofNat v5 ∧
+    ∃ ω' μ' n, FreeStepsH p R e ω μ x t ω' μ' x n ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = UInt64.ofNat v5 ∧
       ω'[6] = UInt64.ofNat v6 ∧
       ω'[7] = (if r = 18446744073709551615 then UInt64.ofNat b else UInt64.ofNat 18446744073709551615) ∧
       HeapCtxC code pb S0 S1 μ' (free (free s kp) vp) ∧
@@ -335,7 +373,7 @@ theorem res_freeG {R : HostRel X} {p : ByteArray} {P : Program} [HasCode p P] [H
     rw [← m16]
     exact Memory.readN_congr fun j hj => (stk4 _ (by omega) (by omega)).trans (stk2 _ (by omega) (by omega))
   obtain ⟨ω5, run5, e1, e5, e6, e7⟩ :=
-    rs_end (R := R) (P := P) x ω4 μ4 (sp - 96) r b v5 v6 (d1.trans c1)
+    rs_endG (R := R) (P := P) x ω4 μ4 (sp - 96) r b v5 v6 ret t hrt (d1.trans c1)
       (d6.trans (c6.trans (g6.trans a6))) (by omega) (by omega) hr64 hv5 hv6 m16'
       (by rw [k4 _ _ (by omega) (by omega) (.inr (by omega))]; exact m0)
       (by rw [k4 _ _ (by omega) (by omega) (.inr (by omega))]; exact m5)
@@ -397,7 +435,7 @@ theorem res_free {R : HostRel X} {p : ByteArray} {P : Program} [HasCode p P] [Ha
       (∀ a, Glob a → μ'.read a = μ.read a) ∧
       (∀ a, a < 4294967296 → μ.writable a = false → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) :=
-  res_freeG (R := R) (P := P) code pb S0 S1 x ω μ s sp vp kp kc r b v5 v6 e 4 _ H hCv rfl (by dsimp only; omega)
+  res_freeG (R := R) (P := P) code pb S0 S1 x ω μ s sp vp kp kc r b v5 v6 e 4 294 8477 (.inl ⟨rfl, rfl⟩) _ H hCv rfl (by dsimp only; omega)
     hCk hne hkp (by decide) (by decide) he h0 h1 h5 h6 hsp hS hkc hk0 hr64 hb hv5 hv6 mk mr mb mc mv m0 m5 m6
 
 end Services.Bootstrap.Acc.Handlers.ResStore

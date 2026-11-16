@@ -78,6 +78,10 @@ are agreed through the parent.
 
 ## Named hypotheses the statement would carry, as things stand
 
+Added for R7 (parent, option (A)): **`DropInstrsH`** over the `InstrRep` bundle's `foot`
+(`Acc/Handlers/InstrRep.lean`), frame-only, for the instructions' `IntoIter` drop (33214).
+
+
 Already accepted or decided: `ValuesFit` (< 2⁶³); `ParamStatics` (an obligation, proved on the
 statics branch); RO-data facts (R10); the fmt hypotheses `KeyFmt`, `Utf8Call`, `LogFmt` and the
 handlers' log-site `ArgsAt` (with `ExhaustsP`); the output decode's failure branch (R3, an open

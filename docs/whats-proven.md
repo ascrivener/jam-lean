@@ -981,6 +981,13 @@ What you trust beyond the kernel:
   against the allocator's earlier state (Adam, 2026-11-15; it replaced "kc = 0 ∨ the buffer is a fresh
   chunk"). `set` needs the key's octets readable and below the stack; whoever discharges `KeyFmt`
   proves this too.
+- **`DropInstrsH` and `InstrRep` (T2, named hypothesis; parent's option (A) for row 11's drops).** The drop
+  of the instructions' `IntoIter` (33214, per-kind drops through the table at 68312) is assumed frame-only:
+  it frees each remaining slot's `foot` and then its buffer, keeps every other allocated chunk with its data
+  and the memory from sp up (`Acc/Handlers/InstrRep.lean`). `InstrRep` (`rep`, `foot`, `frame`) is the
+  parameter shared by the R3/R6 hypotheses; *obligation:* T1's per-kind `Rep`s discharge it and the drop's
+  proof discharges `DropInstrsH`. Row 11's `row_eleven_core` (15038 → 6766) and `r11_tail` (the results drop
+  `drop_results` and the three deallocs) are proved without it.
 - **Refinement of a fragment, not of a whole program.** The allocator theorems are about the
   allocator's entry points called with the stated registers and memory. They are not yet composed
   into a Ψ_R or Ψ_A theorem about a bootstrap run that allocates.

@@ -107,6 +107,37 @@ Handlers dependencies takes ~2 h on 4 cores). Use `ulimit -v 12000000` when comp
 - `refine ⟨?ω', ?run⟩; case run => pvm_go …` for a one-witness existential.
 
 
+## Session 10 handoff (2026-11-16, for the 11th session)
+
+**PRs.** **#228** (row 9): `model`/`changes` green. `attempt-1` was still running at 17:40 (started 14:15).
+Re-subscribe and **merge on green** (squash), then tell @parent. If the merge is refused over the removed
+`build-and-check` check, tell @parent and carry on. **#222** is still open. Once it merges (and #228), rebase r5 onto
+main (`git rebase --onto origin/main <old row-9 tip 6450fb4>`, see session 8), run the full `lake build` in the
+background, and open r5's PR.
+
+**Branch `claude/bootstrap-t2-handlers-a-r5`** (pushed; no PR). Everything compiles locally with clean axioms and is
+imported from `Services.lean`. Session 10's work: see "Session 10 progress" above.
+
+**Decisions (parent, 2026-11-16):** `ResultsAvoid` + `(iterFree ++ tailFree).Nodup` + `IterOwn` as R7's premises;
+`InstrLogH`, `ResultLogH`, `HandlerH` (with `ItemOwn`), `PushH`; `InstrRep.tag`/`notNone`; `LoopKeep` as is (T2
+inputs asked for sp+16, 32, 136…152, added); hB carried as a premise up to R2. hB is an open point: at R2 it
+becomes a case split with heap exhaustion.
+
+**Next, in order (R5's body):**
+1. **A memcpy lemma with a 16-octet gap.** The copy at 8620 (sp+512 → sp+752, 224 octets) has src + n + 16 = dst,
+   but `memcpy_val`/`memcpy_frame` need a 24-octet gap (`hdj`). Find why in `MemcpyBig.lean` (a read-ahead of the
+   shift loop?) and prove a variant for dst = src + n + 16, or a direct one for this call.
+2. The body's front, 8540 → 8735, for tags other than 15: `il_head`, `il_next`, `memcpy_val` (c+8 → sp+512, ret 296),
+   `il_copy2`, memcpy (ret 298), `il_tag_other`/`il_tag_zomb`. Jump-table facts `jte_*`/`bs_*` are in `CodeA/`.
+   Tag 15: `il_tag_ck` → `store_core` (ret 300; `RetOK` already has 300 → 8716) → `il_ck_ok`.
+3. 8735 → 8822: `il_log_pre`, `InstrLogH`, `il_log_post`, memcpy (ret 304, sp+744 → sp+1144). Then `HandlerH`
+   (`Impl` of `onInstr`), then the tail: `il_res_log_pre`, `ResultLogH`, `il_tail_a`, `FreeStepsH.logS` (at 14401;
+   `d_14401`), `il_tail_b0/b1` + dealloc (see `r11_tail`'s deallocs), `il_push` or `PushH`, memcpy (ret 540),
+   `il_post0/1` + dealloc, `il_back`.
+4. `LoopAt` maintained across the body; the spec loop as `Impl.forIn` over `is` with `LoopAt` as the invariant; the
+   entry (`il_setup1` → `LoopAt`) and the empty case (`il_setup0` → 15050 → `r11_di1`, ret 560 → 15060); then the
+   whole of R5 + R7 against the contract R2 consumes (`docs/t2-remaining.md`).
+
 ## Session 10 progress (2026-11-16)
 
 - **R7 is done from 15028.** `RowElevenFront.lean` holds **`row_eleven`**: the instructions' drop

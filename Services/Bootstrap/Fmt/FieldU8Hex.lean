@@ -1,5 +1,5 @@
 import Services.Bootstrap.Fmt.FieldU8HexSteps
-import Services.Bootstrap.Fmt.DebugList
+import Services.Bootstrap.Fmt.FieldWriteNested
 
 /-!
 # `<u8 as fmt::LowerHex>::fmt` (60209) as an argument with the options of `{:02x}`
@@ -42,20 +42,20 @@ theorem FmtrO.congr {s₀ s : State} {μ μ' : Memory} {F W cap len o w : Nat} (
     ((rdN_frame (μ := μ) (μ' := μ') (fun j hj => by
       rw [show W + 16 + j = W + (16 + j) by omega, kW _ (by omega)])).trans hf.str.rl) hf.str.le
 
-/-- **`{:02x}` of an octet** (60209, `<u8 as LowerHex>`) as an argument: for an octet at v where
+/-- **`{:02x}` of an octet** (60209, `<u8 as LowerHex>`) for the `String` W: for an octet at v where
     `ValAt` puts it, two octets are written. It needs 600 octets of stack (Z ≥ 600).
     The Ok path takes at most 2(cap' − cap) + 3900 steps; the constant 536875000 is the budget a
     failed allocator call may need (the `write_char` before the digit may have grown the `String`). -/
-theorem u8hex_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
+theorem u8hex_okW {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
     (pb S0 S1 Z : Nat) (hZ : 600 ≤ Z) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
-    (μA : Memory) (sA : State) (spA v : Nat) (hS : S0 ≤ spA) (hv : ValAt μA sA spA S1 v 1) :
-    ArgOkO p P R env pb S0 S1 Z μA sA spA 60209 v 1761607712 2 2 536875000 := by
-  intro ω μ x s sp F W cap len ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hWA hF hn
+    (μA : Memory) (sA : State) (spA W v : Nat) (hS : S0 ≤ spA) (hv : ValAt μA sA spA S1 v 1) :
+    ArgOkW p P R env pb S0 S1 Z μA sA spA W 60209 v 1761607712 2 2 536875000 := by
+  intro ω μ x s sp F cap len ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hF hn
   have hS1 := H.hS1
   have hSb := H.hSb
   have hst : ∀ a, S0 ≤ a → a < S1 → μ.writable a = true := H.st
   have hro : ∀ a, a < 196608 → μ.writable a = false := H.ro
-  obtain ⟨hrv, hloc⟩ := hv.readable (by omega) H hS hspA K
+  obtain ⟨hrv, hloc⟩ := hv.readableW (by omega) H hS hspA K
   -- 60209 … 60229
   obtain ⟨ω1, μ1, run1, a1, a2, a5, a6, a7, a8, a9, a12, s8, fr1, rd1, wr1⟩ := u8x_entry (p := p) (P := P)
     (R := R) x ω μ sp v F ret ⟨by omega, by omega⟩ h0 h1 h7 h8 (by omega) (by omega) (by omega) (by omega)
@@ -174,5 +174,49 @@ theorem u8hex_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env
         rw [fr3 a h1 (by omega), fr2 a h1 (by omega), fr1 a h1 (by omega)])
       (by rw [rdN_frame (μ := μ1) (fun j hj => by rw [fr3 _ (by omega) (by omega), fr2 _ (by omega) (by omega)])]; exact s8)
       (fun a => by rw [rd3, rd2, rd1]) (fun a => by rw [wr3, wr2, wr1])
+
+/-- **`{:02x}` of an octet** (60209) as an argument (`ArgOkO`), from `u8hex_okW`. -/
+theorem u8hex_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
+    (pb S0 S1 Z : Nat) (hZ : 600 ≤ Z) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
+    (μA : Memory) (sA : State) (spA v : Nat) (hS : S0 ≤ spA) (hv : ValAt μA sA spA S1 v 1) :
+    ArgOkO p P R env pb S0 S1 Z μA sA spA 60209 v 1761607712 2 2 536875000 :=
+  ArgOkW.toO (fun W => u8hex_okW env pb S0 S1 Z hZ HA HR μA sA spA W v hS hv)
+
+/-- 57917 … 57919, `<&u8 as LowerHex>`: the octet's address loaded from the cell at v (ω₇), then the
+    jump to 60209. -/
+theorem u8r_step {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (x : X) (ω : Regs) (μ : Memory)
+    (v a : Nat) (hv : v + 8 < 4294967296) (h7 : ω[7] = UInt64.ofNat v) (rv : rdN μ v 8 = a)
+    (hr : ∀ b, v ≤ b → b < v + 8 → μ.readable b = true) :
+    ∃ ω', FreeStepsH p R 57917 ω μ x 60209 ω' μ x 2 ∧ ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧
+      ω'[6] = ω[6] ∧ ω'[8] = ω[8] ∧ ω'[7] = UInt64.ofNat a := by
+  have ha : a < 18446744073709551616 := by rw [← rv]; exact rdN_lt64 μ _
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?_, ?_, ?_⟩
+  rotate_left
+  · pvm_go [h7, hv, rv, hr, ↓rdN_fold]
+  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
+    all_goals post_simp [Nat.mod_eq_of_lt ha]
+
+/-- **`{:02x}` of an octet through a reference** (57917, `<&u8 as LowerHex>`) for the `String` W: the
+    cell at v (at or above spA, apart from W) holds the address a of an octet where `ValAt` puts it;
+    two octets are written. -/
+theorem u8hexref_okW {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
+    (pb S0 S1 Z : Nat) (hZ : 600 ≤ Z) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
+    (μA : Memory) (sA : State) (spA W v a : Nat) (hS : S0 ≤ spA)
+    (hvc : spA ≤ v ∧ v + 8 ≤ S1 ∧ (v + 8 ≤ W ∨ W + 24 ≤ v))
+    (hrv : ∀ b, v ≤ b → b < v + 8 → μA.readable b = true) (rv : rdN μA v 8 = a)
+    (ha : ValAt μA sA spA S1 a 1) :
+    ArgOkW p P R env pb S0 S1 Z μA sA spA W 57917 v 1761607712 2 2 536875002 := by
+  intro ω μ x s sp F cap len ret t v5 v6 H hba K hf h0 h1 h5 h6 h7 h8 hv5 hv6 hret hjt hbt hsp hspA hW hF hn
+  have hS1 := H.hS1
+  have hSb := H.hSb
+  obtain ⟨ω1, run1, a0, a1, a5, a6, a8, a7⟩ := u8r_step (p := p) (P := P) (R := R) x ω μ v a (by omega) h7
+    (by rw [rdN_frame (fun j hj => K.hi _ (by omega) (by omega) (by omega))]; exact rv)
+    (fun b h1 h2 => by rw [(K.access b (Or.inr (by unfold pageSize; omega))).1]; exact hrv b h1 h2)
+  rcases u8hex_okW env pb S0 S1 Z hZ HA HR μA sA spA W a hS ha ω1 μ x s sp F cap len ret t v5 v6 H hba K hf
+      (a0.trans h0) (a1.trans h1) (a5.trans h5) (a6.trans h6) a7 (a8.trans h8) hv5 hv6 hret hjt hbt hsp hspA hW
+      hF hn with ⟨ω', μ', x', s', cap', n, hn', run, rest⟩ | hx
+  · exact Or.inl ⟨ω', μ', x', s', cap', n, hn', (run1.trans run).mono (by omega), rest⟩
+  · exact Or.inr ((Exhausts.pre run1 hx).mono (by omega))
 
 end Services.Bootstrap.Fmt

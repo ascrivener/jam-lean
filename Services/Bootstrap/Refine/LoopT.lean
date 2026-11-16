@@ -122,7 +122,7 @@ def LookupOk (env : RefineHost.Env) (cap0 : Nat) (μ0 : Memory) (E k : Nat) (ce 
       (∀ j, j < k → B' j = B j) → LUSlotB (B' k) (LookupStep.lookupOf env svc h) buf →
       LUOwn μ0 μ0' Kp Kp' (LookupStep.lookupOf env svc h) buf →
       (∀ c, Kp' c → ¬ Kp c → c ≠ ce ∧ (∀ a, InData c a → ¬ InData ce a ∧ ∀ d, Kp d → ¬ InData d a) ∧
-        c.addr + 32 * c.size ≤ 2147483648) →
+        c.addr + 32 * c.size ≤ 2147483648 ∧ ∀ d, Kp d → d.addr ≠ c.addr) →
       Inv' μ0' Kp' B'
 
 /-- **The transform loop for T1c** (5042 … 5042, or from 5054): from `PInv 0` with the written slots `B` and the
@@ -227,23 +227,28 @@ theorem loop_t {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCo
           obtain ⟨hc0, -, hcT⟩ := Decode.VecU8.chunk_in hwf hcm hcu
           have hbT := st1.H.hbT
           have hne := hce' c hc1 hc2
-          refine ⟨hne, fun a ha => ⟨fun hb => ?_, fun d hd hb => ?_⟩, by omega⟩
+          have hK1 : ∀ d, Kp d → Kp1 d := by
+            intro d hd
+            revert hown
+            generalize LookupStep.lookupOf env svc h = w
+            intro hown
+            unfold LUOwn at hown
+            cases w with
+            | none => rw [hown.2]; exact hd
+            | some dd =>
+              rcases hown with ⟨-, -, -, e⟩ | ⟨ch, -, -, -, e, -⟩
+              · rw [e]; exact hd
+              · rw [e]; exact Or.inl hd
+          refine ⟨hne, fun a ha => ⟨fun hb => ?_, fun d hd hb => ?_⟩, by omega, fun d hd e => ?_⟩
           · have := chunk_apart hwf hcm st1.hce.1 hne
             unfold InData at ha hb; omega
-          · have hd' : Kp1 d := by
-              revert hown
-              generalize LookupStep.lookupOf env svc h = w
-              intro hown
-              unfold LUOwn at hown
-              cases w with
-              | none => rw [hown.2]; exact hd
-              | some dd =>
-                rcases hown with ⟨-, -, -, e⟩ | ⟨ch, -, -, -, e, -⟩
-                · rw [e]; exact hd
-                · rw [e]; exact Or.inl hd
-            obtain ⟨hdm, -, -⟩ := st1.kp d hd'
+          · obtain ⟨hdm, -, -⟩ := st1.kp d (hK1 d hd)
             have := chunk_apart hwf hcm hdm (fun e => hc2 (e ▸ hd))
             unfold InData at ha hb; omega
+          · obtain ⟨hdm, -, -⟩ := st1.kp d (hK1 d hd)
+            have ht := hwf.2.2.2.1
+            unfold TilesOk at ht
+            exact hc2 (Tiles.addr_inj ht d hdm c hcm e ▸ hd)
         · -- slot k by its octets
           obtain ⟨cap, ptr, a1, a2, a3, a4, a5, a6, a7, hO1⟩ := st1.out
           have hpp : ptr = ptr' := by

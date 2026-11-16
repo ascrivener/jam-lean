@@ -349,4 +349,42 @@ theorem rl_item {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {env 
       have hg := ha; unfold Glob at hg
       rw [gl4 a ha, gl2 a ha, fr1 a (by omega) (by omega), hgl a ha]
 
+
+/-- **The results loop** (36346 → 36405): from `LoopInv k` with k < n, the remaining n − k passes reach
+    `LoopInv n` at 36405, or the heap is exhausted. -/
+theorem rl_loop {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {env : AccEnv} {pb S0 S1 : Nat}
+    (hE : ExtendH p P env pb S0 S1) (hO : OkEncH p P env pb S0 S1)
+    (c : AccCtx) (f : Stream) (sp rp n : Nat) (rs : List Spec.Result)
+    (st : State) (μ₀ : Memory) (L : LoopHyp pb S0 S1 sp rp n rs st μ₀) :
+    ∀ (k : Nat) (ω : Regs) (μ : Memory) (s : State), k < n →
+    LoopInv env.code pb S0 S1 sp rp n rs st μ₀ k ω μ s →
+    (∃ ω' μ' s' N, FreeStepsH p (KeepCtx (accContractS env)) 36346 ω μ (c, f) 36405 ω' μ' (c, f) N ∧
+      LoopInv env.code pb S0 S1 sp rp n rs st μ₀ n ω' μ' s') ∨
+    ExhaustsP p env pb 36346 ω μ c f := by
+  suffices h : ∀ m k ω μ s, n - (k + 1) = m → k < n →
+      LoopInv env.code pb S0 S1 sp rp n rs st μ₀ k ω μ s →
+      (∃ ω' μ' s' N, FreeStepsH p (KeepCtx (accContractS env)) 36346 ω μ (c, f) 36405 ω' μ' (c, f) N ∧
+        LoopInv env.code pb S0 S1 sp rp n rs st μ₀ n ω' μ' s') ∨
+      ExhaustsP p env pb 36346 ω μ c f from
+    fun k ω μ s hk I => h _ k ω μ s rfl hk I
+  intro m
+  induction m with
+  | zero =>
+    intro k ω μ s hm hk I
+    rcases rl_item hE hO c f ω μ s sp rp n rs st μ₀ k L hk I with ⟨ω', μ', s', N, run, I'⟩ | hx
+    · simp only [hm, ↓reduceIte] at run
+      have e : k + 1 = n := by omega
+      rw [e] at I'
+      exact .inl ⟨ω', μ', s', N, run, I'⟩
+    · exact .inr hx
+  | succ m ih =>
+    intro k ω μ s hm hk I
+    rcases rl_item hE hO c f ω μ s sp rp n rs st μ₀ k L hk I with ⟨ω', μ', s', N, run, I'⟩ | hx
+    · have hm' : n - (k + 1) ≠ 0 := by omega
+      simp only [hm', ↓reduceIte] at run
+      rcases ih (k + 1) ω' μ' s' (by omega) (by omega) I' with ⟨ω'', μ'', s'', N', run', I''⟩ | hx
+      · exact .inl ⟨ω'', μ'', s'', N + N', run.trans run', I''⟩
+      · exact .inr (ExhaustsP.pre run hx)
+    · exact .inr hx
+
 end Services.Bootstrap.Acc.Handlers.ResStore

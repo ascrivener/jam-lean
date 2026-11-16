@@ -266,31 +266,32 @@ theorem res_head {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Has
     unfold Memory.readable; rw [ro1' (a / pageSize) (.inl (by unfold pageSize; omega))]
 
 open Services.Bootstrap.Decode.DeallocCall in
-/-- **From `set`'s return to 8477**, under any host relation: `set`'s return (ω₀ = 1706) to 36456, the
+/-- **From `set`'s return to 8477, any value chunk** (`res_free` for a value buffer that is the data of
+    an allocated chunk dv, dv.addr + 32 = vp, with capacity vc ≠ 0 at S + 24), under any host relation: `set`'s return (ω₀ = 1706) to 36456, the
     result word r (at S + 56, S = sp − 96) saved at S + 16, `dealloc` of the key's buffer (the chunk at
     kp − 32) and of the value's (at vp − 32), and the return to 8477 with ω₇ = −1 if r ≠ −1, else the
     octet b at S + 64 (`set`'s error code); ω₁ = sp, ω₅ and ω₆ restored. The context is kept for both
     frees; memory is kept from S up but at S + 16, at the globals, where it is not writable, and in every
     other allocated chunk's data. -/
-theorem res_free {R : HostRel X} {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
+theorem res_freeG {R : HostRel X} {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
     (code : ByteArray) (pb S0 S1 : Nat) (x : X) (ω : Regs) (μ : Memory) (s : State)
-    (sp vp kp kc r b v5 v6 e : Nat) (H : HeapCtxC code pb S0 S1 μ s)
-    (hCv : (⟨vp - 32, 2, true⟩ : Chunk) ∈ chunks s)
+    (sp vp kp kc r b v5 v6 e vc : Nat) (dv : Chunk) (H : HeapCtxC code pb S0 S1 μ s)
+    (hCv : dv ∈ chunks s) (hdu : dv.used = true) (hda : dv.addr + 32 = vp)
     (hCk : (⟨kp - 32, (kc + 31) / 32 + 1, true⟩ : Chunk) ∈ chunks s)
-    (hne : (⟨vp - 32, 2, true⟩ : Chunk) ≠ ⟨kp - 32, (kc + 31) / 32 + 1, true⟩) (hvp : 32 ≤ vp) (hkp : 32 ≤ kp)
+    (hne : dv ≠ ⟨kp - 32, (kc + 31) / 32 + 1, true⟩) (hkp : 32 ≤ kp) (hvc : vc < 2 ^ 64) (hvc0 : vc ≠ 0)
     (he : e = 48158 ∨ e = 48250 ∨ e = 48235) (h0 : ω[0] = UInt64.ofNat 1706)
     (h1 : ω[1] = UInt64.ofNat (sp - 96)) (h5 : ω[5] = UInt64.ofNat kp) (h6 : ω[6] = UInt64.ofNat vp)
     (hsp : 2147483648 + 352 ≤ sp) (hS : S0 + 352 ≤ sp ∧ sp ≤ S1)
     (hkc : kc < 2 ^ 64) (hk0 : kc ≠ 0) (hr64 : r < 2 ^ 64) (hb : b < 256) (hv5 : v5 < 2 ^ 64) (hv6 : v6 < 2 ^ 64)
     (mk : μ.readN (sp - 96 + 32) 8 = Num.encodeLE 8 kc) (mr : μ.readN (sp - 96 + 56) 8 = Num.encodeLE 8 r)
-    (mb : μ.readN (sp - 96 + 64) 1 = Num.encodeLE 1 b) (mc : μ.readN (sp - 96 + 24) 8 = Num.encodeLE 8 4)
+    (mb : μ.readN (sp - 96 + 64) 1 = Num.encodeLE 1 b) (mc : μ.readN (sp - 96 + 24) 8 = Num.encodeLE 8 vc)
     (mv : μ.readN (sp - 96) 8 = Num.encodeLE 8 vp) (m0 : μ.readN (sp - 96 + 88) 8 = Num.encodeLE 8 294)
     (m5 : μ.readN (sp - 96 + 80) 8 = Num.encodeLE 8 v5) (m6 : μ.readN (sp - 96 + 72) 8 = Num.encodeLE 8 v6) :
     ∃ ω' μ' n, FreeStepsH p R e ω μ x 8477 ω' μ' x n ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = UInt64.ofNat v5 ∧
       ω'[6] = UInt64.ofNat v6 ∧
       ω'[7] = (if r = 18446744073709551615 then UInt64.ofNat b else UInt64.ofNat 18446744073709551615) ∧
       HeapCtxC code pb S0 S1 μ' (free (free s kp) vp) ∧
-      (∀ d ∈ chunks s, d.used = true → d ≠ ⟨vp - 32, 2, true⟩ → d ≠ ⟨kp - 32, (kc + 31) / 32 + 1, true⟩ →
+      (∀ d ∈ chunks s, d.used = true → d ≠ dv → d ≠ ⟨kp - 32, (kc + 31) / 32 + 1, true⟩ →
         d ∈ chunks (free (free s kp) vp) ∧ ∀ a, InData d a → μ'.read a = μ.read a) ∧
       (∀ a, a < 4294967296 → sp - 96 ≤ a → (a < sp - 96 + 16 ∨ sp - 96 + 24 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, Glob a → μ'.read a = μ.read a) ∧
@@ -299,8 +300,7 @@ theorem res_free {R : HostRel X} {p : ByteArray} {P : Program} [HasCode p P] [Ha
   have hst := H.st
   have hS1 := H.hS1
   have hbT := H.hbT
-  obtain ⟨-, -, nv⟩ := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hCv rfl
-  dsimp only at nv
+  obtain ⟨-, -, nv⟩ := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hCv hdu
   have run0 := rs_ret (R := R) (P := P) x ω μ e he h0
   obtain ⟨ω1, μ1, run1, a0, a1, a5, a6, a7, m16, fr1, rd1, wr1⟩ :=
     rs_d1 (R := R) (P := P) x ω μ (sp - 96) kc r b h1 (by omega) hkc hk0 hr64 hb mk mr mb
@@ -318,14 +318,14 @@ theorem res_free {R : HostRel X} {p : ByteArray} {P : Program} [HasCode p P] [Ha
       μ1.readN b n = μ.readN b n := fun b n h1 h2 h3 =>
     Memory.readN_congr fun j hj => fr1 _ (by omega) (by omega)
   obtain ⟨ω3, run3, c0, c1, c5, c6, c7⟩ :=
-    rs_d2 (R := R) (P := P) x ω2 μ2 (sp - 96) 4 vp (g1.trans a1) (by omega) (by decide) (by decide) (by omega)
+    rs_d2 (R := R) (P := P) x ω2 μ2 (sp - 96) vc vp (g1.trans a1) (by omega) hvc hvc0 (by omega)
       (by rw [k21 _ _ (by omega) (by omega), k10 _ _ (by omega) (by omega) (.inr (by omega))]; exact mc)
       (by rw [k21 _ _ (by omega) (by omega), k10 _ _ (by omega) (by omega) (.inl (by omega))]; exact mv)
       (fun a h1 h2 => Memory.readable_of_writable (H2.st a (by omega) (by omega)))
-  have hCv2 : (⟨vp - 32, 2, true⟩ : Chunk) ∈ chunks (free s kp) := (keep2 _ hCv rfl hne).1
+  have hCv2 : dv ∈ chunks (free s kp) := (keep2 _ hCv hdu hne).1
   obtain ⟨ω4, μ4, run4, H4, -, pg4, ro4, stk4, gl4, keep4, d0, d1, d5, d6⟩ :=
     dealloc_callG (R := R) (p := p) (P := P) code pb S0 S1 x ω3 μ2 (free s kp) (sp - 96) vp 1710 36499 _ H2
-      hCv2 rfl (by dsimp only; omega) c0 c1 c7 ⟨by decide, by decide, by decide⟩
+      hCv2 hdu hda c0 c1 c7 ⟨by decide, by decide, by decide⟩
       (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_854]) bs_36499 (by omega) ⟨by omega, by omega⟩
   have k4 : ∀ b n, sp - 96 ≤ b → b + n ≤ 4294967296 → (b + n ≤ sp - 96 + 16 ∨ sp - 96 + 24 ≤ b) →
       μ4.readN b n = μ.readN b n := fun b n h1 h2 h3 => by
@@ -365,5 +365,39 @@ theorem res_free {R : HostRel X} {p : ByteArray} {P : Program} [HasCode p P] [Ha
     · exact fr1 a h0 (by omega)
   · intro a
     rw [show μ4.readable a = μ1.readable a by unfold Memory.readable; rw [pg4, pg2], rd1]
+
+
+/-- **From `set`'s return to 8477**, under any host relation: `set`'s return (ω₀ = 1706) to 36456, the
+    result word r (at S + 56, S = sp − 96) saved at S + 16, `dealloc` of the key's buffer (the chunk at
+    kp − 32) and of the value's (at vp − 32), and the return to 8477 with ω₇ = −1 if r ≠ −1, else the
+    octet b at S + 64 (`set`'s error code); ω₁ = sp, ω₅ and ω₆ restored. The context is kept for both
+    frees; memory is kept from S up but at S + 16, at the globals, where it is not writable, and in every
+    other allocated chunk's data. -/
+theorem res_free {R : HostRel X} {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P]
+    (code : ByteArray) (pb S0 S1 : Nat) (x : X) (ω : Regs) (μ : Memory) (s : State)
+    (sp vp kp kc r b v5 v6 e : Nat) (H : HeapCtxC code pb S0 S1 μ s)
+    (hCv : (⟨vp - 32, 2, true⟩ : Chunk) ∈ chunks s)
+    (hCk : (⟨kp - 32, (kc + 31) / 32 + 1, true⟩ : Chunk) ∈ chunks s)
+    (hne : (⟨vp - 32, 2, true⟩ : Chunk) ≠ ⟨kp - 32, (kc + 31) / 32 + 1, true⟩) (hvp : 32 ≤ vp) (hkp : 32 ≤ kp)
+    (he : e = 48158 ∨ e = 48250 ∨ e = 48235) (h0 : ω[0] = UInt64.ofNat 1706)
+    (h1 : ω[1] = UInt64.ofNat (sp - 96)) (h5 : ω[5] = UInt64.ofNat kp) (h6 : ω[6] = UInt64.ofNat vp)
+    (hsp : 2147483648 + 352 ≤ sp) (hS : S0 + 352 ≤ sp ∧ sp ≤ S1)
+    (hkc : kc < 2 ^ 64) (hk0 : kc ≠ 0) (hr64 : r < 2 ^ 64) (hb : b < 256) (hv5 : v5 < 2 ^ 64) (hv6 : v6 < 2 ^ 64)
+    (mk : μ.readN (sp - 96 + 32) 8 = Num.encodeLE 8 kc) (mr : μ.readN (sp - 96 + 56) 8 = Num.encodeLE 8 r)
+    (mb : μ.readN (sp - 96 + 64) 1 = Num.encodeLE 1 b) (mc : μ.readN (sp - 96 + 24) 8 = Num.encodeLE 8 4)
+    (mv : μ.readN (sp - 96) 8 = Num.encodeLE 8 vp) (m0 : μ.readN (sp - 96 + 88) 8 = Num.encodeLE 8 294)
+    (m5 : μ.readN (sp - 96 + 80) 8 = Num.encodeLE 8 v5) (m6 : μ.readN (sp - 96 + 72) 8 = Num.encodeLE 8 v6) :
+    ∃ ω' μ' n, FreeStepsH p R e ω μ x 8477 ω' μ' x n ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = UInt64.ofNat v5 ∧
+      ω'[6] = UInt64.ofNat v6 ∧
+      ω'[7] = (if r = 18446744073709551615 then UInt64.ofNat b else UInt64.ofNat 18446744073709551615) ∧
+      HeapCtxC code pb S0 S1 μ' (free (free s kp) vp) ∧
+      (∀ d ∈ chunks s, d.used = true → d ≠ ⟨vp - 32, 2, true⟩ → d ≠ ⟨kp - 32, (kc + 31) / 32 + 1, true⟩ →
+        d ∈ chunks (free (free s kp) vp) ∧ ∀ a, InData d a → μ'.read a = μ.read a) ∧
+      (∀ a, a < 4294967296 → sp - 96 ≤ a → (a < sp - 96 + 16 ∨ sp - 96 + 24 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, Glob a → μ'.read a = μ.read a) ∧
+      (∀ a, a < 4294967296 → μ.writable a = false → μ'.read a = μ.read a) ∧
+      (∀ a, μ'.readable a = μ.readable a) :=
+  res_freeG (R := R) (P := P) code pb S0 S1 x ω μ s sp vp kp kc r b v5 v6 e 4 _ H hCv rfl (by dsimp only; omega)
+    hCk hne hkp (by decide) (by decide) he h0 h1 h5 h6 hsp hS hkc hk0 hr64 hb hv5 hv6 mk mr mb mc mv m0 m5 m6
 
 end Services.Bootstrap.Acc.Handlers.ResStore

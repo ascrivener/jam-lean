@@ -180,6 +180,7 @@ import Services.Bootstrap.Acc.Handlers.ResultsAt
 import Services.Bootstrap.Acc.Handlers.ResStoreLoopSeg
 import Services.Bootstrap.Acc.Handlers.ResultsHyp
 import Services.Bootstrap.Acc.Handlers.ResStoreLoop
+import Services.Bootstrap.Acc.Handlers.ResStoreGen
 import Services.Bootstrap.Acc.Handlers.Upgrade
 import Services.Bootstrap.Acc.HeapHost
 import Services.Bootstrap.Acc.DecodeU32A

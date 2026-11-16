@@ -1,6 +1,6 @@
 # Handoff: field formatters of refine's 6159 Debug line
 
-## Current state (session 3, branch `claude/bootstrap-fields-2-wip`, 2026-11-16 ~08:30 UTC)
+## Current state (session 3, branch `claude/bootstrap-fields-2-wip`, 2026-11-16 ~09:30 UTC)
 - **Open PRs**: #213 (FieldInt) and #216 (write_str_heap). #213's proofs job timed out on attempt 1 and
   resumed in attempt 2; #216 was on attempt 1. Merge each on green (subscribed in session 3).
 - **Done this session** (all build, axioms clean; on the wip branch, after the session-2 commits):
@@ -22,8 +22,13 @@
     (57922 as `ArgOk`, M 2·len, C 1073741924 + 536875500·len), named hypothesis `RO70833`.
   - `FieldN56Hex.lean`: `n56_hex`, 56340 from 57346 to its return (≤ 21 octets), named hypotheses
     `RO70824`, `RO70833`.
+  - `FieldN57Hex.lean`: `n57_hex`, 57485's hex path (57567 … the return), the same shape as `n56_hex`
+    (80-octet frame, args at U, slice at U + 40, F in ω₅, the memo in ω₆).
+  - `FieldMemoScan.lean`: `memo_scan`, 57485's prologue and first scan (128 octets: 32 ≤ b < 128 or 0
+    goes on) to 57532 or 57567, memory written only in the frame.
   - Imports in `Services.lean` (FieldWriteSpec, FieldWriteChar and the new leaves); `docs/whats-proven.md`
-    lists RO70833 and RO70824 under "In progress" (D3).
+    lists RO70833 and RO70824 under "In progress" (D3). A full local `lake build` (main@dd373c2 + the wip
+    commits) was green before FieldN57Hex/FieldMemoScan; `lake build Services` green after them.
 - **Tactics notes.** `post_simp` ends in `try rfl`, which hangs (whnf timeout, not caught by `try`) on
   any goal simp leaves with a memory term or `decodeLE (encodeLE 8 v)`. Add `rdN_lit8` / `rdN_lit4`
   (stores of literals), `Num.decodeLE_encodeLE, Nat.reduceMul, Nat.reducePow` and `Nat.mod_eq_of_lt`
@@ -37,7 +42,13 @@
      `&str` arg 2530) needs the from_utf8 step bound (after #194, from the executor line); the hex path
      is `n56_hex` + `n56_checks` (its prologue 56340 … 56356 still to state). Then 56340 / 33167 as
      `RefOk`/`ArgOk`. `fmt_writeW` covers 70818's write too.
-  3. 57485 / 33162 where they don't need from_utf8, then the step-8 survey.
+  3. 57485: left are the search for the first 0 (57532 … 57549: a 0 at i → `from_utf8(memo, i)` at
+     57618, none → `from_utf8(memo, 128)` at 57552; Err → 57567, Ok → `write(70818)` with a `&str`
+     arg 2530 at 57635), all after from_utf8 blocked. 33162 / 33167 are 2-instruction derefs (load
+     ω₇ from ω₇, jump to 57485 / 56340), like 57917 (`u8hexref_okW`), once 57485 / 56340 are done.
+  4. The step-8 survey.
+- **Context**: session 3 asked the parent for a restart at ~330k tokens; the PR events for #213 / #216
+  go to whichever session is subscribed (re-subscribe in the new session).
 - Local builds: `scripts/fetch-lake.sh` unpacked main@dd373c2; I worked on a local branch `local-build`
   = dd373c2 + the wip commits, and cherry-picked onto `claude/bootstrap-fields-2-wip` (base
   16b767f) to push.

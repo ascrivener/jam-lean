@@ -67,7 +67,7 @@ theorem wz {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR 
     (h1 : ω[1] = UInt64.ofNat G) (h7 : ω[7] = UInt64.ofNat 0)
     (s0 : μ.readN G 8 = Num.encodeLE 8 svc) (s8 : μ.readN (G + 8) 8 = Num.encodeLE 8 hp)
     (hr : ∀ a, G ≤ a → a < G + 16 → μ.readable a = true) :
-    ∃ ω', FreeStepsH p R 5368 ω μ x 49174 ω' μ x 11 ∧ ω'[1] = ω[1] ∧ ω'[5] = UInt64.ofNat 0 ∧
+    ∃ ω', FreeStepsH p R 5368 ω μ x 49174 ω' μ x 13 ∧ ω'[1] = ω[1] ∧ ω'[5] = UInt64.ofNat 0 ∧
       ω'[6] = UInt64.ofNat 1 ∧ ω'[7] = UInt64.ofNat svc ∧ ω'[8] = UInt64.ofNat hp ∧ ω'[9] = UInt64.ofNat 1 ∧
       ω'[10] = UInt64.ofNat 0 ∧ ω'[11] = UInt64.ofNat 0 := by
   have rs := rd8 hsvc s0
@@ -88,6 +88,7 @@ theorem wbig {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCode
   have hr0 : ¬ r = 0 := by omega
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?_, ?_⟩
+  rotate_left
   pvm_go [h7, hr1, hr2, hr0]
 
 /-- 5368 … 41177, 1 ≤ r ≤ 2^37 − 32 with ⌈r/32⌉ < 2^31 units: the allocator's lock is taken (ω₄ parked at 196608,
@@ -114,8 +115,8 @@ theorem wl {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR 
       fun a ha h1 h2 => ?_, fun a => ?_⟩
     · simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte, PVM.getD_some',
         List.lookup_nil, Option.getD_none]
-      rd_simp []
-      simp
+      try rd_simp []
+      try simp
     · rd_simp []
     · rd_simp [hwr]
 
@@ -123,13 +124,13 @@ theorem wl {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR 
     into the block: ω₇ = the service id (G), ω₈ = the hash's address (G + 8), ω₉ = buf, ω₁₀ = 0, ω₁₁ = r (ω₅), with
     ω₆ = buf. Memory changes only at 206848. -/
 theorem wu {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] (x : X) (ω : Regs)
-    (μ : Memory) (G svc hp buf r : Nat) (hG : G + 48 ≤ 4294967296) (hsvc : svc < 18446744073709551616)
-    (hhp : hp < 18446744073709551616) (hbuf : buf ≠ 0) (hbuf1 : buf < 18446744073709551616)
+    (μ : Memory) (G svc hp buf r : Nat) (hG : 206856 ≤ G ∧ G + 48 ≤ 4294967296) (hsvc : svc < 18446744073709551616)
+    (hhp : hp < 18446744073709551616) (hbuf : buf ≠ 0) (hbuf1 : buf < 18446744073709551616) (hrr : r < 18446744073709551616)
     (h1 : ω[1] = UInt64.ofNat G) (h5 : ω[5] = UInt64.ofNat r) (h6 : ω[6] = UInt64.ofNat 196792)
     (h7 : ω[7] = UInt64.ofNat buf)
     (s0 : μ.readN G 8 = Num.encodeLE 8 svc) (s8 : μ.readN (G + 8) 8 = Num.encodeLE 8 hp)
     (hr : ∀ a, G ≤ a → a < G + 16 → μ.readable a = true) (hw : μ.writable 206848 = true) :
-    ∃ ω' μ', FreeStepsH p R 49149 ω μ x 49174 ω' μ' x 9 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧
+    ∃ ω' μ', FreeStepsH p R 49149 ω μ x 49174 ω' μ' x 10 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧
       ω'[6] = UInt64.ofNat buf ∧ ω'[7] = UInt64.ofNat svc ∧ ω'[8] = UInt64.ofNat hp ∧
       ω'[9] = UInt64.ofNat buf ∧ ω'[10] = UInt64.ofNat 0 ∧ ω'[11] = UInt64.ofNat r ∧ rdN μ' 206848 1 = 0 ∧
       (∀ a, a < 4294967296 → a ≠ 206848 → μ'.read a = μ.read a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
@@ -141,11 +142,12 @@ theorem wu {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR 
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?_, ?_, ?_, ?_⟩
   rotate_left 2
-  · pvm_go [h1, h5, h6, h7, hG, hb0, hbuf1, hr, hw', rs, rh, rdN_writeN_disjoint, ↓rdN_fold]
+  · pvm_go [h1, h5, h6, h7, hG.2, hb0, hbuf1, hr, hw', rs, rh, rdN_writeN_disjoint, ↓rdN_fold]
   · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_⟩
     all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
-      ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, h5]
+      ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, h5, rdN_writeN_disjoint, rs, rh, Nat.mod_eq_of_lt hrr]
     post_simp
+    all_goals try (unfold rdN; rw [Memory.readN_writeN_same _ _ _ _ (by simp) (by simp only [two32]; omega)]; rfl)
 
 /-- 49176 … 5372, after the second Ω_H: `Some(Vec)` {r, buf, r} at `out` (from G + 16), the frame popped (ω₀, ω₅,
     ω₆ from G + 40, G + 32, G + 24, ω₁ = G + 48), back to 5372. Memory changes only at `out` … `out` + 24. -/

@@ -28,6 +28,12 @@ theorem rd4 {μ : Memory} {a w : Nat} (hw : w < 2 ^ 32) (h : μ.readN a 4 = Num.
   show Num.decodeLE _ = _
   rw [h, Num.decodeLE_encodeLE, Nat.mod_eq_of_lt hw]
 
+/-- A u32 sign-extended and then zero-extended by the shift pair (`shlo_l 32`, `shlo_r 32`) is itself. -/
+theorem zext32 {svc : Nat} (h : svc < 4294967296) :
+    ((if svc < 2147483648 then (svc : Int) else (svc : Int) - 4294967296) % 18446744073709551616).toNat *
+      4294967296 % 18446744073709551616 / 4294967296 = svc := by
+  split <;> omega
+
 /-- 5095 … 5288: back from the staging copy, an element of index 8 (`Lookup`, D = 2^63 + 7) whose flag (the staged
     octet at M + 348) is set goes on into the eager handler at 5288. -/
 theorem ld {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] (x : X) (ω : Regs)
@@ -40,10 +46,13 @@ theorem ld {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR 
     ∃ ω', FreeStepsH p R 5095 ω μ x 5288 ω' μ x 12 ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
   have r128 := rd8 (by decide) s128
   have r136 := rd8 (by decide) s136
+  have hb' : ¬ rdN μ (M + 348) 1 % 18446744073709551616 = 0 := by
+    have := rdN_lt μ (M + 348) 1
+    rw [Nat.mod_eq_of_lt (by omega)]; exact hb
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?_, ?_, ?_⟩
   rotate_left
-  · pvm_go [h1, h6, hM, hr, hr2, hb, r128, r136, ↓rdN_fold]
+  · pvm_go [h1, h6, hM, hr, hr2, hb', r128, r136, ↓rdN_fold]
   · refine ⟨?_, ?_, ?_⟩ <;> simp only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff, ↓reduceIte,
       List.lookup_nil, Option.getD_none, h6]
 
@@ -67,13 +76,15 @@ theorem la {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR 
       ω'[9] = UInt64.ofNat 0 ∧ ω'[10] = UInt64.ofNat 0 ∧ ω'[11] = UInt64.ofNat 0 ∧
       μ'.readN (M + 168) 8 = μ.readN (cur + 12) 8 ∧ μ'.readN (M + 176) 8 = μ.readN (cur + 20) 8 ∧
       μ'.readN (M + 184) 8 = μ.readN (cur + 28) 8 ∧ μ'.readN (M + 192) 8 = μ.readN (cur + 36) 8 ∧
-      μ'.readN (M - 48) 8 = Num.encodeLE 8 svc ∧ μ'.readN (M - 40) 8 = Num.encodeLE 8 (M + 168) ∧
-      μ'.readN (M - 32) 8 = Num.encodeLE 8 (M + 560) ∧ μ'.readN (M - 24) 8 = Num.encodeLE 8 ω[6].toNat ∧
-      μ'.readN (M - 16) 8 = Num.encodeLE 8 ω[5].toNat ∧ μ'.readN (M - 8) 8 = Num.encodeLE 8 170 ∧
+      μ'.readN (M - 48) 8 = Num.encodeLE 8 svc ∧ μ'.readN (M - 48 + 8) 8 = Num.encodeLE 8 (M + 168) ∧
+      μ'.readN (M - 48 + 16) 8 = Num.encodeLE 8 (M + 560) ∧ μ'.readN (M - 48 + 24) 8 = Num.encodeLE 8 ω[6].toNat ∧
+      μ'.readN (M - 48 + 32) 8 = Num.encodeLE 8 cur ∧ μ'.readN (M - 48 + 40) 8 = Num.encodeLE 8 170 ∧
       (∀ a, a < 4294967296 → (a < M - 48 ∨ M ≤ a) → (a < M + 168 ∨ M + 200 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
   obtain ⟨hM0, hM1, hM8⟩ := hM
   have rs := rd4 hsvc s312
+  have hm : ∀ a, rdN μ a 8 % 18446744073709551616 = rdN μ a 8 := fun a => Nat.mod_eq_of_lt (rdN_lt64 μ a)
+  have hz := zext32 hsvc
   have hr3 : ∀ a, M - 48 ≤ a → a < M → μ.readable a = true :=
     fun a h1 h2 => Memory.readable_of_writable (hw a h1 h2)
   rw [show ω = regsNF ω [] from rfl]
@@ -83,7 +94,7 @@ theorem la {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR 
   · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 ha2 => ?_,
       fun a => ?_, fun a => ?_⟩
     all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
-      ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, h5]
+      ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, h5, hm, hz, encodeLE_rdN, Memory.length_readN]
     post_simp
 
 /-- 5372 … 59375: the `format!` call for the log line: its one argument (M + 560, the `Debug` function from M + 32)
@@ -250,8 +261,8 @@ theorem lps {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR
     (hr2 : ∀ a, M + 256 ≤ a → a < M + 264 → μ.readable a = true)
     (hr3 : ∀ a, M + 584 ≤ a → a < M + 608 → μ.readable a = true)
     (hw : ∀ a, ptr + 232 * len ≤ a → a < ptr + 232 * len + 32 → μ.writable a = true)
-    (hw2 : ∀ a, M + 264 ≤ a → a < M + 272 → μ.writable a = true) :
-    ∃ ω' μ', FreeStepsH p R 5493 ω μ x 4046 ω' μ' x 15 ∧ ω'[0] = UInt64.ofNat 178 ∧ ω'[1] = ω[1] ∧
+    (hwl : ∀ a, M + 264 ≤ a → a < M + 272 → μ.writable a = true) :
+    ∃ ω' μ', FreeStepsH p R 5493 ω μ x 4046 ω' μ' x 16 ∧ ω'[0] = UInt64.ofNat 178 ∧ ω'[1] = ω[1] ∧
       ω'[7] = UInt64.ofNat (M + 304) ∧
       μ'.readN (ptr + 232 * len) 8 = Num.encodeLE 8 9223372036854775825 ∧
       μ'.readN (ptr + 232 * len + 8) 8 = Num.encodeLE 8 w0 ∧ μ'.readN (ptr + 232 * len + 16) 8 = Num.encodeLE 8 w1 ∧
@@ -268,29 +279,37 @@ theorem lps {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?_, ?_, ?_, ?_⟩
   rotate_left 2
-  · pvm_go [h1, h5, hM0, hM1, hM8, hptr, hpM, hr, hr2, hr3, hw, hw2, r8, rp, r0, r1, r2, rdN_writeN_disjoint,
+  · pvm_go [h1, h5, hM0, hM1, hM8, hptr, hpM, hr, hr2, hr3, hw, hwl, r8, rp, r0, r1, r2, rdN_writeN_disjoint,
       ↓rdN_fold]
   · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 ha2 => ?_, fun a => ?_, fun a => ?_⟩
     all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
-      ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, h5]
+      ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, h5, Nat.mul_comm len 232]
     post_simp
 
 /-- The entry of `drop_in_place::<Instruction>`'s table (65536, read-only data) for index 8 (`Lookup`): the offset
     of the jump-table address 122, whose entry is the plain return 4115. -/
 def dropEntry8 : List UInt8 := [122, 0, 255, 255]
 
+/-- The return address 178, just stored as an immediate at a, read back. -/
+theorem rdN_writeN_178 (μ : Memory) (a : Nat) (ha : a + 8 ≤ 4294967296) :
+    rdN (μ.writeN a [UInt8.ofNat 178, UInt8.ofNat 0, UInt8.ofNat 0, UInt8.ofNat 0, UInt8.ofNat 0, UInt8.ofNat 0,
+      UInt8.ofNat 0, UInt8.ofNat 0]) a 8 = 178 := by
+  unfold rdN
+  rw [Memory.readN_writeN_same _ _ _ _ (by simp) (by simp only [two32]; omega)]
+  rfl
+
 /-- 4046 … 5558, `drop_in_place::<Instruction>` of the staged `Lookup` (D = 2^63 + 7 at M + 304): it owns nothing,
     so the table's arm (`dropEntry8`, at 65568) returns at once, to 178 (→ 5558), and on to the loop head 5042.
     Memory changes only at the frame M − 40 … M. -/
 theorem ldrop {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P] (x : X) (ω : Regs)
-    (μ : Memory) (M : Nat) (hM : 65536 ≤ M ∧ M + 632 ≤ 4294967296 ∧ M % 8 = 0)
+    (μ : Memory) (M : Nat) (hM : 131072 ≤ M ∧ M + 632 ≤ 4294967296 ∧ M % 8 = 0)
     (h0 : ω[0] = UInt64.ofNat 178) (h1 : ω[1] = UInt64.ofNat M) (h7 : ω[7] = UInt64.ofNat (M + 304))
     (s304 : μ.readN (M + 304) 8 = Num.encodeLE 8 9223372036854775815)
     (tab : μ.readN 65568 4 = dropEntry8)
     (hr : ∀ a, M + 304 ≤ a → a < M + 312 → μ.readable a = true)
     (hr2 : ∀ a, 65568 ≤ a → a < 65572 → μ.readable a = true)
     (hw : ∀ a, M - 40 ≤ a → a < M → μ.writable a = true) :
-    ∃ ω' μ', FreeStepsH p R 4046 ω μ x 5042 ω' μ' x 17 ∧ ω'[1] = ω[1] ∧
+    ∃ ω' μ', FreeStepsH p R 4046 ω μ x 5042 ω' μ' x 26 ∧ ω'[1] = ω[1] ∧
       (∀ a, a < 4294967296 → (a < M - 40 ∨ M ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
   obtain ⟨hM0, hM1, hM8⟩ := hM
@@ -303,7 +322,7 @@ theorem ldrop {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCod
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?_, ?_, ?_, ?_⟩
   rotate_left 2
-  · pvm_go [h0, h1, h7, hM0, hM1, hM8, hr, hr2, hr3, hw, rD, rt, rdN_writeN_disjoint, ↓rdN_fold]
+  · pvm_go [h0, h1, h7, hM0, hM1, hM8, hr, hr2, hr3, hw, rD, rt, rdN_writeN_178, rdN_writeN_disjoint, ↓rdN_fold]
   · refine ⟨?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
     all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
       ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1]

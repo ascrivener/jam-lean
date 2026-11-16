@@ -102,8 +102,10 @@ def step (env : AccEnv) : {β : Type} → AOp β → AccCtx → Option (β × Ac
     let o ← call env 5 [key, value] [argAt [key, value] 0, key.length, argAt [key, value] 1, value.length] c
     pure (if r7 o = FULL then .error () else .ok (), o.ctx)
   | _, .remove key, c => do
+    -- quirk Q18: the SDK's `remove` (48481) panics on FULL (Ω_W, GP v0.8.0 B.7: the threshold
+    -- after the removal still above the balance).
     let o ← call env 5 [key] [argAt [key] 0, key.length, 0, 0] c
-    pure ((), o.ctx)
+    if r7 o = FULL then none else pure ((), o.ctx)
   | _, .checkpoint, c => do
     let o ← call env 18 [] [] c
     pure ((), o.ctx)

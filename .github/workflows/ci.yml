@@ -12,10 +12,166 @@ concurrency:
   group: ci-${{ github.event.pull_request.number || (github.ref == 'refs/heads/main' && github.sha) || github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
+# Two lines of jobs (docs/BUILD-INFRA.md):
+# * `model` builds PVM, JAM and the tests, and runs every vector suite: minutes, on every run.
+# * `attempt-1..3` build and check everything, including the Services proofs: hours when cold. They run
+#   on main always, and on a PR only when `changes` finds that it can affect Services.
+# A PR may merge when `model` is green and the attempts are green or skipped.
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      affected: ${{ steps.detect.outputs.affected }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Can this change affect the Services proofs?
+        id: detect
+        run: scripts/services-affected.py ${{ github.event.pull_request.base.sha }}
+
+  model:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install elan
+        run: |
+          curl -sSfL --retry 5 --retry-all-errors https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh \
+            | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+          # Download the pinned toolchain up front, retrying transient download errors (e.g. HTTP 504).
+          for i in 1 2 3 4 5; do
+            "$HOME/.elan/bin/elan" toolchain install "$(cat lean-toolchain)" && break
+            echo "toolchain download failed (attempt $i); retrying" >&2
+            sleep $((i * 15))
+          done
+          "$HOME/.elan/bin/elan" toolchain list | grep -q "$(cut -d: -f2 lean-toolchain)"
+
+      - name: Generated tables and constants match the pinned paper
+        run: scripts/check-tables.sh
+
+      - name: No forbidden constructs
+        run: |
+          if grep -rnE '\bsorry\b|partial def|implemented_by|native_decide|bv_decide' PVM JAM Services Tests PVM.lean JAM.lean Services.lean; then
+            echo "forbidden construct found" >&2; exit 1
+          fi
+
+      # The model's own cache (saved by main's model job), else the newest full build of this toolchain.
+      - name: Restore .lake
+        uses: actions/cache/restore@v4
+        with:
+          path: .lake
+          key: lake-model-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
+          restore-keys: |
+            lake-model-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
+            lake-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
+
+      - name: Build the model and its theorems (everything but Services)
+        run: lake build PVM JAM
+
+      - name: Kernel-checked Ψ_H, Y and Ψ_M examples
+        run: lake build Tests.Invocation
+
+      - name: Worked proof with the gas-free logic
+        run: lake build Tests.LogicExample
+
+      - name: Theorems use only propext, Classical.choice and Quot.sound (PVM and JAM)
+        run: lake env lean scripts/CheckAxiomsModel.lean
+
+      - name: Fetch the pinned test vectors
+        run: scripts/fetch-vectors.sh
+
+      - name: Vector runner (programs/)
+        run: lake build pvmtest
+
+      - name: Block gas checker (programs/ and gas-tests/)
+        run: lake build gascheck
+
+      - name: Blake2b vectors
+        run: lake build Tests.Blake2bTest
+
+      - name: General host functions
+        run: lake build Tests.HostGeneralTest
+
+      - name: Keccak and SHA3 vectors
+        run: lake build Tests.KeccakTest
+
+      - name: SHA-512 vectors (FIPS 180-2 and hashlib) and one trace block's VRF output
+        run: lake build Tests.Sha512Test
+
+      - name: Refine host functions, Ψ_R and Ψ_I (hand-written; no vectors exist)
+        run: lake build Tests.RefineTest
+
+      - name: The real witness binary rejects malformed payloads (a test, not a proof)
+        run: lake build witnessrun
+
+      - name: Fetch the Gray Paper v0.8.0 JAM vectors
+        run: scripts/fetch-jam-vectors.sh
+
+      - name: Codec vectors, tiny and full (encode from JSON, decode and re-encode)
+        run: lake build codectest
+
+      - name: State trie vectors (Appendix D)
+        run: lake build trietest
+
+      - name: Shuffle vectors (Appendix F)
+        run: lake build shuffletest
+
+      - name: Erasure-coding vectors, tiny and full (all listed as deviating from GP 0.8.0)
+        run: lake build erasuretest
+
+      - name: Accumulate vectors (all but the listed deviations from GP 0.8.0)
+        run: lake build acctest
+
+      - name: Recent-history vectors (tiny and full)
+        run: lake build historytest
+
+      - name: Authorizations vectors (tiny and full)
+        run: lake build authtest
+
+      - name: Statistics vectors (tiny and full)
+        run: lake build statstest
+
+      - name: Preimages vectors (tiny and full)
+        run: lake build preimagestest
+
+      - name: Disputes vectors (tiny and full)
+        run: lake build disputestest
+
+      - name: Assurances vectors (tiny and full)
+        run: lake build assurancestest
+
+      - name: Reports vectors (tiny and full)
+        run: lake build reportstest
+
+      - name: Safrole vectors (tiny and full; Bandersnatch primitives as an oracle read from the vectors)
+        run: lake build safroletest
+
+      - name: Fetch four block-import traces (fallback, safrole, storage_light, preimages_light)
+        run: scripts/fetch-trace-vectors.sh fallback safrole storage_light preimages_light
+
+      - name: Block import Υ over those traces, state compared after every block
+        run: lake build tracetest
+
+      # The restored cache may be a full build; keep the model's cache small by leaving Services out.
+      - name: Drop Services from .lake
+        if: success() && github.ref == 'refs/heads/main'
+        run: rm -rf .lake/build/lib/lean/Services .lake/build/lib/lean/Services.* .lake/build/ir/Services .lake/build/ir/Services.*
+
+      - name: Save .lake
+        if: success() && github.ref == 'refs/heads/main'
+        uses: actions/cache/save@v4
+        with:
+          path: .lake
+          key: lake-model-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
+
   # A cold build needs more than one job's time: each attempt that runs out of budget saves .lake and the
   # next one resumes from it (see build.yml). Three attempts cover a cold build (about 4.5–5 h of building).
   attempt-1:
+    needs: changes
+    if: needs.changes.outputs.affected == 'true'
     permissions: { contents: write }  # publish .lake to the lake-cache release (main only)
     uses: ./.github/workflows/build.yml
     with: { attempt: 1, last: false }

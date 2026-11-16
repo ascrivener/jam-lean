@@ -282,4 +282,42 @@ theorem pkg_imported {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] 
   exact passSlot_own _ (passW_idx (t := 19) (by unfold PassIdx; omega)) (hR μr (keep_refl cs μr)).1
     (he ▸ SlotVV.slotOK_imported env K pb hK1 hK C ds hw cs bs μr hR)
 
+/-- **`CreateService` with code `None`** (word 0 the niche 2^64 − 1). -/
+theorem pkg_csNone {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeA p P]
+    (env : RefineHost.Env) (K pb : Nat) (hK1 : 134217728 ≤ K) (hK : K < 18446744073709551616) (gl : Nat → UInt8)
+    (C : Spec.Consts) (h : List UInt8) (l g m b : Nat) (memo : List UInt8) (f : Nat) (id : Option Nat)
+    (hw : (Spec.Instr.createService h l g m b memo none f id).WF C) :
+    DecPkg env K pb gl p P (.createService h l g m b memo none f id)
+      (PassSlot env K pb p P C (.createService h l g m b memo none f id)) := by
+  have hw0 := hw
+  obtain ⟨hh, -, -, -, -, hmemo, -, -, -⟩ := hw
+  have he : (Spec.Instr.createService h l g m b memo none f id).encode =
+      0 :: (h ++ Codec.fixed 8 l ++ Codec.fixed 8 g ++ Codec.fixed 8 m ++ Codec.fixed 8 b ++ memo ++ [0] ++
+        Codec.fixed 8 f ++ Spec.opt (Codec.fixed 4) id) := by
+    simp [Spec.Instr.encode, Spec.opt]
+  refine pkg_ofF (fun F RD hL => he ▸ Decode.CreateServiceElem.create_service_noneF F RD hL _ _ _ _ _ _ _ _ hh
+    (by simp [Codec.fixed]) (by simp [Codec.fixed]) (by simp [Codec.fixed]) (by simp [Codec.fixed]) hmemo
+    (by simp [Codec.fixed]) (optU32_of id)) (fun cs bs μr hb => ?_)
+  exact passSlot_noown 18446744073709551615 (Or.inr (Or.inr rfl)) hb.1
+    (slotOK_csNone env K pb hK1 hK C h l g m b memo f id hw0 _ bs hb μr)
+
+/-- **`CreateService` with code `Some []`** (word 0 the length 0). -/
+theorem pkg_csEmpty {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeA p P]
+    (env : RefineHost.Env) (K pb : Nat) (hK1 : 134217728 ≤ K) (hK : K < 18446744073709551616) (gl : Nat → UInt8)
+    (C : Spec.Consts) (h : List UInt8) (l g m b : Nat) (memo : List UInt8) (f : Nat) (id : Option Nat)
+    (hw : (Spec.Instr.createService h l g m b memo (some []) f id).WF C) :
+    DecPkg env K pb gl p P (.createService h l g m b memo (some []) f id)
+      (PassSlot env K pb p P C (.createService h l g m b memo (some []) f id)) := by
+  have hw0 := hw
+  obtain ⟨hh, -, -, -, -, hmemo, -, -, -⟩ := hw
+  have he : (Spec.Instr.createService h l g m b memo (some []) f id).encode =
+      0 :: (h ++ Codec.fixed 8 l ++ Codec.fixed 8 g ++ Codec.fixed 8 m ++ Codec.fixed 8 b ++ memo ++ [1, 0] ++
+        Codec.fixed 8 f ++ Spec.opt (Codec.fixed 4) id) := by
+    simp [Spec.Instr.encode, Spec.opt, Spec.bytes, Codec.nat]; rfl
+  refine pkg_ofAF (fun F RD hL => he ▸ Decode.CreateServiceElem.create_service_empty_elem env K pb gl F RD hL
+    _ _ _ _ _ _ _ _ hh (by simp [Codec.fixed]) (by simp [Codec.fixed]) (by simp [Codec.fixed])
+    (by simp [Codec.fixed]) hmemo (by simp [Codec.fixed]) (optU32_of id)) (fun cs bs μr hb => ?_)
+  exact passSlot_noown 0 (Or.inr (Or.inl (by decide))) hb.1
+    (slotOK_csEmpty env K pb hK1 hK C h l g m b memo f id hw0 _ bs hb μr)
+
 end Services.Bootstrap.Refine.PkgH

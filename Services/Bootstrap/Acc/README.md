@@ -1,12 +1,25 @@
 # Bootstrap's accumulate: entry, control flow and checkpoints
 
-## Handoff: T2 inputs, items loop and `on_transfer` (updated 2026-11-16, third session)
+## Handoff: T2 inputs (updated 2026-11-16 evening, end of the third session)
 
-**State.** PR #222 (`claude/bootstrap-t2-inputs-wip`) is open: `tr_impl` and everything below. Main
-(d6b9533, with #215's weaker `none` branch) was merged in, and nothing here needed changes. A full
-`lake build` passed (2802 jobs); `tr_impl`'s axioms are propext, Classical.choice and Quot.sound. Get a
-built tree with `scripts/fetch-lake.sh --force`, then `lake build`. The toolchain lands in
-`/root/.lean/lean-4.36.0-rc1-linux/bin`.
+**Read this from `claude/bootstrap-t2-statics`** (it has everything; `claude/bootstrap-t2-inputs-wip`'s
+README is older, and pushing to that branch restarts #222's CI).
+
+**PR #222** (`claude/bootstrap-t2-inputs-wip`, `tr_impl` and the items-loop pieces): main with #224 merged
+in (2bba0ed), `gk_call`'s `get_call` pattern adapted (`… keepd5, fr5, -, -, -⟩`), full local build green
+(2874 jobs). CI: `model` green, `attempt-1` was still running at the handoff. Merges are blocked for now:
+main's ruleset still requires the old `build-and-check` check (Adam to update). Merge #222 (squash) once
+it is green and merging is possible; message @parent on merge. Nothing else to change in it.
+
+**Then the statics PR** from `claude/bootstrap-t2-statics`: merge main (with #222) into it, `lake build`
+(it was fully green at fdcbed6 / c31e166: 2880 jobs; axioms of `tr_impl`, `start_to_6429_statics`,
+`accAbort_of_heapFailT` clean), push, open the PR. Body: the three parts below, the strengthened
+`KeyFmt` / `LogFmt` (Adam, option (a), R11), `TrPost`'s new `Glob` conjunct, `AccAbort`'s trap list and
+the 59710 exclusion, the PR-body line from CLAUDE.md. Merge on green; message @parent.
+
+Toolchain: `scripts/fetch-lake.sh --force`, then `export PATH=/root/.lean/lean-4.36.0-rc1-linux/bin:$PATH`.
+Run long `lake build`s with `run_in_background` (a foreground call is cut at 10 min). The disassembler:
+`python3 -I scripts/allocfail/dis.py services/bootstrap/jam-bootstrap-service.jam > dis.txt`.
 
 **Branch `claude/bootstrap-t2-statics` (PR after #222 merges; pushed):**
 - `Acc/Statics.lean`: `chain` / `start_to_6429_statics`: at 6429, [196616]₂ = 𝖢 and [196696]₈ = 𝖨

@@ -923,6 +923,23 @@ What you trust beyond the kernel:
   values shorter than 2⁶³ octets (`get_call`'s `hfit`); T2 will carry this as `ValuesFit` (decided
   2026-11-15). The SDK's `get` reads a length of 2⁶⁴ − 1 as NONE and traps on lengths from 2⁶³; see
   [Findings](#findings).
+- **The ring size (T2, `RingFits`; row 8, `add_recent_work_item`).** The binary sizes the ring of recent work items
+  as 2·𝖢·𝖨 computed in 32 bits (`Acc/Handlers/RecentSlotWrite.lean`), so row 8 assumes
+  `ParamStatics μ C I ∧ RingFits C I`: the protocol parameters' statics hold 𝖢 (the `u16` at 196616) and 𝖨 (the
+  `u64` at 196696), and 0 < 2·𝖢·𝖨 < 2³² (decided 2026-11-16). The full parameters give 2·341·16 = 10912.
+  - `RingFits` is a named hypothesis on the chain parameters and an assumption of T2. *Obligation (open):* it may
+    later be discharged from the fetched parameters (fetch kind 0) instead. The upper bound already follows from
+    `apply()`'s checks (2 ≤ 𝖢 ≤ 341, 𝖨 stored as a `u16`, so 2·𝖢·𝖨 < 2³²); only positivity (𝖨 ≥ 1) is not checked
+    by the binary and remains a real assumption on the chain parameters.
+  - `ParamStatics` is not an assumption of T2. *Obligation (open):* the T2 composition discharges it from the entry
+    prologue's `apply()` (the stores at 56205 and 56279) and from the frames of the later steps, which keep
+    196616 … 196791.
+  - Row 8 is composed: `add_recent` (`Acc/Handlers/RecentAdd.lean`) states that the run from 8013 to 8416
+    implements spec `addRecent` in `Impl`'s form. Early ☇ happens only at the allocation-failure traps 34070,
+    47977 and 32584 (heap exhaustion). Its hypotheses are `ParamStatics` (an obligation), `RingFits`,
+    maxRecent = 2·𝖢·𝖨, the read-only words it reads (key sizes, `set`'s error table) and `ValuesFit` for
+    this service's storage at the start (`StoreFit`). `Impl.inv` carries `StoreFit` past the removal and the
+    slot write.
 - **Refinement of a fragment, not of a whole program.** The allocator theorems are about the
   allocator's entry points called with the stated registers and memory. They are not yet composed
   into a Ψ_R or Ψ_A theorem about a bootstrap run that allocates.

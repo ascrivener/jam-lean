@@ -33,7 +33,7 @@ set_option maxRecDepth 100000
 /-- Two chunks of a well-formed heap whose data share an octet are equal. -/
 theorem chunk_uniq {s : State} (hwf : WF s) {c d : Chunk} (hc : c ∈ chunks s) (hd : d ∈ chunks s) {a : Nat}
     (ha : InData c a) (hb : InData d a) : c = d := by
-  by_contra hne
+  refine Classical.byContradiction fun hne => ?_
   have := Decode.VecU8.data_disj hwf hc hd hne ha
   unfold InData at hb
   omega
@@ -162,7 +162,7 @@ theorem TailHyp.keepF {code : ByteArray} {pb S0 S1 : Nat} {μ μ' : Memory} {st 
   have hb : ∀ q ∈ tailBufs μ sp, q ∉ F := fun q hq =>
     hdis q (by unfold tailFree; exact List.mem_append_right _ hq)
   refine ⟨⟨H', T.hsp, ?_, ?_, ?_, ?_⟩, tf⟩
-  · rw [e 456 (by omega), e 464 (by omega)]; exact T.O.keepG hG hk
+  · rw [e 456 (by omega), e 464 (by omega)]; exact ResultsOwn.keepG T.O hG hk
   · rw [e 456 (by omega), e 464 (by omega), e 448 (by omega), hr]
     exact T.b1.keepF hk fun hc => hb _ (by
       unfold tailBufs; exact List.mem_append_left _ (List.mem_append_left _ (optBuf_mem hc)))

@@ -107,6 +107,21 @@ Handlers dependencies takes ~2 h on 4 cores). Use `ulimit -v 12000000` when comp
 - `refine ⟨?ω', ?run⟩; case run => pvm_go …` for a one-witness existential.
 
 
+## Session 10 progress (2026-11-16)
+
+- **R7 is done from 15028.** `RowElevenFront.lean` holds **`row_eleven`**: the instructions' drop
+  (`DropInstrsH`, 33214, ret 558 → 15038), then `row_eleven_core`. It is `Impl` of
+  `if b then pure () else store (Key.results …) (encodeResults rs)`, ending in `R7Post` with
+  `iterFree ++ tailFree` freed. Premises the parent accepted, recorded in `docs/t2-remaining.md`:
+  `IterOwn` at sp + 472, `(iterFree ++ tailFree).Nodup`, `ResultsAvoid … iterFree`, and the stack room.
+  Pieces: `chunk_uniq`, `mem_resPtrs`, `ChunksKeptG`/`OwnG` with `ResultsOwn.keepG` (the keep lemmas over
+  the chunks satisfying G), `BufOK.keepF`, `TailHyp.keepF`. Axioms clean.
+- `ResultsAvoid.lean`: `InHeapP`/`VecAtP`/`OkAtP`/`ResultAtP`/`ResultsAtP` (`ResultsAt` over a chunk
+  predicate), `AvoidC`, **`ResultsAvoid`**, `ResultsAtP.mono`, `ResultsAvoid.toAt`, `ResultsAvoid.keep`.
+- Fix: `Impl.then` in `RowElevenCore.lean` didn't bind `Qu`, and the module failed to build. It is now
+  `{Qu : Type}`.
+- Next: R5 (the instruction loop). Entry 15050 (`r11_di1`) is still unexplained.
+
 ## Session 9 handoff (2026-11-16, for the 10th session)
 
 **PRs.** **#228** (row 9) still open: `model`/`changes` green, `attempt-1` was still running after ~3 h at

@@ -30,7 +30,7 @@ set_option maxRecDepth 100000
 
 /-- **`Impl` with its post-condition continued**: if a run from s implements `prog` with Q, and from
     every state where Q a holds a run implements `pure a` with Q′, the run implements `prog` with Q′. -/
-theorem Impl.then {p : ByteArray} {R : HostRel (AccCtx × Qu)} {env : AccEnv} {Ab : St Qu → Prop}
+theorem Impl.then {Qu : Type} {p : ByteArray} {R : HostRel (AccCtx × Qu)} {env : AccEnv} {Ab : St Qu → Prop}
     {α : Type} {Q Q' : α → St Qu → Prop} (hQ : ∀ a s, Q a s → Impl p R env Ab (Prog.pure a) Q' s) :
     ∀ (prog : Prog AOp α) (s : St Qu), Impl p R env Ab prog Q s → Impl p R env Ab prog Q' s := by
   intro prog

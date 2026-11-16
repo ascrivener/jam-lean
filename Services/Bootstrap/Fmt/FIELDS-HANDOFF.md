@@ -1,6 +1,48 @@
 # Handoff: field formatters of refine's 6159 Debug line
 
-## Current state (session 2, branch `claude/bootstrap-fields-2`, 2026-11-16)
+## Current state (session 3, branch `claude/bootstrap-fields-2-wip`, 2026-11-16 ~08:30 UTC)
+- **Open PRs**: #213 (FieldInt) and #216 (write_str_heap). #213's proofs job timed out on attempt 1 and
+  resumed in attempt 2; #216 was on attempt 1. Merge each on green (subscribed in session 3).
+- **Done this session** (all build, axioms clean; on the wip branch, after the session-2 commits):
+  - `FieldPadWidthSteps.lean` / `FieldPadWidth.lean`: `pad_wp` (options 0x69000020, width w ≤ n: the
+    plain path) and `pad_z2` (width 2, one digit: the zero-pad path, `write_char` of '0' then
+    `write_str`, the options word saved and restored; `Keeps.restore`). `pz_a` had to be split
+    (`pz_a1`, `pz_a2`): one 30-instruction run with 14 stores made `post_simp` time out.
+  - `FieldU8HexSteps.lean` / `FieldU8Hex.lean`: `u8hex_okW` (60209 for a fixed String W) and
+    `u8hex_ok` (`ArgOkO`, M 2, C 536875000: the C carries the exhaustion budget, the Ok path is
+    ≤ 2(cap' − cap) + 3900); `FmtrO.congr`; `u8hexref_okW` (57917, `<&u8 as LowerHex>`).
+  - `FieldWriteNested.lean`: **nested writes.** 57922 and 57346 call `core::fmt::write` from their own
+    frames, with the arguments *below* the String, while `ArgOk`/`ArgOkO`/`fmt_write`/`fmt_write_spec`
+    need W + 24 ≤ spA ≤ args. New, in my files only: `ArgOkW` (the caller's frame kept but for W, W a
+    parameter; `ArgOkW.toO`), `ValAt.readableW`, `fmt_write_c3` (template = one 0xC3 item + end).
+  - `FieldWriteNestedPlain.lean`: `ArgOkWp` (`ArgOkWp.toArgOk`), `ArgsAtW`, `WrLoopW`, `wr_itemW`,
+    `wr_loopW`, `fmt_writeW`: Write.lean's loop copied under the nested frame (generated from
+    Write.lean with substitutions, then fixed).
+  - `FieldSliceHexSteps.lean` / `FieldSliceHex.lean`: `sh_loop`, `slice_hex_okW`, `slice_hex_ok`
+    (57922 as `ArgOk`, M 2·len, C 1073741924 + 536875500·len), named hypothesis `RO70833`.
+  - `FieldN56Hex.lean`: `n56_hex`, 56340 from 57346 to its return (≤ 21 octets), named hypotheses
+    `RO70824`, `RO70833`.
+  - Imports in `Services.lean` (FieldWriteSpec, FieldWriteChar and the new leaves); `docs/whats-proven.md`
+    lists RO70833 and RO70824 under "In progress" (D3).
+- **Tactics notes.** `post_simp` ends in `try rfl`, which hangs (whnf timeout, not caught by `try`) on
+  any goal simp leaves with a memory term or `decodeLE (encodeLE 8 v)`. Add `rdN_lit8` / `rdN_lit4`
+  (stores of literals), `Num.decodeLE_encodeLE, Nat.reduceMul, Nat.reducePow` and `Nat.mod_eq_of_lt`
+  facts for every stored value. To find the culprit fast: replace the post block with a
+  `simp (disch := pvm_arith) only [...]` (post_simp's list, no rfl), `trace_state`, `all_goals sorry`
+  in a scratch copy (pvm_go itself takes ~20–40 s).
+- **Next steps, in order:**
+  1. PR 2 (N56Steps / N56Len / N56Checks + imports) and PR 3 (FieldWriteSpec, FieldWriteChar and this
+     session's files) onto main after #213 / #216 merge (cherry-pick; the base must be main).
+  2. 56340 as a whole: the string path (56921 → `from_utf8` 57327 → `write(70818)` at 57412 with a
+     `&str` arg 2530) needs the from_utf8 step bound (after #194, from the executor line); the hex path
+     is `n56_hex` + `n56_checks` (its prologue 56340 … 56356 still to state). Then 56340 / 33167 as
+     `RefOk`/`ArgOk`. `fmt_writeW` covers 70818's write too.
+  3. 57485 / 33162 where they don't need from_utf8, then the step-8 survey.
+- Local builds: `scripts/fetch-lake.sh` unpacked main@dd373c2; I worked on a local branch `local-build`
+  = dd373c2 + the wip commits, and cherry-picked onto `claude/bootstrap-fields-2-wip` (base
+  16b767f) to push.
+
+## Session 2 state (superseded), branch `claude/bootstrap-fields-2`, 2026-11-16)
 - **Open PRs (2026-11-16 ~03:00 UTC)**: #213 (FieldInt) and #216 (write_str_heap, D1). For both, the `model`
   job is green and the proofs build is running. Subscribe and merge each on green.
 - **Branch layout**: `claude/bootstrap-fields-2-wip` = main@16b767f + write_str_heap (a81005a, = #216) + the

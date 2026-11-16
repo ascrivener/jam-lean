@@ -92,7 +92,7 @@ theorem op_r57 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCo
     (hD : DropInstrsH B p P env.code pb S0 S1)
     (gcap : Nat) (hcap1 : 134217728 ≤ gcap) (hcap : gcap < 18446744073709551616)
     (hAb1 : ∀ s : St Stream, s.i = 36528 → Ab s) (hAb2 : ∀ s : St Stream, s.i = 34070 → Ab s)
-    (hAbX : ∀ s : St Stream, s.i = 40611 ∨ s.i = 40821 → Ab s)
+    (hAbX : ∀ s : St Stream, (s.i = 40611 ∨ s.i = 40821) ∧ s.ω[7] = UInt64.ofNat 0 → Ab s)
     {sp q nc e : Nat} {μ₀ : Memory} (o : OperandTuple) (rest : List AccumulateInput) (s : St Stream)
     (Q : ForInStep PUnit → St Stream → Prop)
     (hQ : ∀ s', ItemsInv env pb S0 S1 sp q nc e μ₀ rest s' → Q (.yield ⟨⟩) s')
@@ -219,8 +219,8 @@ set_option maxRecDepth 20000 in
 /-- **R2, the items loop's operand arm** (`OpArm`): from the loop head with an operand with a work
     output b next, the run implements `onWorkItem C now p b` then `yield` (GP v0.8.0 Appendix B, Ω_W)
     and returns to the loop head with `ItemsInv` for the rest; early ☇ only where `Ab` holds (heap
-    exhaustion: `HeapFailT`, the traps 15364, 34070, 47977, 32584, 36528, the allocator calls 40611 /
-    40821). Named hypotheses: `ItemLogFmt` (the item's log line), `OutDecH` (R3, the output's decode),
+    exhaustion: `HeapFailT`, the traps 15364, 34070, 47977, 32584, 36528, a failed allocator call at
+    40611 / 40821 with ω₇ = 0). Named hypotheses: `ItemLogFmt` (the item's log line), `OutDecH` (R3, the output's decode),
     Handlers A's `InstrLogH`, `ResultLogH` (G4), `HandlerH` (R6), `PushH` (R8), `ExtendH`, `OkEncH`
     (R8 / R9), `DropInstrsH`; `ParamStatics μ₀ Cp I` for the statics μ₀ fixes (proved from the prologue,
     `start_to_6429_statics`), `RingFits Cp I` and maxRecent = 2·𝖢·𝖨 (row 8). -/
@@ -229,7 +229,7 @@ theorem op_arm {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCo
     (gcap : Nat) (hcap1 : 134217728 ≤ gcap) (hcap : gcap < 18446744073709551616)
     (hAb : ∀ s : St Stream, HeapFailT s → Ab s)
     (hAbT : ∀ s : St Stream, s.i = 15364 ∨ s.i = 34070 ∨ s.i = 47977 ∨ s.i = 32584 ∨ s.i = 36528 → Ab s)
-    (hAbX : ∀ s : St Stream, s.i = 40611 ∨ s.i = 40821 → Ab s)
+    (hAbX : ∀ s : St Stream, (s.i = 40611 ∨ s.i = 40821) ∧ s.ω[7] = UInt64.ofNat 0 → Ab s)
     (hIL : ItemLogFmt p env pb S0 S1) (hOD : OutDecH B C p env pb S0 S1)
     (hL : InstrLogH B p env pb S0 S1) (hR : ResultLogH p env pb S0 S1) (hH : HandlerH B p env C now pb S0 S1 Ab)
     (hP : PushH p env pb S0 S1) (hE : ExtendH p P env pb S0 S1) (hO : OkEncH p P env pb S0 S1)

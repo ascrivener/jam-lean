@@ -19,6 +19,8 @@ import Services.Bootstrap.CodeFOk
 import Services.Bootstrap.CodeR
 import Services.Bootstrap.CodeRAll
 import Services.Bootstrap.CodeROk
+import Services.Bootstrap.CodeT1BAll
+import Services.Bootstrap.CodeT1BOk
 import Services.Bootstrap.Bridge
 import Services.Bootstrap.Fmt.OracleRefine
 import Services.Bootstrap.Fmt.Hex

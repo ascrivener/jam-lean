@@ -1,4 +1,4 @@
-import Services.Bootstrap.Acc.Handlers.ResultsDropRun
+import Services.Bootstrap.Acc.Handlers.InstrRep
 import Services.Bootstrap.Acc.Handlers.RowElevenTail
 
 /-!
@@ -18,6 +18,7 @@ namespace Services.Bootstrap.Acc.Handlers.RowEleven
 open PVM JAM Picoalloc Services.Bootstrap Services.Bootstrap.Code Services.Bootstrap.CodeA
   Services.Bootstrap.Alloc Services.Bootstrap.Decode.HeapCtx Services.Bootstrap.Decode.LoopA
   Services.Bootstrap.Decode.DeallocCall Services.Bootstrap.Acc.Handlers.ResultsDrop
+  Services.Bootstrap.Acc.Handlers.InstrRep
 
 set_option maxHeartbeats 8000000
 set_option maxRecDepth 100000
@@ -63,9 +64,6 @@ theorem KF.dk {p : ByteArray} {P : Program} [HasCode p P] {code : ByteArray} {pb
   obtain ⟨h1, h2⟩ := K d hd hu hn'
   obtain ⟨h3, h4⟩ := keep d h1 hu hdc
   exact ⟨h3, fun a ha => (h4 a ha).trans (h2 a ha)⟩
-
-/-- The buffer freed at a cap word: none if the cap is 0. -/
-def optBuf (c q : Nat) : List Nat := if c = 0 then [] else [q]
 
 /-- A buffer that the drops free: if its cap c is not 0, its pointer q is the data address of an
     allocated chunk of s₀ that is not among FR. -/

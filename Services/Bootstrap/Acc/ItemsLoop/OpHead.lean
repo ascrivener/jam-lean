@@ -42,7 +42,7 @@ theorem opArm_head {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (e
     (hIL : ItemLogFmt p env pb S0 S1) {sp q nc e : Nat} {μ₀ : Memory}
     (o : OperandTuple) (rest : List AccumulateInput) (s : St Stream)
     (hI : ItemsInv env pb S0 S1 sp q nc e μ₀ (.operand o :: rest) s) (st : State)
-    (H : HeapCtxC env.code pb S0 S1 s.μ st) (cur : Nat) (hc : rdN s.μ (sp + 168) 8 = cur)
+    (H : HeapCtxC env.code pb S0 S1 s.μ st) (cur : Nat) (hc : curAt sp s = cur)
     (db : Chunk) (hdb : db ∈ chunks st) (hdbu : db.used = true)
     (hin : ∀ a, cur ≤ a → a < cur + 184 → InDataA db a)
     (htl : rdN s.μ cur 8 ≤ 16384) :
@@ -63,9 +63,9 @@ theorem opArm_head {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (e
   have hrf : ∀ a, sp ≤ a → a < sp + 1856 → s.μ.readable a = true := fun a h1 h2 =>
     Memory.readable_of_writable (hwf a h1 h2)
   -- 6766 → 6782 → 6827
-  obtain ⟨ω1, r1, e5, f1⟩ := il_step (p := p) (P := P) (R := KeepCtx (accContractS env)) (s.c, s.q)
-    s.ω s.μ sp cur e hI.r1 ⟨by omega, by omega⟩ hc hI.m144 (by omega) hrf
-  have g1' : ω1[1] = UInt64.ofNat sp := (f1 1 (by decide)).trans hI.r1
+  obtain ⟨ω1, N1, r1, g1', e5⟩ := hI.to6782 (P := P) (R := KeepCtx (accContractS env)) (s.c, s.q)
+    (by omega) hrf
+  rw [hc] at e5
   obtain ⟨ω2, μa, r2, a1, a5, -, a8, -, a7, n168, n200, fra, rda, wra, fa⟩ :=
     il_disp_op (p := p) (P := P) (R := KeepCtx (accContractS env)) (s.c, s.q) ω1 s.μ sp cur g1' e5
       ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ (by omega) (by omega) hwf hrq
@@ -128,13 +128,13 @@ theorem opArm_head {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (e
   rcases hIL s.c s.q ω5 μd st sp Hd g1 g7 g8 g9 (by omega) hstk.2 (by omega) m1144 m1152 with
     ⟨st', ω6, μe, N6, r6, He, h1e, keepe, fre, gle⟩ | hx
   rotate_left
-  · refine .inl (Aborts.prepend (s' := ⟨6955, ω5, μd, s.c, s.q⟩) ⟨_, by rw [hI.pc]; exact run6955⟩ ?_)
+  · refine .inl (Aborts.prepend (s' := ⟨6955, ω5, μd, s.c, s.q⟩) ⟨_, run6955⟩ ?_)
     exact aborts_of_exhaustsP hAb ⟨6955, ω5, μd, s.c, s.q⟩ hx
   have ste : ∀ k, sp ≤ k → k + 8 ≤ sp + 1856 → (k + 8 ≤ sp + 1568 ∨ sp + 1592 ≤ k) →
       rdN μe k 8 = rdN μd k 8 := fun k h0 h1 h2 => rdN_frame fun j hj => fre _ (by omega) (by omega) (by omega)
   have runAll := run6955.trans r6
   have roAll := ro_keep (keepCtx_keepsRO env H.bd) runAll H.ro
-  refine .inr ⟨⟨7009, ω6, μe, s.c, s.q⟩, ⟨_, by rw [hI.pc]; exact runAll⟩, rfl, rfl, h1e.trans g1, ?_, ?_,
+  refine .inr ⟨⟨7009, ω6, μe, s.c, s.q⟩, ⟨_, runAll⟩, rfl, rfl, h1e.trans g1, ?_, ?_,
     ?_, ?_, ?_, ?_, ?_, fun a ha => ⟨(roAll a ha).1, (roAll a ha).2.1⟩⟩
   · exact ⟨st', He, fun d hd hu => ⟨(keepe d hd hu).1, fun a ha => by
       rw [(keepe d hd hu).2 a ha, lod a (by have := heapC_data_lt H hd ha; omega)]⟩⟩

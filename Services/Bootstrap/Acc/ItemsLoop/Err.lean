@@ -64,7 +64,7 @@ theorem err_arm {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
   have hstk := hI.hstk
   have hl := hI.cur
   simp only [List.length_cons] at hl
-  generalize hc : rdN s.μ (sp + 168) 8 = cur at hl hbuf hslots hown
+  generalize hc : curAt sp s = cur at hl hbuf hslots hown
   have hnc : nc ≠ 0 := by have := hI.hcap; simp only [List.length_cons] at this; omega
   obtain ⟨db, hdb, hdbu, hdbq, hdata⟩ := hbuf hnc
   have hin : ∀ a, cur ≤ a → a < cur + 184 → InDataA db a := fun a h1 h2 => hdata a h1 (by omega)
@@ -90,9 +90,9 @@ theorem err_arm {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
   have e24 : rdN s.μ (cur + 24) 8 = 18446744073709551615 := by
     rw [← wd_slot s.μ cur 24 (by omega)]; exact b24
   -- 6766 → 6782 → 6827
-  obtain ⟨ω1, r1, e5, f1⟩ := il_step (p := p) (P := P) (R := KeepCtx (accContractS env)) (s.c, s.q)
-    s.ω s.μ sp cur e hI.r1 ⟨by omega, by omega⟩ hc hI.m144 (by omega) hrf
-  have g1' : ω1[1] = UInt64.ofNat sp := (f1 1 (by decide)).trans hI.r1
+  obtain ⟨ω1, N1, r1, g1', e5⟩ := hI.to6782 (P := P) (R := KeepCtx (accContractS env)) (s.c, s.q)
+    (by omega) hrf
+  rw [hc] at e5
   obtain ⟨ω2, μa, r2, a1, a5, -, a8, -, a7, n168, n200, fra, rda, wra, fa⟩ :=
     il_disp_op (p := p) (P := P) (R := KeepCtx (accContractS env)) (s.c, s.q) ω1 s.μ sp cur g1' e5
       ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ (by rw [e0]; omega) (by rw [e0]; omega) hwf hrq
@@ -163,7 +163,7 @@ theorem err_arm {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
   rcases hIL s.c s.q ω5 μd st sp Hd g1 g7 g8 g9 (by omega) hstk.2 (by omega) m1144 m1152 with
     ⟨st', ω6, μe, N6, r6, He, h1e, keepe, fre, gle⟩ | hx
   rotate_left
-  · refine .inl (Aborts.prepend (s' := ⟨6955, ω5, μd, s.c, s.q⟩) ⟨_, by rw [hI.pc]; exact run6955⟩ ?_)
+  · refine .inl (Aborts.prepend (s' := ⟨6955, ω5, μd, s.c, s.q⟩) ⟨_, run6955⟩ ?_)
     exact aborts_of_exhaustsP hAb ⟨6955, ω5, μd, s.c, s.q⟩ hx
   have ste : ∀ k, sp ≤ k → k + 8 ≤ sp + 1856 → (k + 8 ≤ sp + 1568 ∨ sp + 1592 ≤ k) →
       rdN μe k 8 = rdN μd k 8 := fun k h0 h1 h2 => rdN_frame fun j hj => fre _ (by omega) (by omega) (by omega)
@@ -198,9 +198,9 @@ theorem err_arm {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
     intro stf ωf μf Nf rf Hf h1f frf glf keepf
     have runAll := (run6955.trans r6).trans rf
     have roAll := ro_keep (keepCtx_keepsRO env H.bd) runAll H.ro
-    refine .inr ⟨⟨6766, ωf, μf, s.c, s.q⟩, ⟨_, by rw [hI.pc]; exact runAll⟩, rfl, hQ _ ?_⟩
-    have hcur' : rdN μf (sp + 168) 8 = cur + 184 := by
-      rw [rdN_frame fun j hj => frf _ (by omega) (by omega), ste _ (by omega) (by omega) (by omega), d168]
+    refine .inr ⟨⟨6766, ωf, μf, s.c, s.q⟩, ⟨_, runAll⟩, rfl, hQ _ ?_⟩
+    have hcur' : curAt sp ⟨6766, ωf, μf, s.c, s.q⟩ = cur + 184 := by
+      rw [curAt_6766 rfl, rdN_frame fun j hj => frf _ (by omega) (by omega), ste _ (by omega) (by omega) (by omega), d168]
     have datf : ∀ d ∈ chunks st, d.used = true →
         (d.addr + 32 ∈ (footL rest (cur + 184) s.μ).map Prod.fst ∨ d = db) →
         d ∈ chunks stf ∧ ∀ a, InDataA d a → μf.read a = s.μ.read a := fun d hd hu hm =>
@@ -208,7 +208,7 @@ theorem err_arm {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
     obtain ⟨sl', own'⟩ := rest_keep (st' := stf) (μ' := μf) (db := db) hslots hown
       (fun a h1 h2 => hdata a h1 (by omega)) (fun a ha => (datf db hdb hdbu (.inr rfl)).2 a ha)
       (fun d0 h0 hu hm => datf d0 h0 hu (.inl hm))
-    refine ⟨rfl, h1f, hsp, hstk, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, hI.fit, ?_⟩
+    refine ⟨.inl rfl, h1f, hsp, hstk, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, hI.fit, ?_⟩
     · rw [hcur']; omega
     · rw [kw μf frf 144 (by omega)]; exact hI.m144
     · rw [kw μf frf 16 (by omega)]; exact hI.m16

@@ -219,15 +219,25 @@ theorem itemsOwn_of_slots {st : State} {μ : Memory} {q : Nat} {ins : List Accum
   rw [ItemsOwn, e]
   exact ⟨hnd, hq, hpl⟩
 
+/-- The loop's cursor in state s: ω₅ at the dispatch 6782 (the loop's first entry, 6764 → 6782), else the
+    word at sp + 168 (the loop head 6766). -/
+def curAt (sp : Nat) (s : St Stream) : Nat := if s.i = 6782 then s.ω[5].toNat else rdN s.μ (sp + 168) 8
+
+theorem curAt_6766 {sp : Nat} {s : St Stream} (h : s.i = 6766) : curAt sp s = rdN s.μ (sp + 168) 8 := by
+  simp [curAt, h]
+
+theorem curAt_6782 {sp : Nat} {s : St Stream} (h : s.i = 6782) : curAt sp s = s.ω[5].toNat := by
+  simp [curAt, h]
+
 /-- **The items loop's state at its head 6766** with the inputs `ins` still to run (see the module
-    docstring). The frame: sp, the slot buffer q of capacity cap, the end e; μ₀ fixes the statics. -/
+    docstring), or at the dispatch 6782 with the cursor in ω₅ (the loop's first entry). The frame: sp, the slot buffer q of capacity cap, the end e; μ₀ fixes the statics. -/
 structure ItemsInv (env : AccEnv) (pb S0 S1 sp q cap e : Nat) (μ₀ : Memory)
     (ins : List AccumulateInput) (s : St Stream) : Prop where
-  pc : s.i = 6766
+  pc : s.i = 6766 ∨ (s.i = 6782 ∧ ins ≠ [])
   r1 : s.ω[1] = UInt64.ofNat sp
   hsp : 2147483992 ≤ sp ∧ sp % 8 = 0
   hstk : S0 + 4096 ≤ sp ∧ sp + 1856 ≤ S1
-  cur : rdN s.μ (sp + 168) 8 + 184 * ins.length = e
+  cur : curAt sp s + 184 * ins.length = e
   m144 : rdN s.μ (sp + 144) 8 = e
   m16 : rdN s.μ (sp + 16) 8 = q
   m32 : rdN s.μ (sp + 32) 8 = cap
@@ -239,13 +249,31 @@ structure ItemsInv (env : AccEnv) (pb S0 S1 sp q cap e : Nat) (μ₀ : Memory)
   hcap : ins.length ≤ cap
   heap : ∃ st, HeapCtxC env.code pb S0 S1 s.μ st ∧
     (cap ≠ 0 → ∃ d ∈ chunks st, d.used = true ∧ d.addr + 32 = q ∧
-      ∀ a, rdN s.μ (sp + 168) 8 ≤ a → a < e → InDataA d a) ∧
+      ∀ a, curAt sp s ≤ a → a < e → InDataA d a) ∧
     (∀ (j : Nat) (i : AccumulateInput), ins[j]? = some i →
-      (itemOf i).2 (s.μ.readN (rdN s.μ (sp + 168) 8 + 184 * j) 184) s.μ) ∧
-    ItemsOwn st s.μ (rdN s.μ (sp + 168) 8) q ins
+      (itemOf i).2 (s.μ.readN (curAt sp s + 184 * j) 184) s.μ) ∧
+    ItemsOwn st s.μ (curAt sp s) q ins
   ro : TrRO s.μ
   glob : ∀ a, Glob a → s.μ.read a = μ₀.read a
   fit : ValuesFit env s.c.1
   sized : ∀ i ∈ ins, InputSized i
+
+/-- **To the dispatch 6782** from the loop's state with an input left: from 6766 by `il_step`, or already
+    there; ω₁ = sp and ω₅ = the cursor, the memory unchanged. -/
+theorem ItemsInv.to6782 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {X : Type} {R : HostRel X}
+    {env : AccEnv} {pb S0 S1 sp q cap e : Nat} {μ₀ : Memory} {i : AccumulateInput}
+    {rest : List AccumulateInput} {s : St Stream} (hI : ItemsInv env pb S0 S1 sp q cap e μ₀ (i :: rest) s)
+    (x : X) (hS : sp + 1856 < 4294967296) (hrf : ∀ a, sp ≤ a → a < sp + 1856 → s.μ.readable a = true) :
+    ∃ ω' N, FreeStepsH p R s.i s.ω s.μ x 6782 ω' s.μ x N ∧ ω'[1] = UInt64.ofNat sp ∧
+      ω'[5] = UInt64.ofNat (curAt sp s) := by
+  rcases hI.pc with h | ⟨h, -⟩
+  · have hc := hI.cur
+    simp only [List.length_cons] at hc
+    rw [curAt_6766 h] at hc ⊢
+    have := hI.hstk
+    obtain ⟨ω1, r1, e5, f1⟩ := il_step (p := p) (P := P) (R := R) x s.ω s.μ sp _ e hI.r1
+      ⟨by have := hI.hsp; omega, hS⟩ rfl hI.m144 (by omega) hrf
+    exact ⟨ω1, _, by rw [h]; exact r1, (f1 1 (by decide)).trans hI.r1, e5⟩
+  · exact ⟨s.ω, 0, by rw [h]; exact .refl, hI.r1, by rw [curAt_6782 h, UInt64.ofNat_toNat]⟩
 
 end Services.Bootstrap.Acc

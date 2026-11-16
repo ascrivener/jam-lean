@@ -11,9 +11,15 @@
   `tr_impl`); `Loop.lean` (`accBody` = the spec's loop body, `loop_end` (halt), `items_loop`: `Impl` of
   `forIn (ins.map specItem) () accBody` then `pure ()`, post `Halts`, with premises `OpArm` (R2) and
   `ErrArm`). `il_disp_tr` also states ω₁₀.
-- Asked @parent: (1) item buffer ownership `ItemsOwn` (the frees at 15201 / 15166 / 15185 need it;
-  `inputs_decode` does not state it); (2) `ItemLogFmt` hypothesis for the item log line 6955 → 7009.
-  `ErrArm`'s proof waits on these.
+- Decided (@parent, 2026-11-16): (1) `ItemsOwn` (slot buffer ownership) is a premise of `ItemsInv`
+  (option C). **Obligation (A), mine, before or at R16:** strengthen `inputs_decode`'s post with
+  `ItemsOwn` (to be recorded in `docs/t2-remaining.md`); if still open when `accumulate_spec` is ready,
+  tell @parent before stating it (it would be a new assumption, Adam's call). (2) `ItemLogFmt`, the item
+  log line 6955 → 7009 as a frame-only named hypothesis (LogFmt's shape, G4); list it in whats-proven.
+- `ErrArm` proved: `Acc/ItemsLoop/Err.lean` (`err_arm`, with `ItemLogFmt`), `ErrSeg.lean` (7009 → 6766 /
+  → dealloc of the trace). `Inv.lean` now has `slotFoot` / `footL` / `ItemsOwn`, `itemOf_local`,
+  `rest_keep` (slots and ownership carried to the rest under a frame).
+- Asked Handlers A (via @parent) to add sp + 16…24, 32…40, 136…152 to `LoopKeep`, which R2 needs across R5.
 - #222: merge refused by the ruleset (required check names); reported to @parent.
 
 **Read this from `claude/bootstrap-t2-statics`** (it has everything; `claude/bootstrap-t2-inputs-wip`'s

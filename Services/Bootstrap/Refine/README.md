@@ -27,11 +27,16 @@ Everything cites Gray Paper v0.8.0 via the docstrings of the files named here; t
     Hypotheses beyond run_mixedG's: hgD/hgA (globals), hmax/hQ, NoImpRsr, |enc| ≤ 2^24 per instruction, `hlenL`
     (preimages < 2^63), `hgas` (eager Lookup gas ≤ cap0), `LookupFmtOk`, `htab`, `DebugLineOk … (fun _ => DRt C 0)`,
     `rltab` (65568 … 65572 readable). Output: ℰ(n) ⌢ `out (fun j => (outT (lookupOf env) is[j]).encode) n` ⌢ ℰ₂(w).
-- **Next:** `TopT` (as `TopG.from4680G` / `refine_coreG`, with `run_t`; the output equation as
-  `SpecRun.output_eqG` for `outT`; gl at 196616 / 196680 from `StartupConsts.startup_decoder_facts` carried
-  4642 → 4792 as Glob words; `hgas` from K = 2^62 and `hlenL`), then `T1c.refine_t1c` (as
-  `Milestone.refine_milestone`, `SpecRunT.run_refineT`, `rsemLk` = `LookupStep.lookupOf`), docs, full `lake build`,
-  PR, message the parent the statement and hypothesis list.
+  - `TopT`: `output_eqT` (ℰ(`BootstrapWorkOutput { is.map f, item }`) for any f) and **`from4680T`** (`from4680G` with
+    `run_t` at any gas cap K ≥ 2^27; extra memory hypotheses `gD : μ.readN 196616 2 = ℰ₂(341)`,
+    `gA : μ.readN 196680 8 = ℰ₈(80)` (carried 4680 → 4792 by `tail4680`'s Glob frame) and `rltab`; |enc| ≤ 2^24 is
+    derived from |y| < 2^24).
+- **Next:** `TopT.refine_coreT` (as `TopG.refine_coreG`, lines 132–178, with `from4680T` at K = 2^62; gD / gA from
+  `StartupConsts.startup_decoder_facts` / `startup_consts` (under `env.fetch.params = Params.full`) carried from the
+  start-up to 4680; rltab from the read-only data; `hgas` from K = 2^62 and `hlenL`), then `T1c.refine_t1c` (as
+  `Milestone.refine_milestone`, `SpecRunT.run_refineT`, `rsemLk` = `LookupStep.lookupOf`, C := `Consts.ofParams
+  Params.full rk`, which gives hmax (3 · 341 = 1023) and hQ (80)), docs, full `lake build`, PR, message the parent
+  the statement and hypothesis list.
 
 **Handoff (end of the ninth instance).** Read this first.
 - **#217 merged** (90f7bf2). **#226** (the m1d PR: branch `claude/bootstrap-t1-m1c`, restarted from main with m1d merged)

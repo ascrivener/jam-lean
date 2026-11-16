@@ -69,8 +69,9 @@ with `lake env lean`; axioms clean.
   `provide_inline`, `create_service_some`, `assign_gas`): `ElemsBig.*_elem_big` as `ElemOkAFC`, the slot's buffer word
   naming a returned chunk that holds the buffer (`OwnsBuf cs bs off m`: off 16, except `provide_inline` 24 and
   `create_service_some` 8). These cover only the large sizes (> 1024 pairs / > 512 hashes / > 48 keys / > 16384 octets);
-  the small adapters (`ElemsBig`'s counterparts in `Decode/*Elem*.lean`, and `assign_elem`) need the same `C` form for
-  refine_t1c. Not done yet.
+  the small adapters are in `ElemsSmallC` (`bless_elemC`, `random_storage_ok_elemC`, `designate_elemC`,
+  `looked_up_some_elemC`, `provide_inline_elemC`, `create_service_some_elemC`, `assign_gas_elemFC`, `assign_elemFC`;
+  same `OwnsBuf` offsets). `import_elem` (part D's input, not an output) has no `C` form yet.
 - Still open for part B: the output drop arms of the other heap kinds (indices 0, 11, 12, 13, 17, 22, 24; `DropOut.NoDrop`
   excludes them and `HeapEl` covers only 5, 18, 19), the encoder arms `EncOkMH` and `DRm` for them.
 - **Debug field formatters the new kinds reach** (for the field-formatter session; from `Fmt/README.md`'s arm table): the

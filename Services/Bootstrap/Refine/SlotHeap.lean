@@ -186,4 +186,54 @@ theorem slotOK_assignGas {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p
       by rw [r 16 8 (by omega)]; exact hb16, ?_⟩)
     simp only [true_iff]; omega
 
+theorem buf_ofO {bs : List UInt8} {o q a m : Nat} {v : List UInt8} {μ : Memory}
+    (h16 : (bs.drop o).take 8 = Num.encodeLE 8 q) (hb16 : (bs.drop o).take 8 = Num.encodeLE 8 a)
+    (ha : a < 18446744073709551616) (hq : μ.readN q m = v) : μ.readN a m = v := by
+  have := congrArg Num.decodeLE (h16.symm.trans hb16)
+  simp only [Num.decodeLE_encodeLE] at this
+  rw [show a = q % 18446744073709551616 by omega, readN_mod64]; exact hq
+
+/-- **`Provide(s, Inline(d))`'s decoded slot is good**: 1 ≤ n = |d| < 2^32 octets, the slot `ProvideInlineRep` with its
+    buffer (word 24) a chunk of cs holding them. -/
+theorem slotOK_provideInline {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeA p P]
+    (env : RefineHost.Env) (K pb : Nat) (hK1 : 134217728 ≤ K) (hK : K < 18446744073709551616)
+    (C : Spec.Consts) (sv : Nat) (d : List UInt8) (hw : (Spec.Instr.provide sv (.inline d)).WF C)
+    (hn1 : 1 ≤ d.length) (cs : List Chunk) (bs : List UInt8) (μr : Memory)
+    (hR : ∀ μ : Memory, (∀ c ∈ cs, ∀ a, InData c a → μ.read a = μr.read a) →
+      Decode.LookupProvideElem.ProvideInlineRep (Codec.fixed 4 sv) d.length d bs μ ∧ OwnsBuf cs bs 24 d.length) :
+    SlotOK env K pb p P (DRt C 0) (Spec.Instr.provide sv (.inline d)).encode bs (· ∈ cs) μr := by
+  intro μ s el hel ho
+  obtain ⟨hs4, hnb⟩ := hw
+  have hnb : d.length < 4294967296 := hnb
+  obtain ⟨⟨h0, h8, h48, q, h16, h24, h32, hq⟩, co, hco, hcou, hb24, hcoS, hcoT⟩ :=
+    hR μ (fun c hc a ha => (ho c hc).2.2 a ha)
+  have hq' := buf_ofO h24 hb24 (by omega) hq
+  have hloc : ∀ (bs : List UInt8) (μ μ' : Memory), (∀ q m, SrcAtP (co.addr + 32) d.length q m →
+      μ'.readN q m = μ.readN q m) → EncProvide.ProvideInlineRepAt (Codec.fixed 4 sv) d.length (co.addr + 32) d bs μ →
+      EncProvide.ProvideInlineRepAt (Codec.fixed 4 sv) d.length (co.addr + 32) d bs μ' :=
+    fun bs μ μ' hk ⟨e0, e1, e2, e8, e16, e24, e⟩ => ⟨e0, e1, e2, e8, e16, e24, src_keep hk e⟩
+  have hrep : EncProvide.ProvideInlineRepAt (Codec.fixed 4 sv) d.length (co.addr + 32) d (μ.readN el 232) μ :=
+    ⟨by rw [hel]; exact h0, by rw [hel]; exact h8, by rw [hel]; exact h48, by rw [hel]; exact h16,
+      by rw [hel]; exact hb24, by rw [hel]; exact h32, hq'⟩
+  have henc : (Spec.Instr.provide sv (.inline d)).encode =
+      17 :: (Codec.fixed 4 sv ++ 1 :: (Blob.encodeNat d.length ++ d)) := by
+    simp [Spec.Instr.encode, Spec.bytes, Codec.nat]
+  have r := fun o l (hol : o + l ≤ 232) => Decode.Loop.readN_sub μ el 232 o l _ hel hol
+  have r0 := r 0 8 (by omega)
+  simp only [Nat.add_zero, List.drop_zero] at r0
+  rw [henc]
+  refine ⟨EncProvide.ProvideInlineRepAt (Codec.fixed 4 sv) d.length (co.addr + 32) d,
+    EncProvide.ProvideInlineRepAt (Codec.fixed 4 sv) d.length (co.addr + 32) d, SrcAtP (co.addr + 32) d.length,
+    EncProvide.provide_inlineH env K pb hK1 hK (Codec.fixed 4 sv) d.length (co.addr + 32) d
+      (by simp [Codec.fixed]) rfl hnb (by omega), hrep, hrep,
+    fun bs μ h => ⟨.provide sv (.inline d), ⟨hs4, hnb⟩,
+      (EncProvide.provideInlineRep_iff _ d.length d bs μ).mpr ⟨_, h⟩⟩,
+    hloc, hloc, ?_, Or.inr (Or.inr ⟨true, co.addr + 32, co, ?_, by omega, fun _ => ⟨(ho co hco).1, hcou, rfl, hco⟩⟩)⟩
+  · rintro q m ⟨-, rfl, rfl⟩
+    exact ⟨co, hco, by omega, by omega⟩
+  · refine Or.inr (Or.inr (Or.inl ⟨1, d.length, by omega, by omega, by rw [r0]; exact h0,
+      by rw [r 8 1 (by omega)]; exact h8, by rw [r 16 8 (by omega)]; exact h16,
+      by rw [r 24 8 (by omega)]; exact hb24, ?_⟩))
+    simp only [true_iff]; omega
+
 end Services.Bootstrap.Refine.SlotHeap

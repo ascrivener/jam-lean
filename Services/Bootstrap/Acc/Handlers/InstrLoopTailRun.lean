@@ -161,7 +161,7 @@ def NewBuf (st st' : State) (μ μ' : Memory) (rp rp' cp' : Nat) : Prop :=
     chunk with room for cp items if cp ≠ 0), either the run reaches 14516 with ω₁ kept, ω₅ = n, the
     allocator's context for some st′, a `Vec` { cp′, rp′, n } with n < cp′ in a buffer `NewBuf`, the
     first n items kept, the result's 144 octets at sp + 1000 copied to item n, and from sp up only
-    sp + 448 … sp + 464 changed; or the growth fails (`ExhaustsP`). -/
+    sp + 448 … sp + 464 changed, the globals kept; or the growth fails (`ExhaustsP`). -/
 theorem il_tail_push {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env : AccEnv)
     {pb S0 S1 : Nat} (hP : PushH p env pb S0 S1) (c : AccCtx) (f : Stream) (ω : Regs) (μ : Memory)
     (st : State) (sp cp rp n : Nat) (H : HeapCtxC env.code pb S0 S1 μ st)
@@ -278,7 +278,7 @@ theorem il_tail_push {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
 /-- **14516 … 8540, the loop's back edge**: with ω₅ = n, the instruction's `String` { kc, kp, _ } at
     sp + 976 (kp the data of an allocated chunk ch if kc ≠ 0): len := n + 1 at sp + 464, the `String`
     freed (state `(optBuf kc kp).foldl free st`), every other allocated chunk kept with its data, and
-    from sp up only sp + 464 … sp + 472 changed. -/
+    from sp up only sp + 464 … sp + 472 changed, the globals kept. -/
 theorem il_tail_post {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env : AccEnv)
     {pb S0 S1 : Nat} (c : AccCtx) (f : Stream) (ω : Regs) (μ : Memory)
     (st : State) (sp n kc kp : Nat) (H : HeapCtxC env.code pb S0 S1 μ st)

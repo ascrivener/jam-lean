@@ -970,7 +970,8 @@ What you trust beyond the kernel:
     47977 and 32584 (heap exhaustion). Its hypotheses are `ParamStatics` (an obligation), `RingFits`,
     maxRecent = 2·𝖢·𝖨, the read-only words it reads (key sizes, `set`'s error table) and `ValuesFit` for
     this service's storage at the start (`StoreFit`). `Impl.inv` carries `StoreFit` past the removal and the
-    slot write.
+    slot write. Its post `AddPost` also records ω₆ kept (added 2026-11-16, parent-approved).
+
 - **Allocation failure ends in ☇ (a blob obligation).** The binary follows a failed allocation with
   `handle_alloc_error`, which traps. Wherever a theorem only reaches the failed allocator call
   (`Fmt.Exhausts`: 40611 / 40821 with ω₇ = 0), this last stretch to the trap is still to be proved;
@@ -1016,32 +1017,32 @@ What you trust beyond the kernel:
   through) → 8540, implements the spec's loop body (`onInstr C now i`, and for `Checkpoint` first
   `store key (encodeResults rs)`) and re-establishes `LoopAt` for the instructions left and rs ++ [r].
   **`il_loop`** wraps them as `Impl.forIn` over `LoopInv`. Named hypotheses: `InstrLogH`, `ResultLogH`,
-  `HandlerH`, `PushH` (above) and `ExtendH`/`OkEncH` (the `Checkpoint` store). Premises (not new
+  `HandlerH`, `PushH` (above) and `ExtendH`/`OkEncH` (the `Checkpoint` store; since 2026-11-16 they carry
+  no length premise: the old `len + n < 2³⁰ − 64` and `WriterPre`'s `2·cap < 2³⁰ − 64` are gone, a
+  too-large encoding being heap exhaustion inside their `ExhaustsP` branch, parent-approved). Premises (not new
   assumptions of T2; R2 discharges them):
   - a context invariant `Inv` with `hIst` (every `ASem.step` keeps it) and `hIfit` (it gives `StoreFit`),
     the `StoreStep` premise the parent approved: R2 takes `Inv c := ValuesFit env c.1`, `hIst :=
     ValuesFit.step` and `hIfit := ValuesFit.storage` (T2 inputs, R12);
-  - `hBall`: 2·(144·|rs| + 4) + 4·|encodeResults rs| + 64 < 2³⁰ − 64 for every results list no longer
-    than the instructions. Open (see `docs/t2-remaining.md`): at R16 it must become "the bound holds, or
-    the run exhausts the heap";
   - at the entry's memory: the item index at sp + 176, the key-size word, `set`'s error table, the
     read-only data's access and the dispatch table at 65736;
   - the loop's body f through its two equations (`Checkpoint`, other), which R2 proves for the spec's
     `do` block by `rfl`.
   `LoopInv` also carries `OldKeep`: every allocated chunk of the entry outside the instructions' buffers
-  stays allocated with its data and is none of the buffers freed later (`StepKeep`, from each body).
+  stays allocated with its data and is none of the buffers freed later (`StepKeep`, from each body), and
+  the globals 196616 … 196791 kept (each body keeps them: `BodyPost`). There is no size premise on the
+  results (`hBall` and `LoopHyp.hB` were removed 2026-11-16, parent-approved): the results store's
+  `alloc(144n + 4)` is bounded by the results' own heap footprint (`LoopHyp.hrp`).
 - **R5 and R7 composed (T2, Handlers A; `Acc/Handlers/InstrLoopEntry.lean`, `InstrLoopRowEleven.lean`).**
   **`loop_row11`**: from row 9's end (8492) with `EntryHyp` (the decoded instructions' `Vec` owned as
   `VecOwn`, its pointer in ω₆; the results `Vec` with len 0 (`hres`) and row 11's `TailHyp`; the instructions' buffers distinct from `tailFree`; the frame constants),
   the run implements the spec's loop followed by `unless is.any isZomb (store key (encodeResults results))`
   and reaches the items loop's head 6766 in `R57Post`: the allocator's context, every allocated chunk of
   the entry outside the instructions' buffers and the frame buffers at sp + 104 / sp + 272 kept with its
-  data, the frame words `StableKeep` kept. Both cases: some instructions (`il_entry`, `il_loop`,
+  data, the frame words `StableKeep` and the globals 196616 … 196791 kept. Both cases: some instructions (`il_entry`, `il_loop`,
   `loop_exit`) and none (8492 → 15050, the empty `IntoIter`'s drop, `row_eleven_store` from 15060).
-  Named hypotheses: those of `il_loop` plus `DropInstrsH`. Premises as `il_loop`'s (`Inv`, `hBall`, the
-  read-only facts), now at the entry. Not promised yet: the globals 196616 … 196791 (all three
-  hypotheses now keep them; threading them through the body to `R57Post` is the next step) and the
-  registers but ω₁. `EntryHyp.hres` allows the results buffer either empty (cap 0) or `Vec::with_capacity`'s
+  Named hypotheses: those of `il_loop` plus `DropInstrsH`. Premises as `il_loop`'s (`Inv`, the
+  read-only facts), now at the entry. Not promised: the registers but ω₁. `EntryHyp.hres` allows the results buffer either empty (cap 0) or `Vec::with_capacity`'s
   allocated chunk (the binary's case for |is| > 0, 7970).
   `LoopHyp.hrp` (the results' addresses in [2¹⁶, 2³¹)) now applies only when there are results: an
   empty `Vec`'s pointer dangles.

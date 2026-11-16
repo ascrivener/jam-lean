@@ -60,7 +60,7 @@ def StableKeep (sp a : Nat) : Prop :=
 
 /-- The state after one body, against the head's memory μ₀: back at 8540 with ω₁ = sp, `LoopAt` for the
     instructions left `is` and rs ++ [r] (flag zs), the cursor advanced by a slot, the counter by one,
-    the octets below 196608 and their access kept, and the words `StableKeep` kept; and what the body keeps
+    the octets below 196608 and their access kept, the words `StableKeep` and the globals kept; and what the body keeps
     of the head's chunks (state st, `StepKeep`). -/
 def BodyPost (B : InstrRep) (code : ByteArray) (pb S0 S1 sp : Nat) (is : List Spec.Instr)
     (rs : List Spec.Result) (zs : Bool) (μ₀ : Memory) (st : State) (r : Spec.Result) (s' : St Stream) : Prop :=
@@ -75,7 +75,7 @@ def BodyPost (B : InstrRep) (code : ByteArray) (pb S0 S1 sp : Nat) (is : List Sp
     state st: ω₁ = sp; the allocator's context for some st₁ keeping st's allocated chunks with their data;
     the instruction's slot (at the head's cursor) copied to sp + 744; the cursor advanced by a slot and the
     counter by one; the flag for zs′ at sp + 160; from sp up the memory kept but at sp + 160 … 168,
-    480 … 488, 504 … 976 and 1568 … 1632; the octets below 196608 and their access kept. -/
+    480 … 488, 504 … 976 and 1568 … 1632; the octets below 196608 and their access, and the globals, kept. -/
 def AtLog (code : ByteArray) (pb S0 S1 sp : Nat) (μ₀ : Memory) (st : State) (zs' : Bool) (s : St Stream) : Prop :=
   s.i = 8735 ∧ s.ω[1] = UInt64.ofNat sp ∧ ∃ st₁, HeapCtxC code pb S0 S1 s.μ st₁ ∧
     (∀ d ∈ chunks st, d.used = true → d ∈ chunks st₁ ∧ ∀ a, InData d a → s.μ.read a = μ₀.read a) ∧
@@ -550,7 +550,7 @@ theorem Prog.all_true {α : Type} : ∀ prog : Prog AOp α, Acc.Prog.All (fun _ 
     returning to 8716: `Ok` → 8735 by `il_ck_ok`, FULL → ☇ at 15361), then `il_after_log`. A context
     invariant Inv kept by every operation and giving `StoreFit` carries `StoreFit` across the store.
     Premises beyond `il_body`'s: `ExtendH`/`OkEncH` and the store's abort reasons, the item index at
-    sp + 176, the read-only key-size word and `set`'s error table, and the size bound hB on rs's encoding. -/
+    sp + 176, the read-only key-size word and `set`'s error table. -/
 theorem il_body_ck {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeA p P] (env : AccEnv)
     (B : InstrRep) {C : Consts} {now pb S0 S1 : Nat} {Ab : St Stream → Prop}
     (hL : InstrLogH B p env pb S0 S1) (hR : ResultLogH p env pb S0 S1) (hH : HandlerH B p env C now pb S0 S1 Ab)
@@ -570,8 +570,7 @@ theorem il_body_ck {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
     (hinv : Inv s.c) (hitem : s.μ.readN (sp + 176) 2 = fixed 2 item)
     (mkc : s.μ.readN 68696 8 = Num.encodeLE 8 kc) (hkc : 35 ≤ kc ∧ kc + 31 < 68719476736)
     (ht8 : rdN s.μ 69072 4 = 4294900408) (ht4 : rdN s.μ 69056 4 = 4294900402)
-    (hro : ∀ a, 68680 ≤ a → a < 69076 → s.μ.readable a = true)
-    (hB : 2 * (144 * rs.length + 4) + 4 * (encodeResults rs).length + 64 < 1073741760) :
+    (hro : ∀ a, 68680 ≤ a → a < 69076 → s.μ.readable a = true) :
     Impl p (accContractS env) env Ab
       (Prog.bind (store (.results (s.μ.readN (sp + 312) 32) item) (encodeResults rs))
         (fun _ => onInstr C now .checkpoint))
@@ -665,7 +664,7 @@ theorem il_body_ck {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
   -- the store's premises at 36170
   obtain ⟨cp, hcp⟩ : ∃ cp, rdN μ (sp + 448) 8 = cp := ⟨_, rfl⟩
   have LH : LoopHyp pb S0 S1 sp (rdN μ (sp + 456) 8) (rdN μ (sp + 464) 8) rs st μT := by
-    refine ⟨⟨by omega, by omega, hs8, by omega⟩, hT, LA.hn.symm, ⟨lt8 _, fun hn0 => ?_⟩, by rw [LA.hn]; exact hB,
+    refine ⟨⟨by omega, by omega, hs8, by omega⟩, hT, LA.hn.symm, ⟨lt8 _, fun hn0 => ?_⟩,
       ResultsAt.keep hkH LA.hav.toAt⟩
     have hcap0 := LA.hcap
     rw [hcp] at hcap0

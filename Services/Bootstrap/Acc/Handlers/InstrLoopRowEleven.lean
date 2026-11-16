@@ -73,7 +73,7 @@ theorem not_tailFree0 {μ : Memory} {sp q : Nat} (h : q ∉ tailFree μ sp) :
     exhaustion, and ends in `R57Post`. Named hypotheses: `InstrLogH`, `ResultLogH`, `HandlerH`, `PushH`,
     `ExtendH`, `OkEncH`, `DropInstrsH`. Premises: the context invariant Inv (kept by every operation,
     giving `StoreFit`); the read-only facts (the key-size word, `set`'s error table, the dispatch table);
-    `hBall` (open: the size bound on the results' encoding, see `docs/t2-remaining.md`). -/
+    nothing on the results' size (a too-large encoding is heap exhaustion). -/
 theorem loop_row11 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeA p P] (env : AccEnv)
     (B : InstrRep) {C : Consts} {now pb S0 S1 : Nat} {Ab : St Stream → Prop}
     (hL : InstrLogH B p env pb S0 S1) (hR : ResultLogH p env pb S0 S1) (hH : HandlerH B p env C now pb S0 S1 Ab)
@@ -96,9 +96,7 @@ theorem loop_row11 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
     (mkc : s.μ.readN 68696 8 = Num.encodeLE 8 kc) (hkc : 35 ≤ kc ∧ kc + 31 < 68719476736)
     (ht8 : rdN s.μ 69072 4 = 4294900408) (ht4 : rdN s.μ 69056 4 = 4294900402)
     (hro : ∀ a, 68680 ≤ a → a < 69076 → s.μ.readable a = true)
-    (hjt : s.μ.readN 65736 100 = jumpTab) (hjr : ∀ a, 65736 ≤ a → a < 65836 → s.μ.readable a = true)
-    (hBall : ∀ rs : List Spec.Result, rs.length ≤ is.length →
-      2 * (144 * rs.length + 4) + 4 * (encodeResults rs).length + 64 < 1073741760) :
+    (hjt : s.μ.readN 65736 100 = jumpTab) (hjr : ∀ a, 65736 ≤ a → a < 65836 → s.μ.readable a = true) :
     Impl p (accContractS env) env Ab
       (Prog.bind (forIn is [] f) (fun rs =>
         if is.any isZomb then pure () else store (.results (s.μ.readN (sp + 312) 32) item) (encodeResults rs)))
@@ -160,11 +158,10 @@ theorem loop_row11 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
       (fun k hk => by rw [h464] at hk; omega) fun a h1 h2 => fr3 a h1 (by omega)
     have L3 : LoopHyp pb S0 S1 sp (rdN μ3 (sp + 456) 8) (rdN μ3 (sp + 464) 8) []
         ((vecFree B μ b c 0).foldl free st) μ3 := by
-      refine ⟨⟨by omega, by omega, hs8, by omega⟩, hT, ?_, ⟨rdN_lt8 _ _, fun h => absurd ?_ h⟩, ?_,
+      refine ⟨⟨by omega, by omega, hs8, by omega⟩, hT, ?_, ⟨rdN_lt8 _ _, fun h => absurd ?_ h⟩,
         ⟨fun k hk => absurd hk (by simp), fun j hj => absurd hj (by simp)⟩⟩
       · rw [rdN_frame fun j hj => fr3 _ (by omega) (by omega), h464]; rfl
       · rw [rdN_frame fun j hj => fr3 _ (by omega) (by omega), h464]
-      · rw [rdN_frame fun j hj => fr3 _ (by omega) (by omega), h464]; decide
     have hro3 : ∀ a, a < 196608 → μ3.read a = μ.read a := fun a ha =>
       (Fm3.2.2.1 a (by unfold two32; omega) (H1.ro a ha)).trans (heap1 a (by omega))
     have SS := row_eleven_store env hE hO cap hcap1 hcap Ab hAb1 hAb2 hAbX ⟨15060, ω3, μ3, c0, f0⟩ _ sp item kc []
@@ -199,7 +196,7 @@ theorem loop_row11 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
     refine Impl.bind _ _ _ _ ?_
     have LP := il_loop (P := P) env B hL hR hH hP hE hO cap hcap1 hcap hAb1 hAb2 hAbX Inv hIst hIfit sp item kc μ st
       (vecFree B μ b c is.length ++ optBuf (rdN μ (sp + 448) 8) (rdN μ (sp + 456) 8)) (is.any isZomb) is.length hs8
-      f hck hother hitem mkc hkc ht8 ht4 hro hjt hjr hBall
+      f hck hother hitem mkc hkc ht8 ht4 hro hjt hjr
       is [] _ (LI c0 f0 hinv)
     refine Impl.mono_post ?_ _ _ LP
     rintro rs ⟨i', ω'', μ'', c'', f''⟩ LIe
@@ -227,7 +224,7 @@ theorem loop_row11 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
     have lt8 : ∀ b, rdN μ'' b 8 < 2 ^ 64 := fun b => rdN_lt8 μ'' b
     have LH : LoopHyp pb S0 S1 sp (rdN μ'' (sp + 456) 8) (rdN μ'' (sp + 464) 8) rs st' μ'' := by
       refine ⟨⟨by omega, by omega, hs8, by omega⟩, hT', LA.hn.symm, ⟨lt8 _, fun hn0 => ?_⟩,
-        by rw [LA.hn]; exact hBall rs (by omega), LA.hav.toAt⟩
+        LA.hav.toAt⟩
       have hcap0 := LA.hcap
       have hn' := LA.hn
       have hc0 : rdN μ'' (sp + 448) 8 ≠ 0 := by omega

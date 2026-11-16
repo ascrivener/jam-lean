@@ -107,6 +107,23 @@ Handlers dependencies takes ~2 h on 4 cores). Use `ulimit -v 12000000` when comp
 - `refine ⟨?ω', ?run⟩; case run => pvm_go …` for a one-witness existential.
 
 
+## Session 14 progress and handoff (2026-11-16, for the 15th session)
+
+**PRs.** #228 (row 9): green, merges blocked by main's ruleset; subscribed; merge when @parent says.
+After #222 merges: rebase r5 (`git rebase --onto origin/main 6450fb4`), full build, open the r5 PR.
+
+**Done this session** (parent-approved items 1–3 of part 2 below; all compile):
+1. ω₆ in `AddPost` (`add_recent`, row 8): threaded through `RmPost`, `SwPost`, `CwPost` (each takes a
+   `w6`), `remove_call`/`rm_ret`, `sw_free`/`sw_ok1`/`sw_ok2`, `cw_pre`/`cw_mid`/`cw_dl`/`cw_free`/`cw_ok`.
+2. Glob (196616 … 196791) kept: `il_mid`, `il_tail_log`, `il_tail_push`, `il_tail_post` (new `glob_lt`:
+   a global lies below every allocated chunk), `AtLog`, `BodyPost`, `LoopInv.glob`, `il_entry`, `R57Post`.
+3. hB/hBall removed: `ExtendH`/`OkEncH` lost `len + n < 2³⁰ − 64`; `WriterPre` lost `2·cap < 2³⁰ − 64`
+   (needed: after a grow, cap′ ≤ max cap 8 2(len+n) is otherwise unbounded; it was derivable-only-by-hB);
+   `LoopHyp.hB` gone (the `alloc(144n + 4)` bound already came from `hrp`); `il_body_ck`, `il_loop`,
+   `loop_row11` lost hB/hBall. Docs updated (whats-proven, t2-remaining: the open point is closed).
+
+**Next:** the PR flow above; whatever @parent assigns.
+
 ## Session 13, part 2: handoff (2026-11-16, for the 14th session)
 
 **PRs.** As in part 1 below: #228 green, blocked on main's ruleset (subscribe and merge on green when

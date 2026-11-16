@@ -128,8 +128,7 @@ theorem LoopInv.of_post {B : InstrRep} {code : ByteArray} {pb S0 S1 sp : Nat} {I
     `InstrLogH`, `ResultLogH`, `HandlerH`, `PushH` (and `ExtendH`, `OkEncH` for the `Checkpoint` store).
     Premises: the context invariant Inv (kept by every operation, giving `StoreFit`); at the entry's
     memory μ₀ the item index at sp + 176, the key-size word kc, `set`'s error table, the read-only data's
-    access and the dispatch table; and the size bound on the results' encoding for every results list no
-    longer than the instructions (`hBall`, open: see `docs/t2-remaining.md`). -/
+    access and the dispatch table. -/
 theorem il_loop {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeA p P] (env : AccEnv)
     (B : InstrRep) {C : Consts} {now pb S0 S1 : Nat} {Ab : St Stream → Prop}
     (hL : InstrLogH B p env pb S0 S1) (hR : ResultLogH p env pb S0 S1) (hH : HandlerH B p env C now pb S0 S1 Ab)
@@ -149,9 +148,7 @@ theorem il_loop {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasC
     (mkc : μ₀.readN 68696 8 = Num.encodeLE 8 kc) (hkc : 35 ≤ kc ∧ kc + 31 < 68719476736)
     (ht8 : rdN μ₀ 69072 4 = 4294900408) (ht4 : rdN μ₀ 69056 4 = 4294900402)
     (hro : ∀ a, 68680 ≤ a → a < 69076 → μ₀.readable a = true)
-    (hjt : μ₀.readN 65736 100 = jumpTab) (hjr : ∀ a, 65736 ≤ a → a < 65836 → μ₀.readable a = true)
-    (hBall : ∀ rs : List Spec.Result, rs.length ≤ n₀ →
-      2 * (144 * rs.length + 4) + 4 * (encodeResults rs).length + 64 < 1073741760) :
+    (hjt : μ₀.readN 65736 100 = jumpTab) (hjr : ∀ a, 65736 ≤ a → a < 65836 → μ₀.readable a = true) :
     ∀ (xs : List Spec.Instr) (rs : List Spec.Result) (s : St Stream),
       LoopInv B env.code pb S0 S1 sp Inv μ₀ st₀ G Z n₀ xs rs s →
       Impl p (accContractS env) env Ab (forIn xs rs f)
@@ -191,7 +188,7 @@ theorem il_loop {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasC
       (by rw [← mkc]; exact Memory.readN_congr fun j hj => (I.ro _ (by omega)).1) hkc
       (by rw [← ht8]; exact rdN_frame fun j hj => (I.ro _ (by omega)).1)
       (by rw [← ht4]; exact rdN_frame fun j hj => (I.ro _ (by omega)).1)
-      (fun a h1 h2 => by rw [(I.ro a (by omega)).2]; exact hro a h1 h2) (hBall rs (by omega))
+      (fun a h1 h2 => by rw [(I.ro a (by omega)).2]; exact hro a h1 h2)
     rw [hpk] at B1
     have B2 := Impl.inv (fun _ => True) Inv (fun o c c₁ b _ => hIst o c c₁ b) _ _ (Prog.all_true _) hinvS B1
     exact Impl.mono_post (fun r s' h => post zs (by simp [isZomb]) r s' h) _ _ B2

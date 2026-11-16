@@ -69,6 +69,7 @@ theorem od_ok0 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X
     (hrf : ∀ a, sp ≤ a → a < sp + 1856 → μ.readable a = true)
     (hwf : ∀ a, sp ≤ a → a < sp + 1856 → μ.writable a = true) :
     ∃ ω' μ', FreeStepsH p R 7080 ω μ x 8013 ω' μ' x 25 ∧ ω'[1] = UInt64.ofNat sp ∧
+      ω'[6] = UInt64.ofNat (rdN μ (sp + 1576) 8) ∧
       rdN μ' (sp + 240) 8 = c ∧ rdN μ' (sp + 128) 8 = ω[6].toNat ∧
       rdN μ' (sp + 176) 8 = rdN μ (sp + 1592) 2 ∧ rdN μ' (sp + 248) 8 = 0 ∧
       rdN μ' (sp + 448) 8 = 0 ∧ rdN μ' (sp + 456) 8 = 8 ∧ rdN μ' (sp + 464) 8 = 0 ∧
@@ -84,7 +85,7 @@ theorem od_ok0 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X
   refine ⟨?ω', ?μ', ?run, ?post⟩
   case run => pvm_go [h1, h5, m1568, hc', m1584, hrf, hwf, rdN_writeN_disjoint, ↓rdN_fold, ↓loadI_fold]
   case post =>
-    refine ⟨by reg_val; simp [h1], ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_,
+    refine ⟨by reg_val; simp [h1], by reg_val, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_,
       fun a ha h1 h2 h3 h4 h5 => ?_, fun a => ?_, fun a => ?_⟩
     all_goals try (rd_simp []; done)
     all_goals (simp (disch := pvm_arith) only [rdN, PVM.Memory.readN_writeN_disjoint, PVM.Memory.readN_writeN_same,
@@ -103,6 +104,7 @@ theorem od_okn {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X
     (hwf : ∀ a, sp ≤ a → a < sp + 1856 → μ.writable a = true) :
     ∃ ω' μ', FreeStepsH p R 7080 ω μ x 40494 ω' μ' x 17 ∧ ω'[0] = UInt64.ofNat 240 ∧
       ω'[1] = UInt64.ofNat sp ∧ ω'[7] = UInt64.ofNat (144 * n) ∧ ω'[8] = UInt64.ofNat 8 ∧
+      ω'[6] = UInt64.ofNat (rdN μ (sp + 1576) 8) ∧
       rdN μ' (sp + 240) 8 = c ∧ rdN μ' (sp + 128) 8 = ω[6].toNat ∧
       rdN μ' (sp + 176) 8 = rdN μ (sp + 1592) 2 ∧ rdN μ' (sp + 248) 8 = n ∧
       (∀ a, a < 4294967296 → (a < sp + 128 ∨ sp + 136 ≤ a) → (a < sp + 176 ∨ sp + 184 ≤ a) →
@@ -115,7 +117,7 @@ theorem od_okn {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X
   refine ⟨?ω', ?μ', ?run, ?post⟩
   case run => pvm_go [h1, h5, m1568, hc', m1584, hn', hrf, hwf, rdN_writeN_disjoint, ↓rdN_fold, ↓loadI_fold]
   case post =>
-    refine ⟨by reg_val, by reg_val; simp [h1], ?_, by reg_val, ?_, ?_, ?_, ?_,
+    refine ⟨by reg_val, by reg_val; simp [h1], ?_, by reg_val, by reg_val, ?_, ?_, ?_, ?_,
       fun a ha h1 h2 h3 => ?_, fun a => ?_, fun a => ?_⟩
     all_goals try (rd_simp []; done)
     all_goals (simp (disch := pvm_arith) only [rdN, PVM.Memory.readN_writeN_disjoint, PVM.Memory.readN_writeN_same,
@@ -146,7 +148,7 @@ theorem od_alloc {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x :
     (hr : r < 4294967296) (hsp : 65536 ≤ sp ∧ sp + 1856 < 4294967296) (m248 : rdN μ (sp + 248) 8 = n)
     (hrf : ∀ a, sp ≤ a → a < sp + 1856 → μ.readable a = true)
     (hwf : ∀ a, sp ≤ a → a < sp + 1856 → μ.writable a = true) :
-    ∃ ω' μ', FreeStepsH p R 7145 ω μ x 8013 ω' μ' x 16 ∧ ω'[1] = UInt64.ofNat sp ∧
+    ∃ ω' μ', FreeStepsH p R 7145 ω μ x 8013 ω' μ' x 16 ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[6] = ω[6] ∧
       rdN μ' (sp + 448) 8 = n ∧ rdN μ' (sp + 456) 8 = r ∧ rdN μ' (sp + 464) 8 = 0 ∧
       rdN μ' (sp + 512) 8 = rdN μ (sp + 312) 8 ∧ rdN μ' (sp + 520) 8 = rdN μ (sp + 320) 8 ∧
       rdN μ' (sp + 528) 8 = rdN μ (sp + 328) 8 ∧ rdN μ' (sp + 536) 8 = rdN μ (sp + 336) 8 ∧
@@ -159,7 +161,8 @@ theorem od_alloc {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x :
   refine ⟨?ω', ?μ', ?run, ?post⟩
   case run => pvm_go [h1, h7, hr0', hrf, hwf, rdN_writeN_disjoint, ↓rdN_fold, ↓loadI_fold]
   case post =>
-    refine ⟨by reg_val; simp [h1], ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha h1 h2 => ?_, fun a => ?_, fun a => ?_⟩
+    refine ⟨by reg_val; simp [h1], by reg_val, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha h1 h2 => ?_, fun a => ?_,
+      fun a => ?_⟩
     all_goals try (rd_simp []; done)
     all_goals (simp (disch := pvm_arith) only [rdN, PVM.Memory.readN_writeN_disjoint, PVM.Memory.readN_writeN_same,
       Num.decodeLE_encodeLE]; try simp)

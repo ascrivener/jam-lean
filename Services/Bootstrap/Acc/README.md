@@ -8,18 +8,31 @@
 built tree with `scripts/fetch-lake.sh --force`, then `lake build`. The toolchain lands in
 `/root/.lean/lean-4.36.0-rc1-linux/bin`.
 
-**Step 5 (ParamStatics): proved, on branch `claude/bootstrap-t2-statics`, not yet a PR.** It needs
-`Start.lean` from #222. `Acc/Statics.lean`: `chain` / `start_to_6429_statics` state, at 6429,
-[196616]₂ = 𝖢 and [196696]₈ = 𝖨 (341 and 16 for `Params.full`). **No code-fact tier is needed:** `Code`
-already has the facts for 56205 and 56279, because refine runs the same prologue. `AccBParams`'s last two
-executor pieces are re-checked with cuts that also carry the two cells (16 s). To do: import it from
-`Services.lean`, add a whats-proven entry, and open the PR after #222 merges. `apply()` checks
-2 ≤ 𝖢 ≤ 341 and stores 𝖨 as a u16, so 2·𝖢·𝖨 < 2³² always holds. 𝖨 > 0 is not checked by the binary.
+**Branch `claude/bootstrap-t2-statics` (PR after #222 merges; pushed):**
+- `Acc/Statics.lean`: `chain` / `start_to_6429_statics`: at 6429, [196616]₂ = 𝖢 and [196696]₈ = 𝖨
+  (341 and 16 for `Params.full`). No code-fact tier needed (`Code` has 56205 / 56279); `AccBParams`'s
+  last two executor pieces re-checked with cuts carrying the cells. `apply()` checks 2 ≤ 𝖢 ≤ 341 and
+  stores 𝖨 as a u16, so 2·𝖢·𝖨 < 2³²; 𝖨 > 0 is not checked by the binary.
+- R11 (Adam, option (a), 2026-11-16): `KeyFmt` and `LogFmt` also keep `Glob` (196616 … 196791);
+  `Utf8Call`'s frame already implies it. **Whoever discharges `KeyFmt` / `LogFmt` must prove this
+  too.** Threaded through `sk_call`, `enc_call`, `tr_w2a`, `lg_part1/2`, `tr_w2c`, `W1Post`, `W2Post`
+  (helper `Transfer/Glob.lean`: `glob_of_hkeepC`). **Left:** `gk_call`, `tr_read`, then `TrPost`'s
+  `Glob` conjunct, using `get_call`'s new `Glob` conclusion from Handlers A's PR #224 (merge main
+  after #224 lands; don't edit `GetCall.lean`). Then the PR (whats-proven: the strengthened
+  `KeyFmt`/`LogFmt`, `TrPost`'s new conjunct).
+- R12: `Acc/Abort.lean`: `HeapTrapPc` (every allocation-failure trap of the blob, from
+  `scripts/allocfail/`; 59710 excluded since a formatter `Err` also reaches it), `AccAbort` (a heap
+  trap, or a failed allocator call 40611 / 40821 with ω₇ = 0), `accAbort_of_heapFailT`, `ValuesFit`
+  (self storage values, every service's preimages, ℰ(↕**i**), all < 2⁶³). **To do:** `ValuesFit` is
+  kept by every `ASem.step` (writes are bounded by `argMem`; check each host in `AccHost.dispatch`).
 
-**Waiting on @parent:** `TrPost` does not yet keep 196616…196791 (Handlers A's later summaries need
-that). The frames of `KeyFmt` / `Utf8Call` / `LogFmt` don't cover that region. Options sent: (a)
-strengthen the three hypotheses' frames and thread the region through (recommended), (b) a
-whole-program write analysis later.
+**Plan (Adam's decision 23, option B: a T2 skeleton with named hypotheses; map:
+`docs/t2-remaining.md` on `claude/bootstrap-t2-handlers-a-row9`).** My rows, in order: R11, R12
+(above), R1 items-loop skeleton, R2 operand arm (consumes Handlers A's R5 / R7; agree the interface
+through @parent), R15 the end, R16 `accumulate_spec`. Named hypotheses: per-handler `Impl` (R6, not
+rows 8/9), the output decode's success path (R3), the results encoder 36299 (R9), the HeapHost writer
+step (R8), per-instruction log lines (Fmt). Keep each minimal and close to Spec. When
+`accumulate_spec` is on main, send @parent its statement and hypothesis list.
 
 **Only on WIP (proved):**
 - `Acc/Items/`: Exit (`items_end`, `items_halt`), Operand (`op_pre`, `op_mid`), Disp, End, Head.

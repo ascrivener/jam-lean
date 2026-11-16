@@ -3,6 +3,29 @@
 Owner: the symexec/KeyFmt session (a child of the project's parent session). Paused 2026-11-14 for the
 account move.
 
+## PAUSED (2026-11-16, sixth session)
+
+The executor line is paused (Adam, decision 19). The from_utf8 step bound and the CodeF callers
+(55106/57327/57556/57624) are dropped, since they only served the formatter line. Resume only if
+T1 or T2 needs an executor feature.
+
+The sixth session fixed #194 against main: `Hosts.lean` built a `Static` with the old six fields,
+and this branch adds `facts`, so `log4770_ok` now passes seven.
+
+If the step bound is ever wanted again, here is the design that was drafted (not committed):
+- `srunF_soundB` / `fork_soundB` / `fork_soundWB`: k ≤ fuel. The proofs are those of
+  `srunF_sound` / `fork_sound` with the bound threaded through, because every step and every
+  split uses one unit of fuel. `check_sound` already gives exactly k steps.
+- `loop_soundXB`: a back edge pays `k + c·meas' ≤ c·meas`; an exit pays `k + c·e ≤ c·meas + d`
+  for an exit measure e named in the postcondition. The whole run then pays `k + c·e ≤ c·meas + d`.
+  The exit measure lets the inner loops (byte 60803 and word 60759) be paid for by the progress
+  they make, which keeps the outer bound affine.
+- `loop_fork_soundXB` with `LoopOblXB`: exits pass `meas (svals sub)` to Q, with c = d = fuel.
+- Outer body: `ReachB s n pc`, with the budget `s + 100·(len − i) + R_pc ≤ 100·n + 1000`, where
+  R_pc is the fixed fuel still to run (5b 100, 5a 200, byte 300, byte0 400, 4 500, word 600,
+  8 700, 7 100, 6 100, 1b 400, header 1000). This gives `outer_loop` k ≤ 1100·(len − i) + 1000
+  and from_utf8 k ≤ 1100·len + 1400.
+
 ## Done (on main)
 
 - #153: ProgAll imports the aggregate code modules.

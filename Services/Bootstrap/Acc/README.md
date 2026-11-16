@@ -20,6 +20,10 @@
   → dealloc of the trace). `Inv.lean` now has `slotFoot` / `footL` / `ItemsOwn`, `itemOf_local`,
   `rest_keep` (slots and ownership carried to the rest under a frame).
 - Asked Handlers A (via @parent) to add sp + 16…24, 32…40, 136…152 to `LoopKeep`, which R2 needs across R5.
+- Handlers A (2026-11-16): `LoopKeep` keeps sp + 104…152 (asked to confirm sp + 16…40 too);
+  `HandlerPost` keeps every chunk but the current instruction's buffers. Row 11's `LoopHyp` carries
+  `hB : 2·(144n+4) + 4·|encodeResults rs| + 64 < 2³⁰ − 64` up to R2: at R2 / R16 it must become a case
+  split (hB, or the run exhausts the heap), never an unconditional assumption.
 - **Next (session 4 or 5):** (1) when @parent says the ruleset is fixed: merge #222, merge main here,
   full build, open the statics PR (ParamStatics, R11, R12 + R1 now too; body per the third session's
   notes plus R1 / `ItemsOwn` / `ItemLogFmt`), merge on green. (2) R2 = prove `OpArm` (operand with

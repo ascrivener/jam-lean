@@ -84,7 +84,7 @@ Added for R5 (parent, 2026-11-16; `Acc/Handlers/InstrLoopHyp.lean`): **`InstrLog
 **`ResultLogH`** (G4, the two `format!` calls at 8772 and 14369), **`HandlerH`** (R6, one hypothesis
 over every instruction: 8822 → 14278 implements `onInstr C now i`, ending in `HandlerPost`: the result,
 its buffers' ownership `ItemOwn` (approved 2026-11-16), old chunks kept except the instruction's own
-buffers, and the item frame's words `LoopKeep` (sp + 16, 32, 104 … 152, 160 … 224, 264 … 280, 312 … 344,
+buffers, and the item frame's words `LoopKeep` (sp + 16 … 40, 104 … 152, 160 … 224, 264 … 280, 312 … 344,
 448 … 512, 736, 976 … 1000, and from sp + 1632) kept), and
 **`PushH`** (R8, `finish_grow` with an old buffer, 14431 → 14485). R5's precondition from R2 includes
 [sp + 184] = 2⁶³, [sp + 216] = 2⁶³ + 1, [sp + 200] = 678, and the decoded `Vec` at sp + 240 / sp + 248

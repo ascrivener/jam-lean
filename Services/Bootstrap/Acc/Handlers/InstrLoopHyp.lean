@@ -29,15 +29,16 @@ open PVM JAM Picoalloc Services.Bootstrap Services.Bootstrap.Code Services.Boots
   Services.Bootstrap.Acc.Handlers.RowEleven
 
 /-- The frame words of accumulate's item step that the instruction loop and what follows it need
-    (from sp): the items' slot buffer's ptr and cap (sp + 16, sp + 32), the tail's buffers (sp + 104 …
-    sp + 136, sp + 264 … sp + 280), the formatter word 2804 and the items' iterator end (sp + 136,
-    sp + 144), the `Zombify` flag, the
+    (from sp): sp + 16 … sp + 40, which holds the items' slot buffer's ptr and cap (sp + 16, sp + 32,
+    read by the epilogue at 15317 / 15330) and the constant word at sp + 24 (set at 6724); sp + 104 …
+    sp + 152, the tail's buffers (sp + 104 … sp + 136), the formatter word 2804 and the items'
+    iterator end (sp + 136, sp + 144); sp + 264 … sp + 280, more of the tail's buffers; the `Zombify` flag, the
     item index, the constants and the formatter word (sp + 160 … sp + 224), the package hash
     (sp + 312 … sp + 344), the results `Vec`, the `IntoIter` and the counter (sp + 448 … sp + 512), the
     index (sp + 736), the instruction's `String` (sp + 976 … sp + 1000), and the caller's frames
     (from sp + 1632). -/
 def LoopKeep (sp a : Nat) : Prop :=
-  (sp + 16 ≤ a ∧ a < sp + 24) ∨ (sp + 32 ≤ a ∧ a < sp + 40) ∨ (sp + 104 ≤ a ∧ a < sp + 152) ∨
+  (sp + 16 ≤ a ∧ a < sp + 40) ∨ (sp + 104 ≤ a ∧ a < sp + 152) ∨
   (sp + 160 ≤ a ∧ a < sp + 224) ∨ (sp + 264 ≤ a ∧ a < sp + 280) ∨
   (sp + 312 ≤ a ∧ a < sp + 344) ∨ (sp + 448 ≤ a ∧ a < sp + 512) ∨ (sp + 736 ≤ a ∧ a < sp + 744) ∨
   (sp + 976 ≤ a ∧ a < sp + 1000) ∨ sp + 1632 ≤ a
@@ -50,8 +51,8 @@ def FreshBuf (s₀ s' : State) (kc kp : Nat) : Prop :=
 /-- **The instruction's log line's `format!` at 8772** (59375, returning to 8779), frame-only (G4):
     from the call's registers (ω₀ = 302, ω₁ = sp, ω₇ = sp + 1568, ω₈ = 66194 the template, ω₉ =
     sp + 1144 the argument pair (sp + 1000, 2272): the pointer sp + 744 to the instruction's copy, which
-    represents some i), either the run returns to 8779 with ω₁, ω₅, ω₆ kept, a `String` { kc, kp, _ }
-    at sp + 1568 (`FreshBuf`), every allocated chunk of s₀ kept with its data, the allocator's context
+    represents some i), either the run returns to 8779 with ω₁, ω₅, ω₆ kept, a `String` { kc, kp, kl }
+    at sp + 1568 (`FreshBuf`, its kl octets at kp readable), every allocated chunk of s₀ kept with its data, the allocator's context
     for the new state, and from sp up only sp + 1568 … sp + 1592 changed; or it reaches a failed
     allocator call and then ends ☇ (`ExhaustsP`). The message's text is not stated. -/
 def InstrLogH (B : InstrRep) (p : ByteArray) (env : AccEnv) (pb S0 S1 : Nat) : Prop :=
@@ -62,11 +63,12 @@ def InstrLogH (B : InstrRep) (p : ByteArray) (env : AccEnv) (pb S0 S1 : Nat) : P
     S0 + 4096 ≤ sp → sp + 1632 ≤ S1 → 2147483648 + 4096 ≤ sp →
     rdN μ (sp + 1144) 8 = sp + 1000 → rdN μ (sp + 1152) 8 = 2272 → rdN μ (sp + 1000) 8 = sp + 744 →
     B.rep i (μ.readN (sp + 744) 232) μ →
-    (∃ (s' : State) (ω' : Regs) (μ' : Memory) (N kc kp : Nat),
+    (∃ (s' : State) (ω' : Regs) (μ' : Memory) (N kc kp kl : Nat),
       FreeStepsH p (KeepCtx (accContractS env)) 59375 ω μ (c, f) 8779 ω' μ' (c, f) N ∧
       HeapCtxC env.code pb S0 S1 μ' s' ∧
       ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       rdN μ' (sp + 1568) 8 = kc ∧ rdN μ' (sp + 1576) 8 = kp ∧ FreshBuf s₀ s' kc kp ∧
+      rdN μ' (sp + 1584) 8 = kl ∧ (∀ a, kp ≤ a → a < kp + kl → μ'.readable a = true) ∧
       (∀ d ∈ chunks s₀, d.used = true → d ∈ chunks s' ∧ ∀ a, InData d a → μ'.read a = μ.read a) ∧
       (∀ a, a < 4294967296 → sp ≤ a → (a < sp + 1568 ∨ sp + 1592 ≤ a) → μ'.read a = μ.read a)) ∨
     ExhaustsP p env pb 59375 ω μ c f

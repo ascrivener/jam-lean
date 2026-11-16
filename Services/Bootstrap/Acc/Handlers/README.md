@@ -107,6 +107,26 @@ Handlers dependencies takes ~2 h on 4 cores). Use `ulimit -v 12000000` when comp
 - `refine ⟨?ω', ?run⟩; case run => pvm_go …` for a one-witness existential.
 
 
+## Session 11 progress (2026-11-16)
+
+- **LoopKeep** is now one range sp + 16 … 40 (was sp + 16 … 24 and sp + 32 … 40). Final ranges (from sp): [16,40)
+  [104,152) [160,224) [264,280) [312,344) [448,512) [736,744) [976,1000) [1632,∞). Binary check: no store at the
+  outer sp to sp + 16 … 40 inside the loop (all hits are callee frames); sp + 24 is a constant set at 6724.
+- **`InstrLogH` amended (pending @parent, option A)**: also gives the `String`'s len kl at sp + 1584 and its kl
+  octets readable, which `ResultLogH`'s readability premise needs at 14369.
+- `InstrLoopMid.lean`: **`il_mid`** (8735 → 8822: `il_log_pre`, `InstrLogH`, `il_log_post`, memcpy ret 304), or
+  `ExhaustsP`.
+- `InstrLoopPush.lean`: `il_full` (14420 → 14431, len = cap) and `il_push2` (14485 → memcpy, ret 540).
+- `InstrLoopOwn.lean`: `ResultAtP.copy` (a result moves with its 144 octets), `ResultAtP.toAt'`, `iterFree_succ`,
+  **`IterOwn.step`** (the `IntoIter` after one instruction).
+- `InstrLoopTailRun.lean`: `data_ge`, `NewBuf`, **`il_tail_log`** (14278 → 14420: `ResultLogH`, `log`, the
+  line's dealloc), **`il_tail_push`** (14420 → 14516, room or `PushH`), **`il_tail_post`** (14516 → 8540).
+  Pitfall: give `HeapCtxC … (free st kp)` only after `rw [List.foldl_cons, List.foldl_nil]` (else OOM).
+- Asked @parent: the `StoreStep` premise (StoreFit kept by every `ASem.step`, R12) and the shape of hB in R5
+  (`hBall` over every results list of length ≤ |is|).
+- Still to do: `LoopAt` maintenance (TailHyp/ResultsOwn/ResultsAvoid/nodup for rs ++ [r]), the body as `Impl`
+  (front → mid → `HandlerH` → tail), the Checkpoint front variant, `Impl.forIn`, entry and empty case.
+
 ## Session 10 handoff (2026-11-16, for the 11th session)
 
 **PRs.** **#228** (row 9): `model`/`changes` green. `attempt-1` was still running at 17:50 (started 14:15; the attempts resume

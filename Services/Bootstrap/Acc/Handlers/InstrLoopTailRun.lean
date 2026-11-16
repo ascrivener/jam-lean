@@ -80,7 +80,7 @@ theorem il_tail_log {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (
     (fun a h1 h2 => by rw [rd1]; rw [e984, e992] at *; exact hstr a h1 h2) hr1
     (by rw [e1000]; exact DesignateAlloc.rd8 (by split <;> omega) n7)
     (by rw [e1000]; exact DesignateAlloc.rd8 (by split <;> omega) n8) with
-    ⟨s', ω2, μ2, N2, kc, kp, run2, H2, b1, b5, b6, m2c, m2p, hfb, hkeep, fr2⟩ | hX
+    ⟨s', ω2, μ2, N2, kc, kp, run2, H2, b1, b5, b6, m2c, m2p, hfb, hkeep, fr2, -⟩ | hX
   rotate_left
   · exact .inr (ResStore.ExhaustsP.pre run1 hX)
   have hSt2 := H2.st

@@ -53,7 +53,8 @@ def FreshBuf (s₀ s' : State) (kc kp : Nat) : Prop :=
     sp + 1144 the argument pair (sp + 1000, 2272): the pointer sp + 744 to the instruction's copy, which
     represents some i), either the run returns to 8779 with ω₁, ω₅, ω₆ kept, a `String` { kc, kp, kl }
     at sp + 1568 (`FreshBuf`, its kl octets at kp readable), every allocated chunk of s₀ kept with its data, the allocator's context
-    for the new state, and from sp up only sp + 1568 … sp + 1592 changed; or it reaches a failed
+    for the new state, from sp up only sp + 1568 … sp + 1592 changed, the globals 196616 … 196791 kept; or
+    it reaches a failed
     allocator call and then ends ☇ (`ExhaustsP`). The message's text is not stated. -/
 def InstrLogH (B : InstrRep) (p : ByteArray) (env : AccEnv) (pb S0 S1 : Nat) : Prop :=
   ∀ (c : AccCtx) (f : Stream) (ω : Regs) (μ : Memory) (s₀ : State) (sp : Nat) (i : Spec.Instr),
@@ -70,7 +71,8 @@ def InstrLogH (B : InstrRep) (p : ByteArray) (env : AccEnv) (pb S0 S1 : Nat) : P
       rdN μ' (sp + 1568) 8 = kc ∧ rdN μ' (sp + 1576) 8 = kp ∧ FreshBuf s₀ s' kc kp ∧
       rdN μ' (sp + 1584) 8 = kl ∧ (∀ a, kp ≤ a → a < kp + kl → μ'.readable a = true) ∧
       (∀ d ∈ chunks s₀, d.used = true → d ∈ chunks s' ∧ ∀ a, InData d a → μ'.read a = μ.read a) ∧
-      (∀ a, a < 4294967296 → sp ≤ a → (a < sp + 1568 ∨ sp + 1592 ≤ a) → μ'.read a = μ.read a)) ∨
+      (∀ a, a < 4294967296 → sp ≤ a → (a < sp + 1568 ∨ sp + 1592 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, Glob a → μ'.read a = μ.read a)) ∨
     ExhaustsP p env pb 59375 ω μ c f
 
 /-- **The result's log line's `format!` at 14369** (59375, returning to 14376), frame-only (G4): from
@@ -79,7 +81,8 @@ def InstrLogH (B : InstrRep) (p : ByteArray) (env : AccEnv) (pb S0 S1 : Nat) : P
     octets at its buffer readable), (sp + 1496, 680) the `Result` view { e, payload } with the result r
     at sp + 1000), either the run returns to 14376 with ω₁, ω₅, ω₆ kept, a `String` { kc, kp, _ } at
     sp + 1144 (`FreshBuf`), every allocated chunk of s₀ kept with its data, the allocator's context for
-    the new state, and from sp up only sp + 1144 … sp + 1168 changed; or `ExhaustsP`. -/
+    the new state, from sp up only sp + 1144 … sp + 1168 changed, the globals 196616 … 196791 kept; or
+    `ExhaustsP`. -/
 def ResultLogH (p : ByteArray) (env : AccEnv) (pb S0 S1 : Nat) : Prop :=
   ∀ (c : AccCtx) (f : Stream) (ω : Regs) (μ : Memory) (s₀ : State) (sp : Nat) (r : Spec.Result),
     HeapCtxC env.code pb S0 S1 μ s₀ →
@@ -99,7 +102,8 @@ def ResultLogH (p : ByteArray) (env : AccEnv) (pb S0 S1 : Nat) : Prop :=
       ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
       rdN μ' (sp + 1144) 8 = kc ∧ rdN μ' (sp + 1152) 8 = kp ∧ FreshBuf s₀ s' kc kp ∧
       (∀ d ∈ chunks s₀, d.used = true → d ∈ chunks s' ∧ ∀ a, InData d a → μ'.read a = μ.read a) ∧
-      (∀ a, a < 4294967296 → sp ≤ a → (a < sp + 1144 ∨ sp + 1168 ≤ a) → μ'.read a = μ.read a)) ∨
+      (∀ a, a < 4294967296 → sp ≤ a → (a < sp + 1144 ∨ sp + 1168 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, Glob a → μ'.read a = μ.read a)) ∨
     ExhaustsP p env pb 59375 ω μ c f
 
 /-- The chunks a handler's result may occupy, against the states st (at the dispatch) and st′: an

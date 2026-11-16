@@ -997,8 +997,8 @@ What you trust beyond the kernel:
   Each is minimal and frame-only, and keeps sp + 184 … sp + 224:
   - `InstrLogH` (G4): the instruction's Debug log line, `format!` at 8772 (59375 → 8779): a fresh `String`
     { kc, kp, kl } at sp + 1568 with its kl octets at kp readable (option A, approved by the parent
-    2026-11-16: `ResultLogH`'s readability premise needs it), the allocator's chunks kept, or `ExhaustsP`;
-    the text is not stated;
+    2026-11-16: `ResultLogH`'s readability premise needs it), the allocator's chunks kept, the globals
+    196616 … 196791 kept (added 2026-11-16, parent-approved), or `ExhaustsP`; the text is not stated;
   - `ResultLogH` (G4): the result's log line, `format!` at 14369 (59375 → 14376), the same shape with the
     `String` at sp + 1144;
   - `HandlerH` (R6): one hypothesis over every instruction i: from the dispatch at 8822, the handler
@@ -1032,16 +1032,17 @@ What you trust beyond the kernel:
   stays allocated with its data and is none of the buffers freed later (`StepKeep`, from each body).
 - **R5 and R7 composed (T2, Handlers A; `Acc/Handlers/InstrLoopEntry.lean`, `InstrLoopRowEleven.lean`).**
   **`loop_row11`**: from row 9's end (8492) with `EntryHyp` (the decoded instructions' `Vec` owned as
-  `VecOwn`, its pointer in ω₆; the empty results `Vec` (cap 0, dangling pointer below 32,
-  len 0) with row 11's `TailHyp`; the instructions' buffers distinct from `tailFree`; the frame constants),
+  `VecOwn`, its pointer in ω₆; the results `Vec` with len 0 (`hres`) and row 11's `TailHyp`; the instructions' buffers distinct from `tailFree`; the frame constants),
   the run implements the spec's loop followed by `unless is.any isZomb (store key (encodeResults results))`
   and reaches the items loop's head 6766 in `R57Post`: the allocator's context, every allocated chunk of
   the entry outside the instructions' buffers and the frame buffers at sp + 104 / sp + 272 kept with its
   data, the frame words `StableKeep` kept. Both cases: some instructions (`il_entry`, `il_loop`,
   `loop_exit`) and none (8492 → 15050, the empty `IntoIter`'s drop, `row_eleven_store` from 15060).
   Named hypotheses: those of `il_loop` plus `DropInstrsH`. Premises as `il_loop`'s (`Inv`, `hBall`, the
-  read-only facts), now at the entry. Not promised yet: the globals 196616 … 196791 (`InstrLogH`/`ResultLogH` do not keep
-  them; asked) and the registers but ω₁.
+  read-only facts), now at the entry. Not promised yet: the globals 196616 … 196791 (all three
+  hypotheses now keep them; threading them through the body to `R57Post` is the next step) and the
+  registers but ω₁. `EntryHyp.hres` allows the results buffer either empty (cap 0) or `Vec::with_capacity`'s
+  allocated chunk (the binary's case for |is| > 0, 7970).
   `LoopHyp.hrp` (the results' addresses in [2¹⁶, 2³¹)) now applies only when there are results: an
   empty `Vec`'s pointer dangles.
 - **Refinement of a fragment, not of a whole program.** The allocator theorems are about the

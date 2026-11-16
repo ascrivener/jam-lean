@@ -63,7 +63,7 @@ theorem il_mid {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env :
   rcases hL c f ω1 μ1 s₀ sp i H1 a0 (a1.trans h1) a7 a8 a9 hs2 hs3 hs1
     (DesignateAlloc.rd8 (by omega) m1b) (DesignateAlloc.rd8 (by omega) m1c)
     (DesignateAlloc.rd8 (by omega) m1a) hrep1 with
-    ⟨s', ω2, μ2, N2, kc, kp, kl, run2, H2, b1, b5, b6, m2c, m2p, hfb, m2l, hrd, hkeep, fr2⟩ | hX
+    ⟨s', ω2, μ2, N2, kc, kp, kl, run2, H2, b1, b5, b6, m2c, m2p, hfb, m2l, hrd, hkeep, fr2, -⟩ | hX
   rotate_left
   · exact .inr (ResStore.ExhaustsP.pre run1 hX)
   have hSt2 := H2.st

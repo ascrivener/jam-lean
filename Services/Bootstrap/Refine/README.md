@@ -13,7 +13,7 @@ Everything cites Gray Paper v0.8.0 via the docstrings of the files named here; t
   slots' octets `B` carried existentially with a caller's invariant `Inv k μ0 Kp B`; obligations `PassOkT`, `ExportOkT`,
   `LookupOk`; `PInv.mono_O`, `PInv.exact`, `LUSlotB`), `SpecRunT` (`NoImpRsr`, `outT lk`, `rsemLk`, `run_refineT`).
 - `LookupStep2.lookup_step` now also exports `ptr' < 2^31` and that the adopted chunk is not `ce` (strengthening only).
-- Written, being checked: `SlotT` (`slotRep`, `DRt C` ⊇ `Top.DRm C`, `SlotW` = what `exit_runW` needs of one slot,
+- Done too (build, axioms clean): `SlotT` (`slotRep`, `DRt C` ⊇ `Top.DRm C`, `SlotW` = what `exit_runW` needs of one slot,
   `SlotOK` = `SlotW` for every memory keeping the owned chunks as in μr), `SlotFixed` (`kind_okH`, `slotOK_fixed`),
   `SlotLU` (`slotW_lu`, for pass-through `LookedUp` and the eager Lookup's slot).
 - **Gas cap.** `lookup_step`'s internal `hgas` (1125 + ⌈264 |d| / 1024⌉ ≤ cap) cannot hold at cap 2^27 for preimages up

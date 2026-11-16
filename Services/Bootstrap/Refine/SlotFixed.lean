@@ -1,4 +1,7 @@
 import Services.Bootstrap.Refine.SlotT
+import Services.Bootstrap.Encode.ArmsH
+import Services.Bootstrap.Encode.ArmsHFixed
+import Services.Bootstrap.Encode.ArmsHFixed2
 
 /-!
 # T1c's output slots of the milestone's fixed-width kinds
@@ -12,7 +15,7 @@ namespace Services.Bootstrap.Refine.SlotFixed
 
 open PVM Picoalloc JAM Services.Bootstrap Services.Bootstrap.Code Services.Bootstrap.CodeX Services.Bootstrap.CodeA
   Services.Bootstrap.Decode.HeapCtx Services.Bootstrap.Decode.LoopA Services.Bootstrap.Encode.GrowH
-  Services.Bootstrap.Encode.EncMH Services.Bootstrap.Refine.Kinds Services.Bootstrap.Refine.SlotT
+  Services.Bootstrap.Refine.Kinds Services.Bootstrap.Refine.SlotT
 
 set_option maxHeartbeats 8000000
 set_option maxRecDepth 100000

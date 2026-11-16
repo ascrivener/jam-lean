@@ -1,4 +1,7 @@
 import Services.Bootstrap.Refine.SlotT
+import Services.Bootstrap.Encode.ArmsH
+import Services.Bootstrap.Encode.ArmsHFixed
+import Services.Bootstrap.Encode.ArmsHFixed2
 import Services.Bootstrap.Refine.LoopT
 
 /-!
@@ -14,7 +17,7 @@ namespace Services.Bootstrap.Refine.SlotLU
 
 open PVM Picoalloc JAM Services.Bootstrap Services.Bootstrap.Code Services.Bootstrap.CodeX Services.Bootstrap.CodeA
   Services.Bootstrap.Decode.HeapCtx Services.Bootstrap.Decode.LoopA Services.Bootstrap.Encode.GrowH
-  Services.Bootstrap.Encode.EncMH Services.Bootstrap.Refine.SlotT Services.Bootstrap.Refine.LoopT
+  Services.Bootstrap.Refine.SlotT Services.Bootstrap.Refine.LoopT
   Services.Bootstrap.Refine.DropVecH Services.Bootstrap.Refine.DropVecW
 
 set_option maxHeartbeats 8000000
@@ -41,7 +44,7 @@ theorem slotW_lu {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Has
       fun bs _ => bs.take 8 = Num.encodeLE 8 9223372036854775825 ∧
         (bs.drop 8).take 8 = Num.encodeLE 8 18446744073709551615, fun _ _ => False,
       (looked_up_noneH env K pb hK1 hK).mono (by decide), ⟨b0, b1⟩, ⟨b0, b1⟩,
-      fun bs μ h => ⟨.lookedUp none, fun x hx => by cases hx, h⟩, fun _ _ _ _ h => h, fun _ _ _ _ h => h,
+      fun bs μ h => ⟨.lookedUp none, ⟨by simp [Spec.Instr.WF], h⟩⟩, fun _ _ _ _ h => h, fun _ _ _ _ h => h,
       fun _ _ h => h.elim, Or.inr (Or.inl (Or.inr ⟨18446744073709551615, rdN μ (el + 16) 8, ⟨0, 0, false⟩,
         by rw [r0]; exact b0, by rw [r 8 8 (by omega)]; exact b1, ?_, rdN_lt64 _ _, Or.inl rfl⟩))⟩
     rw [encodeLE_rdN]
@@ -49,14 +52,14 @@ theorem slotW_lu {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Has
     obtain ⟨b8, b16, b24⟩ := b1
     have hdl := hv d rfl
     have hloc : ∀ (bs : List UInt8) (μ μ' : Memory), (∀ q m, Encode.GrowH.SrcAtP buf d.length q m →
-        μ'.readN q m = μ.readN q m) → Encode.VariantsVec.LookedUpSomeRepAt buf d.length d bs μ →
-        Encode.VariantsVec.LookedUpSomeRepAt buf d.length d bs μ' := by
+        μ'.readN q m = μ.readN q m) → Encode.Enc.LookedUpSomeRepAt buf d.length d bs μ →
+        Encode.Enc.LookedUpSomeRepAt buf d.length d bs μ' := by
       rintro bs μ μ' hk ⟨e0, e8, e16, e24, e⟩
       refine ⟨e0, e8, e16, e24, ?_⟩
       rcases Nat.eq_zero_or_pos d.length with h0 | h0
       · rw [h0] at e ⊢; simp only [Memory.readN, List.range_zero, List.map_nil] at e ⊢; exact e
       · rw [hk buf d.length ⟨h0, rfl, rfl⟩]; exact e
-    have hrep : Encode.VariantsVec.LookedUpSomeRepAt buf d.length d (μ.readN el 232) μ := by
+    have hrep : Encode.Enc.LookedUpSomeRepAt buf d.length d (μ.readN el 232) μ := by
       refine ⟨b0, b8, b16, b24, ?_⟩
       by_cases hne : d = []
       · subst hne; simp [Memory.readN]
@@ -64,11 +67,11 @@ theorem slotW_lu {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Has
     have henc : (Spec.Instr.lookedUp (some d)).encode = 18 :: 1 :: (Blob.encodeNat d.length ++ d) := by
       simp [Spec.Instr.encode, Spec.opt, Spec.bytes, Codec.nat]
     rw [henc]
-    refine ⟨Encode.VariantsVec.LookedUpSomeRepAt buf d.length d, Encode.VariantsVec.LookedUpSomeRepAt buf d.length d,
+    refine ⟨Encode.Enc.LookedUpSomeRepAt buf d.length d, Encode.Enc.LookedUpSomeRepAt buf d.length d,
       Encode.GrowH.SrcAtP buf d.length,
       (looked_up_someH env K pb hK1 hK buf d.length d rfl hdl hbuf).mono (by decide), hrep, hrep,
-      fun bs μ h => ⟨.lookedUp (some d), fun x hx => by cases hx; exact hdl,
-        (Encode.VariantsVec.lookedUpSomeRep_iff d.length d bs μ).mpr ⟨buf, h⟩⟩, hloc, hloc, ?_, ?_⟩
+      fun bs μ h => ⟨.lookedUp (some d), ⟨by simp [Spec.Instr.WF, Spec.short, hdl],
+        (Encode.Enc.lookedUpSomeRep_iff d.length d bs μ).mpr ⟨buf, h⟩⟩⟩, hloc, hloc, ?_, ?_⟩
     · rintro q m ⟨h0, rfl, rfl⟩
       have hne : d ≠ [] := fun e => by subst e; simp at h0
       obtain ⟨-, ch, ho, -, -, ha, hs⟩ := hd d rfl hne

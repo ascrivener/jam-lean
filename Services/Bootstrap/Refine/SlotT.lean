@@ -33,10 +33,10 @@ def slotRep : Spec.Instr → List UInt8 → Memory → Prop
       | some d => Decode.CreateServiceElem.CreateServiceSomeRep d.length d h (Codec.fixed 8 l) (Codec.fixed 8 g)
           (Codec.fixed 8 m) (Codec.fixed 8 b) memo (Codec.fixed 8 f) (Spec.opt (Codec.fixed 4) id) bs μ
   | .deleteItems ks => Decode.VecVecElem.VecVecRep 9223372036854775812 ks
-  | .bless m a v r z => Decode.BlessHeap.BlessRep (Codec.fixed 4 m) (Codec.fixed 4 a) (Codec.fixed 4 v)
+  | .bless m a v r z => Decode.Bless.BlessRep (Codec.fixed 4 m) (Codec.fixed 4 a) (Codec.fixed 4 v)
       (Codec.fixed 4 r) z.length (z.map (fun (s, g) => Codec.fixed 4 s ++ Codec.fixed 8 g)).flatten
   | .assign c q a => Decode.Assign.AssignRep q.length (Codec.fixed 2 c) q.flatten (Codec.fixed 4 a)
-  | .designate ks => Decode.DesignateHeap.DesignateRep ks.length ks.flatten
+  | .designate ks => Decode.Designate.DesignateRep ks.length ks.flatten
   | .provide s (.hash h) => fun bs _ => bs.take 8 = Num.encodeLE 8 9223372036854775824 ∧
       (bs.drop 8).take 1 = [0] ∧ (bs.drop 9).take 32 = h ∧ (bs.drop 48).take 4 = Codec.fixed 4 s
   | .provide s (.inline d) => Decode.LookupProvideElem.ProvideInlineRep (Codec.fixed 4 s) d.length d
@@ -45,7 +45,7 @@ def slotRep : Spec.Instr → List UInt8 → Memory → Prop
   | .lookedUp (some d) => Decode.LookupProvideElem.LookedUpSomeRep d.length d
   | .imported ds => Decode.VecVecElem.VecVecRep 9223372036854775826 ds
   | .randomStorageAccumulate none => EncRSA.RSAErrRep
-  | .randomStorageAccumulate (some ks) => Decode.RandomStorageOk.RandomStorageOkRep ks.length ks.flatten
+  | .randomStorageAccumulate (some ks) => Decode.RandomStorage.RandomStorageOkRep ks.length ks.flatten
   | .assignForGasCost c q a => Decode.AssignGas.AssignGasRep (Codec.fixed 2 c) q.length q.flatten (Codec.fixed 4 a)
   | y => fun bs _ => kindRep y bs
 
@@ -72,7 +72,7 @@ def SlotW (env : RefineHost.Env) (K pb : Nat) (p : ByteArray) (P : Program)
     (DRt : List UInt8 → Memory → Prop) (enc : List UInt8) (el : Nat) (μ : Memory) (s : State)
     (own : Chunk → Prop) : Prop :=
   ∃ (rep DR : List UInt8 → Memory → Prop) (src : Nat → Nat → Prop),
-    Encode.EncMH.EncOkMH env K pb p P 232 enc rep src ∧ rep (μ.readN el 232) μ ∧ DR (μ.readN el 232) μ ∧
+    Encode.GrowH.EncOkMH env K pb p P 232 enc rep src ∧ rep (μ.readN el 232) μ ∧ DR (μ.readN el 232) μ ∧
     (∀ bs μ, DR bs μ → DRt bs μ) ∧
     (∀ bs μ μ', (∀ q m, src q m → μ'.readN q m = μ.readN q m) → rep bs μ → rep bs μ') ∧
     (∀ bs μ μ', (∀ q m, src q m → μ'.readN q m = μ.readN q m) → DR bs μ → DR bs μ') ∧

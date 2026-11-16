@@ -29,13 +29,16 @@ open PVM JAM Picoalloc Services.Bootstrap Services.Bootstrap.Code Services.Boots
   Services.Bootstrap.Acc.Handlers.RowEleven
 
 /-- The frame words of accumulate's item step that the instruction loop and what follows it need
-    (from sp): the tail's buffers (sp + 104 … sp + 136, sp + 264 … sp + 280), the `Zombify` flag, the
+    (from sp): the items' slot buffer's ptr and cap (sp + 16, sp + 32), the tail's buffers (sp + 104 …
+    sp + 136, sp + 264 … sp + 280), the formatter word 2804 and the items' iterator end (sp + 136,
+    sp + 144), the `Zombify` flag, the
     item index, the constants and the formatter word (sp + 160 … sp + 224), the package hash
     (sp + 312 … sp + 344), the results `Vec`, the `IntoIter` and the counter (sp + 448 … sp + 512), the
     index (sp + 736), the instruction's `String` (sp + 976 … sp + 1000), and the caller's frames
     (from sp + 1632). -/
 def LoopKeep (sp a : Nat) : Prop :=
-  (sp + 104 ≤ a ∧ a < sp + 136) ∨ (sp + 160 ≤ a ∧ a < sp + 224) ∨ (sp + 264 ≤ a ∧ a < sp + 280) ∨
+  (sp + 16 ≤ a ∧ a < sp + 24) ∨ (sp + 32 ≤ a ∧ a < sp + 40) ∨ (sp + 104 ≤ a ∧ a < sp + 152) ∨
+  (sp + 160 ≤ a ∧ a < sp + 224) ∨ (sp + 264 ≤ a ∧ a < sp + 280) ∨
   (sp + 312 ≤ a ∧ a < sp + 344) ∨ (sp + 448 ≤ a ∧ a < sp + 512) ∨ (sp + 736 ≤ a ∧ a < sp + 744) ∨
   (sp + 976 ≤ a ∧ a < sp + 1000) ∨ sp + 1632 ≤ a
 

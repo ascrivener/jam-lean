@@ -999,8 +999,9 @@ What you trust beyond the kernel:
     `String` at sp + 1144;
   - `HandlerH` (R6): one hypothesis over every instruction i: from the dispatch at 8822, the handler
     implements `onInstr C now i` under `accContractS` and ends at 14278 in `HandlerPost` (the result at
-    sp + 1000 in fresh chunks or the instruction's own buffers, owning its buffers (`ItemOwn`; amendment
-    proposed to the parent 2026-11-16), other chunks kept, `LoopKeep` frame words
+    sp + 1000 in fresh chunks or the instruction's own buffers, owning its buffers (`ItemOwn`, the pushed
+    item's `itemPtrs` distinct and in `ResC` chunks, a `dataVec`'s inner array in its buffer; approved by the
+    parent 2026-11-16), other chunks kept, `LoopKeep` frame words
     kept);
   - `PushH` (R8): `finish_grow` with an old buffer for the results `Vec` (14431 → 14485), or `ExhaustsP`.
   The loop's straight-line segments (`InstrLoopSeg.lean`, `InstrLoopTail.lean`) are proved without them.

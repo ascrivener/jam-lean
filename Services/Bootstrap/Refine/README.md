@@ -14,7 +14,7 @@ Everything cites Gray Paper v0.8.0 via the docstrings of the files named here; t
   `VendoredFactsC` conjunct; carry it from 4642 to the decode as a frame fact (Glob words kept), into `gl`.
 - **Adam decided (A):** refine_t1c takes C := `Spec.Consts.ofParams Params.full rk`, rk free (no new hypothesis;
   refine_milestone keeps C free). The docstring must say so, and that randomKeys is irrelevant since RSR is excluded.
-- `SlotVV` (DeleteItems / Imported slots, and their empty forms): `slotOK_deleteItems`, `slotOK_imported`,
+- `SlotVV` (build, axioms clean; DeleteItems / Imported slots, and their empty forms): `slotOK_deleteItems`, `slotOK_imported`,
   `slotOK_deleteItemsEmpty`, `slotOK_importedEmpty` (via `vv_facts`, `vvAt_empty`). Pass-through `LookedUp None` is
   `SlotLU.slotW_lu` with v = none.
 

@@ -55,6 +55,7 @@ theorem vv_facts {t : Nat} (ht : t = 5 ∨ t = 19) (ks : List (List UInt8)) (cs 
       qs j + ks[j].length ≤ (f j).addr + 32 * (f j).size :=
     ⟨fun j => if h : ∃ hj : j < ks.length, ks[j].length ≠ 0 then Classical.choose (hne j h.1 h.2) else co,
       fun j hj hl => by
+        dsimp only
         rw [dif_pos ⟨hj, hl⟩]
         obtain ⟨a, b, c, d, e⟩ := Classical.choose_spec (hne j hj hl)
         exact ⟨a, b, c, d, e⟩⟩
@@ -62,7 +63,7 @@ theorem vv_facts {t : Nat} (ht : t = 5 ∨ t = 19) (ks : List (List UInt8)) (cs 
   have r0 := r 0 8 (by omega)
   simp only [Nat.add_zero, List.drop_zero] at r0
   have hgl : ∀ i (hi : i < ks.length), (ks.getD i []).length = ks[i].length := fun i hi => by
-    rw [List.getD_eq_getElem _ _ hi]
+    rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hi, Option.getD_some]
   refine ⟨q, qs, h0, h8, h16, h24, hj, by omega, fun j hj => by have := hqs31 j hj; omega, ?_, ?_⟩
   · rintro q' m (⟨hm, rfl, rfl⟩ | ⟨j, hj, hm, rfl, rfl⟩)
     · exact ⟨co, hco, by omega, hcoS⟩
@@ -73,14 +74,14 @@ theorem vv_facts {t : Nat} (ht : t = 5 ∨ t = 19) (ks : List (List UInt8)) (cs 
       by rw [r0]; exact h0, by rw [r 8 8 (by omega)]; exact h8, by rw [r 16 8 (by omega)]; exact h16,
       by rw [r 24 8 (by omega)]; exact h24, fun i hi => ?_, fun _ => ⟨hcoq, (ho co hco).1, hcou, hco⟩, by omega,
       fun h => h, by omega, fun i hi => ?_, fun i hi hci => ?_, fun i i' hi hi' hii hci hci' => ?_, fun a h1 h2 => ?_⟩
-    · rw [hgl i hi]; exact ⟨(hj i hi).1, (hj i hi).2.1⟩
+    · dsimp only; rw [hgl i hi]; exact ⟨(hj i hi).1, (hj i hi).2.1⟩
     · have := hqs31 i hi
-      have : ks[i].length < 2147483648 := by omega
-      rw [hgl i hi]; omega
-    · rw [hgl i hi] at hci
+      have : ks[i].length ≤ 2147483648 := by omega
+      dsimp only; rw [hgl i hi]; omega
+    · dsimp only at hci; rw [hgl i hi] at hci
       obtain ⟨a, b, c, d, -⟩ := hf i hi hci
       exact ⟨d, (ho _ a).1, b, a, c⟩
-    · rw [hgl i hi] at hci; rw [hgl i' hi'] at hci'
+    · dsimp only at hci hci'; rw [hgl i hi] at hci; rw [hgl i' hi'] at hci'
       intro he
       have d1 := (hf i hi hci).2.2.2.1
       have d2 := (hf i' hi' hci').2.2.2.1
@@ -90,11 +91,13 @@ theorem vv_facts {t : Nat} (ht : t = 5 ∨ t = 19) (ks : List (List UInt8)) (cs 
 
 theorem encode_deleteItems (ks : List (List UInt8)) :
     (Spec.Instr.deleteItems ks).encode = 5 :: (Blob.encodeNat ks.length ++ (Decode.VecVecU8.encs ks).flatten) := by
-  simp [Spec.Instr.encode, Spec.vec, Spec.bytes, Decode.VecVecU8.encs, Codec.nat]
+  have hb : Spec.bytes = fun e => Blob.encodeNat e.length ++ e := by funext e; rfl
+  simp [Spec.Instr.encode, Spec.vec, hb, Decode.VecVecU8.encs, Codec.nat]
 
 theorem encode_imported (ds : List (List UInt8)) :
     (Spec.Instr.imported ds).encode = 19 :: (Blob.encodeNat ds.length ++ (Decode.VecVecU8.encs ds).flatten) := by
-  simp [Spec.Instr.encode, Spec.vec, Spec.bytes, Decode.VecVecU8.encs, Codec.nat]
+  have hb : Spec.bytes = fun e => Blob.encodeNat e.length ++ e := by funext e; rfl
+  simp [Spec.Instr.encode, Spec.vec, hb, Decode.VecVecU8.encs, Codec.nat]
 
 /-- `DeleteItemsRepAt q qs` depends on memory only through `VecVecSrcH q qs`. -/
 theorem vvRep_keep {q : Nat} {qs : Nat → Nat} {ks : List (List UInt8)} {μ μ' : Memory}
@@ -214,7 +217,7 @@ theorem slotOK_deleteItemsEmpty {p : ByteArray} {P : Program} [HasCode p P] [Has
     VecVecSrcH 8 (fun _ => 0) [],
     delete_itemsH_232 env K pb hK1 hK 8 (fun _ => 0) [] (by decide) (by decide) (fun j hj => absurd hj (Nat.not_lt_zero _))
       (fun j hj => absurd hj (Nat.not_lt_zero _)), hrep, hrep,
-    fun bs μ h => ⟨.deleteItems [], ⟨by decide, by simp⟩,
+    fun bs μ h => ⟨.deleteItems [], ⟨by simp [Spec.short], by simp⟩,
       (Encode.Enc.deleteItemsRep_iff [] bs μ).mpr ⟨8, fun _ => 0, h⟩⟩,
     hloc, hloc, ?_, Or.inr (Or.inl (Or.inl (vvAt_empty (t := 5) (Or.inl rfl) μ s el _ hE)))⟩
   rintro q' m (⟨hm, -, rfl⟩ | ⟨j, hj, -⟩)
@@ -240,7 +243,7 @@ theorem slotOK_importedEmpty {p : ByteArray} {P : Program} [HasCode p P] [HasCod
     VecVecSrcH 8 (fun _ => 0) [],
     importedH_232 env K pb hK1 hK 8 (fun _ => 0) [] (by decide) (by decide) (fun j hj => absurd hj (Nat.not_lt_zero _))
       (fun j hj => absurd hj (Nat.not_lt_zero _)), hrep, hrep,
-    fun bs μ h => ⟨.imported [], ⟨by decide, by simp⟩,
+    fun bs μ h => ⟨.imported [], ⟨by simp [Spec.short], by simp⟩,
       (Encode.Enc.vecVecRep_iff [] bs μ).mpr ⟨8, fun _ => 0, h⟩⟩,
     hloc, hloc, ?_, Or.inr (Or.inl (Or.inl (vvAt_empty (t := 19) (Or.inr rfl) μ s el _ hE)))⟩
   rintro q' m (⟨hm, -, rfl⟩ | ⟨j, hj, -⟩)

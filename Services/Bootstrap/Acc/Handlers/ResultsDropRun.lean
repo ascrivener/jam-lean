@@ -707,4 +707,80 @@ theorem drop_results {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
     subst hs2
     exact ⟨ω3, μ2, _, (run1.trans run2).trans run3, C2.H, C2.K, C2.Fm, by rw [b1]; congr 1; omega,
       by rw [b5, UInt64.ofNat_toNat], by rw [b6, UInt64.ofNat_toNat]⟩
+/-! ## `ResultsOwn` survives a run that keeps the allocated chunks -/
+
+section Keep
+
+variable {μ μ' : Memory} {st st' : State} {rp n : Nat}
+
+/-- The chunks kept: every allocated chunk of st is a chunk of st' with its data kept. -/
+def ChunksKept (μ : Memory) (st : State) (μ' : Memory) (st' : State) : Prop :=
+  ∀ d ∈ chunks st, d.used = true → d ∈ chunks st' ∧ ∀ a, InData d a → μ'.read a = μ.read a
+
+theorem item_keep (O : ResultsOwn μ st rp n) (hk : ChunksKept μ st μ' st') {i o m : Nat} (hi : i < n)
+    (hom : o + m ≤ 144) : rdN μ' (rp + 144 * i + o) m = rdN μ (rp + 144 * i + o) m :=
+  rdN_frame fun j hj => by
+    obtain ⟨d, hd, hu, hin, -⟩ := O.2.2.1 (144 * i + o + j) (by omega)
+    rw [show rp + 144 * i + o + j = rp + (144 * i + o + j) by omega]
+    exact (hk d hd hu).2 _ hin
+
+theorem innerPtrs_congr {q : Nat} :
+    ∀ L, (∀ j, j < L → rdN μ' (q + 24 * j) 8 = rdN μ (q + 24 * j) 8 ∧
+      rdN μ' (q + 24 * j + 8) 8 = rdN μ (q + 24 * j + 8) 8) → innerPtrs μ' q L = innerPtrs μ q L
+  | 0, _ => by simp [innerPtrs]
+  | L + 1, h => by
+    rw [innerPtrs_succ, innerPtrs_succ, innerPtrs_congr L (fun j hj => h j (by omega)),
+      (h L (by omega)).1, (h L (by omega)).2]
+
+theorem itemPtrs_keep (O : ResultsOwn μ st rp n) (hk : ChunksKept μ st μ' st') {i : Nat} (hi : i < n) :
+    itemPtrs μ' (rp + 144 * i) = itemPtrs μ (rp + 144 * i) := by
+  have e0 := item_keep O hk hi (o := 0) (m := 1) (by omega)
+  simp only [Nat.add_zero] at e0
+  have e8 := item_keep O hk hi (o := 8) (m := 8) (by omega)
+  have e16 := item_keep O hk hi (o := 16) (m := 8) (by omega)
+  have e24 := item_keep O hk hi (o := 24) (m := 8) (by omega)
+  unfold itemPtrs
+  rw [e0, e8, e16, e24]
+  by_cases h5 : rdN μ (rp + 144 * i) 1 = 5
+  · rw [if_pos h5, if_pos h5]
+  · rw [if_neg h5, if_neg h5]
+    by_cases hv : 6 ≤ rdN μ (rp + 144 * i) 1 ∧ rdN μ (rp + 144 * i) 1 < 255
+    · rw [if_pos hv, if_pos hv]
+      congr 1
+      by_cases hL : rdN μ (rp + 144 * i + 24) 8 = 0
+      · rw [hL]; simp [innerPtrs]
+      · obtain ⟨-, d, hd, hu, hq, hend⟩ := O.2.2.2 i hi hv.1 hv.2 hL
+        have hk' := (hk d hd hu).2
+        apply innerPtrs_congr
+        intro j hj
+        exact ⟨rdN_frame fun l hl => hk' _ ⟨by omega, by omega⟩,
+          rdN_frame fun l hl => hk' _ ⟨by omega, by omega⟩⟩
+    · rw [if_neg hv, if_neg hv]
+
+theorem resPtrs_keep (O : ResultsOwn μ st rp n) (hk : ChunksKept μ st μ' st') :
+    ∀ k, k ≤ n → resPtrs μ' rp k = resPtrs μ rp k
+  | 0, _ => by simp [resPtrs]
+  | k + 1, h => by
+    rw [resPtrs_succ, resPtrs_succ, resPtrs_keep O hk k (by omega), itemPtrs_keep O hk (by omega)]
+
+/-- **`ResultsOwn` survives a run that keeps every allocated chunk with its data** (e.g. the results
+    store `store_core`, whose `StorePost` says so). -/
+theorem ResultsOwn.keep (O : ResultsOwn μ st rp n) (hk : ChunksKept μ st μ' st') :
+    ResultsOwn μ' st' rp n := by
+  have hr := resPtrs_keep O hk n (Nat.le_refl _)
+  refine ⟨hr ▸ O.1, fun q hq => ?_, fun k hk' => ?_, fun i hi h6 h255 hL => ?_⟩
+  · obtain ⟨d, hd, hu, ha⟩ := O.2.1 q (hr ▸ hq)
+    exact ⟨d, (hk d hd hu).1, hu, ha⟩
+  · obtain ⟨d, hd, hu, hin, hn⟩ := O.2.2.1 k hk'
+    exact ⟨d, (hk d hd hu).1, hu, hin, hr ▸ hn⟩
+  · have e0 := item_keep O hk hi (o := 0) (m := 1) (by omega)
+    simp only [Nat.add_zero] at e0
+    rw [item_keep O hk hi (o := 8) (m := 8) (by omega), item_keep O hk hi (o := 16) (m := 8) (by omega)]
+    rw [item_keep O hk hi (o := 24) (m := 8) (by omega)] at hL ⊢
+    rw [e0] at h6 h255
+    obtain ⟨hc, d, hd, hu, hq, hend⟩ := O.2.2.2 i hi h6 h255 hL
+    exact ⟨hc, d, (hk d hd hu).1, hu, hq, hend⟩
+
+end Keep
+
 end Services.Bootstrap.Acc.Handlers.ResultsDrop

@@ -20,6 +20,15 @@
   → dealloc of the trace). `Inv.lean` now has `slotFoot` / `footL` / `ItemsOwn`, `itemOf_local`,
   `rest_keep` (slots and ownership carried to the rest under a frame).
 - Asked Handlers A (via @parent) to add sp + 16…24, 32…40, 136…152 to `LoopKeep`, which R2 needs across R5.
+- **Next (session 4 or 5):** (1) when @parent says the ruleset is fixed: merge #222, merge main here,
+  full build, open the statics PR (ParamStatics, R11, R12 + R1 now too; body per the third session's
+  notes plus R1 / `ItemsOwn` / `ItemLogFmt`), merge on green. (2) R2 = prove `OpArm` (operand with
+  output: 6766 → 6827 as in `err_arm` up to 7009, then the output decode (R3 hyp), rows 8 / 9, R5, R7
+  (Handlers A), the drops 15166 / 15185 / 15201 → 6766; `rest_keep` re-establishes the slots). (3) The
+  `ItemsOwn` obligation: `ItemOk` (Inputs/LoopItem.lean) already yields per item fresh chunks `cs` with
+  `Rep` local to them; strengthen `itemOk_opok` / `itemOk_operr` so `cs` are the trace / output chunks
+  (addr + 32 = the slot's pointer, covering its length), then carry through `g_inputs` /
+  `inputs_decode`. (4) R16.
 - #222: merge refused by the ruleset (required check names); reported to @parent.
 
 **Read this from `claude/bootstrap-t2-statics`** (it has everything; `claude/bootstrap-t2-inputs-wip`'s

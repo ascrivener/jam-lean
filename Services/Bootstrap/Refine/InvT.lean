@@ -82,30 +82,30 @@ theorem inv_pass {env : RefineHost.Env} {K pb : Nat} {p : ByteArray} {P : Progra
     fun j hj => ?_, fun j c hj hc => ?_, fun j j' c hj hj' hne hc hc' => ?_⟩
   · by_cases e : j = k
     · subst e
-      simp only [eq_self_iff_true, if_true]
+      simp only [eq_self_iff_true, ite_true]
       rw [hQ, hout]
-      exact ⟨hS.congr (fun d hd a ha => ((kc d hd).2 a ha).symm), hlen⟩
-    · simp only [e, if_false]
+      exact ⟨hS.congr (fun d hd a ha => (kc d hd).2 a ha), hlen⟩
+    · simp only [e, ite_false]
       rw [hB' j (by omega)]
       exact iown j (by omega)
   · by_cases e : j = k
     · subst e
-      simp only [eq_self_iff_true, if_true] at hc
+      simp only [eq_self_iff_true, ite_true] at hc
       have hm := hown0 c hc
       exact ⟨(kc c hc).1, (hcs.1 j c hk hm).1, (hcs.1 j c hk hm).2, fun j' h1 h2 hm' =>
         hcs.2 j j' hk h2 (by omega) c hm hm'⟩
-    · simp only [e, if_false] at hc
+    · simp only [e, ite_false] at hc
       obtain ⟨a1, a2, a3, a4⟩ := iownK j c (by omega) hc
       exact ⟨a1, a2, a3, fun j' h1 h2 => a4 j' (by omega) h2⟩
   · by_cases e : j = k
     · subst e
-      simp only [if_true, show j' ≠ j from fun h => hne h.symm, if_false] at hc hc'
+      simp only [ite_true, show j' ≠ j from fun h => hne h.symm, ite_false] at hc hc'
       exact (iownK j' c (by omega) hc').2.2.2 j (Nat.le_refl _) hk (hown0 c hc)
     · by_cases e' : j' = k
       · subst e'
-        simp only [e, if_true, if_false] at hc hc'
+        simp only [e, ite_true, ite_false] at hc hc'
         exact (iownK j c (by omega) hc).2.2.2 j' (Nat.le_refl _) hk (hown0 c hc')
-      · simp only [e, e', if_false] at hc hc'
+      · simp only [e, e', ite_false] at hc hc'
         exact idisj j j' c (by omega) (by omega) hne hc hc'
 
 /-- **A step whose output slot owns nothing keeps `Inv`**, with chunks to keep Kp' between Kp minus `csOf k` and
@@ -127,32 +127,33 @@ theorem inv_noown {env : RefineHost.Env} {K pb : Nat} {p : ByteArray} {P : Progr
     fun j => if j = k then fun _ => False else own j, fun j hj => ?_, fun j c hj hc => ?_,
     fun j j' c hj hj' hne hc hc' => ?_⟩
   · by_cases e : j = k
-    · subst e; simp only [eq_self_iff_true, if_true]; exact ⟨hS, hlen⟩
-    · simp only [e, if_false]; rw [hB' j (by omega)]; exact iown j (by omega)
+    · subst e; simp only [eq_self_iff_true, ite_true]; exact ⟨hS, hlen⟩
+    · simp only [e, ite_false]; rw [hB' j (by omega)]; exact iown j (by omega)
   · by_cases e : j = k
-    · subst e; simp only [eq_self_iff_true, if_true] at hc
-    · simp only [e, if_false] at hc
+    · subst e; simp only [eq_self_iff_true, ite_true] at hc
+    · simp only [e, ite_false] at hc
       obtain ⟨a1, a2, a3, a4⟩ := iownK j c (by omega) hc
       exact ⟨hK2 c a1 (a4 k (Nat.le_refl _) hk), a2, a3, fun j' h1 h2 => a4 j' (by omega) h2⟩
   · by_cases e : j = k
-    · subst e; simp only [eq_self_iff_true, if_true] at hc
+    · subst e; simp only [eq_self_iff_true, ite_true] at hc
     · by_cases e' : j' = k
-      · subst e'; simp only [eq_self_iff_true, if_true] at hc'
-      · simp only [e, e', if_false] at hc hc'
+      · subst e'; simp only [eq_self_iff_true, ite_true] at hc'
+      · simp only [e, e', ite_false] at hc hc'
         exact idisj j j' c (by omega) (by omega) hne hc hc'
 
 /-- `Exported n`'s output slot owns nothing and is short. -/
-theorem exported_slot {p : ByteArray} {P : Program} [HasCode p P] [CodeX.HasCodeX p P] [CodeA.HasCodeA p P]
+theorem exported_slot {p : ByteArray} {P : Program} [Code.HasCode p P] [CodeX.HasCodeX p P] [CodeA.HasCodeA p P]
     (env : RefineHost.Env) (K pb : Nat) (hK1 : 134217728 ≤ K) (hK : K < 18446744073709551616) (C : Spec.Consts)
     (m : Nat) (hm : m < 18446744073709551616) (bs : List UInt8) (hb : kindRep (.exported m) bs) (μ0 : Memory) :
     SlotOK env K pb p P (DRt C 0) (Spec.Instr.exported m).encode bs (fun _ => False) μ0 ∧
       (Spec.Instr.exported m).encode.length < 8589934592 :=
-  ⟨SlotFixed.slotOK_fixed env K pb hK1 hK C _ trivial (show Spec.fits 8 m by unfold Spec.fits; omega) bs hb μ0,
+  ⟨SlotFixed.slotOK_fixed env K pb hK1 hK C (.exported m) trivial
+    (show (Spec.Instr.exported m).WF C from (show Spec.fits 8 m by unfold Spec.fits; omega)) bs hb μ0,
     by simp [Spec.Instr.encode, Codec.fixed]⟩
 
 /-- **An `ExportSegs ds` step (ds ≠ []) keeps `Inv`**: the decoded slot's segments are its chunks `csOf k`, which
     the step frees (Kp' = Kp minus `csOf k`); refine returns `Exported |ds|`. -/
-theorem inv_export_big {env : RefineHost.Env} {K pb : Nat} {p : ByteArray} {P : Program} [HasCode p P]
+theorem inv_export_big {env : RefineHost.Env} {K pb : Nat} {p : ByteArray} {P : Program} [Code.HasCode p P]
     [CodeX.HasCodeX p P] [CodeA.HasCodeA p P] (hK1 : 134217728 ≤ K) (hK : K < 18446744073709551616)
     {C : Spec.Consts} {lk : Nat → List UInt8 → Option (List UInt8)} {xs : Nat → Spec.Instr} {μ1 : Memory}
     {ce cp : Chunk} {csOf : Nat → List Chunk} {n E k : Nat} {μ0 : Memory} {Kp : Chunk → Prop}
@@ -171,13 +172,13 @@ theorem inv_export_big {env : RefineHost.Env} {K pb : Nat} {p : ByteArray} {P : 
       (fun c hc => ⟨(irest k (Nat.le_refl _) hk c hc).1, (hcs.1 k c hk hc).1⟩)
       (fun d hd => ⟨hd.1, hd.2, fun c hc e => hd.2 ((iaddr d c hd.1 (irest k (Nat.le_refl _) hk c hc).1 e) ▸ hc)⟩)
       (fun bs h0 h8 => ⟨fun h => absurd h (by omega), fun _ => ⟨h0, h8⟩⟩) rfl, fun B' hB' hQ => ?_⟩
-  have hS := exported_slot env K pb hK1 hK C ds.length (by omega) (B' k) hQ μ0
+  have hS := exported_slot (p := p) (P := P) env K pb hK1 hK C ds.length (by omega) (B' k) hQ μ0
   refine inv_noown hcs hk (fun d hd => hd.1) (fun d hd hn => ⟨hd, hn⟩) hB' ?_ ?_ hI
   · rw [hx]; exact hS.1
   · rw [hx]; exact hS.2
 
 /-- **An `ExportSegs []` step keeps `Inv`** (nothing exported; refine returns `Exported 0`). -/
-theorem inv_export_empty {env : RefineHost.Env} {K pb : Nat} {p : ByteArray} {P : Program} [HasCode p P]
+theorem inv_export_empty {env : RefineHost.Env} {K pb : Nat} {p : ByteArray} {P : Program} [Code.HasCode p P]
     [CodeX.HasCodeX p P] [CodeA.HasCodeA p P] (hK1 : 134217728 ≤ K) (hK : K < 18446744073709551616)
     {C : Spec.Consts} {lk : Nat → List UInt8 → Option (List UInt8)} {xs : Nat → Spec.Instr} {μ1 : Memory}
     {ce cp : Chunk} {csOf : Nat → List Chunk} {n E k : Nat} {μ0 : Memory} {Kp : Chunk → Prop}
@@ -194,7 +195,7 @@ theorem inv_export_empty {env : RefineHost.Env} {K pb : Nat} {p : ByteArray} {P 
   have hsl := in_slot (k := k) ice hin
   refine ⟨Kp, kindRep (.exported 0), export_ok_empty (by rw [hsl]; exact hrep) (fun _ h => h)
       (fun bs h0 h8 => ⟨fun h => absurd h (by omega), fun _ => ⟨h0, h8⟩⟩) rfl, fun B' hB' hQ => ?_⟩
-  have hS := exported_slot env K pb hK1 hK C 0 (by omega) (B' k) hQ μ0
+  have hS := exported_slot (p := p) (P := P) env K pb hK1 hK C 0 (by omega) (B' k) hQ μ0
   refine inv_noown hcs hk (fun d hd => hd) (fun d hd _ => hd) hB' ?_ ?_ hI
   · rw [hx]; exact hS.1
   · rw [hx]; exact hS.2
@@ -214,7 +215,7 @@ theorem lu_len (v : Option (List UInt8)) (hv : ∀ d, v = some d → d.length < 
 /-- **An eager `Lookup` step keeps `Inv`**: instruction k is `Lookup(sv, h, true)` (its decoded slot `kindRep`), the
     historical lookup lk agrees with the host's (`lookupOf`); the output slot `LookedUp(lookupOf env sv h)` owns the
     preimage's chunk, if one is adopted. -/
-theorem inv_lookup {env : RefineHost.Env} {K pb : Nat} {p : ByteArray} {P : Program} [HasCode p P]
+theorem inv_lookup {env : RefineHost.Env} {K pb : Nat} {p : ByteArray} {P : Program} [Code.HasCode p P]
     [CodeX.HasCodeX p P] [CodeA.HasCodeA p P] (hK1 : 134217728 ≤ K) (hK : K < 18446744073709551616)
     {C : Spec.Consts} {lk : Nat → List UInt8 → Option (List UInt8)} {xs : Nat → Spec.Instr} {μ1 : Memory}
     {ce cp : Chunk} {csOf : Nat → List Chunk} {n E k : Nat} {μ0 : Memory} {Kp : Chunk → Prop}
@@ -232,11 +233,11 @@ theorem inv_lookup {env : RefineHost.Env} {K pb : Nat} {p : ByteArray} {P : Prog
   have hI' := hI
   obtain ⟨ice, ifr, icp, iaddr, ibnd, irest, own, iown, iownK, idisj⟩ := hI'
   have hsl := in_slot (k := k) ice hin
-  obtain ⟨r0, r8, r12, -⟩ := hrep
+  obtain ⟨r0, r8, r12, r44⟩ := hrep
   have sub : ∀ o l, o + l ≤ 232 → μ0.readN (E + 232 * k + o) l = ((μ1.readN (E + 232 * k) 232).drop o).take l :=
     fun o l hl => by rw [← hsl]; exact Decode.Loop.readN_sub μ0 _ 232 o l _ rfl hl
-  refine ⟨sv, h, ?_, by rw [sub 8 4 (by omega)]; exact r8, hsv, by rw [sub 12 32 (by omega)]; exact r12, hlenL,
-    hgas, ?_⟩
+  refine ⟨sv, h, ?_, by unfold rdN; rw [sub 44 1 (by omega), r44]; decide, by rw [sub 8 4 (by omega)]; exact r8,
+    hsv, by rw [sub 12 32 (by omega)]; exact r12, hlenL, hgas, rfl, ?_⟩
   · rw [← PVM.readN_take μ0 _ 232 8 (by omega), hsl]; exact r0
   intro μ0' Kp' B' buf hB' hlu hown hnew
   have ho : outT lk (xs k) = .lookedUp (LookupStep.lookupOf env sv h) := by
@@ -280,40 +281,40 @@ theorem inv_lookup {env : RefineHost.Env} {K pb : Nat} {p : ByteArray} {P : Prog
         · unfold InData at ha; omega
       · by_cases e : j = k
         · subst e
-          simp only [eq_self_iff_true, if_true]
+          simp only [eq_self_iff_true, ite_true]
           rw [ho]
           refine ⟨fun μ s el hel hown' => ?_, lu_len _ (fun d' e => by cases e; exact hdl)⟩
           obtain ⟨hcm, hcu, hcd⟩ := hown' ch rfl
-          refine SlotLU.slotW_lu env K pb hK1 hK C (some d) (fun d' e => by cases e; omega) (ch.addr + 32)
+          refine SlotLU.slotW_lu env K pb hK1 hK C (some d) (fun d' e => by cases e; omega) buf
             (by omega) el μ s _ (by rw [hel]; exact hlu) (fun d' e _ => ?_)
           cases e
-          refine ⟨?_, ch, rfl, hcm, hcu, rfl, by omega⟩
+          refine ⟨?_, ch, rfl, hcm, hcu, hca, by omega⟩
           rw [Memory.readN_congr (fun i hi => hcd _ ⟨by omega, by omega⟩)]
           exact hdat
-        · simp only [e, if_false]
+        · simp only [e, ite_false]
           rw [hB' j (by omega)]
           exact ⟨(iown j (by omega)).1.congr (fun c hc a ha => keepK c (iownK j c (by omega) hc).1 a ha),
             (iown j (by omega)).2⟩
       · by_cases e : j = k
         · subst e
-          simp only [eq_self_iff_true, if_true] at hc
+          simp only [eq_self_iff_true, ite_true] at hc
           subst hc
           exact ⟨Or.inr rfl, hn1, fun e => hnK (e ▸ icp), fun j' h1 h2 hm =>
             hnK (irest j' (by omega) h2 c hm).1⟩
-        · simp only [e, if_false] at hc
+        · simp only [e, ite_false] at hc
           obtain ⟨a1, a2, a3, a4⟩ := iownK j c (by omega) hc
           exact ⟨Or.inl a1, a2, a3, fun j' h1 h2 => a4 j' (by omega) h2⟩
       · by_cases e : j = k
         · subst e
-          simp only [eq_self_iff_true, if_true, show j' ≠ j from fun h => hne h.symm, if_false] at hc hc'
+          simp only [eq_self_iff_true, ite_true, show j' ≠ j from fun h => hne h.symm, ite_false] at hc hc'
           subst hc
           exact hnK (iownK j' c (by omega) hc').1
         · by_cases e' : j' = k
           · subst e'
-            simp only [e, eq_self_iff_true, if_true, if_false] at hc hc'
+            simp only [e, eq_self_iff_true, ite_true, ite_false] at hc hc'
             subst hc'
             exact hnK (iownK j c (by omega) hc).1
-          · simp only [e, e', if_false] at hc hc'
+          · simp only [e, e', ite_false] at hc hc'
             exact idisj j j' c (by omega) (by omega) hne hc hc'
 
 end Services.Bootstrap.Refine.InvT

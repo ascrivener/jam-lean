@@ -102,7 +102,7 @@ theorem charged_ctx_of {X : Type} (P : X → Prop) {g gas : Nat} {ω : Regs} {μ
   · exact hx
   · exact hb _ rfl
 
-@[simp] theorem writeValue_ctx {X : Type} (out : HostOut X) (v : Except Unit (Option (List UInt8)))
+@[simp] theorem vf_writeValue_ctx {X : Type} (out : HostOut X) (v : Except Unit (Option (List UInt8)))
     (o f z : Nat) : (writeValue out v o f z).ctx = out.ctx := by
   unfold writeValue
   rcases v with _ | _ | _ <;> dsimp only <;> (try split) <;> rfl

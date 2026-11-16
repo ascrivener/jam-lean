@@ -107,6 +107,39 @@ Handlers dependencies takes ~2 h on 4 cores). Use `ulimit -v 12000000` when comp
 - `refine ⟨?ω', ?run⟩; case run => pvm_go …` for a one-witness existential.
 
 
+## Session 12 progress and handoff (2026-11-16, for the 13th session)
+
+**PRs.** **#228** (row 9) is green but merges were blocked by main's ruleset; @parent will say when Adam has
+fixed it. Re-subscribe and squash-merge it then. **#222** still open. After both merge: rebase r5 onto main
+(`git rebase --onto origin/main 6450fb4`, see session 8), full `lake build` in the background, open r5's PR.
+
+**Parent's answers (2026-11-16), applied:** `InstrLogH` option A (whats-proven updated); `StoreStep` as a
+context invariant `Inv` + `hIst` + `hIfit` (R2: `ValuesFit env c.1`, `ValuesFit.step`, `ValuesFit.storage`);
+`hBall` a premise for now, recorded as open in t2-remaining.
+
+**Done this session** (all compile, axioms clean, imported from `Services.lean`):
+- `InstrLoopBody.lean`: `AtLog` (the state at 8735), `il_front_any` (8540/8554 → 8735), `il_after_log`
+  (8735 → 8540: `il_mid`, `HandlerH`, `il_tail_log`, `il_tail_push`, `il_tail_post`, `LoopAt.step`),
+  **`il_body`**, `il_front8627` (in `InstrLoopFront.lean`), **`il_body_ck`** (`Checkpoint`: `il_tag_ck`,
+  `store_core` ret 300, `il_ck_ok`/`il_ck_err`), `BodyPost`, `StableKeep`, `roKeep`, `read_of_readN`.
+- `InstrLoopFor.lean`: `LoopInv`, **`il_loop`** (`Impl.forIn`; the body f through equations `hck`/`hother`).
+- `LoopAt` gained `hroom` (the results buffer's chunk has room for cap items) and `hrp0` is now
+  `cap = 0 → rp < 32` (row 9's dangling pointer; check the value at the entry). `LoopAt.step`'s `hd'`
+  now also assumes `d ∉ F`. `il_front`, `il_front_zomb`, `il_front8627` start at 8540 or at 8554 with
+  ω₆ = cur (`il_setup1` falls through to 8554) and keep sp + 488 … 504.
+- `LoopHyp.hrp` weakened to `rp < 2⁶⁴ ∧ (n ≠ 0 → …)` (a Checkpoint before any result stores with the
+  dangling pointer; `res_store`'s n = 0 path never needed the bounds).
+
+**Next, in order:**
+1. **The entry** (8492/8493 → `LoopInv is []` at 8554 with xs = is): `il_setup1` (n ≠ 0). From R9Post
+   (row 9's post) plus R2's facts about the decoded `Vec` at sp + 240 / 248 (ptr ω₆ = b): `IterOwn` for the
+   new `IntoIter` { b, b, c, b + 232n }, `TailHyp` (results `Vec` {0, dangling, 0}), `ResultsAvoid` /
+   `PayAvoid` trivial for [], `hnd`, `hroom` vacuous, flag 0, the constants, cur = b 8-aligned (b is a
+   chunk's data address: check `chunk_in`/alignment), counter 0, Inv.
+2. **The empty case** (n = 0): `il_setup0` → 15050 → `r11_di1` (ret 560) → 15060, then into row 11.
+3. R5 + R7 composed against the contract R2 consumes (`loop_exit` after `il_loop`; `LoopHyp` from
+   `hBall` and `LoopAt`), then update `docs/t2-remaining.md`'s R5 row.
+
 ## Session 11 handoff (2026-11-16, for the 12th session)
 
 **PRs.** **#228** (row 9): every check is green (model, changes, attempt-1; attempts 2/3 skipped), but the squash merge is

@@ -96,6 +96,14 @@ and `loop_exit` up to R2. It must not end up as an unconditional T2 assumption. 
 the binary should run out of heap, which is an allowed outcome. So at R2/R16 it becomes a case split:
 hB holds, or the run exhausts the heap (`ExhaustsP`). That requires the failure branches of
 `ExtendH`/`PushH` to cover the oversize case.
+R5's `il_loop` carries it as `hBall` (for every results list no longer than the instructions), which
+cannot be discharged at R16 as it stands; the open design issue (parent, 2026-11-16) is to turn it into
+"the bound holds for the actual results, or the run exhausts the heap", likely through `PushH`'s and
+`ExtendH`'s `ExhaustsP` branches. The loop uses it only at a `Checkpoint`, on the results so far.
+
+`StoreStep` (parent, 2026-11-16): R5 takes a context invariant `Inv` kept by every `ASem.step` (`hIst`)
+that gives `StoreFit` (`hIfit`). R2 discharges it with `Inv c := ValuesFit env c.1`, `ValuesFit.step`
+and `ValuesFit.storage` (R12, on `claude/bootstrap-t2-statics`).
 
 Added for R7 (parent, option (A)): **`DropInstrsH`** over the `InstrRep` bundle's `foot`
 (`Acc/Handlers/InstrRep.lean`), frame-only, for the instructions' `IntoIter` drop (33214).

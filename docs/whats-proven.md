@@ -1007,6 +1007,27 @@ What you trust beyond the kernel:
     kept);
   - `PushH` (R8): `finish_grow` with an old buffer for the results `Vec` (14431 → 14485), or `ExhaustsP`.
   The loop's straight-line segments (`InstrLoopSeg.lean`, `InstrLoopTail.lean`) are proved without them.
+- **R5, the instruction loop (T2, Handlers A; `Acc/Handlers/InstrLoopBody.lean`, `InstrLoopFor.lean`).**
+  `il_body` (an instruction other than `Checkpoint`) and `il_body_ck` (`Checkpoint`: the results store
+  first, `store_core` returning to 8716) prove that one pass, 8540 (or 8554, where the entry falls
+  through) → 8540, implements the spec's loop body (`onInstr C now i`, and for `Checkpoint` first
+  `store key (encodeResults rs)`) and re-establishes `LoopAt` for the instructions left and rs ++ [r].
+  **`il_loop`** wraps them as `Impl.forIn` over `LoopInv`. Named hypotheses: `InstrLogH`, `ResultLogH`,
+  `HandlerH`, `PushH` (above) and `ExtendH`/`OkEncH` (the `Checkpoint` store). Premises (not new
+  assumptions of T2; R2 discharges them):
+  - a context invariant `Inv` with `hIst` (every `ASem.step` keeps it) and `hIfit` (it gives `StoreFit`),
+    the `StoreStep` premise the parent approved: R2 takes `Inv c := ValuesFit env c.1`, `hIst :=
+    ValuesFit.step` and `hIfit := ValuesFit.storage` (T2 inputs, R12);
+  - `hBall`: 2·(144·|rs| + 4) + 4·|encodeResults rs| + 64 < 2³⁰ − 64 for every results list no longer
+    than the instructions. Open (see `docs/t2-remaining.md`): at R16 it must become "the bound holds, or
+    the run exhausts the heap";
+  - at the entry's memory: the item index at sp + 176, the key-size word, `set`'s error table, the
+    read-only data's access and the dispatch table at 65736;
+  - the loop's body f through its two equations (`Checkpoint`, other), which R2 proves for the spec's
+    `do` block by `rfl`.
+  Still to do: the entry (8493 → `LoopInv`) and the case with no instructions (8493 → 15050).
+  `LoopHyp.hrp` (the results' addresses in [2¹⁶, 2³¹)) now applies only when there are results: an
+  empty `Vec`'s pointer dangles.
 - **Refinement of a fragment, not of a whole program.** The allocator theorems are about the
   allocator's entry points called with the stated registers and memory. They are not yet composed
   into a Ψ_R or Ψ_A theorem about a bootstrap run that allocates.

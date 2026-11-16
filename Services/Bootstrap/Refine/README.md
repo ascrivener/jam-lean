@@ -57,6 +57,28 @@ length prefix ℰ(n) and output ℰ(n) ⌢ encodings ⌢ ℰ₂(w)). Builds, axi
   to the halt with ℰ(`BootstrapWorkOutput { outI is, I }`).
 - Next: part B; then refine_t1c (T1's match form) once the bound question is settled.
 
+**Progress (2026-11-16, fourth instance; branch `claude/bootstrap-t1-m1c`):** all files below build, axioms clean.
+- `DropOut.dh` also exports the count n it saves at the frame base (F + 0); `DropOutH.items_loop` also keeps pages and the
+  read-only bytes.
+- `DropOutH.drop_vv`: one `DeleteItems` / `Imported` element dropped (29188 → 29181), its items' and outer buffers freed.
+- `DropOutL`: `LookedUp`'s arm (index 18, jump entry 682 → 29376, tier T1B): `ddL`, `lo0` (cap 2^64 − 1 = `None`, or 0),
+  `lo1` (`dealloc(ptr, cap, 1)`, return 1356 → 29181), `drop_lu` (one element).
+- `DropVecH`: `VVAt` (a `DeleteItems` / `Imported` element and the chunks it owns), `LUAt` (a `LookedUp`), `HeapEl` = either,
+  with `congr` lemmas; `drop_vecH`: the whole output drop (29087 → ret) where each element is `NoDrop` or `HeapEl`.
+- `FinH.fin_runH`: refine's epilogue with `drop_vecH`.
+- `ExitEncH.enc_runH`: the output encoder via `encode_okMH_big` (growth). Internal hypotheses (never in refine_t1c's
+  statement): `hcapB` (232 n + 6 ≤ capBound = 2^28), `hbig` (twice the output ≤ capBound), both until ReallocBig; and two
+  frame bounds the growth encoder's `FrH` needs: `2147484384 ≤ M` (LayP has 2147484104) and `S1 + 16 < 2^32`. Both hold
+  for refine's real stack; they must be discharged where `LayP` is.
+- `ExitRunH.exit_runH`: refine's exit (5042 → ret) with heap elements: slots described at the loop's end state (output
+  buffer Eo), `rep` / `DR` depending on memory only through `src` (kept chunks), owned chunks kept (`Kp`, not `ce`).
+- `PInvAdopt.PInv.adopt`: a fresh allocated chunk (eager `Lookup`'s preimage) joins the kept chunks by rebasing the
+  snapshot μ0 on its data (`snapWith`).
+- Next: the eager-`Lookup` step 5042 → 5042 on `PInv` (ld → la → `lookup_wrap` → lf + `LookupFmtOk` → ll → lfr/lfz →
+  lp0/lpg → lps → ldrop, then `PInv.adopt` for `Some d` with d ≠ []), then the 8 `*_elem_bigC` lemmas, ReallocBig,
+  refine_t1c. The pass-through heap kinds need no `PInv` change: their chunks come from the decoder, so they are `Kp`
+  chunks with their data as in μ0, and `VVAt` at the loop's end follows by `VVAt.congr`.
+
 **Handoff (2026-11-16, end of the third instance; branch `claude/bootstrap-t1-m1c`, pushed, no PR yet):**
 - The branch is `claude/bootstrap-t1-m1-wip` (#214) plus main merged plus parts C/B below. #214 (part A) was still in
   CI (attempt-1) at handoff: merge it on green (brief), then rebase or merge main into this branch before opening its PR.

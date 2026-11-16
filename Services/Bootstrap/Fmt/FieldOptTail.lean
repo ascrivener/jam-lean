@@ -31,7 +31,7 @@ theorem fo_tail {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env 
     (hbe : P.isBlockStart e = true)
     (hrr : 0 < rr ∧ rr ≤ 2806 ∧ rr % 2 = 0) (hji : P.jumpTable.getD (rr / 2 - 1) 0 = i)
     (hbi : P.isBlockStart i = true)
-    (hi : i = 28781 ∨ i = 36575 ∨ i = 36635 ∨ i = 26947 ∨ i = 26982 ∨ i = 36693 ∨ i = 36724)
+    (hi : i = 28781 ∨ i = 36575 ∨ i = 36635 ∨ i = 26947 ∨ i = 26982)
     (hnm : 65536 ≤ nm ∧ nm + nl + 24 ≤ 196608 ∧ 0 < nl) (hnm' : nm + nl ≤ 77144) (hvt : 65536 ≤ vt ∧ vt + 32 ≤ 77144)
     (ω : Regs) (μ : Memory) (x : X) (s : State) (sp F W cap len0 ret t v5 v6 : Nat)
     (H : HeapCtx env pb S0 S1 μ s) (hba : s.base % 8 = 0) (K : Keeps pb spA (fun _ => False) sA μA μ s)

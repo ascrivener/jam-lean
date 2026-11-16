@@ -283,7 +283,9 @@ theorem ref_vecvec_core {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p 
 /-- **`<&Vec<Vec<u8>> as Debug>::fmt`** (26397, plain options) as a field (`RefOk`): the slot holds
     the address a of a `Vec` (cap, ptr, len) where `ValAt` puts it; element j (24 octets at
     ptr + 24·j, where `ValAt` puts them) is a `Vec<u8>` of at most L octets, those where `ValAt` puts
-    them. At most (5·L + 4) · len + 2 octets. It needs 936 octets of stack below the caller (Z) and
+    them. At most (5·L + 4) · len + 2 octets. The bound L is a hypothesis: a caller (T1's tags 5, 10 and
+    19) discharges it from the decoder, which built each inner `Vec<u8>` from the payload, so L can be
+    the payload's length. It needs 936 octets of stack below the caller (Z) and
     the vtables' `fmt` words (75776: 1250, `&Vec<u8>`; 76000: 1788, `&u8`). -/
 theorem ref_vecvec_26397_ok {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
     (pb S0 S1 Z L : Nat) (hZ : 936 ≤ Z) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)

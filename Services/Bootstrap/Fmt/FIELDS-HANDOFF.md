@@ -1,200 +1,65 @@
-# Handoff: field formatters of refine's 6159 Debug line
+# Field formatters of refine's 6159 Debug line: paused (2026-11-16)
 
-## Session 4 (2026-11-16, from ~10:00 UTC), local branch `local-build` = main@93cd751 + the wip commits
-- #213 / #216: still in CI (attempt-2 / attempt-1) at session start; re-subscribed.
-- **Step-8 survey** (the T1 README on `claude/bootstrap-t1-m1c` does not list the reached formatters
-  yet). Estimates and what each is (vtable `fmt` words read from RO at vt + 24, resolved via the jump
-  table; RO base in the .jam at offset 92):
+The formatter line is paused (Adam, decision 19): T1 keeps the field-formatter facts as named
+hypotheses instead of discharging them. This note records what is proved and what remains.
 
-  | formatter | what (tag) | needs | size | status |
-  |---|---|---|---|---|
-  | 315 | **not a formatter**: README's table misread 74968 (tag 0's field-*names* array, 9 × (ptr, len)) as a vtable. Tag 0 (`CreateService`, 9 fields via 63820) uses 56340, 28843 ×5, 57485, 28739, 36594 only | — | — | discrepancy, reported |
-  | 28739 | `Option<Vec<u8>>` (`registration`, 0) | = 17465 | XS | **done** `opt_vec_28739_ok` |
-  | 36534 | `&Option<Vec<u8>>` (18) | as 17465 | XS | **done** `ref_opt_vec_36534_ok` |
-  | 26905 | `&Code` enum: tag 0 `Hash([u8;32])` (36529), else `Inline(Vec<u8>)` (26807) (17) | debug_tuple1 | S | **done** `ref_code_26905_ok` |
-  | 36594 | `&Option<u32>` (`maybe_id`, 0); Some → 37549 | ref_u32_ok (#213) | S | **done** `ref_opt_u32_36594_ok` |
-  | 36972 | `&Input { seed: u64 (37857), nb_items: u8 (37527) }` (21) | debug_struct2 | S–M | **done** `ref_input_36972_ok` (+ `u64b_ok`, 37857) |
-  | 28801 | `<u16 as Debug>` → `<u16 as Display>` 67932 (12, 24) | new `dec16` | M | **done** `u16_ok` (ArgOk), `dec16` |
-  | 26397 | `&Vec<Vec<u8>>` (elements 24 octets, 26807) (5, 10, 19) | VecInstr template | M | **done** `ref_vecvec_26397_ok` (elements ≤ L octets), `ref_vecvec_core` (any RefOk elements at 26807) |
-  | 26605 / 26706 | `&Vec<(u32, u64)>`-like, 16-octet elements via 37352 / 37436: a tuple builder (61767 `debug_tuple` new, 65573 `DebugTuple::field`, 65868 finish: **not proved anywhere**) with 37549 (&u32) and 37589 (&u64) (11 / 9) | DebugTuple builder API | M–L | |
-  | 36654 | `&Result<Output, ()>` (22): Err → 37571 (`"()"` via pad); Ok → 37067 = struct1 `Output { items }`, items → 26504 (`&Vec<32-octet>` via 36917) | 36917 unknown | L | |
-  | 36732 | `BoundedVec(Vec<336-octet struct 37158, ≥ 4 fields>, u64 const)` via the tuple builder (13) | tuple builder + 37158 | XL | |
-  | 29877 | `Vec<Hash>` (32-octet elements via 33152 = deref → 56340) (24) | 56340 (from_utf8 bound) | M | blocked |
-  | 37611 | `[a, b, …]` of hashes via `core::fmt::write` with 56340 (12) | 56340 | M | blocked |
+## Proved (all build; axioms propext, Classical.choice, Quot.sound only)
+- On main: `FieldSteps` / `Field` (`ref_bool_ok`, 37522), `U8x32` (`ref_u8x32_ok`, 36529), `FieldInt`
+  (`u32_ok` 28822, `u64_ok` 28843, `ref_u32_ok` 37549; #213), `write_str_heap` (#216).
+- PR "N56*" (#219): `N56Steps` (56340's 32 octet checks), `N56Checks` (`n56_checks`), `N56Len` (`n56_len`,
+  the length before `from_utf8`), `FieldMemoScan` (`memo_scan`, 57485's prologue and first scan).
+- PR "hex path" (#220): `FieldWriteSpec` (`fmt_write_spec`, explicit-options items), `FieldWriteChar`
+  (`write_char`, 59743), `FieldPadWidth` (`pad_wp`, `pad_z2`), `FieldU8Hex` (`u8hex_ok`, 60209;
+  `u8hexref_okW`, 57917), `FieldWriteNested` / `FieldWriteNestedPlain` (nested `core::fmt::write`),
+  `FieldSliceHex` (`slice_hex_ok`, 57922), `FieldN56Hex` (`n56_hex`), `FieldN57Hex` (`n57_hex`).
+  - **Named RO hypotheses added** (decision D3; in `docs/whats-proven.md`, discharged in step 10 like
+    `FmtRO`): `RO70833` (octets 70833 … 70840, `{:02x}`) and `RO70824` (octets 70824, 70827, 70828,
+    70832, `0x{}...`).
+- PR "step 8" (#221): `opt_vec_28739_ok`, `ref_opt_vec_36534_ok`, `ref_code_26905_ok`,
+  `ref_opt_u32_36594_ok`, `ref_input_36972_ok` (+ `u64b_ok`, 37857), `u16_ok` (28801) with `dec16`
+  (67932), `ref_vecvec_26397_ok` (assumes each inner `Vec<u8>` ≤ L octets) and `ref_vecvec_core`.
+  Also the `Fmt/README.md` fix: there is no field formatter 315 (74968 is tag 0's field-names array).
 
-## Current state (session 3, branch `claude/bootstrap-fields-2-wip`, 2026-11-16 ~09:30 UTC)
-- **Open PRs**: #213 (FieldInt) and #216 (write_str_heap). #213's proofs job timed out on attempt 1 and
-  resumed in attempt 2; #216 was on attempt 1. Merge each on green (subscribed in session 3).
-- **Done this session** (all build, axioms clean; on the wip branch, after the session-2 commits):
-  - `FieldPadWidthSteps.lean` / `FieldPadWidth.lean`: `pad_wp` (options 0x69000020, width w ≤ n: the
-    plain path) and `pad_z2` (width 2, one digit: the zero-pad path, `write_char` of '0' then
-    `write_str`, the options word saved and restored; `Keeps.restore`). `pz_a` had to be split
-    (`pz_a1`, `pz_a2`): one 30-instruction run with 14 stores made `post_simp` time out.
-  - `FieldU8HexSteps.lean` / `FieldU8Hex.lean`: `u8hex_okW` (60209 for a fixed String W) and
-    `u8hex_ok` (`ArgOkO`, M 2, C 536875000: the C carries the exhaustion budget, the Ok path is
-    ≤ 2(cap' − cap) + 3900); `FmtrO.congr`; `u8hexref_okW` (57917, `<&u8 as LowerHex>`).
-  - `FieldWriteNested.lean`: **nested writes.** 57922 and 57346 call `core::fmt::write` from their own
-    frames, with the arguments *below* the String, while `ArgOk`/`ArgOkO`/`fmt_write`/`fmt_write_spec`
-    need W + 24 ≤ spA ≤ args. New, in my files only: `ArgOkW` (the caller's frame kept but for W, W a
-    parameter; `ArgOkW.toO`), `ValAt.readableW`, `fmt_write_c3` (template = one 0xC3 item + end).
-  - `FieldWriteNestedPlain.lean`: `ArgOkWp` (`ArgOkWp.toArgOk`), `ArgsAtW`, `WrLoopW`, `wr_itemW`,
-    `wr_loopW`, `fmt_writeW`: Write.lean's loop copied under the nested frame (generated from
-    Write.lean with substitutions, then fixed).
-  - `FieldSliceHexSteps.lean` / `FieldSliceHex.lean`: `sh_loop`, `slice_hex_okW`, `slice_hex_ok`
-    (57922 as `ArgOk`, M 2·len, C 1073741924 + 536875500·len), named hypothesis `RO70833`.
-  - `FieldN56Hex.lean`: `n56_hex`, 56340 from 57346 to its return (≤ 21 octets), named hypotheses
-    `RO70824`, `RO70833`.
-  - `FieldN57Hex.lean`: `n57_hex`, 57485's hex path (57567 … the return), the same shape as `n56_hex`
-    (80-octet frame, args at U, slice at U + 40, F in ω₅, the memo in ω₆).
-  - `FieldMemoScan.lean`: `memo_scan`, 57485's prologue and first scan (128 octets: 32 ≤ b < 128 or 0
-    goes on) to 57532 or 57567, memory written only in the frame.
-  - Imports in `Services.lean` (FieldWriteSpec, FieldWriteChar and the new leaves); `docs/whats-proven.md`
-    lists RO70833 and RO70824 under "In progress" (D3). A full local `lake build` (main@dd373c2 + the wip
-    commits) was green before FieldN57Hex/FieldMemoScan; `lake build Services` green after them.
-- **Tactics notes.** `post_simp` ends in `try rfl`, which hangs (whnf timeout, not caught by `try`) on
-  any goal simp leaves with a memory term or `decodeLE (encodeLE 8 v)`. Add `rdN_lit8` / `rdN_lit4`
-  (stores of literals), `Num.decodeLE_encodeLE, Nat.reduceMul, Nat.reducePow` and `Nat.mod_eq_of_lt`
-  facts for every stored value. To find the culprit fast: replace the post block with a
-  `simp (disch := pvm_arith) only [...]` (post_simp's list, no rfl), `trace_state`, `all_goals sorry`
-  in a scratch copy (pvm_go itself takes ~20–40 s).
-- **Next steps, in order:**
-  1. PR 2 (N56Steps / N56Len / N56Checks + imports) and PR 3 (FieldWriteSpec, FieldWriteChar and this
-     session's files) onto main after #213 / #216 merge (cherry-pick; the base must be main).
-  2. 56340 as a whole: the string path (56921 → `from_utf8` 57327 → `write(70818)` at 57412 with a
-     `&str` arg 2530) needs the from_utf8 step bound (after #194, from the executor line); the hex path
-     is `n56_hex` + `n56_checks` (its prologue 56340 … 56356 still to state). Then 56340 / 33167 as
-     `RefOk`/`ArgOk`. `fmt_writeW` covers 70818's write too.
-  3. 57485: left are the search for the first 0 (57532 … 57549: a 0 at i → `from_utf8(memo, i)` at
-     57618, none → `from_utf8(memo, 128)` at 57552; Err → 57567, Ok → `write(70818)` with a `&str`
-     arg 2530 at 57635), all after from_utf8 blocked. 33162 / 33167 are 2-instruction derefs (load
-     ω₇ from ω₇, jump to 57485 / 56340), like 57917 (`u8hexref_okW`), once 57485 / 56340 are done.
-  4. The step-8 survey.
-- **Context**: session 3 asked the parent for a restart at ~330k tokens; the PR events for #213 / #216
-  go to whichever session is subscribed (re-subscribe in the new session).
-- Local builds: `scripts/fetch-lake.sh` unpacked main@dd373c2; I worked on a local branch `local-build`
-  = dd373c2 + the wip commits, and cherry-picked onto `claude/bootstrap-fields-2-wip` (base
-  16b767f) to push.
+## Remains
+- **M1 formatters 56340 and 57485** (and the derefs 33167 / 33162): the string paths need the
+  `from_utf8` step bound (executor line, after #194). Left for 56340: its prologue 56340 … 56356 and the
+  string path (56921 → `from_utf8` 57327 → `write(70818)` with a `&str` arg; `fmt_writeW` covers that
+  write). Left for 57485: the search for the first 0 (57532 … 57549) and its two `from_utf8` calls
+  (57618, 57552), then `write(70818)` at 57635. Then 56340 / 57485 as `RefOk`/`ArgOk`, and 33167 /
+  33162 (2-instruction derefs, as `u8hexref_okW`).
+- **Step 8, reached by T1's new kinds but not done**: 26605 and 36732 need the `DebugTuple` builder
+  (61767 new, 65573 `field`, 65868 `finish`; unproved) and a `write_str` variant for an empty name
+  (61767 passes src = 1, n = 0, which `write_str`'s `hsrc` does not admit); 36732 also needs 37158 (a
+  336-octet struct with several fields). 29877 and 37611 need 56340. 36654 is drafted (below).
+- **Drafts, not built** (on `claude/bootstrap-fields-3-wip`, commit "step 8, WIP"): the 36654 chain:
+  `FieldStruct1Steps` / `FieldStruct1` (`s1_tail`, `ref_item_36917_ok`), `FieldVecItemSteps` /
+  `FieldVecItem` (26504, `&Vec<Item>`), `FieldResultSteps` / `FieldResult` (37571 `"()"`, 37067
+  `Output`, 36654). All step files compile. To finish: `FieldResult` needs `fo_r` / `fo_tail` to accept
+  the returns 36693 and 36724; extending their `hi` disjunction breaks the `Or.inr …` literals in
+  `FieldCode` / `FieldOptU32` (adjust those, or give 36654 its own return lemma), then build the tops.
+- Not reached by the new kinds (T1, 2026-11-16): 26706, 36972 (done anyway).
 
-## Session 2 state (superseded), branch `claude/bootstrap-fields-2`, 2026-11-16)
-- **Open PRs (2026-11-16 ~03:00 UTC)**: #213 (FieldInt) and #216 (write_str_heap, D1). For both, the `model`
-  job is green and the proofs build is running. Subscribe and merge each on green.
-- **Branch layout**: `claude/bootstrap-fields-2-wip` = main@16b767f + write_str_heap (a81005a, = #216) + the
-  FieldInt commit (= #213) + the N56* commits + FieldWriteSpec + FieldWriteChar + this note. After #213 and
-  #216 merge, cherry-pick the rest onto main for the next PRs: PR 2 = N56Steps / N56Len / N56Checks
-  (+ imports); PR 3 = FieldWriteSpec + FieldWriteChar (+ imports), once the hex-path pieces below are
-  done or as they stand.
-- **Next steps, in order**: FieldPadWidth (pad_integral with o = 0x69000020, w = 2: the plain path for 2
-  digits, the zero-pad path for 1 digit using `write_char`); `<u8 as LowerHex>` 60209 as an `ArgOkO`;
-  the 57922 slice loop (8 octets, `fmt_write_spec` per octet); 57346 (`fmt_write` 70824 with that arg);
-  then, once the executor's from_utf8 step bound is on main, the string path and 56340 / 33167 as `RefOk`;
-  then 57485 / 33162. After that, step 8 (non-M1 formatters).
-- **Ready for PR 2**, on `claude/bootstrap-fields-2-wip` (based on main@16b767f, the published cache;
-  cherry-pick onto main after #213 merges), full `lake build` green locally, axioms clean:
-  - `N56Steps.lean` (P1): the 32 octet checks build (3 min). The store octets (8–30) read back their
-    stack slot, so `pvm_go` needs `rdN_writeN_same8, rdN_zero, rdN_lit8` (in `gen/gen_n56.py`).
-  - `N56Checks.lean` (`gen/gen_n56chain.py`): `n56_checks`, 56356 → 56921 or → 57346 in ≤ 224 steps.
-  - `N56Len.lean` (P2, `gen/gen_n56len.py`): `n56_len`, 56921 → 57327 (the `from_utf8` call) in 134
-    steps with ω₉ ≤ 32, ω₇ = sp + 200, ω₈ = ω₅ = a; writes only sp … sp + 16. Nine `pvm_go` chunks of 16
-    instructions, register bounds from `gen/bounds.py`; bound goals closed by `n56l_bnd` after a light
-    `simp only` (the generic `post_simp` times out on bitwise conditions).
-  - Imports of N56Checks and N56Len in `Services.lean`.
-- **Which formatters M1 needs.** Tag t is the t-th constructor of `Spec.Instr` (0 createService … 24
-  assignForGasCost). M1's tags (`MFixed`) are 1, 2, 3, 4, 6, 7, 8, 14, 15, 16, 20 and 23, and besides
-  what is on main they need only **56340** (code hashes: tags 1, 6, 7, 8; via 33167: tag 4) and
-  **57485** (the transfer memo, via 33162: tag 2). The other formatters in the brief's table (315,
-  26397, …) are for full T1 only.
-- **Blocked or awaiting decisions** (sent to the parent 2026-11-15):
-  - `from_utf8_call` / `from_utf8_ascii` (#194) have no step bound (`∃ k`), and RefOk needs one.
-    Proposed: the executor adds k ≤ A·len + B.
-  - D1: write_str with a heap source (the name lies in the `Vec<Instruction>`'s heap buffer). It is on
-    `claude/bootstrap-fmt-sink-heap` (unmerged, old base). Recommended: rebase it and open its PR.
-  - D2: explicit-spec `fmt_write` and pad_integral's width path, in new files of ours (recommended).
-  - D3: FmtRO slices 70818, 70824, 70833, 71060, 71076, 71078 as named hypotheses (recommended).
-- **Decisions (parent, 2026-11-15)**: D1 (a), the write_str_heap PR is **#216**. D2: new files of ours
-  (FieldWriteSpec, FieldPadWidth); leave Write.lean and PadIntegral.lean alone. D3 (a): named RO
-  hypotheses with exact (address, length), listed in docstrings, in `docs/whats-proven.md` and in the
-  PR body (discharged in step 10, like FmtRO); don't edit FmtRO. from_utf8 step bound: the executor
-  line adds it as a follow-up PR after #194, and the parent will say when it lands.
-- **Hex path progress.** `FieldWriteSpec.lean` (builds, axioms clean): `FmtrO` / `ArgOkO` (a
-  Formatter with options o, width w, precision 0), `SpecAt`, `wr_spec` (64611 → fn), `wr_spec_ret`
-  (64843 → 64600), `wr_item_spec`, and `fmt_write_spec` (template = one 0xC3 item, then plain items).
-- `FieldWriteChar.lean` (builds, axioms clean): **`write_char`** (59743, the `String` sink's
-  write_char for c < 128): `Ok` with the `String` one octet longer within 2(cap' − cap) + 1600 steps,
-  frame-only, or a failed allocator call. Pieces: `rt2g` / `wc_back` (reserve's end, any caller),
-  `wc1` and `wc_reserve` (as Sink's `ws_reserve`, from 59815 to 59840), `wc_entry`, `wc_fast`,
-  `wc_after` and `wc_post`.
-- **Hex path, what remains:**
-  - RO bytes (RO base in the .jam file at offset 92; RO starts at 65536): 70818 = `"{}"`
-    (01 22 C0 01 22 00); 70824 = `0x{}...` (02 30 78 C0 03 2E2E2E 00); 70833 = C3, o = 0x69000020,
-    w = 2, end byte at 70840; 71060 = "0123456789abcdef"; 71076 = "0x" (the prefix, unused without `#`).
-  - 57346: `core::fmt::write`(70824) with the arg (slice (a, 8), 2534 → 57922). The hex path
-    prints only the first 8 octets.
-  - 57922 (slice Debug-as-hex): for len < 1027, a loop at 57976 over the octets: 64495(70833) with
-    (&octet, 2532 → `<u8 as LowerHex>` 60209); an error goes to 58233, the end to 58215.
-  - 60209: the digit loop (1 or 2 iterations), then pad_integral 61857 (digits at sp + 7 − k).
-  - pad_integral with o = 0x69000020, w = 2: bit 21 (+) and bit 23 (#) are clear, so no sign and no
-    prefix. With 2 digits (len ≥ w) it is the plain path (61994 → write_prefix → write_str), as
-    `pi_a`/`pi_b`/`pi_c` but with o. With 1 digit, bit 24 (zero pad) gives 62076: the options are
-    saved and set to fill '0'; write_prefix; a fill loop of w − len = 1 `write_char` (vtable +32 =
-    2592 → jt 1295 → **59743**, String push; it grows through reserve 58615 like write_str, so it
-    needs a `wc_reserve` like Sink's `ws_reserve`, reusing `rs2a`/`rs2b` with return 2594); then
-    the digits via write_str (62219); the options are restored at 62248.
-- Local builds: use a base matching the latest published `lake-cache` (`fetch-lake.sh` prints it;
-  main after #192/#201/#204 is near-cold against it), and cherry-pick onto main before pushing.
+## Survey (vtable `fmt` word at vt + 24, resolved through the jump table; RO base at .jam offset 92)
 
-The notes below are from session 1 (paused 2026-11-14).
+| formatter | what (tag) | status |
+|---|---|---|
+| 28739 | `Option<Vec<u8>>` (0) | done |
+| 36534 | `&Option<Vec<u8>>` (18) | done |
+| 26905 | `&Code`: `Hash([u8;32])` / `Inline(Vec<u8>)` (17) | done |
+| 36594 | `&Option<u32>` (0) | done |
+| 36972 | `&Input { seed: u64, nb_items: u8 }` (21) | done |
+| 28801 | `<u16 as Debug>` (12, 24) | done |
+| 26397 | `&Vec<Vec<u8>>` (5, 10, 19) | done |
+| 36654 | `&Result<Output { items: Vec<Item { key: [u8;32] }> }, ()>` (22) | drafted |
+| 26605 / 26706 | `&Vec<(u32, u64)>`-like via a tuple builder (11 / 9) | needs DebugTuple builder |
+| 36732 | `BoundedVec(Vec<37158>, u64)` (13) | needs DebugTuple builder, 37158 |
+| 29877 | `Vec<Hash>` via 33152 → 56340 (24) | needs 56340 |
+| 37611 | `[a, b, …]` of hashes via 56340 (12) | needs 56340 |
 
-The field-formatter session wrote this handoff note. The brief is the last section of `Fmt/README.md` (on `claude/bootstrap-fmt-6`).
-
-## Done
-- **PR #189** (`claude/bootstrap-fields-1`, head 878ebaf), open, not merged. It contains:
-  - `FieldSteps.lean`: `f_u32` (28822), `f_u64` (28843), `rf_u32` (37549), `rf_bool` (37522 → 64029) and `pad_str` (`Formatter::pad` plain path, 64029 → write_str).
-  - `Field.lean`: `ref_bool_ok : RefOk … 600 … 37522 a 5 2100`, with `ValAt … a 1`.
-  - `U8x32Steps.lean` (generated by `gen/gen_u8x32.py`) and `U8x32.lean`: `ref_u8x32_ok : RefOk … Z … 36529 a 162 2147632648`, with `752 ≤ Z`, 32 octets by `ValAt`, and `rdN μA 76000 8 = 1788`.
-  - Two import lines in `Services.lean`.
-  - Checks: built locally with `lake build` of both modules; axioms are only propext, Classical.choice and Quot.sound. CI was pending when work paused. The local full `lake build` was started but stopped at the pause.
-
-## In flight (this branch, `claude/bootstrap-fields-wip`, not built)
-- `FieldInt.lean`: `u32_ok` (28822, ArgOk, M 10, C 2710), `u64_ok` (28843, ArgOk, M 20, C 2910) and `ref_u32_ok` (37549, RefOk, M 10, C 2710), all with `ValAt`.
-  - It needs #187 (fmt session's `claude/bootstrap-fmt-dec`: `dec32`/`dec64` take a value below the frame) to be merged first. It is uncompiled.
-  - Next step: after #187 merges, start a branch from main, take `FieldInt.lean`, add its import to `Services.lean`, build it, then open a PR.
-- `N56Steps.lean` (generated by `gen/gen_n56.py`): the 32 per-octet checks of 56340 (`n56_0` … `n56_31`), each going to the next check or to the hex path 57346. It is uncompiled.
-  - In scratch tests, a single octet's three cases closed by `pvm_go` with `sx8_signed` and the case hypothesis.
-
-## Next steps (plan agreed with the parent; estimate ≈ 7 days)
-Order: the 56340 string path, then the hex path, then a PR for 56340 + 33167, then 57485 + 33162.
-1. **P1**: compile `N56Steps.lean`. If the post-goals time out, replace `post_simp` with explicit tactics, as `pad_str` does.
-2. **P2** (56921 → 57327, about 110 straight-line ALU/cmov instructions): it computes the length without trailing NULs, which goes to `from_utf8` in ω₉.
-   - Only `len ≤ 32` is needed. Every value in it is a 0/1 flag or a constant ≤ 32.
-   - Plan: pvm_go in chunks of about 15 instructions, abstracting the registers to bounded values between chunks. `gen/trace.py` shows the dataflow.
-3. **P3**: `str::from_utf8` (60681) for n ≤ 32: termination, frame, Ok or Err.
-4. **P4a**: `core::fmt::write`, template 70818 = [lit 1, arg, lit 1], with the arg `<str as Display>` (57901 → 65046 → `pad_str` → write_str).
-   - **Blocked:** `write_str`'s `hsrc` allows only RO data or the stack, not a heap chunk. The fmt session was asked to widen it.
-5. **Hex path** (57346): template 70824 = [lit 2, arg, lit 3], with the arg 57922. 57922 is a loop calling `core::fmt::write` on template 70833, which has one explicit-options arg (`{:02x}`), `<u8 as LowerHex>` 60209, then pad_integral with width.
-   - It needs fmt_write for explicit-spec items. The parent's default is a new file of ours, unless fmt prefers to extend `Write.lean`; fmt was asked and had not answered.
-   - It also needs pad_integral's width path.
-6. **57485** (128 octets, real loops at 57511 and 57537) and its derefs **33162** / **33167**.
-
-## Open decisions and dependencies
-- #187 (fmt) must merge before `FieldInt.lean`.
-- The `write_str` heap-source widening (fmt).
-- The explicit-spec fmt_write: new file, or fmt extends `Write.lean`.
-- RefOk/ArgOk have a single C for both the Ok bound and the Exhausts budget, which forces C ≈ 2^31 in `ref_u8x32_ok`. The parent asked about this; the suggestion was separate C_ok and C_exh (fmt/T1 interface).
-- RO slices for FmtRO (owned by fmt):
-  - #189 needs only 76000.
-  - The 56340 work will need 70818, 70824, 70833, 71060, 71076 and 71078.
-
-## Tooling notes
-- `gen/dis.py` prints instructions from the code facts (`python3 gen/dis.py <pc> <n>`).
-- `pvm_go` runs fast; the generic `post_simp` can blow up after stack stores, and explicit `rw`/`simp only` per goal fixes it.
-
-## Updates received just before the pause
-- #187 is merged (squash 12a33d0), so `FieldInt.lean` is unblocked. `ref_u64_okV` (37589) is on main and belongs to the fmt session.
-- `write_str_heap` is on branch `claude/bootstrap-fmt-sink-heap` (1d10116; the fmt session opens its PR after the full build).
-  - Its third `hsrc` disjunct is `∃ d ∈ chunks s₀, d.used = true ∧ d.addr + 32 ≤ src ∧ src + n ≤ d.addr + 32 * d.size`.
-  - Once it merges, P4a is unblocked.
-- The fmt session agreed that the explicit-spec fmt_write goes in a new file of ours.
-- The parent accepted the ≈7-day plan.
-  - Until fmt answers on C_ok/C_exh, keep C as it is.
-  - Note the real Ok-path bound (~148,100 for `ref_u8x32_ok`) in each docstring, so it's easy to restate later. This is not yet done in #189.
-- Send fmt the exact (address, length) slices for 70818, 70824, 70833, 71060, 71076 and 71078 once those lemmas are stated (FmtRO is on `claude/bootstrap-fmt-ro`).
+## Tactics notes
+- `post_simp` ends in `try rfl`, which can hang on goals left with a memory term; for runs with many
+  stores split the run (e.g. `in36_a1` / `in36_a2`, `pz_a1` / `pz_a2`).
+- `omega` hits max recursion on `x * 2^49 % 2^64 / 2^48 = 2x`; use `sh49` (`Dec16Steps`).
+- Loops with a parametric per-element budget (Me, Ce): give `Nat.mul_succ` facts and one distributive
+  fact (`dX` in `FieldVecVec`) so `omega` sees the products as atoms.
+- Generators and the disassembler are in `Fmt/gen/` (`dis.py`; RO words: read the .jam at offset 92).

@@ -158,7 +158,8 @@ theorem loop_row11 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
       rw [rdN_frame fun j hj => fr1 _ (by omega) (.inl (by omega))]; exact E.h464
     obtain ⟨T3, tf3⟩ := T1.keepF H3 (fun d hd hu hn => K3 d hd hu hn) hdis
       (fun k hk => by rw [h464] at hk; omega) fun a h1 h2 => fr3 a h1 (by omega)
-    have L3 : LoopHyp pb S0 S1 sp (rdN μ3 (sp + 456) 8) (rdN μ3 (sp + 464) 8) [] _ μ3 := by
+    have L3 : LoopHyp pb S0 S1 sp (rdN μ3 (sp + 456) 8) (rdN μ3 (sp + 464) 8) []
+        ((vecFree B μ b c 0).foldl free st) μ3 := by
       refine ⟨⟨by omega, by omega, hs8, by omega⟩, hT, ?_, ⟨rdN_lt8 _ _, fun h => absurd ?_ h⟩, ?_,
         ⟨fun k hk => absurd hk (by simp), fun j hj => absurd hj (by simp)⟩⟩
       · rw [rdN_frame fun j hj => fr3 _ (by omega) (by omega), h464]; rfl
@@ -168,8 +169,8 @@ theorem loop_row11 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
       (Fm3.2.2.1 a (by unfold two32; omega) (H1.ro a ha)).trans (heap1 a (by omega))
     have SS := row_eleven_store env hE hO cap hcap1 hcap Ab hAb1 hAb2 hAbX ⟨15060, ω3, μ3, c0, f0⟩ _ sp item kc []
       rfl (g1.trans (w1.trans (a1.trans (e1.trans h1)))) T3 L3 hs3
-      (by rw [← hitem]; exact Memory.readN_congr fun j hj => (fr3 _ (by omega) (by omega)).trans
-        (fr1 _ (by omega) (.inl (by omega))))
+      (by rw [← hitem]; exact Memory.readN_congr fun j hj => ((fr3 _ (by omega) (by omega)).trans
+            (fr1 _ (by omega) (.inl (by omega)))))
       (by rw [← mkc]; exact Memory.readN_congr fun j hj => hro3 _ (by omega)) hkc
       (by rw [← ht8]; exact rdN_frame fun j hj => hro3 _ (by omega))
       (by rw [← ht4]; exact rdN_frame fun j hj => hro3 _ (by omega))
@@ -188,8 +189,8 @@ theorem loop_row11 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
       obtain ⟨g3, g4⟩ := hk' d g1 hu hn2
       exact ⟨g3, fun a ha => (g4 a ha).trans ((g2 a ha).trans ((hk1 d hd hu).2 a ha))⟩
     · unfold StableKeep at hs
-      exact (stk' a h0 (by omega) (by unfold R9Out; omega)).trans ((fr3 a (by omega) h0).trans
-        (fr1 a h0 (.inl (by omega))))
+      exact (stk' a h0 (by omega) (by unfold ResultsInit.R9Out; omega)).trans ((fr3 a (by omega) h0).trans
+        (fr1 a h0 (by omega)))
   · ---------------- some instructions: 8492 → 8554, the loop, 8540 → 15028 → 6766
     obtain ⟨ω', μ', N, run, -, LI⟩ := il_entry (R := KeepCtx (accContractS env)) (P := P) B Inv (c0, f0) ω μ st sp
       b c is hn0 h1 h6 E
@@ -252,14 +253,15 @@ theorem loop_row11 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
       obtain ⟨k1, k2, k3, k4, k5⟩ := KO d hd hu hG
       have hTF' : d.addr + 32 ∉ tailFree μ'' sp := by
         unfold tailFree tailBufs
-        rw [LA.hn, List.append_assoc, List.append_assoc, ← List.append_assoc (optBuf _ _) (optBuf _ _),
-          tailBufs23 stab (by omega)]
+        rw [LA.hn]
+        have e := tailBufs23 (sp := sp) stab (by omega)
         intro h
-        simp only [List.mem_append] at h
-        rcases h with h | h | h
+        simp only [List.mem_append, or_assoc] at h
+        rcases h with h | h | h | h
         · exact k5 h
         · exact k4 h
-        · exact not_tailFree0 E.h448 E.h464 hTF (by simpa [List.mem_append] using h)
+        · exact not_tailFree0 E.h448 E.h464 hTF (by rw [← e]; exact List.mem_append.2 (.inl h))
+        · exact not_tailFree0 E.h448 E.h464 hTF (by rw [← e]; exact List.mem_append.2 (.inr h))
       obtain ⟨g3, g4⟩ := hk'' d k1 hu (fun h => by
         rcases List.mem_append.1 h with h | h
         · exact k3 h
@@ -267,6 +269,6 @@ theorem loop_row11 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [H
       exact ⟨g3, fun a ha => (g4 a ha).trans (k2 a ha)⟩
     · have hs' := hs
       unfold StableKeep at hs'
-      exact (stk'' a h0 (by omega) (by unfold R9Out; omega)).trans (stab a h0 hs)
+      exact (stk'' a h0 (by omega) (by unfold ResultsInit.R9Out; omega)).trans (stab a h0 hs)
 
 end Services.Bootstrap.Acc.Handlers.InstrLoop

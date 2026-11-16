@@ -128,7 +128,7 @@ theorem row_eleven_store {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p
   have rd0 : ∀ a, sp ≤ a → a < sp + 1632 → μ.readable a = true := fun a h1 h2 =>
     Memory.readable_of_writable (hSt a (by omega) (by omega))
   obtain ⟨ωA, μA, runA, c0', cA1, cA5, cA6, cA7, cA8, cA9, mk0, mk1, mq0, mq1, mq2, mq3, frA, rdA, wrA⟩ :=
-    r11_pre (R := KeepCtx (accContractS env)) (P := P) (c0, f) ω1 μ sp _ _ _ _ _ _ _ h1
+    r11_pre (R := KeepCtx (accContractS env)) (P := P) (c0, f) ω μ sp _ _ _ _ _ _ _ h1
       ⟨by omega, by omega⟩ (e8 (sp + 312)) (e8 (sp + 320)) (e8 (sp + 328)) (e8 (sp + 336)) (lt8 _) (lt8 _)
       (lt8 _) (lt8 _) (e8 (sp + 176)) (lt8 _) (e8 (sp + 456)) (lt8 _) (e8 (sp + 464)) (lt8 _)
       (fun a h1 h2 => rd0 a (by omega) (by omega)) (fun a h1 h2 => hSt a (by omega) (by omega))

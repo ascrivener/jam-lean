@@ -52,10 +52,11 @@ theorem LoopAt.stepKeep {B : InstrRep} {code : ByteArray} {pb S0 S1 sp : Nat} {i
     StepKeep B sp is rs.length μ st μ' st' := by
   have hT := L.T
   have hn := L.hn
+  unfold StepKeep
   rw [show sp + 472 + 8 = sp + 480 by omega] at hcur hkeep hd' hown
-  generalize hF : B.foot (slot μ (rdN μ (sp + 480) 8) 0) = F at hkeep hown hd'
-  generalize hrp : rdN μ (sp + 456) 8 = rp at hkeep hmv hd'
-  generalize hcp : rdN μ (sp + 448) 8 = cp at hkeep hd'
+  generalize hF : B.foot (slot μ (rdN μ (sp + 480) 8) 0) = F at hkeep hown hd' ⊢
+  generalize hrp : rdN μ (sp + 456) 8 = rp at hkeep hmv hd' ⊢
+  generalize hcp : rdN μ (sp + 448) 8 = cp at hkeep hd' ⊢
   have hnd := L.hnd
   obtain ⟨d', hd'm, hd'u, hd'a, hd'n⟩ := hd'
   have hnotRP : ∀ q ∈ iterFree B μ (sp + 472) (is.length + 1), q ∉ optBuf cp rp := fun q h1 h3 =>

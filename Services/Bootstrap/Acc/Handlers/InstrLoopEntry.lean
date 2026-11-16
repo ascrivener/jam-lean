@@ -38,8 +38,8 @@ theorem flatMap_range_congr {f g : Nat → List Nat} : ∀ (m : Nat), (∀ k, k 
     (List.range m).flatMap f = (List.range m).flatMap g
   | 0, _ => rfl
   | m + 1, h => by
-    rw [List.range_succ, List.flatMap_append, List.flatMap_append, flatMap_range_congr m fun k hk => h k (by omega),
-      h m (by omega)]
+    rw [List.range_succ, List.flatMap_append, List.flatMap_append, flatMap_range_congr m fun k hk => h k (by omega)]
+    simp [h m (by omega)]
 
 /-- The buffers the drop of the `Vec` { cap c, ptr b } with m instructions frees: each slot's `foot`, then
     the buffer if c ≠ 0 (`iterFree` for an `IntoIter` with cur = b). -/
@@ -83,7 +83,7 @@ structure EntryHyp (B : InstrRep) (code : ByteArray) (pb S0 S1 sp b c : Nat) (is
 
 /-- `TailHyp` survives a run that keeps every allocated chunk with its data and the frame's words off
     sp + 160 … 168; `tailFree` is unchanged. -/
-theorem TailHyp.keepW {code : ByteArray} {pb S0 S1 : Nat} {μ μ' : Memory} {st st' : State} {sp : Nat}
+theorem _root_.Services.Bootstrap.Acc.Handlers.RowEleven.TailHyp.keepW {code : ByteArray} {pb S0 S1 : Nat} {μ μ' : Memory} {st st' : State} {sp : Nat}
     (T : TailHyp code pb S0 S1 μ st sp) (H' : HeapCtxC code pb S0 S1 μ' st') (hk : ChunksKept μ st μ' st')
     (fr : ∀ a, sp ≤ a → a < sp + 472 → (a < sp + 160 ∨ sp + 168 ≤ a) → μ'.read a = μ.read a) :
     TailHyp code pb S0 S1 μ' st' sp ∧ tailFree μ' sp = tailFree μ sp := by

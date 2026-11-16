@@ -1025,7 +1025,20 @@ What you trust beyond the kernel:
     read-only data's access and the dispatch table at 65736;
   - the loop's body f through its two equations (`Checkpoint`, other), which R2 proves for the spec's
     `do` block by `rfl`.
-  Still to do: the entry (8493 → `LoopInv`) and the case with no instructions (8493 → 15050).
+  `LoopInv` also carries `OldKeep`: every allocated chunk of the entry outside the instructions' buffers
+  stays allocated with its data and is none of the buffers freed later (`StepKeep`, from each body).
+- **R5 and R7 composed (T2, Handlers A; `Acc/Handlers/InstrLoopEntry.lean`, `InstrLoopRowEleven.lean`).**
+  **`loop_row11`**: from row 9's end (8492) with `EntryHyp` (the decoded instructions' `Vec` owned as
+  `VecOwn`, its pointer in ω₆ and 8-aligned; the empty results `Vec` (cap 0, dangling pointer below 32,
+  len 0) with row 11's `TailHyp`; the instructions' buffers distinct from `tailFree`; the frame constants),
+  the run implements the spec's loop followed by `unless is.any isZomb (store key (encodeResults results))`
+  and reaches the items loop's head 6766 in `R57Post`: the allocator's context, every allocated chunk of
+  the entry outside the instructions' buffers and the frame buffers at sp + 104 / sp + 272 kept with its
+  data, the frame words `StableKeep` kept. Both cases: some instructions (`il_entry`, `il_loop`,
+  `loop_exit`) and none (8492 → 15050, the empty `IntoIter`'s drop, `row_eleven_store` from 15060).
+  Named hypotheses: those of `il_loop` plus `DropInstrsH`. Premises as `il_loop`'s (`Inv`, `hBall`, the
+  read-only facts), now at the entry. Not promised: the globals 196616 … 196791 (`PushH` does not keep
+  them) and the registers but ω₁.
   `LoopHyp.hrp` (the results' addresses in [2¹⁶, 2³¹)) now applies only when there are results: an
   empty `Vec`'s pointer dangles.
 - **Refinement of a fragment, not of a whole program.** The allocator theorems are about the

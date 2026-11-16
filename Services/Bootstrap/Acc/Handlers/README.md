@@ -107,6 +107,32 @@ Handlers dependencies takes ~2 h on 4 cores). Use `ulimit -v 12000000` when comp
 - `refine ⟨?ω', ?run⟩; case run => pvm_go …` for a one-witness existential.
 
 
+## Session 13 progress and handoff (2026-11-16, for the 14th session)
+
+**PRs.** **#228** (row 9): green, merges blocked by main's ruleset; subscribed; merge on green once @parent
+says the ruleset is fixed. **#222** still open. After #222 merges: rebase r5 onto main
+(`git rebase --onto origin/main 6450fb4`, see session 8), full `lake build`, open r5's PR.
+
+**Done this session** (all compile, axioms clean, imported from `Services.lean`):
+- `InstrLoopStepKeep.lean`: `StepKeep`, `LoopAt.stepKeep` (from `LoopAt.step`'s premises: the drop's
+  buffers shrink; head chunks outside the instruction's buffers, the results buffer and the results'
+  buffers kept and avoiding the new ones). `BodyPost` gained the head's state st and a `StepKeep` conjunct
+  (`il_after_log`, `il_body`, `il_body_ck`).
+- `InstrLoopFor.lean`: `OldKeep`, `OldKeep.step`; `LoopInv` gained st₀ and G (the entry's instructions'
+  buffers) with `OldKeep` in `la`; `il_loop` updated.
+- `RowElevenCore.lean`: `row_eleven_store` (15060 → 6766) factored out of `row_eleven_core` (which now
+  calls it after `r11_flag0`).
+- `InstrLoopEntry.lean`: `il_ft` (8492 → 8493), `vecFree`, `VecOwn`, `EntryHyp`, `TailHyp.keepW`,
+  **`il_entry`** (8492 → `LoopInv` at 8554, n ≠ 0).
+- `InstrLoopRowEleven.lean`: `R57Post`, **`loop_row11`** (8492 → 6766, R5 + R7, both cases).
+
+**Points for @parent / R2** (reported): `EntryHyp.hb8` (b 8-aligned: no chunk-alignment lemma found, R2
+supplies it); `R57Post` does not keep the globals (`PushH` does not); `R9Post` does not record ω₆ (the
+instructions' pointer at 8492).
+
+**Next:** whatever @parent assigns: `hBall` → "fits or heap exhaustion" (needs `PushH`/`ExtendH` failure
+branches, a hypothesis change: ask first); the alignment lemma for `hb8`; ω₆ in `R9Post`.
+
 ## Session 12 progress and handoff (2026-11-16, for the 13th session)
 
 **PRs.** **#228** (row 9) is green but merges were blocked by main's ruleset; @parent will say when Adam has

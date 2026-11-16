@@ -33,6 +33,7 @@ import Services.Bootstrap.Fmt.AccFmt
 import Services.Bootstrap.Fmt.ResultDebug
 import Services.Bootstrap.Fmt.OptionDebug
 import Services.Bootstrap.Fmt.Field
+import Services.Bootstrap.Fmt.FieldInt
 import Services.Bootstrap.Fmt.U8x32
 import Services.Bootstrap.Fmt.OracleRefineK
 import Services.Bootstrap.Fmt.StructField2

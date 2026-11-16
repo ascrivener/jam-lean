@@ -441,9 +441,10 @@ theorem Str.update {s₀ s : State} {μ μ' : Memory} {W cap len len' : Nat} (hs
       allocated chunk of s₀ keeps its data; or
     - reaches a failed allocator call (`Exhausts`).
 
-    What the octets say is not stated. The octets come from read-only data (below 196608) or from
-    the stack above sp. -/
-theorem write_str {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
+    What the octets say is not stated. The octets come from read-only data (below 196608), from
+    the stack above sp, or from the data of a chunk allocated in s₀ (which the `String`'s buffer,
+    a fresh allocation, never is). -/
+theorem write_str_heap {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
     (pb S0 S1 : Nat) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
     (x : X) (ω : Regs) (μ : Memory) (s₀ s : State) (sp W src n cap len ret t v5 v6 : Nat)
     (H : HeapCtx env pb S0 S1 μ s) (hba : s.base % 8 = 0) (hs : Str s₀ s μ W cap len)
@@ -455,7 +456,8 @@ theorem write_str {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (en
     (hsp : S0 + 448 ≤ sp ∧ sp % 8 = 0 ∧ 2147484096 ≤ sp) (hW : sp ≤ W ∧ W + 24 ≤ S1)
     (hn : len + n < 134217728)
     (hsrc : (65536 ≤ src ∧ src + n + 24 ≤ 196608) ∨
-      (sp ≤ src ∧ src + n + 16 < 4294967296 ∧ (src + n ≤ W ∨ W + 24 ≤ src)))
+      (sp ≤ src ∧ src + n + 16 < 4294967296 ∧ (src + n ≤ W ∨ W + 24 ≤ src)) ∨
+      (∃ d ∈ chunks s₀, d.used = true ∧ d.addr + 32 ≤ src ∧ src + n ≤ d.addr + 32 * d.size))
     (hr : ∀ a, src ≤ a → a < src + n → μ.readable a = true) :
     (∃ ω' μ' x' s' cap', FreeStepsH p R 59959 ω μ x t ω' μ' x' (7 * n + 2 * (cap' - cap) + 2000) ∧
       HeapCtx env pb S0 S1 μ' s' ∧ s'.base = s.base ∧ Str s₀ s' μ' W cap' (len + n) ∧ cap ≤ cap' ∧
@@ -490,7 +492,11 @@ theorem write_str {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (en
       ((rdN_frame (μ := μ) (μ' := μ1) (fun j hj => by
         rw [show W + 16 + j = W + (16 + j) by omega, kW _ (by omega)])).trans hs.rl) hle
     have H1 : HeapCtx env pb S0 S1 μ1 s := ctx_hi H (fun a ha => fr1 a (by omega) (Or.inl (by omega))) wr1
-    have hsrc' : src < 4294967296 := by omega
+    have hsrc' : src < 4294967296 := by
+      rcases hsrc with h | h | ⟨d, hd, hu, h1, h2⟩
+      · omega
+      · omega
+      · have := chunk_bounds H.wf (hs.base d hd hu); omega
     rcases ws_reserve (p := p) (P := P) (R := R) env pb S0 S1 HA HR x ω1 μ1 s₀ s (sp - 32) W n len cap src H1 hba hs1
       a1 a5 a6 a8 a9 (by omega) hn hsrc' ⟨by omega, by omega, by omega⟩ ⟨by omega, hW.2⟩ with
       ⟨ω2, μ2, x2, s', run2, b1, b5, b6, b8, b9, H2, hb2, hs2, K2⟩ | hx
@@ -506,6 +512,26 @@ theorem write_str {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (en
       generalize hpd : rdN μ2 (W + 8) 8 = ptr at hca
       have hwb : ∀ a, ptr + len ≤ a → a < ptr + len + n → μ2.writable a = true := fun a h1 h2 =>
         Decode.VecU8.heap_writable H2 hc hcu (by unfold InData; omega)
+      have hsx : (65536 ≤ src ∧ src + n + 24 ≤ 196608) ∨
+          (sp ≤ src ∧ src + n + 16 < 4294967296 ∧ (src + n ≤ W ∨ W + 24 ≤ src)) ∨
+          (206864 ≤ src ∧ src + n < 2147483648 ∧ (ptr + len + n + 24 ≤ src ∨ src + n + 24 ≤ ptr + len)) := by
+        rcases hsrc with h | h | ⟨d, hd, hu, h1, h2⟩
+        · exact Or.inl h
+        · exact Or.inr (Or.inl h)
+        · have hd' := hs2.base d hd hu
+          have hdb := chunk_bounds H2.wf hd'
+          rw [hb2] at hdb
+          have hne : c ≠ d := fun e => hcf d hd hu (by rw [e])
+          have hdj := Decode.HeapFrame.Tiles.disjoint (by have ht := H2.wf.2.2.2.1; unfold TilesOk at ht; exact ht)
+            c hc d hd' hne
+          exact Or.inr (Or.inr ⟨by omega, by omega, by omega⟩)
+      have hr2 : ∀ a, src ≤ a → a < src + n → μ2.readable a = true := fun a h1 h2 => by
+        rcases hsrc with h | h | ⟨d, hd, hu, h3, h4⟩
+        · rw [(K2.access a (Or.inl (by unfold pageSize; omega))).1, rd1]; exact hr a h1 h2
+        · rw [(K2.access a (Or.inr (by unfold pageSize; omega))).1, rd1]; exact hr a h1 h2
+        · exact Memory.readable_of_writable
+            (Decode.VecU8.heap_writable H2 (hs2.base d hd hu) hu (by unfold InData; omega))
+      clear hsrc
       have hk2 : ∀ a, sp - 32 + 8 ≤ a → a < 4294967296 → ¬ (W ≤ a ∧ a < W + 16) → μ2.read a = μ1.read a :=
         fun a h1 h2 h3 => K2.hi a h1 h2 h3
       obtain ⟨ω3, μ3, run3, c0, c1, c5, c6, c7, cl, fr3, rd3, wr3⟩ := ws_copytail (p := p) (P := P) (R := R) x2 ω2 μ2
@@ -515,10 +541,7 @@ theorem write_str {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (en
         (by rw [rdN_frame (fun j hj => hk2 _ (by omega) (by omega) (by omega))]; exact sv5)
         (by rw [rdN_frame (fun j hj => hk2 _ (by omega) (by omega) (by omega))]; exact sv6)
         hv.1 hv.2 hret hjt hbt
-        (fun a h1 h2 => by
-          rcases hsrc with h | h
-          · rw [(K2.access a (Or.inl (by unfold pageSize; omega))).1, rd1]; exact hr a h1 h2
-          · rw [(K2.access a (Or.inr (by unfold pageSize; omega))).1, rd1]; exact hr a h1 h2)
+        hr2
         hwb (fun a h1 h2 => H2.st a (by omega) (by omega)) (fun a h1 h2 => H2.st a (by omega) (by omega))
       have H3 : HeapCtx env pb S0 S1 μ3 s' := Decode.VecU8.ctx_congr_data H2 hc
         (fun a ha h => fr3 a (by omega) (by omega) (by omega) (by omega)) wr3
@@ -568,6 +591,7 @@ theorem write_str {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (en
     by_cases hn0 : n = 0
     · -- nothing to copy: the length rewritten as it was
       subst hn0
+      clear hsrc
       have run2 := ws_zero (p := p) (P := P) (R := R) x ω1 μ1 a5
       obtain ⟨ω3, run3, c0, c1, c5, c6, c7⟩ := ws_fin (p := p) (P := P) (R := R) x ω1 μ1 (sp - 32) W 0 len ret t v5 v6
         ⟨by omega, by omega⟩ a1 a5 a6 a9 (by omega) (by omega) (Or.inr (by omega))
@@ -605,6 +629,19 @@ theorem write_str {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (en
           rw [show W + 8 + j = W + (8 + j) by omega, kW _ (by omega)])]; exact hpd
       have hwb : ∀ a, ptr + len ≤ a → a < ptr + len + n → μ1.writable a = true := fun a h1 h2 =>
         Decode.VecU8.heap_writable H1 hc hcu (by unfold InData; omega)
+      have hsx : (65536 ≤ src ∧ src + n + 24 ≤ 196608) ∨
+          (sp ≤ src ∧ src + n + 16 < 4294967296 ∧ (src + n ≤ W ∨ W + 24 ≤ src)) ∨
+          (206864 ≤ src ∧ src + n < 2147483648 ∧ (ptr + len + n + 24 ≤ src ∨ src + n + 24 ≤ ptr + len)) := by
+        rcases hsrc with h | h | ⟨d, hd, hu, h1, h2⟩
+        · exact Or.inl h
+        · exact Or.inr (Or.inl h)
+        · have hd' := hs.base d hd hu
+          have hdb := chunk_bounds H.wf hd'
+          have hne : c ≠ d := fun e => hcf d hd hu (by rw [e])
+          have hdj := Decode.HeapFrame.Tiles.disjoint (by have ht := H.wf.2.2.2.1; unfold TilesOk at ht; exact ht)
+            c hc d hd' hne
+          exact Or.inr (Or.inr ⟨by omega, by omega, by omega⟩)
+      clear hsrc
       have run2 := ws_pos (p := p) (P := P) (R := R) x ω1 μ1 n a5 ⟨by omega, by omega⟩
       obtain ⟨ω3, μ3, run3, c0, c1, c5, c6, c7, cl, fr3, rd3, wr3⟩ := ws_copytail (p := p) (P := P) (R := R) x ω1 μ1
         (sp - 32) W n len ptr src ret t v5 v6 hS a1 a5 a6 a8 a9 (by omega) hpd1 ⟨by omega, by omega⟩
@@ -638,5 +675,31 @@ theorem write_str {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (en
         rw [cl]; omega
       · have := K1.trans' K3
         rwa [Nat.max_self] at this
+
+/-- **`write_str`, octets from read-only data or the stack** (59959): `write_str_heap` with its
+    first two cases. -/
+theorem write_str {p : ByteArray} {P : Program} [HasCode p P] [HasCodeF p P] (env : RefineHost.Env)
+    (pb S0 S1 : Nat) (HA : AllocOk p R env pb S0 S1) (HR : ReallocOk p R env pb S0 S1)
+    (x : X) (ω : Regs) (μ : Memory) (s₀ s : State) (sp W src n cap len ret t v5 v6 : Nat)
+    (H : HeapCtx env pb S0 S1 μ s) (hba : s.base % 8 = 0) (hs : Str s₀ s μ W cap len)
+    (h0 : ω[0] = UInt64.ofNat ret) (h1 : ω[1] = UInt64.ofNat sp) (h5 : ω[5] = UInt64.ofNat v5)
+    (h6 : ω[6] = UInt64.ofNat v6) (h7 : ω[7] = UInt64.ofNat W) (h8 : ω[8] = UInt64.ofNat src)
+    (h9 : ω[9] = UInt64.ofNat n) (hv : v5 < 18446744073709551616 ∧ v6 < 18446744073709551616)
+    (hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0) (hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t)
+    (hbt : P.isBlockStart t = true)
+    (hsp : S0 + 448 ≤ sp ∧ sp % 8 = 0 ∧ 2147484096 ≤ sp) (hW : sp ≤ W ∧ W + 24 ≤ S1)
+    (hn : len + n < 134217728)
+    (hsrc : (65536 ≤ src ∧ src + n + 24 ≤ 196608) ∨
+      (sp ≤ src ∧ src + n + 16 < 4294967296 ∧ (src + n ≤ W ∨ W + 24 ≤ src)))
+    (hr : ∀ a, src ≤ a → a < src + n → μ.readable a = true) :
+    (∃ ω' μ' x' s' cap', FreeStepsH p R 59959 ω μ x t ω' μ' x' (7 * n + 2 * (cap' - cap) + 2000) ∧
+      HeapCtx env pb S0 S1 μ' s' ∧ s'.base = s.base ∧ Str s₀ s' μ' W cap' (len + n) ∧ cap ≤ cap' ∧
+      cap' ≤ max cap (max 8 (2 * (len + n))) ∧
+      Keeps pb sp (fun a => W ≤ a ∧ a < W + 24) s₀ μ μ' s' ∧
+      ω'[0] = UInt64.ofNat ret ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = UInt64.ofNat v5 ∧
+      ω'[6] = UInt64.ofNat v6 ∧ ω'[7] = UInt64.ofNat 0) ∨
+    Exhausts p R pb 59959 ω μ x (7 * n + 1073741824 + 2000) :=
+  write_str_heap env pb S0 S1 HA HR x ω μ s₀ s sp W src n cap len ret t v5 v6 H hba hs h0 h1 h5 h6 h7 h8 h9 hv
+    hret hjt hbt hsp hW hn (hsrc.elim Or.inl (fun h => Or.inr (Or.inl h))) hr
 
 end Services.Bootstrap.Fmt

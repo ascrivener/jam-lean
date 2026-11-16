@@ -57,6 +57,22 @@ length prefix ℰ(n) and output ℰ(n) ⌢ encodings ⌢ ℰ₂(w)). Builds, axi
   to the halt with ℰ(`BootstrapWorkOutput { outI is, I }`).
 - Next: part B; then refine_t1c (T1's match form) once the bound question is settled.
 
+**Handoff (2026-11-16, end of the third instance; branch `claude/bootstrap-t1-m1c`, pushed, no PR yet):**
+- The branch is `claude/bootstrap-t1-m1-wip` (#214) plus main merged plus parts C/B below. #214 (part A) was still in
+  CI (attempt-1) at handoff: merge it on green (brief), then rebase or merge main into this branch before opening its PR.
+- Open decision with Adam (via the coordinator): whether refine_t1c assumes looked-up preimages < 2^63 octets
+  (recommended (a)). Approved: `VendoredFactsC` (the 4046 table), tier T1B, the gas cap as an internal choice (it must
+  not surface in refine_t1c's statement).
+- All new files build locally (`lake build Services.Bootstrap.Refine.LookupRun Services.Bootstrap.Refine.LookupFmt
+  Services.Bootstrap.Refine.DropOutH`, `CodeT1BAll`, `CodeT1BOk`); axioms checked for `lookup_wrap`. A full `lake build`
+  has not been run on this branch yet.
+- When a PR goes up: add the binary-vs-spec note for preimages ≥ 2^63 octets (the wrapper traps; `Spec.refine` returns
+  `lookedUp (some d)`) to `docs/upstream-candidates.md` and the PR body.
+- Order still to do: `drop_vv`, `drop_vecH`, `exit_runH`, `PInv` with slot-owned chunks and the Lookup step, the 8
+  `*_elem_bigC` lemmas (new files, mirroring `vecvec_elem_bigC`), ReallocBig, refine_t1c. When `DRm` is widened, list
+  here which Debug field formatters the new kinds reach (candidates 315, 26397, 26605, 26706, 26905, 28739, 28801, 29877,
+  36534, 36594, 36654, 36732, 36972, 37611).
+
 **Progress on C (2026-11-16, third instance, branch `claude/bootstrap-t1-m1c`):** the handler and the wrapper are
 proved up to the composition with `PInv`. All files build, axioms clean.
 - `LookupHost.FreeStepsH.lookupRef`: one Ω_H step under `refineContractK cap` (cap ≥ 1125 + ⌈264·ω₁₁/1024⌉; the gas cap
@@ -89,8 +105,10 @@ proved up to the composition with `PInv`. All files build, axioms clean.
   (dispatch 29188 → arm; table entries 1360 / 1372), `va` / `va0` (items or none), `vz` + `vn` = `vi0` (an item of
   capacity 0, on to the next), `vi1` (an item's `dealloc(q, c, 1)`, return 1362 → 29336 / 1374 → 29540), `vb` (after
   it), `vo0` / `vo1` (the outer buffer, `dealloc(ptr, 24·cap, 8)`, return 1356 → 29181). All build.
-- Next for B: `drop_vv` (one heap element, 29188 → 29181: the item loop by induction with
-  `Decode.DeallocCall.dealloc_call`, which is for any host relation), then `drop_vecH` (the whole output drop with the
+- `DropOutH.items_loop`: the item loop (head → 29542) by induction, each nonzero item freed by
+  `Decode.DeallocCall.dealloc_call` (any host relation); proved.
+- Next for B: `drop_vv` (one heap element, 29188 → 29181: `ddV`, then `va` + `items_loop` or `va0`, then `vo0` or
+  `vo1` + `dealloc_call` of the outer buffer (return 1356 → 29181: `jte_677`, `bs_29181` are in `Code`)), then `drop_vecH` (the whole output drop with the
   heap context, `NoDrop` elements by `DropOut.dd`), then `exit_runH` (encoder with growth via
   `Encode.EncMHLoop.encode_okMH_big` and the arms `delete_itemsH_232` / `importedH_232` / `looked_up_someH`, the wider
   `DRm`, `drop_vecH`), then `PInv` carrying chunks owned by output slots (for Lookup), then refine_t1c.

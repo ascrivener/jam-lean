@@ -138,6 +138,7 @@ theorem Core.dk {p : ByteArray} {P : Program} [HasCode p P] {code : ByteArray} {
   obtain ⟨H, K, ⟨f1, f2, f3, f4, f5⟩, hs, r1, mn, mp, m0, m5, m6⟩ := C
   obtain ⟨hS1, hS2, hS3⟩ := hS
   obtain ⟨c, hc0, hcu, hca⟩ := hc
+  have hT := H.hS1
   have hcs := (K c hc0 hcu (by rw [hca]; exact hw)).1
   obtain ⟨ω', μ', run, H', -, pg, ro, stk, gl, keep, e0, e1, e5, e6⟩ :=
     dealloc_callG (R := R) (p := p) (P := P) code pb S0 S1 x ω μ s (S - 56) w r t c H hcs hcu hca h0 r1 h7
@@ -148,7 +149,7 @@ theorem Core.dk {p : ByteArray} {P : Program} [HasCode p P] {code : ByteArray} {
     ⟨fun a h1 h2 => (stk a h1 (by omega)).trans (f1 a h1 h2), fun a ha => (gl a ha).trans (f2 a ha),
      fun b hb hw' => (ro b hb (by rw [f5]; exact hw')).trans (f3 b hb hw'), fun a => (rdeq a).trans (f4 a),
      fun a => (wreq a).trans (f5 a)⟩,
-    by rw [hs, List.foldl_append]; rfl, e1.trans r1, ?_, ?_, ?_, ?_, ?_⟩,
+    by rw [List.foldl_append, List.foldl_cons, List.foldl_nil, hs], e1.trans r1, ?_, ?_, ?_, ?_, ?_⟩,
     fun a h1 h2 => stk a h1 h2, e0, e5, e6⟩
   · have hn' : d.addr + 32 ∉ FR := fun h => hn (List.mem_append_left _ h)
     have hdc : d ≠ c := by
@@ -309,6 +310,7 @@ theorem dv_cell {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {code
   obtain ⟨C, r5, r6, ma, me⟩ := I
   have hT := C.H.hS1
   have hS3 := hS.2.2
+  have hS1' := hS.1
   obtain ⟨-, d, hd, hu, hdq, hdL⟩ := V.chunk O
   have hn := V.q_notin O (j := j) (by omega)
   obtain ⟨c1, c2, c3⟩ := C.inr hd hu hdq hn (o := 24 * j) (m := 8) (by omega) (by omega)
@@ -342,7 +344,7 @@ theorem dv_cell {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {code
     obtain ⟨ω2, μ2, run2, C2, fr2, b0, b5, b6⟩ := Core.dk (R := R) (P := P) x (C.reg a1) hS _ 1352 29032
       ⟨cc, hcc, hccu, hcca⟩ hwn a0 a7 ⟨by decide, by decide, by decide⟩
       (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_675]) bs_29032
-    refine ⟨ω2, μ2, _, _, (run1.trans run2).trans (dv_back x ω2 μ2), ?_, b5.trans (a5.trans r5),
+    refine ⟨ω2, μ2, free s (rdN μ0 (q + 24 * j + 8) 8), _, (run1.trans run2).trans (dv_back (R := R) (P := P) x ω2 μ2), ?_, b5.trans (a5.trans r5),
       b6.trans (a6.trans r6), ?_, ?_⟩
     · rw [hsucc, if_neg hc, ← List.append_assoc]; exact C2
     · rw [← ma]; exact rdN_frame fun i hi => fr2 _ (by omega) (by omega)
@@ -362,6 +364,7 @@ theorem dv_inner {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {cod
         ω'[6] = UInt64.ofNat k ∧ rdN μ' (S - 56 + 16) 8 = rp + 144 * k from
     fun j ω μ s hj I => h _ j ω μ s rfl hj I
   have hS3 := hS.2.2
+  have hS1' := hS.1
   intro m
   induction m with
   | zero =>
@@ -371,7 +374,8 @@ theorem dv_inner {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {cod
     have hb := V.bound O (Nat.le_refl _) (by have := C1; exact (show j + 1 = L by omega) ▸ this)
     have hjL : j + 1 = L := by omega
     obtain ⟨ω2, run2, b1, b6⟩ := dv_step0 (R := R) (P := P) x ω1 μ1 (S - 56) (q + 8 + 24 * j)
-      (q + 8 + 24 * L) C1.r1 a5 (by omega) (by omega) me1 (by omega) (C1.stk hS (by omega) (by omega)).1
+      (q + 8 + 24 * L) C1.r1 a5 (by omega) (by omega) me1 (by omega)
+      (C1.stk hS (lo := S - 56 + 24) (hi := S - 56 + 32) (by omega) (by omega)).1
     rw [hjL] at C1
     exact ⟨ω2, μ1, s1, _, run1.trans run2, C1.reg b1, b6.trans a6, ma1⟩
   | succ m ih =>
@@ -380,9 +384,10 @@ theorem dv_inner {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {cod
     have hT := C1.H.hS1
     have hb := V.bound O (by omega) C1
     obtain ⟨ω2, run2, b1, b5, b6⟩ := dv_step1 (R := R) (P := P) x ω1 μ1 (S - 56) (q + 8 + 24 * j)
-      (q + 8 + 24 * L) C1.r1 a5 (by omega) (by omega) me1 (by omega) (C1.stk hS (by omega) (by omega)).1
+      (q + 8 + 24 * L) C1.r1 a5 (by omega) (by omega) me1 (by omega)
+      (C1.stk hS (lo := S - 56 + 24) (hi := S - 56 + 32) (by omega) (by omega)).1
     have I2 : InInv code pb S0 S1 s0 μ0 S rp n ret v5 v6 k q L (j + 1) ω2 μ1 s1 :=
-      ⟨C1.reg b1, by rw [b5]; congr 1; omega, b6.trans a6, ma1, me1⟩
+      ⟨C1.reg b1, by rw [b5]; congr 1; try omega, b6.trans a6, ma1, me1⟩
     obtain ⟨ω3, μ3, s3, N3, run3, rest⟩ := ih (j + 1) ω2 μ1 s1 (by omega) (by omega) I2
     exact ⟨ω3, μ3, s3, _, (run1.trans run2).trans run3, rest⟩
 
@@ -401,12 +406,13 @@ theorem dv_out {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {code 
       ω'[5] = UInt64.ofNat n ∧ ω'[6] = UInt64.ofNat k := by
   have hT := C.H.hS1
   have hS3 := hS.2.2
+  have hS1' := hS.1
   have hip := itemPtrs_vec ht
   rw [hq, hL] at hip
   obtain ⟨R0, hR⟩ := resPtrs_at μ0 rp k n hk
   rw [hip] at hR
   have hFR : ∃ R', resPtrs μ0 rp n = (resPtrs μ0 rp k ++ innerPtrs μ0 q L) ++ R' :=
-    ⟨_ ++ R0, by rw [hR]; simp [List.append_assoc]⟩
+    ⟨(if rdN μ0 (rp + 144 * k + 8) 8 = 0 then [] else [q]) ++ R0, by rw [hR]; simp only [List.append_assoc]⟩
   obtain ⟨i1, j1, -⟩ := C.item O hFR (o := 8) (m := 8) hk (by omega) (by omega)
   obtain ⟨i2, j2, k2⟩ := C.item O hFR (o := 16) (m := 8) hk (by omega) (by omega)
   have hra : ∀ b, rp + 144 * k + 8 ≤ b → b < rp + 144 * k + 24 → μ.readable b = true := fun b h1 h2 => by
@@ -418,7 +424,7 @@ theorem dv_out {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {code 
   · obtain ⟨ω1, run1, a1, a5, a6⟩ := dv_out0 (R := R) (P := P) x ω μ (S - 56) (rp + 144 * k) n C.r1
       (by omega) (by omega) ma (by rw [i1, hc]) C.mn sr (fun b h1 h2 => hra b h1 (by omega))
     refine ⟨ω1, μ, s, _, run1, ?_, a5, a6.trans r6⟩
-    rw [resPtrs_succ, hip, if_pos hc, List.append_nil, ← List.append_assoc]
+    rw [resPtrs_succ, hip, if_pos hc, List.append_nil]
     exact C.reg a1
   · obtain ⟨ω1, run1, a0, a1, a5, a6, a7⟩ := dv_out1 (R := R) (P := P) x ω μ (S - 56) (rp + 144 * k) n
       (rdN μ0 (rp + 144 * k + 8) 8) q C.r1 (by omega) (by omega) ma (by rw [i1]) hc (by rw [i2, hq]) C.mn sr hra
@@ -430,7 +436,7 @@ theorem dv_out {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {code 
     obtain ⟨ω2, μ2, run2, C2, -, b0, b5, b6⟩ := Core.dk (R := R) (P := P) x (C.reg a1) hS q 1350 28922
       ⟨cc, hcc, hccu, hcca⟩ (nodup_next hnd) a0 a7 ⟨by decide, by decide, by decide⟩
       (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_674]) bs_28922
-    refine ⟨ω2, μ2, _, _, run1.trans run2, ?_, b5.trans a5, b6.trans (a6.trans r6)⟩
+    refine ⟨ω2, μ2, free s q, _, run1.trans run2, ?_, b5.trans a5, b6.trans (a6.trans r6)⟩
     rw [resPtrs_succ, hip, if_neg hc, ← List.append_assoc]
     exact C2
 
@@ -446,10 +452,12 @@ theorem dr_data {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {code
       ω'[5] = UInt64.ofNat n ∧ ω'[6] = UInt64.ofNat k := by
   have hT := C.H.hS1
   have hS3 := hS.2.2
+  have hS1' := hS.1
   have hip := itemPtrs_data ht
   obtain ⟨R0, hR⟩ := resPtrs_at μ0 rp k n hk
+  have hFR : ∃ R', resPtrs μ0 rp n = resPtrs μ0 rp k ++ R' :=
+    ⟨itemPtrs μ0 (rp + 144 * k) ++ R0, by rw [hR, List.append_assoc]⟩
   rw [hip] at hR
-  have hFR : ∃ R', resPtrs μ0 rp n = resPtrs μ0 rp k ++ R' := ⟨_ ++ R0, by rw [hR]; simp [List.append_assoc]⟩
   obtain ⟨i1, j1, -⟩ := C.item O hFR (o := 8) (m := 8) hk (by omega) (by omega)
   obtain ⟨i2, j2, k2⟩ := C.item O hFR (o := 16) (m := 8) hk (by omega) (by omega)
   have hra : ∀ b, rp + 144 * k + 8 ≤ b → b < rp + 144 * k + 24 → μ.readable b = true := fun b h1 h2 => by
@@ -474,7 +482,7 @@ theorem dr_data {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {code
     obtain ⟨ω2, μ2, run2, C2, -, b0, b5, b6⟩ := Core.dk (R := R) (P := P) x (C.reg a1) hS _ 1350 28922
       ⟨cc, hcc, hccu, hcca⟩ (nodup_next hnd) a0 a7 ⟨by decide, by decide, by decide⟩
       (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_674]) bs_28922
-    refine ⟨ω2, μ2, _, _, run1.trans run2, ?_, b5.trans (a5.trans r5), b6.trans (a6.trans r6)⟩
+    refine ⟨ω2, μ2, free s (rdN μ0 (rp + 144 * k + 16) 8), _, run1.trans run2, ?_, b5.trans (a5.trans r5), b6.trans (a6.trans r6)⟩
     rw [resPtrs_succ, hip, if_neg hc]
     exact C2
 
@@ -490,8 +498,10 @@ theorem dr_vec {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {code 
       ω'[5] = UInt64.ofNat n ∧ ω'[6] = UInt64.ofNat k := by
   have hT := C.H.hS1
   have hS3 := hS.2.2
+  have hS1' := hS.1
   obtain ⟨R0, hR⟩ := resPtrs_at μ0 rp k n hk
-  have hFR : ∃ R', resPtrs μ0 rp n = resPtrs μ0 rp k ++ R' := ⟨_ ++ R0, by rw [hR]; simp [List.append_assoc]⟩
+  have hFR : ∃ R', resPtrs μ0 rp n = resPtrs μ0 rp k ++ R' :=
+    ⟨itemPtrs μ0 (rp + 144 * k) ++ R0, by rw [hR, List.append_assoc]⟩
   obtain ⟨i2, j2, -⟩ := C.item O hFR (o := 16) (m := 8) hk (by omega) (by omega)
   obtain ⟨i3, j3, k3⟩ := C.item O hFR (o := 24) (m := 8) hk (by omega) (by omega)
   have hra : ∀ b, rp + 144 * k + 16 ≤ b → b < rp + 144 * k + 32 → μ.readable b = true := fun b h1 h2 => by
@@ -523,7 +533,7 @@ theorem dr_vec {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {code 
     have C1 := C0.sk hS a1 (fun a h1 h2 => fr1 a h1 (by omega)) rd1 wr1
     have I0 : InInv code pb S0 S1 s0 μ0 S rp n ret v5 v6 k (rdN μ0 (rp + 144 * k + 16) 8)
         (rdN μ0 (rp + 144 * k + 24) 8) 0 ω1 μ1 s :=
-      ⟨C1, by rw [a5]; congr 1, a6.trans r6,
+      ⟨C1, by rw [a5]; try (congr 1; omega), a6.trans r6,
         by rw [← ma]; exact rdN_frame fun i hi => fr1 _ (by omega) (by omega),
         rdN_enc w24 (by omega)⟩
     obtain ⟨ω2, μ2, s2, N2, run2, C2, b6, mb⟩ := dv_inner (R := R) (P := P) x O hS V 0 ω1 μ1 s (by omega) I0
@@ -551,14 +561,16 @@ theorem dr_item {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {code
       ω'[5] = UInt64.ofNat n ∧ ω'[6] = UInt64.ofNat k := by
   have hT := C.H.hS1
   have hS3 := hS.2.2
+  have hS1' := hS.1
   have hS1 := hS.1
   obtain ⟨R0, hR⟩ := resPtrs_at μ0 rp k n hk
-  have hFR : ∃ R', resPtrs μ0 rp n = resPtrs μ0 rp k ++ R' := ⟨_ ++ R0, by rw [hR]; simp [List.append_assoc]⟩
+  have hFR : ∃ R', resPtrs μ0 rp n = resPtrs μ0 rp k ++ R' :=
+    ⟨itemPtrs μ0 (rp + 144 * k) ++ R0, by rw [hR, List.append_assoc]⟩
   obtain ⟨i0, j0, k0⟩ := C.item O hFR (o := 0) (m := 1) hk (by omega) (by omega)
   simp only [Nat.add_zero] at i0 j0 k0
   obtain ⟨sr, sw⟩ := C.stk hS (lo := S - 56) (hi := S - 56 + 24) (by omega) (by omega)
   have HH : HeadHyp ω μ (S - 56) rp k (rdN μ0 (rp + 144 * k) 1) :=
-    ⟨C.r1, r6, by omega, by omega, .inl (by omega), C.mp, i0, fun a h1 h2 => sr a (by omega) h2,
+    ⟨C.r1, r6, by omega, by omega, .inl (by omega), C.mp, i0, fun a h1 h2 => sr a (by omega) (by omega),
       j0 _ (by omega) (by omega), fun a h1 h2 => sw a (by omega) h2⟩
   have ha : rp + 144 * k < 2 ^ 64 := by omega
   have hnone : ∀ ω' μ', rdN μ0 (rp + 144 * k) 1 = 255 ∨ rdN μ0 (rp + 144 * k) 1 < 5 →
@@ -570,19 +582,19 @@ theorem dr_item {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {code
     exact ⟨C1, e5.trans r5, e6.trans r6⟩
   have ht256 := rdN_lt1 μ0 (rp + 144 * k)
   by_cases h255 : rdN μ0 (rp + 144 * k) 1 = 255
-  · obtain ⟨ω1, μ1, run1, hp⟩ := dr_err (R := R) x ω μ (S - 56) rp k (h255 ▸ HH)
+  · obtain ⟨ω1, μ1, run1, hp⟩ := dr_err (R := R) (P := P) x ω μ (S - 56) rp k (h255 ▸ HH)
     exact ⟨ω1, μ1, s, _, run1, hnone ω1 μ1 (.inl h255) hp⟩
   by_cases h5 : rdN μ0 (rp + 144 * k) 1 < 5
-  · obtain ⟨ω1, μ1, run1, hp⟩ := dr_small (R := R) x ω μ (S - 56) rp k _ HH h5
+  · obtain ⟨ω1, μ1, run1, hp⟩ := dr_small (R := R) (P := P) x ω μ (S - 56) rp k _ HH h5
     exact ⟨ω1, μ1, s, _, run1, hnone ω1 μ1 (.inr h5) hp⟩
   by_cases hd5 : rdN μ0 (rp + 144 * k) 1 = 5
-  · obtain ⟨ω1, μ1, run1, hp⟩ := dr_isdata (R := R) x ω μ (S - 56) rp k (hd5 ▸ HH)
+  · obtain ⟨ω1, μ1, run1, hp⟩ := dr_isdata (R := R) (P := P) x ω μ (S - 56) rp k (hd5 ▸ HH)
     obtain ⟨C1, e5, e6, ma⟩ := head_core C hS ha hp
     obtain ⟨ω2, μ2, s2, N2, run2, rest⟩ :=
       dr_data (R := R) (P := P) x O hS hk hd5 C1 (e5.trans r5) (e6.trans r6) ma
     exact ⟨ω2, μ2, s2, _, run1.trans run2, rest⟩
   · have ht : 6 ≤ rdN μ0 (rp + 144 * k) 1 ∧ rdN μ0 (rp + 144 * k) 1 < 255 := by omega
-    obtain ⟨ω1, μ1, run1, hp⟩ := dr_isvec (R := R) x ω μ (S - 56) rp k _ HH ht
+    obtain ⟨ω1, μ1, run1, hp⟩ := dr_isvec (R := R) (P := P) x ω μ (S - 56) rp k _ HH ht
     obtain ⟨C1, e5, e6, ma⟩ := head_core C hS ha hp
     obtain ⟨ω2, μ2, s2, N2, run2, rest⟩ := dr_vec (R := R) (P := P) x O hS hk ht C1 (e6.trans r6) ma
     exact ⟨ω2, μ2, s2, _, run1.trans run2, rest⟩
@@ -660,7 +672,7 @@ theorem drop_results {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
   have hT := H.hS1
   obtain ⟨hS1, hS2, hS3⟩ := hS
   have hw : ∀ a, S - 56 ≤ a → a < S → μ0.writable a = true := fun a h1 h2 => H.st a (by omega) (by omega)
-  have e0 : ω[0].toNat = ret := by rw [h0, UInt64.toNat_ofNat]; omega
+  have e0 : ω[0].toNat = ret := by rw [h0]; simp [Nat.mod_eq_of_lt (show ret < 2 ^ 64 by omega)]
   have l0 := UInt64.toNat_lt ω[0]
   have l5 := UInt64.toNat_lt ω[5]
   have l6 := UInt64.toNat_lt ω[6]

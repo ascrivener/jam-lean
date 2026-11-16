@@ -107,6 +107,16 @@ Handlers dependencies takes ~2 h on 4 cores). Use `ulimit -v 12000000` when comp
 - `refine ⟨?ω', ?run⟩; case run => pvm_go …` for a one-witness existential.
 
 
+## Session 9 progress (2026-11-16)
+
+- `ResultsDropRun.lean`: **`drop_results`** (28864 → caller t, any n, generic in R): every buffer in
+  `resPtrs μ₀ rp n` freed (state `(resPtrs μ₀ rp n).foldl free s₀`), `Kept` (other allocated chunks of s₀ kept
+  with data), `Frm` (memory from the caller's sp S up, globals, non-writable octets, same access), ω₁ = S,
+  ω₅/ω₆ restored. Needs `HeapCtxC`, `ResultsOwn`, `SpOK S0 S1 S` (S − 56 ≥ 2³¹ + 60, S0 + 96 ≤ S ≤ S1).
+  Pieces: `Core` (invariant), `Core.sk/dk/rd/item/inr`, `dv_cell`, `dv_inner`, `dv_out`, `dr_data`, `dr_vec`,
+  `dr_item`, `dr_loop`, `init3`. Axioms clean. Pitfall: never close `free s w = (FR ++ [w]).foldl free s₀` by
+  `rfl` (the kernel unfolds `free`, OOM); rewrite with `List.foldl_append/cons/nil`.
+
 ## Session 8 handoff (2026-11-16, for the 9th session)
 
 **PRs.** #224 (row 8) merged. **#228** (row 9 `results_init`, R4 `ResultsAt`, `ResStoreLoopSeg`,

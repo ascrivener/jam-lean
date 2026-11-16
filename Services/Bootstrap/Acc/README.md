@@ -34,6 +34,14 @@ rows 8/9), the output decode's success path (R3), the results encoder 36299 (R9)
 step (R8), per-instruction log lines (Fmt). Keep each minimal and close to Spec. When
 `accumulate_spec` is on main, send @parent its statement and hypothesis list.
 
+**R2's interface (Handlers A, via @parent, 2026-11-16).** R4: `Results.ResultsVec μ st sp rs`, the
+results `Vec` {cap, ptr, len} at sp + 448 / 456 / 464, 144-octet items, kept by frames that keep old
+chunks and their data. R5's theorem: from 8493 (after row 9's checkpoint), with `InstrRep` for each
+decoded item, `ResultsVec []` and `HeapCtxC`, the `Impl` of the spec's `for i in is do …`, post at 15028
+(15050 when n = 0): `ResultsVec results`, [sp + 160] = 1 ↔ `is.any zombify`, `HeapCtxC st'` keeping old
+chunks, the frame. `InstrRep` is a parameter of the hypothesis bundle, shared by R3 (the output decode
+yields items with `InstrRep`) and R6 (the handlers consume it). R7 (row 11) starts from 15028.
+
 **Only on WIP (proved):**
 - `Acc/Items/`: Exit (`items_end`, `items_halt`), Operand (`op_pre`, `op_mid`), Disp, End, Head.
 - `Acc/Start.lean`.

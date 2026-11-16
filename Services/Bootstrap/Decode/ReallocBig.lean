@@ -1,10 +1,11 @@
 import Services.Bootstrap.Decode.ReallocCall
+import Services.Bootstrap.Decode.HeapFrame
 
 /-!
 # `realloc` with a request beyond the heap
 
-The binary's `realloc` (40701) for a request of 2^25 ≤ units < 2^31 − 1 (sizes below 2^36 octets): the heap holds 2^30
-octets, so `realloc_impl` (42980) cannot grow the chunk in place (its next chunk lies past the heap's end, is used,
+The binary's `realloc` (40701) for a request of 2^25 ≤ units < 2^31 − 1 (sizes below 2^36 octets), or of 2^25 − 1
+units while some other chunk is in use (`BigReq`): the heap holds 2^30 octets, so `realloc_impl` (42980) cannot grow the chunk in place (its next chunk lies past the heap's end, is used,
 or with it the chunk holds fewer than req + 1 units) and falls back to `alloc_impl` (41177), which fails, and
 `realloc` returns null with the allocator's context unchanged; the model's `realloc` is `none`. This extends
 `Decode.ReallocCall.realloc_call`, whose bound `hr1` (units < 2^25 − 1) the Alloc chain needs for its success paths.
@@ -12,7 +13,7 @@ The proofs are `Alloc.fallback_pre`, `fallback_entryG` and `fallback_refines_fai
 32-bit arithmetic needs) and the grow-heap branch impossible. GP v0.8.0 Appendix B.4 (Ψ_R running the service's code).
 -/
 
-namespace Services.Bootstrap.Refine.ReallocBig
+namespace Services.Bootstrap.Decode.ReallocBig
 
 open PVM Picoalloc Services.Bootstrap.Code JAM Services.Bootstrap.Alloc
 
@@ -21,10 +22,33 @@ set_option maxRecDepth 100000
 
 variable {X : Type} {R : HostRel X}
 
-/-- **The model's `growInplace` fails for a request of at least 2^25 units**, and the request is above the usable
-    size: the chunk and its next chunk lie inside the heap's 2^25 units. -/
+/-- The request's case split: at least 2^25 units, or 2^25 − 1 units with some other chunk in use. -/
+def BigReq (s : State) (ptr req : Nat) : Prop :=
+  33554432 ≤ req ∨ (req = 33554431 ∧ ∃ d ∈ chunks s, d.used = true ∧ d.addr + 32 ≠ ptr)
+
+theorem third_lt {B x n y m : Nat} (h1 : y + 32 * m ≤ x ∨ x + 32 * n ≤ y)
+    (hx : B ≤ x ∧ x + 32 * n ≤ B + 1073741824 ∧ 0 < n) (hy : B ≤ y ∧ y + 32 * m ≤ B + 1073741824 ∧ 0 < m) :
+    n + 1 ≤ 33554432 := by omega
+
+theorem cur_lt {B x cur req : Nat} (hcl : cur + 1 ≤ 33554432 ∨ 33554432 ≤ req)
+    (hx : B ≤ x ∧ x + 32 * cur ≤ B + 1073741824 ∧ 0 < cur) (hb : 33554431 ≤ req) : cur < req + 1 ∧ cur - 1 < req := by
+  omega
+
+/-- **Two adjacent chunks and a third** of a heap of 2^25 units: the two hold fewer than 2^25 units. -/
+theorem two_lt_heap {a : Nat} {cs : List Chunk} (ht : Tiles a (a + 1073741824) cs) {c e d : Chunk}
+    (hc : c ∈ cs) (he : e ∈ cs) (hd : d ∈ cs) (hce : e.addr = c.addr + 32 * c.size) (hdc : d ≠ c) (hde : d ≠ e) :
+    c.size + e.size < 33554432 := by
+  have h1 := HeapFrame.Tiles.disjoint ht d hd c hc hdc
+  have h2 := HeapFrame.Tiles.disjoint ht d hd e he hde
+  have m1 := ht.mem_lt c hc
+  have m2 := ht.mem_lt e he
+  have m3 := ht.mem_lt d hd
+  omega
+
+/-- **The model's `growInplace` fails for a request of at least 2^25 units** (or 2^25 − 1 with another chunk in
+    use), and the request is above the usable size: the chunk and its next chunk lie inside the heap's 2^25 units. -/
 theorem growInplace_none_big {grow : Grow} {s : State} {ptr req : Nat} (hwf : WF s)
-    (hc : ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true) (hbig : 33554432 ≤ req) :
+    (hc : ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true) (hbig : BigReq s ptr req) :
     growInplace grow s ptr req = none ∧ usable s ptr < req := by
   obtain ⟨c, hcm, hca, hcu⟩ := hc
   obtain ⟨pre, post, hcs⟩ := List.append_of_mem hcm
@@ -59,26 +83,85 @@ theorem growInplace_none_big {grow : Grow} {s : State} {ptr req : Nat} (hwf : WF
       simp only [Tiles] at hm1 hm3; omega
     | cons e es =>
       exact ⟨e, List.mem_append_right _ (List.mem_cons_of_mem _ (by simp)), hph e (by rw [hpo]; rfl)⟩
-  refine ⟨growInplace_none_of hcur (by omega) ?_, by omega⟩
+  have hb0 : 33554431 ≤ req := by unfold BigReq at hbig; omega
+  have hp32 : 32 ≤ ptr := by omega
+  have hdX : ∀ d ∈ chunks s, d.addr + 32 ≠ ptr → d ≠ ⟨ptr - 32, cur, true⟩ := fun d _ hdp h => by
+    rw [h] at hdp; exact hdp (Nat.sub_add_cancel hp32)
+  have hcl : cur + 1 ≤ 33554432 ∨ 33554432 ≤ req := by
+    rcases hbig with hb | ⟨-, d, hdm, -, hdp⟩
+    · exact Or.inr hb
+    · have hne := hdX d hdm hdp
+      rw [hcs] at hdm
+      have h1 := HeapFrame.Tiles.disjoint htiles d hdm _ hXm hne
+      have m3 := htiles.mem_lt d hdm
+      simp only at h1 hXl
+      exact Or.inl (third_lt h1 hXl m3)
+  have hcc := cur_lt hcl hXl hb0
+  refine ⟨growInplace_none_of hcur hcc.1 ?_, by rw [husable]; exact hcc.2⟩
   by_cases hin : s.base + 1073741824 ≤ ptr - 32 + 32 * cur
   · exact Or.inl hin
-  · refine Or.inr (Or.inr ?_)
-    obtain ⟨e, hem, hea⟩ := hnx (by omega)
+  · obtain ⟨e, hem, hea⟩ := hnx (by omega)
     have hes := henc e hem
     rw [hea] at hes
     have hel := htiles.mem_lt e hem
     have hws : wordSize (s.hdr (ptr - 32 + 32 * cur)).size = e.size := by rw [hes, wordSize_sizeWord]
-    rw [hws]
-    omega
+    cases heu : e.used
+    · refine Or.inr (Or.inr ?_)
+      rw [hws]
+      rcases hbig with hb | ⟨hr, d, hdm, hdu, hdp⟩
+      · omega
+      · have hne := hdX d hdm hdp
+        rw [hcs] at hdm
+        have := two_lt_heap htiles hXm hem hdm (by simp only; omega) hne
+          (fun h => by subst h; rw [hdu] at heu; cases heu)
+        simp only at this; omega
+    · refine Or.inr (Or.inl ?_)
+      rw [hes, heu]; unfold wordUsed sizeWord; simp
 
 /-- **The model's `alloc` fails for a request of at least 2^25 units**: its minimum size exceeds `maxSize`. -/
-theorem alloc_none_big {grow : Grow} {hb req : Nat} {s : State} (hbig : 33554432 ≤ req) :
+theorem alloc_none_big0 {grow : Grow} {hb req : Nat} {s : State} (hbig : 33554432 ≤ req) :
     alloc grow hb 1 req s = none := by
   unfold alloc
   have h1 : ¬ (req + 1 + (1 - 1) ≤ maxSize) := by rw [maxSize_val]; omega
   cases h : init grow hb s with
   | none => simp
   | some s' => simp; omega
+
+/-- **The model's `alloc` fails for a request of `BigReq` size**: at least 2^25 units exceed `maxSize`; for 2^25 − 1
+    units every free chunk is smaller than the whole heap, since another chunk is in use. -/
+theorem alloc_none_big {grow : Grow} {hb req ptr : Nat} {s : State} (hwf : WF s) (hbig : BigReq s ptr req) :
+    alloc grow hb 1 req s = none := by
+  rcases hbig with hb' | ⟨hr, d, hdm, hdu, -⟩
+  · exact alloc_none_big0 hb'
+  rw [alloc_one hwf.1]
+  unfold alloc1
+  have hm : ¬ (req + 1 > maxSize) := by rw [maxSize_val]; omega
+  simp only [hm, ite_false]
+  generalize hF : (findFirst s (binUp (req + 1))).orElse (fun _ => findFirst s (binDown (req + 1))) = F
+  cases F with
+  | none => rfl
+  | some bin =>
+    have hbin' : (findFirst s (binUp (req + 1))).or (findFirst s (binDown (req + 1))) = some bin := by
+      rw [← hF]; cases findFirst s (binUp (req + 1)) <;> rfl
+    obtain ⟨-, -, -, -, ⟨pre, post, hsplit⟩, -, -⟩ := bin_chunk hwf (by rw [maxSize_val]; omega) hbin'
+    have ht := hwf.2.2.2.1
+    unfold TilesOk at ht
+    have htop : s.top = s.base + 1073741824 := by unfold State.top; rw [maxSize_val]
+    rw [htop] at ht
+    have hCm : (⟨s.heads bin, wordSize (s.hdr (s.heads bin)).size, false⟩ : Chunk) ∈ chunks s := by
+      rw [hsplit]; exact List.mem_append_right _ List.mem_cons_self
+    have hne : d ≠ ⟨s.heads bin, wordSize (s.hdr (s.heads bin)).size, false⟩ := by
+      intro h; rw [h] at hdu; cases hdu
+    have h1 := HeapFrame.Tiles.disjoint ht d hdm _ hCm hne
+    have m1 := ht.mem_lt _ hCm
+    have m3 := ht.mem_lt d hdm
+    simp only at h1 m1
+    have hS : wordSize (s.hdr (s.heads bin)).size < req + 1 := by
+      have := third_lt h1 m1 m3; rw [hr]; exact this
+    show (do
+      if wordSize (s.hdr (s.heads bin)).size < req + 1 then none
+      _) = none
+    rw [if_pos hS]; rfl
 
 /-- **42980 … 43259**: a request of req units above the chunk X's `cur − 1` usable units, its next
     chunk past the heap's end, used, or too small: at the fallback with the frame at sp − 152,
@@ -200,7 +283,7 @@ theorem fallback_preB {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : 
 
 theorem fallback_entryB {p : ByteArray} {P : Program} [HasCode p P] (env : HeapHost X) (x : X)
     (ω : Regs) (μ : Memory) (s : State) (sp ptr req pb ph : Nat) (hwf : WF s) (hrep : Rep μ s)
-    (hc : ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true) (hr : usable s ptr < req) (hr1 : req < 2147483647) (hbig : 33554432 ≤ req)
+    (hc : ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true) (hr : usable s ptr < req) (hr1 : req < 2147483647) (hbig : BigReq s ptr req)
     (hbd : heapBounds env.code = (48, pb)) (h48 : 48 ≤ ph) (hhb : ph ≤ pb) (hbs : pb < 4294967296)
     (hnone : growInplace (growTo pb) s ptr req = none)
     (h1 : ω[1] = UInt64.ofNat sp) (h8 : ω[8] = UInt64.ofNat ptr) (h7 : ω[7] = UInt64.ofNat 196792)
@@ -270,7 +353,20 @@ theorem fallback_entryB {p : ByteArray} {P : Program} [HasCode p P] (env : HeapH
   have hXl := htiles.mem_lt _ hXm
   simp only at hXl
   have hc1 : 1 ≤ cur := by omega
-  have hlt : cur < req + 1 := by omega
+  have hb0' : 33554431 ≤ req := by unfold BigReq at hbig; omega
+  have hp32 : 32 ≤ ptr := by omega
+  have hdX : ∀ d ∈ chunks s, d.addr + 32 ≠ ptr → d ≠ ⟨ptr - 32, cur, true⟩ := fun d _ hdp h => by
+    rw [h] at hdp; exact hdp (Nat.sub_add_cancel hp32)
+  have hcl : cur + 1 ≤ 33554432 ∨ 33554432 ≤ req := by
+    rcases hbig with hb | ⟨-, d, hdm, -, hdp⟩
+    · exact Or.inr hb
+    · have hne := hdX d hdm hdp
+      rw [hcs] at hdm
+      have h1 := HeapFrame.Tiles.disjoint htiles d hdm _ hXm hne
+      have m3 := htiles.mem_lt d hdm
+      simp only at h1 hXl
+      exact Or.inl (third_lt h1 hXl m3)
+  have hlt : cur < req + 1 := (cur_lt hcl hXl hb0').1
   obtain ⟨-, hph, -, -⟩ := Tiles.around htiles
   -- the next chunk, when below the heap's end, is a chunk
   have hnx : ptr - 32 + 32 * cur < s.base + 1073741824 →
@@ -325,13 +421,23 @@ theorem fallback_entryB {p : ByteArray} {P : Program} [HasCode p P] (env : HeapH
       · simp [hu] at hw0
     have hws : wordSize (s.hdr (ptr - 32 + 32 * cur)).size = e.size := by rw [hw2]; unfold wordSize; omega
     rw [hws] at hav
-    have htop : s.top = s.base + 1073741824 := by unfold State.top; rw [maxSize_val]
-    omega
+    have heu : e.used = false := by
+      rw [hes] at hw0; unfold sizeWord at hw0
+      cases hu : e.used
+      · rfl
+      · simp [hu] at hw0
+    rcases hbig with hb | ⟨-, d, hdm, hdu, hdp⟩
+    · omega
+    · have hne := hdX d hdm hdp
+      rw [hcs] at hdm
+      have := two_lt_heap htiles hXm hem hdm (by simp only; omega) hne
+        (fun h => by subst h; rw [hdu] at heu; cases heu)
+      simp only at this; omega
 
 theorem fallback_refines_failB {p : ByteArray} {P : Program} [HasCode p P] (env : HeapHost X)
     (x : X) (ω : Regs) (μ : Memory) {hb : Nat} (s : State) (sp ptr req pb ph : Nat)
     (hwf : WF s) (hrep : Rep μ s)
-    (hc : ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true) (hr : usable s ptr < req) (hr1 : req < 2147483647) (hbig : 33554432 ≤ req)
+    (hc : ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true) (hr : usable s ptr < req) (hr1 : req < 2147483647) (hbig : BigReq s ptr req)
     (hbd : heapBounds env.code = (48, pb)) (h48 : 48 ≤ ph) (hhb : ph ≤ pb) (hbs : pb < 4294967296)
     (hnone : growInplace (growTo pb) s ptr req = none) (ha : alloc (growTo pb) hb 1 req s = none)
     (h1 : ω[1] = UInt64.ofNat sp) (h8 : ω[8] = UInt64.ofNat ptr) (h7 : ω[7] = UInt64.ofNat 196792)
@@ -372,7 +478,8 @@ theorem fallback_refines_failB {p : ByteArray} {P : Program} [HasCode p P] (env 
     by rw [e1]; congr 1; omega, by rw [e5, UInt64.ofNat_toNat], by rw [e6, UInt64.ofNat_toNat]⟩
 
 open Services.Bootstrap.Decode.HeapCtx in
-/-- **`realloc` with a request of 2^25 ≤ units < 2^31 − 1** (sizes below 2^36 − 32 octets), the outcome
+/-- **`realloc` with a request of 2^25 ≤ units < 2^31 − 1** (sizes below 2^36 − 32 octets), or 2^25 − 1 units with
+    another chunk in use (`BigReq`), the outcome
     `Decode.ReallocCall.realloc_callG` leaves out: the model's `realloc` is `none`, and the binary's `realloc` (40701)
     returns null at 40821 with the allocator's context for the same state, the stack from sp up and the globals
     kept, and ω₀, ω₁, ω₅, ω₆ restored. -/
@@ -380,7 +487,7 @@ theorem realloc_call_bigG {p : ByteArray} {P : Program} [HasCode p P] (env : Hea
     (hcap1 : 134217728 ≤ cap) (hcap : cap < 18446744073709551616) (x : X) (ω : Regs) (μ : Memory)
     {hb : Nat} (s : State) (sp ptr al size pb S0 S1 : Nat) (H : HeapCtxC env.code pb S0 S1 μ s)
     (hc : ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true)
-    (hbig : 33554432 ≤ (size + 31) / 32) (hs : size + 31 < 68719476704) (hba : s.base % 8 = 0)
+    (hbig : BigReq s ptr ((size + 31) / 32)) (hs : size + 31 < 68719476704) (hba : s.base % 8 = 0)
     (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat ptr) (h9 : ω[9] = UInt64.ofNat al)
     (h10 : ω[10] = UInt64.ofNat size) (hal1 : 1 ≤ al) (hal2 : al ≤ 32)
     (hsp : 2147483968 ≤ sp ∧ sp % 8 = 0) (hS : S0 + 320 ≤ sp ∧ sp ≤ S1) :
@@ -398,7 +505,7 @@ theorem realloc_call_bigG {p : ByteArray} {P : Program} [HasCode p P] (env : Hea
   have hal : (al + 31) / 32 = 1 := by omega
   rw [hal]
   obtain ⟨hnone, hr⟩ := growInplace_none_big (grow := growTo pb) H.wf hc hbig
-  have ha : alloc (growTo pb) hb 1 ((size + 31) / 32) s = none := alloc_none_big hbig
+  have ha : alloc (growTo pb) hb 1 ((size + 31) / 32) s = none := alloc_none_big H.wf hbig
   have hc' := hc
   obtain ⟨c, hcm, hca, -⟩ := hc'
   have ht := H.wf.2.2.2.1
@@ -450,7 +557,7 @@ theorem realloc_call_big {p : ByteArray} {P : Program} [HasCode p P] (env : Refi
     (hcap1 : 134217728 ≤ cap) (hcap : cap < 18446744073709551616) (x : RefineCtx) (ω : Regs) (μ : Memory)
     {hb : Nat} (s : State) (sp ptr al size pb S0 S1 : Nat) (H : HeapCtx env pb S0 S1 μ s)
     (hc : ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true)
-    (hbig : 33554432 ≤ (size + 31) / 32) (hs : size + 31 < 68719476704) (hba : s.base % 8 = 0)
+    (hbig : BigReq s ptr ((size + 31) / 32)) (hs : size + 31 < 68719476704) (hba : s.base % 8 = 0)
     (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat ptr) (h9 : ω[9] = UInt64.ofNat al)
     (h10 : ω[10] = UInt64.ofNat size) (hal1 : 1 ≤ al) (hal2 : al ≤ 32)
     (hsp : 2147483968 ≤ sp ∧ sp % 8 = 0) (hS : S0 + 320 ≤ sp ∧ sp ≤ S1) :
@@ -463,4 +570,44 @@ theorem realloc_call_big {p : ByteArray} {P : Program} [HasCode p P] (env : Refi
   realloc_call_bigG (p := p) (P := P) (refineHeap env) cap hcap1 hcap x ω μ (hb := hb) s sp ptr al size pb S0 S1 H
     hc hbig hs hba h1 h7 h9 h10 hal1 hal2 hsp hS
 
-end Services.Bootstrap.Refine.ReallocBig
+open Services.Bootstrap.Decode.HeapCtx Services.Bootstrap.Decode.ReallocKeepAll Services.Bootstrap.Decode.LoopA in
+/-- **`realloc` for any request below 2^36 − 32 octets** but units = 2^25 − 1 with no other chunk in use:
+    `ReallocCall.realloc_call` (units < 2^25 − 1) and `realloc_call_big` (`BigReq`) together, in `realloc_call`'s
+    form. -/
+theorem realloc_call_any {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHost.Env) (cap : Nat)
+    (hcap1 : 134217728 ≤ cap) (hcap : cap < 18446744073709551616) (x : RefineCtx) (ω : Regs) (μ : Memory)
+    {hb : Nat} (s : State) (sp ptr al size pb S0 S1 : Nat) (H : HeapCtx env pb S0 S1 μ s)
+    (hc : ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true)
+    (hsz : 0 < size) (hrq : (size + 31) / 32 < 33554431 ∨ BigReq s ptr ((size + 31) / 32))
+    (hs : size + 31 < 68719476704) (hba : s.base % 8 = 0)
+    (h1 : ω[1] = UInt64.ofNat sp) (h7 : ω[7] = UInt64.ofNat ptr) (h9 : ω[9] = UInt64.ofNat al)
+    (h10 : ω[10] = UInt64.ofNat size) (hal1 : 1 ≤ al) (hal2 : al ≤ 32)
+    (hsp : 2147483968 ≤ sp ∧ sp % 8 = 0) (hS : S0 + 320 ≤ sp ∧ sp ≤ S1) :
+    (∃ r s' b ω' μ', realloc (growTo pb) hb s ptr ((al + 31) / 32) ((size + 31) / 32) = some (r, s', b) ∧
+      FreeStepsH p (refineContractK cap env) 40701 ω μ x 40821 ω' μ' x (64 * usable s ptr + 1300) ∧
+      ω'[7] = UInt64.ofNat r ∧ HeapCtx env pb S0 S1 μ' s' ∧
+      μ'.readN r (32 * min (usable s ptr) ((size + 31) / 32)) =
+        μ.readN ptr (32 * min (usable s ptr) ((size + 31) / 32)) ∧
+      (∀ c ∈ chunks s, c.used = true → c.addr + 32 ≠ ptr → c ∈ chunks s') ∧
+      (∃ c ∈ chunks s', c.addr + 32 = r ∧ c.used = true ∧ c.size = (size + 31) / 32 + 1) ∧
+      (∀ a, OthersData s ptr a → μ'.read a = μ.read a) ∧
+      (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
+      (∀ a, a < 196608 → μ'.read a = μ.read a ∧ μ'.readable a = μ.readable a) ∧
+      (∀ a, S0 ≤ a → μ'.writable a = μ.writable a) ∧
+      ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      (∀ a, Glob a → μ'.read a = μ.read a) ∧ s'.base = s.base ∧
+      (r = ptr ∨ ∀ e ∈ chunks s, e.used = true → e.addr + 32 ≠ r)) ∨
+    (realloc (growTo pb) hb s ptr ((al + 31) / 32) ((size + 31) / 32) = none ∧ ∃ ω' μ',
+      FreeStepsH p (refineContractK cap env) 40701 ω μ x 40821 ω' μ' x (64 * usable s ptr + 1300) ∧
+      ω'[7] = UInt64.ofNat 0 ∧ HeapCtx env pb S0 S1 μ' s ∧
+      (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
+      ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
+      (∀ a, Glob a → μ'.read a = μ.read a)) := by
+  rcases hrq with hr1 | hbig
+  · exact ReallocCall.realloc_call (p := p) (P := P) (hb := hb) env cap hcap1 hcap x ω μ s sp ptr al size pb S0 S1 H
+      hc hsz hr1 hba h1 h7 h9 h10 hal1 hal2 hsp hS
+  · obtain ⟨hn, ω', μ', run, e7, H', fr, e0, e1, e5, e6, gl⟩ := realloc_call_big (p := p) (P := P) (hb := hb) env cap
+      hcap1 hcap x ω μ s sp ptr al size pb S0 S1 H hc hbig hs hba h1 h7 h9 h10 hal1 hal2 hsp hS
+    exact Or.inr ⟨hn, ω', μ', run.mono (by omega), e7, H', fr, e0, e1, e5, e6, gl⟩
+
+end Services.Bootstrap.Decode.ReallocBig

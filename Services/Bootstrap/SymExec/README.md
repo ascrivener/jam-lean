@@ -291,6 +291,17 @@ Next (fifth session): the final theorem (new file or in Utf8Fn).
    docstring and in docs/whats-proven.md.
 5. Then the CodeF callers (55106/57327/57556/57624): confirm they are log-only (parent's request).
 
+### NEXT FIRST (parent, 2026-11-16): step bounds for from_utf8 (follow-up PR after #194 merges)
+
+The field-formatter session needs from_utf8 with a step bound, because RefOk/ArgOk need the Ok path
+to finish within a fixed number of steps. The change is additive and keeps every existing statement:
+- add a variant of `loop_sound` / `loop_soundX` (PVM/SymExec/Loop.lean) that also concludes
+  k ≤ c·meas + d;
+- add variants of `from_utf8_call` and `from_utf8_ascii` that conclude k ≤ A·len + B. Any affine
+  bound will do, since the caller has len ≤ 128.
+
+This comes before the CodeF callers below.
+
 ### Update 2026-11-15 (fifth session): from_utf8 assembled
 
 Done, in `Utf8Final.lean` (added to `Services.lean`; axioms propext, Classical.choice and

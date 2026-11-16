@@ -775,6 +775,31 @@ Pieces of T2 (`docs/bootstrap-target.md`): parts of bootstrap's accumulate code 
       unchanged (Adam, 2026-11-16, so that `ParamStatics` reaches row 8). Whoever discharges them
       proves this too; the formatters write only the stack and the heap.
 
+- **`ValuesFit` is kept by every operation.** `Acc.dispatch_keeps`, `Acc.ValuesFit.step`,
+  `Acc.ValuesFit.run` (`Acc/ValuesFitStep.lean`).
+  - *Statement:* every host call of the model (`AccHost.dispatch`, any id, gas, registers and memory)
+    keeps this service's storage values and every service's preimages shorter than 2⁶³ octets (a
+    stored value is read from a readable range, below 2³²); so every `ASem.step` keeps `ValuesFit`,
+    and so does every run (`ASem.run`). No assumptions.
+
+- **The items loop (R1).** `Acc.items_loop`, `Acc.loop_tr`, `Acc.err_arm`, `Acc.loop_end`
+  (`Acc/ItemsLoop/`).
+  - *Statement:* from the loop head 6766 with `ItemsInv` for the inputs `ins` (the iterator, slot
+    buffer and frame words, `HeapCtxC`, each slot holding its input, `ItemsOwn`, the read-only data,
+    the statics, `ValuesFit`), the run implements `Spec.accumulate`'s loop over `ins.map specItem`
+    (body `accBody`), then halts with ω₈ = 0. Transfers by `tr_impl`; work errors skip (the trace's
+    buffer freed); the loop's end frees the slot buffer and halts.
+  - *Premises:* the operand arm `OpArm` (R2, to be proved), `ItemsInv` at the head (to be established
+    by the final composition, R16).
+  - *Assumed (premise of `ItemsInv`, an obligation):* `ItemsOwn`, each slot's trace / output buffer is
+    the data of its own allocated chunk, all distinct and not the slot buffer (decided 2026-11-16,
+    option (C); to be discharged by strengthening `inputs_decode`).
+  - *Named hypotheses:* those of `tr_impl`, and `ItemLogFmt` (`Acc/ItemsLoop/Err.lean`): the item's log
+    line "Accumulating work item from {}" at 6955 … 7009 (format, `log`, the String's free) is
+    frame-only — it keeps the context, ω₁, the allocator's context with every allocated chunk and its
+    data, the memory from sp up but sp + 1568 … 1592, and the statics — or exhausts the heap and ends ☇
+    (`ExhaustsP`). A log site (standing decision; decision 23's G4).
+
 - **The accumulate prologue stores 𝖢 and 𝖨.** `Acc.Statics.start_to_6429_statics` and
   `Acc.Statics.chain` (`Acc/Statics.lean`).
   - *Statement:* from Y's state at instruction 5, the run reaches 6429 (the first argument decode) in

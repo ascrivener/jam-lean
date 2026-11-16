@@ -1008,6 +1008,23 @@ What you trust beyond the kernel:
   values shorter than 2⁶³ octets (`get_call`'s `hfit`); T2 will carry this as `ValuesFit` (decided
   2026-11-15). The SDK's `get` reads a length of 2⁶⁴ − 1 as NONE and traps on lengths from 2⁶³; see
   [Findings](#findings).
+- **The ring size (T2, `RingFits`; row 8, `add_recent_work_item`).** The binary sizes the ring of recent work items
+  as 2·𝖢·𝖨 computed in 32 bits (`Acc/Handlers/RecentSlotWrite.lean`), so row 8 assumes
+  `ParamStatics μ C I ∧ RingFits C I`: the protocol parameters' statics hold 𝖢 (the `u16` at 196616) and 𝖨 (the
+  `u64` at 196696), and 0 < 2·𝖢·𝖨 < 2³² (decided 2026-11-16). The full parameters give 2·341·16 = 10912.
+  - `RingFits` is a named hypothesis on the chain parameters and an assumption of T2. *Obligation (open):* it may
+    later be discharged from the fetched parameters (fetch kind 0) instead. The upper bound already follows from
+    `apply()`'s checks (2 ≤ 𝖢 ≤ 341, 𝖨 stored as a `u16`, so 2·𝖢·𝖨 < 2³²); only positivity (𝖨 ≥ 1) is not checked
+    by the binary and remains a real assumption on the chain parameters.
+  - `ParamStatics` is not an assumption of T2. *Obligation (open):* the T2 composition discharges it from the entry
+    prologue's `apply()` (the stores at 56205 and 56279) and from the frames of the later steps, which keep
+    196616 … 196791.
+  - Row 8 is composed: `add_recent` (`Acc/Handlers/RecentAdd.lean`) states that the run from 8013 to 8416
+    implements spec `addRecent` in `Impl`'s form. Early ☇ happens only at the allocation-failure traps 34070,
+    47977 and 32584 (heap exhaustion). Its hypotheses are `ParamStatics` (an obligation), `RingFits`,
+    maxRecent = 2·𝖢·𝖨, the read-only words it reads (key sizes, `set`'s error table) and `ValuesFit` for
+    this service's storage at the start (`StoreFit`). `Impl.inv` carries `StoreFit` past the removal and the
+    slot write.
 - **Allocation failure ends in ☇ (a blob obligation).** The binary follows a failed allocation with
   `handle_alloc_error`, which traps. Wherever a theorem only reaches the failed allocator call
   (`Fmt.Exhausts`: 40611 / 40821 with ω₇ = 0), this last stretch to the trap is still to be proved;
@@ -1037,6 +1054,66 @@ What you trust beyond the kernel:
     maxRecent = 2·𝖢·𝖨, the read-only words it reads (key sizes, `set`'s error table) and `ValuesFit` for
     this service's storage at the start (`StoreFit`). `Impl.inv` carries `StoreFit` past the removal and the
     slot write.
+- **`DropInstrsH` and `InstrRep` (T2, named hypothesis; parent's option (A) for row 11's drops).** The drop
+  of the instructions' `IntoIter` (33214, per-kind drops through the table at 68312) is assumed frame-only:
+  it frees each remaining slot's `foot` and then its buffer, keeps every other allocated chunk with its data
+  and the memory from sp up (`Acc/Handlers/InstrRep.lean`). `InstrRep` (`rep`, `foot`, `frame`, `tag`,
+  `notNone`) is the parameter shared by the R3/R6 hypotheses and R5. *Obligation:* T1's per-kind `Rep`s
+  discharge it, `tag` (the slot's first word decodes to the instruction's index) and `notNone` (that word
+  is not 2⁶⁴ − 2) included; the drop's proof discharges `DropInstrsH`. Row 11's `row_eleven_core`
+  (15038 → 6766) and `r11_tail` (the results drop `drop_results` and the three deallocs) are proved without
+  it. **`row_eleven`** (15028 → 6766, `Acc/Handlers/RowElevenFront.lean`) uses it, with the premises R5 must
+  supply: `IterOwn`, `(iterFree ++ tailFree).Nodup`, `ResultsAvoid` and the stack room.
+- **R5's named hypotheses (T2, Plan B, approved by the parent 2026-11-16; `Acc/Handlers/InstrLoopHyp.lean`).**
+  Each is minimal and frame-only, and keeps sp + 184 … sp + 224:
+  - `InstrLogH` (G4): the instruction's Debug log line, `format!` at 8772 (59375 → 8779): a fresh `String`
+    { kc, kp, kl } at sp + 1568 with its kl octets at kp readable (option A, approved by the parent
+    2026-11-16: `ResultLogH`'s readability premise needs it), the allocator's chunks kept, or `ExhaustsP`;
+    the text is not stated;
+  - `ResultLogH` (G4): the result's log line, `format!` at 14369 (59375 → 14376), the same shape with the
+    `String` at sp + 1144;
+  - `HandlerH` (R6): one hypothesis over every instruction i: from the dispatch at 8822, the handler
+    implements `onInstr C now i` under `accContractS` and ends at 14278 in `HandlerPost` (the result at
+    sp + 1000 in fresh chunks or the instruction's own buffers, owning its buffers (`ItemOwn`, the pushed
+    item's `itemPtrs` distinct and in `ResC` chunks, a `dataVec`'s inner array in its buffer; approved by the
+    parent 2026-11-16), other chunks kept, `LoopKeep` frame words
+    kept);
+  - `PushH` (R8): `finish_grow` with an old buffer for the results `Vec` (14431 → 14485), or `ExhaustsP`.
+  The loop's straight-line segments (`InstrLoopSeg.lean`, `InstrLoopTail.lean`) are proved without them.
+- **R5, the instruction loop (T2, Handlers A; `Acc/Handlers/InstrLoopBody.lean`, `InstrLoopFor.lean`).**
+  `il_body` (an instruction other than `Checkpoint`) and `il_body_ck` (`Checkpoint`: the results store
+  first, `store_core` returning to 8716) prove that one pass, 8540 (or 8554, where the entry falls
+  through) → 8540, implements the spec's loop body (`onInstr C now i`, and for `Checkpoint` first
+  `store key (encodeResults rs)`) and re-establishes `LoopAt` for the instructions left and rs ++ [r].
+  **`il_loop`** wraps them as `Impl.forIn` over `LoopInv`. Named hypotheses: `InstrLogH`, `ResultLogH`,
+  `HandlerH`, `PushH` (above) and `ExtendH`/`OkEncH` (the `Checkpoint` store). Premises (not new
+  assumptions of T2; R2 discharges them):
+  - a context invariant `Inv` with `hIst` (every `ASem.step` keeps it) and `hIfit` (it gives `StoreFit`),
+    the `StoreStep` premise the parent approved: R2 takes `Inv c := ValuesFit env c.1`, `hIst :=
+    ValuesFit.step` and `hIfit := ValuesFit.storage` (T2 inputs, R12);
+  - `hBall`: 2·(144·|rs| + 4) + 4·|encodeResults rs| + 64 < 2³⁰ − 64 for every results list no longer
+    than the instructions. Open (see `docs/t2-remaining.md`): at R16 it must become "the bound holds, or
+    the run exhausts the heap";
+  - at the entry's memory: the item index at sp + 176, the key-size word, `set`'s error table, the
+    read-only data's access and the dispatch table at 65736;
+  - the loop's body f through its two equations (`Checkpoint`, other), which R2 proves for the spec's
+    `do` block by `rfl`.
+  `LoopInv` also carries `OldKeep`: every allocated chunk of the entry outside the instructions' buffers
+  stays allocated with its data and is none of the buffers freed later (`StepKeep`, from each body).
+- **R5 and R7 composed (T2, Handlers A; `Acc/Handlers/InstrLoopEntry.lean`, `InstrLoopRowEleven.lean`).**
+  **`loop_row11`**: from row 9's end (8492) with `EntryHyp` (the decoded instructions' `Vec` owned as
+  `VecOwn`, its pointer in ω₆ and 8-aligned; the empty results `Vec` (cap 0, dangling pointer below 32,
+  len 0) with row 11's `TailHyp`; the instructions' buffers distinct from `tailFree`; the frame constants),
+  the run implements the spec's loop followed by `unless is.any isZomb (store key (encodeResults results))`
+  and reaches the items loop's head 6766 in `R57Post`: the allocator's context, every allocated chunk of
+  the entry outside the instructions' buffers and the frame buffers at sp + 104 / sp + 272 kept with its
+  data, the frame words `StableKeep` kept. Both cases: some instructions (`il_entry`, `il_loop`,
+  `loop_exit`) and none (8492 → 15050, the empty `IntoIter`'s drop, `row_eleven_store` from 15060).
+  Named hypotheses: those of `il_loop` plus `DropInstrsH`. Premises as `il_loop`'s (`Inv`, `hBall`, the
+  read-only facts), now at the entry. Not promised: the globals 196616 … 196791 (`PushH` does not keep
+  them) and the registers but ω₁.
+  `LoopHyp.hrp` (the results' addresses in [2¹⁶, 2³¹)) now applies only when there are results: an
+  empty `Vec`'s pointer dangles.
 - **Refinement of a fragment, not of a whole program.** The allocator theorems are about the
   allocator's entry points called with the stated registers and memory. They are not yet composed
   into a Ψ_R or Ψ_A theorem about a bootstrap run that allocates.

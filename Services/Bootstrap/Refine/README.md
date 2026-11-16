@@ -16,13 +16,13 @@ Everything cites Gray Paper v0.8.0 via the docstrings of the files named here; t
 - Done too (build, axioms clean): `SlotT` (`slotRep`, `DRt C` ⊇ `Top.DRm C`, `SlotW` = what `exit_runW` needs of one slot,
   `SlotOK` = `SlotW` for every memory keeping the owned chunks as in μr), `SlotFixed` (`kind_okH`, `slotOK_fixed`),
   `SlotLU` (`slotW_lu`, for pass-through `LookedUp` and the eager Lookup's slot).
-- `SlotHeap` (build, axioms not yet printed): `slotOK_rsaOk`, `slotOK_designate`, `slotOK_assignGas`,
-  `slotOK_provideInline`, `slotOK_bless`, `slotOK_assign`, `slotOK_csSome` (each: the decoded `…Rep ∧ OwnsBuf` for
+- `SlotHeap` (build, axioms clean): `slotOK_rsaOk`, `slotOK_designate`, `slotOK_assignGas`,
+  `slotOK_provideInline`, `slotOK_bless`, `slotOK_assign`, `slotOK_csSome`, `slotOK_luSome` (each: the decoded `…Rep ∧ OwnsBuf` for
   every memory keeping cs as μr ⟹ `SlotOK` owning `(· ∈ cs)`; helpers `readN_mod64(o)`, `buf_of(O)`, `src_keep`,
   `sub_keep`, `flatten_len`), and the no-buffer drop-arm kinds via `slotOK_nobuf`: `slotOK_csNone`, `slotOK_csEmpty`,
   `slotOK_provideHash`, `slotOK_rsaErr`.
 - Slots still to do: `DeleteItems` / `Imported` (`VVAt`, from `VecVecRepC`; and their empty forms, `VecEmptyRep`, whose
-  drop is `VVAt` with c0 = 0, len = 0), pass-through `LookedUp` (`SlotLU.slotW_lu` with own = (· ∈ cs), `OwnsBuf … 16`).
+  drop is `VVAt` with c0 = 0, len = 0); pass-through `LookedUp None` (`slotW_lu`, no owned chunk).
 - **Decode gaps found:** the vector kinds with 0 elements other than DeleteItems / Imported / Export (`Bless` with z = [],
   `Designate []`, `AssignForGasCost` with q = [], `RandomStorageAccumulate (some [])`) have no `ElemOkAFC` here yet
   (ElemsSmallC needs n ≥ 1). Frame-level decoders exist and need `ElemOkF` wrappers as `ExportEmpty.vec_emptyF`:

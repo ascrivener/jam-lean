@@ -1,4 +1,5 @@
 import Services.Bootstrap.Refine.SlotT
+import Services.Bootstrap.Refine.SlotLU
 import Services.Bootstrap.Refine.ElemsSmallC
 import Services.Bootstrap.Encode.ArmsHVecDesignate
 import Services.Bootstrap.Encode.ArmsHVecGas
@@ -516,5 +517,24 @@ theorem slotOK_rsaErr {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P]
   simp only [Nat.add_zero, List.drop_zero] at r0
   exact ⟨rdN μ (el + 16) 8, Or.inr (Or.inr (Or.inr ⟨18446744073709551615, by omega, by rw [r0]; exact e0,
     by rw [rd 8 8 (by omega)]; exact e8, by rw [encodeLE_rdN], by simp⟩)), rdN_lt64 _ _⟩
+
+/-- **A passed-through `LookedUp(Some d)`'s decoded slot is good**: 1 ≤ |d| < 2^32 octets, `LookedUpSomeRep` with its
+    buffer (word 16) a chunk of cs holding them (`SlotLU.slotW_lu`). -/
+theorem slotOK_luSome {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeA p P]
+    (env : RefineHost.Env) (K pb : Nat) (hK1 : 134217728 ≤ K) (hK : K < 18446744073709551616)
+    (C : Spec.Consts) (d : List UInt8) (hd : d.length < 4294967296)
+    (hn1 : 1 ≤ d.length) (cs : List Chunk) (bs : List UInt8) (μr : Memory)
+    (hR : ∀ μ : Memory, (∀ c ∈ cs, ∀ a, InData c a → μ.read a = μr.read a) →
+      Decode.LookupProvideElem.LookedUpSomeRep d.length d bs μ ∧ OwnsBuf cs bs 16 d.length) :
+    SlotOK env K pb p P (DRt C 0) (Spec.Instr.lookedUp (some d)).encode bs (· ∈ cs) μr := by
+  intro μ s el hel ho
+  obtain ⟨⟨h0, q, h8, h16, h24, hq⟩, co, hco, hcou, hb16, hcoS, hcoT⟩ :=
+    hR μ (fun c hc a ha => (ho c hc).2.2 a ha)
+  have hq' := buf_of h16 hb16 (by omega) hq
+  refine SlotLU.slotW_lu env K pb hK1 hK C (some d) (fun d' e => by cases e; exact hd) (co.addr + 32) (by omega) el μ s
+    (· ∈ cs) ⟨by rw [hel]; exact h0, by rw [hel]; exact h8, by rw [hel]; exact hb16, by rw [hel]; exact h24⟩
+    (fun d' e _ => ?_)
+  cases e
+  exact ⟨hq', co, hco, (ho co hco).1, hcou, rfl, by omega⟩
 
 end Services.Bootstrap.Refine.SlotHeap

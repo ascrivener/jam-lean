@@ -57,6 +57,27 @@ length prefix ℰ(n) and output ℰ(n) ⌢ encodings ⌢ ℰ₂(w)). Builds, axi
   to the halt with ℰ(`BootstrapWorkOutput { outI is, I }`).
 - Next: part B; then refine_t1c (T1's match form) once the bound question is settled.
 
+**Handoff (2026-11-16, end of the fifth instance).** Read this first.
+- **PR #217** (parts B/C, branch `claude/bootstrap-t1-m1c` at 69626f5): `model` green, `attempt-1` still running at
+  handoff. Merge it (squash) on green (the parent approved). Then restart `claude/bootstrap-t1-m1c` from main and bring
+  in the work on **`claude/bootstrap-t1-m1d`** (pushed, no PR; it is 69626f5 plus the commits below), e.g. merge it.
+- On m1d, beyond #217 (every file builds with `lake env lean`; axioms clean; a full `lake build` not yet run on it):
+  `Refine/ReallocBig.lean` (`realloc_call_big`, see "ReallocBig done" below) and `Refine/ElemsSmallC.lean` (the 8 small
+  `C` adapters), both imported in `Services.lean`; README updates.
+- Order approved by the parent (2026-11-16): ReallocBig (done but for units = 2^25 − 1 and threading it into T1's
+  callers, below), the small `C` forms (done), then the drop / `EncOkMH` arms for kinds 0, 11, 12, 13, 17, 22, 24 (tier
+  T1B range; if an arm needs code facts outside it, add them to T1B append-only and say so in the PR) with `DRm`
+  widened, all as new Refine files, then refine_t1c.
+- Next steps, in order:
+  1. Drop arms (see "Drop arms still to do" below; template `DropOutL`: `dd*` dispatch, the zero / nonzero pieces,
+     `drop_*` with `dealloc_call`), then extend `DropVecH.HeapEl` with them (a new predicate per buffer layout) and
+     re-run `drop_vecH` / `fin_runH` / `exit_runH` over the wider `HeapEl` (new files, as the parent asked).
+  2. `EncOkMH` arms for those kinds (`Encode/`'s heap arms, as `delete_itemsH_232` / `looked_up_someH`) and the
+     wider `DRm` (`ExitRun.DebugLineOk`'s slot predicate) with the formatters listed below.
+  3. Thread `realloc_call_big` beside `realloc_call` into decode's `finish_grow`, `grow_one` and the writer's growth,
+     and close units = 2^25 − 1; then n ≤ 2²¹, `hbig`, `hcapB` and `capBound` can go.
+  4. refine_t1c: the loop's induction carries μ0 / `Kp` existentially (`lookup_step` rebases them, `LUOwn`).
+
 **Progress (2026-11-16, fifth instance; branch `claude/bootstrap-t1-m1c`).** Main (#214) merged in. Every file below builds
 with `lake env lean`; axioms clean.
 - `LookupStep2.lookup_step`: the whole eager `Lookup` step, `PInv k` at i → `PInv (k + 1)` at 5042: `lmid`, then `lfmt`

@@ -1,5 +1,27 @@
 # Handoff: field formatters of refine's 6159 Debug line
 
+## Session 4 (2026-11-16, from ~10:00 UTC), local branch `local-build` = main@93cd751 + the wip commits
+- #213 / #216: still in CI (attempt-2 / attempt-1) at session start; re-subscribed.
+- **Step-8 survey** (the T1 README on `claude/bootstrap-t1-m1c` does not list the reached formatters
+  yet). Estimates and what each is (vtable `fmt` words read from RO at vt + 24, resolved via the jump
+  table; RO base in the .jam at offset 92):
+
+  | formatter | what (tag) | needs | size | status |
+  |---|---|---|---|---|
+  | 315 | **not a formatter**: README's table misread 74968 (tag 0's field-*names* array, 9 × (ptr, len)) as a vtable. Tag 0 (`CreateService`, 9 fields via 63820) uses 56340, 28843 ×5, 57485, 28739, 36594 only | — | — | discrepancy, reported |
+  | 28739 | `Option<Vec<u8>>` (`registration`, 0) | = 17465 | XS | **done** `opt_vec_28739_ok` |
+  | 36534 | `&Option<Vec<u8>>` (18) | as 17465 | XS | **done** `ref_opt_vec_36534_ok` |
+  | 26905 | `&Code` enum: tag 0 `Hash([u8;32])` (36529), else `Inline(Vec<u8>)` (26807) (17) | debug_tuple1 | S | **done** `ref_code_26905_ok` |
+  | 36594 | `&Option<u32>` (`maybe_id`, 0); Some → 37549 | ref_u32_ok (#213) | S | **done** `ref_opt_u32_36594_ok` |
+  | 36972 | `&Input { seed: u64 (37857), nb_items: u8 (37527) }` (21) | debug_struct2 | S–M | **done** `ref_input_36972_ok` (+ `u64b_ok`, 37857) |
+  | 28801 | `<u16 as Debug>` → `<u16 as Display>` 67932 (12, 24) | new `dec16` | M | **done** `u16_ok` (ArgOk), `dec16` |
+  | 26397 | `&Vec<Vec<u8>>` (elements 24 octets, 26807) (5, 10, 19) | vd_loop for stride 24 | M | |
+  | 26605 / 26706 | `&Vec<(u32, u64)>`-like, 16-octet elements via 37352 / 37436: a tuple builder (61767 `debug_tuple` new, 65573 `DebugTuple::field`, 65868 finish: **not proved anywhere**) with 37549 (&u32) and 37589 (&u64) (11 / 9) | DebugTuple builder API | M–L | |
+  | 36654 | `&Result<Output, ()>` (22): Err → 37571 (`"()"` via pad); Ok → 37067 = struct1 `Output { items }`, items → 26504 (`&Vec<32-octet>` via 36917) | 36917 unknown | L | |
+  | 36732 | `BoundedVec(Vec<336-octet struct 37158, ≥ 4 fields>, u64 const)` via the tuple builder (13) | tuple builder + 37158 | XL | |
+  | 29877 | `Vec<Hash>` (32-octet elements via 33152 = deref → 56340) (24) | 56340 (from_utf8 bound) | M | blocked |
+  | 37611 | `[a, b, …]` of hashes via `core::fmt::write` with 56340 (12) | 56340 | M | blocked |
+
 ## Current state (session 3, branch `claude/bootstrap-fields-2-wip`, 2026-11-16 ~09:30 UTC)
 - **Open PRs**: #213 (FieldInt) and #216 (write_str_heap). #213's proofs job timed out on attempt 1 and
   resumed in attempt 2; #216 was on attempt 1. Merge each on green (subscribed in session 3).

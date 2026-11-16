@@ -7,6 +7,21 @@ Everything cites Gray Paper v0.8.0 via the docstrings of the files named here; t
 ## Current state (2026-11-16, read this first)
 
 **Eighth instance (2026-11-16, branch `claude/bootstrap-t1c`, on top of m1d).** refine_t1c, in progress.
+
+**Handoff (end of the eighth instance).** Read this first.
+- **#217** (parts B/C): attempt-1 timed out green as designed, attempt-2 was still running at handoff (started 12:15).
+  Subscribe, merge (squash) on green. Then the m1d PR exactly as the seventh instance's handoff says (restart `claude/bootstrap-t1-m1c` from main, merge
+  `claude/bootstrap-t1-m1d` (be5f08e) into it, full `lake build`, open the PR listing every changed statement below,
+  merge on green). A full local `lake build` of m1d (plus the LookupStep2 strengthening) passed this instance on top of
+  main@93cd751's cache.
+- **T1c work** is on `claude/bootstrap-t1c` (m1d + the files below; no PR). After the m1d PR merges, merge main into it.
+  Its `LookupStep2` change (ptr' < 2^31, adopted chunk ≠ ce) is not in the m1d PR; it goes with refine_t1c's PR.
+- **Adam decided** (via the parent): exclude Import with a named hypothesis `hnoimport` (like `hrsr`), keep 1 ≤ n.
+- Next, in order: the remaining slots (DeleteItems / Imported via `VVAt`, their empty forms, `LookedUp None`
+  pass-through), the per-kind decode packages (step 1 of the plan below, including the empty-vector `ElemOkF`
+  wrappers and the `Assign` global-word question for the parent), `Inv` + `RunT`, `TopT`, `T1c.refine_t1c`, docs
+  (docstring, README, `docs/whats-proven.md`: deferred ☇ table, step 10, Fmt discharges, M2, Import), PR, then message
+  the parent the full statement and hypothesis list (including the gas cap K = 2^62 for the Fmt hypotheses).
 - Scope (Adam, 2026-11-16): Import excluded by a named hypothesis `hnoimport` (like `hrsr`), recorded as deferred;
   1 ≤ n kept (n = 0 is the existing NoInstr theorem). Both go in the docstring and `docs/whats-proven.md`.
 - Done (build, axioms clean): `LoopT.loop_t` (the loop over pass / Export / eager Lookup steps; μ0, `Kp` and the written

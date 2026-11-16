@@ -75,7 +75,8 @@ theorem dh {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ :
       μ'.readN (sp - 80 + 24) 8 = Num.encodeLE 8 9223372036854775832 ∧
       μ'.readN (sp - 80 + 16) 8 = Num.encodeLE 8 67760 ∧
       (∀ a, a < 4294967296 → (a < sp - 80 ∨ sp ≤ a) → μ'.read a = μ.read a) ∧
-      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
+      (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) ∧
+      μ'.readN (sp - 80) 8 = Num.encodeLE 8 n := by
   obtain ⟨hsp0, hsp1, hsp8⟩ := hsp
   have rE := rd8 hE sV8
   have rn := rd8 hn' sV16
@@ -84,7 +85,7 @@ theorem dh {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs) (μ :
   refine ⟨?_, ?_, ?_, ?_⟩
   rotate_left 2
   · pvm_go [h1, h7, hsp0, hsp1, hsp8, hV, hVs, hn0, hr, hw, rE, rn, rdN_writeN_disjoint, ↓rdN_fold]
-  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_⟩
+  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, fun a ha0 ha1 => ?_, fun a => ?_, fun a => ?_, ?_⟩
     all_goals try simp (disch := pvm_arith) only [PVM.getElem_regsNF, PVM.lookup_cons_nat, Nat.reduceEqDiff,
       ↓reduceIte, List.lookup_nil, Option.getD_none, PVM.getD_some', h1, Nat.mod_eq_of_lt hn']
     post_simp
@@ -200,7 +201,7 @@ theorem drop_vec {p : ByteArray} {P : Program} [HasCode p P] (x : X) (ω : Regs)
   obtain ⟨hsp0, hsp1, hsp8⟩ := hsp
   have hE64 : E < 18446744073709551616 := by omega
   have hr0 : ω[0].toNat = ret := by rw [h0]; simp; omega
-  obtain ⟨ω1, μ1, run1, a1, a5, a6, a72, a64, a56, a40, a32, a24, a16, afr, ard, awr⟩ := dh (p := p) (P := P)
+  obtain ⟨ω1, μ1, run1, a1, a5, a6, a72, a64, a56, a40, a32, a24, a16, afr, ard, awr, -⟩ := dh (p := p) (P := P)
     (R := R) x ω μ sp V E n ⟨by omega, hsp1, hsp8⟩ hV hVs hE64 (by omega) (by omega) h1 h7 sV8 sV16 hrV hw
   -- the element loop, from element k with the frame's words in place
   have loop : ∀ m k (ω2 : Regs) (μ2 : Memory), k + m = n → k < n → ω2[1] = UInt64.ofNat (sp - 80) →

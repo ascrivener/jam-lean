@@ -4,7 +4,7 @@ State of the work on bootstrap's `refine` (T1), written for the next session to 
 Everything cites Gray Paper v0.8.0 via the docstrings of the files named here; the spec side is
 `Spec.refine` and `exportSeg` in `JAM/Refine.lean`.
 
-## Current state (2026-11-15, read this first)
+## Current state (2026-11-16, read this first)
 
 **On `main`:** `Refine/Milestone.lean` `refine_milestone` (#197, with the `Fmt.FmtRO` conjunct of
 `VendoredFacts` from #207), T1c's first milestone M1. Ψ_R against `Spec.refine` for payloads of 1 ≤ n < 128
@@ -30,20 +30,30 @@ on 2026-11-15:
   panics).
 - **E. The allocation-failure ☇ obligation.**
 
-**Progress on A (2026-11-15):**
+**Progress on A (2026-11-16):** A1–A3 done for 1 ≤ n ≤ 2²¹, as `RunMixedG.run_mixedG` (`run_mixed` for any
+length prefix ℰ(n) and output ℰ(n) ⌢ encodings ⌢ ℰ₂(w)). Builds, axioms clean.
 - `DecodeHeadG.headG`: `Instructions::decode`'s head for any n < 2^32 (general `decodeU32`).
-- `DecodeVecN.w1G`, `v2gG`: the grow step between batches for any length and batch. The batches are 70, then
-  min(remaining, length): 70, 70, 140, 280, …; every batch after the first grows the buffer to exactly
-  length + batch with `finish_grow` → `realloc`.
-- `DecodeVecNC`: `BInv` (the state at 562 after L elements), `batch_step`, `batches` (induction), `first_batch`,
-  `vec_exit` and `vec_allC`, which is `vec_anyC` for any 1 ≤ n < 2^32. Two internal hypotheses remain:
-  - `hbatch` (each batch below 128): the decode loop's `OkFD` (Decode/LoopAPassC.lean) requires it. It is unused
-    there: a scratch copy with the conjunct removed builds. Dropping it is a two-line weakening of another
-    session's file and is waiting on the coordinator.
-  - `hbig` (232 n < 2^30 − 64, `realloc_call`'s range): n ≤ |y| ≤ 2^24 does not imply it, since up to about 16.7M
-    one-octet instructions fit in a payload and 232 n < 2^30 needs n < about 4.6M. The top level needs the failure
-    path of a `realloc` request at or above 2^25 − 1 units (heap exhaustion). Not done yet.
-- Next: switch `DecodeC`/`RunMixed` to `vec_allC`, `headG`; lift `LayP.hn` (part A3) and the exit encoder.
+- `DecodeVecN.w1G`, `v2gG`: the grow step between batches. Batches: 70, then min(remaining, length) (70, 70, 140,
+  280, …); each later batch grows the buffer to length + batch by `finish_grow` → `realloc`.
+- `DecodeVecNC`: `BInv`, `batch_step`, `batches`, `first_batch`, `vec_exit`, `vec_allC` (= `vec_anyC` for any
+  1 ≤ n < 2^32, with `hbig`: 232 n < 2^30 − 64). `hbatch` is gone: OkFD's unused `es.length < 128` was dropped
+  (Decode/LoopAPassC.lean, approved option (i); noted in Decode/README.md).
+- `DecodeCG.decode_allC`: `decode_oneC` for any n (headG + vec_allC).
+- `PassLoop.LayP.hn` is now n ≤ 2²¹ (was n < 128); `Entry.entry`, `Body.body`, `ExportElem.push` take n ≤ 2²¹.
+- Exit encoder: `ExitEnc.enc_run` now runs `Encode.EncMD.encode_okMD_big` (no growth: |ℰ(n)| ≤ 4 for n ≤ 2²¹, so the
+  232 n + 6 octets suffice for `EncOk` elements of ≤ 232 octets). Its output is ℰ(n) ⌢ out ⌢ ℰ₂(w), and the chain
+  enc_run → exit_run → body → run_fixed/run_mixed/from4680/refine_core takes `[HasCodeA p P]`.
+  `ExitEnc.out_small` turns that back into n :: … for n < 128, so `run_fixed`, `run_mixed` and `refine_milestone`
+  keep their statements.
+- **Open: where n ≤ 2²¹ comes from** (asked the coordinator, 2026-11-16). Every bound traces to
+  `ReallocCall.realloc_call`'s hr1 (request < 2^25 − 1 units = 2^30 octets), which runs through the whole Alloc
+  realloc chain. It is needed by: decode's realloc (232 n < 2^30 − 64, implied by n ≤ 2²¹); the output `grow_one`
+  (`pass_elem_grow`'s len ≤ 2²¹); and, for part B's heap elements, `encode_okMH_big`'s `cap ≤ capBound` (2^28) and
+  `hbig`. The payload bound |y| ≤ 2^24 allows n up to 2^24. Model side: the heap is 1 GiB (`maxSize`), so requests
+  of ≥ 2^25 units fail in `growInplace` and `alloc`. `alloc_call` already covers sizes up to 2^36. What's missing is the
+  binary's `realloc_impl` null path for 2^25 ≤ units < 2^32. Options sent: (a) T1 proves it in a new file
+  (recommended); (b) Alloc generalises hr1; (c) bound n in refine_t1c (Adam).
+- Next: from4680/refine_core for n ≤ 2²¹ (`run_mixedG`); then part B; refine_t1c once the bound question is settled.
 
 Decided by the coordinator on 2026-11-15:
 - the new theorem `refine_t1c` is added in T1's match form, and `refine_milestone` stays unchanged;

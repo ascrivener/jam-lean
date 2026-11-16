@@ -50,21 +50,21 @@ theorem ExportOk.congr {env : RefineHost.Env} {μ μ' : Memory} {E k : Nat} {ce 
     · omega
     · rw [(rq j hj).1, (rq j hj).2] at h2; have := hql j hj; omega))]
 
-/-- **Refine's body** (4842 … t): from the decode's `Vec<Instruction>` `{cap, E, n}` at M + 168 (1 ≤ n < 128,
+/-- **Refine's body** (4842 … t): from the decode's `Vec<Instruction>` `{cap, E, n}` at M + 168 (1 ≤ n ≤ 2²¹,
     E = ce.addr + 32 in the allocated chunk ce) and the allocator's context, with each instruction k passed
     through (`PassOk`) or exported (`ExportOk`), the chunks to keep `Kp k` and the host context `ctx k` per
     instruction, and each output slot satisfying `O` (whence `rep` for the encoder, `DR` for the `Debug` line
     and a variant whose drop does nothing), refine returns to `ret` (→ t) with ω₇ = buf and ω₈ the length of
     ℰ(`BootstrapWorkOutput`) = n :: (the encodings) ⌢ ℰ₂(w mod 2^16) at buf, the host context `ctx n`. Or an
     allocation fails. Hypotheses: `ExportFmtOk` and `DebugLineOk` (the fmt summaries). -/
-theorem body {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P]
+theorem body {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Services.Bootstrap.CodeA.HasCodeA p P] [HasCodeR p P]
     (env : RefineHost.Env) (cap0 : Nat) (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616)
     {hb : Nat} {pb S0 S1 : Nat} {ro : List UInt8} (fmt : ExportSeg.ExportFmtOk p cap0 env pb S0 S1 ro)
     (DR : Nat → List UInt8 → Memory → Prop) (enc : Nat → List UInt8) (rep : Nat → List UInt8 → Prop)
     (dbg : ExitRun.DebugLineOk p cap0 env pb S0 S1 ro DR)
     (ω : Regs) (μ : Memory) (s : State) (H : HeapCtx env pb S0 S1 μ s) (hro : RoData.RoIs ro μ) (M cap n : Nat) (ce : Chunk)
     (Kp : Nat → Chunk → Prop) (O : Nat → List UInt8 → Prop) (ctx : Nat → RefineCtx)
-    (hM : S0 + 7560 ≤ M ∧ M + 632 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0) (hn : 0 < n) (hn128 : n < 128)
+    (hM : S0 + 7560 ≤ M ∧ M + 632 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0) (hn : 0 < n) (hn128 : n ≤ 2097152)
     (hcap : 232 * cap < 18446744073709551616) (hce : cap ≠ 18446744073709551615)
     (hceC : ce ∈ chunks s ∧ ce.used = true) (hE : ce.addr + 32 + 232 * n ≤ ce.addr + 32 * ce.size)
     (hEtop : ce.addr + 32 + 232 * n < 2147483648)
@@ -89,9 +89,9 @@ theorem body {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCode
     (∃ (ω' : Regs) (μ' : Memory) (s' : State) (N buf : Nat),
       FreeStepsH p (refineContractK cap0 env) 4842 ω μ (ctx 0) t ω' μ' (ctx n) N ∧ HeapCtx env pb S0 S1 μ' s' ∧
       ω'[0] = UInt64.ofNat ret ∧ ω'[1] = UInt64.ofNat (M + 632) ∧ ω'[5] = UInt64.ofNat r5 ∧
-      ω'[6] = UInt64.ofNat r6 ∧ ω'[7] = UInt64.ofNat buf ∧ ω'[8] = UInt64.ofNat (off enc n + 3) ∧
-      μ'.readN buf (off enc n + 3) = UInt8.ofNat n :: (out enc n ++ Num.encodeLE 2 (w % 65536)) ∧
-      ((∀ a, buf ≤ a → a < buf + (off enc n + 3) → μ'.readable a = true) ∧ buf + (off enc n + 3) < 2147483648)) ∨
+      ω'[6] = UInt64.ofNat r6 ∧ ω'[7] = UInt64.ofNat buf ∧ ω'[8] = UInt64.ofNat ((Blob.encodeNat n).length + off enc n + 2) ∧
+      μ'.readN buf ((Blob.encodeNat n).length + off enc n + 2) = Blob.encodeNat n ++ out enc n ++ Num.encodeLE 2 (w % 65536) ∧
+      ((∀ a, buf ≤ a → a < buf + ((Blob.encodeNat n).length + off enc n + 2) → μ'.readable a = true) ∧ buf + ((Blob.encodeNat n).length + off enc n + 2) < 2147483648)) ∨
     ∃ N, ExhaustsX env cap0 pb p 4842 ω μ (ctx 0) N := by
   obtain ⟨hS0M, hMS1, hM2, hM8⟩ := hM
   have hS1 := H.hS1

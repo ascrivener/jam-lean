@@ -67,8 +67,8 @@ theorem take_add' (es : List (List UInt8)) (L b : Nat) : es.take (L + b) = es.ta
 
 /-- **One more batch** (562 … 562): from `BInv` after L < n elements, the next batch of b' = min(n − L, L): the
     buffer grown to L + b' slots by `realloc` (the first L slots copied) and the batch decoded into slots
-    L … L + b' − 1, giving `BInv` after L + b' elements. Or an allocation fails. The batch is below 128 elements
-    (the decode loop's `OkFD`) and the buffer below 2³⁰ octets (`realloc_call`'s range). -/
+    L … L + b' − 1, giving `BInv` after L + b' elements. Or an allocation fails. The buffer is below 2³⁰ octets
+    (`realloc_call`'s range). -/
 theorem batch_step {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env : RefineHost.Env) (cap0 : Nat)
     (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616) {hb pb : Nat} (gl : Nat → UInt8)
     (x : RefineCtx) (S rd P0 Lt : Nat) (es : List (List UInt8)) (reps : Nat → List Chunk → List UInt8 → Memory → Prop)
@@ -81,8 +81,7 @@ theorem batch_step {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (e
     (hLt : es.flatten.length ≤ Lt ∧ Lt < 4294967296) (pay : μ0.readN P0 es.flatten.length = es.flatten)
     (hbig : 232 * es.length < 1073741760)
     (L Rc b q : Nat) (ω : Regs) (μ : Memory) (s : State)
-    (I : BInv env pb gl S rd P0 Lt es reps cp μ0 s0 out v5 v6 L Rc b q ω μ s) (hLn : L < es.length)
-    (hb128 : min (es.length - L) L < 128) :
+    (I : BInv env pb gl S rd P0 Lt es reps cp μ0 s0 out v5 v6 L Rc b q ω μ s) (hLn : L < es.length) :
     (∃ (ω' : Regs) (μ' : Memory) (s' : State) (q' N : Nat),
       FreeStepsH p (refineContractK cap0 env) 562 ω μ x 562 ω' μ' x N ∧
       BInv env pb gl S rd P0 Lt es reps cp μ0 s0 out v5 v6 (L + min (es.length - L) L) (es.length - L)
@@ -98,8 +97,7 @@ theorem batch_step {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (e
   obtain ⟨m, hm⟩ : ∃ m, m = n - L := ⟨_, rfl⟩
   obtain ⟨b', hb'⟩ : ∃ b', b' = min m L := ⟨_, rfl⟩
   rw [hN, ← hm, ← hb']
-  rw [hN] at hLn hbig hb128 hRb
-  rw [← hm, ← hb'] at hb128
+  rw [hN] at hLn hbig hRb
   have hb'1 : 1 ≤ b' ∧ b' ≤ m ∧ b' ≤ L := by omega
   have H := I.heap
   have hst := H.st
@@ -231,7 +229,7 @@ theorem batch_step {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (e
     have := hcpd (P0 + es.flatten.length - 1) (by omega) (by omega)
     unfold InData at this; omega
   have ok2 : OkFD (S - 56) rd (P0 + f1) (Lt - f1) es2 L r :=
-    ⟨by omega, ⟨by rcases hapart with h | h <;> omega, by omega⟩, hr8, by omega,
+    ⟨⟨by rcases hapart with h | h <;> omega, by omega⟩, hr8, by omega,
       fun j hj => by rw [hg2 j hj]; exact hne _ _, by omega, by omega, by omega,
       by omega, by omega, by omega, by omega⟩
   have hoff0 : off es2 0 = 0 := by simp [off]
@@ -359,7 +357,7 @@ theorem batch_step {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (e
     rw [fr8e a ha, hg7 a ha]
 
 /-- **All the batches** (562 … 562): from `BInv` after L elements, the remaining batches, giving `BInv` after all n.
-    Or an allocation fails. `hbatch`: every later batch is below 128 elements (the decode loop's `OkFD`). -/
+    Or an allocation fails. -/
 theorem batches {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env : RefineHost.Env) (cap0 : Nat)
     (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616) {hb pb : Nat} (gl : Nat → UInt8)
     (x : RefineCtx) (S rd P0 Lt : Nat) (es : List (List UInt8)) (reps : Nat → List Chunk → List UInt8 → Memory → Prop)
@@ -370,8 +368,7 @@ theorem batches {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env 
     (hcp : cp ∈ chunks s0 ∧ cp.used = true)
     (hcpd : ∀ a, P0 ≤ a → a < P0 + es.flatten.length → InData cp a) (hP0 : 206864 ≤ P0)
     (hLt : es.flatten.length ≤ Lt ∧ Lt < 4294967296) (pay : μ0.readN P0 es.flatten.length = es.flatten)
-    (hbig : 232 * es.length < 1073741760)
-    (hbatch : ∀ L', 1 ≤ L' → L' < es.length → min (es.length - L') L' < 128) :
+    (hbig : 232 * es.length < 1073741760) :
     ∀ k L Rc b q (ω : Regs) (μ : Memory) (s : State), es.length - L = k →
       BInv env pb gl S rd P0 Lt es reps cp μ0 s0 out v5 v6 L Rc b q ω μ s →
       (∃ (ω' : Regs) (μ' : Memory) (s' : State) (Rc' b' q' N : Nat),
@@ -385,7 +382,7 @@ theorem batches {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env 
     have hL := I.hL
     by_cases hLn : L < es.length
     · rcases batch_step (hb := hb) env cap0 hcap1 hcap0 gl x S rd P0 Lt es reps cp Ns μ0 s0 out v5 v6 hel hne hS hcp
-        hcpd hP0 hLt pay hbig L Rc b q ω μ s I hLn (hbatch L hL.1 hLn) with
+        hcpd hP0 hLt pay hbig L Rc b q ω μ s I hLn with
         ⟨ω1, μ1, s1, q1, N1, run1, I1⟩ | hx
       · rcases ih (es.length - (L + min (es.length - L) L)) (by omega) _ _ _ _ ω1 μ1 s1 rfl I1 with
           ⟨ω2, μ2, s2, Rc2, b2, q2, N2, run2, I2⟩ | ⟨N2, hx⟩
@@ -553,8 +550,7 @@ theorem first_batch {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (
     rw [fr2c c hc1 hu a ha (by omega), hd1 a ha]
 
 /-- **`Vec<Instruction>::decode`, the slots' chunks seen, any n ≥ 1** (482 … 20420): `DecodeVec2C.vec_anyC` with
-    1 ≤ n < 128 replaced by n < 2³², 232 n < 2³⁰ − 64 (`realloc_call`'s range) and `hbatch` (every batch after the
-    second below 128 elements, the decode loop's `OkFD`). Same conclusion. -/
+    1 ≤ n < 128 replaced by n < 2³² and 232 n < 2³⁰ − 64 (`realloc_call`'s range). Same conclusion. -/
 theorem vec_allC {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env : RefineHost.Env) (cap0 : Nat)
     (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616) {hb pb : Nat} (gl : Nat → UInt8)
     (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State) (H : HeapCtx env pb S0 S1 μ s)
@@ -563,7 +559,6 @@ theorem vec_allC {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env
     (hel : ∀ j (hj : j < es.length), Decode.VecVecOwn.ElemOkAFC env cap0 pb gl p P (S - 56) rd (Ns j) es[j] (reps j))
     (hg : ∀ a, Glob a → μ.read a = gl a)
     (hn : 1 ≤ es.length ∧ es.length < 4294967296) (hbig : 232 * es.length < 1073741760)
-    (hbatch : ∀ L', 1 ≤ L' → L' < es.length → min (es.length - L') L' < 128)
     (hne : ∀ j (hj : j < es.length), 1 ≤ es[j].length)
     (hS : S0 + 2104 ≤ S ∧ S + 552 + 24 ≤ rd ∧ rd + 16 ≤ S1 ∧ S % 8 = 0)
     (hv5 : v5 < 18446744073709551616) (hv6 : v6 < 18446744073709551616)
@@ -602,7 +597,7 @@ theorem vec_allC {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env
   rotate_left
   · exact Or.inr hx
   rcases batches (hb := hb) env cap0 hcap1 hcap0 gl x S rd P0 Lt es reps cp Ns μ s (S + 552) v5 v6 hel hne hS
-      ⟨hcp.1, hcp.2.1⟩ hcpd hP0 hLt pay hbig hbatch _ _ _ _ _ ω1 μ1 s1 rfl I1 with
+      ⟨hcp.1, hcp.2.1⟩ hcpd hP0 hLt pay hbig _ _ _ _ _ ω1 μ1 s1 rfl I1 with
     ⟨ω2, μ2, s2, Rc, b, q, N2, run2, I⟩ | ⟨N2, hx⟩
   rotate_left
   · exact Or.inr ⟨_, Exhausts.pre run1 hx⟩

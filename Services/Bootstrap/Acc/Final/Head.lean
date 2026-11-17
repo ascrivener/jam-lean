@@ -53,14 +53,15 @@ theorem il_head2 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x :
     all_goals try exact Nat.mod_eq_of_lt (by omega)
     all_goals try omega
 
-/-- **6674 … 15316**, no items (the word at sp + 1584 is 0): the capacity c (sp + 1568) stored at
-    sp + 32, the end q at sp + 144, q at sp + 16, then 15215 finds the cursor ω₁₁ = q at the end. -/
-theorem il_head0 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
+/-- **6674 … 15215**, no items (the word at sp + 1584 is 0): the capacity c (sp + 1568) stored at
+    sp + 32, the end q at sp + 144, q at sp + 16 and in ω₁₁. -/
+theorem il_head0a {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
     (μ : Memory) (sp q c : Nat) (h1 : ω[1] = UInt64.ofNat sp) (hsp : 65536 ≤ sp ∧ sp + 1600 < 4294967296)
     (m0 : rdN μ (sp + 1568) 8 = c) (m8 : rdN μ (sp + 1576) 8 = q) (m16 : rdN μ (sp + 1584) 8 = 0)
     (hwf : ∀ a, sp ≤ a → a < sp + 1600 → μ.writable a = true) :
-    ∃ ω' μ', FreeStepsH p R 6674 ω μ x 15316 ω' μ' x 20 ∧
-      ω'[1] = UInt64.ofNat sp ∧ rdN μ' (sp + 32) 8 = c ∧
+    ∃ ω' μ', FreeStepsH p R 6674 ω μ x 15215 ω' μ' x 20 ∧
+      ω'[1] = UInt64.ofNat sp ∧ ω'[11] = UInt64.ofNat q ∧ rdN μ' (sp + 32) 8 = c ∧
+      rdN μ' (sp + 144) 8 = q ∧
       (∀ a, a < 4294967296 → (a < sp + 16 ∨ sp + 24 ≤ a) → (a < sp + 32 ∨ sp + 40 ≤ a) →
         (a < sp + 144 ∨ sp + 152 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
@@ -72,12 +73,24 @@ theorem il_head0 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x :
   refine ⟨?ω', ?μ', ?run, ?post⟩
   case run => pvm_go [h1, m0, m8, m16, hwf, hr, rdN_writeN_disjoint, ↓rdN_fold, ↓loadI_fold]
   case post =>
-    refine ⟨by reg_val; simp [h1], ?_, fun a ha h1 h2 h3 => ?_, fun a => ?_, fun a => ?_⟩
+    refine ⟨by reg_val; simp [h1], by reg_val, ?_, ?_, fun a ha h1 h2 h3 => ?_, fun a => ?_, fun a => ?_⟩
     all_goals try (rd_simp []; done)
     all_goals try rd_simp []
     all_goals try with_reducible rfl
     all_goals try exact Nat.mod_eq_of_lt (by omega)
     all_goals try omega
+
+/-- **15215 … 15316**: the cursor ω₁₁ is the end (sp + 144). -/
+theorem il_15215_end {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
+    (μ : Memory) (sp q : Nat) (h1 : ω[1] = UInt64.ofNat sp) (hsp : 65536 ≤ sp ∧ sp + 1600 < 4294967296)
+    (h11 : ω[11] = UInt64.ofNat q) (m144 : rdN μ (sp + 144) 8 = q)
+    (hr : ∀ a, sp ≤ a → a < sp + 1600 → μ.readable a = true) :
+    ∃ ω', FreeStepsH p R 15215 ω μ x 15316 ω' μ x 3 ∧ ω'[1] = ω[1] := by
+  have hq : q < 18446744073709551616 := by rw [← m144]; exact rdN_lt64 _ _
+  rw [show ω = regsNF ω [] from rfl]
+  refine ⟨?ω', ?run, ?post⟩
+  case run => pvm_go [h1, h11, m144, hr, ↓rdN_fold, ↓loadI_fold]
+  case post => reg_val
 
 /-- **No items: the run halts** from 6674 with an empty output (ω₈ = 0), given the saved return
     address 2³² − 2¹⁶ at sp + 1848 and the decoded `Vec { 0, q, 0 }` at sp + 1568. -/
@@ -87,8 +100,12 @@ theorem items_none_halt {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p 
     (m1848 : rdN μ (sp + 1848) 8 = 4294901760)
     (hwf : ∀ a, sp ≤ a → a < sp + 1856 → μ.writable a = true) :
     ∃ ω' μ', FreeRunH p R 6674 ω μ x .halt ω' μ' x ∧ (ω'.get 8).toNat = 0 := by
-  obtain ⟨ω1, μ1, run1, a1, a32, fr1, rd1, wr1⟩ := il_head0 (p := p) (P := P) (R := R) x ω μ sp q 0 h1
+  obtain ⟨ω0, μ1, run0, a1', a11, a32, a144, fr1, rd1, wr1⟩ := il_head0a (p := p) (P := P) (R := R) x ω μ sp q 0 h1
     ⟨hsp.1, by omega⟩ m0 m8 m16 (fun a h1 h2 => hwf a h1 (by omega))
+  obtain ⟨ω1, run1', e1⟩ := il_15215_end (p := p) (P := P) (R := R) x ω0 μ1 sp q a1' ⟨hsp.1, by omega⟩ a11 a144
+    (fun a h1 h2 => by rw [rd1]; exact Memory.readable_of_writable (hwf a h1 (by omega)))
+  have a1 : ω1[1] = UInt64.ofNat sp := e1.trans a1'
+  have run1 := run0.trans run1'
   have hrf : ∀ a, sp ≤ a → a < sp + 1856 → μ1.readable a = true := fun a h1 h2 => by
     rw [rd1]; exact Memory.readable_of_writable (hwf a h1 h2)
   obtain ⟨ω2, run2, f2⟩ := il_end_nofree (p := p) (P := P) (R := R) x ω1 μ1 sp a1 hsp a32 hrf

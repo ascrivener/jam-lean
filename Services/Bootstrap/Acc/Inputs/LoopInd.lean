@@ -56,8 +56,8 @@ theorem lp_body {X : Type} (env : HeapHost X) (cap pb N : Nat) {p : ByteArray} {
       (∀ c ∈ chunks st, c.used = true → ∀ a, InDataA c a → (a < q + 184 * L ∨ q + 184 * L + 184 ≤ a) →
         μ'.read a = μ.read a) ∧
       (∃ cs : List Chunk, (∀ c ∈ cs, c ∈ chunks st' ∧ c.used = true ∧ ∀ d ∈ chunks st, d.used = true → d ≠ c) ∧
-        ∀ μ'' : Memory, (∀ c ∈ cs, ∀ a, InDataA c a → μ''.read a = μ'.read a) →
-          Rep (μ'.readN (q + 184 * L) 184) μ'') ∧
+        (∀ μ'' : Memory, (∀ c ∈ cs, ∀ a, InDataA c a → μ''.read a = μ'.read a) →
+          Rep (μ'.readN (q + 184 * L) 184) μ'') ∧ FootIn cs (μ'.readN (q + 184 * L) 184)) ∧
       μ'.readN rd 8 = Num.encodeLE 8 (ip + enc.length) ∧
       μ'.readN (rd + 8) 8 = Num.encodeLE 8 (rlen - enc.length) ∧
       rdN μ' (s + 56) 8 = q ∧
@@ -69,7 +69,7 @@ theorem lp_body {X : Type} (env : HeapHost X) (cap pb N : Nat) {p : ByteArray} {
   have hS1 := H.hS1
   obtain ⟨Cb1, Cb2, Cb3⟩ := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hC hCu
   rcases item x ω μ hb st s rd ip rlen S0 S1 H h0 h1 h7 h8 hs.1 hs.2 hSTk hrds hrdS hR0 hR8 hrl hrl32 henc hsrc with
-    ⟨st', ω1, μ1, r1, e0, e1, e5, e6, ne2, H1, keep, keepd, ⟨cs, fresh, rep⟩, R0, R8, fr1⟩ | ⟨ω1, μ1, r1⟩
+    ⟨st', ω1, μ1, r1, e0, e1, e5, e6, ne2, H1, keep, keepd, ⟨cs, fresh, rep, foot⟩, R0, R8, fr1⟩ | ⟨ω1, μ1, r1⟩
   · have hst := H1.st
     obtain ⟨ω2, r2, c0, c1, c5, c6, c7, c8, c9⟩ :=
       lp_chk (p := p) (P := P) (R := env.rel cap) x ω1 μ1 s e1 ne2 ⟨by omega, by omega⟩
@@ -114,7 +114,8 @@ theorem lp_body {X : Type} (env : HeapHost X) (cap pb N : Nat) {p : ByteArray} {
       rw [cp2, PVM.Memory.readN_congr (μ := μ3) (fun j hj => fr4 _ (by omega) (Or.inr (by omega))), cp1]
     refine Or.inl ⟨st', ω5, μ5, (((((r1.trans r2).trans r3).trans r4).trans r5)).mono (by omega),
       g1, by rw [g5, f5, d5, c5, e5, h5], by rw [g6, f6], H5, keep,
-      fun c hc hu a ha hout => ?_, ⟨cs, fresh, fun μ'' hag => ?_⟩, ?_, ?_, ?_, fun a h0 hs h56 h88 hr => ?_⟩
+      fun c hc hu a ha hout => ?_, ⟨cs, fresh, fun μ'' hag => ?_, by rw [slot]; exact foot⟩, ?_, ?_, ?_,
+      fun a h0 hs h56 h88 hr => ?_⟩
     · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
       unfold InDataA at ha
       rw [lo a (by omega) hout, keepd c hc hu a ⟨ha.1, ha.2⟩]
@@ -146,6 +147,83 @@ def encs (rest : List (List UInt8 × (List UInt8 → Memory → Prop))) : List U
 theorem encs_cons (e : List UInt8 × (List UInt8 → Memory → Prop)) (rest) : encs (e :: rest) = e.1 ++ encs rest := by
   simp [encs]
 
+/-- The buffers the m slots from slot L of the buffer at q own (`uFoot`), in order. -/
+def feetL (μ : Memory) (q L m : Nat) : List (Nat × Nat) :=
+  (List.range m).flatMap fun j => uFoot (μ.readN (q + 184 * (L + j)) 184)
+
+theorem feetL_zero (μ : Memory) (q L : Nat) : feetL μ q L 0 = [] := rfl
+
+theorem feetL_succ (μ : Memory) (q L m : Nat) :
+    feetL μ q L (m + 1) = uFoot (μ.readN (q + 184 * L) 184) ++ feetL μ q (L + 1) m := by
+  unfold feetL
+  rw [List.range_succ_eq_map, List.flatMap_cons, List.flatMap_map, Nat.add_zero]
+  refine congrArg (uFoot (μ.readN (q + 184 * L) 184) ++ ·) (congrArg (fun f => List.flatMap f (List.range m))
+    (funext fun j => ?_))
+  show uFoot (μ.readN (q + 184 * (L + (j + 1))) 184) = uFoot (μ.readN (q + 184 * (L + 1 + j)) 184)
+  rw [show L + (j + 1) = L + 1 + j by omega]
+
+/-- `feetL` reads only the slots. -/
+theorem feetL_congr {μ μ' : Memory} {q : Nat} (m : Nat) : ∀ (L : Nat),
+    (∀ a, q + 184 * L ≤ a → a < q + 184 * (L + m) → μ'.read a = μ.read a) →
+    feetL μ' q L m = feetL μ q L m := by
+  induction m with
+  | zero => intro L _; rfl
+  | succ m ih =>
+    intro L h
+    rw [feetL_succ, feetL_succ, ih (L + 1) fun a h1 h2 => h a (by omega) (by omega)]
+    congr 2
+    exact PVM.Memory.readN_congr fun k hk => h _ (by omega) (by omega)
+
+/-- **The slots' buffers are owned** (slots L … L + m − 1 of the buffer at q, in memory μ): their pointers
+    are distinct, and each is the data of a chunk allocated in st', covering its length, and fresh against
+    st (none of st's allocated chunks). -/
+def FeetOwn (st st' : State) (μ : Memory) (q L m : Nat) : Prop :=
+  ((feetL μ q L m).map Prod.fst).Nodup ∧
+  ∀ pl ∈ feetL μ q L m, ∃ c ∈ chunks st', c.used = true ∧ c.addr + 32 = pl.1 ∧
+    (∀ a, pl.1 ≤ a → a < pl.1 + pl.2 → InDataA c a) ∧ ∀ d ∈ chunks st, d.used = true → d ≠ c
+
+/-- **The decoded inputs' buffer and the slots' buffers are owned** (the n slots at q, against the
+    allocator state st): if n ≠ 0, q is the data of an allocated chunk holding the slots; the slots'
+    buffers have distinct pointers, none q, each the data of an allocated chunk covering its length. -/
+def SlotsOwn (st : State) (μ : Memory) (q n : Nat) : Prop :=
+  (n ≠ 0 → ∃ d ∈ chunks st, d.used = true ∧ d.addr + 32 = q ∧ q + 184 * n ≤ d.addr + 32 * d.size) ∧
+  ((feetL μ q 0 n).map Prod.fst).Nodup ∧ q ∉ (feetL μ q 0 n).map Prod.fst ∧
+  ∀ pl ∈ feetL μ q 0 n, ∃ d ∈ chunks st, d.used = true ∧ d.addr + 32 = pl.1 ∧
+    ∀ a, pl.1 ≤ a → a < pl.1 + pl.2 → InDataA d a
+
+theorem FeetOwn.nil (st st' : State) (μ : Memory) (q L : Nat) : FeetOwn st st' μ q L 0 := by
+  simp [FeetOwn, feetL_zero]
+
+/-- **One more slot's buffers**: the slot at L (its octets as when it was filled, FootIn its fresh chunks
+    cs) in front of slots owned against the state st1 after it. -/
+theorem FeetOwn.cons {code : ByteArray} {pb S0 S1 : Nat} {st st1 st' : State} {μ1 μ' : Memory}
+    {q L m : Nat} {cs : List Chunk} (H' : HeapCtxC code pb S0 S1 μ' st')
+    (foot : FootIn cs (μ1.readN (q + 184 * L) 184))
+    (fresh : ∀ c ∈ cs, c ∈ chunks st1 ∧ c.used = true ∧ ∀ d ∈ chunks st, d.used = true → d ≠ c)
+    (keepC : ∀ c ∈ chunks st1, c.used = true → c ∈ chunks st')
+    (keepSt : ∀ d ∈ chunks st, d.used = true → d ∈ chunks st1)
+    (hslot : μ'.readN (q + 184 * L) 184 = μ1.readN (q + 184 * L) 184)
+    (tl : FeetOwn st1 st' μ' q (L + 1) m) : FeetOwn st st' μ' q L (m + 1) := by
+  have ht := H'.wf.2.2.2.1
+  unfold TilesOk at ht
+  obtain ⟨fp, fnd⟩ := foot
+  obtain ⟨tnd, tp⟩ := tl
+  unfold FeetOwn
+  rw [feetL_succ, hslot, List.map_append]
+  refine ⟨List.nodup_append.2 ⟨fnd, tnd, fun x hx y hy hxy => ?_⟩, fun pl hpl => ?_⟩
+  · obtain ⟨pl, hpl, rfl⟩ := List.mem_map.1 hx
+    obtain ⟨pl', hpl', rfl⟩ := List.mem_map.1 hy
+    obtain ⟨c, hc, hca, -⟩ := fp pl hpl
+    obtain ⟨c', hc', hcu', hca', -, hfr'⟩ := tp pl' hpl'
+    obtain ⟨hc1, hcu, -⟩ := fresh c hc
+    exact hfr' c hc1 hcu (Tiles.addr_inj ht c (keepC c hc1 hcu) c' hc' (by omega))
+  · rcases List.mem_append.1 hpl with h | h
+    · obtain ⟨c, hc, hca, hcov⟩ := fp pl h
+      obtain ⟨hc1, hcu, hfr⟩ := fresh c hc
+      exact ⟨c, keepC c hc1 hcu, hcu, hca, hcov, hfr⟩
+    · obtain ⟨c, hc, hcu, hca, hcov, hfr⟩ := tp pl h
+      exact ⟨c, hc, hcu, hca, hcov, fun d hd hdu => hfr d (keepSt d hd hdu) hdu⟩
+
 /-- **The loop over the remaining items, 45126 → 45613** (see the module doc): with L slots filled and the
     reader holding the rest's encodings, either every remaining item's slot q + 184·(L + j) satisfies its
     `Rep` in the final memory, `Vec { n, q, n }` is written at out and the frame popped; or the allocator
@@ -176,7 +254,7 @@ theorem lp_items {X : Type} (env : HeapHost X) (cap pb N : Nat) {p : ByteArray} 
         μ'.read a = μ.read a) ∧
       (∀ (j : Nat) (e : List UInt8 × (List UInt8 → Memory → Prop)), rest[j]? = some e →
         ∀ μ'' : Memory, (∀ c ∈ chunks st', c.used = true → c ≠ Rc → ∀ a, InDataA c a → μ''.read a = μ'.read a) →
-          e.2 (μ''.readN (q + 184 * (L + j)) 184) μ'') ∧
+          e.2 (μ''.readN (q + 184 * (L + j)) 184) μ'') ∧ FeetOwn st st' μ' q L rest.length ∧
       μ'.readN rd 8 = Num.encodeLE 8 (ip + (encs rest).length) ∧
       μ'.readN (rd + 8) 8 = Num.encodeLE 8 (rlen - (encs rest).length) ∧
       (∀ a, a < 4294967296 → s + 480 ≤ a → (a < out ∨ out + 24 ≤ a) → (a < rd ∨ rd + 16 ≤ a) →
@@ -198,7 +276,7 @@ theorem lp_items {X : Type} (env : HeapHost X) (cap pb N : Nat) {p : ByteArray} 
   rcases lp_body env cap pb N (hok e (by simp)) x ω μ hb st s rd ip rlen S0 S1 n q L (e :: tail).length C H
       h0 h1 h5 h7 h8 hs hSTk hrds hrdS m64 m72 m80 (by simp at hLn; omega) hC hCu hCq hCe hR0 hR8 (by omega) hrl32 he
       ⟨Rc, hR, hRu, hRq, by omega⟩ with
-    ⟨st1, ω1, μ1, r1, a1, a5, a6, H1, keep1, keepd1, ⟨cs, fresh, rep⟩, R0, R8, s56, fr1⟩ | ⟨ω1, μ1, r1⟩
+    ⟨st1, ω1, μ1, r1, a1, a5, a6, H1, keep1, keepd1, ⟨cs, fresh, rep, foot⟩, R0, R8, s56, fr1⟩ | ⟨ω1, μ1, r1⟩
   · have hst := H1.st
     have kf : ∀ o, s ≤ o → o + 8 ≤ s + 56 → rdN μ1 o 8 = rdN μ o 8 := fun o h1 h2 =>
       rdN_frame fun j hj => fr1 _ (by omega) (by omega) (Or.inl (by omega)) (Or.inl (by omega)) (Or.inl (by omega))
@@ -221,6 +299,7 @@ theorem lp_items {X : Type} (env : HeapHost X) (cap pb N : Nat) {p : ByteArray} 
       have hap := Services.Bootstrap.Decode.LoopA.InData.apart H1.wf hcm hCu1 hne ha
       unfold Services.Bootstrap.Decode.LoopA.InData at hap
       exact hk c hcm hcu (Ne.symm (hcf Rc hR hRu)) a ha (by omega)
+    obtain ⟨Cb1, Cb2, Cb3⟩ := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hC hCu
     by_cases htl : tail = []
     · subst htl
       simp only [List.length_cons, List.length_nil, Nat.zero_add] at a5 hLn
@@ -236,7 +315,9 @@ theorem lp_items {X : Type} (env : HeapHost X) (cap pb N : Nat) {p : ByteArray} 
       refine Or.inl ⟨st1, ω2, μ2, (r1.trans r2).mono (by simp; try omega),
         by rw [b0, kg _ (by omega) (by omega)], b1, by rw [b5, kg _ (by omega) (by omega)],
         by rw [b6, kg _ (by omega) (by omega)], o0, o8, by rw [o16]; try omega,
-        HeapCtxC.keep_hi H1 lo2 wr2, keep1, fun c hc hu a ha hout' => ?_, fun j e' hj => ?_, ?_, ?_,
+        HeapCtxC.keep_hi H1 lo2 wr2, keep1, fun c hc hu a ha hout' => ?_, fun j e' hj => ?_,
+        FeetOwn.cons (HeapCtxC.keep_hi H1 lo2 wr2) foot fresh (fun c hc _ => hc) keep1
+          (PVM.Memory.readN_congr fun j hj => lo2 _ (by omega)) (FeetOwn.nil _ _ _ _ _), ?_, ?_,
         fun a h0 ha ho hr => ?_⟩
       · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
         unfold InDataA at ha
@@ -295,12 +376,15 @@ theorem lp_items {X : Type} (env : HeapHost X) (cap pb N : Nat) {p : ByteArray} 
           (by rw [k2 _ (by omega) (by omega), kh _ (by omega) (by omega)]; exact m72)
           s80 (by simp at hLn; omega) hCu1 hCu hCq hCe hR1 hRu (by omega) (by omega) hrd2 hrd8 (by omega)
           (by omega) hencT with
-        ⟨st', ω', μ', r3, c0, c1, c5, c6, o0, o8, o16, H', keep', keepd', reps, R0', R8', fr3⟩ | ⟨ω', μ', r3⟩
+        ⟨st', ω', μ', r3, c0, c1, c5, c6, o0, o8, o16, H', keep', keepd', reps, own', R0', R8', fr3⟩ | ⟨ω', μ', r3⟩
       · refine Or.inl ⟨st', ω', μ', ((r1.trans r2).trans r3).mono (by simp; rw [Nat.mul_succ]; omega),
           by rw [c0, k2' _ (by omega) (by omega), kg _ (by omega) (by omega)], c1,
           by rw [c5, k2' _ (by omega) (by omega), kg _ (by omega) (by omega)],
           by rw [c6, k2' _ (by omega) (by omega), kg _ (by omega) (by omega)], o0, o8, o16, H',
-          fun c hc hu => keep' c (keep1 c hc hu) hu, fun c hc hu a ha hout' => ?_, fun j e' hj => ?_, ?_, ?_,
+          fun c hc hu => keep' c (keep1 c hc hu) hu, fun c hc hu a ha hout' => ?_, fun j e' hj => ?_,
+          FeetOwn.cons H' foot fresh keep' keep1 (PVM.Memory.readN_congr fun j hj => by
+            rw [keepd' C hCu1 hCu _ ⟨by omega, by omega⟩ (Or.inl (by omega)), lo2 _ (by omega)])
+            (by simpa using own'), ?_, ?_,
           fun a h0 ha ho hr => ?_⟩
         · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
           unfold InDataA at ha
@@ -366,6 +450,10 @@ theorem lp_call {X : Type} (env : HeapHost X) (cap pb N : Nat) (hcap1 : 13421772
       (∀ (j : Nat) (e : List UInt8 × (List UInt8 → Memory → Prop)), rest[j]? = some e →
         ∀ μ'' : Memory, (∀ c ∈ chunks st', c.used = true → c ≠ Rc → ∀ a, InDataA c a → μ''.read a = μ'.read a) →
           e.2 (μ''.readN (q + 184 * j) 184) μ'') ∧
+      ((feetL μ' q 0 rest.length).map Prod.fst).Nodup ∧
+      (∀ pl ∈ feetL μ' q 0 rest.length, ∃ c ∈ chunks st', c.used = true ∧ c.addr + 32 = pl.1 ∧
+        (∀ a, pl.1 ≤ a → a < pl.1 + pl.2 → InDataA c a) ∧ (∀ d ∈ chunks s0, d.used = true → d ≠ c) ∧
+        c ≠ ⟨q - 32, (rest.length * 184 + 31) / 32 + 1, true⟩) ∧
       μ'.readN rd 8 = Num.encodeLE 8 (ip + (encs rest).length) ∧
       μ'.readN (rd + 8) 8 = Num.encodeLE 8 (rlen - (encs rest).length) ∧
       (∀ a, a < 4294967296 → sp ≤ a → (a < out ∨ out + 24 ≤ a) → (a < rd ∨ rd + 16 ≤ a) →
@@ -436,14 +524,18 @@ theorem lp_call {X : Type} (env : HeapHost X) (cap pb N : Nat) (hcap1 : 13421772
             rw [lo3 _ (by omega), keepd Rc hR hRu _ ⟨by omega, by omega⟩]),
             PVM.Memory.readN_congr (μ := μ) (fun j hj => lo1 _ (by omega))]
           exact henc) with
-      ⟨st', ω4, μ4, r4, c0, c1, c5, c6, v0, v8, v16, H4, keep', keepd', reps, R0, R8, fr4⟩ | ⟨ω4, μ4, r4⟩
+      ⟨st', ω4, μ4, r4, c0, c1, c5, c6, v0, v8, v16, H4, keep', keepd', reps, ⟨ond, opl⟩, R0, R8, fr4⟩ | ⟨ω4, μ4, r4⟩
     · refine Or.inl ⟨q, st', ω4, μ4, ((((r1.trans r2).trans r2').trans r3).trans r4).mono (by omega),
         by rw [c0, kh _ (by omega) (by omega), s472, UInt64.ofNat_toNat],
         by rw [c1, show sp - 480 + 480 = sp by omega],
         by rw [c5, kh _ (by omega) (by omega), s464, UInt64.ofNat_toNat],
         by rw [c6, kh _ (by omega) (by omega), s456, UInt64.ofNat_toNat], v0, v8, v16, H4,
         fun c hc hu => keep' c (keep c hc hu) hu, fun c hc hu a ha' => ?_, keep' _ hnew rfl, hfresh,
-        fun j e hj μ'' hag => by simpa using reps j e hj μ'' hag, R0, R8, fun a h0 ha ho hr => ?fr⟩
+        fun j e hj μ'' hag => by simpa using reps j e hj μ'' hag, ond, fun pl hpl => ?own, R0, R8,
+        fun a h0 ha ho hr => ?fr⟩
+      case own =>
+        obtain ⟨c, hc, hcu, hca, hcov, hfr⟩ := opl pl hpl
+        exact ⟨c, hc, hcu, hca, hcov, fun d hd hdu => hfr d (keep d hd hdu) hdu, fun e => hfr _ hnew rfl e.symm⟩
       case fr =>
         rw [fr4 a h0 (by omega) ho hr, fr3 _ h0 (Or.inr (by omega)) (Or.inr (by omega)),
           fr2 _ h0 (by omega) (Or.inr (by omega)), fr1 _ h0 (Or.inr ha)]

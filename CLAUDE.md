@@ -51,7 +51,8 @@ rebuilds only what changed since then instead of building cold for 4.5–5 h.
   `main` always and on a PR only when `changes` (`scripts/services-affected.py`) finds that it can
   affect Services: a path under `Services/` or `services/`, build configuration, a proofs script, or
   a module the Services proofs import.
-- **Merge rule.** A PR may merge when `model` is green and the attempts are green or skipped.
+- **Merge rule.** A PR may merge when `model` is green and the attempts are green or skipped. The
+  `proofs` job checks exactly that and is the check branch protection requires.
 - **Detector bugs.** If `main`'s proofs fail after a PR merged with `affected=false`, the detector
   missed a dependency: fix `scripts/services-affected.py`, don't work around it.
 - **Re-sync rule.** After a PR that regenerates code facts (`Services/Bootstrap/Code*`) lands on

@@ -104,9 +104,9 @@ theorem run_fixed {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Se
       (by simp only; omega) (by simp only; omega)
       (fun d hd => by rw [hd]; exact ⟨(keep1 cp hcp.1 hcp.2.1).1, hcp.2.1⟩) b1
       b168 (by simp only [hE32]; exact b176) b184
-      (fun k hk' => Or.inl ⟨ts k, by
+      (fun k hk' => Or.inl ⟨_, PassW.ofK (by
           have := (hk k (by omega)).pass _ (slot k hk')
-          simp only [hE32]; unfold rdN; rw [rsub k 44 1 (by omega)]; exact this,
+          simp only [hE32]; unfold rdN; rw [rsub k 44 1 (by omega)]; exact this),
         by simp only [hE32]; rw [show E + 232 * k = E + 232 * k + 0 from rfl, rsub k 0 8 (by omega)]
            simpa using (hk k (by omega)).tag _ (slot k hk'),
         by simp only [hE32]; exact slot k hk', fun d h => h, rfl⟩)

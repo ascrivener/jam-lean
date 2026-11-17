@@ -1,5 +1,320 @@
 # Bootstrap's accumulate: entry, control flow and checkpoints
 
+## Handoff: T2 inputs (updated 2026-11-16 evening, end of the third session)
+
+**Session 7 (2026-11-17), on `claude/bootstrap-t2-r2`: R16 done, `accumulate_spec` proved** (axioms clean),
+in `Acc/Final/`: `KeepK` (`accKeepK`, lifts to `accContractS`), `LogLineK` (`acc_log_lineK`), `StaticsZ`
+(`chainZ`), `StartCtx` (`start_ctx`), `Head` (`il_head2`, `items_none_halt`), `FetchSpec`, `Lifts`, `Hyps`
+(the named hypotheses), `Impl` (`acc_impl`), `Spec` (`accumulate_spec`). New named hypotheses, accepted
+(Adam, 2026-11-17): `InfoFits`, `AccLogFail`, `InputsGlob` (temporary); `AccVendoredFacts` and
+`IsBootstrapCode` accepted by @parent under standing decisions. Full build green (2998 jobs, 33f51fa).
+Statics merged as #231, R2 as #233; R16 is its own PR. **Open obligation:** thread `Glob` through
+`inputs_decode` to discharge `InputsGlob` (a fresh session does it).
+
+**Session 6 (2026-11-17), on `claude/bootstrap-t2-r2`: R2 done.**
+- Merged Handlers A 8173e6b: every `hAbX` now requires ω₇ = 0 (a failed allocation), so T2's abort
+  reason stays `AccAbort` (@parent, option (A)).
+- **`ItemsLoop/Op.lean`** (axioms clean): `op_arm : OpArm …` (6766 → 7009 `opArm_head` → 8013 `op_dec`
+  → 8416 `add_recent` → 8492 `results_init` → 6766 `loop_row11`, via `op_r57`), and **`items_loop_full`**:
+  `items_loop` with `op_arm` / `err_arm` plugged in, so the whole items loop is an `Impl` of
+  `forIn (ins.map specItem) () accBody; pure ()` with post `Halts`. Its named hypotheses: `Utf8Call`,
+  `LogFmt`, `KeyFmt`, `ItemLogFmt`, `OutDecH`, `InstrLogH`, `ResultLogH`, `HandlerH`, `PushH`, `ExtendH`,
+  `OkEncH`, `DropInstrsH`; premises `ParamStatics μ₀ Cp I`, `RingFits Cp I`, maxRecent = 2·𝖢·𝖨; aborts:
+  `HeapFailT`, traps 15364 / 34070 / 47977 / 32584 / 36528, 40611 / 40821 with ω₇ = 0 (all `AccAbort`).
+- `ItemsInv` gained `ro2 : OpRO s.μ` (`OpRO` moved to `Inv.lean`) and `hsp : 2³¹ + 4096 ≤ sp` (EntryHyp
+  needs it). Whoever establishes `ItemsInv` at 6782 (R16) must supply both.
+- `op_dec`'s `hpo` is now `|out| ≠ 0 → ptr + |out| ≤ 2³¹` (weakened; it is used).
+- **Pitfall (Lean):** a *full* application of `add_recent` / `results_init` makes the elaborator whnf
+  `Impl … (spec program)` (unfolding `addRecent` / `store`, it loops: maxRecDepth). Apply all but the last
+  premise, `generalize` the program to a variable (`at h ⊢`), then apply the last premise. Also: an
+  `obtain`/`rcases` clearing (`-`) the `jumpTab` equation of `OpRO` loops; use projections.
+- **Next: R16** (`accumulate_spec`), from the R16 map below. Missing links, in order: (1) 5 → 6501 with
+  the statics (`Statics.chain` in place of `AccBParams.chain` in `start_to_6501`); (2) `HeapCtxC` before
+  6501 (analogue of `Refine/ArgsCtx.lean` `args_ctx`); (3) `acc_log_line` (6501 → 6630, accContractK;
+  it needs the service's own account in the context and `infoValue` shorter than 2⁶⁴ − 9: new premises or
+  derived from Ψ_A's setup) and `inputs_decode` (6630 → 6674, accContractK) lifted to KeepCtx accContractS
+  (`FreeStepsH.pairS`, `Wrappers/GrowS.lean`); (4) n = 0: 6674 → 15215 → halt; n > 0: `il_head` (6674 →
+  6782) → `ItemsInv` at 6782 (`itemsOwn_of_slots`; words 208 / 136 / 200 / 1848 from the prologue);
+  (5) `items_loop_full` → `Halts`; (6) `psiA_of_impl` with Ab = `AccAbort`, `prog` = Spec.accumulate.
+
+**Session 5 (2026-11-16, night), on `claude/bootstrap-t2-r2`** (= `claude/bootstrap-t2-statics` + Handlers A's
+`claude/bootstrap-t2-handlers-a-r5` at 4a9f542, merged locally; full build green after the merge):
+- R2 pieces, complete (no gaps): `ItemsLoop/OpHead.lean` (`opArm_head`, 6766 → 7009 for any operand, `OpHeadPost`),
+  `OpSeg.lean` (7009 → 7050, 7080 → 15361 / 8013 / 40494, 40611 → 7145, 7145 → 15364 / 8013),
+  `OutDec.lean` (**`OutDecH`**, R3 as a named hypothesis: the inlined `BootstrapWorkOutput::decode`
+  7050 → 7080; draft sent to @parent, awaiting OK), `OpSpec.lean` (`onWorkItem_some` / `_none`),
+  `OpDec.lean` (`op_dec`, 7009 → 8013: ExhaustsP / trap 15364 / decode error ☇ 15361 / `At8013`;
+  `VecOwn.keep`).
+- Found (reported to @parent for Handlers A): `EntryHyp` assumes the empty results `Vec`, but for n > 0
+  instructions the binary does `Vec::with_capacity(n)` (7120 … 7970: alloc 144·n, align 8, trap 15364);
+  `AddPost` / `R9Post` must keep ω₆ (= the instructions' pointer, set at 7100); `R57Post` lacks `Glob`.
+  Extra abort pcs for the arm: 34070, 32584, 47977, 36528, 15364.
+- Obligation (A) done: `ItemOk` carries `FootIn` (`uFoot`, `Inputs/LoopItem.lean`), threaded through
+  `lp_body` / `lp_items` (`FeetOwn`) / `lp_call` / `g_call` / `g_inputs` to `inputs_decode`, which now states
+  `SlotsOwn st' μ' q n` (buffer chunk + slots' buffers owned); `itemsOwn_of_slots` (`ItemsLoop/Inv.lean`)
+  gives `ItemsOwn` and the slot-buffer chunk for `ItemsInv`.
+- Later in session 5: merged Handlers A 5a3c238 (EntryHyp `hres` with cap = n, ω₆ in AddPost / R9Post, Glob in
+  R57Post, hBall gone; hb8 from `ChunkAlign`); dropped `b % 8 = 0` from `OutDecH` (@parent approved `OutDecH`
+  as drafted otherwise; note it and the decode-failure branch in whats-proven). `ItemsInv` now also holds at
+  6782 (first entry; cursor `curAt`, `ItemsInv.to6782`). `ItemsLoop/ImplRO.lean`: `Impl.keepRO` (octets
+  < 196608 and their access kept along any `Impl`; needed since AddPost has no readability conjunct) and
+  `OpRO` (kc words 68680/68688/68696, RO range 68680…69076, jump table 65736).
+- **op_arm plan (next session):** (1) add `ro2 : OpRO s.μ` to `ItemsInv` (arms re-establish it with
+  `OpRO.keep` like `TrRO.keep`); (2) new file `ItemsLoop/Op.lean`, `op_arm : OpArm …` with premises
+  `ItemLogFmt`, `OutDecH`, Handlers A's `InstrLogH ResultLogH HandlerH PushH ExtendH OkEncH DropInstrsH`,
+  `ParamStatics μ₀ C I`, `RingFits`, `hmax`, Ab covering HeapFailT, 34070 / 47977 / 32584 / 36528 / 15364 and
+  40611 / 40821 (any ω₇). Chain: `opArm_head` → slot facts (cpy gives [sp+288] = |b| ≠ −1, [296] = ptr,
+  [304] = |b|, readN (sp+312) 32 = packageHash) → `op_dec` → case decode: none → `onWorkItem_none` (panic);
+  some → `onWorkItem_some`, `Impl.pre` to 8013, `Impl.bind` `add_recent` (AddPost, ω₆ kept), `Impl.bind`
+  `results_init` (R9Post) with `Prog.bind_assoc'`, then `loop_row11` with `EntryHyp` built from `At8013` +
+  frames (TailHyp: results buffer chunk, sp+104 output buffer and sp+272 trace buffer from `ItemsOwn`;
+  `hnd` from freshness), `f := wiBody` (`wiBody_ck` / `wiBody_other`), Inv := `ValuesFit env c.1`; then
+  R57Post → `ItemsInv rest` (StableKeep covers the words; rest's chunks are outside vecFree / tailFree by
+  freshness and ItemsOwn nodup); use `Impl.keepRO` and `Impl.inv` for RO / ValuesFit at the end.
+- **R16 map** (survey, 2026-11-16): `accumulate_spec` not stated yet; final step is `psiA_of_impl`
+  (`Acc/Impl/Lift.lean:120`). Missing links: 5 → 6501 with statics (rebuild `start_to_6501` with
+  `Statics.chain`); `HeapCtxC` before 6501 (analogue of refine's `args_ctx`, `Refine/ArgsCtx.lean:490`);
+  6501 → 6630 is `acc_log_line` (`Fmt/AccFmt.lean:157`, accContractK, HeapCtx in, x' existential);
+  accContractK → KeepCtx (accContractS) via `FreeStepsH.pairS` (`Wrappers/GrowS.lean:51`); n = 0 path
+  6674 → 15215 → halt (no lemma yet); glue `inputs_decode` + `il_head` → `ItemsInv` at 6782
+  (`itemsOwn_of_slots`). Template: `Refine/Milestone.lean` `refine_milestone`.
+- **Next:** when Handlers A lands the three interface changes (done, see above): 8013 → `add_recent` → `results_init` →
+  `loop_row11` → `ItemsInv` for the rest (R57Post → ItemsInv: StableKeep covers every word ItemsInv
+  reads; the rest's chunks survive since they are neither `vecFree` (fresh), the results buffer (fresh)
+  nor this item's trace / output buffers (`ItemsOwn` nodup)). Then R15/R16.
+
+**Session 4 (2026-11-16, later), on `claude/bootstrap-t2-statics`:**
+- R12 done: `Acc/ValuesFitStep.lean` (`dispatch_keeps`, `ValuesFit.step`, `ValuesFit.run`).
+- R1 skeleton done: `Acc/ItemsLoop/` — `Inv.lean` (`ItemsInv`, the loop-head invariant: iterator words
+  sp + 168 / 144, buffer sp + 16 / 32, formatter words sp + 208 / 136, sp + 184 / 216, return address
+  sp + 1848, `HeapCtxC` with the slot buffer a chunk, slots as `itemOf` for chunk-agreeing memories,
+  `TrRO`, statics equal to μ₀'s, `ValuesFit`, `InputSized`); `Tr.lean` (`loop_tr`, the transfer arm via
+  `tr_impl`); `Loop.lean` (`accBody` = the spec's loop body, `loop_end` (halt), `items_loop`: `Impl` of
+  `forIn (ins.map specItem) () accBody` then `pure ()`, post `Halts`, with premises `OpArm` (R2) and
+  `ErrArm`). `il_disp_tr` also states ω₁₀.
+- Decided (@parent, 2026-11-16): (1) `ItemsOwn` (slot buffer ownership) is a premise of `ItemsInv`
+  (option C). **Obligation (A), mine, before or at R16:** strengthen `inputs_decode`'s post with
+  `ItemsOwn` (to be recorded in `docs/t2-remaining.md`); if still open when `accumulate_spec` is ready,
+  tell @parent before stating it (it would be a new assumption, Adam's call). (2) `ItemLogFmt`, the item
+  log line 6955 → 7009 as a frame-only named hypothesis (LogFmt's shape, G4); list it in whats-proven.
+- `ErrArm` proved: `Acc/ItemsLoop/Err.lean` (`err_arm`, with `ItemLogFmt`), `ErrSeg.lean` (7009 → 6766 /
+  → dealloc of the trace). `Inv.lean` now has `slotFoot` / `footL` / `ItemsOwn`, `itemOf_local`,
+  `rest_keep` (slots and ownership carried to the rest under a frame).
+- Asked Handlers A (via @parent) to add sp + 16…24, 32…40, 136…152 to `LoopKeep`, which R2 needs across R5.
+- Handlers A (2026-11-16): `LoopKeep` keeps sp + 104…152 (confirmed final: [16,40) [104,152) [160,224) [264,280) [312,344) [448,512) [736,744) [976,1000) [1632,∞) from sp — covers every word `ItemsInv` reads);
+  `HandlerPost` keeps every chunk but the current instruction's buffers. Row 11's `LoopHyp` carries
+  `hB : 2·(144n+4) + 4·|encodeResults rs| + 64 < 2³⁰ − 64` up to R2: at R2 / R16 it must become a case
+  split (hB, or the run exhausts the heap), never an unconditional assumption.
+- R2 interface (@parent, 2026-11-16 evening): build R2 against Handlers A's `loop_row11`
+  (`InstrLoopRowEleven.lean` on `claude/bootstrap-t2-handlers-a-r5`, 4a9f542): R5 + R7 as one `Impl`,
+  8492 → 6766, of `for i in is do …; unless is.any isZomb (store key (encodeResults results))`, post
+  `R57Post` (ω₁ = sp, allocator context, old chunks kept but the instructions' buffers and the frame
+  buffers at sp + 104 / 272, the StableKeep words). Coming: Glob kept in R57Post, ω₆ in R9Post, hb8 from
+  an allocator lemma, an `hBall` "fits or exhausts" design. Full local build of this branch green at
+  534ab23 (2892 jobs). Session 4 asked for a restart at this point (context).
+- **Next (session 4 or 5):** (1) when @parent says the ruleset is fixed: merge #222, merge main here,
+  full build, open the statics PR (ParamStatics, R11, R12 + R1 now too; body per the third session's
+  notes plus R1 / `ItemsOwn` / `ItemLogFmt`), merge on green. (2) R2 = prove `OpArm` (operand with
+  output: 6766 → 6827 as in `err_arm` up to 7009, then the output decode (R3 hyp), rows 8 / 9, R5, R7
+  (Handlers A), the drops 15166 / 15185 / 15201 → 6766; `rest_keep` re-establishes the slots). (3) The
+  `ItemsOwn` obligation: `ItemOk` (Inputs/LoopItem.lean) already yields per item fresh chunks `cs` with
+  `Rep` local to them; strengthen `itemOk_opok` / `itemOk_operr` so `cs` are the trace / output chunks
+  (addr + 32 = the slot's pointer, covering its length), then carry through `g_inputs` /
+  `inputs_decode`. (4) R16.
+- #222: merge refused by the ruleset (required check names); reported to @parent.
+
+**Read this from `claude/bootstrap-t2-statics`** (it has everything; `claude/bootstrap-t2-inputs-wip`'s
+README is older, and pushing to that branch restarts #222's CI).
+
+**PR #222** (`claude/bootstrap-t2-inputs-wip`, `tr_impl` and the items-loop pieces): main with #224 merged
+in (2bba0ed), `gk_call`'s `get_call` pattern adapted (`… keepd5, fr5, -, -, -⟩`), full local build green
+(2874 jobs). CI: `model` green, `attempt-1` was still running at the handoff. Merges are blocked for now:
+main's ruleset still requires the old `build-and-check` check (Adam to update). Merge #222 (squash) once
+it is green and merging is possible; message @parent on merge. Nothing else to change in it.
+
+**Then the statics PR** from `claude/bootstrap-t2-statics`: merge main (with #222) into it, `lake build`
+(it was fully green at fdcbed6 / c31e166: 2880 jobs; axioms of `tr_impl`, `start_to_6429_statics`,
+`accAbort_of_heapFailT` clean), push, open the PR. Body: the three parts below, the strengthened
+`KeyFmt` / `LogFmt` (Adam, option (a), R11), `TrPost`'s new `Glob` conjunct, `AccAbort`'s trap list and
+the 59710 exclusion, the PR-body line from CLAUDE.md. Merge on green; message @parent.
+
+Toolchain: `scripts/fetch-lake.sh --force`, then `export PATH=/root/.lean/lean-4.36.0-rc1-linux/bin:$PATH`.
+Run long `lake build`s with `run_in_background` (a foreground call is cut at 10 min). The disassembler:
+`python3 -I scripts/allocfail/dis.py services/bootstrap/jam-bootstrap-service.jam > dis.txt`.
+
+**Branch `claude/bootstrap-t2-statics` (PR after #222 merges; pushed):**
+- `Acc/Statics.lean`: `chain` / `start_to_6429_statics`: at 6429, [196616]₂ = 𝖢 and [196696]₈ = 𝖨
+  (341 and 16 for `Params.full`). No code-fact tier needed (`Code` has 56205 / 56279); `AccBParams`'s
+  last two executor pieces re-checked with cuts carrying the cells. `apply()` checks 2 ≤ 𝖢 ≤ 341 and
+  stores 𝖨 as a u16, so 2·𝖢·𝖨 < 2³²; 𝖨 > 0 is not checked by the binary.
+- R11 (Adam, option (a), 2026-11-16): `KeyFmt` and `LogFmt` also keep `Glob` (196616 … 196791);
+  `Utf8Call`'s frame already implies it. **Whoever discharges `KeyFmt` / `LogFmt` must prove this
+  too.** Threaded through `sk_call`, `enc_call`, `tr_w2a`, `lg_part1/2`, `tr_w2c`, `W1Post`, `W2Post`
+  (helper `Transfer/Glob.lean`: `glob_of_hkeepC`). Also `gk_call`, `tr_read` and `TrPost` (with `get_call`'s `Glob` conclusion from #224): done.
+- R12: `Acc/Abort.lean`: `HeapTrapPc` (every allocation-failure trap of the blob, from
+  `scripts/allocfail/`; 59710 excluded since a formatter `Err` also reaches it), `AccAbort` (a heap
+  trap, or a failed allocator call 40611 / 40821 with ω₇ = 0), `accAbort_of_heapFailT`, `ValuesFit`
+  (self storage values, every service's preimages, ℰ(↕**i**), all < 2⁶³). **Done (session 4):**
+  `Acc/ValuesFitStep.lean`: `dispatch_keeps` (every host call of `AccHost.dispatch`, any id / gas /
+  registers / memory, keeps self's storage and every preimage < 2⁶³: stored values are read from a
+  readable range, < 2³²), `ValuesFit.step` (every `ASem.step`) and `ValuesFit.run` (the end of a run).
+
+**Plan (Adam's decision 23, option B: a T2 skeleton with named hypotheses; map:
+`docs/t2-remaining.md` on `claude/bootstrap-t2-handlers-a-row9`).** My rows, in order: R11, R12
+(above), R1 items-loop skeleton, R2 operand arm (consumes Handlers A's R5 / R7; agree the interface
+through @parent), R15 the end, R16 `accumulate_spec`. Named hypotheses: per-handler `Impl` (R6, not
+rows 8/9), the output decode's success path (R3), the results encoder 36299 (R9), the HeapHost writer
+step (R8), per-instruction log lines (Fmt). Keep each minimal and close to Spec. When
+`accumulate_spec` is on main, send @parent its statement and hypothesis list.
+
+**R2's interface (Handlers A, via @parent, 2026-11-16).** R4: `Results.ResultsVec μ st sp rs`, the
+results `Vec` {cap, ptr, len} at sp + 448 / 456 / 464, 144-octet items, kept by frames that keep old
+chunks and their data. R5's theorem: from 8493 (after row 9's checkpoint), with `InstrRep` for each
+decoded item, `ResultsVec []` and `HeapCtxC`, the `Impl` of the spec's `for i in is do …`, post at 15028
+(15050 when n = 0): `ResultsVec results`, [sp + 160] = 1 ↔ `is.any zombify`, `HeapCtxC st'` keeping old
+chunks, the frame. `InstrRep` is a parameter of the hypothesis bundle, shared by R3 (the output decode
+yields items with `InstrRep`) and R6 (the handlers consume it). R7 (row 11) starts from 15028.
+Update: the `InstrRep` bundle gains a footprint (the chunks the instruction list owns) and
+`DropInstrsH` (33214 frees exactly that footprint, otherwise frame-only); Handlers A adds `ResultsOwn`
+(ownership next to `ResultsVec`, produced by R5, consumed by row 11). R2 passes them through from R3
+into R5 and R7.
+Update 2 (`Acc/Handlers/InstrRep.lean` on `claude/bootstrap-t2-handlers-a-r5`): R3's output-decode
+hypothesis concludes `IterOwn B μ st v`, the `Vec<Instr>` `IntoIter` at v (buf v, cur v + 8, cap
+v + 16, end v + 24), each 232-octet slot satisfying `InstrRep.rep`, the owned buffers allocated chunks.
+Row 11 (R7) needs 2³¹ + 4096 ≤ sp and S0 + 4096 ≤ sp; R2 supplies that and passes `IterOwn` from R3
+into R5 / R7.
+Update 3: row 11 (from 15028) takes `IterOwn` for the `IntoIter` at sp + 472, `(iterFree ++
+tailFree).Nodup`, `ResultsAvoid` (the results' octets outside iterator-freed chunks) and the stack room;
+R5 produces them; R2 passes them through (definitions: `docs/t2-remaining.md`, `Acc/Handlers` on
+`claude/bootstrap-t2-handlers-a-r5`).
+Update 4 (R5's precondition at 8493, each pass): [sp + 184] = 2⁶³ and [sp + 216] = 2⁶³ + 1 (stored
+once before the loop head at 6746 / 6760; R1's invariant carries them; `TrPost` keeps them, `TrW` misses
+sp + 184 … 224); [sp + 200] = 678 (rewritten every iteration at 6804); the decoded `Vec<Instr>` at
+sp + 240 / 248 (written by the decode at 7092 / 7116) turned into the `IntoIter` at sp + 472 with
+`IterOwn`; stack room 2³¹ + 4096 ≤ sp, S0 + 4096 ≤ sp. R5's named hypotheses `InstrLogH`, `ResultLogH`
+(G4), `HandlerH` (R6), `PushH` (R8) are carried as parameters.
+
+**Only on WIP (proved):**
+- `Acc/Items/`: Exit (`items_end`, `items_halt`), Operand (`op_pre`, `op_mid`), Disp, End, Head.
+- `Acc/Start.lean`.
+- `Acc/Transfer/`, the whole of `on_transfer`'s segments. Composed calls:
+  - `gk_call` (copied-key `get`; hypothesis `hfit : |w| < 2⁶³`);
+  - `sk_call` (copied-key `set`, under `YIn`, with `FreeStepsH.keepY`);
+  - `enc_call` (the record ℰ₄(s) ++ ℰ₈(a) ++ memo).
+
+  Straight-line segments: `Tail`, `Tail2`, `Tail3` (log line), `LogS` (`log` under accContractS),
+  Count / ReadShort.
+- "transfer-count" in `accRoBytes`; `bootstrapcheck` passes.
+
+**Named hypotheses (`Transfer/Hyp.lean`), owned by other sessions:**
+- `KeyFmt` (format! "transfer{n}" at 7792, text stated) and `Utf8Call` (from_utf8 at 7447): the
+  executor session (session_017ptjPEK6kFj3WH6ukoPJ2m). They asked for read-only data premises: the
+  template at 66607, the digit table at 70844 and the vtable. When they send the form, add it to
+  `KeyFmt` and `accRoBytes`.
+- `LogFmt` (the log format! at 7692): the log-sites handoff. Formatters 2800 → dec32, 2804 → dec64,
+  678 → 17596 (String Display, needs ArgOk).
+
+**Next steps, in order:**
+1. Merge #198 when green (then re-sync the WIP branch with main).
+2. Compose `on_transfer` as `Impl … (Spec.onTransfer s a m)` from `gk_call`, the count decode, `sk_call`,
+   `Tail`, the log line (`Utf8Call`, `LogFmt`, `logS`), `KeyFmt`, `enc_call` and `Tail2`. Its aborts:
+   `heap` (allocations at 3820 / 48047 / 4002 / 15363 / 15362 / 34178, `get`'s 47977, and Exhausts), and
+   `orPanic` (FULL at 7386 / 7919 → 15361).
+   **Progress (builds, no forbidden constructs, axioms clean):**
+   - `Transfer/Trap.lean`: `HeapTrapT` / `HeapFailT`, `aborts_of_trap`, `aborts_of_exhaustsP` and
+     `ends_of_15361`.
+   - `Transfer/CopyVal.lean`: `memcpy_val` and `read_exact_val`, which state the copied octets.
+   - `Transfer/Read.lean`: `tr_read`, 7159 → 7326, with ω₆ = `sxw 4 (trCount v)` or a heap trap.
+   - `Tail.tr_sk_pre_sx`: 7326 → 40494 for any ω₆ (the sign-extended counter).
+   - `Transfer/OrPanic.lean`: `impl_call_keep` (`op o >>= f` for a context-keeping op such as `read`) and
+     `impl_orPanic` (an `orPanic` call: abort, or `ok` → `pure`, `error` → ☇).
+   - `Hyp.ExhaustsP`: KeyFmt/LogFmt's failure disjunct ("Exhausts, then ☇", a blob obligation; Adam
+     chose option (a)).
+
+   **Session 3 (2026-11-15), built locally (exit 0; axioms propext, Classical.choice, Quot.sound):**
+   - `Transfer/ImplW1.lean`: `tr_w1` (7326 → 7399 as the counter's `orPanic` write), post `W1Post`.
+   - `Transfer/Tail4.lean`: gap segments `tr_u8_pre` (7437), `lg_log_b0` (7743, message cap 0),
+     `t2_kfmt_pre` (7763 → 59375).
+   - `Transfer/W2a.lean` (7399 → 7454), `W2b.lean` (`lg_part1` 7454 → 7631, `lg_part2` 7631 → 7763),
+     `W2c.lean` (7763 → 48104), `ImplW2.lean`: `tr_w2` (7399 → 6766 as the record's `orPanic` write),
+     post `W2Post`. `tr_w2` also needs the prologue's formatter words at sp + 208 / 136 / 200 (2800,
+     2804, 678) and |key| fits from the chunk bounds.
+   - `KeyFmt` now states the key's len octets lie in a live fresh chunk's data (replacing "kc = 0 ∨
+     chunk"; Adam approved, 2026-11-15): `set` needs them readable and below the stack.
+   - `W1Post` / `W2Post` also state the context and stream (needed to continue a bind).
+   - **`Transfer/ImplTr.lean`: `tr_impl`**, the whole of `on_transfer` (7159 → 6766) as
+     `Impl … (onTransfer src am memo)`, post `TrPost` (context `trCtx c src am memo`, frame ¬`TrW`).
+     Premises: `hfit` for every key (< 2⁶³, from `ValuesFit`), the RO facts (key at 65956, error table),
+     the prologue's words at sp + 208 / 136 / 200, `Utf8Call` / `LogFmt` / `KeyFmt`.
+     It needs `maxRecDepth 20000` (elaborating the goal).
+   - Fixed: conflict markers left in `Services.lean` and this README by the earlier merge 97b8f56
+     (CI could not parse `Services.lean`); `Services.lean` now imports `Transfer.ImplTr`.
+
+   **State at the overnight pause (2026-11-16):** no PR open yet. A full `lake build` passed at 2bbbd16
+   (before merging main); main was then merged (c3ba1fd, clean) and the post-merge full build was stopped
+   at the pause, unfinished. To resume: `scripts/fetch-lake.sh --force` (lake-cache), `lake build`, then
+   open the PR for `tr_impl` (body: the conflict-marker fix, `W1Post`/`W2Post` additions, `KeyFmt` (b)).
+   Parent notes: don't edit `Acc/Wrappers/GetCall.lean` or `Acc/Impl/Impl.lean` (Handlers A); for step 5
+   add a code-fact tier (docs/code-fact-tiers.md) instead of regenerating CodeA, and tell the parent first.
+
+   **Next: the items-loop skeleton (step 3 below), then step 4 (AccAbort / ValuesFit / T2) and step 5.**
+   The plan notes below for `tr_w1` / `tr_w2` / `tr_impl` are done; kept for reference.
+
+   **Next (the composition, as `Impl` pieces rather than long runs):**
+   - **`tr_w1`** (new file `Transfer/ImplW1.lean`), from s at 7326:
+     - Goal: `Impl p (accContractS env) env Ab (orPanic (.write trKey (fixed 4 ((n+1) % 2^32)))) Q s`,
+       with n = `trCount (get? trKey)`, given `hQ : ∀ s' at 7399 with the frame facts, Q () s'`.
+     - Proof via `impl_orPanic`, with s₁ at 40494: `tr_sk_pre_sx` with v = `sxw 4 n`, so v % 2³² = n.
+     - Step: `step_write` with hk by `decide` on argBase/outBase, and hold from `hfit` (< 2⁶³).
+     - `sk_call` cases:
+       - FULL: `writeSelf` = self and ω₇ = 3, then `tr_chk_full` → `ends_of_15361`;
+       - Ok: `writeAcct`, then `tr_chk_ok` → 7399 and `.inr ⟨s', run, rfl, hQ …⟩`;
+       - alloc null: the 4002 trap, `aborts_of_trap`, with the run moved to `YIn` by `keepY`.
+     - The value: `JAM.Codec.fixed l x = Num.encodeLE l x`; `hval` comes from
+       `rdN μ' (sp+1568) 4 = (v+1) % 2³²` via `readN_of_rdN`.
+     - `writeR7 = FULL` ↔ the minBalance condition, because the old length is < 2⁶³ ≠ FULL.
+     - Premises `sk_call` needs that tr_read doesn't give:
+       - the error table: `ht8`, `ht4`, `htr`, read-only data at 69056…69076;
+       - `hkey` (65956) and `hkr`.
+       Carry them as premises of the final theorem (they hold of the blob's RO data; see `accRoBytes`).
+   - **`tr_w2`**, from 7399: `tr_a128` → alloc (null → 15363 trap) → `tr_a128_cpy` → `memcpy_val` →
+     `Utf8Call` → the log line (`lg_*`, `LogFmt`, `logS`) → `KeyFmt` (7792 → 7799) → `t2_rec` →
+     `enc_call` → `t2_set` (48104, `set` with the formatted key) → `t2_chk_*` → `t2_kfree`/`t2_knofree`
+     → 6766. The second `orPanic`; its s₁ is the state where `set` is entered.
+   - **`tr_impl`**: `impl_call_keep` with `step_read` (hk by `decide`; hv from `tr_read`'s new
+     `|w| < 2³¹` conjunct) and s₂ = tr_read's 7326 state, then `Impl.bind`, `tr_w1` and `tr_w2`.
+     `Ab` is a parameter with `hAb : ∀ s, HeapFailT s → Ab s`.
+
+   **`step_read`'s bound (value < 2³¹ octets) is discharged.** `tr_read`'s success disjunct states
+   it: a value the binary reads was allocated on the heap, which ends below 2³¹. Longer values take
+   the heap-trap disjunct. `HeapTrapT` now includes 4002 (the trap of `set`'s copied-key alloc).
+3. The items-loop skeleton (`Impl.forIn` over the inputs, loop head 6766, frame sp as at 6674). Its
+   operand arm calls the Vec session's output decode at 7073 (in progress; success and Exhausts; the
+   decode-error branch is the open obligation "output decode failure contract") and Handlers A's rows
+   8, 9 and 11.
+4. Define `AccAbort` (`heap` including tooLong; named quirks, Q18 = `remove` on FULL panics) and the
+   `ValuesFit` WF predicate (storage values, preimages, encoded inputs < 2⁶³ octets), then state T2.
+5. **Queued (parent, 2026-11-15): the accumulate prologue's protocol-parameter statics.**
+   - `apply()` of the fetched params (fetch kind 0) stores the u16 C at 196616 (storeU16 at 56279) and
+     the u64 I at 196696 (storeU64 at 56205). The rw statics 196616…196791 are written only there.
+   - Handlers A's row 8 (at 8280) takes these as the premise `ParamStatics μ C I`. The prologue proof
+     must show that `apply()` establishes it.
+   - 56205…56279 lie outside every fnRangesA range, so this needs a CodeA range. Tell @parent before
+     pushing a CodeA regeneration: it forces re-syncs.
+
+**Decisions (settled):**
+- remove-on-FULL: `ASem.step .remove` panics on FULL, as in the binary; quirk Q18 (Adam, 2026-11-15).
+- `ValuesFit` < 2⁶³ octets (Adam, 2026-11-15): `get`, `fetch_vec` (47490) and `lookup` (49263) read a
+  length of 2⁶⁴ − 1 as NONE and trap on lengths from 2⁶³.
+- The output decode's failure branch is an open obligation to prove, not a T2 assumption. A local
+  premise on the operand arm is allowed meanwhile.
+
+**Other sessions:**
+- Vec (session_017ptjPF1zNcwuoS6FTtV6ZC): 7073 decode, `claude/decode-heaphost`.
+- Executor: `KeyFmt`, `Utf8Call`.
+- Handlers A: rows 8, 9 and 11. Their copies of the heap lemmas live in `Handlers/HeapKeep.lean`.
+- Log sites: `LogFmt`.
+
 This page maps the accumulate entry of `services/bootstrap/jam-bootstrap-service.jam`, as
 groundwork for T2. Every address is a PVM instruction index in the blob. It was read off the
 blob as follows:
@@ -500,8 +815,9 @@ cases:
   FULL is pending with Adam).
 
 **Hypotheses on the state.** `ValuesFit (credit e s inputs) s` (`hvals`, Adam): storage values,
-preimages and the encoded inputs of s are shorter than 2⁶⁴ octets. Ω_R / Ω_Y return lengths in a
-64-bit register, so a longer one would wrap.
+preimages and the encoded inputs of s are shorter than 2⁶³ octets (2026-11-15; first 2⁶⁴). Ω_R / Ω_Y
+return lengths in a 64-bit register, and `get` reads 2⁶⁴ − 1 as NONE and traps at 47901 / 47929 on
+lengths from 2⁶³ (`docs/bootstrap-target.md`).
 
 **What remains for T2:** `∀ f, Impl (accContractS env) env (Spec.accumulate C t) Halts` from instruction 5. This is built:
 - from the segment lemmas: 1 → 6630 (start, `acc_log_line`), `inputs_decode`, and the items loop;
@@ -530,6 +846,36 @@ Lemmas under `accContractQ` (from (x, v :: qs) to (x', qs)) carry over to any st
 - Keys must survive `get`'s allocation: `get_some` takes them on the stack above the frame or in an
   allocated chunk's data.
 
+## `on_transfer` (`Acc/Transfer/`)
+
+Spec `onTransfer`: read "transfer-count", write n + 1 under it, write ℰ₄(source) ++ ℰ₈(amount) ++ memo
+under "transfer{n}". Proved segments and calls:
+- the head and the copied-key `get` (`Head`, `GetKey`, `GetKeyCall.gk_call`), the count's decode
+  (`Count`, `ReadShort`);
+- the copied-key `set` of n + 1 (`SetKey`, `SetKeyCall.sk_call`, 40494 → 7386 under `YIn`, with
+  `FreeStepsH.keepY` lifting the context-keeping steps), its prologue and `Ok` check (`Tail`);
+- `alloc(128)` and the memo's copy (`Tail`); the record's encoding helper 34071 … 34176 (`Encode`,
+  `EncodeCall.enc_call`); the second `set`, its `Ok` check and the frees back to 6766 (`Tail2`).
+"transfer-count" (65956) is in `accRoBytes` (checked by `bootstrapcheck`).
+
+**Open obligation: the output decode's failure branch (7073).** `BootstrapWorkOutput::decode` (7073,
+the Vec session) is proved for success (→ 7091, {cap, ptr, len} at sp + 1568, k at sp + 1592) and heap
+exhaustion. Its decode-error outcome (−1 at sp + 1568, then 7080 → 7088 → 15361, ☇) matches Spec
+`onWorkItem`'s `| none => Prog.panic` but has no failure contract yet. It is the named TODO "output
+decode failure contract", to be proved (parent's decision). Until then the operand arm may carry a local
+premise `decode (Dec.output C) o = some (is, k)`, which must not reach the stated T2 theorem.
+
+**Named hypotheses (`Transfer/Hyp.lean`)**, to be proved by the symbolic-executor session:
+- `KeyFmt`: `format!("transfer{}", n)` at 7792 leaves the `String` `s!"transfer{n}"` at sp + 512
+  (the second write's key; its text is needed, unlike log lines).
+- `LogFmt`: the log line's `format!` at 7692 (template 66221), frame-only (for the log-sites work).
+- `Utf8Call`: `core::str::from_utf8` at 7447 on the memo's copy, frame-only plus its tag (0 with the
+  input slice, or 1); it feeds only the log line.
+
+The log line's segments 7454 … 7763 are proved (`Tail3`, with `FreeStepsH.logS`). The whole of
+`on_transfer` is composed as an `Impl` of `onTransfer`: `ImplTr.tr_impl` (7159 → 6766, post-state
+`TrPost`), from `tr_read`, `ImplW1.tr_w1` and `ImplW2.tr_w2`.
+
 ## Brief: `add_recent_work_item` and the results tail (rows 8, 9, 11)
 
 These go to a separate session. Both run inside an operand's iteration of the items loop, in
@@ -554,8 +900,8 @@ wrapper's call keeping (x, y) (`KeepCtx`), run the wrapper under `YIn`, and cont
 - **Row 11, the results write and the drops** (the tail of `onWorkItem`, unless a `Zombify`):
   15032 → 33214 (ω₀ = 558), …, 15185 → 40613 (`dealloc`, ω₀ = 568), on to 15191 (the operand's
   remaining drops) and back to the loop head 6766.
-- **Hypotheses to carry:** `ValuesFit` (values < 2⁶⁴ octets), the [2³⁶, 2³⁷ − 32] `get` band (TODO),
-  and the `heap` abort reason for every allocation.
+- **Hypotheses to carry:** `ValuesFit` (values < 2⁶³ octets) and the `heap` abort reason for every
+  allocation. `get`'s band from 2³⁶ (`get_huge`) reaches the trap 47977, so it is the `heap` reason.
 
 **Log sites** (the per-item line at 6955, the handlers' `format!`) are stated against a hypothesis of
 `acc_log_line`'s shape: the allocator's context in and out, the format!/String region kept, or

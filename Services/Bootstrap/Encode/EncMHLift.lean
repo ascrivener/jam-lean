@@ -61,7 +61,7 @@ theorem EncOkMD.runH {p : ByteArray} {P : Program} {D : Nat} {enc : List UInt8}
   have kl : ∀ a, a < 2147483648 → (a < ptr + len ∨ ptr + len + enc.length ≤ a) → μ'.read a = μ.read a :=
     fun a h0 h1 => efr a (by omega) (Or.inl (by omega)) h1 (Or.inl (by omega))
   refine ⟨ω', μ', run.mono (by unfold encGas; omega), e0, e1, e5, e6, cap, ptr, s,
-    ⟨L.fr.hvS1, ?_, ?_, el, ?_, hroom, L.cpos, L.cb, ?_, ⟨c, hc, hcu, hcp, hcc⟩, ?_, ?_, ?_, ?_, ?_⟩⟩
+    ⟨L.fr.hvS1, ?_, ?_, el, ?_, hroom, L.cpos, L.cb, ?_, ⟨c, hc, hcu, hcp, hcc⟩, L.oth, ?_, ?_, ?_, ?_, ?_⟩⟩
   · exact Memory.readN_congr (fun j hj => efr (v + j) (by omega) (Or.inr (by omega)) (Or.inr (by omega))
       (Or.inl (by omega))) |>.trans L.vc
   · exact Memory.readN_congr (fun j hj => efr (v + 8 + j) (by omega) (Or.inr (by omega)) (Or.inr (by omega))

@@ -562,14 +562,16 @@ def load {α : Type} (k : Key) (p : Dec α) : Prog AOp (Option α) := do
   pure ((← op (AOp.read k.encode)).bind (decode p))
 
 /-- `add_recent_work_item`: write (package, item) into the ring's next slot, removing the results of
-    the work item it replaces, and advance the slot. -/
+    the work item it replaces, and advance the slot. The new counter is ((c + 1) mod 2^32) mod
+    `maxRecent`: the binary adds in 32 bits (8320 … 8323, quirk Q19). -/
 def addRecent (C : Consts) (package : Bytes) (item : Nat) : Prog AOp Unit := do
   let c := (← load .counter (Dec.fixedN 4)).getD 0  -- quirk Q12: undecodable reads as 0
   match ← load (.recent c) (do return (← Dec.take 32, ← Dec.fixedN 2)) with
   | some (p, i) => op (AOp.remove (Key.results p i).encode)  -- quirk Q18: panics on FULL
   | none => pure ()
   store (.recent c) (encodeRecent package item)
-  store .counter (fixed 4 ((c + 1) % C.maxRecent))
+  -- quirk Q19: c + 1 wraps at 2^32 (the binary's u32 add) before the reduction mod maxRecent
+  store .counter (fixed 4 (((c + 1) % 2 ^ 32) % C.maxRecent))
 
 /-- `remove_all_recent_work_items`, from slot `i` on: stop at the first empty slot. -/
 def removeRecentFrom : List Nat → Prog AOp Unit

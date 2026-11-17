@@ -34,6 +34,7 @@ theorem PInv.mono_kp {env : RefineHost.Env} {pb S0 S1 M E n : Nat} {ce : Chunk} 
   c16 := st.c16
   c24 := st.c24
   c32 := st.c32
+  c8 := st.c8
   i0 := st.i0
   i8 := st.i8
   i16 := st.i16
@@ -48,12 +49,12 @@ theorem PInv.mono_kp {env : RefineHost.Env} {pb S0 S1 M E n : Nat} {ce : Chunk} 
   kp := fun d hd => st.kp d (h d hd)
   fr := st.fr
 
-/-- **Instruction k passed through**: an index of `PassK` (its tag word in μ0), its output slot `O k`
+/-- **Instruction k passed through**: a word of `PassW` (its tag word in μ0), its output slot `O k`
     satisfied by its own octets; the chunks to keep may shrink and the context is unchanged. -/
 def PassOk (μ0 : Memory) (E k : Nat) (Kp Kp' : Chunk → Prop) (O : Nat → List UInt8 → Prop) (x x' : RefineCtx) :
     Prop :=
-  ∃ t, PassK t (rdN μ0 (E + 232 * k + 44) 1) ∧
-    μ0.readN (E + 232 * k) 8 = Num.encodeLE 8 (9223372036854775807 + t) ∧ O k (μ0.readN (E + 232 * k) 232) ∧
+  ∃ D, PassW D (rdN μ0 (E + 232 * k + 44) 1) ∧
+    μ0.readN (E + 232 * k) 8 = Num.encodeLE 8 D ∧ O k (μ0.readN (E + 232 * k) 232) ∧
     (∀ d, Kp' d → Kp d) ∧ x' = x
 
 /-- **Instruction k exported**: an `ExportSegs` laid out as `ExportElem.export_step` needs, its output slot
@@ -107,11 +108,11 @@ theorem loop_all {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Has
     · obtain ⟨cap, ptr, vc, -, -, -, hcapn, -⟩ := st.out
       by_cases hkc : k = cap
       · subst hkc
-        rcases step_full (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 (ctx k) ω μ μ0 s L k hk t ht sD0 hO st
+        rcases step_full (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 (ctx k) ω μ μ0 s L k hk _ ht sD0 hO st
             vc with ⟨s1, ω1, μ1, run1, st1⟩ | hx'
         · exact Or.inl ⟨ω1, μ1, ctx k, _, run1, hx.symm, RoData.RoIs.keep st.H run1 hro, s1, PInv.mono_kp st1 hK⟩
         · exact Or.inr ⟨_, ExhaustsX.of hx'⟩
-      · obtain ⟨ω1, μ1, run1, st1⟩ := step_room (p := p) (P := P) env (ctx k) ω μ μ0 s L k hk t ht sD0 hO st
+      · obtain ⟨ω1, μ1, run1, st1⟩ := step_room (p := p) (P := P) env (ctx k) ω μ μ0 s L k hk _ ht sD0 hO st
           (fun c hc => by
             intro h; subst h
             have h1 := congrArg Num.decodeLE (vc.symm.trans hc)

@@ -242,6 +242,7 @@ and its definitions mark them with `-- quirk Qn`. Whether each was intended is n
 | Q15 | **Trailing octets after the accumulate inputs are ignored.** Accumulate decodes ℰ(↕**i**) (fetch kind 14) as a `Vec<AccumulateItem>` and never checks that the reader is empty afterwards (44495 … 44659), so octets after the items are accepted. This does not contradict the model, whose `fetch` returns exactly ℰ(↕**i**). | (binary-side; the inputs decode at 6630 → 6674) |
 | Q16 | **`Designate`'s key bound is computed in 16 bits.** The decoder loads 𝖢 sign-extended (`loadI16`), computes 3·𝖢 and zero-extends it from 16 bits, so it accepts n ≤ (3·𝖢) mod 2¹⁶ keys rather than n ≤ 3·𝖢. The two agree for 𝖢 < 21846 (the full parameters' 𝖢 = 341); beyond that, valid key lists are rejected. The spec's bound is 3·𝖢, exact for every 𝖢 bootstrap is built for. Proven as the code does it in `Decode.Designate.designate_heap`. | `Consts.maxValCount` |
 | Q18 | **`remove` panics on FULL.** The SDK's `remove` (48481) traps (48533) on any `write` reply other than NONE or a length, and for this service that is FULL: the account's threshold after the removal is still above its balance (Ω_W, B.7). So every removal (the ring's replaced results, `Zombify`'s key wipe, `DeleteItems`) can abort the whole accumulate rather than go on. The spec panics there too (decision of 2026-11-15). | `ASem.step` `.remove` |
+| Q19 | **The ring counter wraps at 2³² before the reduction.** `add_recent_work_item` computes the next slot as `(c + 1) % (2·𝖢·𝖨)` with a `u32` add (8320 … 8323: a 64-bit add, then `remU32` on the low 32 bits), so a stored counter c = 2³² − 1 gives slot 0 where the plain `(c + 1) mod (2·𝖢·𝖨)` gives 2³² mod 2·𝖢·𝖨 (5440 for the full parameters). The spec stores `((c + 1) mod 2³²) mod maxRecent` (decision of 2026-11-16). It only matters for a counter that is not already a slot: for c < maxRecent ≤ 2³² the two agree (`SpecLemmas.Ring.addRecent_counter`). | `addRecent` |
 
 ---
 
@@ -605,6 +606,13 @@ Effort is relative: S < M < L < XL. Steps 0, 1 and 9 involve no binary.
     read-only tables of the vendored blob; step 10) and `FmtHyps` (the log lines at 4742 and 5744 and the `Debug` line
     at 6159; the fmt summaries). Not yet covered: eager `Lookup`, `Import`, `RandomStorageRefine`, the
     variable-width instructions and n ≥ 128.
+  - **M1, T1c for all but `Import` and `RandomStorageRefine` (proved: `Refine.T1c.refine_t1c`).** T1c for
+    1 ≤ n instructions, every kind but `Import` (`hnoimport`, deferred) and `RandomStorageRefine` (`hrsr`), with
+    C = `Consts.ofParams Params.full rk` and |y| + 48 ≤ 2²⁴. Named hypotheses: `VendoredFactsC` (`VendoredFacts`
+    and the drop table's entry 8), `IsBootstrapC` (`IsBootstrap` and `checkCode` for the tiers `CodeT1B`,
+    `CodeT1C`; both discharged in step 10), `FmtHypsC` (the four log / `Debug` lines at gas cap 2⁶²) and `hpre`
+    (preimages < 2⁶³ octets). Third outcome `ExhaustsHeap`, as for the first step. Remaining for full T1c:
+    `Import`; then M2 (non-canonical payloads).
   - **Later obligation: an allocation failure ends in ☇ with no exports.** The milestone's third outcome is
     `ExhaustsHeap` alone (the run reaches a failed allocation). That the run then traps (panic = abort: each null
     check falls into a `trap`), so Ψ_R's result is ☇ with no exports, is not yet proved; T1 keeps the full claim.

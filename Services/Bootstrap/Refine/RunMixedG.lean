@@ -7,7 +7,7 @@ import Services.Bootstrap.Decode.ExportEmpty
 /-!
 # Refine from the payload to its return, any number of instructions
 
-`run_mixedG` is `run_mixed` for 1 ≤ n ≤ 2²¹ (part A of full M1): the decode over every batch (`DecodeC.decode_allC`), the
+`run_mixedG` is `run_mixed` for 1 ≤ n ≤ 2²⁴ (part A of full M1): the decode over every batch (`DecodeC.decode_allC`), the
 transform loop and the exit encoder for that n (`Body.body`, `ExitEnc.enc_run`). Each instruction is one the milestone
 passes through (a `Kinds.FixedKind`) or `ExportSegs ds`. GP v0.8.0 Appendix B.4 (Ψ_R running bootstrap's code), B.7
 (export), Appendix C (ℰ); `Spec.refineInstr`.
@@ -24,8 +24,8 @@ open PVM Picoalloc JAM Services.Bootstrap Services.Bootstrap.Code Services.Boots
 set_option maxHeartbeats 8000000
 set_option maxRecDepth 100000
 
-/-- **Refine from the payload, fixed-width instructions passed through and `Export`, any n ≤ 2²¹**: `run_mixed`
-    for 1 ≤ n ≤ 2²¹ instructions, the payload's length prefix ℰ(n) of any width (`DecodeC.decode_allC`) and the
+/-- **Refine from the payload, fixed-width instructions passed through and `Export`, any n ≤ 2²⁴**: `run_mixed`
+    for 1 ≤ n ≤ 2²⁴ instructions, the payload's length prefix ℰ(n) of any width (`DecodeC.decode_allC`) and the
     output ℰ(n) ⌢ the encodings ⌢ ℰ₂(w mod 2^16). As `RunFixed.run_fixed`, each instruction j either a `FixedKind` with its slot property `Rs j` (passed
     through), or `ExportSegs ds` (its `Rs j` that of `Exported |ds|`, ≤ 2²⁶ segments of < 2³⁰ octets): refine
     returns ℰ(`BootstrapWorkOutput`) of the instructions `outI`, the host context the segments exported in
@@ -43,7 +43,7 @@ theorem run_mixedG {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [S
     (x : RefineCtx)
     (ω : Regs) (μ : Memory) (s : State) (H : HeapCtx env pb S0 S1 μ s) (hro : RoData.RoIs ro μ)
     (M q Ly r5 : Nat) (salt : List UInt8) (cp : Chunk)
-    (hn : 1 ≤ is.length ∧ is.length ≤ 2097152) (hM : S0 + 7560 ≤ M ∧ M + 632 ≤ S1 ∧ M % 8 = 0)
+    (hn : 1 ≤ is.length ∧ is.length ≤ 16777216) (hM : S0 + 7560 ≤ M ∧ M + 632 ≤ S1 ∧ M % 8 = 0)
     (hr5 : r5 < 18446744073709551616)
     (hcp : cp ∈ chunks s ∧ cp.used = true ∧ cp.addr = s.base) (hcpq : cp.addr + 32 = q)
     (hcpd : ∀ a, q ≤ a → a < q + Ly → InData cp a)
@@ -167,7 +167,7 @@ theorem run_mixedG {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [S
     have hxs := expTo_succ env is x (k := k) (by omega)
     rcases (hk k hk').2 with h | ⟨ds, hds, hR, hb1, hb2⟩
     · have sl : Rs k (μ1.readN (E + 232 * k) 232) := by have := slot k hk'; rw [hrn k h] at this; exact this
-      refine Or.inl ⟨ts k, ?_, ?_, sl, hmono k, by rw [hxs]; unfold instrCtx; rw [h]⟩
+      refine Or.inl ⟨_, PassW.ofK (t := ts k) ?_, ?_, sl, hmono k, by rw [hxs]; unfold instrCtx; rw [h]⟩
       · unfold rdN; rw [rsub k 44 1 (by omega)]; exact (hk k hk').1.pass _ sl
       · rw [← readN_take μ1 _ 232 8 (by omega)]; exact (hk k hk').1.tag _ sl
     · have sl := slot k hk'

@@ -25,6 +25,22 @@ theorem readN_drop_take (μ : Memory) (a n k m : Nat) (h : k + m ≤ n) :
   rw [e, List.drop_append_of_le_length (by simp), List.drop_eq_nil_of_le (by simp), List.nil_append,
     List.take_append_of_le_length (by simp), List.take_of_length_le (by simp)]
 
+/-- The 8-octet word at offset k of a slot's octets. -/
+def wd (bs : List UInt8) (k : Nat) : Nat := Num.decodeLE ((bs.drop k).take 8)
+
+/-- **The buffers a decoded slot owns** (pointer, length), read off its octets: none for a transfer
+    (first word −1); for an operand its trace (capacity at + 0, pointer + 8, length + 16) if the capacity
+    is not 0, and its work output (+ 24 / + 32 / + 40) if that capacity is neither 0 nor −1 (an error). -/
+def uFoot (bs : List UInt8) : List (Nat × Nat) :=
+  if wd bs 0 = 18446744073709551615 then [] else
+    (if wd bs 0 = 0 then [] else [(wd bs 8, wd bs 16)]) ++
+      (if wd bs 24 = 0 ∨ wd bs 24 = 18446744073709551615 then [] else [(wd bs 32, wd bs 40)])
+
+/-- The slot's buffers are the data of chunks among cs, with distinct pointers. -/
+def FootIn (cs : List Chunk) (bs : List UInt8) : Prop :=
+  (∀ pl ∈ uFoot bs, ∃ c ∈ cs, c.addr + 32 = pl.1 ∧ ∀ a, pl.1 ≤ a → a < pl.1 + pl.2 → InDataA c a) ∧
+    ((uFoot bs).map Prod.fst).Nodup
+
 /-- **One item decodes into the loop's stack slot** (see the module doc): from 45126 with the loop's
     frame base sp (ω₁), the slot at sp + 88 (ω₇), the reader rd (ω₈) holding `enc` inside an allocated
     chunk, and return address 2044, either the run reaches 45168 with the slot's first word not −2, its
@@ -46,8 +62,8 @@ def ItemOk {X : Type} (env : HeapHost X) (cap pb : Nat) (p : ByteArray) (P : Pro
       HeapCtxC env.code pb S0 S1 μ' s' ∧ (∀ c ∈ chunks s, c.used = true → c ∈ chunks s') ∧
       (∀ c ∈ chunks s, c.used = true → ∀ a, InDataA c a → μ'.read a = μ.read a) ∧
       (∃ cs : List Chunk, (∀ c ∈ cs, c ∈ chunks s' ∧ c.used = true ∧ ∀ d ∈ chunks s, d.used = true → d ≠ c) ∧
-        ∀ μ'' : Memory, (∀ c ∈ cs, ∀ a, InDataA c a → μ''.read a = μ'.read a) →
-          Rep (μ'.readN (sp + 88) 184) μ'') ∧
+        (∀ μ'' : Memory, (∀ c ∈ cs, ∀ a, InDataA c a → μ''.read a = μ'.read a) →
+          Rep (μ'.readN (sp + 88) 184) μ'') ∧ FootIn cs (μ'.readN (sp + 88) 184)) ∧
       μ'.readN rd 8 = Num.encodeLE 8 (ip + enc.length) ∧
       μ'.readN (rd + 8) 8 = Num.encodeLE 8 (rlen - enc.length) ∧
       (∀ a, a < 4294967296 → sp ≤ a → (a < sp + 88 ∨ sp + 272 ≤ a) → (a < rd ∨ rd + 16 ≤ a) →
@@ -110,7 +126,7 @@ theorem itemOk_tr {X : Type} (env : HeapHost X) (cap pb : Nat) {p : ByteArray} {
     fun k n h => readN_drop_take μ1 (sp + 88) 184 k n h
   refine Or.inl ⟨s, ω1, μ1, (r1.trans (lp_ret_tr (p := p) (P := P) (R := env.rel cap) x ω1 μ1
       (by rw [e0, h0]))).mono (by omega), by rw [e0, h0], e1, e5, e6, by rw [o0]; decide,
-    HeapCtxC.keep_hi H lo wrf, fun c hc _ => hc, fun c hc hu a ha' => ?_, ⟨[], by simp, fun μ'' _ => ?_⟩,
+    HeapCtxC.keep_hi H lo wrf, fun c hc _ => hc, fun c hc hu a ha' => ?_, ⟨[], by simp, fun μ'' _ => ?_, ?_⟩,
     R0, R8, fun a h0 hs h1 h2 => fr a h0 (Or.inr hs) (by omega) h2⟩
   · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
     unfold InDataA at ha'
@@ -123,6 +139,10 @@ theorem itemOk_tr {X : Type} (env : HeapHost X) (cap pb : Nat) {p : ByteArray} {
     · rw [slot 144 8 (by omega)]; unfold rdN at o144 fg; rw [Nat.add_assoc, o144, fg]
     · rw [slot 152 4 (by omega)]; unfold rdN at o152 fs; rw [Nat.add_assoc, o152, fs]
     · rw [slot 156 4 (by omega)]; unfold rdN at o156 fd; rw [Nat.add_assoc, o156, fd]
+  · have w0 : wd (μ1.readN (sp + 88) 184) 0 = 18446744073709551615 := by
+      have := slot 0 8 (by omega); simp only [Nat.add_zero] at this
+      unfold wd; rw [this]; exact o0
+    exact ⟨by simp [uFoot, w0], by simp [uFoot, w0]⟩
 
 /-- Peeling a read: a read of A ⌢ B is a read of A, then of B. -/
 theorem readN_app (μ : Memory) (a : Nat) (A B : List UInt8)

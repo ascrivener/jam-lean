@@ -50,7 +50,7 @@ theorem ExportOk.congr {env : RefineHost.Env} {μ μ' : Memory} {E k : Nat} {ce 
     · omega
     · rw [(rq j hj).1, (rq j hj).2] at h2; have := hql j hj; omega))]
 
-/-- **Refine's body** (4842 … t): from the decode's `Vec<Instruction>` `{cap, E, n}` at M + 168 (1 ≤ n ≤ 2²¹,
+/-- **Refine's body** (4842 … t): from the decode's `Vec<Instruction>` `{cap, E, n}` at M + 168 (1 ≤ n ≤ 2²⁴,
     E = ce.addr + 32 in the allocated chunk ce) and the allocator's context, with each instruction k passed
     through (`PassOk`) or exported (`ExportOk`), the chunks to keep `Kp k` and the host context `ctx k` per
     instruction, and each output slot satisfying `O` (whence `rep` for the encoder, `DR` for the `Debug` line
@@ -64,7 +64,7 @@ theorem body {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Service
     (dbg : ExitRun.DebugLineOk p cap0 env pb S0 S1 ro DR)
     (ω : Regs) (μ : Memory) (s : State) (H : HeapCtx env pb S0 S1 μ s) (hro : RoData.RoIs ro μ) (M cap n : Nat) (ce : Chunk)
     (Kp : Nat → Chunk → Prop) (O : Nat → List UInt8 → Prop) (ctx : Nat → RefineCtx)
-    (hM : S0 + 7560 ≤ M ∧ M + 632 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0) (hn : 0 < n) (hn128 : n ≤ 2097152)
+    (hM : S0 + 7560 ≤ M ∧ M + 632 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0) (hn : 0 < n) (hn128 : n ≤ 16777216)
     (hcap : 232 * cap < 18446744073709551616) (hce : cap ≠ 18446744073709551615)
     (hceC : ce ∈ chunks s ∧ ce.used = true) (hE : ce.addr + 32 + 232 * n ≤ ce.addr + 32 * ce.size)
     (hEtop : ce.addr + 32 + 232 * n < 2147483648)

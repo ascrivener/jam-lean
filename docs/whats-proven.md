@@ -177,6 +177,34 @@ An independent kernel, nanoda as vendored by
   - *Built from:* `Refine/Top.lean` (`refine_core`: the arguments' parse `ArgsAll.refine_args`, then
     `from4680`), `Refine/RunMixed.lean` (the decode, transform loop and output), `Refine/SpecRun.lean`
     (`Spec.refine`'s run on these payloads).
+- **T1c: canonical payloads, every instruction but `Import` and `RandomStorageRefine`.** `refine_t1c`
+  (`Services/Bootstrap/Refine/T1c.lean`).
+  - *Statement:* for a work item whose code is bootstrap with T1c's code tiers (`IsBootstrapC`), c < 2¹⁶,
+    i < 2¹⁶, service id < 2³², and payload y = ℰ(`Instructions { is, salt }`) ⌢ rest with 1 ≤ |is|
+    instructions well-formed for C = `Consts.ofParams Params.full rk` (any rk), none `Import` or
+    `RandomStorageRefine`, and |y| + 48 ≤ 2²⁴ (so |is| < 2²⁴): `Spec.refine C` under the GP refine host
+    functions (`RSem.run`) returns some output and exports, and Ψ_R's result and exports are those; or ∞ with
+    no exports; or the run reaches a failed allocation (`ExhaustsHeap`). The output passes every instruction
+    through, returns `ExportSegs ds` as `Exported |ds|` and an eager `Lookup s h` as `LookedUp (lk s h)`.
+  - *Assumed:*
+    - `VendoredFactsC`: `VendoredFacts` and the drop table's entry 8 (read-only offset 32), about the constant
+      blob, discharged in step 10;
+    - `IsBootstrapC`: `IsBootstrap` plus `checkCode` for the append-only tiers `CodeT1B` and `CodeT1C`. The
+      kernel proves these of the vendored blob (`CodeT1BCheck`, `CodeT1CCheck`); step 10;
+    - `FmtHypsC C`: four log / `Debug` lines (`ArgsLineOk`, `ExportFmtOk`, `LookupFmtOk`, and `DebugLineOk` for
+      `SlotT.DRt C`), stated at the host contract's gas cap 2⁶², to be discharged by the fmt summaries. The cap
+      is 2⁶² rather than 2²⁷ because the eager `Lookup`'s gas, 1125 + ⌈264 |d| / 1024⌉, must fit under it for
+      every preimage d; Ψ_M's lift holds at any cap;
+    - `hnoimport`: no `Import` (deferred; Adam);
+    - `hrsr`: no `RandomStorageRefine` (decision of 2026-11-13);
+    - `hpre`: every preimage the historical lookup at the anchor returns is shorter than 2⁶³ octets.
+  - *Not yet proved:* that a failed allocation then ends in ☇ with no exports (the named later obligation).
+  - *Not covered (deferred):* `Import`, `RandomStorageRefine`, n = 0 (the separate `psiR_noinstr`), and
+    non-canonical payloads (M2).
+  - *Built from:* `Refine/TopT.lean` (`refine_coreT`: `ArgsAll.refine_args`, which also carries 𝖢 = 341 and
+    𝖰 = 80 at 196616 / 196680 from the parameter chain, then `from4680T`), `Refine/RunT.lean` (`run_t`: the
+    decode with per-kind packages `PkgAll`, the loop `LoopT.loop_t` with the invariant `InvT.Inv`, and
+    `ExitRunW.exit_runW`), `Refine/SpecRunT.lean` (`Spec.refine`'s run on these payloads).
 - **The `Instructions` decode loop, for lists of `Checkpoint`.** `DecodeLoop.loop` and
   `DecodeLoop.pass` (`Services/Bootstrap/DecodeLoop.lean`).
   - *Statement:* from the loop's state after k of n elements, the loop at pc 680 decodes the
@@ -602,6 +630,8 @@ An independent kernel, nanoda as vendored by
     With cap ≥ 2²⁷ the growth cost fits, since 4096·pb ≤ S0 < 2³² gives pb < 2²⁰.
   - *Assumed:* the heap base is 8-aligned (`s.base % 8 = 0`), which `HeapCtx` does not record; the
     stack frame below sp (S0 + 320 ≤ sp, 2147483968 ≤ sp, 8-aligned).
+    (Pointer for later: `WF` records `s.base % 32 = 0`, so this is likely dischargeable; see
+    `Acc/Handlers/ChunkAlign.lean`.)
 
 - **The allocator under any host fit for it, refine's or accumulate's.** `Alloc.HeapHost`,
   `Alloc.refineHeap`, `Acc.accHeapHost` (`Services/Bootstrap/Alloc/HeapContract.lean`,
@@ -741,6 +771,145 @@ An independent kernel, nanoda as vendored by
     𝖰 = 80. Other parameter sets are not covered.
   - *Scope:* the facts hold at 4642. That the later code until each decoder keeps these globals is a
     separate matter (`HKeepG` and the decoders' own statements).
+
+### Bootstrap service: accumulate (`Services/Bootstrap/Acc/`)
+
+Pieces of T2 (`docs/bootstrap-target.md`): parts of bootstrap's accumulate code shown to implement
+`Spec.accumulate`'s operations in the sense of `Acc.Impl` (`Acc/Impl/Impl.lean`).
+
+- **`on_transfer` implements `Spec.onTransfer`.** `Acc.tr_impl` (`Acc/Transfer/ImplTr.lean`).
+  - *Statement:* from the transfer arm at 7159 (an incoming transfer: source ω₁₀ mod 2³², amount
+    ω₆, the 128-octet memo at ω₈), the run implements `onTransfer src am memo`: it reads the counter
+    under "transfer-count", writes it back incremented (mod 2³²), logs a line, formats the key
+    "transfer{n}" and writes the record ℰ₄(src) ⌢ ℰ₈(am) ⌢ memo under it, then reaches the items
+    loop's head 6766 (`TrPost`: context `trCtx`, every earlier heap chunk and its data kept, from sp
+    up only the octets `TrW` changed, memory below 196608 unchanged, the statics 196616 … 196791
+    (`Glob`, where the prologue stored the chain parameters) unchanged). Each `set` that returns FULL
+    ends ☇ (`orPanic`, 15361); a failed allocation (3820, 48047, 4002, 15363, 15362, 34178, `get`'s
+    47977) is an early ☇ for the reason `heap` (`HeapFailT`).
+  - *Assumed:*
+    - every value in the service's storage is shorter than 2⁶³ octets (`hfit`; T2's `ValuesFit`);
+    - the blob's read-only data: the key "transfer-count" at 65956 and `set`'s error table at
+      69056 … 69076 (`accRoBytes`);
+    - the prologue's formatter words at sp + 208 / 136 / 200 (2800, 2804, 678);
+    - the heap context `HeapCtxC` and the stack bounds of the accumulate frame.
+  - *Named hypotheses* (`Acc/Transfer/Hyp.lean`; to be discharged by the executor and log-site work):
+    - `KeyFmt`: `format!("transfer{}", n)` at 7792 returns the key's octets, stated as text, in the
+      data of a live heap chunk fresh against the allocator's earlier state (strengthened from
+      "kc = 0 or a fresh chunk", Adam, 2026-11-15), or exhausts the heap and then ends ☇ (`ExhaustsP`);
+    - `Utf8Call`: `core::str::from_utf8` at 7447 on the memo (its frame, all memory below sp − 4096,
+      covers the statics);
+    - `LogFmt`: the log line's `format!` at 7692, frame-only (formatters 2800 → dec32, 2804 → dec64,
+      678 → String Display), or `ExhaustsP`.
+    - `KeyFmt` and `LogFmt` also state, in their success case, that the statics 196616 … 196791 are
+      unchanged (Adam, 2026-11-16, so that `ParamStatics` reaches row 8). Whoever discharges them
+      proves this too; the formatters write only the stack and the heap.
+
+- **`ValuesFit` is kept by every operation.** `Acc.dispatch_keeps`, `Acc.ValuesFit.step`,
+  `Acc.ValuesFit.run` (`Acc/ValuesFitStep.lean`).
+  - *Statement:* every host call of the model (`AccHost.dispatch`, any id, gas, registers and memory)
+    keeps this service's storage values and every service's preimages shorter than 2⁶³ octets (a
+    stored value is read from a readable range, below 2³²); so every `ASem.step` keeps `ValuesFit`,
+    and so does every run (`ASem.run`). No assumptions.
+
+- **The items loop (R1).** `Acc.items_loop`, `Acc.loop_tr`, `Acc.err_arm`, `Acc.loop_end`
+  (`Acc/ItemsLoop/`).
+  - *Statement:* from the loop head 6766 with `ItemsInv` for the inputs `ins` (the iterator, slot
+    buffer and frame words, `HeapCtxC`, each slot holding its input, `ItemsOwn`, the read-only data,
+    the statics, `ValuesFit`), the run implements `Spec.accumulate`'s loop over `ins.map specItem`
+    (body `accBody`), then halts with ω₈ = 0. Transfers by `tr_impl`; work errors skip (the trace's
+    buffer freed); the loop's end frees the slot buffer and halts.
+  - *Premises:* the operand arm `OpArm` (proved by R2, below), `ItemsInv` at the head (to be established
+    by the final composition, R16).
+  - `ItemsOwn` (premise of `ItemsInv`): each slot's trace / output buffer is the data of its own
+    allocated chunk, all distinct and not the slot buffer (decided 2026-11-16, option (C)). It is
+    discharged: `inputs_decode` now states `SlotsOwn` (`Acc/Inputs/`), and `itemsOwn_of_slots`
+    (`Acc/ItemsLoop/Inv.lean`) gives `ItemsOwn`.
+  - *Named hypotheses:* those of `tr_impl`, and `ItemLogFmt` (`Acc/ItemsLoop/Err.lean`): the item's log
+    line "Accumulating work item from {}" at 6955 … 7009 (format, `log`, the String's free) is
+    frame-only — it keeps the context, ω₁, the allocator's context with every allocated chunk and its
+    data, the memory from sp up but sp + 1568 … 1592, and the statics — or exhausts the heap and ends ☇
+    (`ExhaustsP`). A log site (standing decision; decision 23's G4).
+
+- **The items loop's operand arm (R2).** `Acc.op_arm`, `Acc.items_loop_full` (`Acc/ItemsLoop/Op.lean`).
+  - *Statement:* `op_arm : OpArm …`: for a work-item operand, the run from 6766 (head `opArm_head` →
+    7009, `op_dec` → 8013, row 8 `add_recent` → 8416, row 9 `results_init` → 8492, `loop_row11` → 6766)
+    implements `accBody` on it and re-establishes `ItemsInv` for the rest. `items_loop_full` is
+    `items_loop` with `op_arm` and `err_arm` plugged in: from `ItemsInv` at the head, the run implements
+    `forIn (ins.map specItem) () accBody; pure ()` and halts.
+  - *Premises:* `ParamStatics μ₀ 𝖢 𝖨`, `RingFits 𝖢 𝖨`, maxRecent = 2·𝖢·𝖨 (see row 8). `ItemsInv` now also
+    carries `OpRO` (the read-only words the arm reads) and 2³¹ + 4096 ≤ sp.
+  - *Aborts:* `HeapFailT`, the traps 15364 / 34070 / 47977 / 32584 / 36528, and 40611 / 40821 with
+    ω₇ = 0: all `AccAbort` (heap exhaustion).
+  - *Named hypotheses:* `Utf8Call`, `LogFmt`, `KeyFmt`, `ItemLogFmt` (above); Handlers A's `InstrLogH`,
+    `ResultLogH`, `HandlerH`, `PushH`, `ExtendH`, `OkEncH`, `DropInstrsH`; and **`OutDecH`**
+    (`Acc/ItemsLoop/OutDec.lean`; Adam's decision 23, Plan B; approved by @parent): the inlined
+    `BootstrapWorkOutput::decode` runs from 7050 to 7080, keeping the frame (ω₁, ω₅, ω₆, the allocator's
+    chunks and their data, the stack but the reader and the result, the statics, the octets below
+    196608). If the spec decode succeeds, the result is the instructions' `Vec` (each slot representing
+    its instruction, fresh buffers) and ℰ₂(item) at sp + 1592. If it fails, the result is −1 at
+    sp + 1568 (the arm then traps at 15361). Otherwise it exhausts the heap (`ExhaustsP`). To be
+    discharged by R3; the decode-error branch is an open obligation stated with it.
+
+- **The accumulate prologue stores 𝖢 and 𝖨.** `Acc.Statics.start_to_6429_statics` and
+  `Acc.Statics.chain` (`Acc/Statics.lean`).
+  - *Statement:* from Y's state at instruction 5, the run reaches 6429 (the first argument decode) in
+    3420 steps with `AccBParams.St177`, and also [196616]₂ = ℰ₂(𝖢) and [196696]₈ = ℰ₈(𝖨), where
+    𝖢 = `coreCount` and 𝖨 = `maxPackageItems` of `env.params`. The SDK's `apply()` stores them
+    (`store_u16` at 56279 after the check 2 ≤ 𝖢 ≤ 341, `store_u64` at 56205 of a u16 field). They
+    are the words Handlers A's row 8 takes as `ParamStatics μ 𝖢 𝖨` (the ring size 2·𝖢·𝖨).
+  - *Assumed:* as `Acc.start_to_6429`, including `env.params = Params.full`. So 𝖢 = 341 and 𝖨 = 16.
+  - *Scope:* the facts hold at 6429. `on_transfer` keeps 196616 … 196791 (`TrPost`); the rest of
+    the way to row 8 (the argument decodes, the inputs decode, the items loop) is still to be shown.
+    The binary does not check 𝖨 > 0; 2·𝖢·𝖨 < 2³² follows from 𝖢 ≤ 341 and
+    𝖨 < 2¹⁶.
+
+- **T2: bootstrap's accumulate implements `Spec.accumulate` (stated with named hypotheses).**
+  `Acc.Final.accumulate_spec` (`Acc/Final/Spec.lean`), from `Acc.Final.acc_impl` (`Acc/Final/Impl.lean`)
+  and the lift `psiA_of_impl`.
+  - *Statement:* for a service s whose code (in the state with the incoming transfers credited) is
+    bootstrap's (`IsBootstrapCode`), timeslot t < 2³², s < 2³², and at most 89 inputs each `InputSized`:
+    for some n, Ψ_A's state, transfers, yield and provisions are `ASem.outcome (ASem.run n
+    (Spec.accumulate C t) …)` from (x₀, x₀), x₀ = I(**e**′, s); and that spec run finished, or Ψ_M ran
+    out of gas, or the binary reached heap exhaustion (`AccAbort`). C is any constants with
+    maxRecent = 2·341·16.
+  - *Proved along the way:* the start-up to 6501 with the statics and picoalloc's start state
+    (`start_ctx`, with `Statics.chainZ`, which also checks the freed header word [206892]₄ = 0); the first
+    log line under a context-keeping contract (`acc_log_lineK`, `accKeepK`); `fetchItems` replies ℰ(↕**i**)
+    (`ASem.step_fetchItems`); the spec's decode gives `inputs.map specItem` (`decode_items`); no inputs:
+    6674 halts (`items_none_halt`); otherwise `ItemsInv` at 6782 (`il_head2`) and `items_loop_full`.
+    `ParamStatics` (𝖢 = 341, 𝖨 = 16) and `RingFits` are discharged; the service's own account comes from
+    Ψ_A's code lookup.
+  - *Named hypotheses* (`Acc/Final/Hyps.lean`):
+    - `AccVendoredFacts`: the read-only slices accumulate reads in the vendored blob (templates, `String`
+      vtable, "transfer-count", `set`'s error table, key-size words, jump table); a named vendored-blob
+      fact under Adam's standing decision (like `VendoredFacts` and `FmtRO`), discharged in step 10;
+    - `IsBootstrapCode` (a premise, accepted as T2's counterpart of `IsBootstrap`): the code is bootstrap's;
+    - `AccHyps B C` (for every bootstrap code): `AccLogFail` (the first log line, 6501 … 6630: a failed
+      allocation then ends ☇; its success branch is proved), `InputsGlob` (the inputs decode keeps
+      196616 … 196791), and `items_loop_full`'s `Utf8Call`, `LogFmt`, `KeyFmt`, `ItemLogFmt`, `OutDecH`,
+      `InstrLogH`, `ResultLogH`, `HandlerH`, `PushH`, `ExtendH`, `OkEncH`, `DropInstrsH`;
+    - `InfoFits e s`: s's code hash is shorter than 2⁶⁴ − 73 octets (its `info` record shorter than
+      2⁶⁴ − 9, which the SDK's `info` wrapper reads as an error code from on, 49017);
+    - `ValuesFit` (decided 2026-11-15);
+    - G3 (temporary): at most 89 inputs, each `InputSized`.
+  - *Accepted (Adam, 2026-11-17):* `InfoFits`, `AccLogFail` and `InputsGlob` as named hypotheses.
+  - *Open obligation:* `InputsGlob` is temporary; it is to be discharged by threading a `Glob` conclusion
+    through `inputs_decode` (`fv_call`, `g_inputs` and their sub-lemmas).
+
+- **T2's abort reason and length premise (definitions).** `Acc.AccAbort`, `Acc.HeapTrapPc`,
+  `Acc.ValuesFit` (`Acc/Abort.lean`).
+  - `AccAbort s`: heap exhaustion. Either a failed allocator call (the `alloc` wrapper's return 40611 or
+    `realloc`'s 40821 with ω₇ = 0), or one of the blob's 53 allocation-failure traps (`HeapTrapPc`,
+    found from the disassembly with `scripts/allocfail/`). Each listed trap is reached only by the
+    null test after an allocation (or a growth helper's `Err`, which means a null allocation or an
+    overflowing size), or by an allocation-size check failing (a request above 2³⁷ − 32), both heap
+    exhaustion under Adam's decision. `format_inner`'s trap 59710 is left out, because a formatter
+    returning `Err` also reaches it. `accAbort_of_heapFailT`: `on_transfer`'s abort states are
+    `AccAbort` states.
+  - `ValuesFit env x`: this service's storage values, every service's preimages and ℰ(↕**i**)
+    (`fetch` kind 14) are shorter than 2⁶³ octets (decided 2026-11-15).
+  - *To do:* `ValuesFit` is kept by every operation (`ASem.step`).
 
 ### picoalloc: the model (`Services/Picoalloc/`)
 
@@ -923,6 +1092,97 @@ What you trust beyond the kernel:
   values shorter than 2⁶³ octets (`get_call`'s `hfit`); T2 will carry this as `ValuesFit` (decided
   2026-11-15). The SDK's `get` reads a length of 2⁶⁴ − 1 as NONE and traps on lengths from 2⁶³; see
   [Findings](#findings).
+- **Allocation failure ends in ☇ (a blob obligation).** The binary follows a failed allocation with
+  `handle_alloc_error`, which traps. Wherever a theorem only reaches the failed allocator call
+  (`Fmt.Exhausts`: 40611 / 40821 with ω₇ = 0), this last stretch to the trap is still to be proved;
+  T1 needs it for its `ExhaustsHeap` disjunct. For T2, `on_transfer`'s named hypotheses `KeyFmt` and
+  `LogFmt` (`Acc/Transfer/Hyp.lean`, on the T2 inputs branch) state their failure case as `ExhaustsP`:
+  the failed call is reached *and from there the run ends ☇*, keeping (x, y) (Adam, 2026-11-15).
+  Whoever discharges them, and the fmt summaries used under T2, proves that path too.
+- **`KeyFmt`'s key buffer (T2, named hypothesis).** `KeyFmt` (`format!("transfer{}", n)`) states, in
+  its success case, that the key's len octets lie in the data of a live heap chunk at kp − 32, fresh
+  against the allocator's earlier state (Adam, 2026-11-15; it replaced "kc = 0 ∨ the buffer is a fresh
+  chunk"). `set` needs the key's octets readable and below the stack; whoever discharges `KeyFmt`
+  proves this too.
+- **The ring size (T2, `RingFits`; row 8, `add_recent_work_item`).** The binary sizes the ring of recent work items
+  as 2·𝖢·𝖨 computed in 32 bits (`Acc/Handlers/RecentSlotWrite.lean`), so row 8 assumes
+  `ParamStatics μ C I ∧ RingFits C I`: the protocol parameters' statics hold 𝖢 (the `u16` at 196616) and 𝖨 (the
+  `u64` at 196696), and 0 < 2·𝖢·𝖨 < 2³² (decided 2026-11-16). The full parameters give 2·341·16 = 10912.
+  - `RingFits` is a named hypothesis on the chain parameters and an assumption of T2. *Obligation (open):* it may
+    later be discharged from the fetched parameters (fetch kind 0) instead. The upper bound already follows from
+    `apply()`'s checks (2 ≤ 𝖢 ≤ 341, 𝖨 stored as a `u16`, so 2·𝖢·𝖨 < 2³²); only positivity (𝖨 ≥ 1) is not checked
+    by the binary and remains a real assumption on the chain parameters.
+  - `ParamStatics` is not an assumption of T2. *Obligation (open):* the T2 composition discharges it from the entry
+    prologue's `apply()` (the stores at 56205 and 56279) and from the frames of the later steps, which keep
+    196616 … 196791.
+  - Row 8 is composed: `add_recent` (`Acc/Handlers/RecentAdd.lean`) states that the run from 8013 to 8416
+    implements spec `addRecent` in `Impl`'s form. Early ☇ happens only at the allocation-failure traps 34070,
+    47977 and 32584 (heap exhaustion). Its hypotheses are `ParamStatics` (an obligation), `RingFits`,
+    maxRecent = 2·𝖢·𝖨, the read-only words it reads (key sizes, `set`'s error table) and `ValuesFit` for
+    this service's storage at the start (`StoreFit`). `Impl.inv` carries `StoreFit` past the removal and the
+    slot write. Its post `AddPost` also records ω₆ kept (added 2026-11-16, parent-approved).
+- **`DropInstrsH` and `InstrRep` (T2, named hypothesis; parent's option (A) for row 11's drops).** The drop
+  of the instructions' `IntoIter` (33214, per-kind drops through the table at 68312) is assumed frame-only:
+  it frees each remaining slot's `foot` and then its buffer, keeps every other allocated chunk with its data
+  and the memory from sp up (`Acc/Handlers/InstrRep.lean`). `InstrRep` (`rep`, `foot`, `frame`, `tag`,
+  `notNone`) is the parameter shared by the R3/R6 hypotheses and R5. *Obligation:* T1's per-kind `Rep`s
+  discharge it, `tag` (the slot's first word decodes to the instruction's index) and `notNone` (that word
+  is not 2⁶⁴ − 2) included; the drop's proof discharges `DropInstrsH`. Row 11's `row_eleven_core`
+  (15038 → 6766) and `r11_tail` (the results drop `drop_results` and the three deallocs) are proved without
+  it. **`row_eleven`** (15028 → 6766, `Acc/Handlers/RowElevenFront.lean`) uses it, with the premises R5 must
+  supply: `IterOwn`, `(iterFree ++ tailFree).Nodup`, `ResultsAvoid` and the stack room.
+- **R5's named hypotheses (T2, Plan B, approved by the parent 2026-11-16; `Acc/Handlers/InstrLoopHyp.lean`).**
+  Each is minimal and frame-only, and keeps sp + 184 … sp + 224:
+  - `InstrLogH` (G4): the instruction's Debug log line, `format!` at 8772 (59375 → 8779): a fresh `String`
+    { kc, kp, kl } at sp + 1568 with its kl octets at kp readable (option A, approved by the parent
+    2026-11-16: `ResultLogH`'s readability premise needs it), the allocator's chunks kept, the globals
+    196616 … 196791 kept (added 2026-11-16, parent-approved), or `ExhaustsP`; the text is not stated;
+  - `ResultLogH` (G4): the result's log line, `format!` at 14369 (59375 → 14376), the same shape with the
+    `String` at sp + 1144;
+  - `HandlerH` (R6): one hypothesis over every instruction i: from the dispatch at 8822, the handler
+    implements `onInstr C now i` under `accContractS` and ends at 14278 in `HandlerPost` (the result at
+    sp + 1000 in fresh chunks or the instruction's own buffers, owning its buffers (`ItemOwn`, the pushed
+    item's `itemPtrs` distinct and in `ResC` chunks, a `dataVec`'s inner array in its buffer; approved by the
+    parent 2026-11-16), other chunks kept, `LoopKeep` frame words
+    kept);
+  - `PushH` (R8): `finish_grow` with an old buffer for the results `Vec` (14431 → 14485), keeping the frame
+    and the globals 196616 … 196791 (added 2026-11-16, parent-approved), or `ExhaustsP`.
+  The loop's straight-line segments (`InstrLoopSeg.lean`, `InstrLoopTail.lean`) are proved without them.
+- **R5, the instruction loop (T2, Handlers A; `Acc/Handlers/InstrLoopBody.lean`, `InstrLoopFor.lean`).**
+  `il_body` (an instruction other than `Checkpoint`) and `il_body_ck` (`Checkpoint`: the results store
+  first, `store_core` returning to 8716) prove that one pass, 8540 (or 8554, where the entry falls
+  through) → 8540, implements the spec's loop body (`onInstr C now i`, and for `Checkpoint` first
+  `store key (encodeResults rs)`) and re-establishes `LoopAt` for the instructions left and rs ++ [r].
+  **`il_loop`** wraps them as `Impl.forIn` over `LoopInv`. Named hypotheses: `InstrLogH`, `ResultLogH`,
+  `HandlerH`, `PushH` (above) and `ExtendH`/`OkEncH` (the `Checkpoint` store; since 2026-11-16 they carry
+  no length premise: the old `len + n < 2³⁰ − 64` and `WriterPre`'s `2·cap < 2³⁰ − 64` are gone, a
+  too-large encoding being heap exhaustion inside their `ExhaustsP` branch, parent-approved). Premises (not new
+  assumptions of T2; R2 discharges them):
+  - a context invariant `Inv` with `hIst` (every `ASem.step` keeps it) and `hIfit` (it gives `StoreFit`),
+    the `StoreStep` premise the parent approved: R2 takes `Inv c := ValuesFit env c.1`, `hIst :=
+    ValuesFit.step` and `hIfit := ValuesFit.storage` (T2 inputs, R12);
+  - at the entry's memory: the item index at sp + 176, the key-size word, `set`'s error table, the
+    read-only data's access and the dispatch table at 65736;
+  - the loop's body f through its two equations (`Checkpoint`, other), which R2 proves for the spec's
+    `do` block by `rfl`.
+  `LoopInv` also carries `OldKeep`: every allocated chunk of the entry outside the instructions' buffers
+  stays allocated with its data and is none of the buffers freed later (`StepKeep`, from each body), and
+  the globals 196616 … 196791 kept (each body keeps them: `BodyPost`). There is no size premise on the
+  results (`hBall` and `LoopHyp.hB` were removed 2026-11-16, parent-approved): the results store's
+  `alloc(144n + 4)` is bounded by the results' own heap footprint (`LoopHyp.hrp`).
+- **R5 and R7 composed (T2, Handlers A; `Acc/Handlers/InstrLoopEntry.lean`, `InstrLoopRowEleven.lean`).**
+  **`loop_row11`**: from row 9's end (8492) with `EntryHyp` (the decoded instructions' `Vec` owned as
+  `VecOwn`, its pointer in ω₆; the results `Vec` with len 0 (`hres`) and row 11's `TailHyp`; the instructions' buffers distinct from `tailFree`; the frame constants),
+  the run implements the spec's loop followed by `unless is.any isZomb (store key (encodeResults results))`
+  and reaches the items loop's head 6766 in `R57Post`: the allocator's context, every allocated chunk of
+  the entry outside the instructions' buffers and the frame buffers at sp + 104 / sp + 272 kept with its
+  data, the frame words `StableKeep` and the globals 196616 … 196791 kept. Both cases: some instructions (`il_entry`, `il_loop`,
+  `loop_exit`) and none (8492 → 15050, the empty `IntoIter`'s drop, `row_eleven_store` from 15060).
+  Named hypotheses: those of `il_loop` plus `DropInstrsH`. Premises as `il_loop`'s (`Inv`, the
+  read-only facts), now at the entry. Not promised: the registers but ω₁. `EntryHyp.hres` allows the results buffer either empty (cap 0) or `Vec::with_capacity`'s
+  allocated chunk (the binary's case for |is| > 0, 7970).
+  `LoopHyp.hrp` (the results' addresses in [2¹⁶, 2³¹)) now applies only when there are results: an
+  empty `Vec`'s pointer dangles.
 - **Refinement of a fragment, not of a whole program.** The allocator theorems are about the
   allocator's entry points called with the stated registers and memory. They are not yet composed
   into a Ψ_R or Ψ_A theorem about a bootstrap run that allocates.
@@ -997,5 +1257,31 @@ At the time of writing, other work in progress includes:
 - **Lifting the 14-page limit,** by making the host-call gas cap a parameter of `refineContract`.
 - **`alloc` in the binary at alignment above one unit with heap growth, on first use and on
   failure.** The no-growth success path is done (`AllocAlignRefines.lean`).
+- **The field formatters of refine's 6159 `Debug` line** (`Services/Bootstrap/Fmt/Field*.lean`,
+  `N56*.lean`), frame-only summaries in the style of the Fmt ones: `write_char` (59743), `pad_wp` and
+  `pad_z2` (`pad_integral` with `{:02x}`'s options), `u8hex_ok` (60209), `fmt_write_spec` (an
+  explicit-options item), `fmt_write_c3` and `fmt_writeW` (nested `core::fmt::write` calls, whose
+  arguments lie below the `String`), `slice_hex_ok` (57922) and `n56_hex` (56340's hex path).
+  - *Named hypotheses* on the vendored blob's read-only data, discharged in step 10 like `FmtRO`:
+    `RO70833` (the octets 70833 … 70840, the template `{:02x}`) and `RO70824` (the octets 70824,
+    70827, 70828 and 70832, the template `0x{}...`).
+- **`core::str::from_utf8` (60681), by the symbolic executor** (draft PR #194,
+  `Services/Bootstrap/SymExec/Utf8Final.lean`). Both statements are proved, with axioms propext,
+  Classical.choice and Quot.sound only:
+  - `from_utf8_call`: for every input the call returns to the caller with r0, r1, r5 and r6
+    restored. Memory changes only in its 32-octet stack frame and the 24-octet result, and the page
+    map is kept. The result is either `Ok` (0, p, len), or `Err` (1, v, error_len) with v < len,
+    the octet at p + v at least 0x80, and error_len `None` or `Some 1..3`.
+  - `from_utf8_ascii`: if every octet is below 0x80, the result is `Ok` with the same pointer and
+    length.
+
+  The premises are the calling convention (`Pre`):
+  - p < 2^32, len < 2^32, p + len ≤ 2^32, and [p, p + len) is readable;
+  - [sp, sp + 32) is writable, with sp + 32 < 2^32;
+  - [O, O + 24) is writable, with O + 24 < 2^32, and is disjoint from the frame;
+  - the input is disjoint from the frame;
+  - [71078, 71334) is readable.
+
+  There is no hypothesis about the contents of the table.
 
 This page should be updated as these land.

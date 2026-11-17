@@ -833,7 +833,9 @@ Pieces of T2 (`docs/bootstrap-target.md`): parts of bootstrap's accumulate code 
     Ψ_A's code lookup.
   - *Named hypotheses* (`Acc/Final/Hyps.lean`):
     - `AccVendoredFacts`: the read-only slices accumulate reads in the vendored blob (templates, `String`
-      vtable, "transfer-count", `set`'s error table, key-size words, jump table); step 10;
+      vtable, "transfer-count", `set`'s error table, key-size words, jump table); a named vendored-blob
+      fact under Adam's standing decision (like `VendoredFacts` and `FmtRO`), discharged in step 10;
+    - `IsBootstrapCode` (a premise, accepted as T2's counterpart of `IsBootstrap`): the code is bootstrap's;
     - `AccHyps B C` (for every bootstrap code): `AccLogFail` (the first log line, 6501 … 6630: a failed
       allocation then ends ☇; its success branch is proved), `InputsGlob` (the inputs decode keeps
       196616 … 196791), and `items_loop_full`'s `Utf8Call`, `LogFmt`, `KeyFmt`, `ItemLogFmt`, `OutDecH`,

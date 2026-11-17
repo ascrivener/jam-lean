@@ -42,7 +42,7 @@ theorem encode_length_le (i : AccumulateInput) (hi : InputSized i) : i.encode.le
   | operand o =>
     obtain ⟨h1, h2, h3, h4, -, ht, ho⟩ := hi
     have hg := encodeNat_length_le o.gasLimit
-    have h0 := encodeNat_length_le 0
+    have h0 : (Blob.encodeNat 0).length = 1 := by decide
     have hta := encodeNat_length_le o.authTrace.size
     have hr : o.result.encode.length ≤ 1 + 9 + 16384 := by
       cases hres : o.result with
@@ -135,7 +135,7 @@ theorem acc_impl {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Has
     (B : InstrRep) (C : Spec.Consts) (hmax : C.maxRecent = 2 * 341 * 16)
     (env : AccEnv) (henv : heapBounds env.code = (48, 1044430)) (hpar : env.params = Params.full)
     (hH : AccHypsAt B C env.slot p P env)
-    (μ : Memory) (hμ : Prefix.StartMem μ) (hZ : StartMemZ μ)
+    (μ : Memory) (hμ : Prefix.StartMem μ) (hZ : Prefix.StartMemZ μ)
     (hz : ∀ a, 4278050816 ≤ a → a < 4278059008 → μ.read a = 0) (hro : AccRO μ)
     (S N LA : Nat) (hT : env.slot < 4294967296) (hS : S < 4294967296) (hN : N = env.inputs.length)
     (hLA : (Blob.encodeNat env.slot).length + (Blob.encodeNat S).length + (Blob.encodeNat N).length = LA)
@@ -187,7 +187,7 @@ theorem acc_impl {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Has
   subst hx2
   have run2Y := FreeStepsH.keepYIn x₀ x₀ run2K rfl
   -- (3) 6630 → 6674, the inputs
-  have hcost : 287 + memGas 400 (inputsEnc env).length ≤ gcap := by unfold memGas; omega
+  have hcost : 287 + memGas 400 (inputsEnc env).length ≤ gcap := by unfold memGas gcap; omega
   rcases inputs_decode env gcap 1044430 (by decide) (by decide) hcost (P := P) (hb := 0) (x₀, x₀) ω2 μ2 s2
       4278057152 4278050816 4278059008 H2 (r21.trans r1) hn hsz (by omega) (by decide) (by decide) (by decide) with
     ⟨q, st', ω3, μ3, run3, z1, -, -, o0, o8, o16, H3, -, reps, sown, fr3⟩ | ⟨j, ω3, μ3, hj, run3⟩
@@ -235,14 +235,16 @@ theorem acc_impl {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Has
       (by rw [show (4278057152 + 1576 : Nat) = 4278057152 + 1568 + 8 from rfl]; exact o8)
       (by rw [show (4278057152 + 1584 : Nat) = 4278057152 + 1568 + 16 from rfl, o16, hl0]) w1848
       (fun b h1 h2 => H3.st b (by omega) (by omega))
-    refine hpr _ (by rw [hn0]; rfl) _ (.inr ⟨_, ⟨0, .refl⟩, rfl, ωh, μh, f, runh, h8⟩)
+    refine hpr (Prog.pure PUnit.unit) (by rw [hn0]; rfl) _ ?_
+    show _ ∨ _
+    exact .inr ⟨_, ⟨0, .refl⟩, rfl, ωh, μh, f, runh, h8⟩
   · -- inputs: 6674 → 6782, then the items loop
     have hpos : 0 < env.inputs.length := by
       cases h : env.inputs with
       | nil => exact absurd h hn0
       | cons _ _ => simp
     obtain ⟨d, hd, hdu, hda, hdq⟩ := sown.1 (by omega)
-    have hcb := chunk_bounds H3.wf hd
+    obtain ⟨hcb1, hcb2, hcb3⟩ := chunk_bounds H3.wf hd
     have hbT := H3.hbT
     obtain ⟨ω4, μ4, run4, a1, a5, -, a144, a16, a32, a184, a216, fr4, rd4, wr4⟩ :=
       il_head2 (p := p) (P := P) (R := YIn (accContractS env) x₀ x₀) ((x₀, x₀), f) ω3 μ3 4278057152
@@ -308,7 +310,7 @@ theorem acc_impl {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Has
       (fun s h => .inl (by rcases h with h | h | h | h | h <;> rw [h] <;> decide))
       (fun s h => .inr h)
       hH.utf8 hH.logFmt hH.keyFmt hH.itemLog hH.outDec hH.instrLog hH.resultLog hH.handler hH.push
-      hH.extend hH.okEnc hH.drop (Cp := 341) (I := 16) (by decide) hmax hPS env.inputs _ hInv
+      hH.extend hH.okEnc hH.drop (Cp := 341) (I := 16) (by unfold Handlers.RecentSlotWrite.RingFits; decide) hmax hPS env.inputs _ hInv
     right
     exact ⟨⟨6782, ω4, μ4, (x₀, x₀), f⟩, ⟨_, runB⟩, rfl, hpr _ rfl _ himpl⟩
 

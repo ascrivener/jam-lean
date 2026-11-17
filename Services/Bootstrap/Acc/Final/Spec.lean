@@ -35,7 +35,7 @@ theorem credit_codeHash (e : PartialState) (s : Nat) (inputs : List AccumulateIn
   | none => rw [he] at h; simp only at h; rw [he] at h; cases h
   | some a =>
     rw [he] at h
-    simp only [Std.ExtTreeMap.get?_insert_self, Option.some.injEq] at h
+    simp only [Std.ExtTreeMap.get?_eq_getElem?, Std.ExtTreeMap.getElem?_insert_self, Option.some.injEq] at h
     exact ⟨a, rfl, by rw [← h]⟩
 
 /-- **Y's memory holds `AccRO`**, for a blob with the vendored blob's read-only data. -/
@@ -45,7 +45,7 @@ theorem accRO_initial (hvend : AccVendoredFacts) (jb vb : JamBlob) (hvb : vendor
   obtain ⟨vb', hvb', -, t1, t2, t3, t4, t5, t6⟩ := hvend
   obtain rfl : vb' = vb := Option.some.inj (hvb'.symm.trans hvb)
   have tabR : ∀ o l, o + l ≤ 11608 → (initialMemory jb a).readN (65536 + o) l = (vb'.ro.toList.drop o).take l :=
-    fun o l h => by rw [initialMemory_readN_ro jb a hl ha o l h, hro]
+    fun o l h => by rw [Refine.Milestone.initialMemory_readN_ro jb a hl ha o l h, hro]
   have rdR : ∀ x, 65536 ≤ x → x < 77144 → (initialMemory jb a).readable x = true :=
     (startMem_initial jb a hl ha).ro
   have e1 : (initialMemory jb a).readN 66464 42 = accTmplBytes := by
@@ -75,7 +75,7 @@ theorem accRO_initial (hvend : AccVendoredFacts) (jb vb : JamBlob) (hvb : vendor
     fun x h1 h2 => rdR x (by omega) (by omega)⟩⟩
   · unfold rdN; rw [show (77040 : Nat) = 77040 + 0 from rfl, sub _ _ 0 8 _ e2 (by omega)]; rfl
   · unfold rdN; rw [show (77048 : Nat) = 77040 + 8 from rfl, sub _ _ 8 8 _ e2 (by omega)]; rfl
-  · rw [e3]; rfl
+  · rw [e3]; decide
   · unfold rdN; rw [show (69072 : Nat) = 69056 + 16 from rfl, sub _ _ 16 4 _ e4 (by omega)]; rfl
   · unfold rdN; rw [show (69056 : Nat) = 69056 + 0 from rfl, sub _ _ 0 4 _ e4 (by omega)]; rfl
   · rw [show (68680 : Nat) = 68680 + 0 from rfl, sub _ _ 0 8 _ e5 (by omega)]; rfl
@@ -137,8 +137,8 @@ theorem accumulate_spec (B : InstrRep) (C : Spec.Consts) (hmax : C.maxRecent = 2
   have hSl := encodeNat_len_le5 s hs
   have hNl := encodeNat_len_le5 inputs.length (by omega)
   have hlist : args.toList = Blob.encodeNat t ++ Blob.encodeNat s ++ Blob.encodeNat inputs.length := by
-    show (Codec.nat t ++ Codec.nat s ++ Codec.nat inputs.length).toArray.toList = _
-    simp only [Codec.nat, List.toList_toArray]
+    rw [ByteArray.toList_eq_data]
+    simp [args, Codec.nat]
   have hasize : args.size = (Blob.encodeNat t).length + (Blob.encodeNat s).length +
       (Blob.encodeNat inputs.length).length := by
     rw [← ByteArray.length_toList', hlist]; simp only [List.length_append]
@@ -156,7 +156,7 @@ theorem accumulate_spec (B : InstrRep) (C : Spec.Consts) (hmax : C.maxRecent = 2
     rw [ite_eq_right (by omega), hjb, Option.bind_some, ite_eq_right hfit']
     rfl
   have hrs : rwStart jb = 196608 := by simp [rwStart, hros, roundZone, zoneSize]
-  have hmem := Services.Witness.initialMemory_readN_args jb args (by simp [roStart, zoneSize, hros, two32])
+  have hmem := PVM.initialMemory_readN_args jb args (by simp [roStart, zoneSize, hros, two32])
     (by simp [hrs, hrws, two32]) (by simp [argStart, zoneSize, inputSize, two32] at ha ⊢; omega)
   rw [hlist] at hmem
   -- the service's own account
@@ -180,7 +180,7 @@ theorem accumulate_spec (B : InstrRep) (C : Spec.Consts) (hmax : C.maxRecent = 2
       (initialMemory_stack_zero jb args hlay ha) (accRO_initial hvend jb vb hvb hro hlay args ha)
       s inputs.length args.size ht hs rfl hasize.symm
       (by simpa [argStart, zoneSize, inputSize] using hmem)
-      (fun j h1 h2 => Services.Witness.initialMemory_readable_args jb args j (by simp [argStart, zoneSize, inputSize]; omega)
+      (fun j h1 h2 => PVM.initialMemory_readable_args jb args j (by simp [argStart, zoneSize, inputSize]; omega)
         (by simp [argStart, zoneSize, inputSize] at h2 ⊢; omega))
       x₀ a' ha' hlen hn hsz hfit f
   obtain ⟨n, h1, h2⟩ := psiA_of_impl η e t s g inputs code hcode (by omega) hY0 (Spec.accumulate C t) AccAbort himpl

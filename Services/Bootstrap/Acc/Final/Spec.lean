@@ -75,7 +75,7 @@ theorem accRO_initial (hvend : AccVendoredFacts) (jb vb : JamBlob) (hvb : vendor
     fun x h1 h2 => rdR x (by omega) (by omega)⟩⟩
   · unfold rdN; rw [show (77040 : Nat) = 77040 + 0 from rfl, sub _ _ 0 8 _ e2 (by omega)]; rfl
   · unfold rdN; rw [show (77048 : Nat) = 77040 + 8 from rfl, sub _ _ 8 8 _ e2 (by omega)]; rfl
-  · rw [e3]; decide
+  · rw [e3]; decide +kernel
   · unfold rdN; rw [show (69072 : Nat) = 69056 + 16 from rfl, sub _ _ 16 4 _ e4 (by omega)]; rfl
   · unfold rdN; rw [show (69056 : Nat) = 69056 + 0 from rfl, sub _ _ 0 4 _ e4 (by omega)]; rfl
   · rw [show (68680 : Nat) = 68680 + 0 from rfl, sub _ _ 0 8 _ e5 (by omega)]; rfl
@@ -125,7 +125,8 @@ theorem accumulate_spec (B : InstrRep) (C : Spec.Consts) (hmax : C.maxRecent = 2
   obtain ⟨hsize, jb, vb, hjb, hvb, hro, hrw, hhp, hss, hheap, hcc, hccX, hccA, hccF⟩ := hboot
   have hvend' := hvend
   obtain ⟨vb', hvb', hlay', -⟩ := hvend'
-  obtain rfl : vb' = vb := Option.some.inj (hvb'.symm.trans hvb)
+  have hvv : vb' = vb := Option.some.inj (hvb'.symm.trans hvb)
+  subst hvv
   have hlay : layoutOk jb = true := by unfold layoutOk; rw [hro, hrw, hhp, hss]; exact hlay'
   obtain ⟨P, hP⟩ := checkCode_sound hcc
   haveI i1 : HasCode jb.code P := ⟨hP⟩
@@ -170,16 +171,17 @@ theorem accumulate_spec (B : InstrRep) (C : Spec.Consts) (hmax : C.maxRecent = 2
     rw [infoValue_length, hch]; have := hinfo a hea; omega
   -- the hypotheses for this code
   have hH : AccHypsAt B C t jb.code P env :=
-    hyps code jb ⟨hsize, jb, vb, hjb, hvb, hro, hrw, hhp, hss, hheap, hcc, hccX, hccA, hccF⟩ hjb P i1 i2 i3 i4
+    hyps code jb ⟨hsize, jb, vb', hjb, hvb, hro, hrw, hhp, hss, hheap, hcc, hccX, hccA, hccF⟩ hjb P i1 i2 i3 i4
       env t rfl rfl
   have himpl : ∀ f : Stream, Impl jb.code (accContractS env) env AccAbort (Spec.accumulate C t)
       (Halts jb.code (accContractS env)) ⟨5, initialRegs args, initialMemory jb args, (x₀, x₀), f⟩ := by
     intro f
     rw [initRegs_eq]
     exact acc_impl (p := jb.code) (P := P) B C hmax env hheap rfl hH (initialMemory jb args) hSM hZ
-      (initialMemory_stack_zero jb args hlay ha) (accRO_initial hvend jb vb hvb hro hlay args ha)
+      (initialMemory_stack_zero jb args hlay ha) (accRO_initial hvend jb vb' hvb hro hlay args ha)
       s inputs.length args.size ht hs rfl hasize.symm
-      (by simpa [argStart, zoneSize, inputSize] using hmem)
+      (by show _ = Blob.encodeNat t ++ Blob.encodeNat s ++ Blob.encodeNat inputs.length
+          simpa [argStart, zoneSize, inputSize] using hmem)
       (fun j h1 h2 => PVM.initialMemory_readable_args jb args j (by simp [argStart, zoneSize, inputSize]; omega)
         (by simp [argStart, zoneSize, inputSize] at h2 ⊢; omega))
       x₀ a' ha' hlen hn hsz hfit f

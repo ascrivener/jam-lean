@@ -110,7 +110,7 @@ theorem out_small {n o : Nat} (l : List UInt8) (hn : n < 128) :
   rw [he]; exact ⟨by simp; omega, rfl⟩
 
 /-- **The output encoded** (6209 … 6295): from the allocator's context, with the output `Vec<Instruction>`
-    `{cap, E, n}` at M + 248 (0 < n ≤ 2²¹, its n slots inside the used chunk c, each slot j satisfying
+    `{cap, E, n}` at M + 248 (0 < n ≤ 2²⁴, its n slots inside the used chunk c, each slot j satisfying
     `rep j` and encoding by `EncOk` to `enc j` of at most 232 octets) and the work item's index w at
     M + 80, refine allocates a buffer `buf` of 232 n + 6 octets and encodes into it
     ℰ(`BootstrapWorkOutput`) = ↕ the n encodings ⌢ ℰ₂(w): `{cap', buf, |ℰ| }` at M + 272, the octets
@@ -121,7 +121,7 @@ theorem enc_run {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Serv
     (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616) (x : RefineCtx) (ω : Regs) (μ : Memory)
     {hb : Nat} (s : State) {pb S0 S1 : Nat} (H : HeapCtx env pb S0 S1 μ s) (M cap E n w : Nat) (c : Chunk)
     (enc : Nat → List UInt8) (rep : Nat → List UInt8 → Prop)
-    (hM : S0 + 7560 ≤ M ∧ M + 632 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0) (hn : 0 < n ∧ n ≤ 2097152)
+    (hM : S0 + 7560 ≤ M ∧ M + 632 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0) (hn : 0 < n ∧ n ≤ 16777216)
     (hcap : cap < 18446744073709551616) (hw64 : w < 18446744073709551616)
     (hc : c ∈ chunks s ∧ c.used = true ∧ c.addr + 32 ≤ E ∧ E + 232 * n ≤ c.addr + 32 * c.size)
     (h1 : ω[1] = UInt64.ofNat M)

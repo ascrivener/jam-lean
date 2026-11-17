@@ -5,11 +5,13 @@ on:
     branches: [main]
   pull_request:
 
-# One run per PR at a time: a new push cancels the run it replaces. On main every merge gets its own
-# complete run (one per commit, never cancelled), so a semantic clash between two separately green PRs
-# shows up on the commit that introduced it.
+# One run per PR at a time: a new push cancels the run it replaces. On main, runs are serialized in one
+# group and never cancelled: a running main run always finishes and saves its .lake, and the next one
+# starts from that cache instead of every run rebuilding the same delta in parallel from an older one.
+# GitHub keeps at most one pending run per group (a newer push replaces the pending one), so the latest
+# commit on main is always built. The attempts are jobs of the same run, so the group never blocks them.
 concurrency:
-  group: ci-${{ github.event.pull_request.number || (github.ref == 'refs/heads/main' && github.sha) || github.ref }}
+  group: ci-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 # Two lines of jobs (docs/BUILD-INFRA.md):

@@ -203,7 +203,8 @@ theorem start_to_6501 (p : ByteArray) (P : Program) [HasCode p P] [HasCodeX p P]
       μ'.readN 4278057408 4 = Num.encodeLE 4 T ∧ μ'.readN 4278057412 4 = Num.encodeLE 4 S ∧
       (∀ a, a < 4294967296 → (a < 4278057024 ∨ 4278057152 ≤ a) → (a < 4278058720 ∨ 4278058736 ≤ a) →
         (a < 4278057408 ∨ 4278057416 ≤ a) → μ'.read a = μ₂.read a) ∧
-      (∀ a, μ'.readable a = μ₂.readable a) ∧ (∀ a, μ'.writable a = μ₂.writable a) := by
+      (∀ a, μ'.readable a = μ₂.readable a) ∧ (∀ a, μ'.writable a = μ₂.writable a) ∧
+      μ'.readN 4278059000 8 = Num.encodeLE 8 4294901760 := by
   have hLA3 : 3 ≤ LA ∧ LA ≤ 15 := by
     obtain ⟨a1, a2⟩ := encodeNat_len_le5 T hT
     obtain ⟨b1, b2⟩ := encodeNat_len_le5 S hS
@@ -236,6 +237,16 @@ theorem start_to_6501 (p : ByteArray) (P : Program) [HasCode p P] [HasCodeX p P]
       (fun a h1 h2 => by rw [rdfr a (by omega)]; exact hrd a h1 h2)
       (fun a h1 h2 => wrst a (by omega) (by omega)) (fun a h1 h2 => wrst a (by omega) (by omega))
       (fun a h1 h2 => wrst a (by omega) (by omega))
+  -- the return address Y left in ω₀ (2³² − 2¹⁶), saved at sp + 1848 by accumulate's prologue
+  have c177r : ∀ a, 4278059000 ≤ a → a < 4278059008 → AccBParams.C177 a = true := by
+    intro a h1 h2
+    simp only [AccBParams.C0, AccBParams.C1, AccBParams.C2, AccBParams.C3, AccBParams.C4, AccBParams.C5, AccBParams.C6, AccBParams.C7, AccBParams.C8, AccBParams.C9, AccBParams.C10, AccBParams.C11, AccBParams.C12, AccBParams.C13, AccBParams.C14, AccBParams.C15, AccBParams.C16, AccBParams.C17, AccBParams.C18, AccBParams.C19, AccBParams.C20, AccBParams.C21, AccBParams.C22, AccBParams.C23, AccBParams.C24, AccBParams.C25, AccBParams.C26, AccBParams.C27, AccBParams.C28, AccBParams.C29, AccBParams.C30, AccBParams.C31, AccBParams.C32, AccBParams.C33, AccBParams.C34, AccBParams.C35, AccBParams.C36, AccBParams.C37, AccBParams.C38, AccBParams.C39, AccBParams.C40, AccBParams.C41, AccBParams.C42, AccBParams.C43, AccBParams.C44, AccBParams.C45, AccBParams.C46, AccBParams.C47, AccBParams.C48, AccBParams.C49, AccBParams.C50, AccBParams.C51, AccBParams.C52, AccBParams.C53, AccBParams.C54, AccBParams.C55, AccBParams.C56, AccBParams.C57, AccBParams.C58, AccBParams.C59, AccBParams.C60, AccBParams.C61, AccBParams.C62, AccBParams.C63, AccBParams.C64, AccBParams.C65, AccBParams.C66, AccBParams.C67, AccBParams.C68, AccBParams.C69, AccBParams.C70, AccBParams.C71, AccBParams.C72, AccBParams.C73, AccBParams.C74, AccBParams.C75, AccBParams.C76, AccBParams.C77, AccBParams.C78, AccBParams.C79, AccBParams.C80, AccBParams.C81, AccBParams.C82, AccBParams.C83, AccBParams.C84, AccBParams.C85, AccBParams.C86, AccBParams.C87, AccBParams.C88, AccBParams.C89, AccBParams.C90, AccBParams.C91, AccBParams.C92, AccBParams.C93, AccBParams.C94, AccBParams.C95, AccBParams.C96, AccBParams.C97, AccBParams.C98, AccBParams.C99, AccBParams.C100, AccBParams.C101, AccBParams.C102, AccBParams.C103, AccBParams.C104, AccBParams.C105, AccBParams.C106, AccBParams.C107, AccBParams.C108, AccBParams.C109, AccBParams.C110, AccBParams.C111, AccBParams.C112, AccBParams.C113, AccBParams.C114, AccBParams.C115, AccBParams.C116, AccBParams.C117, AccBParams.C118, AccBParams.C119, AccBParams.C120, AccBParams.C121, AccBParams.C122, AccBParams.C123, AccBParams.C124, AccBParams.C125, AccBParams.C126, AccBParams.C127, AccBParams.C128, AccBParams.C129, AccBParams.C130, AccBParams.C131, AccBParams.C132, AccBParams.C133, AccBParams.C134, AccBParams.C135, AccBParams.C136, AccBParams.C137, AccBParams.C138, AccBParams.C139, AccBParams.C140, AccBParams.C141, AccBParams.C142, AccBParams.C143, AccBParams.C144, AccBParams.C145, AccBParams.C146, AccBParams.C147, AccBParams.C148, AccBParams.C149, AccBParams.C150, AccBParams.C151, AccBParams.C152, AccBParams.C153, AccBParams.C154, AccBParams.C155, AccBParams.C156, AccBParams.C157, AccBParams.C158, AccBParams.C159, AccBParams.C160, AccBParams.C161, AccBParams.C162, AccBParams.C163, AccBParams.C164, AccBParams.C165, AccBParams.C166, AccBParams.C167, AccBParams.C168, AccBParams.C169, AccBParams.C170, AccBParams.C171, AccBParams.C172, AccBParams.C173, AccBParams.C174, AccBParams.C175, AccBParams.C176, AccBParams.C177, Bool.and_eq_true, decide_eq_true_eq, Bool.not_eq_true', decide_eq_false_iff_not,
+      not_and, Nat.not_lt]
+    omega
+  have hra : μ'.readN 4278059000 8 = Num.encodeLE 8 4294901760 := by
+    rw [show Num.encodeLE 8 4294901760 = [0, 0, 255, 255, 0, 0, 0, 0] by decide, ← h38.hm_4278059000_8]
+    exact PVM.Memory.readN_congr fun j hj => by
+      rw [mfr _ (by omega) (.inr (by omega)) (.inr (by omega)) (.inr (by omega)), h.fr _ (c177r _ (by omega) (by omega))]
   exact ⟨ω₁0, μ₁0, ω₂, μ₂, ω', μ', ((run1.trans run2).trans run3).mono (by decide), h, r1, r5, r6, r7, r8,
-    r2, r3, r4, r12, m0, m8, mT, mS, mfr, mrd, mwr⟩
+    r2, r3, r4, r12, m0, m8, mT, mS, mfr, mrd, mwr, hra⟩
 end Services.Bootstrap.Acc

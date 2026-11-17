@@ -48,6 +48,22 @@ theorem rwHold_mem {E : Env} : ∀ {l : List (SVal × SVal)}, RwHold E l → ∀
     · exact h
     · exact rwHold_mem hs _ hq
 
+/-- The facts of a list hold. -/
+def FactsHold (E : Env) : List Fact → Prop
+  | [] => True
+  | f :: fs => f.Holds E ∧ FactsHold E fs
+
+theorem factsHold_mem {E : Env} : ∀ {l : List Fact}, FactsHold E l → ∀ f ∈ l, f.Holds E
+  | [], _, _, h => by cases h
+  | _ :: _, ⟨h, hs⟩, _, hq => by
+    rcases List.mem_cons.1 hq with rfl | hq
+    · exact h
+    · exact factsHold_mem hs _ hq
+
+theorem factsHold_of_mem {E : Env} : ∀ {l : List Fact}, (∀ f ∈ l, f.Holds E) → FactsHold E l
+  | [], _ => trivial
+  | _ :: _, h => ⟨h _ (List.mem_cons_self ..), factsHold_of_mem fun g hg => h g (List.mem_cons_of_mem _ hg)⟩
+
 /-- The pairs of regions of a list are disjoint. -/
 def SepHold (E : Env) : List ((Aff × Nat) × (Aff × Nat)) → Prop
   | [] => True
@@ -342,7 +358,8 @@ theorem check_sound {X : Type} {p : ByteArray} {R : HostRel X} {P : Program} {st
     (hr : RegsHold ⟨fun k => vals.getD k 0, ω, μ⟩ ω A.regs)
     (hc : CellsHold ⟨fun k => vals.getD k 0, ω, μ⟩ μ A.cells) (x : X)
     (hH : HostOk R G.hosts := by exact trivial)
-    (hrw : RwHold ⟨fun k => vals.getD k 0, ω, μ⟩ st.rw := by exact trivial) :
+    (hrw : RwHold ⟨fun k => vals.getD k 0, ω, μ⟩ st.rw := by exact trivial)
+    (hfacts : FactsHold ⟨fun k => vals.getD k 0, ω, μ⟩ st.facts := by exact trivial) :
     ∃ ω' μ', FreeStepsH p R start ω μ x tgt ω' μ' x k ∧
       RegsHold ⟨fun k => vals.getD k 0, ω, μ⟩ ω' T.regs ∧
       CellsHold ⟨fun k => vals.getD k 0, ω, μ⟩ μ' T.cells ∧
@@ -350,7 +367,8 @@ theorem check_sound {X : Type} {p : ByteArray} {R : HostRel X} {P : Program} {st
         μ'.read t = μ.read t) ∧ μ'.pages = μ.pages := by
   let E : Env := ⟨fun k => vals.getD k 0, ω, μ⟩
   have hpre : Pre E st :=
-    ⟨bHold_get hB, lbHold_get hLB, rdHold_mem hrd, wrHold_mem hwr, sepHold_mem hsep, rwHold_mem hrw⟩
+    ⟨bHold_get hB, lbHold_get hLB, rdHold_mem hrd, wrHold_mem hwr, sepHold_mem hsep, rwHold_mem hrw,
+      factsHold_mem hfacts⟩
   simp only [check, Bool.and_eq_true] at h
   obtain ⟨hok, h⟩ := h
   split at h

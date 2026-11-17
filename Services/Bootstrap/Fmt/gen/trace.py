@@ -1,5 +1,5 @@
 import re,sys
-sys.path.insert(0,'/tmp/claude-0/sp')
+import os; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from dis import ins
 a=int(sys.argv[1]); end=int(sys.argv[2])
 R={i:f'r{i}' for i in range(13)}

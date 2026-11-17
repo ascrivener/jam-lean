@@ -1,87 +1,53 @@
-# Handoff: coordinator state (2026-11-15, ~21:25 UTC)
+# Handoff: coordinator state (2026-11-16, ~09:30 UTC)
 
-The project resumed on 2026-11-15 after the 2026-11-14 pause. A coordinator (parent) session runs
-up to 7 child sessions, all tagged `jam-lean`. Each line of work keeps its own handoff README in
-the repo; read it before resuming that line. This file is the coordinator's state: if the
-coordinator restarts, start here.
+A coordinator (parent) session runs the child sessions, all tagged `jam-lean`. Each line of work keeps
+its own handoff README; read it before resuming that line. This file is the coordinator's state: if
+the coordinator restarts, start here. Scope since 2026-11-16: decision 19 below.
 
 ## Where things stand
 
-- **T1 (refine ≡ Spec.refine).** `refine_milestone` (M1: 1–127 fixed-width or Export instructions)
-  is on main (#197). The `FmtRO` conjunct of `VendoredFacts` is **#207** (T1 child merges on green).
-  #188 (fmt) is on main.
-- **T2 (accumulate ≡ Spec.accumulate).** On main: the Impl framework, the input decode, the
-  allocator/heap pieces, the storage wrappers (#166), `get_huge` and ValuesFit < 2^63 (#198), and the
-  CodeA range for 51243 (#186). In flight:
-  - T2 inputs (on_transfer composition: tr_w1, tr_w2 written against the strengthened KeyFmt);
-  - Handlers A: **#208** (handler pieces) and **#209** (Q18), both merged by the coordinator on green;
-    then rows 8, 9, 11. Row 8 takes the premise `ParamStatics μ C I` (see below).
-- **Symbolic executor.** On main: the core. In flight:
-  - **#192**: KeyFmt and executor extensions (core change);
-  - **#194** (draft, based on #192): path facts, forking, loop induction (`fork_sound`,
-    `loop_sound(X)`, `loop_fork_sound(X)`), signed branches and sum facts.
-  - `from_utf8` (60681): `from_utf8_call` (all inputs, frame-only) and `from_utf8_ascii` are proved on
-    #194 (`SymExec/Utf8Final.lean`). Next: the CodeF callers (57327, 57556, 57624, 55106).
-- **Model fixes from the jam-lean-target fuzzing project:**
-  - merged: #195 (lookup anchor uses `lookupAnchorStateRoot`, eq. 11.36) and #196 (context strings
-    drop the leading `$`);
-  - **#201** (Ψ_H fast path, csimp, 33× on the fuzzer's slow case);
-  - **#204** (growHeapCore and Blake2b fast paths, based on #201, about 2× more).
-- **Build and CI:**
-  - #193 is on main (auto-resume, the rolling public `lake-cache` prerelease, `scripts/fetch-lake.sh`).
-    The first publish comes from main's first green run with it; build infra checks it and tests
-    fetch-lake.sh on a fresh checkout;
-  - **#202** (based on #193): CI split into a fast model job and a proofs job, which runs only when
-    Services is affected;
-  - **#205**: append-only code-fact tiers (P1);
-  - profiling proposal merged as `docs/profiling/proposal.md` (#203); per-module build times for all
-    1305 modules on `claude/profiling-data` (`docs/profiling/build-times.tsv`);
-  - **P3 `module` conversion** (decision 13), by the build-items child:
-    - stage 1 is PVM and JAM minus `PVM/SymExec` and `PVM.lean`, after #200, #201 and #204 merge;
-    - stage 2 is SymExec and `PVM.lean`, after #192 and #194;
-    - from stage 1 on, every new PVM/JAM file needs the module header (`docs/module-system.md`);
-    - P4 import trimming comes after the conversion of the same files.
+- **T1 (refine).** On main: `refine_milestone` (#197, #207) and full M1 part A, refine for
+  1 ≤ n ≤ 2^21 (#214). **#217** (parts B/C: variable-width DeleteItems/Imported, the eager Lookup
+  step, the eight large `*_elem_bigC`) is in CI. On `claude/bootstrap-t1-m1d`: ReallocBig and the
+  small-size C adapters. Remaining for `refine_t1c`: drop/EncOkMH arms for kinds 0, 11, 12, 13, 17,
+  22, 24; threading realloc_call_big; the theorem.
+- **T2 (accumulate).** On main: the Impl framework (#215 weakened its panic branch), wrappers, the
+  handler pieces (#208), Q18 (#209). on_transfer is composed on `claude/bootstrap-t2-inputs-wip` (PR
+  next). Handlers A: row 8 nearly done (slot write and counter get left), then rows 9 and 11.
+- **Executor.** #192 merged. **#194** (forking, loops, from_utf8) fails to build against main (a
+  `facts` field missing in `SymExec/Hosts.lean`); the executor session is fixing it.
+- **Field formatters.** #213 (FieldInt) and #216 (write_str_heap) merged. Open PRs for N56*, the hex
+  path and step-8 formatters come next; then the line pauses (decision 19).
+- **Build and CI.** On main: auto-resume and `lake-cache` (#193, #211), the CI split (#202),
+  code-fact tiers (#205), the perf fast paths (#204, incl. #201). New jam-lean cloud sessions fetch
+  the cache via the environment's setup script. Next, in order: CodeF regeneration, P3 stage 1 (PVM
+  and JAM as modules), the post_simp tactic pass (3–5× faster Decode proofs). Branches are listed in
+  `docs/profiling/STATE-build-items.md` (on `claude/build-items-state`).
 
-## Merge order and rules
+## Merge rules
 
-- **Merge on green, independently:** #200, #201 (then #204), #205, #207, #208, #209.
-  - #200 and #201 don't force re-syncs under the re-sync rule, so they aren't batched.
-  - #201 is merged by build infra.
-  - #204 is merged by the perf child once #201 is in.
-  - #205 is merged by the build-items child; #207 by the T1 child.
-  - #200, #208 and #209 are merged by the coordinator.
-- **#202** (CI split, now based on main): build infra reports green, and the coordinator checks and
-  OKs the merge, since it changes the workflow.
-- **#192 → #194** (executor core; #197 is in). The executor child syncs #192 with main and merges it
-  on green, then syncs #194 and marks it ready once green; the coordinator merges #194.
-- **Once the lake-cache release exists** (after #193 plus a green main run):
-  - sessions with 1.5 h or more of local build left switch to `scripts/fetch-lake.sh`;
-  - then offer Adam a cloud-environment setup script (toolchain plus fetch-lake). It needs his
-    approval.
-- **Messaging rule (Adam, 2026-11-15):** children message the coordinator only when they open a PR,
-  merge one, are blocked, need a decision, finish, or need a restart. Progress goes in READMEs.
+- Each child merges its own PR on green, except #194, which the coordinator merges.
+- Code-fact regenerations are sequenced by the coordinator (re-sync rule). New facts go in as tiers.
+- After P3 stage 1 lands, every new PVM/JAM file needs the module header (`docs/module-system.md`).
+- Whoever restarts `claude/decode-heaphost` must merge main and resolve the Decode/README.md add/add
+  and the OkFD change from #214.
+- Messaging rule (Adam, 2026-11-15): children message the coordinator only when they open or merge a
+  PR, are blocked, need a decision, finish, or need a restart. Progress goes in READMEs.
 
 ## Children (as of this writing)
 
 | Line | Session | Branch / PR | Next |
 |---|---|---|---|
-| T1 milestone | session_01FAPLsbkPzH8Yfj9VvZFM17 | #207 | merge #207 on green |
-| Executor (5th) | session_01FAPLsaSYRainAkdWH9CyDX | `claude/keyfmt` (#192), `claude/symexec-loops` (#194) | sync and merge #192, sync #194, then hand off; a fresh session takes the CodeF callers |
-| Build infra | session_01FAPLscWuAjJ7U2ts3omA2r | #201, #202 | merge #201, report #202 green, check the first lake-cache publish |
-| T2 Handlers A (2) | session_01FAPLsZjqCgY6yAeJE4cPXV | `claude/bootstrap-t2-handlers-a-wip` | rows 8, 9, 11 |
-| Build items P1/P3/P4 | session_01FAPLsbZuTvaqKJWtPwxEP7 | #205, P3 stages | P3 stage 1 after #200/#201/#204 |
-| Perf | session_01FAPLsaVzo2cgwafJUWm6CV | #204 | merge after #201 |
-| T2 inputs (2) | session_01FAPLsc8QZw3s37mRnjAqya | `claude/bootstrap-t2-inputs-wip` | on_transfer (tr_w1, tr_w2), then the prologue's `ParamStatics` |
+| T1 (6th) | session_01FAPLsZnE5YLqLpAmNt6jeJ | #217, `claude/bootstrap-t1-m1d` | merge #217; arms; refine_t1c |
+| T2 Handlers A (5th) | session_01FAPLsdzswtDsCsKWorttaw | `claude/bootstrap-t2-handlers-a-wip` | finish row 8 (decisions 17, 18); rows 9, 11 |
+| T2 inputs (3rd) | session_01FAPLsZyRGnqCpa8xKzDWWE | `claude/bootstrap-t2-inputs-wip` | on_transfer PR; ParamStatics prologue |
+| Executor (6th) | session_01FAPLse7sPN4yxBDE4BaFtJ | #194 | fix and push #194, then pause |
+| Field formatters (4th) | session_01FAPLsc3qjhviw4J2ADvaut | `claude/bootstrap-fields-3-wip` | open and merge its PRs, then pause |
+| Build items (2nd) | session_01FAPLscnMqhsrcx7QX51DiF | `claude/codef-regen` etc. | CodeF, P3 stage 1, post_simp, then stop |
 
-**Queue for free slots:**
-1. Vec / Decode (HeapHost): `claude/decode-heaphost`, `Services/Bootstrap/Decode/README.md`.
-2. Field formatters: `claude/bootstrap-fields-wip`, `Services/Bootstrap/Fmt/FIELDS-HANDOFF.md`.
-3. Storage-key stage 2, after T2's storage wrappers settle (`docs/storage-key-design.md`).
-
-**jam-lean-target** (a separate project, the JAM conformance fuzzing target) has its own parent
-session, session_01FAPLsdKXq86WuSpB5fCYVg. Adam allows the coordinator to message it. It reports
-jam-lean bugs and perf requests, and it measures perf commits. Tell it when #201 and #204 merge, so it
-can bump its pin.
+Paused lines with handoffs: Decode/HeapHost (`claude/decode-heaphost`), storage-key stage 2
+(`docs/storage-key-design.md`). **jam-lean-target** (a separate project) has its own parent,
+session_01FAPLsdKXq86WuSpB5fCYVg; it is pinned at or after 208cc20.
 
 ## Adam's decisions on 2026-11-15
 
@@ -111,6 +77,21 @@ can bump its pin.
 14. KeyFmt strengthened: its success case says the key text lies in a live, freshly allocated chunk's
     data (`∃ ch ∈ chunks s', ch.used ∧ ch.addr + 32 = kp ∧ fresh ∧ ∀ a ∈ [kp, kp+len), InDataA ch a`);
     the `kc = 0` disjunct is dropped. The executor discharges this version.
+15. Critical-path build work after the P3 conversion. No bigger CI runner for now (cost estimate in
+    `docs/BUILD-INFRA.md`).
+
+## Adam's decisions on 2026-11-16
+
+16. `refine_t1c` assumes every preimage an eager Lookup finds is shorter than 2^63 octets (a named
+    hypothesis, like ValuesFit). The binary panics from 2^63 on; noted in upstream-candidates.
+17. Row 8's premise is `ParamStatics μ C I ∧ 0 < 2·C·I < 2^32`, a named hypothesis on the chain
+    parameters (an assumption of T2 unless discharged from the fetched parameters).
+18. The recent-work counter's u32 wrap is a new spec quirk: `fixed 4 (((c + 1) % 2^32) % maxRecent)`.
+19. **Narrowed scope.** Finish `refine_t1c` (full M1, with named hypotheses) and a T2 statement with
+    named hypotheses. Deferred: discharging the Fmt hypotheses (the field-formatter line wraps up after
+    its open PRs), the allocation-failure ☇ table, step 10, M2 (the real decoder), the from_utf8 step
+    bound and CodeF callers, and further build work after the CodeF regen, P3 stage 1 and the
+    post_simp pass. At most 4 working sessions.
 
 ## Decisions the coordinator made (Adam may overturn)
 
@@ -135,6 +116,17 @@ can bump its pin.
   summaries' frames keep 196616…196791. The T2-inputs session proves the prologue's `apply()` stores
   (56205, 56279; needs a CodeA range, sequenced by the coordinator).
 - P3 split into two stages, stage 1 after #200/#201/#204 (they force a cold rebuild anyway).
+- Impl's none branch keeps only y on ☇ (#215): on panic Ψ_A keeps the checkpoint, so x needn't be
+  unchanged. The final T2 statement is unchanged.
+- get_call / get_some gain frame conclusions (Glob statics, memory below 196608), additively.
+- Weakenings in other areas' files: OkFD drops `es.length < 128` (#214).
+- `refine_t1c`: a new theorem in T1's match form; `refine_milestone` unchanged. `VendoredFactsC` =
+  VendoredFacts plus the 96-octet 4046 table (step 10). DRm widened and LookupFmtOk, as named Fmt
+  hypotheses. The gas cap and the n ≤ 2^21 / capBound bounds stay internal; `ReallocBig` is a new
+  file. Code-fact tier T1B (29181–29675), append-only.
+- Field formatters: new files only; the RO slices they read are named RO hypotheses on their lemmas
+  (FmtRO unchanged).
+- Restart threshold about 400k tokens. A session being replaced is interrupted first.
 - GenWitnessSteps imports narrowed to 8 JAM modules (output byte-identical), so the CI split can tell
   model-only PRs apart.
 
@@ -150,6 +142,8 @@ can bump its pin.
 - **T2, the output decode failure contract:** spec decode = none ⇒ the binary reaches 15361 or
   exhausts the heap.
 - **T2, `ParamStatics`:** the prologue's `apply()` stores C and I, and later steps keep them.
+- **T2, row 8:** `0 < 2·C·I < 2^32` from the fetched parameters (decision 17).
+- **ReallocBig:** the single value units = 2^25 − 1 (two routes in the Refine README).
 - **from_utf8 at 55106:** Ok ⇒ well-formed UTF-8, if that Debug site's hypothesis is to be discharged.
 - **Known looseness:** ArgOk/RefOk use a single C for the Ok bound and the Exhausts budget. It can be
   fixed additively (ArgOk2) with exact gas (T1′).

@@ -844,7 +844,9 @@ Pieces of T2 (`docs/bootstrap-target.md`): parts of bootstrap's accumulate code 
       2⁶⁴ − 9, which the SDK's `info` wrapper reads as an error code from on, 49017);
     - `ValuesFit` (decided 2026-11-15);
     - G3 (temporary): at most 89 inputs, each `InputSized`.
-  - *Pending Adam's decision (2026-11-17):* `InfoFits`, `AccLogFail` and `InputsGlob` are new assumptions.
+  - *Accepted (Adam, 2026-11-17):* `InfoFits`, `AccLogFail` and `InputsGlob` as named hypotheses.
+  - *Open obligation:* `InputsGlob` is temporary; it is to be discharged by threading a `Glob` conclusion
+    through `inputs_decode` (`fv_call`, `g_inputs` and their sub-lemmas).
 
 - **T2's abort reason and length premise (definitions).** `Acc.AccAbort`, `Acc.HeapTrapPc`,
   `Acc.ValuesFit` (`Acc/Abort.lean`).

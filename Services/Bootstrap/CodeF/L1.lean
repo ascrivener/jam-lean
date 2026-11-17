@@ -4,7 +4,7 @@
 -/
 import Services.Bootstrap.CodeF
 
-/-! # Lemmas of `CodeF.facts`, slice 1 of 38 -/
+/-! # Lemmas of `CodeF.facts`, slice 1 of 37 -/
 
 namespace Services.Bootstrap.CodeF
 

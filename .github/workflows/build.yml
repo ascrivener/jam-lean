@@ -95,6 +95,14 @@ jobs:
           lake exe genwitnesssteps --service bootstrap code 7463 | diff - Services/Bootstrap/Code.lean
           lake exe genwitnesssteps --service bootstrap blob | diff - Services/Bootstrap/Blob.lean
           lake exe genwitnesssteps --service bootstrap codecheck 7463
+          lake exe genwitnesssteps --service bootstrap codex 7463 | diff - Services/Bootstrap/CodeX.lean
+          lake exe genwitnesssteps --service bootstrap codexcheck 7463
+          lake exe genwitnesssteps --service bootstrap codea 7463 | diff - Services/Bootstrap/CodeA.lean
+          lake exe genwitnesssteps --service bootstrap codeacheck 7463
+          lake exe genwitnesssteps --service bootstrap codef 7463 | diff - Services/Bootstrap/CodeF.lean
+          lake exe genwitnesssteps --service bootstrap codefcheck 7463
+          lake exe genwitnesssteps --service bootstrap coder 7463 | diff - Services/Bootstrap/CodeR.lean
+          lake exe genwitnesssteps --service bootstrap codercheck 7463
           # the append-only code-fact tiers (docs/code-fact-tiers.md)
           for t in $(lake exe genwitnesssteps --service bootstrap tiers); do
             lake exe genwitnesssteps --service bootstrap tier 7463 "$t" | diff - "Services/Bootstrap/Code$t.lean"

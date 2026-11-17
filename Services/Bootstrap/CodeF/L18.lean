@@ -4,109 +4,11 @@
 -/
 import Services.Bootstrap.CodeF
 
-/-! # Lemmas of `CodeF.facts`, slice 18 of 38 -/
+/-! # Lemmas of `CodeF.facts`, slice 18 of 37 -/
 
 namespace Services.Bootstrap.CodeF
 
 open PVM
-
-theorem d_70121 {p : ByteArray} {P : Program} [h : HasCodeF p P] : deblob p 70121 = some P ∧ P.decode 70121 = some (.regImmOffset (.branchNeImm) 9 0 70104) ∧ P.next 70121 = 70124 ∧ P.blockCost (P.blockStartOf 70121) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 70121 (.regImmOffset (.branchNeImm) 9 0 70104) 70124 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 102) (by decide)) (List.getElem_mem (l := factGroup_102) (n := 17) (by decide))) (List.getElem_mem (l := facts_6545) (n := 2) (by decide)))
-    (show CodeFact.block 70112 70124 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 102) (by decide)) (List.getElem_mem (l := factGroup_102) (n := 15) (by decide))) (List.getElem_mem (l := facts_6543) (n := 0) (by decide))) (by decide)
-
-@[pvm_code] theorem nx_70121 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.next 70121 = 70124 := (d_70121 (p := p)).2.2.1
-
-theorem d_70124 {p : ByteArray} {P : Program} [h : HasCodeF p P] : deblob p 70124 = some P ∧ P.decode 70124 = some (.regImm (.loadImm) 7 0) ∧ P.next 70124 = 70126 ∧ P.blockCost (P.blockStartOf 70124) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 70124 (.regImm (.loadImm) 7 0) 70126 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 102) (by decide)) (List.getElem_mem (l := factGroup_102) (n := 18) (by decide))) (List.getElem_mem (l := facts_6546) (n := 1) (by decide)))
-    (show CodeFact.block 70124 70128 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 102) (by decide)) (List.getElem_mem (l := factGroup_102) (n := 19) (by decide))) (List.getElem_mem (l := facts_6547) (n := 0) (by decide))) (by decide)
-
-@[pvm_code] theorem nx_70124 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.next 70124 = 70126 := (d_70124 (p := p)).2.2.1
-
-theorem d_70126 {p : ByteArray} {P : Program} [h : HasCodeF p P] : deblob p 70126 = some P ∧ P.decode 70126 = some (.regImm (.jumpInd) 0 0) ∧ P.next 70126 = 70128 ∧ P.blockCost (P.blockStartOf 70126) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 70126 (.regImm (.jumpInd) 0 0) 70128 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 102) (by decide)) (List.getElem_mem (l := factGroup_102) (n := 20) (by decide))) (List.getElem_mem (l := facts_6548) (n := 1) (by decide)))
-    (show CodeFact.block 70124 70128 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 102) (by decide)) (List.getElem_mem (l := factGroup_102) (n := 19) (by decide))) (List.getElem_mem (l := facts_6547) (n := 0) (by decide))) (by decide)
-
-@[pvm_code] theorem nx_70126 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.next 70126 = 70128 := (d_70126 (p := p)).2.2.1
-
-theorem d_70128 {p : ByteArray} {P : Program} [h : HasCodeF p P] : deblob p 70128 = some P ∧ P.decode 70128 = some (.threeReg (.sub64) 10 11 7) ∧ P.next 70128 = 70131 ∧ P.blockCost (P.blockStartOf 70128) ≤ stepCostCap :=
-  h.ok.instrCost (show CodeFact.instr 70128 (.threeReg (.sub64) 10 11 7) 70131 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 102) (by decide)) (List.getElem_mem (l := factGroup_102) (n := 21) (by decide))) (List.getElem_mem (l := facts_6549) (n := 0) (by decide)))
-    (show CodeFact.block 70128 70133 ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 102) (by decide)) (List.getElem_mem (l := factGroup_102) (n := 22) (by decide))) (List.getElem_mem (l := facts_6550) (n := 0) (by decide))) (by decide)
-
-@[pvm_code] theorem nx_70128 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.next 70128 = 70131 := (d_70128 (p := p)).2.2.1
-
-@[pvm_code] theorem bs_15373 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 15373 = false := h.ok.blockStart (show CodeFact.blockStart 15373 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 2) (by decide))) (List.getElem_mem (l := facts_2) (n := 1) (by decide)))
-
-@[pvm_code] theorem bs_15377 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 15377 = false := h.ok.blockStart (show CodeFact.blockStart 15377 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 3) (by decide))) (List.getElem_mem (l := facts_3) (n := 0) (by decide)))
-
-@[pvm_code] theorem bs_15381 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 15381 = false := h.ok.blockStart (show CodeFact.blockStart 15381 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 3) (by decide))) (List.getElem_mem (l := facts_3) (n := 2) (by decide)))
-
-@[pvm_code] theorem bs_15385 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 15385 = false := h.ok.blockStart (show CodeFact.blockStart 15385 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 4) (by decide))) (List.getElem_mem (l := facts_4) (n := 1) (by decide)))
-
-@[pvm_code] theorem bs_15387 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 15387 = false := h.ok.blockStart (show CodeFact.blockStart 15387 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 5) (by decide))) (List.getElem_mem (l := facts_5) (n := 0) (by decide)))
-
-@[pvm_code] theorem bs_15389 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 15389 = false := h.ok.blockStart (show CodeFact.blockStart 15389 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 5) (by decide))) (List.getElem_mem (l := facts_5) (n := 2) (by decide)))
-
-@[pvm_code] theorem bs_15399 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 15399 = false := h.ok.blockStart (show CodeFact.blockStart 15399 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 6) (by decide))) (List.getElem_mem (l := facts_6) (n := 1) (by decide)))
-
-@[pvm_code] theorem bs_15409 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 15409 = false := h.ok.blockStart (show CodeFact.blockStart 15409 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 7) (by decide))) (List.getElem_mem (l := facts_7) (n := 0) (by decide)))
-
-@[pvm_code] theorem bs_15412 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 15412 = false := h.ok.blockStart (show CodeFact.blockStart 15412 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 7) (by decide))) (List.getElem_mem (l := facts_7) (n := 2) (by decide)))
-
-@[pvm_code] theorem bs_15415 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 15415 = false := h.ok.blockStart (show CodeFact.blockStart 15415 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 8) (by decide))) (List.getElem_mem (l := facts_8) (n := 1) (by decide)))
-
-@[pvm_code] theorem bs_15417 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 15417 = false := h.ok.blockStart (show CodeFact.blockStart 15417 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 9) (by decide))) (List.getElem_mem (l := facts_9) (n := 0) (by decide)))
-
-@[pvm_code] theorem bs_15420 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 15420 = false := h.ok.blockStart (show CodeFact.blockStart 15420 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 9) (by decide))) (List.getElem_mem (l := facts_9) (n := 2) (by decide)))
-
-@[pvm_code] theorem bs_15425 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 15425 = false := h.ok.blockStart (show CodeFact.blockStart 15425 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 10) (by decide))) (List.getElem_mem (l := facts_10) (n := 1) (by decide)))
-
-@[pvm_code] theorem bs_15428 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 15428 = false := h.ok.blockStart (show CodeFact.blockStart 15428 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 11) (by decide))) (List.getElem_mem (l := facts_11) (n := 0) (by decide)))
-
-@[pvm_code] theorem bs_15430 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 15430 = false := h.ok.blockStart (show CodeFact.blockStart 15430 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 11) (by decide))) (List.getElem_mem (l := facts_11) (n := 2) (by decide)))
-
-@[pvm_code] theorem bs_15433 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 15433 = false := h.ok.blockStart (show CodeFact.blockStart 15433 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 12) (by decide))) (List.getElem_mem (l := facts_12) (n := 1) (by decide)))
-
-@[pvm_code] theorem bs_15435 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 15435 = false := h.ok.blockStart (show CodeFact.blockStart 15435 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 13) (by decide))) (List.getElem_mem (l := facts_13) (n := 0) (by decide)))
-
-@[pvm_code] theorem bs_15949 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 15949 = true := h.ok.blockStart (show CodeFact.blockStart 15949 true ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 15) (by decide))) (List.getElem_mem (l := facts_15) (n := 0) (by decide)))
-
-@[pvm_code] theorem bs_15952 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 15952 = false := h.ok.blockStart (show CodeFact.blockStart 15952 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 15) (by decide))) (List.getElem_mem (l := facts_15) (n := 1) (by decide)))
-
-@[pvm_code] theorem bs_15956 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 15956 = false := h.ok.blockStart (show CodeFact.blockStart 15956 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 16) (by decide))) (List.getElem_mem (l := facts_16) (n := 0) (by decide)))
-
-@[pvm_code] theorem bs_15961 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 15961 = false := h.ok.blockStart (show CodeFact.blockStart 15961 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 16) (by decide))) (List.getElem_mem (l := facts_16) (n := 2) (by decide)))
-
-@[pvm_code] theorem bs_15966 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 15966 = false := h.ok.blockStart (show CodeFact.blockStart 15966 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 17) (by decide))) (List.getElem_mem (l := facts_17) (n := 1) (by decide)))
-
-@[pvm_code] theorem bs_15971 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 15971 = false := h.ok.blockStart (show CodeFact.blockStart 15971 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 18) (by decide))) (List.getElem_mem (l := facts_18) (n := 0) (by decide)))
-
-@[pvm_code] theorem bs_15974 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 15974 = false := h.ok.blockStart (show CodeFact.blockStart 15974 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 18) (by decide))) (List.getElem_mem (l := facts_18) (n := 2) (by decide)))
-
-@[pvm_code] theorem bs_15977 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 15977 = false := h.ok.blockStart (show CodeFact.blockStart 15977 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 19) (by decide))) (List.getElem_mem (l := facts_19) (n := 1) (by decide)))
-
-@[pvm_code] theorem bs_16544 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 16544 = true := h.ok.blockStart (show CodeFact.blockStart 16544 true ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 21) (by decide))) (List.getElem_mem (l := facts_21) (n := 0) (by decide)))
-
-@[pvm_code] theorem bs_16547 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 16547 = false := h.ok.blockStart (show CodeFact.blockStart 16547 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 21) (by decide))) (List.getElem_mem (l := facts_21) (n := 1) (by decide)))
-
-@[pvm_code] theorem bs_16551 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 16551 = false := h.ok.blockStart (show CodeFact.blockStart 16551 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 22) (by decide))) (List.getElem_mem (l := facts_22) (n := 0) (by decide)))
-
-@[pvm_code] theorem bs_16556 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 16556 = false := h.ok.blockStart (show CodeFact.blockStart 16556 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 22) (by decide))) (List.getElem_mem (l := facts_22) (n := 2) (by decide)))
-
-@[pvm_code] theorem bs_16561 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 16561 = false := h.ok.blockStart (show CodeFact.blockStart 16561 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 23) (by decide))) (List.getElem_mem (l := facts_23) (n := 1) (by decide)))
-
-@[pvm_code] theorem bs_16564 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 16564 = false := h.ok.blockStart (show CodeFact.blockStart 16564 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 24) (by decide))) (List.getElem_mem (l := facts_24) (n := 0) (by decide)))
-
-@[pvm_code] theorem bs_16568 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 16568 = false := h.ok.blockStart (show CodeFact.blockStart 16568 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 24) (by decide))) (List.getElem_mem (l := facts_24) (n := 2) (by decide)))
-
-@[pvm_code] theorem bs_16572 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 16572 = false := h.ok.blockStart (show CodeFact.blockStart 16572 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 25) (by decide))) (List.getElem_mem (l := facts_25) (n := 1) (by decide)))
-
-@[pvm_code] theorem bs_16726 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 16726 = true := h.ok.blockStart (show CodeFact.blockStart 16726 true ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 27) (by decide))) (List.getElem_mem (l := facts_27) (n := 0) (by decide)))
-
-@[pvm_code] theorem bs_16729 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 16729 = false := h.ok.blockStart (show CodeFact.blockStart 16729 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 27) (by decide))) (List.getElem_mem (l := facts_27) (n := 1) (by decide)))
-
-@[pvm_code] theorem bs_16733 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 16733 = false := h.ok.blockStart (show CodeFact.blockStart 16733 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 28) (by decide))) (List.getElem_mem (l := facts_28) (n := 0) (by decide)))
-
-@[pvm_code] theorem bs_16738 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 16738 = false := h.ok.blockStart (show CodeFact.blockStart 16738 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 28) (by decide))) (List.getElem_mem (l := facts_28) (n := 2) (by decide)))
 
 @[pvm_code] theorem bs_16743 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 16743 = false := h.ok.blockStart (show CodeFact.blockStart 16743 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 0) (by decide)) (List.getElem_mem (l := factGroup_0) (n := 29) (by decide))) (List.getElem_mem (l := facts_29) (n := 1) (by decide)))
 
@@ -825,5 +727,87 @@ theorem d_70128 {p : ByteArray} {P : Program} [h : HasCodeF p P] : deblob p 7012
 @[pvm_code] theorem bs_26807 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26807 = true := h.ok.blockStart (show CodeFact.blockStart 26807 true ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 5) (by decide)) (List.getElem_mem (l := factGroup_5) (n := 39) (by decide))) (List.getElem_mem (l := facts_359) (n := 2) (by decide)))
 
 @[pvm_code] theorem bs_26810 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26810 = false := h.ok.blockStart (show CodeFact.blockStart 26810 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 5) (by decide)) (List.getElem_mem (l := factGroup_5) (n := 42) (by decide))) (List.getElem_mem (l := facts_362) (n := 0) (by decide)))
+
+@[pvm_code] theorem bs_26813 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26813 = false := h.ok.blockStart (show CodeFact.blockStart 26813 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 5) (by decide)) (List.getElem_mem (l := factGroup_5) (n := 42) (by decide))) (List.getElem_mem (l := facts_362) (n := 2) (by decide)))
+
+@[pvm_code] theorem bs_26816 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26816 = false := h.ok.blockStart (show CodeFact.blockStart 26816 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 5) (by decide)) (List.getElem_mem (l := factGroup_5) (n := 43) (by decide))) (List.getElem_mem (l := facts_363) (n := 1) (by decide)))
+
+@[pvm_code] theorem bs_26819 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26819 = false := h.ok.blockStart (show CodeFact.blockStart 26819 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 5) (by decide)) (List.getElem_mem (l := factGroup_5) (n := 44) (by decide))) (List.getElem_mem (l := facts_364) (n := 0) (by decide)))
+
+@[pvm_code] theorem bs_26821 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26821 = false := h.ok.blockStart (show CodeFact.blockStart 26821 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 5) (by decide)) (List.getElem_mem (l := factGroup_5) (n := 44) (by decide))) (List.getElem_mem (l := facts_364) (n := 2) (by decide)))
+
+@[pvm_code] theorem bs_26824 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26824 = false := h.ok.blockStart (show CodeFact.blockStart 26824 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 5) (by decide)) (List.getElem_mem (l := factGroup_5) (n := 45) (by decide))) (List.getElem_mem (l := facts_365) (n := 1) (by decide)))
+
+@[pvm_code] theorem bs_26827 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26827 = false := h.ok.blockStart (show CodeFact.blockStart 26827 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 5) (by decide)) (List.getElem_mem (l := factGroup_5) (n := 46) (by decide))) (List.getElem_mem (l := facts_366) (n := 0) (by decide)))
+
+@[pvm_code] theorem bs_26830 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26830 = false := h.ok.blockStart (show CodeFact.blockStart 26830 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 5) (by decide)) (List.getElem_mem (l := factGroup_5) (n := 46) (by decide))) (List.getElem_mem (l := facts_366) (n := 2) (by decide)))
+
+@[pvm_code] theorem bs_26837 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26837 = true := h.ok.blockStart (show CodeFact.blockStart 26837 true ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 5) (by decide)) (List.getElem_mem (l := factGroup_5) (n := 47) (by decide))) (List.getElem_mem (l := facts_367) (n := 1) (by decide)))
+
+@[pvm_code] theorem bs_26840 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26840 = true := h.ok.blockStart (show CodeFact.blockStart 26840 true ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 5) (by decide)) (List.getElem_mem (l := factGroup_5) (n := 49) (by decide))) (List.getElem_mem (l := facts_369) (n := 0) (by decide)))
+
+@[pvm_code] theorem bs_26845 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26845 = false := h.ok.blockStart (show CodeFact.blockStart 26845 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 5) (by decide)) (List.getElem_mem (l := factGroup_5) (n := 51) (by decide))) (List.getElem_mem (l := facts_371) (n := 0) (by decide)))
+
+@[pvm_code] theorem bs_26847 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26847 = false := h.ok.blockStart (show CodeFact.blockStart 26847 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 5) (by decide)) (List.getElem_mem (l := factGroup_5) (n := 51) (by decide))) (List.getElem_mem (l := facts_371) (n := 2) (by decide)))
+
+@[pvm_code] theorem bs_26848 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26848 = true := h.ok.blockStart (show CodeFact.blockStart 26848 true ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 5) (by decide)) (List.getElem_mem (l := factGroup_5) (n := 52) (by decide))) (List.getElem_mem (l := facts_372) (n := 1) (by decide)))
+
+@[pvm_code] theorem bs_26851 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26851 = false := h.ok.blockStart (show CodeFact.blockStart 26851 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 5) (by decide)) (List.getElem_mem (l := factGroup_5) (n := 54) (by decide))) (List.getElem_mem (l := facts_374) (n := 0) (by decide)))
+
+@[pvm_code] theorem bs_26854 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26854 = false := h.ok.blockStart (show CodeFact.blockStart 26854 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 5) (by decide)) (List.getElem_mem (l := factGroup_5) (n := 54) (by decide))) (List.getElem_mem (l := facts_374) (n := 2) (by decide)))
+
+@[pvm_code] theorem bs_26857 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26857 = false := h.ok.blockStart (show CodeFact.blockStart 26857 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 5) (by decide)) (List.getElem_mem (l := factGroup_5) (n := 55) (by decide))) (List.getElem_mem (l := facts_375) (n := 1) (by decide)))
+
+@[pvm_code] theorem bs_26860 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26860 = false := h.ok.blockStart (show CodeFact.blockStart 26860 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 5) (by decide)) (List.getElem_mem (l := factGroup_5) (n := 56) (by decide))) (List.getElem_mem (l := facts_376) (n := 0) (by decide)))
+
+@[pvm_code] theorem bs_26863 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26863 = false := h.ok.blockStart (show CodeFact.blockStart 26863 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 5) (by decide)) (List.getElem_mem (l := factGroup_5) (n := 56) (by decide))) (List.getElem_mem (l := facts_376) (n := 2) (by decide)))
+
+@[pvm_code] theorem bs_26865 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26865 = false := h.ok.blockStart (show CodeFact.blockStart 26865 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 5) (by decide)) (List.getElem_mem (l := factGroup_5) (n := 57) (by decide))) (List.getElem_mem (l := facts_377) (n := 1) (by decide)))
+
+@[pvm_code] theorem bs_26872 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26872 = true := h.ok.blockStart (show CodeFact.blockStart 26872 true ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 5) (by decide)) (List.getElem_mem (l := factGroup_5) (n := 58) (by decide))) (List.getElem_mem (l := facts_378) (n := 0) (by decide)))
+
+@[pvm_code] theorem bs_26875 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26875 = false := h.ok.blockStart (show CodeFact.blockStart 26875 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 5) (by decide)) (List.getElem_mem (l := factGroup_5) (n := 60) (by decide))) (List.getElem_mem (l := facts_380) (n := 0) (by decide)))
+
+@[pvm_code] theorem bs_26878 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26878 = false := h.ok.blockStart (show CodeFact.blockStart 26878 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 5) (by decide)) (List.getElem_mem (l := factGroup_5) (n := 60) (by decide))) (List.getElem_mem (l := facts_380) (n := 2) (by decide)))
+
+@[pvm_code] theorem bs_26881 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26881 = true := h.ok.blockStart (show CodeFact.blockStart 26881 true ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 5) (by decide)) (List.getElem_mem (l := factGroup_5) (n := 61) (by decide))) (List.getElem_mem (l := facts_381) (n := 1) (by decide)))
+
+@[pvm_code] theorem bs_26884 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26884 = false := h.ok.blockStart (show CodeFact.blockStart 26884 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 5) (by decide)) (List.getElem_mem (l := factGroup_5) (n := 63) (by decide))) (List.getElem_mem (l := facts_383) (n := 0) (by decide)))
+
+@[pvm_code] theorem bs_26891 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26891 = true := h.ok.blockStart (show CodeFact.blockStart 26891 true ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 5) (by decide)) (List.getElem_mem (l := factGroup_5) (n := 63) (by decide))) (List.getElem_mem (l := facts_383) (n := 2) (by decide)))
+
+@[pvm_code] theorem bs_26894 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26894 = false := h.ok.blockStart (show CodeFact.blockStart 26894 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 6) (by decide)) (List.getElem_mem (l := factGroup_6) (n := 2) (by decide))) (List.getElem_mem (l := facts_386) (n := 0) (by decide)))
+
+@[pvm_code] theorem bs_26897 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26897 = false := h.ok.blockStart (show CodeFact.blockStart 26897 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 6) (by decide)) (List.getElem_mem (l := factGroup_6) (n := 2) (by decide))) (List.getElem_mem (l := facts_386) (n := 2) (by decide)))
+
+@[pvm_code] theorem bs_26900 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26900 = false := h.ok.blockStart (show CodeFact.blockStart 26900 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 6) (by decide)) (List.getElem_mem (l := factGroup_6) (n := 3) (by decide))) (List.getElem_mem (l := facts_387) (n := 1) (by decide)))
+
+@[pvm_code] theorem bs_26903 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26903 = false := h.ok.blockStart (show CodeFact.blockStart 26903 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 6) (by decide)) (List.getElem_mem (l := factGroup_6) (n := 4) (by decide))) (List.getElem_mem (l := facts_388) (n := 0) (by decide)))
+
+@[pvm_code] theorem bs_26905 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26905 = true := h.ok.blockStart (show CodeFact.blockStart 26905 true ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 6) (by decide)) (List.getElem_mem (l := factGroup_6) (n := 4) (by decide))) (List.getElem_mem (l := facts_388) (n := 2) (by decide)))
+
+@[pvm_code] theorem bs_26908 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26908 = false := h.ok.blockStart (show CodeFact.blockStart 26908 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 6) (by decide)) (List.getElem_mem (l := factGroup_6) (n := 7) (by decide))) (List.getElem_mem (l := facts_391) (n := 0) (by decide)))
+
+@[pvm_code] theorem bs_26911 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26911 = false := h.ok.blockStart (show CodeFact.blockStart 26911 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 6) (by decide)) (List.getElem_mem (l := factGroup_6) (n := 7) (by decide))) (List.getElem_mem (l := facts_391) (n := 2) (by decide)))
+
+@[pvm_code] theorem bs_26913 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26913 = false := h.ok.blockStart (show CodeFact.blockStart 26913 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 6) (by decide)) (List.getElem_mem (l := factGroup_6) (n := 8) (by decide))) (List.getElem_mem (l := facts_392) (n := 1) (by decide)))
+
+@[pvm_code] theorem bs_26915 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26915 = false := h.ok.blockStart (show CodeFact.blockStart 26915 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 6) (by decide)) (List.getElem_mem (l := factGroup_6) (n := 9) (by decide))) (List.getElem_mem (l := facts_393) (n := 0) (by decide)))
+
+@[pvm_code] theorem bs_26917 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26917 = false := h.ok.blockStart (show CodeFact.blockStart 26917 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 6) (by decide)) (List.getElem_mem (l := factGroup_6) (n := 9) (by decide))) (List.getElem_mem (l := facts_393) (n := 2) (by decide)))
+
+@[pvm_code] theorem bs_26920 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26920 = true := h.ok.blockStart (show CodeFact.blockStart 26920 true ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 6) (by decide)) (List.getElem_mem (l := factGroup_6) (n := 10) (by decide))) (List.getElem_mem (l := facts_394) (n := 1) (by decide)))
+
+@[pvm_code] theorem bs_26923 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26923 = false := h.ok.blockStart (show CodeFact.blockStart 26923 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 6) (by decide)) (List.getElem_mem (l := factGroup_6) (n := 12) (by decide))) (List.getElem_mem (l := facts_396) (n := 0) (by decide)))
+
+@[pvm_code] theorem bs_26925 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26925 = false := h.ok.blockStart (show CodeFact.blockStart 26925 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 6) (by decide)) (List.getElem_mem (l := factGroup_6) (n := 12) (by decide))) (List.getElem_mem (l := facts_396) (n := 2) (by decide)))
+
+@[pvm_code] theorem bs_26930 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26930 = false := h.ok.blockStart (show CodeFact.blockStart 26930 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 6) (by decide)) (List.getElem_mem (l := factGroup_6) (n := 13) (by decide))) (List.getElem_mem (l := facts_397) (n := 1) (by decide)))
+
+@[pvm_code] theorem bs_26935 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26935 = false := h.ok.blockStart (show CodeFact.blockStart 26935 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 6) (by decide)) (List.getElem_mem (l := factGroup_6) (n := 14) (by decide))) (List.getElem_mem (l := facts_398) (n := 0) (by decide)))
+
+@[pvm_code] theorem bs_26938 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26938 = false := h.ok.blockStart (show CodeFact.blockStart 26938 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 6) (by decide)) (List.getElem_mem (l := factGroup_6) (n := 14) (by decide))) (List.getElem_mem (l := facts_398) (n := 2) (by decide)))
+
+@[pvm_code] theorem bs_26940 {p : ByteArray} {P : Program} [h : HasCodeF p P] : P.isBlockStart 26940 = false := h.ok.blockStart (show CodeFact.blockStart 26940 false ∈ facts from List.mem_flatten_of_mem (List.mem_flatten_of_mem (List.getElem_mem (l := factGroups) (n := 6) (by decide)) (List.getElem_mem (l := factGroup_6) (n := 15) (by decide))) (List.getElem_mem (l := facts_399) (n := 1) (by decide)))
 
 end Services.Bootstrap.CodeF

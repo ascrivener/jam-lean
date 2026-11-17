@@ -70,7 +70,7 @@ theorem il_head0 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x :
   have hq : q < 18446744073709551616 := by rw [← m8]; exact rdN_lt64 _ _
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?ω', ?μ', ?run, ?post⟩
-  case run => pvm_go [h1, m0, m8, m16, hwf, hr, rdN_writeN_disjoint, rdN_writeN_same8, ↓rdN_fold, ↓loadI_fold]
+  case run => pvm_go [h1, m0, m8, m16, hwf, hr, rdN_writeN_disjoint, ↓rdN_fold, ↓loadI_fold]
   case post =>
     refine ⟨by reg_val; simp [h1], ?_, fun a ha h1 h2 h3 => ?_, fun a => ?_, fun a => ?_⟩
     all_goals try (rd_simp []; done)

@@ -2,6 +2,7 @@ import Services.Bootstrap.Acc.ItemsLoop.Op
 import Services.Bootstrap.Acc.Final.LogLineK
 import Services.Bootstrap.Acc.Final.Lifts
 import Services.Bootstrap.Bridge
+import Services.Bootstrap.Prefix
 
 /-!
 # T2's named hypotheses
@@ -68,7 +69,7 @@ def InputsGlob (p : ByteArray) (env : AccEnv) (pb S0 S1 : Nat) : Prop :=
     line's template (66464), the `String` vtable's words (77040), the key "transfer-count" (65956),
     `set`'s error table (69056), the key-size words (68680) and the instruction jump table (65736). -/
 def AccVendoredFacts : Prop :=
-  ∃ vb : JamBlob, vendored = some vb ∧ Prefix.layoutOk vb = true ∧
+  ∃ vb : JamBlob, vendored = some vb ∧ Services.Bootstrap.Prefix.layoutOk vb = true ∧
     (vb.ro.toList.drop 928).take 42 = accTmplBytes ∧
     (vb.ro.toList.drop 11504).take 16 = [36, 10, 0, 0, 0, 0, 0, 0, 32, 10, 0, 0, 0, 0, 0, 0] ∧
     (vb.ro.toList.drop 420).take 14 = [116, 114, 97, 110, 115, 102, 101, 114, 45, 99, 111, 117, 110, 116] ∧

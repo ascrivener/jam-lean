@@ -190,7 +190,6 @@ Field formatters (entry addresses; a vtable's `fmt` word resolves to them throug
 
 | formatter | ~instructions to its first return (callees not counted) | used by tags |
 |---|---|---|
-| 315 | ~52 | 0 |
 | 26397 | ~33 | 5, 10, 19 |
 | 26605 | ~31 | 11 |
 | 26706 | ~31 | 9 |
@@ -220,7 +219,7 @@ the order their vtables are loaded):
 
 | tag | arm | builder / tail | field formatters (fmt entry) |
 |---|---|---|---|
-| 0 | 27058 | 63820 | 56340, 28843, 57485, 28739, 36594, 315 |
+| 0 | 27058 | 63820 | 56340, 28843, 57485, 28739, 36594 (74968, loaded with them, is the array of the 9 field names, not a vtable: no formatter 315) |
 | 1 | 27937 | 63149 | 37589, 28843, 56340 |
 | 2 | 27685 | 63347 | 33162, 28843, 28822 |
 | 3 | 27852 | 28576 | 37549 |

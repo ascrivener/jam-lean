@@ -59,6 +59,12 @@ import Services.Bootstrap.Fmt.FieldWriteNestedPlain
 import Services.Bootstrap.Fmt.FieldSliceHex
 import Services.Bootstrap.Fmt.FieldN56Hex
 import Services.Bootstrap.Fmt.FieldN57Hex
+import Services.Bootstrap.Fmt.FieldOpt
+import Services.Bootstrap.Fmt.FieldCode
+import Services.Bootstrap.Fmt.FieldOptU32
+import Services.Bootstrap.Fmt.FieldInput
+import Services.Bootstrap.Fmt.Dec16
+import Services.Bootstrap.Fmt.FieldVecVec
 import Services.Bootstrap.AccLog.ItemLog
 import Services.Bootstrap.AccLog.Imported
 import Services.Bootstrap.AccLog.Yield

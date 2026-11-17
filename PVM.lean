@@ -31,6 +31,7 @@ import PVM.Logic.Words
 import PVM.Logic.Go
 import PVM.Logic.GasBound
 import PVM.SymExec.Trace
+import PVM.SymExec.Loop
 
 /-!
 # An executable model of the JAM PVM (Gray Paper v0.8.0, Appendix A)

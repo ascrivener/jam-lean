@@ -843,9 +843,13 @@ Pieces of T2 (`docs/bootstrap-target.md`): parts of bootstrap's accumulate code 
     ω₇ = 0: all `AccAbort` (heap exhaustion).
   - *Named hypotheses:* `Utf8Call`, `LogFmt`, `KeyFmt`, `ItemLogFmt` (above); Handlers A's `InstrLogH`,
     `ResultLogH`, `HandlerH`, `PushH`, `ExtendH`, `OkEncH`, `DropInstrsH`; and **`OutDecH`**
-    (`Acc/ItemsLoop/OutDec.lean`, approved by @parent): the inlined `BootstrapWorkOutput::decode` at
-    7050 … 7080 decodes the work output's octets into the instructions (R3), fails with the decode-error
-    branch (☇ at 15361), or exhausts the heap. To be discharged by R3.
+    (`Acc/ItemsLoop/OutDec.lean`; Adam's decision 23, Plan B; approved by @parent): the inlined
+    `BootstrapWorkOutput::decode` runs from 7050 to 7080, keeping the frame (ω₁, ω₅, ω₆, the allocator's
+    chunks and their data, the stack but the reader and the result, the statics, the octets below
+    196608). If the spec decode succeeds, the result is the instructions' `Vec` (each slot representing
+    its instruction, fresh buffers) and ℰ₂(item) at sp + 1592. If it fails, the result is −1 at
+    sp + 1568 (the arm then traps at 15361). Otherwise it exhausts the heap (`ExhaustsP`). To be
+    discharged by R3; the decode-error branch is an open obligation stated with it.
 
 - **The accumulate prologue stores 𝖢 and 𝖨.** `Acc.Statics.start_to_6429_statics` and
   `Acc.Statics.chain` (`Acc/Statics.lean`).

@@ -170,7 +170,7 @@ theorem lfmt {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCode
 theorem lpush {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P]
     (env : RefineHost.Env) (cap0 : Nat) (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616)
     (x : RefineCtx) (ω : Regs) (μ : Memory) {hb : Nat} (s : State) {pb S0 S1 M n : Nat}
-    {O : Nat → List UInt8 → Prop} (k : Nat) (hkn : k < n) (hn : n ≤ 2097152)
+    {O : Nat → List UInt8 → Prop} (k : Nat) (hkn : k < n) (hn : n ≤ 16777216)
     (hM : S0 + 7560 ≤ M ∧ M + 632 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0)
     (H : HeapCtx env pb S0 S1 μ s) (h1 : ω[1] = UInt64.ofNat M) (w0 w1 w2 : Nat)
     (hw0 : w0 < 18446744073709551616) (hw1 : w1 < 18446744073709551616) (hw2 : w2 < 18446744073709551616)
@@ -384,9 +384,10 @@ theorem lookup_step {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [
     (∃ (s' : State) (ω' : Regs) (μ' μ0' : Memory) (Kp' : Chunk → Prop) (N ptr' : Nat),
       FreeStepsH p (refineContractK cap0 env) i ω μ x 5042 ω' μ' x N ∧
       PInv env pb S0 S1 M E n ce capI μ0' Kp' O 5042 (k + 1) ω' μ' s' ∧
-      μ'.readN (M + 256) 8 = Num.encodeLE 8 ptr' ∧
+      μ'.readN (M + 256) 8 = Num.encodeLE 8 ptr' ∧ ptr' < 2147483648 ∧
       LUSlot μ' (ptr' + 232 * k) (LookupStep.lookupOf env svc h) (rdN μ' (M + 568) 8) ∧
-      LUOwn μ0 μ0' Kp Kp' (LookupStep.lookupOf env svc h) (rdN μ' (M + 568) 8)) ∨
+      LUOwn μ0 μ0' Kp Kp' (LookupStep.lookupOf env svc h) (rdN μ' (M + 568) 8) ∧
+      ∀ c, Kp' c → ¬ Kp c → c ≠ ce) ∨
     ∃ N, ExhaustsX env cap0 pb p i ω μ x N := by
   obtain ⟨hS0M, hMS1, hM2, hM8⟩ := L.hM
   have hn := L.hn
@@ -556,13 +557,13 @@ theorem lookup_step {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [
   have run := run3.trans (run4.trans (run5.trans run6))
   generalize LookupStep.lookupOf env svc h = v at hlu dres4 ⊢
   cases v with
-  | none => exact Or.inl ⟨s5, ω6, μ6, μ0, Kp, _, ptr', run, st6, vp6, hlu, rfl, rfl⟩
+  | none => exact Or.inl ⟨s5, ω6, μ6, μ0, Kp, _, ptr', run, st6, vp6, hp5, hlu, ⟨rfl, rfl⟩, fun c h1 h2 => absurd h1 h2⟩
   | some d =>
     obtain ⟨-, -, b, e8, hb⟩ := dres4
     rw [show M + 560 + 8 = M + 568 by omega] at e8
     rcases hb with ⟨hd, rfl⟩ | ⟨c, hc, hcu, hca, hcs, hfr, hdat⟩
     · have h1 : rdN μ6 (M + 568) 8 = 1 := by rw [e568]; exact rd8 (by decide) e8
-      exact Or.inl ⟨s5, ω6, μ6, μ0, Kp, _, ptr', run, st6, vp6, hlu, Or.inl ⟨hd, h1, rfl, rfl⟩⟩
+      exact Or.inl ⟨s5, ω6, μ6, μ0, Kp, _, ptr', run, st6, vp6, hp5, hlu, Or.inl ⟨hd, h1, rfl, rfl⟩, fun c h1 h2 => absurd h1 h2⟩
     · have hc0 := Decode.VecU8.chunk_in H4.wf hc hcu
       have hb4 := H4.hb0
       have hb4T := H4.hbT
@@ -584,12 +585,15 @@ theorem lookup_step {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [
             have a1 := rd8 (by omega) h0; have a2 := rd8 (show ptr' < 2 ^ 64 by omega) vp6; omega
           exact ExportElem.addr_ne H5.wf hc5 hc' hcc' (by rw [e1, hca']))
       have hT : c.addr + 32 * c.size ≤ 2147483648 := by omega
-      refine Or.inl ⟨s5, ω6, μ6, PassLoop.snapWith μ0 μ6 c, fun d => Kp d ∨ d = c, _, ptr', run, st7, vp6, hlu,
+      refine Or.inl ⟨s5, ω6, μ6, PassLoop.snapWith μ0 μ6 c, fun d => Kp d ∨ d = c, _, ptr', run, st7, vp6, hp5, hlu,
         Or.inr ⟨c, hrb.symm, hcs, fun hK => hfr c (st.kp c hK).1 (st.kp c hK).2.1 rfl, rfl, ?_, fun a ha hout =>
-          PassLoop.snapWith_out hT (by rw [hcs]; omega) ha hout⟩⟩
-      rw [hrb, hca]
-      refine Eq.trans (Memory.readN_congr (fun j hj => ?_)) hdat
-      have hj' : b + j < c.addr + 32 * c.size := by rw [hcs]; omega
-      rw [PassLoop.snapWith_in hT ⟨by omega, hj'⟩, hc6 _ ⟨by omega, hj'⟩]
+          PassLoop.snapWith_out hT (by rw [hcs]; omega) ha hout⟩, fun c0 h1 h2 => ?_⟩
+      · rw [hrb, hca]
+        refine Eq.trans (Memory.readN_congr (fun j hj => ?_)) hdat
+        have hj' : b + j < c.addr + 32 * c.size := by rw [hcs]; omega
+        rw [PassLoop.snapWith_in hT ⟨by omega, hj'⟩, hc6 _ ⟨by omega, hj'⟩]
+      · rcases h1 with h1 | rfl
+        · exact absurd h1 h2
+        · exact fun h => hfr ce st.hce.1 st.hce.2 h.symm
 
 end Services.Bootstrap.Refine.LookupStep2

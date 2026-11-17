@@ -113,7 +113,8 @@ def TailOut (env : RefineHost.Env) (μ0 : Memory) (Y C I S v5 v6 : Nat) (y h : L
   (∃ cp ∈ chunks s', cp.used = true ∧ cp.addr = s'.base ∧ cp.addr + 32 = q ∧
     ∀ a, q ≤ a → a < q + Y → InData cp a) ∧
   TablesKept μ0 μ' ∧ (∀ a, 4278050816 ≤ a → a < 4278059008 → μ'.writable a = true) ∧
-  (∀ a, 4278058610 ≤ a → a < 4294967296 → μ'.read a = μ0.read a)
+  (∀ a, 4278058610 ≤ a → a < 4294967296 → μ'.read a = μ0.read a) ∧
+  (∀ a, Glob a → μ'.read a = μ0.read a)
 
 /-- `ArgsTail.from_vec` through `tail_core_hi`, with the payload's chunk at the base given, ending in
     `TailOut`. -/
@@ -140,7 +141,8 @@ theorem from_vec_hi {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHos
     (hnew : (⟨q - 32, (Y + 31) / 32 + 1, true⟩ : Chunk) ∈ chunks s')
     (hq : q = 206912) (hbase : s'.base = 206880)
     (bfr : ∀ a, a < 4294967296 → 4278058264 ≤ a → (a < 4278058304 ∨ 4278058304 + 16 ≤ a) →
-      (a < 4278058320 ∨ 4278058320 + 24 ≤ a) → μ2.read a = μ.read a) :
+      (a < 4278058320 ∨ 4278058320 + 24 ≤ a) → μ2.read a = μ.read a)
+    (bgl : ∀ a, Glob a → μ2.read a = μ.read a) :
     ∃ ω' μ', FreeStepsH p (refineContractK cap env) 35130 ω μ x 4680 ω' μ' x (n2 + 505) ∧
       TailOut env μ Y C I S v5 v6 y h q s' ω' μ' := by
   obtain ⟨hq0, -, hqT⟩ := Decode.VecU8.chunk_in H2.wf hnew rfl
@@ -170,7 +172,8 @@ theorem from_vec_hi {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHos
     Decode.VecU8.ctx_congr_hi H2 (fun a ha => fr3 a (by omega)) wr3
   refine ⟨ω3, μ3, runAll, d0, d1, d5, d6, dc, dq, dl, ?_, dI, dS, dC, ?_, H3, hq, hbase,
     ⟨_, hnew, rfl, by simp only; omega, by simp only; omega, fun a h1 h2 => ⟨by simp only; omega, by simp only; omega⟩⟩,
-    tables_kept H runAll, fun a h1 h2 => H3.st a h1 h2, fun a h1 h2 => ?_⟩
+    tables_kept H runAll, fun a h1 h2 => H3.st a h1 h2, fun a h1 h2 => ?_,
+    fun a ha => (fr3 a (by unfold Glob at ha; omega)).trans (bgl a ha)⟩
   · rw [dh, ← hh]
     exact Memory.readN_congr (fun j hj => hpay _ (by omega) (by omega))
   · rw [← hy, ← bdat]
@@ -207,13 +210,13 @@ theorem args_tail_hi {p : ByteArray} {P : Program} [HasCode p P] (env : RefineHo
       a0 a1 (a5.trans h5) (by rw [a6, UInt64.ofNat_toNat]) a7 a8 a9 (by decide)
       (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_820]) bs_35155 (by omega) hv6' hY (by omega)
       (by omega) ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ (Or.inr (by omega)) s40 s48 with
-    ⟨q, s', ω2, μ2, ha, run2, -, b1, b5, -, bO, bO8, bO16, bdat, bR0, bR8, H2, -, hnew, -, -, -, bfr, -, -, -⟩ |
+    ⟨q, s', ω2, μ2, ha, run2, -, b1, b5, -, bO, bO8, bO16, bdat, bR0, bR8, H2, -, hnew, -, -, -, bfr, -, bgl, -⟩ |
     ⟨hna, ω2, μ2, run2, e7⟩
   · obtain ⟨hq, -, -, -, -, hbase⟩ := alloc_sStart ha
     obtain ⟨ω', μ', run, out⟩ :=
       from_vec_hi (P := P) env cap x ω μ μ2 ω2 s' Y q ptr C I S v5 v6 _ y h H2 ⟨hY.1, by omega⟩ hptr hC hI hS hv5
         hv6 hra hy hh s16 s24 s32 s88 s96 s104 (run1.trans run2) H b1 (b5.trans (by rfl)) bO bO8 bO16 bdat bR0
-        bR8 hnew hq hbase bfr
+        bR8 hnew hq hbase bfr bgl
     exact Or.inl ⟨q, s', ω', μ', _, run, out⟩
   · exact Or.inr ⟨_, PassLoop.ExhaustsX.ofFmt ⟨ω2, μ2, x, 40611, run1.trans run2, e7, Or.inl rfl⟩⟩
 
@@ -246,12 +249,12 @@ theorem args_tail_big_hi {p : ByteArray} {P : Program} [HasCode p P] [CodeX.HasC
       a0 a1 (a5.trans h5) (by rw [a6, UInt64.ofNat_toNat]) a7 a8 a9 (by decide)
       (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_820]) bs_35155 (by omega) hv6' hY (by omega)
       (by omega) ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ (Or.inr (by omega)) s40 s48 with
-    ⟨q, s', ω2, μ2, run2, -, b1, b5, -, bO, bO8, bO16, bdat, bR0, bR8, H2, -, hnew, -, -, -, bfr, -, -, -, hq,
+    ⟨q, s', ω2, μ2, run2, -, b1, b5, -, bO, bO8, bO16, bdat, bR0, bR8, H2, -, hnew, -, -, -, bfr, -, bgl, -, hq,
       hbase, -⟩ | hex
   · obtain ⟨ω', μ', run, out⟩ :=
       from_vec_hi (P := P) env cap x ω μ μ2 ω2 s' Y q ptr C I S v5 v6 _ y h H2 ⟨by omega, by omega⟩ hptr hC hI hS
         hv5 hv6 hra hy hh s16 s24 s32 s88 s96 s104 (run1.trans run2) H b1 (b5.trans (by rfl))
-        bO bO8 bO16 bdat bR0 bR8 hnew hq hbase bfr
+        bO bO8 bO16 bdat bR0 bR8 hnew hq hbase bfr bgl
     exact Or.inl ⟨q, s', ω', μ', _, run, out⟩
   · exact Or.inr ⟨_, PassLoop.ExhaustsX.pre run1 (PassLoop.ExhaustsX.of hex)⟩
 
@@ -287,7 +290,8 @@ theorem TablesKept.trans {μ μ' μ'' : Memory} (h1 : TablesKept μ μ') (h2 : T
     {cap Y, ptr q = 206912, len Y, h, i, s, c}, y at q, the allocator's context for s' (base 206880) whose
     chunk at the base holds [q, q + Y), the read-only tables and the stack's access kept, and refine's
     saved words at M + 624 (the return address 2^32 − 2^16 = initial ω₀), M + 616 and M + 608 (the
-    initial ω₅ and ω₆, both 0); or it reaches a failed allocator call (`ExhaustsX`). -/
+    initial ω₅ and ω₆, both 0), and the parameter chain's 𝖢 = 341 and 𝖰 = 80 at 196616 / 196680 (as
+    `StartupConsts.startup_consts`); or it reaches a failed allocator call (`ExhaustsX`). -/
 theorem refine_args (p : ByteArray) (P : Program) [HasCode p P] [CodeX.HasCodeX p P] (env : RefineHost.Env)
     (cap : Nat) (hcap1 : 134217728 ≤ cap) (hcap : cap < 18446744073709551616)
     (henv : heapBounds env.code = (48, 1044430)) (hpar : env.fetch.params = Params.full) (μ : Memory)
@@ -315,7 +319,8 @@ theorem refine_args (p : ByteArray) (P : Program) [HasCode p P] [CodeX.HasCodeX 
       μ'.readN (4278058376 + 624) 8 = Num.encodeLE 8 4294901760 ∧
       μ'.readN (4278058376 + 616) 8 = Num.encodeLE 8 0 ∧ μ'.readN (4278058376 + 608) 8 = Num.encodeLE 8 0 ∧
       (initRegs L)[0] = UInt64.ofNat 4294901760 ∧ (initRegs L)[5] = UInt64.ofNat 0 ∧
-      (initRegs L)[6] = UInt64.ofNat 0) ∨
+      (initRegs L)[6] = UInt64.ofNat 0 ∧
+      μ'.readN 196616 2 = Num.encodeLE 2 341 ∧ μ'.readN 196680 8 = Num.encodeLE 8 80) ∨
     ∃ N, PassLoop.ExhaustsX env cap 1044430 p 0 (initRegs L) μ ((∅, []) : RefineCtx) N := by
   obtain ⟨ω1, μ1, run0, post, H1⟩ := ArgsCtx.args_ctx p P env henv hpar μ hμ C I S h hC hI hS Y hY1 hY y hy hh L
     hLdef hL hmem hrd hz
@@ -345,6 +350,11 @@ theorem refine_args (p : ByteArray) (P : Program) [HasCode p P] [CodeX.HasCodeX 
   have q107 : μ1.readN 4278058992 8 = [0, 0, 0, 0, 0, 0, 0, 0] := by assumption
   have q108 : μ1.readN 4278059000 8 = [0, 0, 255, 255, 0, 0, 0, 0] := by assumption
   have q130 : ∀ a, 4278059008 ≤ a → a < 4294967296 → μ1.read a = μ.read a := by assumption
+  -- 𝖢 and 𝖰, stored by the parameter chain before 4642 and kept to 35130
+  have gw : μ1.readN 196616 2 = Num.encodeLE 2 341 ∧ μ1.readN 196680 8 = Num.encodeLE 8 80 := by
+    obtain ⟨ω₂, μ₂, -, -, f42, -, -, g1, g2⟩ := c131
+    exact ⟨by rw [Memory.readN_congr (fun j hj => f42 _ (by omega) (by omega))]; exact g1,
+      by rw [Memory.readN_congr (fun j hj => f42 _ (by omega) (by omega))]; exact g2⟩
   clear c0 c1 c2 c3 c4 c5 c6 c7 c8 c9 c10 c11 c12 c13 c14 c15 c16 c17 c18 c19 c20 c21 c22 c23 c24 c25 c26 c27 c28 c29 c30 c31 c32 c33 c34 c35 c36 c37 c38 c39 c40 c41 c42 c43 c44 c45 c46 c47 c48 c49 c50 c51 c52 c53 c54 c55 c56 c57 c58 c59 c60 c61 c62 c63 c64 c65 c66 c67 c68 c69 c70 c71 c72 c73 c74 c75 c76 c77 c78 c79 c80 c81 c82 c83 c84 c85 c86 c87 c88 c89 c90 c91 c92 c93 c94 c95 c96 c97 c98 c99 c100 c101 c102 c103 c104 c105 c106 c107 c108 c109 c110 c111 c112 c113 c114 c115 c116 c117 c118 c119 c120 c121 c122 c123 c124 c125 c126 c127 c128 c129 c130 c131
   -- the payload's pointer and the hash
   generalize hk : (Blob.encodeNat C).length + (Blob.encodeNat I).length + (Blob.encodeNat S).length +
@@ -378,14 +388,17 @@ theorem refine_args (p : ByteArray) (P : Program) [HasCode p P] [CodeX.HasCodeX 
       μ'.readN (4278058376 + 624) 8 = Num.encodeLE 8 4294901760 ∧
       μ'.readN (4278058376 + 616) 8 = Num.encodeLE 8 0 ∧ μ'.readN (4278058376 + 608) 8 = Num.encodeLE 8 0 ∧
       (initRegs L)[0] = UInt64.ofNat 4294901760 ∧ (initRegs L)[5] = UInt64.ofNat 0 ∧
-      (initRegs L)[6] = UInt64.ofNat 0 := by
+      (initRegs L)[6] = UInt64.ofNat 0 ∧
+      μ'.readN 196616 2 = Num.encodeLE 2 341 ∧ μ'.readN 196680 8 = Num.encodeLE 8 80 := by
     intro ω' μ' q s' o
-    obtain ⟨o0, o1, o5, o6, oc, oq, ol, oh, oI, oS, oC, odat, H', hq, hb, hcp, tk, wst, fr⟩ := o
+    obtain ⟨o0, o1, o5, o6, oc, oq, ol, oh, oI, oS, oC, odat, H', hq, hb, hcp, tk, wst, fr, ogl⟩ := o
     refine ⟨o0, o1, o5, o6, oc, oq, ol, oh, oI, oS, oC, odat, H', hq, hb, hcp,
-      TablesKept.trans (tables_kept0 H1 run0') tk, wst, ?_, ?_, ?_, hi0, hi5, hi6⟩
+      TablesKept.trans (tables_kept0 H1 run0') tk, wst, ?_, ?_, ?_, hi0, hi5, hi6, ?_, ?_⟩
     · rw [Memory.readN_congr (fun j hj => fr _ (by omega) (by omega)), q108]; decide
     · rw [Memory.readN_congr (fun j hj => fr _ (by omega) (by omega)), q107]; decide
     · rw [Memory.readN_congr (fun j hj => fr _ (by omega) (by omega)), q106]; decide
+    · rw [Memory.readN_congr (fun j hj => ogl _ ⟨by omega, by omega⟩)]; exact gw.1
+    · rw [Memory.readN_congr (fun j hj => ogl _ ⟨by omega, by omega⟩)]; exact gw.2
   by_cases hsm : Y ≤ 16384
   · rcases args_tail_hi (P := P) env cap hcap1 hcap ((∅, []) : RefineCtx) ω1 μ1 Y (4278124544 + k) C I S L
         4278124544 y h H1 ⟨hY1, hsm⟩ ⟨by omega, by omega⟩ hC (by omega) hS (by omega) (by omega)

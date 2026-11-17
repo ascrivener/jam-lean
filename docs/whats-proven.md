@@ -177,6 +177,34 @@ An independent kernel, nanoda as vendored by
   - *Built from:* `Refine/Top.lean` (`refine_core`: the arguments' parse `ArgsAll.refine_args`, then
     `from4680`), `Refine/RunMixed.lean` (the decode, transform loop and output), `Refine/SpecRun.lean`
     (`Spec.refine`'s run on these payloads).
+- **T1c: canonical payloads, every instruction but `Import` and `RandomStorageRefine`.** `refine_t1c`
+  (`Services/Bootstrap/Refine/T1c.lean`).
+  - *Statement:* for a work item whose code is bootstrap with T1c's code tiers (`IsBootstrapC`), c < 2¹⁶,
+    i < 2¹⁶, service id < 2³², and payload y = ℰ(`Instructions { is, salt }`) ⌢ rest with 1 ≤ |is|
+    instructions well-formed for C = `Consts.ofParams Params.full rk` (any rk), none `Import` or
+    `RandomStorageRefine`, and |y| + 48 ≤ 2²⁴ (so |is| < 2²⁴): `Spec.refine C` under the GP refine host
+    functions (`RSem.run`) returns some output and exports, and Ψ_R's result and exports are those; or ∞ with
+    no exports; or the run reaches a failed allocation (`ExhaustsHeap`). The output passes every instruction
+    through, returns `ExportSegs ds` as `Exported |ds|` and an eager `Lookup s h` as `LookedUp (lk s h)`.
+  - *Assumed:*
+    - `VendoredFactsC`: `VendoredFacts` and the drop table's entry 8 (read-only offset 32), about the constant
+      blob, discharged in step 10;
+    - `IsBootstrapC`: `IsBootstrap` plus `checkCode` for the append-only tiers `CodeT1B` and `CodeT1C`. The
+      kernel proves these of the vendored blob (`CodeT1BCheck`, `CodeT1CCheck`); step 10;
+    - `FmtHypsC C`: four log / `Debug` lines (`ArgsLineOk`, `ExportFmtOk`, `LookupFmtOk`, and `DebugLineOk` for
+      `SlotT.DRt C`), stated at the host contract's gas cap 2⁶², to be discharged by the fmt summaries. The cap
+      is 2⁶² rather than 2²⁷ because the eager `Lookup`'s gas, 1125 + ⌈264 |d| / 1024⌉, must fit under it for
+      every preimage d; Ψ_M's lift holds at any cap;
+    - `hnoimport`: no `Import` (deferred; Adam);
+    - `hrsr`: no `RandomStorageRefine` (decision of 2026-11-13);
+    - `hpre`: every preimage the historical lookup at the anchor returns is shorter than 2⁶³ octets.
+  - *Not yet proved:* that a failed allocation then ends in ☇ with no exports (the named later obligation).
+  - *Not covered (deferred):* `Import`, `RandomStorageRefine`, n = 0 (the separate `psiR_noinstr`), and
+    non-canonical payloads (M2).
+  - *Built from:* `Refine/TopT.lean` (`refine_coreT`: `ArgsAll.refine_args`, which also carries 𝖢 = 341 and
+    𝖰 = 80 at 196616 / 196680 from the parameter chain, then `from4680T`), `Refine/RunT.lean` (`run_t`: the
+    decode with per-kind packages `PkgAll`, the loop `LoopT.loop_t` with the invariant `InvT.Inv`, and
+    `ExitRunW.exit_runW`), `Refine/SpecRunT.lean` (`Spec.refine`'s run on these payloads).
 - **The `Instructions` decode loop, for lists of `Checkpoint`.** `DecodeLoop.loop` and
   `DecodeLoop.pass` (`Services/Bootstrap/DecodeLoop.lean`).
   - *Statement:* from the loop's state after k of n elements, the loop at pc 680 decodes the
@@ -1010,24 +1038,6 @@ What you trust beyond the kernel:
   values shorter than 2⁶³ octets (`get_call`'s `hfit`); T2 will carry this as `ValuesFit` (decided
   2026-11-15). The SDK's `get` reads a length of 2⁶⁴ − 1 as NONE and traps on lengths from 2⁶³; see
   [Findings](#findings).
-- **The ring size (T2, `RingFits`; row 8, `add_recent_work_item`).** The binary sizes the ring of recent work items
-  as 2·𝖢·𝖨 computed in 32 bits (`Acc/Handlers/RecentSlotWrite.lean`), so row 8 assumes
-  `ParamStatics μ C I ∧ RingFits C I`: the protocol parameters' statics hold 𝖢 (the `u16` at 196616) and 𝖨 (the
-  `u64` at 196696), and 0 < 2·𝖢·𝖨 < 2³² (decided 2026-11-16). The full parameters give 2·341·16 = 10912.
-  - `RingFits` is a named hypothesis on the chain parameters and an assumption of T2. *Obligation (open):* it may
-    later be discharged from the fetched parameters (fetch kind 0) instead. The upper bound already follows from
-    `apply()`'s checks (2 ≤ 𝖢 ≤ 341, 𝖨 stored as a `u16`, so 2·𝖢·𝖨 < 2³²); only positivity (𝖨 ≥ 1) is not checked
-    by the binary and remains a real assumption on the chain parameters.
-  - `ParamStatics` is not an assumption of T2. *Obligation (open):* the T2 composition discharges it from the entry
-    prologue's `apply()` (the stores at 56205 and 56279) and from the frames of the later steps, which keep
-    196616 … 196791.
-  - Row 8 is composed: `add_recent` (`Acc/Handlers/RecentAdd.lean`) states that the run from 8013 to 8416
-    implements spec `addRecent` in `Impl`'s form. Early ☇ happens only at the allocation-failure traps 34070,
-    47977 and 32584 (heap exhaustion). Its hypotheses are `ParamStatics` (an obligation), `RingFits`,
-    maxRecent = 2·𝖢·𝖨, the read-only words it reads (key sizes, `set`'s error table) and `ValuesFit` for
-    this service's storage at the start (`StoreFit`). `Impl.inv` carries `StoreFit` past the removal and the
-    slot write. Its post `AddPost` also records ω₆ kept (added 2026-11-16, parent-approved).
-
 - **Allocation failure ends in ☇ (a blob obligation).** The binary follows a failed allocation with
   `handle_alloc_error`, which traps. Wherever a theorem only reaches the failed allocator call
   (`Fmt.Exhausts`: 40611 / 40821 with ω₇ = 0), this last stretch to the trap is still to be proved;
@@ -1056,7 +1066,7 @@ What you trust beyond the kernel:
     47977 and 32584 (heap exhaustion). Its hypotheses are `ParamStatics` (an obligation), `RingFits`,
     maxRecent = 2·𝖢·𝖨, the read-only words it reads (key sizes, `set`'s error table) and `ValuesFit` for
     this service's storage at the start (`StoreFit`). `Impl.inv` carries `StoreFit` past the removal and the
-    slot write.
+    slot write. Its post `AddPost` also records ω₆ kept (added 2026-11-16, parent-approved).
 - **`DropInstrsH` and `InstrRep` (T2, named hypothesis; parent's option (A) for row 11's drops).** The drop
   of the instructions' `IntoIter` (33214, per-kind drops through the table at 68312) is assumed frame-only:
   it frees each remaining slot's `foot` and then its buffer, keeps every other allocated chunk with its data
@@ -1193,5 +1203,31 @@ At the time of writing, other work in progress includes:
 - **Lifting the 14-page limit,** by making the host-call gas cap a parameter of `refineContract`.
 - **`alloc` in the binary at alignment above one unit with heap growth, on first use and on
   failure.** The no-growth success path is done (`AllocAlignRefines.lean`).
+- **The field formatters of refine's 6159 `Debug` line** (`Services/Bootstrap/Fmt/Field*.lean`,
+  `N56*.lean`), frame-only summaries in the style of the Fmt ones: `write_char` (59743), `pad_wp` and
+  `pad_z2` (`pad_integral` with `{:02x}`'s options), `u8hex_ok` (60209), `fmt_write_spec` (an
+  explicit-options item), `fmt_write_c3` and `fmt_writeW` (nested `core::fmt::write` calls, whose
+  arguments lie below the `String`), `slice_hex_ok` (57922) and `n56_hex` (56340's hex path).
+  - *Named hypotheses* on the vendored blob's read-only data, discharged in step 10 like `FmtRO`:
+    `RO70833` (the octets 70833 … 70840, the template `{:02x}`) and `RO70824` (the octets 70824,
+    70827, 70828 and 70832, the template `0x{}...`).
+- **`core::str::from_utf8` (60681), by the symbolic executor** (draft PR #194,
+  `Services/Bootstrap/SymExec/Utf8Final.lean`). Both statements are proved, with axioms propext,
+  Classical.choice and Quot.sound only:
+  - `from_utf8_call`: for every input the call returns to the caller with r0, r1, r5 and r6
+    restored. Memory changes only in its 32-octet stack frame and the 24-octet result, and the page
+    map is kept. The result is either `Ok` (0, p, len), or `Err` (1, v, error_len) with v < len,
+    the octet at p + v at least 0x80, and error_len `None` or `Some 1..3`.
+  - `from_utf8_ascii`: if every octet is below 0x80, the result is `Ok` with the same pointer and
+    length.
+
+  The premises are the calling convention (`Pre`):
+  - p < 2^32, len < 2^32, p + len ≤ 2^32, and [p, p + len) is readable;
+  - [sp, sp + 32) is writable, with sp + 32 < 2^32;
+  - [O, O + 24) is writable, with O + 24 < 2^32, and is disjoint from the frame;
+  - the input is disjoint from the frame;
+  - [71078, 71334) is readable.
+
+  There is no hypothesis about the contents of the table.
 
 This page should be updated as these land.

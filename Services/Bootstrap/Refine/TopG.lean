@@ -2,9 +2,9 @@ import Services.Bootstrap.Refine.Top
 import Services.Bootstrap.Refine.RunMixedG
 
 /-!
-# Refine from the arguments' decode to the halt, any number of instructions up to 2²¹
+# Refine from the arguments' decode to the halt, any number of instructions up to 2²⁴
 
-`from4680G` and `refine_coreG` are `Top.from4680` and `Top.refine_core` for 1 ≤ n ≤ 2²¹ instructions (part A of
+`from4680G` and `refine_coreG` are `Top.from4680` and `Top.refine_core` for 1 ≤ n ≤ 2²⁴ instructions (part A of
 full M1): the payload's length prefix ℰ(n) of any width and the output ℰ(`BootstrapWorkOutput`) with ℰ(n) of any
 width (`RunMixedG.run_mixedG`, `SpecRun.output_eqG`). Hypotheses as for `refine_core`. GP v0.8.0 Appendix B.4
 (Ψ_R running bootstrap's code), Appendix C (ℰ); `Spec.refine`.
@@ -19,10 +19,10 @@ open PVM Picoalloc JAM Services.Bootstrap Services.Bootstrap.Code Services.Boots
 set_option maxHeartbeats 8000000
 set_option maxRecDepth 100000
 
-/-- **Refine from 4680 to the halt, any n ≤ 2²¹** (`from4680` with `RunMixedG.run_mixedG`): from the arguments decoded at refine's frame
+/-- **Refine from 4680 to the halt, any n ≤ 2²⁴** (`from4680` with `RunMixedG.run_mixedG`): from the arguments decoded at refine's frame
     M = 4278058376 (the payload's `Vec<u8>` {Y, q, Y} at M + 168, the item index I and the service id S as 32-bit
     words at M + 224, M + 228, the halt address and two zero words saved at M + 624, M + 616, M + 608), the payload
-    y = ℰ(`Instructions { is, salt }`) ⌢ rest at q, in the heap's first chunk, with 1 ≤ |is| ≤ 2²¹ well-formed
+    y = ℰ(`Instructions { is, salt }`) ⌢ rest at q, in the heap's first chunk, with 1 ≤ |is| ≤ 2²⁴ well-formed
     instructions each passed through or `ExportSegs`: the run reaches the halting `jump_ind` at 6373 with ω₇, ω₈
     the octets ℰ(`BootstrapWorkOutput { outI is, I }`), readable, and the host context the segments exported
     in order (`expTo`); or an allocation fails. -/
@@ -32,7 +32,7 @@ theorem from4680G {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Se
     (fmt : ExportSeg.ExportFmtOk p 134217728 env 1044430 S0 S1 ro)
     (dbg : ExitRun.DebugLineOk p 134217728 env 1044430 S0 S1 ro (DRm C))
     (is : List Spec.Instr) (salt rest : List UInt8) (hsalt : salt.length = 32)
-    (hn : 1 ≤ is.length ∧ is.length ≤ 2097152) (hwf : ∀ x ∈ is, x.WF C)
+    (hn : 1 ≤ is.length ∧ is.length ≤ 16777216) (hwf : ∀ x ∈ is, x.WF C)
     (hk : ∀ x ∈ is, MFixed x ∨ ∃ ds, x = .exportSegs ds)
     (Y I S q : Nat) (y : List UInt8) (hy : y = Spec.encodePayload is salt ++ rest) (hYl : y.length = Y)
     (hY : Y < 16777216) (hI : I < 65536) (hS : S < 4294967296)
@@ -126,7 +126,7 @@ theorem from4680G {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Se
     rw [fo, SpecRun.output_eqG is I hI]
   · exact Or.inr ⟨_, ExhaustsX.pre run2 hx3⟩
 
-/-- **Refine from Y's state to the halt, any n ≤ 2²¹** (pc 0 … 6373): `refine_core` with `from4680G`: the
+/-- **Refine from Y's state to the halt, any n ≤ 2²⁴** (pc 0 … 6373): `refine_core` with `from4680G`: the
     arguments' parse (`ArgsAll.refine_args`: ℰ(c) ⌢ ℰ(i) ⌢ ℰ(s) ⌢ ↕y ⌢ h, 1 ≤ |y| < 2^24) and `from4680G`. The read-only tables
     the run reads are given in the starting memory. -/
 theorem refine_coreG {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Services.Bootstrap.CodeA.HasCodeA p P] [HasCodeR p P]
@@ -136,7 +136,7 @@ theorem refine_coreG {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] 
     (fmt : ExportSeg.ExportFmtOk p 134217728 env 1044430 S0 S1 ro)
     (dbg : ExitRun.DebugLineOk p 134217728 env 1044430 S0 S1 ro (DRm C))
     (is : List Spec.Instr) (salt rest : List UInt8) (hsalt : salt.length = 32)
-    (hn : 1 ≤ is.length ∧ is.length ≤ 2097152) (hwf : ∀ x ∈ is, x.WF C)
+    (hn : 1 ≤ is.length ∧ is.length ≤ 16777216) (hwf : ∀ x ∈ is, x.WF C)
     (hk : ∀ x ∈ is, MFixed x ∨ ∃ ds, x = .exportSegs ds)
     (μ : Memory) (hμ : Prefix.StartMem μ) (hz : Prefix.StartMemZ μ) (hro : RoData.RoIs ro μ) (cc I S : Nat) (h y : List UInt8)
     (hc : cc < 65536) (hI : I < 65536) (hS : S < 4294967296) (hh : h.length = 32)

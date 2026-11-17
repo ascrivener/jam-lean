@@ -1,12 +1,24 @@
 # jam-lean
 
 An executable Lean 4 model of JAM from the
-[Gray Paper](https://github.com/gavofyork/graypaper) **v0.8.0**: the Polkadot Virtual Machine
-(Appendix A, library `PVM`), and Appendix B with the protocol terms it needs (library `JAM`, in
-progress). The PVM is checked against the PVM test vectors of
-[koute/jamtestvectors](https://github.com/koute/jamtestvectors) (branch `master_pvm_initial`,
-commit `6bf3768e5b37bbe4ca5d6e1306284ecb27c0198f`, directory `pvm/`); `JAM` against
-[davxy/jam-test-vectors](https://github.com/davxy/jam-test-vectors) `v0.8.0`.
+[Gray Paper](https://github.com/gavofyork/graypaper) **v0.8.0**, and machine-checked theorems about
+real compiled JAM service binaries.
+
+* **The protocol.** All of Appendix A (the Polkadot Virtual Machine, its host-call machinery and its
+  gas model; library `PVM`), and the protocol built on it (library `JAM`): the codec, hashes, the
+  general, accumulate and refine host functions, Ψ_A, Ψ_R and Ψ_I, every section-level state
+  transition (Safrole, disputes, reports, assurances, accumulation, preimages, recent history,
+  authorizations, statistics) and block import Υ with the state Merklization of Appendix D.
+* **Validated** against the PVM vectors of
+  [koute/jamtestvectors](https://github.com/koute/jamtestvectors) (branch `master_pvm_initial`,
+  commit `6bf3768e5b37bbe4ca5d6e1306284ecb27c0198f`, directory `pvm/`; 364 / 364) and the GP v0.8.0
+  vectors of [davxy/jam-test-vectors](https://github.com/davxy/jam-test-vectors) `v0.8.0`: every
+  STF suite, and the block-import traces with the post-state compared after every block. The few
+  departures are listed with the vectors' own changelog notes in the [results](#results) below.
+* **Proved about real binaries.** Theorems about the octets that run on chain, for the witness
+  service and Parity's bootstrap service, including the picoalloc heap allocator the JAM SDK links
+  into every service. Along the way they found disagreements between the binary and the paper,
+  listed in [`docs/upstream-candidates.md`](docs/upstream-candidates.md).
 
 **What's proven:** [`docs/whats-proven.md`](docs/whats-proven.md) summarises the theorems about real
 service binaries (witness, and Parity's bootstrap service with its picoalloc heap allocator), their
@@ -27,7 +39,7 @@ Two libraries, each bounded by the Gray Paper (v0.8.0):
   references: the integer and bit-sequence encodings of Appendix C, the RAM and register
   definitions of §4.7, and constants. `PVM/Logic/` holds proof rules about this model; it adds no
   semantics.
-* **`JAM`: Appendix B (in progress)**, built on `PVM`, with the protocol terms Appendix B needs:
+* **`JAM`: Appendix B and the protocol**, built on `PVM`, with the protocol terms Appendix B needs:
   the codec (Appendix C) with its decoder ℰ⁻¹, blocks, headers and extrinsics, ℋ = Blake2b-256
   (§3.8), work packages, items, digests and reports (§11, §14), service accounts (§9), ℋ_K = Keccak-256 and the binary Merkle root (Appendix E).
   It has the general host functions (`gas`, `grow_heap`, `fetch`, `lookup`, `read`, `write`,

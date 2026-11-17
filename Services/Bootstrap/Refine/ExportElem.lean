@@ -206,7 +206,7 @@ theorem addr_ne {s : State} (hwf : WF s) {c d : Chunk} (hc : c ∈ chunks s) (hd
 theorem push {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P]
     (env : RefineHost.Env) (cap0 : Nat) (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616)
     (x : RefineCtx) (ω : Regs) (μ : Memory) {hb : Nat} (s : State) {pb S0 S1 M n : Nat} (ns : Nat)
-    {O : Nat → List UInt8 → Prop} (k : Nat) (hkn : k < n) (hn : n ≤ 2097152)
+    {O : Nat → List UInt8 → Prop} (k : Nat) (hkn : k < n) (hn : n ≤ 16777216)
     (hM : S0 + 7560 ≤ M ∧ M + 632 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0)
     (H : HeapCtx env pb S0 S1 μ s) (h1 : ω[1] = UInt64.ofNat M) (hns : ns < 18446744073709551616)
     (s136 : μ.readN (M + 136) 8 = Num.encodeLE 8 9223372036854775809) (s56 : μ.readN (M + 56) 8 = Num.encodeLE 8 ns)

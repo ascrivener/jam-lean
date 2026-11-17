@@ -60,7 +60,7 @@ theorem ro_keep {p : ByteArray} {cap0 : Nat} {env : RefineHost.Env} {pb S0 S1 : 
     (H.ro _ (by omega))), fun b h1 h2 => ?_⟩
   unfold Memory.readable; rw [kp _ (Or.inl (by unfold pageSize; omega))]
 
-/-- **Refine's exit** (5042 … t): from the loop's state after all n instructions (`PInv n`, 1 ≤ n ≤ 2²¹),
+/-- **Refine's exit** (5042 … t): from the loop's state after all n instructions (`PInv n`, 1 ≤ n ≤ 2²⁴),
     where each output slot j satisfies `O j` (so `rep j` for the encoder, `DR j` for the `Debug` line and a
     variant whose drop does nothing), refine returns to the return address `ret` saved at M + 624 (→ t) with
     ω₇ = buf and ω₈ = len, where the len octets at buf are

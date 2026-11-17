@@ -22,7 +22,10 @@ still open.
   saved cache.
 - A real failure keeps its exit code and fails the attempt: a proof error, or an OOM kill (exit 137
   before the deadline).
-- Runs on `main` are never cancelled (`concurrency` in `ci.yml`). Main always saves `.lake`. A PR
+- Runs on `main` are never cancelled, and they run one at a time (`concurrency` in `ci.yml`): each
+  starts from the `.lake` the previous one saved. GitHub keeps one pending main run and drops older
+  pending ones, so the latest commit is always built, but a commit that lands while another is
+  pending may get no run of its own. Main always saves `.lake`. A PR
   saves only when its build did not finish, so that finished PR builds don't evict main's caches
   from the 10 GB repository cache.
 

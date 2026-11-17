@@ -249,7 +249,9 @@ def bootstrapSvc : Svc where
   fnRangesR := [(4046, 6378), (30766, 30977), (44677, 44916), (49015, 49201)]
   tiers := [
     { name := "T1B", ranges := [(29181, 29675)], excludes := ["X", "R"],
-      doc := "refine's output drop (drop_in_place::<[Instruction]>): the heap variants' drop arms" }]
+      doc := "refine's output drop (drop_in_place::<[Instruction]>): the heap variants' drop arms" },
+    { name := "T1C", ranges := [(29153, 29181)], excludes := ["X", "R", "T1B"],
+      doc := "refine's output drop: the arm shared by `Assign` and `AssignForGasCost` (its jump-table entry)" }]
   -- accumulate (`Services/Bootstrap/Acc/README.md`, tier A): the entry 6378 … 15368, the inputs fetch
   -- and `AccumulateItem` decode, `BootstrapWorkOutput::decode`, the ring and results helpers, the
   -- storage wrappers and the allocator's remaining paths

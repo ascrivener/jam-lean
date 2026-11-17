@@ -49,6 +49,7 @@ structure LayDH (env : RefineHost.Env) (pb S0 S1 : Nat) (P : Program) (D F S v c
   cb : cap ≤ capBound
   H : HeapCtx env pb S0 S1 μ s
   chunk : ∃ c ∈ chunks s, c.used = true ∧ c.addr + 32 = ptr ∧ cap ≤ 32 * (c.size - 1)
+  oth : Decode.ReallocBig.OtherUsed s ptr
   hret : 0 < ret ∧ ret ≤ 2806 ∧ ret % 2 = 0
   hjt : P.jumpTable.getD (ret / 2 - 1) 0 = t
   hbt : P.isBlockStart t = true
@@ -108,7 +109,7 @@ theorem LayDH.nums (L : LayDH env pb S0 S1 P D F S v cap ptr len ret t s μ) :
 /-- **The writer at entry**, as `BufH` with nothing appended. -/
 theorem LayDH.init (L : LayDH env pb S0 S1 P D F S v cap ptr len ret t s μ) :
     BufH env pb S0 S1 F v len ptr s μ [] cap ptr s μ :=
-  BufH.init L.fr.hvS1 L.vc L.vp L.vl L.hlc L.cpos L.cb L.H L.chunk
+  BufH.init L.fr.hvS1 L.vc L.vp L.vl L.hlc L.cpos L.cb L.H L.chunk L.oth
 
 /-- The slot lies apart from the buffer, and below the frame or above F. -/
 theorem LayDH.slot_apart (L : LayDH env pb S0 S1 P D F S v cap ptr len ret t s μ) :

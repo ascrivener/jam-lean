@@ -2,6 +2,15 @@
 
 ## Handoff: T2 inputs (updated 2026-11-16 evening, end of the third session)
 
+**Session 7 (2026-11-17), on `claude/bootstrap-t2-r2`: R16 done, `accumulate_spec` proved** (axioms clean),
+in `Acc/Final/`: `KeepK` (`accKeepK`, lifts to `accContractS`), `LogLineK` (`acc_log_lineK`), `StaticsZ`
+(`chainZ`), `StartCtx` (`start_ctx`), `Head` (`il_head2`, `items_none_halt`), `FetchSpec`, `Lifts`, `Hyps`
+(the named hypotheses), `Impl` (`acc_impl`), `Spec` (`accumulate_spec`). New named hypotheses, accepted
+(Adam, 2026-11-17): `InfoFits`, `AccLogFail`, `InputsGlob` (temporary); `AccVendoredFacts` and
+`IsBootstrapCode` accepted by @parent under standing decisions. Full build green (2998 jobs, 33f51fa).
+Statics merged as #231, R2 as #233; R16 is its own PR. **Open obligation:** thread `Glob` through
+`inputs_decode` to discharge `InputsGlob` (a fresh session does it).
+
 **Session 6 (2026-11-17), on `claude/bootstrap-t2-r2`: R2 done.**
 - Merged Handlers A 8173e6b: every `hAbX` now requires ω₇ = 0 (a failed allocation), so T2's abort
   reason stays `AccAbort` (@parent, option (A)).

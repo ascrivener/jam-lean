@@ -134,7 +134,8 @@ theorem op_dec {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env :
     (m288 : rdN s₁.μ (sp + 288) 8 = cp) (hcp : cp ≠ 18446744073709551615)
     (m296 : rdN s₁.μ (sp + 296) 8 = ptr) (m304 : rdN s₁.μ (sp + 304) 8 = out.length)
     (hout : s₁.μ.readN ptr out.length = out)
-    (hrd : ∀ a, ptr ≤ a → a < ptr + out.length → s₁.μ.readable a = true) :
+    (hrd : ∀ a, ptr ≤ a → a < ptr + out.length → s₁.μ.readable a = true)
+    (hpo : out.length ≠ 0 → ptr + out.length ≤ 2147483648) :
     Aborts p (KeepCtx (accContractS env)) Ab s₁ s₁.c ∨
     (Spec.decode (Spec.Dec.output C) out = none ∧ Ends p (KeepCtx (accContractS env)) s₁ .panic s₁.c) ∨
     ∃ is item, Spec.decode (Spec.Dec.output C) out = some (is, item) ∧
@@ -156,7 +157,9 @@ theorem op_dec {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env :
   have H1 : HeapCtxC env.code pb S0 S1 μ1 st₁ := HeapCtxC.keep_hi H (fun a ha => lo1 a (by omega)) wr1
   -- the decode, 7050 → 7080
   rcases hOD cx f ω1 μ1 st₁ sp ptr out H1 a1 a5 a7 a8 hstk.1 hstk.2 (by omega) hsp.2 n1144 n1152
-      (by rw [Memory.readN_congr fun j hj => lo1 _ (by omega)]; exact hout)
+      (by rcases Nat.eq_zero_or_pos out.length with h0 | h0
+          · rw [List.length_eq_zero_iff.1 h0]; rfl
+          · rw [Memory.readN_congr fun j hj => lo1 _ (by have := hpo (by omega); omega)]; exact hout)
       (fun a h1 h2 => by rw [rd1]; exact hrd a h1 h2) with
     ⟨st₂, ω2, μ2, N2, r2, H2, b1, b5, b6, keep2, fr2, gl2, lo2, res2⟩ | hx
   rotate_left

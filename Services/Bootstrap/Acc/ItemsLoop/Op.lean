@@ -328,7 +328,10 @@ theorem op_arm {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCo
   -- the decode, 7009 → 8013
   rcases op_dec (P := P) env B C gcap hcap1 hcap hAb (fun s h => hAbT s (.inl h)) hOD s₁ st₁ sp
       bo.toList.length ptr bo.toList hi1 h11 H₁ hstk ⟨by omega, hsp.2⟩ w288 (by omega) w296 w304
-      hout1.1 hout1.2 with
+      hout1.1 hout1.2 (fun h => by
+        obtain ⟨d, hd, -, -, hdr⟩ := chO h
+        have := heapC_data_lt H hd (hdr (ptr + bo.toList.length - 1) (by omega) (by omega))
+        omega) with
     hab | ⟨hnone, hend⟩ | ⟨is, item, hsome, bv, cv, rp, st₂, s₂, run2, hc2, A⟩
   · exact Impl.abort _ _ hab
   · rw [onWorkItem_none C now _ _ hnone]; exact hend

@@ -208,7 +208,7 @@ theorem err_arm {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
     obtain ⟨sl', own'⟩ := rest_keep (st' := stf) (μ' := μf) (db := db) hslots hown
       (fun a h1 h2 => hdata a h1 (by omega)) (fun a ha => (datf db hdb hdbu (.inr rfl)).2 a ha)
       (fun d0 h0 hu hm => datf d0 h0 hu (.inl hm))
-    refine ⟨.inl rfl, h1f, hsp, hstk, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, hI.fit, ?_⟩
+    refine ⟨.inl rfl, h1f, hsp, hstk, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, hI.fit, ?_⟩
     · rw [hcur']; omega
     · rw [kw μf frf 144 (by omega)]; exact hI.m144
     · rw [kw μf frf 16 (by omega)]; exact hI.m16

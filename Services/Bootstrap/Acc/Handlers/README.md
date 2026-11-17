@@ -107,6 +107,67 @@ Handlers dependencies takes ~2 h on 4 cores). Use `ulimit -v 12000000` when comp
 - `refine ⟨?ω', ?run⟩; case run => pvm_go …` for a one-witness existential.
 
 
+## Session 7 handoff (2026-11-16, for the 8th session)
+
+**Branches.**
+- `claude/bootstrap-t2-handlers-a-row9` (based on #224's branch): row 9 (`ResStoreImpl`, `ResultsInit`), R4
+  (`ResultsAt`), 36170's loop segments (`ResStoreLoopSeg`), `docs/t2-remaining.md`. All compile locally; imported
+  from `Services.lean`. **To do:** once #224 merges, rebase onto main, full `lake build` in the background, open
+  the PR (body: row 9, R4, the map, plan B; the GetCall/GetKeyCall note below), merge on green.
+- `claude/bootstrap-t2-handlers-a-r5` = row9 branch + #222's head (`claude/bootstrap-t2-inputs-wip`) merged in
+  (parent's answer (c)). Adds `ResultsHyp.lean` (R8 `ExtendH`, R9 `OkEncH`, `WriterPre`, `WriterPost`) and
+  `ResStoreLoop.lean` (`ExhaustsP.pre`, `encK`, `LoopInv`, `LoopHyp`, `writer_chain`, `ext_step`, **`rl_item`**:
+  one pass of the loop, Ok and Err, axioms clean). It also carries a one-line fix in #222's
+  `Acc/Transfer/GetKeyCall.lean:197` (`fr5⟩` → `fr5, -, -, -⟩`), needed because #224's `get_some` has more
+  conclusions; the parent is sequencing #224/#222 (whichever merges second needs that line). Rebase this
+  branch onto main once #222 (and the row-9 PR) merge, before opening its PR.
+
+**Decisions this session (parent):** park row 11 as such; plan B (Adam, decision 23): T2 as a skeleton with named
+hypotheses (R6 per handler, R3 decode success, R9 encoder per item, R8 writer step, G4 log lines as Fmt
+hypotheses). `InstrRep` is a parameter shared by R3/R6 with a copy/frame field (obligation: T1's per-kind Reps
+discharge it). Handlers A states the G4 Debug log-line hypotheses itself (minimal, frame-only, like `LogFmt`;
+list in whats-proven.md). R5's result is the contract T2 inputs' R2 consumes (see `docs/t2-remaining.md`).
+
+**Next, in order (Handlers A):**
+1. `rl_loop`: induction on k with `rl_item` (n − k passes; `rl_enter` first; ends at 36405 with `LoopInv n`).
+2. `res_store` (general n ≥ 0): from 36170 like `res_head` (rs_pre, alloc 144n+4, rs_vec, prefix_any) to
+   `LoopInv 0` (μ₀ := memory after prefix_any; ℰ(n) = encK n rs 0; buffer chunk fresh vs st), then `rl_loop`,
+   `rl_tail`, `kb_call`, `rs_set`, `set_call`, and a `res_free` generalised to any value chunk (the buffer may have
+   grown: chunk `d` with d.addr + 32 = r). Convert the HeapHost runs with `FreeStepsH.growS`. For n = 0 reuse
+   `res_head`. Aborts: 36528, 34070, and `ExhaustsP` (T2 inputs' `AccAbort` must cover its state).
+3. R7: row 11 (15032 … 15198): unless [sp+160] = 1, `res_store` with the final results; drops 33214 (ret 558/560),
+   28864 (ret 564), deallocs at 15166 / 15185, back to 6766.
+4. R5: the instruction loop (map in this README's parent message; 8493 setup, head 8540, end 15028/15050; per item:
+   copy to sp+744 (memcpy 68729, `memcpy_val`), Zombify flag [sp+160] for tag 3, Checkpoint (tag 15) pre-write via
+   36170 at 8655 → 8716 (use `res_store`), Debug log line at 8772 (G4 hypothesis), copy to sp+1144, dispatch 8822,
+   handler hypothesis `HandlerImpl` (R6) to 14278, the tail (result log line, G4; push with growth, R8-style
+   hypothesis or `ExtendH`-like for the 144-octet push), back to 8540), as `Impl.forIn` with `ResultsVec`.
+
+## Session 7 progress (2026-11-16, row 9 composed)
+
+- `ResStoreImpl.lean`: `rs_j1` (40611 → 36217), **`res_head`** (36170 → `set` at 48104, n = 0, any `HeapHost`;
+  traps 36528 / 34070; key `keyEnc μ kp 2` in a chunk of (kc+31)/32+1 units, value [0] in a 2-unit chunk;
+  memory from sp up kept) and **`res_free`** (`set`'s return → 8477; ω₇ = −1 for `Ok`, else the error octet).
+- `ResultsInit.lean`: **`results_init`**, the `Impl` of `store (.results (μ[sp+312..+32]) item) (encodeResults [])`
+  then `op .checkpoint` from 8416 to `R9Post` at 8492 (ω₁ = sp, HeapCtxC for some st′ keeping st's chunks with
+  data, memory above sp kept off `R9Out` = [sp+1568, sp+1604), Glob, below 196608 with readability).
+  Hypotheses: [sp+464] = 0, kc at 68696 (35 ≤ kc), set's error table, 68680 … 69076 readable, frame
+  [sp − 352, sp + 1632), ℰ₂(item) = μ[sp+176..+2], `StoreFit`; `[HasCodeX p P]`. Ab covers 36528, 34070.
+  Axioms clean. Both imported from `Services.lean`.
+- Row 11 parked; **plan B** (Adam, decision 23): T2 as a skeleton with named hypotheses. Handlers A does R4,
+  R5, R7 of `docs/t2-remaining.md` (map written this session).
+- **R4 done:** `ResultsAt.lean`: `InHeap`, `VecAt`, `OkAt`, `ResultAt`, `ResultsAt`, `ResultsVec` (cap/ptr/len at
+  sp+448/456/464), `KeepsHeap`, `ResultsAt.keep` (frames keeping st's chunks with data keep it), `ResultsAt.nil`.
+  Layout read off the encoder arms (36346 … 36394, 30374 … 30640).
+- `ResStoreLoopSeg.lean` (compiles): 36170's loop for n ≥ 1: `rl_enter`, `rl_ok`, `rl_okenc`, `rl_err`,
+  `rl_errcode`, `rl_next`, `rl_tail`. Return addresses: 1696 → 36290, 1698 → 36335, 1700 → 36373, 1702 → 36394.
+- **Waiting on @parent** (sent 2026-11-16): InstrRep as a hypothesis parameter vs T1 export; who states the Debug
+  log-line Fmt hypotheses; using `memcpy_val`/`ExhaustsP` from #222 (R8/R9 hypotheses use `ExhaustsP`).
+- **Next:** R8 hypothesis (`extend` at 58508 under HeapHost, shaped like refine's `extend_any`) and R9 (36299 per
+  Ok item appends `(Result.encode (.ok r)).drop 1`), both with `ExhaustsP` failure; then the general-n 36170
+  (`res_store`), R7 (15032 … 15198), R5 (loop 8493 … 15028, see the map in the parent message).
+- Row 9: rebase onto main once #224 merges, full build, PR, merge on green.
+
 ## Session 6 progress (2026-11-16, row 8 composed)
 
 - `RecentAddGen.lean`: `Prog.bind_assoc`, **`addRecent_eq`** (spec `addRecent` as four binds: counter get,
@@ -122,8 +183,32 @@ Handlers dependencies takes ~2 h on 4 cores). Use `ulimit -v 12000000` when comp
   row 9 needs it.
 - Tip: foreground `sleep` loops return at once in this environment; wait with a background until-loop.
   To compile a new module before `lake build` reaches it: `lake env lean F.lean -o <olean> -i <ilean>`.
-- **Next:** full build green → row-8 PR (body: Q19, RingFits, ParamStatics obligation, the additive
-  get_call conclusions, `add_recent`). Then rows 9 and 11 (see "Row 9" / "Row 11" in the plan below).
+- Row 8 is **PR #224** (opened 2026-11-16; `model` green, attempts running). Merge on green.
+- **Row 9 started (local commits on this branch, pushed only after #224 merges, since a push restarts its CI):**
+  - `ResStoreSeg.lean` (all compile): 36170's n = 0 path in the callee frame S = sp − 96: `rs_null` +
+    `trap_36528` (alloc null → ☇, a heap-exhaustion reason), `rs_vec` (36217 → 30977, Vec {144n+4, ptr, 0}
+    at S+32, n u32 at S+56, ret 1694 → 36263), `rs_zero` (36263 → 33843 for n = 0: value cap → S+24, len →
+    S+8, ptr in ω₆; key encoder with out S+32, kp from S+16, ret 1704 → 36432), `rs_set` (36432 → 48104:
+    out S+56, key ptr/len S+40/S+48, value ω₆ / [S+8], vp saved at S; ret 1706), `rs_ret` (set's returns →
+    36456), `rs_d1` (36456 → 40613: r saved at S+16, b = u8 [S+64] in ω₆, dealloc key buffer ω₅, ret 1708 →
+    36482), `rs_d2` (36482 → 40613: dealloc [S], ret 1710 → 36499), `rs_end` (36499 → 8477, ret 294
+    hard-wired: ω₇ = −1 if r ≠ −1 else b; ω₀/ω₅/ω₆ restored).
+  - `ResultsInitSeg.lean` (all compile): `ASem.step_checkpoint` (y := x), `r9_pre` (8416 → 36170: tag-2 key
+    value at sp+1568 from the package copy at **sp + 312** (not sp + 512) and the item u16 at sp+176;
+    ω₇ = [sp+456] results ptr, ω₈ = [sp+464] n; ret 294), `r9_ok` (ω₇ = −1 → 8490), `r9_err` (ω₇ = 3 →
+    15361), `r9_ck` (8490 → 8492 as a `YIn (accContractS env) c.2 c.1` step).
+  - **Next for row 9:**
+    1. `res_store0` (36170 → 8477, n = 0), composing exactly like `sw_head` + `sw_free`
+       (RecentSlotWriteImpl.lean): `rs_pre`, `alloc_callG` (4 octets; null → `rs_null`), `rs_vec`,
+       `Encode.VecCore.prefix_any` (needs `[HasCodeX p P]`, available at top level as in Acc/Start.lean;
+       ℰ(0) = [0]), `rs_zero`, `kb_call` (tag 2, key size word at 68696, `keyEnc μ (sp+1568) 2` =
+       `(Key.results pkg item).encode`), `rs_set`, `set_call` (value [0], length 1), `rs_ret`, `rs_d1`,
+       `dealloc_callG`, `rs_d2`, `dealloc_callG`, `rs_end`. Ab gets 36528 and 34070.
+    2. Row 9 as `Impl` of `Prog.bind (store (.results pkg item) (encodeResults [])) (fun _ => op .checkpoint)`
+       from 8416 (check `encodeResults [] = [0]`), with hypotheses: [sp+464] = 0, μ[sp+312..+32] = package.
+       Post at 8492 (after the checkpoint, ω₇ = stream head). The checkpoint's ASem step is
+       `step_checkpoint`; the run is `r9_ck` (no Reaches before it beyond `r9_ok`).
+    3. Then compose rows 8 + 9 if useful, and row 11 (15032 … 15198, see the plan below).
 
 ## Session 5 progress (2026-11-16, row 8)
 

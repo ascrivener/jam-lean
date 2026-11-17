@@ -34,8 +34,8 @@ def R9Out (sp a : Nat) : Prop := sp + 1568 ≤ a ∧ a < sp + 1604
     st at 8416: ω₁ = sp; the allocator's context for some st′ keeping every allocated chunk of st with
     its data; memory kept above sp off `R9Out`, at the globals 196616 … 196791 and below 196608
     (read-only data, with its access). -/
-def R9Post (code : ByteArray) (pb S0 S1 sp : Nat) (st : State) (μ₀ : Memory) (s' : St Stream) : Prop :=
-  s'.i = 8492 ∧ s'.ω[1] = UInt64.ofNat sp ∧
+def R9Post (code : ByteArray) (pb S0 S1 sp : Nat) (st : State) (μ₀ : Memory) (v6 : UInt64) (s' : St Stream) : Prop :=
+  s'.i = 8492 ∧ s'.ω[1] = UInt64.ofNat sp ∧ s'.ω[6] = v6 ∧
   ∃ st', HeapCtxC code pb S0 S1 s'.μ st' ∧
     (∀ d ∈ chunks st, d.used = true → d ∈ chunks st' ∧ ∀ a, InData d a → s'.μ.read a = μ₀.read a) ∧
     (∀ a, a < 4294967296 → sp ≤ a → ¬ R9Out sp a → s'.μ.read a = μ₀.read a) ∧
@@ -45,6 +45,9 @@ def R9Post (code : ByteArray) (pb S0 S1 sp : Nat) (st : State) (μ₀ : Memory) 
 theorem encodeResults_nil : encodeResults [] = [0] := rfl
 
 theorem setR7_1 (ω : Regs) (v : Nat) : (setR7 ω v)[1] = ω[1] := by
+  unfold setR7; rw [Vector.getElem_set]; simp
+
+theorem setR7_6 (ω : Regs) (v : Nat) : (setR7 ω v)[6] = ω[6] := by
   unfold setR7; rw [Vector.getElem_set]; simp
 
 /-- **Row 9, 8416 → 8492, implements `store (results package item) (encodeResults [])` then
@@ -71,7 +74,7 @@ theorem results_init {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] 
     Impl p (accContractS env) env Ab
       (Prog.bind (store (.results (s.μ.readN (sp + 312) 32) item) (encodeResults []))
         (fun _ => Prog.op AOp.checkpoint))
-      (fun _ => R9Post env.code pb S0 S1 sp st s.μ) s := by
+      (fun _ => R9Post env.code pb S0 S1 sp st s.μ s.ω[6]) s := by
   obtain ⟨i, ω, μ, c0, f⟩ := s
   dsimp only at hi h1 H hn mc ht8 ht4 hro hitem hvals ⊢
   subst hi
@@ -157,7 +160,7 @@ theorem results_init {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] 
   have rest : ∀ (x : AccCtx × Stream) r b, r < 2 ^ 64 → b < 256 →
       μD.readN (sp - 96 + 56) 8 = Num.encodeLE 8 r → μD.readN (sp - 96 + 64) 1 = Num.encodeLE 1 b →
       ∃ ω' μ' n, FreeStepsH p (KeepCtx (accContractS env)) e ωD μD x 8477 ω' μ' x n ∧
-        ω'[1] = UInt64.ofNat sp ∧
+        ω'[1] = UInt64.ofNat sp ∧ ω'[6] = ωA[6] ∧
         ω'[7] = (if r = 18446744073709551615 then UInt64.ofNat b else UInt64.ofNat 18446744073709551615) ∧
         HeapCtxC env.code pb S0 S1 μ' (free (free s2 kp) vp) ∧
         (∀ d ∈ chunks st, d.used = true → d ∈ chunks (free (free s2 kp) vp) ∧ ∀ a, InData d a → μ'.read a = μ.read a) ∧
@@ -165,7 +168,7 @@ theorem results_init {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] 
         (∀ a, Glob a → μ'.read a = μ.read a) ∧ (∀ a, a < 196608 → μ'.read a = μ.read a) ∧
         (∀ a, a < 196608 → μ'.readable a = μ.readable a) := by
     intro x r b hr hb mr mb
-    obtain ⟨ωG, μG, nG, runG, g1, -, -, g7, HG, keepG, stkG, glG, roG, rdG⟩ := res_free (P := P)
+    obtain ⟨ωG, μG, nG, runG, g1, -, g6, g7, HG, keepG, stkG, glG, roG, rdG⟩ := res_free (P := P)
       (R := KeepCtx (accContractS env)) env.code pb S0 S1 x ωD μD s2 sp vp kp kc r b ωA[5].toNat ωA[6].toNat e
       HD hCv hCk hne (by omega) (by omega) he (d0.trans b0) d1 (d5.trans b5) (d6.trans b6) hsp.1
       ⟨hS0, by omega⟩ (by omega) (by omega) hr hb (UInt64.toNat_lt _) (UInt64.toNat_lt _)
@@ -175,7 +178,7 @@ theorem results_init {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] 
       (by rw [kD _ _ (by omega) (by omega) (.inr (by omega)), m294, a0]; rfl)
       (by rw [kD _ _ (by omega) (by omega) (.inr (by omega))]; exact m5)
       (by rw [kD _ _ (by omega) (by omega) (.inr (by omega))]; exact m6)
-    refine ⟨ωG, μG, nG, runG, g1, g7, HG, ?_, ?_, ?_, ?_, ?_⟩
+    refine ⟨ωG, μG, nG, runG, g1, by rw [g6]; simp, g7, HG, ?_, ?_, ?_, ?_, ?_⟩
     · intro d hd hu
       obtain ⟨k1, k2⟩ := keepG d (keepB d hd hu) hu (hfr d hd hu).1 (hfr d hd hu).2
       refine ⟨k1, fun a ha => ?_⟩
@@ -211,7 +214,7 @@ theorem results_init {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] 
     unfold SetOut at sO
     rw [if_pos rfl] at sO
     rw [hS] at runD
-    obtain ⟨ωG, μG, nG, runG, -, g7, -⟩ := rest ((c0.1.setSelf c0.1.self, c0.2), f) _ 3 (by decide) (by decide)
+    obtain ⟨ωG, μG, nG, runG, -, -, g7, -⟩ := rest ((c0.1.setSelf c0.1.self, c0.2), f) _ 3 (by decide) (by decide)
       sO.1 (by rw [show sp - 96 + 64 = sp - 96 + 56 + 8 by omega]; exact sO.2)
     refine .inr ⟨⟨e, ωD, μD, (c0.1.setSelf c0.1.self, c0.2), f⟩, ⟨_, runD⟩, rfl, .inr ⟨_, ⟨0, .refl⟩, rfl, ?_⟩⟩
     obtain ⟨ωE, runE⟩ := r9_err (P := P) (R := KeepCtx (accContractS env)) ((c0.1.setSelf c0.1.self, c0.2), f)
@@ -237,11 +240,11 @@ theorem results_init {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] 
     rw [hS] at runD
     have mb := readN_enc μD (sp - 96 + 64) 1
     generalize hc1 : (c0.1.setSelf (ASem.writeAcct c0.1.self key [0]), c0.2) = c1 at runD ⊢
-    obtain ⟨ωG, μG, nG, runG, g1, g7, HG, keepG, stkG, glG, roG, rdG⟩ :=
+    obtain ⟨ωG, μG, nG, runG, g1, g6, g7, HG, keepG, stkG, glG, roG, rdG⟩ :=
       rest (c1, f) r _ hr (decodeLE_readN_lt μD (sp - 96 + 64) 1) mr mb
     rw [if_neg hr1] at g7
     refine .inr ⟨⟨e, ωD, μD, c1, f⟩, ⟨_, runD⟩, rfl, .inr ⟨_, ⟨0, .refl⟩, rfl, ?_⟩⟩
-    obtain ⟨ωK, runK, k1⟩ := r9_ok (P := P) (R := KeepCtx (accContractS env)) (c1, f) ωG μG g7
+    obtain ⟨ωK, runK, k1, k6⟩ := r9_ok (P := P) (R := KeepCtx (accContractS env)) (c1, f) ωG μG g7
     refine .inr ⟨⟨8490, ωK, μG, c1, f⟩, ⟨_, runG.trans runK⟩, rfl, ?_⟩
     -- the checkpoint
     show Impl p (accContractS env) env Ab (Prog.call AOp.checkpoint Prog.pure) _
@@ -251,6 +254,6 @@ theorem results_init {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] 
     rw [show ({ i := 8490, ω := ωK, μ := μG, c := c1, q := f } : St Stream).c = c1 from rfl,
       ASem.step_checkpoint]
     refine .inr ⟨⟨8492, setR7 ωK (f 0), μG, (c1.1, c1.1), f.tail⟩, ⟨1, r9_ck (P := P) env c1 f ωK μG⟩, rfl,
-      .inr ⟨_, ⟨0, .refl⟩, rfl, rfl, by rw [setR7_1, k1, g1], free (free s2 kp) vp, HG, keepG, stkG, glG, roG, rdG⟩⟩
+      .inr ⟨_, ⟨0, .refl⟩, rfl, rfl, by rw [setR7_1, k1, g1], by rw [setR7_6, k6, g6, a6], free (free s2 kp) vp, HG, keepG, stkG, glG, roG, rdG⟩⟩
 
 end Services.Bootstrap.Acc.Handlers.ResultsInit

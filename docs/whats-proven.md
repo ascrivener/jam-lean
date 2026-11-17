@@ -602,6 +602,8 @@ An independent kernel, nanoda as vendored by
     With cap ≥ 2²⁷ the growth cost fits, since 4096·pb ≤ S0 < 2³² gives pb < 2²⁰.
   - *Assumed:* the heap base is 8-aligned (`s.base % 8 = 0`), which `HeapCtx` does not record; the
     stack frame below sp (S0 + 320 ≤ sp, 2147483968 ≤ sp, 8-aligned).
+    (Pointer for later: `WF` records `s.base % 32 = 0`, so this is likely dischargeable; see
+    `Acc/Handlers/ChunkAlign.lean`.)
 
 - **The allocator under any host fit for it, refine's or accumulate's.** `Alloc.HeapHost`,
   `Alloc.refineHeap`, `Acc.accHeapHost` (`Services/Bootstrap/Alloc/HeapContract.lean`,
@@ -980,7 +982,69 @@ What you trust beyond the kernel:
     47977 and 32584 (heap exhaustion). Its hypotheses are `ParamStatics` (an obligation), `RingFits`,
     maxRecent = 2·𝖢·𝖨, the read-only words it reads (key sizes, `set`'s error table) and `ValuesFit` for
     this service's storage at the start (`StoreFit`). `Impl.inv` carries `StoreFit` past the removal and the
-    slot write.
+    slot write. Its post `AddPost` also records ω₆ kept (added 2026-11-16, parent-approved).
+- **`DropInstrsH` and `InstrRep` (T2, named hypothesis; parent's option (A) for row 11's drops).** The drop
+  of the instructions' `IntoIter` (33214, per-kind drops through the table at 68312) is assumed frame-only:
+  it frees each remaining slot's `foot` and then its buffer, keeps every other allocated chunk with its data
+  and the memory from sp up (`Acc/Handlers/InstrRep.lean`). `InstrRep` (`rep`, `foot`, `frame`, `tag`,
+  `notNone`) is the parameter shared by the R3/R6 hypotheses and R5. *Obligation:* T1's per-kind `Rep`s
+  discharge it, `tag` (the slot's first word decodes to the instruction's index) and `notNone` (that word
+  is not 2⁶⁴ − 2) included; the drop's proof discharges `DropInstrsH`. Row 11's `row_eleven_core`
+  (15038 → 6766) and `r11_tail` (the results drop `drop_results` and the three deallocs) are proved without
+  it. **`row_eleven`** (15028 → 6766, `Acc/Handlers/RowElevenFront.lean`) uses it, with the premises R5 must
+  supply: `IterOwn`, `(iterFree ++ tailFree).Nodup`, `ResultsAvoid` and the stack room.
+- **R5's named hypotheses (T2, Plan B, approved by the parent 2026-11-16; `Acc/Handlers/InstrLoopHyp.lean`).**
+  Each is minimal and frame-only, and keeps sp + 184 … sp + 224:
+  - `InstrLogH` (G4): the instruction's Debug log line, `format!` at 8772 (59375 → 8779): a fresh `String`
+    { kc, kp, kl } at sp + 1568 with its kl octets at kp readable (option A, approved by the parent
+    2026-11-16: `ResultLogH`'s readability premise needs it), the allocator's chunks kept, the globals
+    196616 … 196791 kept (added 2026-11-16, parent-approved), or `ExhaustsP`; the text is not stated;
+  - `ResultLogH` (G4): the result's log line, `format!` at 14369 (59375 → 14376), the same shape with the
+    `String` at sp + 1144;
+  - `HandlerH` (R6): one hypothesis over every instruction i: from the dispatch at 8822, the handler
+    implements `onInstr C now i` under `accContractS` and ends at 14278 in `HandlerPost` (the result at
+    sp + 1000 in fresh chunks or the instruction's own buffers, owning its buffers (`ItemOwn`, the pushed
+    item's `itemPtrs` distinct and in `ResC` chunks, a `dataVec`'s inner array in its buffer; approved by the
+    parent 2026-11-16), other chunks kept, `LoopKeep` frame words
+    kept);
+  - `PushH` (R8): `finish_grow` with an old buffer for the results `Vec` (14431 → 14485), keeping the frame
+    and the globals 196616 … 196791 (added 2026-11-16, parent-approved), or `ExhaustsP`.
+  The loop's straight-line segments (`InstrLoopSeg.lean`, `InstrLoopTail.lean`) are proved without them.
+- **R5, the instruction loop (T2, Handlers A; `Acc/Handlers/InstrLoopBody.lean`, `InstrLoopFor.lean`).**
+  `il_body` (an instruction other than `Checkpoint`) and `il_body_ck` (`Checkpoint`: the results store
+  first, `store_core` returning to 8716) prove that one pass, 8540 (or 8554, where the entry falls
+  through) → 8540, implements the spec's loop body (`onInstr C now i`, and for `Checkpoint` first
+  `store key (encodeResults rs)`) and re-establishes `LoopAt` for the instructions left and rs ++ [r].
+  **`il_loop`** wraps them as `Impl.forIn` over `LoopInv`. Named hypotheses: `InstrLogH`, `ResultLogH`,
+  `HandlerH`, `PushH` (above) and `ExtendH`/`OkEncH` (the `Checkpoint` store; since 2026-11-16 they carry
+  no length premise: the old `len + n < 2³⁰ − 64` and `WriterPre`'s `2·cap < 2³⁰ − 64` are gone, a
+  too-large encoding being heap exhaustion inside their `ExhaustsP` branch, parent-approved). Premises (not new
+  assumptions of T2; R2 discharges them):
+  - a context invariant `Inv` with `hIst` (every `ASem.step` keeps it) and `hIfit` (it gives `StoreFit`),
+    the `StoreStep` premise the parent approved: R2 takes `Inv c := ValuesFit env c.1`, `hIst :=
+    ValuesFit.step` and `hIfit := ValuesFit.storage` (T2 inputs, R12);
+  - at the entry's memory: the item index at sp + 176, the key-size word, `set`'s error table, the
+    read-only data's access and the dispatch table at 65736;
+  - the loop's body f through its two equations (`Checkpoint`, other), which R2 proves for the spec's
+    `do` block by `rfl`.
+  `LoopInv` also carries `OldKeep`: every allocated chunk of the entry outside the instructions' buffers
+  stays allocated with its data and is none of the buffers freed later (`StepKeep`, from each body), and
+  the globals 196616 … 196791 kept (each body keeps them: `BodyPost`). There is no size premise on the
+  results (`hBall` and `LoopHyp.hB` were removed 2026-11-16, parent-approved): the results store's
+  `alloc(144n + 4)` is bounded by the results' own heap footprint (`LoopHyp.hrp`).
+- **R5 and R7 composed (T2, Handlers A; `Acc/Handlers/InstrLoopEntry.lean`, `InstrLoopRowEleven.lean`).**
+  **`loop_row11`**: from row 9's end (8492) with `EntryHyp` (the decoded instructions' `Vec` owned as
+  `VecOwn`, its pointer in ω₆; the results `Vec` with len 0 (`hres`) and row 11's `TailHyp`; the instructions' buffers distinct from `tailFree`; the frame constants),
+  the run implements the spec's loop followed by `unless is.any isZomb (store key (encodeResults results))`
+  and reaches the items loop's head 6766 in `R57Post`: the allocator's context, every allocated chunk of
+  the entry outside the instructions' buffers and the frame buffers at sp + 104 / sp + 272 kept with its
+  data, the frame words `StableKeep` and the globals 196616 … 196791 kept. Both cases: some instructions (`il_entry`, `il_loop`,
+  `loop_exit`) and none (8492 → 15050, the empty `IntoIter`'s drop, `row_eleven_store` from 15060).
+  Named hypotheses: those of `il_loop` plus `DropInstrsH`. Premises as `il_loop`'s (`Inv`, the
+  read-only facts), now at the entry. Not promised: the registers but ω₁. `EntryHyp.hres` allows the results buffer either empty (cap 0) or `Vec::with_capacity`'s
+  allocated chunk (the binary's case for |is| > 0, 7970).
+  `LoopHyp.hrp` (the results' addresses in [2¹⁶, 2³¹)) now applies only when there are results: an
+  empty `Vec`'s pointer dangles.
 - **Refinement of a fragment, not of a whole program.** The allocator theorems are about the
   allocator's entry points called with the stated registers and memory. They are not yet composed
   into a Ψ_R or Ψ_A theorem about a bootstrap run that allocates.

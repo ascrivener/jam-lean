@@ -380,7 +380,7 @@ theorem sw_ok1 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X
     (hr : ∀ a, 196616 ≤ a → a < 196704 → μ.readable a = true)
     (hw : ∀ a, sp + 88 ≤ a → a < sp + 104 → μ.writable a = true) :
     ∃ ω' μ', FreeStepsH p R 8266 ω μ x 8312 ω' μ' x 12 ∧
-      ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[7].toNat % 4294967296 = 2 * C * I ∧
+      ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ ω'[7].toNat % 4294967296 = 2 * C * I ∧
       (∀ a, a < 4294967296 → (a < sp + 88 ∨ sp + 104 ≤ a) → μ'.read a = μ.read a) ∧
       (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a) := by
   obtain ⟨mC, hC, mI, hI⟩ := hPS
@@ -394,8 +394,9 @@ theorem sw_ok1 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X
   refine ⟨?_, ?_, ?_, ?_⟩
   rotate_left 2
   · pvm_go [h1, h7, hsp, rC, rI, hr, hw, rdN_writeN_disjoint, ↓rdN_fold]
-  · refine ⟨?_, ?_, ?_, fun a ha h1' => ?_, fun a => ?_, fun a => ?_⟩
+  · refine ⟨?_, ?_, ?_, ?_, fun a ha h1' => ?_, fun a => ?_, fun a => ?_⟩
     · simp [PVM.getElem_regsNF, PVM.lookup_cons_nat, h1]
+    · simp [PVM.getElem_regsNF, PVM.lookup_cons_nat]
     · simp [PVM.getElem_regsNF, PVM.lookup_cons_nat]
     · simp [PVM.getElem_regsNF, PVM.lookup_cons_nat]
       omega
@@ -408,14 +409,15 @@ theorem sw_ok1 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X
 theorem sw_ok2 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X) (ω : Regs)
     (μ : Memory) (c w : Nat) (h5 : ω[5] = UInt64.ofNat c) (h7 : ω[7] = UInt64.ofNat w)
     (hc : c < 2 ^ 64) (hw : w < 2 ^ 64) (hw0 : w % 4294967296 ≠ 0) :
-    ∃ ω', FreeStepsH p R 8312 ω μ x 8326 ω' μ x 4 ∧ ω'[1] = ω[1] ∧
+    ∃ ω', FreeStepsH p R 8312 ω μ x 8326 ω' μ x 4 ∧ ω'[1] = ω[1] ∧ ω'[6] = ω[6] ∧
       ω'[7].toNat % 4294967296 = (c + 1) % 4294967296 % (w % 4294967296) := by
   have hw0' : w % 18446744073709551616 ≠ 0 := by rw [Nat.mod_eq_of_lt hw]; omega
   rw [show ω = regsNF ω [] from rfl]
   refine ⟨?_, ?_, ?_⟩
   rotate_left
   · pvm_go [h5, h7, hw0', hw0]
-  · refine ⟨?_, ?_⟩
+  · refine ⟨?_, ?_, ?_⟩
+    · simp [PVM.getElem_regsNF, PVM.lookup_cons_nat]
     · simp [PVM.getElem_regsNF, PVM.lookup_cons_nat]
     · have hy : (c + 1) % 4294967296 % (w % 4294967296) < 4294967296 :=
         Nat.lt_of_le_of_lt (Nat.mod_le _ _) (Nat.mod_lt _ (by decide))

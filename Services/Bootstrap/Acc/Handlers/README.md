@@ -107,6 +107,362 @@ Handlers dependencies takes ~2 h on 4 cores). Use `ulimit -v 12000000` when comp
 - `refine ⟨?ω', ?run⟩; case run => pvm_go …` for a one-witness existential.
 
 
+## Session 14 progress and handoff (2026-11-16, for the 15th session)
+
+**PRs.** #228 (row 9): green, merges blocked by main's ruleset; subscribed; merge when @parent says.
+After #222 merges: rebase r5 (`git rebase --onto origin/main 6450fb4`), full build, open the r5 PR.
+
+**Done this session** (parent-approved items 1–3 of part 2 below; all compile):
+1. ω₆ in `AddPost` (`add_recent`, row 8): threaded through `RmPost`, `SwPost`, `CwPost` (each takes a
+   `w6`), `remove_call`/`rm_ret`, `sw_free`/`sw_ok1`/`sw_ok2`, `cw_pre`/`cw_mid`/`cw_dl`/`cw_free`/`cw_ok`.
+2. Glob (196616 … 196791) kept: `il_mid`, `il_tail_log`, `il_tail_push`, `il_tail_post` (new `glob_lt`:
+   a global lies below every allocated chunk), `AtLog`, `BodyPost`, `LoopInv.glob`, `il_entry`, `R57Post`.
+3. hB/hBall removed: `ExtendH`/`OkEncH` lost `len + n < 2³⁰ − 64`; `WriterPre` lost `2·cap < 2³⁰ − 64`
+   (needed: after a grow, cap′ ≤ max cap 8 2(len+n) is otherwise unbounded; it was derivable-only-by-hB);
+   `LoopHyp.hB` gone (the `alloc(144n + 4)` bound already came from `hrp`); `il_body_ck`, `il_loop`,
+   `loop_row11` lost hB/hBall. Docs updated (whats-proven, t2-remaining: the open point is closed).
+
+**Next:** the PR flow above; whatever @parent assigns.
+
+## Session 13, part 2: handoff (2026-11-16, for the 14th session)
+
+**PRs.** As in part 1 below: #228 green, blocked on main's ruleset (subscribe and merge on green when
+@parent says); after #222 merges, rebase r5 (`git rebase --onto origin/main 6450fb4`), full build, open the
+r5 PR. Tell T2 inputs (via @parent) the final `EntryHyp` shape when items 1–3 below are done.
+
+**Parent decisions (2026-11-16), all approved:**
+- Alignment: done (`ChunkAlign.lean`, `chunk_data_mod8`; `EntryHyp.hb8` removed, derived in `il_entry`).
+- `EntryHyp` results buffer: done (`hres`: cap 0 with a pointer below 32, or an allocated chunk with room
+  for cap items, as `Vec::with_capacity(|is|)` at 7970). `LoopInv`'s G is now `vecFree ++ optBuf cap rp`.
+- ω₆ in `R9Post`: done (`R9Post … v6`, `results_init` posts `s.ω[6]`; `r9_ok` keeps ω₆, `setR7_6`).
+- Globals: `PushH`, `InstrLogH`, `ResultLogH` now keep Glob 196616 … 196791 (done, docs updated).
+
+**Next, in order:**
+1. **ω₆ in `AddPost`** (row 8, `RecentAdd.lean`): add `s'.ω[6] = v6` like `R9Post`. The segment lemmas
+   already track ω₆ (`RecentCounterGet`, `RecentMatch`, `RecentSlot*`); the composite posts
+   (`counter_get`'s, `recent_match`'s, `slot_write`'s, `counter_write`'s) need an ω₆ conjunct threaded.
+2. **Thread Glob to `R57Post`**: each body stage must give Glob kept: `il_front_any` / segments (Glob
+   < 2³¹ ≤ sp, so the stack frames cover it), `il_mid` (InstrLogH's new last conjunct, now `-` in its
+   rcases), `HandlerPost` (has Glob), `il_tail_log` (ResultLogH's, `-` in its rcases), `il_tail_push`
+   (PushH's, `-`; the memcpy copy), `il_tail_post` (free), the `Checkpoint` store (`store_core`'s post
+   has Glob). Add Glob to `BodyPost`, to `LoopInv` (vs μ₀), then to `R57Post` (row 11's `R7Post` has it;
+   the empty case: `DropInstrsH`'s `Frm` has it).
+3. **Remove hB / hBall** (parent-approved design A–D, 2026-11-16; reported to Adam): drop
+   `len + n < 1073741760` from `ExtendH` and `OkEncH` (`ResultsHyp.lean`); the `alloc(144n + 4)` at 36170:
+   bound from the results Vec's own footprint (144n octets already in a heap chunk) or a HeapHost
+   "too big → null" lemma, whichever needs no new hypothesis; remove `LoopHyp.hB`, `hBall` (il_loop,
+   il_body_ck, loop_row11), `hB` in `store_core`/`row_eleven*`. Then update whats-proven and
+   t2-remaining (the hBall open point is closed; ExtendH/OkEncH lose their length precondition).
+
+## Session 13 progress and handoff (2026-11-16, for the 14th session)
+
+**PRs.** **#228** (row 9): green, merges blocked by main's ruleset; subscribed; merge on green once @parent
+says the ruleset is fixed. **#222** still open. After #222 merges: rebase r5 onto main
+(`git rebase --onto origin/main 6450fb4`, see session 8), full `lake build`, open r5's PR.
+
+**Done this session** (all compile, axioms clean, imported from `Services.lean`):
+- `InstrLoopStepKeep.lean`: `StepKeep`, `LoopAt.stepKeep` (from `LoopAt.step`'s premises: the drop's
+  buffers shrink; head chunks outside the instruction's buffers, the results buffer and the results'
+  buffers kept and avoiding the new ones). `BodyPost` gained the head's state st and a `StepKeep` conjunct
+  (`il_after_log`, `il_body`, `il_body_ck`).
+- `InstrLoopFor.lean`: `OldKeep`, `OldKeep.step`; `LoopInv` gained st₀ and G (the entry's instructions'
+  buffers) with `OldKeep` in `la`; `il_loop` updated.
+- `RowElevenCore.lean`: `row_eleven_store` (15060 → 6766) factored out of `row_eleven_core` (which now
+  calls it after `r11_flag0`).
+- `InstrLoopEntry.lean`: `il_ft` (8492 → 8493), `vecFree`, `VecOwn`, `EntryHyp`, `TailHyp.keepW`,
+  **`il_entry`** (8492 → `LoopInv` at 8554, n ≠ 0).
+- `InstrLoopRowEleven.lean`: `R57Post`, **`loop_row11`** (8492 → 6766, R5 + R7, both cases).
+
+**Points for @parent / R2** (reported): `EntryHyp.hb8` (b 8-aligned: no chunk-alignment lemma found, R2
+supplies it); `R57Post` does not keep the globals (`PushH` does not); `R9Post` does not record ω₆ (the
+instructions' pointer at 8492).
+
+**Next:** whatever @parent assigns: `hBall` → "fits or heap exhaustion" (needs `PushH`/`ExtendH` failure
+branches, a hypothesis change: ask first); the alignment lemma for `hb8`; ω₆ in `R9Post`.
+
+## Session 12 progress and handoff (2026-11-16, for the 13th session)
+
+**PRs.** **#228** (row 9) is green but merges were blocked by main's ruleset; @parent will say when Adam has
+fixed it. Re-subscribe and squash-merge it then. **#222** still open. After both merge: rebase r5 onto main
+(`git rebase --onto origin/main 6450fb4`, see session 8), full `lake build` in the background, open r5's PR.
+
+**Parent's answers (2026-11-16), applied:** `InstrLogH` option A (whats-proven updated); `StoreStep` as a
+context invariant `Inv` + `hIst` + `hIfit` (R2: `ValuesFit env c.1`, `ValuesFit.step`, `ValuesFit.storage`);
+`hBall` a premise for now, recorded as open in t2-remaining.
+
+**Done this session** (all compile, axioms clean, imported from `Services.lean`):
+- `InstrLoopBody.lean`: `AtLog` (the state at 8735), `il_front_any` (8540/8554 → 8735), `il_after_log`
+  (8735 → 8540: `il_mid`, `HandlerH`, `il_tail_log`, `il_tail_push`, `il_tail_post`, `LoopAt.step`),
+  **`il_body`**, `il_front8627` (in `InstrLoopFront.lean`), **`il_body_ck`** (`Checkpoint`: `il_tag_ck`,
+  `store_core` ret 300, `il_ck_ok`/`il_ck_err`), `BodyPost`, `StableKeep`, `roKeep`, `read_of_readN`.
+- `InstrLoopFor.lean`: `LoopInv`, **`il_loop`** (`Impl.forIn`; the body f through equations `hck`/`hother`).
+- `LoopAt` gained `hroom` (the results buffer's chunk has room for cap items) and `hrp0` is now
+  `cap = 0 → rp < 32` (row 9's dangling pointer; check the value at the entry). `LoopAt.step`'s `hd'`
+  now also assumes `d ∉ F`. `il_front`, `il_front_zomb`, `il_front8627` start at 8540 or at 8554 with
+  ω₆ = cur (`il_setup1` falls through to 8554) and keep sp + 488 … 504.
+- `LoopHyp.hrp` weakened to `rp < 2⁶⁴ ∧ (n ≠ 0 → …)` (a Checkpoint before any result stores with the
+  dangling pointer; `res_store`'s n = 0 path never needed the bounds).
+
+**Next, in order:**
+1. **The entry** (8492/8493 → `LoopInv is []` at 8554 with xs = is): `il_setup1` (n ≠ 0). From R9Post
+   (row 9's post) plus R2's facts about the decoded `Vec` at sp + 240 / 248 (ptr ω₆ = b): `IterOwn` for the
+   new `IntoIter` { b, b, c, b + 232n }, `TailHyp` (results `Vec` {0, dangling, 0}), `ResultsAvoid` /
+   `PayAvoid` trivial for [], `hnd`, `hroom` vacuous, flag 0, the constants, cur = b 8-aligned (b is a
+   chunk's data address: check `chunk_in`/alignment), counter 0, Inv.
+2. **The empty case** (n = 0): `il_setup0` → 15050 → `r11_di1` (ret 560) → 15060, then into row 11.
+3. R5 + R7 composed against the contract R2 consumes (`loop_exit` after `il_loop`; `LoopHyp` from
+   `hBall` and `LoopAt`), then update `docs/t2-remaining.md`'s R5 row.
+
+## Session 11 handoff (2026-11-16, for the 12th session)
+
+**PRs.** **#228** (row 9): every check is green (model, changes, attempt-1; attempts 2/3 skipped), but the squash merge is
+refused: "405 Repository rule violations: 2 of 4 required status checks are expected" (the ruleset naming problem).
+@parent knows. Re-subscribe and merge once @parent says the ruleset is fixed. **#222** still open. After both merge:
+rebase r5 onto main (`git rebase --onto origin/main 6450fb4`, see session 8), full `lake build` in the background,
+then open r5's PR.
+
+**Pending with @parent** (asked this session; carry on as if the recommendation is accepted):
+1. `InstrLogH` option A (**already applied** in `InstrLoopHyp.lean`): also gives len kl at sp + 1584 and its kl
+   octets readable (`ResultLogH`'s readability premise needs it). Update whats-proven/t2-remaining once confirmed.
+2. `StoreStep env`: `∀ β (o : AOp β) c c₁ b, StoreFit c → ASem.step env o c = some (b, c₁) → StoreFit c₁` as an R5
+   premise (an R12 consequence), carried with `Impl.inv` (`RecentAddGen.lean`), so `HandlerH`'s `StoreFit c`
+   holds at every dispatch.
+3. hB in R5: `hBall : ∀ rs, rs.length ≤ is.length → 2*(144*|rs|+4) + 4*|encodeResults rs| + 64 < 1073741760`.
+
+**Branch** `claude/bootstrap-t2-handlers-a-r5` (pushed). All modules compile, axioms clean, imported from `Services.lean`.
+
+**Done this session:**
+- `LoopKeep` = [16,40) [104,152) [160,224) [264,280) [312,344) [448,512) [736,744) [976,1000) [1632,∞) (sp + 16 …
+  40 now one range; binary check: no store at the outer sp to sp + 16 … 40 inside the loop).
+- `InstrLoopMid.lean`: `il_mid` (8735 → 8822) or `ExhaustsP`.
+- `InstrLoopPush.lean`: `il_full` (14420 → 14431), `il_push2` (14485 → memcpy ret 540).
+- `InstrLoopTailRun.lean`: `data_ge`, `NewBuf`, `il_tail_log` (14278 → 14420), `il_tail_push` (14420 → 14516,
+  room or `PushH`), `il_tail_post` (14516 → 8540, frees the instruction's `String`).
+- `InstrLoopOwn.lean`: `ResultAtP.copy`, `ResultAtP.toAt'`, `iterFree_succ`, `IterOwn.step` (also returns the
+  `iterFree` split), `rdN_move`, `item_move`, `itemPtrs_move`, `resPtrs_move`, `ResultsOwn.push`, `PayAvoid`
+  (+ `push`, `toAvoid`, `mono`), `ItemOwn.copy`.
+- `LoopAt` gained two R5-internal fields: `hpay` (`PayAvoid` against `iterFree ++ optBuf cp rp`: the push writes
+  into the results buffer, so old payloads must avoid it) and `hrp0` (cp = 0 → rp is no chunk's data address).
+  The entry must establish them (rs = []: `hpay` trivial; `hrp0` from row 9's dangling pointer).
+- `InstrLoopStep.lean`: `chunk_addr` (`Tiles.addr_inj`), `nd_dis`, `NewC`, **`LoopAt.step`** (the invariant for
+  is, rs ++ [r] from the body's facts).
+- Pitfalls: `swap` is not in core (use `rotate_left`); `ring` isn't available; `.2.2…` projections of an `∃` give a
+  kernel "invalid projection", so use `obtain`; `List.flatMap_congr` and `List.nodup_singleton` don't exist; give
+  `HeapCtxC … (free st kp)` only after `rw [List.foldl_cons, List.foldl_nil]` (else OOM). Compile single files
+  under `ulimit -v 14000000`.
+
+**Next, in order:**
+1. **The body as `Impl`** (tags other than 15; Zombify via `il_front_zomb`, flag := 1): from 8540 with `LoopAt`
+   for i :: is: `il_front` (slot word w = first 8 octets of `slot μ cur 0`; `B.tag`/`B.notNone` give
+   `slotTag w = instrIdx i`, ≠ 3/15, and w ≠ None), `il_mid`, then `Impl.pre` (FreeStepsH under KeepCtx gives
+   `Reaches` with c kept) and `Impl.bind` on `HandlerH` (premises: `B.rep` at sp + 1144 via `il_mid`'s copy +
+   `B.frame`; foot allocated in the mid state (owned by `IterOwn`, kept by `il_mid`); the constants via
+   `LoopAt.c*` and frames; `jumpTab` at 65736 < 196608 via `HeapHost.keepRO`; `StoreFit`). Then `Impl.mono_post`:
+   from `HandlerPost` run `il_tail_log` (C := `ResC …`), `il_tail_push` (cp/rp/n kept by `LoopKeep`; `hbuf` from
+   `TailHyp.b1` + `ResultsOwn`), `il_tail_post` (the String's chunk from `FreshBuf`, kept by the handler since it
+   is not in F, then by the tail), and discharge `LoopAt.step`: `hkeep` by composing the keeps; `hmv` from
+   `il_tail_push`; `hd'` from `NewBuf` (use `hrp0` when cp = 0); `NewC` for `ResC` chunks (fresh vs the mid
+   state → address differs from every kept chunk by `chunk_addr`; in F → address ∈ F); `hres` by
+   `ResultAtP.copy` (sp + 1000 → rp′ + 144·n), `hown` by `ItemOwn.copy`. The `ExhaustsP` branches go to
+   `Impl.abort` via `ResStore.ExhaustsP.aborts`.
+2. The Checkpoint front: `il_tag_ck` → `store_core` (ret 300) → `il_ck_ok` = spec `store key (encodeResults rs)`
+   before `onInstr`; it needs `LoopHyp` (hB from `hBall`).
+3. `Impl.forIn` with the invariant `LoopInv`: s.i = 8540, ω₁ = sp, `StoreFit s.c`, ∃ st zs, `LoopAt …` with
+   `(zs || xs.any isZomb) = is₀.any isZomb`, the stable frame words (`LoopKeep` minus 160, 448 … 512, 736, 976 …)
+   and the octets below 196608 equal to the entry's, the counter bound at sp + 504. The body desugars to
+   `match i with | .checkpoint => store key (encodeResults rs) >>= jp | _ => jp ()` where
+   `jp _ = onInstr C now i >>= fun r => pure (.yield (rs ++ [r]))` (`#print onWorkItem`).
+4. The entry `il_setup1` → `LoopInv`, the empty case (`il_setup0` → 15050 → `r11_di1`, ret 560 → 15060), then R5 +
+   R7 against the contract R2 consumes (`docs/t2-remaining.md`).
+
+## Session 10 handoff (2026-11-16, for the 11th session)
+
+**PRs.** **#228** (row 9): `model`/`changes` green. `attempt-1` was still running at 17:50 (started 14:15; the attempts resume
+on their own after a timeout).
+Re-subscribe and **merge on green** (squash), then tell @parent. If the merge is refused over the removed
+`build-and-check` check, tell @parent and carry on. **#222** is still open. Once it merges (and #228), rebase r5 onto
+main (`git rebase --onto origin/main <old row-9 tip 6450fb4>`, see session 8), run the full `lake build` in the
+background, and open r5's PR.
+
+**Branch `claude/bootstrap-t2-handlers-a-r5`** (pushed; no PR). Everything compiles locally with clean axioms and is
+imported from `Services.lean`. Session 10's work: see "Session 10 progress" above.
+
+**Decisions (parent, 2026-11-16):** `ResultsAvoid` + `(iterFree ++ tailFree).Nodup` + `IterOwn` as R7's premises;
+`InstrLogH`, `ResultLogH`, `HandlerH` (with `ItemOwn`), `PushH`; `InstrRep.tag`/`notNone`; `LoopKeep` as is (T2
+inputs asked for sp+16, 32, 136…152, added); hB carried as a premise up to R2. hB is an open point: at R2 it
+becomes a case split with heap exhaustion.
+
+**Next, in order (R5's body):**
+1. **The copy at 8620** (sp+512 → sp+752, 224 octets, a 16-octet gap) is out of `memcpy_val`'s reach (it needs a 24-octet
+   gap). Use **`memcpy_big_aligned`** (`MemcpyBig.lean`: both ends 8-aligned, exact disjointness, sp % 8 = 0) instead.
+   The slot copy c+8 → sp+512 is aligned too (cur = buf + 232·k).
+2. ~~The body's front for tags other than 3/15~~: **done**, `il_front` (`InstrLoopFront.lean`, 8540 → 8735, axioms clean;
+   `il_copy2` now also keeps ω₅). `il_front_zomb` (tag 3, flag := 1) done too. Still to do: the Checkpoint variant. Pieces: `il_head`, `il_next`, `memcpy_val` (c+8 → sp+512, ret 296),
+   `il_copy2`, memcpy (ret 298), `il_tag_other`/`il_tag_zomb`. Jump-table facts `jte_*`/`bs_*` are in `CodeA/`.
+   Tag 15: `il_tag_ck` → `store_core` (ret 300; `RetOK` already has 300 → 8716) → `il_ck_ok`.
+3. 8735 → 8822: `il_log_pre`, `InstrLogH`, `il_log_post`, memcpy (ret 304, sp+744 → sp+1144). Then `HandlerH`
+   (`Impl` of `onInstr`), then the tail: `il_res_log_pre`, `ResultLogH`, `il_tail_a`, `FreeStepsH.logS` (at 14401;
+   `d_14401`), `il_tail_b0/b1` + dealloc (see `r11_tail`'s deallocs), `il_push` or `PushH`, memcpy (ret 540),
+   `il_post0/1` + dealloc, `il_back`.
+4. `LoopAt` maintained across the body; the spec loop as `Impl.forIn` over `is` with `LoopAt` as the invariant; the
+   entry (`il_setup1` → `LoopAt`) and the empty case (`il_setup0` → 15050 → `r11_di1`, ret 560 → 15060); then the
+   whole of R5 + R7 against the contract R2 consumes (`docs/t2-remaining.md`).
+
+## Session 10 progress (2026-11-16)
+
+- **R7 is done from 15028.** `RowElevenFront.lean` holds **`row_eleven`**: the instructions' drop
+  (`DropInstrsH`, 33214, ret 558 → 15038), then `row_eleven_core`. It is `Impl` of
+  `if b then pure () else store (Key.results …) (encodeResults rs)`, ending in `R7Post` with
+  `iterFree ++ tailFree` freed. Premises the parent accepted, recorded in `docs/t2-remaining.md`:
+  `IterOwn` at sp + 472, `(iterFree ++ tailFree).Nodup`, `ResultsAvoid … iterFree`, and the stack room.
+  Pieces: `chunk_uniq`, `mem_resPtrs`, `ChunksKeptG`/`OwnG` with `ResultsOwn.keepG` (the keep lemmas over
+  the chunks satisfying G), `BufOK.keepF`, `TailHyp.keepF`. Axioms clean.
+- `ResultsAvoid.lean`: `InHeapP`/`VecAtP`/`OkAtP`/`ResultAtP`/`ResultsAtP` (`ResultsAt` over a chunk
+  predicate), `AvoidC`, **`ResultsAvoid`**, `ResultsAtP.mono`, `ResultsAvoid.toAt`, `ResultsAvoid.keep`.
+- Fix: `Impl.then` in `RowElevenCore.lean` didn't bind `Qu`, and the module failed to build. It is now
+  `{Qu : Type}`.
+- R5 map (from `scripts/allocfail/dis.py`). 15050 is the loop's exit when there are no instructions (len = 0):
+  [sp+160] is never set, so 15050 skips the flag.
+- R5 straight-line segments, all compiling:
+  - `InstrLoopSeg.lean`: `il_setup0`/`il_setup1` (8493), `il_head_end`/`il_head` (8540), `il_next_none`/`il_next` (8554),
+    `il_copy2` (8589), `slotTag`, `il_tag_other`/`il_tag_zomb`/`il_tag_ck` (8627), `il_ck_ok`/`il_ck_err` (8716),
+    `il_log_pre` (8735), `il_log_post` (8779), `il_res_log_pre` (14278).
+  - `InstrLoopTail.lean`: `FreeStepsH.logS` (log under the stream contract), `il_tail_a`/`il_tail_b0`/`il_tail_b1`
+    (14376/14403), `il_push` (14420, room), `il_post0`/`il_post1` (14516), `il_back` (14546).
+  - Pitfall: a symbolic slot word through the signed compare at 8634 hits a kernel deep recursion; the niche
+    tags are enumerated concretely instead.
+- **R5 hypotheses stated** (parent approved 2026-11-16) in `InstrLoopHyp.lean`: `InstrLogH`, `ResultLogH`, `HandlerH`
+  (with `HandlerPost`, `ResC`, `LoopKeep`), `PushH`, plus `FreshBuf`. `InstrRep` gained `tag` (via `instrIdx`,
+  `wordTag` = `InstrLoop.slotTag`) and `notNone`. Listed in whats-proven / t2-remaining.
+  **Pending with @parent:** the `ItemOwn` amendment to `HandlerPost` (the pushed item's buffer ownership, needed for
+  `ResultsOwn` and so for the results drop). It is already in the file.
+- `InstrLoopInv.lean`: **`LoopAt`**, the invariant at 8540, `LoopAt.nil_of_end`, and **`loop_exit`**: from `LoopAt`
+  with cur = end, 8540 → 15028 → `row_eleven`. Axioms clean. Still to do for R5:
+  - the body from 8540 back to 8540 for one instruction, composing the segments, the hypotheses, `memcpy_val`, the
+    deallocs (40613) and `store_core` for Checkpoint;
+  - `LoopAt` maintained: the new item's ownership comes from `ItemOwn`; `iterFree` shrinks by the consumed slot's
+    `foot`; `ResultsAvoid` extends to the new item;
+  - the entry `il_setup1` → `LoopAt`; the `Impl.forIn` wrapping; the empty case (15050, `r11_di1`).
+  - `LoopHyp`'s size bound `hB` on `encodeResults rs` is open: decide with @parent who supplies it (R2 or a
+    `ValuesFit` consequence).
+
+## Session 9 handoff (2026-11-16, for the 10th session)
+
+**PRs.** **#228** (row 9) still open: `model`/`changes` green, `attempt-1` was still running after ~3 h at
+handoff. Re-subscribe (`subscribe_pr_activity` #228) and **merge on green** (squash), tell @parent. The parent
+warned main's ruleset may still require the removed `build-and-check` check: if a merge is refused for that,
+tell @parent and carry on (don't work around it).
+
+**Branch `claude/bootstrap-t2-handlers-a-r5`** (pushed, no PR; CI runs only on PRs/main, so pushes are free).
+Everything below compiles locally, axioms clean, imported from `Services.lean`. Rebase onto main once #222 and
+#228 merge, before opening its PR (see session 8's note on `git rebase --onto`). Run the full `lake build` in
+the background before the PR. Local tip: build deps with `lake build <Module>`, then check one file with
+`lake env lean <file>` under a memory watch (a runaway `rfl`/`congr` can eat >9 GB).
+
+**Pending with @parent** (sent this session): confirm `DropInstrsH`'s premises — the stack room
+(2³¹ + 4096 ≤ sp, S0 + 4096 ≤ sp) and `IterOwn` (see `InstrRep.lean`). Proceeding on that basis.
+
+**Next, in order:**
+1. Merge #228 on green.
+2. R7's front: compose `DropInstrsH` (15028 → 33214 → 15038, `r11_di0`, return 558 = jte 278 → 15038) before
+   `row_eleven_core`. Carry across the drop (`Kept st μ (iterFree …)`, `Frm μ sp`): `TailHyp` (needs every
+   tail/results chunk ∉ `iterFree`: `ResultsOwn.keep`/`BufOK.keep` variants with an excluded set), `LoopHyp`'s
+   `ResultsAt` (`ResultsAt.keep` needs all chunks kept; add a variant: generalize `InHeap.keep` … `ResultsAt.keep`
+   in `ResultsAt.lean` to `hk` over the witness chunks only, with an "avoid F" premise), the flag/key words
+   (above sp, kept by `Frm`). Interface choice to send @parent: the disjointness premise R5 must supply
+   (recommend: `(iterFree ++ tailFree μ sp).Nodup` plus "every chunk holding a results octet is ∉ iterFree",
+   phrased via a `ResultsAvoid` predicate mirroring `ResultsAt`). Then the final R7 statement from 15028 as
+   `Impl` of `unless (is.any zombify) (store …)` with `R7Post` (freed: `iterFree ++ tailFree`). Entry 15050
+   (`r11_di1`, ret 560 → 15060, skipping the flag) is unexplained: find who jumps there before using it.
+3. R5 (the instruction loop) as in `docs/t2-remaining.md`; it must produce `IterOwn`, `ResultsOwn`,
+   `TailHyp`'s buffer facts, `LoopHyp`, [sp+160] ↔ Zombify.
+
+## Session 9 progress (2026-11-16)
+
+- `ResultsDropRun.lean`: **`drop_results`** (28864 → caller t, any n, generic in R): every buffer in
+  `resPtrs μ₀ rp n` freed (state `(resPtrs μ₀ rp n).foldl free s₀`), `Kept` (other allocated chunks of s₀ kept
+  with data), `Frm` (memory from the caller's sp S up, globals, non-writable octets, same access), ω₁ = S,
+  ω₅/ω₆ restored. Needs `HeapCtxC`, `ResultsOwn`, `SpOK S0 S1 S` (S − 56 ≥ 2³¹ + 60, S0 + 96 ≤ S ≤ S1).
+  Pieces: `Core` (invariant), `Core.sk/dk/rd/item/inr`, `dv_cell`, `dv_inner`, `dv_out`, `dr_data`, `dr_vec`,
+  `dr_item`, `dr_loop`, `init3`. Axioms clean. Pitfall: never close `free s w = (FR ++ [w]).foldl free s₀` by
+  `rfl` (the kernel unfolds `free`, OOM); rewrite with `List.foldl_append/cons/nil`.
+- `ResultsDropRun.lean` (end): `ChunksKept μ st μ' st'` (= `StorePost`'s chunk clause) and **`ResultsOwn.keep`**
+  (with `resPtrs_keep`, `itemPtrs_keep`, `item_keep`, `innerPtrs_congr`). Axioms clean. Avoid `congr 1` on
+  goals with `rdN` (whnf timeout).
+- `RowElevenTail.lean`: row 11's straight-line tail segments (15028/15050 → 33214, 15133 → 28864, the three
+  dealloc sites 15143/15172/15191 → 6766).
+- `InstrRep.lean`: the `InstrRep` bundle (`rep`, `foot`, `frame`), `iterFree`, `IterOwn`, **`DropInstrsH`**
+  (named hypothesis for 33214). IntoIter layout: buf v, cur v+8, cap v+16, end v+24, 232-octet slots.
+  Sent to @parent for confirmation: the stack premise (2³¹ + 4096 ≤ sp, S0 + 4096 ≤ sp) and `IterOwn`.
+- `RowEleven.lean`: `KF`, `KF.dk`, `KF.opt`, `tailBufs`, `tailFree`, `TailHyp`, **`r11_tail`** (15133 → 6766).
+- `RowElevenCore.lean`: `Impl.then`, `BufOK.keep`, `TailHyp.keep`, `R7Post`, **`row_eleven_core`**: from 15038
+  (after the instructions' drop) `Impl` of `if b then pure () else store (Key.results pkg item) (encodeResults rs)`
+  ending in `R7Post` at 6766. Axioms clean.
+- **R7 left:** the instructions' drop (15028 → 15038 via `DropInstrsH`) composed in front: carry `TailHyp`,
+  `LoopHyp` (`ResultsAt`) and the key/flag words across it. Needs a disjointness premise (the chunks
+  `iterFree` frees are none of the results' chunks: items, `resPtrs`, the data buffers in `ResultsAt`,
+  `tailBufs`); `ResultsAt.keep` needs a variant with an excluded set (`KeepsHeap` minus F).
+
+## Session 8 handoff (2026-11-16, for the 9th session)
+
+**PRs.** #224 (row 8) merged. **#228** (row 9 `results_init`, R4 `ResultsAt`, `ResStoreLoopSeg`,
+`docs/t2-remaining.md`; branch `claude/bootstrap-t2-handlers-a-row9`, rebased on main, local full build green)
+is open and subscribed: `model` green, attempts running. **Merge it on green** (squash), tell @parent.
+
+**Branch `claude/bootstrap-t2-handlers-a-r5`** (pushed; = old row-9 branch + #222's head + this work; no PR).
+Rebase onto main once #222 and #228 merge, before opening its PR (#228's commits are the pre-rebase row-9
+commits: `git rebase --onto origin/main <old row-9 tip 6450fb4>`; #222's own commits drop out once it merges).
+New this session (all compile, axioms clean, imported from `Services.lean`):
+- `ResStoreLoop.lean`: **`rl_loop`** (36346 → 36405, induction on n − k with `rl_item`).
+- `ResStoreImpl.lean`: `RetOK ret t` (294 → 8477 row 9, 300 → 8716 Checkpoint instr, 562 → 15121 row 11),
+  `rs_endG`, **`res_freeG`** (any value chunk dv with cap vc, any `RetOK` return); `res_free` now a corollary
+  (statement unchanged).
+- `ResStoreGen.lean`: `res_enter` (36170 → 36346, `LoopInv 0`), `res_exit` (36405 → 48104), `SetPre` (the
+  state at `set`'s call, with |val| ≤ vc ≤ 32·(dv.size − 1)), `SetPre.mono`, **`res_store`** (36170 → 48104,
+  any n; aborts 36528 / 34070 / `ExhaustsP`; value `encodeResults rs`).
+- `ResStoreCall.lean`: `ExhaustsP.aborts` (an `ExhaustsP` is an `Aborts` when `Ab` covers 40611/40821),
+  `StorePost`, **`store_core`**: 36170 → caller t (`RetOK`) is `Impl` of
+  `orPanic (write (keyEnc μ (sp+1568) 2) (encodeResults rs))` against `ExtendH`/`OkEncH`; FULL continues at t
+  with ω₇ = 3 where the caller's `herr` ends ☇. Usable for row 11 and for the Checkpoint instruction (R5).
+- `RowElevenSeg.lean`: `r11_flag0/1` (15038: [sp+160] & 1), `r11_pre` (15060 → 36170, ret 562), `r11_ok`
+  (15121 → 15133), `r11_err` (→ 15361).
+- `ResultsDropSeg.lean`: every straight-line segment of the results drop 28864 (see its module doc), incl.
+  `back8` (the [ω₅ − 8] load: keep ω₅ = q opaque, never `r + 8`, or the kernel recurses on the folded 2⁶⁴ literal).
+- `ResultsDrop.lean`: `innerPtrs`, `itemPtrs`, `resPtrs`, **`ResultsOwn`** (decided by @parent: option (A),
+  additive next to `ResultsAt`; R5 must produce it), `innerPtrs_succ/split`, `resPtrs_succ/split`, `nodup_next`.
+
+**Decision this session (@parent, option A for R7's drops):** `ResultsOwn` additive; prove 28864 and the
+deallocs (15166 results buffer, 15185 [sp+104]/[sp+128], 15201 [sp+272]/[sp+264]); 33214 (drop of the
+`IntoIter<Instr>` at sp+472, per-kind drops via the table at 68312) is a named frame-only hypothesis
+**`DropInstrsH`** over an InstrRep footprint. `InstrRep` doesn't exist yet: define the bundle (parameter shared
+by R3/R6, with a footprint field and `DropInstrsH`) on r5 yourself; list `DropInstrsH` in
+`docs/whats-proven.md` and `docs/t2-remaining.md`. @parent tells T2 inputs (R2 passes it through).
+
+**Row 11 map** (jte: 558 → 15038, 560 → 15060, 562 → 15121, 564 → 15143, 566 → 15172, 568 → 15191, 228 → 6766):
+15028: ω₇ = sp+472, call 33214 (ret 558) [15050: same, ret 560 → 15060, skipping the flag]; 15038 flag;
+15060 … 15115 key + call 36170 (ret 562); 15121 Ok check (else ☇ 15361); 15133: ω₇ = sp+448, call 28864
+(ret 564); 15143: if [sp+448] ≠ 0, dealloc([sp+456], 144·cap, 8) ret 566; 15172: if [sp+128] ≠ 0,
+dealloc([sp+104], …, 1) ret 568; 15191: if [sp+264] = 0 → 6766, else dealloc([sp+272], …, 1) with ω₀ = 228
+(→ 6766). The last two buffers' chunk facts are premises of R7 (from R2's state).
+
+**Next, in order:**
+1. Merge #228 on green.
+2. `drop_results` (in `ResultsDrop.lean`), generic in R (all segments and `dealloc_callG` are): plan —
+   - `Kept s0 μ0 FR μ s` := ∀ d ∈ chunks s0 used, d.addr + 32 ∉ FR → d ∈ chunks s ∧ data kept vs μ0;
+     `Frm`: memory from S up, `Glob`, non-writable octets kept vs μ0; readable/writable equal.
+   - helper `sk` (a stack write in [F, F+56) keeps HeapCtxC/Kept/Frm; F = S − 56 ≥ 2³¹) and `dk` (a dealloc
+     call of q ∉ FR whose chunk is in s0: `dealloc_callG` → HeapCtxC (free s q), Kept (FR ++ [q])).
+   - outer invariant at 28929 for item k with FR = `resPtrs μ0 rp k` (ω₁ = F, ω₅ = n, ω₆ = k, F = n,
+     F+8 = rp, F+48/40/32 = ret/v5/v6); item step to 28922 with FR = resPtrs (k+1), by tag (255, < 5, 5,
+     6 … 254); then `dr_next0/1`; end `dr_end`. Item reads: octets in a chunk ∉ resPtrs (ResultsOwn.3) → kept.
+   - inner invariant at 29014 for j with FR = resPtrs k ++ innerPtrs q j, ω₅ = q + 8 + 24j, F+24 = end; reads
+     in the outer chunk (∉ FR by `nodup_next` on resPtrs n = resPtrs k ++ innerPtrs q j ++ w :: …).
+   - result: HeapCtxC μ' s', Kept (resPtrs μ0 rp n), Frm, ω₁ = S, ω₅/ω₆ restored, at t.
+3. `ResultsOwn.keep` (store_core keeps st's chunks with data, so resPtrs and ResultsOwn survive).
+4. R7 (`RowEleven.lean`): DropInstrsH + flag + `store_core` (or skip) + `drop_results` + the three deallocs →
+   6766, as `Impl` of `unless (is.any zombify) (store key (encodeResults rs))`.
+5. R5 (the instruction loop) as before; it must produce `ResultsVec`, `ResultsOwn`, [sp+160] ↔ Zombify.
+
 ## Session 7 handoff (2026-11-16, for the 8th session)
 
 **Branches.**

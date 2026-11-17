@@ -351,11 +351,12 @@ def RmOut (sp a : Nat) : Prop :=
   (sp + 744 ≤ a ∧ a < sp + 780) ∨ (sp + 1144 ≤ a ∧ a < sp + 1180) ∨ (sp + 1568 ≤ a ∧ a < sp + 1604)
 
 /-- **The state after the slot read and removal** (8172), against the memory μ₀ and allocator state
-    st at 8056: ω₁ = sp, ω₅ = c (the counter, stored again at 8177); the allocator's context for
+    st at 8056: ω₁ = sp, ω₅ = c (the counter, stored again at 8177), ω₆ = w6 (kept from 8056); the allocator's context for
     some st′ keeping every allocated chunk of st with its data; memory kept above sp off `RmOut`,
     at the globals 196616 … 196791 and below 196608 (with its access). -/
-def RmPost (code : ByteArray) (pb S0 S1 sp c : Nat) (st : State) (μ₀ : Memory) (s' : St Stream) : Prop :=
-  s'.i = 8172 ∧ s'.ω[1] = UInt64.ofNat sp ∧ s'.ω[5] = UInt64.ofNat c ∧
+def RmPost (code : ByteArray) (pb S0 S1 sp c : Nat) (w6 : UInt64) (st : State) (μ₀ : Memory)
+    (s' : St Stream) : Prop :=
+  s'.i = 8172 ∧ s'.ω[1] = UInt64.ofNat sp ∧ s'.ω[5] = UInt64.ofNat c ∧ s'.ω[6] = w6 ∧
   ∃ st', HeapCtxC code pb S0 S1 s'.μ st' ∧
     (∀ d ∈ chunks st, d.used = true → d ∈ chunks st' ∧ ∀ a, InData d a → s'.μ.read a = μ₀.read a) ∧
     (∀ a, a < 4294967296 → sp ≤ a → ¬ RmOut sp a → s'.μ.read a = μ₀.read a) ∧
@@ -384,7 +385,7 @@ theorem recent_match {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
       (Prog.bind (load (.recent c) RecentSlot.slotDec) (fun v => match v with
         | some (q, k) => Prog.op (AOp.remove (Key.results q k).encode)
         | none => Prog.pure ()))
-      (fun _ => RmPost env.code pb S0 S1 sp c st s.μ) s := by
+      (fun _ => RmPost env.code pb S0 S1 sp c s.ω[6] st s.μ) s := by
   obtain ⟨i, ω, μ, c0, f⟩ := s
   dsimp only at hi h1 h5 H mc hrt hvals ⊢
   subst hi
@@ -427,7 +428,7 @@ theorem recent_match {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
   | none =>
     obtain ⟨ωC, runC, g0, g1, g5, g6⟩ := rm_none (P := P) (R := KeepCtx (accContractS env)) (c0, f) ωB μB sp b1
       (by omega) soB (fun a h1 h2 => Memory.readable_of_writable (HB.st a (by omega) (by omega)))
-    refine .inr ⟨⟨8172, ωC, μB, c0, f⟩, ⟨_, runC⟩, rfl, rfl, g1, g5.trans (b5.trans h5), st', HB,
+    refine .inr ⟨⟨8172, ωC, μB, c0, f⟩, ⟨_, runC⟩, rfl, rfl, g1, g5.trans (b5.trans h5), g6.trans b6, st', HB,
       keepB, fun a h0 ha hn => ?_, glB, loB, rdB⟩
     unfold RmOut at hn
     exact kB a h0 ha (by omega) (by omega)
@@ -451,7 +452,7 @@ theorem recent_match {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
       (fun a h1 h2 => by rw [rd2]; exact Memory.readable_of_writable (HB.st a (by omega) (by omega))) (by omega)
     rcases remove_call (P := P) env c0 f ω2 μ2 sp (sp + 744) 35 (Key.results q k).encode a1 a7 a8
         (by decide) (by omega) ⟨by omega, by omega⟩ hwf hk2 ok2 (.inr (by omega)) (hvals _) with
-      ⟨hF, ω3, μ3, run3⟩ | ⟨hF, e, ω3, μ3, he, run3, -, g0, g1, g5, fr3, rd3, wr3⟩
+      ⟨hF, ω3, μ3, run3⟩ | ⟨hF, e, ω3, μ3, he, run3, -, g0, g1, g5, g6, fr3, rd3, wr3⟩
     · rw [if_pos hF]
       exact ⟨(c0.1.setSelf (writeSelf c0.1.self (Key.results q k).encode []), c0.2), rfl, ω3, μ3, f, run3.run (.exit (FreeRun.exit (trap_48533 (P := P) ω3 μ3)) (by simp))⟩
     · rw [if_neg hF]
@@ -459,7 +460,7 @@ theorem recent_match {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] 
       have run4 := rm_back (P := P) (R := YIn (accContractS env) c0.2 c0.2)
         ((c0.1.setSelf (writeSelf c0.1.self (Key.results q k).encode []), c0.2), f) ω3 μ3 e he (g0.trans a0)
       refine .inr ⟨⟨8172, ω3, μ3, (c0.1.setSelf (writeSelf c0.1.self (Key.results q k).encode []), c0.2), f⟩,
-        ⟨_, run3.trans run4⟩, rfl, .inr ⟨_, ⟨0, .refl⟩, rfl, rfl, g1, ?_, st', ?_, ?_, ?_, ?_, ?_,
+        ⟨_, run3.trans run4⟩, rfl, .inr ⟨_, ⟨0, .refl⟩, rfl, rfl, g1, ?_, g6.trans (a6.trans b6), st', ?_, ?_, ?_, ?_, ?_,
           fun a ha => by rw [rd3, rd2, rdB a ha]⟩⟩
       · rw [g5, a5, b5, h5]
       · exact HeapKeep.keepHi HB (fun a ha => by rw [fr3 a (by omega) (.inl (by omega)),

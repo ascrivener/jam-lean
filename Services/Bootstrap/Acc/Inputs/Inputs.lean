@@ -97,7 +97,7 @@ theorem inputs_decode (aenv : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap)
         by rw [z5, k2 _ (by omega) (Or.inr (by omega)) (by omega), s128, UInt64.ofNat_toNat],
         by rw [z6, k2 _ (by omega) (Or.inr (by omega)) (by omega), s120, UInt64.ofNat_toNat],
         o0, o8, o16, H3, fun c hc hu => ⟨(kd c (keep2 c hc hu) hu (hfresh c hc hu)).1, fun a ha => ?_⟩, reps,
-        sown, fun a h0 ha ho => ?_, fun a hg => by rw [gl a hg, gl2 a hg, lo1 a hg.lt]⟩
+        sown, fun a h0 ha ho => ?_, fun a hg => by rw [gl a hg, gl2 a hg, lo1 a (Glob.lt hg)]⟩
       · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
         have := H.hbT
         rw [(kd c (keep2 c hc hu) hu (hfresh c hc hu)).2 a ha, keepd2 c hc hu a ha]

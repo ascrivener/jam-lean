@@ -170,7 +170,7 @@ theorem g_call {X : Type} (env : HeapHost X) (cap pb N : Nat) (hcap1 : 134217728
       fun c hc hu hcF => ⟨(kd7 c (keep4 c hc hu) hu hcF).1, fun a ha => ?_⟩,
       (kd7 _ hnew rfl hNF).1, hfresh, fun j e hj μ'' hag => reps j e hj μ'' fun c hc hu hcF a ha => ?_,
       by rw [hfe]; exact ond, fun pl hpl => ?_, fun a h0 ha ho' => ?_,
-      fun a hg => by rw [lo8 a hg.lt, gl7 a hg, lo6 a hg.lt, gl4 a hg, lo2 a hg.lt, lo1 a hg.lt]⟩
+      fun a hg => by rw [lo8 a (Glob.lt hg), gl7 a hg, lo6 a (Glob.lt hg), gl4 a hg, lo2 a (Glob.lt hg), lo1 a (Glob.lt hg)]⟩
     · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
       rw [kd8 c (keep4 c hc hu) hu hcF a ha, keepd4 c hc hu a ha]
       unfold InDataA at ha
@@ -279,7 +279,7 @@ theorem g_call0 {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [HasCod
     by rw [z0, rr _ (by omega) (by omega)], by rw [z1], by rw [z5, rr _ (by omega) (by omega)],
     by rw [z6, rr _ (by omega) (by omega)], o0, o8, o16, HeapCtxC.keep_hi H7 lo8 wr8,
     fun c hc hu hcF => ⟨(kd7 c hc hu hcF).1, fun a ha => ?_⟩, fun a h0 ha ho' => ?_,
-    fun a hg => by rw [lo8 a hg.lt, gl7 a hg, lo6 a hg.lt, lo4 a hg.lt, lo2 a hg.lt, lo1 a hg.lt]⟩
+    fun a hg => by rw [lo8 a (Glob.lt hg), gl7 a hg, lo6 a (Glob.lt hg), lo4 a (Glob.lt hg), lo2 a (Glob.lt hg), lo1 a (Glob.lt hg)]⟩
   · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
     unfold InDataA at ha
     rw [lo8 a (by omega), (kd7 c hc hu hcF).2 a ha.1 ha.2, lo6 a (by omega), lo4 a (by omega), lo2 a (by omega),

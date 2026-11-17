@@ -117,8 +117,8 @@ theorem lp_body {X : Type} (env : HeapHost X) (cap pb N : Nat) {p : ByteArray} {
       g1, by rw [g5, f5, d5, c5, e5, h5], by rw [g6, f6], H5, keep,
       fun c hc hu a ha hout => ?_, ⟨cs, fresh, fun μ'' hag => ?_, by rw [slot]; exact foot⟩, ?_, ?_, ?_,
       fun a h0 hs h56 h88 hr => ?_, fun a ha => by
-        have := ha.lt_base hb0
-        rw [lo a ha.lt (Or.inl (by omega)), gl1 a ha]⟩
+        have := (Glob.lt_base ha) hb0
+        rw [lo a (Glob.lt ha) (Or.inl (by omega)), gl1 a ha]⟩
     · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
       unfold InDataA at ha
       rw [lo a (by omega) hout, keepd c hc hu a ⟨ha.1, ha.2⟩]
@@ -322,7 +322,7 @@ theorem lp_items {X : Type} (env : HeapHost X) (cap pb N : Nat) {p : ByteArray} 
         HeapCtxC.keep_hi H1 lo2 wr2, keep1, fun c hc hu a ha hout' => ?_, fun j e' hj => ?_,
         FeetOwn.cons (HeapCtxC.keep_hi H1 lo2 wr2) foot fresh (fun c hc _ => hc) keep1
           (PVM.Memory.readN_congr fun j hj => lo2 _ (by omega)) (FeetOwn.nil _ _ _ _ _), ?_, ?_,
-        fun a h0 ha ho hr => ?_, fun a hg => by rw [lo2 a hg.lt, gl1 a hg]⟩
+        fun a h0 ha ho hr => ?_, fun a hg => by rw [lo2 a (Glob.lt hg), gl1 a hg]⟩
       · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
         unfold InDataA at ha
         rw [lo2 a (by omega), keepd1 c hc hu a ha (by omega)]
@@ -390,7 +390,7 @@ theorem lp_items {X : Type} (env : HeapHost X) (cap pb N : Nat) {p : ByteArray} 
           FeetOwn.cons H' foot fresh keep' keep1 (PVM.Memory.readN_congr fun j hj => by
             rw [keepd' C hCu1 hCu _ ⟨by omega, by omega⟩ (Or.inl (by omega)), lo2 _ (by omega)])
             (by simpa using own'), ?_, ?_,
-          fun a h0 ha ho hr => ?_, fun a hg => by rw [gl3 a hg, lo2 a hg.lt, gl1 a hg]⟩
+          fun a h0 ha ho hr => ?_, fun a hg => by rw [gl3 a hg, lo2 a (Glob.lt hg), gl1 a hg]⟩
         · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
           unfold InDataA at ha
           rw [keepd' c (keep1 c hc hu) hu a ha (by omega), lo2 a (by omega), keepd1 c hc hu a ha (by omega)]
@@ -539,7 +539,7 @@ theorem lp_call {X : Type} (env : HeapHost X) (cap pb N : Nat) (hcap1 : 13421772
         fun c hc hu => keep' c (keep c hc hu) hu, fun c hc hu a ha' => ?_, keep' _ hnew rfl, hfresh,
         fun j e hj μ'' hag => by simpa using reps j e hj μ'' hag, ond, fun pl hpl => ?own, R0, R8,
         fun a h0 ha ho hr => ?fr, fun a hg => by
-          rw [gl4 a hg, lo3 a hg.lt, glob_of_hkeepC H2.wf hb0' hk a hg, lo1 a hg.lt]⟩
+          rw [gl4 a hg, lo3 a (Glob.lt hg), glob_of_hkeepC H2.wf hb0' hk a hg, lo1 a (Glob.lt hg)]⟩
       case own =>
         obtain ⟨c, hc, hcu, hca, hcov, hfr⟩ := opl pl hpl
         exact ⟨c, hc, hcu, hca, hcov, fun d hd hdu => hfr d (keep d hd hdu) hdu, fun e => hfr _ hnew rfl e.symm⟩

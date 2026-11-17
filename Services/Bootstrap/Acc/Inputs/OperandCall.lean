@@ -188,7 +188,7 @@ theorem op_mid_ok {X : Type} {p : ByteArray} {P : Program} [HasCode p P] [HasCod
     refine Or.inl ⟨po, s1, ω5, μ5, va, ((((r1.trans r2).trans r3).trans r4).trans
       ((op_ret1 (p := p) (P := P) (R := env.rel cap) x ω4 μ4 (by rw [f0, c0])).trans r5)).mono (by omega),
       HeapCtxC.keep_hi H4 lo5 wr5, keep, fun c hc hu a ha => ?_, g0, g1, ?_, ?_, g7, ?_, w0, w8, w16, ?_,
-      ?_, ?_, fun a h0 h1 h2 h3 => ?_, fun a ha => by rw [lo5 a ha.lt, gl4 a ha, lo2 a ha.lt]⟩
+      ?_, ?_, fun a h0 h1 h2 h3 => ?_, fun a ha => by rw [lo5 a (Glob.lt ha), gl4 a ha, lo2 a (Glob.lt ha)]⟩
     · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
       unfold InDataA at ha
       rw [lo5 a (by omega), keepd c hc hu a ha, lo2 a (by omega)]
@@ -401,7 +401,7 @@ theorem op_end {X : Type} {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA 
         by rw [u160, kf _ (by omega) (by omega) μ2 f21, kb _ (by omega) (by omega) (by omega)],
         by rw [u168, kf _ (by omega) (by omega) μ2 f21, kb _ (by omega) (by omega) (by omega)]⟩,
       u176, ?_, ?_, ?_, fun a h0 hb' h2 h3 h4 => by rw [f41 a h0 h3, fr1 a h0 hb' h2 h4],
-      fun a ha => by rw [lo4 a ha.lt, gl1 a ha]⟩
+      fun a ha => by rw [lo4 a (Glob.lt ha), gl1 a ha]⟩
     · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
       have := H.hbT
       unfold InDataA at ha

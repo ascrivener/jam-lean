@@ -131,7 +131,7 @@ theorem op_call_ok {X : Type} {p : ByteArray} {P : Program} [HasCode p P] [HasCo
         X48.trans' (kw _ (by omega) (by omega)) W1, X80.trans' (kw _ (by omega) (by omega)) W2,
         X112.trans' (kw _ (by omega) (by omega)) W3, X144.trans' (kw _ (by omega) (by omega)) W4, x176, ?_, ?_,
         by rw [R0f]; congr 1; omega, by rw [R8f]; congr 1; omega, fun a h0 h hout' hr => ?_,
-        fun a ha => by rw [gl3 a ha, gl2 a ha, lo1 a ha.lt]⟩
+        fun a ha => by rw [gl3 a ha, gl2 a ha, lo1 a (Glob.lt ha)]⟩
       · rw [keepd2 c (keep1 c hc hu) hu a ha, keepd1 c hc hu a ha]
         have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
         unfold InDataA at ha
@@ -246,7 +246,7 @@ theorem op_call_err {X : Type} {p : ByteArray} {P : Program} [HasCode p P] [HasC
       X48.trans' (kw _ (by omega) (by omega)) W1, X80.trans' (kw _ (by omega) (by omega)) W2,
       X112.trans' (kw _ (by omega) (by omega)) W3, X144.trans' (kw _ (by omega) (by omega)) W4, x176, ?_,
       by rw [R0f]; congr 1; omega, by rw [R8f]; congr 1; omega, fun a h0 h hout' hr => ?_,
-      fun a ha => by rw [gl3 a ha, lo2 a ha.lt]⟩
+      fun a ha => by rw [gl3 a ha, lo2 a (Glob.lt ha)]⟩
     · rw [keepd2 c hc hu a ha]
       have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
       unfold InDataA at ha

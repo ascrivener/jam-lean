@@ -143,7 +143,7 @@ theorem item_op_ok {X : Type} {p : ByteArray} {P : Program} [HasCode p P] [HasCo
       wsame X48 (by omega), wsame X80 (by omega), wsame X112 (by omega), wsame X144 (by omega), x176,
       by rw [od, kk _ _ (by omega)], by rw [td, kk _ _ (by omega)], by rw [R0f]; all_goals (congr 1 <;> omega),
       by rw [R8f]; all_goals (congr 1 <;> omega), fun a h0 hs ho hr => by
-        rw [fr2 a h0 (by omega) ho hr, fr1 a h0 (Or.inr hs) hr], fun a ha => by rw [gl2 a ha, lo1 a ha.lt]⟩
+        rw [fr2 a h0 (by omega) ho hr, fr1 a h0 (Or.inr hs) hr], fun a ha => by rw [gl2 a ha, lo1 a (Glob.lt ha)]⟩
     rw [keepd c hc hu a ha]
     have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
     unfold InDataA at ha
@@ -224,7 +224,7 @@ theorem item_op_err {X : Type} {p : ByteArray} {P : Program} [HasCode p P] [HasC
       wsame X48 (by omega), wsame X80 (by omega), wsame X112 (by omega), wsame X144 (by omega), x176,
       by rw [td, kk _ _ (by omega)], by rw [R0f]; all_goals (congr 1 <;> omega),
       by rw [R8f]; all_goals (congr 1 <;> omega), fun a h0 hs ho hr => by
-        rw [fr2 a h0 (by omega) ho hr, fr1 a h0 (Or.inr hs) hr], fun a ha => by rw [gl2 a ha, lo1 a ha.lt]⟩
+        rw [fr2 a h0 (by omega) ho hr, fr1 a h0 (Or.inr hs) hr], fun a ha => by rw [gl2 a ha, lo1 a (Glob.lt ha)]⟩
     rw [keepd c hc hu a ha]
     have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
     unfold InDataA at ha

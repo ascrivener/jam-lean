@@ -128,7 +128,7 @@ theorem itemOk_tr {X : Type} (env : HeapHost X) (cap pb : Nat) {p : ByteArray} {
   refine Or.inl ⟨s, ω1, μ1, (r1.trans (lp_ret_tr (p := p) (P := P) (R := env.rel cap) x ω1 μ1
       (by rw [e0, h0]))).mono (by omega), by rw [e0, h0], e1, e5, e6, by rw [o0]; decide,
     HeapCtxC.keep_hi H lo wrf, fun c hc _ => hc, fun c hc hu a ha' => ?_, ⟨[], by simp, fun μ'' _ => ?_, ?_⟩,
-    R0, R8, fun a h0 hs h1 h2 => fr a h0 (Or.inr hs) (by omega) h2, fun a ha => lo a ha.lt⟩
+    R0, R8, fun a h0 hs h1 h2 => fr a h0 (Or.inr hs) (by omega) h2, fun a ha => lo a (Glob.lt ha)⟩
   · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
     unfold InDataA at ha'
     exact lo a (by omega)

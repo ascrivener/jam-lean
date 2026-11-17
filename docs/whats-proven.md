@@ -1055,5 +1055,23 @@ At the time of writing, other work in progress includes:
 - **Lifting the 14-page limit,** by making the host-call gas cap a parameter of `refineContract`.
 - **`alloc` in the binary at alignment above one unit with heap growth, on first use and on
   failure.** The no-growth success path is done (`AllocAlignRefines.lean`).
+- **`core::str::from_utf8` (60681), by the symbolic executor** (draft PR #194,
+  `Services/Bootstrap/SymExec/Utf8Final.lean`). Both statements are proved, with axioms propext,
+  Classical.choice and Quot.sound only:
+  - `from_utf8_call`: for every input the call returns to the caller with r0, r1, r5 and r6
+    restored. Memory changes only in its 32-octet stack frame and the 24-octet result, and the page
+    map is kept. The result is either `Ok` (0, p, len), or `Err` (1, v, error_len) with v < len,
+    the octet at p + v at least 0x80, and error_len `None` or `Some 1..3`.
+  - `from_utf8_ascii`: if every octet is below 0x80, the result is `Ok` with the same pointer and
+    length.
+
+  The premises are the calling convention (`Pre`):
+  - p < 2^32, len < 2^32, p + len ≤ 2^32, and [p, p + len) is readable;
+  - [sp, sp + 32) is writable, with sp + 32 < 2^32;
+  - [O, O + 24) is writable, with O + 24 < 2^32, and is disjoint from the frame;
+  - the input is disjoint from the frame;
+  - [71078, 71334) is readable.
+
+  There is no hypothesis about the contents of the table.
 
 This page should be updated as these land.

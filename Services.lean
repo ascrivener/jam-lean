@@ -518,6 +518,13 @@ import Services.Bootstrap.Decode.VecVecOwn
 import Services.Bootstrap.Decode.LoopAPassC
 import Services.Bootstrap.Decode.ExportEmpty
 import Services.Bootstrap.SymExec
+import Services.Bootstrap.SymExec.ProgU
+import Services.Bootstrap.SymExec.Utf8Byte
+import Services.Bootstrap.SymExec.Utf8Word
+import Services.Bootstrap.SymExec.Utf8Outer
+import Services.Bootstrap.SymExec.Utf8Loop
+import Services.Bootstrap.SymExec.Utf8Fn
+import Services.Bootstrap.SymExec.Utf8Final
 import Services.Witness.SymExec
 import Services.Bootstrap.Alloc.AfterStart
 import Services.Bootstrap.StartMemZ

@@ -3,6 +3,29 @@
 Owner: the symexec/KeyFmt session (a child of the project's parent session). Paused 2026-11-14 for the
 account move.
 
+## PAUSED (2026-11-16, sixth session)
+
+The executor line is paused (Adam, decision 19). The from_utf8 step bound and the CodeF callers
+(55106/57327/57556/57624) are dropped, since they only served the formatter line. Resume only if
+T1 or T2 needs an executor feature.
+
+The sixth session fixed #194 against main: `Hosts.lean` built a `Static` with the old six fields,
+and this branch adds `facts`, so `log4770_ok` now passes seven.
+
+If the step bound is ever wanted again, here is the design that was drafted (not committed):
+- `srunF_soundB` / `fork_soundB` / `fork_soundWB`: k ≤ fuel. The proofs are those of
+  `srunF_sound` / `fork_sound` with the bound threaded through, because every step and every
+  split uses one unit of fuel. `check_sound` already gives exactly k steps.
+- `loop_soundXB`: a back edge pays `k + c·meas' ≤ c·meas`; an exit pays `k + c·e ≤ c·meas + d`
+  for an exit measure e named in the postcondition. The whole run then pays `k + c·e ≤ c·meas + d`.
+  The exit measure lets the inner loops (byte 60803 and word 60759) be paid for by the progress
+  they make, which keeps the outer bound affine.
+- `loop_fork_soundXB` with `LoopOblXB`: exits pass `meas (svals sub)` to Q, with c = d = fuel.
+- Outer body: `ReachB s n pc`, with the budget `s + 100·(len − i) + R_pc ≤ 100·n + 1000`, where
+  R_pc is the fixed fuel still to run (5b 100, 5a 200, byte 300, byte0 400, 4 500, word 600,
+  8 700, 7 100, 6 100, 1b 400, header 1000). This gives `outer_loop` k ≤ 1100·(len − i) + 1000
+  and from_utf8 k ≤ 1100·len + 1400.
+
 ## Done (on main)
 
 - #153: ProgAll imports the aggregate code modules.
@@ -61,10 +84,304 @@ Contents:
 4. After merging, send T2 (session_017ptjPC2RqWsJBhwvgtGRLf) `key_fmt`'s exact statement and its
    read-only data hypotheses (above), so T2 can discharge them from the program blob.
 
+## Loops in the executor (branch `claude/symexec-loops`, stacked on `claude/keyfmt` / #192)
+
+Adam decided on 2026-11-15: forking and loop induction in the executor. The parent approved the
+design note, including one more core change (the `facts` field). Merge order set by the parent:
+T1 milestone PR, then #192, then this PR. Don't merge either yourself.
+
+Done (all compile; axioms propext, Classical.choice, Quot.sound):
+- Core: `Fact` (lt/ge/ne on SVals, `le` on Affs, `rd`/`wr` regions [lo, hi)), `Static.facts := []`,
+  `Pre`'s 7th conjunct, `check_sound`'s autoParam `hfacts`. `SVal.bnd`/`lob` are now `bnd0`/`lob0`
+  combined with the facts (`fub`, `flb`). `scond` uses `ne` facts. `ltU` on two addresses uses `le`
+  facts (`leA`). `sload`/`sstore` accept regions from `rd`/`wr` facts (`inRd`, `inWr`). With no facts
+  the executor behaves exactly as before, and no existing theorem's type changed. No downstream file
+  uses these definitions directly (checked by grep).
+- `PVM/SymExec/Fork.lean`: `splitB` (the facts for a branch holding or failing: unsigned/eq against an
+  immediate; unsigned on two addresses), `srunF` (splits at undecided branches, stops at a stop pc),
+  `srunF_sound`. `Leaf` = pc, path facts, target cut `B`, `sub` (B's named naturals as SVals over the
+  start env). `forkCheck`, `fork_sound`.
+- `PVM/SymExec/Loop.lean`: `loop_sound` (generic well-founded induction on a measure), `LoopObl`
+  (per-leaf Lean obligation: back edge keeps `I`, bounds and `asm`, and lowers the measure; exit leaf
+  implies `Q`), `loop_fork_sound`.
+
+Also done (commit "signed branches…"): `scond` decides signed comparisons of a value ≥ 2^63; `scond2`
+falls back to an immediate comparison when one operand is a literal (`imm2`); `splitImm` splits a
+signed comparison on the sign first; `split2` = `splitAddr` or `splitVia` (literal operand).
+
+### from_utf8 (60681–61140): what it is and what the executor still lacks
+
+Rust's run_utf8_validation. Registers at entry: r7 result ptr, r8 ptr p, r9 len, r1 sp, r0 ret
+(saved on the stack; r0 is then scratch = align offset). Outer loop header 60738 (r5 = index i).
+- 60739: r10 := p + i; signed byte load; negative (≥ 0x80) → 60822 (multi-byte arms, table
+  UTF8_CHAR_WIDTH at 71078, address kept in stack slot sp+0). Else (align − i) & 7 ≠ 0 → 60731
+  (i += 1; i ≥ len → 61086 Ok; else 60738).
+- Aligned: 60756 i ≥ r4 (r4 = max(len,15) − 15, from 60714/60720) → 60793; else word loop
+  60759–60790: two u64 loads at p + i, (w0 | w1) & 0x8080…80 ≠ 0 → 60793; i += 16; i < r4 → 60759.
+- 60793–60819: byte loop (r10 pointer, r6 = −remaining counter), then 60946 / 61086.
+- 61086: Ok exit (stores at r7+8, r7+16, r7+0 = 0), restores and returns via jumpInd r0. 61109+:
+  error paths (r2 = error_len, r3).
+Callers: 7447 (CodeA, len 128 literal), 55106/57327/57556/57624 (CodeF, len loaded from memory:
+symbolic). Spec question (full UTF-8 vs ASCII-only first) sent to the parent; recommendation:
+ASCII-only first.
+
+Gaps found (each an additive executor change in #194; check with the parent if any would change an
+existing statement):
+1. Two-base addresses: loads at p + i with p and i both symbolic. `asAff` takes one base. Plan: a
+   `Fact.sum a b c` (ρ_a + ρ_b = ρ_c) and a case in `mkAlu3` add64 giving `addr ⟨c, off⟩`.
+2. Bounds through max/saturating arithmetic: r4 = max(len,15) − 15. Plan: `mkAlu3 maxU/minU`
+   simplified when `leB` decides it (facts can make len ≥ 15 known), and a split on `len ≥ 15` when
+   the branch is undecided (generic split for two-register compares of non-affine values: new
+   `Fact` comparing two SVals, used syntactically by `ltU`).
+3. Readability of [q, q+16) at a symbolic cursor: `inRd` needs q + 16 ≤ e from i + 16 ≤ len with
+   q = p + i, e = p + len. Plan: `leA` reduces through two `sum` facts with a shared summand.
+4. Signed-byte facts: path facts are on `.sx 1 (mem0 q 1)`; obligations need
+   `sx 1 b ≥ 2^63 ↔ b ≥ 128` (a small lemma, user side).
+5. A named read-only-data hypothesis for the 256-octet table at 71078 (like `Dec32.Table`).
+Tooling: `/tmp`-free disassembly is easy from the code facts (regex over `theorem d_…` in
+`Services/Bootstrap/Code*/L*.lean`, as `PVM/SymExec/gen_prog.py` does). For `#eval` experiments,
+generate a scratch `Prog` for 60681–61145 (code + bs facts) that imports only `PVM.SymExec.Fork`.
+
+Not done yet / next:
+- No consumer yet: no `#eval` of `srunF` on a real loop. Next: from_utf8 (60681). Find its loops, write
+  header cuts, get the leaves by `#eval`, discharge the obligations. Expect the fixes to be in
+  `splitB` coverage (signed branches, two-register eq/ne and non-address operands are not split).
+- Symbolic-position writes in loops: frames have literal lengths (`Cut.frame : List (Aff × Nat)`), so
+  a loop that writes at a moving cursor can't state its frame yet. The field formatters will need
+  this. Option: add a `Fact`-style frame region or a symbolic-length frame (another core change, so
+  check with the parent first).
+
+### Update 2026-11-15 (second session): gaps 1–3 closed
+
+Commit "sum and neA facts, two-variable adds…" on this branch (all additive):
+- `Fact.sum x y z` (ρx + ρy = ρz), `Fact.neA a b`. `addSum`: add64 of values affine on ρx, ρy gives
+  `addr ⟨z, o1+o2⟩` under a sum fact. `leA` = `leA0` (old) or ρx ≤ ρx+ρy (`hasSum`) or through two
+  sums with a shared first summand. `asAffV` lets `ltU`/`eqU`/`splitAddr` take `.var` too; Eq/Ne
+  split on two affine values.
+- `loop_soundX`, `LoopOblX`, `loop_fork_soundX` (Loop.lean): leaves may exit at any pc (`Q pc`).
+- Gap 2 handled without executor change: split on len ≥ 15 in the pre-loop segment (lb[len] = 15
+  gives r4 = ⟨len, −15⟩; otherwise r4 = 0).
+- `#eval` on the real code works (scratch Prog from the code facts 60681–61147, see below):
+  L1 60738 → {60822 (byte ≥ 0x80), 61086, 60738, 60756}; L2 60759 → {60759, 60793 ×2};
+  L3 60803 → {60803, 61086, 60943}. Named naturals used: 0 p, 1 len, 2 i, 3 q = p+i, 4 sp, 5 align,
+  6 m (r4), 7 w (r11 = −len), 8 ret, 9/10 saved r5/r6, 11 r7, 12 e = p+len, 13 u (r6 in L3, lb
+  2^64−2^32), 14 i0 (r5 in L3). asm: sum 0 2 3, sum 0 1 12, rd ⟨0,0⟩ ⟨12,0⟩, le ⟨2,1⟩ ⟨1,0⟩ (L2: le
+  ⟨2,1⟩ ⟨1,−15⟩ with ub[q] = 2^32−15). Stack cells at sp+0/8/16/24 (71078, s6, s5, ret), frame (sp,32).
+- Under ASCII the control flow is sequential: pre → L1 → (61086 | 60756 → [L2] → 60793 → L3 → 61086).
+
+Caller 7447 (on_transfer) passes the 128-octet transfer memo (arbitrary octets) and uses the result
+only for the log line at 7692; Err takes a lossy path at 7465. Sent to the parent: recommend spec (c)
+(all inputs: terminates, frame-only, Ok/Err shape) plus the ASCII implication. Awaiting decision.
+
+Scratch tooling (not committed): a generator printing `def code/bs` NTrees for 60681–61147 from
+`Services/Bootstrap/Code*/L*.lean` (same regexes as gen_prog.py) into a file with
+`import PVM.SymExec.Loop`, then `#eval srunF (forkStatic ub lb [] H asm) G stops 300 [] pc (init ⟨H.regs, H.cells⟩)`
+via `lake env lean`.
+
+### Update 2026-11-15 (second session, later): first loop proved; spec (c) decided
+
+Parent decision: from_utf8 gets spec (c) for all inputs: it terminates, writes only its 24-octet
+result (stack frame aside), and the result is Ok, or Err{valid_up_to ≤ len, error_len ∈ {none, 1..3}}.
+(b), the ASCII implication (all octets < 0x80 → Ok, same octets), goes on top. The table hypothesis
+is NOT needed; a readability premise for [71078, 71078+256) is fine. (a) only if a caller needs the
+octets. The CodeF callers (55106/57327/57556/57624) are expected to be log-only: confirm that when you
+get there. The lossy Err path at 7465… (caller side) should be frame-only too, under the same
+logging decision.
+
+Done:
+- `Services/Bootstrap/SymExec/ProgU.lean`: generated by
+  `python3 PVM/SymExec/gen_prog.py Services/Bootstrap/SymExec/ProgU.lean Services.Bootstrap.SymExec U
+  "Services.Bootstrap.CodeF=Services/Bootstrap/CodeF/L10.lean,…/L11.lean,…/L28.lean,…/L29.lean"
+  "Services.Bootstrap.Code=Services/Bootstrap/Code.lean"`. from_utf8's instructions are in L10/L11,
+  its block starts in L28/L29. Builds without CodeFAll, so locally in minutes.
+- `Services/Bootstrap/SymExec/Utf8Byte.lean`: `byte_loop` (60803), proved: check3 (`decide +kernel`)
+  plus `obl3`. That proof is the template for the other loops: destructure `vals` into a0…a14
+  (rcases pattern; bad lengths closed by `simp [BHold] at hB`), `simp only` the facts, then give
+  goals as explicit tuples. omega fails on big ∧-goals, so split them with `refine ⟨?_, …⟩`. An `rd`
+  fact (∀ t …) is passed through by hand.
+  Pitfall: at an exit, q + 1 can equal 2^32, so exit bounds use `ub3x` (q < 2^32 + 1).
+- The machine has 15 GB; two big Lean jobs at once OOM. Build modules one at a time.
+
+Next (spec c):
+1. Word loop 60759 (big case len ≥ 15, r4 = ⟨len, −15⟩): one exit, 60793. (c) needs no claim
+   about the mask; (b) needs the mask = 0 when the 16 octets are < 0x80 (a small lemma on
+   (w0 | w1) & 0x8080…80).
+2. Pre-loop segment 60681 → {61086 (len = 0), 60738}, split on len ≥ 15 (two statics).
+3. The outer loop 60738 for (c): the multibyte arms 60822… return to 60738 (61079/61082) or go to
+   the error exits 61109/61113/61121/61129/61134 → 61138. The table load at 60827–60832 reads
+   μ[71078 + byte]: give the readability as an `rd` fact on literal addresses. The leaves at 60759 and
+   60803 are composed with the inner-loop lemmas inside a hand-written `loop_soundX` body; there is
+   no generic "call a lemma at a leaf" yet.
+4. The exits 61086 (Ok) and 61138 (Err) → 61107 (jumpInd r0), stating the result struct at r7.
+5. (b) on top: under ASCII, 60822 and 60943 are unreachable (byte_loop's Q3 gives the octet ≥ 0x80).
+
+### Update 2026-11-15 (third session): word loop proved; outer-loop checks all pass
+
+Done (all compile; axioms propext, Classical.choice, Quot.sound; all in `Services.lean`):
+- `Utf8Word.lean`: `word_loop` (60759), template of `Utf8Byte`. Header `H2` has r4 = `.addr ⟨len, −15⟩`
+  (lb[len] = 15), asm i + 16 ≤ len. Exit `Q2` at 60793: i ≤ len, and len ≤ i + 15 or (i + 16 ≤ len and
+  `maskV` ≠ 0 over μ₀, for (b)).
+- Executor (additive, no statement changed):
+  - `valid` = `valid0` (old, by bounds) || `validF`: n > 0 octets ending at or below the end `hi` of an
+    `rd`/`wr` fact region, with hi's bound ≤ 2^32 (`leA`). Needed for the continuation loads at q+1…q+3.
+  - `mkAddr`: when `addAff` fails and the offset is 0, accept the affine address if `validF` holds.
+  - `forkCheckW`/`fork_soundW` (Fork.lean): leaves matched by pc and `leafOk` only, no path facts
+    (`Leaf.facts` ignored). `leafOk_sound` was split out of `fork_sound`'s proof.
+- `Utf8Outer.lean`: eight checks, all `decide +kernel`, a few seconds each:
+  - `check1` (W) 60738 → 60731 (misaligned, octet < 0x80) | 60756 (aligned) | 60829 (octet ≥ 0x80, after
+    the table base load; `H1b` has r10 = b (named 14), r12 = t (named 13, pinned 71078 by ub/lb), fact
+    sum 13 14 15, so the table load 60832 is at the affine ⟨15, 0⟩, readable by `rd 71078 71334`; no
+    table contents assumed). The literal-first `add64` at 60829 is why t is a named natural.
+  - `check1b` (W) 60829 → 61138 error exit `HE c2 c3` for (r2, r3) ∈ {(0,1) none, (1,1), (1,2), (1,3)}, or
+    61079 `H6` (r6 = j, named 13) with j = i + k, k ∈ {1, 2, 3} (`sub6 k`). 66 paths, 7 leaves.
+  - `check6` 61079 → 60738 (i := j + 1, j + 2 ≤ len) | 61086 (`HOk`).
+  - `check7` 60731 → 60738 (i + 1) | 61086. `check8` 60756 → 60793 (m ≤ i) | 60759 (i + 1 ≤ m).
+  - `check4` 60793 (asm i ≤ len, ub[q] = 2^32 + 1) → 61086 (i = len) | 60803 = `H3` (r6 = 2^64 − i
+    as `.alu2i .negAddImm64 (.const 0) (vr 2) 0`, r5 = i0 = i).
+  - `check5a` (W) 60943 (from `H3`, ub3x/lb3/asm3) → 60946 `H5a` (r5 = the negAdd term over vr 13).
+  - `check5b` 60946 → 60738 (i < len is already decided by asm1).
+
+Next (for the next session):
+1. **check1 must become a `forkCheck` with facts** (3 leaves; get the exact facts by `#eval` of
+   `srunF`, see the scratch method above): the 60756 leaf needs the path fact "octet at q < 0x80"
+   (`.lt (.sx 1 (.mem0 ⟨3,0⟩ 1)) (2^63)`) for the measure on the aligned path: the byte loop's exit
+   octet (≥ 0x80 in μ₀, `Q3`) then differs from i's, so i_b > i. The 60731 leaf's facts are harmless.
+2. **Ghost start index** for the inner loops: add a parameter i₀ to `I3`/`Q3` (`Utf8Byte`) and `I2`/`Q2`
+   (`Utf8Word`) with i₀ ≤ i, so exits give i_exit ≥ i_start (both are only on this branch; no
+   consumer).
+3. **The outer loop** (new file): `loop_soundX` with a hand-written body. Inv: H1.Holds ∧ BHold ub1 ∧
+   asm1 ∧ I1, I1 = r11 + len = 2^64 ∧ input/frame disjoint ∧ m + 15 = max len 15 (named 6) ∧ align < 8.
+   Body: `fork_sound check1`, then per leaf: 60731 → check7; 60829 → `fork_soundW check1b` (choose vals
+   with 15 := 71078 + b; b < 256 from the andImm) → error exit (Q) or check6; 60756 → check8 → (60759:
+   convert H1 → H2 (same vals; r4: ρ6 = len − 15 since m ≥ i + 1 > 0), `word_loop`, then re-choose vals
+   with 6 := len − 15 back to an H1-shaped cut at 60793) → check4 → `byte_loop` → 61086 (Q) or 60943 →
+   check5a → convert H5a → H1 (r5: 2^64 − ρ13 = i) → check5b. Measure len − i. Q = at 61086 `HOk`, or at
+   61138 `HE c2 c3` with i < len.
+   Cut conversions with concrete vals lists: `simp [Cut.Holds, RegsHold, CellsHold, SVal.eval, …]`.
+4. Pre-loop 60681 → 61086 (len = 0) | 60738, split on len ≥ 15 (two statics; r4 = ⟨len, −15⟩ or 0).
+5. Exits: 61086 → 61107 (Ok: stores p, len at r7+8, r7+16, 0 at r7) and 61138 → 61164 (Err: i at r7+8,
+   r2 at r7+16, r3 at r7+17, 1 at r7), both then restore r0/r5/r6, sp += 32, jumpInd r0.
+   Premises the final theorem will need, beyond the table's readability (to confirm with @parent):
+   input [p, p + len) readable with p + len ≤ 2^32, result [r7, r7 + 24) writable and disjoint from
+   the frame [sp − 32, sp), stack frame writable.
+6. (b) on top: mask lemma ((w0 | w1) & 0x8080…80 = 0 when the 16 octets are < 0x80), byte ≥ 0x80
+   exits unreachable under ASCII.
+
+### Update 2026-11-15 (fourth session): outer loop proved; pre-loop and epilogue checks pass
+
+Done (all compile; axioms propext, Classical.choice, Quot.sound; all in `Services.lean`):
+- Inner loops (README step 2): `I3`/`Q3`, `I2`/`Q2` take a ghost start state v₀ (`Keep ks v₀ vals`:
+  every named natural but i, q (and r6) unchanged; v₀'s i ≤ i). `byte_loop`/`word_loop` take v₀.
+  `Q3` now gives `J3` (r6 + i ≡ 0 mod 2^64) and no `LBHold lb3`.
+- **Gap found and fixed:** the byte loop can be entered at i = 0 (aligned, len ≤ 15), where r6 = 0,
+  not 2^64 − i, so `I3` fails. `check3z` (Utf8Loop) runs that first iteration from `H3z`
+  (r6 = const 0); `segByte0` composes it with `byte_loop` from i = 1. `check5a'` = `check5a`
+  without the lower bound on r6.
+- `Utf8Loop.lean`: **`outer_loop`** (60738), via `loop_soundX` and a hand-composed body.
+  - Invariant `Inv1 μ₀ v₀` = `I1` (r11 + len = 2^64, input/frame disjoint, m + 15 = max len 15,
+    `Keep keepO v₀`) ∧ `BHold ub1` ∧ `LBHold lb1` ∧ `asm1` ∧ `H1.Holds`. Measure len − i. Constant
+    readability is the premise `RdO μ₀ v₀` (input, table, frame readable in μ₀).
+  - Postcondition `QO`: at 61086 `HOk.Holds` with `Keep keepO v₀`; at 61138 `HE c2 c3` with
+    (c2, c3) ∈ {(0,1), (1,1), (1,2), (1,3)}, i < len, and the octet at p + i in μ₀ ≥ 0x80. The witness
+    gives (b) directly (all octets < 0x80 ⇒ never Err), so the mask lemma is not needed.
+  - Segments (`Reach … n pc`: back at the header with measure < n, or `QO`): `seg5b` 60946,
+    `seg5a` 60943, `q3_reach`, `segByte1`/`segByte0` 60803, `seg4` 60793, `segWord` 60759,
+    `seg8` 60756, `seg7` 60731, `seg6` 61079, `seg1b` 60829, `body`. Progress on the aligned
+    path: `hprog` (∀ j ≥ i, octet(p + j) ≥ 0x80 ⇒ len − j < n), from check1F's fact octet(q) < 0x80.
+  - `check1F` = `check1` with path facts (README step 1).
+- `Utf8Fn.lean`: `check0` (60681 → 61086 if len = 0 (`HOkE`), or 60738 `H1` via `sub0`: i = 0,
+  align = `alignT`, m = `mT`, r11 = `r11T`); `checkOk` (61086 `HOkE` → 61107 `HOkX`: result
+  0, p, len at r7, r0/r1/r5/r6 restored); `checkErr` (61138 `HEE` → 61164 `HEX`: 1, i, r2 (u8),
+  r3 (u8)). Both 61107 and 61164 are `jump_ind r0` → use `ret_step` (PVM/SymExec/Check.lean).
+  The epilogue checks need sep (r7 region apart from the frame) and the frame in `rd`.
+
+Next (fifth session): the final theorem (new file or in Utf8Fn).
+1. Entry: vals0 = [p, len, _, _, sp, _, _, _, ret, s5, s6, O, p + len, _, _]; `H0.Holds vals0 μ μ`
+   from ω (r1 = sp + 32 etc.) and the writability premises; `fork_sound check0`.
+2. Leaf 60738: v₀ := svals sub0. `Inv1`: needs eval lemmas: `alignT` < 8 (bitwise and with
+   2^64 − 8 clears the low 3 bits: `bitwise_and_eq` in Sound.lean, then a Nat.and lemma),
+   `mT` = max(len, 15) − 15, `r11T` = 2^64 − len (len ≠ 0). `RdO μ v₀` from the premises
+   (frame: writable ⇒ readable, `Memory.readable`/`writable` in PVM/Memory.lean). Then `outer_loop`.
+3. From `QO`: Ok → `HOkE.Holds` (HOk minus the sp+0 cell, plus rd frame / wr result from the
+   premises; pages unchanged) → `fork_sound checkOk` → `ret_step` 61107. Err → `HEE.Holds` with
+   vals.set 13 c2, 14 c3 (`HE` has r2/r3 as constants) → `checkErr` → `ret_step` 61164.
+   Leaf 61086 of check0 (len = 0) goes straight to `checkOk`.
+4. Statement (as agreed): terminates (returns to t, ret conditions as in `key_fmt`), r0/r1/r5/r6
+   restored, memory changed only in [sp, sp + 32) and [O, O + 24), pages kept; Ok writes (0, p, len),
+   Err writes (1, v, c2, c3) with v < len, (c2, c3) as above. (b): all octets < 0x80 ⇒ Ok.
+   Premises (confirmed by the parent): [p, p + len) readable, p + len ≤ 2^32; [O, O + 24) writable
+   and disjoint from [sp, sp + 32); that frame writable; [71078, 71334) readable. List them in the
+   docstring and in docs/whats-proven.md.
+5. Then the CodeF callers (55106/57327/57556/57624): confirm they are log-only (parent's request).
+
+### Update 2026-11-15 (fifth session): from_utf8 assembled
+
+Done, in `Utf8Final.lean` (added to `Services.lean`; axioms propext, Classical.choice and
+Quot.sound only):
+- **`from_utf8_call`** (plan (c)) and **`from_utf8_ascii`** (plan (b)), with the premises in the
+  structure `Pre`.
+- Results: `Utf8Res` (Ok (0, p, len), or Err (1, v, tag, value) with v < len, the octet at p + v
+  ≥ 0x80, and (tag, value) ∈ {(0, 1), (1, 1), (1, 2), (1, 3)}); `Utf8Ret` (r0, r1, r5, r6
+  restored, memory equal outside the frame and the result, pages kept).
+- Chain: `check0` → (len = 0) `finish_ok`, or → `outer_loop` → `hoke_of` + `finish_ok` /
+  `hee_of` + `finish_err`. `finish_*` run `checkOk`/`checkErr`, then `ret_step` at 61107/61164.
+- **Premises beyond the list confirmed earlier** (accepted by the parent on 2026-11-15):
+  - the input is disjoint from the frame (`I1` needs it);
+  - the strict bounds p < 2^32, len < 2^32, sp + 32 < 2^32 and O + 24 < 2^32, from `ub0`/`ubE`;
+    writability does not bound addresses.
+- **Build pitfall (memory).** A definitional check that unfolds `x + 2^64` (for example `rfl` for
+  `twoRegImmAlu .negAddImm64 …` with a `getD` on the left, `simp [twoRegImmAlu]`, `rw`/`simp`
+  closing a goal by `rfl` after rewriting an ALU value, or `omega` with an `SVal.eval` atom) can
+  use all 15 GB and get the process killed silently (exit 137). Use `rfl` lemmas whose right side
+  is a constructor or matches the definition syntactically (`add64_eq`, `nadd64_eq`, `maxU_eq`),
+  rewrite in hypotheses (`mT_closed`, `r11T_closed`), and always check the exit code. Keep side
+  goals such as `BHold`/`SepHold` as separate `have`s, not inline `by` blocks in a `fork_sound`
+  application.
+- Step 5 (the CodeF callers), from tracing the code (read-only):
+  - 57327, 57556 and 57624 sit in Display impls for NUL-padded name fields (32 and 128 octets).
+    On Ok they print the text (`{}` through `<str as Display>`); on Err or a non-printable octet
+    they print a hex dump (`0x{}…`). They are format-only, and (c) suffices.
+  - 55106 sits in a Debug impl for `&[u8]` (55075–55928, a `fmt::Argument`). On Err it prints a
+    hex dump. On Ok it walks the octets char by char (escape_debug: 67074 grapheme_extend, 61166
+    is_printable) until ptr == end. Proving that walk terminates and stays in bounds needs
+    "Ok ⇒ well-formed UTF-8", which is spec (a) or an Ok ⇒ valid predicate. It is format-only, but
+    (c) alone does not cover it. Parent decision: option (B). That Debug site gets its own named Fmt
+    log-site hypothesis, listed in the caller theorem's docstring and in `docs/whats-proven.md`.
+    Add the hypothesis only when a caller theorem actually needs that site.
+  - There are two more from_utf8 calls in a sibling function, 57764 and 57832 (57693–57899, a
+    144-octet field). They follow the same pattern, and no caller of that function was found.
+
+- **The real caller 7447 (CodeA, accumulate) can discharge every premise.** This was checked by
+  reading the code, with nothing proved yet:
+  - r1 in the body is 4278057152, so sp = 4278057120.
+  - O = r1 + 744 is in the caller's stack frame, which is writable.
+  - p comes from `alloc(128)`, so it is in the heap: p + 128 ≤ S0 ≤ sp.
+  - len = 128.
+  - The table lies inside the RO data [65536, 77144). Accumulate has no `ro` conjunct like refine's
+    `Prefix.lean` one, so one has to be added; that is additive.
+  - A caller proof also needs summaries for alloc (40494) and memcpy (68729) that keep r6, restore
+    r1 and keep the frame, plus the outlined code at 7346–7382, which moves r1 by 64 and must
+    restore it.
+
+**Obligation (recorded, not started):** "Ok ⇒ the input is well-formed UTF-8" (spec (a)). The
+Debug site at 55106 would need it to drop its named hypothesis.
+
+**Next (sixth session): the CodeF callers.** These are 55106, 57327, 57556 and 57624, plus 57764
+and 57832 if a caller turns up. Use `from_utf8_call` at each site. The Display sites (57327,
+57556, 57624) need only (c). Handle 55106 with a named log-site hypothesis as above. When writing
+or touching fmt summaries, use the parent's new failure shape: "`Fmt.Exhausts`, and from that state
+the run ends ☇ keeping (x, y)".
+
+**Note for KeyFmt (Adam, 2026-11-15).** The T2-inputs branch strengthens its `KeyFmt`
+hypothesis (Transfer/Hyp.lean). The success case now places the key text in the data of a live
+chunk allocated during the call:
+∃ ch ∈ chunks s', ch.used ∧ ch.addr + 32 = kp ∧ (fresh w.r.t. s₀) ∧ ∀ a ∈ [kp, kp+len), InDataA ch a.
+The `kc = 0 ∨ …` disjunct is dropped. Prove this version when `key_fmt` is discharged against it,
+or when it is revised with the RO-data premises.
+
 ## Open decisions and dependencies
 
-- `core::str::from_utf8` (60681): the parent took the choice of route to Adam. Don't start either
-  route until he answers.
+- `core::str::from_utf8` (60681): Adam chose the executor-loops route (2026-11-15).
 - No discrepancies with the paper or vectors were found in this work.
 - grow_heap host calls are deliberately left out (parent decision (b): build only what has a
   consumer).

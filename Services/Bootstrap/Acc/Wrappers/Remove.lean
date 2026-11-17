@@ -54,16 +54,17 @@ theorem rm_ret {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x : X
     ∃ e ω', FreeStepsH p R 48495 ω μ x e ω' μ x 12 ∧
       (r < 18446744073709551607 → e = 48514 ∧ ω'[7] = UInt64.ofNat 1) ∧
       (r = 18446744073709551615 → e = 48531 ∧ ω'[7] = UInt64.ofNat 0) ∧
-      ω'[0] = UInt64.ofNat r0 ∧ ω'[1] = UInt64.ofNat (sp + 16) ∧ ω'[5] = UInt64.ofNat r5 := by
+      ω'[0] = UInt64.ofNat r0 ∧ ω'[1] = UInt64.ofNat (sp + 16) ∧ ω'[5] = UInt64.ofNat r5 ∧
+      ω'[6] = ω[6] := by
   have q0 : rdN μ sp 8 = r5 := by unfold rdN; rw [m0, Num.decodeLE_encodeLE]; exact Nat.mod_eq_of_lt hr5
   have q8 : rdN μ (sp + 8) 8 = r0 := by unfold rdN; rw [m8, Num.decodeLE_encodeLE]; exact Nat.mod_eq_of_lt hr0
   rw [show ω = regsNF ω [] from rfl]
   rcases hr with hr | rfl
-  · refine ⟨48514, ?ω', ?run, fun _ => ⟨rfl, ?a⟩, fun h => absurd h (by omega), ?b, ?c, ?d⟩
+  · refine ⟨48514, ?ω', ?run, fun _ => ⟨rfl, ?a⟩, fun h => absurd h (by omega), ?b, ?c, ?d, ?e6⟩
     case run => pvm_go [h1, h7, q0, q8, hrf, ↓rdN_fold, Nat.mod_eq_of_lt (show r < 18446744073709551616 by omega)]
-    all_goals reg_val
-  · refine ⟨48531, ?ω2, ?run2, fun h => absurd h (by omega), fun _ => ⟨rfl, ?a2⟩, ?b2, ?c2, ?d2⟩
+    all_goals first | reg_val | simp [PVM.getElem_regsNF, PVM.lookup_cons_nat]
+  · refine ⟨48531, ?ω2, ?run2, fun h => absurd h (by omega), fun _ => ⟨rfl, ?a2⟩, ?b2, ?c2, ?d2, ?e62⟩
     case run2 => pvm_go [h1, h7, q0, q8, hrf, ↓rdN_fold]
-    all_goals reg_val
+    all_goals first | reg_val | simp [PVM.getElem_regsNF, PVM.lookup_cons_nat]
 
 end Services.Bootstrap.Acc

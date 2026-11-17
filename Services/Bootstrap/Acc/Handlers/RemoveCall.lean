@@ -48,7 +48,7 @@ theorem remove_call {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (
       ∃ e ω' μ', (e = 48514 ∨ e = 48531) ∧
         FreeStepsH p (YIn (accContractS env) c.2 c.2) 48481 ω μ (c, f) e ω' μ' c' 19 ∧
         ω'[7] = UInt64.ofNat (if c.1.self.storage.get? key = none then 0 else 1) ∧
-        ω'[0] = ω[0] ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧
+        ω'[0] = ω[0] ∧ ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧
         (∀ a, a < 4294967296 → (a < sp - 16 ∨ sp ≤ a) → μ'.read a = μ.read a) ∧
         (∀ a, μ'.readable a = μ.readable a) ∧ (∀ a, μ'.writable a = μ.writable a)) := by
   intro c'
@@ -91,7 +91,7 @@ theorem remove_call {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (
     have n8 : μ1.readN (sp - 16 + 8) 8 = Num.encodeLE 8 ω[0].toNat := readN_of_rdN m8
     have hrf : ∀ a, sp - 16 ≤ a → a < sp - 16 + 16 → μ1.readable a = true := fun a h1 h2 => by
       rw [rd1]; exact Memory.readable_of_writable (hwf a h1 (by omega))
-    obtain ⟨e, ω2, run2, hlt, hnone, g0, g1, g5⟩ :=
+    obtain ⟨e, ω2, run2, hlt, hnone, g0, g1, g5, g6⟩ :=
       rm_ret (p := p) (P := P) (R := YIn (accContractS env) c.2 c.2) c' (setR7 ω1 r) μ1 (sp - 16) r
         ω[0].toNat ω[5].toNat e1 e7
         (by rcases hrv with ⟨-, h⟩ | ⟨-, h⟩
@@ -105,6 +105,8 @@ theorem remove_call {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (
       · obtain ⟨ee, ew⟩ := hlt (by omega); rw [if_neg hg]; exact ⟨.inl ee, ew⟩
     exact ⟨e, ω2, μ1, he.1, (run1.trans (FreeStepsH.host_decode (d_48493 (p := p) (P := P)) hst run2)).mono
       (by omega), he.2, by rw [g0, UInt64.ofNat_toNat], by rw [g1, show sp - 16 + 16 = sp by omega],
-      by rw [g5, UInt64.ofNat_toNat], fun a h0 hs => fr1 a h0 hs, rd1, wr1⟩
+      by rw [g5, UInt64.ofNat_toNat],
+      by rw [g6, sr 6 (by decide) (by decide)]; exact bo1 ⟨6, by decide⟩ (by decide),
+      fun a h0 hs => fr1 a h0 hs, rd1, wr1⟩
 
 end Services.Bootstrap.Acc

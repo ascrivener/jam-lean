@@ -819,16 +819,33 @@ Pieces of T2 (`docs/bootstrap-target.md`): parts of bootstrap's accumulate code 
     the statics, `ValuesFit`), the run implements `Spec.accumulate`'s loop over `ins.map specItem`
     (body `accBody`), then halts with ω₈ = 0. Transfers by `tr_impl`; work errors skip (the trace's
     buffer freed); the loop's end frees the slot buffer and halts.
-  - *Premises:* the operand arm `OpArm` (R2, to be proved), `ItemsInv` at the head (to be established
+  - *Premises:* the operand arm `OpArm` (proved by R2, below), `ItemsInv` at the head (to be established
     by the final composition, R16).
-  - *Assumed (premise of `ItemsInv`, an obligation):* `ItemsOwn`, each slot's trace / output buffer is
-    the data of its own allocated chunk, all distinct and not the slot buffer (decided 2026-11-16,
-    option (C); to be discharged by strengthening `inputs_decode`).
+  - `ItemsOwn` (premise of `ItemsInv`): each slot's trace / output buffer is the data of its own
+    allocated chunk, all distinct and not the slot buffer (decided 2026-11-16, option (C)). It is
+    discharged: `inputs_decode` now states `SlotsOwn` (`Acc/Inputs/`), and `itemsOwn_of_slots`
+    (`Acc/ItemsLoop/Inv.lean`) gives `ItemsOwn`.
   - *Named hypotheses:* those of `tr_impl`, and `ItemLogFmt` (`Acc/ItemsLoop/Err.lean`): the item's log
     line "Accumulating work item from {}" at 6955 … 7009 (format, `log`, the String's free) is
     frame-only — it keeps the context, ω₁, the allocator's context with every allocated chunk and its
     data, the memory from sp up but sp + 1568 … 1592, and the statics — or exhausts the heap and ends ☇
     (`ExhaustsP`). A log site (standing decision; decision 23's G4).
+
+- **The items loop's operand arm (R2).** `Acc.op_arm`, `Acc.items_loop_full` (`Acc/ItemsLoop/Op.lean`).
+  - *Statement:* `op_arm : OpArm …`: for a work-item operand, the run from 6766 (head `opArm_head` →
+    7009, `op_dec` → 8013, row 8 `add_recent` → 8416, row 9 `results_init` → 8492, `loop_row11` → 6766)
+    implements `accBody` on it and re-establishes `ItemsInv` for the rest. `items_loop_full` is
+    `items_loop` with `op_arm` and `err_arm` plugged in: from `ItemsInv` at the head, the run implements
+    `forIn (ins.map specItem) () accBody; pure ()` and halts.
+  - *Premises:* `ParamStatics μ₀ 𝖢 𝖨`, `RingFits 𝖢 𝖨`, maxRecent = 2·𝖢·𝖨 (see row 8). `ItemsInv` now also
+    carries `OpRO` (the read-only words the arm reads) and 2³¹ + 4096 ≤ sp.
+  - *Aborts:* `HeapFailT`, the traps 15364 / 34070 / 47977 / 32584 / 36528, and 40611 / 40821 with
+    ω₇ = 0: all `AccAbort` (heap exhaustion).
+  - *Named hypotheses:* `Utf8Call`, `LogFmt`, `KeyFmt`, `ItemLogFmt` (above); Handlers A's `InstrLogH`,
+    `ResultLogH`, `HandlerH`, `PushH`, `ExtendH`, `OkEncH`, `DropInstrsH`; and **`OutDecH`**
+    (`Acc/ItemsLoop/OutDec.lean`, approved by @parent): the inlined `BootstrapWorkOutput::decode` at
+    7050 … 7080 decodes the work output's octets into the instructions (R3), fails with the decode-error
+    branch (☇ at 15361), or exhausts the heap. To be discharged by R3.
 
 - **The accumulate prologue stores 𝖢 and 𝖨.** `Acc.Statics.start_to_6429_statics` and
   `Acc.Statics.chain` (`Acc/Statics.lean`).

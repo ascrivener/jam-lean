@@ -44,7 +44,7 @@ theorem Impl.fitRO {p : ByteArray} {env : AccEnv} {pb : Nat} (hbd : heapBounds e
     (h : Impl p (accContractS env) env Ab prog Q s) :
     Impl p (accContractS env) env Ab prog
       (fun a s' => (Q a s' ∧ ValuesFit env s'.c.1) ∧ LoKept s.μ s'.μ) s :=
-  Impl.keepRO hbd prog s hw (Spec.Impl.inv TrueOp (fun c => ValuesFit env c.1)
+  Impl.keepRO hbd prog s hw (Impl.inv TrueOp (fun c => ValuesFit env c.1)
     (fun o _ _ _ _ h hs => ValuesFit.step o h hs) prog s (prog_all_true prog) hf h)
 
 /-- An address among three optional buffers. -/
@@ -75,8 +75,7 @@ theorem tailFree_nil {μ : Memory} {sp : Nat} (h : rdN μ (sp + 464) 8 = 0) :
     tailFree μ sp = optBuf (rdN μ (sp + 448) 8) (rdN μ (sp + 456) 8) ++
       optBuf (rdN μ (sp + 128) 8) (rdN μ (sp + 104) 8) ++ optBuf (rdN μ (sp + 264) 8) (rdN μ (sp + 272) 8) := by
   unfold tailFree tailBufs
-  rw [h]
-  rfl
+  rw [h, show resPtrs μ (rdN μ (sp + 456) 8) 0 = [] from rfl, List.nil_append]
 
 set_option maxHeartbeats 8000000 in
 set_option maxRecDepth 20000 in
@@ -88,7 +87,7 @@ set_option maxRecDepth 20000 in
 theorem op_r57 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeA p P] (env : AccEnv)
     (B : InstrRep) {C : Consts} {now pb S0 S1 : Nat} {Ab : St Stream → Prop}
     (hL : InstrLogH B p env pb S0 S1) (hR : ResultLogH p env pb S0 S1) (hH : HandlerH B p env C now pb S0 S1 Ab)
-    (hP : PushH p env pb S0 S1) (hE : ExtendH p P env pb S0 S1) (hO : OkEncH p P env pb S0 S1)
+    (hP : PushH p env pb S0 S1) (hE : Handlers.Results.ExtendH p P env pb S0 S1) (hO : Handlers.Results.OkEncH p P env pb S0 S1)
     (hD : DropInstrsH B p P env.code pb S0 S1)
     (gcap : Nat) (hcap1 : 134217728 ≤ gcap) (hcap : gcap < 18446744073709551616)
     (hAb1 : ∀ s : St Stream, s.i = 36528 → Ab s) (hAb2 : ∀ s : St Stream, s.i = 34070 → Ab s)
@@ -102,7 +101,7 @@ theorem op_r57 {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCo
     (hslots : ∀ (j : Nat) (i : AccumulateInput), (.operand o :: rest)[j]? = some i →
       (itemOf i).2 (s.μ.readN (cur + 184 * j) 184) s.μ)
     (hown : ItemsOwn st s.μ cur q (.operand o :: rest))
-    (s₄ : St Stream) (st₄ : State) (b c item kc : Nat) (is : List Instr) (pkg : List UInt8)
+    (s₄ : St Stream) (st₄ : State) (b c item kc : Nat) (is : List Spec.Instr) (pkg : List UInt8)
     (hi : s₄.i = 8492) (h1 : s₄.ω[1] = UInt64.ofNat sp) (h6 : s₄.ω[6] = UInt64.ofNat b)
     (E : EntryHyp B env.code pb S0 S1 sp b c is s₄.μ st₄) (hfit : ValuesFit env s₄.c.1)
     (hpkg : s₄.μ.readN (sp + 312) 32 = pkg) (hitem : s₄.μ.readN (sp + 176) 2 = fixed 2 item)
@@ -206,8 +205,8 @@ theorem ne_slot {st : State} {μ : Memory} {cur q : Nat} {i : AccumulateInput} {
 theorem safe89 {sp a : Nat}
     (h : a < sp + 88 ∨ (sp + 104 ≤ a ∧ a < sp + 232) ∨ (sp + 240 ≤ a ∧ a < sp + 744) ∨ sp + 1604 ≤ a) :
     ¬ Handlers.RecentAdd.AddOut sp a ∧ ¬ Handlers.ResultsInit.R9Out sp a := by
-  simp only [Handlers.RecentAdd.AddOut, Handlers.RecentMatch.RmOut, Handlers.RecentSlotWriteImpl.SwOut,
-    Handlers.RecentCounterImpl.CwOut, Handlers.ResultsInit.R9Out]
+  simp only [Handlers.RecentAdd.AddOut, Handlers.RecentMatch.RmOut, Handlers.RecentSlotWrite.SwOut,
+    Handlers.RecentCounter.CwOut, Handlers.ResultsInit.R9Out]
   omega
 
 /-- `ResultsOwn` of no results. -/
@@ -215,7 +214,7 @@ theorem resultsOwn_nil (μ : Memory) (st : State) (rp : Nat) : ResultsOwn μ st 
   ⟨by simp [resPtrs], by simp [resPtrs], fun k hk => absurd hk (by omega), fun i hi => absurd hi (by omega)⟩
 
 set_option maxHeartbeats 16000000 in
-set_option maxRecDepth 20000 in
+set_option maxRecDepth 100000 in
 /-- **R2, the items loop's operand arm** (`OpArm`): from the loop head with an operand with a work
     output b next, the run implements `onWorkItem C now p b` then `yield` (GP v0.8.0 Appendix B, Ω_W)
     and returns to the loop head with `ItemsInv` for the rest; early ☇ only where `Ab` holds (heap
@@ -232,7 +231,7 @@ theorem op_arm {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCo
     (hAbX : ∀ s : St Stream, (s.i = 40611 ∨ s.i = 40821) ∧ s.ω[7] = UInt64.ofNat 0 → Ab s)
     (hIL : ItemLogFmt p env pb S0 S1) (hOD : OutDecH B C p env pb S0 S1)
     (hL : InstrLogH B p env pb S0 S1) (hR : ResultLogH p env pb S0 S1) (hH : HandlerH B p env C now pb S0 S1 Ab)
-    (hP : PushH p env pb S0 S1) (hE : ExtendH p P env pb S0 S1) (hO : OkEncH p P env pb S0 S1)
+    (hP : PushH p env pb S0 S1) (hE : Handlers.Results.ExtendH p P env pb S0 S1) (hO : Handlers.Results.OkEncH p P env pb S0 S1)
     (hD : DropInstrsH B p P env.code pb S0 S1)
     {Cp I : Nat} (hRF : Handlers.RecentSlotWrite.RingFits Cp I) (hmax : C.maxRecent = 2 * Cp * I)
     {sp q nc e : Nat} {μ₀ : Memory} (hPS : Handlers.RecentSlotWrite.ParamStatics μ₀ Cp I) :
@@ -335,7 +334,6 @@ theorem op_arm {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCo
     hab | ⟨hnone, hend⟩ | ⟨is, item, hsome, bv, cv, rp, st₂, s₂, run2, hc2, A⟩
   · exact Impl.abort _ _ hab
   · rw [onWorkItem_none C now _ _ hnone]; exact hend
-  rw [onWorkItem_some C now _ _ is item hsome]
   refine Impl.pre _ Q run2 hc2 ?_
   have H₂ := A.H
   have hfit2 : ValuesFit env s₂.c.1 := by rw [hc2, hc1]; exact hI.fit
@@ -343,7 +341,9 @@ theorem op_arm {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCo
     ⟨(A.lo a ha).1.trans (lo1 a ha).1, (A.lo a ha).2.trans (lo1 a ha).2⟩
   have ro2 : OpRO s₂.μ := hI.ro2.keep lo2
   have tro2 : TrRO s₂.μ := hI.ro.keep lo2
-  obtain ⟨⟨k0, mc0, hk0⟩, ⟨k1, mc1, hk1⟩, ⟨k2, mc2, hk2⟩, rro, -, -⟩ := ro2
+  obtain ⟨k0, mc0, hk0⟩ := ro2.1
+  obtain ⟨k1, mc1, hk1⟩ := ro2.2.1
+  have rro := ro2.2.2.2.1
   have gl2 : ∀ a, Glob a → s₂.μ.read a = μ₀.read a := fun a ha => by
     rw [A.glob a ha, gl1 a ha]; exact hI.glob a ha
   have hPS2 : Handlers.RecentSlotWrite.ParamStatics s₂.μ Cp I := by
@@ -353,12 +353,21 @@ theorem op_arm {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCo
     · rw [Memory.readN_congr fun j hj => gl2 _ (by unfold Glob; omega)]; exact p3
   have pk2 : s₂.μ.readN (sp + 512) 32 = o.packageHash.toList := A.pkg.trans pk1
   -- row 8
-  have AR := Handlers.RecentAdd.add_recent (P := P) env gcap hcap1 hcap Ab (fun s h => hAbT s (by omega))
-    (fun s h => hAbT s (by omega)) (fun s h => hAbT s (by omega)) C item s₂ st₂ sp k0 k1 Cp I pb S0 S1 H₂
-    A.pc A.r1 ⟨by omega, hsp.2⟩ (by omega) hstk.2 mc0 hk0 mc1 hk1 tro2.2.2.1 tro2.2.2.2.1 rro hPS2 hRF hmax
-    A.m176 (fun k w h => ValuesFit.storage hfit2 k w h)
-  rw [pk2] at AR
-  rw [Prog.bind_assoc']
+  have hA1 : ∀ s : St Stream, s.i = 34070 → Ab s := fun s h => hAbT s (.inr (.inl h))
+  have hA2 : ∀ s : St Stream, s.i = 47977 → Ab s := fun s h => hAbT s (.inr (.inr (.inl h)))
+  have hA3 : ∀ s : St Stream, s.i = 32584 → Ab s := fun s h => hAbT s (.inr (.inr (.inr (.inl h))))
+  have hA4 : ∀ s : St Stream, s.i = 36528 → Ab s := fun s h => hAbT s (.inr (.inr (.inr (.inr h))))
+  have hsp352 : 2147483648 + 352 ≤ sp := Nat.le_trans (by decide) hsp.1
+  have hS352 : S0 + 352 ≤ sp := Nat.le_trans (Nat.add_le_add_left (by decide : 352 ≤ 4096) S0) hstk.1
+  -- (applied to all but its last premise: the full application would make the elaborator unfold the
+  -- spec program; the program is generalized first)
+  have ARk := @Handlers.RecentAdd.add_recent p P _ _ env gcap hcap1 hcap Ab hA1 hA2 hA3 C item s₂ st₂ sp k0 k1
+    Cp I pb S0 S1 H₂ A.pc A.r1 ⟨hsp352, hsp.2⟩ hS352 hstk.2 mc0 hk0 mc1 hk1 tro2.2.2.1 tro2.2.2.2.1 rro
+    hPS2 hRF hmax A.m176
+  rw [pk2] at ARk
+  rw [onWorkItem_some C now _ _ is item hsome, Prog.bind_assoc']
+  generalize addRecent C o.packageHash.toList item = prg at ARk ⊢
+  have AR := ARk (fun k w h => ValuesFit.storage hfit2 k w h)
   refine Impl.bind _ Q _ s₂ (Impl.mono_post ?_ _ _ (Impl.fitRO H₂.bd _ s₂ H₂.ro hfit2 AR))
   rintro _ s₃ ⟨⟨⟨hi3, h13, h63, st₃, H₃, keep₃, fr3, gl3, -⟩, hfit3⟩, lo3⟩
   have w3 : ∀ k, k + 8 ≤ 88 ∨ (104 ≤ k ∧ k + 8 ≤ 232) ∨ (240 ≤ k ∧ k + 8 ≤ 744) ∨ (1604 ≤ k ∧ k + 8 ≤ 1856) →
@@ -378,18 +387,22 @@ theorem op_arm {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCo
     ⟨(lo3 a ha).1, (lo3 a ha).2.1⟩
   have ro3 := (show OpRO s₂.μ from hI.ro2.keep lo2).keep lo23
   have tro3 := tro2.keep lo23
-  obtain ⟨-, -, ⟨k2', mc2', hk2'⟩, rro3, -, -⟩ := ro3
+  obtain ⟨k2', mc2', hk2'⟩ := ro3.2.2.1
+  have rro3 := ro3.2.2.2.1
   -- row 9
-  have RI := Handlers.ResultsInit.results_init (P := P) env gcap hcap1 hcap Ab (fun s h => hAbT s (by omega))
-    (fun s h => hAbT s (by omega)) item s₃ st₃ sp k2' pb S0 S1 H₃ hi3 h13 ⟨by omega, hsp.2⟩ (by omega)
-    (by omega) hn3 mc2' hk2' tro3.2.2.1 tro3.2.2.2.1 rro3 it3 (fun k w h => ValuesFit.storage hfit3 k w h)
-  rw [pk3] at RI
+  have RIk := @Handlers.ResultsInit.results_init p P _ _ _ env gcap hcap1 hcap Ab hA4 hA1 item s₃ st₃ sp k2' pb S0
+    S1 H₃ hi3 h13 ⟨hsp352, hsp.2⟩ hS352 (Nat.le_trans (Nat.add_le_add_left (by decide : 1632 ≤ 1856) sp) hstk.2)
+    hn3 mc2' hk2' tro3.2.2.1 tro3.2.2.2.1 rro3 it3
+  rw [pk3] at RIk
   rw [show ∀ (M : PUnit → Prog AOp PUnit),
       Prog.bind (Prog.bind (store (.results o.packageHash.toList item) (encodeResults []))
         (fun _ => Prog.bind (Prog.op AOp.checkpoint) M)) (fun _ => pure (ForInStep.yield PUnit.unit)) =
       Prog.bind (Prog.bind (store (.results o.packageHash.toList item) (encodeResults []))
         (fun _ => Prog.op AOp.checkpoint)) (fun x => Prog.bind (M x) (fun _ => pure (ForInStep.yield PUnit.unit)))
-      from fun M => by rw [Prog.bind_assoc', Prog.bind_assoc']; rfl]
+      from fun M => by rw [Prog.bind_assoc', Prog.bind_assoc', Prog.bind_assoc']]
+  generalize Prog.bind (store (.results o.packageHash.toList item) (encodeResults []))
+    (fun _ => Prog.op AOp.checkpoint) = prg2 at RIk ⊢
+  have RI := RIk (fun k w h => ValuesFit.storage hfit3 k w h)
   refine Impl.bind _ Q _ s₃ (Impl.mono_post ?_ _ _ (Impl.fitRO H₃.bd _ s₃ H₃.ro hfit3 RI))
   rintro _ s₄ ⟨⟨⟨hi4, h14, h64, st₄, H₄, keep₄, fr4, gl4, -, -⟩, hfit4⟩, lo4⟩
   -- the state at 8492 against the earlier ones
@@ -434,9 +447,9 @@ theorem op_arm {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCo
     rcases A.res with ⟨-, h0, -⟩ | ⟨-, -, hch, hfr, hnv⟩
     · exact absurd h0 h
     · refine ⟨⟨_, (keep24 _ hch rfl).1, rfl, ?_⟩, hfr, hnv⟩
-      have := chunk_bounds H₂.wf hch
+      have hcb := Services.Bootstrap.Fmt.chunk_bounds H₂.wf hch
       have := H₂.hb0
-      dsimp only at this ⊢; omega
+      dsimp only at hcb ⊢; omega
   -- the slot's buffers are old chunks, so not the instructions' nor the results'
   have oldT : o.authTrace.toList.length ≠ 0 → ∃ d ∈ chunks st₁, d.used = true ∧ d.addr + 32 = tp ∧ d ∈ chunks st₄ :=
     fun h => by
@@ -462,7 +475,7 @@ theorem op_arm {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCo
     rw [v448, v456]
     rcases A.res with ⟨-, h0, hrp8⟩ | ⟨hne, hn, hch, -, -⟩
     · exact .inl ⟨h0, by omega⟩
-    · have hb := chunk_bounds H₂.wf hch
+    · have hb := Services.Bootstrap.Fmt.chunk_bounds H₂.wf hch
       have := H₂.hb0
       dsimp only at hb
       refine .inr ⟨by rw [hn]; exact fun h => hne (List.length_eq_zero_iff.1 h), _, (keep24 _ hch rfl).1, rfl,
@@ -481,22 +494,22 @@ theorem op_arm {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCo
         obtain ⟨d, hd1, hu, ha, hd4⟩ := oldO h
         refine ⟨⟨d, hd4, hu, ha⟩, fun hm => ?_⟩
         unfold optBuf at hm
-        split_ifs at hm with h0
-        · simp at hm
-        · simp only [List.mem_singleton] at hm; exact (hrp h0).2.1 d hd1 hu (ha.trans hm)
+        by_cases h0 : rdN s₂.μ (sp + 448) 8 = 0
+        · simp [h0] at hm
+        · simp only [h0, if_false, List.mem_singleton] at hm; exact (hrp h0).2.1 d hd1 hu (ha.trans hm)
       · rw [v456, v464, v448, v128, v104, v264, v272, e0r, List.nil_append]
         intro h
         obtain ⟨d, hd1, hu, ha, hd4⟩ := oldT h
         refine ⟨⟨d, hd4, hu, ha⟩, fun hm => ?_⟩
         rcases List.mem_append.1 hm with hm | hm
         · unfold optBuf at hm
-          split_ifs at hm with h0
-          · simp at hm
-          · simp only [List.mem_singleton] at hm; exact (hrp h0).2.1 d hd1 hu (ha.trans hm)
+          by_cases h0 : rdN s₂.μ (sp + 448) 8 = 0
+          · simp [h0] at hm
+          · simp only [h0, if_false, List.mem_singleton] at hm; exact (hrp h0).2.1 d hd1 hu (ha.trans hm)
         · unfold optBuf at hm
-          split_ifs at hm with h0
-          · simp at hm
-          · simp only [List.mem_singleton] at hm; exact hTO h h0 hm.symm
+          by_cases h0 : bo.toList.length = 0
+          · simp [h0] at hm
+          · simp only [h0, if_false, List.mem_singleton] at hm; exact hTO h h0 hm.symm
     · rw [hvf, htf]
       refine nodup_opt3 A.V.nodup (fun h => (hrp h).2.2) (fun h hv => ?_) (fun h hv => ?_)
         (fun h h' he => ?_) (fun h h' he => ?_) (fun h h' => hTO h' h)
@@ -513,8 +526,7 @@ theorem op_arm {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCo
   have ro4 : OpRO s₄.μ := ((hI.ro2.keep lo2).keep lo23).keep lo34
   have mk4 : s₄.μ.readN 68696 8 = Num.encodeLE 8 k2' := by
     rw [Memory.readN_congr fun j hj => (lo4 _ (by omega)).1]; exact mc2'
-  refine op_r57 (P := P) env B hL hR hH hP hE hO hD gcap hcap1 hcap (fun s h => hAbT s (by omega))
-    (fun s h => hAbT s (by omega)) hAbX o rest s Q hQ hI st cur hc db hdb hdbu hdbq hdata hslots hown s₄ st₄
+  refine op_r57 (P := P) env B hL hR hH hP hE hO hD gcap hcap1 hcap hA4 hA1 hAbX o rest s Q hQ hI st cur hc db hdb hdbu hdbq hdata hslots hown s₄ st₄
     bv cv item k2' is o.packageHash.toList hi4 h14 (h64.trans (h63.trans A.r6)) E hfit4 ?_ ?_
     (tro3.keep lo34) ro4 mk4 hk2' H₄.ro ?_ ?_ ?_ ?_
   · rw [Memory.readN_congr fun j hj => fr4 _ (by omega) (by omega) (safe89 (by omega)).2]; exact pk3

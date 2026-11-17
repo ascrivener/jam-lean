@@ -39,7 +39,7 @@ Next: the PR sequence (#222, statics, R2, R16), on @parent's go. **Open obligati
 
 **Session 5 (2026-11-16, night), on `claude/bootstrap-t2-r2`** (= `claude/bootstrap-t2-statics` + Handlers A's
 `claude/bootstrap-t2-handlers-a-r5` at 4a9f542, merged locally; full build green after the merge):
-- R2 pieces, sorry-free: `ItemsLoop/OpHead.lean` (`opArm_head`, 6766 → 7009 for any operand, `OpHeadPost`),
+- R2 pieces, complete (no gaps): `ItemsLoop/OpHead.lean` (`opArm_head`, 6766 → 7009 for any operand, `OpHeadPost`),
   `OpSeg.lean` (7009 → 7050, 7080 → 15361 / 8013 / 40494, 40611 → 7145, 7145 → 15364 / 8013),
   `OutDec.lean` (**`OutDecH`**, R3 as a named hypothesis: the inlined `BootstrapWorkOutput::decode`
   7050 → 7080; draft sent to @parent, awaiting OK), `OpSpec.lean` (`onWorkItem_some` / `_none`),

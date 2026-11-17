@@ -1,36 +1,44 @@
-# Handoff: coordinator state (2026-11-16, ~09:30 UTC)
+# Handoff: coordinator state (2026-11-17, ~18:00 UTC)
 
 A coordinator (parent) session runs the child sessions, all tagged `jam-lean`. Each line of work keeps
 its own handoff README; read it before resuming that line. This file is the coordinator's state: if
-the coordinator restarts, start here. Scope since 2026-11-16: decision 19 below.
+the coordinator restarts, start here. Scope since 2026-11-16: decision 19, refined by 20–26 below.
 
 ## Where things stand
 
-- **T1 (refine).** On main: `refine_milestone` (#197, #207) and full M1 part A, refine for
-  1 ≤ n ≤ 2^21 (#214). **#217** (parts B/C: variable-width DeleteItems/Imported, the eager Lookup
-  step, the eight large `*_elem_bigC`) is in CI. On `claude/bootstrap-t1-m1d`: ReallocBig and the
-  small-size C adapters. Remaining for `refine_t1c`: drop/EncOkMH arms for kinds 0, 11, 12, 13, 17,
-  22, 24; threading realloc_call_big; the theorem.
-- **T2 (accumulate).** On main: the Impl framework (#215 weakened its panic branch), wrappers, the
-  handler pieces (#208), Q18 (#209). on_transfer is composed on `claude/bootstrap-t2-inputs-wip` (PR
-  next). Handlers A: row 8 nearly done (slot write and counter get left), then rows 9 and 11.
-- **Executor.** #192 merged. **#194** (forking, loops, from_utf8) fails to build against main (a
-  `facts` field missing in `SymExec/Hosts.lean`); the executor session is fixing it.
-- **Field formatters.** #213 (FieldInt) and #216 (write_str_heap) merged. Open PRs for N56*, the hex
-  path and step-8 formatters come next; then the line pauses (decision 19).
-- **Build and CI.** On main: auto-resume and `lake-cache` (#193, #211), the CI split (#202),
-  code-fact tiers (#205), the perf fast paths (#204, incl. #201). New jam-lean cloud sessions fetch
-  the cache via the environment's setup script. Next, in order: CodeF regeneration, P3 stage 1 (PVM
-  and JAM as modules), the post_simp tactic pass (3–5× faster Decode proofs). Branches are listed in
-  `docs/profiling/STATE-build-items.md` (on `claude/build-items-state`).
+Both targets of the narrowed scope (decision 19) are proved and on main, with named hypotheses.
+
+- **T1: `refine_t1c`** (`Services/Bootstrap/Refine/T1c.lean`, #229). For the Bootstrap binary and
+  every canonical payload of at least one instruction with no Import (decisions 20, 21) and no
+  RandomStorageRefine (`hrsr`), with constants `Consts.ofParams Params.full rk` (decision 25): refine
+  ends `ok (out, ex)` matching `Spec.refine`, or out of gas with no exports, or `ExhaustsHeap`.
+  Hypotheses: `VendoredFactsC`, `FmtHypsC` (at gas cap 2^62), `IsBootstrapC`, `hnoimport`, `hrsr`,
+  `hpre` (preimages < 2^63, decision 16), shape and range premises.
+- **T2: `accumulate_spec`** (`Services/Bootstrap/Acc/Final/Spec.lean`, #231, #233, #234). For any
+  bootstrap code, ≤ 89 inputs each `InputSized`, t, s < 2^32 and constants with
+  `maxRecent = 2·341·16`: Ψ_A's (state, transfers, yield, provisions) equals the outcome of
+  `Spec.accumulate` run for some n steps, unless the binary runs out of gas or aborts at an
+  allocation failure (`AccAbort`: a heap trap pc, or 40611/40821 with ω₇ = 0). Hypotheses:
+  - `AccVendoredFacts` (vendored blob, step 10) and `IsBootstrapCode` (accepted by the coordinator
+    under the standing named-hypothesis decision);
+  - `AccHyps B C` (option B, decision 23): AccLogFail, InputsGlob, Utf8Call, LogFmt, KeyFmt,
+    ItemLogFmt, OutDecH, InstrLogH, ResultLogH, HandlerH (Ab = AccAbort), PushH, ExtendH, OkEncH,
+    DropInstrsH, over an `InstrRep` bundle;
+  - `ValuesFit` (decision 4), `InfoFits` (decision 26), G3 (≤ 89 inputs, `InputSized`).
+  Discharged inside: ParamStatics and RingFits (from the prologue), StoreFit, the own account.
+- **In flight.** `InputsGlob` is being discharged (decision 26: thread Glob through inputs_decode),
+  session `session_01FAPLse8iyeN6855tGWte5L`, branch `claude/bootstrap-t2-inputsglob`. #223 (CodeF
+  regeneration) is being re-synced with main and merges on green.
+- **CI.** One check for branch protection: `proofs` (#232) passes exactly when the merge rule holds.
+  The ruleset requires `model`; Adam was asked to add `proofs`. Main's runs are serialized (#225).
+  A proofs build with a warm cache takes about 40 min to 2.5 h.
+- **Not started, need Adam:** T1 Import and empty payloads, M2 (the real decoder), discharging the
+  named hypotheses (Fmt sites, handlers, step 10), P3 stage 1 and post_simp (branches pushed).
 
 ## Merge rules
 
-- Each child merges its own PR on green, except #194, which the coordinator merges.
+- Each child merges its own PR on green (`model` and `proofs`).
 - Code-fact regenerations are sequenced by the coordinator (re-sync rule). New facts go in as tiers.
-- After P3 stage 1 lands, every new PVM/JAM file needs the module header (`docs/module-system.md`).
-- Whoever restarts `claude/decode-heaphost` must merge main and resolve the Decode/README.md add/add
-  and the OkFD change from #214.
 - Messaging rule (Adam, 2026-11-15): children message the coordinator only when they open or merge a
   PR, are blocked, need a decision, finish, or need a restart. Progress goes in READMEs.
 
@@ -38,16 +46,12 @@ the coordinator restarts, start here. Scope since 2026-11-16: decision 19 below.
 
 | Line | Session | Branch / PR | Next |
 |---|---|---|---|
-| T1 (6th) | session_01FAPLsZnE5YLqLpAmNt6jeJ | #217, `claude/bootstrap-t1-m1d` | merge #217; arms; refine_t1c |
-| T2 Handlers A (5th) | session_01FAPLsdzswtDsCsKWorttaw | `claude/bootstrap-t2-handlers-a-wip` | finish row 8 (decisions 17, 18); rows 9, 11 |
-| T2 inputs (3rd) | session_01FAPLsZyRGnqCpa8xKzDWWE | `claude/bootstrap-t2-inputs-wip` | on_transfer PR; ParamStatics prologue |
-| Executor (6th) | session_01FAPLse7sPN4yxBDE4BaFtJ | #194 | fix and push #194, then pause |
-| Field formatters (4th) | session_01FAPLsc3qjhviw4J2ADvaut | `claude/bootstrap-fields-3-wip` | open and merge its PRs, then pause |
-| Build items (2nd) | session_01FAPLscnMqhsrcx7QX51DiF | `claude/codef-regen` etc. | CodeF, P3 stage 1, post_simp, then stop |
+| T2 InputsGlob (1st) | session_01FAPLse8iyeN6855tGWte5L | `claude/bootstrap-t2-inputsglob` | discharge InputsGlob |
 
-Paused lines with handoffs: Decode/HeapHost (`claude/decode-heaphost`), storage-key stage 2
-(`docs/storage-key-design.md`). **jam-lean-target** (a separate project) has its own parent,
-session_01FAPLsdKXq86WuSpB5fCYVg; it is pinned at or after 208cc20.
+All other lines are finished or paused. Paused lines with handoffs: field formatters
+(`FIELDS-HANDOFF.md`), Decode/HeapHost (`claude/decode-heaphost`), storage-key stage 2
+(`docs/storage-key-design.md`), P3 stage 1 (`claude/p3-module-stage1`), post_simp
+(`claude/post-simp-fast`). **jam-lean-target** (a separate project) has its own parent.
 
 ## Adam's decisions on 2026-11-15
 
@@ -92,6 +96,35 @@ session_01FAPLsdKXq86WuSpB5fCYVg; it is pinned at or after 208cc20.
     its open PRs), the allocation-failure ☇ table, step 10, M2 (the real decoder), the from_utf8 step
     bound and CodeF callers, and further build work after the CodeF regen, P3 stage 1 and the
     post_simp pass. At most 4 working sessions.
+
+## Adam's decisions on 2026-11-16 (continued) and 2026-11-17
+
+20. `refine_t1c` excludes payloads containing Import, by a named hypothesis (`hnoimport`), like
+    `hrsr`.
+21. `refine_t1c` requires at least one instruction; empty payloads stay with `refine_milestone`.
+22. KeyFmt, Utf8Call and LogFmt also say they keep 196616…196791 (the Glob statics), like decision 14.
+23. **T2 option B:** a T2 statement soon, as a skeleton in which the handlers, output decode, results
+    encoder and writer are named hypotheses (`AccHyps`).
+24. At most **3** parallel working children. Restart at about 400k tokens.
+25. `refine_t1c`'s constants are fixed to `Params.full`.
+26. T2's three new named hypotheses (2026-11-17), all option A:
+    - `InfoFits e s`: s's code hash in e is shorter than 2^64 − 73 octets (the SDK reads an info
+      length ≥ 2^64 − 9 as an error code; implied by the paper's 32-octet hash);
+    - `AccLogFail`: in the first accumulate log line (6501 → 6630), a failed allocation ends in
+      `ExhaustsP`; the success branch is proved;
+    - `InputsGlob`: inputs_decode (6630 → 6674) keeps the Glob octets. Temporary: discharged next
+      by threading Glob through inputs_decode.
+
+## Decisions the coordinator made since 2026-11-16 (Adam may overturn)
+
+- T2: `AccVendoredFacts` (six RO slices and layoutOk) accepted under the standing named vendored-blob
+  decision; `IsBootstrapCode` accepted as `IsBootstrap`'s T2 counterpart.
+- T2 plan-B interfaces (`docs/t2-remaining.md`): the InstrRep bundle (with tag, notNone and
+  footprint fields), ResultsOwn and DropInstrsH; ExtendH and OkEncH without length preconditions (a
+  too-large result is heap exhaustion); hAbX requires ω₇ = 0; ItemsOwn proved via SlotsOwn.
+- The `proofs` gate job (#232) as the single check branch protection requires.
+- Merge order after the ruleset fix: #227, #225, #219–#222, #226, #228, #194, then #229, #230,
+  #231, #233, #234; #223 (CodeF) last, per the re-sync rule.
 
 ## Decisions the coordinator made (Adam may overturn)
 
@@ -141,8 +174,9 @@ session_01FAPLsdKXq86WuSpB5fCYVg; it is pinned at or after 208cc20.
   UTF8_CHAR_WIDTH readability.
 - **T2, the output decode failure contract:** spec decode = none ⇒ the binary reaches 15361 or
   exhausts the heap.
-- **T2, `ParamStatics`:** the prologue's `apply()` stores C and I, and later steps keep them.
-- **T2, row 8:** `0 < 2·C·I < 2^32` from the fetched parameters (decision 17).
+- **T2, `InputsGlob`** (decision 26): thread Glob through inputs_decode (in flight).
+- *(Done in `accumulate_spec`: `ParamStatics` and row 8's `0 < 2·C·I < 2^32` are discharged from
+  the prologue.)*
 - **ReallocBig:** the single value units = 2^25 − 1 (two routes in the Refine README).
 - **from_utf8 at 55106:** Ok ⇒ well-formed UTF-8, if that Debug site's hypothesis is to be discharged.
 - **Known looseness:** ArgOk/RefOk use a single C for the Ok bound and the Exhausts budget. It can be

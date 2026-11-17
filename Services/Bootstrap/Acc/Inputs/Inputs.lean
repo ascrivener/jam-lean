@@ -44,7 +44,7 @@ theorem inputs_decode (aenv : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap)
       (∀ c ∈ chunks s0, c.used = true → c ∈ chunks st' ∧ ∀ a, InDataA c a → μ'.read a = μ.read a) ∧
       (∀ (j : Nat) (i : AccumulateInput), aenv.inputs[j]? = some i →
         ∀ μ'' : Memory, (∀ c ∈ chunks st', c.used = true → ∀ a, InDataA c a → μ''.read a = μ'.read a) →
-          (itemOf i).2 (μ''.readN (q + 184 * j) 184) μ'') ∧
+          (itemOf i).2 (μ''.readN (q + 184 * j) 184) μ'') ∧ SlotsOwn st' μ' q aenv.inputs.length ∧
       (∀ a, a < 4294967296 → sp ≤ a → (a < sp + 1568 ∨ sp + 1568 + 24 ≤ a) → μ'.read a = μ.read a)) ∨
     (∃ j ω' μ', (j = 47554 ∨ j = 45975 ∨ j = 45642) ∧
       FreeStepsH p (accContractK cap aenv) 6630 ω μ x j ω' μ' x
@@ -86,7 +86,7 @@ theorem inputs_decode (aenv : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap)
         (by rw [show sp - 144 + 72 = sp - 144 + 56 + 16 by omega]; exact v16)
         ⟨hL0, by omega⟩ hnew rfl (by dsimp only; omega) (by dsimp only; omega) ⟨Nat.le_refl _, by omega⟩ dat
         ⟨by omega, by omega⟩ (by omega) ⟨by omega, by omega⟩ with
-      ⟨q, st', ω3, μ3, r4, z0, z1, z5, z6, o0, o8, o16, H3, kd, reps, fr⟩ | ⟨j, ω3, μ3, hj, r4⟩
+      ⟨q, st', ω3, μ3, r4, z0, z1, z5, z6, o0, o8, o16, H3, kd, reps, sown, fr⟩ | ⟨j, ω3, μ3, hj, r4⟩
     · have r5 := in_ret (p := p) (P := P) (R := accContractK cap aenv) x ω3 μ3
         (by rw [z0, k2 _ (by omega) (Or.inr (by omega)) (by omega), s136])
       refine Or.inl ⟨q, st', ω3, μ3, ((((r1.trans r2).trans r3).trans (FreeStepsH.ofAccGrow r4)).trans r5).mono
@@ -95,7 +95,7 @@ theorem inputs_decode (aenv : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap)
         by rw [z5, k2 _ (by omega) (Or.inr (by omega)) (by omega), s128, UInt64.ofNat_toNat],
         by rw [z6, k2 _ (by omega) (Or.inr (by omega)) (by omega), s120, UInt64.ofNat_toNat],
         o0, o8, o16, H3, fun c hc hu => ⟨(kd c (keep2 c hc hu) hu (hfresh c hc hu)).1, fun a ha => ?_⟩, reps,
-        fun a h0 ha ho => ?_⟩
+        sown, fun a h0 ha ho => ?_⟩
       · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
         have := H.hbT
         rw [(kd c (keep2 c hc hu) hu (hfresh c hc hu)).2 a ha, keepd2 c hc hu a ha]

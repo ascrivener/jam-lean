@@ -77,7 +77,7 @@ theorem loop_tr (env : AccEnv) (gcap pb : Nat) (hcap1 : 134217728 ≤ gcap)
   have hstk := hI.hstk
   have hl := hI.cur
   simp only [List.length_cons] at hl
-  generalize hc : rdN s.μ (sp + 168) 8 = cur at hl hbuf hslots hown
+  generalize hc : curAt sp s = cur at hl hbuf hslots hown
   have hnc : nc ≠ 0 := by have := hI.hcap; simp only [List.length_cons] at this; omega
   obtain ⟨d, hd, hdu, hdq, hdata⟩ := hbuf hnc
   have hin : ∀ a, cur ≤ a → a < cur + 184 → InDataA d a := fun a h1 h2 => hdata a h1 (by omega)
@@ -105,9 +105,9 @@ theorem loop_tr (env : AccEnv) (gcap pb : Nat) (hcap1 : 134217728 ≤ gcap)
   have e8 : s.μ.readN (cur + 8) 128 = x.memo.toList := by
     rw [← wm, readN_drop_take s.μ cur 184 8 128 (by omega)]
   -- 6766 → 6782 → 7159
-  obtain ⟨ω1, r1, e5, f1⟩ := il_step (p := p) (P := P) (R := KeepCtx (accContractS env)) (s.c, s.q)
-    s.ω s.μ sp cur e hI.r1 ⟨by omega, by omega⟩ hc hI.m144 (by omega) hrf
-  have g1' : ω1[1] = UInt64.ofNat sp := (f1 1 (by decide)).trans hI.r1
+  obtain ⟨ω1, N1, r1, g1', e5⟩ := hI.to6782 (P := P) (R := KeepCtx (accContractS env)) (s.c, s.q)
+    (by omega) hrf
+  rw [hc] at e5
   obtain ⟨ω2, μ2, r2, g1, -, -, g8, g6, g10, n168, n200, fr2, rd2, wr2, -⟩ :=
     il_disp_tr (p := p) (P := P) (R := KeepCtx (accContractS env)) (s.c, s.q) ω1 s.μ sp cur g1' e5
       ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ e0 hwf hrq
@@ -119,7 +119,7 @@ theorem loop_tr (env : AccEnv) (gcap pb : Nat) (hcap1 : 134217728 ≤ gcap)
       rdN μ2 (sp + k) 8 = rdN s.μ (sp + k) 8 := fun k h1 h2 h3 =>
     rdN_frame fun j hj => fr2 _ (by omega) (by omega) (by omega)
   have ro2 : TrRO μ2 := hI.ro.keep (fun a ha => ⟨lo2 a (by omega), rd2 a⟩)
-  refine Impl.pre _ Q (s' := ⟨7159, ω2, μ2, s.c, s.q⟩) ⟨_, by rw [hI.pc]; exact r1.trans r2⟩ rfl ?_
+  refine Impl.pre _ Q (s' := ⟨7159, ω2, μ2, s.c, s.q⟩) ⟨_, r1.trans r2⟩ rfl ?_
   refine Impl.bind _ Q _ _ ?_
   refine tr_impl env gcap pb hcap1 hcap (P := P) hAb hU hL hK s.c s.q ω2 μ2 st sp (cur + 8) x.source
     x.amount x.memo.toList H2 g1 g8 ?_ ?_ ?_ ⟨by omega, hsp.2⟩ hstk ⟨by omega, by omega⟩
@@ -146,15 +146,16 @@ theorem loop_tr (env : AccEnv) (gcap pb : Nat) (hcap1 : 134217728 ≤ gcap)
         rdN s'.μ (sp + k) 8 = rdN μ2 (sp + k) 8 := fun k _ hj =>
       rdN_frame fun j hj' => fr' _ (by have := hj j hj'; omega) (by omega)
         (not_trW_loop (by have := (hj j hj').2; omega))
-    have hcur' : rdN s'.μ (sp + 168) 8 = cur + 184 := by
-      rw [kk 168 (by omega) (fun j hj => ⟨by omega, by omega⟩), n168]
+    have hcur' : curAt sp s' = cur + 184 := by
+      rw [curAt_6766 hi, kk 168 (by omega) (fun j hj => ⟨by omega, by omega⟩), n168]
     have kw : ∀ k, (k = 16 ∨ k = 32 ∨ k = 136 ∨ k = 144 ∨ k = 184 ∨ k = 208 ∨ k = 216 ∨
         k = 1848) → rdN s'.μ (sp + k) 8 = rdN s.μ (sp + k) 8 := fun k hk => by
       rw [kk k (by omega) (fun j hj => ⟨by omega, by omega⟩), st2 k (by omega) (by omega) (by omega)]
     have dat : ∀ d0 ∈ chunks st, d0.used = true → ∀ a, InDataA d0 a → s'.μ.read a = s.μ.read a :=
       fun d0 h0 hu a ha => by
         rw [(keep' d0 h0 hu).2 a ha, lo2 a (by have := heapC_data_lt H h0 ha; omega)]
-    refine ⟨hi, h1', hsp, hstk, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ro2.keep lo', ?_, ?_, ?_⟩
+    refine ⟨.inl hi, h1', hsp, hstk, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ro2.keep lo',
+      (hI.ro2.keep fun a ha => ⟨lo2 a (by omega), rd2 a⟩).keep lo', ?_, ?_, ?_⟩
     · rw [hcur']; omega
     · rw [kw 144 (by omega)]; exact hI.m144
     · rw [kw 16 (by omega)]; exact hI.m16

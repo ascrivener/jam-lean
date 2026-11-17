@@ -2,6 +2,78 @@
 
 ## Handoff: T2 inputs (updated 2026-11-16 evening, end of the third session)
 
+**Session 6 (2026-11-17), on `claude/bootstrap-t2-r2`: R2 done.**
+- Merged Handlers A 8173e6b: every `hAbX` now requires ω₇ = 0 (a failed allocation), so T2's abort
+  reason stays `AccAbort` (@parent, option (A)).
+- **`ItemsLoop/Op.lean`** (axioms clean): `op_arm : OpArm …` (6766 → 7009 `opArm_head` → 8013 `op_dec`
+  → 8416 `add_recent` → 8492 `results_init` → 6766 `loop_row11`, via `op_r57`), and **`items_loop_full`**:
+  `items_loop` with `op_arm` / `err_arm` plugged in, so the whole items loop is an `Impl` of
+  `forIn (ins.map specItem) () accBody; pure ()` with post `Halts`. Its named hypotheses: `Utf8Call`,
+  `LogFmt`, `KeyFmt`, `ItemLogFmt`, `OutDecH`, `InstrLogH`, `ResultLogH`, `HandlerH`, `PushH`, `ExtendH`,
+  `OkEncH`, `DropInstrsH`; premises `ParamStatics μ₀ Cp I`, `RingFits Cp I`, maxRecent = 2·𝖢·𝖨; aborts:
+  `HeapFailT`, traps 15364 / 34070 / 47977 / 32584 / 36528, 40611 / 40821 with ω₇ = 0 (all `AccAbort`).
+- `ItemsInv` gained `ro2 : OpRO s.μ` (`OpRO` moved to `Inv.lean`) and `hsp : 2³¹ + 4096 ≤ sp` (EntryHyp
+  needs it). Whoever establishes `ItemsInv` at 6782 (R16) must supply both.
+- `op_dec`'s `hpo` is now `|out| ≠ 0 → ptr + |out| ≤ 2³¹` (weakened; it is used).
+- **Pitfall (Lean):** a *full* application of `add_recent` / `results_init` makes the elaborator whnf
+  `Impl … (spec program)` (unfolding `addRecent` / `store`, it loops: maxRecDepth). Apply all but the last
+  premise, `generalize` the program to a variable (`at h ⊢`), then apply the last premise. Also: an
+  `obtain`/`rcases` clearing (`-`) the `jumpTab` equation of `OpRO` loops; use projections.
+- **Next: R16** (`accumulate_spec`), from the R16 map below. Missing links, in order: (1) 5 → 6501 with
+  the statics (`Statics.chain` in place of `AccBParams.chain` in `start_to_6501`); (2) `HeapCtxC` before
+  6501 (analogue of `Refine/ArgsCtx.lean` `args_ctx`); (3) `acc_log_line` (6501 → 6630, accContractK;
+  it needs the service's own account in the context and `infoValue` shorter than 2⁶⁴ − 9: new premises or
+  derived from Ψ_A's setup) and `inputs_decode` (6630 → 6674, accContractK) lifted to KeepCtx accContractS
+  (`FreeStepsH.pairS`, `Wrappers/GrowS.lean`); (4) n = 0: 6674 → 15215 → halt; n > 0: `il_head` (6674 →
+  6782) → `ItemsInv` at 6782 (`itemsOwn_of_slots`; words 208 / 136 / 200 / 1848 from the prologue);
+  (5) `items_loop_full` → `Halts`; (6) `psiA_of_impl` with Ab = `AccAbort`, `prog` = Spec.accumulate.
+
+**Session 5 (2026-11-16, night), on `claude/bootstrap-t2-r2`** (= `claude/bootstrap-t2-statics` + Handlers A's
+`claude/bootstrap-t2-handlers-a-r5` at 4a9f542, merged locally; full build green after the merge):
+- R2 pieces, complete (no gaps): `ItemsLoop/OpHead.lean` (`opArm_head`, 6766 → 7009 for any operand, `OpHeadPost`),
+  `OpSeg.lean` (7009 → 7050, 7080 → 15361 / 8013 / 40494, 40611 → 7145, 7145 → 15364 / 8013),
+  `OutDec.lean` (**`OutDecH`**, R3 as a named hypothesis: the inlined `BootstrapWorkOutput::decode`
+  7050 → 7080; draft sent to @parent, awaiting OK), `OpSpec.lean` (`onWorkItem_some` / `_none`),
+  `OpDec.lean` (`op_dec`, 7009 → 8013: ExhaustsP / trap 15364 / decode error ☇ 15361 / `At8013`;
+  `VecOwn.keep`).
+- Found (reported to @parent for Handlers A): `EntryHyp` assumes the empty results `Vec`, but for n > 0
+  instructions the binary does `Vec::with_capacity(n)` (7120 … 7970: alloc 144·n, align 8, trap 15364);
+  `AddPost` / `R9Post` must keep ω₆ (= the instructions' pointer, set at 7100); `R57Post` lacks `Glob`.
+  Extra abort pcs for the arm: 34070, 32584, 47977, 36528, 15364.
+- Obligation (A) done: `ItemOk` carries `FootIn` (`uFoot`, `Inputs/LoopItem.lean`), threaded through
+  `lp_body` / `lp_items` (`FeetOwn`) / `lp_call` / `g_call` / `g_inputs` to `inputs_decode`, which now states
+  `SlotsOwn st' μ' q n` (buffer chunk + slots' buffers owned); `itemsOwn_of_slots` (`ItemsLoop/Inv.lean`)
+  gives `ItemsOwn` and the slot-buffer chunk for `ItemsInv`.
+- Later in session 5: merged Handlers A 5a3c238 (EntryHyp `hres` with cap = n, ω₆ in AddPost / R9Post, Glob in
+  R57Post, hBall gone; hb8 from `ChunkAlign`); dropped `b % 8 = 0` from `OutDecH` (@parent approved `OutDecH`
+  as drafted otherwise; note it and the decode-failure branch in whats-proven). `ItemsInv` now also holds at
+  6782 (first entry; cursor `curAt`, `ItemsInv.to6782`). `ItemsLoop/ImplRO.lean`: `Impl.keepRO` (octets
+  < 196608 and their access kept along any `Impl`; needed since AddPost has no readability conjunct) and
+  `OpRO` (kc words 68680/68688/68696, RO range 68680…69076, jump table 65736).
+- **op_arm plan (next session):** (1) add `ro2 : OpRO s.μ` to `ItemsInv` (arms re-establish it with
+  `OpRO.keep` like `TrRO.keep`); (2) new file `ItemsLoop/Op.lean`, `op_arm : OpArm …` with premises
+  `ItemLogFmt`, `OutDecH`, Handlers A's `InstrLogH ResultLogH HandlerH PushH ExtendH OkEncH DropInstrsH`,
+  `ParamStatics μ₀ C I`, `RingFits`, `hmax`, Ab covering HeapFailT, 34070 / 47977 / 32584 / 36528 / 15364 and
+  40611 / 40821 (any ω₇). Chain: `opArm_head` → slot facts (cpy gives [sp+288] = |b| ≠ −1, [296] = ptr,
+  [304] = |b|, readN (sp+312) 32 = packageHash) → `op_dec` → case decode: none → `onWorkItem_none` (panic);
+  some → `onWorkItem_some`, `Impl.pre` to 8013, `Impl.bind` `add_recent` (AddPost, ω₆ kept), `Impl.bind`
+  `results_init` (R9Post) with `Prog.bind_assoc'`, then `loop_row11` with `EntryHyp` built from `At8013` +
+  frames (TailHyp: results buffer chunk, sp+104 output buffer and sp+272 trace buffer from `ItemsOwn`;
+  `hnd` from freshness), `f := wiBody` (`wiBody_ck` / `wiBody_other`), Inv := `ValuesFit env c.1`; then
+  R57Post → `ItemsInv rest` (StableKeep covers the words; rest's chunks are outside vecFree / tailFree by
+  freshness and ItemsOwn nodup); use `Impl.keepRO` and `Impl.inv` for RO / ValuesFit at the end.
+- **R16 map** (survey, 2026-11-16): `accumulate_spec` not stated yet; final step is `psiA_of_impl`
+  (`Acc/Impl/Lift.lean:120`). Missing links: 5 → 6501 with statics (rebuild `start_to_6501` with
+  `Statics.chain`); `HeapCtxC` before 6501 (analogue of refine's `args_ctx`, `Refine/ArgsCtx.lean:490`);
+  6501 → 6630 is `acc_log_line` (`Fmt/AccFmt.lean:157`, accContractK, HeapCtx in, x' existential);
+  accContractK → KeepCtx (accContractS) via `FreeStepsH.pairS` (`Wrappers/GrowS.lean:51`); n = 0 path
+  6674 → 15215 → halt (no lemma yet); glue `inputs_decode` + `il_head` → `ItemsInv` at 6782
+  (`itemsOwn_of_slots`). Template: `Refine/Milestone.lean` `refine_milestone`.
+- **Next:** when Handlers A lands the three interface changes (done, see above): 8013 → `add_recent` → `results_init` →
+  `loop_row11` → `ItemsInv` for the rest (R57Post → ItemsInv: StableKeep covers every word ItemsInv
+  reads; the rest's chunks survive since they are neither `vecFree` (fresh), the results buffer (fresh)
+  nor this item's trace / output buffers (`ItemsOwn` nodup)). Then R15/R16.
+
 **Session 4 (2026-11-16, later), on `claude/bootstrap-t2-statics`:**
 - R12 done: `Acc/ValuesFitStep.lean` (`dispatch_keeps`, `ValuesFit.step`, `ValuesFit.run`).
 - R1 skeleton done: `Acc/ItemsLoop/` — `Inv.lean` (`ItemsInv`, the loop-head invariant: iterator words

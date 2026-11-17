@@ -60,14 +60,16 @@ theorem loop_end {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env
   have hS1 := H.hS1
   have hsp := hI.hsp
   have hstk := hI.hstk
+  have hpc : s.i = 6766 := hI.pc.resolve_right fun h => h.2 rfl
   have hc := hI.cur
+  rw [curAt_6766 hpc] at hc
   simp only [List.length_nil, Nat.mul_zero, Nat.add_zero] at hc
   obtain ⟨ω', μ', run, h8⟩ := items_halt (p := p) (P := P) (R := KeepCtx (accContractS env)) env.code pb
     S0 S1 (s.c, s.q) s.ω s.μ st sp e q nc H hI.r1 ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ hc
     hI.m144 hI.m32 hI.m16 hI.m1848
     (fun hn => by obtain ⟨d, hd, hu, hq, -⟩ := hbuf hn; exact ⟨d, hd, hu, hq⟩)
   refine ⟨ω', μ', s.q, ?_, h8⟩
-  rw [hI.pc]; exact run
+  rw [hpc]; exact run
 
 set_option maxRecDepth 20000 in
 /-- **R1, the items loop**: from the loop head with `ItemsInv` for the inputs `ins`, the run

@@ -189,3 +189,40 @@ jobs:
     permissions: { contents: write }  # publish .lake to the lake-cache release (main only)
     uses: ./.github/workflows/build.yml
     with: { attempt: 3, last: true }
+
+  # One check for branch protection: GitHub names a skipped reusable-workflow job `attempt-N` but a run one
+  # `attempt-N / build-and-check`, so the attempts can't be required by name. `proofs` always runs and
+  # passes exactly when the model job passed and the proofs either weren't needed or finished green
+  # (every attempt that ran succeeded, and the last one that ran didn't time out).
+  proofs:
+    needs: [changes, model, attempt-1, attempt-2, attempt-3]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Model and proofs passed
+        env:
+          AFFECTED: ${{ needs.changes.outputs.affected }}
+          CHANGES: ${{ needs.changes.result }}
+          MODEL: ${{ needs.model.result }}
+          A1: ${{ needs.attempt-1.result }}
+          A2: ${{ needs.attempt-2.result }}
+          A3: ${{ needs.attempt-3.result }}
+          T1: ${{ needs.attempt-1.outputs.timed_out }}
+          T2: ${{ needs.attempt-2.outputs.timed_out }}
+        run: |
+          echo "changes=$CHANGES affected=$AFFECTED model=$MODEL attempts=$A1/$A2/$A3 timed_out=$T1/$T2"
+          [ "$CHANGES" = success ] || { echo "changes job did not succeed"; exit 1; }
+          [ "$MODEL" = success ] || { echo "model job did not succeed"; exit 1; }
+          for r in "$A1" "$A2" "$A3"; do
+            case "$r" in success|skipped) ;; *) echo "an attempt ended $r"; exit 1;; esac
+          done
+          if [ "$AFFECTED" = true ]; then
+            [ "$A1" = success ] || { echo "proofs needed but attempt-1 did not run"; exit 1; }
+            if [ "$T1" = true ]; then
+              [ "$A2" = success ] || { echo "attempt-1 timed out and attempt-2 did not finish"; exit 1; }
+              if [ "$T2" = true ]; then
+                [ "$A3" = success ] || { echo "attempt-2 timed out and attempt-3 did not finish"; exit 1; }
+              fi
+            fi
+          fi
+          echo "ok"

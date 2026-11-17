@@ -8,7 +8,7 @@ in `Acc/Final/`: `KeepK` (`accKeepK`, lifts to `accContractS`), `LogLineK` (`acc
 (the named hypotheses), `Impl` (`acc_impl`), `Spec` (`accumulate_spec`). New named hypotheses, accepted
 (Adam, 2026-11-17): `InfoFits`, `AccLogFail`, `InputsGlob` (temporary); `AccVendoredFacts` and
 `IsBootstrapCode` accepted by @parent under standing decisions. Full build green (2998 jobs, 33f51fa).
-Next: the PR sequence (#222, statics, R2, R16), on @parent's go. **Open obligation:** thread `Glob` through
+Statics merged as #231, R2 as #233; R16 is its own PR. **Open obligation:** thread `Glob` through
 `inputs_decode` to discharge `InputsGlob` (a fresh session does it).
 
 **Session 6 (2026-11-17), on `claude/bootstrap-t2-r2`: R2 done.**

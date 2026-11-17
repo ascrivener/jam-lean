@@ -1,4 +1,5 @@
 import Services.Bootstrap.Acc.Transfer.Encode
+import Services.Bootstrap.Acc.Transfer.Glob
 import Services.Bootstrap.Acc.Transfer.GetKeyCall
 
 /-!
@@ -48,7 +49,8 @@ theorem enc_call (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
       (∀ d ∈ chunks s₀, d.used = true → d ≠ ⟨ptr - 32, (140 + 31) / 32 + 1, true⟩) ∧
       HeapCtxC env.code pb S0 S1 μ' s' ∧ (∀ c ∈ chunks s₀, c.used = true → c ∈ chunks s') ∧
       (∀ c ∈ chunks s₀, c.used = true → ∀ a, InDataA c a → μ'.read a = μ.read a) ∧
-      (∀ a, a < 4294967296 → s + 64 ≤ a → (a < out ∨ out + 24 ≤ a) → μ'.read a = μ.read a)) ∨
+      (∀ a, a < 4294967296 → s + 64 ≤ a → (a < out ∨ out + 24 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, Glob a → μ'.read a = μ.read a)) ∨
     (∃ ω' μ' n, FreeStepsH p (KeepCtx (accContractS env)) 40494 ω μ (c, f) 34071 ω' μ' (c, f) n ∧
       ω'[7] = UInt64.ofNat 0 ∧
       FreeStepsH p (KeepCtx (accContractS env)) 34071 ω' μ' (c, f) 34178 ω' μ' (c, f) 1) := by
@@ -193,7 +195,7 @@ theorem enc_call (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
         frm5 a (by omega) (.inl (by omega)) (by omega) (.inl (by omega)), fr4 a (by omega) (.inl (by omega)),
         frm3 a (by omega) (.inl (by omega)) (by omega) (.inl (by omega)), fr2 a (by omega) (.inl (by omega))]
     refine .inl ⟨s1, ω8, μ8, _, ptr, (((((((run1'.trans run2).trans run3).trans run4).trans run5).trans run6).trans
-      run7).trans run8).trans run9, i1, i5, i6, o0, o8, o16, ?_, hnew, hfresh, H8, keep1, ?_, ?_⟩
+      run7).trans run8).trans run9, i1, i5, i6, o0, o8, o16, ?_, hnew, hfresh, H8, keep1, ?_, ?_, ?_⟩
     · -- the value: ℰ₄(source), then ℰ₈(amount), then the memo
       have p8 : ∀ a, ptr ≤ a → a < ptr + 140 → μ8.read a = μ7.read a := fun a h1 h2 =>
         fr8 a (by omega) (.inl (by omega))
@@ -223,6 +225,13 @@ theorem enc_call (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
       exact HKeepG.data H1.wf H1.hb0 H1.hbT hkg hd1 ha
     · intro a h0 ha ho
       rw [fr8 a h0 ho]; exact kH a h0 (by omega)
+    · intro a ha
+      have hg := ha; unfold Glob at hg
+      have := Services.Bootstrap.Decode.VecU8.chunk_in H1.wf hnew rfl
+      have hb0 := H1.hb0
+      dsimp only at this
+      rw [kL a (by omega) (.inl (by omega))]
+      exact glob_of_hkeepC H1.wf H1.hb0 hkg a ha
   · obtain ⟨-, run1S⟩ := FreeStepsH.growS f run1
     exact .inr ⟨ω1, μ1, _, run1S.trans (enc_j0 (p := p) (P := P) _ ω1 μ1 (f0.trans h0)), e7,
       enc_null (p := p) (P := P) _ ω1 μ1 e7⟩

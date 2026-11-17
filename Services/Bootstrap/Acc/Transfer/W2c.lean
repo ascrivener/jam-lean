@@ -52,7 +52,8 @@ theorem tr_w2c (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap :
       μ'.readN vp 140 = Num.encodeLE 4 src ++ Num.encodeLE 8 am ++ memo ∧
       (∀ d ∈ chunks s₀, d.used = true → d ≠ kch ∧ d ≠ vch ∧ d ∈ chunks s' ∧
         ∀ a, InDataA d a → μ'.read a = μ.read a) ∧
-      (∀ a, a < 4294967296 → sp ≤ a → ¬ T2W sp a → μ'.read a = μ.read a)) ∨
+      (∀ a, a < 4294967296 → sp ≤ a → ¬ T2W sp a → μ'.read a = μ.read a) ∧
+      (∀ a, Glob a → μ'.read a = μ.read a)) ∨
     Aborts p (KeepCtx (accContractS env)) Ab ⟨7763, ω, μ, c, f⟩ c := by
   have hst := H.st
   have hS1 := H.hS1
@@ -67,7 +68,7 @@ theorem tr_w2c (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap :
   rcases hK c f ω1 μ1 s₀ sp n H1 a0 a1 a7 a8 a9 (by omega) (by omega) (by omega) r1568 (r1576.trans m208)
       (by rw [k10 _ _ (by omega)]; exact m1496) hn with
     ⟨s2, ω2, μ2, N2, kc, kp, run2, H2, k1, k5, k6, mkc, mkp, mkl, mkey,
-      ⟨kch, hkch, hkcu, hkca, hkcf, hkin⟩, keep2, fr2⟩ | hx
+      ⟨kch, hkch, hkcu, hkca, hkcf, hkin⟩, keep2, fr2, g2⟩ | hx
   rotate_left
   · exact .inr (Aborts.prepend ⟨8, run1⟩ (aborts_of_exhaustsP hAb ⟨59375, ω1, μ1, c, f⟩ hx))
   have hst2 := H2.st
@@ -116,7 +117,7 @@ theorem tr_w2c (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap :
           Memory.readN_congr fun j hj => fr2 _ (by omega) (by omega) (.inr (by omega)),
           Memory.readN_congr fun j hj => fr1 _ (by omega) (.inl (by omega))]
         exact mmemo) with
-    ⟨s3, ω6, μ6, n6, vp, run6, e1, e5, e6, o0, o8, o16, vdat, hvch, hvfr, H6, kch6, kdat6, khi6⟩ |
+    ⟨s3, ω6, μ6, n6, vp, run6, e1, e5, e6, o0, o8, o16, vdat, hvch, hvfr, H6, kch6, kdat6, khi6, g6⟩ |
     ⟨ω6, μ6, n6, run6, -, run6b⟩
   rotate_left
   · exact .inr (aborts_of_trap (P := P) (fun s h => hAb s (.inl h)) ⟨7763, ω, μ, c, f⟩
@@ -148,7 +149,7 @@ theorem tr_w2c (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap :
     (run1.trans run2).trans (run3.trans (run4.trans (run5.trans (run6.trans run7)))),
     j0, j1, j7, ?_, j9, j10, j11, j6, ?_, H6, ?_, hkch6, hkcu, hkca, hkin, ?_, o0, ?_, hvch, rfl,
     by dsimp only; omega, hkv, fun a h1 h2 => ⟨by dsimp only; omega, by dsimp only; omega⟩, vdat,
-    fun d hd hu => ?_, fun a h0 ha hW => ?_⟩
+    fun d hd hu => ?_, fun a h0 ha hW => ?_, fun a hg => ?_⟩
   · rw [j8, e5, hkp5]
   · rw [j5, e5, hkp5]
   · rw [k63 _ _ (by omega) (by omega) (.inl (by omega)) (.inl (by omega))]
@@ -163,5 +164,7 @@ theorem tr_w2c (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap :
   · unfold T2W at hW
     rw [khi6 a h0 (by omega) (by omega), fr53 a h0 ha (by omega), fr3 a h0 (by omega) (by omega),
       fr2 a h0 ha (by omega), fr1 a h0 (by omega)]
+  · have ha := hg; unfold Glob at ha
+    rw [g6 a hg, fr52 a (by omega), g2 a hg, fr1 a (by omega) (.inl (by omega))]
 
 end Services.Bootstrap.Acc

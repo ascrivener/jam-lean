@@ -783,7 +783,8 @@ Pieces of T2 (`docs/bootstrap-target.md`): parts of bootstrap's accumulate code 
     under "transfer-count", writes it back incremented (mod 2³²), logs a line, formats the key
     "transfer{n}" and writes the record ℰ₄(src) ⌢ ℰ₈(am) ⌢ memo under it, then reaches the items
     loop's head 6766 (`TrPost`: context `trCtx`, every earlier heap chunk and its data kept, from sp
-    up only the octets `TrW` changed, memory below 196608 unchanged). Each `set` that returns FULL
+    up only the octets `TrW` changed, memory below 196608 unchanged, the statics 196616 … 196791
+    (`Glob`, where the prologue stored the chain parameters) unchanged). Each `set` that returns FULL
     ends ☇ (`orPanic`, 15361); a failed allocation (3820, 48047, 4002, 15363, 15362, 34178, `get`'s
     47977) is an early ☇ for the reason `heap` (`HeapFailT`).
   - *Assumed:*
@@ -796,10 +797,65 @@ Pieces of T2 (`docs/bootstrap-target.md`): parts of bootstrap's accumulate code 
     - `KeyFmt`: `format!("transfer{}", n)` at 7792 returns the key's octets, stated as text, in the
       data of a live heap chunk fresh against the allocator's earlier state (strengthened from
       "kc = 0 or a fresh chunk", Adam, 2026-11-15), or exhausts the heap and then ends ☇ (`ExhaustsP`);
-    - `Utf8Call`: `core::str::from_utf8` at 7447 on the memo;
+    - `Utf8Call`: `core::str::from_utf8` at 7447 on the memo (its frame, all memory below sp − 4096,
+      covers the statics);
     - `LogFmt`: the log line's `format!` at 7692, frame-only (formatters 2800 → dec32, 2804 → dec64,
       678 → String Display), or `ExhaustsP`.
-  - *Scope:* the frame does not yet state that the parameter statics 196616 … 196791 are kept.
+    - `KeyFmt` and `LogFmt` also state, in their success case, that the statics 196616 … 196791 are
+      unchanged (Adam, 2026-11-16, so that `ParamStatics` reaches row 8). Whoever discharges them
+      proves this too; the formatters write only the stack and the heap.
+
+- **`ValuesFit` is kept by every operation.** `Acc.dispatch_keeps`, `Acc.ValuesFit.step`,
+  `Acc.ValuesFit.run` (`Acc/ValuesFitStep.lean`).
+  - *Statement:* every host call of the model (`AccHost.dispatch`, any id, gas, registers and memory)
+    keeps this service's storage values and every service's preimages shorter than 2⁶³ octets (a
+    stored value is read from a readable range, below 2³²); so every `ASem.step` keeps `ValuesFit`,
+    and so does every run (`ASem.run`). No assumptions.
+
+- **The items loop (R1).** `Acc.items_loop`, `Acc.loop_tr`, `Acc.err_arm`, `Acc.loop_end`
+  (`Acc/ItemsLoop/`).
+  - *Statement:* from the loop head 6766 with `ItemsInv` for the inputs `ins` (the iterator, slot
+    buffer and frame words, `HeapCtxC`, each slot holding its input, `ItemsOwn`, the read-only data,
+    the statics, `ValuesFit`), the run implements `Spec.accumulate`'s loop over `ins.map specItem`
+    (body `accBody`), then halts with ω₈ = 0. Transfers by `tr_impl`; work errors skip (the trace's
+    buffer freed); the loop's end frees the slot buffer and halts.
+  - *Premises:* the operand arm `OpArm` (R2, to be proved), `ItemsInv` at the head (to be established
+    by the final composition, R16).
+  - *Assumed (premise of `ItemsInv`, an obligation):* `ItemsOwn`, each slot's trace / output buffer is
+    the data of its own allocated chunk, all distinct and not the slot buffer (decided 2026-11-16,
+    option (C); to be discharged by strengthening `inputs_decode`).
+  - *Named hypotheses:* those of `tr_impl`, and `ItemLogFmt` (`Acc/ItemsLoop/Err.lean`): the item's log
+    line "Accumulating work item from {}" at 6955 … 7009 (format, `log`, the String's free) is
+    frame-only — it keeps the context, ω₁, the allocator's context with every allocated chunk and its
+    data, the memory from sp up but sp + 1568 … 1592, and the statics — or exhausts the heap and ends ☇
+    (`ExhaustsP`). A log site (standing decision; decision 23's G4).
+
+- **The accumulate prologue stores 𝖢 and 𝖨.** `Acc.Statics.start_to_6429_statics` and
+  `Acc.Statics.chain` (`Acc/Statics.lean`).
+  - *Statement:* from Y's state at instruction 5, the run reaches 6429 (the first argument decode) in
+    3420 steps with `AccBParams.St177`, and also [196616]₂ = ℰ₂(𝖢) and [196696]₈ = ℰ₈(𝖨), where
+    𝖢 = `coreCount` and 𝖨 = `maxPackageItems` of `env.params`. The SDK's `apply()` stores them
+    (`store_u16` at 56279 after the check 2 ≤ 𝖢 ≤ 341, `store_u64` at 56205 of a u16 field). They
+    are the words Handlers A's row 8 takes as `ParamStatics μ 𝖢 𝖨` (the ring size 2·𝖢·𝖨).
+  - *Assumed:* as `Acc.start_to_6429`, including `env.params = Params.full`. So 𝖢 = 341 and 𝖨 = 16.
+  - *Scope:* the facts hold at 6429. `on_transfer` keeps 196616 … 196791 (`TrPost`); the rest of
+    the way to row 8 (the argument decodes, the inputs decode, the items loop) is still to be shown.
+    The binary does not check 𝖨 > 0; 2·𝖢·𝖨 < 2³² follows from 𝖢 ≤ 341 and
+    𝖨 < 2¹⁶.
+
+- **T2's abort reason and length premise (definitions).** `Acc.AccAbort`, `Acc.HeapTrapPc`,
+  `Acc.ValuesFit` (`Acc/Abort.lean`).
+  - `AccAbort s`: heap exhaustion. Either a failed allocator call (the `alloc` wrapper's return 40611 or
+    `realloc`'s 40821 with ω₇ = 0), or one of the blob's 53 allocation-failure traps (`HeapTrapPc`,
+    found from the disassembly with `scripts/allocfail/`). Each listed trap is reached only by the
+    null test after an allocation (or a growth helper's `Err`, which means a null allocation or an
+    overflowing size), or by an allocation-size check failing (a request above 2³⁷ − 32), both heap
+    exhaustion under Adam's decision. `format_inner`'s trap 59710 is left out, because a formatter
+    returning `Err` also reaches it. `accAbort_of_heapFailT`: `on_transfer`'s abort states are
+    `AccAbort` states.
+  - `ValuesFit env x`: this service's storage values, every service's preimages and ℰ(↕**i**)
+    (`fetch` kind 14) are shorter than 2⁶³ octets (decided 2026-11-15).
+  - *To do:* `ValuesFit` is kept by every operation (`ASem.step`).
 
 ### picoalloc: the model (`Services/Picoalloc/`)
 

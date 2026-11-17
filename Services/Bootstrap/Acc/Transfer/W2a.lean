@@ -22,7 +22,8 @@ set_option maxRecDepth 100000
 /-- **7399 → 7454**: the memo copied into a fresh 128-octet block ptr (a chunk of the new allocator
     state, fresh against s₀) and `from_utf8` run on it: ω₁ = sp, ω₅ kept, ω₆ = ptr, the tag at
     sp + 744 (0 with the slice (ptr, 128), or 1); every allocated chunk of s₀ and its data kept; from sp
-    up only sp + 744 … sp + 768 changed; below 196608 the memory reads and is readable as before. Or
+    up only sp + 744 … sp + 768 changed; below 196608 the memory reads and is readable as before; the
+    statics 196616 … 196791 (`Glob`) kept. Or
     `alloc` returned null: an early ☇ for a `HeapFailT` reason. -/
 theorem tr_w2a (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap : cap < 18446744073709551616)
     {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] {Ab : St Stream → Prop} {S0 S1 : Nat}
@@ -39,7 +40,8 @@ theorem tr_w2a (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap :
       ((rdN μ' (sp + 744) 8 = 0 ∧ rdN μ' (sp + 752) 8 = ptr ∧ rdN μ' (sp + 760) 8 = 128) ∨
         rdN μ' (sp + 744) 8 = 1) ∧
       (∀ a, a < 4294967296 → sp ≤ a → (a < sp + 744 ∨ sp + 768 ≤ a) → μ'.read a = μ.read a) ∧
-      (∀ a, a < 196608 → μ'.read a = μ.read a ∧ μ'.readable a = μ.readable a)) ∨
+      (∀ a, a < 196608 → μ'.read a = μ.read a ∧ μ'.readable a = μ.readable a) ∧
+      (∀ a, Glob a → μ'.read a = μ.read a)) ∨
     Aborts p (KeepCtx (accContractS env)) Ab ⟨7399, ω, μ, c, f⟩ c := by
   have hst := H.st
   have hS1 := H.hS1
@@ -89,7 +91,7 @@ theorem tr_w2a (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap :
     (fun a h1 h2 => by rw [rd4]; exact Memory.readable_of_writable (hwd a h1 h2))
   have run := (run1.trans run2').trans (run3.trans (run4.trans (run5.trans run6)))
   refine .inl ⟨s1, ω6, μ6, _, ptr, run, k1.trans g1, ?_, ?_, by omega, by omega, H6, hnew, hfresh,
-    fun d hd hu => ⟨keep2 d hd hu, fun a ha => ?_⟩, tag, fun a h0 ha hb => ?_, fun a ha => ⟨?_, ?_⟩⟩
+    fun d hd hu => ⟨keep2 d hd hu, fun a ha => ?_⟩, tag, fun a h0 ha hb => ?_, fun a ha => ⟨?_, ?_⟩, fun a ha => ?_⟩
   · exact k5.trans ((gj 5 (by decide)).trans (d5.trans ((cj 5 (by decide)).trans (f5.trans (bj 5 (by decide))))))
   · exact k6.trans ((gj 6 (by decide)).trans (d6.trans c6))
   · -- a chunk of s₀: its data is apart from the new block
@@ -109,5 +111,8 @@ theorem tr_w2a (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap :
       kro.2 a (by unfold two32; omega) (.inl (by unfold pageSize; omega)) (hro a ha)]
   · have hp := kro.1 (a / pageSize) (.inl (by unfold pageSize; omega))
     rw [rd6, rd4]; unfold Memory.readable; rw [hp]
+  · have hg := ha; unfold Glob at hg
+    rw [fr6 a (by omega) (.inl (by omega)) (.inl (by omega)), fr4 a (by omega) (.inl (by omega)) (.inl (by omega))]
+    exact glob_of_hkeepC H2.wf H2.hb0 hkg a ha
 
 end Services.Bootstrap.Acc

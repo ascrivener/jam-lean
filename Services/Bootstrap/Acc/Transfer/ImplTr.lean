@@ -54,14 +54,16 @@ def trCtx (c : AccCtx) (src am : Nat) (memo : Bytes) : AccCtx :=
 /-- **The state at the items loop's head 6766 after `on_transfer`**, from 7159 with memory μ,
     allocator state s₀, context c and stream f: context `trCtx c src am memo`, stream f; sp in ω₁; the
     allocator's context for some state keeping every allocated chunk of s₀ and its data; from sp up
-    only `TrW` changed; below 196608 the memory reads and is readable as before. -/
+    only `TrW` changed; below 196608 the memory reads and is readable as before; the statics
+    196616 … 196791 (`Glob`, the chain parameters) kept. -/
 def TrPost (env : AccEnv) (pb S0 S1 sp : Nat) (s₀ : State) (μ : Memory) (c : AccCtx) (f : Stream)
     (src am : Nat) (memo : Bytes) (s' : St Stream) : Prop :=
   s'.i = 6766 ∧ s'.c = trCtx c src am memo ∧ s'.q = f ∧ s'.ω[1] = UInt64.ofNat sp ∧
   (∃ st, HeapCtxC env.code pb S0 S1 s'.μ st ∧
     ∀ d ∈ chunks s₀, d.used = true → d ∈ chunks st ∧ ∀ a, InDataA d a → s'.μ.read a = μ.read a) ∧
   (∀ a, a < 4294967296 → sp ≤ a → ¬ TrW sp a → s'.μ.read a = μ.read a) ∧
-  (∀ a, a < 196608 → s'.μ.read a = μ.read a ∧ s'.μ.readable a = μ.readable a)
+  (∀ a, a < 196608 → s'.μ.read a = μ.read a ∧ s'.μ.readable a = μ.readable a) ∧
+  (∀ a, Glob a → s'.μ.read a = μ.read a)
 
 set_option maxRecDepth 20000 in
 /-- **`on_transfer` (7159 → 6766) implements `onTransfer src am memo`**: src = ω₁₀ mod 2³², am = ω₆,
@@ -99,7 +101,7 @@ theorem tr_impl (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap 
   rotate_left
   · obtain ⟨t, ω1, μ1, N1, ht, run1⟩ := TR
     exact Impl.abort _ Q (aborts_of_trap (P := P) (fun s h => hAb s (.inl h)) ⟨7159, ω, μ, c, f⟩ ht run1)
-  obtain ⟨s1, ω1, μ1, N1, run1, e1, e6, H1, keep1, mm1, m472, m1000, -, hv31, fr1⟩ := TR
+  obtain ⟨s1, ω1, μ1, N1, run1, e1, e6, H1, keep1, mm1, m472, m1000, -, hv31, fr1, g1⟩ := TR
   -- the read's step
   have hkl : trKey.length = 14 := by rw [← hkey]; exact Memory.length_readN _ _ _
   have hk : argBase + trKey.length ≤ outBase := by rw [hkl]; unfold argBase outBase; omega
@@ -124,8 +126,8 @@ theorem tr_impl (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap 
   rw [hn] at tw1
   refine tw1 _ fun s' hW => ?_
   obtain ⟨i2, ω2, μ2, c2, f2⟩ := s'
-  obtain ⟨hi, hc, hq, w1, -, -, ⟨st, H2, keep2⟩, r1496, -, fr2, ro2⟩ := hW
-  dsimp only at hi hc hq w1 H2 keep2 r1496 fr2 ro2
+  obtain ⟨hi, hc, hq, w1, -, -, ⟨st, H2, keep2⟩, r1496, -, fr2, ro2, g2⟩ := hW
+  dsimp only at hi hc hq w1 H2 keep2 r1496 fr2 ro2 g2
   subst hi c2 f2
   -- from 7326's memory back to μ
   have k21 : ∀ a, a < 4294967296 → sp ≤ a → ¬ TrRdW sp a → (a < sp + 1496 ∨ sp + 1500 ≤ a) →
@@ -156,9 +158,10 @@ theorem tr_impl (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap 
     (by rw [rdN_frame fun j hj => (ro21 _ (by omega)).1]; exact ht4)
     (fun a h1 h2 => by rw [(ro21 a (by omega)).2]; exact htr a h1 h2)
     hold Q fun s' hW => ?_
-  obtain ⟨hi3, hc3, hq3, w13, ⟨st3, H3, keep3⟩, fr3, ro3⟩ := hW
+  obtain ⟨hi3, hc3, hq3, w13, ⟨st3, H3, keep3⟩, fr3, ro3, g3⟩ := hW
   refine hQ s' ⟨hi3, by rw [hc3, ← hn]; rfl, hq3, w13, ⟨st3, H3, fun d hd hu => ?_⟩,
-    fun a h0 ha hW => ?_, fun a ha => ⟨(ro3 a ha).1.trans (ro21 a ha).1, (ro3 a ha).2.trans (ro21 a ha).2⟩⟩
+    fun a h0 ha hW => ?_, fun a ha => ⟨(ro3 a ha).1.trans (ro21 a ha).1, (ro3 a ha).2.trans (ro21 a ha).2⟩,
+    fun a hg => (g3 a hg).trans ((g2 a hg).trans (g1 a hg))⟩
   · obtain ⟨hd1, hdat1⟩ := keep1 d hd hu
     obtain ⟨hd2, hdat2⟩ := keep2 d hd1 hu
     obtain ⟨hd3, hdat3⟩ := keep3 d hd2 hu

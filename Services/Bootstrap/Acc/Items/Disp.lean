@@ -59,6 +59,7 @@ theorem il_disp_tr {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x
     ∃ ω' μ', FreeStepsH p R 6782 ω μ x 7159 ω' μ' x 12 ∧
       ω'[1] = UInt64.ofNat sp ∧ ω'[5] = UInt64.ofNat q ∧ ω'[11] = UInt64.ofNat (q + 184) ∧
       ω'[8] = UInt64.ofNat (q + 8) ∧ ω'[6] = UInt64.ofNat (rdN μ (q + 136) 8) ∧
+      ω'[10] = UInt64.ofNat (sxw 4 (rdN μ (q + 152) 4)) ∧
       rdN μ' (sp + 168) 8 = q + 184 ∧ rdN μ' (sp + 200) 8 = 678 ∧
       (∀ a, a < 4294967296 → (a < sp + 168 ∨ sp + 176 ≤ a) → (a < sp + 200 ∨ sp + 208 ≤ a) →
         μ'.read a = μ.read a) ∧
@@ -70,7 +71,7 @@ theorem il_disp_tr {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (x
   refine ⟨?ω', ?μ', ?run, ?post⟩
   case run => pvm_go [h1, h5, w0, hwf, hr, hrq, rdN_writeN_disjoint, ↓rdN_fold, ↓loadI_fold]
   case post =>
-    refine ⟨by reg_val; simp [h1], by reg_val; simp [h5], by reg_val, by reg_val, ?_, ?_, ?_,
+    refine ⟨by reg_val; simp [h1], by reg_val; simp [h5], by reg_val, by reg_val, ?_, ?_, ?_, ?_,
       fun a ha h1 h2 => ?_, fun a => ?_, fun a => ?_, by reg_frame⟩
     all_goals try (rd_simp []; done)
     all_goals try rd_simp []

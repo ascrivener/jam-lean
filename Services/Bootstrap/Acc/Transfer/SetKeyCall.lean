@@ -1,4 +1,5 @@
 import Services.Bootstrap.Acc.Transfer.SetKey
+import Services.Bootstrap.Acc.Transfer.Glob
 import Services.Bootstrap.Acc.Transfer.GetKeyCall
 import Services.Bootstrap.Acc.Wrappers.SetCall
 
@@ -99,7 +100,8 @@ theorem sk_call (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap 
       ω'[1] = UInt64.ofNat (s + 64) ∧ ω'[5] = UInt64.ofNat r5 ∧ ω'[6] = UInt64.ofNat r6 ∧
       HeapCtxC env.code pb S0 S1 μ' s' ∧ (∀ c ∈ chunks s₀, c.used = true → c ∈ chunks s') ∧
       (∀ c ∈ chunks s₀, c.used = true → ∀ a, InDataA c a → μ'.read a = μ.read a) ∧
-      (∀ a, a < 4294967296 → s + 64 ≤ a → μ'.read a = μ.read a)) ∨
+      (∀ a, a < 4294967296 → s + 64 ≤ a → μ'.read a = μ.read a) ∧
+      (∀ a, Glob a → μ'.read a = μ.read a)) ∨
     (∃ ω' μ' n, FreeStepsH p (KeepCtx (accContractS env)) 40494 ω μ (c, f) 3896 ω' μ' (c, f) n ∧
       ω'[7] = UInt64.ofNat 0 ∧
       FreeStepsH p (KeepCtx (accContractS env)) 3896 ω' μ' (c, f) 4002 ω' μ' (c, f) 1) := by
@@ -205,7 +207,7 @@ theorem sk_call (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap 
       Services.Bootstrap.Acc.HeapCtxC.keep_hi
         (Services.Bootstrap.Acc.HeapCtxC.keep_hi H3 (fun a ha => fr5 a (by omega) (.inl (by omega)) (.inl (by omega))) wr5)
         (fun a ha => fr6 a (by omega) (.inl (by omega))) wr6
-    obtain ⟨ω7, μ7, run7, H7, -, -, -, stk7, -, oth7, -, b1', b5', -⟩ :=
+    obtain ⟨ω7, μ7, run7, H7, -, -, -, stk7, glob7, oth7, -, b1', b5', -⟩ :=
       dealloc_callG (R := KeepCtx (accContractS env)) (p := p) (P := P) env.code pb S0 S1 (c', f) ω6 μ6 s1 s ptr
         116 3972 _ H6 hnew rfl (by dsimp only; omega) d0 d1 d7 ⟨by decide, by decide, by decide⟩
         (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_57]) bs_3972 (by omega) ⟨by omega, by omega⟩
@@ -232,7 +234,7 @@ theorem sk_call (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap 
     have hfr1 : ∀ d ∈ chunks s₀, d.used = true → d ≠ (⟨ptr - 32, (14 + 31) / 32 + 1, true⟩ : Chunk) := hfresh
     subst hc'
     refine .inl ⟨Picoalloc.free s1 ptr, ω9, μ7, _,
-      ((runA.keepY c.2 c.2 rfl).trans run5').trans (runB.keepY c.2 c.2 rfl), ?_, i1, i5, i6, H7, ?_, ?_, ?_⟩
+      ((runA.keepY c.2 c.2 rfl).trans run5').trans (runB.keepY c.2 c.2 rfl), ?_, i1, i5, i6, H7, ?_, ?_, ?_, ?_⟩
     · rw [i7, hw7, show s + 24 = s + 16 + 8 by omega, sk_res gout]
     · intro d hd hu
       exact (oth7 d (keep1 d hd hu) hu (hfr1 d hd hu)).1
@@ -251,6 +253,15 @@ theorem sk_call (env : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap 
     · intro a h0 ha
       rw [stk7 a h0 (by omega), fr6 a h0 (.inr (by omega)), fr5 a h0 (.inr (by omega)) (.inr (by omega))]
       exact keep13 a h0 (by omega) (.inr (by omega))
+    · intro a ha
+      have hg := ha; unfold Glob at hg
+      have := Services.Bootstrap.Decode.VecU8.chunk_in H1.wf hnew rfl
+      have hb0 := H1.hb0
+      dsimp only at this
+      rw [glob7 a ha, fr6 a (by omega) (.inl (by omega)),
+        fr5 a (by omega) (.inl (by omega)) (.inl (by omega)),
+        frm a (by omega) (.inl (by omega)) (.inl (by omega)) (.inl (by omega)), fr2 a (by omega) (.inl (by omega))]
+      exact glob_of_hkeepC H1.wf H1.hb0 hkg a ha
   · obtain ⟨-, run1S⟩ := FreeStepsH.growS f run1
     exact .inr ⟨ω1, μ1, _, run1S.trans (sk_j1 (p := p) (P := P) _ ω1 μ1 (f0.trans h0)), e7,
       sk_null (p := p) (P := P) _ ω1 μ1 e7⟩

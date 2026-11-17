@@ -272,6 +272,11 @@ import Services.Bootstrap.AccPrefixC
 import Services.Bootstrap.AccBParams
 import Services.Bootstrap.Acc.Args
 import Services.Bootstrap.Acc.Start
+import Services.Bootstrap.Acc.Statics
+import Services.Bootstrap.Acc.Abort
+import Services.Bootstrap.Acc.ValuesFitStep
+import Services.Bootstrap.Acc.ItemsLoop.Loop
+import Services.Bootstrap.Acc.ItemsLoop.Err
 import Services.Bootstrap.Decode.VecPairs
 import Services.Bootstrap.Decode.VecU32U64
 import Services.Bootstrap.Decode.BlessHeap

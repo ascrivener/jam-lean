@@ -36,8 +36,9 @@ def vendored : Option JamBlob := (splitMetadata Blob.preimage).bind fun code => 
     * its code splits from its metadata and parses as a program blob (GP §A.7);
     * the blob's read-only and read-write data, heap pages and stack size are those of the vendored
       blob, with heap bounds (48, 1044430) as deployed;
-    * its instructions pass `checkCode` for every set of code facts the bootstrap proofs use
-      (`Code`, `CodeX`, `CodeA`, `CodeF`, `CodeR`).
+    * its instructions pass `checkCode` for the built-in sets of code facts (`Code`, `CodeX`, `CodeA`,
+      `CodeF`, `CodeR`). The append-only tiers later proofs use are not included: `refine_t1c` takes
+      `Refine.T1c.IsBootstrapC`, which adds `CodeT1B` and `CodeT1C`.
 
     T1 is about this binary, so the data sections and the layout are pinned to the vendored blob's
     exactly: refine's paths read formatting templates and the encoder's dispatch table from the

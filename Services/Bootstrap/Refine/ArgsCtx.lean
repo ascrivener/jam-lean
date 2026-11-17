@@ -170,7 +170,9 @@ def ArgsPost (p : ByteArray) (env : RefineHost.Env) (μ : Memory) (C I S Y : Nat
         FreeStepsH p (refineContract env) 4642 ω₂ μ₂ ((∅, []) : RefineCtx) 35130 ω' μ'
           ((∅, []) : RefineCtx) 2016 ∧
         (∀ a, a < 4294967296 → (a < 4278058136 ∨ 4278058320 ≤ a) → μ'.read a = μ₂.read a) ∧
-        (∀ a, μ'.readable a = μ₂.readable a) ∧ (∀ a, μ'.writable a = μ₂.writable a))
+        (∀ a, μ'.readable a = μ₂.readable a) ∧ (∀ a, μ'.writable a = μ₂.writable a) ∧
+        -- the parameter chain's 𝖢 = 341 and 𝖰 = 80 (as `StartupConsts.startup_consts`)
+        μ₂.readN 196616 2 = Num.encodeLE 2 341 ∧ μ₂.readN 196680 8 = Num.encodeLE 8 80)
 
 /-- `ArgsRun.run_args_gen`, with its post as `ArgsPost`, and in addition the first chunk's `prevL`
     (the octets 206892 … 206896) 0 at 35130 (via `BParamsHdr.run_hdr`). -/
@@ -214,7 +216,7 @@ theorem run_args_hdr (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHo
     and_true] at ip0
   -- the parameter chain, to the core index's decode at 4642
   refine (fun h2 => ?_) (BParamsHdr.run_hdr p P env ω1 μ1 ((∅, []) : RefineCtx) L ⟨by omega, by omega⟩ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_)
-  · obtain ⟨ω2, μ2, run2, g2, m2, s2, f2, rd2, wr2, -, -, hZ2⟩ := h2
+  · obtain ⟨ω2, μ2, run2, g2, m2, s2, f2, rd2, wr2, hC2, hQ2, hZ2⟩ := h2
     obtain ⟨g2_0, g2_1, g2_2, g2_3, g2_4, g2_5, g2_6, g2_7, g2_8, g2_10, g2_11, g2_12, g2_9⟩ := g2
     obtain ⟨s2a, s2b⟩ := s2
     -- the arguments, sliced
@@ -443,8 +445,10 @@ theorem run_args_hdr (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHo
         FreeStepsH p (refineContract env) 4642 ω₂ μ₂ ((∅, []) : RefineCtx) 35130 ω10 μ10
           ((∅, []) : RefineCtx) 2016 ∧
         (∀ a, a < 4294967296 → (a < 4278058136 ∨ 4278058320 ≤ a) → μ10.read a = μ₂.read a) ∧
-        (∀ a, μ10.readable a = μ₂.readable a) ∧ (∀ a, μ10.writable a = μ₂.writable a) :=
-      ⟨ω2, μ2, run12.mono (by omega), run3_10.mono (by omega), fr4642, rd4642, wr4642⟩
+        (∀ a, μ10.readable a = μ₂.readable a) ∧ (∀ a, μ10.writable a = μ₂.writable a) ∧
+        μ₂.readN 196616 2 = Num.encodeLE 2 341 ∧ μ₂.readN 196680 8 = Num.encodeLE 8 80 :=
+      ⟨ω2, μ2, run12.mono (by omega), run3_10.mono (by omega), fr4642, rd4642, wr4642,
+        by rw [hC2]; decide, by rw [hQ2]; decide⟩
     have frTop : ∀ a, 4278059008 ≤ a → a < 4294967296 → μ10.read a = μ.read a := fun a h1 h2 => by
       rw [fr4642 a h2 (by omega)]
       refine (f2 a ?_).trans (hfr1 a ?_)

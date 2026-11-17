@@ -177,6 +177,34 @@ An independent kernel, nanoda as vendored by
   - *Built from:* `Refine/Top.lean` (`refine_core`: the arguments' parse `ArgsAll.refine_args`, then
     `from4680`), `Refine/RunMixed.lean` (the decode, transform loop and output), `Refine/SpecRun.lean`
     (`Spec.refine`'s run on these payloads).
+- **T1c: canonical payloads, every instruction but `Import` and `RandomStorageRefine`.** `refine_t1c`
+  (`Services/Bootstrap/Refine/T1c.lean`).
+  - *Statement:* for a work item whose code is bootstrap with T1c's code tiers (`IsBootstrapC`), c < 2¹⁶,
+    i < 2¹⁶, service id < 2³², and payload y = ℰ(`Instructions { is, salt }`) ⌢ rest with 1 ≤ |is|
+    instructions well-formed for C = `Consts.ofParams Params.full rk` (any rk), none `Import` or
+    `RandomStorageRefine`, and |y| + 48 ≤ 2²⁴ (so |is| < 2²⁴): `Spec.refine C` under the GP refine host
+    functions (`RSem.run`) returns some output and exports, and Ψ_R's result and exports are those; or ∞ with
+    no exports; or the run reaches a failed allocation (`ExhaustsHeap`). The output passes every instruction
+    through, returns `ExportSegs ds` as `Exported |ds|` and an eager `Lookup s h` as `LookedUp (lk s h)`.
+  - *Assumed:*
+    - `VendoredFactsC`: `VendoredFacts` and the drop table's entry 8 (read-only offset 32), about the constant
+      blob, discharged in step 10;
+    - `IsBootstrapC`: `IsBootstrap` plus `checkCode` for the append-only tiers `CodeT1B` and `CodeT1C`. The
+      kernel proves these of the vendored blob (`CodeT1BCheck`, `CodeT1CCheck`); step 10;
+    - `FmtHypsC C`: four log / `Debug` lines (`ArgsLineOk`, `ExportFmtOk`, `LookupFmtOk`, and `DebugLineOk` for
+      `SlotT.DRt C`), stated at the host contract's gas cap 2⁶², to be discharged by the fmt summaries. The cap
+      is 2⁶² rather than 2²⁷ because the eager `Lookup`'s gas, 1125 + ⌈264 |d| / 1024⌉, must fit under it for
+      every preimage d; Ψ_M's lift holds at any cap;
+    - `hnoimport`: no `Import` (deferred; Adam);
+    - `hrsr`: no `RandomStorageRefine` (decision of 2026-11-13);
+    - `hpre`: every preimage the historical lookup at the anchor returns is shorter than 2⁶³ octets.
+  - *Not yet proved:* that a failed allocation then ends in ☇ with no exports (the named later obligation).
+  - *Not covered (deferred):* `Import`, `RandomStorageRefine`, n = 0 (the separate `psiR_noinstr`), and
+    non-canonical payloads (M2).
+  - *Built from:* `Refine/TopT.lean` (`refine_coreT`: `ArgsAll.refine_args`, which also carries 𝖢 = 341 and
+    𝖰 = 80 at 196616 / 196680 from the parameter chain, then `from4680T`), `Refine/RunT.lean` (`run_t`: the
+    decode with per-kind packages `PkgAll`, the loop `LoopT.loop_t` with the invariant `InvT.Inv`, and
+    `ExitRunW.exit_runW`), `Refine/SpecRunT.lean` (`Spec.refine`'s run on these payloads).
 - **The `Instructions` decode loop, for lists of `Checkpoint`.** `DecodeLoop.loop` and
   `DecodeLoop.pass` (`Services/Bootstrap/DecodeLoop.lean`).
   - *Statement:* from the loop's state after k of n elements, the loop at pc 680 decodes the

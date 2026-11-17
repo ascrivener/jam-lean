@@ -6,6 +6,171 @@ Everything cites Gray Paper v0.8.0 via the docstrings of the files named here; t
 
 ## Current state (2026-11-16, read this first)
 
+**Eleventh instance (2026-11-16, branch `claude/bootstrap-t1c`).** refine_t1c stated and proved.
+- `T1c.refine_t1c` (`Refine/T1c.lean`): the headline, in `refine_milestone`'s form, C := `Consts.ofParams Params.full rk`.
+  Hypotheses: `VendoredFactsC` (`VendoredFacts` ∧ drop-table entry 8 at ro offset 32), `FmtHypsC C` (ArgsLineOk,
+  ExportFmtOk, LookupFmtOk, DebugLineOk for `DRt C`, all at gas cap K = 2^62), `IsBootstrapC l` (`IsBootstrap` ∧
+  `checkCode` for `CodeT1B`, `CodeT1C`: IsBootstrap lacked the newer tiers; parent asked, option (A)), `hnoimport`,
+  `hrsr`, `hpre` (preimages < 2^63), 1 ≤ |is|, |y| + 48 ≤ 2^24 (gives |is| ≤ 2^24 via `length_le_flatten`).
+- `TopT.refine_coreT` (pc 0 → 6373 at K = 2^62), `rd_kept0`, `gas_cap62` (eager Lookup gas ≤ 2^62 for |d| < 2^63).
+- 𝖢/𝖰 at 4680: `ArgsCtx.ArgsPost`'s "state at 4642" conjunct now also records ℰ₂(341) at 196616 and ℰ₈(80) at 196680
+  (from `BParamsHdr.run_hdr`, previously discarded); `ArgsAll.TailOut` gains a Glob frame (35130 → 4680, from
+  `vec_u8_args`' Glob frame and `tail_core_hi`'s low frame; `from_vec_hi` takes it as `bgl`); `ArgsAll.refine_args`
+  appends the two words at 4680 to its conclusion (callers' patterns unchanged). Strengthenings only.
+
+**Eighth instance (2026-11-16, branch `claude/bootstrap-t1c`, on top of m1d).** refine_t1c, in progress.
+
+**Handoff (tenth instance, 2026-11-16, branch `claude/bootstrap-t1c`).** Read this first.
+- **#226** (m1d) is green (model, attempt-1 success) but the squash merge is refused by the ruleset ("Required status
+  check build-and-check is expected"); the parent knows, Adam must update the ruleset. Do not work around it. Merge
+  it once the ruleset is fixed, then merge main into `claude/bootstrap-t1c`.
+- Done this instance (all build, axioms clean):
+  - `GapEmpty` (Gap 1 closed): `rsa_emptyF` ([22, 0, 0]) and `assign_gas_emptyF` (24 :: c ++ 0 :: g) as `ElemOkF`,
+    their slots `slotOK_rsaEmpty`, `slotOK_assignGasEmpty` (encoder arms with n = 0, `ArmOk` with capacity 0) and
+    packages `pkg_rsaEmpty`, `pkg_assignGasEmpty`.
+  - `PkgAll.pkg_all`: every `PassKind` instruction (all but Import, RSR, Export, eager Lookup) with WF, |enc| ≤ 2^24,
+    globals 𝖢 = 341 at 196616 and 𝖰 = 80 at 196680, `C.maxValCount ≤ 1023`, `C.authQueueLen = 80`.
+  - `InvT`: the loop invariant `Inv` (μ1 := the memory after `Entry.entry`) and its steps `inv_pass`,
+    `inv_export_big`, `inv_export_empty`, `inv_lookup` (+ `inv_noown`, `lu_len`, `exported_slot`).
+  - `LoopT.LookupOk`: the adopted chunk's condition gained `∀ d, Kp d → d.addr ≠ c.addr` (weaker obligation for
+    callers; `loop_t` proves it via `Tiles.addr_inj`). Needed by `export_ok_big`'s address clause.
+  - `RunT`: `StepT`, `pkg_step` (every T1c instruction's package), and **`run_t`** (4792 → return: `decode_allC` with
+    the packages, `Entry.entry`, `loop_t` with `Inv`, `exit_runW` with per-slot rep/DR/src chosen from `SlotW`).
+    Hypotheses beyond run_mixedG's: hgD/hgA (globals), hmax/hQ, NoImpRsr, |enc| ≤ 2^24 per instruction, `hlenL`
+    (preimages < 2^63), `hgas` (eager Lookup gas ≤ cap0), `LookupFmtOk`, `htab`, `DebugLineOk … (fun _ => DRt C 0)`,
+    `rltab` (65568 … 65572 readable). Output: ℰ(n) ⌢ `out (fun j => (outT (lookupOf env) is[j]).encode) n` ⌢ ℰ₂(w).
+  - `TopT`: `output_eqT` (ℰ(`BootstrapWorkOutput { is.map f, item }`) for any f) and **`from4680T`** (`from4680G` with
+    `run_t` at any gas cap K ≥ 2^27; extra memory hypotheses `gD : μ.readN 196616 2 = ℰ₂(341)`,
+    `gA : μ.readN 196680 8 = ℰ₈(80)` (carried 4680 → 4792 by `tail4680`'s Glob frame) and `rltab`; |enc| ≤ 2^24 is
+    derived from |y| < 2^24).
+- **Next:** `TopT.refine_coreT` (as `TopG.refine_coreG`, lines 132–178, with `from4680T` at K = 2^62; gD / gA from
+  `StartupConsts.startup_decoder_facts` / `startup_consts` (under `env.fetch.params = Params.full`) carried from the
+  start-up to 4680; rltab from the read-only data; `hgas` from K = 2^62 and `hlenL`), then `T1c.refine_t1c` (as
+  `Milestone.refine_milestone`, `SpecRunT.run_refineT`, `rsemLk` = `LookupStep.lookupOf`, C := `Consts.ofParams
+  Params.full rk`, which gives hmax (3 · 341 = 1023) and hQ (80)), docs, full `lake build`, PR, message the parent
+  the statement and hypothesis list.
+
+**Handoff (end of the ninth instance).** Read this first.
+- **#217 merged** (90f7bf2). **#226** (the m1d PR: branch `claude/bootstrap-t1-m1c`, restarted from main with m1d merged)
+  was open with `model` green and attempt-1 running (started 13:34). Subscribe, merge (squash) on green, tell the parent.
+  Then merge main into `claude/bootstrap-t1c` (expect README / Services.lean conflicts only; t1c already contains m1d).
+- `claude/bootstrap-t1c` (pushed, 5a2bf43): a full `lake build` passed at 7c8acf4+PkgH (2830 jobs). Since then
+  only new files were added (PkgH csNone/csEmpty, ProvideEmpty, HashEmpty), each built alone.
+- Done this instance (all build, axioms clean): `SlotVV`, `EmptyElems`, `SlotEmpty`, `PassW` refactor (Gap 2),
+  `PkgT` + `PkgH` (packages), `ProvideEmpty` (decoder + slot + `pkg_provideInlineEmpty`), `HashEmpty`
+  (`VecHash.vec_hash_empty` at 1764, `VecHash32.vec_hash32_empty` at 907, both n = 0).
+- **Gap 1 remaining:** `AssignForGasCost` with q = [] and `RandomStorageAccumulate(Some [])`: compose the callers'
+  paths with n = 0 (as `ProvideEmpty.provide_inline_emptyF` does from `pi_pre` / `vec_u8_empty` / `pi_post`): for
+  AssignGas, the pieces of `Decode/AssignGas.lean` around 25408 → 1764 (`assign_gas_elemF`'s proof, with
+  `vec_hash_empty` in place of `vec_hash`); for RSA, `Decode/RandomStorageOk.lean` (`random_storage_ok_heap`'s
+  pieces, with `vec_hash32_empty` in place of `vec_hash32_heap`). Then their slots (as `slotOK_provideInlineEmpty`:
+  encoder arm with n = 0, ArmOk capacity 0) and packages.
+- **Then:** `pkg_all` (dispatch on x), `Inv`, `RunT`, `TopT`, `T1c.refine_t1c` (C := `Consts.ofParams Params.full
+  rk`; gl at 196616 / 196680 from `StartupConsts.startup_decoder_facts`, carried 4642 → 4792), docs, PR, message the
+  parent the statement and hypothesis list (gas cap K = 2^62 for the Fmt hypotheses, differing from
+  refine_milestone's).
+
+**Ninth instance (2026-11-16, branch `claude/bootstrap-t1c`).**
+- `Assign`'s word at 196680 is written by the start-up's parameter chain (56253 `store_u64`, BParams segment 174), and
+  its value ℰ₈(80) is already proved: `StartupConsts.startup_consts` (under `env.fetch.params = Params.full`). No
+  `VendoredFactsC` conjunct; carry it from 4642 to the decode as a frame fact (Glob words kept), into `gl`.
+- **Adam decided (A):** refine_t1c takes C := `Spec.Consts.ofParams Params.full rk`, rk free (no new hypothesis;
+  refine_milestone keeps C free). The docstring must say so, and that randomKeys is irrelevant since RSR is excluded.
+- `SlotVV` (build, axioms clean; DeleteItems / Imported slots, and their empty forms): `slotOK_deleteItems`, `slotOK_imported`,
+  `slotOK_deleteItemsEmpty`, `slotOK_importedEmpty` (via `vv_facts`, `vvAt_empty`). Pass-through `LookedUp None` is
+  `SlotLU.slotW_lu` with v = none.
+
+- `EmptyElems` (build, axioms clean): `ElemOkF` wrappers `bless_emptyF`, `looked_up_emptyF`, `random_storage_errF`, and
+  `designate_emptyF` in the form `ElemOkFG` (it reads 196616; `of_elemOkFG` gives the `ElemOkAF`), with reps
+  `VecNilRep W q` / `BlessEmptyRep` / `RSAErrRep0`. `SlotEmpty` (build): `slotOK_blessEmpty`, `slotOK_designateEmpty`,
+  `slotOK_luEmpty`. (RSA(Err)'s slot: `SlotHeap.slotOK_rsaErr`.)
+- **Gap 1 (decoders, parent told; plan (A) = prove):** no decoder at all for `Provide(s, Inline [])`,
+  `AssignForGasCost` with q = [], `RandomStorageAccumulate(Some [])`. Paths: read_vec n = 0 (`VecU8.vec_u8_empty`
+  exists; compose as `provide_inline_small` does) and the hash reader 1764 with n = 0 (no proof yet). Encoders and
+  drops handle n = 0 (`*H_232` take any n; `ArmOk` with capacity 0 frees nothing).
+- **Gap 2 (loop), closed:** `CreateService`'s word 0 is the niche (code length < 2^63, or 2^64 − 1 for None),
+  which the dispatch maps to index 0 → 5561. `Pass.PassW D b := (∃ t, PassK t b ∧ D = 2^63 − 1 + t) ∨ D < 2^63 ∨
+  D = 2^64 − 1`, `Pass.pdCS`; `pdK`, `pass_elem`, `PassGrow.pass_elem_grow`, `PassLoop.step_room/step_full` and
+  `LoopAll.PassOk` now take the word D with `PassW` (weakened hypotheses; `PassLoop.loop_pass`'s `kinds` and every
+  milestone statement unchanged; callers wrap `PassW.ofK`).
+- **Packages (step 1), done (build, axioms clean):** `PkgT.PassSlot`, `PkgT.DecPkg`; `PkgT`: `pkg_fixed` (MFixed),
+  `pkg_luNone`, `pkg_provideHash`, `pkg_rsaErr`, `pkg_luEmpty`, `pkg_designateEmpty`, `pkg_blessEmpty`,
+  `pkg_deleteItemsEmpty`, `pkg_importedEmpty`; `PkgH`: `pkg_rsaOk`, `pkg_designate` (Cc at 196616, C.maxValCount ≤
+  3 Cc mod 2^16), `pkg_bless`, `pkg_luSome`, `pkg_provideInline`, `pkg_assignGas`, `pkg_assign` (G at 196680,
+  C.authQueueLen = G mod 2^32), `pkg_csSome`, `pkg_csNone`, `pkg_csEmpty`, `pkg_deleteItems`, `pkg_imported` (each
+  needing |x.encode| ≤ 2^24 where sizes matter). Missing: the three n = 0 gaps (Gap 1), and the Export / eager
+  Lookup steps (they use `RunMixedG`'s Export path and `LoopT.LookupOk`, not `PassSlot`).
+- **Next:** a `pkg_all` dispatching on x (WF, NoImpRsr, not Export / eager Lookup, |enc| ≤ 2^24); then step 2
+  (`Inv`), step 3 (`RunT`, `TopT`, `T1c.refine_t1c` with C := `Consts.ofParams Params.full rk`; gl from
+  `StartupConsts.startup_decoder_facts` carried 4642 → 4792 as Glob words); then Gap 1's three decoders; docs.
+- Package design notes (step 1): `PassSlot x cs bs μr := ∃ D own, PassW D (bs[44]) ∧ bs.take 8 = ℰ₈ D ∧
+  SlotOK … x.encode bs own μr ∧ own ⊆ cs`; `DecPkg x Step := ∃ N Rd, (∀ F RD, Lay F RD → ElemOkAFC … N x.encode Rd) ∧
+  ∀ cs bs μr, (∀ μ'' keeping cs as μr, Rd cs bs μ'') → Step cs bs μr`. Per kind: `MFixed` via `FixedKind.dec` +
+  `slotOK_fixed`; heap kinds via `ElemsSmallC`/`ElemsBigC` (sizes: small ≤ 512/1024/48/16384, else big) + `SlotHeap`;
+  vec-vec via `VecVecOwn.vecvec_elem_bigC` (any n ≥ 1) + `SlotVV`, n = 0 via `ExportEmpty.vec_emptyF` +
+  `slotOK_*Empty`; Assign: `gl` at 196680 = ℰ₈(80) (`StartupConsts`), Designate: 196616 = ℰ₂(341).
+
+**Handoff (end of the eighth instance).** Read this first.
+- **#217** (parts B/C): attempt-1 timed out green as designed, attempt-2 was still running at handoff (started 12:15).
+  Subscribe, merge (squash) on green. Then the m1d PR exactly as the seventh instance's handoff says (restart `claude/bootstrap-t1-m1c` from main, merge
+  `claude/bootstrap-t1-m1d` (be5f08e) into it, full `lake build`, open the PR listing every changed statement below,
+  merge on green). A full local `lake build` of m1d (plus the LookupStep2 strengthening) passed this instance on top of
+  main@93cd751's cache.
+- **T1c work** is on `claude/bootstrap-t1c` (m1d + the files below; no PR). After the m1d PR merges, merge main into it.
+  Its `LookupStep2` change (ptr' < 2^31, adopted chunk ≠ ce) is not in the m1d PR; it goes with refine_t1c's PR.
+- **Adam decided** (via the parent): exclude Import with a named hypothesis `hnoimport` (like `hrsr`), keep 1 ≤ n.
+- Next, in order: the remaining slots (DeleteItems / Imported via `VVAt`, their empty forms, `LookedUp None`
+  pass-through), the per-kind decode packages (step 1 of the plan below, including the empty-vector `ElemOkF`
+  wrappers and the `Assign` global-word question for the parent), `Inv` + `RunT`, `TopT`, `T1c.refine_t1c`, docs
+  (docstring, README, `docs/whats-proven.md`: deferred ☇ table, step 10, Fmt discharges, M2, Import), PR, then message
+  the parent the full statement and hypothesis list (including the gas cap K = 2^62 for the Fmt hypotheses).
+- Scope (Adam, 2026-11-16): Import excluded by a named hypothesis `hnoimport` (like `hrsr`), recorded as deferred;
+  1 ≤ n kept (n = 0 is the existing NoInstr theorem). Both go in the docstring and `docs/whats-proven.md`.
+- Done (build, axioms clean): `LoopT.loop_t` (the loop over pass / Export / eager Lookup steps; μ0, `Kp` and the written
+  slots' octets `B` carried existentially with a caller's invariant `Inv k μ0 Kp B`; obligations `PassOkT`, `ExportOkT`,
+  `LookupOk`; `PInv.mono_O`, `PInv.exact`, `LUSlotB`), `SpecRunT` (`NoImpRsr`, `outT lk`, `rsemLk`, `run_refineT`).
+- `LookupStep2.lookup_step` now also exports `ptr' < 2^31` and that the adopted chunk is not `ce` (strengthening only).
+- Done too (build, axioms clean): `SlotT` (`slotRep`, `DRt C` ⊇ `Top.DRm C`, `SlotW` = what `exit_runW` needs of one slot,
+  `SlotOK` = `SlotW` for every memory keeping the owned chunks as in μr), `SlotFixed` (`kind_okH`, `slotOK_fixed`),
+  `SlotLU` (`slotW_lu`, for pass-through `LookedUp` and the eager Lookup's slot).
+- `SlotHeap` (build, axioms clean): `slotOK_rsaOk`, `slotOK_designate`, `slotOK_assignGas`,
+  `slotOK_provideInline`, `slotOK_bless`, `slotOK_assign`, `slotOK_csSome`, `slotOK_luSome` (each: the decoded `…Rep ∧ OwnsBuf` for
+  every memory keeping cs as μr ⟹ `SlotOK` owning `(· ∈ cs)`; helpers `readN_mod64(o)`, `buf_of(O)`, `src_keep`,
+  `sub_keep`, `flatten_len`), and the no-buffer drop-arm kinds via `slotOK_nobuf`: `slotOK_csNone`, `slotOK_csEmpty`,
+  `slotOK_provideHash`, `slotOK_rsaErr`.
+- Slots still to do: `DeleteItems` / `Imported` (`VVAt`, from `VecVecRepC`; and their empty forms, `VecEmptyRep`, whose
+  drop is `VVAt` with c0 = 0, len = 0); pass-through `LookedUp None` (`slotW_lu`, no owned chunk).
+- **Decode gaps found:** the vector kinds with 0 elements other than DeleteItems / Imported / Export (`Bless` with z = [],
+  `Designate []`, `AssignForGasCost` with q = [], `RandomStorageAccumulate (some [])`) have no `ElemOkAFC` here yet
+  (ElemsSmallC needs n ≥ 1). Frame-level decoders exist and need `ElemOkF` wrappers as `ExportEmpty.vec_emptyF`:
+  `Decode.Bless.bless_empty`, `Decode.Designate.designate_empty`, `Decode.VecEmpty.vec_empty`, and for `LookedUp(Some [])`
+  `Decode.LookedUp.looked_up_empty`; `RandomStorageAccumulate(None)` ([22, 1])
+  has only the frame-level `Decode.RandomStorage.random_storage_err`. `Assign`'s decode (`assign_elemFC`) takes the
+  queue length from the global word at 196680 (`gv`, G % 2^32 = |q|): T1c needs it equal to `C.authQueueLen`, a fact
+  about the vendored blob's globals (a `VendoredFactsC`-style conjunct, or a hypothesis relating C to the blob; ask the
+  parent before adding it to the statement).
+- **Gas cap.** `lookup_step`'s internal `hgas` (1125 + ⌈264 |d| / 1024⌉ ≤ cap) cannot hold at cap 2^27 for preimages up
+  to 2^63 octets; refine_t1c runs under `refineContractK K` with K = 2^62 (any cap works for Ψ_M's lift), so its Fmt
+  hypotheses are stated at that cap (report to the parent with the statement).
+- **Plan for the rest** (in order):
+  1. Per kind (input x, `WF`, `NoImpRsr`), a decode package: `∃ N Rd, (∀ F RD, Lay F RD → ElemOkAFC … N x.encode Rd) ∧
+     ∀ cs bs μr, (∀ μ'' agreeing with μr on cs, Rd cs bs μ'') → Step x cs bs μr`, where `Step` is: pass kinds — tag t,
+     `PassK t flag`, `SlotOK (x.encode) bs (· ∈ cs) μr`, |x.encode| bound; eager Lookup — the `LookupOk` field facts
+     from bs, cs = []; Export — `VecVecRepC` (as `RunMixedG`, via `ExportOkOf.export_ok_big` / `export_ok_empty`).
+     Small and big sizes combine `ElemsSmallC` / `ElemsBigC` (and the Decode `*_elem*` lemmas); gaps: an `ElemOkF`
+     wrapper for `RandomStorageAccumulate(None)` ([22, 1], `Decode.RandomStorage.random_storage_err`) may be missing.
+     The `SlotOK` of each heap kind mirrors `slotW_lu`: rep = the encoder's `…RepAt q` (q the slot's buffer word),
+     src = `SrcAtP q m` / `VecVecSrcH`, DR = rep (⊆ `DRt` by the `…Rep_iff` lemmas), drop by `HeapElW`
+     (`VVAt` for DeleteItems / Imported, `BufEl` + `ArmOk` for 0, 11, 12, 13, 17, 22, 24).
+  2. `Inv k μ0 Kp B` for `loop_t`: μ0 = μ1 (after decode) on ce's data and on the frame words; `Kp cp`; for j ≥ k the
+     chunks `csOf j` kept with data as μ1; ∃ ownF, for j < k `SlotOK (outT lk x_j).encode (B j) (ownF j) μ0`, ownF j ⊆
+     Kp, ≠ ce, ≠ cp, disjoint from `csOf j'` (j' ≥ k) and between slots, |enc| < 2^33. Steps: pass — Kp' = Kp, ownF k
+     = (· ∈ csOf k); Export — Kp' = Kp minus `csOf k`; Lookup — `LUOwn` (ownF k = (· = ch) or none), old `SlotOK`s by
+     `SlotOK.congr` (ch apart from kept chunks).
+  3. `RunT` (as `RunMixedG`: decode_allC with the packages, `loop_t`, then `exit_runW` with rep/src/own/DR chosen from
+     `SlotW` per slot; `hcapB`, `hbig` from n ≤ 2^24 and |enc| < 2^33), `TopT` (as `TopG`), `T1c.refine_t1c` (as
+     `Milestone.refine_milestone`, match form, with `SpecRunT.run_refineT` and `rsemLk` = `LookupStep.lookupOf`).
+
 **Seventh instance (2026-11-16, branch `claude/bootstrap-t1-m1d`).** Step 2 (the big `realloc`), approved by the parent
 as option (A), in-place edits of Decode/Encode files used only by T1's chain:
 - `Decode/ReallocBig.lean` (moved from `Refine/`): `OtherUsed s ptr` (another allocated chunk), `BigReq` (units ≥ 2^25,

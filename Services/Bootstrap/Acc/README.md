@@ -2,6 +2,14 @@
 
 ## Handoff: T2 inputs (updated 2026-11-16 evening, end of the third session)
 
+**Session 8 (2026-11-17), on `claude/bootstrap-t2-inputsglob`: `InputsGlob` discharged.** `inputs_decode`
+now also concludes `∀ a, Glob a → μ'.read a = μ.read a` (the statics 196616 … 196791 kept), threaded as an
+added conclusion (no premise changed) through `rv_call`, `vv_call`, `vv_any`, `op_mid_ok`, `op_end`,
+`op_call_ok` / `op_call_err`, `item_op_ok` / `item_op_err`, `ItemOk` (and its three instances), `lp_body`,
+`lp_items`, `lp_call`, `g_free`, `g_call`, `g_call0`, `g_inputs` and `fv_call`. Helpers in
+`Inputs/GlobKeep.lean` (`Glob.lt`, `Glob.lt_base`, `glob_of_hkeepGD`). `InputsGlob` is gone from
+`AccHypsAt`; `acc_impl` uses the new conclusion.
+
 **Session 7 (2026-11-17), on `claude/bootstrap-t2-r2`: R16 done, `accumulate_spec` proved** (axioms clean),
 in `Acc/Final/`: `KeepK` (`accKeepK`, lifts to `accContractS`), `LogLineK` (`acc_log_lineK`), `StaticsZ`
 (`chainZ`), `StartCtx` (`start_ctx`), `Head` (`il_head2`, `items_none_halt`), `FetchSpec`, `Lifts`, `Hyps`
@@ -9,7 +17,7 @@ in `Acc/Final/`: `KeepK` (`accKeepK`, lifts to `accContractS`), `LogLineK` (`acc
 (Adam, 2026-11-17): `InfoFits`, `AccLogFail`, `InputsGlob` (temporary); `AccVendoredFacts` and
 `IsBootstrapCode` accepted by @parent under standing decisions. Full build green (2998 jobs, 33f51fa).
 Statics merged as #231, R2 as #233; R16 is its own PR. **Open obligation:** thread `Glob` through
-`inputs_decode` to discharge `InputsGlob` (a fresh session does it).
+`inputs_decode` to discharge `InputsGlob` (a fresh session does it; done in session 8).
 
 **Session 6 (2026-11-17), on `claude/bootstrap-t2-r2`: R2 done.**
 - Merged Handlers A 8173e6b: every `hAbX` now requires ω₇ = 0 (a failed allocation), so T2's abort

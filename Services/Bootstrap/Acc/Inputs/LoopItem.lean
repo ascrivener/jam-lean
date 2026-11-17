@@ -1,4 +1,5 @@
 import Services.Bootstrap.Acc.Inputs.Loop
+import Services.Bootstrap.Acc.Inputs.GlobKeep
 
 /-!
 # One item of `Vec<AccumulateItem>::decode`, as the loop sees it
@@ -67,7 +68,7 @@ def ItemOk {X : Type} (env : HeapHost X) (cap pb : Nat) (p : ByteArray) (P : Pro
       μ'.readN rd 8 = Num.encodeLE 8 (ip + enc.length) ∧
       μ'.readN (rd + 8) 8 = Num.encodeLE 8 (rlen - enc.length) ∧
       (∀ a, a < 4294967296 → sp ≤ a → (a < sp + 88 ∨ sp + 272 ≤ a) → (a < rd ∨ rd + 16 ≤ a) →
-        μ'.read a = μ.read a)) ∨
+        μ'.read a = μ.read a) ∧ (∀ a, Glob a → μ'.read a = μ.read a)) ∨
     (∃ ω' μ', FreeStepsH p (env.rel cap) 45126 ω μ x 45975 ω' μ' x N)
 
 /-- A deferred transfer's encoding (GP v0.8.0 Appendix C): the tag 1, then ℰ₄(s), ℰ₄(d), ℰ₈(a), the
@@ -127,7 +128,7 @@ theorem itemOk_tr {X : Type} (env : HeapHost X) (cap pb : Nat) {p : ByteArray} {
   refine Or.inl ⟨s, ω1, μ1, (r1.trans (lp_ret_tr (p := p) (P := P) (R := env.rel cap) x ω1 μ1
       (by rw [e0, h0]))).mono (by omega), by rw [e0, h0], e1, e5, e6, by rw [o0]; decide,
     HeapCtxC.keep_hi H lo wrf, fun c hc _ => hc, fun c hc hu a ha' => ?_, ⟨[], by simp, fun μ'' _ => ?_, ?_⟩,
-    R0, R8, fun a h0 hs h1 h2 => fr a h0 (Or.inr hs) (by omega) h2⟩
+    R0, R8, fun a h0 hs h1 h2 => fr a h0 (Or.inr hs) (by omega) h2, fun a ha => lo a ha.lt⟩
   · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
     unfold InDataA at ha'
     exact lo a (by omega)

@@ -62,14 +62,15 @@ theorem lp_body {X : Type} (env : HeapHost X) (cap pb N : Nat) {p : ByteArray} {
       μ'.readN (rd + 8) 8 = Num.encodeLE 8 (rlen - enc.length) ∧
       rdN μ' (s + 56) 8 = q ∧
       (∀ a, a < 4294967296 → s ≤ a → (a < s + 56 ∨ s + 64 ≤ a) → (a < s + 88 ∨ s + 456 ≤ a) →
-        (a < rd ∨ rd + 16 ≤ a) → μ'.read a = μ.read a)) ∨
+        (a < rd ∨ rd + 16 ≤ a) → μ'.read a = μ.read a) ∧ (∀ a, Glob a → μ'.read a = μ.read a)) ∨
     (∃ ω' μ', FreeStepsH p (env.rel cap) 45126 ω μ x 45975 ω' μ' x (N + 2000)) := by
   have hbT := H.hbT
   have hb0 := H.hb0
   have hS1 := H.hS1
   obtain ⟨Cb1, Cb2, Cb3⟩ := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hC hCu
   rcases item x ω μ hb st s rd ip rlen S0 S1 H h0 h1 h7 h8 hs.1 hs.2 hSTk hrds hrdS hR0 hR8 hrl hrl32 henc hsrc with
-    ⟨st', ω1, μ1, r1, e0, e1, e5, e6, ne2, H1, keep, keepd, ⟨cs, fresh, rep, foot⟩, R0, R8, fr1⟩ | ⟨ω1, μ1, r1⟩
+    ⟨st', ω1, μ1, r1, e0, e1, e5, e6, ne2, H1, keep, keepd, ⟨cs, fresh, rep, foot⟩, R0, R8, fr1, gl1⟩ |
+    ⟨ω1, μ1, r1⟩
   · have hst := H1.st
     obtain ⟨ω2, r2, c0, c1, c5, c6, c7, c8, c9⟩ :=
       lp_chk (p := p) (P := P) (R := env.rel cap) x ω1 μ1 s e1 ne2 ⟨by omega, by omega⟩
@@ -115,7 +116,9 @@ theorem lp_body {X : Type} (env : HeapHost X) (cap pb N : Nat) {p : ByteArray} {
     refine Or.inl ⟨st', ω5, μ5, (((((r1.trans r2).trans r3).trans r4).trans r5)).mono (by omega),
       g1, by rw [g5, f5, d5, c5, e5, h5], by rw [g6, f6], H5, keep,
       fun c hc hu a ha hout => ?_, ⟨cs, fresh, fun μ'' hag => ?_, by rw [slot]; exact foot⟩, ?_, ?_, ?_,
-      fun a h0 hs h56 h88 hr => ?_⟩
+      fun a h0 hs h56 h88 hr => ?_, fun a ha => by
+        have := ha.lt_base hb0
+        rw [lo a ha.lt (Or.inl (by omega)), gl1 a ha]⟩
     · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
       unfold InDataA at ha
       rw [lo a (by omega) hout, keepd c hc hu a ⟨ha.1, ha.2⟩]
@@ -258,7 +261,7 @@ theorem lp_items {X : Type} (env : HeapHost X) (cap pb N : Nat) {p : ByteArray} 
       μ'.readN rd 8 = Num.encodeLE 8 (ip + (encs rest).length) ∧
       μ'.readN (rd + 8) 8 = Num.encodeLE 8 (rlen - (encs rest).length) ∧
       (∀ a, a < 4294967296 → s + 480 ≤ a → (a < out ∨ out + 24 ≤ a) → (a < rd ∨ rd + 16 ≤ a) →
-        μ'.read a = μ.read a)) ∨
+        μ'.read a = μ.read a) ∧ (∀ a, Glob a → μ'.read a = μ.read a)) ∨
     (∃ ω' μ', FreeStepsH p (env.rel cap) 45126 ω μ x 45975 ω' μ' x ((N + 2100) * rest.length)) := by
   intro rest
   induction rest with
@@ -276,7 +279,8 @@ theorem lp_items {X : Type} (env : HeapHost X) (cap pb N : Nat) {p : ByteArray} 
   rcases lp_body env cap pb N (hok e (by simp)) x ω μ hb st s rd ip rlen S0 S1 n q L (e :: tail).length C H
       h0 h1 h5 h7 h8 hs hSTk hrds hrdS m64 m72 m80 (by simp at hLn; omega) hC hCu hCq hCe hR0 hR8 (by omega) hrl32 he
       ⟨Rc, hR, hRu, hRq, by omega⟩ with
-    ⟨st1, ω1, μ1, r1, a1, a5, a6, H1, keep1, keepd1, ⟨cs, fresh, rep, foot⟩, R0, R8, s56, fr1⟩ | ⟨ω1, μ1, r1⟩
+    ⟨st1, ω1, μ1, r1, a1, a5, a6, H1, keep1, keepd1, ⟨cs, fresh, rep, foot⟩, R0, R8, s56, fr1, gl1⟩ |
+    ⟨ω1, μ1, r1⟩
   · have hst := H1.st
     have kf : ∀ o, s ≤ o → o + 8 ≤ s + 56 → rdN μ1 o 8 = rdN μ o 8 := fun o h1 h2 =>
       rdN_frame fun j hj => fr1 _ (by omega) (by omega) (Or.inl (by omega)) (Or.inl (by omega)) (Or.inl (by omega))
@@ -318,7 +322,7 @@ theorem lp_items {X : Type} (env : HeapHost X) (cap pb N : Nat) {p : ByteArray} 
         HeapCtxC.keep_hi H1 lo2 wr2, keep1, fun c hc hu a ha hout' => ?_, fun j e' hj => ?_,
         FeetOwn.cons (HeapCtxC.keep_hi H1 lo2 wr2) foot fresh (fun c hc _ => hc) keep1
           (PVM.Memory.readN_congr fun j hj => lo2 _ (by omega)) (FeetOwn.nil _ _ _ _ _), ?_, ?_,
-        fun a h0 ha ho hr => ?_⟩
+        fun a h0 ha ho hr => ?_, fun a hg => by rw [lo2 a hg.lt, gl1 a hg]⟩
       · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
         unfold InDataA at ha
         rw [lo2 a (by omega), keepd1 c hc hu a ha (by omega)]
@@ -376,7 +380,8 @@ theorem lp_items {X : Type} (env : HeapHost X) (cap pb N : Nat) {p : ByteArray} 
           (by rw [k2 _ (by omega) (by omega), kh _ (by omega) (by omega)]; exact m72)
           s80 (by simp at hLn; omega) hCu1 hCu hCq hCe hR1 hRu (by omega) (by omega) hrd2 hrd8 (by omega)
           (by omega) hencT with
-        ⟨st', ω', μ', r3, c0, c1, c5, c6, o0, o8, o16, H', keep', keepd', reps, own', R0', R8', fr3⟩ | ⟨ω', μ', r3⟩
+        ⟨st', ω', μ', r3, c0, c1, c5, c6, o0, o8, o16, H', keep', keepd', reps, own', R0', R8', fr3, gl3⟩ |
+        ⟨ω', μ', r3⟩
       · refine Or.inl ⟨st', ω', μ', ((r1.trans r2).trans r3).mono (by simp; rw [Nat.mul_succ]; omega),
           by rw [c0, k2' _ (by omega) (by omega), kg _ (by omega) (by omega)], c1,
           by rw [c5, k2' _ (by omega) (by omega), kg _ (by omega) (by omega)],
@@ -385,7 +390,7 @@ theorem lp_items {X : Type} (env : HeapHost X) (cap pb N : Nat) {p : ByteArray} 
           FeetOwn.cons H' foot fresh keep' keep1 (PVM.Memory.readN_congr fun j hj => by
             rw [keepd' C hCu1 hCu _ ⟨by omega, by omega⟩ (Or.inl (by omega)), lo2 _ (by omega)])
             (by simpa using own'), ?_, ?_,
-          fun a h0 ha ho hr => ?_⟩
+          fun a h0 ha ho hr => ?_, fun a hg => by rw [gl3 a hg, lo2 a hg.lt, gl1 a hg]⟩
         · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
           unfold InDataA at ha
           rw [keepd' c (keep1 c hc hu) hu a ha (by omega), lo2 a (by omega), keepd1 c hc hu a ha (by omega)]
@@ -457,7 +462,7 @@ theorem lp_call {X : Type} (env : HeapHost X) (cap pb N : Nat) (hcap1 : 13421772
       μ'.readN rd 8 = Num.encodeLE 8 (ip + (encs rest).length) ∧
       μ'.readN (rd + 8) 8 = Num.encodeLE 8 (rlen - (encs rest).length) ∧
       (∀ a, a < 4294967296 → sp ≤ a → (a < out ∨ out + 24 ≤ a) → (a < rd ∨ rd + 16 ≤ a) →
-        μ'.read a = μ.read a)) ∨
+        μ'.read a = μ.read a) ∧ (∀ a, Glob a → μ'.read a = μ.read a)) ∨
     (∃ j ω' μ', (j = 45975 ∨ j = 45642) ∧
       FreeStepsH p (env.rel cap) 44916 ω μ x j ω' μ' x ((N + 2100) * rest.length + 1000)) := by
   have hbT := H.hbT
@@ -524,7 +529,8 @@ theorem lp_call {X : Type} (env : HeapHost X) (cap pb N : Nat) (hcap1 : 13421772
             rw [lo3 _ (by omega), keepd Rc hR hRu _ ⟨by omega, by omega⟩]),
             PVM.Memory.readN_congr (μ := μ) (fun j hj => lo1 _ (by omega))]
           exact henc) with
-      ⟨st', ω4, μ4, r4, c0, c1, c5, c6, v0, v8, v16, H4, keep', keepd', reps, ⟨ond, opl⟩, R0, R8, fr4⟩ | ⟨ω4, μ4, r4⟩
+      ⟨st', ω4, μ4, r4, c0, c1, c5, c6, v0, v8, v16, H4, keep', keepd', reps, ⟨ond, opl⟩, R0, R8, fr4, gl4⟩ |
+      ⟨ω4, μ4, r4⟩
     · refine Or.inl ⟨q, st', ω4, μ4, ((((r1.trans r2).trans r2').trans r3).trans r4).mono (by omega),
         by rw [c0, kh _ (by omega) (by omega), s472, UInt64.ofNat_toNat],
         by rw [c1, show sp - 480 + 480 = sp by omega],
@@ -532,7 +538,8 @@ theorem lp_call {X : Type} (env : HeapHost X) (cap pb N : Nat) (hcap1 : 13421772
         by rw [c6, kh _ (by omega) (by omega), s456, UInt64.ofNat_toNat], v0, v8, v16, H4,
         fun c hc hu => keep' c (keep c hc hu) hu, fun c hc hu a ha' => ?_, keep' _ hnew rfl, hfresh,
         fun j e hj μ'' hag => by simpa using reps j e hj μ'' hag, ond, fun pl hpl => ?own, R0, R8,
-        fun a h0 ha ho hr => ?fr⟩
+        fun a h0 ha ho hr => ?fr, fun a hg => by
+          rw [gl4 a hg, lo3 a hg.lt, glob_of_hkeepC H2.wf hb0' hk a hg, lo1 a hg.lt]⟩
       case own =>
         obtain ⟨c, hc, hcu, hca, hcov, hfr⟩ := opl pl hpl
         exact ⟨c, hc, hcu, hca, hcov, fun d hd hdu => hfr d (keep d hd hdu) hdu, fun e => hfr _ hnew rfl e.symm⟩

@@ -17,13 +17,14 @@ they land, each listed in the theorem's docstring and in `docs/whats-proven.md`)
 - **`AccLogFail`**: the first log line's failure tail (decision 12's `ExhaustsP` for 6501 … 6630):
   if its run reaches a failed allocation, the run then ends ☇ keeping the context. Its success branch is
   proved (`acc_log_lineK`).
-- **`InputsGlob`**: the inputs decode (6630 … 6674) keeps the read-write statics 196616 … 196791
-  (`Glob`). Its other frame facts are proved (`inputs_decode`).
 - **`AccVendoredFacts`**: the read-only slices accumulate reads in the vendored blob (step 10 of
   `docs/bootstrap-target.md`, as `VendoredFacts`).
 - **`AccHypsAt`**: the items loop's hypotheses (`items_loop_full`): `Utf8Call`, `LogFmt`, `KeyFmt`,
   `ItemLogFmt`, `OutDecH`, `InstrLogH`, `ResultLogH`, `HandlerH`, `PushH`, `ExtendH`, `OkEncH`,
-  `DropInstrsH`, with `AccLogFail` and `InputsGlob`, for a program with bootstrap's code facts.
+  `DropInstrsH`, with `AccLogFail`, for a program with bootstrap's code facts.
+
+(`InputsGlob`, that the inputs decode 6630 … 6674 keeps the statics `Glob`, was a named hypothesis
+here; it is now a conclusion of `inputs_decode`.)
 -/
 
 namespace Services.Bootstrap.Acc.Final
@@ -53,16 +54,6 @@ def AccLogFail (p : ByteArray) (env : AccEnv) (pb S0 S1 : Nat) : Prop :=
     Exhausts p (KeepCtx (accContractS env)) pb 6501 ω μ (c, f) N →
     ExhaustsP p env pb 6501 ω μ c f
 
-/-- **The inputs decode keeps the statics** (a named hypothesis): under `inputs_decode`'s premises,
-    a run from 6630 to 6674 keeps the octets at `Glob` (196616 … 196791, the parameter statics). -/
-def InputsGlob (p : ByteArray) (env : AccEnv) (pb S0 S1 : Nat) : Prop :=
-  ∀ (cap : Nat) (x : AccCtx) (ω : Regs) (μ : Memory) (s0 : State) (sp n : Nat) (ω' : Regs) (μ' : Memory)
-    (x' : AccCtx),
-    HeapCtxC env.code pb S0 S1 μ s0 → ω[1] = UInt64.ofNat sp →
-    2147483960 + 424 + 480 + 144 ≤ sp → S0 + 864 + 480 + 144 ≤ sp → sp + 1568 + 24 ≤ S1 →
-    FreeStepsH p (accContractK cap env) 6630 ω μ x 6674 ω' μ' x' n →
-    ∀ a, Glob a → μ'.read a = μ.read a
-
 /-- **The read-only slices accumulate reads, in the vendored blob** (a named hypothesis, for step 10 of
     `docs/bootstrap-target.md`, like `VendoredFacts`): a closed statement about `Bridge.vendored`. Its
     layout is as deployed, and its read-only data holds, at their offsets from 65536: the first log
@@ -91,12 +82,11 @@ def IsBootstrapCode (code : ByteArray) : Prop :=
 
 /-- **The items loop's and the start-up's named hypotheses**, for program p (code facts P) and
     environment env, with the representation `B` of instructions, constants `C` and timeslot `now`:
-    `AccLogFail`, `InputsGlob` and `items_loop_full`'s twelve. All at the heap bound 1044430 and the
+    `AccLogFail` and `items_loop_full`'s twelve. All at the heap bound 1044430 and the
     stack 4278050816 … 4278059008. -/
 structure AccHypsAt (B : InstrRep) (C : Spec.Consts) (now : Nat) (p : ByteArray) (P : Program)
     (env : AccEnv) : Prop where
   logFail : AccLogFail p env 1044430 4278050816 4278059008
-  inGlob : InputsGlob p env 1044430 4278050816 4278059008
   utf8 : Utf8Call p env 1044430 4278050816 4278059008
   logFmt : LogFmt p env 1044430 4278050816 4278059008
   keyFmt : KeyFmt p env 1044430 4278050816 4278059008

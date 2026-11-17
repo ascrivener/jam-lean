@@ -56,7 +56,8 @@ theorem g_call {X : Type} (env : HeapHost X) (cap pb N : Nat) (hcap1 : 134217728
       (∀ pl ∈ feetL μ' q 0 rest.length, ∃ c ∈ chunks st', c.used = true ∧ c.addr + 32 = pl.1 ∧
         (∀ a, pl.1 ≤ a → a < pl.1 + pl.2 → InDataA c a) ∧ (∀ d ∈ chunks s0, d.used = true → d ≠ c) ∧
         c ≠ ⟨q - 32, (rest.length * 184 + 31) / 32 + 1, true⟩) ∧
-      (∀ a, a < 4294967296 → sp + 144 ≤ a → (a < o ∨ o + 24 ≤ a) → μ'.read a = μ.read a)) ∨
+      (∀ a, a < 4294967296 → sp + 144 ≤ a → (a < o ∨ o + 24 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, Glob a → μ'.read a = μ.read a)) ∨
     (∃ j ω' μ', (j = 45975 ∨ j = 45642) ∧
       FreeStepsH p (env.rel cap) 44495 ω μ x j ω' μ' x ((N + 2100) * rest.length + 1900)) := by
   have hbT := H.hbT
@@ -96,7 +97,8 @@ theorem g_call {X : Type} (env : HeapHost X) (cap pb N : Nat) (hcap1 : 134217728
       (by
         rw [PVM.Memory.readN_congr (μ := μ) (fun j hj => by rw [lo2 _ (by omega), lo1 _ (by omega)])]
         exact hB) with
-    ⟨q, s2, ω4, μ4, r4, d0, d1, d5, d6, v0, v8, v16, H4, keep4, keepd4, hnew, hfresh, reps, ond, opl, -, -, fr4⟩ |
+    ⟨q, s2, ω4, μ4, r4, d0, d1, d5, d6, v0, v8, v16, H4, keep4, keepd4, hnew, hfresh, reps, ond, opl, -, -, fr4,
+      gl4⟩ |
     ⟨j, ω4, μ4, hj, r4⟩
   · have hst4 := H4.st
     -- the stack above sp, from μ to μ4, off out (sp + 80 … + 104), the reader (… + 120), and sp itself
@@ -120,7 +122,7 @@ theorem g_call {X : Type} (env : HeapHost X) (cap pb N : Nat) (hcap1 : 134217728
     have lo6 : ∀ a, a < 2147483648 → μ6.read a = μ4.read a := fun a ha => fr6 a (by omega) (Or.inl (by omega))
     have H6 : HeapCtxC env.code pb S0 S1 μ6 s2 := HeapCtxC.keep_hi H4 lo6 wr6
     -- 44591 → 44641, F freed
-    obtain ⟨ω7, μ7, r7, H7, -, wr7, stk7, kd7, f1, f5, f6⟩ :=
+    obtain ⟨ω7, μ7, r7, H7, -, wr7, stk7, kd7, f1, f5, f6, gl7⟩ :=
       g_free (p := p) (P := P) (R := env.rel cap) env.code pb S0 S1 x ω6 μ6 s2 sp ptr F H6 (keep4 F hF hFu) hFu hFa
         e1 e6 e7 e8 (by rw [rdN_frame fun j hj => fr6 _ (by omega) (Or.inl (by omega))]; exact hsp4) (by omega)
         ⟨by omega, by omega⟩
@@ -167,7 +169,8 @@ theorem g_call {X : Type} (env : HeapHost X) (cap pb N : Nat) (hcap1 : 134217728
       by rw [z6, rr _ (by omega) (by omega)], o0, o8, o16, HeapCtxC.keep_hi H7 lo8 wr8,
       fun c hc hu hcF => ⟨(kd7 c (keep4 c hc hu) hu hcF).1, fun a ha => ?_⟩,
       (kd7 _ hnew rfl hNF).1, hfresh, fun j e hj μ'' hag => reps j e hj μ'' fun c hc hu hcF a ha => ?_,
-      by rw [hfe]; exact ond, fun pl hpl => ?_, fun a h0 ha ho' => ?_⟩
+      by rw [hfe]; exact ond, fun pl hpl => ?_, fun a h0 ha ho' => ?_,
+      fun a hg => by rw [lo8 a hg.lt, gl7 a hg, lo6 a hg.lt, gl4 a hg, lo2 a hg.lt, lo1 a hg.lt]⟩
     · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
       rw [kd8 c (keep4 c hc hu) hu hcF a ha, keepd4 c hc hu a ha]
       unfold InDataA at ha
@@ -199,7 +202,8 @@ theorem g_call0 {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [HasCod
       HeapCtxC code pb S0 S1 μ' (free s0 ptr) ∧
       (∀ c ∈ chunks s0, c.used = true → c ≠ F → c ∈ chunks (free s0 ptr) ∧
         ∀ a, InDataA c a → μ'.read a = μ.read a) ∧
-      (∀ a, a < 4294967296 → sp + 144 ≤ a → (a < o ∨ o + 24 ≤ a) → μ'.read a = μ.read a) := by
+      (∀ a, a < 4294967296 → sp + 144 ≤ a → (a < o ∨ o + 24 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, Glob a → μ'.read a = μ.read a) := by
   have hbT := H.hbT
   have hb0 := H.hb0
   have hS1 := H.hS1
@@ -250,7 +254,7 @@ theorem g_call0 {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [HasCod
       (fun a h1 h2 => hst4 a (by omega) (by omega))
   have lo6 : ∀ a, a < 2147483648 → μ6.read a = μ4.read a := fun a ha => fr6 a (by omega) (Or.inl (by omega))
   have H6 : HeapCtxC code pb S0 S1 μ6 s0 := HeapCtxC.keep_hi H4 lo6 wr6
-  obtain ⟨ω7, μ7, r7, H7, -, wr7, stk7, kd7, f1, f5, f6⟩ :=
+  obtain ⟨ω7, μ7, r7, H7, -, wr7, stk7, kd7, f1, f5, f6, gl7⟩ :=
     g_free (p := p) (P := P) (R := R) code pb S0 S1 x ω6 μ6 s0 sp ptr F H6 hF hFu hFa
       e1 e6 e7 e8 (by rw [rdN_frame fun j hj => fr6 _ (by omega) (Or.inl (by omega))]; exact hsp4) (by omega)
       ⟨by omega, by omega⟩
@@ -274,7 +278,8 @@ theorem g_call0 {X : Type} {R : HostRel X} {p : ByteArray} {P : Program} [HasCod
   refine ⟨ω8, μ8, (((((((r1.trans r2).trans r3).trans r4).trans r5).trans r6).trans r7).trans r8).mono (by omega),
     by rw [z0, rr _ (by omega) (by omega)], by rw [z1], by rw [z5, rr _ (by omega) (by omega)],
     by rw [z6, rr _ (by omega) (by omega)], o0, o8, o16, HeapCtxC.keep_hi H7 lo8 wr8,
-    fun c hc hu hcF => ⟨(kd7 c hc hu hcF).1, fun a ha => ?_⟩, fun a h0 ha ho' => ?_⟩
+    fun c hc hu hcF => ⟨(kd7 c hc hu hcF).1, fun a ha => ?_⟩, fun a h0 ha ho' => ?_,
+    fun a hg => by rw [lo8 a hg.lt, gl7 a hg, lo6 a hg.lt, lo4 a hg.lt, lo2 a hg.lt, lo1 a hg.lt]⟩
   · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
     unfold InDataA at ha
     rw [lo8 a (by omega), (kd7 c hc hu hcF).2 a ha.1 ha.2, lo6 a (by omega), lo4 a (by omega), lo2 a (by omega),

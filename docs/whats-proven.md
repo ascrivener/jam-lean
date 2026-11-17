@@ -886,16 +886,20 @@ Pieces of T2 (`docs/bootstrap-target.md`): parts of bootstrap's accumulate code 
       fact under Adam's standing decision (like `VendoredFacts` and `FmtRO`), discharged in step 10;
     - `IsBootstrapCode` (a premise, accepted as T2's counterpart of `IsBootstrap`): the code is bootstrap's;
     - `AccHyps B C` (for every bootstrap code): `AccLogFail` (the first log line, 6501 … 6630: a failed
-      allocation then ends ☇; its success branch is proved), `InputsGlob` (the inputs decode keeps
-      196616 … 196791), and `items_loop_full`'s `Utf8Call`, `LogFmt`, `KeyFmt`, `ItemLogFmt`, `OutDecH`,
+      allocation then ends ☇; its success branch is proved), and `items_loop_full`'s `Utf8Call`, `LogFmt`,
+      `KeyFmt`, `ItemLogFmt`, `OutDecH`,
       `InstrLogH`, `ResultLogH`, `HandlerH`, `PushH`, `ExtendH`, `OkEncH`, `DropInstrsH`;
     - `InfoFits e s`: s's code hash is shorter than 2⁶⁴ − 73 octets (its `info` record shorter than
       2⁶⁴ − 9, which the SDK's `info` wrapper reads as an error code from on, 49017);
     - `ValuesFit` (decided 2026-11-15);
     - G3 (temporary): at most 89 inputs, each `InputSized`.
-  - *Accepted (Adam, 2026-11-17):* `InfoFits`, `AccLogFail` and `InputsGlob` as named hypotheses.
-  - *Open obligation:* `InputsGlob` is temporary; it is to be discharged by threading a `Glob` conclusion
-    through `inputs_decode` (`fv_call`, `g_inputs` and their sub-lemmas).
+  - *Accepted (Adam, 2026-11-17):* `InfoFits` and `AccLogFail` as named hypotheses.
+  - *Discharged:* `InputsGlob` (the inputs decode 6630 … 6674 keeps the statics 196616 … 196791), accepted
+    as a temporary named hypothesis on 2026-11-17, is now a conclusion of `inputs_decode`, threaded
+    through `fv_call`, `g_inputs`, `g_call` / `g_call0`, `g_free`, `lp_call` / `lp_items` / `lp_body`,
+    `ItemOk` (and `itemOk_tr` / `itemOk_opok` / `itemOk_operr`), `item_op_ok` / `item_op_err`,
+    `op_call_ok` / `op_call_err`, `op_mid_ok`, `op_end`, `vv_any`, `vv_call` and `rv_call`
+    (`Acc/Inputs/`; allocator steps via `glob_of_hkeepC` / `glob_of_hkeepGD`).
 
 - **T2's abort reason and length premise (definitions).** `Acc.AccAbort`, `Acc.HeapTrapPc`,
   `Acc.ValuesFit` (`Acc/Abort.lean`).

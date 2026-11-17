@@ -18,7 +18,7 @@ allows) could stand in for the item for now.
 |---|---|
 | `Impl`, `Impl.bind`/`pre`/`forIn`, `accContractS`, the lift `psiA_of_impl`, `ASem` | main, `Acc/Impl/` |
 | Start, 5 → 6501 (`start_to_6501`), and `acc_log_line` (6501 → 6630) | main |
-| `inputs_decode` (6630 → 6674; ≤ 89 inputs, blobs ≤ 16384 octets: G3) | main |
+| `inputs_decode` (6630 → 6674; ≤ 89 inputs, blobs ≤ 16384 octets: G3), keeping the statics (`InputsGlob` discharged, 2026-11-17) | main |
 | SDK wrappers `get` / `set` / `remove` (Q18) | main, `Acc/Wrappers/` |
 | `on_transfer` as `Impl … (onTransfer …)` (`tr_impl`) | `claude/bootstrap-t2-inputs-wip`, PR #222 |
 | Items-loop pieces: `items_end`, `items_halt`, `op_pre`, `op_mid`, Disp, Head | inputs WIP |

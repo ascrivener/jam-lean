@@ -68,7 +68,7 @@ theorem vv_any {X : Type} {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA 
       μ'.readN (rd + 8) 8 = Num.encodeLE 8 (rlen - (Blob.encodeNat n).length - n) ∧
       (∀ a, a < 4294967296 → sp ≤ a → (a < out ∨ out + 24 ≤ a) → (a < rd ∨ rd + 16 ≤ a) →
         μ'.read a = μ.read a) ∧
-      ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6]) ∨
+      ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ (∀ a, Glob a → μ'.read a = μ.read a)) ∨
     (0 < n ∧ alloc (growTo pb) hb 1 ((n + 31) / 32) s = none ∧ ∃ ω' μ',
       FreeStepsH p (env.rel cap) 39634 ω μ x 45975 ω' μ' x (7 * n + 1800)) := by
   by_cases hz : n = 0
@@ -92,16 +92,17 @@ theorem vv_any {X : Type} {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA 
       fr a (by omega) (Or.inl (by omega)) (Or.inl (by omega)) (Or.inl (by omega))
     refine Or.inl ⟨1, s, ω', μ', Or.inl ⟨rfl, rfl, rfl⟩, r.mono (by omega), HeapCtxC.keep_hi H lo wr',
       fun c hc _ => hc, fun c hc hu a ha => ?_, o0, o8, o16, by simp [PVM.Memory.readN],
-      by simpa using q0, by simpa using q8, fun a h0 hs ho hr => fr a h0 (Or.inr hs) ho hr, e0, e1, e5, e6⟩
+      by simpa using q0, by simpa using q8, fun a h0 hs ho hr => fr a h0 (Or.inr hs) ho hr, e0, e1, e5, e6,
+      fun a ha => lo a (by have ⟨g1, g2⟩ : 196616 ≤ a ∧ a < 196792 := ha; omega)⟩
     have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
     unfold InDataA at ha
     exact lo a (by omega)
   · rcases vv_call (p := p) (P := P) (hb := hb) env cap hcap1 hcap x ω μ s sp out rd ip rlen n pb S0 S1 H h1 h7 h8
         hR0 hR8 ⟨Nat.pos_of_ne_zero hz, hn⟩ hrl hrl32 henc hsrc hsp hSTk hout hrd dor with
-      ⟨ptr, s', ω', μ', ha, r, H', keep, hnew, hfresh, keepd, o0, o8, o16, od, q0, q8, fr, e0, e1, e5, e6⟩ |
+      ⟨ptr, s', ω', μ', ha, r, H', keep, hnew, hfresh, keepd, o0, o8, o16, od, q0, q8, fr, e0, e1, e5, e6, gl⟩ |
       ⟨ha, rest⟩
     · exact Or.inl ⟨ptr, s', ω', μ', Or.inr ⟨Nat.pos_of_ne_zero hz, ha, hnew, hfresh⟩, r, H', keep, keepd,
-        o0, o8, o16, od, q0, q8, fr, e0, e1, e5, e6⟩
+        o0, o8, o16, od, q0, q8, fr, e0, e1, e5, e6, gl⟩
     · exact Or.inr ⟨Nat.pos_of_ne_zero hz, ha, rest⟩
 
 /-- **The work output, 46889 → 39634** (GP v0.8.0 Appendix C, O(l) with tag 0): after the gas
@@ -132,7 +133,7 @@ theorem op_mid_ok {X : Type} {p : ByteArray} {P : Program} [HasCode p P] [HasCod
       μ'.readN rd 8 = Num.encodeLE 8 (ip + 1 + (Blob.encodeNat n).length + n) ∧
       μ'.readN (rd + 8) 8 = Num.encodeLE 8 (rlen - 1 - (Blob.encodeNat n).length - n) ∧
       (∀ a, a < 4294967296 → b + 24 ≤ a → (a < b + 272 ∨ b + 296 ≤ a) → (a < rd ∨ rd + 16 ≤ a) →
-        μ'.read a = μ.read a)) ∨
+        μ'.read a = μ.read a) ∧ (∀ a, Glob a → μ'.read a = μ.read a)) ∨
     (0 < n ∧ alloc (growTo pb) hb 1 ((n + 31) / 32) s = none ∧ ∃ ω' μ',
       FreeStepsH p (env.rel cap) 46889 ω μ x 45975 ω' μ' x (7 * n + 2000)) := by
   obtain ⟨c, hcm, hcu, hci1, hci2⟩ := hsrc
@@ -177,7 +178,8 @@ theorem op_mid_ok {X : Type} {p : ByteArray} {P : Program} [HasCode p P] [HasCod
       (by rw [PVM.Memory.readN_congr (μ := μ) (fun j hj => lo2 _ (by omega))]; exact henc)
       ⟨c, hcm, hcu, by omega, by omega⟩ ⟨by omega, hbs.2.1⟩ hSTk ⟨by omega, by omega⟩ ⟨by omega, by omega⟩
       (Or.inl (by omega)) with
-    ⟨po, s1, ω4, μ4, va, r4, H4, keep, keepd, o0, o8, o16, od, z0, z8, fr4, f0, f1, f5, f6⟩ | ⟨hpos, ha, ω4, μ4, r4⟩
+    ⟨po, s1, ω4, μ4, va, r4, H4, keep, keepd, o0, o8, o16, od, z0, z8, fr4, f0, f1, f5, f6, gl4⟩ |
+    ⟨hpos, ha, ω4, μ4, r4⟩
   · obtain ⟨ω5, μ5, r5, g0, g1, g5, g6, g7, g8, w0, w8, w16, fr5, rd5, wr5⟩ :=
       op_ok (p := p) (P := P) (R := env.rel cap) x ω4 μ4 b n po n (by rw [f1, c1]) o0 o8 o16 (by omega)
         ⟨by omega, by omega⟩ (fun a h1 h2 => by
@@ -186,7 +188,7 @@ theorem op_mid_ok {X : Type} {p : ByteArray} {P : Program} [HasCode p P] [HasCod
     refine Or.inl ⟨po, s1, ω5, μ5, va, ((((r1.trans r2).trans r3).trans r4).trans
       ((op_ret1 (p := p) (P := P) (R := env.rel cap) x ω4 μ4 (by rw [f0, c0])).trans r5)).mono (by omega),
       HeapCtxC.keep_hi H4 lo5 wr5, keep, fun c hc hu a ha => ?_, g0, g1, ?_, ?_, g7, ?_, w0, w8, w16, ?_,
-      ?_, ?_, fun a h0 h1 h2 h3 => ?_⟩
+      ?_, ?_, fun a h0 h1 h2 h3 => ?_, fun a ha => by rw [lo5 a ha.lt, gl4 a ha, lo2 a ha.lt]⟩
     · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
       unfold InDataA at ha
       rw [lo5 a (by omega), keepd c hc hu a ha, lo2 a (by omega)]
@@ -321,14 +323,15 @@ theorem op_end {X : Type} {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA 
       μ'.readN rd 8 = Num.encodeLE 8 (it + (Blob.encodeNat n).length + n) ∧
       μ'.readN (rd + 8) 8 = Num.encodeLE 8 (rlen - (Blob.encodeNat n).length - n) ∧
       (∀ a, a < 4294967296 → b ≤ a → (a < b + 272 ∨ b + 296 ≤ a) → (a < out ∨ out + 184 ≤ a) →
-        (a < rd ∨ rd + 16 ≤ a) → μ'.read a = μ.read a)) ∨
+        (a < rd ∨ rd + 16 ≤ a) → μ'.read a = μ.read a) ∧ (∀ a, Glob a → μ'.read a = μ.read a)) ∨
     (0 < n ∧ alloc (growTo pb) hb 1 ((n + 31) / 32) s = none ∧ ∃ ω' μ',
       FreeStepsH p (env.rel cap) 39634 ω μ x 45975 ω' μ' x (7 * n + 2000)) := by
   have hS1 := H.hS1
   rcases vv_any (p := p) (P := P) (hb := hb) env cap hcap1 hcap x ω μ s b (b + 272) rd it rlen n pb S0 S1 H
       h1 h7 h8 hR0 hR8 hn hrl hrl32 henc hsrc ⟨by omega, hbs.2.1⟩ hSTk ⟨by omega, by omega⟩
       ⟨by omega, by omega⟩ (Or.inl (by omega)) with
-    ⟨pt, s2, ω1, μ1, va, r1, H1, keep, keepd, o0, o8, o16, od, z0, z8, fr1, f0, f1, f5, f6⟩ | ⟨hpos, ha, ω1, μ1, r1⟩
+    ⟨pt, s2, ω1, μ1, va, r1, H1, keep, keepd, o0, o8, o16, od, z0, z8, fr1, f0, f1, f5, f6, gl1⟩ |
+    ⟨hpos, ha, ω1, μ1, r1⟩
   · have hst := H1.st
     -- the frame from μ, at b and above (outside the trace's Vec and the reader)
     have kb : ∀ o, b ≤ o → (o + 8 ≤ b + 272 ∨ b + 296 ≤ o) → o + 8 ≤ b + 424 → rdN μ1 o 8 = rdN μ o 8 :=
@@ -397,7 +400,8 @@ theorem op_end {X : Type} {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA 
         by rw [w3 _ (by omega) (by omega), t152, kf _ (by omega) (by omega) μ2 f21, kb _ (by omega) (by omega) (by omega)],
         by rw [u160, kf _ (by omega) (by omega) μ2 f21, kb _ (by omega) (by omega) (by omega)],
         by rw [u168, kf _ (by omega) (by omega) μ2 f21, kb _ (by omega) (by omega) (by omega)]⟩,
-      u176, ?_, ?_, ?_, fun a h0 hb' h2 h3 h4 => by rw [f41 a h0 h3, fr1 a h0 hb' h2 h4]⟩
+      u176, ?_, ?_, ?_, fun a h0 hb' h2 h3 h4 => by rw [f41 a h0 h3, fr1 a h0 hb' h2 h4],
+      fun a ha => by rw [lo4 a ha.lt, gl1 a ha]⟩
     · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
       have := H.hbT
       unfold InDataA at ha

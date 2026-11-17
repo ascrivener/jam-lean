@@ -1055,6 +1055,14 @@ At the time of writing, other work in progress includes:
 - **Lifting the 14-page limit,** by making the host-call gas cap a parameter of `refineContract`.
 - **`alloc` in the binary at alignment above one unit with heap growth, on first use and on
   failure.** The no-growth success path is done (`AllocAlignRefines.lean`).
+- **The field formatters of refine's 6159 `Debug` line** (`Services/Bootstrap/Fmt/Field*.lean`,
+  `N56*.lean`), frame-only summaries in the style of the Fmt ones: `write_char` (59743), `pad_wp` and
+  `pad_z2` (`pad_integral` with `{:02x}`'s options), `u8hex_ok` (60209), `fmt_write_spec` (an
+  explicit-options item), `fmt_write_c3` and `fmt_writeW` (nested `core::fmt::write` calls, whose
+  arguments lie below the `String`), `slice_hex_ok` (57922) and `n56_hex` (56340's hex path).
+  - *Named hypotheses* on the vendored blob's read-only data, discharged in step 10 like `FmtRO`:
+    `RO70833` (the octets 70833 … 70840, the template `{:02x}`) and `RO70824` (the octets 70824,
+    70827, 70828 and 70832, the template `0x{}...`).
 - **`core::str::from_utf8` (60681), by the symbolic executor** (draft PR #194,
   `Services/Bootstrap/SymExec/Utf8Final.lean`). Both statements are proved, with axioms propext,
   Classical.choice and Quot.sound only:

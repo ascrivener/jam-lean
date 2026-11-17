@@ -246,6 +246,7 @@ theorem acc_impl {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Has
     obtain ⟨d, hd, hdu, hda, hdq⟩ := sown.1 (by omega)
     obtain ⟨hcb1, hcb2, hcb3⟩ := chunk_bounds H3.wf hd
     have hbT := H3.hbT
+    have hq31 : q + 184 * env.inputs.length < 2147483648 := by omega
     obtain ⟨ω4, μ4, run4, a1, a5, -, a144, a16, a32, a184, a216, fr4, rd4, wr4⟩ :=
       il_head2 (p := p) (P := P) (R := YIn (accContractS env) x₀ x₀) ((x₀, x₀), f) ω3 μ3 4278057152
         env.inputs.length q env.inputs.length z1 (by decide) o0
@@ -278,13 +279,17 @@ theorem acc_impl {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Has
       refine ⟨?_, by decide, ?_, by decide⟩
       · rw [Memory.readN_congr fun j hj => (lo4 _ (by omega)).trans (g3 _ (by unfold Glob; omega))]; exact hcC
       · rw [Memory.readN_congr fun j hj => (lo4 _ (by omega)).trans (g3 _ (by unfold Glob; omega))]; exact hcI
+    have he5 : curAt 4278057152 ⟨6782, ω4, μ4, (x₀, x₀), f⟩ = q := by
+      rw [curAt_6782 rfl]
+      show ω4[5].toNat = q
+      rw [a5]; exact UInt64.toNat_ofNat_of_lt' (show q < 2 ^ 64 by omega)
     have hInv : ItemsInv env 1044430 4278050816 4278059008 4278057152 q env.inputs.length
         (q + 184 * env.inputs.length) μ4 env.inputs ⟨6782, ω4, μ4, (x₀, x₀), f⟩ :=
       { pc := .inr ⟨rfl, hn0⟩
         r1 := a1
         hsp := by decide
         hstk := by decide
-        cur := by rw [curAt_6782 rfl]; simp only [a5]; rw [UInt64.toNat_ofNat_of_lt' (by omega)]
+        cur := by rw [he5]
         m144 := a144
         m16 := a16
         m32 := a32
@@ -295,11 +300,10 @@ theorem acc_impl {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Has
         m1848 := by rw [k43 _ (.inr (.inr rfl))]; exact w1848
         hcap := Nat.le_refl _
         heap := ⟨st', H4, fun _ => ⟨d, hd, hdu, hda, fun b h1 h2 => by
-            rw [curAt_6782 rfl] at h1; simp only [a5] at h1
-            rw [UInt64.toNat_ofNat_of_lt' (by omega)] at h1
+            rw [he5] at h1
             unfold InDataA; omega⟩,
-          by rw [curAt_6782 rfl]; simp only [a5]; rw [UInt64.toNat_ofNat_of_lt' (by omega)]; exact hslots,
-          by rw [curAt_6782 rfl]; simp only [a5]; rw [UInt64.toNat_ofNat_of_lt' (by omega)]; exact hown⟩
+          by rw [he5]; exact hslots,
+          by rw [he5]; exact hown⟩
         ro := ro4.tr
         ro2 := ro4.op
         glob := fun _ _ => rfl

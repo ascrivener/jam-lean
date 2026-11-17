@@ -82,7 +82,7 @@ def lemma(k):
         r=ref.replace('{OR}',OR)
         body+=f'''  · have hc : {cond} := by omega
     {r}
-    · pvm_go [h1, h7, hsp, ha, hra, hw, hr, rb, sx8_signed b hb256, hc, rdN_writeN_disjoint, ↓rdN_fold]
+    · pvm_go [h1, h7, hsp, ha, hra, hw, hr, rb, sx8_signed b hb256, hc, rdN_writeN_disjoint, rdN_writeN_same8, rdN_zero, rdN_lit8, ↓rdN_fold]
 {tail}
 '''
     return f'''

@@ -94,6 +94,38 @@ def InReg (E : Env) (r : Aff × Nat) (t : Nat) : Prop := r.1.eval E ≤ t ∧ (t
 
 /-! ## What a stretch assumes and keeps -/
 
+/-- A fact about the start environment: a path condition taken at a fork (`PVM/SymExec/Fork.lean`)
+    or an assumption of a stretch. -/
+inductive Fact where
+  /-- v < c. -/
+  | lt (v : SVal) (c : Nat)
+  /-- c ≤ v. -/
+  | ge (v : SVal) (c : Nat)
+  /-- v ≠ c. -/
+  | ne (v : SVal) (c : Nat)
+  /-- a ≤ b, as integers. -/
+  | le (a b : Aff)
+  /-- Every address in [lo, hi) is readable in the start memory. -/
+  | rd (lo hi : Aff)
+  /-- Every address in [lo, hi) is writable in the start memory. -/
+  | wr (lo hi : Aff)
+  /-- ρ_x + ρ_y = ρ_z (e.g. a cursor `p + i`). -/
+  | sum (x y z : Nat)
+  /-- a ≠ b, as integers. -/
+  | neA (a b : Aff)
+  deriving DecidableEq, Repr
+
+/-- What a fact asserts of an environment. -/
+def Fact.Holds (E : Env) : Fact → Prop
+  | .lt v c => v.eval E < c
+  | .ge v c => c ≤ v.eval E
+  | .ne v c => v.eval E ≠ c
+  | .le a b => a.eval E ≤ b.eval E
+  | .rd lo hi => ∀ t : Nat, lo.eval E ≤ t → (t : Int) < hi.eval E → E.μ.readable t = true
+  | .wr lo hi => ∀ t : Nat, lo.eval E ≤ t → (t : Int) < hi.eval E → E.μ.writable t = true
+  | .sum x y z => E.ρ x + E.ρ y = E.ρ z
+  | .neA a b => a.eval E ≠ b.eval E
+
 /-- Bounds of the named naturals (`lb[k] ≤ ρ_k < ub[k]`), readable and writable regions of the
     start memory, and declared pairs of disjoint regions. -/
 structure Static where
@@ -105,6 +137,8 @@ structure Static where
   /-- Rewrites (p, q): p and q have the same value under the assumptions (e.g. a multiply-shift
       and the quotient it computes). Each is proved separately (`RwHold`). -/
   rw : List (SVal × SVal) := []
+  /-- Facts about the environment (`Fact.Holds`): path conditions and relational assumptions. -/
+  facts : List Fact := []
 
 /-- The least value an address can have. -/
 def Aff.lo (st : Static) (a : Aff) : Int :=
@@ -116,8 +150,8 @@ def Aff.hi (st : Static) (a : Aff) : Option Int :=
   | some k => st.ub[k]?.map fun u => (u : Int) - 1 + a.off
   | none => some a.off
 
-/-- `n` octets at `a` lie within ℕ_{2^32}. -/
-def valid (st : Static) (a : Aff) (n : Nat) : Bool :=
+/-- `n` octets at `a` lie within ℕ_{2^32}, by the bounds. -/
+def valid0 (st : Static) (a : Aff) (n : Nat) : Bool :=
   decide (0 ≤ a.lo st) && match a.hi st with
     | some h => decide (h + n ≤ two32) && decide (h < two32)
     | none => false
@@ -137,8 +171,59 @@ def disj (st : Static) (a : Aff) (n : Nat) (b : Aff) (m : Nat) : Bool :=
   (match b.hi st with | some h => decide (h + m ≤ a.lo st) | none => false) ||
   st.sep.any fun p => (within st a n p.1 && within st b m p.2) || (within st a n p.2 && within st b m p.1)
 
+/-- a ≤ b, as integers: on a common base, by the bounds, or by a fact `a' ≤ b'` on the same bases. -/
+def leA0 (st : Static) (a b : Aff) : Bool :=
+  (a.base == b.base && decide (a.off ≤ b.off)) ||
+  (match a.hi st with | some h => decide (h ≤ b.lo st) | none => false) ||
+  st.facts.any fun f => match f with
+    | .le a' b' => a'.base == a.base && b'.base == b.base && decide (a.off - a'.off ≤ b.off - b'.off)
+    | _ => false
+
+/-- Some fact says ρ_z = ρ_x + ρ_y or ρ_z = ρ_y + ρ_x. -/
+def hasSum (st : Static) (x z : Nat) : Bool :=
+  st.facts.any fun f => match f with
+    | .sum x' y' z' => z' == z && (x' == x || y' == x)
+    | _ => false
+
+/-- a ≤ b, as integers: by `leA0`; or a summand below its sum (ρ_x ≤ ρ_x + ρ_y); or through two
+    sums with a shared first summand (ρ_s + ρ_x ≤ ρ_s + ρ_y when ρ_x ≤ ρ_y, by `leA0`). -/
+def leA (st : Static) (a b : Aff) : Bool :=
+  leA0 st a b ||
+  match a.base, b.base with
+  | some x, some z =>
+    (decide (a.off ≤ b.off) && hasSum st x z) ||
+    st.facts.any fun f => match f with
+      | .sum s u za => za == x && st.facts.any fun g => match g with
+        | .sum s' w zb => zb == z && s' == s && leA0 st ⟨some u, a.off⟩ ⟨some w, b.off⟩
+        | _ => false
+      | _ => false
+  | _, _ => false
+
+/-- `n > 0` octets at `a` end at or below the end of a region of an `rd` or `wr` fact, and the
+    bounds put that end at or below 2^32. -/
+def validF (st : Static) (a : Aff) (n : Nat) : Bool :=
+  decide (0 < n) && decide (0 ≤ a.lo st) && st.facts.any fun f => match f with
+    | .rd _ hi | .wr _ hi => leA st ⟨a.base, a.off + n⟩ hi &&
+        match hi.hi st with | some h => decide (h ≤ two32) | none => false
+    | _ => false
+
+/-- `n` octets at `a` lie within ℕ_{2^32}: by the bounds (`valid0`) or by a fact (`validF`). -/
+def valid (st : Static) (a : Aff) (n : Nat) : Bool := valid0 st a n || validF st a n
+
+/-- The `n` octets at `a` lie in a region that a fact `rd` says is readable. -/
+def inRd (st : Static) (a : Aff) (n : Nat) : Bool :=
+  st.facts.any fun f => match f with
+    | .rd lo hi => leA st lo a && leA st ⟨a.base, a.off + n⟩ hi
+    | _ => false
+
+/-- The `n` octets at `a` lie in a region that a fact `wr` says is writable. -/
+def inWr (st : Static) (a : Aff) (n : Nat) : Bool :=
+  st.facts.any fun f => match f with
+    | .wr lo hi => leA st lo a && leA st ⟨a.base, a.off + n⟩ hi
+    | _ => false
+
 /-- An exclusive upper bound of a value. -/
-def SVal.bnd (st : Static) : SVal → Option Nat
+def SVal.bnd0 (st : Static) : SVal → Option Nat
   | .const n => some (n + 1)
   | .var k => st.ub[k]?
   | .reg0 _ => some two64
@@ -150,6 +235,29 @@ def SVal.bnd (st : Static) : SVal → Option Nat
     if op = .shloLImm64 then some two64 else if op = .andImm then some (x + 1) else none
   | .tbl vs _ => some (vs.foldr max 0 + 1)
   | _ => none
+
+/-- The least of two optional bounds. -/
+def minO : Option Nat → Option Nat → Option Nat
+  | some a, some b => some (min a b)
+  | some a, none => some a
+  | none, b => b
+
+/-- The bound that the facts `v < c` give a value. -/
+def fub : List Fact → SVal → Option Nat
+  | [], _ => none
+  | f :: fs, v => match f with
+    | .lt w c => if w == v then minO (some c) (fub fs v) else fub fs v
+    | _ => fub fs v
+
+/-- The lower bound that the facts `c ≤ v` give a value. -/
+def flb : List Fact → SVal → Nat
+  | [], _ => 0
+  | f :: fs, v => match f with
+    | .ge w c => if w == v then max c (flb fs v) else flb fs v
+    | _ => flb fs v
+
+/-- An exclusive upper bound of a value: from its form, and from the facts. -/
+def SVal.bnd (st : Static) (v : SVal) : Option Nat := minO (v.bnd0 st) (fub st.facts v)
 
 /-- `v mod m`, simplified: folded on a literal, dropped when a bound shows it does nothing, and
     `𝒵⁻¹_8(𝒵_k(w)) mod 2^(8k) = w mod 2^(8k)` for k = 2, 4. -/
@@ -227,15 +335,18 @@ def mkAlu2i (st : Static) (op : TwoRegImmOp) (a b : SVal) (x : Nat) : SVal :=
     if op = .addImm64 then addv st b x (foldAlu2i op (.const 0) b x)
     else foldAlu2i op (if usesA op then a else .const 0) b x
 
-/-- A lower bound of a value. -/
-def SVal.lob (st : Static) : SVal → Nat
+/-- A lower bound of a value, from its form. -/
+def SVal.lob0 (st : Static) : SVal → Nat
   | .const n => n
   | .var k => st.lb[k]?.getD 0
   | .addr a => (a.lo st).toNat
   | .sx k v =>
-    if k = 4 ∧ 2 ^ 31 ≤ v.lob st ∧ (v.bnd st).any (· ≤ 2 ^ 32) then v.lob st + 18446744069414584320
+    if k = 4 ∧ 2 ^ 31 ≤ v.lob0 st ∧ (v.bnd st).any (· ≤ 2 ^ 32) then v.lob0 st + 18446744069414584320
     else 0
   | _ => 0
+
+/-- A lower bound of a value: from its form, and from the facts. -/
+def SVal.lob (st : Static) (v : SVal) : Nat := max (v.lob0 st) (flb st.facts v)
 
 /-- v ≤ w, by the bounds. -/
 def leB (st : Static) (v w : SVal) : Bool := (v.bnd st).any (· ≤ w.lob st + 1)
@@ -245,6 +356,26 @@ def foldAlu3 (op : ThreeRegOp) (a b d : SVal) : SVal :=
   | .const p, .const q, .const r => .const (threeRegAlu op p q r)
   | a, b, d => .alu3 op a b d
 
+/-- An affine reading of a named natural or an address (not of a literal). -/
+def asAffV : SVal → Option Aff
+  | .var k => some ⟨some k, 0⟩
+  | .addr a => some a
+  | _ => none
+
+/-- (v + w) mod 2^64 as an address on ρ_z, when v and w are affine on ρ_x and ρ_y, a fact says
+    ρ_x + ρ_y = ρ_z (or ρ_y + ρ_x = ρ_z), and the bounds show that nothing wraps. -/
+def addSum (st : Static) (v w : SVal) : Option SVal :=
+  match asAffV v, asAffV w with
+  | some ⟨some x, o1⟩, some ⟨some y, o2⟩ =>
+    match st.facts.find? (fun f => match f with
+        | .sum x' y' _ => (x' == x && y' == y) || (x' == y && y' == x) | _ => false) with
+    | some (.sum _ _ z) =>
+      if affOk st ⟨some x, o1⟩ ⟨some z, o1 + o2⟩ two64 && decide (0 ≤ Aff.lo st ⟨some y, o2⟩) then
+        some (affVal ⟨some z, o1 + o2⟩)
+      else none
+    | _ => none
+  | _, _ => none
+
 def mkAlu3 (st : Static) (op : ThreeRegOp) (a b d : SVal) : SVal :=
   let f := foldAlu3 op a b (if usesD op then d else .const 0)
   match op, b with
@@ -252,6 +383,7 @@ def mkAlu3 (st : Static) (op : ThreeRegOp) (a b d : SVal) : SVal :=
   | .sub64, .const q => if q < two64 then addv st a (two64 - q) f else f
   | .minU, _ => if leB st a b then a else if leB st b a then b else f
   | .maxU, _ => if leB st a b then b else if leB st b a then a else f
+  | .add64, _ => (addSum st a b).getD f
   | _, _ => f
 
 def mkAlu2 (op : TwoRegOp) (a : SVal) : SVal :=
@@ -285,7 +417,8 @@ def Pre (E : Env) (st : Static) : Prop :=
   (∀ r ∈ st.rd, ∀ t, InReg E r t → E.μ.readable t = true) ∧
   (∀ r ∈ st.wr, ∀ t, InReg E r t → E.μ.writable t = true) ∧
   (∀ p ∈ st.sep, ∀ t, InReg E p.1 t → ¬ InReg E p.2 t) ∧
-  (∀ q ∈ st.rw, q.1.eval E = q.2.eval E)
+  (∀ q ∈ st.rw, q.1.eval E = q.2.eval E) ∧
+  (∀ f ∈ st.facts, f.Holds E)
 
 /-- A machine state (ω, μ) is described by σ. -/
 def Inv (E : Env) (σ : SState) (ω : Regs) (μ : Memory) : Prop :=
@@ -397,13 +530,17 @@ def negImm : RegImmOffsetOp → Bool
 def scond (op : RegImmOffsetOp) (v : SVal) (x : Nat) : Option Bool :=
   match v with
   | .const c => some (regImmBranchCond op c x)
-  | v => (v.bnd st).bind fun hi =>
+  | v => if st.facts.contains (.ne v x) && (op == .branchEqImm || op == .branchNeImm) then
+      some (op == .branchNeImm) else (v.bnd st).bind fun hi =>
     match toU op with
     | none => decideCond op (v.lob st) hi x
     | some u =>
       if hi ≤ 2 ^ 63 then
         if x < 2 ^ 63 then decideCond u (v.lob st) hi x
         else if x < two64 then some (negImm u) else none
+      else if 2 ^ 63 ≤ v.lob st ∧ hi ≤ two64 then
+        if x < 2 ^ 63 then some (!negImm u)
+        else if x < two64 then decideCond u (v.lob st) hi x else none
       else none
 
 /-- Two addresses on a common base, both at least 0: their offsets. -/
@@ -421,19 +558,34 @@ def ltU (v w : SVal) : Option Bool :=
   | none =>
     if (v.bnd st).any (· ≤ w.lob st) then some true
     else if (w.bnd st).any (· ≤ v.lob st + 1) then some false
-    else none
+    else match asAffV v, asAffV w with
+    | some a, some b =>
+      if decide (0 ≤ a.lo st) && decide (0 ≤ b.lo st) then
+        if leA st ⟨a.base, a.off + 1⟩ b then some true
+        else if leA st b a then some false else none
+      else none
+    | _, _ => none
 
-/-- v = w, when equal values, a common base or the bounds decide it. -/
+/-- v = w, when equal values, a common base or the bounds decide it; or, on two affine values, `le`
+    facts both ways or a `neA` fact. -/
 def eqU (v w : SVal) : Option Bool :=
   if v == w then some true else
   match sameBase st v w with
   | some (p, q) => some (p == q)
   | none =>
-    if (v.bnd st).any (· ≤ w.lob st) || (w.bnd st).any (· ≤ v.lob st) then some false else none
+    if (v.bnd st).any (· ≤ w.lob st) || (w.bnd st).any (· ≤ v.lob st) then some false else
+    match asAffV v, asAffV w with
+    | some a, some b =>
+      if decide (0 ≤ a.lo st) && decide (0 ≤ b.lo st) then
+        if leA st a b && leA st b a then some true
+        else if st.facts.contains (.neA a b) || st.facts.contains (.neA b a) then some false
+        else none
+      else none
+    | _, _ => none
 
 /-- A comparison of two registers (§A.5.11), when it is decided; signed ones on values below
     2^63, where they equal the unsigned ones. -/
-def scond2 (op : TwoRegOffsetOp) (v w : SVal) : Option Bool :=
+def scond2a (op : TwoRegOffsetOp) (v w : SVal) : Option Bool :=
   let nn := (v.bnd st).any (· ≤ 2 ^ 63) && (w.bnd st).any (· ≤ 2 ^ 63)
   match op with
   | .branchEq => eqU st v w
@@ -442,6 +594,33 @@ def scond2 (op : TwoRegOffsetOp) (v w : SVal) : Option Bool :=
   | .branchGeU => (ltU st v w).map (!·)
   | .branchLtS => if nn then ltU st v w else none
   | .branchGeS => if nn then (ltU st v w).map (!·) else none
+
+/-- A comparison of two registers, one of them a literal, as a comparison with an immediate. -/
+def imm2 (op : TwoRegOffsetOp) (v w : SVal) : Option (RegImmOffsetOp × SVal × Nat) :=
+  match op, v, w with
+  | .branchEq, v, .const c => some (.branchEqImm, v, c)
+  | .branchEq, .const c, w => some (.branchEqImm, w, c)
+  | .branchNe, v, .const c => some (.branchNeImm, v, c)
+  | .branchNe, .const c, w => some (.branchNeImm, w, c)
+  | .branchLtU, v, .const c => some (.branchLtUImm, v, c)
+  | .branchLtU, .const c, w => some (.branchGtUImm, w, c)
+  | .branchGeU, v, .const c => some (.branchGeUImm, v, c)
+  | .branchGeU, .const c, w => some (.branchLeUImm, w, c)
+  | .branchLtS, v, .const c => some (.branchLtSImm, v, c)
+  | .branchLtS, .const c, w => some (.branchGtSImm, w, c)
+  | .branchGeS, v, .const c => some (.branchGeSImm, v, c)
+  | .branchGeS, .const c, w => some (.branchLeSImm, w, c)
+  | _, _, _ => none
+
+/-- A comparison of two registers (§A.5.11), when it is decided: by `scond2a`, or, with a literal
+    operand, as a comparison with an immediate (`scond`). -/
+def scond2 (op : TwoRegOffsetOp) (v w : SVal) : Option Bool :=
+  match scond2a st op v w with
+  | some c => some c
+  | none =>
+    match imm2 op v w with
+    | some (op', u, c) => scond st op' u c
+    | none => none
 
 /-- A value after the first rewrite of `st.rw` that applies to it. -/
 def rwv (v : SVal) : SVal :=
@@ -458,7 +637,9 @@ def setv (σ : SState) (r : Nat) (v : SVal) : SState := { σ with regs := σ.reg
 def mkAddr (v : SVal) (x n : Nat) : Option Aff :=
   let a? : Option Aff := match v with
     | .const c => some ⟨none, ((c + x) % two32 : Nat)⟩
-    | v => (asAff v).bind fun a => addAff st a x two32
+    | v => (asAff v).bind fun a => match addAff st a x two32 with
+      | some a' => some a'
+      | none => if x = 0 ∧ validF st a n = true then some a else none
   match a? with
   | some a => if valid st a n then some a else none
   | none => none
@@ -502,7 +683,7 @@ def loadVal (σ : SState) (a : Aff) (n : Nat) : Option SVal :=
 
 /-- Store ℰ_n(v) at `a`. -/
 def sstore (σ : SState) (a : Aff) (n : Nat) (v : SVal) : Option SState :=
-  if valid st a n && st.wr.any (within st a n) then
+  if valid st a n && (st.wr.any (within st a n) || inWr st a n) then
     some { regs := σ.regs
            cells := (a, n, v) :: (σ.cells.filter (fun c => disj st c.1 c.2.1 a n) ++
              (σ.cells.filter (fun c => !disj st c.1 c.2.1 a n)).flatMap (frags a n))
@@ -511,7 +692,8 @@ def sstore (σ : SState) (a : Aff) (n : Nat) (v : SVal) : Option SState :=
 
 /-- Load `n` octets at `a` into register `d`, sign-extended from `k` octets unless `k = 0`. -/
 def sload (σ : SState) (d : Nat) (a : Aff) (n k : Nat) : Option SState :=
-  if valid st a n && (st.rd.any (within st a n) || st.wr.any (within st a n)) then
+  if valid st a n && (st.rd.any (within st a n) || st.wr.any (within st a n) ||
+      inRd st a n || inWr st a n) then
     (loadVal st σ a n).map fun v => setv σ d (mkSx st k v)
   else none
 

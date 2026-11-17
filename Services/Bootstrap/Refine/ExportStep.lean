@@ -54,7 +54,7 @@ theorem push_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
     (x : RefineCtx) (ω : Regs) (μ : Memory) {hb : Nat} (s : State) (M ptr len n pb S0 S1 : Nat)
     (H : HeapCtx env pb S0 S1 μ s)
     (hold : len = 0 ∨ ∃ c ∈ chunks s, c.addr + 32 = ptr ∧ c.used = true ∧ c.size = (232 * len + 31) / 32 + 1)
-    (hlen : len ≤ 2097152) (hn : n < 18446744073709551616)
+    (hlen : len ≤ 16777216) (hn : n < 18446744073709551616)
     (hM : S0 + 7560 ≤ M ∧ M + 632 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0) (hptr : ptr < 18446744073709551616)
     (h1 : ω[1] = UInt64.ofNat M)
     (sc : μ.readN (M + 248) 8 = Num.encodeLE 8 len) (sp : μ.readN (M + 256) 8 = Num.encodeLE 8 ptr)
@@ -80,7 +80,7 @@ theorem push_grow {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Ha
   obtain ⟨ω1, run1, a0, a1, a5, a6, a7⟩ := xpg (p := p) (P := P) (R := refineContractK cap0 env) x ω μ M len
     (by omega) (by omega) h1 sc sl (fun a h1 h2 => Memory.readable_of_writable (H.st a (by omega) (by omega)))
   rcases Decode.GrowOne.grow_one_call (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 x ω1 μ s M (M + 248) len ptr
-      188 5832 len ω1[6].toNat pb S0 S1 H hold hlen ⟨by omega, by omega⟩ ⟨by omega, hM8⟩ ⟨by omega, by omega⟩ a0
+      188 5832 len ω1[6].toNat pb S0 S1 H hold (Nat.le_trans hlen (by decide)) ⟨by omega, by omega⟩ ⟨by omega, hM8⟩ ⟨by omega, by omega⟩ a0
       (a1.trans h1) a5 UInt64.ofNat_toNat.symm a7 ⟨by decide, by decide, by decide⟩ jte_93 bs_5832 (by omega)
       (UInt64.toNat_lt _) hptr sc sp with
     ⟨q, s', ω2, μ2, run2, e0, e1, e5, e6, eV, eV8, hnew, emove, H2, keep, fresh, _, stk, _, _, ewr⟩ | hx

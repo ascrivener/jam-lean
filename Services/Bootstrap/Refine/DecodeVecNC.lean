@@ -1,3 +1,4 @@
+import Services.Bootstrap.Decode.ReallocBig
 import Services.Bootstrap.Refine.DecodeVecN
 import Services.Bootstrap.Refine.DecodeVec2C
 
@@ -67,8 +68,8 @@ theorem take_add' (es : List (List UInt8)) (L b : Nat) : es.take (L + b) = es.ta
 
 /-- **One more batch** (562 … 562): from `BInv` after L < n elements, the next batch of b' = min(n − L, L): the
     buffer grown to L + b' slots by `realloc` (the first L slots copied) and the batch decoded into slots
-    L … L + b' − 1, giving `BInv` after L + b' elements. Or an allocation fails. The buffer is below 2³⁰ octets
-    (`realloc_call`'s range). -/
+    L … L + b' − 1, giving `BInv` after L + b' elements. Or an allocation fails (any request: `Decode.ReallocBig.realloc_call_any`).
+    -/
 theorem batch_step {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env : RefineHost.Env) (cap0 : Nat)
     (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616) {hb pb : Nat} (gl : Nat → UInt8)
     (x : RefineCtx) (S rd P0 Lt : Nat) (es : List (List UInt8)) (reps : Nat → List Chunk → List UInt8 → Memory → Prop)
@@ -79,7 +80,7 @@ theorem batch_step {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (e
     (hcp : cp ∈ chunks s0 ∧ cp.used = true)
     (hcpd : ∀ a, P0 ≤ a → a < P0 + es.flatten.length → InData cp a) (hP0 : 206864 ≤ P0)
     (hLt : es.flatten.length ≤ Lt ∧ Lt < 4294967296) (pay : μ0.readN P0 es.flatten.length = es.flatten)
-    (hbig : 232 * es.length < 1073741760)
+    (hbig : 232 * es.length < 4294967296)
     (L Rc b q : Nat) (ω : Regs) (μ : Memory) (s : State)
     (I : BInv env pb gl S rd P0 Lt es reps cp μ0 s0 out v5 v6 L Rc b q ω μ s) (hLn : L < es.length) :
     (∃ (ω' : Regs) (μ' : Memory) (s' : State) (q' N : Nat),
@@ -137,8 +138,13 @@ theorem batch_step {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (e
   have H4 : HeapCtx env pb S0 S1 μ4 s := Decode.GrowOne.ctx_high H hlow4 (fun a => by rw [wr4, wr3])
   have hba : s.base % 8 = 0 := by have := H.wf.2.1; omega
   -- `realloc`
-  rcases Decode.ReallocCall.realloc_call (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 x ω4 μ4 s (S - 40) q 8
-      (232 * (L + b')) pb S0 S1 H4 ⟨_, hcbm, by simp only [bufC]; omega, rfl⟩ (by omega) (by omega) hba b1 b7 b9 b10
+  have hrq : (232 * (L + b') + 31) / 32 < 33554431 ∨
+      Decode.ReallocBig.BigReq s q ((232 * (L + b') + 31) / 32) := by
+    by_cases h : (232 * (L + b') + 31) / 32 < 33554431
+    · exact Or.inl h
+    · exact Or.inr (Or.inl (by omega))
+  rcases Decode.ReallocBig.realloc_call_any (p := p) (P := P) (hb := hb) env cap0 hcap1 hcap0 x ω4 μ4 s (S - 40) q 8
+      (232 * (L + b')) pb S0 S1 H4 ⟨_, hcbm, by simp only [bufC]; omega, rfl⟩ (by omega) hrq (by omega) hba b1 b7 b9 b10
       (by decide) (by decide) ⟨by omega, by omega⟩ ⟨by omega, by omega⟩ with
     ⟨r, s3, bb, ω5, μ5, hR, run5, e7, H5, dat5, keep5, ⟨cr, hcrm, hcra, hcru, hcrs⟩, kp5, stk5, ro5, wr5, e0, e1,
       e5, e6, gl5, base5, frr⟩ |
@@ -368,7 +374,7 @@ theorem batches {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env 
     (hcp : cp ∈ chunks s0 ∧ cp.used = true)
     (hcpd : ∀ a, P0 ≤ a → a < P0 + es.flatten.length → InData cp a) (hP0 : 206864 ≤ P0)
     (hLt : es.flatten.length ≤ Lt ∧ Lt < 4294967296) (pay : μ0.readN P0 es.flatten.length = es.flatten)
-    (hbig : 232 * es.length < 1073741760) :
+    (hbig : 232 * es.length < 4294967296) :
     ∀ k L Rc b q (ω : Regs) (μ : Memory) (s : State), es.length - L = k →
       BInv env pb gl S rd P0 Lt es reps cp μ0 s0 out v5 v6 L Rc b q ω μ s →
       (∃ (ω' : Regs) (μ' : Memory) (s' : State) (Rc' b' q' N : Nat),
@@ -550,7 +556,7 @@ theorem first_batch {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (
     rw [fr2c c hc1 hu a ha (by omega), hd1 a ha]
 
 /-- **`Vec<Instruction>::decode`, the slots' chunks seen, any n ≥ 1** (482 … 20420): `DecodeVec2C.vec_anyC` with
-    1 ≤ n < 128 replaced by n < 2³² and 232 n < 2³⁰ − 64 (`realloc_call`'s range). Same conclusion. -/
+    1 ≤ n < 128 replaced by n < 2³² and 232 n < 2³². Same conclusion. -/
 theorem vec_allC {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env : RefineHost.Env) (cap0 : Nat)
     (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616) {hb pb : Nat} (gl : Nat → UInt8)
     (x : RefineCtx) (ω : Regs) (μ : Memory) (s : State) (H : HeapCtx env pb S0 S1 μ s)
@@ -558,7 +564,7 @@ theorem vec_allC {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] (env
     (cp : Chunk) (Ns : Nat → Nat)
     (hel : ∀ j (hj : j < es.length), Decode.VecVecOwn.ElemOkAFC env cap0 pb gl p P (S - 56) rd (Ns j) es[j] (reps j))
     (hg : ∀ a, Glob a → μ.read a = gl a)
-    (hn : 1 ≤ es.length ∧ es.length < 4294967296) (hbig : 232 * es.length < 1073741760)
+    (hn : 1 ≤ es.length ∧ es.length < 4294967296) (hbig : 232 * es.length < 4294967296)
     (hne : ∀ j (hj : j < es.length), 1 ≤ es[j].length)
     (hS : S0 + 2104 ≤ S ∧ S + 552 + 24 ≤ rd ∧ rd + 16 ≤ S1 ∧ S % 8 = 0)
     (hv5 : v5 < 18446744073709551616) (hv6 : v6 < 18446744073709551616)

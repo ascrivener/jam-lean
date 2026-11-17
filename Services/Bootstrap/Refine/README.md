@@ -6,6 +6,47 @@ Everything cites Gray Paper v0.8.0 via the docstrings of the files named here; t
 
 ## Current state (2026-11-16, read this first)
 
+**Seventh instance (2026-11-16, branch `claude/bootstrap-t1-m1d`).** Step 2 (the big `realloc`), approved by the parent
+as option (A), in-place edits of Decode/Encode files used only by T1's chain:
+- `Decode/ReallocBig.lean` (moved from `Refine/`): `OtherUsed s ptr` (another allocated chunk), `BigReq` (units ≥ 2^25,
+  or = 2^25 − 1 with `OtherUsed`: **the gap is closed**, model `growInplace_none_big` / `alloc_none_big` via
+  `bin_chunk` and `HeapFrame.Tiles.disjoint`, binary `fallback_entryB`), `realloc_call_big` for `BigReq`, and
+  `realloc_call_any` (units < 2^25 − 1 ∨ `BigReq`, in `realloc_call`'s form).
+- Changed statements (all weakenings, except the two new `oth` fields):
+  - `Decode/GrowOne.grow_one_call`: `hoc : oc ≤ 2^21` → `oc ≤ 2^26`; `g3i`'s `hN : N ≤ 2^22` → `N ≤ 2^27`.
+  - `Encode/WriterGrow.extend_grow`, `extend_any`: `hbig : 2·cap < 2^30 − 64 ∧ len + n < 2^30 − 64` → that `∨ OtherUsed s ptr`.
+  - `Encode/GrowH.capBound`: 2^28 → 2^60 (every `hlen ≤ capBound` stays, now dischargeable from crude bounds).
+  - New fields `BufH.oth` and `LayDH.oth : OtherUsed s ptr` (`BufH.init` takes it; `EncMHLoop` gets it from `LayLMH.arr`).
+  - `Refine/DecodeVecNC` (`batch_step`, `batches`, `vec_allC`), `DecodeCG.decode_allC`: `hbig : 232 n < 2^30 − 64` → `< 2^32`.
+- Omega pitfall: omega builds an ill-typed proof when it case-splits a hypothesis `… ∨ ∃ …` (e.g. `StackSrc ∨ HeapSrc`
+  unfolded). Keep such hypotheses folded (a `def`), or wrap them in `Nonempty`.
+  - `Refine/DecodeVec2.g3x`: `hN : 232 N < 2^30 − 64` → `< 2^32`.
+  - Refine's n ≤ 2²¹ → n ≤ 2²⁴ everywhere (`PassLoop.LayP.hn`, `Entry`, `Body`, `ExportElem.push`, `ExportStep`,
+    `PassGrow`, `LookupStep2.lpush`, `ExitEnc(H)`, `RunMixedG.run_mixedG`, `TopG`): |y| ≤ 2²⁴ gives n < 2²⁴.
+  - A full `lake build` passed after the threading; axioms clean (`realloc_call_any`, `grow_one_call`,
+    `refine_milestone`, `refine_coreG`).
+- Scope (parent, 2026-11-16): refine_t1c keeps 1 ≤ n (n = 0 is not a small lemma: `psiR_noinstr` fixes |y| = 33 and says
+  nothing of exports). Import: Adam decides; meanwhile state refine_t1c with an `hnoimport`-style hypothesis (as `hrsr`)
+  and do not start Import's handler.
+
+**Handoff (end of the seventh instance).**
+- #217 (parts B/C): attempt-1 still running at handoff. Merge it (squash) on green. Then restart
+  `claude/bootstrap-t1-m1c` from main, merge `claude/bootstrap-t1-m1d` into it, full `lake build`, and open the m1d PR.
+  PR body: the drop arms, encoder arms (22, 17-inline), ElemsSmallC, the big `realloc` (every changed statement listed
+  above), the new append-only tier T1C (jump entry 676 and 29153 … 29181; T1B untouched); no new findings. Check first
+  that build-items' post_simp PR (≈21 Decode files) doesn't conflict.
+- Then refine_t1c (the only remaining step):
+  1. `hcapB` / `hbig` in `ExitEncH.enc_runH` / `ExitRunW.exit_runW` are now dischargeable (capBound = 2^60; each output
+     element's data lies in a chunk below 2^30 and n ≤ 2²⁴); discharge them where refine_t1c calls `exit_runW`.
+  2. `slotRep : Spec.Instr → List UInt8 → Memory → Prop`: `kindRep` for the fixed kinds, `VecEmptyRep` / `VecVecRep` for
+     the vector ones, and the decode side's `CreateService{None,Some,Empty}Rep`, `BlessRep`, `AssignRep`,
+     `AssignGasRep`, `DesignateRep`, `ProvideInlineRep`, `LookedUpSomeRep`, `RandomStorageOkRep` (Decode/*.lean), with
+     the arguments as the decode lemmas instantiate them. `DRt C j bs μ := ∃ x, x.WF C ∧ … ∧ slotRep (outI x) bs μ`;
+     the named hypothesis is `DebugLineOk … DRt` (in place of `DRm`, on refine_t1c only).
+  3. The loop over pass (fixed and heap kinds) / Export / eager Lookup steps (`loop_all` with a third alternative from
+     `LookupStep2.lookup_step`; μ0 / Kp carried existentially), the decode of the heap kinds (`ElemsBigC` / `ElemsSmallC`
+     per kind into `decode_allC`), `exit_runW`, and the top as `TopG.refine_coreG` / `Milestone.refine_milestone`.
+
 **On `main`:** `Refine/Milestone.lean` `refine_milestone` (#197, with the `Fmt.FmtRO` conjunct of
 `VendoredFacts` from #207), T1c's first milestone M1. Ψ_R against `Spec.refine` for payloads of 1 ≤ n < 128
 well-formed instructions, each passed through (`Kinds.MFixed`) or `ExportSegs`, with |y| + 48 ≤ 2^24.
@@ -56,6 +97,219 @@ length prefix ℰ(n) and output ℰ(n) ⌢ encodings ⌢ ℰ₂(w)). Builds, axi
 - `TopG.from4680G`, `refine_coreG` (with `SpecRun.output_eqG`): `from4680`/`refine_core` for 1 ≤ n ≤ 2²¹, from pc 0
   to the halt with ℰ(`BootstrapWorkOutput { outI is, I }`).
 - Next: part B; then refine_t1c (T1's match form) once the bound question is settled.
+
+**Handoff (2026-11-16, end of the sixth instance).** Read this first.
+- **PR #217** (parts B/C, `claude/bootstrap-t1-m1c` at 69626f5): `model` green, `attempt-1` still running at handoff
+  (started 07:14). Subscribe to it, merge (squash) on green. Then restart `claude/bootstrap-t1-m1c` from main and merge
+  **`claude/bootstrap-t1-m1d`** into it (pushed, no PR), then open the PR for it.
+- m1d = #217 + ReallocBig, ElemsSmallC (fifth instance) + this instance's work below. **A full `lake build` of m1d passed**
+  (then `Refine.EncProvide` added and rebuilt, exit 0); axioms clean.
+- For the PR body: the new append-only tier **T1C** (jump entry 676 and the arm 29153 … 29181; T1B is untouched, per
+  `docs/code-fact-tiers.md`, which forbids adding a range to an existing tier); no new findings (the encoder traps for vector
+  lengths ≥ 2^32 at 20397 / 3779 are unreachable from |y| ≤ 2^24).
+- Next steps: step 3 (thread `realloc_call_big`), then refine_t1c with `DRm` widened (see "Next" below).
+
+**Progress (2026-11-16, sixth instance; branch `claude/bootstrap-t1-m1d`).** Every file below builds; axioms clean.
+- **Drop arms done** (`DropArms`): `ArmOk` (what the drop of an element reads and whether it frees a buffer), the dispatch
+  `dd0`/`dd11`/`dd12`/`dd13`/`dd17`/`dd22`/`dd24` and the arms (`aC*` CreateService, `aB*` Bless, `aA*` Assign and
+  AssignForGasCost, `aD*` Designate, `aP*` Provide, `aR*` RandomStorageAccumulate), `run_buf`, `drop_buf` (one element
+  dropped, as `drop_lu`). **AssignForGasCost (tag 24)** has index 24, past the table's 24 entries: the dispatch's
+  `branchLtU 23 < idx` at 29221 goes straight to 29153, the arm it shares with `Assign` (`dd24`).
+- **New append-only tier `T1C`** (`Tests/GenWitnessSteps.lean`, range 29153 … 29181, excludes X, R, T1B): jump entry 676
+  (index 12 → 29153) and the arm 29153 … 29181, which no tier had. Say so in the PR.
+- `DropVecW`: `BufEl` (an `ArmOk` element owning its buffer's chunk), `HeapElW = HeapEl ∨ BufEl` (+ `congr`), `drop_vecW`;
+  `FinW.fin_runW`, `ExitRunW.exit_runW`: `fin_runH` / `exit_runH` over `HeapElW` (copies; the H files are unchanged).
+- **Encoder arms** (`EncOkMH`) existing in `Encode/`: 0 (`ArmsHVecCS`, None / Some / empty), 5, 11, 12, 13, 18, 19, 24.
+  Missing were 22 and 17-inline. **22 done** (`EncRSA`): `rsa_okH(_232)` (`RSAOkRepAt q n hs` → 22 :: 0 :: ℰ(n) ++ hs,
+  n < 2^32) and `rsa_errH(_232)` (`RSAErrRep` → [22, 1]); `rsaOkRep_iff` links the decode side's `RandomStorageOkRep`. It
+  needed ω₅ = 2^64 − 1 from the dispatch (19894 compares the word at S + 8 with ω₅): `dispatch22` / `startV22` /
+  `startVH22` are `dispatchV` / `startV` / `startVH` for index 22. The binary traps at 20397 for n ≥ 2^32 (unreachable:
+  |y| ≤ 2^24).
+- **17-inline done** (`EncProvide`): `provide_inlineH` (`ProvideInlineRepAt s n q bytes` → 17 :: s ++ 1 :: ℰ(n) ++ bytes,
+  n < 2^32, `EncOkMH 232`; `provideInlineRep_iff` links the decode side). The `[u8]` encoder 3716 runs in its own frame at
+  F − 96: the `BufH` is carried across it by `BufH.frame`, with `prefix_anyH` / `extendH` at sp' = F − 96, and the arm's
+  tail 19074 is `seg_3765` (the helper's return and `encode_to`'s epilogue). The binary traps at 3779 for n ≥ 2^32
+  (unreachable). **Every output kind now has its `EncOkMH` arm.**
+- **Next**, in order: step 3 (thread `realloc_call_big` into decode's `finish_grow`, `grow_one` and the writer's growth;
+  close units = 2^25 − 1), then refine_t1c, with `DRm` widened there (define it from the slot predicates, the `rep j` of
+  each output kind, as a named Fmt hypothesis `DebugLineOk … DRt`).
+
+**Handoff (2026-11-16, end of the fifth instance).** Read this first.
+- **PR #217** (parts B/C, branch `claude/bootstrap-t1-m1c` at 69626f5): `model` green, `attempt-1` still running at
+  handoff. Merge it (squash) on green (the parent approved). Then restart `claude/bootstrap-t1-m1c` from main and bring
+  in the work on **`claude/bootstrap-t1-m1d`** (pushed, no PR; it is 69626f5 plus the commits below), e.g. merge it.
+- On m1d, beyond #217 (every file builds with `lake env lean`; axioms clean; a full `lake build` not yet run on it):
+  `Refine/ReallocBig.lean` (`realloc_call_big`, see "ReallocBig done" below) and `Refine/ElemsSmallC.lean` (the 8 small
+  `C` adapters), both imported in `Services.lean`; README updates.
+- Order approved by the parent (2026-11-16): ReallocBig (done but for units = 2^25 − 1 and threading it into T1's
+  callers, below), the small `C` forms (done), then the drop / `EncOkMH` arms for kinds 0, 11, 12, 13, 17, 22, 24 (tier
+  T1B range; if an arm needs code facts outside it, add them to T1B append-only and say so in the PR) with `DRm`
+  widened, all as new Refine files, then refine_t1c.
+- Next steps, in order:
+  1. Drop arms (see "Drop arms still to do" below; template `DropOutL`: `dd*` dispatch, the zero / nonzero pieces,
+     `drop_*` with `dealloc_call`), then extend `DropVecH.HeapEl` with them (a new predicate per buffer layout) and
+     re-run `drop_vecH` / `fin_runH` / `exit_runH` over the wider `HeapEl` (new files, as the parent asked).
+  2. `EncOkMH` arms for those kinds (`Encode/`'s heap arms, as `delete_itemsH_232` / `looked_up_someH`) and the
+     wider `DRm` (`ExitRun.DebugLineOk`'s slot predicate) with the formatters listed below.
+  3. Thread `realloc_call_big` beside `realloc_call` into decode's `finish_grow`, `grow_one` and the writer's growth,
+     and close units = 2^25 − 1; then n ≤ 2²¹, `hbig`, `hcapB` and `capBound` can go.
+  4. refine_t1c: the loop's induction carries μ0 / `Kp` existentially (`lookup_step` rebases them, `LUOwn`).
+
+**Progress (2026-11-16, fifth instance; branch `claude/bootstrap-t1-m1c`).** Main (#214) merged in. Every file below builds
+with `lake env lean`; axioms clean.
+- `LookupStep2.lookup_step`: the whole eager `Lookup` step, `PInv k` at i → `PInv (k + 1)` at 5042: `lmid`, then `lfmt`
+  (5372 → 5448: `LookupFmtOk`, log, `String` freed), `lpush` (5448 → 4046: `LookedUp(result)` pushed, with room or
+  `grow_one`), `Lookup.ldrop` (→ 5042). Slot k satisfies `LUSlot` (so `O k` via `hO`); `LUOwn` says what happens to μ0 and
+  `Kp`: unchanged for `None` and `Some []` (buffer 1), else the preimage's chunk is adopted (`PInv.adopt`, μ0 rebased by
+  `snapWith`). Named hypotheses: `LookupFmtOk` and `htab` (`(ro.drop 32).take 4 = dropEntry8`, part of `VendoredFactsC`);
+  the step also takes `rtab` (65568 … 65572 readable at its start). Internal: `hlen`, `hgas`.
+- `ElemsBigC`: the 8 `*_elem_bigC` (`import`, `bless`, `random_storage_ok`, `designate`, `looked_up_some`,
+  `provide_inline`, `create_service_some`, `assign_gas`): `ElemsBig.*_elem_big` as `ElemOkAFC`, the slot's buffer word
+  naming a returned chunk that holds the buffer (`OwnsBuf cs bs off m`: off 16, except `provide_inline` 24 and
+  `create_service_some` 8). These cover only the large sizes (> 1024 pairs / > 512 hashes / > 48 keys / > 16384 octets);
+  the small adapters are in `ElemsSmallC` (`bless_elemC`, `random_storage_ok_elemC`, `designate_elemC`,
+  `looked_up_some_elemC`, `provide_inline_elemC`, `create_service_some_elemC`, `assign_gas_elemFC`, `assign_elemFC`;
+  same `OwnsBuf` offsets). `import_elem` (part D's input, not an output) has no `C` form yet.
+- **Drop arms still to do** (from the disassembly and the table at 67760; each mirrors `DropOutL`: the element at the
+  frame word sp + 48, a capacity test, `dealloc(ptr, cap·size, align)` returning via jump entry 1356 → 29181, else
+  straight to 29181). Index → jump entry → arm:
+  0 (CreateService) → 687 → 29581: cap = ω₈ (the discriminant word; 2^64 − 1 = `None`, 0 = empty → 29181), ptr at +8,
+  align 1. 11 (Bless; also 9, Import) → 678 → 29241: cap at +8 (0 → 29181), ptr at +16, size 16·cap, align 8.
+  12 (Assign) → 676 → 29153 (below T1B's range, in `Code`). 13 (Designate) → 688 → 29609: cap at +8, ptr at +16,
+  336·cap, align 1. 17 (Provide) → 681 → 29338: the octet at +8 (0 = by hash → 29181), cap at +16, ptr at +24,
+  align 1. 22 (RandomStorageAccumulate) → 689 → 29640: cap at +8 (2^64 − 1 = `Err`, 0 → 29181), else → 29162 (12's
+  arm's tail, in `Code`). AssignForGasCost (tag 24) is not among the table's 24 indices: check its dispatch index.
+- Still open for part B: the output drop arms of the other heap kinds (indices 0, 11, 12, 13, 17, 22, 24; `DropOut.NoDrop`
+  excludes them and `HeapEl` covers only 5, 18, 19), the encoder arms `EncOkMH` and `DRm` for them.
+- **Debug field formatters the new kinds reach** (for the field-formatter session; from `Fmt/README.md`'s arm table): the
+  output kinds refine_t1c adds are tags 0, 5, 11, 12, 13, 17, 18, 19, 22, 24. Beyond the milestone's formatters (28822,
+  28843, 37549, 56340) they reach **315, 26397, 26605, 26905, 28739, 28801, 29877, 36534, 36594, 36654, 36732, 37611,
+  57485**, through the builders/tails 63820 (tag 0), 28576 (5, 13, 18), 63570 (11), 27665 (12), 28280 (17), 62816 (19),
+  62471 (22) and 28458 (24). Not needed: 26706 (tag 9, `Import`, never an output) and 36972 (tag 21, RSR, excluded).
+
+**ReallocBig plan (fifth instance, from the disassembly).** Goal: `realloc_call`'s null outcome for
+2^25 − 1 ≤ units, so n ≤ 2²¹, `hbig` and `capBound` can go. The wrapper 40701: size > 2^37 − 32 → ω₇ = 0 and return at
+40724 (no lock). Otherwise lock (as `alloc_call`), units = (size + 31) >> 5 passed through `add_imm_32` (sign-extended:
+units ≥ 2^31 arrive as 2^64 − 2^32 + units), `realloc_impl` 42980, unlock, 40821. In 42980 for units req ≥ 2^25 − 1:
+- 42996 cur = header(ptr − 32).size >> 1; req ≠ cur − 1, req ≠ 0; 43023 req ≥ cur − 1 (unsigned) → grow path 43169.
+- 43169: req = 2^64 − 1 (units 2^32 − 1) → fallback 43259. Otherwise ω₅ = req + 1 (32-bit, sign-extended), cur < ω₅;
+  next = chunk + 32·cur (32-bit add): next ≥ heap top + 2^30 → 43259; next used → 43259; next free and
+  cur + next.size < req + 1 (always: the heap has < 2^25 units) → 43259. The merge path 43375 (with `ecalli 1`) is
+  never reached.
+- 43259: `alloc_impl` 41177 (ω₈ = align, ω₉ = req, ω₁₀ = 0) returns null for these sizes (`Decode/AllocHuge`'s
+  `alloc_impl_huge_callG`, both units < 2^31 and ≥ 2^31, as `LookupWrap.wl` / `wlh` use) → 43326: ω₇ = 0, return to
+  40805 → unlock → 40821.
+- Model side: check `realloc (growTo pb)` is `none` for these units (heap 2^30 octets).
+New file `Refine/ReallocBig.lean`; the Alloc files are not changed (their `hr1` stays).
+
+**ReallocBig done for 2^25 ≤ units < 2^31 − 1** (sizes < 2^36 − 32; every T1 request stays below 2^31 units, since
+232·(2n + 4) octets for n ≤ 2^24 is about 2.4·10^8 units). `ReallocBig.realloc_call_big` (and `…G`): the model's
+`realloc` is `none` (`growInplace_none_big`, `alloc_none_big`) and the binary returns null at 40821 with `HeapCtx` for
+the same state, stack and globals kept. Proof: copies of `Alloc.fallback_pre` / `fallback_entryG` /
+`fallback_refines_failG` with req < 2^31 − 1 (all their 32-bit arithmetic needs; the grow-heap branch is impossible for
+req ≥ 2^25) and the fallback's general alloc tail (`fallback_tail_failG`, no size bound), inside `rw_lock` / `rw_unlock`.
+- Tried and reverted: weakening `hr1` in the Alloc files in place to req < 2^31 − 1 fails in `ReallocGrowImpl` (the
+  in-place merge's success path) at req = 2^25 − 1.
+- **Gap: units = 2^25 − 1 exactly** (sizes 2^30 − 63 … 2^30 − 32) is covered by neither `realloc_call` (units < 2^25 − 1)
+  nor `realloc_call_big`. There the merge with the next free chunk can only succeed when the chunk and its neighbour
+  span the whole heap. To close it: either a case lemma for that value, or keep requests off it internally (232-octet
+  multiples never land on it; the encoder's writer growth needs a check).
+- Next: thread `realloc_call` ∨ `realloc_call_big` through `ReallocCall.realloc_call`'s users in T1 (decode's
+  `finish_grow`, `grow_one`, the encoder's writer growth) so n ≤ 2²¹, `hbig` and `capBound` can go.
+
+**Handoff (2026-11-16, end of the fourth instance; branch `claude/bootstrap-t1-m1c`, pushed, no PR yet).** Every file
+below builds; axioms clean. #214 (part A) was still in attempt-1 at handoff (`model` green): merge it on green, then merge
+main into this branch before opening its PR. A full `lake build` of this branch was started but not finished (the cache
+from main@dd373c2 predates #201, so everything rebuilds cold); run it before the PR.
+- Changed existing files (all T1's): `DropOut.dh` also exports n at the frame base; `DropOutH.items_loop` also keeps pages
+  and read-only bytes; **`PInv` has a new field `c8`** (M + 8 = 2^63 + 17, `LookedUp`'s discriminant, which `Lookup.lps`
+  reads), exported by `Entry.e2` and kept by `PassLoop` / `ExportElem` / `LoopAll` / `PInvAdopt`.
+- `DropOutH.drop_vv`: one `DeleteItems` / `Imported` element dropped (29188 → 29181).
+- `DropOutL`: `LookedUp`'s arm (index 18, jump entry 682 → 29376, tier T1B; `None` = cap 2^64 − 1): `ddL`, `lo0`, `lo1`,
+  `drop_lu`.
+- `DropVecH`: `VVAt`, `LUAt`, `HeapEl` (+ `congr`); `drop_vecH` (29087 → ret, elements `NoDrop` or `HeapEl`).
+- `FinH.fin_runH`: the epilogue with `drop_vecH`.
+- `ExitEncH.enc_runH`: the encoder via `encode_okMH_big`. Internal hypotheses, never in refine_t1c's statement: `hcapB`
+  (232 n + 6 ≤ 2^28) and `hbig` (twice the output ≤ 2^28) until ReallocBig; the growth encoder's `FrH` also needs
+  `2147484384 ≤ M` (LayP has 2147484104) and `S1 + 16 < 2^32`: both true of refine's real stack, to discharge where
+  `LayP` is.
+- `ExitRunH.exit_runH`: refine's exit (5042 → ret) with heap elements (slots at the end state, output buffer Eo; `rep` /
+  `DR` depend on memory only through `src` in kept chunks; owned chunks kept, `Kp`, not `ce`).
+- `PInvAdopt.PInv.adopt`: a fresh allocated chunk joins the kept chunks, rebasing μ0 on its data (`snapWith`).
+- `LookupStep.lhead` (i → 5288: stage, `ld`), `lookupOf` (Ω_H's 𝐯 for service svc and hash h), `lmid` (i → 5372: `la`,
+  `lookup_wrap`; result `ResAt μ' (M + 560) (lookupOf env svc h) s s'`; internal `hlen` (Adam's pending decision) and
+  `hgas`).
+- **Next, the second half of the Lookup step** (5372 → 5042, a new file `LookupStep2.lean` or appended): `Lookup.lf`
+  (5372 → 59375) → `LookupFmt.LookupFmtOk` (needs `OptVecAt μ (M + 560)` from `ResAt`: `None` is the first disjunct;
+  `Some d` gives cap = len = |d| < 2^63 and the buffer readable: chunk data, or buf = 1 with len 0) → `Lookup.ll` →
+  `lfr` + `Decode.DeallocCall.dealloc_call` (return 174 → 5448) or `lfz` → `lp0` (room) or `lpg` +
+  `Decode.GrowOne.grow_one_call` (return 176 → 5493; see `PassGrow` / `ExportElem.push` for the pattern) → `lps` (slot k
+  = {2^63 + 17 from `st.c8`, the result's three words}) → `ldrop` (needs `dropEntry8` at 65568, from `VendoredFactsC`)
+  → `PInv (k + 1)` at 5042 with O k for the `LookedUp` slot; for `Some d` with d ≠ [] apply `PInv.adopt` to its chunk
+  (fresh: `ResAt`'s `∀ e ∈ chunks s, e ≠ c` gives ≠ ce, ∉ Kp, ≠ the output buffer). Then the 8 `*_elem_bigC` lemmas,
+  ReallocBig, refine_t1c (the loop's induction must carry μ0 / Kp existentially, since Lookup steps rebase them).
+- The pass-through heap kinds need no `PInv` change: their chunks come from the decoder, so they are `Kp` chunks with
+  data as in μ0, and `HeapEl` at the loop's end follows by `VVAt.congr`.
+- Debug field formatters the new kinds reach: not yet determined (the widened `DRm` is still to be written; candidates
+  as listed in the third instance's handoff).
+
+**Handoff (2026-11-16, end of the third instance; branch `claude/bootstrap-t1-m1c`, pushed, no PR yet):**
+- The branch is `claude/bootstrap-t1-m1-wip` (#214) plus main merged plus parts C/B below. #214 (part A) was still in
+  CI (attempt-1) at handoff: merge it on green (brief), then rebase or merge main into this branch before opening its PR.
+- Open decision with Adam (via the coordinator): whether refine_t1c assumes looked-up preimages < 2^63 octets
+  (recommended (a)). Approved: `VendoredFactsC` (the 4046 table), tier T1B, the gas cap as an internal choice (it must
+  not surface in refine_t1c's statement).
+- All new files build locally (`lake build Services.Bootstrap.Refine.LookupRun Services.Bootstrap.Refine.LookupFmt
+  Services.Bootstrap.Refine.DropOutH`, `CodeT1BAll`, `CodeT1BOk`); axioms checked for `lookup_wrap`. A full `lake build`
+  has not been run on this branch yet.
+- When a PR goes up: add the binary-vs-spec note for preimages ≥ 2^63 octets (the wrapper traps; `Spec.refine` returns
+  `lookedUp (some d)`) to `docs/upstream-candidates.md` and the PR body.
+- Order still to do: `drop_vv`, `drop_vecH`, `exit_runH`, `PInv` with slot-owned chunks and the Lookup step, the 8
+  `*_elem_bigC` lemmas (new files, mirroring `vecvec_elem_bigC`), ReallocBig, refine_t1c. When `DRm` is widened, list
+  here which Debug field formatters the new kinds reach (candidates 315, 26397, 26605, 26706, 26905, 28739, 28801, 29877,
+  36534, 36594, 36654, 36732, 36972, 37611).
+
+**Progress on C (2026-11-16, third instance, branch `claude/bootstrap-t1-m1c`):** the handler and the wrapper are
+proved up to the composition with `PInv`. All files build, axioms clean.
+- `LookupHost.FreeStepsH.lookupRef`: one Ω_H step under `refineContractK cap` (cap ≥ 1125 + ⌈264·ω₁₁/1024⌉; the gas cap
+  stays internal, coordinator 2026-11-16), `lookupVal` / `lookupR7` / `lookupMem`.
+- `Lookup`: `ld` (5095 → 5288, flag set), `la` (5288 → 5366, the frame G = M − 48), `lf` (5372 → `format!`), `ll` (→ log
+  5428), `lfr` / `lfz` (free or not), `lp0` / `lpg` (room, or `grow_one`), `lps` (the `LookedUp` slot {2^63 + 17 from
+  M + 8, the result's three words}, len + 1, → 4046), `ldrop` (4046 → 5042 for index 8, given the ro table entry
+  `dropEntry8` at 65568).
+- `LookupWrap`: `wn`, `wz`, `wbig`, `wl` / `wlh` (lock + `alloc_impl`, units < 2^31 / ≥ 2^31), `wu`, `wr`.
+- `LookupRun.lookup_wrap`: 5366 → 5372 with `ResAt` (`None`, `Some []` with buf 1, or `Some d` in a fresh chunk), or
+  `Bridge.AllocFails` (null at 49149, or `sizeTrap`). Internal hypotheses: preimages < 2^63 octets (`hlen`; Adam
+  decides whether refine_t1c assumes it, recommended (a)), and the cap covering the second Ω_H (`hgas`).
+- `LookupFmt.LookupFmtOk`: the named hypothesis for 5398's `format!` (with `OptVecAt` for the argument).
+- Approved: `VendoredFactsC` = `VendoredFacts` ∧ the 96-octet 4046 drop table at ro offset 0 (for refine_t1c only).
+  The table (ro[0 … 96)): index 8 → jump entry 122 → 4115 (return), 9 → 4129, 10 → 4302, 0 → 4463, 5 → 4169, 12 → 4160,
+  13 → 4496, 17 → 4231, 18 → 4266, 19 → 4362, 22 → 4529; all others → 4115.
+- Next for C: the step 5042 → 5042 for an eager `Lookup` on `PInv`. It needs `PInv` to carry the chunks owned by
+  output slots (the preimage's buffer), with their data, as part B does for the heap kinds: do it together with B.
+- Notes from the previous instance (part B): a new append-only code-fact tier "T1B" (approved; `Tests/GenWitnessSteps.lean`,
+  `bootstrapSvc` after `fnRangesR`: `tiers := [{ name := "T1B", ranges := [(29181, 29675)], excludes := ["X", "R"], doc
+  := "refine's output drop (drop_in_place::<[Instruction]>): the heap variants' drop arms" }]`). Drop arms: jump entries
+  679 → 29270 (DeleteItems, 5), 685 → 29476 (Imported, 19); the drop table at 67760 maps index t to entry
+  (67760 + offset_t)/2 − 1. The encoder with growth needs H arms for every fixed kind (`ArmsHFixed` etc.). `LayLMH`
+  needs cap = 232n + 6 ≤ capBound (2^28), i.e. n ≲ 1.157M internally until ReallocBig.
+
+**Progress on B (2026-11-16, third instance):**
+- Tier T1B generated and kernel-checked (`CodeT1B*`, range (29181, 29675); the previous note's 29176 starts inside the
+  instruction at 29175 and gave a false fact).
+- `DropOutH`: the drop arms of `DeleteItems` (5, arm 29270) and `Imported` (19, arm 29476), straight-line: `ddV`
+  (dispatch 29188 → arm; table entries 1360 / 1372), `va` / `va0` (items or none), `vz` + `vn` = `vi0` (an item of
+  capacity 0, on to the next), `vi1` (an item's `dealloc(q, c, 1)`, return 1362 → 29336 / 1374 → 29540), `vb` (after
+  it), `vo0` / `vo1` (the outer buffer, `dealloc(ptr, 24·cap, 8)`, return 1356 → 29181). All build.
+- `DropOutH.items_loop`: the item loop (head → 29542) by induction, each nonzero item freed by
+  `Decode.DeallocCall.dealloc_call` (any host relation); proved.
+- Next for B: `drop_vv` (one heap element, 29188 → 29181: `ddV`, then `va` + `items_loop` or `va0`, then `vo0` or
+  `vo1` + `dealloc_call` of the outer buffer (return 1356 → 29181: `jte_677`, `bs_29181` are in `Code`)), then `drop_vecH` (the whole output drop with the
+  heap context, `NoDrop` elements by `DropOut.dd`), then `exit_runH` (encoder with growth via
+  `Encode.EncMHLoop.encode_okMH_big` and the arms `delete_itemsH_232` / `importedH_232` / `looked_up_someH`, the wider
+  `DRm`, `drop_vecH`), then `PInv` carrying chunks owned by output slots (for Lookup), then refine_t1c.
+- pvm_go pitfall: a piece whose start pc equals its target (a loop head reached again) can stop at once; split it
+  (`vi0` = `vz` + `vn`). Negative offsets: read as `w + 2^64 − 8` and convert as in `Export.xr1`.
 
 Decided by the coordinator on 2026-11-15:
 - the new theorem `refine_t1c` is added in T1's match form, and `refine_milestone` stays unchanged;

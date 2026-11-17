@@ -815,6 +815,35 @@ Pieces of T2 (`docs/bootstrap-target.md`): parts of bootstrap's accumulate code 
     The binary does not check 𝖨 > 0; 2·𝖢·𝖨 < 2³² follows from 𝖢 ≤ 341 and
     𝖨 < 2¹⁶.
 
+- **T2: bootstrap's accumulate implements `Spec.accumulate` (stated with named hypotheses).**
+  `Acc.Final.accumulate_spec` (`Acc/Final/Spec.lean`), from `Acc.Final.acc_impl` (`Acc/Final/Impl.lean`)
+  and the lift `psiA_of_impl`.
+  - *Statement:* for a service s whose code (in the state with the incoming transfers credited) is
+    bootstrap's (`IsBootstrapCode`), timeslot t < 2³², s < 2³², and at most 89 inputs each `InputSized`:
+    for some n, Ψ_A's state, transfers, yield and provisions are `ASem.outcome (ASem.run n
+    (Spec.accumulate C t) …)` from (x₀, x₀), x₀ = I(**e**′, s); and that spec run finished, or Ψ_M ran
+    out of gas, or the binary reached heap exhaustion (`AccAbort`). C is any constants with
+    maxRecent = 2·341·16.
+  - *Proved along the way:* the start-up to 6501 with the statics and picoalloc's start state
+    (`start_ctx`, with `Statics.chainZ`, which also checks the freed header word [206892]₄ = 0); the first
+    log line under a context-keeping contract (`acc_log_lineK`, `accKeepK`); `fetchItems` replies ℰ(↕**i**)
+    (`ASem.step_fetchItems`); the spec's decode gives `inputs.map specItem` (`decode_items`); no inputs:
+    6674 halts (`items_none_halt`); otherwise `ItemsInv` at 6782 (`il_head2`) and `items_loop_full`.
+    `ParamStatics` (𝖢 = 341, 𝖨 = 16) and `RingFits` are discharged; the service's own account comes from
+    Ψ_A's code lookup.
+  - *Named hypotheses* (`Acc/Final/Hyps.lean`):
+    - `AccVendoredFacts`: the read-only slices accumulate reads in the vendored blob (templates, `String`
+      vtable, "transfer-count", `set`'s error table, key-size words, jump table); step 10;
+    - `AccHyps B C` (for every bootstrap code): `AccLogFail` (the first log line, 6501 … 6630: a failed
+      allocation then ends ☇; its success branch is proved), `InputsGlob` (the inputs decode keeps
+      196616 … 196791), and `items_loop_full`'s `Utf8Call`, `LogFmt`, `KeyFmt`, `ItemLogFmt`, `OutDecH`,
+      `InstrLogH`, `ResultLogH`, `HandlerH`, `PushH`, `ExtendH`, `OkEncH`, `DropInstrsH`;
+    - `InfoFits e s`: s's code hash is shorter than 2⁶⁴ − 73 octets (its `info` record shorter than
+      2⁶⁴ − 9, which the SDK's `info` wrapper reads as an error code from on, 49017);
+    - `ValuesFit` (decided 2026-11-15);
+    - G3 (temporary): at most 89 inputs, each `InputSized`.
+  - *Pending Adam's decision (2026-11-17):* `InfoFits`, `AccLogFail` and `InputsGlob` are new assumptions.
+
 - **T2's abort reason and length premise (definitions).** `Acc.AccAbort`, `Acc.HeapTrapPc`,
   `Acc.ValuesFit` (`Acc/Abort.lean`).
   - `AccAbort s`: heap exhaustion. Either a failed allocator call (the `alloc` wrapper's return 40611 or

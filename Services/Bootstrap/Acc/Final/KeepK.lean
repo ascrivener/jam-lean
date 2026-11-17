@@ -160,4 +160,18 @@ theorem accContractK_keepsRO (cap : Nat) (env : AccEnv) {pb : Nat} (hbd : heapBo
   rw [← hm]
   exact accHostFn_keep env hbd h (UInt64.ofNat cap) ω μ x hs
 
+/-- A run under a contract keeping what is not writable keeps the octets below 196608 (as
+    `Acc.ro_keep`, here without its heavier imports). -/
+theorem ro_keep0 {X : Type} {R : HostRel X} {p : ByteArray} {pb : Nat} (hR : KeepsRO R 48 pb)
+    {i i' n : Nat} {ω ω' : Regs} {μ μ' : Memory} {x x' : X} (run : FreeStepsH p R i ω μ x i' ω' μ' x' n)
+    (hro : ∀ a, a < 196608 → μ.writable a = false) :
+    ∀ a, a < 196608 → μ'.read a = μ.read a ∧ μ'.readable a = μ.readable a ∧ μ'.writable a = false := by
+  intro a ha
+  have k := FreeStepsH.keepRO_of hR run
+  have hp := k.1 (a / pageSize) (.inl (by unfold pageSize; omega))
+  refine ⟨k.2 a (by unfold two32; omega) (.inl (by unfold pageSize; omega)) (hro a ha), ?_, ?_⟩
+  · unfold Memory.readable; rw [hp]
+  · have := hro a ha
+    unfold Memory.writable at this ⊢; rw [hp]; exact this
+
 end Services.Bootstrap.Acc

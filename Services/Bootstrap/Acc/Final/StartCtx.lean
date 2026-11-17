@@ -3,7 +3,6 @@ import Services.Bootstrap.AllocStart
 import Services.Bootstrap.StartMemZ
 import Services.Bootstrap.Decode.HeapCtx
 import Services.Bootstrap.Acc.Final.KeepK
-import Services.Bootstrap.Acc.Transfer.ImplW2
 
 /-!
 # Accumulate from instruction 5 to 6501, with the statics and the allocator's context
@@ -153,7 +152,7 @@ theorem start_ctx (p : ByteArray) (P : Program) [HasCode p P] [HasCodeX p P] [Ha
   have wrq : ∀ a, μ'.writable a = μ₁0.writable a := fun a => by rw [mwr, h.wrq]
   have runA : FreeStepsH p (accContract env) 5 (Prefix.initRegs LA) μ x 6501 ω' μ' x 4936 :=
     ((run1.trans run2).trans run3).mono (by decide)
-  have lk := ro_keep (accContractK_keepsRO hostCostMax env henv) runA hZ.lowRO
+  have lk := ro_keep0 (accContractK_keepsRO hostCostMax env henv) runA hZ.lowRO
   have hlow : ∀ a, a < 196608 → μ'.read a = μ.read a := fun a ha => (lk a ha).1
   refine ⟨ω', μ', runA, r1, r7, hra,
     m2 _ _ _ (by omega) hcC, m2 _ _ _ (by omega) hcI, ?_, hlow,

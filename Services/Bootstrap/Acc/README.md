@@ -2,6 +2,32 @@
 
 ## Handoff: T2 inputs (updated 2026-11-16 evening, end of the third session)
 
+**Session 6 (2026-11-17), on `claude/bootstrap-t2-r2`: R2 done.**
+- Merged Handlers A 8173e6b: every `hAbX` now requires ω₇ = 0 (a failed allocation), so T2's abort
+  reason stays `AccAbort` (@parent, option (A)).
+- **`ItemsLoop/Op.lean`** (axioms clean): `op_arm : OpArm …` (6766 → 7009 `opArm_head` → 8013 `op_dec`
+  → 8416 `add_recent` → 8492 `results_init` → 6766 `loop_row11`, via `op_r57`), and **`items_loop_full`**:
+  `items_loop` with `op_arm` / `err_arm` plugged in, so the whole items loop is an `Impl` of
+  `forIn (ins.map specItem) () accBody; pure ()` with post `Halts`. Its named hypotheses: `Utf8Call`,
+  `LogFmt`, `KeyFmt`, `ItemLogFmt`, `OutDecH`, `InstrLogH`, `ResultLogH`, `HandlerH`, `PushH`, `ExtendH`,
+  `OkEncH`, `DropInstrsH`; premises `ParamStatics μ₀ Cp I`, `RingFits Cp I`, maxRecent = 2·𝖢·𝖨; aborts:
+  `HeapFailT`, traps 15364 / 34070 / 47977 / 32584 / 36528, 40611 / 40821 with ω₇ = 0 (all `AccAbort`).
+- `ItemsInv` gained `ro2 : OpRO s.μ` (`OpRO` moved to `Inv.lean`) and `hsp : 2³¹ + 4096 ≤ sp` (EntryHyp
+  needs it). Whoever establishes `ItemsInv` at 6782 (R16) must supply both.
+- `op_dec`'s `hpo` is now `|out| ≠ 0 → ptr + |out| ≤ 2³¹` (weakened; it is used).
+- **Pitfall (Lean):** a *full* application of `add_recent` / `results_init` makes the elaborator whnf
+  `Impl … (spec program)` (unfolding `addRecent` / `store`, it loops: maxRecDepth). Apply all but the last
+  premise, `generalize` the program to a variable (`at h ⊢`), then apply the last premise. Also: an
+  `obtain`/`rcases` clearing (`-`) the `jumpTab` equation of `OpRO` loops; use projections.
+- **Next: R16** (`accumulate_spec`), from the R16 map below. Missing links, in order: (1) 5 → 6501 with
+  the statics (`Statics.chain` in place of `AccBParams.chain` in `start_to_6501`); (2) `HeapCtxC` before
+  6501 (analogue of `Refine/ArgsCtx.lean` `args_ctx`); (3) `acc_log_line` (6501 → 6630, accContractK;
+  it needs the service's own account in the context and `infoValue` shorter than 2⁶⁴ − 9: new premises or
+  derived from Ψ_A's setup) and `inputs_decode` (6630 → 6674, accContractK) lifted to KeepCtx accContractS
+  (`FreeStepsH.pairS`, `Wrappers/GrowS.lean`); (4) n = 0: 6674 → 15215 → halt; n > 0: `il_head` (6674 →
+  6782) → `ItemsInv` at 6782 (`itemsOwn_of_slots`; words 208 / 136 / 200 / 1848 from the prologue);
+  (5) `items_loop_full` → `Halts`; (6) `psiA_of_impl` with Ab = `AccAbort`, `prog` = Spec.accumulate.
+
 **Session 5 (2026-11-16, night), on `claude/bootstrap-t2-r2`** (= `claude/bootstrap-t2-statics` + Handlers A's
 `claude/bootstrap-t2-handlers-a-r5` at 4a9f542, merged locally; full build green after the merge):
 - R2 pieces, sorry-free: `ItemsLoop/OpHead.lean` (`opArm_head`, 6766 → 7009 for any operand, `OpHeadPost`),

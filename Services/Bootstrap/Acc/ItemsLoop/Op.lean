@@ -551,4 +551,32 @@ theorem op_arm {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCo
   · intro a ha
     rw [gl4 a ha, gl3 a ha, A.glob a ha, gl1 a ha]
 
+set_option maxRecDepth 20000 in
+/-- **R1 with R2: the items loop**, `items_loop` with its two arm premises discharged (`op_arm`,
+    `err_arm`): from the loop head with `ItemsInv` for the inputs `ins`, the run implements
+    `Spec.accumulate`'s loop over `ins.map Spec.specItem`, then halts with ω₈ = 0; early ☇ only where
+    `Ab` holds (heap exhaustion). Named hypotheses: `Utf8Call`, `LogFmt`, `KeyFmt` (the transfer arm),
+    `ItemLogFmt`, `OutDecH`, `InstrLogH`, `ResultLogH`, `HandlerH`, `PushH`, `ExtendH`, `OkEncH`,
+    `DropInstrsH`; `ParamStatics μ₀ Cp I`, `RingFits Cp I`, maxRecent = 2·𝖢·𝖨. -/
+theorem items_loop_full {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeA p P]
+    (env : AccEnv) (B : InstrRep) (C : Consts) (now : Nat) {Ab : St Stream → Prop} {pb S0 S1 : Nat}
+    (gcap : Nat) (hcap1 : 134217728 ≤ gcap) (hcap : gcap < 18446744073709551616)
+    (hAb : ∀ s : St Stream, HeapFailT s → Ab s)
+    (hAbT : ∀ s : St Stream, s.i = 15364 ∨ s.i = 34070 ∨ s.i = 47977 ∨ s.i = 32584 ∨ s.i = 36528 → Ab s)
+    (hAbX : ∀ s : St Stream, (s.i = 40611 ∨ s.i = 40821) ∧ s.ω[7] = UInt64.ofNat 0 → Ab s)
+    (hU : Utf8Call p env pb S0 S1) (hLF : LogFmt p env pb S0 S1) (hK : KeyFmt p env pb S0 S1)
+    (hIL : ItemLogFmt p env pb S0 S1) (hOD : OutDecH B C p env pb S0 S1)
+    (hL : InstrLogH B p env pb S0 S1) (hR : ResultLogH p env pb S0 S1) (hH : HandlerH B p env C now pb S0 S1 Ab)
+    (hP : PushH p env pb S0 S1) (hE : Handlers.Results.ExtendH p P env pb S0 S1)
+    (hO : Handlers.Results.OkEncH p P env pb S0 S1) (hD : DropInstrsH B p P env.code pb S0 S1)
+    {Cp I : Nat} (hRF : Handlers.RecentSlotWrite.RingFits Cp I) (hmax : C.maxRecent = 2 * Cp * I)
+    {sp q nc e : Nat} {μ₀ : Memory} (hPS : Handlers.RecentSlotWrite.ParamStatics μ₀ Cp I) :
+    ∀ (ins : List AccumulateInput) (s : St Stream), ItemsInv env pb S0 S1 sp q nc e μ₀ ins s →
+      Impl p (accContractS env) env Ab
+        (Prog.bind (forIn (ins.map Spec.specItem) PUnit.unit (accBody C now)) fun _ => pure ())
+        (Halts p (accContractS env)) s :=
+  items_loop env gcap pb hcap1 hcap (P := P) hAb hU hLF hK C now
+    (op_arm (P := P) env B C now gcap hcap1 hcap hAb hAbT hAbX hIL hOD hL hR hH hP hE hO hD hRF hmax hPS)
+    (err_arm (P := P) env hAb hIL)
+
 end Services.Bootstrap.Acc

@@ -105,7 +105,7 @@ theorem stepMH (x : RefineCtx) (ω : Regs) (μ μ0 : Memory) {pre : List UInt8}
       30215 s1 μ :=
     { fr := L.fr, hS := by omega, hS' := by omega, slot := Or.inr ⟨e, g1, heu, g2, by omega, by omega⟩,
       vc := W.vc, vp := W.vp, vl := W.vl, hlc := W.room, cpos := W.cpos, cb := W.cb, H := W.H,
-      chunk := W.chunk, hret := ⟨by decide, by decide, by decide⟩, hjt := jte_708, hbt := bs_30215 }
+      chunk := W.chunk, oth := W.oth, hret := ⟨by decide, by decide, by decide⟩, hjt := jte_708, hbt := bs_30215 }
   have hrep : rep k (μ.readN (E + 232 * k) 232) μ := by
     rw [W.readN_safe hslot0]
     exact L.rcong k hk _ μ0 μ (fun q m h => W.readN_safe (L.hsrc k hk q m h)) (L.rep0 k hk)
@@ -269,7 +269,7 @@ theorem restMH (x : RefineCtx) (ω : Regs) (μ0 μ2 : Memory) {pre : List UInt8}
     (by rw [Memory.readN_congr (fun j hj => k5M _ (by omega) (by omega))]; exact sr)
     (by rw [Memory.readN_congr (fun j hj => k5M _ (by omega) (by omega))]; exact s5)
     (by rw [Memory.readN_congr (fun j hj => k5M _ (by omega) (by omega))]; exact s6)
-    (by have := W5.cb; unfold capBound at this; omega) (by have := W5.buf_lt; omega) (by omega) hr5 hr6 hret hjt hbt
+    (by have := W5.buf_lt; omega) (by have := W5.buf_lt; omega) (by omega) hr5 hr6 hret hjt hbt
     (fun a h1 h2 => Memory.readable_of_writable (W5.H.st a (by omega) (by omega)))
     (fun a h1 h2 => W5.H.st a (by omega) (by omega))
   exact Or.inl ⟨cap5, ptr5, s5', ω6, μ5, μ6,
@@ -380,6 +380,7 @@ theorem encode_okMH_big {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p 
   have L1 := L.congr afr ard awr
   have W1 : BufH env pb S0 S1 (M + 56) (M + 24) 0 buf s μ1 [] cap buf s μ1 :=
     BufH.init (by omega) ac ap al (by omega) L.cpos L.cb L1.H ⟨c, hc, hcu, hcp, hcc⟩
+      (by obtain ⟨e', he', heu', hne', -, -⟩ := L.arr; exact ⟨e', he', heu', hne'⟩)
   -- the length prefix
   rcases prefix_anyH (p := p) (P := P) K hK1 hK x ω1 μ1 W1 M (M + 52) 1416 30122 E (232 * n) n ⟨by omega, by omega, hM8⟩
       (by omega) (by omega) L.fr.hS1 a0 a1 a5 (by rw [a6, h6]) a7 a8 (by omega) (by omega) (by omega)

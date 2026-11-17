@@ -170,7 +170,7 @@ theorem lfmt {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCode
 theorem lpush {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [HasCodeR p P]
     (env : RefineHost.Env) (cap0 : Nat) (hcap1 : 134217728 ≤ cap0) (hcap0 : cap0 < 18446744073709551616)
     (x : RefineCtx) (ω : Regs) (μ : Memory) {hb : Nat} (s : State) {pb S0 S1 M n : Nat}
-    {O : Nat → List UInt8 → Prop} (k : Nat) (hkn : k < n) (hn : n ≤ 2097152)
+    {O : Nat → List UInt8 → Prop} (k : Nat) (hkn : k < n) (hn : n ≤ 16777216)
     (hM : S0 + 7560 ≤ M ∧ M + 632 ≤ S1 ∧ 2147484104 ≤ M ∧ M % 8 = 0)
     (H : HeapCtx env pb S0 S1 μ s) (h1 : ω[1] = UInt64.ofNat M) (w0 w1 w2 : Nat)
     (hw0 : w0 < 18446744073709551616) (hw1 : w1 < 18446744073709551616) (hw2 : w2 < 18446744073709551616)

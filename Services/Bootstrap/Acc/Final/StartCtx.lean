@@ -47,7 +47,7 @@ theorem c38_alloc (a : Nat) (ha : 196792 ≤ a ∧ a < 206512 ∨ 206528 ≤ a �
     sp + 1848, the parameter statics, `HeapCtxC` for `sStart`, and the memory below 196608 as Y's. -/
 theorem start_ctx (p : ByteArray) (P : Program) [HasCode p P] [HasCodeX p P] [HasCodeA p P]
     (env : AccEnv) (henv : heapBounds env.code = (48, 1044430)) (hpar : env.params = Params.full)
-    (μ : Memory) (hμ : Prefix.StartMem μ) (hZ : StartMemZ μ)
+    (μ : Memory) (hμ : Prefix.StartMem μ) (hZ : Prefix.StartMemZ μ)
     (hz : ∀ a, 4278050816 ≤ a → a < 4278059008 → μ.read a = 0)
     (T S N LA : Nat) (hT : T < 4294967296) (hS : S < 4294967296) (hN : N < 4294967296)
     (hLA : (Blob.encodeNat T).length + (Blob.encodeNat S).length + (Blob.encodeNat N).length = LA)
@@ -117,11 +117,13 @@ theorem start_ctx (p : ByteArray) (P : Program) [HasCode p P] [HasCodeX p P] [Ha
   have e888 := m2 206888 4 _ (by omega) h.hm_206888_4
   have e892 := m2 206892 4 _ (by omega) h3z
   have e520 : μ'.readN 206520 8 = [32, 40, 3, 0, 0, 0, 0, 0] := by
-    rw [Memory.readN_congr (fun j hj => by rw [lo _ (by omega), h.fr _ (c177_alloc _ (by omega))])]
-    exact h38.hm_206520_8
+    have : μ'.readN 206520 8 = μ₁0.readN 206520 8 :=
+      Memory.readN_congr (fun j hj => (lo _ (by omega)).trans (h.fr _ (c177_alloc _ (by omega))))
+    rw [this]; exact h38.hm_206520_8
   have e840 : μ'.readN 206840 4 = [6, 0, 0, 0] := by
-    rw [Memory.readN_congr (fun j hj => by rw [lo _ (by omega), h.fr _ (c177_alloc _ (by omega))])]
-    exact h38.hm_206840_4
+    have : μ'.readN 206840 4 = μ₁0.readN 206840 4 :=
+      Memory.readN_congr (fun j hj => (lo _ (by omega)).trans (h.fr _ (c177_alloc _ (by omega))))
+    rw [this]; exact h38.hm_206840_4
   have hw : AllocWords μ' := by
     refine ⟨fun b hb => ?_, fun q hq => ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
     · unfold A0; unfold binCount at hb
@@ -158,7 +160,7 @@ theorem start_ctx (p : ByteArray) (P : Program) [HasCode p P] [HasCodeX p P] [Ha
     m2 _ _ _ (by omega) hcC, m2 _ _ _ (by omega) hcI, ?_, hlow,
     fun a ha => by rw [mrd, h.rdq]; exact h38.rdm a ha⟩
   refine ⟨sStart_wf, hw.rep, sStart_first, ?_, by rw [sStart_base]; omega, by rw [sStart_base]; omega,
-    by rw [sStart_allocated]; omega, henv, ⟨51, by omega, by omega, h38.hhp.of_eq wrq, by omega,
+    by rw [sStart_allocated]; omega, henv, ⟨51, by omega, by omega, HeapPages.of_eq h38.hhp wrq, by omega,
       by rw [sStart_base, sStart_allocated]; omega⟩, by omega, by omega, fun a h1 h2 => ?_, fun a ha => ?_⟩
   · unfold rdN; rw [show μ'.readN 206848 1 = [μ'.read (206848 + 0)] from rfl, Memory.read_of_readN e848 0 (by decide)]; rfl
   · rw [wrq]; exact h38.wrm a (hμ.stack a (by omega) h2)

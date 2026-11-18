@@ -72,7 +72,7 @@ theorem op_call_ok {X : Type} {p : ByteArray} {P : Program} [HasCode p P] [HasCo
       μ'.readN (rd + 8) 8 = Num.encodeLE 8 (rlen - (128 + (Blob.encodeNat g).length + 1 +
         (Blob.encodeNat no).length + no + (Blob.encodeNat nt).length + nt)) ∧
       (∀ a, a < 4294967296 → b + 304 ≤ a → (a < out ∨ out + 184 ≤ a) → (a < rd ∨ rd + 16 ≤ a) →
-        μ'.read a = μ.read a)) ∨
+        μ'.read a = μ.read a) ∧ (∀ a, Glob a → μ'.read a = μ.read a)) ∨
     (∃ ω' μ', FreeStepsH p (env.rel cap) 46300 ω μ x 45975 ω' μ' x (7 * no + 7 * nt + 7000)) := by
   obtain ⟨c, hcm, hcu, hci1, hci2⟩ := hsrc
   have hcs := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hcm hcu
@@ -98,7 +98,7 @@ theorem op_call_ok {X : Type} {p : ByteArray} {P : Program} [HasCode p P] [HasCo
       (by rw [PVM.Memory.readN_congr (μ := μ) (fun j hj => lo1 _ (by omega))]; exact ht0)
       (by rw [PVM.Memory.readN_congr (μ := μ) (fun j hj => lo1 _ (by omega))]; exact heo)
       ⟨c, hcm, hcu, by omega, by omega⟩ with
-    ⟨po, s1, ω2, μ2, va1, r2, H2, keep1, keepd1, b0, b1, b5, b6, b7, b8, m0, m8, m16, od, R0', R8', fr2⟩ |
+    ⟨po, s1, ω2, μ2, va1, r2, H2, keep1, keepd1, b0, b1, b5, b6, b7, b8, m0, m8, m16, od, R0', R8', fr2, gl2⟩ |
     ⟨-, -, ω2, μ2, r2⟩
   · have hc1 : c ∈ chunks s1 := keep1 c hcm hcu
     have k21 : ∀ a, ip ≤ a → a < ip + (128 + (Blob.encodeNat g).length + 1 + (Blob.encodeNat no).length + no +
@@ -114,7 +114,7 @@ theorem op_call_ok {X : Type} {p : ByteArray} {P : Program} [HasCode p P] [HasCo
         (by rw [PVM.Memory.readN_congr (μ := μ) (fun j hj => k21 _ (by omega) (by omega))]; exact het)
         ⟨c, hc1, hcu, by omega, by omega⟩ with
       ⟨pt, s2, ω3, μ3, va2, r3, H3, keep2, keepd2, e0, e1, e5, e6, x0, x8, x16, x24, x32, x40, X48, X80, X112,
-        X144, x176, td, R0f, R8f, fr3⟩ | ⟨-, -, ω3, μ3, r3⟩
+        X144, x176, td, R0f, R8f, fr3, gl3⟩ | ⟨-, -, ω3, μ3, r3⟩
     · -- the frame at b, from μ2 back to μ
       have k2 : ∀ a, b + 24 ≤ a → a < b + 424 → (a < b + 272 ∨ b + 296 ≤ a) → μ2.read a = μ1.read a :=
         fun a h1 h2 h3 => fr2 a (by omega) h1 h3 (by omega)
@@ -130,7 +130,8 @@ theorem op_call_ok {X : Type} {p : ByteArray} {P : Program} [HasCode p P] [HasCo
         by rw [x24, m8], by rw [x32, m16], by rw [x40, m0],
         X48.trans' (kw _ (by omega) (by omega)) W1, X80.trans' (kw _ (by omega) (by omega)) W2,
         X112.trans' (kw _ (by omega) (by omega)) W3, X144.trans' (kw _ (by omega) (by omega)) W4, x176, ?_, ?_,
-        by rw [R0f]; congr 1; omega, by rw [R8f]; congr 1; omega, fun a h0 h hout' hr => ?_⟩
+        by rw [R0f]; congr 1; omega, by rw [R8f]; congr 1; omega, fun a h0 h hout' hr => ?_,
+        fun a ha => by rw [gl3 a ha, gl2 a ha, lo1 a (Glob.lt ha)]⟩
       · rw [keepd2 c (keep1 c hc hu) hu a ha, keepd1 c hc hu a ha]
         have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
         unfold InDataA at ha
@@ -188,7 +189,7 @@ theorem op_call_err {X : Type} {p : ByteArray} {P : Program} [HasCode p P] [HasC
       μ'.readN (rd + 8) 8 = Num.encodeLE 8 (rlen - (128 + (Blob.encodeNat g).length + 1 +
         (Blob.encodeNat nt).length + nt)) ∧
       (∀ a, a < 4294967296 → b + 304 ≤ a → (a < out ∨ out + 184 ≤ a) → (a < rd ∨ rd + 16 ≤ a) →
-        μ'.read a = μ.read a)) ∨
+        μ'.read a = μ.read a) ∧ (∀ a, Glob a → μ'.read a = μ.read a)) ∨
     (∃ ω' μ', FreeStepsH p (env.rel cap) 46300 ω μ x 45975 ω' μ' x (7 * nt + 7000)) := by
   obtain ⟨c, hcm, hcu, hci1, hci2⟩ := hsrc
   have hcs := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hcm hcu
@@ -228,7 +229,7 @@ theorem op_call_err {X : Type} {p : ByteArray} {P : Program} [HasCode p P] [HasC
       (by rw [PVM.Memory.readN_congr (μ := μ) (fun j hj => lo2 _ (by omega))]; exact het)
       ⟨c, hcm, hcu, by omega, by omega⟩ with
     ⟨pt, s2, ω3, μ3, va2, r3, H3, keep2, keepd2, e0, e1, e5, e6, x0, x8, x16, x24, x32, x40, X48, X80, X112,
-      X144, x176, td, R0f, R8f, fr3⟩ | ⟨-, -, ω3, μ3, r3⟩
+      X144, x176, td, R0f, R8f, fr3, gl3⟩ | ⟨-, -, ω3, μ3, r3⟩
   · have k2 : ∀ a, b + 24 ≤ a → a < b + 424 → (a < b + 135 ∨ b + 136 ≤ a) → (a < b + 271 ∨ b + 296 ≤ a) →
         μ2.read a = μ1.read a := fun a h1 h2 h3 h4 => frh a (by omega) h1 h3 h4 (by omega)
     have kb : ∀ o, b + 304 ≤ o → o + 8 ≤ b + 424 → rdN μ2 o 8 = rdN μ o 8 := fun o h1 h2 => by
@@ -244,7 +245,8 @@ theorem op_call_err {X : Type} {p : ByteArray} {P : Program} [HasCode p P] [HasC
       by rw [x24, m8], by rw [x32, m16],
       X48.trans' (kw _ (by omega) (by omega)) W1, X80.trans' (kw _ (by omega) (by omega)) W2,
       X112.trans' (kw _ (by omega) (by omega)) W3, X144.trans' (kw _ (by omega) (by omega)) W4, x176, ?_,
-      by rw [R0f]; congr 1; omega, by rw [R8f]; congr 1; omega, fun a h0 h hout' hr => ?_⟩
+      by rw [R0f]; congr 1; omega, by rw [R8f]; congr 1; omega, fun a h0 h hout' hr => ?_,
+      fun a ha => by rw [gl3 a ha, lo2 a (Glob.lt ha)]⟩
     · rw [keepd2 c hc hu a ha]
       have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
       unfold InDataA at ha

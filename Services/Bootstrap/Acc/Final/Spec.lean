@@ -94,7 +94,7 @@ theorem accRO_initial (hvend : AccVendoredFacts) (jb vb : JamBlob) (hvb : vendor
     **Named hypotheses** (each listed in `docs/whats-proven.md`):
     - `AccVendoredFacts`: the read-only slices accumulate reads, in the vendored blob (step 10);
     - `AccHyps B C`, for bootstrap's code: `AccLogFail` (the first log line's failure tail),
-      `InputsGlob` (the inputs decode keeps the statics), `Utf8Call`, `LogFmt`, `KeyFmt`, `ItemLogFmt`
+      `Utf8Call`, `LogFmt`, `KeyFmt`, `ItemLogFmt`
       (formatting and log sites, frame-only), `OutDecH` (R3, the output decode), `InstrLogH`, `ResultLogH`
       (G4), `HandlerH` (R6, every instruction's handler implements `onInstr`), `PushH`, `ExtendH`,
       `OkEncH` (R8/R9, the results writer), `DropInstrsH` (the instructions' drop);

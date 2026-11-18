@@ -134,7 +134,7 @@ theorem vv_call {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
       μ'.readN (rd + 8) 8 = Num.encodeLE 8 (rlen - (Blob.encodeNat n).length - n) ∧
       (∀ a, a < 4294967296 → sp ≤ a → (a < out ∨ out + 24 ≤ a) → (a < rd ∨ rd + 16 ≤ a) →
         μ'.read a = μ.read a) ∧
-      ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6]) ∨
+      ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ (∀ a, Glob a → μ'.read a = μ.read a)) ∨
     (alloc (growTo pb) hb 1 ((n + 31) / 32) s = none ∧ ∃ ω' μ',
       FreeStepsH p (env.rel cap) 39634 ω μ x 45975 ω' μ' x (7 * n + 1800)) := by
   obtain ⟨ph, h48, hhb, hp, hHTs, hHT⟩ := H.pages
@@ -183,7 +183,8 @@ theorem vv_call {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
   rcases rv_call (p := p) (P := P) (hb := hb) env cap hcap1 hcap x ω3 μ2 s (sp - 24) out rd (ip + w) (rlen - w) n
       pb S0 S1 H2 (by rw [b1, d1, a1]) b7 b8 b9 q0 q8 hn (by omega) (by omega)
       ⟨c, hcm, hcu, by omega, by omega⟩ ⟨by omega, by omega⟩ (by omega) ⟨by omega, hout.2⟩ ⟨by omega, hrd.2⟩ dor with
-    ⟨ptr, s', ω4, μ4, ha, r4, H4, keep, hnew, hfresh, keepd, g0, g8, g16, gd, gr0, gr8, gfr, e0, e1, e5, e6⟩ |
+    ⟨ptr, s', ω4, μ4, ha, r4, H4, keep, hnew, hfresh, keepd, g0, g8, g16, gd, gr0, gr8, gfr, e0, e1, e5, e6,
+      ggl⟩ |
     ⟨ha, ω4, μ4, r4⟩
   · left
     -- the frame words, from μ1 to μ4
@@ -205,7 +206,7 @@ theorem vv_call {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
       m2 a (by omega) (Or.inl (by omega)) (Or.inl (by omega))
     refine ⟨ptr, s', ω5, μ4, ha, ((((r1.trans r2).trans r3).trans r4).trans r5).mono (by omega), H4, keep, hnew,
       hfresh, fun c' hc' hu a ha' => ?_, g0, g8, g16, ?_, ?_, ?_, ?_, by rw [f0, dec], ?_, by rw [f5, dec],
-      by rw [f6, dec]⟩
+      by rw [f6, dec], fun a ha' => ?_⟩
     · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc' hu
       unfold InDataA at ha'
       rw [keepd c' hc' hu a ⟨ha'.1, ha'.2⟩, m2h a (by omega)]
@@ -215,6 +216,8 @@ theorem vv_call {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
     · intro a h0 hs ho hr
       rw [gfr a h0 (by omega) ho hr, m2 a h0 (Or.inr hs) hr]
     · rw [f1, h1]; congr 1; omega
+    · have ⟨g1, g2⟩ : 196616 ≤ a ∧ a < 196792 := ha'
+      rw [ggl a ha', m2h a (by omega)]
   · exact Or.inr ⟨ha, ω4, μ4, ((((r1.trans r2).trans r3).trans r4)).mono (by omega)⟩
 
 

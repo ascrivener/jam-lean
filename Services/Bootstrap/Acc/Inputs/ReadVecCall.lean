@@ -1,6 +1,7 @@
 import Services.Bootstrap.Acc.Inputs.ReadVec
 import Services.Bootstrap.Acc.Inputs.FinishGrowCall
 import Services.Bootstrap.Alloc.ReallocFallbackTail
+import Services.Bootstrap.Acc.Inputs.GlobKeep
 
 /-!
 # One call of accumulate's `Vec<u8>` reader (45643) for 1 … 16384 octets, on the allocator's context
@@ -80,7 +81,7 @@ theorem rv_call {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
       μ'.readN rd 8 = Num.encodeLE 8 (ip + len) ∧ μ'.readN (rd + 8) 8 = Num.encodeLE 8 (rlen - len) ∧
       (∀ a, a < 4294967296 → sp ≤ a → (a < out ∨ out + 24 ≤ a) → (a < rd ∨ rd + 16 ≤ a) →
         μ'.read a = μ.read a) ∧
-      ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6]) ∨
+      ω'[0] = ω[0] ∧ ω'[1] = ω[1] ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ (∀ a, Glob a → μ'.read a = μ.read a)) ∨
     (alloc (growTo pb) hb 1 ((len + 31) / 32) s = none ∧ ∃ ω' μ',
       FreeStepsH p (env.rel cap) 45643 ω μ x 45975 ω' μ' x (7 * len + 1200)) := by
   obtain ⟨ph, h48, hhb, hp, hHTs, hHT⟩ := H.pages
@@ -217,7 +218,7 @@ theorem rv_call {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
         by obtain ⟨ph2, a2, b2, c2, d2, e2⟩ := H2.pages; exact ⟨ph2, a2, b2, HeapPages.of_eq c2 ww, d2, e2⟩,
         H2.hSb, H2.hS1, fun a h1 h2 => by rw [ww]; exact H2.st a h1 h2, fun a h => by rw [ww]; exact H2.ro a h⟩,
       keep, hnew, fun d hd hu => hfresh d hd hu, ?_, g0, g8, g16, ?_, ?_, ?_, ?_, by rw [f0, dec], ?_,
-      by rw [f5, dec], by rw [f6, dec]⟩
+      by rw [f5, dec], by rw [f6, dec], fun a ha => ?_⟩
     · intro c' hc' hu a ha
       have hc'' := keep c' hc' hu
       have hne' : c' ≠ ⟨ptr - 32, (len + 31) / 32 + 1, true⟩ := hfresh c' hc' hu
@@ -234,6 +235,9 @@ theorem rv_call {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (env 
     · intro a h0 hs ho hr
       rw [fr5 a h0 ho, fr4 a h0 (Or.inr (by omega)) hr (Or.inr (by omega)), m3 a h0 hs]
     · rw [f1, h1]; congr 1; omega
+    · have ⟨g1, g2⟩ : 196616 ≤ a ∧ a < 196792 := ha
+      rw [low52 a (by omega) (Or.inl (by omega)), glob_of_hkeepC H2.wf (by rw [hb']; exact H.hb0) hk a ha,
+        fr1 a (by omega) (Or.inl (by omega))]
   · right
     rw [e1] at ha
     refine ⟨ha, ?_⟩

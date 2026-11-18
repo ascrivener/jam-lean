@@ -45,7 +45,8 @@ theorem inputs_decode (aenv : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap)
       (∀ (j : Nat) (i : AccumulateInput), aenv.inputs[j]? = some i →
         ∀ μ'' : Memory, (∀ c ∈ chunks st', c.used = true → ∀ a, InDataA c a → μ''.read a = μ'.read a) →
           (itemOf i).2 (μ''.readN (q + 184 * j) 184) μ'') ∧ SlotsOwn st' μ' q aenv.inputs.length ∧
-      (∀ a, a < 4294967296 → sp ≤ a → (a < sp + 1568 ∨ sp + 1568 + 24 ≤ a) → μ'.read a = μ.read a)) ∨
+      (∀ a, a < 4294967296 → sp ≤ a → (a < sp + 1568 ∨ sp + 1568 + 24 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, Glob a → μ'.read a = μ.read a)) ∨
     (∃ j ω' μ', (j = 47554 ∨ j = 45975 ∨ j = 45642) ∧
       FreeStepsH p (accContractK cap aenv) 6630 ω μ x j ω' μ' x
         (96 * (((inputsEnc aenv).length + 31) / 32) + (itemSteps + 2100) * aenv.inputs.length + 2700)) := by
@@ -68,7 +69,8 @@ theorem inputs_decode (aenv : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap)
       (by have := encodeLE_decodeLE (μ1.readN (sp - 144 + 32 + 16) 8); simp only [Memory.length_readN] at this
           rw [show sp - 144 + 32 + 16 = sp - 144 + 48 by omega] at this ⊢; unfold rdN; exact this.symm)
       (rdN_lt64 _ _) (rdN_lt64 _ _) with
-    ⟨ptr, s1, ω2, μ2, r2, b0, b1, b5, b6, v0, v8, v16, H2, keep2, keepd2, hnew, hfresh, dat, fr2⟩ | ⟨ω2, μ2, r2⟩
+    ⟨ptr, s1, ω2, μ2, r2, b0, b1, b5, b6, v0, v8, v16, H2, keep2, keepd2, hnew, hfresh, dat, fr2, gl2⟩ |
+    ⟨ω2, μ2, r2⟩
   · have r3 := fv_ret (p := p) (P := P) (R := accContractK cap aenv) x ω2 μ2 (by rw [b0, a0])
     obtain ⟨Nb1, Nb2, Nb3⟩ := Services.Bootstrap.Decode.VecU8.chunk_in H2.wf hnew rfl
     dsimp only at Nb1 Nb2 Nb3
@@ -86,7 +88,7 @@ theorem inputs_decode (aenv : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap)
         (by rw [show sp - 144 + 72 = sp - 144 + 56 + 16 by omega]; exact v16)
         ⟨hL0, by omega⟩ hnew rfl (by dsimp only; omega) (by dsimp only; omega) ⟨Nat.le_refl _, by omega⟩ dat
         ⟨by omega, by omega⟩ (by omega) ⟨by omega, by omega⟩ with
-      ⟨q, st', ω3, μ3, r4, z0, z1, z5, z6, o0, o8, o16, H3, kd, reps, sown, fr⟩ | ⟨j, ω3, μ3, hj, r4⟩
+      ⟨q, st', ω3, μ3, r4, z0, z1, z5, z6, o0, o8, o16, H3, kd, reps, sown, fr, gl⟩ | ⟨j, ω3, μ3, hj, r4⟩
     · have r5 := in_ret (p := p) (P := P) (R := accContractK cap aenv) x ω3 μ3
         (by rw [z0, k2 _ (by omega) (Or.inr (by omega)) (by omega), s136])
       refine Or.inl ⟨q, st', ω3, μ3, ((((r1.trans r2).trans r3).trans (FreeStepsH.ofAccGrow r4)).trans r5).mono
@@ -95,7 +97,7 @@ theorem inputs_decode (aenv : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap)
         by rw [z5, k2 _ (by omega) (Or.inr (by omega)) (by omega), s128, UInt64.ofNat_toNat],
         by rw [z6, k2 _ (by omega) (Or.inr (by omega)) (by omega), s120, UInt64.ofNat_toNat],
         o0, o8, o16, H3, fun c hc hu => ⟨(kd c (keep2 c hc hu) hu (hfresh c hc hu)).1, fun a ha => ?_⟩, reps,
-        sown, fun a h0 ha ho => ?_⟩
+        sown, fun a h0 ha ho => ?_, fun a hg => by rw [gl a hg, gl2 a hg, lo1 a (Glob.lt hg)]⟩
       · have := Services.Bootstrap.Decode.VecU8.chunk_in H.wf hc hu
         have := H.hbT
         rw [(kd c (keep2 c hc hu) hu (hfresh c hc hu)).2 a ha, keepd2 c hc hu a ha]

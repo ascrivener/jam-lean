@@ -86,7 +86,7 @@ theorem itemOk_opok {X : Type} (env : HeapHost X) (cap pb : Nat) (hcap1 : 134217
       hrl hrl32 p0 pg pz peo pet
       (by obtain ⟨c, c1, c2, c3, c4⟩ := hsrc; exact ⟨c, c1, c2, c3, by omega⟩) with
     ⟨po, pt, s1, s2, ω', μ', va1, va2, run, H', keep, keepa, keepb, keepd, e0, e1, e5, e6, x0, x8, x16, x24, x32, x40,
-      X48, X80, X112, X144, x176, od, td, R0f, R8f, fr⟩ | ⟨ω', μ', run⟩
+      X48, X80, X112, X144, x176, od, td, R0f, R8f, fr, gl⟩ | ⟨ω', μ', run⟩
   · have mo := va1.blk_mem
     have mt := va2.blk_mem
     have cso : ∀ c ∈ blk o.length po, c ∈ chunks s2 := fun c hc => keepb c (mo c hc).1 (mo c hc).2.1
@@ -94,7 +94,7 @@ theorem itemOk_opok {X : Type} (env : HeapHost X) (cap pb : Nat) (hcap1 : 134217
     refine Or.inl ⟨s2, ω', μ', (run.trans (lp_ret_op (p := p) (P := P) (R := env.rel cap) x ω' μ'
         (by rw [e0, h0]))).mono (by omega), by rw [e0, h0], e1, e5, e6, by rw [x0]; omega, H', keep, keepd,
       ⟨blk o.length po ++ blk t.length pt, fun c hc => ?_, fun μ'' hag => ?_, ?_⟩,
-      by rw [R0f, hL]; all_goals (congr 1 <;> omega), by rw [R8f, hL]; all_goals (congr 1 <;> omega), fun a h0 hs h1 h2 => fr a h0 hs (by omega) h2⟩
+      by rw [R0f, hL]; all_goals (congr 1 <;> omega), by rw [R8f, hL]; all_goals (congr 1 <;> omega), fun a h0 hs h1 h2 => fr a h0 hs (by omega) h2, gl⟩
     · rcases List.mem_append.mp hc with hc | hc
       · exact ⟨cso c hc, (mo c hc).2.1, (mo c hc).2.2⟩
       · exact ⟨(mt c hc).1, (mt c hc).2.1, fun d hd hu => (mt c hc).2.2 d (keepa d hd hu) hu⟩
@@ -185,14 +185,14 @@ theorem itemOk_operr {X : Type} (env : HeapHost X) (cap pb : Nat) (hcap1 : 13421
       hrl hrl32 p0 pg pe' pet
       (by obtain ⟨c, c1, c2, c3, c4⟩ := hsrc; exact ⟨c, c1, c2, c3, by omega⟩) with
     ⟨pt, s2, ω', μ', va2, run, H', keep, keepd, e0, e1, e5, e6, x0, x8, x16, x24, x32,
-      X48, X80, X112, X144, x176, td, R0f, R8f, fr⟩ | ⟨ω', μ', run⟩
+      X48, X80, X112, X144, x176, td, R0f, R8f, fr, gl⟩ | ⟨ω', μ', run⟩
   · have mt := va2.blk_mem
     have cst : ∀ c ∈ blk t.length pt, c ∈ chunks s2 := fun c hc => (mt c hc).1
     refine Or.inl ⟨s2, ω', μ', (run.trans (lp_ret_op (p := p) (P := P) (R := env.rel cap) x ω' μ'
         (by rw [e0, h0]))).mono (by omega), by rw [e0, h0], e1, e5, e6, by rw [x0]; omega, H', keep, keepd,
       ⟨blk t.length pt, fun c hc => mt c hc, fun μ'' hag => ?_, ?_⟩,
       by rw [R0f, hL]; all_goals (congr 1 <;> omega), by rw [R8f, hL]; all_goals (congr 1 <;> omega),
-      fun a h0 hs h1 h2 => fr a h0 hs (by omega) h2⟩
+      fun a h0 hs h1 h2 => fr a h0 hs (by omega) h2, gl⟩
     have rt : μ''.readN pt t.length = t := by
       rw [blk_read H' cst μ'' μ' hag, td, pt']
     refine ⟨⟨?_, ?_, ?_, ?_, ?_⟩, ?_, ?_⟩

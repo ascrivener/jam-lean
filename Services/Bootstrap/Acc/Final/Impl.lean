@@ -190,7 +190,7 @@ theorem acc_impl {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Has
   have hcost : 287 + memGas 400 (inputsEnc env).length ≤ gcap := by unfold memGas gcap; omega
   rcases inputs_decode env gcap 1044430 (by decide) (by decide) hcost (P := P) (hb := 0) (x₀, x₀) ω2 μ2 s2
       4278057152 4278050816 4278059008 H2 (r21.trans r1) hn hsz (by omega) (by decide) (by decide) (by decide) with
-    ⟨q, st', ω3, μ3, run3, z1, -, -, o0, o8, o16, H3, -, reps, sown, fr3⟩ | ⟨j, ω3, μ3, hj, run3⟩
+    ⟨q, st', ω3, μ3, run3, z1, -, -, o0, o8, o16, H3, -, reps, sown, fr3, gl3⟩ | ⟨j, ω3, μ3, hj, run3⟩
   rotate_left
   · -- an allocation-failure trap
     left
@@ -213,9 +213,7 @@ theorem acc_impl {p : ByteArray} {P : Program} [HasCode p P] [HasCodeX p P] [Has
     rw [rdN_frame fun j hj => fr3 _ (by omega) (by omega) (.inr (by omega)),
       rdN_frame fun j hj => K2.hi _ (by omega) (by omega) (by unfold logE; omega)]
     unfold rdN; rw [show (4278057152 + 1848 : Nat) = 4278059000 from rfl, hra]; rfl
-  have g3 : ∀ b, Glob b → μ3.read b = μ1.read b := fun b hb =>
-    (hH.inGlob gcap (x₀, x₀) ω2 μ2 s2 4278057152 _ ω3 μ3 (x₀, x₀) H2 (r21.trans r1) (by decide) (by decide)
-      (by decide) run3 b hb).trans (K2.glob b hb)
+  have g3 : ∀ b, Glob b → μ3.read b = μ1.read b := fun b hb => (gl3 b hb).trans (K2.glob b hb)
   have hpr : ∀ (prog : Prog AOp Unit), prog = Prog.bind (forIn (env.inputs.map specItem) PUnit.unit (accBody C env.slot))
       (fun _ => pure PUnit.unit) → ∀ s', Impl p (accContractS env) env AccAbort prog (Halts p (accContractS env)) s' →
       Impl p (accContractS env) env AccAbort

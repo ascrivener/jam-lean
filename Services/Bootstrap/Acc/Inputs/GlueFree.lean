@@ -85,14 +85,14 @@ theorem g_free {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (code 
       (∀ a, a < 4294967296 → sp ≤ a → μ'.read a = μ.read a) ∧
       (∀ d ∈ chunks s, d.used = true → d ≠ c → d ∈ chunks (free s ptr) ∧
         ∀ a, d.addr + 32 ≤ a → a < d.addr + 32 * d.size → μ'.read a = μ.read a) ∧
-      ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] := by
+      ω'[1] = UInt64.ofNat sp ∧ ω'[5] = ω[5] ∧ ω'[6] = ω[6] ∧ (∀ a, Glob a → μ'.read a = μ.read a) := by
   obtain ⟨ph, h48, hhb, hp, hHTs, hHT⟩ := H.pages
   have hS1 := H.hS1
   obtain ⟨ω1, μ1, r1, a0, a1, a7, a8, a5, a6, fr1, wr1, -⟩ :=
     g_lock (p := p) (P := P) (R := R) x ω μ sp h1 h6 h7 h8 H.lock (HT := 4096 * ph) (by omega)
       ⟨by omega, hS.2⟩ ⟨by omega, by omega⟩ (HeapPages.wrAt hp hhb H.st)
   have HL : HeapCtxL code pb S0 S1 μ1 s := ⟨μ, H, fr1, wr1⟩
-  obtain ⟨ω2, μ2, r2, H2, hb2, pg2, ro2, stk2, _, kd2, b0, b1, b5, b6⟩ :=
+  obtain ⟨ω2, μ2, r2, H2, hb2, pg2, ro2, stk2, gl2, kd2, b0, b1, b5, b6⟩ :=
     free_callG (R := R) (p := p) (P := P) code pb S0 S1 x ω1 μ1 s sp ptr 2028 44632 c HL hc hcu hca a0
       a1 a7 (by rw [a8, hptr]) (by decide) (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_1013]) bs_44632
       hsp ⟨hS.1, by omega⟩
@@ -103,7 +103,7 @@ theorem g_free {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (code 
   obtain ⟨ω3, μ3, r3, l3, fr3, rd3, wr3, -, c1, c5, c6, -⟩ := g_unlock (p := p) (P := P) (R := R) x ω2 μ2 h62 hwl
   refine ⟨ω3, μ3, (r1.trans r2).trans r3, heapL_release H2 l3 fr3 wr3, hb2,
     fun a => by rw [wr3, wr2, wr1], fun a ha hsa => ?_, fun d hd hdu hdc => ⟨(kd2 d hd hdu hdc).1, fun a ha ha' => ?_⟩,
-    ?_, ?_, ?_⟩
+    ?_, ?_, ?_, fun a ha => ?_⟩
   · rw [fr3 a ha (by omega), stk2 a ha hsa, fr1 a ha (Or.inr (by omega)) (Or.inr (by omega))]
   · have ht := H.wf.2.2.2.1
     unfold TilesOk at ht
@@ -115,5 +115,7 @@ theorem g_free {p : ByteArray} {P : Program} [HasCode p P] [HasCodeA p P] (code 
   · rw [c1, b1, a1]
   · rw [c5, b5, a5]
   · rw [c6, b6, a6]
+  · have ⟨g1, g2⟩ : 196616 ≤ a ∧ a < 196792 := ha
+    rw [fr3 a (by omega) (by omega), gl2 a ha, fr1 a (by omega) (Or.inr g1) (Or.inl (by omega))]
 
 end Services.Bootstrap.Acc

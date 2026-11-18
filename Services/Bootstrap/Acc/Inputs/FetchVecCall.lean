@@ -53,7 +53,8 @@ theorem fv_call (aenv : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
       (⟨ptr - 32, ((inputsEnc aenv).length + 31) / 32 + 1, true⟩ : Chunk) ∈ chunks s' ∧
       (∀ d ∈ chunks s, d.used = true → d ≠ ⟨ptr - 32, ((inputsEnc aenv).length + 31) / 32 + 1, true⟩) ∧
       μ'.readN ptr (inputsEnc aenv).length = inputsEnc aenv ∧
-      (∀ a, a < 4294967296 → sp ≤ a → (a < out ∨ out + 24 ≤ a) → μ'.read a = μ.read a)) ∨
+      (∀ a, a < 4294967296 → sp ≤ a → (a < out ∨ out + 24 ≤ a) → μ'.read a = μ.read a) ∧
+      (∀ a, Glob a → μ'.read a = μ.read a)) ∨
     (∃ ω' μ', FreeStepsH p (accContractK cap aenv) 47417 ω μ x 47554 ω' μ' x
         (96 * (((inputsEnc aenv).length + 31) / 32) + 700)) := by
   have hS1 := H.hS1
@@ -86,7 +87,7 @@ theorem fv_call (aenv : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
       ((L + 31) / 32) 1 2122 47631 pb S0 S1 HL e1 d7 d8 d9 d10 (by decide) d0 ⟨by decide, by decide, by decide⟩
       (by simp only [Nat.reduceDiv, Nat.reduceSub, jte_1060]) bs_47631 req1 (by omega) (by omega)
       ⟨by omega, by omega⟩ with
-    ⟨ptr, s', ω4, μ4, -, run4, HL4, keep4, hnew, hfresh, -, keepd4, e7, stk4, -, f1, f5, f6⟩ |
+    ⟨ptr, s', ω4, μ4, -, run4, HL4, keep4, hnew, hfresh, hkd4, keepd4, e7, stk4, -, f1, f5, f6⟩ |
     ⟨-, ω4, μ4, run4, e7, stk4, wst, wl, -, f1, f5, f6⟩
   · have HL4' := HL4
     obtain ⟨μ₀, H₀, hag, hwa⟩ := HL4'
@@ -131,7 +132,7 @@ theorem fv_call (aenv : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
       by unfold rdN; rw [o16, Num.decodeLE_encodeLE]; exact Nat.mod_eq_of_lt (by omega),
       heapL_release_data HL4 hnew lk' (fun a ha ha' hc => k5 a (by omega) ha' (Or.inl (by omega)) (Or.inl (by omega))
         (by dsimp only at hc; omega)) wr5,
-      keep4, fun c hc hu a ha => ?_, hnew, hfresh, dat, fun a h0 ha ho => ?_⟩
+      keep4, fun c hc hu a ha => ?_, hnew, hfresh, dat, fun a h0 ha ho => ?_, fun a hg => ?_⟩
     · have hne : (⟨ptr - 32, (L + 31) / 32 + 1, true⟩ : Chunk) ≠ c := Ne.symm (hfresh c hc hu)
       have hap := Services.Bootstrap.Decode.LoopA.InData.apart H₀.wf (keep4 c hc hu) hnew hne ha
       unfold Services.Bootstrap.Decode.LoopA.InData at hap
@@ -144,6 +145,10 @@ theorem fv_call (aenv : AccEnv) (cap pb : Nat) (hcap1 : 134217728 ≤ cap) (hcap
         fr3 a (by omega) (Or.inr (by omega)) (Or.inr (by omega)), lo1 a (by omega)]
     · rw [k5 a h0 (by omega) (Or.inr (by omega)) ho (Or.inr (by omega)), stk4 a h0 (by omega),
         fr3 a h0 (Or.inr (by omega)) (Or.inr (by omega)), fr1 a h0 (Or.inr ha)]
+    · have ⟨g1, g2⟩ : 196616 ≤ a ∧ a < 196792 := hg
+      rw [k5 a (by omega) (by omega) (Or.inl (by omega)) (Or.inl (by omega)) (Or.inl (by omega)),
+        glob_of_hkeepGD H₀.wf hb0' hkd4 (by omega) a hg, fr3 a (by omega) (Or.inr g1) (Or.inl (by omega)),
+        lo1 a (by omega)]
   · obtain ⟨ω5, μ5, run5⟩ := fv_null (p := p) (P := P) (R := accContractK cap aenv) x ω4 μ4 (sp - 64)
       (by rw [f1, e1]) (by rw [f6, d6]) e7 (fun a h1 h2 => wst a (by omega) (by omega)) wl
     exact Or.inr ⟨ω5, μ5, ((((run1.trans run2).trans run3).trans (FreeStepsH.ofAccGrow run4)).trans run5).mono

@@ -154,10 +154,10 @@ An independent kernel, nanoda as vendored by
   - the heap bounds are `(48, 1044430)`;
   - the full-chain parameters.
 
-  The kernel proves the code facts of the vendored blob (`CodeOk.checkCode_ok`). The layout is
-  checked by the compiled `lake build bootstrapcheck`. Unlike witness's `refine_rejects`, no
-  bootstrap theorem yet discharges these hypotheses for the vendored blob in a single statement,
-  and there is no gas bound, so the "or ∞" remains.
+  The kernel proves the code facts of the vendored blob (`CodeOk.checkCode_ok`), and since step 10
+  (#239) also its layout and heap bounds (`Vendored.layout_ok`, `Vendored.heap_ok`,
+  `Vendored.isBootstrap_preimage`). These two theorems are not restated for the deployed blob; T1c
+  is (`refine_t1c_deployed`, below). There is no gas bound, so the "or ∞" remains.
 - **Pass-through and `Export` payloads (T1c, first milestone).** `refine_milestone`
   (`Services/Bootstrap/Refine/Milestone.lean`).
   - *Statement:* for a work item whose code is bootstrap (`IsBootstrap`), c < 2¹⁶, i < 2¹⁶, service id
@@ -169,8 +169,8 @@ An independent kernel, nanoda as vendored by
   - *Not yet proved:* that a failed allocation then ends in ☇ with no exports (a named later obligation;
     T1 keeps the full claim).
   - *Assumed:* `VendoredFacts` (the vendored blob's layout, three read-only tables and `Fmt.FmtRO`, the
-    read-only slices the Fmt summaries read; all about the constant blob, discharged in step 10 of
-    `docs/bootstrap-target.md`) and `FmtHyps` (three log / `Debug` lines: `ArgsLineOk`, `ExportFmtOk`,
+    read-only slices the Fmt summaries read; all about the constant blob, proved by the kernel in step 10
+    of `docs/bootstrap-target.md`: `Vendored.vendoredFacts`, #239) and `FmtHyps` (three log / `Debug` lines: `ArgsLineOk`, `ExportFmtOk`,
     `DebugLineOk`; to be discharged by the fmt summaries).
   - *Not covered:* eager `Lookup`, `Import`, `RandomStorageRefine`, the variable-width instructions,
     n ≥ 128.
@@ -188,9 +188,9 @@ An independent kernel, nanoda as vendored by
     through, returns `ExportSegs ds` as `Exported |ds|` and an eager `Lookup s h` as `LookedUp (lk s h)`.
   - *Assumed:*
     - `VendoredFactsC`: `VendoredFacts` and the drop table's entry 8 (read-only offset 32), about the constant
-      blob, discharged in step 10;
+      blob; proved by the kernel (`Vendored.vendoredFactsC`, step 10, #239);
     - `IsBootstrapC`: `IsBootstrap` plus `checkCode` for the append-only tiers `CodeT1B` and `CodeT1C`. The
-      kernel proves these of the vendored blob (`CodeT1BCheck`, `CodeT1CCheck`); step 10;
+      kernel proves it of the deployed binary (`Vendored.isBootstrapC_preimage`, step 10, #239);
     - `FmtHypsC C`: four log / `Debug` lines (`ArgsLineOk`, `ExportFmtOk`, `LookupFmtOk`, and `DebugLineOk` for
       `SlotT.DRt C`), stated at the host contract's gas cap 2⁶², to be discharged by the fmt summaries. The cap
       is 2⁶² rather than 2²⁷ because the eager `Lookup`'s gas, 1125 + ⌈264 |d| / 1024⌉, must fit under it for
@@ -205,6 +205,11 @@ An independent kernel, nanoda as vendored by
     𝖰 = 80 at 196616 / 196680 from the parameter chain, then `from4680T`), `Refine/RunT.lean` (`run_t`: the
     decode with per-kind packages `PkgAll`, the loop `LoopT.loop_t` with the invariant `InvT.Inv`, and
     `ExitRunW.exit_runW`), `Refine/SpecRunT.lean` (`Spec.refine`'s run on these payloads).
+- **T1c for the deployed binary.** `Vendored.refine_t1c_deployed` (`Services/Bootstrap/Vendored/Deployed.lean`,
+  step 10, #239): `refine_t1c` for a work item whose looked-up code is the deployed binary `Blob.preimage`
+  (the octets of `services/bootstrap/jam-bootstrap-service.jam`), with `VendoredFactsC` and `IsBootstrapC`
+  gone: the kernel proves them (`Vendored/Facts.lean`: `layout_ok`, `heap_ok`, one `decide +kernel` per
+  read-only slice, and the existing code-fact checks). *Assumed:* `FmtHypsC`, `hnoimport`, `hrsr`, `hpre`.
 - **The `Instructions` decode loop, for lists of `Checkpoint`.** `DecodeLoop.loop` and
   `DecodeLoop.pass` (`Services/Bootstrap/DecodeLoop.lean`).
   - *Statement:* from the loop's state after k of n elements, the loop at pc 680 decodes the
@@ -883,8 +888,10 @@ Pieces of T2 (`docs/bootstrap-target.md`): parts of bootstrap's accumulate code 
   - *Named hypotheses* (`Acc/Final/Hyps.lean`):
     - `AccVendoredFacts`: the read-only slices accumulate reads in the vendored blob (templates, `String`
       vtable, "transfer-count", `set`'s error table, key-size words, jump table); a named vendored-blob
-      fact under Adam's standing decision (like `VendoredFacts` and `FmtRO`), discharged in step 10;
-    - `IsBootstrapCode` (a premise, accepted as T2's counterpart of `IsBootstrap`): the code is bootstrap's;
+      fact under Adam's standing decision (like `VendoredFacts` and `FmtRO`); proved by the kernel
+      (`Vendored.accVendoredFacts`, step 10, #239);
+    - `IsBootstrapCode` (a premise, accepted as T2's counterpart of `IsBootstrap`): the code is bootstrap's.
+      The kernel proves it of the deployed code (`Vendored.isBootstrapCode_deployed`, #239);
     - `AccHyps B C` (for every bootstrap code): `AccLogFail` (the first log line, 6501 … 6630: a failed
       allocation then ends ☇; its success branch is proved), and `items_loop_full`'s `Utf8Call`, `LogFmt`,
       `KeyFmt`, `ItemLogFmt`, `OutDecH`,
@@ -900,6 +907,11 @@ Pieces of T2 (`docs/bootstrap-target.md`): parts of bootstrap's accumulate code 
     `ItemOk` (and `itemOk_tr` / `itemOk_opok` / `itemOk_operr`), `item_op_ok` / `item_op_err`,
     `op_call_ok` / `op_call_err`, `op_mid_ok`, `op_end`, `vv_any`, `vv_call` and `rv_call`
     (`Acc/Inputs/`; allocator steps via `glob_of_hkeepC` / `glob_of_hkeepGD`).
+- **T2 for the deployed binary.** `Vendored.accumulate_spec_deployed` (`Services/Bootstrap/Vendored/Deployed.lean`,
+  step 10, #239): `accumulate_spec` for a service whose code (after crediting) is `Vendored.deployedCode`, the
+  deployed binary's code after its metadata (`split_deployed : splitMetadata Blob.preimage = some
+  deployedCode`, by the kernel), with `AccVendoredFacts` and `IsBootstrapCode` gone and no premise in their
+  place. *Assumed:* `AccHyps B C`, `ValuesFit`, `InfoFits`, G3.
 
 - **T2's abort reason and length premise (definitions).** `Acc.AccAbort`, `Acc.HeapTrapPc`,
   `Acc.ValuesFit` (`Acc/Abort.lean`).
@@ -1062,7 +1074,11 @@ What you trust beyond the kernel:
   2000 gas (`JAM/Theorems/RefineContract.lean`). `grow_heap` costs 275 + 121 per page, so a
   growth theorem assumes the new top is at most 14 pages above the old one (the `hcost`
   hypothesis). Larger single growths are covered by the `…K` versions of the growth theorems
-  (PR #73), under `refineContractK cap` (`JAM/Theorems/RefineContract.lean`): any growth whose cost
+  (PR #73: `FreeStepsH.growHeapK`; `ii_callK`; `ag_callK`, `ag_growK`, `ag_grow_failK`;
+  `alloc_mid_growK`, `alloc_impl_growK`, `alloc_refines_growK`, `alloc_wrap_refines_growK`;
+  `alloc_mid_failK`, `alloc_fail_growK`, `alloc_refines_failK`, `alloc_wrap_refines_failK`;
+  `alloc_init_pathK`, `alloc_refines_firstK`, `alloc_wrap_refines_firstK`; `rgh_callK`, `rg_heapK`,
+  `realloc_impl_grow_heapK`, `grow_heap_refinesK`, `realloc_wrap_grow_heapK`), under `refineContractK cap` (`JAM/Theorems/RefineContract.lean`): any growth whose cost
   275 + 121·(new pages) fits in `cap`. The `hostCostMax` statements are unchanged.
 - **Alignment.** In the binary, `alloc` with heap growth, on first use and on failure is proved
   at alignment one unit (≤ 32 octets). Success without growth is proved at any power-of-two
@@ -1251,9 +1267,11 @@ machine: some proof files take several GB of memory to elaborate.
 
 ## In progress
 
-Nothing is in flight as of 2026-11-20. The next planned step is step 10 of
-[`docs/bootstrap-target.md`](bootstrap-target.md) (kernel-checking the vendored blob, which
-discharges `VendoredFacts`, `FmtRO` and the RO hypotheses below); it has not started.
+Nothing is in flight as of 2026-11-20. Step 10 of [`docs/bootstrap-target.md`](bootstrap-target.md)
+(kernel-checking the vendored blob) is done (#239): `VendoredFacts` (with `FmtRO`), `VendoredFactsC`,
+`AccVendoredFacts`, `IsBootstrapC` and `IsBootstrapCode` are proved for the deployed binary, and T1c and T2
+are restated for it (`refine_t1c_deployed`, `accumulate_spec_deployed`). The memory-level RO hypotheses
+below stay with their lines; the blob's side of them is checked (`Vendored/FieldRO.lean`).
 
 ### On `main`, not yet folded into the sections above
 
@@ -1262,9 +1280,10 @@ discharges `VendoredFacts`, `FmtRO` and the RO hypotheses below); it has not sta
   ones: `write_char` (59743), `pad_wp` and `pad_z2` (`pad_integral` with `{:02x}`'s options), `u8hex_ok` (60209), `fmt_write_spec` (an
   explicit-options item), `fmt_write_c3` and `fmt_writeW` (nested `core::fmt::write` calls, whose
   arguments lie below the `String`), `slice_hex_ok` (57922) and `n56_hex` (56340's hex path).
-  - *Named hypotheses* on the vendored blob's read-only data, discharged in step 10 like `FmtRO`:
-    `RO70833` (the octets 70833 … 70840, the template `{:02x}`) and `RO70824` (the octets 70824,
-    70827, 70828 and 70832, the template `0x{}...`).
+  - *Named hypotheses* on the read-only data in memory: `RO70833` (the octets 70833 … 70840, the
+    template `{:02x}`) and `RO70824` (the octets 70824, 70827, 70828 and 70832, the template
+    `0x{}...`). The kernel checks that the vendored blob holds those octets (`Vendored.ro_70833`,
+    `Vendored.ro_70824`); deriving the memory-level hypotheses for a run from Y's start is still open.
 - **`core::str::from_utf8` (60681), by the symbolic executor** (PR #194,
   `Services/Bootstrap/SymExec/Utf8Final.lean`). Both statements are proved, with axioms propext,
   Classical.choice and Quot.sound only:
@@ -1280,7 +1299,8 @@ discharges `VendoredFacts`, `FmtRO` and the RO hypotheses below); it has not sta
   - [sp, sp + 32) is writable, with sp + 32 < 2^32;
   - [O, O + 24) is writable, with O + 24 < 2^32, and is disjoint from the frame;
   - the input is disjoint from the frame;
-  - [71078, 71334) is readable.
+  - [71078, 71334) is readable (it lies inside the vendored blob's read-only data:
+    `Vendored.utf8Table_in_ro`).
 
   There is no hypothesis about the contents of the table.
 

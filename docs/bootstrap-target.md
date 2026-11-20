@@ -592,7 +592,7 @@ Effort is relative: S < M < L < XL. Steps 0, 1 and 9 involve no binary.
 | 7 | **T2:** the entry, the items fetch and decode, the item loop, `on_work_item`, the 25 `on_instruction` branches, the ring and registry helpers; lift to Ψ_A with checkpoints | 2, 3, 4, 5 | L |
 | 8 | **Gas:** block-cost bound for the blob (as `checkMaxBlockCost`), then `refineGas`; T1′, S3, S4. Optionally `accGas` and T2′ | 6 (7) | M |
 | 9 | **Spec-level safety:** S1, S5 and S6 about `Spec.accumulate` under `ASem`, carried over by T2 | 1 (S1), 7 | S–M each |
-| 10 | **The vendored blob:** discharge `IsBootstrap` for `jam-bootstrap-service.jam`, as witness's `refine_rejects` does | 6 | S |
+| 10 | **The vendored blob:** discharge `IsBootstrap` for `jam-bootstrap-service.jam`, as witness's `refine_rejects` does. **Done** (#239, `Services/Bootstrap/Vendored/`: `refine_t1c_deployed`, `accumulate_spec_deployed`) | 6 | S |
 
 **Milestones,** each a usable statement:
 - **M1 (first): T1c, T1 for canonically encoded payloads** (decision 3). Decoding, dispatch and

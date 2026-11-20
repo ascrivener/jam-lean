@@ -616,6 +616,7 @@ import Services.Bootstrap.Refine.ArgsTailBig
 import Services.Bootstrap.Refine.ArgsAll
 import Services.Bootstrap.Vendored.Facts
 import Services.Bootstrap.Vendored.Deployed
+import Services.Bootstrap.Vendored.FieldRO
 
 /-!
 # Results about specific services' deployed code
@@ -695,4 +696,6 @@ Built on `JAM`; nothing in `PVM` or `JAM` depends on this library.
   `AccVendoredFacts`, `IsBootstrapC Blob.preimage` and `IsBootstrapCode` of the deployed code hold.
 * `Services.Bootstrap.Vendored.Deployed` — `refine_t1c_deployed` and `accumulate_spec_deployed`: T1c and
   T2 for the deployed binary, with those blob hypotheses gone.
+* `Services.Bootstrap.Vendored.FieldRO` — the blob's octets behind the field formatters' `RO70824` and
+  `RO70833` (`ro_70824`, `ro_70833`), and the UTF-8 width table inside the read-only data.
 -/

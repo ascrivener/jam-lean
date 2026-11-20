@@ -15,14 +15,16 @@ Both targets of the narrowed scope (decision 19) are proved and on main, with na
   RandomStorageRefine (`hrsr`), with constants `Consts.ofParams Params.full rk` (decision 25): refine
   ends `ok (out, ex)` matching `Spec.refine`, or out of gas with no exports, or `ExhaustsHeap`.
   Hypotheses: `VendoredFactsC`, `FmtHypsC` (at gas cap 2^62), `IsBootstrapC`, `hnoimport`, `hrsr`,
-  `hpre` (preimages < 2^63, decision 16), shape and range premises.
+  `hpre` (preimages < 2^63, decision 16), shape and range premises. For the deployed binary,
+  `Vendored.refine_t1c_deployed` (#239) drops `VendoredFactsC` and `IsBootstrapC` (kernel-proved).
 - **T2: `accumulate_spec`** (`Services/Bootstrap/Acc/Final/Spec.lean`, #231, #233, #234). For any
   bootstrap code, ≤ 89 inputs each `InputSized`, t, s < 2^32 and constants with
   `maxRecent = 2·341·16`: Ψ_A's (state, transfers, yield, provisions) equals the outcome of
   `Spec.accumulate` run for some n steps, unless the binary runs out of gas or aborts at an
   allocation failure (`AccAbort`: a heap trap pc, or 40611/40821 with ω₇ = 0). Hypotheses:
-  - `AccVendoredFacts` (vendored blob, step 10) and `IsBootstrapCode` (accepted by the coordinator
-    under the standing named-hypothesis decision);
+  - `AccVendoredFacts` (vendored blob) and `IsBootstrapCode` (accepted by the coordinator under the
+    standing named-hypothesis decision); both kernel-proved for the deployed binary in step 10 (#239),
+    and `Vendored.accumulate_spec_deployed` states T2 for `deployedCode` without them;
   - `AccHyps B C` (option B, decision 23): AccLogFail, Utf8Call, LogFmt, KeyFmt,
     ItemLogFmt, OutDecH, InstrLogH, ResultLogH, HandlerH (Ab = AccAbort), PushH, ExtendH, OkEncH,
     DropInstrsH, over an `InstrRep` bundle;
@@ -32,14 +34,17 @@ Both targets of the narrowed scope (decision 19) are proved and on main, with na
 - **In flight.** No proof work. #223 (CodeF regeneration, with CI diffing every code-fact tier)
   merged 2026-11-17. Small maintenance PRs from the witness-toaster project (CI sync check for the
   symbolic executor's `Prog` modules, these docs) may be open.
-- **Next planned step: step 10** (kernel-check the vendored blob, `docs/bootstrap-target.md` §4),
-  discharging `VendoredFacts`/`VendoredFactsC`, `AccVendoredFacts`, `FmtRO` and the RO hypotheses.
-  **Not started.**
+- **Step 10: done** (#239, `Services/Bootstrap/Vendored/`). The kernel checks the vendored blob
+  (`layout_ok`, `heap_ok`, every read-only slice), proving `VendoredFacts` (with `FmtRO`),
+  `VendoredFactsC`, `AccVendoredFacts`, `IsBootstrapC Blob.preimage` and `IsBootstrapCode deployedCode`;
+  corollaries `refine_t1c_deployed` and `accumulate_spec_deployed`. The memory-level `RO70824` / `RO70833`
+  and the UTF-8 table's readability stay with the field-formatter / from_utf8 lines; the blob's side of
+  them is checked (`Vendored/FieldRO.lean`).
 - **CI.** One check for branch protection: `proofs` (#232) passes exactly when the merge rule holds.
   Adam has added `proofs` as a required check on main. Main's runs are serialized (#225).
   A proofs build with a warm cache takes about 40 min to 2.5 h.
 - **Not started, need Adam:** T1 Import and empty payloads, M2 (the real decoder), discharging the
-  named hypotheses (Fmt sites, handlers, step 10), P3 stage 1 and post_simp (branches pushed).
+  named hypotheses (Fmt sites, handlers), P3 stage 1 and post_simp (branches pushed).
 
 ## Merge rules
 
@@ -182,8 +187,8 @@ separate project) has its own parent.
   - or a whole-program table of allocator return sites.
 - **Fmt allocation failure ends in ☇** (`ExhaustsP`, decision 12). It shares the handle_alloc_error
   path with T1's obligation.
-- **Step 10:** kernel-check the vendored blob, discharging `VendoredFacts`, `FmtRO` and the
-  UTF8_CHAR_WIDTH readability.
+- *(Done: **Step 10**, the vendored blob kernel-checked, #239. The memory-level RO and UTF-8
+  readability premises stay with their lines.)*
 - **T2, the output decode failure contract:** spec decode = none ⇒ the binary reaches 15361 or
   exhausts the heap.
 - *(Done: **T2, `InputsGlob`** (decision 26), discharged in #236.)*

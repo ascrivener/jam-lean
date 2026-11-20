@@ -901,6 +901,10 @@ Pieces of T2 (`docs/bootstrap-target.md`): parts of bootstrap's accumulate code 
     - `ValuesFit` (decided 2026-11-15);
     - G3 (temporary): at most 89 inputs, each `InputSized`.
   - *Accepted (Adam, 2026-11-17):* `InfoFits` and `AccLogFail` as named hypotheses.
+  - *Bounty statement* (`Acc/Final/Bounty.lean`): `AccLogFailGoal`, `AccLogFail` quantified exactly as
+    `AccHyps` asks for `logFail`, is the statement of a witness bounty on the JAM Toaster; the kernel proves
+    it equivalent to that obligation (`accLogFailGoal_iff`, `AccLogFailGoal.logFail`, `AccLogFailGoal.of_accHyps`).
+    Nothing is assumed or proved about the binary there.
   - *Discharged:* `InputsGlob` (the inputs decode 6630 … 6674 keeps the statics 196616 … 196791), accepted
     as a temporary named hypothesis on 2026-11-17, is now a conclusion of `inputs_decode`, threaded
     through `fv_call`, `g_inputs`, `g_call` / `g_call0`, `g_free`, `lp_call` / `lp_items` / `lp_body`,

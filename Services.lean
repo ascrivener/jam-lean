@@ -614,6 +614,8 @@ import Services.Bootstrap.Refine.ArgsCtx
 import Services.Bootstrap.Refine.ArgsTail
 import Services.Bootstrap.Refine.ArgsTailBig
 import Services.Bootstrap.Refine.ArgsAll
+import Services.Bootstrap.Vendored.Facts
+import Services.Bootstrap.Vendored.Deployed
 
 /-!
 # Results about specific services' deployed code
@@ -688,4 +690,9 @@ Built on `JAM`; nothing in `PVM` or `JAM` depends on this library.
 * `Services.Bootstrap.Acc.Impl` — T2 reduced to the binary implementing `Spec.accumulate`
   (`Impl`, early ☇ only for a listed reason `Ab`): `psiA_of_impl` gives Ψ_A's outcome as
   `ASem.run`'s, and says why that run may have stopped early.
+* `Services.Bootstrap.Vendored.Facts` — step 10 of `docs/bootstrap-target.md`: the kernel checks the
+  vendored bootstrap blob (`layout_ok`, `heap_ok`, the read-only slices), so `VendoredFactsC`,
+  `AccVendoredFacts`, `IsBootstrapC Blob.preimage` and `IsBootstrapCode` of the deployed code hold.
+* `Services.Bootstrap.Vendored.Deployed` — `refine_t1c_deployed` and `accumulate_spec_deployed`: T1c and
+  T2 for the deployed binary, with those blob hypotheses gone.
 -/

@@ -2,8 +2,8 @@
 
 This page is for people evaluating this repository, such as Polkadot Fellowship reviewers,
 retro-funding committees and JAM implementers. It says what is proved, about what, under which
-assumptions, and how to check it. It describes `main` as of PR #67 (2026-11-07). Work still in
-progress is listed at the end. Every theorem named below exists on `main`, and the trust base
+assumptions, and how to check it. It describes `main` as of PR #236 (2026-11-18). Work still in
+progress, and paused lines, are listed at the end. Every theorem named below exists on `main`, and the trust base
 below covers all of them. Where a result is only partial, the text says so.
 
 ## Overview
@@ -1023,14 +1023,12 @@ both for every outcome: any non-null result r holds those octets of the old bloc
 Through the wrapper, a null address returns null at once, and so does an alignment or size above
 2³⁷ − 32 octets.
 
-Not yet on `main` for `realloc`:
+Also on `main` for `realloc` (PR #68, `ReallocCases.lean` and `ReallocFallback*.lean`):
 - a wrapper-level corollary for the fallback;
 - the fallback when its inner `alloc` fails or grows the heap;
 - the fallback reached after the host refuses heap growth;
 - a fallback copy of 0 units;
 - the combined case split `realloc_wrap_cases`.
-
-These are in open PR #68.
 
 ## Trust base
 
@@ -1063,7 +1061,9 @@ What you trust beyond the kernel:
 - **At most 14 pages per heap growth.** Gas-free host calls are allowed at most `hostCostMax` =
   2000 gas (`JAM/Theorems/RefineContract.lean`). `grow_heap` costs 275 + 121 per page, so a
   growth theorem assumes the new top is at most 14 pages above the old one (the `hcost`
-  hypothesis). Larger single growths are not covered yet.
+  hypothesis). Larger single growths are covered by the `…K` versions of the growth theorems
+  (PR #73), under `refineContractK cap` (`JAM/Theorems/RefineContract.lean`): any growth whose cost
+  275 + 121·(new pages) fits in `cap`. The `hostCostMax` statements are unchanged.
 - **Alignment.** In the binary, `alloc` with heap growth, on first use and on failure is proved
   at alignment one unit (≤ 32 octets). Success without growth is proved at any power-of-two
   alignment. The `realloc`
@@ -1251,25 +1251,21 @@ machine: some proof files take several GB of memory to elaborate.
 
 ## In progress
 
-At the time of writing, other work in progress includes:
+Nothing is in flight as of 2026-11-20. The next planned step is step 10 of
+[`docs/bootstrap-target.md`](bootstrap-target.md) (kernel-checking the vendored blob, which
+discharges `VendoredFacts`, `FmtRO` and the RO hypotheses below); it has not started.
 
-- **The rest of `realloc`** (open PR #68):
-  - the fallback's corner cases: inner `alloc` failing or growing the heap, the fallback after a
-    refused heap growth, and a 0-unit copy;
-  - `realloc_wrap_cases`, which matches every outcome of the model's `realloc` at alignment 1
-    through the locked wrapper.
-- **Lifting the 14-page limit,** by making the host-call gas cap a parameter of `refineContract`.
-- **`alloc` in the binary at alignment above one unit with heap growth, on first use and on
-  failure.** The no-growth success path is done (`AllocAlignRefines.lean`).
-- **The field formatters of refine's 6159 `Debug` line** (`Services/Bootstrap/Fmt/Field*.lean`,
-  `N56*.lean`), frame-only summaries in the style of the Fmt ones: `write_char` (59743), `pad_wp` and
-  `pad_z2` (`pad_integral` with `{:02x}`'s options), `u8hex_ok` (60209), `fmt_write_spec` (an
+### On `main`, not yet folded into the sections above
+
+- **The field formatters of refine's 6159 `Debug` line** (PRs #189, #213, #219, #220, #221;
+  `Services/Bootstrap/Fmt/Field*.lean`, `N56*.lean`), frame-only summaries in the style of the Fmt
+  ones: `write_char` (59743), `pad_wp` and `pad_z2` (`pad_integral` with `{:02x}`'s options), `u8hex_ok` (60209), `fmt_write_spec` (an
   explicit-options item), `fmt_write_c3` and `fmt_writeW` (nested `core::fmt::write` calls, whose
   arguments lie below the `String`), `slice_hex_ok` (57922) and `n56_hex` (56340's hex path).
   - *Named hypotheses* on the vendored blob's read-only data, discharged in step 10 like `FmtRO`:
     `RO70833` (the octets 70833 … 70840, the template `{:02x}`) and `RO70824` (the octets 70824,
     70827, 70828 and 70832, the template `0x{}...`).
-- **`core::str::from_utf8` (60681), by the symbolic executor** (draft PR #194,
+- **`core::str::from_utf8` (60681), by the symbolic executor** (PR #194,
   `Services/Bootstrap/SymExec/Utf8Final.lean`). Both statements are proved, with axioms propext,
   Classical.choice and Quot.sound only:
   - `from_utf8_call`: for every input the call returns to the caller with r0, r1, r5 and r6
@@ -1287,5 +1283,17 @@ At the time of writing, other work in progress includes:
   - [71078, 71334) is readable.
 
   There is no hypothesis about the contents of the table.
+
+### Paused (branches kept, each with a handoff)
+
+- **The field formatters** beyond the lemmas above: `Services/Bootstrap/Fmt/FIELDS-HANDOFF.md`
+  (`claude/bootstrap-fields-*` branches).
+- **Decode / HeapHost:** `claude/decode-heaphost`.
+- **Storage keys, stage 2** (the representation switch): `docs/storage-key-design.md`
+  (`claude/storage-key-design`).
+- **Build work:** P3 stage 1 (`claude/p3-module-stage1`, after the spike `claude/p3-module-spike`)
+  and the post_simp pass (`claude/post-simp-fast`).
+- **`alloc` in the binary at alignment above one unit with heap growth, on first use and on
+  failure.** The no-growth success path is done (`AllocAlignRefines.lean`, PR #74).
 
 This page should be updated as these land.

@@ -163,6 +163,12 @@ theorem isBootstrapCode_deployed : Acc.Final.IsBootstrapCode (ba N 81 95042) :=
   ⟨code_size, jamBlob, jamBlob, jam, vendored_eq, rfl, rfl, rfl, rfl, heap_ok, CodeCheck.checkCode_ok,
     CodeXCheck.checkCode_ok, CodeACheck.checkCode_ok, CodeFCheck.checkCode_ok⟩
 
+/-- **The deployed code**: the code of the deployed binary `Blob.preimage`, after its metadata (GP §A.7). -/
+def deployedCode : ByteArray := ba N 81 95042
+
+/-- The deployed binary splits from its metadata into `deployedCode` (GP §A.7), by the kernel. -/
+theorem split_deployed : splitMetadata preimage = some deployedCode := split
+
 /-- For any code the deployed binary's metadata split gives, it is bootstrap's. -/
 theorem isBootstrapCode_of_split {code : ByteArray} (h : splitMetadata preimage = some code) :
     Acc.Final.IsBootstrapCode code := by

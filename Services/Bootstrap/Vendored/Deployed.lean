@@ -53,30 +53,30 @@ theorem refine_t1c_deployed (rk : Nat → Nat → List Spec.Bytes)
     isBootstrapC_preimage hc hi hs is salt rest hy hsalt hn hY hwf hnoimport hrsr hpre
 
 /-- **T2 for the deployed binary** (`accumulate_spec` with `hvend` and `hboot` discharged by the kernel): as
-    `accumulate_spec`, for a service whose code, after the transfers are credited, is the code of the deployed
-    bootstrap binary (`splitMetadata Blob.preimage = some code`: the code after its metadata, GP §A.7).
+    `accumulate_spec`, for a service whose code, after the transfers are credited, is `deployedCode`, the code of
+    the deployed bootstrap binary after its metadata (`split_deployed`: `splitMetadata Blob.preimage = some
+    deployedCode`, GP §A.7, by the kernel).
 
     Hypotheses besides the run's shape: `AccHyps B C` (the items loop's and the start-up's named hypotheses),
     `ValuesFit` (`hfit`) and `InfoFits` (`hinfo`). -/
 theorem accumulate_spec_deployed (B : InstrRep) (C : Spec.Consts) (hmax : C.maxRecent = 2 * 341 * 16)
     (hyps : AccHyps B C)
     (η : List UInt8) (e : PartialState) (t s g : Nat) (inputs : List AccumulateInput)
-    (code : ByteArray) (hcode : ASem.codeOf (ASem.credit e s inputs) s = some code)
-    (hdep : splitMetadata Blob.preimage = some code) (ht : t < 4294967296) (hs : s < 4294967296)
+    (hcode : ASem.codeOf (ASem.credit e s inputs) s = some deployedCode) (ht : t < 4294967296) (hs : s < 4294967296)
     (hn : inputs.length ≤ 89) (hsz : ∀ i ∈ inputs, InputSized i)
-    (hfit : ValuesFit (ASem.accEnv η t inputs code) (initImplications (ASem.credit e s inputs) s t η))
+    (hfit : ValuesFit (ASem.accEnv η t inputs deployedCode) (initImplications (ASem.credit e s inputs) s t η))
     (hinfo : InfoFits e s) :
     let o := psiA Params.full η e t s g inputs
     let x₀ := initImplications (ASem.credit e s inputs) s t η
-    let env := ASem.accEnv η t inputs code
+    let env := ASem.accEnv η t inputs deployedCode
     let args : ByteArray := ⟨(Codec.nat t ++ Codec.nat s ++ Codec.nat inputs.length).toArray⟩
     ∃ n, (o.state, o.xfers, o.yield, o.provisions) = ASem.outcome (ASem.run n (Spec.accumulate C t) env (x₀, x₀)) ∧
       ((ASem.run n (Spec.accumulate C t) env (x₀, x₀)).1 ≠ .stopped ∨
-        (psiM code 5 (UInt64.ofNat g) args (accHostFn env) (x₀, x₀)).2.1 = .oog ∨
+        (psiM deployedCode 5 (UInt64.ofNat g) args (accHostFn env) (x₀, x₀)).2.1 = .oog ∨
         ∃ (p : ByteArray) (ω : Regs) (μ : Memory) (f : Stream) (s' : St Stream),
-          standardInit code args = some (p, ω, μ) ∧
+          standardInit deployedCode args = some (p, ω, μ) ∧
           Reaches p (accContractS env) ⟨5, ω, μ, (x₀, x₀), f⟩ s' ∧ AccAbort s') :=
-  accumulate_spec B C hmax accVendoredFacts hyps η e t s g inputs code hcode (isBootstrapCode_of_split hdep)
+  accumulate_spec B C hmax accVendoredFacts hyps η e t s g inputs deployedCode hcode isBootstrapCode_deployed
     ht hs hn hsz hfit hinfo
 
 end Services.Bootstrap.Vendored

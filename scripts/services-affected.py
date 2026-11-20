@@ -10,6 +10,7 @@ A change affects Services when a changed path is
   * under `Services/` or `services/` (the vendored blobs), or `Services.lean`;
   * build configuration: `lakefile.lean`, `lean-toolchain`, `lake-manifest.json`, `.github/`;
   * under `scripts/`, except the scripts listed in MODEL_ONLY_SCRIPTS;
+  * a generator the proofs chain runs outside `scripts/`, listed in PROOF_GENERATORS;
   * a Lean module that a Services module, or one of the Services checks in PROOF_ROOTS, imports
     (directly or transitively), found by scanning `import` lines.
 Any error also gives `affected=true`: a wrong `true` costs a long build, a wrong `false` a broken main.
@@ -19,6 +20,11 @@ import os
 import re
 import subprocess
 import sys
+
+# Generators outside `scripts/` that the proofs chain runs (its "generated files" checks).
+PROOF_GENERATORS = {
+    "PVM/SymExec/gen_prog.py",
+}
 
 # Scripts the proofs chain never runs.
 MODEL_ONLY_SCRIPTS = {
@@ -69,6 +75,8 @@ def affected_by(path, closure):
     if path == "Services.lean" or path.startswith(("Services/", "services/", ".github/")):
         return True
     if path in ("lakefile.lean", "lean-toolchain", "lake-manifest.json"):
+        return True
+    if path in PROOF_GENERATORS:
         return True
     if path.startswith("scripts/"):
         return path not in MODEL_ONLY_SCRIPTS

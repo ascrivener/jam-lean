@@ -1,8 +1,10 @@
-# Handoff: coordinator state (2026-11-17, ~18:00 UTC)
+# Handoff: coordinator state (2026-11-20)
 
 A coordinator (parent) session runs the child sessions, all tagged `jam-lean`. Each line of work keeps
 its own handoff README; read it before resuming that line. This file is the coordinator's state: if
 the coordinator restarts, start here. Scope since 2026-11-16: decision 19, refined by 20–26 below.
+Since 2026-11-20 jam-lean is run by the parent session of the `witness-toaster` project; the old
+jam-lean parent session is archived.
 
 ## Where things stand
 
@@ -21,16 +23,20 @@ Both targets of the narrowed scope (decision 19) are proved and on main, with na
   allocation failure (`AccAbort`: a heap trap pc, or 40611/40821 with ω₇ = 0). Hypotheses:
   - `AccVendoredFacts` (vendored blob, step 10) and `IsBootstrapCode` (accepted by the coordinator
     under the standing named-hypothesis decision);
-  - `AccHyps B C` (option B, decision 23): AccLogFail, InputsGlob, Utf8Call, LogFmt, KeyFmt,
+  - `AccHyps B C` (option B, decision 23): AccLogFail, Utf8Call, LogFmt, KeyFmt,
     ItemLogFmt, OutDecH, InstrLogH, ResultLogH, HandlerH (Ab = AccAbort), PushH, ExtendH, OkEncH,
     DropInstrsH, over an `InstrRep` bundle;
   - `ValuesFit` (decision 4), `InfoFits` (decision 26), G3 (≤ 89 inputs, `InputSized`).
-  Discharged inside: ParamStatics and RingFits (from the prologue), StoreFit, the own account.
-- **In flight.** `InputsGlob` is being discharged (decision 26: thread Glob through inputs_decode),
-  session `session_01FAPLse8iyeN6855tGWte5L`, branch `claude/bootstrap-t2-inputsglob`. #223 (CodeF
-  regeneration) is being re-synced with main and merges on green.
+  Discharged inside: ParamStatics and RingFits (from the prologue), StoreFit, the own account, and
+  `InputsGlob` (#236, merged 2026-11-18: inputs_decode keeps the Glob statics).
+- **In flight.** No proof work. #223 (CodeF regeneration, with CI diffing every code-fact tier)
+  merged 2026-11-17. Small maintenance PRs from the witness-toaster project (CI sync check for the
+  symbolic executor's `Prog` modules, these docs) may be open.
+- **Next planned step: step 10** (kernel-check the vendored blob, `docs/bootstrap-target.md` §4),
+  discharging `VendoredFacts`/`VendoredFactsC`, `AccVendoredFacts`, `FmtRO` and the RO hypotheses.
+  **Not started.**
 - **CI.** One check for branch protection: `proofs` (#232) passes exactly when the merge rule holds.
-  The ruleset requires `model`; Adam was asked to add `proofs`. Main's runs are serialized (#225).
+  Adam has added `proofs` as a required check on main. Main's runs are serialized (#225).
   A proofs build with a warm cache takes about 40 min to 2.5 h.
 - **Not started, need Adam:** T1 Import and empty payloads, M2 (the real decoder), discharging the
   named hypotheses (Fmt sites, handlers, step 10), P3 stage 1 and post_simp (branches pushed).
@@ -44,14 +50,20 @@ Both targets of the narrowed scope (decision 19) are proved and on main, with na
 
 ## Children (as of this writing)
 
-| Line | Session | Branch / PR | Next |
-|---|---|---|---|
-| T2 InputsGlob (1st) | session_01FAPLse8iyeN6855tGWte5L | `claude/bootstrap-t2-inputsglob` | discharge InputsGlob |
+No jam-lean proof children are running. The T2 InputsGlob line finished with #236.
 
-All other lines are finished or paused. Paused lines with handoffs: field formatters
-(`FIELDS-HANDOFF.md`), Decode/HeapHost (`claude/decode-heaphost`), storage-key stage 2
-(`docs/storage-key-design.md`), P3 stage 1 (`claude/p3-module-stage1`), post_simp
-(`claude/post-simp-fast`). **jam-lean-target** (a separate project) has its own parent.
+Paused lines (remote branches kept; do not delete them):
+
+| Line | Branch(es) | Handoff |
+|---|---|---|
+| Field formatters | `claude/bootstrap-fields-3-wip`, `-2-alt`, `-2-wc`, `-2-wip`, `-wip` (`-1`, `-2`, `-hex`, `-n56`, `-step8` merged as #189, #213, #220, #219, #221) | `Services/Bootstrap/Fmt/FIELDS-HANDOFF.md` (newer copy on `-3-wip`) |
+| Decode / HeapHost | `claude/decode-heaphost` | on the branch |
+| Storage keys, stage 2 | `claude/storage-key-design` | `docs/storage-key-design.md` |
+| P3 `module` conversion | `claude/p3-module-stage1`, `claude/p3-module-spike` | `docs/module-system.md` on stage1; `docs/profiling/proposal.md` |
+| post_simp pass | `claude/post-simp-fast` | on the branch |
+
+Open PRs as of 2026-11-20: none besides witness-toaster maintenance PRs. **jam-lean-target** (a
+separate project) has its own parent.
 
 ## Adam's decisions on 2026-11-15
 
@@ -174,7 +186,7 @@ All other lines are finished or paused. Paused lines with handoffs: field format
   UTF8_CHAR_WIDTH readability.
 - **T2, the output decode failure contract:** spec decode = none ⇒ the binary reaches 15361 or
   exhausts the heap.
-- **T2, `InputsGlob`** (decision 26): thread Glob through inputs_decode (in flight).
+- *(Done: **T2, `InputsGlob`** (decision 26), discharged in #236.)*
 - *(Done in `accumulate_spec`: `ParamStatics` and row 8's `0 < 2·C·I < 2^32` are discharged from
   the prologue.)*
 - **ReallocBig:** the single value units = 2^25 − 1 (two routes in the Refine README).

@@ -4,7 +4,7 @@ import JAM.Crypto
 import JAM.Params
 
 /-!
-# Safrole: block production and chain growth (GP v0.8.0 §6, `sec:blockproduction`)
+# Safrole: block production and chain growth (GP v0.8.1 §6, `sec:blockproduction`)
 
 The Safrole state γ = (γ_P, γ_Z, γ_S, γ_A) (eq. `consensusstatecomposition`) together with the
 timeslot τ (eq. `timeslotindex`), the entropy η (eq. `entropycomposition`) and the validator key
@@ -23,7 +23,8 @@ The seal and entropy-source conditions on the header (eqs. `ticketconditiontrue`
 source's VRF output, as an input.
 
 Cryptography enters through `JAM.Crypto`: the ring root O, Ring VRF verification and output for
-tickets, and IETF VRF verification and output for the seal.
+tickets, and singly-contextualized VRF verification and output for the seal (Thin VRF in GP v0.8.1
+Appendix G; the interface 𝔹̄_k⟨c⟩⟨m⟩ ⊂ 𝔹_96 is unchanged from v0.8.0).
 
 The paper states the extrinsic's conditions but names no errors and gives no order between them.
 The errors here are the test vectors' names. They are checked in this order: the timeslot (§5,
@@ -42,8 +43,9 @@ namespace ValidatorKey
 def bs (k : ValidatorKey) : List UInt8 := k.take 32
 /-- k_e = k_{32⋅⋅⋅+32}, the Ed25519 key. -/
 def ed (k : ValidatorKey) : List UInt8 := (k.drop 32).take 32
-/-- The null key [0, 0, …] of Φ. -/
-def null : ValidatorKey := List.replicate 336 0
+/-- The null key 𝕂^∅ of Φ (GP v0.8.1 eq. `nullvalkey`): zero except for its Ed25519 component
+    [2, 0, …]. -/
+def null : ValidatorKey := nullValidatorKey
 end ValidatorKey
 
 /-- γ_S ∈ ⟦𝕋⟧_𝖤 ∪ ⟦ℍ_B⟧_𝖤 (GP eq. `ticketaccumulatorsealticketsspec`): a full complement of tickets,
@@ -135,10 +137,20 @@ def octetLt : List UInt8 → List UInt8 → Bool
   | _ :: _, [] => false
   | a :: as, b :: bs => a < b || (a == b && octetLt as bs)
 
-/-- Φ(**k**) (GP eq. `blacklistfilter`): keys whose Ed25519 component is an offender become the
-    null key. -/
+/-- Φ(**k**) (GP v0.8.1 eq. `blacklistfilter`): keys whose Ed25519 component is an offender become
+    the null key 𝕂^∅ (eq. `nullvalkey`). -/
 def offendersFilter (offenders : List (List UInt8)) (k : List ValidatorKey) : List ValidatorKey :=
   k.map fun v => if offenders.contains v.ed then ValidatorKey.null else v
+
+-- Regression tests (GP v0.8.1 #543): 𝕂^∅ has 336 octets, is zero but for its Ed25519 component
+-- [2, 0, …], and Φ replaces an offender's key by it.
+#guard ValidatorKey.null.length = 336
+#guard ValidatorKey.null.ed = 2 :: List.replicate 31 0
+#guard ValidatorKey.null.bs = List.replicate 32 0
+#guard (ValidatorKey.null.drop 64).all (· == 0)
+#guard offendersFilter [List.replicate 32 7]
+    [List.replicate 32 1 ++ List.replicate 32 7 ++ List.replicate 272 1, List.replicate 336 1] =
+  [ValidatorKey.null, List.replicate 336 1]
 
 /-- Z, the outside-in sequencer (GP §6.5): [s_0, s_{|s|−1}, s_1, s_{|s|−2}, …]. -/
 def outsideIn {α : Type} (s : List α) : List α :=

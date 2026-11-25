@@ -143,19 +143,19 @@ theorem refineContractK_keep {cap : Nat} {env : RefineHost.Env} {pb : Nat}
   obtain ⟨hs, -, -, hm, -⟩ := he
   subst hm
   rcases hg with rfl | rfl | ⟨h3, h8⟩ | hg
-  · simp only [RefineHost.dispatch, hostGrowHeap, growHeapCore, hbd] at hs ⊢
+  · simp only [RefineHost.dispatch, hostGrowHeap, growHeapCore, hbd, charged] at hs ⊢
     generalize hC : List.countP (fun k => μ.pages.get? (48 + k) == some Access.write) (List.range (pb - 48)) = C
       at hs ⊢
     have hCle : C ≤ pb - 48 := by
       rw [← hC]; exact Nat.le_trans List.countP_le_length (by simp)
     by_cases c1 : reg ω 7 ≤ 48 + C ∨ reg ω 7 > pb
-    · rw [if_pos c1] at hs ⊢
-      exact ⟨fun q hq => Memory.setPages_get_off _ _ _ _ _ (by dsimp only; omega), fun b _ _ => rfl⟩
-    · rw [if_neg c1] at hs ⊢
-      by_cases c2 : (UInt64.ofNat cap).toNat < Constants.CgasGeminiconst + (reg ω 7 - (48 + C)) * Constants.CgasGeminilinear
-      · rw [if_pos c2] at hs; simp at hs
-      · rw [if_neg c2]
-        exact ⟨fun q hq => Memory.setPages_get_off _ _ _ _ _ (by dsimp only; omega), fun b _ _ => rfl⟩
+    all_goals
+      simp only [c1, ↓reduceIte] at hs ⊢
+      split at hs
+      · simp at hs
+      · next c2 =>
+        simp only [c2, ↓reduceIte]
+        exact ⟨fun q hq => Memory.setPages_get_off _ _ _ _ _ (by omega), fun b _ _ => rfl⟩
   · simp only [RefineHost.dispatch, hostFetch, charged] at hs ⊢
     generalize Constants.CgasY (if reg ω 10 < 16 then some (reg ω 10) else none) = cg at hs ⊢
     by_cases hc : (UInt64.ofNat cap).toNat < cg.fst + memGas cg.snd (reg ω 9)
@@ -184,13 +184,13 @@ theorem refineContractK_keep {cap : Nat} {env : RefineHost.Env} {pb : Nat}
     · have e : ∀ g, RefineHost.dispatch env h g ω μ x = RefineHost.unknown g ω μ x := fun g => by
         unfold RefineHost.dispatch
         split <;> first | omega | rfl
-      rw [e]
-      exact ⟨fun _ _ => rfl, fun _ _ _ => rfl⟩
+      rw [e]; unfold RefineHost.unknown
+      split <;> exact ⟨fun _ _ => rfl, fun _ _ _ => rfl⟩
   · have e : ∀ g, RefineHost.dispatch env h g ω μ x = RefineHost.unknown g ω μ x := fun g => by
       unfold RefineHost.dispatch
       split <;> first | omega | rfl
-    rw [e]
-    exact ⟨fun _ _ => rfl, fun _ _ _ => rfl⟩
+    rw [e]; unfold RefineHost.unknown
+    split <;> exact ⟨fun _ _ => rfl, fun _ _ _ => rfl⟩
 
 /-- **A gas-free refine run keeps what is not writable**: every page outside the heap's 48 … pb keeps
     its access, and every octet on such a page that is not writable keeps its value. Read-only data,

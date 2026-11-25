@@ -286,7 +286,7 @@ def traceFor (code : ByteArray) (h : List UInt8) (acct : ServiceAccount) (Q : Pr
     (Blake2b.hash256 ⟨pkg.encode.toArray⟩).toList).toArray⟩
   let (_, ω, μ) ← standardInit code a
   let env := mkEnv code sid i (Std.ExtTreeMap.ofList [(sid, acct)]) pkg
-  let (tr, _, _, _, _) := go Q (toHostFn (RefineHost.dispatch env)) 0 1000000000 false ω μ (∅, []) #[] #[] 300000
+  let (tr, _, _, _, _) := go Q (toHostFn (RefineHost.dispatch env)) 0 1000000000 false ω μ (∅, ∅, []) #[] #[] 300000
   return tr
 
 /-- As `go`, for an accumulate run (Ψ_A's context 𝕃²). -/
@@ -2117,7 +2117,7 @@ structure PrefixPost (L : Nat) (μ : Memory) (ω' : Regs) (μ' : Memory) (x' : R
   argsRd : ∀ a, {argLo} ≤ a → a < {argLo} + L → μ'.readable a = μ.readable a
   stack : ∀ a, {ω[1]!.toNat} - {jb.stackSize} ≤ a → a < {ω[1]!.toNat} → μ'.writable a = true
   heap : ∀ a, {rwLo} ≤ a → a < {rwHi} → μ'.writable a = true
-  ctx : x' = ((∅, []) : RefineCtx)
+  ctx : x' = ((∅, ∅, []) : RefineCtx)
   lenWords : ∀ a ∈ lenAt, μ'.readN a 8 = Num.encodeLE 8 L
   ro : ∀ a, {roStart} ≤ a → a < {roStart + jb.ro.size} → μ'.readable a = true
   frame : ∀ a, (decide (a < 4294967296){String.join (frameR.map fun (lo, hi) => s!" && !(decide ({lo} ≤ a ∧ a < {hi}))")}) = true →
@@ -2141,7 +2141,7 @@ structure StartMem (μ : Memory) : Prop where
 theorem prefix_run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost.Env)
     (henv : heapBounds env.code = ({hA}, {hB})) (hpar : env.fetch.params = Params.full) (μ : Memory)
     (L : Nat) (hL : 0 < L ∧ L ≤ 16777216) (hμ : StartMem μ) :
-    ∃ ω' μ' x', FreeStepsH p (refineContract env) 0 (initRegs L) μ ((∅, []) : RefineCtx) {endPc} ω' μ' x' {n} ∧
+    ∃ ω' μ' x', FreeStepsH p (refineContract env) 0 (initRegs L) μ ((∅, ∅, []) : RefineCtx) {endPc} ω' μ' x' {n} ∧
       PrefixPost L μ ω' μ' x' := by"
   -- `cut=NAME`: the proof from the cut chain NAME (`genwitnesssteps cut 0 NAME 0 N every=16 frame words`)
   let cutName := ((args.find? (·.startsWith "cut=")).map fun o => (o.drop 4).toString).getD ""
@@ -2179,7 +2179,7 @@ theorem prefix_run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost
       let _ := ty
       argsS := argsS ++ [a]
     IO.println s!"  obtain ⟨ω', μ', hrun, hregs, hmem, hsym, hfr, hrdA, hrdm, hwrm, -⟩ :=
-    {cutName}.run p P env (initRegs L) μ ((∅, []) : RefineCtx) {" ".intercalate argsS}
+    {cutName}.run p P env (initRegs L) μ ((∅, ∅, []) : RefineCtx) {" ".intercalate argsS}
   refine ⟨ω', μ', _, hrun, ⟨?regs, ?bytes, ?args, ?argsRd, ?stk, ?hp, rfl, ?lw, ?ro, ?fr⟩⟩
   case regs =>
     clear hfr hrdA hrdm hwrm hmem hsym hrun
@@ -2240,8 +2240,8 @@ theorem prefix_run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost
     out "  refine ⟨?ω, ?μ, ?x, ?h, ?post⟩\n  case h =>"
     for pc in path do out (stepLine pc "")
   else
-    out s!"  suffices hs : ∃ ω' μ', FreeStepsH p (refineContract env) 0 (regsNF (initRegs L) []) μ ((∅, []) : RefineCtx) {endPc} ω' μ' ((∅, []) : RefineCtx) {n} ∧
-      PrefixPost L μ ω' μ' ((∅, []) : RefineCtx) by
+    out s!"  suffices hs : ∃ ω' μ', FreeStepsH p (refineContract env) 0 (regsNF (initRegs L) []) μ ((∅, ∅, []) : RefineCtx) {endPc} ω' μ' ((∅, ∅, []) : RefineCtx) {n} ∧
+      PrefixPost L μ ω' μ' ((∅, ∅, []) : RefineCtx) by
     obtain ⟨ω', μ', h, hp⟩ := hs
     exact ⟨ω', μ', _, h, hp⟩"
     let mut k := 0
@@ -2253,7 +2253,7 @@ theorem prefix_run (p : ByteArray) (P : Program) [HasCode p P] (env : RefineHost
       out s!"  refine FreeStepsH.ex_trans (n₁ := {ks - k}) (n₂ := {n - ks}) (i₁ := {memBase}) (ω₁ := ?ω₁_{s}) (μ₁ := ?μ₁_{s}) ?pre{s} ?rest{s} (by decide)\n  case pre{s} =>"
       for j in [k:ks] do out (stepLine path[j]! gs)
       out s!"    exact FreeStepsH.refl
-  refine FreeStepsH.bind_ex (memcpy_small_regs (p := p) (P := P) (R := refineContract env) ((∅, []) : RefineCtx) _ _
+  refine FreeStepsH.bind_ex (memcpy_small_regs (p := p) (P := P) (R := refineContract env) ((∅, ∅, []) : RefineCtx) _ _
     {ret} {t} {r[1]!.toNat} {r[7]!.toNat} {r[8]!.toNat} {r[9]!.toNat} ?m0_{s} ?m1_{s} ?m7_{s} ?m8_{s} ?m9_{s} (by decide)
     (by decide) ?mjt_{s} ?mbt_{s} (by omega) (by omega) (by omega) (by omega) (by omega) (by omega) ?mwf_{s} ?mr_{s} ?mw_{s}) ?k{s}
     (n₂ := {n - kr}) (by decide)
@@ -2444,7 +2444,7 @@ theorem prefix_from_Y (b a : ByteArray) (jb : JamBlob) (hjb : JamBlob.parse? b =
     (μ : Memory) (hY : standardInit b a = some (p, ω, μ)) (env : RefineHost.Env)
     (henv : heapBounds env.code = ({hA}, {hB})) (hpar : env.fetch.params = Params.full)
     (ha0 : 0 < a.size) :
-    ∃ ω' μ' x', FreeStepsH p (refineContract env) 0 ω μ ((∅, []) : RefineCtx) {endPc} ω' μ' x' {n} ∧
+    ∃ ω' μ' x', FreeStepsH p (refineContract env) 0 ω μ ((∅, ∅, []) : RefineCtx) {endPc} ω' μ' x' {n} ∧
       PrefixPost a.size μ ω' μ' x' := by
   obtain ⟨jb', hv, he⟩ := Option.map_eq_some_iff.1 hY
   have hjb' : jb' = jb ∧ a.size ≤ inputSize := by
@@ -3298,7 +3298,7 @@ def main (args0 : List String) : IO Unit := do
   let a : ByteArray := ⟨(Codec.nat c ++ Codec.nat i ++ Codec.nat sid ++ Codec.var ⟨y.toArray⟩ ++ (Blake2b.hash256 ⟨pkg.encode.toArray⟩).toList).toArray⟩
   let some (_, ω, μ) := standardInit code a | return
   let env := mkEnv code sid i (Std.ExtTreeMap.ofList [(sid, acct)]) pkg
-  let (tr, _, _, _, _) := go Q (toHostFn (RefineHost.dispatch env)) 0 1000000000 false ω μ (∅, []) #[] #[] 3000000
+  let (tr, _, _, _, _) := go Q (toHostFn (RefineHost.dispatch env)) 0 1000000000 false ω μ (∅, ∅, []) #[] #[] 3000000
   let path := (tr.toList.take n).map (·.1)
   let sbE := ((← IO.getEnv "WITNESS_SBOUND").getD "").splitOn "," |>.filterMap String.toNat?
   let sBound := match sbE with

@@ -4,29 +4,31 @@ import JAM.Params
 import JAM.Work
 
 /-!
-# General host functions (GP v0.8.0 Appendix B, `sec:generalfunctions`)
+# General host functions (GP v0.8.1 Appendix B, `sec:generalfunctions`)
 
 `gas` (Ω_G), `grow_heap` (Ω_♊), `fetch` (Ω_Y), `lookup` (Ω_L), `read` (Ω_R), `write` (Ω_W) and
 `info` (Ω_I), each transcribed from its row of the paper's table.
 
-The common rules (GP Appendix B, before the table):
-* ϱ' ≡ ϱ − g unless a function defines ϱ' itself;
-* (ε', ω', μ', **s**') ≡ (∞, ω, μ, **s**) if ϱ < g, and otherwise (▸, ω, μ, **s**) except as indicated.
+The common rules (GP v0.8.1 Appendix B, `Host Functions`, #533), shared by every host function:
+* ϱ* ≡ max(ϱ − g, 0) unless a function defines ϱ* itself;
+* (ε*, ω*, μ*, x*) ≡ (∞, ω, μ, x) if ϱ < g, and otherwise (ε', ω', μ', x'), where by default
+  ε' = ▸, ω' = ω, μ' = μ and x' = x except as indicated.
 
-Gas here is ℤ_G, as in the paper's host functions, so on ∞ the returned ϱ' = ϱ − g may be negative.
+So running out of gas consumes all of it (ϱ* = 0) and leaves registers, memory and context as they
+were. The paper's gas is ℕ_G throughout (v0.8.0 used ℤ_G here), and so is `HostOut.gas`.
 -/
 
 namespace JAM
 
 open PVM
 
-/-- ε' of a host function: ▸, ∎, ☇ or ∞. -/
+/-- ε* of a host function: ▸, ☇ or ∞ (GP v0.8.1). -/
 abbrev HostStatus := PVM.HostStatus
 
-/-- The result of a host function: (ε', ϱ', ω', μ', x'), with ϱ' ∈ ℤ_G. -/
+/-- The result of a host function: (ε*, ϱ*, ω*, μ*, x*), with ϱ* ∈ ℕ_G (GP v0.8.1). -/
 structure HostOut (X : Type) where
   status : HostStatus
-  gas : Int
+  gas : Nat
   regs : Regs
   mem : Memory
   ctx : X
@@ -62,12 +64,13 @@ def setR7 (ω : Regs) (v : Nat) : Regs := ω.set 7 (UInt64.ofNat v)
 /-- Register `k` as a natural. -/
 def reg (ω : Regs) (k : Fin 13) : Nat := (ω.get k).toNat
 
-/-- Apply the common rules: charge `g`, report ∞ (state unchanged) if ϱ < g, otherwise run `body`
-    with the default (▸, ϱ − g, ω, μ, x). -/
+/-- Apply the common rules (GP v0.8.1 Appendix B, #533): if ϱ < g, (∞, 0, ω, μ, x), with all gas
+    consumed and the state unchanged; otherwise run `body` on the default (▸, ϱ − g, ω, μ, x).
+    (ϱ − g = max(ϱ − g, 0) here, since ϱ ≥ g.) -/
 def charged {X : Type} (g : Nat) (gas : Nat) (ω : Regs) (μ : Memory) (x : X)
     (body : HostOut X → HostOut X) : HostOut X :=
-  if gas < g then ⟨.oog, (gas : Int) - g, ω, μ, x⟩
-  else body ⟨.cont, (gas : Int) - g, ω, μ, x⟩
+  if gas < g then ⟨.oog, 0, ω, μ, x⟩
+  else body ⟨.cont, gas - g, ω, μ, x⟩
 
 /-- The shared tail of `fetch`, `lookup`, `read` and `info`: given the value **v** (∅ as `none`,
     ∇ as `.error`), the offset `f₀` and length `z` registers and the output address `o`:
@@ -90,20 +93,21 @@ def writeValue {X : Type} (out : HostOut X) (v : Except Unit (Option (List UInt8
 
 /-! ## Ω_G, `gas` = 0 -/
 
-/-- Ω_G: ω'_7 ≡ ϱ', with g = 𝖬_G. -/
+/-- Ω_G: ω'_7 ≡ ϱ*, with g = 𝖬_G (GP v0.8.1). -/
 def hostGas {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (x : X) : HostOut X :=
-  charged Constants.CgasG gas ω μ x fun out => { out with regs := setR7 ω out.gas.toNat }
+  charged Constants.CgasG gas ω μ x fun out => { out with regs := setR7 ω out.gas }
 
 /-! ## Ω_♊, `grow_heap` = 1 -/
 
-/-- The heap's page bounds for a standard program (eq. `conditions`): the first heap page
-    a = (2𝖹_Z + Q(|**o**|)) / 𝖹_P and the bound b below the stack. -/
+/-- The heap's page bounds for a standard program (GP v0.8.1 Ω_♊, eq. `jamblobformat`): the first
+    heap page a = (2𝖹_Z + Q(|**o**|)) / 𝖹_P and the bound b = (2^32 − 3𝖹_Z − 𝖹_I − Q(s)) / 𝖹_P below
+    the stack, with the stack size rounded to a zone (Q, not P: GP #538). -/
 def heapBounds (jam : ByteArray) : Nat × Nat :=
-  let (roLen, stack) := match JamBlob.parse? jam with
+  let (roLen, stack) := match JamBlob.parseStd? jam with
     | some jb => (jb.ro.size, jb.stackSize)
     | none => (0, 0)
   ((2 * zoneSize + roundZone roLen) / pageSize,
-   (2 ^ 32 - 3 * zoneSize - inputSize - roundPage stack) / pageSize)
+   (2 ^ 32 - 3 * zoneSize - inputSize - roundZone stack) / pageSize)
 
 /-- The gas-free part of Ω_♊: the heap bounds a and b, the current heap top h = a + c (c the
     writable pages in ℕ_{a…b}) and the requested top w = ω_7. -/
@@ -175,18 +179,18 @@ def growHeapCoreFast (ω : Regs) (μ : Memory) (jam : ByteArray) : Nat × Nat ×
   funext ω μ jam
   simp only [growHeapCore, growHeapCoreFast, countWritable_eq]
 
-/-- Ω_♊(ϱ, ω, μ, **p**): grow the read-write region of a standard program (eq. `conditions`) to
-    page ω_7, charging 𝖬_{♊,c} + (ω_7 − h)·𝖬_{♊,p}. The function defines (ε', ϱ', ω'_7) itself, and
-    then (μ'_**a**)_{a…ω'_7} = [W, …]. -/
+/-- Ω_♊(ϱ, ω, μ, x, **p**) (GP v0.8.1): grow the read-write region of a standard program
+    (eq. `conditions`) to page ω_7. ω'_7 = h if ω_7 ≤ h or ω_7 > b, otherwise ω_7; then
+    (μ'_**a**)_{a…ω'_7} = [W, …]; g = 𝖬_{♊,c} + (ω'_7 − h)·𝖬_{♊,p}, under the common rules.
+    Since v0.8.1 (#533) the no-growth case is charged like any other (∞ if ϱ < 𝖬_{♊,c}).
+    The bound b rounds the stack size to a zone (Q(s), GP #538; `heapBounds`). -/
 def hostGrowHeap {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (jam : ByteArray) (x : X) :
     HostOut X :=
   let (a, b, h, w) := growHeapCore ω μ jam
-  let g := Constants.CgasGeminiconst + (w - h) * Constants.CgasGeminilinear
-  let (st, gas', r7) : HostStatus × Int × Nat :=
-    if w ≤ h ∨ w > b then (.cont, (gas : Int) - Constants.CgasGeminiconst, h)
-    else if gas < g then (.oog, gas, h)
-    else (.cont, (gas : Int) - g, w)
-  ⟨st, gas', setR7 ω r7, μ.setPages a (r7 - a) (some .write), x⟩
+  let r7 := if w ≤ h ∨ w > b then h else w
+  let g := Constants.CgasGeminiconst + (r7 - h) * Constants.CgasGeminilinear
+  charged g gas ω μ x fun out =>
+    { out with regs := setR7 ω r7, mem := μ.setPages a (r7 - a) (some .write) }
 
 /-! ## Ω_Y, `fetch` = 2 -/
 
@@ -241,87 +245,61 @@ def hostFetch {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (cx : FetchContex
   charged g gas ω μ x fun out =>
     writeValue out (.ok (fetchValue cx c (reg ω 11) (reg ω 12))) (reg ω 7) (reg ω 8) (reg ω 9)
 
-/-! ## Ω_L, `lookup` = 3 -/
+/-! ## Ω_L, `lookup` = 3 (an accumulate function in GP v0.8.1)
 
-/-- The account `ω_7` names: the service's own **s** for ω_7 ∈ {s, 2^64 − 1}, otherwise **d**[ω_7]. -/
-def namedAccount (self : ServiceAccount) (sid : Nat) (d : Accounts) (w : Nat) : Option ServiceAccount :=
-  if w = sid ∨ w = 2 ^ 64 - 1 then some self else d.get? w
+`lookup`, `read` and `info` are accumulate functions in GP v0.8.1 (§B, "Accumulate Functions");
+`write` is defined with the accumulation context in `JAM/Accumulate.lean`. These three only read the
+context, so they take the accumulating service's account **x**_s and the accounts **d** = (x_e)_d. -/
 
-/-- Ω_L(ϱ, ω, μ, **s**, s, **d**): look up the preimage of the 32-octet hash at ω_8 in the named
-    account, with g = 𝖬_{L,c} + 𝔊(𝖬_{L,ℓ}, ω_11). -/
-def hostLookup {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (self : ServiceAccount) (sid : Nat)
+/-- The account ω_7 names (GP v0.8.1, Ω_L, Ω_R, Ω_I): **x**_s for ω_7 = 2^64 − 1, otherwise
+    **d**[ω_7] if any. -/
+def namedAccount (self : ServiceAccount) (d : Accounts) (w : Nat) : Option ServiceAccount :=
+  if w = 2 ^ 64 - 1 then some self else d.get? w
+
+/-- Ω_L(ϱ, ω, μ, (x, y)) (GP v0.8.1): look up the preimage of the 32-octet hash at ω_8 in the
+    named account, with g = 𝖬_{L,c} + 𝔊(𝖬_{L,ℓ}, ω_11). -/
+def hostLookup {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (self : ServiceAccount)
     (d : Accounts) (x : X) : HostOut X :=
   let g := Constants.CgasLconst + memGas Constants.CgasLlinear (reg ω 11)
   charged g gas ω μ x fun out =>
     let h := reg ω 8
     let v : Except Unit (Option (List UInt8)) :=
       if !μ.rangeReadable h 32 then .error ()
-      else .ok ((namedAccount self sid d (reg ω 7)).bind fun a => a.preimages.get? (μ.readN h 32))
+      else .ok ((namedAccount self d (reg ω 7)).bind fun a => a.preimages.get? (μ.readN h 32))
     writeValue out v (reg ω 9) (reg ω 10) (reg ω 11)
 
 /-! ## Ω_R, `read` = 4 -/
 
-/-- Ω_R(ϱ, ω, μ, **s**, s, **d**): read the storage value under the key at ω_8 (length ω_9) of the
-    named account, with g = 𝖬_{R,c} + 𝔊(𝖬_{R,k,ℓ}, ω_9) + 𝔊(𝖬_{R,v,ℓ}, ω_12). -/
-def hostRead {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (self : ServiceAccount) (sid : Nat)
+/-- Ω_R(ϱ, ω, μ, (x, y)) (GP v0.8.1): read the storage value under the key at ω_8 (length ω_9) of
+    the named account, with g = 𝖬_{R,c} + 𝔊(𝖬_{R,k,ℓ}, ω_9) + 𝔊(𝖬_{R,v,ℓ}, ω_12). -/
+def hostRead {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (self : ServiceAccount)
     (d : Accounts) (x : X) : HostOut X :=
   let kO := reg ω 8
   let kZ := reg ω 9
   let g := Constants.CgasRconst + memGas Constants.CgasRkeylinear kZ +
     memGas Constants.CgasRvallinear (reg ω 12)
   charged g gas ω μ x fun out =>
-    let sStar := if reg ω 7 = 2 ^ 64 - 1 then sid else reg ω 7
-    let a := if sStar = sid then some self else d.get? sStar
     let v : Except Unit (Option (List UInt8)) :=
       if !μ.rangeReadable kO kZ then .error ()
-      else .ok (a.bind fun a => a.storageGet (μ.readN kO kZ))
+      else .ok ((namedAccount self d (reg ω 7)).bind fun a => a.storageGet (μ.readN kO kZ))
     writeValue out v (reg ω 10) (reg ω 11) (reg ω 12)
-
-/-! ## Ω_W, `write` = 5 -/
-
-/-- Ω_W(ϱ, ω, μ, **s**, s): set (or, for v_Z = 0, delete) the storage value under the key at ω_7
-    (length ω_8) to the octets at ω_9 (length ω_10). FULL if the result would fall below the
-    threshold balance; otherwise ω'_7 is the previous value's length (NONE if there was none).
-    g = 𝖬_{W,c} + 𝔊(𝖬_{W,k,ℓ}, k_Z) + 𝔊(𝖬_{W,v,ℓ}, v_Z). The context carries the account **s**. -/
-def hostWrite (gas : Nat) (ω : Regs) (μ : Memory) (self : ServiceAccount) :
-    HostOut ServiceAccount :=
-  let kO := reg ω 7
-  let kZ := reg ω 8
-  let vO := reg ω 9
-  let vZ := reg ω 10
-  let g := Constants.CgasWconst + memGas Constants.CgasWkeylinear kZ +
-    memGas Constants.CgasWvallinear vZ
-  charged g gas ω μ self fun out =>
-    if !μ.rangeReadable kO kZ then { out with status := .panic }
-    else
-      let k := μ.readN kO kZ
-      let a : Option ServiceAccount :=
-        if vZ = 0 then some (self.storageWrite k [])
-        else if μ.rangeReadable vO vZ then some (self.storageWrite k (μ.readN vO vZ))
-        else none
-      let l := match self.storageGet k with
-        | some v => v.length
-        | none => Result.NONE
-      match a with
-      | none => { out with status := .panic }
-      | some a =>
-        if a.minBalance > a.balance then { out with regs := setR7 ω Result.FULL }
-        else { out with regs := setR7 ω l, ctx := a }
 
 /-! ## Ω_I, `info` = 6 -/
 
-/-- The octets `info` returns for an account:
-    ℰ(c, ℰ_8(b, t, g, m, o), ℰ_4(i), ℰ_8(f), ℰ_4(r, a, p)). -/
+/-- The octets `info` returns for an account (GP v0.8.1, Ω_I):
+    ℰ(c, ℰ_4(u, u'), ℰ_8(b, b', t, g, m, o), ℰ_4(i), ℰ_8(f), ℰ_4(r, a, p)), with u the supervisor,
+    u' its creation slot and b' the supervisor balance. -/
 def infoValue (a : ServiceAccount) : List UInt8 :=
   let e := Codec.fixed
-  a.codeHash ++ e 8 a.balance ++ e 8 a.minBalance ++ e 8 a.minAccGas ++ e 8 a.minMemoGas ++
+  a.codeHash ++ e 4 a.supervisor ++ e 4 a.supervisorCreated ++ e 8 a.balance ++
+    e 8 a.supervisorBalance ++ e 8 a.minBalance ++ e 8 a.minAccGas ++ e 8 a.minMemoGas ++
     e 8 a.octets ++ e 4 a.items ++ e 8 a.gratis ++ e 4 a.created ++ e 4 a.lastAcc ++ e 4 a.parent
 
-/-- Ω_I(ϱ, ω, μ, s, **d**): information about service ω_7 (or s, for 2^64 − 1), with g = 𝖬_I. -/
-def hostInfo {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (sid : Nat) (d : Accounts) (x : X) :
-    HostOut X :=
+/-- Ω_I(ϱ, ω, μ, (x, y)) (GP v0.8.1): information about the named account, with g = 𝖬_I. -/
+def hostInfo {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (self : ServiceAccount)
+    (d : Accounts) (x : X) : HostOut X :=
   charged Constants.CgasI gas ω μ x fun out =>
-    let a := d.get? (if reg ω 7 = 2 ^ 64 - 1 then sid else reg ω 7)
-    writeValue out (.ok (a.map infoValue)) (reg ω 8) (reg ω 9) (reg ω 10)
+    writeValue out (.ok ((namedAccount self d (reg ω 7)).map infoValue)) (reg ω 8) (reg ω 9)
+      (reg ω 10)
 
 end JAM

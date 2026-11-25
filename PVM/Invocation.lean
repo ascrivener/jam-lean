@@ -4,18 +4,19 @@ import PVM.Fast
 /-!
 # Host-call invocation Ψ_H, standard initialization Y and argument invocation Ψ_M
 
-GP v0.8.0 §A.6 (Host Call Definition), §A.7 (`sec:standardprograminit`, eqs. `conditions`,
-`memlayout`, `registers`) and §A.8 (Argument Invocation Definition).
+GP v0.8.1 §A.6 (Host Call Definition), §A.7 (`sec:standardprograminit`, eqs. `jamblobformat`,
+`ramlayoutfits`, `memlayout`, `registers`; the metadata prefix ℰ(↕**m**) is #582) and §A.8
+(Argument Invocation Definition).
 -/
 
 namespace PVM
 
 /-! ## Host-call handlers and Ψ_H (GP §A.6) -/
 
-/-- The exit reasons a host-call handler may give: {▸, ∎, ☇, ∞} (GP §A.6, 𝔉_X). -/
+/-- The exit reasons a host-call handler may give: {▸, ☇, ∞} (GP v0.8.1 §A.6, 𝔉_X). Since
+    v0.8.1 (#533) a handler can no longer halt the machine. -/
 inductive HostStatus where
   | cont
-  | halt
   | panic
   | oog
   deriving DecidableEq, Repr
@@ -23,7 +24,6 @@ inductive HostStatus where
 /-- The corresponding PVM exit reason. -/
 def HostStatus.toStatus : HostStatus → Status
   | .cont => .cont
-  | .halt => .halt
   | .panic => .panic
   | .oog => .oog
 
@@ -35,11 +35,10 @@ structure HostResult (X : Type) where
   mem : Memory
   ctx : X
 
-/-- 𝔉_X ≡ (ℕ, ℕ_G, ⟦ℕ_R⟧_13, 𝕄, X) → ({▸, ∎, ☇, ∞}, ℕ_G, ⟦ℕ_R⟧_13, 𝕄, X) (GP §A.6).
+/-- 𝔉_X ≡ (ℕ, ℕ_G, ⟦ℕ_R⟧_13, 𝕄, X) → ({▸, ☇, ∞}, ℕ_G, ⟦ℕ_R⟧_13, 𝕄, X) (GP v0.8.1 §A.6).
 
-    We follow this type literally, with gas in ℕ_G. (The paper gives Ψ_H's result gas the type
-    ℤ_G, and its host functions compute ϱ − g, which can be negative; Ψ_M clamps with max(ϱ', 0).
-    See README.) -/
+    Gas is in ℕ_G throughout: since v0.8.1 (#533) Ψ_H's result gas is ℕ_G too, and host functions
+    return ϱ* = max(ϱ − g, 0). -/
 abbrev HostFn (X : Type) := Nat → UInt64 → Regs → Memory → X → HostResult X
 
 /-- A handler that never returns more gas than it was given. Every host function of the paper
@@ -47,7 +46,7 @@ abbrev HostFn (X : Type) := Nat → UInt64 → Regs → Memory → X → HostRes
 def HostFn.GasNonIncreasing {X : Type} (f : HostFn X) : Prop :=
   ∀ h g ω μ x, (f h g ω μ x).gas.toNat ≤ g.toNat
 
-/-- The result of Ψ_H*: (ε, ı, ϱ, ϱ̃, ω, μ, x) (GP §A.6). -/
+/-- The result of Ψ_H*: (ε, ı, ϱ, ϱ̃, ω, μ, x) (GP v0.8.1 §A.6). -/
 structure HostRunResult (X : Type) where
   /-- ε ∈ {☇, ∞, ∎} ∪ {F} × ℕ_R -/
   status : Status
@@ -66,7 +65,8 @@ def blobNext (p : ByteArray) (i : Nat) : Nat :=
   | some P => P.next i
   | none => i
 
-/-- Ψ_H* with at most `fuel` host calls (GP §A.6). -/
+/-- Ψ_H* with at most `fuel` host calls (GP v0.8.1 §A.6). A handler result other than ▸ is ☇ or
+    ∞, which Ψ_H* returns with the handler's state. -/
 def psiHFuel {X : Type} (p : ByteArray) (f : HostFn X) :
     Nat → Nat → UInt64 → Bool → Regs → Memory → X → Option (HostRunResult X)
   | 0, _, _, _, _, _, _ => none
@@ -82,7 +82,7 @@ def psiHFuel {X : Type} (p : ByteArray) (f : HostFn X) :
     | _ => some { status := r.status, pc := r.pc, gas := r.gas,
                   charged := r.charged, regs := r.regs, mem := r.mem, ctx := x }
 
-/-- Ψ_H*(p, ı, ϱ, ϱ̃, ω, μ, f, x) (GP §A.6). Every host call that continues happens at a lower
+/-- Ψ_H*(p, ı, ϱ, ϱ̃, ω, μ, f, x) (GP v0.8.1 §A.6). Every host call that continues happens at a lower
     `runMeasure` than the last, so `runMeasure + 1` host calls suffice when `f` does not increase
     gas (`PVM.psiHStar_eq` in `PVM.Theorems.Invocation`). For a handler that does increase gas
     the paper's Ψ_H need not terminate; there we return ☇ after the fuel. -/
@@ -91,17 +91,17 @@ def psiHStar {X : Type} (p : ByteArray) (i : Nat) (gas : UInt64) (ch : Bool) (ω
   (psiHFuel p f (runMeasure p i gas ch + 1) i gas ch ω μ x).getD
     { status := .panic, pc := 0, gas, charged := ch, regs := ω, mem := μ, ctx := x }
 
-/-- Ψ_H(p, ı, ϱ, ω, μ, f, x) ≡ Ψ_H*(p, ı, ϱ, ⊥, ω, μ, f, x) (GP §A.6). -/
+/-- Ψ_H(p, ı, ϱ, ω, μ, f, x) ≡ Ψ_H*(p, ı, ϱ, ⊥, ω, μ, f, x) (GP v0.8.1 §A.6). -/
 def psiH {X : Type} (p : ByteArray) (i : Nat) (gas : UInt64) (ω : Regs) (μ : Memory)
     (f : HostFn X) (x : X) : HostRunResult X :=
   psiHStar p i gas false ω μ f x
 
 /-! ## Standard program initialization Y (GP §A.7) -/
 
-/-- 𝖹_Z = 2^16, the major zone size (GP eq. `conditions`). -/
+/-- 𝖹_Z = 2^16, the major zone size (GP v0.8.1 eq. `jamblobformat`). -/
 def zoneSize : Nat := 2 ^ 16
 
-/-- 𝖹_I = 2^24, the maximum input size (GP eq. `conditions`). -/
+/-- 𝖹_I = 2^24, the maximum input size (GP v0.8.1 eq. `jamblobformat`). -/
 def inputSize : Nat := 2 ^ 24
 
 /-- P(x) = 𝖹_P⌈x / 𝖹_P⌉. -/
@@ -110,7 +110,7 @@ def roundPage (x : Nat) : Nat := pageSize * ((x + pageSize - 1) / pageSize)
 /-- Q(x) = 𝖹_Z⌈x / 𝖹_Z⌉. -/
 def roundZone (x : Nat) : Nat := zoneSize * ((x + zoneSize - 1) / zoneSize)
 
-/-- The components of a standard JAM program blob (GP eq. `conditions`): read-only data **o**,
+/-- The components of a standard JAM program blob (GP v0.8.1 eq. `jamblobformat`): read-only data **o**,
     read-write data **w**, `z` extra heap pages, stack size `s` and the PVM blob **p**. -/
 structure JamBlob where
   ro : ByteArray
@@ -137,6 +137,19 @@ def JamBlob.parse? (b : ByteArray) : Option JamBlob := do
   if pos + pLen ≠ b.size then none
   let p ← Blob.slice? b pos pLen
   some ⟨⟨o.toArray⟩, ⟨w.toArray⟩, z, s, ⟨p.toArray⟩⟩
+
+/-- A standard program blob without its metadata (GP v0.8.1 eq. `jamblobformat`, GP #582): the
+    blob is ℰ(↕**m**) ⌢ (the rest), and the metadata **m** is opaque and ignored by Y. `none` if
+    the blob does not start with a well-formed ℰ(↕**m**). -/
+def skipMetadata? (b : ByteArray) : Option ByteArray := do
+  let (mLen, pos) ← Blob.decodeNat? b 0
+  if pos + mLen > b.size then none
+  some (b.extract (pos + mLen) b.size)
+
+/-- The unique (**m**, **o**, **w**, z, s, **p**) of a standard program blob (GP v0.8.1
+    eq. `jamblobformat`): the metadata is skipped (`skipMetadata?`), the rest parsed by
+    `JamBlob.parse?`. -/
+def JamBlob.parseStd? (b : ByteArray) : Option JamBlob := (skipMetadata? b).bind JamBlob.parse?
 
 /-- The address of the read-only section, 𝖹_Z. -/
 def roStart : Nat := zoneSize
@@ -180,7 +193,7 @@ def initialRegs (a : ByteArray) : Regs :=
     (5𝖹_Z + Q(|**o**|) + Q(|**w**| + z𝖹_P) + Q(s) + 𝖹_I ≤ 2^32) and |**a**| ≤ 𝖹_I. -/
 def validJamBlob? (b : ByteArray) (a : ByteArray) : Option JamBlob :=
   if a.size > inputSize then none
-  else (JamBlob.parse? b).bind fun jb =>
+  else (JamBlob.parseStd? b).bind fun jb =>
     if 5 * zoneSize + roundZone jb.ro.size + roundZone (jb.rw.size + jb.heapPages * pageSize) +
         roundZone jb.stackSize + inputSize > 2 ^ 32 then none
     else some jb
@@ -192,7 +205,7 @@ def validJamBlob? (b : ByteArray) (a : ByteArray) : Option JamBlob :=
 def standardInit (b : ByteArray) (a : ByteArray) : Option (ByteArray × Regs × Memory) :=
   (validJamBlob? b a).map fun jb => (jb.code, initialRegs a, initialMemory jb a)
 
-/-! ## Argument invocation Ψ_M (GP §A.8) -/
+/-! ## Argument invocation Ψ_M (GP v0.8.1 §A.8) -/
 
 /-- The output of Ψ_M: a blob, ☇ or ∞. -/
 inductive InvOutput where
@@ -209,7 +222,7 @@ def Memory.rangeReadable (μ : Memory) (a n : Nat) : Bool :=
       let last := (a + n - 1) / pageSize
       (List.range (last + 1 - first)).all fun k => μ.readable ((first + k) * pageSize))
 
-/-- R(ϱ, (ε, ı', ϱ', ω', μ', x')) of Ψ_M (GP §A.8), with u = ϱ − max(ϱ', 0). -/
+/-- R(ϱ, (ε, ı', ϱ', ω', μ', x')) of Ψ_M (GP v0.8.1 §A.8), with u = ϱ − ϱ'. -/
 def invocationResult {X : Type} (gas : UInt64) (r : HostRunResult X) : Nat × InvOutput × X :=
   let u := gas.toNat - r.gas.toNat
   let a := (r.regs.get 7).toNat
@@ -221,7 +234,7 @@ def invocationResult {X : Type} (gas : UInt64) (r : HostRunResult X) : Nat × In
     else (u, .ok ByteArray.empty, r.ctx)
   | _ => (u, .panic, r.ctx)
 
-/-- Ψ_M(**p**, ı, ϱ, **a**, f, x) (GP §A.8): (gas used, output, final context). -/
+/-- Ψ_M(**p**, ı, ϱ, **a**, f, x) (GP v0.8.1 §A.8): (gas used, output, final context). -/
 def psiM {X : Type} (b : ByteArray) (i : Nat) (gas : UInt64) (a : ByteArray) (f : HostFn X)
     (x : X) : Nat × InvOutput × X :=
   match standardInit b a with

@@ -154,7 +154,9 @@ def padding : Aff :=
    19058981610000167534379068105702216971787064146691007947119244515951752366738⟩
 
 /-! ### GP v0.8.1: the same points of the VRF spec's Draft 35 (hash_to_curve of "pedersen-blinding",
-    "ring-accumulator" and "ring-padding" under suite `Bandersnatch-SHA512-ELL2-v1`, §4 and §5) -/
+    "ring-accumulator" and "ring-padding" under suite `Bandersnatch-SHA512-ELL2-v1`, §4 and §5),
+    as the draft prints them: the derivation with the 48-octet Z_pad, i.e. the points of
+    `Reading.vectors`. The points of `Reading.prose` are derived in `RingRoot` (`h2cProse`). -/
 
 /-- The Pedersen blinding base B of Draft 35. -/
 def blindingBase081 : Aff :=

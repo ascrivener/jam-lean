@@ -3,7 +3,7 @@ import JAM.Blake2b
 import JAM.Crypto
 
 /-!
-# Disputes, verdicts and judgments (GP v0.8.0 §10, `sec:disputes`)
+# Disputes, verdicts and judgments (GP v0.8.1 §10, `sec:disputes`)
 
 The disputes state ψ = (ψ_G, ψ_B, ψ_W, ψ_O) (eq. `disputesspec`) and its transition under the
 disputes extrinsic 𝔼_D = (𝔼_V, 𝔼_C, 𝔼_F) (eq. `disputesextrinsics`): the validity conditions on

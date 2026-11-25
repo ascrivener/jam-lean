@@ -66,6 +66,8 @@ def check (_ : Params) (j : Json) : Except String (List String) := do
     | .ok _ => none
     | .error .notSortedUnique => some "preimages_not_sorted_unique"
     | .error .unneeded => some "preimage_unneeded"
+    | .error .tooMany => some "too_many_preimages (GP v0.8.1, unnamed)"
+    | .error .tooMuchData => some "too_much_preimage_data (GP v0.8.1, unnamed)"
   if gotErr != expErr then diffs := diffs ++ [s!"output {gotErr} ≠ {expErr}"]
   let d' := match res with | .ok d' => d' | .error _ => d
   let ea ← accounts post

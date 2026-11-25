@@ -4,7 +4,7 @@ import JAM.Shuffle
 import JAM.Account
 
 /-!
-# Guarantor assignments and work-report guarantees (GP v0.8.0 §11.3–§11.5)
+# Guarantor assignments and work-report guarantees (GP v0.8.1 §11.3–§11.5)
 
 The guarantor assignments M and M* (eq. `priorassignments`), the validity conditions on the
 guarantees extrinsic 𝔼_G (eqs. `guaranteesextrinsic`–`reportcodesarecorrect`), the reporters set
@@ -27,10 +27,14 @@ namespace JAM
 /-- A validator's keys k ∈ 𝕂 as the reports transition reads them: its Ed25519 key k_e. -/
 abbrev EdKey := List UInt8
 
-/-- Φ(**k**) (GP eq. `blacklistfilter`): the keys of offenders in ψ'_O replaced by the null key. Only
-    the Ed25519 part is kept here; a null key is 32 zero octets. -/
+/-- Φ(**k**) (GP v0.8.1 eq. `blacklistfilter`): the keys of offenders in ψ'_O replaced by the null
+    key 𝕂^∅ (eq. `nullvalkey`). Only the Ed25519 part is kept here: `nullEdKey` = [2, 0, …]. -/
 def blacklist (offenders : OctetSet) (k : List EdKey) : List EdKey :=
-  k.map fun e => if offenders.contains e then List.replicate 32 0 else e
+  k.map fun e => if offenders.contains e then nullEdKey else e
+
+-- Regression test (GP v0.8.1 #543): an offender's Ed25519 key becomes [2, 0, …], not zeros.
+#guard blacklist (Std.ExtTreeSet.ofList [List.replicate 32 (7 : UInt8)])
+    [List.replicate 32 7, List.replicate 32 1] = [2 :: List.replicate 31 0, List.replicate 32 1]
 
 /-- R(**c**, n) (GP §11.3): each core index rotated by n, modulo |**c**|/3. -/
 def rotate (c : List Nat) (n : Nat) : List Nat :=
@@ -125,6 +129,10 @@ inductive ReportsError where
   | missingWorkResults
   | badAnchorSlot
   | badErasureShards
+  | refineLoadTooHigh
+  | badExportsCount
+  | bundleTooBig
+  | authGasTooHigh
   deriving BEq, Repr
 
 /-- The posterior of the guarantees transition: ρ', the reporters G, and the reported packages
@@ -149,6 +157,26 @@ def checkReportShape (params : Params) (r : WorkReport) : Except ReportsError Un
   unless r.authTrace.size + (r.digests.map (resultSize ·.result)).sum ≤ params.maxReportVarSize do
     throw .workReportTooBig
 
+/-- The work-package limits on a work report (GP v0.8.1 eq. `reportrefineload`, #563): over the
+    digests, ∑ u ≤ 𝖦_R, ∑ i ≤ 𝖶_M, (r_s)_n = ∑ e ≤ 𝖶_X, ∑ x ≤ 𝖳 and ∑ (z + i·𝖶_F) ≤ 𝖶_I; then
+    (r_s)_l ≤ 𝖶_B and r_g ≤ 𝖦_I. The paper names no errors and gives no order; the errors are the
+    vectors' (davxy/jam-test-vectors after v0.8.0, errors 28–31): `badExportsCount` when the
+    segment count is not the sum of the export counts, `refineLoadTooHigh` for any sum over its
+    limit, `bundleTooBig` and `authGasTooHigh`. The rows are checked in the paper's order. 𝖶_B is
+    `Constants.Cmaxbundlesize`, as `fetch` does not report it. -/
+def checkReportLoad (params : Params) (r : WorkReport) : Except ReportsError Unit := do
+  let ds := r.digests
+  let sum (f : WorkDigest → Nat) := (ds.map f).sum
+  unless sum (·.gasUsed) ≤ params.packageRefGas do throw .refineLoadTooHigh
+  unless sum (·.importCount) ≤ params.maxPackageImports do throw .refineLoadTooHigh
+  unless r.spec.segmentCount = sum (·.exportCount) do throw .badExportsCount
+  unless sum (·.exportCount) ≤ params.maxPackageExports do throw .refineLoadTooHigh
+  unless sum (·.extrinsicCount) ≤ params.maxPackageXts do throw .refineLoadTooHigh
+  unless sum (fun d => d.extrinsicSize + d.importCount * Constants.Csegmentfootprint) ≤
+      params.maxInputSize do throw .refineLoadTooHigh
+  unless r.spec.bundleLength ≤ Constants.Cmaxbundlesize do throw .bundleTooBig
+  unless r.authGasUsed ≤ params.packageAuthGas do throw .authGasTooHigh
+
 /-- The conditions on one guarantee (r, t, **a**) (GP eq. `guarantorsig` and §11.4): the core index
     below 𝖢; 2 ≤ |**a**| ≤ 3 and ordered by validator index; t no later than τ' and no earlier
     than the previous rotation; for each (v, s): v < |**k**|, **c**_v = r_c, r_c < |κ'|/3, the key
@@ -171,7 +199,7 @@ def checkGuarantee (params : Params) (crypto : Crypto) (i : ReportsInput) (g : G
     unless m.cores.getD v 0 = r.core do throw .wrongAssignment
     unless r.core < i.activeEd.length / 3 do throw .badCoreIndex
     let k := m.keys.getD v []
-    if k == List.replicate 32 0 then throw .bannedValidator
+    if k == nullEdKey then throw .bannedValidator
     unless crypto.edVerify k (Xguarantee ++ h) s.toList do throw .badSignature
     return k
 
@@ -190,7 +218,8 @@ def checkAnchor (recent : List RecentBlock) (x : RefineContext) : Except Reports
     1. 𝔼_G ordered and unique by core (eq. `guaranteesextrinsic`);
     2. for each guarantee in turn: `checkGuarantee`, `checkReportShape`, the erasure-shard count
        |κ'|, the core free in ρ (eq. `reportcoresareunused`), the authorizer in α[r_c], and each
-       digest's service: present in δ, d_g ≥ its minimum gas, then ∑ d_g ≤ 𝖦_A;
+       digest's service: present in δ, d_g ≥ its minimum gas, then ∑ d_g ≤ 𝖦_A, then the
+       work-package limits (`checkReportLoad`, GP v0.8.1 eq. `reportrefineload`);
     3. no two reports of one package;
     4. for each report: its anchor (`checkAnchor`), the lookup anchor's age (x_t ≥ τ' − 𝖫) and
        ancestry, the package not already known, the segment-root lookup within the extrinsic's
@@ -214,6 +243,7 @@ def guarantees (params : Params) (crypto : Crypto) (i : ReportsInput) (δ : Acco
       let some a := δ.get? d.service | throw .badServiceId
       unless d.gasLimit ≥ a.minAccGas do throw .serviceItemGasTooLow
     unless (r.digests.map (·.gasLimit)).sum ≤ params.reportAccGas do throw .workReportGasTooHigh
+    checkReportLoad params r
   let reports := xs.map (·.report)
   let p : OctetDict := Std.ExtTreeMap.ofList
     (reports.map fun r => (r.spec.packageHash.toList, r.spec.segmentRoot.toList))

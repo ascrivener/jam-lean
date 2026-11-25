@@ -276,17 +276,19 @@ theorem decodeBits?_bytes (N : Nat) (o n : Nat) :
   rw [hall]
   rfl
 
-/-- **Deblobbing a tree blob** (GP §A.1): with its two length prefixes and the jump-table width
+/-- **Deblobbing a tree blob** (GP v0.8.1 eq. `deblob`): with its two length prefixes and the jump-table width
     read off the first octets (`h1`, `hz`, `h3`, decided by the kernel on a handful of octets), the
-    blob's size accounting for the jump table, code and bitmask (`hsz`), and zero padding bits
-    (`hpad`), it parses to the code, bitmask and jump table at the offsets the header gives. -/
+    blob's size accounting for the jump table, code and bitmask (`hsz`), zero padding bits
+    (`hpad`) and the v0.8.1 limits |**j**| ≤ 𝖹_J, z ≤ 4, |**c**| ≤ 𝖹_C (`hlim`, decided by default),
+    it parses to the code, bitmask and jump table at the offsets the header gives. -/
 theorem parse?_ba (N : Nat) (o n : Nat) {jLen p1 z cLen p2 : Nat}
     (h1 : Blob.decodeNat? (ba N o n) 0 = some (jLen, p1))
     (h2 : p1 < n) (hz : byte N (o + p1) = z)
     (h3 : Blob.decodeNat? (ba N o n) (p1 + 1) = some (cLen, p2))
     (hsz : n = p2 + jLen * z + cLen + (cLen + 7) / 8)
     (hpad : ((List.range (8 * ((cLen + 7) / 8) - cLen)).all fun k =>
-      !bit N (8 * (o + p2 + jLen * z + cLen) + cLen + k)) = true) :
+      !bit N (8 * (o + p2 + jLen * z + cLen) + cLen + k)) = true)
+    (hlim : jLen ≤ Blob.maxJumpTableEntries ∧ z ≤ 4 ∧ cLen ≤ Blob.maxCodeSize := by decide) :
     Blob.parse? (ba N o n) = some ⟨ba N (o + p2 + jLen * z) cLen,
       bits N (8 * (o + p2 + jLen * z + cLen)) cLen,
       ((List.range jLen).map fun i => Num.decodeLE (bytes N (o + p2 + i * z) z)).toArray⟩ := by
@@ -307,8 +309,10 @@ theorem parse?_ba (N : Nat) (o n : Nat) {jLen p1 z cLen p2 : Nat}
     · omega
     · omega
   have hz' : (UInt8.ofNat (byte N (o + p1))).toNat = z := by rw [toNat_byte, hz]
+  obtain ⟨hjl, hzl, hcl⟩ := hlim
   simp only [Blob.parse?, h1, getElem?_ba, h2, ↓reduceIte, Option.map_some, hz',
-    Option.bind_eq_bind, Option.bind_some, h3, size_ba, hj]
+    Option.bind_eq_bind, Option.bind_some, h3, size_ba, hj, Nat.not_lt.2 hjl, Nat.not_lt.2 hzl,
+    Nat.not_lt.2 hcl, gt_iff_lt]
   rw [ite_eq_right_iff.2 (fun h => absurd h (by omega)), slice?_ba, ite_eq_left_iff.2 (fun h => absurd (by omega) h)]
   simp only [Option.bind_some]
   rw [hk, decodeBits?_bytes, ite_eq_left hpad]
@@ -342,7 +346,7 @@ theorem view_eq (N : Nat) (oc mb cLen : Nat) (jt : Array Nat) :
   · simp
   · simp [bits]
 
-/-- **A standard program blob from the tree** (GP eq. `conditions`): with the section lengths
+/-- **A standard program blob from the tree** (GP v0.8.1 eq. `jamblobformat`): with the section lengths
     its header gives (decided by the kernel on 15 octets), it parses to the sections at those
     offsets. -/
 theorem jamParse?_ba (N : Nat) (o n : Nat) {oLen wLen z s pLen : Nat}

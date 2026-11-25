@@ -2,7 +2,7 @@ import PVM.Instr
 import PVM.Memory
 
 /-!
-# Instruction semantics: the mutation tables of GP v0.8.0 §A.5
+# Instruction semantics: the mutation tables of GP v0.8.1 §A.5
 
 `exec` gives, for one decoded instruction, the paper's (ε, ı', ω', μ') of the regular
 execution, together with the index sets **r** and **w** by which μ is read and written. The

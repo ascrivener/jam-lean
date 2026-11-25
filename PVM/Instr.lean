@@ -5,7 +5,7 @@ import PVM.Blob
 
 Decoding is kept separate from execution: `Program.decode` turns the octets at an opcode index
 into an `Instr`, following the operand definitions at the head of each subsubsection of GP
-v0.8.0 §A.5 (`sec:instructiontables`); `PVM.Exec` gives each `Instr` its meaning.
+v0.8.1 §A.5 (`sec:instructiontables`); `PVM.Exec` gives each `Instr` its meaning.
 
 Immediates ν are stored already sign-extended (𝒳) as values in ℕ_{2^64}. Offsets (ı + 𝒵(…)) are
 stored as integers, since the paper does not reduce them modulo anything.
@@ -151,9 +151,9 @@ def decode (P : Program) (i : Nat) : Option Instr :=
     (TwoRegTwoImmOp.ofOpcode? op).map fun o =>
       .twoRegTwoImm o lo hi (P.immAt (i + 3) lX) (P.immAt (i + 3 + lX) lY)
   | some .threeReg =>
-    -- r_A = min(12, ζ_{ı+1} mod 16), r_B = min(12, ⌊ζ_{ı+1} ÷ 16⌋), r_D = min(12, ζ_{ı+2})
-    -- (the paper does not reduce ζ_{ı+2} mod 16 here; README, note 4)
-    (ThreeRegOp.ofOpcode? op).map fun o => .threeReg o lo hi (regIdx (P.zeta (i + 2)))
+    -- r_A = min(12, ζ_{ı+1} mod 16), r_B = min(12, ⌊ζ_{ı+1} ÷ 16⌋),
+    -- r_D = min(12, ζ_{ı+2} mod 16) (GP v0.8.1 §A.5.13, #554)
+    (ThreeRegOp.ofOpcode? op).map fun o => .threeReg o lo hi (regIdx (P.zeta (i + 2) % 16))
 
 end Program
 

@@ -5,7 +5,7 @@ import JAM.Preimages
 import JAM.Authorization
 
 /-!
-# The block-level state transition Υ(σ, B) = σ' (GP v0.8.0 §4, §5)
+# The block-level state transition Υ(σ, B) = σ' (GP v0.8.1 §4, §5)
 
 Υ is the composition of the section-level transitions along the dependency graph of GP eq.
 `transitionfunctioncomposition`:
@@ -56,15 +56,20 @@ def hashL (m : List UInt8) : List UInt8 := (Blake2b.hash256 ⟨m.toArray⟩).toL
 def Header.hash (h : Header) : List UInt8 := hashL h.encode
 
 open Codec in
-/-- H_X = ℋ(ℰ(ℋ#(**a**))) with **a** = [ℰ_T(𝔼_T), **p**, **g**, ℰ_A(𝔼_A), ℰ_D(𝔼_D)],
+/-- **a** = [ℰ_T(𝔼_T), **p**, **g**, ℰ_A(𝔼_A), ℰ_D(𝔼_D)] of GP eq. `extrinsichash`, with
     **p** = ℰ(↕[(ℰ_4(s), ℋ(**d**)) | (s, **d**) ← 𝔼_P]) and
-    **g** = ℰ(↕[(ℋ(r), ℰ_4(t), ↕a) | (r, t, a) ← 𝔼_G]) (GP eq. `extrinsichash`). -/
-def Extrinsic.hash (x : Extrinsic) : List UInt8 :=
+    **g** = ℰ(↕[(ℋ(r), ℰ_4(t), O(a)) | (r, t, a) ← 𝔼_G]), where O(a) = ℰ(↕[(ℰ_2(v), s) | (v, s) ← a])
+    is the credential encoding of Appendix C (GP v0.8.1 #560 writes O(a) in eq. `extrinsichash`
+    where v0.8.0 wrote ↕a; the model already encoded v with ℰ_2). -/
+def Extrinsic.hashParts (x : Extrinsic) : List (List UInt8) :=
   let p := varSeq (fun (q : Preimage) => fixed 4 q.requester ++ hashL q.blob.toList) x.preimages
   let g := varSeq (fun (g : Guarantee) => hashL g.report.encode ++ fixed 4 g.slot ++
-    varSeq (fun (v, s) => fixed 2 v ++ blob s) g.credential) x.guarantees
-  let a := [encodeTickets x.tickets, p, g, encodeAssurances x.assurances, x.disputes.encode]
-  hashL (a.flatMap hashL)
+    encodeCredential g.credential) x.guarantees
+  [encodeTickets x.tickets, p, g, encodeAssurances x.assurances, x.disputes.encode]
+
+/-- H_X = ℋ(ℰ(ℋ#(**a**))) (GP v0.8.1 eq. `extrinsichash`), **a** = `Extrinsic.hashParts`. -/
+def Extrinsic.hash (x : Extrinsic) : List UInt8 :=
+  hashL (x.hashParts.flatMap hashL)
 
 /-- The ancestor-set condition of §11.4.1 (GP eq. 11.36) for a refinement context x: some
     h, h' ∈ 𝒜 with h_T = x_lookupanchortime, ℋ(h) = x_lookupanchor, h'_P = ℋ(h) and
@@ -88,6 +93,7 @@ def importBlock (params : Params) (c : Crypto) (chain : Chain) (σ : State) (B :
     Except BlockError (State × ImportTrace) := do
   let H := B.header
   let X := B.extrinsic
+  let xh := X.hash
   let hdr (ok : Bool) (msg : String) : Except BlockError Unit :=
     if ok then pure () else throw (.header msg)
   -- §5: the parent, the prior state root and the extrinsic hash.
@@ -95,7 +101,7 @@ def importBlock (params : Params) (c : Crypto) (chain : Chain) (σ : State) (B :
   | some p => hdr (H.parent.toList == p.hash) "H_P is not the parent header's hash"
   | none => pure ()
   hdr (H.priorStateRoot.toList == σ.root) "H_R ≠ M_σ(σ)"
-  hdr (H.extrinsicHash.toList == X.hash) "H_X does not commit to the extrinsic"
+  hdr (H.extrinsicHash.toList == xh) "H_X does not commit to the extrinsic"
   -- τ' = H_T; τ < H_T is Safrole's `badSlot`.
   let slot := H.slot
   -- β_H^† (eq. `betadagger`).

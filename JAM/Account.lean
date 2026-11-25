@@ -4,7 +4,7 @@ import JAM.Constants
 import JAM.Blake2b
 
 /-!
-# Service accounts (GP v0.8.0 §9, `sec:accounts`)
+# Service accounts (GP v0.8.1 §9, `sec:accounts`)
 
 𝔸 ≡ (**s**, **p**, **l**, f, c, b, g, m, r, a, p) with the dependent terms i, o and t
 (eq. `serviceaccount`, eq. `deposits`), and the historical lookup Λ (eq. `historicallookup`).
@@ -53,6 +53,13 @@ structure ServiceAccount where
   codeHash : List UInt8
   /-- b: balance -/
   balance : Nat
+  /-- u: supervisor (GP v0.8.1 eq. `serviceaccount`, §9 "Supervisors") -/
+  supervisor : Nat := 0
+  /-- the supervisor's creation slot, recorded with u (GP v0.8.1 eq. `serviceaccount`) -/
+  supervisorCreated : Nat := 0
+  /-- the supervisor balance, transferable only by the supervisor and counted with b against the
+      threshold balance (GP v0.8.1 eq. `serviceaccount`, §9 "Supervisors") -/
+  supervisorBalance : Nat := 0
   /-- g: minimum gas per accumulated work item -/
   minAccGas : Nat
   /-- m: minimum gas per deferred transfer -/
@@ -128,16 +135,20 @@ def storageWrite (a : ServiceAccount) (k v : List UInt8) : ServiceAccount :=
   else { a with entries := a.entries.insert (storageKey k) v, items := i0 + 1,
                 octets := o0 + (34 + k.length + v.length) }
 
-/-- **l**[h, z]: the request history of (h, z), if any. The keys of **l** are (ℍ, ℕ_L) with
-    ℕ_L = ℕ_{2³²} (GP eq. `serviceaccount`), so z ≥ 2³² has none. A stored value that does not
+/-- The bound of ℕ_L, the request lengths: ℕ_L = ℕ_{2³² − 2}, below the state-key discriminators
+    2³² − 2 and 2³² − 1 (GP v0.8.1 eq. `serviceaccount` and its definition of ℕ_L, GP #542). -/
+def requestLenBound : Nat := 2 ^ 32 - 2
+
+/-- **l**[h, z]: the request history of (h, z), if any. The keys of **l** are (ℍ, ℕ_L)
+    (`requestLenBound`, GP v0.8.1 eq. `serviceaccount`), so z ∉ ℕ_L has none. A stored value that does not
     decode as ⟦ℕ_T⟧_{:3} (only a state not built by the model can hold one) reads as none: Adam's
     decision of 2026-11-15 (`docs/storage-key-design.md`). -/
 def requestGet (a : ServiceAccount) (h : List UInt8) (z : Nat) : Option (List Nat) :=
-  if z < 2 ^ 32 then (a.entries.get? (requestKey h z)).bind decodeSlots else none
+  if z < requestLenBound then (a.entries.get? (requestKey h z)).bind decodeSlots else none
 
 /-- The account with **l**[h, z] set to `t`. A new key adds 2 to a_i and 81 + z to a_o
     (GP eq. `deposits`). "New" means `requestGet` finds none: an undecodable stored value (only an
-    invalid loaded state holds one; GP v0.8.0 does not cover such states) counts as absent, so it
+    invalid loaded state holds one; GP v0.8.1 does not cover such states) counts as absent, so it
     is overwritten and a_i, a_o grow as for a new key, consistently with `requestGet`. -/
 def requestSet (a : ServiceAccount) (h : List UInt8) (z : Nat) (t : List Nat) : ServiceAccount :=
   let (i0, o0) := match a.requestGet h z with
@@ -208,7 +219,7 @@ theorem storageGet_eq (a : ServiceAccount) (k : List UInt8) :
 
 /-- Representation lemma: **l**[h, z] is the decoded `entries` value under (h, z)'s state key. -/
 theorem requestGet_eq (a : ServiceAccount) (h : List UInt8) (z : Nat) :
-    a.requestGet h z = if z < 2 ^ 32 then (a.entries.get? (requestKey h z)).bind decodeSlots
+    a.requestGet h z = if z < requestLenBound then (a.entries.get? (requestKey h z)).bind decodeSlots
       else none := rfl
 
 theorem storageGet_write_same (a : ServiceAccount) (k v : List UInt8) :
@@ -226,7 +237,7 @@ theorem storageGet_write_other (a : ServiceAccount) (k k' v : List UInt8)
 
 /-- Setting (h, z) to a history in ⟦ℕ_T⟧_{:3}, with z ∈ ℕ_L, reads back that history. -/
 theorem requestGet_set_same (a : ServiceAccount) (h : List UInt8) (z : Nat) (t : List Nat)
-    (hz : z < 2 ^ 32) (hl : t.length ≤ 3) (hx : ∀ x ∈ t, x < 2 ^ 32) :
+    (hz : z < requestLenBound) (hl : t.length ≤ 3) (hx : ∀ x ∈ t, x < 2 ^ 32) :
     (a.requestSet h z t).requestGet h z = some t := by
   unfold requestSet
   split <;>
@@ -263,6 +274,17 @@ theorem storageWrite_frame (a : ServiceAccount) (k v : List UInt8) :
       a'.parent = a.parent := by
   unfold storageWrite; split <;> split <;> simp
 
+@[simp] theorem storageWrite_created (a : ServiceAccount) (k v : List UInt8) :
+    (a.storageWrite k v).created = a.created := (storageWrite_frame a k v).2.2.2.2.2.2.1
+
+@[simp] theorem requestSet_created (a : ServiceAccount) (h : List UInt8) (z : Nat) (t : List Nat) :
+    (a.requestSet h z t).created = a.created := by
+  unfold requestSet; split <;> rfl
+
+@[simp] theorem requestErase_created (a : ServiceAccount) (h : List UInt8) (z : Nat) :
+    (a.requestErase h z).created = a.created := by
+  unfold requestErase; split <;> rfl
+
 /-- Setting a request leaves storage unchanged, for keys whose state keys differ. -/
 theorem storageGet_requestSet (a : ServiceAccount) (h : List UInt8) (z : Nat) (t : List Nat)
     (k : List UInt8) (hk : requestKey h z ≠ storageKey k) :
@@ -282,5 +304,16 @@ end ServiceAccount
 
 /-- 𝐝 ∈ ⟨ℕ_S → 𝔸⟩: the service accounts (GP eq. `serviceaccounts`). -/
 abbrev Accounts := Std.ExtTreeMap Nat ServiceAccount
+
+/-- The effective supervisor of s in **d** (GP v0.8.1 eq. `effectivesupervisor`): the designated
+    supervisor u = **d**[s]_u if u ∈ K(**d**) and **d**[u]_r equals the recorded creation slot,
+    and s itself otherwise. Defined for s ∈ K(**d**); for any other s it is s. -/
+def effectiveSupervisor (d : Accounts) (s : Nat) : Nat :=
+  match d.get? s with
+  | none => s
+  | some a =>
+    match d.get? a.supervisor with
+    | some su => if su.created = a.supervisorCreated then a.supervisor else s
+    | none => s
 
 end JAM

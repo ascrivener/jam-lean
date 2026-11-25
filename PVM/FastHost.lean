@@ -84,7 +84,7 @@ theorem hostFuel_prepare {X : Type} {p : ByteArray} {P : Program} (h : Blob.pars
 def psiHStarFast {X : Type} (p : ByteArray) (i : Nat) (gas : UInt64) (ch : Bool) (ω : Regs)
     (μ : Memory) (f : HostFn X) (x : X) : HostRunResult X :=
   match Blob.parse? p with
-  | none => { status := .panic, pc := 0, gas, charged := ch, regs := ω, mem := μ, ctx := x }
+  | none => { status := .panic, pc := 0, gas, charged := false, regs := ω, mem := μ, ctx := x }
   | some P =>
     (P.prepare.hostFuel f (P.measure i gas ch + 1) i gas ch ω μ x).getD
       { status := .panic, pc := 0, gas, charged := ch, regs := ω, mem := μ, ctx := x }
@@ -96,7 +96,7 @@ def psiHStarFast {X : Type} (p : ByteArray) (i : Nat) (gas : UInt64) (ch : Bool)
   cases h : Blob.parse? p with
   | none =>
     have hp : psi p i gas ch ω μ =
-        ({ status := .panic, pc := 0, gas, charged := ch, regs := ω, mem := μ } : Result) := by
+        ({ status := .panic, pc := 0, gas, charged := false, regs := ω, mem := μ } : Result) := by
       rw [psi_eq_psiFast]; simp [psiFast, h]
     simp [psiHFuel, hp]
   | some P => simp only [runMeasure_of_parse h, hostFuel_prepare h]

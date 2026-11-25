@@ -1,7 +1,9 @@
 import JAM.Codec
 
 /-!
-# Work packages, work items and work reports (GP v0.8.0 §11, §14) and their encodings (Appendix C)
+# Work packages, work items and work reports (GP v0.8.1 §11, §14) and their encodings (Appendix C)
+
+Not yet modelled: the deferred-transfer field u of GP v0.8.1 #539 (junior services, phase 2).
 
 The terms that refine and is-authorized take as input and produce as output, with ℰ as Appendix C
 defines it for each.
@@ -163,7 +165,8 @@ def AvailabilitySpec.encode (s : AvailabilitySpec) : List UInt8 :=
   blob s.packageHash ++ fixed 4 s.bundleLength ++ blob s.erasureRoot ++ fixed 2 s.erasureShards ++
     blob s.segmentRoot ++ fixed 2 s.segmentCount
 
-/-- A work report ℝ (GP eq. `workreport`). -/
+/-- A work report ℝ = (s, c, c, a, g, t, l, d) (GP v0.8.1 eq. `workreport`; #537 moved g to fifth
+    place, matching Appendix C, where v0.8.0's tuple had it last). -/
 structure WorkReport where
   /-- s -/
   spec : AvailabilitySpec
@@ -173,14 +176,14 @@ structure WorkReport where
   core : Nat
   /-- a, the authorizer hash -/
   authorizerHash : Hash
+  /-- g, gas used by is-authorized -/
+  authGasUsed : Nat
   /-- t, the authorizer trace -/
   authTrace : Blob
   /-- l, the segment-root lookup dictionary ℍ → ℍ -/
   segmentRootLookup : OctetDict := ∅
   /-- d, the work digests -/
   digests : List WorkDigest
-  /-- g, gas used by is-authorized -/
-  authGasUsed : Nat
 
 /-- ℰ(r ∈ ℝ) (GP Appendix C). -/
 def WorkReport.encode (r : WorkReport) : List UInt8 :=
@@ -219,14 +222,19 @@ def OperandTuple.encode (o : OperandTuple) : List UInt8 :=
 structure DeferredTransfer where
   source : ServiceId
   dest : ServiceId
+  /-- whether the destination's supervisor balance is credited rather than its balance
+      (GP v0.8.1 eq. `defxfer`, GP #539) -/
+  destSupervisor : Bool := false
   amount : Nat
   /-- the 𝖶_T-octet memo -/
   memo : Blob
   gas : Nat
 
-/-- ℰ(x ∈ 𝕏) = ℰ(1, ℰ_4(s), ℰ_4(d), ℰ_8(a), m, ℰ_8(g)) (GP Appendix C). -/
+/-- ℰ(x ∈ 𝕏) = ℰ(1, ℰ_4(s), ℰ_4(d), x_u, ℰ_8(a), m, ℰ_8(g)) with x_u the destination-supervisor
+    flag (GP v0.8.1 Appendix C, GP #539). -/
 def DeferredTransfer.encode (x : DeferredTransfer) : List UInt8 :=
-  nat 1 ++ fixed 4 x.source ++ fixed 4 x.dest ++ fixed 8 x.amount ++ blob x.memo ++ fixed 8 x.gas
+  nat 1 ++ fixed 4 x.source ++ fixed 4 x.dest ++ nat (if x.destSupervisor then 1 else 0) ++
+    fixed 8 x.amount ++ blob x.memo ++ fixed 8 x.gas
 
 /-- An accumulation input: an operand tuple or a deferred transfer (GP §12, the union 𝕌 ∪ 𝕏). -/
 inductive AccumulateInput where

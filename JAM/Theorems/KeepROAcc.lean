@@ -9,7 +9,7 @@ is not writable. `FreeStepsH.keepRO_of`: a gas-free run under such an R keeps ev
 lo … hi and every octet on such a page that is not writable (GP §A.4: a step that continues writes
 only indices in 𝕍*_μ). This is the contract-generic form of `FreeStepsH.keepRO` (refine).
 
-`accHostFn_keep`: every accumulate host call that continues (GP v0.8.0 Appendix B) keeps them, with
+`accHostFn_keep`: every accumulate host call that continues (GP v0.8.1 Appendix B) keeps them, with
 the heap's 48 … pb: `grow_heap` changes only heap pages; `fetch`, `lookup`, `read` and `info` write
 through `writeValue`, which checks writability; the others leave the memory (`*_mem`).
 -/
@@ -29,7 +29,7 @@ theorem charged_mem {X : Type} (g gas : Nat) (ω : Regs) (μ : Memory) (x : X)
 /-- Close `∀ o, (body o).mem = o.mem` by splitting every `if` and `match` in the body. -/
 macro "mem_body" : tactic =>
   `(tactic| (intro o; first | rfl | ((try dsimp only) <;> (repeat' split) <;>
-    (try simp only [AccHost.r7, AccHost.panic, AccHost.updX, AccHost.onSelf]) <;> rfl)))
+    (try simp only [AccHost.r7, AccHost.panic, AccHost.updX]) <;> rfl)))
 
 namespace AccHost
 
@@ -85,11 +85,15 @@ theorem provide_mem (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
     (provide gas ω μ c).mem = μ := by
   unfold provide charge; exact charged_mem _ _ _ _ _ _ (by mem_body)
 
-end AccHost
+theorem write_mem (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
+    (write gas ω μ c).mem = μ := by
+  unfold write charge; exact charged_mem _ _ _ _ _ _ (by mem_body)
 
-theorem hostWrite_mem (gas : Nat) (ω : Regs) (μ : Memory) (s : ServiceAccount) :
-    (hostWrite gas ω μ s).mem = μ := by
-  unfold hostWrite; exact charged_mem _ _ _ _ _ _ (by mem_body)
+theorem supervisor_mem (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
+    (supervisor gas ω μ c).mem = μ := by
+  unfold supervisor charge; exact charged_mem _ _ _ _ _ _ (by mem_body)
+
+end AccHost
 
 theorem hostGas_mem {X} (gas : Nat) (ω : Regs) (μ : Memory) (x : X) : (hostGas gas ω μ x).mem = μ := by
   unfold hostGas; first | rfl | exact charged_mem _ _ _ _ _ _ (by mem_body)
@@ -137,23 +141,23 @@ theorem accHostFn_keep (env : AccEnv) {pb : Nat} (hbd : heapBounds env.code = (4
   unfold AccHost.dispatch at hs ⊢
   split
   · exact same _ (hostGas_mem _ _ _ _)
-  · simp only [hostGrowHeap, growHeapCore, hbd] at hs ⊢
+  · simp only [hostGrowHeap, growHeapCore, hbd, charged] at hs ⊢
     generalize hC : List.countP (fun k => μ.pages.get? (48 + k) == some Access.write) (List.range (pb - 48)) = C
       at hs ⊢
     have hCle : C ≤ pb - 48 := by
       rw [← hC]; exact Nat.le_trans List.countP_le_length (by simp)
     by_cases c1 : reg ω 7 ≤ 48 + C ∨ reg ω 7 > pb
-    · rw [if_pos c1] at hs ⊢
-      exact ⟨fun q hq => Memory.setPages_get_off _ _ _ _ _ (by dsimp only; omega), fun b _ _ => rfl⟩
-    · rw [if_neg c1] at hs ⊢
-      by_cases c2 : gn < Constants.CgasGeminiconst + (reg ω 7 - (48 + C)) * Constants.CgasGeminilinear
-      · rw [if_pos c2] at hs; simp at hs
-      · rw [if_neg c2]
-        exact ⟨fun q hq => Memory.setPages_get_off _ _ _ _ _ (by dsimp only; omega), fun b _ _ => rfl⟩
+    all_goals
+      simp only [c1, ↓reduceIte] at hs ⊢
+      split at hs
+      · simp at hs
+      · next c2 =>
+        simp only [c2, ↓reduceIte]
+        exact ⟨fun q hq => Memory.setPages_get_off _ _ _ _ _ (by omega), fun b _ _ => rfl⟩
   · simp only [hostFetch] at hs ⊢; exact wv _ hs (charged_wv_keep _ _ _ _ _ _ _ _ _ hs)
   · simp only [hostLookup] at hs ⊢; exact wv _ hs (charged_wv_keep _ _ _ _ _ _ _ _ _ hs)
   · simp only [hostRead] at hs ⊢; exact wv _ hs (charged_wv_keep _ _ _ _ _ _ _ _ _ hs)
-  · exact same _ (by simp only [AccHost.onSelf]; exact hostWrite_mem _ _ _ _)
+  · exact same _ (AccHost.write_mem _ _ _ _)
   · simp only [hostInfo] at hs ⊢; exact wv _ hs (charged_wv_keep _ _ _ _ _ _ _ _ _ hs)
   · exact same _ (AccHost.bless_mem _ _ _ _ _)
   · exact same _ (AccHost.assign_mem _ _ _ _ _)
@@ -168,7 +172,8 @@ theorem accHostFn_keep (env : AccEnv) {pb : Nat} (hbd : heapBounds env.code = (4
   · exact same _ (AccHost.forget_mem _ _ _ _ _)
   · exact same _ (AccHost.yield_mem _ _ _ _)
   · exact same _ (AccHost.provide_mem _ _ _ _)
-  · exact same _ rfl
+  · exact same _ (AccHost.supervisor_mem _ _ _ _)
+  · exact same _ (by dsimp only; split <;> rfl)
 
 /-- **A contract keeps what is not writable off [lo, hi)**: every continuing host step changes no page
     outside lo … hi and no octet that is not writable. -/

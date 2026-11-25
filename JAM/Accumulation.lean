@@ -2,7 +2,7 @@ import JAM.Accumulate
 import JAM.Merkle
 
 /-!
-# Accumulation (GP v0.8.0 §12, `sec:accumulation`)
+# Accumulation (GP v0.8.1 §12, `sec:accumulation`)
 
 The accumulation state transition: the queue functions E, Q and P (§12.1), the single, parallel
 and outer accumulation functions Δ_1, Δ_* and Δ_+ (eqs. `accone`, `accpar`, `accseq`), and the
@@ -91,27 +91,60 @@ def integrateProvisions (d : Accounts) (p : Provisions) : Accounts :=
       else d
     | none => d) d
 
-/-- Δ_*(**e**, **t**, **r**, **f**) (GP eq. `accpar`): accumulate every service with work, free gas
-    or incoming transfers, and merge the results. -/
+/-- N (GP v0.8.1 eq. `accpar`): service s's Δ_1 outcome `os`, discarded (keeping only its gas use and
+    provisions) when both s and its effective supervisor u = E(**d**, s) ≠ s modified s, given u's
+    outcome `ou`.
+
+    GP v0.8.1 leaves N(**o**)'s post-state without a value (every other field has one). It is taken
+    to be the round's input state **e**, as the prose before eq. `accseq` says ("discard all results
+    of the service's execution", its footnote excepting only provided preimages). Reading it as
+    **o**'s post-state would keep a discarded run's new accounts and privilege, staging and queue
+    changes while M(s) drops its own account change. Adam's decision (2026-11-25); the paper gap is
+    `docs/upstream-candidates.md` v0.8.1-A1, raised as graypaper#592. -/
+def discardIfBoth (e : PartialState) (s u : Nat) (os ou : AccOut) : AccOut :=
+  if os.modified.contains s ∧ u ≠ s ∧ ou.modified.contains s then
+    ⟨e, ∅, [], none, os.gasUsed, os.provisions⟩
+  else os
+
+/-- Δ_*(**e**, **t**, **r**, **f**) (GP v0.8.1 eq. `accpar`): accumulate every service with work,
+    free gas or incoming transfers, and merge the results.
+
+* A service's results are discarded, keeping only its gas use and provisions (N), when both it and
+  its effective supervisor E(**d**, s) ≠ s modified s's account in this round.
+* Each existing account is taken from the run of the service itself if it modified it, and
+  otherwise from the run of its effective supervisor (M); new accounts come from their creators
+  (**n**); a removed account is one whose M is none.
+* Privileges, staging set and authorizer queue through X(s) and R (unchanged from GP v0.8.0).
+
+A service that is neither accumulated nor needed for the privileges has no inputs and no gas; its
+Δ_1 is the unchanged state with nothing modified (Ψ_A with g = 0 runs out of gas at once, or has no
+code), which `acc` returns for it without running Ψ_A. -/
 def accPar (e : PartialState) (t : List DeferredTransfer) (r : List WorkReport)
     (f : Std.ExtTreeMap Nat Nat) :
     PartialState × List DeferredTransfer × List (Nat × List UInt8) × List (Nat × Nat) :=
   let ss := ((r.flatMap fun w => w.digests.map (·.service)) ++ f.keys ++ t.map (·.dest)).eraseDups.mergeSort
-  -- every service whose result is used, each accumulated once
-  let needed := (ss ++ [e.manager, e.delegator, e.registrar] ++ e.assigners).eraseDups
-  let results : List (Nat × AccOut) := needed.map fun s => (s, accOne params entropy slot e t r f s)
-  let acc (s : Nat) : AccOut := (results.lookup s).getD ⟨e, [], none, 0, ∅⟩
+  let d := e.accounts
+  let E := effectiveSupervisor d
+  -- every service whose Δ_1 result is used, each run once
+  let needed := (ss ++ ss.map E ++ d.keys.map E ++ [e.manager, e.delegator, e.registrar] ++
+    e.assigners).eraseDups
+  let raw : List (Nat × AccOut) := needed.map fun s => (s, accOne params entropy slot e t r f s)
+  let o (s : Nat) : AccOut := (raw.lookup s).getD ⟨e, ∅, [], none, 0, ∅⟩
+  let acc (s : Nat) : AccOut := discardIfBoth e s (E s) (o s) (o (E s))
   let u := ss.map fun s => (s, (acc s).gasUsed)
   let b := ss.filterMap fun s => (acc s).yield.map (s, ·)
   let t' := ss.flatMap fun s => (acc s).xfers
-  let d := e.accounts
-  -- **n**: each service's own account and the accounts it created
-  let n := ss.foldl (fun (n : Accounts) s =>
-    (acc s).state.accounts.foldl (fun n k a => if d.contains k ∧ k ≠ s then n else n.insert k a) n) ∅
-  -- **m**: the accounts some service removed
-  let m := ss.flatMap fun s => d.keys.filter fun k => !(acc s).state.accounts.contains k
-  let merged := (n.foldl (fun d k a => d.insert k a) d)
-  let merged := m.foldl (fun d k => d.erase k) merged
+  -- M(s): s's account from its own run if it modified it, else from its effective supervisor's
+  let M (s : Nat) : Option ServiceAccount :=
+    if (acc s).modified.contains s then (acc s).state.accounts.get? s
+    else (acc (E s)).state.accounts.get? s
+  let m : Accounts := d.keys.foldl (fun mm s => match M s with
+    | some a => mm.insert s a
+    | none => mm) ∅
+  -- **n**: the accounts each service created
+  let n : Accounts := ss.foldl (fun (n : Accounts) s =>
+    (acc s).state.accounts.foldl (fun n k a => if d.contains k then n else n.insert k a) n) ∅
+  let merged := n.foldl (fun mm k a => mm.insert k a) m
   let accounts := integrateProvisions slot merged (ss.foldl (fun p s => p.union (acc s).provisions) ∅)
   let eStar := (acc e.manager).state
   let assigners := (List.range e.assigners.length).map fun c =>
@@ -127,8 +160,26 @@ def accPar (e : PartialState) (t : List DeferredTransfer) (r : List WorkReport)
       alwaysAcc := eStar.alwaysAcc }
   (st, t', b, u)
 
-/-- Δ_+(g, **t**, **r**, **e**, **f**) (GP eq. `accseq`): accumulate as many reports as fit in the
-    gas, then recurse with the transfers they produced. `fuel` bounds the rounds. -/
+/-- T(**t**, **s**, **d**) (GP v0.8.1 eq. `accseq`'s partition T): split the deferred transfers into
+    those accumulated in this round (**t**^!) and those deferred to a later one (**t**^Q). A transfer
+    waits if its destination's effective supervisor is accumulated (in **s**) or already receives
+    a transfer this round (in **i**), or if it is itself the effective supervisor of a service in
+    **i**; otherwise its destination joins **i**. -/
+def partitionXfers (s : List Nat) (d : Accounts) :
+    List DeferredTransfer → List Nat → List DeferredTransfer × List DeferredTransfer
+  | [], _ => ([], [])
+  | t :: ts, i =>
+    let E := effectiveSupervisor d
+    let q : Bool :=
+      (d.contains t.dest && (s.contains (E t.dest) || i.contains (E t.dest)) && E t.dest != t.dest) ||
+        i.any fun x => x != t.dest && E x == t.dest
+    let i' := if q || !d.contains t.dest then i else t.dest :: i
+    let (bang, wait) := partitionXfers s d ts i'
+    if q then (bang, t :: wait) else (t :: bang, wait)
+
+/-- Δ_+(g, **t**, **r**, **e**, **f**) (GP v0.8.1 eq. `accseq`): accumulate as many reports as fit in
+    the gas, with the transfers `partitionXfers` lets through, then recurse with the deferred ones and
+    those this round produced. `fuel` bounds the rounds. -/
 def accSeq : Nat → Int → List DeferredTransfer → List WorkReport → PartialState →
     Std.ExtTreeMap Nat Nat →
     Nat × PartialState × List (Nat × List UInt8) × List (Nat × Nat) × List DeferredTransfer
@@ -137,13 +188,15 @@ def accSeq : Nat → Int → List DeferredTransfer → List WorkReport → Parti
     let fixedGas : Int := ((t.map (·.gas)).sum + f.values.sum : Nat)
     let prefixGas (k : Nat) : Int := ((r.take k).flatMap fun w => w.digests.map (·.gasLimit)).sum
     let i := ((List.range (r.length + 1)).filter fun k => prefixGas k + fixedGas ≤ g).getLast?.getD 0
-    let n := i + t.length + f.size
+    let svcs := ((r.take i).flatMap fun w => w.digests.map (·.service)) ++ f.keys
+    let (tBang, tQ) := partitionXfers svcs e.accounts t []
+    let n := i + tBang.length + f.size
     if n = 0 then (0, e, [], [], [])
     else
-      let (eStar, tStar, bStar, uStar) := accPar params entropy slot e t (r.take i) f
+      let (eStar, tStar, bStar, uStar) := accPar params entropy slot e tBang (r.take i) f
       let gStar : Int := g + ((tStar.map (·.gas)).sum : Nat) - ((uStar.map (·.2)).sum : Nat)
-      let (j, e', b, u, tDagger) := accSeq fuel gStar tStar (r.drop i) eStar ∅
-      (i + j, e', bStar ++ b, uStar ++ u, t ++ tDagger)
+      let (j, e', b, u, tDagger) := accSeq fuel gStar (tQ ++ tStar) (r.drop i) eStar ∅
+      (i + j, e', bStar ++ b, uStar ++ u, tBang ++ tDagger)
 
 end
 

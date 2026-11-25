@@ -17,6 +17,12 @@ O_k + c·O = s·I and R + c·Ȳ = s·G + s_b·B.
 
 The 160-octet proof is enc_point(Ȳ) ⌢ enc_point(R) ⌢ enc_point(O_k) ⌢ enc_scalar(s) ⌢
 enc_scalar(s_b), the field order of §4 (aggregate encoding, §1.5).
+
+The `Reading` (default `.prose`) selects the hash to curve of the input point (done by the caller)
+and the blinding base B: §4 prints B's coordinates and says B is hash_to_curve("pedersen-blinding")
+(App. A.2). Under `.vectors` B is the printed point, which is that derivation with the 48-octet
+Z_pad; under `.prose` B is derived with the prose hash to curve (Z_pad of 128 octets), and differs
+from the printed point.
 -/
 
 namespace JamCrypto.Bandersnatch.Pedersen
@@ -28,10 +34,23 @@ open JamCrypto.Bandersnatch.Thin
 def tagPedersenVrf : UInt8 := 0x02
 def tagPedersenBlinding : UInt8 := 0x12
 
-/-- The blinding base B (§4), hash_to_curve("pedersen-blinding"). -/
-def blindingBase : Point :=
+/-- The blinding base B under the vectors' reading: the coordinates §4 prints (hash_to_curve of
+    "pedersen-blinding" with the 48-octet Z_pad). -/
+def blindingBaseVectors : Point :=
   curve.ofAffine 23335687741101763108036518445642207119627658113885888016488710494487028845889
     5552214580375038693022409684979828600325210968745774080859660443337357929963
+
+/-- The blinding base B under the prose reading: hash_to_curve("pedersen-blinding") (§4, App. A.2)
+    with the prose hash to curve. (`hashToCurve` gives a point for this input, which cryptotest
+    checks; the identity fallback is never taken.) -/
+def blindingBaseProse : Point :=
+  (Thin.hashToCurve "pedersen-blinding".toUTF8.toList .prose).getD Curve.zero
+
+/-- The blinding base B (§4) under the reading `rd`. -/
+def blindingBase (rd : Reading := .prose) : Point :=
+  match rd with
+  | .prose => blindingBaseProse
+  | .vectors => blindingBaseVectors
 
 /-- vrf_transcript(PedersenVrf, [(I, O)], ad) (§1.6.5). -/
 def vrfTranscript (I O : Point) (ad : List UInt8) : Transcript :=
@@ -71,8 +90,10 @@ def proofChallenge (I O : Point) (ad : List UInt8) (pkCom R Ok : Point) : Nat :=
   let t := (vrfTranscript I O ad).absorb (Bandersnatch.encode pkCom)
   decScalarMod ((t.absorb ([tagChallenge] ++ Bandersnatch.encode R ++ Bandersnatch.encode Ok)).squeeze challengeLen)
 
-/-- Pedersen prove (§4.1) for the input point I: the proof and the blinding factor b. -/
-def prove (x : Nat) (I : Point) (ad : List UInt8) : Proof × Nat :=
+/-- Pedersen prove (§4.1) for the input point I, under the reading `rd`: the proof and the
+    blinding factor b. -/
+def prove (x : Nat) (I : Point) (ad : List UInt8) (rd : Reading := .prose) : Proof × Nat :=
+  let blindingBase := blindingBase rd
   let O := curve.smul x I
   let t := vrfTranscript I O ad
   let b := blinding x t
@@ -85,8 +106,9 @@ def prove (x : Nat) (I : Point) (ad : List UInt8) : Proof × Nat :=
   let c := decScalarMod ((t.absorb ([tagChallenge] ++ Bandersnatch.encode R ++ Bandersnatch.encode Ok)).squeeze challengeLen)
   ({ pkCom, R, Ok, s := (k + c * x) % r, sb := (kb + c * b) % r }, b)
 
-/-- Pedersen verify (§4.2) for the input point I and output point O. -/
-def verify (I O : Point) (ad : List UInt8) (p : Proof) : Bool :=
+/-- Pedersen verify (§4.2) for the input point I and output point O, under the reading `rd`. -/
+def verify (I O : Point) (ad : List UInt8) (p : Proof) (rd : Reading := .prose) : Bool :=
+  let blindingBase := blindingBase rd
   if curve.isZero p.pkCom || curve.isZero I || curve.isZero O then false else
   let c := proofChallenge I O ad p.pkCom p.R p.Ok
   let l0 := curve.add p.Ok (curve.smul c O)

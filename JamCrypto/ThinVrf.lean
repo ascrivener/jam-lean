@@ -1,4 +1,5 @@
 import JamCrypto.Bandersnatch
+import JamCrypto.Reading
 
 /-!
 # Bandersnatch Thin VRF (GP v0.8.1 Appendix G)
@@ -14,8 +15,12 @@ The v0.8.0 IETF VRF (`JamCrypto.Bandersnatch.ietfVerify`) is left as it is.
   Every squeeze here is the first squeeze of its transcript, so a transcript is just the octets
   absorbed so far.
 * hash_to_curve (§1.6.2, App. A.2): RFC 9380 `_RO_` with expand_message_xmd(SHA-512) and Elligator
-  2, DST = suite_id ⌢ 0x60, with the Z_pad of L = 48 octets that the draft's vectors use (Draft 36
-  states this deviation from RFC 9380 explicitly; the constants and vectors are unchanged).
+  2, DST = suite_id ⌢ 0x60. The zero prefix Z_pad depends on the `Reading` (default `.prose`):
+  128 octets under `.prose`, as RFC 9380 §5.3.1 step 4 has it for SHA-512 (s_in_bytes = 128) and
+  App. A.2 cites; 48 octets under `.vectors`, which the draft's vectors and printed constants need
+  (Draft 36 later states this deviation from RFC 9380 explicitly). The rest of A.2 is RFC 9380 as
+  written: Z = 5 (App. H.3), the Elligator 2 sign rule of §6.7.1, the rational map of App. D.1, a
+  cofactor of 4, and 48 octets per field element.
 * output (§1.6.3): o = squeeze_32(suite_id ⌢ 0x20 ⌢ enc_point(O)); GP takes the first 32 octets.
 * Thin VRF (§3) with one I/O pair (I, O), I = hash_to_curve(c), additional data m: the pairs are
   [(G, Y), (I, O)], merged by delinearization (§1.6.4) into (I_m, O_m) = (G + z·I, Y + z·O); the
@@ -82,18 +87,37 @@ def Transcript.squeeze (t : Transcript) (n : Nat) : List UInt8 :=
 /-- DST = suite_id ⌢ HashToCurve. -/
 def dst : List UInt8 := suiteId ++ [tagHashToCurve]
 
-/-- expand_message_xmd (RFC 9380 §5.3.1), SHA-512, 96 output octets, Z_pad of 48 octets. -/
-def expandMessage (msg : List UInt8) : List UInt8 :=
-  let dstPrime := dst ++ [UInt8.ofNat dst.length]
-  let b0 := JAM.Sha512.hash (List.replicate 48 0 ++ msg ++ [0, 96, 0] ++ dstPrime)
-  let b1 := JAM.Sha512.hash (b0 ++ [1] ++ dstPrime)
-  let b2 := JAM.Sha512.hash ((b0.zip b1).map (fun (u, v) => u ^^^ v) ++ [2] ++ dstPrime)
-  (b1 ++ b2).take 96
+/-- The length of Z_pad: 128 octets (RFC 9380 §5.3.1, s_in_bytes of SHA-512) under the prose
+    reading, 48 under the vectors' reading. -/
+def zPadLen : Reading → Nat
+  | .prose => 128
+  | .vectors => 48
 
-/-- hash_to_curve: hash_to_field (two elements, 48 octets each, big-endian mod q), Elligator 2 on
-    each, add, clear the cofactor 4. -/
-def hashToCurve (data : List UInt8) : Option Point := do
-  let u := expandMessage data
+/-- expand_message_xmd (RFC 9380 §5.3.1) with H = SHA-512 and a zero prefix of `zPad` octets
+    (RFC 9380: `zPad` = s_in_bytes = 128): `len` uniform octets for `msg` under `dst`. The RFC's
+    step 2 aborts for ell > 255, `len` > 65535 or |DST| > 255; no caller here comes near those
+    bounds, so they are not checked. -/
+def expandMessageXmd (zPad : Nat) (dst msg : List UInt8) (len : Nat) : List UInt8 := Id.run do
+  let dstPrime := dst ++ [UInt8.ofNat dst.length]
+  let ell := (len + 63) / 64
+  let b0 := JAM.Sha512.hash
+    (List.replicate zPad 0 ++ msg ++ [UInt8.ofNat (len / 256), UInt8.ofNat len, 0] ++ dstPrime)
+  let mut prev := JAM.Sha512.hash (b0 ++ [1] ++ dstPrime)
+  let mut out := prev
+  for i in [2:ell + 1] do
+    prev := JAM.Sha512.hash ((b0.zip prev).map (fun (u, v) => u ^^^ v) ++ [UInt8.ofNat i] ++ dstPrime)
+    out := out ++ prev
+  return out.take len
+
+/-- expand_message_xmd for hash_to_curve: 96 output octets under the suite's DST, with the Z_pad
+    of the reading `rd`. -/
+def expandMessage (msg : List UInt8) (rd : Reading := .prose) : List UInt8 :=
+  expandMessageXmd (zPadLen rd) dst msg 96
+
+/-- hash_to_curve under the reading `rd`: hash_to_field (two elements, 48 octets each, big-endian
+    mod q), Elligator 2 on each, add, clear the cofactor 4. -/
+def hashToCurve (data : List UInt8) (rd : Reading := .prose) : Option Point := do
+  let u := expandMessage data rd
   let P0 ← elligator2 (beToNat (u.take 48) % q)
   let P1 ← elligator2 (beToNat (u.drop 48) % q)
   let P := curve.smul 4 (curve.add P0 P1)
@@ -141,8 +165,9 @@ def thinDecode (sig : List UInt8) : Option (Point × Point × Nat) := do
 
 /-- Thin VRF prove (§3.1) for one I/O pair: (O, R, s); `none` only if `ctx` does not hash to the
     curve. -/
-def proveParts (x : Nat) (ctx ad : List UInt8) : Option (Point × Point × Nat) := do
-  let I ← hashToCurve ctx
+def proveParts (x : Nat) (ctx ad : List UInt8) (rd : Reading := .prose) :
+    Option (Point × Point × Nat) := do
+  let I ← hashToCurve ctx rd
   let Y := curve.smul x G
   let O := curve.smul x I
   let (t, Im, _) := vrfTranscript Y I O ad
@@ -152,12 +177,12 @@ def proveParts (x : Nat) (ctx ad : List UInt8) : Option (Point × Point × Nat) 
   return (O, R, (k + c * x) % r)
 
 /-- x ∈ 𝔹̄_k⟨c⟩⟨m⟩ (GP v0.8.1): the 96-octet `sig` is a valid Thin VRF signature under the key
-    `key` for VRF input data `ctx` and additional data `msg` (§3.2). -/
-def verify (key ctx msg sig : List UInt8) : Bool := Id.run do
+    `key` for VRF input data `ctx` and additional data `msg` (§3.2), under the reading `rd`. -/
+def verify (key ctx msg sig : List UInt8) (rd : Reading := .prose) : Bool := Id.run do
   if key.length != 32 then return false
   let some Y := decode key | return false
   let some (O, R, s) := thinDecode sig | return false
-  let some I := hashToCurve ctx | return false
+  let some I := hashToCurve ctx rd | return false
   -- step 1: Y, I and O must not be the identity (R may be)
   if curve.isZero Y || curve.isZero I || curve.isZero O then return false
   let (t, Im, Om) := vrfTranscript Y I O msg
@@ -187,14 +212,14 @@ def secretOfSeed (seed : List UInt8) : Nat := Id.run do
 def publicKey (x : Nat) : List UInt8 := encode (curve.smul x G)
 
 /-- The 96-octet Thin VRF signature of the secret x for VRF input data `ctx` and additional data
-    `msg`; `none` only if `ctx` does not hash to the curve. -/
-def sign (x : Nat) (ctx msg : List UInt8) : Option (List UInt8) := do
-  let (O, R, s) ← proveParts x ctx msg
+    `msg` under the reading `rd`; `none` only if `ctx` does not hash to the curve. -/
+def sign (x : Nat) (ctx msg : List UInt8) (rd : Reading := .prose) : Option (List UInt8) := do
+  let (O, R, s) ← proveParts x ctx msg rd
   return thinEncode O R s
 
 /-- Y of the signature `sign x ctx _` would give, without signing. -/
-def signOutput (x : Nat) (ctx : List UInt8) : Option (List UInt8) := do
-  let I ← hashToCurve ctx
+def signOutput (x : Nat) (ctx : List UInt8) (rd : Reading := .prose) : Option (List UInt8) := do
+  let I ← hashToCurve ctx rd
   return output (curve.smul x I)
 
 end JamCrypto.Bandersnatch.Thin

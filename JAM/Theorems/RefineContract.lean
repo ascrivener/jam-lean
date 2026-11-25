@@ -42,7 +42,7 @@ theorem charged_sameButGas {X : Type} (g : Nat) (ω : Regs) (μ : Memory) (x : X
     · simp only [*]
       exact hb _ _
 
-theorem writeValue_sameButGas {X : Type} (s : HostStatus) (a b : Int) (ω : Regs) (μ : Memory)
+theorem writeValue_sameButGas {X : Type} (s : HostStatus) (a b : Nat) (ω : Regs) (μ : Memory)
     (x : X) (v : Except Unit (Option (List UInt8))) (o f z : Nat) :
     SameButGas (writeValue ⟨s, a, ω, μ, x⟩ v o f z) (writeValue ⟨s, b, ω, μ, x⟩ v o f z) := by
   unfold writeValue SameButGas
@@ -52,8 +52,8 @@ theorem writeValue_sameButGas {X : Type} (s : HostStatus) (a b : Int) (ω : Regs
 
 /-- The host-call ids whose non-∞ outcome does not depend on the gas: `grow_heap` (1), `fetch` (2),
     `historical_lookup` (7, Ω_H), `export` (8, Ω_E), and the ids the refine dispatcher does not know
-    (3 … 6 and above 14). -/
-def GasFreeId (h : Nat) : Prop := h = 1 ∨ h = 2 ∨ (3 ≤ h ∧ h ≤ 8) ∨ 14 < h
+    (3 … 6 and above 15; GP v0.8.1 numbers the refine calls up to `expunge` = 15). -/
+def GasFreeId (h : Nat) : Prop := h = 1 ∨ h = 2 ∨ (3 ≤ h ∧ h ≤ 8) ∨ 15 < h
 
 
 /-- The protocol parameters always encode to 122 octets (`fetch` case 0). -/
@@ -61,9 +61,10 @@ def GasFreeId (h : Nat) : Prop := h = 1 ∨ h = 2 ∨ (3 ≤ h ∧ h ≤ 8) ∨ 
   unfold Params.encode
   simp only [Codec.fixed, List.length_append, PVM.Num.length_encodeLE]
 
-/-- ℰ of the Gray Paper's full-chain parameters, as `fetch` case 0 returns them (GP Appendix B,
-    Ω_Y; the constants of `JAM.Constants`). -/
-theorem Params.full_encode : Params.full.encode = [10, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 85, 1, 0, 75, 0, 0, 88, 2, 0, 0, 128, 150, 152, 0, 0, 0, 0, 0, 128, 240, 250, 2, 0, 0, 0, 0, 0, 242, 5, 42, 1, 0, 0, 0, 0, 195, 157, 208, 0, 0, 0, 0, 8, 0, 16, 0, 8, 0, 16, 0, 64, 56, 0, 0, 8, 0, 6, 0, 80, 0, 10, 0, 128, 0, 5, 0, 0, 250, 0, 0, 128, 112, 210, 0, 0, 9, 61, 0, 0, 12, 0, 0, 0, 192, 0, 0, 128, 0, 0, 0, 0, 12, 0, 0, 244, 1, 0, 0] := by
+/-- ℰ of the Gray Paper's full-chain parameters, as `fetch` case 0 returns them (GP v0.8.1
+    Appendix B, Ω_Y; the constants of `JAM.Constants`, with 𝖦_A, 𝖦_I, 𝖦_R, 𝖦_T of #587, 𝖶_A of #557
+    and 𝖶_I in the slot v0.8.0 gave 𝖶_B, #563). -/
+theorem Params.full_encode : Params.full.encode = [10, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 85, 1, 0, 75, 0, 0, 88, 2, 0, 0, 192, 41, 205, 2, 0, 0, 0, 0, 192, 208, 1, 14, 0, 0, 0, 0, 0, 139, 181, 120, 5, 0, 0, 0, 128, 20, 127, 212, 3, 0, 0, 0, 8, 0, 16, 0, 8, 0, 16, 0, 64, 56, 0, 0, 8, 0, 6, 0, 80, 0, 10, 0, 128, 0, 5, 0, 0, 0, 3, 0, 128, 112, 210, 0, 0, 9, 61, 0, 0, 12, 0, 0, 0, 192, 0, 0, 128, 0, 0, 0, 0, 12, 0, 0, 244, 1, 0, 0] := by
   decide
 
 namespace RefineHost
@@ -79,12 +80,7 @@ theorem dispatch_sameButGas (env : Env) {h : Nat} (hh : GasFreeId h) (ω : Regs)
     generalize growHeapCore ω μ env.code = q at *
     obtain ⟨a, b, hp, w⟩ := q
     dsimp only at *
-    by_cases hc : w ≤ hp ∨ w > b
-    · simp [hc]
-    · simp only [hc, ↓reduceIte] at h₁ h₂ ⊢
-      by_cases g₁ : gas₁ < Constants.CgasGeminiconst + (w - hp) * Constants.CgasGeminilinear <;>
-        by_cases g₂ : gas₂ < Constants.CgasGeminiconst + (w - hp) * Constants.CgasGeminilinear <;>
-        simp only [g₁, g₂, ↓reduceIte] at h₁ h₂ ⊢ <;> simp_all
+    exact charged_sameButGas _ _ _ _ _ (fun _ _ => ⟨rfl, rfl, rfl, rfl⟩) h₁ h₂
   · -- fetch
     simp only [dispatch] at *
     exact charged_sameButGas _ _ _ _ _ (fun a b => writeValue_sameButGas _ _ _ _ _ _ _ _ _ _) h₁ h₂
@@ -107,20 +103,18 @@ theorem dispatch_sameButGas (env : Env) {h : Nat} (hh : GasFreeId h) (ω : Regs)
       simp only [hu] at h₁ h₂ ⊢
       unfold unknown at h₁ h₂ ⊢
       unfold SameButGas
-      dsimp only at h₁ h₂ ⊢
-      split at h₁ <;> split at h₂ <;> simp_all
-      simp only [show ¬((gas₁ : Int) - Constants.Cgasunknown < 0) by omega,
-        show ¬((gas₂ : Int) - Constants.Cgasunknown < 0) by omega, ↓reduceIte]
+      try dsimp only at h₁ h₂ ⊢
+      by_cases g1 : gas₁ < Constants.Cgasunknown <;> by_cases g2 : gas₂ < Constants.Cgasunknown <;>
+        simp only [g1, g2, ↓reduceIte] at h₁ h₂ ⊢ <;> simp_all
   · -- an unknown id
     have hu : ∀ g, dispatch env h g ω μ c = unknown g ω μ c := by
       intro g; unfold dispatch; split <;> first | omega | rfl
     simp only [hu] at h₁ h₂ ⊢
     unfold unknown at h₁ h₂ ⊢
     unfold SameButGas
-    dsimp only at h₁ h₂ ⊢
-    split at h₁ <;> split at h₂ <;> simp_all
-    simp only [show ¬((gas₁ : Int) - Constants.Cgasunknown < 0) by omega,
-      show ¬((gas₂ : Int) - Constants.Cgasunknown < 0) by omega, ↓reduceIte]
+    try dsimp only at h₁ h₂ ⊢
+    by_cases g1 : gas₁ < Constants.Cgasunknown <;> by_cases g2 : gas₂ < Constants.Cgasunknown <;>
+        simp only [g1, g2, ↓reduceIte] at h₁ h₂ ⊢ <;> simp_all
 
 end RefineHost
 
@@ -178,8 +172,8 @@ theorem writeValue_status {X : Type} (out : HostOut X) (v : Except Unit (Option 
 /-- `charged k`: with a body that keeps the gas and never reports ∞, the call charges exactly k. -/
 theorem charged_cost {X : Type} (k g : Nat) (ω : Regs) (μ : Memory) (x : X)
     (body : HostOut X → HostOut X)
-    (hb : ∀ a : Int, (body ⟨.cont, a, ω, μ, x⟩).gas = a ∧ (body ⟨.cont, a, ω, μ, x⟩).status ≠ .oog) :
-    ((charged k g ω μ x body).status ≠ .oog → (charged k g ω μ x body).gas = (g : Int) - k) ∧
+    (hb : ∀ a : Nat, (body ⟨.cont, a, ω, μ, x⟩).gas = a ∧ (body ⟨.cont, a, ω, μ, x⟩).status ≠ .oog) :
+    ((charged k g ω μ x body).status ≠ .oog → (charged k g ω μ x body).gas = g - k) ∧
       (k ≤ g → (charged k g ω μ x body).status ≠ .oog) ∧
       ((charged k g ω μ x body).status ≠ .oog → k ≤ g) := by
   unfold charged
@@ -188,12 +182,11 @@ theorem charged_cost {X : Type} (k g : Nat) (ω : Regs) (μ : Memory) (x : X)
   · simp only [hg, ↓reduceIte]
     exact ⟨fun _ => (hb _).1, fun _ => (hb _).2, fun _ => by omega⟩
 
-/-- **Each gas-independent call charges a fixed cost k** (at most 275 more than the gas it was
-    given, for `grow_heap`'s no-growth case): the gas left is g − k whenever it does not run out,
+/-- **Each gas-independent call charges a fixed cost k**: the gas left is g − k whenever it does not run out,
     and it does not run out once g ≥ k. -/
 theorem dispatch_cost (env : Env) {h : Nat} (hh : GasFreeId h) (ω : Regs) (μ : Memory)
     (c : RefineCtx) : ∃ k : Nat, ∀ g : Nat,
-      ((dispatch env h g ω μ c).status ≠ .oog → (dispatch env h g ω μ c).gas = (g : Int) - k) ∧
+      ((dispatch env h g ω μ c).status ≠ .oog → (dispatch env h g ω μ c).gas = g - k) ∧
       (k ≤ g → (dispatch env h g ω μ c).status ≠ .oog) ∧
       ((dispatch env h g ω μ c).status ≠ .oog → k ≤ max g 275) := by
   rcases hh with rfl | rfl | ⟨h3, h8⟩ | hlt
@@ -203,17 +196,14 @@ theorem dispatch_cost (env : Env) {h : Nat} (hh : GasFreeId h) (ω : Regs) (μ :
     generalize growHeapCore ω μ env.code = q
     obtain ⟨a, b, hp, w⟩ := q
     dsimp only
-    by_cases hc : w ≤ hp ∨ w > b
-    · refine ⟨Constants.CgasGeminiconst, fun g => ?_⟩
-      simp only [hc, ↓reduceIte]
-      exact ⟨fun _ => trivial, fun _ => by simp, fun _ => by simp [Constants.CgasGeminiconst]; omega⟩
-    · refine ⟨Constants.CgasGeminiconst + (w - hp) * Constants.CgasGeminilinear, fun g => ?_⟩
-      simp only [hc, ↓reduceIte]
-      by_cases hg : g < Constants.CgasGeminiconst + (w - hp) * Constants.CgasGeminilinear
-      · simp [hg]
-      · simp only [hg, ↓reduceIte]
-        refine ⟨fun _ => ?_, fun _ => by simp, fun _ => by omega⟩
-        simp
+    refine ⟨Constants.CgasGeminiconst +
+      ((if w ≤ hp ∨ w > b then hp else w) - hp) * Constants.CgasGeminilinear, fun g => ?_⟩
+    have := charged_cost (X := RefineCtx) (Constants.CgasGeminiconst +
+      ((if w ≤ hp ∨ w > b then hp else w) - hp) * Constants.CgasGeminilinear) g ω μ c
+      (fun out => { out with regs := setR7 ω (if w ≤ hp ∨ w > b then hp else w),
+                             mem := μ.setPages a ((if w ≤ hp ∨ w > b then hp else w) - a) (some .write) })
+      (fun _ => ⟨rfl, by simp⟩)
+    exact ⟨this.1, this.2.1, fun h => Nat.le_trans (this.2.2 h) (Nat.le_max_left _ _)⟩
   · -- fetch
     simp only [dispatch, hostFetch]
     refine ⟨(Constants.CgasY (if reg ω 10 < 16 then some (reg ω 10) else none)).fst +
@@ -246,10 +236,9 @@ theorem dispatch_cost (env : Env) {h : Nat} (hh : GasFreeId h) (ω : Regs) (μ :
         intro g; unfold dispatch; split <;> first | omega | rfl
       refine ⟨Constants.Cgasunknown, fun g => ?_⟩
       simp only [hu, unknown]
-      by_cases hg : (g : Int) - Constants.Cgasunknown < 0
+      by_cases hg : g < Constants.Cgasunknown
       · simp only [hg, ↓reduceIte]
-        refine ⟨fun h => absurd rfl h, fun h => ?_, fun h => absurd rfl h⟩
-        simp only [Constants.Cgasunknown] at hg h; omega
+        exact ⟨fun h => absurd rfl h, fun h => absurd h (by omega), fun h => absurd rfl h⟩
       · simp only [hg, ↓reduceIte]
         refine ⟨fun _ => trivial, fun _ => by simp, fun _ => ?_⟩
         simp only [Constants.Cgasunknown] at hg ⊢; omega
@@ -258,10 +247,9 @@ theorem dispatch_cost (env : Env) {h : Nat} (hh : GasFreeId h) (ω : Regs) (μ :
       intro g; unfold dispatch; split <;> first | omega | rfl
     refine ⟨Constants.Cgasunknown, fun g => ?_⟩
     simp only [hu, unknown]
-    by_cases hg : (g : Int) - Constants.Cgasunknown < 0
+    by_cases hg : g < Constants.Cgasunknown
     · simp only [hg, ↓reduceIte]
-      refine ⟨fun h => absurd rfl h, fun h => ?_, fun h => absurd rfl h⟩
-      simp only [Constants.Cgasunknown] at hg h; omega
+      exact ⟨fun h => absurd rfl h, fun h => absurd h (by omega), fun h => absurd rfl h⟩
     · simp only [hg, ↓reduceIte]
       refine ⟨fun _ => trivial, fun _ => by simp, fun _ => ?_⟩
       simp only [Constants.Cgasunknown] at hg ⊢; omega

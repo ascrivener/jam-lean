@@ -1,6 +1,7 @@
 import JAM.BlockImport
 import JAM.Sha512
 import Tests.TraceState
+import Tests.V080
 
 /-! Development aid: replay a trace up to a step, then show that step's accumulation, with every
 host call of the deferred-transfer recipients' runs. `lake env lean --run Tests/TraceDebug.lean DIR TRACE N`. -/
@@ -12,8 +13,10 @@ def oracle (roots : List (List (List UInt8) × List UInt8)) : Crypto :=
     bsRingRoot := fun ks => (roots.lookup ks).getD [], bsRingVerify := fun _ _ _ _ => true
     bsRingOut := Sha512.vrfOutput }
 
-def readStep (path : System.FilePath) : IO Step := do
-  match Decoder.run (step Params.tiny) (← IO.FS.readBinFile path) with
+/-- A step, its block read from the v0.8.0 encoding, with the block's v0.8.0 H_X commitment
+    (`Tests.V080`, GP #562). -/
+def readStep (path : System.FilePath) : IO (Step × List UInt8) := do
+  match Decoder.run (V080.step080 V080.tiny080) (← IO.FS.readBinFile path) with
   | .ok s => return s
   | .error e => throw (IO.userError s!"{path}: {e}")
 
@@ -32,8 +35,9 @@ def runLogged (params : Params) (entropy : List UInt8) (st : PartialState) (t s 
 /-- Each service of **R** run alone with its operands, logging host calls; returns the last host
     call and its ω7 result, and the outcome. -/
 def showStep (p : Params) (σ : State) (roots : List (List (List UInt8) × List UInt8)) (chain : Chain)
-    (st : Step) : IO Unit := do
-  let .ok (_, tr) := importBlock p (oracle roots) chain σ st.block | IO.println "  import failed"; return
+    (st : Step) (xh : List UInt8) : IO Unit := do
+  let .ok (_, tr) := importBlock p (oracle roots) chain σ st.block
+    | IO.println "  import failed"; return
   let H := st.block.header
   let entropy := hashL ((σ.eta.getD 0 []) ++ Sha512.vrfOutput H.vrfSig.toList)
   let e := σ.partialState
@@ -51,19 +55,20 @@ def showStep (p : Params) (σ : State) (roots : List (List (List UInt8) × List 
 def main (args : List String) : IO Unit := do
   let dir :: name :: steps := args | throw (IO.userError "DIR TRACE N…")
   let want := steps.map String.toNat!
-  let p := Params.tiny
+  let p := V080.tiny080
   let tdir : System.FilePath := dir / name
-  let .ok (gh, graw) := Decoder.run (genesis p) (← IO.FS.readBinFile (tdir / "genesis.bin")) | throw (IO.userError "genesis")
+  let .ok (gh, graw0) := Decoder.run (genesis p) (← IO.FS.readBinFile (tdir / "genesis.bin")) | throw (IO.userError "genesis")
+  let .ok graw := upgradeRaw graw0 | throw (IO.userError "genesis: v0.8.1 form")
   let .ok σ0 := decodeState p graw.kvs | throw (IO.userError "genesis state")
   let mut σ := σ0
   let mut chain : Chain := { ancestors := [gh] }
   let roots := [(σ.pending.map ValidatorKey.bs, σ.ringRoot)]
   let last := want.foldl max 0
   for i in [1:last + 1] do
-    let st ← readStep (tdir / s!"{String.ofList (List.replicate (8 - (toString i).length) '0')}{i}.bin")
+    let (st, xh) ← readStep (tdir / s!"{String.ofList (List.replicate (8 - (toString i).length) '0')}{i}.bin")
     if want.contains i then
       IO.println s!"step {i}:"
-      showStep p σ roots chain st
+      showStep p σ roots chain st xh
     if st.pre.root == st.post.root then continue
     match importBlock p (oracle roots) chain σ st.block with
     | .ok (s', _) =>

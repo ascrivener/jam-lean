@@ -4,7 +4,8 @@ import JamCrypto.Ring
     file is `root RINGSIZE ROOT KEY…` (hex; a key may be any octet string),
     `proof RINGSIZE ROOT CTX MSG SIG VALID OUT` (MSG `-` for empty; VALID 1 or 0; OUT the expected
     Y for valid ones), `ticket RINGSIZE ROOT ETA2 ATTEMPT SIG` (the ticket context is built here)
-    or a `#` comment; `root081` and `proof081` are the same for GP v0.8.1 (VRF spec Draft 35). Exits 1 on any
+    or a `#` comment; `root081` and `proof081` are the same for GP v0.8.1 (VRF spec Draft 35), checked
+    under `Reading.vectors` (the published vectors follow it; none follow `Reading.prose`). Exits 1 on any
     mismatch. Vector sources: `JamCryptoTest/ring/gen/` (jam-test-vectors and jam-fuzzing states; ark-vrf 0.1.0); `ring-d35.txt`
     from the VRF spec Draft 35 (GP v0.8.1). -/
 
@@ -47,7 +48,7 @@ def main (args : List String) : IO UInt32 := do
       | kind :: size :: want :: keys =>
       if kind == "root" || kind == "root081" then
         let s ← IO.monoMsNow
-        let k := if kind == "root081" then Ring.Consts.v081 else Ring.Consts.v080
+        let k := if kind == "root081" then Ring.Consts.v081 .vectors else Ring.Consts.v080
         let got := Ring.root srs size.toNat! (keys.map unhex) k
         let e ← IO.monoMsNow
         n := n + 1
@@ -55,6 +56,10 @@ def main (args : List String) : IO UInt32 := do
           bad := bad + 1
           IO.println s!"FAIL root (ring size {size}, {keys.length} keys): got {hex got} want {want}"
         else IO.println s!"ok {kind} (ring size {size}, {keys.length} keys, {e - s} ms)"
+        -- Reading.prose (other padding and blinding points) gives another root
+        if kind == "root081" && Ring.root srs size.toNat! (keys.map unhex) (Ring.Consts.v081 .prose) == unhex want then
+          bad := bad + 1
+          IO.println s!"FAIL root081 also matches under Reading.prose"
       else if kind == "proof" || kind == "proof081" then
         let (root, ctx, msg, sig, valid, out) := match keys with
           | [ctx, msg, sig, valid, out] => (want, ctx, msg, sig, valid, out)
@@ -62,11 +67,16 @@ def main (args : List String) : IO UInt32 := do
         let v081 := kind == "proof081"
         let ctx := if ctx == "-" then [] else unhex ctx
         let s ← IO.monoMsNow
-        let ok := (if v081 then Ring.verify081 else Ring.verify) srs size.toNat! (unhex root) ctx
-          (if msg == "-" then [] else unhex msg) (unhex sig)
+        let msg := if msg == "-" then [] else unhex msg
+        let ok := if v081 then Ring.verify081 srs size.toNat! (unhex root) ctx msg (unhex sig) .vectors
+          else Ring.verify srs size.toNat! (unhex root) ctx msg (unhex sig)
         let e ← IO.monoMsNow
         n := n + 1
         let want := valid == "1"
+        -- a valid Draft 35 proof does not verify under Reading.prose (the default)
+        if v081 && want && Ring.verify081 srs size.toNat! (unhex root) ctx msg (unhex sig) then
+          bad := bad + 1
+          IO.println s!"FAIL proof081 also verifies under Reading.prose"
         let outOk := !want || hex ((if v081 then Ring.output081 else Ring.output) (unhex sig)) == out
         if ok != want || !outOk then
           bad := bad + 1

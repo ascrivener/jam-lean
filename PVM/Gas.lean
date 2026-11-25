@@ -1,7 +1,7 @@
 import PVM.Instr
 
 /-!
-# The gas cost model ϱ^Δ (GP v0.8.0 §A.9 `sec:gascostmodel`, §A.10 `sec:gascosttables`)
+# The gas cost model ϱ^Δ (GP v0.8.1 §A.9 `sec:gascostmodel`, §A.10 `sec:gascosttables`)
 
 The cost of a basic block is the number of cycles a simulated out-of-order CPU needs to
 retire every instruction of the block: ϱ^Δ(**c**, **k**, ı) = max(𝔛(**c**, **k**, **x**^init)_c − 3, 1).
@@ -37,7 +37,9 @@ namespace Instr
 
 /-- š: the registers read by an instruction, "as described by the equations in §A.5", i.e.
     every ω_X (unprimed) that its mutation mentions, regardless of whether it would be needed
-    at runtime. `ecalli` reads none (§A.9). -/
+    at runtime. `ecalli` reads none (§A.9). The destination register of `cmov_iz`, `cmov_nz`,
+    `cmov_iz_imm` and `cmov_nz_imm` counts as a source too (GP v0.8.1 §A.9, stated by #559; we
+    already read it so from their mutations, which keep ω_D when the condition fails). -/
 def srcRegs : Instr → List RegIdx
   | .noArgs _ => []
   | .oneImm _ _ => []

@@ -2,13 +2,19 @@ import JAM.Codec
 import JAM.Constants
 
 /-!
-# Erasure coding (GP v0.8.0 Appendix H)
+# Erasure coding (GP v0.8.1 Appendix H)
 
-Systematic Reed–Solomon over GF(2¹⁶), as the paper defines it: a message of d = R(v) words
-(eq. `ecoriginalshards`) is the values at 0̃, …, (d−1)~ of the unique polynomial p of degree < d,
-and code word i is p(ĩ) (§H.3, "The Generator Polynomial"). Words are octet pairs read by ℰ_2,
-and both words and validator indices stand for field elements through the Cantor basis
+Systematic Reed–Solomon over GF(2¹⁶), as the paper defines it (§H.3, "The Generator Polynomial",
+as fixed by GP #580): for v validators, d = R(v) message words (eq. `ecoriginalshards`),
+d' = 2^⌈log₂ d⌉ and v' = v + d' − d, the polynomial p of degree < d' takes the message words at
+0̃, …, (d−1)~ and zero at d̃, …, (d'−1)~. Code words sit at the indices I = ℕ_d ∪ [d', v'), and
+the word at index i goes to validator f(i) = i for i < d and i − (d' − d) for i ≥ d'. So validator
+j receives p at index g(j) = j for j < d and j + (d' − d) otherwise (`codeIndex`). Words are octet
+pairs read by ℰ_2, and both words and indices stand for field elements through the Cantor basis
 v₀, …, v₁₅ (§H.2): bit j of the word selects v_j.
+
+(v0.8.0 §H.3 took p of degree < d and gave validator i the word p(ĩ); the vectors already used the
+v0.8.1 layout, upstream candidate 28.)
 
 Arithmetic is done in the polynomial basis {1, α, …, α¹⁵} of 𝔽₂[x]/(x¹⁶ + x⁵ + x³ + x² + 1), where
 the Cantor basis vectors are given; `toField` and `ofField` convert. The polynomial is primitive
@@ -16,8 +22,9 @@ the Cantor basis vectors are given; `toField` and `ofField` convert. The polynom
 logarithm tables.
 
 p is never built: evaluating it at a point is Lagrange interpolation, Σ_s L_s(x)·p(x_s), and the
-weights L_s(x) depend only on the points (`lagrange`). The same routine gives ℰ_C (from the d
-message points to all v) and ℛ (from any d known points back to the d message points).
+weights L_s(x) depend only on the points (`lagrange`). The same routine gives ℰ_C (from the d'
+points ℕ_{d'} to the v code indices) and ℛ (from the d known code indices and the d' − d zero
+points back to the d message points).
 -/
 
 namespace JAM.Erasure
@@ -144,32 +151,49 @@ def word (b : ByteArray) (o : Nat) : Nat := (b.get! o).toNat + 256 * (b.get! (o 
 /-- ℰ_2 of a word. -/
 def wordOctets (w : Nat) : List UInt8 := [UInt8.ofNat w, UInt8.ofNat (w / 256)]
 
-/-- ℰ_C^k (GP eq. `erasurecoding`) for v validators, with the weights `m` from the message
-    points 0 … d−1 to the validator points 0 … v−1: the data, of 2k·d octets, is split into d
-    chunks of k words; piece p is word p of every chunk; each piece is coded into v words; chunk i
-    of the result is word i of every piece. `none` if the length is not a multiple of 2d. -/
+/-- d' = 2^⌈log₂ d⌉, the least power of two ≥ d (GP v0.8.1 §H.3). -/
+def paddedShards (d : Nat) : Nat := Id.run do
+  let mut n := 1
+  for _ in [0:d] do
+    if n < d then n := 2 * n
+  return n
+
+/-- g(j), the code index whose word validator j receives: the inverse of f (GP v0.8.1 §H.3),
+    j for j < d and j + (d' − d) otherwise. -/
+def codeIndex (d j : Nat) : Nat := if j < d then j else j + (paddedShards d - d)
+
+/-- ℰ_C^k (GP eq. `erasurecoding`, §H.3) with d message words per piece and the weights `m` from
+    the d' points ℕ_{d'} to the code indices of the validators: the data, of 2k·d octets, is split
+    into d chunks of k words; piece p is word p of every chunk, followed by d' − d zero words;
+    each piece is coded into one word per validator; chunk i of the result is word i of every
+    piece. `none` if the length is not a multiple of 2d. -/
 def encodeWith (d : Nat) (m : Array (Array Nat)) (data : ByteArray) : Option (List ByteArray) :=
   if d = 0 ∨ data.size % (2 * d) ≠ 0 then none
   else
     let k := data.size / (2 * d)
     let pieces := (List.range k).map fun p =>
-      interpolate m ((Array.range d).map fun j => word data (2 * k * j + 2 * p))
+      interpolate m ((Array.range (paddedShards d)).map fun j =>
+        if j < d then word data (2 * k * j + 2 * p) else 0)
     some ((List.range m.size).map fun i => ⟨(pieces.flatMap fun c => wordOctets c[i]!).toArray⟩)
 
-/-- The weights ℰ_C uses for v validators. -/
-def encodeWeights (v : Nat) : Array (Array Nat) := lagrange (List.range (originalShards v)) (List.range v)
+/-- The weights ℰ_C uses for v validators: from ℕ_{d'} to g(0), …, g(v − 1). -/
+def encodeWeights (v : Nat) : Array (Array Nat) :=
+  let d := originalShards v
+  lagrange (List.range (paddedShards d)) ((List.range v).map (codeIndex d))
 
 /-- ℰ_C^k for v validators (GP eq. `erasurecoding`). -/
 def encode (v : Nat) (data : ByteArray) : Option (List ByteArray) :=
   encodeWith (originalShards v) (encodeWeights v) data
 
 /-- ℛ^k for v validators (GP eq. `erasurecodinginv`): from d = R(v) chunks of 2k octets with
-    distinct indices below v, the original 2k·d octets. Piece p's d words are interpolated back to
-    the message points 0 … d−1 and joined chunk by chunk. When the indices are exactly 0 … d−1 the
-    weights are the identity, which is the paper's first case (the chunks concatenated in index
-    order). `none` if the chunks are not d of equal even length with distinct indices below v. -/
+    distinct validator indices below v, the original 2k·d octets. Piece p's d words, at the code
+    indices g(j), together with the zeroes at d, …, d' − 1, are interpolated back to the message
+    points 0 … d−1 and joined chunk by chunk. When the indices are exactly 0 … d−1 the weights are
+    the identity, which is the paper's first case (the chunks concatenated in index order). `none`
+    if the chunks are not d of equal even length with distinct indices below v. -/
 def recover (v : Nat) (c : List (ByteArray × Nat)) : Option ByteArray :=
   let d := originalShards v
+  let n := paddedShards d
   let idx := c.map (·.2)
   match c with
   | [] => none
@@ -179,10 +203,15 @@ def recover (v : Nat) (c : List (ByteArray × Nat)) : Option ByteArray :=
         c.any (·.1.size ≠ len) then none
     else
       let k := len / 2
-      let m := lagrange idx (List.range d)
+      let m := lagrange (idx.map (codeIndex d) ++ (List.range (n - d)).map (d + ·)) (List.range d)
       let pieces := (List.range k).map fun p =>
-        interpolate m ((c.map fun (x, _) => word x (2 * p)).toArray)
+        interpolate m ((c.map fun (x, _) => word x (2 * p)).toArray ++ Array.replicate (n - d) 0)
       -- chunk j of the data is word j of every piece
       some ⟨((List.range d).flatMap fun j => pieces.flatMap fun ws => wordOctets ws[j]!).toArray⟩
+
+-- Regression tests (GP v0.8.1 #580): d' and the index map f⁻¹.
+#guard paddedShards 2 = 2 ∧ paddedShards 3 = 4 ∧ paddedShards 342 = 512 ∧ paddedShards 1 = 1
+#guard originalShards 6 = 3 ∧ originalShards 1023 = 342
+#guard (List.range 6).map (codeIndex 3) = [0, 1, 2, 4, 5, 6]
 
 end JAM.Erasure

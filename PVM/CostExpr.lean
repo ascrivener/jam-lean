@@ -1,5 +1,5 @@
 /-!
-# Cells of the gas cost tables (GP v0.8.0 §A.10)
+# Cells of the gas cost tables (GP v0.8.1 §A.10)
 
 The generated `PVM.Tables` records each row of the paper's gas cost table as written,
 before evaluation; `PVM.Gas` evaluates the cells for a concrete instruction.

@@ -1,7 +1,7 @@
 import Lake
 open Lake DSL System
 
-/-! Build configuration for the Lean model of the JAM PVM and Appendix B (Gray Paper v0.8.0).
+/-! Build configuration for the Lean model of the JAM PVM and Appendix B (Gray Paper v0.8.1).
 
 * `lake build`           builds the model (`PVM`, `JAM`) and its theorems.
 * `lake build Services`  builds the results about service binaries (proof work only).
@@ -48,7 +48,8 @@ lean_lib Tests where
   globs := #[.one `Tests.Vectors, .one `Tests.Invocation, .one `Tests.LogicExample,
     .one `Tests.Blake2bTest, .one `Tests.HostGeneralTest, .one `Tests.JamJson,
     .one `Tests.KeccakTest, .one `Tests.RefineTest, .one `Tests.BlockJson,
-    .one `Tests.StfRunner, .one `Tests.ReportsJson, .one `Tests.TraceState, .one `Tests.Sha512Test]
+    .one `Tests.StfRunner, .one `Tests.ReportsJson, .one `Tests.TraceState, .one `Tests.Sha512Test,
+    .one `Tests.V080]
 
 lean_exe «pvmtest-exe» where
   root := `Tests.PvmTest

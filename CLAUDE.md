@@ -47,14 +47,15 @@ rebuilds only what changed since then instead of building cold for 4.5–5 h.
   `docs/BUILD-INFRA.md`.
 - Runs on `main` are never cancelled, and they save the cache.
 - **Two lines of jobs.** `model` builds PVM, JAM and the tests and runs every vector suite, in
-  minutes, on every run. The proofs (`attempt-1..3`) build everything, including Services, and run on
-  `main` always and on a PR only when `changes` (`scripts/services-affected.py`) finds that it can
-  affect Services: a path under `Services/` or `services/`, build configuration, a proofs script, or
-  a module the Services proofs import.
+  minutes, on every run. The proofs (`attempt-1..3`) build everything, including Services, and run
+  **only on demand** (Adam, 2026-11-25): Actions → CI → Run workflow, on `main` or a branch. Pushes
+  and PRs skip them. A model change that breaks a Services proof is found when proof work resumes:
+  start that work with a manual run on `main`, and fix what it finds first.
 - **Merge rule.** A PR may merge when `model` is green and the attempts are green or skipped. The
   `proofs` job checks exactly that and is the check branch protection requires.
-- **Detector bugs.** If `main`'s proofs fail after a PR merged with `affected=false`, the detector
-  missed a dependency: fix `scripts/services-affected.py`, don't work around it.
+- **Proof work.** A PR that changes Services or the proofs needs a green manual run on its branch
+  before merging. To gate PRs automatically again, restore the `scripts/services-affected.py` step in
+  `ci.yml`'s `changes` job.
 - **Re-sync rule.** After a PR that regenerates code facts (`Services/Bootstrap/Code*`) lands on
   `main`, re-sync an open PR only if it imports the regenerated module, directly or transitively.
   Otherwise merge it on its own green CI. Sequence code-fact regenerations after the PRs that
@@ -91,5 +92,7 @@ rebuilds only what changed since then instead of building cold for 4.5–5 h.
   - weakening a hypothesis;
   - adding a lemma;
   - generalising a statement in place while keeping every existing statement unchanged.
-- **Usage limits.** Keep the number of parallel sessions within the limit Adam sets (see docs/HANDOFF.md). Restart sessions fresh,
-  with a handoff note, before their context gets large: the cost of each turn grows with context.
+- **Usage limits.** Keep the number of parallel sessions within the limit Adam sets (see docs/HANDOFF.md). When a session's
+  context gets large (about 400k tokens), compact it instead of restarting: first update
+  `docs/HANDOFF.md` (decisions, open items, where things are) and merge it, so the state survives in
+  git as well as in the summary. The cost of each turn grows with context.

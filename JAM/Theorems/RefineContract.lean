@@ -52,8 +52,8 @@ theorem writeValue_sameButGas {X : Type} (s : HostStatus) (a b : Int) (ω : Regs
 
 /-- The host-call ids whose non-∞ outcome does not depend on the gas: `grow_heap` (1), `fetch` (2),
     `historical_lookup` (7, Ω_H), `export` (8, Ω_E), and the ids the refine dispatcher does not know
-    (3 … 6 and above 14). -/
-def GasFreeId (h : Nat) : Prop := h = 1 ∨ h = 2 ∨ (3 ≤ h ∧ h ≤ 8) ∨ 14 < h
+    (3 … 6 and above 15; GP v0.8.1 numbers the refine calls up to `expunge` = 15). -/
+def GasFreeId (h : Nat) : Prop := h = 1 ∨ h = 2 ∨ (3 ≤ h ∧ h ≤ 8) ∨ 15 < h
 
 
 /-- The protocol parameters always encode to 122 octets (`fetch` case 0). -/

@@ -42,7 +42,7 @@ theorem charged_sameButGas {X : Type} (g : Nat) (ω : Regs) (μ : Memory) (x : X
     · simp only [*]
       exact hb _ _
 
-theorem writeValue_sameButGas {X : Type} (s : HostStatus) (a b : Int) (ω : Regs) (μ : Memory)
+theorem writeValue_sameButGas {X : Type} (s : HostStatus) (a b : Nat) (ω : Regs) (μ : Memory)
     (x : X) (v : Except Unit (Option (List UInt8))) (o f z : Nat) :
     SameButGas (writeValue ⟨s, a, ω, μ, x⟩ v o f z) (writeValue ⟨s, b, ω, μ, x⟩ v o f z) := by
   unfold writeValue SameButGas
@@ -172,21 +172,21 @@ theorem writeValue_status {X : Type} (out : HostOut X) (v : Except Unit (Option 
 /-- `charged k`: with a body that keeps the gas and never reports ∞, the call charges exactly k. -/
 theorem charged_cost {X : Type} (k g : Nat) (ω : Regs) (μ : Memory) (x : X)
     (body : HostOut X → HostOut X)
-    (hb : ∀ a : Int, (body ⟨.cont, a, ω, μ, x⟩).gas = a ∧ (body ⟨.cont, a, ω, μ, x⟩).status ≠ .oog) :
-    ((charged k g ω μ x body).status ≠ .oog → (charged k g ω μ x body).gas = (g : Int) - k) ∧
+    (hb : ∀ a : Nat, (body ⟨.cont, a, ω, μ, x⟩).gas = a ∧ (body ⟨.cont, a, ω, μ, x⟩).status ≠ .oog) :
+    ((charged k g ω μ x body).status ≠ .oog → (charged k g ω μ x body).gas = g - k) ∧
       (k ≤ g → (charged k g ω μ x body).status ≠ .oog) ∧
       ((charged k g ω μ x body).status ≠ .oog → k ≤ g) := by
   unfold charged
   by_cases hg : g < k
   · simp [hg]
   · simp only [hg, ↓reduceIte]
-    exact ⟨fun _ => by rw [(hb _).1]; omega, fun _ => (hb _).2, fun _ => by omega⟩
+    exact ⟨fun _ => (hb _).1, fun _ => (hb _).2, fun _ => by omega⟩
 
 /-- **Each gas-independent call charges a fixed cost k**: the gas left is g − k whenever it does not run out,
     and it does not run out once g ≥ k. -/
 theorem dispatch_cost (env : Env) {h : Nat} (hh : GasFreeId h) (ω : Regs) (μ : Memory)
     (c : RefineCtx) : ∃ k : Nat, ∀ g : Nat,
-      ((dispatch env h g ω μ c).status ≠ .oog → (dispatch env h g ω μ c).gas = (g : Int) - k) ∧
+      ((dispatch env h g ω μ c).status ≠ .oog → (dispatch env h g ω μ c).gas = g - k) ∧
       (k ≤ g → (dispatch env h g ω μ c).status ≠ .oog) ∧
       ((dispatch env h g ω μ c).status ≠ .oog → k ≤ max g 275) := by
   rcases hh with rfl | rfl | ⟨h3, h8⟩ | hlt
@@ -240,7 +240,7 @@ theorem dispatch_cost (env : Env) {h : Nat} (hh : GasFreeId h) (ω : Regs) (μ :
       · simp only [hg, ↓reduceIte]
         exact ⟨fun h => absurd rfl h, fun h => absurd h (by omega), fun h => absurd rfl h⟩
       · simp only [hg, ↓reduceIte]
-        refine ⟨fun _ => by omega, fun _ => by simp, fun _ => ?_⟩
+        refine ⟨fun _ => trivial, fun _ => by simp, fun _ => ?_⟩
         simp only [Constants.Cgasunknown] at hg ⊢; omega
   · -- an unknown id
     have hu : ∀ g, dispatch env h g ω μ c = unknown g ω μ c := by
@@ -251,7 +251,7 @@ theorem dispatch_cost (env : Env) {h : Nat} (hh : GasFreeId h) (ω : Regs) (μ :
     · simp only [hg, ↓reduceIte]
       exact ⟨fun h => absurd rfl h, fun h => absurd h (by omega), fun h => absurd rfl h⟩
     · simp only [hg, ↓reduceIte]
-      refine ⟨fun _ => by omega, fun _ => by simp, fun _ => ?_⟩
+      refine ⟨fun _ => trivial, fun _ => by simp, fun _ => ?_⟩
       simp only [Constants.Cgasunknown] at hg ⊢; omega
 
 end RefineHost

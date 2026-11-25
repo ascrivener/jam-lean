@@ -30,7 +30,7 @@ abbrev HostStatus := PVM.HostStatus
     the field keeps v0.8.0's type ℤ_G, but the common rules (`charged`) never make it negative. -/
 structure HostOut (X : Type) where
   status : HostStatus
-  gas : Int
+  gas : Nat
   regs : Regs
   mem : Memory
   ctx : X
@@ -72,7 +72,7 @@ def reg (ω : Regs) (k : Fin 13) : Nat := (ω.get k).toNat
 def charged {X : Type} (g : Nat) (gas : Nat) (ω : Regs) (μ : Memory) (x : X)
     (body : HostOut X → HostOut X) : HostOut X :=
   if gas < g then ⟨.oog, 0, ω, μ, x⟩
-  else body ⟨.cont, ((gas - g : Nat) : Int), ω, μ, x⟩
+  else body ⟨.cont, gas - g, ω, μ, x⟩
 
 /-- The shared tail of `fetch`, `lookup`, `read` and `info`: given the value **v** (∅ as `none`,
     ∇ as `.error`), the offset `f₀` and length `z` registers and the output address `o`:
@@ -97,7 +97,7 @@ def writeValue {X : Type} (out : HostOut X) (v : Except Unit (Option (List UInt8
 
 /-- Ω_G: ω'_7 ≡ ϱ*, with g = 𝖬_G (GP v0.8.1). -/
 def hostGas {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (x : X) : HostOut X :=
-  charged Constants.CgasG gas ω μ x fun out => { out with regs := setR7 ω out.gas.toNat }
+  charged Constants.CgasG gas ω μ x fun out => { out with regs := setR7 ω out.gas }
 
 /-! ## Ω_♊, `grow_heap` = 1 -/
 

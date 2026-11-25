@@ -303,7 +303,7 @@ structure Env where
     (∞, 0, ω', μ, x) if ϱ < 𝖬_∅, otherwise (▸, ϱ − 𝖬_∅, ω', μ, x), where ω' = ω except ω'_7 = WHAT. -/
 def unknown {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (x : X) : HostOut X :=
   if gas < Constants.Cgasunknown then ⟨.oog, 0, setR7 ω WHAT, μ, x⟩
-  else ⟨.cont, ((gas - Constants.Cgasunknown : Nat) : Int), setR7 ω WHAT, μ, x⟩
+  else ⟨.cont, gas - Constants.Cgasunknown, setR7 ω WHAT, μ, x⟩
 
 /-- F ∈ 𝔉_{(⟨ℕ → instance⟩, ⟨ℕ → module⟩, ⟦𝕁⟧)} (GP v0.8.1 eq. `refinemutator`): dispatch on the
     host-call id. v0.8.1 inserts `compile` = 9 and renumbers `machine` … `expunge` to 10 … 15 (#530). -/
@@ -335,12 +335,11 @@ def dispatchI (params : Params) (p : WorkPackage) (code : ByteArray) (n gas : Na
 
 end RefineHost
 
-/-- A host function as a `PVM.HostFn`. Its gas is never negative under the v0.8.1 common rules, so
-    the clamp `Int.toNat` is the identity. -/
+/-- A host function as a `PVM.HostFn` (its gas is in ℕ_G under the v0.8.1 common rules). -/
 def toHostFn {X : Type} (f : Nat → Nat → Regs → Memory → X → HostOut X) : HostFn X :=
   fun n gas ω μ x =>
     let o := f n gas.toNat ω μ x
-    ⟨o.status, UInt64.ofNat o.gas.toNat, o.regs, o.mem, o.ctx⟩
+    ⟨o.status, UInt64.ofNat o.gas, o.regs, o.mem, o.ctx⟩
 
 /-- The work result of a Ψ_M output: the blob, or ☇ / ∞. -/
 def _root_.PVM.InvOutput.toWorkResult : InvOutput → WorkResult

@@ -215,7 +215,7 @@ def designate (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) 
 /-- Ω_C, `checkpoint` = 19: y' ≡ x, ω'_7 ≡ ϱ*. -/
 def checkpoint (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
   charge Constants.CgasC gas ω μ c fun out =>
-    { out with ctx := (c.1, c.1), regs := setR7 ω out.gas.toNat }
+    { out with ctx := (c.1, c.1), regs := setR7 ω out.gas }
 
 /-- Ω_N, `new` = 20 (GP v0.8.1, junior services GP #539). Service s = ω_7 (x_s for 2^64 − 1)
     funds a new account whose code hash c, request length l, gas limits g, m and gratis offset f are
@@ -508,7 +508,7 @@ def dispatch (env : AccEnv) (n gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx)
   | _ =>
     -- GP v0.8.1 eq. `accinvocation`: ∞ with ϱ* = 0 if ϱ < 𝖬_∅, else ϱ − 𝖬_∅; ω'_7 = WHAT either way
     if gas < Constants.Cgasunknown then ⟨.oog, 0, setR7 ω WHAT, μ, c⟩
-    else ⟨.cont, ((gas - Constants.Cgasunknown : Nat) : Int), setR7 ω WHAT, μ, c⟩
+    else ⟨.cont, gas - Constants.Cgasunknown, setR7 ω WHAT, μ, c⟩
 
 end AccHost
 
@@ -516,7 +516,7 @@ end AccHost
     together with ∞ (see the note on 𝔉_X in the README). -/
 def accHostFn (env : AccEnv) : HostFn AccCtx := fun n gas ω μ c =>
   let o := AccHost.dispatch env n gas.toNat ω μ c
-  ⟨o.status, UInt64.ofNat o.gas.toNat, o.regs, o.mem, o.ctx⟩
+  ⟨o.status, UInt64.ofNat o.gas, o.regs, o.mem, o.ctx⟩
 
 /-- The code of a service account, a_c ≡ a_p[a_c] (GP v0.8.1 §9 "Code and Gas", GP #582): the
     whole preimage, metadata included; Y skips the metadata (`PVM.skipMetadata?`). -/

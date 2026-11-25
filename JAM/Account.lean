@@ -53,6 +53,13 @@ structure ServiceAccount where
   codeHash : List UInt8
   /-- b: balance -/
   balance : Nat
+  /-- u: supervisor (GP v0.8.1 eq. `serviceaccount`, §9 "Supervisors") -/
+  supervisor : Nat := 0
+  /-- the supervisor's creation slot, recorded with u (GP v0.8.1 eq. `serviceaccount`) -/
+  supervisorCreated : Nat := 0
+  /-- the supervisor balance, transferable only by the supervisor and counted with b against the
+      threshold balance (GP v0.8.1 eq. `serviceaccount`, §9 "Supervisors") -/
+  supervisorBalance : Nat := 0
   /-- g: minimum gas per accumulated work item -/
   minAccGas : Nat
   /-- m: minimum gas per deferred transfer -/
@@ -282,5 +289,16 @@ end ServiceAccount
 
 /-- 𝐝 ∈ ⟨ℕ_S → 𝔸⟩: the service accounts (GP eq. `serviceaccounts`). -/
 abbrev Accounts := Std.ExtTreeMap Nat ServiceAccount
+
+/-- The effective supervisor of s in **d** (GP v0.8.1 eq. `effectivesupervisor`): the designated
+    supervisor u = **d**[s]_u if u ∈ K(**d**) and **d**[u]_r equals the recorded creation slot,
+    and s itself otherwise. Defined for s ∈ K(**d**); for any other s it is s. -/
+def effectiveSupervisor (d : Accounts) (s : Nat) : Nat :=
+  match d.get? s with
+  | none => s
+  | some a =>
+    match d.get? a.supervisor with
+    | some su => if su.created = a.supervisorCreated then a.supervisor else s
+    | none => s
 
 end JAM

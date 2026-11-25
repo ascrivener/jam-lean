@@ -88,14 +88,12 @@ structure ImportTrace where
   /-- The accumulation output root. -/
   accRoot : List UInt8
 
-/-- Υ(σ, B) with the block's validity conditions, where the extrinsic hash H_X is checked against
-    the commitment `xh` given. `importBlock` gives ℋ of GP eq. `extrinsichash`; the v0.8.0 trace
-    runner gives the v0.8.0 commitment of the vectors' blocks (whose assurances carry an anchor,
-    GP #562), so that everything else of Υ is checked against v0.8.1. -/
-def importBlockCommitted (xh : List UInt8) (params : Params) (c : Crypto) (chain : Chain)
-    (σ : State) (B : Block) : Except BlockError (State × ImportTrace) := do
+/-- Υ(σ, B) (GP eq. `transitionfunctioncomposition`), with the block's validity conditions. -/
+def importBlock (params : Params) (c : Crypto) (chain : Chain) (σ : State) (B : Block) :
+    Except BlockError (State × ImportTrace) := do
   let H := B.header
   let X := B.extrinsic
+  let xh := X.hash
   let hdr (ok : Bool) (msg : String) : Except BlockError Unit :=
     if ok then pure () else throw (.header msg)
   -- §5: the parent, the prior state root and the extrinsic hash.
@@ -184,10 +182,5 @@ def importBlockCommitted (xh : List UInt8) (params : Params) (c : Crypto) (chain
       serviceStats := serviceStats incoming xp acc.stats,
       ready := acc.state.ready, accumulated := acc.state.accumulated }
   return (σ', { available := avail, accRoot := acc.root })
-
-/-- Υ(σ, B) (GP eq. `transitionfunctioncomposition`), with the block's validity conditions. -/
-def importBlock (params : Params) (c : Crypto) (chain : Chain) (σ : State) (B : Block) :
-    Except BlockError (State × ImportTrace) :=
-  importBlockCommitted B.extrinsic.hash params c chain σ B
 
 end JAM

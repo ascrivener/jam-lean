@@ -4,7 +4,7 @@ import JAM.Shuffle
 import JAM.Account
 
 /-!
-# Guarantor assignments and work-report guarantees (GP v0.8.0 §11.3–§11.5)
+# Guarantor assignments and work-report guarantees (GP v0.8.1 §11.3–§11.5)
 
 The guarantor assignments M and M* (eq. `priorassignments`), the validity conditions on the
 guarantees extrinsic 𝔼_G (eqs. `guaranteesextrinsic`–`reportcodesarecorrect`), the reporters set
@@ -129,6 +129,10 @@ inductive ReportsError where
   | missingWorkResults
   | badAnchorSlot
   | badErasureShards
+  | refineLoadTooHigh
+  | badExportsCount
+  | bundleTooBig
+  | authGasTooHigh
   deriving BEq, Repr
 
 /-- The posterior of the guarantees transition: ρ', the reporters G, and the reported packages
@@ -152,6 +156,26 @@ def checkReportShape (params : Params) (r : WorkReport) : Except ReportsError Un
     throw .tooManyDependencies
   unless r.authTrace.size + (r.digests.map (resultSize ·.result)).sum ≤ params.maxReportVarSize do
     throw .workReportTooBig
+
+/-- The work-package limits on a work report (GP v0.8.1 eq. `reportrefineload`, #563): over the
+    digests, ∑ u ≤ 𝖦_R, ∑ i ≤ 𝖶_M, (r_s)_n = ∑ e ≤ 𝖶_X, ∑ x ≤ 𝖳 and ∑ (z + i·𝖶_F) ≤ 𝖶_I; then
+    (r_s)_l ≤ 𝖶_B and r_g ≤ 𝖦_I. The paper names no errors and gives no order; the errors are the
+    vectors' (davxy/jam-test-vectors after v0.8.0, errors 28–31): `badExportsCount` when the
+    segment count is not the sum of the export counts, `refineLoadTooHigh` for any sum over its
+    limit, `bundleTooBig` and `authGasTooHigh`. The rows are checked in the paper's order. 𝖶_B is
+    `Constants.Cmaxbundlesize`, as `fetch` does not report it. -/
+def checkReportLoad (params : Params) (r : WorkReport) : Except ReportsError Unit := do
+  let ds := r.digests
+  let sum (f : WorkDigest → Nat) := (ds.map f).sum
+  unless sum (·.gasUsed) ≤ params.packageRefGas do throw .refineLoadTooHigh
+  unless sum (·.importCount) ≤ params.maxPackageImports do throw .refineLoadTooHigh
+  unless r.spec.segmentCount = sum (·.exportCount) do throw .badExportsCount
+  unless sum (·.exportCount) ≤ params.maxPackageExports do throw .refineLoadTooHigh
+  unless sum (·.extrinsicCount) ≤ params.maxPackageXts do throw .refineLoadTooHigh
+  unless sum (fun d => d.extrinsicSize + d.importCount * Constants.Csegmentfootprint) ≤
+      params.maxInputSize do throw .refineLoadTooHigh
+  unless r.spec.bundleLength ≤ Constants.Cmaxbundlesize do throw .bundleTooBig
+  unless r.authGasUsed ≤ params.packageAuthGas do throw .authGasTooHigh
 
 /-- The conditions on one guarantee (r, t, **a**) (GP eq. `guarantorsig` and §11.4): the core index
     below 𝖢; 2 ≤ |**a**| ≤ 3 and ordered by validator index; t no later than τ' and no earlier
@@ -194,7 +218,8 @@ def checkAnchor (recent : List RecentBlock) (x : RefineContext) : Except Reports
     1. 𝔼_G ordered and unique by core (eq. `guaranteesextrinsic`);
     2. for each guarantee in turn: `checkGuarantee`, `checkReportShape`, the erasure-shard count
        |κ'|, the core free in ρ (eq. `reportcoresareunused`), the authorizer in α[r_c], and each
-       digest's service: present in δ, d_g ≥ its minimum gas, then ∑ d_g ≤ 𝖦_A;
+       digest's service: present in δ, d_g ≥ its minimum gas, then ∑ d_g ≤ 𝖦_A, then the
+       work-package limits (`checkReportLoad`, GP v0.8.1 eq. `reportrefineload`);
     3. no two reports of one package;
     4. for each report: its anchor (`checkAnchor`), the lookup anchor's age (x_t ≥ τ' − 𝖫) and
        ancestry, the package not already known, the segment-root lookup within the extrinsic's
@@ -218,6 +243,7 @@ def guarantees (params : Params) (crypto : Crypto) (i : ReportsInput) (δ : Acco
       let some a := δ.get? d.service | throw .badServiceId
       unless d.gasLimit ≥ a.minAccGas do throw .serviceItemGasTooLow
     unless (r.digests.map (·.gasLimit)).sum ≤ params.reportAccGas do throw .workReportGasTooHigh
+    checkReportLoad params r
   let reports := xs.map (·.report)
   let p : OctetDict := Std.ExtTreeMap.ofList
     (reports.map fun r => (r.spec.packageHash.toList, r.spec.segmentRoot.toList))

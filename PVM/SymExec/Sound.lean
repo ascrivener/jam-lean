@@ -4,7 +4,7 @@ import PVM.SymExec.Core
 # Soundness of the symbolic executor (spike)
 
 `srun_sound`: if `srun` follows a stretch from a state described by σ to `target` in `k` steps,
-ending in σ', then the gas-free machine (GP v0.8.0 §A.4, `Program.freeStep`) takes the same `k`
+ending in σ', then the gas-free machine (GP v0.8.1 §A.4, `Program.freeStep`) takes the same `k`
 steps through the listed instructions, as a `FreeStepsH` chain, to a state described by σ'.
 -/
 

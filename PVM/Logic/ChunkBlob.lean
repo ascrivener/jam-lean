@@ -346,7 +346,7 @@ theorem view_eq (N : Nat) (oc mb cLen : Nat) (jt : Array Nat) :
   · simp
   · simp [bits]
 
-/-- **A standard program blob from the tree** (GP eq. `conditions`): with the section lengths
+/-- **A standard program blob from the tree** (GP v0.8.1 eq. `jamblobformat`): with the section lengths
     its header gives (decided by the kernel on 15 octets), it parses to the sections at those
     offsets. -/
 theorem jamParse?_ba (N : Nat) (o n : Nat) {oLen wLen z s pLen : Nat}

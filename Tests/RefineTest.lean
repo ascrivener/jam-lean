@@ -4,9 +4,9 @@ import JAM
 # Hand-written tests of the refine host functions, Ψ_R and Ψ_I
 
 No vectors exercise refine or is-authorized at the pinned commits, so each check here is one case
-of a definition in GP v0.8.0 Appendix B (`sec:refinefunctions`, eqs. `refinvocation`,
-`isauthinvocation`); the refine host calls follow v0.8.1 (`compile`, the module map and the new
-numbering of #530, and the common rules of #533). The `#guard`s run compiled code; the `example`s at the end are checked by the
+of a definition in GP v0.8.1 Appendix B (`sec:refinefunctions`, eqs. `refinvocation`,
+`isauthinvocation`): `compile`, the module map and the numbering of #530, and the common rules of
+#533. The `#guard`s run compiled code; the `example`s at the end are checked by the
 kernel.
 -/
 
@@ -272,7 +272,8 @@ def env0 : Env :=
 
 /-! ### Ψ_R end to end -/
 
-/-- A JAM blob (GP eq. `conditions`) with no data, no heap and a one-page stack. -/
+/-- The part of a JAM blob (GP v0.8.1 eq. `jamblobformat`) after the metadata prefix ℰ(↕**m**), with
+    no data, no heap and a one-page stack (`svc` adds the metadata). -/
 def jam (p : List UInt8) : List UInt8 :=
   Codec.fixed 3 0 ++ Codec.fixed 3 0 ++ Codec.fixed 2 0 ++ Codec.fixed 3 4096 ++ Codec.fixed 4 p.length ++ p
 

@@ -6,7 +6,7 @@ import PVM.Logic.Words
 
 EXPERIMENTAL (see `docs/symexec-spike.md`). One function, `srun`, runs a stretch of PVM code over a
 *symbolic* state, and `srun_sound` (`PVM.SymExec.Sound`) proves once that what it computes is what
-the gas-free machine does (GP v0.8.0 §A.4–A.5, `Program.freeStep`, chained as `FreeStepsH`). A
+the gas-free machine does (GP v0.8.1 §A.4–A.5, `Program.freeStep`, chained as `FreeStepsH`). A
 stretch is then proved by evaluating `check … = true` in the kernel (`decide +kernel`).
 
 * Registers hold symbolic values (`SVal`): terms over named naturals ρ_k, the start registers and

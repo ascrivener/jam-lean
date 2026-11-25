@@ -85,8 +85,8 @@ def gR' : Nat := Num.decodeLE (inv1.mem.readN (base + 0x100) 8)
 -- An unknown machine: WHO; an unwritable block: ☇.
 #guard r7 (inv 100000 1000 withMachine 5) == Result.WHO
 #guard (invoke 100000 (regs [(7, 0), (8, 34 * 4096)]) mem0 withMachine).status == .panic
--- ϱ < 𝖬_K + g_R: ∞, with ϱ' = ϱ − g.
-#guard (inv 1500 1000).status == .oog && (inv 1500 1000).gas == (1500 : Int) - (Constants.CgasK + 1000)
+-- ϱ < 𝖬_K + g_R: ∞, with all gas consumed (ϱ* = 0, GP v0.8.1 #533; v0.8.0 gave ϱ − g < 0).
+#guard (inv 1500 1000).status == .oog && (inv 1500 1000).gas == 0
 
 /-! ### pages, poke and peek -/
 
@@ -185,6 +185,9 @@ def env0 : Env :=
 -- Accumulate-only ids are unknown to refine: WHAT, charging 𝖬_∅.
 #guard r7 (dispatch env0 15 1000 (regs []) mem0 ctx0) == Result.WHAT
 #guard (dispatch env0 15 1000 (regs []) mem0 ctx0).gas == (1000 - Constants.Cgasunknown : Nat)
+-- ϱ < 𝖬_∅: ∞ with ϱ* = 0 (GP v0.8.1 eq. `refinemutator`, #533).
+#guard (dispatch env0 15 999 (regs []) mem0 ctx0).status == .oog
+#guard (dispatch env0 15 999 (regs []) mem0 ctx0).gas == 0
 -- `lookup` (3) is not available to refine either.
 #guard r7 (dispatch env0 3 1000 (regs []) mem0 ctx0) == Result.WHAT
 

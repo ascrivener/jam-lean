@@ -3,7 +3,7 @@ import JAM.Blake2b
 import PVM.FastHost
 
 /-!
-# The accumulate invocation Ψ_A and its host functions (GP v0.8.0 Appendix B)
+# The accumulate invocation Ψ_A and its host functions (GP v0.8.1 Appendix B)
 
 * the partial state 𝕊 (eq. `partialstate`) and the implications 𝕃 (eq. `implications`);
 * the accumulate host functions `bless`, `assign`, `designate`, `checkpoint`, `new`, `upgrade`,

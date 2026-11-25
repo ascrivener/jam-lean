@@ -2,7 +2,7 @@ import JAM.State
 import JAM.Block
 
 /-!
-# σ from its key-values: the inverse of T (GP v0.8.0 §D.1)
+# σ from its key-values: the inverse of T (GP v0.8.1 §D.1)
 
 T (GP §D.1, eq. D.2) maps σ to key-value pairs: the components keyed by C(i), i ∈ 1 … 16, each
 service account's fields under C(255, s), and its data under C(s, ·) (eq. D.1). `decodeState`

@@ -2,7 +2,7 @@ import JAM.Accumulate
 import JAM.Merkle
 
 /-!
-# Accumulation (GP v0.8.0 §12, `sec:accumulation`)
+# Accumulation (GP v0.8.1 §12, `sec:accumulation`)
 
 The accumulation state transition: the queue functions E, Q and P (§12.1), the single, parallel
 and outer accumulation functions Δ_1, Δ_* and Δ_+ (eqs. `accone`, `accpar`, `accseq`), and the
@@ -114,7 +114,7 @@ def discardIfBoth (e : PartialState) (s u : Nat) (os ou : AccOut) : AccOut :=
 * Each existing account is taken from the run of the service itself if it modified it, and
   otherwise from the run of its effective supervisor (M); new accounts come from their creators
   (**n**); a removed account is one whose M is none.
-* Privileges, staging set and authorizer queue are as in GP v0.8.0, through X(s) and R.
+* Privileges, staging set and authorizer queue through X(s) and R (unchanged from GP v0.8.0).
 
 A service that is neither accumulated nor needed for the privileges has no inputs and no gas; its
 Δ_1 is the unchanged state with nothing modified (Ψ_A with g = 0 runs out of gas at once, or has no

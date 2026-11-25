@@ -6,7 +6,7 @@ import JAM.Accumulation
 import JAM.Trie
 
 /-!
-# The state σ and its serialization T(σ) (GP v0.8.0 §4.2, Appendix D)
+# The state σ and its serialization T(σ) (GP v0.8.1 §4.2, Appendix D)
 
 σ ≡ (α, β, θ, γ, δ, η, ι, κ, λ, ρ, τ, φ, χ, ψ, π, ω, ξ) (GP eq. `statecomposition`), with
 γ ≡ (γ_P, γ_Z, γ_S, γ_A) (eq. `gammaspec`), χ ≡ (χ_M, χ_A, χ_V, χ_R, χ_Z) (eq. `privilegesspec`)

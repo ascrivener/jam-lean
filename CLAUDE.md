@@ -14,9 +14,8 @@ rebuilds only what changed since then instead of building cold for 4.5–5 h.
 - **Source.** Model only from the Gray Paper **v0.8.1** (tag v0.8.1 of gavofyork/graypaper,
   2026-11-16; Adam moved the model from v0.8.0 on 2026-11-25). Don't copy other implementations,
   especially JAR. Docstrings cite the paper (section and equation); code changed for v0.8.1 cites
-  v0.8.1. Don't follow paper changes made after the v0.8.1 tag. `JamCrypto` may carry explicitly
-  selected crypto versions (GP v0.8.1's Bandersnatch Thin VRF and VRF-spec Draft 35 ring VRF,
-  selected by `JamCrypto.GpVersion`), modelled from the cited spec and its published vectors.
+  v0.8.1. Don't follow paper changes made after the v0.8.1 tag. `JamCrypto` carries both the
+  v0.8.0 and v0.8.1 paths, selected by `JamCrypto.GpVersion`.
 - **Vectors during the migration.** An expected output of a v0.8.0 vector may change only where a
   v0.8.1 paper change dictates it. List each such edit in the PR body with the GP PR and the
   equation. Prefer the vectors' own updates (davxy/jam-test-vectors master) where they cover it.

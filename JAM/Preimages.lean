@@ -18,6 +18,12 @@ inductive PreimageError where
   | notSortedUnique
   /-- Some (s, **i**) ∈ E_P fails Y(δ, s, **i**). -/
   | unneeded
+  /-- |E_P| > 𝖷_P's length bound (GP v0.8.1 eq. `xtpreimages`). Not named by the paper or the
+      v0.8.0 vectors. -/
+  | tooMany
+  /-- Σ |**i**| over E_P exceeds the data bound (GP v0.8.1 eq. `maxxtpreimagesdatasize`). Not named
+      by the paper or the v0.8.0 vectors. -/
+  | tooMuchData
   deriving BEq, Repr
 
 /-- The order on E_P's pairs: by service index, then by the data, lexicographically. -/
@@ -34,11 +40,16 @@ def providable (d : Accounts) (s : Nat) (i : List UInt8) : Bool :=
   | some a => a.requestGet (Blake2b.hash256 ⟨i.toArray⟩).toList i.length == some []
   | none => false
 
-/-- The preimage transition (GP §12.4): check E_P against the prior accounts δ, then integrate it
-    into the accounts δ^† after accumulation at timeslot τ'. -/
+/-- The preimage transition (GP v0.8.1 §12.4): check E_P (at most `Cmaxxtpreimageslen` pairs and
+    `Cmaxxtpreimagesdatasize` data octets, eq. `xtpreimages` and `maxxtpreimagesdatasize`; ordered;
+    providable) against the prior accounts δ, then integrate it into the accounts δ^† after
+    accumulation at timeslot τ'. The paper orders none of the checks (upstream note 25); the
+    bounds are checked first. -/
 def preimages (prior postAcc : Accounts) (xs : List (Nat × List UInt8)) (slot : Nat) :
     Except PreimageError Accounts :=
-  if !preimagesOrdered xs then .error .notSortedUnique
+  if xs.length > Constants.Cmaxxtpreimageslen then .error .tooMany
+  else if (xs.map (·.2.length)).sum > Constants.Cmaxxtpreimagesdatasize then .error .tooMuchData
+  else if !preimagesOrdered xs then .error .notSortedUnique
   else if !xs.all fun (s, i) => providable prior s i then .error .unneeded
   else .ok (integrateProvisions slot postAcc (Std.ExtTreeSet.ofList xs))
 

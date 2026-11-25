@@ -112,7 +112,7 @@ structure Summary where
 /-- A step, its block read from the v0.8.0 encoding, with the block's v0.8.0 H_X commitment
     (`Tests.V080`, GP #562). -/
 def readStep (path : System.FilePath) : IO (Step × List UInt8) := do
-  match Decoder.run (V080.step080 Params.tiny) (← IO.FS.readBinFile path) >>=
+  match Decoder.run (V080.step080 V080.tiny080) (← IO.FS.readBinFile path) >>=
       fun (st, xh) => do return (← upgradeStep st, xh) with
   | .ok s => return s
   | .error e => throw (IO.userError s!"{path}: {e}")
@@ -125,7 +125,7 @@ def readStep (path : System.FilePath) : IO (Step × List UInt8) := do
 def blockImportSuspended : Bool := true
 
 def runTrace (dir : System.FilePath) (name : String) : IO Summary := do
-  let p := Params.tiny
+  let p := V080.tiny080
   let tdir := dir / name
   let (gh, graw) ← match Decoder.run (genesis p) (← IO.FS.readBinFile (tdir / "genesis.bin")) >>=
       fun (h, r) => do return (h, ← upgradeRaw r) with

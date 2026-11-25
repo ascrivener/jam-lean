@@ -105,7 +105,7 @@ def hostGas {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (x : X) : HostOut X
     heap page a = (2𝖹_Z + Q(|**o**|)) / 𝖹_P and the bound b = (2^32 − 3𝖹_Z − 𝖹_I − Q(s)) / 𝖹_P below
     the stack, with the stack size rounded to a zone (Q, not P: GP #538). -/
 def heapBounds (jam : ByteArray) : Nat × Nat :=
-  let (roLen, stack) := match JamBlob.parse? jam with
+  let (roLen, stack) := match JamBlob.parseStd? jam with
     | some jb => (jb.ro.size, jb.stackSize)
     | none => (0, 0)
   ((2 * zoneSize + roundZone roLen) / pageSize,

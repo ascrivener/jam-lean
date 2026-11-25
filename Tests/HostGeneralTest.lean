@@ -260,4 +260,12 @@ def xfer (dst : Nat) : DeferredTransfer := { source := 1, dest := dst, amount :=
 #guard (partitionXfers [] ps0.accounts [xfer 4, xfer 9] []).1.map (·.dest) == [4] &&
   (partitionXfers [] ps0.accounts [xfer 4, xfer 9] []).2.map (·.dest) == [9]
 
+/-! ### the preimages extrinsic bounds (GP v0.8.1 eq. `xtpreimages`, `maxxtpreimagesdatasize`) -/
+
+def pErr (xs : List (Nat × List UInt8)) : Option PreimageError :=
+  match preimages ∅ ∅ xs 0 with | .ok _ => none | .error e => some e
+#guard pErr (List.replicate (Constants.Cmaxxtpreimageslen + 1) (0, [])) == some .tooMany
+#guard pErr [(0, List.replicate (Constants.Cmaxxtpreimagesdatasize + 1) 0)] == some .tooMuchData
+#guard pErr [] == none
+
 end JAM.Tests.HostGeneral

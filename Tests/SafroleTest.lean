@@ -219,7 +219,7 @@ open JAM.Tests in
 def main (args : List String) : IO UInt32 := do
   let base : System.FilePath := args.headD "vendor/jam-test-vectors/stf/safrole"
   let mut code : UInt32 := 0
-  for (label, params) in [("tiny", JAM.Params.tiny), ("full", JAM.Params.full)] do
+  for (label, params) in [("tiny", JAM.V080.tiny080), ("full", JAM.V080.full080)] do
     let dir := base / label
     let mut o : Safrole.Oracle := {}
     for f in ← PVM.Tests.jsonFiles dir do

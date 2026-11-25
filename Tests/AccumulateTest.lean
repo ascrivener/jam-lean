@@ -1,4 +1,5 @@
 import Tests.JamJson
+import Tests.V080
 
 /-!
 # Accumulate STF vectors (`lake build acctest`)
@@ -141,7 +142,7 @@ def main (args : List String) : IO UInt32 := do
   for f in files do
     let name := f.fileName.getD ""
     let t0 ← IO.monoMsNow
-    let r := runVector JAM.Params.tiny (← PVM.Tests.readJson f)
+    let r := runVector JAM.V080.tiny080 (← PVM.Tests.readJson f)
     let ok := match r with | .ok [] => "ok" | _ => "FAIL"
     IO.println s!"{name}: {ok} ({(← IO.monoMsNow) - t0} ms)"
     (← IO.getStdout).flush

@@ -5,7 +5,8 @@ Usage:  python3 -I scripts/gen_constants.py <path/to/graypaper/text/definitions.
 
 Reads every `\\item[$\\NAME = value$]` whose NAME is a constant macro (`\\C…`), including the
 host-call gas constants (`\\Cgas…`, §I.4.4 "Host-call gas") and the per-case `fetch` constants
-(`\\CgasYc{n} = a, \\CgasYl{n} = b`). The Lean names are the paper's macro names, so each value can be
+(`\\CgasYc{n} = a, \\CgasYl{n} = b`, and `\\CgasYunknown = a` for an unknown case, which v0.8.1
+writes instead of v0.8.0's `\\CgasYc{\\none} = a, \\CgasYl{\\none} = 0`). The Lean names are the paper's macro names, so each value can be
 traced back to its definition. Anything unrecognised is an error.
 """
 
@@ -44,6 +45,9 @@ def main():
             key = "none" if fm.group(1) == "\\none" else int(fm.group(1))
             fetch[key] = (int(fm.group(2)), int(fm.group(4)))
             continue
+        um = re.fullmatch(r"\\CgasYunknown\s*=\s*(\d+)", head)
+        if um:
+            fetch["none"] = (int(um.group(1)), 0)
         cm = re.fullmatch(r"\\(C[A-Za-z]+)\s*=\s*(.*)", head)
         if not cm:
             continue
@@ -67,7 +71,7 @@ def main():
 
     L = ["/-",
          "  GENERATED FILE: do not edit by hand.",
-         "  Produced by `scripts/gen_constants.py` from the Gray Paper v0.8.0, `text/definitions.tex`.",
+         "  Produced by `scripts/gen_constants.py` from the Gray Paper v0.8.1, `text/definitions.tex`.",
          "  CI regenerates it from the pinned paper and fails on any difference.",
          "-/",
          "",

@@ -86,14 +86,14 @@ Status is one of: **done** (with the PR), **no change** (wording, or not modelle
 | safrole | 𝕂^∅ (`nullvalkey`); Φ uses it (#543) | done #246 | `Block.nullValidatorKey`, `Safrole.offendersFilter`, `Reports.blacklist` |
 | reporting_assurance | ℝ field order, r_g 5th (#537) | done | `WorkReport` (encoding unchanged: Appendix C already had it 5th) |
 | reporting_assurance | 𝔼_A without anchor; ordered-unique by a_v (#562, #574) | done #246 | `Assurance`, `checkAssurance` |
-| reporting_assurance | eq. `reportrefineload`: per-report limits (#563) | done #253 | `Reports.checkReportLoad` |
+| reporting_assurance | eq. `reportrefineload`: per-report limits (#563) | done #253 | `Reports.checkReportLoad`: all seven rows, in the paper's order; error names from the vectors (28–31) |
 | statistics | π_V preimage size; guarantees by (κ'_v)_e ∈ G; provisions filtered by service (#565, #567) | done | `Statistics.lean` |
 | statistics | layout | no change | typesetting |
 | work_packages_and_reports | 𝖶_B → 𝖶_I in `checkextractsize`; eq. `maxbundlesize`; `wplimits` < → ≤ (#563) | constants done #250; rules no change | no work-package validity in the model; on-chain use is `reportrefineload` (#253) |
 | work_packages_and_reports | **p**_c is the whole preimage (#582) | done #251 | `WorkPackage.authCode` |
 | work_packages_and_reports | Ξ tuple order, `countupexports`, ᵀ_m / s♣ / paged proofs (#537, #568, #583) | no change | no Ξ or availability specifier in the model (jam-lean-target follow-up) |
 | serialization | ℰ(⊥) = [0], ℰ(⊤) = [1]; ℰ_A without anchor; O(a) (#560, #562) | done #246 | `Block.lean` encoders and decoders |
-| serialization | deferred transfer gains u (#539) | phase 2 | `DeferredTransfer` in `JAM/Work.lean` (not on the phase-2 file list; flagged) |
+| serialization | deferred transfer gains u (#539) | phase 2 | `DeferredTransfer` in `JAM/Work.lean` (edit approved for the phase-2 child) |
 | header | **g** of `extrinsichash` uses O(a) (#560) | done #246 | `Extrinsic.hashParts` |
 | erasure_coding | example v = 1020; ᵀ_m | no change | prose; s♣ not modelled |
 | erasure_coding | padded systematic code (#580) | done #246 | `Erasure.paddedShards`, `encodeWith`, `recover` |
@@ -110,8 +110,7 @@ Status is one of: **done** (with the PR), **no change** (wording, or not modelle
 
 ### Open after the sweep
 
-- **#539 transfer field u** in `JAM/Work.lean` (`DeferredTransfer`): phase 2, flagged because the
-  file is not on the phase-2 list.
+Nothing in phase 1. Phase-2 items are marked in the tables.
 
 Docstrings in the phase-1 areas now cite v0.8.1 (PVM, Refine, Safrole, Reports, Work, Codec, Decode,
 BlockImport, Disputes, Authorization, History, Shuffle). The remaining "v0.8.0" mentions are

@@ -42,6 +42,16 @@ Phase 1 notes (Blocks):
 | Accounts and accumulation | accounts.tex, accumulation.tex, merklization.tex (C(12), C(13), C(255)), pvm_invocations.tex general and accumulate host calls | #533, #539 (junior services), #542, #545, #558, #565, #567, #571, #581; deferred from phase 1: #582 metadata in Y / Ψ_M with `ServiceAccount.code` and the Refine/Is-Authorized code fetch, #538 `heapBounds` in Host/General, #564 C(13) validator statistics serialization (State.lean), work_packages "p_c without metadata" (with #582) |
 | Sweep | every file | re-read the whole diff; move remaining v0.8.0 citations to v0.8.1 |
 
+## Suspended until v0.8.1 vectors
+
+These checks of the `model` job are suspended on `gp-v0.8.1` because the published vectors are GP
+v0.8.0 and cannot pass under v0.8.1 (decided 2026-11-25; `main` keeps full v0.8.0 coverage). Each
+is restored as soon as davxy/jam-test-vectors publishes v0.8.1 vectors.
+
+| Check | Why suspended | What still runs |
+|---|---|---|
+| `tracetest` block import | Every trace header's H_R is a v0.8.0 state root; v0.8.1's C(255) (#539) and C(13) (#564) encodings give other roots, so Υ rejects every block. Rewriting headers would fabricate vectors. | The T(σ) round trip of every raw state, after the test-only conversion `Tests.TraceState.upgradeRaw` (C(255): a_u = s, a_u' = a_r, a_b' = 0; C(13) re-encoded). |
+
 ## jam-lean-target follow-ups (after the merge to `main`)
 
 - Refine extension: the erasure root (#580) and the "exports nothing" case (#583) are now defined by

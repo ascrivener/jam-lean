@@ -1,7 +1,7 @@
 import JAM.Work
 
 /-!
-# The deserialization function ℰ⁻¹ (GP v0.8.0 Appendix C)
+# The deserialization function ℰ⁻¹ (GP v0.8.1 Appendix C)
 
 GP Appendix C defines the decoding function as "the inverse of ℰ … able to decode some sequence
 into the original value". A `Decoder α` reads a term from an octet sequence at a position; `run`

@@ -2,7 +2,7 @@ import JAM.Blake2b
 import JAM.Codec
 
 /-!
-# The Fisher–Yates shuffle (GP v0.8.0 Appendix F)
+# The Fisher–Yates shuffle (GP v0.8.1 Appendix F)
 
 ℱ over a numeric sequence (eq. `suffle`) and over a hash, through the sequence-from-hash
 function 𝒬_l (eq. `sequencefromhash`).

@@ -3,7 +3,7 @@ import JAM.Codec
 import JAM.Params
 
 /-!
-# Recent history (GP v0.8.0 §7, `sec:recenthistory`)
+# Recent history (GP v0.8.1 §7, `sec:recenthistory`)
 
 The recent-blocks state β = (β_H, β_B) (eq. `recentspec`): the last 𝖧 blocks' header hashes,
 state roots, accumulation-output super-peaks, timeslots and reported packages (β_H, eq.

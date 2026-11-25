@@ -13,10 +13,11 @@ namespace PVM.Tests.Invocation
 
 open PVM
 
-/-- A JAM blob (GP eq. `conditions`) with read-only data `ro`, no read-write data, `z` extra heap
-    pages and a one-page stack, wrapping the PVM blob `p`. -/
+/-- A standard program blob (GP v0.8.1 eq. `jamblobformat`) with empty metadata ℰ(↕[]) = [0],
+    read-only data `ro`, no read-write data, `z` extra heap pages and a one-page stack, wrapping the
+    PVM blob `p`. -/
 def jam (p : List UInt8) (ro : List UInt8 := []) (z : Nat := 0) : ByteArray :=
-  ⟨(Num.encodeLE 3 ro.length ++ Num.encodeLE 3 0 ++ Num.encodeLE 2 z ++ Num.encodeLE 3 4096 ++
+  ⟨([0] ++ Num.encodeLE 3 ro.length ++ Num.encodeLE 3 0 ++ Num.encodeLE 2 z ++ Num.encodeLE 3 4096 ++
     ro ++ Num.encodeLE 4 p.length ++ p).toArray⟩
 
 /-- `jump_ind ω₀ + 0`: since Y sets ω₀ = 2^32 − 2^16, this halts, returning μ[ω₇…+ω₈], which Y

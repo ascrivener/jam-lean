@@ -419,7 +419,7 @@ theorem hostCallIdsOf_of {p : ByteArray} {P : Program} (h : Blob.parse? p = some
     hostCallIdsOf p = P.hostCallIds := by
   unfold hostCallIdsOf; rw [h]
 
-theorem jamHostCallIdsOf_of {b : ByteArray} {jb : JamBlob} (h : JamBlob.parse? b = some jb) :
+theorem jamHostCallIdsOf_of {b : ByteArray} {jb : JamBlob} (h : JamBlob.parseStd? b = some jb) :
     jamHostCallIdsOf b = hostCallIdsOf jb.code := by
   unfold jamHostCallIdsOf; rw [h]
 

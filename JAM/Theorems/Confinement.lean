@@ -15,7 +15,8 @@ that those calls preserve (`PVM.psiM_ctx_inv`). From the host functions of GP v0
   privileged services are as they were, and it provides nothing. Its only effects on other
   services are the deferred transfers it returns.
 * **Refine** (`psiR_noExports`). If a service's code does not name `export` (id 8), Ψ_R returns no
-  exported segments.
+  exported segments. Since GP v0.8.1 (#582) the code is the whole preimage and Y skips its
+  metadata, so the hypothesis names `jamHostCallIdsOf` of the preimage itself.
 
 Both depend only on the set of host-call ids in the blob, which is read off the code without
 running it.
@@ -297,7 +298,7 @@ theorem refine_psiM_noExports (env : RefineHost.Env) (code : ByteArray) (gas : U
 theorem psiR_noExports (params : Params) (d : Accounts) (c i : Nat) (p : WorkPackage)
     (r : List UInt8) (imports extrinsics : List (List (List UInt8))) (off : Nat)
     (hids : ∀ w ∈ p.items[i]?, ∀ a ∈ d.get? w.service, ∀ l ∈ a.historicalLookup p.context.lookupAnchorSlot w.codeHash.toList,
-      ∀ code ∈ splitMetadata l, 8 ∉ jamHostCallIdsOf code) :
+      8 ∉ jamHostCallIdsOf ⟨l.toArray⟩) :
     (psiR params d c i p r imports extrinsics off).exports = [] := by
   unfold psiR
   split
@@ -309,16 +310,13 @@ theorem psiR_noExports (params : Params) (d : Accounts) (c i : Nat) (p : WorkPac
     · rename_i l hl
       split
       · rfl
-      · split
-        · rfl
-        · rename_i code hcode
-          obtain ⟨a, ha, hla⟩ := Option.bind_eq_some_iff.1 hl
-          have h8 := hids w hw a ha l hla code hcode
-          generalize hres : psiM code 0 _ _ _ _ = res
-          have hinv : res.2.2.2 = [] := by
-            rw [← hres]; exact refine_psiM_noExports _ _ _ _ h8
-          obtain ⟨u, o, m, ex⟩ := res
-          simp only at hinv ⊢
-          split <;> simp [hinv]
+      · obtain ⟨a, ha, hla⟩ := Option.bind_eq_some_iff.1 hl
+        have h8 := hids w hw a ha l hla
+        generalize hres : psiM _ 0 _ _ _ _ = res
+        have hinv : res.2.2.2 = [] := by
+          rw [← hres]; exact refine_psiM_noExports _ _ _ _ h8
+        obtain ⟨u, o, m, ex⟩ := res
+        simp only at hinv ⊢
+        split <;> simp [hinv]
 
 end JAM

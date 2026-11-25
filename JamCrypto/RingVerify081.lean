@@ -11,8 +11,9 @@ proof for the key commitment Ȳ of the Pedersen proof.
 
 Against v0.8.0 (`Ring.verify`) the ring proof itself is unchanged except for its constants
 (`Consts.v081`: blinding base, padding point, accumulator seed, and the transcript label, which is
-Draft 35's suite id as its ring vectors require — §5's prose says a "ring-proof" label). The
-Pedersen proof, hash to curve and output hash are Draft 35's.
+Draft 35's suite id under `Reading.vectors`, "ring-proof" under `Reading.prose`). The Pedersen
+proof, hash to curve and output hash are Draft 35's. The `Reading` (default `.prose`) selects the
+hash to curve of the input, the Pedersen blinding base and the ring constants together.
 
 The domain is `domainSize ringSize`, as for v0.8.0; the caller chooses the ring size. `Ring.crypto`
 passes the ring size of the fixed domain 2048 of Draft 35 §5 (`Ring.domain081`).
@@ -20,8 +21,9 @@ passes the ring size of the fixed domain 2048 of Draft 35 §5 (`Ring.domain081`)
 
 namespace JamCrypto.Ring
 
-/-- x ∈ 𝔹̄°_r⟨c⟩⟨m⟩ (GP v0.8.1) for rings of up to `ringSize` keys. -/
-def verify081 (srs : Srs) (ringSize : Nat) (root ctx msg proof : List UInt8) : Bool := Id.run do
+/-- x ∈ 𝔹̄°_r⟨c⟩⟨m⟩ (GP v0.8.1) for rings of up to `ringSize` keys, under the reading `rd`. -/
+def verify081 (srs : Srs) (ringSize : Nat) (root ctx msg proof : List UInt8)
+    (rd : Reading := .prose) : Bool := Id.run do
   if root.length != 144 || proof.length != 784 then return false
   let some cx := G1.decompress (root.take 48) | return false
   let some cy := G1.decompress ((root.drop 48).take 48) | return false
@@ -29,13 +31,13 @@ def verify081 (srs : Srs) (ringSize : Nat) (root ctx msg proof : List UInt8) : B
   let some output := Bandersnatch.decode (proof.take 32) | return false
   let some ped := Bandersnatch.Pedersen.Proof.decode ((proof.drop 32).take 160) | return false
   let some rp := decodeRingProof (proof.drop 192) | return false
-  let some input := Bandersnatch.Thin.hashToCurve ctx | return false
-  if !Bandersnatch.Pedersen.verify input output msg ped then return false
+  let some input := Bandersnatch.Thin.hashToCurve ctx rd | return false
+  if !Bandersnatch.Pedersen.verify input output msg ped rd then return false
   -- Ȳ as a point of the ring code's curve type (the same subgroup point)
   let some pkCom := Curve.decode ((proof.drop 32).take 32) | return false
   let dom := domainSize ringSize
   if srs.g1.size < dom then return false
-  return ringProofOk srs dom cx cy csel pkCom rp .v081
+  return ringProofOk srs dom cx cy csel pkCom rp (Consts.v081 rd)
 
 /-- Y(x) (GP v0.8.1): the 32-octet Draft 35 output hash of the signature's output point. -/
 def output081 (proof : List UInt8) : List UInt8 := Bandersnatch.Thin.vrfOutput proof

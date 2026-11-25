@@ -27,9 +27,11 @@ def domain081 : Nat := 2048
 /-- `c` with the ring VRF primitives for a chain of `validators` = V validators: `bsRingRoot` := O
     (`Ring.root`), `bsRingVerify` := 𝔹̄° (`Ring.verify`), `bsRingOut` := Y (`Ring.output`).
     v0.8.0 sizes the ring domain by V; v0.8.1 uses the domain `dom081` (default `domain081` =
-    2048, whatever V is; the ring then holds up to N − 257 keys). -/
+    2048, whatever V is; the ring then holds up to N − 257 keys) and the reading `rd` of the VRF
+    spec's Draft 35 (default `.prose`; `.vectors` is what the published vectors check, see
+    `JamCrypto.Reading`). v0.8.0 ignores `dom081` and `rd`. -/
 def crypto (srs : Srs) (validators : Nat) (c : JAM.Crypto) (gp : GpVersion := .v080)
-    (dom081 : Nat := domain081) : JAM.Crypto :=
+    (dom081 : Nat := domain081) (rd : Reading := .prose) : JAM.Crypto :=
   match gp with
   | .v080 =>
     { c with
@@ -38,8 +40,8 @@ def crypto (srs : Srs) (validators : Nat) (c : JAM.Crypto) (gp : GpVersion := .v
       bsRingOut := output }
   | .v081 =>
     { c with
-      bsRingRoot := fun keys => root srs (keysetSize dom081) keys .v081
-      bsRingVerify := verify081 srs (keysetSize dom081)
+      bsRingRoot := fun keys => root srs (keysetSize dom081) keys (Consts.v081 rd)
+      bsRingVerify := fun root ctx msg proof => verify081 srs (keysetSize dom081) root ctx msg proof rd
       bsRingOut := output081 }
 
 end JamCrypto.Ring

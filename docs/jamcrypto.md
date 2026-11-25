@@ -7,14 +7,16 @@ imports it.
 
 ## Layout
 
-* `JamCrypto.lean`, `JamCrypto/*.lean` (20 files), copied verbatim except for the path of the SRS
-  in two docstrings. The only imports from outside JamCrypto are `JAM.Crypto`, `JAM.Sha512`,
+* `JamCrypto.lean`, `JamCrypto/*.lean` (21 files). Twenty were copied verbatim, except for the
+  path of the SRS in two docstrings, and have changed since (the v0.8.1 reading switch); `Reading`
+  is new. The only imports from outside JamCrypto are `JAM.Crypto`, `JAM.Sha512`,
   `JAM.Keccak` and `JAM.Blake2b`.
   * Ed25519 (`Ed25519`, `Ed25519Sign`).
   * Bandersnatch IETF VRF (`Bandersnatch`, `BandersnatchSign`), Thin VRF (`ThinVrf`) and Pedersen
     VRF (`PedersenVrf`).
   * The ring root and ring VRF (`Ring*`), over BLS12-381 (`Bls12381*`).
   * Development keys (`DevKeys`) and the `JAM.Crypto` instance (`Crypto`).
+  * The reading of the v0.8.1 path's spec, Draft 35 (`Reading`: `.prose`, the default, or `.vectors`).
 * `JamCryptoTest.lean` (`cryptotest`) and its vectors `JamCryptoTest/vectors/` (see their README).
   The provenance generator is in `JamCryptoTest/generator/` and is not built.
 * `RingTest.lean` (`ringtest`) and its vectors `JamCryptoTest/ring/*.txt` (`tests/vectors/` in the
@@ -49,8 +51,10 @@ published test vectors are the reference:
 * **Ring proof:** eprint 2023/002.
 * **Hashing to the curve:** RFC 9380.
 
-Where a spec's prose and its vectors disagree, JamCrypto follows the vectors. Each case is listed
-below.
+Where a spec's prose and its vectors disagree, the v0.8.0 path follows the vectors (it stays as
+validated against the 0.8.0 data). The v0.8.1 path follows the prose of the cited Draft 35 by
+default and the vectors on request, through one switch, `JamCrypto.Reading` (Adam, 2026-11-25; see
+"The two readings of Draft 35" below). Each case is listed below.
 
 
 Points where the GP v0.8.0 leaves the cryptography to its references, and where the model and the
@@ -105,10 +109,12 @@ signature 32 + 16 + 32 = 80 octets, but GP (bandersnatch.tex) has 𝔹̄_k⟨c�
 own IETF test vectors are those of ark-vrf 0.1.0: a 32-octet c, derived as the first 32 octets of
 the SHA-512 challenge hash read big-endian, reduced mod r, stored little-endian (ark-vrf 0.1.0
 `utils::challenge_rfc_9381`). Draft 28 (commit 38cf32d) still says `cLen` = 32. `JamCrypto.Bandersnatch`
-follows the vectors and GP's 96 octets. Two further details come from arkworks 0.5 rather than from
+follows the vectors and GP's 96 octets. One further detail comes from arkworks 0.5 rather than from
 RFC 9380, which the spec cites: `expand_message_xmd` pads with 48 zero octets instead of SHA-512's
-block size of 128, and the Elligator 2 sign rule makes y odd for the first candidate x and even for
-the second (instead of matching the sign of u). The fuzzer's blocks verify with both.
+block size of 128. (The Elligator 2 sign rule, y odd for the first candidate x and even for the
+second, is RFC 9380's own: §6.7.1 steps 6 and 7, sgn0(y) = 1 and 0. An earlier version of this
+page listed it as a deviation; it is not one. Z = 5 is also RFC 9380's choice, App. H.3, and the
+map to the Edwards curve is its App. D.1.) The fuzzer's blocks verify with this.
 
 ## GP v0.8.1 (GP #550): Thin VRF and the VRF spec's Draft 35
 
@@ -132,12 +138,10 @@ Choices the paper and the draft leave open:
 * **96-octet signature layout.** GP gives 𝔹̄ as 96-octet strings and reads Y from the signature,
   but the draft encodes only the proof (R, s). We read it as O ⌢ R ⌢ s, the output point first as
   in the v0.8.0 IETF signature and the ring proof (`Thin.thinEncode`/`thinDecode`); Adam,
-  2026-11-25. The planned check: once fuzzer blocks for 0.8.1 exist, only one layout will verify.
-* **Z_pad**: hash to curve uses a zero prefix of 48 octets, not RFC 9380's 128. Draft 35's own
-  vectors require this, and Draft 36 states it explicitly.
-* **Ring transcript label**: §5 of the draft says the ring proof transcript starts with a
-  "ring-proof" label. Its ring vectors verify only with the suite id `Bandersnatch-SHA512-ELL2-v1`
-  as the label, so we follow the vectors.
+  2026-11-25. The gap is raised upstream as gavofyork/graypaper#593. The planned check: once fuzzer
+  blocks for 0.8.1 exist, only one layout will verify.
+* **Z_pad**, the fixed points and the ring transcript label: the draft's prose and its vectors
+  disagree; see the next section.
 * **Ring domain**: §5 of Draft 35 fixes the domain at 2048. The 181aba2 ring vectors themselves
   use domain 512; the spec's later commit 0b7422f regenerates them at 2048, and our root matches
   that regeneration too. Adam, 2026-11-25: the v0.8.1 path uses the fixed domain 2048 of the cited
@@ -145,12 +149,78 @@ Choices the paper and the draft leave open:
   reading of the cited spec, to be confirmed by 0.8.1 vectors or fuzzer blocks. The v0.8.0 path
   stays sized by V.
 
+## The two readings of Draft 35 (`JamCrypto.Reading`)
+
+Adam, 2026-11-25 (option A): on the v0.8.1 path the cited spec's **prose** is the default reading,
+and the reading of its **vectors** is an explicit switch. `JamCrypto.Reading` is `.prose` or
+`.vectors`; `Thin.hashToCurve`, `Thin.verify`, `Thin.sign`, `Pedersen.prove`/`verify`,
+`Ring.Consts.v081`, `Ring.verify081`, `Ring.crypto` and `withSignatures` take it as their last
+argument, default `.prose`. The v0.8.0 path has no reading. (jam-lean-target will select
+`.vectors` as a listed assumption.)
+
+| Point | Draft 35 prose (`.prose`, default) | Draft 35 vectors (`.vectors`) |
+|---|---|---|
+| Z_pad of expand_message_xmd (App. A.2) | 128 zero octets | 48 zero octets |
+| Blinding base B (§4), accumulator base S and padding point □ (§5) | hash_to_curve of "pedersen-blinding", "ring-accumulator", "ring-padding" with the prose hash to curve | the printed coordinates (the same names with the 48-octet Z_pad) |
+| Ring proof transcript label (§5) | "ring-proof" | `Bandersnatch-SHA512-ELL2-v1` |
+
+The disagreements, in the draft's words:
+
+* **Z_pad.** App. A.2: "using the method defined in section 3 of [RFC-9380], with the *Elligator 2*
+  map to curve (section 6.8.2) and `expand_message_xmd` with SHA-512 (section 5.3.1)". RFC 9380
+  §5.3.1 step 4: "Z_pad = I2OSP(0, s_in_bytes)", and s_in_bytes is 128 for SHA-512 ("s = 1024 for
+  SHA-512"). The vectors (every input point h, hence every output, signature and proof) need 48.
+  Draft 36 (commit fcf7012, after the tag GP v0.8.1 cites) adds: "With one difference from section
+  5.3.1: the zero prefix Z_pad … has L = 48 octets … An implementation with the RFC prefix does not
+  reproduce the constants of this document or the vectors of Appendix C." We do not follow Draft 36
+  (it is not what GP v0.8.1 cites). The rest of A.2 matches RFC 9380 as written (Z = 5 by App. H.3,
+  the sign rule of §6.7.1, the rational map of App. D.1, cofactor 4, 48 octets per field element),
+  so Z_pad is the only difference in the hash to curve.
+* **The fixed points.** §4: "The *blinding base* B ∈ G is defined as: x = 2333…5889, y = 5552…9963.
+  A point with unknown discrete logarithm derived using the `hash_to_curve` function as described
+  in Appendix A.2 with input the string: "pedersen-blinding"." §5 says the same of the accumulator
+  base S ("ring-accumulator") and the padding point □ ("ring-padding"). The printed coordinates are
+  the derivation with the 48-octet Z_pad, so under the prose reading of A.2 the two halves of each
+  definition disagree. `.prose` takes the derivation (the points are recomputed with the prose hash
+  to curve, once, as closed constants); `.vectors` takes the printed coordinates.
+* **Ring transcript label.** §5, Fiat–Shamir transform: "Begin with empty transcript and
+  "ring-proof" label." Every ring vector of Draft 35 (`JamCryptoTest/ring/ring-d35.txt`) verifies
+  only with the suite id `Bandersnatch-SHA512-ELL2-v1` as the label.
+* **Not modelled under either reading.** §5 also says "Push R to the transcript after
+  instancing." R is not defined in §5 (in §4 R is the Pedersen proof's nonce commitment), and the
+  draft gives no label or encoding for it. The vectors' transcript pushes nothing after the
+  instance Ȳ other than the proof's own columns, and we follow that under both readings: `.prose`
+  therefore omits this step of the prose, because the prose leaves it underdetermined. An open
+  prose/vectors disagreement, listed in `docs/upstream-candidates.md`.
+* The ring domain of 2048 is the same under both readings: §5 fixes it, and Adam's decision of
+  2026-11-25 follows §5 (above).
+
+**The prose reading has no external oracle.** No published vectors follow it: every Draft 35
+vector (thin, pedersen, ring) checks `.vectors`, and fails under `.prose`, which `cryptotest` and
+`ringtest` confirm. What is checked under `.prose`:
+
+* its expand_message_xmd against the ten SHA-512 vectors of RFC 9380 App. K.3
+  (`JamCryptoTest/vectors/expand_message_xmd_sha512.txt`) — the one external check, and only of
+  that piece;
+* the three derived points: they hash to the curve, lie in the prime subgroup, are not the
+  identity, round-trip through the point encoding, are pairwise distinct, differ from the printed
+  points, and are what `Pedersen.blindingBase` and `Ring.Consts.v081` use;
+* Thin VRF sign → verify and Pedersen prove → verify round trips on the vectors' keys and inputs,
+  and that another key or ad, or the `.vectors` verifier, rejects them.
+
+Everything else under `.prose` is untested. In particular the ring VRF under `.prose` (the
+"ring-proof" label, the derived accumulator and padding points in the ring proof) is not exercised
+at all: JamCrypto has no ring prover, so no `.prose` ring proof exists to verify, and a `.prose`
+ring root is computed but has nothing to be compared with.
+
 ## Open readings (from jam-lean-target's docs/gaps.md)
 
 The GP v0.8.1 crypto readings are still to be confirmed by 0.8.1 vectors or fuzzer blocks:
 
 * The 96-octet Thin VRF signature is read as O ⌢ R ⌢ s. GP gives 96 octets; the VRF spec encodes only
-  R ⌢ s (Adam, 2026-11-25).
+  R ⌢ s (Adam, 2026-11-25; raised as gavofyork/graypaper#593).
 * The ring domain is fixed at 2048 for every chain, per Draft 35 §5 (Adam, 2026-11-25). v0.8.0
   stays sized by V.
-* The ring transcript label follows Draft 35's vectors (the suite id), not its prose ("ring-proof").
+* Where Draft 35's prose and vectors disagree (Z_pad, the fixed points, the ring transcript label),
+  the default is the prose (`Reading.prose`) and the vectors are a switch (`Reading.vectors`); Adam,
+  2026-11-25. Only 0.8.1 vectors or fuzzer blocks can say which one JAM implementations use.

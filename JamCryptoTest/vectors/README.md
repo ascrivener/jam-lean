@@ -56,6 +56,19 @@ or s is rejected. It also checks that Draft 35's blinding base, ring accumulator
 points are hash_to_curve of "pedersen-blinding", "ring-accumulator" and "ring-padding". The ring
 vectors of Draft 35 are in `JamCryptoTest/ring/ring-d35.txt` (`ringtest`).
 
+All Draft 35 vectors (thin, pedersen, ring) are checked under `JamCrypto.Reading.vectors`; they
+follow the vectors' reading of the draft (Z_pad of 48 octets, the suite id as the ring transcript
+label). `cryptotest` and `ringtest` also check that they fail under `Reading.prose`, the default.
+No published vectors follow `Reading.prose` (see `docs/jamcrypto.md`).
+
+## `expand_message_xmd_sha512.txt`
+
+`msg len uniform_bytes`: the ten expand_message_xmd(SHA-512) vectors of RFC 9380 Appendix K.3
+(DST `QUUX-V01-CS02-with-expander-SHA512-256`, len 32 and 128), extracted from the RFC text and
+checked against Python's hashlib. They check `Thin.expandMessageXmd` with the RFC's Z_pad of 128
+octets, i.e. the hash to curve's expansion under `Reading.prose`: the only external oracle for any
+part of that reading.
+
 ## `signing.txt`
 
 Signing (`JamCrypto.Ed25519Sign`, `JamCrypto.BandersnatchSign`). Lean's signature must equal the

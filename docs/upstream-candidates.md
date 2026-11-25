@@ -82,6 +82,21 @@ These would go to the service's authors, not to the Gray Paper.
 | SDK `get` (`read` wrapper), 47888 … 47907 | The length returned by Ω_R in ω₇ is compared against the host error codes (≥ 2⁶⁴ − 9) before it is used. A value of exactly 2⁶⁴ − 1 octets is therefore indistinguishable from NONE and `get` returns `None` for a key that is present; lengths in [2⁶⁴ − 9, 2⁶⁴ − 2] trap (47929), and lengths in [2⁶³, 2⁶⁴ − 9) trap as a negative `isize` (47901). The same ambiguity is in Ω_R's interface itself (GP Appendix B: a length and an error code share ω₇), so it may also be a note for the paper. Unreachable in practice; T2 assumes values shorter than 2⁶³ octets (`ValuesFit`). |
 | SDK `foreign_historical_lookup` (refine's eager `Lookup`), 49015 … 49074 | The preimage length Ω_H returns in ω₇ is checked against the host error codes and then used as a signed size: lengths in [2⁶³, 2⁶⁴ − 9) trap, and so do lengths above 2³⁷ − 32 (the allocator's limit, counted as heap exhaustion). `Spec.refine` (GP Appendix B.6, Ω_H) returns `lookedUp (some d)` for any preimage d. Unreachable in practice; T1's eager `Lookup` step takes preimages shorter than 2⁶³ octets as an internal hypothesis (`hlen`, whether refine_t1c assumes it is pending with Adam). |
 
+## Bandersnatch VRF-AD specification, Draft 35 (cited by GP v0.8.1)
+
+GP v0.8.1 cites Draft 35 (davxy/bandersnatch-vrf-spec commit 181aba2) for all of Appendix G. Where
+its prose and its own vectors (Appendix C, ark-vrf 0.5.0) disagree, JamCrypto's v0.8.1 path
+follows the prose by default (`Reading.prose`) and the vectors on request (`Reading.vectors`;
+Adam, 2026-11-25). Details in `docs/jamcrypto.md`. For the draft's author, or for the GP if it
+should cite a later draft.
+
+| Where | Prose | What the vectors need |
+|---|---|---|
+| App. A.2, hash_to_curve | "`expand_message_xmd` with SHA-512 (section 5.3.1)" of RFC 9380, whose step 4 is Z_pad = I2OSP(0, s_in_bytes): 128 zero octets for SHA-512. | 48 zero octets. Draft 36 (fcf7012) states the 48 as a deliberate deviation and announces a suite `…-v2` with RFC 9380's 128; GP v0.8.1 cites Draft 35, which does not state it. |
+| §4, §5, the fixed points B, S, □ | Each "is defined as" printed coordinates, and is "derived using the `hash_to_curve` function as described in Appendix A.2" from its name. With A.2 read as RFC 9380, the two disagree: the printed coordinates are the 48-octet derivation. | The printed coordinates. |
+| §5, Fiat–Shamir of the ring proof | "Begin with empty transcript and "ring-proof" label." | The suite id `Bandersnatch-SHA512-ELL2-v1` as the label; no ring vector verifies with "ring-proof". |
+| §5, Fiat–Shamir of the ring proof | "Push R to the transcript after instancing." R is not defined in §5 (Pedersen's nonce commitment is R in §4), and no framing is given. | Nothing is pushed after the instance (Ȳ) other than the proof's own columns. Not modelled under either reading (`.prose` omits the step, since the prose leaves it underdetermined). |
+
 ## Not for upstream
 
 - **The picoalloc model's alignment rounding.** A bug in this repository's own model, not in the

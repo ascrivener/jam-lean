@@ -102,7 +102,7 @@ Status is one of: **done** (with the PR), **no change** (wording, or not modelle
 | definitions | ℕ_P, 𝕏 / 𝕥 types, Ω_V (#539, #542, #558) | phase 2 | — |
 | definitions | ℤ_G removed; instance type renamed; Ω_Γ / Ω_X descriptions | done #244, #248, #255 | — |
 | definitions | 𝖣 refers to `forget`; 𝖬_B "per record"; blank line | no change | wording |
-| bandersnatch | Thin VRF (#550) | no change in the model | crypto is a parameter; `JamCrypto` carries the v0.8.1 path |
+| bandersnatch | Thin VRF (#550) | no change in the model | crypto is a parameter; `JamCrypto` carries the v0.8.1 path (Draft 35 prose by default, its vectors as the switch `Reading.vectors`; `docs/jamcrypto.md`) |
 | notation | "subscript implies the key exists" removed (#566) | no change | lookups are `Option`-typed, invalidity is explicit (phase-2 files not audited here) |
 | notation | ZIP 215 citation; BLS aggregatable form (#541) | no change | `edVerify` is a parameter; BLS is never verified |
 | overview | 𝔼 order (𝔼_T, 𝔼_P, 𝔼_G, 𝔼_A, 𝔼_D) (#575) | done | `Block.Extrinsic` |

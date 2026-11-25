@@ -2,6 +2,7 @@ import JamCrypto.Modular
 import JamCrypto.Edwards
 import JamCrypto.Ed25519
 import JamCrypto.Bandersnatch
+import JamCrypto.Reading
 import JamCrypto.Crypto
 import JamCrypto.Ring
 import JamCrypto.Ed25519Sign

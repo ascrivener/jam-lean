@@ -3,10 +3,15 @@ import JamCrypto
 /-!
 # `lake exe cryptotest [DIR]`: the JamCrypto test vectors
 
-Runs every vector of `DIR/ed25519.txt`, `DIR/bandersnatch_ietf.txt`, `DIR/bandersnatch_thin.txt`
-and `DIR/signing.txt` (default
+Runs every vector of `DIR/ed25519.txt`, `DIR/bandersnatch_ietf.txt`, `DIR/bandersnatch_thin.txt`,
+`DIR/bandersnatch_pedersen.txt`, `DIR/expand_message_xmd_sha512.txt` and `DIR/signing.txt` (default
 `JamCryptoTest/vectors`, see its README) and exits non-zero on a mismatch. Prints the time per
 verification.
+
+The GP v0.8.1 vectors (Draft 35) are checked under `Reading.vectors`. `Reading.prose`, the default
+of the v0.8.1 path, has no published vectors: only its expand_message_xmd is checked against an
+external oracle (RFC 9380 App. K.3); the rest gets self-consistency checks only (derived fixed
+points, sign/verify and prove/verify round trips, the switch itself).
 -/
 
 open JamCrypto JamCrypto.Modular
@@ -118,21 +123,32 @@ def main (args : List String) : IO UInt32 := do
       let x := leToNat (unhex sk)
       let (pk, alpha, ad, beta) := (unhex pk, unhex alpha, unhex ad, unhex beta)
       let sig := unhex gamma ++ unhex pr ++ unhex ps
-      let T := Bandersnatch.Thin.verify
+      let T := fun key ctx msg sig => Bandersnatch.Thin.verify key ctx msg sig .vectors
       check s!"thin {tag} pk" (Bandersnatch.Thin.publicKey x == pk) failures
-      check s!"thin {tag} h" ((Bandersnatch.Thin.hashToCurve alpha).map Bandersnatch.encode == some (unhex h)) failures
-      check s!"thin {tag} gamma" ((Bandersnatch.Thin.hashToCurve alpha).map
+      check s!"thin {tag} h" ((Bandersnatch.Thin.hashToCurve alpha .vectors).map Bandersnatch.encode == some (unhex h)) failures
+      check s!"thin {tag} gamma" ((Bandersnatch.Thin.hashToCurve alpha .vectors).map
         (fun I => Bandersnatch.encode (Bandersnatch.curve.smul x I)) == some (unhex gamma)) failures
       check s!"thin {tag} beta" (Bandersnatch.Thin.vrfOutput sig == beta) failures
-      check s!"thin {tag} signOutput" (Bandersnatch.Thin.signOutput x alpha == some beta) failures
-      check s!"thin {tag} prove" (Bandersnatch.Thin.sign x alpha ad == some sig) failures
+      check s!"thin {tag} signOutput" (Bandersnatch.Thin.signOutput x alpha .vectors == some beta) failures
+      check s!"thin {tag} prove" (Bandersnatch.Thin.sign x alpha ad .vectors == some sig) failures
       let (ok, t) ← timed fun _ => T pk alpha ad sig
       thN := thN + 1; thT := thT + t
       check s!"thin {tag} verify" ok failures
-      let c081 := withSignatures { edVerify := fun _ _ _ => false } (gp := .v081)
+      let c081 := withSignatures { edVerify := fun _ _ _ => false } (gp := .v081) (rd := .vectors)
       let c080 := withSignatures { edVerify := fun _ _ _ => false }
-      check s!"thin {tag} selected by GpVersion.v081"
+      check s!"thin {tag} selected by GpVersion.v081 and Reading.vectors"
         (c081.bsVerify pk alpha ad sig && c081.bsOut sig == beta && !c080.bsVerify pk alpha ad sig) failures
+      -- the prose reading (the default) hashes the input differently, so the vector's signature
+      -- does not verify under it, and its own signature does
+      let cProse := withSignatures { edVerify := fun _ _ _ => false } (gp := .v081)
+      check s!"thin {tag} rejected under Reading.prose (default)" (!cProse.bsVerify pk alpha ad sig) failures
+      match Bandersnatch.Thin.sign x alpha ad with
+      | some sigP =>
+        check s!"thin {tag} prose sign/verify round trip"
+          (cProse.bsVerify pk alpha ad sigP && Bandersnatch.Thin.signOutput x alpha == some (cProse.bsOut sigP)
+            && !T pk alpha ad sigP && !Bandersnatch.Thin.verify pk alpha (ad ++ [0]) sigP
+            && !Bandersnatch.Thin.verify (Bandersnatch.Thin.publicKey (x + 1)) alpha ad sigP) failures
+      | none => check s!"thin {tag} prose sign" false failures
       -- mutations, all rejected
       let flip (i : Nat) := sig.set i (sig[i]! ^^^ 1)
       check s!"thin {tag} flipped O rejected" (!T pk alpha ad (flip 0)) failures
@@ -154,30 +170,87 @@ def main (args : List String) : IO UInt32 := do
       let x := leToNat (unhex sk)
       let (alpha, ad) := (unhex alpha, unhex ad)
       let proof := unhex com ++ unhex pr ++ unhex pok ++ unhex ps ++ unhex psb
-      match Bandersnatch.Thin.hashToCurve alpha, Bandersnatch.decode (unhex gamma),
+      match Bandersnatch.Thin.hashToCurve alpha .vectors, Bandersnatch.decode (unhex gamma),
           Bandersnatch.Pedersen.Proof.decode proof with
       | some I, some O, some p =>
+        let V := fun I O ad p => Bandersnatch.Pedersen.verify I O ad p .vectors
         check s!"pedersen {tag} h" (Bandersnatch.encode I == unhex h) failures
-        let (mine, b) := Bandersnatch.Pedersen.prove x I ad
+        let (mine, b) := Bandersnatch.Pedersen.prove x I ad .vectors
         check s!"pedersen {tag} blinding" (natToLE 32 b == unhex bl) failures
         check s!"pedersen {tag} prove" (mine.encode == proof) failures
-        check s!"pedersen {tag} verify" (Bandersnatch.Pedersen.verify I O ad p) failures
+        check s!"pedersen {tag} verify" (V I O ad p) failures
         check s!"pedersen {tag} beta" (Bandersnatch.Thin.output O == unhex beta) failures
-        check s!"pedersen {tag} other ad rejected" (!Bandersnatch.Pedersen.verify I O (ad ++ [0]) p) failures
+        check s!"pedersen {tag} other ad rejected" (!V I O (ad ++ [0]) p) failures
         check s!"pedersen {tag} other s rejected"
-          (!Bandersnatch.Pedersen.verify I O ad { p with s := (p.s + 1) % Bandersnatch.r }) failures
+          (!V I O ad { p with s := (p.s + 1) % Bandersnatch.r }) failures
+        -- prose reading (the default): other blinding base, so the vector proof fails; its own
+        -- proof round-trips
+        check s!"pedersen {tag} rejected under Reading.prose" (!Bandersnatch.Pedersen.verify I O ad p) failures
+        match Bandersnatch.Thin.hashToCurve alpha with
+        | some IP =>
+          let OP := Bandersnatch.curve.smul x IP
+          let (pp, _) := Bandersnatch.Pedersen.prove x IP ad
+          check s!"pedersen {tag} prose prove/verify round trip"
+            (Bandersnatch.Pedersen.verify IP OP ad pp && !V IP OP ad pp
+              && !Bandersnatch.Pedersen.verify IP OP (ad ++ [0]) pp) failures
+        | none => check s!"pedersen {tag} prose input" false failures
       | _, _, _ => check s!"pedersen {tag} decodes" false failures
     | _ => if line != "" then check s!"pedersen malformed line: {line}" false failures
-  -- Draft 35's fixed points are hash_to_curve of their names
-  let h2c (s : String) := (Bandersnatch.Thin.hashToCurve s.toUTF8.toList).map Bandersnatch.curve.toAffine
+  -- Draft 35's fixed points are hash_to_curve of their names: the printed coordinates (the
+  -- vectors' reading) with the 48-octet Z_pad
+  let h2c (s : String) := (Bandersnatch.Thin.hashToCurve s.toUTF8.toList .vectors).map Bandersnatch.curve.toAffine
   check "d35 blinding base = h2c(pedersen-blinding)"
-    (h2c "pedersen-blinding" == some (Bandersnatch.curve.toAffine Bandersnatch.Pedersen.blindingBase)) failures
+    (h2c "pedersen-blinding" == some (Bandersnatch.curve.toAffine (Bandersnatch.Pedersen.blindingBase .vectors))) failures
   check "d35 accumulator = h2c(ring-accumulator)"
     (h2c "ring-accumulator" == some (Ring.Curve.accumulatorBase081.x, Ring.Curve.accumulatorBase081.y)) failures
   check "d35 padding = h2c(ring-padding)"
     (h2c "ring-padding" == some (Ring.Curve.padding081.x, Ring.Curve.padding081.y)) failures
   check "d35 blinding base (ring copy)"
     (h2c "pedersen-blinding" == some (Ring.Curve.blindingBase081.x, Ring.Curve.blindingBase081.y)) failures
+  check "d35 Consts.v081 .vectors"
+    (let k := Ring.Consts.v081 .vectors
+     h2c "pedersen-blinding" == some (k.blinding.x, k.blinding.y) && h2c "ring-padding" == some (k.padding.x, k.padding.y)
+       && h2c "ring-accumulator" == some (k.seed.x, k.seed.y)
+       && k.label == "Bandersnatch-SHA512-ELL2-v1".toUTF8.toList) failures
+  -- The prose reading (no external oracle; self-consistency only). Its expand_message_xmd is
+  -- RFC 9380's, checked against RFC 9380 App. K.3: tag-free lines `msg len uniform_bytes`.
+  let xmdDst := "QUUX-V01-CS02-with-expander-SHA512-256".toUTF8.toList
+  let mut xmdN := 0
+  for line in (← IO.FS.lines s!"{dir}/expand_message_xmd_sha512.txt") do
+    match line.splitOn " " with
+    | [msg, len, out] =>
+      xmdN := xmdN + 1
+      check s!"rfc9380 K.3 expand_message_xmd(SHA-512) {msg.take 16} {len}"
+        (Bandersnatch.Thin.expandMessageXmd (Bandersnatch.Thin.zPadLen .prose) xmdDst (unhex msg) len.toNat!
+          == unhex out) failures
+    | _ => if line != "" then check s!"xmd malformed line: {line}" false failures
+  check "rfc9380 K.3: 10 vectors" (xmdN == 10) failures
+  check "prose expandMessage = RFC 9380 xmd, 96 octets, Z_pad 128"
+    (Bandersnatch.Thin.expandMessage [0x0a] == Bandersnatch.Thin.expandMessageXmd 128 Bandersnatch.Thin.dst [0x0a] 96
+      && Bandersnatch.Thin.expandMessage [0x0a] .vectors != Bandersnatch.Thin.expandMessage [0x0a]) failures
+  -- prose fixed points: hash_to_curve of their names under the prose h2c, on the curve, in the
+  -- prime subgroup, not the identity, distinct from each other and from the printed points
+  let h2cP (s : String) := Bandersnatch.Thin.hashToCurve s.toUTF8.toList
+  let names := ["pedersen-blinding", "ring-accumulator", "ring-padding"]
+  let pts := names.filterMap h2cP
+  check "prose fixed points hash to the curve" (pts.length == 3) failures
+  for (n, P) in names.zip pts do
+    let (x, y) := Bandersnatch.curve.toAffine P
+    check s!"prose {n}: valid, in the subgroup, not the identity, encodes and decodes"
+      (Bandersnatch.curve.valid P && Bandersnatch.inSubgroup P && !Bandersnatch.curve.isZero P
+        && (Bandersnatch.decode (Bandersnatch.encode P)).map Bandersnatch.curve.toAffine == some (x, y)
+        && Ring.Curve.onCurve ⟨x, y⟩ && Ring.Curve.inSubgroup ⟨x, y⟩) failures
+    check s!"prose {n} differs from the printed point" (some (x, y) != h2c n) failures
+  check "prose blinding base (Pedersen) = h2c(pedersen-blinding)"
+    ((h2cP "pedersen-blinding").map Bandersnatch.curve.toAffine
+      == some (Bandersnatch.curve.toAffine Bandersnatch.Pedersen.blindingBase)) failures
+  let kP := Ring.Consts.v081
+  check "prose Consts.v081 (default) = derived points and the \"ring-proof\" label"
+    ((h2cP "pedersen-blinding").map Bandersnatch.curve.toAffine == some (kP.blinding.x, kP.blinding.y)
+      && (h2cP "ring-accumulator").map Bandersnatch.curve.toAffine == some (kP.seed.x, kP.seed.y)
+      && (h2cP "ring-padding").map Bandersnatch.curve.toAffine == some (kP.padding.x, kP.padding.y)
+      && kP.label == "ring-proof".toUTF8.toList) failures
+  check "prose fixed points pairwise distinct" ((pts.map Bandersnatch.curve.toAffine).eraseDups.length == 3) failures
   -- JIP-5 development keys = the genesis validators of the fuzzer's 0.8.0 sessions
   -- (jam-fuzzing fuzz-proto/examples/0.8.0/no_forks, Initialize, epoch mark).
   let genesis := [

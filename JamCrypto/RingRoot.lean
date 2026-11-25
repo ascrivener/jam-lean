@@ -1,5 +1,6 @@
 import JamCrypto.RingSrs
 import JamCrypto.RingCurve
+import JamCrypto.ThinVrf
 
 /-!
 # The ring root O(**k**) (GP v0.8.0 Appendix G)
@@ -42,11 +43,40 @@ def Consts.v080 : Consts :=
   { blinding := Curve.blindingBase, padding := Curve.padding, seed := Curve.accumulatorBase
     label := "Bandersnatch_SHA-512_ELL2".toUTF8.toList }
 
-/-- GP v0.8.1 (VRF spec Draft 35; the transcript label is Draft 35's suite id, as its ring
-    vectors require). -/
-def Consts.v081 : Consts :=
+/-- GP v0.8.1 under the vectors' reading of the VRF spec's Draft 35: the points are the
+    coordinates §4 and §5 print (hash_to_curve of their names with the 48-octet Z_pad), and the
+    transcript label is Draft 35's suite id, which its ring vectors require. -/
+def Consts.v081Vectors : Consts :=
   { blinding := Curve.blindingBase081, padding := Curve.padding081, seed := Curve.accumulatorBase081
     label := "Bandersnatch-SHA512-ELL2-v1".toUTF8.toList }
+
+/-- hash_to_curve of a name under the prose reading of Draft 35 (Z_pad of 128 octets), as a point
+    of the ring code's curve type (the same curve, the same affine coordinates). The names used
+    here all hash to a point, which cryptotest checks; the identity fallback is never taken. -/
+def h2cProse (name : String) : Curve.Aff :=
+  let (x, y) := Bandersnatch.curve.toAffine
+    ((Bandersnatch.Thin.hashToCurve name.toUTF8.toList .prose).getD JamCrypto.Curve.zero)
+  ⟨x, y⟩
+
+/-- The blinding base B of Draft 35 §4 under the prose reading: hash_to_curve("pedersen-blinding"). -/
+def blindingBase081Prose : Curve.Aff := h2cProse "pedersen-blinding"
+/-- The accumulator base S of Draft 35 §5 under the prose reading: hash_to_curve("ring-accumulator"). -/
+def accumulatorBase081Prose : Curve.Aff := h2cProse "ring-accumulator"
+/-- The padding point □ of Draft 35 §5 under the prose reading: hash_to_curve("ring-padding"). -/
+def padding081Prose : Curve.Aff := h2cProse "ring-padding"
+
+/-- GP v0.8.1 under the prose reading of the VRF spec's Draft 35: the three points derived with the
+    prose hash to curve (Z_pad of 128 octets, RFC 9380 §5.3.1), and the transcript label
+    "ring-proof" (§5: "Begin with empty transcript and "ring-proof" label"). -/
+def Consts.v081Prose : Consts :=
+  { blinding := blindingBase081Prose, padding := padding081Prose, seed := accumulatorBase081Prose
+    label := "ring-proof".toUTF8.toList }
+
+/-- GP v0.8.1 (VRF spec Draft 35) under the reading `rd` (default `.prose`). -/
+def Consts.v081 (rd : Reading := .prose) : Consts :=
+  match rd with
+  | .prose => Consts.v081Prose
+  | .vectors => Consts.v081Vectors
 
 /-- Bits of a Bandersnatch scalar. -/
 def scalarBits : Nat := 253

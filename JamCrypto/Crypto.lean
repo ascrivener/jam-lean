@@ -14,7 +14,8 @@ The Bandersnatch signature scheme depends on the Gray Paper version (`GpVersion`
 the IETF VRF (`Bandersnatch.ietfVerify`), v0.8.1 the Thin VRF of the VRF spec's Draft 35
 (`Bandersnatch.Thin.verify`, GP #550). The default stays v0.8.0, the version of the pinned
 jam-lean model. The ring VRF and ring root of each version are selected the same way by
-`Ring.crypto`.
+`Ring.crypto`. The v0.8.1 path also takes the `Reading` of the VRF spec's Draft 35 (default
+`.prose`; `.vectors` is what the published vectors check, see `JamCrypto.Reading`).
 -/
 
 namespace JamCrypto
@@ -25,9 +26,10 @@ inductive GpVersion where
   | v081
   deriving DecidableEq, Repr, Inhabited
 
-/-- `base` with `edVerify`, `bsVerify` and `bsOut` implemented for Gray Paper version `gp`. -/
+/-- `base` with `edVerify`, `bsVerify` and `bsOut` implemented for Gray Paper version `gp`, and for
+    v0.8.1 the reading `rd` of Draft 35 (v0.8.0 ignores `rd`). -/
 def withSignatures (base : JAM.Crypto) (rules : Ed25519.Rules := Ed25519.zip215)
-    (gp : GpVersion := .v080) : JAM.Crypto :=
+    (gp : GpVersion := .v080) (rd : Reading := .prose) : JAM.Crypto :=
   match gp with
   | .v080 =>
     { base with
@@ -37,7 +39,7 @@ def withSignatures (base : JAM.Crypto) (rules : Ed25519.Rules := Ed25519.zip215)
   | .v081 =>
     { base with
       edVerify := Ed25519.verifyWith rules
-      bsVerify := Bandersnatch.Thin.verify
+      bsVerify := fun key ctx msg sig => Bandersnatch.Thin.verify key ctx msg sig rd
       bsOut := Bandersnatch.Thin.vrfOutput }
 
 end JamCrypto

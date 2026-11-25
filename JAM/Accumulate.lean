@@ -3,7 +3,7 @@ import JAM.Blake2b
 import PVM.FastHost
 
 /-!
-# The accumulate invocation Ψ_A and its host functions (GP v0.8.0 Appendix B)
+# The accumulate invocation Ψ_A and its host functions (GP v0.8.1 Appendix B)
 
 * the partial state 𝕊 (eq. `partialstate`) and the implications 𝕃 (eq. `implications`);
 * the accumulate host functions `bless`, `assign`, `designate`, `checkpoint`, `new`, `upgrade`,
@@ -299,6 +299,48 @@ def upgrade (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx 
         if !mayModify x d then r7 out HUH
         else r7 (updX out (putAcct x d { a with codeHash := h, minAccGas := g, minMemoGas := m })) OK
 
+/-- Ω_T's debit (GP v0.8.1): mode x ∈ {0, 2} takes `amount` from src's balance, {1, 3} from its
+    supervisor balance. -/
+def transferDebit (d : Accounts) (src mode amount : Nat) : Accounts :=
+  match d.get? src with
+  | some sa => d.insert src
+      (if mode = 0 ∨ mode = 2 then { sa with balance := sa.balance - amount }
+       else { sa with supervisorBalance := sa.supervisorBalance - amount })
+  | none => d
+
+/-- Ω_T's immediate credit for o = 0 (GP v0.8.1): mode x ∈ {0, 1} adds `amount` to dst's balance,
+    {2, 3} to its supervisor balance. With o ≠ 0 the accounts are unchanged. -/
+def transferCredit (d : Accounts) (dst mode amount o : Nat) : Accounts :=
+  if o ≠ 0 then d else match d.get? dst with
+    | some da => d.insert dst
+        (if mode = 2 ∨ mode = 3 then { da with supervisorBalance := da.supervisorBalance + amount }
+         else { da with balance := da.balance + amount })
+    | none => d
+
+/-- p_s of Ω_T (GP v0.8.1): x_s ∈ {s, E(**d**, s)} for x ∈ {0, 2}, x_s = E(**d**, s) otherwise. -/
+def transferPs (x : Implications) (src mode : Nat) : Bool :=
+  if mode = 0 ∨ mode = 2 then mayModify x src
+  else x.id == effectiveSupervisor x.state.accounts src
+
+/-- p_d of Ω_T (GP v0.8.1): o ≠ 0, or x_s ∈ {d, E(**d**, d)} and (x ∈ {1, 2} or s ≠ d). -/
+def transferPd (x : Implications) (src dst mode o : Nat) : Bool :=
+  o ≠ 0 || (mayModify x dst && ((mode = 1 ∨ mode = 2) || src ≠ dst))
+
+/-- The result code c of Ω_T (GP v0.8.1) once the memo is readable: WHO, HUH, LOW, CASH or OK. -/
+def transferCode (x : Implications) (src dst mode amount l o : Nat) : Nat :=
+  let d := x.state.accounts
+  -- the debited balances, as integers (the source's other balance is unchanged)
+  let (sb, ssb, smin) : Int × Int × Nat := match d.get? src with
+    | some sa =>
+      if mode = 0 ∨ mode = 2 then ((sa.balance : Int) - amount, sa.supervisorBalance, sa.minBalance)
+      else (sa.balance, (sa.supervisorBalance : Int) - amount, sa.minBalance)
+    | none => (0, 0, 0)
+  if !d.contains src || !d.contains dst then WHO
+  else if mode > 3 || !transferPs x src mode || !transferPd x src dst mode o then HUH
+  else if o ≠ 0 && l < (d.getD dst default).minMemoGas then LOW
+  else if sb < 0 ∨ ssb < 0 ∨ sb + ssb < smin then CASH
+  else OK
+
 /-- Ω_T, `transfer` = 22 (GP v0.8.1, GP #539), with g = 𝖬_T + t where t = l for a deferred transfer
     that succeeds and 0 otherwise. Source s = ω_7 and destination d = ω_8 (each x_s for 2^64 − 1),
     mode x = ω_9, amount ω_10, gas limit l = ω_11, memo at o = ω_12: x ∈ {0, 2} debits s's balance
@@ -309,43 +351,13 @@ def transfer (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
   let x := c.1
   let src := tgt (reg ω 7) x.id
   let dst := tgt (reg ω 8) x.id
-  let d := x.state.accounts
-  let toSup := mode = 2 ∨ mode = 3
-  let fromBal := mode = 0 ∨ mode = 2
   let t : Option (List DeferredTransfer) :=
     if o = 0 then some []
     else (readMem μ o env.params.memoSize).map fun memo =>
-      [({ source := src, dest := dst, destSupervisor := toSup, amount, memo := ⟨memo.toArray⟩,
-          gas := l } : DeferredTransfer)]
-  -- d' after the debit, and after the immediate credit when o = 0
-  let d1 : Accounts := match d.get? src with
-    | some sa => d.insert src
-        (if fromBal then { sa with balance := sa.balance - amount }
-         else { sa with supervisorBalance := sa.supervisorBalance - amount })
-    | none => d
-  let d2 : Accounts := if o ≠ 0 then d1 else match d1.get? dst with
-    | some da => d1.insert dst
-        (if toSup then { da with supervisorBalance := da.supervisorBalance + amount }
-         else { da with balance := da.balance + amount })
-    | none => d1
-  let ps : Bool := if fromBal then mayModify x src else x.id == effectiveSupervisor d src
-  let pd : Bool := o ≠ 0 || (mayModify x dst && ((mode = 1 ∨ mode = 2) || src ≠ dst))
-  -- the debited balances, as integers (the source's other balance is unchanged)
-  let (sb, ssb, smin) : Int × Int × Nat := match d.get? src with
-    | some sa =>
-      if fromBal then ((sa.balance : Int) - amount, sa.supervisorBalance, sa.minBalance)
-      else (sa.balance, (sa.supervisorBalance : Int) - amount, sa.minBalance)
-    | none => (0, 0, 0)
-  let (code, tg) : Option Nat × Nat :=
-    match t with
-    | none => (none, 0)
-    | some _ =>
-      if !d.contains src || !d.contains dst then (some WHO, 0)
-      else if mode > 3 || !ps || !pd then (some HUH, 0)
-      else if o ≠ 0 && l < (d.getD dst default).minMemoGas then (some LOW, 0)
-      else if sb < 0 ∨ ssb < 0 ∨ sb + ssb < smin then (some CASH, 0)
-      else if o = 0 then (some OK, 0)
-      else (some OK, l)
+      [({ source := src, dest := dst, destSupervisor := mode = 2 ∨ mode = 3, amount,
+          memo := ⟨memo.toArray⟩, gas := l } : DeferredTransfer)]
+  let code : Option Nat := t.map fun _ => transferCode x src dst mode amount l o
+  let tg : Nat := if code = some OK ∧ o ≠ 0 then l else 0
   charge (Constants.CgasT + tg) gas ω μ c fun out =>
     match code, t with
     | none, _ => panic out
@@ -353,6 +365,7 @@ def transfer (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
       if c' ≠ OK then r7 out c'
       else
         let w : List Nat := if o = 0 then [src, dst] else [src]
+        let d2 := transferCredit (transferDebit x.state.accounts src mode amount) dst mode amount o
         let x' := { x with state := { x.state with accounts := d2 }, xfers := x.xfers ++ t,
                            modified := w.foldl (fun s i => s.insert i) x.modified }
         r7 (updX out x') OK

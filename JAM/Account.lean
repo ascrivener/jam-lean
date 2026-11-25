@@ -4,7 +4,7 @@ import JAM.Constants
 import JAM.Blake2b
 
 /-!
-# Service accounts (GP v0.8.0 §9, `sec:accounts`)
+# Service accounts (GP v0.8.1 §9, `sec:accounts`)
 
 𝔸 ≡ (**s**, **p**, **l**, f, c, b, g, m, r, a, p) with the dependent terms i, o and t
 (eq. `serviceaccount`, eq. `deposits`), and the historical lookup Λ (eq. `historicallookup`).
@@ -148,7 +148,7 @@ def requestGet (a : ServiceAccount) (h : List UInt8) (z : Nat) : Option (List Na
 
 /-- The account with **l**[h, z] set to `t`. A new key adds 2 to a_i and 81 + z to a_o
     (GP eq. `deposits`). "New" means `requestGet` finds none: an undecodable stored value (only an
-    invalid loaded state holds one; GP v0.8.0 does not cover such states) counts as absent, so it
+    invalid loaded state holds one; GP v0.8.1 does not cover such states) counts as absent, so it
     is overwritten and a_i, a_o grow as for a new key, consistently with `requestGet`. -/
 def requestSet (a : ServiceAccount) (h : List UInt8) (z : Nat) (t : List Nat) : ServiceAccount :=
   let (i0, o0) := match a.requestGet h z with
@@ -273,6 +273,17 @@ theorem storageWrite_frame (a : ServiceAccount) (k v : List UInt8) :
       a'.minMemoGas = a.minMemoGas ∧ a'.created = a.created ∧ a'.lastAcc = a.lastAcc ∧
       a'.parent = a.parent := by
   unfold storageWrite; split <;> split <;> simp
+
+@[simp] theorem storageWrite_created (a : ServiceAccount) (k v : List UInt8) :
+    (a.storageWrite k v).created = a.created := (storageWrite_frame a k v).2.2.2.2.2.2.1
+
+@[simp] theorem requestSet_created (a : ServiceAccount) (h : List UInt8) (z : Nat) (t : List Nat) :
+    (a.requestSet h z t).created = a.created := by
+  unfold requestSet; split <;> rfl
+
+@[simp] theorem requestErase_created (a : ServiceAccount) (h : List UInt8) (z : Nat) :
+    (a.requestErase h z).created = a.created := by
+  unfold requestErase; split <;> rfl
 
 /-- Setting a request leaves storage unchanged, for keys whose state keys differ. -/
 theorem storageGet_requestSet (a : ServiceAccount) (h : List UInt8) (z : Nat) (t : List Nat)

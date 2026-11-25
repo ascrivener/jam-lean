@@ -4,7 +4,7 @@ import JAM.Params
 import JAM.Work
 
 /-!
-# General host functions (GP v0.8.0 Appendix B, `sec:generalfunctions`)
+# General host functions (GP v0.8.1 Appendix B, `sec:generalfunctions`)
 
 `gas` (Ω_G), `grow_heap` (Ω_♊), `fetch` (Ω_Y), `lookup` (Ω_L), `read` (Ω_R), `write` (Ω_W) and
 `info` (Ω_I), each transcribed from its row of the paper's table.
@@ -15,8 +15,7 @@ The common rules (GP v0.8.1 Appendix B, `Host Functions`, #533), shared by every
   ε' = ▸, ω' = ω, μ' = μ and x' = x except as indicated.
 
 So running out of gas consumes all of it (ϱ* = 0) and leaves registers, memory and context as they
-were. The paper's gas is ℕ_G throughout (v0.8.0 used ℤ_G here); `HostOut.gas` keeps the type ℤ but
-is never negative after `charged`.
+were. The paper's gas is ℕ_G throughout (v0.8.0 used ℤ_G here), and so is `HostOut.gas`.
 -/
 
 namespace JAM
@@ -26,8 +25,7 @@ open PVM
 /-- ε* of a host function: ▸, ☇ or ∞ (GP v0.8.1). -/
 abbrev HostStatus := PVM.HostStatus
 
-/-- The result of a host function: (ε*, ϱ*, ω*, μ*, x*). The paper's ϱ* is in ℕ_G (GP v0.8.1);
-    the field keeps v0.8.0's type ℤ_G, but the common rules (`charged`) never make it negative. -/
+/-- The result of a host function: (ε*, ϱ*, ω*, μ*, x*), with ϱ* ∈ ℕ_G (GP v0.8.1). -/
 structure HostOut (X : Type) where
   status : HostStatus
   gas : Nat
@@ -185,7 +183,7 @@ def growHeapCoreFast (ω : Regs) (μ : Memory) (jam : ByteArray) : Nat × Nat ×
     (eq. `conditions`) to page ω_7. ω'_7 = h if ω_7 ≤ h or ω_7 > b, otherwise ω_7; then
     (μ'_**a**)_{a…ω'_7} = [W, …]; g = 𝖬_{♊,c} + (ω'_7 − h)·𝖬_{♊,p}, under the common rules.
     Since v0.8.1 (#533) the no-growth case is charged like any other (∞ if ϱ < 𝖬_{♊,c}).
-    The bound b is still v0.8.0's (P(s), not v0.8.1's Q(s), #538; deferred to phase 2). -/
+    The bound b rounds the stack size to a zone (Q(s), GP #538; `heapBounds`). -/
 def hostGrowHeap {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (jam : ByteArray) (x : X) :
     HostOut X :=
   let (a, b, h, w) := growHeapCore ω μ jam

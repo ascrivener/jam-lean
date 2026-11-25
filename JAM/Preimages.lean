@@ -1,7 +1,7 @@
 import JAM.Accumulation
 
 /-!
-# Preimage integration (GP v0.8.0 §12.4, `Preimage Integration`)
+# Preimage integration (GP v0.8.1 §12.4, `Preimage Integration`)
 
 The preimages extrinsic E_P ∈ ⟦(ℕ_S, 𝔹)⟧ must be ordered and free of duplicates
 (eq. `preimagesareordered`), and every pair must be providable in the prior state, Y(δ, s, **i**)

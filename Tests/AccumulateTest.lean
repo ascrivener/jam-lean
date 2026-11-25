@@ -24,7 +24,10 @@ open JAM.Tests.Json
 
 def arrF (j : Json) (k : String) : Except String (Array Json) := do (← field j k).getArr?
 
-def account (j : Json) : Except String ServiceAccount := do
+/-- Service `id`'s account from a v0.8.0 vector. The vectors predate supervisors (GP v0.8.1, #539),
+    so the account is its own supervisor (u = id with u's creation slot a_r, hence effective
+    supervisor id) and has supervisor balance 0: the values under which v0.8.1 behaves as v0.8.0. -/
+def account (id : Nat) (j : Json) : Except String ServiceAccount := do
   let s ← field j "service"
   let storage ← (← arrF j "storage").mapM fun e => do
     return ((← hexField e "key").toList, (← hexField e "value").toList)
@@ -39,7 +42,8 @@ def account (j : Json) : Except String ServiceAccount := do
       codeHash := (← hexField s "code_hash").toList, balance := ← natField s "balance",
       minAccGas := ← natField s "min_item_gas", minMemoGas := ← natField s "min_memo_gas",
       created := ← natField s "creation_slot", lastAcc := ← natField s "last_accumulation_slot",
-      parent := ← natField s "parent_service" }
+      parent := ← natField s "parent_service", supervisor := id,
+      supervisorCreated := ← natField s "creation_slot", supervisorBalance := 0 }
   -- The vector gives raw storage keys and request keys, so the accessors build `entries` and
   -- compute a_o and a_i by GP eq. `deposits`; they must equal the vector's `bytes` and `items`.
   let a1 := storage.foldl (fun a (k, v) => a.storageWrite k v) a0
@@ -50,7 +54,7 @@ def account (j : Json) : Except String ServiceAccount := do
   return a
 
 def state (params : Params) (j : Json) : Except String AccState := do
-  let accounts ← (← arrF j "accounts").mapM fun e => do return (← natField e "id", ← account (← field e "data"))
+  let accounts ← (← arrF j "accounts").mapM fun e => do let id ← natField e "id"; return (id, ← account id (← field e "data"))
   let p ← field j "privileges"
   let always ← (← arrF p "always_acc").mapM fun e => do return (← natField e "id", ← natField e "gas")
   let ready ← (← arrF j "ready_queue").mapM fun slotQ => do

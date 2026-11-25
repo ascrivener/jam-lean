@@ -131,9 +131,10 @@ def privileges (s : State) : List UInt8 :=
   fixed 4 s.manager ++ seq (fixed 4) s.assigners ++ fixed 4 s.delegator ++ fixed 4 s.registrar ++
     varSeq (fun (k, g) => fixed 4 k ++ fixed 8 g) s.alwaysAcc.toList
 
-/-- ℰ_4 of a validator record's six counters. -/
+/-- ℰ of a validator record's six counters, as variable-length naturals (GP v0.8.1
+    eq. `serialization`, C(13); GP #564). -/
 def valRecord (r : ValidatorRecord) : List UInt8 :=
-  [r.blocks, r.tickets, r.preimages, r.preimagesSize, r.guarantees, r.assurances].flatMap (fixed 4)
+  [r.blocks, r.tickets, r.preimages, r.preimagesSize, r.guarantees, r.assurances].flatMap nat
 
 /-- ℰ of a core record: its eight naturals in the order of GP §13.2. -/
 def coreRecord (r : CoreRecord) : List UInt8 :=
@@ -161,9 +162,12 @@ def accumulated (ξ : List OctetSet) : List UInt8 := seq hashSet ξ
 /-- C(16): ℰ(↕[(ℰ_4(s), ℰ(h)) | (s, h) ∈ θ]). -/
 def lastAccOut (θ : List (Nat × List UInt8)) : List UInt8 := varSeq (fun (s, h) => fixed 4 s ++ h) θ
 
-/-- C(255, s): ℰ(0, a_c, ℰ_8(a_b, a_g, a_m, a_o, a_f), ℰ_4(a_i, a_r, a_a, a_p)). -/
+/-- C(255, s): ℰ(0, a_c, ℰ_4(a_u, a_u'), ℰ_8(a_b, a_b', a_g, a_m, a_o, a_f)) ⌢ ℰ_4(a_i, a_r, a_a, a_p),
+    with a_u' the supervisor's creation slot and a_b' the supervisor balance (GP v0.8.1
+    eq. `serialization`, C(255, s)). -/
 def accountInfo (a : ServiceAccount) : List UInt8 :=
-  nat 0 ++ a.codeHash ++ [a.balance, a.minAccGas, a.minMemoGas, a.octets, a.gratis].flatMap (fixed 8) ++
+  nat 0 ++ a.codeHash ++ [a.supervisor, a.supervisorCreated].flatMap (fixed 4) ++
+    [a.balance, a.supervisorBalance, a.minAccGas, a.minMemoGas, a.octets, a.gratis].flatMap (fixed 8) ++
     [a.items, a.created, a.lastAcc, a.parent].flatMap (fixed 4)
 
 /-- The key-value pairs of one account: C(255, s), its storage and request entries, already held

@@ -103,14 +103,15 @@ structure Summary where
   maxStep : Nat := 0
 
 def readStep (path : System.FilePath) : IO Step := do
-  match Decoder.run (step Params.tiny) (← IO.FS.readBinFile path) with
+  match Decoder.run (step Params.tiny) (← IO.FS.readBinFile path) >>= upgradeStep with
   | .ok s => return s
   | .error e => throw (IO.userError s!"{path}: {e}")
 
 def runTrace (dir : System.FilePath) (name : String) : IO Summary := do
   let p := Params.tiny
   let tdir := dir / name
-  let (gh, graw) ← match Decoder.run (genesis p) (← IO.FS.readBinFile (tdir / "genesis.bin")) with
+  let (gh, graw) ← match Decoder.run (genesis p) (← IO.FS.readBinFile (tdir / "genesis.bin")) >>=
+      fun (h, r) => do return (h, ← upgradeRaw r) with
     | .ok g => pure g
     | .error e => throw (IO.userError s!"{name}/genesis.bin: {e}")
   let mut σ ← match decodeState p graw.kvs with

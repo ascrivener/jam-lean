@@ -45,9 +45,10 @@ def hash32 : Decoder (List UInt8) := do return (← bytes 32).toList
 def vkey : Decoder ValidatorKey := do return (← bytes 336).toList
 def ticket : Decoder Ticket := Ticket.decode
 
+/-- A validator record of C(13): six variable-length naturals (GP v0.8.1, GP #564). -/
 def valRecord : Decoder ValidatorRecord := do
-  return { blocks := ← fixed 4, tickets := ← fixed 4, preimages := ← fixed 4,
-           preimagesSize := ← fixed 4, guarantees := ← fixed 4, assurances := ← fixed 4 }
+  return { blocks := ← nat, tickets := ← nat, preimages := ← nat,
+           preimagesSize := ← nat, guarantees := ← nat, assurances := ← nat }
 
 def coreRecord : Decoder CoreRecord := do
   return { daLoad := ← nat, popularity := ← nat, imports := ← nat, xtCount := ← nat,
@@ -86,15 +87,66 @@ def availEntry : Decoder AvailAssignment := do
   let t ← fixed 4
   return { guarantee := g, time := t }
 
+/-- Whether a 31-octet key is C(255, s) for some s (GP eq. `serialization`). -/
+def isInfoKey (k : List UInt8) : Bool :=
+  k.headD 0 == 255 && k.length == 31 &&
+    (List.range 31).all fun j => j ∈ [0, 1, 3, 5, 7] || k.getD j 0 == 0
+
 /-- The service-account fields of C(255, s), without the storage, preimages and requests. -/
 def accountInfo : Decoder ServiceAccount := do
   let v ← nat
   if v ≠ 0 then fail s!"account version {v}"
   let c ← hash32
-  let b ← fixed 8; let g ← fixed 8; let m ← fixed 8; let o ← fixed 8; let f ← fixed 8
+  let u ← fixed 4; let uc ← fixed 4
+  let b ← fixed 8; let bs ← fixed 8; let g ← fixed 8; let m ← fixed 8; let o ← fixed 8
+  let f ← fixed 8
   let i ← fixed 4; let r ← fixed 4; let a ← fixed 4; let p ← fixed 4
-  return { codeHash := c, balance := b, minAccGas := g, minMemoGas := m, octets := o, gratis := f,
+  return { codeHash := c, supervisor := u, supervisorCreated := uc, balance := b,
+           supervisorBalance := bs, minAccGas := g, minMemoGas := m, octets := o, gratis := f,
            items := i, created := r, lastAcc := a, parent := p }
+
+/-! ## v0.8.0 raw states in v0.8.1 form
+
+The published traces are GP v0.8.0 states. Until v0.8.1 traces exist, `upgradeRaw` rewrites the
+two state rows whose encoding GP v0.8.1 changed, and nothing else (CLAUDE.md, "Vectors during the
+migration"):
+
+* C(13): the validator statistics π_V and π_L become variable-length naturals (GP #564,
+  eq. `serialization`); π_C and π_S are unchanged.
+* C(255, s): ℰ_4(a_u, a_u') is inserted after a_c and ℰ_8(a_b') after a_b (GP #539, junior
+  services, eq. `serialization`). A v0.8.0 account has no supervisor, so it is given the values
+  under which GP v0.8.1 behaves as v0.8.0 did: a_u = s with a_u' = a_r (the effective supervisor
+  is s itself, eq. `effectivesupervisor`) and a_b' = 0.
+
+The root is recomputed from the rewritten key-values (`Trie.root`). -/
+
+/-- Rewrite one v0.8.0 C(13) value in the v0.8.1 encoding (GP #564). -/
+def upgradeStats (v : List UInt8) : Except String (List UInt8) := do
+  let old : Decoder (List (List Nat)) := varSeq (seqN 6 (fixed 4))
+  let dec : Decoder (List (List Nat) × List (List Nat) × Nat) := do
+    let a ← old; let b ← old; let pos ← get; let _ ← bytes (← remaining); return (a, b, pos)
+  let (a, b, pos) ← match Decoder.run dec ⟨v.toArray⟩ with
+    | .ok r => pure r
+    | .error e => throw s!"C(13): {e}"
+  let enc (xs : List (List Nat)) := Codec.varSeq (fun r => r.flatMap Codec.nat) xs
+  return enc a ++ enc b ++ v.drop pos
+
+/-- Rewrite one v0.8.0 C(255, s) value in the v0.8.1 layout (GP #539). -/
+def upgradeInfo (s : Nat) (v : List UInt8) : Except String (List UInt8) := do
+  if v.length != 1 + 32 + 40 + 16 then throw s!"C(255, {s}): {v.length} octets"
+  let created := v.drop (1 + 32 + 40 + 4) |>.take 4
+  return v.take 33 ++ Codec.fixed 4 s ++ created ++ (v.drop 33).take 8 ++ Codec.fixed 8 0 ++ v.drop 41
+
+/-- A v0.8.0 raw state in v0.8.1 form; also checks that its root is the v0.8.0 one. -/
+def upgradeRaw (raw : RawState) : Except String RawState := do
+  let d : OctetDict := Std.ExtTreeMap.ofList raw.kvs
+  if Trie.root d != raw.root.toList then throw "raw state: root does not match its key-values"
+  let kvs ← raw.kvs.mapM fun (k, v) => do
+    if k == Trie.keyOfIndex 13 then return (k, ← upgradeStats v)
+    else if isInfoKey k then
+      return (k, ← upgradeInfo (PVM.Num.decodeLE [k.getD 1 0, k.getD 3 0, k.getD 5 0, k.getD 7 0]) v)
+    else return (k, v)
+  return { root := ⟨(Trie.root (Std.ExtTreeMap.ofList kvs)).toArray⟩, kvs }
 
 def get (kvs : List (List UInt8 × List UInt8)) (i : Nat) : Except String ByteArray :=
   match kvs.lookup (Trie.keyOfIndex i) with
@@ -136,8 +188,7 @@ def decodeState (p : Params) (kvs : List (List UInt8 × List UInt8)) : Except St
   let accumulated ← dec kvs 15 (seqN E varHashSet)
   let lastAccOut ← dec kvs 16 (varSeq (do return (← fixed 4, ← hash32)))
   -- Service accounts.
-  let infoKeys := kvs.filter fun (k, _) => k.headD 0 == 255 && k.length == 31 &&
-    (List.range 31).all fun j => j ∈ [0, 1, 3, 5, 7] || k.getD j 0 == 0
+  let infoKeys := kvs.filter fun (k, _) => isInfoKey k
   let mut accounts : Accounts := ∅
   let mut used : List (List UInt8) := infoKeys.map (·.1)
   for (k, v) in infoKeys do
@@ -165,5 +216,13 @@ def decodeState (p : Params) (kvs : List (List UInt8 × List UInt8)) : Except St
            accumulator, accounts, eta, staging, active, prev, avail, tau, manager, assigners,
            delegator, registrar, alwaysAcc, disputes, valStats, valStatsLast, coreStats,
            serviceStats, ready, accumulated }
+
+end JAM.TraceState
+
+namespace JAM.TraceState
+
+/-- A trace step with both raw states in v0.8.1 form (`upgradeRaw`). -/
+def upgradeStep (st : Step) : Except String Step := do
+  return { st with pre := ← upgradeRaw st.pre, post := ← upgradeRaw st.post }
 
 end JAM.TraceState

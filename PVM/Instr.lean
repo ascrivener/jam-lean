@@ -5,7 +5,7 @@ import PVM.Blob
 
 Decoding is kept separate from execution: `Program.decode` turns the octets at an opcode index
 into an `Instr`, following the operand definitions at the head of each subsubsection of GP
-v0.8.0 §A.5 (`sec:instructiontables`); `PVM.Exec` gives each `Instr` its meaning.
+v0.8.1 §A.5 (`sec:instructiontables`); `PVM.Exec` gives each `Instr` its meaning.
 
 Immediates ν are stored already sign-extended (𝒳) as values in ℕ_{2^64}. Offsets (ı + 𝒵(…)) are
 stored as integers, since the paper does not reduce them modulo anything.

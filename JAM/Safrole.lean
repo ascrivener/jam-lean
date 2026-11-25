@@ -4,7 +4,7 @@ import JAM.Crypto
 import JAM.Params
 
 /-!
-# Safrole: block production and chain growth (GP v0.8.0 §6, `sec:blockproduction`)
+# Safrole: block production and chain growth (GP v0.8.1 §6, `sec:blockproduction`)
 
 The Safrole state γ = (γ_P, γ_Z, γ_S, γ_A) (eq. `consensusstatecomposition`) together with the
 timeslot τ (eq. `timeslotindex`), the entropy η (eq. `entropycomposition`) and the validator key

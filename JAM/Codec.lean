@@ -3,7 +3,7 @@ import Std.Data.ExtTreeSet
 import Std.Data.ExtTreeMap
 
 /-!
-# The serialization codec ℰ (GP v0.8.0 Appendix C)
+# The serialization codec ℰ (GP v0.8.1 Appendix C)
 
 Encoders for the terms Appendix B and its invocations need. Natural numbers use either the
 general variable-length encoding ℰ (`nat`) or a fixed-length little-endian ℰ_l (`fixed`); octet

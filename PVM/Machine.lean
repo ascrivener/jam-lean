@@ -2,7 +2,7 @@ import PVM.Exec
 import PVM.Gas
 
 /-!
-# Single-step Ψ₁ and the full PVM Ψ (GP v0.8.0 §A.1, §A.4)
+# Single-step Ψ₁ and the full PVM Ψ (GP v0.8.1 §A.1, §A.4)
 -/
 
 namespace PVM

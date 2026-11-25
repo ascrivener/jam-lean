@@ -1,7 +1,7 @@
 import PVM.Instr
 
 /-!
-# The gas cost model ϱ^Δ (GP v0.8.0 §A.9 `sec:gascostmodel`, §A.10 `sec:gascosttables`)
+# The gas cost model ϱ^Δ (GP v0.8.1 §A.9 `sec:gascostmodel`, §A.10 `sec:gascosttables`)
 
 The cost of a basic block is the number of cycles a simulated out-of-order CPU needs to
 retire every instruction of the block: ϱ^Δ(**c**, **k**, ı) = max(𝔛(**c**, **k**, **x**^init)_c − 3, 1).

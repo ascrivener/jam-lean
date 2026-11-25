@@ -1,7 +1,7 @@
 import Lake
 open Lake DSL System
 
-/-! Build configuration for the Lean model of the JAM PVM and Appendix B (Gray Paper v0.8.0).
+/-! Build configuration for the Lean model of the JAM PVM and Appendix B (Gray Paper v0.8.1).
 
 * `lake build`           builds the model (`PVM`, `JAM`) and its theorems.
 * `lake build Services`  builds the results about service binaries (proof work only).

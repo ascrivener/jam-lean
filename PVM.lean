@@ -35,7 +35,7 @@ import PVM.SymExec.Trace
 import PVM.SymExec.Loop
 
 /-!
-# An executable model of the JAM PVM (Gray Paper v0.8.0, Appendix A)
+# An executable model of the JAM PVM (Gray Paper v0.8.1, Appendix A)
 
 * `PVM.Blob`     — deblob, 𝔳_blob, 𝔳_inst, skip, ζ, ϖ, 𝔏 (§A.1–A.3)
 * `PVM.Instr`    — typed instructions and decoding (§A.5 operand definitions)

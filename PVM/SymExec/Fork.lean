@@ -11,7 +11,7 @@ headers, exits) and yields a leaf: the pc, the facts taken on the way (the path 
 symbolic state.
 
 `srunF_sound`: if the start state is described, some leaf's path condition holds, and the machine
-reaches that leaf's pc in a state the leaf's symbolic state describes (GP v0.8.0 §A.4–A.5, through
+reaches that leaf's pc in a state the leaf's symbolic state describes (GP v0.8.1 §A.4–A.5, through
 `sstep_sound` and `srun_sound`).
 -/
 

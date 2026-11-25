@@ -6,7 +6,7 @@ import PVM.Theorems.Decode
 
 `psi` runs Ψ with fuel `stepBound`. We show that this fuel never runs out
 (`runFuel_stepBound_isSome`) and that `psi` satisfies the recursive definition of Ψ in GP
-v0.8.0 §A.1 verbatim (`psi_eq`), so the fuel is an implementation device only.
+v0.8.1 §A.1 verbatim (`psi_eq`), so the fuel is an implementation device only.
 
 The argument: a continuing step either charges a block (ϱ̃ = ⊥ before the step), which costs at
 least one unit of gas; or executes a terminator, which clears ϱ̃; or executes a non-terminator,

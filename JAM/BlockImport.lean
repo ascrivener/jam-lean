@@ -5,7 +5,7 @@ import JAM.Preimages
 import JAM.Authorization
 
 /-!
-# The block-level state transition Υ(σ, B) = σ' (GP v0.8.0 §4, §5)
+# The block-level state transition Υ(σ, B) = σ' (GP v0.8.1 §4, §5)
 
 Υ is the composition of the section-level transitions along the dependency graph of GP eq.
 `transitionfunctioncomposition`:

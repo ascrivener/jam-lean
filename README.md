@@ -821,8 +821,8 @@ noted here and in a comment at the definition.
       eq. `extrinsichash`, H_O, H_E and H_W equal to the markers the transitions produce,
       H_I < |κ'|, and `sealValid` for the seal and entropy source. The wall-clock bound is not
       checked. The ancestor set 𝒜 of §11.4.1 is the retained headers together with the block's own
-      header, so that a lookup anchor can be the parent; the paper does not say whether 𝒜 includes
-      the block being imported.
+      header, so that a lookup anchor can be the parent, as eq. `ancestors` (§5) defines it:
+      h ∈ 𝒜 ⇔ h = H ∨ (∃ i ∈ 𝒜 : h = P(i)).
     * *Serialization.* ρ's entries are serialized with the whole guarantee (r, t, **a**) and then
       ℰ_4 of the timestamp, as in C(10); the traces agree. The core and service statistics π_C, π_S
       use the general natural encoding ℰ for every field, gas included; the traces agree, while

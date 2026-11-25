@@ -25,6 +25,7 @@ import JAM.Assurances
 import JAM.Reports
 import JAM.Safrole
 import JAM.State
+import JAM.StateDecode
 import JAM.BlockImport
 import JAM.Refine
 import JAM.Theorems.HostGas
@@ -61,6 +62,7 @@ Built on `PVM` (Appendix A).
 * `JAM.Reports` — guarantor assignments M and M*, the guarantees extrinsic, ρ' and the reporters G (§11.3–§11.5)
 * `JAM.Safrole` — Safrole: timekeeping, key rotation, entropy, the slot-sealer sequence, the markers and the tickets (§6)
 * `JAM.State` — the state σ, its serialization T(σ) and the state root M_σ (§4.2, Appendix D)
+* `JAM.StateDecode` — σ from its key-values, the inverse of T (Appendix D)
 * `JAM.BlockImport` — the block-level transition Υ(σ, B) with the header's validity conditions (§4, §5)
 * `JAM.Refine` — the refine and is-authorized invocations Ψ_R and Ψ_I, with the refine host functions
 * `JAM.Theorems.HostGas` — the dispatchers of Ψ_A, Ψ_R and Ψ_I never add gas

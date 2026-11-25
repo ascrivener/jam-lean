@@ -28,14 +28,14 @@ theorem writeValue_gas {X : Type} (out : HostOut X) (v : Except Unit (Option (Li
   repeat' split
   all_goals rfl
 
-/-- The common rules: with a body that leaves ϱ alone, ϱ' = ϱ − g ≤ ϱ. -/
+/-- The common rules (GP v0.8.1): with a body that leaves ϱ alone, ϱ* ∈ {0, ϱ − g}, so ϱ* ≤ ϱ. -/
 theorem charged_gas_le {X : Type} (g gas : Nat) (ω : Regs) (μ : Memory) (x : X)
     (body : HostOut X → HostOut X) (hb : ∀ o, (body o).gas = o.gas) :
     (charged g gas ω μ x body).gas ≤ gas := by
   unfold charged
   split
-  · show (gas : Int) - g ≤ gas; omega
-  · rw [hb]; show (gas : Int) - g ≤ gas; omega
+  · dsimp only; omega
+  · rw [hb]; dsimp only; omega
 
 /-- Close `∀ o, (body o).gas = o.gas` by splitting every `if` and `match` in the body. -/
 macro "gas_body" : tactic =>
@@ -55,10 +55,7 @@ theorem hostGrowHeap_gas {X} (gas : Nat) (ω : Regs) (μ : Memory) (jam : ByteAr
   generalize growHeapCore ω μ jam = q
   obtain ⟨a, b, hp, w⟩ := q
   dsimp only
-  by_cases hc : w ≤ hp ∨ w > b
-  · simp only [hc, ↓reduceIte]; omega
-  · simp only [hc, ↓reduceIte]
-    split <;> (dsimp only; omega)
+  exact charged_gas_le _ _ _ _ _ _ fun _ => rfl
 
 theorem hostFetch_gas {X} (gas : Nat) (ω : Regs) (μ : Memory) (cx : FetchContext) (x : X) :
     (hostFetch gas ω μ cx x).gas ≤ gas :=
@@ -161,7 +158,7 @@ theorem dispatch_gas (env : AccEnv) (n gas : Nat) (ω : Regs) (μ : Memory) (c :
     | with_reducible exact query_gas ..
     | with_reducible exact yield_gas ..
     | with_reducible exact provide_gas ..
-    | (show (gas : Int) - _ ≤ gas; omega)
+    | (dsimp only; omega)
 
 end AccHost
 
@@ -180,7 +177,7 @@ namespace RefineHost
 
 theorem unknown_gas {X} (gas : Nat) (ω : Regs) (μ : Memory) (x : X) :
     (unknown gas ω μ x).gas ≤ gas := by
-  show (gas : Int) - _ ≤ gas; omega
+  unfold unknown; split <;> (dsimp only; omega)
 
 theorem invoke_gas (gas : Nat) (ω : Regs) (μ : Memory) (c : RefineCtx) :
     (invoke gas ω μ c).gas ≤ gas := by
@@ -193,20 +190,20 @@ theorem invoke_gas (gas : Nat) (ω : Regs) (μ : Memory) (c : RefineCtx) :
   unfold charged
   rcases w? with _ | ⟨gR, w⟩
   · dsimp only
-    split <;> (show (gas : Int) - _ ≤ gas; omega)
+    split <;> (try simp only [panic, r7]) <;> omega
   · dsimp only
     split
-    · show (gas : Int) - _ ≤ gas; omega
+    · (try simp only [panic, r7]) <;> omega
     · rename_i hge
       split
-      · show (gas : Int) - _ ≤ gas; omega
+      · (try simp only [panic, r7]) <;> omega
       · rename_i vm _
         have hp := psi_gas_le vm.code vm.pc (UInt64.ofNat gR) vm.charged w vm.ram
         have hu : (UInt64.ofNat gR).toNat ≤ gR := UInt64.toNat_ofNat_le
         generalize psi vm.code vm.pc (UInt64.ofNat gR) vm.charged w vm.ram = r at hp ⊢
         rcases r with ⟨st, pc, g', ch', regs, mem⟩
         dsimp only at hp ⊢
-        cases st <;> (show (gas : Int) - _ + _ ≤ gas; omega)
+        cases st <;> ((try dsimp only at hp ⊢) <;> omega)
 
 theorem exportSeg_gas (gas : Nat) (ω : Regs) (μ : Memory) (off : Nat) (c : RefineCtx) :
     (exportSeg gas ω μ off c).gas ≤ gas := by

@@ -63,7 +63,7 @@ theorem Confined.setSelf {e : PartialState} {s : Nat} {x : Implications} (h : Co
     charged function (on ∞ the context is unchanged). -/
 theorem charged_ctx {X : Type} (P : X → Prop) (g gas : Nat) (ω : Regs) (μ : Memory) (x : X)
     (body : HostOut X → HostOut X) (hx : P x)
-    (hb : P (body ⟨.cont, (gas : Int) - g, ω, μ, x⟩).ctx) :
+    (hb : P (body ⟨.cont, ((gas - g : Nat) : Int), ω, μ, x⟩).ctx) :
     P (charged g gas ω μ x body).ctx := by
   unfold charged
   split
@@ -140,7 +140,7 @@ theorem dispatch_confined (env : AccEnv) (n gas : Nat) (ω : Regs) (μ : Memory)
   unfold dispatch
   split
   · exact charged_ctx _ _ _ _ _ _ _ hc hc
-  · unfold hostGrowHeap; exact hc
+  · unfold hostGrowHeap; exact charged_ctx _ _ _ _ _ _ _ hc hc
   · exact charged_ctx _ _ _ _ _ _ _ hc (by rw [writeValue_ctx]; exact hc)
   · exact hc
   · exact hc
@@ -266,7 +266,7 @@ theorem dispatch_exports (env : Env) (n gas : Nat) (ω : Regs) (μ : Memory) (c 
   unfold dispatch
   split
   · exact charged_ctx (fun c' : RefineCtx => c'.2 = c.2) _ _ _ _ _ _ rfl rfl
-  · unfold hostGrowHeap; rfl
+  · unfold hostGrowHeap; exact charged_ctx (fun c' : RefineCtx => c'.2 = c.2) _ _ _ _ _ _ rfl rfl
   · exact charged_ctx (fun c' : RefineCtx => c'.2 = c.2) _ _ _ _ _ _ rfl (by rw [writeValue_ctx])
   · unfold historicalLookup
     exact charged_ctx (fun c' : RefineCtx => c'.2 = c.2) _ _ _ _ _ _ rfl (by rw [writeValue_ctx])
@@ -277,7 +277,7 @@ theorem dispatch_exports (env : Env) (n gas : Nat) (ω : Regs) (μ : Memory) (c 
   · unfold pages; exports_tac c
   · exact invoke_exports gas ω μ c
   · unfold expunge; exports_tac c
-  · rfl
+  · unfold unknown; split <;> rfl
 
 end RefineHost
 

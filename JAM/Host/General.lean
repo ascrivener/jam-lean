@@ -9,21 +9,25 @@ import JAM.Work
 `gas` (Ω_G), `grow_heap` (Ω_♊), `fetch` (Ω_Y), `lookup` (Ω_L), `read` (Ω_R), `write` (Ω_W) and
 `info` (Ω_I), each transcribed from its row of the paper's table.
 
-The common rules (GP Appendix B, before the table):
-* ϱ' ≡ ϱ − g unless a function defines ϱ' itself;
-* (ε', ω', μ', **s**') ≡ (∞, ω, μ, **s**) if ϱ < g, and otherwise (▸, ω, μ, **s**) except as indicated.
+The common rules (GP v0.8.1 Appendix B, `Host Functions`, #533), shared by every host function:
+* ϱ* ≡ max(ϱ − g, 0) unless a function defines ϱ* itself;
+* (ε*, ω*, μ*, x*) ≡ (∞, ω, μ, x) if ϱ < g, and otherwise (ε', ω', μ', x'), where by default
+  ε' = ▸, ω' = ω, μ' = μ and x' = x except as indicated.
 
-Gas here is ℤ_G, as in the paper's host functions, so on ∞ the returned ϱ' = ϱ − g may be negative.
+So running out of gas consumes all of it (ϱ* = 0) and leaves registers, memory and context as they
+were. The paper's gas is ℕ_G throughout (v0.8.0 used ℤ_G here); `HostOut.gas` keeps the type ℤ but
+is never negative after `charged`.
 -/
 
 namespace JAM
 
 open PVM
 
-/-- ε' of a host function: ▸, ∎, ☇ or ∞. -/
+/-- ε* of a host function: ▸, ☇ or ∞ (GP v0.8.1). -/
 abbrev HostStatus := PVM.HostStatus
 
-/-- The result of a host function: (ε', ϱ', ω', μ', x'), with ϱ' ∈ ℤ_G. -/
+/-- The result of a host function: (ε*, ϱ*, ω*, μ*, x*). The paper's ϱ* is in ℕ_G (GP v0.8.1);
+    the field keeps v0.8.0's type ℤ_G, but the common rules (`charged`) never make it negative. -/
 structure HostOut (X : Type) where
   status : HostStatus
   gas : Int
@@ -62,12 +66,13 @@ def setR7 (ω : Regs) (v : Nat) : Regs := ω.set 7 (UInt64.ofNat v)
 /-- Register `k` as a natural. -/
 def reg (ω : Regs) (k : Fin 13) : Nat := (ω.get k).toNat
 
-/-- Apply the common rules: charge `g`, report ∞ (state unchanged) if ϱ < g, otherwise run `body`
-    with the default (▸, ϱ − g, ω, μ, x). -/
+/-- Apply the common rules (GP v0.8.1 Appendix B, #533): if ϱ < g, (∞, 0, ω, μ, x), with all gas
+    consumed and the state unchanged; otherwise run `body` on the default (▸, ϱ − g, ω, μ, x).
+    (ϱ − g = max(ϱ − g, 0) here, since ϱ ≥ g.) -/
 def charged {X : Type} (g : Nat) (gas : Nat) (ω : Regs) (μ : Memory) (x : X)
     (body : HostOut X → HostOut X) : HostOut X :=
-  if gas < g then ⟨.oog, (gas : Int) - g, ω, μ, x⟩
-  else body ⟨.cont, (gas : Int) - g, ω, μ, x⟩
+  if gas < g then ⟨.oog, 0, ω, μ, x⟩
+  else body ⟨.cont, ((gas - g : Nat) : Int), ω, μ, x⟩
 
 /-- The shared tail of `fetch`, `lookup`, `read` and `info`: given the value **v** (∅ as `none`,
     ∇ as `.error`), the offset `f₀` and length `z` registers and the output address `o`:
@@ -90,7 +95,7 @@ def writeValue {X : Type} (out : HostOut X) (v : Except Unit (Option (List UInt8
 
 /-! ## Ω_G, `gas` = 0 -/
 
-/-- Ω_G: ω'_7 ≡ ϱ', with g = 𝖬_G. -/
+/-- Ω_G: ω'_7 ≡ ϱ*, with g = 𝖬_G (GP v0.8.1). -/
 def hostGas {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (x : X) : HostOut X :=
   charged Constants.CgasG gas ω μ x fun out => { out with regs := setR7 ω out.gas.toNat }
 
@@ -175,18 +180,18 @@ def growHeapCoreFast (ω : Regs) (μ : Memory) (jam : ByteArray) : Nat × Nat ×
   funext ω μ jam
   simp only [growHeapCore, growHeapCoreFast, countWritable_eq]
 
-/-- Ω_♊(ϱ, ω, μ, **p**): grow the read-write region of a standard program (eq. `conditions`) to
-    page ω_7, charging 𝖬_{♊,c} + (ω_7 − h)·𝖬_{♊,p}. The function defines (ε', ϱ', ω'_7) itself, and
-    then (μ'_**a**)_{a…ω'_7} = [W, …]. -/
+/-- Ω_♊(ϱ, ω, μ, x, **p**) (GP v0.8.1): grow the read-write region of a standard program
+    (eq. `conditions`) to page ω_7. ω'_7 = h if ω_7 ≤ h or ω_7 > b, otherwise ω_7; then
+    (μ'_**a**)_{a…ω'_7} = [W, …]; g = 𝖬_{♊,c} + (ω'_7 − h)·𝖬_{♊,p}, under the common rules.
+    Since v0.8.1 (#533) the no-growth case is charged like any other (∞ if ϱ < 𝖬_{♊,c}).
+    The bound b is still v0.8.0's (P(s), not v0.8.1's Q(s), #538; deferred to phase 2). -/
 def hostGrowHeap {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (jam : ByteArray) (x : X) :
     HostOut X :=
   let (a, b, h, w) := growHeapCore ω μ jam
-  let g := Constants.CgasGeminiconst + (w - h) * Constants.CgasGeminilinear
-  let (st, gas', r7) : HostStatus × Int × Nat :=
-    if w ≤ h ∨ w > b then (.cont, (gas : Int) - Constants.CgasGeminiconst, h)
-    else if gas < g then (.oog, gas, h)
-    else (.cont, (gas : Int) - g, w)
-  ⟨st, gas', setR7 ω r7, μ.setPages a (r7 - a) (some .write), x⟩
+  let r7 := if w ≤ h ∨ w > b then h else w
+  let g := Constants.CgasGeminiconst + (r7 - h) * Constants.CgasGeminilinear
+  charged g gas ω μ x fun out =>
+    { out with regs := setR7 ω r7, mem := μ.setPages a (r7 - a) (some .write) }
 
 /-! ## Ω_Y, `fetch` = 2 -/
 

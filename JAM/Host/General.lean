@@ -101,14 +101,15 @@ def hostGas {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (x : X) : HostOut X
 
 /-! ## Ω_♊, `grow_heap` = 1 -/
 
-/-- The heap's page bounds for a standard program (eq. `conditions`): the first heap page
-    a = (2𝖹_Z + Q(|**o**|)) / 𝖹_P and the bound b below the stack. -/
+/-- The heap's page bounds for a standard program (GP v0.8.1 Ω_♊, eq. `jamblobformat`): the first
+    heap page a = (2𝖹_Z + Q(|**o**|)) / 𝖹_P and the bound b = (2^32 − 3𝖹_Z − 𝖹_I − Q(s)) / 𝖹_P below
+    the stack, with the stack size rounded to a zone (Q, not P: GP #538). -/
 def heapBounds (jam : ByteArray) : Nat × Nat :=
   let (roLen, stack) := match JamBlob.parseStd? jam with
     | some jb => (jb.ro.size, jb.stackSize)
     | none => (0, 0)
   ((2 * zoneSize + roundZone roLen) / pageSize,
-   (2 ^ 32 - 3 * zoneSize - inputSize - roundPage stack) / pageSize)
+   (2 ^ 32 - 3 * zoneSize - inputSize - roundZone stack) / pageSize)
 
 /-- The gas-free part of Ω_♊: the heap bounds a and b, the current heap top h = a + c (c the
     writable pages in ℕ_{a…b}) and the requested top w = ω_7. -/
@@ -246,87 +247,61 @@ def hostFetch {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (cx : FetchContex
   charged g gas ω μ x fun out =>
     writeValue out (.ok (fetchValue cx c (reg ω 11) (reg ω 12))) (reg ω 7) (reg ω 8) (reg ω 9)
 
-/-! ## Ω_L, `lookup` = 3 -/
+/-! ## Ω_L, `lookup` = 3 (an accumulate function in GP v0.8.1)
 
-/-- The account `ω_7` names: the service's own **s** for ω_7 ∈ {s, 2^64 − 1}, otherwise **d**[ω_7]. -/
-def namedAccount (self : ServiceAccount) (sid : Nat) (d : Accounts) (w : Nat) : Option ServiceAccount :=
-  if w = sid ∨ w = 2 ^ 64 - 1 then some self else d.get? w
+`lookup`, `read` and `info` are accumulate functions in GP v0.8.1 (§B, "Accumulate Functions");
+`write` is defined with the accumulation context in `JAM/Accumulate.lean`. These three only read the
+context, so they take the accumulating service's account **x**_s and the accounts **d** = (x_e)_d. -/
 
-/-- Ω_L(ϱ, ω, μ, **s**, s, **d**): look up the preimage of the 32-octet hash at ω_8 in the named
-    account, with g = 𝖬_{L,c} + 𝔊(𝖬_{L,ℓ}, ω_11). -/
-def hostLookup {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (self : ServiceAccount) (sid : Nat)
+/-- The account ω_7 names (GP v0.8.1, Ω_L, Ω_R, Ω_I): **x**_s for ω_7 = 2^64 − 1, otherwise
+    **d**[ω_7] if any. -/
+def namedAccount (self : ServiceAccount) (d : Accounts) (w : Nat) : Option ServiceAccount :=
+  if w = 2 ^ 64 - 1 then some self else d.get? w
+
+/-- Ω_L(ϱ, ω, μ, (x, y)) (GP v0.8.1): look up the preimage of the 32-octet hash at ω_8 in the
+    named account, with g = 𝖬_{L,c} + 𝔊(𝖬_{L,ℓ}, ω_11). -/
+def hostLookup {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (self : ServiceAccount)
     (d : Accounts) (x : X) : HostOut X :=
   let g := Constants.CgasLconst + memGas Constants.CgasLlinear (reg ω 11)
   charged g gas ω μ x fun out =>
     let h := reg ω 8
     let v : Except Unit (Option (List UInt8)) :=
       if !μ.rangeReadable h 32 then .error ()
-      else .ok ((namedAccount self sid d (reg ω 7)).bind fun a => a.preimages.get? (μ.readN h 32))
+      else .ok ((namedAccount self d (reg ω 7)).bind fun a => a.preimages.get? (μ.readN h 32))
     writeValue out v (reg ω 9) (reg ω 10) (reg ω 11)
 
 /-! ## Ω_R, `read` = 4 -/
 
-/-- Ω_R(ϱ, ω, μ, **s**, s, **d**): read the storage value under the key at ω_8 (length ω_9) of the
-    named account, with g = 𝖬_{R,c} + 𝔊(𝖬_{R,k,ℓ}, ω_9) + 𝔊(𝖬_{R,v,ℓ}, ω_12). -/
-def hostRead {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (self : ServiceAccount) (sid : Nat)
+/-- Ω_R(ϱ, ω, μ, (x, y)) (GP v0.8.1): read the storage value under the key at ω_8 (length ω_9) of
+    the named account, with g = 𝖬_{R,c} + 𝔊(𝖬_{R,k,ℓ}, ω_9) + 𝔊(𝖬_{R,v,ℓ}, ω_12). -/
+def hostRead {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (self : ServiceAccount)
     (d : Accounts) (x : X) : HostOut X :=
   let kO := reg ω 8
   let kZ := reg ω 9
   let g := Constants.CgasRconst + memGas Constants.CgasRkeylinear kZ +
     memGas Constants.CgasRvallinear (reg ω 12)
   charged g gas ω μ x fun out =>
-    let sStar := if reg ω 7 = 2 ^ 64 - 1 then sid else reg ω 7
-    let a := if sStar = sid then some self else d.get? sStar
     let v : Except Unit (Option (List UInt8)) :=
       if !μ.rangeReadable kO kZ then .error ()
-      else .ok (a.bind fun a => a.storageGet (μ.readN kO kZ))
+      else .ok ((namedAccount self d (reg ω 7)).bind fun a => a.storageGet (μ.readN kO kZ))
     writeValue out v (reg ω 10) (reg ω 11) (reg ω 12)
-
-/-! ## Ω_W, `write` = 5 -/
-
-/-- Ω_W(ϱ, ω, μ, **s**, s): set (or, for v_Z = 0, delete) the storage value under the key at ω_7
-    (length ω_8) to the octets at ω_9 (length ω_10). FULL if the result would fall below the
-    threshold balance; otherwise ω'_7 is the previous value's length (NONE if there was none).
-    g = 𝖬_{W,c} + 𝔊(𝖬_{W,k,ℓ}, k_Z) + 𝔊(𝖬_{W,v,ℓ}, v_Z). The context carries the account **s**. -/
-def hostWrite (gas : Nat) (ω : Regs) (μ : Memory) (self : ServiceAccount) :
-    HostOut ServiceAccount :=
-  let kO := reg ω 7
-  let kZ := reg ω 8
-  let vO := reg ω 9
-  let vZ := reg ω 10
-  let g := Constants.CgasWconst + memGas Constants.CgasWkeylinear kZ +
-    memGas Constants.CgasWvallinear vZ
-  charged g gas ω μ self fun out =>
-    if !μ.rangeReadable kO kZ then { out with status := .panic }
-    else
-      let k := μ.readN kO kZ
-      let a : Option ServiceAccount :=
-        if vZ = 0 then some (self.storageWrite k [])
-        else if μ.rangeReadable vO vZ then some (self.storageWrite k (μ.readN vO vZ))
-        else none
-      let l := match self.storageGet k with
-        | some v => v.length
-        | none => Result.NONE
-      match a with
-      | none => { out with status := .panic }
-      | some a =>
-        if a.minBalance > a.balance then { out with regs := setR7 ω Result.FULL }
-        else { out with regs := setR7 ω l, ctx := a }
 
 /-! ## Ω_I, `info` = 6 -/
 
-/-- The octets `info` returns for an account:
-    ℰ(c, ℰ_8(b, t, g, m, o), ℰ_4(i), ℰ_8(f), ℰ_4(r, a, p)). -/
+/-- The octets `info` returns for an account (GP v0.8.1, Ω_I):
+    ℰ(c, ℰ_4(u, u'), ℰ_8(b, b', t, g, m, o), ℰ_4(i), ℰ_8(f), ℰ_4(r, a, p)), with u the supervisor,
+    u' its creation slot and b' the supervisor balance. -/
 def infoValue (a : ServiceAccount) : List UInt8 :=
   let e := Codec.fixed
-  a.codeHash ++ e 8 a.balance ++ e 8 a.minBalance ++ e 8 a.minAccGas ++ e 8 a.minMemoGas ++
+  a.codeHash ++ e 4 a.supervisor ++ e 4 a.supervisorCreated ++ e 8 a.balance ++
+    e 8 a.supervisorBalance ++ e 8 a.minBalance ++ e 8 a.minAccGas ++ e 8 a.minMemoGas ++
     e 8 a.octets ++ e 4 a.items ++ e 8 a.gratis ++ e 4 a.created ++ e 4 a.lastAcc ++ e 4 a.parent
 
-/-- Ω_I(ϱ, ω, μ, s, **d**): information about service ω_7 (or s, for 2^64 − 1), with g = 𝖬_I. -/
-def hostInfo {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (sid : Nat) (d : Accounts) (x : X) :
-    HostOut X :=
+/-- Ω_I(ϱ, ω, μ, (x, y)) (GP v0.8.1): information about the named account, with g = 𝖬_I. -/
+def hostInfo {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (self : ServiceAccount)
+    (d : Accounts) (x : X) : HostOut X :=
   charged Constants.CgasI gas ω μ x fun out =>
-    let a := d.get? (if reg ω 7 = 2 ^ 64 - 1 then sid else reg ω 7)
-    writeValue out (.ok (a.map infoValue)) (reg ω 8) (reg ω 9) (reg ω 10)
+    writeValue out (.ok ((namedAccount self d (reg ω 7)).map infoValue)) (reg ω 8) (reg ω 9)
+      (reg ω 10)
 
 end JAM

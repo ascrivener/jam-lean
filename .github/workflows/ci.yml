@@ -134,8 +134,11 @@ jobs:
       - name: Erasure-coding vectors, tiny and full (GP v0.8.1 §H.3)
         run: lake build erasuretest
 
-      - name: Accumulate vectors (all but the listed deviations from GP 0.8.0)
-        run: lake build acctest
+      # Suspended on gp-v0.8.1 until v0.8.1 vectors exist (docs/gp-v0.8.1-migration.md, "Suspended until
+      # v0.8.1 vectors"): the vectors' services are v0.8.0 programs (old host-call ids and registers).
+      # The runner is still built; Tests/HostGeneralTest.lean has hand-written v0.8.1 guards meanwhile.
+      - name: Accumulate vectors (suspended until v0.8.1 vectors; build only)
+        run: lake build acctest-exe
 
       - name: Recent-history vectors (tiny and full)
         run: lake build historytest

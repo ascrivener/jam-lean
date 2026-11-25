@@ -57,7 +57,8 @@ def main (args : List String) : IO Unit := do
   let want := steps.map String.toNat!
   let p := V080.tiny080
   let tdir : System.FilePath := dir / name
-  let .ok (gh, graw) := Decoder.run (genesis p) (← IO.FS.readBinFile (tdir / "genesis.bin")) | throw (IO.userError "genesis")
+  let .ok (gh, graw0) := Decoder.run (genesis p) (← IO.FS.readBinFile (tdir / "genesis.bin")) | throw (IO.userError "genesis")
+  let .ok graw := upgradeRaw graw0 | throw (IO.userError "genesis: v0.8.1 form")
   let .ok σ0 := decodeState p graw.kvs | throw (IO.userError "genesis state")
   let mut σ := σ0
   let mut chain : Chain := { ancestors := [gh] }

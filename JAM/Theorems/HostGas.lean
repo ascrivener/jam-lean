@@ -40,7 +40,7 @@ theorem charged_gas_le {X : Type} (g gas : Nat) (ω : Regs) (μ : Memory) (x : X
 /-- Close `∀ o, (body o).gas = o.gas` by splitting every `if` and `match` in the body. -/
 macro "gas_body" : tactic =>
   `(tactic| (intro o; first | rfl | ((try dsimp only) <;> (repeat' split) <;>
-    (try simp only [writeValue_gas, AccHost.r7, AccHost.panic, AccHost.updX, AccHost.onSelf,
+    (try simp only [writeValue_gas, AccHost.r7, AccHost.panic, AccHost.updX,
       RefineHost.r7, RefineHost.panic]) <;> rfl)))
 
 /-! ## General functions -/
@@ -61,25 +61,29 @@ theorem hostFetch_gas {X} (gas : Nat) (ω : Regs) (μ : Memory) (cx : FetchConte
     (hostFetch gas ω μ cx x).gas ≤ gas :=
   charged_gas_le _ _ _ _ _ _ fun _ => writeValue_gas ..
 
-theorem hostLookup_gas {X} (gas : Nat) (ω : Regs) (μ : Memory) (s : ServiceAccount) (sid : Nat)
-    (d : Accounts) (x : X) : (hostLookup gas ω μ s sid d x).gas ≤ gas :=
+theorem hostLookup_gas {X} (gas : Nat) (ω : Regs) (μ : Memory) (s : ServiceAccount)
+    (d : Accounts) (x : X) : (hostLookup gas ω μ s d x).gas ≤ gas :=
   charged_gas_le _ _ _ _ _ _ fun _ => writeValue_gas ..
 
-theorem hostRead_gas {X} (gas : Nat) (ω : Regs) (μ : Memory) (s : ServiceAccount) (sid : Nat)
-    (d : Accounts) (x : X) : (hostRead gas ω μ s sid d x).gas ≤ gas :=
+theorem hostRead_gas {X} (gas : Nat) (ω : Regs) (μ : Memory) (s : ServiceAccount)
+    (d : Accounts) (x : X) : (hostRead gas ω μ s d x).gas ≤ gas :=
   charged_gas_le _ _ _ _ _ _ fun _ => writeValue_gas ..
 
-theorem hostWrite_gas (gas : Nat) (ω : Regs) (μ : Memory) (s : ServiceAccount) :
-    (hostWrite gas ω μ s).gas ≤ gas :=
-  charged_gas_le _ _ _ _ _ _ (by gas_body)
-
-theorem hostInfo_gas {X} (gas : Nat) (ω : Regs) (μ : Memory) (sid : Nat) (d : Accounts) (x : X) :
-    (hostInfo gas ω μ sid d x).gas ≤ gas :=
+theorem hostInfo_gas {X} (gas : Nat) (ω : Regs) (μ : Memory) (s : ServiceAccount) (d : Accounts)
+    (x : X) : (hostInfo gas ω μ s d x).gas ≤ gas :=
   charged_gas_le _ _ _ _ _ _ fun _ => writeValue_gas ..
 
 /-! ## Accumulate -/
 
 namespace AccHost
+
+theorem write_gas (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
+    (write gas ω μ c).gas ≤ gas := by
+  unfold write charge; exact charged_gas_le _ _ _ _ _ _ (by gas_body)
+
+theorem supervisor_gas (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
+    (supervisor gas ω μ c).gas ≤ gas := by
+  unfold supervisor charge; exact charged_gas_le _ _ _ _ _ _ (by gas_body)
 
 theorem bless_gas (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
     (bless env gas ω μ c).gas ≤ gas := by
@@ -144,7 +148,8 @@ theorem dispatch_gas (env : AccEnv) (n gas : Nat) (ω : Regs) (μ : Memory) (c :
     | with_reducible exact hostLookup_gas ..
     | with_reducible exact hostRead_gas ..
     | with_reducible exact hostInfo_gas ..
-    | (simp only [onSelf]; exact hostWrite_gas ..)
+    | with_reducible exact write_gas ..
+    | with_reducible exact supervisor_gas ..
     | with_reducible exact bless_gas ..
     | with_reducible exact assign_gas ..
     | with_reducible exact designate_gas ..
@@ -158,7 +163,7 @@ theorem dispatch_gas (env : AccEnv) (n gas : Nat) (ω : Regs) (μ : Memory) (c :
     | with_reducible exact query_gas ..
     | with_reducible exact yield_gas ..
     | with_reducible exact provide_gas ..
-    | (dsimp only; omega)
+    | (dsimp only; split <;> (dsimp only; omega))
 
 end AccHost
 

@@ -135,12 +135,16 @@ def storageWrite (a : ServiceAccount) (k v : List UInt8) : ServiceAccount :=
   else { a with entries := a.entries.insert (storageKey k) v, items := i0 + 1,
                 octets := o0 + (34 + k.length + v.length) }
 
-/-- **l**[h, z]: the request history of (h, z), if any. The keys of **l** are (ℍ, ℕ_L) with
-    ℕ_L = ℕ_{2³²} (GP eq. `serviceaccount`), so z ≥ 2³² has none. A stored value that does not
+/-- The bound of ℕ_L, the request lengths: ℕ_L = ℕ_{2³² − 2}, below the state-key discriminators
+    2³² − 2 and 2³² − 1 (GP v0.8.1 eq. `serviceaccount` and its definition of ℕ_L, GP #542). -/
+def requestLenBound : Nat := 2 ^ 32 - 2
+
+/-- **l**[h, z]: the request history of (h, z), if any. The keys of **l** are (ℍ, ℕ_L)
+    (`requestLenBound`, GP v0.8.1 eq. `serviceaccount`), so z ∉ ℕ_L has none. A stored value that does not
     decode as ⟦ℕ_T⟧_{:3} (only a state not built by the model can hold one) reads as none: Adam's
     decision of 2026-11-15 (`docs/storage-key-design.md`). -/
 def requestGet (a : ServiceAccount) (h : List UInt8) (z : Nat) : Option (List Nat) :=
-  if z < 2 ^ 32 then (a.entries.get? (requestKey h z)).bind decodeSlots else none
+  if z < requestLenBound then (a.entries.get? (requestKey h z)).bind decodeSlots else none
 
 /-- The account with **l**[h, z] set to `t`. A new key adds 2 to a_i and 81 + z to a_o
     (GP eq. `deposits`). "New" means `requestGet` finds none: an undecodable stored value (only an
@@ -215,7 +219,7 @@ theorem storageGet_eq (a : ServiceAccount) (k : List UInt8) :
 
 /-- Representation lemma: **l**[h, z] is the decoded `entries` value under (h, z)'s state key. -/
 theorem requestGet_eq (a : ServiceAccount) (h : List UInt8) (z : Nat) :
-    a.requestGet h z = if z < 2 ^ 32 then (a.entries.get? (requestKey h z)).bind decodeSlots
+    a.requestGet h z = if z < requestLenBound then (a.entries.get? (requestKey h z)).bind decodeSlots
       else none := rfl
 
 theorem storageGet_write_same (a : ServiceAccount) (k v : List UInt8) :
@@ -233,7 +237,7 @@ theorem storageGet_write_other (a : ServiceAccount) (k k' v : List UInt8)
 
 /-- Setting (h, z) to a history in ⟦ℕ_T⟧_{:3}, with z ∈ ℕ_L, reads back that history. -/
 theorem requestGet_set_same (a : ServiceAccount) (h : List UInt8) (z : Nat) (t : List Nat)
-    (hz : z < 2 ^ 32) (hl : t.length ≤ 3) (hx : ∀ x ∈ t, x < 2 ^ 32) :
+    (hz : z < requestLenBound) (hl : t.length ≤ 3) (hx : ∀ x ∈ t, x < 2 ^ 32) :
     (a.requestSet h z t).requestGet h z = some t := by
   unfold requestSet
   split <;>

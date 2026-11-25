@@ -42,7 +42,8 @@ Both targets of the narrowed scope (decision 19) are proved and on main, with na
   them is checked (`Vendored/FieldRO.lean`).
 - **CI.** One check for branch protection: `proofs` (#232) passes exactly when the merge rule holds.
   Adam has added `proofs` as a required check on main. Main's runs are serialized (#225).
-  A proofs build with a warm cache takes about 40 min to 2.5 h.
+  A proofs build with a warm cache takes about 40 min to 2.5 h. Since 2026-11-25 the proofs run only
+  on demand (Actions → CI → Run workflow); pushes and PRs run `model` only.
 - **Not started, need Adam:** T1 Import and empty payloads, M2 (the real decoder), discharging the
   named hypotheses (Fmt sites, handlers), P3 stage 1 and post_simp (branches pushed).
 

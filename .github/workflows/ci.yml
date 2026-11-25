@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
   pull_request:
+  # The proofs run only on demand (Adam, 2026-11-25): Actions > CI > Run workflow, on main or any branch.
+  workflow_dispatch:
 
 # One run per PR at a time: a new push cancels the run it replaces. On main, runs are serialized in one
 # group and never cancelled: a running main run always finishes and saves its .lake, and the next one
@@ -17,7 +19,9 @@ concurrency:
 # Two lines of jobs (docs/BUILD-INFRA.md):
 # * `model` builds PVM, JAM and the tests, and runs every vector suite: minutes, on every run.
 # * `attempt-1..3` build and check everything, including the Services proofs: hours when cold. They run
-#   on main always, and on a PR only when `changes` finds that it can affect Services.
+#   only on a manual run (workflow_dispatch). Pushes and PRs skip them, so a model change that breaks a
+#   Services proof shows up at the next manual run. To gate PRs on the proofs again, put back the
+#   detector step (`scripts/services-affected.py`) for pull_request events.
 # A PR may merge when `model` is green and the attempts are green or skipped.
 jobs:
   changes:
@@ -26,11 +30,11 @@ jobs:
     outputs:
       affected: ${{ steps.detect.outputs.affected }}
     steps:
-      - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
-      - name: Can this change affect the Services proofs?
+      - name: Run the proofs? (only on a manual run)
         id: detect
-        run: scripts/services-affected.py ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ "${{ github.event_name }}" = workflow_dispatch ]; then a=true; else a=false; fi
+          echo "affected=$a" | tee -a "$GITHUB_OUTPUT"
 
   model:
     runs-on: ubuntu-latest

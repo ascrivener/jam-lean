@@ -40,8 +40,12 @@ still open.
   - **the proofs** (`attempt-1..3`, `build.yml`): the largest proofs, the full `lake build`,
     `scripts/CheckAxioms.lean`, witnesscheck, bootstrapcheck and the generated-file checks, then the
     cache save and (main) the `lake-cache` publish.
-- The proofs run on `main` always. On a PR they run only when the `changes` job
-  (`scripts/services-affected.py`) finds that the PR can affect Services. A path counts when it is
+- The proofs run **only on a manual run** (`workflow_dispatch`, decided 2026-11-25): pushes and PRs
+  skip them, and `proofs` then passes on `model` alone. A manual run on `main` also saves the cache and
+  publishes `lake-cache`, so `scripts/fetch-lake.sh` unpacks the build of the last manual run and
+  `lake build` rebuilds the delta since then.
+- `scripts/services-affected.py` (not called by CI now; restore it in the `changes` job to gate PRs
+  on the proofs again) decides whether a PR can affect Services. A path counts when it is
   under `Services/` or `services/`, is `Services.lean` or build configuration (`lakefile.lean`,
   `lean-toolchain`, `lake-manifest.json`, `.github/`), is a script other than the model-only ones,
   or is a module that a Services module, `Tests.WitnessCheck`, `Tests.BootstrapCheck` or
@@ -49,8 +53,8 @@ still open.
 - In the current import graph, Services imports 15 of JAM's modules (Codec, Accumulate, Refine, …)
   and every PVM base module, but not BlockImport, Safrole, Disputes, Crypto or the other STF modules.
   Changes to those, to tests and to docs get a verdict from `model` alone.
-- A PR may merge when `model` is green and the attempts are green or skipped. If `main`'s proofs fail
-  after a PR merged with `affected=false`, fix the detector.
+- A PR may merge when `model` is green and the attempts are green or skipped. A PR doing proof work
+  needs a green manual run on its branch first.
 
 ## Cloud sessions: start from main's latest build
 
@@ -58,7 +62,7 @@ Cloud sessions can't reach the Actions cache or artifacts: the proxy refuses `/a
 and artifact downloads need a token. They can reach GitHub release assets of this public repository
 without a token. So:
 
-- **`scripts/publish-lake.sh`** runs at the end of every green main run (the job has
+- **`scripts/publish-lake.sh`** runs at the end of every green proofs run on main (manual runs only) (the job has
   `permissions: contents: write`). It:
   - packs `.lake` as tar + zstd, about 2.8 GB;
   - splits the archive into parts under GitHub's 2 GiB asset limit;

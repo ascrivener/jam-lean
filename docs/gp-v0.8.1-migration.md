@@ -1,5 +1,9 @@
 # Migrating the model from GP v0.8.0 to v0.8.1
 
+**Status (2026-11-25): done.** Phases 1 and 2 and both sweeps are merged; `gp-v0.8.1` merges into
+`main`. The last v0.8.0 commit of `main` is `5055102` (to be tagged `gp-v0.8.0`). Checks suspended
+until v0.8.1 vectors exist are listed below.
+
 Decided by Adam on 2026-11-25. Source: tag v0.8.1 of gavofyork/graypaper (2026-11-16).
 
 - **Integration branch `gp-v0.8.1`.** Migration PRs target this branch, not `main`. Until the

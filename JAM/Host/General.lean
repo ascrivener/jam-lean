@@ -274,7 +274,7 @@ def hostRead {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (self : ServiceAcc
     let a := if sStar = sid then some self else d.get? sStar
     let v : Except Unit (Option (List UInt8)) :=
       if !μ.rangeReadable kO kZ then .error ()
-      else .ok (a.bind fun a => a.storage.get? (μ.readN kO kZ))
+      else .ok (a.bind fun a => a.storageGet (μ.readN kO kZ))
     writeValue out v (reg ω 10) (reg ω 11) (reg ω 12)
 
 /-! ## Ω_W, `write` = 5 -/
@@ -296,10 +296,10 @@ def hostWrite (gas : Nat) (ω : Regs) (μ : Memory) (self : ServiceAccount) :
     else
       let k := μ.readN kO kZ
       let a : Option ServiceAccount :=
-        if vZ = 0 then some { self with storage := self.storage.erase k }
-        else if μ.rangeReadable vO vZ then some { self with storage := self.storage.insert k (μ.readN vO vZ) }
+        if vZ = 0 then some (self.storageWrite k [])
+        else if μ.rangeReadable vO vZ then some (self.storageWrite k (μ.readN vO vZ))
         else none
-      let l := match self.storage.get? k with
+      let l := match self.storageGet k with
         | some v => v.length
         | none => Result.NONE
       match a with

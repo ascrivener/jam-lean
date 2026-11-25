@@ -31,7 +31,7 @@ def preimagesOrdered : List (Nat × List UInt8) → Bool
 /-- Y(**d**, s, **i**) (GP §12.2): s has an account whose request for (ℋ(**i**), |**i**|) is []. -/
 def providable (d : Accounts) (s : Nat) (i : List UInt8) : Bool :=
   match d.get? s with
-  | some a => a.requests.get? ((Blake2b.hash256 ⟨i.toArray⟩).toList, i.length) == some []
+  | some a => a.requestGet (Blake2b.hash256 ⟨i.toArray⟩).toList i.length == some []
   | none => false
 
 /-- The preimage transition (GP §12.4): check E_P against the prior accounts δ, then integrate it

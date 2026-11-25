@@ -36,6 +36,12 @@ def keyOfServiceData (s : Nat) (h : List UInt8) : List UInt8 :=
   let a := (Blake2b.hash256 ⟨h.toArray⟩).toList
   [n[0]!, a[0]!, n[1]!, a[1]!, n[2]!, a[2]!, n[3]!, a[3]!] ++ (a.drop 4).take 23
 
+/-- C(s, **x**) from the 27 octets of ℋ(**x**) it keeps (merklization eq. C), the form in which
+    service accounts hold their storage and request keys (`ServiceAccount.entries`). -/
+def keyOfServiceHash (s : Nat) (a : List UInt8) : List UInt8 :=
+  let n := n4 s
+  [n[0]!, a[0]!, n[1]!, a[1]!, n[2]!, a[2]!, n[3]!, a[3]!] ++ (a.drop 4).take 23
+
 /-- B(l, r) = [0] ⌢ bits(l)_{1…} ⌢ bits(r) (GP §D.2), as 64 octets: the first bit of l is
     replaced by the branch marker 0. -/
 def branch (l r : List UInt8) : List UInt8 :=

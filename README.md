@@ -821,26 +821,26 @@ noted here and in a comment at the definition.
       use the general natural encoding ℰ for every field, gas included; the traces agree, while
       Appendix D says numeric state terms use fixed-length encodings by the size of the term.
     * *The trace runner* (`Tests/TraceTest.lean`, `lake build tracetest` after
-      `scripts/fetch-trace-vectors.sh`). Trace states are raw key-values. A storage key is hashed
-      in C(s, h), so a raw state with storage cannot be decoded into 𝔸 (whose storage is keyed by
-      the original keys). The runner decodes only the genesis state (preimages and requests are
-      recognised by hashing) and keeps the model's own σ from there, comparing T(σ') and M_σ(σ')
-      with every post-state. Cryptography: every signature, VRF and ring proof is accepted (the
+      `scripts/fetch-trace-vectors.sh`). Trace states are raw key-values. The model holds an
+      account's storage and requests under the hash part of their state keys, with a_o and a_i
+      carried (`JAM.ServiceAccount`), so every raw state decodes (`Tests/TraceState.lean`; preimages
+      are recognised by hashing). The runner decodes the genesis state and keeps the model's own σ
+      from there, comparing T(σ') and M_σ(σ') with every post-state; it also checks that every raw
+      state of the trace decodes and re-serializes to the same key-values and root. Cryptography: every signature, VRF and ring proof is accepted (the
       blocks are known valid); Y is the Bandersnatch VRF specification's output hash, SHA-512 of the
       suite string, 3, the 32-octet output point and 0, cut to 32 octets (`JAM/Sha512.lean`, FIPS 180-4). This follows the output-hash convention of the Bandersnatch VRF specification, which GP Appendix G defers to; it is beyond the paper's text. Only the runner's `Crypto` instance uses it: `JAM.Crypto` stays a parameter and no STF changed; O
       is answered from (γ_P, γ_Z) of the states already seen, as every state has γ_Z = O(γ_P).
     * *Differences and how the runner continues.* After a block whose post-state differs, the runner
-      reports it and continues from the trace's post-state, decoding its storage entries under the
-      storage keys the model's own states hold; when an entry's key is unknown it stops. Each
+      reports it and continues from the trace's post-state. Each
       difference is listed in `knownDeviations` with its reason, found from a host-call log
       (`Tests/TraceDebug.lean`). All of them are the vectors' `bless` deviation (GP #519, in their
       CHANGELOG; the accumulate vectors' `bless_from_non_manager` of note 15): in GP 0.8.0 `bless`
       from a service other than χ_M answers HUH, and the fuzz service then panics; in the traces
       it is accepted. `fuzzy_light` blocks 77, 118, 148, 151, 163 and 165, and 86 and 179 where the
       caller is the delegator χ_V handing its role over. In `fuzzy` block 17 the fuzz service
-      stores the results of `bless`, `designate` and `assign` calls without the privilege, so the
-      trace's storage holds an entry under a key the model never wrote and the remaining 183 blocks
-      cannot be run model-faithfully.
+      stores the results of `bless`, `designate` and `assign` calls without the privilege. Since
+      storage-key stage 2 the runner continues from there (every raw state decodes); `fuzzy` (not
+      run by CI) then has 35 further blocks whose post-state differs, not yet classified.
     * *Rejected blocks.* The 7 steps whose root does not change (`fuzzy` 37–39, `fuzzy_light`
       152–155) are blocks to reject. `fuzzy_light` 152–155 are rejected by the model too, with a
       report whose code hash is not the service's (`badCodeHash`), not for a cryptographic reason,

@@ -16,8 +16,10 @@ the model's own σ and, after each block, compares T(σ') and M_σ(σ') with the
 key by key. A step whose post-state root equals its pre-state root is a block the importer must
 reject; the runner then expects an error and keeps σ. If the model's σ does not match a step's
 post-state, the runner reports it (or, at a step listed in `knownDeviations`, counts it as a
-known deviation) and continues from the trace's post-state when that can be decoded: storage
-entries are matched against the storage keys the model's σ and σ' hold. Otherwise it stops.
+known deviation) and continues from the trace's post-state, which `decodeState` always decodes.
+
+Every raw state of the trace (genesis, and each step's pre- and post-state) is also checked by
+`roundTrip`: decoded and serialized again, it must give the same key-values and root.
 
 **Vector edit dictated by GP v0.8.1 (#562).** The trace blocks are in the v0.8.0 encoding, whose
 assurances carry an anchor (equal to H_P). Each block is read with `Tests.V080.step080`, which
@@ -65,9 +67,21 @@ def diffKvs (got exp : List (List UInt8 × List UInt8)) : List String :=
     if (exp.lookup k).isNone then some s!"  extra {componentName k} {hexS k}" else none
   missing ++ extra
 
-/-- The storage keys of σ, which a raw state's hashed storage entries can be matched against. -/
-def storageKeys (σ : State) : List (Nat × List UInt8) :=
-  σ.accounts.toList.flatMap fun (s, a) => a.storage.keys.map (s, ·)
+/-- T(σ) round trip on a raw state of the trace: decode it (`decodeState`), serialize the result
+    again and compare with the raw key-values, key by key and octet by octet, and the state roots.
+    This checks the loader and T together, including a_o and a_i, which the decoded accounts carry
+    from C(255, s) and T writes back. -/
+def roundTrip (p : Params) (what : String) (raw : RawState) : List String :=
+  match decodeState p raw.kvs with
+  | .error e => [s!"{what}: round trip: cannot decode: {e}"]
+  | .ok σ =>
+    let got := σ.serializeList
+    let gotM : Std.ExtTreeMap (List UInt8) (List UInt8) := Std.ExtTreeMap.ofList got
+    let same := got.length == raw.kvs.length && gotM.size == got.length &&
+      raw.kvs.all fun (k, v) => gotM.get? k == some v
+    if same && σ.root == raw.root.toList then []
+    else [s!"{what}: round trip differs ({got.length} keys against {raw.kvs.length})\n" ++
+      "\n".intercalate ((diffKvs got raw.kvs).take 12)]
 
 /-- Steps where the trace follows a rule other than GP v0.8.0's, by trace and step number, with
     the reason. At such a step the runner reports the difference, then continues from the trace's
@@ -86,6 +100,9 @@ structure Summary where
   passed : Nat := 0
   rejectedOk : Nat := 0
   deviations : Nat := 0
+  /-- Raw states (genesis, and each step's pre- and post-state) checked by `roundTrip`. -/
+  roundTrips : Nat := 0
+  roundTripFails : List String := []
   failures : List String := []
   stoppedAt : Option Nat := none
   totalMs : Nat := 0
@@ -108,7 +125,7 @@ def runTrace (dir : System.FilePath) (name : String) : IO Summary := do
   let mut σ ← match decodeState p graw.kvs with
     | .ok s => pure s
     | .error e => throw (IO.userError s!"{name}: genesis state: {e}")
-  let mut sum : Summary := { name }
+  let mut sum : Summary := { name, roundTrips := 1, roundTripFails := roundTrip p "genesis" graw }
   if σ.root != graw.root.toList then
     sum := { sum with failures := ["genesis: decoded state's root differs"] }
   let mut chain : Chain := { ancestors := [gh] }
@@ -118,10 +135,12 @@ def runTrace (dir : System.FilePath) (name : String) : IO Summary := do
   for f in files do
     let (st, xh) ← readStep (tdir / f)
     let idx := sum.steps + 1
-    sum := { sum with steps := idx }
+    sum := { sum with steps := idx, roundTrips := sum.roundTrips + 2,
+                      roundTripFails := sum.roundTripFails ++ roundTrip p s!"{f} pre" st.pre ++
+                        roundTrip p s!"{f} post" st.post }
     -- The model's σ against the step's pre-state.
     if σ.root != st.pre.root.toList then
-      match decodeState p st.pre.kvs (storageKeys σ) with
+      match decodeState p st.pre.kvs with
       | .ok s =>
         sum := { sum with failures := sum.failures ++ [s!"{f}: σ ≠ pre-state; re-synchronised"] }
         σ := s
@@ -146,7 +165,7 @@ def runTrace (dir : System.FilePath) (name : String) : IO Summary := do
                         failures := sum.failures ++ [s!"{f}: rejected as expected ({repr e})"] }
     | .error e, false =>
       sum := { sum with failures := sum.failures ++ [s!"{f}: rejected a valid block: {repr e}"] }
-      match decodeState p st.post.kvs (storageKeys σ) with
+      match decodeState p st.post.kvs with
       | .ok s => σ := s; chain := { ancestors := chain.ancestors ++ [st.block.header] }
       | .error _ => sum := { sum with stoppedAt := some idx }; break
     | .ok _, true =>
@@ -164,7 +183,7 @@ def runTrace (dir : System.FilePath) (name : String) : IO Summary := do
           | some (_, _, why) => s!"{f}: known deviation: {why}"
           | none => s!"{f}: post-state root differs"
         -- Continue from the trace's post-state, with the storage keys of σ and σ'.
-        match decodeState p st.post.kvs (storageKeys σ ++ storageKeys s') with
+        match decodeState p st.post.kvs with
         | .ok s =>
           sum := { sum with failures := sum.failures ++ [head ++ "; continuing from the trace's post-state\n" ++ "\n".intercalate (d.take 12)] }
           σ := s
@@ -214,8 +233,11 @@ def main (args : List String) : IO UInt32 := do
   for n in names do
     let s ← runTrace dir n
     IO.println s!"{n}: {s.passed}/{s.steps} imported with matching state, {s.rejectedOk} rejected as expected, {s.deviations} known deviations; total {s.totalMs} ms, slowest block {s.maxStep} at {s.maxMs} ms"
+    IO.println s!"  T(σ) round trip: {s.roundTrips - s.roundTripFails.length}/{s.roundTrips} raw states decode and re-serialize byte-identically"
+    for f in s.roundTripFails do IO.println s!"  {f}"
+    unless s.roundTripFails.isEmpty do bad := true
     for f in s.failures do IO.println s!"  {f}"
     if let some i := s.stoppedAt then
-      IO.println s!"  stopped at step {i}: the remaining steps are not runnable model-faithfully (their states hold storage under keys the model never wrote)"
+      IO.println s!"  stopped at step {i}: the trace's state could not be decoded"
     if s.passed + s.rejectedOk + s.deviations != s.steps then bad := true
   return if bad then 1 else 0

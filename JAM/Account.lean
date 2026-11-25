@@ -274,6 +274,17 @@ theorem storageWrite_frame (a : ServiceAccount) (k v : List UInt8) :
       a'.parent = a.parent := by
   unfold storageWrite; split <;> split <;> simp
 
+@[simp] theorem storageWrite_created (a : ServiceAccount) (k v : List UInt8) :
+    (a.storageWrite k v).created = a.created := (storageWrite_frame a k v).2.2.2.2.2.2.1
+
+@[simp] theorem requestSet_created (a : ServiceAccount) (h : List UInt8) (z : Nat) (t : List Nat) :
+    (a.requestSet h z t).created = a.created := by
+  unfold requestSet; split <;> rfl
+
+@[simp] theorem requestErase_created (a : ServiceAccount) (h : List UInt8) (z : Nat) :
+    (a.requestErase h z).created = a.created := by
+  unfold requestErase; split <;> rfl
+
 /-- Setting a request leaves storage unchanged, for keys whose state keys differ. -/
 theorem storageGet_requestSet (a : ServiceAccount) (h : List UInt8) (z : Nat) (t : List Nat)
     (k : List UInt8) (hk : requestKey h z ≠ storageKey k) :

@@ -95,7 +95,10 @@ section):
 - `psi_eq_psiFast` (`PVM/Fast.lean`, registered with `@[csimp]`): the fast interpreter that the
   tests run is equal to the paper-literal `psi`.
 - `psiA_confined` and `psiR_noExports` (`JAM/Theorems/Confinement.lean`): code that never names
-  certain host calls cannot touch other accounts or export segments.
+  certain host calls cannot touch other accounts or export segments. Since GP v0.8.1 (supervisors,
+  #539) `psiA_confined` also assumes `NoSupervisee e.accounts s`: in the initial state no other
+  service has s as its effective supervisor (∀ d ≠ s, E(**e**_d, d) ≠ s), because a service may
+  change any service it effectively supervises (Adam, 2026-11-25).
 - `psi_freeRun`, `psiM_of_freeRunH` and `psiM_of_stepsH` (`PVM/Logic/`): the gas-free reasoning
   layer used below. It is sound against Ψ and Ψ_M.
 - `FreeStepsH.keepRO` (`JAM/Theorems/KeepRO.lean`): a gas-free refine run (under

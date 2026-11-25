@@ -219,14 +219,19 @@ def OperandTuple.encode (o : OperandTuple) : List UInt8 :=
 structure DeferredTransfer where
   source : ServiceId
   dest : ServiceId
+  /-- whether the destination's supervisor balance is credited rather than its balance
+      (GP v0.8.1 eq. `defxfer`, GP #539) -/
+  destSupervisor : Bool := false
   amount : Nat
   /-- the 𝖶_T-octet memo -/
   memo : Blob
   gas : Nat
 
-/-- ℰ(x ∈ 𝕏) = ℰ(1, ℰ_4(s), ℰ_4(d), ℰ_8(a), m, ℰ_8(g)) (GP Appendix C). -/
+/-- ℰ(x ∈ 𝕏) = ℰ(1, ℰ_4(s), ℰ_4(d), x_u, ℰ_8(a), m, ℰ_8(g)) with x_u the destination-supervisor
+    flag (GP v0.8.1 Appendix C, GP #539). -/
 def DeferredTransfer.encode (x : DeferredTransfer) : List UInt8 :=
-  nat 1 ++ fixed 4 x.source ++ fixed 4 x.dest ++ fixed 8 x.amount ++ blob x.memo ++ fixed 8 x.gas
+  nat 1 ++ fixed 4 x.source ++ fixed 4 x.dest ++ nat (if x.destSupervisor then 1 else 0) ++
+    fixed 8 x.amount ++ blob x.memo ++ fixed 8 x.gas
 
 /-- An accumulation input: an operand tuple or a deferred transfer (GP §12, the union 𝕌 ∪ 𝕏). -/
 inductive AccumulateInput where

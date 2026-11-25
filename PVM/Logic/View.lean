@@ -171,9 +171,9 @@ def decode (V : CodeView) (i : Nat) : Option Instr :=
     (TwoRegTwoImmOp.ofOpcode? op).map fun o =>
       .twoRegTwoImm o lo hi (V.immAt (i + 3) lX) (V.immAt (i + 3 + lX) lY)
   | some .threeReg =>
-    -- r_A = min(12, ζ_{ı+1} mod 16), r_B = min(12, ⌊ζ_{ı+1} ÷ 16⌋), r_D = min(12, ζ_{ı+2})
-    -- (the paper does not reduce ζ_{ı+2} mod 16 here; README, note 4)
-    (ThreeRegOp.ofOpcode? op).map fun o => .threeReg o lo hi (regIdx (V.zeta (i + 2)))
+    -- r_A = min(12, ζ_{ı+1} mod 16), r_B = min(12, ⌊ζ_{ı+1} ÷ 16⌋),
+    -- r_D = min(12, ζ_{ı+2} mod 16) (GP v0.8.1 §A.5.13, #554)
+    (ThreeRegOp.ofOpcode? op).map fun o => .threeReg o lo hi (regIdx (V.zeta (i + 2) % 16))
 
 /-- 𝔟(**c**, ı) (GP §A.10): 1 if ζ_{ı+1+skip(ı)} or ζ_{ı_target} is `unlikely` or `trap`, else 20. -/
 def branchCost (V : CodeView) (i : Nat) (target : Int) : Nat :=

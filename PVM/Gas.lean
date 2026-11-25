@@ -37,7 +37,9 @@ namespace Instr
 
 /-- š: the registers read by an instruction, "as described by the equations in §A.5", i.e.
     every ω_X (unprimed) that its mutation mentions, regardless of whether it would be needed
-    at runtime. `ecalli` reads none (§A.9). -/
+    at runtime. `ecalli` reads none (§A.9). The destination register of `cmov_iz`, `cmov_nz`,
+    `cmov_iz_imm` and `cmov_nz_imm` counts as a source too (GP v0.8.1 §A.9, stated by #559; we
+    already read it so from their mutations, which keep ω_D when the condition fails). -/
 def srcRegs : Instr → List RegIdx
   | .noArgs _ => []
   | .oneImm _ _ => []

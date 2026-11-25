@@ -16,6 +16,7 @@ import PVM.Theorems.Termination
 import PVM.Theorems.Invocation
 import PVM.Theorems.HostIds
 import PVM.Theorems.InitMem
+import PVM.Theorems.BlobLimits
 import PVM.Logic.Free
 import PVM.Logic.Host
 import PVM.Logic.Invariant

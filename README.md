@@ -806,8 +806,8 @@ noted here and in a comment at the definition.
       (master after v0.8.0): `bad_exports_count` when (r_s)_n ≠ ∑ e, `refine_load_too_high` for
       a sum over its limit, `bundle_too_big` for (r_s)_l > 𝖶_B and `auth_gas_too_high` for
       r_g > 𝖦_I. The reports suite runs master 5e8d2a2's vectors, which use v0.8.0's 𝖦_I and
-      v0.8.1's 𝖶_B. Its tiny `lookup_anchor_not_recent-1` assumes a tiny 𝖫 of 24 that the
-      vectors' README does not list; it is a known deviation (`docs/upstream-candidates.md`).
+      v0.8.1's 𝖶_B. The tiny chain's 𝖫 is 24 (`Params.tiny`; the README omits it, the fuzzer
+      protocol and `lookup_anchor_not_recent-1` use it).
 
 33. **Block import Υ** (§4, §5, Appendix D).
     * *Composition.* `JAM.importBlock` (`JAM/BlockImport.lean`) composes the section transitions

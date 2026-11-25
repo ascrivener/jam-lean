@@ -42,6 +42,7 @@ is restored as soon as davxy/jam-test-vectors publishes v0.8.1 vectors.
 
 | Check | Why suspended | What still runs |
 |---|---|---|
+| `acctest` (accumulate STF vectors) | The vectors' service binaries are v0.8.0 programs: v0.8.0 host-call ids (bless 15 … provide 27) and register layouts (write's key at ω_7, and so on), so under v0.8.1's host calls (#533, #539) even plain storage writes answer WHO (15 of 63 pass). | The runner is built; hand-written v0.8.1 guards in `Tests/HostGeneralTest.lean` cover the accumulate host calls (write, supervisor, new, transfer, eject, bless), the discard rule N and the transfer partition T. `preimagestest` runs no service code and stays. |
 | `tracetest` block import | Every trace header's H_R is a v0.8.0 state root; v0.8.1's C(255) (#539) and C(13) (#564) encodings give other roots, so Υ rejects every block. Rewriting headers would fabricate vectors. | The T(σ) round trip of every raw state, after the test-only conversion `Tests.TraceState.upgradeRaw` (C(255): a_u = s, a_u' = a_r, a_b' = 0; C(13) re-encoded). |
 
 ## jam-lean-target follow-ups (after the merge to `main`)

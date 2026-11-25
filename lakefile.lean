@@ -30,7 +30,8 @@ lean_lib Tests where
   globs := #[.one `Tests.Vectors, .one `Tests.Invocation, .one `Tests.LogicExample,
     .one `Tests.Blake2bTest, .one `Tests.HostGeneralTest, .one `Tests.JamJson,
     .one `Tests.KeccakTest, .one `Tests.RefineTest, .one `Tests.BlockJson,
-    .one `Tests.StfRunner, .one `Tests.ReportsJson, .one `Tests.TraceState, .one `Tests.Sha512Test]
+    .one `Tests.StfRunner, .one `Tests.ReportsJson, .one `Tests.TraceState, .one `Tests.Sha512Test,
+    .one `Tests.V080]
 
 lean_exe «pvmtest-exe» where
   root := `Tests.PvmTest

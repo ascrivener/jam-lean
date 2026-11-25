@@ -50,12 +50,13 @@ def guarantee (j : Json) : Except String Guarantee := do
            credential := ← list j "signatures" fun s => do
              return (← natField s "validator_index", ← hexField s "signature") }
 
-/-- An assurance; its bit field has `cores` bits. -/
+/-- An assurance; its bit field has `cores` bits. The v0.8.0 vectors' `anchor` is not read: GP
+    v0.8.1 removes it (#562, see `Tests.V080`). -/
 def assurance (cores : Nat) (j : Json) : Except String Assurance := do
   let some bits := PVM.Blob.decodeBits? (← hexField j "bitfield").toList cores
     | die s!"bit field is not {cores} bits"
-  return { anchor := ← hexField j "anchor", bitfield := bits.toList,
-           assurer := ← natField j "validator_index", signature := ← hexField j "signature" }
+  return { bitfield := bits.toList, assurer := ← natField j "validator_index",
+           signature := ← hexField j "signature" }
 
 def disputes (j : Json) : Except String Disputes := do
   return {

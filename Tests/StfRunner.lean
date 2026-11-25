@@ -48,7 +48,7 @@ def runSuite (name : String) (dirs : List (String × Params × System.FilePath))
     return 1
   let knownKeys := known.map (·.1)
   for (n, why) in known do
-    IO.println s!"  expected deviation from GP 0.8.0: {n}: {why}"
+    IO.println s!"  expected deviation: {n}: {why}"
   let unexpected := failed.toList.filter (!knownKeys.contains ·)
   let nowPassing := knownKeys.filter (!failed.contains ·)
   for n in unexpected do IO.eprintln s!"unexpected failure: {n}"

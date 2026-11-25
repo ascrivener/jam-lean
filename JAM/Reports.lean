@@ -27,10 +27,14 @@ namespace JAM
 /-- A validator's keys k ∈ 𝕂 as the reports transition reads them: its Ed25519 key k_e. -/
 abbrev EdKey := List UInt8
 
-/-- Φ(**k**) (GP eq. `blacklistfilter`): the keys of offenders in ψ'_O replaced by the null key. Only
-    the Ed25519 part is kept here; a null key is 32 zero octets. -/
+/-- Φ(**k**) (GP v0.8.1 eq. `blacklistfilter`): the keys of offenders in ψ'_O replaced by the null
+    key 𝕂^∅ (eq. `nullvalkey`). Only the Ed25519 part is kept here: `nullEdKey` = [2, 0, …]. -/
 def blacklist (offenders : OctetSet) (k : List EdKey) : List EdKey :=
-  k.map fun e => if offenders.contains e then List.replicate 32 0 else e
+  k.map fun e => if offenders.contains e then nullEdKey else e
+
+-- Regression test (GP v0.8.1 #543): an offender's Ed25519 key becomes [2, 0, …], not zeros.
+#guard blacklist (Std.ExtTreeSet.ofList [List.replicate 32 (7 : UInt8)])
+    [List.replicate 32 7, List.replicate 32 1] = [2 :: List.replicate 31 0, List.replicate 32 1]
 
 /-- R(**c**, n) (GP §11.3): each core index rotated by n, modulo |**c**|/3. -/
 def rotate (c : List Nat) (n : Nat) : List Nat :=
@@ -171,7 +175,7 @@ def checkGuarantee (params : Params) (crypto : Crypto) (i : ReportsInput) (g : G
     unless m.cores.getD v 0 = r.core do throw .wrongAssignment
     unless r.core < i.activeEd.length / 3 do throw .badCoreIndex
     let k := m.keys.getD v []
-    if k == List.replicate 32 0 then throw .bannedValidator
+    if k == nullEdKey then throw .bannedValidator
     unless crypto.edVerify k (Xguarantee ++ h) s.toList do throw .badSignature
     return k
 

@@ -2,7 +2,7 @@ import JAM.Work
 import JAM.Accumulation
 
 /-!
-# Statistics (GP v0.8.0 §13, `sec:bookkeeping`)
+# Statistics (GP v0.8.1 §13, `sec:bookkeeping`)
 
 The activity statistics π = (π_V, π_L, π_C, π_S) (eq. `activityspec`): per-validator records for
 the current and the last epoch, per-core records and per-service records for the current block.
@@ -73,8 +73,9 @@ structure ValidatorStatsInput where
 /-- The validator update (π_V, π_L) ↦ (π_V', π_L') (GP §13.1). π_V^† credits assurances over
     N_{|κ|}, which is |π_V| (eq. `activityspec`). On an epoch change π_L' = π_V^† and the new
     accumulator starts at zero; its length is |κ'|, as |π_V'| = |κ'| requires. Then the author
-    is credited its block, tickets and preimages, and each v with (κ'_v)_e ∈ G a guarantee.
-    The paper writes κ'_v ∈ G; G holds Ed25519 keys, so we compare (κ'_v)_e. -/
+    is credited its block, tickets, preimages and preimage octets ∑_{**p** ∈ E_P} |**p**_d|, and each
+    v with (κ'_v)_e ∈ G a guarantee. v0.8.1 writes both as the model reads them (GP #565; v0.8.0
+    wrote ∑_{d ∈ E_P} |d| and κ'_v ∈ G). -/
 def validatorStats (params : Params) (curr last : List ValidatorRecord) (i : ValidatorStatsInput) :
     List ValidatorRecord × List ValidatorRecord :=
   let dagger := curr.mapIdx fun v r =>
@@ -109,10 +110,10 @@ def coreStats (params : Params) (incoming available : List WorkReport) (bitfield
         r.spec.bundleLength + Constants.Csegmentsize * ((r.spec.segmentCount * 65 + 63) / 64)).sum,
       popularity := (bitfields.map fun f => if f.getD c false then 1 else 0).sum }
 
-/-- π_S' (GP §13.2) for **s** = **s**^R ∪ **s**^P ∪ K(S), from the incoming reports **I**, the
-    preimages extrinsic E_P and the accumulation statistics S. Services outside **s** have no
-    record. In the provision sum ∑_{(s, **d**) ∈ E_P}, s is already bound by ∀ s ∈ **s**, so it
-    ranges over the pairs for that service. -/
+/-- π_S' (GP v0.8.1 §13.2) for **s** = **s**^R ∪ **s**^P ∪ K(S), from the incoming reports **I**,
+    the preimages extrinsic E_P and the accumulation statistics S. Services outside **s** have no
+    record. The provision is ∑_{**p** ∈ E_P, **p**_s = s} (1, |**p**_d|) (v0.8.1 states the filter
+    on s, which v0.8.0 left implicit). -/
 def serviceStats (incoming : List WorkReport) (preimages : List (Nat × List UInt8))
     (acc : List (Nat × AccStat)) : Std.ExtTreeMap Nat ServiceRecord :=
   let digests := incoming.flatMap (·.digests)

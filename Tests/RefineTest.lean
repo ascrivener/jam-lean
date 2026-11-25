@@ -54,8 +54,8 @@ def mk (c : RefineCtx) (i : Nat := 0) : HostOut RefineCtx :=
 -- With 63 machines: FULL (before the memory check).
 def full63 : RefineCtx := ((List.range 63).foldl (fun m k => m.insert k ⟨⟨#[]⟩, Memory.empty, 0, false⟩) ∅, [])
 #guard r7 (machine 100000 (regs [(7, 0x100), (8, 7)]) memInner full63) == Result.FULL
--- Gas: 𝖬_{M,c} + 𝔊(𝖬_{M,ℓ}, p_Z).
-#guard (mk ctx0).gas == 100000 - (Constants.CgasMconst + memGas Constants.CgasMlinear inner.length : Nat)
+-- Gas: 𝖬_M, flat (GP v0.8.1; v0.8.0 charged 𝖬_{M,c} + 𝔊(𝖬_{M,ℓ}, p_Z)).
+#guard (mk ctx0).gas == 100000 - Constants.CgasM
 
 /-! ### invoke -/
 

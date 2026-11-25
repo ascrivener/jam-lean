@@ -4,10 +4,11 @@ import JAM.Codec
 /-!
 # Chain parameters
 
-The protocol constants that the `fetch` host call reports (case 0, GP v0.8.0 Appendix B), in its
+The protocol constants that the `fetch` host call reports (case 0, GP v0.8.1 Appendix B), in its
 order. `full` is the Gray Paper's chain (`JAM.Constants`, generated from `definitions.tex`). `tiny`
-is the test-vector chain of davxy/jam-test-vectors `v0.8.0` (README "Chainspec Parameters"), which
-differs only in the values listed there.
+is the test-vector chain of davxy/jam-test-vectors (README "Chainspec Parameters"), which differs
+from `full` only in the values listed there. The v0.8.0 vectors were made with v0.8.0's values of
+the constants v0.8.1 changed; the test harnesses use those (`Tests.V080`).
 -/
 
 namespace JAM
@@ -38,7 +39,7 @@ structure Params where
   maxPackageXts : Nat      -- 𝖳
   assuranceTimeout : Nat   -- 𝖴
   maxAuthCodeSize : Nat    -- 𝖶_A
-  maxBundleSize : Nat      -- 𝖶_B
+  maxInputSize : Nat       -- 𝖶_I (v0.8.1 #563: this slot held 𝖶_B in v0.8.0)
   maxServiceCodeSize : Nat -- 𝖶_C
   maxPackageImports : Nat  -- 𝖶_M
   maxReportVarSize : Nat   -- 𝖶_R
@@ -58,7 +59,7 @@ def Params.full : Params :=
     slotSeconds := Cslotseconds, authQueueSize := Cauthqueuesize,
     rotationPeriod := Crotationperiod, maxPackageXts := Cmaxpackagexts,
     assuranceTimeout := Cassurancetimeoutperiod, maxAuthCodeSize := Cmaxauthcodesize,
-    maxBundleSize := Cmaxbundlesize, maxServiceCodeSize := Cmaxservicecodesize,
+    maxInputSize := Cmaxinputsize, maxServiceCodeSize := Cmaxservicecodesize,
     maxPackageImports := Cmaxpackageimports, maxReportVarSize := Cmaxreportvarsize,
     memoSize := Cmemosize, maxPackageExports := Cmaxpackageexports,
     epochTailStart := Cepochtailstart }
@@ -80,7 +81,7 @@ def Params.encode (c : Params) : List UInt8 :=
     e 2 c.maxReportDeps ++ e 2 c.maxBlockTickets ++ e 4 c.maxLookupAnchorAge ++
     e 2 c.authPoolSize ++ e 2 c.slotSeconds ++ e 2 c.authQueueSize ++ e 2 c.rotationPeriod ++
     e 2 c.maxPackageXts ++ e 2 c.assuranceTimeout ++ e 4 c.maxAuthCodeSize ++
-    e 4 c.maxBundleSize ++ e 4 c.maxServiceCodeSize ++ e 4 c.maxPackageImports ++
+    e 4 c.maxInputSize ++ e 4 c.maxServiceCodeSize ++ e 4 c.maxPackageImports ++
     e 4 c.maxReportVarSize ++ e 4 c.memoSize ++ e 4 c.maxPackageExports ++ e 4 c.epochTailStart
 
 end JAM

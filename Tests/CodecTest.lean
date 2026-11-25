@@ -114,7 +114,7 @@ def main (args : List String) : IO UInt32 := do
   let tiny := args.getD 0 (root / "tiny").toString
   let full := args.getD 1 (root / "full").toString
   let mut failed := false
-  for (label, dir, p) in [("tiny", tiny, JAM.Params.tiny), ("full", full, JAM.Params.full)] do
+  for (label, dir, p) in [("tiny", tiny, JAM.V080.tiny080), ("full", full, JAM.V080.full080)] do
     let (pass, fail) ← runDir label dir p
     IO.println s!"codectest {label}: {pass} of {(cases p).length} vectors encode from JSON and round-trip through ℰ⁻¹ exactly"
     if fail ≠ 0 then failed := true

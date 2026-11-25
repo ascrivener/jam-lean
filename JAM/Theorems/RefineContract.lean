@@ -61,9 +61,10 @@ def GasFreeId (h : Nat) : Prop := h = 1 ∨ h = 2 ∨ (3 ≤ h ∧ h ≤ 8) ∨ 
   unfold Params.encode
   simp only [Codec.fixed, List.length_append, PVM.Num.length_encodeLE]
 
-/-- ℰ of the Gray Paper's full-chain parameters, as `fetch` case 0 returns them (GP Appendix B,
-    Ω_Y; the constants of `JAM.Constants`). -/
-theorem Params.full_encode : Params.full.encode = [10, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 85, 1, 0, 75, 0, 0, 88, 2, 0, 0, 128, 150, 152, 0, 0, 0, 0, 0, 128, 240, 250, 2, 0, 0, 0, 0, 0, 242, 5, 42, 1, 0, 0, 0, 0, 195, 157, 208, 0, 0, 0, 0, 8, 0, 16, 0, 8, 0, 16, 0, 64, 56, 0, 0, 8, 0, 6, 0, 80, 0, 10, 0, 128, 0, 5, 0, 0, 250, 0, 0, 128, 112, 210, 0, 0, 9, 61, 0, 0, 12, 0, 0, 0, 192, 0, 0, 128, 0, 0, 0, 0, 12, 0, 0, 244, 1, 0, 0] := by
+/-- ℰ of the Gray Paper's full-chain parameters, as `fetch` case 0 returns them (GP v0.8.1
+    Appendix B, Ω_Y; the constants of `JAM.Constants`, with 𝖦_A, 𝖦_I, 𝖦_R, 𝖦_T of #587, 𝖶_A of #557
+    and 𝖶_I in the slot v0.8.0 gave 𝖶_B, #563). -/
+theorem Params.full_encode : Params.full.encode = [10, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 85, 1, 0, 75, 0, 0, 88, 2, 0, 0, 192, 41, 205, 2, 0, 0, 0, 0, 192, 208, 1, 14, 0, 0, 0, 0, 0, 139, 181, 120, 5, 0, 0, 0, 128, 20, 127, 212, 3, 0, 0, 0, 8, 0, 16, 0, 8, 0, 16, 0, 64, 56, 0, 0, 8, 0, 6, 0, 80, 0, 10, 0, 128, 0, 5, 0, 0, 0, 3, 0, 128, 112, 210, 0, 0, 9, 61, 0, 0, 12, 0, 0, 0, 192, 0, 0, 128, 0, 0, 0, 0, 12, 0, 0, 244, 1, 0, 0] := by
   decide
 
 namespace RefineHost

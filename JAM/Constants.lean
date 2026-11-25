@@ -1,6 +1,6 @@
 /-
   GENERATED FILE: do not edit by hand.
-  Produced by `scripts/gen_constants.py` from the Gray Paper v0.8.0, `text/definitions.tex`.
+  Produced by `scripts/gen_constants.py` from the Gray Paper v0.8.1, `text/definitions.tex`.
   CI regenerates it from the pinned paper and fails on any difference.
 -/
 
@@ -21,7 +21,7 @@ def Cbasedeposit : Nat := 100
 /-- The total number of cores. -/
 def Ccorecount : Nat := 341
 
-/-- The period in timeslots after which an unreferenced preimage may be expunged. See \texttt{eject} definition in section \ref{sec:accumulatefunctions}. -/
+/-- The period in timeslots after which an unreferenced preimage may be expunged. See \texttt{forget} definition in section \ref{sec:accumulatefunctions}. -/
 def Cexpungeperiod : Nat := 19200
 
 /-- The length of an epoch in timeslots. See section \ref{sec:epochsandslots}. -/
@@ -30,17 +30,17 @@ def Cepochlen : Nat := 600
 /-- The audit bias factor, the expected number of additional validators who will audit a work-report in the following tranche for each no-show in the previous. See equation \ref{eq:latertranches}. -/
 def Cauditbiasfactor : Nat := 2
 
-/-- The gas allocated to invoke a work-report's Accumulation logic. -/
-def Creportaccgas : Nat := 10000000
+/-- The gas allocated to invoke a work-report's Accumulation logic. Equivalent to 10\,ms on the reference hardware clocked at 4.7\,GHz. -/
+def Creportaccgas : Nat := 47000000
 
-/-- The gas allocated to invoke a work-package's Is-Authorized logic. -/
-def Cpackageauthgas : Nat := 50000000
+/-- The gas allocated to invoke a work-package's Is-Authorized logic. Equivalent to 50\,ms on the reference hardware clocked at 4.7\,GHz. -/
+def Cpackageauthgas : Nat := 235000000
 
-/-- The gas allocated to invoke a work-package's Refine logic. -/
-def Cpackagerefgas : Nat := 5000000000
+/-- The gas allocated to invoke a work-package's Refine logic. Equivalent to 5\,s on the reference hardware clocked at 4.7\,GHz. -/
+def Cpackagerefgas : Nat := 23500000000
 
-/-- The total gas allocated across for all Accumulation. Should be no smaller than $\Creportaccgas\cdot\Ccorecount + \sum_{g \in \values{\alwaysaccers}}(g)$. -/
-def Cblockaccgas : Nat := 3500000000
+/-- The total gas allocated across for all Accumulation. Should be no smaller than $\Creportaccgas\cdot\Ccorecount + \sum_{g \in \values{\alwaysaccers}}(g)$. Equivalent to 3.5\,s on the reference hardware clocked at 4.7\,GHz. -/
+def Cblockaccgas : Nat := 16450000000
 
 /-- The size of recent history, in blocks. See equation \ref{eq:recenthistorydef}. -/
 def Crecenthistorylen : Nat := 8
@@ -62,6 +62,12 @@ def Cmaxextrinsicverdicts : Nat := 16
 
 /-- The maximum number each of culprits or faults which may be included in a single extrinsic. See equation \ref{eq:disputesextrinsics}. -/
 def Cmaxextrinsicoffenses : Nat := 16
+
+/-- The maximum length of the preimages component of the extrinsic ($\xtpreimages$). See equation \ref{eq:xtpreimages}. -/
+def Cmaxxtpreimageslen : Nat := 256
+
+/-- The maximum number of data octets in the preimages component of the extrinsic ($\xtpreimages$). See equation \ref{eq:maxxtpreimagesdatasize}. -/
+def Cmaxxtpreimagesdatasize : Nat := 33554432
 
 /-- The maximum number of items in the authorizations pool. See equation \ref{eq:authstatecomposition}. -/
 def Cauthpoolsize : Nat := 8
@@ -85,12 +91,12 @@ def Cmaxpackagexts : Nat := 128
 def Cassurancetimeoutperiod : Nat := 5
 
 /-- The maximum size of is-authorized code in octets. See equation \ref{eq:isauthinvocation}. -/
-def Cmaxauthcodesize : Nat := 64000
+def Cmaxauthcodesize : Nat := 196608
 
-/-- The maximum size of the concatenated variable-size blobs, extrinsics and imported segments of a work-package, in octets. See equation \ref{eq:checkextractsize}. -/
-def Cmaxbundlesize : Nat := 13791360
+/-- The maximum size of a work-package bundle in octets. See equation \ref{eq:maxbundlesize}. -/
+def Cmaxbundlesize : Nat := 13904950
 
-/-- The maximum size of service code in octets. See equations \ref{eq:refinvocation}, \ref{eq:accinvocation} \& \ref{eq:onxferinvocation}. -/
+/-- The maximum size of service code in octets. See equations \ref{eq:refinvocation} \& \ref{eq:accinvocation}. -/
 def Cmaxservicecodesize : Nat := 4000000
 
 /-- The size of a segment in octets. See section \ref{sec:segments}. -/
@@ -98,6 +104,9 @@ def Csegmentsize : Nat := 4104
 
 /-- The additional footprint in the Audits DA of a single imported segment. See equation \ref{eq:segmentfootprint}. -/
 def Csegmentfootprint : Nat := 4488
+
+/-- The maximum size of the input data of a work-package, in octets: its concatenated variable-size blobs, extrinsics and imported segments. See equation \ref{eq:checkextractsize}. -/
+def Cmaxinputsize : Nat := 13791360
 
 /-- The maximum number of imports in a work-package. See equation \ref{eq:limitworkpackagebandwidth}. -/
 def Cmaxpackageimports : Nat := 3072
@@ -117,8 +126,14 @@ def Cepochtailstart : Nat := 500
 /-- The \textsc{pvm} dynamic address alignment factor. See equation \ref{eq:jumptablealignment}. -/
 def Cpvmdynaddralign : Nat := 2
 
+/-- The maximum size of the instruction data of a \textsc{pvm} program blob, in octets. See equation \ref{eq:deblob}. -/
+def Cpvmmaxcodesize : Nat := 33554432
+
 /-- The standard \textsc{pvm} program initialization input data size. See equation \ref{sec:standardprograminit}. -/
 def Cpvminitinputsize : Nat := 16777216
+
+/-- The maximum number of entries in the dynamic jump table of a \textsc{pvm} program blob. See equation \ref{eq:deblob}. -/
+def Cpvmmaxjumptableentries : Nat := 16777216
 
 /-- The \textsc{pvm} memory page size. See equation \ref{eq:pvmmemory}. -/
 def Cpvmpagesize : Nat := 4096
@@ -135,7 +150,7 @@ def CgasA : Nat := 1818
 /-- $\Omega_B$ (\texttt{bless}) base gas cost. -/
 def CgasBconst : Nat := 422
 
-/-- $\Omega_B$ (\texttt{bless}) gas per item. -/
+/-- $\Omega_B$ (\texttt{bless}) gas per record. -/
 def CgasBlinear : Nat := 20
 
 /-- $\Omega_C$ (\texttt{checkpoint}) base gas cost. -/
@@ -177,11 +192,8 @@ def CgasLconst : Nat := 600
 /-- $\Omega_L$ (\texttt{lookup}) gas per 1024 octets ($\fnmemgas(\CgasLlinear, \ell)$). -/
 def CgasLlinear : Nat := 248
 
-/-- $\Omega_M$ (\texttt{machine}) base gas cost. -/
-def CgasMconst : Nat := 1862
-
-/-- $\Omega_M$ (\texttt{machine}) gas per 1024 octets, program size ($\fnmemgas(\CgasMlinear, \ell)$). -/
-def CgasMlinear : Nat := 112
+/-- $\Omega_M$ (\texttt{machine}) gas cost. -/
+def CgasM : Nat := 1862
 
 /-- $\Omega_N$ (\texttt{new}) base gas cost. -/
 def CgasN : Nat := 3855
@@ -219,6 +231,9 @@ def CgasT : Nat := 575
 /-- $\Omega_U$ (\texttt{upgrade}) base gas cost. -/
 def CgasU : Nat := 1028
 
+/-- $\Omega_V$ (\texttt{supervisor}) base gas cost. -/
+def CgasV : Nat := 1000
+
 /-- $\Omega_W$ (\texttt{write}) base gas cost. -/
 def CgasWconst : Nat := 2442
 
@@ -230,6 +245,9 @@ def CgasWkeylinear : Nat := 3358
 
 /-- $\Omega_X$ (\texttt{expunge}) base gas cost. -/
 def CgasX : Nat := 335
+
+/-- $\Omega_Y$ (\texttt{fetch}) otherwise: nothing. -/
+def CgasYunknown : Nat := 80
 
 /-- $\Omega_Z$ (\texttt{pages}) alloc base gas cost. -/
 def CgasZallocconst : Nat := 275
@@ -266,6 +284,18 @@ def CgasGeminiconst : Nat := 275
 
 /-- $\Omega_\Gemini$ (\texttt{grow\_heap}) gas per additional page. -/
 def CgasGeminilinear : Nat := 121
+
+/-- $\Omega_\Gamma$ (\texttt{compile}) base gas cost when compiling from memory. -/
+def CgasGammamemconst : Nat := 1862
+
+/-- $\Omega_\Gamma$ (\texttt{compile}) base gas cost when compiling from the database. -/
+def CgasGammadbconst : Nat := 1862
+
+/-- $\Omega_\Gamma$ (\texttt{compile}) in-memory read gas per 1024 octets ($\fnmemgas(\CgasGammamemlinear, \ell)$). -/
+def CgasGammamemlinear : Nat := 264
+
+/-- $\Omega_\Gamma$ (\texttt{compile}) database lookup read gas per 1024 octets ($\fnmemgas(\CgasGammadblinear, \ell)$). -/
+def CgasGammadblinear : Nat := 366
 
 /-- 𝖬_{Y,c,c} and 𝖬_{Y,c,ℓ}: the constant and per-1024-octet gas of `fetch` case `c`
     (`none` for an unknown case). -/

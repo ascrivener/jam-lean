@@ -27,6 +27,14 @@ JAM/Accumulation.lean, JAM/Preimages.lean, JAM/State.lean, Tests/TraceState.lean
 | Blocks | safrole, reporting_assurance, statistics (not its C(13) serialization), work_packages_and_reports, serialization, header, erasure_coding, auditing, definitions (constants), bandersnatch.tex | #534, #537, #543, #557, #560, #562, #563, #564, #565 (stats), #566, #568, #574, #575, #580, #583, #587 | child "Blocks" |
 | Crypto (jam-lean-target JamCrypto) | bandersnatch.tex | #550 Thin VRF | child "VRF" (jam-lean-target) |
 
+Phase 1 notes (Blocks):
+- No change needed: auditing (#534) and the Ξ / A / paged-proof hunks (#568, #583), because the model
+  has no auditing, no Ξ and no availability specifier (the target's refine extension computes the
+  erasure root; see the follow-ups below).
+- 𝖪_P and 𝖪_D (#567) are generated in JAM/Constants.lean; their rules are phase 2.
+- Vectors run with the chain values they were generated with (v0.8.0), so expected outputs are not
+  edited; Params.full is v0.8.1. Reports vectors come from davxy/jam-test-vectors master 5e8d2a2.
+
 ## Phase 2 (after stage 2 is on `gp-v0.8.1`)
 
 | Area | Paper files | GP PRs |

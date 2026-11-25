@@ -163,7 +163,8 @@ def AvailabilitySpec.encode (s : AvailabilitySpec) : List UInt8 :=
   blob s.packageHash ++ fixed 4 s.bundleLength ++ blob s.erasureRoot ++ fixed 2 s.erasureShards ++
     blob s.segmentRoot ++ fixed 2 s.segmentCount
 
-/-- A work report ℝ (GP eq. `workreport`). -/
+/-- A work report ℝ = (s, c, c, a, g, t, l, d) (GP v0.8.1 eq. `workreport`; #537 moved g to fifth
+    place, matching Appendix C, where v0.8.0's tuple had it last). -/
 structure WorkReport where
   /-- s -/
   spec : AvailabilitySpec
@@ -173,14 +174,14 @@ structure WorkReport where
   core : Nat
   /-- a, the authorizer hash -/
   authorizerHash : Hash
+  /-- g, gas used by is-authorized -/
+  authGasUsed : Nat
   /-- t, the authorizer trace -/
   authTrace : Blob
   /-- l, the segment-root lookup dictionary ℍ → ℍ -/
   segmentRootLookup : OctetDict := ∅
   /-- d, the work digests -/
   digests : List WorkDigest
-  /-- g, gas used by is-authorized -/
-  authGasUsed : Nat
 
 /-- ℰ(r ∈ ℝ) (GP Appendix C). -/
 def WorkReport.encode (r : WorkReport) : List UInt8 :=

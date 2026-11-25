@@ -2,11 +2,11 @@ import JAM.Decode
 import JAM.Params
 
 /-!
-# Blocks, headers and extrinsics (GP v0.8.0 §4, §5, §6, §10, §11, §12) and their codec
+# Blocks, headers and extrinsics (GP v0.8.1 §4, §5, §6, §10, §11, §12) and their codec
 (Appendix C, "Block Serialization")
 
 The block 𝔹 = (ℍ, 𝔼) (GP eq. `block`), the header (eq. `header`) and the five extrinsics
-𝔼 = (𝔼_T, 𝔼_D, 𝔼_P, 𝔼_A, 𝔼_G) (eq. `extrinsic`), with ℰ exactly as Appendix C writes it and the
+𝔼 = (𝔼_T, 𝔼_P, 𝔼_G, 𝔼_A, 𝔼_D) (v0.8.1 eq. `extrinsic`), with ℰ exactly as Appendix C writes it and the
 decoders that invert it. Keys, signatures and proofs are octet sequences of the paper's fixed
 sizes; the types do not enforce the lengths, the decoders read exactly them.
 
@@ -28,6 +28,17 @@ def keySize : Nat := 32
 def edSigSize : Nat := 64
 def bsSigSize : Nat := 96
 def ringProofSize : Nat := 784
+
+/-- The Ed25519 component of the null validator key: [2, 0, 0, …] (GP v0.8.1 eq. `nullvalkey`).
+    The all-zero sequence encodes a point of order four, under which signatures can be forged;
+    2 is a y-coordinate with no curve point, so no signature verifies under this key. -/
+def nullEdKey : List UInt8 := 2 :: List.replicate 31 0
+
+/-- The null validator key (GP v0.8.1 eq. `nullvalkey`), of 336 octets: Bandersnatch [0, 0, …],
+    Ed25519 `nullEdKey`, BLS [0, 0, …] and metadata [0, 0, …]. Used in place of the key of a
+    validator that must be kept out of the protocol (Φ, eq. `blacklistfilter`). -/
+def nullValidatorKey : List UInt8 :=
+  List.replicate keySize 0 ++ nullEdKey ++ List.replicate 144 0 ++ List.replicate 128 0
 
 /-! ## The header (GP §5, eq. `header`) -/
 
@@ -108,10 +119,10 @@ structure Guarantee where
   slot : Nat
   credential : List (Nat × Blob)
 
-/-- An assurance in 𝔼_A (GP eq. `xtassurances`): the anchor a, the availability bit field f ∈ 𝕓_𝖢,
-    the assurer's validator index v and its signature s. -/
+/-- An assurance in 𝔼_A (GP v0.8.1 eq. `xtassurances`): the availability bit field f ∈ 𝕓_𝖢, the
+    assurer's validator index v and its signature s. v0.8.1 drops v0.8.0's anchor a, which had to
+    equal H_P (GP #562). -/
 structure Assurance where
-  anchor : Hash
   bitfield : List Bool
   assurer : Nat
   signature : Blob
@@ -147,7 +158,7 @@ structure Disputes where
   culprits : List Culprit
   faults : List Fault
 
-/-- ℰ on {⊤, ⊥}: ℰ of the indicator, 1 for ⊤ and 0 for ⊥. -/
+/-- ℰ(⊥) = [0], ℰ(⊤) = [1] (GP v0.8.1 Appendix C; v0.8.0 left it implicit). -/
 def encodeBool (b : Bool) : List UInt8 := nat (if b then 1 else 0)
 
 /-- ℰ of a bit sequence (GP (C) "Bit Sequence Encoding"): ⌈n/8⌉ octets, packed least
@@ -164,16 +175,20 @@ def encodeTickets (xs : List TicketProof) : List UInt8 :=
 def encodePreimages (xs : List Preimage) : List UInt8 :=
   varSeq (fun p => fixed 4 p.requester ++ var p.blob) xs
 
-/-- ℰ(g ∈ 𝔾) = ℰ(r, ℰ_4(t), ↕[(ℰ_2(v), s) | (v, s) ← a]) (GP Appendix C). -/
+/-- O(a) = ℰ(↕[(ℰ_2(v), s) | (v, s) ← a]), the credential encoding (GP v0.8.1 Appendix C, #560). -/
+def encodeCredential (a : List (Nat × Blob)) : List UInt8 :=
+  varSeq (fun (v, s) => fixed 2 v ++ blob s) a
+
+/-- ℰ(g ∈ 𝔾) = ℰ(r, ℰ_4(t), O(a)) (GP v0.8.1 Appendix C). -/
 def Guarantee.encode (g : Guarantee) : List UInt8 :=
-  g.report.encode ++ fixed 4 g.slot ++ varSeq (fun (v, s) => fixed 2 v ++ blob s) g.credential
+  g.report.encode ++ fixed 4 g.slot ++ encodeCredential g.credential
 
 /-- ℰ_G(𝔼_G) = ℰ(↕𝔼_G) (GP Appendix C). -/
 def encodeGuarantees (xs : List Guarantee) : List UInt8 := varSeq Guarantee.encode xs
 
-/-- ℰ_A(𝔼_A) = ℰ(↕[(a, f, ℰ_2(v), s) | (a, f, v, s) ← 𝔼_A]) (GP Appendix C). -/
+/-- ℰ_A(𝔼_A) = ℰ(↕[(f, ℰ_2(v), s) | (f, v, s) ← 𝔼_A]) (GP v0.8.1 Appendix C). -/
 def encodeAssurances (xs : List Assurance) : List UInt8 :=
-  varSeq (fun a => blob a.anchor ++ encodeBits a.bitfield ++ fixed 2 a.assurer ++ blob a.signature) xs
+  varSeq (fun a => encodeBits a.bitfield ++ fixed 2 a.assurer ++ blob a.signature) xs
 
 /-- A judgment (v, ℰ_2(i), s) within ℰ_D. -/
 def Judgment.encode (j : Judgment) : List UInt8 := encodeBool j.valid ++ fixed 2 j.index ++ blob j.signature
@@ -185,7 +200,8 @@ def Disputes.encode (d : Disputes) : List UInt8 :=
     varSeq (fun c => blob c.target ++ blob c.key ++ blob c.signature) d.culprits ++
     varSeq (fun f => blob f.target ++ encodeBool f.valid ++ blob f.key ++ blob f.signature) d.faults
 
-/-- The extrinsic 𝔼 = (𝔼_T, 𝔼_D, 𝔼_P, 𝔼_A, 𝔼_G) (GP eq. `extrinsic`). -/
+/-- The extrinsic 𝔼 = (𝔼_T, 𝔼_P, 𝔼_G, 𝔼_A, 𝔼_D) (GP v0.8.1 eq. `extrinsic`, reordered by #575 to
+    match ℰ(𝔹); the fields are named, so the order of this structure's fields does not matter). -/
 structure Extrinsic where
   tickets : List TicketProof
   disputes : Disputes
@@ -248,8 +264,8 @@ def decodeGuarantees : Decoder (List Guarantee) := varSeq Guarantee.decode
 
 /-- ℰ_A⁻¹; each bit field has 𝖢 bits. -/
 def decodeAssurances (p : Params) : Decoder (List Assurance) :=
-  varSeq do return { anchor := ← bytes hashSize, bitfield := ← bits p.coreCount,
-                     assurer := ← fixed 2, signature := ← bytes edSigSize }
+  varSeq do return { bitfield := ← bits p.coreCount, assurer := ← fixed 2,
+                     signature := ← bytes edSigSize }
 
 /-- ℰ_D⁻¹. -/
 def Disputes.decode : Decoder Disputes := do

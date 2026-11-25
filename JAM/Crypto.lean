@@ -1,12 +1,13 @@
 /-!
-# Cryptographic primitives as parameters (GP v0.8.0 §3.8)
+# Cryptographic primitives as parameters (GP v0.8.1 §3.8)
 
 The model does not implement signature schemes. The state-transition functions that check
 signatures take a `Crypto` whose fields stand for the paper's primitives; a caller supplies them (a
 real implementation, or, in the vector tests, an oracle read from each vector's expected outcome).
 
 Ed25519 verification is used by disputes, assurances and guarantees (§10–§11). Safrole (§6) uses
-the Bandersnatch primitives of Appendix G (`sec:bandersnatch`): the IETF VRF signatures 𝔹̄_k⟨c⟩⟨m⟩
+the Bandersnatch primitives of Appendix G (`sec:bandersnatch`): the singly-contextualized VRF
+signatures 𝔹̄_k⟨c⟩⟨m⟩ (under the Thin VRF template since v0.8.1, GP #550; the IETF VRF in v0.8.0)
 (header seal and entropy source) and the Ring VRF proofs 𝔹̄°_r⟨c⟩⟨m⟩ (tickets), their output Y, and
 the ring root O.
 
@@ -22,11 +23,13 @@ structure Crypto where
   /-- s ∈ 𝕍̄_k⟨m⟩ (GP §3.8.2): s is a valid Ed25519 signature on the message m under the public
       key k. -/
   edVerify : (key : List UInt8) → (msg : List UInt8) → (sig : List UInt8) → Bool
-  /-- x ∈ 𝔹̄_k⟨c⟩⟨m⟩ (GP Appendix G): x is a valid Bandersnatch IETF VRF signature under the key k
+  /-- x ∈ 𝔹̄_k⟨c⟩⟨m⟩ (GP Appendix G): x is a valid singly-contextualized Bandersnatch
+      VRF signature (Thin VRF, GP v0.8.1 Appendix G) under the key k
       with context c and message m. -/
   bsVerify : (key : List UInt8) → (ctx : List UInt8) → (msg : List UInt8) → (sig : List UInt8) → Bool :=
     fun _ _ _ _ => false
-  /-- Y(s) (GP Appendix G): the 32-octet VRF output of a Bandersnatch IETF VRF signature. -/
+  /-- Y(s) (GP Appendix G): the 32-octet VRF output of a singly-contextualized
+      Bandersnatch VRF signature. -/
   bsOut : (sig : List UInt8) → List UInt8 := fun _ => []
   /-- O(**k**) (GP Appendix G): the ring root (commitment) of a sequence of Bandersnatch keys. A key
       with no corresponding curve point stands for the padding point; that is O's concern. -/

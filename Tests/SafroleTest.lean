@@ -4,7 +4,7 @@ import JAM.Safrole
 /-!
 # Safrole STF vectors (`lake build safroletest`)
 
-Runs the Safrole transition of GP v0.8.0 §6 (`JAM.safrole`) on every vector of
+Runs the Safrole transition of GP v0.8.1 §6 (`JAM.safrole`) on every vector of
 davxy/jam-test-vectors `v0.8.0` `stf/safrole/{tiny,full}`. Where the vector expects success it
 compares the posterior state (τ', η', λ', κ', γ_P', ι', γ_A', γ_S', γ_Z') and the markers H_E and
 H_W. Where it expects an error, it checks that the model returns the same error and leaves the
@@ -25,7 +25,7 @@ vectors:
 * Ring VRF output Y maps each such proof to that identifier.
 * The ring root O maps the Bandersnatch keys of γ_P' to γ_Z' for each vector that expects success
   and changes epoch.
-* The IETF VRF primitives are unused: the vectors give Y(H_V) directly.
+* The singly-contextualized VRF primitives (𝔹̄_k⟨c⟩⟨m⟩) are unused: the vectors give Y(H_V) directly.
 
 So the vectors check every part of §6 that is not cryptography: rotation and Φ, η and its
 rotation, F and Z, the markers, the merge into γ_A', and the extrinsic's conditions. They also
@@ -34,6 +34,14 @@ the wrong root or context, or computed O over the wrong keys, would miss the ora
 They do not check any Bandersnatch arithmetic. "Valid" here means "accepted by some vector", so a
 proof the oracle has not seen is invalid. Each error vector's proofs are either seen with a different
 attempt or root (rejected as bad proofs) or rejected before the proof is checked.
+
+## Vector edit dictated by GP v0.8.1 (#543)
+
+Φ replaces an offender's key by the null key 𝕂^∅ (eq. `nullvalkey`), whose Ed25519 component is
+[2, 0, …]; v0.8.0's null key was all zeros. So in a vector that expects success, each key of the
+expected γ_P' (and of the expected epoch marker H_E) at an index where Φ nulls ι's key, which the
+v0.8.0 vector gives as zeros, is replaced by 𝕂^∅ (`nullTo081`). This changes
+`enact-epoch-change-with-padding-1` (tiny and full).
 -/
 
 namespace JAM.Tests.Safrole
@@ -169,11 +177,28 @@ def errName : SafroleError → String
   | .duplicateTicket => "duplicate_ticket"
   | .uselessTicket => "useless_ticket"
 
+/-- The v0.8.0 vectors' expected γ_P' and H_E under GP v0.8.1's null key (#543): where ι's key
+    has an offender's Ed25519 key, the expected all-zero key becomes 𝕂^∅ and the marker's Ed25519
+    key becomes [2, 0, …]. Other keys are left as they are. -/
+def nullTo081 (pre : SafroleState) (offenders : List (List UInt8)) (post : SafroleState)
+    (out : SafroleOutput) : SafroleState × SafroleOutput :=
+  let nulled (i : Nat) := offenders.contains (pre.staging.getD i []).ed
+  let zero : ValidatorKey := List.replicate 336 0
+  let pending := post.pending.mapIdx fun i k => if nulled i && k == zero then ValidatorKey.null else k
+  let epochMark := out.epochMark.map fun m =>
+    { m with validators := m.validators.mapIdx fun i (b, e) =>
+        if nulled i && e.toList == List.replicate 32 0 then (b, ⟨nullEdKey.toArray⟩) else (b, e) }
+  ({ post with pending }, { out with epochMark })
+
 def check (crypto : Crypto) (params : Params) (j : Json) : Except String (List String) := do
   let pre ← state (← field j "pre_state")
   let post ← state (← field j "post_state")
+  let inp ← input j
   let expected ← output j
-  let got := safrole params crypto pre (← input j)
+  let (post, expected) : SafroleState × Except String SafroleOutput := match expected with
+    | .ok eo => let (p, o) := nullTo081 pre inp.offenders post eo; (p, .ok o)
+    | .error e => (post, .error e)
+  let got := safrole params crypto pre inp
   match got, expected with
   | .ok (s, out), .ok eo =>
     return diff (showState s) (showState post) ++ diff (showOutput out) (showOutput eo)
@@ -185,7 +210,7 @@ def check (crypto : Crypto) (params : Params) (j : Json) : Except String (List S
     if showState pre != showState post then diffs := diffs ++ ["the vector's post-state differs from its pre-state"]
     return diffs
 
-/-- Vectors whose outcome differs from GP 0.8.0 as modelled; none so far. -/
+/-- Vectors whose outcome differs from GP v0.8.1 as modelled; none so far. -/
 def known : List (String × String) := []
 
 end JAM.Tests.Safrole

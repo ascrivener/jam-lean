@@ -91,5 +91,7 @@ rebuilds only what changed since then instead of building cold for 4.5–5 h.
   - weakening a hypothesis;
   - adding a lemma;
   - generalising a statement in place while keeping every existing statement unchanged.
-- **Usage limits.** Keep the number of parallel sessions within the limit Adam sets (see docs/HANDOFF.md). Restart sessions fresh,
-  with a handoff note, before their context gets large: the cost of each turn grows with context.
+- **Usage limits.** Keep the number of parallel sessions within the limit Adam sets (see docs/HANDOFF.md). When a session's
+  context gets large (about 400k tokens), compact it instead of restarting: first update
+  `docs/HANDOFF.md` (decisions, open items, where things are) and merge it, so the state survives in
+  git as well as in the summary. The cost of each turn grows with context.

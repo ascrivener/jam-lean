@@ -125,7 +125,7 @@ jobs:
       - name: Shuffle vectors (Appendix F)
         run: lake build shuffletest
 
-      - name: Erasure-coding vectors, tiny and full (all listed as deviating from GP 0.8.0)
+      - name: Erasure-coding vectors, tiny and full (GP v0.8.1 §H.3)
         run: lake build erasuretest
 
       - name: Accumulate vectors (all but the listed deviations from GP 0.8.0)

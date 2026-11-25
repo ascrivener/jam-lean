@@ -74,7 +74,7 @@ call `pc`) live in `Tests/`, not in the model.
 | The real witness binary's refine on 7 malformed payloads gives `Rejected(BadPayload)` (`lake build witnessrun`; a test, not a proof) | **7 / 7** |
 | `JAM` state trie M (Appendix D) vs. GP v0.8.0 trie vectors (keys cut to 31 octets, note 27); state-key constructor C, hand-written | **11 / 11** roots match; **4 / 4** |
 | `JAM` Fisher–Yates shuffle ℱ with 𝒬_l (Appendix F) vs. GP v0.8.0 shuffle vectors | **8 / 8** match |
-| `JAM` erasure coding ℰ_C / ℛ over GF(2¹⁶) (Appendix H) vs. GP v0.8.0 erasure vectors | data shards match in **12 / 12** (6 tiny, 6 full); parity shards follow a different convention in all 12 (note 28), which the test reproduces exactly; ℛ recovers the paper's code in all 12 |
+| `JAM` erasure coding ℰ_C / ℛ over GF(2¹⁶) (Appendix H, GP v0.8.1 §H.3) vs. GP v0.8.0 erasure vectors | **12 / 12** match shard for shard (6 tiny, 6 full; v0.8.1 #580 adopted the vectors' layout, note 28); ℛ recovers the data in all 12 |
 | Accumulation STF (§12) vs. GP v0.8.0 accumulate vectors (tiny) | **61 / 63** pass; the 2 others are `bless_from_non_manager`, which the vectors' changelog lists as departing from GP 0.8.0 |
 | Recent-history STF (§7: β_H, the accumulation-output belt β_B) vs. `stf/history` (`lake build historytest`) | **4 / 4** tiny, **4 / 4** full |
 | Authorization STF (§8: the pool α from the queue φ') vs. `stf/authorizations` (`lake build authtest`) | **3 / 3** tiny, **3 / 3** full |
@@ -686,7 +686,9 @@ noted here and in a comment at the definition.
     exactly 31 octets of key, but `trie/trie.json` gives 32-octet keys. The test passes the first
     31 octets to M, after checking that no two keys of a case share them; all 11 roots then
     match, so the vectors' last octet never matters.
-28. **Erasure coding: the vectors pad the message polynomial to a power of two.** §H.3 interpolates
+28. **Erasure coding: the vectors pad the message polynomial to a power of two.** *Resolved in GP
+    v0.8.1 (#580), which defines exactly the vectors' layout; the model follows v0.8.1 and all 12
+    vectors match. The rest of this note describes v0.8.0.* §H.3 interpolates
     p of degree < d = R(v) through the d message words at 0̃ … (d−1)~ and gives validator i ≥ d the
     word p(ĩ). Every erasure vector (tiny and full) instead takes p of degree < n = 2^⌈log₂ d⌉
     through the message words and zeroes at d̃ … (n−1)~, and gives validator i ≥ d the word at

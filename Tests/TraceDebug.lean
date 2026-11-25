@@ -16,7 +16,7 @@ def oracle (roots : List (List (List UInt8) × List UInt8)) : Crypto :=
 /-- A step, its block read from the v0.8.0 encoding, with the block's v0.8.0 H_X commitment
     (`Tests.V080`, GP #562). -/
 def readStep (path : System.FilePath) : IO (Step × List UInt8) := do
-  match Decoder.run (V080.step080 Params.tiny) (← IO.FS.readBinFile path) with
+  match Decoder.run (V080.step080 V080.tiny080) (← IO.FS.readBinFile path) with
   | .ok s => return s
   | .error e => throw (IO.userError s!"{path}: {e}")
 
@@ -55,7 +55,7 @@ def showStep (p : Params) (σ : State) (roots : List (List (List UInt8) × List 
 def main (args : List String) : IO Unit := do
   let dir :: name :: steps := args | throw (IO.userError "DIR TRACE N…")
   let want := steps.map String.toNat!
-  let p := Params.tiny
+  let p := V080.tiny080
   let tdir : System.FilePath := dir / name
   let .ok (gh, graw) := Decoder.run (genesis p) (← IO.FS.readBinFile (tdir / "genesis.bin")) | throw (IO.userError "genesis")
   let .ok σ0 := decodeState p graw.kvs | throw (IO.userError "genesis state")

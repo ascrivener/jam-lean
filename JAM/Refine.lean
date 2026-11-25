@@ -90,11 +90,11 @@ def exportSeg (gas : Nat) (ω : Regs) (μ : Memory) (off : Nat) (c : RefineCtx) 
 def freeId (m : Std.ExtTreeMap Nat InnerPvm) : Nat :=
   ((List.range (m.size + 1)).find? (!m.contains ·)).getD m.size
 
-/-- Ω_M(ϱ, ω, μ, **m**), g = 𝖬_{M,c} + 𝔊(𝖬_{M,ℓ}, p_Z): create an inner machine from the program
+/-- Ω_M(ϱ, ω, μ, **m**), g = 𝖬_M (GP v0.8.1 Appendix B; v0.8.0 charged 𝖬_{M,c} + 𝔊(𝖬_{M,ℓ}, p_Z)): create an inner machine from the program
     at ω_7 (length ω_8), starting at ω_9, with empty RAM. FULL if there are already 63. -/
 def machine (gas : Nat) (ω : Regs) (μ : Memory) (c : RefineCtx) : HostOut RefineCtx :=
   let pO := reg ω 7; let pZ := reg ω 8; let i := reg ω 9
-  charged (Constants.CgasMconst + memGas Constants.CgasMlinear pZ) gas ω μ c fun out =>
+  charged Constants.CgasM gas ω μ c fun out =>
     let m := c.1
     if m.size ≥ 63 then r7 out FULL
     else if !μ.rangeReadable pO pZ then panic out

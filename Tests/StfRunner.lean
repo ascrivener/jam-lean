@@ -1,4 +1,5 @@
 import Tests.JamJson
+import Tests.V080
 
 /-!
 # A shared runner for the STF vector tests
@@ -55,10 +56,10 @@ def runSuite (name : String) (dirs : List (String × Params × System.FilePath))
   for n in nowPassing do IO.eprintln s!"listed deviation now passes: {n}"
   return if unexpected.isEmpty && nowPassing.isEmpty then 0 else 1
 
-/-- The default directories: `<base>/tiny` with `Params.tiny` and `<base>/full` with
-    `Params.full`; a command-line argument replaces the base. -/
+/-- The default directories: `<base>/tiny` and `<base>/full`, with the chains the v0.8.0 vectors
+    were made with (`V080.tiny080`, `V080.full080`); a command-line argument replaces the base. -/
 def defaultDirs (args : List String) (base : String) : List (String × Params × System.FilePath) :=
   let b : System.FilePath := args.headD base
-  [("tiny", Params.tiny, b / "tiny"), ("full", Params.full, b / "full")]
+  [("tiny", V080.tiny080, b / "tiny"), ("full", V080.full080, b / "full")]
 
 end JAM.Tests.Stf

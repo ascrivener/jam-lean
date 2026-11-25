@@ -67,6 +67,40 @@ def step080 (p : Params) : Decoder (TraceState.Step × List UInt8) := do
   let post ← TraceState.rawState
   return ({ pre, block, post }, Extrinsic.hash080 block.extrinsic anchors)
 
+/-! ## The chains the v0.8.0 vectors were made with
+
+GP v0.8.1 changes five of the constants `fetch` reports: 𝖦_A 10,000,000 → 47,000,000,
+𝖦_I 50,000,000 → 235,000,000, 𝖦_R 5,000,000,000 → 23,500,000,000, 𝖦_T 3,500,000,000 →
+16,450,000,000 (#587) and 𝖶_A 64,000 → 196,608 (#557). The slot of 𝖶_B in `fetch` case 0
+becomes 𝖶_I (#563), with v0.8.0's 𝖶_B value 13,791,360, so it is unchanged. The v0.8.0 vectors'
+chains are the v0.8.1 chains with the v0.8.0 values of these constants (the tiny chain's own
+𝖦_T and 𝖦_R are those its README lists). The harnesses run the vectors under them. -/
+
+/-- The full chain of the v0.8.0 vectors. -/
+def full080 : Params :=
+  { Params.full with reportAccGas := 10000000, packageAuthGas := 50000000,
+                     packageRefGas := 5000000000, blockAccGas := 3500000000,
+                     maxAuthCodeSize := 64000 }
+
+/-- The tiny chain of the v0.8.0 vectors. -/
+def tiny080 : Params :=
+  { Params.tiny with reportAccGas := 10000000, packageAuthGas := 50000000,
+                     maxAuthCodeSize := 64000 }
+
+-- Regression tests (GP v0.8.1 #557, #563, #587): the model's chains carry the v0.8.1 values.
+#guard Params.full.reportAccGas = 47000000 ∧ Params.full.packageAuthGas = 235000000 ∧
+  Params.full.packageRefGas = 23500000000 ∧ Params.full.blockAccGas = 16450000000 ∧
+  Params.full.maxAuthCodeSize = 196608 ∧ Params.full.maxInputSize = 13791360
+#guard Constants.Cmaxbundlesize = 13904950 ∧ Constants.CgasM = 1862
+-- 𝖶_B = 𝖶_I + 214 + 32𝖩 + 62𝖨 + 35𝖶_M + 36𝖳 (GP v0.8.1 eq. `maxbundlesize`).
+#guard Constants.Cmaxbundlesize = Constants.Cmaxinputsize + 214 + 32 * Constants.Cmaxreportdeps +
+  62 * Constants.Cmaxpackageitems + 35 * Constants.Cmaxpackageimports + 36 * Constants.Cmaxpackagexts
+-- 𝖦_T ≥ 𝖦_A · 𝖢 (the floor definitions.tex asks for, with no always-accumulate services).
+#guard Constants.Cblockaccgas ≥ Constants.Creportaccgas * Constants.Ccorecount
+-- The v0.8.0 vectors' tiny chain: the README's values plus v0.8.0's 𝖦_A, 𝖦_I and 𝖶_A.
+#guard tiny080.blockAccGas = 20000000 ∧ tiny080.packageRefGas = 1000000000 ∧
+  tiny080.reportAccGas = 10000000
+
 /-! Regression tests (GP v0.8.1 #562): an assurance encodes as f ⌢ ℰ_2(v) ⌢ s, with no anchor. -/
 
 private def a0 : Assurance :=

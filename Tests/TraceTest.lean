@@ -112,14 +112,23 @@ structure Summary where
 /-- A step, its block read from the v0.8.0 encoding, with the block's v0.8.0 H_X commitment
     (`Tests.V080`, GP #562). -/
 def readStep (path : System.FilePath) : IO (Step × List UInt8) := do
-  match Decoder.run (V080.step080 V080.tiny080) (← IO.FS.readBinFile path) with
+  match Decoder.run (V080.step080 V080.tiny080) (← IO.FS.readBinFile path) >>=
+      fun (st, xh) => do return (← upgradeStep st, xh) with
   | .ok s => return s
   | .error e => throw (IO.userError s!"{path}: {e}")
+
+/-- **Block import is suspended until v0.8.1 traces are published** (`docs/gp-v0.8.1-migration.md`,
+    "Suspended until v0.8.1 vectors"). The published traces are GP v0.8.0: every header's H_R is a
+    v0.8.0 state root, which GP v0.8.1's C(255) and C(13) encodings no longer produce, so Υ rejects
+    every block. Rewriting headers would fabricate vectors. Meanwhile the runner checks only the
+    T(σ) round trip of every raw state, converted to v0.8.1 form (`upgradeRaw`). -/
+def blockImportSuspended : Bool := true
 
 def runTrace (dir : System.FilePath) (name : String) : IO Summary := do
   let p := V080.tiny080
   let tdir := dir / name
-  let (gh, graw) ← match Decoder.run (genesis p) (← IO.FS.readBinFile (tdir / "genesis.bin")) with
+  let (gh, graw) ← match Decoder.run (genesis p) (← IO.FS.readBinFile (tdir / "genesis.bin")) >>=
+      fun (h, r) => do return (h, ← upgradeRaw r) with
     | .ok g => pure g
     | .error e => throw (IO.userError s!"{name}/genesis.bin: {e}")
   let mut σ ← match decodeState p graw.kvs with
@@ -138,6 +147,7 @@ def runTrace (dir : System.FilePath) (name : String) : IO Summary := do
     sum := { sum with steps := idx, roundTrips := sum.roundTrips + 2,
                       roundTripFails := sum.roundTripFails ++ roundTrip p s!"{f} pre" st.pre ++
                         roundTrip p s!"{f} post" st.post }
+    if blockImportSuspended then continue
     -- The model's σ against the step's pre-state.
     if σ.root != st.pre.root.toList then
       match decodeState p st.pre.kvs with
@@ -232,12 +242,15 @@ def main (args : List String) : IO UInt32 := do
   let mut bad := false
   for n in names do
     let s ← runTrace dir n
-    IO.println s!"{n}: {s.passed}/{s.steps} imported with matching state, {s.rejectedOk} rejected as expected, {s.deviations} known deviations; total {s.totalMs} ms, slowest block {s.maxStep} at {s.maxMs} ms"
+    if blockImportSuspended then
+      IO.println s!"{n}: {s.steps} steps; block import suspended (v0.8.0 traces: header roots are v0.8.0; block import resumes with v0.8.1 traces)"
+    else
+      IO.println s!"{n}: {s.passed}/{s.steps} imported with matching state, {s.rejectedOk} rejected as expected, {s.deviations} known deviations; total {s.totalMs} ms, slowest block {s.maxStep} at {s.maxMs} ms"
     IO.println s!"  T(σ) round trip: {s.roundTrips - s.roundTripFails.length}/{s.roundTrips} raw states decode and re-serialize byte-identically"
     for f in s.roundTripFails do IO.println s!"  {f}"
     unless s.roundTripFails.isEmpty do bad := true
     for f in s.failures do IO.println s!"  {f}"
     if let some i := s.stoppedAt then
       IO.println s!"  stopped at step {i}: the trace's state could not be decoded"
-    if s.passed + s.rejectedOk + s.deviations != s.steps then bad := true
+    if !blockImportSuspended && s.passed + s.rejectedOk + s.deviations != s.steps then bad := true
   return if bad then 1 else 0

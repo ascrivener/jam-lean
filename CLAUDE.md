@@ -1,6 +1,6 @@
 # Working on jam-lean
 
-jam-lean is a Lean 4 model of JAM from the Gray Paper v0.8.0. It is used to prove theorems about
+jam-lean is a Lean 4 model of JAM from the Gray Paper v0.8.1 (migrating from v0.8.0 on branch `gp-v0.8.1`, see `docs/gp-v0.8.1-migration.md`). It is used to prove theorems about
 the real compiled service binaries in `services/`. Read `docs/whats-proven.md` for what is proved,
 `docs/bootstrap-target.md` for the Bootstrap targets (T1 refine, T2 accumulate), and
 `docs/HANDOFF.md` for the state of work in flight.
@@ -11,9 +11,13 @@ rebuilds only what changed since then instead of building cold for 4.5–5 h.
 
 ## Rules
 
-- **Source.** Model only from the Gray Paper v0.8.0. Don't copy other implementations, especially
-  JAR. Docstrings cite the paper (section and equation). Stay on v0.8.0: don't switch to later
-  paper changes such as #519.
+- **Source.** Model only from the Gray Paper **v0.8.1** (tag v0.8.1 of gavofyork/graypaper,
+  2026-11-16; Adam moved the model from v0.8.0 on 2026-11-25). Don't copy other implementations,
+  especially JAR. Docstrings cite the paper (section and equation); code changed for v0.8.1 cites
+  v0.8.1. Don't follow paper changes made after the v0.8.1 tag.
+- **Vectors during the migration.** An expected output of a v0.8.0 vector may change only where a
+  v0.8.1 paper change dictates it. List each such edit in the PR body with the GP PR and the
+  equation. Prefer the vectors' own updates (davxy/jam-test-vectors master) where they cover it.
 - **Toolchain.** Lean v4.36.0-rc1, with core and Std only. If installing elan is blocked, download
   the official release.
 - **Forbidden:** `sorry`, `partial def`, `implemented_by`, `native_decide` and `bv_decide`.

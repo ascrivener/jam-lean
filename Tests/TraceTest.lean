@@ -1,12 +1,14 @@
 import JAM.BlockImport
 import Tests.TraceState
+import Tests.V080
 import JAM.Sha512
 
 /-!
 # Block-import trace runner (davxy/jam-test-vectors `traces/`, GP v0.8.0)
 
-`tracetest [DIR [TRACE …]]` imports each trace's blocks in order with `JAM.importBlock` (Υ) under
-the tiny parameters; by default every trace present under `vendor/jam-traces/traces`, fetched by
+`tracetest [DIR [TRACE …]]` imports each trace's blocks in order with Υ under the tiny parameters
+(`JAM.importBlockCommitted`, which is `JAM.importBlock` with H_X checked against the commitment
+given); by default every trace present under `vendor/jam-traces/traces`, fetched by
 `scripts/fetch-trace-vectors.sh`.
 
 The genesis state is decoded from its key-values (`Tests.TraceState`); from then on the runner keeps
@@ -19,8 +21,13 @@ known deviation) and continues from the trace's post-state, which `decodeState` 
 Every raw state of the trace (genesis, and each step's pre- and post-state) is also checked by
 `roundTrip`: decoded and serialized again, it must give the same key-values and root.
 
+**Vector edit dictated by GP v0.8.1 (#562).** The trace blocks are in the v0.8.0 encoding, whose
+assurances carry an anchor (equal to H_P). Each block is read with `Tests.V080.step080`, which
+drops the anchors, and its H_X is checked against the v0.8.0 commitment `V080.Extrinsic.hash080`
+(the only part of Υ the anchor reaches); everything else of Υ follows v0.8.1.
+
 The cryptographic primitives (`JAM.Crypto`) are supplied as follows:
-* verification (Ed25519, Bandersnatch IETF VRF, Ring VRF): accepts every signature and proof,
+* verification (Ed25519, Bandersnatch VRF signatures, Ring VRF): accepts every signature and proof,
   as the trace blocks are known to be validly signed;
 * the VRF output Y (`bsOut`, `bsRingOut`): `JAM.Sha512.vrfOutput`, the output-point hash of the
   Bandersnatch VRF specification (`JAM/Sha512.lean`);
@@ -102,10 +109,20 @@ structure Summary where
   maxMs : Nat := 0
   maxStep : Nat := 0
 
-def readStep (path : System.FilePath) : IO Step := do
-  match Decoder.run (step Params.tiny) (← IO.FS.readBinFile path) >>= upgradeStep with
+/-- A step, its block read from the v0.8.0 encoding, with the block's v0.8.0 H_X commitment
+    (`Tests.V080`, GP #562). -/
+def readStep (path : System.FilePath) : IO (Step × List UInt8) := do
+  match Decoder.run (V080.step080 Params.tiny) (← IO.FS.readBinFile path) >>=
+      fun (st, xh) => do return (← upgradeStep st, xh) with
   | .ok s => return s
   | .error e => throw (IO.userError s!"{path}: {e}")
+
+/-- **Block import is suspended until v0.8.1 traces are published** (`docs/gp-v0.8.1-migration.md`,
+    "Suspended until v0.8.1 vectors"). The published traces are GP v0.8.0: every header's H_R is a
+    v0.8.0 state root, which GP v0.8.1's C(255) and C(13) encodings no longer produce, so Υ rejects
+    every block. Rewriting headers would fabricate vectors. Meanwhile the runner checks only the
+    T(σ) round trip of every raw state, converted to v0.8.1 form (`upgradeRaw`). -/
+def blockImportSuspended : Bool := true
 
 def runTrace (dir : System.FilePath) (name : String) : IO Summary := do
   let p := Params.tiny
@@ -125,11 +142,12 @@ def runTrace (dir : System.FilePath) (name : String) : IO Summary := do
   let files := ((← tdir.readDir).map (·.fileName)).filter
     (fun f => f.endsWith ".bin" && f != "genesis.bin") |>.qsort (· < ·)
   for f in files do
-    let st ← readStep (tdir / f)
+    let (st, xh) ← readStep (tdir / f)
     let idx := sum.steps + 1
     sum := { sum with steps := idx, roundTrips := sum.roundTrips + 2,
                       roundTripFails := sum.roundTripFails ++ roundTrip p s!"{f} pre" st.pre ++
                         roundTrip p s!"{f} post" st.post }
+    if blockImportSuspended then continue
     -- The model's σ against the step's pre-state.
     if σ.root != st.pre.root.toList then
       match decodeState p st.pre.kvs with
@@ -144,7 +162,7 @@ def runTrace (dir : System.FilePath) (name : String) : IO Summary := do
     unless roots.any (·.1 == key) do roots := (key, σ.ringRoot) :: roots
     let expectReject := st.pre.root.toList == st.post.root.toList
     let t0 ← IO.monoMsNow
-    let r := importBlock p (oracle roots) chain σ st.block
+    let r := importBlockCommitted xh p (oracle roots) chain σ st.block
     let r ← match r with
       | .ok (s', _) => do let _ := s'.root.length; pure r
       | .error _ => pure r
@@ -224,12 +242,15 @@ def main (args : List String) : IO UInt32 := do
   let mut bad := false
   for n in names do
     let s ← runTrace dir n
-    IO.println s!"{n}: {s.passed}/{s.steps} imported with matching state, {s.rejectedOk} rejected as expected, {s.deviations} known deviations; total {s.totalMs} ms, slowest block {s.maxStep} at {s.maxMs} ms"
+    if blockImportSuspended then
+      IO.println s!"{n}: {s.steps} steps; block import suspended (v0.8.0 traces: header roots are v0.8.0; block import resumes with v0.8.1 traces)"
+    else
+      IO.println s!"{n}: {s.passed}/{s.steps} imported with matching state, {s.rejectedOk} rejected as expected, {s.deviations} known deviations; total {s.totalMs} ms, slowest block {s.maxStep} at {s.maxMs} ms"
     IO.println s!"  T(σ) round trip: {s.roundTrips - s.roundTripFails.length}/{s.roundTrips} raw states decode and re-serialize byte-identically"
     for f in s.roundTripFails do IO.println s!"  {f}"
     unless s.roundTripFails.isEmpty do bad := true
     for f in s.failures do IO.println s!"  {f}"
     if let some i := s.stoppedAt then
       IO.println s!"  stopped at step {i}: the trace's state could not be decoded"
-    if s.passed + s.rejectedOk + s.deviations != s.steps then bad := true
+    if !blockImportSuspended && s.passed + s.rejectedOk + s.deviations != s.steps then bad := true
   return if bad then 1 else 0

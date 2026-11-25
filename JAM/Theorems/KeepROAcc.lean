@@ -141,19 +141,19 @@ theorem accHostFn_keep (env : AccEnv) {pb : Nat} (hbd : heapBounds env.code = (4
   unfold AccHost.dispatch at hs ⊢
   split
   · exact same _ (hostGas_mem _ _ _ _)
-  · simp only [hostGrowHeap, growHeapCore, hbd] at hs ⊢
+  · simp only [hostGrowHeap, growHeapCore, hbd, charged] at hs ⊢
     generalize hC : List.countP (fun k => μ.pages.get? (48 + k) == some Access.write) (List.range (pb - 48)) = C
       at hs ⊢
     have hCle : C ≤ pb - 48 := by
       rw [← hC]; exact Nat.le_trans List.countP_le_length (by simp)
     by_cases c1 : reg ω 7 ≤ 48 + C ∨ reg ω 7 > pb
-    · rw [if_pos c1] at hs ⊢
-      exact ⟨fun q hq => Memory.setPages_get_off _ _ _ _ _ (by dsimp only; omega), fun b _ _ => rfl⟩
-    · rw [if_neg c1] at hs ⊢
-      by_cases c2 : gn < Constants.CgasGeminiconst + (reg ω 7 - (48 + C)) * Constants.CgasGeminilinear
-      · rw [if_pos c2] at hs; simp at hs
-      · rw [if_neg c2]
-        exact ⟨fun q hq => Memory.setPages_get_off _ _ _ _ _ (by dsimp only; omega), fun b _ _ => rfl⟩
+    all_goals
+      simp only [c1, ↓reduceIte] at hs ⊢
+      split at hs
+      · simp at hs
+      · next c2 =>
+        simp only [c2, ↓reduceIte]
+        exact ⟨fun q hq => Memory.setPages_get_off _ _ _ _ _ (by omega), fun b _ _ => rfl⟩
   · simp only [hostFetch] at hs ⊢; exact wv _ hs (charged_wv_keep _ _ _ _ _ _ _ _ _ hs)
   · simp only [hostLookup] at hs ⊢; exact wv _ hs (charged_wv_keep _ _ _ _ _ _ _ _ _ hs)
   · simp only [hostRead] at hs ⊢; exact wv _ hs (charged_wv_keep _ _ _ _ _ _ _ _ _ hs)

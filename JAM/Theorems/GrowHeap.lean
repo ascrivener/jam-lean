@@ -76,14 +76,13 @@ theorem FreeStepsH.growHeapK (cap : Nat) (hcap : cap < 2 ^ 64) (env : RefineHost
     growTop] at hcost ⊢
   have hw := (ω.get 7).toNat_lt
   simp only [reg] at hw hcost ⊢
+  have hc64 : (UInt64.ofNat cap).toNat = cap := UInt64.toNat_ofNat_of_lt' hcap
   by_cases hc : (ω.get 7).toNat ≤ h ∨ (ω.get 7).toNat > b
-  · simp [hc]
-  · simp only [hc, ↓reduceIte] at hcost
-    have : ¬ cap % 18446744073709551616 <
-        Constants.CgasGeminiconst + ((ω.get 7).toNat - h) * Constants.CgasGeminilinear := by
-      rw [Nat.mod_eq_of_lt hcap]
-      omega
-    simp [hc, this]
+  · simp only [hc, ↓reduceIte, charged, hc64, Nat.sub_self, Nat.zero_mul, Nat.add_zero] at hcost ⊢
+    simp [show ¬ cap < Constants.CgasGeminiconst by omega]
+  · simp only [hc, ↓reduceIte, charged, hc64] at hcost ⊢
+    simp [show ¬ cap < Constants.CgasGeminiconst + ((ω.get 7).toNat - h) * Constants.CgasGeminilinear
+      by omega]
 
 /-- **A `grow_heap` step**, under `refineContract`: `growHeapK` at `hostCostMax`, so at most 14
     pages a call. -/

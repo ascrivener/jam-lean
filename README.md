@@ -74,7 +74,7 @@ call `pc`) live in `Tests/`, not in the model.
 | The real witness binary's refine on 7 malformed payloads gives `Rejected(BadPayload)` (`lake build witnessrun`; a test, not a proof) | **7 / 7** |
 | `JAM` state trie M (Appendix D) vs. GP v0.8.0 trie vectors (keys cut to 31 octets, note 27); state-key constructor C, hand-written | **11 / 11** roots match; **4 / 4** |
 | `JAM` Fisher–Yates shuffle ℱ with 𝒬_l (Appendix F) vs. GP v0.8.0 shuffle vectors | **8 / 8** match |
-| `JAM` erasure coding ℰ_C / ℛ over GF(2¹⁶) (Appendix H) vs. GP v0.8.0 erasure vectors | data shards match in **12 / 12** (6 tiny, 6 full); parity shards follow a different convention in all 12 (note 28), which the test reproduces exactly; ℛ recovers the paper's code in all 12 |
+| `JAM` erasure coding ℰ_C / ℛ over GF(2¹⁶) (Appendix H, GP v0.8.1 §H.3) vs. GP v0.8.0 erasure vectors | **12 / 12** match shard for shard (6 tiny, 6 full; v0.8.1 #580 adopted the vectors' layout, note 28); ℛ recovers the data in all 12 |
 | Accumulation STF (§12) vs. GP v0.8.0 accumulate vectors (tiny) | **61 / 63** pass; the 2 others are `bless_from_non_manager`, which the vectors' changelog lists as departing from GP 0.8.0 |
 | Recent-history STF (§7: β_H, the accumulation-output belt β_B) vs. `stf/history` (`lake build historytest`) | **4 / 4** tiny, **4 / 4** full |
 | Authorization STF (§8: the pool α from the queue φ') vs. `stf/authorizations` (`lake build authtest`) | **3 / 3** tiny, **3 / 3** full |
@@ -599,7 +599,8 @@ noted here and in a comment at the definition.
    apparent (in)accessibility", but the formula for ε^μ only considers *inaccessible* indices, so
    an accessible index below 2^16 does not panic. We follow the formula. No vector maps a page
    below 2^16, so the two readings are not distinguished.
-4. **Three-register r_D = min(12, ζ_{ı+2})**, not mod 16. No vector has ζ_{ı+2} ≥ 16.
+4. **Three-register r_D** *(resolved in v0.8.1, #554)*. v0.8.0 wrote r_D = min(12, ζ_{ı+2}), not mod 16;
+   v0.8.1 reduces mod 16, and the model follows it. No vector has ζ_{ı+2} ≥ 16.
 5. **The exit pc.** Ψ returns ı = 0 on ∎ and ☇; the vectors report the exiting instruction.
    `Result` is exactly Ψ's tuple, so the test harness recomputes the exiting instruction
    (`Tests.exitIndex`).
@@ -618,9 +619,9 @@ noted here and in a comment at the definition.
 10. **ε^μ takes min(**x**) before reducing mod 2^32**, as written; this only matters for accesses
     that wrap around 2^32.
 11. **Coverage gap.** No vector contains `cmov_nz_imm` (opcode 148).
-12. **Gas types in Ψ_H.** The handler type 𝔉_X returns gas in ℕ_G, but Ψ_H's result is typed
-    ℤ_G and the host functions compute ϱ − g, which is negative when they run out. We follow 𝔉_X
-    (gas in ℕ_G); Ψ_M only uses max(ϱ', 0), so nothing downstream sees the difference yet.
+12. **Gas types in Ψ_H** *(resolved in v0.8.1, #533)*. In v0.8.0 the handler type 𝔉_X returned
+    gas in ℕ_G, but Ψ_H's result was typed ℤ_G and the host functions computed ϱ − g. v0.8.1 types
+    all of it ℕ_G (host functions return max(ϱ − g, 0)), which the model already did.
 13. **Ψ_H need not terminate.** The paper's Ψ_H* recurses after every host call; a handler that
     returns more gas than it was given can keep it running forever. We prove termination (and the
     paper's equation) for handlers that do not add gas, which includes the dispatchers of Ψ_A, Ψ_R
@@ -686,7 +687,9 @@ noted here and in a comment at the definition.
     exactly 31 octets of key, but `trie/trie.json` gives 32-octet keys. The test passes the first
     31 octets to M, after checking that no two keys of a case share them; all 11 roots then
     match, so the vectors' last octet never matters.
-28. **Erasure coding: the vectors pad the message polynomial to a power of two.** §H.3 interpolates
+28. **Erasure coding: the vectors pad the message polynomial to a power of two.** *Resolved in GP
+    v0.8.1 (#580), which defines exactly the vectors' layout; the model follows v0.8.1 and all 12
+    vectors match. The rest of this note describes v0.8.0.* §H.3 interpolates
     p of degree < d = R(v) through the d message words at 0̃ … (d−1)~ and gives validator i ≥ d the
     word p(ĩ). Every erasure vector (tiny and full) instead takes p of degree < n = 2^⌈log₂ d⌉
     through the message words and zeroes at d̃ … (n−1)~, and gives validator i ≥ d the word at

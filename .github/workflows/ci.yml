@@ -60,7 +60,7 @@ jobs:
 
       - name: No forbidden constructs
         run: |
-          if grep -rnE '\bsorry\b|partial def|implemented_by|native_decide|bv_decide' PVM JAM Services Tests PVM.lean JAM.lean Services.lean; then
+          if grep -rnE '\bsorry\b|partial def|implemented_by|native_decide|bv_decide' PVM JAM Services Tests PVM.lean JAM.lean Services.lean JamCrypto JamCrypto.lean JamCryptoTest.lean RingTest.lean; then
             echo "forbidden construct found" >&2; exit 1
           fi
 
@@ -83,8 +83,14 @@ jobs:
       - name: Worked proof with the gas-free logic
         run: lake build Tests.LogicExample
 
-      - name: Theorems use only propext, Classical.choice and Quot.sound (PVM and JAM)
-        run: lake env lean scripts/CheckAxiomsModel.lean
+      - name: Theorems use only propext, Classical.choice and Quot.sound (PVM, JAM and JamCrypto)
+        run: lake build JamCrypto && lake env lean scripts/CheckAxiomsModel.lean
+
+      - name: JamCrypto vectors (Ed25519, Bandersnatch IETF / Thin / Pedersen VRF)
+        run: lake build cryptotest && .lake/build/bin/cryptotest
+
+      - name: JamCrypto ring root and ring VRF vectors
+        run: lake build ringtest && .lake/build/bin/ringtest
 
       - name: Fetch the pinned test vectors
         run: scripts/fetch-vectors.sh
@@ -125,7 +131,7 @@ jobs:
       - name: Shuffle vectors (Appendix F)
         run: lake build shuffletest
 
-      - name: Erasure-coding vectors, tiny and full (all listed as deviating from GP 0.8.0)
+      - name: Erasure-coding vectors, tiny and full (GP v0.8.1 §H.3)
         run: lake build erasuretest
 
       - name: Accumulate vectors (all but the listed deviations from GP 0.8.0)

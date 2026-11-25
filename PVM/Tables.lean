@@ -1,6 +1,6 @@
 /-
   GENERATED FILE: do not edit by hand.
-  Produced by `scripts/gen_tables.py` from the Gray Paper v0.8.0, `text/pvm.tex`.
+  Produced by `scripts/gen_tables.py` from the Gray Paper v0.8.1, `text/pvm.tex`.
   CI regenerates it from the pinned paper and fails on any difference.
 -/
 import PVM.CostExpr

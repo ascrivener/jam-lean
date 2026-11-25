@@ -101,7 +101,7 @@ theorem dispatch_confined (env : AccEnv) (n gas : Nat) (ω : Regs) (μ : Memory)
   unfold dispatch
   split
   · exact charged_ctx _ _ _ _ _ _ _ hc hc
-  · unfold hostGrowHeap; exact hc
+  · unfold hostGrowHeap; exact charged_ctx _ _ _ _ _ _ _ hc hc
   · exact charged_ctx _ _ _ _ _ _ _ hc (by rw [writeValue_ctx]; exact hc)
   · exact hc
   · exact hc

@@ -5,7 +5,7 @@ import JAM.Assurances
 /-!
 # Assurances STF vectors (`lake build assurancestest`)
 
-Runs the assurances transition of GP v0.8.0 §11.2 (`JAM.assurances`) on every vector of
+Runs the assurances transition of GP v0.8.1 §11.2 (`JAM.assurances`) on every vector of
 davxy/jam-test-vectors `v0.8.0` `stf/assurances/{tiny,full}`, and compares:
 * the output: the newly available reports **R**, or the error (the paper names no errors; we
   compare the vectors' names);
@@ -14,6 +14,10 @@ davxy/jam-test-vectors `v0.8.0` `stf/assurances/{tiny,full}`, and compares:
 The pre-state's assignments are ρ^‡, after the disputes transition. Ed25519 verification uses the
 signature oracle of README note 29: every signature is rejected exactly when the vector expects
 `bad_signature`.
+
+**GP v0.8.1 (#562).** Assurances no longer carry an anchor, so the vectors' `anchor` fields are
+not read, and `assurance_with_bad_attestation_parent` (tiny and full), whose only fault is an
+anchor ≠ H_P, has no v0.8.1 counterpart: it is listed in `knownDeviations` (the model accepts it).
 -/
 
 namespace JAM.Tests.Assurances
@@ -24,7 +28,6 @@ open JAM.Tests.Json
 open JAM.Tests.Stf (hexS)
 
 def errName : AssurancesError → String
-  | .badAttestationParent => "bad_attestation_parent"
   | .badValidatorIndex => "bad_validator_index"
   | .coreNotEngaged => "core_not_engaged"
   | .badSignature => "bad_signature"
@@ -62,8 +65,15 @@ def check (params : Params) (j : Json) : Except String (List String) := do
     if (← field pre k) != (← field post k) then diffs := diffs ++ [s!"{k} changed"]
   return diffs
 
+/-- Vectors with no v0.8.1 counterpart. -/
+def knownDeviations : List (String × String) :=
+  let why := "its only fault is an anchor ≠ H_P; GP v0.8.1 removes the anchor (#562), so the model accepts the assurances"
+  [("tiny/assurance_with_bad_attestation_parent-1.json", why),
+   ("full/assurance_with_bad_attestation_parent-1.json", why)]
+
 end JAM.Tests.Assurances
 
 def main (args : List String) : IO UInt32 :=
   JAM.Tests.Stf.runSuite "assurancestest"
     (JAM.Tests.Stf.defaultDirs args "vendor/jam-test-vectors/stf/assurances") JAM.Tests.Assurances.check
+    JAM.Tests.Assurances.knownDeviations

@@ -96,14 +96,15 @@ def hostGas {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (x : X) : HostOut X
 
 /-! ## Ω_♊, `grow_heap` = 1 -/
 
-/-- The heap's page bounds for a standard program (eq. `conditions`): the first heap page
-    a = (2𝖹_Z + Q(|**o**|)) / 𝖹_P and the bound b below the stack. -/
+/-- The heap's page bounds for a standard program (GP v0.8.1 Ω_♊, eq. `jamblobformat`): the first
+    heap page a = (2𝖹_Z + Q(|**o**|)) / 𝖹_P and the bound b = (2^32 − 3𝖹_Z − 𝖹_I − Q(s)) / 𝖹_P below
+    the stack, with the stack size rounded to a zone (Q, not P: GP #538). -/
 def heapBounds (jam : ByteArray) : Nat × Nat :=
   let (roLen, stack) := match JamBlob.parse? jam with
     | some jb => (jb.ro.size, jb.stackSize)
     | none => (0, 0)
   ((2 * zoneSize + roundZone roLen) / pageSize,
-   (2 ^ 32 - 3 * zoneSize - inputSize - roundPage stack) / pageSize)
+   (2 ^ 32 - 3 * zoneSize - inputSize - roundZone stack) / pageSize)
 
 /-- The gas-free part of Ω_♊: the heap bounds a and b, the current heap top h = a + c (c the
     writable pages in ℕ_{a…b}) and the requested top w = ω_7. -/

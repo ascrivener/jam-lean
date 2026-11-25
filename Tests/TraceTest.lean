@@ -6,10 +6,10 @@ import JAM.Sha512
 /-!
 # Block-import trace runner (davxy/jam-test-vectors `traces/`, GP v0.8.0)
 
-`tracetest [DIR [TRACE …]]` imports each trace's blocks in order with Υ under the tiny parameters
-(`JAM.importBlockCommitted`, which is `JAM.importBlock` with H_X checked against the commitment
-given); by default every trace present under `vendor/jam-traces/traces`, fetched by
-`scripts/fetch-trace-vectors.sh`.
+`tracetest [DIR [TRACE …]]` imports each trace's blocks in order with Υ (`JAM.importBlock`) under
+the tiny parameters; by default every trace present under `vendor/jam-traces/traces`, fetched by
+`scripts/fetch-trace-vectors.sh`. **On `gp-v0.8.1` block import is suspended** until v0.8.1 traces
+exist (`blockImportSuspended`); only the T(σ) round trip below runs.
 
 The genesis state is decoded from its key-values (`Tests.TraceState`); from then on the runner keeps
 the model's own σ and, after each block, compares T(σ') and M_σ(σ') with the step's post-state
@@ -21,10 +21,8 @@ known deviation) and continues from the trace's post-state, which `decodeState` 
 Every raw state of the trace (genesis, and each step's pre- and post-state) is also checked by
 `roundTrip`: decoded and serialized again, it must give the same key-values and root.
 
-**Vector edit dictated by GP v0.8.1 (#562).** The trace blocks are in the v0.8.0 encoding, whose
-assurances carry an anchor (equal to H_P). Each block is read with `Tests.V080.step080`, which
-drops the anchors, and its H_X is checked against the v0.8.0 commitment `V080.Extrinsic.hash080`
-(the only part of Υ the anchor reaches); everything else of Υ follows v0.8.1.
+The trace blocks are in the v0.8.0 encoding, whose assurances carry an anchor (equal to H_P,
+GP #562); each block is read with `Tests.V080.step080`, which drops the anchors.
 
 The cryptographic primitives (`JAM.Crypto`) are supplied as follows:
 * verification (Ed25519, Bandersnatch VRF signatures, Ring VRF): accepts every signature and proof,
@@ -162,7 +160,7 @@ def runTrace (dir : System.FilePath) (name : String) : IO Summary := do
     unless roots.any (·.1 == key) do roots := (key, σ.ringRoot) :: roots
     let expectReject := st.pre.root.toList == st.post.root.toList
     let t0 ← IO.monoMsNow
-    let r := importBlockCommitted xh p (oracle roots) chain σ st.block
+    let r := importBlock p (oracle roots) chain σ st.block
     let r ← match r with
       | .ok (s', _) => do let _ := s'.root.length; pure r
       | .error _ => pure r

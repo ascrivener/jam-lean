@@ -95,7 +95,7 @@ should cite a later draft.
 | App. A.2, hash_to_curve | "`expand_message_xmd` with SHA-512 (section 5.3.1)" of RFC 9380, whose step 4 is Z_pad = I2OSP(0, s_in_bytes): 128 zero octets for SHA-512. | 48 zero octets. Draft 36 (fcf7012) states the 48 as a deliberate deviation and announces a suite `…-v2` with RFC 9380's 128; GP v0.8.1 cites Draft 35, which does not state it. |
 | §4, §5, the fixed points B, S, □ | Each "is defined as" printed coordinates, and is "derived using the `hash_to_curve` function as described in Appendix A.2" from its name. With A.2 read as RFC 9380, the two disagree: the printed coordinates are the 48-octet derivation. | The printed coordinates. |
 | §5, Fiat–Shamir of the ring proof | "Begin with empty transcript and "ring-proof" label." | The suite id `Bandersnatch-SHA512-ELL2-v1` as the label; no ring vector verifies with "ring-proof". |
-| §5, Fiat–Shamir of the ring proof | "Push R to the transcript after instancing." R is not defined in §5 (Pedersen's nonce commitment is R in §4), and no framing is given. | Nothing is pushed after the instance (Ȳ) other than the proof's own columns. Not modelled under either reading. |
+| §5, Fiat–Shamir of the ring proof | "Push R to the transcript after instancing." R is not defined in §5 (Pedersen's nonce commitment is R in §4), and no framing is given. | Nothing is pushed after the instance (Ȳ) other than the proof's own columns. Not modelled under either reading (`.prose` omits the step, since the prose leaves it underdetermined). |
 
 ## Not for upstream
 

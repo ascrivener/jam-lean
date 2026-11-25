@@ -138,7 +138,8 @@ Choices the paper and the draft leave open:
 * **96-octet signature layout.** GP gives 𝔹̄ as 96-octet strings and reads Y from the signature,
   but the draft encodes only the proof (R, s). We read it as O ⌢ R ⌢ s, the output point first as
   in the v0.8.0 IETF signature and the ring proof (`Thin.thinEncode`/`thinDecode`); Adam,
-  2026-11-25. The planned check: once fuzzer blocks for 0.8.1 exist, only one layout will verify.
+  2026-11-25. The gap is raised upstream as gavofyork/graypaper#593. The planned check: once fuzzer
+  blocks for 0.8.1 exist, only one layout will verify.
 * **Z_pad**, the fixed points and the ring transcript label: the draft's prose and its vectors
   disagree; see the next section.
 * **Ring domain**: §5 of Draft 35 fixes the domain at 2048. The 181aba2 ring vectors themselves
@@ -188,8 +189,9 @@ The disagreements, in the draft's words:
 * **Not modelled under either reading.** §5 also says "Push R to the transcript after
   instancing." R is not defined in §5 (in §4 R is the Pedersen proof's nonce commitment), and the
   draft gives no label or encoding for it. The vectors' transcript pushes nothing after the
-  instance Ȳ other than the proof's own columns, and we follow that under both readings. Listed in
-  `docs/upstream-candidates.md`.
+  instance Ȳ other than the proof's own columns, and we follow that under both readings: `.prose`
+  therefore omits this step of the prose, because the prose leaves it underdetermined. An open
+  prose/vectors disagreement, listed in `docs/upstream-candidates.md`.
 * The ring domain of 2048 is the same under both readings: §5 fixes it, and Adam's decision of
   2026-11-25 follows §5 (above).
 
@@ -216,7 +218,7 @@ ring root is computed but has nothing to be compared with.
 The GP v0.8.1 crypto readings are still to be confirmed by 0.8.1 vectors or fuzzer blocks:
 
 * The 96-octet Thin VRF signature is read as O ⌢ R ⌢ s. GP gives 96 octets; the VRF spec encodes only
-  R ⌢ s (Adam, 2026-11-25).
+  R ⌢ s (Adam, 2026-11-25; raised as gavofyork/graypaper#593).
 * The ring domain is fixed at 2048 for every chain, per Draft 35 §5 (Adam, 2026-11-25). v0.8.0
   stays sized by V.
 * Where Draft 35's prose and vectors disagree (Z_pad, the fixed points, the ring transcript label),

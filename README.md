@@ -45,7 +45,7 @@ Two libraries, each bounded by the Gray Paper (v0.8.0):
   It has the general host functions (`gas`, `grow_heap`, `fetch`, `lookup`, `read`, `write`,
   `info`), the 13 accumulate host functions, Ψ_A, and the accumulation state transition of §12
   (Δ_1, Δ_*, Δ_+, the ready queue and history, statistics, and the output root); and the refine
-  host functions (`historical_lookup`, `export`, `machine`, `peek`, `poke`, `pages`, `invoke`,
+  host functions (`historical_lookup`, `export`, `compile` (GP v0.8.1), `machine`, `peek`, `poke`, `pages`, `invoke`,
   `expunge`), Ψ_R and Ψ_I. Protocol and gas
   constants are generated from `definitions.tex` (`scripts/gen_constants.py`, drift-checked in CI);
   the test vectors' tiny chain is `Params.tiny`. A proof about pure PVM programs imports only `PVM` and trusts nothing from `JAM`.
@@ -801,6 +801,13 @@ noted here and in a comment at the definition.
       taken as 0 when τ' < 𝖱. The full-chain vectors with a shrunk set agree.
     * The reporters G and the incoming reports' core and service statistics (π_C', π_S' of
       §13.2) are checked too, with no available reports, assurances, preimages or accumulation.
+    * *Work-package limits* (GP v0.8.1 eq. `reportrefineload`, #563; `checkReportLoad`). They are
+      checked after ∑ d_g ≤ 𝖦_A, row by row in the paper's order, with the vectors' errors
+      (master after v0.8.0): `bad_exports_count` when (r_s)_n ≠ ∑ e, `refine_load_too_high` for
+      a sum over its limit, `bundle_too_big` for (r_s)_l > 𝖶_B and `auth_gas_too_high` for
+      r_g > 𝖦_I. The reports suite runs master 5e8d2a2's vectors, which use v0.8.0's 𝖦_I and
+      v0.8.1's 𝖶_B. The tiny chain's 𝖫 is 24 (`Params.tiny`; the README omits it, the fuzzer
+      protocol and `lookup_anchor_not_recent-1` use it).
 
 33. **Block import Υ** (§4, §5, Appendix D).
     * *Composition.* `JAM.importBlock` (`JAM/BlockImport.lean`) composes the section transitions

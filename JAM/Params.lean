@@ -66,11 +66,14 @@ def Params.full : Params :=
 
 /-- The test vectors' tiny chain: 2 cores, an expunge period of 32 and epochs of 12 slots,
     tail start 10, 3 tickets per extrinsic, rotation period 4, 𝖦_T = 20,000,000 and
-    𝖦_R = 1,000,000,000. -/
+    𝖦_R = 1,000,000,000 (the vectors' README), and a lookup-anchor age 𝖫 = 24. The paper
+    defines only the full chain, so these are test configuration. The README does not list 𝖫;
+    24 is the fuzzer protocol's tiny value, and the reports vector `lookup_anchor_not_recent`
+    (master after v0.8.0) uses it (an anchor 25 slots old is "one slot older than L"). -/
 def Params.tiny : Params :=
   { Params.full with coreCount := 2, expungePeriod := 32, epochLen := 12, epochTailStart := 10,
                      maxBlockTickets := 3, rotationPeriod := 4, blockAccGas := 20000000,
-                     packageRefGas := 1000000000 }
+                     packageRefGas := 1000000000, maxLookupAnchorAge := 24 }
 
 /-- ℰ of the parameters as `fetch` case 0 returns them (GP Appendix B, Ω_Y). -/
 def Params.encode (c : Params) : List UInt8 :=

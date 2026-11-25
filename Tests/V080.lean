@@ -15,9 +15,8 @@ This module reads the v0.8.0 encoding and converts it, for the harnesses only:
 
 * `decodeAssurances080`, `Extrinsic.decode080` and `Block.decode080` read the v0.8.0 encoding and
   return the v0.8.1 terms together with the anchors;
-* `encodeAssurances080` and `Extrinsic.hash080` give the v0.8.0 encoding and extrinsic hash, so
-  that a trace block's H_X is checked against the formula it was made with
-  (`JAM.importBlockCommitted`);
+* `encodeAssurances080` and `Extrinsic.hash080` give the v0.8.0 encoding and extrinsic hash (the
+  formula a trace block's H_X was made with; unused while block import is suspended);
 * `step080` reads a trace step (`Tests.TraceState.Step`) with v0.8.0 blocks.
 
 The model itself (`JAM.Block`, `JAM.Assurances`) follows v0.8.1 only.

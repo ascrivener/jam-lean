@@ -230,6 +230,10 @@ theorem pages_gas (gas : Nat) (ω : Regs) (μ : Memory) (c : RefineCtx) :
     (pages gas ω μ c).gas ≤ gas := by
   unfold pages; exact charged_gas_le _ _ _ _ _ _ (by gas_body)
 
+theorem compile_gas (gas : Nat) (ω : Regs) (μ : Memory) (s : Nat) (d : Accounts) (t : Nat)
+    (c : RefineCtx) : (compile gas ω μ s d t c).gas ≤ gas := by
+  unfold compile; exact charged_gas_le _ _ _ _ _ _ (by gas_body)
+
 theorem expunge_gas (gas : Nat) (ω : Regs) (μ : Memory) (c : RefineCtx) :
     (expunge gas ω μ c).gas ≤ gas := by
   unfold expunge; exact charged_gas_le _ _ _ _ _ _ (by gas_body)
@@ -250,6 +254,7 @@ theorem dispatch_gas (env : Env) (n gas : Nat) (ω : Regs) (μ : Memory) (c : Re
     | with_reducible exact unknown_gas ..
     | with_reducible exact historicalLookup_gas ..
     | with_reducible exact exportSeg_gas ..
+    | with_reducible exact compile_gas ..
     | with_reducible exact machine_gas ..
     | with_reducible exact peek_gas ..
     | with_reducible exact poke_gas ..

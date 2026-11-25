@@ -835,9 +835,9 @@ noted here and in a comment at the definition.
       from a service other than χ_M answers HUH, and the fuzz service then panics; in the traces
       it is accepted. `fuzzy_light` blocks 77, 118, 148, 151, 163 and 165, and 86 and 179 where the
       caller is the delegator χ_V handing its role over. In `fuzzy` block 17 the fuzz service
-      stores the results of `bless`, `designate` and `assign` calls without the privilege, so the
-      trace's storage holds an entry under a key the model never wrote and the remaining 183 blocks
-      cannot be run model-faithfully.
+      stores the results of `bless`, `designate` and `assign` calls without the privilege. Since
+      storage-key stage 2 the runner continues from there (every raw state decodes); `fuzzy` (not
+      run by CI) then has 35 further blocks whose post-state differs, not yet classified.
     * *Rejected blocks.* The 7 steps whose root does not change (`fuzzy` 37–39, `fuzzy_light`
       152–155) are blocks to reject. `fuzzy_light` 152–155 are rejected by the model too, with a
       report whose code hash is not the service's (`badCodeHash`), not for a cryptographic reason,

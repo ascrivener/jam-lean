@@ -6,6 +6,23 @@ the coordinator restarts, start here. Scope since 2026-11-16: decision 19, refin
 Since 2026-11-20 jam-lean is run by the parent session of the `witness-toaster` project; the old
 jam-lean parent session is archived.
 
+## 2026-11-25: GP v0.8.1 (read first)
+
+- **Ownership:** session_01FAPLsdKXq86WuSpB5fCYVg is the single parent for jam-lean, jam-lean-target
+  and jam. All its children from 2026-11-25 are archived; nothing is in flight.
+- **The model is GP v0.8.1 on `main`** (#261, `58d1b86`). The last v0.8.0 model is tagged `gp-v0.8.0`
+  (`5055102`). Plan, hunk coverage, decisions and the checks suspended until v0.8.1 vectors exist:
+  `docs/gp-v0.8.1-migration.md`.
+- **Moved in from jam-lean-target:** `JamCrypto` (#249; v0.8.1 path reads the VRF spec's prose by
+  default, vector reading as a switch, #260) and the state decoder `JAM/StateDecode.lean` (#247).
+- **Adam's decisions (2026-11-25):** N(o) post-state = input state (raised as graypaper#592);
+  Thin signature O‖R‖s (confirmed by davxy on graypaper#593); `psiA_confined` gains `NoSupervisee`;
+  crypto prose default (v0.8.1 path only); proofs CI on demand only; Services proofs not migrated
+  (option 2, last kernel-checked `c22c197`).
+- **Open:** davxy's answers on the VRF ring label, Z_pad and "push R" (asked privately); v0.8.1
+  test vectors and the 0.8.1 fuzzer (restore suspended checks then); graypaper#592; proof work
+  (restate Services through the accessors, then a manual proofs run on main).
+
 ## Where things stand
 
 **Storage-key stage 2 (2026-11-25, branch `claude/storage-key-stage2`).** The model now holds

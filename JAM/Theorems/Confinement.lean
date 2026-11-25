@@ -230,16 +230,16 @@ theorem psiA_confined (params : Params) (entropy : List UInt8) (e : PartialState
 
 namespace RefineHost
 
-/-- Close `(f …).ctx.2 = c.2` by splitting every case of a refine host function. -/
+/-- Close `(f …).ctx.2.2 = c.2.2` (the exports) by splitting every case of a refine host function. -/
 macro "exports_tac" c:term : tactic =>
   `(tactic| (
     dsimp only
-    apply charged_ctx (fun c' : RefineCtx => c'.2 = ($c).2) _ _ _ _ _ _ rfl
+    apply charged_ctx (fun c' : RefineCtx => c'.2.2 = ($c).2.2) _ _ _ _ _ _ rfl
     dsimp only
     (repeat' split) <;> (simp only [r7, panic]) <;> rfl))
 
 theorem invoke_exports (gas : Nat) (ω : Regs) (μ : Memory) (c : RefineCtx) :
-    (invoke gas ω μ c).ctx.2 = c.2 := by
+    (invoke gas ω μ c).ctx.2.2 = c.2.2 := by
   unfold invoke
   dsimp only
   generalize (if μ.rangeWritable (reg ω 8) 112 = true then
@@ -261,16 +261,17 @@ theorem invoke_exports (gas : Nat) (ω : Regs) (μ : Memory) (c : RefineCtx) :
         cases st <;> rfl
 
 theorem dispatch_exports (env : Env) (n gas : Nat) (ω : Regs) (μ : Memory) (c : RefineCtx)
-    (hn : n ≠ 8) (hc : c.2 = []) : (dispatch env n gas ω μ c).ctx.2 = [] := by
+    (hn : n ≠ 8) (hc : c.2.2 = []) : (dispatch env n gas ω μ c).ctx.2.2 = [] := by
   rw [← hc]
   unfold dispatch
   split
-  · exact charged_ctx (fun c' : RefineCtx => c'.2 = c.2) _ _ _ _ _ _ rfl rfl
-  · unfold hostGrowHeap; exact charged_ctx (fun c' : RefineCtx => c'.2 = c.2) _ _ _ _ _ _ rfl rfl
-  · exact charged_ctx (fun c' : RefineCtx => c'.2 = c.2) _ _ _ _ _ _ rfl (by rw [writeValue_ctx])
+  · exact charged_ctx (fun c' : RefineCtx => c'.2.2 = c.2.2) _ _ _ _ _ _ rfl rfl
+  · unfold hostGrowHeap; exact charged_ctx (fun c' : RefineCtx => c'.2.2 = c.2.2) _ _ _ _ _ _ rfl rfl
+  · exact charged_ctx (fun c' : RefineCtx => c'.2.2 = c.2.2) _ _ _ _ _ _ rfl (by rw [writeValue_ctx])
   · unfold historicalLookup
-    exact charged_ctx (fun c' : RefineCtx => c'.2 = c.2) _ _ _ _ _ _ rfl (by rw [writeValue_ctx])
+    exact charged_ctx (fun c' : RefineCtx => c'.2.2 = c.2.2) _ _ _ _ _ _ rfl (by rw [writeValue_ctx])
   · exact absurd rfl hn
+  · unfold compile; exports_tac c
   · unfold machine; exports_tac c
   · unfold peek; exports_tac c
   · unfold poke; exports_tac c
@@ -284,8 +285,8 @@ end RefineHost
 /-- Ψ_M under the refine dispatcher, for code that does not name `export`, exports nothing. -/
 theorem refine_psiM_noExports (env : RefineHost.Env) (code : ByteArray) (gas : UInt64)
     (a : ByteArray) (h8 : 8 ∉ jamHostCallIdsOf code) :
-    (psiM code 0 gas a (toHostFn (RefineHost.dispatch env)) ((∅, []) : RefineCtx)).2.2.2 = [] :=
-  psiM_ctx_inv code 0 gas a ((∅, []) : RefineCtx) (fun c => c.2 = [])
+    (psiM code 0 gas a (toHostFn (RefineHost.dispatch env)) ((∅, ∅, []) : RefineCtx)).2.2.2.2 = [] :=
+  psiM_ctx_inv code 0 gas a ((∅, ∅, []) : RefineCtx) (fun c => c.2.2 = [])
     (toHostFn (RefineHost.dispatch env))
     (fun h hh g ω μ x hx => by
       have hne : h ≠ 8 := fun he => h8 (he ▸ hh)
@@ -315,9 +316,9 @@ theorem psiR_noExports (params : Params) (d : Accounts) (c i : Nat) (p : WorkPac
           obtain ⟨a, ha, hla⟩ := Option.bind_eq_some_iff.1 hl
           have h8 := hids w hw a ha l hla code hcode
           generalize hres : psiM code 0 _ _ _ _ = res
-          have hinv : res.2.2.2 = [] := by
+          have hinv : res.2.2.2.2 = [] := by
             rw [← hres]; exact refine_psiM_noExports _ _ _ _ h8
-          obtain ⟨u, o, m, ex⟩ := res
+          obtain ⟨u, o, m, P, ex⟩ := res
           simp only at hinv ⊢
           split <;> simp [hinv]
 

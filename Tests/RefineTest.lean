@@ -5,7 +5,8 @@ import JAM
 
 No vectors exercise refine or is-authorized at the pinned commits, so each check here is one case
 of a definition in GP v0.8.0 Appendix B (`sec:refinefunctions`, eqs. `refinvocation`,
-`isauthinvocation`). The `#guard`s run compiled code; the `example`s at the end are checked by the
+`isauthinvocation`); the refine host calls follow v0.8.1 (`compile`, the module map and the new
+numbering of #530, and the common rules of #533). The `#guard`s run compiled code; the `example`s at the end are checked by the
 kernel.
 -/
 
@@ -25,7 +26,7 @@ def regs (vals : List (Nat × Nat)) : Regs :=
 def r7 {X} (o : HostOut X) : Nat := (o.regs.get 7).toNat
 def r8 {X} (o : HostOut X) : Nat := (o.regs.get 8).toNat
 
-def ctx0 : RefineCtx := (∅, [])
+def ctx0 : RefineCtx := (∅, ∅, [])
 
 /-- An inner program: `ecalli 42; trap`. PVM blob: |j| = 0, z = 0, |c| = 3, c = [10, 42, 0],
     k = 0b101. -/
@@ -33,29 +34,66 @@ def inner : List UInt8 := [0, 0, 3, 10, 42, 0, 5]
 
 def memInner : Memory := mem0.writeN base inner
 
-/-- `machine` on the program at `base`, starting at instruction `i`. -/
-def mk (c : RefineCtx) (i : Nat := 0) : HostOut RefineCtx :=
-  machine 100000 (regs [(7, base), (8, inner.length), (9, i)]) memInner c
+/-- `compile` from our RAM (m = 0): the l octets at p. -/
+def cmpMem (c : RefineCtx) (p : Nat := base) (l : Nat := inner.length) (μ : Memory := memInner) :
+    HostOut RefineCtx :=
+  compile 100000 (regs [(7, 0), (8, p), (9, l)]) μ 0 ∅ 0 c
+
+/-! ### compile (GP v0.8.1, #530) -/
+
+-- The first module gets handle 0, the next handle 1; the module is the blob.
+#guard (cmpMem ctx0).status == .cont && r7 (cmpMem ctx0) == 0
+#guard ((cmpMem ctx0).ctx.2.1.get? 0).map (·.toList) == some inner
+#guard r7 (cmpMem (cmpMem ctx0).ctx) == 1
+-- A blob that does not deblob at 0: HUH (here, the first two octets only).
+#guard r7 (cmpMem ctx0 base 2) == Result.HUH && (cmpMem ctx0 base 2).ctx.2.1.size == 0
+-- An unreadable source: ☇.
+#guard (cmpMem ctx0 0x100).status == .panic
+-- Any m other than 0 or 1: HUH, charging 𝖬_{Γ,mem,c}.
+#guard r7 (compile 100000 (regs [(7, 2), (8, base), (9, 7)]) memInner 0 ∅ 0 ctx0) == Result.HUH
+#guard (compile 100000 (regs [(7, 2), (8, base), (9, 7)]) memInner 0 ∅ 0 ctx0).gas ==
+  100000 - Constants.CgasGammamemconst
+-- Gas for m = 0: 𝖬_{Γ,mem,c} + 𝔊(𝖬_{Γ,mem,ℓ}, l).
+#guard (cmpMem ctx0).gas ==
+  100000 - (Constants.CgasGammamemconst + memGas Constants.CgasGammamemlinear inner.length)
+-- 128 handles in use: FULL, before the source is read.
+def full128 : RefineCtx :=
+  (∅, (List.range 128).foldl (fun m k => m.insert k (⟨#[]⟩ : ByteArray)) ∅, [])
+#guard r7 (cmpMem full128 0x100) == Result.FULL
+
+/-- The context with module 0 compiled from `inner`. -/
+def withModule : RefineCtx := (cmpMem ctx0).ctx
+
+/-- `machine` on module `h`, starting at instruction `i`. -/
+def mk (c : RefineCtx) (i : Nat := 0) (h : Nat := 0) : HostOut RefineCtx :=
+  machine 100000 (regs [(7, h), (8, i)]) mem0 c
 
 /-! ### machine -/
 
--- The first machine gets id 0, the next id 1.
-#guard (mk ctx0).status == .cont && r7 (mk ctx0) == 0 && (mk ctx0).ctx.1.contains 0
-#guard r7 (mk (mk ctx0).ctx) == 1
--- The new machine has the program, an empty RAM, the given counter and an uncharged block.
-#guard ((mk ctx0).ctx.1.get? 0).map (fun vm => (vm.code.toList, vm.pc, vm.charged, vm.ram.pages.size)) ==
-  some (inner, 0, false, 0)
+-- The first instance gets id 0, the next id 1.
+#guard (mk withModule).status == .cont && r7 (mk withModule) == 0 && (mk withModule).ctx.1.contains 0
+#guard r7 (mk (mk withModule).ctx) == 1
+-- The new instance has the module's program, an empty RAM, the given counter, an uncharged block
+-- and the module's handle.
+#guard ((mk withModule).ctx.1.get? 0).map (fun vm => (vm.code.toList, vm.pc, vm.charged, vm.ram.pages.size, vm.handle)) ==
+  some (inner, 0, false, 0, 0)
 -- The smallest free id is reused after an expunge.
-#guard r7 (mk ((expunge 1000 (regs [(7, 0)]) mem0 (mk (mk ctx0).ctx).ctx).ctx)) == 0
+#guard r7 (mk ((expunge 1000 (regs [(7, 0), (8, 0)]) mem0 (mk (mk withModule).ctx).ctx).ctx)) == 0
 -- A start that is not an instruction boundary: deblob fails, HUH.
-#guard r7 (mk ctx0 1) == Result.HUH && (mk ctx0 1).ctx.1.size == 0
--- An unreadable program panics.
-#guard (machine 100000 (regs [(7, 0x100), (8, 7)]) memInner ctx0).status == .panic
--- With 63 machines: FULL (before the memory check).
-def full63 : RefineCtx := ((List.range 63).foldl (fun m k => m.insert k ⟨⟨#[]⟩, Memory.empty, 0, false⟩) ∅, [])
-#guard r7 (machine 100000 (regs [(7, 0x100), (8, 7)]) memInner full63) == Result.FULL
+#guard r7 (mk withModule 1) == Result.HUH && (mk withModule 1).ctx.1.size == 0
+-- No such module: WHO.
+#guard r7 (mk withModule 0 5) == Result.WHO && r7 (mk ctx0) == Result.WHO
+-- With 63 instances: FULL (before the module check).
+def full63 : RefineCtx :=
+  ((List.range 63).foldl (fun m k => m.insert k ⟨⟨#[]⟩, Memory.empty, 0, false, 0⟩) ∅, ∅, [])
+#guard r7 (mk full63) == Result.FULL
 -- Gas: 𝖬_M, flat (GP v0.8.1; v0.8.0 charged 𝖬_{M,c} + 𝔊(𝖬_{M,ℓ}, p_Z)).
-#guard (mk ctx0).gas == 100000 - Constants.CgasM
+#guard (mk withModule).gas == 100000 - Constants.CgasM
+-- A handle still used by an instance is not reused after its module is expunged:
+-- H = K(**P**) ∪ {**m**[n]_h}.
+def afterExpungeModule : RefineCtx :=
+  (expunge 1000 (regs [(7, 1), (8, 0)]) mem0 (mk withModule).ctx).ctx
+#guard afterExpungeModule.2.1.size == 0 && r7 (cmpMem afterExpungeModule) == 1
 
 /-! ### invoke -/
 
@@ -63,7 +101,7 @@ def full63 : RefineCtx := ((List.range 63).foldl (fun m k => m.insert k ⟨⟨#[
 def invokeBlock (gR : Nat) (w : List Nat := List.replicate 13 0) : List UInt8 :=
   Codec.fixed 8 gR ++ (w.map (Codec.fixed 8)).flatten
 
-def withMachine : RefineCtx := (mk ctx0).ctx
+def withMachine : RefineCtx := (mk withModule).ctx
 
 def inv (gas gR : Nat) (c : RefineCtx := withMachine) (n : Nat := 0) : HostOut RefineCtx :=
   invoke gas (regs [(7, n), (8, base + 0x100)]) (mem0.writeN (base + 0x100) (invokeBlock gR)) c
@@ -135,19 +173,26 @@ def freed := pg 0 16 2 0 pk.ctx
 
 /-! ### expunge -/
 
--- Expunge returns the machine's counter (2, after the host call) and removes it.
-def ex := expunge 1000 (regs [(7, 0)]) mem0 inv1.ctx
-#guard r7 ex == 2 && ex.ctx.1.size == 0
-#guard r7 (expunge 1000 (regs [(7, 0)]) mem0 ex.ctx) == Result.WHO
+-- m = 0: expunge returns the instance's counter (2, after the host call) and removes it; the module
+-- stays.
+def ex := expunge 1000 (regs [(7, 0), (8, 0)]) mem0 inv1.ctx
+#guard r7 ex == 2 && ex.ctx.1.size == 0 && ex.ctx.2.1.size == 1
+#guard r7 (expunge 1000 (regs [(7, 0), (8, 0)]) mem0 ex.ctx) == Result.WHO
+-- m = 1: expunge removes module n and returns OK; WHO if there is none (GP v0.8.1, #530).
+def exM := expunge 1000 (regs [(7, 1), (8, 0)]) mem0 ex.ctx
+#guard r7 exM == Result.OK && exM.ctx.2.1.size == 0
+#guard r7 (expunge 1000 (regs [(7, 1), (8, 0)]) mem0 exM.ctx) == Result.WHO
+-- Any other m: HUH.
+#guard r7 (expunge 1000 (regs [(7, 2), (8, 0)]) mem0 ex.ctx) == Result.HUH
 
 /-! ### export -/
 
 def exp1 := exportSeg 100000 (regs [(7, base + 0x200), (8, 4)]) memData 10 ctx0
 -- The segment is zero-padded to 𝖶_G and its index is ς + |**e**|.
-#guard r7 exp1 == 10 && exp1.ctx.2 == [[1, 2, 3, 4] ++ List.replicate (Constants.Csegmentsize - 4) 0]
+#guard r7 exp1 == 10 && exp1.ctx.2.2 == [[1, 2, 3, 4] ++ List.replicate (Constants.Csegmentsize - 4) 0]
 #guard r7 (exportSeg 100000 (regs [(7, base + 0x200), (8, 4)]) memData 10 exp1.ctx) == 11
 -- A longer length is cut to 𝖶_G.
-#guard ((exportSeg 100000 (regs [(7, base), (8, 99999)]) mem0 0 ctx0).ctx.2.map (·.length)) == [Constants.Csegmentsize]
+#guard ((exportSeg 100000 (regs [(7, base), (8, 99999)]) mem0 0 ctx0).ctx.2.2.map (·.length)) == [Constants.Csegmentsize]
 -- ς + |**e**| ≥ 𝖶_X: FULL. Unreadable: ☇.
 #guard r7 (exportSeg 100000 (regs [(7, base), (8, 4)]) mem0 Constants.Cmaxpackageexports ctx0) == Result.FULL
 #guard (exportSeg 100000 (regs [(7, 0x100), (8, 4)]) mem0 0 ctx0).status == .panic
@@ -177,18 +222,51 @@ def hl (w7 t : Nat) : HostOut Unit :=
 -- An unreadable hash: ☇.
 #guard (historicalLookup (X := Unit) 100000 (regs [(7, 3), (8, 0x100)]) memH 3 accts 6 ()).status == .panic
 
+/-! ### compile from a preimage (m = 1, GP v0.8.1, #530) -/
+
+def hInner : List UInt8 := (Blake2b.hash256 ⟨inner.toArray⟩).toList
+
+/-- Service 4, whose preimage `inner` was available from slot 5 until slot 9. -/
+def acctI : ServiceAccount :=
+  ServiceAccount.requestSet
+    { acct with preimages := Std.ExtTreeMap.ofList [(hInner, inner)] } hInner inner.length [5, 9]
+
+def acctsI : Accounts := Std.ExtTreeMap.ofList [(4, acctI)]
+def memHI : Memory := mem0.writeN base hInner
+
+/-- `compile` with m = 1 of the preimage of the hash at `base`, octets f … f + l, from service i. -/
+def cmpDb (i t : Nat) (f : Nat := 0) (l : Nat := 1000) (μ : Memory := memHI) : HostOut RefineCtx :=
+  compile 100000 (regs [(7, 1), (8, base), (9, l), (10, f), (11, i)]) μ 4 acctsI t ctx0
+
+-- Available at slot 6, by id or through i = 2^64 − 1 (the service itself): handle 0, the preimage.
+#guard r7 (cmpDb 4 6) == 0 && ((cmpDb 4 6).ctx.2.1.get? 0).map (·.toList) == some inner
+#guard r7 (cmpDb (2 ^ 64 - 1) 6) == 0
+-- Not available at slot 9, or no such service: NONE.
+#guard r7 (cmpDb 4 9) == Result.NONE && r7 (cmpDb 7 6) == Result.NONE
+-- The window f* = min(f, |h|), l* = min(l, |h| − f*): a window that cuts the blob does not deblob,
+-- HUH.
+#guard r7 (cmpDb 4 6 0 2) == Result.HUH && r7 (cmpDb 4 6 1) == Result.HUH
+-- An unreadable hash: ☇.
+#guard (compile 100000 (regs [(7, 1), (8, 0x100), (9, 7), (11, 4)]) memHI 4 acctsI 6 ctx0).status == .panic
+-- Gas for m = 1: 𝖬_{Γ,db,c} + 𝔊(𝖬_{Γ,db,ℓ}, l).
+#guard (cmpDb 4 6).gas == 100000 - (Constants.CgasGammadbconst + memGas Constants.CgasGammadblinear 1000)
+
 /-! ### Dispatch -/
 
 def env0 : Env :=
   { params := .tiny, service := 3, accounts := accts, lookupSlot := 6, code := ⟨#[]⟩, exportOffset := 0,
     fetch := {} }
 
--- Accumulate-only ids are unknown to refine: WHAT, charging 𝖬_∅.
-#guard r7 (dispatch env0 15 1000 (regs []) mem0 ctx0) == Result.WHAT
-#guard (dispatch env0 15 1000 (regs []) mem0 ctx0).gas == (1000 - Constants.Cgasunknown : Nat)
+-- GP v0.8.1 numbering (#530): `compile` = 9, `machine` = 10, …, `expunge` = 15.
+#guard r7 (dispatch env0 9 100000 (regs [(7, 0), (8, base), (9, inner.length)]) memInner ctx0) == 0
+#guard r7 (dispatch env0 10 100000 (regs [(7, 0)]) mem0 withModule) == 0
+#guard r7 (dispatch env0 15 1000 (regs [(7, 0), (8, 0)]) mem0 withMachine) == 0
+-- Accumulate-only ids (16 and up) are unknown to refine: WHAT, charging 𝖬_∅.
+#guard r7 (dispatch env0 16 1000 (regs []) mem0 ctx0) == Result.WHAT
+#guard (dispatch env0 16 1000 (regs []) mem0 ctx0).gas == (1000 - Constants.Cgasunknown : Nat)
 -- ϱ < 𝖬_∅: ∞ with ϱ* = 0 (GP v0.8.1 eq. `refinemutator`, #533).
-#guard (dispatch env0 15 999 (regs []) mem0 ctx0).status == .oog
-#guard (dispatch env0 15 999 (regs []) mem0 ctx0).gas == 0
+#guard (dispatch env0 16 999 (regs []) mem0 ctx0).status == .oog
+#guard (dispatch env0 16 999 (regs []) mem0 ctx0).gas == 0
 -- `lookup` (3) is not available to refine either.
 #guard r7 (dispatch env0 3 1000 (regs []) mem0 ctx0) == Result.WHAT
 

@@ -3,11 +3,12 @@ import JAM.Blake2b
 import PVM.FastHost
 
 /-!
-# The refine and is-authorized invocations Ψ_R and Ψ_I (GP v0.8.0 Appendix B)
+# The refine and is-authorized invocations Ψ_R and Ψ_I (GP v0.8.1 Appendix B)
 
-* the integrated PVM type 𝕄 (eq. `innerpvm`, here `InnerPvm`);
-* the refine host functions `historical_lookup` (Ω_H), `export` (Ω_E), `machine` (Ω_M), `peek` (Ω_P),
-  `poke` (Ω_O), `pages` (Ω_Z), `invoke` (Ω_K) and `expunge` (Ω_X) (`sec:refinefunctions`);
+* the PVM instance type (GP v0.8.1 eq. `innerpvm`, here `InnerPvm`) and the program modules;
+* the refine host functions `historical_lookup` (Ω_H), `export` (Ω_E), `compile` (Ω_Γ), `machine`
+  (Ω_M), `peek` (Ω_P), `poke` (Ω_O), `pages` (Ω_Z), `invoke` (Ω_K) and `expunge` (Ω_X)
+  (`sec:refinefunctions`; `compile` and the module map are new in v0.8.1, #530);
 * the refine invocation Ψ_R with its dispatcher F (eqs. `refinvocation`, `refinemutator`);
 * the is-authorized invocation Ψ_I with its dispatcher F (eqs. `isauthinvocation`,
   `isauthorizedmutator`), with the authorization code **p**_c (eq. in §14.3, `sec:packagesanditems`).
@@ -19,17 +20,20 @@ namespace JAM
 
 open PVM
 
-/-- An integrated PVM 𝕄 ≡ (**p** ∈ 𝔹, **u** ∈ 𝕄, i ∈ ℕ_R, ϱ̃ ∈ 𝔹ool) (GP eq. `innerpvm`): program
-    blob, RAM, instruction counter and the gas-charged flag. -/
+/-- A PVM instance ≡ (**p** ∈ 𝔹, **u** ∈ 𝕄, i ∈ ℕ_R, ϱ̃ ∈ 𝔹ool, h ∈ ℕ) (GP v0.8.1 eq. `innerpvm`):
+    program blob, RAM, instruction counter, the gas-charged flag, and the handle of the program
+    module it was instantiated from (#530). -/
 structure InnerPvm where
   code : ByteArray
   ram : Memory
   pc : Nat
   charged : Bool
+  handle : Nat
 
-/-- The refine context (**m**, **e**) ∈ (⟨ℕ → 𝕄⟩, ⟦𝕁⟧): the inner machines and the exported
-    segments. Both start empty. -/
-abbrev RefineCtx := Std.ExtTreeMap Nat InnerPvm × List (List UInt8)
+/-- The refine context (**m**, **P**, **e**) ∈ (⟨ℕ → instance⟩, ⟨ℕ → 𝔹⟩, ⟦𝕁⟧) (GP v0.8.1
+    eq. `refinemutator`): the PVM instances, the compiled program modules (blobs, by handle) and the
+    exported segments. All start empty. -/
+abbrev RefineCtx := Std.ExtTreeMap Nat InnerPvm × Std.ExtTreeMap Nat ByteArray × List (List UInt8)
 
 /-- (**m**, c): the code split ℰ(↕**m**, **c**) of a preimage: the metadata is skipped. `none` if
     the octets do not have that form. -/
@@ -55,15 +59,15 @@ def panic {X} (out : HostOut X) : HostOut X := { out with status := .panic }
 
 /-! ## Ω_H, `historical_lookup` = 7 -/
 
-/-- Ω_H(ϱ, ω, μ, s, **d**, t), g = 𝖬_{H,c} + 𝔊(𝖬_{H,ℓ}, ω_11): the historical lookup Λ of the
-    preimage of the hash at ω_8, in service s (ω_7 = 2^64 − 1) or ω_7, at time t. -/
+/-- Ω_H(ϱ, ω, μ, x, s, **d**, t), g = 𝖬_{H,c} + 𝔊(𝖬_{H,ℓ}, ω_11) (GP v0.8.1): the historical
+    lookup Λ of the preimage of the hash at ω_8, in service **a** = **d**[s] (ω_7 = 2^64 − 1) or
+    **d**[ω_7], at time t. -/
 def historicalLookup {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (s : Nat) (d : Accounts)
     (t : Nat) (x : X) : HostOut X :=
   let z := reg ω 11
   charged (Constants.CgasHconst + memGas Constants.CgasHlinear z) gas ω μ x fun out =>
     let a : Option ServiceAccount :=
-      if reg ω 7 = 2 ^ 64 - 1 ∧ d.contains s then d.get? s
-      else d.get? (reg ω 7)
+      if reg ω 7 = 2 ^ 64 - 1 then d.get? s else d.get? (reg ω 7)
     let h := reg ω 8
     let v : Except Unit (Option (List UInt8)) :=
       if !μ.rangeReadable h 32 then .error ()
@@ -72,40 +76,101 @@ def historicalLookup {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (s : Nat) 
 
 /-! ## Ω_E, `export` = 8 -/
 
-/-- Ω_E(ϱ, ω, μ, **e**, ς), g = 𝖬_E: append the octets at ω_7 (length min(ω_8, 𝖶_G)), zero-padded
+/-- Ω_E(ϱ, ω, μ, (**m**, **P**, **e**), ς), g = 𝖬_E: append the octets at ω_7 (length min(ω_8, 𝖶_G)), zero-padded
     to 𝖶_G, to the exports; ω'_7 is the new segment's index ς + |**e**|. -/
 def exportSeg (gas : Nat) (ω : Regs) (μ : Memory) (off : Nat) (c : RefineCtx) : HostOut RefineCtx :=
   charged Constants.CgasE gas ω μ c fun out =>
     let p := reg ω 7
     let z := min (reg ω 8) Constants.Csegmentsize
     if !μ.rangeReadable p z then panic out
-    else if off + c.2.length ≥ Constants.Cmaxpackageexports then r7 out FULL
+    else if off + c.2.2.length ≥ Constants.Cmaxpackageexports then r7 out FULL
     else
       let x := μ.readN p z ++ List.replicate (Constants.Csegmentsize - z) 0
-      r7 { out with ctx := (c.1, c.2 ++ [x]) } (off + c.2.length)
+      r7 { out with ctx := (c.1, c.2.1, c.2.2 ++ [x]) } (off + c.2.2.length)
 
-/-! ## Ω_M, `machine` = 9 -/
+/-! ## Ω_Γ, `compile` = 9 (new in GP v0.8.1, #530) -/
+
+/-- min(n ∈ ℕ : n ∉ K), for a set K given as a membership test on at most `bound` naturals: one of
+    0, …, `bound` is free. -/
+def freeIn (mem : Nat → Bool) (bound : Nat) : Nat :=
+  ((List.range (bound + 1)).find? (!mem ·)).getD bound
+
+/-- **H** = K(**P**) ∪ {**m**[n]_h : n ∈ K(**m**)}, the handles in use (GP v0.8.1 Ω_Γ), as a list
+    (possibly with repeats). -/
+def handlesInUse (c : RefineCtx) : List Nat :=
+  c.2.1.keys ++ c.1.values.map (·.handle)
+
+/-- The program blob **p** of Ω_Γ (GP v0.8.1), with ∇ as `.error ()` and ∅ as `.ok none`: from our
+    RAM at p (length l) for m = 0; for m = 1, the historical lookup **h** of the hash at p, in
+    service **a**, at time t, cut to **h**_{f*…+l*} with f* = min(f, |**h**|) and
+    l* = min(l, |**h**| − f*); ∅ otherwise. -/
+def compileBlob (μ : Memory) (a : Option ServiceAccount) (t m p l f : Nat) :
+    Except Unit (Option ByteArray) :=
+  if m = 0 then
+    if μ.rangeReadable p l then .ok (some ⟨(μ.readN p l).toArray⟩) else .error ()
+  else if m = 1 then
+    if !μ.rangeReadable p 32 then .error ()
+    else match a.bind fun a => a.historicalLookup t (μ.readN p 32) with
+      | some h =>
+        let fS := min f h.length
+        let lS := min l (h.length - fS)
+        .ok (some ⟨((h.drop fS).take lS).toArray⟩)
+      | none => .ok none
+  else .ok none
+
+/-- The gas of `compile` for mode m and length l (GP v0.8.1 Ω_Γ). -/
+def compileGas (m l : Nat) : Nat :=
+  if m = 0 then Constants.CgasGammamemconst + memGas Constants.CgasGammamemlinear l
+  else if m = 1 then Constants.CgasGammadbconst + memGas Constants.CgasGammadblinear l
+  else Constants.CgasGammamemconst
+
+/-- Ω_Γ(ϱ, ω, μ, (**m**, **P**, **e**), s, **d**, t) (GP v0.8.1 Appendix B, #530), with
+    [m, p, l, f, i] = ω_{7…+5}: compile a program module from our RAM (m = 0) or from the preimage
+    of the hash at p in service **a** = **d**[s] (i = 2^64 − 1) or **d**[i] (m = 1). FULL if 128
+    handles are in use; ☇ if the source is unreadable; NONE if the preimage is not available; HUH if
+    there is no blob or it does not deblob at 0; otherwise the module gets the least free handle k,
+    returned in ω'_7. -/
+def compile (gas : Nat) (ω : Regs) (μ : Memory) (s : Nat) (d : Accounts) (t : Nat) (c : RefineCtx) :
+    HostOut RefineCtx :=
+  let m := reg ω 7; let p := reg ω 8; let l := reg ω 9; let f := reg ω 10; let i := reg ω 11
+  charged (compileGas m l) gas ω μ c fun out =>
+    let a : Option ServiceAccount := if i = 2 ^ 64 - 1 then d.get? s else d.get? i
+    let hs := handlesInUse c
+    let H := hs.eraseDups
+    if H.length ≥ 128 then r7 out FULL
+    else match compileBlob μ a t m p l f with
+      | .error () => panic out
+      | .ok none => if m = 1 then r7 out NONE else r7 out HUH
+      | .ok (some blob) =>
+        if (deblob blob 0).isNone then r7 out HUH
+        else
+          let k := freeIn (hs.contains ·) hs.length
+          r7 { out with ctx := (c.1, c.2.1.insert k blob, c.2.2) } k
+
+/-! ## Ω_M, `machine` = 10 -/
 
 /-- min(n ∈ ℕ : n ∉ K(**m**)). One of 0, …, |**m**| is free. -/
 def freeId (m : Std.ExtTreeMap Nat InnerPvm) : Nat :=
   ((List.range (m.size + 1)).find? (!m.contains ·)).getD m.size
 
-/-- Ω_M(ϱ, ω, μ, **m**), g = 𝖬_M (GP v0.8.1 Appendix B; v0.8.0 charged 𝖬_{M,c} + 𝔊(𝖬_{M,ℓ}, p_Z)): create an inner machine from the program
-    at ω_7 (length ω_8), starting at ω_9, with empty RAM. FULL if there are already 63. -/
+/-- Ω_M(ϱ, ω, μ, (**m**, **P**, **e**)), g = 𝖬_M (GP v0.8.1 Appendix B, #530): with [h, i] = ω_{7…+2},
+    instantiate program module h, starting at i, with empty RAM. FULL if there are already 63
+    instances; WHO if there is no module h; HUH if its blob does not deblob at i. (v0.8.0 read the
+    program blob from RAM.) -/
 def machine (gas : Nat) (ω : Regs) (μ : Memory) (c : RefineCtx) : HostOut RefineCtx :=
-  let pO := reg ω 7; let pZ := reg ω 8; let i := reg ω 9
+  let h := reg ω 7; let i := reg ω 8
   charged Constants.CgasM gas ω μ c fun out =>
     let m := c.1
     if m.size ≥ 63 then r7 out FULL
-    else if !μ.rangeReadable pO pZ then panic out
-    else
-      let p : ByteArray := ⟨(μ.readN pO pZ).toArray⟩
-      if (deblob p i).isNone then r7 out HUH
-      else
-        let n := freeId m
-        r7 { out with ctx := (m.insert n ⟨p, Memory.empty, i, false⟩, c.2) } n
+    else match c.2.1.get? h with
+      | none => r7 out WHO
+      | some p =>
+        if (deblob p i).isNone then r7 out HUH
+        else
+          let n := freeId m
+          r7 { out with ctx := (m.insert n ⟨p, Memory.empty, i, false, h⟩, c.2) } n
 
-/-! ## Ω_P, `peek` = 10 -/
+/-! ## Ω_P, `peek` = 11 -/
 
 /-- Ω_P(ϱ, ω, μ, **m**), g = 𝖬_{P,c} + 𝔊(𝖬_{P,ℓ}, z): copy z octets from address s of machine n's
     RAM to address o of ours, with [n, o, s, z] = ω_{7…+4}. -/
@@ -119,7 +184,7 @@ def peek (gas : Nat) (ω : Regs) (μ : Memory) (c : RefineCtx) : HostOut RefineC
         if !vm.ram.rangeReadable s z then r7 out OOB
         else r7 { out with mem := μ.writeN o (vm.ram.readN s z) } OK
 
-/-! ## Ω_O, `poke` = 11 -/
+/-! ## Ω_O, `poke` = 12 -/
 
 /-- Ω_O(ϱ, ω, μ, **m**), g = 𝖬_{O,c} + 𝔊(𝖬_{O,ℓ}, z): copy z octets from address s of our RAM to
     address o of machine n's, with [n, s, o, z] = ω_{7…+4}. -/
@@ -135,7 +200,7 @@ def poke (gas : Nat) (ω : Regs) (μ : Memory) (c : RefineCtx) : HostOut RefineC
           let vm' := { vm with ram := vm.ram.writeN o (μ.readN s z) }
           r7 { out with ctx := (c.1.insert n vm', c.2) } OK
 
-/-! ## Ω_Z, `pages` = 12 -/
+/-! ## Ω_Z, `pages` = 13 -/
 
 /-- The gas of `pages` for mode r and page count c. -/
 def pagesGas (r c : Nat) : Nat :=
@@ -164,7 +229,7 @@ def pages (gas : Nat) (ω : Regs) (μ : Memory) (c : RefineCtx) : HostOut Refine
       else if r > 2 ∧ (List.range k).any (fun j => !(vm.ram.pages.contains (p + j))) then r7 out HUH
       else r7 { out with ctx := (c.1.insert n { vm with ram := setPagesMode vm.ram p k r }, c.2) } OK
 
-/-! ## Ω_K, `invoke` = 13 -/
+/-! ## Ω_K, `invoke` = 14 -/
 
 /-- ℰ_8 of thirteen registers. -/
 def encodeRegs (w : Regs) : List UInt8 := (w.toList.map fun r => Codec.fixed 8 r.toNat).flatten
@@ -176,7 +241,7 @@ def decodeRegs (b : List UInt8) : Regs :=
 /-- Ω_K(ϱ, ω, μ, **m**), g = 𝖬_K + g_R: run inner machine n = ω_7 by Ψ, with gas g_R and registers
     **w** read from (and written back to) the 112 octets at o = ω_8. ω'_7 gives the exit reason, and
     ω'_8 the host-call id or fault address. The gas left by the inner run is returned:
-    ϱ' = ϱ − g + g_R'. -/
+    ϱ* = max(ϱ − g, 0) + g_R' (GP v0.8.1). -/
 def invoke (gas : Nat) (ω : Regs) (μ : Memory) (c : RefineCtx) : HostOut RefineCtx :=
   let n := reg ω 7; let o := reg ω 8
   let w? : Option (Nat × Regs) :=
@@ -209,15 +274,22 @@ def invoke (gas : Nat) (ω : Regs) (μ : Memory) (c : RefineCtx) : HostOut Refin
           | _ => (HALT, reg ω 8)
         { base with regs := (setR7 ω code).set 8 (UInt64.ofNat r8) }
 
-/-! ## Ω_X, `expunge` = 14 -/
+/-! ## Ω_X, `expunge` = 15 -/
 
-/-- Ω_X(ϱ, ω, μ, **m**), g = 𝖬_X: remove machine n = ω_7, returning its instruction counter. -/
+/-- Ω_X(ϱ, ω, μ, (**m**, **P**, **e**)), g = 𝖬_X (GP v0.8.1, #530), with [m, n] = ω_{7, 8}: for
+    m = 0 remove instance n, returning its instruction counter; for m = 1 remove program module n,
+    returning OK; WHO if there is no such instance or module; HUH for any other m. -/
 def expunge (gas : Nat) (ω : Regs) (μ : Memory) (c : RefineCtx) : HostOut RefineCtx :=
   charged Constants.CgasX gas ω μ c fun out =>
-    let n := reg ω 7
-    match c.1.get? n with
-    | none => r7 out WHO
-    | some vm => r7 { out with ctx := (c.1.erase n, c.2) } vm.pc
+    let m := reg ω 7; let n := reg ω 8
+    if m = 0 then
+      match c.1.get? n with
+      | none => r7 out WHO
+      | some vm => r7 { out with ctx := (c.1.erase n, c.2) } vm.pc
+    else if m = 1 then
+      if c.2.1.contains n then r7 { out with ctx := (c.1, c.2.1.erase n, c.2.2) } OK
+      else r7 out WHO
+    else r7 out HUH
 
 /-- The fixed part of a refine invocation's environment. -/
 structure Env where
@@ -241,7 +313,8 @@ def unknown {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (x : X) : HostOut X
   if gas < Constants.Cgasunknown then ⟨.oog, 0, setR7 ω WHAT, μ, x⟩
   else ⟨.cont, ((gas - Constants.Cgasunknown : Nat) : Int), setR7 ω WHAT, μ, x⟩
 
-/-- F ∈ 𝔉_{(⟨ℕ → 𝕄⟩, ⟦𝕁⟧)} (GP eq. `refinemutator`): dispatch on the host-call id. -/
+/-- F ∈ 𝔉_{(⟨ℕ → instance⟩, ⟨ℕ → module⟩, ⟦𝕁⟧)} (GP v0.8.1 eq. `refinemutator`): dispatch on the
+    host-call id. v0.8.1 inserts `compile` = 9 and renumbers `machine` … `expunge` to 10 … 15 (#530). -/
 def dispatch (env : Env) (n gas : Nat) (ω : Regs) (μ : Memory) (c : RefineCtx) : HostOut RefineCtx :=
   match n with
   | 0 => hostGas gas ω μ c
@@ -249,12 +322,13 @@ def dispatch (env : Env) (n gas : Nat) (ω : Regs) (μ : Memory) (c : RefineCtx)
   | 2 => hostFetch gas ω μ env.fetch c
   | 7 => historicalLookup gas ω μ env.service env.accounts env.lookupSlot c
   | 8 => exportSeg gas ω μ env.exportOffset c
-  | 9 => machine gas ω μ c
-  | 10 => peek gas ω μ c
-  | 11 => poke gas ω μ c
-  | 12 => pages gas ω μ c
-  | 13 => invoke gas ω μ c
-  | 14 => expunge gas ω μ c
+  | 9 => compile gas ω μ env.service env.accounts env.lookupSlot c
+  | 10 => machine gas ω μ c
+  | 11 => peek gas ω μ c
+  | 12 => poke gas ω μ c
+  | 13 => pages gas ω μ c
+  | 14 => invoke gas ω μ c
+  | 15 => expunge gas ω μ c
   | _ => unknown gas ω μ c
 
 /-- F of Ψ_I (GP eq. `isauthorizedmutator`): `gas`, `grow_heap` and `fetch` only; the context is
@@ -316,8 +390,8 @@ def psiR (params : Params) (d : Accounts) (c i : Nat) (p : WorkPackage) (r : Lis
               fetch := { params, package := some p, entropy := some (List.replicate 32 0),
                          authTrace := some r, itemIndex := some i, imports := some imports,
                          extrinsics := some extrinsics } }
-          let (u, o, (_, e)) := psiM code 0 (UInt64.ofNat w.refineGasLimit) a
-            (toHostFn (RefineHost.dispatch env)) (∅, [])
+          let (u, o, (_, _, e)) := psiM code 0 (UInt64.ofNat w.refineGasLimit) a
+            (toHostFn (RefineHost.dispatch env)) (∅, ∅, [])
           match o with
           | .ok b => ⟨.ok b, e, u⟩
           | o => ⟨o.toWorkResult, [], u⟩

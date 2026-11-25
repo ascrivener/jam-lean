@@ -45,7 +45,7 @@ Two libraries, each bounded by the Gray Paper (v0.8.0):
   It has the general host functions (`gas`, `grow_heap`, `fetch`, `lookup`, `read`, `write`,
   `info`), the 13 accumulate host functions, Ψ_A, and the accumulation state transition of §12
   (Δ_1, Δ_*, Δ_+, the ready queue and history, statistics, and the output root); and the refine
-  host functions (`historical_lookup`, `export`, `machine`, `peek`, `poke`, `pages`, `invoke`,
+  host functions (`historical_lookup`, `export`, `compile` (GP v0.8.1), `machine`, `peek`, `poke`, `pages`, `invoke`,
   `expunge`), Ψ_R and Ψ_I. Protocol and gas
   constants are generated from `definitions.tex` (`scripts/gen_constants.py`, drift-checked in CI);
   the test vectors' tiny chain is `Params.tiny`. A proof about pure PVM programs imports only `PVM` and trusts nothing from `JAM`.

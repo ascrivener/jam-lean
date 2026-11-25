@@ -1,2 +1,5 @@
 /.lake
 /vendor
+/JamCryptoTest/generator/target/
+/JamCryptoTest/ring/gen/ark-vectors/target/
+__pycache__/

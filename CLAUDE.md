@@ -12,8 +12,10 @@ rebuilds only what changed since then instead of building cold for 4.5–5 h.
 ## Rules
 
 - **Source.** Model only from the Gray Paper v0.8.0. Don't copy other implementations, especially
-  JAR. Docstrings cite the paper (section and equation). Stay on v0.8.0: don't switch to later
-  paper changes such as #519.
+  JAR. Docstrings cite the paper (section and equation). Stay on v0.8.0: the model doesn't switch
+  to later paper changes such as #519. Exception: `JamCrypto` may carry explicitly selected
+  later-version crypto (GP v0.8.1's Bandersnatch Thin VRF and VRF-spec Draft 35 ring VRF, selected
+  by `JamCrypto.GpVersion`, default v0.8.0), modelled from the cited spec and its published vectors.
 - **Toolchain.** Lean v4.36.0-rc1, with core and Std only. If installing elan is blocked, download
   the official release.
 - **Forbidden:** `sorry`, `partial def`, `implemented_by`, `native_decide` and `bv_decide`.
@@ -68,6 +70,8 @@ rebuilds only what changed since then instead of building cold for 4.5–5 h.
 ## Standing decisions (Adam)
 
 - **Crypto** stays a parameter. SHA-512 is in plain Lean.
+- **JamCrypto** (moved from jam-lean-target, 2026-11-25) implements the crypto parameter in plain
+  Lean. The model never imports it.
 - **Logging:** the text of log messages is never specified. Log sites are proved frame-only:
   terminates, keeps memory and the allocator context, and writes only its own buffer.
 - **Heap exhaustion** is an allowed outcome, not a quirk. A failed allocation, and a request that

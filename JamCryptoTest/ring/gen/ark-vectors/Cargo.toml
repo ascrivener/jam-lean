@@ -1,0 +1,11 @@
+[package]
+name = "gen"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+ark-vrf = { version = "=0.1.0", features = ["ring", "bandersnatch"] }
+hex = "0.4.3"
+rand_chacha = "0.3"
+rand_core = "0.6"
+serde_json = "1.0.154"

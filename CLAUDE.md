@@ -75,6 +75,10 @@ rebuilds only what changed since then instead of building cold for 4.5–5 h.
 - **Crypto** stays a parameter. SHA-512 is in plain Lean.
 - **JamCrypto** (moved from jam-lean-target, 2026-11-25) implements the crypto parameter in plain
   Lean. The model never imports it.
+- **jam-lean-target stays a separate repository** (2026-11-25) and pins this repo to one commit.
+  **Pin-bump rule:** after a merge here that touches `JAM/`, `PVM/` or `JamCrypto/`, open a PR in
+  jam-lean-target the same day that bumps the pin (its merge publishes the fuzzer image). Merges
+  that touch only docs, proofs, tests or CI need no bump.
 - **Logging:** the text of log messages is never specified. Log sites are proved frame-only:
   terminates, keeps memory and the allocator context, and writes only its own buffer.
 - **Heap exhaustion** is an allowed outcome, not a quirk. A failed allocation, and a request that

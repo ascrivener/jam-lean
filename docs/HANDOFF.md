@@ -18,7 +18,8 @@ jam-lean parent session is archived.
 - **Adam's decisions (2026-11-25):** N(o) post-state = input state (raised as graypaper#592);
   Thin signature O‖R‖s (confirmed by davxy on graypaper#593); `psiA_confined` gains `NoSupervisee`;
   crypto prose default (v0.8.1 path only); proofs CI on demand only; Services proofs not migrated
-  (option 2, last kernel-checked `c22c197`).
+  (option 2, last kernel-checked `c22c197`); jam-lean-target stays a separate repository, with the
+  pin-bump rule in `CLAUDE.md`.
 - **Open:** davxy's answers on the VRF ring label, Z_pad and "push R" (asked privately); v0.8.1
   test vectors and the 0.8.1 fuzzer (restore suspended checks then); graypaper#592; proof work
   (restate Services through the accessors, then a manual proofs run on main).

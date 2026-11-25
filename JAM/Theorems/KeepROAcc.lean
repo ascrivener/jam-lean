@@ -173,7 +173,7 @@ theorem accHostFn_keep (env : AccEnv) {pb : Nat} (hbd : heapBounds env.code = (4
   · exact same _ (AccHost.yield_mem _ _ _ _)
   · exact same _ (AccHost.provide_mem _ _ _ _)
   · exact same _ (AccHost.supervisor_mem _ _ _ _)
-  · exact same _ rfl
+  · exact same _ (by dsimp only; split <;> rfl)
 
 /-- **A contract keeps what is not writable off [lo, hi)**: every continuing host step changes no page
     outside lo … hi and no octet that is not writable. -/

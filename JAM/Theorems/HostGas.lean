@@ -163,7 +163,7 @@ theorem dispatch_gas (env : AccEnv) (n gas : Nat) (ω : Regs) (μ : Memory) (c :
     | with_reducible exact query_gas ..
     | with_reducible exact yield_gas ..
     | with_reducible exact provide_gas ..
-    | (dsimp only; omega)
+    | (dsimp only; split <;> (dsimp only; omega))
 
 end AccHost
 

@@ -483,7 +483,7 @@ def provide (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx 
           else r7 (updX out { x with provisions := x.provisions.insert (s, i) }) OK
 
 /-- F ∈ 𝔉_{𝕃²} (GP v0.8.1 eq. `accinvocation`): dispatch on the host-call id. An unknown id
-    charges 𝖬_∅ and returns WHAT (∞ if that exhausts the gas). -/
+    charges 𝖬_∅ and sets ω'_7 = WHAT; with ϱ < 𝖬_∅ it is ∞ with ϱ* = 0. -/
 def dispatch (env : AccEnv) (n gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
   let x := c.1
   let d := x.state.accounts
@@ -510,8 +510,9 @@ def dispatch (env : AccEnv) (n gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx)
   | 28 => provide gas ω μ c
   | 29 => supervisor gas ω μ c
   | _ =>
-    let g' : Int := (gas : Int) - Constants.Cgasunknown
-    ⟨if g' < 0 then .oog else .cont, g', setR7 ω WHAT, μ, c⟩
+    -- GP v0.8.1 eq. `accinvocation`: ∞ with ϱ* = 0 if ϱ < 𝖬_∅, else ϱ − 𝖬_∅; ω'_7 = WHAT either way
+    if gas < Constants.Cgasunknown then ⟨.oog, 0, setR7 ω WHAT, μ, c⟩
+    else ⟨.cont, ((gas - Constants.Cgasunknown : Nat) : Int), setR7 ω WHAT, μ, c⟩
 
 end AccHost
 

@@ -6,8 +6,10 @@ import JAM.Statistics
 /-!
 # Reports (guarantees) STF vectors (`lake build reportstest`)
 
-Runs the guarantees transition of GP v0.8.0 §11.3–§11.5 (`JAM.guarantees`) on every vector of
-davxy/jam-test-vectors `v0.8.0` `stf/reports/{tiny,full}`, and compares:
+Runs the guarantees transition of GP v0.8.1 §11.3–§11.5 (`JAM.guarantees`) on every vector of
+davxy/jam-test-vectors `stf/reports/{tiny,full}` at master 5e8d2a2 (`scripts/fetch-jam-vectors.sh`),
+which adds the GP #563 work-report-limit vectors to `v0.8.0` (errors 28–31, eq.
+`reportrefineload`) and fixes the lookup anchor slots, and compares:
 * the output: the reported packages and the reporters G, or the error (the paper names no
   errors; we compare the vectors' names);
 * ρ' (on an error, the state is unchanged);
@@ -23,6 +25,13 @@ The vectors' state carries what the transition reads:
 
 Ed25519 verification uses the signature oracle of README note 29: every signature is rejected
 exactly when the vector expects `bad_signature`.
+
+The chain is the vectors' own (`V080.tiny080`, `V080.full080`): 𝖦_I is v0.8.0's 50,000,000,
+which `too_high_auth_gas` uses; 𝖶_B is v0.8.1's 13,904,950, which `too_big_bundle` uses.
+
+Known deviation: `tiny/lookup_anchor_not_recent-1` has a lookup anchor 25 slots old, which the
+vectors' README calls "one slot older than 𝖫"; the README's tiny chainspec does not change 𝖫, so
+the tiny chain's 𝖫 is the paper's 14,400 and the anchor is recent. (The full vector passes.)
 -/
 
 namespace JAM.Tests.Reports
@@ -61,6 +70,10 @@ def errName : ReportsError → String
   | .missingWorkResults => "missing_work_results"
   | .badAnchorSlot => "bad_anchor_slot"
   | .badErasureShards => "bad_erasure_shards"
+  | .refineLoadTooHigh => "refine_load_too_high"
+  | .badExportsCount => "bad_exports_count"
+  | .bundleTooBig => "bundle_too_big"
+  | .authGasTooHigh => "auth_gas_too_high"
 
 def recentBlock (j : Json) : Except String RecentBlock := do
   let rep ← list j "reported" fun e => do
@@ -144,8 +157,14 @@ def check (params : Params) (j : Json) : Except String (List String) := do
     if (← field pre k) != (← field post k) then diffs := diffs ++ [s!"{k} changed"]
   return diffs
 
+/-- Vectors whose outcome differs from the model under the vectors' documented chains. -/
+def knownDeviations : List (String × String) :=
+  [("tiny/lookup_anchor_not_recent-1.json",
+    "the vector assumes a tiny 𝖫 of 24 (anchor 25 slots old, \"one slot older than L\"); the README's tiny chainspec does not list 𝖫, so it is the paper's 14,400")]
+
 end JAM.Tests.Reports
 
 def main (args : List String) : IO UInt32 :=
   JAM.Tests.Stf.runSuite "reportstest"
     (JAM.Tests.Stf.defaultDirs args "vendor/jam-test-vectors/stf/reports") JAM.Tests.Reports.check
+    JAM.Tests.Reports.knownDeviations

@@ -162,10 +162,9 @@ def new (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : Host
     match codeHash with
     | none => panic out
     | some ch =>
-      let a0 : ServiceAccount :=
-        { codeHash := ch, requests := Std.ExtTreeMap.ofList [((ch, l), [])], balance := 0,
-          minAccGas := g, minMemoGas := m, created := env.slot, gratis := f, lastAcc := 0,
-          parent := x.id }
+      let a0 : ServiceAccount := ServiceAccount.requestSet
+        { codeHash := ch, balance := 0, minAccGas := g, minMemoGas := m, created := env.slot,
+          gratis := f, lastAcc := 0, parent := x.id } ch l []
       let a := { a0 with balance := a0.minBalance }
       let sBal : Int := (x.self.balance : Int) - a.minBalance
       let s := { x.self with balance := sBal.toNat }
@@ -232,8 +231,8 @@ def eject (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : Ho
         if da.codeHash ≠ Codec.fixed 32 x.id then r7 out WHO
         else
           let l := max 81 da.octets - 81
-          if da.items ≠ 2 ∨ !da.requests.contains (h, l) then r7 out HUH
-          else match da.requests.get? (h, l) with
+          if da.items ≠ 2 ∨ (da.requestGet h l).isNone then r7 out HUH
+          else match da.requestGet h l with
             | some [_, y] =>
               if (y : Int) < (env.slot : Int) - env.params.expungePeriod then
                 let s' := { x.self with balance := x.self.balance + da.balance }
@@ -252,7 +251,7 @@ def query (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
     else match readMem μ o 32 with
       | none => panic out
       | some h =>
-        match c.1.self.requests.get? (h, z) with
+        match c.1.self.requestGet h z with
         | none => set78 NONE 0
         | some [] => set78 0 0
         | some [x] => set78 (1 + 2 ^ 32 * x) 0
@@ -270,9 +269,9 @@ def solicit (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : 
       | none => panic out
       | some h =>
         let a : Option ServiceAccount :=
-          match self.requests.get? (h, z) with
-          | none => some { self with requests := self.requests.insert (h, z) [] }
-          | some [x, y] => some { self with requests := self.requests.insert (h, z) [x, y, env.slot] }
+          match self.requestGet h z with
+          | none => some (self.requestSet h z [])
+          | some [x, y] => some (self.requestSet h z [x, y, env.slot])
           | some _ => none
         match a with
         | none => r7 out HUH
@@ -290,13 +289,13 @@ def forget (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : H
     else match readMem μ o 32 with
       | none => panic out
       | some h =>
-        let drop := { self with requests := self.requests.erase (h, z), preimages := self.preimages.erase h }
+        let drop := { self.requestErase h z with preimages := self.preimages.erase h }
         let a : Option ServiceAccount :=
-          match self.requests.get? (h, z) with
+          match self.requestGet h z with
           | some [] => some drop
           | some [_, y] => if old y then some drop else none
-          | some [x] => some { self with requests := self.requests.insert (h, z) [x, env.slot] }
-          | some [_, y, w] => if old y then some { self with requests := self.requests.insert (h, z) [w, env.slot] } else none
+          | some [x] => some (self.requestSet h z [x, env.slot])
+          | some [_, y, w] => if old y then some (self.requestSet h z [w, env.slot]) else none
           | _ => none
         match a with
         | none => r7 out HUH
@@ -322,7 +321,7 @@ def provide (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx 
         match x.state.accounts.get? s with
         | none => r7 out WHO
         | some a =>
-          if a.requests.get? ((Blake2b.hash256 ⟨i.toArray⟩).toList, z) ≠ some [] then r7 out HUH
+          if a.requestGet (Blake2b.hash256 ⟨i.toArray⟩).toList z ≠ some [] then r7 out HUH
           else if x.provisions.contains (s, i) then r7 out HUH
           else r7 (updX out { x with provisions := x.provisions.insert (s, i) }) OK
 

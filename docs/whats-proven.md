@@ -1,5 +1,20 @@
 # What's proven
 
+> **Services theorems are not built against the current model (2026-11-25).** Storage-key stage 2
+> (`docs/storage-key-design.md`) changed how the model holds a service account: storage and
+> requests now share one dictionary keyed by the hash part of their state key, with a_o and a_i
+> carried. The `Services/` theorems below (witness, bootstrap refine T1, accumulate T2, picoalloc
+> in the binary) were **last kernel-checked at commit `c22c197`** (#241, CI run 44770759701,
+> `attempt-1` green) and do not build against the current model until proof work resumes; they
+> will then be restated through the account accessors (`storageGet`, `requestGet`, …). Everything
+> about the `PVM` and `JAM` model (its theorems, the axiom check and the vector results) is
+> checked on every CI run as before.
+>
+> **One new assumption of the model:** C has no collision on the state keys that occur
+> (merklization.tex:19, "no duplicate state-keys given that there are no duplicate inputs to C";
+> licensed by merklization.tex:116). The model is faithful to GP σ given this assumption, which is
+> the paper's own (Adam's decision of 2026-11-15). See "Assumptions and limits".
+
 This page is for people evaluating this repository, such as Polkadot Fellowship reviewers,
 retro-funding committees and JAM implementers. It says what is proved, about what, under which
 assumptions, and how to check it. It describes `main` as of PR #236 (2026-11-18). Work still in
@@ -1068,6 +1083,17 @@ What you trust beyond the kernel:
 
 ## Assumptions and limits
 
+- **No collision in C (the model's account representation).** Since storage-key stage 2 the model
+  keys a service's storage entry **k** and request (h, z) by the 27 octets of ℋ(ℰ_4(2³²−1) ⌢ **k**)
+  and ℋ(ℰ_4(z) ⌢ h) that their state keys C(s, ·) keep (GP §D.1), and carries a_o and a_i,
+  updating them at every mutation by GP eq. `deposits`. This is faithful to σ as long as no two
+  distinct keys that occur share a state key, which is the paper's own assumption
+  (merklization.tex:19) and which the paper licenses implementations to rely on
+  (merklization.tex:116). Blake2b is concrete here, so the assumption cannot be proved; it is not a
+  hypothesis of any theorem. A stored request value that does not decode as ⟦ℕ_T⟧_{:3} reads as
+  absent (only a state not built by the model can hold one). `docs/storage-key-design.md` has the
+  details; the optional bridging theorem (stage 3) would make the correspondence explicit.
+
 - **Writable memory.** The allocator theorems assume only that the heap and the stack are
   writable, never all of memory.
   - `WrAt μ HT S0 S1` (`Writable.lean`) says the heap region 196608 … `HT` and the stack
@@ -1313,8 +1339,8 @@ below stay with their lines; the blob's side of them is checked (`Vendored/Field
 - **The field formatters** beyond the lemmas above: `Services/Bootstrap/Fmt/FIELDS-HANDOFF.md`
   (`claude/bootstrap-fields-*` branches).
 - **Decode / HeapHost:** `claude/decode-heaphost`.
-- **Storage keys, stage 2** (the representation switch): `docs/storage-key-design.md`
-  (`claude/storage-key-design`).
+- **Storage keys, stage 3** (the optional bridging theorem, not started), and restating the
+  Services proofs after stage 2: `docs/storage-key-design.md`.
 - **Build work:** P3 stage 1 (`claude/p3-module-stage1`, after the spike `claude/p3-module-spike`)
   and the post_simp pass (`claude/post-simp-fast`).
 - **`alloc` in the binary at alignment above one unit with heap growth, on first use and on

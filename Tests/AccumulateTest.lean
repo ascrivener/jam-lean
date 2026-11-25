@@ -34,12 +34,20 @@ def account (j : Json) : Except String ServiceAccount := do
     let k ← field e "key"
     let v ← (← field e "value").getArr?
     return (((← hexField k "hash").toList, ← natField k "length"), (← v.mapM (·.getNat?)).toList)
-  return { storage := Std.ExtTreeMap.ofList storage.toList, preimages := Std.ExtTreeMap.ofList preimages.toList,
-           requests := Std.ExtTreeMap.ofList requests.toList, gratis := ← natField s "deposit_offset",
-           codeHash := (← hexField s "code_hash").toList, balance := ← natField s "balance",
-           minAccGas := ← natField s "min_item_gas", minMemoGas := ← natField s "min_memo_gas",
-           created := ← natField s "creation_slot", lastAcc := ← natField s "last_accumulation_slot",
-           parent := ← natField s "parent_service" }
+  let a0 : ServiceAccount :=
+    { preimages := Std.ExtTreeMap.ofList preimages.toList, gratis := ← natField s "deposit_offset",
+      codeHash := (← hexField s "code_hash").toList, balance := ← natField s "balance",
+      minAccGas := ← natField s "min_item_gas", minMemoGas := ← natField s "min_memo_gas",
+      created := ← natField s "creation_slot", lastAcc := ← natField s "last_accumulation_slot",
+      parent := ← natField s "parent_service" }
+  -- The vector gives raw storage keys and request keys, so the accessors build `entries` and
+  -- compute a_o and a_i by GP eq. `deposits`; they must equal the vector's `bytes` and `items`.
+  let a1 := storage.foldl (fun a (k, v) => a.storageWrite k v) a0
+  let a := requests.foldl (fun a ((h, z), t) => a.requestSet h z t) a1
+  let (o, i) := (← natField s "bytes", ← natField s "items")
+  if a.octets != o || a.items != i then
+    throw s!"a_o, a_i by GP eq. deposits are {a.octets}, {a.items}; the vector's are {o}, {i}"
+  return a
 
 def state (params : Params) (j : Json) : Except String AccState := do
   let accounts ← (← arrF j "accounts").mapM fun e => do return (← natField e "id", ← account (← field e "data"))
@@ -67,8 +75,7 @@ def hexS (b : List UInt8) : String :=
 /-- A comparable rendering of an account, including the derived footprint terms. -/
 def showAccount (a : ServiceAccount) : String :=
   s!"code={hexS a.codeHash} bal={a.balance} g={a.minAccGas} m={a.minMemoGas} o={a.octets} i={a.items} f={a.gratis} r={a.created} a={a.lastAcc} p={a.parent} " ++
-  s!"storage={a.storage.toList.map fun (k, v) => (hexS k, hexS v)} preimages={a.preimages.toList.map fun (k, v) => (hexS k, v.length)} " ++
-  s!"requests={a.requests.toList.map fun ((h, l), v) => (hexS h, l, v)}"
+  s!"entries={a.entries.toList.map fun (k, v) => (hexS k, hexS v)} preimages={a.preimages.toList.map fun (k, v) => (hexS k, v.length)}"
 
 /-- Compare the computed post-state with the vector; the first differences found. -/
 def compare (params : Params) (j : Json) (res : AccResult) : Except String (List String) := do

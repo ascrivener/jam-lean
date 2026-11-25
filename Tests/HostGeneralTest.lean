@@ -148,4 +148,67 @@ def memH : Memory := mem0.writeN base h
 #guard (hostFetch (X := Unit) 100000 (regs [(7, base), (9, 122), (10, 0)]) mem0 {} ()).gas ==
   100000 - (Constants.CgasY (some 0)).1
 
+/-! ### accumulate functions with supervisors (GP v0.8.1, #539, #558) -/
+
+def env0 : AccEnv := { params := .tiny, slot := 50, entropy := List.replicate 32 0, inputs := [], code := ⟨#[]⟩ }
+
+/-- Service 4, supervised by 9 (recorded with 9's creation slot 0). -/
+def junior : ServiceAccount := { acct with supervisor := 9, supervisorCreated := 0, created := 7 }
+
+-- supervisor: 9 is 4's effective supervisor, so it may hand 4 over to 5 (WHO for an unknown target)
+def sv := AccHost.supervisor 100000 (regs [(7, 4), (8, 5)]) mem0 (ctxOf acct [(4, junior), (5, { acct with created := 3 })])
+#guard r7 sv == Result.OK && (acctOf sv 4).supervisor == 5 && (acctOf sv 4).supervisorCreated == 3
+#guard sv.ctx.1.modified.contains 4
+#guard r7 (AccHost.supervisor 100000 (regs [(7, 4), (8, 6)]) mem0 (ctxOf acct [(4, junior)])) == Result.WHO
+-- not 4's effective supervisor: HUH
+#guard r7 (AccHost.supervisor 100000 (regs [(7, 4), (8, 9)]) mem0 (ctxOf acct [(4, acct)])) == Result.HUH
+
+-- new: the 60 octets c ⌢ ℰ_4(l) ⌢ ℰ_8(g, m, f) at `base`
+def newMem (l : Nat) : Memory :=
+  mem0.writeN base (List.replicate 32 0xcc ++ Codec.fixed 4 l ++ Codec.fixed 8 1 ++ Codec.fixed 8 2 ++ Codec.fixed 8 0)
+def newRegs (mode : Nat) (s : Nat := 2 ^ 64 - 1) : Regs := regs [(7, s), (8, 0), (9, mode), (10, base)]
+def rich : ServiceAccount := { acct with balance := 1000000, supervisorBalance := 1000000 }
+def n0 := AccHost.new env0 100000 (newRegs 0) (newMem 10) (ctxOf rich)
+-- mode 0: paid from the balance into the new account's balance; the new account is supervised by 9
+#guard (acctOf n0 (r7 n0)).balance == (acctOf n0 (r7 n0)).minBalance &&
+  (acctOf n0 (r7 n0)).supervisorBalance == 0 && (acctOf n0 (r7 n0)).supervisor == 9 &&
+  (acctOf n0).balance == 1000000 - (acctOf n0 (r7 n0)).minBalance
+-- mode 3: paid from the supervisor balance into the new account's supervisor balance
+def n3 := AccHost.new env0 100000 (newRegs 3) (newMem 10) (ctxOf rich)
+#guard (acctOf n3 (r7 n3)).balance == 0 &&
+  (acctOf n3 (r7 n3)).supervisorBalance == (acctOf n3 (r7 n3)).minBalance &&
+  (acctOf n3).supervisorBalance == 1000000 - (acctOf n3 (r7 n3)).minBalance
+-- mode 4 and a request length outside ℕ_L = ℕ_{2^32 − 2}: HUH
+#guard r7 (AccHost.new env0 100000 (newRegs 4) (newMem 10) (ctxOf rich)) == Result.HUH
+#guard r7 (AccHost.new env0 100000 (newRegs 0) (newMem (2 ^ 32 - 2)) (ctxOf rich)) == Result.HUH
+-- mode 1 (from the supervisor balance) for a service whose effective supervisor is not the caller: HUH
+#guard r7 (AccHost.new env0 100000 (newRegs 1 4) (newMem 10) (ctxOf rich [(4, { rich with supervisor := 4 })])) == Result.HUH
+
+-- transfer with o = 0: an immediate credit; to one's own supervisor balance (mode 2) is allowed
+def tRegs (src dst mode amt : Nat) : Regs := regs [(7, src), (8, dst), (9, mode), (10, amt), (11, 0), (12, 0)]
+def t2 := AccHost.transfer env0 100000 (tRegs (2 ^ 64 - 1) (2 ^ 64 - 1) 2 100) mem0 (ctxOf rich)
+#guard r7 t2 == Result.OK && (acctOf t2).balance == 1000000 - 100 && (acctOf t2).supervisorBalance == 1000000 + 100
+-- … but balance to balance (mode 0) of the same service is HUH
+#guard r7 (AccHost.transfer env0 100000 (tRegs (2 ^ 64 - 1) (2 ^ 64 - 1) 0 100) mem0 (ctxOf rich)) == Result.HUH
+-- an unknown destination: WHO
+#guard r7 (AccHost.transfer env0 100000 (tRegs (2 ^ 64 - 1) 77 0 100) mem0 (ctxOf rich)) == Result.WHO
+
+-- eject: only the effective supervisor, of a service with no items not created in this slot
+def ej := AccHost.eject env0 100000 (regs [(7, 4)]) mem0 (ctxOf acct [(4, { junior with balance := 5, supervisorBalance := 6 })])
+#guard r7 ej == Result.OK && (acctOf ej).balance == acct.balance + 11 && !(ej.ctx.1.state.accounts.contains 4)
+#guard r7 (AccHost.eject env0 100000 (regs [(7, 4)]) mem0 (ctxOf acct [(4, { junior with created := 50 })])) == Result.HUH
+#guard r7 (AccHost.eject env0 100000 (regs [(7, 4)]) mem0 (ctxOf acct [(4, acct)])) == Result.HUH
+
+-- bless: the delegator (here 9, not the manager 0) hands its role to 5, keeping everything else
+def ctxDeleg : AccCtx :=
+  let (x, _) := ctxOf acct
+  let x := { x with state := { x.state with delegator := 9, assigners := [0, 0] } }
+  (x, x)
+def bl := AccHost.bless env0 100000 (regs [(7, 2 ^ 64 - 1), (8, 2 ^ 64 - 1), (9, 5), (10, 2 ^ 64 - 1),
+  (11, 2 ^ 64 - 1), (12, 0)]) mem0 ctxDeleg
+#guard r7 bl == Result.OK && bl.ctx.1.state.delegator == 5 && bl.ctx.1.state.manager == 0
+-- … but may not change the manager
+#guard r7 (AccHost.bless env0 100000 (regs [(7, 5), (8, 2 ^ 64 - 1), (9, 5), (10, 2 ^ 64 - 1),
+  (11, 2 ^ 64 - 1), (12, 0)]) mem0 ctxDeleg) == Result.HUH
+
 end JAM.Tests.HostGeneral

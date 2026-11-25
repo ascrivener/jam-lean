@@ -4,7 +4,7 @@ import PVM.Tables
 /-!
 # Program blobs, skip, ζ and basic blocks
 
-GP v0.8.0 §A.1 (deblob, 𝔳_blob, 𝔳_inst), §A.2 (`sec:programdecoding`: skip, ζ) and
+GP v0.8.1 §A.1 (deblob, eq. `deblob`; 𝔳_blob, 𝔳_inst), §A.2 (`sec:programdecoding`: skip, ζ) and
 §A.3 (`sec:basicblocks`: U, T, ϖ, 𝔏).
 -/
 
@@ -105,6 +105,14 @@ end Program
 
 namespace Blob
 
+/-- 𝖹_C = 2^25, the maximum size of the instruction data **c** of a program blob (GP v0.8.1
+    definitions, eq. `deblob`; #559). -/
+def maxCodeSize : Nat := 2 ^ 25
+
+/-- 𝖹_J = 2^24, the maximum number of entries of the dynamic jump table **j** (GP v0.8.1
+    definitions, eq. `deblob`; #559). -/
+def maxJumpTableEntries : Nat := 2 ^ 24
+
 /-- ℰ, the general natural-number serialization (GP (C), "general natural number
     serialization"). -/
 def encodeNat (x : Nat) : List UInt8 :=
@@ -142,14 +150,18 @@ def decodeBits? (bs : List UInt8) (n : Nat) : Option (Array Bool) :=
     let bits := (List.range (8 * bs.length)).map fun i => Num.bit (ba.getD (i / 8) 0).toNat (i % 8)
     if (bits.drop n).all (· == false) then some (bits.take n).toArray else none
 
-/-- The unique (**c**, **k**, **j**) with
-    p = ℰ(|**j**|) ⌢ ℰ_1(z) ⌢ ℰ(|**c**|) ⌢ ℰ_z(**j**) ⌢ ℰ(**c**) ⌢ ℰ(**k**) and |**k**| = |**c**|
-    (GP §A.1, the encoding condition of deblob). -/
+/-- The unique (**c**, **k**, **j**) ∈ (𝔹_{:𝖹_C}, 𝕓, ⟦ℕ_R⟧_{:𝖹_J}) with
+    p = ℰ(|**j**|) ⌢ ℰ_1(z) ⌢ ℰ(|**c**|) ⌢ ℰ_z(**j**) ⌢ ℰ(**c**) ⌢ ℰ(**k**), z ≤ 4 and
+    |**k**| = |**c**| (GP v0.8.1 eq. `deblob`, the encoding condition; the bounds on |**c**|, |**j**|
+    and z are new in v0.8.1, #559). -/
 def parse? (p : ByteArray) : Option Program := do
   let (jLen, pos) ← decodeNat? p 0
+  if jLen > maxJumpTableEntries then none
   let z ← p[pos]?.map UInt8.toNat
+  if z > 4 then none
   let pos := pos + 1
   let (cLen, pos) ← decodeNat? p pos
+  if cLen > maxCodeSize then none
   if p.size < pos + jLen * z then none
   let j := (List.range jLen).map fun i => Num.decodeLE ((p.extract (pos + i * z) (pos + i * z + z)).toList)
   let pos := pos + jLen * z
@@ -160,7 +172,7 @@ def parse? (p : ByteArray) : Option Program := do
 
 end Blob
 
-/-- deblob(p, ı) (GP §A.1): the program (**c**, **k**, **j**) if p is a valid encoding,
+/-- deblob(p, ı) (GP v0.8.1 eq. `deblob`): the program (**c**, **k**, **j**) if p is a valid encoding,
     𝔳_blob(**c**, **k**, 0) and 𝔳_inst(**c**, **k**, ı); otherwise ∇ (`none`). -/
 def deblob (p : ByteArray) (i : Nat) : Option Program := do
   let P ← Blob.parse? p

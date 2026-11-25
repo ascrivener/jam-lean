@@ -69,13 +69,13 @@ def run (Q : Prepared) : Nat → Nat → UInt64 → Bool → Regs → Memory →
   | 0, _, _, _, _, _ => none
   | fuel + 1, i, gas, charged, ω, μ =>
     if !(Q.valid && Q.prog.vInst i) then
-      some { status := .panic, pc := 0, gas, charged, regs := ω, mem := μ }
+      some { status := .panic, pc := 0, gas, charged := false, regs := ω, mem := μ }
     else
       let r := Q.step i gas charged ω μ
       match r.status with
       | .cont => Q.run fuel r.pc r.gas r.charged r.regs r.mem
       | .halt | .panic =>
-        some { status := r.status, pc := 0, gas := r.gas, charged := r.charged, regs := r.regs, mem := r.mem }
+        some { status := r.status, pc := 0, gas := r.gas, charged := false, regs := r.regs, mem := r.mem }
       | _ => some { status := r.status, pc := i, gas := r.gas, charged := r.charged, regs := ω, mem := μ }
 
 end Prepared
@@ -104,7 +104,7 @@ theorem run_prepare {p : ByteArray} {P : Program} (h : Blob.parse? p = some P) :
 /-- Ψ, parsing the blob once and memoizing block costs. -/
 def psiFast (p : ByteArray) (i : Nat) (gas : UInt64) (charged : Bool) (ω : Regs) (μ : Memory) : Result :=
   match Blob.parse? p with
-  | none => { status := .panic, pc := 0, gas, charged, regs := ω, mem := μ }
+  | none => { status := .panic, pc := 0, gas, charged := false, regs := ω, mem := μ }
   | some P =>
     (P.prepare.run (stepBound p i gas charged) i gas charged ω μ).getD
       { status := .panic, pc := 0, gas, charged, regs := ω, mem := μ }

@@ -599,7 +599,8 @@ noted here and in a comment at the definition.
    apparent (in)accessibility", but the formula for ε^μ only considers *inaccessible* indices, so
    an accessible index below 2^16 does not panic. We follow the formula. No vector maps a page
    below 2^16, so the two readings are not distinguished.
-4. **Three-register r_D = min(12, ζ_{ı+2})**, not mod 16. No vector has ζ_{ı+2} ≥ 16.
+4. **Three-register r_D** *(resolved in v0.8.1, #554)*. v0.8.0 wrote r_D = min(12, ζ_{ı+2}), not mod 16;
+   v0.8.1 reduces mod 16, and the model follows it. No vector has ζ_{ı+2} ≥ 16.
 5. **The exit pc.** Ψ returns ı = 0 on ∎ and ☇; the vectors report the exiting instruction.
    `Result` is exactly Ψ's tuple, so the test harness recomputes the exiting instruction
    (`Tests.exitIndex`).
@@ -618,9 +619,9 @@ noted here and in a comment at the definition.
 10. **ε^μ takes min(**x**) before reducing mod 2^32**, as written; this only matters for accesses
     that wrap around 2^32.
 11. **Coverage gap.** No vector contains `cmov_nz_imm` (opcode 148).
-12. **Gas types in Ψ_H.** The handler type 𝔉_X returns gas in ℕ_G, but Ψ_H's result is typed
-    ℤ_G and the host functions compute ϱ − g, which is negative when they run out. We follow 𝔉_X
-    (gas in ℕ_G); Ψ_M only uses max(ϱ', 0), so nothing downstream sees the difference yet.
+12. **Gas types in Ψ_H** *(resolved in v0.8.1, #533)*. In v0.8.0 the handler type 𝔉_X returned
+    gas in ℕ_G, but Ψ_H's result was typed ℤ_G and the host functions computed ϱ − g. v0.8.1 types
+    all of it ℕ_G (host functions return max(ϱ − g, 0)), which the model already did.
 13. **Ψ_H need not terminate.** The paper's Ψ_H* recurses after every host call; a handler that
     returns more gas than it was given can keep it running forever. We prove termination (and the
     paper's equation) for handlers that do not add gas, which includes the dispatchers of Ψ_A, Ψ_R

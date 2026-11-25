@@ -120,4 +120,46 @@ example (f f' : HostFn Nat) (h7 : ∀ g ω μ x, f 7 g ω μ x = f' 7 g ω μ x)
     simp only [List.mem_singleton] at hh
     subst hh; exact h7)
 
+/-! ### Rules new in GP v0.8.1
+
+Regression tests for the v0.8.1 changes to Ψ and deblob (§A.1, §A.5.13). -/
+
+/-- The registers with ω₀ = 2^32 − 2^16 (so `jump_ind ω₀ + 0` halts), ω₁ = 5 and ω₂ = 7. -/
+def regs0 : Regs :=
+  (Vector.replicate 13 (0 : UInt64)) |>.set 0 (UInt64.ofNat (2 ^ 32 - 2 ^ 16)) |>.set 1 5 |>.set 2 7
+
+/-- PVM blobs (no JAM wrapper): a single `trap`; `jump_ind ω₀ + 0`; `ecalli 7; jump_ind ω₀ + 0`. -/
+def pTrap : ByteArray := ⟨#[0, 0, 1, 0, 1]⟩
+def pHalt : ByteArray := ⟨#[0, 0, 2, 50, 0, 1]⟩
+def pCall : ByteArray := ⟨#[0, 0, 4, 10, 7, 50, 0, 5]⟩
+
+-- #588: Ψ clears the gas-charged flag ϱ̃ when it panics or halts (v0.8.0 kept ϱ̃'), whether or not
+-- it was set on entry.
+example : (psi pTrap 0 1000 false regs0 Memory.empty).status = .panic ∧
+    (psi pTrap 0 1000 false regs0 Memory.empty).charged = false := by decide +kernel
+example : (psi pTrap 0 1000 true regs0 Memory.empty).charged = false := by decide +kernel
+example : (psi pHalt 0 1000 false regs0 Memory.empty).status = .halt ∧
+    (psi pHalt 0 1000 false regs0 Memory.empty).charged = false := by decide +kernel
+-- ... also when deblob fails (ı = 1 is not an instruction), the ☇ case of Ψ.
+example : (psi pTrap 1 1000 true regs0 Memory.empty).charged = false := by decide +kernel
+-- A host-call exit is not a halt or panic: ϱ̃ stays set (`ecalli` is not in T).
+example : (psi pCall 0 1000 false regs0 Memory.empty).status = .host 7 ∧
+    (psi pCall 0 1000 false regs0 Memory.empty).charged = true := by decide +kernel
+
+-- #554: three-register instructions read r_D = min(12, ζ_{ı+2} mod 16). `add_64` with
+-- ζ_{ı+1} = 0x21 (r_A = 1, r_B = 2) and ζ_{ı+2} = 0x13 writes ω₃ = 5 + 7 (v0.8.0: min(12, 19) = 12),
+-- then `trap`; Ψ returns ω' on ☇.
+def pAdd : ByteArray := ⟨#[0, 0, 4, 200, 0x21, 0x13, 0, 9]⟩
+example : (psi pAdd 0 1000 false regs0 Memory.empty).regs[3] = 12 ∧
+    (psi pAdd 0 1000 false regs0 Memory.empty).regs[12] = 0 := by decide +kernel
+
+-- #559: the jump-table entry width z is at most 4, |**j**| ≤ 𝖹_J and |**c**| ≤ 𝖹_C
+-- (`Blob.parse?_limits` states the bounds for every parsed program).
+example : (Blob.parse? ⟨#[0, 4, 1, 0, 1]⟩).isSome := by decide +kernel
+example : (Blob.parse? ⟨#[0, 5, 1, 0, 1]⟩).isNone := by decide +kernel
+example : (deblob ⟨#[0, 5, 1, 0, 1]⟩ 0).isNone := by decide +kernel
+-- |**j**| = 𝖹_J + 1 with z = 0: rejected before the (empty) entries are read.
+example : (Blob.parse? ⟨(Blob.encodeNat (2 ^ 24 + 1) ++ [0, 1, 0, 1]).toArray⟩).isNone := by
+  decide +kernel
+
 end PVM.Tests.Invocation

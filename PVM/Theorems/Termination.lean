@@ -193,18 +193,18 @@ theorem psi_eq_runFuel (p : ByteArray) (n i : Nat) (gas : UInt64) (ch : Bool) (�
   obtain ⟨r, hr⟩ := Option.isSome_iff_exists.1 h1.1
   simp [hr]
 
-/-- **Ψ's defining equation** (GP §A.1): `psi` satisfies the paper's recursive definition of Ψ,
+/-- **Ψ's defining equation** (GP v0.8.1 §A.1): `psi` satisfies the paper's recursive definition of Ψ,
     with deblob, Ψ₁ and the case split on ε, exactly. -/
 theorem psi_eq (p : ByteArray) (i : Nat) (gas : UInt64) (ch : Bool) (ω : Regs) (μ : Memory) :
     psi p i gas ch ω μ =
       match deblob p i with
-      | none => { status := .panic, pc := 0, gas, charged := ch, regs := ω, mem := μ }
+      | none => { status := .panic, pc := 0, gas, charged := false, regs := ω, mem := μ }
       | some P =>
         let r := P.step i gas ch ω μ
         match r.status with
         | .cont => psi p r.pc r.gas r.charged r.regs r.mem
         | .halt | .panic =>
-          { status := r.status, pc := 0, gas := r.gas, charged := r.charged,
+          { status := r.status, pc := 0, gas := r.gas, charged := false,
             regs := r.regs, mem := r.mem }
         | _ =>
           { status := r.status, pc := i, gas := r.gas, charged := r.charged,

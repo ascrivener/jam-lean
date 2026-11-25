@@ -1,7 +1,9 @@
 import JAM.Codec
 
 /-!
-# Work packages, work items and work reports (GP v0.8.0 §11, §14) and their encodings (Appendix C)
+# Work packages, work items and work reports (GP v0.8.1 §11, §14) and their encodings (Appendix C)
+
+Not yet modelled: the deferred-transfer field u of GP v0.8.1 #539 (junior services, phase 2).
 
 The terms that refine and is-authorized take as input and produce as output, with ℰ as Appendix C
 defines it for each.

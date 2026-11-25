@@ -11,7 +11,7 @@ next named naturals satisfy `I`, the bounds and `asm`, and the measure drops; at
 leaf's target cut implies the postcondition `Q`.
 
 `loop_sound` is the induction itself, over any invariant; `loop_fork_sound` instantiates it with a
-forking check. Both are about `FreeStepsH` (GP v0.8.0 §A.4–A.5) only.
+forking check. Both are about `FreeStepsH` (GP v0.8.1 §A.4–A.5) only.
 -/
 
 namespace PVM.SymExec

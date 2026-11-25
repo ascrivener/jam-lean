@@ -35,11 +35,93 @@ Phase 1 notes (Blocks):
 - Vectors run with the chain values they were generated with (v0.8.0), so expected outputs are not
   edited; Params.full is v0.8.1. Reports vectors come from davxy/jam-test-vectors master 5e8d2a2.
 
+## Phase-1 sweep: hunk coverage (2026-11-25)
+
+Every hunk of `git diff v0.8.0 v0.8.1` in the phase-1 paper files, checked against `gp-v0.8.1`.
+Status is one of: **done** (with the PR), **no change** (wording, or not modelled), **phase 2**, or
+**open**.
+
+### pvm.tex
+
+| Hunk | Status | Where |
+|---|---|---|
+| Ψ: ϱ̃ = ⊥ on ∎ and ☇ (#588) | done #244 | `PVM.runFuel`, `Prepared.run`, `psi_eq` |
+| deblob: \label, **c** ∈ 𝔹_{:𝖹_C}, **j** ∈ ⟦ℕ_R⟧_{:𝖹_J}, z ≤ 4 (#559) | done #244 | `Blob.parse?`, `Blob.parse?_limits` |
+| "except as indicated" layout | no change | wording |
+| r_D = min(12, ζ_{ı+2} mod 16) (#554) | done #244 | `Program.decode` (and `CodeView.decode`) |
+| Ψ_H: ℕ_G gas, `\context`, 𝔉_X without ∎; Φ → Ψ typo (#533, #536) | done #244 | `HostStatus`, `HostFn`, `psiHFuel` |
+| Y: metadata ℰ(↕**m**), eqs. `jamblobformat` and `ramlayoutfits`, closing note (#582) | done #251 | `skipMetadata?`, `JamBlob.parseStd?`, `standardInit` |
+| Ψ_M: `\context`, u = ϱ − ϱ' (#533) | done #244 | `invocationResult` |
+| š counts the destination of the cmov instructions (#559) | done (already modelled) | `Instr.srcRegs` |
+
+### pvm_invocations.tex (Ψ_I, Ψ_R, general and refine functions)
+
+| Hunk | Status | Where |
+|---|---|---|
+| Ψ_I prose: "the work-package p and the core c" | no change | wording |
+| Ψ_I dispatcher: context {∅}, unknown id → (∞, 0, ω', μ) (#533) | done #248 | `RefineHost.dispatchI`, `unknown` (context `Unit`) |
+| PVM instance type with handle (#530) | done #255 | `InnerPvm.handle` |
+| Export prose "may be assumed" | no change | wording |
+| Ψ_R: BAD / BIG on the full blob, Ψ_M on the full blob (#582) | done #251 | `psiR` |
+| Ψ_R: context (**m**, **P**, **e**), F with `compile` = 9 and machine … expunge = 10 … 15, unknown id (#530, #533) | done #255, #248 | `RefineCtx`, `RefineHost.dispatch` |
+| Host Functions intro: ϱ* = max(ϱ − g, 0), (ε*, ω*, μ*, x*), defaults (#533) | done #248 | `charged` |
+| Ω_G: ω'_7 = ϱ* | done #248 | `hostGas` |
+| Ω_♊: no own (ε', ϱ'); g with ω'_7; (**o**, s) per eq. `jamblobformat` | done #248, #251 | `hostGrowHeap`, `heapBounds` |
+| Ω_♊: b uses Q(s) (#538) | phase 2 | `heapBounds` (phase 2, part 2) |
+| Ω_Y: gas by ω_10, 𝖬_{Y,∅} otherwise; 𝖶_I in case 0 (#533, #563) | done #250 | `hostFetch`, `Constants.CgasY`, `Params.encode` |
+| `lookup`, `read`, `write`, `info` moved to the accumulate functions | phase 2 | accumulate host calls |
+| Refine Functions intro: context triple | done #255 | `RefineCtx` |
+| Ω_H: **a** = **d**[s] or **d**[ω_7], no key guard; g in the right column (#533) | done #255 | `RefineHost.historicalLookup` |
+| Ω_E: context argument | done #255 | `RefineHost.exportSeg` |
+| Ω_Γ `compile` (#530) | done #255 | `RefineHost.compile` |
+| Ω_M from a module handle, WHO, g = 𝖬_M (#530) | done #255, #250 | `RefineHost.machine` |
+| Ω_P, Ω_O, Ω_Z, Ω_K: renumbered, g in the right column, ϱ* for Ω_K | done #255, #248 | `peek`, `poke`, `pages`, `invoke` |
+| Ω_X: modes m = 0 / 1 / other (#530) | done #255 | `RefineHost.expunge` |
+| Accumulate invocation and functions | phase 2 | — |
+
+### Blocks-area files
+
+| File | Hunk | Status | Where |
+|---|---|---|---|
+| safrole | 𝕂^∅ (`nullvalkey`); Φ uses it (#543) | done #246 | `Block.nullValidatorKey`, `Safrole.offendersFilter`, `Reports.blacklist` |
+| reporting_assurance | ℝ field order, r_g 5th (#537) | done | `WorkReport` (encoding unchanged: Appendix C already had it 5th) |
+| reporting_assurance | 𝔼_A without anchor; ordered-unique by a_v (#562, #574) | done #246 | `Assurance`, `checkAssurance` |
+| reporting_assurance | eq. `reportrefineload`: per-report limits (#563) | done #253 | `Reports.checkReportLoad`: all seven rows, in the paper's order; error names from the vectors (28–31) |
+| statistics | π_V preimage size; guarantees by (κ'_v)_e ∈ G; provisions filtered by service (#565, #567) | done | `Statistics.lean` |
+| statistics | layout | no change | typesetting |
+| work_packages_and_reports | 𝖶_B → 𝖶_I in `checkextractsize`; eq. `maxbundlesize`; `wplimits` < → ≤ (#563) | constants done #250; rules no change | no work-package validity in the model; on-chain use is `reportrefineload` (#253) |
+| work_packages_and_reports | **p**_c is the whole preimage (#582) | done #251 | `WorkPackage.authCode` |
+| work_packages_and_reports | Ξ tuple order, `countupexports`, ᵀ_m / s♣ / paged proofs (#537, #568, #583) | no change | no Ξ or availability specifier in the model (jam-lean-target follow-up) |
+| serialization | ℰ(⊥) = [0], ℰ(⊤) = [1]; ℰ_A without anchor; O(a) (#560, #562) | done #246 | `Block.lean` encoders and decoders |
+| serialization | deferred transfer gains u (#539) | phase 2 | `DeferredTransfer` in `JAM/Work.lean` (edit approved for the phase-2 child) |
+| header | **g** of `extrinsichash` uses O(a) (#560) | done #246 | `Extrinsic.hashParts` |
+| erasure_coding | example v = 1020; ᵀ_m | no change | prose; s♣ not modelled |
+| erasure_coding | padded systematic code (#580) | done #246 | `Erasure.paddedShards`, `encodeWith`, `recover` |
+| auditing | 16-bit tranche comparand (#534) | no change | no auditing in the model |
+| definitions | 𝖦_A, 𝖦_I, 𝖦_R, 𝖦_T, 𝖶_A, 𝖶_B, 𝖶_I, 𝖹_C, 𝖹_J, 𝖬_M, 𝖬_Γ, 𝖬_{Y,∅}, 𝖭_P, 𝖭_D, 𝖬_V (#557, #559, #563, #567, #587, …) | done #250 | `JAM/Constants.lean` (rules for 𝖭_P / 𝖭_D and Ω_V: phase 2) |
+| definitions | ℕ_P, 𝕏 / 𝕥 types, Ω_V (#539, #542, #558) | phase 2 | — |
+| definitions | ℤ_G removed; instance type renamed; Ω_Γ / Ω_X descriptions | done #244, #248, #255 | — |
+| definitions | 𝖣 refers to `forget`; 𝖬_B "per record"; blank line | no change | wording |
+| bandersnatch | Thin VRF (#550) | no change in the model | crypto is a parameter; `JamCrypto` carries the v0.8.1 path |
+| notation | "subscript implies the key exists" removed (#566) | no change | lookups are `Option`-typed, invalidity is explicit (phase-2 files not audited here) |
+| notation | ZIP 215 citation; BLS aggregatable form (#541) | no change | `edVerify` is a parameter; BLS is never verified |
+| overview | 𝔼 order (𝔼_T, 𝔼_P, 𝔼_G, 𝔼_A, 𝔼_D) (#575) | done | `Block.Extrinsic` |
+| overview | ℤ_G removed from `gasregentry` | done #244 | — |
+
+### Open after the sweep
+
+Nothing in phase 1. Phase-2 items are marked in the tables.
+
+Docstrings in the phase-1 areas now cite v0.8.1 (PVM, Refine, Safrole, Reports, Work, Codec, Decode,
+BlockImport, Disputes, Authorization, History, Shuffle). The remaining "v0.8.0" mentions are
+deliberate comparisons ("v0.8.0 had …") or cite the v0.8.0 test vectors. `JAM/Host/General.lean`
+still cites v0.8.0 in its header and eq. `conditions`; it is left to phase 2, which is changing it.
+
 ## Phase 2 (after stage 2 is on `gp-v0.8.1`)
 
 | Area | Paper files | GP PRs |
 |---|---|---|
-| Accounts and accumulation | accounts.tex, accumulation.tex, merklization.tex (C(12), C(13), C(255)), pvm_invocations.tex general and accumulate host calls | #533, #539 (junior services), #542, #545, #558, #565, #567, #571, #581; deferred from phase 1: #582 metadata in Y / Ψ_M with `ServiceAccount.code` and the Refine/Is-Authorized code fetch, #538 `heapBounds` in Host/General, #564 C(13) validator statistics serialization (State.lean), work_packages "p_c without metadata" (with #582) |
+| Accounts and accumulation | accounts.tex, accumulation.tex, merklization.tex (C(12), C(13), C(255)), pvm_invocations.tex general and accumulate host calls | #533, #539 (junior services), #542, #545, #558, #565, #567, #571, #581; deferred from phase 1: #582 metadata in Y / Ψ_M with `ServiceAccount.code` and the Refine/Is-Authorized code fetch, #538 `heapBounds` in Host/General, #564 C(13) validator statistics serialization (State.lean) |
 | Sweep | every file | re-read the whole diff; move remaining v0.8.0 citations to v0.8.1 |
 
 ## Suspended until v0.8.1 vectors

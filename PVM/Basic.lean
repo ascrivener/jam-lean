@@ -2,7 +2,7 @@
 # Basic numeric definitions
 
 Registers, sign conversions, sign extension and little-endian codecs, as defined in the
-Gray Paper v0.8.0. References are to Appendix A (`sec:virtualmachine`) unless stated
+Gray Paper v0.8.1. References are to Appendix A (`sec:virtualmachine`) unless stated
 otherwise; "GP (C)" refers to the serialization codec of Appendix C.
 
 All arithmetic here is on `Nat` and `Int`, mirroring the paper's definitions over ℕ and ℤ;

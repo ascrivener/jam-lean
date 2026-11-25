@@ -1,7 +1,7 @@
 import JAM.Params
 
 /-!
-# Authorization (GP v0.8.0 §8, `sec:authorization`)
+# Authorization (GP v0.8.1 §8, `sec:authorization`)
 
 The authorizer pool α and queue φ: each core's pool α[c] holds at most 𝖮 authorizer hashes, and
 each block it drops the authorizer used by that core's guarantee, if any, and takes the next one

@@ -2,7 +2,7 @@ import Std.Data.ExtTreeMap
 import PVM.Basic
 
 /-!
-# RAM (GP v0.8.0 §4.7, eq. `pvmmemory`) and the memory-access exception ε^μ (§A.4)
+# RAM (GP v0.8.1 §4.7, eq. `pvmmemory`) and the memory-access exception ε^μ (§A.4)
 
 𝕄 ≡ (**v** ∈ 𝔹_{2^32}, **a** ∈ ⟦{W, R, ∅}⟧_p), p = 2^32 / 𝖹_P, 𝖹_P = 2^12.
 

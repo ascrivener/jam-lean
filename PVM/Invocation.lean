@@ -4,9 +4,9 @@ import PVM.Fast
 /-!
 # Host-call invocation Ψ_H, standard initialization Y and argument invocation Ψ_M
 
-GP v0.8.1 §A.6 (Host Call Definition), §A.8 (Argument Invocation Definition); GP v0.8.0 §A.7
-(`sec:standardprograminit`, eqs. `conditions`, `memlayout`, `registers`). The v0.8.1 changes to Y
-(the metadata prefix ℰ(↕**m**) of eq. `jamblobformat`, #582) are not yet modelled.
+GP v0.8.1 §A.6 (Host Call Definition), §A.7 (`sec:standardprograminit`, eqs. `jamblobformat`,
+`ramlayoutfits`, `memlayout`, `registers`; the metadata prefix ℰ(↕**m**) is #582) and §A.8
+(Argument Invocation Definition).
 -/
 
 namespace PVM
@@ -98,10 +98,10 @@ def psiH {X : Type} (p : ByteArray) (i : Nat) (gas : UInt64) (ω : Regs) (μ : M
 
 /-! ## Standard program initialization Y (GP §A.7) -/
 
-/-- 𝖹_Z = 2^16, the major zone size (GP eq. `conditions`). -/
+/-- 𝖹_Z = 2^16, the major zone size (GP v0.8.1 eq. `jamblobformat`). -/
 def zoneSize : Nat := 2 ^ 16
 
-/-- 𝖹_I = 2^24, the maximum input size (GP eq. `conditions`). -/
+/-- 𝖹_I = 2^24, the maximum input size (GP v0.8.1 eq. `jamblobformat`). -/
 def inputSize : Nat := 2 ^ 24
 
 /-- P(x) = 𝖹_P⌈x / 𝖹_P⌉. -/
@@ -110,7 +110,7 @@ def roundPage (x : Nat) : Nat := pageSize * ((x + pageSize - 1) / pageSize)
 /-- Q(x) = 𝖹_Z⌈x / 𝖹_Z⌉. -/
 def roundZone (x : Nat) : Nat := zoneSize * ((x + zoneSize - 1) / zoneSize)
 
-/-- The components of a standard JAM program blob (GP eq. `conditions`): read-only data **o**,
+/-- The components of a standard JAM program blob (GP v0.8.1 eq. `jamblobformat`): read-only data **o**,
     read-write data **w**, `z` extra heap pages, stack size `s` and the PVM blob **p**. -/
 structure JamBlob where
   ro : ByteArray

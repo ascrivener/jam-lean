@@ -44,7 +44,7 @@ theorem get?_insert_same {α : Type} (m : Std.ExtTreeMap Nat α) (s : Nat) (a : 
     charged function (on ∞ the context is unchanged). -/
 theorem charged_ctx {X : Type} (P : X → Prop) (g gas : Nat) (ω : Regs) (μ : Memory) (x : X)
     (body : HostOut X → HostOut X) (hx : P x)
-    (hb : P (body ⟨.cont, ((gas - g : Nat) : Int), ω, μ, x⟩).ctx) :
+    (hb : P (body ⟨.cont, gas - g, ω, μ, x⟩).ctx) :
     P (charged g gas ω μ x body).ctx := by
   unfold charged
   split

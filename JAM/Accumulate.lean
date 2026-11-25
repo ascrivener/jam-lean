@@ -367,13 +367,10 @@ def accHostFn (env : AccEnv) : HostFn AccCtx := fun n gas ω μ c =>
   let o := AccHost.dispatch env n gas.toNat ω μ c
   ⟨o.status, UInt64.ofNat o.gas.toNat, o.regs, o.mem, o.ctx⟩
 
-/-- The code of a service account: **c** where **p**[c_h] = ℰ(↕m, **c**) (GP §9, "Code and Gas"). -/
-def ServiceAccount.code (a : ServiceAccount) : Option ByteArray := do
-  let p ← a.preimages.get? a.codeHash
-  let b : ByteArray := ⟨p.toArray⟩
-  let (mLen, pos) ← Blob.decodeNat? b 0
-  if pos + mLen > b.size then none
-  some (b.extract (pos + mLen) b.size)
+/-- The code of a service account, a_c ≡ a_p[a_c] (GP v0.8.1 §9 "Code and Gas", GP #582): the
+    whole preimage, metadata included; Y skips the metadata (`PVM.skipMetadata?`). -/
+def ServiceAccount.code (a : ServiceAccount) : Option ByteArray :=
+  (a.preimages.get? a.codeHash).map fun p => ⟨p.toArray⟩
 
 /-- The result of Ψ_A / Δ_1 (GP eq. `acconeout`): post-state, transfers, yield, gas used, provisions. -/
 structure AccOut where

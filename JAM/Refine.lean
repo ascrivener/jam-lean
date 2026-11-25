@@ -31,14 +31,6 @@ structure InnerPvm where
     segments. Both start empty. -/
 abbrev RefineCtx := Std.ExtTreeMap Nat InnerPvm × List (List UInt8)
 
-/-- (**m**, c): the code split ℰ(↕**m**, **c**) of a preimage: the metadata is skipped. `none` if
-    the octets do not have that form. -/
-def splitMetadata (b : List UInt8) : Option ByteArray := do
-  let ba : ByteArray := ⟨b.toArray⟩
-  let (mLen, pos) ← Blob.decodeNat? ba 0
-  if pos + mLen > ba.size then none
-  some (ba.extract (pos + mLen) ba.size)
-
 namespace RefineHost
 
 open Result
@@ -305,9 +297,9 @@ def psiR (params : Params) (d : Accounts) (c i : Nat) (p : WorkPackage) (r : Lis
     | none => ⟨.err .bad, [], 0⟩
     | some l =>
       if l.length > Constants.Cmaxservicecodesize then ⟨.err .big, [], 0⟩
-      else match splitMetadata l with
-        | none => ⟨.err .bad, [], 0⟩
-        | some code =>
+      else
+          -- the whole preimage is the JAM blob (GP v0.8.1 eq. `refinvocation`, GP #582)
+          let code : ByteArray := ⟨l.toArray⟩
           let a : ByteArray := ⟨(Codec.nat c ++ Codec.nat i ++ Codec.nat w.service ++
             Codec.var w.payload ++ (Blake2b.hash256 ⟨p.encode.toArray⟩).toList).toArray⟩
           let env : RefineHost.Env :=
@@ -321,11 +313,12 @@ def psiR (params : Params) (d : Accounts) (c i : Nat) (p : WorkPackage) (r : Lis
           | .ok b => ⟨.ok b, e, u⟩
           | o => ⟨o.toWorkResult, [], u⟩
 
-/-- **p**_c, the authorization code (GP §14.3): ℰ(↕**p**_m, **p**_c) = Λ(**d**[p_h], (p_c)_t, p_u). -/
+/-- **p**_c ≡ Λ(**d**[p_h], (p_c)_t, p_u), the authorization code, the whole preimage (GP v0.8.1
+    §14.3, GP #582). -/
 def WorkPackage.authCode (d : Accounts) (p : WorkPackage) : Option ByteArray := do
   let a ← d.get? p.authCodeHost
   let l ← a.historicalLookup p.context.lookupAnchorSlot p.authCodeHash.toList
-  splitMetadata l
+  some ⟨l.toArray⟩
 
 /-- Ψ_I(p, c) (GP eq. `isauthinvocation`), over accounts **d**: the authorizer trace or an error,
     and the gas used. -/

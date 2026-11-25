@@ -99,7 +99,7 @@ def hostGas {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (x : X) : HostOut X
 /-- The heap's page bounds for a standard program (eq. `conditions`): the first heap page
     a = (2𝖹_Z + Q(|**o**|)) / 𝖹_P and the bound b below the stack. -/
 def heapBounds (jam : ByteArray) : Nat × Nat :=
-  let (roLen, stack) := match JamBlob.parse? jam with
+  let (roLen, stack) := match JamBlob.parseStd? jam with
     | some jb => (jb.ro.size, jb.stackSize)
     | none => (0, 0)
   ((2 * zoneSize + roundZone roLen) / pageSize,

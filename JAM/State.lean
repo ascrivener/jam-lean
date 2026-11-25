@@ -166,14 +166,13 @@ def accountInfo (a : ServiceAccount) : List UInt8 :=
   nat 0 ++ a.codeHash ++ [a.balance, a.minAccGas, a.minMemoGas, a.octets, a.gratis].flatMap (fixed 8) ++
     [a.items, a.created, a.lastAcc, a.parent].flatMap (fixed 4)
 
-/-- The key-value pairs of one account: C(255, s), and its storage, preimage and request entries
-    under C(s, ℰ_4(2³²−1) ⌢ k), C(s, ℰ_4(2³²−2) ⌢ h) and C(s, ℰ_4(l) ⌢ h). -/
+/-- The key-value pairs of one account: C(255, s), its storage and request entries, already held
+    under the hash parts of C(s, ℰ_4(2³²−1) ⌢ k) and C(s, ℰ_4(l) ⌢ h) with the values T(σ) gives
+    them (`ServiceAccount.entries`), and its preimages under C(s, ℰ_4(2³²−2) ⌢ h). -/
 def account (s : Nat) (a : ServiceAccount) : List (List UInt8 × List UInt8) :=
   (Trie.keyOfService 255 s, accountInfo a) ::
-    (a.storage.toList.map fun (k, v) => (Trie.keyOfServiceData s (fixed 4 (2 ^ 32 - 1) ++ k), v)) ++
-    (a.preimages.toList.map fun (h, p) => (Trie.keyOfServiceData s (fixed 4 (2 ^ 32 - 2) ++ h), p)) ++
-    (a.requests.toList.map fun ((h, l), t) =>
-      (Trie.keyOfServiceData s (fixed 4 l ++ h), varSeq (fixed 4) t))
+    (a.entries.toList.map fun (k, v) => (Trie.keyOfServiceHash s k, v)) ++
+    (a.preimages.toList.map fun (h, p) => (Trie.keyOfServiceData s (fixed 4 (2 ^ 32 - 2) ++ h), p))
 
 end Serialize
 

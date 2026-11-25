@@ -43,14 +43,21 @@ def w1 := hostWrite 100000 (writeRegs 5) memKV acct
 
 -- a fresh key: ω'_7 = NONE, and the storage holds the value
 #guard w1.status == .cont && r7 w1 == Result.NONE
-#guard w1.ctx.storage.get? "k1".toUTF8.toList == some "hello".toUTF8.toList
+#guard w1.ctx.storageGet "k1".toUTF8.toList == some "hello".toUTF8.toList
+-- a_i and a_o follow GP eq. `deposits`: one item, 34 + |k| + |v| octets
+#guard w1.ctx.items == 1 && w1.ctx.octets == 34 + 2 + 5
 -- overwriting returns the previous length
 #guard r7 (hostWrite 100000 (writeRegs 3) memKV w1.ctx) == 5
 -- v_Z = 0 deletes
-#guard (hostWrite 100000 (writeRegs 0) memKV w1.ctx).ctx.storage.get? "k1".toUTF8.toList == none
+#guard (hostWrite 100000 (writeRegs 0) memKV w1.ctx).ctx.storageGet "k1".toUTF8.toList == none
+#guard (hostWrite 100000 (writeRegs 0) memKV w1.ctx).ctx.items == 0 &&
+  (hostWrite 100000 (writeRegs 0) memKV w1.ctx).ctx.octets == 0
+-- overwriting replaces the old value's octets: 34 + 2 + 3
+#guard (hostWrite 100000 (writeRegs 3) memKV w1.ctx).ctx.items == 1 &&
+  (hostWrite 100000 (writeRegs 3) memKV w1.ctx).ctx.octets == 34 + 2 + 3
 -- below the threshold balance: FULL and the account is unchanged
 #guard r7 (hostWrite 100000 (writeRegs 5) memKV { acct with balance := 0 }) == Result.FULL
-#guard ((hostWrite 100000 (writeRegs 5) memKV { acct with balance := 0 }).ctx.storage.size) == 0
+#guard ((hostWrite 100000 (writeRegs 5) memKV { acct with balance := 0 }).ctx.entries.size) == 0
 -- an unreadable key panics
 #guard (hostWrite 100000 (regs [(7, 0x10), (8, 2)]) memKV acct).status == .panic
 -- write gas: 𝖬_{W,c} + 𝔊(𝖬_{W,k,ℓ}, 2) + 𝔊(𝖬_{W,v,ℓ}, 5)

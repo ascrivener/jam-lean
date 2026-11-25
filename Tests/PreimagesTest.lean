@@ -30,16 +30,16 @@ def accounts (j : Json) : Except String Accounts := do
       let k ← field r "key"
       return (((← hexField k "hash").toList, ← natField k "length"),
               (← (← arr r "value").mapM (·.getNat?)).toList)
-    let a : ServiceAccount := { preimages := Std.ExtTreeMap.ofList blobs.toList,
-                                requests := Std.ExtTreeMap.ofList reqs.toList, codeHash := [],
-                                balance := 0, minAccGas := 0, minMemoGas := 0, gratis := 0,
-                                created := 0, lastAcc := 0, parent := 0 }
+    let a0 : ServiceAccount := { preimages := Std.ExtTreeMap.ofList blobs.toList, codeHash := [],
+                                 balance := 0, minAccGas := 0, minMemoGas := 0, gratis := 0,
+                                 created := 0, lastAcc := 0, parent := 0 }
+    let a := reqs.foldl (fun a ((h, z), t) => a.requestSet h z t) a0
     return (← natField e "id", a)
   return Std.ExtTreeMap.ofList as.toList
 
 def showAccounts (d : Accounts) : List String :=
   d.toList.map fun (s, a) =>
-    s!"{s}: preimages={a.preimages.toList.map fun (h, b) => (hexS h, hexS b)} requests={a.requests.toList.map fun ((h, l), v) => (hexS h, l, v)}"
+    s!"{s}: preimages={a.preimages.toList.map fun (h, b) => (hexS h, hexS b)} entries={a.entries.toList.map fun (k, v) => (hexS k, hexS v)}"
 
 def serviceRecord (j : Json) : Except String ServiceRecord := do
   return { provided := (← natField j "provided_count", ← natField j "provided_size"),

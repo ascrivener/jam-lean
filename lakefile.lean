@@ -3,7 +3,8 @@ open Lake DSL System
 
 /-! Build configuration for the Lean model of the JAM PVM and Appendix B (Gray Paper v0.8.0).
 
-* `lake build`           builds the model (`PVM`) and its theorems.
+* `lake build`           builds the model (`PVM`, `JAM`) and its theorems.
+* `lake build Services`  builds the results about service binaries (proof work only).
 * `lake build pvmtest`   builds and runs the vector runner over `vendor/jamtestvectors/pvm/programs`.
 * `lake build gascheck`  builds and runs the block gas checker over `programs/` and `gas-tests/`.
 * `lake build Tests.Invocation`  kernel-checks the Ψ_H / Y / Ψ_M examples.
@@ -21,8 +22,9 @@ lean_lib PVM
 @[default_target]
 lean_lib JAM
 
-/-- Results about specific services' deployed code, built on `JAM`. -/
-@[default_target]
+/-- Results about specific services' deployed code, built on `JAM`. Not a default target: since
+    storage-key stage 2 these proofs do not build against the current model until proof work
+    resumes (`docs/whats-proven.md`); build them with `lake build Services`. -/
 lean_lib Services
 
 /-- Shared helpers of the test executables. -/

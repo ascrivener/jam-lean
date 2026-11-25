@@ -54,10 +54,9 @@ def main (args : List String) : IO UInt32 := do
   let h := (Blake2b.hash256 bytes).toList
   let mut ok := true
   for (c, i, sid, y) in cases do
-    let acct : ServiceAccount :=
+    let acct : ServiceAccount := ServiceAccount.requestSet
       { codeHash := h, balance := 0, minAccGas := 0, minMemoGas := 0,
-        preimages := Std.ExtTreeMap.ofList [(h, bytes.toList)],
-        requests := Std.ExtTreeMap.ofList [((h, bytes.size), [0])] }
+        preimages := Std.ExtTreeMap.ofList [(h, bytes.toList)] } h bytes.size [0]
     let r := psiR .tiny (Std.ExtTreeMap.ofList [(sid, acct)]) c i (mkPkg h sid (i + 1) (mkItem h sid y))
       [] (List.replicate (i + 1) []) (List.replicate (i + 1) []) 0
     let out := match r.result with | .ok b => some b.toList | _ => none

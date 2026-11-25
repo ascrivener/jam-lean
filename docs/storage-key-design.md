@@ -1,6 +1,8 @@
 # Storage keys: loading σ from serialized state (design note)
 
-Status: **scoping only, nothing decided.** No Lean is changed by this note.
+Status: **decided (option (A), in stages); stages 1 and 2 done.** See "Decision" and "Status" at
+the end. Sections 1–4 are the original scoping note; line references in them are to the code
+before stage 2.
 
 **The problem** (reported by jam-lean-target, which uses jam-lean as a conformance fuzzing target):
 σ cannot be rebuilt from its key–value form T(σ) (GP v0.8.0 Appendix D) when an account has storage
@@ -342,3 +344,24 @@ is timed with the full-rebuild PRs.
   in-flight proofs.
 - Stage 2 restates them together with Handlers.
 - Meanwhile, new statements use the accessors. `storageGet_eq` (`rfl`) bridges the two forms.
+
+**Stage 2 (the representation switch), model and tests only** (Adam's "option 2", 2026-11-25):
+
+- `ServiceAccount` holds `preimages`, one `entries` dictionary keyed by the 27-octet hash part of
+  C(s, ·) (storage values raw, request values ℰ(↕[ℰ_4 x])), and `items` / `octets` (a_i, a_o) as
+  carried fields. `storageWrite`, `requestSet` and `requestErase` update a_i and a_o by GP eq.
+  `deposits`; `requestGet` decodes, reads an undecodable value (or z ≥ 2³², outside ℕ_L) as
+  absent. Every model use goes through the accessors: Ω_R, Ω_W, Ω_I, new, eject, query, solicit,
+  forget, provide, preimage integration, E_P validity, Λ and T(σ).
+- Accessor lemmas that the new representation makes false as stated gained hypotheses:
+  `requestGet_set_same` needs z < 2³² and a history in ⟦ℕ_T⟧_{:3}; `storageGet_requestSet` and
+  `storageGet_requestErase` need the two state keys to differ; `storageWrite_frame` no longer
+  mentions `requests`. No Services file used them.
+- `Tests/TraceState.lean` is total: every 31-octet service key either is a preimage (its key is
+  C(s, ℰ_4(2³²−2) ⌢ ℋ(value))) or goes into `entries`; a_o and a_i come from C(255, s).
+  `tracetest` round-trips every raw state of every trace through the loader and T(σ).
+- **The Services proofs were not updated** (Adam: proof work resumes later). About 25 files under
+  `Services/Bootstrap/Acc/` and `ASemLemmas.lean` read `.storage` directly and no longer build;
+  they were last kernel-checked at `c22c197` (#241). Restating them through the accessors
+  (`storageGet`, `storageWrite`, …) is the first task when proof work resumes.
+- Stage 3 (the optional bridging theorem) is not started.

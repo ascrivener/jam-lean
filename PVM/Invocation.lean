@@ -138,6 +138,19 @@ def JamBlob.parse? (b : ByteArray) : Option JamBlob := do
   let p ← Blob.slice? b pos pLen
   some ⟨⟨o.toArray⟩, ⟨w.toArray⟩, z, s, ⟨p.toArray⟩⟩
 
+/-- A standard program blob without its metadata (GP v0.8.1 eq. `jamblobformat`, GP #582): the
+    blob is ℰ(↕**m**) ⌢ (the rest), and the metadata **m** is opaque and ignored by Y. `none` if
+    the blob does not start with a well-formed ℰ(↕**m**). -/
+def skipMetadata? (b : ByteArray) : Option ByteArray := do
+  let (mLen, pos) ← Blob.decodeNat? b 0
+  if pos + mLen > b.size then none
+  some (b.extract (pos + mLen) b.size)
+
+/-- The unique (**m**, **o**, **w**, z, s, **p**) of a standard program blob (GP v0.8.1
+    eq. `jamblobformat`): the metadata is skipped (`skipMetadata?`), the rest parsed by
+    `JamBlob.parse?`. -/
+def JamBlob.parseStd? (b : ByteArray) : Option JamBlob := (skipMetadata? b).bind JamBlob.parse?
+
 /-- The address of the read-only section, 𝖹_Z. -/
 def roStart : Nat := zoneSize
 
@@ -180,7 +193,7 @@ def initialRegs (a : ByteArray) : Regs :=
     (5𝖹_Z + Q(|**o**|) + Q(|**w**| + z𝖹_P) + Q(s) + 𝖹_I ≤ 2^32) and |**a**| ≤ 𝖹_I. -/
 def validJamBlob? (b : ByteArray) (a : ByteArray) : Option JamBlob :=
   if a.size > inputSize then none
-  else (JamBlob.parse? b).bind fun jb =>
+  else (JamBlob.parseStd? b).bind fun jb =>
     if 5 * zoneSize + roundZone jb.ro.size + roundZone (jb.rw.size + jb.heapPages * pageSize) +
         roundZone jb.stackSize + inputSize > 2 ^ 32 then none
     else some jb

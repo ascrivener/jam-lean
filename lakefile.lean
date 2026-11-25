@@ -9,6 +9,7 @@ open Lake DSL System
 * `lake build gascheck`  builds and runs the block gas checker over `programs/` and `gas-tests/`.
 * `lake build Tests.Invocation`  kernel-checks the Ψ_H / Y / Ψ_M examples.
 * `lake build Tests.LogicExample`  the worked for-all-inputs proof.
+* `lake build JamCrypto`, `cryptotest`, `ringtest`  the crypto in plain Lean and its vectors.
 
 The vectors are fetched at the pinned commit by `scripts/fetch-vectors.sh`. -/
 
@@ -26,6 +27,21 @@ lean_lib JAM
     storage-key stage 2 these proofs do not build against the current model until proof work
     resumes (`docs/whats-proven.md`); build them with `lake build Services`. -/
 lean_lib Services
+
+/-- The crypto parameter of the model in plain Lean (Ed25519, Bandersnatch IETF / Thin / Pedersen
+    VRFs, the ring root and ring VRF), moved from jam-lean-target. The model never imports it; see
+    `docs/jamcrypto.md`. Not a default target. -/
+lean_lib JamCrypto
+
+/-- JamCrypto's Ed25519 and Bandersnatch VRF vectors: `lake build cryptotest &&
+    .lake/build/bin/cryptotest [DIR]`, run from the repository root (default `JamCryptoTest/vectors`). -/
+lean_exe cryptotest where
+  root := `JamCryptoTest
+
+/-- JamCrypto's ring root and ring VRF vectors: `lake build ringtest && .lake/build/bin/ringtest
+    [FILE…]`, run from the repository root (default `JamCryptoTest/ring/*.txt`). -/
+lean_exe ringtest where
+  root := `RingTest
 
 /-- Shared helpers of the test executables. -/
 lean_lib Tests where

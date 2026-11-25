@@ -14,7 +14,6 @@ Inconsistencies, where the paper contradicts itself:
 |---|---|---|
 | 1 | §A.10 | 𝔓_S compares ω_A = ω_D, which read literally compares register values. The gas model has no values, so it must mean the indices r_A = r_D. |
 | 3 | §A.4 | The prose says RAM below 2^16 always panics, but the formula for ε^μ only considers inaccessible indices. |
-| 12 | Ψ_H | The handler type 𝔉_X returns gas in ℕ_G, but Ψ_H's result is ℤ_G and the host functions compute ϱ − g, which can be negative. |
 
 Gaps, where the paper leaves behaviour undefined:
 
@@ -22,7 +21,6 @@ Gaps, where the paper leaves behaviour undefined:
 |---|---|---|
 | 13 | Ψ_H | Ψ_H* need not terminate: a handler that returns more gas than it was given can recurse forever. Termination holds for handlers that do not add gas (`JAM/Theorems/HostGas.lean`). |
 | 2 | 𝔟 | A branch target ı + 𝒵(…) can be negative, where ζ is undefined. |
-| 4 | three-register instructions | r_D = min(12, ζ_{ı+2}): the paper does not say how values ≥ 16 should be read. |
 | 17 | Y | **a** ∈ 𝔹_{:𝖹_I}; the paper does not say what happens to a longer argument. |
 | 18 | Ψ_R | The refine dispatcher passes x̄ to `fetch`, but Ψ_R's arguments do not include that data. The account state **d** is also implicit. |
 | 19 | Ψ_R, §14.3 | A looked-up preimage that is not of the form ℰ(↕**m**, **c**). |
@@ -37,6 +35,13 @@ Gaps, where the paper leaves behaviour undefined:
 | 30 | §11.2 | No errors are named and no order is given between the assurance conditions. |
 | 33 | Appendix D, §13.2 | D.1 says every non-discriminator number in the state is serialized fixed-length by the size of its term, but π_C and π_S (C(13)) hold ℕ and ℕ_G terms with no stated encoding; the traces use the general encoding ℰ for all of them, gas included. §11.4.1 does not say whether the ancestor set 𝒜 includes the block being imported (needed when the lookup anchor is the parent). |
 | 32 | §11.3–§11.4 | R and P divide by 3 (\|**c**\|/3, ⌊i/3⌋) without saying what happens when \|κ'\| is not a multiple of 3; M* uses τ' − 𝖱, which is negative when τ' < 𝖱. No errors are named and no order is given between the guarantee conditions; a segment-root lookup key outside the extrinsic and β fails two conditions at once. |
+
+## Resolved in GP v0.8.1
+
+| Note | Resolution |
+|---|---|
+| 4 | #554: r_D = min(12, ζ_{ı+2} mod 16). |
+| 12 | #533: Ψ_H, 𝔉_X and the host functions all use gas in ℕ_G. |
 
 ## Paper and vectors
 
@@ -57,7 +62,6 @@ These cases have no test vector, so the readings above are untested:
 | 11 | Any program using `cmov_nz_imm` (opcode 148). |
 | 2 | A branch with a target outside [0, \|**c**\|). |
 | 3 | A program that maps a page below 2^16. |
-| 4 | A three-register instruction with ζ_{ı+2} ≥ 16. |
 | 31 | A tickets extrinsic whose tickets are valid but not all kept in γ_A' (**n** ⊄ γ_A'). |
 | 24 | Core statistics π_C, and the refinement and accumulation parts of π_S, in the statistics and preimages suites. They are covered by the reports and accumulate suites. |
 | 29 | Ed25519 verification is a parameter of the model, so the disputes, assurances and reports vectors' signatures are not verified; the runner rejects all of them exactly when a vector expects `bad_signature`. |

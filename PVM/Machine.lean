@@ -87,14 +87,16 @@ def runFuel (p : ByteArray) : Nat → Nat → UInt64 → Bool → Regs → Memor
   | fuel + 1, i, gas, charged, ω, μ =>
     match deblob p i with
     | none =>
-      -- ⟨☇, ı, ϱ, ϱ̃, ω, μ⟩ from the `where` clause, then the ☇ case of Ψ.
-      some { status := .panic, pc := 0, gas, charged, regs := ω, mem := μ }
+      -- ⟨☇, ı, ϱ, ϱ̃, ω, μ⟩ from the `where` clause, then the ☇ case of Ψ, which clears ϱ̃
+      -- (GP v0.8.1 §A.1, #588).
+      some { status := .panic, pc := 0, gas, charged := false, regs := ω, mem := μ }
     | some P =>
       let r := P.step i gas charged ω μ
       match r.status with
       | .cont => runFuel p fuel r.pc r.gas r.charged r.regs r.mem
       | .halt | .panic =>
-        some { status := r.status, pc := 0, gas := r.gas, charged := r.charged,
+        -- ⟨ε, 0, ϱ', ⊥, ω', μ'⟩: halting or panicking clears ϱ̃ (GP v0.8.1 §A.1, #588).
+        some { status := r.status, pc := 0, gas := r.gas, charged := false,
                regs := r.regs, mem := r.mem }
       | _ =>
         some { status := r.status, pc := i, gas := r.gas, charged := r.charged,

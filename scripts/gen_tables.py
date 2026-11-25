@@ -3,7 +3,7 @@
 
 Usage:  python3 -I scripts/gen_tables.py <path/to/graypaper/text/pvm.tex> <output.lean>
 
-Everything in the output is read from `text/pvm.tex` (Gray Paper v0.8.0, Appendix A):
+Everything in the output is read from `text/pvm.tex` (Gray Paper v0.8.1, Appendix A):
 
 * the opcode numbers, names and argument formats, from the instruction tables
   (§A.5, `sec:instructiontables`): one Lean enumeration per argument format;
@@ -181,7 +181,7 @@ def cost_expr(cell, name):
 HEADER = """\
 /-
   GENERATED FILE: do not edit by hand.
-  Produced by `scripts/gen_tables.py` from the Gray Paper v0.8.0, `text/pvm.tex`.
+  Produced by `scripts/gen_tables.py` from the Gray Paper v0.8.1, `text/pvm.tex`.
   CI regenerates it from the pinned paper and fails on any difference.
 -/
 import PVM.CostExpr

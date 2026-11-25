@@ -50,6 +50,7 @@ Gaps, where the paper leaves behaviour undefined:
 | 5 | Ψ returns ı = 0 on ∎ and ☇; the vectors report the exiting instruction. | Paper or vector docs: which one is meant? |
 | 15 | The accumulate vectors follow later GP PRs rather than v0.8.0: `bless_from_non_manager-1` and `-2`. | Already in the vectors' CHANGELOG; no issue needed. |
 | 33 | The `fuzzy` and `fuzzy_light` block-import traces follow GP #519 (`bless` from a non-manager accepted), like the accumulate vectors (note 15): `fuzzy_light` blocks 77, 86, 118, 148, 151, 163, 165, 179 and `fuzzy` block 17. | Already in the vectors' CHANGELOG; no issue needed. |
+| 32 | The vectors' README tiny chainspec omits 𝖫; the tiny vectors (`stf/reports/tiny/lookup_anchor_not_recent-1`, master) use 24, the fuzzer protocol's value. | Vectors: list `max_lookup_anchor_age` in the README's tiny chainspec. |
 | 27 | `trie/trie.json` gives 32-octet keys; GP §D.1 state keys are 31 octets. The roots match with the last octet dropped. | Vectors: say keys are cut to 31 octets, or give 31-octet keys. |
 | 28 | **Resolved in GP v0.8.1 (#580):** §H.3 now defines the vectors' layout, and the model follows it (all erasure vectors match). Was: every erasure vector pads the message polynomial with zeroes to degree < n = 2^⌈log₂ R(v)⌉ and puts parity word i at point (n + i − R(v))~; §H.3 says degree < R(v) and point ĩ. No GP release (v0.1.1–v0.8.0) describes the vectors' layout; it is the "low rate" layout `reed-solomon-simd` documents (originals in one zero-padded power-of-two chunk, recovery shards in the chunks after). | Paper: if that code is intended (the cited Lin–Chung–Han transform works on power-of-two blocks), §H.3 should define p of degree < n with zeroes at d̃ … (n−1)~ and parity at (n + i − d)~; otherwise the vectors should follow §H.3. |
 
@@ -65,7 +66,7 @@ These cases have no test vector, so the readings above are untested:
 | 31 | A tickets extrinsic whose tickets are valid but not all kept in γ_A' (**n** ⊄ γ_A'). |
 | 24 | Core statistics π_C, and the refinement and accumulation parts of π_S, in the statistics and preimages suites. They are covered by the reports and accumulate suites. |
 | 29 | Ed25519 verification is a parameter of the model, so the disputes, assurances and reports vectors' signatures are not verified; the runner rejects all of them exactly when a vector expects `bad_signature`. |
-| 32 | The lookup-anchor conditions of §11.4.1 (x_t ≥ H_T − 𝖫, and h, h' in the ancestor set A): the reports vectors carry no ancestor set and no case for `lookup_anchor_not_recent`. |
+| 32 | The lookup-anchor conditions of §11.4.1 (x_t ≥ H_T − 𝖫, and h, h' in the ancestor set A): the reports vectors carry no ancestor set. (Master after v0.8.0 adds `lookup_anchor_not_recent`; on its tiny vector see the table above.) |
 
 ## Bootstrap service binary
 

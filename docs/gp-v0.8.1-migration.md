@@ -47,3 +47,19 @@ Phase 1 notes (Blocks):
 - Refine extension: the erasure root (#580) and the "exports nothing" case (#583) are now defined by
   v0.8.1; replace the v0.8.0 choices (§H.3 erasure root, Error on nothing exported).
 - Default `--gp` to 0.8.1 with the pin bump.
+
+## Suspended until v0.8.1 vectors
+
+Checks that the v0.8.0 vectors cannot exercise faithfully under the v0.8.1 model. Each comes back
+when the v0.8.1 vectors are pinned.
+
+- **Block traces, H_X under v0.8.1 (#562).** The trace blocks' assurances carry the v0.8.0
+  anchor, so their H_X commits to the v0.8.0 encoding. `Tests/TraceTest.lean` reads the blocks
+  with `Tests/V080.lean` and calls `JAM.importBlockCommitted xh`, giving the block's v0.8.0
+  commitment as `xh`. `importBlockCommitted` differs from `importBlock` only in where the expected
+  H_X comes from (`importBlock` passes v0.8.1's eq. `extrinsichash`); every other check runs.
+  So on the traces, H_X is checked against v0.8.0's formula, not v0.8.1's. v0.8.1's formula is
+  covered by `Extrinsic.hash` and the `#guard`s in `Tests/V080.lean`.
+- **Assurances STF, `assurance_with_bad_attestation_parent-1` (tiny, full) (#562).** v0.8.1 has
+  no anchor condition, so the vector has no counterpart. It is listed in
+  `Tests/AssurancesTest.lean`.

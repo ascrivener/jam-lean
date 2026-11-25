@@ -2,9 +2,14 @@
 
 Findings from this model worth reporting to the Gray Paper or the test vectors. The full notes
 are in the README, under "Notes on the paper and the vectors"; the numbers below are theirs.
-None has been filed yet.
+Every place where the model fills a gap in GP v0.8.1 with a choice (error names, the order in
+which conditions are checked, encodings, readings of ambiguous text, constants) is listed here,
+with where the choice comes from (usually the test vectors) and where the model makes it.
 
-Before filing, check each against the latest Gray Paper: some may be fixed after v0.8.0.
+Filed so far (marked **Filed** below): gavofyork/graypaper#592 (note v0.8.1-A1) and
+gavofyork/graypaper#593 (the Thin VRF signature encoding).
+
+Before filing, check each against the latest Gray Paper: some may be fixed after v0.8.1.
 
 ## Gray Paper issues
 
@@ -25,17 +30,23 @@ Gaps, where the paper leaves behaviour undefined:
 | 18 | Ψ_R | The refine dispatcher passes x̄ to `fetch`, but Ψ_R's arguments do not include that data. The account state **d** is also implicit. |
 | 19 | Ψ_R, §14.3 | A looked-up preimage that is not of the form ℰ(↕**m**, **c**). *Resolved in v0.8.1 (#582): the code is the whole preimage and Y fails on it (Ψ_M panics).* |
 | 20 | Ω_Z (`pages`) | The row defines only (ω'_7, **m**'), with no ε'. |
-| 21 | §8, F(c) | α[c] ⊖ {(g_w)_a} names a g bound only in the case condition; it should say the guarantee on core c. |
-| 23 | §13.1 | The guarantee count tests κ'_v ∈ G, a validator key against a set of Ed25519 keys. The fresh accumulator [(0, …), …] has no stated length (|κ'| is implied). |
-| 24 | §13.2 | The provision sum ∑_{(s, **d**) ∈ E_P} reuses s, already bound by ∀ s ∈ **s**. It reads as a fresh binding unless the reader knows it is a filter. |
-| 25 | §12.4 | No error is named for an invalid E_P, and no order is given between the ordering check and the providable check. |
-| 31 | §6.7 | Tickets are ordered by their identifier y ∈ ℍ, but no order on ℍ is defined (lexicographic on octets is the evident reading and the vectors use it). `$jam_ticket_seal` ⌢ η_2' ⌢ e appends a natural number to an octet sequence without saying how it is encoded. No errors are named for an invalid E_T, and no order is given between its conditions. |
-| 26 | Appendix C | No encoding of Booleans {⊤, ⊥} is defined, though 𝔼_D's judgments and faults contain them; 0/1 is the evident reading and the vectors use it. |
-| 29 | §10.2 | The fault condition r ∈ ψ_B' ⇔ r ∉ ψ_G' ⇔ v can be read as a chain or as ((… ⇔ …) ⇔ v); the second accepts a ⊤ fault on a good report. No errors are named and no order is given between the conditions. |
-| 30 | §11.2 | No errors are named and no order is given between the assurance conditions. |
-| 33 | Appendix D, §13.2 | D.1 says every non-discriminator number in the state is serialized fixed-length by the size of its term, but π_C and π_S (C(13)) hold ℕ and ℕ_G terms with no stated encoding; the traces use the general encoding ℰ for all of them, gas included. §11.4.1 does not say whether the ancestor set 𝒜 includes the block being imported (needed when the lookup anchor is the parent). |
-| 32 | §11.3–§11.4 | R and P divide by 3 (\|**c**\|/3, ⌊i/3⌋) without saying what happens when \|κ'\| is not a multiple of 3; M* uses τ' − 𝖱, which is negative when τ' < 𝖱. No errors are named and no order is given between the guarantee conditions; a segment-root lookup key outside the extrinsic and β fails two conditions at once. |
-| v0.8.1-A1 | eq. `accpar`, N(**o**) | GP v0.8.1: the discard function N(**o**) gives every field a value except the post-state, written bare. The prose ("discard all results of the service's execution", except provided preimages) suggests the round's input state; reading it as **o**'s post-state would keep a discarded run's new services and privilege, staging and queue changes while M(s) drops its own account change. The model uses the input state (`JAM/Accumulation.lean`, `accPar`). Raised as graypaper#592. |
+| 21 | §8, F(c) | α[c] ⊖ {(g_w)_a} names a g bound only in the case condition; it should say the guarantee on core c. The model reads it so (`JAM/Authorization.lean`, `poolUsed`). |
+| 23 | §13.1 | The guarantee count tests κ'_v ∈ G, a validator key against a set of Ed25519 keys (*resolved in v0.8.1, #565: (κ'_v)_e ∈ G*). The fresh accumulator [(0, …), …] has no stated length (\|κ'\| is implied); the model uses \|κ'\| (`JAM/Statistics.lean`, `validatorStats`). |
+| 24 | §13.2 | The provision sum ∑_{(s, **d**) ∈ E_P} reuses s, already bound by ∀ s ∈ **s**. It reads as a fresh binding unless the reader knows it is a filter. *Resolved in v0.8.1 (#567): the sum is over **p** ∈ E_P with **p**_s = s.* |
+| 25 | §12.4 | No error is named for an invalid E_P, and no order is given between the ordering check and the providable check. The model uses the vectors' `preimages_not_sorted_unique` and `preimage_unneeded`, ordering first (`JAM/Preimages.lean`, `preimages`). |
+| 31 | §6.7 | Tickets are ordered by their identifier y ∈ ℍ, but no order on ℍ is defined (lexicographic on octets is the evident reading and the vectors use it). `$jam_ticket_seal` ⌢ η_2' ⌢ e appends a natural number to an octet sequence without saying how it is encoded. No errors are named for an invalid E_T, and no order is given between its conditions. The model compares y lexicographically (`octetLt`), appends the attempt as one octet (`ticketContext`), and uses the vectors' error names (`SafroleError`) in the order given in the module docstring (`JAM/Safrole.lean`, `safrole`). |
+| 26 | Appendix C | No encoding of Booleans {⊤, ⊥} is defined, though 𝔼_D's judgments and faults contain them; 0/1 is the evident reading and the vectors use it (`JAM/Decode.lean`, `Decoder.bool`). |
+| 29 | §10.2 | The fault condition r ∈ ψ_B' ⇔ r ∉ ψ_G' ⇔ v can be read as a chain or as ((… ⇔ …) ⇔ v); the second accepts a ⊤ fault on a good report. No errors are named and no order is given between the conditions. The model reads a chain, uses the vectors' error names (`DisputesError`; a key outside **k** is `offender_already_reported` when in ψ_O and an unknown auditor or guarantor otherwise) and checks the conditions in the order §10 states them (`JAM/Disputes.lean`, `disputesTransition`). |
+| 30 | §11.2 | No errors are named and no order is given between the assurance conditions. The model uses the vectors' names (`AssurancesError`) and checks each assurance in turn: index range, order, signature, bits (`JAM/Assurances.lean`, `assurances`, `checkAssurance`). |
+| 33 | Appendix D, §13.2 | D.1 says every non-discriminator number in the state is serialized fixed-length by the size of its term, but π_C and π_S (C(13)) hold ℕ and ℕ_G terms with no stated encoding; the traces use the general encoding ℰ for all of them, gas included. §11.4.1 does not say whether the ancestor set 𝒜 includes the block being imported (needed when the lookup anchor is the parent). The model follows the traces: ℰ for π_C and π_S (`JAM/State.lean`, `stats`), and 𝒜 includes the block's own header (`JAM/BlockImport.lean`, `lookupAnchorKnown`). |
+| 32 | §11.3–§11.4 | R and P divide by 3 (\|**c**\|/3, ⌊i/3⌋) without saying what happens when \|κ'\| is not a multiple of 3; M* uses τ' − 𝖱, which is negative when τ' < 𝖱. No errors are named and no order is given between the guarantee conditions; a segment-root lookup key outside the extrinsic and β fails two conditions at once. The model uses the vectors' error names (`ReportsError`) and the order given at `guarantees`: the lookup is checked before the prerequisites, and an anchor found by hash with another field wrong names the first field that differs (`JAM/Reports.lean`, `guarantees`, `checkGuarantee`, `checkAnchor`). |
+| v0.8.1-A1 | eq. `accpar`, N(**o**) | GP v0.8.1: the discard function N(**o**) gives every field a value except the post-state, written bare. The prose ("discard all results of the service's execution", except provided preimages) suggests the round's input state; reading it as **o**'s post-state would keep a discarded run's new services and privilege, staging and queue changes while M(s) drops its own account change. The model uses the input state (`JAM/Accumulation.lean`, `accPar`). **Filed:** gavofyork/graypaper#592. |
+| v0.8.1-A2 | eq. `reportrefineload` (#563) | GP v0.8.1 adds the work-package limits on each report (∑ u ≤ 𝖦_R, ∑ i ≤ 𝖶_M, (r_s)_n = ∑ e ≤ 𝖶_X, ∑ x ≤ 𝖳, ∑ (z + i·𝖶_F) ≤ 𝖶_I, (r_s)_l ≤ 𝖶_B, r_g ≤ 𝖦_I) but names no errors and gives no order between them or against the other guarantee conditions. The model uses the vectors' errors 28–31 (davxy/jam-test-vectors master after v0.8.0): `bad_exports_count` when (r_s)_n ≠ ∑ e, `refine_load_too_high` for any sum over its limit, `bundle_too_big` and `auth_gas_too_high`; the rows in the paper's order, after ∑ d_g ≤ 𝖦_A (`JAM/Reports.lean`, `checkReportLoad`). |
+| v0.8.1-A3 | eqs. `xtpreimages`, `maxxtpreimagesdatasize` | GP v0.8.1 bounds \|E_P\| and its total data size, but names no errors and gives no order against the ordering and providable checks (note 25). No vector covers them; the names `tooMany` and `tooMuchData` are the model's own, and the bounds are checked first (`JAM/Preimages.lean`, `preimages`). |
+| v0.8.1-A4 | §3.8.2, 𝕍̄_k⟨m⟩ | "Valid Ed25519 signatures, defined by RFC 8032": RFC 8032 allows the cofactored or the cofactorless equation, and implementations differ on non-canonical encodings. The model follows ZIP 215, which the jam-fuzzing conformance vectors (commit 5bbd4266, `crypto/ed25519`) target (Adam, 2026-11-15; `JamCrypto/Ed25519.lean`, `verify`, `Rules.zip215`). |
+| v0.8.1-A5 | Appendix G, O(**k**) | The ring root's ring size (hence the ring proof's domain) is not fixed. The v0.8.0 path uses the chain's V whatever \|**k**\| is, as `stf/safrole/full/enact-epoch-change-with-set-resize-1` requires (`JamCrypto/RingRoot.lean`, `root`). The v0.8.1 path uses Draft 35 §5's fixed domain 2048 (its prose; its own ring vectors use 512, regenerated at 2048 in 0b7422f): `Ring.domain081`, Adam 2026-11-25. |
+| v0.8.1-A6 | Appendix G, 𝔹̄_k⟨c⟩⟨m⟩ | GP gives Thin VRF signatures as 96 octets and reads Y from the signature, but Draft 35 encodes only the proof (R, s), 64 octets. The model reads O ⌢ R ⌢ s (Adam, 2026-11-25; `JamCrypto/ThinVrf.lean`, `thinEncode`, `thinDecode`). **Filed:** gavofyork/graypaper#593; the spec's author confirmed O ⌢ R ⌢ s and opened davxy/bandersnatch-vrf-spec#30. |
+| v0.8.1-A7 | notation, context strings | `$jam_ticket_seal`, `$jam_valid`, …: the wording leaves open whether `$` is an octet of the string. Every v0.8.0 vector signature (58 ticket proofs, seals, entropy sources, Ed25519 judgments, guarantees, assurances) verifies only without it; the model drops a leading `$` (`JAM/Crypto.lean`, `contextString`). See also "Not for upstream" below. |
 
 ## Resolved in GP v0.8.1
 
@@ -43,6 +54,9 @@ Gaps, where the paper leaves behaviour undefined:
 |---|---|
 | 4 | #554: r_D = min(12, ζ_{ı+2} mod 16). |
 | 12 | #533: Ψ_H, 𝔉_X and the host functions all use gas in ℕ_G. |
+| 19 | #582: the looked-up code is the whole preimage. |
+| 23 (first part) | #565: the guarantee count tests (κ'_v)_e ∈ G. |
+| 24 | #567: the provision sum filters E_P by service. |
 
 ## Paper and vectors
 
@@ -84,6 +98,9 @@ These would go to the service's authors, not to the Gray Paper.
 
 ## Bandersnatch VRF-AD specification, Draft 35 (cited by GP v0.8.1)
 
+The 96-octet signature encoding, which GP and the draft leave open together, is note v0.8.1-A6 above
+(**Filed:** gavofyork/graypaper#593; davxy/bandersnatch-vrf-spec#30).
+
 GP v0.8.1 cites Draft 35 (davxy/bandersnatch-vrf-spec commit 181aba2) for all of Appendix G. Where
 its prose and its own vectors (Appendix C, ark-vrf 0.5.0) disagree, JamCrypto's v0.8.1 path
 follows the prose by default (`Reading.prose`) and the vectors on request (`Reading.vectors`;
@@ -112,6 +129,6 @@ should cite a later draft.
   and the other context strings. In the paper `$` only marks the set of ASCII strings
   (`notation.tex`), though its wording leaves this open; the v0.8.0 vectors settle it: their 58
   ticket proofs verify only with "jam_ticket_seal" ⌢ …. Fixed in `JAM.contextString` (it drops a
-  leading `$`), with `#guard`s on X_T, X_E and X_G.
+  leading `$`), with `#guard`s on X_T, X_E and X_G. The paper's side of it is note v0.8.1-A7.
 - **Notes 6–10, 14, 16 and 22.** Points where the vectors confirm a subtle reading, or observations
   that need no change.

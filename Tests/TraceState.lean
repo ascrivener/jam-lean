@@ -7,12 +7,12 @@ import JAM.Block
 A trace step is ℰ(pre-state, block, post-state) and the genesis file is ℰ(header, state), where a
 raw state is ℰ(root, ↕[(key ∈ 𝔹_31, ↕value)]).
 
-`decodeState` inverts T (GP §D.1) on a raw state for the components keyed by C(i), and for the
-service accounts as far as the key-values allow. Storage keys are hashed (C(s, h) keeps only
-ℋ(h)), so a storage entry cannot be decoded; a preimage entry is recognised by C(s, ℰ_4(2³²−2) ⌢
-ℋ(p)) for its value p, and a request entry by C(s, ℰ_4(l) ⌢ h) for a known preimage of hash h and
-length l. A raw state with any other entry is rejected. The runner therefore decodes only the
-genesis state and keeps its own σ from there.
+`decodeState` inverts T (GP §D.1) on a raw state. The components keyed by C(i) are decoded, and
+each service account is built in the form the model holds it (`JAM.ServiceAccount`): a_o and a_i
+come from C(255, s); an entry under C(s, ℰ_4(2³²−2) ⌢ ℋ(**p**)) for its own value **p** is a
+preimage; every other entry of s (storage, or a request) goes into `entries` under the 27 hash
+octets of its key. The decoding is total on states whose service entries all belong to an account
+with a C(255, s) entry.
 -/
 
 namespace JAM.TraceState
@@ -91,10 +91,10 @@ def accountInfo : Decoder ServiceAccount := do
   let v ← nat
   if v ≠ 0 then fail s!"account version {v}"
   let c ← hash32
-  let b ← fixed 8; let g ← fixed 8; let m ← fixed 8; let _o ← fixed 8; let f ← fixed 8
-  let _i ← fixed 4; let r ← fixed 4; let a ← fixed 4; let p ← fixed 4
-  return { codeHash := c, balance := b, minAccGas := g, minMemoGas := m, gratis := f,
-           created := r, lastAcc := a, parent := p }
+  let b ← fixed 8; let g ← fixed 8; let m ← fixed 8; let o ← fixed 8; let f ← fixed 8
+  let i ← fixed 4; let r ← fixed 4; let a ← fixed 4; let p ← fixed 4
+  return { codeHash := c, balance := b, minAccGas := g, minMemoGas := m, octets := o, gratis := f,
+           items := i, created := r, lastAcc := a, parent := p }
 
 def get (kvs : List (List UInt8 × List UInt8)) (i : Nat) : Except String ByteArray :=
   match kvs.lookup (Trie.keyOfIndex i) with
@@ -108,8 +108,7 @@ def dec {α : Type} (kvs : List (List UInt8 × List UInt8)) (i : Nat) (d : Decod
   | .error e => .error s!"C({i}): {e}"
 
 /-- Decode a raw state into σ (see the module note for what can be decoded). -/
-def decodeState (p : Params) (kvs : List (List UInt8 × List UInt8))
-    (knownKeys : List (Nat × List UInt8) := []) : Except String State := do
+def decodeState (p : Params) (kvs : List (List UInt8 × List UInt8)) : Except String State := do
   let C := p.coreCount
   let E := p.epochLen
   let authPools ← dec kvs 1 (seqN C (varSeq hash32))
@@ -150,39 +149,18 @@ def decodeState (p : Params) (kvs : List (List UInt8 × List UInt8))
   let small := (List.range 17).map Trie.keyOfIndex
   used := used ++ small
   let rest := kvs.filter fun (k, _) => !used.contains k
-  -- Storage entries under keys already known, then preimages, then the requests of known
-  -- preimages.
-  let known : Std.ExtTreeMap (List UInt8) (Nat × List UInt8) := Std.ExtTreeMap.ofList
-    (knownKeys.map fun (s, k) => (Trie.keyOfServiceData s (Codec.fixed 4 (2 ^ 32 - 1) ++ k), (s, k)))
-  let mut rest' : List (List UInt8 × List UInt8) := []
+  -- Every other key is C(s, x) = [n₀, a₀, n₁, a₁, n₂, a₂, n₃, a₃, a₄, …, a₂₆] with n = ℰ_4(s)
+  -- and a = ℋ(x) (GP §D.1): a preimage if x = ℰ_4(2³²−2) ⌢ ℋ(v) for its value v, else an entry.
   for (k, v) in rest do
-    match known.get? k with
-    | some (s, sk) =>
-      if let some a := accounts.get? s then
-        accounts := accounts.insert s { a with storage := a.storage.insert sk v }
-      else rest' := rest' ++ [(k, v)]
-    | none => rest' := rest' ++ [(k, v)]
-  let mut left : List (List UInt8 × List UInt8) := []
-  for (k, v) in rest' do
+    if k.length != 31 then throw s!"key {k} is not 31 octets"
+    let s := PVM.Num.decodeLE [k.getD 0 0, k.getD 2 0, k.getD 4 0, k.getD 6 0]
+    let hk := [k.getD 1 0, k.getD 3 0, k.getD 5 0, k.getD 7 0] ++ k.drop 8
+    let some a := accounts.get? s | throw s!"key {k}: service {s} has no C(255, {s})"
     let h := (Blake2b.hash256 ⟨v.toArray⟩).toList
-    match accounts.keys.find? fun s => Trie.keyOfServiceData s (Codec.fixed 4 (2 ^ 32 - 2) ++ h) == k with
-    | some s =>
-      let a := accounts.getD s default
+    if Trie.keyOfServiceData s (Codec.fixed 4 (2 ^ 32 - 2) ++ h) == k then
       accounts := accounts.insert s { a with preimages := a.preimages.insert h v }
-    | none => left := left ++ [(k, v)]
-  for (k, v) in left do
-    let found := accounts.toList.findSome? fun (s, a) =>
-      a.preimages.toList.findSome? fun (h, pv) =>
-        if Trie.keyOfServiceData s (Codec.fixed 4 pv.length ++ h) == k then some (s, h, pv.length)
-        else none
-    match found with
-    | some (s, h, l) =>
-      let t ← match Decoder.run (varSeq (fixed 4)) ⟨v.toArray⟩ with
-        | .ok t => pure t
-        | .error e => throw s!"request entry: {e}"
-      let a := accounts.getD s default
-      accounts := accounts.insert s { a with requests := a.requests.insert (h, l) t }
-    | none => throw s!"cannot decode key {k} (storage, or a request without its preimage)"
+    else
+      accounts := accounts.insert s { a with entries := a.entries.insert hk v }
   return { authPools, authQueue, recent := rec_, lastAccOut, pending, ringRoot, sealKeys,
            accumulator, accounts, eta, staging, active, prev, avail, tau, manager, assigners,
            delegator, registrar, alwaysAcc, disputes, valStats, valStatsLast, coreStats,

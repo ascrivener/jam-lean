@@ -29,9 +29,6 @@ def runLogged (params : Params) (entropy : List UInt8) (st : PartialState) (t s 
   let (u, o, _) := psiM c 5 (UInt64.ofNat g) args f (x, x)
   IO.println s!"  {s}: used {u}, {match o with | .ok b => s!"ok {b.size}" | .panic => "panic" | .oog => "oog"}"
 
-def storageKeys (σ : State) : List (Nat × List UInt8) :=
-  σ.accounts.toList.flatMap fun (s, a) => a.storage.keys.map (s, ·)
-
 /-- Each service of **R** run alone with its operands, logging host calls; returns the last host
     call and its ω7 result, and the outcome. -/
 def showStep (p : Params) (σ : State) (roots : List (List (List UInt8) × List UInt8)) (chain : Chain)
@@ -72,7 +69,7 @@ def main (args : List String) : IO Unit := do
     | .ok (s', _) =>
       chain := { ancestors := chain.ancestors ++ [st.block.header] }
       if s'.root == st.post.root.toList then σ := s'
-      else match decodeState p st.post.kvs (storageKeys σ ++ storageKeys s') with
+      else match decodeState p st.post.kvs with
         | .ok s => σ := s
         | .error e => throw (IO.userError s!"step {i}: {e}")
     | .error e => throw (IO.userError s!"step {i}: {repr e}")

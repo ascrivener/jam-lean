@@ -8,6 +8,14 @@ jam-lean parent session is archived.
 
 ## Where things stand
 
+**Storage-key stage 2 (2026-11-25, branch `claude/storage-key-stage2`).** The model now holds
+storage and requests in one `entries` dictionary keyed by state-key hash, with a_o and a_i carried
+(`docs/storage-key-design.md`, Status). Model and tests only (Adam's "option 2"): the `Services/`
+proofs no longer build and were last kernel-checked at `c22c197` (#241). `Services` is no longer a
+default `lake build` target; the manual proofs run builds `PVM JAM Services` and will fail until
+proof work resumes. **First task when proof work resumes:** restate `ASemLemmas.lean` and the
+`Acc/` files that read `.storage` through the accessors, then a manual proofs run on main.
+
 Both targets of the narrowed scope (decision 19) are proved and on main, with named hypotheses.
 
 - **T1: `refine_t1c`** (`Services/Bootstrap/Refine/T1c.lean`, #229). For the Bootstrap binary and
@@ -64,7 +72,7 @@ Paused lines (remote branches kept; do not delete them):
 |---|---|---|
 | Field formatters | `claude/bootstrap-fields-3-wip`, `-2-alt`, `-2-wc`, `-2-wip`, `-wip` (`-1`, `-2`, `-hex`, `-n56`, `-step8` merged as #189, #213, #220, #219, #221) | `Services/Bootstrap/Fmt/FIELDS-HANDOFF.md` (newer copy on `-3-wip`) |
 | Decode / HeapHost | `claude/decode-heaphost` | on the branch |
-| Storage keys, stage 2 | `claude/storage-key-design` | `docs/storage-key-design.md` |
+| Storage keys, stage 3 (optional bridging theorem) | none yet | `docs/storage-key-design.md` |
 | P3 `module` conversion | `claude/p3-module-stage1`, `claude/p3-module-spike` | `docs/module-system.md` on stage1; `docs/profiling/proposal.md` |
 | post_simp pass | `claude/post-simp-fast` | on the branch |
 

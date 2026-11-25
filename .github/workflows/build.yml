@@ -1,6 +1,6 @@
 name: Proofs
 
-# One attempt at the proofs job (everything `lake build` builds, including Services, and the checks that
+# One attempt at the proofs job (`lake build PVM JAM Services`, and the checks that
 # need Services), called by ci.yml when the change can affect Services. The model and its vector suites run
 # in ci.yml's `model` job. A cold build takes longer than a GitHub-hosted job
 # may run, so the build steps stop at a budget (scripts/ci-bounded.sh), the attempt saves .lake and ends
@@ -75,7 +75,7 @@ jobs:
         id: build
         if: env.CI_TIMED_OUT != 'true'
         # bounded so a cold build ends here, with time left to save .lake for the next attempt to resume from
-        run: scripts/ci-bounded.sh lake build
+        run: scripts/ci-bounded.sh lake build PVM JAM Services
 
       - name: Theorems use only propext, Classical.choice and Quot.sound
         if: env.CI_TIMED_OUT != 'true'

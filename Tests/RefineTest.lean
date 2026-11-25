@@ -159,8 +159,9 @@ def h : List UInt8 := (Blake2b.hash256 ⟨pre.toArray⟩).toList
 
 /-- An account whose preimage was available from slot 5 until slot 9. -/
 def acct : ServiceAccount :=
-  { codeHash := List.replicate 32 7, balance := 10000, minAccGas := 5, minMemoGas := 6,
-    preimages := Std.ExtTreeMap.ofList [(h, pre)], requests := Std.ExtTreeMap.ofList [((h, pre.length), [5, 9])] }
+  ServiceAccount.requestSet
+    { codeHash := List.replicate 32 7, balance := 10000, minAccGas := 5, minMemoGas := 6,
+      preimages := Std.ExtTreeMap.ofList [(h, pre)] } h pre.length [5, 9]
 
 def accts : Accounts := Std.ExtTreeMap.ofList [(3, acct)]
 def memH : Memory := mem0.writeN base h
@@ -206,8 +207,9 @@ def codeHash : List UInt8 := List.replicate 32 0xcc
 /-- Service 3 with code `code` (metadata "m"), requested and available from slot 0. -/
 def svc (code : List UInt8) : Accounts :=
   let pre := Codec.nat 1 ++ [0x6d] ++ code
-  Std.ExtTreeMap.ofList [(3, { acct with codeHash, preimages := Std.ExtTreeMap.ofList [(codeHash, pre)],
-                                         requests := Std.ExtTreeMap.ofList [((codeHash, pre.length), [0])] })]
+  Std.ExtTreeMap.ofList [(3, ServiceAccount.requestSet
+    { acct with codeHash, preimages := Std.ExtTreeMap.ofList [(codeHash, pre)], entries := ∅,
+                items := 0, octets := 0 } codeHash pre.length [0])]
 
 def item : WorkItem :=
   { service := 3, codeHash := ⟨codeHash.toArray⟩, payload := ⟨#[7, 8, 9]⟩, refineGasLimit := 100000,

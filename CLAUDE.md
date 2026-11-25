@@ -32,7 +32,11 @@ rebuilds only what changed since then instead of building cold for 4.5–5 h.
     executor (`PVM/SymExec`, see `docs/symexec-spike.md`) for longer straight-line stretches.
   - Pass `(S0 := S0) (S1 := S1)` explicitly.
   - Elaboration can die silently, so check exit codes.
-  - Run the full `lake build` in the background before each PR.
+  - Before each PR, run `lake build` (the model: `PVM` and `JAM`) and the model job's tests in the
+    background. Since storage-key stage 2 the Services proofs do not build against the current
+    model (last kernel-checked at `c22c197`; see `docs/whats-proven.md`), so `Services` is no
+    longer a default target. When proof work resumes, restate them through the account accessors
+    (`storageGet`, `requestGet`, …) and run `lake build Services` before each proof PR.
   - New code facts go in a new append-only tier, not a regeneration of an existing one: see
     `docs/code-fact-tiers.md`.
 

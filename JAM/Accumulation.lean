@@ -86,9 +86,8 @@ def integrateProvisions (d : Accounts) (p : Provisions) : Accounts :=
     let h := (Blake2b.hash256 ⟨i.toArray⟩).toList
     match d.get? s with
     | some a =>
-      if a.requests.get? (h, i.length) == some [] then
-        d.insert s { a with requests := a.requests.insert (h, i.length) [slot],
-                             preimages := a.preimages.insert h i }
+      if a.requestGet h i.length == some [] then
+        d.insert s { a.requestSet h i.length [slot] with preimages := a.preimages.insert h i }
       else d
     | none => d) d
 

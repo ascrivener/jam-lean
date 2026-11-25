@@ -66,13 +66,13 @@ theorem psiHStar_congr (p : ByteArray) (i : Nat) (gas : UInt64) (ch : Bool) (ω 
 
 /-- The host-call ids of the PVM blob inside a standard JAM blob (GP §A.7). -/
 def jamHostCallIdsOf (b : ByteArray) : List Nat :=
-  match JamBlob.parse? b with
+  match JamBlob.parseStd? b with
   | some jb => hostCallIdsOf jb.code
   | none => []
 
 /-- Y returns the PVM blob of the JAM blob it decodes. -/
 theorem standardInit_code {b a : ByteArray} {r : ByteArray × Regs × Memory}
-    (hY : standardInit b a = some r) : ∃ jb, JamBlob.parse? b = some jb ∧ r.1 = jb.code := by
+    (hY : standardInit b a = some r) : ∃ jb, JamBlob.parseStd? b = some jb ∧ r.1 = jb.code := by
   unfold standardInit at hY
   obtain ⟨jb, hv, rfl⟩ := Option.map_eq_some_iff.1 hY
   refine ⟨jb, ?_, rfl⟩

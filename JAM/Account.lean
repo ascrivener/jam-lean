@@ -136,7 +136,9 @@ def requestGet (a : ServiceAccount) (h : List UInt8) (z : Nat) : Option (List Na
   if z < 2 ^ 32 then (a.entries.get? (requestKey h z)).bind decodeSlots else none
 
 /-- The account with **l**[h, z] set to `t`. A new key adds 2 to a_i and 81 + z to a_o
-    (GP eq. `deposits`). -/
+    (GP eq. `deposits`). "New" means `requestGet` finds none: an undecodable stored value (only an
+    invalid loaded state holds one; GP v0.8.0 does not cover such states) counts as absent, so it
+    is overwritten and a_i, a_o grow as for a new key, consistently with `requestGet`. -/
 def requestSet (a : ServiceAccount) (h : List UInt8) (z : Nat) (t : List Nat) : ServiceAccount :=
   let (i0, o0) := match a.requestGet h z with
     | some _ => (a.items, a.octets)
@@ -144,7 +146,9 @@ def requestSet (a : ServiceAccount) (h : List UInt8) (z : Nat) (t : List Nat) : 
   { a with entries := a.entries.insert (requestKey h z) (encodeSlots t), items := i0, octets := o0 }
 
 /-- The account with (h, z) removed from **l**, which takes 2 from a_i and 81 + z from a_o
-    (GP eq. `deposits`). Without a request for (h, z) the account is unchanged. -/
+    (GP eq. `deposits`). Without a request for (h, z) the account is unchanged; an undecodable
+    stored value (invalid loaded states only) counts as absent, as in `requestGet`, so it is kept
+    and a_i, a_o do not change. -/
 def requestErase (a : ServiceAccount) (h : List UInt8) (z : Nat) : ServiceAccount :=
   match a.requestGet h z with
   | some _ => { a with entries := a.entries.erase (requestKey h z), items := a.items - 2,

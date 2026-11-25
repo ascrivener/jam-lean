@@ -235,10 +235,11 @@ structure Env where
   /-- what `fetch` sees: p, 𝟎 (32 zero octets), **r**, i, ī, x̄ -/
   fetch : FetchContext
 
-/-- The unknown-host-call case: charge 𝖬_∅ and return WHAT. -/
+/-- The unknown-host-call case (GP v0.8.1 eqs. `refinemutator`, `isauthorizedmutator`):
+    (∞, 0, ω', μ, x) if ϱ < 𝖬_∅, otherwise (▸, ϱ − 𝖬_∅, ω', μ, x), where ω' = ω except ω'_7 = WHAT. -/
 def unknown {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (x : X) : HostOut X :=
-  let g' : Int := (gas : Int) - Constants.Cgasunknown
-  ⟨if g' < 0 then .oog else .cont, g', setR7 ω WHAT, μ, x⟩
+  if gas < Constants.Cgasunknown then ⟨.oog, 0, setR7 ω WHAT, μ, x⟩
+  else ⟨.cont, ((gas - Constants.Cgasunknown : Nat) : Int), setR7 ω WHAT, μ, x⟩
 
 /-- F ∈ 𝔉_{(⟨ℕ → 𝕄⟩, ⟦𝕁⟧)} (GP eq. `refinemutator`): dispatch on the host-call id. -/
 def dispatch (env : Env) (n gas : Nat) (ω : Regs) (μ : Memory) (c : RefineCtx) : HostOut RefineCtx :=
@@ -268,8 +269,8 @@ def dispatchI (params : Params) (p : WorkPackage) (code : ByteArray) (n gas : Na
 
 end RefineHost
 
-/-- A host function with ℤ_G gas as a `PVM.HostFn`: the gas is clamped at 0, which only happens
-    together with ∞ (as for `accHostFn`). -/
+/-- A host function as a `PVM.HostFn`. Its gas is never negative under the v0.8.1 common rules, so
+    the clamp `Int.toNat` is the identity. -/
 def toHostFn {X : Type} (f : Nat → Nat → Regs → Memory → X → HostOut X) : HostFn X :=
   fun n gas ω μ x =>
     let o := f n gas.toNat ω μ x

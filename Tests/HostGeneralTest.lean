@@ -3,7 +3,8 @@ import JAM
 /-!
 # Hand-written tests of the general host functions
 
-Each `#guard` checks one case of a function's definition in GP v0.8.0 Appendix B. These functions
+Each `#guard` checks one case of a function's definition in GP v0.8.0 Appendix B (the common rules
+of v0.8.1). These functions
 are also exercised end to end by the accumulate vectors once Ψ_A exists.
 -/
 
@@ -28,10 +29,32 @@ def r7 {X} (o : HostOut X) : Nat := (o.regs.get 7).toNat
 -- ω'_7 = ϱ − 𝖬_G
 #guard r7 (hostGas (X := Unit) 1000 (regs []) mem0 ()) == 1000 - Constants.CgasG
 #guard (hostGas (X := Unit) 1000 (regs []) mem0 ()).gas == 1000 - Constants.CgasG
--- out of gas: ∞, ϱ' = ϱ − g < 0, registers unchanged
+-- out of gas: ∞, all gas consumed (ϱ* = 0, GP v0.8.1 #533; v0.8.0 gave ϱ − g < 0), registers unchanged
 #guard (hostGas (X := Unit) 10 (regs [(7, 99)]) mem0 ()).status == .oog
-#guard (hostGas (X := Unit) 10 (regs [(7, 99)]) mem0 ()).gas == 10 - (Constants.CgasG : Int)
+#guard (hostGas (X := Unit) 10 (regs [(7, 99)]) mem0 ()).gas == 0
 #guard r7 (hostGas (X := Unit) 10 (regs [(7, 99)]) mem0 ()) == 99
+
+/-! ### grow_heap under the v0.8.1 common rules (#533) -/
+-- With an unparsable blob the heap starts at page a = 32; pages 32 and 33 are W, so h = 34.
+-- A request that does not grow (ω_7 ≤ h) sets ω'_7 = h and charges 𝖬_{♊,c} ...
+#guard (hostGrowHeap (X := Unit) 1000 (regs [(7, 0)]) mem0 ByteArray.empty ()).status == .cont
+#guard r7 (hostGrowHeap (X := Unit) 1000 (regs [(7, 0)]) mem0 ByteArray.empty ()) == 34
+#guard (hostGrowHeap (X := Unit) 1000 (regs [(7, 0)]) mem0 ByteArray.empty ()).gas ==
+  1000 - Constants.CgasGeminiconst
+-- ... and since v0.8.1 it runs out of gas like any other call if ϱ < 𝖬_{♊,c}: ∞, ϱ* = 0, ω unchanged.
+-- (v0.8.0 continued with ϱ − 𝖬_{♊,c} < 0 and ω'_7 = h.)
+#guard (hostGrowHeap (X := Unit) 10 (regs [(7, 0)]) mem0 ByteArray.empty ()).status == .oog
+#guard (hostGrowHeap (X := Unit) 10 (regs [(7, 0)]) mem0 ByteArray.empty ()).gas == 0
+#guard r7 (hostGrowHeap (X := Unit) 10 (regs [(7, 0)]) mem0 ByteArray.empty ()) == 0
+-- Growing to page 36 charges 𝖬_{♊,c} + 2·𝖬_{♊,p} and makes pages 34 and 35 writable.
+#guard r7 (hostGrowHeap (X := Unit) 100000 (regs [(7, 36)]) mem0 ByteArray.empty ()) == 36
+#guard (hostGrowHeap (X := Unit) 100000 (regs [(7, 36)]) mem0 ByteArray.empty ()).gas ==
+  100000 - (Constants.CgasGeminiconst + 2 * Constants.CgasGeminilinear)
+#guard (hostGrowHeap (X := Unit) 100000 (regs [(7, 36)]) mem0 ByteArray.empty ()).mem.writable (35 * 4096)
+-- Out of gas while growing: ∞, ϱ* = 0, nothing made writable.
+#guard (hostGrowHeap (X := Unit) 300 (regs [(7, 36)]) mem0 ByteArray.empty ()).status == .oog
+#guard (hostGrowHeap (X := Unit) 300 (regs [(7, 36)]) mem0 ByteArray.empty ()).gas == 0
+#guard !(hostGrowHeap (X := Unit) 300 (regs [(7, 36)]) mem0 ByteArray.empty ()).mem.writable (35 * 4096)
 
 /-! ### write and read -/
 

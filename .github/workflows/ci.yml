@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, gp-v0.8.1]  # gp-v0.8.1: the integration branch of the GP v0.8.1 migration; tests the combined state after each merge
   pull_request:
   # The proofs run only on demand (Adam, 2026-11-25): Actions > CI > Run workflow, on main or any branch.
   workflow_dispatch:

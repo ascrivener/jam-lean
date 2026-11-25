@@ -37,6 +37,7 @@ Gaps, where the paper leaves behaviour undefined:
 | 30 | §11.2 | No errors are named and no order is given between the assurance conditions. |
 | 33 | Appendix D, §13.2 | D.1 says every non-discriminator number in the state is serialized fixed-length by the size of its term, but π_C and π_S (C(13)) hold ℕ and ℕ_G terms with no stated encoding; the traces use the general encoding ℰ for all of them, gas included. §11.4.1 does not say whether the ancestor set 𝒜 includes the block being imported (needed when the lookup anchor is the parent). |
 | 32 | §11.3–§11.4 | R and P divide by 3 (\|**c**\|/3, ⌊i/3⌋) without saying what happens when \|κ'\| is not a multiple of 3; M* uses τ' − 𝖱, which is negative when τ' < 𝖱. No errors are named and no order is given between the guarantee conditions; a segment-root lookup key outside the extrinsic and β fails two conditions at once. |
+| v0.8.1-A1 | eq. `accpar`, N(**o**) | GP v0.8.1: the discard function N(**o**) gives every field a value except the post-state, written bare. The prose ("discard all results of the service's execution", except provided preimages) suggests the round's input state; reading it as **o**'s post-state would keep a discarded run's new services and privilege, staging and queue changes while M(s) drops its own account change. The model uses the input state (`JAM/Accumulation.lean`, `accPar`). |
 
 ## Paper and vectors
 

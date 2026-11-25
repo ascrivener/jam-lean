@@ -211,4 +211,29 @@ def bl := AccHost.bless env0 100000 (regs [(7, 2 ^ 64 - 1), (8, 2 ^ 64 - 1), (9,
 #guard r7 (AccHost.bless env0 100000 (regs [(7, 5), (8, 2 ^ 64 - 1), (9, 5), (10, 2 ^ 64 - 1),
   (11, 2 ^ 64 - 1), (12, 0)]) mem0 ctxDeleg) == Result.HUH
 
+/-! ### accumulation with supervisors (GP v0.8.1 eq. `accpar`, `accseq`) -/
+
+def ps0 : PartialState := (ctxOf acct [(4, junior)]).1.state
+def outMod (m : List Nat) (g : Nat) : AccOut :=
+  ⟨{ ps0 with manager := 77 }, Std.ExtTreeSet.ofList m, [], some [1], g, ∅⟩
+
+-- N: 4's run is discarded when both 4 and its effective supervisor 9 modified 4 (gas use kept)
+#guard (discardIfBoth ps0 4 9 (outMod [4] 5) (outMod [4] 6)).state.manager == 0 &&
+  (discardIfBoth ps0 4 9 (outMod [4] 5) (outMod [4] 6)).gasUsed == 5 &&
+  (discardIfBoth ps0 4 9 (outMod [4] 5) (outMod [4] 6)).yield == none
+-- … but kept when the supervisor did not modify 4, or when 4 is its own supervisor
+#guard (discardIfBoth ps0 4 9 (outMod [4] 5) (outMod [9] 6)).state.manager == 77
+#guard (discardIfBoth ps0 4 4 (outMod [4] 5) (outMod [4] 5)).state.manager == 77
+
+def xfer (dst : Nat) : DeferredTransfer := { source := 1, dest := dst, amount := 1, memo := ⟨#[]⟩, gas := 0 }
+-- T: a transfer to 4 waits while 4's effective supervisor 9 accumulates
+#guard (partitionXfers [9] ps0.accounts [xfer 4] []).1.length == 0 &&
+  (partitionXfers [9] ps0.accounts [xfer 4] []).2.length == 1
+-- … goes through otherwise; then a transfer to its junior 4 waits (9 already receives one) …
+#guard (partitionXfers [] ps0.accounts [xfer 9, xfer 4] []).1.map (·.dest) == [9] &&
+  (partitionXfers [] ps0.accounts [xfer 9, xfer 4] []).2.map (·.dest) == [4]
+-- … and so does a transfer to 9 after one to its junior 4
+#guard (partitionXfers [] ps0.accounts [xfer 4, xfer 9] []).1.map (·.dest) == [4] &&
+  (partitionXfers [] ps0.accounts [xfer 4, xfer 9] []).2.map (·.dest) == [9]
+
 end JAM.Tests.HostGeneral

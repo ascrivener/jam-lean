@@ -91,6 +91,21 @@ def integrateProvisions (d : Accounts) (p : Provisions) : Accounts :=
       else d
     | none => d) d
 
+/-- N (GP v0.8.1 eq. `accpar`): service s's Δ_1 outcome `os`, discarded (keeping only its gas use and
+    provisions) when both s and its effective supervisor u = E(**d**, s) ≠ s modified s, given u's
+    outcome `ou`.
+
+    GP v0.8.1 leaves N(**o**)'s post-state without a value (every other field has one). It is taken
+    to be the round's input state **e**, as the prose before eq. `accseq` says ("discard all results
+    of the service's execution", its footnote excepting only provided preimages). Reading it as
+    **o**'s post-state would keep a discarded run's new accounts and privilege, staging and queue
+    changes while M(s) drops its own account change. `docs/upstream-candidates.md` v0.8.1-A1;
+    Adam decides. -/
+def discardIfBoth (e : PartialState) (s u : Nat) (os ou : AccOut) : AccOut :=
+  if os.modified.contains s ∧ u ≠ s ∧ ou.modified.contains s then
+    ⟨e, ∅, [], none, os.gasUsed, os.provisions⟩
+  else os
+
 /-- Δ_*(**e**, **t**, **r**, **f**) (GP v0.8.1 eq. `accpar`): accumulate every service with work,
     free gas or incoming transfers, and merge the results.
 
@@ -115,12 +130,7 @@ def accPar (e : PartialState) (t : List DeferredTransfer) (r : List WorkReport)
     e.assigners).eraseDups
   let raw : List (Nat × AccOut) := needed.map fun s => (s, accOne params entropy slot e t r f s)
   let o (s : Nat) : AccOut := (raw.lookup s).getD ⟨e, ∅, [], none, 0, ∅⟩
-  -- N: discard s's results when s and its effective supervisor E(d, s) ≠ s both modified s
-  let acc (s : Nat) : AccOut :=
-    let os := o s
-    if os.modified.contains s ∧ E s ≠ s ∧ (o (E s)).modified.contains s then
-      ⟨e, ∅, [], none, os.gasUsed, os.provisions⟩
-    else os
+  let acc (s : Nat) : AccOut := discardIfBoth e s (E s) (o s) (o (E s))
   let u := ss.map fun s => (s, (acc s).gasUsed)
   let b := ss.filterMap fun s => (acc s).yield.map (s, ·)
   let t' := ss.flatMap fun s => (acc s).xfers

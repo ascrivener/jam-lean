@@ -10,3 +10,5 @@ import JamCrypto.BandersnatchSign
 import JamCrypto.ThinVrf
 import JamCrypto.PedersenVrf
 import JamCrypto.DevKeys
+import JamCrypto.Fast.Bandersnatch
+import JamCrypto.Fast.Ed25519

@@ -1,4 +1,5 @@
 import JamCrypto
+import JamCryptoTest.Fast
 
 /-!
 # `lake exe cryptotest [DIR]`: the JamCrypto test vectors
@@ -57,6 +58,7 @@ def main (args : List String) : IO UInt32 := do
   -- Ed25519: tag zip215 rfc8032Strict rfc8032Cofactorless key msg sig
   let mut edN := 0
   let mut edT := 0
+  let mut edTF := 0
   for line in (← IO.FS.lines s!"{dir}/ed25519.txt") do
     match line.splitOn " " with
     | [tag, z, s, c, key, msg, sig] =>
@@ -66,6 +68,13 @@ def main (args : List String) : IO UInt32 := do
         edN := edN + 1
         edT := edT + t
       check s!"ed25519 {tag} zip215" (rz == (z == "1")) failures
+      let (rzF, tF) ← timed fun _ => Fast.Ed25519.verify key msg sig
+      if z == "1" then edTF := edTF + tF
+      check s!"ed25519 {tag} zip215 fast" (rzF == (z == "1")) failures
+      check s!"ed25519 {tag} rfc8032Strict fast"
+        (Fast.Ed25519.verifyWith Ed25519.rfc8032Strict key msg sig == (s == "1")) failures
+      check s!"ed25519 {tag} rfc8032Cofactorless fast"
+        (Fast.Ed25519.verifyWith Ed25519.rfc8032Cofactorless key msg sig == (c == "1")) failures
       check s!"ed25519 {tag} rfc8032Strict"
         (Ed25519.verifyWith Ed25519.rfc8032Strict key msg sig == (s == "1")) failures
       check s!"ed25519 {tag} rfc8032Cofactorless"
@@ -74,6 +83,7 @@ def main (args : List String) : IO UInt32 := do
   -- Bandersnatch IETF VRF: tag valid key ctx msg sig Y
   let mut bsN := 0
   let mut bsT := 0
+  let mut bsTF := 0
   for line in (← IO.FS.lines s!"{dir}/bandersnatch_ietf.txt") do
     match line.splitOn " " with
     | [tag, v, key, ctx, msg, sig, y] =>
@@ -83,6 +93,10 @@ def main (args : List String) : IO UInt32 := do
         bsN := bsN + 1
         bsT := bsT + t
       check s!"bandersnatch {tag} verify" (ok == (v == "1")) failures
+      let (okF, tF) ← timed fun _ => Fast.Bandersnatch.ietfVerify key ctx msg sig
+      if v == "1" then bsTF := bsTF + tF
+      check s!"bandersnatch {tag} fast verify" (okF == (v == "1")) failures
+      check s!"bandersnatch {tag} fast Y" (Fast.Bandersnatch.vrfOutput sig == Bandersnatch.vrfOutput sig) failures
       if ok then
         check s!"bandersnatch {tag} Y" (Bandersnatch.vrfOutput sig == unhex y) failures
         check s!"bandersnatch {tag} Y = JAM.Sha512.vrfOutput"
@@ -117,6 +131,7 @@ def main (args : List String) : IO UInt32 := do
   -- tag sk pk alpha ad h gamma beta proof_r proof_s; sig = gamma ⌢ proof_r ⌢ proof_s.
   let mut thN := 0
   let mut thT := 0
+  let mut thTF := 0
   for line in (← IO.FS.lines s!"{dir}/bandersnatch_thin.txt") do
     match line.splitOn " " with
     | [tag, sk, pk, alpha, ad, h, gamma, beta, pr, ps] =>
@@ -134,10 +149,18 @@ def main (args : List String) : IO UInt32 := do
       let (ok, t) ← timed fun _ => T pk alpha ad sig
       thN := thN + 1; thT := thT + t
       check s!"thin {tag} verify" ok failures
+      let (okF, tF) ← timed fun _ => Fast.Bandersnatch.Thin.verify pk alpha ad sig .vectors
+      thTF := thTF + tF
+      check s!"thin {tag} fast verify" okF failures
+      check s!"thin {tag} fast beta" (Fast.Bandersnatch.Thin.vrfOutput sig == beta) failures
       let c081 := withSignatures { edVerify := fun _ _ _ => false } (gp := .v081) (rd := .vectors)
       let c080 := withSignatures { edVerify := fun _ _ _ => false }
       check s!"thin {tag} selected by GpVersion.v081 and Reading.vectors"
         (c081.bsVerify pk alpha ad sig && c081.bsOut sig == beta && !c080.bsVerify pk alpha ad sig) failures
+      let c081r := withSignatures { edVerify := fun _ _ _ => false } (gp := .v081) (rd := .vectors) (fast := false)
+      let c080r := withSignatures { edVerify := fun _ _ _ => false } (fast := false)
+      check s!"thin {tag} selected by GpVersion.v081 and Reading.vectors (reference implementations)"
+        (c081r.bsVerify pk alpha ad sig && c081r.bsOut sig == beta && !c080r.bsVerify pk alpha ad sig) failures
       -- the prose reading (the default) hashes the input differently, so the vector's signature
       -- does not verify under it, and its own signature does
       let cProse := withSignatures { edVerify := fun _ _ _ => false } (gp := .v081)
@@ -267,6 +290,18 @@ def main (args : List String) : IO UInt32 := do
   IO.println s!"ed25519: {edT / 1000 / max edN 1} µs per valid signature (ZIP 215)"
   IO.println s!"bandersnatch ietf: {bsT / 1000 / max bsN 1} µs per valid signature"
   IO.println s!"bandersnatch thin: {thT / 1000 / max thN 1} µs per valid signature"
+  IO.println s!"ed25519 (fast): {edTF / 1000 / max edN 1} µs per valid signature (ZIP 215)"
+  IO.println s!"bandersnatch ietf (fast): {bsTF / 1000 / max bsN 1} µs per valid signature"
+  IO.println s!"bandersnatch thin (fast): {thTF / 1000 / max thN 1} µs per valid signature"
+  -- differential tests of the fast implementations against the reference ones
+  let log := fun (msg : String) => do
+    IO.eprintln s!"MISMATCH {msg}"
+    failures.modify (· + 1)
+  let fb ← JamCryptoTest.Fast.fieldTests 3000 log
+  let db ← JamCryptoTest.Fast.bsDecodeTests 400 log
+  let vb ← JamCryptoTest.Fast.bsVerifyTests 16 log
+  let eb ← JamCryptoTest.Fast.edTests 40 log
+  IO.println s!"fast vs reference: field {fb}, bandersnatch decode/output {db}, bandersnatch verify {vb}, ed25519 {eb} mismatches"
   let f ← failures.get
   if f == 0 then
     IO.println "all vectors pass"

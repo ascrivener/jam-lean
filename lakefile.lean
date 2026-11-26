@@ -38,6 +38,11 @@ lean_lib JamCrypto
 lean_exe cryptotest where
   root := `JamCryptoTest
 
+/-- The differential tests of `JamCrypto.Fast` against the reference implementations, run by
+    `cryptotest` and `ringtest`. -/
+lean_lib JamCryptoTestLib where
+  globs := #[.submodules `JamCryptoTest]
+
 /-- JamCrypto's ring root and ring VRF vectors: `lake build ringtest && .lake/build/bin/ringtest
     [FILE…]`, run from the repository root (default `JamCryptoTest/ring/*.txt`). -/
 lean_exe ringtest where

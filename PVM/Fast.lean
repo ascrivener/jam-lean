@@ -15,20 +15,54 @@ definition is otherwise the same as `psi`'s.
 `psiFast` wherever compiled code calls `psi`. This is a proved replacement: `@[csimp]` requires
 the equality theorem (unlike attributes that swap in unverified code), and the kernel and every
 theorem still see the paper-literal `psi`.
+
+`Prepared` also carries lazily filled per-index tables (`info`: the decoded instruction,
+ı + 1 + skip(ı), 𝔳_inst, ζ_ı ∈ T and ı ∈ ϖ; `charge`: ϱ^Δ(𝔏(ı))), with `infoAt_prepare`,
+`startAt_prepare` and `chargeAt_prepare` stating that they agree with the spec definitions.
+`PVM.FastStep` uses them.
 -/
 
 namespace PVM
 
-/-- A program prepared for fast execution: 𝔳_blob checked once, block costs memoized. -/
+/-- The facts about index `i` of a program that each step needs: the decoded instruction (an
+    undecodable octet read as `trap`, as in `Program.step`), ı + 1 + skip(ı), 𝔳_inst, whether ζ_ı ∈ T,
+    and whether ı ∈ ϖ. -/
+structure InstrInfo where
+  instr : Instr
+  next : Nat
+  valid : Bool
+  term : Bool
+  start : Bool
+
+/-- The `InstrInfo` of index `i`, computed from the spec definitions. -/
+def Program.info (P : Program) (i : Nat) : InstrInfo :=
+  { instr := (P.decode i).getD (.noArgs .trap), next := P.next i, valid := P.vInst i,
+    term := isTerminator (P.zeta i), start := P.isBlockStart i }
+
+/-- Search downwards from `n` for the greatest `j ≤ n` with `start j`; `0` if there is none
+    (`Program.blockStartFrom` with a given block-start test). -/
+def scanStart (start : Nat → Bool) : Nat → Nat
+  | 0 => 0
+  | n + 1 => if start (n + 1) then n + 1 else scanStart start n
+
+/-- A program prepared for fast execution: 𝔳_blob checked once, block costs memoized, and, for
+    every index of **c**, a lazily evaluated `InstrInfo` (so each instruction is decoded once
+    per program) and the cost ϱ^Δ(𝔏(ı)) of the block containing it (so 𝔏 is found once per index). -/
 structure Prepared where
   prog : Program
   valid : Bool
   costs : Array (Thunk Nat)
+  info : Array (Thunk InstrInfo) := #[]
+  charge : Array (Thunk Nat) := #[]
 
-/-- Prepare a program: check 𝔳_blob once and set up a lazy cost table for every index. -/
+/-- Prepare a program: check 𝔳_blob once and set up the lazy tables for every index. -/
 def Program.prepare (P : Program) : Prepared :=
-  { prog := P, valid := P.vBlob,
-    costs := Array.ofFn (n := P.code.size) fun k => Thunk.mk fun _ => P.blockCost k.val }
+  let costs := Array.ofFn (n := P.code.size) fun k => Thunk.mk fun _ => P.blockCost k.val
+  let info := Array.ofFn (n := P.code.size) fun k => Thunk.mk fun _ => P.info k.val
+  let startOf (n : Nat) : Bool := if h : n < info.size then info[n].get.start else P.isBlockStart n
+  let costOf (k : Nat) : Nat := if h : k < costs.size then costs[k].get else P.blockCost k
+  { prog := P, valid := P.vBlob, costs, info,
+    charge := Array.ofFn (n := P.code.size) fun k => Thunk.mk fun _ => costOf (scanStart startOf k.val) }
 
 namespace Prepared
 
@@ -40,6 +74,45 @@ theorem cost_prepare (P : Program) (k : Nat) : P.prepare.cost k = P.blockCost k 
   unfold cost Program.prepare
   split
   · simp [Thunk.get]
+  · rfl
+
+/-- The `InstrInfo` of index `i`, from the table. -/
+@[inline] def infoAt (Q : Prepared) (i : Nat) : InstrInfo :=
+  if h : i < Q.info.size then Q.info[i].get else Q.prog.info i
+
+/-- ı ∈ ϖ, from the table. -/
+@[inline] def startAt (Q : Prepared) (n : Nat) : Bool :=
+  if h : n < Q.info.size then Q.info[n].get.start else Q.prog.isBlockStart n
+
+/-- ϱ^Δ(𝔏(ı)), from the table. -/
+@[inline] def chargeAt (Q : Prepared) (i : Nat) : Nat :=
+  if h : i < Q.charge.size then Q.charge[i].get else Q.prog.blockCost (Q.prog.blockStartOf i)
+
+theorem infoAt_prepare (P : Program) (i : Nat) : P.prepare.infoAt i = P.info i := by
+  unfold infoAt Program.prepare
+  split
+  · simp [Thunk.get]
+  · rfl
+
+theorem startAt_prepare (P : Program) (n : Nat) : P.prepare.startAt n = P.isBlockStart n := by
+  unfold startAt Program.prepare
+  split
+  · simp [Thunk.get, Program.info]
+  · rfl
+
+theorem scanStart_eq (P : Program) (start : Nat → Bool) (h : ∀ n, start n = P.isBlockStart n) :
+    ∀ n, scanStart start n = P.blockStartFrom n
+  | 0 => rfl
+  | n + 1 => by simp [scanStart, Program.blockStartFrom, h, scanStart_eq P start h n]
+
+theorem chargeAt_prepare (P : Program) (i : Nat) :
+    P.prepare.chargeAt i = P.blockCost (P.blockStartOf i) := by
+  unfold chargeAt
+  split
+  · rename_i hi
+    simp only [Program.prepare, Array.getElem_ofFn, Thunk.get] at hi ⊢
+    rw [scanStart_eq P _ (by intro n; split <;> simp [Program.info])]
+    split <;> simp [Program.blockStartOf]
   · rfl
 
 /-- The gas stage of Ψ₁ with the memoized cost (cf. `Program.chargeGas`). -/

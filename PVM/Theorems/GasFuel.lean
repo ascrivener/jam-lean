@@ -462,6 +462,319 @@ theorem decodeInstr_spec {P : Program} {s : Nat} {x : SimState} {i : Nat} {ins :
     simp only [measure]
     omega
 
+/-! ## Starting an entry keeps the invariant and lowers the measure -/
+
+theorem readyToStart_spec {x : SimState} {n : Fin x.rob.length} (h : readyToStart x = some n) :
+    x.rob[n].state = .wait ∧ x.rob[n].units.le x.units = true ∧
+      x.rob[n].deps.all (depDone x) = true := by
+  have hp := List.find?_some h
+  simp only [Bool.and_eq_true, beq_iff_eq] at hp
+  exact ⟨hp.1.1, hp.1.2, hp.2⟩
+
+theorem startStep_spec {P : Program} {s : Nat} {x : SimState} (hI : Inv P s x)
+    {n : Fin x.rob.length} (h : readyToStart x = some n) :
+    Inv P s (startStep x n) ∧ measure P (startStep x n) < measure P x := by
+  obtain ⟨hw, hle, -⟩ := readyToStart_spec h
+  have hmem : x.rob[n] ∈ x.rob := List.getElem_mem _
+  have hpos := hI.pos _ hmem (.inr hw)
+  refine ⟨⟨hI.pc, ?_, ?_, ?_, ?_, ?_⟩, ?_⟩
+  · intro e he hs
+    rcases mem_modify he with he | ⟨_, rfl⟩
+    · exact hI.done0 e he hs
+    · simp at hs
+  · intro e he hs
+    rcases mem_modify he with he | ⟨_, rfl⟩
+    · exact hI.pos e he hs
+    · simp at hs
+  · intro e he
+    rcases mem_modify he with he | ⟨_, rfl⟩
+    · exact hI.bnd e he
+    · exact hI.bnd x.rob[n] hmem
+  · intro j hj k hk
+    simp only [startStep, List.getElem_modify] at hk
+    have hj' : j < x.rob.length := by simpa [startStep] using hj
+    split at hk
+    · exact hI.deps j hj' k hk
+    · exact hI.deps j hj' k hk
+  · intro f
+    have hu := hI.units f
+    have hs := sum_map_modify (fun e => if e.state = .exe ∧ 0 < e.cycles then f.get e.units else 0)
+      (fun e => { e with state := .exe }) x.rob n n.isLt
+    have hl := (UnitField.le_iff _ _).1 hle f
+    simp only [Fin.getElem_fin] at hw hs hl hpos
+    simp only [startStep, held, UnitField.get_sub, Fin.getElem_fin] at hu hs ⊢
+    simp only [hw, reduceCtorEq, false_and, if_false, Nat.add_zero] at hs
+    rcases hpos with hc | hz
+    · rw [if_pos ⟨trivial, hc⟩] at hs; omega
+    · rw [hz f] at hs hl ⊢; split at hs <;> omega
+  · have hs := sum_map_modify pot (fun e => { e with state := .exe }) x.rob n n.isLt
+    simp only [Fin.getElem_fin] at hw hs
+    simp only [pot, hw] at hs
+    simp only [measure, startStep, slack, potSum, Fin.getElem_fin]
+    omega
+
+/-! ## The cycle step keeps the invariant, and lowers the measure when 𝔛 takes it -/
+
+theorem cycleStep_spec {P : Program} {s : Nat} {x : SimState} (hI : Inv P s x)
+    (hprog : potSum (cycleStep x).rob < potSum x.rob ∨ 0 < slack x) :
+    Inv P s (cycleStep x) ∧ measure P (cycleStep x) < measure P x := by
+  refine ⟨⟨hI.pc, ?_, ?_, ?_, ?_, ?_⟩, ?_⟩
+  · intro e he
+    rw [cycleStep_rob] at he
+    obtain ⟨a, ha, r, hr, rfl⟩ := mem_cyc _ _ _ he
+    exact (cyc_inv a r hr (hI.done0 a ha) (hI.pos a ha)).1
+  · intro e he
+    rw [cycleStep_rob] at he
+    obtain ⟨a, ha, r, hr, rfl⟩ := mem_cyc _ _ _ he
+    exact (cyc_inv a r hr (hI.done0 a ha) (hI.pos a ha)).2
+  · intro e he
+    rw [cycleStep_rob] at he
+    obtain ⟨a, ha, r, hr, rfl⟩ := mem_cyc _ _ _ he
+    exact hI.bnd a ha
+  · intro j hj k hk
+    have hj' : j < x.rob.length := by
+      simp only [cycleStep_rob, List.length_zipWith, retiredPrefix_length] at hj; omega
+    simp only [cycleStep_rob, List.getElem_zipWith] at hk
+    exact hI.deps j hj' k hk
+  · intro f
+    have hu := hI.units f
+    have hc := held_cyc f x.rob true
+    have hf := freed_foldl f x.rob Units.zero
+    rw [← cycleStep_rob] at hc
+    simp only [UnitField.get_zero, Nat.zero_add] at hf
+    simp only [cycleStep, UnitField.get_add] at hf hc ⊢
+    omega
+  · have hle := (potSum_cyc x.rob true).1
+    rw [← cycleStep_rob] at hle
+    simp only [measure, slack, cycleStep, maxDecode, maxStart] at hprog hle ⊢
+    omega
+
+theorem held_zero (f : UnitField) : ∀ (l : List RobEntry), (∀ e ∈ l, e.state ≠ .exe) → held f l = 0
+  | [], _ => rfl
+  | e :: l, h => by
+    have := held_zero f l fun e he => h e (by simp [he])
+    simp only [held, List.map_cons, List.sum_cons] at this ⊢
+    rw [if_neg (fun hc => h e (by simp) hc.1)]; omega
+
+theorem exists_first_wait (x : SimState) :
+    ∀ j (hj : j < x.rob.length), x.rob[j].state = .wait →
+      ∃ m, ∃ hm : m < x.rob.length, x.rob[m].state = .wait ∧
+        ∀ k (hk : k < m), x.rob[k].state ≠ .wait := by
+  intro j
+  induction j using Nat.strongRecOn with
+  | _ j ih =>
+    intro hj hw
+    by_cases h : ∃ k, ∃ hk : k < j, x.rob[k].state = .wait
+    · obtain ⟨k, hk, hkw⟩ := h
+      exact ih k hk (by omega) hkw
+    · refine ⟨j, hj, hw, fun k hk hkw => h ⟨k, hk, hkw⟩⟩
+
+theorem readyToStart_ne_none {P : Program} {s : Nat} {x : SimState} (hI : Inv P s x)
+    (hnde : ∀ e ∈ x.rob, e.state ≠ .dec ∧ e.state ≠ .exe)
+    {j : Nat} (hj : j < x.rob.length) (hw : x.rob[j].state = .wait) : readyToStart x ≠ none := by
+  obtain ⟨m, hm, hmw, hmin⟩ := exists_first_wait x j hj hw
+  intro hnone
+  rw [readyToStart, List.find?_eq_none] at hnone
+  apply hnone ⟨m, hm⟩ (List.mem_finRange _)
+  simp only [Fin.getElem_fin, Bool.and_eq_true, beq_iff_eq, List.all_eq_true]
+  refine ⟨⟨hmw, ?_⟩, ?_⟩
+  · rw [UnitField.le_iff]; intro f
+    have hu := hI.units f
+    rw [held_zero f x.rob fun e he => (hnde e he).2, Nat.add_zero] at hu
+    rw [hu]
+    exact (UnitField.le_iff _ _).1 (hI.bnd _ (List.getElem_mem _)) f
+  · intro k hk
+    obtain ⟨hk', hd⟩ := hI.depDone_eq hm hk
+    rw [hd]
+    have hkm := hI.deps m hm k hk
+    have hne := hmin k hkm
+    have hmem : x.rob[k] ∈ x.rob := List.getElem_mem _
+    have h0 : x.rob[k].state = .fin ∨ x.rob[k].state = .none := by
+      have := hnde _ hmem
+      cases h : x.rob[k].state <;> simp_all
+    simp [hI.done0 _ hmem h0]
+
+theorem cycle_progress {P : Program} {s : Nat} {x : SimState} (hI : Inv P s x)
+    (hdec : ∀ i, x.pc = some i → ∃ ins c, P.instrCost? i = some (ins, c) ∧
+      ¬(c.decodeSlots ≤ x.decodeSlots ∧ live x < 32))
+    (hstart : ∀ n, readyToStart x = some n → x.startSlots = 0)
+    (hstop : ¬(x.pc = none ∧ live x = 0)) :
+    potSum (cycleStep x).rob < potSum x.rob ∨ 0 < slack x := by
+  by_cases hs : 0 < slack x
+  · exact .inr hs
+  left
+  have hs' : maxDecode ≤ x.decodeSlots ∧ maxStart ≤ x.startSlots := by
+    simp only [slack] at hs; omega
+  simp only [maxDecode, maxStart] at hs'
+  rw [cycleStep_rob]
+  by_cases ha : ∃ e ∈ x.rob, e.state = .dec ∨ e.state = .exe
+  · exact (potSum_cyc x.rob true).2 ha
+  have hnde : ∀ e ∈ x.rob, e.state ≠ .dec ∧ e.state ≠ .exe :=
+    fun e he => ⟨fun h => ha ⟨e, he, .inl h⟩, fun h => ha ⟨e, he, .inr h⟩⟩
+  by_cases hw : ∃ e ∈ x.rob, e.state = .wait
+  · obtain ⟨e, he, hew⟩ := hw
+    obtain ⟨j, hj, rfl⟩ := List.mem_iff_getElem.1 he
+    cases hr : readyToStart x with
+    | none => exact absurd hr (readyToStart_ne_none hI hnde hj hew)
+    | some n => have := hstart n hr; omega
+  have hfn : ∀ e ∈ x.rob, e.state = .fin ∨ e.state = .none := by
+    intro e he
+    have := hnde e he
+    cases h : e.state <;> simp_all
+  by_cases hf : ∃ e ∈ x.rob, e.state = .fin
+  · exact potSum_cyc_fin x.rob hfn hf
+  have hnone : ∀ e ∈ x.rob, e.state = .none := fun e he =>
+    (hfn e he).resolve_left fun h => hf ⟨e, he, h⟩
+  have hl : live x = 0 := foldl_live_none x.rob 0 hnone
+  cases hpc : x.pc with
+  | none => exact absurd ⟨hpc, hl⟩ hstop
+  | some i =>
+    obtain ⟨ins, c, hc, hn⟩ := hdec i hpc
+    have := (instrCost?_bounded hc).decode_le
+    exact absurd ⟨by omega, by omega⟩ hn
+
+/-! ## The transition -/
+
+theorem transition_inl {P : Program} {x x' : SimState} (h : transition P x = some (.inl x')) :
+    (∃ i ins c, x.pc = some i ∧ P.instrCost? i = some (ins, c) ∧ x' = decodeStep P x i ins c) ∨
+    (∃ n, readyToStart x = some n ∧ x' = startStep x n) ∨
+    (x' = cycleStep x ∧
+      (∀ i, x.pc = some i → ∃ ins c, P.instrCost? i = some (ins, c) ∧
+        ¬(c.decodeSlots ≤ x.decodeSlots ∧ live x < 32)) ∧
+      (∀ n, readyToStart x = some n → x.startSlots = 0) ∧ ¬(x.pc = none ∧ live x = 0)) := by
+  -- the stages after decoding, once decoding is ruled out
+  have tail : (hdec : ∀ i, x.pc = some i → ∃ ins c, P.instrCost? i = some (ins, c) ∧
+        ¬(c.decodeSlots ≤ x.decodeSlots ∧ live x < 32)) →
+      (∀ n, readyToStart x = some n → 0 < x.startSlots → transition P x = some (.inl (startStep x n))) →
+      ((∀ n, readyToStart x = some n → x.startSlots = 0) →
+        transition P x = if x.pc.isNone && live x == 0 then some (.inr x) else some (.inl (cycleStep x))) →
+      (∃ n, readyToStart x = some n ∧ x' = startStep x n) ∨
+      (x' = cycleStep x ∧
+        (∀ i, x.pc = some i → ∃ ins c, P.instrCost? i = some (ins, c) ∧
+          ¬(c.decodeSlots ≤ x.decodeSlots ∧ live x < 32)) ∧
+        (∀ n, readyToStart x = some n → x.startSlots = 0) ∧ ¬(x.pc = none ∧ live x = 0)) := by
+    intro hdec hS hC
+    by_cases hr : ∃ n, readyToStart x = some n ∧ 0 < x.startSlots
+    · obtain ⟨n, hn, hs⟩ := hr
+      rw [hS n hn hs] at h
+      simp only [Option.some.injEq, Sum.inl.injEq] at h
+      exact .inl ⟨n, hn, h.symm⟩
+    · have hst : ∀ n, readyToStart x = some n → x.startSlots = 0 :=
+        fun n hn => Nat.eq_zero_of_not_pos fun hs => hr ⟨n, hn, hs⟩
+      rw [hC hst] at h
+      split at h
+      · simp at h
+      · rename_i hc
+        simp only [Option.some.injEq, Sum.inl.injEq] at h
+        refine .inr ⟨h.symm, hdec, hst, fun ⟨h1, h2⟩ => hc ?_⟩
+        simp [h1, h2]
+  by_cases hn : x.pc = none
+  · refine .inr (tail (fun i hi => by simp [hn] at hi) ?_ ?_)
+    · intro n hr hs; simp [transition, hn, hr, hs, pure]
+    · intro hst
+      cases hr : readyToStart x with
+      | none => simp [transition, hn, hr, pure]
+      | some n => simp [transition, hn, hr, hst n hr, pure]
+  · obtain ⟨i, hpc⟩ := Option.ne_none_iff_exists'.1 hn
+    cases hc : P.instrCost? i with
+    | none => simp [transition, hpc, hc, bind, Option.bind] at h
+    | some ic =>
+      obtain ⟨ins, c⟩ := ic
+      by_cases hd : c.decodeSlots ≤ x.decodeSlots ∧ live x < 32
+      · simp [transition, hpc, hc, hd, bind, Option.bind, pure] at h
+        exact .inl ⟨i, ins, c, hpc, hc, h.symm⟩
+      · have hd' : ¬(c.decodeSlots ≤ x.decodeSlots ∧ live x < 32) := hd
+        refine .inr (tail ?_ ?_ ?_)
+        · intro j hj; rw [hpc] at hj; cases hj; exact ⟨ins, c, hc, hd'⟩
+        · intro n hr hs
+          simp only [Classical.not_and_iff_not_or_not, Nat.not_le, Nat.not_lt] at hd
+          rcases hd with hd | hd <;>
+            simp [transition, hpc, hc, bind, Option.bind, pure, hr, hs, Nat.not_le.2 hd,
+              Nat.not_lt.2 hd]
+        · intro hst
+          simp only [Classical.not_and_iff_not_or_not, Nat.not_le, Nat.not_lt] at hd
+          cases hr : readyToStart x <;>
+            rcases hd with hd | hd <;>
+            simp [transition, hpc, hc, bind, Option.bind, pure, hr, Nat.not_le.2 hd,
+              Nat.not_lt.2 hd, hst]
+
+theorem transition_spec {P : Program} {s : Nat} {x x' : SimState} (hI : Inv P s x)
+    (h : transition P x = some (.inl x')) : Inv P s x' ∧ measure P x' < measure P x := by
+  rcases transition_inl h with ⟨i, ins, c, hpc, hc, rfl⟩ | ⟨n, hn, rfl⟩ | ⟨rfl, hdec, hst, hstop⟩
+  · unfold decodeStep
+    split
+    · rename_i hm
+      simp only [Bool.and_eq_true, decide_eq_true_eq, beq_iff_eq] at hm
+      exact decodeMove_spec hI hpc hm.1 hm.2
+    · exact decodeInstr_spec hI hpc hc
+  · exact startStep_spec hI hn
+  · exact cycleStep_spec hI (cycle_progress hI hdec hst hstop)
+
+/-- The transitions reachable from an invariant state are all defined when every instruction 𝔛
+    may decode is in U. -/
+theorem transition_isSome {P : Program} {s : Nat} {x : SimState} (hI : Inv P s x)
+    (hU : ∀ j, Reach P s j → (P.instrCost? j).isSome) : (transition P x).isSome := by
+  unfold transition
+  cases hpc : x.pc with
+  | none =>
+    simp only
+    split
+    · split <;> (try split) <;> simp [pure]
+    · split <;> simp [pure]
+  | some i =>
+    obtain ⟨⟨ins, c⟩, hc⟩ := Option.isSome_iff_exists.1 (hU i (hI.pc i hpc))
+    simp only [hc, bind, Option.bind]
+    split
+    · simp [pure]
+    · split
+      · split <;> (try split) <;> simp [pure]
+      · split <;> simp [pure]
+
+/-! ## The fuel suffices -/
+
+/-- Beyond the measure, the fuel does not change the result of `run`. -/
+theorem run_stable (P : Program) (s : Nat) :
+    ∀ (f : Nat) (x : SimState), Inv P s x → measure P x < f →
+      ∀ f', f ≤ f' → run P f' x = run P f x
+  | 0, _, _, h, _, _ => absurd h (Nat.not_lt_zero _)
+  | f + 1, x, hI, hm, f', hf => by
+    obtain ⟨f'', rfl⟩ : ∃ f'', f' = f'' + 1 := ⟨f' - 1, by omega⟩
+    simp only [run]
+    cases ht : transition P x with
+    | none => rfl
+    | some r =>
+      cases r with
+      | inr y => rfl
+      | inl y =>
+        have ⟨hI', hm'⟩ := transition_spec hI ht
+        exact run_stable P s f y hI' (by omega) f'' (by omega)
+
+/-- `run` with more fuel than the measure is never out of fuel: it is `some` whenever every
+    transition is defined. -/
+theorem run_isSome (P : Program) (s : Nat) (hU : ∀ j, Reach P s j → (P.instrCost? j).isSome) :
+    ∀ (f : Nat) (x : SimState), Inv P s x → measure P x < f → (run P f x).isSome
+  | 0, _, _, h => absurd h (Nat.not_lt_zero _)
+  | f + 1, x, hI, hm => by
+    simp only [run]
+    obtain ⟨r, hr⟩ := Option.isSome_iff_exists.1 (transition_isSome hI hU)
+    rw [hr]
+    cases r with
+    | inr y => rfl
+    | inl y =>
+      have ⟨hI', hm'⟩ := transition_spec hI hr
+      exact run_isSome P s hU f y hI' (by omega)
+
+/-- **The fuel of 𝔛 suffices**: from **x**^init, any fuel at least `fuel P s` gives the same
+    result, so the out-of-fuel case of `run` is never what `blockCost?` returns. -/
+theorem run_fuel_eq (P : Program) (s f : Nat) (hf : fuel P s ≤ f) :
+    run P f (init s) = run P (fuel P s) (init s) :=
+  run_stable P s (fuel P s) (init s) (inv_init P s) (measure_init P s) f hf
+
+/-- With every instruction 𝔛 may decode from `s` in U, the simulation finishes within its fuel. -/
+theorem run_fuel_isSome (P : Program) (s : Nat) (hU : ∀ j, Reach P s j → (P.instrCost? j).isSome) :
+    (run P (fuel P s) (init s)).isSome :=
+  run_isSome P s hU _ _ (inv_init P s) (measure_init P s)
+
 end Sim
 
 end PVM

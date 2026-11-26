@@ -1,4 +1,5 @@
 import PVM.Invocation
+import PVM.FastParse
 import JAM.Account
 import JAM.Params
 import JAM.Work

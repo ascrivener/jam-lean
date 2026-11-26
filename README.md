@@ -1,8 +1,11 @@
 # jam-lean
 
 An executable Lean 4 model of JAM from the
-[Gray Paper](https://github.com/gavofyork/graypaper) **v0.8.0**, and machine-checked theorems about
-real compiled JAM service binaries.
+[Gray Paper](https://github.com/gavofyork/graypaper) **v0.8.1** (tag `v0.8.1` of
+gavofyork/graypaper, 2026-11-16), and machine-checked theorems about real compiled JAM service
+binaries. The model moved from v0.8.0 to v0.8.1 on 2026-11-25 (#261); the last v0.8.0 model is tag
+`gp-v0.8.0` (commit `5055102`). What changed, hunk by hunk, is in
+[`docs/gp-v0.8.1-migration.md`](docs/gp-v0.8.1-migration.md).
 
 * **The protocol.** All of Appendix A (the Polkadot Virtual Machine, its host-call machinery and its
   gas model; library `PVM`), and the protocol built on it (library `JAM`): the codec, hashes, the
@@ -11,17 +14,22 @@ real compiled JAM service binaries.
   authorizations, statistics) and block import Υ with the state Merklization of Appendix D.
 * **Validated** against the PVM vectors of
   [koute/jamtestvectors](https://github.com/koute/jamtestvectors) (branch `master_pvm_initial`,
-  commit `6bf3768e5b37bbe4ca5d6e1306284ecb27c0198f`, directory `pvm/`; 364 / 364) and the GP v0.8.0
-  vectors of [davxy/jam-test-vectors](https://github.com/davxy/jam-test-vectors) `v0.8.0`: every
-  STF suite, and the block-import traces with the post-state compared after every block. The few
-  departures are listed with the vectors' own changelog notes in the [results](#results) below.
+  commit `6bf3768e5b37bbe4ca5d6e1306284ecb27c0198f`, directory `pvm/`) and the GP v0.8.0 vectors of
+  [davxy/jam-test-vectors](https://github.com/davxy/jam-test-vectors) `v0.8.0`. No v0.8.1 vectors
+  are published yet, so the v0.8.1 model runs the v0.8.0 vectors, with an expected output changed
+  only where a v0.8.1 paper change dictates it. Two checks are suspended until v0.8.1 vectors exist:
+  the accumulate STF vectors and block import over the traces. See the [results](#results) below.
 * **Proved about real binaries.** Theorems about the octets that run on chain, for the witness
   service and Parity's bootstrap service, including the picoalloc heap allocator the JAM SDK links
-  into every service. Along the way they found disagreements between the binary and the paper,
-  listed in [`docs/upstream-candidates.md`](docs/upstream-candidates.md).
+  into every service. These proofs were last kernel-checked at commit `c22c197`, against the
+  v0.8.0 model. They have not been rebuilt against the v0.8.1 model and do not build against it
+  until proof work resumes (see [`docs/whats-proven.md`](docs/whats-proven.md)). Along the way they
+  found disagreements between the binary and the paper, listed in
+  [`docs/upstream-candidates.md`](docs/upstream-candidates.md).
 
 **What's proven:** [`docs/whats-proven.md`](docs/whats-proven.md) summarises the theorems about real
-service binaries (witness, and Parity's bootstrap service with its picoalloc heap allocator), their
+service binaries (witness, and Parity's bootstrap service with its picoalloc heap allocator; last
+kernel-checked at `c22c197`, against the v0.8.0 model), their
 assumptions, the trust base, the model/binary disagreements found, and how to reproduce it all.
 
 It is meant for proofs as well as evaluation: everything is total, decoding is kept separate from
@@ -31,7 +39,7 @@ execution, memory is an extensional finite map, and the theorems use only `prope
 
 ## Scope
 
-Two libraries, each bounded by the Gray Paper (v0.8.0):
+Two libraries, each bounded by the Gray Paper (v0.8.1):
 
 * **`PVM`: exactly Appendix A**, all of it and nothing more: §A.1–A.5 (deblob, decoding,
   instruction semantics, memory, Ψ₁, Ψ), §A.6–A.8 (Ψ_H, Y, Ψ_M) and §A.9–A.10 (the gas model).
@@ -42,21 +50,52 @@ Two libraries, each bounded by the Gray Paper (v0.8.0):
 * **`JAM`: Appendix B and the protocol**, built on `PVM`, with the protocol terms Appendix B needs:
   the codec (Appendix C) with its decoder ℰ⁻¹, blocks, headers and extrinsics, ℋ = Blake2b-256
   (§3.8), work packages, items, digests and reports (§11, §14), service accounts (§9), ℋ_K = Keccak-256 and the binary Merkle root (Appendix E).
-  It has the general host functions (`gas`, `grow_heap`, `fetch`, `lookup`, `read`, `write`,
-  `info`), the 13 accumulate host functions, Ψ_A, and the accumulation state transition of §12
-  (Δ_1, Δ_*, Δ_+, the ready queue and history, statistics, and the output root); and the refine
-  host functions (`historical_lookup`, `export`, `compile` (GP v0.8.1), `machine`, `peek`, `poke`, `pages`, `invoke`,
-  `expunge`), Ψ_R and Ψ_I. Protocol and gas
+  It has the general host functions (`gas`, `grow_heap`, `fetch`), the 18 accumulate host
+  functions (`lookup`, `read`, `write`, `info`, and `bless` … `supervisor`, ids 16–29), Ψ_A, and
+  the accumulation state transition of §12 (Δ_1, Δ_*, Δ_+, the ready queue and history, statistics,
+  and the output root); and the refine host functions (`historical_lookup`, `export`, `compile`,
+  `machine`, `peek`, `poke`, `pages`, `invoke`, `expunge`), Ψ_R and Ψ_I. Protocol and gas
   constants are generated from `definitions.tex` (`scripts/gen_constants.py`, drift-checked in CI);
   the test vectors' tiny chain is `Params.tiny`. A proof about pure PVM programs imports only `PVM` and trusts nothing from `JAM`.
 
 A third library, **`Services`**, holds results about specific services' deployed code, built on
-`JAM`; nothing in `PVM` or `JAM` depends on it.
+`JAM`; nothing in `PVM` or `JAM` depends on it. It was last kernel-checked at commit `c22c197`,
+against the v0.8.0 model, and does not build against the current model: storage-key stage 2
+changed how the model holds a service account, and the v0.8.1 migration did not migrate the proofs.
+It is not a default build target,
+and CI builds it only in on-demand proof runs. Until it is restated, its theorems are about the
+v0.8.0 model at that commit, not the current one (`docs/whats-proven.md`).
+
+A fourth library, **`JamCrypto`**, implements the crypto parameter (`JAM.Crypto`) in plain Lean:
+Ed25519, the Bandersnatch IETF, Thin and Pedersen VRFs, and the ring root and ring VRF over
+BLS12-381. It carries both a v0.8.0 and a v0.8.1 path, selected by `JamCrypto.GpVersion`. On the
+v0.8.1 path the cited spec draft's prose is the default reading (`JamCrypto.Reading.prose`), and its
+vectors are an explicit switch (`.vectors`). The model never imports it. See
+[`docs/jamcrypto.md`](docs/jamcrypto.md).
 
 Test-vector conventions (`map`/`write`/`set-reg` steps, how runs resume, the exit index the vectors
 call `pc`) live in `Tests/`, not in the model.
 
 ## Results
+
+What CI's `model` job runs on every push and PR. No GP v0.8.1 vectors are published yet, so the
+v0.8.1 model runs the GP v0.8.0 vectors (davxy/jam-test-vectors `v0.8.0`, the reports suite from its
+master at 5e8d2a2) and the PVM vectors. An expected output is changed only where a v0.8.1 paper
+change dictates it, and each such edit is listed in
+[`docs/gp-v0.8.1-migration.md`](docs/gp-v0.8.1-migration.md) and in the test that makes it. Two checks
+are suspended until v0.8.1 vectors exist (same document, "Suspended until v0.8.1 vectors"):
+
+* **the accumulate STF vectors** (`acctest`). Their service binaries are v0.8.0 programs, with
+  v0.8.0 host-call ids and register layouts, so under v0.8.1's host calls even plain storage writes
+  answer WHO: 15 of the 63 pass. CI only builds the runner (`acctest-exe`). Hand-written v0.8.1
+  checks in `Tests/HostGeneralTest.lean` cover the accumulate host calls write, supervisor, new,
+  transfer, eject and bless, the discard rule N and the transfer partition T.
+* **block import Υ over the traces** (`tracetest`). Every trace header's H_R is a v0.8.0 state
+  root, and v0.8.1's C(255) and C(13) encodings give other roots, so Υ would reject every block.
+  CI runs only the T(σ) round trip of every raw trace state.
+
+The results of the v0.8.0 model at tag `gp-v0.8.0`, including the accumulate suite and block import
+over the traces, are in that tag's README.
 
 | Check | Result |
 | --- | --- |
@@ -64,32 +103,34 @@ call `pc`) live in `Tests/`, not in the model.
 | Block costs in `programs/` | **5,123 / 5,123** correct |
 | Block costs in `gas-tests/` (doom, pinky, prime-sieve) | **39,737 / 39,737** correct |
 | Model's ϖ against the blocks the vectors list | identical in all 367 programs |
-| `JAM` codec (Appendix C): every GP v0.8.0 codec vector (headers, blocks, all extrinsics, the work-package family), encoded from JSON and round-tripped through ℰ⁻¹ | **15 / 15** tiny, **15 / 15** full |
+| `JAM` codec (Appendix C): every GP v0.8.0 codec vector (headers, blocks, all extrinsics, the work-package family), encoded from JSON and round-tripped through ℰ⁻¹; the three holding assurances are compared without the anchor v0.8.1 removed (#562) | **15 / 15** tiny, **15 / 15** full |
 | `JAM` Blake2b-256 vs. `hashlib` and RFC 7693 | **13 / 13** match |
-| `JAM` general host functions, hand-written cases | **30 / 30** pass |
+| `JAM` general and accumulate host functions, hand-written v0.8.1 cases (`#guard`s in `Tests/HostGeneralTest.lean`) | **78 / 78** pass |
 | `JAM` Keccak-256 / SHA3-256 vs. `hashlib` and standard vectors | **15 / 15** match |
 | `JAM` SHA-512 vs. FIPS 180-2 examples and `hashlib`; the VRF output Y of one trace block against its η'_0 | **9 / 9** match; **1 / 1** |
-| `JAM` refine host functions, Ψ_R and Ψ_I, hand-written cases (no vectors exist) | **59 / 59** pass, 2 more kernel-checked |
-| `witness-service.jam`'s host-call ids within those `Services.Witness` assumes (`lake build witnesscheck`) | **pass** |
+| `JAM` refine host functions, Ψ_R and Ψ_I, hand-written cases (no vectors exist) | **83 / 83** pass, 2 more kernel-checked |
+| `JamCrypto`: Ed25519, Bandersnatch IETF, Thin and Pedersen VRF vectors (`cryptotest`) | all pass |
+| `JamCrypto`: ring root and ring VRF vectors (`ringtest`) | **146 / 146** pass |
 | The real witness binary's refine on 7 malformed payloads gives `Rejected(BadPayload)` (`lake build witnessrun`; a test, not a proof) | **7 / 7** |
 | `JAM` state trie M (Appendix D) vs. GP v0.8.0 trie vectors (keys cut to 31 octets, note 27); state-key constructor C, hand-written | **11 / 11** roots match; **4 / 4** |
 | `JAM` Fisher–Yates shuffle ℱ with 𝒬_l (Appendix F) vs. GP v0.8.0 shuffle vectors | **8 / 8** match |
 | `JAM` erasure coding ℰ_C / ℛ over GF(2¹⁶) (Appendix H, GP v0.8.1 §H.3) vs. GP v0.8.0 erasure vectors | **12 / 12** match shard for shard (6 tiny, 6 full; v0.8.1 #580 adopted the vectors' layout, note 28); ℛ recovers the data in all 12 |
-| Accumulation STF (§12) vs. GP v0.8.0 accumulate vectors (tiny) | **61 / 63** pass; the 2 others are `bless_from_non_manager`, which the vectors' changelog lists as departing from GP 0.8.0 |
+| Accumulation STF (§12) vs. GP v0.8.0 accumulate vectors (tiny) | **suspended** until v0.8.1 vectors exist (15 / 63 pass under v0.8.1; see above) |
 | Recent-history STF (§7: β_H, the accumulation-output belt β_B) vs. `stf/history` (`lake build historytest`) | **4 / 4** tiny, **4 / 4** full |
 | Authorization STF (§8: the pool α from the queue φ') vs. `stf/authorizations` (`lake build authtest`) | **3 / 3** tiny, **3 / 3** full |
 | Validator statistics (§13.1: π_V, π_L) vs. `stf/statistics` (`lake build statstest`) | **4 / 4** tiny, **4 / 4** full |
 | Preimage STF (§12.4) and its service statistics (§13.2 provision counts) vs. `stf/preimages` (`lake build preimagestest`) | **8 / 8** tiny, **8 / 8** full |
 | Disputes STF (§10: verdicts, culprits, faults, ψ', ρ^‡ and H_O) vs. `stf/disputes` (`lake build disputestest`; Ed25519 verification is a parameter, note 29) | **29 / 29** tiny, **31 / 31** full |
-| Assurances STF (§11.2: the available reports **R** and ρ after assurances) vs. `stf/assurances` (`lake build assurancestest`; signatures as in note 29) | **11 / 11** tiny, **11 / 11** full |
-| Reports STF (§11.3–§11.5: guarantor assignments M and M*, guarantee validity, ρ', G and the reported packages) and core and service statistics (§13.2) vs. `stf/reports` (`lake build reportstest`; signatures as in note 29) | **44 / 44** tiny, **48 / 48** full |
+| Assurances STF (§11.2: the available reports **R** and ρ after assurances) vs. `stf/assurances` (`lake build assurancestest`; signatures as in note 29) | **10 / 11** tiny, **10 / 11** full; the other is `assurance_with_bad_attestation_parent-1`, whose only fault is the anchor v0.8.1 removed (#562), a listed deviation (note 30) |
+| Reports STF (§11.3–§11.5: guarantor assignments M and M*, guarantee validity, ρ', G and the reported packages, the v0.8.1 limits of eq. `reportrefineload`) and core and service statistics (§13.2) vs. `stf/reports` at master 5e8d2a2 (`lake build reportstest`; signatures as in note 29) | **60 / 60** tiny, **64 / 64** full |
 | Safrole STF (§6: τ, η, key rotation, γ_Z, γ_S, γ_A, H_E, H_W) vs. `stf/safrole` (`lake build safroletest`), with the Bandersnatch primitives as an oracle read from the vectors (note 31) | **21 / 21** tiny, **25 / 25** full |
-| Block import Υ (§4, §5; T and M_σ of Appendix D) vs. the `traces/` block-import traces (`lake build tracetest`; signatures accepted, Y by SHA-512 and O from the states, note 33): post-state compared key by key after every block | fallback **100 / 100**, safrole **100 / 100**, storage **100 / 100**, storage_light **100 / 100**, preimages **100 / 100**, preimages_light **100 / 100**; fuzzy_light **188 / 200**, **4 / 4** rejections (bad code hash), and 8 blocks that follow the vectors' `bless` deviation (note 33); fuzzy **16 / 17**, then the same deviation at block 17, after which the trace cannot run model-faithfully |
+| Block import Υ (§4, §5; T and M_σ of Appendix D) vs. the `traces/` block-import traces (`lake build tracetest`; CI fetches fallback, safrole, storage_light and preimages_light) | block import **suspended** until v0.8.1 traces exist (note 33); T(σ) round trip of every raw state (after `Tests.TraceState.upgradeRaw`): **201 / 201** in each of the four traces |
+| `witness-service.jam`'s host-call ids within those `Services.Witness` assumes (`lake build witnesscheck`) | not in the `model` job: it imports `Services`, which does not build against the current model; it last passed with the proofs at `c22c197` (v0.8.0 model) |
 
 ## Building and running
 
 ```bash
-lake build                            # the model and its theorems
+lake build                            # the model and its theorems (PVM, JAM; not Services)
 lake env lean scripts/CheckAxioms.lean   # axiom audit of every PVM declaration
 scripts/fetch-vectors.sh              # pinned vectors into vendor/jamtestvectors
 lake build pvmtest                    # run every vector in programs/
@@ -101,7 +142,7 @@ lake build statstest preimagestest    # the statistics and preimage STF vectors 
 lake build disputestest assurancestest reportstest  # disputes, assurances and reports STF vectors
 lake build safroletest                # the Safrole STF vectors (tiny and full)
 scripts/fetch-trace-vectors.sh        # block-import traces (.bin only) into vendor/jam-traces; names optional
-lake build tracetest                  # Υ over every fetched trace
+lake build tracetest                  # T(σ) round trip of every fetched trace (block import suspended)
 ```
 
 `pvmtest` and `gascheck` are Lake targets that build an executable and run it; a failing vector
@@ -139,6 +180,12 @@ the build of the semantics rather than drifting silently.
 
 ## Theorems
 
+> The `Services/` results below (witness, bootstrap) were last kernel-checked at commit `c22c197`,
+> against the v0.8.0 model, and are not rebuilt against the current v0.8.1 model; until proof work
+> resumes and restates them, they are statements about that model, not the current one (see
+> [`docs/whats-proven.md`](docs/whats-proven.md)). The `PVM` and `JAM` theorems are checked on every
+> CI run.
+
 * **Host calls** (`PVM/Theorems/Host.lean`). `exec_status_eq_host_iff`: an instruction's mutation
   yields h̵ × h iff it is `ecalli` with immediate h. `step_host` lifts this to Ψ₁ and `psi_host`
   to Ψ: if Ψ exits with h̵ × h, the program deblobs at the exit index and the instruction there
@@ -175,7 +222,9 @@ the build of the semantics rather than drifting silently.
   blob names preserves a property of the context, Ψ_M's final context has it. Only the blob's own
   `ecalli` ids matter.
 * **Confinement** (`JAM/Theorems/Confinement.lean`). `psiA_confined`: if a service's code names
-  none of `bless`, `assign`, `designate`, `new`, `eject`, `provide`, Ψ_A for it leaves every other
+  none of `bless`, `assign`, `designate`, `new`, `eject`, `provide`, and no other service has it
+  as its effective supervisor (`NoSupervisee`, GP v0.8.1 eq. `effectivesupervisor`; new with
+  v0.8.1, since a service may change any service it supervises), Ψ_A for it leaves every other
   account, the staging set, the authorizer queue and the privileged services as they were, and
   provides nothing. `psiR_noExports`: code that does not name `export` exports no segments.
 * **Y's RAM, region by region** (`PVM/Theorems/InitMem.lean`). `initialMemory_pages` and
@@ -354,6 +403,9 @@ the axioms `native_decide` and `bv_decide` introduce). CI also greps for `sorry`
 `implemented_by`, `native_decide` and `bv_decide`.
 
 ## A second service: Parity's bootstrap service
+
+> Like the witness results, these were last kernel-checked at `c22c197`, against the v0.8.0 model,
+> and are not rebuilt against the current model.
 
 To check that the tooling is not witness-specific, it also runs on Parity's JAM bootstrap service
 (`services/bootstrap`, built unmodified from the published crate, with the same SDK version as
@@ -587,7 +639,9 @@ attest in one round with no extra data, and need nothing beyond the kernel.
 ## Notes on the paper and the vectors
 
 Where the paper is ambiguous, the model follows the paper's formal definition and the choice is
-noted here and in a comment at the definition.
+noted here and in a comment at the definition. Most notes were written against v0.8.0. Each has been
+re-read against v0.8.1: a note that still applies is stated for v0.8.1, and one that v0.8.1
+resolved, or that describes a check now suspended, is marked as such.
 
 1. **𝔓_S compares ω_A = ω_D** (§A.10), which read literally compares register *values*; the gas
    model has no values, so we compare the register indices r_A = r_D. The equal-register case
@@ -629,7 +683,8 @@ noted here and in a comment at the definition.
 14. **Y's fit condition is vacuous.** With 3-, 3-, 2- and 3-octet length fields, |**o**|, |**w**|,
     z𝖹_P and s are bounded so that 5𝖹_Z + Q(|**o**|) + Q(|**w**| + z𝖹_P) + Q(s) + 𝖹_I is at most
     about 2^28.3 < 2^32. We check it anyway.
-15. **Accumulate vectors and GP 0.8.0.** The vectors' CHANGELOG lists behaviour that departs from
+15. **Accumulate vectors and GP 0.8.0** *(v0.8.0-era; the accumulate suite is suspended until
+    v0.8.1 vectors exist, and v0.8.1 changed `bless`, #558)*. The vectors' CHANGELOG lists behaviour that departs from
     GP 0.8.0, following later Gray Paper PRs. We follow the paper and list the affected vectors in
     `Tests/AccumulateTest.lean` (`knownDeviations`); CI fails if any other vector fails or if a
     listed one starts to pass. Currently: `bless_from_non_manager-1` and `-2` (`bless` from a
@@ -646,9 +701,11 @@ noted here and in a comment at the definition.
     (ℋ(**x**), |**x**|) ∈ w_x, but Ψ_R's arguments do not include that data. `psiR` takes x̄ as an
     argument. Likewise Ψ_R and Ψ_I draw on an account state **d** the paper leaves implicit; both
     take it as an argument.
-19. **Code that is not ℰ(↕**m**, **c**).** Ψ_R and **p**_c (§14.3) split the looked-up preimage as
-    ℰ(↕**m**, **c**) without saying what happens if it does not have that form. We treat it like a
-    missing preimage: BAD. Likewise an item index i ≥ |p_w| gives BAD.
+19. **Code that is not ℰ(↕**m**, **c**)** *(resolved in v0.8.1, #582)*. In v0.8.0, Ψ_R and **p**_c
+    (§14.3) split the looked-up preimage as ℰ(↕**m**, **c**) without saying what happens if it does
+    not have that form, and the model treated it like a missing preimage: BAD. In v0.8.1 the whole
+    preimage is the program blob, and Y skips the metadata (eq. `jamblobformat`). A blob that Y
+    cannot parse is Ψ_M's ☇, as for any invalid blob. An item index i ≥ |p_w| still gives BAD.
 20. **`pages` gives no ε'.** Ω_Z's row defines only (ω'_7, **m**'); with the common rules it
     continues (▸) in every case, including WHO and HUH.
 21. **Authorization's F(c) binds g only in its condition** (§8): α[c] ⊖ {(g_w)_a} names a g that
@@ -657,9 +714,10 @@ noted here and in a comment at the definition.
 22. **Recent history** (§7) follows the paper as written: β_H^† corrects the last state root, the
     new entry has state root ℍ_0 and super-peak ℳ_R(β_B'), and β_B' = 𝒜(β_B, r, ℋ_K). The
     vectors give r = ℳ_B(**s**, ℋ_K) directly (`accumulate_root`) and agree throughout.
-23. **Validator statistics** (§13.1). Three points the paper leaves loose:
-    * The guarantee count tests κ'_v ∈ G, but G (eq. `guarantorsig`) holds Ed25519 keys. We
-      compare (κ'_v)_e.
+23. **Validator statistics** (§13.1). Three points the paper leaves loose (the first is resolved in
+    v0.8.1):
+    * The guarantee count tested κ'_v ∈ G in v0.8.0, but G (eq. `guarantorsig`) holds Ed25519
+      keys. We compare (κ'_v)_e, which is what v0.8.1 writes (#565).
     * On an epoch change the fresh accumulator is written [(0, …), …] with no length. We use
       |κ'|, which |π_V'| = |κ'| (eq. `activityspec`) requires.
     * π_V^† credits assurances over N_{|κ|}, which we take as |π_V|.
@@ -668,9 +726,10 @@ noted here and in a comment at the definition.
     entropy and λ' that the vectors do not carry. The test builds G from κ' and each credential's
     validator index. The vectors agree with all three readings, including the full-size
     `stats_epoch_change_with_set_resize-1`, where the set shrinks from 1023 to 6 validators.
-24. **The service provision sum** (§13.2) is written ∑_{(s, **d**) ∈ E_P}(1, |**d**|) inside
-    ∀ s ∈ **s**. Read literally as a fresh binding, it would give every service the whole
-    extrinsic's count. We read s as already bound, so the sum covers that service's pairs only.
+24. **The service provision sum** (§13.2) *(resolved in v0.8.1, #565)*. v0.8.0 wrote
+    ∑_{(s, **d**) ∈ E_P}(1, |**d**|) inside ∀ s ∈ **s**. Read literally as a fresh binding, it would
+    give every service the whole extrinsic's count. We read s as already bound, so the sum covers
+    that service's pairs only; v0.8.1 writes exactly that (**p**_s = s).
     `preimages_order_check-3` provides to two services and agrees. The statistics vectors cover
     only validator records, and the preimages vectors only the provision counts. Core
     statistics and the refinement and accumulation parts of service records are modelled
@@ -680,9 +739,10 @@ noted here and in a comment at the definition.
     and use the vectors' names (`preimages_not_sorted_unique`, `preimage_unneeded`). Pairs are
     ordered by service, then by the data octets lexicographically. On an error, the vectors keep
     the prior state; the paper makes such a block invalid.
-26. **ℰ on Booleans.** Appendix C defines no encoding of {⊤, ⊥}, which appears in a verdict's
-    judgments and in faults (𝔼_D). We encode ⊤ as 1 and ⊥ as 0 (ℰ of the indicator, by the
-    notation section's ⊤ = 1, ⊥ = 0) and decode only those two octets. The codec vectors agree.
+26. **ℰ on Booleans** *(resolved in v0.8.1, #560)*. v0.8.0's Appendix C defined no encoding of
+    {⊤, ⊥}, which appears in a verdict's judgments and in faults (𝔼_D). We encoded ⊤ as 1 and ⊥ as 0
+    and decode only those two octets. v0.8.1 defines ℰ(⊥) = [0] and ℰ(⊤) = [1]. The codec vectors
+    agree.
 27. **Trie keys are 31 octets; the vectors' are 32.** State keys are 𝔹_31 (§D.1) and L stores
     exactly 31 octets of key, but `trie/trie.json` gives 32-octet keys. The test passes the first
     31 octets to M, after checking that no two keys of a case share them; all 11 roots then
@@ -731,14 +791,17 @@ noted here and in a comment at the definition.
     * *Offender keys.* **k** = {i_e | i ∈ λ ∪ κ} ∖ ψ_O. A key outside **k** is reported as
       `offender_already_reported` when it is in ψ_O, and as `bad_guarantor_key` (culprits) or
       `bad_auditor_key` (faults) otherwise. κ and λ are the prior sets, as the paper writes them.
-    * A bad verdict needs no culprits in GP 0.8.0, and the vectors agree
+    * A bad verdict needs no culprits in GP v0.8.1 (§10 is unchanged from v0.8.0), and the vectors agree
       (`progress_with_bad_verdict_without_culprits-1`). On an error the vectors keep the prior
       state; the paper makes such a block invalid.
 
 30. **Assurances** (§11.2). Signatures are checked through `Crypto.edVerify`, with the test oracle
     of note 29. The paper names no errors and gives no order between the conditions; each
-    assurance is checked in turn, in the order §11.2.1 states them: the anchor H_P, the assurer
-    index (a_v ∈ ℕ_{|κ|}) and order, the signature, then the bits. A core is cleared when its
+    assurance is checked in turn, in the order §11.2.1 states them: the assurer index
+    (a_v ∈ ℕ_{|κ|}) and order, the signature, then the bits. v0.8.1 removed the anchor and its
+    condition a_a = H_P (#562), so `assurance_with_bad_attestation_parent-1` (tiny and full), whose
+    only fault is its anchor, has no counterpart and is a listed deviation
+    (`Tests/AssurancesTest.lean`). A core is cleared when its
     report is in **R**, compared by encoding. A stale report that is still assigned may be
     assured and made available; the paper allows it (ρ^‡[c] ≠ ∅ is all a set bit needs) and the
     vectors agree (`assurances_for_stale_report-1`).
@@ -809,7 +872,12 @@ noted here and in a comment at the definition.
       v0.8.1's 𝖶_B. The tiny chain's 𝖫 is 24 (`Params.tiny`; the README omits it, the fuzzer
       protocol and `lookup_anchor_not_recent-1` use it).
 
-33. **Block import Υ** (§4, §5, Appendix D).
+33. **Block import Υ** (§4, §5, Appendix D). *Block import over the traces is suspended until
+    v0.8.1 traces exist: every trace header's H_R is a v0.8.0 state root, and v0.8.1's C(255) and
+    C(13) encodings (#539, #564) give other roots, so Υ would reject every block. CI now checks only
+    the T(σ) round trip of every raw trace state, after the test-only conversion
+    `Tests.TraceState.upgradeRaw`. The bullets from "The trace runner" on describe the v0.8.0 model
+    (tag `gp-v0.8.0`) and its results.*
     * *Composition.* `JAM.importBlock` (`JAM/BlockImport.lean`) composes the section transitions
       along GP eq. `transitionfunctioncomposition`: disputes, Safrole (with ψ'_O), assurances,
       guarantees (with κ', λ', η', ψ'_O and β_H^†), accumulation of **R**, recent history with θ',
@@ -825,8 +893,9 @@ noted here and in a comment at the definition.
       h ∈ 𝒜 ⇔ h = H ∨ (∃ i ∈ 𝒜 : h = P(i)).
     * *Serialization.* ρ's entries are serialized with the whole guarantee (r, t, **a**) and then
       ℰ_4 of the timestamp, as in C(10); the traces agree. The core and service statistics π_C, π_S
-      use the general natural encoding ℰ for every field, gas included; the traces agree, while
-      Appendix D says numeric state terms use fixed-length encodings by the size of the term.
+      use the general natural encoding ℰ for every field, gas included; the traces agree. v0.8.0's
+      Appendix D also said numeric state terms use fixed-length encodings by the size of the term;
+      v0.8.1 removed that sentence and changed C(13) (#564).
     * *The trace runner* (`Tests/TraceTest.lean`, `lake build tracetest` after
       `scripts/fetch-trace-vectors.sh`). Trace states are raw key-values. The model holds an
       account's storage and requests under the hash part of their state keys, with a_o and a_i

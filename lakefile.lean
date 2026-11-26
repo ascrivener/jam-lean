@@ -49,7 +49,7 @@ lean_lib Tests where
     .one `Tests.Blake2bTest, .one `Tests.HostGeneralTest, .one `Tests.JamJson,
     .one `Tests.KeccakTest, .one `Tests.RefineTest, .one `Tests.BlockJson,
     .one `Tests.StfRunner, .one `Tests.ReportsJson, .one `Tests.TraceState, .one `Tests.Sha512Test,
-    .one `Tests.V080]
+    .one `Tests.V080, .one `Tests.AuditingTest]
 
 lean_exe «pvmtest-exe» where
   root := `Tests.PvmTest
@@ -246,3 +246,7 @@ lean_exe «tracedebug-exe» where
     `python3 Tests/pvmbench_gen.py N [host]` writes a synthetic loop with N iterations). Not run by CI. -/
 lean_exe pvmbench where
   root := `Tests.PvmBench
+
+/-- Throughput of Blake2b-256 and Keccak-256 (4 KB and 144 KB messages). -/
+lean_exe hashbench where
+  root := `Tests.HashBench

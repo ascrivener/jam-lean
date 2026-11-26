@@ -103,6 +103,11 @@ section):
   add gas.
 - `psi_eq_psiFast` (`PVM/Fast.lean`, registered with `@[csimp]`): the fast interpreter that the
   tests run is equal to the paper-literal `psi`.
+- Fast paths for hashing and the state root, each proved equal to the spec definition and
+  registered with `@[csimp]` (compiled code uses the fast one; the kernel and every theorem see the
+  spec one): `hash_eq_hashFast` (`JAM/Blake2b.lean`, Blake2b), `sponge256_eq_sponge256Fast`
+  (`JAM/Keccak.lean`, Keccak-256 and SHA3-256) and `merkle_eq_merkleFast` (`JAM/Trie.lean`, M and
+  hence M_σ).
 - `psiA_confined` and `psiR_noExports` (`JAM/Theorems/Confinement.lean`): code that never names
   certain host calls cannot touch other accounts or export segments. Since GP v0.8.1 (supervisors,
   #539) `psiA_confined` also assumes `NoSupervisee e.accounts s`: in the initial state no other
@@ -128,6 +133,18 @@ section):
   stay 336 octets if they were). Typed views `ValidatorKey.View` (k_b, k_e, k_l, k_m as fixed-length
   vectors) and `etaView` (η as four `Vector UInt8 32`) with inverse conversions, keeping the public
   `List UInt8` representation.
+- Auditing (`JAM/Theorems/Auditing.lean`, GP v0.8.1 §17, off-chain): `shuffle_perm` (ℱ is a
+  permutation) and `shuffle_map`; tranche 0 draws at most ten reports (`tranche0_length_le`), each
+  core at most once (`tranche0Indexed_nodup_cores`), each from **q** (`tranche0Indexed_mem`); no
+  no-shows means no later-tranche selection (`laterSelected_zero`, `laterTranche_eq_nil`), and
+  selection is monotone in the no-show count (`laterSelected_mono`); `audited_iff` (the Boolean
+  decides U), U monotone in J_⊤ and in the current tranche (`audited_mono_positive`,
+  `audited_mono_current`) but revoked by one negative judgment below the supermajority
+  (`audited_false_of_negative`); the literal U collapses (`auditedLiteral_degenerate`, upstream
+  candidate v0.8.1-A8); U's supermajority is §10's good-verdict count
+  (`supermajority_iff_verdictGood`); `formVerdict_sound` (a formed verdict has §10's count, order and
+  a defined outcome, each vote backed by an observed judgment) and `formVerdict_good_complete`.
+  Scenario tests in `Tests/AuditingTest.lean` (no vectors exist for §17).
 
 **Provenance.** The model was written from the Gray Paper and the test vectors only. No other PVM
 or JAM implementation was consulted.

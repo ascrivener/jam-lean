@@ -13,6 +13,7 @@ import JAM.Erasure
 import JAM.Params
 import JAM.Host.General
 import JAM.Merkle
+import JAM.Segments
 import JAM.Accumulate
 import JAM.Accumulation
 import JAM.History
@@ -54,6 +55,7 @@ Built on `PVM` (Appendix A).
 * `JAM.Shuffle` — the Fisher–Yates shuffle ℱ and 𝒬_l (Appendix F)
 * `JAM.Erasure` — Reed–Solomon erasure coding ℰ_C and recovery ℛ over GF(2¹⁶) (Appendix H)
 * `JAM.History` — recent history β and the accumulation-output belt (§7, Appendix E MMB)
+* `JAM.Segments` — constant-depth Merkle trees ℳ, J_x, L_x and the paged proofs P, with their verifiers (Appendix E, §14)
 * `JAM.Authorization` — the authorizer pool α (§8)
 * `JAM.Statistics` — validator, core and service activity statistics (§13)
 * `JAM.Preimages` — the preimages extrinsic and its integration (§12.4)

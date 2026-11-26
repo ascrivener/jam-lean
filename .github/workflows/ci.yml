@@ -116,6 +116,9 @@ jobs:
       - name: Refine host functions, Ψ_R and Ψ_I (hand-written; no vectors exist)
         run: lake build Tests.RefineTest
 
+      - name: Constant-depth Merkle trees, J_x, L_x and paged proofs (hand-written; no vectors exist)
+        run: lake build Tests.SegmentsTest
+
       - name: The real witness binary rejects malformed payloads (a test, not a proof)
         run: lake build witnessrun
 

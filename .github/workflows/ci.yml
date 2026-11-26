@@ -116,6 +116,9 @@ jobs:
       - name: Refine host functions, Ψ_R and Ψ_I (hand-written; no vectors exist)
         run: lake build Tests.RefineTest
 
+      - name: Auditing scenarios, §17 (hand-built; no vectors exist)
+        run: lake build Tests.AuditingTest
+
       - name: Constant-depth Merkle trees, J_x, L_x and paged proofs (hand-written; no vectors exist)
         run: lake build Tests.SegmentsTest
 

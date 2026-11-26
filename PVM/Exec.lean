@@ -281,7 +281,8 @@ def exec (P : Program) (i : Nat) (ins : Instr) (ω : Regs) (μ : Memory) : Mutat
   | .regImmOffset op a x y => jumpTo (P.branch i y (regImmBranchCond op (r a) x.toNat)) ω
   -- §A.5.9
   | .twoReg op d a => { dflt with regs := set d (twoRegAlu op (r a)) }
-  -- §A.5.10
+  -- §A.5.10. The paper writes the signed loads here as 𝒵⁻¹_8(𝒵_n(…)) and in §A.5.6 as 𝒳_n(…); we
+  -- keep each form, and they agree (`PVM.Program.exec_loadIndI` in `PVM.Theorems.ExecForms`).
   | .twoRegImm op a b x =>
     let addr := r b + x.toNat
     match op with
@@ -296,6 +297,8 @@ def exec (P : Program) (i : Nat) (ins : Instr) (ω : Regs) (μ : Memory) : Mutat
     | .loadIndU32 => load a addr 4 id
     | .loadIndI32 => load a addr 4 (fun v => u64 (signed 4 v))
     | .loadIndU64 => load a addr 8 id
+    -- `twoRegImmAlu` is `none` only for the loads and stores above, so the default `0` is never
+    -- used (`PVM.Exec.twoRegImmAlu_eq_none_iff` in `PVM.Theorems.ExecForms`)
     | op => { dflt with regs := set a ((twoRegImmAlu op (r a) (r b) x.toNat).getD 0) }
   -- §A.5.11
   | .twoRegOffset op a b x => jumpTo (P.branch i x (twoRegBranchCond op (r a) (r b))) ω

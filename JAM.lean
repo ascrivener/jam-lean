@@ -29,6 +29,7 @@ import JAM.State
 import JAM.StateDecode
 import JAM.BlockImport
 import JAM.Refine
+import JAM.Auditing
 import JAM.Theorems.HostGas
 import JAM.Theorems.Confinement
 import JAM.Theorems.RefineContract
@@ -36,6 +37,7 @@ import JAM.Theorems.KeepRO
 import JAM.Theorems.KeepROAcc
 import JAM.Theorems.GrowHeap
 import JAM.Theorems.Safrole
+import JAM.Theorems.Auditing
 
 /-!
 # Gray Paper v0.8.0, Appendix B and the protocol terms it needs
@@ -68,6 +70,8 @@ Built on `PVM` (Appendix A).
 * `JAM.StateDecode` — σ from its key-values, the inverse of T (Appendix D)
 * `JAM.BlockImport` — the block-level transition Υ(σ, B) with the header's validity conditions (§4, §5)
 * `JAM.Refine` — the refine and is-authorized invocations Ψ_R and Ψ_I, with the refine host functions
+* `JAM.Auditing` — auditing and judging: the reports to audit, tranche-0 and later-tranche selection, announcements, judgments and the audited condition U (§17)
 * `JAM.Theorems.HostGas` — the dispatchers of Ψ_A, Ψ_R and Ψ_I never add gas
 * `JAM.Theorems.Safrole` — Safrole invariants: γ_A' sorted, unique and bounded by 𝖤; Z a permutation; |γ_S'| = 𝖤; η' and key well-formedness
+* `JAM.Theorems.Auditing` — auditing invariants: ℱ a permutation, tranche 0 draws at most ten distinct cores, no no-shows no escalation, U monotone in J_⊤ and the §10 verdict link
 -/

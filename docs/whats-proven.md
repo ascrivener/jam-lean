@@ -114,7 +114,7 @@ section):
   (γ_S' has 𝖤 entries on an epoch change, ticket and fallback cases alike, and keeps 𝖤 within an
   epoch); `safrole_ticketsMark_length` (H_W is Z(γ_A) with 𝖤 tickets); `maxAttempts_spec`
   (n = ⌈2𝖤/|γ_P'|⌉ for non-empty γ_P') and `safrole_tickets_nil_of_pending_nil` (the paper has
-  |γ_P'| = 𝖵 > 0; the model's lists carry no length, and an empty γ_P' gives n = 0 and admits no
+  |γ_P'| a multiple of 3 between 6 and 3𝖢, eq. `valcount`; the model's lists carry no length, and an empty γ_P' gives n = 0 and admits no
   tickets); `safrole_shape` and `safrole_wf` (τ' = H_T > τ; η' is four 32-octet hashes and keys
   stay 336 octets if they were). Typed views `ValidatorKey.View` (k_b, k_e, k_l, k_m as fixed-length
   vectors) and `etaView` (η as four `Vector UInt8 32`) with inverse conversions, keeping the public

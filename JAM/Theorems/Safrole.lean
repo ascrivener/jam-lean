@@ -19,8 +19,9 @@ without changing them.
   entries in both the ticket and the fallback case, and a γ_S of 𝖤 entries stays one
   (`safrole_sealKeys_length`).
 * **The entry-index bound n** (eq. `ticketsextrinsic`, `maxAttempts`) is ⌈2𝖤/|γ_P'|⌉ when
-  γ_P' is non-empty (`maxAttempts_spec`). In the paper γ_P' ∈ ⟦𝕂⟧_𝖵 (eq. `validatorkeys`), so
-  |γ_P'| = 𝖵 > 0 and the case |γ_P'| = 0 does not arise; the model's lists carry no length, and
+  γ_P' is non-empty (`maxAttempts_spec`). In the paper every validator sequence has a length in
+  𝕍 = {3c | c ∈ ℕ_{2…𝖢+1}}, "a multiple of 3 between 6 and 3𝖢" (eqs. `validatorkeys`, `valcount`),
+  so |γ_P'| ≥ 6 and the case |γ_P'| = 0 does not arise; the model's lists carry no length, and
   there n = 0 (Lean's x / 0 = 0), so a successful transition with an empty γ_P' admits no tickets
   (`safrole_tickets_nil_of_pending_nil`).
 * **η', τ' and the validator sets**: η' has four entries (and four 32-octet hashes if η had),
@@ -406,8 +407,8 @@ theorem maxAttempts_spec (params : Params) {p : List ValidatorKey} (hp : 0 < p.l
   rw [Nat.succ_mul] at this
   omega
 
-/-- In the paper |γ_P'| = 𝖵 > 0 (γ_P ∈ ⟦𝕂⟧_𝖵, eq. `validatorkeys`). The model's γ_P' is a list
-    of any length; when it is empty n = 0, and a successful transition then admits no tickets. -/
+/-- In the paper |γ_P'| is a multiple of 3 between 6 and 3𝖢 (eqs. `validatorkeys`, `valcount`), so
+    never 0. The model's γ_P' is a list of any length; when it is empty n = 0, and a successful transition then admits no tickets. -/
 theorem safrole_tickets_nil_of_pending_nil {params : Params} {c : Crypto} {s s' : SafroleState}
     {i : SafroleInput} {o : SafroleOutput} (h : safrole params c s i = .ok (s', o))
     (hp : s'.pending = []) : i.tickets = [] := by
@@ -422,6 +423,33 @@ theorem safrole_attempt_lt {params : Params} {c : Crypto} {s s' : SafroleState}
     {i : SafroleInput} {o : SafroleOutput} (h : safrole params c s i = .ok (s', o)) :
     ∀ t ∈ i.tickets, t.attempt < maxAttempts params s'.pending :=
   (safrole_ok h).2.1
+
+/-- n ≤ 256 whenever 2𝖤 ≤ 256⋅|γ_P'|. -/
+theorem maxAttempts_le_256 (params : Params) {p : List ValidatorKey} (hp : 0 < p.length)
+    (h : 2 * params.epochLen ≤ 256 * p.length) : maxAttempts params p ≤ 256 :=
+  (maxAttempts_spec params hp).2 256 h
+
+/-- The entry index fits the one octet `ticketContext` appends: on a successful transition with
+    2𝖤 ≤ 256⋅|γ_P'|, every e of E_T is below 256, so `UInt8.ofNat e` does not truncate. -/
+theorem safrole_attempt_fits {params : Params} {c : Crypto} {s s' : SafroleState}
+    {i : SafroleInput} {o : SafroleOutput} (h : safrole params c s i = .ok (s', o))
+    (hp : 2 * params.epochLen ≤ 256 * s'.pending.length) :
+    ∀ t ∈ i.tickets, t.attempt < 256 ∧ (UInt8.ofNat t.attempt).toNat = t.attempt := by
+  intro t ht
+  have hlt := safrole_attempt_lt h t ht
+  have hpos : 0 < s'.pending.length := by
+    cases hq : s'.pending with
+    | nil => rw [hq, maxAttempts_nil] at hlt; exact absurd hlt (Nat.not_lt_zero _)
+    | cons _ _ => simp
+  have h256 := maxAttempts_le_256 params hpos hp
+  refine ⟨by omega, ?_⟩
+  rw [UInt8.toNat_ofNat']; exact Nat.mod_eq_of_lt (by omega)
+
+/-- With the paper's |γ_P'| ≥ 6 (eq. `valcount`), the condition holds for 𝖤 ≤ 768, so for both
+    the full chain (𝖤 = 600) and the tiny one (𝖤 = 12). -/
+theorem attempt_fits_of_six (params : Params) {p : List ValidatorKey} (h6 : 6 ≤ p.length)
+    (hE : params.epochLen ≤ 768) : 2 * params.epochLen ≤ 256 * p.length := by
+  omega
 
 /-! ## η', τ' and the validator sets -/
 

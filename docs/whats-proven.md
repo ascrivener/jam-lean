@@ -1346,6 +1346,20 @@ below stay with their lines; the blob's side of them is checked (`Vendored/Field
 
 ### On `main`, not yet folded into the sections above
 
+- **Constant-depth Merkle trees and segment justifications** (`JAM/Segments.lean`, GP v0.8.1
+  Appendix E and §14): C, ℳ, T, J_x, L_x, 𝒫 and the paged proofs P, executable, with a verifier for
+  one segment and for one page (the paper gives no verifier; reading v0.8.1-A13 in
+  `docs/upstream-candidates.md`). Proved, with axioms propext, Classical.choice and Quot.sound only
+  and no hypotheses beyond the index being in range:
+  - `verifySegment_justify`: every segment verifies against ℳ(**v**) with its J_0 justification;
+  - `verifyPage_page_justify`: every page L_x(**v**, i) verifies against ℳ(**v**) with J_x(**v**, i);
+  - `pagedProofs_verify`, `length_pagedProofs`: P(**s**) has ⌈\|**s**\|/64⌉ segments, each the padded
+    encoding of a page and path that verify;
+  - `justify_zero_eq_page`: J_0(**v**, n) is J_x(**v**, ⌊n/2^x⌋) followed by the trace within that page.
+
+  Tested in `Tests/SegmentsTest.lean` (hand-computed cases, Blake2b values from an independent
+  Python reading, and the statements checked exhaustively on small sizes). No vector carries
+  segments with their root.
 - **The field formatters of refine's 6159 `Debug` line** (PRs #189, #213, #219, #220, #221;
   `Services/Bootstrap/Fmt/Field*.lean`, `N56*.lean`), frame-only summaries in the style of the Fmt
   ones: `write_char` (59743), `pad_wp` and `pad_z2` (`pad_integral` with `{:02x}`'s options), `u8hex_ok` (60209), `fmt_write_spec` (an

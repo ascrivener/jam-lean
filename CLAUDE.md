@@ -75,8 +75,9 @@ rebuilds only what changed since then instead of building cold for 4.5–5 h.
 - **Version change checklist** (whenever the model moves to a new GP version):
   - the README's title, intro and result tables;
   - CLAUDE.md and `docs/HANDOFF.md`;
-  - a `gp-vX` tag for the last model of the old version and one for the first of the new (Adam
-    creates tags in the GitHub UI; ask him, with the exact commit);
+  - a `gp-vX` tag for the last model of the old version and one for the first of the new. Sessions
+    cannot push tags: ask Adam with the exact commit, then run Actions -> Release (`release.yml`)
+    after his go-ahead, or he creates it in the GitHub UI;
   - jam-lean-target's pin, image and release;
   - finally, read both repositories' front pages as a visitor would.
 - **Crypto** stays a parameter. SHA-512 is in plain Lean.

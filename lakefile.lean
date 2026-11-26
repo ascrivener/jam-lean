@@ -241,3 +241,8 @@ target tracetest pkg : Unit := do
 lean_exe «tracedebug-exe» where
   root := `Tests.TraceDebug
   exeName := "tracedebug"
+
+/-- Development aid: time Ψ_H on a long-running program (`lake exe pvmbench <vector.json> [gas]`;
+    `python3 Tests/pvmbench_gen.py N [host]` writes a synthetic loop with N iterations). Not run by CI. -/
+lean_exe pvmbench where
+  root := `Tests.PvmBench

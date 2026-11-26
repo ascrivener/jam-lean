@@ -1,3 +1,6 @@
+"""Write a synthetic PVM program for `pvmbench`: a load/store/ALU loop of N iterations
+(`loop.json`), or with an `ecalli` in every iteration (`loophost.json`, second argument `host`).
+Usage: python3 Tests/pvmbench_gen.py N [host]"""
 import json, sys
 N = int(sys.argv[1]) if len(sys.argv) > 1 else 300000
 HOST = len(sys.argv) > 2

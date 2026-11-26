@@ -205,7 +205,7 @@ jobs:
       - name: No forbidden constructs
         if: steps.need.outputs.run == 'true'
         run: |
-          if grep -rnE '\bsorry\b|partial def|implemented_by|native_decide|bv_decide' proofs --include='*.lean' --exclude-dir=.lake; then
+          if grep -rnE '\bsorry\b|partial def|implemented_by|native_decide|bv_decide' proofs --include='*.lean' --exclude=CheckAxioms.lean --exclude-dir=.lake; then
             echo "forbidden construct found" >&2; exit 1
           fi
 

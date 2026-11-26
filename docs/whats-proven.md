@@ -107,6 +107,18 @@ section):
   `Program.exec_mem` (an instruction changes nothing off its writes), `Program.freeStep_keep` (a
   continuing step writes only writable octets, GP §A.4) and `refineContractK_keep` (`grow_heap` sets
   only heap pages; `fetch` writes only a writable range).
+- Safrole (`JAM/Theorems/Safrole.lean`, GP v0.8.1 §6), all for a successful `safrole`:
+  `safrole_accumulator_length` (|γ_A'| ≤ 𝖤); `safrole_accumulator_sorted` (if γ_A has unique
+  identifiers, γ_A' is strictly sorted by identifier with unique identifiers, so this is
+  invariant); `outsideIn_perm` (Z is a permutation, so keeps length); `safrole_sealKeys_length`
+  (γ_S' has 𝖤 entries on an epoch change, ticket and fallback cases alike, and keeps 𝖤 within an
+  epoch); `safrole_ticketsMark_length` (H_W is Z(γ_A) with 𝖤 tickets); `maxAttempts_spec`
+  (n = ⌈2𝖤/|γ_P'|⌉ for non-empty γ_P') and `safrole_tickets_nil_of_pending_nil` (the paper has
+  |γ_P'| a multiple of 3 between 6 and 3𝖢, eq. `valcount`; the model's lists carry no length, and an empty γ_P' gives n = 0 and admits no
+  tickets); `safrole_shape` and `safrole_wf` (τ' = H_T > τ; η' is four 32-octet hashes and keys
+  stay 336 octets if they were). Typed views `ValidatorKey.View` (k_b, k_e, k_l, k_m as fixed-length
+  vectors) and `etaView` (η as four `Vector UInt8 32`) with inverse conversions, keeping the public
+  `List UInt8` representation.
 
 **Provenance.** The model was written from the Gray Paper and the test vectors only. No other PVM
 or JAM implementation was consulted.

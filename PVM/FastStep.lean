@@ -1,6 +1,7 @@
 import PVM.Fast
 import PVM.FastMem
 import PVM.FastAlu
+import PVM.FastParse
 
 /-!
 # Ψ on the page-chunked memory, proved equal to the paper's

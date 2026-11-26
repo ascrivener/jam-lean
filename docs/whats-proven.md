@@ -102,7 +102,14 @@ section):
   `isAuthHostFn_gasNonIncreasing` (`JAM/Theorems/HostGas.lean`): the protocol's dispatchers never
   add gas.
 - `psi_eq_psiFast` (`PVM/Fast.lean`, registered with `@[csimp]`): the fast interpreter that the
-  tests run is equal to the paper-literal `psi`.
+  tests run is equal to the paper-literal `psi`. Compiled code goes further down a chain of proved
+  `@[csimp]` replacements: `psiFast_eq_psiFaster` (`PVM/FastStep.lean`: page-chunked memory,
+  per-index decode and block-cost tables), `psiHStarFast_eq_psiHStarFaster` (`PVM/FastHost.lean`),
+  `Exec.bitwise_eq_bitwiseFast` (`PVM/FastAlu.lean`), and `Blob.parse?_eq_parseFast`,
+  `JamBlob.parse?_eq_parseFast` and `standardInit_eq_standardInitFast` (`PVM/FastParse.lean`). The
+  kernel and every theorem still see the paper-literal definitions. Since #274, `Program.prepare`
+  builds a lazy `info` table and its `costs` table is a `Thunk`: a stale Services proof that unfolds
+  `Program.prepare` or `Prepared.cost` directly needs its unfolding adjusted when proof work resumes.
 - Fast paths for hashing and the state root, each proved equal to the spec definition and
   registered with `@[csimp]` (compiled code uses the fast one; the kernel and every theorem see the
   spec one): `hash_eq_hashFast` (`JAM/Blake2b.lean`, Blake2b), `sponge256_eq_sponge256Fast`

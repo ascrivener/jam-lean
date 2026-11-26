@@ -44,7 +44,7 @@ def main (args : List String) : IO UInt32 := do
   let tiny := args.getD 0 (root / "tiny").toString
   let full := args.getD 1 (root / "full").toString
   let mut failed := false
-  if !(GF.primitive && GF.cantorIsBasis) then
+  if !(GF.primitive GF.expTable GF.logTable && GF.cantorIsBasis) then
     IO.eprintln "FAIL: the field polynomial is not primitive or the Cantor basis is not a basis"
     failed := true
   for (label, dir, v) in [("tiny", tiny, 6), ("full", full, 1023)] do

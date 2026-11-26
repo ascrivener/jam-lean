@@ -21,6 +21,12 @@ rebuilds only what changed since then instead of building cold for 4.5–5 h.
   equation. Prefer the vectors' own updates (davxy/jam-test-vectors master) where they cover it.
 - **Toolchain.** Lean v4.36.0-rc1, with core and Std only. If installing elan is blocked, download
   the official release.
+- **Mathlib, proofs only** (Adam, 2026-11-26). Mathlib (tag `v4.36.0-rc1`, matching the toolchain) may
+  be used only in a separate proofs-only library (e.g. `JamCryptoProofs`) that no executable and no
+  model or JamCrypto module imports. Its purpose is proving fast implementations equal to the
+  reference ones (e.g. curve group laws for faster scalar multiplication). The model, JamCrypto, the
+  tests' executables and jam-lean-target stay core+Std. A fast implementation proved there is called
+  directly by its users (no `@[csimp]` across the boundary), and CI builds the proofs library.
 - **Forbidden:** `sorry`, `partial def`, `implemented_by`, `native_decide` and `bv_decide`.
   Axioms may be only `propext`, `Classical.choice` and `Quot.sound`. Check with `#print axioms` or
   `scripts/CheckAxioms.lean`.

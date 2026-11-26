@@ -241,3 +241,7 @@ target tracetest pkg : Unit := do
 lean_exe «tracedebug-exe» where
   root := `Tests.TraceDebug
   exeName := "tracedebug"
+
+/-- Throughput of Blake2b-256 and Keccak-256 (4 KB and 144 KB messages). -/
+lean_exe hashbench where
+  root := `Tests.HashBench

@@ -15,32 +15,90 @@ definition is otherwise the same as `psi`'s.
 `psiFast` wherever compiled code calls `psi`. This is a proved replacement: `@[csimp]` requires
 the equality theorem (unlike attributes that swap in unverified code), and the kernel and every
 theorem still see the paper-literal `psi`.
+
+`Prepared` also carries a lazily filled per-index table (`info`: the decoded instruction,
+ı + 1 + skip(ı), 𝔳_inst, ζ_ı ∈ T, ı ∈ ϖ and ϱ^Δ(𝔏(ı))), with `infoAt_prepare`, `startAt_prepare`
+and `chargeAt_prepare` stating that it agrees with the spec definitions.
+`PVM.FastStep` uses them.
 -/
 
 namespace PVM
 
-/-- A program prepared for fast execution: 𝔳_blob checked once, block costs memoized. -/
+/-- The facts about index `i` of a program that each step needs: the decoded instruction (an
+    undecodable octet read as `trap`, as in `Program.step`), ı + 1 + skip(ı), 𝔳_inst, whether
+    ζ_ı ∈ T, whether ı ∈ ϖ, and the cost ϱ^Δ(𝔏(ı)) of the block containing ı (itself lazy: it is
+    only needed when a block is entered). -/
+structure InstrInfo where
+  instr : Instr
+  next : Nat
+  valid : Bool
+  term : Bool
+  start : Bool
+  charge : Thunk Nat
+
+/-- The `InstrInfo` of index `i`, computed from the spec definitions. -/
+def Program.info (P : Program) (i : Nat) : InstrInfo :=
+  { instr := (P.decode i).getD (.noArgs .trap), next := P.next i, valid := P.vInst i,
+    term := isTerminator (P.zeta i), start := P.isBlockStart i,
+    charge := Thunk.mk fun _ => P.blockCost (P.blockStartOf i) }
+
+/-- A program prepared for fast execution: 𝔳_blob checked once, block costs memoized, and, for
+    every index of **c**, a lazily evaluated `InstrInfo` (so each instruction is decoded, and the
+    block containing it found, once per program). -/
 structure Prepared where
   prog : Program
   valid : Bool
-  costs : Array (Thunk Nat)
+  /-- The block-cost table of `Prepared.step`, built on first use (the fast path of
+      `PVM.FastStep` does not use it). -/
+  costs : Thunk (Array (Thunk Nat))
+  info : Array (Thunk InstrInfo) := #[]
 
-/-- Prepare a program: check 𝔳_blob once and set up a lazy cost table for every index. -/
+/-- Prepare a program: check 𝔳_blob once and set up the lazy tables for every index. -/
 def Program.prepare (P : Program) : Prepared :=
   { prog := P, valid := P.vBlob,
-    costs := Array.ofFn (n := P.code.size) fun k => Thunk.mk fun _ => P.blockCost k.val }
+    costs := Thunk.mk fun _ => Array.ofFn (n := P.code.size) fun k => Thunk.mk fun _ => P.blockCost k.val,
+    info := Array.ofFn (n := P.code.size) fun k => Thunk.mk fun _ => P.info k.val }
 
 namespace Prepared
 
 /-- ϱ^Δ at `k`, from the memoized table. -/
 def cost (Q : Prepared) (k : Nat) : Nat :=
-  if h : k < Q.costs.size then Q.costs[k].get else Q.prog.blockCost k
+  let cs := Q.costs.get
+  if h : k < cs.size then cs[k].get else Q.prog.blockCost k
 
 theorem cost_prepare (P : Program) (k : Nat) : P.prepare.cost k = P.blockCost k := by
   unfold cost Program.prepare
+  simp only [Thunk.get]
+  by_cases h : k < P.code.size
+  · simp [h]
+  · simp [h]
+
+/-- The `InstrInfo` of index `i`, from the table. -/
+@[inline] def infoAt (Q : Prepared) (i : Nat) : InstrInfo :=
+  if h : i < Q.info.size then Q.info[i].get else Q.prog.info i
+
+/-- ı ∈ ϖ, from the table. -/
+@[inline] def startAt (Q : Prepared) (n : Nat) : Bool :=
+  if h : n < Q.info.size then Q.info[n].get.start else Q.prog.isBlockStart n
+
+/-- ϱ^Δ(𝔏(ı)), from the table. -/
+@[inline] def chargeAt (Q : Prepared) (i : Nat) : Nat := (Q.infoAt i).charge.get
+
+theorem infoAt_prepare (P : Program) (i : Nat) : P.prepare.infoAt i = P.info i := by
+  unfold infoAt Program.prepare
   split
   · simp [Thunk.get]
   · rfl
+
+theorem startAt_prepare (P : Program) (n : Nat) : P.prepare.startAt n = P.isBlockStart n := by
+  unfold startAt Program.prepare
+  split
+  · simp [Thunk.get, Program.info]
+  · rfl
+
+theorem chargeAt_prepare (P : Program) (i : Nat) :
+    P.prepare.chargeAt i = P.blockCost (P.blockStartOf i) := by
+  simp [chargeAt, infoAt_prepare, Program.info, Thunk.get]
 
 /-- The gas stage of Ψ₁ with the memoized cost (cf. `Program.chargeGas`). -/
 def chargeGas (Q : Prepared) (i : Nat) (gas : UInt64) (charged : Bool) : Status × UInt64 × Bool :=

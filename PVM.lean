@@ -17,6 +17,8 @@ import PVM.Theorems.Invocation
 import PVM.Theorems.HostIds
 import PVM.Theorems.InitMem
 import PVM.Theorems.BlobLimits
+import PVM.Theorems.GasFuel
+import PVM.Theorems.ExecForms
 import PVM.Logic.Free
 import PVM.Logic.Host
 import PVM.Logic.Invariant
@@ -46,5 +48,6 @@ import PVM.SymExec.Loop
 * `PVM.Invocation` — Ψ_H, Y and Ψ_M (§A.6–A.8)
 * `PVM.FastHost` — a fast Ψ_H and Ψ_M, proved equal to the paper's and used by compiled code (`@[csimp]`)
 * `PVM.Tables`   — generated from the paper's LaTeX: opcodes, T, the gas cost table
-* `PVM.Theorems` — host calls and their ids, termination and Ψ's and Ψ_H's equations, decoding, blobs
+* `PVM.Theorems` — host calls and their ids, termination and Ψ's and Ψ_H's equations, decoding, blobs,
+  the gas simulation's fuel (`GasFuel`) and the unreachable defaults of Ψ₁ (`ExecForms`)
 -/

@@ -1,3 +1,4 @@
+import JAM.Fast
 import JAM.Codec
 import JAM.Constants
 import JAM.Account

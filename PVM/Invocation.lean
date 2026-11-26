@@ -1,5 +1,5 @@
 import PVM.Machine
-import PVM.Fast
+import PVM.Fast.Basic
 
 /-!
 # Host-call invocation Ψ_H, standard initialization Y and argument invocation Ψ_M

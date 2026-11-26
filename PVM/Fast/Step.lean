@@ -1,7 +1,7 @@
-import PVM.Fast
-import PVM.FastMem
-import PVM.FastAlu
-import PVM.FastParse
+import PVM.Fast.Basic
+import PVM.Fast.Mem
+import PVM.Fast.Alu
+import PVM.Fast.Parse
 
 /-!
 # Ψ on the page-chunked memory, proved equal to the paper's
@@ -9,7 +9,7 @@ import PVM.FastParse
 `psiFaster` runs Ψ on a prepared program (`Program.prepare`) with three changes from `psiFast`:
 
 * RAM is a `FastMem` (the spec `Memory` with a page-chunked overlay of written octets,
-  `PVM.FastMem`), so stores update a page in place instead of inserting into a tree;
+  `PVM.Fast.Mem`), so stores update a page in place instead of inserting into a tree;
 * each step reads the decoded instruction, ı + 1 + skip(ı), 𝔳_inst, ζ_ı ∈ T and the block starts
   ϖ, and the block cost ϱ^Δ(𝔏(ı)), from the lazily filled per-index table of `Prepared` (each
   instruction decoded, and 𝔏 searched, once per program);

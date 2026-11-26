@@ -1,3 +1,4 @@
+import JAM.Fast.Blake2b
 import JAM.Assurances
 import JAM.Shuffle
 import JAM.Constants

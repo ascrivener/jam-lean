@@ -1,5 +1,5 @@
 import PVM.Invocation
-import PVM.FastStep
+import PVM.Fast.Step
 
 /-!
 # A fast Ψ_H, proved equal to the paper's
@@ -22,7 +22,7 @@ definitions. `psiH` and `psiM` need their own `@[csimp]` because their compiled 
 `PVM.Invocation`) predates this module.
 
 `psiHStarFaster` runs the same loop on the page-chunked memory and per-index tables of
-`PVM.FastStep` (`Prepared.hostFuelF`): each segment between host calls runs on a `FastMem`, whose
+`PVM.Fast.Step` (`Prepared.hostFuelF`): each segment between host calls runs on a `FastMem`, whose
 overlay is written back for the handler. `psiHStarFast_eq_psiHStarFaster` is registered with
 `@[csimp]` before `psiHFast` and `psiMFast` are defined, so compiled code reaches
 `psiHStarFaster` from `psiHStar`, `psiH` and `psiM`.

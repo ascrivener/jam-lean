@@ -1,3 +1,4 @@
+import JAM.Fast.Blake2b
 import JAM.State
 import JAM.Reports
 import JAM.Assurances

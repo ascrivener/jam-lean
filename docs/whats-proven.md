@@ -87,6 +87,15 @@ pinned commit do not cover these layers.
 section):
 - `psi_eq` (`PVM/Theorems/Termination.lean`): the executable `psi` satisfies the paper's
   recursive definition of Ψ, and its fuel never runs out.
+- `Sim.run_fuel_eq`, `Program.blockCost?_isSome_of_deblob` and `Program.blockCost_eq_of_deblob`
+  (`PVM/Theorems/GasFuel.lean`): the gas simulation 𝔛 (§A.9) always finishes within its fuel
+  (more fuel never changes the result), and for every block Ψ charges it meets only opcodes in U,
+  so ϱ^Δ is the simulated cost and `blockCost`'s default `1` is unreachable. The proof uses
+  bounds on the §A.10 cost table that `decide` checks over all 256 octets.
+- `Program.step_decode`, `Exec.twoRegImmAlu_eq_none_iff` and `Program.exec_loadIndI`
+  (`PVM/Theorems/ExecForms.lean`): Ψ₁'s `trap` default for an undecodable octet and `exec`'s
+  `.getD 0` are never used. The paper writes the signed loads two ways, as 𝒳_n in §A.5.6 and as
+  𝒵⁻¹_8 ∘ 𝒵_n in §A.5.10, and the two agree.
 - `psiHStar_eq` (`PVM/Theorems/Invocation.lean`): `psiHStar` is the paper's Ψ_H* for any handler
   that never adds gas.
 - `accHostFn_gasNonIncreasing`, `refineHostFn_gasNonIncreasing` and

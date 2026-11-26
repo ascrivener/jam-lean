@@ -224,7 +224,7 @@ lean_exe «safroletest-exe» where
   exeName := "safroletest"
 
 /-- Run the Safrole STF (§6) on every safrole vector (tiny and full), with the crypto oracle read
-    from the vectors (see `Tests/SafroleTest.lean`). -/
+    from the vectors and again with JamCrypto's ring VRF (see `Tests/SafroleTest.lean`). -/
 target safroletest pkg : Unit := do
   runOnVectors `«safroletest-exe» #[(jamVectorDir pkg / "stf" / "safrole").toString]
 

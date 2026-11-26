@@ -17,7 +17,8 @@ least 255 and adds at most 2 · 104 + 4; starting an entry (WAIT → EXE) lowers
 and uses one start slot; a cycle step never raises the potential and resets the slots, and the
 invariant `Sim.Inv` shows that a cycle step that lowers neither must have been preceded by a
 decode or start since the last cycle (otherwise 𝔛 would have decoded, started or stopped
-instead). The bounds used from the cost table (GP §A.10): 1 ≤ č ≤ 100, ď ≤ 4, x̌ ≤ (4, 4, 4, 1, 1).
+instead). The bounds used from the cost table (GP §A.10), checked by `decide` over all 256
+octets: č ≤ 100, ď ≤ 4, x̌ ≤ (4, 4, 4, 1, 1), and č ≥ 1 unless x̌ = 0 (only `move_reg` has č = 0).
 -/
 
 namespace PVM
@@ -776,5 +777,207 @@ theorem run_fuel_isSome (P : Program) (s : Nat) (hU : ∀ j, Reach P s j → (P.
   run_isSome P s hU _ _ (inv_init P s) (measure_init P s)
 
 end Sim
+
+/-! ## Every block Ψ charges decodes only opcodes in U -/
+
+/-- Every opcode in U decodes, and has a row in the cost table (GP §A.5, §A.10). -/
+def opcodeTotal (n : Nat) : Bool :=
+  (match formatOf? n with
+    | none => true
+    | some .noArgs => (NoArgsOp.ofOpcode? n).isSome
+    | some .oneImm => (OneImmOp.ofOpcode? n).isSome
+    | some .regExtImm => (RegExtImmOp.ofOpcode? n).isSome
+    | some .twoImm => (TwoImmOp.ofOpcode? n).isSome
+    | some .oneOffset => (OneOffsetOp.ofOpcode? n).isSome
+    | some .regImm => (RegImmOp.ofOpcode? n).isSome
+    | some .regTwoImm => (RegTwoImmOp.ofOpcode? n).isSome
+    | some .regImmOffset => (RegImmOffsetOp.ofOpcode? n).isSome
+    | some .twoReg => (TwoRegOp.ofOpcode? n).isSome
+    | some .twoRegImm => (TwoRegImmOp.ofOpcode? n).isSome
+    | some .twoRegOffset => (TwoRegOffsetOp.ofOpcode? n).isSome
+    | some .twoRegTwoImm => (TwoRegTwoImmOp.ofOpcode? n).isSome
+    | some .threeReg => (ThreeRegOp.ofOpcode? n).isSome) &&
+  (!isValidOpcode n || (costRow? n).isSome)
+
+set_option maxRecDepth 100000 in
+theorem opcodeTotal_lt : ∀ n, n < 256 → opcodeTotal n = true := by
+  decide
+
+namespace Program
+
+/-- 𝔳_inst's opcode condition **c**_ı ∈ U makes the instruction at ı decode (so Ψ₁'s fallback
+    `trap` for an undecodable octet is unreachable). -/
+theorem decode_isSome {P : Program} {i : Nat} (h : isValidOpcode (P.zeta i) = true) :
+    (P.decode i).isSome := by
+  have ht := opcodeTotal_lt _ (zeta_lt P i)
+  unfold isValidOpcode at h
+  unfold opcodeTotal at ht
+  unfold decode
+  generalize P.zeta i = op at h ht ⊢
+  cases hf : formatOf? op with
+  | none => rw [hf] at h; cases h
+  | some fmt => cases fmt <;> simp_all
+
+theorem costRow_isSome {P : Program} {i : Nat} (h : isValidOpcode (P.zeta i) = true) :
+    (costRow? (P.zeta i)).isSome := by
+  have ht := opcodeTotal_lt _ (zeta_lt P i)
+  simp only [opcodeTotal, Bool.and_eq_true, Bool.or_eq_true, Bool.not_eq_true'] at ht
+  rcases ht.2 with h' | h'
+  · rw [h] at h'; cases h'
+  · exact h'
+
+theorem instrCost?_isSome {P : Program} {i : Nat} (h : isValidOpcode (P.zeta i) = true) :
+    (P.instrCost? i).isSome := by
+  obtain ⟨ins, hd⟩ := Option.isSome_iff_exists.1 (decode_isSome h)
+  obtain ⟨row, hr⟩ := Option.isSome_iff_exists.1 (costRow_isSome h)
+  simp [instrCost?, hd, hr, bind, Option.bind, pure]
+
+theorem maskAt_eq_maskExt (P : Program) {i : Nat} (h : i < P.mask.size) : P.maskAt i = P.maskExt i := by
+  simp [maskAt, maskExt, Array.getD, h]
+
+/-- skip(c) is the least j with (**k** ⌢ [1, 1, …])_{c+1+j} = 1, capped at 24 (GP eq. `skip`). -/
+theorem maskExt_of_lt_skip (P : Program) (c : Nat) {k : Nat} (hk : k < P.skip c) :
+    P.maskExt (c + 1 + k) = false := by
+  unfold skip at hk
+  cases hf : (List.range 24).find? (fun j => P.maskExt (c + 1 + j)) with
+  | none =>
+    rw [hf] at hk
+    have := List.find?_eq_none.1 hf k (List.mem_range.2 (by simpa using hk))
+    simpa using this
+  | some m =>
+    rw [hf] at hk
+    obtain ⟨-, i, hi, him, hmin⟩ := List.find?_eq_some_iff_getElem.1 hf
+    rw [List.getElem_range] at him
+    subst him
+    have := hmin k (by simpa using hk)
+    simpa [List.getElem_range] using this
+
+theorem vBlobAux_cases (P : Program) :
+    ∀ (f c : Nat), P.vBlobAux f c = true → (0 < c ∧ c = P.mask.size) ∨ P.vInst c = true
+  | 0, _, h => by simp [vBlobAux] at h
+  | f + 1, c, h => by
+    simp only [vBlobAux] at h
+    split at h
+    · rename_i h1; simp only [Bool.and_eq_true, decide_eq_true_eq, beq_iff_eq] at h1; exact .inl h1
+    · split at h
+      · cases h
+      · split at h
+        · exact .inr ‹_›
+        · cases h
+
+/-- Along a program passing 𝔳_blob, every opcode index ≥ c of the chain is 𝔳_inst, and so is the
+    one after a non-terminator. -/
+theorem vBlobAux_chain (P : Program) (hsz : P.mask.size = P.code.size) :
+    ∀ (f c : Nat), P.vBlobAux f c = true → ∀ j, c ≤ j → j < P.code.size → P.maskAt j = true →
+      P.vInst j = true ∧ (isTerminator (P.zeta j) = false → P.vInst (P.next j) = true)
+  | 0, _, h => by simp [vBlobAux] at h
+  | f + 1, c, h => by
+    intro j hcj hj hm
+    simp only [vBlobAux] at h
+    split at h
+    · rename_i h1; simp only [Bool.and_eq_true, decide_eq_true_eq, beq_iff_eq] at h1; omega
+    · rename_i h1
+      split at h
+      · cases h
+      · rename_i h2
+        split at h
+        · rename_i hvc
+          by_cases hjc : j = c
+          · subst hjc
+            refine ⟨hvc, fun ht => ?_⟩
+            rcases vBlobAux_cases P f _ h with ⟨-, hn⟩ | hn
+            · exact absurd (by simp [hn, ht]) h2
+            · exact hn
+          · have hlt : P.next c ≤ j := by
+              refine Nat.le_of_not_lt fun hlt => ?_
+              have hk : j - (c + 1) < P.skip c := by unfold next at hlt; omega
+              have := P.maskExt_of_lt_skip c hk
+              rw [show c + 1 + (j - (c + 1)) = j by omega, ← P.maskAt_eq_maskExt (by omega),
+                hm] at this
+              cases this
+            exact vBlobAux_chain P hsz f _ h j hlt hj hm
+        · cases h
+
+theorem vBlob_vInst_zero {P : Program} (hv : P.vBlob = true) : P.vInst 0 = true := by
+  rcases vBlobAux_cases P _ 0 hv with ⟨h, -⟩ | h
+  · cases h
+  · exact h
+
+theorem vBlob_size {P : Program} (hv : P.vBlob = true) : P.mask.size = P.code.size := by
+  have := vBlob_vInst_zero hv
+  simp only [vInst, Bool.and_eq_true, beq_iff_eq] at this
+  exact this.1.1.1
+
+/-- In a program passing 𝔳_blob, every instruction 𝔛 decodes from a valid opcode index is valid. -/
+theorem vBlob_reach {P : Program} (hv : P.vBlob = true) {s : Nat} (hs : P.vInst s = true) :
+    ∀ j, Sim.Reach P s j → P.vInst j = true := by
+  intro j hr
+  induction hr with
+  | refl => exact hs
+  | step _ ht ih =>
+    have hj := ih
+    simp only [vInst, Bool.and_eq_true, beq_iff_eq, decide_eq_true_eq] at hj
+    exact (vBlobAux_chain P (vBlob_size hv) _ 0 hv _ (Nat.zero_le _) (by omega) hj.1.2 |>.2) ht
+
+theorem vInst_isValidOpcode {P : Program} {i : Nat} (h : P.vInst i = true) :
+    isValidOpcode (P.zeta i) = true := by
+  simp only [vInst, Bool.and_eq_true] at h; exact h.2
+
+/-- ϱ^Δ(**c**, **k**, s) is defined (the simulation finishes within its fuel and meets no opcode
+    outside U) for every valid opcode index s of a program passing 𝔳_blob. -/
+theorem blockCost?_isSome_of_vBlob {P : Program} (hv : P.vBlob = true) {s : Nat}
+    (hs : P.vInst s = true) : (P.blockCost? s).isSome := by
+  unfold blockCost?
+  rw [Option.isSome_map]
+  exact Sim.run_fuel_isSome P s fun j hj =>
+    instrCost?_isSome (vInst_isValidOpcode (vBlob_reach hv hs j hj))
+
+theorem blockStartFrom_spec (P : Program) :
+    ∀ n, P.isBlockStart (P.blockStartFrom n) = true ∨ P.blockStartFrom n = 0
+  | 0 => .inr rfl
+  | n + 1 => by
+    simp only [blockStartFrom]
+    split
+    · exact .inl ‹_›
+    · exact blockStartFrom_spec P n
+
+/-- 𝔏(ı), for a program passing 𝔳_blob, is a valid opcode index. -/
+theorem vInst_blockStartOf {P : Program} (hv : P.vBlob = true) (i : Nat) :
+    P.vInst (P.blockStartOf i) = true := by
+  rcases blockStartFrom_spec P i with h | h
+  · simp only [isBlockStart, isInstrStart, Bool.and_eq_true, decide_eq_true_eq] at h
+    obtain ⟨-, ⟨hlt, hm⟩, hu⟩ := h
+    simp only [blockStartOf, vInst, Bool.and_eq_true, beq_iff_eq, decide_eq_true_eq]
+    exact ⟨⟨⟨vBlob_size hv, by rw [vBlob_size hv]; exact decide_eq_true hlt⟩, hm⟩, hu⟩
+  · rw [blockStartOf, h]; exact vBlob_vInst_zero hv
+
+/-- **The default of `blockCost` is unreachable in Ψ**: at every step Ψ takes (deblob succeeds),
+    the block it charges has a simulated cost. -/
+theorem blockCost?_isSome_of_deblob {p : ByteArray} {i : Nat} {P : Program}
+    (h : deblob p i = some P) : (P.blockCost? (P.blockStartOf i)).isSome := by
+  unfold deblob at h
+  cases hp : Blob.parse? p with
+  | none => simp [hp] at h
+  | some Q =>
+    simp only [hp, bind, Option.bind] at h
+    split at h
+    · rename_i hv
+      cases h
+      simp only [Bool.and_eq_true] at hv
+      exact blockCost?_isSome_of_vBlob hv.1 (vInst_blockStartOf hv.1 i)
+    · cases h
+
+/-- `blockCost` is the simulated cost max(**x**^final_c − 3, 1) for every block Ψ charges. -/
+theorem blockCost_eq_of_deblob {p : ByteArray} {i : Nat} {P : Program}
+    (h : deblob p i = some P) :
+    ∃ z, Sim.run P (Sim.fuel P (P.blockStartOf i)) (Sim.init (P.blockStartOf i)) = some z ∧
+      P.blockCost (P.blockStartOf i) = max (z.cycle - 3) 1 := by
+  have hs := blockCost?_isSome_of_deblob h
+  unfold blockCost? at hs
+  rw [Option.isSome_map] at hs
+  obtain ⟨z, hz⟩ := Option.isSome_iff_exists.1 hs
+  exact ⟨z, hz, by simp [blockCost, blockCost?, hz]⟩
+
+end Program
 
 end PVM

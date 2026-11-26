@@ -329,13 +329,14 @@ namespace Program
 
 /-- ϱ^Δ(**c**, **k**, ı) = max(**x**^final_c − 3, 1) (GP eq. `gascostforblock`); `none` if the
     simulation meets an opcode outside U. The fuel never runs out (`PVM.Sim.run_fuel_eq`), and
-    for the blocks Ψ charges (ı a block start of a program passing 𝔳_blob) the result is always
-    `some` (`PVM.Program.blockCost?_isSome_of_vBlob` in `PVM.Theorems.GasFuel`). -/
+    for the blocks Ψ charges (ı a valid opcode index of a program passing 𝔳_blob) the result is
+    always `some` (`PVM.Program.blockCost?_isSome_of_vBlob`, `PVM.Program.blockCost?_isSome_of_deblob`
+    in `PVM.Theorems.GasFuel`). -/
 def blockCost? (P : Program) (i : Nat) : Option Nat :=
   (Sim.run P (Sim.fuel P i) (Sim.init i)).map fun x => max (x.cycle - 3) 1
 
 /-- ϱ^Δ as a total function: the simulated cost. The default `1` is unreachable for the blocks
-    Ψ charges (`PVM.Program.blockCost_eq_of_vBlob` in `PVM.Theorems.GasFuel`). -/
+    Ψ charges (`PVM.Program.blockCost_eq_of_deblob` in `PVM.Theorems.GasFuel`). -/
 def blockCost (P : Program) (i : Nat) : Nat := (P.blockCost? i).getD 1
 
 end Program

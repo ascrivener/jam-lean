@@ -127,9 +127,10 @@ These points are recorded in the model's
 * *Note 3, §A.4.* The prose says that a RAM index below $`2^{16}` always panics, "regardless of the
   apparent (in)accessibility". The formula for $`\varepsilon^\mu` considers only inaccessible indices. The model
   follows the formula ({api}`PVM.memoryException`).
-* *Note 2, the branch target.* A branch target $`\imath + \mathcal{Z}(\dots)` can be negative, and $`\zeta` is undefined there.
-  In the model a negative target is never the start of a basic block, so the branch panics
-  ({api}`PVM.Program.branch`).
+* *Note 2, §A.10, the branch cost.* The gas model's $`\mathfrak{b}` reads $`\zeta` at the branch
+  target $`\imath + \mathcal{Z}(\dots)`, which can be negative, where $`\zeta` is undefined. The
+  model reads a negative index as 0 (`trap`), like an index past the end of $`\mathbf{c}`
+  ({api}`PVM.Program.zetaInt`, used by {api}`PVM.Program.branchCost`).
 * *Note 1, §A.10.* The gas model's $`\mathfrak{P}_S` compares $`\varphi_A = \varphi_D`, which, read literally, compares
   register values. The gas model has no values, so the model compares the indices $`r_A = r_D`.
 * *Note 5.* $`\Psi` returns $`\imath = 0` on $`\blacksquare` and ☇, while the test vectors report the instruction that exited.

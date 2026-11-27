@@ -89,7 +89,9 @@ are suspended until v0.8.1 vectors exist (same document, "Suspended until v0.8.1
   v0.8.0 host-call ids and register layouts, so under v0.8.1's host calls even plain storage writes
   answer WHO: 15 of the 63 pass. CI only builds the runner (`acctest-exe`). Hand-written v0.8.1
   checks in `Tests/HostGeneralTest.lean` cover the accumulate host calls write, supervisor, new,
-  transfer, eject and bless, the discard rule N and the transfer partition T.
+  transfer, eject and bless, the discard rule N and the transfer partition T, and run small
+  hand-assembled services through Ψ_A, Δ_*, Δ_+ and the accumulation STF (θ', N, T over rounds,
+  privilege merging with R).
 * **block import Υ over the traces** (`tracetest`). Every trace header's H_R is a v0.8.0 state
   root, and v0.8.1's C(255) and C(13) encodings give other roots, so Υ would reject every block.
   CI runs only the T(σ) round trip of every raw trace state.
@@ -105,7 +107,7 @@ over the traces, are in that tag's README.
 | Model's ϖ against the blocks the vectors list | identical in all 367 programs |
 | `JAM` codec (Appendix C): every GP v0.8.0 codec vector (headers, blocks, all extrinsics, the work-package family), encoded from JSON and round-tripped through ℰ⁻¹; the three holding assurances are compared without the anchor v0.8.1 removed (#562) | **15 / 15** tiny, **15 / 15** full |
 | `JAM` Blake2b-256 vs. `hashlib` and RFC 7693 | **13 / 13** match |
-| `JAM` general and accumulate host functions, hand-written v0.8.1 cases (`#guard`s in `Tests/HostGeneralTest.lean`) | **78 / 78** pass |
+| `JAM` general and accumulate host functions, hand-written v0.8.1 cases (`#guard`s in `Tests/HostGeneralTest.lean`) | **107 / 107** pass |
 | `JAM` Keccak-256 / SHA3-256 vs. `hashlib` and standard vectors | **15 / 15** match |
 | `JAM` SHA-512 vs. FIPS 180-2 examples and `hashlib`; the VRF output Y of one trace block against its η'_0 | **9 / 9** match; **1 / 1** |
 | `JAM` refine host functions, Ψ_R and Ψ_I, hand-written cases (no vectors exist) | **83 / 83** pass, 2 more kernel-checked |

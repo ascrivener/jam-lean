@@ -100,10 +100,10 @@ tag := "safrole-tickets"
 %%%
 
 A ticket carries an entry index below n and a Ring VRF proof over the context
-`$jam_ticket_seal` ⌢ η₂′ ⌢ e (eq. `ticketsextrinsic`). The extrinsic is bounded by 𝖪 before the
+`$jam_ticket_seal` ⌢ η₂′ ⧺ e (eq. `ticketsextrinsic`). The extrinsic is bounded by 𝖪 before the
 epoch's tail and by 0 within it (eq. `enforceticketlimit`):
 
-$$`\mathbf{E}_T \in \left\lbrack\left(e \in \mathbb{N}_n,\; p \in \bar{\mathbb{V}}^{\gamma'_Z}_{X_T \frown \eta'_2 \frown e}\langle[]\rangle\right)\right\rbrack \quad \text{where } n = \left\lceil \frac{2\mathsf{E}}{|\gamma'_P|} \right\rceil \qquad |\mathbf{E}_T| \le \begin{cases} \mathsf{K} & \text{when } m' < \mathsf{Y} \\ 0 & \text{otherwise} \end{cases}`
+$$`\mathbf{E}_T \in \left\lbrack\left(e \in \mathbb{N}_n,\; p \in \mathring{\mathbb{V}}^{[]}_{\gamma'_Z}\langle X_T \frown \eta'_2 \mathbin{+\!\!+} e \rangle\right)\right\rbrack \quad \text{where } n = \left\lceil \frac{2\mathsf{E}}{|\gamma'_P|} \right\rceil \qquad |\mathbf{E}_T| \le \begin{cases} \mathsf{K} & \text{when } m' < \mathsf{Y} \\ 0 & \text{otherwise} \end{cases}`
 
 {leanSource JAM.maxAttempts}
 
@@ -114,7 +114,7 @@ $$`\mathbf{E}_T \in \left\lbrack\left(e \in \mathbb{N}_n,\; p \in \bar{\mathbb{V
 The new accumulator keeps the 𝖤 lowest identifiers of the union of the new tickets 𝐧 with the old
 accumulator, or with nothing at an epoch change. Every submitted ticket must survive:
 
-$$`\gamma'_A \equiv \overrightarrow{\left[x \in \mathbf{n} \cup \begin{cases} [] & \text{when } e' > e \\ \gamma_A & \text{otherwise} \end{cases} \;\middle\|\; x_y \right]}^{\mathsf{E}} \qquad \mathbf{n} \subseteq \gamma'_A`
+$$`\gamma'_A \equiv \overrightarrow{\left[x \in \mathbf{n} \cup \begin{cases} \emptyset & \text{when } e' > e \\ \gamma_A & \text{otherwise} \end{cases} \;\wr\; x_y \right]}^{\mathsf{E}} \qquad \mathbf{n} \subseteq \gamma'_A`
 
 In {name}`JAM.safrole` this is the `acc'` binding: a merge sort by identifier, then `take E`, and
 the `uselessTicket` check for 𝐧 ⊆ γ\_A′. The order on identifiers is {name}`JAM.octetLt`:
@@ -141,8 +141,8 @@ note 31 of the model's
 * *The order on identifiers.* Tickets are ordered by their identifier y ∈ ℍ, but no order on ℍ is
   defined. The model compares octet sequences lexicographically ({name}`JAM.octetLt`), the evident
   reading and the one the test vectors use.
-* *The entry index in the context.* `$jam_ticket_seal` ⌢ η₂′ ⌢ e appends a natural number to an
-  octet sequence without saying how. The model appends one octet ({name}`JAM.ticketContext`), and
+* *The entry index in the context.* `$jam_ticket_seal` ⌢ η₂′ ⧺ e appends a natural number to an
+  octet sequence without saying how it is encoded. The model appends one octet ({name}`JAM.ticketContext`), and
   proves that one octet holds every allowed e for the full and tiny chains:
 
 {docstring JAM.safrole_attempt_fits}

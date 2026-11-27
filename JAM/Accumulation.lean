@@ -1,3 +1,5 @@
+import JAM.Fast.Keccak
+import JAM.Fast.Blake2b
 import JAM.Accumulate
 import JAM.Merkle
 

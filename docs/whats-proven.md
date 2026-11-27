@@ -101,20 +101,14 @@ section):
 - `accHostFn_gasNonIncreasing`, `refineHostFn_gasNonIncreasing` and
   `isAuthHostFn_gasNonIncreasing` (`JAM/Theorems/HostGas.lean`): the protocol's dispatchers never
   add gas.
-- `psi_eq_psiFast` (`PVM/Fast.lean`, registered with `@[csimp]`): the fast interpreter that the
-  tests run is equal to the paper-literal `psi`. Compiled code goes further down a chain of proved
-  `@[csimp]` replacements: `psiFast_eq_psiFaster` (`PVM/FastStep.lean`: page-chunked memory,
-  per-index decode and block-cost tables), `psiHStarFast_eq_psiHStarFaster` (`PVM/FastHost.lean`),
-  `Exec.bitwise_eq_bitwiseFast` (`PVM/FastAlu.lean`), and `Blob.parse?_eq_parseFast`,
-  `JamBlob.parse?_eq_parseFast` and `standardInit_eq_standardInitFast` (`PVM/FastParse.lean`). The
+- `psi_eq_psiFast` (`PVM/Fast/Basic.lean`, registered with `@[csimp]`): the fast interpreter that the
+  tests run is equal to the paper-literal `psi`. Every fast compiled form of the model (the rest of
+  the Ψ chain, the ALU, the blob parsers and Y, the gas simulation, ℋ, ℋ_K, M and `grow_heap`) is
+  likewise proved equal to its spec definition and registered with `@[csimp]`. They live in fast
+  modules (`PVM/Fast/`, `JAM/Fast/`); `docs/fast-paths.md` lists every pair with its theorem. The
   kernel and every theorem still see the paper-literal definitions. Since #274, `Program.prepare`
   builds a lazy `info` table and its `costs` table is a `Thunk`: a stale Services proof that unfolds
   `Program.prepare` or `Prepared.cost` directly needs its unfolding adjusted when proof work resumes.
-- Fast paths for hashing and the state root, each proved equal to the spec definition and
-  registered with `@[csimp]` (compiled code uses the fast one; the kernel and every theorem see the
-  spec one): `hash_eq_hashFast` (`JAM/Blake2b.lean`, Blake2b), `sponge256_eq_sponge256Fast`
-  (`JAM/Keccak.lean`, Keccak-256 and SHA3-256) and `merkle_eq_merkleFast` (`JAM/Trie.lean`, M and
-  hence M_σ).
 - `psiA_confined` and `psiR_noExports` (`JAM/Theorems/Confinement.lean`): code that never names
   certain host calls cannot touch other accounts or export segments. Since GP v0.8.1 (supervisors,
   #539) `psiA_confined` also assumes `NoSupervisee e.accounts s`: in the initial state no other

@@ -132,8 +132,12 @@ def gen_mul(n, p, n0, square):
             ms.append(m)
             s2 = g.bind("s", f"{s} + {m} * {P[0]}", f"{N(s)} + {N(m)} * {P[0]}")
             acc = g.bind("c", f"{s2} >>> {W}", f"{N(s2)} / 2^{W}")
+            # the Montgomery step by the generic `mont_col` (omega would have to rediscover the
+            # modular identity 1 + n0·p0 ≡ 0 with 58-bit coefficients, slowly)
+            proof = (f"(by obtain ⟨e, hm, hc⟩ := mont_col (B := 2^{W}) (C := 2^37) h_{m} h_{s2} h_{acc} "
+                     f"(by decide) (Nat.lt_of_lt_of_le l_{s2} (by decide)); exact ⟨by omega, hm, hc⟩)")
             g.eqn("mul", f"{natnc} + {N(m)} * {P[0]}", N(cprev) if cprev else "0", "0", N(acc),
-                  (f"{N(m)} < 2^{W}", True), f"{N(acc)} < 2^37")
+                  (f"{N(m)} < 2^{W}", True), f"{N(acc)} < 2^37", proof=proof)
         else:
             rk = g.bind("r", f"{s} &&& {M}", f"{N(s)} % 2^{W}")
             r.append(rk)

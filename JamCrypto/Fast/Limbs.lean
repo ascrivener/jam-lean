@@ -224,4 +224,24 @@ theorem mul_fin {T D E M w p R : Nat} (e1 : T * R = E + M * p) (e2 : D + p = T +
   · refine ⟨fun h => absurd h (by omega), fun _ => ⟨by omega, mod_of_eq (k := 0) (M := M) ?_⟩⟩
     rw [Nat.zero_mul, Nat.add_zero, e1]
 
+/-- One column of Montgomery reduction: with m = s·n0 mod B and 1 + n0·p0 ≡ 0 (mod B), s + m·p0 is
+    divisible by B, so it is B times its carry c; and m, c are bounded. -/
+theorem mont_col {sN mN s2N cN n0 p0 B C : Nat} (hm : mN = sN * n0 % B) (hs2 : s2N = sN + mN * p0)
+    (hc : cN = s2N / B) (hk : (1 + n0 * p0) % B = 0) (hb : s2N < B * C) :
+    sN + mN * p0 = 0 + B * cN ∧ mN < B ∧ cN < C := by
+  have hB : 0 < B := by
+    rcases Nat.eq_zero_or_pos B with h | h
+    · subst h; simp at hb
+    · exact h
+  have hmod : s2N % B = 0 := by
+    rw [hs2, hm, Nat.add_mod, Nat.mul_mod (sN * n0 % B), Nat.mod_mod, ← Nat.mul_mod, ← Nat.add_mod,
+      Nat.mul_assoc, show sN + sN * (n0 * p0) = sN * (1 + n0 * p0) by rw [Nat.mul_add, Nat.mul_one],
+      Nat.mul_mod, hk, Nat.mul_zero, Nat.zero_mod]
+  refine ⟨?_, hm ▸ Nat.mod_lt _ hB, ?_⟩
+  · rw [← hs2, hc, Nat.zero_add]
+    have := Nat.div_add_mod s2N B
+    rw [hmod, Nat.add_zero] at this
+    exact this.symm
+  · rw [hc]; exact (Nat.div_lt_iff_lt_mul hB).mpr (by rw [Nat.mul_comm]; exact hb)
+
 end JamCrypto.Fast

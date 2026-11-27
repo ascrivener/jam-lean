@@ -186,9 +186,7 @@ theorem mul_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have l_s3 := UInt64.toNat_lt s3
   have h_c4 : c4.toNat = s3.toNat / 536870912 := by clear ha1 ha2 ha3 ha4 ha5 ha6 ha7 ha8 hav hb1 hb2 hb3 hb4 hb5 hb6 hb7 hb8 hbv hABlt hE; simp only [c4, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c4 := UInt64.toNat_lt c4
-  have k1 : (a.l0.toNat * b.l0.toNat) + m2.toNat * 1 + 0 = 0 + 536870912 * c4.toNat := by clear ha1 ha2 ha3 ha4 ha5 ha6 ha7 ha8 hav hb1 hb2 hb3 hb4 hb5 hb6 hb7 hb8 hbv hABlt hE; omega
-  have k2 : m2.toNat < 536870912 := by clear ha1 ha2 ha3 ha4 ha5 ha6 ha7 ha8 hav hb1 hb2 hb3 hb4 hb5 hb6 hb7 hb8 hbv hABlt hE; omega
-  have k3 : c4.toNat < 137438953472 := by clear ha1 ha2 ha3 ha4 ha5 ha6 ha7 ha8 hav hb1 hb2 hb3 hb4 hb5 hb6 hb7 hb8 hbv hABlt hE; omega
+  obtain ⟨k1, k2, k3⟩ : (a.l0.toNat * b.l0.toNat) + m2.toNat * 1 + 0 = 0 + 536870912 * c4.toNat ∧ m2.toNat < 536870912 ∧ c4.toNat < 137438953472 := (by obtain ⟨e, hm, hc⟩ := mont_col (B := 536870912) (C := 137438953472) h_m2 h_s3 h_c4 (by decide) (Nat.lt_of_lt_of_le l_s3 (by decide)); exact ⟨by omega, hm, hc⟩)
   clear hp0_0 h_s1 l_s1 h_m2 l_m2 h_s3 l_s3 h_c4 l_c4
   have ps1 := chain (B' := 536870912) (I := 0) (O := 0) (c := 0) (B := 1) rfl k1 (by decide)
   clear k1
@@ -202,9 +200,7 @@ theorem mul_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have l_s7 := UInt64.toNat_lt s7
   have h_c8 : c8.toNat = s7.toNat / 536870912 := by clear ha2 ha3 ha4 ha5 ha6 ha7 ha8 hav hb2 hb3 hb4 hb5 hb6 hb7 hb8 hbv hABlt hE ps1; simp only [c8, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c8 := UInt64.toNat_lt c8
-  have k4 : (a.l0.toNat * b.l1.toNat) + (a.l1.toNat * b.l0.toNat) + (m2.toNat * 536870904) + m6.toNat * 1 + c4.toNat = 0 + 536870912 * c8.toNat := by clear ha2 ha3 ha4 ha5 ha6 ha7 ha8 hav hb2 hb3 hb4 hb5 hb6 hb7 hb8 hbv hABlt hE ps1; omega
-  have k5 : m6.toNat < 536870912 := by clear ha2 ha3 ha4 ha5 ha6 ha7 ha8 hav hb2 hb3 hb4 hb5 hb6 hb7 hb8 hbv hABlt hE ps1; omega
-  have k6 : c8.toNat < 137438953472 := by clear ha2 ha3 ha4 ha5 ha6 ha7 ha8 hav hb2 hb3 hb4 hb5 hb6 hb7 hb8 hbv hABlt hE ps1; omega
+  obtain ⟨k4, k5, k6⟩ : (a.l0.toNat * b.l1.toNat) + (a.l1.toNat * b.l0.toNat) + (m2.toNat * 536870904) + m6.toNat * 1 + c4.toNat = 0 + 536870912 * c8.toNat ∧ m6.toNat < 536870912 ∧ c8.toNat < 137438953472 := (by obtain ⟨e, hm, hc⟩ := mont_col (B := 536870912) (C := 137438953472) h_m6 h_s7 h_c8 (by decide) (Nat.lt_of_lt_of_le l_s7 (by decide)); exact ⟨by omega, hm, hc⟩)
   clear hp0_1 hp1_0 h_s5 l_s5 h_m6 l_m6 h_s7 l_s7 h_c8 l_c8
   have ps2 := chain (B' := 288230376151711744) ps1 k4 (by decide)
   clear k4 ps1
@@ -219,9 +215,7 @@ theorem mul_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have l_s11 := UInt64.toNat_lt s11
   have h_c12 : c12.toNat = s11.toNat / 536870912 := by clear ha3 ha4 ha5 ha6 ha7 ha8 hav hb3 hb4 hb5 hb6 hb7 hb8 hbv hABlt hE k3 ps2; simp only [c12, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c12 := UInt64.toNat_lt c12
-  have k7 : (a.l0.toNat * b.l2.toNat) + (a.l1.toNat * b.l1.toNat) + (a.l2.toNat * b.l0.toNat) + (m2.toNat * 529989567) + (m6.toNat * 536870904) + m10.toNat * 1 + c8.toNat = 0 + 536870912 * c12.toNat := by clear ha3 ha4 ha5 ha6 ha7 ha8 hav hb3 hb4 hb5 hb6 hb7 hb8 hbv hABlt hE k3 ps2; omega
-  have k8 : m10.toNat < 536870912 := by clear ha3 ha4 ha5 ha6 ha7 ha8 hav hb3 hb4 hb5 hb6 hb7 hb8 hbv hABlt hE k3 ps2; omega
-  have k9 : c12.toNat < 137438953472 := by clear ha3 ha4 ha5 ha6 ha7 ha8 hav hb3 hb4 hb5 hb6 hb7 hb8 hbv hABlt hE k3 ps2; omega
+  obtain ⟨k7, k8, k9⟩ : (a.l0.toNat * b.l2.toNat) + (a.l1.toNat * b.l1.toNat) + (a.l2.toNat * b.l0.toNat) + (m2.toNat * 529989567) + (m6.toNat * 536870904) + m10.toNat * 1 + c8.toNat = 0 + 536870912 * c12.toNat ∧ m10.toNat < 536870912 ∧ c12.toNat < 137438953472 := (by obtain ⟨e, hm, hc⟩ := mont_col (B := 536870912) (C := 137438953472) h_m10 h_s11 h_c12 (by decide) (Nat.lt_of_lt_of_le l_s11 (by decide)); exact ⟨by omega, hm, hc⟩)
   clear hp0_2 hp1_1 hp2_0 h_s9 l_s9 h_m10 l_m10 h_s11 l_s11 h_c12 l_c12
   have ps3 := chain (B' := 154742504910672534362390528) ps2 k7 (by decide)
   clear k7 ps2
@@ -237,9 +231,7 @@ theorem mul_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have l_s15 := UInt64.toNat_lt s15
   have h_c16 : c16.toNat = s15.toNat / 536870912 := by clear ha4 ha5 ha6 ha7 ha8 hav hb4 hb5 hb6 hb7 hb8 hbv hABlt hE k3 k6 ps3; simp only [c16, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c16 := UInt64.toNat_lt c16
-  have k10 : (a.l0.toNat * b.l3.toNat) + (a.l1.toNat * b.l2.toNat) + (a.l2.toNat * b.l1.toNat) + (a.l3.toNat * b.l0.toNat) + (m2.toNat * 457704959) + (m6.toNat * 529989567) + (m10.toNat * 536870904) + m14.toNat * 1 + c12.toNat = 0 + 536870912 * c16.toNat := by clear ha4 ha5 ha6 ha7 ha8 hav hb4 hb5 hb6 hb7 hb8 hbv hABlt hE k3 k6 ps3; omega
-  have k11 : m14.toNat < 536870912 := by clear ha4 ha5 ha6 ha7 ha8 hav hb4 hb5 hb6 hb7 hb8 hbv hABlt hE k3 k6 ps3; omega
-  have k12 : c16.toNat < 137438953472 := by clear ha4 ha5 ha6 ha7 ha8 hav hb4 hb5 hb6 hb7 hb8 hbv hABlt hE k3 k6 ps3; omega
+  obtain ⟨k10, k11, k12⟩ : (a.l0.toNat * b.l3.toNat) + (a.l1.toNat * b.l2.toNat) + (a.l2.toNat * b.l1.toNat) + (a.l3.toNat * b.l0.toNat) + (m2.toNat * 457704959) + (m6.toNat * 529989567) + (m10.toNat * 536870904) + m14.toNat * 1 + c12.toNat = 0 + 536870912 * c16.toNat ∧ m14.toNat < 536870912 ∧ c16.toNat < 137438953472 := (by obtain ⟨e, hm, hc⟩ := mont_col (B := 536870912) (C := 137438953472) h_m14 h_s15 h_c16 (by decide) (Nat.lt_of_lt_of_le l_s15 (by decide)); exact ⟨by omega, hm, hc⟩)
   clear hp0_3 hp1_2 hp2_1 hp3_0 h_s13 l_s13 h_m14 l_m14 h_s15 l_s15 h_c16 l_c16
   have ps4 := chain (B' := 83076749736557242056487941267521536) ps3 k10 (by decide)
   clear k10 ps3
@@ -256,9 +248,7 @@ theorem mul_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have l_s19 := UInt64.toNat_lt s19
   have h_c20 : c20.toNat = s19.toNat / 536870912 := by clear ha5 ha6 ha7 ha8 hav hb5 hb6 hb7 hb8 hbv hABlt hE k3 k6 k9 ps4; simp only [c20, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c20 := UInt64.toNat_lt c20
-  have k13 : (a.l0.toNat * b.l4.toNat) + (a.l1.toNat * b.l3.toNat) + (a.l2.toNat * b.l2.toNat) + (a.l3.toNat * b.l1.toNat) + (a.l4.toNat * b.l0.toNat) + (m2.toNat * 494949691) + (m6.toNat * 457704959) + (m10.toNat * 529989567) + (m14.toNat * 536870904) + m18.toNat * 1 + c16.toNat = 0 + 536870912 * c20.toNat := by clear ha5 ha6 ha7 ha8 hav hb5 hb6 hb7 hb8 hbv hABlt hE k3 k6 k9 ps4; omega
-  have k14 : m18.toNat < 536870912 := by clear ha5 ha6 ha7 ha8 hav hb5 hb6 hb7 hb8 hbv hABlt hE k3 k6 k9 ps4; omega
-  have k15 : c20.toNat < 137438953472 := by clear ha5 ha6 ha7 ha8 hav hb5 hb6 hb7 hb8 hbv hABlt hE k3 k6 k9 ps4; omega
+  obtain ⟨k13, k14, k15⟩ : (a.l0.toNat * b.l4.toNat) + (a.l1.toNat * b.l3.toNat) + (a.l2.toNat * b.l2.toNat) + (a.l3.toNat * b.l1.toNat) + (a.l4.toNat * b.l0.toNat) + (m2.toNat * 494949691) + (m6.toNat * 457704959) + (m10.toNat * 529989567) + (m14.toNat * 536870904) + m18.toNat * 1 + c16.toNat = 0 + 536870912 * c20.toNat ∧ m18.toNat < 536870912 ∧ c20.toNat < 137438953472 := (by obtain ⟨e, hm, hc⟩ := mont_col (B := 536870912) (C := 137438953472) h_m18 h_s19 h_c20 (by decide) (Nat.lt_of_lt_of_le l_s19 (by decide)); exact ⟨by omega, hm, hc⟩)
   clear hp0_4 hp1_3 hp2_2 hp3_1 hp4_0 h_s17 l_s17 h_m18 l_m18 h_s19 l_s19 h_c20 l_c20
   have ps5 := chain (B' := 44601490397061246283071436545296723011960832) ps4 k13 (by decide)
   clear k13 ps4
@@ -276,9 +266,7 @@ theorem mul_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have l_s23 := UInt64.toNat_lt s23
   have h_c24 : c24.toNat = s23.toNat / 536870912 := by clear ha6 ha7 ha8 hav hb6 hb7 hb8 hbv hABlt hE k3 k6 k9 k12 ps5; simp only [c24, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c24 := UInt64.toNat_lt c24
-  have k16 : (a.l0.toNat * b.l5.toNat) + (a.l1.toNat * b.l4.toNat) + (a.l2.toNat * b.l3.toNat) + (a.l3.toNat * b.l2.toNat) + (a.l4.toNat * b.l1.toNat) + (a.l5.toNat * b.l0.toNat) + (m2.toNat * 201589968) + (m6.toNat * 494949691) + (m10.toNat * 457704959) + (m14.toNat * 529989567) + (m18.toNat * 536870904) + m22.toNat * 1 + c20.toNat = 0 + 536870912 * c24.toNat := by clear ha6 ha7 ha8 hav hb6 hb7 hb8 hbv hABlt hE k3 k6 k9 k12 ps5; omega
-  have k17 : m22.toNat < 536870912 := by clear ha6 ha7 ha8 hav hb6 hb7 hb8 hbv hABlt hE k3 k6 k9 k12 ps5; omega
-  have k18 : c24.toNat < 137438953472 := by clear ha6 ha7 ha8 hav hb6 hb7 hb8 hbv hABlt hE k3 k6 k9 k12 ps5; omega
+  obtain ⟨k16, k17, k18⟩ : (a.l0.toNat * b.l5.toNat) + (a.l1.toNat * b.l4.toNat) + (a.l2.toNat * b.l3.toNat) + (a.l3.toNat * b.l2.toNat) + (a.l4.toNat * b.l1.toNat) + (a.l5.toNat * b.l0.toNat) + (m2.toNat * 201589968) + (m6.toNat * 494949691) + (m10.toNat * 457704959) + (m14.toNat * 529989567) + (m18.toNat * 536870904) + m22.toNat * 1 + c20.toNat = 0 + 536870912 * c24.toNat ∧ m22.toNat < 536870912 ∧ c24.toNat < 137438953472 := (by obtain ⟨e, hm, hc⟩ := mont_col (B := 536870912) (C := 137438953472) h_m22 h_s23 h_c24 (by decide) (Nat.lt_of_lt_of_le l_s23 (by decide)); exact ⟨by omega, hm, hc⟩)
   clear hp0_5 hp1_4 hp2_3 hp3_2 hp4_1 hp5_0 h_s21 l_s21 h_m22 l_m22 h_s23 l_s23 h_c24 l_c24
   have ps6 := chain (B' := 23945242826029513411849172299223580994042798784118784) ps5 k16 (by decide)
   clear k16 ps5
@@ -297,9 +285,7 @@ theorem mul_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have l_s27 := UInt64.toNat_lt s27
   have h_c28 : c28.toNat = s27.toNat / 536870912 := by clear ha7 ha8 hav hb7 hb8 hbv hABlt hE k3 k6 k9 k12 k15 ps6; simp only [c28, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c28 := UInt64.toNat_lt c28
-  have k19 : (a.l0.toNat * b.l6.toNat) + (a.l1.toNat * b.l5.toNat) + (a.l2.toNat * b.l4.toNat) + (a.l3.toNat * b.l3.toNat) + (a.l4.toNat * b.l2.toNat) + (a.l5.toNat * b.l1.toNat) + (a.l6.toNat * b.l0.toNat) + (m2.toNat * 354471143) + (m6.toNat * 201589968) + (m10.toNat * 494949691) + (m14.toNat * 457704959) + (m18.toNat * 529989567) + (m22.toNat * 536870904) + m26.toNat * 1 + c24.toNat = 0 + 536870912 * c28.toNat := by clear ha7 ha8 hav hb7 hb8 hbv hABlt hE k3 k6 k9 k12 k15 ps6; omega
-  have k20 : m26.toNat < 536870912 := by clear ha7 ha8 hav hb7 hb8 hbv hABlt hE k3 k6 k9 k12 k15 ps6; omega
-  have k21 : c28.toNat < 137438953472 := by clear ha7 ha8 hav hb7 hb8 hbv hABlt hE k3 k6 k9 k12 k15 ps6; omega
+  obtain ⟨k19, k20, k21⟩ : (a.l0.toNat * b.l6.toNat) + (a.l1.toNat * b.l5.toNat) + (a.l2.toNat * b.l4.toNat) + (a.l3.toNat * b.l3.toNat) + (a.l4.toNat * b.l2.toNat) + (a.l5.toNat * b.l1.toNat) + (a.l6.toNat * b.l0.toNat) + (m2.toNat * 354471143) + (m6.toNat * 201589968) + (m10.toNat * 494949691) + (m14.toNat * 457704959) + (m18.toNat * 529989567) + (m22.toNat * 536870904) + m26.toNat * 1 + c24.toNat = 0 + 536870912 * c28.toNat ∧ m26.toNat < 536870912 ∧ c28.toNat < 137438953472 := (by obtain ⟨e, hm, hc⟩ := mont_col (B := 536870912) (C := 137438953472) h_m26 h_s27 h_c28 (by decide) (Nat.lt_of_lt_of_le l_s27 (by decide)); exact ⟨by omega, hm, hc⟩)
   clear hp0_6 hp1_5 hp2_4 hp3_3 hp4_2 hp5_1 hp6_0 h_s25 l_s25 h_m26 l_m26 h_s27 l_s27 h_c28 l_c28
   have ps7 := chain (B' := 12855504354071922204335696738729300820177623950262342682411008) ps6 k19 (by decide)
   clear k19 ps6
@@ -319,9 +305,7 @@ theorem mul_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have l_s31 := UInt64.toNat_lt s31
   have h_c32 : c32.toNat = s31.toNat / 536870912 := by clear ha8 hav hb8 hbv hABlt hE k3 k6 k9 k12 k15 k18 ps7; simp only [c32, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c32 := UInt64.toNat_lt c32
-  have k22 : (a.l0.toNat * b.l7.toNat) + (a.l1.toNat * b.l6.toNat) + (a.l2.toNat * b.l5.toNat) + (a.l3.toNat * b.l4.toNat) + (a.l4.toNat * b.l3.toNat) + (a.l5.toNat * b.l2.toNat) + (a.l6.toNat * b.l1.toNat) + (a.l7.toNat * b.l0.toNat) + (m2.toNat * 174404527) + (m6.toNat * 354471143) + (m10.toNat * 201589968) + (m14.toNat * 494949691) + (m18.toNat * 457704959) + (m22.toNat * 529989567) + (m26.toNat * 536870904) + m30.toNat * 1 + c28.toNat = 0 + 536870912 * c32.toNat := by clear ha8 hav hb8 hbv hABlt hE k3 k6 k9 k12 k15 k18 ps7; omega
-  have k23 : m30.toNat < 536870912 := by clear ha8 hav hb8 hbv hABlt hE k3 k6 k9 k12 k15 k18 ps7; omega
-  have k24 : c32.toNat < 137438953472 := by clear ha8 hav hb8 hbv hABlt hE k3 k6 k9 k12 k15 k18 ps7; omega
+  obtain ⟨k22, k23, k24⟩ : (a.l0.toNat * b.l7.toNat) + (a.l1.toNat * b.l6.toNat) + (a.l2.toNat * b.l5.toNat) + (a.l3.toNat * b.l4.toNat) + (a.l4.toNat * b.l3.toNat) + (a.l5.toNat * b.l2.toNat) + (a.l6.toNat * b.l1.toNat) + (a.l7.toNat * b.l0.toNat) + (m2.toNat * 174404527) + (m6.toNat * 354471143) + (m10.toNat * 201589968) + (m14.toNat * 494949691) + (m18.toNat * 457704959) + (m22.toNat * 529989567) + (m26.toNat * 536870904) + m30.toNat * 1 + c28.toNat = 0 + 536870912 * c32.toNat ∧ m30.toNat < 536870912 ∧ c32.toNat < 137438953472 := (by obtain ⟨e, hm, hc⟩ := mont_col (B := 536870912) (C := 137438953472) h_m30 h_s31 h_c32 (by decide) (Nat.lt_of_lt_of_le l_s31 (by decide)); exact ⟨by omega, hm, hc⟩)
   clear hp0_7 hp1_6 hp2_5 hp3_4 hp4_3 hp5_2 hp6_1 hp7_0 h_s29 l_s29 h_m30 l_m30 h_s31 l_s31 h_c32 l_c32
   have ps8 := chain (B' := 6901746346790563787434755862277025452451108972170386555162524223799296) ps7 k22 (by decide)
   clear k22 ps7
@@ -342,9 +326,7 @@ theorem mul_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have l_s35 := UInt64.toNat_lt s35
   have h_c36 : c36.toNat = s35.toNat / 536870912 := by clear hav hbv hABlt hE k3 k6 k9 k12 k15 k18 k21 ps8; simp only [c36, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c36 := UInt64.toNat_lt c36
-  have k25 : (a.l0.toNat * b.l8.toNat) + (a.l1.toNat * b.l7.toNat) + (a.l2.toNat * b.l6.toNat) + (a.l3.toNat * b.l5.toNat) + (a.l4.toNat * b.l4.toNat) + (a.l5.toNat * b.l3.toNat) + (a.l6.toNat * b.l2.toNat) + (a.l7.toNat * b.l1.toNat) + (a.l8.toNat * b.l0.toNat) + (m2.toNat * 7597479) + (m6.toNat * 174404527) + (m10.toNat * 354471143) + (m14.toNat * 201589968) + (m18.toNat * 494949691) + (m22.toNat * 457704959) + (m26.toNat * 529989567) + (m30.toNat * 536870904) + m34.toNat * 1 + c32.toNat = 0 + 536870912 * c36.toNat := by clear hav hbv hABlt hE k3 k6 k9 k12 k15 k18 k21 ps8; omega
-  have k26 : m34.toNat < 536870912 := by clear hav hbv hABlt hE k3 k6 k9 k12 k15 k18 k21 ps8; omega
-  have k27 : c36.toNat < 137438953472 := by clear hav hbv hABlt hE k3 k6 k9 k12 k15 k18 k21 ps8; omega
+  obtain ⟨k25, k26, k27⟩ : (a.l0.toNat * b.l8.toNat) + (a.l1.toNat * b.l7.toNat) + (a.l2.toNat * b.l6.toNat) + (a.l3.toNat * b.l5.toNat) + (a.l4.toNat * b.l4.toNat) + (a.l5.toNat * b.l3.toNat) + (a.l6.toNat * b.l2.toNat) + (a.l7.toNat * b.l1.toNat) + (a.l8.toNat * b.l0.toNat) + (m2.toNat * 7597479) + (m6.toNat * 174404527) + (m10.toNat * 354471143) + (m14.toNat * 201589968) + (m18.toNat * 494949691) + (m22.toNat * 457704959) + (m26.toNat * 529989567) + (m30.toNat * 536870904) + m34.toNat * 1 + c32.toNat = 0 + 536870912 * c36.toNat ∧ m34.toNat < 536870912 ∧ c36.toNat < 137438953472 := (by obtain ⟨e, hm, hc⟩ := mont_col (B := 536870912) (C := 137438953472) h_m34 h_s35 h_c36 (by decide) (Nat.lt_of_lt_of_le l_s35 (by decide)); exact ⟨by omega, hm, hc⟩)
   clear hp0_8 hp1_7 hp2_6 hp3_5 hp4_4 hp5_3 hp6_2 hp7_1 hp8_0 h_s33 l_s33 h_m34 l_m34 h_s35 l_s35 h_c36 l_c36
   have ps9 := chain (B' := 3705346855594118253554271520278013051304639509300498049262642688253220148477952) ps8 k25 (by decide)
   clear k25 ps8
@@ -683,9 +665,7 @@ theorem sq_spec (a : Elem) (ha : a.Ok) :
   have l_s3 := UInt64.toNat_lt s3
   have h_c4 : c4.toNat = s3.toNat / 536870912 := by clear ha1 ha2 ha3 ha4 ha5 ha6 ha7 ha8 hav hABlt hE; simp only [c4, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c4 := UInt64.toNat_lt c4
-  have k1 : (a.l0.toNat * a.l0.toNat) + m2.toNat * 1 + 0 = 0 + 536870912 * c4.toNat := by clear ha1 ha2 ha3 ha4 ha5 ha6 ha7 ha8 hav hABlt hE; omega
-  have k2 : m2.toNat < 536870912 := by clear ha1 ha2 ha3 ha4 ha5 ha6 ha7 ha8 hav hABlt hE; omega
-  have k3 : c4.toNat < 137438953472 := by clear ha1 ha2 ha3 ha4 ha5 ha6 ha7 ha8 hav hABlt hE; omega
+  obtain ⟨k1, k2, k3⟩ : (a.l0.toNat * a.l0.toNat) + m2.toNat * 1 + 0 = 0 + 536870912 * c4.toNat ∧ m2.toNat < 536870912 ∧ c4.toNat < 137438953472 := (by obtain ⟨e, hm, hc⟩ := mont_col (B := 536870912) (C := 137438953472) h_m2 h_s3 h_c4 (by decide) (Nat.lt_of_lt_of_le l_s3 (by decide)); exact ⟨by omega, hm, hc⟩)
   clear hp0_0 h_s1 l_s1 h_m2 l_m2 h_s3 l_s3 h_c4 l_c4
   have ps1 := chain (B' := 536870912) (I := 0) (O := 0) (c := 0) (B := 1) rfl k1 (by decide)
   clear k1
@@ -698,9 +678,7 @@ theorem sq_spec (a : Elem) (ha : a.Ok) :
   have l_s7 := UInt64.toNat_lt s7
   have h_c8 : c8.toNat = s7.toNat / 536870912 := by clear ha2 ha3 ha4 ha5 ha6 ha7 ha8 hav hABlt hE ps1; simp only [c8, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c8 := UInt64.toNat_lt c8
-  have k4 : (a.l0.toNat * a.l1.toNat * 2) + (m2.toNat * 536870904) + m6.toNat * 1 + c4.toNat = 0 + 536870912 * c8.toNat := by clear ha2 ha3 ha4 ha5 ha6 ha7 ha8 hav hABlt hE ps1; omega
-  have k5 : m6.toNat < 536870912 := by clear ha2 ha3 ha4 ha5 ha6 ha7 ha8 hav hABlt hE ps1; omega
-  have k6 : c8.toNat < 137438953472 := by clear ha2 ha3 ha4 ha5 ha6 ha7 ha8 hav hABlt hE ps1; omega
+  obtain ⟨k4, k5, k6⟩ : (a.l0.toNat * a.l1.toNat * 2) + (m2.toNat * 536870904) + m6.toNat * 1 + c4.toNat = 0 + 536870912 * c8.toNat ∧ m6.toNat < 536870912 ∧ c8.toNat < 137438953472 := (by obtain ⟨e, hm, hc⟩ := mont_col (B := 536870912) (C := 137438953472) h_m6 h_s7 h_c8 (by decide) (Nat.lt_of_lt_of_le l_s7 (by decide)); exact ⟨by omega, hm, hc⟩)
   clear hp0_1 h_s5 l_s5 h_m6 l_m6 h_s7 l_s7 h_c8 l_c8
   have ps2 := chain (B' := 288230376151711744) ps1 k4 (by decide)
   clear k4 ps1
@@ -714,9 +692,7 @@ theorem sq_spec (a : Elem) (ha : a.Ok) :
   have l_s11 := UInt64.toNat_lt s11
   have h_c12 : c12.toNat = s11.toNat / 536870912 := by clear ha3 ha4 ha5 ha6 ha7 ha8 hav hABlt hE k3 ps2; simp only [c12, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c12 := UInt64.toNat_lt c12
-  have k7 : (a.l0.toNat * a.l2.toNat * 2) + (a.l1.toNat * a.l1.toNat) + (m2.toNat * 529989567) + (m6.toNat * 536870904) + m10.toNat * 1 + c8.toNat = 0 + 536870912 * c12.toNat := by clear ha3 ha4 ha5 ha6 ha7 ha8 hav hABlt hE k3 ps2; omega
-  have k8 : m10.toNat < 536870912 := by clear ha3 ha4 ha5 ha6 ha7 ha8 hav hABlt hE k3 ps2; omega
-  have k9 : c12.toNat < 137438953472 := by clear ha3 ha4 ha5 ha6 ha7 ha8 hav hABlt hE k3 ps2; omega
+  obtain ⟨k7, k8, k9⟩ : (a.l0.toNat * a.l2.toNat * 2) + (a.l1.toNat * a.l1.toNat) + (m2.toNat * 529989567) + (m6.toNat * 536870904) + m10.toNat * 1 + c8.toNat = 0 + 536870912 * c12.toNat ∧ m10.toNat < 536870912 ∧ c12.toNat < 137438953472 := (by obtain ⟨e, hm, hc⟩ := mont_col (B := 536870912) (C := 137438953472) h_m10 h_s11 h_c12 (by decide) (Nat.lt_of_lt_of_le l_s11 (by decide)); exact ⟨by omega, hm, hc⟩)
   clear hp0_2 hp1_1 h_s9 l_s9 h_m10 l_m10 h_s11 l_s11 h_c12 l_c12
   have ps3 := chain (B' := 154742504910672534362390528) ps2 k7 (by decide)
   clear k7 ps2
@@ -730,9 +706,7 @@ theorem sq_spec (a : Elem) (ha : a.Ok) :
   have l_s15 := UInt64.toNat_lt s15
   have h_c16 : c16.toNat = s15.toNat / 536870912 := by clear ha4 ha5 ha6 ha7 ha8 hav hABlt hE k3 k6 ps3; simp only [c16, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c16 := UInt64.toNat_lt c16
-  have k10 : (a.l0.toNat * a.l3.toNat * 2) + (a.l1.toNat * a.l2.toNat * 2) + (m2.toNat * 457704959) + (m6.toNat * 529989567) + (m10.toNat * 536870904) + m14.toNat * 1 + c12.toNat = 0 + 536870912 * c16.toNat := by clear ha4 ha5 ha6 ha7 ha8 hav hABlt hE k3 k6 ps3; omega
-  have k11 : m14.toNat < 536870912 := by clear ha4 ha5 ha6 ha7 ha8 hav hABlt hE k3 k6 ps3; omega
-  have k12 : c16.toNat < 137438953472 := by clear ha4 ha5 ha6 ha7 ha8 hav hABlt hE k3 k6 ps3; omega
+  obtain ⟨k10, k11, k12⟩ : (a.l0.toNat * a.l3.toNat * 2) + (a.l1.toNat * a.l2.toNat * 2) + (m2.toNat * 457704959) + (m6.toNat * 529989567) + (m10.toNat * 536870904) + m14.toNat * 1 + c12.toNat = 0 + 536870912 * c16.toNat ∧ m14.toNat < 536870912 ∧ c16.toNat < 137438953472 := (by obtain ⟨e, hm, hc⟩ := mont_col (B := 536870912) (C := 137438953472) h_m14 h_s15 h_c16 (by decide) (Nat.lt_of_lt_of_le l_s15 (by decide)); exact ⟨by omega, hm, hc⟩)
   clear hp0_3 hp1_2 h_s13 l_s13 h_m14 l_m14 h_s15 l_s15 h_c16 l_c16
   have ps4 := chain (B' := 83076749736557242056487941267521536) ps3 k10 (by decide)
   clear k10 ps3
@@ -747,9 +721,7 @@ theorem sq_spec (a : Elem) (ha : a.Ok) :
   have l_s19 := UInt64.toNat_lt s19
   have h_c20 : c20.toNat = s19.toNat / 536870912 := by clear ha5 ha6 ha7 ha8 hav hABlt hE k3 k6 k9 ps4; simp only [c20, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c20 := UInt64.toNat_lt c20
-  have k13 : (a.l0.toNat * a.l4.toNat * 2) + (a.l1.toNat * a.l3.toNat * 2) + (a.l2.toNat * a.l2.toNat) + (m2.toNat * 494949691) + (m6.toNat * 457704959) + (m10.toNat * 529989567) + (m14.toNat * 536870904) + m18.toNat * 1 + c16.toNat = 0 + 536870912 * c20.toNat := by clear ha5 ha6 ha7 ha8 hav hABlt hE k3 k6 k9 ps4; omega
-  have k14 : m18.toNat < 536870912 := by clear ha5 ha6 ha7 ha8 hav hABlt hE k3 k6 k9 ps4; omega
-  have k15 : c20.toNat < 137438953472 := by clear ha5 ha6 ha7 ha8 hav hABlt hE k3 k6 k9 ps4; omega
+  obtain ⟨k13, k14, k15⟩ : (a.l0.toNat * a.l4.toNat * 2) + (a.l1.toNat * a.l3.toNat * 2) + (a.l2.toNat * a.l2.toNat) + (m2.toNat * 494949691) + (m6.toNat * 457704959) + (m10.toNat * 529989567) + (m14.toNat * 536870904) + m18.toNat * 1 + c16.toNat = 0 + 536870912 * c20.toNat ∧ m18.toNat < 536870912 ∧ c20.toNat < 137438953472 := (by obtain ⟨e, hm, hc⟩ := mont_col (B := 536870912) (C := 137438953472) h_m18 h_s19 h_c20 (by decide) (Nat.lt_of_lt_of_le l_s19 (by decide)); exact ⟨by omega, hm, hc⟩)
   clear hp0_4 hp1_3 hp2_2 h_s17 l_s17 h_m18 l_m18 h_s19 l_s19 h_c20 l_c20
   have ps5 := chain (B' := 44601490397061246283071436545296723011960832) ps4 k13 (by decide)
   clear k13 ps4
@@ -764,9 +736,7 @@ theorem sq_spec (a : Elem) (ha : a.Ok) :
   have l_s23 := UInt64.toNat_lt s23
   have h_c24 : c24.toNat = s23.toNat / 536870912 := by clear ha6 ha7 ha8 hav hABlt hE k3 k6 k9 k12 ps5; simp only [c24, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c24 := UInt64.toNat_lt c24
-  have k16 : (a.l0.toNat * a.l5.toNat * 2) + (a.l1.toNat * a.l4.toNat * 2) + (a.l2.toNat * a.l3.toNat * 2) + (m2.toNat * 201589968) + (m6.toNat * 494949691) + (m10.toNat * 457704959) + (m14.toNat * 529989567) + (m18.toNat * 536870904) + m22.toNat * 1 + c20.toNat = 0 + 536870912 * c24.toNat := by clear ha6 ha7 ha8 hav hABlt hE k3 k6 k9 k12 ps5; omega
-  have k17 : m22.toNat < 536870912 := by clear ha6 ha7 ha8 hav hABlt hE k3 k6 k9 k12 ps5; omega
-  have k18 : c24.toNat < 137438953472 := by clear ha6 ha7 ha8 hav hABlt hE k3 k6 k9 k12 ps5; omega
+  obtain ⟨k16, k17, k18⟩ : (a.l0.toNat * a.l5.toNat * 2) + (a.l1.toNat * a.l4.toNat * 2) + (a.l2.toNat * a.l3.toNat * 2) + (m2.toNat * 201589968) + (m6.toNat * 494949691) + (m10.toNat * 457704959) + (m14.toNat * 529989567) + (m18.toNat * 536870904) + m22.toNat * 1 + c20.toNat = 0 + 536870912 * c24.toNat ∧ m22.toNat < 536870912 ∧ c24.toNat < 137438953472 := (by obtain ⟨e, hm, hc⟩ := mont_col (B := 536870912) (C := 137438953472) h_m22 h_s23 h_c24 (by decide) (Nat.lt_of_lt_of_le l_s23 (by decide)); exact ⟨by omega, hm, hc⟩)
   clear hp0_5 hp1_4 hp2_3 h_s21 l_s21 h_m22 l_m22 h_s23 l_s23 h_c24 l_c24
   have ps6 := chain (B' := 23945242826029513411849172299223580994042798784118784) ps5 k16 (by decide)
   clear k16 ps5
@@ -782,9 +752,7 @@ theorem sq_spec (a : Elem) (ha : a.Ok) :
   have l_s27 := UInt64.toNat_lt s27
   have h_c28 : c28.toNat = s27.toNat / 536870912 := by clear ha7 ha8 hav hABlt hE k3 k6 k9 k12 k15 ps6; simp only [c28, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c28 := UInt64.toNat_lt c28
-  have k19 : (a.l0.toNat * a.l6.toNat * 2) + (a.l1.toNat * a.l5.toNat * 2) + (a.l2.toNat * a.l4.toNat * 2) + (a.l3.toNat * a.l3.toNat) + (m2.toNat * 354471143) + (m6.toNat * 201589968) + (m10.toNat * 494949691) + (m14.toNat * 457704959) + (m18.toNat * 529989567) + (m22.toNat * 536870904) + m26.toNat * 1 + c24.toNat = 0 + 536870912 * c28.toNat := by clear ha7 ha8 hav hABlt hE k3 k6 k9 k12 k15 ps6; omega
-  have k20 : m26.toNat < 536870912 := by clear ha7 ha8 hav hABlt hE k3 k6 k9 k12 k15 ps6; omega
-  have k21 : c28.toNat < 137438953472 := by clear ha7 ha8 hav hABlt hE k3 k6 k9 k12 k15 ps6; omega
+  obtain ⟨k19, k20, k21⟩ : (a.l0.toNat * a.l6.toNat * 2) + (a.l1.toNat * a.l5.toNat * 2) + (a.l2.toNat * a.l4.toNat * 2) + (a.l3.toNat * a.l3.toNat) + (m2.toNat * 354471143) + (m6.toNat * 201589968) + (m10.toNat * 494949691) + (m14.toNat * 457704959) + (m18.toNat * 529989567) + (m22.toNat * 536870904) + m26.toNat * 1 + c24.toNat = 0 + 536870912 * c28.toNat ∧ m26.toNat < 536870912 ∧ c28.toNat < 137438953472 := (by obtain ⟨e, hm, hc⟩ := mont_col (B := 536870912) (C := 137438953472) h_m26 h_s27 h_c28 (by decide) (Nat.lt_of_lt_of_le l_s27 (by decide)); exact ⟨by omega, hm, hc⟩)
   clear hp0_6 hp1_5 hp2_4 hp3_3 h_s25 l_s25 h_m26 l_m26 h_s27 l_s27 h_c28 l_c28
   have ps7 := chain (B' := 12855504354071922204335696738729300820177623950262342682411008) ps6 k19 (by decide)
   clear k19 ps6
@@ -800,9 +768,7 @@ theorem sq_spec (a : Elem) (ha : a.Ok) :
   have l_s31 := UInt64.toNat_lt s31
   have h_c32 : c32.toNat = s31.toNat / 536870912 := by clear ha8 hav hABlt hE k3 k6 k9 k12 k15 k18 ps7; simp only [c32, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c32 := UInt64.toNat_lt c32
-  have k22 : (a.l0.toNat * a.l7.toNat * 2) + (a.l1.toNat * a.l6.toNat * 2) + (a.l2.toNat * a.l5.toNat * 2) + (a.l3.toNat * a.l4.toNat * 2) + (m2.toNat * 174404527) + (m6.toNat * 354471143) + (m10.toNat * 201589968) + (m14.toNat * 494949691) + (m18.toNat * 457704959) + (m22.toNat * 529989567) + (m26.toNat * 536870904) + m30.toNat * 1 + c28.toNat = 0 + 536870912 * c32.toNat := by clear ha8 hav hABlt hE k3 k6 k9 k12 k15 k18 ps7; omega
-  have k23 : m30.toNat < 536870912 := by clear ha8 hav hABlt hE k3 k6 k9 k12 k15 k18 ps7; omega
-  have k24 : c32.toNat < 137438953472 := by clear ha8 hav hABlt hE k3 k6 k9 k12 k15 k18 ps7; omega
+  obtain ⟨k22, k23, k24⟩ : (a.l0.toNat * a.l7.toNat * 2) + (a.l1.toNat * a.l6.toNat * 2) + (a.l2.toNat * a.l5.toNat * 2) + (a.l3.toNat * a.l4.toNat * 2) + (m2.toNat * 174404527) + (m6.toNat * 354471143) + (m10.toNat * 201589968) + (m14.toNat * 494949691) + (m18.toNat * 457704959) + (m22.toNat * 529989567) + (m26.toNat * 536870904) + m30.toNat * 1 + c28.toNat = 0 + 536870912 * c32.toNat ∧ m30.toNat < 536870912 ∧ c32.toNat < 137438953472 := (by obtain ⟨e, hm, hc⟩ := mont_col (B := 536870912) (C := 137438953472) h_m30 h_s31 h_c32 (by decide) (Nat.lt_of_lt_of_le l_s31 (by decide)); exact ⟨by omega, hm, hc⟩)
   clear hp0_7 hp1_6 hp2_5 hp3_4 h_s29 l_s29 h_m30 l_m30 h_s31 l_s31 h_c32 l_c32
   have ps8 := chain (B' := 6901746346790563787434755862277025452451108972170386555162524223799296) ps7 k22 (by decide)
   clear k22 ps7
@@ -819,9 +785,7 @@ theorem sq_spec (a : Elem) (ha : a.Ok) :
   have l_s35 := UInt64.toNat_lt s35
   have h_c36 : c36.toNat = s35.toNat / 536870912 := by clear hav hABlt hE k3 k6 k9 k12 k15 k18 k21 ps8; simp only [c36, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c36 := UInt64.toNat_lt c36
-  have k25 : (a.l0.toNat * a.l8.toNat * 2) + (a.l1.toNat * a.l7.toNat * 2) + (a.l2.toNat * a.l6.toNat * 2) + (a.l3.toNat * a.l5.toNat * 2) + (a.l4.toNat * a.l4.toNat) + (m2.toNat * 7597479) + (m6.toNat * 174404527) + (m10.toNat * 354471143) + (m14.toNat * 201589968) + (m18.toNat * 494949691) + (m22.toNat * 457704959) + (m26.toNat * 529989567) + (m30.toNat * 536870904) + m34.toNat * 1 + c32.toNat = 0 + 536870912 * c36.toNat := by clear hav hABlt hE k3 k6 k9 k12 k15 k18 k21 ps8; omega
-  have k26 : m34.toNat < 536870912 := by clear hav hABlt hE k3 k6 k9 k12 k15 k18 k21 ps8; omega
-  have k27 : c36.toNat < 137438953472 := by clear hav hABlt hE k3 k6 k9 k12 k15 k18 k21 ps8; omega
+  obtain ⟨k25, k26, k27⟩ : (a.l0.toNat * a.l8.toNat * 2) + (a.l1.toNat * a.l7.toNat * 2) + (a.l2.toNat * a.l6.toNat * 2) + (a.l3.toNat * a.l5.toNat * 2) + (a.l4.toNat * a.l4.toNat) + (m2.toNat * 7597479) + (m6.toNat * 174404527) + (m10.toNat * 354471143) + (m14.toNat * 201589968) + (m18.toNat * 494949691) + (m22.toNat * 457704959) + (m26.toNat * 529989567) + (m30.toNat * 536870904) + m34.toNat * 1 + c32.toNat = 0 + 536870912 * c36.toNat ∧ m34.toNat < 536870912 ∧ c36.toNat < 137438953472 := (by obtain ⟨e, hm, hc⟩ := mont_col (B := 536870912) (C := 137438953472) h_m34 h_s35 h_c36 (by decide) (Nat.lt_of_lt_of_le l_s35 (by decide)); exact ⟨by omega, hm, hc⟩)
   clear hp0_8 hp1_7 hp2_6 hp3_5 hp4_4 h_s33 l_s33 h_m34 l_m34 h_s35 l_s35 h_c36 l_c36
   have ps9 := chain (B' := 3705346855594118253554271520278013051304639509300498049262642688253220148477952) ps8 k25 (by decide)
   clear k25 ps8

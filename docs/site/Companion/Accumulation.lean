@@ -19,8 +19,10 @@ shortTitle := "§12 Accumulation"
 file := "accumulation"
 %%%
 
-Accumulation runs the on-chain _Accumulate_ code of every service that has work in the reports
-that became available in this block, and folds the results into the state. GP v0.8.1 §12 defines,
+Accumulation runs the on-chain _Accumulate_ code of the services that have work to do in this
+block: those with digests in the newly available reports or in queued reports whose dependencies
+are now met, the always-accumulate services with their free gas, and the recipients of deferred
+transfers. It folds the results into the state. GP v0.8.1 §12 defines,
 in this order: the queue of reports waiting for their dependencies (§12.1); the execution in rounds,
 with the outer function $`\Delta_+`, the parallel function $`\Delta_*` and the single-service function
 $`\Delta_1` (§12.2); the posterior state (§12.3); and the integration of the preimages extrinsic
@@ -66,11 +68,11 @@ Reports with no prerequisites and an empty segment-root lookup, $`\mathbf{R}^!`,
 at once. The others, $`\mathbf{R}^Q`, are queued with their dependencies, minus those already
 accumulated:
 
-$$`\mathbf{R}^! \equiv \left[ r \;\middle|\; r \mathrel{\mathrlap{<}{-}} \mathbf{R},\ |(r_c)_p| = 0 \wedge r_l = \{\} \right] \qquad \text{(12.4)}`
+$$`\mathbf{R}^! \equiv \left[ r \;\middle|\; r \mathrel{\mathrlap{<}{-}} \mathbf{R},\ |(r_\mathbf{c})_\mathbf{p}| = 0 \wedge r_\mathbf{l} = \{\} \right] \qquad \text{(12.4)}`
 
-$$`\mathbf{R}^Q \equiv E\left(\left[ D(r) \;\middle|\; r \mathrel{\mathrlap{<}{-}} \mathbf{R},\ |(r_c)_p| > 0 \vee r_l \ne \{\} \right], \overbrace{\xi}\right) \qquad \text{(12.5)}`
+$$`\mathbf{R}^Q \equiv E\left(\left[ D(r) \;\middle|\; r \mathrel{\mathrlap{<}{-}} \mathbf{R},\ |(r_\mathbf{c})_\mathbf{p}| > 0 \vee r_\mathbf{l} \ne \{\} \right], \overbrace{\xi}\right) \qquad \text{(12.5)}`
 
-$$`D(r) \equiv (r, (r_c)_p \cup \mathcal{K}(r_l)) \qquad \text{(12.6)}`
+$$`D(r) \equiv (r, (r_\mathbf{c})_\mathbf{p} \cup \mathcal{K}(r_\mathbf{l})) \qquad \text{(12.6)}`
 
 {leanSource JAM.deps}
 
@@ -82,7 +84,7 @@ $`E` removes the entries whose package is in $`\mathbf{x}`, and removes $`\mathb
 remaining dependencies. $`Q` repeatedly takes the entries with no dependencies left. $`P` gives the
 package hashes of a set of reports:
 
-$$`E \colon \left\{ \begin{aligned} &\left(\llbracket (\mathbb{R}, \{\![\,\mathbb{H}\,]\!\}) \rrbracket, \{\![\,\mathbb{H}\,]\!\}\right) \to \llbracket (\mathbb{R}, \{\![\,\mathbb{H}\,]\!\}) \rrbracket \\ &(\mathbf{r}, \mathbf{x}) \mapsto \left[ (r, \mathbf{d} \setminus \mathbf{x}) \;\middle|\; (r, \mathbf{d}) \mathrel{\mathrlap{<}{-}} \mathbf{r},\ (r_s)_p \notin \mathbf{x} \right] \end{aligned} \right. \qquad \text{(12.7)}`
+$$`E \colon \left\{ \begin{aligned} &\left(\llbracket (\mathbb{R}, \{\![\,\mathbb{H}\,]\!\}) \rrbracket, \{\![\,\mathbb{H}\,]\!\}\right) \to \llbracket (\mathbb{R}, \{\![\,\mathbb{H}\,]\!\}) \rrbracket \\ &(\mathbf{r}, \mathbf{x}) \mapsto \left[ (r, \mathbf{d} \setminus \mathbf{x}) \;\middle|\; (r, \mathbf{d}) \mathrel{\mathrlap{<}{-}} \mathbf{r},\ (r_\mathbf{s})_p \notin \mathbf{x} \right] \end{aligned} \right. \qquad \text{(12.7)}`
 
 {leanSource JAM.editQueue}
 
@@ -90,7 +92,7 @@ $$`Q \colon \left\{ \begin{aligned} &\llbracket (\mathbb{R}, \{\![\,\mathbb{H}\,
 
 {leanSource JAM.readyOrder}
 
-$$`P \colon \left\{ \begin{aligned} &\{\![\,\mathbb{R}\,]\!\} \to \{\![\,\mathbb{H}\,]\!\} \\ &\mathbf{r} \mapsto \left\{ (r_s)_p \;\middle|\; r \in \mathbf{r} \right\} \end{aligned} \right. \qquad \text{(12.9)}`
+$$`P \colon \left\{ \begin{aligned} &\{\![\,\mathbb{R}\,]\!\} \to \{\![\,\mathbb{H}\,]\!\} \\ &\mathbf{r} \mapsto \left\{ (r_\mathbf{s})_p \;\middle|\; r \in \mathbf{r} \right\} \end{aligned} \right. \qquad \text{(12.9)}`
 
 {leanSource JAM.pkgs}
 
@@ -123,7 +125,7 @@ transfers. A transfer carries its sender $`s`, receiver $`d`, whether it credits
 supervisor balance ($`u = \top`) or its regular balance ($`u = \bot`), the amount $`a`, a memo $`m`
 of $`\mathsf{W}_T = 128` octets and a gas limit $`g`:
 
-$$`\mathbb{U} \equiv \left( p \in \mathbb{H},\ e \in \mathbb{H},\ a \in \mathbb{H},\ y \in \mathbb{H},\ g \in \mathbb{N}_G,\ t \in \mathbb{B},\ l \in \mathbb{B} \cup \mathbb{E} \right) \qquad \text{(12.13)}`
+$$`\mathbb{U} \equiv \left( p \in \mathbb{H},\ e \in \mathbb{H},\ a \in \mathbb{H},\ y \in \mathbb{H},\ g \in \mathbb{N}_G,\ \mathbf{t} \in \mathbb{B},\ \mathbf{l} \in \mathbb{B} \cup \mathbb{E} \right) \qquad \text{(12.13)}`
 
 $$`\text{𝕥} \equiv \left( s \in \mathbb{N}_S,\ d \in \mathbb{N}_S,\ u \in \{\bot, \top\},\ a \in \mathbb{N}_B,\ m \in \mathbb{B}_{\mathsf{W}_T},\ g \in \mathbb{N}_G \right) \qquad \text{(12.14)}`
 
@@ -137,7 +139,7 @@ The partial state $`\mathbb{S}` holds the parts of the state that accumulation r
 the accounts, the staging keys, the authorizer queue and the privileges. $`B` and $`U` are the
 types of the accumulation outputs and of the gas used:
 
-$$`\mathbb{S} \equiv \left( \mathbf{d} \in \langle \mathbb{N}_S \to \mathbb{A} \rangle,\ \mathbf{i} \in \llbracket \mathbb{K} \rrbracket_\mathsf{V},\ \mathbf{q} \in \llbracket \llbracket \mathbb{H} \rrbracket_\mathsf{Q} \rrbracket_\mathsf{C},\ \mathbf{x} \in \mathbb{X} \right) \qquad \text{(12.15)}`
+$$`\mathbb{S} \equiv \left( \mathbf{d} \in \langle \mathbb{N}_S \to \mathbb{A} \rangle,\ \mathbf{i} \in \llbracket \mathbb{K} \rrbracket_\mathbb{V},\ \mathbf{q} \in \llbracket \llbracket \mathbb{H} \rrbracket_\mathsf{Q} \rrbracket_\mathsf{C},\ \mathbf{x} \in \mathbb{X} \right) \qquad \text{(12.15)}`
 
 $$`B \equiv \{\![\,(\mathbb{N}_S, \mathbb{H})\,]\!\} \qquad U \equiv \llbracket (\mathbb{N}_S, \mathbb{N}_G) \rrbracket \qquad \text{(12.16)}`
 
@@ -221,9 +223,13 @@ How the code maps to the equation:
 
 * `ss` is $`\mathbf{s}`, sorted (a set in the paper, so any order is allowed; $`\mathbf{u}` and
   $`\mathbf{t}'` are built in ascending order of service).
-* `acc s` is $`\Delta(s)`. The paper evaluates $`\Delta_1` at every service in $`\mathbf{s}`, at their
-  effective supervisors, and at the privileged services $`m`, $`v`, $`r` and $`\mathbf{a}_c`. The
-  model runs $`\Delta_1` once for each service in that list (`needed`) and reuses the result.
+* `acc s` is $`\Delta(s)`. The paper evaluates $`\Delta_1` at every service in $`\mathbf{s}`, at
+  their effective supervisors, at the effective supervisor of every account in $`\mathcal{K}(\mathbf{d})`
+  (through $`M`), and at the privileged services $`m`, $`v`, $`r` and $`\mathbf{a}_c`. The model
+  runs $`\Delta_1` once for each service in that list (`needed`) and reuses the result. Any other
+  service gets the unchanged outcome (input state, nothing modified, no gas) without running
+  $`\Psi_A`; that this equals $`\Delta_1` for a service with no inputs and no gas is argued in the
+  docstring of {api}`JAM.accPar`, not proved.
 * `M`, `m`, `n` and `merged` are $`M(s)`, $`\mathbf{m}`, $`\mathbf{n}` and $`\mathbf{m} \cup \mathbf{n}`;
   `accounts` is $`\mathbf{d}'`. The function returns an `Except`, for the conflict described below.
 * `eStar` is $`\Delta(m)_\mathbf{e}`, so `eStar.manager` and `eStar.alwaysAcc` are
@@ -272,7 +278,7 @@ $$`\mathbb{O} \equiv \left( \mathbf{e} \in \mathbb{S},\ \mathbf{w} \in \{\![\,\m
 
 $$`\Delta_1 \colon \left\{ \begin{aligned} &\left( \mathbb{S}, \llbracket \text{𝕥} \rrbracket, \llbracket \mathbb{R} \rrbracket, \langle \mathbb{N}_S \to \mathbb{N}_G \rangle, \mathbb{N}_S \right) \to \mathbb{O} \\ &(\mathbf{e}, \mathbf{t}, \mathbf{r}, \mathbf{f}, s) \mapsto \Psi_A(\mathbf{e}, \tau', s, g, \mathbf{i}^T \frown \mathbf{i}^U) \end{aligned} \right. \qquad \text{(12.24)}`
 
-$$`\begin{aligned} \text{where: } g &= \mathcal{U}(\mathbf{f}_s, 0) + \sum_{t \in \mathbf{t},\, t_d = s} (t_g) + \sum_{r \in \mathbf{r},\, d \in r_\mathbf{d},\, d_s = s} (d_g) \\ \mathbf{i}^T &= \left[ t \;\middle|\; t \mathrel{\mathrlap{<}{-}} \mathbf{t},\, t_d = s \right] \\ \mathbf{i}^U &= \left[ \left( \begin{aligned} &l : d_l,\ g : d_g,\ y : d_y,\ t : r_t, \\ &e : (r_s)_e,\ p : (r_s)_p,\ a : r_a \end{aligned} \right) \;\middle|\; r \mathrel{\mathrlap{<}{-}} \mathbf{r},\ d \mathrel{\mathrlap{<}{-}} r_\mathbf{d},\ d_s = s \right] \end{aligned}`
+$$`\begin{aligned} \text{where: } g &= \mathcal{U}(\mathbf{f}_s, 0) + \sum_{t \in \mathbf{t},\, t_d = s} (t_g) + \sum_{r \in \mathbf{r},\, d \in r_\mathbf{d},\, d_s = s} (d_g) \\ \mathbf{i}^T &= \left[ t \;\middle|\; t \mathrel{\mathrlap{<}{-}} \mathbf{t},\, t_d = s \right] \\ \mathbf{i}^U &= \left[ \left( \begin{aligned} &\mathbf{l} : d_\mathbf{l},\ g : d_g,\ y : d_y,\ \mathbf{t} : r_\mathbf{t}, \\ &e : (r_\mathbf{s})_e,\ p : (r_\mathbf{s})_p,\ a : r_a \end{aligned} \right) \;\middle|\; r \mathrel{\mathrlap{<}{-}} \mathbf{r},\ d \mathrel{\mathrlap{<}{-}} r_\mathbf{d},\ d_s = s \right] \end{aligned}`
 
 {leanSource JAM.accOne}
 
@@ -425,15 +431,16 @@ suspended until v0.8.1 vectors exist.
 tag := "accumulation-readings"
 %%%
 
-Notes are in the model's
-[notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues):
+The items marked with a note number are in the model's
+[notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues);
+the others are recorded only in this book:
 
 * *Note v0.8.1-A1, the post-state of $`N(\mathbf{o})`.* In (12.19), $`N(\mathbf{o})` gives every
   field a value except the post-state. The model takes the round's input state $`\mathbf{e}`
   ({api}`JAM.discardIfBoth`), following the prose: "discard all results of the service's execution",
   with only provided preimages excepted. Taking $`\mathbf{o}`'s post-state instead would keep a
   discarded run's new services and its changes to the privileges, staging keys and queue, while
-  $`M(s)` drops its change to its own account. One consequence of either reading: if the
+  $`M(s)` drops its change to its own account. One consequence of the model's reading: if the
   supervisor's own run is also discarded (its own supervisor modified it too), both changes to the
   service are lost. This is filed as
   [graypaper#592](https://github.com/gavofyork/graypaper/issues/592).

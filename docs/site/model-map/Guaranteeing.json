@@ -1,0 +1,8 @@
+{
+  "equations": {
+    "15.1": { "kind": "def", "name": "JAM.Guarantee.computeReport",
+              "note": "it also takes the accounts that Ψ_I and Ψ_R read and each item's data; `none` is the paper's ∇" },
+    "15.2": { "kind": "inline", "name": "JAM.checkGuarantee", "at": "crypto.edVerify k (Xguarantee ++ h)",
+              "note": "the model verifies this message rather than producing it; `h` is the Blake2b hash of `r.encode`, bound above, and the context string is `JAM.Xguarantee`" }
+  }
+}

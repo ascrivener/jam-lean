@@ -1,6 +1,10 @@
 import VersoManual
 import Companion.Source
+import Companion.Primitives
+import Companion.Overview
 import Companion.Safrole
+import Companion.History
+import Companion.Authorization
 import Companion.Disputes
 import Companion.Reports
 import Companion.Statistics
@@ -69,10 +73,11 @@ tag := "roadmap"
 Chapters follow the order of the paper's sections. Two are written so far; the others are listed
 with the model modules that implement them.
 
-* §4–§5 The state, the header and the block: `JAM/State.lean`, `JAM/Block.lean`, `JAM/BlockImport.lean`
+* *§3 Primitives* ({ref "primitives"}[written]): `JAM/Blake2b.lean`, `JAM/Keccak.lean`, `JAM/Sha512.lean`, `JAM/Constants.lean`, `JAM/Params.lean`
+* *§4–§5 The state, the header and the block* ({ref "overview"}[written]): `JAM/State.lean`, `JAM/Block.lean`, `JAM/BlockImport.lean`
 * *§6 Safrole* ({ref "safrole"}[written]): `JAM/Safrole.lean`
-* §7 Recent history: `JAM/History.lean`
-* §8 Authorization: `JAM/Authorization.lean`
+* *§7 Recent history* ({ref "history"}[written]): `JAM/History.lean`
+* *§8 Authorization* ({ref "authorization"}[written]): `JAM/Authorization.lean`
 * §9 Service accounts: `JAM/Account.lean`
 * *§10 Disputes* ({ref "disputes"}[written]): `JAM/Disputes.lean`
 * *§11 Reports and assurances* ({ref "reports"}[written]): `JAM/Reports.lean`, `JAM/Assurances.lean`
@@ -93,7 +98,15 @@ with the model modules that implement them.
 * Appendix G, the Bandersnatch VRF: `JAM/Crypto.lean` (the interface) and `JamCrypto/` (an implementation)
 * Appendix H, erasure coding: `JAM/Erasure.lean`
 
+{include 1 Companion.Primitives}
+
+{include 1 Companion.Overview}
+
 {include 1 Companion.Safrole}
+
+{include 1 Companion.History}
+
+{include 1 Companion.Authorization}
 
 {include 1 Companion.Disputes}
 

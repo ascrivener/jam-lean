@@ -78,6 +78,8 @@ PACKAGE_SYMBOLS = {
     "Aries": r"\text{♈}",                # marvosym: the host-call gas constants' signs
     "Taurus": r"\text{♉}",
     "Gemini": r"\text{♊}",
+    "llbracket": r"[\![",                # stmaryrd: MathJax's TeX input lacks these (KaTeX has them)
+    "rrbracket": r"]\!]",
 }
 
 # Substitutions that print a close but not identical glyph; listed under "approximate".

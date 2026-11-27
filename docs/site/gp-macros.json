@@ -2185,6 +2185,11 @@
    "body": "\\left\\vert#1\\right\\vert",
    "paper": "\\len"
   },
+  "llbracket": {
+   "args": 0,
+   "body": "[\\![",
+   "paper": "\\llbracket"
+  },
   "loadcost": {
    "args": 0,
    "body": "\\mathfrak{m}",
@@ -2875,6 +2880,11 @@
    "args": 0,
    "body": "\\set{\\stateQQdecoding, \\stateQQwaiting, \\stateQQexecuting, \\stateQQexecuted, \\none}",
    "paper": "\\rob¬state¬ty"
+  },
+  "rrbracket": {
+   "args": 0,
+   "body": "]\\!]",
+   "paper": "\\rrbracket"
   },
   "rtz": {
    "args": 0,
@@ -3876,7 +3886,9 @@
  "package": {
   "Aries": "\\Aries",
   "Gemini": "\\Gemini",
-  "Taurus": "\\Taurus"
+  "Taurus": "\\Taurus",
+  "llbracket": "\\llbracket",
+  "rrbracket": "\\rrbracket"
  },
  "sentinel": "QQ",
  "source": "gavofyork/graypaper tag v0.8.1: preamble.tex and text/*.tex",

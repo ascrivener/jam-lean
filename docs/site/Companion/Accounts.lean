@@ -105,7 +105,7 @@ takes any $`t`; keeping $`t` in that range is left to its callers.
 tag := "accounts-entries"
 %%%
 
-Appendix D (eq. (D.2)) serializes each storage item under the state key
+{ref "statemerkle"}[Appendix D] (eq. (D.2)) serializes each storage item under the state key
 $`C(s, \mathcal{E}_4(2^{32}-1) \frown \mathbf{k})` and each request under
 $`C(s, \mathcal{E}_4(z) \frown h)`, where $`C(s, h)` (eq. (D.1)) interleaves $`\mathcal{E}_4(s)` with the
 first 27 octets of $`\mathcal{H}(h)`. The paper adds that storage keys cannot be inspected or enumerated, so "implementations
@@ -189,7 +189,7 @@ keep the storage keys $`\mathbf{k}`, it cannot recompute $`|\mathbf{k}|` in $`a_
 $`a_i` and $`a_o` as fields instead, and each accessor that writes $`\mathbf{s}` or $`\mathbf{l}`
 ({api}`JAM.ServiceAccount.storageWrite`, {api}`JAM.ServiceAccount.requestSet`,
 {api}`JAM.ServiceAccount.requestErase`) changes them by exactly the amount it adds to or removes
-from the paper's sums. Appendix D serializes $`a_i` and $`a_o` explicitly, so a loaded state brings
+from the paper's sums. {ref "statemerkle"}[Appendix D] serializes $`a_i` and $`a_o` explicitly, so a loaded state brings
 its own values. That the fields equal the paper's formulas on every state the model's transitions
 build is stated in the structure's docstring; it is not yet a theorem.
 

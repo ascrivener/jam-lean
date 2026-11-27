@@ -113,8 +113,8 @@ $`\max(0, \cdot)`.
 tag := "merkle-verify"
 %%%
 
-The paper defines how justifications are made, but not how they are checked. §14.2 says only that
-justifications are "generated, stored, included alongside the fetched data and verified", and §17.2
+The paper defines how justifications are made, but not how they are checked. {ref "work"}[§14.2] says only that
+justifications are "generated, stored, included alongside the fetched data and verified", and {ref "auditing"}[§17.2]
 that a justification "allows verification that each segment's hash is included in the referencing
 Merkle root". The model defines the check as the inverse of $`T`. {api}`JAM.Segments.foldPath`
 rebuilds a root from the value at the bottom of a path and the path, top first, as $`T` gives it:
@@ -164,7 +164,7 @@ one is the padded encoding of a page and a path that verify against the segment 
 
 {mathdoc JAM.Segments.pagedProofs_verify}
 
-§14.4 also notes that each segment's justification "can be derived through a single paged-proof".
+{ref "work"}[§14.4] also notes that each segment's justification "can be derived through a single paged-proof".
 The model proves it: the $`\mathcal{J}_0` justification of segment $`n` is the path of its page followed by the
 trace of $`n \bmod 2^x` within the page's leaves:
 
@@ -231,6 +231,6 @@ These are recorded in the model's
 * *Note v0.8.1-A14, the page index.* $`\mathcal{J}_x` and $`\mathcal{L}_x` type their index as $`i \in \mathbb{N}_{|\mathbf{v}|}`, but it is a page index: only
   $`i < \lceil |\mathbf{v}|/2^x \rceil` names a page, and $`P` uses only those. For a larger $`i`, $`\mathcal{J}_x`'s trace leads to padding while
   $`2^x \cdot i < |C(\mathbf{v})|`, and indexes past the end of $`C(\mathbf{v})` once $`2^x \cdot i \geq |C(\mathbf{v})|`. The model accepts any $`i` and states its theorems for page indices.
-* *Note v0.8.1-A15, the pages of $`P`.* §14.4 describes each paged proof as "a page of 64 hashes of
+* *Note v0.8.1-A15, the pages of $`P`.* {ref "work"}[§14.4] describes each paged proof as "a page of 64 hashes of
   segments". By the equation, the page is $`\mathcal{L}_6`, the hashes $`H(\$\text{leaf} \frown \mathbf{s}_i)` of the segments rather than
   $`\mathcal{H}(\mathbf{s}_i)`, and the last page holds only $`|\mathbf{s}| \bmod 64` of them when 64 does not divide $`|\mathbf{s}|`. The model follows the equation.

@@ -83,7 +83,7 @@ A core's record sums the load of the reports guaranteed on it in this block ($`\
 data-availability load of the reports that became available on it ($`\mathbf{R}`, eq. (11.16)), and the
 number of assurances that set its bit:
 
-$$`\forall c \in \mathbb{N}_{\mathsf{C}} : \pi'_C[c] \equiv \begin{pmatrix} i \mathrel{\scriptstyle\blacktriangleright} R(c)_i \,,\ x \mathrel{\scriptstyle\blacktriangleright} R(c)_x \,,\ z \mathrel{\scriptstyle\blacktriangleright} R(c)_z \,, \\ e \mathrel{\scriptstyle\blacktriangleright} R(c)_e \,,\ u \mathrel{\scriptstyle\blacktriangleright} R(c)_u \,,\ l \mathrel{\scriptstyle\blacktriangleright} L(c) \,, \\ d \mathrel{\scriptstyle\blacktriangleright} D(c) \,,\ p \mathrel{\scriptstyle\blacktriangleright} \sum_{a \in \mathbf{E}_A} a_f[c] \end{pmatrix} \qquad \text{(13.9)}`
+$$`\forall c \in \mathbb{N}_{\mathsf{C}} : \pi'_C[c] \equiv \begin{pmatrix} i \mathrel{\substack{\scriptscriptstyle\blacktriangleright \\ \scriptscriptstyle\blacktriangleright}} R(c)_i \,,\ x \mathrel{\substack{\scriptscriptstyle\blacktriangleright \\ \scriptscriptstyle\blacktriangleright}} R(c)_x \,,\ z \mathrel{\substack{\scriptscriptstyle\blacktriangleright \\ \scriptscriptstyle\blacktriangleright}} R(c)_z \,, \\ e \mathrel{\substack{\scriptscriptstyle\blacktriangleright \\ \scriptscriptstyle\blacktriangleright}} R(c)_e \,,\ u \mathrel{\substack{\scriptscriptstyle\blacktriangleright \\ \scriptscriptstyle\blacktriangleright}} R(c)_u \,,\ l \mathrel{\substack{\scriptscriptstyle\blacktriangleright \\ \scriptscriptstyle\blacktriangleright}} L(c) \,, \\ d \mathrel{\substack{\scriptscriptstyle\blacktriangleright \\ \scriptscriptstyle\blacktriangleright}} D(c) \,,\ p \mathrel{\substack{\scriptscriptstyle\blacktriangleright \\ \scriptscriptstyle\blacktriangleright}} \sum_{a \in \mathbf{E}_A} a_f[c] \end{pmatrix} \qquad \text{(13.9)}`
 
 $$`\text{where } R(c \in \mathbb{N}_{\mathsf{C}}) \equiv \sum_{\mathbf{d} \in \mathbf{r}_\mathbf{d}, \mathbf{r} \in \mathbf{I}, \mathbf{r}_c = c} (\mathbf{d}_i, \mathbf{d}_x, \mathbf{d}_z, \mathbf{d}_e, \mathbf{d}_u,) \qquad \text{(13.10)}`
 
@@ -100,7 +100,7 @@ In {api}`JAM.coreStats`, the ceiling $`\lceil n \cdot 65/64 \rceil` is computed 
 A record is made for every service that had a work-digest reported, a preimage provided, or an
 accumulation in this block:
 
-$$`\forall s \in \mathbf{s} : \pi'_S[s] \equiv \begin{pmatrix} i \mathrel{\scriptstyle\blacktriangleright} R(s)_i \,,\ x \mathrel{\scriptstyle\blacktriangleright} R(s)_x \,,\ z \mathrel{\scriptstyle\blacktriangleright} R(s)_z \,, \\ e \mathrel{\scriptstyle\blacktriangleright} R(s)_e \,,\ r \mathrel{\scriptstyle\blacktriangleright} (R(s)_n, R(s)_u) \,, \\ p \mathrel{\scriptstyle\blacktriangleright} \sum_{\mathbf{p} \in \mathbf{E}_P, \mathbf{p}_s = s} (1, |\mathbf{p}_\mathbf{d}|) \,, \\ a \mathrel{\scriptstyle\blacktriangleright} \mathcal{U}(\mathbf{S}[s], (0, 0, 0)) \end{pmatrix} \qquad \text{(13.13)}`
+$$`\forall s \in \mathbf{s} : \pi'_S[s] \equiv \begin{pmatrix} i \mathrel{\substack{\scriptscriptstyle\blacktriangleright \\ \scriptscriptstyle\blacktriangleright}} R(s)_i \,,\ x \mathrel{\substack{\scriptscriptstyle\blacktriangleright \\ \scriptscriptstyle\blacktriangleright}} R(s)_x \,,\ z \mathrel{\substack{\scriptscriptstyle\blacktriangleright \\ \scriptscriptstyle\blacktriangleright}} R(s)_z \,, \\ e \mathrel{\substack{\scriptscriptstyle\blacktriangleright \\ \scriptscriptstyle\blacktriangleright}} R(s)_e \,,\ r \mathrel{\substack{\scriptscriptstyle\blacktriangleright \\ \scriptscriptstyle\blacktriangleright}} (R(s)_n, R(s)_u) \,, \\ p \mathrel{\substack{\scriptscriptstyle\blacktriangleright \\ \scriptscriptstyle\blacktriangleright}} \sum_{\mathbf{p} \in \mathbf{E}_P, \mathbf{p}_s = s} (1, |\mathbf{p}_\mathbf{d}|) \,, \\ a \mathrel{\substack{\scriptscriptstyle\blacktriangleright \\ \scriptscriptstyle\blacktriangleright}} \mathcal{U}(\mathbf{S}[s], (0, 0, 0)) \end{pmatrix} \qquad \text{(13.13)}`
 
 $$`\text{where } \mathbf{s} = \mathbf{s}^R \cup \mathbf{s}^P \cup \mathcal{K}(\mathbf{S}) \qquad \text{(13.14)}`
 
@@ -108,9 +108,9 @@ $$`\text{and } \mathbf{s}^R = \{ \mathbf{d}_s \mid \mathbf{d} \in \mathbf{r}_\ma
 
 $$`\text{and } \mathbf{s}^P = \{ s \mid \exists x : (s, x) \in \mathbf{E}_P \} \qquad \text{(13.16)}`
 
-$$`\text{and } R(s \in \mathbb{N}_S) \equiv \sum_{\mathbf{d} \in \mathbf{r}_\mathbf{d}, \mathbf{r} \in \mathbf{I}, \mathbf{d}_s = s} (n \mathrel{\scriptstyle\blacktriangleright} 1, \mathbf{d}_u, \mathbf{d}_i, \mathbf{d}_x, \mathbf{d}_z, \mathbf{d}_e) \qquad \text{(13.17)}`
+$$`\text{and } R(s \in \mathbb{N}_S) \equiv \sum_{\mathbf{d} \in \mathbf{r}_\mathbf{d}, \mathbf{r} \in \mathbf{I}, \mathbf{d}_s = s} (n \mathrel{\substack{\scriptscriptstyle\blacktriangleright \\ \scriptscriptstyle\blacktriangleright}} 1, \mathbf{d}_u, \mathbf{d}_i, \mathbf{d}_x, \mathbf{d}_z, \mathbf{d}_e) \qquad \text{(13.17)}`
 
-$`\mathbf{S}` is the accumulation statistics of §12 (eq. (12.29)), and $`\mathcal{U}(x, y)` is $`x` unless $`x` is $`\emptyset`, in which case it
+$`\mathbf{S}` is the accumulation statistics of {ref "accumulation"}[§12] (eq. (12.29)), and $`\mathcal{U}(x, y)` is $`x` unless $`x` is $`\emptyset`, in which case it
 is $`y`. v0.8.1 states the provision sum's filter $`\mathbf{p}_s = s` explicitly (GP #567). In {api}`JAM.serviceStats`,
 `active` is $`\mathbf{s}`, and `(acc.lookup s).getD (0, 0, 0)` is $`\mathcal{U}(\mathbf{S}[s], (0, 0, 0))`:
 
@@ -118,7 +118,7 @@ is $`y`. v0.8.1 states the provision sum's filter $`\mathbf{p}_s = s` explicitly
 
 # Theorems
 
-No theorems about the statistics are proved yet. The functions are run against GP v0.8.0 test
+No theorems about the statistics are proved yet. The functions are run against test
 vectors: the statistics vectors check the validator records, the preimages vectors the service
 records' provision counts, and the reports vectors the core and service figures of the incoming
 reports. The statistics and preimages vectors are those of davxy/jam-test-vectors v0.8.0; the
@@ -134,6 +134,6 @@ tag := "statistics-readings"
   $`[(0, \dots), \dots]`, with no stated length. $`|\pi'_V| = |\kappa'|` (13.3) implies it, and the model uses $`|\kappa'|`
   ({api}`JAM.validatorStats`). This is recorded in the model's
   [notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues).
-* *The reporters set as an input.* $`\mathbf{G}` is defined in §11.4 from the guarantor assignments, where the
+* *The reporters set as an input.* $`\mathbf{G}` is defined in {ref "reports"}[§11.4] from the guarantor assignments, where the
   signatures are checked. The model computes it there ({api}`JAM.guarantees`) and passes it to
   {api}`JAM.validatorStats`.

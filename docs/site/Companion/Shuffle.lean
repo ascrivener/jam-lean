@@ -18,8 +18,8 @@ file := "shuffle"
 %%%
 
 The paper uses a Fisher–Yates shuffle $`\mathcal{F}` wherever it needs a random order: for the
-guarantor assignments of §11.3 ({ref "reports-assignments"}[chapter]) it shuffles validators, and
-for the selection of reports to audit in §17 it shuffles reports. §3.7.5 introduces it: it takes a sequence and some entropy, and returns
+guarantor assignments of §11.3 ({ref "reports-assignments"}[chapter]) it shuffles the core indices $`[\lfloor i/3 \rfloor \mid i \mathrel{\mathrlap{<}{-}} \mathbb{N}_v]`, one per validator, and
+for the selection of reports to audit in {ref "auditing"}[§17] it shuffles reports. §3.7.5 introduces it: it takes a sequence and some entropy, and returns
 the same elements in an order fixed by the entropy. Appendix F of GP v0.8.1 defines it, first for
 entropy given as a sequence of naturals, then for entropy given as a hash.
 
@@ -56,8 +56,8 @@ $$`\forall T, l \in \mathbb{N} :\ \mathcal{F} \colon \begin{cases} \left\lgroup 
 
 {leanSource JAM.Shuffle.shuffleHash}
 
-$`\mathcal{H}` is Blake2b-256 (§3.8), and $`\mathcal{E}_4` and $`\mathcal{E}^{-1}_4` are the four-octet little-endian encoding and its
-inverse (Appendix C), here `PVM.Num.encodeLE 4` and `PVM.Num.decodeLE`.
+$`\mathcal{H}` is Blake2b-256 ({ref "primitives"}[§3.8]), and $`\mathcal{E}_4` and $`\mathcal{E}^{-1}_4` are the four-octet little-endian encoding and its
+inverse ({ref "codec"}[Appendix C]), here `PVM.Num.encodeLE 4` and `PVM.Num.decodeLE`.
 
 # What the model proves
 %%%

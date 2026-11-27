@@ -19,8 +19,8 @@ file := "authorization"
 
 A work package may use a core only if one of the core's current *authorizers* allows it. An
 authorizer is identified by a hash: the hash of its PVM code hash concatenated with its
-configuration blob. Running an authorizer happens in-core, in the Is-Authorized invocation (§14.3), which is separate
-from Refine. On chain,
+configuration blob. Running an authorizer happens in-core, in the Is-Authorized invocation $`\Psi_I` (defined in
+{ref "invocations"}[Appendix B.2] and used in {ref "work"}[§14.4]), which is separate from Refine. On chain,
 the state only has to say which authorizers each core accepts, and keep that set up to date. That
 is §8 of GP v0.8.1, and in the model it is `JAM/Authorization.lean`
 ([API page](https://ascrivener.github.io/jam-lean/api/JAM/Authorization.html)).
@@ -36,7 +36,7 @@ from which the pool is refilled:
 $$`\alpha \in \llbracket \llbracket \mathbb{H} \rrbracket_{:\mathsf{O}} \rrbracket_{\mathsf{C}}, \qquad \phi \in \llbracket \llbracket \mathbb{H} \rrbracket_{\mathsf{Q}} \rrbracket_{\mathsf{C}} \qquad \text{(8.1)}`
 
 So each of the $`\mathsf{C} = 341` pools holds at most $`\mathsf{O} = 8` hashes, and each queue exactly $`\mathsf{Q} = 80`. Only accumulation changes
-$`\phi`, through a call from a privileged service (§12). In the model's state these are the fields
+$`\phi`, through a call from a privileged service ({ref "accumulation"}[§12]). In the model's state these are the fields
 `authPools` and `authQueue` of {api}`JAM.State`, each a list of lists of hashes. The lengths are not
 fixed by the types; if either list has fewer than $`\mathsf{C}` entries, a missing core's pool or queue is read as
 empty (`getD`).
@@ -100,7 +100,7 @@ Notes 21, v0.8.1-A28 and v0.8.1-A29 are in the model's
 * *Which guarantee's authorizer (note 21).* In (8.3), $`g` is bound only inside the condition
   $`\exists g \in \mathbf{E}_G : (g_\mathbf{r})_c = c`, but $`(g_\mathbf{r})_a` is used in the result. The model reads $`g` as the guarantee on core $`c`
   ({api}`JAM.poolUsed`).
-* *More than one guarantee on a core (note v0.8.1-A28).* A valid $`\mathbf{E}_G` has at most one guarantee per core (§11). The
+* *More than one guarantee on a core (note v0.8.1-A28).* A valid $`\mathbf{E}_G` has at most one guarantee per core ({ref "reports"}[§11]). The
   model does not rely on that here: if there were several, it would remove each one's authorizer
   in turn.
 * *An empty queue (note v0.8.1-A29).* By (8.1) every queue has exactly $`\mathsf{Q}` entries, so $`\phi'[c][\mathbf{H}_T]^{\circlearrowleft}` always exists. The model's

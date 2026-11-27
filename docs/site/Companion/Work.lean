@@ -22,14 +22,14 @@ file := "work"
 A work-package is what a service's users submit to a core: an authorization, a context, and a
 sequence of work-items, each naming a service and carrying a payload. §14 of GP v0.8.1 defines
 these terms and the work-report computation $`\Xi`, which turns a work-package into the work-report
-that guarantors sign and that §11 puts on chain. Around $`\Xi` the section defines the item-to-digest
+that guarantors sign and that {ref "reports"}[§11] puts on chain. Around $`\Xi` the section defines the item-to-digest
 function $`C`, the implied authorizer $`\mathbf{p}_a`, the import and extrinsic data of an item, the bundle
 assembly $`B` and the availability specifier $`A`.
 
 $`\Xi` is off-chain logic: no state transition calls it. In the model it is one function,
 {api}`JAM.Guarantee.computeReport`, defined in `JAM/Guarantee.lean` with the terms around it. The
 work-package types are in `JAM/Work.lean`, and the two PVM invocations $`\Xi` uses, $`\Psi_I` and $`\Psi_R`
-(Appendix B), are in `JAM/Refine.lean`. §15 (guaranteeing) and §16 (availability assurance) are
+({ref "invocations"}[Appendix B]), are in `JAM/Refine.lean`. §15 (guaranteeing) and §16 (availability assurance) are
 modelled only as far as this refinement: the networking, chunk distribution and signing they
 describe are not.
 
@@ -90,7 +90,7 @@ $$`\forall \mathbf{p} \in \mathbb{P}: \left\{ \begin{aligned} \mathbf{p}_a &\equ
 
 {leanSource JAM.WorkPackage.authorizer}
 
-The authorization code $`\mathbf{p}_\mathbf{u}` is the historical lookup $`\Lambda` (§9) of the code hash in the host
+The authorization code $`\mathbf{p}_\mathbf{u}` is the historical lookup $`\Lambda` ({ref "accounts"}[§9]) of the code hash in the host
 service, at the timeslot $`t` of the lookup anchor. It is `none` in the model when the service or the
 preimage is missing; {api}`JAM.psiI` then gives the error BAD.
 
@@ -107,7 +107,7 @@ hashes with Merkle proofs, from which an import can later be justified against t
 $$`P\colon \left\{ \begin{aligned} \llbracket \mathbb{J} \rrbracket \to\ & \llbracket \mathbb{J} \rrbracket \\ \mathbf{s} \mapsto\ & \left[ \mathcal{P}_l\left(\mathcal{E}\left(\updownarrow\mathcal{J}_6(\mathbf{s}, i), \updownarrow\mathcal{L}_6(\mathbf{s}, i)\right)\right) \;\middle|\; i \mathrel{\mathrlap{<}{-}} \mathbb{N}_{\lceil |\mathbf{s}|/64 \rceil} \right] \\ & \text{where } l = \mathsf{W}_G \end{aligned} \right. \qquad \text{(14.13)}`
 
 $`\mathcal{J}_6` and $`\mathcal{L}_6` are the subtree justification and leaf page of the constant-depth Merkle tree
-(Appendix E). The model's $`P` is in `JAM/Segments.lean`:
+({ref "merkle"}[Appendix E]). The model's $`P` is in `JAM/Segments.lean`:
 
 {leanSource JAM.Segments.pagedProofs}
 
@@ -219,8 +219,8 @@ $$`A\colon \left\{ \begin{aligned} \left\lgroup \mathbb{H}, \mathbb{B}, \llbrack
 
 $$`\begin{aligned} \text{where } u &= \mathcal{M}_B\left( \left[ \overgroup{\mathbf{x}} \;\middle|\; \mathbf{x} \mathrel{\mathrlap{<}{-}} {}^{\text{T}}\left[\mathbf{b}^\clubsuit, \mathbf{s}^\clubsuit\right] \right] \right) \\ \text{and } \mathbf{b}^\clubsuit &= \mathcal{H}^\#\left(\mathcal{C}^{v}_{\lceil |\mathbf{b}|/z \rceil}\left(\mathcal{P}_z(\mathbf{b})\right)\right) \\ \text{and } \mathbf{s}^\clubsuit &= \mathcal{M}_B^\#\left({}^{\text{T}}_{v}\,\mathcal{C}^{v\#}_{\mathsf{W}_G/z}\left(\mathbf{s} \frown P(\mathbf{s})\right)\right) \\ \text{and } z &= 2 \cdot \mathcal{D}(v) \end{aligned}`
 
-$`\mathcal{C}` is erasure coding and $`\mathcal{D}(v)` the number of original chunks for $`v` validators (Appendix H);
-$`\mathcal{M}` and $`\mathcal{M}_B` are the constant-depth and simple binary Merkle roots (Appendix E). $`{}^{\text{T}}_v` is the transpose of a
+$`\mathcal{C}` is erasure coding and $`\mathcal{D}(v)` the number of original chunks for $`v` validators ({ref "erasure"}[Appendix H]);
+$`\mathcal{M}` and $`\mathcal{M}_B` are the constant-depth and simple binary Merkle roots ({ref "merkle"}[Appendix E]). $`{}^{\text{T}}_v` is the transpose of a
 sequence of sequences whose result has $`v` items, so that $`{}^{\text{T}}_v[]` is $`v` empty sequences:
 
 {leanSource JAM.Guarantee.sizedTranspose}
@@ -256,7 +256,7 @@ tag := "work-checks"
 %%%
 
 An auditor rebuilds a bundle from erasure-coded chunks and must check it before refining it again
-(§17.2, "Data Fetching"). The paper states these checks in prose only: the extrinsics' hashes must
+({ref "auditing"}[§17.2], "Data Fetching"). The paper states these checks in prose only: the extrinsics' hashes must
 equal those in their work-item, and each imported segment's justification must show that the
 segment is included under its Merkle root at its index. The model decodes a bundle into the
 package and the data of each item, the remaining lengths being "determinable through the work
@@ -269,7 +269,7 @@ package itself", and then checks it:
 The check of one imported segment is {api}`JAM.Segments.verifySegment`. Every segment verifies against the
 segment root of its sequence with the $`\mathcal{J}_0` justification $`J_\mathbf{l}` uses. Building on that,
 {api}`JAM.Guarantee.checkBundle` accepts a package together with the item data the data source
-gives for it ({api}`JAM.Guarantee.packageData`), provided every exported segment is $`\mathsf{W}_G` octets and the
+gives for it ({api}`JAM.Guarantee.packageData`), provided every segment the data source holds for the imports is $`\mathsf{W}_G` octets and the
 keys of $`\mathbf{l}` are exactly the imported package hashes. The theorem is about the decoded form
 that `checkBundle` takes. No round trip through the bundle's encoding is proved, so it does not
 show that {api}`JAM.Guarantee.verifyBundle` accepts the encoded bundle:
@@ -283,7 +283,7 @@ show that {api}`JAM.Guarantee.verifyBundle` accepts the encoded bundle:
 tag := "work-ancestors"
 %%%
 
-A lookup anchor must be a block the node has recorded. §11.4.1 asks nodes to keep "the series of the
+A lookup anchor must be a block the node has recorded. {ref "reports"}[§11.4.1] asks nodes to keep "the series of the
 last $`\mathsf{L}` headers as the ancestor set $`\mathbf{A}`". The model keeps them in a {api}`JAM.Chain`:
 
 {leanSource JAM.Chain.extend}
@@ -308,7 +308,7 @@ model's [notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/do
   output that $`I` replaced by $`\circleddash` or $`\circledcirc` adds nothing. The model carries $`z` this way through
   {api}`JAM.Guarantee.refineItems`. Counting $`\Psi_R`'s raw outputs instead would let one oversized item push
   every later item over $`\mathsf{W}_R`.
-* *The bundle checks (note v0.8.1-A18).* §17.2 gives the checks on a bundle only in prose. The model decodes
+* *The bundle checks (note v0.8.1-A18).* {ref "auditing"}[§17.2] gives the checks on a bundle only in prose. The model decodes
   the bundle (rejecting trailing octets) and checks one data entry per item, each extrinsic's hash
   and length, each segment's size $`\mathsf{W}_G` and its justification against $`L_\mathbf{l}(r)` at index $`n`, and that the keys
   of $`\mathbf{l}` are the imported work-package hashes ({api}`JAM.Guarantee.checkBundle`). Comparing the package's

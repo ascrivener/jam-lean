@@ -43,7 +43,7 @@ Besides $`\sigma` and $`\mathbf{B}`, it takes three arguments the paper leaves i
 * the cryptography, a {api}`JAM.Crypto`: signature and VRF verification, and the ring root. The
   model keeps these as a parameter and never implements them itself;
 * the ancestor headers the importer has kept, a {api}`JAM.Chain`. The paper's ancestor set
-  $`\mathbf{A}` (eq. (5.3)) is not part of $`\sigma`, and guarantees (§11) need it.
+  $`\mathbf{A}` (eq. (5.3)) is not part of $`\sigma`, and guarantees ({ref "reports"}[§11]) need it.
 
 # The block
 %%%
@@ -52,8 +52,8 @@ tag := "overview-block"
 
 $$`\mathbf{B} \equiv (\mathbf{H}, \mathbf{E}) \qquad \text{(4.2)} \qquad\qquad \mathbf{E} \equiv (\mathbf{E}_T, \mathbf{E}_P, \mathbf{E}_G, \mathbf{E}_A, \mathbf{E}_D) \qquad \text{(4.3)}`
 
-The extrinsic $`\mathbf{E}` has five parts: tickets $`\mathbf{E}_T` (§6), preimages $`\mathbf{E}_P` (§12), guarantees of work reports
-$`\mathbf{E}_G` (§11), availability assurances $`\mathbf{E}_A` (§11) and disputes $`\mathbf{E}_D` (§10).
+The extrinsic $`\mathbf{E}` has five parts: tickets $`\mathbf{E}_T` ({ref "safrole"}[§6]), preimages $`\mathbf{E}_P` ({ref "accumulation"}[§12]), guarantees of work reports
+$`\mathbf{E}_G` ({ref "reports"}[§11]), availability assurances $`\mathbf{E}_A` ({ref "reports"}[§11]) and disputes $`\mathbf{E}_D` ({ref "disputes"}[§10]).
 
 {leanSource JAM.Block}
 
@@ -72,19 +72,19 @@ fields. Each component, with the section that covers it, and its fields:
 
 * $`\alpha` ({ref "authorization"}[§8]): authorizer pools. Fields: `authPools`.
 * $`\beta` ({ref "history"}[§7]): recent blocks and the accumulation output log. Fields: `recent`.
-* $`\theta` (§7, §12): the most recent accumulation outputs. Fields: `lastAccOut`.
+* $`\theta` ({ref "history"}[§7], {ref "accumulation"}[§12]): the most recent accumulation outputs. Fields: `lastAccOut`.
 * $`\gamma` ({ref "safrole"}[§6]): Safrole's state. Fields: `pending`, `ringRoot`, `sealKeys`, `accumulator`.
-* $`\delta` (§9): service accounts. Fields: `accounts`.
+* $`\delta` ({ref "accounts"}[§9]): service accounts. Fields: `accounts`.
 * $`\eta` ({ref "safrole"}[§6]): entropy. Fields: `eta`.
 * $`\iota`, $`\kappa`, $`\lambda` ({ref "safrole"}[§6]): staging, active and previous validator keys. Fields: `staging`, `active`, `prev`.
-* $`\rho` (§11): work reports awaiting availability, per core. Fields: `avail`.
+* $`\rho` ({ref "reports"}[§11]): work reports awaiting availability, per core. Fields: `avail`.
 * $`\tau` ({ref "safrole"}[§6]): the most recent block's timeslot. Fields: `tau`.
 * $`\phi` ({ref "authorization"}[§8]): authorizer queues. Fields: `authQueue`.
-* $`\chi` (§9, §12): privileged services. Fields: `manager`, `assigners`, `delegator`, `registrar`, `alwaysAcc`.
-* $`\psi` (§10): judgments. Fields: `disputes`.
-* $`\pi` (§13): validator, core and service statistics. Fields: `valStats`, `valStatsLast`, `coreStats`, `serviceStats`.
-* $`\omega` (§12): reports ready for accumulation. Fields: `ready`.
-* $`\xi` (§12): recently accumulated packages. Fields: `accumulated`.
+* $`\chi` ({ref "accounts"}[§9], {ref "accumulation"}[§12]): privileged services. Fields: `manager`, `assigners`, `delegator`, `registrar`, `alwaysAcc`.
+* $`\psi` ({ref "disputes"}[§10]): judgments. Fields: `disputes`.
+* $`\pi` ({ref "statistics"}[§13]): validator, core and service statistics. Fields: `valStats`, `valStatsLast`, `coreStats`, `serviceStats`.
+* $`\omega` ({ref "accumulation"}[§12]): reports ready for accumulation. Fields: `ready`.
+* $`\xi` ({ref "accumulation"}[§12]): recently accumulated packages. Fields: `accumulated`.
 
 {leanSource JAM.State}
 
@@ -113,28 +113,29 @@ binding or function, what it computes, and the equations and section:
 
 * header checks, `slot`: $`\tau' = \mathbf{H}_T`; (4.5), (5.2), (5.4), (5.9) ({ref "overview-header"}[§5]).
 * `recentDagger`: $`\beta^\dagger_H`; (4.6) ({ref "history"}[§7]).
-* `disputesTransition`: $`\psi'`, $`\rho^\dagger`; (4.11), (4.12) (§10).
+* `disputesTransition`: $`\psi'`, $`\rho^\dagger`; (4.11), (4.12) ({ref "disputes"}[§10]).
 * `safrole`: $`\gamma'`, $`\eta'`, $`\kappa'`, $`\lambda'`; (4.7)–(4.10) ({ref "safrole"}[§6]).
-* `assurances`: $`\rho^\ddagger`, $`\mathbf{R}^*`; (4.13), (4.15) (§11).
-* `guarantees`: $`\rho'`; (4.14) (§11).
-* `accumulate`: $`\omega'`, $`\xi'`, $`\delta^\ddagger`, $`\chi'`, $`\iota'`, $`\phi'`, $`\theta'`, $`\mathbf{S}`; (4.16) (§12).
-* `recentHistory`: $`\beta'` (both $`\beta'_H`, eq. (4.17), and $`\beta'_B`, eq. (7.7)); ({ref "history"}[§7]).
-* `preimages`: $`\delta'`; (4.18) (§12).
+* `assurances`: $`\rho^\ddagger`, $`\mathbf{R}^*`; (4.13), (4.15) ({ref "reports"}[§11]).
+* `guarantees`: $`\rho'`; (4.14) ({ref "reports"}[§11]).
+* `accumulate`: $`\omega'`, $`\xi'`, $`\delta^\ddagger`, $`\chi'`, $`\iota'`, $`\phi'`, $`\theta'`, $`\mathbf{S}`; (4.16) ({ref "accumulation"}[§12]).
+* `recentHistory`: $`\beta'` (both $`\beta'_H`, eq. (4.17), and $`\beta'_B`, eq. (7.7)) ({ref "history"}[§7]).
+* `preimages`: $`\delta'`; (4.18) ({ref "accumulation"}[§12]).
 * `authorizations`: $`\alpha'`; (4.19) ({ref "authorization"}[§8]).
-* `validatorStats`, `coreStats`, `serviceStats`: $`\pi'`; (4.20) (§13).
+* `validatorStats`, `coreStats`, `serviceStats`: $`\pi'`; (4.20) ({ref "statistics"}[§13]).
 
 The graph lists dependencies, not every input each section reads. The model passes each
 section-level function what that section's own equations use, and several steps read more than
 their line of the graph lists:
 
-* *Guarantees.* (4.14) lists $`\kappa`. The equations of §11 use the posterior keys $`\kappa'` and $`\lambda'`, the posterior
+* *Guarantees.* (4.14) lists $`\kappa`. The equations of {ref "reports"}[§11] use the posterior keys $`\kappa'` and $`\lambda'`, the posterior
   entropy $`\eta'`, the offenders in $`\psi'` (through the key filter $`\Phi`), and $`\beta^\dagger_H`, $`\alpha` and $`\delta`. The model's guarantee
   step reads those.
-* *Preimages.* The model checks $`\mathbf{E}_P` against the prior accounts $`\delta` as well as $`\delta^\ddagger`, as §12.4 does: the
+* *Preimages.* The model checks $`\mathbf{E}_P` against the prior accounts $`\delta` as well as $`\delta^\ddagger`, as {ref "accumulation"}[§12.4] does: the
   data must have been solicited but not yet provided in the prior state.
 * *Other steps.* Disputes read $`\kappa`, $`\lambda` and $`\tau`. Assurances read $`\kappa`, $`|\kappa'|`, $`\mathbf{H}_P` and $`\mathbf{H}_T`. The guarantee
   step also reads the prior $`\beta_H`, $`\xi`, $`\omega` and $`\rho` (to find packages already known) and the ancestor set $`\mathbf{A}`.
-  Accumulation reads $`\eta'_0` and $`\mathbf{H}_T`. The core statistics read the newly available reports $`\mathbf{R}`.
+  Accumulation reads $`\eta'_0` and $`\mathbf{H}_T`. The core statistics read the newly available reports $`\mathbf{R}`, and the validator statistics read
+  the reporters $`\mathbf{G}` of the guarantees, which come from the assignments $`M` and $`M^*` (so from $`\lambda'`, $`\eta'_2`, $`\eta'_3` and $`\psi'_O`).
 * *The timeslot.* The model sets $`\tau' = \mathbf{H}_T` directly. The check that $`\mathbf{H}_T` is after $`\tau` is made by
   {api}`JAM.safrole` (its `badSlot` error).
 
@@ -159,7 +160,7 @@ $$`\mathbf{H}_E \in \left\lgroup \mathbb{H}, \mathbb{H}, \llbracket \left\lgroup
 $`\tilde{\mathbb{H}}` and $`\bar{\mathbb{H}}` are Bandersnatch and Ed25519 keys (§3.8.2). The model's {api}`JAM.EpochMark` and the option
 types hold them, and the types do not fix their lengths. The decoder ({api}`JAM.Header.decode`) fixes the
 winning-tickets marker's $`\mathsf{E}`. The epoch marker's key list is length-prefixed (its encoding is $`\updownarrow\mathbf{k}`); its
-length is enforced at import, because $`\mathbf{H}_E` must equal the marker Safrole produces.
+length is enforced at import, because $`\mathbf{H}_E` must match the marker Safrole produces.
 
 ## The header's conditions
 
@@ -181,21 +182,21 @@ $`P(\mathbf{H})` is the parent header and $`\mathcal{T}` the wall clock. A heade
 
 * (5.2): $`\mathbf{H}_P` is the hash of the last header in the {api}`JAM.Chain` it is given.
 * (5.3): the ancestor set is the chain's headers together with $`\mathbf{H}` itself. It is used only by the
-  lookup-anchor check of §11 ({api}`JAM.lookupAnchorKnown`).
+  lookup-anchor check of {ref "reports"}[§11] ({api}`JAM.lookupAnchorKnown`).
 * (5.8): $`P(\mathbf{H})_T < \mathbf{H}_T` is checked as $`\tau < \mathbf{H}_T`, since $`\tau` is the parent's timeslot (Safrole's `badSlot`).
   $`\mathbf{H}_T \cdot \mathsf{P} \leq \mathcal{T}` is not checked: $`\Upsilon` has no clock.
-* (5.9): $`\mathbf{H}_R` equals {api}`JAM.State.root`, the state Merklization $`\mathcal{M}_\sigma` of Appendix D.
-* (5.10): $`\mathbf{H}_I < |\kappa'|`. $`\mathbf{H}_A` is the author key used to check the seal and the entropy source (§6.4,
+* (5.9): $`\mathbf{H}_R` equals {api}`JAM.State.root`, the state Merklization $`\mathcal{M}_\sigma` of {ref "statemerkle"}[Appendix D].
+* (5.10): $`\mathbf{H}_I < |\kappa'|`. $`\mathbf{H}_A` is the author key used to check the seal and the entropy source ({ref "safrole"}[§6.4],
   {api}`JAM.sealValid`).
-* The markers $`\mathbf{H}_E` and $`\mathbf{H}_W` must equal the ones Safrole produces (§6.6), and $`\mathbf{H}_O` the one disputes
-  produce (§10).
+* The markers $`\mathbf{H}_E` and $`\mathbf{H}_W` must equal the ones Safrole produces ({ref "safrole"}[§6.6]), and $`\mathbf{H}_O` the one disputes
+  produce ({ref "disputes"}[§10]).
 
 ## The extrinsic hash
 
 $$`\begin{aligned} \mathbf{H}_X &\in \mathbb{H}, \quad \mathbf{H}_X \equiv \mathcal{H}(\mathcal{E}(\mathcal{H}^\#(\mathbf{a}))) & \text{(5.4)} \\ \text{where } \mathbf{a} &= \left[\mathcal{E}_T(\mathbf{E}_T), \mathbf{p}, \mathbf{g}, \mathcal{E}_A(\mathbf{E}_A), \mathcal{E}_D(\mathbf{E}_D)\right] & \text{(5.5)} \\ \text{and } \mathbf{p} &= \mathcal{E}\left(\updownarrow\left[\left(\mathcal{E}_4(s), \mathcal{H}(\mathbf{d})\right) \;\middle|\; (s, \mathbf{d}) \mathrel{\mathrlap{<}{-}} \mathbf{E}_P\right]\right) & \text{(5.6)} \\ \text{and } \mathbf{g} &= \mathcal{E}\left(\updownarrow\left[\left(\mathcal{H}(r), \mathcal{E}_4(t), \mathcal{E}_C(a)\right) \;\middle|\; (r, t, a) \mathrel{\mathrlap{<}{-}} \mathbf{E}_G\right]\right) & \text{(5.7)} \end{aligned}`
 
 $`\mathcal{H}^\#` applies $`\mathcal{H}` to each element. Preimages and work reports enter by their hashes, so that each can be shown to be
-included without the whole extrinsic. $`\mathcal{E}_C` is the credential encoding of Appendix C; the model's
+included without the whole extrinsic. $`\mathcal{E}_C` is the credential encoding of {ref "codec"}[Appendix C]; the model's
 {api}`JAM.encodeCredential`.
 
 {leanSource JAM.Extrinsic.hashParts}

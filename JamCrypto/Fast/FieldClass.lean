@@ -1,10 +1,11 @@
 /-!
 # The interface of a fast prime field, and what its operations are proved to compute
 
-`Fast.Field F` gives the operations of a field 𝔽_p on a representation `F`; `Fast.LawfulField F`
-states that each computes the corresponding `Nat` operation mod p on values (`value`), for reduced
-elements (`Ok`). The generated fields (`Fast/Fr`, `Fast/Fq`, `Fast/Fp25519`) are instances; the
-curve code is written once against this interface and its proofs use only these laws.
+`Fast.Field F` gives the operations of a field $\mathbb{F}_p$ on a representation `F`;
+`Fast.LawfulField F` states that each computes the corresponding `Nat` operation mod $p$ on values
+(`value`), for reduced elements (`Ok`). The generated fields (`Fast/Fr`, `Fast/Fq`, `Fast/Fp25519`)
+are instances; the curve code is written once against this interface and its proofs use only these
+laws.
 -/
 
 namespace JamCrypto.Fast

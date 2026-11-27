@@ -7,10 +7,10 @@ import JamCrypto.Crypto
 /-!
 # Bandersnatch ring VRF primitives for `JAM.Crypto`
 
-`JamCrypto.Ring.crypto srs V c` is `c` with the ring root O, ring VRF verification and output Y
-(GP Appendix G) computed in Lean, for a chain of V validators. `gp` selects the Gray Paper
-version (default v0.8.0; v0.8.1 uses the VRF spec's Draft 35, see `RingVerify081`). Load
-the SRS once at startup:
+`JamCrypto.Ring.crypto srs V c` is `c` with the ring root $\mathcal{O}$, ring VRF verification and
+output $\mathcal{Y}$ (GP Appendix G) computed in Lean, for a chain of $V$ validators. `gp` selects
+the Gray Paper version (default v0.8.0; v0.8.1 uses the VRF spec's Draft 35, see `RingVerify081`).
+Load the SRS once at startup:
 
 ```
 let srs := JamCrypto.Ring.withSelectors (← JamCrypto.Ring.Srs.load "JamCryptoTest/data/bls12-381-srs-2-11-uncompressed-zcash.bin")
@@ -24,12 +24,12 @@ namespace JamCrypto.Ring
     fuzzer blocks). -/
 def domain081 : Nat := 2048
 
-/-- `c` with the ring VRF primitives for a chain of `validators` = V validators: `bsRingRoot` := O
-    (`Ring.root`), `bsRingVerify` := 𝔹̄° (`Ring.verify`), `bsRingOut` := Y (`Ring.output`).
-    v0.8.0 sizes the ring domain by V; v0.8.1 uses the domain `dom081` (default `domain081` =
-    2048, whatever V is; the ring then holds up to N − 257 keys) and the reading `rd` of the VRF
-    spec's Draft 35 (default `.prose`; `.vectors` is what the published vectors check, see
-    `JamCrypto.Reading`). v0.8.0 ignores `dom081` and `rd`. -/
+/-- `c` with the ring VRF primitives for a chain of `validators` = $V$ validators: `bsRingRoot` :=
+    $\mathcal{O}$ (`Ring.root`), `bsRingVerify` := $\bar{\mathbb{B}}^{\circ}$ (`Ring.verify`),
+    `bsRingOut` := $\mathcal{Y}$ (`Ring.output`). v0.8.0 sizes the ring domain by $V$; v0.8.1 uses
+    the domain `dom081` (default `domain081` = 2048, whatever $V$ is; the ring then holds up to $N -
+    257$ keys) and the reading `rd` of the VRF spec's Draft 35 (default `.prose`; `.vectors` is what
+    the published vectors check, see `JamCrypto.Reading`). v0.8.0 ignores `dom081` and `rd`. -/
 def crypto (srs : Srs) (validators : Nat) (c : JAM.Crypto) (gp : GpVersion := .v080)
     (dom081 : Nat := domain081) (rd : Reading := .prose) : JAM.Crypto :=
   match gp with

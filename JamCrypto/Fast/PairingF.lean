@@ -361,10 +361,10 @@ theorem lines_rel {q : G2F F} {q' : JamCrypto.Pairing.G2} (hq : GRel q q') :
     exact ⟨arr_push ho2 (hc hl2 hx3 hy3), (hl2.sq.sub hx3).sub qx, (hl2.mul (hx3.sub ((hl2.sq.sub hx3).sub qx))).sub hy3⟩
   · exact ⟨ho2, hx3, hy3⟩
 
-/-- `miller`, step for step. -/
-def miller (p : AF F) (q : G2F F) : E12 F := Id.run do
+/-- `miller`, step for step, with the line coefficients `ls` of `q` given (`lines q`, or the same
+    array computed once for a fixed `q`). -/
+def millerWith (p : AF F) (q : G2F F) (ls : Array (E12 F × E12 F)) : E12 F := Id.run do
   if p.inf || q.inf then return E12.one
-  let ls := lines q
   let evalLine (k : Nat) : E12 F :=
     let (a, b) := ls[k]!
     let l := b.add (a.scale p.x)
@@ -380,14 +380,15 @@ def miller (p : AF F) (q : G2F F) : E12 F := Id.run do
       k := k + 1
   return f.conj
 
-theorem miller_rel {p : AF F} {p' : JamCrypto.G1.Aff} {q : G2F F} {q' : JamCrypto.Pairing.G2}
-    (hp : ARel p p') (hq : GRel q q') : V12 (miller p q) (JamCrypto.Pairing.miller p' q') := by
-  unfold miller JamCrypto.Pairing.miller
+theorem millerWith_rel {p : AF F} {p' : JamCrypto.G1.Aff} {q : G2F F} {q' : JamCrypto.Pairing.G2}
+    {ls : Array (E12 F × E12 F)} (hp : ARel p p') (hq : GRel q q')
+    (hls : ArrRel LRel ls (JamCrypto.Pairing.lines q')) :
+    V12 (millerWith p q ls) (JamCrypto.Pairing.miller p' q') := by
+  unfold millerWith JamCrypto.Pairing.miller
   simp only [Id.run, bind, pure]
   rw [hp.2.2, hq.2.2]
   split
   · exact V12.one
-  have hls := lines_rel hq
   have ev : ∀ {x : E12 F × E12 F} {y : JamCrypto.Pairing.Fq12 × JamCrypto.Pairing.Fq12}, LRel x y →
       V12 (⟨⟨(x.2.add (x.1.scale p.x)).d0.c0.add ⟨p.y, Field.zero⟩, (x.2.add (x.1.scale p.x)).d0.c1,
           (x.2.add (x.1.scale p.x)).d0.c2⟩, (x.2.add (x.1.scale p.x)).d1⟩ : E12 F)
@@ -404,6 +405,13 @@ theorem miller_rel {p : AF F} {p' : JamCrypto.G1.Aff} {q : G2F F} {q' : JamCrypt
   split
   · exact ⟨(hf.sq.mul (he k)).mul (he (k + 1)), rfl⟩
   · exact ⟨hf.sq.mul (he k), rfl⟩
+
+/-- `miller`. -/
+def miller (p : AF F) (q : G2F F) : E12 F := millerWith p q (lines q)
+
+theorem miller_rel {p : AF F} {p' : JamCrypto.G1.Aff} {q : G2F F} {q' : JamCrypto.Pairing.G2}
+    (hp : ARel p p') (hq : GRel q q') : V12 (miller p q) (JamCrypto.Pairing.miller p' q') :=
+  millerWith_rel hp hq (lines_rel hq)
 
 /-- `frobGamma`. -/
 def frobGamma : E2 F := E2.pow ⟨Field.one, Field.one⟩ ((P - 1) / 6)
@@ -468,28 +476,28 @@ theorem finalExp_rel {f : E12 F} {f' : JamCrypto.Pairing.Fq12} (h : V12 f f') :
   have t3 := ((powX_rel (powX_rel t2)).mul (frob_rel (frob_rel t2))).mul t2.conj
   exact t3.mul (f2.sq.mul f2)
 
-/-- The product of the Miller loops of `pairingCheck`. -/
-def millerProd (pairs : List (AF F × G2F F)) : E12 F :=
-  pairs.foldl (fun acc (p, q) => acc.mul (miller p q)) E12.one
-
 /-- Two lists agree elementwise. -/
 def ListRel {α β : Type} (R : α → β → Prop) : List α → List β → Prop
   | [], [] => True
   | a :: l, b :: l' => R a b ∧ ListRel R l l'
   | _, _ => False
 
-/-- The pairs agree. -/
-def PRel (a : AF F × G2F F) (b : JamCrypto.G1.Aff × JamCrypto.Pairing.G2) : Prop :=
-  ARel a.1 b.1 ∧ GRel a.2 b.2
+/-- The product of the Miller loops of `pairingCheck`, each pair with its line coefficients. -/
+def millerProd (pairs : List (AF F × G2F F × Array (E12 F × E12 F))) : E12 F :=
+  pairs.foldl (fun acc (p, q, ls) => acc.mul (millerWith p q ls)) E12.one
 
-theorem millerProd_rel {pairs : List (AF F × G2F F)} {pairs' : List (JamCrypto.G1.Aff × JamCrypto.Pairing.G2)}
-    (h : ListRel PRel pairs pairs') :
+/-- The pairs agree, and the line coefficients are those of the reference's `lines`. -/
+def PRel (a : AF F × G2F F × Array (E12 F × E12 F)) (b : JamCrypto.G1.Aff × JamCrypto.Pairing.G2) : Prop :=
+  ARel a.1 b.1 ∧ GRel a.2.1 b.2 ∧ ArrRel LRel a.2.2 (JamCrypto.Pairing.lines b.2)
+
+theorem millerProd_rel {pairs : List (AF F × G2F F × Array (E12 F × E12 F))}
+    {pairs' : List (JamCrypto.G1.Aff × JamCrypto.Pairing.G2)} (h : ListRel PRel pairs pairs') :
     V12 (finalExp (millerProd pairs))
       (JamCrypto.Pairing.finalExp (pairs'.foldl (fun acc (p, q) => acc.mul (JamCrypto.Pairing.miller p q))
         JamCrypto.Pairing.Fq12.one)) := by
   unfold millerProd
   refine finalExp_rel ?_
-  suffices ∀ (a : E12 F) a', V12 a a' → V12 (pairs.foldl (fun acc (p, q) => acc.mul (miller p q)) a)
+  suffices ∀ (a : E12 F) a', V12 a a' → V12 (pairs.foldl (fun acc (p, q, ls) => acc.mul (millerWith p q ls)) a)
       (pairs'.foldl (fun acc (p, q) => acc.mul (JamCrypto.Pairing.miller p q)) a') from this _ _ V12.one
   induction pairs generalizing pairs' with
   | nil => cases pairs' <;> simp_all [ListRel]
@@ -498,6 +506,6 @@ theorem millerProd_rel {pairs : List (AF F × G2F F)} {pairs' : List (JamCrypto.
     | nil => exact absurd h id
     | cons y ys =>
       intro a a' ha
-      exact ih h.2 _ _ (ha.mul (miller_rel h.1.1 h.1.2))
+      exact ih h.2 _ _ (ha.mul (millerWith_rel h.1.1 h.1.2.1 h.1.2.2))
 
 end JamCrypto.Fast.PairingF

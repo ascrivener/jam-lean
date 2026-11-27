@@ -569,7 +569,8 @@ $$`\mathfrak{S}(\mathbf{x}) = \begin{cases} \emptyset & \text{if } s = \emptyset
 The paper's $`\mathfrak{X}` is a recursion with no stated bound. The model runs it with fuel,
 $`256 \cdot (|\mathbf{c}| - \imath + 2)` transitions ({api}`PVM.Sim.fuel`), and proves that the fuel always suffices (more fuel gives
 the same result), and that for every block $`\Psi` charges the simulation finishes, so the total
-{api}`PVM.Program.blockCost` is the paper's $`\varrho^\Delta` there:
+{api}`PVM.Program.blockCost` there is $`\max(\mathbf{x}^{\text{final}}_c - 3, 1)` as computed by the model's
+$`\mathfrak{X}` ({api}`PVM.Sim.run`), with no default used:
 
 {mathdoc PVM.Sim.run_fuel_eq}
 

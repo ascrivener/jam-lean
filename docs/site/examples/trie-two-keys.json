@@ -22,6 +22,7 @@
    "cells": ["$l$ = $\\mathbb{H}_0$ (empty), $r$ = `0x1845748e…`", "`00`", "`0x5a2b3aad…`"]},
   {"label": "Root $M(d)$", "cells": ["the top branch's hash", "", "`0x5a2b3aad…`"]}],
  "params": "no chain parameters: case 8 of the trie vectors",
+ "nowrapColumns": [2, 3],
  "notes":
  ["Every node is 64 octets. The first bit says what it is: a branch has 0, a leaf 1. An embedded-value leaf's first octet is $2^7$ plus the value's length; a regular leaf's is $2^7 + 2^6$ = `c0`. A branch is its two children's hashes, with the left one's first bit cleared, so its first octet is the left child's first octet without its high bit. $l$ is the root of the entries whose bit is 0, $r$ of those whose bit is 1.",
   "The vectors' keys are 32 octets; as in `trietest`, the model is given their first 31, the paper's state-key length."],

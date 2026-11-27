@@ -102,6 +102,7 @@ def codecPreimages : IO Example := do
       { label := "Preimages $\\mathbf{E}_P$", value := toString xs.length },
       { label := "Encoded size", value := count bin.length "octet" "octets" }],
     columns := ["", "Value", "Octets at", "Encoding", "Rule"],
+    nowrapColumns := [2, 3],
     rows := pieceRows ps,
     notes := ["Every number below 128 is a single octet under $\\mathcal{E}$ (the case $x < 2^7$ of eq. C.6), so the \
       count 3 and the length 16 are the octets `03` and `10`. Larger numbers take two to nine octets, the \
@@ -126,17 +127,17 @@ def codecWorkItem : IO Example := do
     { label := "Accumulate gas limit $a$", value := toString w.accumulateGasLimit, enc := Codec.fixed 8 w.accumulateGasLimit, rule := ruleFixed 8 },
     { label := "Exported segments $e$", value := toString w.exportCount, enc := Codec.fixed 2 w.exportCount, rule := ruleFixed 2 },
     { label := "Payload $\\mathbf{y}$, with its length", value := count w.payload.size "octet" "octets",
-      enc := Codec.var w.payload, rule := "$\\updownarrow$ (C.8): $\\mathcal{E}$ of the length, then the octets" },
+      enc := Codec.var w.payload, rule := "$\\updownarrow$ (C.8)" },
     { label := "Number of imports $|\\mathbf{i}|$", value := toString w.importSegments.length,
       enc := Codec.nat w.importSegments.length, rule := ruleNat }] ++
     (w.importSegments.zipIdx.map fun (x, k) =>
       { label := s!"Import {k + 1}", value := importDesc x, enc := encodeImport x,
-        rule := "the root as itself, then $\\mathcal{E}_2$ of the index" }) ++
+        rule := "$I$ (C.39)" }) ++
     [{ label := "Number of extrinsics $|\\mathbf{x}|$", value := toString w.extrinsics.length,
        enc := Codec.nat w.extrinsics.length, rule := ruleNat }] ++
     (w.extrinsics.zipIdx.map fun ((h, l), k) =>
       { label := s!"Extrinsic {k + 1}", value := s!"hash {abbrB h}, length {l}",
-        enc := Codec.blob h ++ Codec.fixed 4 l, tail := 4, rule := "the hash as itself, then $\\mathcal{E}_4$ of the length" })
+        enc := Codec.blob h ++ Codec.fixed 4 l, tail := 4, rule := "itself, $\\mathcal{E}_4$" })
   checkPieces name ps (WorkItem.encode w)
   return {
     name := "codec-work-item", title := "Encoding a structure: a work item",
@@ -149,9 +150,11 @@ def codecWorkItem : IO Example := do
       { label := "Payload $\\mathbf{y}$", value := octets w.payload.toList },
       { label := "Imports, extrinsics", value := s!"{w.importSegments.length}, {w.extrinsics.length}" }],
     columns := ["", "Value", "Octets at", "Encoding", "Rule"],
+    nowrapColumns := [2, 3],
     rows := pieceRows ps,
-    notes := ["Long runs show their first four octets and their last few: an import ends with its index in \
-      $\\mathcal{E}_2$, an extrinsic with its length in $\\mathcal{E}_4$.",
+    notes := ["$\\updownarrow$ puts $\\mathcal{E}$ of the length before the payload. $I$ writes an import's root as itself, then its index in $\\mathcal{E}_2$; \
+      an extrinsic is its hash, then its length in $\\mathcal{E}_4$.",
+      "Long runs show their first four octets and their last few.",
       "Every count and length here is below 128, so $\\mathcal{E}$ writes each as one octet (eq. C.6)."],
     model := ["JAM.WorkItem.encode", "JAM.encodeImport", "JAM.Codec.var", "JAM.Codec.varSeq", "JAM.Codec.nat", "JAM.Codec.fixed", "JAM.Codec.blob"],
     equations := ["C.6", "C.8", "C.13", "C.34", "C.39"],
@@ -218,6 +221,7 @@ def trieExample (case : Nat) : IO Example := do
       ($\\mathbb\{H}_0$). At bit {depth - 1} they part, and each becomes a leaf. The root is the hash of the top branch.",
     inputs := keyItems,
     columns := ["Node", "Contents", "First octet", "Hash $\\mathcal{H}$ of the node"],
+    nowrapColumns := [2, 3],
     rows := leaves ++ levels.toList.reverse ++ [{ label := "Root $M(d)$", cells := ["the top branch's hash", "", abbr got] }],
     notes := ["Every node is 64 octets. The first bit says what it is: a branch has 0, a leaf 1. An embedded-value leaf's first octet is \
       $2^7$ plus the value's length; a regular leaf's is $2^7 + 2^6$ = `c0`. A branch is its two children's hashes, with \
@@ -261,7 +265,7 @@ def shuffleExample (case : Nat) : IO Example := do
     unless Shuffle.shuffle s r == picked :: Shuffle.shuffle s' r.tail do
       throw <| IO.userError "examples: a shuffle step disagrees with the model"
     let row : Row := ⟨toString (k + 1), [showList s, toString x, s!"{i}", toString picked,
-        if i + 1 == l then "it was last: dropped" else s!"last ({s.getLastD 0}) moves to position {i}"]⟩
+        if i + 1 == l then "it was last: dropped" else s!"last ({s.getLastD 0}) → position {i}"]⟩
     rows := rows.push row
     s := s'
     r := r.tail
@@ -275,7 +279,8 @@ def shuffleExample (case : Nat) : IO Example := do
       { label := "Entropy $h$", value := abbrB h },
       { label := s!"$\\mathcal\{Q}_{n}(h)$", value := showList r0 }],
     columns := ["Step", "Left $\\mathbf{s}$", "$\\mathbf{r}_0$", "$\\mathbf{r}_0 \\bmod l$", "Picked", "Then"],
-    rows := rows.toList ++ [{ label := "Result", cells := ["", "", "", showList got, ""] }],
+    nowrapColumns := [1, 2, 3],
+    rows := rows.toList ++ [{ label := "Result", cells := [showList got, "", "", "", ""] }],
     notes := ["$l$ is the length of what is left. The picked element is replaced by the last one, the last position is \
       dropped, and $\\mathbf{r}$ moves on by one, as in eq. F.1.",
       s!"The {n} numbers of $\\mathcal\{Q}_{n}(h)$ are the eight four-octet words of $\\mathcal\{H}(h \\frown \\mathcal\{E}_4(0))$ (eq. F.2)."],
@@ -321,6 +326,7 @@ def erasureExample (file : String) (subsets : List (List Nat)) : IO Example := d
       { label := "Data $\\mathbf{d}$", value := octets data.toList },
       { label := "Padded data", value := octets padded.toList }],
     columns := ["", "Octets", "What it is"],
+    nowrapColumns := [1],
     rows := (got.zipIdx.map fun (c, i) => chunkRow c i) ++ recRows.toList,
     notes := ["Each chunk is one word because the padded data is one word per run ($k$ = 1). Longer data gives each chunk one \
       word per piece, with the same code applied to every piece.",

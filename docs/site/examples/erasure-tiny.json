@@ -17,6 +17,7 @@
   {"label": "$\\mathcal{R}^6_1$ from chunks 1, 3, 5",
    "cells": ["`61 5d 17 00 00 00`", "the padded data"]}],
  "params": "$v$ = 6 validators, so $\\mathcal{D}(v)$ = 3: any 3 of the 6 chunks recover the data",
+ "nowrapColumns": [1],
  "notes":
  ["Each chunk is one word because the padded data is one word per run ($k$ = 1). Longer data gives each chunk one word per piece, with the same code applied to every piece.",
   "The first recovery uses only parity chunks, so the model interpolates through the field of §H.2; the second mixes data and parity."],

@@ -27,6 +27,7 @@
   {"label": "Preimage 3: data $\\mathbf{p}$",
    "cells": ["16 octets", "48–63", "`38 db 05 6c … 73 85`", "itself (C.1)"]}],
  "params": "no chain parameters: the codec alone",
+ "nowrapColumns": [2, 3],
  "notes":
  ["Every number below 128 is a single octet under $\\mathcal{E}$ (the case $x < 2^7$ of eq. C.6), so the count 3 and the length 16 are the octets `03` and `10`. Larger numbers take two to nine octets, the first of which says how many follow.",
   "$\\mathcal{E}_4$ writes the least significant octet first: 16909060 is `0x01020304`, written `04 03 02 01`.",

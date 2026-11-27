@@ -77,6 +77,7 @@ Gaps, where the paper leaves behaviour undefined:
 | v0.8.1-A51 | §11.2, eq. `availassignmentspostassurancesdef` | (p_**g**)_**r** ∈ **R** tests whether a work-report is in **R** without saying how reports are compared. The model compares their encodings ℰ(**r**) (`JAM/Assurances.lean`, `assurances`). |
 | v0.8.1-A52 | Appendix F, eq. `suffle` | ℱ types its entropy as **r** ∈ ⟦ℕ⟧_{l:}, so **r**_0 always exists. The model's ℱ is total over any **r** and reads a missing entry as 0 (`JAM/Shuffle.lean`, `shuffle`); the paper's uses never reach this, as (F.3) passes 𝒬_l(h), which has exactly l entries. |
 | v0.8.1-A53 | §11.4, eqs. (11.32), `reportcodesarecorrect` | δ[**d**_s] is undefined when **d**_s ∉ 𝒦(δ), and no condition requires a digest's service to exist. The model rejects such a report with the vectors' `bad_service_id`, before the minimum-gas condition (`JAM/Reports.lean`, `guarantees`). |
+| v0.8.1-A54 | §10.2, eq. `disputesextrinsics` | 𝔼_V ∈ ⟦…⟧_{:𝖭_V} and 𝔼_C, 𝔼_F ∈ ⟦…⟧_{:𝖭_O} bound the parts of the disputes extrinsic (𝖭_V = 𝖭_O = 16), but no error is named for a longer one and no order is given against the other conditions. No v0.8.0 vector exceeds them. The model checks the three bounds first, under its own names `tooManyVerdicts`, `tooManyCulprits` and `tooManyFaults` (`JAM/Disputes.lean`, `disputesTransition`); before 2026-11-27 it did not check them. |
 
 ## Resolved in GP v0.8.1
 
@@ -115,6 +116,7 @@ These cases have no test vector, so the readings above are untested:
 | 24 | Core statistics π_C, and the refinement and accumulation parts of π_S, in the statistics and preimages suites. They are covered by the reports and accumulate suites. |
 | 29 | Ed25519 verification is a parameter of the model, so the disputes, assurances and reports vectors' signatures are not verified; the runner rejects all of them exactly when a vector expects `bad_signature`. |
 | 32 | The lookup-anchor conditions of §11.4.1 (x_t ≥ H_T − 𝖫, and h, h' in the ancestor set A): the reports vectors carry no ancestor set. (Master after v0.8.0 adds `lookup_anchor_not_recent`; on its tiny vector see the table above.) |
+| v0.8.1-A54 | A disputes extrinsic with more than 𝖭_V verdicts or more than 𝖭_O culprits or faults. |
 
 ## Bootstrap service binary
 

@@ -56,8 +56,9 @@ found invalid) and faults $`\mathbf{E}_F` (judges who contradicted a verdict):
 $$`\begin{aligned} \mathbf{E}_D &\equiv \left\lgroup \mathbf{E}_V, \mathbf{E}_C, \mathbf{E}_F \right\rgroup \\ \text{where } \mathbf{E}_V &\in \llbracket\left\lgroup\mathbb{H}, \left\lfloor\frac{\tau}{\mathsf{E}}\right\rfloor - \mathbb{N}_2, \llbracket\left\lgroup\{\top, \bot\}, \mathbb{N}, \bar{\mathbb{V}}\right\rgroup\rrbracket\right\rgroup\rrbracket_{:\mathsf{N}_V} \\ \text{and } \mathbf{E}_C &\in \llbracket\left\lgroup\mathbb{H}, \bar{\mathbb{H}}, \bar{\mathbb{V}}\right\rgroup\rrbracket_{:\mathsf{N}_O} \\ \text{and } \mathbf{E}_F &\in \llbracket\left\lgroup\mathbb{H}, \{\top, \bot\}, \bar{\mathbb{H}}, \bar{\mathbb{V}}\right\rgroup\rrbracket_{:\mathsf{N}_O} \end{aligned} \qquad \text{(10.2)}`
 
 The model's types are {api}`JAM.Disputes`, {api}`JAM.Verdict` (with its judgments,
-{api}`JAM.Judgment`), {api}`JAM.Culprit` and {api}`JAM.Fault`. The length bounds
-$`\mathsf{N}_V` and $`\mathsf{N}_O` are not checked by {api}`JAM.disputesTransition`.
+{api}`JAM.Judgment`), {api}`JAM.Culprit` and {api}`JAM.Fault`. {api}`JAM.disputesTransition` checks
+the length bounds first ($`\mathsf{N}_V = \mathsf{N}_O = 16`, `Constants.Cmaxextrinsicverdicts` and
+`Constants.Cmaxextrinsicoffenses`); see the readings below for the errors it uses.
 
 ## Verdicts
 
@@ -200,14 +201,17 @@ The first two points are note 29, and the others the notes they name, in the mod
   with $`v = \top` on a report with a good verdict. The model reads a chain.
 * *Errors and their order.* The paper names no errors for an invalid disputes extrinsic and gives
   no order between its conditions. The model uses the test vectors' error names
-  ({api}`JAM.DisputesError`). It checks each part's order before the conditions on its
-  elements: the order of the verdicts (10.8); then, for each verdict, its epoch index (the type
+  ({api}`JAM.DisputesError`). It checks the length bounds of (10.2) first, then each part's order
+  before the conditions on its elements: the order of the verdicts (10.8); then, for each verdict, its epoch index (the type
   $`\lfloor \tau/\mathsf{E} \rfloor - \mathbb{N}_2` of (10.2)), the order of its judgments (10.11), their number and
   each judge's index and signature (10.4), that its report is not already judged (10.10), and that
   $`V` is defined (10.12); then the order of the culprits (10.9) and, for each culprit, the
   conditions of (10.6); then the order of the faults (10.9) and, for each fault, the conditions of
   (10.7); and last (10.13). A key outside $`\mathbf{k}` is reported as already an offender when it is
   in $`\psi_O`, and as an unknown guarantor or auditor otherwise.
+* *Note v0.8.1-A54, the length bounds.* No error is named for a disputes extrinsic longer than
+  (10.2) allows, and no test vector has one. The model uses its own names: `tooManyVerdicts`,
+  `tooManyCulprits` and `tooManyFaults` ({api}`JAM.DisputesError`).
 * *Note v0.8.1-A50, overlapping cases of V.* When $`|\mathbf{k}| < 3`, $`\lfloor 1/3 |\mathbf{k}| \rfloor = 0`, so the cases $`\bot` and
   $`\emptyset` of (10.12) both apply at $`t = 0`. {api}`JAM.verdictOutcome` takes $`\bot`. The full and tiny
   chains have $`|\mathbf{k}| = 1023` and $`6`, and every validator count in the paper is a multiple of 3 of at least 6

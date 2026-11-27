@@ -61,6 +61,16 @@ inductive DisputesError where
   | badGuarantorKey
   | badAuditorKey
   | badVotesCount
+  /-- $|\mathbf{E}_V| > \mathsf{N}_V$ (GP v0.8.1 eq. `disputesextrinsics`, (10.2):
+      $\mathbf{E}_V \in \llbracket\dots\rrbracket_{:\mathsf{N}_V}$). The model's own name: neither the paper nor the
+      v0.8.0 vectors name this error. -/
+  | tooManyVerdicts
+  /-- $|\mathbf{E}_C| > \mathsf{N}_O$ (GP v0.8.1 eq. `disputesextrinsics`, (10.2)). The model's own name:
+      neither the paper nor the v0.8.0 vectors name this error. -/
+  | tooManyCulprits
+  /-- $|\mathbf{E}_F| > \mathsf{N}_O$ (GP v0.8.1 eq. `disputesextrinsics`, (10.2)). The model's own name:
+      neither the paper nor the v0.8.0 vectors name this error. -/
+  | tooManyFaults
   deriving BEq, Repr
 
 /-- $\mathsf{X}_V$ = `$jam_valid`, $\mathsf{X}_I$ = `$jam_invalid` (GP §10.2). -/
@@ -160,6 +170,8 @@ def clearNonPositive (ρ : AvailAssignments) (verdicts : List (List UInt8 × Out
 
 /-- The disputes transition (GP §10): check $\mathbf{E}_D$ against $\tau$, $\kappa$, $\lambda$ and $\psi$, and give $\psi'$, $\availassignmentspostjudgment$ and $\mathbf{H}_O$.
 
+    * The length bounds of eq. (10.2), checked first: $|\mathbf{E}_V| \le \mathsf{N}_V$, $|\mathbf{E}_C| \le \mathsf{N}_O$ and
+      $|\mathbf{E}_F| \le \mathsf{N}_O$ (`Constants.Cmaxextrinsicverdicts`, `Constants.Cmaxextrinsicoffenses`).
     * Verdicts are ordered and unique by report hash, and each satisfies `checkVerdict`.
     * Culprits are ordered and unique by key; each $(r, f, s)$ has $r \in \psi'_B$, $f \in \mathbf{k}$ and
       $s \in \edsignaturebase_f\langle \mathsf{X}_G \frown r \rangle$.
@@ -171,6 +183,9 @@ def clearNonPositive (ρ : AvailAssignments) (verdicts : List (List UInt8 × Out
     in $\psi_O$, and as an unknown guarantor or auditor otherwise. -/
 def disputesTransition (params : Params) (crypto : Crypto) (i : DisputesInput) (ψ : DisputesState)
     (ρ : AvailAssignments) (x : Disputes) : Except DisputesError DisputesOutput := do
+  if x.verdicts.length > Constants.Cmaxextrinsicverdicts then throw .tooManyVerdicts
+  if x.culprits.length > Constants.Cmaxextrinsicoffenses then throw .tooManyCulprits
+  if x.faults.length > Constants.Cmaxextrinsicoffenses then throw .tooManyFaults
   unless orderedUniqBy (·.target.toList) x.verdicts do throw .verdictsNotSortedUnique
   let verdicts ← x.verdicts.mapM (checkVerdict params crypto i ψ)
   let ψ' := assimilate ψ verdicts

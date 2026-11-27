@@ -415,7 +415,7 @@ $$`\mathfrak{x} \equiv (\mathbf{x}, \mathbf{y}), \quad \mathfrak{x}' \equiv (\ma
 
 $`\mathbf{d} = (\mathbf{x}_\mathbf{e})_\mathbf{d}` is the accounts of the current partial state. Many
 functions ask that the caller $`\mathbf{x}_s` be the service $`d` it changes or that service's effective
-supervisor $`\mathbf{d}[d]_e` (§9): in the model, {api}`JAM.AccHost.mayModify`. A function that changes
+supervisor $`\mathbf{d}[d]_e` (§9.5): in the model, {api}`JAM.AccHost.mayModify`. A function that changes
 service $`d`'s account adds $`d` to $`\mathbf{x}_\mathbf{w}`.
 
 *`lookup` = 3*, $`\Omega_L`. In: $`\varphi_7` names the service, the hash is at $`h = \varphi_8`; then

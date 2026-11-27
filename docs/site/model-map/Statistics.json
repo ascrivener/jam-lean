@@ -4,17 +4,17 @@
                "note": "no separate record: π is the fields `valStats`, `valStatsLast`, `coreStats` and `serviceStats`" },
     "13.2":  { "kind": "type", "name": "JAM.ValidatorRecord", "note": "π_V and π_L are lists of these" },
     "13.3":  { "kind": "inline", "name": "JAM.validatorStats", "at": "let curr' :=",
-               "note": "not enforced by the types; `validatorStats` gives π'_V the length |κ'|, and π'_L is π†_V, of length |π_V|" },
+               "note": "not enforced by the types; `validatorStats` gives π′_V the length |κ′|; on an epoch change π′_L is π†_V (length |π_V|), otherwise π_L unchanged" },
     "13.4":  { "kind": "inline", "name": "JAM.validatorStats", "at": "let dagger :=",
                "note": "over the indices of π_V, which number |κ| (eq. 13.3)" },
     "13.5":  { "kind": "inline", "name": "JAM.validatorStats", "at": "let (ddagger, last') :=",
                "note": "the fresh accumulator has length |κ'|" },
     "13.6":  { "kind": "inline", "name": "JAM.validatorStats", "at": "let curr' :=" },
-    "13.7":  { "kind": "type", "name": "JAM.CoreRecord", "note": "π_C is a list of these" },
+    "13.7":  { "kind": "type", "name": "JAM.CoreRecord", "note": "π_C is a list of these, of length 𝖢 (`coreStats`)" },
     "13.8":  { "kind": "type", "name": "JAM.ServiceRecord", "note": "π_S maps service ids to these" },
     "13.9":  { "kind": "def", "name": "JAM.coreStats" },
-    "13.10": { "kind": "inline", "name": "JAM.coreStats", "at": "let ds :=",
-               "note": "summed field by field in the record below" },
+    "13.10": { "kind": "inline", "name": "JAM.coreStats", "at": "{ imports :=",
+               "note": "summed field by field over `ds`" },
     "13.11": { "kind": "inline", "name": "JAM.coreStats", "at": "-- L(c)" },
     "13.12": { "kind": "inline", "name": "JAM.coreStats", "at": "-- D(c)",
                "note": "⌈n · 65/64⌉ is `(n * 65 + 63) / 64`" },
@@ -25,7 +25,7 @@
                "note": "𝐬^R is `digests.map (·.service)`" },
     "13.16": { "kind": "inline", "name": "JAM.serviceStats", "at": "let active :=",
                "note": "𝐬^P is `preimages.map (·.1)`" },
-    "13.17": { "kind": "inline", "name": "JAM.serviceStats", "at": "let ds :=",
-               "note": "summed field by field in the record below; the counter is `ds.length`" }
+    "13.17": { "kind": "inline", "name": "JAM.serviceStats", "at": "let r : ServiceRecord :=",
+               "note": "summed field by field over `ds`; the counter is `ds.length`" }
   }
 }

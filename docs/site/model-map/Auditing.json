@@ -29,11 +29,12 @@
     "17.15": { "kind": "def", "name": "JAM.Auditing.laterTranche",
                "note": "a sequence rather than a set; `JAM.Auditing.laterTrancheWithNegatives` adds the prose's negative-judgment rule (note v0.8.1-A10)" },
     "17.16": { "kind": "notModelled",
-               "reason": "eₙ is not defined as one function: the evaluation is an input to `JAM.Auditing.judgmentValid`; its parts are `JAM.Guarantee.verifyBundle` and Ξ, `JAM.Guarantee.computeReport`" },
+               "reason": "not composed: no one function computes eₙ, which is an input to `JAM.Auditing.judgmentValid`; its parts are `JAM.Guarantee.verifyBundle` and Ξ, `JAM.Guarantee.computeReport`" },
     "17.17": { "kind": "def", "name": "JAM.Auditing.judgmentValid",
                "note": "the message is `JAM.Auditing.judgmentMessage`; eₙ(𝐫) is the input `valid`" },
     "17.18": { "kind": "def", "name": "JAM.Auditing.Audited",
                "note": "∃n is bounded by the current tranche (note v0.8.1-A8); `JAM.Auditing.AuditedLiteral` is the literal reading, and `JAM.Auditing.audited` decides `Audited`" },
-    "17.19": { "kind": "def", "name": "JAM.Auditing.blockAudited" }
+    "17.19": { "kind": "def", "name": "JAM.Auditing.blockAudited",
+               "note": "U(𝐫) is decided by `JAM.Auditing.audited`, with ∃n bounded by the current tranche (note v0.8.1-A8)" }
   }
 }

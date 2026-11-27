@@ -8,6 +8,6 @@ def config : Config where
   emitTeX := false
   emitHtmlSingle := .no
   emitHtmlMulti := .immediately
-  htmlDepth := 2
+  htmlDepth := 1
 
-def main := manualMain (%doc Companion) (config := config)
+def main := manualMain (%doc Companion) (config := { config with })

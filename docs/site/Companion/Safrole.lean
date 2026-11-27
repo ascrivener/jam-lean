@@ -5,6 +5,7 @@ import JAM.Theorems.Safrole
 
 open Verso.Genre Manual
 open Companion
+open Verso.Genre.Manual.InlineLean
 
 set_option pp.rawOnError true
 
@@ -12,6 +13,7 @@ set_option pp.rawOnError true
 %%%
 tag := "safrole"
 shortTitle := "§6 Safrole"
+file := "safrole"
 %%%
 
 Safrole fixes which validator may seal each timeslot of an epoch. Validators submit anonymous
@@ -22,11 +24,11 @@ goes through it in the paper's order: the entropy accumulator (§6.4), the slot-
 Z and F (§6.5), and the ticket accumulator (§6.7).
 
 The whole module, `JAM/Safrole.lean`, opens with a docstring listing the paper's equations it
-covers. Its full API is on the [doc-gen4 page](/jam-lean/api/JAM/Safrole.html).
+covers. Its full API is on the [doc-gen4 page](https://ascrivener.github.io/jam-lean/api/JAM/Safrole.html).
 
 # The state
 
-The paper's Safrole state is γ = (γ_P, γ_Z, γ_S, γ_A) (eq. `consensusstatecomposition`), together
+The paper's Safrole state is γ = (γ\_P, γ\_Z, γ\_S, γ\_A) (eq. `consensusstatecomposition`), together
 with τ, η and the key sets κ, λ and ι. The model keeps them in one structure:
 
 {docstring JAM.SafroleState}
@@ -43,7 +45,7 @@ $$`\eta'_0 \equiv \mathcal{H}\left(\eta_0 \frown \mathcal{Y}(\mathbf{H}_V)\right
 
 Two readings appear in the model:
 
-* 𝒴(𝐇_V), the VRF output of the header's entropy-source signature, is an input to the transition
+* 𝒴(𝐇\_V), the VRF output of the header's entropy-source signature, is an input to the transition
   (`SafroleInput.entropy`). The header condition it comes from, eq. `vrfsigcheck`, is checked
   separately by {name}`JAM.sealValid`.
 * ℋ is Blake2b-256 ({name}`JAM.blake`).
@@ -58,7 +60,7 @@ In {name}`JAM.safrole` these are the lines under `-- Entropy (§6.4)`: `eta0'` a
 tag := "safrole-sealers"
 %%%
 
-The posterior sealer sequence γ_S′ (eq. `slotkeysequence`) is the outside-in ordering of the ticket
+The posterior sealer sequence γ\_S′ (eq. `slotkeysequence`) is the outside-in ordering of the ticket
 accumulator when that accumulator is full at the end of the previous epoch. Otherwise it is the
 fallback keys:
 
@@ -75,7 +77,7 @@ $$`Z \colon \mathbf{s} \mapsto \left[\mathbf{s}_0, \mathbf{s}_{|\mathbf{s}|-1}, 
 
 The paper gives Z only by its first four entries. The model takes entry i from index i/2 when i is
 even and from index |s| − 1 − ⌊i/2⌋ when i is odd. The theorems below show that this reading is a
-permutation, as the paper's typing ⟦T⟧_𝖤 → ⟦T⟧_𝖤 requires:
+permutation, as the paper's typing ⟦T⟧\_𝖤 → ⟦T⟧\_𝖤 requires:
 
 {docstring JAM.outsideIn_perm}
 
@@ -115,7 +117,7 @@ accumulator, or with nothing at an epoch change. Every submitted ticket must sur
 $$`\gamma'_A \equiv \overrightarrow{\left[x \in \mathbf{n} \cup \begin{cases} [] & \text{when } e' > e \\ \gamma_A & \text{otherwise} \end{cases} \;\middle\|\; x_y \right]}^{\mathsf{E}} \qquad \mathbf{n} \subseteq \gamma'_A`
 
 In {name}`JAM.safrole` this is the `acc'` binding: a merge sort by identifier, then `take E`, and
-the `uselessTicket` check for 𝐧 ⊆ γ_A′. The order on identifiers is {name}`JAM.octetLt`:
+the `uselessTicket` check for 𝐧 ⊆ γ\_A′. The order on identifiers is {name}`JAM.octetLt`:
 
 {leanSource JAM.octetLt}
 
@@ -147,7 +149,7 @@ note 31 of the model's
 
 {docstring JAM.attempt_fits_of_six}
 
-* *Errors and their order.* No errors are named for an invalid 𝐄_T, and no order is given between
+* *Errors and their order.* No errors are named for an invalid 𝐄\_T, and no order is given between
   its conditions. The model uses the test vectors' error names (`SafroleError`), in the order given
   in the module docstring.
 

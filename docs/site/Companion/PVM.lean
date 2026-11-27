@@ -7,6 +7,7 @@ import PVM.Theorems.ExecForms
 
 open Verso.Genre Manual
 open Companion
+open Verso.Genre.Manual.InlineLean
 
 set_option pp.rawOnError true
 
@@ -14,6 +15,7 @@ set_option pp.rawOnError true
 %%%
 tag := "pvm"
 shortTitle := "A. PVM step"
+file := "pvm-step"
 %%%
 
 Appendix A of GP v0.8.1 defines the Polkadot Virtual Machine. Ψ runs a program, and each of its
@@ -58,7 +60,9 @@ $$`\left(\varepsilon^{\varrho}, \varrho^*, \tilde\varrho'\right) = \begin{cases}
 The block cost ϱ^Δ (eq. `gascostforblock`) is the number of cycles a simulated out-of-order CPU
 needs to retire the whole block, minus 3, and at least 1:
 
-$$`\varrho^{\Delta}(\mathbf{c}, \mathbf{k}, \imath) = \max\left(\mathbf{x}^{\text{final}}_{c} - 3,\, 1\right) \quad \text{where } \mathbf{x}^{\text{final}} = \mathfrak{X}(\mathbf{c}, \mathbf{k}, \mathbf{x}^{\text{init}}),\; \mathbf{x}^{\text{init}} = \left(\imath, 0, 4, 5, (4, 4, 4, 1, 1), []\right)`
+$$`\varrho^{\Delta}(\mathbf{c}, \mathbf{k}, \imath) = \max\left(\mathbf{x}^{\text{final}}_{c} - 3,\, 1\right)`
+
+$$`\text{where } \mathbf{x}^{\text{final}} = \mathfrak{X}(\mathbf{c}, \mathbf{k}, \mathbf{x}^{\text{init}}),\; \mathbf{x}^{\text{init}} = \left(\imath, 0, 4, 5, (4, 4, 4, 1, 1), []\right)`
 
 {leanSource PVM.Program.blockCost?}
 
@@ -78,23 +82,27 @@ tag := "pvm-memory"
 Let 𝐫 and 𝐰 be the indices that an instruction reads and writes. The memory-access exception is
 the following:
 
-$$`\varepsilon^{\mu} = \begin{cases} \blacktriangleright & \text{when } \mathbf{x} = \emptyset \\ \text{☇} & \text{when } \min(\mathbf{x}) \bmod 2^{32} < 2^{16} \\ \text{F} \times \mathsf{Z}_P \left\lfloor \min(\mathbf{x}) \bmod 2^{32} \div \mathsf{Z}_P \right\rfloor & \text{otherwise} \end{cases} \quad \text{where } \mathbf{x} = \left\{ x \;\middle|\; x \in \mathbf{r} \wedge x \bmod 2^{32} \notin \mathbb{V}_\mu \;\vee\; x \in \mathbf{w} \wedge x \bmod 2^{32} \notin \mathbb{V}^*_\mu \right\}`
+$$`\varepsilon^{\mu} = \begin{cases} \blacktriangleright & \text{when } \mathbf{x} = \emptyset \\ \text{☇} & \text{when } \min(\mathbf{x}) \bmod 2^{32} < 2^{16} \\ \text{F} \times \mathsf{Z}_P \left\lfloor \min(\mathbf{x}) \bmod 2^{32} \div \mathsf{Z}_P \right\rfloor & \text{otherwise} \end{cases}`
+
+$$`\text{where } \mathbf{x} = \left\{ x \;\middle|\; x \in \mathbf{r} \wedge x \bmod 2^{32} \notin \mathbb{V}_\mu \;\vee\; x \in \mathbf{w} \wedge x \bmod 2^{32} \notin \mathbb{V}^*_\mu \right\}`
 
 {leanSource PVM.memoryException}
 
 The model computes 𝐫 and 𝐰 together with the regular execution. Each row of the mutation tables
-in {name}`PVM.exec` returns the indices it reads and writes (`Mutation.reads`, `Mutation.writes`).
+in {name}`PVM.Program.exec` returns the indices it reads and writes (`Mutation.reads`, `Mutation.writes`).
 
-# The final state and ϱ̃*
+# The final state and ϱ̃\*
 %%%
 tag := "pvm-final"
 %%%
 
-$$`\left(\varepsilon^*, \imath^*, \omega^*, \mu^*\right) = \begin{cases} (\varepsilon^{\varrho}, \imath, \omega, \mu) & \text{when } \varepsilon^{\varrho} \ne \blacktriangleright \\ (\varepsilon^{\mu}, \imath, \omega, \mu) & \text{otherwise when } \varepsilon^{\mu} \ne \blacktriangleright \\ (\varepsilon, \imath', \omega', \mu') & \text{otherwise} \end{cases} \qquad \tilde\varrho^* = \begin{cases} \bot & \text{when } \tilde\varrho' = \bot \vee \left(\mathbf{c}_\imath \in T \wedge \varepsilon^* \in \{\blacktriangleright\} \cup \{\hbar\} \times \mathbb{N}_R\right) \\ \top & \text{otherwise} \end{cases}`
+$$`\left(\varepsilon^*, \imath^*, \omega^*, \mu^*\right) = \begin{cases} (\varepsilon^{\varrho}, \imath, \omega, \mu) & \text{when } \varepsilon^{\varrho} \ne \blacktriangleright \\ (\varepsilon^{\mu}, \imath, \omega, \mu) & \text{otherwise when } \varepsilon^{\mu} \ne \blacktriangleright \\ (\varepsilon, \imath', \omega', \mu') & \text{otherwise} \end{cases}`
+
+$$`\tilde\varrho^* = \begin{cases} \bot & \text{when } \tilde\varrho' = \bot \vee \left(\mathbf{c}_{\imath} \in T \wedge \varepsilon^* \in \{\blacktriangleright\} \cup \{\hbar\} \times \mathbb{N}_R\right) \\ \top & \text{otherwise} \end{cases}`
 
 {leanSource PVM.Program.finalState}
 
-ϱ̃* is the `charged` field in {name}`PVM.Program.step`. A terminator that continues, or makes a
+ϱ̃\* is the `charged` field in {name}`PVM.Program.step`. A terminator that continues, or makes a
 host call, clears the flag, so the next block is charged when it starts.
 
 # Ψ terminates
@@ -121,7 +129,7 @@ These points are recorded in the model's
 * *Note 2, the branch target.* A branch target ı + 𝒵(…) can be negative, and ζ is undefined there.
   In the model a negative target is never the start of a basic block, so the branch panics
   ({name}`PVM.Program.branch`).
-* *Note 1, §A.10.* The gas model's 𝔓_S compares ω_A = ω_D, which, read literally, compares register
-  values. The gas model has no values, so the model compares the indices r_A = r_D.
+* *Note 1, §A.10.* The gas model's 𝔓\_S compares ω\_A = ω\_D, which, read literally, compares register
+  values. The gas model has no values, so the model compares the indices r\_A = r\_D.
 * *Note 5.* Ψ returns ı = 0 on ∎ and ☇, while the test vectors report the instruction that exited.
   The model follows the paper (`PVM.Result.pc`).

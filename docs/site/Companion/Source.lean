@@ -25,7 +25,7 @@ namespace Companion
 def repoUrl : String := "https://github.com/ascrivener/jam-lean"
 
 /-- Where the doc-gen4 pages are served: the `api/` directory of the same Pages site. -/
-def apiRoot : String := "/jam-lean/api"
+def apiRoot : String := "https://ascrivener.github.io/jam-lean/api"
 
 /-- The repository root, seen from the directory the book is elaborated in (`docs/site`, or the
     root itself): the nearest candidate holding the model's `lakefile.lean` and `JAM.lean`. -/

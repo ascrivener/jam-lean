@@ -22,13 +22,16 @@ main table { display: block; max-width: 100%; width: max-content; overflow-x: au
 main table::-webkit-scrollbar { height: 8px; }
 .semantics::-webkit-scrollbar-thumb, pre::-webkit-scrollbar-thumb, code.hl.lean.block::-webkit-scrollbar-thumb,
 main table::-webkit-scrollbar-thumb { background: var(--jl-scroll); border-radius: 4px; }
-code.hl.lean.block, .semantics, main table {
+code.hl.lean.block, .semantics, main table, .katex-display {
   background:
     linear-gradient(to right, var(--jl-bg) 30%, var(--jl-bg-clear)) left / 2em 100% no-repeat local,
     linear-gradient(to left, var(--jl-bg) 30%, var(--jl-bg-clear)) right / 2em 100% no-repeat local,
     radial-gradient(farthest-side at 0 50%, var(--jl-edge-shadow), transparent) left / 12px 100% no-repeat scroll,
     radial-gradient(farthest-side at 100% 50%, var(--jl-edge-shadow), transparent) right / 12px 100% no-repeat scroll; }
-.katex-display { max-width: 100%; overflow-x: auto; overflow-y: hidden; }
+.katex-display { max-width: 100%; overflow-x: auto; overflow-y: hidden; padding-bottom: 2px;
+  scrollbar-width: thin; scrollbar-color: var(--jl-scroll) transparent; }
+.katex-display::-webkit-scrollbar { height: 8px; }
+.katex-display::-webkit-scrollbar-thumb { background: var(--jl-scroll); border-radius: 4px; }
 .header-title-wrapper { box-sizing: border-box; min-width: 0;
   padding-right: calc(var(--search-bar-width, 24rem) + 1.5rem); }
 .header-title { font-size: 1.5rem; }
@@ -265,6 +268,34 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 "⟩
 
+/-- Wide displayed equations. A display at most 15% wider than the column is shrunk to fit, so its
+    equation number shows without scrolling; a wider one keeps its size and scrolls inside its own
+    box (`.katex-display`, which shows an edge shadow on the side with more to see, like code
+    blocks). Runs after the page loads, once KaTeX has rendered and the fonts are in, and again when
+    the window is resized. -/
+def displayFitJs : Verso.Genre.Manual.JS := ⟨"
+(() => {
+  const MIN = 0.85;
+  const fit = () => {
+    for (const d of document.querySelectorAll('.katex-display')) {
+      const k = d.querySelector(':scope > .katex');
+      if (!k) continue;
+      k.style.fontSize = '';
+      const ratio = d.clientWidth / d.scrollWidth;
+      if (ratio < 1 && ratio >= MIN)
+        k.style.fontSize = (parseFloat(getComputedStyle(k).fontSize) * ratio * 0.995) + 'px';
+    }
+  };
+  const run = () => requestAnimationFrame(() => { fit(); requestAnimationFrame(fit); });
+  window.addEventListener('load', () => {
+    run();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(run);
+  });
+  let t;
+  window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(run, 100); });
+})();
+"⟩
+
 /-- Math in docstrings: `$…$` and `$$…$$` in the text of docstrings (the `.docs` blocks of
     `{docstring}` and `{leanSource}`, and hover tooltips) are rendered with the KaTeX that Verso
     already loads. As in doc-gen4's MathJax
@@ -326,7 +357,7 @@ def docMathJs : Verso.Genre.Manual.JS := ⟨"
 /-- HTML only, one page per chapter. -/
 def config : Config where
   extraCss := (({} : Std.HashSet Verso.Genre.Manual.CSS).insert narrowCss).insert darkCss
-  extraJs := ((((({} : Std.HashSet Verso.Genre.Manual.JS).insert toolsJs).insert themeJs).insert docMathJs).insert collapseJs).insert modelJs
+  extraJs := (((((({} : Std.HashSet Verso.Genre.Manual.JS).insert toolsJs).insert themeJs).insert docMathJs).insert collapseJs).insert modelJs).insert displayFitJs
   emitTeX := false
   emitHtmlSingle := .no
   emitHtmlMulti := .immediately

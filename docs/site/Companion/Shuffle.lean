@@ -72,6 +72,11 @@ $`\mathcal{Q}_l` of it:
 $`\mathcal{H}` is Blake2b-256 ({ref "primitives"}[§3.8]), and $`\mathcal{E}_4` and $`\mathcal{E}^{-1}_4` are the four-octet little-endian encoding and its
 inverse ({ref "codec"}[Appendix C]), here `PVM.Num.encodeLE 4` and `PVM.Num.decodeLE`.
 
+Here is $`\mathcal{F}` on eight indices from the shuffle vectors, one step of eq. {eq}`F.1` per row, with
+the numbers $`\mathbf{r}` that {api}`JAM.Shuffle.seqFromHash` derives from the entropy:
+
+{example "shuffle-eight"}
+
 # What the model proves
 %%%
 tag := "shuffle-theorems"

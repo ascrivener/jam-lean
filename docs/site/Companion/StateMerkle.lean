@@ -185,6 +185,13 @@ $`M` against the roots of the GP v0.8.0 trie vectors.
 
 {leanSource JAM.Trie.bit}
 
+Here is $`M` on a two-entry dictionary from the trie vectors. The two keys share their first bits, so
+the recursion of eq. {eq}`D.6` passes through several branches with one empty side before the keys
+part. One value fits in an embedded leaf and the other does not, so both kinds of leaf of
+eq. {eq}`D.4` ({api}`JAM.Trie.leaf`) appear:
+
+{example "trie-two-keys"}
+
 # Readings chosen
 %%%
 tag := "statemerkle-readings"

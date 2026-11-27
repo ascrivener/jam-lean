@@ -24,9 +24,9 @@ file := "primitives"
 %%%
 
 GP v0.8.1 §3 fixes the notation the rest of the paper uses. Most of it (sets, sequences,
-dictionaries) maps directly onto Lean's own types. This chapter covers the two parts of §3 that the
-model has to implement: the hash functions of §3.8.1, and the protocol constants indexed in
-Appendix I.4.4.
+dictionaries) maps directly onto Lean's own types. This chapter covers the part of §3 that the model has to
+implement, the hash functions of §3.8.1, and also the protocol constants, which are not part of §3
+but are listed in the paper's index of notation (Appendix I.4.4).
 
 # Hashing (§3.8.1)
 %%%
@@ -52,9 +52,9 @@ $`\mathcal{H}` is Blake2b with a 32-octet digest, {api}`JAM.Blake2b.hash256`:
 
 The compression function {api}`JAM.Blake2b.compress`, the mixing function {api}`JAM.Blake2b.mix`
 and the constants {api}`JAM.Blake2b.iv` and {api}`JAM.Blake2b.sigma` follow RFC 7693 §2–§3. The
-digest octets are read from the eight-word state with `getD`. The default is never used for a
-digest of at most 64 octets: {api}`JAM.Blake2b.hash_getD_unused` proves that octet $`k < n \le 64` comes from word
-$`\lfloor k / 8 \rfloor < 8`.
+digest octets are read from the eight-word state with `getD`. For a digest of at most 64 octets
+the default is never used. {api}`JAM.Blake2b.hash_getD_unused` is the arithmetic fact behind this: for $`n \le 64` and
+$`k < n`, $`\lfloor k / 8 \rfloor < 8`, so every word index is within the eight-word state.
 
 Most of the model works on `List UInt8`, so it calls $`\mathcal{H}` through a list wrapper,
 {api}`JAM.blake`:
@@ -186,6 +186,14 @@ the `fetch` host call reports (case 0, Appendix B), in that order:
 The tiny values are test configuration, not part of the paper. They come from the test vectors'
 README, except $`\mathsf{L}`, which the README does not list; the tiny vectors use 24
 ([paper and vectors](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#paper-and-vectors), note 32).
+
+The test vectors the model runs were made for GP v0.8.0, before v0.8.1 changed five of these
+constants ($`\mathsf{G}_A`, $`\mathsf{G}_I`, $`\mathsf{G}_R`, $`\mathsf{G}_T` and $`\mathsf{W}_A`). The test harnesses therefore run them with two further chains,
+`full080` and `tiny080`, which carry the v0.8.0 values
+([`Tests/V080.lean`](https://github.com/ascrivener/jam-lean/blob/main/Tests/V080.lean)). For the tiny chain these are
+$`\mathsf{G}_A = 10\,000\,000`, $`\mathsf{G}_I = 50\,000\,000` and $`\mathsf{W}_A = 64\,000`. {api}`JAM.Params.tiny` itself pairs the tiny values with v0.8.1's
+$`\mathsf{G}_A = 47\,000\,000`, so it does not meet the paper's guidance that $`\mathsf{G}_T` be no smaller than
+$`\mathsf{G}_A \cdot \mathsf{C} + \sum_{g \in \mathcal{V}(\chi_Z)} g`: with $`\mathsf{C} = 2`, $`\mathsf{G}_A \cdot \mathsf{C} = 94\,000\,000 > \mathsf{G}_T = 20\,000\,000`.
 
 # Readings chosen
 %%%

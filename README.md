@@ -7,6 +7,8 @@ binaries. The model moved from v0.8.0 to v0.8.1 on 2026-11-25 (#261); the last v
 `gp-v0.8.0` (commit `5055102`). What changed, hunk by hunk, is in
 [`docs/gp-v0.8.1-migration.md`](docs/gp-v0.8.1-migration.md).
 
+**Documentation site:** the [API reference](https://ascrivener.github.io/jam-lean/api/) (doc-gen4, every definition and theorem of `PVM`, `JAM` and `JamCrypto`) and [*A Companion to the Gray Paper*](https://ascrivener.github.io/jam-lean/book/) (the paper's equations next to the Lean definitions and theorems), built from [`docs/site/`](docs/site/README.md).
+
 * **The protocol.** All of Appendix A (the Polkadot Virtual Machine, its host-call machinery and its
   gas model; library `PVM`), and the protocol built on it (library `JAM`): the codec, hashes, the
   general, accumulate and refine host functions, Ψ_A, Ψ_R and Ψ_I, every section-level state

@@ -32,7 +32,7 @@ This chapter puts each part of the paper's definition next to the model's.
 tag := "pvm-step"
 %%%
 
-$$`\Psi_1 \colon (\mathbf{p}, \mathbf{k}, \mathbf{j}, \imath, \varrho, \tilde\varrho, \omega, \mu) \mapsto (\varepsilon^*, \imath^*, \varrho^*, \tilde\varrho^*, \omega^*, \mu^*)`
+$$`\Psi_1 \colon (\mathfrak{p}, \mathbf{k}, \mathbf{j}, \imath, \varrho, \tilde\varrho, \omega, \mu) \mapsto (\varepsilon^*, \imath^*, \varrho^*, \tilde\varrho^*, \omega^*, \mu^*)`
 
 The result is {name}`PVM.StepResult`, and the function is {name}`PVM.Program.step`. A
 {name}`PVM.Program` holds the code 𝐜, the bitmask 𝐤 and the jump table 𝐣, so they need not be passed

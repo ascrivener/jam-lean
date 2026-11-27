@@ -48,18 +48,18 @@ The VRF signatures are "a formulation under the *Thin* VRF template" of the Band
 specification (GP v0.8.1 cites its Draft 35; v0.8.0 used the IETF VRF). A signature is 96 octets,
 and its output $`\mathcal{Y}` is 32 octets:
 
-$$`\overset{\backsim}{\mathbb{V}}^{m \in \mathbb{B}}_{k \in \overset{\backsim}{\mathbb{H}}}\langle c \in \mathbb{B} \rangle \subset \mathbb{B}_{96} \equiv \left\{\, x \;\middle|\; x \in \mathbb{B}_{96}, \text{verify}(k, c, m, x) = \top \,\right\} \qquad \text{(G.1)}`
+{gpeq "G.1"}
 
-$$`\mathcal{Y}\left(s \in \overset{\backsim}{\mathbb{V}}^m_k\langle c \rangle\right) \in \mathbb{H} \equiv \text{output}\left(x \;\middle|\; x \in \overset{\backsim}{\mathbb{V}}^m_k\langle c \rangle\right)_{\dots 32} \qquad \text{(G.2)}`
+{gpeq "G.2"}
 
 The Ring VRF proofs are a zk-SNARK-enabled analogue built on the Pedersen VRF. They verify against a
 ring root $`\mathcal{O}(\mathbf{k})`, a commitment to a sequence of keys, and are 784 octets:
 
-$$`\mathcal{O}\left(\llbracket\overset{\backsim}{\mathbb{H}}\rrbracket\right) \in \overset{\circ}{\mathbb{B}} \equiv \text{commit}\left(\llbracket\overset{\backsim}{\mathbb{H}}\rrbracket\right) \qquad \text{(G.3)}`
+{gpeq "G.3"}
 
-$$`\overset{\circ}{\mathbb{V}}^{m \in \mathbb{B}}_{r \in \overset{\circ}{\mathbb{B}}}\langle c \in \mathbb{B} \rangle \subset \mathbb{B}_{784} \equiv \left\{\, x \;\middle|\; x \in \mathbb{B}_{784}, \text{verify}(r, c, m, x) = \top \,\right\} \qquad \text{(G.4)}`
+{gpeq "G.4"}
 
-$$`\mathcal{Y}\left(p \in \overset{\circ}{\mathbb{V}}^m_r\langle c \rangle\right) \in \mathbb{H} \equiv \text{output}\left(x \;\middle|\; x \in \overset{\circ}{\mathbb{V}}^m_r\langle c \rangle\right)_{\dots 32} \qquad \text{(G.5)}`
+{gpeq "G.5"}
 
 A key with no corresponding curve point is replaced by the specification's padding point when the
 ring is built. The paper's other signature scheme, Ed25519 (§3.8.2), is defined there:
@@ -72,8 +72,8 @@ tag := "bandersnatch-interface"
 %%%
 
 Each field of {api}`JAM.Crypto` stands for one of these sets or functions: `edVerify` for membership
-in $`\bar{\mathbb{V}}_k\langle m \rangle`, `bsVerify` for (G.1), `bsOut` for (G.2), `bsRingRoot` for (G.3),
-`bsRingVerify` for (G.4) and `bsRingOut` for (G.5). Membership in a set is a Boolean function of the
+in $`\bar{\mathbb{V}}_k\langle m \rangle`, `bsVerify` for {eq}`G.1`, `bsOut` for {eq}`G.2`, `bsRingRoot` for {eq}`G.3`,
+`bsRingVerify` for {eq}`G.4` and `bsRingOut` for {eq}`G.5`. Membership in a set is a Boolean function of the
 key (or root), the context, the message and the signature, in the paper's argument order:
 
 {leanSource JAM.Crypto}

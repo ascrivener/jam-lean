@@ -42,7 +42,7 @@ tag := "statemerkle-keys"
 A state key is built from a state-component index, from an index and a service, or from a service
 and an octet sequence:
 
-$$`C\colon \left\{\begin{aligned} \mathbb{N}_{2^8} \cup (\mathbb{N}_{2^8}, \mathbb{N}_S) \cup (\mathbb{N}_S, \mathbb{B}) &\to \mathbb{B}_{31} \\ i \in \mathbb{N}_{2^8} &\mapsto [i, 0, 0, \dots] \\ (i, s \in \mathbb{N}_S) &\mapsto [i, n_0, 0, n_1, 0, n_2, 0, n_3, 0, 0, \dots] \\ &\phantom{\mapsto}\ \text{where } n = \mathcal{E}_4(s) \\ (s, h) &\mapsto [n_0, a_0, n_1, a_1, n_2, a_2, n_3, a_3, a_4, a_5, \dots, a_{26}] \\ &\phantom{\mapsto}\ \text{where } n = \mathcal{E}_4(s), a = \mathcal{H}(h) \end{aligned}\right. \quad \text{(D.1)}`
+{gpeq "D.1"}
 
 The three cases are three functions:
 
@@ -83,7 +83,7 @@ tag := "statemerkle-serialize"
 $`T(\sigma)` puts each state component under its own key $`C(1)` to $`C(16)`, and each service account's
 fields, storage, preimages and requests under keys built from its index:
 
-$$`T(\sigma) \equiv \left\{\begin{aligned} &C(1) \mapsto \mathcal{E}\left(\left[\updownarrow x \;\middle|\; x \mathrel{<\mkern-7mu-} \alpha\right]\right), \\ &C(2) \mapsto \mathcal{E}(\phi), \\ &C(3) \mapsto \mathcal{E}\big(\updownarrow\left[(h, b, s, \mathcal{E}_4(t), \updownarrow\mathbf{p}) \;\middle|\; (h, b, s, t, \mathbf{p}) \mathrel{<\mkern-7mu-} \beta_H\right], \mathcal{E}_M(\beta_B)\big), \\ &C(4) \mapsto \mathcal{E}\left(\updownarrow\gamma_P, \gamma_Z, \begin{cases} 0 & \text{if } \gamma_S \in \llbracket\mathbb{T}\rrbracket_{\mathsf{E}} \\ 1 & \text{if } \gamma_S \in \llbracket\overset{\backsim}{\mathbb{H}}\rrbracket_{\mathsf{E}} \end{cases}, \gamma_S, \updownarrow\gamma_A\right), \\ &C(5) \mapsto \mathcal{E}\big(\updownarrow[x \in \psi_G \wr x], \updownarrow[x \in \psi_B \wr x], \updownarrow[x \in \psi_W \wr x], \updownarrow[x \in \psi_O \wr x]\big), \\ &C(6) \mapsto \mathcal{E}(\eta), \quad C(7) \mapsto \mathcal{E}(\updownarrow\iota), \quad C(8) \mapsto \mathcal{E}(\updownarrow\kappa), \quad C(9) \mapsto \mathcal{E}(\updownarrow\lambda), \\ &C(10) \mapsto \mathcal{E}\left(\left[\text{¿}(\mathbf{g}, \mathcal{E}_4(t)) \;\middle|\; (\mathbf{g}, t) \mathrel{<\mkern-7mu-} \rho\right]\right), \\ &C(11) \mapsto \mathcal{E}_4(\tau), \\ &C(12) \mapsto \mathcal{E}_4(\chi_m, \chi_\mathbf{a}, \chi_v, \chi_r) \frown {} \\ &\qquad \mathcal{E}\left(\updownarrow\left[(\mathcal{E}_4(s), \mathcal{E}_8(\chi_\mathbf{z}[s])) \;\middle|\; s \in \mathcal{K}(\chi_\mathbf{z}) \wr s\right]\right), \\ &C(13) \mapsto \mathcal{E}\big(\updownarrow\pi_V, \updownarrow\pi_L, \pi_C, \updownarrow\left[(\mathcal{E}_4(s), \mathcal{E}(\pi_S[s])) \;\middle|\; s \in \mathcal{K}(\pi_S) \wr s\right]\big), \\ &C(14) \mapsto \mathcal{E}\left(\left[\updownarrow\left[(\mathbf{r}, \updownarrow\mathbf{d}) \;\middle|\; (\mathbf{r}, \mathbf{d}) \mathrel{<\mkern-7mu-} \mathbf{i}\right] \;\middle|\; \mathbf{i} \mathrel{<\mkern-7mu-} \omega\right]\right), \\ &C(15) \mapsto \mathcal{E}\left(\left[\updownarrow\mathbf{i} \;\middle|\; \mathbf{i} \mathrel{<\mkern-7mu-} \xi\right]\right), \\ &C(16) \mapsto \mathcal{E}\left(\updownarrow\left[(\mathcal{E}_4(s), \mathcal{E}(h)) \;\middle|\; (s, h) \mathrel{<\mkern-7mu-} \theta\right]\right), \\ &\forall (s \mapsto \mathbf{a}) \in \delta\colon \\ &\qquad C(255, s) \mapsto \mathcal{E}\left(0, \mathbf{a}_c, \mathcal{E}_4(\mathbf{a}_u, \mathbf{a}_d), \mathcal{E}_8(\mathbf{a}_b, \mathbf{a}_x, \mathbf{a}_g, \mathbf{a}_m, \mathbf{a}_o, \mathbf{a}_f)\right) \frown {} \\ &\qquad\qquad \mathcal{E}_4(\mathbf{a}_i, \mathbf{a}_r, \mathbf{a}_a, \mathbf{a}_p), \\ &\forall (s \mapsto \mathbf{a}) \in \delta, (\mathbf{k} \mapsto \mathbf{v}) \in \mathbf{a}_\mathbf{s}\colon \\ &\qquad C(s, \mathcal{E}_4(2^{32} - 1) \frown \mathbf{k}) \mapsto \mathbf{v}, \\ &\forall (s \mapsto \mathbf{a}) \in \delta, (h \mapsto \mathbf{p}) \in \mathbf{a}_\mathbf{p}\colon \\ &\qquad C(s, \mathcal{E}_4(2^{32} - 2) \frown h) \mapsto \mathbf{p}, \\ &\forall (s \mapsto \mathbf{a}) \in \delta, ((h, l) \mapsto \mathbf{t}) \in \mathbf{a}_\mathbf{l}\colon \\ &\qquad C(s, \mathcal{E}_4(l) \frown h) \mapsto \mathcal{E}\left(\updownarrow\left[\mathcal{E}_4(x) \;\middle|\; x \mathrel{<\mkern-7mu-} \mathbf{t}\right]\right) \end{aligned}\right. \quad \text{(D.2)}`
+{gpeq "D.2"}
 
 The model's $`T` lists the same rows as (key, value) pairs. The component rows come in the paper's
 order; the account rows are grouped by account. Order does not matter, since $`T(\sigma)` is a dictionary:
@@ -136,9 +136,9 @@ A trie is identified by the hash of its root node, and an empty one by the zero 
 node is 512 bits. Its first bit tells a branch from a leaf; a leaf's second bit tells a leaf with its
 value embedded (at most 32 octets) from a leaf that holds the hash of its value:
 
-$$`B\colon \left\{\begin{aligned} (\mathbb{H}, \mathbb{H}) &\to \text{𝕓}_{512} \\ (l, r) &\mapsto [0] \frown \text{bits}(l)_{1\dots} \frown \text{bits}(r) \end{aligned}\right. \qquad \text{(D.3)}`
+{gpeq "D.3"}
 
-$$`L\colon \left\{\begin{aligned} (\mathbb{B}_{31}, \mathbb{B}) &\to \text{𝕓}_{512} \\ (k, v) &\mapsto \begin{cases} \begin{aligned} &[1, 0] \frown \text{bits}(\mathcal{E}_1(|v|))_{2\dots} \frown \text{bits}(k) \\ &\quad \frown \text{bits}(v) \frown [0, 0, \dots] \end{aligned} & \text{if } |v| \le 32 \\ [1, 1, 0, 0, 0, 0, 0, 0] \frown \text{bits}(k) \frown \text{bits}(\mathcal{H}(v)) & \text{otherwise} \end{cases} \end{aligned}\right. \qquad \text{(D.4)}`
+{gpeq "D.4"}
 
 $`\text{bits}` orders the bits of each octet most significant first (§3.7), so the paper's first bit of a
 node is the high bit of its first octet. The model builds the 64 octets directly: a branch clears the
@@ -153,9 +153,11 @@ The root of a dictionary is defined by recursion on the bits of its keys. A dict
 is the hash of its leaf; otherwise the entries are split by their first bit, and the two halves'
 roots form a branch:
 
-$$`\mathcal{M}_\sigma(\sigma) \equiv M\left(\left\{\, (\text{bits}(k) \mapsto (k, v)) \;\middle|\; (k \mapsto v) \in T(\sigma) \,\right\}\right) \qquad \text{(D.5)}`
+{gpeq "D.5"}
 
 $$`M(d\colon \langle \text{𝕓} \to (\mathbb{B}_{31}, \mathbb{B}) \rangle) \equiv \begin{cases} \mathbb{H}_0 & \text{if } |d| = 0 \\ \mathcal{H}(\text{bits}^{-1}(L(k, v))) & \text{if } \mathcal{V}(d) = \{(k, v)\} \\ \mathcal{H}(\text{bits}^{-1}(B(M(l), M(r)))) & \text{otherwise} \end{cases}`
+
+{transcribed "D.6" "5282b2f852"}
 
 $$`\text{where } \forall b, p\colon (b \mapsto p) \in d \Leftrightarrow (b_{1\dots} \mapsto p) \in \begin{cases} l & \text{if } b_0 = 0 \\ r & \text{if } b_0 = 1 \end{cases} \qquad \text{(D.6)}`
 

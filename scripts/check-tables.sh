@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Regenerate PVM/Tables.lean, JAM/Constants.lean, the docs site's GP macro table
-# (docs/site/gp-macros.json, gp-macros.js) and the book's paper table (docs/site/gp-labels.json)
+# (docs/site/gp-macros.json, gp-macros.js) and the book's paper tables (docs/site/gp-labels.json, gp-equations.json)
 # from the pinned Gray Paper; fail on any difference.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -26,6 +26,14 @@ if diff -u "$ROOT/docs/site/gp-labels.json" "$OUT"; then
   echo "docs/site/gp-labels.json matches the paper"
 else
   echo "docs/site/gp-labels.json differs from the section table generated from the paper" >&2
+  status=1
+fi
+python3 -I "$ROOT/scripts/gen_equations.py" "$ROOT/vendor/graypaper" "$OUT"
+if diff -q "$ROOT/docs/site/gp-equations.json" "$OUT" > /dev/null; then
+  echo "docs/site/gp-equations.json matches the paper"
+else
+  diff -u "$ROOT/docs/site/gp-equations.json" "$OUT" | head -40
+  echo "docs/site/gp-equations.json differs from the equation table generated from the paper" >&2
   status=1
 fi
 OUTJS="$(mktemp)"

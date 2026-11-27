@@ -54,9 +54,9 @@ $`\xi` holds, for each of the last $`\mathsf{E}` blocks, the set of work-package
 $`\omega` holds, per slot of the epoch, the reports that are ready but wait on dependencies, each with
 its set of unaccumulated dependencies:
 
-$$`\xi \in \llbracket \{\![\,\mathbb{H}\,]\!\} \rrbracket_\mathsf{E} \qquad \overbrace{\xi} \equiv \bigcup_{x \in \xi} (x) \qquad \text{(12.1, 12.2)}`
+{gpeq "12.1, 12.2"}
 
-$$`\omega \in \llbracket \llbracket (\mathbb{R}, \{\![\,\mathbb{H}\,]\!\}) \rrbracket \rrbracket_\mathsf{E} \qquad \text{(12.3)}`
+{gpeq "12.3"}
 
 The model keeps them in {api}`JAM.AccState`, as `accumulated` and `ready`. A ready entry is a
 report with a set of hashes:
@@ -71,11 +71,11 @@ Reports with no prerequisites and an empty segment-root lookup, $`\mathbf{R}^!`,
 at once. The others, $`\mathbf{R}^Q`, are queued with their dependencies, minus those already
 accumulated:
 
-$$`\mathbf{R}^! \equiv \left[ r \;\middle|\; r \mathrel{\mathrlap{<}{-}} \mathbf{R},\ |(r_\mathbf{c})_\mathbf{p}| = 0 \wedge r_\mathbf{l} = \{\} \right] \qquad \text{(12.4)}`
+{gpeq "12.4"}
 
-$$`\mathbf{R}^Q \equiv E\left(\left[ D(r) \;\middle|\; r \mathrel{\mathrlap{<}{-}} \mathbf{R},\ |(r_\mathbf{c})_\mathbf{p}| > 0 \vee r_\mathbf{l} \ne \{\} \right], \overbrace{\xi}\right) \qquad \text{(12.5)}`
+{gpeq "12.5"}
 
-$$`D(r) \equiv (r, (r_\mathbf{c})_\mathbf{p} \cup \mathcal{K}(r_\mathbf{l})) \qquad \text{(12.6)}`
+{gpeq "12.6"}
 
 {leanSource JAM.deps}
 
@@ -87,15 +87,17 @@ $`E` removes the entries whose package is in $`\mathbf{x}`, and removes $`\mathb
 remaining dependencies. $`Q` repeatedly takes the entries with no dependencies left. $`P` gives the
 package hashes of a set of reports:
 
+{transcribed "12.7" "88b75dde25"}
+
 $$`E \colon \left\{ \begin{aligned} &\left(\llbracket (\mathbb{R}, \{\![\,\mathbb{H}\,]\!\}) \rrbracket, \{\![\,\mathbb{H}\,]\!\}\right) \to \llbracket (\mathbb{R}, \{\![\,\mathbb{H}\,]\!\}) \rrbracket \\ &(\mathbf{r}, \mathbf{x}) \mapsto \left[ (r, \mathbf{d} \setminus \mathbf{x}) \;\middle|\; (r, \mathbf{d}) \mathrel{\mathrlap{<}{-}} \mathbf{r},\ (r_\mathbf{s})_p \notin \mathbf{x} \right] \end{aligned} \right. \qquad \text{(12.7)}`
 
 {leanSource JAM.editQueue}
 
-$$`Q \colon \left\{ \begin{aligned} &\llbracket (\mathbb{R}, \{\![\,\mathbb{H}\,]\!\}) \rrbracket \to \llbracket \mathbb{R} \rrbracket \\ &\mathbf{r} \mapsto \begin{cases} [] & \text{if } \mathbf{g} = [] \\ \mathbf{g} \frown Q(E(\mathbf{r}, P(\mathbf{g}))) & \text{otherwise} \end{cases} \quad \text{where } \mathbf{g} = \left[ r \;\middle|\; (r, \{\}) \mathrel{\mathrlap{<}{-}} \mathbf{r} \right] \end{aligned} \right. \qquad \text{(12.8)}`
+{gpeq "12.8"}
 
 {leanSource JAM.readyOrder}
 
-$$`P \colon \left\{ \begin{aligned} &\{\![\,\mathbb{R}\,]\!\} \to \{\![\,\mathbb{H}\,]\!\} \\ &\mathbf{r} \mapsto \left\{ (r_\mathbf{s})_p \;\middle|\; r \in \mathbf{r} \right\} \end{aligned} \right. \qquad \text{(12.9)}`
+{gpeq "12.9"}
 
 {leanSource JAM.pkgs}
 
@@ -109,9 +111,9 @@ are enough; {api}`JAM.accumulate` passes that. This argument is in the docstring
 The queue is read starting at the current slot of the epoch, wrapping round, followed by the new
 queued reports, with the packages of $`\mathbf{R}^!` removed:
 
-$$`\text{let } m = \mathbf{H}_T \bmod \mathsf{E} \qquad \mathbf{R}^* \equiv \mathbf{R}^! \frown Q(\mathbf{q}) \qquad \text{(12.10, 12.11)}`
+{gpeq "12.10, 12.11"}
 
-$$`\text{where } \mathbf{q} = E\left(\overgroup{\omega_{m\dots}} \frown \overgroup{\omega_{\dots m}} \frown \mathbf{R}^Q, P(\mathbf{R}^!)\right) \qquad \text{(12.12)}`
+{gpeq "12.12"}
 
 Here $`\overgroup{\mathbf{x}}` concatenates the sequences in $`\mathbf{x}`. In
 {api}`JAM.accumulate` these are the bindings `m`, `q` and `rStar`, with `slot` for $`\mathbf{H}_T`.
@@ -128,9 +130,9 @@ transfers. A transfer carries its sender $`s`, receiver $`d`, whether it credits
 supervisor balance ($`u = \top`) or its regular balance ($`u = \bot`), the amount $`a`, a memo $`m`
 of $`\mathsf{W}_T = 128` octets and a gas limit $`g`:
 
-$$`\mathbb{U} \equiv \left( p \in \mathbb{H},\ e \in \mathbb{H},\ a \in \mathbb{H},\ y \in \mathbb{H},\ g \in \mathbb{N}_G,\ \mathbf{t} \in \mathbb{B},\ \mathbf{l} \in \mathbb{B} \cup \mathbb{E} \right) \qquad \text{(12.13)}`
+{gpeq "12.13"}
 
-$$`\text{𝕥} \equiv \left( s \in \mathbb{N}_S,\ d \in \mathbb{N}_S,\ u \in \{\bot, \top\},\ a \in \mathbb{N}_B,\ m \in \mathbb{B}_{\mathsf{W}_T},\ g \in \mathbb{N}_G \right) \qquad \text{(12.14)}`
+{gpeq "12.14"}
 
 {leanSource JAM.OperandTuple}
 
@@ -142,13 +144,13 @@ The partial state $`\mathbb{S}` holds the parts of the state that accumulation r
 the accounts, the staging keys, the authorizer queue and the privileges. $`B` and $`U` are the
 types of the accumulation outputs and of the gas used:
 
-$$`\mathbb{S} \equiv \left( \mathbf{d} \in \langle \mathbb{N}_S \to \mathbb{A} \rangle,\ \mathbf{i} \in \llbracket \mathbb{K} \rrbracket_\mathbb{V},\ \mathbf{q} \in \llbracket \llbracket \mathbb{H} \rrbracket_\mathsf{Q} \rrbracket_\mathsf{C},\ \mathbf{x} \in \mathbb{X} \right) \qquad \text{(12.15)}`
+{gpeq "12.15"}
 
-$$`B \equiv \{\![\,(\mathbb{N}_S, \mathbb{H})\,]\!\} \qquad U \equiv \llbracket (\mathbb{N}_S, \mathbb{N}_G) \rrbracket \qquad \text{(12.16)}`
+{gpeq "12.16"}
 
 {leanSource JAM.PartialState}
 
-The model flattens the privileges $`\mathbf{x} = (m, v, r, \mathbf{a}, \mathbf{z})` (eq. (9.9), see
+The model flattens the privileges $`\mathbf{x} = (m, v, r, \mathbf{a}, \mathbf{z})` (eq. {eq}`9.9`, see
 {ref "accounts-privileges"}[§9.4]) into the fields `manager`, `delegator`, `registrar`, `assigners`
 and `alwaysAcc`.
 
@@ -161,6 +163,8 @@ cannot be discarded without losing funds, so transfers to a service are never ac
 same round as its supervisor's code. $`T` splits the transfers into those that may run in this
 round, $`\mathbf{t}^!`, and those that must wait, $`\mathbf{t}^Q`:
 
+{transcribed "12.17" "62c5927b59"}
+
 $$`T(\mathbf{t}, \mathbf{s}, \mathbf{d}) \equiv T^*(\mathbf{t}, \mathbf{s}, \emptyset, \mathbf{d}) \qquad \text{(12.17)}`
 
 $$`T^* \colon \left\{ \begin{aligned} &\left( \llbracket \text{𝕥} \rrbracket, \{\![\,\mathbb{N}_S\,]\!\}, \{\![\,\mathbb{N}_S\,]\!\}, \langle \mathbb{N}_S \to \mathbb{A} \rangle \right) \to \left( \llbracket \text{𝕥} \rrbracket, \llbracket \text{𝕥} \rrbracket \right) \\ &([], \mathbf{s}, \mathbf{i}, \mathbf{d}) \mapsto ([], []) \\ &([t] \frown \mathbf{t}, \mathbf{s}, \mathbf{i}, \mathbf{d}) \mapsto \begin{cases} (\mathbf{t}^!, [t] \frown \mathbf{t}^Q) & \text{if } q = \top \\ ([t] \frown \mathbf{t}^!, \mathbf{t}^Q) & \text{otherwise} \end{cases} \end{aligned} \right.`
@@ -169,10 +173,10 @@ $$`\begin{aligned} \text{where } q &= \left(t_d \in \mathcal{K}(\mathbf{d}) \wed
 
 {leanSource JAM.partitionXfers}
 
-$`\mathbf{d}[s]_e` is the effective supervisor of eq. (9.11), {api}`JAM.effectiveSupervisor`.
+$`\mathbf{d}[s]_e` is the effective supervisor of eq. {eq}`9.11`, {api}`JAM.effectiveSupervisor`.
 The model's `T` is the paper's $`T^*`, called with `[]` for $`\emptyset`; the sets $`\mathbf{s}` and
 $`\mathbf{i}` are lists, used only through membership. A transfer may still be lost: if its
-destination has been ejected by the time it is accumulated, $`\Psi_A` discards it (eq. (B.9)).
+destination has been ejected by the time it is accumulated, $`\Psi_A` discards it (eq. {eq}`B.9`).
 
 ## Δ₊, the outer accumulation function
 
@@ -180,6 +184,8 @@ $`\Delta_+` takes the longest prefix of the reports whose gas limits, with the g
 transfers and of the free accumulations, fit in $`g`. It runs that round with $`\Delta_*`, then
 recurses on the rest, with the transfers that waited and those the round produced, and the gas that
 was left plus the gas of the new transfers:
+
+{transcribed "12.18" "8ebeaa8137"}
 
 $$`\Delta_+ \colon \left\{ \begin{aligned} &\left( \mathbb{N}_G, \llbracket \text{𝕥} \rrbracket, \llbracket \mathbb{R} \rrbracket, \mathbb{S}, \langle \mathbb{N}_S \to \mathbb{N}_G \rangle \right) \to \left( \mathbb{N}, \mathbb{S}, B, U, \llbracket \text{𝕥} \rrbracket \right) \\ &(g, \mathbf{t}, \mathbf{r}, \mathbf{e}, \mathbf{f}) \mapsto \begin{cases} (0, \mathbf{e}, \{\}, [], []) & \text{if } n = 0 \\ (i + j, \mathbf{e}', \mathbf{b}^* \cup \mathbf{b}, \mathbf{u}^* \frown \mathbf{u}, \mathbf{t}^! \frown \mathbf{t}^\dagger) & \text{o/w} \end{cases} \end{aligned} \right. \qquad \text{(12.18)}`
 
@@ -200,6 +206,8 @@ existing account from the service's own run if that run modified it, and otherwi
 its effective supervisor; $`\mathbf{n}` collects the new accounts; the privileges go through $`R`,
 which takes the manager's change if there is one and otherwise the holder's own:
 
+{transcribed "12.19" "da351e2b0d"}
+
 $$`\Delta_* \colon \left\{ \begin{aligned} &\left( \mathbb{S}, \llbracket \text{𝕥} \rrbracket, \llbracket \mathbb{R} \rrbracket, \langle \mathbb{N}_S \to \mathbb{N}_G \rangle \right) \to \left( \mathbb{S}, \llbracket \text{𝕥} \rrbracket, B, U \right) \\ &(\mathbf{e}, \mathbf{t}, \mathbf{r}, \mathbf{f}) \mapsto \left( (\mathbf{d}', \mathbf{i}', \mathbf{q}', \mathbf{x}'), \overgroup{\mathbf{t}'}, \mathbf{b}, \mathbf{u} \right) \end{aligned} \right. \qquad \text{(12.19)}`
 
 $$`\begin{aligned} \text{where: let } &(\mathbf{d}, \mathbf{i}, \mathbf{q}, \mathbf{x} : (m, v, r, \mathbf{a}, \mathbf{z})) = \mathbf{e} \\ \mathbf{s} &= \left\{ d_s \;\middle|\; r \in \mathbf{r}, d \in r_\mathbf{d} \right\} \cup \mathcal{K}(\mathbf{f}) \cup \left\{ t_d \;\middle|\; t \in \mathbf{t} \right\} \\ N(\mathbf{o}) \in \mathbb{O} &\equiv (\mathbf{e},\ \mathbf{w} : \{\},\ \mathbf{t} : [],\ y : \emptyset,\ u : \mathbf{o}_u,\ \mathbf{p} : \mathbf{o}_\mathbf{p}) \\ \Delta(s) &\equiv \begin{cases} N(\mathbf{o}) & \text{if } s \in \mathbf{o}_\mathbf{w} \wedge s \in \mathbf{y}_\mathbf{w} \setminus \{\mathbf{d}[s]_e\} \\ \mathbf{o} & \text{otherwise} \end{cases} \\ &\quad \text{where } \mathbf{o} = \Delta_1(\mathbf{e}, \mathbf{t}, \mathbf{r}, \mathbf{f}, s) \\ &\quad \text{and } \mathbf{y} = \Delta_1(\mathbf{e}, \mathbf{t}, \mathbf{r}, \mathbf{f}, \mathbf{d}[s]_e) \end{aligned}`
@@ -210,7 +218,7 @@ $$`\begin{aligned} X(s) &\equiv (\Delta(s)_\mathbf{e})_\mathbf{x} \\ \mathbf{x}'
 
 $$`\begin{aligned} M(s) &\equiv \begin{cases} (\Delta(s)_\mathbf{e})_\mathbf{d}[s] & \text{if } s \in \Delta(s)_\mathbf{w} \\ (\Delta(\mathbf{d}[s]_e)_\mathbf{e})_\mathbf{d}[s] & \text{otherwise} \end{cases} \\ \mathbf{m} &= \left\{ (s \mapsto M(s)) \;\middle|\; s \in \mathcal{K}(\mathbf{d}),\, M(s) \ne \emptyset \right\} \\ \mathbf{n} &= \bigcup_{s \in \mathbf{s}} \left( (\Delta(s)_\mathbf{e})_\mathbf{d} \setminus \mathcal{K}(\mathbf{d}) \right) \end{aligned}`
 
-$$`R(o, a, b) \equiv \begin{cases} b & \text{if } a = o \\ a & \text{otherwise} \end{cases} \qquad \text{(12.20)}`
+{gpeq "12.20"}
 
 Note that the post-state field of $`N(\mathbf{o})` is written without a value: every other field of
 $`N(\mathbf{o})` is given one. The model's choice is explained under
@@ -254,9 +262,9 @@ Preimages that services provide during accumulation, and later those of the prei
 are integrated by $`I`. A provision counts only if the service still exists and its request for
 that hash and length is still $`[]`:
 
-$$`I \colon \left\{ \begin{aligned} &\left( \langle \mathbb{N}_S \to \mathbb{A} \rangle, \{\![\,(\mathbb{N}_S, \mathbb{B})\,]\!\} \right) \to \langle \mathbb{N}_S \to \mathbb{A} \rangle \\ &(\mathbf{d}, \mathbf{p}) \mapsto \mathbf{d}' \text{ where } \mathbf{d}' = \mathbf{d} \text{ except:} \\ &\quad \forall (s, \mathbf{i}) \in \mathbf{p},\ Y(\mathbf{d}, s, \mathbf{i}) : \\ &\qquad \mathbf{d}'[s]_\mathbf{l}[(\mathcal{H}(\mathbf{i}), |\mathbf{i}|)] = [\tau'] \\ &\qquad \mathbf{d}'[s]_\mathbf{p}[\mathcal{H}(\mathbf{i})] = \mathbf{i} \end{aligned} \right. \qquad \text{(12.21)}`
+{gpeq "12.21"}
 
-$$`Y \colon \left\{ \begin{aligned} &\left( \langle \mathbb{N}_S \to \mathbb{A} \rangle, \mathbb{N}_S, \mathbb{B} \right) \to \{\bot, \top\} \\ &(\mathbf{d}, s, \mathbf{i}) \mapsto \begin{cases} \mathbf{d}[s]_\mathbf{l}[(\mathcal{H}(\mathbf{i}), |\mathbf{i}|)] = [] & \text{if } s \in \mathcal{K}(\mathbf{d}) \\ \bot & \text{otherwise} \end{cases} \end{aligned} \right. \qquad \text{(12.22)}`
+{gpeq "12.22"}
 
 {leanSource JAM.integrateProvisions}
 
@@ -275,9 +283,11 @@ accessors of {ref "accounts-entries"}[§9].
 $`\Delta_1` gathers the transfers to $`s` and the digests for $`s` from the reports, adds up their
 gas with $`s`'s free gas, and runs $`\Psi_A`:
 
-$$`\mathbb{O} \equiv \left( \mathbf{e} \in \mathbb{S},\ \mathbf{w} \in \{\![\,\mathbb{N}_S\,]\!\},\ \mathbf{t} \in \llbracket \text{𝕥} \rrbracket,\ y \in \mathbb{H}?,\ u \in \mathbb{N}_G,\ \mathbf{p} \in \{\![\,(\mathbb{N}_S, \mathbb{B})\,]\!\} \right) \qquad \text{(12.23)}`
+{gpeq "12.23"}
 
 {leanSource JAM.AccOut}
+
+{transcribed "12.24" "7b85d9e8e5"}
 
 $$`\Delta_1 \colon \left\{ \begin{aligned} &\left( \mathbb{S}, \llbracket \text{𝕥} \rrbracket, \llbracket \mathbb{R} \rrbracket, \langle \mathbb{N}_S \to \mathbb{N}_G \rangle, \mathbb{N}_S \right) \to \mathbb{O} \\ &(\mathbf{e}, \mathbf{t}, \mathbf{r}, \mathbf{f}, s) \mapsto \Psi_A(\mathbf{e}, \tau', s, g, \mathbf{i}^T \frown \mathbf{i}^U) \end{aligned} \right. \qquad \text{(12.24)}`
 
@@ -286,7 +296,7 @@ $$`\begin{aligned} \text{where: } g &= \mathcal{U}(\mathbf{f}_s, 0) + \sum_{t \i
 {leanSource JAM.accOne}
 
 $`\mathcal{U}(\mathbf{f}_s, 0)` is $`\mathbf{f}_s` if present and 0 otherwise, `f.getD s 0`. `slot`
-is $`\tau'`. {api}`JAM.psiA` is $`\Psi_A` (eq. (B.9)): it credits the incoming transfers, marks
+is $`\tau'`. {api}`JAM.psiA` is $`\Psi_A` (eq. {eq}`B.9`): it credits the incoming transfers, marks
 $`s` modified if any came in, and runs $`s`'s code.
 
 # Final state integration (§12.3)
@@ -300,29 +310,31 @@ always-accumulate services $`\chi_\mathbf{z}` as free gas:
 
 $$`\begin{aligned} \text{let } g &= \max\left(\mathsf{G}_T, \mathsf{G}_A \cdot \mathsf{C} + \textstyle\sum_{x \in \mathcal{V}(\chi_\mathbf{z})} (x)\right) \\ \text{and } \mathbf{e} &= (\mathbf{d} : \delta, \mathbf{i} : \iota, \mathbf{q} : \phi, \mathbf{x} : \chi) \end{aligned}`
 
-$$`(n, \mathbf{e}', \mathbf{b}, \mathbf{u}, \mathbf{t}) \equiv \Delta_+(g, [], \mathbf{R}^*, \mathbf{e}, \chi_\mathbf{z}) \qquad \text{(12.25)}`
+{gpeq "12.25"}
 
-$$`\theta' \equiv [(s, h) \in \mathbf{b}] \qquad \text{(12.26)}`
+{gpeq "12.26"}
 
-$$`(\mathbf{d} : \delta^\dagger, \mathbf{i} : \iota', \mathbf{q} : \phi', \mathbf{x} : \chi') \equiv \mathbf{e}' \qquad \text{(12.27)}`
+{gpeq "12.27"}
 
 The accumulation statistics count, for each service, the digests accumulated, the transfers
 processed and the gas used, and keep the services where any of these is non-zero:
 
-$$`\mathbf{S} \in \langle \mathbb{N}_S \to (\mathbb{N}, \mathbb{N}, \mathbb{N}_G) \rangle \qquad \text{(12.28)}`
+{gpeq "12.28"}
+
+{transcribed "12.29" "44a82d6f2f"}
 
 $$`\begin{aligned} \mathbf{S} &\equiv \left\{ (s \mapsto S(s)) \;\middle|\; S(s) \ne (0, 0, 0) \right\} \qquad \text{(12.29)} \\ \text{where } S(s) &\equiv (N(s), X(s), G(s)) \\ \text{and } N(s) &\equiv \left| \left[ d \;\middle|\; r \mathrel{\mathrlap{<}{-}} \mathbf{R}^*_{\dots n},\, d \mathrel{\mathrlap{<}{-}} r_\mathbf{d},\, d_s = s \right] \right| \\ \text{and } X(s) &\equiv \left| \left[ t \;\middle|\; t \mathrel{\mathrlap{<}{-}} \mathbf{t},\, t_d = s \right] \right| \\ \text{and } G(s) &\equiv \sum_{(s, u) \in \mathbf{u}} (u) \end{aligned}`
 
 Every accumulated service has its last-accumulation slot set:
 
-$$`\delta^\ddagger \equiv \left\{ (s \mapsto a') \;\middle|\; (s \mapsto a) \in \delta^\dagger \right\} \quad \text{where } a' = \begin{cases} a \text{ except } a'_a = \tau' & \text{if } s \in \mathcal{K}(\mathbf{S}) \\ a & \text{otherwise} \end{cases} \qquad \text{(12.30, 12.31)}`
+{gpeq "12.30, 12.31"}
 
 Finally the history and the ready queue move on by one block: the packages accumulated now enter
 $`\xi`, the oldest entry leaves, and the queue drops what was accumulated and the slots that passed:
 
-$$`\xi'_{\mathsf{E}-1} = P(\mathbf{R}^*_{\dots n}) \qquad \forall i \in \mathbb{N}_{\mathsf{E}-1} : \xi'_i \equiv \xi_{i+1} \qquad \text{(12.32, 12.33)}`
+{gpeq "12.32, 12.33"}
 
-$$`\forall i \in \mathbb{N}_\mathsf{E} : {\omega'}^{\circlearrowleft}_{m-i} \equiv \begin{cases} E(\mathbf{R}^Q, \xi'_{\mathsf{E}-1}) & \text{if } i = 0 \\ [] & \text{if } 1 \le i < \tau' - \tau \\ E(\omega^{\circlearrowleft}_{m-i}, \xi'_{\mathsf{E}-1}) & \text{if } i \ge \tau' - \tau \end{cases} \qquad \text{(12.34)}`
+{gpeq "12.34"}
 
 All of §12.1–§12.3 is one function in the model, returning the posterior state, the output root and
 the statistics, or the error that makes the block invalid:
@@ -333,18 +345,18 @@ the statistics, or the error that makes the block invalid:
 
 How the code maps to the equations:
 
-* `g` and the call to {api}`JAM.accSeq` are (12.25); `params.blockAccGas`, `params.reportAccGas` and
+* `g` and the call to {api}`JAM.accSeq` are {eq}`12.25`; `params.blockAccGas`, `params.reportAccGas` and
   `params.coreCount` are $`\mathsf{G}_T`, $`\mathsf{G}_A` and $`\mathsf{C}`. The partial state is
   `pre.pstate`, and its `alwaysAcc` is $`\chi_\mathbf{z}`. `rounds` is the fuel for $`\Delta_+`.
 * `stats` is $`\mathbf{S}`, with `N`, `T`, `G` for $`N(s)`, $`X(s)`, $`G(s)`; `accounted` is
   $`\mathbf{R}^*_{\dots n}`.
-* `accounts` is $`\delta^\ddagger` (12.30, 12.31).
-* `newAcc` and `accumulated` are (12.32, 12.33). In `ready`, entry `idx` is
+* `accounts` is $`\delta^\ddagger` {eq}`12.30, 12.31`.
+* `newAcc` and `accumulated` are {eq}`12.32, 12.33`. In `ready`, entry `idx` is
   $`{\omega'}^{\circlearrowleft}_{m-i}` with $`i = (m - \mathit{idx}) \bmod \mathsf{E}`, and the three branches
-  are the cases of (12.34).
+  are the cases of {eq}`12.34`.
 * `theta` is $`\theta'`, and `root` is $`\mathcal{M}_B(\mathbf{s}, \mathcal{H}_K)`, the Keccak Merkle root over
   $`\mathbf{s} = [\mathcal{E}_4(s) \frown \mathcal{E}(h) \mid (s, h) \mathrel{\mathrlap{<}{-}} \theta']` that {ref "history"}[§7] appends to the
-  accumulation-output log (eqs. (7.6, 7.7)); $`\mathcal{E}(h)` of a hash is the hash itself.
+  accumulation-output log (eqs. {eq}`7.6, 7.7`); $`\mathcal{E}(h)` of a hash is the hash itself.
 
 # Preimage integration (§12.4)
 %%%
@@ -355,14 +367,14 @@ After accumulation, the preimages extrinsic $`\mathbf{E}_P` is integrated. It ha
 $`\mathsf{N}_P` pairs, is ordered and without duplicates, provides only data that was requested
 and not yet provided in the _prior_ state $`\delta`, and holds at most $`\mathsf{N}_D` octets of data:
 
-$$`\mathbf{E}_P \in \llbracket (\mathbb{N}_S, \mathbb{B}) \rrbracket_{:\mathsf{N}_P} \qquad \mathbf{E}_P = \left[ i \in \mathbf{E}_P \;\wr\!\wr\; i \right] \qquad \text{(12.35, 12.36)}`
+{gpeq "12.35, 12.36"}
 
-$$`\forall (s, \mathbf{d}) \in \mathbf{E}_P : Y(\delta, s, \mathbf{d}) \qquad \sum_{(s, \mathbf{d}) \in \mathbf{E}_P} |\mathbf{d}| \le \mathsf{N}_D \qquad \text{(12.37, 12.38)}`
+{gpeq "12.37, 12.38"}
 
 Preimages no longer useful after accumulation (their request was changed or the service ejected)
 are disregarded, by $`I`:
 
-$$`\delta' = I(\delta^\ddagger, \mathbf{E}_P) \qquad \text{(12.39)}`
+{gpeq "12.39"}
 
 {leanSource JAM.PreimageError}
 
@@ -373,7 +385,7 @@ $$`\delta' = I(\delta^\ddagger, \mathbf{E}_P) \qquad \text{(12.39)}`
 {leanSource JAM.preimages}
 
 `prior` is $`\delta` and `postAcc` is $`\delta^\ddagger`. The extrinsic is passed to
-{api}`JAM.integrateProvisions` as a set, which it is by (12.36).
+{api}`JAM.integrateProvisions` as a set, which it is by {eq}`12.36`.
 
 # What is checked
 %%%
@@ -437,7 +449,7 @@ tag := "accumulation-readings"
 Each is a note in the model's
 [notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues):
 
-* *Note v0.8.1-A1, the post-state of $`N(\mathbf{o})`.* In (12.19), $`N(\mathbf{o})` gives every
+* *Note v0.8.1-A1, the post-state of $`N(\mathbf{o})`.* In {eq}`12.19`, $`N(\mathbf{o})` gives every
   field a value except the post-state. The model takes the round's input state $`\mathbf{e}`
   ({api}`JAM.discardIfBoth`), following the prose: "discard all results of the service's execution",
   with only provided preimages excepted. Taking $`\mathbf{o}`'s post-state instead would keep a
@@ -446,7 +458,7 @@ Each is a note in the model's
   supervisor's own run is also discarded (its own supervisor modified it too), both changes to the
   service are lost. This is filed as
   [graypaper#592](https://github.com/gavofyork/graypaper/issues/592).
-* *Note v0.8.1-A46, $`\theta'` as an ordered set.* $`\mathbf{b}` is a set of pairs, so (12.26) lists each pair once.
+* *Note v0.8.1-A46, $`\theta'` as an ordered set.* $`\mathbf{b}` is a set of pairs, so {eq}`12.26` lists each pair once.
   The model orders them by service and then by hash ({api}`JAM.accumulate`, `theta`), the order in
   which sets are serialized.
 * *Note v0.8.1-A45, the effective supervisor of a service with no account.* $`\mathbf{d}[s]_e` is defined only for
@@ -462,5 +474,5 @@ Each is a note in the model's
 * *Note 25 and v0.8.1-A3, the preimages extrinsic.* The paper names no errors for an invalid
   $`\mathbf{E}_P` and orders none of its conditions. The model checks the two bounds, then the order,
   then $`Y`, with the error names of {api}`JAM.PreimageError` (the test vectors' names where they
-  exist). The order on pairs, which (12.36) needs, is by service and then by the data octets
+  exist). The order on pairs, which {eq}`12.36` needs, is by service and then by the data octets
   lexicographically ({api}`JAM.preimageLt`).

@@ -80,11 +80,13 @@ tag := "invocations-isauth"
 $`\Psi_I` runs a work-package's authorization code on core $`c`. It is stateless: its only host calls
 are `gas`, `grow_heap` and `fetch`.
 
+{transcribed "B.1" "3bb9b7d0c8"}
+
 $$`\Psi_I \colon \left\lgroup \mathbb{P}, \mathbb{N}_{\mathsf{C}} \right\rgroup \to \left\lgroup \mathbb{B} \cup \mathbb{E}, \mathbb{N}_G \right\rgroup, \quad (\mathbf{p}, c) \mapsto \begin{cases} (\texttt{BAD}, 0) & \text{if } \mathbf{p}_\mathbf{u} = \emptyset \\ (\texttt{BIG}, 0) & \text{otherwise if } |\mathbf{p}_\mathbf{u}| > \mathsf{W}_A \\ (\mathbf{r}, u) & \text{otherwise} \end{cases} \qquad \text{(B.1)}`
 
 $$`\text{where } (u, \mathbf{r}, \emptyset) = \Psi_M(\mathbf{p}_\mathbf{u}, 0, \mathsf{G}_I, \mathcal{E}_2(c), F, \emptyset)`
 
-$$`F \colon (n, \varrho, \varphi, \mu, \emptyset) \mapsto \begin{cases} \Omega_G(\varrho, \varphi, \mu, \emptyset) & \text{if } n = \mathtt{gas} \\ \Omega_{\text{♊}}(\varrho, \varphi, \mu, \emptyset, \mathbf{p}_\mathbf{u}) & \text{if } n = \mathtt{grow\_heap} \\ \Omega_Y(\varrho, \varphi, \mu, \emptyset, \mathbf{p}, \emptyset, \emptyset, \emptyset, \emptyset, \emptyset, \emptyset) & \text{if } n = \mathtt{fetch} \\ (\infty, 0, \varphi', \mu, \emptyset) & \text{otherwise if } \varrho < \mathsf{M}_\emptyset \\ (\blacktriangleright, \varrho - \mathsf{M}_\emptyset, \varphi', \mu, \emptyset) & \text{otherwise} \end{cases} \qquad \text{(B.2)}`
+{gpeq "B.2"}
 
 $$`\text{where } \varphi' = \varphi \text{ except } \varphi'_7 = \mathtt{WHAT}`
 
@@ -113,12 +115,12 @@ at any time when auditing may occur (less than two epochs after accumulation). T
 be up to $`\mathsf{L}` timeslots before the recent history, so the expunge period $`\mathsf{D}` adds a safety
 margin of eight hours:
 
-$$`\mathsf{D} \equiv \mathsf{L} + 4{,}800 = 19{,}200 \qquad \text{(B.3)}`
+{gpeq "B.3"}
 
 An inner PVM instance holds a program blob, its RAM, its instruction counter, the gas-charged flag
 of the current basic block, and the handle of the program module it came from:
 
-$$`\mathbb{I} \equiv \left\lgroup \mathfrak{p} \in \mathbb{B}, \mathbf{u} \in \mathbb{M}, i \in \mathbb{N}_R, \tilde{g} \in \{\bot, \top\}, h \in \mathbb{N} \right\rgroup \qquad \text{(B.4)}`
+{gpeq "B.4"}
 
 {leanSource JAM.InnerPvm}
 
@@ -131,6 +133,8 @@ $`\Psi_R` takes the core $`c`, the item index $`i`, the work-package $`p`, the a
 $`\mathbf{r}`, the import segments $`\overline{\mathbf{i}}` of every item and the export offset
 $`\varsigma`. It draws implicitly on a recent account state $`\delta`:
 
+{transcribed "B.5" "f6f3a96977"}
+
 $$`\Psi_R \colon \left\lgroup \mathbb{N}_{\mathsf{C}}, \mathbb{N}, \mathbb{P}, \mathbb{B}, \llbracket\llbracket\mathbb{J}\rrbracket\rrbracket, \mathbb{N} \right\rgroup \to \left\lgroup \mathbb{B} \cup \mathbb{E}, \llbracket\mathbb{J}\rrbracket, \mathbb{N}_G \right\rgroup \qquad \text{(B.5)}`
 
 $$`(c, i, p, \mathbf{r}, \overline{\mathbf{i}}, \varsigma) \mapsto \begin{cases} (\texttt{BAD}, [], 0) & \text{if } w_s \notin \mathcal{K}(\delta) \vee \mathfrak{j} = \emptyset \\ (\texttt{BIG}, [], 0) & \text{otherwise if } |\mathfrak{j}| > \mathsf{W}_C \\ (\mathbf{o}, [], u) & \text{otherwise if } \mathbf{o} \in \{\infty, \text{☇}\} \\ (\mathbf{o}, \mathbf{e}, u) & \text{otherwise} \end{cases}`
@@ -142,10 +146,10 @@ The model passes $`\delta` as the argument `d`, and the extrinsic data $`\overli
 
 {leanSource JAM.psiR}
 
-The dispatcher $`F` (eq. (B.6)) gives `gas`, `grow_heap` and `fetch` the refine arguments
+The dispatcher $`F` (eq. {eq}`B.6`) gives `gas`, `grow_heap` and `fetch` the refine arguments
 ($`\mathbf{p}`, the zero hash in place of entropy, $`\mathbf{r}`, $`i`, $`\overline{\mathbf{i}}`,
 $`\overline{\mathbf{x}}`) and adds the refine functions with identifiers 7 to 15. Any other identifier
-is charged $`\mathsf{M}_\emptyset` and answered with $`\varphi'_7 = \mathtt{WHAT}`, as in (B.2).
+is charged $`\mathsf{M}_\emptyset` and answered with $`\varphi'_7 = \mathtt{WHAT}`, as in {eq}`B.2`.
 In the model, the fixed arguments are collected in {api}`JAM.RefineHost.Env`:
 
 {leanSource JAM.RefineHost.dispatch}
@@ -161,9 +165,9 @@ changes. An implication holds the accumulating service $`s`, the partial state $
 services whose accounts were modified $`\mathbf{w}`, the next free service identifier $`i`, the
 deferred transfers $`\mathbf{t}`, the yield $`y` and the provisions $`\mathbf{p}`:
 
-$$`\mathbb{L} \equiv \left\lgroup s \in \mathbb{N}_S, \mathbf{e} \in \mathbb{S}, \mathbf{w} \in \{[\mathbb{N}_S]\}, i \in \mathbb{N}_S, \mathbf{t} \in \llbracket\text{𝕥}\rrbracket, y \in \mathbb{H}\boldsymbol{?}, \mathbf{p} \in \{[(\mathbb{N}_S, \mathbb{B})]\} \right\rgroup \qquad \text{(B.7)}`
+{gpeq "B.7"}
 
-$$`\forall \mathbf{x} \in \mathbb{L} \colon \mathbf{x}_\mathbf{s} \equiv (\mathbf{x}_\mathbf{e})_\mathbf{d}[\mathbf{x}_s] \qquad \text{(B.8)}`
+{gpeq "B.8"}
 
 {leanSource JAM.Implications}
 
@@ -171,6 +175,8 @@ $$`\forall \mathbf{x} \in \mathbb{L} \colon \mathbf{x}_\mathbf{s} \equiv (\mathb
 
 $`\Psi_A` first credits the service with the incoming deferred transfers, then runs its code with
 entry point 5:
+
+{transcribed "B.9" "0a03907597"}
 
 $$`\Psi_A \colon (\mathbf{e}, t, s, g, \mathbf{i}) \mapsto \begin{cases} (\mathbf{e}, \mathbf{w} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \{\}, \mathbf{t} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} [], y \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \emptyset, u \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} 0, \mathbf{p} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} []) & \text{if } s \notin \mathcal{K}(\mathbf{e}_\mathbf{d}) \\ (\mathbf{e} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathbf{s}, \mathbf{w}, \mathbf{t} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} [], y \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \emptyset, u \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} 0, \mathbf{p} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} []) & \text{otherwise if } \mathfrak{j} = \emptyset \vee |\mathfrak{j}| > \mathsf{W}_C \\ C(\Psi_M(\mathfrak{j}, 5, g, \mathcal{E}(t, s, |\mathbf{i}|), F, I(\mathbf{s}, \mathbf{w}, s)^2)) & \text{otherwise} \end{cases} \qquad \text{(B.9)}`
 
@@ -187,9 +193,9 @@ $`\mathbf{w}`, and {api}`JAM.psiARun` does the rest:
 The initial implications, and `check`, which finds the first identifier in a sequence that is not
 already a service:
 
-$$`I \colon (\mathbf{e}, \mathbf{w}, s) \mapsto (s, \mathbf{e}, \mathbf{w}, i, \mathbf{t} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} [], y \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \emptyset, \mathbf{p} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} []) \quad \text{where } i = \text{check}\left(\left(\mathcal{E}_4^{-1}\left(\mathcal{H}(\mathcal{E}(s, \eta'_0, \mathbf{H}_T))\right) \bmod (2^{32} - \mathsf{S} - 2^8)\right) + \mathsf{S}\right) \qquad \text{(B.10)}`
+{gpeq "B.10"}
 
-$$`\text{check}(i \in \mathbb{N}_S) \equiv \begin{cases} i & \text{if } i \notin \mathcal{K}(\mathbf{e}_\mathbf{d}) \\ \text{check}((i - \mathsf{S} + 1) \bmod (2^{32} - 2^8 - \mathsf{S}) + \mathsf{S}) & \text{otherwise} \end{cases} \qquad \text{(B.13)}`
+{gpeq "B.13"}
 
 {leanSource JAM.initImplications}
 
@@ -198,17 +204,17 @@ $$`\text{check}(i \in \mathbb{N}_S) \equiv \begin{cases} i & \text{if } i \notin
 `checkId` takes fuel because Lean needs every function to terminate; it is given
 $`|\mathbf{e}_\mathbf{d}| + 1` steps.
 
-The dispatcher $`F` (eq. (B.11)) has the general functions `gas`, `grow_heap` and `fetch` (with the
+The dispatcher $`F` (eq. {eq}`B.11`) has the general functions `gas`, `grow_heap` and `fetch` (with the
 entropy $`\eta'_0` and the inputs $`\mathbf{i}`), and the accumulate functions with identifiers 3 to 6
-and 16 to 29. Unknown identifiers are handled as in (B.2):
+and 16 to 29. Unknown identifiers are handled as in {eq}`B.2`:
 
 {leanSource JAM.AccHost.dispatch}
 
-The collapse $`C` (eq. (B.12)) keeps the exceptional dimension $`\mathbf{y}` when the machine ran out
+The collapse $`C` (eq. {eq}`B.12`) keeps the exceptional dimension $`\mathbf{y}` when the machine ran out
 of gas or panicked. Otherwise it keeps $`\mathbf{x}`, and an output $`\mathbf{o} \in \mathbb{H}` (32 octets)
 becomes the yield:
 
-$$`C \colon (u, \mathbf{o}, (\mathbf{x}, \mathbf{y})) \mapsto \begin{cases} (\mathbf{e} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathbf{y}_\mathbf{e}, \mathbf{w} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathbf{y}_\mathbf{w}, \mathbf{t} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathbf{y}_\mathbf{t}, y \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathbf{y}_y, u, \mathbf{p} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathbf{y}_\mathbf{p}) & \text{if } \mathbf{o} \in \{\infty, \text{☇}\} \\ (\mathbf{e} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathbf{x}_\mathbf{e}, \mathbf{w} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathbf{x}_\mathbf{w}, \mathbf{t} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathbf{x}_\mathbf{t}, y \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathbf{o}, u, \mathbf{p} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathbf{x}_\mathbf{p}) & \text{otherwise if } \mathbf{o} \in \mathbb{H} \\ (\mathbf{e} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathbf{x}_\mathbf{e}, \mathbf{w} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathbf{x}_\mathbf{w}, \mathbf{t} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathbf{x}_\mathbf{t}, y \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathbf{x}_y, u, \mathbf{p} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathbf{x}_\mathbf{p}) & \text{otherwise} \end{cases} \qquad \text{(B.12)}`
+{gpeq "B.12"}
 
 In the model, $`C` is the final `match o with` of {api}`JAM.psiARun`.
 
@@ -224,11 +230,11 @@ $`(\varepsilon^* \in \{\blacktriangleright, \text{☇}, \infty\}, \varrho^* \in 
 It costs $`g` gas, given in its row of the paper's tables. If there is not enough gas, the result is
 $`\infty`, all the gas is used, and registers, memory and context are unchanged:
 
-$$`\varrho^* \equiv \max(\varrho - g, 0) \quad \text{unless } \varrho^* \text{ is explicitly defined below} \qquad \text{(B.14)}`
+{gpeq "B.14"}
 
-$$`(\varepsilon^*, \varphi^*, \mu^*, \mathfrak{x}^*) \equiv \begin{cases} (\infty, \varphi, \mu, \mathfrak{x}) & \text{if } \varrho < g \\ (\varepsilon', \varphi', \mu', \mathfrak{x}') & \text{otherwise} \end{cases} \qquad \text{(B.15)}`
+{gpeq "B.15"}
 
-$$`\varepsilon' \equiv \blacktriangleright, \quad \varphi' \equiv \varphi, \quad \mu' \equiv \mu, \quad \mathfrak{x}' \equiv \mathfrak{x} \quad \text{except as indicated below} \qquad \text{(B.17)}`
+{gpeq "B.17"}
 
 The model applies these rules in one place, {api}`JAM.charged`, which every host function calls with
 its $`g` and a body that gives the "except as indicated" part. A body starts from
@@ -240,7 +246,7 @@ $`(\blacktriangleright, \varrho - g, \varphi, \mu, \mathfrak{x})`:
 
 Gas that depends on a size $`\ell` in octets is charged at a rate $`L` per 1024 octets:
 
-$$`\mathcal{G}(L, \ell) \equiv \left\lceil \frac{L \cdot \ell}{1024} \right\rceil \qquad \text{(B.16)}`
+{gpeq "B.16"}
 
 {leanSource JAM.memGas}
 
@@ -279,7 +285,7 @@ $`g = \mathsf{M}_G`. Out: $`\varphi'_7 = \varrho^*`, the gas left after the char
 
 *`grow_heap` = 1*, $`\Omega_{\text{♊}}(\varrho, \varphi, \mu, \mathfrak{x}, \mathfrak{j})`. In:
 $`\varphi_7`, the page the heap should reach. The heap's first page $`a` and its bound $`b` come from the
-program blob $`\mathfrak{j}` (its read-only data $`\mathbf{o}` and stack size $`s`, eq. (A.42)), and
+program blob $`\mathfrak{j}` (its read-only data $`\mathbf{o}` and stack size $`s`, eq. {eq}`A.42`), and
 $`h = a + c` is the current top, where $`c` counts the writable pages in $`\mathbb{N}_{a \dots b}`:
 
 $$`a = \frac{2\mathsf{Z}_Z + Z(|\mathbf{o}|)}{\mathsf{Z}_P}, \quad b = \frac{2^{32} - 3\mathsf{Z}_Z - \mathsf{Z}_I - Z(s)}{\mathsf{Z}_P}, \quad \varphi'_7 \equiv \begin{cases} h & \text{if } \varphi_7 \le h \vee \varphi_7 > b \\ \varphi_7 & \text{otherwise} \end{cases}, \quad (\mu'_\mathbf{a})_{a \dots \varphi'_7} \equiv [\mathrm{W}, \dots, \mathrm{W}], \quad g \equiv \mathsf{M}_{\text{♊},c} + (\varphi'_7 - h) \cdot \mathsf{M}_{\text{♊},p}`
@@ -315,7 +321,7 @@ tag := "invocations-refine-functions"
 
 These work on the refine context:
 
-$$`\mathfrak{x} \equiv (\mathbf{m}, \mathbf{c}, \mathbf{e}), \quad \mathfrak{x}' \equiv (\mathbf{m}', \mathbf{c}', \mathbf{e}') \qquad \text{(B.18)}`
+{gpeq "B.18"}
 
 *`historical_lookup` = 7*, $`\Omega_H(\varrho, \varphi, \mu, (\mathbf{m}, \mathbf{c}, \mathbf{e}), s, \mathbf{d}, t)`.
 In: $`\varphi_7` names the service, the 32-octet hash is at $`h = \varphi_8`; then
@@ -417,7 +423,7 @@ tag := "invocations-accumulate-functions"
 These work on the accumulate context, and change only the regular dimension $`\mathbf{x}` (except
 `checkpoint`):
 
-$$`\mathfrak{x} \equiv (\mathbf{x}, \mathbf{y}), \quad \mathfrak{x}' \equiv (\mathbf{x}', \mathbf{y}') \qquad \text{(B.19)}`
+{gpeq "B.19"}
 
 $`\mathbf{d} = (\mathbf{x}_\mathbf{e})_\mathbf{d}` is the accounts of the current partial state. Many
 functions ask that the caller $`\mathbf{x}_s` be the service $`d` it changes or that service's effective
@@ -649,9 +655,9 @@ These points are recorded in the model's
   both as arguments of {api}`JAM.psiR` (`extrinsics` and `d`), and {api}`JAM.psiI` takes the account
   state the same way.
 * *Note 20, `pages`.* The row defines only $`(\varphi'_7, \mathbf{m}')`, with no $`\varepsilon'`. The
-  model uses the default $`\varepsilon' = \blacktriangleright` of (B.17): `pages` never panics
+  model uses the default $`\varepsilon' = \blacktriangleright` of {eq}`B.17`: `pages` never panics
   ({api}`JAM.RefineHost.pages`).
-* *Note v0.8.1-A19, `new` and check.* $`\text{check}` (B.13) tests $`i \notin \mathcal{K}(\mathbf{e}_\mathbf{d})`
+* *Note v0.8.1-A19, `new` and check.* $`\text{check}` {eq}`B.13` tests $`i \notin \mathcal{K}(\mathbf{e}_\mathbf{d})`
   against the state passed to $`\Psi_A`, but `new` uses it in the middle of an invocation. The model
   checks against the current accounts $`(\mathbf{x}_\mathbf{e})_\mathbf{d}` ({api}`JAM.AccHost.new`);
   the two differ only if the sequence meets an identifier created or ejected earlier in the same

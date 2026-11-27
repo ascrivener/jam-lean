@@ -36,7 +36,7 @@ tag := "authorization-state"
 Each core $`c` has an *authorizer pool* $`\alpha[c]`, the authorizers it accepts now, and an *authorizer queue* $`\phi[c]`,
 from which the pool is refilled:
 
-$$`\alpha \in \llbracket \llbracket \mathbb{H} \rrbracket_{:\mathsf{O}} \rrbracket_{\mathsf{C}}, \qquad \phi \in \llbracket \llbracket \mathbb{H} \rrbracket_{\mathsf{Q}} \rrbracket_{\mathsf{C}} \qquad \text{(8.1)}`
+{gpeq "8.1"}
 
 So each of the $`\mathsf{C} = 341` pools holds at most $`\mathsf{O} = 8` hashes, and each queue exactly $`\mathsf{Q} = 80`. Only accumulation changes
 $`\phi`, through a call from a privileged service ({ref "accumulation"}[§12]). In the model's state these are the fields
@@ -53,16 +53,16 @@ Each block, every core drops the authorizer that a guarantee on that core used, 
 and takes the next authorizer from its posterior queue. The queue is indexed by the block's
 timeslot, cyclically:
 
-$$`\forall c \in \mathbb{N}_{\mathsf{C}} : \alpha'[c] \equiv \overleftarrow{F(c) \mathbin{+\!\!+} \phi'[c][\mathbf{H}_T]^{\circlearrowleft}}^{\mathsf{O}} \qquad \text{(8.2)}`
+{gpeq "8.2"}
 
-$$`F(c) \equiv \begin{cases} \alpha[c] \ominus \{(g_\mathbf{r})_a\} & \text{if } \exists g \in \mathbf{E}_G : (g_\mathbf{r})_c = c \\ \alpha[c] & \text{otherwise} \end{cases} \qquad \text{(8.3)}`
+{gpeq "8.3"}
 
 The notation is from §3.7: $`\mathbf{s}[i]^{\circlearrowleft}` is $`\mathbf{s}[i \bmod |\mathbf{s}|]`; $`\overleftarrow{\mathbf{s}}^n` is the last $`n` elements of $`\mathbf{s}`; $`x \mathbin{+\!\!+} i` appends one element; and
 $`\mathbf{s} \ominus \{v\}` is $`\mathbf{s}` without its left-most element equal to $`v`. (The paper draws this operator with its
 own symbol, a spoon, which KaTeX cannot draw; it is shown here as $`\ominus`.) $`(g_\mathbf{r})_a` is the authorizer hash of
 the work report in guarantee $`g`, and $`(g_\mathbf{r})_c` is its core.
 
-Since $`\alpha'` uses $`\phi'`, it is computed after accumulation (eq. (4.19) of the
+Since $`\alpha'` uses $`\phi'`, it is computed after accumulation (eq. {eq}`4.19` of the
 {ref "overview"}[dependency graph]).
 
 Sequence subtraction:
@@ -100,12 +100,12 @@ tag := "authorization-readings"
 Notes 21, v0.8.1-A28 and v0.8.1-A29 are in the model's
 [notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues).
 
-* *Which guarantee's authorizer (note 21).* In (8.3), $`g` is bound only inside the condition
+* *Which guarantee's authorizer (note 21).* In {eq}`8.3`, $`g` is bound only inside the condition
   $`\exists g \in \mathbf{E}_G : (g_\mathbf{r})_c = c`, but $`(g_\mathbf{r})_a` is used in the result. The model reads $`g` as the guarantee on core $`c`
   ({api}`JAM.poolUsed`).
 * *More than one guarantee on a core (note v0.8.1-A28).* A valid $`\mathbf{E}_G` has at most one guarantee per core ({ref "reports"}[§11]). The
   model does not rely on that here: if there were several, it would remove each one's authorizer
   in turn.
-* *An empty queue (note v0.8.1-A29).* By (8.1) every queue has exactly $`\mathsf{Q}` entries, so $`\phi'[c][\mathbf{H}_T]^{\circlearrowleft}` always exists. The model's
+* *An empty queue (note v0.8.1-A29).* By {eq}`8.1` every queue has exactly $`\mathsf{Q}` entries, so $`\phi'[c][\mathbf{H}_T]^{\circlearrowleft}` always exists. The model's
   queues are lists of any length; for an empty queue, where $`i \bmod 0` names no element, it appends
   nothing ({api}`JAM.poolNext`).

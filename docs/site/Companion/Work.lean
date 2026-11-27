@@ -48,7 +48,7 @@ tag := "work-packages"
 A work-package holds an authorization token $`\mathbf{j}`, the service $`h` that hosts the authorization code,
 the code's hash $`u`, a configuration blob $`\mathbf{f}`, a context $`\mathbf{c}` and its work-items $`\mathbf{w}`:
 
-$$`\mathbb{P} \equiv \left\lgroup \mathbf{j} \in \mathbb{B},\ h \in \mathbb{N}_S,\ u \in \mathbb{H},\ \mathbf{f} \in \mathbb{B},\ \mathbf{c} \in \mathbb{C},\ \mathbf{w} \in \llbracket \mathbb{W} \rrbracket_{1:\mathsf{I}} \right\rgroup \qquad \text{(14.2)}`
+{gpeq "14.2"}
 
 {leanSource JAM.WorkPackage}
 
@@ -56,7 +56,7 @@ A work-item names its service $`s`, the service's code hash $`c`, a payload $`\m
 $`g` (refine) and $`a` (accumulate), the number $`e` of segments it exports, the segments $`\mathbf{i}` it imports and
 its extrinsics $`\mathbf{x}`, each given by hash and length:
 
-$$`\mathbb{W} \equiv \left\lgroup \begin{aligned} &s \in \mathbb{N}_S,\ c \in \mathbb{H},\ \mathbf{y} \in \mathbb{B},\ g \in \mathbb{N}_G,\ a \in \mathbb{N}_G,\ e \in \mathbb{N}, \\ &\mathbf{i} \in \llbracket \left\lgroup \mathbb{H} \cup \mathbb{H}^{\boxplus}, \mathbb{N} \right\rgroup \rrbracket,\ \mathbf{x} \in \llbracket \left\lgroup \mathbb{H}, \mathbb{N} \right\rgroup \rrbracket \end{aligned} \right\rgroup \qquad \text{(14.3)}`
+{gpeq "14.3"}
 
 {leanSource JAM.WorkItem}
 
@@ -65,9 +65,9 @@ exported it, from the tagged $`\mathbb{H}^{\boxplus}`. The model's {api}`JAM.Seg
 
 {leanSource JAM.SegmentRoot}
 
-The paper bounds every work-package: at most $`\mathsf{J}` dependencies (14.4), at most $`\mathsf{W}_X` exports,
-$`\mathsf{W}_M` imports and $`\mathsf{T}` extrinsics (14.5), at most $`\mathsf{W}_I` octets of input data (14.6–14.8), and gas
-limits summing to at most $`\mathsf{G}_A` and $`\mathsf{G}_R` (14.10). The model's types do not carry these bounds, and
+The paper bounds every work-package: at most $`\mathsf{J}` dependencies {eq}`14.4`, at most $`\mathsf{W}_X` exports,
+$`\mathsf{W}_M` imports and $`\mathsf{T}` extrinsics {eq}`14.5`, at most $`\mathsf{W}_I` octets of input data (14.6–14.8), and gas
+limits summing to at most $`\mathsf{G}_A` and $`\mathsf{G}_R` {eq}`14.10`. The model's types do not carry these bounds, and
 its $`\Xi` does not check them (see {ref "work-readings"}[Readings chosen]).
 
 # Item to digest (§14.3)
@@ -77,7 +77,7 @@ tag := "work-digest"
 
 Given the result $`\mathbf{l}` and the gas used $`u` of a work-item, $`C` gives its work-digest:
 
-$$`C\colon \left\{ \begin{aligned} \left\lgroup \mathbb{W}, \mathbb{B} \cup \mathbb{E}, \mathbb{N}_G \right\rgroup &\to \mathbb{D} \\ \left(\left(\begin{aligned} &s, c, \mathbf{y}, \\ &a, e, \mathbf{i}, \mathbf{x} \end{aligned}\right), \mathbf{l}, u\right) &\mapsto \left(\begin{aligned} &s,\, c,\, y \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathcal{H}(\mathbf{y}),\, g \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} a,\, \mathbf{l},\, u, \\ &i \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} |\mathbf{i}|,\, e,\, x \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} |\mathbf{x}|,\, z \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \sum_{(h, z) \in \mathbf{x}} z \end{aligned}\right) \end{aligned} \right. \qquad \text{(14.11)}`
+{gpeq "14.11"}
 
 The mark $`\mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}}` names a field and gives its value: $`y \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathcal{H}(\mathbf{y})` is the field $`y` with value $`\mathcal{H}(\mathbf{y})`.
 
@@ -91,7 +91,7 @@ paper's $`\mathcal{H}`.
 tag := "work-authorizer"
 %%%
 
-$$`\forall \mathbf{p} \in \mathbb{P}: \left\{ \begin{aligned} \mathbf{p}_a &\equiv \mathcal{H}(\mathbf{p}_u \frown \mathbf{p}_\mathbf{f}) \\ \mathbf{p}_\mathbf{u} &\equiv \Lambda(\delta[\mathbf{p}_h], (\mathbf{p}_\mathbf{c})_t, \mathbf{p}_u) \end{aligned} \right. \qquad \text{(14.12)}`
+{gpeq "14.12"}
 
 {leanSource JAM.WorkPackage.authorizer}
 
@@ -109,7 +109,7 @@ tag := "work-pagedproofs"
 Besides its exported segments, a work-package places in the long-term store pages of segment
 hashes with Merkle proofs, from which an import can later be justified against the segment root:
 
-$$`P\colon \left\{ \begin{aligned} \llbracket \mathbb{J} \rrbracket \to\ & \llbracket \mathbb{J} \rrbracket \\ \mathbf{s} \mapsto\ & \left[ \mathcal{P}_l\left(\mathcal{E}\left(\updownarrow\mathcal{J}_6(\mathbf{s}, i), \updownarrow\mathcal{L}_6(\mathbf{s}, i)\right)\right) \;\middle|\; i \mathrel{\mathrlap{<}{-}} \mathbb{N}_{\lceil |\mathbf{s}|/64 \rceil} \right] \\ & \text{where } l = \mathsf{W}_G \end{aligned} \right. \qquad \text{(14.13)}`
+{gpeq "14.13"}
 
 $`\mathcal{J}_6` and $`\mathcal{L}_6` are the subtree justification and leaf page of the constant-depth Merkle tree
 ({ref "merkle"}[Appendix E]). The model's $`P` is in `JAM/Segments.lean`:
@@ -128,7 +128,7 @@ tag := "work-xi"
 $`\Xi` takes a work-package $`\mathbf{p}`, a core $`c`, a segment-root dictionary $`\mathbf{l}` and the number $`v` of assurers,
 and gives a work-report or the error $`\nabla`:
 
-$$`\Xi \colon \left\{ \begin{aligned} &\left\lgroup \mathbb{P}, \mathbb{N}_{\mathsf{C}}, \langle\!|\,\mathbb{H}\to\mathbb{H}\,|\!\rangle, \mathbb{V} \right\rgroup \to \mathbb{R} \cup \{\nabla\} \\ &(\mathbf{p}, c, \mathbf{l}, v) \mapsto \begin{cases} \nabla & \text{if } E \\ \left( \begin{aligned} &\mathbf{s}, \mathbf{c} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathbf{p}_\mathbf{c}, c, \\ &a \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathbf{p}_a, g, \mathbf{t}, \mathbf{l}, \mathbf{d} \end{aligned} \right) & \text{otherwise} \end{cases} \end{aligned} \right. \qquad \text{(14.14)}`
+{gpeq "14.14"}
 
 where
 
@@ -157,7 +157,7 @@ read, and the data of every item, $`(X(\mathbf{w}), S_\mathbf{l}(\mathbf{w}), J_
 
 The availability specifier is the last line of §14.4's definitions:
 
-$$`\mathbf{s} = A\left(\mathcal{H}(\mathbf{p}), B(\mathbf{p}, \mathbf{l}), \overgroup{\overline{\mathbf{e}}}, v\right) \qquad \text{(14.18)}`
+{gpeq "14.18"}
 
 $`\overgroup{\overline{\mathbf{e}}}` is the concatenation of every item's exports, `outs.flatMap (·.exports)` in the model.
 
@@ -173,7 +173,7 @@ are exactly the imported package hashes, and no item exports anything.
 {mathdoc JAM.Guarantee.computeReport_noExports}
 
 The paper also asks a guarantor to choose $`\mathbf{l}` so that every pair $`h \mapsto e` in it is the hash and segment root
-of some work-package (eq. (14.15)). That is a condition on the guarantor's choice of $`\mathbf{l}`, and the model's
+of some work-package (eq. {eq}`14.15`). That is a condition on the guarantor's choice of $`\mathbf{l}`, and the model's
 $`\Xi` does not check it.
 
 # The data of an item (§14.4)
@@ -184,7 +184,7 @@ tag := "work-data"
 $`\Xi` and $`B` use the extrinsic data $`X`, the segment-root lookup $`L_\mathbf{l}`, the import data $`S_\mathbf{l}` and its
 justifications $`J_\mathbf{l}`:
 
-$$`\begin{aligned} X(\mathbf{w} \in \mathbb{W}) &\equiv \left[ \mathbf{d} \;\middle|\; (\mathcal{H}(\mathbf{d}), |\mathbf{d}|) \mathrel{\mathrlap{<}{-}} \mathbf{w}_\mathbf{x} \right] \\ \forall \mathbf{l} \in \langle\!|\,\mathbb{H}\to\mathbb{H}\,|\!\rangle &: \\ L_\mathbf{l}(r \in \mathbb{H} \cup \mathbb{H}^{\boxplus}) &\equiv \begin{cases} r & \text{if } r \in \mathbb{H} \\ \mathbf{l}[h] & \text{if } \exists h \in \mathbb{H}: r = h^{\boxplus} \end{cases} \\ S_\mathbf{l}(\mathbf{w} \in \mathbb{W}) &\equiv \left[ \mathbf{b}[n] \;\middle|\; \mathcal{M}(\mathbf{b}) = L_\mathbf{l}(r), (r, n) \mathrel{\mathrlap{<}{-}} \mathbf{w}_\mathbf{i} \right] \\ J_\mathbf{l}(\mathbf{w} \in \mathbb{W}) &\equiv \left[ \updownarrow\mathcal{J}_0(\mathbf{b}, n) \;\middle|\; \mathcal{M}(\mathbf{b}) = L_\mathbf{l}(r), (r, n) \mathrel{\mathrlap{<}{-}} \mathbf{w}_\mathbf{i} \right] \end{aligned} \qquad \text{(14.16)}`
+{gpeq "14.16"}
 
 $`X` and $`S_\mathbf{l}` range over data the paper does not pass as arguments: the preimage of each
 extrinsic hash, which "we make an assumption … is known by the guarantor", and the whole sequence
@@ -213,7 +213,7 @@ $`\mathbf{b}` of segments behind each segment root. The model takes both from a
 tag := "work-bundle"
 %%%
 
-$$`B \colon \left\{ \begin{aligned} &\left\lgroup \mathbb{P}, \langle\!|\,\mathbb{H}\to\mathbb{H}\,|\!\rangle \right\rgroup \to \mathbb{B} \\ &(\mathbf{p}, \mathbf{l}) \mapsto \mathcal{E}\left(\mathbf{p}, X^\#(\mathbf{p}_\mathbf{w}), S_\mathbf{l}^\#(\mathbf{p}_\mathbf{w}), J_\mathbf{l}^\#(\mathbf{p}_\mathbf{w})\right) \end{aligned} \right. \qquad \text{(14.17)}`
+{gpeq "14.17"}
 
 "Note the lack of length prefixes: only the Merkle paths for the justifications have a length
 prefix." The model concatenates the encoded package, every extrinsic, every imported segment, and
@@ -226,7 +226,7 @@ every justification path with its length prefix:
 tag := "work-avspec"
 %%%
 
-$$`A\colon \left\{ \begin{aligned} \left\lgroup \mathbb{H}, \mathbb{B}, \llbracket \mathbb{J} \rrbracket, \mathbb{V} \right\rgroup &\to \mathbb{Y} \\ (p, \mathbf{b}, \mathbf{s}, v) &\mapsto \left(p,\, l \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} |\mathbf{b}|,\, u,\, v,\, e \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathcal{M}(\mathbf{s}),\, n \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} |\mathbf{s}|\right) \end{aligned} \right. \qquad \text{(14.19)}`
+{gpeq "14.19"}
 
 $$`\begin{aligned} \text{where } u &= \mathcal{M}_B\left( \left[ \overgroup{\mathbf{x}} \;\middle|\; \mathbf{x} \mathrel{\mathrlap{<}{-}} {}^{\text{T}}\left[\mathbf{b}^\clubsuit, \mathbf{s}^\clubsuit\right] \right] \right) \\ \text{and } \mathbf{b}^\clubsuit &= \mathcal{H}^\#\left(\mathcal{C}^{v}_{\lceil |\mathbf{b}|/z \rceil}\left(\mathcal{P}_z(\mathbf{b})\right)\right) \\ \text{and } \mathbf{s}^\clubsuit &= \mathcal{M}_B^\#\left({}^{\text{T}}_{v}\,\mathcal{C}^{v\#}_{\mathsf{W}_G/z}\left(\mathbf{s} \frown P(\mathbf{s})\right)\right) \\ \text{and } z &= 2 \cdot \mathcal{D}(v) \end{aligned}`
 
@@ -246,7 +246,7 @@ sequence of sequences whose result has $`v` items, so that $`{}^{\text{T}}_v[]` 
 
 The zero-padding function $`\mathcal{P}_n` takes an octet sequence to a multiple of $`n` in length:
 
-$$`\mathcal{P}_{n \in \mathbb{N}_{1\dots}}\colon \left\{ \begin{aligned} \mathbb{B} &\to \mathbb{B}_{k \cdot n} \\ \mathbf{x} &\mapsto \mathbf{x} \frown [0, 0, \dots]_{((|\mathbf{x}| + n - 1) \bmod n) + 1 \dots n} \end{aligned} \right. \qquad \text{(14.20)}`
+{gpeq "14.20"}
 
 {leanSource JAM.Segments.zeroPad}
 
@@ -327,10 +327,10 @@ model's [notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/do
 * *How a justification is checked (note v0.8.1-A13).* The paper defines how justifications are made, not how
   they are checked. The model's {api}`JAM.Segments.verifySegment` recomputes the root from the segment and
   its path.
-* *The pages of $`P` (note v0.8.1-A15).* The prose after (14.19) calls each page "a page of 64 hashes of
+* *The pages of $`P` (note v0.8.1-A15).* The prose after {eq}`14.19` calls each page "a page of 64 hashes of
   segments"; the model follows the equation, whose page $`\mathcal{L}_6` holds the leaf hashes of the segments, and
   whose last page is short when 64 does not divide $`|\mathbf{s}|`.
-* *Package limits.* (14.4)–(14.10) are stated for every $`\mathbf{p} \in \mathbb{P}`. The model's types do not enforce
+* *Package limits.* {eq}`14.4`–{eq}`14.10` are stated for every $`\mathbf{p} \in \mathbb{P}`. The model's types do not enforce
   them and its $`\Xi` does not check them, so it computes a report for any package.
 * *Malformed data argument.* The model's $`\Xi` expects one data entry per item; a missing entry reads as
   empty.

@@ -38,7 +38,7 @@ tag := "accounts-account"
 
 Service accounts are a partial mapping from service identifiers to account records:
 
-$$`\mathbb{N}_S \equiv \mathbb{N}_{2^{32}} \qquad \delta \in \langle \mathbb{N}_S \to \mathbb{A} \rangle \qquad \text{(9.1, 9.2)}`
+{gpeq "9.1, 9.2"}
 
 {leanSource JAM.Accounts}
 
@@ -47,7 +47,7 @@ $`\mathbf{l}`, the gratis storage offset $`f`, the code hash $`c`, the balance $
 $`u` with its creation slot $`d` and the supervisor balance $`x`, the gas limits $`g` and $`m`, the
 creation slot $`r`, the slot of the most recent accumulation $`a`, and the parent service $`p`:
 
-$$`\mathbb{A} \equiv \left(\begin{aligned} &\mathbf{s} \in \langle \mathbb{B} \to \mathbb{B} \rangle,\ \mathbf{p} \in \langle \mathbb{H} \to \mathbb{B} \rangle, \\ &\mathbf{l} \in \langle (\mathbb{H}, \mathbb{N}_P) \to \llbracket \mathbb{N}_T \rrbracket_{:3} \rangle,\ f \in \mathbb{N}_B,\ c \in \mathbb{H}, \\ &b \in \mathbb{N}_B,\ u \in \mathbb{N}_S,\ d \in \mathbb{N}_T,\ x \in \mathbb{N}_B, \\ &g \in \mathbb{N}_G,\ m \in \mathbb{N}_G,\ r \in \mathbb{N}_T,\ a \in \mathbb{N}_T,\ p \in \mathbb{N}_S \end{aligned}\right) \qquad \text{(9.3)}`
+{gpeq "9.3"}
 
 The model's record, {api}`JAM.ServiceAccount`, keeps the same fields, with two differences of form:
 $`\mathbf{s}` and $`\mathbf{l}` share one dictionary, `entries`, and the footprint terms $`a_i` and
@@ -66,7 +66,7 @@ tag := "accounts-code"
 
 An account's code is the preimage of its code hash:
 
-$$`\forall \mathbf{a} \in \mathbb{A} : \mathbf{a}_\mathbf{c} \equiv \mathbf{a}_\mathbf{p}[\mathbf{a}_c] \qquad \text{(9.4)}`
+{gpeq "9.4"}
 
 {leanSource JAM.ServiceAccount.code}
 
@@ -81,14 +81,16 @@ tag := "accounts-lookups"
 $`\mathbf{p}` maps a hash to its preimage, and $`\mathbf{l}` records, for a hash and a length, the
 history of the preimage's availability. The paper's invariant ties the two together:
 
-$$`\forall \mathbf{a} \in \mathbb{A}, (h \mapsto \mathbf{d}) \in \mathbf{a}_\mathbf{p} \Rightarrow h = \mathcal{H}(\mathbf{d}) \wedge (h, |\mathbf{d}|) \in \mathcal{K}(\mathbf{a}_\mathbf{l}) \qquad \text{(9.6)}`
+{gpeq "9.6"}
 
-The model does not carry (9.6) as a property of {api}`JAM.ServiceAccount`, and no theorem yet
+The model does not carry {eq}`9.6` as a property of {api}`JAM.ServiceAccount`, and no theorem yet
 states that the transitions which change $`\mathbf{p}` and $`\mathbf{l}` preserve it.
 
 A history of length 0 means the preimage is requested but not supplied; 1, available since
 $`h_0`; 2, unavailable since $`h_1` after being available from $`h_0`; 3, available again since
 $`h_2`. The historical lookup $`\Lambda` returns the preimage if it was available at time $`t`:
+
+{transcribed "9.7" "76c008da78"}
 
 $$`\Lambda(\mathbf{a}, t, h) \equiv \begin{cases} \mathbf{a}_\mathbf{p}[h] & \text{if } h \in \mathcal{K}(\mathbf{a}_\mathbf{p}) \wedge I(\mathbf{a}_\mathbf{l}[h, |\mathbf{a}_\mathbf{p}[h]|], t) \\ \emptyset & \text{otherwise} \end{cases} \qquad \text{(9.7)}`
 
@@ -99,8 +101,8 @@ $$`\text{where } I(\mathbf{l}, t) = \begin{cases} \bot & \text{if } [] = \mathbf
 {leanSource JAM.ServiceAccount.historicalLookup}
 
 The paper first types $`\Lambda` with $`t` restricted to the last $`\mathsf{D}` slots,
-$`\mathbb{N}_{(\mathbf{H}_T - \mathsf{D}) \dots \mathbf{H}_T}` (eq. (9.5)), and then defines it for
-any $`t \in \mathbb{N}_T` in (9.7). The model follows (9.7): {api}`JAM.ServiceAccount.historicalLookup`
+$`\mathbb{N}_{(\mathbf{H}_T - \mathsf{D}) \dots \mathbf{H}_T}` (eq. {eq}`9.5`), and then defines it for
+any $`t \in \mathbb{N}_T` in {eq}`9.7`. The model follows {eq}`9.7`: {api}`JAM.ServiceAccount.historicalLookup`
 takes any $`t`; keeping $`t` in that range is left to its callers.
 
 # Storage and requests in the model
@@ -108,9 +110,9 @@ takes any $`t`; keeping $`t` in that range is left to its callers.
 tag := "accounts-entries"
 %%%
 
-{ref "statemerkle"}[Appendix D] (eq. (D.2)) serializes each storage item under the state key
+{ref "statemerkle"}[Appendix D] (eq. {eq}`D.2`) serializes each storage item under the state key
 $`C(s, \mathcal{E}_4(2^{32}-1) \frown \mathbf{k})` and each request under
-$`C(s, \mathcal{E}_4(z) \frown h)`, where $`C(s, h)` (eq. (D.1)) interleaves $`\mathcal{E}_4(s)` with the
+$`C(s, \mathcal{E}_4(z) \frown h)`, where $`C(s, h)` (eq. {eq}`D.1`) interleaves $`\mathcal{E}_4(s)` with the
 first 27 octets of $`\mathcal{H}(h)`. The paper adds that storage keys cannot be inspected or enumerated, so "implementations
 are free to use this fact in order to avoid storing the keys themselves" (§D.1). The model does
 this: it keys $`\mathbf{s}` and $`\mathbf{l}` by those 27 octets, in one dictionary, exactly as
@@ -182,7 +184,7 @@ tag := "accounts-footprint"
 The number of items an account stores, $`a_i`, and the octets they take, $`a_o`, set the
 threshold balance $`a_t` the account must hold:
 
-$$`\forall \mathbf{a} \in \mathbb{A} : \begin{cases} \mathbf{a}_i \equiv 2 \cdot |\mathbf{a}_\mathbf{l}| + |\mathbf{a}_\mathbf{s}| \\ \mathbf{a}_o \equiv \sum_{(h, z) \in \mathcal{K}(\mathbf{a}_\mathbf{l})} 81 + z \; + \sum_{(x, y) \in \mathbf{a}_\mathbf{s}} 34 + |y| + |x| \\ \mathbf{a}_t \equiv \max(0, \mathsf{B}_S + \mathsf{B}_I \cdot \mathbf{a}_i + \mathsf{B}_L \cdot \mathbf{a}_o - \mathbf{a}_f) \end{cases} \qquad \text{(9.8)}`
+{gpeq "9.8"}
 
 {leanSource JAM.ServiceAccount.minBalance}
 
@@ -207,7 +209,7 @@ Five kinds of privilege are held in $`\chi`: the manager $`m`, the delegator $`v
 $`\iota`), the registrar $`r` (who creates services in the protected range), one assigner per core
 $`\mathbf{a}` (who alter $`\phi`), and the always-accumulate services $`\mathbf{z}` with their gas:
 
-$$`\mathbb{X} \equiv \left(m \in \mathbb{N}_S,\ v \in \mathbb{N}_S,\ r \in \mathbb{N}_S,\ \mathbf{a} \in \llbracket \mathbb{N}_S \rrbracket_\mathsf{C},\ \mathbf{z} \in \langle \mathbb{N}_S \to \mathbb{N}_G \rangle\right) \qquad \chi \in \mathbb{X} \qquad \text{(9.9, 9.10)}`
+{gpeq "9.9, 9.10"}
 
 The model keeps them as the fields `manager`, `delegator`, `registrar`, `assigners` and `alwaysAcc`
 of the state {api}`JAM.State` and of the partial state {api}`JAM.PartialState` that accumulation
@@ -223,7 +225,7 @@ a supervisor balance $`x` that only the supervisor may transfer and that counts 
 the threshold balance. The creation slot $`d` recorded with $`u` stops a new service that reuses an
 ejected supervisor's identifier from inheriting its power. The effective supervisor is:
 
-$$`\forall \mathbf{d} \in \langle \mathbb{N}_S \to \mathbb{A} \rangle, s \in \mathcal{K}(\mathbf{d}) : \mathbf{d}[s]_e \equiv \begin{cases} u & \text{if } u \in \mathcal{K}(\mathbf{d}) \wedge \mathbf{d}[u]_r = d \\ s & \text{otherwise} \end{cases} \quad \text{where } u = \mathbf{d}[s]_u,\ d = \mathbf{d}[s]_d \qquad \text{(9.11)}`
+{gpeq "9.11"}
 
 {leanSource JAM.effectiveSupervisor}
 

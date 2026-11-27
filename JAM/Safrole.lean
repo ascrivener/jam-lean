@@ -102,7 +102,7 @@ inductive SafroleError where
   | unexpectedTicket
   /-- **n** is not ordered by identifier without duplicates. -/
   | badTicketOrder
-  /-- A proof is not in 𝔹̄°_{γ_Z'}⟨$jam_ticket_seal ⌢ η_2' ⌢ e⟩⟨[]⟩. -/
+  /-- A proof is not in 𝔹̄°_{γ_Z'}⟨$jam_ticket_seal ⌢ η_2' ⧺ e⟩⟨[]⟩. -/
   | badTicketProof
   /-- An entry index is not in ℕ_n. -/
   | badTicketAttempt
@@ -123,12 +123,12 @@ def Xentropy : List UInt8 := contextString "$jam_entropy"
 #guard Xentropy = "jam_entropy".toUTF8.toList
 
 /-- The context of a ticket's ring proof, and of a ticket-sealed block's seal:
-    $jam_ticket_seal ⌢ η ⌢ e, the entry index appended as one octet. The paper does not define the
-    encoding (`docs/upstream-candidates.md`, 31). e < n = ⌈2𝖤/|γ_P'|⌉, and one octet holds every
-    such e exactly when n ≤ 256, i.e. when 2𝖤 ≤ 256⋅|γ_P'|; this holds for the paper's
-    |γ_P'| ≥ 6 (eq. `valcount`) whenever 𝖤 ≤ 768, so for the full (𝖤 = 600) and tiny (𝖤 = 12)
-    chains (`safrole_attempt_fits`, `attempt_fits_of_six` in `JAM/Theorems/Safrole.lean`). For
-    smaller γ_P' `UInt8.ofNat` would reduce e mod 256. -/
+    $jam_ticket_seal ⌢ η ⧺ e (GP eq. `ticketsextrinsic` appends e as an element), the entry index
+    as one octet. The paper does not define the encoding (`docs/upstream-candidates.md`, 31).
+    e < n = ⌈2𝖤/|γ_P'|⌉, and one octet holds every such e exactly when n ≤ 256, i.e. when
+    2𝖤 ≤ 256⋅|γ_P'|; this holds for the paper's |γ_P'| ≥ 6 (eq. `valcount`) whenever 𝖤 ≤ 768, so
+    for the full (𝖤 = 600) and tiny (𝖤 = 12) chains (`safrole_attempt_fits`, `attempt_fits_of_six`
+    in `JAM/Theorems/Safrole.lean`). For smaller γ_P' `UInt8.ofNat` would reduce e mod 256. -/
 def ticketContext (eta : List UInt8) (attempt : Nat) : List UInt8 :=
   Xticket ++ eta ++ [UInt8.ofNat attempt]
 

@@ -33,8 +33,9 @@ tag := "overview-upsilon"
 $$`\sigma' \equiv \Upsilon(\sigma, \mathbf{B}) \qquad \text{(4.1)}`
 
 The paper defines JAM by $`\Upsilon` together with a genesis state $`\sigma^0`. In the model, $`\Upsilon` is
-{api}`JAM.importBlock`. It returns the posterior state or the reason the block is invalid; its source
-is quoted {ref "overview-graph"}[below].
+{api}`JAM.importBlock`. It returns the posterior state together with an {api}`JAM.ImportTrace` (the newly
+available reports and the accumulation root), or the reason the block is invalid; its source is
+quoted {ref "overview-graph"}[below].
 
 Besides $`\sigma` and $`\mathbf{B}`, it takes three arguments the paper leaves implicit:
 
@@ -42,7 +43,7 @@ Besides $`\sigma` and $`\mathbf{B}`, it takes three arguments the paper leaves i
 * the cryptography, a {api}`JAM.Crypto`: signature and VRF verification, and the ring root. The
   model keeps these as a parameter and never implements them itself;
 * the ancestor headers the importer has kept, a {api}`JAM.Chain`. The paper's ancestor set
-  $`\mathcal{A}` (eq. (5.3)) is not part of $`\sigma`, and guarantees (§11) need it.
+  $`\mathbf{A}` (eq. (5.3)) is not part of $`\sigma`, and guarantees (§11) need it.
 
 # The block
 %%%
@@ -63,7 +64,7 @@ $`\mathbf{E}_G` (§11), availability assurances $`\mathbf{E}_A` (§11) and dispu
 tag := "overview-state"
 %%%
 
-$$`\sigma \equiv (\alpha, \beta, \theta, \gamma, \delta, \eta, \iota, \kappa, \lambda, \rho, \tau, \varphi, \chi, \psi, \pi, \omega, \xi) \qquad \text{(4.4)}`
+$$`\sigma \equiv (\alpha, \beta, \theta, \gamma, \delta, \eta, \iota, \kappa, \lambda, \rho, \tau, \phi, \chi, \psi, \pi, \omega, \xi) \qquad \text{(4.4)}`
 
 The model's {api}`JAM.State` has one field per component. It flattens the components that are
 tuples: $`\gamma = (\gamma_P, \gamma_Z, \gamma_S, \gamma_A)`, the privileges $`\chi` and the statistics $`\pi` each become several
@@ -78,7 +79,7 @@ fields. Each component, with the section that covers it, and its fields:
 * $`\iota`, $`\kappa`, $`\lambda` ({ref "safrole"}[§6]): staging, active and previous validator keys. Fields: `staging`, `active`, `prev`.
 * $`\rho` (§11): work reports awaiting availability, per core. Fields: `avail`.
 * $`\tau` ({ref "safrole"}[§6]): the most recent block's timeslot. Fields: `tau`.
-* $`\varphi` ({ref "authorization"}[§8]): authorizer queues. Fields: `authQueue`.
+* $`\phi` ({ref "authorization"}[§8]): authorizer queues. Fields: `authQueue`.
 * $`\chi` (§9, §12): privileged services. Fields: `manager`, `assigners`, `delegator`, `registrar`, `alwaysAcc`.
 * $`\psi` (§10): judgments. Fields: `disputes`.
 * $`\pi` (§13): validator, core and service statistics. Fields: `valStats`, `valStatsLast`, `coreStats`, `serviceStats`.
@@ -87,8 +88,9 @@ fields. Each component, with the section that covers it, and its fields:
 
 {leanSource JAM.State}
 
-Timeslots are naturals below $`2^{32}` (eq. (4.28), $`\mathbb{N}_T \equiv \mathbb{N}_{2^{32}}`). The model stores them as `Nat` and keeps the
-bound where an encoding needs it ($`\mathcal{E}_4`).
+Timeslots are naturals below $`2^{32}` (eq. (4.28), $`\mathbb{N}_T \equiv \mathbb{N}_{2^{32}}`). The model stores them as `Nat`. {api}`JAM.importBlock` does not check
+$`\mathbf{H}_T < 2^{32}`, and the four-octet encoding $`\mathcal{E}_4` the model uses (`Codec.fixed 4`) keeps only the low 32 bits
+of a larger value.
 
 # The dependency graph
 %%%
@@ -98,7 +100,7 @@ tag := "overview-graph"
 The paper specifies $`\Upsilon` by saying what each part of the posterior state depends on. The symbol $`\prec`
 reads "depends on":
 
-$$`\begin{aligned} \tau' &\prec \mathbf{H} & \text{(4.5)} \\ \beta^\dagger_H &\prec (\mathbf{H}, \beta_H) & \text{(4.6)} \\ \gamma' &\prec (\mathbf{H}, \tau, \mathbf{E}_T, \gamma, \iota, \eta', \kappa', \psi') & \text{(4.7)} \\ \eta' &\prec (\mathbf{H}, \tau, \eta) & \text{(4.8)} \\ \kappa' &\prec (\mathbf{H}, \tau, \kappa, \gamma) & \text{(4.9)} \\ \lambda' &\prec (\mathbf{H}, \tau, \lambda, \kappa) & \text{(4.10)} \\ \psi' &\prec (\mathbf{E}_D, \psi) & \text{(4.11)} \\ \rho^\dagger &\prec (\mathbf{E}_D, \rho) & \text{(4.12)} \\ \rho^\ddagger &\prec (\mathbf{E}_A, \rho^\dagger) & \text{(4.13)} \\ \rho' &\prec (\mathbf{E}_G, \rho^\ddagger, \kappa, \tau') & \text{(4.14)} \\ \mathbf{R}^* &\prec (\mathbf{E}_A, \rho^\dagger) & \text{(4.15)} \\ (\omega', \xi', \delta^\ddagger, \chi', \iota', \varphi', \theta', \mathbf{S}) &\prec (\mathbf{R}^*, \omega, \xi, \delta, \chi, \iota, \varphi, \tau, \tau') & \text{(4.16)} \\ \beta'_H &\prec (\mathbf{H}, \mathbf{E}_G, \beta^\dagger_H, \theta') & \text{(4.17)} \\ \delta' &\prec (\mathbf{E}_P, \delta^\ddagger, \tau') & \text{(4.18)} \\ \alpha' &\prec (\mathbf{H}, \mathbf{E}_G, \varphi', \alpha) & \text{(4.19)} \\ \pi' &\prec (\mathbf{E}_G, \mathbf{E}_P, \mathbf{E}_A, \mathbf{E}_T, \tau, \kappa', \pi, \mathbf{H}, \mathbf{S}) & \text{(4.20)} \end{aligned}`
+$$`\begin{aligned} \tau' &\prec \mathbf{H} & \text{(4.5)} \\ \beta^\dagger_H &\prec (\mathbf{H}, \beta_H) & \text{(4.6)} \\ \gamma' &\prec (\mathbf{H}, \tau, \mathbf{E}_T, \gamma, \iota, \eta', \kappa', \psi') & \text{(4.7)} \\ \eta' &\prec (\mathbf{H}, \tau, \eta) & \text{(4.8)} \\ \kappa' &\prec (\mathbf{H}, \tau, \kappa, \gamma) & \text{(4.9)} \\ \lambda' &\prec (\mathbf{H}, \tau, \lambda, \kappa) & \text{(4.10)} \\ \psi' &\prec (\mathbf{E}_D, \psi) & \text{(4.11)} \\ \rho^\dagger &\prec (\mathbf{E}_D, \rho) & \text{(4.12)} \\ \rho^\ddagger &\prec (\mathbf{E}_A, \rho^\dagger) & \text{(4.13)} \\ \rho' &\prec (\mathbf{E}_G, \rho^\ddagger, \kappa, \tau') & \text{(4.14)} \\ \mathbf{R}^* &\prec (\mathbf{E}_A, \rho^\dagger) & \text{(4.15)} \\ (\omega', \xi', \delta^\ddagger, \chi', \iota', \phi', \theta', \mathbf{S}) &\prec (\mathbf{R}^*, \omega, \xi, \delta, \chi, \iota, \phi, \tau, \tau') & \text{(4.16)} \\ \beta'_H &\prec (\mathbf{H}, \mathbf{E}_G, \beta^\dagger_H, \theta') & \text{(4.17)} \\ \delta' &\prec (\mathbf{E}_P, \delta^\ddagger, \tau') & \text{(4.18)} \\ \alpha' &\prec (\mathbf{H}, \mathbf{E}_G, \phi', \alpha) & \text{(4.19)} \\ \pi' &\prec (\mathbf{E}_G, \mathbf{E}_P, \mathbf{E}_A, \mathbf{E}_T, \tau, \kappa', \pi, \mathbf{H}, \mathbf{S}) & \text{(4.20)} \end{aligned}`
 
 The daggered terms are intermediate values: $`\beta^\dagger_H` is recent history with the parent's state root
 corrected, $`\rho^\dagger` and $`\rho^\ddagger` are the availability assignments after disputes and after assurances, $`\mathbf{R}^*`
@@ -106,8 +108,8 @@ the reports that have just become available, $`\delta^\ddagger` the accounts aft
 accumulation statistics.
 
 {api}`JAM.importBlock` computes the parts in an order consistent with this graph. Each step is
-marked in its source with the section it implements. Each step's binding or function, what it
-computes, and the equations and section:
+marked in its source with the section (and sometimes the equation) it implements. Each step's
+binding or function, what it computes, and the equations and section:
 
 * header checks, `slot`: $`\tau' = \mathbf{H}_T`; (4.5), (5.2), (5.4), (5.9) ({ref "overview-header"}[§5]).
 * `recentDagger`: $`\beta^\dagger_H`; (4.6) ({ref "history"}[§7]).
@@ -115,20 +117,24 @@ computes, and the equations and section:
 * `safrole`: $`\gamma'`, $`\eta'`, $`\kappa'`, $`\lambda'`; (4.7)–(4.10) ({ref "safrole"}[§6]).
 * `assurances`: $`\rho^\ddagger`, $`\mathbf{R}^*`; (4.13), (4.15) (§11).
 * `guarantees`: $`\rho'`; (4.14) (§11).
-* `accumulate`: $`\omega'`, $`\xi'`, $`\delta^\ddagger`, $`\chi'`, $`\iota'`, $`\varphi'`, $`\theta'`, $`\mathbf{S}`; (4.16) (§12).
-* `recentHistory`: $`\beta'`; (4.17) ({ref "history"}[§7]).
+* `accumulate`: $`\omega'`, $`\xi'`, $`\delta^\ddagger`, $`\chi'`, $`\iota'`, $`\phi'`, $`\theta'`, $`\mathbf{S}`; (4.16) (§12).
+* `recentHistory`: $`\beta'` (both $`\beta'_H`, eq. (4.17), and $`\beta'_B`, eq. (7.7)); ({ref "history"}[§7]).
 * `preimages`: $`\delta'`; (4.18) (§12).
 * `authorizations`: $`\alpha'`; (4.19) ({ref "authorization"}[§8]).
 * `validatorStats`, `coreStats`, `serviceStats`: $`\pi'`; (4.20) (§13).
 
 The graph lists dependencies, not every input each section reads. The model passes each
-section-level function what that section's own equations use. Where that differs from the graph:
+section-level function what that section's own equations use, and several steps read more than
+their line of the graph lists:
 
 * *Guarantees.* (4.14) lists $`\kappa`. The equations of §11 use the posterior keys $`\kappa'` and $`\lambda'`, the posterior
   entropy $`\eta'`, the offenders in $`\psi'` (through the key filter $`\Phi`), and $`\beta^\dagger_H`, $`\alpha` and $`\delta`. The model's guarantee
   step reads those.
 * *Preimages.* The model checks $`\mathbf{E}_P` against the prior accounts $`\delta` as well as $`\delta^\ddagger`, as §12.4 does: the
   data must have been solicited but not yet provided in the prior state.
+* *Other steps.* Disputes read $`\kappa`, $`\lambda` and $`\tau`. Assurances read $`\kappa`, $`|\kappa'|`, $`\mathbf{H}_P` and $`\mathbf{H}_T`. The guarantee
+  step also reads the prior $`\beta_H`, $`\xi`, $`\omega` and $`\rho` (to find packages already known) and the ancestor set $`\mathbf{A}`.
+  Accumulation reads $`\eta'_0` and $`\mathbf{H}_T`. The core statistics read the newly available reports $`\mathbf{R}`.
 * *The timeslot.* The model sets $`\tau' = \mathbf{H}_T` directly. The check that $`\mathbf{H}_T` is after $`\tau` is made by
   {api}`JAM.safrole` (its `badSlot` error).
 
@@ -148,16 +154,18 @@ and offenders markers, the author's index, the entropy-yielding VRF signature an
 
 The markers' types:
 
-$$`\mathbf{H}_E \in \left\lgroup \mathbb{H}, \mathbb{H}, \llbracket \left\lgroup \tilde{\mathbb{H}}, \bar{\mathbb{H}} \right\rgroup \rrbracket_{\mathsf{V}} \right\rgroup?, \qquad \mathbf{H}_W \in \llbracket \mathbb{T} \rrbracket_{\mathsf{E}}?, \qquad \mathbf{H}_O \in \llbracket \bar{\mathbb{H}} \rrbracket \qquad \text{(5.11)}`
+$$`\mathbf{H}_E \in \left\lgroup \mathbb{H}, \mathbb{H}, \llbracket \left\lgroup \tilde{\mathbb{H}}, \bar{\mathbb{H}} \right\rgroup \rrbracket_{\mathbb{V}} \right\rgroup\boldsymbol{?}, \qquad \mathbf{H}_W \in \llbracket \mathbb{T} \rrbracket_{\mathsf{E}}\boldsymbol{?}, \qquad \mathbf{H}_O \in \llbracket \bar{\mathbb{H}} \rrbracket \qquad \text{(5.11)}`
 
 $`\tilde{\mathbb{H}}` and $`\bar{\mathbb{H}}` are Bandersnatch and Ed25519 keys (§3.8.2). The model's {api}`JAM.EpochMark` and the option
-types hold them; the lengths $`\mathsf{V}` and $`\mathsf{E}` are fixed by the decoder ({api}`JAM.Header.decode`), not by the types.
+types hold them, and the types do not fix their lengths. The decoder ({api}`JAM.Header.decode`) fixes the
+winning-tickets marker's $`\mathsf{E}`. The epoch marker's key list is length-prefixed (its encoding is $`\updownarrow\mathbf{k}`); its
+length is enforced at import, because $`\mathbf{H}_E` must equal the marker Safrole produces.
 
 ## The header's conditions
 
 $$`\mathbf{H}_P \in \mathbb{H}, \quad \mathbf{H}_P \equiv \mathcal{H}(\mathcal{E}(P(\mathbf{H}))) \qquad \text{(5.2)}`
 
-$$`h \in \mathcal{A} \Leftrightarrow h = \mathbf{H} \vee (\exists i \in \mathcal{A} : h = P(i)) \qquad \text{(5.3)}`
+$$`h \in \mathbf{A} \Leftrightarrow h = \mathbf{H} \vee (\exists i \in \mathbf{A} : h = P(i)) \qquad \text{(5.3)}`
 
 $$`\mathbf{H}_T \in \mathbb{N}_T, \quad P(\mathbf{H})_T < \mathbf{H}_T \wedge \mathbf{H}_T \cdot \mathsf{P} \leq \mathcal{T} \qquad \text{(5.8)}`
 
@@ -205,8 +213,8 @@ tag := "overview-readings"
 The notes named below are in the model's [notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues).
 
 * *No clock (note v0.8.1-A30).* The paper's $`\Upsilon` assumes a universally known clock $`\mathcal{T}`. The model's {api}`JAM.importBlock` has none, so
-  it does not check $`\mathbf{H}_T \cdot \mathsf{P} \leq \mathcal{T}`; a caller that has a clock checks it separately.
-* *The ancestors (note v0.8.1-A31).* $`\mathcal{A}` is defined from $`\mathbf{H}` by following parents back to genesis; the paper only requires
+  it does not check $`\mathbf{H}_T \cdot \mathsf{P} \leq \mathcal{T}`; a caller must check it separately (the model has no such caller).
+* *The ancestors (note v0.8.1-A31).* $`\mathbf{A}` is defined from $`\mathbf{H}` by following parents back to genesis; the paper only requires
   nodes to keep the headers of the last $`\mathsf{L}` = 24 hours. The model takes the kept headers as an argument
   ({api}`JAM.Chain`). When the list is empty (no parent header kept), the $`\mathbf{H}_P` check is skipped.
 * *Errors (note v0.8.1-A32).* The paper names no errors for an invalid block. The model reports the first section

@@ -32,7 +32,7 @@ $$`\beta \equiv (\beta_H, \beta_B) \qquad \text{(7.1)}`
 
 $$`\beta_H \in \llbracket \left\lgroup h \in \mathbb{H},\; s \in \mathbb{H},\; b \in \mathbb{H},\; t \in \mathbb{N}_T,\; \mathbf{p} \in \langle \mathbb{H} \to \mathbb{H} \rangle \right\rgroup \rrbracket_{:\mathsf{H}} \qquad \text{(7.2)}`
 
-$$`\beta_B \in \llbracket \mathbb{H}? \rrbracket \qquad \text{(7.3)} \qquad\qquad \theta \in \llbracket (\mathbb{N}_S, \mathbb{H}) \rrbracket \qquad \text{(7.4)}`
+$$`\beta_B \in \llbracket \mathbb{H}\boldsymbol{?} \rrbracket \qquad \text{(7.3)} \qquad\qquad \theta \in \llbracket (\mathbb{N}_S, \mathbb{H}) \rrbracket \qquad \text{(7.4)}`
 
 Each entry of $`\beta_H` holds a block's header hash $`h`, its state root $`s`, the super-peak $`b` of the
 Accumulation Output Log after that block, its timeslot $`t`, and the work packages reported in it:
@@ -48,7 +48,7 @@ $`\beta` in {api}`JAM.Recent`:
 
 {leanSource JAM.Recent}
 
-Mountain ranges and belts, $`\llbracket \mathbb{H}? \rrbracket`, are {api}`JAM.MMR`. Hashes are octet lists whose length the types
+Mountain ranges and belts, $`\llbracket \mathbb{H}\boldsymbol{?} \rrbracket`, are {api}`JAM.MMR`. Hashes are octet lists whose length the types
 do not fix.
 
 {leanSource JAM.MMR}
@@ -65,8 +65,8 @@ $$`\beta^\dagger_H \equiv \beta_H \quad\text{except}\quad \beta^\dagger_H\left[|
 
 {leanSource JAM.Recent.withParentRoot}
 
-$`\beta^\dagger_H` is also an input to the guarantee checks of §11, which is why the paper names it separately
-(eq. (4.6) of the {ref "overview"}[dependency graph]).
+$`\beta^\dagger_H` is also used by §11's check that each report's anchor block is recent (eq. (11.36)), and it appears
+as its own node, eq. (4.6), of the {ref "overview"}[dependency graph].
 
 # The Accumulation Output Log
 %%%
@@ -88,7 +88,7 @@ the transition reads from the block and from accumulation is in {api}`JAM.Histor
 
 The append function $`\mathcal{A}` and the super-peak function $`\mathcal{M}_R` are defined in Appendix E.2:
 
-$$`\begin{aligned} \mathcal{A}(\mathbf{r}, l, H) &\equiv P(\mathbf{r}, l, 0, H) \qquad \text{(E.8)} \\ \text{where } P(\mathbf{r}, l, n, H) &= \begin{cases} \mathbf{r} \mathbin{+\!\!+} l & \text{when } n \geq |\mathbf{r}| \\ R(\mathbf{r}, n, l) & \text{when } n < |\mathbf{r}| \wedge \mathbf{r}_n = \varnothing \\ P\left(R(\mathbf{r}, n, \varnothing), H(\mathbf{r}_n \frown l), n + 1, H\right) & \text{otherwise} \end{cases} \end{aligned}`
+$$`\begin{aligned} \mathcal{A}(\mathbf{r}, l, H) &\equiv P(\mathbf{r}, l, 0, H) \qquad \text{(E.8)} \\ \text{where } P(\mathbf{r}, l, n, H) &= \begin{cases} \mathbf{r} \mathbin{+\!\!+} l & \text{if } n \geq |\mathbf{r}| \\ R(\mathbf{r}, n, l) & \text{if } n < |\mathbf{r}| \wedge \mathbf{r}_n = \emptyset \\ P\left(R(\mathbf{r}, n, \emptyset), H(\mathbf{r}_n \frown l), n + 1, H\right) & \text{otherwise} \end{cases} \end{aligned}`
 
 Here $`R(\mathbf{s}, i, v)` is $`\mathbf{s}` with entry $`i` replaced by $`v`, which is Lean's `List.set`.
 
@@ -96,7 +96,7 @@ Here $`R(\mathbf{s}, i, v)` is $`\mathbf{s}` with entry $`i` replaced by $`v`, w
 
 {leanSource JAM.MMR.append}
 
-$$`\begin{aligned} \mathcal{M}_R(\mathbf{b}) &= \begin{cases} \mathbb{H}_0 & \text{when } |\mathbf{h}| = 0 \\ \mathbf{h}_0 & \text{when } |\mathbf{h}| = 1 \\ \mathcal{H}_K\left(\texttt{\$peak} \frown \mathcal{M}_R(\mathbf{h}_{\dots|\mathbf{h}|-1}) \frown \mathbf{h}_{|\mathbf{h}|-1}\right) & \text{otherwise} \end{cases} \qquad \text{(E.10)} \\ \text{where } \mathbf{h} &= \left[\, h \;\middle|\; h \mathrel{\mathrlap{<}{-}} \mathbf{b}, h \neq \varnothing \,\right] \end{aligned}`
+$$`\begin{aligned} \mathcal{M}_R(\mathbf{b}) &= \begin{cases} \mathbb{H}_0 & \text{if } |\mathbf{h}| = 0 \\ \mathbf{h}_0 & \text{if } |\mathbf{h}| = 1 \\ \mathcal{H}_K\left(\texttt{\$peak} \frown \mathcal{M}_R(\mathbf{h}_{\dots|\mathbf{h}|-1}) \frown \mathbf{h}_{|\mathbf{h}|-1}\right) & \text{otherwise} \end{cases} \qquad \text{(E.10)} \\ \text{where } \mathbf{h} &= \left[\, h \;\middle|\; h \mathrel{\mathrlap{<}{-}} \mathbf{b}, h \neq \emptyset \,\right] \end{aligned}`
 
 The model drops the empty peaks once and recurses on the list of present peaks, reversed, so that
 removing the last peak is taking the tail of the list:
@@ -112,7 +112,7 @@ tag := "history-entry"
 
 The posterior $`\beta_H` appends an entry for the new block and keeps the last $`\mathsf{H}`:
 
-$$`\begin{aligned} \beta'_H &\equiv \overleftarrow{\beta^\dagger_H \mathbin{+\!\!+} \left( h \mathrel{\scriptstyle\blacktriangleright} \mathcal{H}(\mathbf{H}),\; s \mathrel{\scriptstyle\blacktriangleright} \mathbb{H}_0,\; b \mathrel{\scriptstyle\blacktriangleright} \mathcal{M}_R(\beta'_B),\; t \mathrel{\scriptstyle\blacktriangleright} \mathbf{H}_T,\; \mathbf{p} \right)}^{\mathsf{H}} \\ \text{where } \mathbf{p} &= \left\{ \left((g_r)_s\right)_p \mapsto \left((g_r)_s\right)_e \;\middle|\; g \in \mathbf{E}_G \right\} \end{aligned} \qquad \text{(7.8)}`
+$$`\begin{aligned} \beta'_H &\equiv \overleftarrow{\beta^\dagger_H \mathbin{+\!\!+} \left( h \mathrel{\substack{\scriptscriptstyle\blacktriangleright \\ \scriptscriptstyle\blacktriangleright}} \mathcal{H}(\mathbf{H}),\; s \mathrel{\substack{\scriptscriptstyle\blacktriangleright \\ \scriptscriptstyle\blacktriangleright}} \mathbb{H}_0,\; b \mathrel{\substack{\scriptscriptstyle\blacktriangleright \\ \scriptscriptstyle\blacktriangleright}} \mathcal{M}_R(\beta'_B),\; t \mathrel{\substack{\scriptscriptstyle\blacktriangleright \\ \scriptscriptstyle\blacktriangleright}} \mathbf{H}_T,\; \mathbf{p} \right)}^{\mathsf{H}} \\ \text{where } \mathbf{p} &= \left\{ \left((g_\mathbf{r})_\mathbf{s}\right)_p \mapsto \left((g_\mathbf{r})_\mathbf{s}\right)_e \;\middle|\; g \in \mathbf{E}_G \right\} \end{aligned} \qquad \text{(7.8)}`
 
 $`\overleftarrow{\mathbf{s}}^n` is the last $`n` elements of $`\mathbf{s}` (§3.7), and $`\mathbf{p}` maps the package hash of each guaranteed report's
 availability specification to its segment root. The new state root is $`\mathbb{H}_0`. The paper notes that this is
@@ -140,5 +140,5 @@ The notes named below are in the model's [notes on the paper](https://github.com
   (as at genesis). The model then leaves $`\beta^\dagger_H` empty ({api}`JAM.Recent.withParentRoot`).
 * *The package map (note v0.8.1-A27).* $`\mathbf{p}` is written as a set of pairs $`k \mapsto v`, which makes it a dictionary. If two guarantees
   had the same package hash, the model would keep the later one (`Std.ExtTreeMap.ofList`). The
-  guarantee checks of §11 reject duplicate packages before this point, so the case does not arise in
+  guarantee checks of §11 reject duplicate packages before this point (eq. (11.35)), so the case does not arise in
   a valid block.

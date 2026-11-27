@@ -1,6 +1,8 @@
 import VersoManual
 import Companion.Source
 import Companion.Safrole
+import Companion.Accounts
+import Companion.Accumulation
 import Companion.PVM
 
 open Verso.Genre Manual
@@ -66,10 +68,10 @@ with the model modules that implement them.
 * *§6 Safrole* ({ref "safrole"}[written]): `JAM/Safrole.lean`
 * §7 Recent history: `JAM/History.lean`
 * §8 Authorization: `JAM/Authorization.lean`
-* §9 Service accounts: `JAM/Account.lean`
+* *§9 Service accounts* ({ref "accounts"}[written]): `JAM/Account.lean`
 * §10 Disputes: `JAM/Disputes.lean`
 * §11 Reports and assurances: `JAM/Reports.lean`, `JAM/Assurances.lean`
-* §12 Accumulation and preimages: `JAM/Accumulate.lean`, `JAM/Accumulation.lean`, `JAM/Preimages.lean`
+* *§12 Accumulation and preimages* ({ref "accumulation"}[written]): `JAM/Accumulate.lean`, `JAM/Accumulation.lean`, `JAM/Preimages.lean`
 * §13 Statistics: `JAM/Statistics.lean`
 * §14 Work packages and refinement: `JAM/Work.lean`, `JAM/Refine.lean`, `JAM/Guarantee.lean`
 * §15 Guaranteeing and §16 Availability assurance: not modelled beyond the refinement of §14
@@ -87,5 +89,9 @@ with the model modules that implement them.
 * Appendix H, erasure coding: `JAM/Erasure.lean`
 
 {include 1 Companion.Safrole}
+
+{include 1 Companion.Accounts}
+
+{include 1 Companion.Accumulation}
 
 {include 1 Companion.PVM}

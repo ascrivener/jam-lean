@@ -153,8 +153,8 @@ theorem log_loop (n m : ℕ) (e : ℕ → ℕ) : (Id.run do
   rfl
 
 theorem logTable_eq : GF.logTable =
-    (List.range' 0 65535).foldl (fun t i => t.set! GF.expTable[i]! i) (Array.replicate 65536 0) :=
-  log_loop 65535 65536 (fun i => GF.expTable[i]!)
+    (List.range' 0 65535).foldl (fun t i => t.set! GF.expTable[i]! i) (Array.replicate 65536 0) := by
+  rw [GF.logTable_eq_old]; exact log_loop 65535 65536 (fun i => GF.expTable[i]!)
 
 theorem logTable_E {i : ℕ} (hi : i < 65535) : GF.logTable[E i]! = i := by
   rw [logTable_eq, ← expTable_get hi]
@@ -186,13 +186,13 @@ theorem add_lt {a b : ℕ} (ha : W a) (hb : W b) : W (GF.add a b) := xor_lt ha h
 theorem φ_add (a b : ℕ) : φ (GF.add a b) = φ a + φ b := φ_xor a b
 
 theorem mul_lt (a b : ℕ) : W (GF.mul a b) := by
-  unfold GF.mul
+  rw [GF.mul_eq_old]
   split
   · decide
   · rw [expTable_get (Nat.mod_lt _ (by norm_num))]; exact E_lt _
 
 theorem φ_mul {a b : ℕ} (ha : W a) (hb : W b) : φ (GF.mul a b) = φ a * φ b := by
-  unfold GF.mul
+  rw [GF.mul_eq_old]
   split
   · rename_i h
     rcases h with rfl | rfl <;> simp
@@ -204,12 +204,12 @@ theorem φ_mul {a b : ℕ} (ha : W a) (hb : W b) : φ (GF.mul a b) = φ a * φ b
       α_pow_mod, φ_E, φ_E, pow_add]
 
 theorem inv_lt (a : ℕ) : W (GF.inv a) := by
-  unfold GF.inv
+  rw [GF.inv_eq_old]
   rw [expTable_get (Nat.mod_lt _ (by norm_num))]; exact E_lt _
 
 theorem φ_inv {a : ℕ} (ha : W a) (h0 : a ≠ 0) : φ (GF.inv a) = (φ a)⁻¹ := by
   obtain ⟨i, hi, rfl⟩ := exists_E ha h0
-  unfold GF.inv
+  rw [GF.inv_eq_old]
   rw [logTable_E hi, expTable_get (Nat.mod_lt _ (by norm_num)), φ_E, α_pow_mod, φ_E]
   apply eq_inv_of_mul_eq_one_left
   rw [← pow_add, Nat.sub_add_cancel hi.le, α_pow_65535]
@@ -363,13 +363,13 @@ theorem lin_inv_lin {c c' : ℕ → ℕ} (h : ∀ j < 16, lin c' (c j) = 2 ^ j) 
   exact lin_two_pow hm
 
 theorem toFieldTable_get {m : ℕ} (hm : W m) : GF.toFieldTable[m]! = lin cantorC m := by
-  simp [GF.toFieldTable, hm, lin, cantorC]
+  rw [GF.toFieldTable_eq_old]; simp [hm, lin, cantorC]
 
 theorem toField_eq {m : ℕ} (hm : W m) : toField m = lin cantorC m := by
-  rw [toField, Nat.mod_eq_of_lt hm, toFieldTable_get hm]
+  rw [toField_eq_old, Nat.mod_eq_of_lt hm, toFieldTable_get hm]
 
 theorem toField_lt (m : ℕ) : W (toField m) := by
-  rw [toField, toFieldTable_get (Nat.mod_lt _ (by norm_num))]; exact lin_lt _ _ cantorC_lt
+  rw [toField_eq_old, toFieldTable_get (Nat.mod_lt _ (by norm_num))]; exact lin_lt _ _ cantorC_lt
 
 theorem toField_injOn {a b : ℕ} (ha : W a) (hb : W b) (h : toField a = toField b) : a = b := by
   rw [toField_eq ha, toField_eq hb] at h
@@ -384,22 +384,22 @@ theorem of_loop (n m : ℕ) (e : ℕ → ℕ) : (Id.run do
 
 theorem ofFieldTable_eq : GF.ofFieldTable =
     (List.range' 0 65536).foldl (fun t i => t.set! GF.toFieldTable[i]! i)
-      (Array.replicate 65536 0) :=
-  of_loop 65536 65536 (fun i => GF.toFieldTable[i]!)
+      (Array.replicate 65536 0) := by
+  rw [GF.ofFieldTable_eq_old]; exact of_loop 65536 65536 (fun i => GF.toFieldTable[i]!)
 
 theorem ofField_toField {m : ℕ} (hm : W m) : ofField (toField m) = m := by
-  rw [ofField, Nat.mod_eq_of_lt (toField_lt m), toField, Nat.mod_eq_of_lt hm, ofFieldTable_eq]
+  rw [ofField_eq_old, Nat.mod_eq_of_lt (toField_lt m), toField_eq_old, Nat.mod_eq_of_lt hm, ofFieldTable_eq]
   apply get_set_fold_hit
   · exact List.nodup_range'
   · intro j hj
     rw [List.mem_range'_1] at hj
     have := toField_lt j
-    rw [toField, Nat.mod_eq_of_lt (by omega)] at this
+    rw [toField_eq_old, Nat.mod_eq_of_lt (by omega)] at this
     rw [Array.size_replicate]; exact this
   · intro a ha b hb h
     rw [List.mem_range'_1] at ha hb
     have h' : toField a = toField b := by
-      rw [toField, toField, Nat.mod_eq_of_lt (by omega), Nat.mod_eq_of_lt (by omega)]; exact h
+      rw [toField_eq_old, toField_eq_old, Nat.mod_eq_of_lt (by omega), Nat.mod_eq_of_lt (by omega)]; exact h
     exact toField_injOn (by simp; omega) (by simp; omega) h'
   · rw [List.mem_range'_1]; omega
 

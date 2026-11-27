@@ -134,7 +134,7 @@ theorem lagrange_row (src tgt : List ℕ) (hsrc : src.Nodup) (hW : ∀ i ∈ src
       φ ((lagrange src tgt)[q]!)[s]! =
         eval (X tgt[q]) (Lagrange.basis (Finset.range src.length) (nodes src) s) := by
   have hinj := nodes_injOn src hsrc hW
-  unfold lagrange
+  rw [lagrange_eq_old]
   dsimp only
   rw [toArray_map_get _ _ hq]
   split
@@ -241,11 +241,11 @@ theorem lagrange_row (src tgt : List ℕ) (hsrc : src.Nodup) (hW : ∀ i ∈ src
 theorem interpolate_get (m : Array (Array ℕ)) (words : Array ℕ) {q : ℕ} (hq : q < m.size) :
     (interpolate m words)[q]! = ofField ((List.range (m[q]!).size).foldl
       (fun acc s => GF.add acc (GF.mul (m[q]!)[s]! (words.map toField)[s]!)) 0) := by
-  unfold interpolate
+  rw [interpolate_eq_old]
   rw [arr_getElem!_eq _ (by simpa using hq), Array.getElem_map, arr_getElem!_eq _ hq]
 
 theorem lagrange_size (src tgt : List ℕ) : (lagrange src tgt).size = tgt.length := by
-  unfold lagrange; simp
+  rw [lagrange_eq_old]; simp
 
 /-- `interpolate (lagrange src tgt) words` evaluates, at x_t for each target index t, the
     polynomial of degree < |src| through the points (x_{src[k]}, words[k]~): Mathlib's
@@ -271,5 +271,86 @@ theorem interpolate_lagrange (src tgt : List ℕ) (words : Array ℕ) (hsrc : sr
   have hs' := Finset.mem_range.1 hs
   rw [(hrow s hs').2, hys s hs', eval_mul, eval_C, mul_comm]
   rfl
+
+/-! ## Reads in bounds
+
+`JAM.Erasure` reads its tables and arrays with `getD … 0`. Every read is in bounds where the model
+makes it: the tables have their full sizes, a field element is below 2¹⁶, and the arrays read in
+`lagrange`, `interpolate`, `encodeWith` and `recover` are as long as the index range. So the default
+is never used. -/
+
+theorem expTable_size : GF.expTable.size = 65535 := by rw [expTable_eq]; simp
+
+theorem logTable_size : GF.logTable.size = 65536 := by rw [logTable_eq, size_set_fold]; simp
+
+theorem toFieldTable_size : GF.toFieldTable.size = 65536 := by simp [GF.toFieldTable]
+
+theorem ofFieldTable_size : GF.ofFieldTable.size = 65536 := by rw [ofFieldTable_eq, size_set_fold]; simp
+
+theorem cantor_size : GF.cantor.size = 16 := by simp [GF.cantor, GF.cantorExponents]
+
+/-- `GF.logTable`'s loop reads `expTable` at i < 2¹⁶ − 1. -/
+theorem logTable_reads {i : ℕ} (hi : i < 65535) : i < GF.expTable.size := by
+  rw [expTable_size]; exact hi
+
+/-- `GF.mul` reads the logarithm table at its (nonzero) field-element arguments, and the
+    exponential table below 2¹⁶ − 1. -/
+theorem mul_reads {a b : ℕ} (ha : W a) (hb : W b) :
+    a < GF.logTable.size ∧ b < GF.logTable.size ∧
+      (GF.logTable.getD a 0 + GF.logTable.getD b 0) % 65535 < GF.expTable.size := by
+  rw [logTable_size, expTable_size]; exact ⟨ha, hb, Nat.mod_lt _ (by norm_num)⟩
+
+/-- `GF.inv` reads the logarithm table at its field-element argument. -/
+theorem inv_reads {a : ℕ} (ha : W a) :
+    a < GF.logTable.size ∧ (65535 - GF.logTable.getD a 0) % 65535 < GF.expTable.size := by
+  rw [logTable_size, expTable_size]; exact ⟨ha, Nat.mod_lt _ (by norm_num)⟩
+
+/-- `GF.toFieldTable` reads the Cantor basis at j < 16. -/
+theorem toFieldTable_reads {j : ℕ} (hj : j < 16) : j < GF.cantor.size := by
+  rw [cantor_size]; exact hj
+
+/-- `GF.ofFieldTable`'s loop and `GF.cantorIsBasis` read `toFieldTable` below 2¹⁶ and
+    `ofFieldTable` at its entries. -/
+theorem ofFieldTable_reads {m : ℕ} (hm : W m) :
+    m < GF.toFieldTable.size ∧ GF.toFieldTable.getD m 0 < GF.ofFieldTable.size := by
+  refine ⟨by rw [toFieldTable_size]; exact hm, ?_⟩
+  have h := toField_lt m
+  rw [toField_eq_old, Nat.mod_eq_of_lt hm, Array.getElem!_eq_getD] at h
+  rw [ofFieldTable_size]; exact h
+
+/-- `toField` and `ofField` read their tables below 2¹⁶. -/
+theorem toField_reads (m : ℕ) : m % 65536 < GF.toFieldTable.size ∧ m % 65536 < GF.ofFieldTable.size := by
+  rw [toFieldTable_size, ofFieldTable_size]; exact ⟨Nat.mod_lt _ (by norm_num), Nat.mod_lt _ (by norm_num)⟩
+
+/-- `lagrange` reads the weights and the nodes at s < |nodes|. -/
+theorem lagrange_reads (xs : Array ℕ) (f : ℕ → ℕ → ℕ) {s : ℕ} (hs : s < xs.size) :
+    s < (xs.mapIdx f).size ∧ s < xs.size := by
+  simp [hs]
+
+/-- `interpolate` reads the source words at s below a row's length; the rows of `lagrange src _`
+    are |src| long (`lagrange_row`), which is the number of words `encodeWith` and `recover`
+    pass. -/
+theorem interpolate_reads (row words : Array ℕ) (h : row.size ≤ words.size) {s : ℕ}
+    (hs : s < row.size) : s < row.size ∧ s < (words.map toField).size := by
+  simp; omega
+
+/-- `encodeWith` and `recover` read each interpolated piece at an index below the number of rows of
+    the weights. -/
+theorem interpolate_size (m : Array (Array ℕ)) (w : Array ℕ) : (interpolate m w).size = m.size := by
+  simp [interpolate]
+
+theorem recover_reads (src : List ℕ) (w : Array ℕ) {d j : ℕ} (hj : j < d) :
+    j < (interpolate (lagrange src (List.range d)) w).size := by
+  rw [interpolate_size, lagrange_size, List.length_range]; exact hj
+
+/-- `word` reads octets 2kj + 2p and 2kj + 2p + 1 of the 2kd octets `encodeWith` splits, and
+    octets 2p and 2p + 1 of a 2k-octet chunk in `recover`, for p < k and j < d. -/
+theorem word_reads {k d j p : ℕ} (hp : p < k) (hj : j < d) :
+    2 * k * j + 2 * p + 1 < 2 * k * d ∧ 2 * p + 1 < 2 * k := by
+  constructor
+  · have : 2 * k * j + 2 * k ≤ 2 * k * d := by
+      rw [← Nat.mul_succ]; exact Nat.mul_le_mul_left _ hj
+    omega
+  · omega
 
 end JAM.Erasure.Proofs

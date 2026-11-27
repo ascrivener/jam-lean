@@ -59,14 +59,14 @@ theorem get!_mk (L : List UInt8) (o : ℕ) : (ByteArray.mk L.toArray).get! o = L
 theorem word_wordOctets {c : ℕ} (hc : W c) (L : List UInt8) (o : ℕ)
     (h0 : L[o]? = some (UInt8.ofNat c)) (h1 : L[o + 1]? = some (UInt8.ofNat (c / 256))) :
     word (ByteArray.mk L.toArray) o = c := by
-  unfold word
+  rw [word_eq_old]
   rw [get!_mk, get!_mk, List.getElem!_eq_getElem?_getD, List.getElem!_eq_getElem?_getD, h0, h1]
   simp only [Option.getD_some, UInt8.toNat_ofNat']
   omega
 
 theorem wordOctets_word (b : ByteArray) (o e : ℕ) (he : e < 2) :
     (wordOctets (word b o))[e]? = some (b.get! (o + e)) := by
-  unfold wordOctets word
+  unfold wordOctets; rw [word_eq_old]
   rcases (by omega : e = 0 ∨ e = 1) with rfl | rfl
   · simp only [List.getElem?_cons_zero, Nat.add_zero, Option.some.injEq]
     rw [← UInt8.toNat_inj, UInt8.toNat_ofNat']
@@ -220,7 +220,7 @@ theorem encode_eq {v : ℕ} {data : ByteArray} {chunks : List ByteArray}
     chunks = (List.range v).map fun i =>
       ByteArray.mk (((encPieces v data (data.size / (2 * originalShards v))).flatMap
         fun ws => wordOctets ws[i]!).toArray) := by
-  unfold encode encodeWith at henc
+  unfold encode at henc; rw [encodeWith_eq_old] at henc
   split at henc
   · exact absurd henc (by simp)
   · rename_i h
@@ -410,12 +410,12 @@ theorem recover_encode {v : ℕ} (hv : v ≤ 32768) {data : ByteArray} {chunks :
       rw [if_pos (by rw [← hd_def]; exact hj)]
     rw [hmw] at hres
     apply X_injOn hresW _ hres
-    unfold word W
+    rw [word_eq_old]; unfold W
     have := (data.get! (2 * k * j + 2 * p)).toNat_lt
     have := (data.get! (2 * k * j + 2 * p + 1)).toNat_lt
     omega
   -- reduce `recover`
-  unfold recover
+  rw [recover_eq_old]
   simp only [← hd_def, ← hn_def, List.map_map, Function.comp_def]
   split
   · rename_i heq; simp [hJJ] at heq

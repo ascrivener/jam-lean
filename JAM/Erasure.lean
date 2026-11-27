@@ -25,6 +25,11 @@ p is never built: evaluating it at a point is Lagrange interpolation, Σ_s L_s(x
 weights L_s(x) depend only on the points (`lagrange`). The same routine gives ℰ_C (from the d'
 points ℕ_{d'} to the v code indices) and ℛ (from the d known code indices and the d' − d zero
 points back to the d message points).
+
+Tables and arrays are read with `getD … 0`: every index is a field element below 2¹⁶, an octet
+offset or a position inside an array of known size, but its type is ℕ. The proofs package shows the
+default is never used (`ErasureProofs.Interp`, "Reads in bounds"), and
+`JAM.Theorems.CheckedIndex.Erasure` states each definition equal to its earlier `a[i]!` form.
 -/
 
 namespace JAM.Erasure
@@ -50,7 +55,7 @@ def expTable : Array Nat := Id.run do
 def logTable : Array Nat := Id.run do
   let mut t : Array Nat := Array.replicate 65536 0
   for i in [0:65535] do
-    t := t.set! expTable[i]! i
+    t := t.set! (expTable.getD i 0) i
   return t
 
 /-- Whether α generates the multiplicative group, so `mul` and `inv` are right: given the tables
@@ -65,10 +70,10 @@ def add (a b : Nat) : Nat := a ^^^ b
 
 /-- Multiplication, by logarithms. -/
 def mul (a b : Nat) : Nat :=
-  if a = 0 ∨ b = 0 then 0 else expTable[(logTable[a]! + logTable[b]!) % 65535]!
+  if a = 0 ∨ b = 0 then 0 else expTable.getD ((logTable.getD a 0 + logTable.getD b 0) % 65535) 0
 
 /-- Multiplicative inverse of a nonzero element. -/
-def inv (a : Nat) : Nat := expTable[(65535 - logTable[a]!) % 65535]!
+def inv (a : Nat) : Nat := expTable.getD ((65535 - logTable.getD a 0) % 65535) 0
 
 /-- The Cantor basis v₀ … v₁₅ (GP §H.2), each as the exponents of α in its standard-basis
     expansion. -/
@@ -95,25 +100,25 @@ def cantor : Array Nat := (cantorExponents.map fun es => es.foldl (fun acc e => 
 
 /-- m̃ = Σ_j m_j v_j (GP §H.2), for every 16-bit m. -/
 def toFieldTable : Array Nat := (Array.range 65536).map fun m =>
-  (List.range 16).foldl (fun acc j => if m.testBit j then acc ^^^ cantor[j]! else acc) 0
+  (List.range 16).foldl (fun acc j => if m.testBit j then acc ^^^ cantor.getD j 0 else acc) 0
 
 /-- The inverse of `toFieldTable` (the Cantor basis is a basis, so it is a bijection). -/
 def ofFieldTable : Array Nat := Id.run do
   let mut t : Array Nat := Array.replicate 65536 0
   for m in [0:65536] do
-    t := t.set! toFieldTable[m]! m
+    t := t.set! (toFieldTable.getD m 0) m
   return t
 
 /-- Whether `toFieldTable` is a bijection, i.e. the v_j are linearly independent. -/
-def cantorIsBasis : Bool := (List.range 65536).all fun m => ofFieldTable[toFieldTable[m]!]! == m
+def cantorIsBasis : Bool := (List.range 65536).all fun m => ofFieldTable.getD (toFieldTable.getD m 0) 0 == m
 
 end GF
 
 /-- The field element m̃ of a word or validator index m < 2¹⁶ (GP §H.2). -/
-def toField (m : Nat) : Nat := GF.toFieldTable[m % 65536]!
+def toField (m : Nat) : Nat := GF.toFieldTable.getD (m % 65536) 0
 
 /-- The word whose field element is x. -/
-def ofField (x : Nat) : Nat := GF.ofFieldTable[x % 65536]!
+def ofField (x : Nat) : Nat := GF.ofFieldTable.getD (x % 65536) 0
 
 /-! ## Interpolation -/
 
@@ -132,13 +137,13 @@ def lagrange (src tgt : List Nat) : Array (Array Nat) :=
     | some s => (Array.range xs.size).map fun r => if r = s then 1 else 0
     | none =>
       let l := xs.foldl (fun acc xr => GF.mul acc (GF.add x xr)) 1
-      (Array.range xs.size).map fun s => GF.mul l (GF.mul w[s]! (GF.inv (GF.add x xs[s]!)))).toArray
+      (Array.range xs.size).map fun s => GF.mul l (GF.mul (w.getD s 0) (GF.inv (GF.add x (xs.getD s 0))))).toArray
 
 /-- Apply interpolation weights to words: the words at the target points, given the words at the
     source points. -/
 def interpolate (m : Array (Array Nat)) (words : Array Nat) : Array Nat :=
   let ys := words.map toField
-  m.map fun row => ofField ((List.range row.size).foldl (fun acc s => GF.add acc (GF.mul row[s]! ys[s]!)) 0)
+  m.map fun row => ofField ((List.range row.size).foldl (fun acc s => GF.add acc (GF.mul (row.getD s 0) (ys.getD s 0))) 0)
 
 /-! ## The erasure code -/
 
@@ -149,7 +154,7 @@ def originalShards (v : Nat) : Nat :=
   ((List.range (v / 3 + 2)).filter fun d => d > 0 ∧ Constants.Csegmentsize % (2 * d) = 0).foldl max 0
 
 /-- The word ℰ_2⁻¹ at octet offset `o`. -/
-def word (b : ByteArray) (o : Nat) : Nat := (b.get! o).toNat + 256 * (b.get! (o + 1)).toNat
+def word (b : ByteArray) (o : Nat) : Nat := (b.data.getD o 0).toNat + 256 * (b.data.getD (o + 1) 0).toNat
 
 /-- ℰ_2 of a word. -/
 def wordOctets (w : Nat) : List UInt8 := [UInt8.ofNat w, UInt8.ofNat (w / 256)]
@@ -177,7 +182,7 @@ def encodeWith (d : Nat) (m : Array (Array Nat)) (data : ByteArray) : Option (Li
     let pieces := (List.range k).map fun p =>
       interpolate m ((Array.range (paddedShards d)).map fun j =>
         if j < d then word data (2 * k * j + 2 * p) else 0)
-    some ((List.range m.size).map fun i => ⟨(pieces.flatMap fun c => wordOctets c[i]!).toArray⟩)
+    some ((List.range m.size).map fun i => ⟨(pieces.flatMap fun c => wordOctets (c.getD i 0)).toArray⟩)
 
 /-- The weights ℰ_C uses for v validators: from ℕ_{d'} to g(0), …, g(v − 1). -/
 def encodeWeights (v : Nat) : Array (Array Nat) :=
@@ -210,7 +215,7 @@ def recover (v : Nat) (c : List (ByteArray × Nat)) : Option ByteArray :=
       let pieces := (List.range k).map fun p =>
         interpolate m ((c.map fun (x, _) => word x (2 * p)).toArray ++ Array.replicate (n - d) 0)
       -- chunk j of the data is word j of every piece
-      some ⟨((List.range d).flatMap fun j => pieces.flatMap fun ws => wordOctets ws[j]!).toArray⟩
+      some ⟨((List.range d).flatMap fun j => pieces.flatMap fun ws => wordOctets (ws.getD j 0)).toArray⟩
 
 -- Regression tests (GP v0.8.1 #580): d' and the index map f⁻¹.
 #guard paddedShards 2 = 2 ∧ paddedShards 3 = 4 ∧ paddedShards 342 = 512 ∧ paddedShards 1 = 1

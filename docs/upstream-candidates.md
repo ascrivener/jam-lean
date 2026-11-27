@@ -19,6 +19,7 @@ Inconsistencies, where the paper contradicts itself:
 |---|---|---|
 | 1 | §A.10 | 𝔓_S compares φ_A = φ_D (the paper writes the registers φ), which read literally compares register values. The gas model has no values, so it must mean the indices r_A = r_D. |
 | 3 | §A.4 | The prose says RAM below 2^16 always panics, but the formula for ε^μ only considers inaccessible indices. |
+| v0.8.1-A35 | Ψ_M, §A.8, eq. (A.48) | R takes (ϱ, (ε, ı', ϱ', φ', μ', 𝔵')), six components, while Ψ_H, whose result it is applied to, returns seven, including the gas-charged flag ϱ̃. The model reads R as ignoring the flag (`PVM/Invocation.lean`, `invocationResult`). |
 
 Gaps, where the paper leaves behaviour undefined:
 
@@ -71,6 +72,7 @@ Gaps, where the paper leaves behaviour undefined:
 | v0.8.1-A32 | §4, (4.1) | No errors are named for an invalid block and no order is given between the sections' validity conditions. The model reports the first failing check in the order of `importBlock` (header checks, disputes, Safrole and the markers, seal, assurances, guarantees, preimages; `BlockError`). |
 | v0.8.1-A33 | §3.8.1 | ℋ_K is "Keccak 256-bit … proposed by Bertoni et al. and utilized by" the Yellow Paper; the FIPS 202 SHA3-256 padding differs. The model uses the original Keccak padding (domain octet 0x01), as Ethereum does (`JAM/Keccak.lean`, `keccak256`). |
 | v0.8.1-A34 | Appendix H, eq. (H.1) | 𝒟(v) ≡ max({d ∣ d ∈ ℕ_{v/3+2}, 𝖶_G mod 2d = 0}) does not say whether v/3 is integer or real division when 3 ∤ v. The two readings differ for v = 1021 and 1022: with real division ℕ_{v/3+2} contains 342, and 𝖶_G mod 684 = 0, so 𝒟(v) = 342; with integer division (⌊v/3⌋ + 2 = 342, so d ≤ 341) 𝒟(v) = 228. The chains of the vectors (v = 6 and 1023) are multiples of 3 and unaffected. The model uses integer division (`JAM/Erasure.lean`, `originalShards`). |
+| v0.8.1-A36 | Ψ_R, eq. (B.5) | w = p_**w**[i] is read without saying what happens when the package has no item i. The model answers (BAD, [], 0), as for a missing service (`JAM/Refine.lean`, `psiR`). |
 | v0.8.1-A50 | §10.2, eq. `verdicts` | When \|**k**\| < 3, ⌊⅓\|**k**\|⌋ = 0, so V(a, **j**)'s cases ⊥ (t = 0) and ∅ (t = ⌊⅓\|**k**\|⌋) both hold at t = 0. The model takes ⊥ (`JAM/Disputes.lean`, `verdictOutcome`). Validator counts are in 𝕍 (eq. `valcount`), so \|**k**\| ≥ 6 and the paper never reaches it. |
 | v0.8.1-A51 | §11.2, eq. `availassignmentspostassurancesdef` | (p_**g**)_**r** ∈ **R** tests whether a work-report is in **R** without saying how reports are compared. The model compares their encodings ℰ(**r**) (`JAM/Assurances.lean`, `assurances`). |
 | v0.8.1-A52 | Appendix F, eq. `suffle` | ℱ types its entropy as **r** ∈ ⟦ℕ⟧_{l:}, so **r**_0 always exists. The model's ℱ is total over any **r** and reads a missing entry as 0 (`JAM/Shuffle.lean`, `shuffle`); the paper's uses never reach this, as (F.3) passes 𝒬_l(h), which has exactly l entries. |

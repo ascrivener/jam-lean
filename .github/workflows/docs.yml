@@ -1,0 +1,86 @@
+name: Docs
+
+# The documentation site (Adam, 2026-11-27), built by the separate Lake package in docs/site/ (the root
+# package never resolves doc-gen4 or Verso) and deployed to GitHub Pages:
+#   /api/   doc-gen4 pages for PVM, JAM and JamCrypto
+#   /book/  A Companion to the Gray Paper (Verso)
+#
+# * Pushes to main build and deploy. PRs do not run it.
+# * Actions > Docs > Run workflow builds on any branch (to check a docs change before merging); only a
+#   run on main deploys.
+#
+# Not part of CI's merge gate. Pages must be enabled once in the repository settings:
+# Settings > Pages > Build and deployment > Source: GitHub Actions.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# One deployment at a time; a newer main push replaces a pending one, a running one finishes.
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install elan
+        run: |
+          curl -sSfL --retry 5 --retry-all-errors https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh \
+            | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+          for i in 1 2 3 4 5; do
+            "$HOME/.elan/bin/elan" toolchain install "$(cat lean-toolchain)" && break
+            echo "toolchain download failed (attempt $i); retrying" >&2
+            sleep $((i * 15))
+          done
+          "$HOME/.elan/bin/elan" toolchain list | grep -q "$(cut -d: -f2 lean-toolchain)"
+
+      # The model's cache (read-only here, saved by CI's model job on main), so only what changed in PVM, JAM
+      # and JamCrypto is rebuilt.
+      - name: Restore the model's .lake
+        uses: actions/cache/restore@v4
+        with:
+          path: .lake
+          key: lake-model-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
+          restore-keys: |
+            lake-model-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
+            lake-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
+
+      # doc-gen4, Verso, their dependencies and the pages of core and Std: saved once per toolchain and
+      # manifest (a fixed key, so it never grows the 10 GB repository cache); jam-lean's own pages and the
+      # companion are rebuilt.
+      - name: Cache docs/site/.lake
+        uses: actions/cache@v4
+        with:
+          path: docs/site/.lake
+          key: docs-site-${{ runner.os }}-${{ hashFiles('docs/site/lean-toolchain', 'docs/site/lake-manifest.json') }}
+
+      - name: Build the site
+        run: docs/site/build-site.sh
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/site/_site
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -11,7 +11,9 @@ binaries. The model moved from v0.8.0 to v0.8.1 on 2026-11-25 (#261); the last v
   gas model; library `PVM`), and the protocol built on it (library `JAM`): the codec, hashes, the
   general, accumulate and refine host functions, Ψ_A, Ψ_R and Ψ_I, every section-level state
   transition (Safrole, disputes, reports, assurances, accumulation, preimages, recent history,
-  authorizations, statistics) and block import Υ with the state Merklization of Appendix D.
+  authorizations, statistics) and block import Υ with the state Merklization of Appendix D. Also
+  the off-chain parts a node computes: work-package refinement (§14), segment justifications
+  (Appendix E), auditing (§17) and the best-chain rule (§19). See [Scope](#scope).
 * **Validated** against the PVM vectors of
   [koute/jamtestvectors](https://github.com/koute/jamtestvectors) (branch `master_pvm_initial`,
   commit `6bf3768e5b37bbe4ca5d6e1306284ecb27c0198f`, directory `pvm/`) and the GP v0.8.0 vectors of
@@ -26,8 +28,15 @@ binaries. The model moved from v0.8.0 to v0.8.1 on 2026-11-25 (#261); the last v
   until proof work resumes (see [`docs/whats-proven.md`](docs/whats-proven.md)). Along the way they
   found disagreements between the binary and the paper, listed in
   [`docs/upstream-candidates.md`](docs/upstream-candidates.md).
-* **Proved about the model, with Mathlib.** Machine-checked: the erasure code recovers the data
-  from any 342 of 1023 pieces (GP v0.8.1 Appendix H; [`proofs/`](proofs/README.md), using Mathlib).
+* **Proved about the model.** Theorems in `PVM` and `JAM`, checked on every CI run: Ψ and Ψ_H are
+  the paper's recursive definitions, the gas simulation always finishes, and results on Safrole,
+  confinement, segments, §14 refinement, auditing and the best-chain rule ([Theorems](#theorems)). In a separate
+  Mathlib package: the erasure code recovers the data from any 342 of 1023 pieces
+  ([Mathlib proofs](#mathlib-proofs-proofs)).
+* **Fast where it runs, literal where it is proved.** Compiled code runs faster implementations of
+  Ψ, the gas simulation, hashing, the state trie and the crypto, each proved equal to the
+  paper-literal definition and swapped in by `@[csimp]`. The kernel and every theorem still see the
+  literal definitions ([Fast paths](#fast-paths), [`docs/fast-paths.md`](docs/fast-paths.md)).
 
 **What's proven:** [`docs/whats-proven.md`](docs/whats-proven.md) summarises the theorems about real
 service binaries (witness, and Parity's bootstrap service with its picoalloc heap allocator; last
@@ -56,7 +65,25 @@ Two libraries, each bounded by the Gray Paper (v0.8.1):
   functions (`lookup`, `read`, `write`, `info`, and `bless` … `supervisor`, ids 16–29), Ψ_A, and
   the accumulation state transition of §12 (Δ_1, Δ_*, Δ_+, the ready queue and history, statistics,
   and the output root); and the refine host functions (`historical_lookup`, `export`, `compile`,
-  `machine`, `peek`, `poke`, `pages`, `invoke`, `expunge`), Ψ_R and Ψ_I. Protocol and gas
+  `machine`, `peek`, `poke`, `pages`, `invoke`, `expunge`), Ψ_R and Ψ_I. It also has the
+  off-chain logic a validator runs, which is not part of the state transition (no vectors exist
+  for any of it; each is tested by hand-built cases):
+  - work-package refinement (§14, `JAM/Guarantee.lean`): p_a, C, the bundle B and its decoder,
+    I, Ξ, the availability specifier A, the bundle checks of §17.1 and `Chain.extend`;
+  - constant-depth Merkle trees and segment justifications (Appendix E, §14, `JAM/Segments.lean`):
+    ℳ, T, J_x, L_x, the paged proofs P, and verifiers for a segment and a page (the paper gives
+    none);
+  - auditing (§17, `JAM/Auditing.lean`): the audit selection, tranche 0 and later tranches,
+    announcements, judgments, U and **U**, the disregard rule and verdict formation for §10;
+  - the best-chain rule (§19, `JAM/BestChain.lean`): 𝐀 over a store of known blocks, (19.1)–(19.3)
+    with §17.3's disregard rule, the metric m of (19.4) and the best heads 𝐁^♭. The finalized
+    block, 𝐔 and the disregard flags are inputs; GRANDPA is not modelled. Readings
+    v0.8.1-A21–A25 in [`docs/upstream-candidates.md`](docs/upstream-candidates.md): (19.2)'s formula
+    audits only the head while the prose audits the chain (both readings are offered), §19 omits
+    §17.3's disregard rule, (19.3) leaves H^B unconstrained, there is no tie-break, and m sums back
+    to genesis while nodes keep 24 h of headers.
+
+  Protocol and gas
   constants are generated from `definitions.tex` (`scripts/gen_constants.py`, drift-checked in CI);
   the test vectors' tiny chain is `Params.tiny`. A proof about pure PVM programs imports only `PVM` and trusts nothing from `JAM`.
 
@@ -72,7 +99,9 @@ A fourth library, **`JamCrypto`**, implements the crypto parameter (`JAM.Crypto`
 Ed25519, the Bandersnatch IETF, Thin and Pedersen VRFs, and the ring root and ring VRF over
 BLS12-381. It carries both a v0.8.0 and a v0.8.1 path, selected by `JamCrypto.GpVersion`. On the
 v0.8.1 path the cited spec draft's prose is the default reading (`JamCrypto.Reading.prose`), and its
-vectors are an explicit switch (`.vectors`). The model never imports it. See
+vectors are an explicit switch (`.vectors`). The model never imports it. Its reference code
+computes on `Nat`; `JamCrypto/Fast/` computes the same functions on fixed-limb fields, each proved
+equal to its reference (see [Fast paths](#fast-paths)). See
 [`docs/jamcrypto.md`](docs/jamcrypto.md).
 
 Test-vector conventions (`map`/`write`/`set-reg` steps, how runs resume, the exit index the vectors
@@ -113,7 +142,11 @@ over the traces, are in that tag's README.
 | `JAM` Keccak-256 / SHA3-256 vs. `hashlib` and standard vectors | **15 / 15** match |
 | `JAM` SHA-512 vs. FIPS 180-2 examples and `hashlib`; the VRF output Y of one trace block against its η'_0 | **9 / 9** match; **1 / 1** |
 | `JAM` refine host functions, Ψ_R and Ψ_I, hand-written cases (no vectors exist) | **83 / 83** pass, 2 more kernel-checked |
-| `JamCrypto`: Ed25519, Bandersnatch IETF, Thin and Pedersen VRF vectors (`cryptotest`) | all pass |
+| `JAM` work-package refinement (§14: ᵀ_m, C, I, B and its decoder, the bundle checks on genuine and 14 tampered bundles, A, Ξ end to end, `Chain.extend`), hand-built `#guard`s in `Tests/GuaranteeTest.lean` (no vectors exist) | **67 / 67** pass |
+| `JAM` segments (Appendix E, §14: ℳ, J_x, L_x, P and the verifiers; hand-computed trees, Blake2b values from an independent Python reading, the theorems' statements exhaustively on small sizes, tampered inputs), `#guard`s in `Tests/SegmentsTest.lean` (no vectors exist) | **48 / 48** pass; axioms of each theorem pinned by 5 `#guard_msgs` |
+| `JAM` best-chain rule (§19: a ticketed fork beating a longer one, unaudited blocks under both readings of (19.2), a disregarded fork, equivocation, finality pruning, reversed stores, `ticketedOf`, `slotTimely`), hand-built `#guard`s in `Tests/BestChainTest.lean` (no vectors exist) | **29 / 29** pass |
+| `JAM` auditing (§17: **q**, tranche 0 with 3 and 20 cores, timing, announcements, the a_n threshold at its boundary, no-show escalation, U and **U**, verdicts through `checkVerdict`), hand-built `#guard`s in `Tests/AuditingTest.lean` (no vectors exist) | **85 / 85** pass |
+| `JamCrypto`: Ed25519, Bandersnatch IETF, Thin and Pedersen VRF vectors (`cryptotest`, running the proved fast code); fast against reference functions on the vectors and random inputs | all pass; **0** mismatches |
 | `JamCrypto`: ring root and ring VRF vectors (`ringtest`) | **146 / 146** pass |
 | The real witness binary's refine on 7 malformed payloads gives `Rejected(BadPayload)` (`lake build witnessrun`; a test, not a proof) | **7 / 7** |
 | `JAM` state trie M (Appendix D) vs. GP v0.8.0 trie vectors (keys cut to 31 octets, note 27); state-key constructor C, hand-written | **11 / 11** roots match; **4 / 4** |
@@ -128,7 +161,7 @@ over the traces, are in that tag's README.
 | Disputes STF (§10: verdicts, culprits, faults, ψ', ρ^‡ and H_O) vs. `stf/disputes` (`lake build disputestest`; Ed25519 verification is a parameter, note 29) | **29 / 29** tiny, **31 / 31** full |
 | Assurances STF (§11.2: the available reports **R** and ρ after assurances) vs. `stf/assurances` (`lake build assurancestest`; signatures as in note 29) | **10 / 11** tiny, **10 / 11** full; the other is `assurance_with_bad_attestation_parent-1`, whose only fault is the anchor v0.8.1 removed (#562), a listed deviation (note 30) |
 | Reports STF (§11.3–§11.5: guarantor assignments M and M*, guarantee validity, ρ', G and the reported packages, the v0.8.1 limits of eq. `reportrefineload`) and core and service statistics (§13.2) vs. `stf/reports` at master 5e8d2a2 (`lake build reportstest`; signatures as in note 29) | **60 / 60** tiny, **64 / 64** full |
-| Safrole STF (§6: τ, η, key rotation, γ_Z, γ_S, γ_A, H_E, H_W) vs. `stf/safrole` (`lake build safroletest`), with the Bandersnatch primitives as an oracle read from the vectors (note 31) | **21 / 21** tiny, **25 / 25** full |
+| Safrole STF (§6: τ, η, key rotation, γ_Z, γ_S, γ_A, H_E, H_W) vs. `stf/safrole` (`lake build safroletest`), first with the Bandersnatch primitives as an oracle read from the vectors (note 31), then again with JamCrypto's ring VRF (v0.8.0 path) | **21 / 21** tiny, **25 / 25** full, in both runs |
 | Block import Υ (§4, §5; T and M_σ of Appendix D) vs. the `traces/` block-import traces (`lake build tracetest`; CI fetches fallback, safrole, storage_light and preimages_light) | block import **suspended** until v0.8.1 traces exist (note 33); T(σ) round trip of every raw state (after `Tests.TraceState.upgradeRaw`): **201 / 201** in each of the four traces |
 | `witness-service.jam`'s host-call ids within those `Services.Witness` assumes (`lake build witnesscheck`) | not in the `model` job: it imports `Services`, which does not build against the current model; it last passed with the proofs at `c22c197` (v0.8.0 model) |
 
@@ -148,6 +181,9 @@ lake build disputestest assurancestest reportstest  # disputes, assurances and r
 lake build safroletest                # the Safrole STF vectors (tiny and full)
 scripts/fetch-trace-vectors.sh        # block-import traces (.bin only) into vendor/jam-traces; names optional
 lake build tracetest                  # T(σ) round trip of every fetched trace (block import suspended)
+lake build Tests.GuaranteeTest Tests.SegmentsTest Tests.AuditingTest Tests.BestChainTest   # §14, App. E, §17, §19
+lake build cryptotest ringtest && .lake/build/bin/cryptotest && .lake/build/bin/ringtest  # JamCrypto
+(cd proofs && lake exe cache get && lake build)   # the Mathlib proofs (a separate package)
 ```
 
 `pvmtest` and `gascheck` are Lake targets that build an executable and run it; a failing vector
@@ -168,6 +204,13 @@ fails the build. `lake exe pvmtrace <vector.json> [steps]` prints a step-by-step
 | `PVM/Tables.lean` | **generated**: opcode enumerations per argument format, U, T, 𝔪, the gas cost table | §A.3, §A.5, §A.10 |
 | `PVM/Logic/Words.lean`, `PVM/Logic/Go.lean` | service-independent tools for summaries: ℰ and little-endian words as octet lists, misaligned word splices, folded loads (`rdN`, `sxw`, `sx8`); `pvm_go` steps a run through generated code facts | (C) |
 | `PVM/Theorems/*.lean` | the theorems below | |
+| `PVM/Fast/`, `JAM/Fast/`, `JamCrypto/Fast/` | fast implementations, each proved equal to its spec definition and swapped in by `@[csimp]` ([`docs/fast-paths.md`](docs/fast-paths.md)) | |
+| `JAM/Guarantee.lean` | work-package refinement: p_a, C, L_l/X/S_l/J_l, B, I, Ξ, ᵀ_m, A, the bundle checks, `Chain.extend` | §14.3–§14.4.1, §17.1, §11.4.1 |
+| `JAM/Segments.lean` | constant-depth Merkle ℳ, T, J_x, L_x, C, 𝒫_n, paged proofs P, verifiers, and their theorems | App. E, §14 |
+| `JAM/Auditing.lean`, `JAM/Theorems/Auditing.lean` | audit selection, tranches, announcements, judgments, U, **U**, disregard rule, verdicts | §17 |
+| `JAM/BestChain.lean`, `JAM/Theorems/BestChain.lean` | the best-chain rule: 𝐀, acceptability, m, 𝐁^♭ | §19, §5 |
+| `JAM/Theorems/*.lean` | theorems about the protocol (host gas, confinement, Safrole, auditing, best chain, …) | |
+| `proofs/` | a separate Lake package with Mathlib: erasure-code recovery | App. H |
 | `Tests/` | vector runner, gas checker, tracer, kernel-checked invocation examples | |
 | `scripts/gen_tables.py` | LaTeX → `PVM/Tables.lean` | |
 
@@ -383,11 +426,52 @@ the build of the semantics rather than drifting silently.
   (`CodeCheck.hostIds_ok`), so `Confined.accumulate_confined` and `Confined.refine_noExports` have no
   hypothesis about the code and depend on propext, Classical.choice and Quot.sound only
   (`lake build witnesscheck` remains as a compiled cross-check).
-* **A fast Ψ that is the paper's Ψ** (`PVM/Fast/`, listed in `docs/fast-paths.md`). `psi` re-deblobs the program on every step
-  and re-simulates gas on every block charge, as the paper writes it. `psiFast` parses once and
-  memoizes block costs. `psi_eq_psiFast : psi = psiFast` is registered with `@[csimp]`, so compiled
-  code (including every test runner) executes `psiFast`, while the kernel and every theorem see
-  `psi`.
+* **The gas simulation always finishes** (`PVM/Theorems/GasFuel.lean`, GP v0.8.1 §A.9; #270).
+  `Sim.run_fuel_eq`: from 𝔛's initial state, any fuel of at least `Sim.fuel P s` gives the same
+  result, so the out-of-fuel case is never what `blockCost?` returns. The measure is
+  255·(instructions left to decode) + 2·Σ(per-entry potential) + (slots used this cycle), under an
+  invariant `Sim.Inv` on the reorder buffer and the units. `Program.blockCost?_isSome_of_deblob`
+  and `Program.blockCost_eq_of_deblob`: at every step Ψ takes, the charged block's simulation
+  finishes and meets only opcodes in U, so `blockCost`'s fallback of 1 is unreachable.
+  `Program.step_decode`: at every step Ψ takes, the instruction decodes. The table bounds
+  (č ≤ 100, ď ≤ 4, x̌ ≤ (4,4,4,1,1)) are checked by `decide` over all 256 octets.
+* **Fast paths equal to the spec** (`PVM/Fast/`, `JAM/Fast/`, `JamCrypto/Fast/`; see
+  [Fast paths](#fast-paths)). For example `psi_eq_psiFast` and `psiFast_eq_psiFaster` (Ψ),
+  `Blake2b.hash_eq_hashFast`, `Trie.merkle_eq_merkleFast`, `Fast.Ed25519.verifyWith_eq`.
+* **Safrole** (`JAM/Theorems/Safrole.lean`, GP v0.8.1 §6; #268). For every successful transition:
+  |γ_A'| ≤ 𝖤, and if γ_A's identifiers are unique then γ_A' is strictly sorted with unique
+  identifiers (`safrole_accumulator_sorted`, an invariant); Z is a permutation (`outsideIn_perm`);
+  on an epoch change |γ_S'| = 𝖤 in the ticket and the fallback case (`safrole_sealKeys_length`);
+  n = ⌈2𝖤/|γ_P'|⌉ is the least n with 2𝖤 ≤ n·|γ_P'| (`maxAttempts_spec`), and every entry index
+  fits the one-octet encoding when |γ_P'| ≥ 6 (`safrole_attempt_fits`); τ', η', κ', λ', γ_P'
+  have the paper's shape (`safrole_shape`); and well-formed keys and entropy stay well formed
+  (`safrole_wf`).
+* **Segments** (`JAM/Segments.lean`, GP v0.8.1 Appendix E, §14; #277). With no hypotheses beyond
+  the index being in range: every segment verifies against ℳ(**v**) with its J_0 justification
+  (`verifySegment_justify`); every page L_x(**v**, i) verifies with J_x(**v**, i)
+  (`verifyPage_page_justify`); P(**s**) has ⌈|**s**|/64⌉ segments, each a page and path that verify
+  (`length_pagedProofs`, `pagedProofs_verify`); and J_0 is J_x followed by the trace within the
+  page (`justify_zero_eq_page`).
+* **Work-package refinement** (`JAM/Guarantee.lean`, GP v0.8.1 §14; #283). I exports exactly w_e
+  segments on every branch (`refineItems_exports`); A's segment root is ℳ(**s**)
+  (`availabilitySpec_segmentRoot`); with no exports, Ξ succeeds with A(ℋ(p), B(p, l), [], v), given
+  a trace within 𝖶_R and K(l) correct (`computeReport_noExports`); the bundle checks accept the
+  genuine data, given 𝖶_G-octet segments and K(l) correct (`checkBundle_packageData`);
+  `Chain.extend_spec`.
+* **Auditing** (`JAM/Theorems/Auditing.lean`, GP v0.8.1 §17; #275). Tranche 0 selects at most 10
+  reports, on distinct cores, each the report on its core (`tranche0_length_le`,
+  `tranche0Indexed_nodup_cores`, `tranche0Indexed_mem`); with no no-shows nothing escalates
+  (`laterTranche_eq_nil`); U characterised (`audited_iff`), monotone in positive judgments and the
+  current tranche but not in negative ones (`audited_false_of_negative`); and the verdicts formed
+  for §10 are sound and complete for a good supermajority (`formVerdict_sound`,
+  `formVerdict_good_complete`).
+* **Best chain** (`JAM/Theorems/BestChain.lean`, GP v0.8.1 §19; #288). `mem_bestHeads_iff`: the
+  best heads are exactly the acceptable blocks ((19.1)–(19.3) plus §17.3) that maximise m; hence
+  `bestHead?_acceptable`, `bestHead?_extends_finalized` and `bestHead?_maximal`. With unique hashes
+  the store's order does not change the result (`mem_bestHeads_perm`). A best head exists when the
+  finalized block is audited and not disregarded (`finalized_acceptable`, `bestHeads_ne_nil`). The
+  chain reading of (19.2) is the stricter (`acceptable_head_of_chain`), and m(H) = m(P(H)) + 𝐓(H)
+  (`metric_child`).
 * **Memory** (`PVM/Memory.lean`). `read_write`, `read_write_self`, `read_write_of_ne`,
   `read_writeN_at`, `readN_writeN` (read after a multi-octet write of at most 2^32 octets), and
   that writes leave page access unchanged.
@@ -406,6 +490,81 @@ itself. No test vectors cover these layers at the pinned commit.
 fails on anything but `propext`, `Classical.choice` and `Quot.sound` (so on `sorryAx`, and on
 the axioms `native_decide` and `bv_decide` introduce). CI also greps for `sorry`, `partial def`,
 `implemented_by`, `native_decide` and `bv_decide`.
+
+## Fast paths
+
+The model follows the paper literally, which is slow to run: Ψ re-deblobs the program on every
+step and re-simulates gas at every block charge. For each slow definition that the tests and tools
+execute, a fast module (`PVM/Fast/`, `JAM/Fast/`, `JamCrypto/Fast/`) defines a faster
+implementation, proves it equal to the spec definition, and registers the equality with
+`@[csimp]`. The compiler then emits the fast form in compiled code, including every test runner;
+the kernel and every theorem see only the spec definitions. A `@[csimp]` equality is a proved
+theorem, unlike `implemented_by`, which this repository forbids.
+
+Spec and fast code are kept apart (#282): spec modules hold no fast code, proof modules import no
+fast module, and the few spec modules whose own compiled code calls a replaced definition import
+the specific fast module, from an allowlist that `scripts/check-fast-imports.py` enforces in CI.
+Every pair, its theorem and its file are listed in [`docs/fast-paths.md`](docs/fast-paths.md).
+
+What is replaced:
+
+* **PVM**: Ψ (`psiFast`, then `psiFaster` with page-chunked memory and per-index decode and
+  block-cost tables), Ψ_H\*, Ψ_H, Ψ_M, the word-level bitwise ALU, blob and standard-blob parsing
+  and Y, and the gas simulation 𝔛 and ϱ^Δ.
+* **JAM**: Blake2b (ℋ), Keccak-256 (ℋ_K) and SHA3-256, the state trie M and `grow_heap`.
+* **JamCrypto**: Ed25519 verification, Bandersnatch IETF and Thin VRF verification and outputs,
+  hash to curve, and the ring curve, ring root and ring verification. The fast code performs the
+  reference's own sequence of field operations on fixed-limb fields (Montgomery form on nine 29-bit
+  limbs for 𝔽_r of BLS12-381 and for 𝔽_(2^255−19), generated with their proofs). Hash to curve
+  became provable after a purely structural edit of the references `elligator2` and `ell2Map`
+  (#287, Adam's decision of 2026-11-27): each binds its condition once and selects each component
+  with its own `if`, so no value changes, and every vector passes unchanged. The ring's BLS12-381
+  part (G1 and the pairing on 𝔽_q) still runs the reference code.
+
+Headline speed-ups. These are quoted from the PR bodies, each measured on that PR's development
+container (wall clock unless stated); they were not re-measured for this README.
+
+| What | Before | After | PR |
+| --- | --- | --- | --- |
+| Startup of any `JAM` executable (the erasure primitivity check no longer runs at module init) | 15.45 s | 0.06 s | #271 |
+| Synthetic load/store/ALU loop, 3M steps, Ψ_H | 8.9–9.1 s | 0.72–0.80 s (≈12×) | #274 |
+| Same loop with an `ecalli` per iteration, 100k host calls | 3.06–3.16 s | 0.41–0.43 s (≈7×) | #274 |
+| One witness-blob Ψ_M invocation (callgrind, instructions in `psiMFast`) | 0.81 G (before #274) | 0.44 G | #278 |
+| `witnessrun` (7 invocations) | 0.47 s (before #274) | 0.25 s | #278 |
+| `gascheck` | 8.6 s | 1.6 s | #281 |
+| Blake2b-256, 144 KB | 7.86 ms | ~0.45–0.65 ms | #276 |
+| Keccak-256, 144 KB | ~200 ms | ~0.7 ms | #276 |
+| `Trie.root`, 300 keys / 157 KB | 13.4 ms | ~1.8 ms | #276 |
+| Ed25519, per valid signature | 1.82 ms | 0.60 ms | #286, #287 |
+| Bandersnatch IETF VRF verify | about 13 ms | 3.7 ms | #286, #287 |
+| Bandersnatch Thin VRF verify | 12–17 ms | 3.8 ms | #286, #287 |
+| Ring proof verify (valid, mean) | 124 ms | 103 ms | #287 |
+| Ring root, 1023 keys | 2151 ms | 1117 ms | #287 |
+
+CI's `ringtest` log on main (run 942, commit `b226ec0`) agrees with the last two rows: about
+106–108 ms per valid ring proof and 1125–1137 ms per 1023-key root.
+
+## Mathlib proofs (`proofs/`)
+
+[`proofs/`](proofs/README.md) is a separate Lake package (Adam, 2026-11-26, #272) and the only place
+Mathlib (tag `v4.36.0-rc1`) may be used. It requires the root package by path; nothing outside
+`proofs/` imports it, so the model, JamCrypto, the test executables and jam-lean-target stay on Lean
+core and `Std` and never fetch Mathlib. Its purposes are proving fast implementations equal to the
+reference ones where that needs Mathlib's mathematics, and theorems about the model that need it.
+CI's `mathlib-proofs` job builds it and checks that its axioms are only `propext`,
+`Classical.choice` and `Quot.sound`.
+
+It holds one library so far, **`ErasureProofs`** (#280), about `JAM/Erasure.lean` as it is (GP v0.8.1
+Appendix H):
+
+* `recover_encode`: for v ≤ 2¹⁵, if ℰ_C encodes the data into chunks, then any R(v) distinct
+  validator indices below v, in any order, with their chunks, recover the data;
+  `recover_encode_full` (v = 1023, any 342) and `recover_encode_tiny` (v = 6, any 3).
+* `erasure_recovery` and `encode_isSome_iff`: encoding succeeds exactly when the size is a multiple
+  of 2·R(v).
+* Along the way: GF(2¹⁶) = 𝔽₂[x]/(x¹⁶+x⁵+x³+x²+1) is a field; the model's exp/log and Cantor-basis
+  tables agree with it; each coded word is an evaluation of a polynomial of degree < d'; and the
+  model's interpolation is Mathlib's Lagrange interpolation.
 
 ## A second service: Parity's bootstrap service
 
@@ -935,18 +1094,17 @@ resolved, or that describes a check now suspended, is marked as such.
 
 ## Caveats
 
-* **𝔛's termination is not proved.** The simulation runs with fuel `256 · (|**c**| − ı + 2)`
-  transitions. Across every block of the vectors it needs at most 54 transitions per instruction
-  and under 5% of the fuel. `Program.blockCost?` returns `none` if the fuel runs out, and the gas
-  checker treats that as a failure; `Program.blockCost` (used by Ψ₁) falls back to 1.
+* **𝔛 runs with fuel**, `256 · (|**c**| − ı + 2)` transitions, so that it is a total function.
+  Since #270 the fuel is proved sufficient (`Sim.run_fuel_eq`), so the out-of-fuel result is
+  never returned.
 * **Totality fallbacks that valid programs never reach**: Ψ₁ reads an undecodable octet as
-  `trap` (Ψ only calls Ψ₁ where 𝔳_inst holds), and ϱ^Δ evaluates to 1 if 𝔛 meets an opcode
-  outside U.
-* **Kernel evaluation is slow.** Concrete runs can be checked by the kernel, but the model
-  follows the paper literally: it re-deblobs the program on every step and re-runs the gas
+  `trap`, and ϱ^Δ evaluates to 1 if 𝔛 meets an opcode outside U. Both are proved unreachable at
+  every step Ψ takes (`Program.step_decode`, `Program.blockCost_eq_of_deblob`).
+* **Kernel evaluation is slow.** Concrete runs can be checked by the kernel, but the kernel sees
+  the paper-literal definitions: it re-deblobs the program on every step and re-runs the gas
   simulation on every block charge. A 200-iteration two-instruction loop takes about 45 s of
-  kernel time. Proved-equivalent fast paths (parse once, cache block costs) are the obvious next
-  step before checking real services this way.
+  kernel time. The fast paths speed up compiled code only. Proofs about real services therefore
+  go through the gas-free logic and kernel-sized code checks instead (`PVM/Logic/`).
 * **Types.** ı is a `Nat` rather than ℕ_R; gas is a `UInt64` (ℕ_G). Immediates are stored
   sign-extended as `UInt64`, offsets as `Int`.
 * **Test harness.** The vectors' `map`, `write` and `set-reg` steps and the resumption rule

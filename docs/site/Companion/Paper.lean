@@ -1,5 +1,6 @@
 import VersoManual
 import Companion.Source
+import Companion.ModelMap
 
 /-!
 # The Gray Paper's version and section numbers
@@ -116,7 +117,8 @@ TeX as the paper writes it.
 
 * ``{eq}`6.24` `` (or ``{eq}`6.24, 6.25` ``, or a label: ``{eq}`eq:slotkeysequence` `` is "(6.26)"): the number as text.
 * `{gpeq "6.24"}` (a paragraph of its own; also `"9.1, 9.2"` or a label): the paper's own equation,
-  displayed with its number, rendered with the paper's macros.
+  displayed with its number, rendered with the paper's macros, and followed by its "In the
+  model:" line (`Companion/ModelMap.lean`).
 
 An unknown number or label fails the build. -/
 
@@ -233,7 +235,10 @@ def gpeq : BlockCommandOf EqArgs
           let b := if hasTopLevelAmp b then b else alignAtRelation b
           s!"{b} && \\qquad {tag n}"
         s!"\\begin\{aligned}" ++ " \\\\ ".intercalate rows ++ "\\end{aligned}"
-    ``(Verso.Doc.Block.para #[Verso.Doc.Inline.math Lean.Doc.MathMode.display $(quote tex)])
+    let model ← modelLines ns (before := false)
+    ``(Verso.Doc.Block.concat #[
+        Verso.Doc.Block.para #[Verso.Doc.Inline.math Lean.Doc.MathMode.display $(quote tex)],
+        $model])
 
 structure TranscribedArgs where
   spec : String
@@ -245,10 +250,10 @@ instance : FromArgs TranscribedArgs DocElabM :=
 
 /-- `{transcribed "13.9" "9f4fa6c4de"}`, a paragraph of its own just before a hand-written display:
     the display is the book's own rendering of (part of) the paper's equation 13.9, made when the
-    equation had that fingerprint (`docs/site/gp-equations.json`). It renders nothing. The build fails
-    when the paper's equation changes (a new version: re-check the display, then update the
+    equation had that fingerprint (`docs/site/gp-equations.json`). The build fails when the paper's equation changes (a new version: re-check the display, then update the
     fingerprint) or the number does not exist. Used where `{gpeq}` does not fit: a part of an
-    equation, a single case, or a layout the renderers cannot draw. -/
+    equation, a single case, or a layout the renderers cannot draw. Like `{gpeq}`, it brings the
+    display's "In the model:" line (`Companion/ModelMap.lean`). -/
 @[block_command]
 def transcribed : BlockCommandOf TranscribedArgs
   | ⟨spec, hashes⟩ => do
@@ -261,6 +266,8 @@ def transcribed : BlockCommandOf TranscribedArgs
       throwError m!"transcribed: the paper's equation {spec} changed (fingerprint {now}, the display \
         was written against {hashes}); re-check the hand-written display against the paper, then \
         update the fingerprint"
-    ``(Verso.Doc.Block.concat #[])
+    -- The display follows this marker: its "In the model:" line is emitted here and moved after
+    -- the display by the page script (`modelJs` in `CompanionMain.lean`).
+    modelLines ns (before := true)
 
 end Companion

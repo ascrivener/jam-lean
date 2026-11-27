@@ -81,8 +81,10 @@ jobs:
       - name: Every note the book and the model cite exists in docs/upstream-candidates.md
         run: python3 -I scripts/check-citations.py
 
-      - name: The book's equations and equation numbers come from the paper's table (scripts/check-equations.py)
-        run: python3 -I scripts/check-equations.py
+      - name: The book's equations come from the paper's table, and each has a model-map entry (scripts/check-equations.py, scripts/check-model-map.py)
+        run: |
+          python3 -I scripts/check-equations.py
+          python3 -I scripts/check-model-map.py
 
       - name: No forbidden constructs
         run: |

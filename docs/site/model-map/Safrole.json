@@ -1,0 +1,17 @@
+{
+  "equations": {
+    "6.24": { "kind": "inline", "name": "JAM.safrole", "at": "-- Entropy (§6.4)",
+              "note": "`eta0'` is η'₀; the VRF output 𝒴(H_V) is the input `SafroleInput.entropy`" },
+    "6.25": { "kind": "inline", "name": "JAM.safrole", "at": "-- Entropy (§6.4)",
+              "note": "`eta0'` is η'₀; the VRF output 𝒴(H_V) is the input `SafroleInput.entropy`" },
+    "6.26": { "kind": "inline", "name": "JAM.safrole", "at": "let sealKeys' :=" },
+    "6.27": { "kind": "def", "name": "JAM.outsideIn" },
+    "6.28": { "kind": "def", "name": "JAM.fallbackKeys" },
+    "6.31": { "kind": "inline", "name": "JAM.safrole", "at": "-- The tickets extrinsic (§6.7).",
+              "note": "n is `JAM.maxAttempts` and the proof's context `JAM.ticketContext`" },
+    "6.32": { "kind": "inline", "name": "JAM.safrole", "at": "if i.tickets.length > (if m' < Y" },
+    "6.36": { "kind": "inline", "name": "JAM.safrole", "at": "let acc' :=",
+              "note": "the union's second part is `base`, on the line before; identifiers are ordered by `JAM.octetLt`" },
+    "6.37": { "kind": "inline", "name": "JAM.safrole", "at": "throw .uselessTicket" }
+  }
+}

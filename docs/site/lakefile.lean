@@ -31,7 +31,13 @@ require verso from git "https://github.com/leanprover/verso" @ "v4.36.0-rc1-patc
 /-- *A companion to the Gray Paper*: the chapters, in the order of GP v0.8.1's sections. -/
 lean_lib Companion where
   leanOptions := #[⟨`autoImplicit, false⟩]
-  extraDepTargets := #[`modelHighlights]
+  extraDepTargets := #[`modelHighlights, `modelMap]
+
+/-- The model maps (`model-map/*.json`, read by `Companion/ModelMap.lean`): a dependency of every
+    chapter, so editing a map re-elaborates the chapters (which render and check its entries). -/
+input_dir modelMap where
+  path := "model-map"
+  text := true
 
 /-- Renders the companion to HTML: `lake exe companion --output DIR`. -/
 lean_exe companion where

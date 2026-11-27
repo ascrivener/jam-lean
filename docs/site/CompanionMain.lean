@@ -66,6 +66,20 @@ body.lean-hidden .lean-source, body.lean-hidden code.hl.lean.block,
 body.lean-hidden button.show-code { display: none; }
 .split-toc li:has(> a[href*='/#JAM___']), .split-toc li:has(> a[href*='/#PVM___']),
 .split-toc li:has(> a[href*='/#JamCrypto___']) { display: none; }
+.model-line { margin: -0.3em 0 1.2em; font-family: system-ui, sans-serif; font-size: 0.85em; line-height: 1.45;
+  color: var(--jl-muted); overflow-wrap: anywhere; }
+.model-line p { margin: 0.1em 0; }
+.model-line code { font-size: 0.95em; }
+.model-line details > summary { cursor: pointer; list-style: none; }
+.model-line details > summary::-webkit-details-marker { display: none; }
+.model-line details > summary:focus-visible { outline: 2px solid var(--jl-focus); outline-offset: 2px; }
+.model-line .model-show { display: inline-block; margin-left: 0.5em; padding: 0 0.45em; border: 1px solid var(--jl-button-border);
+  border-radius: 3px; background: var(--jl-button-bg); white-space: nowrap; }
+.model-line .model-show::before { content: '▸ '; }
+.model-line details[open] .model-show::before { content: '▾ '; }
+.model-line details > :not(summary) { margin-top: 0.4em; font-size: 1.15em; }
+.model-line a.model-quoted[href] { cursor: pointer; }
+body.lean-hidden .model-line .model-show, body.lean-hidden .model-line details > :not(summary) { display: none; }
 "⟩
 
 /-- Dark mode: the book follows the reader's system setting (`prefers-color-scheme`), and the
@@ -232,6 +246,25 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 "⟩
 
+/-- The "In the model:" lines under the paper's equations (`Companion/ModelMap.lean`): a line made
+    by a `{transcribed}` marker stands before its hand-written display and is moved after it; a
+    "quoted in this chapter" pointer becomes a link to that quotation on this page (built here
+    because the pages' `<base href>` would send a bare `#…` link to the book's root). -/
+def modelJs : Verso.Genre.Manual.JS := ⟨"
+document.addEventListener('DOMContentLoaded', () => {
+  for (const line of document.querySelectorAll('.model-line-before')) {
+    const display = line.nextElementSibling;
+    if (display) display.insertAdjacentElement('afterend', line);
+  }
+  for (const a of document.querySelectorAll('a.model-quoted[data-target]')) {
+    const box = [...document.querySelectorAll('.lean-source[data-decl]')].find(b => b.dataset.decl === a.dataset.target);
+    if (!box) continue;
+    if (!box.id) box.id = 'src-' + a.dataset.target;
+    a.href = location.pathname + location.search + '#' + box.id;
+  }
+});
+"⟩
+
 /-- Math in docstrings: `$…$` and `$$…$$` in the text of docstrings (the `.docs` blocks of
     `{docstring}` and `{leanSource}`, and hover tooltips) are rendered with the KaTeX that Verso
     already loads. As in doc-gen4's MathJax
@@ -293,7 +326,7 @@ def docMathJs : Verso.Genre.Manual.JS := ⟨"
 /-- HTML only, one page per chapter. -/
 def config : Config where
   extraCss := (({} : Std.HashSet Verso.Genre.Manual.CSS).insert narrowCss).insert darkCss
-  extraJs := (((({} : Std.HashSet Verso.Genre.Manual.JS).insert toolsJs).insert themeJs).insert docMathJs).insert collapseJs
+  extraJs := ((((({} : Std.HashSet Verso.Genre.Manual.JS).insert toolsJs).insert themeJs).insert docMathJs).insert collapseJs).insert modelJs
   emitTeX := false
   emitHtmlSingle := .no
   emitHtmlMulti := .immediately

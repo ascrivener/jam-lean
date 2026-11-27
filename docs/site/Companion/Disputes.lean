@@ -63,6 +63,16 @@ The model's types are {api}`JAM.Disputes`, {api}`JAM.Verdict` (with its judgment
 the length bounds first ($`\mathsf{N}_V = \mathsf{N}_O = 16`, `Constants.Cmaxextrinsicverdicts` and
 `Constants.Cmaxextrinsicoffenses`); see the readings below for the errors it uses.
 
+{leanSource JAM.Disputes}
+
+{leanSource JAM.Verdict}
+
+{leanSource JAM.Judgment}
+
+{leanSource JAM.Culprit}
+
+{leanSource JAM.Fault}
+
 ## Verdicts
 
 Each verdict names the epoch whose validator set judged it: the current one ($`\kappa`) or the
@@ -96,6 +106,8 @@ verdict's outcome:
 {api}`JAM.Xvalidif` gives $`\mathsf{X}_v`. In {api}`JAM.disputesTransition` the order of {eq}`10.8` is
 checked by {api}`JAM.orderedUniqBy`, after the length bounds of {eq}`10.2` and before any verdict's own
 conditions.
+
+{leanSource JAM.orderedUniqBy}
 
 ## The verdict sequence v (eq. 10.12)
 %%%

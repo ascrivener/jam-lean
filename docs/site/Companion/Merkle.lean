@@ -218,6 +218,8 @@ $`\mathcal{E}_M` is the second half of the $`C(3)` row of the state serializatio
 {api}`JAM.Serialize.recent` ({ref "statemerkle"}[Appendix D]). $`\mathcal{M}_R` takes the last present peak off at each
 step, so the model works on the present peaks in reverse order:
 
+{leanSource JAM.Serialize.recent}
+
 {leanSource JAM.MMR.superPeakRev}
 
 {leanSource JAM.MMR.superPeak}
@@ -243,3 +245,6 @@ These are recorded in the model's
 * *Note v0.8.1-A15, the pages of $`P`.* {ref "work"}[§14.4] describes each paged proof as "a page of 64 hashes of
   segments". By the equation, the page is $`\mathcal{L}_6`, the hashes $`H(\$\text{leaf} \frown \mathbf{s}_i)` of the segments rather than
   $`\mathcal{H}(\mathbf{s}_i)`, and the last page holds only $`|\mathbf{s}| \bmod 64` of them when 64 does not divide $`|\mathbf{s}|`. The model follows the equation.
+
+
+{leanSource JAM.Segments.pageRoot}

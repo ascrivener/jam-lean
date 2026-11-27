@@ -77,6 +77,8 @@ The paper writes $`\mathbf{a}_0` as a set; the model keeps it as a sequence in s
 {api}`JAM.Auditing.tranche0Indexed`, makes the same draw over $`\mathbf{q}` paired with core indices. What the model
 proves about $`\mathbf{a}_0`:
 
+{leanSource JAM.Auditing.tranche0Indexed}
+
 {mathdoc JAM.Auditing.tranche0_length_le}
 
 {mathdoc JAM.Auditing.tranche0Indexed_nodup_cores}
@@ -134,6 +136,8 @@ These are inputs to the model, gathered in a {api}`JAM.Auditing.View`. Reports a
 $`\mathcal{H}(\mathbf{r})`, as announcements and judgments name them, and a set of validators is a
 {api}`JAM.Auditing.VSet`, of which only the indices below $`|\kappa|` are read:
 
+{leanSource JAM.Auditing.VSet}
+
 {leanSource JAM.Auditing.View}
 
 # Later tranches (§17.3)
@@ -165,6 +169,10 @@ The prose also says a validator must always judge a report on which it has seen 
 judgment; that rule is not in {eq}`17.15`. The model keeps {eq}`17.15` as {api}`JAM.Auditing.laterTranche` and adds
 the prose rule in a second function, {api}`JAM.Auditing.laterTrancheWithNegatives` (see
 {ref "auditing-readings"}[Readings chosen]). {api}`JAM.Auditing.tranche` gives $`\mathbf{a}_n` for any $`n`. What the model proves:
+
+{leanSource JAM.Auditing.laterTrancheWithNegatives}
+
+{leanSource JAM.Auditing.tranche}
 
 {mathdoc JAM.Auditing.laterSelected_zero}
 
@@ -272,6 +280,8 @@ show that what it returns has the count, order and outcome that {ref "disputes"}
 by a judgment the author has seen (the signatures are supplied by the caller and are not checked
 here), and that it finds a good verdict whenever enough positive judgments are known. The
 supermajority clause of $`U` is exactly the count a good verdict needs.
+
+{leanSource JAM.Auditing.formVerdict}
 
 {mathdoc JAM.Auditing.formVerdict_sound}
 

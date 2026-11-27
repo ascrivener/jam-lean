@@ -47,11 +47,23 @@ tag := "reports-state"
 An entry is a guarantee and the timeslot at which it was reported. The model's entry is
 {api}`JAM.AvailAssignment`, and $`\rho` is {api}`JAM.AvailAssignments`.
 
+{leanSource JAM.AvailAssignment}
+
+{leanSource JAM.AvailAssignments}
+
 §11.1 goes on to define the work-report and its parts: the report $`\mathbb{R}` (eq. {eq}`11.2`), the
 refinement context $`\mathbb{C}` (eq. {eq}`11.4`), the availability specification $`\mathbb{Y}` (eq. {eq}`11.5`), the
 work-digest $`\mathbb{D}` (eq. {eq}`11.6`) and the work errors $`\mathbb{E}` (eq. {eq}`11.7`). The model's types are
 {api}`JAM.WorkReport`, {api}`JAM.RefineContext`, {api}`JAM.AvailabilitySpec`,
 {api}`JAM.WorkDigest` and {api}`JAM.WorkError`. It also bounds a report's dependencies and size:
+
+{leanSource JAM.WorkReport}
+
+{leanSource JAM.RefineContext}
+
+{leanSource JAM.AvailabilitySpec}
+
+{leanSource JAM.WorkDigest}
 
 {gpeq "11.3"}
 
@@ -91,6 +103,8 @@ with an assignment:
 
 The model's assurance is {api}`JAM.Assurance`. {api}`JAM.checkAssurance` checks one assurance
 against the index of the one before it:
+
+{leanSource JAM.Assurance}
 
 {leanSource JAM.assuranceMessage}
 

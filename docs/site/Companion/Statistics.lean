@@ -80,6 +80,10 @@ The core and service records are kept for the current block only:
 
 The model's records are {api}`JAM.CoreRecord` and {api}`JAM.ServiceRecord`.
 
+{leanSource JAM.CoreRecord}
+
+{leanSource JAM.ServiceRecord}
+
 ## Cores
 
 A core's record sums the load of the reports guaranteed on it in this block ($`\mathbf{I}`, eq. {eq}`11.29`), the

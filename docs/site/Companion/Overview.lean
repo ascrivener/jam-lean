@@ -144,8 +144,7 @@ their line of the graph lists:
 * *The timeslot.* The model sets $`\tau' = \mathbf{H}_T` directly. The check that $`\mathbf{H}_T` is after $`\tau` is made by
   {api}`JAM.safrole` (its `badSlot` error).
 
-The whole of {api}`JAM.importBlock` (about 90 lines, each step marked with its section) is on its API page,
-which links to the source.
+{leanSource JAM.importBlock}
 
 # The header (§5)
 %%%
@@ -163,10 +162,12 @@ The markers' types:
 
 {gpeq "5.11"}
 
-$`\tilde{\mathbb{H}}` and $`\bar{\mathbb{H}}` are Bandersnatch and Ed25519 keys (§3.8.2). The model's {api}`JAM.EpochMark` and the option
+$`\bskey` and $`\edkey` are Bandersnatch and Ed25519 keys (§3.8.2). The model's {api}`JAM.EpochMark` and the option
 types hold them, and the types do not fix their lengths. The decoder ({api}`JAM.Header.decode`) fixes the
 winning-tickets marker's $`\mathsf{E}`. The epoch marker's key list is length-prefixed (its encoding is $`\updownarrow\mathbf{k}`); its
 length is enforced at import, because $`\mathbf{H}_E` must match the marker Safrole produces.
+
+{leanSource JAM.Header.decode}
 
 ## The header's conditions
 
@@ -196,6 +197,10 @@ $`P(\mathbf{H})` is the parent header and $`\mathcal{T}` the wall clock. A heade
   {api}`JAM.sealValid`).
 * The markers $`\mathbf{H}_E` and $`\mathbf{H}_W` must equal the ones Safrole produces ({ref "safrole"}[§6.6]), and $`\mathbf{H}_O` the one disputes
   produce ({ref "disputes"}[§10]).
+
+{leanSource JAM.lookupAnchorKnown}
+
+{leanSource JAM.sealValid}
 
 ## The extrinsic hash
 

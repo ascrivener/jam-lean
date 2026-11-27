@@ -430,6 +430,8 @@ functions ask that the caller $`\mathbf{x}_s` be the service $`d` it changes or 
 supervisor $`\mathbf{d}[d]_e` ({ref "accounts"}[§9.5]): in the model, {api}`JAM.AccHost.mayModify`. A function that changes
 service $`d`'s account adds $`d` to $`\mathbf{x}_\mathbf{w}`.
 
+{leanSource JAM.AccHost.mayModify}
+
 *`lookup` = 3*, $`\Omega_L`. In: $`\varphi_7` names the service, the hash is at $`h = \varphi_8`; then
 $`o = \varphi_9`, $`f_0 = \varphi_{10}`, $`z = \varphi_{11}`. $`\mathbf{v}` is the preimage
 $`\mathbf{a}_\mathbf{p}[\mu_{h \dots+ 32}]`. $`g \equiv \mathsf{M}_{L,c} + \mathcal{G}(\mathsf{M}_{L,\ell}, z)`.

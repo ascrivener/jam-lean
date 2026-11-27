@@ -127,6 +127,8 @@ $`\mathfrak{v}_{\text{blob}}` is again a recursion, here on an index that increa
 $`|\mathbf{k}| + 1` units of fuel ({api}`PVM.Program.vBlob`). More fuel would not change the answer, and every program that parses
 respects the v0.8.1 limits:
 
+{leanSource PVM.Program.vBlob}
+
 {mathdoc PVM.Program.vBlob_eq}
 
 {mathdoc PVM.Blob.parse?_limits}
@@ -163,6 +165,10 @@ The model's $`T` and $`U` ({api}`PVM.terminatorOpcodes`, {api}`PVM.validOpcodes`
 which is generated from the paper's LaTeX source by a script; CI regenerates it from the pinned
 paper and fails on any difference.
 
+{leanSource PVM.terminatorOpcodes}
+
+{leanSource PVM.validOpcodes}
+
 {leanSource PVM.Program.isBlockStart}
 
 {leanSource PVM.Program.blockStartOf}
@@ -191,6 +197,8 @@ The result is {api}`PVM.StepResult`, and the function is {api}`PVM.Program.step`
 {api}`PVM.Program` holds the code $`\mathbf{c}`, the bitmask $`\mathbf{k}` and the jump table $`\mathbf{j}`, so they need not be passed
 separately. The left side of {eq}`A.7` names the first argument $`\mathfrak{p}`, but its call in {eq}`A.1` and the gas stage
 {eq}`A.8` use the instruction data $`\mathbf{c}` (the type of $`\Psi_1` gives this argument only as $`\mathbb{B}`); the model takes $`\mathbf{c}`.
+
+{leanSource PVM.Program}
 
 {leanSource PVM.Program.step}
 
@@ -275,6 +283,10 @@ strings. $`\mathcal{Z}_n` reads an $`n`-octet natural as a signed integer and $`
 $`\mathcal{B}_n` and $`\overleftarrow{\mathcal{B}}_n` (eqs. {eq}`A.15`–{eq}`A.18`) give the bits of a natural, least or most significant
 first, with their inverses. The model works with single bits, {api}`PVM.Num.bit` and {api}`PVM.Num.ofBits`.
 Immediates are stored in as few octets as possible and sign-extended to 64 bits by $`\mathcal{X}_n`:
+
+{leanSource PVM.Num.bit}
+
+{leanSource PVM.Num.ofBits}
 
 {gpeq "A.19"}
 
@@ -377,6 +389,14 @@ of its table: {api}`PVM.Exec.twoRegAlu` (§A.5.9), {api}`PVM.Exec.twoRegImmAlu` 
 and {api}`PVM.Exec.twoRegBranchCond` (§A.5.11). The model computes over $`\mathbb{N}` and $`\mathbb{Z}` as the paper does,
 reading a register with `toNat` and writing the result back with `UInt64.ofNat`. Some rows of §A.5.13, for example:
 
+{leanSource PVM.Exec.twoRegAlu}
+
+{leanSource PVM.Exec.twoRegImmAlu}
+
+{leanSource PVM.Exec.regImmBranchCond}
+
+{leanSource PVM.Exec.twoRegBranchCond}
+
 $$`\texttt{add\_32}\colon\ \varphi'_D = \mathcal{X}_4((\varphi_A + \varphi_B) \bmod 2^{32})`
 
 $$`\texttt{div\_s\_32}\colon\ \varphi'_D = \begin{cases} 2^{64} - 1 & \text{if } b = 0 \\ \mathcal{Z}^{-1}_8(a) & \text{if } a = -2^{31} \wedge b = -1 \\ \mathcal{Z}^{-1}_8(\text{rtz}(a \div b)) & \text{otherwise} \end{cases} \quad \text{where } a = \mathcal{Z}_4(\varphi_A \bmod 2^{32}),\ b = \mathcal{Z}_4(\varphi_B \bmod 2^{32})`
@@ -443,6 +463,8 @@ Two theorems about the host calls a program can make: $`\Psi` exits with $`\hbar
 immediate is $`h`, and so every such $`h` is among the immediates of the `ecalli` instructions in the
 program's code ({api}`PVM.hostCallIdsOf`):
 
+{leanSource PVM.hostCallIdsOf}
+
 {mathdoc PVM.psi_host}
 
 {mathdoc PVM.psi_hostId_mem}
@@ -476,6 +498,10 @@ zone is left unmapped, and everything outside the sections is inaccessible:
 
 So $`\varphi_1` is the top of the stack, $`\varphi_7` points at the arguments and $`\varphi_8` is their length, and $`\varphi_0` is the return address
 that halts (eq. {eq}`A.22`). In the model's code the paper's $`P` and $`Z` are {api}`PVM.roundPage` and {api}`PVM.roundZone`.
+
+{leanSource PVM.roundPage}
+
+{leanSource PVM.roundZone}
 
 {leanSource PVM.standardInit}
 
@@ -542,6 +568,10 @@ $`\check{s}` and $`\check{r}`, the source and destination registers of an instru
 reads or writes, whether or not it would at run time; `ecalli` has neither, and the destination of
 the four `cmov` instructions also counts as a source ({api}`PVM.Instr.srcRegs`, {api}`PVM.Instr.dstRegs`).
 
+{leanSource PVM.Instr.srcRegs}
+
+{leanSource PVM.Instr.dstRegs}
+
 The block cost runs the simulation $`\mathfrak{X}` from an initial state and takes its final cycle count:
 
 $$`\varrho^{\Delta}(\mathbf{c}, \mathbf{k}, \imath) = \max\left(\mathbf{x}^{\text{final}}_{c} - 3,\, 1\right)`
@@ -597,6 +627,12 @@ the same result), and that for every block $`\Psi` charges the simulation finish
 {api}`PVM.Program.blockCost` there is $`\max(\mathbf{x}^{\text{final}}_c - 3, 1)` as computed by the model's
 $`\mathfrak{X}` ({api}`PVM.Sim.run`), with no default used:
 
+{leanSource PVM.Sim.fuel}
+
+{leanSource PVM.Program.blockCost}
+
+{leanSource PVM.Sim.run}
+
 {mathdoc PVM.Sim.run_fuel_eq}
 
 {mathdoc PVM.Program.blockCost?_isSome_of_deblob}
@@ -633,6 +669,8 @@ $`(60, 4, 1, 0, 0, 0, 1)`, in the order $`(\check{c}, \check{d}, \check{x}_A, \c
 
 The table itself is {api}`PVM.costRow?`, generated from the paper with the other tables. It keeps each
 cell as written ({api}`PVM.CostExpr`); {api}`PVM.Program.evalCost` evaluates a cell for one instruction:
+
+{leanSource PVM.CostExpr}
 
 {leanSource PVM.Program.evalCost}
 
@@ -683,3 +721,6 @@ Most of these points are recorded in the model's
 * *`neg_add_imm_32`, §A.5.10.* $`\varphi'_A = \mathcal{X}_4((\nu_X + 2^{32} - \varphi_B) \bmod 2^{32})` is computed over $`\mathbb{Z}`: the intermediate value is negative when
   $`\varphi_B > \nu_X + 2^{32}`, and the model takes the mathematical (non-negative)
   remainder ({api}`PVM.Exec.twoRegImmAlu`).
+
+
+{leanSource PVM.Program.zetaInt}

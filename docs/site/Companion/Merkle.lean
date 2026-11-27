@@ -27,8 +27,9 @@ exported segments, and the page functions to build the *paged proofs* that justi
 
 In the model the node function and the well-balanced tree are in `JAM/Merkle.lean`, the
 constant-depth tree, its pages and the paged proofs in `JAM/Segments.lean`, and the mountain
-ranges in `JAM/History.lean`. Every function takes the hash function $`H` as an argument, as the
-paper's do; the paper's default is Blake2b.
+ranges in `JAM/History.lean`. Every function except the super-peak takes the hash function $`H` as an argument, as the
+paper's do; the paper's default is Blake2b. The super-peak $`\mathcal{M}_R` is fixed to Keccak in the paper, and
+{api}`JAM.MMR.superPeak` takes no $`H`.
 
 # The node function and the trace (§E.1)
 %%%
@@ -59,8 +60,8 @@ $$`\text{and } P_I(\mathbf{v}, i) \equiv \begin{cases} 0 & \text{if } i < \lceil
 
 {leanSource JAM.Segments.trace}
 
-The two branches of `if i < h` are the two values of $`s`: the sibling `o` is $`P^\bot`, and the recursive
-call goes into $`P^\top` at index $`i - P_I`.
+The two branches of `if i < h` are the two values of the condition $`i < \lceil |\mathbf{v}|/2 \rceil`, which $`P^s` compares
+with $`s`: in each, the sibling `o` is $`P^\bot`, and the recursive call goes into $`P^\top` at index $`i - P_I`.
 
 # The well-balanced tree (§E.1.1)
 %%%
@@ -112,7 +113,8 @@ $`\max(0, \cdot)`.
 tag := "merkle-verify"
 %%%
 
-The paper defines how justifications are made, but not how they are checked: §14 and §17 say only
+The paper defines how justifications are made, but not how they are checked. §14.2 says only that
+justifications are "generated, stored, included alongside the fetched data and verified", and §17.2
 that a justification "allows verification that each segment's hash is included in the referencing
 Merkle root". The model defines the check as the inverse of $`T`. {api}`JAM.Segments.foldPath`
 rebuilds a root from the value at the bottom of a path and the path, top first, as $`T` gives it:
@@ -147,7 +149,7 @@ segments, the page's leaf hashes and its path, encoded and zero-padded to one se
 
 $$`P\colon \left\{\begin{aligned} \llbracket\mathbb{J}\rrbracket &\to \llbracket\mathbb{J}\rrbracket \\ \mathbf{s} &\mapsto \left[ \mathcal{P}_l\left(\mathcal{E}(\updownarrow\mathcal{J}_6(\mathbf{s}, i), \updownarrow\mathcal{L}_6(\mathbf{s}, i))\right) \;\middle|\; i \mathrel{<\mkern-7mu-} \mathbb{N}_{\lceil |\mathbf{s}|/64 \rceil} \right] \quad \text{where } l = \mathsf{W}_G \end{aligned}\right. \qquad \text{(14.13)}`
 
-$$`\mathcal{P}_{n \in \mathbb{N}_{1\dots}}\colon \left\{\begin{aligned} \mathbb{B} &\to \mathbb{B}_{k \cdot n} \\ \mathbf{x} &\mapsto \mathbf{x} \frown [0, 0, \dots]_{((|\mathbf{x}| + n - 1) \bmod n) + 1 \dots n} \end{aligned}\right. \qquad \text{(14.20)}`
+$$`\mathcal{P}_{n \in \mathbb{N}_{1\dots}}\colon \left\{\begin{aligned} \mathbb{B} &\to \mathbb{B}_{k \cdot n} \\ \mathbf{x} &\mapsto \mathbf{x} \frown [0, 0, \dots]_{((|x| + n - 1) \bmod n) + 1 \dots n} \end{aligned}\right. \qquad \text{(14.20)}`
 
 {leanSource JAM.Segments.pagedProofs}
 
@@ -164,7 +166,7 @@ one is the padded encoding of a page and a path that verify against the segment 
 
 §14.4 also notes that each segment's justification "can be derived through a single paged-proof".
 The model proves it: the $`\mathcal{J}_0` justification of segment $`n` is the path of its page followed by the
-trace of $`n` within the page's leaves:
+trace of $`n \bmod 2^x` within the page's leaves:
 
 {mathdoc JAM.Segments.justify_zero_eq_page}
 
@@ -222,12 +224,13 @@ These are recorded in the model's
 * *Note v0.8.1-A13, checking a justification.* The paper defines how justifications are made but not
   how they are checked. The model's check ({api}`JAM.Segments.verifySegment`,
   {api}`JAM.Segments.verifyPage`) is the inverse of $`T` on the perfect trees $`C` produces. The depth of
-  the tree is read from the length of the path, and the index must be below $`2^{|\text{path}|}`. A page's
+  the tree is read from the length of the path, the index must be below $`2^{|\text{path}|}`, and a page may hold
+  at most $`2^x` leaves. A page's
   subtree root pads the page with $`\mathbb{H}_0` to $`2^x` leaves when its path is non-empty, and to
   $`2^{\lceil \log_2 |\text{page}| \rceil}` leaves when the page is the whole tree ({api}`JAM.Segments.pageRoot`).
 * *Note v0.8.1-A14, the page index.* $`\mathcal{J}_x` and $`\mathcal{L}_x` type their index as $`i \in \mathbb{N}_{|\mathbf{v}|}`, but it is a page index: only
-  $`i < \lceil |\mathbf{v}|/2^x \rceil` names a page, and $`P` uses only those. For a larger $`i`, $`\mathcal{J}_x`'s trace indexes past the end of
-  $`C(\mathbf{v})`. The model accepts any $`i` and states its theorems for page indices.
+  $`i < \lceil |\mathbf{v}|/2^x \rceil` names a page, and $`P` uses only those. For a larger $`i`, $`\mathcal{J}_x`'s trace leads to padding while
+  $`2^x \cdot i < |C(\mathbf{v})|`, and indexes past the end of $`C(\mathbf{v})` once $`2^x \cdot i \geq |C(\mathbf{v})|`. The model accepts any $`i` and states its theorems for page indices.
 * *Note v0.8.1-A15, the pages of $`P`.* §14.4 describes each paged proof as "a page of 64 hashes of
   segments". By the equation, the page is $`\mathcal{L}_6`, the hashes $`H(\$\text{leaf} \frown \mathbf{s}_i)` of the segments rather than
   $`\mathcal{H}(\mathbf{s}_i)`, and the last page holds only $`|\mathbf{s}| \bmod 64` of them when 64 does not divide $`|\mathbf{s}|`. The model follows the equation.

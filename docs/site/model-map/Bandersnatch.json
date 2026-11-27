@@ -1,13 +1,13 @@
 {
   "equations": {
     "G.1": { "kind": "def", "name": "JamCrypto.Bandersnatch.Thin.verify",
-             "note": "the model takes this as the parameter field `bsVerify` of `JAM.Crypto`; JamCrypto implements it (v0.8.1 Thin VRF)" },
+             "note": "the model takes this as the parameter field `bsVerify` of `JAM.Crypto`; JamCrypto implements it (v0.8.1 Thin VRF; reading `rd`, default `.prose`)" },
     "G.2": { "kind": "def", "name": "JamCrypto.Bandersnatch.Thin.vrfOutput",
              "note": "the model takes this as the parameter field `bsOut` of `JAM.Crypto`; JamCrypto implements it" },
     "G.3": { "kind": "def", "name": "JamCrypto.Ring.root",
-             "note": "the model takes this as the parameter field `bsRingRoot` of `JAM.Crypto`; `JamCrypto.Ring.crypto` instantiates it with the v0.8.1 constants" },
+             "note": "the model takes this as the parameter field `bsRingRoot` of `JAM.Crypto`; `JamCrypto.Ring.crypto` instantiates it with `gp := .v081` (the default is v0.8.0); the domain 2048 and the Draft-35 reading `rd` are JamCrypto's reading of the cited VRF spec, to be confirmed by v0.8.1 vectors" },
     "G.4": { "kind": "def", "name": "JamCrypto.Ring.verify081",
-             "note": "the model takes this as the parameter field `bsRingVerify` of `JAM.Crypto`; JamCrypto implements it" },
+             "note": "the model takes this as the parameter field `bsRingVerify` of `JAM.Crypto`; JamCrypto implements it (reading `rd`, default `.prose`)" },
     "G.5": { "kind": "def", "name": "JamCrypto.Ring.output081",
              "note": "the model takes this as the parameter field `bsRingOut` of `JAM.Crypto`; JamCrypto implements it" }
   }

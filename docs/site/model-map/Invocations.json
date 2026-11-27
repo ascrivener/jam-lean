@@ -14,7 +14,7 @@
              "note": "the cases after e′ is formed are `JAM.psiARun`" },
     "B.10": { "kind": "def", "name": "JAM.initImplications" },
     "B.13": { "kind": "def", "name": "JAM.checkId",
-              "note": "`fuel` bounds the search; |d| + 1 steps suffice" },
+              "note": "`fuel` bounds the search; |d| + 1 steps always suffice (by counting; not a theorem)" },
     "B.12": { "kind": "inline", "name": "JAM.psiARun", "at": "match o with",
               "note": "C's cases are the arms that follow: ∞ or ☇ takes the exceptional y, a 32-octet output sets the yield, otherwise x" },
     "B.14": { "kind": "def", "name": "JAM.charged",

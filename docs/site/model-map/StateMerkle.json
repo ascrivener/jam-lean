@@ -8,6 +8,6 @@
     "D.4": { "kind": "def", "name": "JAM.Trie.leaf" },
     "D.5": { "kind": "def", "name": "JAM.State.root" },
     "D.6": { "kind": "def", "name": "JAM.Trie.merkle",
-             "note": "keys stay whole and `depth` counts the bits stripped; `JAM.Trie.root` calls it with fuel 248, enough for distinct 31-octet keys" }
+             "note": "keys stay whole and `depth` counts the bits stripped; `JAM.Trie.root` calls it with fuel 248, which always suffices for distinct 31-octet keys (by counting; not a theorem)" }
   }
 }

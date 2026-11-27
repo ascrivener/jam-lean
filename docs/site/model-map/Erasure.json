@@ -10,7 +10,7 @@
     "H.5": { "kind": "def", "name": "JAM.Erasure.encode",
              "note": "the work is in `JAM.Erasure.encodeWith`" },
     "H.6": { "kind": "def", "name": "JAM.Erasure.recover",
-             "note": "that recovery inverts encoding is proved with Mathlib in the separate package `proofs/ErasureProofs`, which the book cannot import" },
+             "note": "that recovery inverts encoding is proved for v ≤ 2^15 validators as `recover_encode` (with `recover_encode_full` / `_tiny`) in the separate Mathlib package `proofs/ErasureProofs`, which the book cannot import" },
     "H.8": { "kind": "def", "name": "JAM.Erasure.GF.mul",
              "note": "elements are naturals below 2^16 in the polynomial basis; the modulus is `JAM.Erasure.GF.poly`, addition is `JAM.Erasure.GF.add` (XOR)" },
     "H.10": { "kind": "inline", "name": "JAM.Erasure.encodeWeights", "at": "lagrange (List.range (paddedShards d))",

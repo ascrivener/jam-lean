@@ -192,7 +192,7 @@ so the vectors check where the model looks for one, not the signatures themselve
 tag := "disputes-readings"
 %%%
 
-The first two points are note 29 of the model's
+The first two points are note 29, and the others the notes they name, in the model's
 [notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues):
 
 * *The fault condition.* $`r \in \psi'_B \Leftrightarrow r \notin \psi'_G \Leftrightarrow v` can be read as a chain of two
@@ -208,9 +208,10 @@ The first two points are note 29 of the model's
   conditions of (10.6); then the order of the faults (10.9) and, for each fault, the conditions of
   (10.7); and last (10.13). A key outside $`\mathbf{k}` is reported as already an offender when it is
   in $`\psi_O`, and as an unknown guarantor or auditor otherwise.
-* *Overlapping cases of V.* When $`|\mathbf{k}| < 3`, $`\lfloor 1/3 |\mathbf{k}| \rfloor = 0`, so the cases $`\bot` and
+* *Note v0.8.1-A34, overlapping cases of V.* When $`|\mathbf{k}| < 3`, $`\lfloor 1/3 |\mathbf{k}| \rfloor = 0`, so the cases $`\bot` and
   $`\emptyset` of (10.12) both apply at $`t = 0`. {api}`JAM.verdictOutcome` takes $`\bot`. The full and tiny
-  chains have $`|\mathbf{k}| = 1023` and $`6`, where the cases do not overlap.
+  chains have $`|\mathbf{k}| = 1023` and $`6`, and every validator count in the paper is a multiple of 3 of at least 6
+  (eq. (6.8)), so the cases never overlap there.
 * *Note v0.8.1-A7, context strings.* The paper's wording leaves open whether the `$` of
   `$jam_valid`, `$jam_invalid` and `$jam_guarantee` is an octet of the signed message. The note
   records that every signature in the v0.8.0 test vectors verifies only without it. That was

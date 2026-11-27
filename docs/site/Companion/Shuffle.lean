@@ -82,6 +82,8 @@ v0.8.0), which apply the hash form to $`[0, 1, \dots, n-1]`.
 tag := "shuffle-readings"
 %%%
 
-* *A short entropy sequence.* (F.1) types $`\mathbf{r}` as having at least $`l` entries, so $`\mathbf{r}_0` always exists. The
+* *Note v0.8.1-A36, a short entropy sequence.* (F.1) types $`\mathbf{r}` as having at least $`l` entries, so $`\mathbf{r}_0` always exists. The
   model's {api}`JAM.Shuffle.shuffle` accepts any $`\mathbf{r}`, and reads a missing entry as 0, to stay total.
-  The paper's uses never reach that case: (F.3) passes $`\mathcal{Q}_l(h)`, which has exactly $`l` entries.
+  The paper's uses never reach that case: (F.3) passes $`\mathcal{Q}_l(h)`, which has exactly $`l` entries. This is
+  recorded in the model's
+  [notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues).

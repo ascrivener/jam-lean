@@ -73,7 +73,7 @@ The core and service records are kept for the current block only:
 
 $$`\pi_C \in \llbracket \left\lgroup \begin{matrix} d \in \mathbb{N}, p \in \mathbb{N}, i \in \mathbb{N}, x \in \mathbb{N}, \\ z \in \mathbb{N}, e \in \mathbb{N}, l \in \mathbb{N}, u \in \mathbb{N}_G \end{matrix} \right\rgroup \rrbracket_{\mathsf{C}} \qquad \text{(13.7)}`
 
-$$`\pi_S \in \left\langle \mathbb{N}_S \to \left\lgroup \begin{matrix} p \in (\mathbb{N}, \mathbb{N}), \quad r \in (\mathbb{N}, \mathbb{N}_G), \\ i \in \mathbb{N}, x \in \mathbb{N}, z \in \mathbb{N}, e \in \mathbb{N}, \\ a \in (\mathbb{N}, \mathbb{N}, \mathbb{N}_G) \end{matrix} \right\rgroup \right\rangle \qquad \text{(13.8)}`
+$$`\pi_S \in \left\langle\!\left| \mathbb{N}_S \to \left\lgroup \begin{matrix} p \in (\mathbb{N}, \mathbb{N}), \quad r \in (\mathbb{N}, \mathbb{N}_G), \\ i \in \mathbb{N}, x \in \mathbb{N}, z \in \mathbb{N}, e \in \mathbb{N}, \\ a \in (\mathbb{N}, \mathbb{N}, \mathbb{N}_G) \end{matrix} \right\rgroup \right|\!\right\rangle \qquad \text{(13.8)}`
 
 The model's records are {api}`JAM.CoreRecord` and {api}`JAM.ServiceRecord`.
 
@@ -83,7 +83,7 @@ A core's record sums the load of the reports guaranteed on it in this block ($`\
 data-availability load of the reports that became available on it ($`\mathbf{R}`, eq. (11.16)), and the
 number of assurances that set its bit:
 
-$$`\forall c \in \mathbb{N}_{\mathsf{C}} : \pi'_C[c] \equiv \begin{pmatrix} i : R(c)_i \,,\ x : R(c)_x \,,\ z : R(c)_z \,, \\ e : R(c)_e \,,\ u : R(c)_u \,,\ l : L(c) \,, \\ d : D(c) \,,\ p : \sum_{a \in \mathbf{E}_A} a_f[c] \end{pmatrix} \qquad \text{(13.9)}`
+$$`\forall c \in \mathbb{N}_{\mathsf{C}} : \pi'_C[c] \equiv \begin{pmatrix} i \mathrel{\scriptstyle\blacktriangleright} R(c)_i \,,\ x \mathrel{\scriptstyle\blacktriangleright} R(c)_x \,,\ z \mathrel{\scriptstyle\blacktriangleright} R(c)_z \,, \\ e \mathrel{\scriptstyle\blacktriangleright} R(c)_e \,,\ u \mathrel{\scriptstyle\blacktriangleright} R(c)_u \,,\ l \mathrel{\scriptstyle\blacktriangleright} L(c) \,, \\ d \mathrel{\scriptstyle\blacktriangleright} D(c) \,,\ p \mathrel{\scriptstyle\blacktriangleright} \sum_{a \in \mathbf{E}_A} a_f[c] \end{pmatrix} \qquad \text{(13.9)}`
 
 $$`\text{where } R(c \in \mathbb{N}_{\mathsf{C}}) \equiv \sum_{\mathbf{d} \in \mathbf{r}_\mathbf{d}, \mathbf{r} \in \mathbf{I}, \mathbf{r}_c = c} (\mathbf{d}_i, \mathbf{d}_x, \mathbf{d}_z, \mathbf{d}_e, \mathbf{d}_u,) \qquad \text{(13.10)}`
 
@@ -100,7 +100,7 @@ In {api}`JAM.coreStats`, the ceiling $`\lceil n \cdot 65/64 \rceil` is computed 
 A record is made for every service that had a work-digest reported, a preimage provided, or an
 accumulation in this block:
 
-$$`\forall s \in \mathbf{s} : \pi'_S[s] \equiv \begin{pmatrix} i : R(s)_i \,,\ x : R(s)_x \,,\ z : R(s)_z \,, \\ e : R(s)_e \,,\ r : (R(s)_n, R(s)_u) \,, \\ p : \sum_{\mathbf{p} \in \mathbf{E}_P, \mathbf{p}_s = s} (1, |\mathbf{p}_\mathbf{d}|) \,, \\ a : \mathcal{U}(\mathbf{S}[s], (0, 0, 0)) \end{pmatrix} \qquad \text{(13.13)}`
+$$`\forall s \in \mathbf{s} : \pi'_S[s] \equiv \begin{pmatrix} i \mathrel{\scriptstyle\blacktriangleright} R(s)_i \,,\ x \mathrel{\scriptstyle\blacktriangleright} R(s)_x \,,\ z \mathrel{\scriptstyle\blacktriangleright} R(s)_z \,, \\ e \mathrel{\scriptstyle\blacktriangleright} R(s)_e \,,\ r \mathrel{\scriptstyle\blacktriangleright} (R(s)_n, R(s)_u) \,, \\ p \mathrel{\scriptstyle\blacktriangleright} \sum_{\mathbf{p} \in \mathbf{E}_P, \mathbf{p}_s = s} (1, |\mathbf{p}_\mathbf{d}|) \,, \\ a \mathrel{\scriptstyle\blacktriangleright} \mathcal{U}(\mathbf{S}[s], (0, 0, 0)) \end{pmatrix} \qquad \text{(13.13)}`
 
 $$`\text{where } \mathbf{s} = \mathbf{s}^R \cup \mathbf{s}^P \cup \mathcal{K}(\mathbf{S}) \qquad \text{(13.14)}`
 
@@ -108,7 +108,7 @@ $$`\text{and } \mathbf{s}^R = \{ \mathbf{d}_s \mid \mathbf{d} \in \mathbf{r}_\ma
 
 $$`\text{and } \mathbf{s}^P = \{ s \mid \exists x : (s, x) \in \mathbf{E}_P \} \qquad \text{(13.16)}`
 
-$$`\text{and } R(s \in \mathbb{N}_S) \equiv \sum_{\mathbf{d} \in \mathbf{r}_\mathbf{d}, \mathbf{r} \in \mathbf{I}, \mathbf{d}_s = s} (n : 1, \mathbf{d}_u, \mathbf{d}_i, \mathbf{d}_x, \mathbf{d}_z, \mathbf{d}_e) \qquad \text{(13.17)}`
+$$`\text{and } R(s \in \mathbb{N}_S) \equiv \sum_{\mathbf{d} \in \mathbf{r}_\mathbf{d}, \mathbf{r} \in \mathbf{I}, \mathbf{d}_s = s} (n \mathrel{\scriptstyle\blacktriangleright} 1, \mathbf{d}_u, \mathbf{d}_i, \mathbf{d}_x, \mathbf{d}_z, \mathbf{d}_e) \qquad \text{(13.17)}`
 
 $`\mathbf{S}` is the accumulation statistics of §12 (eq. (12.29)), and $`\mathcal{U}(x, y)` is $`x` unless $`x` is $`\emptyset`, in which case it
 is $`y`. v0.8.1 states the provision sum's filter $`\mathbf{p}_s = s` explicitly (GP #567). In {api}`JAM.serviceStats`,
@@ -121,7 +121,9 @@ is $`y`. v0.8.1 states the provision sum's filter $`\mathbf{p}_s = s` explicitly
 No theorems about the statistics are proved yet. The functions are run against GP v0.8.0 test
 vectors: the statistics vectors check the validator records, the preimages vectors the service
 records' provision counts, and the reports vectors the core and service figures of the incoming
-reports (those vectors have no newly available reports and no assurances).
+reports. The statistics and preimages vectors are those of davxy/jam-test-vectors v0.8.0; the
+reports vectors are its master at commit 5e8d2a2, later than v0.8.0. The reports vectors have no
+newly available reports and no assurances.
 
 # Readings chosen
 %%%

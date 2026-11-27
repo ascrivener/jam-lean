@@ -219,7 +219,7 @@ The ancestor set is not part of the state, so the model takes the condition of (
 A package already in the pipeline may not be reported again: not one reported in recent history
 $`\beta_H`, accumulated in $`\xi`, waiting in the ready queue $`\omega`, or assigned in $`\rho`:
 
-$$`\text{let } \mathbf{q} = \{ (\mathbf{r}_\mathbf{s})_p \mid (\mathbf{r}, \mathbf{d}) \in \widehat{\omega} \} \qquad \text{(11.39)}`
+$$`\text{let } \mathbf{q} = \{ (\mathbf{r}_\mathbf{s})_p \mid (\mathbf{r}, \mathbf{d}) \in \overgroup{\omega} \} \qquad \text{(11.39)}`
 
 $$`\text{let } \mathbf{a} = \{ (((\mathbf{a}_\mathbf{g})_\mathbf{r})_\mathbf{s})_p \mid \mathbf{a} \in \rho, \mathbf{a} \ne \emptyset \} \qquad \text{(11.40)}`
 
@@ -235,7 +235,7 @@ with the right segment roots:
 
 $$`\begin{aligned} &\forall \mathbf{r} \in \mathbf{I}, \forall p \in (\mathbf{r}_\mathbf{c})_\mathbf{p} \cup \mathcal{K}(\mathbf{r}_\mathbf{l}) : \\ &\quad p \in \mathbf{p} \cup \{ x \mid x \in \mathcal{K}(b_\mathbf{p}),\, b \in \beta_H \} \end{aligned} \qquad \text{(11.42)}`
 
-$$`\text{let } \mathbf{p} = \{ (((\mathbf{g}_\mathbf{r})_\mathbf{s})_p \mapsto ((\mathbf{g}_\mathbf{r})_\mathbf{s})_e) \mid \mathbf{g} \in \mathbf{E}_G \} \qquad \text{(11.43)}`
+$$`\text{let } \mathbf{p} = \{ (((g_\mathbf{r})_\mathbf{s})_p \mapsto ((g_\mathbf{r})_\mathbf{s})_e) \mid g \in \mathbf{E}_G \} \qquad \text{(11.43)}`
 
 $$`\forall \mathbf{r} \in \mathbf{I} : \mathbf{r}_\mathbf{l} \subseteq \mathbf{p} \cup \bigcup_{b \in \beta_H} b_\mathbf{p} \qquad \text{(11.44)}`
 
@@ -251,7 +251,7 @@ tag := "reports-posterior"
 Each core with a new guarantee takes it, stamped with the current time; the others keep their
 entry in $`\rho^\ddagger`:
 
-$$`\forall c \in \mathbb{N}_{\mathsf{C}} : \rho'[c] \equiv \begin{cases} (\mathbf{g}, t: \tau') & \text{if } \exists \mathbf{g} \in \mathbf{E}_G, (\mathbf{g}_\mathbf{r})_c = c \\ \rho^\ddagger[c] & \text{otherwise} \end{cases} \qquad \text{(11.46)}`
+$$`\forall c \in \mathbb{N}_{\mathsf{C}} : \rho'[c] \equiv \begin{cases} (\mathbf{g},\, t \mathrel{\scriptstyle\blacktriangleright} \tau') & \text{if } \exists \mathbf{g} \in \mathbf{E}_G, (\mathbf{g}_\mathbf{r})_c = c \\ \rho^\ddagger[c] & \text{otherwise} \end{cases} \qquad \text{(11.46)}`
 
 This is the `ρ'` binding at the end of {api}`JAM.guarantees`, which also carries out every check
 of §11.4, in the order given in its docstring:
@@ -261,8 +261,16 @@ of §11.4, in the order given in its docstring:
 # Theorems
 
 No theorems about the assurances or guarantees transitions are proved yet. The functions are run
-against the assurances test vectors (GP v0.8.0) and the reports test vectors (GP v0.8.0, with later
-vectors added for (11.33)). Ed25519 verification is a parameter of the model; in those runs it is
+against test vectors:
+
+* the assurances vectors of davxy/jam-test-vectors v0.8.0. v0.8.1 drops the assurance's anchor
+  (GP #562), so `assurance_with_bad_attestation_parent`, whose only fault is its anchor, is listed
+  as an expected deviation: the model accepts it;
+* the reports vectors of davxy/jam-test-vectors master at commit 5e8d2a2, later than v0.8.0, which
+  adds vectors for (11.33). They carry no ancestor set, so the runs take `lookupAnchorKnown` to hold
+  for every context, and the ancestry condition of (11.38) is not exercised.
+
+Ed25519 verification is a parameter of the model; in those runs it is
 replaced by an oracle that rejects every signature exactly when a vector expects a bad signature,
 so the vectors check where the model looks for one, not the signatures themselves.
 
@@ -271,7 +279,7 @@ so the vectors check where the model looks for one, not the signatures themselve
 tag := "reports-readings"
 %%%
 
-The first five points are notes 30, 32 and v0.8.1-A2 of the model's
+These points are recorded, under the note numbers given, in the model's
 [notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues):
 
 * *Note 30, errors and order for assurances.* No errors are named for an invalid $`\mathbf{E}_A`, and no
@@ -279,11 +287,14 @@ The first five points are notes 30, 32 and v0.8.1-A2 of the model's
   ({api}`JAM.AssurancesError`) and checks each assurance in turn: the index range, the order,
   the signature, then the bits.
 * *Note 32, division by 3.* $`R` divides by 3 ($`|\mathbf{c}|/3`), and the active-core bound in (11.27) is
-  $`|\kappa'|/3`, without saying what happens when $`|\kappa'|` is not a multiple of 3. The model reads both as
-  the floor $`\lfloor |\kappa'|/3 \rfloor` ({api}`JAM.rotate`, {api}`JAM.checkGuarantee`). The full chain's 1023 validators
-  and the tiny chain's 6 are multiples of 3, where the readings agree.
-* *Note 32, the previous rotation near genesis.* $`\mathbf{M}^*` uses $`\tau' - \mathsf{R}`, which is negative when $`\tau' < \mathsf{R}`.
-  The model truncates it at 0 ({api}`JAM.priorAssignments`).
+  $`|\kappa'|/3`. In the paper the division is exact: every validator key sequence has a length in
+  $`\mathbb{V} \equiv \{ 3c \mid c \in \mathbb{N}_{2\dots\mathsf{C}+1} \}` (eqs. (6.7), (6.8)). The model's types do not enforce
+  $`|\kappa'| \in \mathbb{V}`; its integer division ({api}`JAM.rotate`, {api}`JAM.checkGuarantee`) gives the floor
+  $`\lfloor |\kappa'|/3 \rfloor`, which is the exact quotient whenever $`|\kappa'| \in \mathbb{V}`.
+* *Note 32, the previous rotation.* $`\mathbf{M}^*` uses $`\tau' - \mathsf{R}`, which is negative when $`\tau' < \mathsf{R}`, and
+  the model's natural subtraction truncates it at 0 ({api}`JAM.priorAssignments`). This is never reached:
+  $`\mathbf{M}^*` is used only for a timeslot $`t \le \tau'` in an earlier rotation than $`\tau'`, which needs
+  $`\tau' \ge \mathsf{R}`.
 * *Note 32, errors and order for guarantees.* No errors are named for an invalid $`\mathbf{E}_G`, and no
   order is given between its conditions. The model uses the test vectors' names
   ({api}`JAM.ReportsError`) and the order given at {api}`JAM.guarantees`. A segment-root lookup
@@ -294,5 +305,8 @@ The first five points are notes 30, 32 and v0.8.1-A2 of the model's
   rows or against the other conditions. The model uses the test vectors' later error names
   (`refineLoadTooHigh`, `badExportsCount`, `bundleTooBig`, `authGasTooHigh`) and checks the rows in
   the paper's order ({api}`JAM.checkReportLoad`).
-* *Report equality in (11.17).* $`(p_\mathbf{g})_\mathbf{r} \in \mathbf{R}` compares work-reports. The model compares their
-  encodings.
+* *Note v0.8.1-A35, report equality in (11.17).* $`(p_\mathbf{g})_\mathbf{r} \in \mathbf{R}` compares work-reports without
+  saying how. The model compares their encodings ({api}`JAM.assurances`).
+* *Note v0.8.1-A37, a digest for a service that does not exist.* (11.32) and (11.45) read
+  $`\delta[\mathbf{d}_s]`, which is undefined when $`\mathbf{d}_s \notin \mathcal{K}(\delta)`. The model rejects such a report
+  (`badServiceId`, the test vectors' name), before the minimum-gas condition ({api}`JAM.guarantees`).

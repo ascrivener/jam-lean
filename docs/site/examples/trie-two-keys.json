@@ -6,28 +6,38 @@
   "repo": "davxy/jam-test-vectors v0.8.0",
   "path": "trie/trie.json"},
  "rows":
- [{"label": "Leaf for key `0x80542dac…`",
+ [{"label": "Leaf $L(k, v)$ for $k$ = `0x80542dac…`",
    "cells": ["embedded-value leaf: value of 22 octets, padded to 32", "`96`", "`0xbe812eb5…`"]},
-  {"label": "Leaf for key `0x8e758c6d…`",
+  {"label": "Leaf $L(k, v)$ for $k$ = `0x8e758c6d…`",
    "cells":
    ["regular leaf: value of 38 octets, stored as $\\mathcal{H}(v)$", "`c0`", "`0x5b6c965a…`"]},
-  {"label": "Branch on bit 4",
-   "cells": ["bit 0: `0xbe812eb5…`; bit 1: `0x5b6c965a…`", "`3e`", "`0x39c9e1fe…`"]},
-  {"label": "Branch on bit 3",
-   "cells": ["bit 0: `0x39c9e1fe…`; bit 1: $\\mathbb{H}_0$ (empty)", "`39`", "`0x79e84370…`"]},
-  {"label": "Branch on bit 2",
-   "cells": ["bit 0: `0x79e84370…`; bit 1: $\\mathbb{H}_0$ (empty)", "`79`", "`0x3778b55d…`"]},
-  {"label": "Branch on bit 1",
-   "cells": ["bit 0: `0x3778b55d…`; bit 1: $\\mathbb{H}_0$ (empty)", "`37`", "`0x1845748e…`"]},
-  {"label": "Branch on bit 0",
-   "cells": ["bit 0: $\\mathbb{H}_0$ (empty); bit 1: `0x1845748e…`", "`00`", "`0x5a2b3aad…`"]},
+  {"label": "Branch $B(l, r)$ on bit 4",
+   "cells": ["$l$ (bit 0): `0xbe812eb5…`; $r$ (bit 1): `0x5b6c965a…`", "`3e`", "`0x39c9e1fe…`"]},
+  {"label": "Branch $B(l, r)$ on bit 3",
+   "cells":
+   ["$l$ (bit 0): `0x39c9e1fe…`; $r$ (bit 1): $\\mathbb{H}_0$ (empty)", "`39`", "`0x79e84370…`"]},
+  {"label": "Branch $B(l, r)$ on bit 2",
+   "cells":
+   ["$l$ (bit 0): `0x79e84370…`; $r$ (bit 1): $\\mathbb{H}_0$ (empty)", "`79`", "`0x3778b55d…`"]},
+  {"label": "Branch $B(l, r)$ on bit 1",
+   "cells":
+   ["$l$ (bit 0): `0x3778b55d…`; $r$ (bit 1): $\\mathbb{H}_0$ (empty)", "`37`", "`0x1845748e…`"]},
+  {"label": "Branch $B(l, r)$ on bit 0",
+   "cells":
+   ["$l$ (bit 0): $\\mathbb{H}_0$ (empty); $r$ (bit 1): `0x1845748e…`", "`00`", "`0x5a2b3aad…`"]},
   {"label": "Root $M(d)$", "cells": ["the top branch's hash", "", "`0x5a2b3aad…`"]}],
  "params": "no chain parameters: case 8 of the trie vectors",
  "notes":
  ["Every node is 64 octets. The first bit says what it is: a branch has 0, a leaf 1. An embedded-value leaf's first octet is $2^7$ plus the value's length; a regular leaf's is $2^7 + 2^6$ = `c0`. A branch is its two children's hashes, with the left one's first bit cleared, so its first octet is the left child's first octet without its high bit.",
   "The vectors' keys are 32 octets; as in `trietest`, the model is given their first 31, the paper's state-key length."],
  "name": "trie-two-keys",
- "model": ["JAM.Trie.root", "JAM.Trie.merkle", "JAM.Trie.branch", "JAM.Trie.leaf", "JAM.Trie.bit"],
+ "model":
+ ["JAM.Trie.root",
+  "JAM.Trie.merkle",
+  "JAM.Trie.branch",
+  "JAM.Trie.leaf",
+  "JAM.Trie.hashNode",
+  "JAM.Trie.bit"],
  "inputs":
  [{"value": "first bits `100000`, value of 22 octets", "label": "Key `0x80542dac…`"},
   {"value": "first bits `100011`, value of 38 octets", "label": "Key `0x8e758c6d…`"}],

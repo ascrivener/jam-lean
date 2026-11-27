@@ -32,7 +32,12 @@
   "$\\mathcal{E}_4$ writes the least significant octet first: 16909060 is `0x01020304`, written `04 03 02 01`."],
  "name": "codec-preimages",
  "model":
- ["JAM.encodePreimages", "JAM.Codec.varSeq", "JAM.Codec.nat", "JAM.Codec.fixed", "JAM.Codec.var"],
+ ["JAM.encodePreimages",
+  "JAM.Codec.varSeq",
+  "JAM.Codec.var",
+  "JAM.Codec.nat",
+  "JAM.Codec.fixed",
+  "JAM.Codec.blob"],
  "inputs":
  [{"value": "3", "label": "Preimages $\\mathbf{E}_P$"},
   {"value": "64 octets", "label": "Encoded size"}],

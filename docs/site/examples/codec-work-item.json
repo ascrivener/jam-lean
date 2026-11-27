@@ -68,7 +68,9 @@
   "JAM.encodeImport",
   "JAM.Codec.var",
   "JAM.Codec.varSeq",
-  "JAM.Codec.fixed"],
+  "JAM.Codec.nat",
+  "JAM.Codec.fixed",
+  "JAM.Codec.blob"],
  "inputs":
  [{"value": "16909060", "label": "Service $s$"},
   {"value": "`01 02 03 04 05`", "label": "Payload $\\mathbf{y}$"},

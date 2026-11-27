@@ -107,7 +107,7 @@ def codecPreimages : IO Example := do
       count 3 and the length 16 are the octets `03` and `10`. Larger numbers take two to nine octets, the \
       first of which says how many follow.",
       "$\\mathcal{E}_4$ writes the least significant octet first: 16909060 is `0x01020304`, written `04 03 02 01`."],
-    model := ["JAM.encodePreimages", "JAM.Codec.varSeq", "JAM.Codec.nat", "JAM.Codec.fixed", "JAM.Codec.var"],
+    model := ["JAM.encodePreimages", "JAM.Codec.varSeq", "JAM.Codec.var", "JAM.Codec.nat", "JAM.Codec.fixed", "JAM.Codec.blob"],
     equations := ["C.1", "C.6", "C.7", "C.8", "C.13", "C.19"],
     check := codecCheck name }
 
@@ -152,7 +152,7 @@ def codecWorkItem : IO Example := do
     notes := ["Long runs show their first four octets and their last few: an import ends with its index in \
       $\\mathcal{E}_2$, an extrinsic with its length in $\\mathcal{E}_4$.",
       "Every count and length here is below 128, so $\\mathcal{E}$ writes each as one octet (eq. C.6)."],
-    model := ["JAM.WorkItem.encode", "JAM.encodeImport", "JAM.Codec.var", "JAM.Codec.varSeq", "JAM.Codec.fixed"],
+    model := ["JAM.WorkItem.encode", "JAM.encodeImport", "JAM.Codec.var", "JAM.Codec.varSeq", "JAM.Codec.nat", "JAM.Codec.fixed", "JAM.Codec.blob"],
     equations := ["C.6", "C.8", "C.13", "C.34", "C.39"],
     check := codecCheck name }
 
@@ -188,7 +188,7 @@ def trieExample (case : Nat) : IO Example := do
     let n := Trie.leaf k v
     let kind := if v.length ≤ 32 then s!"embedded-value leaf: value of {v.length} octets, padded to 32"
       else s!"regular leaf: value of {v.length} octets, stored as $\\mathcal\{H}(v)$"
-    { label := s!"Leaf for key {abbr k}",
+    { label := s!"Leaf $L(k, v)$ for $k$ = {abbr k}",
       cells := [kind, octets (n.take 1), abbr (Trie.hashNode n)] }
   let mut levels : Array Row := #[]
   let mut d := entries
@@ -202,7 +202,7 @@ def trieExample (case : Nat) : IO Example := do
     let node := Trie.branch ml mr
     let h := Trie.merkle (248 - depth) depth d
     unless h == Trie.hashNode node do throw <| IO.userError "examples: the branch does not hash to M"
-    let row : Row := ⟨s!"Branch on bit {depth}", [s!"bit 0: {name ml}; bit 1: {name mr}", octets (node.take 1), abbr h]⟩
+    let row : Row := ⟨s!"Branch $B(l, r)$ on bit {depth}", [s!"$l$ (bit 0): {name ml}; $r$ (bit 1): {name mr}", octets (node.take 1), abbr h]⟩
     levels := levels.push row
     d := if l.length ≥ r.length then l else r
     depth := depth + 1
@@ -222,7 +222,7 @@ def trieExample (case : Nat) : IO Example := do
       $2^7$ plus the value's length; a regular leaf's is $2^7 + 2^6$ = `c0`. A branch is its two children's hashes, with \
       the left one's first bit cleared, so its first octet is the left child's first octet without its high bit.",
       "The vectors' keys are 32 octets; as in `trietest`, the model is given their first 31, the paper's state-key length."],
-    model := ["JAM.Trie.root", "JAM.Trie.merkle", "JAM.Trie.branch", "JAM.Trie.leaf", "JAM.Trie.bit"],
+    model := ["JAM.Trie.root", "JAM.Trie.merkle", "JAM.Trie.branch", "JAM.Trie.leaf", "JAM.Trie.hashNode", "JAM.Trie.bit"],
     equations := ["D.3", "D.4", "D.5", "D.6"],
     check := "The model's root equals the vector's expected root (the comparison `lake build trietest` makes on every \
       trie vector). Each branch row's hash is $M$ of the entries below it, computed by the model's `merkle`." }
@@ -306,17 +306,17 @@ def erasureExample (file : String) (subsets : List (List Nat)) : IO Example := d
     let chunks := sub.map fun i => (got.getD i ⟨#[]⟩, i)
     let some r := Erasure.recover v chunks | throw <| IO.userError s!"examples: {file}: recover rejected {sub}"
     unless r == padded do throw <| IO.userError s!"examples: {file}: recovery from {sub} differs"
-    let row : Row := ⟨s!"Recovered from chunks {", ".intercalate (sub.map toString)}", [octets r.toList, "the padded data"]⟩
+    let row : Row := ⟨s!"$\\mathcal\{R}^{v}_1$ from chunks {", ".intercalate (sub.map toString)}", [octets r.toList, "the padded data"]⟩
     recRows := recRows.push row
   return {
     name := "erasure-tiny", title := "Erasure coding for six validators: three octets into six chunks, and back",
     source := jamSource s!"erasure/tiny/{file}",
     params := s!"$v$ = {v} validators, so $\\mathcal\{D}(v)$ = {d}: any {d} of the {v} chunks recover the data",
-    summary := s!"The data, {count data.size "octet" "octets"}, is padded with zeroes to a multiple of $2\\mathcal\{D}(v)$ = {2 * d} octets, \
-      so it is one word (two octets) for each of {d} runs. The code is systematic: the first {d} chunks are the data itself, \
+    summary := s!"The data $\\mathbf\{d}$, {count data.size "octet" "octets"}, is padded with zeroes to a multiple of $2\\mathcal\{D}(v)$ = {2 * d} octets, \
+      so it is one word (two octets) for each of {d} runs. The code $\\mathcal\{C}^{v}_1$ is systematic: the first {d} chunks are the data itself, \
       and the other {v - d} are parity. Any {d} chunks give the data back.",
     inputs := [
-      { label := "Data", value := octets data.toList },
+      { label := "Data $\\mathbf{d}$", value := octets data.toList },
       { label := "Padded data", value := octets padded.toList }],
     columns := ["", "Octets", "What it is"],
     rows := (got.zipIdx.map fun (c, i) => chunkRow c i) ++ recRows.toList,
@@ -324,7 +324,7 @@ def erasureExample (file : String) (subsets : List (List Nat)) : IO Example := d
       word per piece, with the same code applied to every piece.",
       "The first recovery uses only parity chunks, so the model interpolates through the field of §H.2; the second mixes data and parity."],
     model := ["JAM.Erasure.encode", "JAM.Erasure.recover", "JAM.Erasure.originalShards"],
-    equations := ["H.1", "H.4", "H.6", "H.13"],
+    equations := ["H.1", "H.5", "H.6", "H.13"],
     check := "The model's six chunks equal the vector's shards (the comparison `lake build erasuretest` makes on every \
       erasure vector), and recovering from each subset above gives the padded data back." }
 

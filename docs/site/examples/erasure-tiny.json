@@ -1,6 +1,6 @@
 {"title": "Erasure coding for six validators: three octets into six chunks, and back",
  "summary":
- "The data, 3 octets, is padded with zeroes to a multiple of $2\\mathcal{D}(v)$ = 6 octets, so it is one word (two octets) for each of 3 runs. The code is systematic: the first 3 chunks are the data itself, and the other 3 are parity. Any 3 chunks give the data back.",
+ "The data $\\mathbf{d}$, 3 octets, is padded with zeroes to a multiple of $2\\mathcal{D}(v)$ = 6 octets, so it is one word (two octets) for each of 3 runs. The code $\\mathcal{C}^6_1$ is systematic: the first 3 chunks are the data itself, and the other 3 are parity. Any 3 chunks give the data back.",
  "source":
  {"url": "https://github.com/davxy/jam-test-vectors/blob/v0.8.0/erasure/tiny/ec-3.json",
   "repo": "davxy/jam-test-vectors v0.8.0",
@@ -12,8 +12,10 @@
   {"label": "Chunk 3 (validator 3)", "cells": ["`59 d0`", "parity"]},
   {"label": "Chunk 4 (validator 4)", "cells": ["`06 15`", "parity"]},
   {"label": "Chunk 5 (validator 5)", "cells": ["`75 6d`", "parity"]},
-  {"label": "Recovered from chunks 3, 4, 5", "cells": ["`61 5d 17 00 00 00`", "the padded data"]},
-  {"label": "Recovered from chunks 1, 3, 5", "cells": ["`61 5d 17 00 00 00`", "the padded data"]}],
+  {"label": "$\\mathcal{R}^6_1$ from chunks 3, 4, 5",
+   "cells": ["`61 5d 17 00 00 00`", "the padded data"]},
+  {"label": "$\\mathcal{R}^6_1$ from chunks 1, 3, 5",
+   "cells": ["`61 5d 17 00 00 00`", "the padded data"]}],
  "params": "$v$ = 6 validators, so $\\mathcal{D}(v)$ = 3: any 3 of the 6 chunks recover the data",
  "notes":
  ["Each chunk is one word because the padded data is one word per run ($k$ = 1). Longer data gives each chunk one word per piece, with the same code applied to every piece.",
@@ -21,9 +23,9 @@
  "name": "erasure-tiny",
  "model": ["JAM.Erasure.encode", "JAM.Erasure.recover", "JAM.Erasure.originalShards"],
  "inputs":
- [{"value": "`61 5d 17`", "label": "Data"},
+ [{"value": "`61 5d 17`", "label": "Data $\\mathbf{d}$"},
   {"value": "`61 5d 17 00 00 00`", "label": "Padded data"}],
- "equations": ["H.1", "H.4", "H.6", "H.13"],
+ "equations": ["H.1", "H.5", "H.6", "H.13"],
  "columns": ["", "Octets", "What it is"],
  "check":
  "The model's six chunks equal the vector's shards (the comparison `lake build erasuretest` makes on every erasure vector), and recovering from each subset above gives the padded data back."}

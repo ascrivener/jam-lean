@@ -106,7 +106,7 @@ source point, the interpolation weights are rows of the identity, and the result
 index order, as the first case says.
 
 Here are both directions on the smallest erasure vector: three octets coded for six validators by
-{api}`JAM.Erasure.encode` (eq. {eq}`H.4`), and recovered by {api}`JAM.Erasure.recover` (eq. {eq}`H.6`) from two
+{api}`JAM.Erasure.encode` (eq. {eq}`H.5`), and recovered by {api}`JAM.Erasure.recover` (eq. {eq}`H.6`) from two
 different sets of three chunks:
 
 {example "erasure-tiny"}

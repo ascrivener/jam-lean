@@ -265,5 +265,6 @@ These are recorded as notes v0.8.1-A40 to A45 of the model's
   defined for $`s \in \mathcal{K}(\mathbf{d})`; {api}`JAM.effectiveSupervisor` returns $`s` for any
   other $`s`, which §12 relies on when a service without an account appears in a round.
 
+{api}`JAM.ServiceAccount.requestLenBound`, which note v0.8.1-A41 above refers to:
 
 {leanSource JAM.ServiceAccount.requestLenBound}

@@ -99,7 +99,8 @@ def dec {α : Type} (kvs : List (List UInt8 × List UInt8)) (i : Nat) (d : Decod
   | .ok x => .ok x
   | .error e => .error s!"C({i}): {e}"
 
-/-- Decode a raw state into $\sigma$ (see the module note for what can be decoded). -/
+/-- Decode a raw state into $\sigma$: the inverse of the serialization $T$ on a state's key-values. It is total on
+    states whose service entries all belong to an account with a $C(255, s)$ entry. -/
 def decodeState (p : Params) (kvs : List (List UInt8 × List UInt8)) : Except String State := do
   let C := p.coreCount
   let E := p.epochLen

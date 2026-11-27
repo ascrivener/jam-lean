@@ -174,9 +174,7 @@ The report is hashed through its encoding, as $`\mathcal{H}` applies to the code
 tag := "disputes-posterior"
 %%%
 
-{transcribed "10.15, 10.16, 10.17, 10.18" "08447e65ca,3b5958e84d,8bfbd40d08,6898d905e6"}
-
-$$`\begin{aligned} \psi'_G &\equiv \psi_G \cup \{ r \mid (r, \top) \in \mathbf{v} \} & \text{(10.15)} \\ \psi'_B &\equiv \psi_B \cup \{ r \mid (r, \bot) \in \mathbf{v} \} & \text{(10.16)} \\ \psi'_W &\equiv \psi_W \cup \{ r \mid (r, \emptyset) \in \mathbf{v} \} & \text{(10.17)} \\ \psi'_O &\equiv \psi_O \cup \{ f \mid (f, \dots) \in \mathbf{E}_C \} \cup \{ f \mid (f, \dots) \in \mathbf{E}_F \} & \text{(10.18)} \end{aligned}`
+{gpeq "10.15, 10.16, 10.17, 10.18"}
 
 The first three are {api}`JAM.assimilate`:
 

@@ -66,7 +66,7 @@ exported it, from the tagged $`\mathbb{H}^{\boxplus}`. The model's {api}`JAM.Seg
 {leanSource JAM.SegmentRoot}
 
 The paper bounds every work-package: at most $`\mathsf{J}` dependencies {eq}`14.4`, at most $`\mathsf{W}_X` exports,
-$`\mathsf{W}_M` imports and $`\mathsf{T}` extrinsics {eq}`14.5`, at most $`\mathsf{W}_I` octets of input data (14.6–14.8), and gas
+$`\mathsf{W}_M` imports and $`\mathsf{T}` extrinsics {eq}`14.5`, at most $`\mathsf{W}_I` octets of input data {eq}`14.6`–{eq}`14.8`, and gas
 limits summing to at most $`\mathsf{G}_A` and $`\mathsf{G}_R` {eq}`14.10`. The model's types do not carry these bounds, and
 its $`\Xi` does not check them (see {ref "work-readings"}[Readings chosen]).
 
@@ -200,11 +200,13 @@ $`\mathbf{b}` of segments behind each segment root. The model takes both from a
 {leanSource JAM.Guarantee.importOne}
 
 {api}`JAM.Guarantee.extrinsicData` and {api}`JAM.Guarantee.importData` map these over $`\mathbf{w}_\mathbf{x}` and $`\mathbf{w}_\mathbf{i}`, and
-{api}`JAM.Guarantee.packageData` collects $`(X(\mathbf{w}), S_\mathbf{l}(\mathbf{w}), J_\mathbf{l}(\mathbf{w}))` for every item of $`\mathbf{p}`.
+{api}`JAM.Guarantee.packageData` collects $`(X(\mathbf{w}), S_\mathbf{l}(\mathbf{w}), J_\mathbf{l}(\mathbf{w}))` for every item of $`\mathbf{p}` (each item's triple is {api}`JAM.Guarantee.itemData`).
 
 {leanSource JAM.Guarantee.extrinsicData}
 
 {leanSource JAM.Guarantee.importData}
+
+{leanSource JAM.Guarantee.itemData}
 
 {leanSource JAM.Guarantee.packageData}
 

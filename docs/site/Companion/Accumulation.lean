@@ -87,9 +87,7 @@ $`E` removes the entries whose package is in $`\mathbf{x}`, and removes $`\mathb
 remaining dependencies. $`Q` repeatedly takes the entries with no dependencies left. $`P` gives the
 package hashes of a set of reports:
 
-{transcribed "12.7" "88b75dde25"}
-
-$$`E \colon \left\{ \begin{aligned} &\left(\llbracket (\mathbb{R}, \{\![\,\mathbb{H}\,]\!\}) \rrbracket, \{\![\,\mathbb{H}\,]\!\}\right) \to \llbracket (\mathbb{R}, \{\![\,\mathbb{H}\,]\!\}) \rrbracket \\ &(\mathbf{r}, \mathbf{x}) \mapsto \left[ (r, \mathbf{d} \setminus \mathbf{x}) \;\middle|\; (r, \mathbf{d}) \mathrel{\mathrlap{<}{-}} \mathbf{r},\ (r_\mathbf{s})_p \notin \mathbf{x} \right] \end{aligned} \right. \qquad \text{(12.7)}`
+{gpeq "12.7"}
 
 {leanSource JAM.editQueue}
 

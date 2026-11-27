@@ -74,6 +74,8 @@ The exit reasons are a regular halt $`\blacksquare`, a panic ☇, running out of
 fault $`\Finv` with the address that faulted, and a host call $`\hbar` with the host-call identifier.
 The model's {api}`PVM.Status` has one constructor for each, plus `cont` for $`\blacktriangleright`.
 
+{leanSource PVM.Status}
+
 The model's $`\Psi` is {api}`PVM.psi`. Lean requires every function to terminate, and the paper's
 $`\Psi` is a plain recursion, so the model runs the steps with a fuel bound, {api}`PVM.runFuel`, and
 proves the bound is never reached (the last section of this chapter, {ref "pvm-terminates"}[Ψ terminates]):
@@ -197,6 +199,8 @@ The result is {api}`PVM.StepResult`, and the function is {api}`PVM.Program.step`
 {api}`PVM.Program` holds the code $`\mathbf{c}`, the bitmask $`\mathbf{k}` and the jump table $`\mathbf{j}`, so they need not be passed
 separately. The left side of {eq}`A.7` names the first argument $`\mathfrak{p}`, but its call in {eq}`A.1` and the gas stage
 {eq}`A.8` use the instruction data $`\mathbf{c}` (the type of $`\Psi_1` gives this argument only as $`\mathbb{B}`); the model takes $`\mathbf{c}`.
+
+{leanSource PVM.StepResult}
 
 {leanSource PVM.Program}
 
@@ -387,7 +391,7 @@ The arithmetic of the ALU formats is in separate functions, one per format, each
 of its table: {api}`PVM.Exec.twoRegAlu` (§A.5.9), {api}`PVM.Exec.twoRegImmAlu` (§A.5.10) and
 {api}`PVM.Exec.threeRegAlu` (§A.5.13); the branch conditions are {api}`PVM.Exec.regImmBranchCond` (§A.5.8)
 and {api}`PVM.Exec.twoRegBranchCond` (§A.5.11). The model computes over $`\mathbb{N}` and $`\mathbb{Z}` as the paper does,
-reading a register with `toNat` and writing the result back with `UInt64.ofNat`. Some rows of §A.5.13, for example:
+reading a register with `toNat` and writing the result back with `UInt64.ofNat`.
 
 {leanSource PVM.Exec.twoRegAlu}
 
@@ -396,6 +400,8 @@ reading a register with `toNat` and writing the result back with `UInt64.ofNat`.
 {leanSource PVM.Exec.regImmBranchCond}
 
 {leanSource PVM.Exec.twoRegBranchCond}
+
+Some rows of §A.5.13, for example:
 
 $$`\texttt{add\_32}\colon\ \varphi'_D = \mathcal{X}_4((\varphi_A + \varphi_B) \bmod 2^{32})`
 
@@ -461,9 +467,11 @@ model's fuel is always enough, and `psiHStar` satisfies the paper's equation {eq
 
 Two theorems about the host calls a program can make: $`\Psi` exits with $`\hbar \times h` only at an `ecalli` whose
 immediate is $`h`, and so every such $`h` is among the immediates of the `ecalli` instructions in the
-program's code ({api}`PVM.hostCallIdsOf`):
+program's code ({api}`PVM.hostCallIdsOf`, which scans the decoded code with {api}`PVM.Program.hostCallIds`):
 
 {leanSource PVM.hostCallIdsOf}
+
+{leanSource PVM.Program.hostCallIds}
 
 {mathdoc PVM.psi_host}
 
@@ -722,5 +730,6 @@ Most of these points are recorded in the model's
   $`\varphi_B > \nu_X + 2^{32}`, and the model takes the mathematical (non-negative)
   remainder ({api}`PVM.Exec.twoRegImmAlu`).
 
+{api}`PVM.Program.zetaInt`, which note 2 above refers to:
 
 {leanSource PVM.Program.zetaInt}

@@ -187,7 +187,7 @@ def glossarySection : BlockCommandOf GlossaryArgs
     off-chain steps from the on-chain ones. -/
 def lifeOfWorkSvg : String := "<svg viewBox=\"0 0 360 470\" role=\"img\" aria-labelledby=\"low-title low-desc\" xmlns=\"http://www.w3.org/2000/svg\">
 <title id=\"low-title\">The life of a work package</title>
-<desc id=\"low-desc\">Off-chain: a builder submits a work package to a core; the core's guarantors authorize and refine it, producing a work report, and spread the data to all validators. On-chain: a block includes the guaranteed report; later blocks carry availability assurances until the report is available; then accumulation runs the services' code and updates the state. Meanwhile auditors re-check the report, and a wrong report leads to a dispute.</desc>
+<desc id=\"low-desc\">Off-chain: a builder submits a work package to a core; the core's guarantors authorize and refine it, producing a work report, and spread the data to all validators. On-chain: a block includes the guaranteed report; later blocks carry availability assurances until the report is available; then accumulation runs the services' code and updates the state. Once the report is available, auditors re-check it, and a wrong report leads to a dispute.</desc>
 <defs><marker id=\"low-arrow\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"currentColor\"/></marker></defs>
 <g fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.4\">
 <rect x=\"20\" y=\"28\" width=\"230\" height=\"50\" rx=\"7\"/>
@@ -195,12 +195,12 @@ def lifeOfWorkSvg : String := "<svg viewBox=\"0 0 360 470\" role=\"img\" aria-la
 <rect x=\"20\" y=\"236\" width=\"230\" height=\"50\" rx=\"7\"/>
 <rect x=\"20\" y=\"318\" width=\"230\" height=\"50\" rx=\"7\"/>
 <rect x=\"20\" y=\"400\" width=\"230\" height=\"50\" rx=\"7\"/>
-<rect x=\"268\" y=\"236\" width=\"82\" height=\"132\" rx=\"7\" stroke-dasharray=\"4 3\"/>
+<rect x=\"268\" y=\"278\" width=\"82\" height=\"132\" rx=\"7\" stroke-dasharray=\"4 3\"/>
 <path d=\"M135,78 V108\" marker-end=\"url(#low-arrow)\"/>
 <path d=\"M135,174 V234\" marker-end=\"url(#low-arrow)\"/>
 <path d=\"M135,286 V316\" marker-end=\"url(#low-arrow)\"/>
 <path d=\"M135,368 V398\" marker-end=\"url(#low-arrow)\"/>
-<path d=\"M250,261 H266\" marker-end=\"url(#low-arrow)\"/>
+<path d=\"M250,343 H266\" marker-end=\"url(#low-arrow)\"/>
 <path d=\"M6,205 H354\" stroke-dasharray=\"6 4\" stroke-width=\"1\"/>
 </g>
 <g font-size=\"11\" opacity=\"0.75\" text-anchor=\"end\"><text x=\"350\" y=\"196\">OFF-CHAIN · on one core ↑</text><text x=\"350\" y=\"222\">ON-CHAIN · in blocks ↓</text></g>
@@ -210,7 +210,7 @@ def lifeOfWorkSvg : String := "<svg viewBox=\"0 0 360 470\" role=\"img\" aria-la
 <text x=\"32\" y=\"257\" font-weight=\"600\">3. Reported</text><text x=\"32\" y=\"275\">a block carries the guarantee</text>
 <text x=\"32\" y=\"339\" font-weight=\"600\">4. Available</text><text x=\"32\" y=\"357\">over 2/3 of validators assure</text>
 <text x=\"32\" y=\"421\" font-weight=\"600\">5. Accumulated</text><text x=\"32\" y=\"439\">service code updates the state</text>
-<text x=\"278\" y=\"257\" font-weight=\"600\">Audit</text><text x=\"278\" y=\"275\" font-size=\"11.5\">validators</text><text x=\"278\" y=\"290\" font-size=\"11.5\">re-check;</text><text x=\"278\" y=\"305\" font-size=\"11.5\">a wrong</text><text x=\"278\" y=\"320\" font-size=\"11.5\">report is</text><text x=\"278\" y=\"335\" font-size=\"11.5\">disputed</text>
+<text x=\"278\" y=\"299\" font-weight=\"600\">Audit</text><text x=\"278\" y=\"317\" font-size=\"11.5\">validators</text><text x=\"278\" y=\"332\" font-size=\"11.5\">re-check;</text><text x=\"278\" y=\"347\" font-size=\"11.5\">a wrong</text><text x=\"278\" y=\"362\" font-size=\"11.5\">report is</text><text x=\"278\" y=\"377\" font-size=\"11.5\">disputed</text>
 </g>
 </svg>"
 

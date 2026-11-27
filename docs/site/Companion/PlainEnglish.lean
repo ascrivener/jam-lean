@@ -30,7 +30,7 @@ tag := "plain-english-purpose"
 JAM is a blockchain for running other people's programs at scale. On most chains every node runs
 every transaction. JAM splits the work into two kinds and runs each where it is cheapest:
 
-* *Refine* is the heavy part. It runs _off-chain_, on one *core*: a small group of validators
+* *Refine* is the heavy part. It runs _in-core_ (off-chain), on one *core*: a small group of validators
   assigned to that core (its *guarantors*) does the computation, and only a compact result goes on
   chain. There are $`\Ccorecount` cores (341), so many workloads run side by side. Refine cannot
   change the chain's state; it reads the data it was given and can look up older on-chain data.
@@ -80,7 +80,7 @@ state does not change. The steps run in this order.
 2. *Disputes.* The disputes part of the extrinsic carries verdicts on work reports, each backed
    by judgments from more than two-thirds of a validator set, and the validators shown to have
    misbehaved. The judgments state records them; a report judged bad, or whose validity cannot be
-   known, is removed from its core, so it will never be accumulated. The header must list the
+   known, is removed from its core, which cancels its accumulation. The header must list the
    offending validators. ({ref "disputes"}[§10])
 
 3. *Block production (Safrole).* The author's VRF signature in the header is mixed into the
@@ -116,8 +116,8 @@ state does not change. The steps run in this order.
 
 7. *Recent history.* The root of this block's accumulation outputs is appended to a Merkle
    mountain range, a compact commitment to the accumulation outputs of every block so far. An
-   entry for this block is added to the recent-history log: its header hash, the packages reported
-   in it, and the new root of that commitment. ({ref "history"}[§7])
+   entry for this block is added to the recent-history log: its header hash, its timeslot, the
+   packages reported in it, and the new root of that commitment. ({ref "history"}[§7])
 
 8. *Preimages.* The preimages part of the extrinsic supplies data that services asked for by
    hash. Each blob must have been requested and not yet supplied; it is then stored in the
@@ -143,7 +143,7 @@ tag := "plain-english-offchain"
 
 The steps above are what every node does when it imports a block. The data in the extrinsic comes
 from work that validators do between blocks. The paper describes it too, and the model implements
-its deterministic parts.
+its deterministic parts, except Beefy's BLS signatures.
 
 * *Guaranteeing* ({ref "guaranteeing"}[§15]). A core's guarantors receive a work package, run its
   authorizer and then each item's refine code ({ref "work"}[§14]), and build the work report. They
@@ -159,7 +159,8 @@ its deterministic parts.
   in tranches every few seconds, fetch its data, re-run the refinement and announce their
   judgment; more auditors are drawn when some fail to show up. A negative judgment starts a
   dispute, and its verdict reaches the chain through the disputes extrinsic (step 2). A block
-  counts as audited once all the reports it made available are judged good.
+  counts as audited once each report it made available has a positive judgment from every auditor
+  announced for it (and no negative one), or from more than two-thirds of all validators.
 
 * *The best chain and finality* ({ref "bestchain"}[§19]). When there are forks, a node builds on
   the best chain: among the chains that extend the latest finalized block, are audited, and have

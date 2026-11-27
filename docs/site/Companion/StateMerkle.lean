@@ -69,7 +69,7 @@ The 27 octets of a storage key and of a request are {api}`JAM.ServiceAccount.sto
 {mathdoc JAM.ServiceAccount.storageGet_eq}
 
 {api}`JAM.ServiceAccount.requestGet` reads a request the same way, with two cases where it returns `none`: a
-length $`z \geq 2^{32} - 2` (outside $`\mathbb{N}_L`, so no request can have it), and a stored value that does not decode as a
+length $`z \geq 2^{32} - 2` (outside $`\mathbb{N}_P = \mathbb{N}_{2^{32}-2}`, the lengths a request can have), and a stored value that does not decode as a
 sequence of at most three timeslots (which only a state not built by the model can hold).
 
 # The serialization T (§D.1)

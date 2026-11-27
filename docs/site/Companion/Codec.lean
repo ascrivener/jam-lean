@@ -140,12 +140,12 @@ The model uses it in the assurances extrinsic (eq. (C.21)) and to build the mess
 tag := "codec-dicts"
 %%%
 
-$$`\forall K, V\colon \mathcal{E}(d \in \langle K \to V \rangle) \equiv \mathcal{E}\left(\updownarrow\left[\, (\mathcal{E}(k), \mathcal{E}(d[k])) \;\middle|\; k \in \mathcal{K}(d) \wr k \,\right]\right) \qquad \text{(C.11)}`
+$$`\forall K, V\colon \mathcal{E}(d \in \langle\!|\, K \to V \,|\!\rangle) \equiv \mathcal{E}\left(\updownarrow\left[\, (\mathcal{E}(k), \mathcal{E}(d[k])) \;\middle|\; k \in \mathcal{K}(d) \wr k \,\right]\right) \qquad \text{(C.11)}`
 
 $$`\mathcal{E}(\{a, b, c, \dots\}) \equiv \mathcal{E}(a) \frown \mathcal{E}(b) \frown \mathcal{E}(c) \frown \dots \quad \text{where } a < b < c < \dots \qquad \text{(C.12)}`
 
 A dictionary is encoded as its pairs in key order, with a length; a set as its elements in order.
-Where the paper uses a set of hashes $`\left\{\mkern-5mu\left[\,\mathbb{H}\,\right]\mkern-5mu\right\}` or a dictionary $`\langle \mathbb{H} \to \mathbb{H} \rangle`, the model holds it as
+Where the paper uses a set of hashes $`\left\{\mkern-5mu\left[\,\mathbb{H}\,\right]\mkern-5mu\right\}` or a dictionary $`\langle\!|\, \mathbb{H} \to \mathbb{H} \,|\!\rangle`, the model holds it as
 {api}`JAM.OctetSet` or {api}`JAM.OctetDict`. Both are extensional search trees over octet lists, so
 iterating over one already gives the elements in ascending order, and no sort is needed:
 

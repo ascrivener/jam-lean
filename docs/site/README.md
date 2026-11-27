@@ -72,6 +72,43 @@ its own box, with an edge shadow on the side that has more (`displayFitJs` and `
 
 The readings the model chose should link to `docs/upstream-candidates.md` by note number.
 
+## Worked examples: the model run on test vectors
+
+`{example "safrole-epoch-change"}` shows a box with a worked example: the model run on one test
+vector. The box says which vector and parameters were used, lists the inputs, and shows a table of
+values (usually before → after). It ends with notes, the model functions that computed the values
+(linked to their API pages), the paper's equations it illustrates, and how the result was checked
+against the vector. A box whose table has more than ten rows starts collapsed. The block is
+`Companion/Example.lean`.
+
+The numbers are never typed by hand. Each box is `docs/site/examples/<name>.json`, written by
+`Tests/Examples.lean`. That file runs the model's functions on the vectors through the same
+harnesses the vector tests use (`Tests/SafroleHarness.lean`, `Tests/AccumulateHarness.lean`,
+`Tests/PvmHarness.lean`), and stops with an error unless the vector's expected output matches.
+CI's `model` job runs `scripts/check-examples.sh`, which regenerates the files and fails on any
+difference, so a model change that changes an example fails CI until the files are regenerated:
+
+```
+scripts/fetch-vectors.sh && scripts/fetch-jam-vectors.sh     # once
+lake build examples-exe && .lake/build/bin/examples          # from the repository root
+```
+
+The vectors are GP v0.8.0 vectors, run with the tiny chain the tests use. Each box says so.
+
+To add an example:
+
+1. In `Tests/Examples.lean`, write a function returning an `Example`: run the model on the vector
+   and check the result against the vector with the suite's own comparison (as `safroleExample`,
+   `runAcc` and `pvmExample` do), then fill in the fields from the model's result, never from the
+   vector. Keep a box readable: a dozen rows of plain-English labels with the paper's symbols,
+   hashes abbreviated (`abbr`), long lists given as counts or the first few entries. Text fields may
+   use `$…$` (inline math with the paper's macros) and `` `…` `` (code). `model` lists full
+   declaration names the chapter imports; `equations` lists the paper's equation numbers. Name a
+   vector that the suite passes: a vector the model fails cannot be an example.
+2. Add the function to `examples`, run the generator, and commit the new JSON file.
+3. In the chapter, at the section the example illustrates, write a lead-in sentence and
+   `{example "<name>"}`. Write the prose so it reads on its own without the box.
+
 ## Notation: the paper's macros
 
 Math in the book (KaTeX) and in the API docstrings (MathJax) can use the Gray Paper's own macros,

@@ -204,6 +204,9 @@ jobs:
       - name: Safrole vectors (tiny and full; Bandersnatch as an oracle read from the vectors, then JamCrypto's ring VRF)
         run: lake build safroletest
 
+      - name: The companion book's worked examples are what the model computes (docs/site/examples)
+        run: scripts/check-examples.sh
+
       - name: Fetch four block-import traces (fallback, safrole, storage_light, preimages_light)
         run: scripts/fetch-trace-vectors.sh fallback safrole storage_light preimages_light
 

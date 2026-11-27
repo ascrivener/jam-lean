@@ -275,6 +275,11 @@ changes nothing:
 
 This is `dflt` in {api}`PVM.Program.exec`, below.
 
+Here are $`\Psi_1`'s steps on a short test program, with the gas charged at the start of each block
+and the registers each instruction changes:
+
+{example "pvm-inst_branch_eq_ok"}
+
 ## Numbers: signs, bits and sign extension
 
 The instruction tables use a few conversions between $`n`-octet naturals and integers or bit

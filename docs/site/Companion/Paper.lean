@@ -1,6 +1,7 @@
 import VersoManual
 import Companion.Source
 import Companion.ModelMap
+import Companion.Example
 
 /-!
 # The Gray Paper's version and section numbers

@@ -116,6 +116,11 @@ queued reports, with the packages of $`\mathbf{R}^!` removed:
 Here $`\overgroup{\mathbf{x}}` concatenates the sequences in $`\mathbf{x}`. In
 {api}`JAM.accumulate` these are the bindings `m`, `q` and `rStar`, with `slot` for $`\mathbf{H}_T`.
 
+Here is the queue at work on a test vector, where two new reports wait for packages that are not
+yet accumulated:
+
+{example "accumulate-queue"}
+
 # Execution (§12.2)
 %%%
 tag := "accumulation-execution"
@@ -355,6 +360,10 @@ How the code maps to the equations:
 * `theta` is $`\theta'`, and `root` is $`\mathcal{M}_B(\mathbf{s}, \mathcal{H}_K)`, the Keccak Merkle root over
   $`\mathbf{s} = [\mathcal{E}_4(s) \frown \mathcal{E}(h) \mid (s, h) \mathrel{\mathrlap{<}{-}} \theta']` that {ref "history"}[§7] appends to the
   accumulation-output log (eqs. {eq}`7.6, 7.7`); $`\mathcal{E}(h)` of a hash is the hash itself.
+
+Here is {api}`JAM.accumulate` on a block with no reports, where only the always-accumulate service runs:
+
+{example "accumulate-always"}
 
 # Preimage integration (§12.4)
 %%%

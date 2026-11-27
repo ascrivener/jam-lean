@@ -36,7 +36,8 @@ lean_lib Companion where
 /-- The data files the chapters read while they elaborate, as a dependency of every chapter: the
     paper's tables (`gp-equations.json`, read by `{gpeq}`, `{eq}` and `{transcribed}`;
     `gp-labels.json`, read by `{gpsec}`, `{gpchapter}` and `{gptag}`; both in `Companion/Paper.lean`)
-    and the model maps (`model-map/*.json`, read by `Companion/ModelMap.lean`). Changing any of them
+    the model maps (`model-map/*.json`, read by `Companion/ModelMap.lean`) and the worked examples
+    (`examples/*.json`, read by `Companion/Example.lean`). Changing any of them
     re-elaborates the chapters, so even a cached build renders the new entries and fails on a
     broken map entry or a `{transcribed}` fingerprint that no longer matches.
 
@@ -47,8 +48,10 @@ target bookInputs : Array System.FilePath := do
   let pkg ← getRootPackage
   let maps ← (pkg.dir / "model-map").readDir
   let maps := (maps.map (·.path)).filter (·.extension == some "json") |>.qsort (·.toString < ·.toString)
+  let exs ← (pkg.dir / "examples").readDir
+  let exs := (exs.map (·.path)).filter (·.extension == some "json") |>.qsort (·.toString < ·.toString)
   Job.collectArray (traceCaption := "book inputs") <$>
-    (#[pkg.dir / "gp-equations.json", pkg.dir / "gp-labels.json"] ++ maps).mapM fun p => inputTextFile p
+    (#[pkg.dir / "gp-equations.json", pkg.dir / "gp-labels.json"] ++ maps ++ exs).mapM fun p => inputTextFile p
 
 /-- Renders the companion to HTML: `lake exe companion --output DIR`. -/
 lean_exe companion where

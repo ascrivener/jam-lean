@@ -1,0 +1,49 @@
+{"title": "A short PVM program, one instruction at a time",
+ "summary":
+ "Two `load_imm` instructions put equal values in two registers, and `branch_eq` compares them; the branch is taken, and the program ends at a trap. Gas is charged once per basic block, at the block's first instruction.",
+ "source":
+ {"url": "https://github.com/koute/jamtestvectors/blob/master/pvm/programs/inst_branch_eq_ok.json",
+  "repo": "koute/jamtestvectors (pvm/programs)",
+  "path": "inst_branch_eq_ok.json"},
+ "rows":
+ [{"label": "1",
+   "cells":
+   ["0",
+    "`load_imm` $\\varphi_{7}$, 0x4d2",
+    "10000 → 9998 (block cost 2)",
+    "$\\varphi_{7}$ = 0x4d2",
+    "continue"]},
+  {"label": "2",
+   "cells":
+   ["4", "`load_imm` $\\varphi_{8}$, 0x4d2", "9998 → 9998", "$\\varphi_{8}$ = 0x4d2", "continue"]},
+  {"label": "3",
+   "cells":
+   ["8", "`branch_eq` $\\varphi_{7}$, $\\varphi_{8}$, → 12", "9998 → 9998", "—", "continue"]},
+  {"label": "4",
+   "cells":
+   ["12",
+    "`load_imm_64` $\\varphi_{7}$, 0xdeadbeef",
+    "9998 → 9996 (block cost 2)",
+    "$\\varphi_{7}$ = 0xdeadbeef",
+    "continue"]},
+  {"label": "5", "cells": ["22", "`trap`", "9996 → 9996", "—", "panic ☇"]}],
+ "params": "no chain parameters: the PVM alone",
+ "notes":
+ ["The vector reports the exit at the instruction that caused it; $\\Psi$ itself returns $\\imath = 0$ on ☇."],
+ "name": "pvm-inst_branch_eq_ok",
+ "model": ["PVM.Program.step", "PVM.psi", "PVM.Program.chargeGas"],
+ "inputs":
+ [{"value": "23 octets", "label": "Code $\\mathbf{c}$"},
+  {"value": "0", "label": "Start $\\imath$"},
+  {"value": "10000", "label": "Gas $\\varrho$"},
+  {"value": "all 0", "label": "Registers $\\varphi$"}],
+ "equations": ["A.1", "A.7", "A.8", "A.10"],
+ "columns":
+ ["Step",
+  "$\\imath$",
+  "Instruction",
+  "Gas $\\varrho$",
+  "Registers changed",
+  "Status $\\varepsilon$"],
+ "check":
+ "Running $\\Psi$ on the whole program gives the same status, gas and registers as the steps above, and they equal the vector's expected result (the comparison `lake build pvmtest` makes on every program vector)."}

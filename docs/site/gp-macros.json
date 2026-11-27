@@ -1182,7 +1182,7 @@
   },
   "bitstring": {
    "args": 1,
-   "body": "\\mathbb{b}_{#1}",
+   "body": "\\text{𝕓}_{#1}",
    "default": "",
    "paper": "\\bitstring"
   },
@@ -1430,7 +1430,7 @@
   },
   "defxfer": {
    "args": 0,
-   "body": "\\mathbb{t}",
+   "body": "\\text{𝕥}",
    "paper": "\\defxfer"
   },
   "defxfers": {

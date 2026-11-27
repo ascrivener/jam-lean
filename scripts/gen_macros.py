@@ -220,6 +220,12 @@ def rename_refs(body):
     return re.sub(r"\\([A-Za-z]*¬[A-Za-z¬]*)", lambda m: "\\" + ascii_name(m.group(1)), body)
 
 
+def lower_bb(body):
+    """\\mathbb of a lowercase letter: KaTeX prints a plain italic letter, so use the Unicode
+    double-struck letter (U+1D552 …) in \\text, the same glyph."""
+    return re.sub(r"\\mathbb\{([a-z])\}", lambda m: "\\text{" + chr(0x1D552 + ord(m.group(1)) - ord("a")) + "}", body)
+
+
 def apply_subst(body):
     for k in sorted(SUBST, key=len, reverse=True):
         guard = r"(?![A-Za-z])" if k[-1].isalpha() else ""
@@ -245,7 +251,7 @@ def main():
         nargs, default, body, where = defs[name]
         body = OVERRIDES.get("\\" + name, body)
         a = ascii_name(name)
-        b = apply_subst(rename_refs(body))
+        b = lower_bb(apply_subst(rename_refs(body)))
         b = re.sub(r"(?<!\\)\$", "", b)  # math inside a text-mode macro: already in math here
         if name in EXCLUDE:
             unmapped[a] = {"paper": "\\" + name, "where": where, "uses": ["LaTeX plumbing (EXCLUDE)"]}

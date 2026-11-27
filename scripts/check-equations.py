@@ -14,7 +14,9 @@ keeps hand-typed numbers out:
 * a hand-written display (`$$`…``) that carries an equation number (`\\text{(6.24)}`) must follow a
   `{transcribed "6.24" "<fingerprint>"}` paragraph naming the same numbers; that marker fails the
   build when the paper's equation changes;
-* a number like "(6.24)" in prose, outside code and math, must be written ``{eq}`6.24` ``.
+* a number like "(6.24)" or "(14.6–14.8)" in prose, outside code and math, must be written
+  ``{eq}`6.24` `` (a range: ``{eq}`14.6`–{eq}`14.8` ``);
+* a heading stays plain text, but every equation number in it must exist in the paper.
 """
 
 import glob
@@ -26,7 +28,8 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NUM = r"(?:[1-9]\d?|[A-H])\.\d+"
 TAG = re.compile(r"\\text\{\((" + NUM + r"(?:\s*,\s*" + NUM + r")*)\)\}")
-PROSE = re.compile(r"\((" + NUM + r"(?:\s*,\s*" + NUM + r")*)\)")
+PROSE = re.compile(r"\((" + NUM + r"(?:\s*(?:,|–|-)\s*" + NUM + r")*)\)")
+HEADING_NUM = re.compile(r"(?<![\w.])" + NUM + r"(?![\w.]*\d)")
 SKIP = ("Paper.lean", "Source.lean", "Docstring.lean")
 
 
@@ -67,6 +70,7 @@ def main():
     if sys.argv[1:2] == ["--changed"]:
         changed(sys.argv[2])
         return
+    table = json.load(open(os.path.join(ROOT, "docs", "site", "gp-equations.json"), encoding="utf-8"))["equations"]
     bad = []
     for f in chapters():
         lines = open(f, encoding="utf-8").read().split("\n")
@@ -89,11 +93,17 @@ def main():
                     bad.append(f"{rel}: hand-written display of ({', '.join(tags)}): use {{gpeq \"{', '.join(tags)}\"}}, "
                                "or mark it {transcribed …} with the equation's fingerprint")
                 continue
+            if line.startswith("#"):
+                # Headings stay plain text: their equation numbers must exist in the table.
+                for n in HEADING_NUM.findall(re.sub(r"§\S+", "", line)):
+                    if n not in table:
+                        bad.append(f"{rel}: heading cites equation ({n}), which the paper does not have")
+                continue
             if line.startswith(("{", "import", "open", "%%%", "set_option")):
                 continue
             text = re.sub(r"\$?`[^`]*`", "", line)
             for m in PROSE.finditer(text):
-                bad.append(f"{rel}: hand-typed equation number {m.group(0)}: write {{eq}}`{m.group(1)}`")
+                bad.append(f"{rel}: hand-typed equation number {m.group(0)}: write {{eq}}`N` (a range: {{eq}}`N`–{{eq}}`M`)")
     for b in bad:
         print(b)
     print(f"check-equations: {len(bad)} problem(s)")

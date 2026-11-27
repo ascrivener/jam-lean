@@ -66,7 +66,7 @@ exported it, from the tagged $`\mathbb{H}^{\boxplus}`. The model's {api}`JAM.Seg
 {leanSource JAM.SegmentRoot}
 
 The paper bounds every work-package: at most $`\mathsf{J}` dependencies {eq}`14.4`, at most $`\mathsf{W}_X` exports,
-$`\mathsf{W}_M` imports and $`\mathsf{T}` extrinsics {eq}`14.5`, at most $`\mathsf{W}_I` octets of input data (14.6–14.8), and gas
+$`\mathsf{W}_M` imports and $`\mathsf{T}` extrinsics {eq}`14.5`, at most $`\mathsf{W}_I` octets of input data {eq}`14.6`–{eq}`14.8`, and gas
 limits summing to at most $`\mathsf{G}_A` and $`\mathsf{G}_R` {eq}`14.10`. The model's types do not carry these bounds, and
 its $`\Xi` does not check them (see {ref "work-readings"}[Readings chosen]).
 

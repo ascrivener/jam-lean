@@ -103,9 +103,7 @@ tag := "overview-graph"
 The paper specifies $`\Upsilon` by saying what each part of the posterior state depends on. The symbol $`\prec`
 reads "depends on":
 
-{transcribed "4.5, 4.6, 4.7, 4.8, 4.9, 4.10, 4.11, 4.12, 4.13, 4.14, 4.15, 4.16, 4.17, 4.18, 4.19, 4.20" "08022e224e,a3a715d0fe,bb1a9b64b5,86a38169af,967c6a2b56,93126121f4,140a592b26,c8d23bf7b1,351c1c3dad,101fdc7e08,c7c73e4495,98a46a357a,095732e29a,5ca9cb71a8,3bdc40e654,2cd495cc60"}
-
-$$`\begin{aligned} \tau' &\prec \mathbf{H} & \text{(4.5)} \\ \beta^\dagger_H &\prec (\mathbf{H}, \beta_H) & \text{(4.6)} \\ \gamma' &\prec (\mathbf{H}, \tau, \mathbf{E}_T, \gamma, \iota, \eta', \kappa', \psi') & \text{(4.7)} \\ \eta' &\prec (\mathbf{H}, \tau, \eta) & \text{(4.8)} \\ \kappa' &\prec (\mathbf{H}, \tau, \kappa, \gamma) & \text{(4.9)} \\ \lambda' &\prec (\mathbf{H}, \tau, \lambda, \kappa) & \text{(4.10)} \\ \psi' &\prec (\mathbf{E}_D, \psi) & \text{(4.11)} \\ \rho^\dagger &\prec (\mathbf{E}_D, \rho) & \text{(4.12)} \\ \rho^\ddagger &\prec (\mathbf{E}_A, \rho^\dagger) & \text{(4.13)} \\ \rho' &\prec (\mathbf{E}_G, \rho^\ddagger, \kappa, \tau') & \text{(4.14)} \\ \mathbf{R}^* &\prec (\mathbf{E}_A, \rho^\dagger) & \text{(4.15)} \\ (\omega', \xi', \delta^\ddagger, \chi', \iota', \phi', \theta', \mathbf{S}) &\prec (\mathbf{R}^*, \omega, \xi, \delta, \chi, \iota, \phi, \tau, \tau') & \text{(4.16)} \\ \beta'_H &\prec (\mathbf{H}, \mathbf{E}_G, \beta^\dagger_H, \theta') & \text{(4.17)} \\ \delta' &\prec (\mathbf{E}_P, \delta^\ddagger, \tau') & \text{(4.18)} \\ \alpha' &\prec (\mathbf{H}, \mathbf{E}_G, \phi', \alpha) & \text{(4.19)} \\ \pi' &\prec (\mathbf{E}_G, \mathbf{E}_P, \mathbf{E}_A, \mathbf{E}_T, \tau, \kappa', \pi, \mathbf{H}, \mathbf{S}) & \text{(4.20)} \end{aligned}`
+{gpeq "4.5, 4.6, 4.7, 4.8, 4.9, 4.10, 4.11, 4.12, 4.13, 4.14, 4.15, 4.16, 4.17, 4.18, 4.19, 4.20"}
 
 The daggered terms are intermediate values: $`\beta^\dagger_H` is recent history with the parent's state root
 corrected, $`\rho^\dagger` and $`\rho^\ddagger` are the availability assignments after disputes and after assurances, $`\mathbf{R}^*`
@@ -206,9 +204,7 @@ $`P(\mathbf{H})` is the parent header and $`\mathcal{T}` the wall clock. A heade
 
 ## The extrinsic hash
 
-{transcribed "5.4, 5.5, 5.6, 5.7" "519c1a0834,fd9718cd34,b963e9d92f,bee2aaed7b"}
-
-$$`\begin{aligned} \mathbf{H}_X &\in \mathbb{H}, \quad \mathbf{H}_X \equiv \mathcal{H}(\mathcal{E}(\mathcal{H}^\#(\mathbf{a}))) & \text{(5.4)} \\ \text{where } \mathbf{a} &= \left[\mathcal{E}_T(\mathbf{E}_T), \mathbf{p}, \mathbf{g}, \mathcal{E}_A(\mathbf{E}_A), \mathcal{E}_D(\mathbf{E}_D)\right] & \text{(5.5)} \\ \text{and } \mathbf{p} &= \mathcal{E}\left(\updownarrow\left[\left(\mathcal{E}_4(s), \mathcal{H}(\mathbf{d})\right) \;\middle|\; (s, \mathbf{d}) \mathrel{\mathrlap{<}{-}} \mathbf{E}_P\right]\right) & \text{(5.6)} \\ \text{and } \mathbf{g} &= \mathcal{E}\left(\updownarrow\left[\left(\mathcal{H}(r), \mathcal{E}_4(t), \mathcal{E}_C(a)\right) \;\middle|\; (r, t, a) \mathrel{\mathrlap{<}{-}} \mathbf{E}_G\right]\right) & \text{(5.7)} \end{aligned}`
+{gpeq "5.4, 5.5, 5.6, 5.7"}
 
 $`\mathcal{H}^\#` applies $`\mathcal{H}` to each element. Preimages and work reports enter by their hashes, so that each can be shown to be
 included without the whole extrinsic. $`\mathcal{E}_C` is the credential encoding of {ref "codec"}[Appendix C]; the model's

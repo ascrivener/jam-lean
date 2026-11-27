@@ -70,7 +70,7 @@ Gaps, where the paper leaves behaviour undefined:
 | v0.8.1-A31 | §5, (5.2)–(5.3) | **A** and P(H) come from headers outside σ. The model takes the retained headers as an argument (`Chain`); with none retained, the H_P check is skipped (`JAM/BlockImport.lean`, `importBlock`). |
 | v0.8.1-A32 | §4, (4.1) | No errors are named for an invalid block and no order is given between the sections' validity conditions. The model reports the first failing check in the order of `importBlock` (header checks, disputes, Safrole and the markers, seal, assurances, guarantees, preimages; `BlockError`). |
 | v0.8.1-A33 | §3.8.1 | ℋ_K is "Keccak 256-bit … proposed by Bertoni et al. and utilized by" the Yellow Paper; the FIPS 202 SHA3-256 padding differs. The model uses the original Keccak padding (domain octet 0x01), as Ethereum does (`JAM/Keccak.lean`, `keccak256`). |
-| v0.8.1-A34 | Appendix H, eq. (H.1) | 𝒟(v) ≡ max({d ∣ d ∈ ℕ_{v/3+2}, 𝖶_G mod 2d = 0}) does not say whether v/3 is integer or real division when 3 ∤ v. The two readings differ for v = 1021 and 1022: with real division ℕ_{v/3+2} contains 342, and 𝖶_G mod 684 = 0, so 𝒟(v) = 342; with integer division (⌊v/3⌋ + 2 = 342, so d ≤ 341) 𝒟(v) = 228. The chains of the vectors (v = 6 and 1023) are multiples of 3 and unaffected. The model uses integer division (`JAM/Erasure.lean`, `originalShards`). |
+| v0.8.1-A34 | Appendix H, eq. (H.1) | **Withdrawn (2026-11-27), not for upstream:** 𝒟 is typed on v ∈ 𝕍 = {3c ∣ c ∈ ℕ_{2…𝖢+1}} (eq. (6.8)), so v/3 is exact and v = 1021, 1022 are not in its domain. `originalShards`' integer division agrees on 𝕍. (Was: "v/3 integer or real division when 3 ∤ v".) |
 
 ## Resolved in GP v0.8.1
 

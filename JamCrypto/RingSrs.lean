@@ -1,12 +1,12 @@
 import JamCrypto.Bls12381G1
 
 /-!
-# The ring SRS (KZG powers of τ)
+# The ring SRS (KZG powers of $\tau$)
 
 The structured reference string of the Bandersnatch ring VRF's KZG commitments over BLS12-381:
-[τⁱ]G1 for i < 6145 and [τⁱ]G2 for i < 2, from the Zcash powers-of-τ ceremony, as shipped by
-ark-vrf 0.1.0 (`data/srs/bls12-381-srs-2-11-uncompressed-zcash.bin`, committed here as
-`JamCryptoTest/data/bls12-381-srs-2-11-uncompressed-zcash.bin`).
+$[\tau^i]G_1$ for $i < 6145$ and $[\tau^i]G_2$ for $i < 2$, from the Zcash powers-of-$\tau$
+ceremony, as shipped by ark-vrf 0.1.0 (`data/srs/bls12-381-srs-2-11-uncompressed-zcash.bin`,
+committed here as `JamCryptoTest/data/bls12-381-srs-2-11-uncompressed-zcash.bin`).
 
 File format (arkworks `CanonicalSerialize`, uncompressed, of w3f-pcs `URS`): a little-endian u64
 count of G1 points, the G1 points (96 octets each), a u64 count of G2 points, the G2 points (192
@@ -17,9 +17,9 @@ namespace JamCrypto.Ring
 
 /-- The parsed SRS. -/
 structure Srs where
-  /-- [τⁱ]G1. -/
+  /-- $[\tau^i]G_1$. -/
   g1 : Array G1.Aff
-  /-- The uncompressed encodings of [τⁱ]G2. -/
+  /-- The uncompressed encodings of $[\tau^i]G_2$. -/
   g2Raw : Array ByteArray
   /-- Precomputed ring selector commitments by domain size (see `Ring.withSelectors`); a pure
       cache, never needed for correctness. -/

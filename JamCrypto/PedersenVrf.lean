@@ -5,24 +5,29 @@ import JamCrypto.ThinVrf
 
 The Pedersen VRF that GP v0.8.1's ring VRF builds on (Draft 35 §5: a ring VRF proof is a Pedersen
 proof and a ring proof). It shares the suite, transcript, hash-to-curve and output of
-`JamCrypto.Bandersnatch.Thin`. With one I/O pair (I, O) the delinearization of §1.6.4 returns the
+`JamCrypto.Bandersnatch.Thin`. With one I/O pair $(I, O)$ the delinearization of §1.6.4 returns the
 pair unchanged (it still absorbs nothing into the caller's transcript, since it works on a fork).
 
-Prove (§4.1): T = vrf_transcript(PedersenVrf, [(I, O)], ad); b = blinding(x, fork T) (App. A.4);
-Ȳ = x·G + b·B; T absorbs enc_point(Ȳ); k = nonce(x, fork T), k_b = nonce(b, fork T);
-R = k·G + k_b·B, O_k = k·I; c = challenge([R, O_k], T); s = k + c·x, s_b = k_b + c·b.
+Prove (§4.1): $T = \text{vrf}\_\text{transcript}(\text{PedersenVrf}, [(I, O)], \mathit{ad})$; $b =
+\text{blinding}(x, \text{fork } T)$ (App. A.4); $\bar{Y} = x \cdot G + b \cdot B$; $T$ absorbs
+$\text{enc}\_\text{point}(\bar{Y})$; $k = \text{nonce}(x, \text{fork } T)$, $k_b = \text{nonce}(b,
+\text{fork } T)$; $R = k \cdot G + k_b \cdot B$, $O_k = k \cdot I$; $c = \text{challenge}([R, O_k],
+T)$; $s = k + c \cdot x$, $s_b = k_b + c \cdot b$.
 
-Verify (§4.2): Ȳ, I and O in 𝔾 and not the identity, R and O_k in 𝔾 (the identity allowed);
-O_k + c·O = s·I and R + c·Ȳ = s·G + s_b·B.
+Verify (§4.2): $\bar{Y}$, $I$ and $O$ in $\mathbb{G}$ and not the identity, $R$ and $O_k$ in
+$\mathbb{G}$ (the identity allowed); $O_k + c \cdot O = s \cdot I$ and $R + c \cdot \bar{Y} = s
+\cdot G + s_b \cdot B$.
 
-The 160-octet proof is enc_point(Ȳ) ⌢ enc_point(R) ⌢ enc_point(O_k) ⌢ enc_scalar(s) ⌢
-enc_scalar(s_b), the field order of §4 (aggregate encoding, §1.5).
+The 160-octet proof is $\text{enc}\_\text{point}(\bar{Y}) \frown \text{enc}\_\text{point}(R) \frown
+\text{enc}\_\text{point}(O_k) \frown \text{enc}\_\text{scalar}(s) \frown \text{enc}\_\text{scalar}(s_b)$, the field order
+of §4 (aggregate encoding, §1.5).
 
 The `Reading` (default `.prose`) selects the hash to curve of the input point (done by the caller)
-and the blinding base B: §4 prints B's coordinates and says B is hash_to_curve("pedersen-blinding")
-(App. A.2). Under `.vectors` B is the printed point, which is that derivation with the 48-octet
-Z_pad; under `.prose` B is derived with the prose hash to curve (Z_pad of 128 octets), and differs
-from the printed point.
+and the blinding base $B$: §4 prints $B$'s coordinates and says $B$ is
+$\text{hash}\_\text{to}\_\text{curve}(\texttt{"pedersen-blinding"})$ (App. A.2). Under `.vectors` $B$ is the
+printed point, which is that derivation with the 48-octet $Z_{\text{pad}}$; under `.prose` $B$ is
+derived with the prose hash to curve ($Z_{\text{pad}}$ of 128 octets), and differs from the printed
+point.
 -/
 
 namespace JamCrypto.Bandersnatch.Pedersen
@@ -34,30 +39,31 @@ open JamCrypto.Bandersnatch.Thin
 def tagPedersenVrf : UInt8 := 0x02
 def tagPedersenBlinding : UInt8 := 0x12
 
-/-- The blinding base B under the vectors' reading: the coordinates §4 prints (hash_to_curve of
-    "pedersen-blinding" with the 48-octet Z_pad). -/
+/-- The blinding base $B$ under the vectors' reading: the coordinates §4 prints (hash_to_curve of
+    "pedersen-blinding" with the 48-octet $Z_{\text{pad}}$). -/
 def blindingBaseVectors : Point :=
   curve.ofAffine 23335687741101763108036518445642207119627658113885888016488710494487028845889
     5552214580375038693022409684979828600325210968745774080859660443337357929963
 
-/-- The blinding base B under the prose reading: hash_to_curve("pedersen-blinding") (§4, App. A.2)
-    with the prose hash to curve. (`hashToCurve` gives a point for this input, which cryptotest
-    checks; the identity fallback is never taken.) -/
+/-- The blinding base $B$ under the prose reading:
+    $\text{hash}\_\text{to}\_\text{curve}(\texttt{"pedersen-blinding"})$ (§4, App. A.2) with the prose hash to
+    curve. (`hashToCurve` gives a point for this input, which cryptotest checks; the identity
+    fallback is never taken.) -/
 def blindingBaseProse : Point :=
   (Thin.hashToCurve "pedersen-blinding".toUTF8.toList .prose).getD Curve.zero
 
-/-- The blinding base B (§4) under the reading `rd`. -/
+/-- The blinding base $B$ (§4) under the reading `rd`. -/
 def blindingBase (rd : Reading := .prose) : Point :=
   match rd with
   | .prose => blindingBaseProse
   | .vectors => blindingBaseVectors
 
-/-- vrf_transcript(PedersenVrf, [(I, O)], ad) (§1.6.5). -/
+/-- $\text{vrf}\_\text{transcript}(\text{PedersenVrf}, [(I, O)], \mathit{ad})$ (§1.6.5). -/
 def vrfTranscript (I O : Point) (ad : List UInt8) : Transcript :=
   Transcript.new.absorb
     ([tagPedersenVrf] ++ enc64 1 ++ encode I ++ encode O ++ enc64 ad.length ++ ad)
 
-/-- blinding(x, T) (App. A.4). -/
+/-- $\text{blinding}(x, T)$ (App. A.4). -/
 def blinding (x : Nat) (t : Transcript) : Nat := nonce x (t.absorb [tagPedersenBlinding])
 
 /-- A Pedersen proof (§4). -/
@@ -74,7 +80,7 @@ def Proof.encode (p : Proof) : List UInt8 :=
   Bandersnatch.encode p.pkCom ++ Bandersnatch.encode p.R ++ Bandersnatch.encode p.Ok ++
     encScalar p.s ++ encScalar p.sb
 
-/-- Decoding: points in the prime subgroup, scalars below r. -/
+/-- Decoding: points in the prime subgroup, scalars below $r$. -/
 def Proof.decode (bs : List UInt8) : Option Proof := do
   guard (bs.length == 160)
   let pkCom ← Bandersnatch.decode (bs.take 32)
@@ -85,13 +91,13 @@ def Proof.decode (bs : List UInt8) : Option Proof := do
   guard (s < r && sb < r)
   return { pkCom, R, Ok, s, sb }
 
-/-- The challenge of a proof for (I, O, ad). -/
+/-- The challenge of a proof for $(I, O, \mathit{ad})$. -/
 def proofChallenge (I O : Point) (ad : List UInt8) (pkCom R Ok : Point) : Nat :=
   let t := (vrfTranscript I O ad).absorb (Bandersnatch.encode pkCom)
   decScalarMod ((t.absorb ([tagChallenge] ++ Bandersnatch.encode R ++ Bandersnatch.encode Ok)).squeeze challengeLen)
 
-/-- Pedersen prove (§4.1) for the input point I, under the reading `rd`: the proof and the
-    blinding factor b. -/
+/-- Pedersen prove (§4.1) for the input point $I$, under the reading `rd`: the proof and the
+    blinding factor $b$. -/
 def prove (x : Nat) (I : Point) (ad : List UInt8) (rd : Reading := .prose) : Proof × Nat :=
   let blindingBase := blindingBase rd
   let O := curve.smul x I
@@ -106,7 +112,7 @@ def prove (x : Nat) (I : Point) (ad : List UInt8) (rd : Reading := .prose) : Pro
   let c := decScalarMod ((t.absorb ([tagChallenge] ++ Bandersnatch.encode R ++ Bandersnatch.encode Ok)).squeeze challengeLen)
   ({ pkCom, R, Ok, s := (k + c * x) % r, sb := (kb + c * b) % r }, b)
 
-/-- Pedersen verify (§4.2) for the input point I and output point O, under the reading `rd`. -/
+/-- Pedersen verify (§4.2) for the input point $I$ and output point $O$, under the reading `rd`. -/
 def verify (I O : Point) (ad : List UInt8) (p : Proof) (rd : Reading := .prose) : Bool :=
   let blindingBase := blindingBase rd
   if curve.isZero p.pkCom || curve.isZero I || curve.isZero O then false else

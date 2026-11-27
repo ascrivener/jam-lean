@@ -31,7 +31,18 @@ require verso from git "https://github.com/leanprover/verso" @ "v4.36.0-rc1-patc
 /-- *A companion to the Gray Paper*: the chapters, in the order of GP v0.8.1's sections. -/
 lean_lib Companion where
   leanOptions := #[⟨`autoImplicit, false⟩]
+  extraDepTargets := #[`modelHighlights]
 
 /-- Renders the companion to HTML: `lake exe companion --output DIR`. -/
 lean_exe companion where
   root := `CompanionMain
+
+/-- SubVerso's semantically highlighted JSON (the `highlighted` module facet, from the `subverso`
+    package Verso requires) for the model modules the companion quotes with `{leanSource}`. -/
+target modelHighlights : Unit := do
+  -- Every module a chapter quotes with `{leanSource}`: a missing one fails the book's build.
+  let mods := #[`JAM.Safrole, `PVM.Machine, `PVM.Gas, `PVM.Memory]
+  let jobs ← mods.mapM fun m => do
+    let some mod ← findModule? m | error s!"modelHighlights: no module {m}"
+    fetch <| mod.facet `highlighted
+  return (Job.mixArray jobs).map fun _ => ()

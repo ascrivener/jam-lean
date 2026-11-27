@@ -11,7 +11,7 @@ set_option pp.rawOnError true
 #doc (Manual) "A Companion to the Gray Paper" =>
 %%%
 authors := ["jam-lean"]
-shortTitle := "GP companion"
+shortTitle := "jam-lean: a companion to the Gray Paper"
 %%%
 
 This book reads the [Gray Paper](https://graypaper.com) v0.8.1 alongside

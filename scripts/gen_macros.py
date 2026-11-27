@@ -93,7 +93,8 @@ OVERRIDES = {
     r"\orderedin": r"\mathrel{<\!\!\!-}",       # < overlapping a short rule
     r"\fault": r"\Finv",                         # a rotated sans-serif F
     r"\concat": r"\frown",                       # \ensuremath{\frown}
-    r"\tricolon": r"\mathrel{\vdots}",           # three small stacked triangles (approximate)
+    r"\tricolon": r"\mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}}",  # stacked small triangles
+    r"\anglebar": r"\left\langle\!\left|#1\right|\!\right\rangle",  # mathabx's barred angle brackets
     r"\remainder": r"\mathbin{\mathsf{R}}",       # \text{\footnotesize\textsf{R}}: MathJax's \text takes no macros
     r"\append": r"\doubleplus",                  # \ensuremath{\doubleplus}
 }

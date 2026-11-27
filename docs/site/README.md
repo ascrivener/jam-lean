@@ -57,8 +57,8 @@ the paper's symbol by construction, and a later paper version changes it in one 
   editor hover, GitHub's view of a `.lean` file) the macro shows as written.
 * Where the paper's body uses LaTeX packages that neither renderer has, the table uses supported
   equivalents. A few print a close glyph rather than the same one, listed under `approximate`:
-  `\tricolon` and `\is` (the "is" of tuples, shown as ⋮), `\anglebar` and `\dictionary` (plain angle
-  brackets), and `\concatall` (an over-arc). The macros listed under `unmapped` are not available:
+  `\tricolon` and `\is` (the "is" of tuples, drawn as two stacked small ▸, the form the chapters
+  use) and `\concatall` (an over-arc). `\anglebar` and `\dictionary` print ⟨|…|⟩. The macros listed under `unmapped` are not available:
   `\seqminusl`, `\seqminusr` and `\disjoint` (MnSymbol spoons), `\orderby` and `\sqorderby`
   (mathabx wavy delimiters), and layout macros. For those, write a standard symbol and say which
   macro the paper uses.

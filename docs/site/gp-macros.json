@@ -1,8 +1,6 @@
 {
  "approximate": {
-  "anglebar": "\\anglebar",
   "concatall": "\\concatall",
-  "dictionary": "\\dictionary",
   "is": "\\is",
   "tricolon": "\\tricolon"
  },
@@ -1017,7 +1015,7 @@
   },
   "anglebar": {
    "args": 1,
-   "body": "\\left\\langle#1\\right\\rangle",
+   "body": "\\left\\langle\\!\\left|#1\\right|\\!\\right\\rangle",
    "paper": "\\anglebar"
   },
   "aoQQdefxfers": {
@@ -3256,7 +3254,7 @@
   },
   "tricolon": {
    "args": 0,
-   "body": "\\mathrel{\\vdots}",
+   "body": "\\mathrel{\\genfrac{}{}{0pt}{3}{\\blacktriangleright}{\\blacktriangleright}}",
    "paper": "\\tricolon"
   },
   "tup": {

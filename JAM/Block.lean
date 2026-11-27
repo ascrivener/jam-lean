@@ -231,8 +231,8 @@ structure Block where
   header : Header
   extrinsic : Extrinsic
 
-/-- $\mathcal{E}(\mathbf{B}) = \mathcal{E}(\mathbf{H}, \mathcal{E}_T(\mathbf{E}_T), \mathcal{E}_P(\mathbf{E}_P), \mathcal{E}_G(\mathbf{E}_G), \mathcal{E}_A(\mathbf{E}_A), \mathcal{E}_D(\mathbf{E}_D))$
-    (GP Appendix C). -/
+/-- The block encoding (GP Appendix C):
+    $$\mathcal{E}(\mathbf{B}) = \mathcal{E}(\mathbf{H}, \mathcal{E}_T(\mathbf{E}_T), \mathcal{E}_P(\mathbf{E}_P), \mathcal{E}_G(\mathbf{E}_G), \mathcal{E}_A(\mathbf{E}_A), \mathcal{E}_D(\mathbf{E}_D))$$ -/
 def Block.encode (b : Block) : List UInt8 := b.header.encode ++ b.extrinsic.encode
 
 /-! ## Decoders -/

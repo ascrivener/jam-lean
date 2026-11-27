@@ -14,8 +14,8 @@ indices, adds the d' − d known zeroes, and interpolates back.
   (Mathlib's `Lagrange.eq_interpolate_of_eval_eq`): the code is MDS.
 * `recover_encode`: for v ≤ 2¹⁵ (so all code indices are distinct field points), any 𝒟(v)
   distinct validator indices below v, in any order, with their chunks from `encode v data`,
-  recover `data`. `recover_encode_full` (v = 1023, R = 342) and `recover_encode_tiny` (v = 6,
-  R = 3) are the two chains of the test vectors.
+  recover `data`. `recover_encode_full` (v = 1023, 𝒟(v) = 342) and `recover_encode_tiny` (v = 6,
+  𝒟(v) = 3) are the two chains of the test vectors.
 -/
 
 open Polynomial

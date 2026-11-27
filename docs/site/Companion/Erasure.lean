@@ -113,6 +113,8 @@ of $`\alpha^j`, addition is exclusive or, and multiplication and inversion use t
 logarithms of $`\alpha`. {api}`JAM.Erasure.toField` and {api}`JAM.Erasure.ofField` convert between a word
 and its field element through the Cantor basis:
 
+{leanSource JAM.Erasure.ofField}
+
 {leanSource JAM.Erasure.GF.mul}
 
 {leanSource JAM.Erasure.GF.toFieldTable}
@@ -184,6 +186,14 @@ $`\tilde{d}, \dots, \widetilde{d'-1}`. The theorem is stated about the package's
 (`encPieces`) and of that polynomial (`msgPoly`). Two further theorems connect it to the model's chunks:
 `encode_eq` (the chunks `encode` returns are built from `encPieces`) and `chunk_word` (word $`p` of chunk $`i` is
 word $`i` of coded piece $`p`).
+
+```
+theorem encode_word (v : ℕ) (data : ByteArray) (k : ℕ) (hv : v ≤ 32768) {p i : ℕ} (hp : p < k)
+    (hi : i < v) :
+    W ((encPieces v data k)[p]!)[i]! ∧
+    X ((encPieces v data k)[p]!)[i]! = eval (X (codeIndex (originalShards v) i))
+      (msgPoly v data k p)
+```
 
 [`recover_encode`](https://github.com/ascrivener/jam-lean/blob/1f8496f83ca22f3b8b8121f875906313402aab56/proofs/ErasureProofs/Recovery.lean#L289-L295):
 for at most $`2^{15}` validators, if `encode v data` gives `chunks`, then any $`\mathcal{D}(v)` distinct validator

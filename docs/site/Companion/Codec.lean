@@ -87,6 +87,10 @@ In the model these are written out where they are used, for example `[a.items, a
 for $`\mathcal{E}_4(a_i, a_r, a_a, a_p)` in the state serialization ({ref "statemerkle"}[Appendix D]).
 {api}`JAM.Codec.nat` and {api}`JAM.Codec.fixed` give the two encodings their codec names.
 
+{leanSource JAM.Codec.nat}
+
+{leanSource JAM.Codec.fixed}
+
 What the model proves about $`\mathcal{E}_l`: the result has $`l` octets, decoding it gives back $`x \bmod 2^{8l}`
 (so $`x` itself when $`x < 2^{8l}`, the paper's domain), and every $`l`-octet sequence is the encoding of its
 decoded value:
@@ -193,6 +197,20 @@ discriminators 0 and 1), {api}`JAM.Decoder.bits` (which rejects nonzero padding 
 {api}`JAM.Decoder.bool`, and {api}`JAM.Decoder.varHashSet` and {api}`JAM.Decoder.varHashDict`
 (which reject elements or keys out of ascending order, or repeated). For example:
 
+{leanSource JAM.Decoder.fixed}
+
+{leanSource JAM.Decoder.bytes}
+
+{leanSource JAM.Decoder.varSeq}
+
+{leanSource JAM.Decoder.var}
+
+{leanSource JAM.Decoder.bits}
+
+{leanSource JAM.Decoder.bool}
+
+{leanSource JAM.Decoder.varHashDict}
+
 {leanSource JAM.Decoder.opt}
 
 {leanSource JAM.Decoder.varHashSet}
@@ -261,6 +279,38 @@ The other equations of §C.2 are implemented field by field, in the paper's orde
 * (C.36) a deferred transfer: {api}`JAM.DeferredTransfer.encode`;
 * (C.37) an operand tuple $`\mathbb{U}`: {api}`JAM.OperandTuple.encode`.
 
+{leanSource JAM.encodeTickets}
+
+{leanSource JAM.encodePreimages}
+
+{leanSource JAM.encodeGuarantees}
+
+{leanSource JAM.encodeAssurances}
+
+{leanSource JAM.Disputes.encode}
+
+{leanSource JAM.Judgment.encode}
+
+{leanSource JAM.RefineContext.encode}
+
+{leanSource JAM.AvailabilitySpec.encode}
+
+{leanSource JAM.WorkDigest.encode}
+
+{leanSource JAM.WorkReport.encode}
+
+{leanSource JAM.Guarantee.encode}
+
+{leanSource JAM.encodeCredential}
+
+{leanSource JAM.WorkPackage.encode}
+
+{leanSource JAM.Ticket.encode}
+
+{leanSource JAM.DeferredTransfer.encode}
+
+{leanSource JAM.OperandTuple.encode}
+
 For example, the work item of eq. (C.34):
 
 {leanSource JAM.WorkItem.encode}
@@ -268,6 +318,12 @@ For example, the work item of eq. (C.34):
 The block and the work-package family also have decoders ({api}`JAM.Block.decode`,
 {api}`JAM.WorkPackage.decode`, {api}`JAM.WorkReport.decode`, …), built from the primitive decoders
 above, field by field in the same order.
+
+{leanSource JAM.Block.decode}
+
+{leanSource JAM.WorkPackage.decode}
+
+{leanSource JAM.WorkReport.decode}
 
 # Readings chosen
 %%%

@@ -80,6 +80,10 @@ $$`\pi_S \in \left\langle\!\left| \mathbb{N}_S \to \left\lgroup \begin{matrix} p
 
 The model's records are {api}`JAM.CoreRecord` and {api}`JAM.ServiceRecord`.
 
+{leanSource JAM.CoreRecord}
+
+{leanSource JAM.ServiceRecord}
+
 ## Cores
 
 A core's record sums the load of the reports guaranteed on it in this block ($`\mathbf{I}`, eq. (11.29)), the

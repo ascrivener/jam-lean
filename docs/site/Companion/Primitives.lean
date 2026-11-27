@@ -59,6 +59,14 @@ digest octets are read from the eight-word state with `getD`. For a digest of at
 the default is never used. {api}`JAM.Blake2b.hash_getD_unused` is the arithmetic fact behind this: for $`n \le 64` and
 $`k < n`, $`\lfloor k / 8 \rfloor < 8`, so every word index is within the eight-word state.
 
+{leanSource JAM.Blake2b.compress}
+
+{leanSource JAM.Blake2b.mix}
+
+{leanSource JAM.Blake2b.iv}
+
+{leanSource JAM.Blake2b.sigma}
+
 Most of the model works on `List UInt8`, so it calls $`\mathcal{H}` through a list wrapper,
 {api}`JAM.blake`:
 
@@ -73,6 +81,8 @@ permutation and differ only in their padding. The paper means the original Kecca
 {api}`JAM.Keccak.keccak256` pads with the domain octet `0x01`. {api}`JAM.Keccak.sha3_256` pads with
 `0x06` (FIPS 202) and exists only so that the permutation can be tested against standard SHA3
 implementations.
+
+{leanSource JAM.Keccak.sha3_256}
 
 {leanSource JAM.Keccak.keccak256}
 

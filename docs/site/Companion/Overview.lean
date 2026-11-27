@@ -160,10 +160,12 @@ The markers' types:
 
 $$`\mathbf{H}_E \in \left\lgroup \mathbb{H}, \mathbb{H}, \llbracket \left\lgroup \tilde{\mathbb{H}}, \bar{\mathbb{H}} \right\rgroup \rrbracket_{\mathbb{V}} \right\rgroup\boldsymbol{?}, \qquad \mathbf{H}_W \in \llbracket \mathbb{T} \rrbracket_{\mathsf{E}}\boldsymbol{?}, \qquad \mathbf{H}_O \in \llbracket \bar{\mathbb{H}} \rrbracket \qquad \text{(5.11)}`
 
-$`\tilde{\mathbb{H}}` and $`\bar{\mathbb{H}}` are Bandersnatch and Ed25519 keys (§3.8.2). The model's {api}`JAM.EpochMark` and the option
+$`\bskey` and $`\edkey` are Bandersnatch and Ed25519 keys (§3.8.2). The model's {api}`JAM.EpochMark` and the option
 types hold them, and the types do not fix their lengths. The decoder ({api}`JAM.Header.decode`) fixes the
 winning-tickets marker's $`\mathsf{E}`. The epoch marker's key list is length-prefixed (its encoding is $`\updownarrow\mathbf{k}`); its
 length is enforced at import, because $`\mathbf{H}_E` must match the marker Safrole produces.
+
+{leanSource JAM.Header.decode}
 
 ## The header's conditions
 
@@ -193,6 +195,10 @@ $`P(\mathbf{H})` is the parent header and $`\mathcal{T}` the wall clock. A heade
   {api}`JAM.sealValid`).
 * The markers $`\mathbf{H}_E` and $`\mathbf{H}_W` must equal the ones Safrole produces ({ref "safrole"}[§6.6]), and $`\mathbf{H}_O` the one disputes
   produce ({ref "disputes"}[§10]).
+
+{leanSource JAM.lookupAnchorKnown}
+
+{leanSource JAM.sealValid}
 
 ## The extrinsic hash
 

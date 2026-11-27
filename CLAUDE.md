@@ -86,6 +86,8 @@ rebuilds only what changed since then instead of building cold for 4.5–5 h.
   - a `gp-vX` tag for the last model of the old version and one for the first of the new. Sessions
     cannot push tags: ask Adam with the exact commit, then run Actions -> Release (`release.yml`)
     after his go-ahead, or he creates it in the GitHub UI;
+  - regenerate the GP macro table (`scripts/gen_macros.py`) and grep for glyphs of symbols whose
+    macros changed;
   - jam-lean-target's pin, image and release;
   - an independent review of the companion book against the new paper (equations, readings, claims);
   - finally, read both repositories' front pages as a visitor would.

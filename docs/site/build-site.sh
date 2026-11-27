@@ -59,6 +59,32 @@ if head not in s:
     sys.exit("build-site.sh: doc-gen4's index heading changed; update the API intro injection")
 open(page, "w", encoding="utf-8").write(s.replace(head, intro, 1))
 EOF
+# The Gray Paper's macros (gp-macros.js, from scripts/gen_macros.py) in both renderers:
+# after KaTeX in every book page, and appended to doc-gen4's MathJax configuration.
+cp gp-macros.js landing/math-macros.js _site/
+python3 - _site <<'EOF'
+import os, sys
+site = sys.argv[1]
+n = 0
+for d, _, fs in os.walk(os.path.join(site, "book")):
+    for f in fs:
+        if not f.endswith(".html"):
+            continue
+        p = os.path.join(d, f)
+        s = open(p, encoding="utf-8").read()
+        tag = 'katex/katex.js"></script>'
+        if tag not in s:
+            continue
+        # Verso's pages carry <base href> at the book root, so the site root is "../" from every page.
+        if "<base href=" not in s:
+            sys.exit(f"build-site.sh: {p} has no <base href>; update the macro injection")
+        inj = '<script src="../gp-macros.js"></script><script src="../math-macros.js"></script>'
+        open(p, "w", encoding="utf-8").write(s.replace(tag, tag + inj, 1))
+        n += 1
+if n == 0:
+    sys.exit("build-site.sh: no book page loads katex.js; update the macro injection")
+EOF
+cat gp-macros.js landing/math-macros.js >> _site/api/mathjax-config.js
 cp landing/index.html _site/index.html
 touch _site/.nojekyll
 echo "site: $(du -sh _site | cut -f1) in $(pwd)/_site"

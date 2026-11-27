@@ -5,8 +5,8 @@ import JAM.Disputes
 # Package availability assurances (GP v0.8.1 §11.2)
 
 The assurances extrinsic $\mathbf{E}_A$ (eq. `xtassurances`), the newly available reports $\mathbf{R}$ (eq.
-`availableworkreports`) and the intermediate assignments $\rho^\ddagger = \rho$ after assurances (eq.
-`availassignmentspostassurancesdef`), from the assignments $\rho^\dagger$ left by the disputes transition
+`availableworkreports`) and the intermediate assignments $\availassignmentspostassurances = \rho$ after assurances (eq.
+`availassignmentspostassurancesdef`), from the assignments $\availassignmentspostjudgment$ left by the disputes transition
 (`JAM.disputesTransition`).
 
 Signatures are checked with `Crypto.edVerify`; the validator sets enter through $\kappa$'s Ed25519 keys
@@ -35,7 +35,7 @@ inductive AssurancesError where
   | notSortedOrUniqueAssurers
   deriving BEq, Repr
 
-/-- What the assurances transition reads besides $\rho^\dagger$ and $\mathbf{E}_A$. -/
+/-- What the assurances transition reads besides $\availassignmentspostjudgment$ and $\mathbf{E}_A$. -/
 structure AssurancesInput where
   /-- $\mathbf{H}_T$, the block's timeslot. -/
   slot : Nat
@@ -52,8 +52,8 @@ def assuranceMessage (parent : Hash) (bits : List Bool) : List UInt8 :=
 
 /-- One assurance's conditions (GP v0.8.1 §11.2.1): $a_v \in \mathbb{N}_{|\kappa|}$ and above the previous assurer
     `prev` (eq. `xtassurances` and the ordered-unique condition);
-    $a_s \in \bar{\mathbb{V}}_{\kappa[a_v]_e}\langle \mathsf{X}_A \frown \mathcal{H}(\mathcal{E}(\mathbf{H}_P, a_f)) \rangle$; and a set bit only on a core with an assignment
-    in $\rho^\dagger$. -/
+    $a_s \in \edsignaturebase_{\kappa[a_v]_e}\langle \mathsf{X}_A \frown \mathcal{H}(\mathcal{E}(\mathbf{H}_P, a_f)) \rangle$; and a set bit only on a core with an assignment
+    in $\availassignmentspostjudgment$. -/
 def checkAssurance (crypto : Crypto) (i : AssurancesInput) (ρ : AvailAssignments)
     (prev : Option Nat) (a : Assurance) : Except AssurancesError Unit := do
   unless a.assurer < i.activeEd.length do throw .badValidatorIndex

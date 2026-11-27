@@ -7,7 +7,7 @@ import JAM.Accumulation
 The preimages extrinsic $\mathbf{E}_P \in [\![ (\mathbb{N}_S, \mathbb{B}) ]\!]$ must be ordered and
 free of duplicates (eq. `preimagesareordered`), and every pair must be providable in the prior
 state, $Y(\delta, s, \mathbf{i})$ (§12.2). The posterior accounts are then
-$I(\delta^\dagger, \mathbf{E}_P)$, with $I$ the integration function of §12.2
+$I(\delta^\ddagger, \mathbf{E}_P)$, with $I$ the integration function of §12.2
 (`JAM.integrateProvisions`) applied to the accounts after accumulation.
 -/
 

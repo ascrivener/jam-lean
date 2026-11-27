@@ -4,7 +4,7 @@ import JAM.Sha512
 /-!
 # Bandersnatch IETF VRF (GP v0.8.0 Appendix G)
 
-$\overset{\backsim}{\mathbb{V}}{}_k^{m}\langle c\rangle$ is the IETF VRF of the Bandersnatch VRF-AD
+$\bssignaturebase{}_k^{m}\langle c\rangle$ is the IETF VRF of the Bandersnatch VRF-AD
 specification (Hosseini–Galassi, the draft GP cites), suite `Bandersnatch_SHA-512_ELL2`, with VRF
 input data $c$ and additional data $m$; $\mathcal{Y}$ is its output. The 96-octet signature is the
 output point $O$, then the proof $(c, s)$, 32 octets each.
@@ -134,7 +134,7 @@ def challenge (pts : List Point) (ad : List UInt8) : Nat :=
   let h := JAM.Sha512.hash (suiteString ++ [2] ++ pts.flatMap encode ++ ad ++ [0])
   beToNat (h.take 32) % r
 
-/-- $x \in \overset{\backsim}{\mathbb{V}}{}_k^{m}\langle c\rangle$: the IETF VRF signature `sig`
+/-- $x \in \bssignaturebase{}_k^{m}\langle c\rangle$: the IETF VRF signature `sig`
     $= O \frown c \frown s$ is valid under the public key `key` for VRF input data `ctx` and
     additional data `msg` (spec §2.3). -/
 def ietfVerify (key ctx msg sig : List UInt8) : Bool := Id.run do

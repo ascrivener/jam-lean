@@ -75,6 +75,9 @@ jobs:
       - name: Spec modules import no fast module outside the allowlist (docs/fast-paths.md)
         run: python3 scripts/check-fast-imports.py
 
+      - name: No known-wrong Gray Paper notation in docstrings and the book (scripts/check-notation.py)
+        run: python3 -I scripts/check-notation.py
+
       - name: Every note the book and the model cite exists in docs/upstream-candidates.md
         run: python3 -I scripts/check-citations.py
 

@@ -17,7 +17,7 @@ shortTitle := "§7 Recent history"
 file := "history"
 %%%
 
-The state keeps a short record of the most recent $`\mathsf{H}` blocks ($`\mathsf{H} = 8`). Guarantees use it (§11) to reject work
+The state keeps a short record of the most recent $`\mathsf{H}` blocks ($`\mathsf{H} = 8`). Guarantees use it ({ref "reports"}[§11]) to reject work
 reports that are duplicates or whose context is out of date. It also holds the Accumulation Output
 Log, a Merkle mountain belt that commits to the outputs of every block's accumulation. In the model,
 the whole transition of GP v0.8.1 §7 is one function, {api}`JAM.recentHistory`, in
@@ -39,7 +39,7 @@ Accumulation Output Log after that block, its timeslot $`t`, and the work packag
 $`\mathbf{p}` maps each package hash to its segment root. $`\beta_B` is the log itself, a sequence of optional peaks.
 $`\langle K \to V \rangle` is the paper's notation for dictionaries from $`K` to $`V` (§3.5; the paper draws the angle brackets
 with a bar). $`\theta` is the sequence of accumulation outputs, (service, hash) pairs; it is produced by accumulation
-(§12) and kept in the state as a separate component.
+({ref "accumulation"}[§12]) and kept in the state as a separate component.
 
 The model keeps the five fields of an entry in {api}`JAM.RecentBlock` (the field `accRoot` is $`b`) and
 $`\beta` in {api}`JAM.Recent`:
@@ -65,7 +65,7 @@ $$`\beta^\dagger_H \equiv \beta_H \quad\text{except}\quad \beta^\dagger_H\left[|
 
 {leanSource JAM.Recent.withParentRoot}
 
-$`\beta^\dagger_H` is also used by §11's check that each report's anchor block is recent (eq. (11.36)), and it appears
+$`\beta^\dagger_H` is also used by {ref "reports"}[§11]'s check that each report's anchor block is recent (eq. (11.36)), and it appears
 as its own node, eq. (4.6), of the {ref "overview"}[dependency graph].
 
 # The Accumulation Output Log
@@ -86,7 +86,7 @@ the transition reads from the block and from accumulation is in {api}`JAM.Histor
 
 {leanSource JAM.HistoryInput}
 
-The append function $`\mathcal{A}` and the super-peak function $`\mathcal{M}_R` are defined in Appendix E.2:
+The append function $`\mathcal{A}` and the super-peak function $`\mathcal{M}_R` are defined in {ref "merkle"}[Appendix E.2]:
 
 $$`\begin{aligned} \mathcal{A}(\mathbf{r}, l, H) &\equiv P(\mathbf{r}, l, 0, H) \qquad \text{(E.8)} \\ \text{where } P(\mathbf{r}, l, n, H) &= \begin{cases} \mathbf{r} \mathbin{+\!\!+} l & \text{if } n \geq |\mathbf{r}| \\ R(\mathbf{r}, n, l) & \text{if } n < |\mathbf{r}| \wedge \mathbf{r}_n = \emptyset \\ P\left(R(\mathbf{r}, n, \emptyset), H(\mathbf{r}_n \frown l), n + 1, H\right) & \text{otherwise} \end{cases} \end{aligned}`
 
@@ -140,5 +140,5 @@ The notes named below are in the model's [notes on the paper](https://github.com
   (as at genesis). The model then leaves $`\beta^\dagger_H` empty ({api}`JAM.Recent.withParentRoot`).
 * *The package map (note v0.8.1-A27).* $`\mathbf{p}` is written as a set of pairs $`k \mapsto v`, which makes it a dictionary. If two guarantees
   had the same package hash, the model would keep the later one (`Std.ExtTreeMap.ofList`). The
-  guarantee checks of §11 reject duplicate packages before this point (eq. (11.35)), so the case does not arise in
+  guarantee checks of {ref "reports"}[§11] reject duplicate packages before this point (eq. (11.35)), so the case does not arise in
   a valid block.

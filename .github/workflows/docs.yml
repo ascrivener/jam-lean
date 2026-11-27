@@ -5,7 +5,10 @@ name: Docs
 #   /api/   doc-gen4 pages for PVM, JAM and JamCrypto
 #   /book/  A Companion to the Gray Paper (Verso)
 #
-# * Pushes to main build and deploy. PRs do not run it.
+# * Pushes to main build and deploy.
+# * A PR that touches the model, the site or the lakefiles builds the site and checks its internal links
+#   (docs/site/check-links.py), so a renamed quoted declaration fails the PR rather than main's deploy.
+#   Not part of the required `proofs` gate.
 # * Actions > Docs > Run workflow builds on any branch (to check a docs change before merging); only a
 #   run on main deploys.
 #
@@ -14,12 +17,26 @@ name: Docs
 on:
   push:
     branches: [main]
+  pull_request:
+    paths:
+      - 'JAM/**'
+      - 'PVM/**'
+      - 'JamCrypto/**'
+      - 'JAM.lean'
+      - 'PVM.lean'
+      - 'JamCrypto.lean'
+      - 'docs/site/**'
+      - 'lakefile*'
+      - 'lake-manifest.json'
+      - 'lean-toolchain'
+      - '.github/workflows/docs.yml'
   workflow_dispatch:
 
-# One deployment at a time; a newer main push replaces a pending one, a running one finishes.
+# One deployment at a time; a newer main push replaces a pending one, a running one finishes. On a PR a
+# newer push cancels the older run.
 concurrency:
   group: docs-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -66,7 +83,11 @@ jobs:
       - name: Build the site
         run: docs/site/build-site.sh
 
+      - name: Internal links and anchors of the built site
+        run: python3 -I docs/site/check-links.py docs/site/_site
+
       - uses: actions/upload-pages-artifact@v3
+        if: github.event_name != 'pull_request'
         with:
           path: docs/site/_site
 

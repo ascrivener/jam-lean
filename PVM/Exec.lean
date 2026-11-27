@@ -13,7 +13,7 @@ Unless an instruction says otherwise: $\varepsilon = \blacktriangleright$,
 $\imath' = \imath + 1 + \text{skip}(\imath)$, $\varphi' = \varphi$, $\mu' = \mu$ (§A.4).
 
 All arithmetic follows the paper's formulas over $\mathbb{N}$ and $\mathbb{Z}$; register values are read with
-`toNat` and written back with `UInt64.ofNat` (every result is already in $\mathbb{N}_{2^{64}}$).
+`toNat` and written back with `UInt64.ofNat`, which reduces modulo $2^{64}$.
 -/
 
 namespace PVM

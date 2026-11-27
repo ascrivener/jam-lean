@@ -24,7 +24,7 @@ namespace JamCrypto.Ring
 def domain081 : Nat := 2048
 
 /-- `c` with the ring VRF primitives for a chain of `validators` = $V$ validators: `bsRingRoot` :=
-    $\mathcal{O}$ (`Ring.root`), `bsRingVerify` := $\mathring{\mathbb{V}}$ (`Ring.verify`),
+    $\mathcal{O}$ (`Ring.root`), `bsRingVerify` := $\bsringproofbase$ (`Ring.verify`),
     `bsRingOut` := $\mathcal{Y}$ (`Ring.output`). v0.8.0 sizes the ring domain by $V$; v0.8.1 uses
     the domain `dom081` (default `domain081` = 2048, whatever $V$ is; the ring then holds up to $N -
     257$ keys) and the reading `rd` of the VRF spec's Draft 35 (default `.prose`; `.vectors` is what

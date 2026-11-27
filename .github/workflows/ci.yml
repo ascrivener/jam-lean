@@ -128,6 +128,9 @@ jobs:
       - name: Work-package refinement, §14 — B, A, I, Ξ and the bundle checks (hand-built; no vectors exist)
         run: lake build Tests.GuaranteeTest
 
+      - name: Best chain, §19 — acceptable blocks, ticketed metric, finality (hand-built; no vectors exist)
+        run: lake build Tests.BestChainTest
+
       - name: The real witness binary rejects malformed payloads (a test, not a proof)
         run: lake build witnessrun
 

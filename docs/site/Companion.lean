@@ -77,7 +77,7 @@ with the model modules that implement them.
 * §17 Auditing: `JAM/Auditing.lean`
 * §18 Beefy distribution: not modelled
 * §19 Grandpa and the best chain: `JAM/BestChain.lean` (the best-chain rule; Grandpa itself is not modelled)
-* *Appendix A, the PVM* ({ref "pvm"}[written]): `PVM/Machine.lean`, `PVM/Exec.lean`, `PVM/Gas.lean`, `PVM/Memory.lean`
+* *Appendix A, the PVM* ({ref "pvm"}[written]): `PVM/Blob.lean`, `PVM/Machine.lean`, `PVM/Instr.lean`, `PVM/Exec.lean`, `PVM/Memory.lean`, `PVM/Invocation.lean`, `PVM/Gas.lean`
 * Appendix B, PVM invocations: `PVM/Invocation.lean`, `JAM/Host/`
 * Appendix C, the serialization codec: `JAM/Codec.lean`, `JAM/Decode.lean`
 * Appendix D, state Merklization: `JAM/Trie.lean`, `JAM/State.lean`, `JAM/StateDecode.lean`

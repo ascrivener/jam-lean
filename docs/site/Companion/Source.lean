@@ -78,6 +78,16 @@ block_extension Block.sourceDoc where
     some <| fun _ go _ _ content => do
       pure html%{<div class="docs source-doc">{← content.mapM go}</div>}
 
+-- A quoted declaration as a whole (header, docstring, code), so the page-level
+-- "Show all Lean / Hide all Lean" switch (`CompanionMain.lean`) can hide it.
+block_extension Block.leanSourceBox where
+  traverse := fun _ _ _ => pure none
+  toTeX := none
+  toHtml :=
+    open Verso.Output.Html in
+    some <| fun _ go _ _ content => do
+      pure html%{<div class="lean-source">{← content.mapM go}</div>}
+
 /-- Removes the first doc comment (and the line break after it) from highlighted code. -/
 partial def stripDocComment : Highlighted → Highlighted × Bool
   | .token ⟨.docComment, _⟩ => (.seq #[], true)
@@ -143,7 +153,7 @@ def leanSource : BlockCommandOf SourceConfig
     let some hl ← loadHighlighted root mod name
       | throwErrorAt x m!"leanSource: no command defining {name} in SubVerso's JSON for {mod}"
     let (hl, _) := stripDocComment hl
-    ``(Verso.Doc.Block.concat #[
+    ``(Verso.Doc.Block.other Companion.Block.leanSourceBox #[
         Verso.Doc.Block.para #[
           Verso.Doc.Inline.code $(quote name.toString),
           Verso.Doc.Inline.text $(quote s!" — {label} · "),

@@ -46,12 +46,23 @@ code.hl.lean.block.collapsed-code { display: block; max-height: 18em; overflow-y
   mask-image: linear-gradient(to bottom, #000 70%, transparent); }
 button.show-code { display: block; margin: 0.25em 0 1em; padding: 0.3em 0.8em; font-family: system-ui, sans-serif;
   font-size: 0.9em; cursor: pointer; border: 1px solid #b0b0b0; border-radius: 4px; background: #f6f6f6; }
+.lean-toggle { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5em; margin: 0.5em 0 1em;
+  font-family: system-ui, sans-serif; font-size: 0.9em; }
+.lean-toggle button { min-height: 2.4em; padding: 0.3em 0.9em; font: inherit; cursor: pointer;
+  border: 1px solid #b0b0b0; border-radius: 4px; background: #f6f6f6; color: inherit; }
+.lean-toggle button[aria-pressed='true'] { background: #dde7f3; border-color: #5a7fa8; font-weight: 600; }
+.lean-toggle button:focus-visible, button.show-code:focus-visible { outline: 2px solid #2a6ebb; outline-offset: 2px; }
+.lean-toggle .lean-toggle-note { color: #666; }
+body.lean-hidden .lean-source, body.lean-hidden code.hl.lean.block,
+body.lean-hidden button.show-code { display: none; }
 .split-toc li:has(> a[href*='/#JAM___']), .split-toc li:has(> a[href*='/#PVM___']),
 .split-toc li:has(> a[href*='/#JamCrypto___']) { display: none; }
 "⟩
 
 /-- Long quoted definitions (`{leanSource}` blocks of more than 30 lines) start collapsed to their
-    first 12 lines, with a button to show the whole definition; short ones stay open. -/
+    first 12 lines, with a button to show the whole definition; short ones stay open. A page with
+    Lean code also gets, under its title, a "Show all Lean / Hide all Lean" switch (remembered in
+    `localStorage`, when the browser allows it, for every page). -/
 def collapseJs : Verso.Genre.Manual.JS := ⟨"
 document.addEventListener('DOMContentLoaded', () => {
   for (const code of document.querySelectorAll('code.hl.lean.block')) {
@@ -68,6 +79,56 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     code.insertAdjacentElement('afterend', btn);
   }
+  // The page-level switch: show every quoted definition in full, or hide them all. The choice
+  // is remembered (per browser) for every page of the book.
+  const blocks = document.querySelectorAll('code.hl.lean.block');
+  const heading = document.querySelector('main section h1');
+  if (!blocks.length || !heading) return;
+  const KEY = 'jam-lean-book.lean';
+  const load = () => { try { return localStorage.getItem(KEY); } catch (e) { return null; } };
+  const save = (v) => { try { v ? localStorage.setItem(KEY, v) : localStorage.removeItem(KEY); } catch (e) {} };
+  const bar = document.createElement('div');
+  bar.className = 'lean-toggle';
+  bar.setAttribute('role', 'group');
+  bar.setAttribute('aria-label', 'Lean code on this page');
+  const mk = (text, mode) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = text; b.dataset.mode = mode;
+    b.setAttribute('aria-pressed', 'false');
+    bar.appendChild(b); return b;
+  };
+  const showAll = mk('Show all Lean', 'all');
+  const hideAll = mk('Hide all Lean', 'none');
+  const note = document.createElement('span');
+  note.className = 'lean-toggle-note';
+  note.setAttribute('aria-live', 'polite');
+  bar.appendChild(note);
+  const apply = (mode) => {
+    document.body.classList.toggle('lean-hidden', mode === 'none');
+    if (mode === 'all') {
+      for (const btn of document.querySelectorAll('button.show-code')) {
+        const code = btn.previousElementSibling;
+        if (code && code.classList.contains('collapsed-code')) btn.click();
+      }
+    }
+    showAll.setAttribute('aria-pressed', String(mode === 'all'));
+    hideAll.setAttribute('aria-pressed', String(mode === 'none'));
+    note.textContent = mode === 'none' ? blocks.length + ' Lean block' + (blocks.length === 1 ? '' : 's') + ' hidden' : '';
+  };
+  for (const b of [showAll, hideAll]) b.addEventListener('click', () => {
+    // Pressing the active button again returns to the default (long definitions collapsed).
+    const mode = b.getAttribute('aria-pressed') === 'true' ? null : b.dataset.mode;
+    if (mode === null && b === showAll) {
+      for (const btn of document.querySelectorAll('button.show-code')) {
+        const code = btn.previousElementSibling;
+        if (code && !code.classList.contains('collapsed-code')) btn.click();
+      }
+    }
+    save(mode); apply(mode);
+  });
+  heading.insertAdjacentElement('afterend', bar);
+  const saved = load();
+  if (saved === 'all' || saved === 'none') apply(saved);
 });
 "⟩
 

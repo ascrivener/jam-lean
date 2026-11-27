@@ -151,9 +151,9 @@ def interpolate (m : Array (Array Nat)) (words : Array Nat) : Array Nat :=
 
 /-! ## The erasure code -/
 
-/-- $\fnecoriginalshards(v) = \max \{ d \in \mathbb{N}_{v/3+2} \mid \mathsf{W}_G \bmod 2d = 0 \}$ (GP eq.
+/-- $\fnecoriginalshards(v) = \max \{ d \in \mathbb{N}_{v/3+2} \mid \mathsf{W}_G \rem 2d = 0 \}$ (GP eq.
     `ecoriginalshards`): the number of original shards for $v$ validators, with
-    $\mathsf{W}_G = 4104$ the segment size. $d = 0$ is excluded, where "$\mathsf{W}_G \bmod 0$" has
+    $\mathsf{W}_G = 4104$ the segment size. $d = 0$ is excluded, where "$\mathsf{W}_G \rem 0$" has
     no meaning. -/
 def originalShards (v : Nat) : Nat :=
   ((List.range (v / 3 + 2)).filter fun d => d > 0 ∧ Constants.Csegmentsize % (2 * d) = 0).foldl max 0

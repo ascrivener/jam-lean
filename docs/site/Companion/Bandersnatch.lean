@@ -193,3 +193,6 @@ the fourth is in the same file's section on Draft 35 of the VRF specification:
 * *Draft 35's prose and vectors.* Where they disagree, the v0.8.1 path follows the prose by default
   and the vectors on request ({api}`JamCrypto.Reading`), as described above, except for the transcript
   step that neither follows.
+
+
+{leanSource JamCrypto.Bandersnatch.Thin.thinDecode}

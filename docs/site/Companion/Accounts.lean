@@ -139,6 +139,8 @@ the key the paper's caller has ($`\mathbf{k}`, or $`(h, z)`):
 Reading a request back decodes the stored octets with {api}`JAM.ServiceAccount.decodeSlots`, which
 inverts the encoding on histories of at most three slots that each fit in 4 octets:
 
+{leanSource JAM.ServiceAccount.decodeSlots}
+
 {mathdoc JAM.ServiceAccount.decodeSlots_encodeSlots}
 
 What the model proves about the accessors: a write reads back, and it leaves the other keys of the
@@ -260,3 +262,6 @@ These are recorded as notes v0.8.1-A40 to A45 of the model's
   {api}`JAM.ServiceAccount.availableAt` returns false for longer lists. $`\mathbf{d}[s]_e` is
   defined for $`s \in \mathcal{K}(\mathbf{d})`; {api}`JAM.effectiveSupervisor` returns $`s` for any
   other $`s`, which §12 relies on when a service without an account appears in a round.
+
+
+{leanSource JAM.ServiceAccount.requestLenBound}

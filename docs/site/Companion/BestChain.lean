@@ -53,6 +53,8 @@ The audited flag is the node's $`\mathbf{U}` (eq. (17.19)), which {api}`JAM.Audi
 disregarded flag comes from {ref "auditing"}[§17.3]'s rule ({api}`JAM.BestChain.disregardedBlock`, see below).
 {api}`JAM.BestChain.BlockInfo.ofHeader` builds a `BlockInfo` from a model header.
 
+{leanSource JAM.BestChain.BlockInfo.ofHeader}
+
 # Ancestors (§5)
 %%%
 tag := "bestchain-ancestors"

@@ -106,6 +106,8 @@ requests are already held under the 27-octet hash part of their keys, and with t
 gives them (a request's value is {api}`JAM.ServiceAccount.encodeSlots` of its timeslots), so the row
 only rebuilds the full key:
 
+{leanSource JAM.ServiceAccount.encodeSlots}
+
 {leanSource JAM.Serialize.account}
 
 The dictionary is {api}`JAM.State.serialize`, and the state root is the trie root of it:
@@ -122,6 +124,8 @@ the root the trace records. It then rewrites the $`C(13)` and $`C(255, s)` value
 which changes the root, so it replaces the root with the model's own; for these rewritten states it
 checks that serializing the decoded state gives back the same pairs, key by key, and the same root,
 a round-trip check rather than an independent one.
+
+{leanSource JAM.StateDecode.decodeState}
 
 # Merklization (§D.2)
 %%%
@@ -166,6 +170,8 @@ the number of bits in a 31-octet key: two different 31-octet keys differ in one 
 on the dictionaries $`T` produces the split separates every pair of entries before the fuel runs out.
 The model does not state this as a theorem. The trie test (`Tests/TrieTest.lean`) checks
 $`M` against the roots of the GP v0.8.0 trie vectors.
+
+{leanSource JAM.Trie.bit}
 
 # Readings chosen
 %%%

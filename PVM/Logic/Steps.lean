@@ -215,19 +215,17 @@ open Lean Meta Simp in
 /-- Evaluate a PVM bit helper on literal arguments by calling the model's own definition; the
     kernel re-checks the literal by evaluating the definition. -/
 def evalNatFn2 (f : Nat → Nat → Nat) (e : Expr) : SimpM DStep := do
-  let args := e.getAppArgs
-  if args.size != 2 then return .continue
-  let some a ← Nat.fromExpr? args[0]! | return .continue
-  let some b ← Nat.fromExpr? args[1]! | return .continue
+  let #[a, b] := e.getAppArgs | return .continue
+  let some a ← Nat.fromExpr? a | return .continue
+  let some b ← Nat.fromExpr? b | return .continue
   return .done (toExpr (f a b))
 
 open Lean Meta Simp in
 def evalNatFn3 (f : Nat → Nat → Nat → Nat) (e : Expr) : SimpM DStep := do
-  let args := e.getAppArgs
-  if args.size != 3 then return .continue
-  let some a ← Nat.fromExpr? args[0]! | return .continue
-  let some b ← Nat.fromExpr? args[1]! | return .continue
-  let some c ← Nat.fromExpr? args[2]! | return .continue
+  let #[a, b, c] := e.getAppArgs | return .continue
+  let some a ← Nat.fromExpr? a | return .continue
+  let some b ← Nat.fromExpr? b | return .continue
+  let some c ← Nat.fromExpr? c | return .continue
   return .done (toExpr (f a b c))
 
 dsimproc reduceTrailingZeros (PVM.Num.trailingZeros _ _) := evalNatFn2 PVM.Num.trailingZeros
@@ -248,10 +246,9 @@ open Lean Meta Simp in
     to. A symbolic `x` is left folded, so a stored register reads back by `readN_writeN_same` and
     `decodeLE_encodeLE`. -/
 dsimproc reduceEncodeLE (PVM.Num.encodeLE _ _) := fun e => do
-  let args := e.getAppArgs
-  if args.size != 2 then return .continue
-  let some l ← Nat.fromExpr? args[0]! | return .continue
-  let some x ← Nat.fromExpr? args[1]! | return .continue
+  let #[l, x] := e.getAppArgs | return .continue
+  let some l ← Nat.fromExpr? l | return .continue
+  let some x ← Nat.fromExpr? x | return .continue
   let bytes := (PVM.Num.encodeLE l x).map fun b => mkApp (mkConst ``UInt8.ofNat) (mkNatLit b.toNat)
   return .done (← mkListLit (mkConst ``UInt8) bytes)
 

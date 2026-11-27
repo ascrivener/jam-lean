@@ -18,11 +18,11 @@ shortTitle := "A. PVM step"
 file := "pvm-step"
 %%%
 
-Appendix A of GP v0.8.1 defines the Polkadot Virtual Machine. Ψ runs a program, and each of its
-steps is Ψ₁, the single-step transition of §A.4. A step does three things, in this order:
+Appendix A of GP v0.8.1 defines the Polkadot Virtual Machine. $`\Psi` runs a program, and each of its
+steps is $`\Psi_1`, the single-step transition of §A.4. A step does three things, in this order:
 
 * it charges gas for the current basic block, if the block has not been charged yet;
-* it checks the memory the instruction reads and writes (ε^μ);
+* it checks the memory the instruction reads and writes ($`\varepsilon^\mu`);
 * it applies the instruction's regular execution, given by the mutation tables of §A.5.
 
 This chapter puts each part of the paper's definition next to the model's.
@@ -35,13 +35,13 @@ tag := "pvm-step"
 $$`\Psi_1 \colon (\mathfrak{p}, \mathbf{k}, \mathbf{j}, \imath, \varrho, \tilde\varrho, \omega, \mu) \mapsto (\varepsilon^*, \imath^*, \varrho^*, \tilde\varrho^*, \omega^*, \mu^*)`
 
 The result is {name}`PVM.StepResult`, and the function is {name}`PVM.Program.step`. A
-{name}`PVM.Program` holds the code 𝐜, the bitmask 𝐤 and the jump table 𝐣, so they need not be passed
+{name}`PVM.Program` holds the code $`\mathbf{c}`, the bitmask $`\mathbf{k}` and the jump table $`\mathbf{j}`, so they need not be passed
 separately.
 
 {leanSource PVM.Program.step}
 
-Ψ calls Ψ₁ only at a valid instruction, so in practice the decode always succeeds. The `getD`
-default only keeps Ψ₁ total, and the following theorem shows it is never reached:
+$`\Psi` calls $`\Psi_1` only at a valid instruction, so in practice the decode always succeeds. The `getD`
+default only keeps $`\Psi_1` total, and the following theorem shows it is never reached:
 
 {docstring PVM.Program.step_decode}
 
@@ -50,14 +50,14 @@ default only keeps Ψ₁ total, and the following theorem shows it is never reac
 tag := "pvm-gas"
 %%%
 
-Gas for a whole basic block is charged before the block's first instruction runs. ϱ̃ records that
+Gas for a whole basic block is charged before the block's first instruction runs. $`\tilde\varrho` records that
 the current block has been paid for:
 
 $$`\left(\varepsilon^{\varrho}, \varrho^*, \tilde\varrho'\right) = \begin{cases} (\blacktriangleright, \varrho, \top) & \text{when } \tilde\varrho = \top \\ (\blacktriangleright, \varrho - \varrho^{\Delta}(\mathbf{c}, \mathbf{k}, \mathfrak{L}(\imath)), \top) & \text{otherwise when } \varrho \ge \varrho^{\Delta}(\mathbf{c}, \mathbf{k}, \mathfrak{L}(\imath)) \\ (\infty, \varrho, \bot) & \text{otherwise} \end{cases}`
 
 {leanSource PVM.Program.chargeGas}
 
-The block cost ϱ^Δ (eq. `gascostforblock`) is the number of cycles a simulated out-of-order CPU
+The block cost $`\varrho^\Delta` (eq. `gascostforblock`) is the number of cycles a simulated out-of-order CPU
 needs to retire the whole block, minus 3, and at least 1:
 
 $$`\varrho^{\Delta}(\mathbf{c}, \mathbf{k}, \imath) = \max\left(\mathbf{x}^{\text{final}}_{c} - 3,\, 1\right)`
@@ -66,20 +66,20 @@ $$`\text{where } \mathbf{x}^{\text{final}} = \mathfrak{X}(\mathbf{c}, \mathbf{k}
 
 {leanSource PVM.Program.blockCost?}
 
-The simulation 𝔛 is run with fuel, because Lean needs every function to terminate. The theorems
+The simulation $`\mathfrak{X}` is run with fuel, because Lean needs every function to terminate. The theorems
 below show that the fuel never runs out, and that the total {name}`PVM.Program.blockCost` agrees
-with the paper's ϱ^Δ at every block Ψ charges:
+with the paper's $`\varrho^\Delta` at every block $`\Psi` charges:
 
 {docstring PVM.Sim.run_fuel_eq}
 
 {docstring PVM.Program.blockCost_eq_of_deblob}
 
-# ε^μ: memory exceptions
+# Memory exceptions
 %%%
 tag := "pvm-memory"
 %%%
 
-Let 𝐫 and 𝐰 be the indices that an instruction reads and writes. The memory-access exception is
+Let $`\mathbf{r}` and $`\mathbf{w}` be the indices that an instruction reads and writes. The memory-access exception is
 the following:
 
 $$`\varepsilon^{\mu} = \begin{cases} \blacktriangleright & \text{when } \mathbf{x} = \emptyset \\ \text{☇} & \text{when } \min(\mathbf{x}) \bmod 2^{32} < 2^{16} \\ \text{F} \times \mathsf{Z}_P \left\lfloor \min(\mathbf{x}) \bmod 2^{32} \div \mathsf{Z}_P \right\rfloor & \text{otherwise} \end{cases}`
@@ -88,10 +88,10 @@ $$`\text{where } \mathbf{x} = \left\{ x \;\middle|\; x \in \mathbf{r} \wedge x \
 
 {leanSource PVM.memoryException}
 
-The model computes 𝐫 and 𝐰 together with the regular execution. Each row of the mutation tables
+The model computes $`\mathbf{r}` and $`\mathbf{w}` together with the regular execution. Each row of the mutation tables
 in {name}`PVM.Program.exec` returns the indices it reads and writes (`Mutation.reads`, `Mutation.writes`).
 
-# The final state and ϱ̃\*
+# The final state and the charged flag
 %%%
 tag := "pvm-final"
 %%%
@@ -102,14 +102,14 @@ $$`\tilde\varrho^* = \begin{cases} \bot & \text{when } \tilde\varrho' = \bot \ve
 
 {leanSource PVM.Program.finalState}
 
-ϱ̃\* is the `charged` field in {name}`PVM.Program.step`. A terminator that continues, or makes a
+$`\tilde\varrho^*` is the `charged` field in {name}`PVM.Program.step`. A terminator that continues, or makes a
 host call, clears the flag, so the next block is charged when it starts.
 
 # Ψ terminates
 
-Ψ iterates Ψ₁ until the step's result is not ▸. The paper does not say why this terminates. The
-model gives a measure: every block charge costs at least one unit of gas, and between charges ı
-increases or a terminator clears ϱ̃. With this measure, Ψ is a total function, {name}`PVM.psi`.
+$`\Psi` iterates $`\Psi_1` until the step's result is not $`\blacktriangleright`. The paper does not say why this terminates. The
+model gives a measure: every block charge costs at least one unit of gas, and between charges $`\imath`
+increases or a terminator clears $`\tilde\varrho`. With this measure, $`\Psi` is a total function, {name}`PVM.psi`.
 
 {docstring PVM.step_measure_lt}
 
@@ -123,13 +123,13 @@ tag := "pvm-readings"
 These points are recorded in the model's
 [upstream candidates](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md):
 
-* *Note 3, §A.4.* The prose says that a RAM index below 2^16 always panics, "regardless of the
-  apparent (in)accessibility". The formula for ε^μ considers only inaccessible indices. The model
+* *Note 3, §A.4.* The prose says that a RAM index below $`2^{16}` always panics, "regardless of the
+  apparent (in)accessibility". The formula for $`\varepsilon^\mu` considers only inaccessible indices. The model
   follows the formula ({name}`PVM.memoryException`).
-* *Note 2, the branch target.* A branch target ı + 𝒵(…) can be negative, and ζ is undefined there.
+* *Note 2, the branch target.* A branch target $`\imath + \mathcal{Z}(\dots)` can be negative, and $`\zeta` is undefined there.
   In the model a negative target is never the start of a basic block, so the branch panics
   ({name}`PVM.Program.branch`).
-* *Note 1, §A.10.* The gas model's 𝔓\_S compares ω\_A = ω\_D, which, read literally, compares register
-  values. The gas model has no values, so the model compares the indices r\_A = r\_D.
-* *Note 5.* Ψ returns ı = 0 on ∎ and ☇, while the test vectors report the instruction that exited.
+* *Note 1, §A.10.* The gas model's $`\mathfrak{P}_S` compares $`\omega_A = \omega_D`, which, read literally, compares
+  register values. The gas model has no values, so the model compares the indices $`r_A = r_D`.
+* *Note 5.* $`\Psi` returns $`\imath = 0` on $`\blacksquare` and ☇, while the test vectors report the instruction that exited.
   The model follows the paper (`PVM.Result.pc`).

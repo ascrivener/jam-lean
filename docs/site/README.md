@@ -28,9 +28,12 @@ from `Companion.lean`. A chapter imports the model modules it discusses. It can 
 
 * `$$`…`` for the paper's equations, in KaTeX. Transcribe them from the pinned paper
   (`scripts/fetch-paper.sh`).
-* `{leanSource N}` for the source of declaration `N`, read from the model's file using Lean's stored
-  declaration range (`Companion/Source.lean`). Nothing is copied: a renamed declaration fails the
-  build, and an edited one shows its new text.
+* `{leanSource N}` for the source of declaration `N`, semantically highlighted (hovers, links)
+  by SubVerso, with links to its lines on GitHub and its API page (`Companion/Source.lean`).
+  Nothing is copied: a renamed declaration fails the build, and an edited one shows its new text.
+  A chapter that quotes a new model module must add it to `modelHighlights` in `lakefile.lean`
+  (SubVerso's `highlighted` facet re-elaborates exactly those modules, about 0.5 s each); the build
+  says so if one is missing.
 * `{docstring N}` for a definition or theorem's signature and docstring.
 * `{name}`N`` for an inline reference to `N`.
 

@@ -38,3 +38,12 @@ from `Companion.lean`. A chapter imports the model modules it discusses. It can 
 * `{name}`N`` for an inline reference to `N`.
 
 The readings the model chose should link to `docs/upstream-candidates.md` by note number.
+
+## Keeping the book in step with the model
+
+* `chapter-map.json` maps each model module to the chapters that discuss it (seeded from the
+  chapters' imports by `scripts/check-chapter-map.py --seed`; edit it by hand). A new chapter adds
+  its modules. On a PR, CI's `chapters` job warns in its summary, without failing, when a mapped
+  module changes but none of its chapters does.
+* `scripts/check-citations.py` (CI) checks that every note the book and the model cite
+  (`v0.8.1-A18`, "note 27") exists in `docs/upstream-candidates.md` and is not withdrawn.

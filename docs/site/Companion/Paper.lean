@@ -2,22 +2,20 @@ import VersoManual
 import Companion.Source
 
 /-!
-# Links to the Gray Paper
+# The Gray Paper's version and section numbers
 
-Every link from the book to the Gray Paper, and every section number it shows through these roles,
-comes from one place: `docs/site/gp-labels.json`, generated from the pinned paper by
-`scripts/gen_gp_labels.py` (the paper's version, its commit, and its section labels with their
-numbers). The book holds no hand-written paper URL (`scripts/check-citations.py` rejects one).
+Every reference the book makes to a part of the Gray Paper through these roles comes from one place:
+`docs/site/gp-labels.json`, generated from the pinned paper by `scripts/gen_gp_labels.py` (the
+paper's version, its commit, and its section labels with their numbers and titles). The book holds
+no hand-written paper URL (`scripts/check-citations.py` rejects one).
 
-* ``{gpsec}`sec:epochmarker` `` or ``{gpsec}`6.5` ``: the section's name ("§6.6", "§6.5", "Appendix A"),
-  linked to the paper. An unknown label or number fails the build.
-* ``{gpchapter}`sec:blockproduction` ``: "§6 Block Production and Chain Growth (GP v0.8.1)", linked.
-* `{gp}[text]`: `text` linked to the paper (the pinned reader).
-* `{gppdf}[text]`, `{gptag}[text]`: `text` linked to the release PDF, or to the release.
+* ``{gpchapter}`sec:blockproduction` ``: "§6 Block Production and Chain Growth (GP v0.8.1)".
+* ``{gpsec}`sec:epochmarker` `` or ``{gpsec}`6.5` ``: the section's name ("§6.6", "§6.5", "Appendix A").
+* `{gptag}[text]`: `text` linked to the pinned version's release.
 
-The links go to the Fluffy Labs reader pinned to the paper's commit (`#/<commit>`). The reader has
-no section or equation anchors that can be formed from a number (its locations are opaque codes of
-text selections), so a section link opens the pinned paper and its number says where to go.
+An unknown label or number fails the build. The references are text for now: they link nowhere,
+by decision (a reader of our own may come later). `GpTable.sectionUrl?` is the one place a link
+target would be added.
 -/
 
 open Lean Elab
@@ -47,11 +45,9 @@ def loadGpTable : IO GpTable := do
   return { version := ← str "version", commit := ← str "commit",
            sections := ← obj "sections", titles := ← obj "titles" }
 
-/-- The paper in the Fluffy Labs reader, pinned to the paper's commit. -/
-def GpTable.readerUrl (t : GpTable) : String := s!"https://graypaper.fluffylabs.dev/#/{t.commit}"
-/-- The release PDF of the pinned version. -/
-def GpTable.pdfUrl (t : GpTable) : String :=
-  s!"https://github.com/gavofyork/graypaper/releases/download/v{t.version}/graypaper-{t.version}.pdf"
+/-- Where a reference to section `n` links: nowhere for now, by decision. The one place to add a
+    link target (e.g. a reader of our own) later. -/
+def GpTable.sectionUrl? (_t : GpTable) (_n : String) : Option String := none
 /-- The release of the pinned version. -/
 def GpTable.tagUrl (t : GpTable) : String :=
   s!"https://github.com/gavofyork/graypaper/releases/tag/v{t.version}"
@@ -59,6 +55,12 @@ def GpTable.tagUrl (t : GpTable) : String :=
 /-- How the paper names a section: "§6.5", "§A.7", and "Appendix A" for a whole appendix. -/
 def sectionName (n : String) : String :=
   if n.length == 1 && n.all Char.isUpper then s!"Appendix {n}" else s!"§{n}"
+
+/-- The inline for a reference: `text`, linked when `GpTable.sectionUrl?` gives a target. -/
+def sectionRef (t : GpTable) (n text : String) : TermElabM Term :=
+  match t.sectionUrl? n with
+  | some url => ``(Verso.Doc.Inline.link #[Verso.Doc.Inline.text $(quote text)] $(quote url))
+  | none => ``(Verso.Doc.Inline.text $(quote text))
 
 /-- The number of section `key`: a label in the table, or a number that names a section. -/
 def GpTable.sectionNumber? (t : GpTable) (key : String) : Option String :=
@@ -76,7 +78,7 @@ def gpsec : RoleExpanderOf Unit
     let t ← loadGpTable
     let some n := t.sectionNumber? key
       | throwErrorAt arg m!"gpsec: no section {key} in GP v{t.version} (docs/site/gp-labels.json)"
-    ``(Verso.Doc.Inline.link #[Verso.Doc.Inline.text $(quote (sectionName n))] $(quote t.readerUrl))
+    sectionRef t n (sectionName n)
   | _, _ => throwError "gpsec: expected exactly one code literal"
 
 /-- `{gpchapter}`label``: a chapter's pointer to its part of the paper, "§6 Block Production and
@@ -91,25 +93,8 @@ def gpchapter : RoleExpanderOf Unit
     let some n := t.sectionNumber? key
       | throwErrorAt arg m!"gpchapter: no section {key} in GP v{t.version} (docs/site/gp-labels.json)"
     let title := (t.titles.get? n).getD ""
-    let url := t.readerUrl
-    ``(Verso.Doc.Inline.link #[Verso.Doc.Inline.text $(quote s!"{sectionName n}{if n.length == 1 && n.all Char.isUpper then ":" else ""} {title} (GP v{t.version})")] $(quote url))
+    sectionRef t n s!"{sectionName n}{if n.length == 1 && n.all Char.isUpper then ":" else ""} {title} (GP v{t.version})"
   | _, _ => throwError "gpchapter: expected exactly one code literal"
-
-/-- `{gp}[text]`: `text` linked to the pinned paper (reader). -/
-@[role]
-def gp : RoleExpanderOf Unit
-  | (), content => do
-    let url := (← loadGpTable).readerUrl
-    let content ← content.mapM elabInline
-    ``(Verso.Doc.Inline.link #[$content,*] $(quote url))
-
-/-- `{gppdf}[text]`: `text` linked to the pinned version's release PDF. -/
-@[role]
-def gppdf : RoleExpanderOf Unit
-  | (), content => do
-    let url := (← loadGpTable).pdfUrl
-    let content ← content.mapM elabInline
-    ``(Verso.Doc.Inline.link #[$content,*] $(quote url))
 
 /-- `{gptag}[text]`: `text` linked to the pinned version's release. -/
 @[role]

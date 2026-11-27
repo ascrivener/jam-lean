@@ -34,11 +34,10 @@ authors := ["The jam-lean project"]
 shortTitle := "jam-lean: a companion to the Gray Paper"
 %%%
 
-This book reads {gp}[the Gray Paper], version 0.8.1 ({gptag}[release `v0.8.1`] of
-gavofyork/graypaper, also as a {gppdf}[PDF]), alongside [jam-lean](https://github.com/ascrivener/jam-lean),
-a Lean 4 model of JAM. *The paper is the authority*; this book is a companion to it. Each
-chapter opens with a link to its part of the paper, pinned to v0.8.1. For each part of the paper
-the book shows:
+This book reads the [Gray Paper](https://graypaper.com), version 0.8.1 ({gptag}[release `v0.8.1`] of
+gavofyork/graypaper), alongside [jam-lean](https://github.com/ascrivener/jam-lean), a Lean 4 model
+of JAM. *The paper is the authority*; this book is a companion to it. Each chapter opens by naming
+its part of the paper (v0.8.1). For each part of the paper the book shows:
 
 * the paper's equations, as they are written in the paper, with the paper's equation numbers;
 * the Lean definitions that implement them, read from the model's source when the book is built

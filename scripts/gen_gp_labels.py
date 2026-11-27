@@ -9,9 +9,10 @@ Sections are numbered as LaTeX numbers them: `graypaper.tex`'s `\\input` files i
 `\\appendix`. A `\\label{…}` that follows a heading (before the next heading or paragraph of text)
 names it. The version and commit are those of the pinned paper (`scripts/fetch-paper.sh`).
 
-The book's `Companion/Paper.lean` reads this table: `{gpsec "safrole"}` renders "§6" linked to the
-paper; an unknown label fails the build. Moving to a new paper version: update `VERSION`/`COMMIT`
-below with the pin, regenerate, and rebuild the book (CLAUDE.md's version-change checklist).
+The book's `Companion/Paper.lean` reads this table (``{gpsec}`sec:epochmarker` `` renders "§6.6",
+``{gpchapter}`…` `` a chapter's section with its title); an unknown label fails the build. Moving to a
+new paper version: update `VERSION`/`COMMIT` below with the pin, regenerate, and rebuild the book
+(CLAUDE.md's version-change checklist).
 """
 
 import json

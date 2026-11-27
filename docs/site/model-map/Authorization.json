@@ -1,0 +1,10 @@
+{
+  "equations": {
+    "8.1": { "kind": "inline", "name": "JAM.State", "at": "authPools : List (List (List UInt8))",
+             "note": "φ is the next field, `authQueue`; the types do not fix the lengths C, O and Q, and a missing core's pool or queue reads as empty" },
+    "8.2": { "kind": "def", "name": "JAM.poolNext",
+             "note": "for one core c; `JAM.authorizations` maps it over the C cores. An empty queue appends nothing" },
+    "8.3": { "kind": "def", "name": "JAM.poolUsed",
+             "note": "the guarantees enter as (core, authorizer) pairs; ⊖ is `JAM.seqMinusLeft`" }
+  }
+}

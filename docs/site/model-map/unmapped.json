@@ -1,12 +1,4 @@
 {
   "about": "Chapters whose model map (docs/site/model-map/<Chapter>.json) is not complete yet. Remove a chapter when its map is complete; this list shrinks to empty.",
-  "unmapped": [
-    "Assurance",
-    "Authorization",
-    "Beefy",
-    "Guaranteeing",
-    "History",
-    "Overview",
-    "Primitives"
-  ]
+  "unmapped": []
 }

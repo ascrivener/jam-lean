@@ -1,0 +1,19 @@
+{
+  "equations": {
+    "7.1": { "kind": "type", "name": "JAM.Recent" },
+    "7.2": { "kind": "type", "name": "JAM.RecentBlock",
+             "note": "the field `accRoot` is b; the bound H on the length is kept by `JAM.recentHistory`" },
+    "7.3": { "kind": "type", "name": "JAM.MMR", "note": "the field `belt` of `JAM.Recent`" },
+    "7.4": { "kind": "inline", "name": "JAM.AccResult", "at": "outputs : List (Nat × List UInt8) := []",
+             "note": "θ′ as accumulation returns it; the state keeps θ as the field `lastAccOut` of `JAM.State`" },
+    "7.5": { "kind": "def", "name": "JAM.Recent.withParentRoot" },
+    "7.6": { "kind": "inline", "name": "JAM.accumulate", "at": "let outs := theta.map",
+             "note": "accumulation then returns 𝓜_B(s, 𝓗_K) as `root`, which reaches §7 as `HistoryInput.accRoot`" },
+    "7.7": { "kind": "inline", "name": "JAM.recentHistory", "at": "let belt := MMR.append Keccak.keccak256",
+             "note": "`i.accRoot` is 𝓜_B(s, 𝓗_K), computed by `JAM.accumulate`" },
+    "E.8": { "kind": "def", "name": "JAM.MMR.append", "note": "P is `JAM.MMR.place`" },
+    "E.10": { "kind": "def", "name": "JAM.MMR.superPeak", "note": "the recursion is `JAM.MMR.superPeakRev`, on the present peaks last-first" },
+    "7.8": { "kind": "def", "name": "JAM.recentHistory",
+             "note": "the new entry is `entry`; 𝐩 arrives as `HistoryInput.reported`, computed by the guarantees step `JAM.guarantees` and passed on by `JAM.importBlock`" }
+  }
+}

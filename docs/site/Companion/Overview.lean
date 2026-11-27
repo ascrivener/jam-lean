@@ -189,7 +189,9 @@ $`P(\mathbf{H})` is the parent header and $`\mathcal{T}` the wall clock. A heade
 
 * {eq}`5.2`: $`\mathbf{H}_P` is the hash of the last header in the {api}`JAM.Chain` it is given.
 * {eq}`5.3`: the ancestor set is the chain's headers together with $`\mathbf{H}` itself. It is used only by the
-  lookup-anchor check of {ref "reports"}[§11] ({api}`JAM.lookupAnchorKnown`).
+  lookup-anchor check of {ref "reports"}[§11] ({api}`JAM.lookupAnchorKnown`). The retained headers are supplied by the
+  caller: only the last is checked against $`\mathbf{H}_P`, and the model assumes, without checking, that they form a
+  parent chain.
 * {eq}`5.8`: $`P(\mathbf{H})_T < \mathbf{H}_T` is checked as $`\tau < \mathbf{H}_T`, since $`\tau` is the parent's timeslot (Safrole's `badSlot`).
   $`\mathbf{H}_T \cdot \mathsf{P} \leq \mathcal{T}` is not checked: $`\Upsilon` has no clock.
 * {eq}`5.9`: $`\mathbf{H}_R` equals {api}`JAM.State.root`, the state Merklization $`\mathcal{M}_\sigma` of {ref "statemerkle"}[Appendix D].

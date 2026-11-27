@@ -104,8 +104,10 @@ match discriminant before touching `let`s; prefer `rw`, `extract_lets` and lemma
 `JamCryptoTest/Fast.lean` (run by `cryptotest`) still compares fast and reference functions on all
 vectors and randomized inputs, as an extra check.
 
-Timings (cryptotest, per valid signature, this container): Ed25519 1.83 ms → 0.29 ms, IETF VRF
-12.7 ms → 1.7 ms, Thin VRF 12–17 ms → 2.0 ms.
+Timings (this container; reference → fast): per valid signature (cryptotest), Ed25519 1.82 ms →
+0.60 ms, IETF VRF about 13 ms → 3.7 ms, Thin VRF 12–17 ms → 3.8 ms; ring (ringtest, mean over the
+vectors) proof verification 124 ms → 103 ms, ring root for 1023 keys 2.15 s → 1.12 s. The ring's
+BLS12-381 part (G1, the pairing) still runs on the reference.
 
 ## Derivation
 

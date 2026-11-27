@@ -31,8 +31,7 @@ the paper's equations next to the model's highlighted source and its theorems (b
   service and Parity's bootstrap service, including the picoalloc heap allocator the JAM SDK links
   into every service. These proofs were last kernel-checked at commit `c22c197`, against the
   v0.8.0 model. They have not been rebuilt against the v0.8.1 model and do not build against it
-  until proof work resumes. Along the way they found disagreements between the binary and the
-  paper; both are in [`docs/whats-proven.md`](docs/whats-proven.md).
+  until proof work resumes (see [`docs/whats-proven.md`](docs/whats-proven.md)).
 * **Proved about the model.** Theorems in `PVM` and `JAM`, checked on every CI run: Ψ and Ψ_H are
   the paper's recursive definitions, the gas simulation always finishes, and results on Safrole,
   confinement, segments, §14 refinement, auditing and the best-chain rule ([Theorems](#theorems)). In a separate

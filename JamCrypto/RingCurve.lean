@@ -3,14 +3,16 @@ import JamCrypto.Bls12381Field
 /-!
 # Bandersnatch, as much as the ring needs
 
-The Bandersnatch curve (eprint 2021/1152) in twisted Edwards form a·x² + y² = 1 + d·x²·y² over
-𝔽_r (the BLS12-381 scalar field), a = −5; its prime-order subgroup has order `N` and cofactor 4.
+The Bandersnatch curve (eprint 2021/1152) in twisted Edwards form $a \cdot x^2 + y^2 = 1 + d \cdot
+x^2 \cdot y^2$ over $\mathbb{F}_r$ (the BLS12-381 scalar field), $a = -5$; its prime-order subgroup
+has order `N` and cofactor 4.
 
-* Points are affine (`Aff`) or extended (`Ext`, (X : Y : T : Z) with x = X/Z, y = Y/Z, T = XY/Z).
-* `decode`: the compressed 32-octet encoding of the Bandersnatch VRF spec (arkworks): y little
-  endian, the top bit of the last octet set when x is the larger of ±x. A key decodes only when it
-  is on the curve and in the prime-order subgroup.
-* The constants of the ring: the Pedersen blinding base `blindingBase` (H), the ring's
+* Points are affine (`Aff`) or extended (`Ext`, $(X : Y : T : Z)$ with $x = X/Z$, $y = Y/Z$,
+  $T = XY/Z$).
+* `decode`: the compressed 32-octet encoding of the Bandersnatch VRF spec (arkworks): $y$ little
+  endian, the top bit of the last octet set when $x$ is the larger of $\pm x$. A key decodes only
+  when it is on the curve and in the prime-order subgroup.
+* The constants of the ring: the Pedersen blinding base `blindingBase` ($H$), the ring's
   `accumulatorBase` (seed) and `padding` point, as fixed by the Bandersnatch VRF spec and ark-vrf
   0.1.0 (`suites::bandersnatch`).
 
@@ -21,9 +23,9 @@ namespace JamCrypto.Ring.Curve
 
 open JamCrypto.Fr
 
-/-- a = −5. -/
+/-- $a = -5$. -/
 def A : Nat := R - 5
-/-- d. -/
+/-- $d$. -/
 def D : Nat := 45022363124591815672509500913686876175488063829319466900776701791074614335719
 /-- The order of the prime-order subgroup. -/
 def N : Nat := 13108968793781547619861935127046491459309155893440570251786403306729687672801
@@ -110,7 +112,7 @@ def smulW (p : Ext) (k : Nat) : Ext := Id.run do
     if d != 0 then acc := addE acc tbl[d]!
   return acc
 
-/-- In the prime-order subgroup: [N]P is the identity. -/
+/-- In the prime-order subgroup: $[N]P$ is the identity. -/
 def inSubgroup (p : Aff) : Bool := (smulW p.toExt N).isZero
 
 /-- The compressed encoding (32 octets). -/
@@ -118,7 +120,7 @@ def encode (p : Aff) : List UInt8 :=
   let neg := p.x > (R - 1) / 2
   Field.toLE 32 (p.y + (if neg then 2 ^ 255 else 0))
 
-/-- The point on the curve with this y and sign flag, if any (no subgroup check). -/
+/-- The point on the curve with this $y$ and sign flag, if any (no subgroup check). -/
 def decodeUnchecked (bs : List UInt8) : Option Aff := do
   if bs.length != 32 then none
   let v := Field.ofLE bs
@@ -138,7 +140,7 @@ def decode (bs : List UInt8) : Option Aff := do
   let p ← decodeUnchecked bs
   if onCurve p && inSubgroup p then some p else none
 
-/-- The Pedersen blinding base H. -/
+/-- The Pedersen blinding base $H$. -/
 def blindingBase : Aff :=
   ⟨6150229251051246713677296363717454238956877613358614224171740096471278798312,
    28442734166467795856797249030329035618871580593056783094884474814923353898473⟩
@@ -153,17 +155,19 @@ def padding : Aff :=
   ⟨26287722405578650394504321825321286533153045350760430979437739593351290020913,
    19058981610000167534379068105702216971787064146691007947119244515951752366738⟩
 
-/-! ### GP v0.8.1: the same points of the VRF spec's Draft 35 (hash_to_curve of "pedersen-blinding",
-    "ring-accumulator" and "ring-padding" under suite `Bandersnatch-SHA512-ELL2-v1`, §4 and §5),
-    as the draft prints them: the derivation with the 48-octet Z_pad, i.e. the points of
-    `Reading.vectors`. The points of `Reading.prose` are derived in `RingRoot` (`h2cProse`). -/
+/-! ### GP v0.8.1: the same points of the VRF spec's Draft 35
 
-/-- The Pedersen blinding base B of Draft 35. -/
+hash_to_curve of "pedersen-blinding", "ring-accumulator" and "ring-padding" under suite
+`Bandersnatch-SHA512-ELL2-v1` (§4 and §5), as the draft prints them: the derivation with the
+48-octet $Z_{\text{pad}}$, i.e. the points of `Reading.vectors`. The points of `Reading.prose` are
+derived in `RingRoot` (`h2cProse`). -/
+
+/-- The Pedersen blinding base $B$ of Draft 35. -/
 def blindingBase081 : Aff :=
   ⟨23335687741101763108036518445642207119627658113885888016488710494487028845889,
    5552214580375038693022409684979828600325210968745774080859660443337357929963⟩
 
-/-- The ring accumulator base S of Draft 35. -/
+/-- The ring accumulator base $S$ of Draft 35. -/
 def accumulatorBase081 : Aff :=
   ⟨14056632001415368875257708737821299882600475929746323097150942355715730684350,
    10322661992765989500407719465917595459409463902187386706652408883505670839210⟩

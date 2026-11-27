@@ -3,16 +3,16 @@
 
 Elements are `Nat`s below the modulus (Lean's `Nat` is GMP-backed). Two fields:
 
-* 𝔽_q, the base field of BLS12-381 (381 bits), over which G1 is defined (`Fq`);
-* 𝔽_r, the scalar field of BLS12-381 (255 bits), which is also the base field of the Bandersnatch
-  curve (`Fr`). The KZG polynomials of the ring commitment live over 𝔽_r.
+* $\mathbb{F}_q$, the base field of BLS12-381 (381 bits), over which G1 is defined (`Fq`);
+* $\mathbb{F}_r$, the scalar field of BLS12-381 (255 bits), which is also the base field of the
+  Bandersnatch curve (`Fr`). The KZG polynomials of the ring commitment live over $\mathbb{F}_r$.
 
 Moduli as in the BLS12-381 and Bandersnatch definitions (Bandersnatch paper, eprint 2021/1152).
 -/
 
 namespace JamCrypto.Field
 
-/-- a^e mod m, by binary exponentiation over the bits of e (structural on the bit count). -/
+/-- $a^e \bmod m$, by binary exponentiation over the bits of $e$ (structural on the bit count). -/
 def powMod (a e m : Nat) : Nat := Id.run do
   let mut r := 1 % m
   let mut b := a % m
@@ -23,8 +23,8 @@ def powMod (a e m : Nat) : Nat := Id.run do
     k := k / 2
   return r
 
-/-- Inverse modulo a prime m by the extended Euclidean algorithm (0 for 0). Fuel: the Euclidean
-    algorithm on numbers below 2^k ends within 2k+2 steps. -/
+/-- Inverse modulo a prime $m$ by the extended Euclidean algorithm (0 for 0). Fuel: the Euclidean
+    algorithm on numbers below $2^k$ ends within $2k+2$ steps. -/
 def invMod (a m : Nat) : Nat := Id.run do
   let a := a % m
   if a == 0 then return 0
@@ -47,7 +47,7 @@ def ofBE (bs : List UInt8) : Nat := bs.foldl (fun acc b => acc * 256 + b.toNat) 
 /-- Little-endian octets to a number. -/
 def ofLE (bs : List UInt8) : Nat := ofBE bs.reverse
 
-/-- The n little-endian octets of x mod 256^n. -/
+/-- The $n$ little-endian octets of $x \bmod 256^n$. -/
 def toLE (n x : Nat) : List UInt8 := Id.run do
   let mut out : Array UInt8 := #[]
   let mut v := x
@@ -56,7 +56,7 @@ def toLE (n x : Nat) : List UInt8 := Id.run do
     v := v / 256
   return out.toList
 
-/-- The n big-endian octets of x mod 256^n. -/
+/-- The $n$ big-endian octets of $x \bmod 256^n$. -/
 def toBE (n x : Nat) : List UInt8 := (toLE n x).reverse
 
 end JamCrypto.Field
@@ -89,18 +89,19 @@ def R : Nat := 0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff0000000
 def inv (a : Nat) : Nat := Field.invMod a R
 def pow (a e : Nat) : Nat := Field.powMod a e R
 
-/-- R − 1 = 2^32 · T with T odd. -/
+/-- $R - 1 = 2^{32} \cdot T$ with $T$ odd. -/
 def S : Nat := 32
 def T : Nat := (R - 1) / 2 ^ 32
 
-/-- The multiplicative generator 7 of 𝔽_r^× (as fixed by the BLS12-381 field parameters). -/
+/-- The multiplicative generator 7 of $\mathbb{F}_r^{\times}$ (as fixed by the BLS12-381 field
+    parameters). -/
 def generator : Nat := 7
 
-/-- generator^T, a primitive 2^32-th root of unity. -/
+/-- $\text{generator}^T$, a primitive $2^{32}$-th root of unity. -/
 def rootOfUnity : Nat := pow generator T
 
-/-- A square root of a in 𝔽_r, if a is a square (Tonelli–Shanks; 𝔽_r has 2-adicity 32). The root
-    returned is not normalised; callers pick the sign they need. -/
+/-- A square root of $a$ in $\mathbb{F}_r$, if $a$ is a square (Tonelli–Shanks; $\mathbb{F}_r$ has
+    2-adicity 32). The root returned is not normalised; callers pick the sign they need. -/
 def sqrt? (a : Nat) : Option Nat := Id.run do
   let a := a % R
   if a == 0 then return some 0

@@ -4,10 +4,11 @@ import JamCrypto.PedersenVrf
 /-!
 # Ring VRF verification for GP v0.8.1 (VRF spec Draft 35 §5)
 
-x ∈ 𝔹̄°_r⟨c⟩⟨m⟩ under GP v0.8.1: the 784-octet x is the output point O (32 octets), a Draft 35
-Pedersen VRF proof (160 octets, `Bandersnatch.Pedersen`) and a ring proof (592 octets). Verification
-(§5.2) is Pedersen verify for (I, O) = (hash_to_curve(c), O) and additional data m, then the ring
-proof for the key commitment Ȳ of the Pedersen proof.
+$x \in \bar{\mathbb{B}}^{\circ}_r\langle c\rangle\langle m\rangle$ under GP v0.8.1: the 784-octet
+$x$ is the output point $O$ (32 octets), a Draft 35 Pedersen VRF proof (160 octets,
+`Bandersnatch.Pedersen`) and a ring proof (592 octets). Verification (§5.2) is Pedersen verify for
+$(I, O) = (\text{hash}\_\text{to}\_\text{curve}(c), O)$ and additional data $m$, then the ring proof for the key
+commitment $\bar{Y}$ of the Pedersen proof.
 
 Against v0.8.0 (`Ring.verify`) the ring proof itself is unchanged except for its constants
 (`Consts.v081`: blinding base, padding point, accumulator seed, and the transcript label, which is
@@ -21,7 +22,8 @@ passes the ring size of the fixed domain 2048 of Draft 35 §5 (`Ring.domain081`)
 
 namespace JamCrypto.Ring
 
-/-- x ∈ 𝔹̄°_r⟨c⟩⟨m⟩ (GP v0.8.1) for rings of up to `ringSize` keys, under the reading `rd`. -/
+/-- $x \in \bar{\mathbb{B}}^{\circ}_r\langle c\rangle\langle m\rangle$ (GP v0.8.1) for rings of up to
+    `ringSize` keys, under the reading `rd`. -/
 def verify081 (srs : Srs) (ringSize : Nat) (root ctx msg proof : List UInt8)
     (rd : Reading := .prose) : Bool := Id.run do
   if root.length != 144 || proof.length != 784 then return false
@@ -39,7 +41,7 @@ def verify081 (srs : Srs) (ringSize : Nat) (root ctx msg proof : List UInt8)
   if srs.g1.size < dom then return false
   return ringProofOk srs dom cx cy csel pkCom rp (Consts.v081 rd)
 
-/-- Y(x) (GP v0.8.1): the 32-octet Draft 35 output hash of the signature's output point. -/
+/-- $\mathcal{Y}(x)$ (GP v0.8.1): the 32-octet Draft 35 output hash of the signature's output point. -/
 def output081 (proof : List UInt8) : List UInt8 := Bandersnatch.Thin.vrfOutput proof
 
 end JamCrypto.Ring

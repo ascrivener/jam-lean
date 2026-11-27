@@ -3,7 +3,7 @@ import JAM.Keccak
 /-!
 # SHAKE128 and the ring proof's Fiat–Shamir transcript
 
-* `shake128 msg n`: SHAKE128 (FIPS 202; rate 168, domain bits 0x1F) with n output octets, on
+* `shake128 msg n`: SHAKE128 (FIPS 202; rate 168, domain bits 0x1F) with $n$ output octets, on
   jam-lean's Keccak-f[1600] (`JAM.Keccak`).
 * `Transcript`: the transcript of the ring proof (ark-transcript 0.0.3, as used by w3f ring-proof
   0.0.2 / ark-vrf 0.1.0). It is a SHAKE128 stream; the transcript keeps the octets written so far,
@@ -14,7 +14,7 @@ import JAM.Keccak
 
 namespace JamCrypto.Ring
 
-/-- SHAKE128 of msg, n octets of output. -/
+/-- SHAKE128 of msg, $n$ octets of output. -/
 def shake128 (msg : List UInt8) (n : Nat) : List UInt8 := Id.run do
   let rate := 168
   let full := msg.length / rate
@@ -51,7 +51,7 @@ def separate (t : Transcript) : Transcript :=
     { raw t bs with length := none }
   | none => t
 
-/-- Writes octets (messages here are far below the 2³¹ limit at which ark-transcript splits). -/
+/-- Writes octets (messages here are far below the $2^{31}$ limit at which ark-transcript splits). -/
 def write (t : Transcript) (bs : List UInt8) : Transcript :=
   let t := raw t bs
   { t with length := some (t.length.getD 0 + bs.length) }
@@ -63,7 +63,7 @@ def append (t : Transcript) (item : List UInt8) : Transcript := ((t.separate).wr
 
 def new (l : List UInt8) : Transcript := ({} : Transcript).label l
 
-/-- The challenge for a label: n octets of the XOF, and the transcript after it. -/
+/-- The challenge for a label: $n$ octets of the XOF, and the transcript after it. -/
 def challenge (t : Transcript) (l : List UInt8) (n : Nat) : List UInt8 × Transcript :=
   let t := (t.label l).write "challenge".toUTF8.toList
   (shake128 t.rev.reverse n, t.separate)

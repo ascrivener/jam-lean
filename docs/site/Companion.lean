@@ -1,8 +1,15 @@
 import VersoManual
 import Companion.Source
+import Companion.Primitives
+import Companion.Overview
 import Companion.Safrole
+import Companion.History
+import Companion.Authorization
 import Companion.Accounts
 import Companion.Accumulation
+import Companion.Work
+import Companion.Auditing
+import Companion.BestChain
 import Companion.PVM
 
 open Verso.Genre Manual
@@ -64,21 +71,22 @@ tag := "roadmap"
 Chapters follow the order of the paper's sections. Two are written so far; the others are listed
 with the model modules that implement them.
 
-* §4–§5 The state, the header and the block: `JAM/State.lean`, `JAM/Block.lean`, `JAM/BlockImport.lean`
+* *§3 Primitives* ({ref "primitives"}[written]): `JAM/Blake2b.lean`, `JAM/Keccak.lean`, `JAM/Sha512.lean`, `JAM/Constants.lean`, `JAM/Params.lean`
+* *§4–§5 The state, the header and the block* ({ref "overview"}[written]): `JAM/State.lean`, `JAM/Block.lean`, `JAM/BlockImport.lean`
 * *§6 Safrole* ({ref "safrole"}[written]): `JAM/Safrole.lean`
-* §7 Recent history: `JAM/History.lean`
-* §8 Authorization: `JAM/Authorization.lean`
+* *§7 Recent history* ({ref "history"}[written]): `JAM/History.lean`
+* *§8 Authorization* ({ref "authorization"}[written]): `JAM/Authorization.lean`
 * *§9 Service accounts* ({ref "accounts"}[written]): `JAM/Account.lean`
 * §10 Disputes: `JAM/Disputes.lean`
 * §11 Reports and assurances: `JAM/Reports.lean`, `JAM/Assurances.lean`
 * *§12 Accumulation and preimages* ({ref "accumulation"}[written]): `JAM/Accumulate.lean`, `JAM/Accumulation.lean`, `JAM/Preimages.lean`
 * §13 Statistics: `JAM/Statistics.lean`
-* §14 Work packages and refinement: `JAM/Work.lean`, `JAM/Refine.lean`, `JAM/Guarantee.lean`
+* *§14 Work packages and work reports* ({ref "work"}[written]): `JAM/Work.lean`, `JAM/Refine.lean`, `JAM/Guarantee.lean`
 * §15 Guaranteeing and §16 Availability assurance: not modelled beyond the refinement of §14
   (the networking and distribution they describe is out of scope)
-* §17 Auditing: `JAM/Auditing.lean`
+* *§17 Auditing and judging* ({ref "auditing"}[written]): `JAM/Auditing.lean`
 * §18 Beefy distribution: not modelled
-* §19 Grandpa and the best chain: `JAM/BestChain.lean` (the best-chain rule; Grandpa itself is not modelled)
+* *§19 Grandpa and the best chain* ({ref "bestchain"}[written]): `JAM/BestChain.lean` (the best-chain rule; Grandpa itself is not modelled)
 * *Appendix A, the PVM* ({ref "pvm"}[written]): `PVM/Machine.lean`, `PVM/Exec.lean`, `PVM/Gas.lean`, `PVM/Memory.lean`
 * Appendix B, PVM invocations: `PVM/Invocation.lean`, `JAM/Host/`
 * Appendix C, the serialization codec: `JAM/Codec.lean`, `JAM/Decode.lean`
@@ -88,10 +96,24 @@ with the model modules that implement them.
 * Appendix G, the Bandersnatch VRF: `JAM/Crypto.lean` (the interface) and `JamCrypto/` (an implementation)
 * Appendix H, erasure coding: `JAM/Erasure.lean`
 
+{include 1 Companion.Primitives}
+
+{include 1 Companion.Overview}
+
 {include 1 Companion.Safrole}
+
+{include 1 Companion.History}
+
+{include 1 Companion.Authorization}
 
 {include 1 Companion.Accounts}
 
 {include 1 Companion.Accumulation}
+
+{include 1 Companion.Work}
+
+{include 1 Companion.Auditing}
+
+{include 1 Companion.BestChain}
 
 {include 1 Companion.PVM}

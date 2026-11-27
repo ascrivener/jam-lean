@@ -7,7 +7,7 @@ import JAM.Crypto
 # The `JAM.Crypto` fields this library implements
 
 `withSignatures base` is `base` with Ed25519 verification (ZIP 215 rules, see `Ed25519.Rules`), the
-Bandersnatch VRF signature verification and its output Y; the ring fields (`bsRingRoot`,
+Bandersnatch VRF signature verification and its output $\mathcal{Y}$; the ring fields (`bsRingRoot`,
 `bsRingVerify`, `bsRingOut`) stay those of `base`.
 
 The Bandersnatch signature scheme depends on the Gray Paper version (`GpVersion`): v0.8.0 uses

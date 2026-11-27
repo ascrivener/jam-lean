@@ -360,12 +360,24 @@ def psOf (as : List (Nat × ServiceAccount)) (free : List Nat) (m v : Nat := 0) 
     assigners := [0, 0], delegator := v, registrar := 0,
     alwaysAcc := Std.ExtTreeMap.ofList (free.map (·, 1000000)) }
 
-/-- The accumulation STF at slot 10 (prior slot 9) with no reports. -/
+/-- The prior state for `accAt`: slot 9, nothing queued or accumulated. -/
+def accPre (e : PartialState) : AccState :=
+  { slot := 9, entropy := List.replicate 32 0, ready := List.replicate 12 []
+    accumulated := List.replicate 12 ∅, pstate := e }
+
+/-- The accumulation STF at slot 10 (prior slot 9) with no reports. None of these tests creates
+    a new service, so it never fails (`accOk` checks that); on an error it would return the prior
+    state with no outputs, which the checks below would catch. -/
 def accAt (e : PartialState) : AccResult :=
-  let pre : AccState :=
-    { slot := 9, entropy := List.replicate 32 0, ready := List.replicate 12 []
-      accumulated := List.replicate 12 ∅, pstate := e }
-  accumulate .tiny pre 10 []
+  match accumulate .tiny (accPre e) 10 [] with
+  | .ok r => r
+  | .error _ => { state := accPre e, root := [], stats := [] }
+
+/-- The accumulation STF succeeds on this state. -/
+def accOk (e : PartialState) : Bool :=
+  match accumulate .tiny (accPre e) 10 [] with
+  | .ok _ => true
+  | .error _ => false
 
 -- yield = 27, checkpoint = 19, transfer = 22, write = 5, provide = 28, bless = 16
 /-- A deferred transfer to itself of 0 with gas limit `l`, the memo read at 0x10000. -/
@@ -381,6 +393,7 @@ def argYield : List UInt8 :=
   svcProgram ([.call 27, .call 19] ++ selfXfer 5000 ++ [.call 19] ++ selfXfer 5000) (List.replicate 128 0)
 def hArgs (k : Nat) : List UInt8 := [10, 20, k.toUInt8] ++ List.replicate 29 0
 def thetaRes := accAt (psOf [(20, svc (some argYield))] [20])
+#guard accOk (psOf [(20, svc (some argYield))] [20])
 #guard thetaRes.outputs == [(20, hArgs 0), (20, hArgs 1), (20, hArgs 2)]
 #guard thetaRes.root ==
   Merkle.root Keccak.keccak256 ([0, 1, 2].map fun k => Codec.fixed 4 20 ++ hArgs k)
@@ -413,6 +426,7 @@ def supCode : List UInt8 :=
   svcProgram [.set 7 31, .set 8 roBase, .set 9 1, .set 10 (roBase + 1), .set 11 1, .call 5] "kU".toUTF8.toList
 def junior31 : ServiceAccount := (svc (some juniorCode) 30 0).requestSet hPre4 4 []
 def nRes (sup : Option (List UInt8)) := accAt (psOf [(30, svc sup), (31, junior31)] [30, 31])
+#guard accOk (psOf [(30, svc (some supCode)), (31, junior31)] [30, 31])
 def acctIn (r : AccResult) (s : Nat) : ServiceAccount := r.state.pstate.accounts.getD s default
 -- both write: 31's run is discarded
 #guard (acctIn (nRes (some supCode)) 31).storageGet "k".toUTF8.toList == some "U".toUTF8.toList
@@ -432,7 +446,10 @@ def payBoth : List UInt8 :=
            .set 7 none64, .set 8 41, .set 9 0, .set 10 7, .set 11 0, .set 12 roBase, .call 22]
     (List.replicate 128 0)
 def tPs := psOf [(40, svc (some payBoth)), (41, svc none), (42, svc none 41 0)] [40]
-def tSeq := accSeq .tiny (List.replicate 32 0) 10 20 2000000 [] [] tPs tPs.alwaysAcc
+def tSeq := match accSeq .tiny (List.replicate 32 0) 10 20 2000000 [] [] tPs tPs.alwaysAcc with
+  | .ok x => x
+  | .error _ => (0, tPs, [], [], [])
+#guard accOk tPs
 #guard tSeq.2.2.2.1.map (·.1) == [40, 42, 41]
 #guard tSeq.2.2.2.2.map (·.dest) == [42, 41]
 #guard (tSeq.2.1.accounts.getD 41 default).balance == rich.balance + 7 &&
@@ -457,6 +474,29 @@ def blessV (v : Nat) : List UInt8 :=
            .call 16] []
 #guard (accAt (psOf [(50, svc (some (blessV 60))), (51, svc (some (blessV 61)))] [50, 51] 50 51)).state.pstate.delegator == 60
 #guard (accAt (psOf [(50, svc none), (51, svc (some (blessV 61)))] [50, 51] 50 51)).state.pstate.delegator == 61
+
+/-! ### new-service index conflicts in Δ_* (GP v0.8.1 §12.2, the paragraph after I and Y): two
+services creating the same new index make the block invalid; distinct new indices are collected,
+and indices already in **d** are not new. -/
+
+def dOld : Accounts := Std.ExtTreeMap.ofList [(1, acct)]
+-- service A's post-state holds 1 (existing) and new 100; service B's holds 1 and new 200
+def outA : Accounts := Std.ExtTreeMap.ofList [(1, acct), (100, junior)]
+def outB : Accounts := Std.ExtTreeMap.ofList [(1, rich), (200, rich)]
+#guard match collectNew dOld [outA, outB] with
+  | .ok n => n.keys == [100, 200] && (n.get? 100).map (·.balance) == some junior.balance
+  | .error _ => false
+-- both create 100: a conflict
+def outC : Accounts := Std.ExtTreeMap.ofList [(1, acct), (100, rich)]
+#guard match collectNew dOld [outA, outC] with
+  | .error e => e == .newServiceConflict 100
+  | .ok _ => false
+-- … even if both create the same account
+#guard match collectNew dOld [outA, outA] with
+  | .error e => e == .newServiceConflict 100
+  | .ok _ => false
+-- no service creates anything: nothing new
+#guard match collectNew dOld [dOld, dOld] with | .ok n => n.isEmpty | .error _ => false
 
 /-! ### the preimages extrinsic bounds (GP v0.8.1 eq. `xtpreimages`, `maxxtpreimagesdatasize`) -/
 

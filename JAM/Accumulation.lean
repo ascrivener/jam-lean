@@ -110,6 +110,27 @@ def discardIfBoth (e : PartialState) (s u : Nat) (os ou : AccOut) : AccOut :=
     ⟨e, ∅, [], none, os.gasUsed, os.provisions⟩
   else os
 
+/-- Why accumulation makes a block invalid. -/
+inductive AccumulationError where
+  /-- Two services created an account with the same new index in one round of $\Delta_*$
+      (GP v0.8.1 §12.2, the paragraph after the definitions of $I$ and $Y$: "different services may not each
+      contribute the same index for a new service \dots In the unlikely event of a conflict, the
+      block must be considered invalid"). -/
+  | newServiceConflict (index : Nat)
+  deriving BEq, Repr
+
+/-- $\mathbf{n} = \bigcup_{s \in \mathbf{s}}((\Delta(s)_\mathbf{e})_\mathbf{d} \setminus \mathcal{K}(\mathbf{d}))$
+    (GP v0.8.1 eq. `accpar`), from each service's post-state accounts `outs` (in the order of
+    $\mathbf{s}$). The union must be disjoint: an index outside $\mathcal{K}(\mathbf{d})$ in the
+    accounts of two services is a conflict, and the block is invalid (GP v0.8.1 §12.2, the
+    paragraph after the definitions of $I$ and $Y$). -/
+def collectNew (d : Accounts) (outs : List Accounts) : Except AccumulationError Accounts :=
+  outs.foldlM (fun (n : Accounts) (acc : Accounts) =>
+    acc.foldlM (fun (n' : Accounts) k a =>
+      if d.contains k then .ok n'
+      else if n.contains k then .error (.newServiceConflict k)
+      else .ok (n'.insert k a)) n) ∅
+
 /-- $\Delta_{\ast}(\mathbf{e}, \mathbf{t}, \mathbf{r}, \mathbf{f})$ (GP v0.8.1 eq. `accpar`):
     accumulate every service with work, free gas or incoming transfers, and merge the results.
 
@@ -117,7 +138,9 @@ def discardIfBoth (e : PartialState) (s u : Nat) (os ou : AccOut) : AccOut :=
   and its effective supervisor $E(\mathbf{d}, s) \ne s$ modified $s$'s account in this round.
 * Each existing account is taken from the run of the service itself if it modified it, and
   otherwise from the run of its effective supervisor ($M$); new accounts come from their creators
-  ($\mathbf{n}$); a removed account is one whose $M$ is none.
+  ($\mathbf{n}$, `collectNew`); a removed account is one whose $M$ is none. Two services creating
+  the same new index is an error, `AccumulationError.newServiceConflict`: the block is invalid
+  (GP v0.8.1 §12.2, after the definitions of $I$ and $Y$).
 * Privileges, staging set and authorizer queue through $X(s)$ and $R$ (unchanged from GP v0.8.0).
 
 A service that is neither accumulated nor needed for the privileges has no inputs and no gas; its
@@ -125,7 +148,8 @@ $\Delta_1$ is the unchanged state with nothing modified ($\Psi_A$ with $g = 0$ r
 once, or has no code), which `acc` returns for it without running $\Psi_A$. -/
 def accPar (e : PartialState) (t : List DeferredTransfer) (r : List WorkReport)
     (f : Std.ExtTreeMap Nat Nat) :
-    PartialState × List DeferredTransfer × List (Nat × List UInt8) × List (Nat × Nat) :=
+    Except AccumulationError
+      (PartialState × List DeferredTransfer × List (Nat × List UInt8) × List (Nat × Nat)) := do
   let ss := ((r.flatMap fun w => w.digests.map (·.service)) ++ f.keys ++ t.map (·.dest)).eraseDups.mergeSort
   let d := e.accounts
   let E := effectiveSupervisor d
@@ -146,8 +170,7 @@ def accPar (e : PartialState) (t : List DeferredTransfer) (r : List WorkReport)
     | some a => mm.insert s a
     | none => mm) ∅
   -- **n**: the accounts each service created
-  let n : Accounts := ss.foldl (fun (n : Accounts) s =>
-    (acc s).state.accounts.foldl (fun n k a => if d.contains k then n else n.insert k a) n) ∅
+  let n ← collectNew d (ss.map fun s => (acc s).state.accounts)
   let merged := n.foldl (fun mm k a => mm.insert k a) m
   let accounts := integrateProvisions slot merged (ss.foldl (fun p s => p.union (acc s).provisions) ∅)
   let eStar := (acc e.manager).state
@@ -162,7 +185,7 @@ def accPar (e : PartialState) (t : List DeferredTransfer) (r : List WorkReport)
       delegator := pick e.delegator eStar.delegator (acc e.delegator).state.delegator,
       registrar := pick e.registrar eStar.registrar (acc e.registrar).state.registrar,
       alwaysAcc := eStar.alwaysAcc }
-  (st, t', b, u)
+  return (st, t', b, u)
 
 /-- $T(\mathbf{t}, \mathbf{s}, \mathbf{d})$ (GP v0.8.1 eq. `accseq`'s partition $T$): split the
     deferred transfers into those accumulated in this round ($\mathbf{t}^!$) and those deferred to a
@@ -187,8 +210,9 @@ def partitionXfers (s : List Nat) (d : Accounts) :
     then recurse with the deferred ones and those this round produced. `fuel` bounds the rounds. -/
 def accSeq : Nat → Int → List DeferredTransfer → List WorkReport → PartialState →
     Std.ExtTreeMap Nat Nat →
-    Nat × PartialState × List (Nat × List UInt8) × List (Nat × Nat) × List DeferredTransfer
-  | 0, _, _, _, e, _ => (0, e, [], [], [])
+    Except AccumulationError
+      (Nat × PartialState × List (Nat × List UInt8) × List (Nat × Nat) × List DeferredTransfer)
+  | 0, _, _, _, e, _ => .ok (0, e, [], [], [])
   | fuel + 1, g, t, r, e, f =>
     let fixedGas : Int := ((t.map (·.gas)).sum + f.values.sum : Nat)
     let prefixGas (k : Nat) : Int := ((r.take k).flatMap fun w => w.digests.map (·.gasLimit)).sum
@@ -196,18 +220,19 @@ def accSeq : Nat → Int → List DeferredTransfer → List WorkReport → Parti
     let svcs := ((r.take i).flatMap fun w => w.digests.map (·.service)) ++ f.keys
     let (tBang, tQ) := partitionXfers svcs e.accounts t []
     let n := i + tBang.length + f.size
-    if n = 0 then (0, e, [], [], [])
-    else
-      let (eStar, tStar, bStar, uStar) := accPar params entropy slot e tBang (r.take i) f
+    if n = 0 then .ok (0, e, [], [], [])
+    else do
+      let (eStar, tStar, bStar, uStar) ← accPar params entropy slot e tBang (r.take i) f
       let gStar : Int := g + ((tStar.map (·.gas)).sum : Nat) - ((uStar.map (·.2)).sum : Nat)
-      let (j, e', b, u, tDagger) := accSeq fuel gStar (tQ ++ tStar) (r.drop i) eStar ∅
-      (i + j, e', bStar ++ b, uStar ++ u, tBang ++ tDagger)
+      let (j, e', b, u, tDagger) ← accSeq fuel gStar (tQ ++ tStar) (r.drop i) eStar ∅
+      return (i + j, e', bStar ++ b, uStar ++ u, tBang ++ tDagger)
 
 end
 
 /-- The accumulation state transition (GP §12) for the block with timeslot `slot` and newly
     available reports $\mathbf{R}$, with the accumulation output root (GP eq. `accoutbeltdef`). -/
-def accumulate (params : Params) (pre : AccState) (slot : Nat) (reports : List WorkReport) : AccResult :=
+def accumulate (params : Params) (pre : AccState) (slot : Nat) (reports : List WorkReport) :
+    Except AccumulationError AccResult := do
   let E := params.epochLen
   let m := slot % E
   let accumulatedAll : OctetSet := pre.accumulated.foldl .union ∅
@@ -219,7 +244,7 @@ def accumulate (params : Params) (pre : AccState) (slot : Nat) (reports : List W
   let e := pre.pstate
   let g : Nat := max params.blockAccGas (params.reportAccGas * params.coreCount + e.alwaysAcc.values.sum)
   let rounds := rStar.length + g / Constants.CgasT + 2
-  let (n, e', b, u, t) := accSeq params pre.entropy slot rounds g [] rStar e e.alwaysAcc
+  let (n, e', b, u, t) ← accSeq params pre.entropy slot rounds g [] rStar e e.alwaysAcc
   -- statistics S(s) = (N(s), T(s), G(s))
   let accounted := rStar.take n
   let svcs := ((accounted.flatMap fun w => w.digests.map (·.service)) ++ t.map (·.dest) ++ u.map (·.1)).eraseDups.mergeSort
@@ -247,7 +272,9 @@ def accumulate (params : Params) (pre : AccState) (slot : Nat) (reports : List W
   -- entries ordered by hash, and the same (s, h) twice gives one.
   let theta := (Std.ExtTreeSet.ofList b : Provisions).toList
   let outs := theta.map fun (s, h) => Codec.fixed 4 s ++ h
-  { state := { slot, entropy := pre.entropy, ready, accumulated, pstate := { e' with accounts } },
-    root := Merkle.root Keccak.keccak256 outs, stats, outputs := theta }
+  let res : AccResult :=
+    { state := { slot, entropy := pre.entropy, ready, accumulated, pstate := { e' with accounts } },
+      root := Merkle.root Keccak.keccak256 outs, stats, outputs := theta }
+  return res
 
 end JAM

@@ -11,7 +11,10 @@ import Companion.Reports
 import Companion.Accumulation
 import Companion.Statistics
 import Companion.Work
+import Companion.Guaranteeing
+import Companion.Assurance
 import Companion.Auditing
+import Companion.Beefy
 import Companion.BestChain
 import Companion.PVM
 import Companion.Invocations
@@ -92,10 +95,10 @@ with the model modules that implement them.
 * *§12 Accumulation and preimages* ({ref "accumulation"}[written]): `JAM/Accumulate.lean`, `JAM/Accumulation.lean`, `JAM/Preimages.lean`
 * *§13 Statistics* ({ref "statistics"}[written]): `JAM/Statistics.lean`
 * *§14 Work packages and work reports* ({ref "work"}[written]): `JAM/Work.lean`, `JAM/Refine.lean`, `JAM/Guarantee.lean`
-* §15 Guaranteeing and §16 Availability assurance: not modelled beyond the refinement of §14
-  (the networking and distribution they describe is out of scope)
+* *§15 Guaranteeing* ({ref "guaranteeing"}[written]): a map to the §11 and §14 code it uses (the networking and distribution it describes are not modelled)
+* *§16 Availability assurance* ({ref "assurance"}[written]): a map to the §11, §14 and Appendix H code it uses (shard distribution is not modelled)
 * *§17 Auditing and judging* ({ref "auditing"}[written]): `JAM/Auditing.lean`
-* §18 Beefy distribution: not modelled
+* *§18 Beefy distribution* ({ref "beefy"}[written]): a map to the §7 and Appendix E code it uses (the signed commitment itself is not modelled)
 * *§19 Grandpa and the best chain* ({ref "bestchain"}[written]): `JAM/BestChain.lean` (the best-chain rule; Grandpa itself is not modelled)
 * *Appendix A, the PVM* ({ref "pvm"}[written]): `PVM/Blob.lean`, `PVM/Machine.lean`, `PVM/Instr.lean`, `PVM/Exec.lean`, `PVM/Memory.lean`, `PVM/Invocation.lean`, `PVM/Gas.lean`
 * *Appendix B, PVM invocations and host calls* ({ref "invocations"}[written]): `JAM/Host/General.lean`, `JAM/Refine.lean`, `JAM/Accumulate.lean` (the host-call loop, the standard initialization and the argument invocation, which v0.8.1 defines in §A.6–§A.8, are in the Appendix A chapter)
@@ -128,7 +131,13 @@ with the model modules that implement them.
 
 {include 1 Companion.Work}
 
+{include 1 Companion.Guaranteeing}
+
+{include 1 Companion.Assurance}
+
 {include 1 Companion.Auditing}
+
+{include 1 Companion.Beefy}
 
 {include 1 Companion.BestChain}
 

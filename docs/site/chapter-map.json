@@ -11,6 +11,9 @@
   "docs/site/Companion/Accumulation.lean",
   "docs/site/Companion/History.lean"
  ],
+ "JAM.Assurances": [
+  "docs/site/Companion/Assurance.lean"
+ ],
  "JAM.Auditing": [
   "docs/site/Companion/Auditing.lean"
  ],
@@ -45,19 +48,24 @@
   "docs/site/Companion/Codec.lean"
  ],
  "JAM.Disputes": [
-  "docs/site/Companion/Disputes.lean"
+  "docs/site/Companion/Disputes.lean",
+  "docs/site/Companion/Guaranteeing.lean"
  ],
  "JAM.Erasure": [
+  "docs/site/Companion/Assurance.lean",
   "docs/site/Companion/Erasure.lean"
  ],
  "JAM.Fast.Keccak": [
   "docs/site/Companion/Primitives.lean"
  ],
  "JAM.Guarantee": [
+  "docs/site/Companion/Assurance.lean",
   "docs/site/Companion/Auditing.lean",
+  "docs/site/Companion/Guaranteeing.lean",
   "docs/site/Companion/Work.lean"
  ],
  "JAM.History": [
+  "docs/site/Companion/Beefy.lean",
   "docs/site/Companion/History.lean",
   "docs/site/Companion/Merkle.lean",
   "docs/site/Companion/Primitives.lean"
@@ -82,10 +90,12 @@
   "docs/site/Companion/Work.lean"
  ],
  "JAM.Reports": [
+  "docs/site/Companion/Guaranteeing.lean",
   "docs/site/Companion/Reports.lean",
   "docs/site/Companion/Statistics.lean"
  ],
  "JAM.Safrole": [
+  "docs/site/Companion/Beefy.lean",
   "docs/site/Companion/Primitives.lean",
   "docs/site/Companion/Safrole.lean"
  ],
@@ -129,6 +139,7 @@
   "docs/site/Companion/PVM.lean"
  ],
  "JAM.Theorems.Safrole": [
+  "docs/site/Companion/Beefy.lean",
   "docs/site/Companion/Safrole.lean"
  ],
  "JAM.Trie": [

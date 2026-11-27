@@ -228,8 +228,11 @@ tag := "erasure-readings"
 
 * *$`\mathcal{D}(v)` excludes $`d = 0`.* The set in eq. (H.1) ranges over $`d \in \mathbb{N}_{v/3+2}`, which includes 0, where
   $`\mathsf{W}_G \bmod 2d` has no meaning. The model takes the largest positive $`d`.
-* *$`v/3` is rounded down.* The model reads $`\mathbb{N}_{v/3+2}` with integer division, as $`\{0, \dots, \lfloor v/3 \rfloor + 1\}`. For $`v` a multiple of 3, as
-  in both chains, there is nothing to choose.
+* *$`v/3` is rounded down.* The model reads $`\mathbb{N}_{v/3+2}` with integer division, as $`\{0, \dots, \lfloor v/3 \rfloor + 1\}`. The paper does not
+  say which division it means. The readings differ for $`v = 1021` and $`1022`: with real division $`d = 342` is allowed and
+  $`\mathcal{D}(v) = 342`, with integer division $`\mathcal{D}(v) = 228`. For $`v` a multiple of 3, as in both chains, they agree. This is
+  note v0.8.1-A34 of the model's
+  [notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues).
 * *The layout of §H.3.* The erasure vectors of GP v0.8.0 already used the layout that GP v0.8.1
   §H.3 defines ($`p` of degree less than $`d'`, parity words at the indices from $`d'` on), while v0.8.0's §H.3 did
   not. This was note 28 of the model's

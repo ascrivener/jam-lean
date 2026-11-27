@@ -146,6 +146,17 @@ section):
   (`supermajority_iff_verdictGood`); `formVerdict_sound` (a formed verdict has §10's count, order and
   a defined outcome, each vote backed by an observed judgment) and `formVerdict_good_complete`.
   Scenario tests in `Tests/AuditingTest.lean` (no vectors exist for §17).
+- Best chain (`JAM/BestChain.lean`, `JAM/Theorems/BestChain.lean`, GP v0.8.1 §19, off-chain; the
+  finalized block, 𝐔 and the §17.3 disregard flags are inputs, GRANDPA is not modelled):
+  `mem_bestHeads_iff` (the best heads are exactly the known acceptable blocks, (19.1)–(19.3) plus
+  §17.3, maximising m of (19.4)), hence `bestHead?_acceptable`, `bestHead?_extends_finalized` and
+  `bestHead?_maximal`; with unique hashes the best heads do not depend on the store's order
+  (`mem_bestHeads_perm`, via `lookup_perm`, `ancestry_congr`, `acceptable_perm`, `metric_perm`); the
+  finalized block is acceptable when audited and undisputed (`finalized_acceptable`), so a best head
+  then exists (`bestHeads_ne_nil`); the chain reading of (19.2) is the stricter
+  (`acceptable_head_of_chain`); `metric_child` (m(H) = m(P(H)) + 𝐓(H)). Readings v0.8.1-A21–A25 in
+  `docs/upstream-candidates.md`. Scenario tests in `Tests/BestChainTest.lean` (no vectors exist for
+  §19).
 
 **Provenance.** The model was written from the Gray Paper and the test vectors only. No other PVM
 or JAM implementation was consulted.

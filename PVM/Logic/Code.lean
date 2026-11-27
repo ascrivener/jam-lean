@@ -3,8 +3,9 @@ import PVM.Logic.Det
 /-!
 # Code facts: what a proof needs to know about a program, as one checkable list
 
-A proof that follows a large program through Ψ₁ needs only a few facts about it: that the blob
-passes 𝔳_blob, and, at each index it visits, the decoded instruction and ı + 1 + skip(ı); for
+A proof that follows a large program through $\Psi_1$ needs only a few facts about it: that the blob
+passes $\mathfrak{v}_{\text{blob}}$, and, at each index it visits, the decoded instruction and
+$\imath + 1 + \text{skip}(\imath)$; for
 branches and jumps, whether the targets are block starts; for `jump_ind`/`load_imm_jump_ind`, the
 jump table. `checkCode p fs` checks a list of such facts against the blob `p` in one `Bool`.
 
@@ -17,20 +18,20 @@ for blobs too large for the kernel).
 namespace PVM
 
 /-- The most gas the basic block of a step on a counted chain may cost (GP eq. `gascostforblock`):
-    2^13, above the costliest block of the services proved about here (`PVM.FreeStepsH`). -/
+    $2^{13}$, above the costliest block of the services proved about here (`PVM.FreeStepsH`). -/
 def stepCostCap : Nat := 8192
 
 /-- One fact about a program. -/
 inductive CodeFact where
-  /-- At index i: 𝔳_inst, the decoded instruction, and ı + 1 + skip(ı). -/
+  /-- At index $i$: $\mathfrak{v}_{\text{inst}}$, the decoded instruction, and $\imath + 1 + \text{skip}(\imath)$. -/
   | instr (i : Nat) (ins : Instr) (next : Nat)
-  /-- Whether n ∈ ϖ (a basic-block start). -/
+  /-- Whether $n \in \varpi$ (a basic-block start). -/
   | blockStart (n : Nat) (b : Bool)
-  /-- |**j**|. -/
+  /-- $|\mathbf{j}|$. -/
   | jumpTableSize (n : Nat)
-  /-- **j**_k = t. -/
+  /-- $\mathbf{j}_k = t$. -/
   | jumpEntry (k t : Nat)
-  /-- s ∈ ϖ, no index in (s, e) is in ϖ, and ϱ^Δ of the block at s is at most `stepCostCap`. -/
+  /-- $s \in \varpi$, no index in $(s, e)$ is in $\varpi$, and $\varrho^\Delta$ of the block at $s$ is at most `stepCostCap`. -/
   | block (s e : Nat)
   deriving DecidableEq, Repr
 
@@ -43,7 +44,7 @@ def CodeFact.holds (P : Program) : CodeFact → Bool
   | .block s e => P.isBlockStart s && ((List.range (e - s - 1)).all fun k => !P.isBlockStart (s + 1 + k)) &&
       decide (P.blockCost s ≤ stepCostCap)
 
-/-- The blob deblobs, passes 𝔳_blob, and every listed fact holds. -/
+/-- The blob deblobs, passes $\mathfrak{v}_{\text{blob}}$, and every listed fact holds. -/
 def checkCode (p : ByteArray) (fs : List CodeFact) : Bool :=
   match Blob.parse? p with
   | some P => P.vBlob && fs.all (·.holds P)
@@ -91,7 +92,7 @@ theorem jumpEntry (h : CodeOk p fs P) {k t : Nat} (hm : CodeFact.jumpEntry k t �
   have hf := h.facts _ hm
   simpa [CodeFact.holds] using hf
 
-/-- 𝔏(ı) = s when s ∈ ϖ and nothing in (s, ı] is. -/
+/-- $\mathfrak{L}(\imath) = s$ when $s \in \varpi$ and nothing in $(s, \imath]$ is. -/
 theorem _root_.PVM.Program.blockStartFrom_eq (P : Program) {s : Nat} (hs : P.isBlockStart s = true) :
     ∀ i, s ≤ i → (∀ k, s < k → k ≤ i → P.isBlockStart k = false) → P.blockStartFrom i = s := by
   intro i
@@ -126,7 +127,7 @@ theorem instrCost (h : CodeOk p fs P) {i : Nat} {ins : Instr} {n s e : Nat}
 
 end CodeOk
 
-/-- A gas-free step at a listed instruction is the instruction's mutation, with ε^μ. -/
+/-- A gas-free step at a listed instruction is the instruction's mutation, with $\varepsilon^\mu$. -/
 theorem Program.freeStep_of_decode {P : Program} {i : Nat} {ins : Instr} (ω : Regs) (μ : Memory)
     (h : P.decode i = some ins) :
     P.freeStep i ω μ =

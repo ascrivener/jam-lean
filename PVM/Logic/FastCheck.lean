@@ -3,12 +3,13 @@ import PVM.Logic.Code
 import PVM.Theorems.HostIds
 
 /-!
-# Checking 𝔳_blob a stretch at a time
+# Checking $\mathfrak{v}_{\text{blob}}$ a stretch at a time
 
-𝔳_blob (GP §A.1) walks the whole program from ı = 0, instruction by instruction. `CodeView.walk`
-is k steps of that walk, each checking exactly what `vBlobAux` checks, and `vBlobAux_walk` says
-𝔳_blob from ı is 𝔳_blob from where the k steps end: so the kernel can check a large program's
-𝔳_blob as a chain of walks, each a declaration of its own.
+$\mathfrak{v}_{\text{blob}}$ (GP §A.1) walks the whole program from $\imath = 0$, instruction by
+instruction. `CodeView.walk` is $k$ steps of that walk, each checking exactly what `vBlobAux`
+checks, and `vBlobAux_walk` says $\mathfrak{v}_{\text{blob}}$ from $\imath$ is
+$\mathfrak{v}_{\text{blob}}$ from where the $k$ steps end: so the kernel can check a large
+program's $\mathfrak{v}_{\text{blob}}$ as a chain of walks, each a declaration of its own.
 
 `walkF` is the same walk with U and T read from bit masks (`validOpcodeBits`, `terminatorBits`,
 checked against the tables for every octet), and `NatBlob.wview` the view of a blob reading a
@@ -173,7 +174,7 @@ theorem isTerminator_bits : ∀ n, n < 256 → isTerminator n = terminatorBits.t
 
 namespace CodeView
 
-/-- k steps of 𝔳_blob from ı, each checking what `vBlobAux` checks before it moves on: the index
+/-- $k$ steps of $\mathfrak{v}_{\text{blob}}$ from $\imath$, each checking what `vBlobAux` checks before it moves on: the index
     the steps end at, or `none` if a step fails or the walk reaches the end of the code. -/
 def walk (V : CodeView) : Nat → Nat → Option Nat
   | 0, i => some i
@@ -183,7 +184,7 @@ def walk (V : CodeView) : Nat → Nat → Option Nat
     else if V.vInst i then V.walk k (V.next i)
     else none
 
-/-- **𝔳_blob from ı is 𝔳_blob from where k steps of it end.** -/
+/-- **$\mathfrak{v}_{\text{blob}}$ from $\imath$ is $\mathfrak{v}_{\text{blob}}$ from where $k$ steps of it end.** -/
 theorem vBlobAux_walk (V : CodeView) :
     ∀ k i j f, V.walk k i = some j → k ≤ f → V.vBlobAux f i = V.vBlobAux (f - k) j := by
   intro k
@@ -204,7 +205,7 @@ theorem vBlobAux_walk (V : CodeView) :
           congr 1; omega
         · cases h
 
-/-- 𝔳_blob at the end of the code. -/
+/-- $\mathfrak{v}_{\text{blob}}$ at the end of the code. -/
 theorem vBlobAux_end (V : CodeView) (f i : Nat) (hf : 0 < f) (h0 : 0 < i) (h : i = V.maskSize) :
     V.vBlobAux f i = true := by
   obtain ⟨f, rfl⟩ : ∃ f', f = f' + 1 := ⟨f - 1, by omega⟩
@@ -251,7 +252,7 @@ theorem CodeFact.all_holds_of_view (P : Program) (V : CodeView) (hV : P.view = V
   subst hV
   simpa only [CodeFact.holds_view] using h
 
-/-- `checkCode` from a parse, 𝔳_blob and the facts a chunk at a time. -/
+/-- `checkCode` from a parse, $\mathfrak{v}_{\text{blob}}$ and the facts a chunk at a time. -/
 theorem checkCode_of_chunks {p : ByteArray} {P : Program} {cs : List (List CodeFact)}
     (hp : Blob.parse? p = some P) (hv : P.vBlob = true) (hc : cs.all (fun c => c.all (·.holds P)) = true) :
     checkCode p cs.flatten = true := by
@@ -262,14 +263,14 @@ theorem checkCode_of_chunks {p : ByteArray} {P : Program} {cs : List (List CodeF
 
 namespace CodeView.Sim
 
-/-- k transitions of 𝔛 that each continue (`.inl`), or `none`. -/
+/-- $k$ transitions of $\mathfrak{X}$ that each continue (`.inl`), or `none`. -/
 def steps (V : CodeView) : Nat → SimState → Option SimState
   | 0, x => some x
   | k + 1, x => match transition V x with
     | some (.inl y) => steps V k y
     | _ => none
 
-/-- **𝔛 from x is 𝔛 from where k continuing transitions lead.** -/
+/-- **$\mathfrak{X}$ from $x$ is $\mathfrak{X}$ from where $k$ continuing transitions lead.** -/
 theorem run_steps (V : CodeView) : ∀ k x y f, steps V k x = some y → run V (f + k) x = run V f y := by
   intro k
   induction k with
@@ -284,7 +285,7 @@ theorem run_steps (V : CodeView) : ∀ k x y f, steps V k x = some y → run V (
       exact ih x' y f h
     · cases h
 
-/-- 𝔛 stops at a final state. -/
+/-- $\mathfrak{X}$ stops at a final state. -/
 theorem run_final (V : CodeView) (x : SimState) (f : Nat) (h : transition V x = some (.inr x)) :
     run V (f + 1) x = some x := by
   rw [run, h]
@@ -317,7 +318,7 @@ theorem CodeView.isBlockStartF_eq (V : CodeView) (hz : ∀ i, V.zeta i < 256) (n
     rw [isTerminator_bits _ (hz _)]
   rw [isBlockStartF, isBlockStart, hf, isInstrStart, isValidOpcode_bits _ (hz n), Bool.and_comm]
 
-/-- No block starts at a, …, a + len − 1. -/
+/-- No block starts at $a, \dots, a + \mathit{len} - 1$. -/
 def CodeView.noStartsF (V : CodeView) (a len : Nat) : Bool :=
   (List.range len).all fun k => !V.isBlockStartF (a + k)
 
@@ -337,7 +338,7 @@ theorem CodeFact.holds_block (P : Program) (s e : Nat) :
   simp only [CodeFact.holds, CodeFact.blockStartsV, Program.blockCost_view]
   rfl
 
-/-- The block-start part of a `.block` fact, from s ∈ ϖ and no starts in (s, e). -/
+/-- The block-start part of a `.block` fact, from $s \in \varpi$ and no starts in $(s, e)$. -/
 theorem CodeFact.blockStartsV_of (V : CodeView) (s e : Nat) (hs : V.isBlockStart s = true)
     (hno : ∀ k, s + 1 ≤ k → k < e → V.isBlockStart k = false) :
     CodeFact.blockStartsV V s e = true := by
@@ -480,8 +481,8 @@ theorem wview_eq (N oc mb cLen a w : Nat) : wview N oc mb cLen a w = view N oc m
     · rfl
   simp only [wview, view, hz, hm]
 
-/-- `view` of a blob of chunks, reading the code from chunks kc … kc + mc − 1 and the bitmask
-    from chunks km … km + mm − 1 alone, wherever they hold it (`cview_eq`). A check then works
+/-- `view` of a blob of chunks, reading the code from chunks $\mathit{kc}, \dots, \mathit{kc} + \mathit{mc} - 1$ and the bitmask
+    from chunks $\mathit{km}, \dots, \mathit{km} + \mathit{mm} - 1$ alone, wherever they hold it (`cview_eq`). A check then works
     on a few small numbers and never builds the whole blob. -/
 def cview (cs : List Nat) (oc mb cLen kc mc km mm : Nat) : CodeView where
   zeta i := if i < cLen then
@@ -520,7 +521,7 @@ theorem cview_eq (cs : List Nat) (h : ∀ c ∈ cs, c < 2 ^ 8192) (oc mb cLen kc
     · rfl
   simp only [cview, view, hz, hm]
 
-/-- `cview` with a second stretch of code, chunks kc₂ … kc₂ + mc₂ − 1: for a block whose branch
+/-- `cview` with a second stretch of code, chunks $\mathit{kc}_2, \dots, \mathit{kc}_2 + \mathit{mc}_2 - 1$: for a block whose branch
     target lies far from it. -/
 def cview2 (cs : List Nat) (oc mb cLen kc mc kc₂ mc₂ km mm : Nat) : CodeView :=
   { cview cs oc mb cLen kc mc km mm with

@@ -3,14 +3,14 @@ import PVM.Theorems.Termination
 /-!
 # Gas-free execution
 
-Gas only ever stops a run early: the gas stage of Ψ₁ either continues, leaving the instruction's
-effect untouched, or reports ∞. So for any property of the form "if the run ends with ε ≠ ∞,
+Gas only ever stops a run early: the gas stage of $\Psi_1$ either continues, leaving the instruction's
+effect untouched, or reports $\infty$. So for any property of the form "if the run ends with $\varepsilon \ne \infty$,
 then …" we can forget gas entirely.
 
-* `Program.freeStep`: Ψ₁ without its gas stage, (ε*, ı*, ω*, μ*) from ε^μ and the mutation table.
-* `FreeRun`: big-step runs of the gas-free machine, ending the way Ψ ends.
-* `psi_freeRun`: **every Ψ run that does not end in ∞ is a `FreeRun`** with the same exit reason,
-  registers and memory, and Ψ's returned ı is determined by the exit index.
+* `Program.freeStep`: $\Psi_1$ without its gas stage, $(\varepsilon^{\ast}, \imath^{\ast}, \varphi^{\ast}, \mu^{\ast})$ from $\varepsilon^\mu$ and the mutation table.
+* `FreeRun`: big-step runs of the gas-free machine, ending the way $\Psi$ ends.
+* `psi_freeRun`: **every $\Psi$ run that does not end in $\infty$ is a `FreeRun`** with the same exit reason,
+  registers and memory, and $\Psi$'s returned $\imath$ is determined by the exit index.
 
 Because the gas-free machine has no blocks to charge, straight-line code is just consecutive
 steps; the basic-block structure and the gas cost model never appear in proofs built on it.
@@ -20,12 +20,12 @@ namespace PVM
 
 namespace Program
 
-/-- Ψ₁ without the gas stage (GP §A.4): (ε^μ, ı, ω, μ) if ε^μ ≠ ▸, else the regular execution. -/
+/-- $\Psi_1$ without the gas stage (GP §A.4): $(\varepsilon^\mu, \imath, \varphi, \mu)$ if $\varepsilon^\mu \ne \blacktriangleright$, else the regular execution. -/
 def freeStep (P : Program) (i : Nat) (ω : Regs) (μ : Memory) : Status × Nat × Regs × Memory :=
   let m := P.exec i ((P.decode i).getD (.noArgs .trap)) ω μ
   finalState .cont i ω μ m (memoryException μ m.reads m.writes)
 
-/-- When Ψ₁ does not run out of gas, its (ε*, ı*, ω*, μ*) is the gas-free step's. -/
+/-- When $\Psi_1$ does not run out of gas, its $(\varepsilon^{\ast}, \imath^{\ast}, \varphi^{\ast}, \mu^{\ast})$ is the gas-free step's. -/
 theorem step_eq_freeStep {P : Program} {i : Nat} {gas : UInt64} {ch : Bool} {ω : Regs}
     {μ : Memory} (h : (P.step i gas ch ω μ).status ≠ .oog) :
     ((P.step i gas ch ω μ).status, (P.step i gas ch ω μ).pc, (P.step i gas ch ω μ).regs,
@@ -41,8 +41,8 @@ theorem step_eq_freeStep {P : Program} {i : Nat} {gas : UInt64} {ch : Bool} {ω 
 
 end Program
 
-/-- How a gas-free run ends at index `i`, mirroring Ψ's exit cases (GP §A.1): a deblob failure
-    (☇ with the state unchanged), or a step whose ε* ≠ ▸ (∎ and ☇ keep ω*, μ*; F and ħ keep the
+/-- How a gas-free run ends at index `i`, mirroring $\Psi$'s exit cases (GP §A.1): a deblob failure
+    (☇ with the state unchanged), or a step whose $\varepsilon^{\ast} \ne \blacktriangleright$ ($\blacksquare$ and ☇ keep $\varphi^{\ast}, \mu^{\ast}$; $\Finv$ and $\hbar$ keep the
     state before the step). -/
 inductive FreeExit (p : ByteArray) : Nat → Regs → Memory → Status → Regs → Memory → Prop where
   | invalid {i ω μ} : deblob p i = none → FreeExit p i ω μ .panic ω μ
@@ -56,14 +56,14 @@ def FreeNext (p : ByteArray) (i : Nat) (ω : Regs) (μ : Memory) (i' : Nat) (ω'
     (μ' : Memory) : Prop :=
   ∃ P, deblob p i = some P ∧ P.freeStep i ω μ = (.cont, i', ω', μ')
 
-/-- Gas-free runs: `FreeRun p i ω μ ε e ω' μ'` says that from (ı, ω, μ) the program continues
-    through any number of steps and then exits with ε at index `e`, leaving (ω', μ'). -/
+/-- Gas-free runs: `FreeRun p i ω μ ε e ω' μ'` says that from $(\imath, \varphi, \mu)$ the program continues
+    through any number of steps and then exits with $\varepsilon$ at index `e`, leaving $(\varphi', \mu')$. -/
 inductive FreeRun (p : ByteArray) : Nat → Regs → Memory → Status → Nat → Regs → Memory → Prop where
   | exit {i ω μ ε ω' μ'} : FreeExit p i ω μ ε ω' μ' → FreeRun p i ω μ ε i ω' μ'
   | next {i ω μ i' ω' μ' ε e ω'' μ''} : FreeNext p i ω μ i' ω' μ' →
       FreeRun p i' ω' μ' ε e ω'' μ'' → FreeRun p i ω μ ε e ω'' μ''
 
-/-- Ψ's returned ı for an exit with ε at index `e`: 0 on ∎ and ☇, `e` otherwise (GP §A.1). -/
+/-- $\Psi$'s returned $\imath$ for an exit with $\varepsilon$ at index `e`: 0 on $\blacksquare$ and ☇, `e` otherwise (GP §A.1). -/
 def exitPcOf (ε : Status) (e : Nat) : Nat := if ε = .halt ∨ ε = .panic then 0 else e
 
 theorem runFuel_freeRun {p : ByteArray} :
@@ -101,8 +101,8 @@ theorem runFuel_freeRun {p : ByteArray} :
         have := FreeExit.step (p := p) hP hf.symm (by simp)
         simpa using this
 
-/-- **Gas abstraction for Ψ.** Every Ψ run that does not end in ∞ is a gas-free run with the
-    same exit reason, registers and memory; Ψ's ı is 0 on ∎ and ☇ and the exit index otherwise. -/
+/-- **Gas abstraction for $\Psi$.** Every $\Psi$ run that does not end in $\infty$ is a gas-free run with the
+    same exit reason, registers and memory; $\Psi$'s $\imath$ is 0 on $\blacksquare$ and ☇ and the exit index otherwise. -/
 theorem psi_freeRun {p : ByteArray} {i : Nat} {gas : UInt64} {ch : Bool} {ω : Regs} {μ : Memory}
     (hno : (psi p i gas ch ω μ).status ≠ .oog) :
     ∃ e, FreeRun p i ω μ (psi p i gas ch ω μ).status e (psi p i gas ch ω μ).regs

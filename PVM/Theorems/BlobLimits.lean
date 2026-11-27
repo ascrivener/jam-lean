@@ -3,7 +3,7 @@ import PVM.Theorems.InitMem
 /-!
 # The v0.8.1 limits of deblob
 
-* `Blob.parse?_limits`: every program that parses has |**c**| ≤ 𝖹_C and |**j**| ≤ 𝖹_J
+* `Blob.parse?_limits`: every program that parses has $|\mathbf{c}| \le \mathsf{Z}_C$ and $|\mathbf{j}| \le \mathsf{Z}_J$
   (GP v0.8.1 eq. `deblob`, #559).
 -/
 
@@ -17,7 +17,7 @@ theorem slice?_length {bs : ByteArray} {pos n : Nat} {l : List UInt8} (h : slice
   · cases h
 
 /-- **The v0.8.1 limits of deblob** (GP v0.8.1 eq. `deblob`, #559): every program that parses has
-    |**c**| ≤ 𝖹_C and |**j**| ≤ 𝖹_J. -/
+    $|\mathbf{c}| \le \mathsf{Z}_C$ and $|\mathbf{j}| \le \mathsf{Z}_J$. -/
 theorem parse?_limits {p : ByteArray} {P : Program} (h : parse? p = some P) :
     P.code.size ≤ maxCodeSize ∧ P.jumpTable.size ≤ maxJumpTableEntries := by
   unfold parse? at h

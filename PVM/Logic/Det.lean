@@ -8,7 +8,7 @@ run cannot branch. The same holds for `FreeRunH` under a contract that allows at
 per host call (`HostRel.Functional`).
 
 So a proof that exhibits *one* gas-free run from a program's initial state to an exit has
-determined the exit of *every* run from there, in particular of Ψ and Ψ_H whenever they do not
+determined the exit of *every* run from there, in particular of $\Psi$ and $\Psi_H$ whenever they do not
 run out of gas (`psiHStar_eq_of_freeRunH`).
 -/
 
@@ -118,9 +118,9 @@ theorem FreeRunH.det {p : ByteArray} {R₁ R₂ : HostRel X} (hR : R₁.Pins R�
       obtain ⟨rfl, rfl, rfl, rfl⟩ := hR _ _ _ _ _ _ _ _ _ _ _ _ hR1 hR2
       exact ⟨rfl, rfl, rfl, rfl⟩
 
-/-! ## Determining Ψ_M by one gas-free run -/
+/-! ## Determining $\Psi_M$ by one gas-free run -/
 
-/-- The outcomes a handler can produce for some amount of gas, other than ∞: the contract a
+/-- The outcomes a handler can produce for some amount of gas, other than $\infty$: the contract a
     gas-free run of the real handler satisfies when it does not run out. -/
 def HostFn.graph (f : HostFn X) : HostRel X := fun h ω μ x s ω' μ' x' =>
   s ≠ .oog ∧ ∃ g, f h g ω μ x = ⟨s, (f h g ω μ x).gas, ω', μ', x'⟩
@@ -136,8 +136,9 @@ theorem FreeRunH.to_graph {p : ByteArray} {f : HostFn X} {i : Nat} {ω : Regs} {
   | hostStop hr hR hs =>
     refine .hostStop hr ⟨fun ho => hε (by rw [ho]; rfl), hR⟩ hs
 
-/-- **Ψ_M is determined by one gas-free run.** If, from Y's initial state, some run under a
-    contract that pins down the handler's (non-∞) outcomes exits with ε, then Ψ_M either runs out
+/-- **$\Psi_M$ is determined by one gas-free run.** If, from $Y$'s initial state, some run under a
+    contract that pins down the handler's (non-$\infty$) outcomes exits with $\varepsilon$, then
+    $\Psi_M$ either runs out
     of gas or returns exactly that run's output and context. -/
 theorem psiM_of_freeRunH (b : ByteArray) (i : Nat) (gas : UInt64) (a : ByteArray) (x : X)
     (f : HostFn X) (hf : f.GasNonIncreasing) (R : HostRel X) (hR : R.Pins f.graph)

@@ -11,31 +11,31 @@ namespace PVM
 inductive CostExpr where
   /-- A literal number. -/
   | const (n : Nat)
-  /-- 𝔓(a, b): `a` if the instruction's source and destination registers overlap, else `b`. -/
+  /-- $\mathfrak{P}(a, b)$: `a` if the instruction's source and destination registers overlap, else `b`. -/
   | overlap (a b : Nat)
-  /-- 𝔓_S(a, b): `a` if r_A = r_D, else `b` (non-immediate shifts and rotates). -/
+  /-- $\mathfrak{P}_S(a, b)$: `a` if $r_A = r_D$, else `b` (non-immediate shifts and rotates). -/
   | overlapShift (a b : Nat)
-  /-- 𝔪, the cost of a memory access. -/
+  /-- $\mathfrak{m}$, the cost of a memory access. -/
   | memory
-  /-- 𝔟, the cost of a branch. -/
+  /-- $\mathfrak{b}$, the cost of a branch. -/
   | branch
   deriving DecidableEq, Repr
 
-/-- A row of the gas cost table: `(č, ď, x̌_A, x̌_L, x̌_S, x̌_M, x̌_D)` (GP §A.10). -/
+/-- A row of the gas cost table: $(\check{c}, \check{d}, \check{x}_A, \check{x}_L, \check{x}_S, \check{x}_M, \check{x}_D)$ (GP §A.10). -/
 structure CostRow where
-  /-- č: cycles to finish execution. -/
+  /-- $\check{c}$: cycles to finish execution. -/
   cycles : CostExpr
-  /-- ď: decode slots. -/
+  /-- $\check{d}$: decode slots. -/
   decodeSlots : CostExpr
-  /-- x̌_A: ALU units. -/
+  /-- $\check{x}_A$: ALU units. -/
   alu : CostExpr
-  /-- x̌_L: load units. -/
+  /-- $\check{x}_L$: load units. -/
   load : CostExpr
-  /-- x̌_S: store units. -/
+  /-- $\check{x}_S$: store units. -/
   store : CostExpr
-  /-- x̌_M: multiply units. -/
+  /-- $\check{x}_M$: multiply units. -/
   mul : CostExpr
-  /-- x̌_D: divide units. -/
+  /-- $\check{x}_D$: divide units. -/
   div : CostExpr
   deriving DecidableEq, Repr
 

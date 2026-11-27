@@ -4,11 +4,12 @@ import PVM.Logic.Bits
 /-!
 # Fast blob parsing, proved equal to the paper's
 
-`Blob.parse?` (GP v0.8.1 eq. `deblob`) follows the paper literally. It copies **c** through a list,
-and it decodes the opcode bitmask **k** (`Blob.decodeBits?`) through a list of all 8⌈|**c**|/8⌉ bits,
+`Blob.parse?` (GP v0.8.1 eq. `deblob`) follows the paper literally. It copies $\mathbf{c}$ through a list,
+and it decodes the opcode bitmask $\mathbf{k}$ (`Blob.decodeBits?`) through a list of all
+$8\lceil |\mathbf{c}|/8 \rceil$ bits,
 each computed with a big-number power. That is most of the cost of preparing a service blob.
 
-`Blob.parseFast` takes **c** as a slice of the blob and decodes **k** straight from its octets
+`Blob.parseFast` takes $\mathbf{c}$ as a slice of the blob and decodes $\mathbf{k}$ straight from its octets
 (`Blob.bitsFast`). `parse?_eq_parseFast` is registered with `@[csimp]`: compiled code that imports
 this module, among it `psiFaster` and `psiHStarFaster`, uses `parseFast`.
 
@@ -115,7 +116,7 @@ theorem decodeBits?_eq_bitsFast (p : ByteArray) (s n : Nat) :
     · rfl
   · rw [if_pos hL, if_pos hL]
 
-/-- The tail of `parse?`: **c** and **k**. -/
+/-- The tail of `parse?`: $\mathbf{c}$ and $\mathbf{k}$. -/
 def parseTail (p : ByteArray) (pos cLen : Nat) (j : Array Nat) : Option Program :=
   if pos + cLen ≤ p.size then
     match bitsFast p (pos + cLen) cLen with
@@ -135,7 +136,7 @@ theorem parseTail_eq (p : ByteArray) (pos cLen : Nat) (j : Array Nat) :
     cases bitsFast p (pos + cLen) cLen <;> simp [byteArray_mk_toList]
   · rfl
 
-/-- `parse?` with **c** sliced and **k** decoded from the octets. -/
+/-- `parse?` with $\mathbf{c}$ sliced and $\mathbf{k}$ decoded from the octets. -/
 def parseFast (p : ByteArray) : Option Program := do
   let (jLen, pos) ← decodeNat? p 0
   if jLen > maxJumpTableEntries then none

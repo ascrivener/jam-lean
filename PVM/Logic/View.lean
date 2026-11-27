@@ -3,11 +3,11 @@ import PVM.Gas
 /-!
 # A program's code, seen through its reads
 
-Everything Ψ and the gas model compute from a program's code reads it only through ζ (the
-instruction octets), (**k** ⌢ [1, 1, …]), **k** with zeros beyond, |**c**| and |**k**|. A
+Everything $\Psi$ and the gas model compute from a program's code reads it only through $\zeta$ (the
+instruction octets), $(\mathbf{k} \frown [1, 1, \dots])$, $\mathbf{k}$ with zeros beyond, $|\mathbf{c}|$ and $|\mathbf{k}|$. A
 `CodeView` is exactly those reads, and this file repeats, over a `CodeView`, the definitions of
-`PVM.Blob`, `PVM.Instr` and `PVM.Gas` that use them: skip, 𝔳_inst, 𝔳_blob, ϖ, decoding, and the
-block cost ϱ^Δ with its simulation 𝔛. Each repeat is the model's definition with `P.zeta` read
+`PVM.Blob`, `PVM.Instr` and `PVM.Gas` that use them: skip, $\mathfrak{v}_{\text{inst}}$, $\mathfrak{v}_{\text{blob}}$, $\varpi$, decoding, and the
+block cost $\varrho^\Delta$ with its simulation $\mathfrak{X}$. Each repeat is the model's definition with `P.zeta` read
 as `V.zeta` and so on, and `Program.view` makes the two agree by `rfl` (the `*_view` theorems
 below), so nothing here is a second reading of the paper.
 
@@ -18,18 +18,18 @@ large numbers (`PVM.Logic.ChunkBlob`) lets the kernel decide facts about a 200 k
 
 namespace PVM
 
-/-- The reads of a program's code (GP §A.1–A.3): ζ, (**k** ⌢ [1, 1, …]), **k** with zeros beyond,
-    |**c**| and |**k**|. -/
+/-- The reads of a program's code (GP §A.1–A.3): $\zeta$, $(\mathbf{k} \frown [1, 1, \dots])$, $\mathbf{k}$ with zeros beyond,
+    $|\mathbf{c}|$ and $|\mathbf{k}|$. -/
 structure CodeView where
-  /-- ζ_i ≡ (**c** ⌢ [0, 0, …])_i. -/
+  /-- $\zeta_i \equiv (\mathbf{c} \frown [0, 0, \dots])_i$. -/
   zeta : Nat → Nat
-  /-- (**k** ⌢ [1, 1, …])_i. -/
+  /-- $(\mathbf{k} \frown [1, 1, \dots])_i$. -/
   maskExt : Nat → Bool
-  /-- **k**_i, 0 beyond **k**. -/
+  /-- $\mathbf{k}_i$, 0 beyond $\mathbf{k}$. -/
   maskAt : Nat → Bool
-  /-- |**c**|. -/
+  /-- $|\mathbf{c}|$. -/
   codeSize : Nat
-  /-- |**k**|. -/
+  /-- $|\mathbf{k}|$. -/
   maskSize : Nat
 
 /-- A program's reads. -/
@@ -37,24 +37,24 @@ def Program.view (P : Program) : CodeView := ⟨P.zeta, P.maskExt, P.maskAt, P.c
 
 namespace CodeView
 
-/-- ζ at an integer index, 0 at negative indices (as `Program.zetaInt`). -/
+/-- $\zeta$ at an integer index, 0 at negative indices (as `Program.zetaInt`). -/
 def zetaInt (V : CodeView) (i : Int) : Nat := if i < 0 then 0 else V.zeta i.toNat
 
-/-- skip(i) = min(24, j ∈ ℕ : (**k** ⌢ [1, 1, …])_{i+1+j} = 1) (GP eq. `skip`). -/
+/-- $\text{skip}(i) = \min(24, j \in \mathbb{N} : (\mathbf{k} \frown [1, 1, \dots])_{i+1+j} = 1)$ (GP eq. `skip`). -/
 def skip (V : CodeView) (i : Nat) : Nat :=
   ((List.range 24).find? fun j => V.maskExt (i + 1 + j)).getD 24
 
-/-- The index of the instruction following the one at `i`: i + 1 + skip(i). -/
+/-- The index of the instruction following the one at `i`: $i + 1 + \text{skip}(i)$. -/
 def next (V : CodeView) (i : Nat) : Nat := i + 1 + V.skip i
 
-/-- 𝔳_inst(**c**, **k**, ı) = |**k**| = |**c**| ∧ ı < |**k**| ∧ **k**_ı = 1 ∧ **c**_ı ∈ U (GP §A.1). -/
+/-- $\mathfrak{v}_{\text{inst}}(\mathbf{c}, \mathbf{k}, \imath) = |\mathbf{k}| = |\mathbf{c}| \wedge \imath < |\mathbf{k}| \wedge \mathbf{k}_{\imath} = 1 \wedge \mathbf{c}_{\imath} \in U$ (GP §A.1). -/
 def vInst (V : CodeView) (i : Nat) : Bool :=
   V.maskSize == V.codeSize && decide (i < V.maskSize) && V.maskAt i && isValidOpcode (V.zeta i)
 
-/-- 𝔳_blob(**c**, **k**, ı) (GP §A.1), with explicit fuel.
+/-- $\mathfrak{v}_{\text{blob}}(\mathbf{c}, \mathbf{k}, \imath)$ (GP §A.1), with explicit fuel.
 
-    Every recursive call has ı < |**k**| (from 𝔳_inst) and moves to ı + 1 + skip(ı) ≤ |**k**|, so
-    the recursion makes at most |**k**| + 1 calls; `vBlob` supplies that much fuel
+    Every recursive call has $\imath < |\mathbf{k}|$ (from $\mathfrak{v}_{\text{inst}}$) and moves to $\imath + 1 + \text{skip}(\imath) \le |\mathbf{k}|$, so
+    the recursion makes at most $|\mathbf{k}| + 1$ calls; `vBlob` supplies that much fuel
     (see `PVM.Program.vBlobAux_fuel` in `PVM.Theorems.Blob`). -/
 def vBlobAux (V : CodeView) : Nat → Nat → Bool
   | 0, _ => false
@@ -64,15 +64,15 @@ def vBlobAux (V : CodeView) : Nat → Nat → Bool
     else if V.vInst i then V.vBlobAux fuel (V.next i)
     else false
 
-/-- 𝔳_blob(**c**, **k**, 0) (GP §A.1). -/
+/-- $\mathfrak{v}_{\text{blob}}(\mathbf{c}, \mathbf{k}, 0)$ (GP §A.1). -/
 def vBlob (V : CodeView) : Bool := V.vBlobAux (V.maskSize + 1) 0
 
-/-- `n` is the opcode index of a valid instruction: **k**_n = 1 ∧ **c**_n ∈ U (GP §A.3). -/
+/-- `n` is the opcode index of a valid instruction: $\mathbf{k}_n = 1 \wedge \mathbf{c}_n \in U$ (GP §A.3). -/
 def isInstrStart (V : CodeView) (n : Nat) : Bool :=
   decide (n < V.codeSize) && V.maskAt n && isValidOpcode (V.zeta n)
 
-/-- `n` immediately follows a block terminator: ∃ m ∈ ℕ_{|c|}, **k**_m = 1 ∧ **c**_m ∈ T ∧
-    m + 1 + skip(m) = n. Since skip(m) ≤ 24, the witness `m` lies in [n − 25, n − 1], so the
+/-- `n` immediately follows a block terminator: $\exists m \in \mathbb{N}_{|c|}, \mathbf{k}_m = 1 \wedge \mathbf{c}_m \in T \wedge$
+    $m + 1 + \text{skip}(m) = n$. Since $\text{skip}(m) \le 24$, the witness `m` lies in $[n - 25, n - 1]$, so the
     search is over that window (see `PVM.Program.followsTerminator_iff`). -/
 def followsTerminator (V : CodeView) (n : Nat) : Bool :=
   (List.range 25).any fun d =>
@@ -81,7 +81,7 @@ def followsTerminator (V : CodeView) (n : Nat) : Bool :=
        decide (m < V.codeSize) && V.maskAt m && isTerminator (V.zeta m) && V.next m == n)
 
 /-- `n ∈ ϖ`, the basic-block starts (GP §A.3):
-    ϖ ≡ ({0} ∪ {n + 1 + skip(n) | n ∈ ℕ_{|c|} ∧ **k**_n = 1 ∧ **c**_n ∈ T}) ∩ {n | **k**_n = 1 ∧ **c**_n ∈ U}. -/
+    $\varpi \equiv (\{0\} \cup \{n + 1 + \text{skip}(n) \mid n \in \mathbb{N}_{|c|} \wedge \mathbf{k}_n = 1 \wedge \mathbf{c}_n \in T\}) \cap \{n \mid \mathbf{k}_n = 1 \wedge \mathbf{c}_n \in U\}$. -/
 def isBlockStart (V : CodeView) (n : Nat) : Bool :=
   (n == 0 || V.followsTerminator n) && V.isInstrStart n
 
@@ -93,26 +93,26 @@ def blockStartFrom (V : CodeView) : Nat → Nat
   | 0 => 0
   | n + 1 => if V.isBlockStart (n + 1) then n + 1 else V.blockStartFrom n
 
-/-- 𝔏(ı) = max(j ∈ ϖ : j ≤ ı), the start of the basic block containing ı (GP §A.3).
-    When ϖ has no element `≤ ı` (only possible for invalid programs, since 0 ∈ ϖ whenever
-    𝔳_blob holds) we return 0. -/
+/-- $\mathfrak{L}(\imath) = \max(j \in \varpi : j \le \imath)$, the start of the basic block containing $\imath$ (GP §A.3).
+    When $\varpi$ has no element `≤ ı` (only possible for invalid programs, since $0 \in \varpi$ whenever
+    $\mathfrak{v}_{\text{blob}}$ holds) we return 0. -/
 def blockStartOf (V : CodeView) (i : Nat) : Nat := V.blockStartFrom i
 
-/-- ζ_{start…+n}, the octets `start, …, start + n - 1` of ζ. -/
+/-- $\zeta_{\text{start} \dots + n}$, the octets `start, …, start + n - 1` of $\zeta$. -/
 def zetaBytes (V : CodeView) (start n : Nat) : List UInt8 :=
   (List.range n).map fun i => UInt8.ofNat (V.zeta (start + i))
 
-/-- ℰ_n⁻¹(ζ_{start…+n}). -/
+/-- $\mathcal{E}_n^{-1}(\zeta_{\text{start} \dots + n})$. -/
 def zetaLE (V : CodeView) (start n : Nat) : Nat := Num.decodeLE (V.zetaBytes start n)
 
-/-- 𝒳_n(ℰ_n⁻¹(ζ_{start…+n})), a sign-extended immediate. -/
+/-- $\mathcal{X}_n(\mathcal{E}_n^{-1}(\zeta_{\text{start} \dots + n}))$, a sign-extended immediate. -/
 def immAt (V : CodeView) (start n : Nat) : UInt64 := UInt64.ofNat (Num.sext n (V.zetaLE start n))
 
-/-- ı + 𝒵_n(ℰ_n⁻¹(ζ_{start…+n})), an offset relative to the instruction at `i`. -/
+/-- $\imath + \mathcal{Z}_n(\mathcal{E}_n^{-1}(\zeta_{\text{start} \dots + n}))$, an offset relative to the instruction at `i`. -/
 def offsetAt (V : CodeView) (i start n : Nat) : Int := (i : Int) + Num.signed n (V.zetaLE start n)
 
-/-- Decode the instruction at opcode index `ı` (GP §A.5), with ℓ = skip(ı). Returns `none`
-    when ζ_ı ∉ U. -/
+/-- Decode the instruction at opcode index `ı` (GP §A.5), with $\ell = \text{skip}(\imath)$. Returns `none`
+    when $\zeta_{\imath} \notin U$. -/
 def decode (V : CodeView) (i : Nat) : Option Instr :=
   let op := V.zeta i
   let l := V.skip i
@@ -175,7 +175,7 @@ def decode (V : CodeView) (i : Nat) : Option Instr :=
     -- r_D = min(12, ζ_{ı+2} mod 16) (GP v0.8.1 §A.5.13, #554)
     (ThreeRegOp.ofOpcode? op).map fun o => .threeReg o lo hi (regIdx (V.zeta (i + 2) % 16))
 
-/-- 𝔟(**c**, ı) (GP §A.10): 1 if ζ_{ı+1+skip(ı)} or ζ_{ı_target} is `unlikely` or `trap`, else 20. -/
+/-- $\mathfrak{b}(\mathbf{c}, \imath)$ (GP §A.10): 1 if $\zeta_{\imath+1+\text{skip}(\imath)}$ or $\zeta_{\imath_{\text{target}}}$ is `unlikely` or `trap`, else 20. -/
 def branchCost (V : CodeView) (i : Nat) (target : Int) : Nat :=
   let cheap (n : Nat) : Bool := n == unlikelyOpcode || n == trapOpcode
   if cheap (V.zeta (V.next i)) || cheap (V.zetaInt target) then 1 else 20
@@ -194,7 +194,7 @@ def evalCost (V : CodeView) (i : Nat) (ins : Instr) : CostExpr → Nat
   -- Only branches have a 𝔟 cell; the fallback target is never used.
   | .branch => V.branchCost i ((ins.branchTarget?).getD (-1))
 
-/-- (č, ď, x̌) of the instruction at `ı` (GP §A.10), if ζ_ı ∈ U. -/
+/-- $(\check{c}, \check{d}, \check{x})$ of the instruction at `ı` (GP §A.10), if $\zeta_{\imath} \in U$. -/
 def instrCost? (V : CodeView) (i : Nat) : Option (Instr × InstrCost) := do
   let ins ← V.decode i
   let row ← costRow? (V.zeta i)
@@ -205,7 +205,7 @@ def instrCost? (V : CodeView) (i : Nat) : Option (Instr × InstrCost) := do
 
 namespace Sim
 
-/-- 𝔛^mov (GP §A.9): `move_reg` is handled by the front end and renames registers. -/
+/-- $\mathfrak{X}^{\text{mov}}$ (GP §A.9): `move_reg` is handled by the front end and renames registers. -/
 def decodeMove (V : CodeView) (x : SimState) (i : Nat) (ins : Instr) : SimState :=
   { x with
     pc := some (V.next i)
@@ -213,7 +213,7 @@ def decodeMove (V : CodeView) (x : SimState) (i : Nat) (ins : Instr) : SimState 
     rob := x.rob.map fun e =>
       { e with regs := if e.regs.meets ins.src then e.regs.union ins.dst else e.regs.diff ins.dst } }
 
-/-- 𝔛^dec (GP §A.9): decode an instruction into a new reorder-buffer entry. -/
+/-- $\mathfrak{X}^{\text{dec}}$ (GP §A.9): decode an instruction into a new reorder-buffer entry. -/
 def decodeInstr (V : CodeView) (x : SimState) (i : Nat) (ins : Instr) (cost : InstrCost) : SimState :=
   let deps := (x.rob.zipIdx.filter fun (e, _) => ins.src.meets e.regs).map (·.2)
   let rob := x.rob.map fun e => { e with regs := e.regs.diff ins.dst }
@@ -222,17 +222,17 @@ def decodeInstr (V : CodeView) (x : SimState) (i : Nat) (ins : Instr) (cost : In
     decodeSlots := x.decodeSlots - cost.decodeSlots
     rob := rob ++ [⟨.dec, cost.cycles, deps, ins.dst, cost.units⟩] }
 
-/-- 𝔛' (GP §A.9): `move_reg` (when ı < |**c**|) goes to 𝔛^mov, everything else to 𝔛^dec. -/
+/-- $\mathfrak{X}'$ (GP §A.9): `move_reg` (when $\imath < |\mathbf{c}|$) goes to $\mathfrak{X}^{\text{mov}}$, everything else to $\mathfrak{X}^{\text{dec}}$. -/
 def decodeStep (V : CodeView) (x : SimState) (i : Nat) (ins : Instr) (cost : InstrCost) : SimState :=
   if i < V.codeSize && V.zeta i == moveRegOpcode then decodeMove V x i ins
   else decodeInstr V x i ins cost
 
 
-/-- One transition of 𝔛 (GP §A.9). `.inl x'` continues with x'; `.inr x` is the final state;
-    `none` means ď(**x**_ı) is undefined because ζ at **x**_ı is not in U (impossible for the
-    blocks of valid programs). The cases are tried in the paper's order: decode (𝔛') if
-    **x**_ı ≠ ∅, ď(**x**_ı) ≤ **x**_d and l < 32; else start (𝔛'') if 𝔖(**x**) ≠ ∅ and **x**_e > 0;
-    else stop if **x**_ı = ∅ and l = 0; else advance a cycle (𝔛'''). -/
+/-- One transition of $\mathfrak{X}$ (GP §A.9). `.inl x'` continues with x'; `.inr x` is the final state;
+    `none` means $\check{d}(\mathbf{x}_{\imath})$ is undefined because $\zeta$ at $\mathbf{x}_{\imath}$ is not in $U$ (impossible for the
+    blocks of valid programs). The cases are tried in the paper's order: decode ($\mathfrak{X}'$) if
+    $\mathbf{x}_{\imath} \ne \emptyset$, $\check{d}(\mathbf{x}_{\imath}) \le \mathbf{x}_d$ and $l < 32$; else start ($\mathfrak{X}''$) if $\mathfrak{S}(\mathbf{x}) \ne \emptyset$ and $\mathbf{x}_e > 0$;
+    else stop if $\mathbf{x}_{\imath} = \emptyset$ and $l = 0$; else advance a cycle ($\mathfrak{X}'''$). -/
 def transition (V : CodeView) (x : SimState) : Option (SimState ⊕ SimState) := do
   let l := PVM.Sim.live x
   if let some i := x.pc then
@@ -246,7 +246,7 @@ def transition (V : CodeView) (x : SimState) : Option (SimState ⊕ SimState) :=
     return .inr x
   return .inl (PVM.Sim.cycleStep x)
 
-/-- 𝔛 with at most `fuel` transitions; `none` if the fuel runs out or an invalid opcode is met. -/
+/-- $\mathfrak{X}$ with at most `fuel` transitions; `none` if the fuel runs out or an invalid opcode is met. -/
 def run (V : CodeView) : Nat → SimState → Option SimState
   | 0, _ => none
   | fuel + 1, x =>
@@ -255,9 +255,9 @@ def run (V : CodeView) : Nat → SimState → Option SimState
     | some (.inr x') => some x'
     | none => none
 
-/-- The fuel given to 𝔛: `256 · (|**c**| − ı + 2)` transitions, at least 256 per instruction of
+/-- The fuel given to $\mathfrak{X}$: $256 \cdot (|\mathbf{c}| - \imath + 2)$ transitions, at least 256 per instruction of
     the block. Each instruction is decoded once and started once, and the longest single
-    instruction (č = 60 for the divisions) keeps the pipeline busy for about 64 cycles, so the
+    instruction ($\check{c} = 60$ for the divisions) keeps the pipeline busy for about 64 cycles, so the
     simulation should always finish well within this. **This bound is argued, not proved.**
     Over every block of the test vectors the simulation uses at most 54 transitions per
     instruction and under 5% of this fuel; `PVM.Program.blockCost?` returns `none` if the fuel
@@ -267,12 +267,12 @@ def fuel (V : CodeView) (i : Nat) : Nat := 256 * (V.codeSize - i + 2)
 
 end Sim
 
-/-- ϱ^Δ(**c**, **k**, ı) = max(**x**^final_c − 3, 1) (GP eq. `gascostforblock`); `none` if the
-    simulation does not finish within its fuel or meets an opcode outside U. -/
+/-- $\varrho^\Delta(\mathbf{c}, \mathbf{k}, \imath) = \max(\mathbf{x}^{\text{final}}_c - 3, 1)$ (GP eq. `gascostforblock`); `none` if the
+    simulation does not finish within its fuel or meets an opcode outside $U$. -/
 def blockCost? (V : CodeView) (i : Nat) : Option Nat :=
   (Sim.run V (Sim.fuel V i) (Sim.init i)).map fun x => max (x.cycle - 3) 1
 
-/-- ϱ^Δ as a total function: the simulated cost, or 1 in the cases where `blockCost?` has no
+/-- $\varrho^\Delta$ as a total function: the simulated cost, or 1 in the cases where `blockCost?` has no
     value (which do not arise for the blocks of valid programs). -/
 def blockCost (V : CodeView) (i : Nat) : Nat := (V.blockCost? i).getD 1
 

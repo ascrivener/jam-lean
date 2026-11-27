@@ -5,7 +5,7 @@ import PVM.SymExec.Sound
 
 The value of one ALU operation (§A.5.10, §A.5.13) on named naturals, under the bounds that make it
 exact: shifts, multiplications and subtractions that neither overflow nor sign-extend, `and` with
-2046, and the sign-extended u32 (𝒳_4) at or above 2^31. A check's rewrites (`Static.rw`) replace
+2046, and the sign-extended u32 ($\mathcal{X}_4$) at or above $2^{31}$. A check's rewrites (`Static.rw`) replace
 such an operation by a fresh named natural; these lemmas prove each rewrite (`RwHold`).
 -/
 
@@ -97,7 +97,7 @@ theorem op_sub_sx {E : Env} {a b : Nat} (h1 : 2 ^ 31 ≤ E.ρ a) (h2 : E.ρ a < 
   rw [SVal.eval, e, SVal.eval, SVal.eval]
   simp only [threeRegAlu, two64]; omega
 
-/-- The high-pair offset of a four-digit block r: (r/4 · 5243 / 2^16) & 2046 = 2 · (r / 100). -/
+/-- The high-pair offset of a four-digit block $r$: $(r/4 \cdot 5243 / 2^{16}) \mathbin{\&} 2046 = 2 \cdot (r / 100)$. -/
 theorem idx_hi (r : Nat) (h : r < 10000) : r / 4 * 5243 / 65536 / 2 % 1024 * 2 = 2 * (r / 100) := by
   have e1 : r / 4 * 5243 / 65536 / 2 = r / 4 * 5243 / 131072 := by rw [Nat.div_div_eq_div_mul]
   have e2 : r / 4 * 5243 / 131072 = r / 100 := by omega

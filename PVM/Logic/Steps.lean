@@ -6,8 +6,8 @@ import PVM.Logic.Bits
 /-!
 # Chains of gas-free steps
 
-`FreeSteps p i ω μ i' ω' μ'`: from (ı, ω, μ) the gas-free machine continues, step by step, to
-(ı', ω', μ'). Chains compose (`FreeSteps.trans`) and end in a `FreeRun` (`FreeSteps.run`), so a
+`FreeSteps p i ω μ i' ω' μ'`: from $(\imath, \varphi, \mu)$ the gas-free machine continues, step by step, to
+$(\imath', \varphi', \mu')$. Chains compose (`FreeSteps.trans`) and end in a `FreeRun` (`FreeSteps.run`), so a
 proof can cover a long path piece by piece: a basic block, a function, a loop.
 
 `FreeSteps.step_decode` takes one step at an index whose instruction is known (from code facts),
@@ -39,7 +39,7 @@ theorem run {i ω μ i' ω' μ' ε e ω'' μ''} (h : FreeSteps p i ω μ i' ω' 
   | refl => exact hr
   | next hn _ ih => exact .next hn (ih hr)
 
-/-- One step at an index where the code facts give the instruction `ins` and ı + 1 + skip(ı) = n.
+/-- One step at an index where the code facts give the instruction `ins` and $\imath + 1 + \text{skip}(\imath) = n$.
     The second hypothesis is the step's effect, for `simp` to compute. -/
 theorem step_decode {P : Program} {i : Nat} {ins : Instr} {n : Nat} {ω : Regs} {μ : Memory}
     {i' : Nat} {ω' : Regs} {μ' : Memory} {i'' : Nat} {ω'' : Regs} {μ'' : Memory}
@@ -72,7 +72,7 @@ theorem Memory.readN_writeN_same (μ : Memory) (a n : Nat) (bs : List UInt8) (hn
     (hlen : n ≤ two32) : (μ.writeN a bs).readN a n = bs := by
   subst hn; exact Memory.readN_writeN μ a bs hlen
 
-/-- Reading a range disjoint from a write (neither wrapping past 2^32). -/
+/-- Reading a range disjoint from a write (neither wrapping past $2^{32}$). -/
 theorem Memory.readN_writeN_disjoint (μ : Memory) (a : Nat) (bs : List UInt8) (b n : Nat)
     (h : a + bs.length ≤ b ∨ b + n ≤ a) (ha : a + bs.length ≤ two32) (hb : b + n ≤ two32) :
     (μ.writeN a bs).readN b n = μ.readN b n := by
@@ -268,14 +268,14 @@ theorem Num.getElem_encodeLE (l v k : Nat) (hk : k < (Num.encodeLE l v).length) 
 @[simp] theorem Memory.length_readN (μ : Memory) (a n : Nat) : (μ.readN a n).length = n := by
   simp [Memory.readN]
 
-/-- A one-octet read outside a write (neither wrapping past 2^32). -/
+/-- A one-octet read outside a write (neither wrapping past $2^{32}$). -/
 theorem Memory.read_writeN_disjoint (μ : Memory) (a : Nat) (bs : List UInt8) (b : Nat)
     (h : a + bs.length ≤ b ∨ b + 1 ≤ a) (ha : a + bs.length ≤ two32) (hb : b + 1 ≤ two32) :
     (μ.writeN a bs).read b = μ.read b := by
   have := Memory.readN_writeN_disjoint μ a bs b 1 h ha hb
   simpa [Memory.readN] using this
 
-/-! Addresses at or above 2^32 (a load or store with a negative offset) denote `a mod 2^32`. -/
+/-! Addresses at or above $2^{32}$ (a load or store with a negative offset) denote $a \bmod 2^{32}$. -/
 
 theorem Memory.read_wrap (μ : Memory) (a : Nat) (h : two32 ≤ a) : μ.read a = μ.read (a % two32) := by
   simp [Memory.read, Nat.mod_mod]
@@ -310,13 +310,13 @@ theorem Memory.readN_congr {μ μ' : Memory} {a n : Nat} (h : ∀ j, j < n → �
   intro j hj
   exact h j (List.mem_range.1 hj)
 
-/-- A one-octet `ℰ₁(v)` is the octet `v`. -/
+/-- A one-octet $\mathcal{E}_1(v)$ is the octet `v`. -/
 theorem Num.encodeLE_one (v : Nat) : Num.encodeLE 1 v = [UInt8.ofNat v] := by
   simp only [Num.encodeLE, List.cons.injEq, and_true]
   apply UInt8.toNat_inj.mp
   simp [UInt8.toNat_ofNat, Nat.mod_mod]
 
-/-- Reading the low `m ≤ l` octets of a stored `ℰ_l(v)` gives `ℰ_m(v)`. -/
+/-- Reading the low $m \le l$ octets of a stored $\mathcal{E}_l(v)$ gives $\mathcal{E}_m(v)$. -/
 theorem Memory.readN_writeN_encodeLE_low (μ : Memory) (a l m v : Nat) (hm : m ≤ l)
     (ha : l ≤ two32) : (μ.writeN a (Num.encodeLE l v)).readN a m = Num.encodeLE m v := by
   apply List.ext_getElem
@@ -332,13 +332,13 @@ When a value depends on an unknown (the argument length `L`), the concrete simpr
 lemmas, used with `omega` as discharger, finish such terms from linear facts in context. -/
 
 /-- One octet of a little-endian read folds into the rest: read back octet by octet, from the
-    innermost, `Num.decodeLE` of `Num.encodeLE` gives `x mod 2^(8n)` (cf. `Nat.mod_mul`). -/
+    innermost, `Num.decodeLE` of `Num.encodeLE` gives $x \bmod 2^{8n}$ (cf. `Nat.mod_mul`). -/
 theorem le_byte (x k : Nat) : x % 256 + 256 * (x / 256 % k) = x % (256 * k) :=
   Nat.mod_mul.symm
 
 /-- `Option.getD_some` with a propositional proof. As an `rfl` lemma `simp` uses it by `dsimp`,
     leaving the kernel to check `(some a).getD b ≡ a` by reduction; when `a` is arithmetic over an
-    unknown, the kernel may unfold `a` instead (e.g. `x * 2^32` by `Nat.rec`, 2^32 times). -/
+    unknown, the kernel may unfold `a` instead (e.g. `x * 2^32` by `Nat.rec`, $2^{32}$ times). -/
 theorem getD_some' {α : Type _} (a b : α) : (some a).getD b = a := by
   simp only [Option.getD]
 
@@ -361,7 +361,7 @@ theorem one_mul' (n : Nat) : 1 * n = n := by omega
 theorem add_mod_of_dvd (a c m : Nat) (h : c % m = 0) : (a + c) % m = a % m := by
   rw [Nat.add_mod, h, Nat.add_zero, Nat.mod_mod]
 
-/-- Adding a "negative" 64-bit immediate `m = 2^64 − c` subtracts `c` when no borrow occurs:
+/-- Adding a "negative" 64-bit immediate $m = 2^{64} - c$ subtracts `c` when no borrow occurs:
     the wrapped form of `addImm64` with a negative immediate (cf. `Nat.mod_eq_of_lt` when the sum
     does not wrap). -/
 theorem add_wrap64 (a m : Nat) (hm : m < 18446744073709551616) (h : 18446744073709551616 - m ≤ a)
@@ -369,7 +369,7 @@ theorem add_wrap64 (a m : Nat) (hm : m < 18446744073709551616) (h : 184467440737
     (a + m) % 18446744073709551616 = a - (18446744073709551616 - m) := by
   omega
 
-/-- A register's value is below any modulus of at least 2^64. -/
+/-- A register's value is below any modulus of at least $2^{64}$. -/
 theorem u64_toNat_mod (x : UInt64) (m : Nat) (h : 18446744073709551616 ≤ m) : x.toNat % m = x.toNat :=
   Nat.mod_eq_of_lt (Nat.lt_of_lt_of_le x.toNat_lt h)
 
@@ -377,7 +377,7 @@ theorem u64_toNat_mod (x : UInt64) (m : Nat) (h : 18446744073709551616 ≤ m) : 
 theorem u8_toNat_mod (x : UInt8) (m : Nat) (h : 256 ≤ m) : x.toNat % m = x.toNat :=
   Nat.mod_eq_of_lt (Nat.lt_of_lt_of_le x.toNat_lt h)
 
-/-- `sub64` without borrow: (a + 2^64 − b) mod 2^64 = a − b for b ≤ a < 2^64. -/
+/-- `sub64` without borrow: $(a + 2^{64} - b) \bmod 2^{64} = a - b$ for $b \le a < 2^{64}$. -/
 theorem sub_wrap64 (a b : Nat) (h : b ≤ a) (ha : a < 18446744073709551616) :
     (a + 18446744073709551616 - b) % 18446744073709551616 = a - b := by
   omega
@@ -387,7 +387,7 @@ theorem toNat_natCast_emod (n : Nat) (m : Int) (h : (n : Int) < m) : ((n : Int) 
   rw [Int.emod_eq_of_lt (by omega) h]; rfl
 
 /-- A negative value through `Int` and back modulo `m` (the negative case of `signed`/`u64`):
-    ((b − c) mod m).toNat = b + m − c for b < c ≤ b + m. -/
+    $((b - c) \bmod m).\text{toNat} = b + m - c$ for $b < c \le b + m$. -/
 theorem toNat_natCast_sub_emod (b : Nat) (c m : Int) (h1 : (b : Int) < c) (h2 : c ≤ b + m) (h3 : c ≤ m) :
     (((b : Int) - c) % m).toNat = b + (m - c).toNat := by
   have h : ((b : Int) - c) % m = ((b : Int) - c + m) % m := by
@@ -483,8 +483,8 @@ macro_rules
       Nat.reduceBNe, Bool.false_or, Bool.or_false, Bool.true_or, Bool.or_true, Bool.false_and,
       Bool.and_false, Bool.true_and, Bool.and_true, $hs,*]))
 
-/-- Compute one gas-free step's effect: unfold Ψ₁'s mutation for the (known) instruction, reduce
-    the register file and concrete arithmetic, decide ε^μ from the given access hypotheses, and
+/-- Compute one gas-free step's effect: unfold $\Psi_1$'s mutation for the (known) instruction, reduce
+    the register file and concrete arithmetic, decide $\varepsilon^\mu$ from the given access hypotheses, and
     close `(ε, ı', ω', μ') = (▸, ?, ?, ?)` by `rfl`, which fixes the next state. Fails if the
     step does not provably continue. The extra terms are memory-access facts for `simp`. -/
 syntax "pvm_simp" "[" Lean.Parser.Tactic.simpLemma,* "]" : tactic

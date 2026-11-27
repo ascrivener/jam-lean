@@ -4,20 +4,23 @@ import PVM.Memory
 /-!
 # Instruction semantics: the mutation tables of GP v0.8.1 §A.5
 
-`exec` gives, for one decoded instruction, the paper's (ε, ı', ω', μ') of the regular
-execution, together with the index sets **r** and **w** by which μ is read and written. The
-single-step function Ψ₁ (`PVM.Machine`) combines this with the gas charge and with ε^μ.
+`exec` gives, for one decoded instruction, the paper's $(\varepsilon, \imath', \varphi', \mu')$ of the regular
+execution, together with the index sets $\mathbf{r}$ and $\mathbf{w}$ by which $\mu$ is read and
+written. The single-step function $\Psi_1$ (`PVM.Machine`) combines this with the gas charge and
+with $\varepsilon^\mu$.
 
-Unless an instruction says otherwise: ε = ▸, ı' = ı + 1 + skip(ı), ω' = ω, μ' = μ (§A.4).
+Unless an instruction says otherwise: $\varepsilon = \blacktriangleright$,
+$\imath' = \imath + 1 + \text{skip}(\imath)$, $\varphi' = \varphi$, $\mu' = \mu$ (§A.4).
 
-All arithmetic follows the paper's formulas over ℕ and ℤ; register values are read with
-`toNat` and written back with `UInt64.ofNat` (every result is already in ℕ_{2^64}).
+All arithmetic follows the paper's formulas over $\mathbb{N}$ and $\mathbb{Z}$; register values are read with
+`toNat` and written back with `UInt64.ofNat` (every result is already in $\mathbb{N}_{2^{64}}$).
 -/
 
 namespace PVM
 
-/-- Exit reasons and the continuation marker ▸ (GP §A.1, §A.4):
-    ▸ (`cont`), ∎ (`halt`), ☇ (`panic`), ∞ (`oog`), F × a (`fault a`), ħ × h (`host h`). -/
+/-- Exit reasons and the continuation marker $\blacktriangleright$ (GP §A.1, §A.4):
+    $\blacktriangleright$ (`cont`), $\blacksquare$ (`halt`), ☇ (`panic`), $\infty$ (`oog`),
+    $\Finv \times a$ (`fault a`), $\hbar \times h$ (`host h`). -/
 inductive Status where
   | cont
   | halt
@@ -27,20 +30,21 @@ inductive Status where
   | host (id : UInt64)
   deriving DecidableEq, Repr
 
-/-- The regular-execution result of one instruction (GP §A.4–A.5): ε, ı', ω', μ', and the sets
-    **r** (indices read) and **w** (indices written) used to compute ε^μ. -/
+/-- The regular-execution result of one instruction (GP §A.4–A.5): $\varepsilon$, $\imath'$, $\varphi'$, $\mu'$, and the
+    sets $\mathbf{r}$ (indices read) and $\mathbf{w}$ (indices written) used to compute
+    $\varepsilon^\mu$. -/
 structure Mutation where
-  /-- ε -/
+  /-- $\varepsilon$ -/
   status : Status
-  /-- ı' -/
+  /-- $\imath'$ -/
   pc : Nat
-  /-- ω' -/
+  /-- $\varphi'$ -/
   regs : Regs
-  /-- μ' -/
+  /-- $\mu'$ -/
   mem : Memory
-  /-- **r** -/
+  /-- $\mathbf{r}$ -/
   reads : List Nat := []
-  /-- **w** -/
+  /-- $\mathbf{w}$ -/
   writes : List Nat := []
 
 /-- Width in octets of a store of §A.5.4. -/
@@ -55,21 +59,21 @@ namespace Exec
 
 open Num
 
-/-- The indices `a, a+1, …, a+n-1` of μ^↺_{a…+n}. -/
+/-- The indices $a, a+1, \dots, a+n-1$ of $\mu^{\circlearrowleft}_{a \dots +n}$. -/
 def indices (a n : Nat) : List Nat := (List.range n).map (a + ·)
 
-/-- 𝒵_8 and 𝒵_8⁻¹, written `𝒵` and `𝒵⁻¹` without subscript in the paper. -/
+/-- $\mathcal{Z}_8$ and $\mathcal{Z}_8^{-1}$, written $\mathcal{Z}$ and $\mathcal{Z}^{-1}$ without subscript in the paper. -/
 abbrev s64 (a : Nat) : Int := signed 8 a
-/-- 𝒵_8⁻¹. -/
+/-- $\mathcal{Z}_8^{-1}$. -/
 abbrev u64 (a : Int) : Nat := unsigned 8 a
 
 /-- Boolean as a register value (`set_*` instructions). -/
 def ofBool (b : Bool) : Nat := if b then 1 else 0
 
-/-- Bitwise operation on the 64-bit representations: ∀ i ∈ ℕ_64 : ℬ_8(r)_i = f(ℬ_8(a)_i, ℬ_8(b)_i). -/
+/-- Bitwise operation on the 64-bit representations: $\forall i \in \mathbb{N}_{64} : \mathcal{B}_8(r)_i = f(\mathcal{B}_8(a)_i, \mathcal{B}_8(b)_i)$. -/
 def bitwise (f : Bool → Bool → Bool) (a b : Nat) : Nat := ofBits 64 fun i => f (bit a i) (bit b i)
 
-/-- Two-register ALU operations, §A.5.9: ω'_D as a function of ω_A. -/
+/-- Two-register ALU operations, §A.5.9: $\varphi'_D$ as a function of $\varphi_A$. -/
 def twoRegAlu : TwoRegOp → Nat → Nat
   | .moveReg, a => a
   | .countSetBits64, a => popcount 64 a
@@ -83,8 +87,8 @@ def twoRegAlu : TwoRegOp → Nat → Nat
   | .zeroExtend16, a => a % 2 ^ 16
   | .reverseBytes, a => decodeLE (encodeLE 8 a).reverse
 
-/-- The ALU operations of §A.5.10 (two registers and one immediate): ω'_A as a function of
-    ω_A (used only by `cmov_*_imm`), ω_B and ν_X. `none` for the loads and stores. -/
+/-- The ALU operations of §A.5.10 (two registers and one immediate): $\varphi'_A$ as a function of
+    $\varphi_A$ (used only by `cmov_*_imm`), $\varphi_B$ and $\nu_X$. `none` for the loads and stores. -/
 def twoRegImmAlu : TwoRegImmOp → Nat → Nat → Nat → Option Nat
   | .addImm32, _, b, x => some <| sext 4 ((b + x) % two32)
   | .andImm, _, b, x => some <| bitwise (· && ·) b x
@@ -125,7 +129,7 @@ def twoRegImmAlu : TwoRegImmOp → Nat → Nat → Nat → Option Nat
   | .loadIndI16, _, _, _ | .loadIndU32, _, _, _ | .loadIndI32, _, _, _
   | .loadIndU64, _, _, _ => none
 
-/-- Three-register operations, §A.5.13: ω'_D as a function of ω_A, ω_B and ω_D (the latter
+/-- Three-register operations, §A.5.13: $\varphi'_D$ as a function of $\varphi_A$, $\varphi_B$ and $\varphi_D$ (the latter
     used only by `cmov_iz` and `cmov_nz`). -/
 def threeRegAlu : ThreeRegOp → Nat → Nat → Nat → Nat
   | .add32, a, b, _ => sext 4 ((a + b) % two32)
@@ -183,7 +187,7 @@ def threeRegAlu : ThreeRegOp → Nat → Nat → Nat → Nat
   | .min, a, b, _ => u64 (min (s64 a) (s64 b))
   | .minU, a, b, _ => min a b
 
-/-- Branch conditions of §A.5.8 (`branch_*_imm`), comparing ω_A with ν_X. -/
+/-- Branch conditions of §A.5.8 (`branch_*_imm`), comparing $\varphi_A$ with $\nu_X$. -/
 def regImmBranchCond : RegImmOffsetOp → Nat → Nat → Bool
   | .loadImmJump, _, _ => false
   | .branchEqImm, a, x => a == x
@@ -197,7 +201,7 @@ def regImmBranchCond : RegImmOffsetOp → Nat → Nat → Bool
   | .branchGeSImm, a, x => s64 a ≥ s64 x
   | .branchGtSImm, a, x => s64 a > s64 x
 
-/-- Branch conditions of §A.5.11, comparing ω_A with ω_B. -/
+/-- Branch conditions of §A.5.11, comparing $\varphi_A$ with $\varphi_B$. -/
 def twoRegBranchCond : TwoRegOffsetOp → Nat → Nat → Bool
   | .branchEq, a, b => a == b
   | .branchNe, a, b => a != b
@@ -212,20 +216,21 @@ namespace Program
 
 open Num Exec
 
-/-- sjump(b) (GP §A.4): (☇, ı) if b ∉ ϖ, otherwise (▸, b). -/
+/-- $\text{sjump}(b)$ (GP §A.4): $(\text{☇}, \imath)$ if $b \notin \varpi$, otherwise $(\blacktriangleright, b)$. -/
 def sjump (P : Program) (i : Nat) (b : Int) : Status × Nat :=
   if P.isBlockStartInt b then (.cont, b.toNat) else (.panic, i)
 
-/-- $\text{branch}(b, C)$ (GP §A.4): (☇, $\imath$) if $b \notin \varpi \vee \imath + 1 + \text{skip}(\imath) \notin \varpi$;
+/-- $\text{branch}(b, C)$ (GP §A.4): $(\text{☇}, \imath)$ if $b \notin \varpi \vee \imath + 1 + \text{skip}(\imath) \notin \varpi$;
     $(\blacktriangleright, \imath + 1 + \text{skip}(\imath))$ if $\neg C$; otherwise $(\blacktriangleright, b)$. -/
 def branch (P : Program) (i : Nat) (b : Int) (c : Bool) : Status × Nat :=
   if !P.isBlockStartInt b || !P.isBlockStart (P.next i) then (.panic, i)
   else if !c then (.cont, P.next i)
   else (.cont, b.toNat)
 
-/-- djump(a) (GP eq. `jumptablealignment`), with 𝖹_A = 2:
-    (∎, ı) if a = 2^32 − 2^16; (☇, ı) if a = 0 ∨ a > |**j**|·𝖹_A ∨ a mod 𝖹_A ≠ 0 ∨ **j**_{a/𝖹_A − 1} ∉ ϖ;
-    otherwise (▸, **j**_{a/𝖹_A − 1}). -/
+/-- $\text{djump}(a)$ (GP eq. `jumptablealignment`), with $\mathsf{Z}_A = 2$:
+    $(\blacksquare, \imath)$ if $a = 2^{32} - 2^{16}$; $(\text{☇}, \imath)$ if
+    $a = 0 \vee a > |\mathbf{j}| \cdot \mathsf{Z}_A \vee a \bmod \mathsf{Z}_A \ne 0 \vee \mathbf{j}_{a/\mathsf{Z}_A - 1} \notin \varpi$;
+    otherwise $(\blacktriangleright, \mathbf{j}_{a/\mathsf{Z}_A - 1})$. -/
 def djump (P : Program) (i : Nat) (a : Nat) : Status × Nat :=
   if a = 2 ^ 32 - 2 ^ 16 then (.halt, i)
   else if a = 0 ∨ a > P.jumpTable.size * 2 ∨ a % 2 ≠ 0 then (.panic, i)
@@ -233,7 +238,7 @@ def djump (P : Program) (i : Nat) (a : Nat) : Status × Nat :=
     let t := P.jumpTable.getD (a / 2 - 1) 0
     if P.isBlockStart t then (.cont, t) else (.panic, i)
 
-/-- The regular execution of instruction `ins` at `ı` (GP §A.4–A.5): $(\varepsilon, \imath', \varphi', \mu')$ and the
+/-- The regular execution of instruction `ins` at $\imath$ (GP §A.4–A.5): $(\varepsilon, \imath', \varphi', \mu')$ and the
     index sets $\mathbf{r}$ and $\mathbf{w}$. -/
 def exec (P : Program) (i : Nat) (ins : Instr) (ω : Regs) (μ : Memory) : Mutation :=
   let r (k : RegIdx) : Nat := (ω.get k).toNat

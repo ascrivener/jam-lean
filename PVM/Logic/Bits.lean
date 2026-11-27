@@ -91,10 +91,10 @@ theorem bitwise_and_low (a m j : Nat) (hm : m + 1 = 2 ^ j) (hj : j ≤ 64) :
 /-! ## Sign-extended octets
 
 `sign_extend_8` of an octet `b ≥ 128` is `b + (2^64 − 256)`. Kept folded as `sx8 b`, it never puts
-a 2^64-size constant next to a symbolic value, which the kernel would otherwise have to reduce in
+a $2^{64}$-size constant next to a symbolic value, which the kernel would otherwise have to reduce in
 unary when checking a step. The lemmas give the facts the code uses. -/
 
-/-- 𝒳₁ of an octet (GP eq. `signedextension`), folded. -/
+/-- $\mathcal{X}_1$ of an octet (GP eq. `signedextension`), folded. -/
 def sx8 (b : Nat) : Nat := if b < 128 then b else b + 18446744073709551360
 
 theorem twoRegAlu_signExtend8 (a : Nat) : Exec.twoRegAlu .signExtend8 a = sx8 (a % 256) := by

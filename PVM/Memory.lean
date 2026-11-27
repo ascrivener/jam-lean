@@ -2,36 +2,36 @@ import Std.Data.ExtTreeMap
 import PVM.Basic
 
 /-!
-# RAM (GP v0.8.1 §4.7, eq. `pvmmemory`) and the memory-access exception ε^μ (§A.4)
+# RAM (GP v0.8.1 §4.7, eq. `pvmmemory`) and the memory-access exception $\varepsilon^\mu$ (§A.4)
 
-𝕄 ≡ (**v** ∈ 𝔹_{2^32}, **a** ∈ ⟦{W, R, ∅}⟧_p), p = 2^32 / 𝖹_P, 𝖹_P = 2^12.
+$\mathbb{M} \equiv (\mathbf{v} \in \mathbb{B}_{2^{32}}, \mathbf{a} \in [\![ \{W, R, \emptyset\} ]\!]_p)$, $p = 2^{32} / \mathsf{Z}_P$, $\mathsf{Z}_P = 2^{12}$.
 
 We represent both components as extensional finite maps (`Std.ExtTreeMap`, so that two
 memories with the same lookups are equal):
 
-* `bytes` maps addresses in ℕ_{2^32} to octets; absent addresses hold 0;
-* `pages` maps page indices to `Access.read` (R) or `Access.write` (W); absent pages are
-  inaccessible (∅).
+* `bytes` maps addresses in $\mathbb{N}_{2^{32}}$ to octets; absent addresses hold 0;
+* `pages` maps page indices to `Access.read` ($R$) or `Access.write` ($W$); absent pages are
+  inaccessible ($\emptyset$).
 
-Subscripts are cyclic (μ^↺, GP §3 notation): the octet at index `i` is **v**[i mod 2^32].
+Subscripts are cyclic ($\mu^\circlearrowleft$, GP §3 notation): the octet at index `i` is $\mathbf{v}[i \bmod 2^{32}]$.
 -/
 
 namespace PVM
 
-/-- 𝖹_P = 2^12, the PVM page size (GP §4.7 `sec:virtualmachineandgas`, eq. `pvmmemory`). -/
+/-- $\mathsf{Z}_P = 2^{12}$, the PVM page size (GP §4.7 `sec:virtualmachineandgas`, eq. `pvmmemory`). -/
 def pageSize : Nat := 2 ^ 12
 
-/-- A page's access mode: R (read-only) or W (read-write); ∅ is absence from the map. -/
+/-- A page's access mode: $R$ (read-only) or $W$ (read-write); $\emptyset$ is absence from the map. -/
 inductive Access where
   | read
   | write
   deriving DecidableEq, Repr
 
-/-- PVM RAM μ ∈ 𝕄. -/
+/-- PVM RAM $\mu \in \mathbb{M}$. -/
 structure Memory where
-  /-- **v**: non-zero octets by address in ℕ_{2^32}; absent addresses hold 0. -/
+  /-- $\mathbf{v}$: non-zero octets by address in $\mathbb{N}_{2^{32}}$; absent addresses hold 0. -/
   bytes : Std.ExtTreeMap Nat UInt8 := ∅
-  /-- **a**: access mode by page index; absent pages are inaccessible. -/
+  /-- $\mathbf{a}$: access mode by page index; absent pages are inaccessible. -/
   pages : Std.ExtTreeMap Nat Access := ∅
 
 namespace Memory
@@ -39,23 +39,23 @@ namespace Memory
 /-- The empty RAM: all octets zero, all pages inaccessible. -/
 def empty : Memory := {}
 
-/-- i ∈ 𝕍_μ, the readable indices (GP eq. `pvmmemory`): μ_**a**[⌊i / 𝖹_P⌋] ≠ ∅. -/
+/-- $i \in \mathbb{V}_\mu$, the readable indices (GP eq. `pvmmemory`): $\mu_{\mathbf{a}}[\lfloor i / \mathsf{Z}_P \rfloor] \ne \emptyset$. -/
 def readable (μ : Memory) (i : Nat) : Bool := (μ.pages.get? (i / pageSize)).isSome
 
-/-- i ∈ 𝕍*_μ, the writable indices (GP eq. `pvmmemory`): μ_**a**[⌊i / 𝖹_P⌋] = W. -/
+/-- $i \in \mathbb{V}^{\ast}_\mu$, the writable indices (GP eq. `pvmmemory`): $\mu_{\mathbf{a}}[\lfloor i / \mathsf{Z}_P \rfloor] = W$. -/
 def writable (μ : Memory) (i : Nat) : Bool := μ.pages.get? (i / pageSize) == some .write
 
-/-- μ^↺_i, the octet at index `i mod 2^32`. -/
+/-- $\mu^\circlearrowleft_i$, the octet at index $i \bmod 2^{32}$. -/
 def read (μ : Memory) (i : Nat) : UInt8 := μ.bytes.getD (i % two32) 0
 
-/-- μ'^↺_i = v. -/
+/-- $\mu'^\circlearrowleft_i = v$. -/
 def write (μ : Memory) (i : Nat) (v : UInt8) : Memory :=
   { μ with bytes := μ.bytes.insert (i % two32) v }
 
-/-- μ^↺_{a…+n}. -/
+/-- $\mu^\circlearrowleft_{a \dots + n}$. -/
 def readN (μ : Memory) (a n : Nat) : List UInt8 := (List.range n).map fun k => μ.read (a + k)
 
-/-- μ'^↺_{a…+|bs|} = bs. -/
+/-- $\mu'^\circlearrowleft_{a \dots + |bs|} = bs$. -/
 def writeN (μ : Memory) (a : Nat) : List UInt8 → Memory
   | [] => μ
   | b :: bs => (μ.write a b).writeN (a + 1) bs
@@ -126,7 +126,7 @@ theorem read_writeN_of_not_mem (μ : Memory) (a : Nat) (bs : List UInt8) (j : Na
       have := h (k + 1) (by simp; omega)
       rwa [show a + (k + 1) = a + 1 + k by omega] at this
 
-/-- After writing `bs` at `a` (at most 2^32 octets, so the write does not wrap onto itself),
+/-- After writing `bs` at `a` (at most $2^{32}$ octets, so the write does not wrap onto itself),
     the octet at `a + k` is `bs[k]`. -/
 theorem read_writeN_at (μ : Memory) (a : Nat) (bs : List UInt8) (hlen : bs.length ≤ two32)
     (k : Nat) (hk : k < bs.length) : (μ.writeN a bs).read (a + k) = bs[k] := by
@@ -146,7 +146,7 @@ theorem read_writeN_at (μ : Memory) (a : Nat) (bs : List UInt8) (hlen : bs.leng
       rw [show a + (k + 1) = a + 1 + k by omega, ih _ _ (by omega) k (by omega)]
       simp
 
-/-- Reading back a multi-octet write (of at most 2^32 octets) gives the written octets. -/
+/-- Reading back a multi-octet write (of at most $2^{32}$ octets) gives the written octets. -/
 theorem readN_writeN (μ : Memory) (a : Nat) (bs : List UInt8) (hlen : bs.length ≤ two32) :
     (μ.writeN a bs).readN a bs.length = bs := by
   apply List.ext_getElem

@@ -1,17 +1,17 @@
 import PVM.Gas
 
 /-!
-# A fast gas simulation 𝔛, proved equal to the paper's
+# A fast gas simulation $\mathfrak{X}$, proved equal to the paper's
 
-`Sim.run` follows GP v0.8.1 §A.9 literally: each cycle (𝔛''') builds a list of retirement flags and
-zips it with the reorder buffer; each start check (𝔖) builds `List.finRange` and indexes the buffer
-(a list) once per dependency; each decode recomputes š and ř (a power of two per register) for
+`Sim.run` follows GP v0.8.1 §A.9 literally: each cycle ($\mathfrak{X}'''$) builds a list of retirement flags and
+zips it with the reorder buffer; each start check ($\mathfrak{S}$) builds `List.finRange` and indexes the buffer
+(a list) once per dependency; each decode recomputes $\check{s}$ and $\check{r}$ (a power of two per register) for
 every buffer entry. `Sim.runFast` is the same simulation with:
 
 * `cycleStepFast`: one pass over the buffer, computing each entry's retirement flag as it goes
   (`cycleStep_eq_cycleStepFast`);
 * `readyFast`: the start check reading the buffer through an array (`readyToStart_eq_readyFast`);
-* `decodeStepFast`: š and ř computed once per decode, with shifts (`decodeStep_eq_decodeStepFast`).
+* `decodeStepFast`: $\check{s}$ and $\check{r}$ computed once per decode, with shifts (`decodeStep_eq_decodeStepFast`).
 
 `Program.blockCost?_eq_blockCost?Fast` and `Program.blockCost_eq_blockCostFast` are registered with
 `@[csimp]`, so compiled code that imports this module (the interpreter's block-cost tables and the
@@ -51,14 +51,14 @@ end RobState
 
 namespace Sim
 
-/-- l (`live`) with `RobState.isLive`. -/
+/-- $l$ (`live`) with `RobState.isLive`. -/
 def liveFast (x : SimState) : Nat := x.rob.foldl (fun n e => if e.state.isLive then n + 1 else n) 0
 
 @[csimp] theorem live_eq_liveFast : @live = @liveFast := by
   funext x
   simp only [live, liveFast, RobState.bne_none]
 
-/-- 𝔛^mov with š and ř computed once (cf. `decodeMove`). -/
+/-- $\mathfrak{X}^{\text{mov}}$ with $\check{s}$ and $\check{r}$ computed once (cf. `decodeMove`). -/
 def decodeMoveFast (P : Program) (x : SimState) (i : Nat) (ins : Instr) : SimState :=
   let s := RegSet.ofListFast ins.srcRegs
   let d := RegSet.ofListFast ins.dstRegs
@@ -68,7 +68,7 @@ def decodeMoveFast (P : Program) (x : SimState) (i : Nat) (ins : Instr) : SimSta
     rob := x.rob.map fun e =>
       { e with regs := if e.regs.meets s then e.regs.union d else e.regs.diff d } }
 
-/-- 𝔛^dec with š and ř computed once (cf. `decodeInstr`). -/
+/-- $\mathfrak{X}^{\text{dec}}$ with $\check{s}$ and $\check{r}$ computed once (cf. `decodeInstr`). -/
 def decodeInstrFast (P : Program) (x : SimState) (i : Nat) (ins : Instr) (cost : InstrCost) :
     SimState :=
   let s := RegSet.ofListFast ins.srcRegs
@@ -80,7 +80,7 @@ def decodeInstrFast (P : Program) (x : SimState) (i : Nat) (ins : Instr) (cost :
     decodeSlots := x.decodeSlots - cost.decodeSlots
     rob := rob ++ [⟨.dec, cost.cycles, deps, d, cost.units⟩] }
 
-/-- 𝔛' with `decodeMoveFast` and `decodeInstrFast`. -/
+/-- $\mathfrak{X}'$ with `decodeMoveFast` and `decodeInstrFast`. -/
 def decodeStepFast (P : Program) (x : SimState) (i : Nat) (ins : Instr) (cost : InstrCost) :
     SimState :=
   if i < P.code.size && P.zeta i == moveRegOpcode then decodeMoveFast P x i ins
@@ -91,7 +91,7 @@ def decodeStepFast (P : Program) (x : SimState) (i : Nat) (ins : Instr) (cost : 
   simp [decodeStep, decodeStepFast, decodeMove, decodeMoveFast, decodeInstr, decodeInstrFast,
     Instr.src, Instr.dst, RegSet.ofList_eq_ofListFast]
 
-/-- 𝔖 reading the buffer through an array (cf. `readyToStart`). -/
+/-- $\mathfrak{S}$ reading the buffer through an array (cf. `readyToStart`). -/
 def readyFast (x : SimState) : Option (Fin x.rob.length) :=
   let arr := x.rob.toArray
   let dd (k : Nat) : Bool := if h : k < arr.size then arr[k].cycles == 0 else true
@@ -106,7 +106,7 @@ def readyFast (x : SimState) : Option (Fin x.rob.length) :=
   -- the array reads are the list reads (`List.toArray`), definitionally
   rfl
 
-/-- The new state of a buffer entry in 𝔛''', given whether it retires. -/
+/-- The new state of a buffer entry in $\mathfrak{X}'''$, given whether it retires. -/
 @[inline] def cycleEntry (e : RobEntry) (r : Bool) : RobEntry :=
   { e with
     state :=
@@ -116,7 +116,7 @@ def readyFast (x : SimState) : Option (Fin x.rob.length) :=
       else e.state
     cycles := if e.state.isExe && e.cycles > 0 then e.cycles - 1 else e.cycles }
 
-/-- 𝔛''' on the buffer, one pass: `ok` says that every entry before is FIN or ∅. -/
+/-- $\mathfrak{X}'''$ on the buffer, one pass: `ok` says that every entry before is FIN or $\emptyset$. -/
 def cycleRob : List RobEntry → Bool → List RobEntry
   | [], _ => []
   | e :: es, ok =>
@@ -129,7 +129,7 @@ theorem zipWith_retiredPrefix (rob : List RobEntry) (ok : Bool) :
   | nil => rfl
   | cons e es ih => simp [retiredPrefix, cycleRob, ih, RobState.fin_or_none]
 
-/-- 𝔛''' with one pass over the buffer (cf. `cycleStep`). -/
+/-- $\mathfrak{X}'''$ with one pass over the buffer (cf. `cycleStep`). -/
 def cycleStepFast (x : SimState) : SimState :=
   let freed := x.rob.foldl (fun u e => if e.state.isExe && e.cycles == 1 then u + e.units else u) Units.zero
   { x with
@@ -146,7 +146,7 @@ def cycleStepFast (x : SimState) : SimState :=
   simp only [RobState.beq_dec, RobState.beq_exe]
   rfl
 
-/-- One transition of 𝔛 (`transition`), restated so that its compiled code uses the fast steps
+/-- One transition of $\mathfrak{X}$ (`transition`), restated so that its compiled code uses the fast steps
     (`@[csimp]` lemmas above). -/
 def transitionFast (P : Program) (x : SimState) : Option (SimState ⊕ SimState) := do
   let l := live x
@@ -164,7 +164,7 @@ def transitionFast (P : Program) (x : SimState) : Option (SimState ⊕ SimState)
 theorem transition_eq_transitionFast (P : Program) (x : SimState) :
     transition P x = transitionFast P x := rfl
 
-/-- 𝔛 with at most `fuel` fast transitions (cf. `run`). -/
+/-- $\mathfrak{X}$ with at most `fuel` fast transitions (cf. `run`). -/
 def runFast (P : Program) : Nat → SimState → Option SimState
   | 0, _ => none
   | fuel + 1, x =>
@@ -186,7 +186,7 @@ end Sim
 
 namespace Program
 
-/-- ϱ^Δ? with the fast simulation (cf. `blockCost?`). -/
+/-- $\varrho^\Delta$? with the fast simulation (cf. `blockCost?`). -/
 def blockCost?Fast (P : Program) (i : Nat) : Option Nat :=
   (Sim.runFast P (Sim.fuel P i) (Sim.init i)).map fun x => max (x.cycle - 3) 1
 
@@ -195,7 +195,7 @@ def blockCost?Fast (P : Program) (i : Nat) : Option Nat :=
   funext P i
   simp [blockCost?, blockCost?Fast, Sim.run_eq_runFast]
 
-/-- ϱ^Δ, restated so that its compiled code uses `blockCost?Fast`. -/
+/-- $\varrho^\Delta$, restated so that its compiled code uses `blockCost?Fast`. -/
 def blockCostFast (P : Program) (i : Nat) : Nat := (P.blockCost? i).getD 1
 
 @[csimp] theorem blockCost_eq_blockCostFast : @blockCost = @blockCostFast := rfl

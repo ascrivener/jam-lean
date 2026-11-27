@@ -4,36 +4,36 @@ import PVM.Theorems.HostIds
 import PVM.Logic.FastCheck
 
 /-!
-# Host calls whose ω₇ the program ignores
+# Host calls whose $\varphi_7$ the program ignores
 
-`psiM_of_freeRunH` lifts a gas-free run to Ψ_M (GP §A.8) when the run's contract *pins down* the
-real handler: every non-∞ outcome the handler can produce is the one the contract allows. A host
-call that reports the gas left in ω₇ cannot be pinned down that way. Examples are Ψ_A's
-`checkpoint` (Ω_C, GP v0.8.1 eq. `accinvocation`) and `gas` (Ω_G). A program that overwrites ω₇
+`psiM_of_freeRunH` lifts a gas-free run to $\Psi_M$ (GP §A.8) when the run's contract *pins down* the
+real handler: every non-$\infty$ outcome the handler can produce is the one the contract allows. A host
+call that reports the gas left in $\varphi_7$ cannot be pinned down that way. Examples are $\Psi_A$'s
+`checkpoint` ($\Omega_C$, GP v0.8.1 eq. `accinvocation`) and `gas` ($\Omega_G$). A program that overwrites $\varphi_7$
 before reading it does not see the difference.
 
 This file lifts such runs.
-- `Dead7 p i`: whatever ω₇ holds at index i, the run from i ends the same way, up to Ψ_M's output.
-  The step at i either does not depend on ω₇ (`kill`, e.g. `load_imm ω₇`), or passes it along
+- `Dead7 p i`: whatever $\varphi_7$ holds at index i, the run from i ends the same way, up to $\Psi_M$'s output.
+  The step at i either does not depend on $\varphi_7$ (`kill`, e.g. `load_imm ω₇`), or passes it along
   untouched to an index where it is dead (`pass`).
 - `HostRel.PinsExcept7 K R₁ R₂`: `R₁` pins down `R₂`, except that at the ids in `K` a continuing
-  outcome may differ in ω₇.
+  outcome may differ in $\varphi_7$.
 - `FreeRunH.det7`: two runs, one under each contract, from the same state, end with the same
-  status, context and Ψ_M output. This needs ω₇ to be dead after every `ecalli k`, k ∈ `K`, in the
+  status, context and $\Psi_M$ output. This needs $\varphi_7$ to be dead after every `ecalli k`, $k \in$ `K`, in the
   program (`Program.ecalliSites`, a syntactic scan as `Program.hostCallIds`).
-- `psiM_of_freeRunH7`: the lift to Ψ_M.
+- `psiM_of_freeRunH7`: the lift to $\Psi_M$.
 -/
 
 namespace PVM
 
 variable {X : Type}
 
-/-- ω and ω' agree except perhaps at ω₇. -/
+/-- $\varphi$ and $\varphi'$ agree except perhaps at $\varphi_7$. -/
 def Agree7 (ω ω' : Regs) : Prop := ω.set 7 0 = ω'.set 7 0
 
 theorem Agree7.symm {ω ω' : Regs} (h : Agree7 ω ω') : Agree7 ω' ω := Eq.symm h
 
-/-- The exits whose Ψ_M output is ☇ whatever the registers and memory (`freeOutput`): ☇ and F. -/
+/-- The exits whose $\Psi_M$ output is ☇ whatever the registers and memory (`freeOutput`): ☇ and $\Finv$. -/
 def Status.Quiet : Status → Prop
   | .panic => True
   | .fault _ => True
@@ -43,13 +43,13 @@ theorem freeOutput_quiet {ε : Status} (h : ε.Quiet) (ω ω' : Regs) (μ μ' : 
     freeOutput ε ω μ = freeOutput ε ω' μ' := by
   cases ε <;> simp_all [Status.Quiet, freeOutput]
 
-/-- **ω₇ is dead at index i** of the blob `p`: the run from i does not depend on ω₇, except
+/-- **$\varphi_7$ is dead at index i** of the blob `p`: the run from i does not depend on $\varphi_7$, except
     through an exit whose output is ☇ anyway.
-    - `kill`: the gas-free step at i gives the same result whatever ω₇ is (as `load_imm ω₇`, or a
-      load into ω₇), except for the registers of a ☇ or F exit (Ψ_M's output is ☇ whatever they
+    - `kill`: the gas-free step at i gives the same result whatever $\varphi_7$ is (as `load_imm ω₇`, or a
+      load into $\varphi_7$), except for the registers of a ☇ or $\Finv$ exit ($\Psi_M$'s output is ☇ whatever they
       are); and it is not a host call.
-    - `pass`: the step at i gives results that agree except at ω₇. It continues to an index where
-      ω₇ is dead (which may depend on the state, as after a branch), or exits with ☇ or F. -/
+    - `pass`: the step at i gives results that agree except at $\varphi_7$. It continues to an index where
+      $\varphi_7$ is dead (which may depend on the state, as after a branch), or exits with ☇ or $\Finv$. -/
 inductive Dead7 (p : ByteArray) : Nat → Prop where
   | kill {i : Nat} {P : Program} : deblob p i = some P →
       (∀ ω ω' μ, Agree7 ω ω' →
@@ -68,7 +68,7 @@ inductive Dead7 (p : ByteArray) : Nat → Prop where
       (∀ ω μ, (P.freeStep i ω μ).1 = .cont ∨ (P.freeStep i ω μ).1.Quiet) →
       (∀ ω μ, (P.freeStep i ω μ).1 = .cont → Dead7 p (P.freeStep i ω μ).2.1) → Dead7 p i
 
-/-- Registers that agree except at ω₇ are the first with ω₇ set to the second's. -/
+/-- Registers that agree except at $\varphi_7$ are the first with $\varphi_7$ set to the second's. -/
 theorem Agree7.eq_set {ω ω' : Regs} (h : Agree7 ω ω') : ω' = ω.set 7 ω'[7] := by
   apply Vector.ext
   intro j hj
@@ -81,15 +81,15 @@ theorem Agree7.eq_set {ω ω' : Regs} (h : Agree7 ω ω') : ω' = ω.set 7 ω'[7
 theorem agree7_set (ω : Regs) (v : UInt64) : Agree7 ω (ω.set 7 v) := by
   unfold Agree7; rw [Vector.set_set]
 
-/-- `Dead7.kill` from the step at ω with ω₇ set to anything. -/
+/-- `Dead7.kill` from the step at $\varphi$ with $\varphi_7$ set to anything. -/
 theorem Dead7.kill_of {p : ByteArray} {i : Nat} {P : Program} (hP : deblob p i = some P)
     (hk : ∀ ω μ v, P.freeStep i (ω.set 7 v) μ = P.freeStep i ω μ)
     (hnh : ∀ ω μ, (∀ h, (P.freeStep i ω μ).1 ≠ .host h) ∧ (P.freeStep i ω μ).1 ≠ .oog) :
     Dead7 p i :=
   .kill hP (fun ω ω' μ ha => by rw [ha.eq_set, hk]; exact ⟨rfl, rfl, rfl, fun _ => rfl⟩) hnh
 
-/-- `Dead7.kill` from the step at ω with ω₇ set to anything: the same status, index and memory,
-    and the same registers unless the step exits with ☇ or F (which may keep the registers from
+/-- `Dead7.kill` from the step at $\varphi$ with $\varphi_7$ set to anything: the same status, index and memory,
+    and the same registers unless the step exits with ☇ or $\Finv$ (which may keep the registers from
     before). -/
 theorem Dead7.kill_of' {p : ByteArray} {i : Nat} {P : Program} (hP : deblob p i = some P)
     (hk : ∀ ω μ v, (P.freeStep i (ω.set 7 v) μ).1 = (P.freeStep i ω μ).1 ∧
@@ -104,7 +104,7 @@ theorem Dead7.kill_of' {p : ByteArray} {i : Nat} {P : Program} (hP : deblob p i 
     obtain ⟨a, b, c, d⟩ := hk ω μ ω'[7]
     exact ⟨a.symm, b.symm, c.symm, fun h => (d h).symm⟩) hnh
 
-/-- `Dead7.pass` from the step at ω with ω₇ set to anything: the same result, with ω₇ set. -/
+/-- `Dead7.pass` from the step at $\varphi$ with $\varphi_7$ set to anything: the same result, with $\varphi_7$ set. -/
 theorem Dead7.pass_of {p : ByteArray} {i : Nat} {P : Program} (hP : deblob p i = some P)
     (hp : ∀ ω μ v, P.freeStep i (ω.set 7 v) μ =
       ((P.freeStep i ω μ).1, (P.freeStep i ω μ).2.1, (P.freeStep i ω μ).2.2.1.set 7 v,
@@ -114,7 +114,7 @@ theorem Dead7.pass_of {p : ByteArray} {i : Nat} {P : Program} (hP : deblob p i =
   .pass hP (fun ω ω' μ ha => by
     rw [ha.eq_set, hp]; exact ⟨rfl, rfl, agree7_set _ _, rfl⟩) hc hd
 
-/-- `Dead7.pass_of` with the indices the step can continue to listed, each with ω₇ dead. -/
+/-- `Dead7.pass_of` with the indices the step can continue to listed, each with $\varphi_7$ dead. -/
 theorem Dead7.pass_to {p : ByteArray} {i : Nat} {P : Program} (js : List Nat)
     (hP : deblob p i = some P)
     (hp : ∀ ω μ v, P.freeStep i (ω.set 7 v) μ =
@@ -125,12 +125,12 @@ theorem Dead7.pass_to {p : ByteArray} {i : Nat} {P : Program} (js : List Nat)
     (hjs : ∀ j ∈ js, Dead7 p j) : Dead7 p i :=
   Dead7.pass_of hP hp hc (fun ω μ h => hjs _ (hn ω μ h))
 
-/-- Two states at index i, as `det7` compares them: equal, or ω₇ dead and the registers equal
-    except at ω₇. -/
+/-- Two states at index i, as `det7` compares them: equal, or $\varphi_7$ dead and the registers equal
+    except at $\varphi_7$. -/
 def Same7 (p : ByteArray) (i : Nat) (ω ω' : Regs) : Prop := ω = ω' ∨ (Dead7 p i ∧ Agree7 ω ω')
 
-/-- **Gas-free runs from states that differ only in a dead ω₇** end with the same status, and
-    with the same index, registers and memory unless that status is ☇ or F. -/
+/-- **Gas-free runs from states that differ only in a dead $\varphi_7$** end with the same status, and
+    with the same index, registers and memory unless that status is ☇ or $\Finv$. -/
 theorem FreeRun.det7 {p : ByteArray} {i : Nat} {ω₁ ω₂ : Regs} {μ : Memory} {ε₁ ε₂ : Status}
     {e₁ e₂ : Nat} {ω₁' ω₂' : Regs} {μ₁' μ₂' : Memory} (hs : Same7 p i ω₁ ω₂)
     (h₁ : FreeRun p i ω₁ μ ε₁ e₁ ω₁' μ₁') (h₂ : FreeRun p i ω₂ μ ε₂ e₂ ω₂' μ₂') :
@@ -233,9 +233,9 @@ theorem FreeRun.det7 {p : ByteArray} {i : Nat} {ω₁ ω₂ : Regs} {μ : Memory
           subst e2 e4
           exact ih (Or.inr ⟨hdj, e3⟩) hr₂
 
-/-- Contract `R₁` pins down `R₂` except in ω₇ at the ids in `K`: wherever `R₁` allows an
+/-- Contract `R₁` pins down `R₂` except in $\varphi_7$ at the ids in `K`: wherever `R₁` allows an
     outcome, `R₂` allows only one with the same status, memory and context, and the same
-    registers, unless the id is in `K` and the outcome continues, when ω₇ may differ. -/
+    registers, unless the id is in `K` and the outcome continues, when $\varphi_7$ may differ. -/
 def HostRel.PinsExcept7 (K : Nat → Prop) (R₁ R₂ : HostRel X) : Prop :=
   ∀ h ω μ x s₁ ω₁ μ₁ x₁ s₂ ω₂ μ₂ x₂, R₁ h ω μ x s₁ ω₁ μ₁ x₁ → R₂ h ω μ x s₂ ω₂ μ₂ x₂ →
     s₁ = s₂ ∧ μ₁ = μ₂ ∧ x₁ = x₂ ∧ (ω₁ = ω₂ ∨ (K h ∧ s₁ = .cont ∧ Agree7 ω₁ ω₂))
@@ -246,7 +246,7 @@ theorem HostRel.Pins.except7 {R₁ R₂ : HostRel X} (K : Nat → Prop) (h : R�
   obtain ⟨a, b, c, d⟩ := h _ _ _ _ _ _ _ _ _ _ _ _ h₁ h₂
   exact ⟨a, c, d, Or.inl b⟩
 
-/-- The indices of `ecalli k` in a program, where 𝔳_inst holds (as `Program.hostCallIds`). -/
+/-- The indices of `ecalli k` in a program, where $\mathfrak{v}_{\text{inst}}$ holds (as `Program.hostCallIds`). -/
 def Program.ecalliSites (P : Program) (k : Nat) : List Nat :=
   (List.range P.code.size).filter fun i =>
     P.vInst i && match P.decode i with
@@ -308,7 +308,7 @@ theorem FreeRun.host_site {p : ByteArray} {i : Nat} {ω : Regs} {μ : Memory} {h
   | exit he => subst hε; exact he.host_site
   | next _ _ ih => exact ih hε
 
-/-- ω₇ is dead after every `ecalli k` with k ∈ `K` in the blob `p`. -/
+/-- $\varphi_7$ is dead after every `ecalli k` with $k \in$ `K` in the blob `p`. -/
 def DeadAfter (p : ByteArray) (K : Nat → Prop) : Prop :=
   ∀ P, Blob.parse? p = some P → ∀ k, K k → ∀ e ∈ P.ecalliSites k, Dead7 p (P.next e)
 
@@ -316,9 +316,9 @@ theorem blobNext_eq {p : ByteArray} {e : Nat} {P : Program} (h : deblob p e = so
     blobNext p e = P.next e := by
   unfold blobNext; rw [(deblob_some h).1]
 
-/-- **Gas-free runs with host calls are deterministic up to a dead ω₇**: a run under `R₁` and a run
-    under `R₂` from the same state end with the same status, context and Ψ_M output, if `R₁`
-    pins down `R₂` except in ω₇ at the ids `K`, and ω₇ is dead after every `ecalli k`, k ∈ `K`. -/
+/-- **Gas-free runs with host calls are deterministic up to a dead $\varphi_7$**: a run under `R₁` and a run
+    under `R₂` from the same state end with the same status, context and $\Psi_M$ output, if `R₁`
+    pins down `R₂` except in $\varphi_7$ at the ids `K`, and $\varphi_7$ is dead after every `ecalli k`, $k \in$ `K`. -/
 theorem FreeRunH.det7 {p : ByteArray} {K : Nat → Prop} {R₁ R₂ : HostRel X}
     (hR : R₁.PinsExcept7 K R₂) (hK : DeadAfter p K) {i : Nat} {ω₁ ω₂ : Regs} {μ : Memory} {x : X}
     {ε₁ ε₂ : Status} {ω₁' ω₂' : Regs} {μ₁' μ₂' : Memory} {x₁ x₂ : X} (hs : Same7 p i ω₁ ω₂)
@@ -378,9 +378,9 @@ theorem FreeRunH.det7 {p : ByteArray} {K : Nat → Prop} {R₁ R₂ : HostRel X}
         · exact absurd hc hs'
       · exact hq.elim
 
-/-- **Ψ_M is determined by one gas-free run, up to a dead ω₇.** As `psiM_of_freeRunH`, for a
-    contract that pins down the handler except in ω₇ at the ids `K`, in a program where ω₇ is
-    dead after every `ecalli k`, k ∈ `K`. -/
+/-- **$\Psi_M$ is determined by one gas-free run, up to a dead $\varphi_7$.** As `psiM_of_freeRunH`, for a
+    contract that pins down the handler except in $\varphi_7$ at the ids `K`, in a program where $\varphi_7$ is
+    dead after every `ecalli k`, $k \in$ `K`. -/
 theorem psiM_of_freeRunH7 (b : ByteArray) (i : Nat) (gas : UInt64) (a : ByteArray) (x : X)
     (f : HostFn X) (hf : f.GasNonIncreasing) (K : Nat → Prop) (R : HostRel X)
     (hR : R.PinsExcept7 K f.graph) {p : ByteArray} {ω : Regs} {μ : Memory}

@@ -2,16 +2,16 @@ import PVM.Invocation
 import PVM.Fast.Step
 
 /-!
-# A fast Ψ_H, proved equal to the paper's
+# A fast $\Psi_H$, proved equal to the paper's
 
-`psiHStar` follows GP §A.6 literally. At every host call it runs Ψ on the raw blob, and it
+`psiHStar` follows GP §A.6 literally. At every host call it runs $\Psi$ on the raw blob, and it
 computes the next instruction with `blobNext`. The fuel comes from `runMeasure`. Each of these
-parses the blob afresh. Through `psi_eq_psiFast`, each Ψ also parses it and runs
+parses the blob afresh. Through `psi_eq_psiFast`, each $\Psi$ also parses it and runs
 `Program.prepare`. So every host call costs about three parses and one preparation of the whole
-blob. Every block cost is also simulated again, because each Ψ builds a fresh cost table. For a
+blob. Every block cost is also simulated again, because each $\Psi$ builds a fresh cost table. For a
 service blob of ~100 KB that makes a host-call-heavy invocation very slow.
 
-`psiHStarFast` parses and prepares the blob once per Ψ_H, then runs the host-call loop on the
+`psiHStarFast` parses and prepares the blob once per $\Psi_H$, then runs the host-call loop on the
 prepared program (`Prepared.hostFuel`). Its block-cost table is shared by all segments. Otherwise
 its definition is the same as `psiHFuel`'s.
 
@@ -45,13 +45,13 @@ theorem blobNext_of_parse {p : ByteArray} {P : Program} (h : Blob.parse? p = som
 
 namespace Prepared
 
-/-- Ψ on a prepared program (cf. `psiFast`). -/
+/-- $\Psi$ on a prepared program (cf. `psiFast`). -/
 def psi (Q : Prepared) (i : Nat) (gas : UInt64) (charged : Bool) (ω : Regs) (μ : Memory) :
     Result :=
   (Q.run (Q.prog.measure i gas charged + 1) i gas charged ω μ).getD
     { status := .panic, pc := 0, gas, charged, regs := ω, mem := μ }
 
-/-- Ψ_H* with at most `fuel` host calls, on a prepared program (cf. `psiHFuel`). -/
+/-- $\Psi_H^{\ast}$ with at most `fuel` host calls, on a prepared program (cf. `psiHFuel`). -/
 def hostFuel {X : Type} (Q : Prepared) (f : HostFn X) :
     Nat → Nat → UInt64 → Bool → Regs → Memory → X → Option (HostRunResult X)
   | 0, _, _, _, _, _, _ => none
@@ -87,7 +87,7 @@ theorem hostFuel_prepare {X : Type} {p : ByteArray} {P : Program} (h : Blob.pars
       ih]
     rfl
 
-/-- Ψ_H*, parsing and preparing the blob once (cf. `psiHStar`). -/
+/-- $\Psi_H^{\ast}$, parsing and preparing the blob once (cf. `psiHStar`). -/
 def psiHStarFast {X : Type} (p : ByteArray) (i : Nat) (gas : UInt64) (ch : Bool) (ω : Regs)
     (μ : Memory) (f : HostFn X) (x : X) : HostRunResult X :=
   match Blob.parse? p with
@@ -96,7 +96,7 @@ def psiHStarFast {X : Type} (p : ByteArray) (i : Nat) (gas : UInt64) (ch : Bool)
     (P.prepare.hostFuel f (P.measure i gas ch + 1) i gas ch ω μ x).getD
       { status := .panic, pc := 0, gas, charged := ch, regs := ω, mem := μ, ctx := x }
 
-/-- **The fast Ψ_H* is the paper's Ψ_H*.** Registered with `@[csimp]`. -/
+/-- **The fast $\Psi_H^{\ast}$ is the paper's $\Psi_H^{\ast}$.** Registered with `@[csimp]`. -/
 @[csimp] theorem psiHStar_eq_psiHStarFast : @psiHStar = @psiHStarFast := by
   funext X p i gas ch ω μ f x
   unfold psiHStar psiHStarFast
@@ -110,7 +110,7 @@ def psiHStarFast {X : Type} (p : ByteArray) (i : Nat) (gas : UInt64) (ch : Bool)
 
 namespace Prepared
 
-/-- Ψ on a prepared program and a `FastMem` (cf. `Prepared.psi`). -/
+/-- $\Psi$ on a prepared program and a `FastMem` (cf. `Prepared.psi`). -/
 def psiF (Q : Prepared) (i : Nat) (gas : UInt64) (charged : Bool) (ω : Regs) (F : FastMem) :
     FResult :=
   match Q.frun (Q.prog.measure i gas charged + 1) i gas charged ω F with
@@ -123,7 +123,7 @@ theorem psiF_eq (P : Program) (i : Nat) (gas : UInt64) (ch : Bool) (ω : Regs) (
   rw [← frun_eq]
   cases P.prepare.frun _ i gas ch ω F <;> rfl
 
-/-- Ψ_H* with at most `fuel` host calls, on a prepared program and a `FastMem` (cf.
+/-- $\Psi_H^{\ast}$ with at most `fuel` host calls, on a prepared program and a `FastMem` (cf.
     `Prepared.hostFuel`). At a host call the overlay is written back (`FastMem.toMemory`) for the
     handler, and the next segment starts from the handler's memory with an empty overlay. -/
 def hostFuelF {X : Type} (Q : Prepared) (f : HostFn X) :
@@ -157,7 +157,7 @@ theorem hostFuelF_eq {X : Type} (P : Program) (f : HostFn X) :
 
 end Prepared
 
-/-- Ψ_H* on a prepared program and a `FastMem` (cf. `psiHStarFast`). -/
+/-- $\Psi_H^{\ast}$ on a prepared program and a `FastMem` (cf. `psiHStarFast`). -/
 def psiHStarFaster {X : Type} (p : ByteArray) (i : Nat) (gas : UInt64) (ch : Bool) (ω : Regs)
     (μ : Memory) (f : HostFn X) (x : X) : HostRunResult X :=
   match Blob.parse? p with
@@ -166,7 +166,7 @@ def psiHStarFaster {X : Type} (p : ByteArray) (i : Nat) (gas : UInt64) (ch : Boo
     (P.prepare.hostFuelF f (P.measure i gas ch + 1) i gas ch ω (FastMem.ofMemory μ) x).getD
       { status := .panic, pc := 0, gas, charged := ch, regs := ω, mem := μ, ctx := x }
 
-/-- **The page-chunked Ψ_H* is `psiHStarFast`, hence the paper's Ψ_H*.** Registered with
+/-- **The page-chunked $\Psi_H^{\ast}$ is `psiHStarFast`, hence the paper's $\Psi_H^{\ast}$.** Registered with
     `@[csimp]`, before `psiHFast` and `psiMFast` so that their compiled code uses it. -/
 @[csimp] theorem psiHStarFast_eq_psiHStarFaster : @psiHStarFast = @psiHStarFaster := by
   funext X p i gas ch ω μ f x
@@ -177,24 +177,24 @@ def psiHStarFaster {X : Type} (p : ByteArray) (i : Nat) (gas : UInt64) (ch : Boo
     simp only
     rw [Prepared.hostFuelF_eq, FastMem.toMemory_ofMemory]
 
-/-- Ψ_H with the fast Ψ_H* (cf. `psiH`). -/
+/-- $\Psi_H$ with the fast $\Psi_H^{\ast}$ (cf. `psiH`). -/
 def psiHFast {X : Type} (p : ByteArray) (i : Nat) (gas : UInt64) (ω : Regs) (μ : Memory)
     (f : HostFn X) (x : X) : HostRunResult X :=
   psiHStarFast p i gas false ω μ f x
 
-/-- **The fast Ψ_H is the paper's Ψ_H.** Registered with `@[csimp]`. -/
+/-- **The fast $\Psi_H$ is the paper's $\Psi_H$.** Registered with `@[csimp]`. -/
 @[csimp] theorem psiH_eq_psiHFast : @psiH = @psiHFast := by
   funext X p i gas ω μ f x
   simp only [psiH, psiHFast, psiHStar_eq_psiHStarFast]
 
-/-- Ψ_M with the fast Ψ_H (cf. `psiM`). -/
+/-- $\Psi_M$ with the fast $\Psi_H$ (cf. `psiM`). -/
 def psiMFast {X : Type} (b : ByteArray) (i : Nat) (gas : UInt64) (a : ByteArray) (f : HostFn X)
     (x : X) : Nat × InvOutput × X :=
   match standardInit b a with
   | none => (0, .panic, x)
   | some (p, ω, μ) => invocationResult gas (psiHFast p i gas ω μ f x)
 
-/-- **The fast Ψ_M is the paper's Ψ_M.** Registered with `@[csimp]`. -/
+/-- **The fast $\Psi_M$ is the paper's $\Psi_M$.** Registered with `@[csimp]`. -/
 @[csimp] theorem psiM_eq_psiMFast : @psiM = @psiMFast := by
   funext X b i gas a f x
   unfold psiM psiMFast

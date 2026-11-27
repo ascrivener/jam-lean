@@ -4,10 +4,10 @@ import PVM.Logic.Bits
 /-!
 # Fast bitwise register operations, proved equal to the paper's
 
-`Exec.bitwise f a b` follows GP §A.5 literally: ∀ i ∈ ℕ_64 : ℬ_8(r)_i = f(ℬ_8(a)_i, ℬ_8(b)_i), computed
+`Exec.bitwise f a b` follows GP §A.5 literally: $\forall i \in \mathbb{N}_{64} : \mathcal{B}_8(r)_i = f(\mathcal{B}_8(a)_i, \mathcal{B}_8(b)_i)$, computed
 bit by bit (`Num.ofBits` over `Num.bit`, each bit a big-number power and division). `bitwiseFast`
 computes the same 64 bits with machine-word operations, from the truth table of `f`:
-r = ⋁ over the rows (p, q) with f(p, q) = 1 of (a or ¬a) ∧ (b or ¬b).
+$r = \bigvee$ over the rows $(p, q)$ with $f(p, q) = 1$ of $(a \text{ or } \neg a) \wedge (b \text{ or } \neg b)$.
 
 `bitwise_eq_bitwiseFast` is registered with `@[csimp]`. Since `Exec.twoRegImmAlu` and
 `Exec.threeRegAlu` were compiled before it, `twoRegImmAluFast` and `threeRegAluFast` restate them

@@ -4,16 +4,16 @@ import PVM.Fast.Alu
 import PVM.Fast.Parse
 
 /-!
-# Ψ on the page-chunked memory, proved equal to the paper's
+# $\Psi$ on the page-chunked memory, proved equal to the paper's
 
-`psiFaster` runs Ψ on a prepared program (`Program.prepare`) with three changes from `psiFast`:
+`psiFaster` runs $\Psi$ on a prepared program (`Program.prepare`) with three changes from `psiFast`:
 
 * RAM is a `FastMem` (the spec `Memory` with a page-chunked overlay of written octets,
   `PVM.Fast.Mem`), so stores update a page in place instead of inserting into a tree;
-* each step reads the decoded instruction, ı + 1 + skip(ı), 𝔳_inst, ζ_ı ∈ T and the block starts
-  ϖ, and the block cost ϱ^Δ(𝔏(ı)), from the lazily filled per-index table of `Prepared` (each
-  instruction decoded, and 𝔏 searched, once per program);
-* ε^μ is checked before a store writes, so the memory is updated only when the step succeeds and
+* each step reads the decoded instruction, $\imath + 1 + \text{skip}(\imath)$, $\mathfrak{v}_{\text{inst}}$, $\zeta_{\imath} \in T$ and the block starts
+  $\varpi$, and the block cost $\varrho^\Delta(\mathfrak{L}(\imath))$, from the lazily filled per-index table of `Prepared` (each
+  instruction decoded, and $\mathfrak{L}$ searched, once per program);
+* $\varepsilon^\mu$ is checked before a store writes, so the memory is updated only when the step succeeds and
   is never shared with the pre-step state.
 
 `fexec_eq` relates one step of the regular execution to `Program.exec` + `finalState`,
@@ -32,18 +32,18 @@ def findBad (ok : Nat → Bool) : Nat → Nat → Option Nat
   | _, 0 => none
   | a, n + 1 => if ok a then findBad ok (a + 1) n else some a
 
-/-- ε^μ for the least inaccessible index `m` (cf. `memoryException`). -/
+/-- $\varepsilon^\mu$ for the least inaccessible index `m` (cf. `memoryException`). -/
 @[inline] def excAt (m : Nat) : Option (Option Nat) :=
   let k := FastMem.mod32 m
   if k < 2 ^ 16 then some none else some (some (pageSize * (k / pageSize)))
 
-/-- ε^μ of reading μ^↺_{a…+n}, without building index lists. -/
+/-- $\varepsilon^\mu$ of reading $\mu^\circlearrowleft_{a \dots+n}$, without building index lists. -/
 @[inline] def readExc (μ : Memory) (a n : Nat) : Option (Option Nat) :=
   match findBad (fun i => μ.readable (FastMem.mod32 i)) a n with
   | none => none
   | some m => excAt m
 
-/-- ε^μ of writing μ^↺_{a…+n}, without building index lists. -/
+/-- $\varepsilon^\mu$ of writing $\mu^\circlearrowleft_{a \dots+n}$, without building index lists. -/
 @[inline] def writeExc (μ : Memory) (a n : Nat) : Option (Option Nat) :=
   match findBad (fun i => μ.writable (FastMem.mod32 i)) a n with
   | none => none
@@ -84,7 +84,7 @@ theorem writeExc_eq (μ : Memory) (a n : Nat) :
   rw [find?_indices (fun i => μ.writable (FastMem.mod32 i))]
   rfl
 
-/-- (ε, ı', ω', μ') of one step on a `FastMem`. -/
+/-- $(\varepsilon, \imath', \varphi', \mu')$ of one step on a `FastMem`. -/
 structure FOut where
   status : Status
   pc : Nat
@@ -96,18 +96,18 @@ namespace FOut
 /-- The spec tuple of `finalState`. -/
 def abs (o : FOut) : Status × Nat × Regs × Memory := (o.status, o.pc, o.regs, o.mem.toMemory)
 
-/-- ε^μ ≠ ▸: (☇, ı, ω, μ) or (F × a, ı, ω, μ). -/
+/-- $\varepsilon^\mu \ne \blacktriangleright$: $(\text{☇}, \imath, \varphi, \mu)$ or $(\Finv \times a, \imath, \varphi, \mu)$. -/
 @[inline] def exc (i : Nat) (ω : Regs) (F : FastMem) : Option Nat → FOut
   | none => { status := .panic, pc := i, regs := ω, mem := F }
   | some a => { status := .fault (UInt64.ofNat a), pc := i, regs := ω, mem := F }
 
-/-- A store of the `n`-octet encoding of `v` at `addr`, checked against ε^μ first. -/
+/-- A store of the `n`-octet encoding of `v` at `addr`, checked against $\varepsilon^\mu$ first. -/
 @[inline] def store (nx i : Nat) (ω : Regs) (F : FastMem) (addr n v : Nat) : FOut :=
   match writeExc F.base addr n with
   | none => { status := .cont, pc := nx, regs := ω, mem := F.writeLE addr n v }
   | some e => exc i ω F e
 
-/-- A load of `n` octets at `addr` into register `k`, checked against ε^μ first. -/
+/-- A load of `n` octets at `addr` into register `k`, checked against $\varepsilon^\mu$ first. -/
 @[inline] def load (nx i : Nat) (ω : Regs) (F : FastMem) (k : RegIdx) (addr n : Nat)
     (f : Nat → Nat) : FOut :=
   match readExc F.base addr n with
@@ -119,23 +119,23 @@ end FOut
 
 namespace Prepared
 
-/-- ı + 1 + skip(ı), from the table. -/
+/-- $\imath + 1 + \text{skip}(\imath)$, from the table. -/
 @[inline] def nextAt (Q : Prepared) (i : Nat) : Nat := (Q.infoAt i).next
 
-/-- b ∈ ϖ for an integer `b`, from the table. -/
+/-- $b \in \varpi$ for an integer `b`, from the table. -/
 @[inline] def startAtInt (Q : Prepared) (b : Int) : Bool := if b < 0 then false else Q.startAt b.toNat
 
-/-- sjump(b) with the tables (cf. `Program.sjump`). -/
+/-- $\text{sjump}(b)$ with the tables (cf. `Program.sjump`). -/
 def sjump (Q : Prepared) (i : Nat) (b : Int) : Status × Nat :=
   if Q.startAtInt b then (.cont, b.toNat) else (.panic, i)
 
-/-- branch(b, C) with the tables (cf. `Program.branch`). -/
+/-- $\text{branch}(b, C)$ with the tables (cf. `Program.branch`). -/
 def branch (Q : Prepared) (i : Nat) (b : Int) (c : Bool) : Status × Nat :=
   if !Q.startAtInt b || !Q.startAt (Q.nextAt i) then (.panic, i)
   else if !c then (.cont, Q.nextAt i)
   else (.cont, b.toNat)
 
-/-- djump(a) with the tables (cf. `Program.djump`). -/
+/-- $\text{djump}(a)$ with the tables (cf. `Program.djump`). -/
 def djump (Q : Prepared) (i : Nat) (a : Nat) : Status × Nat :=
   if a = 2 ^ 32 - 2 ^ 16 then (.halt, i)
   else if a = 0 ∨ a > Q.prog.jumpTable.size * 2 ∨ a % 2 ≠ 0 then (.panic, i)
@@ -143,7 +143,7 @@ def djump (Q : Prepared) (i : Nat) (a : Nat) : Status × Nat :=
     let t := Q.prog.jumpTable.getD (a / 2 - 1) 0
     if Q.startAt t then (.cont, t) else (.panic, i)
 
-/-- The regular execution of `ins` at ı together with ε^μ (cf. `Program.exec` and
+/-- The regular execution of `ins` at $\imath$ together with $\varepsilon^\mu$ (cf. `Program.exec` and
     `Program.finalState`), on a `FastMem`. -/
 def fexec (Q : Prepared) (i : Nat) (ins : Instr) (ω : Regs) (F : FastMem) : FOut :=
   let r (k : RegIdx) : Nat := (ω.get k).toNat
@@ -212,7 +212,7 @@ def fexec (Q : Prepared) (i : Nat) (ins : Instr) (ω : Regs) (F : FastMem) : FOu
   | .threeReg op a b d =>
     { status := .cont, pc := nx, regs := set d (threeRegAlu op (r a) (r b) (r d)), mem := F }
 
-/-- Ψ₁ result on a `FastMem`. -/
+/-- $\Psi_1$ result on a `FastMem`. -/
 structure FStep where
   status : Status
   pc : Nat
@@ -226,7 +226,7 @@ def FStep.abs (r : FStep) : StepResult :=
   { status := r.status, pc := r.pc, gas := r.gas, charged := r.charged, regs := r.regs,
     mem := r.mem.toMemory }
 
-/-- Ψ₁ with the tables and a `FastMem` (cf. `Prepared.step`). -/
+/-- $\Psi_1$ with the tables and a `FastMem` (cf. `Prepared.step`). -/
 def fstep (Q : Prepared) (i : Nat) (gas : UInt64) (charged : Bool) (ω : Regs) (F : FastMem) :
     FStep :=
   let inf := Q.infoAt i
@@ -242,7 +242,7 @@ def fstep (Q : Prepared) (i : Nat) (gas : UInt64) (charged : Bool) (ω : Regs) (
         mem := o.mem, charged := !(inf.term && Program.Status.continuesOrHost o.status) }
     else { status := .oog, pc := i, gas, regs := ω, mem := F, charged := false }
 
-/-- The result of Ψ on a `FastMem`. -/
+/-- The result of $\Psi$ on a `FastMem`. -/
 structure FResult where
   status : Status
   pc : Nat
@@ -257,7 +257,7 @@ def FResult.abs (r : FResult) : Result :=
     mem := r.mem.toMemory }
 
 /-- `Prepared.run` with the tables and a `FastMem`. On an exit that leaves the state unchanged
-    (F, ∞, ħ) it returns the step's registers and memory, which are the pre-step ones
+    $(\Finv, \infty, \hbar)$ it returns the step's registers and memory, which are the pre-step ones
     (`fstep_keep`), so that the memory is never shared during a step. -/
 def frun (Q : Prepared) : Nat → Nat → UInt64 → Bool → Regs → FastMem → Option FResult
   | 0, _, _, _, _, _ => none
@@ -320,7 +320,7 @@ theorem load_eq (P : Program) (i : Nat) (ω : Regs) (F : FastMem) (k : RegIdx) (
   · rename_i e h
     rw [h]; cases e <;> simp [FOut.exc, FOut.abs, Program.finalState]
 
-/-- **One step of the regular execution, with ε^μ, is the spec's.** -/
+/-- **One step of the regular execution, with $\varepsilon^\mu$, is the spec's.** -/
 theorem fexec_eq (P : Program) (i : Nat) (ins : Instr) (ω : Regs) (F : FastMem) :
     (P.prepare.fexec i ins ω F).abs =
       let m := P.exec i ins ω F.toMemory
@@ -360,7 +360,7 @@ theorem fexec_eq (P : Program) (i : Nat) (ins : Instr) (ω : Regs) (F : FastMem)
     cases op; simp [fexec, Program.exec, djump_prepare, FOut.abs, Program.finalState, memoryException]
   | threeReg op a b d => simp [fexec, Program.exec, hnx, FOut.abs, Program.finalState, memoryException]
 
-/-- **Ψ₁ with the tables and a `FastMem` is the spec's Ψ₁.** -/
+/-- **$\Psi_1$ with the tables and a `FastMem` is the spec's $\Psi_1$.** -/
 theorem fstep_eq (P : Program) (i : Nat) (gas : UInt64) (ch : Bool) (ω : Regs) (F : FastMem) :
     (P.prepare.fstep i gas ch ω F).abs = P.step i gas ch ω F.toMemory := by
   have hfe := fexec_eq P i ((P.decode i).getD (.noArgs .trap)) ω F
@@ -408,7 +408,7 @@ theorem not_ctl {s : Status} (h1 : s = .cont ∨ s = .halt ∨ s = .panic)
     (h2 : s ≠ .cont ∧ s ≠ .halt ∧ s ≠ .panic) : False := by
   rcases h1 with h1 | h1 | h1 <;> simp_all
 
-/-- An exit other than ▸, ∎ and ☇ (that is F, ∞ or ħ) leaves the registers and the memory as
+/-- An exit other than $\blacktriangleright$, $\blacksquare$ and ☇ (that is $\Finv$, $\infty$ or $\hbar$) leaves the registers and the memory as
     they were. -/
 theorem fexec_keep (Q : Prepared) (i : Nat) (ins : Instr) (ω : Regs) (F : FastMem)
     (h : (Q.fexec i ins ω F).status ≠ .cont ∧ (Q.fexec i ins ω F).status ≠ .halt ∧
@@ -499,7 +499,7 @@ theorem frun_eq (P : Program) :
 
 end Prepared
 
-/-- Ψ with the tables and a `FastMem` (cf. `psiFast`). -/
+/-- $\Psi$ with the tables and a `FastMem` (cf. `psiFast`). -/
 def psiFaster (p : ByteArray) (i : Nat) (gas : UInt64) (charged : Bool) (ω : Regs) (μ : Memory) :
     Result :=
   match Blob.parse? p with
@@ -509,7 +509,7 @@ def psiFaster (p : ByteArray) (i : Nat) (gas : UInt64) (charged : Bool) (ω : Re
     | some r => r.abs
     | none => { status := .panic, pc := 0, gas, charged, regs := ω, mem := μ }
 
-/-- **The page-chunked Ψ is `psiFast`, hence the paper's Ψ.** Registered with `@[csimp]`:
+/-- **The page-chunked $\Psi$ is `psiFast`, hence the paper's $\Psi$.** Registered with `@[csimp]`:
     compiled code that calls `psi` (via `psi_eq_psiFast`) or `psiFast` runs `psiFaster`. -/
 @[csimp] theorem psiFast_eq_psiFaster : @psiFast = @psiFaster := by
   funext p i gas ch ω μ

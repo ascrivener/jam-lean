@@ -2,15 +2,15 @@ import PVM.Machine
 import PVM.Theorems.Decode
 
 /-!
-# Ψ terminates, and `psi` satisfies the paper's equation for Ψ
+# $\Psi$ terminates, and `psi` satisfies the paper's equation for $\Psi$
 
-`psi` runs Ψ with fuel `stepBound`. We show that this fuel never runs out
-(`runFuel_stepBound_isSome`) and that `psi` satisfies the recursive definition of Ψ in GP
+`psi` runs $\Psi$ with fuel `stepBound`. We show that this fuel never runs out
+(`runFuel_stepBound_isSome`) and that `psi` satisfies the recursive definition of $\Psi$ in GP
 v0.8.1 §A.1 verbatim (`psi_eq`), so the fuel is an implementation device only.
 
-The argument: a continuing step either charges a block (ϱ̃ = ⊥ before the step), which costs at
-least one unit of gas; or executes a terminator, which clears ϱ̃; or executes a non-terminator,
-which moves ı forward to ı + 1 + skip(ı) inside **c**. The measure `runMeasure` decreases in
+The argument: a continuing step either charges a block ($\tilde\varrho = \bot$ before the step), which costs at
+least one unit of gas; or executes a terminator, which clears $\tilde\varrho$; or executes a non-terminator,
+which moves $\imath$ forward to $\imath + 1 + \text{skip}(\imath)$ inside $\mathbf{c}$. The measure `runMeasure` decreases in
 each case.
 -/
 
@@ -18,7 +18,7 @@ namespace PVM
 
 namespace Program
 
-/-- Every instruction outside T continues at ı + 1 + skip(ı) (the default of GP §A.4). -/
+/-- Every instruction outside $T$ continues at $\imath + 1 + \text{skip}(\imath)$ (the default of GP §A.4). -/
 theorem exec_pc_of_not_terminator (P : Program) (i : Nat) (ins : Instr) (ω : Regs) (μ : Memory)
     (h : isTerminator ins.opcode = false) : (P.exec i ins ω μ).pc = P.next i := by
   cases ins with
@@ -43,8 +43,8 @@ theorem blockCost_pos (P : Program) (i : Nat) : 1 ≤ P.blockCost i := by
 
 theorem next_gt (P : Program) (i : Nat) : i < P.next i := by unfold next; omega
 
-/-- The gas stage either continues having charged (ϱ̃ = ⊥: at least one unit of gas; ϱ̃ = ⊤:
-    nothing), or reports ∞. -/
+/-- The gas stage either continues having charged ($\tilde\varrho = \bot$: at least one unit of gas; $\tilde\varrho = \top$:
+    nothing), or reports $\infty$. -/
 theorem chargeGas_cases (P : Program) (i : Nat) (gas : UInt64) (ch : Bool) :
     (ch = false → (∃ g', P.chargeGas i gas ch = (.cont, g', true) ∧ g'.toNat < gas.toNat) ∨
         P.chargeGas i gas ch = (.oog, gas, false)) ∧
@@ -62,8 +62,8 @@ theorem chargeGas_cases (P : Program) (i : Nat) (gas : UInt64) (ch : Bool) :
     · right; rfl
   · simp
 
-/-- What a continuing step of Ψ₁ does to (ı, ϱ, ϱ̃): with ϱ̃ = ⊥ it charges at least one unit of
-    gas; with ϱ̃ = ⊤ it leaves ϱ unchanged and either clears ϱ̃ or moves to ı + 1 + skip(ı). -/
+/-- What a continuing step of $\Psi_1$ does to $(\imath, \varrho, \tilde\varrho)$: with $\tilde\varrho = \bot$ it charges at least one unit of
+    gas; with $\tilde\varrho = \top$ it leaves $\varrho$ unchanged and either clears $\tilde\varrho$ or moves to $\imath + 1 + \text{skip}(\imath)$. -/
 theorem step_cont {P : Program} {i : Nat} {gas : UInt64} {ch : Bool} {ω : Regs} {μ : Memory}
     (hs : (P.step i gas ch ω μ).status = .cont) :
     (ch = false → (P.step i gas ch ω μ).gas.toNat < gas.toNat) ∧
@@ -119,7 +119,7 @@ theorem deblob_some {p : ByteArray} {i : Nat} {P : Program} (h : deblob p i = so
       exact ⟨rfl, by omega⟩
     · cases h
 
-/-- `runMeasure` strictly decreases on every continuing step of Ψ. -/
+/-- `runMeasure` strictly decreases on every continuing step of $\Psi$. -/
 theorem step_measure_lt {p : ByteArray} {i : Nat} {gas : UInt64} {ch : Bool} {ω : Regs}
     {μ : Memory} {P : Program} (hP : deblob p i = some P)
     (hs : (P.step i gas ch ω μ).status = .cont) :
@@ -193,8 +193,8 @@ theorem psi_eq_runFuel (p : ByteArray) (n i : Nat) (gas : UInt64) (ch : Bool) (�
   obtain ⟨r, hr⟩ := Option.isSome_iff_exists.1 h1.1
   simp [hr]
 
-/-- **Ψ's defining equation** (GP v0.8.1 §A.1): `psi` satisfies the paper's recursive definition of Ψ,
-    with deblob, Ψ₁ and the case split on ε, exactly. -/
+/-- **$\Psi$'s defining equation** (GP v0.8.1 §A.1): `psi` satisfies the paper's recursive definition of $\Psi$,
+    with deblob, $\Psi_1$ and the case split on $\varepsilon$, exactly. -/
 theorem psi_eq (p : ByteArray) (i : Nat) (gas : UInt64) (ch : Bool) (ω : Regs) (μ : Memory) :
     psi p i gas ch ω μ =
       match deblob p i with
@@ -225,7 +225,7 @@ theorem psi_eq (p : ByteArray) (i : Nat) (gas : UInt64) (ch : Bool) (ω : Regs) 
       · contradiction
       all_goals (rename_i heq; simp only [heq] at h ⊢; exact (Option.some.inj h).symm)
 
-/-- Ψ never returns ▸. -/
+/-- $\Psi$ never returns $\blacktriangleright$. -/
 theorem psi_status_ne_cont (p : ByteArray) (i : Nat) (gas : UInt64) (ch : Bool) (ω : Regs)
     (μ : Memory) : (psi p i gas ch ω μ).status ≠ .cont := by
   have key : ∀ n i gas ch ω μ r, runFuel p n i gas ch ω μ = some r → r.status ≠ .cont := by
@@ -243,7 +243,7 @@ theorem psi_status_ne_cont (p : ByteArray) (i : Nat) (gas : UInt64) (ch : Bool) 
         all_goals (cases hr; simp_all)
   exact key _ i gas ch ω μ _ (psi_eq_runFuel p (runMeasure p i gas ch + 1) i gas ch ω μ (by omega))
 
-/-- A step of Ψ₁ never adds gas: ϱ' is ϱ less the block cost, or ϱ itself. -/
+/-- A step of $\Psi_1$ never adds gas: $\varrho'$ is $\varrho$ less the block cost, or $\varrho$ itself. -/
 theorem Program.step_gas_le (P : Program) (i : Nat) (gas : UInt64) (ch : Bool) (ω : Regs)
     (μ : Memory) : (P.step i gas ch ω μ).gas.toNat ≤ gas.toNat := by
   have hcg := P.chargeGas_cases i gas ch
@@ -254,7 +254,7 @@ theorem Program.step_gas_le (P : Program) (i : Nat) (gas : UInt64) (ch : Bool) (
     · exact Nat.le_refl _
   · rw [hcg.2 rfl]; exact Nat.le_refl _
 
-/-- **Ψ never adds gas**: the gas Ψ returns is at most the gas it was given. -/
+/-- **$\Psi$ never adds gas**: the gas $\Psi$ returns is at most the gas it was given. -/
 theorem psi_gas_le (p : ByteArray) (i : Nat) (gas : UInt64) (ch : Bool) (ω : Regs) (μ : Memory) :
     (psi p i gas ch ω μ).gas.toNat ≤ gas.toNat := by
   have key : ∀ n i gas ch ω μ r, runFuel p n i gas ch ω μ = some r → r.gas.toNat ≤ gas.toNat := by

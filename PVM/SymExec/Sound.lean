@@ -3,9 +3,9 @@ import PVM.SymExec.Core
 /-!
 # Soundness of the symbolic executor (spike)
 
-`srun_sound`: if `srun` follows a stretch from a state described by σ to `target` in `k` steps,
-ending in σ', then the gas-free machine (GP v0.8.1 §A.4, `Program.freeStep`) takes the same `k`
-steps through the listed instructions, as a `FreeStepsH` chain, to a state described by σ'.
+`srun_sound`: if `srun` follows a stretch from a state described by $\sigma$ to `target` in `k` steps,
+ending in $\sigma'$, then the gas-free machine (GP v0.8.1 §A.4, `Program.freeStep`) takes the same `k`
+steps through the listed instructions, as a `FreeStepsH` chain, to a state described by $\sigma'$.
 -/
 
 namespace PVM.SymExec
@@ -1396,7 +1396,7 @@ theorem exec_twoRegImm (P : Program) (i : Nat) (op : TwoRegImmOp) (a b : RegIdx)
     rfl
   all_goals rfl
 
-/-- 𝒳_k(v) = 𝒵⁻¹_8(𝒵_k(v)) for an octet string's value v < 2^(8k) (k = 1, 2, 4). -/
+/-- $\mathcal{X}_k(v) = \mathcal{Z}^{-1}_8(\mathcal{Z}_k(v))$ for an octet string's value $v < 2^{8k}$ ($k = 1, 2, 4$). -/
 theorem sext_eq (k v : Nat) (hk : k = 1 ∨ k = 2 ∨ k = 4) (hv : v < 2 ^ (8 * k)) :
     sext k v = u64 (signed k v) := by
   rcases hk with rfl | rfl | rfl <;>

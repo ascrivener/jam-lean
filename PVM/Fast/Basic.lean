@@ -2,10 +2,10 @@ import PVM.Machine
 import PVM.Fast.Gas
 
 /-!
-# A fast Ψ, proved equal to the paper's
+# A fast $\Psi$, proved equal to the paper's
 
 `psi` follows GP §A.1 literally: every step deblobs the program afresh (parsing it and checking
-𝔳_blob), and every block charge re-runs the gas simulation. That is fine for proofs and small
+$\mathfrak{v}_{\text{blob}}$), and every block charge re-runs the gas simulation. That is fine for proofs and small
 programs, but far too slow for real compiled services.
 
 `psiFast` parses and validates the blob once, and reads block costs from a table of lazily
@@ -18,7 +18,8 @@ the equality theorem (unlike attributes that swap in unverified code), and the k
 theorem still see the paper-literal `psi`.
 
 `Prepared` also carries a lazily filled per-index table (`info`: the decoded instruction,
-ı + 1 + skip(ı), 𝔳_inst, ζ_ı ∈ T, ı ∈ ϖ and ϱ^Δ(𝔏(ı))), with `infoAt_prepare`, `startAt_prepare`
+$\imath + 1 + \text{skip}(\imath)$, $\mathfrak{v}_{\text{inst}}$, $\zeta_{\imath} \in T$, $\imath \in \varpi$ and
+$\varrho^\Delta(\mathfrak{L}(\imath))$), with `infoAt_prepare`, `startAt_prepare`
 and `chargeAt_prepare` stating that it agrees with the spec definitions.
 `PVM.Fast.Step` uses them.
 -/
@@ -26,8 +27,9 @@ and `chargeAt_prepare` stating that it agrees with the spec definitions.
 namespace PVM
 
 /-- The facts about index `i` of a program that each step needs: the decoded instruction (an
-    undecodable octet read as `trap`, as in `Program.step`), ı + 1 + skip(ı), 𝔳_inst, whether
-    ζ_ı ∈ T, whether ı ∈ ϖ, and the cost ϱ^Δ(𝔏(ı)) of the block containing ı (itself lazy: it is
+    undecodable octet read as `trap`, as in `Program.step`), $\imath + 1 + \text{skip}(\imath)$,
+    $\mathfrak{v}_{\text{inst}}$, whether $\zeta_{\imath} \in T$, whether $\imath \in \varpi$, and the cost
+    $\varrho^\Delta(\mathfrak{L}(\imath))$ of the block containing $\imath$ (itself lazy: it is
     only needed when a block is entered). -/
 structure InstrInfo where
   instr : Instr
@@ -43,8 +45,8 @@ def Program.info (P : Program) (i : Nat) : InstrInfo :=
     term := isTerminator (P.zeta i), start := P.isBlockStart i,
     charge := Thunk.mk fun _ => P.blockCost (P.blockStartOf i) }
 
-/-- A program prepared for fast execution: 𝔳_blob checked once, block costs memoized, and, for
-    every index of **c**, a lazily evaluated `InstrInfo` (so each instruction is decoded, and the
+/-- A program prepared for fast execution: $\mathfrak{v}_{\text{blob}}$ checked once, block costs memoized, and, for
+    every index of $\mathbf{c}$, a lazily evaluated `InstrInfo` (so each instruction is decoded, and the
     block containing it found, once per program). -/
 structure Prepared where
   prog : Program
@@ -54,7 +56,7 @@ structure Prepared where
   costs : Thunk (Array (Thunk Nat))
   info : Array (Thunk InstrInfo) := #[]
 
-/-- Prepare a program: check 𝔳_blob once and set up the lazy tables for every index. -/
+/-- Prepare a program: check $\mathfrak{v}_{\text{blob}}$ once and set up the lazy tables for every index. -/
 def Program.prepare (P : Program) : Prepared :=
   { prog := P, valid := P.vBlob,
     costs := Thunk.mk fun _ => Array.ofFn (n := P.code.size) fun k => Thunk.mk fun _ => P.blockCost k.val,
@@ -62,7 +64,7 @@ def Program.prepare (P : Program) : Prepared :=
 
 namespace Prepared
 
-/-- ϱ^Δ at `k`, from the memoized table. -/
+/-- $\varrho^\Delta$ at `k`, from the memoized table. -/
 def cost (Q : Prepared) (k : Nat) : Nat :=
   let cs := Q.costs.get
   if h : k < cs.size then cs[k].get else Q.prog.blockCost k
@@ -78,11 +80,11 @@ theorem cost_prepare (P : Program) (k : Nat) : P.prepare.cost k = P.blockCost k 
 @[inline] def infoAt (Q : Prepared) (i : Nat) : InstrInfo :=
   if h : i < Q.info.size then Q.info[i].get else Q.prog.info i
 
-/-- ı ∈ ϖ, from the table. -/
+/-- $\imath \in \varpi$, from the table. -/
 @[inline] def startAt (Q : Prepared) (n : Nat) : Bool :=
   if h : n < Q.info.size then Q.info[n].get.start else Q.prog.isBlockStart n
 
-/-- ϱ^Δ(𝔏(ı)), from the table. -/
+/-- $\varrho^\Delta(\mathfrak{L}(\imath))$, from the table. -/
 @[inline] def chargeAt (Q : Prepared) (i : Nat) : Nat := (Q.infoAt i).charge.get
 
 theorem infoAt_prepare (P : Program) (i : Nat) : P.prepare.infoAt i = P.info i := by
@@ -101,14 +103,14 @@ theorem chargeAt_prepare (P : Program) (i : Nat) :
     P.prepare.chargeAt i = P.blockCost (P.blockStartOf i) := by
   simp [chargeAt, infoAt_prepare, Program.info, Thunk.get]
 
-/-- The gas stage of Ψ₁ with the memoized cost (cf. `Program.chargeGas`). -/
+/-- The gas stage of $\Psi_1$ with the memoized cost (cf. `Program.chargeGas`). -/
 def chargeGas (Q : Prepared) (i : Nat) (gas : UInt64) (charged : Bool) : Status × UInt64 × Bool :=
   if charged then (.cont, gas, true)
   else
     let cost := Q.cost (Q.prog.blockStartOf i)
     if gas.toNat ≥ cost then (.cont, UInt64.ofNat (gas.toNat - cost), true) else (.oog, gas, false)
 
-/-- Ψ₁ with the memoized cost (cf. `Program.step`). -/
+/-- $\Psi_1$ with the memoized cost (cf. `Program.step`). -/
 def step (Q : Prepared) (i : Nat) (gas : UInt64) (charged : Bool) (ω : Regs) (μ : Memory) :
     StepResult :=
   let P := Q.prog
@@ -123,7 +125,7 @@ theorem step_prepare (P : Program) (i : Nat) (gas : UInt64) (charged : Bool) (ω
   simp only [step, Program.step, chargeGas, Program.chargeGas, cost_prepare]
   rfl
 
-/-- `runFuel` for a prepared program: deblob's checks reduce to the stored 𝔳_blob and 𝔳_inst. -/
+/-- `runFuel` for a prepared program: deblob's checks reduce to the stored $\mathfrak{v}_{\text{blob}}$ and $\mathfrak{v}_{\text{inst}}$. -/
 def run (Q : Prepared) : Nat → Nat → UInt64 → Bool → Regs → Memory → Option Result
   | 0, _, _, _, _, _ => none
   | fuel + 1, i, gas, charged, ω, μ =>
@@ -160,7 +162,7 @@ theorem run_prepare {p : ByteArray} {P : Program} (h : Blob.parse? p = some P) :
       cases hs : (P.step i gas ch ω μ).status <;> simp [ih]
     · simp only [hv, Bool.not_false, ↓reduceIte, Bool.false_eq_true]
 
-/-- Ψ, parsing the blob once and memoizing block costs. -/
+/-- $\Psi$, parsing the blob once and memoizing block costs. -/
 def psiFast (p : ByteArray) (i : Nat) (gas : UInt64) (charged : Bool) (ω : Regs) (μ : Memory) : Result :=
   match Blob.parse? p with
   | none => { status := .panic, pc := 0, gas, charged := false, regs := ω, mem := μ }
@@ -168,7 +170,7 @@ def psiFast (p : ByteArray) (i : Nat) (gas : UInt64) (charged : Bool) (ω : Regs
     (P.prepare.run (stepBound p i gas charged) i gas charged ω μ).getD
       { status := .panic, pc := 0, gas, charged, regs := ω, mem := μ }
 
-/-- **The fast Ψ is the paper's Ψ.** Registered with `@[csimp]`: compiled code that calls `psi` runs
+/-- **The fast $\Psi$ is the paper's $\Psi$.** Registered with `@[csimp]`: compiled code that calls `psi` runs
     `psiFast`. -/
 @[csimp] theorem psi_eq_psiFast : @psi = @psiFast := by
   funext p i gas ch ω μ

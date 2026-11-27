@@ -1,48 +1,48 @@
 import PVM.Instr
 
 /-!
-# The gas cost model ϱ^Δ (GP v0.8.1 §A.9 `sec:gascostmodel`, §A.10 `sec:gascosttables`)
+# The gas cost model $\varrho^\Delta$ (GP v0.8.1 §A.9 `sec:gascostmodel`, §A.10 `sec:gascosttables`)
 
 The cost of a basic block is the number of cycles a simulated out-of-order CPU needs to
-retire every instruction of the block: ϱ^Δ(**c**, **k**, ı) = max(𝔛(**c**, **k**, **x**^init)_c − 3, 1).
+retire every instruction of the block: $\varrho^\Delta(\mathbf{c}, \mathbf{k}, \imath) = \max(\mathfrak{X}(\mathbf{c}, \mathbf{k}, \mathbf{x}^{\text{init}})_c - 3, 1)$.
 
-The per-opcode table (č, ď, x̌) is generated from the paper's LaTeX into `PVM.Tables`; here
-we evaluate its cells (𝔓, 𝔓_S, 𝔪, 𝔟) and run the simulation 𝔛 with its decode (𝔛', 𝔛^mov,
-𝔛^dec), start (𝔛'', 𝔖) and cycle (𝔛''') steps.
+The per-opcode table $(\check{c}, \check{d}, \check{x})$ is generated from the paper's LaTeX into `PVM.Tables`; here
+we evaluate its cells ($\mathfrak{P}$, $\mathfrak{P}_S$, $\mathfrak{m}$, $\mathfrak{b}$) and run the simulation $\mathfrak{X}$ with its decode ($\mathfrak{X}'$, $\mathfrak{X}^{\text{mov}}$,
+$\mathfrak{X}^{\text{dec}}$), start ($\mathfrak{X}''$, $\mathfrak{S}$) and cycle ($\mathfrak{X}'''$) steps.
 -/
 
 namespace PVM
 
-/-! ## Source and destination registers š, ř (GP §A.9) -/
+/-! ## Source and destination registers $\check{s}$, $\check{r}$ (GP §A.9) -/
 
-/-- A set of register indices, as a bit mask over ℕ_13. -/
+/-- A set of register indices, as a bit mask over $\mathbb{N}_{13}$. -/
 structure RegSet where
   bits : Nat
   deriving DecidableEq, Repr, Inhabited
 
 namespace RegSet
-/-- ∅ -/
+/-- $\emptyset$ -/
 def empty : RegSet := ⟨0⟩
-/-- {r₁, …, rₙ} -/
+/-- $\{r_1, \dots, r_n\}$ -/
 def ofList (rs : List RegIdx) : RegSet := ⟨rs.foldl (fun acc r => acc ||| 2 ^ r.val) 0⟩
-/-- s ∪ t -/
+/-- $s \cup t$ -/
 def union (s t : RegSet) : RegSet := ⟨s.bits ||| t.bits⟩
-/-- ℕ_13, every register index, as a bit mask: 2^13 − 1 (bits 0 … 12 set; GP §A.9, where š and
-    ř are subsets of the 13 registers). -/
+/-- $\mathbb{N}_{13}$, every register index, as a bit mask: $2^{13} - 1$ (bits 0 … 12 set; GP §A.9, where $\check{s}$ and
+    $\check{r}$ are subsets of the 13 registers). -/
 def allBits : Nat := 2 ^ 13 - 1
-/-- s ∖ t = s ∩ (ℕ_13 ∖ t) -/
+/-- $s \setminus t = s \cap (\mathbb{N}_{13} \setminus t)$ -/
 def diff (s t : RegSet) : RegSet := ⟨s.bits &&& (allBits ^^^ t.bits)⟩
-/-- s ∩ t ≠ ∅ -/
+/-- $s \cap t \ne \emptyset$ -/
 def meets (s t : RegSet) : Bool := s.bits &&& t.bits != 0
 end RegSet
 
 namespace Instr
 
-/-- š: the registers read by an instruction, "as described by the equations in §A.5", i.e.
-    every ω_X (unprimed) that its mutation mentions, regardless of whether it would be needed
+/-- $\check{s}$: the registers read by an instruction, "as described by the equations in §A.5", i.e.
+    every $\varphi_X$ (unprimed) that its mutation mentions, regardless of whether it would be needed
     at runtime. `ecalli` reads none (§A.9). The destination register of `cmov_iz`, `cmov_nz`,
     `cmov_iz_imm` and `cmov_nz_imm` counts as a source too (GP v0.8.1 §A.9, stated by #559; we
-    already read it so from their mutations, which keep ω_D when the condition fails). -/
+    already read it so from their mutations, which keep $\varphi_D$ when the condition fails). -/
 def srcRegs : Instr → List RegIdx
   | .noArgs _ => []
   | .oneImm _ _ => []
@@ -68,7 +68,7 @@ def srcRegs : Instr → List RegIdx
     | .cmovIz | .cmovNz => [a, b, d]
     | _ => [a, b]
 
-/-- ř: the registers written by an instruction (every ω'_X its mutation mentions). -/
+/-- $\check{r}$: the registers written by an instruction (every $\varphi'_X$ its mutation mentions). -/
 def dstRegs : Instr → List RegIdx
   | .noArgs _ => []
   | .oneImm _ _ => []
@@ -90,18 +90,18 @@ def dstRegs : Instr → List RegIdx
   | .twoRegTwoImm _ a _ _ _ => [a]
   | .threeReg _ _ _ d => [d]
 
-/-- š as a `RegSet`. -/
+/-- $\check{s}$ as a `RegSet`. -/
 def src (i : Instr) : RegSet := .ofList i.srcRegs
-/-- ř as a `RegSet`. -/
+/-- $\check{r}$ as a `RegSet`. -/
 def dst (i : Instr) : RegSet := .ofList i.dstRegs
 
-/-- The (r_A, r_D) operands used by 𝔓_S, for the formats that have both. -/
+/-- The $(r_A, r_D)$ operands used by $\mathfrak{P}_S$, for the formats that have both. -/
 def regsAD? : Instr → Option (RegIdx × RegIdx)
   | .twoReg _ d a => some (a, d)
   | .threeReg _ a _ d => some (a, d)
   | _ => none
 
-/-- The static target of a branch (ı_target in 𝔟, GP §A.10). -/
+/-- The static target of a branch ($\imath_{\text{target}}$ in $\mathfrak{b}$, GP §A.10). -/
 def branchTarget? : Instr → Option Int
   | .regImmOffset _ _ _ y => some y
   | .twoRegOffset _ _ _ x => some x
@@ -111,7 +111,7 @@ end Instr
 
 /-! ## Evaluating the cost table (GP §A.10) -/
 
-/-- Execution-unit counts 𝔼 = (A, L, S, M, D), with memberwise +, − and ≤ (GP §A.9). -/
+/-- Execution-unit counts $\mathbb{E} = (A, L, S, M, D)$, with memberwise $+$, $-$ and $\le$ (GP §A.9). -/
 structure Units where
   alu : Nat
   load : Nat
@@ -123,16 +123,16 @@ structure Units where
 namespace Units
 instance : Add Units := ⟨fun a b => ⟨a.alu + b.alu, a.load + b.load, a.store + b.store, a.mul + b.mul, a.div + b.div⟩⟩
 instance : Sub Units := ⟨fun a b => ⟨a.alu - b.alu, a.load - b.load, a.store - b.store, a.mul - b.mul, a.div - b.div⟩⟩
-/-- a ≤ b memberwise. -/
+/-- $a \le b$ memberwise. -/
 def le (a b : Units) : Bool :=
   a.alu ≤ b.alu && a.load ≤ b.load && a.store ≤ b.store && a.mul ≤ b.mul && a.div ≤ b.div
 /-- The zero tuple. -/
 def zero : Units := ⟨0, 0, 0, 0, 0⟩
-/-- The initial units (4, 4, 4, 1, 1) of **x**^init (GP eq. `gascostforblock`). -/
+/-- The initial units $(4, 4, 4, 1, 1)$ of $\mathbf{x}^{\text{init}}$ (GP eq. `gascostforblock`). -/
 def initial : Units := ⟨4, 4, 4, 1, 1⟩
 end Units
 
-/-- The evaluated cost of one instruction: č, ď, x̌. -/
+/-- The evaluated cost of one instruction: $\check{c}$, $\check{d}$, $\check{x}$. -/
 structure InstrCost where
   cycles : Nat
   decodeSlots : Nat
@@ -141,7 +141,7 @@ structure InstrCost where
 
 namespace Program
 
-/-- 𝔟(**c**, ı) (GP §A.10): 1 if ζ_{ı+1+skip(ı)} or ζ_{ı_target} is `unlikely` or `trap`, else 20. -/
+/-- $\mathfrak{b}(\mathbf{c}, \imath)$ (GP §A.10): 1 if $\zeta_{\imath+1+\text{skip}(\imath)}$ or $\zeta_{\imath_{\text{target}}}$ is `unlikely` or `trap`, else 20. -/
 def branchCost (P : Program) (i : Nat) (target : Int) : Nat :=
   let cheap (n : Nat) : Bool := n == unlikelyOpcode || n == trapOpcode
   if cheap (P.zeta (P.next i)) || cheap (P.zetaInt target) then 1 else 20
@@ -160,7 +160,7 @@ def evalCost (P : Program) (i : Nat) (ins : Instr) : CostExpr → Nat
   -- Only branches have a 𝔟 cell; the fallback target is never used.
   | .branch => P.branchCost i ((ins.branchTarget?).getD (-1))
 
-/-- (č, ď, x̌) of the instruction at `ı` (GP §A.10), if ζ_ı ∈ U. -/
+/-- $(\check{c}, \check{d}, \check{x})$ of the instruction at `ı` (GP §A.10), if $\zeta_{\imath} \in U$. -/
 def instrCost? (P : Program) (i : Nat) : Option (Instr × InstrCost) := do
   let ins ← P.decode i
   let row ← costRow? (P.zeta i)
@@ -169,40 +169,40 @@ def instrCost? (P : Program) (i : Nat) : Option (Instr × InstrCost) := do
 
 end Program
 
-/-! ## The simulation 𝔛 (GP §A.9) -/
+/-! ## The simulation $\mathfrak{X}$ (GP §A.9) -/
 
-/-- Reorder-buffer entry states {DEC, WAIT, EXE, FIN, ∅}. -/
+/-- Reorder-buffer entry states $\{\text{DEC}, \text{WAIT}, \text{EXE}, \text{FIN}, \emptyset\}$. -/
 inductive RobState where
   | dec | wait | exe | fin | none
   deriving DecidableEq, Repr, Inhabited
 
-/-- A reorder-buffer entry ℝ = (s, c, p, r, t) (GP §A.9). -/
+/-- A reorder-buffer entry $\mathbb{R} = (s, c, p, r, t)$ (GP §A.9). -/
 structure RobEntry where
-  /-- s, the state. -/
+  /-- $s$, the state. -/
   state : RobState
-  /-- c, the cycles left. -/
+  /-- $c$, the cycles left. -/
   cycles : Nat
-  /-- p, the indices of the entries it depends on. -/
+  /-- $p$, the indices of the entries it depends on. -/
   deps : List Nat
-  /-- r, the clobbered registers. -/
+  /-- $r$, the clobbered registers. -/
   regs : RegSet
-  /-- t, the execution units used. -/
+  /-- $t$, the execution units used. -/
   units : Units
   deriving DecidableEq, Repr, Inhabited
 
-/-- A simulation state 𝕊 = (ı, c, d, e, t, **r**) (GP §A.9). -/
+/-- A simulation state $\mathbb{S} = (\imath, c, d, e, t, \mathbf{r})$ (GP §A.9). -/
 structure SimState where
-  /-- ı, the next instruction to decode, or ∅. -/
+  /-- $\imath$, the next instruction to decode, or $\emptyset$. -/
   pc : Option Nat
-  /-- c, the cycle counter. -/
+  /-- $c$, the cycle counter. -/
   cycle : Nat
-  /-- d, decode slots left in this cycle. -/
+  /-- $d$, decode slots left in this cycle. -/
   decodeSlots : Nat
-  /-- e, instructions still allowed to start this cycle. -/
+  /-- $e$, instructions still allowed to start this cycle. -/
   startSlots : Nat
-  /-- t, available execution units. -/
+  /-- $t$, available execution units. -/
   units : Units
-  /-- **r**, the reorder buffer (a list, which the kernel walks faster than an array). -/
+  /-- $\mathbf{r}$, the reorder buffer (a list, which the kernel walks faster than an array). -/
   rob : List RobEntry
   deriving DecidableEq, Repr, Inhabited
 
@@ -213,27 +213,27 @@ def maxDecode : Nat := 4
 /-- See `maxDecode`. -/
 def maxStart : Nat := 5
 
-/-- **x**^init = (ı, 0, 4, 5, (4, 4, 4, 1, 1), []) (GP eq. `gascostforblock`). -/
+/-- $\mathbf{x}^{\text{init}} = (\imath, 0, 4, 5, (4, 4, 4, 1, 1), [])$ (GP eq. `gascostforblock`). -/
 def init (i : Nat) : SimState := ⟨some i, 0, maxDecode, maxStart, .initial, []⟩
 
-/-- l = |[r | r ∈ **x**_**r**, r_s ≠ ∅]| (GP §A.9). -/
+/-- $l = |[r \mid r \in \mathbf{x}_{\mathbf{r}}, r_s \ne \emptyset]|$ (GP §A.9). -/
 def live (x : SimState) : Nat := x.rob.foldl (fun n e => if e.state != .none then n + 1 else n) 0
 
-/-- Whether the dependency `k` of a reorder-buffer entry has zero cycles left, r_k,c = 0
-    (GP §A.9, in 𝔖). The index is checked against |**r**|; every dependency of every entry of a
+/-- Whether the dependency `k` of a reorder-buffer entry has zero cycles left, $r_{k,c} = 0$
+    (GP §A.9, in $\mathfrak{S}$). The index is checked against $|\mathbf{r}|$; every dependency of every entry of a
     reachable state is in range (the `else` branch is unreachable:
     `PVM.Sim.Inv.depDone_eq` in `PVM.Theorems.GasFuel`). -/
 def depDone (x : SimState) (k : Nat) : Bool :=
   if h : k < x.rob.length then x.rob[k].cycles == 0 else true
 
-/-- 𝔖(**x**) = min(s), s = {j ∈ ℕ_{|**r**|} : r_j,s = WAIT ∧ r_j,t ≤ **x**_t ∧ ∀ k ∈ r_j,p : r_k,c = 0}
+/-- $\mathfrak{S}(\mathbf{x}) = \min(s)$, $s = \{j \in \mathbb{N}_{|\mathbf{r}|} : r_{j,s} = \text{WAIT} \wedge r_{j,t} \le \mathbf{x}_t \wedge \forall k \in r_{j,p} : r_{k,c} = 0\}$
     (GP §A.9): the least index of a WAIT entry whose units fit and whose dependencies all have
     zero cycles left, if any. -/
 def readyToStart (x : SimState) : Option (Fin x.rob.length) :=
   (List.finRange x.rob.length).find? fun j =>
     x.rob[j].state == .wait && x.rob[j].units.le x.units && x.rob[j].deps.all (depDone x)
 
-/-- 𝔛^mov (GP §A.9): `move_reg` is handled by the front end and renames registers. -/
+/-- $\mathfrak{X}^{\text{mov}}$ (GP §A.9): `move_reg` is handled by the front end and renames registers. -/
 def decodeMove (P : Program) (x : SimState) (i : Nat) (ins : Instr) : SimState :=
   { x with
     pc := some (P.next i)
@@ -241,7 +241,7 @@ def decodeMove (P : Program) (x : SimState) (i : Nat) (ins : Instr) : SimState :
     rob := x.rob.map fun e =>
       { e with regs := if e.regs.meets ins.src then e.regs.union ins.dst else e.regs.diff ins.dst } }
 
-/-- 𝔛^dec (GP §A.9): decode an instruction into a new reorder-buffer entry. -/
+/-- $\mathfrak{X}^{\text{dec}}$ (GP §A.9): decode an instruction into a new reorder-buffer entry. -/
 def decodeInstr (P : Program) (x : SimState) (i : Nat) (ins : Instr) (cost : InstrCost) : SimState :=
   let deps := (x.rob.zipIdx.filter fun (e, _) => ins.src.meets e.regs).map (·.2)
   let rob := x.rob.map fun e => { e with regs := e.regs.diff ins.dst }
@@ -250,19 +250,19 @@ def decodeInstr (P : Program) (x : SimState) (i : Nat) (ins : Instr) (cost : Ins
     decodeSlots := x.decodeSlots - cost.decodeSlots
     rob := rob ++ [⟨.dec, cost.cycles, deps, ins.dst, cost.units⟩] }
 
-/-- 𝔛' (GP §A.9): `move_reg` (when ı < |**c**|) goes to 𝔛^mov, everything else to 𝔛^dec. -/
+/-- $\mathfrak{X}'$ (GP §A.9): `move_reg` (when $\imath < |\mathbf{c}|$) goes to $\mathfrak{X}^{\text{mov}}$, everything else to $\mathfrak{X}^{\text{dec}}$. -/
 def decodeStep (P : Program) (x : SimState) (i : Nat) (ins : Instr) (cost : InstrCost) : SimState :=
   if i < P.code.size && P.zeta i == moveRegOpcode then decodeMove P x i ins
   else decodeInstr P x i ins cost
 
-/-- 𝔛'' (GP §A.9): start executing entry `n = 𝔖(**x**)`. -/
+/-- $\mathfrak{X}''$ (GP §A.9): start executing entry $n = \mathfrak{S}(\mathbf{x})$. -/
 def startStep (x : SimState) (n : Fin x.rob.length) : SimState :=
   { x with
     startSlots := x.startSlots - 1
     units := x.units - x.rob[n].units
     rob := x.rob.modify n fun e => { e with state := .exe } }
 
-/-- For each entry, whether it and every entry before it is FIN or ∅ (given `ok`, that every
+/-- For each entry, whether it and every entry before it is FIN or $\emptyset$ (given `ok`, that every
     entry before the list is). -/
 def retiredPrefix : List RobEntry → Bool → List Bool
   | [], _ => []
@@ -270,7 +270,7 @@ def retiredPrefix : List RobEntry → Bool → List Bool
     let ok' := ok && (e.state == .fin || e.state == .none)
     ok' :: retiredPrefix es ok'
 
-/-- 𝔛''' (GP §A.9): advance one cycle. -/
+/-- $\mathfrak{X}'''$ (GP §A.9): advance one cycle. -/
 def cycleStep (x : SimState) : SimState :=
   let freed := x.rob.foldl (fun u e => if e.state == .exe && e.cycles == 1 then u + e.units else u) Units.zero
   -- retired j: every entry k ≤ j is FIN or ∅ (in the state before this step)
@@ -289,11 +289,11 @@ def cycleStep (x : SimState) : SimState :=
           else e.state
         cycles := if e.state == .exe && e.cycles > 0 then e.cycles - 1 else e.cycles }) retired }
 
-/-- One transition of 𝔛 (GP §A.9). `.inl x'` continues with x'; `.inr x` is the final state;
-    `none` means ď(**x**_ı) is undefined because ζ at **x**_ı is not in U (impossible for the
-    blocks of valid programs). The cases are tried in the paper's order: decode (𝔛') if
-    **x**_ı ≠ ∅, ď(**x**_ı) ≤ **x**_d and l < 32; else start (𝔛'') if 𝔖(**x**) ≠ ∅ and **x**_e > 0;
-    else stop if **x**_ı = ∅ and l = 0; else advance a cycle (𝔛'''). -/
+/-- One transition of $\mathfrak{X}$ (GP §A.9). `.inl x'` continues with x'; `.inr x` is the final state;
+    `none` means $\check{d}(\mathbf{x}_{\imath})$ is undefined because $\zeta$ at $\mathbf{x}_{\imath}$ is not in $U$ (impossible for the
+    blocks of valid programs). The cases are tried in the paper's order: decode ($\mathfrak{X}'$) if
+    $\mathbf{x}_{\imath} \ne \emptyset$, $\check{d}(\mathbf{x}_{\imath}) \le \mathbf{x}_d$ and $l < 32$; else start ($\mathfrak{X}''$) if $\mathfrak{S}(\mathbf{x}) \ne \emptyset$ and $\mathbf{x}_e > 0$;
+    else stop if $\mathbf{x}_{\imath} = \emptyset$ and $l = 0$; else advance a cycle ($\mathfrak{X}'''$). -/
 def transition (P : Program) (x : SimState) : Option (SimState ⊕ SimState) := do
   let l := live x
   if let some i := x.pc then
@@ -307,7 +307,7 @@ def transition (P : Program) (x : SimState) : Option (SimState ⊕ SimState) := 
     return .inr x
   return .inl (cycleStep x)
 
-/-- 𝔛 with at most `fuel` transitions; `none` if the fuel runs out or an invalid opcode is met. -/
+/-- $\mathfrak{X}$ with at most `fuel` transitions; `none` if the fuel runs out or an invalid opcode is met. -/
 def run (P : Program) : Nat → SimState → Option SimState
   | 0, _ => none
   | fuel + 1, x =>
@@ -316,8 +316,8 @@ def run (P : Program) : Nat → SimState → Option SimState
     | some (.inr x') => some x'
     | none => none
 
-/-- The fuel given to 𝔛: `256 · (|**c**| − ı + 2)` transitions. The paper's 𝔛 is unbounded;
-    this fuel always suffices, so the `0` case of `run` is unreachable from **x**^init: every
+/-- The fuel given to $\mathfrak{X}$: $256 \cdot (|\mathbf{c}| - \imath + 2)$ transitions. The paper's $\mathfrak{X}$ is unbounded;
+    this fuel always suffices, so the `0` case of `run` is unreachable from $\mathbf{x}^{\text{init}}$: every
     transition lowers a measure that starts below the fuel (`PVM.Sim.run_fuel_eq` in
     `PVM.Theorems.GasFuel`: any fuel above `fuel P ı` gives the same result). Over every block
     of the test vectors the simulation uses at most 54 transitions per instruction. -/

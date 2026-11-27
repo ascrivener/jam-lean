@@ -3,13 +3,14 @@ import PVM.Theorems.Host
 import PVM.Theorems.Termination
 
 /-!
-# Ψ_H terminates for gas-non-increasing handlers, and satisfies the paper's equation
+# $\Psi_H$ terminates for gas-non-increasing handlers, and satisfies the paper's equation
 
-A host call happens at an `ecalli`, which is not in T, so after it ϱ̃ stays ⊤ and Ψ_H resumes at
-ı + 1 + skip(ı) > ı without recharging; either way `runMeasure` drops below its value at the start
-of the Ψ run (`psi_host_measure`). If the handler does not add gas, the next Ψ_H iteration starts
+A host call happens at an `ecalli`, which is not in $T$, so after it $\tilde\varrho$ stays $\top$
+and $\Psi_H$ resumes at $\imath + 1 + \text{skip}(\imath) > \imath$ without recharging; either way
+`runMeasure` drops below its value at the start of the $\Psi$ run (`psi_host_measure`). If the
+handler does not add gas, the next $\Psi_H$ iteration starts
 lower still, so `runMeasure + 1` iterations suffice (`psiHFuel_stable`), and `psiHStar` satisfies
-GP §A.6's recursive definition of Ψ_H* (`psiHStar_eq`).
+GP §A.6's recursive definition of $\Psi_H^{\ast}$ (`psiHStar_eq`).
 -/
 
 namespace PVM
@@ -23,8 +24,8 @@ theorem runMeasure_mono_gas (p : ByteArray) (i : Nat) {g g' : UInt64} (ch : Bool
 
 namespace Program
 
-/-- A step that exits with ħ has charged its block (ϱ̃* = ⊤), costing at least one gas when ϱ̃ = ⊥
-    and nothing when ϱ̃ = ⊤. -/
+/-- A step that exits with $\hbar$ has charged its block ($\tilde\varrho^{\ast} = \top$), costing at
+    least one gas when $\tilde\varrho = \bot$ and nothing when $\tilde\varrho = \top$. -/
 theorem step_host_facts {P : Program} {i : Nat} {gas : UInt64} {ch : Bool} {ω : Regs}
     {μ : Memory} {h : UInt64} (hs : (P.step i gas ch ω μ).status = .host h) :
     (P.step i gas ch ω μ).charged = true ∧
@@ -61,7 +62,8 @@ theorem step_host_facts {P : Program} {i : Nat} {gas : UInt64} {ch : Bool} {ω :
 
 end Program
 
-/-- When Ψ (with fuel) exits with ħ, resuming at ı + 1 + skip(ı) with the returned gas and flag
+/-- When $\Psi$ (with fuel) exits with $\hbar$, resuming at $\imath + 1 + \text{skip}(\imath)$ with
+    the returned gas and flag
     is strictly lower in `runMeasure` than where the run started. -/
 theorem runFuel_host_measure {p : ByteArray} :
     ∀ (n i : Nat) (gas : UInt64) (ch : Bool) (ω : Regs) (μ : Memory) (r : Result) (h : UInt64),
@@ -138,8 +140,9 @@ theorem psiHFuel_stable (p : ByteArray) (f : HostFn X) (hf : f.GasNonIncreasing)
     all_goals
       refine ⟨?_, fun k => ?_⟩ <;> (try rw [e k]) <;> simp [psiHFuel, hr, hst]
 
-/-- **Ψ_H*'s defining equation** (GP §A.6), for any handler that does not add gas: run Ψ; on ħ × h
-    call f, then either continue at ı' + 1 + skip(ı') or stop with f's exit reason; on any other
+/-- **$\Psi_H^{\ast}$'s defining equation** (GP §A.6), for any handler that does not add gas: run
+    $\Psi$; on $\hbar \times h$ call $f$, then either continue at $\imath' + 1 + \text{skip}(\imath')$
+    or stop with $f$'s exit reason; on any other
     exit reason stop. -/
 theorem psiHStar_eq (p : ByteArray) (i : Nat) (gas : UInt64) (ch : Bool) (ω : Regs) (μ : Memory)
     (f : HostFn X) (hf : f.GasNonIncreasing) (x : X) :

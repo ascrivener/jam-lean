@@ -3,18 +3,18 @@ import PVM.Theorems.GasFuel
 import PVM.Logic.Words
 
 /-!
-# Equal forms and unreachable defaults in Ψ₁ and 𝔛 (GP v0.8.1 §A.5, §A.9)
+# Equal forms and unreachable defaults in $\Psi_1$ and $\mathfrak{X}$ (GP v0.8.1 §A.5, §A.9)
 
 * `Sim.readyToStart` and `Sim.startStep` index the reorder buffer with proved-in-bounds indices;
   they agree with the earlier forms that read `rob[k]!` (`Sim.readyToStart_val`,
   `Sim.startStep_eq_getElem!`).
-* The sign-extending loads: §A.5.6 writes ω'_A = 𝒳_n(…) (`load_i8`, …) and §A.5.10 writes
-  ω'_A = 𝒵⁻¹_8(𝒵_n(…)) (`load_ind_i8`, …). The model keeps each as the paper writes it; the two
+* The sign-extending loads: §A.5.6 writes $\varphi'_A = \mathcal{X}_n(\dots)$ (`load_i8`, …) and §A.5.10 writes
+  $\varphi'_A = \mathcal{Z}^{-1}_8(\mathcal{Z}_n(\dots))$ (`load_ind_i8`, …). The model keeps each as the paper writes it; the two
   forms agree on every loaded value (`Exec.u64_signed_eq_sext`, `Program.exec_loadIndI`,
   `Program.exec_loadI`).
 * `twoRegImmAlu` is `none` exactly for the loads and stores, which `Program.exec` handles before
   it, so `exec`'s `.getD 0` never applies (`Exec.twoRegImmAlu_eq_none_iff`).
-* Ψ₁ reads an undecodable octet as `trap`; at every step Ψ takes, the instruction decodes
+* $\Psi_1$ reads an undecodable octet as `trap`; at every step $\Psi$ takes, the instruction decodes
   (`Program.decode_isSome_of_deblob`, `Program.step_decode`).
 -/
 
@@ -36,7 +36,7 @@ theorem zipIdx_eq_finRange (l : List RobEntry) :
   intro i h1 h2
   simp [List.getElem_zipIdx, List.getElem_finRange]
 
-/-- 𝔖 with proved-in-bounds indices agrees with the form that reads `rob[k]!`. -/
+/-- $\mathfrak{S}$ with proved-in-bounds indices agrees with the form that reads `rob[k]!`. -/
 theorem readyToStart_val (x : SimState) :
     (readyToStart x).map Fin.val =
       (x.rob.zipIdx.find? fun (e, _) =>
@@ -50,7 +50,7 @@ theorem readyToStart_val (x : SimState) :
   rw [show depDone x = fun k => x.rob[k]!.cycles == 0 from funext (depDone_eq_getElem! x)]
   simp only [Function.comp_def, Fin.getElem_fin]
 
-/-- 𝔛'' with a proved-in-bounds index agrees with the form that reads `rob[n]!`. -/
+/-- $\mathfrak{X}''$ with a proved-in-bounds index agrees with the form that reads `rob[n]!`. -/
 theorem startStep_eq_getElem! (x : SimState) (n : Fin x.rob.length) :
     startStep x n =
       { x with
@@ -63,7 +63,7 @@ end Sim
 
 namespace Exec
 
-/-- 𝒵⁻¹_8(𝒵_n(v)) = 𝒳_n(v) for an n-octet value v (n = 1, 2, 4): the two forms of the
+/-- $\mathcal{Z}^{-1}_8(\mathcal{Z}_n(v)) = \mathcal{X}_n(v)$ for an $n$-octet value $v$ ($n = 1, 2, 4$): the two forms of the
     sign-extending loads (§A.5.6, §A.5.10) agree. -/
 theorem u64_signed_eq_sext (n v : Nat) (hn : n = 1 ∨ n = 2 ∨ n = 4) (hv : v < 2 ^ (8 * n)) :
     u64 (signed n v) = sext n v := by
@@ -90,7 +90,7 @@ theorem readN_lt (μ : Memory) (a n : Nat) : decodeLE (μ.readN a n) < 2 ^ (8 * 
   rw [Memory.length_readN] at this
   rw [Nat.pow_mul]; exact this
 
-/-- `load_ind_i8`, `load_ind_i16`, `load_ind_i32` (§A.5.10, ω'_A = 𝒵⁻¹_8(𝒵_n(…))) in the 𝒳_n
+/-- `load_ind_i8`, `load_ind_i16`, `load_ind_i32` (§A.5.10, $\varphi'_A = \mathcal{Z}^{-1}_8(\mathcal{Z}_n(\dots))$) in the $\mathcal{X}_n$
     form of §A.5.6. -/
 theorem exec_loadIndI (P : Program) (i : Nat) (a b : RegIdx) (x : UInt64) (ω : Regs) (μ : Memory) :
     (P.exec i (.twoRegImm .loadIndI8 a b x) ω μ).regs =
@@ -102,7 +102,7 @@ theorem exec_loadIndI (P : Program) (i : Nat) (a b : RegIdx) (x : UInt64) (ω : 
   refine ⟨?_, ?_, ?_⟩ <;> simp only [exec] <;>
     rw [Exec.u64_signed_eq_sext _ _ (by decide) (readN_lt _ _ _)]
 
-/-- `load_i8`, `load_i16`, `load_i32` (§A.5.6, ω'_A = 𝒳_n(…)), for comparison with
+/-- `load_i8`, `load_i16`, `load_i32` (§A.5.6, $\varphi'_A = \mathcal{X}_n(\dots)$), for comparison with
     `exec_loadIndI`. -/
 theorem exec_loadI (P : Program) (i : Nat) (a : RegIdx) (x : UInt64) (ω : Regs) (μ : Memory) :
     (P.exec i (.regImm .loadI8 a x) ω μ).regs =
@@ -113,7 +113,7 @@ theorem exec_loadI (P : Program) (i : Nat) (a : RegIdx) (x : UInt64) (ω : Regs)
       ω.set a (UInt64.ofNat (sext 4 (decodeLE (μ.readN x.toNat 4)))) := by
   refine ⟨?_, ?_, ?_⟩ <;> rfl
 
-/-- At every step Ψ takes (deblob succeeds, so 𝔳_inst holds at ı), the instruction decodes. -/
+/-- At every step $\Psi$ takes (deblob succeeds, so $\mathfrak{v}_{\text{inst}}$ holds at $\imath$), the instruction decodes. -/
 theorem decode_isSome_of_deblob {p : ByteArray} {i : Nat} {P : Program}
     (h : deblob p i = some P) : (P.decode i).isSome := by
   unfold deblob at h

@@ -7,12 +7,12 @@ Partial-correctness reasoning: pick an invariant over machine states that holds 
 preserved by every continuing step; then every way the run can end is an exit from a state
 satisfying the invariant.
 
-* `FreeRun.of_invariant` for Ψ (no host calls);
-* `FreeRunH.of_invariant` for Ψ_H under a host contract: host calls must also preserve the
+* `FreeRun.of_invariant` for $\Psi$ (no host calls);
+* `FreeRunH.of_invariant` for $\Psi_H$ under a host contract: host calls must also preserve the
   invariant, using only what the contract guarantees.
 
 Combined with `psi_freeRun` / `psiM_free`, these give properties of the real machine for every
-amount of gas and, for Ψ_H/Ψ_M, every handler meeting the contract.
+amount of gas and, for $\Psi_H$/$\Psi_M$, every handler meeting the contract.
 -/
 
 namespace PVM
@@ -42,7 +42,7 @@ theorem FreeReach.invariant {p : ByteArray} (I : Nat → Regs → Memory → Pro
   | refl => exact h0
   | step hn _ ih => exact ih (hstep _ _ _ _ _ _ h0 hn)
 
-/-- **Invariant rule for Ψ.** If `I` holds initially, is preserved by continuing steps, and every
+/-- **Invariant rule for $\Psi$.** If `I` holds initially, is preserved by continuing steps, and every
     exit from an `I`-state satisfies `Q`, then every gas-free run ends satisfying `Q`. -/
 theorem FreeRun.of_invariant {p : ByteArray} (I : Nat → Regs → Memory → Prop)
     (Q : Status → Regs → Memory → Prop)
@@ -55,9 +55,9 @@ theorem FreeRun.of_invariant {p : ByteArray} (I : Nat → Regs → Memory → Pr
 
 variable {X : Type}
 
-/-- **Invariant rule for Ψ_H under a host contract.** As `FreeRun.of_invariant`, with the context
+/-- **Invariant rule for $\Psi_H$ under a host contract.** As `FreeRun.of_invariant`, with the context
     threaded through and two extra obligations: a host call that continues must re-establish
-    `I` at ı + 1 + skip(ı), and one that stops must satisfy `Q`, in both cases for every effect the
+    `I` at $\imath + 1 + \text{skip}(\imath)$, and one that stops must satisfy `Q`, in both cases for every effect the
     contract allows. -/
 theorem FreeRunH.of_invariant {p : ByteArray} {R : HostRel X}
     (I : Nat → Regs → Memory → X → Prop) (Q : Status → Regs → Memory → X → Prop)

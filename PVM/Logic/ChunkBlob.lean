@@ -4,18 +4,18 @@ import PVM.Invocation
 /-!
 # Blobs the kernel can read
 
-A `ByteArray` holds its octets in a list, so the kernel can only reach octet j by walking j cells,
+A `ByteArray` holds its octets in a list, so the kernel can only reach octet $j$ by walking $j$ cells,
 and a 200 kB blob is out of its reach. Here a blob is instead the base-256 digits of one number
-N, least significant first: octet j is ⌊N / 2^(8j)⌋ mod 256 (`NatBlob.byte`), which the kernel
+$N$, least significant first: octet $j$ is $\lfloor N / 2^{8j} \rfloor \bmod 256$ (`NatBlob.byte`), which the kernel
 computes with its arbitrary-precision arithmetic. A check that reads a stretch of the blob can
-cut that stretch out of N once and read it from the small number (`NatBlob.byte_window`).
+cut that stretch out of $N$ once and read it from the small number (`NatBlob.byte_window`).
 
-`NatBlob.ba N o n` is the `ByteArray` of the n octets from octet o, and the lemmas below read the
+`NatBlob.ba N o n` is the `ByteArray` of the $n$ octets from octet $o$, and the lemmas below read the
 model's parsers on such arrays without evaluating them: an octet (`getElem?_ba`), a slice
 (`slice?_ba`, `extract_ba`), the opcode bitmask (`decodeBits?_bytes`). `parse?_ba` and
 `jamParse?_ba` put them together: a blob whose header facts the kernel decides on a handful of
 octets parses to sections at known offsets, and its program's `CodeView` is `NatBlob.view`,
-arithmetic on N (`view_eq`).
+arithmetic on $N$ (`view_eq`).
 -/
 
 /-- `ByteArray.toList` lists the underlying array. -/
@@ -42,13 +42,13 @@ namespace PVM
 
 namespace NatBlob
 
-/-- Octet j of the blob whose octets are the base-256 digits of N, least significant first. -/
+/-- Octet $j$ of the blob whose octets are the base-256 digits of $N$, least significant first. -/
 def byte (N j : Nat) : Nat := (N >>> (8 * j)) % 256
 
-/-- Bit b of that blob, each octet read least significant bit first. -/
+/-- Bit $b$ of that blob, each octet read least significant bit first. -/
 def bit (N b : Nat) : Bool := N.testBit b
 
-/-- Reading octet j from the stretch of the blob from octet a. -/
+/-- Reading octet $j$ from the stretch of the blob from octet $a$. -/
 theorem byte_window (N a w j : Nat) (h1 : a ≤ j) (h2 : j < a + w) :
     byte N j = byte ((N >>> (8 * a)) % 2 ^ (8 * w)) (j - a) := by
   simp only [byte]
@@ -63,7 +63,7 @@ theorem byte_window (N a w j : Nat) (h1 : a ≤ j) (h2 : j < a + w) :
     simp only [hk, e1, e2, decide_true, Bool.true_and]
   · simp only [hk, decide_false, Bool.false_and]
 
-/-- Reading bit b from the stretch of the blob from bit s. -/
+/-- Reading bit $b$ from the stretch of the blob from bit $s$. -/
 theorem bit_window (N s w b : Nat) (h1 : s ≤ b) (h2 : b < s + w) :
     bit N b = bit ((N >>> s) % 2 ^ w) (b - s) := by
   simp only [bit, Nat.testBit_mod_two_pow, Nat.testBit_shiftRight]
@@ -72,8 +72,8 @@ theorem bit_window (N s w b : Nat) (h1 : s ≤ b) (h2 : b < s + w) :
 
 /-! ### A blob given as chunks -/
 
-/-- The number whose base-2^w digits are `cs`, least significant first: a blob of chunks of w
-    bits. (Stated for any w, so that no proof here makes the kernel compute 2^w.) -/
+/-- The number whose base-$2^w$ digits are `cs`, least significant first: a blob of chunks of $w$
+    bits. (Stated for any $w$, so that no proof here makes the kernel compute $2^w$.) -/
 def ofChunksW (w : Nat) : List Nat → Nat
   | [] => 0
   | c :: cs => 2 ^ w * ofChunksW w cs + c
@@ -121,7 +121,7 @@ theorem testBit_ofChunksW_window (w : Nat) (cs : List Nat) (h : ∀ c ∈ cs, c 
 /-- A blob of 1024-octet chunks. -/
 def ofChunks (cs : List Nat) : Nat := ofChunksW 8192 cs
 
-/-- Reading octet j from the chunks k … k + m − 1 alone. -/
+/-- Reading octet $j$ from the chunks $k \dots k + m - 1$ alone. -/
 theorem byte_ofChunks_window (cs : List Nat) (h : ∀ c ∈ cs, c < 2 ^ 8192) (k m j : Nat)
     (h1 : 1024 * k ≤ j) (h2 : j < 1024 * (k + m)) :
     byte (ofChunks cs) j = byte (ofChunks ((cs.drop k).take m)) (j - 1024 * k) := by
@@ -137,7 +137,7 @@ theorem byte_ofChunks_window (cs : List Nat) (h : ∀ c ∈ cs, c < 2 ^ 8192) (k
     congr 1; omega
   · simp only [ht, decide_false, Bool.false_and]
 
-/-- Reading bit b from the chunks k … k + m − 1 alone. -/
+/-- Reading bit $b$ from the chunks $k \dots k + m - 1$ alone. -/
 theorem bit_ofChunks_window (cs : List Nat) (h : ∀ c ∈ cs, c < 2 ^ 8192) (k m b : Nat)
     (h1 : 8192 * k ≤ b) (h2 : b < 8192 * (k + m)) :
     bit (ofChunks cs) b = bit (ofChunks ((cs.drop k).take m)) (b - 8192 * k) :=
@@ -145,18 +145,18 @@ theorem bit_ofChunks_window (cs : List Nat) (h : ∀ c ∈ cs, c < 2 ^ 8192) (k 
 
 theorem byte_lt (N j : Nat) : byte N j < 256 := Nat.mod_lt _ (by decide)
 
-/-- Bit k of octet j is bit 8j + k. -/
+/-- Bit $k$ of octet $j$ is bit $8j + k$. -/
 theorem bit_eq (N j k : Nat) (hk : k < 8) : bit N (8 * j + k) = (byte N j).testBit k := by
   simp only [bit, byte]
   have : (256 : Nat) = 2 ^ 8 := rfl
   rw [this, Nat.testBit_mod_two_pow, Nat.testBit_shiftRight]
   simp [hk]
 
-/-- The n octets from octet o. -/
+/-- The $n$ octets from octet $o$. -/
 def bytes (N : Nat) (o n : Nat) : List UInt8 :=
   (List.range n).map fun j => UInt8.ofNat (byte N (o + j))
 
-/-- The n octets from octet o, as a `ByteArray`. -/
+/-- The $n$ octets from octet $o$, as a `ByteArray`. -/
 def ba (N : Nat) (o n : Nat) : ByteArray := ⟨(bytes N o n).toArray⟩
 
 @[simp] theorem length_bytes (N : Nat) (o n : Nat) : (bytes N o n).length = n := by
@@ -199,7 +199,7 @@ theorem getElem?_ba (N : Nat) (o n j : Nat) :
 theorem toList_ba (N : Nat) (o n : Nat) : (ba N o n).toList = bytes N o n := by
   rw [ByteArray.toList_eq_data]; rfl
 
-/-- A slice of the octets from o is the octets from o + a. -/
+/-- A slice of the octets from $o$ is the octets from $o + a$. -/
 theorem extract_bytes (N : Nat) (o n a b : Nat) :
     (bytes N o n).extract a b = bytes N (o + a) (min b n - a) := by
   apply List.ext_getElem
@@ -228,7 +228,7 @@ theorem slice?_ba (N : Nat) (o n pos m : Nat) :
     omega
   · rfl
 
-/-- n bits from bit b, as an array. -/
+/-- $n$ bits from bit $b$, as an array. -/
 def bits (N : Nat) (b n : Nat) : Array Bool :=
   ((List.range n).map fun i => bit N (b + i)).toArray
 
@@ -246,7 +246,7 @@ theorem take_map_range {α : Type} (f : Nat → α) (N n : Nat) (h : n ≤ N) :
   · intro k h1 h2
     simp
 
-/-- ℰ⁻¹ of the bitmask octets from octet o: the bits from bit 8o, if the padding bits are 0. -/
+/-- $\mathcal{E}^{-1}$ of the bitmask octets from octet $o$: the bits from bit $8o$, if the padding bits are 0. -/
 theorem decodeBits?_bytes (N : Nat) (o n : Nat) :
     Blob.decodeBits? (bytes N o ((n + 7) / 8)) n =
       if ((List.range (8 * ((n + 7) / 8) - n)).all fun k => !bit N (8 * o + n + k)) then
@@ -279,7 +279,7 @@ theorem decodeBits?_bytes (N : Nat) (o n : Nat) :
 /-- **Deblobbing a tree blob** (GP v0.8.1 eq. `deblob`): with its two length prefixes and the jump-table width
     read off the first octets (`h1`, `hz`, `h3`, decided by the kernel on a handful of octets), the
     blob's size accounting for the jump table, code and bitmask (`hsz`), zero padding bits
-    (`hpad`) and the v0.8.1 limits |**j**| ≤ 𝖹_J, z ≤ 4, |**c**| ≤ 𝖹_C (`hlim`, decided by default),
+    (`hpad`) and the v0.8.1 limits $|\mathbf{j}| \le \mathsf{Z}_J$, $z \le 4$, $|\mathbf{c}| \le \mathsf{Z}_C$ (`hlim`, decided by default),
     it parses to the code, bitmask and jump table at the offsets the header gives. -/
 theorem parse?_ba (N : Nat) (o n : Nat) {jLen p1 z cLen p2 : Nat}
     (h1 : Blob.decodeNat? (ba N o n) 0 = some (jLen, p1))
@@ -318,7 +318,7 @@ theorem parse?_ba (N : Nat) (o n : Nat) {jLen p1 z cLen p2 : Nat}
   rw [hk, decodeBits?_bytes, ite_eq_left hpad]
   simp only [Option.bind_some, ba, Nat.add_assoc]
 
-/-- The reads of the program with the cLen code octets from octet oc and the bitmask from bit mb:
+/-- The reads of the program with the cLen code octets from octet $oc$ and the bitmask from bit $mb$:
     arithmetic on the tree. -/
 def view (N : Nat) (oc mb cLen : Nat) : CodeView where
   zeta i := if i < cLen then byte N (oc + i) else 0
@@ -367,7 +367,7 @@ theorem jamParse?_ba (N : Nat) (o n : Nat) {oLen wLen z s pLen : Nat}
   simp only [Option.bind_some, ba]
   rw [show o + 11 + oLen + wLen + 4 = o + 15 + oLen + wLen by omega]
 
-/-- Octets o, …, o + n − 1 read from the chunks k … k + m − 1 alone. -/
+/-- Octets $o, \dots, o + n - 1$ read from the chunks $k \dots k + m - 1$ alone. -/
 theorem bytes_ofChunks_window (cs : List Nat) (h : ∀ c ∈ cs, c < 2 ^ 8192) (k m o n : Nat)
     (h1 : 1024 * k ≤ o) (h2 : o + n ≤ 1024 * (k + m)) :
     bytes (ofChunks cs) o n = bytes (ofChunks ((cs.drop k).take m)) (o - 1024 * k) n := by

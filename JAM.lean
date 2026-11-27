@@ -32,6 +32,7 @@ import JAM.BlockImport
 import JAM.Refine
 import JAM.Auditing
 import JAM.Guarantee
+import JAM.BestChain
 import JAM.Theorems.HostGas
 import JAM.Theorems.Confinement
 import JAM.Theorems.RefineContract
@@ -40,6 +41,7 @@ import JAM.Theorems.KeepROAcc
 import JAM.Theorems.GrowHeap
 import JAM.Theorems.Safrole
 import JAM.Theorems.Auditing
+import JAM.Theorems.BestChain
 
 /-!
 # Gray Paper v0.8.0, Appendix B and the protocol terms it needs
@@ -77,4 +79,6 @@ Built on `PVM` (Appendix A).
 * `JAM.Theorems.HostGas` — the dispatchers of Ψ_A, Ψ_R and Ψ_I never add gas
 * `JAM.Theorems.Safrole` — Safrole invariants: γ_A' sorted, unique and bounded by 𝖤; Z a permutation; |γ_S'| = 𝖤; η' and key well-formedness
 * `JAM.Theorems.Auditing` — auditing invariants: ℱ a permutation, tranche 0 draws at most ten distinct cores, no no-shows no escalation, U monotone in J_⊤ and the §10 verdict link
+* `JAM.BestChain` — the best chain (§19): acceptable blocks (19.1)–(19.3) with the §17.3 disregard rule, the ticketed metric m (19.4), the best heads and the §5 timeslot rule
+* `JAM.Theorems.BestChain` — best-chain facts: best heads are acceptable, extend the finalized block and maximise m; independence from store order
 -/

@@ -208,7 +208,7 @@ The first two points are note 29, and the others the notes they name, in the mod
   conditions of (10.6); then the order of the faults (10.9) and, for each fault, the conditions of
   (10.7); and last (10.13). A key outside $`\mathbf{k}` is reported as already an offender when it is
   in $`\psi_O`, and as an unknown guarantor or auditor otherwise.
-* *Note v0.8.1-A34, overlapping cases of V.* When $`|\mathbf{k}| < 3`, $`\lfloor 1/3 |\mathbf{k}| \rfloor = 0`, so the cases $`\bot` and
+* *Note v0.8.1-A50, overlapping cases of V.* When $`|\mathbf{k}| < 3`, $`\lfloor 1/3 |\mathbf{k}| \rfloor = 0`, so the cases $`\bot` and
   $`\emptyset` of (10.12) both apply at $`t = 0`. {api}`JAM.verdictOutcome` takes $`\bot`. The full and tiny
   chains have $`|\mathbf{k}| = 1023` and $`6`, and every validator count in the paper is a multiple of 3 of at least 6
   (eq. (6.8)), so the cases never overlap there.

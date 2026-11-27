@@ -305,8 +305,8 @@ These points are recorded, under the note numbers given, in the model's
   rows or against the other conditions. The model uses the test vectors' later error names
   (`refineLoadTooHigh`, `badExportsCount`, `bundleTooBig`, `authGasTooHigh`) and checks the rows in
   the paper's order ({api}`JAM.checkReportLoad`).
-* *Note v0.8.1-A35, report equality in (11.17).* $`(p_\mathbf{g})_\mathbf{r} \in \mathbf{R}` compares work-reports without
+* *Note v0.8.1-A51, report equality in (11.17).* $`(p_\mathbf{g})_\mathbf{r} \in \mathbf{R}` compares work-reports without
   saying how. The model compares their encodings ({api}`JAM.assurances`).
-* *Note v0.8.1-A37, a digest for a service that does not exist.* (11.32) and (11.45) read
+* *Note v0.8.1-A53, a digest for a service that does not exist.* (11.32) and (11.45) read
   $`\delta[\mathbf{d}_s]`, which is undefined when $`\mathbf{d}_s \notin \mathcal{K}(\delta)`. The model rejects such a report
   (`badServiceId`, the test vectors' name), before the minimum-gas condition ({api}`JAM.guarantees`).

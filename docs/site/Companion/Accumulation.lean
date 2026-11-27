@@ -146,13 +146,11 @@ types of the accumulation outputs and of the gas used:
 
 {gpeq "12.15"}
 
-{transcribed "12.16" "1577c8ac61"}
-
-$$`B \equiv \{\![\,(\mathbb{N}_S, \mathbb{H})\,]\!\} \qquad U \equiv \llbracket (\mathbb{N}_S, \mathbb{N}_G) \rrbracket \qquad \text{(12.16)}`
+{gpeq "12.16"}
 
 {leanSource JAM.PartialState}
 
-The model flattens the privileges $`\mathbf{x} = (m, v, r, \mathbf{a}, \mathbf{z})` (eq. (9.9), see
+The model flattens the privileges $`\mathbf{x} = (m, v, r, \mathbf{a}, \mathbf{z})` (eq. {eq}`9.9`, see
 {ref "accounts-privileges"}[§9.4]) into the fields `manager`, `delegator`, `registrar`, `assigners`
 and `alwaysAcc`.
 
@@ -175,10 +173,10 @@ $$`\begin{aligned} \text{where } q &= \left(t_d \in \mathcal{K}(\mathbf{d}) \wed
 
 {leanSource JAM.partitionXfers}
 
-$`\mathbf{d}[s]_e` is the effective supervisor of eq. (9.11), {api}`JAM.effectiveSupervisor`.
+$`\mathbf{d}[s]_e` is the effective supervisor of eq. {eq}`9.11`, {api}`JAM.effectiveSupervisor`.
 The model's `T` is the paper's $`T^*`, called with `[]` for $`\emptyset`; the sets $`\mathbf{s}` and
 $`\mathbf{i}` are lists, used only through membership. A transfer may still be lost: if its
-destination has been ejected by the time it is accumulated, $`\Psi_A` discards it (eq. (B.9)).
+destination has been ejected by the time it is accumulated, $`\Psi_A` discards it (eq. {eq}`B.9`).
 
 ## Δ₊, the outer accumulation function
 
@@ -298,7 +296,7 @@ $$`\begin{aligned} \text{where: } g &= \mathcal{U}(\mathbf{f}_s, 0) + \sum_{t \i
 {leanSource JAM.accOne}
 
 $`\mathcal{U}(\mathbf{f}_s, 0)` is $`\mathbf{f}_s` if present and 0 otherwise, `f.getD s 0`. `slot`
-is $`\tau'`. {api}`JAM.psiA` is $`\Psi_A` (eq. (B.9)): it credits the incoming transfers, marks
+is $`\tau'`. {api}`JAM.psiA` is $`\Psi_A` (eq. {eq}`B.9`): it credits the incoming transfers, marks
 $`s` modified if any came in, and runs $`s`'s code.
 
 # Final state integration (§12.3)
@@ -316,16 +314,14 @@ $$`\begin{aligned} \text{let } g &= \max\left(\mathsf{G}_T, \mathsf{G}_A \cdot \
 
 {gpeq "12.26"}
 
-{transcribed "12.27" "c59b0af023"}
-
-$$`(\mathbf{d} : \delta^\dagger, \mathbf{i} : \iota', \mathbf{q} : \phi', \mathbf{x} : \chi') \equiv \mathbf{e}' \qquad \text{(12.27)}`
+{gpeq "12.27"}
 
 The accumulation statistics count, for each service, the digests accumulated, the transfers
 processed and the gas used, and keep the services where any of these is non-zero:
 
-{transcribed "12.28" "e96c3780e4"}
+{gpeq "12.28"}
 
-$$`\mathbf{S} \in \langle \mathbb{N}_S \to (\mathbb{N}, \mathbb{N}, \mathbb{N}_G) \rangle \qquad \text{(12.28)}`
+{transcribed "12.29" "44a82d6f2f"}
 
 $$`\begin{aligned} \mathbf{S} &\equiv \left\{ (s \mapsto S(s)) \;\middle|\; S(s) \ne (0, 0, 0) \right\} \qquad \text{(12.29)} \\ \text{where } S(s) &\equiv (N(s), X(s), G(s)) \\ \text{and } N(s) &\equiv \left| \left[ d \;\middle|\; r \mathrel{\mathrlap{<}{-}} \mathbf{R}^*_{\dots n},\, d \mathrel{\mathrlap{<}{-}} r_\mathbf{d},\, d_s = s \right] \right| \\ \text{and } X(s) &\equiv \left| \left[ t \;\middle|\; t \mathrel{\mathrlap{<}{-}} \mathbf{t},\, t_d = s \right] \right| \\ \text{and } G(s) &\equiv \sum_{(s, u) \in \mathbf{u}} (u) \end{aligned}`
 
@@ -349,18 +345,18 @@ the statistics, or the error that makes the block invalid:
 
 How the code maps to the equations:
 
-* `g` and the call to {api}`JAM.accSeq` are (12.25); `params.blockAccGas`, `params.reportAccGas` and
+* `g` and the call to {api}`JAM.accSeq` are {eq}`12.25`; `params.blockAccGas`, `params.reportAccGas` and
   `params.coreCount` are $`\mathsf{G}_T`, $`\mathsf{G}_A` and $`\mathsf{C}`. The partial state is
   `pre.pstate`, and its `alwaysAcc` is $`\chi_\mathbf{z}`. `rounds` is the fuel for $`\Delta_+`.
 * `stats` is $`\mathbf{S}`, with `N`, `T`, `G` for $`N(s)`, $`X(s)`, $`G(s)`; `accounted` is
   $`\mathbf{R}^*_{\dots n}`.
-* `accounts` is $`\delta^\ddagger` (12.30, 12.31).
-* `newAcc` and `accumulated` are (12.32, 12.33). In `ready`, entry `idx` is
+* `accounts` is $`\delta^\ddagger` {eq}`12.30, 12.31`.
+* `newAcc` and `accumulated` are {eq}`12.32, 12.33`. In `ready`, entry `idx` is
   $`{\omega'}^{\circlearrowleft}_{m-i}` with $`i = (m - \mathit{idx}) \bmod \mathsf{E}`, and the three branches
-  are the cases of (12.34).
+  are the cases of {eq}`12.34`.
 * `theta` is $`\theta'`, and `root` is $`\mathcal{M}_B(\mathbf{s}, \mathcal{H}_K)`, the Keccak Merkle root over
   $`\mathbf{s} = [\mathcal{E}_4(s) \frown \mathcal{E}(h) \mid (s, h) \mathrel{\mathrlap{<}{-}} \theta']` that {ref "history"}[§7] appends to the
-  accumulation-output log (eqs. (7.6, 7.7)); $`\mathcal{E}(h)` of a hash is the hash itself.
+  accumulation-output log (eqs. {eq}`7.6, 7.7`); $`\mathcal{E}(h)` of a hash is the hash itself.
 
 # Preimage integration (§12.4)
 %%%
@@ -389,7 +385,7 @@ are disregarded, by $`I`:
 {leanSource JAM.preimages}
 
 `prior` is $`\delta` and `postAcc` is $`\delta^\ddagger`. The extrinsic is passed to
-{api}`JAM.integrateProvisions` as a set, which it is by (12.36).
+{api}`JAM.integrateProvisions` as a set, which it is by {eq}`12.36`.
 
 # What is checked
 %%%
@@ -453,7 +449,7 @@ tag := "accumulation-readings"
 Each is a note in the model's
 [notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues):
 
-* *Note v0.8.1-A1, the post-state of $`N(\mathbf{o})`.* In (12.19), $`N(\mathbf{o})` gives every
+* *Note v0.8.1-A1, the post-state of $`N(\mathbf{o})`.* In {eq}`12.19`, $`N(\mathbf{o})` gives every
   field a value except the post-state. The model takes the round's input state $`\mathbf{e}`
   ({api}`JAM.discardIfBoth`), following the prose: "discard all results of the service's execution",
   with only provided preimages excepted. Taking $`\mathbf{o}`'s post-state instead would keep a
@@ -462,7 +458,7 @@ Each is a note in the model's
   supervisor's own run is also discarded (its own supervisor modified it too), both changes to the
   service are lost. This is filed as
   [graypaper#592](https://github.com/gavofyork/graypaper/issues/592).
-* *Note v0.8.1-A46, $`\theta'` as an ordered set.* $`\mathbf{b}` is a set of pairs, so (12.26) lists each pair once.
+* *Note v0.8.1-A46, $`\theta'` as an ordered set.* $`\mathbf{b}` is a set of pairs, so {eq}`12.26` lists each pair once.
   The model orders them by service and then by hash ({api}`JAM.accumulate`, `theta`), the order in
   which sets are serialized.
 * *Note v0.8.1-A45, the effective supervisor of a service with no account.* $`\mathbf{d}[s]_e` is defined only for
@@ -478,5 +474,5 @@ Each is a note in the model's
 * *Note 25 and v0.8.1-A3, the preimages extrinsic.* The paper names no errors for an invalid
   $`\mathbf{E}_P` and orders none of its conditions. The model checks the two bounds, then the order,
   then $`Y`, with the error names of {api}`JAM.PreimageError` (the test vectors' names where they
-  exist). The order on pairs, which (12.36) needs, is by service and then by the data octets
+  exist). The order on pairs, which {eq}`12.36` needs, is by service and then by the data octets
   lexicographically ({api}`JAM.preimageLt`).

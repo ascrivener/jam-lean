@@ -24,7 +24,7 @@ Safrole fixes which validator may seal each timeslot of an epoch. Validators sub
 tickets during an epoch, and the best tickets become the next epoch's slot sealers. If there are
 not enough tickets, a fallback sequence of keys drawn with on-chain entropy is used instead. In
 the model, the whole transition of GP v0.8.1 §6 is one function, {api}`JAM.safrole`; the seal and entropy-source
-conditions on the header (eqs. (6.17)–(6.19)) are checked separately, by {api}`JAM.sealValid`. This chapter
+conditions on the header (eqs. {eq}`6.17`–{eq}`6.19`) are checked separately, by {api}`JAM.sealValid`. This chapter
 goes through it in the paper's order: the entropy accumulator (§6.4), the slot-sealer sequence with
 $`Z` and $`F` (§6.5), and the ticket accumulator (§6.7).
 
@@ -33,7 +33,7 @@ covers. Its full API is on the [doc-gen4 page](https://ascrivener.github.io/jam-
 
 # The state
 
-The paper's Safrole state is $`\gamma = (\gamma_P, \gamma_Z, \gamma_S, \gamma_A)` (eq. (6.3), `consensusstatecomposition`), together
+The paper's Safrole state is $`\gamma = (\gamma_P, \gamma_Z, \gamma_S, \gamma_A)` {eq}`6.3`, together
 with $`\tau`, $`\eta` and the key sets $`\kappa`, $`\lambda` and $`\iota`. The model keeps them in one structure:
 
 {mathdoc JAM.SafroleState}
@@ -43,7 +43,7 @@ with $`\tau`, $`\eta` and the key sets $`\kappa`, $`\lambda` and $`\iota`. The m
 tag := "safrole-entropy"
 %%%
 
-$`\eta \in \llbracket\mathbb{H}\rrbracket_4` (eq. (6.23), `entropycomposition`). Every block folds the VRF output of its entropy source into
+$`\eta \in \llbracket\mathbb{H}\rrbracket_4` {eq}`6.23`. Every block folds the VRF output of its entropy source into
 $`\eta_0`, and an epoch change rotates $`\eta_0, \eta_1, \eta_2` into $`\eta_1, \eta_2, \eta_3`:
 
 {gpeq "6.24, 6.25"}
@@ -51,7 +51,7 @@ $`\eta_0`, and an epoch change rotates $`\eta_0, \eta_1, \eta_2` into $`\eta_1, 
 One reading appears in the model:
 
 * $`\mathcal{Y}(\mathbf{H}_V)`, the VRF output of the header's entropy-source signature, is an input to the transition
-  (`SafroleInput.entropy`). The header condition it comes from, eq. (6.19), `vrfsigcheck`, is checked
+  (`SafroleInput.entropy`). The header condition it comes from, {eq}`6.19`, is checked
   separately by {api}`JAM.sealValid`.
 
 $`\mathcal{H}` is Blake2b-256, the paper's hash function ({ref "primitives"}[§3.8]), here {api}`JAM.blake`.
@@ -65,7 +65,7 @@ In {api}`JAM.safrole` these are the lines under `-- Entropy (§6.4)`: `eta0'` an
 tag := "safrole-sealers"
 %%%
 
-The posterior sealer sequence $`\gamma'_S` (eq. (6.26), `slotkeysequence`) is the outside-in ordering $`Z(\gamma_A)` of the
+The posterior sealer sequence $`\gamma'_S` {eq}`6.26` is the outside-in ordering $`Z(\gamma_A)` of the
 ticket accumulator when the block opens the next epoch, the previous block was in the closing
 period ($`m \geq \mathsf{Y}`) and $`\gamma_A` is full. Within an epoch it is unchanged. Otherwise it is the fallback keys:
 
@@ -109,8 +109,8 @@ tag := "safrole-tickets"
 %%%
 
 A ticket carries an entry index below $`n` and a Ring VRF proof over the context
-$`\mathsf{X}_T \frown \eta'_2 \mathbin{+\!\!+} e` (eq. (6.31), `ticketsextrinsic`; $`\mathsf{X}_T` is `$jam_ticket_seal`). The extrinsic is bounded by $`\mathsf{K}` before the
-epoch's tail and by 0 within it (eq. (6.32), `enforceticketlimit`):
+$`\mathsf{X}_T \frown \eta'_2 \mathbin{+\!\!+} e` {eq}`6.31` ($`\mathsf{X}_T` is `$jam_ticket_seal`). The extrinsic is bounded by $`\mathsf{K}` before the
+epoch's tail and by 0 within it {eq}`6.32`:
 
 {gpeq "6.31, 6.32"}
 
@@ -136,7 +136,7 @@ What the model proves about the accumulator:
 
 {mathdoc JAM.safrole_accumulator_sorted}
 
-The winning-tickets marker $`\mathbf{H}_W` (eq. (6.30)) is $`Z(\gamma_A)` in the first block after the submission period
+The winning-tickets marker $`\mathbf{H}_W` (eq. {eq}`6.30`) is $`Z(\gamma_A)` in the first block after the submission period
 when the accumulator is full, and $`\emptyset` otherwise:
 
 {mathdoc JAM.safrole_ticketsMark_length}

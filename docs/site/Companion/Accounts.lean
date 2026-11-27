@@ -83,7 +83,7 @@ history of the preimage's availability. The paper's invariant ties the two toget
 
 {gpeq "9.6"}
 
-The model does not carry (9.6) as a property of {api}`JAM.ServiceAccount`, and no theorem yet
+The model does not carry {eq}`9.6` as a property of {api}`JAM.ServiceAccount`, and no theorem yet
 states that the transitions which change $`\mathbf{p}` and $`\mathbf{l}` preserve it.
 
 A history of length 0 means the preimage is requested but not supplied; 1, available since
@@ -101,8 +101,8 @@ $$`\text{where } I(\mathbf{l}, t) = \begin{cases} \bot & \text{if } [] = \mathbf
 {leanSource JAM.ServiceAccount.historicalLookup}
 
 The paper first types $`\Lambda` with $`t` restricted to the last $`\mathsf{D}` slots,
-$`\mathbb{N}_{(\mathbf{H}_T - \mathsf{D}) \dots \mathbf{H}_T}` (eq. (9.5)), and then defines it for
-any $`t \in \mathbb{N}_T` in (9.7). The model follows (9.7): {api}`JAM.ServiceAccount.historicalLookup`
+$`\mathbb{N}_{(\mathbf{H}_T - \mathsf{D}) \dots \mathbf{H}_T}` (eq. {eq}`9.5`), and then defines it for
+any $`t \in \mathbb{N}_T` in {eq}`9.7`. The model follows {eq}`9.7`: {api}`JAM.ServiceAccount.historicalLookup`
 takes any $`t`; keeping $`t` in that range is left to its callers.
 
 # Storage and requests in the model
@@ -110,9 +110,9 @@ takes any $`t`; keeping $`t` in that range is left to its callers.
 tag := "accounts-entries"
 %%%
 
-{ref "statemerkle"}[Appendix D] (eq. (D.2)) serializes each storage item under the state key
+{ref "statemerkle"}[Appendix D] (eq. {eq}`D.2`) serializes each storage item under the state key
 $`C(s, \mathcal{E}_4(2^{32}-1) \frown \mathbf{k})` and each request under
-$`C(s, \mathcal{E}_4(z) \frown h)`, where $`C(s, h)` (eq. (D.1)) interleaves $`\mathcal{E}_4(s)` with the
+$`C(s, \mathcal{E}_4(z) \frown h)`, where $`C(s, h)` (eq. {eq}`D.1`) interleaves $`\mathcal{E}_4(s)` with the
 first 27 octets of $`\mathcal{H}(h)`. The paper adds that storage keys cannot be inspected or enumerated, so "implementations
 are free to use this fact in order to avoid storing the keys themselves" (§D.1). The model does
 this: it keys $`\mathbf{s}` and $`\mathbf{l}` by those 27 octets, in one dictionary, exactly as

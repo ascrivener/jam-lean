@@ -146,10 +146,10 @@ The model passes $`\delta` as the argument `d`, and the extrinsic data $`\overli
 
 {leanSource JAM.psiR}
 
-The dispatcher $`F` (eq. (B.6)) gives `gas`, `grow_heap` and `fetch` the refine arguments
+The dispatcher $`F` (eq. {eq}`B.6`) gives `gas`, `grow_heap` and `fetch` the refine arguments
 ($`\mathbf{p}`, the zero hash in place of entropy, $`\mathbf{r}`, $`i`, $`\overline{\mathbf{i}}`,
 $`\overline{\mathbf{x}}`) and adds the refine functions with identifiers 7 to 15. Any other identifier
-is charged $`\mathsf{M}_\emptyset` and answered with $`\varphi'_7 = \mathtt{WHAT}`, as in (B.2).
+is charged $`\mathsf{M}_\emptyset` and answered with $`\varphi'_7 = \mathtt{WHAT}`, as in {eq}`B.2`.
 In the model, the fixed arguments are collected in {api}`JAM.RefineHost.Env`:
 
 {leanSource JAM.RefineHost.dispatch}
@@ -204,13 +204,13 @@ already a service:
 `checkId` takes fuel because Lean needs every function to terminate; it is given
 $`|\mathbf{e}_\mathbf{d}| + 1` steps.
 
-The dispatcher $`F` (eq. (B.11)) has the general functions `gas`, `grow_heap` and `fetch` (with the
+The dispatcher $`F` (eq. {eq}`B.11`) has the general functions `gas`, `grow_heap` and `fetch` (with the
 entropy $`\eta'_0` and the inputs $`\mathbf{i}`), and the accumulate functions with identifiers 3 to 6
-and 16 to 29. Unknown identifiers are handled as in (B.2):
+and 16 to 29. Unknown identifiers are handled as in {eq}`B.2`:
 
 {leanSource JAM.AccHost.dispatch}
 
-The collapse $`C` (eq. (B.12)) keeps the exceptional dimension $`\mathbf{y}` when the machine ran out
+The collapse $`C` (eq. {eq}`B.12`) keeps the exceptional dimension $`\mathbf{y}` when the machine ran out
 of gas or panicked. Otherwise it keeps $`\mathbf{x}`, and an output $`\mathbf{o} \in \mathbb{H}` (32 octets)
 becomes the yield:
 
@@ -285,7 +285,7 @@ $`g = \mathsf{M}_G`. Out: $`\varphi'_7 = \varrho^*`, the gas left after the char
 
 *`grow_heap` = 1*, $`\Omega_{\text{♊}}(\varrho, \varphi, \mu, \mathfrak{x}, \mathfrak{j})`. In:
 $`\varphi_7`, the page the heap should reach. The heap's first page $`a` and its bound $`b` come from the
-program blob $`\mathfrak{j}` (its read-only data $`\mathbf{o}` and stack size $`s`, eq. (A.42)), and
+program blob $`\mathfrak{j}` (its read-only data $`\mathbf{o}` and stack size $`s`, eq. {eq}`A.42`), and
 $`h = a + c` is the current top, where $`c` counts the writable pages in $`\mathbb{N}_{a \dots b}`:
 
 $$`a = \frac{2\mathsf{Z}_Z + Z(|\mathbf{o}|)}{\mathsf{Z}_P}, \quad b = \frac{2^{32} - 3\mathsf{Z}_Z - \mathsf{Z}_I - Z(s)}{\mathsf{Z}_P}, \quad \varphi'_7 \equiv \begin{cases} h & \text{if } \varphi_7 \le h \vee \varphi_7 > b \\ \varphi_7 & \text{otherwise} \end{cases}, \quad (\mu'_\mathbf{a})_{a \dots \varphi'_7} \equiv [\mathrm{W}, \dots, \mathrm{W}], \quad g \equiv \mathsf{M}_{\text{♊},c} + (\varphi'_7 - h) \cdot \mathsf{M}_{\text{♊},p}`
@@ -653,9 +653,9 @@ These points are recorded in the model's
   both as arguments of {api}`JAM.psiR` (`extrinsics` and `d`), and {api}`JAM.psiI` takes the account
   state the same way.
 * *Note 20, `pages`.* The row defines only $`(\varphi'_7, \mathbf{m}')`, with no $`\varepsilon'`. The
-  model uses the default $`\varepsilon' = \blacktriangleright` of (B.17): `pages` never panics
+  model uses the default $`\varepsilon' = \blacktriangleright` of {eq}`B.17`: `pages` never panics
   ({api}`JAM.RefineHost.pages`).
-* *Note v0.8.1-A19, `new` and check.* $`\text{check}` (B.13) tests $`i \notin \mathcal{K}(\mathbf{e}_\mathbf{d})`
+* *Note v0.8.1-A19, `new` and check.* $`\text{check}` {eq}`B.13` tests $`i \notin \mathcal{K}(\mathbf{e}_\mathbf{d})`
   against the state passed to $`\Psi_A`, but `new` uses it in the middle of an invocation. The model
   checks against the current accounts $`(\mathbf{x}_\mathbf{e})_\mathbf{d}` ({api}`JAM.AccHost.new`);
   the two differ only if the sequence meets an identifier created or ejected earlier in the same

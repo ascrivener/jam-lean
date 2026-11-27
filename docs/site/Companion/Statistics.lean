@@ -52,7 +52,7 @@ assurances $`a` it made. The model's record is {api}`JAM.ValidatorRecord`:
 The update has three stages. Assurances are credited first, over the prior validator set. At an
 epoch change the accumulator is moved to $`\pi_L` and a fresh one started. Then the block's author is
 credited its block, tickets and preimages, and every validator whose Ed25519 key is in the reporters
-set $`\mathbf{G}` (eq. (11.27), {ref "reports-guarantees"}[§11 chapter]) a guarantee:
+set $`\mathbf{G}` (eq. {eq}`11.27`, {ref "reports-guarantees"}[§11 chapter]) a guarantee:
 
 {gpeq "13.4"}
 
@@ -82,8 +82,8 @@ The model's records are {api}`JAM.CoreRecord` and {api}`JAM.ServiceRecord`.
 
 ## Cores
 
-A core's record sums the load of the reports guaranteed on it in this block ($`\mathbf{I}`, eq. (11.29)), the
-data-availability load of the reports that became available on it ($`\mathbf{R}`, eq. (11.16)), and the
+A core's record sums the load of the reports guaranteed on it in this block ($`\mathbf{I}`, eq. {eq}`11.29`), the
+data-availability load of the reports that became available on it ($`\mathbf{R}`, eq. {eq}`11.16`), and the
 number of assurances that set its bit:
 
 {transcribed "13.9" "a7ecea4217"}
@@ -117,7 +117,7 @@ $$`\forall s \in \mathbf{s} : \pi'_S[s] \equiv \begin{pmatrix} i \mathrel{\subst
 
 {gpeq "13.17"}
 
-$`\mathbf{S}` is the accumulation statistics of {ref "accumulation"}[§12] (eq. (12.29)), and $`\mathcal{U}(x, y)` is $`x` unless $`x` is $`\emptyset`, in which case it
+$`\mathbf{S}` is the accumulation statistics of {ref "accumulation"}[§12] (eq. {eq}`12.29`), and $`\mathcal{U}(x, y)` is $`x` unless $`x` is $`\emptyset`, in which case it
 is $`y`. v0.8.1 states the provision sum's filter $`\mathbf{p}_s = s` explicitly (GP #567). In {api}`JAM.serviceStats`,
 `active` is $`\mathbf{s}`, and `(acc.lookup s).getD (0, 0, 0)` is $`\mathcal{U}(\mathbf{S}[s], (0, 0, 0))`:
 
@@ -137,8 +137,8 @@ newly available reports and no assurances.
 tag := "statistics-readings"
 %%%
 
-* *Note 23, the length of a fresh accumulator.* At an epoch change, (13.5) starts $`\pi^\ddagger_V` as
-  $`[(0, \dots), \dots]`, with no stated length. $`|\pi'_V| = |\kappa'|` (13.3) implies it, and the model uses $`|\kappa'|`
+* *Note 23, the length of a fresh accumulator.* At an epoch change, {eq}`13.5` starts $`\pi^\ddagger_V` as
+  $`[(0, \dots), \dots]`, with no stated length. $`|\pi'_V| = |\kappa'|` {eq}`13.3` implies it, and the model uses $`|\kappa'|`
   ({api}`JAM.validatorStats`). This is recorded in the model's
   [notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues).
 * *The reporters set as an input.* $`\mathbf{G}` is defined in {ref "reports"}[§11.4] from the guarantor assignments, where the

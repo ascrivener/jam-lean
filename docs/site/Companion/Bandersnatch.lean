@@ -72,8 +72,8 @@ tag := "bandersnatch-interface"
 %%%
 
 Each field of {api}`JAM.Crypto` stands for one of these sets or functions: `edVerify` for membership
-in $`\bar{\mathbb{V}}_k\langle m \rangle`, `bsVerify` for (G.1), `bsOut` for (G.2), `bsRingRoot` for (G.3),
-`bsRingVerify` for (G.4) and `bsRingOut` for (G.5). Membership in a set is a Boolean function of the
+in $`\bar{\mathbb{V}}_k\langle m \rangle`, `bsVerify` for {eq}`G.1`, `bsOut` for {eq}`G.2`, `bsRingRoot` for {eq}`G.3`,
+`bsRingVerify` for {eq}`G.4` and `bsRingOut` for {eq}`G.5`. Membership in a set is a Boolean function of the
 key (or root), the context, the message and the signature, in the paper's argument order:
 
 {leanSource JAM.Crypto}

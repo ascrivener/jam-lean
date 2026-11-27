@@ -86,15 +86,15 @@ verdict may be about a report already judged:
 
 In the model, $`K` is {api}`JAM.judgeKeys`, with $`\kappa` and $`\lambda` entering only through their Ed25519
 keys. The type $`\lfloor \tau/\mathsf{E} \rfloor - \mathbb{N}_2` of $`a` becomes the condition $`a = e \vee a + 1 = e`. The other conditions of
-(10.4), (10.10) and (10.11) for one verdict are {api}`JAM.checkVerdict`, which also returns the
+{eq}`10.4`, {eq}`10.10` and {eq}`10.11` for one verdict are {api}`JAM.checkVerdict`, which also returns the
 verdict's outcome:
 
 {leanSource JAM.judgeKeys}
 
 {leanSource JAM.checkVerdict}
 
-{api}`JAM.Xvalidif` gives $`\mathsf{X}_v`. In {api}`JAM.disputesTransition` the order of (10.8) is
-checked by {api}`JAM.orderedUniqBy`, after the length bounds of (10.2) and before any verdict's own
+{api}`JAM.Xvalidif` gives $`\mathsf{X}_v`. In {api}`JAM.disputesTransition` the order of {eq}`10.8` is
+checked by {api}`JAM.orderedUniqBy`, after the length bounds of {eq}`10.2` and before any verdict's own
 conditions.
 
 ## The verdict sequence v (eq. 10.12)
@@ -115,7 +115,7 @@ $`V` is {api}`JAM.verdictOutcome`. It returns `none` where the paper's $`V` is u
 The good-verdict count is the supermajority that {ref "auditing"}[§17]'s auditing uses: of `V` validators, `t` positive
 judgments are more than two thirds ($`3t > 2V`) exactly when there are at least $`\lfloor 2V/3 \rfloor + 1` of them.
 In the theorem `V` is the validator count and `t` the number of positive judgments; `V` is not the
-function $`V` of (10.12).
+function $`V` of {eq}`10.12`.
 
 {mathdoc JAM.Auditing.supermajority_iff_verdictGood}
 
@@ -140,7 +140,7 @@ Every good verdict must come with at least one fault for its report:
 {gpeq "10.13"}
 
 These checks are the culprit, fault and good-verdict loops of {api}`JAM.disputesTransition`,
-shown in full {ref "disputes-transition"}[below]. $`\mathsf{X}_G` (`$jam_guarantee`, eq. (11.28)) is
+shown in full {ref "disputes-transition"}[below]. $`\mathsf{X}_G` (`$jam_guarantee`, eq. {eq}`11.28`) is
 {api}`JAM.Xguarantee`.
 
 # Clearing the availability assignments (eq. 10.14)
@@ -161,6 +161,8 @@ The report is hashed through its encoding, as $`\mathcal{H}` applies to the code
 %%%
 tag := "disputes-posterior"
 %%%
+
+{transcribed "10.15, 10.16, 10.17, 10.18" "08447e65ca,3b5958e84d,8bfbd40d08,6898d905e6"}
 
 $$`\begin{aligned} \psi'_G &\equiv \psi_G \cup \{ r \mid (r, \top) \in \mathbf{v} \} & \text{(10.15)} \\ \psi'_B &\equiv \psi_B \cup \{ r \mid (r, \bot) \in \mathbf{v} \} & \text{(10.16)} \\ \psi'_W &\equiv \psi_W \cup \{ r \mid (r, \emptyset) \in \mathbf{v} \} & \text{(10.17)} \\ \psi'_O &\equiv \psi_O \cup \{ f \mid (f, \dots) \in \mathbf{E}_C \} \cup \{ f \mid (f, \dots) \in \mathbf{E}_F \} & \text{(10.18)} \end{aligned}`
 
@@ -205,21 +207,21 @@ The first two points are note 29, and the others the notes they name, in the mod
   with $`v = \top` on a report with a good verdict. The model reads a chain.
 * *Errors and their order.* The paper names no errors for an invalid disputes extrinsic and gives
   no order between its conditions. The model uses the test vectors' error names where they
-  exist ({api}`JAM.DisputesError`). It checks the length bounds of (10.2) first, then each part's order
-  before the conditions on its elements: the order of the verdicts (10.8); then, for each verdict, its epoch index (the type
-  $`\lfloor \tau/\mathsf{E} \rfloor - \mathbb{N}_2` of (10.2)), the order of its judgments (10.11), their number and
-  each judge's index and signature (10.4), that its report is not already judged (10.10), and that
-  $`V` is defined (10.12); then the order of the culprits (10.9) and, for each culprit, the
-  conditions of (10.6); then the order of the faults (10.9) and, for each fault, the conditions of
-  (10.7); and last (10.13). A key outside $`\mathbf{k}` is reported as already an offender when it is
+  exist ({api}`JAM.DisputesError`). It checks the length bounds of {eq}`10.2` first, then each part's order
+  before the conditions on its elements: the order of the verdicts {eq}`10.8`; then, for each verdict, its epoch index (the type
+  $`\lfloor \tau/\mathsf{E} \rfloor - \mathbb{N}_2` of {eq}`10.2`), the order of its judgments {eq}`10.11`, their number and
+  each judge's index and signature {eq}`10.4`, that its report is not already judged {eq}`10.10`, and that
+  $`V` is defined {eq}`10.12`; then the order of the culprits {eq}`10.9` and, for each culprit, the
+  conditions of {eq}`10.6`; then the order of the faults {eq}`10.9` and, for each fault, the conditions of
+  {eq}`10.7`; and last {eq}`10.13`. A key outside $`\mathbf{k}` is reported as already an offender when it is
   in $`\psi_O`, and as an unknown guarantor or auditor otherwise.
 * *Note v0.8.1-A54, the length bounds.* No error is named for a disputes extrinsic longer than
-  (10.2) allows, and no test vector has one. The model uses its own names: `tooManyVerdicts`,
+  {eq}`10.2` allows, and no test vector has one. The model uses its own names: `tooManyVerdicts`,
   `tooManyCulprits` and `tooManyFaults` ({api}`JAM.DisputesError`).
 * *Note v0.8.1-A50, overlapping cases of V.* When $`|\mathbf{k}| < 3`, $`\lfloor 1/3 |\mathbf{k}| \rfloor = 0`, so the cases $`\bot` and
-  $`\emptyset` of (10.12) both apply at $`t = 0`. {api}`JAM.verdictOutcome` takes $`\bot`. The full and tiny
+  $`\emptyset` of {eq}`10.12` both apply at $`t = 0`. {api}`JAM.verdictOutcome` takes $`\bot`. The full and tiny
   chains have $`|\mathbf{k}| = 1023` and $`6`, and every validator count in the paper is a multiple of 3 of at least 6
-  (eq. (6.8)), so the cases never overlap there.
+  (eq. {eq}`6.8`), so the cases never overlap there.
 * *Note v0.8.1-A7, context strings.* The paper's wording leaves open whether the `$` of
   `$jam_valid`, `$jam_invalid` and `$jam_guarantee` is an octet of the signed message. The note
   records that every signature in the v0.8.0 test vectors verifies only without it. That was

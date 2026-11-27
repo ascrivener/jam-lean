@@ -47,9 +47,9 @@ tag := "reports-state"
 An entry is a guarantee and the timeslot at which it was reported. The model's entry is
 {api}`JAM.AvailAssignment`, and $`\rho` is {api}`JAM.AvailAssignments`.
 
-§11.1 goes on to define the work-report and its parts: the report $`\mathbb{R}` (eq. (11.2)), the
-refinement context $`\mathbb{C}` (eq. (11.4)), the availability specification $`\mathbb{Y}` (eq. (11.5)), the
-work-digest $`\mathbb{D}` (eq. (11.6)) and the work errors $`\mathbb{E}` (eq. (11.7)). The model's types are
+§11.1 goes on to define the work-report and its parts: the report $`\mathbb{R}` (eq. {eq}`11.2`), the
+refinement context $`\mathbb{C}` (eq. {eq}`11.4`), the availability specification $`\mathbb{Y}` (eq. {eq}`11.5`), the
+work-digest $`\mathbb{D}` (eq. {eq}`11.6`) and the work errors $`\mathbb{E}` (eq. {eq}`11.7`). The model's types are
 {api}`JAM.WorkReport`, {api}`JAM.RefineContext`, {api}`JAM.AvailabilitySpec`,
 {api}`JAM.WorkDigest` and {api}`JAM.WorkError`. It also bounds a report's dependencies and size:
 
@@ -57,11 +57,9 @@ work-digest $`\mathbb{D}` (eq. (11.6)) and the work errors $`\mathbb{E}` (eq. (1
 
 {gpeq "11.8"}
 
-{transcribed "11.10" "77c24302d4"}
+{gpeq "11.9, 11.10"}
 
-$$`L(\mathbf{l} \in \mathbb{B} \cup \mathbb{E}) \equiv \begin{cases} |\mathbf{l}| & \text{if } \mathbf{l} \in \mathbb{B} \\ 0 & \text{otherwise} \end{cases} \qquad \text{(11.9)} \qquad \mathsf{W}_R \equiv 48 \cdot 2^{10} \qquad \text{(11.10)}`
-
-With the bound $`1 \le |\mathbf{r}_\mathbf{d}| \le \mathsf{I}` from the type $`\mathbf{d} \in \llbracket \mathbb{D} \rrbracket_{1:\mathsf{I}}` in (11.2), these are
+With the bound $`1 \le |\mathbf{r}_\mathbf{d}| \le \mathsf{I}` from the type $`\mathbf{d} \in \llbracket \mathbb{D} \rrbracket_{1:\mathsf{I}}` in {eq}`11.2`, these are
 {api}`JAM.checkReportShape`, which {api}`JAM.guarantees` applies to each incoming report:
 
 {leanSource JAM.checkReportShape}
@@ -108,7 +106,7 @@ of them when the size of the validator set changes:
 
 {gpeq "11.17"}
 
-Both are in {api}`JAM.assurances`: `available` is the threshold of (11.16), written
+Both are in {api}`JAM.assurances`: `available` is the threshold of {eq}`11.16`, written
 $`3 \cdot \text{count} > 2|\kappa|`, and `ρ'` is $`\rho^\ddagger`:
 
 {leanSource JAM.assurances}
@@ -131,8 +129,8 @@ The cores come from a shuffle with the epochal entropy $`\eta'_2`, rotated every
 
 {gpeq "11.21"}
 
-$`\mathcal{F}` is the shuffle of Appendix F ({ref "shuffle"}[chapter]). $`\Phi` (eq. (6.16)) replaces
-the key of each validator in the punish-set $`\psi'_O` by the null key $`\mathbb{K}_0` (eq. (6.14)), whose
+$`\mathcal{F}` is the shuffle of Appendix F ({ref "shuffle"}[chapter]). $`\Phi` (eq. {eq}`6.16`) replaces
+the key of each validator in the punish-set $`\psi'_O` by the null key $`\mathbb{K}_0` (eq. {eq}`6.14`), whose
 Ed25519 part is $`[2, 0, 0, \dots]`. In the model, which reads only the Ed25519 keys here, $`\Phi` is
 {api}`JAM.blacklist` and the null Ed25519 key is {api}`JAM.nullEdKey`:
 
@@ -161,9 +159,7 @@ three signatures. The extrinsic holds at most one guarantee per core, in core or
 
 {gpeq "11.23"}
 
-{transcribed "11.25" "0d04532899"}
-
-$$`\mathbf{E}_G \in \llbracket \mathbb{G} \rrbracket_{:\mathsf{C}} \qquad \text{(11.24)} \qquad \mathbf{E}_G = [\mathbf{g} \in \mathbf{E}_G \wr\wr (\mathbf{g}_\mathbf{r})_c] \qquad \text{(11.25)}`
+{gpeq "11.24, 11.25"}
 
 {gpeq "11.26"}
 
@@ -207,9 +203,7 @@ tag := "reports-context"
 $`\mathbf{x}` and $`\mathbf{p}` are the contexts and the work-package hashes of the incoming reports. No package may be
 reported twice:
 
-{transcribed "11.35" "82a71f018f"}
-
-$$`\text{let } \mathbf{x} \equiv \{ \mathbf{r}_\mathbf{c} \mid \mathbf{r} \in \mathbf{I} \} ,\quad \mathbf{p} \equiv \{ (\mathbf{r}_\mathbf{s})_p \mid \mathbf{r} \in \mathbf{I} \} \qquad \text{(11.34)} \qquad |\mathbf{p}| = |\mathbf{I}| \qquad \text{(11.35)}`
+{gpeq "11.34, 11.35"}
 
 Each anchor must be a recent block, with matching details; each lookup-anchor must be at most $`\mathsf{L}`
 slots old and in the ancestor set $`\mathbf{A}` of the last $`\mathsf{L}` headers:
@@ -222,7 +216,7 @@ slots old and in the ancestor set $`\mathbf{A}` of the last $`\mathsf{L}` header
 
 {leanSource JAM.checkAnchor}
 
-The ancestor set is not part of the state, so the model takes the condition of (11.38) as an input,
+The ancestor set is not part of the state, so the model takes the condition of {eq}`11.38` as an input,
 `lookupAnchorKnown` of {api}`JAM.ReportsInput`.
 
 A package already in the pipeline may not be reported again: not one reported in recent history
@@ -276,8 +270,8 @@ against test vectors:
   (GP #562), so the one vector whose only fault is its anchor is listed as an expected deviation:
   the model accepts it (its name is given below);
 * the reports vectors of davxy/jam-test-vectors master at commit 5e8d2a2, later than v0.8.0, which
-  adds vectors for (11.33). They carry no ancestor set, so the runs take `lookupAnchorKnown` to hold
-  for every context, and the ancestry condition of (11.38) is not exercised.
+  adds vectors for {eq}`11.33`. They carry no ancestor set, so the runs take `lookupAnchorKnown` to hold
+  for every context, and the ancestry condition of {eq}`11.38` is not exercised.
 
 The assurances vector listed as an expected deviation is
 `assurance_with_bad_attestation_parent`.
@@ -298,9 +292,9 @@ These points are recorded, under the note numbers given, in the model's
   order is given between its conditions. The model uses the test vectors' names
   ({api}`JAM.AssurancesError`) and checks each assurance in turn: the index range, the order,
   the signature, then the bits.
-* *Note 32, division by 3.* $`R` divides by 3 ($`|\mathbf{c}|/3`), and the active-core bound in (11.27) is
+* *Note 32, division by 3.* $`R` divides by 3 ($`|\mathbf{c}|/3`), and the active-core bound in {eq}`11.27` is
   $`|\kappa'|/3`. In the paper the division is exact: every validator key sequence has a length in
-  $`\mathbb{V} \equiv \{ 3c \mid c \in \mathbb{N}_{2\dots\mathsf{C}+1} \}` (eqs. (6.7), (6.8)). The model's types do not enforce
+  $`\mathbb{V} \equiv \{ 3c \mid c \in \mathbb{N}_{2\dots\mathsf{C}+1} \}` (eqs. {eq}`6.7`, {eq}`6.8`). The model's types do not enforce
   $`|\kappa'| \in \mathbb{V}`; its integer division ({api}`JAM.rotate`, {api}`JAM.checkGuarantee`) gives the floor
   $`\lfloor |\kappa'|/3 \rfloor`, which is the exact quotient whenever $`|\kappa'| \in \mathbb{V}`.
 * *Note 32, the previous rotation.* $`\mathbf{M}^*` uses $`\tau' - \mathsf{R}`, which is negative when $`\tau' < \mathsf{R}`, and
@@ -310,15 +304,15 @@ These points are recorded, under the note numbers given, in the model's
 * *Note 32, errors and order for guarantees.* No errors are named for an invalid $`\mathbf{E}_G`, and no
   order is given between its conditions. The model uses the test vectors' names
   ({api}`JAM.ReportsError`) and the order given at {api}`JAM.guarantees`. A segment-root lookup
-  key that is neither in the extrinsic nor in recent history fails both (11.42) and (11.44); the
-  model checks (11.44) first, so it reports an invalid lookup. An anchor found by its header hash
+  key that is neither in the extrinsic nor in recent history fails both {eq}`11.42` and {eq}`11.44`; the
+  model checks {eq}`11.44` first, so it reports an invalid lookup. An anchor found by its header hash
   with another field wrong is reported by the first field that differs ({api}`JAM.checkAnchor`).
-* *Note v0.8.1-A2, the work-package limits.* (11.33) names no errors and gives no order between its
+* *Note v0.8.1-A2, the work-package limits.* {eq}`11.33` names no errors and gives no order between its
   rows or against the other conditions. The model uses the test vectors' later error names
   (`refineLoadTooHigh`, `badExportsCount`, `bundleTooBig`, `authGasTooHigh`) and checks the rows in
   the paper's order ({api}`JAM.checkReportLoad`).
-* *Note v0.8.1-A51, report equality in (11.17).* $`(p_\mathbf{g})_\mathbf{r} \in \mathbf{R}` compares work-reports without
+* *Note v0.8.1-A51, report equality in {eq}`11.17`.* $`(p_\mathbf{g})_\mathbf{r} \in \mathbf{R}` compares work-reports without
   saying how. The model compares their encodings ({api}`JAM.assurances`).
-* *Note v0.8.1-A53, a digest for a service that does not exist.* (11.32) and (11.45) read
+* *Note v0.8.1-A53, a digest for a service that does not exist.* {eq}`11.32` and {eq}`11.45` read
   $`\delta[\mathbf{d}_s]`, which is undefined when $`\mathbf{d}_s \notin \mathcal{K}(\delta)`. The model rejects such a report
   (`badServiceId`, the test vectors' name), before the minimum-gas condition ({api}`JAM.guarantees`).

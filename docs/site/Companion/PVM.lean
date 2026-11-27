@@ -82,7 +82,7 @@ proves the bound is never reached (the last section of this chapter, {ref "pvm-t
 
 {leanSource PVM.psi}
 
-The following theorem states that `psi` satisfies the paper's recursive equation (A.1), case by case:
+The following theorem states that `psi` satisfies the paper's recursive equation {eq}`A.1`, case by case:
 
 {mathdoc PVM.psi_eq}
 
@@ -97,7 +97,7 @@ Two consequences, each proved separately: $`\Psi` never returns $`\blacktriangle
 tag := "pvm-deblob"
 %%%
 
-$`\text{deblob}` (eq. (A.2), `deblob`) decodes a program blob into the instruction data
+$`\text{deblob}` {eq}`A.2` decodes a program blob into the instruction data
 $`\mathbf{c}`, the opcode bitmask $`\mathbf{k}` and the dynamic jump table $`\mathbf{j}`, and checks
 that the program is well formed and that $`\imath` is a valid instruction:
 
@@ -189,8 +189,8 @@ $$`\Psi_1 \colon (\mathfrak{p}, \mathbf{k}, \mathbf{j}, \imath, \varrho, \tilde\
 
 The result is {api}`PVM.StepResult`, and the function is {api}`PVM.Program.step`. A
 {api}`PVM.Program` holds the code $`\mathbf{c}`, the bitmask $`\mathbf{k}` and the jump table $`\mathbf{j}`, so they need not be passed
-separately. The left side of (A.7) names the first argument $`\mathfrak{p}`, but its call in (A.1) and the gas stage
-(A.8) use the instruction data $`\mathbf{c}` (the type of $`\Psi_1` gives this argument only as $`\mathbb{B}`); the model takes $`\mathbf{c}`.
+separately. The left side of {eq}`A.7` names the first argument $`\mathfrak{p}`, but its call in {eq}`A.1` and the gas stage
+{eq}`A.8` use the instruction data $`\mathbf{c}` (the type of $`\Psi_1` gives this argument only as $`\mathbb{B}`); the model takes $`\mathbf{c}`.
 
 {leanSource PVM.Program.step}
 
@@ -211,7 +211,7 @@ the current block has been paid for:
 
 {leanSource PVM.Program.chargeGas}
 
-The block cost $`\varrho^\Delta` (eq. (A.54), `gascostforblock`) is the number of cycles a simulated out-of-order CPU
+The block cost $`\varrho^\Delta` {eq}`A.54` is the number of cycles a simulated out-of-order CPU
 needs to retire the whole block, minus 3, and at least 1. It is defined in §A.9, below
 ({ref "pvm-gasmodel"}[the gas cost model]).
 
@@ -272,7 +272,7 @@ strings. $`\mathcal{Z}_n` reads an $`n`-octet natural as a signed integer and $`
 
 {gpeq "A.14"}
 
-$`\mathcal{B}_n` and $`\overleftarrow{\mathcal{B}}_n` (eqs. (A.15)–(A.18)) give the bits of a natural, least or most significant
+$`\mathcal{B}_n` and $`\overleftarrow{\mathcal{B}}_n` (eqs. {eq}`A.15`–{eq}`A.18`) give the bits of a natural, least or most significant
 first, with their inverses. The model works with single bits, {api}`PVM.Num.bit` and {api}`PVM.Num.ofBits`.
 Immediates are stored in as few octets as possible and sign-extended to 64 bits by $`\mathcal{X}_n`:
 
@@ -296,7 +296,7 @@ with addresses that are the table index plus one, times $`\mathsf{Z}_A = 2`:
 
 {gpeq "A.22"}
 
-A dynamic jump to $`2^{32} - 2^{16}` halts the machine. That is the value $`Y` puts in $`\varphi_0` (eq. (A.47)), so a
+A dynamic jump to $`2^{32} - 2^{16}` halts the machine. That is the value $`Y` puts in $`\varphi_0` (eq. {eq}`A.47`), so a
 dynamic jump to the initial value of $`\varphi_0` halts.
 
 {leanSource PVM.Program.sjump}
@@ -312,7 +312,7 @@ tag := "pvm-instructions"
 
 §A.5 lists every instruction in thirteen tables, one per *argument format*. Each table starts with
 an equation that says how the operands are decoded from the octets after the opcode, and each row
-gives an opcode $`\zeta_{\imath}`, a name and the instruction's mutations (its exceptions to eq. (A.12)).
+gives an opcode $`\zeta_{\imath}`, a name and the instruction's mutations (its exceptions to eq. {eq}`A.12`).
 The skip length is
 
 {gpeq "A.23"}
@@ -334,18 +334,18 @@ the opcode and the decoded operands; {api}`PVM.Program.decode` follows the forma
 their opcodes, are:
 
 * §A.5.1, no arguments (opcodes 0–2): `trap`, `fallthrough`, `unlikely`. Constructor `Instr.noArgs`.
-* §A.5.2, one immediate, eq. (A.24) (opcode 10): `ecalli`, the host call. `Instr.oneImm`.
-* §A.5.3, one register and one extended-width immediate, eq. (A.25) (20): `load_imm_64`. `Instr.regExtImm`.
-* §A.5.4, two immediates, eq. (A.26) (30–33): `store_imm_u8` … `store_imm_u64`. `Instr.twoImm`.
-* §A.5.5, one offset, eq. (A.27) (40): `jump`. `Instr.oneOffset`.
-* §A.5.6, one register and one immediate, eq. (A.28) (50–62): `jump_ind`, `load_imm`, the direct loads and stores. `Instr.regImm`.
-* §A.5.7, one register and two immediates, eq. (A.29) (70–73): `store_imm_ind_*`. `Instr.regTwoImm`.
-* §A.5.8, one register, one immediate and one offset, eq. (A.30) (80–90): `load_imm_jump` and the `branch_*_imm`. `Instr.regImmOffset`.
-* §A.5.9, two registers, eq. (A.31) (100–110): `move_reg`, the bit counts, the sign and zero extensions and `reverse_bytes`. `Instr.twoReg`.
-* §A.5.10, two registers and one immediate, eq. (A.32) (120–161): the indirect loads and stores and the ALU operations with an immediate. `Instr.twoRegImm`.
-* §A.5.11, two registers and one offset, eq. (A.33) (170–175): the register-register branches. `Instr.twoRegOffset`.
-* §A.5.12, two registers and two immediates, eq. (A.34) (180): `load_imm_jump_ind`. `Instr.twoRegTwoImm`.
-* §A.5.13, three registers, eq. (A.35) (190–230): the three-register ALU operations. `Instr.threeReg`.
+* §A.5.2, one immediate, eq. {eq}`A.24` (opcode 10): `ecalli`, the host call. `Instr.oneImm`.
+* §A.5.3, one register and one extended-width immediate, eq. {eq}`A.25` (20): `load_imm_64`. `Instr.regExtImm`.
+* §A.5.4, two immediates, eq. {eq}`A.26` (30–33): `store_imm_u8` … `store_imm_u64`. `Instr.twoImm`.
+* §A.5.5, one offset, eq. {eq}`A.27` (40): `jump`. `Instr.oneOffset`.
+* §A.5.6, one register and one immediate, eq. {eq}`A.28` (50–62): `jump_ind`, `load_imm`, the direct loads and stores. `Instr.regImm`.
+* §A.5.7, one register and two immediates, eq. {eq}`A.29` (70–73): `store_imm_ind_*`. `Instr.regTwoImm`.
+* §A.5.8, one register, one immediate and one offset, eq. {eq}`A.30` (80–90): `load_imm_jump` and the `branch_*_imm`. `Instr.regImmOffset`.
+* §A.5.9, two registers, eq. {eq}`A.31` (100–110): `move_reg`, the bit counts, the sign and zero extensions and `reverse_bytes`. `Instr.twoReg`.
+* §A.5.10, two registers and one immediate, eq. {eq}`A.32` (120–161): the indirect loads and stores and the ALU operations with an immediate. `Instr.twoRegImm`.
+* §A.5.11, two registers and one offset, eq. {eq}`A.33` (170–175): the register-register branches. `Instr.twoRegOffset`.
+* §A.5.12, two registers and two immediates, eq. {eq}`A.34` (180): `load_imm_jump_ind`. `Instr.twoRegTwoImm`.
+* §A.5.13, three registers, eq. {eq}`A.35` (190–230): the three-register ALU operations. `Instr.threeReg`.
 
 The opcode enumerations and the format of each opcode are generated from the paper, like $`T` and $`U`.
 
@@ -435,7 +435,7 @@ given ({api}`PVM.HostFn.GasNonIncreasing`). The handlers of all three invocation
 property ({api}`JAM.isAuthHostFn_gasNonIncreasing`, {api}`JAM.refineHostFn_gasNonIncreasing`,
 {api}`JAM.accHostFn_gasNonIncreasing`). Each
 continuing host call happens at a lower value of the measure that bounds $`\Psi`. For such handlers the
-model's fuel is always enough, and `psiHStar` satisfies the paper's equation (A.38):
+model's fuel is always enough, and `psiHStar` satisfies the paper's equation {eq}`A.38`:
 
 {mathdoc PVM.psiHStar_eq}
 
@@ -475,7 +475,7 @@ zone is left unmapped, and everything outside the sections is inaccessible:
 {gpeq "A.47"}
 
 So $`\varphi_1` is the top of the stack, $`\varphi_7` points at the arguments and $`\varphi_8` is their length, and $`\varphi_0` is the return address
-that halts (eq. (A.22)). In the model's code the paper's $`P` and $`Z` are {api}`PVM.roundPage` and {api}`PVM.roundZone`.
+that halts (eq. {eq}`A.22`). In the model's code the paper's $`P` and $`Z` are {api}`PVM.roundPage` and {api}`PVM.roundZone`.
 
 {leanSource PVM.standardInit}
 
@@ -489,7 +489,7 @@ The model sets page access first and then writes the three data sections. The tw
 read the result back. The first gives each page's access mode from the four page assignments, a later one
 taking precedence where two would overlap. The second gives each octet, for a blob whose three data
 sections end below $`2^{32}` (its hypotheses `hro`, `hrw` and `harg`). Neither states that the result equals
-eq. (A.46) as a whole:
+eq. {eq}`A.46` as a whole:
 
 {mathdoc PVM.initialMemory_pages}
 
@@ -524,13 +524,13 @@ tag := "pvm-gasmodel"
 %%%
 
 The cost of a basic block is the number of cycles that a simplified out-of-order CPU needs to run
-it. The simulation state $`\mathbb{S}` (eq. (A.49)) holds the next instruction to decode $`\imath` (or $`\emptyset` once a
+it. The simulation state $`\mathbb{S}` (eq. {eq}`A.49`) holds the next instruction to decode $`\imath` (or $`\emptyset` once a
 terminator has been decoded), a cycle counter $`c`, the decode slots $`d` left in this cycle, the number
 $`e` of instructions that may still start in this cycle, the free execution units $`t` and the reorder
-buffer $`\mathbf{r}`. A reorder-buffer entry $`\mathbb{R}` (eq. (A.50)) has a state (DEC, WAIT, EXE, FIN or $`\emptyset`),
+buffer $`\mathbf{r}`. A reorder-buffer entry $`\mathbb{R}` (eq. {eq}`A.50`) has a state (DEC, WAIT, EXE, FIN or $`\emptyset`),
 the cycles left $`c`, the entries it depends on $`p`, the registers it clobbers $`r`, and the execution
-units it uses $`t`. Units are counted per kind, $`\mathbb{E} = (A, L, S, M, D)` (eq. (A.51): ALU, load, store,
-multiply, divide), with memberwise arithmetic and comparison (eqs. (A.52), (A.53)).
+units it uses $`t`. Units are counted per kind, $`\mathbb{E} = (A, L, S, M, D)` (eq. {eq}`A.51`: ALU, load, store,
+multiply, divide), with memberwise arithmetic and comparison (eqs. {eq}`A.52`, {eq}`A.53`).
 
 {mathdoc PVM.SimState}
 
@@ -565,17 +565,17 @@ $$`\text{where } l = |[r \mid r \mathrel{\mathrlap{<}{-}} \mathbf{x}_{\mathbf{r}
 
 The four steps:
 
-* $`\mathfrak{X}'` (eq. (A.56)) sends `move_reg` to $`\mathfrak{X}^{\text{mov}}` (eq. (A.57)), which advances $`\imath`, uses one decode slot
-  and renames registers in the reorder buffer without adding an entry, and every other instruction to $`\mathfrak{X}^{\text{dec}}` (eq. (A.58)), which appends a DEC entry
+* $`\mathfrak{X}'` (eq. {eq}`A.56`) sends `move_reg` to $`\mathfrak{X}^{\text{mov}}` (eq. {eq}`A.57`), which advances $`\imath`, uses one decode slot
+  and renames registers in the reorder buffer without adding an entry, and every other instruction to $`\mathfrak{X}^{\text{dec}}` (eq. {eq}`A.58`), which appends a DEC entry
   whose dependencies are the entries that clobber one of its source registers. After a terminator,
   $`\mathbf{x}_{\imath}` becomes $`\emptyset`.
-* $`\mathfrak{X}''` (eq. (A.59)) starts the entry $`\mathfrak{S}(\mathbf{x})`: it becomes EXE and takes its execution units.
-* $`\mathfrak{S}` (eq. (A.60)) picks the first WAIT entry whose units are free and whose dependencies have no
+* $`\mathfrak{X}''` (eq. {eq}`A.59`) starts the entry $`\mathfrak{S}(\mathbf{x})`: it becomes EXE and takes its execution units.
+* $`\mathfrak{S}` (eq. {eq}`A.60`) picks the first WAIT entry whose units are free and whose dependencies have no
   cycles left:
 
 {gpeq "A.60"}
 
-* $`\mathfrak{X}'''` (eq. (A.61)) advances one cycle: it resets the decode and start slots, frees the units of
+* $`\mathfrak{X}'''` (eq. {eq}`A.61`) advances one cycle: it resets the decode and start slots, frees the units of
   entries finishing this cycle, retires every leading entry that is FIN or $`\emptyset`, moves DEC to WAIT and
   finished EXE entries to FIN, and counts down the cycles of running entries.
 
@@ -678,7 +678,7 @@ Most of these points are recorded in the model's
   that adds gas, and the three handlers of {ref "invocations"}[Appendix B] are proved not to.
 * *Note 17, §A.7.* $`Y` takes arguments $`\mathbf{a} \in \mathbb{B}_{:\mathsf{Z}_I}`, and the paper does not say what happens to a longer
   argument. The model returns $`\emptyset` ({api}`PVM.validJamBlob?`), so $`\Psi_M` panics.
-* *Note v0.8.1-A35, §A.8.* $`\Psi_H` returns seven components, including the flag $`\tilde\varrho`, while $`R` in eq. (A.48) takes six. The
+* *Note v0.8.1-A35, §A.8.* $`\Psi_H` returns seven components, including the flag $`\tilde\varrho`, while $`R` in eq. {eq}`A.48` takes six. The
   model reads $`R` as ignoring the flag ({api}`PVM.invocationResult`).
 * *`neg_add_imm_32`, §A.5.10.* $`\varphi'_A = \mathcal{X}_4((\nu_X + 2^{32} - \varphi_B) \bmod 2^{32})` is computed over $`\mathbb{Z}`: the intermediate value is negative when
   $`\varphi_B > \nu_X + 2^{32}`, and the model takes the mathematical (non-negative)

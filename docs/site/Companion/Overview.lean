@@ -46,16 +46,14 @@ Besides $`\sigma` and $`\mathbf{B}`, it takes three arguments the paper leaves i
 * the cryptography, a {api}`JAM.Crypto`: signature and VRF verification, and the ring root. The
   model keeps these as a parameter and never implements them itself;
 * the ancestor headers the importer has kept, a {api}`JAM.Chain`. The paper's ancestor set
-  $`\mathbf{A}` (eq. (5.3)) is not part of $`\sigma`, and guarantees ({ref "reports"}[§11]) need it.
+  $`\mathbf{A}` (eq. {eq}`5.3`) is not part of $`\sigma`, and guarantees ({ref "reports"}[§11]) need it.
 
 # The block
 %%%
 tag := "overview-block"
 %%%
 
-{transcribed "4.3" "c2875a26b1"}
-
-$$`\mathbf{B} \equiv (\mathbf{H}, \mathbf{E}) \qquad \text{(4.2)} \qquad\qquad \mathbf{E} \equiv (\mathbf{E}_T, \mathbf{E}_P, \mathbf{E}_G, \mathbf{E}_A, \mathbf{E}_D) \qquad \text{(4.3)}`
+{gpeq "4.2, 4.3"}
 
 The extrinsic $`\mathbf{E}` has five parts: tickets $`\mathbf{E}_T` ({ref "safrole"}[§6]), preimages $`\mathbf{E}_P` ({ref "accumulation"}[§12]), guarantees of work reports
 $`\mathbf{E}_G` ({ref "reports"}[§11]), availability assurances $`\mathbf{E}_A` ({ref "reports"}[§11]) and disputes $`\mathbf{E}_D` ({ref "disputes"}[§10]).
@@ -93,7 +91,7 @@ fields. Each component, with the section that covers it, and its fields:
 
 {leanSource JAM.State}
 
-Timeslots are naturals below $`2^{32}` (eq. (4.28), $`\mathbb{N}_T \equiv \mathbb{N}_{2^{32}}`). The model stores them as `Nat`. {api}`JAM.importBlock` does not check
+Timeslots are naturals below $`2^{32}` (eq. {eq}`4.28`, $`\mathbb{N}_T \equiv \mathbb{N}_{2^{32}}`). The model stores them as `Nat`. {api}`JAM.importBlock` does not check
 $`\mathbf{H}_T < 2^{32}`, and the four-octet encoding $`\mathcal{E}_4` the model uses (`Codec.fixed 4`) keeps only the low 32 bits
 of a larger value.
 
@@ -104,6 +102,8 @@ tag := "overview-graph"
 
 The paper specifies $`\Upsilon` by saying what each part of the posterior state depends on. The symbol $`\prec`
 reads "depends on":
+
+{transcribed "4.5, 4.6, 4.7, 4.8, 4.9, 4.10, 4.11, 4.12, 4.13, 4.14, 4.15, 4.16, 4.17, 4.18, 4.19, 4.20" "08022e224e,a3a715d0fe,bb1a9b64b5,86a38169af,967c6a2b56,93126121f4,140a592b26,c8d23bf7b1,351c1c3dad,101fdc7e08,c7c73e4495,98a46a357a,095732e29a,5ca9cb71a8,3bdc40e654,2cd495cc60"}
 
 $$`\begin{aligned} \tau' &\prec \mathbf{H} & \text{(4.5)} \\ \beta^\dagger_H &\prec (\mathbf{H}, \beta_H) & \text{(4.6)} \\ \gamma' &\prec (\mathbf{H}, \tau, \mathbf{E}_T, \gamma, \iota, \eta', \kappa', \psi') & \text{(4.7)} \\ \eta' &\prec (\mathbf{H}, \tau, \eta) & \text{(4.8)} \\ \kappa' &\prec (\mathbf{H}, \tau, \kappa, \gamma) & \text{(4.9)} \\ \lambda' &\prec (\mathbf{H}, \tau, \lambda, \kappa) & \text{(4.10)} \\ \psi' &\prec (\mathbf{E}_D, \psi) & \text{(4.11)} \\ \rho^\dagger &\prec (\mathbf{E}_D, \rho) & \text{(4.12)} \\ \rho^\ddagger &\prec (\mathbf{E}_A, \rho^\dagger) & \text{(4.13)} \\ \rho' &\prec (\mathbf{E}_G, \rho^\ddagger, \kappa, \tau') & \text{(4.14)} \\ \mathbf{R}^* &\prec (\mathbf{E}_A, \rho^\dagger) & \text{(4.15)} \\ (\omega', \xi', \delta^\ddagger, \chi', \iota', \phi', \theta', \mathbf{S}) &\prec (\mathbf{R}^*, \omega, \xi, \delta, \chi, \iota, \phi, \tau, \tau') & \text{(4.16)} \\ \beta'_H &\prec (\mathbf{H}, \mathbf{E}_G, \beta^\dagger_H, \theta') & \text{(4.17)} \\ \delta' &\prec (\mathbf{E}_P, \delta^\ddagger, \tau') & \text{(4.18)} \\ \alpha' &\prec (\mathbf{H}, \mathbf{E}_G, \phi', \alpha) & \text{(4.19)} \\ \pi' &\prec (\mathbf{E}_G, \mathbf{E}_P, \mathbf{E}_A, \mathbf{E}_T, \tau, \kappa', \pi, \mathbf{H}, \mathbf{S}) & \text{(4.20)} \end{aligned}`
 
@@ -116,23 +116,23 @@ accumulation statistics.
 marked in its source with the section (and sometimes the equation) it implements. Each step's
 binding or function, what it computes, and the equations and section:
 
-* header checks, `slot`: $`\tau' = \mathbf{H}_T`; (4.5), (5.2), (5.4), (5.9) ({ref "overview-header"}[§5]).
-* `recentDagger`: $`\beta^\dagger_H`; (4.6) ({ref "history"}[§7]).
-* `disputesTransition`: $`\psi'`, $`\rho^\dagger`; (4.11), (4.12) ({ref "disputes"}[§10]).
-* `safrole`: $`\gamma'`, $`\eta'`, $`\kappa'`, $`\lambda'`; (4.7)–(4.10) ({ref "safrole"}[§6]).
-* `assurances`: $`\rho^\ddagger`, $`\mathbf{R}^*`; (4.13), (4.15) ({ref "reports"}[§11]).
-* `guarantees`: $`\rho'`; (4.14) ({ref "reports"}[§11]).
-* `accumulate`: $`\omega'`, $`\xi'`, $`\delta^\ddagger`, $`\chi'`, $`\iota'`, $`\phi'`, $`\theta'`, $`\mathbf{S}`; (4.16) ({ref "accumulation"}[§12]).
-* `recentHistory`: $`\beta'` (both $`\beta'_H`, eq. (4.17), and $`\beta'_B`, eq. (7.7)) ({ref "history"}[§7]).
-* `preimages`: $`\delta'`; (4.18) ({ref "accumulation"}[§12]).
-* `authorizations`: $`\alpha'`; (4.19) ({ref "authorization"}[§8]).
-* `validatorStats`, `coreStats`, `serviceStats`: $`\pi'`; (4.20) ({ref "statistics"}[§13]).
+* header checks, `slot`: $`\tau' = \mathbf{H}_T`; {eq}`4.5`, {eq}`5.2`, {eq}`5.4`, {eq}`5.9` ({ref "overview-header"}[§5]).
+* `recentDagger`: $`\beta^\dagger_H`; {eq}`4.6` ({ref "history"}[§7]).
+* `disputesTransition`: $`\psi'`, $`\rho^\dagger`; {eq}`4.11`, {eq}`4.12` ({ref "disputes"}[§10]).
+* `safrole`: $`\gamma'`, $`\eta'`, $`\kappa'`, $`\lambda'`; {eq}`4.7`–{eq}`4.10` ({ref "safrole"}[§6]).
+* `assurances`: $`\rho^\ddagger`, $`\mathbf{R}^*`; {eq}`4.13`, {eq}`4.15` ({ref "reports"}[§11]).
+* `guarantees`: $`\rho'`; {eq}`4.14` ({ref "reports"}[§11]).
+* `accumulate`: $`\omega'`, $`\xi'`, $`\delta^\ddagger`, $`\chi'`, $`\iota'`, $`\phi'`, $`\theta'`, $`\mathbf{S}`; {eq}`4.16` ({ref "accumulation"}[§12]).
+* `recentHistory`: $`\beta'` (both $`\beta'_H`, eq. {eq}`4.17`, and $`\beta'_B`, eq. {eq}`7.7`) ({ref "history"}[§7]).
+* `preimages`: $`\delta'`; {eq}`4.18` ({ref "accumulation"}[§12]).
+* `authorizations`: $`\alpha'`; {eq}`4.19` ({ref "authorization"}[§8]).
+* `validatorStats`, `coreStats`, `serviceStats`: $`\pi'`; {eq}`4.20` ({ref "statistics"}[§13]).
 
 The graph lists dependencies, not every input each section reads. The model passes each
 section-level function what that section's own equations use, and several steps read more than
 their line of the graph lists:
 
-* *Guarantees.* (4.14) lists $`\kappa`. The equations of {ref "reports"}[§11] use the posterior keys $`\kappa'` and $`\lambda'`, the posterior
+* *Guarantees.* {eq}`4.14` lists $`\kappa`. The equations of {ref "reports"}[§11] use the posterior keys $`\kappa'` and $`\lambda'`, the posterior
   entropy $`\eta'`, the offenders in $`\psi'` (through the key filter $`\Phi`), and $`\beta^\dagger_H`, $`\alpha` and $`\delta`. The model's guarantee
   step reads those.
 * *Preimages.* The model checks $`\mathbf{E}_P` against the prior accounts $`\delta` as well as $`\delta^\ddagger`, as {ref "accumulation"}[§12.4] does: the
@@ -186,18 +186,20 @@ $`P(\mathbf{H})` is the parent header and $`\mathcal{T}` the wall clock. A heade
 
 {api}`JAM.importBlock` checks these conditions as follows:
 
-* (5.2): $`\mathbf{H}_P` is the hash of the last header in the {api}`JAM.Chain` it is given.
-* (5.3): the ancestor set is the chain's headers together with $`\mathbf{H}` itself. It is used only by the
+* {eq}`5.2`: $`\mathbf{H}_P` is the hash of the last header in the {api}`JAM.Chain` it is given.
+* {eq}`5.3`: the ancestor set is the chain's headers together with $`\mathbf{H}` itself. It is used only by the
   lookup-anchor check of {ref "reports"}[§11] ({api}`JAM.lookupAnchorKnown`).
-* (5.8): $`P(\mathbf{H})_T < \mathbf{H}_T` is checked as $`\tau < \mathbf{H}_T`, since $`\tau` is the parent's timeslot (Safrole's `badSlot`).
+* {eq}`5.8`: $`P(\mathbf{H})_T < \mathbf{H}_T` is checked as $`\tau < \mathbf{H}_T`, since $`\tau` is the parent's timeslot (Safrole's `badSlot`).
   $`\mathbf{H}_T \cdot \mathsf{P} \leq \mathcal{T}` is not checked: $`\Upsilon` has no clock.
-* (5.9): $`\mathbf{H}_R` equals {api}`JAM.State.root`, the state Merklization $`\mathcal{M}_\sigma` of {ref "statemerkle"}[Appendix D].
-* (5.10): $`\mathbf{H}_I < |\kappa'|`. $`\mathbf{H}_A` is the author key used to check the seal and the entropy source ({ref "safrole"}[§6.4],
+* {eq}`5.9`: $`\mathbf{H}_R` equals {api}`JAM.State.root`, the state Merklization $`\mathcal{M}_\sigma` of {ref "statemerkle"}[Appendix D].
+* {eq}`5.10`: $`\mathbf{H}_I < |\kappa'|`. $`\mathbf{H}_A` is the author key used to check the seal and the entropy source ({ref "safrole"}[§6.4],
   {api}`JAM.sealValid`).
 * The markers $`\mathbf{H}_E` and $`\mathbf{H}_W` must equal the ones Safrole produces ({ref "safrole"}[§6.6]), and $`\mathbf{H}_O` the one disputes
   produce ({ref "disputes"}[§10]).
 
 ## The extrinsic hash
+
+{transcribed "5.4, 5.5, 5.6, 5.7" "519c1a0834,fd9718cd34,b963e9d92f,bee2aaed7b"}
 
 $$`\begin{aligned} \mathbf{H}_X &\in \mathbb{H}, \quad \mathbf{H}_X \equiv \mathcal{H}(\mathcal{E}(\mathcal{H}^\#(\mathbf{a}))) & \text{(5.4)} \\ \text{where } \mathbf{a} &= \left[\mathcal{E}_T(\mathbf{E}_T), \mathbf{p}, \mathbf{g}, \mathcal{E}_A(\mathbf{E}_A), \mathcal{E}_D(\mathbf{E}_D)\right] & \text{(5.5)} \\ \text{and } \mathbf{p} &= \mathcal{E}\left(\updownarrow\left[\left(\mathcal{E}_4(s), \mathcal{H}(\mathbf{d})\right) \;\middle|\; (s, \mathbf{d}) \mathrel{\mathrlap{<}{-}} \mathbf{E}_P\right]\right) & \text{(5.6)} \\ \text{and } \mathbf{g} &= \mathcal{E}\left(\updownarrow\left[\left(\mathcal{H}(r), \mathcal{E}_4(t), \mathcal{E}_C(a)\right) \;\middle|\; (r, t, a) \mathrel{\mathrlap{<}{-}} \mathbf{E}_G\right]\right) & \text{(5.7)} \end{aligned}`
 

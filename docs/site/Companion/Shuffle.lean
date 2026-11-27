@@ -34,9 +34,7 @@ The module is `JAM/Shuffle.lean`; its full API is on the
 tag := "shuffle-seq"
 %%%
 
-{transcribed "F.1" "0a1e35509f"}
-
-$$`\forall T, l \in \mathbb{N} : \mathcal{F} \colon \begin{cases} \left\lgroup \llbracket T \rrbracket_l, \llbracket \mathbb{N} \rrbracket_{l:} \right\rgroup \to \llbracket T \rrbracket_l \\ (\mathbf{s}, \mathbf{r}) \mapsto \begin{cases} [\mathbf{s}_{\mathbf{r}_0 \bmod l}] \frown \mathcal{F}(\mathbf{s}'_{\dots l-1}, \mathbf{r}_{1\dots}) & \text{if } \mathbf{s} \ne [] \\ [] & \text{otherwise} \end{cases} \\ \qquad \text{where } \mathbf{s}' = \mathbf{s} \text{ except } \mathbf{s}'_{\mathbf{r}_0 \bmod l} = \mathbf{s}_{l-1} \end{cases} \qquad \text{(F.1)}`
+{gpeq "F.1"}
 
 (The paper writes the "where" clause inside the first case, on the same line.) Each step takes the element at $`\mathbf{r}_0 \bmod l`, moves the last element into its place, drops the last
 position, and continues with the rest of $`\mathbf{r}`. The model's {api}`JAM.Shuffle.shuffle` does
@@ -87,8 +85,8 @@ v0.8.0), which apply the hash form to $`[0, 1, \dots, n-1]`.
 tag := "shuffle-readings"
 %%%
 
-* *Note v0.8.1-A52, a short entropy sequence.* (F.1) types $`\mathbf{r}` as having at least $`l` entries, so $`\mathbf{r}_0` always exists. The
+* *Note v0.8.1-A52, a short entropy sequence.* {eq}`F.1` types $`\mathbf{r}` as having at least $`l` entries, so $`\mathbf{r}_0` always exists. The
   model's {api}`JAM.Shuffle.shuffle` accepts any $`\mathbf{r}`, and reads a missing entry as 0, to stay total.
-  The paper's uses never reach that case: (F.3) passes $`\mathcal{Q}_l(h)`, which has exactly $`l` entries. This is
+  The paper's uses never reach that case: {eq}`F.3` passes $`\mathcal{Q}_l(h)`, which has exactly $`l` entries. This is
   recorded in the model's
   [notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues).

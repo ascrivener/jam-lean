@@ -63,9 +63,9 @@ its extrinsics $`\mathbf{x}`, each given by hash and length:
 An import names its segment either by a segment root, from $`\mathbb{H}`, or by the hash of the work-package that
 exported it, from the tagged $`\mathbb{H}^{\boxplus}`. The model's {api}`JAM.SegmentRoot` has one constructor for each.
 
-The paper bounds every work-package: at most $`\mathsf{J}` dependencies (14.4), at most $`\mathsf{W}_X` exports,
-$`\mathsf{W}_M` imports and $`\mathsf{T}` extrinsics (14.5), at most $`\mathsf{W}_I` octets of input data (14.6–14.8), and gas
-limits summing to at most $`\mathsf{G}_A` and $`\mathsf{G}_R` (14.10). The model's types do not carry these bounds, and
+The paper bounds every work-package: at most $`\mathsf{J}` dependencies {eq}`14.4`, at most $`\mathsf{W}_X` exports,
+$`\mathsf{W}_M` imports and $`\mathsf{T}` extrinsics {eq}`14.5`, at most $`\mathsf{W}_I` octets of input data (14.6–14.8), and gas
+limits summing to at most $`\mathsf{G}_A` and $`\mathsf{G}_R` {eq}`14.10`. The model's types do not carry these bounds, and
 its $`\Xi` does not check them (see {ref "work-readings"}[Readings chosen]).
 
 # Item to digest (§14.3)
@@ -171,7 +171,7 @@ are exactly the imported package hashes, and no item exports anything.
 {mathdoc JAM.Guarantee.computeReport_noExports}
 
 The paper also asks a guarantor to choose $`\mathbf{l}` so that every pair $`h \mapsto e` in it is the hash and segment root
-of some work-package (eq. (14.15)). That is a condition on the guarantor's choice of $`\mathbf{l}`, and the model's
+of some work-package (eq. {eq}`14.15`). That is a condition on the guarantor's choice of $`\mathbf{l}`, and the model's
 $`\Xi` does not check it.
 
 # The data of an item (§14.4)
@@ -319,10 +319,10 @@ model's [notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/do
 * *How a justification is checked (note v0.8.1-A13).* The paper defines how justifications are made, not how
   they are checked. The model's {api}`JAM.Segments.verifySegment` recomputes the root from the segment and
   its path.
-* *The pages of $`P` (note v0.8.1-A15).* The prose after (14.19) calls each page "a page of 64 hashes of
+* *The pages of $`P` (note v0.8.1-A15).* The prose after {eq}`14.19` calls each page "a page of 64 hashes of
   segments"; the model follows the equation, whose page $`\mathcal{L}_6` holds the leaf hashes of the segments, and
   whose last page is short when 64 does not divide $`|\mathbf{s}|`.
-* *Package limits.* (14.4)–(14.10) are stated for every $`\mathbf{p} \in \mathbb{P}`. The model's types do not enforce
+* *Package limits.* {eq}`14.4`–{eq}`14.10` are stated for every $`\mathbf{p} \in \mathbb{P}`. The model's types do not enforce
   them and its $`\Xi` does not check them, so it computes a report for any package.
 * *Malformed data argument.* The model's $`\Xi` expects one data entry per item; a missing entry reads as
   empty.

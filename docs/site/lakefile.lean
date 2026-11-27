@@ -51,7 +51,8 @@ target modelHighlights : Unit := do
     `JAM.Trie, `JAM.State, `JAM.Account, `PVM.Logic.Steps, `PVM.Logic.Words,
     `JAM.Merkle, `JAM.History, `JAM.Erasure, `JAM.Crypto,
     `JamCrypto.Crypto, `JamCrypto.Ring, `JamCrypto.ThinVrf, `JamCrypto.Reading, `JamCrypto.Fast.Ring,
-    `PVM.Instr, `PVM.Exec, `PVM.Invocation, `JAM.Host.General, `JAM.Accumulate]
+    `PVM.Instr, `PVM.Exec, `PVM.Invocation, `JAM.Host.General, `JAM.Accumulate,
+    `JAM.Accumulation, `JAM.Preimages, `JAM.Theorems.Confinement]
   let jobs ← mods.mapM fun m => do
     let some mod ← findModule? m | error s!"modelHighlights: no module {m}"
     fetch <| mod.facet `highlighted

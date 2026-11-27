@@ -1,361 +1,252 @@
 import JamCrypto.Fast.Fr
+import JamCrypto.Fast.EdwardsF
 import JamCrypto.Bandersnatch
 import JamCrypto.ThinVrf
 
 /-!
-# Bandersnatch on fixed-limb field arithmetic: fast IETF and Thin VRF verification
+# Bandersnatch on fixed-limb field arithmetic: IETF and Thin VRF verification, proved equal to the
+reference
 
-The same functions as `JamCrypto.Bandersnatch.ietfVerify`, `Bandersnatch.vrfOutput`,
-`Bandersnatch.Thin.verify` and `Bandersnatch.Thin.vrfOutput` (the reference implementations,
-which stay as they are), computed over `Fast.Fr` (𝔽_q on 32-bit limbs) instead of `Nat`, with
-windowed and joint (Straus) scalar multiplication.
-
-**Status: tested, not proved.** `FastTest` compares each function here with its reference on
-every published vector and on randomized valid, mutated and garbage inputs.
-
-Why the results agree, in outline:
-* `add` is the reference's `add-2008-hwcd` formula, step for step, over the same field values, and
-  `dbl` the dedicated doubling `dbl-2008-hwcd`, whose Z₃ is −1 times the unified formula's on the
-  same point, so both are exceptional (Z₃ = 0, giving the absorbing `invalid` point) exactly when
-  the reference is.
-* On the prime-order subgroup the formula is never exceptional (Edwards.lean), so there every
-  computation is the group law and any order of additions gives the same point, up to the
-  projective representative; results are compared only through `eq` and affine encodings.
-* Points outside the subgroup occur only in the subgroup check and in hash to curve. The subgroup
-  check decides membership whatever the order of additions: a subgroup point never meets an
-  exceptional step and [r − 1]P = −P; a point outside either meets one (and is rejected, as by
-  the reference) or is computed by the group law, where [r − 1]P ≠ −P. Hash to curve uses the
-  reference's operation sequence (one addition, then two doublings, which [4]· by double-and-add
-  also is, up to adding to the neutral element).
-* Square roots are normalised by every caller (sign or parity), so which root is found does not
-  matter.
+The functions here perform the same sequence of operations as `JamCrypto.Bandersnatch` and
+`JamCrypto.Bandersnatch.Thin` (the reference implementations, unchanged), on `Fast.Fr` (𝔽_q on
+29-bit limbs) instead of `Nat` mod q. Each is proved equal to its reference (`ietfVerify_eq`,
+`vrfOutput_eq`, `Thin.verify_eq`, `Thin.vrfOutput_eq`), from the field laws of `Fast.Fr` and the
+curve lemmas of `Fast.EdwardsF`.
 -/
 
 namespace JamCrypto.Fast.Bandersnatch
 
 open JamCrypto.Fast
-open JamCrypto.Modular (leToNat beToNat natToLE slice)
+open JamCrypto.Modular (leToNat beToNat natToLE slice subMod invMod isSquare)
+
+/- The reference's exponentiations, inversions and square roots are proved equal to the fast ones
+once (`Fast.EdwardsF`); here they stay folded, so that definitional unfolding never evaluates their
+loops on symbolic arguments. -/
+attribute [local irreducible] JamCrypto.Modular.powMod JamCrypto.Modular.isSquare
+  JamCrypto.Modular.invMod JamCrypto.Modular.sqrtTS JamCrypto.Bandersnatch.sqrt
+
+attribute [local irreducible] Fr.mul Fr.sq Fr.add Fr.sub Fr.ofNat Fr.toNat Fr.isZero Fr.beq Fr.inv
+  JamCrypto.Fast.powF JamCrypto.Fast.sqrtF
 
 abbrev F := Fr.Elem
 
-/-- A point in extended coordinates over `Fast.Fr`. -/
-structure Pt where
-  X : F
-  Y : F
-  Z : F
-  T : F
-deriving Inhabited
+local notation "p" => Field.p F
 
-/-- The neutral element. -/
-def zero : Pt := ⟨Fr.zero, Fr.one, Fr.one, Fr.zero⟩
+/-- The curve constants a = −5 and d. -/
+@[irreducible] def C : CurveF F := ⟨Field.ofNat JamCrypto.Bandersnatch.curve.a, Field.ofNat JamCrypto.Bandersnatch.curve.d⟩
 
-/-- The result of an exceptional step (as `Curve.invalid`). -/
-def invalid : Pt := ⟨Fr.zero, Fr.zero, Fr.zero, Fr.zero⟩
+theorem curve_p : JamCrypto.Bandersnatch.curve.p = p := rfl
 
-/-- d. -/
-def dC : F := Fr.ofNat JamCrypto.Bandersnatch.curve.d
+theorem q_eq : JamCrypto.Bandersnatch.q = p := rfl
 
-/-- a·x for a = −5. -/
-@[inline] def mulA (x : F) : F := Fr.neg (Fr.add (Fr.dbl (Fr.dbl x)) x)
+theorem hC : C.Rel JamCrypto.Bandersnatch.curve := by
+  unfold C; exact ⟨VRel.ofNat _, VRel.ofNat _, curve_p⟩
 
-/-- Not the result of an exceptional step. -/
-@[inline] def valid (P : Pt) : Bool := !P.Z.isZero
+theorem vofNat (x : Nat) : VRel (Field.ofNat x : F) x := VRel.ofNat x
+theorem vone : VRel (Field.one : F) 1 := VRel.one
+theorem vzero : VRel (Field.zero : F) 0 := VRel.zero
+theorem vmod {a : F} {n : Nat} (h : VRel a n) : VRel a (n % p) := VRel.mod.mpr h
 
-/-- The affine point (x, y). -/
-def ofAffine (x y : F) : Pt := ⟨x, y, Fr.one, x * y⟩
-
-/-- A reference point. -/
-def ofPoint (P : JamCrypto.Point) : Pt :=
-  ⟨Fr.ofNat P.X, Fr.ofNat P.Y, Fr.ofNat P.Z, Fr.ofNat P.T⟩
-
-/-- P + Q (`add-2008-hwcd`, as `Curve.add`). -/
-def add (P Q : Pt) : Pt :=
-  let A := P.X * Q.X
-  let B := P.Y * Q.Y
-  let C := dC * (P.T * Q.T)
-  let D := P.Z * Q.Z
-  let E := (P.X + P.Y) * (Q.X + Q.Y) - (A + B)
-  let F := D - C
-  let G := D + C
-  let H := B - mulA A
-  let Z3 := F * G
-  if Z3.isZero then invalid else ⟨E * F, G * H, Z3, E * H⟩
-
-/-- 2P (`dbl-2008-hwcd`). -/
-def dbl (P : Pt) : Pt :=
-  let A := P.X.sq
-  let B := P.Y.sq
-  let C := Fr.dbl P.Z.sq
-  let D := mulA A
-  let E := (P.X + P.Y).sq - A - B
-  let G := D + B
-  let F := G - C
-  let H := D - B
-  let Z3 := F * G
-  if Z3.isZero then invalid else ⟨E * F, G * H, Z3, E * H⟩
-
-/-- −P. -/
-def neg (P : Pt) : Pt := ⟨Fr.neg P.X, P.Y, P.Z, Fr.neg P.T⟩
-
-/-- P = Q, for valid points (as `Curve.eq`). -/
-def eq (P Q : Pt) : Bool :=
-  valid P && valid Q && P.X * Q.Z == Q.X * P.Z && P.Y * Q.Z == Q.Y * P.Z
-
-/-- P is the neutral element. -/
-def isZero (P : Pt) : Bool := eq P zero
-
-/-- The 4-bit digits of k mod 2^256, least significant first. -/
-def nibbles (k : Nat) : Array UInt8 := Id.run do
-  let mut out : Array UInt8 := Array.mkEmpty 64
-  for w in [0:4] do
-    let v := (k >>> (64 * w)).toUInt64
-    for i in [0:16] do
-      out := out.push ((v >>> (4 * i).toUInt64) &&& 15).toUInt8
-  return out
-
-/-- 0, P, 2P, …, 15P. -/
-def table (P : Pt) : Array Pt := Id.run do
-  let mut t : Array Pt := Array.mkEmpty 16
-  t := t.push zero
-  t := t.push P
-  for i in [2:16] do
-    t := t.push (if i % 2 == 0 then dbl t[i / 2]! else add t[i - 1]! P)
-  return t
-
-/-- The index of the most significant nonzero digit, plus one. -/
-def topDigit (ds : Array UInt8) : Nat := Id.run do
-  let mut n := 0
-  for i in [0:ds.size] do
-    if ds[i]! != 0 then n := i + 1
-  return n
-
-/-- [k]P for k < 2^256 (fixed 4-bit window). -/
-def smul (k : Nat) (P : Pt) : Pt := Id.run do
-  let ds := nibbles k
-  let tbl := table P
-  let n := topDigit ds
-  let mut acc := zero
-  for j in [0:n] do
-    let d := ds[n - 1 - j]!
-    acc := dbl (dbl (dbl (dbl acc)))
-    if d != 0 then acc := add acc tbl[d.toNat]!
-  return acc
-
-/-- [k₁]P₁ + [k₂]P₂ for k₁, k₂ < 2^256 (Straus, 4-bit windows). -/
-def smul2 (k1 : Nat) (P1 : Pt) (k2 : Nat) (P2 : Pt) : Pt := Id.run do
-  let d1 := nibbles k1
-  let d2 := nibbles k2
-  let t1 := table P1
-  let t2 := table P2
-  let n := max (topDigit d1) (topDigit d2)
-  let mut acc := zero
-  for j in [0:n] do
-    let i := n - 1 - j
-    acc := dbl (dbl (dbl (dbl acc)))
-    let a := d1[i]!
-    if a != 0 then acc := add acc t1[a.toNat]!
-    let b := d2[i]!
-    if b != 0 then acc := add acc t2[b.toNat]!
-  return acc
-
-/-- The affine coordinates of a valid point, as values. -/
-def toAffine (P : Pt) : Nat × Nat :=
-  if P.Z == Fr.one then (P.X.toNat, P.Y.toNat) else
-  let zi := P.Z.inv
-  ((P.X * zi).toNat, (P.Y * zi).toNat)
-
-/-- The 32-octet encoding of a valid point (as `Bandersnatch.encode`). -/
-def encode (P : Pt) : List UInt8 :=
-  let (x, y) := toAffine P
-  natToLE 32 (y + (if x > (Bandersnatch.q - 1) / 2 then 2 ^ 255 else 0))
-
-/-! ## Square roots -/
+/-- An optional point stands for an optional reference point. -/
+abbrev OP : Option (Pt F) → Option JamCrypto.Point → Prop := OR PRel
 
 /-- q − 1 = 2^32·t. -/
 def tOdd : Nat := 12208678567578594777604504606729831043093128246378069236549469339647
 
-def tMinus1Half : Array Bool := Fr.bitsMsb ((tOdd - 1) / 2)
+/-- √n (as `Bandersnatch.sqrt`). -/
+def sqrt (n : F) : Option F := sqrtF 32 tOdd (Field.ofNat 7) n
 
-/-- 7^t, a primitive 2^32-th root of unity. -/
-def rootOfUnity : F := Fr.pow (Fr.ofNat 7) tOdd
+theorem sqrt_rel {n : F} {n' : Nat} (hn : VRel n n') : ORel (sqrt n) (JamCrypto.Bandersnatch.sqrt n') := by
+  unfold JamCrypto.Bandersnatch.sqrt; exact sqrtF_rel (VRel.ofNat 7) hn
 
-/-- A square root of a, if a is a square (Tonelli–Shanks, 2-adicity 32). -/
-def sqrt (a : F) : Option F := Id.run do
-  if a.isZero then return some Fr.zero
-  let w := Fr.powBits a tMinus1Half
-  let mut x := a * w
-  let mut t := x * w
-  let mut m := 32
-  let mut c := rootOfUnity
-  for _ in [0:33] do
-    if t != Fr.one then
-      let mut i := 0
-      let mut tt := t
-      for _ in [0:m] do
-        if tt != Fr.one then
-          tt := tt.sq
-          i := i + 1
-      if i < m then
-        let mut b := c
-        for _ in [0:m - i - 1] do
-          b := b.sq
-        m := i
-        c := b.sq
-        t := t * c
-        x := x * b
-  return if x.sq == a then some x else none
+/-- The 32-octet encoding of a valid point (as `Bandersnatch.encode`). -/
+def encode (P : Pt F) : List UInt8 :=
+  let (x, y) := CurveF.toAffine P
+  natToLE 32 (y + (if x > (JamCrypto.Bandersnatch.q - 1) / 2 then 2 ^ 255 else 0))
 
-/-! ## Decoding -/
+theorem encode_eq {P : Pt F} {P' : JamCrypto.Point} (h : PRel P P') :
+    encode P = JamCrypto.Bandersnatch.encode P' := by
+  unfold encode JamCrypto.Bandersnatch.encode
+  rw [toAffine_eq curve_p h]
 
-/-- The point a 32-octet encoding stands for, on the curve (as `Bandersnatch.decodeOnCurve`). -/
-def decodeOnCurve (bs : List UInt8) : Option Pt := do
+/-- As `Bandersnatch.decodeOnCurve`. -/
+def decodeOnCurve (bs : List UInt8) : Option (Pt F) := do
   guard (bs.length == 32)
   let n := leToNat bs
   let negative := n / 2 ^ 255 == 1
-  let yn := n % 2 ^ 255
-  guard (yn < Bandersnatch.q)
-  let y := Fr.ofNat yn
-  let y2 := y.sq
-  let den := mulA Fr.one - dC * y2
-  guard (!den.isZero)
-  let x ← sqrt ((Fr.one - y2) * den.inv)
-  let xn := x.toNat
-  let mn := (Fr.neg x).toNat
+  let y := n % 2 ^ 255
+  guard (y < JamCrypto.Bandersnatch.q)
+  let yF : F := Field.ofNat y
+  let y2 := Field.mul yF yF
+  let den := Field.sub C.a (Field.mul C.d y2)
+  guard (!Field.isZero den)
+  let x ← sqrt (Field.mul (Field.sub Field.one y2) (invF den))
+  let xn := Field.toNat x
+  let mn := Field.toNat (Field.sub Field.zero x)
   let small := min xn mn
   let large := max xn mn
-  return ofAffine (Fr.ofNat (if negative then large else small)) y
+  return ofAffineF (Field.ofNat (if negative then large else small)) yF
 
-/-- In the prime-order subgroup (as `Bandersnatch.inSubgroup`): [r − 1]P = −P. -/
-def inSubgroup (P : Pt) : Bool := eq (smul (Bandersnatch.r - 1) P) (neg P)
+theorem decodeOnCurve_rel (bs : List UInt8) :
+    OP (decodeOnCurve bs) (JamCrypto.Bandersnatch.decodeOnCurve bs) := by
+  unfold decodeOnCurve JamCrypto.Bandersnatch.decodeOnCurve
+  refine OR.guard Iff.rfl fun _ => OR.guard Iff.rfl fun _ => ?_
+  have hy := VRel.ofNat (F := F) (leToNat bs % 2 ^ 255)
+  have hy2 := VRel.mod.mpr (hy.mul hy)
+  have hden := hC.1.sub (VRel.mod.mpr (hC.2.1.mul hy2))
+  refine OR.guard ?_ fun _ => ?_
+  · rw [hden.isZero]; simp only [q_eq, subMod, Nat.mod_mod]; simp [bne]
+  refine OR.bind (sqrt_rel (VRel.mod.mpr ((VRel.one.sub hy2).mul (invF_rel hden)))) ?_
+  rintro x x' ⟨hx, hx'⟩
+  have hm := VRel.zero.sub hx
+  rw [hx.toNat, hm.toNat, Nat.mod_eq_of_lt hx']
+  simp only [q_eq, subMod, Nat.mod_mod]
+  exact ofAffine_rel curve_p (VRel.ofNat _) hy
 
-/-- string_to_point (as `Bandersnatch.decode`). -/
-def decode (bs : List UInt8) : Option Pt := do
+/-- As `Bandersnatch.inSubgroup`. -/
+def inSubgroup (P : Pt F) : Bool := CurveF.eq (C.smul (JamCrypto.Bandersnatch.r - 1) P) (CurveF.neg P)
+
+theorem inSubgroup_eq {P : Pt F} {P' : JamCrypto.Point} (h : PRel P P') :
+    inSubgroup P = JamCrypto.Bandersnatch.inSubgroup P' := by
+  unfold inSubgroup JamCrypto.Bandersnatch.inSubgroup
+  exact eq_eq curve_p (smul_rel hC _ h) (neg_rel curve_p h)
+
+/-- As `Bandersnatch.decode`. -/
+def decode (bs : List UInt8) : Option (Pt F) := do
   let P ← decodeOnCurve bs
   guard (inSubgroup P)
   return P
 
-/-! ## Hash to curve -/
+theorem decode_rel (bs : List UInt8) : OP (decode bs) (JamCrypto.Bandersnatch.decode bs) := by
+  unfold decode JamCrypto.Bandersnatch.decode
+  refine OR.bind (decodeOnCurve_rel bs) fun P P' h => ?_
+  exact OR.guard (by rw [inSubgroup_eq h]) fun _ => h
 
-def montB : F := Fr.ofNat JamCrypto.Bandersnatch.montB
-def montAoverB : F := Fr.ofNat JamCrypto.Bandersnatch.montAoverB
-def oneOverB2 : F := Fr.ofNat JamCrypto.Bandersnatch.oneOverB2
-def five : F := Fr.ofNat 5
+/-! ### Hash to curve
 
-/-- The arkworks 0.5 Elligator 2 map (as `Bandersnatch.elligator2`). -/
-def elligator2 (u : F) : Option Pt := do
-  let k := montB
-  let j := montAoverB
-  let den1 := Fr.one + five * u.sq
-  let x1 := Fr.neg (j * (if den1.isZero then Fr.one else den1).inv)
-  let g := fun (x : F) => x.sq * x + j * x.sq + x * oneOverB2
-  let gx1 := g x1
-  let x2 := Fr.neg x1 - j
-  -- the reference takes x1 iff g(x1) is a nonzero square, then a root of g(x); here the root of
-  -- g(x1), when there is one, decides
-  let r1 := if gx1.isZero then none else sqrt gx1
-  let (x, odd, y0) ← match r1 with
-    | some y1 => some (x1, true, y1)
-    | none => (sqrt (g x2)).map fun y2 => (x2, false, y2)
-  let y := if Fr.isOdd y0 != odd then Fr.neg y0 else y0
-  let s := x * k
-  let t := y * k
-  let tv1 := s + Fr.one
-  let tv2 := tv1 * t
-  if tv2.isZero then return ofAffine Fr.zero Fr.one
-  let inv := tv2.inv
-  return ofAffine (inv * tv1 * s) (inv * t * (s - Fr.one))
+The reference's `Bandersnatch.elligator2` destructures a pair out of an `if`
+(`let (x, odd) := if isSquare … then … else …`); the kernel cannot check any unfolding of its body
+(it evaluates `isSquare` on symbolic arguments and runs out of memory), so its equality with a
+fast map cannot be proved without changing the reference. Hash to curve is therefore the
+reference's own, converted to a fast point; its result has reduced coordinates (`red_smul`), so
+the conversion is exact. -/
 
-/-- hash_to_curve from the 96 expanded octets (as `Bandersnatch.hashToCurve` and
-    `Bandersnatch.Thin.hashToCurve` after `expandMessage`). -/
-def hashToCurveOf (u : List UInt8) : Option Pt := do
-  let P0 ← elligator2 (Fr.ofNat (beToNat (u.take 48) % Bandersnatch.q))
-  let P1 ← elligator2 (Fr.ofNat (beToNat (u.drop 48) % Bandersnatch.q))
-  let P := dbl (dbl (add P0 P1))
-  guard (valid P)
-  return P
+theorem one_lt_q : 1 < JamCrypto.Bandersnatch.curve.p := by decide
 
-/-! ## IETF VRF (GP v0.8.0) -/
+/-- Points of the option relate to themselves and have reduced coordinates. -/
+def SelfRed (P Q : JamCrypto.Point) : Prop := P = Q ∧ Red JamCrypto.Bandersnatch.curve P
+
+theorem OR.refl {α : Type} (m : Option α) : OR (fun a b => a = b) m m := by
+  cases m <;> simp [OR]
+
+theorem hashToCurve_selfRed (data : List UInt8) :
+    OR SelfRed (JamCrypto.Bandersnatch.hashToCurve data) (JamCrypto.Bandersnatch.hashToCurve data) := by
+  unfold JamCrypto.Bandersnatch.hashToCurve
+  refine OR.bind (OR.refl _) fun P0 _ h0 => ?_
+  subst h0
+  refine OR.bind (OR.refl _) fun P1 _ h1 => ?_
+  subst h1
+  exact OR.guard Iff.rfl fun _ => ⟨rfl, red_smul one_lt_q _ _⟩
+
+theorem thinHashToCurve_selfRed (data : List UInt8) (rd : Reading) :
+    OR SelfRed (JamCrypto.Bandersnatch.Thin.hashToCurve data rd)
+      (JamCrypto.Bandersnatch.Thin.hashToCurve data rd) := by
+  unfold JamCrypto.Bandersnatch.Thin.hashToCurve
+  refine OR.bind (OR.refl _) fun P0 _ h0 => ?_
+  subst h0
+  refine OR.bind (OR.refl _) fun P1 _ h1 => ?_
+  subst h1
+  exact OR.guard Iff.rfl fun _ => ⟨rfl, red_smul one_lt_q _ _⟩
+
+theorem OR.map_ofPoint {m : Option JamCrypto.Point} (h : OR SelfRed m m) : OP (m.map ofPoint) m := by
+  cases m with
+  | none => trivial
+  | some P => exact ofPoint_rel curve_p h.2
+
+/-- As `Bandersnatch.hashToCurve`. -/
+def hashToCurve (data : List UInt8) : Option (Pt F) := (JamCrypto.Bandersnatch.hashToCurve data).map ofPoint
+
+theorem hashToCurve_rel (data : List UInt8) : OP (hashToCurve data) (JamCrypto.Bandersnatch.hashToCurve data) :=
+  OR.map_ofPoint (hashToCurve_selfRed data)
+
+/-! ### IETF VRF -/
 
 /-- The generator. -/
-def G : Pt := ofPoint JamCrypto.Bandersnatch.G
+@[irreducible] def G : Pt F := ofAffineF (Field.ofNat 18886178867200960497001835917649091219057080094937609519140440539760939937304)
+  (Field.ofNat 19188667384257783945677642223292697773471335439753913231509108946878080696678)
 
-/-- The challenge (as `Bandersnatch.challenge`), from encoded points. -/
-def ietfChallenge (encs : List (List UInt8)) (ad : List UInt8) : Nat :=
-  let h := JAM.Sha512.hash (Bandersnatch.suiteString ++ [2] ++ encs.flatten ++ ad ++ [0])
-  beToNat (h.take 32) % Bandersnatch.r
+theorem G_rel : PRel G JamCrypto.Bandersnatch.G := by
+  unfold G; exact ofAffine_rel curve_p (vofNat _) (vofNat _)
 
-/-- `Bandersnatch.ietfVerify` with a decoded key (`decode key = some Y`). -/
-def ietfVerifyWith (Y : Pt) (encY ctx msg sig : List UInt8) : Bool := Id.run do
-  if sig.length != 96 then return false
-  let s := leToNat (slice sig 64 32)
-  if s ≥ Bandersnatch.r then return false
-  let c := leToNat (slice sig 32 32) % Bandersnatch.r
-  let some O := decode (sig.take 32) | return false
-  let some I := hashToCurveOf (Bandersnatch.expandMessage ctx) | return false
-  -- U = sG − cY, V = sI − cO
-  let U := smul2 s G c (neg Y)
-  let V := smul2 s I c (neg O)
-  if !(valid U && valid V) then return false
-  return ietfChallenge [encY, encode I, encode O, encode U, encode V] msg == c
+/-- As `Bandersnatch.challenge`. -/
+def challenge (pts : List (Pt F)) (ad : List UInt8) : Nat :=
+  let h := JAM.Sha512.hash (JamCrypto.Bandersnatch.suiteString ++ [2] ++ pts.flatMap encode ++ ad ++ [0])
+  beToNat (h.take 32) % JamCrypto.Bandersnatch.r
 
-/-- The same function as `Bandersnatch.ietfVerify`. -/
+theorem challenge_eq5 {a b c d e : Pt F} {a' b' c' d' e' : JamCrypto.Point} (ha : PRel a a')
+    (hb : PRel b b') (hc : PRel c c') (hd : PRel d d') (he : PRel e e') (ad : List UInt8) :
+    challenge [a, b, c, d, e] ad = JamCrypto.Bandersnatch.challenge [a', b', c', d', e'] ad := by
+  unfold challenge JamCrypto.Bandersnatch.challenge
+  simp only [List.flatMap_cons, List.flatMap_nil, encode_eq ha, encode_eq hb, encode_eq hc, encode_eq hd,
+    encode_eq he]
+
+/-- As `Bandersnatch.ietfVerify`. -/
 def ietfVerify (key ctx msg sig : List UInt8) : Bool := Id.run do
   if key.length != 32 || sig.length != 96 then return false
   let s := leToNat (slice sig 64 32)
-  if s ≥ Bandersnatch.r then return false
+  if s ≥ JamCrypto.Bandersnatch.r then return false
+  let c := leToNat (slice sig 32 32) % JamCrypto.Bandersnatch.r
   let some Y := decode key | return false
-  return ietfVerifyWith Y (encode Y) ctx msg sig
+  let some O := decode (sig.take 32) | return false
+  let some I := hashToCurve ctx | return false
+  let U := C.sub (C.smul s G) (C.smul c Y)
+  let V := C.sub (C.smul s I) (C.smul c O)
+  if !(CurveF.valid U && CurveF.valid V) then return false
+  return challenge [Y, I, O, U, V] msg == c
 
-/-- The same function as `Bandersnatch.vrfOutput`. -/
+theorem ietfVerify_eq (key ctx msg sig : List UInt8) :
+    ietfVerify key ctx msg sig = JamCrypto.Bandersnatch.ietfVerify key ctx msg sig := by
+  unfold ietfVerify JamCrypto.Bandersnatch.ietfVerify
+  rw [Id.run, Id.run]
+  by_cases h1 : (key.length != 32 || sig.length != 96) = true
+  · rw [if_pos h1, if_pos h1]
+  rw [if_neg h1, if_neg h1]
+  -- the match discriminants first, so that no check ever reduces them
+  have hY := decode_rel key
+  have hO := decode_rel (sig.take 32)
+  have hI := hashToCurve_rel ctx
+  generalize decode key = a at hY ⊢
+  generalize JamCrypto.Bandersnatch.decode key = a' at hY ⊢
+  generalize decode (sig.take 32) = b at hO ⊢
+  generalize JamCrypto.Bandersnatch.decode (sig.take 32) = b' at hO ⊢
+  generalize hashToCurve ctx = i at hI ⊢
+  generalize JamCrypto.Bandersnatch.hashToCurve ctx = i' at hI ⊢
+  cases a <;> cases a' <;> simp only [OR] at hY
+  all_goals cases b <;> cases b' <;> simp only [OR] at hO
+  all_goals cases i <;> cases i' <;> simp only [OR] at hI
+  all_goals dsimp (config := {zeta := false}) only
+  rename_i Y Y' O O' I I'
+  extract_lets s c U V E U' V'
+  by_cases h2 : s ≥ JamCrypto.Bandersnatch.r
+  · rw [if_pos h2, if_pos h2]
+  rw [if_neg h2, if_neg h2]
+  have hU : PRel U U' := sub_rel hC (smul_rel hC s G_rel) (smul_rel hC c hY)
+  have hV : PRel V V' := sub_rel hC (smul_rel hC s hI) (smul_rel hC c hO)
+  rw [valid_eq (E := E) curve_p hU, valid_eq (E := E) curve_p hV, challenge_eq5 hY hI hO hU hV]
+
+/-- As `Bandersnatch.vrfOutput`. -/
 def vrfOutput (sig : List UInt8) : List UInt8 :=
   match decodeOnCurve (sig.take 32) with
-  | some O => (JAM.Sha512.hash (Bandersnatch.suiteString ++ [3] ++ encode O ++ [0])).take 32
+  | some O => (JAM.Sha512.hash (JamCrypto.Bandersnatch.suiteString ++ [3] ++ encode O ++ [0])).take 32
   | none => JAM.Sha512.vrfOutput sig
 
-/-! ## Thin VRF (GP v0.8.1) -/
-
-namespace Thin
-
-open JamCrypto.Bandersnatch.Thin (Transcript tagThinVrf tagDelinearize tagChallenge tagPointToHash
-  challengeLen enc64 decScalarMod)
-
-/-- The encoding of the generator. -/
-def encG : List UInt8 := JamCrypto.Bandersnatch.encode JamCrypto.Bandersnatch.G
-
-/-- `Bandersnatch.Thin.verify` with a decoded key (`decode key = some Y`) and its encoding. -/
-def verifyWith (Y : Pt) (encY ctx msg sig : List UInt8) (rd : Reading := .prose) : Bool := Id.run do
-  if sig.length != 96 then return false
-  let some O := decode (sig.take 32) | return false
-  let some R := decode (slice sig 32 32) | return false
-  let s := leToNat (slice sig 64 32)
-  if s ≥ Bandersnatch.r then return false
-  let some I := hashToCurveOf (Bandersnatch.Thin.expandMessage ctx rd) | return false
-  if isZero Y || isZero I || isZero O then return false
-  -- vrfTranscript
-  let ad := msg
-  let t := Transcript.new.absorb
-    ([tagThinVrf] ++ enc64 2 ++ encG ++ encY ++ encode I ++ encode O ++ enc64 ad.length ++ ad)
-  let z := decScalarMod ((t.absorb [tagDelinearize]).squeeze challengeLen)
-  let Im := add G (smul z I)
-  let Om := add Y (smul z O)
-  -- challenge
-  let c := decScalarMod ((t.absorb ([tagChallenge] ++ encode R)).squeeze challengeLen)
-  -- s·Im = R + c·Om  ⟺  s·Im − c·Om = R (subgroup points: no exceptional steps)
-  let lhs := smul2 s Im c (neg Om)
-  return valid lhs && eq lhs R
-
-/-- The same function as `Bandersnatch.Thin.verify`. -/
-def verify (key ctx msg sig : List UInt8) (rd : Reading := .prose) : Bool := Id.run do
-  if key.length != 32 then return false
-  let some Y := decode key | return false
-  return verifyWith Y (encode Y) ctx msg sig rd
-
-/-- The same function as `Bandersnatch.Thin.vrfOutput`. -/
-def vrfOutput (sig : List UInt8) : List UInt8 :=
-  match decodeOnCurve (sig.take 32) with
-  | some O => (Transcript.new.absorb ([tagPointToHash] ++ encode O)).squeeze 32
-  | none => (Transcript.new.absorb ([tagPointToHash] ++ sig.take 32)).squeeze 32
-
-end Thin
+theorem vrfOutput_eq (sig : List UInt8) : vrfOutput sig = JamCrypto.Bandersnatch.vrfOutput sig := by
+  unfold vrfOutput JamCrypto.Bandersnatch.vrfOutput JamCrypto.Bandersnatch.pointToHash
+  have h := decodeOnCurve_rel (sig.take 32)
+  generalize decodeOnCurve (sig.take 32) = a at h ⊢
+  generalize JamCrypto.Bandersnatch.decodeOnCurve (sig.take 32) = a' at h ⊢
+  cases a <;> cases a' <;> simp only [OR] at h <;> try rfl
+  dsimp only
+  rw [encode_eq h]
 
 end JamCrypto.Fast.Bandersnatch

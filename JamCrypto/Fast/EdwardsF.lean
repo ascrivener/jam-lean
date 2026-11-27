@@ -21,6 +21,46 @@ variable {F : Type} [Field F] [LawfulField F]
 
 local notation "p" => Field.p F
 
+/-- Two optional values agree: both absent, or both present and related. -/
+def OR {α β : Type} (R : α → β → Prop) : Option α → Option β → Prop
+  | none, none => True
+  | some a, some b => R a b
+  | _, _ => False
+
+namespace OR
+variable {α β γ δ : Type} {R : α → β → Prop} {S : γ → δ → Prop}
+
+theorem pure {a : α} {b : β} (h : R a b) : OR R (Pure.pure a) (Pure.pure b) := h
+
+theorem none' : OR R (none : Option α) (none : Option β) := trivial
+
+theorem bind {m : Option α} {m' : Option β} {f : α → Option γ} {g : β → Option δ}
+    (hm : OR R m m') (hf : ∀ a b, R a b → OR S (f a) (g b)) : OR S (m >>= f) (m' >>= g) := by
+  cases m <;> cases m' <;> simp_all [OR, Option.bind_eq_bind]
+
+theorem guard {c c' : Prop} [Decidable c] [Decidable c'] {x : Option γ} {y : Option δ}
+    (h : c ↔ c') (k : c → OR S x y) :
+    OR S (_root_.guard c >>= fun _ => x) (_root_.guard c' >>= fun _ => y) := by
+  by_cases hc : c
+  · have hc' : c' := h.mp hc
+    simp [_root_.guard, hc, hc', k hc]
+  · have hc' : ¬c' := fun h' => hc (h.mpr h')
+    simp [_root_.guard, hc, hc', OR, failure]
+
+/-- Step through a `have` on the left: it becomes a variable with its defining equation. -/
+theorem letL {x : Option α} {y : Option β} {ε : Type} {v : ε} {f : ε → Option α} (h : ∀ e, e = v → OR R (f e) y) :
+    OR R (letFun v f) y := h v rfl
+
+/-- Step through a `have` on the right. -/
+theorem letR {x : Option α} {ε : Type} {v : ε} {f : ε → Option β} (h : ∀ e, e = v → OR R x (f e)) :
+    OR R x (letFun v f) := h v rfl
+
+end OR
+
+/-- Step through the same `have` on both sides of an equation. -/
+theorem letFun_eq {α β : Type} {v : α} {f g : α → β} (h : ∀ x, x = v → f x = g x) :
+    (have x := v; f x) = (have x := v; g x) := h v rfl
+
 /-- `a` stands for n: reduced, with value n mod p. -/
 def VRel (a : F) (n : Nat) : Prop := Field.Ok a ∧ Field.value a = n % p
 
@@ -271,10 +311,7 @@ def sqrtF (s t : Nat) (z n : F) : Option F := Id.run do
   if Field.beq (Field.mul r r) n then return some r else return none
 
 /-- An optional element stands for an optional reduced number. -/
-def ORel : Option F → Option Nat → Prop
-  | none, none => True
-  | some a, some x => VRel a x ∧ x < p
-  | _, _ => False
+abbrev ORel : Option F → Option Nat → Prop := OR (fun a x => VRel a x ∧ x < p)
 
 /-- The outer loop states of `sqrtF` and `sqrtTS` agree: m equal, c, u, r related and reduced. -/
 def SOut (a : Nat × F × F × F) (b : Nat × Nat × Nat × Nat) : Prop :=
@@ -334,6 +371,16 @@ theorem sqrtF_rel {s t : Nat} {z n : F} {z' n' : Nat} (hz : VRel z z') (hn : VRe
     · exact ⟨rfl, hw⟩
     · exact ⟨rfl, VRel.mod.mpr (hw.1.mul hw.1), lt_of_mod⟩
 
+/-- `Curve.ofAffine` of the values of x and y. -/
+def ofAffineF (x y : F) : Pt F := ⟨x, y, Field.one, Field.mul x y⟩
+
+theorem ofAffine_rel {E : Curve} (hp : E.p = p) {x y : F} {x' y' : Nat} (hx : VRel x x')
+    (hy : VRel y y') : PRel (ofAffineF x y) (E.ofAffine x' y') := by
+  unfold ofAffineF Curve.ofAffine
+  simp only [hp]
+  exact ⟨VRel.mod.mpr hx, VRel.mod.mpr hy, VRel.one, VRel.mod.mpr (hx.mul hy), lt_of_mod, lt_of_mod,
+    one_lt, lt_of_mod⟩
+
 theorem neg_rel {E : Curve} (hp : E.p = p) {P : Pt F} {P' : Point} (hP : PRel P P') :
     PRel (CurveF.neg P) (E.neg P') := by
   obtain ⟨px, py, pz, pt, lx, ly, lz, lt⟩ := hP
@@ -372,5 +419,37 @@ theorem eq_eq {E : Curve} (hp : E.p = p) {P Q : Pt F} {P' Q' : Point} (hP : PRel
 theorem isZero_eq {E : Curve} (hp : E.p = p) {P : Pt F} {P' : Point} (hP : PRel P P') :
     CurveF.isZero P = E.isZero P' :=
   eq_eq hp hP (pRel_zero E hp)
+
+/-! ### Reference points with reduced coordinates, and their fast copies -/
+
+/-- The coordinates are below the modulus. -/
+def Red (E : Curve) (P : Point) : Prop := P.X < E.p ∧ P.Y < E.p ∧ P.Z < E.p ∧ P.T < E.p
+
+theorem red_zero {E : Curve} (h : 1 < E.p) : Red E Curve.zero := by
+  simp only [Red, Curve.zero]; omega
+
+theorem red_add {E : Curve} (h : 1 < E.p) (P Q : Point) : Red E (E.add P Q) := by
+  have hp : 0 < E.p := by omega
+  unfold Curve.add
+  simp only []
+  split
+  · simp only [Red, Curve.invalid]; omega
+  · exact ⟨Nat.mod_lt _ hp, Nat.mod_lt _ hp, Nat.mod_lt _ hp, Nat.mod_lt _ hp⟩
+
+theorem red_smul {E : Curve} (h : 1 < E.p) (k : Nat) (P : Point) : Red E (E.smul k P) := by
+  unfold Curve.smul
+  simp only [Id.run, bind, pure]
+  refine forIn_range_inv (Red E) _ _ (red_zero h) fun j a _ => ?_
+  simp only [Id.run]
+  split
+  · exact red_add h _ _
+  · exact red_add h _ _
+
+/-- The fast copy of a reference point. -/
+def ofPoint (P : Point) : Pt F := ⟨Field.ofNat P.X, Field.ofNat P.Y, Field.ofNat P.Z, Field.ofNat P.T⟩
+
+theorem ofPoint_rel {E : Curve} (hp : E.p = p) {P : Point} (h : Red E P) : PRel (ofPoint P : Pt F) P := by
+  unfold Red at h; rw [hp] at h
+  exact ⟨VRel.ofNat _, VRel.ofNat _, VRel.ofNat _, VRel.ofNat _, h.1, h.2.1, h.2.2.1, h.2.2.2⟩
 
 end JamCrypto.Fast

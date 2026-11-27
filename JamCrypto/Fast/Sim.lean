@@ -35,4 +35,14 @@ theorem forIn_range_rel {α β : Type} (R : α → β → Prop) (r : Std.Legacy.
   rw [Std.Legacy.Range.forIn_eq_forIn_range', Std.Legacy.Range.forIn_eq_forIn_range']
   exact forIn_rel R _ f g h0 hs
 
+/-- An invariant of a loop: holds initially and after every step. -/
+theorem forIn_range_inv {α : Type} (P : α → Prop) (r : Std.Legacy.Range) (f : Nat → α → Id (ForInStep α))
+    {a : α} (h0 : P a) (hs : ∀ x a, P a → StepRel (fun b _ => P b) (f x a).run (f x a).run) :
+    P (forIn r a f).run :=
+  (forIn_range_rel (fun b c => b = c ∧ P b) r f f ⟨rfl, h0⟩ (fun x b c ⟨hbc, hb⟩ => by
+    subst hbc
+    have := hs x b hb
+    revert this
+    cases (f x b).run <;> simp [StepRel])).2
+
 end JamCrypto.Fast

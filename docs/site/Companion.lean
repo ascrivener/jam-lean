@@ -9,6 +9,11 @@ import Companion.Work
 import Companion.Auditing
 import Companion.BestChain
 import Companion.PVM
+import Companion.Codec
+import Companion.StateMerkle
+import Companion.Merkle
+import Companion.Bandersnatch
+import Companion.Erasure
 
 open Verso.Genre Manual
 open Companion
@@ -87,12 +92,12 @@ with the model modules that implement them.
 * *§19 Grandpa and the best chain* ({ref "bestchain"}[written]): `JAM/BestChain.lean` (the best-chain rule; Grandpa itself is not modelled)
 * *Appendix A, the PVM* ({ref "pvm"}[written]): `PVM/Machine.lean`, `PVM/Exec.lean`, `PVM/Gas.lean`, `PVM/Memory.lean`
 * Appendix B, PVM invocations: `PVM/Invocation.lean`, `JAM/Host/`
-* Appendix C, the serialization codec: `JAM/Codec.lean`, `JAM/Decode.lean`
-* Appendix D, state Merklization: `JAM/Trie.lean`, `JAM/State.lean`, `JAM/StateDecode.lean`
-* Appendix E, general Merklization: `JAM/Merkle.lean`, `JAM/Segments.lean`
+* *Appendix C, the serialization codec* ({ref "codec"}[written]): `JAM/Codec.lean`, `JAM/Decode.lean`
+* *Appendix D, state Merklization* ({ref "statemerkle"}[written]): `JAM/Trie.lean`, `JAM/State.lean`, `JAM/StateDecode.lean`
+* *Appendix E, general Merklization* ({ref "merkle"}[written]): `JAM/Merkle.lean`, `JAM/Segments.lean`, `JAM/History.lean` (mountain ranges)
 * Appendix F, shuffling: `JAM/Shuffle.lean`
-* Appendix G, the Bandersnatch VRF: `JAM/Crypto.lean` (the interface) and `JamCrypto/` (an implementation)
-* Appendix H, erasure coding: `JAM/Erasure.lean`
+* *Appendix G, the Bandersnatch VRF* ({ref "bandersnatch"}[written]): `JAM/Crypto.lean` (the interface) and `JamCrypto/` (an implementation)
+* *Appendix H, erasure coding* ({ref "erasure"}[written]): `JAM/Erasure.lean`
 
 {include 1 Companion.Primitives}
 
@@ -111,3 +116,13 @@ with the model modules that implement them.
 {include 1 Companion.BestChain}
 
 {include 1 Companion.PVM}
+
+{include 1 Companion.Codec}
+
+{include 1 Companion.StateMerkle}
+
+{include 1 Companion.Merkle}
+
+{include 1 Companion.Bandersnatch}
+
+{include 1 Companion.Erasure}

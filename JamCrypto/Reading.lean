@@ -16,7 +16,7 @@ commit 181aba2), for all of Appendix G. In two places the draft's prose and its 
 * **Ring transcript label.** §5: "Begin with empty transcript and "ring-proof" label." The ring
   vectors verify only with the suite id `Bandersnatch-SHA512-ELL2-v1` as the label.
 
-`Reading.prose` follows the prose and is the default of the v0.8.1 path (Adam, 2026-11-25).
+`Reading.prose` follows the prose and is the default of the v0.8.1 path (a project decision).
 `Reading.vectors` follows the vectors and is what every published vector of the v0.8.1 path checks.
 **No published vectors follow the prose reading**: it has no external oracle and is tested only
 for self-consistency (`cryptotest`; see `docs/jamcrypto.md`). The v0.8.0 path has no reading: it

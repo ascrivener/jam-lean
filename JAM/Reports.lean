@@ -33,7 +33,7 @@ namespace JAM
 abbrev EdKey := List UInt8
 
 /-- $\Phi(\mathbf{k})$ (GP v0.8.1 eq. `blacklistfilter`): the keys of offenders in $\psi'_O$
-    replaced by the null key $\mathbb{K}^{\emptyset}$ (eq. `nullvalkey`). Only the Ed25519 part is
+    replaced by the null key $\mathbb{K}_0$ (eq. `nullvalkey`). Only the Ed25519 part is
     kept here: `nullEdKey` = [2, 0, …]. -/
 def blacklist (offenders : OctetSet) (k : List EdKey) : List EdKey :=
   k.map fun e => if offenders.contains e then nullEdKey else e
@@ -80,7 +80,7 @@ structure ReportsInput where
   /-- The work-package hashes already in the pipeline (`knownPackages`). -/
   known : OctetSet
   /-- The ancestor-set condition on a lookup anchor (GP §11.4.1: $\exists h, h' \in \mathbf{A}$ with
-      $h_T = x_t$, $\mathcal{H}(h) = x_l$, $h'_P = \mathcal{H}(h)$ and $h'_R = x_s$). -/
+      $h_T = x_t$, $\mathcal{H}(h) = x_l$, $h'_P = \mathcal{H}(h)$ and $h'_R = x_r$; GP v0.8.1 eq. 11.38). -/
   lookupAnchorKnown : RefineContext → Bool
 
 /-- $\mathbf{M} = (P(|\kappa'|, \eta'_2, \tau'), \Phi(\kappa'))$ (GP §11.3). -/

@@ -13,7 +13,7 @@ namespace PVM
 
 /-! ## Host-call handlers and $\Psi_H$ (GP §A.6) -/
 
-/-- The exit reasons a host-call handler may give: $\{\blacktriangleright, \text{☇}, \infty\}$ (GP v0.8.1 §A.6, $\mathfrak{F}_X$). Since
+/-- The exit reasons a host-call handler may give: $\{\blacktriangleright, \text{☇}, \infty\}$ (GP v0.8.1 §A.6, $\Omega\langle X \rangle$). Since
     v0.8.1 (#533) a handler can no longer halt the machine. -/
 inductive HostStatus where
   | cont
@@ -35,7 +35,7 @@ structure HostResult (X : Type) where
   mem : Memory
   ctx : X
 
-/-- $\mathfrak{F}_X \equiv (\mathbb{N}, \mathbb{N}_G, [\![ \mathbb{N}_R ]\!]_{13}, \mathbb{M}, X) \to$
+/-- $\Omega\langle X \rangle \equiv (\mathbb{N}, \mathbb{N}_G, [\![ \mathbb{N}_R ]\!]_{13}, \mathbb{M}, X) \to$
     $(\{\blacktriangleright, \text{☇}, \infty\}, \mathbb{N}_G, [\![ \mathbb{N}_R ]\!]_{13}, \mathbb{M}, X)$ (GP v0.8.1 §A.6).
 
     Gas is in $\mathbb{N}_G$ throughout: since v0.8.1 (#533) $\Psi_H$'s result gas is $\mathbb{N}_G$ too, and host functions
@@ -108,7 +108,7 @@ def inputSize : Nat := 2 ^ 24
 /-- $P(x) = \mathsf{Z}_P \lceil x / \mathsf{Z}_P \rceil$. -/
 def roundPage (x : Nat) : Nat := pageSize * ((x + pageSize - 1) / pageSize)
 
-/-- $Q(x) = \mathsf{Z}_Z \lceil x / \mathsf{Z}_Z \rceil$. -/
+/-- $Z(x) = \mathsf{Z}_Z \lceil x / \mathsf{Z}_Z \rceil$. -/
 def roundZone (x : Nat) : Nat := zoneSize * ((x + zoneSize - 1) / zoneSize)
 
 /-- The components of a standard JAM program blob (GP v0.8.1 eq. `jamblobformat`): read-only data $\mathbf{o}$,
@@ -156,7 +156,7 @@ def JamBlob.parseStd? (b : ByteArray) : Option JamBlob := (skipMetadata? b).bind
 /-- The address of the read-only section, $\mathsf{Z}_Z$. -/
 def roStart : Nat := zoneSize
 
-/-- The address of the read-write section, $2\mathsf{Z}_Z + Q(|\mathbf{o}|)$. -/
+/-- The address of the read-write section, $2\mathsf{Z}_Z + Z(|\mathbf{o}|)$. -/
 def rwStart (jb : JamBlob) : Nat := 2 * zoneSize + roundZone jb.ro.size
 
 /-- The end of the stack, $2^{32} - 2\mathsf{Z}_Z - \mathsf{Z}_I$. -/
@@ -172,7 +172,7 @@ def initialMemory (jb : JamBlob) (a : ByteArray) : Memory :=
   let μ : Memory := Memory.empty
   -- [𝖹_Z, 𝖹_Z + P(|o|)) : R
   let μ := μ.setPages (pg roStart) (pg (roundPage jb.ro.size)) (some .read)
-  -- [2𝖹_Z + Q(|o|), 2𝖹_Z + Q(|o|) + P(|w|) + z𝖹_P) : W
+  -- [2𝖹_Z + Z(|o|), 2𝖹_Z + Z(|o|) + P(|w|) + z𝖹_P) : W
   let μ := μ.setPages (pg (rwStart jb)) (pg (roundPage jb.rw.size) + jb.heapPages) (some .write)
   -- [2^32 − 2𝖹_Z − 𝖹_I − P(s), 2^32 − 2𝖹_Z − 𝖹_I) : W
   let μ := μ.setPages (pg (stackEnd - roundPage jb.stackSize)) (pg (roundPage jb.stackSize)) (some .write)
@@ -192,7 +192,7 @@ def initialRegs (a : ByteArray) : Regs :=
     |>.set 8 (UInt64.ofNat a.size)
 
 /-- The decoded JAM blob, if it is a valid encoding, the sections fit
-    ($5\mathsf{Z}_Z + Q(|\mathbf{o}|) + Q(|\mathbf{w}| + z\mathsf{Z}_P) + Q(s) + \mathsf{Z}_I \le 2^{32}$) and $|\mathbf{a}| \le \mathsf{Z}_I$. -/
+    ($5\mathsf{Z}_Z + Z(|\mathbf{o}|) + Z(|\mathbf{w}| + z\mathsf{Z}_P) + Z(s) + \mathsf{Z}_I \le 2^{32}$) and $|\mathbf{a}| \le \mathsf{Z}_I$. -/
 def validJamBlob? (b : ByteArray) (a : ByteArray) : Option JamBlob :=
   if a.size > inputSize then none
   else (JamBlob.parseStd? b).bind fun jb =>
@@ -215,8 +215,7 @@ inductive InvOutput where
   | panic
   | oog
 
-/-- Whether the octets `a, …, a + n − 1` all lie in $\mathbb{V}_\mu$: $\mathbb{N}_{a \dots+n} \subseteq \mathbb{V}_\mu$. Checked page by page
-    (`PVM.Memory.rangeReadable_iff` states it index by index). -/
+/-- Whether the octets `a, …, a + n − 1` all lie in $\mathbb{V}_\mu$: $\mathbb{N}_{a \dots+n} \subseteq \mathbb{V}_\mu$. Checked page by page. -/
 def Memory.rangeReadable (μ : Memory) (a n : Nat) : Bool :=
   n == 0 ||
     (a + n ≤ 2 ^ 32 &&

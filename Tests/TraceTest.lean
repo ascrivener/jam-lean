@@ -201,7 +201,7 @@ def runTrace (dir : System.FilePath) (name : String) : IO Summary := do
           break
   return sum
 
-/-! ## `lookupAnchorKnown` (§11.4.1, GP eq. 11.36)
+/-! ## `lookupAnchorKnown` (§11.4.1, GP v0.8.1 eq. 11.38)
 
 Regression test: the lookup anchor's child must carry the lookup anchor's posterior state root
 x_lookupanchorpoststate as its prior state root, not the anchor's x_stateroot. Here the two roots

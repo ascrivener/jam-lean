@@ -9,7 +9,7 @@ Runs the disputes transition of GP v0.8.0 §10 (`JAM.disputesTransition`) on eve
 davxy/jam-test-vectors `v0.8.0` `stf/disputes/{tiny,full}`, and compares:
 * the output: the offenders marker H_O, or the error (the paper names no errors; we compare the
   vectors' names);
-* ψ' and ρ^‡ (on an error, the state is unchanged).
+* ψ' and ρ^† (on an error, the state is unchanged).
 
 Ed25519 verification is a parameter of the model (`JAM.Crypto`). The oracle here is read from the
 vector's expected output: when it is `bad_signature`, every signature is rejected; otherwise every

@@ -14,6 +14,7 @@ import Companion.Work
 import Companion.Auditing
 import Companion.BestChain
 import Companion.PVM
+import Companion.Invocations
 import Companion.Codec
 import Companion.StateMerkle
 import Companion.Merkle
@@ -96,8 +97,8 @@ with the model modules that implement them.
 * *§17 Auditing and judging* ({ref "auditing"}[written]): `JAM/Auditing.lean`
 * §18 Beefy distribution: not modelled
 * *§19 Grandpa and the best chain* ({ref "bestchain"}[written]): `JAM/BestChain.lean` (the best-chain rule; Grandpa itself is not modelled)
-* *Appendix A, the PVM* ({ref "pvm"}[written]): `PVM/Machine.lean`, `PVM/Exec.lean`, `PVM/Gas.lean`, `PVM/Memory.lean`
-* Appendix B, PVM invocations: `PVM/Invocation.lean`, `JAM/Host/`
+* *Appendix A, the PVM* ({ref "pvm"}[written]): `PVM/Blob.lean`, `PVM/Machine.lean`, `PVM/Instr.lean`, `PVM/Exec.lean`, `PVM/Memory.lean`, `PVM/Invocation.lean`, `PVM/Gas.lean`
+* *Appendix B, PVM invocations and host calls* ({ref "invocations"}[written]): `JAM/Host/General.lean`, `JAM/Refine.lean`, `JAM/Accumulate.lean` (the host-call loop, the standard initialization and the argument invocation, which v0.8.1 defines in §A.6–§A.8, are in the Appendix A chapter)
 * *Appendix C, the serialization codec* ({ref "codec"}[written]): `JAM/Codec.lean`, `JAM/Decode.lean`
 * *Appendix D, state Merklization* ({ref "statemerkle"}[written]): `JAM/Trie.lean`, `JAM/State.lean`, `JAM/StateDecode.lean`
 * *Appendix E, general Merklization* ({ref "merkle"}[written]): `JAM/Merkle.lean`, `JAM/Segments.lean`, `JAM/History.lean` (mountain ranges)
@@ -132,6 +133,8 @@ with the model modules that implement them.
 {include 1 Companion.BestChain}
 
 {include 1 Companion.PVM}
+
+{include 1 Companion.Invocations}
 
 {include 1 Companion.Codec}
 

@@ -95,6 +95,11 @@ lake build examples-exe && .lake/build/bin/examples          # from the reposito
 
 The vectors are GP v0.8.0 vectors, run with the tiny chain the tests use. Each box says so.
 
+TODO: once v0.8.1 vectors exist, add an accumulation example where a report becomes accumulatable
+and its service runs. None of the v0.8.0 accumulate vectors that pass under the v0.8.1 model
+accumulates a report (their services are v0.8.0 programs), so §12's boxes show the ready queue and an
+always-accumulate run.
+
 To add an example:
 
 1. In `Tests/Examples.lean`, write a function returning an `Example`: run the model on the vector

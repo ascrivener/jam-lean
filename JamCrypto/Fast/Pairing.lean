@@ -86,7 +86,7 @@ theorem linesOf_rel {q : JamCrypto.Pairing.G2} (h : redG2 q = true) :
   unfold linesOf
   split
   · rename_i e he
-    have hq : e.1 = q := eq_of_eqG2 (List.find?_some he)
+    have hq : e.1 = q := eq_of_eqG2 (List.find?_some (p := fun e : JamCrypto.Pairing.G2 × Array (E12 E × E12 E) => eqG2 e.1 q) he)
     have hm : e ∈ srsLines := List.mem_of_find?_eq_some he
     unfold srsLines at hm
     obtain ⟨q', -, rfl⟩ := List.mem_map.mp hm

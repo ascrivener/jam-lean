@@ -125,6 +125,9 @@ jobs:
       - name: Constant-depth Merkle trees, J_x, L_x and paged proofs (hand-written; no vectors exist)
         run: lake build Tests.SegmentsTest
 
+      - name: Work-package refinement, §14 — B, A, I, Ξ and the bundle checks (hand-built; no vectors exist)
+        run: lake build Tests.GuaranteeTest
+
       - name: The real witness binary rejects malformed payloads (a test, not a proof)
         run: lake build witnessrun
 

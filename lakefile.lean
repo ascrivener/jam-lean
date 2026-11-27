@@ -49,7 +49,8 @@ lean_lib Tests where
     .one `Tests.Blake2bTest, .one `Tests.HostGeneralTest, .one `Tests.JamJson,
     .one `Tests.KeccakTest, .one `Tests.RefineTest, .one `Tests.BlockJson,
     .one `Tests.StfRunner, .one `Tests.ReportsJson, .one `Tests.TraceState, .one `Tests.Sha512Test,
-    .one `Tests.V080, .one `Tests.AuditingTest, .one `Tests.SegmentsTest]
+    .one `Tests.V080, .one `Tests.AuditingTest, .one `Tests.SegmentsTest,
+    .one `Tests.GuaranteeTest]
 
 lean_exe «pvmtest-exe» where
   root := `Tests.PvmTest

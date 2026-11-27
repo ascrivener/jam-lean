@@ -22,6 +22,7 @@ ALLOW = {
     # library roots
     "PVM": {"PVM.Fast"},
     "JAM": {"JAM.Fast"},
+    "JamCrypto": {"JamCrypto.Fast"},
     # Ψ, Ψ_M and the blob parsers called from compiled spec code
     "PVM.Invocation": {"PVM.Fast.Basic"},
     "JAM.Refine": {"PVM.Fast.Host", "JAM.Fast.HostGeneral"} | BLAKE,

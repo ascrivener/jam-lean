@@ -89,4 +89,86 @@ theorem mod_of_eq {X R k p E M : Nat} (h : X * R + k * p = E + M * p) : X * R % 
   have := congrArg (· % p) h
   simpa [Nat.add_mul_mod_self_right] using this
 
+/-! ## Montgomery values
+
+An element with limb value x stands for x·R⁻¹ mod p. With R·R⁻¹ ≡ 1 (mod p), the operations on
+limb values give the field operations on these. -/
+
+section Mont
+variable {p R rInv : Nat}
+
+theorem mod_mul_one (hR : R * rInv % p = 1) (y : Nat) : y * (R * rInv) % p = y % p := by
+  rw [Nat.mul_mod, hR, Nat.mul_one, Nat.mod_mod]
+
+theorem mont_mul_value (hR : R * rInv % p = 1) {x a b : Nat} (h : x * R % p = a * b % p) :
+    x * rInv % p = (a * rInv % p) * (b * rInv % p) % p := by
+  rw [← Nat.mul_mod, ← mod_mul_one hR (x * rInv)]
+  have e1 : x * rInv * (R * rInv) = (x * R) * (rInv * rInv) := by grind
+  have e2 : a * rInv * (b * rInv) = (a * b) * (rInv * rInv) := by grind
+  rw [e1, e2, ← Nat.mod_mul_mod, h, Nat.mod_mul_mod]
+
+theorem mont_add_value {x a b : Nat} (h : x = (a + b) % p) :
+    x * rInv % p = (a * rInv % p + b * rInv % p) % p := by
+  rw [h, Nat.mod_mul_mod, Nat.add_mul, Nat.add_mod]
+
+/-- (y + c) mod p = a with y, c < p determines y = (a + p − c) mod p. -/
+theorem sub_unique {y c a : Nat} (hy : y < p) (hc : c < p) (h : (y + c) % p = a) :
+    y = (a + p - c) % p := by
+  subst h
+  by_cases hlt : y + c < p
+  · rw [Nat.mod_eq_of_lt hlt]
+    have : y + c + p - c = y + p := by omega
+    rw [this, Nat.add_mod_right, Nat.mod_eq_of_lt hy]
+  · have h2 : (y + c) % p = y + c - p := by
+      rw [Nat.mod_eq_sub_mod (by omega), Nat.mod_eq_of_lt (by omega)]
+    rw [h2]
+    have : y + c - p + p - c = y := by omega
+    rw [this, Nat.mod_eq_of_lt hy]
+
+theorem mont_sub_value (hp : 0 < p) {x a b : Nat} (h : x = (a + p - b) % p) (hb : b < p) :
+    x * rInv % p = (a * rInv % p + p - b * rInv % p) % p := by
+  apply sub_unique (Nat.mod_lt _ hp) (Nat.mod_lt _ hp)
+  rw [← Nat.add_mod, ← Nat.add_mul, h]
+  have e : ((a + p - b) % p + b) * rInv % p = ((a + p - b) + b) * rInv % p := by
+    rw [Nat.add_mul, Nat.add_mul, Nat.add_mod, Nat.mod_mul_mod, ← Nat.add_mod]
+  have : a + p - b + b = a + p := by omega
+  rw [e, this, Nat.add_mul, Nat.add_mod, Nat.mul_mod p, Nat.mod_self, Nat.zero_mul, Nat.zero_mod,
+    Nat.add_zero, Nat.mod_mod]
+
+/-- The Montgomery value determines a reduced limb value. -/
+theorem mont_inj (hR : R * rInv % p = 1) {a b : Nat} (ha : a < p) (hb : b < p)
+    (h : a * rInv % p = b * rInv % p) : a = b := by
+  have h2 : a * rInv % p * R % p = b * rInv % p * R % p := by rw [h]
+  rw [Nat.mod_mul_mod, Nat.mod_mul_mod] at h2
+  have e : ∀ y, y * rInv * R % p = y % p := fun y => by
+    rw [Nat.mul_assoc, Nat.mul_comm rInv R, mod_mul_one hR]
+  rw [e, e, Nat.mod_eq_of_lt ha, Nat.mod_eq_of_lt hb] at h2
+  exact h2
+
+/-- A reduced x with x·R ≡ a (mod p) is a·R⁻¹ mod p. -/
+theorem mont_of_mul (hR : R * rInv % p = 1) {x a : Nat} (hx : x < p) (h : x * R % p = a % p) :
+    x = a * rInv % p := by
+  have : x * R * rInv % p = a * rInv % p := by rw [← Nat.mod_mul_mod, h, Nat.mod_mul_mod]
+  rw [Nat.mul_assoc, mod_mul_one hR, Nat.mod_eq_of_lt hx] at this
+  exact this
+
+end Mont
+
+/-- The sum of the first n base-2^29 digits of y is y mod 2^(29n). -/
+def digitSum (y : Nat) : Nat → Nat
+  | 0 => 0
+  | n + 1 => digitSum y n + (y / (2 ^ 29) ^ n % 2 ^ 29) * (2 ^ 29) ^ n
+
+theorem digitSum_eq (y n : Nat) : digitSum y n = y % (2 ^ 29) ^ n := by
+  induction n with
+  | zero => simp [digitSum, Nat.mod_one]
+  | succ n ih => rw [digitSum, ih, @Nat.mod_pow_succ y (2 ^ 29) n, Nat.mul_comm ((2 ^ 29) ^ n)]
+
+/-- Equal limb sums with limbs below 2^29 have equal low limbs and equal rests. -/
+theorem limb_inj {x y X Y : Nat} (hx : x < 2 ^ 29) (hy : y < 2 ^ 29)
+    (h : x + 2 ^ 29 * X = y + 2 ^ 29 * Y) : x = y ∧ X = Y := by omega
+
+theorem mod29_mod64 (n : Nat) : n % 2 ^ 29 % 2 ^ 64 = n % 2 ^ 29 :=
+  Nat.mod_eq_of_lt (Nat.lt_trans (Nat.mod_lt _ (by decide)) (by decide))
+
 end JamCrypto.Fast

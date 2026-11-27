@@ -243,8 +243,8 @@ def laterTranche (V : Nat) (view : View) (n : Nat) (q : List (Option WorkReport)
   (q.filterMap id).filter fun w => laterSelected V (y w) (noShows V view n w)
 
 /-- $\mathbf{a}_n$ with the prose rule of §17.3 added: a report with a known negative judgment is always
-    audited ("In the first case, the validator is always required to issue a judgment"). Not in eq.
-    `latertranches`; see reading 4 in the module docstring. -/
+    audited ("In the first case, the validator is always required to issue a judgment"). The rule is
+    in the prose only, not in eq. `latertranches`; the model adds it. -/
 def laterTrancheWithNegatives (V : Nat) (view : View) (n : Nat) (q : List (Option WorkReport))
     (y : WorkReport → List UInt8) : List WorkReport :=
   (q.filterMap id).filter fun w =>

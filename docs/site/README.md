@@ -42,6 +42,11 @@ it *quotes* it with `{leanSource N}` (the header "N — file · GitHub · API" c
 30 lines start collapsed). A bare GitHub or API link never stands in for the code. A theorem in the
 `proofs/` package, which `{leanSource}` cannot reach, is quoted as its statement in a code block.
 `{api}` and `{name}` references in running prose to something quoted elsewhere are fine.
+Named in passing, and only linked: constants and context strings (`JAM.Xvalidif`, `JAM.nullEdKey`,
+`Constants.*`), abbreviations, configuration, error, input, output and trace types, and theorems
+mentioned without being discussed. `PVM.costRow?` (the generated 140-row cost table) is the one
+definition the book cannot quote (its quotation exceeds Lean's code-generator recursion depth); it
+stays a link.
 
 Every page with Lean code has a "Show all Lean / Hide all Lean" switch under its title
 (`collapseJs` in `CompanionMain.lean`). "Show all" opens every collapsed definition; "Hide all"
@@ -95,11 +100,14 @@ use goes in a doc comment preceded by `-- notation-ok: <id> <reason>`.
 * `scripts/check-citations.py` (CI) checks that every note the book and the model cite
   (`v0.8.1-A18`, "note 27") exists in `docs/upstream-candidates.md` and is not withdrawn.
 * Equations come from the paper's TeX. `scripts/gen_equations.py` writes `gp-equations.json`
-  (number, label, TeX body, fingerprint; its numbering is checked against LaTeX's `.aux`).
-  `{gpeq "6.24"}` displays the paper's equation; ``{eq}`6.24` `` cites a number. Where a display
+  (number, label, TeX body, fingerprint; run with `--aux` against a build of the tagged paper, it
+  checks the numbers of the labelled equations against LaTeX's `.aux`).
+  `{gpeq "6.24"}` displays the paper's equation (several numbers: one row each, aligned at their
+  relation, each with its own number); ``{eq}`6.24` `` cites a number. Where a display
   must be the book's own (a part of an equation, a single case, a layout the renderers cannot
   draw), a `{transcribed "6.24" "<fingerprint>"}` paragraph goes just before it, and the build fails
   when that equation's TeX changes. `scripts/check-equations.py` (CI) rejects a numbered hand display
-  without its marker and a hand-typed "(6.24)" in prose. After regenerating the table for a new
+  without its marker, a hand-typed "(6.24)" or "(14.6–14.8)" in prose (write
+  ``{eq}`14.6`–{eq}`14.8` ``), and a heading that cites an equation the paper does not have. After regenerating the table for a new
   paper version, `scripts/check-equations.py --changed OLD.json` lists the equations whose TeX
   changed or which moved, and the chapters that use them: re-read those passages.

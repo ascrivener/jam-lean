@@ -157,8 +157,9 @@ $$`\mathbf{s} = A\left(\mathcal{H}(\mathbf{p}), B(\mathbf{p}, \mathbf{l}), \over
 $`\overgroup{\overline{\mathbf{e}}}` is the concatenation of every item's exports, `outs.flatMap (·.exports)` in the model.
 
 What the model proves about $`I` and $`\Xi`: every item exports exactly $`m_e` segments, whichever case of $`I`
-applies, and when no item exports anything $`\Xi` succeeds, with the availability
-specifier of an empty export sequence.
+applies; and $`\Xi` succeeds, with the availability specifier of an empty export sequence, when
+three conditions hold together: $`\Psi_I` returns a trace $`t` of at most $`\mathsf{W}_R` octets, the keys of $`\mathbf{l}`
+are exactly the imported package hashes, and no item exports anything.
 
 {mathdoc JAM.Guarantee.length_exports_itemResult}
 
@@ -266,8 +267,12 @@ package itself", and then checks it:
 {leanSource JAM.Guarantee.verifyBundle}
 
 The check of one imported segment is {api}`JAM.Segments.verifySegment`. Every segment verifies against the
-segment root of its sequence with the $`\mathcal{J}_0` justification $`J_\mathbf{l}` uses, and so the checks accept a bundle
-built from genuine data:
+segment root of its sequence with the $`\mathcal{J}_0` justification $`J_\mathbf{l}` uses. Building on that,
+{api}`JAM.Guarantee.checkBundle` accepts a package together with the item data the data source
+gives for it ({api}`JAM.Guarantee.packageData`), provided every exported segment is $`\mathsf{W}_G` octets and the
+keys of $`\mathbf{l}` are exactly the imported package hashes. The theorem is about the decoded form
+that `checkBundle` takes. No round trip through the bundle's encoding is proved, so it does not
+show that {api}`JAM.Guarantee.verifyBundle` accepts the encoded bundle:
 
 {mathdoc JAM.Segments.verifySegment_justify}
 

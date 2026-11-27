@@ -1,4 +1,5 @@
 import JAM.Blake2b
+import JAM.Theorems.CheckedIndex.Blake2b
 
 /-!
 # Fast compiled Blake2b, proved equal to `JAM.Blake2b`
@@ -9,6 +10,7 @@ compiled code uses `hashFast` too.
 -/
 
 namespace JAM.Blake2b
+open JAM.Theorems.CheckedIndex
 
 /-! ## Fast compiled form
 
@@ -38,24 +40,24 @@ def wordsAt (msg : ByteArray) (o : Nat) : Array UInt64 :=
 /-- `compress` with the message words given directly. -/
 def compressWords (h : Array UInt64) (m : Array UInt64) (t : Nat) (last : Bool) :
     Array UInt64 := Id.run do
-  let mut v := h ++ iv
+  let mut v := h ++ Old.Blake2b.iv
   v := v.set! 12 (v[12]! ^^^ UInt64.ofNat (t % 2 ^ 64))
   v := v.set! 13 (v[13]! ^^^ UInt64.ofNat (t / 2 ^ 64))
   if last then v := v.set! 14 (v[14]! ^^^ 0xFFFFFFFFFFFFFFFF)
   for r in [0:12] do
-    let s := sigma[r % 10]!
-    v := mix v 0 4 8 12 m[s[0]!]! m[s[1]!]!
-    v := mix v 1 5 9 13 m[s[2]!]! m[s[3]!]!
-    v := mix v 2 6 10 14 m[s[4]!]! m[s[5]!]!
-    v := mix v 3 7 11 15 m[s[6]!]! m[s[7]!]!
-    v := mix v 0 5 10 15 m[s[8]!]! m[s[9]!]!
-    v := mix v 1 6 11 12 m[s[10]!]! m[s[11]!]!
-    v := mix v 2 7 8 13 m[s[12]!]! m[s[13]!]!
-    v := mix v 3 4 9 14 m[s[14]!]! m[s[15]!]!
+    let s := Old.Blake2b.sigma[r % 10]!
+    v := Old.Blake2b.mix v 0 4 8 12 m[s[0]!]! m[s[1]!]!
+    v := Old.Blake2b.mix v 1 5 9 13 m[s[2]!]! m[s[3]!]!
+    v := Old.Blake2b.mix v 2 6 10 14 m[s[4]!]! m[s[5]!]!
+    v := Old.Blake2b.mix v 3 7 11 15 m[s[6]!]! m[s[7]!]!
+    v := Old.Blake2b.mix v 0 5 10 15 m[s[8]!]! m[s[9]!]!
+    v := Old.Blake2b.mix v 1 6 11 12 m[s[10]!]! m[s[11]!]!
+    v := Old.Blake2b.mix v 2 7 8 13 m[s[12]!]! m[s[13]!]!
+    v := Old.Blake2b.mix v 3 4 9 14 m[s[14]!]! m[s[15]!]!
   return (List.range 8).toArray.map fun i => h[i]! ^^^ v[i]! ^^^ v[i + 8]!
 
 theorem compress_eq (h : Array UInt64) (block : List UInt8) (t : Nat) (last : Bool) :
-    compress h block t last = compressWords h (words block) t last := rfl
+    Old.Blake2b.compress h block t last = compressWords h (Old.Blake2b.words block) t last := rfl
 
 /-- `ByteArray.toList` lists the underlying array. -/
 private theorem toList_eq_data (bs : ByteArray) : bs.toList = bs.data.toList := by
@@ -95,12 +97,12 @@ theorem getD_extract_toList (msg : ByteArray) (o j : Nat) (hj : j < 128) :
     rw [Array.getElem?_extract, ite_eq_right (by omega), Option.getD_none]
 
 theorem words_extract (msg : ByteArray) (o : Nat) :
-    words (msg.extract o (o + 128)).toList = wordsAt msg o := by
+    Old.Blake2b.words (msg.extract o (o + 128)).toList = wordsAt msg o := by
   apply Array.ext
-  · simp [words, wordsAt]
+  · simp [Old.Blake2b.words, wordsAt]
   · intro i h1 h2
-    simp only [words, Array.size_map, List.size_toArray, List.length_range] at h1
-    simp only [words, wordsAt, Array.getElem_map, Array.getElem_ofFn, List.getElem_toArray,
+    simp only [Old.Blake2b.words, Array.size_map, List.size_toArray, List.length_range] at h1
+    simp only [Old.Blake2b.words, wordsAt, Array.getElem_map, Array.getElem_ofFn, List.getElem_toArray,
       List.getElem_range]
     have hr : List.range 8 = [0, 1, 2, 3, 4, 5, 6, 7] := rfl
     simp only [hr, List.foldr_cons, List.foldr_nil, wordAt]
@@ -111,17 +113,26 @@ theorem words_extract (msg : ByteArray) (o : Nat) :
       e 4 (by decide), e 5 (by decide), e 6 (by decide), e 7 (by decide), Nat.add_zero]
     have e0 := e 0 (by decide); simp only [Nat.add_zero] at e0; rw [e0]
 
-/-- `blocks`, reading each block's words straight from the message. -/
-def blocksFast (h : Array UInt64) (msg : ByteArray) : Array UInt64 :=
+/-- `blocks` on arrays, reading each block's words straight from the message. -/
+def blocksFastA (h : Array UInt64) (msg : ByteArray) : Array UInt64 :=
   let len := msg.size
   let nb := max 1 ((len + 127) / 128)
   let h := (List.range (nb - 1)).foldl
     (fun h k => compressWords h (wordsAt msg (128 * k)) (128 * (k + 1)) false) h
   compressWords h (wordsAt msg (128 * (nb - 1))) len true
 
+theorem blocks_old_eq_blocksFastA (h : Array UInt64) (msg : ByteArray) :
+    Old.Blake2b.blocks h msg = blocksFastA h msg := by
+  simp only [Old.Blake2b.blocks, blocksFastA, compress_eq, words_extract]
+
+/-- `blocks`, reading each block's words straight from the message. -/
+def blocksFast (h : Vector UInt64 8) (msg : ByteArray) : Vector UInt64 8 :=
+  ⟨blocksFastA h.toArray msg, by rw [← blocks_old_eq_blocksFastA, blake2b_blocks_eq_old]; simp⟩
+
 @[csimp] theorem blocks_eq_blocksFast : @blocks = @blocksFast := by
   funext h msg
-  simp only [blocks, blocksFast, compress_eq, words_extract]
+  apply Vector.toArray_inj.mp
+  simp only [blocksFast, ← blocks_old_eq_blocksFastA, blake2b_blocks_eq_old]
 
 /-! ## Faster compiled form
 
@@ -185,8 +196,8 @@ def S8.toArray (h : S8) : Array UInt64 :=
   ⟨a, s.v1, s.v2, s.v3, b, s.v5, s.v6, s.v7, c, s.v9, s.v10, s.v11, d, s.v13, s.v14, s.v15⟩
 
 theorem g0_toArray (s : S16) (x y : UInt64) :
-    (g0 s x y).toArray = mix s.toArray 0 4 8 12 x y := by
-  simp only [g0, mix, S16.toArray, Id.run]
+    (g0 s x y).toArray = Old.Blake2b.mix s.toArray 0 4 8 12 x y := by
+  simp only [g0, Old.Blake2b.mix, S16.toArray, Id.run]
   simp
   rfl
 
@@ -203,8 +214,8 @@ theorem g0_toArray (s : S16) (x y : UInt64) :
   ⟨s.v0, a, s.v2, s.v3, s.v4, b, s.v6, s.v7, s.v8, c, s.v10, s.v11, s.v12, d, s.v14, s.v15⟩
 
 theorem g1_toArray (s : S16) (x y : UInt64) :
-    (g1 s x y).toArray = mix s.toArray 1 5 9 13 x y := by
-  simp only [g1, mix, S16.toArray, Id.run]
+    (g1 s x y).toArray = Old.Blake2b.mix s.toArray 1 5 9 13 x y := by
+  simp only [g1, Old.Blake2b.mix, S16.toArray, Id.run]
   simp
   rfl
 
@@ -221,8 +232,8 @@ theorem g1_toArray (s : S16) (x y : UInt64) :
   ⟨s.v0, s.v1, a, s.v3, s.v4, s.v5, b, s.v7, s.v8, s.v9, c, s.v11, s.v12, s.v13, d, s.v15⟩
 
 theorem g2_toArray (s : S16) (x y : UInt64) :
-    (g2 s x y).toArray = mix s.toArray 2 6 10 14 x y := by
-  simp only [g2, mix, S16.toArray, Id.run]
+    (g2 s x y).toArray = Old.Blake2b.mix s.toArray 2 6 10 14 x y := by
+  simp only [g2, Old.Blake2b.mix, S16.toArray, Id.run]
   simp
   rfl
 
@@ -239,8 +250,8 @@ theorem g2_toArray (s : S16) (x y : UInt64) :
   ⟨s.v0, s.v1, s.v2, a, s.v4, s.v5, s.v6, b, s.v8, s.v9, s.v10, c, s.v12, s.v13, s.v14, d⟩
 
 theorem g3_toArray (s : S16) (x y : UInt64) :
-    (g3 s x y).toArray = mix s.toArray 3 7 11 15 x y := by
-  simp only [g3, mix, S16.toArray, Id.run]
+    (g3 s x y).toArray = Old.Blake2b.mix s.toArray 3 7 11 15 x y := by
+  simp only [g3, Old.Blake2b.mix, S16.toArray, Id.run]
   simp
   rfl
 
@@ -257,8 +268,8 @@ theorem g3_toArray (s : S16) (x y : UInt64) :
   ⟨a, s.v1, s.v2, s.v3, s.v4, b, s.v6, s.v7, s.v8, s.v9, c, s.v11, s.v12, s.v13, s.v14, d⟩
 
 theorem g4_toArray (s : S16) (x y : UInt64) :
-    (g4 s x y).toArray = mix s.toArray 0 5 10 15 x y := by
-  simp only [g4, mix, S16.toArray, Id.run]
+    (g4 s x y).toArray = Old.Blake2b.mix s.toArray 0 5 10 15 x y := by
+  simp only [g4, Old.Blake2b.mix, S16.toArray, Id.run]
   simp
   rfl
 
@@ -275,8 +286,8 @@ theorem g4_toArray (s : S16) (x y : UInt64) :
   ⟨s.v0, a, s.v2, s.v3, s.v4, s.v5, b, s.v7, s.v8, s.v9, s.v10, c, d, s.v13, s.v14, s.v15⟩
 
 theorem g5_toArray (s : S16) (x y : UInt64) :
-    (g5 s x y).toArray = mix s.toArray 1 6 11 12 x y := by
-  simp only [g5, mix, S16.toArray, Id.run]
+    (g5 s x y).toArray = Old.Blake2b.mix s.toArray 1 6 11 12 x y := by
+  simp only [g5, Old.Blake2b.mix, S16.toArray, Id.run]
   simp
   rfl
 
@@ -293,8 +304,8 @@ theorem g5_toArray (s : S16) (x y : UInt64) :
   ⟨s.v0, s.v1, a, s.v3, s.v4, s.v5, s.v6, b, c, s.v9, s.v10, s.v11, s.v12, d, s.v14, s.v15⟩
 
 theorem g6_toArray (s : S16) (x y : UInt64) :
-    (g6 s x y).toArray = mix s.toArray 2 7 8 13 x y := by
-  simp only [g6, mix, S16.toArray, Id.run]
+    (g6 s x y).toArray = Old.Blake2b.mix s.toArray 2 7 8 13 x y := by
+  simp only [g6, Old.Blake2b.mix, S16.toArray, Id.run]
   simp
   rfl
 
@@ -311,8 +322,8 @@ theorem g6_toArray (s : S16) (x y : UInt64) :
   ⟨s.v0, s.v1, s.v2, a, b, s.v5, s.v6, s.v7, s.v8, c, s.v10, s.v11, s.v12, s.v13, d, s.v15⟩
 
 theorem g7_toArray (s : S16) (x y : UInt64) :
-    (g7 s x y).toArray = mix s.toArray 3 4 9 14 x y := by
-  simp only [g7, mix, S16.toArray, Id.run]
+    (g7 s x y).toArray = Old.Blake2b.mix s.toArray 3 4 9 14 x y := by
+  simp only [g7, Old.Blake2b.mix, S16.toArray, Id.run]
   simp
   rfl
 
@@ -322,18 +333,18 @@ def roundS (s : S16) (x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 : UI
 
 /-- One round of F on the array, as `compressWords` performs it for row `r` of σ. -/
 def roundA (m : Array UInt64) (r : Nat) (v : Array UInt64) : Array UInt64 :=
-  let s := sigma[r % 10]!
-  let v := mix v 0 4 8 12 m[s[0]!]! m[s[1]!]!
-  let v := mix v 1 5 9 13 m[s[2]!]! m[s[3]!]!
-  let v := mix v 2 6 10 14 m[s[4]!]! m[s[5]!]!
-  let v := mix v 3 7 11 15 m[s[6]!]! m[s[7]!]!
-  let v := mix v 0 5 10 15 m[s[8]!]! m[s[9]!]!
-  let v := mix v 1 6 11 12 m[s[10]!]! m[s[11]!]!
-  let v := mix v 2 7 8 13 m[s[12]!]! m[s[13]!]!
-  mix v 3 4 9 14 m[s[14]!]! m[s[15]!]!
+  let s := Old.Blake2b.sigma[r % 10]!
+  let v := Old.Blake2b.mix v 0 4 8 12 m[s[0]!]! m[s[1]!]!
+  let v := Old.Blake2b.mix v 1 5 9 13 m[s[2]!]! m[s[3]!]!
+  let v := Old.Blake2b.mix v 2 6 10 14 m[s[4]!]! m[s[5]!]!
+  let v := Old.Blake2b.mix v 3 7 11 15 m[s[6]!]! m[s[7]!]!
+  let v := Old.Blake2b.mix v 0 5 10 15 m[s[8]!]! m[s[9]!]!
+  let v := Old.Blake2b.mix v 1 6 11 12 m[s[10]!]! m[s[11]!]!
+  let v := Old.Blake2b.mix v 2 7 8 13 m[s[12]!]! m[s[13]!]!
+  Old.Blake2b.mix v 3 4 9 14 m[s[14]!]! m[s[15]!]!
 
 theorem roundA_toArray (m : Array UInt64) (r : Nat) (s : S16) :
-    roundA m r s.toArray = (roundS s m[(sigma[r % 10]!)[0]!]! m[(sigma[r % 10]!)[1]!]! m[(sigma[r % 10]!)[2]!]! m[(sigma[r % 10]!)[3]!]! m[(sigma[r % 10]!)[4]!]! m[(sigma[r % 10]!)[5]!]! m[(sigma[r % 10]!)[6]!]! m[(sigma[r % 10]!)[7]!]! m[(sigma[r % 10]!)[8]!]! m[(sigma[r % 10]!)[9]!]! m[(sigma[r % 10]!)[10]!]! m[(sigma[r % 10]!)[11]!]! m[(sigma[r % 10]!)[12]!]! m[(sigma[r % 10]!)[13]!]! m[(sigma[r % 10]!)[14]!]! m[(sigma[r % 10]!)[15]!]!).toArray := by
+    roundA m r s.toArray = (roundS s m[(Old.Blake2b.sigma[r % 10]!)[0]!]! m[(Old.Blake2b.sigma[r % 10]!)[1]!]! m[(Old.Blake2b.sigma[r % 10]!)[2]!]! m[(Old.Blake2b.sigma[r % 10]!)[3]!]! m[(Old.Blake2b.sigma[r % 10]!)[4]!]! m[(Old.Blake2b.sigma[r % 10]!)[5]!]! m[(Old.Blake2b.sigma[r % 10]!)[6]!]! m[(Old.Blake2b.sigma[r % 10]!)[7]!]! m[(Old.Blake2b.sigma[r % 10]!)[8]!]! m[(Old.Blake2b.sigma[r % 10]!)[9]!]! m[(Old.Blake2b.sigma[r % 10]!)[10]!]! m[(Old.Blake2b.sigma[r % 10]!)[11]!]! m[(Old.Blake2b.sigma[r % 10]!)[12]!]! m[(Old.Blake2b.sigma[r % 10]!)[13]!]! m[(Old.Blake2b.sigma[r % 10]!)[14]!]! m[(Old.Blake2b.sigma[r % 10]!)[15]!]!).toArray := by
   simp only [roundA, roundS, g0_toArray, g1_toArray, g2_toArray, g3_toArray, g4_toArray,
     g5_toArray, g6_toArray, g7_toArray]
 
@@ -360,7 +371,7 @@ def compressS (h : S8) (m0 m1 m2 m3 m4 m5 m6 m7 m8 m9 m10 m11 m12 m13 m14 m15 : 
 
 /-- The working vector at the start of F, before the rounds. -/
 def initA (h : Array UInt64) (t : Nat) (last : Bool) : Array UInt64 := Id.run do
-  let mut v := h ++ iv
+  let mut v := h ++ Old.Blake2b.iv
   v := v.set! 12 (v[12]! ^^^ UInt64.ofNat (t % 2 ^ 64))
   v := v.set! 13 (v[13]! ^^^ UInt64.ofNat (t / 2 ^ 64))
   if last then v := v.set! 14 (v[14]! ^^^ 0xFFFFFFFFFFFFFFFF)
@@ -429,8 +440,8 @@ def blocksS (h : S8) (msg : ByteArray) : S8 :=
   compressAt (blocksLoop msg (nb - 1) 0 h) msg (128 * (nb - 1)) len true
 
 theorem blocksFast_toArray (h : S8) (msg : ByteArray) :
-    blocksFast h.toArray msg = (blocksS h msg).toArray := by
-  simp only [blocksFast, blocksS, List.range_eq_range', foldl_blocksLoop, compressWords_wordsAt]
+    blocksFastA h.toArray msg = (blocksS h msg).toArray := by
+  simp only [blocksFastA, blocksS, List.range_eq_range', foldl_blocksLoop, compressWords_wordsAt]
 
 /-- Word `i` of the chaining value (0 past the eighth), as `h.toArray[i]!` reads it. -/
 @[inline] def S8.get (h : S8) (i : Nat) : UInt64 :=
@@ -476,11 +487,12 @@ def hashFast (n : Nat) (msg : ByteArray) : ByteArray :=
 
 @[csimp] theorem hash_eq_hashFast : @hash = @hashFast := by
   funext n msg
-  have hi : iv.set! 0 (iv[0]! ^^^ 0x01010000 ^^^ UInt64.ofNat n)
+  have hi : Old.Blake2b.iv.set! 0 (Old.Blake2b.iv[0]! ^^^ 0x01010000 ^^^ UInt64.ofNat n)
       = S8.toArray ⟨0x6a09e667f3bcc908 ^^^ 0x01010000 ^^^ UInt64.ofNat n, 0xbb67ae8584caa73b,
         0x3c6ef372fe94f82b, 0xa54ff53a5f1d36f1, 0x510e527fade682d1, 0x9b05688c2b3e6c1f,
         0x1f83d9abfb41bd6b, 0x5be0cd19137e2179⟩ := rfl
-  simp only [hash, hashFast, hi, blocks_eq_blocksFast, blocksFast_toArray, outBytes_eq]
+  rw [← blake2b_hash_eq_old]
+  simp only [Old.Blake2b.hash, hashFast, hi, blocks_old_eq_blocksFastA, blocksFast_toArray, outBytes_eq]
 
 /-- ℋ (`hash256`), restated so that its compiled code uses `hashFast`. -/
 def hash256Fast (msg : ByteArray) : ByteArray := hash 32 msg

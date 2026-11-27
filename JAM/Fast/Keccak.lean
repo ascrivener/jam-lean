@@ -1,4 +1,5 @@
 import JAM.Keccak
+import JAM.Theorems.CheckedIndex.Keccak
 import JAM.Fast.Blake2b
 
 /-!
@@ -10,6 +11,7 @@ compiled code uses the fast form too.
 -/
 
 namespace JAM.Keccak
+open JAM.Theorems.CheckedIndex
 
 /-! ## Faster compiled form
 
@@ -115,19 +117,19 @@ def roundS (s : S25) (r : UInt64) : S25 :=
     b23 ^^^ ((~~~ b24) &&& b20),
     b24 ^^^ ((~~~ b20) &&& b21)⟩
 
-theorem roundS_toArray (s : S25) (r : UInt64) : (roundS s r).toArray = round s.toArray r := by
-  simp [roundS, round, S25.toArray, List.range_succ, Std.Legacy.Range.forIn_eq_forIn_range',
-    Std.Legacy.Range.size, List.range'_succ, Id.run, rotations]
+theorem roundS_toArray (s : S25) (r : UInt64) : (roundS s r).toArray = Old.Keccak.round s.toArray r := by
+  simp [roundS, Old.Keccak.round, S25.toArray, List.range_succ, Std.Legacy.Range.forIn_eq_forIn_range',
+    Std.Legacy.Range.size, List.range'_succ, Id.run, Old.Keccak.rotations]
   rfl
 
 
 /-- Keccak-f[1600] on `S25`. -/
-def permuteS (s : S25) : S25 := rc.foldl roundS s
+def permuteS (s : S25) : S25 := Old.Keccak.rc.foldl roundS s
 
-theorem permuteS_toArray (s : S25) : (permuteS s).toArray = permute s.toArray := by
-  unfold permuteS permute
+theorem permuteS_toArray (s : S25) : (permuteS s).toArray = Old.Keccak.permute s.toArray := by
+  unfold permuteS Old.Keccak.permute
   rw [← Array.foldl_toList, ← Array.foldl_toList]
-  generalize rc.toList = l
+  generalize Old.Keccak.rc.toList = l
   induction l generalizing s with
   | nil => rfl
   | cons r l ih => rw [List.foldl_cons, List.foldl_cons, ih, roundS_toArray]
@@ -145,12 +147,12 @@ def xorLanes (a : Array UInt64) (block : List UInt8) (lanes : Nat) : Array UInt6
   (List.range lanes).foldl (fun a i => a.set! i (a[i]! ^^^ lane block i)) a
 
 theorem absorb_def (a : Array UInt64) (block : List UInt8) :
-    absorb a block = permute (xorLanes a block (block.length / 8)) := rfl
+    Old.Keccak.absorb a block = Old.Keccak.permute (xorLanes a block (block.length / 8)) := rfl
 
 theorem absorb_eq (s : S25) (block : List UInt8) (h : block.length = 136) :
-    absorb s.toArray block = (absorbS s (lane block 0) (lane block 1) (lane block 2) (lane block 3) (lane block 4) (lane block 5) (lane block 6) (lane block 7) (lane block 8) (lane block 9) (lane block 10) (lane block 11) (lane block 12) (lane block 13) (lane block 14) (lane block 15) (lane block 16)).toArray := by
+    Old.Keccak.absorb s.toArray block = (absorbS s (lane block 0) (lane block 1) (lane block 2) (lane block 3) (lane block 4) (lane block 5) (lane block 6) (lane block 7) (lane block 8) (lane block 9) (lane block 10) (lane block 11) (lane block 12) (lane block 13) (lane block 14) (lane block 15) (lane block 16)).toArray := by
   rw [absorbS, permuteS_toArray, absorb_def, h]
-  apply congrArg permute
+  apply congrArg Old.Keccak.permute
   simp only [xorLanes, show 136 / 8 = 17 from rfl, List.range_succ, List.range_zero, List.nil_append,
     List.foldl_append, List.foldl_cons, List.foldl_nil]
   simp [S25.toArray]
@@ -178,7 +180,7 @@ theorem lane_eq_wordAt (block : List UInt8) (b : ByteArray) (o : Nat)
 
 theorem absorb_block (s : S25) (b : ByteArray) (o : Nat) (block : List UInt8)
     (hl : block.length = 136) (hb : ∀ j, j < 136 → block.getD j 0 = Blake2b.byteAt b (o + j)) :
-    absorb s.toArray block = (absorbAt s b o).toArray := by
+    Old.Keccak.absorb s.toArray block = (absorbAt s b o).toArray := by
   rw [absorb_eq s block hl, absorbAt]
   rw [lane_eq_wordAt block b o hb 0 (by decide), lane_eq_wordAt block b o hb 1 (by decide), lane_eq_wordAt block b o hb 2 (by decide), lane_eq_wordAt block b o hb 3 (by decide), lane_eq_wordAt block b o hb 4 (by decide), lane_eq_wordAt block b o hb 5 (by decide), lane_eq_wordAt block b o hb 6 (by decide), lane_eq_wordAt block b o hb 7 (by decide), lane_eq_wordAt block b o hb 8 (by decide), lane_eq_wordAt block b o hb 9 (by decide), lane_eq_wordAt block b o hb 10 (by decide), lane_eq_wordAt block b o hb 11 (by decide), lane_eq_wordAt block b o hb 12 (by decide), lane_eq_wordAt block b o hb 13 (by decide), lane_eq_wordAt block b o hb 14 (by decide), lane_eq_wordAt block b o hb 15 (by decide), lane_eq_wordAt block b o hb 16 (by decide)]
 
@@ -212,7 +214,7 @@ def absorbLoop (msg : ByteArray) : Nat → Nat → S25 → S25
   | n + 1, k, s => absorbLoop msg n (k + 1) (absorbAt s msg (136 * k))
 
 theorem foldl_absorbLoop (msg : ByteArray) (n k : Nat) (s : S25) (hk : 136 * (k + n) ≤ msg.size) :
-    (List.range' k n).foldl (fun a k => absorb a ((msg.toList.drop (136 * k)).take 136)) s.toArray
+    (List.range' k n).foldl (fun a k => Old.Keccak.absorb a ((msg.toList.drop (136 * k)).take 136)) s.toArray
       = (absorbLoop msg n k s).toArray := by
   induction n generalizing k s with
   | zero => rfl
@@ -279,10 +281,11 @@ theorem extract_toList (msg : ByteArray) (o : Nat) :
 
 @[csimp] theorem sponge256_eq_sponge256Fast : @sponge256 = @sponge256Fast := by
   funext domain msg
+  rw [← keccak_sponge256_eq_old]
   have hlen : msg.toList.length = msg.size := by
     rw [Blake2b.toList_eq_data_toList, Array.length_toList]; rfl
   have hz : Array.replicate 25 (0 : UInt64) = S25.zero.toArray := rfl
-  simp only [sponge256, sponge256Fast, hlen, hz, List.range_eq_range', extract_toList]
+  simp only [Old.Keccak.sponge256, sponge256Fast, hlen, hz, List.range_eq_range', extract_toList]
   rw [foldl_absorbLoop msg _ 0 _ (by have := Nat.mul_div_le msg.size 136; omega)]
   have hrest : (msg.toList.drop (136 * (msg.size / 136))).length < 136 := by
     rw [List.length_drop, hlen]; have := Nat.mod_lt msg.size (show 136 > 0 by decide)

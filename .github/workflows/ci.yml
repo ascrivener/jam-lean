@@ -36,6 +36,20 @@ jobs:
           if [ "${{ github.event_name }}" = workflow_dispatch ]; then a=true; else a=false; fi
           echo "affected=$a" | tee -a "$GITHUB_OUTPUT"
 
+  # Non-blocking: warns in the job summary when a PR changes a model module but not its companion
+  # chapter (docs/site/chapter-map.json). Not part of the `proofs` gate.
+  chapters:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Model modules changed without their chapter (warning only)
+        run: python3 -I scripts/check-chapter-map.py "origin/${{ github.base_ref }}"
+
   model:
     runs-on: ubuntu-latest
     timeout-minutes: 120
@@ -63,6 +77,9 @@ jobs:
 
       - name: No known-wrong Gray Paper notation in docstrings and the book (scripts/check-notation.py)
         run: python3 -I scripts/check-notation.py
+
+      - name: Every note the book and the model cite exists in docs/upstream-candidates.md
+        run: python3 -I scripts/check-citations.py
 
       - name: No forbidden constructs
         run: |

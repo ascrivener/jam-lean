@@ -70,3 +70,12 @@ the paper's symbol by construction, and a later paper version changes it in one 
 `scripts/check-notation.py` (in CI) rejects known-wrong forms in docstrings and the book, for
 example 𝕏 for the refinement context, ρ^‡‡, ω for registers or lowercase header fields. A genuine
 use goes in a doc comment preceded by `-- notation-ok: <id> <reason>`.
+
+## Keeping the book in step with the model
+
+* `chapter-map.json` maps each model module to the chapters that discuss it (seeded from the
+  chapters' imports by `scripts/check-chapter-map.py --seed`; edit it by hand). A new chapter adds
+  its modules. On a PR, CI's `chapters` job warns in its summary, without failing, when a mapped
+  module changes but none of its chapters does.
+* `scripts/check-citations.py` (CI) checks that every note the book and the model cite
+  (`v0.8.1-A18`, "note 27") exists in `docs/upstream-candidates.md` and is not withdrawn.

@@ -1,4 +1,5 @@
 import PVM.Machine
+import PVM.FastGas
 
 /-!
 # A fast Ψ, proved equal to the paper's

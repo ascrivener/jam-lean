@@ -15,7 +15,7 @@ namespace JamCrypto.Fast.PairingFq
 open JamCrypto.Fast JamCrypto.Fast.G1F JamCrypto.Fast.PairingF JamCrypto.Fast.G1Fq
 open JamCrypto.Fq (P)
 
-/-- A reference 𝔽_q2 element, converted. -/
+/-- A reference $\mathbb{F}_{q^2}$ element, converted. -/
 def ofFq2 (x : JamCrypto.Pairing.Fq2) : E2 E := ⟨Field.ofNat x.a, Field.ofNat x.b⟩
 
 /-- A reference G2 point, converted. -/
@@ -33,7 +33,7 @@ theorem ofG2_rel {q : JamCrypto.Pairing.G2} (h : redG2 q = true) : GRel (ofG2 q)
   simp only [redG2, Bool.and_eq_true] at h
   exact ⟨ofFq2_rel h.1, ofFq2_rel h.2, rfl⟩
 
-/-- Back to a reference 𝔽_q12 element. -/
+/-- Back to a reference $\mathbb{F}_{q^{12}}$ element. -/
 def toFq12 (f : E12 E) : JamCrypto.Pairing.Fq12 :=
   let c (x : E2 E) : JamCrypto.Pairing.Fq2 := ⟨Field.toNat x.a, Field.toNat x.b⟩
   ⟨⟨c f.d0.c0, c f.d0.c1, c f.d0.c2⟩, ⟨c f.d1.c0, c f.d1.c1, c f.d1.c2⟩⟩
@@ -59,8 +59,8 @@ theorem eq_of_eqG2 {a b : JamCrypto.Pairing.G2} (h : eqG2 a b = true) : a = b :=
   obtain ⟨⟨⟨⟨rfl, rfl⟩, rfl⟩, rfl⟩, rfl⟩ := h
   rfl
 
-/-- The two G2 points of the ring SRS ([1]G2 and [τ]G2, `JamCryptoTest/data/…-zcash.bin`), whose
-    line coefficients every ring proof verification needs. -/
+/-- The two G2 points of the ring SRS ($[1]G_2$ and $[\tau]G_2$, `JamCryptoTest/data/…-zcash.bin`),
+    whose line coefficients every ring proof verification needs. -/
 def srsG2 : List JamCrypto.Pairing.G2 := [
   ⟨⟨352701069587466618187139116011060144890029952792775240219908644239793785735715026873347600343865175952761926303160,
       3059144344244213709971259814753781636986470325476647558659373206291635324768958432433509563104347017837885763365758⟩,

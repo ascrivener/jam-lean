@@ -25,7 +25,7 @@ class IsFr (F : Type) [Field F] : Prop where
 
 variable {F : Type} [Field F] [LawfulField F] [IsFr F]
 
-/-- `a` stands for the reduced value x. -/
+/-- `a` stands for the reduced value $x$. -/
 def W (a : F) (x : Nat) : Prop := VRel a x ∧ x < R
 
 namespace W
@@ -129,7 +129,7 @@ theorem erel_default : ERel (default : EF F) (default : JamCrypto.Ring.Curve.Ext
 theorem A_lt : A < R := by decide
 theorem D_lt : D < R := by decide
 
-/-- The curve constants a and d. -/
+/-- The curve constants $a$ and $d$. -/
 def cA : F := Field.ofNat A
 def cD : F := Field.ofNat D
 

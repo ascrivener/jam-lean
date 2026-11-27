@@ -3,21 +3,24 @@ import JamCrypto.Bls12381G1
 /-!
 # The BLS12-381 pairing
 
-The tower 𝔽_q2 = 𝔽_q[u]/(u² + 1), 𝔽_q6 = 𝔽_q2[v]/(v³ − ξ) with ξ = 1 + u, 𝔽_q12 = 𝔽_q6[w]/(w² − v),
-and the optimal ate pairing e : G1 × G2 → 𝔽_q12 with the BLS parameter x = −0xd201000000010000.
+The tower $\mathbb{F}_{q^2} = \mathbb{F}_q[u]/(u^2 + 1)$,
+$\mathbb{F}_{q^6} = \mathbb{F}_{q^2}[v]/(v^3 - \xi)$ with $\xi = 1 + u$,
+$\mathbb{F}_{q^{12}} = \mathbb{F}_{q^6}[w]/(w^2 - v)$, and the optimal ate pairing
+$e : G_1 \times G_2 \to \mathbb{F}_{q^{12}}$ with the BLS parameter $x = -\texttt{0xd201000000010000}$.
 
-G2 is the twist E' : y² = x³ + 4ξ over 𝔽_q2; (x, y) ∈ E' maps into E(𝔽_q12) as (x/w², y/w³)
-(w⁶ = ξ). The Miller loop runs on E' and evaluates each line, untwisted, at the G1 point. The
-final exponentiation raises to (q¹² − 1)/r as (q⁶ − 1)·(q² + 1)·((q⁴ − q² + 1)/r).
+G2 is the twist $E' : y^2 = x^3 + 4\xi$ over $\mathbb{F}_{q^2}$; $(x, y) \in E'$ maps into
+$E(\mathbb{F}_{q^{12}})$ as $(x/w^2, y/w^3)$ ($w^6 = \xi$). The Miller loop runs on $E'$ and
+evaluates each line, untwisted, at the G1 point. The final exponentiation raises to
+$(q^{12} - 1)/r$ as $(q^6 - 1) \cdot (q^2 + 1) \cdot ((q^4 - q^2 + 1)/r)$.
 
-Only what KZG verification needs is here: `pairingCheck` decides Π e(Pᵢ, Qᵢ) = 1.
+Only what KZG verification needs is here: `pairingCheck` decides $\prod_i e(P_i, Q_i) = 1$.
 -/
 
 namespace JamCrypto.Pairing
 
 open JamCrypto
 
-/-! ## 𝔽_q2 -/
+/-! ## $\mathbb{F}_{q^2}$ -/
 
 structure Fq2 where
   a : Nat
@@ -37,13 +40,13 @@ def one : Fq2 := ⟨1, 0⟩
 @[inline] def sq (x : Fq2) : Fq2 :=
   ⟨Fq.mul (Fq.add x.a x.b) (Fq.sub x.a x.b), Fq.mul (Fq.add x.a x.a) x.b⟩
 @[inline] def scale (x : Fq2) (k : Nat) : Fq2 := ⟨Fq.mul x.a k, Fq.mul x.b k⟩
-/-- Multiplication by ξ = 1 + u. -/
+/-- Multiplication by $\xi = 1 + u$. -/
 @[inline] def mulXi (x : Fq2) : Fq2 := ⟨Fq.sub x.a x.b, Fq.add x.a x.b⟩
 def inv (x : Fq2) : Fq2 :=
   let d := Fq.inv (Fq.add (Fq.sq x.a) (Fq.sq x.b))
   ⟨Fq.mul x.a d, Fq.neg (Fq.mul x.b d)⟩
 def isZero (x : Fq2) : Bool := x.a == 0 && x.b == 0
-/-- The Frobenius x ↦ x^q (conjugation). -/
+/-- The Frobenius $x \mapsto x^q$ (conjugation). -/
 def conj (x : Fq2) : Fq2 := ⟨x.a, Fq.neg x.b⟩
 def pow (x : Fq2) (e : Nat) : Fq2 := Id.run do
   let mut acc := one
@@ -54,7 +57,7 @@ def pow (x : Fq2) (e : Nat) : Fq2 := Id.run do
   return acc
 end Fq2
 
-/-! ## 𝔽_q6 -/
+/-! ## $\mathbb{F}_{q^6}$ -/
 
 structure Fq6 where
   c0 : Fq2
@@ -77,7 +80,7 @@ def mul (x y : Fq6) : Fq6 :=
   let c1 := (((x.c0.add x.c1).mul (y.c0.add y.c1)).sub (t0.add t1)).add t2.mulXi
   let c2 := (((x.c0.add x.c2).mul (y.c0.add y.c2)).sub (t0.add t2)).add t1
   ⟨c0, c1, c2⟩
-/-- Multiplication by v. -/
+/-- Multiplication by $v$. -/
 @[inline] def mulV (x : Fq6) : Fq6 := ⟨x.c2.mulXi, x.c0, x.c1⟩
 @[inline] def scale (x : Fq6) (k : Nat) : Fq6 := ⟨x.c0.scale k, x.c1.scale k, x.c2.scale k⟩
 def inv (x : Fq6) : Fq6 :=
@@ -89,7 +92,7 @@ def inv (x : Fq6) : Fq6 :=
   ⟨t0.mul di, t1.mul di, t2.mul di⟩
 end Fq6
 
-/-! ## 𝔽_q12 -/
+/-! ## $\mathbb{F}_{q^{12}}$ -/
 
 structure Fq12 where
   d0 : Fq6
@@ -111,7 +114,7 @@ def inv (x : Fq12) : Fq12 :=
   let d := (x.d0.mul x.d0).sub (x.d1.mul x.d1).mulV
   let di := d.inv
   ⟨x.d0.mul di, (x.d1.mul di).neg⟩
-/-- x^e by square-and-multiply. -/
+/-- $x^e$ by square-and-multiply. -/
 def pow (x : Fq12) (e : Nat) : Fq12 := Id.run do
   let mut acc := one
   let n := e.log2 + 1
@@ -123,10 +126,10 @@ end Fq12
 
 /-! ## The pairing -/
 
-/-- |x| for the BLS parameter x = −0xd201000000010000. -/
+/-- $|x|$ for the BLS parameter $x = -\texttt{0xd201000000010000}$. -/
 def blsX : Nat := 0xd201000000010000
 
-/-- The prime-order subgroup's order r (= 𝔽_r's modulus). -/
+/-- The prime-order subgroup's order $r$ (= $\mathbb{F}_r$'s modulus). -/
 def r : Nat := Fr.R
 
 def w : Fq12 := ⟨Fq6.zero, Fq6.one⟩
@@ -164,9 +167,9 @@ def G2.decode (bs : ByteArray) : Option G2 := Id.run do
   let b' : Fq2 := Fq2.mulXi ⟨4, 0⟩
   return if y.sq == (x.sq.mul x).add b' then some ⟨x, y, false⟩ else none
 
-/-- The line coefficients (A, B) of each Miller step, for a fixed Q: the line at P = (xP, yP) is
-    yP + A·xP + B. Steps: for each bit of |x| below the top one, a doubling, then an addition
-    when the bit is set. -/
+/-- The line coefficients $(A, B)$ of each Miller step, for a fixed $Q$: the line at
+    $P = (x_P, y_P)$ is $y_P + A \cdot x_P + B$. Steps: for each bit of $|x|$ below the top one, a
+    doubling, then an addition when the bit is set. -/
 def lines (q : G2) : Array (Fq12 × Fq12) := Id.run do
   let mut out : Array (Fq12 × Fq12) := #[]
   let mut tx := q.x
@@ -189,7 +192,7 @@ def lines (q : G2) : Array (Fq12 × Fq12) := Id.run do
       tx := x3; ty := y3
   return out
 
-/-- The Miller loop f_{|x|,Q}(P), conjugated for the negative x. -/
+/-- The Miller loop $f_{|x|,Q}(P)$, conjugated for the negative $x$. -/
 def miller (p : G1.Aff) (q : G2) : Fq12 := Id.run do
   if p.inf || q.inf then return Fq12.one
   let ls := lines q
@@ -208,27 +211,29 @@ def miller (p : G1.Aff) (q : G2) : Fq12 := Id.run do
       k := k + 1
   return f.conj
 
-/-- γ = ξ^((q − 1)/6): w^q = γ·w. -/
+/-- $\gamma = \xi^{(q - 1)/6}$: $w^q = \gamma \cdot w$. -/
 def frobGamma : Fq2 := Fq2.pow ⟨1, 1⟩ ((Fq.P - 1) / 6)
-/-- γ⁰ … γ⁵. -/
+/-- $\gamma^0, \dots, \gamma^5$. -/
 def frobGammas : Array Fq2 := Id.run do
   let mut out := #[Fq2.one]
   for _ in [0:5] do out := out.push (out.back!.mul frobGamma)
   return out
 
-/-- The Frobenius f ↦ f^q: with f = Σᵢ aᵢwⁱ (aᵢ ∈ 𝔽_q2, i < 6), f^q = Σᵢ conj(aᵢ)·γⁱ·wⁱ. -/
+/-- The Frobenius $f \mapsto f^q$: with $f = \sum_i a_i w^i$ ($a_i \in \mathbb{F}_{q^2}$, $i < 6$),
+    $f^q = \sum_i \overline{a_i} \cdot \gamma^i \cdot w^i$. -/
 def frob (f : Fq12) : Fq12 :=
   let g := frobGammas
   let c (a : Fq2) (i : Nat) := a.conj.mul g[i]!
   -- w^(2j) carries d0.cj, w^(2j+1) carries d1.cj
   ⟨⟨c f.d0.c0 0, c f.d0.c1 2, c f.d0.c2 4⟩, ⟨c f.d1.c0 1, c f.d1.c1 3, c f.d1.c2 5⟩⟩
 
-/-- f^x for the (negative) BLS parameter, f in the cyclotomic subgroup (inverse = conjugate). -/
+/-- $f^x$ for the (negative) BLS parameter, $f$ in the cyclotomic subgroup (inverse = conjugate). -/
 def powX (f : Fq12) : Fq12 := (f.pow blsX).conj
 
-/-- f^((q¹² − 1)/r)³: the easy part (q⁶ − 1)(q² + 1), then 3·(q⁴ − q² + 1)/r
-    = (x − 1)²·(x + q)·(x² + q² − 1) + 3 (the BLS12 decomposition). The cube is harmless:
-    3 is prime to r, so the result is 1 exactly when f^((q¹² − 1)/r) is. -/
+/-- $\left(f^{(q^{12} - 1)/r}\right)^3$: the easy part $(q^6 - 1)(q^2 + 1)$, then
+    $3 \cdot (q^4 - q^2 + 1)/r = (x - 1)^2 \cdot (x + q) \cdot (x^2 + q^2 - 1) + 3$ (the BLS12
+    decomposition). The cube is harmless: 3 is prime to $r$, so the result is 1 exactly when
+    $f^{(q^{12} - 1)/r}$ is. -/
 def finalExp (f : Fq12) : Fq12 :=
   let f1 := f.conj.mul f.inv
   let f2 := (frob (frob f1)).mul f1
@@ -238,17 +243,17 @@ def finalExp (f : Fq12) : Fq12 :=
   let t3 := ((powX (powX t2)).mul (frob (frob t2))).mul t2.conj  -- ·^(x²+q²−1)
   t3.mul (f2.sq.mul f2)
 
-/-- The plain final exponentiation f^((q¹² − 1)/r), for tests. -/
+/-- The plain final exponentiation $f^{(q^{12} - 1)/r}$, for tests. -/
 def finalExpSlow (f : Fq12) : Fq12 :=
   let f1 := f.conj.mul f.inv
   let f2 := (f1.pow (Fq.P ^ 2)).mul f1
   f2.pow ((Fq.P ^ 4 - Fq.P ^ 2 + 1) / r)
 
-/-- Π e(Pᵢ, Qᵢ) = 1. -/
+/-- $\prod_i e(P_i, Q_i) = 1$. -/
 def pairingCheck (pairs : List (G1.Aff × G2)) : Bool :=
   finalExp (pairs.foldl (fun acc (p, q) => acc.mul (miller p q)) Fq12.one) == Fq12.one
 
-/-- e(P, Q)³ (see `finalExp`), for tests. -/
+/-- $e(P, Q)^3$ (see `finalExp`), for tests. -/
 def pairing (p : G1.Aff) (q : G2) : Fq12 := finalExp (miller p q)
 
 end JamCrypto.Pairing

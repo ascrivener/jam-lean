@@ -6,7 +6,7 @@ import JamCrypto.Fast.Sim
 # Twisted Edwards curves over a fast field, proved to compute what `JamCrypto.Curve` computes
 
 Each operation performs the same sequence of field operations as its reference in
-`JamCrypto/Edwards.lean` (and `Modular.lean`), on a `Fast.Field` instead of `Nat` mod p. The
+`JamCrypto/Edwards.lean` (and `Modular.lean`), on a `Fast.Field` instead of `Nat` $\bmod p$. The
 theorems relate a fast point to the reference point whose coordinates are its values (`Rel`) and
 show that every operation preserves the relation; decisions (`valid`, `eq`, `isZero`) agree.
 -/
@@ -67,7 +67,7 @@ end OR
 theorem letFun_eq {α β : Type} {v : α} {f g : α → β} (h : ∀ x, x = v → f x = g x) :
     (have x := v; f x) = (have x := v; g x) := h v rfl
 
-/-- `a` stands for n: reduced, with value n mod p. -/
+/-- `a` stands for $n$: reduced, with value $n \bmod p$. -/
 def VRel (a : F) (n : Nat) : Prop := Field.Ok a ∧ Field.value a = n % p
 
 namespace VRel
@@ -114,14 +114,14 @@ theorem toNat {a : F} {x : Nat} (ha : VRel a x) : Field.toNat a = x % p := by
 
 end VRel
 
-/-- A point in extended coordinates over F. -/
+/-- A point in extended coordinates over $F$. -/
 structure Pt (F : Type) where
   X : F
   Y : F
   Z : F
   T : F
 
-/-- A curve over F: the constants a and d. -/
+/-- A curve over $F$: the constants $a$ and $d$. -/
 structure CurveF (F : Type) where
   a : F
   d : F
@@ -293,7 +293,7 @@ theorem isSquareF_eq {a : F} {x : Nat} (ha : VRel a x) (hx : x < p) : isSquareF 
   have h := powF_rel' ha ((p - 1) / 2)
   rw [h.1.beq_lt VRel.one h.2 one_lt]
 
-/-- `Modular.sqrtTS p s t z n`, step for step (n given as an element; the reference reduces n). -/
+/-- `Modular.sqrtTS p s t z n`, step for step ($n$ given as an element; the reference reduces $n$). -/
 def sqrtF (s t : Nat) (z n : F) : Option F := Id.run do
   if Field.isZero n then return some Field.zero
   if !isSquareF n then return none
@@ -319,7 +319,8 @@ def sqrtF (s t : Nat) (z n : F) : Option F := Id.run do
 /-- An optional element stands for an optional reduced number. -/
 abbrev ORel : Option F → Option Nat → Prop := OR (fun a x => VRel a x ∧ x < p)
 
-/-- The outer loop states of `sqrtF` and `sqrtTS` agree: m equal, c, u, r related and reduced. -/
+/-- The outer loop states of `sqrtF` and `sqrtTS` agree: $m$ equal, $c$, $u$, $r$ related and
+    reduced. -/
 def SOut (a : Nat × F × F × F) (b : Nat × Nat × Nat × Nat) : Prop :=
   a.1 = b.1 ∧ (VRel a.2.1 b.2.1 ∧ b.2.1 < p) ∧ (VRel a.2.2.1 b.2.2.1 ∧ b.2.2.1 < p) ∧
     (VRel a.2.2.2 b.2.2.2 ∧ b.2.2.2 < p)
@@ -334,7 +335,7 @@ theorem sqrt_fin {n : F} {n0 : Nat} (hn : VRel n n0) (hn0 : n0 < p) (X : Nat × 
   · exact hr
   · trivial
 
-/-- The inner loop states agree: i equal, u2 related and reduced. -/
+/-- The inner loop states agree: $i$ equal, $u_2$ related and reduced. -/
 def SIn (a : Nat × F) (b : Nat × Nat) : Prop := a.1 = b.1 ∧ VRel a.2 b.2 ∧ b.2 < p
 
 theorem sqrt_step {m : Nat} {c u r : F} {c' u' r' : Nat} (hc : VRel c c' ∧ c' < p)
@@ -377,7 +378,7 @@ theorem sqrtF_rel {s t : Nat} {z n : F} {z' n' : Nat} (hz : VRel z z') (hn : VRe
     · exact ⟨rfl, hw⟩
     · exact ⟨rfl, VRel.mod.mpr (hw.1.mul hw.1), lt_of_mod⟩
 
-/-- `Curve.ofAffine` of the values of x and y. -/
+/-- `Curve.ofAffine` of the values of $x$ and $y$. -/
 def ofAffineF (x y : F) : Pt F := ⟨x, y, Field.one, Field.mul x y⟩
 
 theorem ofAffine_rel {E : Curve} (hp : E.p = p) {x y : F} {x' y' : Nat} (hx : VRel x x')

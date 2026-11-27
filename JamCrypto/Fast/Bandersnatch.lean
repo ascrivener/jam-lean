@@ -8,8 +8,8 @@ import JamCrypto.ThinVrf
 reference
 
 The functions here perform the same sequence of operations as `JamCrypto.Bandersnatch` and
-`JamCrypto.Bandersnatch.Thin` (the reference implementations, unchanged), on `Fast.Fr` (𝔽_q on
-29-bit limbs) instead of `Nat` mod q. Each is proved equal to its reference (`ietfVerify_eq`,
+`JamCrypto.Bandersnatch.Thin` (the reference implementations, unchanged), on `Fast.Fr` ($\mathbb{F}_q$
+on 29-bit limbs) instead of `Nat` $\bmod q$. Each is proved equal to its reference (`ietfVerify_eq`,
 `vrfOutput_eq`, `Thin.verify_eq`, `Thin.vrfOutput_eq`), from the field laws of `Fast.Fr` and the
 curve lemmas of `Fast.EdwardsF`.
 -/
@@ -32,7 +32,7 @@ abbrev F := Fr.Elem
 
 local notation "p" => Field.p F
 
-/-- The curve constants a = −5 and d. -/
+/-- The curve constants $a = -5$ and $d$. -/
 @[irreducible] def C : CurveF F := ⟨Field.ofNat JamCrypto.Bandersnatch.curve.a, Field.ofNat JamCrypto.Bandersnatch.curve.d⟩
 
 theorem curve_p : JamCrypto.Bandersnatch.curve.p = p := rfl
@@ -50,10 +50,10 @@ theorem vmod {a : F} {n : Nat} (h : VRel a n) : VRel a (n % p) := VRel.mod.mpr h
 /-- An optional point stands for an optional reference point. -/
 abbrev OP : Option (Pt F) → Option JamCrypto.Point → Prop := OR PRel
 
-/-- q − 1 = 2^32·t. -/
+/-- $q - 1 = 2^{32} \cdot t$. -/
 def tOdd : Nat := 12208678567578594777604504606729831043093128246378069236549469339647
 
-/-- √n (as `Bandersnatch.sqrt`). -/
+/-- $\sqrt{n}$ (as `Bandersnatch.sqrt`). -/
 def sqrt (n : F) : Option F := sqrtF 32 tOdd (Field.ofNat 7) n
 
 theorem sqrt_rel {n : F} {n' : Nat} (hn : VRel n n') : ORel (sqrt n) (JamCrypto.Bandersnatch.sqrt n') := by

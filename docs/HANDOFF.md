@@ -30,13 +30,28 @@ jam-lean parent session is archived.
   ("nobody's using services yet"); GPU/polymul host calls parked (doc artifact: native polymul, weak
   band after measurement); node: not a goal for jam-lean; candidate later step is Jamzilla embedding
   jam-lean as a checker.
-- **In flight:** crypto child (session_01FAPLsa7o4VNVfg2xm4KbHQ): A proved fixed-limb field arithmetic,
-  B restructured signatures/ring with the reference op order, C key cache, then BLS12-381 Mathlib
-  phase; draft #273 (tested-only) will be superseded. jam-lean-target cross-check child
-  (session_01FAPLsbKw5sJquGusdTTBZ1): target PRs #45 (segments switch) and the §14 switch + pin bump
-  to e64fe32.
+- **Crypto speedups (done, 2026-11-27):** #286 signatures, #287 hash to curve (structural edit of the
+  reference `Bandersnatch.elligator2` and `Ring.ell2Map`, Adam-approved) + ring curve on 𝔽_r, #295
+  BLS12-381 (𝔽_q on 14 limbs, G1, pairing). All proved equal to the reference, `@[csimp]`
+  (`docs/fast-paths.md`, `docs/jamcrypto.md`). Reference → fast: Ed25519 1.82 → 0.60 ms, IETF VRF
+  ~13 → 3.7 ms, Thin VRF 12–17 → 3.8 ms, ring proof verify 124 → 46 ms, ring root (1023 keys)
+  2.15 → 0.70 s. Key cache skipped (decision: decoding is fast; revisit only if profiling shows it
+  matters). Draft #273 (tested-only) is superseded. jam-lean-target cross-check child
+  (session_01FAPLsbKw5sJquGusdTTBZ1): target PRs #45 (segments switch) and the §14 switch; pin bumped to
+  58d50d9 in target #51.
 - **Open:** 0.8.1 fuzzer runs (triage then); upstream issue drafts 1–4 (Adam to post); davxy re ring
   label / push R; Fellowship ref 687 (refund after).
+- **Deferred (Adam, 2026-11-27): BLS12-381 group-law (Mathlib) optimisations.** Plan, if ever resumed:
+  wNAF G1 scalar multiplication, cyclotomic squaring (and sparse lines) in the pairing, possibly a
+  signed-window MSM; expected ring verify 46 → ~30–35 ms, root 0.70 → ~0.55 s. Proofs in
+  `proofs/CryptoProofs` (Mathlib): q (and r) prime by Pratt/Lucas certificates (the main risk);
+  the reference Jacobian formulas equal Mathlib's Weierstrass group law up to projective
+  equivalence; equalities at canonical results (`toAff` / the verifier's Bool), since Jacobian
+  coordinates differ; cyclotomic squaring on the cyclotomic subgroup. `@[csimp]` cannot cross the
+  Mathlib boundary, so callers (jam-lean-target) would call a new entry point (e.g.
+  `Ring.Fast.cryptoW`). Effort ~3–5 sessions; CI +10–25 min in `mathlib-proofs`. **First step if
+  resumed: the primality certificate alone, as a feasibility check.**
+
 
 ## 2026-11-25: GP v0.8.1 (read first)
 

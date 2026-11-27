@@ -127,7 +127,7 @@ def disputes (d : DisputesState) : List UInt8 :=
 def avail (ρ : AvailAssignments) : List UInt8 :=
   seq (opt fun (a : AvailAssignment) => a.guarantee.encode ++ fixed 4 a.time) ρ
 
-/-- $C(12)$: $\mathcal{E}(\mathcal{E}_4(\chi_M, \chi_A, \chi_V, \chi_R), \chi_Z)$, $\chi_Z$ a dictionary $\mathbb{N}_S \to \mathbb{N}_G$ ($\mathcal{E}_4$ keys, $\mathcal{E}_8$ gas). -/
+/-- $C(12)$: $\mathcal{E}(\mathcal{E}_4(\chi_m, \chi_\mathbf{a}, \chi_v, \chi_r), \chi_\mathbf{z})$, $\chi_\mathbf{z}$ a dictionary $\mathbb{N}_S \to \mathbb{N}_G$ ($\mathcal{E}_4$ keys, $\mathcal{E}_8$ gas). -/
 def privileges (s : State) : List UInt8 :=
   fixed 4 s.manager ++ seq (fixed 4) s.assigners ++ fixed 4 s.delegator ++ fixed 4 s.registrar ++
     varSeq (fun (k, g) => fixed 4 k ++ fixed 8 g) s.alwaysAcc.toList

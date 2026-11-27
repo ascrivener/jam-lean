@@ -88,7 +88,7 @@ the transition reads from the block and from accumulation is in {api}`JAM.Histor
 
 The append function $`\mathcal{A}` and the super-peak function $`\mathcal{M}_R` are defined in Appendix E.2:
 
-$$`\begin{aligned} \mathcal{A}(\mathbf{r}, l, H) &\equiv P(\mathbf{r}, l, 0, H) \qquad \text{(E.8)} \\ \text{where } P(\mathbf{r}, l, n, H) &= \begin{cases} \mathbf{r} \mathbin{+\!\!+} l & \text{when } n \geq |\mathbf{r}| \\ R(\mathbf{r}, n, l) & \text{when } n < |\mathbf{r}| \wedge \mathbf{r}_n = \varnothing \\ P\left(R(\mathbf{r}, n, \varnothing), H(\mathbf{r}_n \frown l), n + 1, H\right) & \text{otherwise} \end{cases} \end{aligned}`
+$$`\begin{aligned} \mathcal{A}(\mathbf{r}, l, H) &\equiv P(\mathbf{r}, l, 0, H) \qquad \text{(E.8)} \\ \text{where } P(\mathbf{r}, l, n, H) &= \begin{cases} \mathbf{r} \mathbin{+\!\!+} l & \text{if } n \geq |\mathbf{r}| \\ R(\mathbf{r}, n, l) & \text{if } n < |\mathbf{r}| \wedge \mathbf{r}_n = \varnothing \\ P\left(R(\mathbf{r}, n, \varnothing), H(\mathbf{r}_n \frown l), n + 1, H\right) & \text{otherwise} \end{cases} \end{aligned}`
 
 Here $`R(\mathbf{s}, i, v)` is $`\mathbf{s}` with entry $`i` replaced by $`v`, which is Lean's `List.set`.
 
@@ -96,7 +96,7 @@ Here $`R(\mathbf{s}, i, v)` is $`\mathbf{s}` with entry $`i` replaced by $`v`, w
 
 {leanSource JAM.MMR.append}
 
-$$`\begin{aligned} \mathcal{M}_R(\mathbf{b}) &= \begin{cases} \mathbb{H}_0 & \text{when } |\mathbf{h}| = 0 \\ \mathbf{h}_0 & \text{when } |\mathbf{h}| = 1 \\ \mathcal{H}_K\left(\texttt{\$peak} \frown \mathcal{M}_R(\mathbf{h}_{\dots|\mathbf{h}|-1}) \frown \mathbf{h}_{|\mathbf{h}|-1}\right) & \text{otherwise} \end{cases} \qquad \text{(E.10)} \\ \text{where } \mathbf{h} &= \left[\, h \;\middle|\; h \mathrel{\mathrlap{<}{-}} \mathbf{b}, h \neq \varnothing \,\right] \end{aligned}`
+$$`\begin{aligned} \mathcal{M}_R(\mathbf{b}) &= \begin{cases} \mathbb{H}_0 & \text{if } |\mathbf{h}| = 0 \\ \mathbf{h}_0 & \text{if } |\mathbf{h}| = 1 \\ \mathcal{H}_K\left(\texttt{\$peak} \frown \mathcal{M}_R(\mathbf{h}_{\dots|\mathbf{h}|-1}) \frown \mathbf{h}_{|\mathbf{h}|-1}\right) & \text{otherwise} \end{cases} \qquad \text{(E.10)} \\ \text{where } \mathbf{h} &= \left[\, h \;\middle|\; h \mathrel{\mathrlap{<}{-}} \mathbf{b}, h \neq \varnothing \,\right] \end{aligned}`
 
 The model drops the empty peaks once and recurses on the list of present peaks, reversed, so that
 removing the last peak is taking the tail of the list:

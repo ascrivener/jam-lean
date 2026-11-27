@@ -1,0 +1,33 @@
+{
+  "equations": {
+    "10.1": { "kind": "type", "name": "JAM.DisputesState" },
+    "10.2": { "kind": "type", "name": "JAM.Disputes",
+              "note": "with `JAM.Verdict`, `JAM.Judgment`, `JAM.Culprit` and `JAM.Fault`; the length bounds and the range of a are checked by `JAM.disputesTransition` and `JAM.checkVerdict`" },
+    "10.3": { "kind": "def", "name": "JAM.judgeKeys",
+              "note": "returns the Ed25519 keys of κ or λ, the only part of 𝐤 that §10 uses" },
+    "10.4": { "kind": "def", "name": "JAM.checkVerdict",
+              "note": "the conditions throw `badVotesCount`, `badValidatorIndex` and `badSignature`" },
+    "10.5": { "kind": "def", "name": "JAM.Xvalid",
+              "note": "and `JAM.Xinvalid`; the `$` is dropped (note v0.8.1-A7, `JAM.contextString`)" },
+    "10.6": { "kind": "inline", "name": "JAM.disputesTransition", "at": "for c in x.culprits do",
+              "note": "𝐤 is `keys` less ψ_O, checked as `ψ.offenders`" },
+    "10.7": { "kind": "inline", "name": "JAM.disputesTransition", "at": "for flt in x.faults do",
+              "note": "the first condition is read as a chain of two equivalences (note 29)" },
+    "10.8": { "kind": "inline", "name": "JAM.disputesTransition",
+              "at": "unless orderedUniqBy (·.target.toList) x.verdicts do" },
+    "10.9": { "kind": "inline", "name": "JAM.disputesTransition",
+              "at": "unless orderedUniqBy (·.key.toList) x.culprits do",
+              "note": "the faults' order is checked the same way, before the fault loop" },
+    "10.10": { "kind": "inline", "name": "JAM.checkVerdict", "at": "if ψ.good.contains r || ψ.bad.contains r" },
+    "10.11": { "kind": "inline", "name": "JAM.checkVerdict", "at": "unless orderedUniqByNat (·.index) v.votes do" },
+    "10.12": { "kind": "def", "name": "JAM.verdictOutcome",
+               "note": "V; 𝐯 is `verdicts` in `JAM.disputesTransition`, the pairs returned by `JAM.checkVerdict`, which rejects a verdict whose V is undefined" },
+    "10.13": { "kind": "inline", "name": "JAM.disputesTransition", "at": "for (r, o) in verdicts do" },
+    "10.14": { "kind": "def", "name": "JAM.clearNonPositive" },
+    "10.15": { "kind": "def", "name": "JAM.assimilate" },
+    "10.16": { "kind": "def", "name": "JAM.assimilate" },
+    "10.17": { "kind": "def", "name": "JAM.assimilate" },
+    "10.18": { "kind": "inline", "name": "JAM.disputesTransition", "at": "offenders := mark.foldl" },
+    "10.19": { "kind": "inline", "name": "JAM.disputesTransition", "at": "let mark :=" }
+  }
+}

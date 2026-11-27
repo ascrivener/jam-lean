@@ -4,6 +4,7 @@ import Companion.Paper
 import Companion.Docstring
 import JAM.Statistics
 import JAM.Reports
+import JAM.State
 
 open Verso.Genre Manual
 open Companion

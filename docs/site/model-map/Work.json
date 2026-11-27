@@ -1,0 +1,24 @@
+{
+  "equations": {
+    "14.2": { "kind": "type", "name": "JAM.WorkPackage",
+              "note": "the bound of 1 to I items is not carried by the type" },
+    "14.3": { "kind": "type", "name": "JAM.WorkItem",
+              "note": "an import's root, from ℍ ∪ ℍ⊞, is a `JAM.SegmentRoot`" },
+    "14.11": { "kind": "def", "name": "JAM.Guarantee.itemToDigest",
+               "note": "the hash function is the parameter `H`; Ξ passes Blake2b-256" },
+    "14.12": { "kind": "def", "name": "JAM.WorkPackage.authorizer",
+               "note": "the second line, the authorization code, is `JAM.WorkPackage.authCode`" },
+    "14.13": { "kind": "def", "name": "JAM.Segments.pagedProofs" },
+    "14.14": { "kind": "def", "name": "JAM.Guarantee.computeReport",
+               "note": "takes the accounts δ and the item data (X, S, J) as extra arguments; ∇ is `none`" },
+    "14.16": { "kind": "def", "name": "JAM.Guarantee.itemData",
+               "note": "X is `JAM.Guarantee.extrinsicData`, L is `JAM.Guarantee.lookupRoot`, S and J are `JAM.Guarantee.importData`; the preimages and segments come from a `JAM.Guarantee.DataSource`, and missing data gives `none`" },
+    "14.17": { "kind": "def", "name": "JAM.Guarantee.bundle",
+               "note": "from the item data; `JAM.Guarantee.bundleOf` gathers that data from a `JAM.Guarantee.DataSource`" },
+    "14.18": { "kind": "inline", "name": "JAM.Guarantee.computeReport", "at": "spec := availabilitySpec",
+               "note": "𝓗(p) is read as the hash of the encoded package" },
+    "14.19": { "kind": "def", "name": "JAM.Guarantee.availabilitySpec",
+               "note": "u is `JAM.Guarantee.erasureRoot`" },
+    "14.20": { "kind": "def", "name": "JAM.Segments.zeroPad" }
+  }
+}

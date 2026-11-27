@@ -31,13 +31,24 @@ require verso from git "https://github.com/leanprover/verso" @ "v4.36.0-rc1-patc
 /-- *A companion to the Gray Paper*: the chapters, in the order of GP v0.8.1's sections. -/
 lean_lib Companion where
   leanOptions := #[⟨`autoImplicit, false⟩]
-  extraDepTargets := #[`modelHighlights, `modelMap]
+  extraDepTargets := #[`modelHighlights, `bookInputs]
 
-/-- The model maps (`model-map/*.json`, read by `Companion/ModelMap.lean`): a dependency of every
-    chapter, so editing a map re-elaborates the chapters (which render and check its entries). -/
-input_dir modelMap where
-  path := "model-map"
-  text := true
+/-- The data files the chapters read while they elaborate, as a dependency of every chapter: the
+    paper's tables (`gp-equations.json`, read by `{gpeq}`, `{eq}` and `{transcribed}`;
+    `gp-labels.json`, read by `{gpsec}`, `{gpchapter}` and `{gptag}`; both in `Companion/Paper.lean`)
+    and the model maps (`model-map/*.json`, read by `Companion/ModelMap.lean`). Changing any of them
+    re-elaborates the chapters, so even a cached build renders the new entries and fails on a
+    broken map entry or a `{transcribed}` fingerprint that no longer matches.
+
+    The files are hashed here with `inputTextFile` and collected into one job: Lake's `input_file`
+    and `input_dir` targets, listed in `extraDepTargets`, did not make a chapter re-elaborate when
+    their files changed. -/
+target bookInputs : Array System.FilePath := do
+  let pkg ← getRootPackage
+  let maps ← (pkg.dir / "model-map").readDir
+  let maps := (maps.map (·.path)).filter (·.extension == some "json") |>.qsort (·.toString < ·.toString)
+  Job.collectArray (traceCaption := "book inputs") <$>
+    (#[pkg.dir / "gp-equations.json", pkg.dir / "gp-labels.json"] ++ maps).mapM fun p => inputTextFile p
 
 /-- Renders the companion to HTML: `lake exe companion --output DIR`. -/
 lean_exe companion where

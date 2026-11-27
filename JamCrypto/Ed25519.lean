@@ -8,7 +8,7 @@ $s \in \bar{\mathbb{V}}_k\langle m \rangle$ (GP v0.8.0 §3.8.2) is "a valid Ed25
 defined by RFC 8032". RFC 8032 leaves open whether the verification equation is multiplied by the
 cofactor 8, and implementations differ in whether they accept non-canonical point encodings. Those
 choices are the `Rules`. The model uses `zip215` (ZIP 215: any encoding of a curve point, $S < L$,
-cofactored equation; Adam's decision 2026-11-15), the behaviour the JAM conformance vectors target.
+cofactored equation; a project decision), the behaviour the JAM conformance vectors target.
 `rfc8032Strict` and `rfc8032Cofactorless` reject non-canonical encodings (§5.1.3 steps 1 and 4);
 they are kept for the test vectors.
 

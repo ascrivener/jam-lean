@@ -6,7 +6,7 @@ import JamCrypto.Bls12381Pairing
 /-!
 # Ring VRF verification (GP v0.8.0 Appendix G)
 
-$x \in \bar{\mathbb{B}}^{\circ}_r\langle c\rangle\langle m\rangle$ for a ring root $r$, context $c$
+$x \in \mathring{\mathbb{V}}{}_r^{m}\langle c\rangle$ for a ring root $r$, context $c$
 and message $m$: the 784-octet $x$ is the VRF output point $O$ (32 octets) followed by a ring VRF
 proof (Bandersnatch VRF spec, ring VRF; as ark-vrf 0.1.0 serializes it), which is a Pedersen VRF
 proof (160 octets) and a ring proof (592 octets, eprint 2023/002 as implemented by w3f ring-proof
@@ -243,7 +243,7 @@ def ringProofOk (srs : Srs) (dom : Nat) (cx cy csel : G1.Aff) (result : Curve.Af
   let accP := G1.addJ p.proofZeta.toJac (G1.smul p.proofZetaOmega.toJac rnd)
   return Pairing.pairingCheck [(accA.toAff, g2), (accP.toAff, tg2)]
 
-/-- $x \in \bar{\mathbb{B}}^{\circ}_r\langle c\rangle\langle m\rangle$ (GP Appendix G) for rings of up to
+/-- $x \in \mathring{\mathbb{V}}{}_r^{m}\langle c\rangle$ (GP Appendix G) for rings of up to
     `ringSize` keys (JAM: $V$). -/
 def verify (srs : Srs) (ringSize : Nat) (root ctx msg proof : List UInt8) : Bool := Id.run do
   if root.length != 144 || proof.length != 784 then return false

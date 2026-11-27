@@ -164,7 +164,7 @@ over the traces, are in that tag's README.
 | Authorization STF (§8: the pool α from the queue φ') vs. `stf/authorizations` (`lake build authtest`) | **3 / 3** tiny, **3 / 3** full |
 | Validator statistics (§13.1: π_V, π_L) vs. `stf/statistics` (`lake build statstest`) | **4 / 4** tiny, **4 / 4** full |
 | Preimage STF (§12.4) and its service statistics (§13.2 provision counts) vs. `stf/preimages` (`lake build preimagestest`) | **8 / 8** tiny, **8 / 8** full |
-| Disputes STF (§10: verdicts, culprits, faults, ψ', ρ^‡ and H_O) vs. `stf/disputes` (`lake build disputestest`; Ed25519 verification is a parameter, note 29) | **29 / 29** tiny, **31 / 31** full |
+| Disputes STF (§10: verdicts, culprits, faults, ψ', ρ^† and H_O) vs. `stf/disputes` (`lake build disputestest`; Ed25519 verification is a parameter, note 29) | **29 / 29** tiny, **31 / 31** full |
 | Assurances STF (§11.2: the available reports **R** and ρ after assurances) vs. `stf/assurances` (`lake build assurancestest`; signatures as in note 29) | **10 / 11** tiny, **10 / 11** full; the other is `assurance_with_bad_attestation_parent-1`, whose only fault is the anchor v0.8.1 removed (#562), a listed deviation (note 30) |
 | Reports STF (§11.3–§11.5: guarantor assignments M and M*, guarantee validity, ρ', G and the reported packages, the v0.8.1 limits of eq. `reportrefineload`) and core and service statistics (§13.2) vs. `stf/reports` at master 5e8d2a2 (`lake build reportstest`; signatures as in note 29) | **60 / 60** tiny, **64 / 64** full |
 | Safrole STF (§6: τ, η, key rotation, γ_Z, γ_S, γ_A, H_E, H_W) vs. `stf/safrole` (`lake build safroletest`), first with the Bandersnatch primitives as an oracle read from the vectors (note 31), then again with JamCrypto's ring VRF (v0.8.0 path) | **21 / 21** tiny, **25 / 25** full, in both runs |
@@ -973,7 +973,7 @@ resolved, or that describes a check now suspended, is marked as such.
     only fault is its anchor, has no counterpart and is a listed deviation
     (`Tests/AssurancesTest.lean`). A core is cleared when its
     report is in **R**, compared by encoding. A stale report that is still assigned may be
-    assured and made available; the paper allows it (ρ^‡[c] ≠ ∅ is all a set bit needs) and the
+    assured and made available; the paper allows it (ρ^†[c] ≠ ∅ is all a set bit needs) and the
     vectors agree (`assurances_for_stale_report-1`).
 
 31. **Safrole** (§6).

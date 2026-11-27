@@ -12,8 +12,8 @@ Bandersnatch VRF signature verification and its output $\mathcal{Y}$; the ring f
 
 The Bandersnatch signature scheme depends on the Gray Paper version (`GpVersion`): v0.8.0 uses
 the IETF VRF (`Bandersnatch.ietfVerify`), v0.8.1 the Thin VRF of the VRF spec's Draft 35
-(`Bandersnatch.Thin.verify`, GP #550). The default stays v0.8.0, the version of the pinned
-jam-lean model. The ring VRF and ring root of each version are selected the same way by
+(`Bandersnatch.Thin.verify`, GP #550). The default stays v0.8.0: the model is tested against the
+published v0.8.0 vectors until v0.8.1 vectors exist. The ring VRF and ring root of each version are selected the same way by
 `Ring.crypto`. The v0.8.1 path also takes the `Reading` of the VRF spec's Draft 35 (default
 `.prose`; `.vectors` is what the published vectors check, see `JamCrypto.Reading`).
 -/

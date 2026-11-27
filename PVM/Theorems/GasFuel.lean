@@ -9,7 +9,7 @@ prove that this fuel always suffices: from $\mathbf{x}^{\text{init}}$ the `0` (o
 reached, so any larger fuel gives the same result (`PVM.Sim.run_fuel_eq`). For the blocks $\Psi$
 charges ($\imath$ a block start of a program passing $\mathfrak{v}_{\text{blob}}$) the simulation also never meets an opcode
 outside U, so `blockCost?` is `some` and `blockCost`'s default is unreachable
-(`PVM.Program.blockCost?_isSome_of_vBlob`, `PVM.Program.blockCost_eq_of_vBlob`).
+(`PVM.Program.blockCost?_isSome_of_vBlob`; for a decoded blob, `PVM.Program.blockCost_eq_of_deblob`).
 
 The measure: 255 · (instructions left to decode) + 2 · ($\Sigma$ of a per-entry potential over the
 reorder buffer) + (decode and start slots used this cycle). Decoding lowers the first term by at

@@ -41,7 +41,17 @@ lean_exe companion where
     package Verso requires) for the model modules the companion quotes with `{leanSource}`. -/
 target modelHighlights : Unit := do
   -- Every module a chapter quotes with `{leanSource}`: a missing one fails the book's build.
-  let mods := #[`JAM.Safrole, `PVM.Machine, `PVM.Gas, `PVM.Memory]
+  let mods := #[`JAM.Safrole, `JAM.Disputes, `JAM.Assurances, `JAM.Reports, `JAM.Statistics,
+    `JAM.Shuffle, `PVM.Machine, `PVM.Gas, `PVM.Memory,
+    `JAM.Blake2b, `JAM.Keccak, `JAM.Sha512, `JAM.Constants, `JAM.Params,
+    `JAM.State, `JAM.Block, `JAM.BlockImport, `JAM.History, `JAM.Authorization,
+    `JAM.Work, `JAM.Refine, `JAM.Segments, `JAM.Guarantee, `JAM.Auditing, `JAM.BestChain,
+    `JAM.Theorems.BestChain,
+    `PVM.Basic, `PVM.Blob, `JAM.Codec, `JAM.Decode, `JAM.Block,
+    `JAM.Trie, `JAM.State, `JAM.Account, `PVM.Logic.Steps, `PVM.Logic.Words,
+    `JAM.Merkle, `JAM.History, `JAM.Erasure, `JAM.Crypto,
+    `JamCrypto.Crypto, `JamCrypto.Ring, `JamCrypto.ThinVrf, `JamCrypto.Reading, `JamCrypto.Fast.Ring,
+    `PVM.Instr, `PVM.Exec, `PVM.Invocation, `JAM.Host.General, `JAM.Accumulate]
   let jobs ← mods.mapM fun m => do
     let some mod ← findModule? m | error s!"modelHighlights: no module {m}"
     fetch <| mod.facet `highlighted

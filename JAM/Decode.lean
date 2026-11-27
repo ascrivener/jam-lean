@@ -61,8 +61,8 @@ def nat : Decoder Nat := do
   | some (x, pos') => set pos'; return x
   | none => fail "not a canonical ℰ-encoded natural"
 
-/-- A natural whose $\mathcal{E}$-encoding must be 0 or 1, read as a Boolean. The paper does not spell out
-    $\mathcal{E}$ on $\{\top, \bot\}$; $\bot \mapsto 0$ and $\top \mapsto 1$ is $\mathcal{E}$ of the indicator, the reading the vectors use. -/
+/-- A Boolean: one octet, $\mathcal{E}(\bot) = [0]$ and $\mathcal{E}(\top) = [1]$ (GP v0.8.1 eq. C.3);
+    any other octet fails. -/
 def bool : Decoder Bool := do
   match ← byte with
   | 0 => return false
@@ -129,7 +129,7 @@ end Decoder
 
 open Decoder
 
-/-- $\mathcal{E}^{-1}$ for $\mathbb{X}$, the refinement context. -/
+/-- $\mathcal{E}^{-1}$ for $\mathbb{C}$, the refinement context. -/
 def RefineContext.decode : Decoder RefineContext := do
   return { anchorHash := ← bytes 32, anchorSlot := ← fixed 4, anchorStateRoot := ← bytes 32,
            anchorAccOutLog := ← bytes 32, lookupAnchorHash := ← bytes 32,
@@ -143,7 +143,7 @@ def decodeImport : Decoder (SegmentRoot × Nat) := do
   let i ← fixed 2
   return if i < 2 ^ 15 then (.root h, i) else (.package h, i - 2 ^ 15)
 
-/-- $\mathcal{E}^{-1}$ for $\mathbb{I}$, a work item. -/
+/-- $\mathcal{E}^{-1}$ for $\mathbb{W}$, a work item. -/
 def WorkItem.decode : Decoder WorkItem := do
   return { service := ← fixed 4, codeHash := ← bytes 32, refineGasLimit := ← fixed 8,
            accumulateGasLimit := ← fixed 8, exportCount := ← fixed 2, payload := ← var,

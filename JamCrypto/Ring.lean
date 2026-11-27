@@ -20,12 +20,11 @@ let srs := JamCrypto.Ring.withSelectors (← JamCrypto.Ring.Srs.load "JamCryptoT
 namespace JamCrypto.Ring
 
 /-- The ring domain of GP v0.8.1: fixed at 2048 by the VRF spec's Draft 35 §5, which GP v0.8.1
-    cites (Adam, 2026-11-25: the reading of the cited spec, to be confirmed by 0.8.1 vectors or
-    fuzzer blocks). -/
+    cites (our reading of the cited spec, to be confirmed by 0.8.1 vectors or fuzzer blocks). -/
 def domain081 : Nat := 2048
 
 /-- `c` with the ring VRF primitives for a chain of `validators` = $V$ validators: `bsRingRoot` :=
-    $\mathcal{O}$ (`Ring.root`), `bsRingVerify` := $\bar{\mathbb{B}}^{\circ}$ (`Ring.verify`),
+    $\mathcal{O}$ (`Ring.root`), `bsRingVerify` := $\mathring{\mathbb{V}}$ (`Ring.verify`),
     `bsRingOut` := $\mathcal{Y}$ (`Ring.output`). v0.8.0 sizes the ring domain by $V$; v0.8.1 uses
     the domain `dom081` (default `domain081` = 2048, whatever $V$ is; the ring then holds up to $N -
     257$ keys) and the reading `rd` of the VRF spec's Draft 35 (default `.prose`; `.vectors` is what

@@ -50,6 +50,9 @@ inductive BlockError where
   | assurances (e : AssurancesError)
   | reports (e : ReportsError)
   | preimages (e : PreimageError)
+  /-- Accumulation makes the block invalid (GP v0.8.1 §12.2): two services created the same new
+      service index in one round. -/
+  | accumulation (e : AccumulationError)
   deriving BEq, Repr
 
 /-- The headers an importer retains besides $\sigma$: the ancestors of the block being imported,
@@ -69,11 +72,11 @@ open Codec in
     \mathcal{E}_D(\mathbf{E}_D)]$ of GP eq. `extrinsichash`, with
     $\mathbf{p} = \mathcal{E}(\updownarrow[(\mathcal{E}_4(s), \mathcal{H}(\mathbf{d})) \mid
     (s, \mathbf{d}) \leftarrow \mathbf{E}_P])$ and
-    $\mathbf{g} = \mathcal{E}(\updownarrow[(\mathcal{H}(r), \mathcal{E}_4(t), O(a)) \mid
-    (r, t, a) \leftarrow \mathbf{E}_G])$, where
-    $O(a) = \mathcal{E}(\updownarrow[(\mathcal{E}_2(v), s) \mid (v, s) \leftarrow a])$ is the
-    credential encoding of Appendix C (GP v0.8.1 #560 writes $O(a)$ in eq. `extrinsichash` where
-    v0.8.0 wrote $\updownarrow a$; the model already encoded $v$ with $\mathcal{E}_2$). -/
+    $\mathbf{g} = \mathcal{E}(\updownarrow[(\mathcal{H}(\mathbf{r}), \mathcal{E}_4(t), \mathcal{E}_C(a)) \mid
+    (\mathbf{r}, t, a) \leftarrow \mathbf{E}_G])$, where
+    $\mathcal{E}_C(a) = \mathcal{E}(\updownarrow[(\mathcal{E}_2(v), s) \mid (v, s) \leftarrow a])$ is the
+    credential encoding of Appendix C (GP v0.8.1 eq. 5.7; v0.8.0 wrote $\updownarrow a$ there, and
+    #560 introduced $\mathcal{E}_C$; the model already encoded $v$ with $\mathcal{E}_2$). -/
 def Extrinsic.hashParts (x : Extrinsic) : List (List UInt8) :=
   let p := varSeq (fun (q : Preimage) => fixed 4 q.requester ++ hashL q.blob.toList) x.preimages
   let g := varSeq (fun (g : Guarantee) => hashL g.report.encode ++ fixed 4 g.slot ++
@@ -85,7 +88,7 @@ def Extrinsic.hashParts (x : Extrinsic) : List (List UInt8) :=
 def Extrinsic.hash (x : Extrinsic) : List UInt8 :=
   hashL (x.hashParts.flatMap hashL)
 
-/-- The ancestor-set condition of §11.4.1 (GP eq. 11.36) for a refinement context $x$: some
+/-- The ancestor-set condition of §11.4.1 (GP v0.8.1 eq. 11.38) for a refinement context $x$: some
     $h, h' \in \mathbf{A}$ with $h_T = x_{\text{lookupanchortime}}$,
     $\mathcal{H}(h) = x_{\text{lookupanchor}}$, $h'_P = \mathcal{H}(h)$ and
     $h'_R = x_{\text{lookupanchorpoststate}}$: the lookup anchor's posterior state root, the prior
@@ -167,7 +170,7 @@ def importBlock (params : Params) (c : Crypto) (chain : Chain) (σ : State) (B :
   let accPre : AccState :=
     { slot := σ.tau, entropy := saf'.eta.getD 0 [], ready := σ.ready,
       accumulated := σ.accumulated, pstate := σ.partialState }
-  let acc := accumulate params accPre slot avail
+  let acc ← (accumulate params accPre slot avail).mapError .accumulation
   let ps := acc.state.pstate
   -- §7: recent history.
   let recent' := recentHistory params { σ.recent with history := σ.recent.history }

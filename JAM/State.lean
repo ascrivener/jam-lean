@@ -10,7 +10,7 @@ import JAM.Trie
 # The state $\sigma$ and its serialization $T(\sigma)$ (GP v0.8.1 §4.2, Appendix D)
 
 $\sigma \equiv (\alpha, \beta, \theta, \gamma, \delta, \eta, \iota, \kappa, \lambda, \rho, \tau, \phi, \chi, \psi, \pi, \omega, \xi)$ (GP eq. `statecomposition`), with
-$\gamma \equiv (\gamma_P, \gamma_Z, \gamma_S, \gamma_A)$ (eq. `gammaspec`), $\chi \equiv (\chi_M, \chi_A, \chi_V, \chi_R, \chi_Z)$ (eq. `privilegesspec`)
+$\gamma \equiv (\gamma_P, \gamma_Z, \gamma_S, \gamma_A)$ (eq. `gammaspec`), $\chi \equiv (\chi_m, \chi_v, \chi_r, \chi_\mathbf{a}, \chi_\mathbf{z})$ (eq. `privilegesspec`)
 and $\pi \equiv (\pi_V, \pi_L, \pi_C, \pi_S)$ (§13).
 
 The components are stored in the types the state-transition functions already use; `State` adds
@@ -52,15 +52,15 @@ structure State where
   avail : AvailAssignments
   /-- $\tau$, the most recent block's timeslot. -/
   tau : Nat
-  /-- $\chi_M$, the manager service. -/
+  /-- $\chi_m$, the manager service. -/
   manager : Nat
-  /-- $\chi_A$, the assigner of each core. -/
+  /-- $\chi_\mathbf{a}$, the assigner of each core. -/
   assigners : List Nat
-  /-- $\chi_V$, the delegator service. -/
+  /-- $\chi_v$, the delegator service. -/
   delegator : Nat
-  /-- $\chi_R$, the registrar service. -/
+  /-- $\chi_r$, the registrar service. -/
   registrar : Nat
-  /-- $\chi_Z$, the always-accumulate services and their gas. -/
+  /-- $\chi_\mathbf{z}$, the always-accumulate services and their gas. -/
   alwaysAcc : Std.ExtTreeMap Nat Nat
   /-- $\psi$, the disputes state. -/
   disputes : DisputesState
@@ -127,7 +127,7 @@ def disputes (d : DisputesState) : List UInt8 :=
 def avail (ρ : AvailAssignments) : List UInt8 :=
   seq (opt fun (a : AvailAssignment) => a.guarantee.encode ++ fixed 4 a.time) ρ
 
-/-- $C(12)$: $\mathcal{E}(\mathcal{E}_4(\chi_M, \chi_A, \chi_V, \chi_R), \chi_Z)$, $\chi_Z$ a dictionary $\mathbb{N}_S \to \mathbb{N}_G$ ($\mathcal{E}_4$ keys, $\mathcal{E}_8$ gas). -/
+/-- $C(12)$: $\mathcal{E}(\mathcal{E}_4(\chi_m, \chi_\mathbf{a}, \chi_v, \chi_r), \chi_\mathbf{z})$, $\chi_\mathbf{z}$ a dictionary $\mathbb{N}_S \to \mathbb{N}_G$ ($\mathcal{E}_4$ keys, $\mathcal{E}_8$ gas). -/
 def privileges (s : State) : List UInt8 :=
   fixed 4 s.manager ++ seq (fixed 4) s.assigners ++ fixed 4 s.delegator ++ fixed 4 s.registrar ++
     varSeq (fun (k, g) => fixed 4 k ++ fixed 8 g) s.alwaysAcc.toList
@@ -148,7 +148,7 @@ def serviceRecord (r : ServiceRecord) : List UInt8 :=
   [r.provided.1, r.provided.2, r.refinement.1, r.refinement.2, r.imports, r.xtCount, r.xtSize,
     r.exports, an, atr, ag].flatMap nat
 
-/-- $C(13)$: $\mathcal{E}(\updownarrow[\mathcal{E}_4(v) \mid v \in \pi_V], \updownarrow[\mathcal{E}_4(v) \mid v \in \pi_L], \pi_C, \pi_S)$. -/
+/-- $C(13)$: $\mathcal{E}(\updownarrow\pi_V, \updownarrow\pi_L, \pi_C, \updownarrow[(\mathcal{E}_4(s), \mathcal{E}(\pi_S[s])) \mid s \in \mathcal{K}(\pi_S)])$, the service entries in ascending order of $s$ (GP v0.8.1 eq. `serialization`). -/
 def stats (s : State) : List UInt8 :=
   varSeq valRecord s.valStats ++ varSeq valRecord s.valStatsLast ++ seq coreRecord s.coreStats ++
     varSeq (fun (k, r) => fixed 4 k ++ serviceRecord r) s.serviceStats.toList

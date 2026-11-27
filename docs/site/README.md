@@ -175,4 +175,6 @@ moved marker fails the book's build).
   without its marker, a hand-typed "(6.24)" or "(14.6–14.8)" in prose (write
   ``{eq}`14.6`–{eq}`14.8` ``), and a heading that cites an equation the paper does not have. After regenerating the table for a new
   paper version, `scripts/check-equations.py --changed OLD.json` lists the equations whose TeX
-  changed or which moved, and the chapters that use them: re-read those passages.
+  changed or which moved, and the chapters that use them: re-read those passages. Lake tracks
+  `gp-equations.json` and `gp-labels.json` (the `gpTables` target in `lakefile.lean`), so a change
+  to either re-elaborates every chapter, even in a cached build.

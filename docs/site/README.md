@@ -65,6 +65,11 @@ Verso's styles hard-code, and this book's own `--jl-*` variables. New CSS takes 
 those variables (or `currentColor`), not from literal colours, so it works in both themes.
 The API pages (doc-gen4) keep doc-gen4's own styling.
 
+Wide displayed equations: a display at most 15% wider than the text column is shrunk to fit, so
+its equation number shows without scrolling; a wider one keeps its size and scrolls sideways inside
+its own box, with an edge shadow on the side that has more (`displayFitJs` and `narrowCss` in
+`CompanionMain.lean`). The page itself never scrolls sideways.
+
 The readings the model chose should link to `docs/upstream-candidates.md` by note number.
 
 ## Notation: the paper's macros

@@ -63,7 +63,7 @@ $`\mathbf{E}_G` (§11), availability assurances $`\mathbf{E}_A` (§11) and dispu
 tag := "overview-state"
 %%%
 
-$$`\sigma \equiv (\alpha, \beta, \theta, \gamma, \delta, \eta, \iota, \kappa, \lambda, \rho, \tau, \varphi, \chi, \psi, \pi, \omega, \xi) \qquad \text{(4.4)}`
+$$`\sigma \equiv (\alpha, \beta, \theta, \gamma, \delta, \eta, \iota, \kappa, \lambda, \rho, \tau, \phi, \chi, \psi, \pi, \omega, \xi) \qquad \text{(4.4)}`
 
 The model's {api}`JAM.State` has one field per component. It flattens the components that are
 tuples: $`\gamma = (\gamma_P, \gamma_Z, \gamma_S, \gamma_A)`, the privileges $`\chi` and the statistics $`\pi` each become several
@@ -78,7 +78,7 @@ fields. Each component, with the section that covers it, and its fields:
 * $`\iota`, $`\kappa`, $`\lambda` ({ref "safrole"}[§6]): staging, active and previous validator keys. Fields: `staging`, `active`, `prev`.
 * $`\rho` (§11): work reports awaiting availability, per core. Fields: `avail`.
 * $`\tau` ({ref "safrole"}[§6]): the most recent block's timeslot. Fields: `tau`.
-* $`\varphi` ({ref "authorization"}[§8]): authorizer queues. Fields: `authQueue`.
+* $`\phi` ({ref "authorization"}[§8]): authorizer queues. Fields: `authQueue`.
 * $`\chi` (§9, §12): privileged services. Fields: `manager`, `assigners`, `delegator`, `registrar`, `alwaysAcc`.
 * $`\psi` (§10): judgments. Fields: `disputes`.
 * $`\pi` (§13): validator, core and service statistics. Fields: `valStats`, `valStatsLast`, `coreStats`, `serviceStats`.
@@ -98,7 +98,7 @@ tag := "overview-graph"
 The paper specifies $`\Upsilon` by saying what each part of the posterior state depends on. The symbol $`\prec`
 reads "depends on":
 
-$$`\begin{aligned} \tau' &\prec \mathbf{H} & \text{(4.5)} \\ \beta^\dagger_H &\prec (\mathbf{H}, \beta_H) & \text{(4.6)} \\ \gamma' &\prec (\mathbf{H}, \tau, \mathbf{E}_T, \gamma, \iota, \eta', \kappa', \psi') & \text{(4.7)} \\ \eta' &\prec (\mathbf{H}, \tau, \eta) & \text{(4.8)} \\ \kappa' &\prec (\mathbf{H}, \tau, \kappa, \gamma) & \text{(4.9)} \\ \lambda' &\prec (\mathbf{H}, \tau, \lambda, \kappa) & \text{(4.10)} \\ \psi' &\prec (\mathbf{E}_D, \psi) & \text{(4.11)} \\ \rho^\dagger &\prec (\mathbf{E}_D, \rho) & \text{(4.12)} \\ \rho^\ddagger &\prec (\mathbf{E}_A, \rho^\dagger) & \text{(4.13)} \\ \rho' &\prec (\mathbf{E}_G, \rho^\ddagger, \kappa, \tau') & \text{(4.14)} \\ \mathbf{R}^* &\prec (\mathbf{E}_A, \rho^\dagger) & \text{(4.15)} \\ (\omega', \xi', \delta^\ddagger, \chi', \iota', \varphi', \theta', \mathbf{S}) &\prec (\mathbf{R}^*, \omega, \xi, \delta, \chi, \iota, \varphi, \tau, \tau') & \text{(4.16)} \\ \beta'_H &\prec (\mathbf{H}, \mathbf{E}_G, \beta^\dagger_H, \theta') & \text{(4.17)} \\ \delta' &\prec (\mathbf{E}_P, \delta^\ddagger, \tau') & \text{(4.18)} \\ \alpha' &\prec (\mathbf{H}, \mathbf{E}_G, \varphi', \alpha) & \text{(4.19)} \\ \pi' &\prec (\mathbf{E}_G, \mathbf{E}_P, \mathbf{E}_A, \mathbf{E}_T, \tau, \kappa', \pi, \mathbf{H}, \mathbf{S}) & \text{(4.20)} \end{aligned}`
+$$`\begin{aligned} \tau' &\prec \mathbf{H} & \text{(4.5)} \\ \beta^\dagger_H &\prec (\mathbf{H}, \beta_H) & \text{(4.6)} \\ \gamma' &\prec (\mathbf{H}, \tau, \mathbf{E}_T, \gamma, \iota, \eta', \kappa', \psi') & \text{(4.7)} \\ \eta' &\prec (\mathbf{H}, \tau, \eta) & \text{(4.8)} \\ \kappa' &\prec (\mathbf{H}, \tau, \kappa, \gamma) & \text{(4.9)} \\ \lambda' &\prec (\mathbf{H}, \tau, \lambda, \kappa) & \text{(4.10)} \\ \psi' &\prec (\mathbf{E}_D, \psi) & \text{(4.11)} \\ \rho^\dagger &\prec (\mathbf{E}_D, \rho) & \text{(4.12)} \\ \rho^\ddagger &\prec (\mathbf{E}_A, \rho^\dagger) & \text{(4.13)} \\ \rho' &\prec (\mathbf{E}_G, \rho^\ddagger, \kappa, \tau') & \text{(4.14)} \\ \mathbf{R}^* &\prec (\mathbf{E}_A, \rho^\dagger) & \text{(4.15)} \\ (\omega', \xi', \delta^\ddagger, \chi', \iota', \phi', \theta', \mathbf{S}) &\prec (\mathbf{R}^*, \omega, \xi, \delta, \chi, \iota, \phi, \tau, \tau') & \text{(4.16)} \\ \beta'_H &\prec (\mathbf{H}, \mathbf{E}_G, \beta^\dagger_H, \theta') & \text{(4.17)} \\ \delta' &\prec (\mathbf{E}_P, \delta^\ddagger, \tau') & \text{(4.18)} \\ \alpha' &\prec (\mathbf{H}, \mathbf{E}_G, \phi', \alpha) & \text{(4.19)} \\ \pi' &\prec (\mathbf{E}_G, \mathbf{E}_P, \mathbf{E}_A, \mathbf{E}_T, \tau, \kappa', \pi, \mathbf{H}, \mathbf{S}) & \text{(4.20)} \end{aligned}`
 
 The daggered terms are intermediate values: $`\beta^\dagger_H` is recent history with the parent's state root
 corrected, $`\rho^\dagger` and $`\rho^\ddagger` are the availability assignments after disputes and after assurances, $`\mathbf{R}^*`
@@ -115,7 +115,7 @@ computes, and the equations and section:
 * `safrole`: $`\gamma'`, $`\eta'`, $`\kappa'`, $`\lambda'`; (4.7)–(4.10) ({ref "safrole"}[§6]).
 * `assurances`: $`\rho^\ddagger`, $`\mathbf{R}^*`; (4.13), (4.15) (§11).
 * `guarantees`: $`\rho'`; (4.14) (§11).
-* `accumulate`: $`\omega'`, $`\xi'`, $`\delta^\ddagger`, $`\chi'`, $`\iota'`, $`\varphi'`, $`\theta'`, $`\mathbf{S}`; (4.16) (§12).
+* `accumulate`: $`\omega'`, $`\xi'`, $`\delta^\ddagger`, $`\chi'`, $`\iota'`, $`\phi'`, $`\theta'`, $`\mathbf{S}`; (4.16) (§12).
 * `recentHistory`: $`\beta'`; (4.17) ({ref "history"}[§7]).
 * `preimages`: $`\delta'`; (4.18) (§12).
 * `authorizations`: $`\alpha'`; (4.19) ({ref "authorization"}[§8]).
@@ -148,7 +148,7 @@ and offenders markers, the author's index, the entropy-yielding VRF signature an
 
 The markers' types:
 
-$$`\mathbf{H}_E \in \left\lgroup \mathbb{H}, \mathbb{H}, \llbracket \left\lgroup \tilde{\mathbb{H}}, \bar{\mathbb{H}} \right\rgroup \rrbracket_{\mathsf{V}} \right\rgroup?, \qquad \mathbf{H}_W \in \llbracket \mathbb{T} \rrbracket_{\mathsf{E}}?, \qquad \mathbf{H}_O \in \llbracket \bar{\mathbb{H}} \rrbracket \qquad \text{(5.11)}`
+$$`\mathbf{H}_E \in \left\lgroup \mathbb{H}, \mathbb{H}, \llbracket \left\lgroup \tilde{\mathbb{H}}, \bar{\mathbb{H}} \right\rgroup \rrbracket_{\mathsf{V}} \right\rgroup\boldsymbol{?}, \qquad \mathbf{H}_W \in \llbracket \mathbb{T} \rrbracket_{\mathsf{E}}\boldsymbol{?}, \qquad \mathbf{H}_O \in \llbracket \bar{\mathbb{H}} \rrbracket \qquad \text{(5.11)}`
 
 $`\tilde{\mathbb{H}}` and $`\bar{\mathbb{H}}` are Bandersnatch and Ed25519 keys (§3.8.2). The model's {api}`JAM.EpochMark` and the option
 types hold them; the lengths $`\mathsf{V}` and $`\mathsf{E}` are fixed by the decoder ({api}`JAM.Header.decode`), not by the types.

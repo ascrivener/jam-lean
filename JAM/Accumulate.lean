@@ -63,7 +63,7 @@ end Implications
 /-- The accumulation context: the regular and exceptional dimensions $(x, y) \in \mathbb{L}^2$. -/
 abbrev AccCtx := Implications × Implications
 
-/-- The fixed part of an accumulate invocation's environment: chain parameters, the timeslot $\mathbf{H}_t$,
+/-- The fixed part of an accumulate invocation's environment: chain parameters, the timeslot $\mathbf{H}_T$,
     the entropy $\eta'_0$, the inputs $\mathbf{i}$ and the service code (for `grow_heap`). -/
 structure AccEnv where
   params : Params
@@ -578,7 +578,7 @@ structure AccOut where
 
 /-- $I(\mathbf{e}, \mathbf{m}, s)$ (GP v0.8.1 eq. `accinvocation`): the initial implications, with
     the modified set $\mathbf{m}$ and the next free id
-    $\text{check}((\mathcal{E}_4^{-1}(\mathcal{H}(\mathcal{E}(s, \eta'_0, \mathbf{H}_t))) \bmod (2^{32} - \mathsf{S} - 2^8)) + \mathsf{S})$. -/
+    $\text{check}((\mathcal{E}_4^{-1}(\mathcal{H}(\mathcal{E}(s, \eta'_0, \mathbf{H}_T))) \bmod (2^{32} - \mathsf{S} - 2^8)) + \mathsf{S})$. -/
 def initImplications (e : PartialState) (s slot : Nat) (entropy : List UInt8)
     (m : Std.ExtTreeSet Nat := ∅) : Implications :=
   let S := Constants.Cminpublicindex

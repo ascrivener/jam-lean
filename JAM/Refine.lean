@@ -298,7 +298,7 @@ structure Env where
   code : ByteArray
   /-- $\varsigma$, the export offset -/
   exportOffset : Nat
-  /-- what `fetch` sees: $p$, $\mathbf{0}$ (32 zero octets), $\mathbf{r}$, $i$, $\bar{\imath}$, $\bar{x}$ -/
+  /-- what `fetch` sees: $p$, $\mathbb{H}_0$ (32 zero octets), $\mathbf{r}$, $i$, $\bar{\imath}$, $\bar{x}$ -/
   fetch : FetchContext
 
 /-- The unknown-host-call case (GP v0.8.1 eqs. `refinemutator`, `isauthorizedmutator`):
@@ -389,8 +389,8 @@ def psiR (params : Params) (d : Accounts) (c i : Nat) (p : WorkPackage) (r : Lis
           | .ok b => ⟨.ok b, e, u⟩
           | o => ⟨o.toWorkResult, [], u⟩
 
-/-- $\mathbf{p}_c \equiv \Lambda(\mathbf{d}[p_h], (p_c)_t, p_u)$, the authorization code, the whole preimage (GP v0.8.1
-    §14.3, GP #582). -/
+/-- $\mathbf{p}_\mathbf{u} \equiv \Lambda(\delta[p_h], (p_c)_t, p_u)$, the authorization code, the whole preimage (GP v0.8.1
+    eq. 14.12, §14.3, GP #582). -/
 def WorkPackage.authCode (d : Accounts) (p : WorkPackage) : Option ByteArray := do
   let a ← d.get? p.authCodeHost
   let l ← a.historicalLookup p.context.lookupAnchorSlot p.authCodeHash.toList

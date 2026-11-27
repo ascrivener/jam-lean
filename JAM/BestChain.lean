@@ -78,7 +78,7 @@ structure BlockInfo (H : Type) where
 
 /-- $\mathbf{T}$ from the posterior slot-sealer sequence $\gamma'_S$ (eqs. `ticketconditiontrue`,
     `ticketconditionfalse`): 1 when $\gamma'_S \in [\![ \mathbb{T} ]\!]$ (tickets), 0 when
-    $\gamma'_S \in [\![ \mathbb{H}_B ]\!]$ (fallback keys). -/
+    $\gamma'_S \in [\![ \overset{\backsim}{\mathbb{H}} ]\!]$ (fallback keys). -/
 def ticketedOf : SealKeys → Bool
   | .tickets _ => true
   | .keys _ => false

@@ -7,9 +7,9 @@ real implementation, or, in the vector tests, an oracle read from each vector's 
 
 Ed25519 verification is used by disputes, assurances and guarantees (§10–§11). Safrole (§6) uses
 the Bandersnatch primitives of Appendix G (`sec:bandersnatch`): the singly-contextualized VRF
-signatures $\bar{\mathbb{B}}_k\langle c \rangle\langle m \rangle$ (under the Thin VRF template
+signatures $\overset{\backsim}{\mathbb{V}}{}_k^{m}\langle c \rangle$ (under the Thin VRF template
 since v0.8.1, GP #550; the IETF VRF in v0.8.0) (header seal and entropy source) and the Ring VRF
-proofs $\bar{\mathbb{B}}^{\circ}_r\langle c \rangle\langle m \rangle$ (tickets), their output
+proofs $\mathring{\mathbb{V}}{}_r^{m}\langle c \rangle$ (tickets), their output
 $\mathcal{Y}$, and the ring root $\mathcal{O}$.
 
 The Bandersnatch fields default to rejecting every signature and proof and to empty outputs, so a
@@ -24,7 +24,7 @@ structure Crypto where
   /-- $s \in \bar{\mathbb{V}}_k\langle m \rangle$ (GP §3.8.2): $s$ is a valid Ed25519 signature on the
       message $m$ under the public key $k$. -/
   edVerify : (key : List UInt8) → (msg : List UInt8) → (sig : List UInt8) → Bool
-  /-- $x \in \bar{\mathbb{B}}_k\langle c \rangle\langle m \rangle$ (GP Appendix G): $x$ is a valid
+  /-- $x \in \overset{\backsim}{\mathbb{V}}{}_k^{m}\langle c \rangle$ (GP Appendix G): $x$ is a valid
       singly-contextualized Bandersnatch VRF signature (Thin VRF, GP v0.8.1 Appendix G) under the
       key $k$ with context $c$ and message $m$. -/
   bsVerify : (key : List UInt8) → (ctx : List UInt8) → (msg : List UInt8) → (sig : List UInt8) → Bool :=
@@ -36,7 +36,7 @@ structure Crypto where
       Bandersnatch keys. A key with no corresponding curve point stands for the padding point; that
       is $\mathcal{O}$'s concern. -/
   bsRingRoot : (keys : List (List UInt8)) → List UInt8 := fun _ => []
-  /-- $x \in \bar{\mathbb{B}}^{\circ}_r\langle c \rangle\langle m \rangle$ (GP Appendix G): $x$ is a
+  /-- $x \in \mathring{\mathbb{V}}{}_r^{m}\langle c \rangle$ (GP Appendix G): $x$ is a
       valid Bandersnatch Ring VRF proof for the ring root $r$ with context $c$ and message $m$. -/
   bsRingVerify : (root : List UInt8) → (ctx : List UInt8) → (msg : List UInt8) → (proof : List UInt8) → Bool :=
     fun _ _ _ _ => false

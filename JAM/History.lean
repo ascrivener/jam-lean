@@ -77,17 +77,17 @@ structure Recent where
 structure HistoryInput where
   /-- $\mathcal{H}(\mathbf{H})$, the header hash. -/
   headerHash : List UInt8
-  /-- $\mathbf{H}_r$, the parent block's state root. -/
+  /-- $\mathbf{H}_R$, the parent block's state root. -/
   parentStateRoot : List UInt8
   /-- $\mathcal{M}_B(\mathbf{s}, \mathcal{H}_K)$: the root of the block's accumulation outputs (GP eq. `accoutbeltdef`;
       `JAM.accumulate` returns it as `AccResult.root`). -/
   accRoot : List UInt8
-  /-- $\mathbf{H}_t$. -/
+  /-- $\mathbf{H}_T$. -/
   slot : Nat
   /-- $(((g_w)_s)_h, ((g_w)_s)_e)$ for each $g \in \mathbf{E}_G$. -/
   reported : List (List UInt8 × List UInt8)
 
-/-- $\beta_H^\dagger$ (GP eq. `correctlaststateroot`): $\beta_H$ with its last entry's state root set to $\mathbf{H}_r$. -/
+/-- $\beta_H^\dagger$ (GP eq. `correctlaststateroot`): $\beta_H$ with its last entry's state root set to $\mathbf{H}_R$. -/
 def Recent.withParentRoot (h : List RecentBlock) (parentStateRoot : List UInt8) : List RecentBlock :=
   match h.getLast? with
   | none => h

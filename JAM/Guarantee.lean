@@ -6,7 +6,7 @@ import JAM.BlockImport
 
 /-!
 # Work-package refinement: the work-report $\Xi$, the bundle $B$ and the availability specifier $A$
-(GP v0.8.1 §14.3, §14.4, §14.4.1, with the bundle checks of §17.1)
+(GP v0.8.1 §14.3, §14.4, §14.4.1, with the bundle checks of §17.2)
 
 From GP v0.8.1 §14 (`work_packages_and_reports.tex`):
 
@@ -22,7 +22,7 @@ From GP v0.8.1 §14 (`work_packages_and_reports.tex`):
   (eq. `transpose`, as GP #583 states it) — `sizedTranspose`, `bundleClub`, `segmentsClub`,
   `availabilitySpec`.
 
-From §17.1 (`auditing.tex`, "Data Fetching"), the checks on a decoded bundle: extrinsics against
+From §17.2 (`auditing.tex`, "Data Fetching"), the checks on a decoded bundle: extrinsics against
 their (hash, length), imported segments against their roots with their justifications, and the
 segment-root dictionary's keys (the second disjunct of $E$ in eq. `computereport`) — `Bundle.decode`,
 `checkBundle`, `verifyBundle`.
@@ -39,9 +39,9 @@ The hash function $H$ is a parameter of the pure parts ($B$'s checks, $A$), as i
 paper's $H$ is Blake2b, and $\Xi$ fixes it to `Blake2b.hash256`, as $\Psi_R$ does.
 
 Main results: `length_segmentsClub` ($|\mathbf{s}^\clubsuit| = v$), `segmentsClub_nil` (no exports: every item of
-$\mathbf{s}^\clubsuit$ is $\mathbf{0}$), `availabilitySpec_segmentRoot` (the segment root is $\mathcal{M}(\mathbf{s})$), `length_exports_itemResult`
+$\mathbf{s}^\clubsuit$ is $\mathbb{H}_0$), `availabilitySpec_segmentRoot` (the segment root is $\mathcal{M}(\mathbf{s})$), `length_exports_itemResult`
 and `refineItems_exports` ($I$ exports exactly $w_e$ segments on every branch),
-`computeReport_noExports` ($\Xi$ succeeds with the $\mathbf{0}$ columns when nothing is exported), and
+`computeReport_noExports` ($\Xi$ succeeds with the $\mathbb{H}_0$ columns when nothing is exported), and
 `checkBundle_packageData` (the checks accept the bundle built from genuine data).
 -/
 
@@ -176,15 +176,15 @@ def bundleOf (H : ByteArray → ByteArray) (src : DataSource) (l : OctetDict) (p
 def sizedTranspose {α : Type} (m : Nat) (d : α) (x : List (List α)) : List (List α) :=
   (List.range m).map fun i => x.map fun row => row.getD i d
 
-/-- $\mathcal{E}_C^k$ for $v$ validators on an octet list (GP v0.8.1 eq. `erasurecoding`; $k$ is read from the
-    length). `[]` if the length is not a multiple of $2 \cdot R(v)$, which $A$ never asks for
+/-- $\mathcal{C}^v_k$ for $v$ validators on an octet list (GP v0.8.1 eq. `erasurecoding`; $k$ is read from the
+    length). `[]` if the length is not a multiple of $2 \cdot \mathcal{D}(v)$, which $A$ never asks for
     (`length_chunks`). -/
 def chunks (v : Nat) (b : Octets) : List Octets :=
   match Erasure.encode v ⟨b.toArray⟩ with
   | some cs => cs.map (·.toList)
   | none => []
 
-/-- $z = 2 \cdot R(v)$ (GP v0.8.1 §14.4.1). -/
+/-- $z = 2 \cdot \mathcal{D}(v)$ (GP v0.8.1 §14.4.1). -/
 def pieceSize (v : Nat) : Nat := 2 * Erasure.originalShards v
 
 /-- $\mathbf{b}^\clubsuit = \mathcal{H}^\#(\mathcal{E}_{C_v}^{\lceil |\mathbf{b}|/z \rceil}(\mathcal{P}_z(\mathbf{b})))$ (GP v0.8.1 §14.4.1): the hash of each of the $v$
@@ -195,7 +195,7 @@ def bundleClub (H : ByteArray → ByteArray) (b : Octets) (v : Nat) : List Octet
 /-- $\mathbf{s}^\clubsuit = \mathcal{M}_B^\#({}^\text{T}_v \mathcal{E}_{C_v}^{\mathsf{W}_G/z\,\#}(\mathbf{s} \frown P(\mathbf{s})))$ (GP v0.8.1 §14.4.1, with ${}^\text{T}_v$ as GP #583
     states it): each exported segment and each paged-proof segment is coded into $v$ chunks; column
     $i$ (chunk $i$ of every segment) is Merklized with $\mathcal{M}_B$. With no exports every column is [] and its
-    root is $\mathcal{M}_B([]) = \mathbf{0}$ (`segmentsClub_nil`, the paper's "if no segments are exported, each item
+    root is $\mathcal{M}_B([]) = \mathbb{H}_0$ (`segmentsClub_nil`, the paper's "if no segments are exported, each item
     of $\mathbf{s}^\clubsuit$ is the zero hash"). -/
 def segmentsClub (H : ByteArray → ByteArray) (s : List Octets) (v : Nat) : List Octets :=
   (sizedTranspose v [] ((s ++ pagedProofs H s).map (chunks v))).map (Merkle.root H)
@@ -221,7 +221,7 @@ structure ItemOut where
   gasUsed : Nat
   exports : List Octets
 
-/-- $[\mathbb{G}_0, \mathbb{G}_0, \dots]_{\cdots w_e}$: $w_e$ zero segments of $\mathsf{W}_G$ octets (GP v0.8.1 eq. `computereport`). -/
+/-- $[\mathbb{J}_0, \mathbb{J}_0, \dots]_{\cdots w_e}$: $w_e$ zero segments of $\mathsf{W}_G$ octets (GP v0.8.1 eq. `computereport`). -/
 def zeroSegments (n : Nat) : List Octets := List.replicate n (List.replicate Constants.Csegmentsize 0)
 
 /-- $I(p, j)$ given $\Psi_R$'s output $(r, \mathbf{e}, u)$ for item $m = p_w[j]$ and $z$, the trace length plus the
@@ -292,7 +292,7 @@ def computeReport (params : Params) (d : Accounts) (p : WorkPackage) (c : Nat) (
              context := p.context, core := c, authorizerHash := p.authorizer H, authGasUsed := g,
              authTrace := t, segmentRootLookup := l, digests }
 
-/-! ## §17.1: checking a bundle -/
+/-! ## §17.2: checking a bundle -/
 
 /-- A bundle decoded into the package and the data of each item. -/
 structure Bundle where
@@ -313,14 +313,14 @@ def Bundle.decode : Decoder Bundle := do
     return (← Decoder.varSeq (Decoder.bytes 32)).map (·.toList)
   return ⟨p, ((xs.zip ss).zip js).map fun ((x, s), j) => ⟨x, s, j⟩⟩
 
-/-- The extrinsics of item $w$ check against $w_x$ (GP v0.8.1 §17.1, "ensuring their hashes are each
+/-- The extrinsics of item $w$ check against $w_x$ (GP v0.8.1 §17.2, "ensuring their hashes are each
     equivalent to those found in the relevant work-item", and $X$ of §14.4): one per reference, each
     with the referenced hash and length. -/
 def checkExtrinsics (H : ByteArray → ByteArray) (w : WorkItem) (xs : List Octets) : Bool :=
   xs.length == w.extrinsics.length &&
     (xs.zip w.extrinsics).all fun (x, h, n) => Segments.hashL H x == h.toList && x.length == n
 
-/-- The imports of item $w$ check against $w_i$ (GP v0.8.1 §17.1, "a justification must follow the
+/-- The imports of item $w$ check against $w_i$ (GP v0.8.1 §17.2, "a justification must follow the
     concatenated segments which allows verification that each segment's hash is included in the
     referencing Merkle root and index of the corresponding work-item"): one segment and one
     justification per reference; each segment is $\mathsf{W}_G$ octets and verifies (`verifySegment`)
@@ -334,7 +334,7 @@ def checkImports (H : ByteArray → ByteArray) (l : OctetDict) (w : WorkItem) (s
         | some root => verifySegment H root n s j
         | none => false
 
-/-- The checks on a decoded bundle against a segment-root dictionary $l$ (GP v0.8.1 §17.1 and
+/-- The checks on a decoded bundle against a segment-root dictionary $l$ (GP v0.8.1 §17.2 and
     eq. `computereport`): $\mathcal{K}(l)$ is the set of imported work-package hashes, there is one data entry
     per item, and each item's extrinsics and imports check. The paper states these checks only in
     prose (upstream candidate v0.8.1-A18). -/
@@ -343,7 +343,7 @@ def checkBundle (H : ByteArray → ByteArray) (l : OctetDict) (b : Bundle) : Boo
     (b.package.items.zip b.items).all fun (w, x) =>
       checkExtrinsics H w x.extrinsics && checkImports H l w x.imports x.justifications
 
-/-- Decode and check a bundle (GP v0.8.1 §17.1: "a failure to decode or verify the bundle implies
+/-- Decode and check a bundle (GP v0.8.1 §17.3: "a failure to decode or verify the bundle implies
     an invalid work-report"). -/
 def verifyBundle (H : ByteArray → ByteArray) (l : OctetDict) (bs : Octets) : Option Bundle :=
   match Decoder.run Bundle.decode ⟨bs.toArray⟩ with
@@ -385,7 +385,7 @@ theorem length_segmentsClub (H : ByteArray → ByteArray) (s : List Octets) (v :
 theorem pagedProofs_nil (H : ByteArray → ByteArray) : pagedProofs H [] = [] := by
   simp [pagedProofs]
 
-/-- With no exports, every item of $\mathbf{s}^\clubsuit$ is the zero hash $\mathbf{0}$ (GP v0.8.1 §14.4.1, "if no segments
+/-- With no exports, every item of $\mathbf{s}^\clubsuit$ is the zero hash $\mathbb{H}_0$ (GP v0.8.1 §14.4.1, "if no segments
     are exported, each item of $\mathbf{s}^\clubsuit$ is the zero hash"; GP #583). -/
 theorem segmentsClub_nil (H : ByteArray → ByteArray) (v : Nat) :
     segmentsClub H [] v = List.replicate v zeroHash := by
@@ -442,11 +442,11 @@ theorem length_flatMap_exports (wR : Nat) (refine : Nat → Nat → RefineOut)
       (items.map (·.exportCount)).sum := by
   rw [List.length_flatMap, ← refineItems_exports wR refine items t]
 
-/-- $\Xi$ succeeds with the $\mathbf{0}$ columns when nothing is exported (GP v0.8.1 eq. `computereport`,
+/-- $\Xi$ succeeds with the $\mathbb{H}_0$ columns when nothing is exported (GP v0.8.1 eq. `computereport`,
     §14.4.1): if $\Psi_I$ gives a trace $t \in \mathbb{B}[:\mathsf{W}_R]$, $l$ has exactly the imported package hashes as keys,
     and every item has $w_e = 0$, then $\Xi$ gives a report whose availability specifier is
     $A(\mathcal{H}(p), B(p, l), [], v)$, so its segment root is $\mathcal{M}([])$ and its segment count 0, and every
-    item of the $\mathbf{s}^\clubsuit$ behind its erasure root is $\mathbf{0}$. -/
+    item of the $\mathbf{s}^\clubsuit$ behind its erasure root is $\mathbb{H}_0$. -/
 theorem computeReport_noExports (params : Params) (d : Accounts) (p : WorkPackage) (c : Nat)
     (l : OctetDict) (v : Nat) (data : List ItemData) (t : ByteArray) (g : Nat)
     (hI : psiI params d p c = (.ok t, g)) (ht : t.size ≤ params.maxReportVarSize)
@@ -560,7 +560,7 @@ theorem importData_check (H : ByteArray → ByteArray) (src : DataSource) (l : O
         refine ⟨⟨by omega, by omega⟩, ?_, ih'.2⟩
         simp [hlen, hroot, hv]
 
-/-- The bundle checks accept the bundle built from genuine data (GP v0.8.1 §14.4, §17.1): if
+/-- The bundle checks accept the bundle built from genuine data (GP v0.8.1 §14.4, §17.2): if
     every item's $(X(w), S_l(w), J_l(w))$ comes from the data source (`packageData`), every
     exported segment it holds is $\mathsf{W}_G$ octets, and $\mathcal{K}(l)$ is the set of imported package hashes, then
     `checkBundle` accepts the package with that data. -/

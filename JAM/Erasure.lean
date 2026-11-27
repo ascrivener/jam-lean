@@ -5,7 +5,7 @@ import JAM.Constants
 # Erasure coding (GP v0.8.1 Appendix H)
 
 Systematic Reed–Solomon over $\mathrm{GF}(2^{16})$, as the paper defines it (§H.3, "The Generator
-Polynomial", as fixed by GP #580): for $v$ validators, $d = R(v)$ message words (eq.
+Polynomial", as fixed by GP #580): for $v$ validators, $d = \mathcal{D}(v)$ message words (eq.
 `ecoriginalshards`), $d' = 2^{\lceil \log_2 d \rceil}$ and $v' = v + d' - d$, the polynomial $p$ of
 degree $< d'$ takes the message words at $\tilde{0}, \ldots, \widetilde{d-1}$ and zero at
 $\tilde{d}, \ldots, \widetilde{d'-1}$. Code words sit at the indices
@@ -25,7 +25,7 @@ $\mathbb{F}_2[x]/(x^{16} + x^5 + x^3 + x^2 + 1)$, where the Cantor basis vectors
 
 $p$ is never built: evaluating it at a point is Lagrange interpolation,
 $\sum_s L_s(x) \cdot p(x_s)$, and the weights $L_s(x)$ depend only on the points (`lagrange`). The
-same routine gives $\mathcal{E}_C$ (from the $d'$ points $\mathbb{N}_{d'}$ to the $v$ code indices)
+same routine gives $\mathcal{C}$ (from the $d'$ points $\mathbb{N}_{d'}$ to the $v$ code indices)
 and $\mathcal{R}$ (from the $d$ known code indices and the $d' - d$ zero points back to the $d$
 message points).
 
@@ -151,7 +151,7 @@ def interpolate (m : Array (Array Nat)) (words : Array Nat) : Array Nat :=
 
 /-! ## The erasure code -/
 
-/-- $R(v) = \max \{ d \in \mathbb{N}_{v/3+2} \mid \mathsf{W}_G \bmod 2d = 0 \}$ (GP eq.
+/-- $\mathcal{D}(v) = \max \{ d \in \mathbb{N}_{v/3+2} \mid \mathsf{W}_G \bmod 2d = 0 \}$ (GP eq.
     `ecoriginalshards`): the number of original shards for $v$ validators, with
     $\mathsf{W}_G = 4104$ the segment size. $d = 0$ is excluded, where "$\mathsf{W}_G \bmod 0$" has
     no meaning. -/
@@ -175,7 +175,7 @@ def paddedShards (d : Nat) : Nat := Id.run do
     $j$ for $j < d$ and $j + (d' - d)$ otherwise. -/
 def codeIndex (d j : Nat) : Nat := if j < d then j else j + (paddedShards d - d)
 
-/-- $\mathcal{E}_C^k$ (GP eq. `erasurecoding`, §H.3) with $d$ message words per piece and the
+/-- $\mathcal{C}^v_k$ (GP eq. `erasurecoding`, §H.3) with $d$ message words per piece and the
     weights `m` from the $d'$ points $\mathbb{N}_{d'}$ to the code indices of the validators: the
     data, of $2k \cdot d$ octets, is split into $d$ chunks of $k$ words; piece $p$ is word $p$ of
     every chunk, followed by $d' - d$ zero words; each piece is coded into one word per validator;
@@ -190,17 +190,17 @@ def encodeWith (d : Nat) (m : Array (Array Nat)) (data : ByteArray) : Option (Li
         if j < d then word data (2 * k * j + 2 * p) else 0)
     some ((List.range m.size).map fun i => ⟨(pieces.flatMap fun c => wordOctets (c.getD i 0)).toArray⟩)
 
-/-- The weights $\mathcal{E}_C$ uses for $v$ validators: from $\mathbb{N}_{d'}$ to
+/-- The weights $\mathcal{C}$ uses for $v$ validators: from $\mathbb{N}_{d'}$ to
     $g(0), \ldots, g(v - 1)$. -/
 def encodeWeights (v : Nat) : Array (Array Nat) :=
   let d := originalShards v
   lagrange (List.range (paddedShards d)) ((List.range v).map (codeIndex d))
 
-/-- $\mathcal{E}_C^k$ for $v$ validators (GP eq. `erasurecoding`). -/
+/-- $\mathcal{C}^v_k$ for $v$ validators (GP eq. `erasurecoding`). -/
 def encode (v : Nat) (data : ByteArray) : Option (List ByteArray) :=
   encodeWith (originalShards v) (encodeWeights v) data
 
-/-- $\mathcal{R}^k$ for $v$ validators (GP eq. `erasurecodinginv`): from $d = R(v)$ chunks of $2k$
+/-- $\mathcal{R}^v_k$ for $v$ validators (GP eq. `erasurecodinginv`): from $d = \mathcal{D}(v)$ chunks of $2k$
     octets with distinct validator indices below $v$, the original $2k \cdot d$ octets. Piece $p$'s
     $d$ words, at the code indices $g(j)$, together with the zeroes at $d, \ldots, d' - 1$, are
     interpolated back to the message points $0 \ldots d-1$ and joined chunk by chunk. When the

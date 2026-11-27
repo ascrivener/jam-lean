@@ -33,7 +33,7 @@ namespace JAM
 abbrev EdKey := List UInt8
 
 /-- $\Phi(\mathbf{k})$ (GP v0.8.1 eq. `blacklistfilter`): the keys of offenders in $\psi'_O$
-    replaced by the null key $\mathbb{K}^{\emptyset}$ (eq. `nullvalkey`). Only the Ed25519 part is
+    replaced by the null key $\mathbb{K}_0$ (eq. `nullvalkey`). Only the Ed25519 part is
     kept here: `nullEdKey` = [2, 0, …]. -/
 def blacklist (offenders : OctetSet) (k : List EdKey) : List EdKey :=
   k.map fun e => if offenders.contains e then nullEdKey else e

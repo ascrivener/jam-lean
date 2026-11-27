@@ -22,9 +22,9 @@ namespace JAM
 
 open Codec
 
-/-- Sizes of the fixed-length terms, in octets (GP §3.8: $\mathbb{H}$, $\mathbb{K}_B$ and
-    $\mathbb{K}_E$ keys, Ed25519 signatures $\bar{\mathbb{V}}$, Bandersnatch signatures
-    $\tilde{\mathbb{V}}$ and ring proofs $\mathring{\mathbb{V}}$). -/
+/-- Sizes of the fixed-length terms, in octets (GP §3.8: $\mathbb{H}$, $\overset{\backsim}{\mathbb{H}}$ and
+    $\bar{\mathbb{H}}$ keys, Ed25519 signatures $\bar{\mathbb{V}}$, Bandersnatch signatures
+    $\overset{\backsim}{\mathbb{V}}$ and ring proofs $\mathring{\mathbb{V}}$). -/
 def hashSize : Nat := 32
 def keySize : Nat := 32
 def edSigSize : Nat := 64
@@ -125,7 +125,7 @@ structure Guarantee where
   credential : List (Nat × Blob)
 
 /-- An assurance in $\mathbf{E}_A$ (GP v0.8.1 eq. `xtassurances`): the availability bit field
-    $f \in \mathbb{b}_{\mathsf{C}}$, the assurer's validator index $v$ and its signature $s$. v0.8.1
+    $f \in \text{𝕓}_{\mathsf{C}}$, the assurer's validator index $v$ and its signature $s$. v0.8.1
     drops v0.8.0's anchor $a$, which had to equal $\mathbf{H}_P$ (GP #562). -/
 structure Assurance where
   bitfield : List Bool

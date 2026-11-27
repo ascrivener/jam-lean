@@ -192,17 +192,27 @@ def powF (a : F) (e : Nat) : F := Id.run do
 /-- `Modular.invMod` (Fermat). -/
 def invF (a : F) : F := powF a (p - 2)
 
-theorem powF_rel {a : F} {x : Nat} (ha : VRel a x) (e : Nat) : VRel (powF a e) (powMod x e p) := by
+theorem powF_rel' {a : F} {x : Nat} (ha : VRel a x) (e : Nat) :
+    VRel (powF a e) (powMod x e p) ∧ powMod x e p < p := by
   unfold powF powMod
   simp only [Id.run, bind, pure]
   refine (forIn_range_rel (fun (s : F × F × Nat) (t : Nat × Nat × Nat) =>
-      VRel s.1 t.1 ∧ VRel s.2.1 t.2.1 ∧ s.2.2 = t.2.2) _ _ _
-    ⟨VRel.mod.mpr VRel.one, VRel.mod.mpr ha, rfl⟩ ?_).1
+      (VRel s.1 t.1 ∧ t.1 < p) ∧ VRel s.2.1 t.2.1 ∧ s.2.2 = t.2.2) _ _ _
+    ⟨⟨VRel.mod.mpr VRel.one, lt_of_mod⟩, VRel.mod.mpr ha, rfl⟩ ?_).1
   rintro _ ⟨r, b, e⟩ ⟨r', b', e'⟩ ⟨hr, hb, rfl⟩
   simp only [Id.run]
   split
-  · exact ⟨VRel.mod.mpr (hr.mul hb), VRel.mod.mpr hb.sq, rfl⟩
+  · exact ⟨⟨VRel.mod.mpr (hr.1.mul hb), lt_of_mod⟩, VRel.mod.mpr hb.sq, rfl⟩
   · exact ⟨hr, VRel.mod.mpr hb.sq, rfl⟩
+
+theorem powF_rel {a : F} {x : Nat} (ha : VRel a x) (e : Nat) : VRel (powF a e) (powMod x e p) := by
+  unfold powF powMod
+  simp only [Id.run, bind, pure]
+  exact (powF_rel' ha e).1
+
+theorem powMod_lt (x e : Nat) : powMod x e p < p := by
+  have := powF_rel' (VRel.ofNat x : VRel (Field.ofNat x : F) x) e
+  exact this.2
 
 theorem invF_rel {a : F} {x : Nat} (ha : VRel a x) : VRel (invF a) (invMod x p) :=
   powF_rel ha (p - 2)
@@ -222,6 +232,107 @@ theorem toAffine_eq {E : Curve} (hp : E.p = p) {P : Pt F} {P' : Point} (hP : PRe
   have hz := invF_rel hP.2.2.1
   simp only [hp]
   rw [(hP.1.mul hz).toNat, (hP.2.1.mul hz).toNat]
+
+theorem VRel.beq_lt {a b : F} {x y : Nat} (ha : VRel a x) (hb : VRel b y) (hx : x < p) (hy : y < p) :
+    Field.beq a b = (x == y) := by
+  rw [ha.beq hb, Nat.mod_eq_of_lt hx, Nat.mod_eq_of_lt hy]
+
+theorem one_lt : (1 : Nat) < p := LawfulField.one_lt_p
+
+/-- `Modular.isSquare` (Euler's criterion). -/
+def isSquareF (a : F) : Bool := Field.beq (powF a ((p - 1) / 2)) Field.one
+
+theorem isSquareF_eq {a : F} {x : Nat} (ha : VRel a x) (hx : x < p) : isSquareF a = isSquare x p := by
+  unfold isSquareF isSquare
+  have h := powF_rel' ha ((p - 1) / 2)
+  rw [h.1.beq_lt VRel.one h.2 one_lt]
+
+/-- `Modular.sqrtTS p s t z n`, step for step (n given as an element; the reference reduces n). -/
+def sqrtF (s t : Nat) (z n : F) : Option F := Id.run do
+  if Field.isZero n then return some Field.zero
+  if !isSquareF n then return none
+  let mut m := s
+  let mut c := powF z t
+  let mut u := powF n t
+  let mut r := powF n ((t + 1) / 2)
+  for _ in [0:s] do
+    if Field.beq u Field.one then break
+    let mut i := 0
+    let mut u2 := u
+    for _ in [0:m] do
+      if Field.beq u2 Field.one then break
+      u2 := Field.mul u2 u2
+      i := i + 1
+    let b := powF c (2 ^ (m - i - 1))
+    m := i
+    c := Field.mul b b
+    u := Field.mul u c
+    r := Field.mul r b
+  if Field.beq (Field.mul r r) n then return some r else return none
+
+/-- An optional element stands for an optional reduced number. -/
+def ORel : Option F → Option Nat → Prop
+  | none, none => True
+  | some a, some x => VRel a x ∧ x < p
+  | _, _ => False
+
+/-- The outer loop states of `sqrtF` and `sqrtTS` agree: m equal, c, u, r related and reduced. -/
+def SOut (a : Nat × F × F × F) (b : Nat × Nat × Nat × Nat) : Prop :=
+  a.1 = b.1 ∧ (VRel a.2.1 b.2.1 ∧ b.2.1 < p) ∧ (VRel a.2.2.1 b.2.2.1 ∧ b.2.2.1 < p) ∧
+    (VRel a.2.2.2 b.2.2.2 ∧ b.2.2.2 < p)
+
+theorem sqrt_fin {n : F} {n0 : Nat} (hn : VRel n n0) (hn0 : n0 < p) (X : Nat × F × F × F)
+    (Y : Nat × Nat × Nat × Nat) (h : SOut X Y) :
+    ORel (if Field.beq (Field.mul X.2.2.2 X.2.2.2) n = true then some X.2.2.2 else none)
+      (if (Y.2.2.2 * Y.2.2.2 % p == n0) = true then some Y.2.2.2 else none) := by
+  have hr := h.2.2.2
+  rw [(VRel.mod.mpr (hr.1.mul hr.1)).beq_lt hn lt_of_mod hn0]
+  split
+  · exact hr
+  · trivial
+
+/-- The inner loop states agree: i equal, u2 related and reduced. -/
+def SIn (a : Nat × F) (b : Nat × Nat) : Prop := a.1 = b.1 ∧ VRel a.2 b.2 ∧ b.2 < p
+
+theorem sqrt_step {m : Nat} {c u r : F} {c' u' r' : Nat} (hc : VRel c c' ∧ c' < p)
+    (hu : VRel u u' ∧ u' < p) (hr : VRel r r' ∧ r' < p) (I : Nat × F) (J : Nat × Nat) (h : SIn I J) :
+    SOut (I.1, Field.mul (powF c (2 ^ (m - I.1 - 1))) (powF c (2 ^ (m - I.1 - 1))),
+        Field.mul u (Field.mul (powF c (2 ^ (m - I.1 - 1))) (powF c (2 ^ (m - I.1 - 1)))),
+        Field.mul r (powF c (2 ^ (m - I.1 - 1))))
+      (J.1, powMod c' (2 ^ (m - J.1 - 1)) p * powMod c' (2 ^ (m - J.1 - 1)) p % p,
+        u' * (powMod c' (2 ^ (m - J.1 - 1)) p * powMod c' (2 ^ (m - J.1 - 1)) p % p) % p,
+        r' * powMod c' (2 ^ (m - J.1 - 1)) p % p) := by
+  rw [h.1]
+  have hb := (powF_rel' hc.1 (2 ^ (m - J.1 - 1))).1
+  have hbb := VRel.mod.mpr (hb.mul hb)
+  exact ⟨rfl, ⟨hbb, lt_of_mod⟩, ⟨VRel.mod.mpr (hu.1.mul hbb), lt_of_mod⟩,
+    ⟨VRel.mod.mpr (hr.1.mul hb), lt_of_mod⟩⟩
+
+theorem sqrtF_rel {s t : Nat} {z n : F} {z' n' : Nat} (hz : VRel z z') (hn : VRel n n') :
+    ORel (sqrtF s t z n) (sqrtTS p s t z' n') := by
+  have hn0 : VRel n (n' % p) := VRel.mod.mpr hn
+  unfold sqrtF sqrtTS
+  simp only [Id.run, bind, pure]
+  rw [hn.isZero, isSquareF_eq hn0 lt_of_mod]
+  split
+  · exact ⟨VRel.zero, Nat.lt_trans Nat.zero_lt_one one_lt⟩
+  split
+  · trivial
+  have hn1 : n' % p < p := lt_of_mod
+  refine sqrt_fin hn0 hn1 _ _ (forIn_range_rel SOut _ _ _
+    ⟨rfl, powF_rel' hz t, powF_rel' hn0 t, powF_rel' hn0 ((t + 1) / 2)⟩ ?_)
+  rintro _ ⟨m, c, u, r⟩ ⟨m', c', u', r'⟩ ⟨rfl, hc, hu, hr⟩
+  simp only [Id.run]
+  rw [hu.1.beq_lt VRel.one hu.2 one_lt]
+  split
+  · exact ⟨rfl, hc, hu, hr⟩
+  · refine sqrt_step hc hu hr _ _ (forIn_range_rel SIn _ _ _ ⟨rfl, hu⟩ ?_)
+    rintro _ ⟨i, w⟩ ⟨i', w'⟩ ⟨rfl, hw⟩
+    simp only [Id.run]
+    rw [hw.1.beq_lt VRel.one hw.2 one_lt]
+    split
+    · exact ⟨rfl, hw⟩
+    · exact ⟨rfl, VRel.mod.mpr (hw.1.mul hw.1), lt_of_mod⟩
 
 theorem neg_rel {E : Curve} (hp : E.p = p) {P : Pt F} {P' : Point} (hP : PRel P P') :
     PRel (CurveF.neg P) (E.neg P') := by

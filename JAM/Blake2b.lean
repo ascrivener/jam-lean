@@ -1,5 +1,5 @@
 /-!
-# Blake2b (RFC 7693), as used by the Gray Paper's ℋ (GP v0.8.1 §3.8: ℋ is Blake2b-256)
+# Blake2b (RFC 7693), as used by the Gray Paper's $\mathcal{H}$ (GP v0.8.1 §3.8: $\mathcal{H}$ is Blake2b-256)
 
 Unkeyed Blake2b with a configurable digest length, in pure Lean: total, no `extern` code, so it
 can be evaluated by the kernel.
@@ -13,7 +13,7 @@ def iv : Vector UInt64 8 := #v[
   0x6a09e667f3bcc908, 0xbb67ae8584caa73b, 0x3c6ef372fe94f82b, 0xa54ff53a5f1d36f1,
   0x510e527fade682d1, 0x9b05688c2b3e6c1f, 0x1f83d9abfb41bd6b, 0x5be0cd19137e2179]
 
-/-- The message schedule σ (RFC 7693 §2.7); rounds 10 and 11 reuse rows 0 and 1. Each row is a
+/-- The message schedule $\sigma$ (RFC 7693 §2.7); rounds 10 and 11 reuse rows 0 and 1. Each row is a
     permutation of the sixteen message-word indices. -/
 def sigma : Vector (Vector (Fin 16) 16) 10 := #v[
   #v[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
@@ -30,7 +30,7 @@ def sigma : Vector (Vector (Fin 16) 16) 10 := #v[
 /-- Rotate right. -/
 @[inline] def rotr (x : UInt64) (n : UInt64) : UInt64 := (x >>> n) ||| (x <<< (64 - n))
 
-/-- The mixing function G (RFC 7693 §3.1) on the working vector v₀ … v₁₅. -/
+/-- The mixing function $G$ (RFC 7693 §3.1) on the working vector $v_0 \dots v_{15}$. -/
 def mix (v : Vector UInt64 16) (a b c d : Fin 16) (x y : UInt64) : Vector UInt64 16 := Id.run do
   let mut v := v
   v := v.set a (v[a] + v[b] + x)
@@ -48,7 +48,7 @@ def words (block : List UInt8) : Vector UInt64 16 :=
   Vector.ofFn fun i =>
     (List.range 8).foldr (fun k acc => (acc <<< 8) ||| (block.getD (8 * i + k) 0).toUInt64) 0
 
-/-- The compression function F (RFC 7693 §3.2), with byte counter `t` and final-block flag `last`. -/
+/-- The compression function $F$ (RFC 7693 §3.2), with byte counter `t` and final-block flag `last`. -/
 def compress (h : Vector UInt64 8) (block : List UInt8) (t : Nat) (last : Bool) : Vector UInt64 8 := Id.run do
   let m := words block
   let mut v := h ++ iv
@@ -76,8 +76,8 @@ def blocks (h : Vector UInt64 8) (msg : ByteArray) : Vector UInt64 8 :=
   let h := (List.range (nb - 1)).foldl (fun h k => compress h (block k) (128 * (k + 1)) false) h
   compress h (block (nb - 1)) len true
 
-/-- Blake2b with an `n`-octet digest (1 ≤ n ≤ 64), unkeyed (RFC 7693 §3.3). The digest octets are
-    read from the eight-word state with `getD`, whose default is never used for n ≤ 64
+/-- Blake2b with an `n`-octet digest ($1 \le n \le 64$), unkeyed (RFC 7693 §3.3). The digest octets
+    are read from the eight-word state with `getD`, whose default is never used for $n \le 64$
     (`hash_getD_unused`). -/
 def hash (n : Nat) (msg : ByteArray) : ByteArray :=
   let h := iv.set 0 (iv[0] ^^^ 0x01010000 ^^^ UInt64.ofNat n)
@@ -87,7 +87,7 @@ def hash (n : Nat) (msg : ByteArray) : ByteArray :=
 
 theorem hash_getD_unused (n k : Nat) (hn : n ≤ 64) (hk : k < n) : k / 8 < 8 := by omega
 
-/-- ℋ: Blake2b-256 (GP §3.8). -/
+/-- $\mathcal{H}$: Blake2b-256 (GP §3.8). -/
 def hash256 (msg : ByteArray) : ByteArray := hash 32 msg
 
 end JAM.Blake2b

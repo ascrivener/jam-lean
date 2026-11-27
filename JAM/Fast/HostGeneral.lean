@@ -14,12 +14,13 @@ open PVM
 
 /-! ### Fast compiled form of `growHeapCore`
 
-`growHeapCore` counts the W pages by looking up every page index in ℕ_{a…b}, up to about 10^6 map
-lookups per `grow_heap`. `growHeapCoreFast` counts them from the page map's own entries instead.
-They are proved equal and registered with `@[csimp]`, so compiled code uses the fast form while the
-kernel and every theorem see `growHeapCore`. -/
+`growHeapCore` counts the W pages by looking up every page index in $\mathbb{N}_{a \dots b}$, up to
+about $10^6$ map lookups per `grow_heap`. `growHeapCoreFast` counts them from the page map's own
+entries instead. They are proved equal and registered with `@[csimp]`, so compiled code uses the
+fast form while the kernel and every theorem see `growHeapCore`. -/
 
-/-- The number of pages in ℕ_{a…b} that `pages` marks W, counted from the map's own entries. -/
+/-- The number of pages in $\mathbb{N}_{a \dots b}$ that `pages` marks W, counted from the map's own
+    entries. -/
 def countWritable (pages : Std.ExtTreeMap Nat Access) (a b : Nat) : Nat :=
   pages.foldl (fun n k v => if a ≤ k ∧ k < b ∧ v = .write then n + 1 else n) 0
 
@@ -73,7 +74,7 @@ def growHeapCoreFast (ω : Regs) (μ : Memory) (jam : ByteArray) : Nat × Nat ×
   funext ω μ jam
   simp only [growHeapCore, growHeapCoreFast, countWritable_eq]
 
-/-- Ω_♊ (`hostGrowHeap`), restated so that its compiled code uses `growHeapCoreFast`. -/
+/-- $\Omega_{\text{♊}}$ (`hostGrowHeap`), restated so that its compiled code uses `growHeapCoreFast`. -/
 def hostGrowHeapFast {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (jam : ByteArray) (x : X) :
     HostOut X :=
   let (a, b, h, w) := growHeapCore ω μ jam

@@ -6,35 +6,37 @@ import JAM.Safrole
 Facts about `JAM.safrole` and its parts, stated against the definitions in `JAM/Safrole.lean`
 without changing them.
 
-* **The outside-in sequencer Z** (§6.5, `outsideIn`) is a permutation of its input
+* **The outside-in sequencer $Z$** (§6.5, `outsideIn`) is a permutation of its input
   (`outsideIn_perm`), so it keeps length (`length_outsideIn`).
 * **The order on identifiers** (`octetLt`) is a strict total order (`octetLt_irrefl`,
   `octetLt_trans`, `octetLt_trichotomy`), and `strictlyOrdered` is the pairwise form of it
   (`strictlyOrdered_iff`).
-* **The ticket accumulator γ_A'** (§6.7, eqs. (6.5), (6.36)): after a successful transition
-  it has at most 𝖤 tickets (`safrole_accumulator_length`); if the prior γ_A has unique identifiers
-  (which γ_A' then has again, so this is an invariant), γ_A' is strictly sorted by identifier and
-  its identifiers are unique (`safrole_accumulator_sorted`).
-* **The seal-key sequence γ_S'** (eq. `slotkeysequence`): on an epoch change it has exactly 𝖤
-  entries in both the ticket and the fallback case, and a γ_S of 𝖤 entries stays one
-  (`safrole_sealKeys_length`).
-* **The entry-index bound n** (eq. `ticketsextrinsic`, `maxAttempts`) is ⌈2𝖤/|γ_P'|⌉ when
-  γ_P' is non-empty (`maxAttempts_spec`). In the paper every validator sequence has a length in
-  𝕍 = {3c | c ∈ ℕ_{2…𝖢+1}}, "a multiple of 3 between 6 and 3𝖢" (eqs. `validatorkeys`, `valcount`),
-  so |γ_P'| ≥ 6 and the case |γ_P'| = 0 does not arise; the model's lists carry no length, and
-  there n = 0 (Lean's x / 0 = 0), so a successful transition with an empty γ_P' admits no tickets
+* **The ticket accumulator $\gamma'_A$** (§6.7, eqs. (6.5), (6.36)): after a successful transition
+  it has at most $\mathsf{E}$ tickets (`safrole_accumulator_length`); if the prior $\gamma_A$ has
+  unique identifiers (which $\gamma'_A$ then has again, so this is an invariant), $\gamma'_A$ is
+  strictly sorted by identifier and its identifiers are unique (`safrole_accumulator_sorted`).
+* **The seal-key sequence $\gamma'_S$** (eq. `slotkeysequence`): on an epoch change it has exactly
+  $\mathsf{E}$ entries in both the ticket and the fallback case, and a $\gamma_S$ of $\mathsf{E}$
+  entries stays one (`safrole_sealKeys_length`).
+* **The entry-index bound $n$** (eq. `ticketsextrinsic`, `maxAttempts`) is
+  $\lceil 2\mathsf{E}/|\gamma'_P| \rceil$ when $\gamma'_P$ is non-empty (`maxAttempts_spec`). In
+  the paper every validator sequence has a length in
+  $\mathbb{V} = \{3c \mid c \in \mathbb{N}_{2 \dots \mathsf{C}+1}\}$, "a multiple of 3 between 6
+  and $3\mathsf{C}$" (eqs. `validatorkeys`, `valcount`), so $|\gamma'_P| \ge 6$ and the case
+  $|\gamma'_P| = 0$ does not arise; the model's lists carry no length, and there $n = 0$ (Lean's
+  $x / 0 = 0$), so a successful transition with an empty $\gamma'_P$ admits no tickets
   (`safrole_tickets_nil_of_pending_nil`).
-* **η', τ' and the validator sets**: η' has four entries (and four 32-octet hashes if η had),
-  τ' = H_T > τ, ι is unchanged, and on an epoch change κ' = γ_P, λ' = κ (`safrole_shape`,
-  `safrole_eta_wf`).
+* **$\eta'$, $\tau'$ and the validator sets**: $\eta'$ has four entries (and four 32-octet hashes if
+  $\eta$ had), $\tau' = \mathbf{H}_T > \tau$, $\iota$ is unchanged, and on an epoch change
+  $\kappa' = \gamma_P$, $\lambda' = \kappa$ (`safrole_shape`, `safrole_eta_wf`).
 -/
 
 namespace JAM
 
-/-! ## The outside-in sequencer Z -/
+/-! ## The outside-in sequencer $Z$ -/
 
-/-- The index Z reads at position i of a sequence of length n: i/2 at even i, n − 1 − ⌊i/2⌋ at
-    odd i. -/
+/-- The index $Z$ reads at position $i$ of a sequence of length $n$: $i/2$ at even $i$,
+    $n - 1 - \lfloor i/2 \rfloor$ at odd $i$. -/
 def outsideInIdx (n i : Nat) : Nat := if i % 2 = 0 then i / 2 else n - 1 - i / 2
 
 theorem outsideInIdx_lt {n i : Nat} (h : i < n) : outsideInIdx n i < n := by
@@ -60,7 +62,7 @@ private theorem nodup_map_of_inj {α β : Type} {f : α → β} {l : List α} (h
     rintro ⟨y, hy, hxy⟩
     exact hl.1 (hf y (by simp [hy]) x (by simp) hxy ▸ hy)
 
-/-- The indices Z reads are a permutation of ℕ_n. -/
+/-- The indices $Z$ reads are a permutation of $\mathbb{N}_n$. -/
 theorem range_map_outsideInIdx_perm (n : Nat) :
     ((List.range n).map (outsideInIdx n)).Perm (List.range n) := by
   rw [List.perm_ext_iff_of_nodup
@@ -84,7 +86,7 @@ private theorem filterMap_getElem?_range {α : Type} (s : List α) :
     (List.range s.length).filterMap (fun j => s[j]?) = s := by
   rw [List.range_eq_range', filterMap_getElem?_range' s _ 0 (by omega), List.drop_zero]
 
-/-- Z reads s at the indices `outsideInIdx`. -/
+/-- $Z$ reads $s$ at the indices `outsideInIdx`. -/
 theorem outsideIn_eq {α : Type} (s : List α) :
     outsideIn s =
       ((List.range s.length).map (outsideInIdx s.length)).filterMap (fun j => s[j]?) := by
@@ -207,11 +209,12 @@ private theorem forIn_guard_ok {α ε : Type} {l : List α} {p : α → Prop} [D
       · exact hp
       · exact ih h t ht
 
-/-- **n**, the tickets of E_T with their identifiers (GP §6.7), as `safrole` computes them. -/
+/-- $\mathbf{n}$, the tickets of $\mathbf{E}_T$ with their identifiers (GP §6.7), as `safrole`
+    computes them. -/
 def newTickets (c : Crypto) (i : SafroleInput) : List Ticket :=
   i.tickets.map fun t => ({ id := ⟨(c.bsRingOut t.proof.toList).toArray⟩, attempt := t.attempt } : Ticket)
 
-/-- The epoch changes: e' > e. -/
+/-- The epoch changes: $e' > e$. -/
 abbrev epochChange (params : Params) (s : SafroleState) (i : SafroleInput) : Prop :=
   i.slot / params.epochLen > s.tau / params.epochLen
 
@@ -266,7 +269,7 @@ theorem safrole_ok {params : Params} {c : Crypto} {s s' : SafroleState} {i : Saf
   all_goals (try (split <;> rfl))
   all_goals by_cases hc : epochChange params s i <;> simp [hc]
 
-/-! ## The ticket accumulator γ_A' -/
+/-! ## The ticket accumulator $\gamma'_A$ -/
 
 /-- $\gamma'_A$ has at most $\mathsf{E}$ tickets (GP eq. (6.5), `ticketaccumulatorsealticketsspec`:
     $\gamma_A \in [\![ T ]\!]_{:\mathsf{E}}$; $\gamma'_A$ keeps the $\mathsf{E}$ lowest of the merge, eq. (6.36)). -/
@@ -334,15 +337,15 @@ theorem safrole_accumulator_sorted {params : Params} {c : Crypto} {s s' : Safrol
   have hP := hM.sublist hsub
   exact ⟨(strictlyOrdered_iff _).2 hP, nodup_ids_of_pairwise hP⟩
 
-/-- A strictly ordered γ_A has unique identifiers, so strict order alone is invariant. -/
+/-- A strictly ordered $\gamma_A$ has unique identifiers, so strict order alone is invariant. -/
 theorem safrole_accumulator_strictlyOrdered {params : Params} {c : Crypto} {s s' : SafroleState}
     {i : SafroleInput} {o : SafroleOutput} (h : safrole params c s i = .ok (s', o))
     (hprior : strictlyOrdered s.accumulator = true) : strictlyOrdered s'.accumulator = true :=
   (safrole_accumulator_sorted h (nodup_ids_of_pairwise ((strictlyOrdered_iff _).1 hprior))).1
 
-/-! ## The seal-key sequence γ_S' -/
+/-! ## The seal-key sequence $\gamma'_S$ -/
 
-/-- |γ_S|: the number of tickets or keys. -/
+/-- $|\gamma_S|$: the number of tickets or keys. -/
 def SealKeys.length : SealKeys → Nat
   | .tickets t => t.length
   | .keys k => k.length
@@ -384,7 +387,7 @@ theorem safrole_ticketsMark_length {params : Params} {c : Crypto} {s s' : Safrol
   · next hc => cases hw; exact ⟨by simp [hc.2.2.2], outsideIn_perm _⟩
   · cases hw
 
-/-! ## The entry-index bound n -/
+/-! ## The entry-index bound $n$ -/
 
 @[simp] theorem maxAttempts_nil (params : Params) : maxAttempts params [] = 0 := by
   simp [maxAttempts]
@@ -408,8 +411,9 @@ theorem maxAttempts_spec (params : Params) {p : List ValidatorKey} (hp : 0 < p.l
   rw [Nat.succ_mul] at this
   omega
 
-/-- In the paper |γ_P'| is a multiple of 3 between 6 and 3𝖢 (eqs. `validatorkeys`, `valcount`), so
-    never 0. The model's γ_P' is a list of any length; when it is empty n = 0, and a successful transition then admits no tickets. -/
+/-- In the paper $|\gamma'_P|$ is a multiple of 3 between 6 and $3\mathsf{C}$ (eqs. `validatorkeys`,
+    `valcount`), so never 0. The model's $\gamma'_P$ is a list of any length; when it is empty
+    $n = 0$, and a successful transition then admits no tickets. -/
 theorem safrole_tickets_nil_of_pending_nil {params : Params} {c : Crypto} {s s' : SafroleState}
     {i : SafroleInput} {o : SafroleOutput} (h : safrole params c s i = .ok (s', o))
     (hp : s'.pending = []) : i.tickets = [] := by
@@ -419,13 +423,13 @@ theorem safrole_tickets_nil_of_pending_nil {params : Params} {c : Crypto} {s s' 
   | nil => rfl
   | cons t _ => exact absurd (hatt t (by simp [ht])) (Nat.not_lt_zero _)
 
-/-- Every ticket of a successful E_T has an entry index below n. -/
+/-- Every ticket of a successful $\mathbf{E}_T$ has an entry index below $n$. -/
 theorem safrole_attempt_lt {params : Params} {c : Crypto} {s s' : SafroleState}
     {i : SafroleInput} {o : SafroleOutput} (h : safrole params c s i = .ok (s', o)) :
     ∀ t ∈ i.tickets, t.attempt < maxAttempts params s'.pending :=
   (safrole_ok h).2.1
 
-/-- n ≤ 256 whenever 2𝖤 ≤ 256⋅|γ_P'|. -/
+/-- $n \le 256$ whenever $2\mathsf{E} \le 256 \cdot |\gamma'_P|$. -/
 theorem maxAttempts_le_256 (params : Params) {p : List ValidatorKey} (hp : 0 < p.length)
     (h : 2 * params.epochLen ≤ 256 * p.length) : maxAttempts params p ≤ 256 :=
   (maxAttempts_spec params hp).2 256 h
@@ -452,7 +456,7 @@ theorem attempt_fits_of_six (params : Params) {p : List ValidatorKey} (h6 : 6 �
     (hE : params.epochLen ≤ 768) : 2 * params.epochLen ≤ 256 * p.length := by
   omega
 
-/-! ## η', τ' and the validator sets -/
+/-! ## $\eta'$, $\tau'$ and the validator sets -/
 
 private theorem byteArray_toList_eq_data (bs : ByteArray) : bs.toList = bs.data.toList := by
   suffices h : ∀ i r, ByteArray.toList.loop bs i r = r.reverse ++ bs.data.toList.drop i by
@@ -473,13 +477,14 @@ private theorem byteArray_toList_eq_data (bs : ByteArray) : bs.toList = bs.data.
     have : bs.data.toList.length ≤ i := by rw [Array.length_toList]; exact Nat.le_of_not_lt h
     simp [List.drop_eq_nil_of_le this]
 
-/-- ℋ yields 32 octets. -/
+/-- $\mathcal{H}$ yields 32 octets. -/
 @[simp] theorem length_blake (m : List UInt8) : (blake m).length = 32 := by
   simp [blake, Blake2b.hash256, Blake2b.hash, byteArray_toList_eq_data]
 
-/-- The shape of the posterior: τ' = H_T > τ; η' has four entries, η_0' = ℋ(η_0 ⌢ Y(H_V)) of 32
-    octets; ι' = ι; and on an epoch change κ' = γ_P, λ' = κ and γ_P' = Φ(ι), otherwise all three are
-    unchanged (GP §5 eq. `timeslotindex`, §6.3, §6.4). -/
+/-- The shape of the posterior: $\tau' = \mathbf{H}_T > \tau$; $\eta'$ has four entries,
+    $\eta'_0 = \mathcal{H}(\eta_0 \frown \mathcal{Y}(\mathbf{H}_V))$ of 32 octets; $\iota' = \iota$;
+    and on an epoch change $\kappa' = \gamma_P$, $\lambda' = \kappa$ and $\gamma'_P = \Phi(\iota)$,
+    otherwise all three are unchanged (GP §5 eq. `timeslotindex`, §6.3, §6.4). -/
 theorem safrole_shape {params : Params} {c : Crypto} {s s' : SafroleState}
     {i : SafroleInput} {o : SafroleOutput} (h : safrole params c s i = .ok (s', o)) :
     s.tau < s'.tau ∧ s'.tau = i.slot ∧ s'.eta.length = 4 ∧
@@ -493,8 +498,8 @@ theorem safrole_shape {params : Params} {c : Crypto} {s s' : SafroleState}
   · simp [hact, hprev, hpend, hc]
   · simp [hact, hprev, hpend, hc]
 
-/-- If η is four 32-octet hashes, so is η' (η ∈ ⟦ℍ⟧_4, GP eq. `entropycomposition`); then no
-    `getD` in the transition falls back to its default. -/
+/-- If $\eta$ is four 32-octet hashes, so is $\eta'$ ($\eta \in [\![ \mathbb{H} ]\!]_4$, GP eq.
+    `entropycomposition`); then no `getD` in the transition falls back to its default. -/
 theorem safrole_eta_wf {params : Params} {c : Crypto} {s s' : SafroleState}
     {i : SafroleInput} {o : SafroleOutput} (h : safrole params c s i = .ok (s', o))
     (hlen : s.eta.length = 4) (hhash : ∀ x ∈ s.eta, x.length = 32) :
@@ -513,13 +518,15 @@ theorem safrole_eta_wf {params : Params} {c : Crypto} {s s' : SafroleState}
 
 /-! ## Typed views
 
-The model keeps the public representation: a validator key is `List UInt8` and η is
-`List (List UInt8)`, read with `getD`. These views give the paper's types, 𝕂 = 𝔹_336 split into
-its components (GP §6.3: k_b = k_{0⋅⋅⋅+32}, k_e = k_{32⋅⋅⋅+32}, k_l = k_{64⋅⋅⋅+144},
-k_m = k_{208⋅⋅⋅+128}) and η ∈ ⟦ℍ⟧_4 with ℍ = 𝔹_32, with conversions that are inverse to each other
-on well-formed values, and show that the transition keeps values well-formed. -/
+The model keeps the public representation: a validator key is `List UInt8` and $\eta$ is
+`List (List UInt8)`, read with `getD`. These views give the paper's types,
+$\mathbb{K} = \mathbb{B}_{336}$ split into its components (GP §6.3: $k_b = k_{0 \cdots +32}$,
+$k_e = k_{32 \cdots +32}$, $k_l = k_{64 \cdots +144}$, $k_m = k_{208 \cdots +128}$) and
+$\eta \in [\![ \mathbb{H} ]\!]_4$ with $\mathbb{H} = \mathbb{B}_{32}$, with conversions that are
+inverse to each other on well-formed values, and show that the transition keeps values
+well-formed. -/
 
-/-- A validator key in components: Bandersnatch k_b, Ed25519 k_e, BLS k_l, metadata k_m. -/
+/-- A validator key in components: Bandersnatch $k_b$, Ed25519 $k_e$, BLS $k_l$, metadata $k_m$. -/
 structure ValidatorKey.View where
   bs : Vector UInt8 32
   ed : Vector UInt8 32
@@ -528,7 +535,7 @@ structure ValidatorKey.View where
 
 namespace ValidatorKey
 
-/-- The octets of a structured key, k = k_b ⌢ k_e ⌢ k_l ⌢ k_m. -/
+/-- The octets of a structured key, $k = k_b \frown k_e \frown k_l \frown k_m$. -/
 def ofView (v : View) : ValidatorKey := v.bs.toList ++ v.ed.toList ++ v.bls.toList ++ v.metadata.toList
 
 private def slice (k : List UInt8) (o n : Nat) (h : o + n ≤ k.length) : Vector UInt8 n :=
@@ -576,7 +583,7 @@ theorem toView_ofView (v : View) : toView (ofView v) (length_ofView v) = v := by
   · rw [show 208 = (b.toList ++ e.toList ++ l.toList).length by simp, ← List.append_assoc,
       ← List.append_assoc, List.drop_left, List.take_of_length_le (by simp)]
 
-/-- 𝕂^∅ is well-formed. -/
+/-- $\mathbb{K}^{\emptyset}$ is well-formed. -/
 @[simp] theorem length_null : null.length = 336 := by
   show nullValidatorKey.length = 336
   simp only [nullValidatorKey, List.length_append, List.length_replicate, keySize, nullEdKey,
@@ -584,7 +591,7 @@ theorem toView_ofView (v : View) : toView (ofView v) (length_ofView v) = v := by
 
 end ValidatorKey
 
-/-- Φ keeps keys well-formed. -/
+/-- $\Phi$ keeps keys well-formed. -/
 theorem offendersFilter_wf (offenders : List (List UInt8)) {k : List ValidatorKey}
     (h : ∀ v ∈ k, v.length = 336) : ∀ v ∈ offendersFilter offenders k, v.length = 336 := by
   intro v hv
@@ -594,19 +601,20 @@ theorem offendersFilter_wf (offenders : List (List UInt8)) {k : List ValidatorKe
   · exact ValidatorKey.length_null
   · exact h w hw
 
-/-- η as four 32-octet hashes, for an η of that shape. -/
+/-- $\eta$ as four 32-octet hashes, for an $\eta$ of that shape. -/
 def etaView (eta : List (List UInt8)) (hlen : eta.length = 4) (hhash : ∀ x ∈ eta, x.length = 32) :
     Fin 4 → Vector UInt8 32 :=
   fun k => ⟨(eta[k.val]'(by omega)).toArray, by simp [hhash _ (List.getElem_mem _)]⟩
 
-/-- On a well-formed η, `getD k []` (as the transition reads η) is the view's k-th hash. -/
+/-- On a well-formed $\eta$, `getD k []` (as the transition reads $\eta$) is the view's $k$-th
+    hash. -/
 theorem getD_eq_etaView (eta : List (List UInt8)) (hlen : eta.length = 4)
     (hhash : ∀ x ∈ eta, x.length = 32) (k : Fin 4) :
     eta.getD k.val [] = (etaView eta hlen hhash k).toList := by
   simp [etaView, List.getD_eq_getElem?_getD, List.getElem?_eq_getElem (show k.val < eta.length by omega)]
 
-/-- Well-formed Safrole state: η is four 32-octet hashes and every key of ι, γ_P, κ, λ is 336
-    octets (GP eqs. `entropycomposition`, `validatorkeys`). -/
+/-- Well-formed Safrole state: $\eta$ is four 32-octet hashes and every key of $\iota$, $\gamma_P$,
+    $\kappa$, $\lambda$ is 336 octets (GP eqs. `entropycomposition`, `validatorkeys`). -/
 structure SafroleState.WF (s : SafroleState) : Prop where
   eta_length : s.eta.length = 4
   eta_hash : ∀ x ∈ s.eta, x.length = 32

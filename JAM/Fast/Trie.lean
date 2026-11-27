@@ -26,7 +26,7 @@ private theorem toList_mk (l : List UInt8) : (⟨l.toArray⟩ : ByteArray) = l.t
 private theorem toList_eq (b : ByteArray) : b.toList = b.data.toList :=
   Blake2b.toList_eq_data_toList b
 
-/-- ℍ⁰ as octets. -/
+/-- $\mathbb{H}^0$ as octets. -/
 def zeroHashB : ByteArray := ⟨Array.replicate 32 0⟩
 
 /-- `leaf` as octets, converting the value once. -/

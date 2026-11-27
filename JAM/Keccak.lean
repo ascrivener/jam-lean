@@ -1,10 +1,10 @@
 import JAM.Blake2b
 
 /-!
-# Keccak-256 (GP v0.8.1 §3.8: ℋ_K, used for the accumulation output root and BEEFY)
+# Keccak-256 (GP v0.8.1 §3.8: $\mathcal{H}_K$, used for the accumulation output root and BEEFY)
 
 The Keccak-f[1600] permutation and sponge (FIPS 202 §3, §4), in pure Lean. `keccak256` uses the
-original Keccak padding (domain byte 0x01) that the Gray Paper's ℋ_K means; `sha3_256` uses the
+original Keccak padding (domain byte 0x01) that the Gray Paper's $\mathcal{H}_K$ means; `sha3_256` uses the
 FIPS 202 padding (0x06) and is provided so the permutation can be tested against standard SHA3
 implementations.
 -/
@@ -12,7 +12,7 @@ implementations.
 namespace JAM.Keccak
 
 
-/-- Round constants RC[i] (FIPS 202 §3.2.5). -/
+/-- Round constants $\mathrm{RC}[i]$ (FIPS 202 §3.2.5). -/
 def rc : Vector UInt64 24 := #v[
   0x0000000000000001, 0x0000000000008082, 0x800000000000808A, 0x8000000080008000,
   0x000000000000808B, 0x0000000080000001, 0x8000000080008081, 0x8000000000008009,
@@ -21,7 +21,7 @@ def rc : Vector UInt64 24 := #v[
   0x8000000000008002, 0x8000000000000080, 0x000000000000800A, 0x800000008000000A,
   0x8000000080008081, 0x8000000000008080, 0x0000000080000001, 0x8000000080008008]
 
-/-- Rotation offsets r[x + 5y] (FIPS 202 §3.2.2). -/
+/-- Rotation offsets $r[x + 5y]$ (FIPS 202 §3.2.2). -/
 def rotations : Vector UInt64 25 := #v[
   0, 1, 62, 28, 27,
   36, 44, 6, 55, 20,
@@ -31,7 +31,7 @@ def rotations : Vector UInt64 25 := #v[
 
 @[inline] def rotl (x : UInt64) (n : UInt64) : UInt64 := if n = 0 then x else (x <<< n) ||| (x >>> (64 - n))
 
-/-- One round: θ, ρ, π, χ, ι on the state A[x + 5y] (FIPS 202 §3.2). -/
+/-- One round: $\theta$, $\rho$, $\pi$, $\chi$, $\iota$ on the state $A[x + 5y]$ (FIPS 202 §3.2). -/
 def round (a : Vector UInt64 25) (r : UInt64) : Vector UInt64 25 := Id.run do
   -- θ
   let c : Vector UInt64 5 := Vector.ofFn fun x =>
@@ -82,8 +82,8 @@ def absorb (a : Array UInt64) (block : List UInt8) : Array UInt64 :=
     if h : i < a.size then a.set i (a[i] ^^^ w) else a) a
   permute a
 
-/-- The sponge with a 136-octet rate (capacity 512), padding `domain` ⌢ 0* ⌢ 0x80, squeezing 32
-    octets. -/
+/-- The sponge with a 136-octet rate (capacity 512), padding
+    `domain` $\frown 0^{\ast} \frown \mathtt{0x80}$, squeezing 32 octets. -/
 def sponge256 (domain : UInt8) (msg : ByteArray) : ByteArray :=
   let rate := 136
   let m := msg.toList
@@ -96,7 +96,7 @@ def sponge256 (domain : UInt8) (msg : ByteArray) : ByteArray :=
   let a := absorbLanes a padded
   ⟨(List.ofFn fun (k : Fin 32) => (a[k.1 / 8] >>> (8 * (k.1 % 8)).toUInt64).toUInt8).toArray⟩
 
-/-- ℋ_K: Keccak-256 with the original Keccak padding. -/
+/-- $\mathcal{H}_K$: Keccak-256 with the original Keccak padding. -/
 def keccak256 (msg : ByteArray) : ByteArray := sponge256 0x01 msg
 
 /-- SHA3-256 (FIPS 202), the same permutation with FIPS padding; used to test the permutation. -/

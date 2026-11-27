@@ -22,7 +22,7 @@ structure with unboxed fields (`S25`), unroll the round, and read the lanes stra
 it with `@[csimp]`; the kernel and every theorem still see `sponge256`.
 -/
 
-/-- The state A[x + 5y], unboxed. -/
+/-- The state $A[x + 5y]$, unboxed. -/
 structure S25 where
   a0 : UInt64
   a1 : UInt64
@@ -54,7 +54,7 @@ structure S25 where
 def S25.toArray (s : S25) : Array UInt64 :=
   #[s.a0, s.a1, s.a2, s.a3, s.a4, s.a5, s.a6, s.a7, s.a8, s.a9, s.a10, s.a11, s.a12, s.a13, s.a14, s.a15, s.a16, s.a17, s.a18, s.a19, s.a20, s.a21, s.a22, s.a23, s.a24]
 
-/-- `round` on `S25`: θ, ρ and π, χ, ι. -/
+/-- `round` on `S25`: $\theta$, $\rho$ and $\pi$, $\chi$, $\iota$. -/
 def roundS (s : S25) (r : UInt64) : S25 :=
   let c0 := s.a0 ^^^ s.a5 ^^^ s.a10 ^^^ s.a15 ^^^ s.a20
   let c1 := s.a1 ^^^ s.a6 ^^^ s.a11 ^^^ s.a16 ^^^ s.a21
@@ -238,7 +238,7 @@ theorem S25.get_eq (s : S25) (i : Nat) : s.toArray[i]! = s.get i := by
   | 0 | 1 | 2 | 3 => rfl
   | i + 4 => rfl
 
-/-- Append octets `k, k+1, …, k+c-1` of the state's lanes, little-endian, to `b`. -/
+/-- Append octets $k, k+1, \ldots, k+c-1$ of the state's lanes, little-endian, to `b`. -/
 def squeezeLoop (s : S25) : Nat → Nat → ByteArray → ByteArray
   | 0, _, b => b
   | c + 1, k, b => squeezeLoop s c (k + 1) (b.push (s.get (k / 8) >>> (8 * (k % 8)).toUInt64).toUInt8)

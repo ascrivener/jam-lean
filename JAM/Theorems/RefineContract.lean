@@ -8,11 +8,11 @@ import PVM.Logic.GasBound
 # A contract for the refine dispatcher that pins down its outcomes
 
 `FreeRunH` and `FreeStepsH` abstract gas away, so the handler a proof steps through is a contract:
-which outcomes a host call may have. For the lift to Ψ_M (`PVM.psiM_of_freeRunH`) the contract
-must *pin down* the real handler: whatever non-∞ outcome the handler produces, for whatever gas,
-must be the one the contract allows.
+which outcomes a host call may have. For the lift to $\Psi_M$ (`PVM.psiM_of_freeRunH`) the contract
+must *pin down* the real handler: whatever non-$\infty$ outcome the handler produces, for whatever
+gas, must be the one the contract allows.
 
-That holds for host calls whose non-∞ outcome does not depend on the gas left: `grow_heap`,
+That holds for host calls whose non-$\infty$ outcome does not depend on the gas left: `grow_heap`,
 `fetch` and any id the dispatcher does not know (`log`, for instance). It fails for `gas`, which
 reports the gas left. `refineContract` is the dispatcher's graph restricted to those ids, and
 `refineContract_pins` proves it pins down the dispatcher.
@@ -27,7 +27,7 @@ def SameButGas {X : Type} (o₁ o₂ : HostOut X) : Prop :=
   o₁.status = o₂.status ∧ o₁.regs = o₂.regs ∧ o₁.mem = o₂.mem ∧ o₁.ctx = o₂.ctx
 
 /-- The common rules: if the body's outcome does not depend on the gas it is handed and is never
-    ∞, the charged function's non-∞ outcomes do not depend on the gas. -/
+    $\infty$, the charged function's non-$\infty$ outcomes do not depend on the gas. -/
 theorem charged_sameButGas {X : Type} (g : Nat) (ω : Regs) (μ : Memory) (x : X)
     (body : HostOut X → HostOut X)
     (hb : ∀ a b, SameButGas (body ⟨.cont, a, ω, μ, x⟩) (body ⟨.cont, b, ω, μ, x⟩))
@@ -50,9 +50,10 @@ theorem writeValue_sameButGas {X : Type} (s : HostStatus) (a b : Nat) (ω : Regs
   repeat' split
   all_goals simp
 
-/-- The host-call ids whose non-∞ outcome does not depend on the gas: `grow_heap` (1), `fetch` (2),
-    `historical_lookup` (7, Ω_H), `export` (8, Ω_E), and the ids the refine dispatcher does not know
-    (3 … 6 and above 15; GP v0.8.1 numbers the refine calls up to `expunge` = 15). -/
+/-- The host-call ids whose non-$\infty$ outcome does not depend on the gas: `grow_heap` (1),
+    `fetch` (2), `historical_lookup` (7, $\Omega_H$), `export` (8, $\Omega_E$), and the ids the
+    refine dispatcher does not know ($3 \dots 6$ and above 15; GP v0.8.1 numbers the refine calls up
+    to `expunge` = 15). -/
 def GasFreeId (h : Nat) : Prop := h = 1 ∨ h = 2 ∨ (3 ≤ h ∧ h ≤ 8) ∨ 15 < h
 
 
@@ -61,9 +62,10 @@ def GasFreeId (h : Nat) : Prop := h = 1 ∨ h = 2 ∨ (3 ≤ h ∧ h ≤ 8) ∨ 
   unfold Params.encode
   simp only [Codec.fixed, List.length_append, PVM.Num.length_encodeLE]
 
-/-- ℰ of the Gray Paper's full-chain parameters, as `fetch` case 0 returns them (GP v0.8.1
-    Appendix B, Ω_Y; the constants of `JAM.Constants`, with 𝖦_A, 𝖦_I, 𝖦_R, 𝖦_T of #587, 𝖶_A of #557
-    and 𝖶_I in the slot v0.8.0 gave 𝖶_B, #563). -/
+/-- $\mathcal{E}$ of the Gray Paper's full-chain parameters, as `fetch` case 0 returns them
+    (GP v0.8.1 Appendix B, $\Omega_Y$; the constants of `JAM.Constants`, with $\mathsf{G}_A$,
+    $\mathsf{G}_I$, $\mathsf{G}_R$, $\mathsf{G}_T$ of #587, $\mathsf{W}_A$ of #557 and $\mathsf{W}_I$
+    in the slot v0.8.0 gave $\mathsf{W}_B$, #563). -/
 theorem Params.full_encode : Params.full.encode = [10, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 85, 1, 0, 75, 0, 0, 88, 2, 0, 0, 192, 41, 205, 2, 0, 0, 0, 0, 192, 208, 1, 14, 0, 0, 0, 0, 0, 139, 181, 120, 5, 0, 0, 0, 128, 20, 127, 212, 3, 0, 0, 0, 8, 0, 16, 0, 8, 0, 16, 0, 64, 56, 0, 0, 8, 0, 6, 0, 80, 0, 10, 0, 128, 0, 5, 0, 0, 0, 3, 0, 128, 112, 210, 0, 0, 9, 61, 0, 0, 12, 0, 0, 0, 192, 0, 0, 128, 0, 0, 0, 0, 12, 0, 0, 244, 1, 0, 0] := by
   decide
 
@@ -138,7 +140,7 @@ def refineContractK (cap : Nat) (env : RefineHost.Env) : HostRel RefineCtx :=
 def refineContract (env : RefineHost.Env) : HostRel RefineCtx := refineContractK hostCostMax env
 
 /-- **The contract pins down the dispatcher**, for any cap: a step allowed by `refineContractK cap`
-    is the only non-∞ outcome the real handler has, for any gas. -/
+    is the only non-$\infty$ outcome the real handler has, for any gas. -/
 theorem refineContractK_pins (cap : Nat) (env : RefineHost.Env) :
     (refineContractK cap env).Pins (toHostFn (RefineHost.dispatch env)).graph := by
   intro h ω μ x s₁ ω₁ μ₁ x₁ s₂ ω₂ μ₂ x₂ ⟨hh, hs₁, he₁⟩ ⟨hs₂, g₂, he₂⟩
@@ -152,7 +154,7 @@ theorem refineContractK_pins (cap : Nat) (env : RefineHost.Env) :
   exact ⟨e1s ▸ e2s ▸ a, e1r ▸ e2r ▸ b, e1m ▸ e2m ▸ c, e1c ▸ e2c ▸ d⟩
 
 /-- **The contract pins down the dispatcher**: a step allowed by `refineContract` is the only
-    non-∞ outcome the real handler has, for any gas. -/
+    non-$\infty$ outcome the real handler has, for any gas. -/
 theorem refineContract_pins (env : RefineHost.Env) :
     (refineContract env).Pins (toHostFn (RefineHost.dispatch env)).graph :=
   refineContractK_pins hostCostMax env
@@ -169,7 +171,8 @@ theorem writeValue_status {X : Type} (out : HostOut X) (v : Except Unit (Option 
   unfold writeValue; dsimp only; repeat' split
   all_goals simp [h]
 
-/-- `charged k`: with a body that keeps the gas and never reports ∞, the call charges exactly k. -/
+/-- `charged k`: with a body that keeps the gas and never reports $\infty$, the call charges
+    exactly $k$. -/
 theorem charged_cost {X : Type} (k g : Nat) (ω : Regs) (μ : Memory) (x : X)
     (body : HostOut X → HostOut X)
     (hb : ∀ a : Nat, (body ⟨.cont, a, ω, μ, x⟩).gas = a ∧ (body ⟨.cont, a, ω, μ, x⟩).status ≠ .oog) :
@@ -182,8 +185,8 @@ theorem charged_cost {X : Type} (k g : Nat) (ω : Regs) (μ : Memory) (x : X)
   · simp only [hg, ↓reduceIte]
     exact ⟨fun _ => (hb _).1, fun _ => (hb _).2, fun _ => by omega⟩
 
-/-- **Each gas-independent call charges a fixed cost k**: the gas left is g − k whenever it does not run out,
-    and it does not run out once g ≥ k. -/
+/-- **Each gas-independent call charges a fixed cost $k$**: the gas left is $g - k$ whenever it
+    does not run out, and it does not run out once $g \ge k$. -/
 theorem dispatch_cost (env : Env) {h : Nat} (hh : GasFreeId h) (ω : Regs) (μ : Memory)
     (c : RefineCtx) : ∃ k : Nat, ∀ g : Nat,
       ((dispatch env h g ω μ c).status ≠ .oog → (dispatch env h g ω μ c).gas = g - k) ∧
@@ -291,8 +294,8 @@ theorem refineContract_cost (env : RefineHost.Env) :
     HostCostLe (toHostFn (RefineHost.dispatch env)) (refineContract env) hostCostMax :=
   refineContractK_cost hostCostMax (by decide) (by decide) env
 
-/-- **A larger cap allows more**: a call that does not run out of gas with c₁ does not with
-    c₂ ≥ c₁ either, and does the same. So a proof under `refineContract` lifts to
+/-- **A larger cap allows more**: a call that does not run out of gas with $c_1$ does not with
+    $c_2 \ge c_1$ either, and does the same. So a proof under `refineContract` lifts to
     `refineContractK cap` for any `cap ≥ hostCostMax` (`FreeStepsH.weaken`). -/
 theorem refineContractK_mono {c₁ c₂ : Nat} (h275 : 275 ≤ c₁) (h12 : c₁ ≤ c₂) (hc₂ : c₂ < 2 ^ 64)
     (env : RefineHost.Env)

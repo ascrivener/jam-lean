@@ -7,50 +7,55 @@ import JAM.Params
 /-!
 # Safrole: block production and chain growth (GP v0.8.1 §6, `sec:blockproduction`)
 
-The Safrole state γ = (γ_P, γ_Z, γ_S, γ_A) (eq. `consensusstatecomposition`) together with the
-timeslot τ (eq. `timeslotindex`), the entropy η (eq. `entropycomposition`) and the validator key
-sequences ι, γ_P, κ and λ (eq. `validatorkeys`), and their transition:
+The Safrole state $\gamma = (\gamma_P, \gamma_Z, \gamma_S, \gamma_A)$
+(eq. `consensusstatecomposition`) together with the timeslot $\tau$ (eq. `timeslotindex`), the
+entropy $\eta$ (eq. `entropycomposition`) and the validator key sequences $\iota$, $\gamma_P$,
+$\kappa$ and $\lambda$ (eq. `validatorkeys`), and their transition:
 
-* key rotation with the offenders filter Φ and the new ring root γ_Z' (eq. `blacklistfilter`);
-* the entropy accumulator η_0' and its rotation into η_1, η_2, η_3 (§6.4);
-* the slot-sealer sequence γ_S' with the outside-in sequencer Z and the fallback F
+* key rotation with the offenders filter $\Phi$ and the new ring root $\gamma'_Z$
+  (eq. `blacklistfilter`);
+* the entropy accumulator $\eta'_0$ and its rotation into $\eta_1$, $\eta_2$, $\eta_3$ (§6.4);
+* the slot-sealer sequence $\gamma'_S$ with the outside-in sequencer $Z$ and the fallback $F$
   (eqs. `slotkeysequence`, `fallbackkeysequence`);
-* the epoch and winning-tickets markers H_E and H_W (eqs. `epochmarker`, `winningticketsmarker`);
-* the tickets extrinsic E_T and the ticket accumulator γ_A' (§6.7, eqs. `ticketsextrinsic`,
-  `enforceticketlimit`).
+* the epoch and winning-tickets markers $\mathbf{H}_E$ and $\mathbf{H}_W$ (eqs. `epochmarker`,
+  `winningticketsmarker`);
+* the tickets extrinsic $\mathbf{E}_T$ and the ticket accumulator $\gamma'_A$ (§6.7,
+  eqs. `ticketsextrinsic`, `enforceticketlimit`).
 
 The seal and entropy-source conditions on the header (eqs. `ticketconditiontrue`,
-`ticketconditionfalse`, `vrfsigcheck`) are `sealValid`; the transition takes Y(H_V), the entropy
-source's VRF output, as an input.
+`ticketconditionfalse`, `vrfsigcheck`) are `sealValid`; the transition takes
+$\mathcal{Y}(\mathbf{H}_V)$, the entropy source's VRF output, as an input.
 
-Cryptography enters through `JAM.Crypto`: the ring root O, Ring VRF verification and output for
+Cryptography enters through `JAM.Crypto`: the ring root $O$, Ring VRF verification and output for
 tickets, and singly-contextualized VRF verification and output for the seal (Thin VRF in GP v0.8.1
-Appendix G; the interface 𝔹̄_k⟨c⟩⟨m⟩ ⊂ 𝔹_96 is unchanged from v0.8.0).
+Appendix G; the interface $\bar{\mathbb{B}}_k\langle c \rangle\langle m \rangle \subset
+\mathbb{B}_{96}$ is unchanged from v0.8.0).
 
 The paper states the extrinsic's conditions but names no errors and gives no order between them.
 The errors here are the test vectors' names. They are checked in this order: the timeslot (§5,
-eq. `timeslotindex`'s H_T > P(H)_T of the header), the extrinsic's length (eq.
+eq. `timeslotindex`'s $\mathbf{H}_T > P(\mathbf{H})_T$ of the header), the extrinsic's length (eq.
 `enforceticketlimit`), each ticket's entry index and then its proof (eq. `ticketsextrinsic`), the
-ordering of **n**, its disjointness from γ_A, and **n** ⊆ γ_A'.
+ordering of $\mathbf{n}$, its disjointness from $\gamma_A$, and $\mathbf{n} \subseteq \gamma'_A$.
 -/
 
 namespace JAM
 
-/-- A validator key k ∈ 𝕂 = 𝔹_336 (GP §6.3). -/
+/-- A validator key $k \in \mathbb{K} = \mathbb{B}_{336}$ (GP §6.3). -/
 abbrev ValidatorKey := List UInt8
 
 namespace ValidatorKey
-/-- k_b = k_{0⋅⋅⋅+32}, the Bandersnatch key. -/
+/-- $k_b = k_{0 \cdots +32}$, the Bandersnatch key. -/
 def bs (k : ValidatorKey) : List UInt8 := k.take 32
-/-- k_e = k_{32⋅⋅⋅+32}, the Ed25519 key. -/
+/-- $k_e = k_{32 \cdots +32}$, the Ed25519 key. -/
 def ed (k : ValidatorKey) : List UInt8 := (k.drop 32).take 32
-/-- The null key 𝕂^∅ of Φ (GP v0.8.1 eq. `nullvalkey`): zero except for its Ed25519 component
-    [2, 0, …]. -/
+/-- The null key $\mathbb{K}^{\emptyset}$ of $\Phi$ (GP v0.8.1 eq. `nullvalkey`): zero except for
+    its Ed25519 component $[2, 0, \dots]$. -/
 def null : ValidatorKey := nullValidatorKey
 end ValidatorKey
 
-/-- γ_S ∈ ⟦𝕋⟧_𝖤 ∪ ⟦ℍ_B⟧_𝖤 (GP eq. `ticketaccumulatorsealticketsspec`): a full complement of tickets,
-    or the fallback Bandersnatch keys. -/
+/-- $\gamma_S \in [\![ \mathbb{T} ]\!]_{\mathsf{E}} \cup [\![ \mathbb{H}_B ]\!]_{\mathsf{E}}$
+    (GP eq. `ticketaccumulatorsealticketsspec`): a full complement of tickets, or the fallback
+    Bandersnatch keys. -/
 inductive SealKeys where
   | tickets (t : List Ticket)
   | keys (k : List (List UInt8))
@@ -80,43 +85,45 @@ structure SafroleState where
 
 /-- What the transition reads from the block and from the rest of the state. -/
 structure SafroleInput where
-  /-- H_T. -/
+  /-- $\mathbf{H}_T$. -/
   slot : Nat
-  /-- Y(H_V), the entropy source's VRF output (GP eq. `vrfsigcheck`). -/
+  /-- $\mathcal{Y}(\mathbf{H}_V)$, the entropy source's VRF output (GP eq. `vrfsigcheck`). -/
   entropy : List UInt8
-  /-- E_T. -/
+  /-- $\mathbf{E}_T$. -/
   tickets : List TicketProof
-  /-- ψ_O', the posterior offenders (Ed25519 keys, §10). -/
+  /-- $\psi'_O$, the posterior offenders (Ed25519 keys, §10). -/
   offenders : List (List UInt8)
 
-/-- The markers the transition produces: H_E and H_W. -/
+/-- The markers the transition produces: $\mathbf{H}_E$ and $\mathbf{H}_W$. -/
 structure SafroleOutput where
   epochMark : Option EpochMark
   ticketsMark : Option (List Ticket)
 
 /-- Why a block is invalid for Safrole. The paper names no errors; these are the vectors'. -/
 inductive SafroleError where
-  /-- H_T ≤ τ. -/
+  /-- $\mathbf{H}_T \le \tau$. -/
   | badSlot
-  /-- |E_T| exceeds the bound of eq. `enforceticketlimit` (0 in the epoch's tail). -/
+  /-- $|\mathbf{E}_T|$ exceeds the bound of eq. `enforceticketlimit` (0 in the epoch's tail). -/
   | unexpectedTicket
-  /-- **n** is not ordered by identifier without duplicates. -/
+  /-- $\mathbf{n}$ is not ordered by identifier without duplicates. -/
   | badTicketOrder
-  /-- A proof is not in 𝔹̄°_{γ_Z'}⟨$jam_ticket_seal ⌢ η_2' ⧺ e⟩⟨[]⟩. -/
+  /-- A proof is not in
+      $\bar{\mathbb{B}}^{\circ}_{\gamma'_Z}\langle \mathsf{X}_T \frown \eta'_2 \mathbin{+\!\!+} e
+      \rangle\langle [] \rangle$, with $\mathsf{X}_T$ = `$jam_ticket_seal`. -/
   | badTicketProof
-  /-- An entry index is not in ℕ_n. -/
+  /-- An entry index is not in $\mathbb{N}_n$. -/
   | badTicketAttempt
-  /-- A new identifier is already in γ_A. -/
+  /-- A new identifier is already in $\gamma_A$. -/
   | duplicateTicket
-  /-- A new ticket is not in γ_A' (**n** ⊄ γ_A'). -/
+  /-- A new ticket is not in $\gamma'_A$ ($\mathbf{n} \not\subseteq \gamma'_A$). -/
   | uselessTicket
   deriving BEq, Repr
 
-/-- $jam_ticket_seal (GP §6.4, X_T). -/
+/-- `$jam_ticket_seal` (GP §6.4, $\mathsf{X}_T$). -/
 def Xticket : List UInt8 := contextString "$jam_ticket_seal"
-/-- $jam_fallback_seal (GP §6.4, X_F). -/
+/-- `$jam_fallback_seal` (GP §6.4, $\mathsf{X}_F$). -/
 def Xfallback : List UInt8 := contextString "$jam_fallback_seal"
-/-- $jam_entropy (GP §6.4, X_E). -/
+/-- `$jam_entropy` (GP §6.4, $\mathsf{X}_E$). -/
 def Xentropy : List UInt8 := contextString "$jam_entropy"
 
 #guard Xticket = "jam_ticket_seal".toUTF8.toList
@@ -143,8 +150,8 @@ def octetLt : List UInt8 → List UInt8 → Bool
   | _ :: _, [] => false
   | a :: as, b :: bs => a < b || (a == b && octetLt as bs)
 
-/-- Φ(**k**) (GP v0.8.1 eq. `blacklistfilter`): keys whose Ed25519 component is an offender become
-    the null key 𝕂^∅ (eq. `nullvalkey`). -/
+/-- $\Phi(\mathbf{k})$ (GP v0.8.1 eq. `blacklistfilter`): keys whose Ed25519 component is an
+    offender become the null key $\mathbb{K}^{\emptyset}$ (eq. `nullvalkey`). -/
 def offendersFilter (offenders : List (List UInt8)) (k : List ValidatorKey) : List ValidatorKey :=
   k.map fun v => if offenders.contains v.ed then ValidatorKey.null else v
 

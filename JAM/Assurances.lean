@@ -4,27 +4,27 @@ import JAM.Disputes
 /-!
 # Package availability assurances (GP v0.8.1 §11.2)
 
-The assurances extrinsic 𝔼_A (eq. `xtassurances`), the newly available reports **R** (eq.
-`availableworkreports`) and the intermediate assignments ρ^‡‡ = ρ after assurances (eq.
-`availassignmentspostassurancesdef`), from the assignments ρ^‡ left by the disputes transition
+The assurances extrinsic $\mathbf{E}_A$ (eq. `xtassurances`), the newly available reports $\mathbf{R}$ (eq.
+`availableworkreports`) and the intermediate assignments $\rho^{\ddagger\ddagger} = \rho$ after assurances (eq.
+`availassignmentspostassurancesdef`), from the assignments $\rho^\ddagger$ left by the disputes transition
 (`JAM.disputesTransition`).
 
-Signatures are checked with `Crypto.edVerify`; the validator sets enter through κ's Ed25519 keys
-and the size of κ'.
+Signatures are checked with `Crypto.edVerify`; the validator sets enter through $\kappa$'s Ed25519 keys
+and the size of $\kappa'$.
 
 The paper names no errors and gives no order between the conditions. The errors are the test
 vectors' names. Each assurance is checked in turn, its conditions in the order §11.2.1 states
 them: the order of assurers, the signature, then the bits. The assurer index's range comes first,
 as the signature's key depends on it.
 
-v0.8.1 removes the anchor a_a and its condition a_a = H_P (GP #562): the signature already covers
-H_P. The order condition is 𝔼_A = [a ∈ 𝔼_A ordered and unique by a_v] (GP #574), the same strict
-increase of a_v as v0.8.0's.
+v0.8.1 removes the anchor $a_a$ and its condition $a_a = \mathbf{H}_P$ (GP #562): the signature already covers
+$\mathbf{H}_P$. The order condition is $\mathbf{E}_A = [a \in \mathbf{E}_A \text{ ordered and unique by } a_v]$ (GP #574), the same strict
+increase of $a_v$ as v0.8.0's.
 -/
 
 namespace JAM
 
-/-- X_A = `$jam_available` (GP eq. `assurancesig`). -/
+/-- $\mathsf{X}_A$ = `$jam_available` (GP eq. `assurancesig`). -/
 def Xavailable : List UInt8 := contextString "$jam_available"
 
 /-- Why an assurances extrinsic is invalid. The paper names no errors; these are the vectors'. -/
@@ -35,25 +35,25 @@ inductive AssurancesError where
   | notSortedOrUniqueAssurers
   deriving BEq, Repr
 
-/-- What the assurances transition reads besides ρ^‡ and 𝔼_A. -/
+/-- What the assurances transition reads besides $\rho^\ddagger$ and $\mathbf{E}_A$. -/
 structure AssurancesInput where
-  /-- H_T, the block's timeslot. -/
+  /-- $\mathbf{H}_T$, the block's timeslot. -/
   slot : Nat
-  /-- H_P, the parent header hash. -/
+  /-- $\mathbf{H}_P$, the parent header hash. -/
   parent : Hash
-  /-- (κ_v)_e, the prior active set's Ed25519 keys. -/
+  /-- $(\kappa_v)_e$, the prior active set's Ed25519 keys. -/
   activeEd : List (List UInt8)
-  /-- |κ'|, the size of the posterior active set. -/
+  /-- $|\kappa'|$, the size of the posterior active set. -/
   postActiveCount : Nat
 
-/-- The message an assurance signs: X_A ⌢ ℋ(ℰ(H_P, a_f)) (GP eq. `assurancesig`). -/
+/-- The message an assurance signs: $\mathsf{X}_A \frown \mathcal{H}(\mathcal{E}(\mathbf{H}_P, a_f))$ (GP eq. `assurancesig`). -/
 def assuranceMessage (parent : Hash) (bits : List Bool) : List UInt8 :=
   Xavailable ++ (Blake2b.hash256 ⟨(Codec.blob parent ++ encodeBits bits).toArray⟩).toList
 
-/-- One assurance's conditions (GP v0.8.1 §11.2.1): a_v ∈ ℕ_{|κ|} and above the previous assurer
+/-- One assurance's conditions (GP v0.8.1 §11.2.1): $a_v \in \mathbb{N}_{|\kappa|}$ and above the previous assurer
     `prev` (eq. `xtassurances` and the ordered-unique condition);
-    a_s ∈ 𝕍̄_{κ[a_v]_e}⟨X_A ⌢ ℋ(ℰ(H_P, a_f))⟩; and a set bit only on a core with an assignment
-    in ρ^‡. -/
+    $a_s \in \bar{\mathbb{V}}_{\kappa[a_v]_e}\langle \mathsf{X}_A \frown \mathcal{H}(\mathcal{E}(\mathbf{H}_P, a_f)) \rangle$; and a set bit only on a core with an assignment
+    in $\rho^\ddagger$. -/
 def checkAssurance (crypto : Crypto) (i : AssurancesInput) (ρ : AvailAssignments)
     (prev : Option Nat) (a : Assurance) : Except AssurancesError Unit := do
   unless a.assurer < i.activeEd.length do throw .badValidatorIndex
@@ -63,10 +63,10 @@ def checkAssurance (crypto : Crypto) (i : AssurancesInput) (ρ : AvailAssignment
   for c in List.range ρ.length do
     if a.bitfield.getD c false && (ρ.getD c none).isNone then throw .coreNotEngaged
 
-/-- The assurances transition (GP v0.8.1 §11.2): check 𝔼_A, then give **R**, the reports of the cores
-    (in core order) that more than two thirds of |κ| assure, and ρ after assurances, which clears
-    a core when it was empty, its report is in **R** (reports compared by their encoding), it timed out
-    (H_T ≥ t + 𝖴) or |κ| ≠ |κ'|. -/
+/-- The assurances transition (GP v0.8.1 §11.2): check $\mathbf{E}_A$, then give $\mathbf{R}$, the reports of the cores
+    (in core order) that more than two thirds of $|\kappa|$ assure, and $\rho$ after assurances, which clears
+    a core when it was empty, its report is in $\mathbf{R}$ (reports compared by their encoding), it timed out
+    ($\mathbf{H}_T \ge t + \mathsf{U}$) or $|\kappa| \ne |\kappa'|$. -/
 def assurances (params : Params) (crypto : Crypto) (i : AssurancesInput) (ρ : AvailAssignments)
     (xs : List Assurance) : Except AssurancesError (List WorkReport × AvailAssignments) := do
   let mut prev : Option Nat := none

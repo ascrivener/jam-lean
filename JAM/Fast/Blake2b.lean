@@ -5,8 +5,8 @@ import JAM.Theorems.CheckedIndex.Blake2b
 # Fast compiled Blake2b, proved equal to `JAM.Blake2b`
 
 The faster implementations of `JAM.Blake2b.blocks` and `JAM.Blake2b.hash`, moved out of the spec
-file. Each equality is registered with `@[csimp]`; `hash256_eq_hash256Fast` restates ℋ so that its
-compiled code uses `hashFast` too.
+file. Each equality is registered with `@[csimp]`; `hash256_eq_hash256Fast` restates $\mathcal{H}$
+so that its compiled code uses `hashFast` too.
 -/
 
 namespace JAM.Blake2b
@@ -24,7 +24,7 @@ message's `ByteArray`. They are proved equal to the spec definitions and registe
 @[inline] def byteAt (msg : ByteArray) (i : Nat) : UInt8 :=
   if h : i < msg.size then msg[i] else 0
 
-/-- The little-endian 64-bit word at octets `o … o+7` of `msg` (0 past its end), in the shape of
+/-- The little-endian 64-bit word at octets $o \dots o+7$ of `msg` (0 past its end), in the shape of
     `words`'s fold. -/
 @[inline] def wordAt (msg : ByteArray) (o : Nat) : UInt64 :=
   ((((((((0 : UInt64) <<< 8 ||| (byteAt msg (o + 7)).toUInt64) <<< 8
@@ -137,13 +137,13 @@ def blocksFast (h : Vector UInt64 8) (msg : ByteArray) : Vector UInt64 8 :=
 /-! ## Faster compiled form
 
 `blocksFast` still keeps the working vector in an `Array UInt64`, whose elements are boxed, so every
-step of G allocates. The versions below keep the working vector and the chaining value in structures
+step of $G$ allocates. The versions below keep the working vector and the chaining value in structures
 with unboxed `UInt64` fields (`S16`, `S8`), unroll the twelve rounds, and read the message words
 straight from the `ByteArray`. `hash_eq_hashFast` proves `hash = hashFast` and registers it with
 `@[csimp]`; the kernel and every theorem still see `hash`.
 -/
 
-/-- The working vector v (RFC 7693 §3.2), unboxed. -/
+/-- The working vector $v$ (RFC 7693 §3.2), unboxed. -/
 structure S16 where
 
   v0 : UInt64
@@ -167,7 +167,7 @@ structure S16 where
 def S16.toArray (s : S16) : Array UInt64 :=
   #[s.v0, s.v1, s.v2, s.v3, s.v4, s.v5, s.v6, s.v7, s.v8, s.v9, s.v10, s.v11, s.v12, s.v13, s.v14, s.v15]
 
-/-- The chaining value h (RFC 7693 §3.2), unboxed. -/
+/-- The chaining value $h$ (RFC 7693 §3.2), unboxed. -/
 structure S8 where
 
   h0 : UInt64
@@ -327,11 +327,11 @@ theorem g7_toArray (s : S16) (x y : UInt64) :
   simp
   rfl
 
-/-- One round of F: the eight G calls, with the message words in the order the round uses them. -/
+/-- One round of $F$: the eight $G$ calls, with the message words in the order the round uses them. -/
 def roundS (s : S16) (x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 : UInt64) : S16 :=
   g7 (g6 (g5 (g4 (g3 (g2 (g1 (g0 s x0 x1) x2 x3) x4 x5) x6 x7) x8 x9) x10 x11) x12 x13) x14 x15
 
-/-- One round of F on the array, as `compressWords` performs it for row `r` of σ. -/
+/-- One round of F on the array, as `compressWords` performs it for row `r` of $\sigma$. -/
 def roundA (m : Array UInt64) (r : Nat) (v : Array UInt64) : Array UInt64 :=
   let s := Old.Blake2b.sigma[r % 10]!
   let v := Old.Blake2b.mix v 0 4 8 12 m[s[0]!]! m[s[1]!]!
@@ -348,8 +348,8 @@ theorem roundA_toArray (m : Array UInt64) (r : Nat) (s : S16) :
   simp only [roundA, roundS, g0_toArray, g1_toArray, g2_toArray, g3_toArray, g4_toArray,
     g5_toArray, g6_toArray, g7_toArray]
 
-/-- F (RFC 7693 §3.2) on unboxed words: the chaining value `h`, the message words `m₀ … m₁₅`, the
-    byte counter `t` and the final-block flag. -/
+/-- $F$ (RFC 7693 §3.2) on unboxed words: the chaining value `h`, the message words
+    $m_0 \dots m_{15}$, the byte counter `t` and the final-block flag. -/
 def compressS (h : S8) (m0 m1 m2 m3 m4 m5 m6 m7 m8 m9 m10 m11 m12 m13 m14 m15 : UInt64) (t : Nat) (last : Bool) : S8 :=
   let s : S16 := ⟨h.h0, h.h1, h.h2, h.h3, h.h4, h.h5, h.h6, h.h7,
     0x6a09e667f3bcc908, 0xbb67ae8584caa73b, 0x3c6ef372fe94f82b, 0xa54ff53a5f1d36f1,
@@ -369,7 +369,7 @@ def compressS (h : S8) (m0 m1 m2 m3 m4 m5 m6 m7 m8 m9 m10 m11 m12 m13 m14 m15 : 
   let s := roundS s m14 m10 m4 m8 m9 m15 m13 m6 m1 m12 m0 m2 m11 m7 m5 m3
   ⟨h.h0 ^^^ s.v0 ^^^ s.v8, h.h1 ^^^ s.v1 ^^^ s.v9, h.h2 ^^^ s.v2 ^^^ s.v10, h.h3 ^^^ s.v3 ^^^ s.v11, h.h4 ^^^ s.v4 ^^^ s.v12, h.h5 ^^^ s.v5 ^^^ s.v13, h.h6 ^^^ s.v6 ^^^ s.v14, h.h7 ^^^ s.v7 ^^^ s.v15⟩
 
-/-- The working vector at the start of F, before the rounds. -/
+/-- The working vector at the start of $F$, before the rounds. -/
 def initA (h : Array UInt64) (t : Nat) (last : Bool) : Array UInt64 := Id.run do
   let mut v := h ++ Old.Blake2b.iv
   v := v.set! 12 (v[12]! ^^^ UInt64.ofNat (t % 2 ^ 64))
@@ -377,7 +377,7 @@ def initA (h : Array UInt64) (t : Nat) (last : Bool) : Array UInt64 := Id.run do
   if last then v := v.set! 14 (v[14]! ^^^ 0xFFFFFFFFFFFFFFFF)
   return v
 
-/-- The output of F from the chaining value and the final working vector. -/
+/-- The output of $F$ from the chaining value and the final working vector. -/
 def finalA (h v : Array UInt64) : Array UInt64 :=
   (List.range 8).toArray.map fun i => h[i]! ^^^ v[i]! ^^^ v[i + 8]!
 
@@ -407,7 +407,7 @@ theorem compressWords_toArray (h : S8) (m : Array UInt64) (t : Nat) (last : Bool
   rfl
 
 
-/-- F on the 128-octet block at octet `o` of `msg` (octets past its end read as 0). -/
+/-- $F$ on the 128-octet block at octet `o` of `msg` (octets past its end read as 0). -/
 @[inline] def compressAt (h : S8) (msg : ByteArray) (o t : Nat) (last : Bool) : S8 :=
   compressS h (wordAt msg o) (wordAt msg (o + 8)) (wordAt msg (o + 16)) (wordAt msg (o + 24))
     (wordAt msg (o + 32)) (wordAt msg (o + 40)) (wordAt msg (o + 48)) (wordAt msg (o + 56))
@@ -456,7 +456,7 @@ theorem S8.get_eq (h : S8) (i : Nat) : h.toArray[i]! = h.get i := by
   | i + 8 =>
     simp [S8.toArray, S8.get]; rfl
 
-/-- Append octets `k, k+1, …, k+c-1` of the digest to `b`. -/
+/-- Append octets $k, k+1, \dots, k+c-1$ of the digest to `b`. -/
 def outLoop (h : S8) : Nat → Nat → ByteArray → ByteArray
   | 0, _, b => b
   | c + 1, k, b => outLoop h c (k + 1) (b.push (h.get (k / 8) >>> (8 * (k % 8)).toUInt64).toUInt8)
@@ -494,7 +494,7 @@ def hashFast (n : Nat) (msg : ByteArray) : ByteArray :=
   rw [← blake2b_hash_eq_old]
   simp only [Old.Blake2b.hash, hashFast, hi, blocks_old_eq_blocksFastA, blocksFast_toArray, outBytes_eq]
 
-/-- ℋ (`hash256`), restated so that its compiled code uses `hashFast`. -/
+/-- $\mathcal{H}$ (`hash256`), restated so that its compiled code uses `hashFast`. -/
 def hash256Fast (msg : ByteArray) : ByteArray := hash 32 msg
 
 @[csimp] theorem hash256_eq_hash256Fast : @hash256 = @hash256Fast := rfl

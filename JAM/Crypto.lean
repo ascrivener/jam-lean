@@ -7,9 +7,10 @@ real implementation, or, in the vector tests, an oracle read from each vector's 
 
 Ed25519 verification is used by disputes, assurances and guarantees (§10–§11). Safrole (§6) uses
 the Bandersnatch primitives of Appendix G (`sec:bandersnatch`): the singly-contextualized VRF
-signatures 𝔹̄_k⟨c⟩⟨m⟩ (under the Thin VRF template since v0.8.1, GP #550; the IETF VRF in v0.8.0)
-(header seal and entropy source) and the Ring VRF proofs 𝔹̄°_r⟨c⟩⟨m⟩ (tickets), their output Y, and
-the ring root O.
+signatures $\bar{\mathbb{B}}_k\langle c \rangle\langle m \rangle$ (under the Thin VRF template
+since v0.8.1, GP #550; the IETF VRF in v0.8.0) (header seal and entropy source) and the Ring VRF
+proofs $\bar{\mathbb{B}}^{\circ}_r\langle c \rangle\langle m \rangle$ (tickets), their output
+$\mathcal{Y}$, and the ring root $\mathcal{O}$.
 
 The Bandersnatch fields default to rejecting every signature and proof and to empty outputs, so a
 caller that needs only Ed25519 can write `{ edVerify := … }`. The defaults are placeholders, not
@@ -20,25 +21,26 @@ namespace JAM
 
 /-- The cryptographic primitives the transitions use. -/
 structure Crypto where
-  /-- s ∈ 𝕍̄_k⟨m⟩ (GP §3.8.2): s is a valid Ed25519 signature on the message m under the public
-      key k. -/
+  /-- $s \in \bar{\mathbb{V}}_k\langle m \rangle$ (GP §3.8.2): $s$ is a valid Ed25519 signature on the
+      message $m$ under the public key $k$. -/
   edVerify : (key : List UInt8) → (msg : List UInt8) → (sig : List UInt8) → Bool
-  /-- x ∈ 𝔹̄_k⟨c⟩⟨m⟩ (GP Appendix G): x is a valid singly-contextualized Bandersnatch
-      VRF signature (Thin VRF, GP v0.8.1 Appendix G) under the key k
-      with context c and message m. -/
+  /-- $x \in \bar{\mathbb{B}}_k\langle c \rangle\langle m \rangle$ (GP Appendix G): $x$ is a valid
+      singly-contextualized Bandersnatch VRF signature (Thin VRF, GP v0.8.1 Appendix G) under the
+      key $k$ with context $c$ and message $m$. -/
   bsVerify : (key : List UInt8) → (ctx : List UInt8) → (msg : List UInt8) → (sig : List UInt8) → Bool :=
     fun _ _ _ _ => false
-  /-- Y(s) (GP Appendix G): the 32-octet VRF output of a singly-contextualized
+  /-- $\mathcal{Y}(s)$ (GP Appendix G): the 32-octet VRF output of a singly-contextualized
       Bandersnatch VRF signature. -/
   bsOut : (sig : List UInt8) → List UInt8 := fun _ => []
-  /-- O(**k**) (GP Appendix G): the ring root (commitment) of a sequence of Bandersnatch keys. A key
-      with no corresponding curve point stands for the padding point; that is O's concern. -/
+  /-- $\mathcal{O}(\mathbf{k})$ (GP Appendix G): the ring root (commitment) of a sequence of
+      Bandersnatch keys. A key with no corresponding curve point stands for the padding point; that
+      is $\mathcal{O}$'s concern. -/
   bsRingRoot : (keys : List (List UInt8)) → List UInt8 := fun _ => []
-  /-- x ∈ 𝔹̄°_r⟨c⟩⟨m⟩ (GP Appendix G): x is a valid Bandersnatch Ring VRF proof for the ring root r
-      with context c and message m. -/
+  /-- $x \in \bar{\mathbb{B}}^{\circ}_r\langle c \rangle\langle m \rangle$ (GP Appendix G): $x$ is a
+      valid Bandersnatch Ring VRF proof for the ring root $r$ with context $c$ and message $m$. -/
   bsRingVerify : (root : List UInt8) → (ctx : List UInt8) → (msg : List UInt8) → (proof : List UInt8) → Bool :=
     fun _ _ _ _ => false
-  /-- Y(p) (GP Appendix G): the 32-octet VRF output of a Ring VRF proof. -/
+  /-- $\mathcal{Y}(p)$ (GP Appendix G): the 32-octet VRF output of a Ring VRF proof. -/
   bsRingOut : (proof : List UInt8) → List UInt8 := fun _ => []
 
 /-- The octets of a context string such as `$jam_valid` (GP §3.8.2, Appendix I.4.5). The leading

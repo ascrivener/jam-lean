@@ -52,6 +52,14 @@ active button again returns to the default. The choice is kept in `localStorage`
 page. So write the prose to read on its own when the code is hidden: don't let a sentence depend
 on the reader seeing the quoted block.
 
+The book has a dark mode. It follows the reader's system setting (`prefers-color-scheme`), and a
+"Theme: Auto / Light / Dark" switch under each page's title overrides it (kept in `localStorage`
+as `jam-lean-book.theme`, applied in the page head so the page never flashes in the wrong theme).
+The palette is `darkRules` in `CompanionMain.lean`: Verso's colour variables, the few colours
+Verso's styles hard-code, and this book's own `--jl-*` variables. New CSS takes its colours from
+those variables (or `currentColor`), not from literal colours, so it works in both themes.
+The API pages (doc-gen4) keep doc-gen4's own styling.
+
 The readings the model chose should link to `docs/upstream-candidates.md` by note number.
 
 ## Notation: the paper's macros

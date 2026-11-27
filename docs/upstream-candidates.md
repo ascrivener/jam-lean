@@ -65,6 +65,10 @@ Gaps, where the paper leaves behaviour undefined:
 | v0.8.1-A23 | §19, (19.3) | "Two valid blocks at the same timeslot": H^B is unconstrained (any block seen, on any fork, finalized or not; no same-author condition, though one slot has one sealer key under Safrole), and only H^A must be unfinalized. So any two seen blocks at one unfinalized slot rule out every chain through either. The model reads it literally, with H^B over the store (`JAM/BestChain.lean`, `equivocates`). |
 | v0.8.1-A24 | §19, (19.4) | No tie-break is given among acceptable blocks of equal m, and every acceptable block is a candidate, not only leaves: a fallback-sealed child ties with its parent. The model returns every maximiser (`bestHeads`); `bestHead?` takes the first in store order (`JAM/BestChain.lean`). |
 | v0.8.1-A25 | §19, (19.4) and §5 | m sums 𝐓 over all of 𝐀^♭ back to genesis, while §5 lets nodes keep only the last 𝖫 = 24 hours of headers. The model counts the ancestors in the given store; every acceptable block passes through H^♮, so the ancestors shared through H^♮ add the same amount to every candidate when the store holds H^♮'s ancestry consistently (`JAM/BestChain.lean`, `metric`). |
+| v0.8.1-A26 | §10.2, eq. `disputesextrinsics` | 𝔼_V ∈ ⟦…⟧_{:𝖭_V} and 𝔼_C, 𝔼_F ∈ ⟦…⟧_{:𝖭_O} bound the parts of the disputes extrinsic (𝖭_V = 𝖭_O = 16), but no error is named for a longer one and no order is given against the other conditions. No v0.8.0 vector exceeds them. The model checks the three bounds first, under its own names `tooManyVerdicts`, `tooManyCulprits` and `tooManyFaults` (`JAM/Disputes.lean`, `disputesTransition`); before 2026-11-27 it did not check them. |
+| v0.8.1-A27 | §10.2, eq. `verdicts` | When \|**k**\| < 3, ⌊⅓\|**k**\|⌋ = 0, so V(a, **j**)'s cases ⊥ (t = 0) and ∅ (t = ⌊⅓\|**k**\|⌋) both hold at t = 0. The model takes ⊥ (`JAM/Disputes.lean`, `verdictOutcome`). The full and tiny chains (\|**k**\| = 1023, 6) never reach it. |
+| v0.8.1-A28 | §11.2, eq. `availassignmentspostassurancesdef` | (p_**g**)_**r** ∈ **R** tests membership of a work-report in **R** without saying how reports are compared. The model compares their encodings ℰ(**r**) (`JAM/Assurances.lean`, `assurances`). |
+| v0.8.1-A29 | Appendix F, eq. `suffle` | ℱ types its entropy as **r** ∈ ⟦ℕ⟧_{l:}, so **r**_0 always exists. The model's ℱ is total over any **r** and reads a missing entry as 0 (`JAM/Shuffle.lean`, `shuffle`); the paper's uses never reach this, as (F.3) passes 𝒬_l(h), which has exactly l entries. |
 
 ## Resolved in GP v0.8.1
 
@@ -100,6 +104,7 @@ These cases have no test vector, so the readings above are untested:
 | 24 | Core statistics π_C, and the refinement and accumulation parts of π_S, in the statistics and preimages suites. They are covered by the reports and accumulate suites. |
 | 29 | Ed25519 verification is a parameter of the model, so the disputes, assurances and reports vectors' signatures are not verified; the runner rejects all of them exactly when a vector expects `bad_signature`. |
 | 32 | The lookup-anchor conditions of §11.4.1 (x_t ≥ H_T − 𝖫, and h, h' in the ancestor set A): the reports vectors carry no ancestor set. (Master after v0.8.0 adds `lookup_anchor_not_recent`; on its tiny vector see the table above.) |
+| v0.8.1-A26 | A disputes extrinsic with more than 𝖭_V verdicts or more than 𝖭_O culprits or faults. |
 
 ## Bootstrap service binary
 

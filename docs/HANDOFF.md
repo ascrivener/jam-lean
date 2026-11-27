@@ -59,18 +59,21 @@ jam-lean parent session is archived.
   the API, status block, printed equation numbers, roadmap §4–§19 + App. A–H), #296 HANDOFF (crypto),
   #299/#301 docstring math as `$…$` LaTeX (rendered by KaTeX in the book, MathJax in /api/).
   Target pin: jam-lean-target #51 (58d50d9), #52 (0539451).
-- **Docs site announcement (2026-11-27):** an independent review (archived child) passed the 2-chapter
-  pilot, but Adam wants the book COMPLETE first: a chapter for everything modelled. Six writer
-  children (tag jam-lean) are writing them, each owning only docs/site/Companion/<Name>.lean plus its
-  include/roadmap lines: §3+§4–5+§7+§8 (session_01FAPLscZUCC1mbJ2HNugP9R); §9+§12
-  (session_01FAPLseHhUpiPuMxoV2BZn6, also fixing the model: a new-service index collision in Δ_*
-  makes the block invalid, GP v0.8.1 §12.2, Adam agreed); §10+§11+§13+App F
-  (session_01FAPLsayU29dVSvb32QyK2m); §14+§17+§19 (session_01FAPLsaZkX128CkuJfQXRko); App A (owns
-  Companion/PVM.lean) + App B (session_01FAPLsb9BRWF3Bn4MZsGEun); App C+D+E+G+H
-  (session_01FAPLseAg44xScxbxwHaDc1). Then: docs child updates status blocks/intro/README line and does
-  a full-site pass; an independent accuracy review of all chapters; then Adam posts to the JAM Matrix
-  channel himself (draft in chat: what it is, v0.8.0 vectors, proved fast paths, not a node / not
-  audited, issues link; no "verified", no other implementation named).
+- **Companion book (2026-11-27, done):** every GP v0.8.1 section has a chapter (§3–§19, App A–H; §15/§16/§18
+  are bridge chapters, #326). Written by six writer children, independently reviewed in three rounds
+  (all chapters PASS, reviewer sign-off). Model fixes found while writing: #311 (new-service index
+  conflict in Δ* makes the block invalid, §12.2) and #316 (eq. 10.2 length bounds); target pins #53/#54/#55.
+  Notes added: A26–A33, A35–A36, A40–A47, A50–A54, A60; A34 withdrawn (paper settles v/3 via 𝕍).
+  Infrastructure: GP macro table (#319, scripts/gen_macros.py), notation deny-list, citation check, chapter
+  map + reminder, book build + link check on PRs (#322/#323), paper references as text from gp-labels.json
+  (no links: Adam doesn't want to depend on any external reader; maybe our own reader later), equations
+  pulled from the paper's TeX ({gpeq}, #328) with fingerprinted numbers ({eq}) and {transcribed}
+  exceptions, long quotes collapsed, "quote, don't just link" rule (#327). Announcement: Adam decides
+  when (draft given in chat; don't hold work for it).
+- **In flight (docs child session_01FAPLsaPzPTn9T3iJgCH8tS):** #327/#328 merging, then the "Show/Hide all
+  Lean" toggle, then dark mode. Reviewer session_01FAPLsZskwqkqNyZCX21Z5J spot-checks #327/#328 after deploy.
+  Later/optional: Beefy commitment message (§18) model, theorems for Δ₊/Δ*/fuel bounds, §17↔§10
+  judgment/vote lemma, asking Fluffy Labs for permalinks (Adam's call), printable PDF of the companion.
 - **Adam's decisions (2026-11-27, later):** defer the BLS12-381 Mathlib phase (above); disclosure option
   (b): the site, docstrings and README link only to the paper-readings sections of
   `docs/upstream-candidates.md` (`#gray-paper-issues`, `#paper-and-vectors`), never the whole file or
@@ -78,9 +81,8 @@ jam-lean parent session is archived.
   (Findings) and `docs/bootstrap-target.md` (Quirks) stay as they are ("no"); names in the book link
   to the API; docstring math is `$…$` LaTeX repo-wide (portability: `[\![…]\!]` not `\llbracket`,
   `\ast` not `*`); no Lean renaming to paper symbols.
-- **In flight:** docs child session_01FAPLsaPzPTn9T3iJgCH8tS (owns site infrastructure): docstring-math
-  pass step 2 (PVM #301 merged, JAM #303, then JamCrypto + site prose), a gen_constants.py macro-expansion
-  fix, and a v0.8.1 notation-alignment pass over docstrings (ρ^†/ρ^‡, ℂ/𝕎/𝔼/ℝ, H_T/H_I, §17.2, …). One jam-lean-target pin bump when the pass finishes (text-only).
+- **Docstrings:** math as $…$ LaTeX repo-wide (#301/#303/#304), aligned to v0.8.1 letters (#312), personal
+  names/dates removed from public docstrings, Constants \ref resolved (#317). One jam-lean-target pin bump when the pass finishes (text-only).
   Superseded crypto branches left on origin (jamcrypto-ring/-h2c/-bls/-fast-field, handoff-bls-deferred):
   delete only with Adam's OK.
 

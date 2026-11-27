@@ -25,6 +25,16 @@ file := "codec"
 
 *In the paper:* {gpchapter}`sec:serialization`.
 
+*In brief.* Whenever the protocol hashes, signs or stores a value, or hands one to a PVM program, it
+first turns the value into a sequence of octets, and every node must produce exactly the same
+octets. Appendix C defines that encoding and its inverse, designed so that each sequence of octets
+encodes exactly one value. It builds up from a few rules: an octet sequence encodes as itself, a
+tuple as its parts one after another, a natural number in one to nine octets (smaller numbers take
+fewer), and a sequence of varying length as its length followed by its items. From these it encodes
+the header, the block and the work-package family ({ref "work"}[§14]); the layout of the state for
+Merklization is in {ref "statemerkle"}[Appendix D]. For example, a natural number below 128 encodes
+as the single octet holding it.
+
 Appendix C of GP v0.8.1 defines $`\mathcal{E}`, the function that turns a term into a sequence of
 octets, and its inverse $`\mathcal{E}^{-1}`. The paper uses $`\mathcal{E}` wherever a term is hashed,
 signed, stored in the state or passed to the PVM. The appendix has two parts: the encodings of the

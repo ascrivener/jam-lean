@@ -20,6 +20,16 @@ file := "shuffle"
 
 *In the paper:* {gpchapter}`sec:shuffle`.
 
+*In brief.* Some parts of the protocol need an order that is fixed by entropy rather than chosen by
+anyone, and that every node can recompute: which core each validator guarantees for
+({ref "reports-assignments"}[§11]), and which reports a validator audits ({ref "auditing"}[§17]).
+Appendix F provides it, a Fisher–Yates shuffle: given a sequence and some entropy, it returns the
+same elements in an order that depends only on the entropy. For the guarantor assignments, the
+sequence lists each active core's index three times, one entry per validator, and is shuffled with
+the epoch's entropy from {ref "safrole"}[§6] (and then rotated every ten timeslots). The entropy can
+be given as a sequence of numbers or as a 32-octet hash, which is stretched into numbers by hashing
+it with a counter.
+
 The paper uses a Fisher–Yates shuffle $`\mathcal{F}` wherever it needs a random order: for the
 guarantor assignments of §11.3 ({ref "reports-assignments"}[chapter]) it shuffles the core indices $`[\lfloor i/3 \rfloor \mid i \mathrel{\mathrlap{<}{-}} \mathbb{N}_v]`, one per validator, and
 for the selection of reports to audit in {ref "auditing"}[§17] it shuffles reports. §3.7.5 introduces it: it takes a sequence and some entropy, and returns

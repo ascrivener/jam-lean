@@ -583,7 +583,7 @@ theorem toView_ofView (v : View) : toView (ofView v) (length_ofView v) = v := by
   · rw [show 208 = (b.toList ++ e.toList ++ l.toList).length by simp, ← List.append_assoc,
       ← List.append_assoc, List.drop_left, List.take_of_length_le (by simp)]
 
-/-- $\mathbb{K}_0$ is well-formed. -/
+/-- $\nullvalkey$ is well-formed. -/
 @[simp] theorem length_null : null.length = 336 := by
   show nullValidatorKey.length = 336
   simp only [nullValidatorKey, List.length_append, List.length_replicate, keySize, nullEdKey,

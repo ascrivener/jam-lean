@@ -163,7 +163,8 @@ def accumulated (ξ : List OctetSet) : List UInt8 := seq hashSet ξ
 /-- $C(16)$: $\mathcal{E}(\updownarrow[(\mathcal{E}_4(s), \mathcal{E}(h)) \mid (s, h) \in \theta])$. -/
 def lastAccOut (θ : List (Nat × List UInt8)) : List UInt8 := varSeq (fun (s, h) => fixed 4 s ++ h) θ
 
-/-- $C(255, s)$: $\mathcal{E}(0, a_c, \mathcal{E}_4(a_u, a'_u), \mathcal{E}_8(a_b, a'_b, a_g, a_m, a_o, a_f)) \frown \mathcal{E}_4(a_i, a_r, a_a, a_p)$,
+/-- $C(255, s)$:
+    $$\mathcal{E}(0, a_c, \mathcal{E}_4(a_u, a'_u), \mathcal{E}_8(a_b, a'_b, a_g, a_m, a_o, a_f)) \frown \mathcal{E}_4(a_i, a_r, a_a, a_p)$$
     with $a'_u$ the supervisor's creation slot and $a'_b$ the supervisor balance (GP v0.8.1
     eq. `serialization`, $C(255, s)$). -/
 def accountInfo (a : ServiceAccount) : List UInt8 :=

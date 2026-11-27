@@ -9,7 +9,7 @@ import JAM.Crypto
 The disputes state $\psi = (\psi_G, \psi_B, \psi_W, \psi_O)$ (eq. `disputesspec`) and its transition under the
 disputes extrinsic $\mathbf{E}_D = (\mathbf{E}_V, \mathbf{E}_C, \mathbf{E}_F)$ (eq. `disputesextrinsics`): the validity conditions on
 verdicts, culprits and faults, the verdict sequence $\mathbf{v}$ (eq. `verdicts`), the cleared availability
-assignments $\rho^\dagger$ (eq. `removenonpositive`), $\psi'$ (eqs. `goodsetdef`–`offendersdef`) and the offenders
+assignments $\availassignmentspostjudgment$ (eq. `removenonpositive`), $\psi'$ (eqs. `goodsetdef`–`offendersdef`) and the offenders
 marker $\mathbf{H}_O$ (§10.3).
 
 Signatures are checked with `Crypto.edVerify`. The validator sets $\kappa$ and $\lambda$ enter only through their
@@ -111,7 +111,7 @@ structure DisputesInput where
   /-- $(\lambda_v)_e$, the previous epoch's Ed25519 keys. -/
   previousEd : List (List UInt8)
 
-/-- The posterior of the disputes transition: $\psi'$, $\rho^\dagger$ and the offenders marker $\mathbf{H}_O$. -/
+/-- The posterior of the disputes transition: $\psi'$, $\availassignmentspostjudgment$ and the offenders marker $\mathbf{H}_O$. -/
 structure DisputesOutput where
   state : DisputesState
   assignments : AvailAssignments
@@ -158,7 +158,7 @@ def assimilate (ψ : DisputesState) (verdicts : List (List UInt8 × Outcome)) : 
     | .bad => { s with bad := s.bad.insert r }
     | .wonky => { s with wonky := s.wonky.insert r }
 
-/-- $\rho^\dagger$ (GP eq. `removenonpositive`): clear each core whose assigned report's hash
+/-- $\availassignmentspostjudgment$ (GP eq. `removenonpositive`): clear each core whose assigned report's hash
     $\mathcal{H}((\rho[c]_g)_r)$ has a bad or wonky verdict. -/
 def clearNonPositive (ρ : AvailAssignments) (verdicts : List (List UInt8 × Outcome)) :
     AvailAssignments :=
@@ -168,15 +168,15 @@ def clearNonPositive (ρ : AvailAssignments) (verdicts : List (List UInt8 × Out
       let h := (Blake2b.hash256 ⟨a.guarantee.report.encode.toArray⟩).toList
       if verdicts.any fun (r, o) => r == h && (o == .bad || o == .wonky) then none else some a
 
-/-- The disputes transition (GP §10): check $\mathbf{E}_D$ against $\tau$, $\kappa$, $\lambda$ and $\psi$, and give $\psi'$, $\rho^\dagger$ and $\mathbf{H}_O$.
+/-- The disputes transition (GP §10): check $\mathbf{E}_D$ against $\tau$, $\kappa$, $\lambda$ and $\psi$, and give $\psi'$, $\availassignmentspostjudgment$ and $\mathbf{H}_O$.
 
     * The length bounds of eq. (10.2), checked first: $|\mathbf{E}_V| \le \mathsf{N}_V$, $|\mathbf{E}_C| \le \mathsf{N}_O$ and
       $|\mathbf{E}_F| \le \mathsf{N}_O$ (`Constants.Cmaxextrinsicverdicts`, `Constants.Cmaxextrinsicoffenses`).
     * Verdicts are ordered and unique by report hash, and each satisfies `checkVerdict`.
     * Culprits are ordered and unique by key; each $(r, f, s)$ has $r \in \psi'_B$, $f \in \mathbf{k}$ and
-      $s \in \bar{\mathbb{V}}_f\langle \mathsf{X}_G \frown r \rangle$.
+      $s \in \edsignaturebase_f\langle \mathsf{X}_G \frown r \rangle$.
     * Faults are ordered and unique by key; each $(r, v, f, s)$ has $r \in \psi'_B \Leftrightarrow r \notin \psi'_G \Leftrightarrow v$ (read as
-      a chain of two equivalences), $f \in \mathbf{k}$ and $s \in \bar{\mathbb{V}}_f\langle \mathsf{X}_v \frown r \rangle$.
+      a chain of two equivalences), $f \in \mathbf{k}$ and $s \in \edsignaturebase_f\langle \mathsf{X}_v \frown r \rangle$.
     * Every good verdict has a fault for its report.
 
     $\mathbf{k} = \{i_e \mid i \in \lambda \cup \kappa\} \setminus \psi_O$. A key outside it is reported as already an offender when it is

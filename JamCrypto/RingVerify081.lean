@@ -4,7 +4,7 @@ import JamCrypto.PedersenVrf
 /-!
 # Ring VRF verification for GP v0.8.1 (VRF spec Draft 35 §5)
 
-$x \in \mathring{\mathbb{V}}{}_r^{m}\langle c\rangle$ under GP v0.8.1: the 784-octet
+$x \in \bsringproofbase{}_r^{m}\langle c\rangle$ under GP v0.8.1: the 784-octet
 $x$ is the output point $O$ (32 octets), a Draft 35 Pedersen VRF proof (160 octets,
 `Bandersnatch.Pedersen`) and a ring proof (592 octets). Verification (§5.2) is Pedersen verify for
 $(I, O) = (\text{hash}\_\text{to}\_\text{curve}(c), O)$ and additional data $m$, then the ring proof for the key
@@ -22,7 +22,7 @@ passes the ring size of the fixed domain 2048 of Draft 35 §5 (`Ring.domain081`)
 
 namespace JamCrypto.Ring
 
-/-- $x \in \mathring{\mathbb{V}}{}_r^{m}\langle c\rangle$ (GP v0.8.1) for rings of up to
+/-- $x \in \bsringproofbase{}_r^{m}\langle c\rangle$ (GP v0.8.1) for rings of up to
     `ringSize` keys, under the reading `rd`. -/
 def verify081 (srs : Srs) (ringSize : Nat) (root ctx msg proof : List UInt8)
     (rd : Reading := .prose) : Bool := Id.run do

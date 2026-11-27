@@ -4,7 +4,7 @@ import JAM.Sha512
 /-!
 # Ed25519 signature verification (RFC 8032 §5.1)
 
-$s \in \bar{\mathbb{V}}_k\langle m \rangle$ (GP v0.8.0 §3.8.2) is "a valid Ed25519 signature,
+$s \in \edsignaturebase_k\langle m \rangle$ (GP v0.8.0 §3.8.2) is "a valid Ed25519 signature,
 defined by RFC 8032". RFC 8032 leaves open whether the verification equation is multiplied by the
 cofactor 8, and implementations differ in whether they accept non-canonical point encodings. Those
 choices are the `Rules`. The model uses `zip215` (ZIP 215: any encoding of a curve point, $S < L$,
@@ -78,7 +78,7 @@ def decode (rules : Rules) (bs : List UInt8) : Option Point := do
   let x := if x % 2 != sign then subMod 0 x p else x
   return curve.ofAffine x y
 
-/-- $s \in \bar{\mathbb{V}}_k\langle m \rangle$ under the given rules. -/
+/-- $s \in \edsignaturebase_k\langle m \rangle$ under the given rules. -/
 def verifyWith (rules : Rules) (key msg sig : List UInt8) : Bool := Id.run do
   if key.length != 32 || sig.length != 64 then return false
   let Rb := sig.take 32
@@ -93,7 +93,7 @@ def verifyWith (rules : Rules) (key msg sig : List UInt8) : Bool := Id.run do
   else
     return E.eq (E.smul S B) (E.add R (E.smul k A))
 
-/-- $s \in \bar{\mathbb{V}}_k\langle m \rangle$ (GP §3.8.2) under ZIP 215. -/
+/-- $s \in \edsignaturebase_k\langle m \rangle$ (GP §3.8.2) under ZIP 215. -/
 def verify (key msg sig : List UInt8) : Bool := verifyWith zip215 key msg sig
 
 end JamCrypto.Ed25519

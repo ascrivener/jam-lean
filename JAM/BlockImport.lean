@@ -12,12 +12,12 @@ $\Upsilon$ is the composition of the section-level transitions along the depende
 `transitionfunctioncomposition`:
 
 1. $\tau' = \mathbf{H}_T$ (eq. `timeslotindex`) and $\beta_H^\dagger$ (eq. `betadagger`).
-2. $\psi'$ and $\rho^\dagger$ from $\mathbf{E}_D$ and $\psi$, $\rho$ (§10).
+2. $\psi'$ and $\availassignmentspostjudgment$ from $\mathbf{E}_D$ and $\psi$, $\rho$ (§10).
 3. $\gamma'$, $\eta'$, $\kappa'$, $\lambda'$ from $\mathbf{H}$, $\tau$, $\mathbf{E}_T$, $\gamma$,
    $\iota$, $\eta$ and $\psi'_O$ (§6).
-4. $\rho^\ddagger$ and the newly available reports $\mathbf{R}$ from $\mathbf{E}_A$ and $\rho^\dagger$
+4. $\availassignmentspostassurances$ and the newly available reports $\mathbf{R}$ from $\mathbf{E}_A$ and $\availassignmentspostjudgment$
    (§11.2).
-5. $\rho'$ from $\mathbf{E}_G$, $\rho^\ddagger$, $\kappa'$, $\lambda'$, $\eta'$, $\psi'_O$ and $\tau'$
+5. $\rho'$ from $\mathbf{E}_G$, $\availassignmentspostassurances$, $\kappa'$, $\lambda'$, $\eta'$, $\psi'_O$ and $\tau'$
    (§11.3–§11.5).
 6. $\omega'$, $\xi'$, $\delta^\ddagger$, $\chi'$, $\iota'$, $\phi'$, $\theta'$ and the accumulation
    statistics from $\mathbf{R}$ (§12).
@@ -72,9 +72,9 @@ open Codec in
     \mathcal{E}_D(\mathbf{E}_D)]$ of GP eq. `extrinsichash`, with
     $\mathbf{p} = \mathcal{E}(\updownarrow[(\mathcal{E}_4(s), \mathcal{H}(\mathbf{d})) \mid
     (s, \mathbf{d}) \leftarrow \mathbf{E}_P])$ and
-    $\mathbf{g} = \mathcal{E}(\updownarrow[(\mathcal{H}(\mathbf{r}), \mathcal{E}_4(t), \mathcal{E}_C(a)) \mid
+    $\mathbf{g} = \mathcal{E}(\updownarrow[(\mathcal{H}(\mathbf{r}), \mathcal{E}_4(t), \encodecredentials{a}) \mid
     (\mathbf{r}, t, a) \leftarrow \mathbf{E}_G])$, where
-    $\mathcal{E}_C(a) = \mathcal{E}(\updownarrow[(\mathcal{E}_2(v), s) \mid (v, s) \leftarrow a])$ is the
+    $\encodecredentials{a} = \mathcal{E}(\updownarrow[(\mathcal{E}_2(v), s) \mid (v, s) \leftarrow a])$ is the
     credential encoding of Appendix C (GP v0.8.1 eq. 5.7; v0.8.0 wrote $\updownarrow a$ there, and
     #560 introduced $\mathcal{E}_C$; the model already encoded $v$ with $\mathcal{E}_2$). -/
 def Extrinsic.hashParts (x : Extrinsic) : List (List UInt8) :=

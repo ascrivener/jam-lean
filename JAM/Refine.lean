@@ -298,7 +298,7 @@ structure Env where
   code : ByteArray
   /-- $\varsigma$, the export offset -/
   exportOffset : Nat
-  /-- what `fetch` sees: $p$, $\mathbb{H}_0$ (32 zero octets), $\mathbf{r}$, $i$, $\bar{\imath}$, $\bar{x}$ -/
+  /-- what `fetch` sees: $p$, $\zerohash$ (32 zero octets), $\mathbf{r}$, $i$, $\bar{\imath}$, $\bar{x}$ -/
   fetch : FetchContext
 
 /-- The unknown-host-call case (GP v0.8.1 eqs. `refinemutator`, `isauthorizedmutator`):
@@ -307,7 +307,7 @@ def unknown {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (x : X) : HostOut X
   if gas < Constants.Cgasunknown then ⟨.oog, 0, setR7 ω WHAT, μ, x⟩
   else ⟨.cont, gas - Constants.Cgasunknown, setR7 ω WHAT, μ, x⟩
 
-/-- $F \in \Omega\langle (\langle \mathbb{N} \to \text{instance} \rangle, \langle \mathbb{N} \to \mathbb{B} \rangle, [\![ \mathbb{J} ]\!]) \rangle$ (GP v0.8.1 eq. `refinemutator`): dispatch on the
+/-- $F \in \contextmutator{(\langle \mathbb{N} \to \text{instance} \rangle, \langle \mathbb{N} \to \mathbb{B} \rangle, [\![ \segment ]\!])}$ (GP v0.8.1 eq. `refinemutator`): dispatch on the
     host-call id. v0.8.1 inserts `compile` = 9 and renumbers `machine` … `expunge` to 10 … 15 (#530). -/
 def dispatch (env : Env) (n gas : Nat) (ω : Regs) (μ : Memory) (c : RefineCtx) : HostOut RefineCtx :=
   match n with

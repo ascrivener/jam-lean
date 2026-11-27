@@ -136,12 +136,12 @@ def storageWrite (a : ServiceAccount) (k v : List UInt8) : ServiceAccount :=
   else { a with entries := a.entries.insert (storageKey k) v, items := i0 + 1,
                 octets := o0 + (34 + k.length + v.length) }
 
-/-- The bound of $\mathbb{N}_P$, the request lengths: $\mathbb{N}_P = \mathbb{N}_{2^{32} - 2}$, below the state-key discriminators
-    $2^{32} - 2$ and $2^{32} - 1$ (GP v0.8.1 eq. `serviceaccount` and its definition of $\mathbb{N}_P$, GP #542). -/
+/-- The bound of $\preimagelen$, the request lengths: $\preimagelen = \mathbb{N}_{2^{32} - 2}$, below the state-key discriminators
+    $2^{32} - 2$ and $2^{32} - 1$ (GP v0.8.1 eq. `serviceaccount` and its definition of $\preimagelen$, GP #542). -/
 def requestLenBound : Nat := 2 ^ 32 - 2
 
-/-- $\mathbf{l}[h, z]$: the request history of $(h, z)$, if any. The keys of $\mathbf{l}$ are $(\mathbb{H}, \mathbb{N}_P)$
-    (`requestLenBound`, GP v0.8.1 eq. `serviceaccount`), so $z \notin \mathbb{N}_P$ has none. A stored value that does not
+/-- $\mathbf{l}[h, z]$: the request history of $(h, z)$, if any. The keys of $\mathbf{l}$ are $(\mathbb{H}, \preimagelen)$
+    (`requestLenBound`, GP v0.8.1 eq. `serviceaccount`), so $z \notin \preimagelen$ has none. A stored value that does not
     decode as $[\![ \mathbb{N}_T ]\!]_{:3}$ (only a state not built by the model can hold one) reads as none, by
     design (`docs/storage-key-design.md`). -/
 def requestGet (a : ServiceAccount) (h : List UInt8) (z : Nat) : Option (List Nat) :=
@@ -236,7 +236,7 @@ theorem storageGet_write_other (a : ServiceAccount) (k k' v : List UInt8)
     simp [Std.ExtTreeMap.get?_eq_getElem?, Std.ExtTreeMap.getElem?_erase,
       Std.ExtTreeMap.getElem?_insert, h]
 
-/-- Setting $(h, z)$ to a history in $[\![ \mathbb{N}_T ]\!]_{:3}$, with $z \in \mathbb{N}_P$, reads back that history. -/
+/-- Setting $(h, z)$ to a history in $[\![ \mathbb{N}_T ]\!]_{:3}$, with $z \in \preimagelen$, reads back that history. -/
 theorem requestGet_set_same (a : ServiceAccount) (h : List UInt8) (z : Nat) (t : List Nat)
     (hz : z < requestLenBound) (hl : t.length ≤ 3) (hx : ∀ x ∈ t, x < 2 ^ 32) :
     (a.requestSet h z t).requestGet h z = some t := by

@@ -16,7 +16,7 @@ open Codec
 /-- A service identifier $\mathbb{N}_S = \mathbb{N}_{2^{32}}$. -/
 abbrev ServiceId := Nat
 
-/-- The refinement context $\mathbb{C}$ (GP eq. `workcontext`). -/
+/-- The refinement context $\workcontext$ (GP eq. `workcontext`). -/
 structure RefineContext where
   /-- $a$, the anchor header hash -/
   anchorHash : Hash
@@ -35,7 +35,7 @@ structure RefineContext where
   /-- $\mathbf{p}$, the prerequisite work-package hashes, a set $[\![ \mathbb{H} ]\!]$ -/
   prerequisites : OctetSet := ∅
 
-/-- $\mathcal{E}(x \in \mathbb{C})$ (GP Appendix C). -/
+/-- $\mathcal{E}(x \in \workcontext)$ (GP Appendix C). -/
 def RefineContext.encode (x : RefineContext) : List UInt8 :=
   blob x.anchorHash ++ fixed 4 x.anchorSlot ++ blob x.anchorStateRoot ++ blob x.anchorAccOutLog ++
     blob x.lookupAnchorHash ++ fixed 4 x.lookupAnchorSlot ++ blob x.lookupAnchorStateRoot ++
@@ -53,7 +53,7 @@ def encodeImport : SegmentRoot × Nat → List UInt8
   | (.root h, i) => blob h ++ fixed 2 i
   | (.package r, i) => blob r ++ fixed 2 (i + 2 ^ 15)
 
-/-- A work item $\mathbb{W}$ (GP eq. `workitem`). -/
+/-- A work item $\workitem$ (GP eq. `workitem`). -/
 structure WorkItem where
   /-- $s$, the service -/
   service : ServiceId
@@ -72,7 +72,7 @@ structure WorkItem where
   /-- $\mathbf{x}$, the extrinsics (hash, length) -/
   extrinsics : List (Hash × Nat)
 
-/-- $\mathcal{E}(w \in \mathbb{W})$ (GP Appendix C). -/
+/-- $\mathcal{E}(w \in \workitem)$ (GP Appendix C). -/
 def WorkItem.encode (w : WorkItem) : List UInt8 :=
   fixed 4 w.service ++ blob w.codeHash ++ fixed 8 w.refineGasLimit ++ fixed 8 w.accumulateGasLimit ++
     fixed 2 w.exportCount ++ var w.payload ++ varSeq encodeImport w.importSegments ++
@@ -168,7 +168,7 @@ def AvailabilitySpec.encode (s : AvailabilitySpec) : List UInt8 :=
   blob s.packageHash ++ fixed 4 s.bundleLength ++ blob s.erasureRoot ++ fixed 2 s.erasureShards ++
     blob s.segmentRoot ++ fixed 2 s.segmentCount
 
-/-- A work report $\mathbb{R} = (\mathbf{s}, \mathbf{c}, c, a, g, \mathbf{t}, \mathbf{l}, \mathbf{d})$ (GP v0.8.1 eq. `workreport`; #537 moved
+/-- A work report $\workreport = (\mathbf{s}, \mathbf{c}, c, a, g, \mathbf{t}, \mathbf{l}, \mathbf{d})$ (GP v0.8.1 eq. `workreport`; #537 moved
     $g$ to fifth place, matching Appendix C, where v0.8.0's tuple had it last). -/
 structure WorkReport where
   /-- $\mathbf{s}$ -/
@@ -188,7 +188,7 @@ structure WorkReport where
   /-- $\mathbf{d}$, the work digests -/
   digests : List WorkDigest
 
-/-- $\mathcal{E}(r \in \mathbb{R})$ (GP Appendix C). -/
+/-- $\mathcal{E}(r \in \workreport)$ (GP Appendix C). -/
 def WorkReport.encode (r : WorkReport) : List UInt8 :=
   r.spec.encode ++ r.context.encode ++ nat r.core ++ blob r.authorizerHash ++ nat r.authGasUsed ++
     var r.authTrace ++ varHashDict r.segmentRootLookup ++ varSeq WorkDigest.encode r.digests
@@ -222,7 +222,7 @@ def OperandTuple.encode (o : OperandTuple) : List UInt8 :=
   nat 0 ++ blob o.packageHash ++ blob o.segmentRoot ++ blob o.authorizer ++ blob o.payloadHash ++
     nat o.gasLimit ++ o.result.encode ++ var o.authTrace
 
-/-- A deferred transfer $\text{𝕥}$ (GP eq. `defxfer`). -/
+/-- A deferred transfer $\defxfer$ (GP eq. `defxfer`). -/
 structure DeferredTransfer where
   source : ServiceId
   dest : ServiceId
@@ -234,7 +234,7 @@ structure DeferredTransfer where
   memo : Blob
   gas : Nat
 
-/-- $\mathcal{E}(x \in \text{𝕥}) = \mathcal{E}(1, \mathcal{E}_4(s), \mathcal{E}_4(d), x_u,
+/-- $\mathcal{E}(x \in \defxfer) = \mathcal{E}(1, \mathcal{E}_4(s), \mathcal{E}_4(d), x_u,
     \mathcal{E}_8(a), m, \mathcal{E}_8(g))$ with $x_u$ the destination-supervisor flag (GP v0.8.1
     Appendix C, GP #539). -/
 def DeferredTransfer.encode (x : DeferredTransfer) : List UInt8 :=
@@ -242,7 +242,7 @@ def DeferredTransfer.encode (x : DeferredTransfer) : List UInt8 :=
     fixed 8 x.amount ++ blob x.memo ++ fixed 8 x.gas
 
 /-- An accumulation input: an operand tuple or a deferred transfer (GP §12, the union $\mathbb{U}
-    \cup \text{𝕥}$). -/
+    \cup \defxfer$). -/
 inductive AccumulateInput where
   | operand (o : OperandTuple)
   | transfer (x : DeferredTransfer)

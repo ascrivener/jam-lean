@@ -33,7 +33,7 @@ namespace JAM
 abbrev EdKey := List UInt8
 
 /-- $\Phi(\mathbf{k})$ (GP v0.8.1 eq. `blacklistfilter`): the keys of offenders in $\psi'_O$
-    replaced by the null key $\mathbb{K}_0$ (eq. `nullvalkey`). Only the Ed25519 part is
+    replaced by the null key $\nullvalkey$ (eq. `nullvalkey`). Only the Ed25519 part is
     kept here: `nullEdKey` = [2, 0, …]. -/
 def blacklist (offenders : OctetSet) (k : List EdKey) : List EdKey :=
   k.map fun e => if offenders.contains e then nullEdKey else e
@@ -191,7 +191,7 @@ def checkReportLoad (params : Params) (r : WorkReport) : Except ReportsError Uni
     index below $\mathsf{C}$; $2 \leq |\mathbf{a}| \leq 3$ and ordered by validator index; $t$ no later
     than $\tau'$ and no earlier than the previous rotation; for each $(v, s)$: $v < |\mathbf{k}|$,
     $\mathbf{c}_v = r_c$, $r_c < |\kappa'|/3$, the key not nulled by $\Phi$, and
-    $s \in \bar{\mathbb{V}}_{(\mathbf{k}_v)_e}\langle \mathsf{X}_G \frown \mathcal{H}(r) \rangle$.
+    $s \in \edsignaturebase_{(\mathbf{k}_v)_e}\langle \mathsf{X}_G \frown \mathcal{H}(r) \rangle$.
     $(\mathbf{c}, \mathbf{k})$ is $\mathbf{M}$ when $t$ is in $\tau'$'s rotation and
     $\mathbf{M}^{\ast}$ otherwise. Returns the signers' keys. -/
 def checkGuarantee (params : Params) (crypto : Crypto) (i : ReportsInput) (g : Guarantee) :

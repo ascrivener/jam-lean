@@ -5,7 +5,7 @@ import JamCrypto.Reading
 # Bandersnatch Thin VRF (GP v0.8.1 Appendix G)
 
 GP v0.8.1 (GP #550) defines the singly-contextualized Bandersnatch signatures
-$\overset{\backsim}{\mathbb{V}}{}_k^{m}\langle c\rangle$ under the **Thin VRF** of the Bandersnatch
+$\bssignaturebase{}_k^{m}\langle c\rangle$ under the **Thin VRF** of the Bandersnatch
 VRF-AD specification (Galassi–Hosseini, **Draft 35**, 12 Aug 2026,
 github.com/davxy/bandersnatch-vrf-spec commit 181aba2), suite `Bandersnatch-SHA512-ELL2-v1`. This
 file follows that draft; section numbers below are its own. The v0.8.0 IETF VRF
@@ -30,7 +30,7 @@ file follows that draft; section numbers below are its own. The v0.8.0 IETF VRF
   \text{challenge}([R], T)$ (§1.6.7).
 
 **Signature encoding (our reading of GP v0.8.1 and Draft 35).** GP gives
-$\overset{\backsim}{\mathbb{V}}$ as 96-octet strings and reads $\mathcal{Y}$ from the signature alone, but the
+$\bssignaturebase$ as 96-octet strings and reads $\mathcal{Y}$ from the signature alone, but the
 draft encodes only the proof $(R, s)$, 64 octets. We take the 96-octet signature to be
 $\text{enc}\_\text{point}(O) \frown \text{enc}\_\text{point}(R) \frown \text{enc}\_\text{scalar}(s)$, the output point
 first as in the v0.8.0 IETF signature ($O \frown c \frown s$) and the ring VRF proof ($O \frown
@@ -180,7 +180,7 @@ def proveParts (x : Nat) (ctx ad : List UInt8) (rd : Reading := .prose) :
   let c := challenge R t
   return (O, R, (k + c * x) % r)
 
-/-- $x \in \overset{\backsim}{\mathbb{V}}{}_k^{m}\langle c\rangle$ (GP v0.8.1): the 96-octet `sig` is a
+/-- $x \in \bssignaturebase{}_k^{m}\langle c\rangle$ (GP v0.8.1): the 96-octet `sig` is a
     valid Thin VRF signature under the key `key` for VRF input data `ctx` and additional data `msg`
     (§3.2), under the reading `rd`. -/
 def verify (key ctx msg sig : List UInt8) (rd : Reading := .prose) : Bool := Id.run do

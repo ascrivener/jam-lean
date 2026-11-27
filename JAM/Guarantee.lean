@@ -39,9 +39,9 @@ The hash function $H$ is a parameter of the pure parts ($B$'s checks, $A$), as i
 paper's $H$ is Blake2b, and $\Xi$ fixes it to `Blake2b.hash256`, as $\Psi_R$ does.
 
 Main results: `length_segmentsClub` ($|\mathbf{s}^\clubsuit| = v$), `segmentsClub_nil` (no exports: every item of
-$\mathbf{s}^\clubsuit$ is $\mathbb{H}_0$), `availabilitySpec_segmentRoot` (the segment root is $\mathcal{M}(\mathbf{s})$), `length_exports_itemResult`
+$\mathbf{s}^\clubsuit$ is $\zerohash$), `availabilitySpec_segmentRoot` (the segment root is $\mathcal{M}(\mathbf{s})$), `length_exports_itemResult`
 and `refineItems_exports` ($I$ exports exactly $w_e$ segments on every branch),
-`computeReport_noExports` ($\Xi$ succeeds with the $\mathbb{H}_0$ columns when nothing is exported), and
+`computeReport_noExports` ($\Xi$ succeeds with the $\zerohash$ columns when nothing is exported), and
 `checkBundle_packageData` (the checks accept the bundle built from genuine data).
 -/
 
@@ -176,15 +176,15 @@ def bundleOf (H : ByteArray → ByteArray) (src : DataSource) (l : OctetDict) (p
 def sizedTranspose {α : Type} (m : Nat) (d : α) (x : List (List α)) : List (List α) :=
   (List.range m).map fun i => x.map fun row => row.getD i d
 
-/-- $\mathcal{C}^v_k$ for $v$ validators on an octet list (GP v0.8.1 eq. `erasurecoding`; $k$ is read from the
-    length). `[]` if the length is not a multiple of $2 \cdot \mathcal{D}(v)$, which $A$ never asks for
+/-- $\fnerasurecode{v}{k}$ for $v$ validators on an octet list (GP v0.8.1 eq. `erasurecoding`; $k$ is read from the
+    length). `[]` if the length is not a multiple of $2 \cdot \fnecoriginalshards(v)$, which $A$ never asks for
     (`length_chunks`). -/
 def chunks (v : Nat) (b : Octets) : List Octets :=
   match Erasure.encode v ⟨b.toArray⟩ with
   | some cs => cs.map (·.toList)
   | none => []
 
-/-- $z = 2 \cdot \mathcal{D}(v)$ (GP v0.8.1 §14.4.1). -/
+/-- $z = 2 \cdot \fnecoriginalshards(v)$ (GP v0.8.1 §14.4.1). -/
 def pieceSize (v : Nat) : Nat := 2 * Erasure.originalShards v
 
 /-- $\mathbf{b}^\clubsuit = \mathcal{H}^\#(\mathcal{E}_{C_v}^{\lceil |\mathbf{b}|/z \rceil}(\mathcal{P}_z(\mathbf{b})))$ (GP v0.8.1 §14.4.1): the hash of each of the $v$
@@ -195,7 +195,7 @@ def bundleClub (H : ByteArray → ByteArray) (b : Octets) (v : Nat) : List Octet
 /-- $\mathbf{s}^\clubsuit = \mathcal{M}_B^\#({}^\text{T}_v \mathcal{E}_{C_v}^{\mathsf{W}_G/z\,\#}(\mathbf{s} \frown P(\mathbf{s})))$ (GP v0.8.1 §14.4.1, with ${}^\text{T}_v$ as GP #583
     states it): each exported segment and each paged-proof segment is coded into $v$ chunks; column
     $i$ (chunk $i$ of every segment) is Merklized with $\mathcal{M}_B$. With no exports every column is [] and its
-    root is $\mathcal{M}_B([]) = \mathbb{H}_0$ (`segmentsClub_nil`, the paper's "if no segments are exported, each item
+    root is $\mathcal{M}_B([]) = \zerohash$ (`segmentsClub_nil`, the paper's "if no segments are exported, each item
     of $\mathbf{s}^\clubsuit$ is the zero hash"). -/
 def segmentsClub (H : ByteArray → ByteArray) (s : List Octets) (v : Nat) : List Octets :=
   (sizedTranspose v [] ((s ++ pagedProofs H s).map (chunks v))).map (Merkle.root H)
@@ -221,7 +221,7 @@ structure ItemOut where
   gasUsed : Nat
   exports : List Octets
 
-/-- $[\mathbb{J}_0, \mathbb{J}_0, \dots]_{\cdots w_e}$: $w_e$ zero segments of $\mathsf{W}_G$ octets (GP v0.8.1 eq. `computereport`). -/
+/-- $[\segment_0, \segment_0, \dots]_{\cdots w_e}$: $w_e$ zero segments of $\mathsf{W}_G$ octets (GP v0.8.1 eq. `computereport`). -/
 def zeroSegments (n : Nat) : List Octets := List.replicate n (List.replicate Constants.Csegmentsize 0)
 
 /-- $I(p, j)$ given $\Psi_R$'s output $(r, \mathbf{e}, u)$ for item $m = p_w[j]$ and $z$, the trace length plus the
@@ -385,7 +385,7 @@ theorem length_segmentsClub (H : ByteArray → ByteArray) (s : List Octets) (v :
 theorem pagedProofs_nil (H : ByteArray → ByteArray) : pagedProofs H [] = [] := by
   simp [pagedProofs]
 
-/-- With no exports, every item of $\mathbf{s}^\clubsuit$ is the zero hash $\mathbb{H}_0$ (GP v0.8.1 §14.4.1, "if no segments
+/-- With no exports, every item of $\mathbf{s}^\clubsuit$ is the zero hash $\zerohash$ (GP v0.8.1 §14.4.1, "if no segments
     are exported, each item of $\mathbf{s}^\clubsuit$ is the zero hash"; GP #583). -/
 theorem segmentsClub_nil (H : ByteArray → ByteArray) (v : Nat) :
     segmentsClub H [] v = List.replicate v zeroHash := by
@@ -442,11 +442,11 @@ theorem length_flatMap_exports (wR : Nat) (refine : Nat → Nat → RefineOut)
       (items.map (·.exportCount)).sum := by
   rw [List.length_flatMap, ← refineItems_exports wR refine items t]
 
-/-- $\Xi$ succeeds with the $\mathbb{H}_0$ columns when nothing is exported (GP v0.8.1 eq. `computereport`,
+/-- $\Xi$ succeeds with the $\zerohash$ columns when nothing is exported (GP v0.8.1 eq. `computereport`,
     §14.4.1): if $\Psi_I$ gives a trace $t \in \mathbb{B}[:\mathsf{W}_R]$, $l$ has exactly the imported package hashes as keys,
     and every item has $w_e = 0$, then $\Xi$ gives a report whose availability specifier is
     $A(\mathcal{H}(p), B(p, l), [], v)$, so its segment root is $\mathcal{M}([])$ and its segment count 0, and every
-    item of the $\mathbf{s}^\clubsuit$ behind its erasure root is $\mathbb{H}_0$. -/
+    item of the $\mathbf{s}^\clubsuit$ behind its erasure root is $\zerohash$. -/
 theorem computeReport_noExports (params : Params) (d : Accounts) (p : WorkPackage) (c : Nat)
     (l : OctetDict) (v : Nat) (data : List ItemData) (t : ByteArray) (g : Nat)
     (hI : psiI params d p c = (.ok t, g)) (ht : t.size ≤ params.maxReportVarSize)

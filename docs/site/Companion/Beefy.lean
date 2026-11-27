@@ -17,6 +17,18 @@ shortTitle := "§18 Beefy"
 file := "beefy"
 %%%
 
+*In the paper:* {gpchapter}`sec:beefy`.
+
+*In brief.* Beefy lets systems outside JAM check what JAM has finalized by checking signatures. For
+each finalized block it imports, every validator signs, with the BLS part of its key, the latest
+super-peak (a single hash committing to the whole range) of the Accumulation Output Log: a Merkle
+mountain range, kept in the recent history ({ref "history"}[§7]), of the outputs that services yield
+in accumulation ({ref "accumulation"}[§12]). BLS signatures can be aggregated, so many validators'
+signatures can be combined into one concise proof of finality for a third-party system. The paper
+fixes only what is signed, and defers the signature and aggregation scheme to an external
+specification. The model has no BLS operations, so this chapter is a short map to the parts it does
+implement.
+
 §18 of GP v0.8.1 asks each validator, for every finalized block it imports, to make a BLS signature
 on the BLS12-381 curve affirming the Keccak hash of the block's most recent Beefy MMR, and to publish
 it with the signed material. These signatures can be aggregated into concise proofs of finality for

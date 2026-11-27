@@ -22,6 +22,26 @@ file := "accumulation"
 
 *In the paper:* {gpchapter}`sec:accumulation`.
 
+*In brief.* Accumulation is where finished work changes the chain's state. For each service with
+results in the newly available reports ({ref "reports"}[§11]), and for the services set to
+accumulate in every block, the chain runs the service's
+Accumulate code on chain, within a gas limit, and lets it update its storage, create services, send
+balance to other services, ask for preimages and, for privileged services, change settings such as
+the authorizer queues ({ref "authorization"}[§8]) and the queued validator keys ({ref "safrole"}[§6]).
+A report that depends on other work-packages waits in a queue until they have been accumulated, so
+dependent work runs in order. Execution goes in rounds, with the services of one round running in parallel; a
+transfer made in one round is delivered to its recipient in a later round, normally the next. At the end, the outputs that services yield feed the Accumulation
+Output Log ({ref "history"}[§7]), and the preimages supplied in the block are stored for the services
+that asked for them ({ref "accounts"}[§9]).
+
+*Key terms:*
+
+* $`\justbecameavailable`, the reports that became available in this block;
+* $`\ready`, the reports waiting for their dependencies, and $`\accumulated`, the work-packages
+  accumulated in each of the last $`\Cepochlen = 600` blocks;
+* $`\accounts`, the service accounts; $`\privileges`, the privileged services;
+* $`\lastaccout`, the outputs of this block's accumulation.
+
 Accumulation runs the on-chain _Accumulate_ code of the services that have work to do in this
 block: those with digests in the newly available reports or in queued reports whose dependencies
 are now met, the always-accumulate services with their free gas, and the recipients of deferred

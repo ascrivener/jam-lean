@@ -17,6 +17,19 @@ shortTitle := "§15 Guaranteeing"
 file := "guaranteeing"
 %%%
 
+*In the paper:* {gpchapter}`sec:guaranteeing`.
+
+*In brief.* Guaranteeing is the step in which validators vouch for a work-report before it can go on
+chain. Each active core has three validators assigned to it, its guarantors, and the assignment is
+shuffled every epoch and rotated every ten timeslots ({ref "reports-assignments"}[§11],
+{ref "shuffle"}[Appendix F]). A guarantor that receives a work-package computes its work-report as
+{ref "work"}[§14] defines, erasure-codes the package's data and distributes the chunks to the
+validators, and signs the report. A report signed by two or three of the core's guarantors can be
+put in a block's guarantees extrinsic, which {ref "reports"}[§11] checks. Signing is a commitment:
+the paper presumes that in a public system a validator that signs a report which does not faithfully
+follow from the work-package is punished severely, and auditing ({ref "auditing"}[§17]) and disputes
+({ref "disputes"}[§10]) are how such reports are caught.
+
 §15 of GP v0.8.1 describes what a guarantor does with a work-package it receives: it checks the
 package's authorization against the authorization pool of the most recent chain state, refines
 each work-item, erasure-codes the bundle and the exported data, assembles and signs a work-report,

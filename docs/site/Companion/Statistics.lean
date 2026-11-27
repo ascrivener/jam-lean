@@ -21,6 +21,24 @@ file := "statistics"
 
 *In the paper:* {gpchapter}`sec:bookkeeping`.
 
+*In brief.* JAM does not pay validators itself: rewards are left to a staking system built on top of
+it. What the chain does is keep a tally of the activity it can see on chain, so that such a system
+can act on it. For each validator it counts, over the current epoch, the blocks it produced, the
+tickets and preimages it introduced, the reports it guaranteed and the availability assurances it
+made, and it keeps the previous epoch's counts once an epoch ends. It also records, for the current
+block only, how much work each core and each service did, such as the gas used and the segments
+imported and exported. For example, the author of a block that carries three tickets is credited
+with one more block and three more tickets. The counts come from the block's contents as the earlier
+chapters process them: tickets in {ref "safrole"}[§6], guarantees and assurances in
+{ref "reports"}[§11], and accumulation and preimages in {ref "accumulation"}[§12].
+
+*Key terms:*
+
+* $`\activity`, the activity statistics: the four records together.
+* $`\valstatsaccumulator` and $`\valstatsprevious`, the validator records for the current epoch and
+  for the last one.
+* $`\corestats` and $`\servicestats`, the core and service records for the current block.
+
 The chain does not pay rewards itself, but it records what each validator did, so that a staking
 system built on top can act on it. §13 of GP v0.8.1 keeps four records in $`\pi`: per-validator
 counts for the current epoch and the last one, and per-core and per-service figures for the

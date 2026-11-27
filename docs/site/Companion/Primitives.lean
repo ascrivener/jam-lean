@@ -26,6 +26,16 @@ file := "primitives"
 
 *In the paper:* {gpchapter}`sec:notation`.
 
+*In brief.* This chapter is the toolbox. Before the paper can say anything about blocks or
+validators it fixes a common vocabulary (how it writes sets, sequences and dictionaries) and a few
+ingredients that everything else is built from. The most used are two hash functions, which turn any
+data into a short fixed-size fingerprint: Blake2b, the paper's default, which identifies blocks, code
+and work-packages by hash, and Keccak, which the paper uses where it wants compatibility with existing
+systems, such as the Accumulation Output Log of {ref "history"}[§7]. The chapter also lists the
+protocol's fixed numbers, for example 341 cores, 1023 validators and epochs of 600 six-second
+timeslots, which every later chapter uses. How data is written as octets, also basic, has its own
+chapter, {ref "codec"}[Appendix C].
+
 GP v0.8.1 §3 fixes the notation the rest of the paper uses. Most of it (sets, sequences,
 dictionaries) maps directly onto Lean's own types. This chapter covers the part of §3 that the model has to
 implement, the hash functions of §3.8.1, and also the protocol constants, which are not part of §3

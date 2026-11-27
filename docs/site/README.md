@@ -205,6 +205,35 @@ empty, every displayed equation is explained.
 A PR that changes a modelled function updates its model-map entries (a renamed declaration or a
 moved marker fails the book's build).
 
+## Reader aids: JAM in plain English and the glossary
+
+Two chapters are for newcomers. *JAM in plain English* (`Companion/PlainEnglish.lean`, before §3)
+follows one block through `JAM.importBlock`, step by step, in prose. If the order or the content
+of the block transition's steps changes, update it in the same PR. Its figure (`{figure
+"lifeOfWork"}`) is inline SVG in `Companion/Reader.lean`, drawn in `currentColor` so it follows the
+theme.
+
+The *Glossary* (`Companion/Glossary.lean`, at the end) is generated from `glossary.json`: for each
+symbol, its TeX (the paper's macros), a plain-English meaning, the model's declarations (linked to
+their API pages) and the book section that defines it (`place`, a key of `places`, which maps
+section tags to labels). Each `# ` section of the chapter renders one section of the file with
+`{glossarySection "<id>"}`. Edit the JSON, not the chapter. Checks:
+
+* the book's build (`Companion/Reader.lean`) fails when a model name is not a declaration the
+  glossary chapter imports, or a `place` is not a section tag; Lake tracks `glossary.json`
+  (`bookInputs`);
+* `scripts/check-glossary.py` (CI's `model` job, no build needed) checks the structure, that each
+  section is rendered exactly once, that `place` keys are section tags of the book, that every TeX
+  command is one of the paper's macros (or a standard one it lists), and that each model name's last
+  component is declared in the model's sources or is a field of the structure its prefix names.
+
+A PR that renames a declaration the glossary names, or changes what a listed symbol means, updates
+`glossary.json`.
+
+The symbols in the chapters' prose are not linked to their glossary entries: KaTeX renders them
+to markup that cannot be matched back to a symbol reliably (φ and ϕ, subscripts, primes), so the
+glossary is a page of its own, linked from the roadmap and from the plain-English chapter.
+
 ## Keeping the book in step with the model
 
 * `chapter-map.json` maps each model module to the chapters that discuss it (seeded from the

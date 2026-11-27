@@ -86,6 +86,9 @@ jobs:
           python3 -I scripts/check-equations.py
           python3 -I scripts/check-model-map.py
 
+      - name: The book's glossary names only declarations the model has, and only the paper's macros (scripts/check-glossary.py)
+        run: python3 -I scripts/check-glossary.py
+
       - name: No forbidden constructs
         run: |
           if grep -rnE '\bsorry\b|partial def|implemented_by|native_decide|bv_decide' PVM JAM Services Tests PVM.lean JAM.lean Services.lean JamCrypto JamCrypto.lean JamCryptoTest.lean RingTest.lean; then

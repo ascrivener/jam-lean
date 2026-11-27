@@ -22,6 +22,24 @@ file := "work"
 
 *In the paper:* {gpchapter}`sec:workpackagesandworkreports`.
 
+*In brief.* JAM divides work into two halves: the heavy computation is done *in-core*, by the few
+validators assigned to a core, and only its results go on chain, where every node processes them.
+A *work-package* is the unit of in-core work: it carries an authorization and a list of work-items,
+each naming a service and carrying a payload for that service's Refine code. This chapter defines
+work-packages and the *work-report* computed from one: the package's authorization is checked, each
+item is refined by a PVM invocation ({ref "invocations"}[Appendix B]), and the report records one
+digest per item, the context the package was built against, and a specifier of the data made
+available to other validators. Guarantors sign the report ({ref "guaranteeing"}[§15]),
+{ref "reports"}[§11] puts it on chain, and once its data is available its results go to each
+service's Accumulate code ({ref "accumulation"}[§12]). For example, a package with two items, for
+two different services, yields a report with two digests, and each service accumulates its own.
+
+*Key terms:*
+
+* $`\workpackage`, work-packages, and $`\workitem`, work-items.
+* $`\workreport`, work-reports, and $`\workdigest`, the work digest that each item yields.
+* $`\computereport`, the computation of a work-report from a work-package.
+
 A work-package is what a service's users submit to a core: an authorization, a context, and a
 sequence of work-items, each naming a service and carrying a payload. §14 of GP v0.8.1 defines
 these terms and the work-report computation $`\Xi`, which turns a work-package into the work-report

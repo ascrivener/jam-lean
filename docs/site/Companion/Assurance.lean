@@ -17,6 +17,19 @@ shortTitle := "§16 Assurance"
 file := "assurance"
 %%%
 
+*In the paper:* {gpchapter}`sec:assurance`.
+
+*In brief.* A work-report on chain is only useful once its data can be fetched: auditors need the
+work-package bundle to check the report, and later work-packages may import the segments it
+exported. The guarantors erasure-code that data ({ref "erasure"}[Appendix H]) and send each
+validator its chunks, and every timeslot each validator signs an *assurance* saying which of the
+pending reports it holds its chunks for. When more than two thirds of the validators have assured a
+report, it becomes *available* and can go on to accumulation ({ref "reports-assurances"}[§11],
+{ref "accumulation"}[§12]). With 1023 validators that means at least 683 assurers, and any 342
+chunks rebuild the data, so even if 341 of the assurers were dishonest, the others would hold enough
+chunks. This section says what a validator must hold, and check, before it signs an assurance; it
+has no equations of its own.
+
 §16 of GP v0.8.1 says what a validator must hold before it claims, in an *assurance*, that a
 report's data is available. Every timeslot each validator should issue a signed assurance saying
 which of the current availability assignments it has received its erasure-coded shards for. It needs

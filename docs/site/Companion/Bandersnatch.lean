@@ -25,6 +25,18 @@ file := "bandersnatch"
 
 *In the paper:* {gpchapter}`sec:bandersnatch`.
 
+*In brief.* Block production ({ref "safrole"}[§6]) needs two kinds of signature beyond ordinary
+Ed25519 ones, both on the Bandersnatch elliptic curve. A *VRF signature* also yields a 32-octet
+output, fixed by the key and the signature's context alone (not the rest of the signed message),
+which anyone can check against the signer's public key; blocks are sealed with such signatures,
+their outputs feed the chain's entropy, and auditors use one to pick what they audit
+({ref "auditing"}[§17]). A *Ring VRF proof* shows that its signer holds one of the keys in a set
+(the ring, committed to by a ring root) without revealing which; validators use them to submit
+anonymous tickets, so the tickets that win the slots of an epoch are public while their owners stay
+hidden until each seals its block. The appendix names the curve and refers to external
+specifications for the schemes themselves, fixing only what the rest of the paper uses: which octet
+sequences are valid signatures and proofs, their outputs, and the ring root.
+
 Appendix G of GP v0.8.1 defines the two Bandersnatch primitives that Safrole ({ref "safrole"}[§6]) uses: VRF
 signatures, which seal blocks and yield their entropy, and Ring VRF proofs, with which validators
 submit anonymous tickets. The appendix does not define the cryptography itself. It names the

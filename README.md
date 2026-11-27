@@ -13,7 +13,7 @@ binaries. The model moved from v0.8.0 to v0.8.1 on 2026-11-25 (#261); the last v
   transition (Safrole, disputes, reports, assurances, accumulation, preimages, recent history,
   authorizations, statistics) and block import Υ with the state Merklization of Appendix D. Also
   the off-chain parts a node computes: work-package refinement (§14), segment justifications
-  (Appendix E) and auditing (§17). See [Scope](#scope).
+  (Appendix E), auditing (§17) and the best-chain rule (§19). See [Scope](#scope).
 * **Validated** against the PVM vectors of
   [koute/jamtestvectors](https://github.com/koute/jamtestvectors) (branch `master_pvm_initial`,
   commit `6bf3768e5b37bbe4ca5d6e1306284ecb27c0198f`, directory `pvm/`) and the GP v0.8.0 vectors of
@@ -30,7 +30,7 @@ binaries. The model moved from v0.8.0 to v0.8.1 on 2026-11-25 (#261); the last v
   [`docs/upstream-candidates.md`](docs/upstream-candidates.md).
 * **Proved about the model.** Theorems in `PVM` and `JAM`, checked on every CI run: Ψ and Ψ_H are
   the paper's recursive definitions, the gas simulation always finishes, and results on Safrole,
-  confinement, segments, §14 refinement and auditing ([Theorems](#theorems)). In a separate
+  confinement, segments, §14 refinement, auditing and the best-chain rule ([Theorems](#theorems)). In a separate
   Mathlib package: the erasure code recovers the data from any 342 of 1023 pieces
   ([Mathlib proofs](#mathlib-proofs-proofs)).
 * **Fast where it runs, literal where it is proved.** Compiled code runs faster implementations of
@@ -74,7 +74,14 @@ Two libraries, each bounded by the Gray Paper (v0.8.1):
     ℳ, T, J_x, L_x, the paged proofs P, and verifiers for a segment and a page (the paper gives
     none);
   - auditing (§17, `JAM/Auditing.lean`): the audit selection, tranche 0 and later tranches,
-    announcements, judgments, U and **U**, the disregard rule and verdict formation for §10.
+    announcements, judgments, U and **U**, the disregard rule and verdict formation for §10;
+  - the best-chain rule (§19, `JAM/BestChain.lean`): 𝐀 over a store of known blocks, (19.1)–(19.3)
+    with §17.3's disregard rule, the metric m of (19.4) and the best heads 𝐁^♭. The finalized
+    block, 𝐔 and the disregard flags are inputs; GRANDPA is not modelled. Readings
+    v0.8.1-A21–A25 in [`docs/upstream-candidates.md`](docs/upstream-candidates.md): (19.2)'s formula
+    audits only the head while the prose audits the chain (both readings are offered), §19 omits
+    §17.3's disregard rule, (19.3) leaves H^B unconstrained, there is no tie-break, and m sums back
+    to genesis while nodes keep 24 h of headers.
 
   Protocol and gas
   constants are generated from `definitions.tex` (`scripts/gen_constants.py`, drift-checked in CI);
@@ -137,6 +144,7 @@ over the traces, are in that tag's README.
 | `JAM` refine host functions, Ψ_R and Ψ_I, hand-written cases (no vectors exist) | **83 / 83** pass, 2 more kernel-checked |
 | `JAM` work-package refinement (§14: ᵀ_m, C, I, B and its decoder, the bundle checks on genuine and 14 tampered bundles, A, Ξ end to end, `Chain.extend`), hand-built `#guard`s in `Tests/GuaranteeTest.lean` (no vectors exist) | **67 / 67** pass |
 | `JAM` segments (Appendix E, §14: ℳ, J_x, L_x, P and the verifiers; hand-computed trees, Blake2b values from an independent Python reading, the theorems' statements exhaustively on small sizes, tampered inputs), `#guard`s in `Tests/SegmentsTest.lean` (no vectors exist) | **48 / 48** pass; axioms of each theorem pinned by 5 `#guard_msgs` |
+| `JAM` best-chain rule (§19: a ticketed fork beating a longer one, unaudited blocks under both readings of (19.2), a disregarded fork, equivocation, finality pruning, reversed stores, `ticketedOf`, `slotTimely`), hand-built `#guard`s in `Tests/BestChainTest.lean` (no vectors exist) | **29 / 29** pass |
 | `JAM` auditing (§17: **q**, tranche 0 with 3 and 20 cores, timing, announcements, the a_n threshold at its boundary, no-show escalation, U and **U**, verdicts through `checkVerdict`), hand-built `#guard`s in `Tests/AuditingTest.lean` (no vectors exist) | **85 / 85** pass |
 | `JamCrypto`: Ed25519, Bandersnatch IETF, Thin and Pedersen VRF vectors (`cryptotest`, running the proved fast code); fast against reference functions on the vectors and random inputs | all pass; **0** mismatches |
 | `JamCrypto`: ring root and ring VRF vectors (`ringtest`) | **146 / 146** pass |
@@ -173,7 +181,7 @@ lake build disputestest assurancestest reportstest  # disputes, assurances and r
 lake build safroletest                # the Safrole STF vectors (tiny and full)
 scripts/fetch-trace-vectors.sh        # block-import traces (.bin only) into vendor/jam-traces; names optional
 lake build tracetest                  # T(σ) round trip of every fetched trace (block import suspended)
-lake build Tests.GuaranteeTest Tests.SegmentsTest Tests.AuditingTest   # §14, App. E and §17 checks
+lake build Tests.GuaranteeTest Tests.SegmentsTest Tests.AuditingTest Tests.BestChainTest   # §14, App. E, §17, §19
 lake build cryptotest ringtest && .lake/build/bin/cryptotest && .lake/build/bin/ringtest  # JamCrypto
 (cd proofs && lake exe cache get && lake build)   # the Mathlib proofs (a separate package)
 ```
@@ -200,7 +208,8 @@ fails the build. `lake exe pvmtrace <vector.json> [steps]` prints a step-by-step
 | `JAM/Guarantee.lean` | work-package refinement: p_a, C, L_l/X/S_l/J_l, B, I, Ξ, ᵀ_m, A, the bundle checks, `Chain.extend` | §14.3–§14.4.1, §17.1, §11.4.1 |
 | `JAM/Segments.lean` | constant-depth Merkle ℳ, T, J_x, L_x, C, 𝒫_n, paged proofs P, verifiers, and their theorems | App. E, §14 |
 | `JAM/Auditing.lean`, `JAM/Theorems/Auditing.lean` | audit selection, tranches, announcements, judgments, U, **U**, disregard rule, verdicts | §17 |
-| `JAM/Theorems/*.lean` | theorems about the protocol (host gas, confinement, Safrole, auditing, …) | |
+| `JAM/BestChain.lean`, `JAM/Theorems/BestChain.lean` | the best-chain rule: 𝐀, acceptability, m, 𝐁^♭ | §19, §5 |
+| `JAM/Theorems/*.lean` | theorems about the protocol (host gas, confinement, Safrole, auditing, best chain, …) | |
 | `proofs/` | a separate Lake package with Mathlib: erasure-code recovery | App. H |
 | `Tests/` | vector runner, gas checker, tracer, kernel-checked invocation examples | |
 | `scripts/gen_tables.py` | LaTeX → `PVM/Tables.lean` | |
@@ -456,6 +465,13 @@ the build of the semantics rather than drifting silently.
   current tranche but not in negative ones (`audited_false_of_negative`); and the verdicts formed
   for §10 are sound and complete for a good supermajority (`formVerdict_sound`,
   `formVerdict_good_complete`).
+* **Best chain** (`JAM/Theorems/BestChain.lean`, GP v0.8.1 §19; #288). `mem_bestHeads_iff`: the
+  best heads are exactly the acceptable blocks ((19.1)–(19.3) plus §17.3) that maximise m; hence
+  `bestHead?_acceptable`, `bestHead?_extends_finalized` and `bestHead?_maximal`. With unique hashes
+  the store's order does not change the result (`mem_bestHeads_perm`). A best head exists when the
+  finalized block is audited and not disregarded (`finalized_acceptable`, `bestHeads_ne_nil`). The
+  chain reading of (19.2) is the stricter (`acceptable_head_of_chain`), and m(H) = m(P(H)) + 𝐓(H)
+  (`metric_child`).
 * **Memory** (`PVM/Memory.lean`). `read_write`, `read_write_self`, `read_write_of_ne`,
   `read_writeN_at`, `readN_writeN` (read after a multi-octet write of at most 2^32 octets), and
   that writes leave page access unchanged.

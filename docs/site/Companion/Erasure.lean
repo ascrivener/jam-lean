@@ -31,22 +31,24 @@ data is proved, with Mathlib, in a separate package of proofs; see {ref "erasure
 tag := "erasure-rate"
 %%%
 
-$$`\mathcal{D}(v \in \mathbb{V}) \equiv \max\left(\left\{\, d \;\middle|\; d \in \mathbb{N}_{v/3+2}, \mathsf{W}_G \bmod 2d = 0 \,\right\}\right) \qquad \text{(H.1)}`
+$$`\mathcal{D}(v \in \mathbb{V}) \equiv \max\left(\left\{\, d \;\middle|\; d \in \mathbb{N}_{v/3+2}, \mathsf{W}_G \mathbin{\%} 2d = 0 \,\right\}\right) \qquad \text{(H.1)}`
 
 $`\mathcal{D}(v)` is the number of chunks needed to recover the data, so the code's rate is $`\mathcal{D}(v):v`. With
 $`\mathsf{W}_G = 4104` octets, $`\mathcal{D}(1023) = 342` and $`\mathcal{D}(6) = 3`.
 
 {leanSource JAM.Erasure.originalShards}
 
-The model's name for $`\mathcal{D}` is `originalShards` (its docstring writes R(v) for $`\mathcal{D}(v)`).
+The model's name for $`\mathcal{D}` is `originalShards`. $`\mathcal{D}` is defined on $`v \in \mathbb{V}`, the possible validator counts:
+$`\mathbb{V} = \{3c \mid c \in \mathbb{N}_{2\dots\mathsf{C}+1}\}` (eq. (6.8)), multiples of 3 from 6 to $`3\mathsf{C} = 1023`.
 
 # Blob encoding and recovery (§H.1)
 %%%
 tag := "erasure-blob"
 %%%
 
-A blob of $`2k \cdot \mathcal{D}(v)` octets is split into $`\mathcal{D}(v)` pieces of $`k` words; word $`p` of every piece is coded with
-$`\mathcal{C}^v` into $`v` words; and validator $`i`'s chunk is the $`k` words with index $`i`. The paper writes this with a
+A blob of $`2k \cdot \mathcal{D}(v)` octets is split into $`\mathcal{D}(v)` runs of $`k` words (a word is an octet pair). Piece $`p`, as the
+paper uses the word, is word $`p` of every run: there are $`k` pieces of $`\mathcal{D}(v)` words. Each piece is coded with $`\mathcal{C}^v`
+into $`v` words, and validator $`i`'s chunk is word $`i` of every coded piece, $`k` words in all. The paper writes this with a
 split, a join and a transposition:
 
 $$`\forall n \in \mathbb{N}, k \in \mathbb{N}\colon \text{split}_n(\mathbf{d} \in \mathbb{B}_{kn}) \in \llbracket\mathbb{B}_n\rrbracket_k \equiv \left[\mathbf{d}_{0\dots+n}, \mathbf{d}_{n\dots+n}, \cdots, \mathbf{d}_{(k-1)n\dots+n}\right] \qquad \text{(H.2)}`
@@ -71,9 +73,14 @@ piece $`p` is at octet $`2k \cdot j + 2p`, and chunk $`i` of the result is word 
 Recovery takes $`\mathcal{D}(v)` chunks with distinct indices. If they are the first $`\mathcal{D}(v)` chunks, the data is their
 concatenation in index order; in general each piece is recovered with $`\mathcal{R}^v` and the results are joined:
 
-$$`\mathcal{R}^{v \in \mathbb{V}}_{k \in \mathbb{N}}\colon \left\{\begin{array}{l} \left\{\!\left[(\mathbb{B}_{2k}, \mathbb{N}_v)\right]\!\right\}_{\mathcal{D}(v)} \to \mathbb{B}_{2k \cdot \mathcal{D}(v)} \\ \mathbf{c} \mapsto \begin{cases} \mathcal{E}\left(\left[\mathbf{x} \;\middle|\; (\mathbf{x}, i) \mathrel{<\mkern-7mu-} [(\mathbf{x}, i) \in \mathbf{c} \wr i]\right]\right) & \text{if } \{i \mid (\mathbf{x}, i) \in \mathbf{c}\} = \mathbb{N}_{\mathcal{D}(v)} \\ \begin{aligned} &\text{join}\Big(\text{join}^\#\Big({}^{\text{T}}\Big[\mathcal{R}^v\big( \\ &\quad \{(\text{split}_2(\mathbf{x})_p, i) \mid (\mathbf{x}, i) \in \mathbf{c}\}\big) \;\Big|\; p \in \mathbb{N}_k\Big]\Big)\Big) \end{aligned} & \text{always} \end{cases} \end{array}\right. \quad \text{(H.6)}`
+$$`\mathcal{R}^{v \in \mathbb{V}}_{k \in \mathbb{N}}\colon \left\{\begin{array}{l} \left\{\!\left[\left\lgroup\mathbb{B}_{2k}, \mathbb{N}_v\right\rgroup\right]\!\right\}_{\mathcal{D}(v)} \to \mathbb{B}_{2k \cdot \mathcal{D}(v)} \\ \mathbf{c} \mapsto \begin{cases} \mathcal{E}\left(\left[\mathbf{x} \;\middle|\; (\mathbf{x}, i) \mathrel{<\mkern-7mu-} [(\mathbf{x}, i) \in \mathbf{c} \wr i]\right]\right) & \text{if } \{i \mid (\mathbf{x}, i) \in \mathbf{c}\} = \mathbb{N}_{\mathcal{D}(v)} \\ \begin{aligned} &\text{join}\Big(\text{join}^\#\Big({}^{\text{T}}\Big[\mathcal{R}^v\big( \\ &\quad \{(\text{split}_2(\mathbf{x})_p, i) \mid (\mathbf{x}, i) \in \mathbf{c}\}\big) \;\Big|\; p \in \mathbb{N}_k\Big]\Big)\Big) \end{aligned} & \text{always} \end{cases} \end{array}\right. \quad \text{(H.6)}`
 
 {leanSource JAM.Erasure.recover}
+
+Outside their domain both functions return `none`. {api}`JAM.Erasure.encode` does so when the data's size is
+not a multiple of $`2\mathcal{D}(v)` (exactly then, by `encode_isSome_iff` below). {api}`JAM.Erasure.recover` does so for an empty
+list, a number of chunks other than $`\mathcal{D}(v)`, repeated indices, an index $`\geq v`, or chunks of odd or unequal
+lengths.
 
 The model has one path for both cases. When the indices are exactly $`0, \dots, \mathcal{D}(v) - 1`, every target point is a
 source point, the interpolation weights are rows of the identity, and the result is the chunks in
@@ -166,10 +173,14 @@ $`\alpha` has order $`2^{16} - 1` (so the quotient is a field), that the model's
 the field's operations, that `toField` and `ofField` are inverse bijections on 16-bit numbers, and
 that `interpolate (lagrange src tgt)` evaluates Lagrange interpolation through the source points.
 
-On that basis it proves that every coded word is an evaluation of the polynomial of eq. (H.13): validator
-$`i`'s word of piece $`p` is the value at $`\widetilde{g(i)}` (with $`g` = `codeIndex`) of the polynomial of degree less than $`d'` that
-takes the piece's message words at $`\tilde{0}, \dots, \widetilde{d-1}` and zero at $`\tilde{d}, \dots, \widetilde{d'-1}`
+On that basis it proves that every coded word is an evaluation of the polynomial of eq. (H.13)
 ([`encode_word`](https://github.com/ascrivener/jam-lean/blob/1f8496f83ca22f3b8b8121f875906313402aab56/proofs/ErasureProofs/Recovery.lean#L248-L254)).
+For $`v \le 2^{15}`, $`p < k` and $`i < v`, word $`i` of coded piece $`p` is the value at $`\widetilde{g(i)}` (with $`g` = `codeIndex`) of the
+polynomial of degree less than $`d'` that takes the piece's message words at $`\tilde{0}, \dots, \widetilde{d-1}` and zero at
+$`\tilde{d}, \dots, \widetilde{d'-1}`. The theorem is stated about the package's own definitions of the coded pieces
+(`encPieces`) and of that polynomial (`msgPoly`). Two further theorems connect it to the model's chunks:
+`encode_eq` (the chunks `encode` returns are built from `encPieces`) and `chunk_word` (word $`p` of chunk $`i` is
+word $`i` of coded piece $`p`).
 
 [`recover_encode`](https://github.com/ascrivener/jam-lean/blob/1f8496f83ca22f3b8b8121f875906313402aab56/proofs/ErasureProofs/Recovery.lean#L289-L295):
 for at most $`2^{15}` validators, if `encode v data` gives `chunks`, then any $`\mathcal{D}(v)` distinct validator
@@ -218,7 +229,7 @@ theorem recover_encode_tiny {data : ByteArray} {chunks : List ByteArray}
 ```
 
 The bound $`v \le 2^{15}` keeps every code index (below $`v + d' - d`) under $`2^{16}`, so distinct indices are distinct field
-elements. Separately, the erasure test (`Tests/ErasureTest.lean`) checks {api}`JAM.Erasure.encode` and
+elements. It covers every $`v \in \mathbb{V}`, the largest of which is 1023. Separately, the erasure test (`Tests/ErasureTest.lean`) checks {api}`JAM.Erasure.encode` and
 {api}`JAM.Erasure.recover` against the GP v0.8.0 erasure-coding vectors.
 
 # Readings chosen
@@ -227,12 +238,10 @@ tag := "erasure-readings"
 %%%
 
 * *$`\mathcal{D}(v)` excludes $`d = 0`.* The set in eq. (H.1) ranges over $`d \in \mathbb{N}_{v/3+2}`, which includes 0, where
-  $`\mathsf{W}_G \bmod 2d` has no meaning. The model takes the largest positive $`d`.
-* *$`v/3` is rounded down.* The model reads $`\mathbb{N}_{v/3+2}` with integer division, as $`\{0, \dots, \lfloor v/3 \rfloor + 1\}`. The paper does not
-  say which division it means. The readings differ for $`v = 1021` and $`1022`: with real division $`d = 342` is allowed and
-  $`\mathcal{D}(v) = 342`, with integer division $`\mathcal{D}(v) = 228`. For $`v` a multiple of 3, as in both chains, they agree. This is
-  note v0.8.1-A34 of the model's
-  [notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues).
+  $`\mathsf{W}_G \mathbin{\%} 2d` has no meaning. The model takes the largest positive $`d`.
+* *$`v/3` is exact on $`\mathbb{V}`.* $`\mathcal{D}` is typed on $`v \in \mathbb{V}`, and every $`v \in \mathbb{V}` is a multiple of 3 (eq. (6.8)), so $`v/3` in
+  $`\mathbb{N}_{v/3+2}` is a whole number. `originalShards` uses integer division, which agrees with it on $`\mathbb{V}` (and rounds
+  down for other $`v`).
 * *The layout of §H.3.* The erasure vectors of GP v0.8.0 already used the layout that GP v0.8.1
   §H.3 defines ($`p` of degree less than $`d'`, parity words at the indices from $`d'` on), while v0.8.0's §H.3 did
   not. This was note 28 of the model's

@@ -83,7 +83,7 @@ For example, on an epoch change the Safrole transition ({ref "safrole"}[§6]) co
 root $`\gamma'_Z = \mathcal{O}([k_b \mid k \mathrel{<\mkern-7mu-} \gamma'_P])` with `bsRingRoot`, and it checks each ticket's proof with
 `bsRingVerify`.
 
-Contexts such as $`\mathsf{X}_T = \$\text{jam\_ticket\_seal}` are written in the paper with a leading `$`. The model reads the
+Contexts such as $`\mathsf{X}_T = \texttt{\$jam\_ticket\_seal}` are written in the paper with a leading `$`. The model reads the
 `$` as the paper's notation for a string, not as an octet of it:
 
 {leanSource JAM.contextString}
@@ -99,13 +99,15 @@ specification for the Thin VRF, the IETF VRF and the Pedersen VRF; the ring proo
 over BLS12-381 with a KZG setup; and RFC 9380 for hashing to the curve. The model never imports it.
 
 It carries the primitives of both GP v0.8.0 and GP v0.8.1, selected by {api}`JamCrypto.GpVersion`.
-The default is v0.8.0, because the published test vectors are still v0.8.0's; the v0.8.1 path uses
+The default is v0.8.0, because the model is tested against the published v0.8.0 test vectors until
+v0.8.1 vectors exist; the v0.8.1 path uses
 the Thin VRF and Draft 35 of the VRF specification, which GP v0.8.1 cites.
 {api}`JamCrypto.withSignatures` fills in the Ed25519 and VRF-signature fields:
 
 {leanSource JamCrypto.withSignatures}
 
-and {api}`JamCrypto.Ring.crypto` the ring fields, from the KZG setup and the number of validators:
+and {api}`JamCrypto.Ring.crypto` the ring fields, from the KZG setup and, on the v0.8.0 path, the number of
+validators (on the v0.8.1 path the ring's domain is fixed at 2048 and the count is ignored):
 
 {leanSource JamCrypto.Ring.crypto}
 
@@ -117,14 +119,19 @@ On the v0.8.1 path, signature verification is {api}`JamCrypto.Bandersnatch.Thin.
 Where Draft 35's prose and its own test vectors disagree (the zero padding inside hashing to the
 curve, the three fixed points derived from it, and the ring proof's transcript label), the v0.8.1
 path takes a {api}`JamCrypto.Reading`. The default, `.prose`, follows the prose of the cited draft;
-`.vectors` follows its vectors:
+`.vectors` follows its vectors. One step of the prose is followed under neither reading: §5's "Push R
+to the transcript after instancing", which leaves R undefined in §5 and gives no label or encoding
+for it; both readings push nothing there, as the vectors do:
 
 {leanSource JamCrypto.Reading}
 
 `JamCrypto`'s tests check it against the published vectors of the specifications it implements. On
 the v0.8.1 path those vectors agree with the `.vectors` reading. No published vector follows the
-`.prose` reading, which is tested only for internal consistency (signing then verifying, and
-the properties of the derived points).
+`.prose` reading. Under it, the expansion step of hashing to the curve (`expand_message_xmd`) is
+checked against RFC 9380's own vectors (Appendix K.3); the rest is tested only for internal
+consistency (signing then verifying, and the properties of the derived points). The ring VRF under
+`.prose` is not exercised by any accepted proof: `JamCrypto` has no ring prover, and the tests only
+check that the draft's own ring proofs fail under `.prose`.
 
 # Fast implementations, proved equal to the reference
 %%%
@@ -143,9 +150,15 @@ Ed25519 rule set and reading:
 
 {mathdoc JamCrypto.Fast.withSignatures_eq}
 
-and so are the fast ring fields:
+The ring fields are handled differently. `JamCrypto.Ring.Fast.crypto` restates the text of
+`JamCrypto.Ring.crypto` so that its compiled code calls the fast operations, and
+{api}`JamCrypto.Ring.Fast.crypto_eq` proves the two equal essentially by `rfl`:
 
 {leanSource JamCrypto.Ring.Fast.crypto_eq}
+
+The substantive equalities are the `@[csimp]` proofs of the operations underneath: decoding,
+scalar multiplication and hashing on the Bandersnatch curve, scalar and multi-scalar multiplication
+and decompression in BLS12-381's group G1, and the pairing check.
 
 These theorems say that the fast code computes the same functions as the reference code. They say
 nothing about whether the reference code is a correct or secure implementation of the
@@ -156,20 +169,23 @@ specifications: that rests on the tests against the specifications' vectors.
 tag := "bandersnatch-readings"
 %%%
 
-These are recorded in the model's
-[notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues):
+The first three are recorded in the model's
+[notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues);
+the fourth is in the same file's section on Draft 35 of the VRF specification:
 
 * *Note v0.8.1-A6, the 96-octet signature.* The paper gives Thin VRF signatures as 96 octets and reads
   $`\mathcal{Y}` from the signature, but Draft 35 encodes only the proof $`(R, s)`, 64 octets. `JamCrypto` reads a
   signature as the output point $`O`, then $`R`, then $`s`
   ({api}`JamCrypto.Bandersnatch.Thin.thinDecode`). This was raised with the paper as
-  gavofyork/graypaper#593.
+  gavofyork/graypaper#593, and the VRF specification's author confirmed the order $`O \frown R \frown s`
+  (davxy/bandersnatch-vrf-spec#30).
 * *Note v0.8.1-A5, the ring's size.* $`\mathcal{O}(\mathbf{k})` does not fix the ring size, on which the ring proof's
   domain depends. On the v0.8.1 path `JamCrypto` uses the fixed domain of 2048 that §5 of Draft 35
   states, for every number of validators; on the v0.8.0 path it sizes the ring by the number of
   validators, as the v0.8.0 vectors require.
 * *Note v0.8.1-A7, context strings.* The paper's wording leaves open whether the `$` of
-  $`\$\text{jam\_ticket\_seal}` is an octet of the context. Every signature of the GP v0.8.0 test vectors verifies only without it,
+  $`\texttt{\$jam\_ticket\_seal}` is an octet of the context. Every signature of the GP v0.8.0 test vectors verifies only without it,
   and the model drops it ({api}`JAM.contextString`).
 * *Draft 35's prose and vectors.* Where they disagree, the v0.8.1 path follows the prose by default
-  and the vectors on request ({api}`JamCrypto.Reading`), as described above.
+  and the vectors on request ({api}`JamCrypto.Reading`), as described above, except for the transcript
+  step that neither follows.

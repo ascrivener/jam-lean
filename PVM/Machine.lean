@@ -50,7 +50,8 @@ def finalState (εg : Status) (i : Nat) (ω : Regs) (μ : Memory) (m : Mutation)
 /-- Ψ₁(**c**, **k**, **j**, ı, ϱ, ϱ̃, ω, μ) (GP §A.4).
 
     Ψ only calls Ψ₁ when 𝔳_inst(**c**, **k**, ı) holds, so ζ_ı ∈ U and the instruction decodes;
-    to keep Ψ₁ total we read an undecodable octet as `trap`. -/
+    to keep Ψ₁ total we read an undecodable octet as `trap`. That default is unreachable at every
+    step Ψ takes (`PVM.Program.step_decode` in `PVM.Theorems.ExecForms`). -/
 def step (P : Program) (i : Nat) (gas : UInt64) (charged : Bool) (ω : Regs) (μ : Memory) :
     StepResult :=
   -- (ε^ϱ, ϱ*, ϱ̃')

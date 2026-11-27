@@ -1,3 +1,4 @@
+import JAM.Fast.Trie
 import JAM.Safrole
 import JAM.Disputes
 import JAM.History

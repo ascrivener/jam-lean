@@ -27,8 +27,11 @@ def empty : RegSet := ⟨0⟩
 def ofList (rs : List RegIdx) : RegSet := ⟨rs.foldl (fun acc r => acc ||| 2 ^ r.val) 0⟩
 /-- s ∪ t -/
 def union (s t : RegSet) : RegSet := ⟨s.bits ||| t.bits⟩
-/-- s ∖ t -/
-def diff (s t : RegSet) : RegSet := ⟨s.bits &&& (8191 ^^^ t.bits)⟩
+/-- ℕ_13, every register index, as a bit mask: 2^13 − 1 (bits 0 … 12 set; GP §A.9, where š and
+    ř are subsets of the 13 registers). -/
+def allBits : Nat := 2 ^ 13 - 1
+/-- s ∖ t = s ∩ (ℕ_13 ∖ t) -/
+def diff (s t : RegSet) : RegSet := ⟨s.bits &&& (allBits ^^^ t.bits)⟩
 /-- s ∩ t ≠ ∅ -/
 def meets (s t : RegSet) : Bool := s.bits &&& t.bits != 0
 end RegSet
@@ -216,11 +219,19 @@ def init (i : Nat) : SimState := ⟨some i, 0, maxDecode, maxStart, .initial, []
 /-- l = |[r | r ∈ **x**_**r**, r_s ≠ ∅]| (GP §A.9). -/
 def live (x : SimState) : Nat := x.rob.foldl (fun n e => if e.state != .none then n + 1 else n) 0
 
-/-- 𝔖(**x**): the least index of a WAIT entry whose units fit and whose dependencies all have
-    zero cycles left, if any (GP §A.9). -/
-def readyToStart (x : SimState) : Option Nat :=
-  (x.rob.zipIdx.find? fun (e, _) =>
-    e.state == .wait && e.units.le x.units && e.deps.all fun k => x.rob[k]!.cycles == 0).map (·.2)
+/-- Whether the dependency `k` of a reorder-buffer entry has zero cycles left, r_k,c = 0
+    (GP §A.9, in 𝔖). The index is checked against |**r**|; every dependency of every entry of a
+    reachable state is in range (the `else` branch is unreachable:
+    `PVM.Sim.Inv.depDone_eq` in `PVM.Theorems.GasFuel`). -/
+def depDone (x : SimState) (k : Nat) : Bool :=
+  if h : k < x.rob.length then x.rob[k].cycles == 0 else true
+
+/-- 𝔖(**x**) = min(s), s = {j ∈ ℕ_{|**r**|} : r_j,s = WAIT ∧ r_j,t ≤ **x**_t ∧ ∀ k ∈ r_j,p : r_k,c = 0}
+    (GP §A.9): the least index of a WAIT entry whose units fit and whose dependencies all have
+    zero cycles left, if any. -/
+def readyToStart (x : SimState) : Option (Fin x.rob.length) :=
+  (List.finRange x.rob.length).find? fun j =>
+    x.rob[j].state == .wait && x.rob[j].units.le x.units && x.rob[j].deps.all (depDone x)
 
 /-- 𝔛^mov (GP §A.9): `move_reg` is handled by the front end and renames registers. -/
 def decodeMove (P : Program) (x : SimState) (i : Nat) (ins : Instr) : SimState :=
@@ -245,10 +256,10 @@ def decodeStep (P : Program) (x : SimState) (i : Nat) (ins : Instr) (cost : Inst
   else decodeInstr P x i ins cost
 
 /-- 𝔛'' (GP §A.9): start executing entry `n = 𝔖(**x**)`. -/
-def startStep (x : SimState) (n : Nat) : SimState :=
+def startStep (x : SimState) (n : Fin x.rob.length) : SimState :=
   { x with
     startSlots := x.startSlots - 1
-    units := x.units - x.rob[n]!.units
+    units := x.units - x.rob[n].units
     rob := x.rob.modify n fun e => { e with state := .exe } }
 
 /-- For each entry, whether it and every entry before it is FIN or ∅ (given `ok`, that every
@@ -305,13 +316,11 @@ def run (P : Program) : Nat → SimState → Option SimState
     | some (.inr x') => some x'
     | none => none
 
-/-- The fuel given to 𝔛: `256 · (|**c**| − ı + 2)` transitions, at least 256 per instruction of
-    the block. Each instruction is decoded once and started once, and the longest single
-    instruction (č = 60 for the divisions) keeps the pipeline busy for about 64 cycles, so the
-    simulation should always finish well within this. **This bound is argued, not proved.**
-    Over every block of the test vectors the simulation uses at most 54 transitions per
-    instruction and under 5% of this fuel; `PVM.Program.blockCost?` returns `none` if the fuel
-    is ever exhausted, and the gas checker reports it. -/
+/-- The fuel given to 𝔛: `256 · (|**c**| − ı + 2)` transitions. The paper's 𝔛 is unbounded;
+    this fuel always suffices, so the `0` case of `run` is unreachable from **x**^init: every
+    transition lowers a measure that starts below the fuel (`PVM.Sim.run_fuel_eq` in
+    `PVM.Theorems.GasFuel`: any fuel above `fuel P ı` gives the same result). Over every block
+    of the test vectors the simulation uses at most 54 transitions per instruction. -/
 def fuel (P : Program) (i : Nat) : Nat := 256 * (P.code.size - i + 2)
 
 end Sim
@@ -319,12 +328,15 @@ end Sim
 namespace Program
 
 /-- ϱ^Δ(**c**, **k**, ı) = max(**x**^final_c − 3, 1) (GP eq. `gascostforblock`); `none` if the
-    simulation does not finish within its fuel or meets an opcode outside U. -/
+    simulation meets an opcode outside U. The fuel never runs out (`PVM.Sim.run_fuel_eq`), and
+    for the blocks Ψ charges (ı a valid opcode index of a program passing 𝔳_blob) the result is
+    always `some` (`PVM.Program.blockCost?_isSome_of_vBlob`, `PVM.Program.blockCost?_isSome_of_deblob`
+    in `PVM.Theorems.GasFuel`). -/
 def blockCost? (P : Program) (i : Nat) : Option Nat :=
   (Sim.run P (Sim.fuel P i) (Sim.init i)).map fun x => max (x.cycle - 3) 1
 
-/-- ϱ^Δ as a total function: the simulated cost, or 1 in the cases where `blockCost?` has no
-    value (which do not arise for the blocks of valid programs). -/
+/-- ϱ^Δ as a total function: the simulated cost. The default `1` is unreachable for the blocks
+    Ψ charges (`PVM.Program.blockCost_eq_of_deblob` in `PVM.Theorems.GasFuel`). -/
 def blockCost (P : Program) (i : Nat) : Nat := (P.blockCost? i).getD 1
 
 end Program

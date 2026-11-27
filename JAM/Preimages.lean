@@ -1,3 +1,4 @@
+import JAM.Fast.Blake2b
 import JAM.Accumulation
 
 /-!

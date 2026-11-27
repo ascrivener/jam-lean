@@ -6,6 +6,37 @@ the coordinator restarts, start here. Scope since 2026-11-16: decision 19, refin
 Since 2026-11-20 jam-lean is run by the parent session of the `witness-toaster` project; the old
 jam-lean parent session is archived.
 
+## 2026-11-26/27: review, speedups, new modelling, Mathlib proofs (read first)
+
+- **Ownership:** unchanged (parent session_01FAPLsdKXq86WuSpB5fCYVg). Up to 7 parallel children (decision 5).
+- **Merged:**
+  - Proofs/types: #268 Safrole theorems, #269 Safrole vectors also run with JamCrypto's real ring VRF,
+    #270 PVM gas model proved total (fallbacks unreachable), #280 `proofs/` Mathlib package +
+    **erasure recovery theorem** (any R(v) of v pieces recover the data; 342/1023 full, 3/6 tiny).
+  - Speed (all proved equal, `@[csimp]`; list in `docs/fast-paths.md`): #271 startup fix (15 s → 0.06 s,
+    was over jam-fuzzing L0's 15 s timeout), #274/#278/#281 fast Ψ, parse, Y, gas simulation,
+    #276 fast Blake2b/Keccak/trie root (plain tiny block 43 → 21 ms in the target), #282 spec/fast
+    separation (fast code only in `PVM/Fast/*`, `JAM/Fast/*`; allowlisted spec→Fast imports, CI check).
+  - New modelling (additions): #275 auditing §17, #277 segment justifications (App. E, §14), #283 §14
+    refinement `JAM/Guarantee.lean` (B, A, p_a, C, I, Ξ, bundle checks, Chain.extend).
+  - Fixes: #284 accumulation (transfer CASH on self-transfers; θ' as ordered deduplicated set) + 29 tests.
+  - Process/docs: #266 README v0.8.1, #267 release workflow (Actions → Release; tags only with Adam's
+    go-ahead), #272 Mathlib rule (proofs-only package), #264/#265/#263 docs.
+- **Adam's decisions (2026-11-26/27):** keep jam-lean-target separate + pin-bump rule; Mathlib only in
+  `proofs/`; no tested-only equalities (crypto speedups must be proved); BLS12-381 group-law
+  (Mathlib) optimisations after the rest of the crypto work, Bandersnatch/Edwards deferred; auditing
+  U's ∃n read bounded by the current tranche (A8, confirmed); Services proofs stay on hold
+  ("nobody's using services yet"); GPU/polymul host calls parked (doc artifact: native polymul, weak
+  band after measurement); node: not a goal for jam-lean; candidate later step is Jamzilla embedding
+  jam-lean as a checker.
+- **In flight:** crypto child (session_01FAPLsa7o4VNVfg2xm4KbHQ): A proved fixed-limb field arithmetic,
+  B restructured signatures/ring with the reference op order, C key cache, then BLS12-381 Mathlib
+  phase; draft #273 (tested-only) will be superseded. jam-lean-target cross-check child
+  (session_01FAPLsbKw5sJquGusdTTBZ1): target PRs #45 (segments switch) and the §14 switch + pin bump
+  to e64fe32.
+- **Open:** 0.8.1 fuzzer runs (triage then); upstream issue drafts 1–4 (Adam to post); davxy re ring
+  label / push R; Fellowship ref 687 (refund after).
+
 ## 2026-11-25: GP v0.8.1 (read first)
 
 - **Ownership:** session_01FAPLsdKXq86WuSpB5fCYVg is the single parent for jam-lean, jam-lean-target
@@ -20,6 +51,9 @@ jam-lean parent session is archived.
   crypto prose default (v0.8.1 path only); proofs CI on demand only; Services proofs not migrated
   (option 2, last kernel-checked `c22c197`); jam-lean-target stays a separate repository, with the
   pin-bump rule in `CLAUDE.md`.
+- **Mathlib proofs (2026-11-26, jam-lean#272):** Mathlib is allowed only in the separate Lake
+  package `proofs/` (CI job `mathlib-proofs`, not in the required gate). Erasure-code recovery is
+  proved there (PR #280); see `proofs/README.md`.
 - **Open:** davxy's answers on the VRF ring label, Z_pad and "push R" (asked privately); v0.8.1
   test vectors and the 0.8.1 fuzzer (restore suspended checks then); graypaper#592; proof work
   (restate Services through the accessors, then a manual proofs run on main).

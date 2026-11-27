@@ -54,7 +54,8 @@ lean_lib Tests where
     .one `Tests.Blake2bTest, .one `Tests.HostGeneralTest, .one `Tests.JamJson,
     .one `Tests.KeccakTest, .one `Tests.RefineTest, .one `Tests.BlockJson,
     .one `Tests.StfRunner, .one `Tests.ReportsJson, .one `Tests.TraceState, .one `Tests.Sha512Test,
-    .one `Tests.V080]
+    .one `Tests.V080, .one `Tests.AuditingTest, .one `Tests.SegmentsTest,
+    .one `Tests.GuaranteeTest]
 
 lean_exe «pvmtest-exe» where
   root := `Tests.PvmTest
@@ -246,3 +247,12 @@ target tracetest pkg : Unit := do
 lean_exe «tracedebug-exe» where
   root := `Tests.TraceDebug
   exeName := "tracedebug"
+
+/-- Development aid: time Ψ_H on a long-running program (`lake exe pvmbench <vector.json> [gas]`;
+    `python3 Tests/pvmbench_gen.py N [host]` writes a synthetic loop with N iterations). Not run by CI. -/
+lean_exe pvmbench where
+  root := `Tests.PvmBench
+
+/-- Throughput of Blake2b-256 and Keccak-256 (4 KB and 144 KB messages). -/
+lean_exe hashbench where
+  root := `Tests.HashBench

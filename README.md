@@ -26,6 +26,8 @@ binaries. The model moved from v0.8.0 to v0.8.1 on 2026-11-25 (#261); the last v
   until proof work resumes (see [`docs/whats-proven.md`](docs/whats-proven.md)). Along the way they
   found disagreements between the binary and the paper, listed in
   [`docs/upstream-candidates.md`](docs/upstream-candidates.md).
+* **Proved about the model, with Mathlib.** Machine-checked: the erasure code recovers the data
+  from any 342 of 1023 pieces (GP v0.8.1 Appendix H; [`proofs/`](proofs/README.md), using Mathlib).
 
 **What's proven:** [`docs/whats-proven.md`](docs/whats-proven.md) summarises the theorems about real
 service binaries (witness, and Parity's bootstrap service with its picoalloc heap allocator; last
@@ -89,7 +91,9 @@ are suspended until v0.8.1 vectors exist (same document, "Suspended until v0.8.1
   v0.8.0 host-call ids and register layouts, so under v0.8.1's host calls even plain storage writes
   answer WHO: 15 of the 63 pass. CI only builds the runner (`acctest-exe`). Hand-written v0.8.1
   checks in `Tests/HostGeneralTest.lean` cover the accumulate host calls write, supervisor, new,
-  transfer, eject and bless, the discard rule N and the transfer partition T.
+  transfer, eject and bless, the discard rule N and the transfer partition T, and run small
+  hand-assembled services through Ψ_A, Δ_*, Δ_+ and the accumulation STF (θ', N, T over rounds,
+  privilege merging with R).
 * **block import Υ over the traces** (`tracetest`). Every trace header's H_R is a v0.8.0 state
   root, and v0.8.1's C(255) and C(13) encodings give other roots, so Υ would reject every block.
   CI runs only the T(σ) round trip of every raw trace state.
@@ -105,7 +109,7 @@ over the traces, are in that tag's README.
 | Model's ϖ against the blocks the vectors list | identical in all 367 programs |
 | `JAM` codec (Appendix C): every GP v0.8.0 codec vector (headers, blocks, all extrinsics, the work-package family), encoded from JSON and round-tripped through ℰ⁻¹; the three holding assurances are compared without the anchor v0.8.1 removed (#562) | **15 / 15** tiny, **15 / 15** full |
 | `JAM` Blake2b-256 vs. `hashlib` and RFC 7693 | **13 / 13** match |
-| `JAM` general and accumulate host functions, hand-written v0.8.1 cases (`#guard`s in `Tests/HostGeneralTest.lean`) | **78 / 78** pass |
+| `JAM` general and accumulate host functions, hand-written v0.8.1 cases (`#guard`s in `Tests/HostGeneralTest.lean`) | **107 / 107** pass |
 | `JAM` Keccak-256 / SHA3-256 vs. `hashlib` and standard vectors | **15 / 15** match |
 | `JAM` SHA-512 vs. FIPS 180-2 examples and `hashlib`; the VRF output Y of one trace block against its η'_0 | **9 / 9** match; **1 / 1** |
 | `JAM` refine host functions, Ψ_R and Ψ_I, hand-written cases (no vectors exist) | **83 / 83** pass, 2 more kernel-checked |
@@ -115,6 +119,7 @@ over the traces, are in that tag's README.
 | `JAM` state trie M (Appendix D) vs. GP v0.8.0 trie vectors (keys cut to 31 octets, note 27); state-key constructor C, hand-written | **11 / 11** roots match; **4 / 4** |
 | `JAM` Fisher–Yates shuffle ℱ with 𝒬_l (Appendix F) vs. GP v0.8.0 shuffle vectors | **8 / 8** match |
 | `JAM` erasure coding ℰ_C / ℛ over GF(2¹⁶) (Appendix H, GP v0.8.1 §H.3) vs. GP v0.8.0 erasure vectors | **12 / 12** match shard for shard (6 tiny, 6 full; v0.8.1 #580 adopted the vectors' layout, note 28); ℛ recovers the data in all 12 |
+| `ErasureProofs` (`proofs/`, Mathlib): ℛ inverts ℰ_C for any R(v) distinct chunks, v ≤ 2¹⁵ (full chain: any 342 of 1023; tiny: any 3 of 6), [`proofs/README.md`](proofs/README.md) | **proved**; axioms propext, Classical.choice, Quot.sound |
 | Accumulation STF (§12) vs. GP v0.8.0 accumulate vectors (tiny) | **suspended** until v0.8.1 vectors exist (15 / 63 pass under v0.8.1; see above) |
 | Recent-history STF (§7: β_H, the accumulation-output belt β_B) vs. `stf/history` (`lake build historytest`) | **4 / 4** tiny, **4 / 4** full |
 | Authorization STF (§8: the pool α from the queue φ') vs. `stf/authorizations` (`lake build authtest`) | **3 / 3** tiny, **3 / 3** full |
@@ -378,7 +383,7 @@ the build of the semantics rather than drifting silently.
   (`CodeCheck.hostIds_ok`), so `Confined.accumulate_confined` and `Confined.refine_noExports` have no
   hypothesis about the code and depend on propext, Classical.choice and Quot.sound only
   (`lake build witnesscheck` remains as a compiled cross-check).
-* **A fast Ψ that is the paper's Ψ** (`PVM/Fast.lean`). `psi` re-deblobs the program on every step
+* **A fast Ψ that is the paper's Ψ** (`PVM/Fast/`, listed in `docs/fast-paths.md`). `psi` re-deblobs the program on every step
   and re-simulates gas on every block charge, as the paper writes it. `psiFast` parses once and
   memoizes block costs. `psi_eq_psiFast : psi = psiFast` is registered with `@[csimp]`, so compiled
   code (including every test runner) executes `psiFast`, while the kernel and every theorem see

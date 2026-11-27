@@ -260,6 +260,204 @@ def xfer (dst : Nat) : DeferredTransfer := { source := 1, dest := dst, amount :=
 #guard (partitionXfers [] ps0.accounts [xfer 4, xfer 9] []).1.map (·.dest) == [4] &&
   (partitionXfers [] ps0.accounts [xfer 4, xfer 9] []).2.map (·.dest) == [9]
 
+/-! ### transfer: an immediate transfer to the same service counts the credit in **d'** (GP v0.8.1
+pvm_invocations.tex:1001–1006, 1021) -/
+
+-- (a) s moves 100 from its balance into its own supervisor balance (x = 2, o = 0) with only 50
+-- above its threshold: **d'**[s] = (a_t − 50, 100), b + b' = a_t + 50 ≥ a_t, so OK.
+def nearT : ServiceAccount := { acct with balance := acct.minBalance + 50, supervisorBalance := 0 }
+def tSelf2 := AccHost.transfer env0 100000 (tRegs (2 ^ 64 - 1) (2 ^ 64 - 1) 2 100) mem0 (ctxOf nearT)
+#guard r7 tSelf2 == Result.OK && (acctOf tSelf2).balance == acct.minBalance - 50 &&
+  (acctOf tSelf2).supervisorBalance == 100 && tSelf2.ctx.1.modified.contains 9
+-- … but not more than its balance: b − 200 < 0, CASH
+#guard r7 (AccHost.transfer env0 100000 (tRegs (2 ^ 64 - 1) (2 ^ 64 - 1) 2 (acct.minBalance + 51)) mem0
+  (ctxOf nearT)) == Result.CASH
+-- (b) 9, the effective supervisor of junior 4, moves 100 of 4's supervisor balance into 4's balance
+-- (x = 1) while 4's balance alone is 50 below its threshold: **d'**[4] = (a_t + 50, 0), OK.
+def juniorNear : ServiceAccount :=
+  { junior with balance := junior.minBalance - 50, supervisorBalance := 100 }
+def tSelf1 := AccHost.transfer env0 100000 (tRegs 4 4 1 100) mem0 (ctxOf acct [(4, juniorNear)])
+#guard r7 tSelf1 == Result.OK && (acctOf tSelf1 4).balance == junior.minBalance + 50 &&
+  (acctOf tSelf1 4).supervisorBalance == 0 && tSelf1.ctx.1.modified.contains 4
+-- … while a deferred transfer to itself (o ≠ 0) credits nothing yet, so the debit alone counts: CASH
+#guard r7 (AccHost.transfer env0 100000 (regs [(7, 4), (8, 4), (9, 1), (10, 100), (11, 6), (12, base)])
+  mem0 (ctxOf acct [(4, juniorNear)])) == Result.CASH
+
+/-! ### new: the CASH boundary when the supervisor pays from a junior's supervisor balance, and the
+registrar's FULL (GP v0.8.1 Ω_N) -/
+
+/-- a_t of the account `new` creates from `newMem 10` (gratis 0): items 2, octets 81 + 10. -/
+def newT : Nat := Constants.Cbasedeposit + 2 * Constants.Citemdeposit + (81 + 10) * Constants.Cbytedeposit
+-- 9 funds a new account from junior 4's supervisor balance (x = 1): afterwards 4 has b + b' = its
+-- threshold exactly, OK …
+def jFund (sb : Nat) : ServiceAccount :=
+  { junior with balance := junior.minBalance - 1, supervisorBalance := sb }
+#guard r7 (AccHost.new env0 100000 (newRegs 1 4) (newMem 10) (ctxOf rich [(4, jFund (newT + 1))])) != Result.CASH
+#guard (acctOf (AccHost.new env0 100000 (newRegs 1 4) (newMem 10) (ctxOf rich [(4, jFund (newT + 1))])) 4).supervisorBalance == 1
+-- … one less and it is CASH
+#guard r7 (AccHost.new env0 100000 (newRegs 1 4) (newMem 10) (ctxOf rich [(4, jFund newT)])) == Result.CASH
+-- the registrar asking for a protected id that exists: FULL
+def ctxReg (others : List (Nat × ServiceAccount)) : AccCtx :=
+  let (x, _) := ctxOf rich others
+  let x := { x with state := { x.state with registrar := 9 } }
+  (x, x)
+#guard r7 (AccHost.new env0 100000 (regs [(7, 2 ^ 64 - 1), (8, 4), (9, 0), (10, base)]) (newMem 10)
+  (ctxReg [(4, acct)])) == Result.FULL
+#guard r7 (AccHost.new env0 100000 (regs [(7, 2 ^ 64 - 1), (8, 5), (9, 0), (10, base)]) (newMem 10)
+  (ctxReg [(4, acct)])) == 5
+
+/-! ### Δ_*, Δ_+ and θ' with hand-assembled services (GP v0.8.1 eqs. `accpar`, `accseq`,
+`finalstateaccumulation`)
+
+Each service is a PVM program entered at ı = 5 (eq. `accinvocation`): five `fallthrough`s, then a
+list of steps, each `load_imm_64` into registers or `ecalli n`, then `jump_ind ω₀ + 0`, which halts
+(Y sets ω₀ = 2^32 − 2^16). Its read-only data sits at 𝖹_Z = 0x10000. The services accumulate on free
+gas (χ_Z), so no work reports are needed. -/
+
+/-- A step of a test service. -/
+inductive TOp where
+  | set (r v : Nat)
+  | call (n : Nat)
+
+/-- The instructions: `fallthrough` ×5, the steps, `jump_ind ω₀ + 0`. -/
+def svcInstrs (ops : List TOp) : List (List UInt8) :=
+  List.replicate 5 [1] ++ ops.map (fun
+    | .set r v => [20, r.toUInt8] ++ Num.encodeLE 8 v
+    | .call n => [10, n.toUInt8]) ++ [[50, 0]]
+
+/-- k: one bit per code octet, set at each instruction's start, least significant bit first. -/
+def startBits (xs : List (List UInt8)) : List UInt8 :=
+  let bits := xs.flatMap fun i => true :: List.replicate (i.length - 1) false
+  (List.range ((bits.length + 7) / 8)).map fun j =>
+    (List.range 8).foldl (fun acc b =>
+      if bits.getD (8 * j + b) false then acc ||| ((1 : UInt8) <<< b.toUInt8) else acc) 0
+
+/-- The standard program (GP v0.8.1 eq. `jamblobformat`, empty metadata) of a step list. -/
+def svcProgram (ops : List TOp) (ro : List UInt8) : List UInt8 :=
+  let xs := svcInstrs ops
+  let c := xs.flatten
+  let p := [0, 0] ++ Codec.nat c.length ++ c ++ startBits xs
+  [0] ++ Num.encodeLE 3 ro.length ++ Num.encodeLE 3 0 ++ Num.encodeLE 2 0 ++ Num.encodeLE 3 4096 ++
+    ro ++ Num.encodeLE 4 p.length ++ p
+
+def roBase : Nat := 0x10000
+def none64 : Nat := 2 ^ 64 - 1
+
+/-- A rich account whose code is `code` (none: no code). -/
+def svc (code : Option (List UInt8)) (sup supCreated : Nat := 0) : ServiceAccount :=
+  match code with
+  | none => { rich with codeHash := List.replicate 32 1, minMemoGas := 0, supervisor := sup,
+                        supervisorCreated := supCreated }
+  | some c =>
+    let h := (Blake2b.hash256 ⟨c.toArray⟩).toList
+    { rich with codeHash := h, preimages := Std.ExtTreeMap.ofList [(h, c)], minMemoGas := 0,
+                supervisor := sup, supervisorCreated := supCreated }
+
+/-- The partial state with these accounts, all of them always-accumulated with 10^6 gas
+    (`free`), manager `m` and delegator `v`. -/
+def psOf (as : List (Nat × ServiceAccount)) (free : List Nat) (m v : Nat := 0) : PartialState :=
+  { accounts := Std.ExtTreeMap.ofList as, staging := [], authQueue := [[], []], manager := m,
+    assigners := [0, 0], delegator := v, registrar := 0,
+    alwaysAcc := Std.ExtTreeMap.ofList (free.map (·, 1000000)) }
+
+/-- The accumulation STF at slot 10 (prior slot 9) with no reports. -/
+def accAt (e : PartialState) : AccResult :=
+  let pre : AccState :=
+    { slot := 9, entropy := List.replicate 32 0, ready := List.replicate 12 []
+      accumulated := List.replicate 12 ∅, pstate := e }
+  accumulate .tiny pre 10 []
+
+-- yield = 27, checkpoint = 19, transfer = 22, write = 5, provide = 28, bless = 16
+/-- A deferred transfer to itself of 0 with gas limit `l`, the memo read at 0x10000. -/
+def selfXfer (l : Nat) : List TOp :=
+  [.set 7 none64, .set 8 none64, .set 9 0, .set 10 0, .set 11 l, .set 12 roBase, .call 22]
+
+/-! θ': service 20 yields the first 32 octets of its arguments ℰ(t, s, |**i**|) = [10, 20, |**i**|, 0, …]
+(ω_7 points there on entry). Round 1 (free gas, no inputs) it also sends itself two transfers of
+gas 5000, with a checkpoint after each step; round 2 (two inputs, gas 10000) has gas for only one,
+round 3 (one input, gas 5000) for none. So it yields [10, 20, 0, …], then [10, 20, 2, …], then
+[10, 20, 1, …], and θ' lists them by hash, not by round. -/
+def argYield : List UInt8 :=
+  svcProgram ([.call 27, .call 19] ++ selfXfer 5000 ++ [.call 19] ++ selfXfer 5000) (List.replicate 128 0)
+def hArgs (k : Nat) : List UInt8 := [10, 20, k.toUInt8] ++ List.replicate 29 0
+def thetaRes := accAt (psOf [(20, svc (some argYield))] [20])
+#guard thetaRes.outputs == [(20, hArgs 0), (20, hArgs 1), (20, hArgs 2)]
+#guard thetaRes.root ==
+  Merkle.root Keccak.keccak256 ([0, 1, 2].map fun k => Codec.fixed 4 20 ++ hArgs k)
+-- three rounds' transfers: two from round 1, one from round 2
+#guard thetaRes.stats == [(20, (0, 3, (thetaRes.stats.lookup 20).elim 0 (·.2.2)))]
+
+/-! … and a service yielding the same hash in two rounds appears once. It yields the 32 octets at
+0x10000, then sends itself a transfer of gas 5000, which round 2 cannot afford. -/
+def constHash : List UInt8 := List.replicate 32 0xab
+def constYield : List UInt8 :=
+  svcProgram ([.set 7 roBase, .call 27, .call 19] ++ selfXfer 5000) (constHash ++ List.replicate 96 0)
+def dupRes := accAt (psOf [(20, svc (some constYield))] [20])
+#guard dupRes.outputs == [(20, constHash)]
+#guard (dupRes.stats.lookup 20).map (·.2.1) == some 1
+
+/-! N: junior 31 and its effective supervisor 30 both write 31's key "k". 31 also yields and provides
+a preimage for its own request; its run is discarded (GP v0.8.1 eq. `accpar`, with the input state
+for N(**o**)'s post-state, note v0.8.1-A1): 31's storage holds 30's value, 31 yields nothing, but its
+gas use and its provision stay. -/
+def pre4 : List UInt8 := [1, 2, 3, 4]
+def hPre4 : List UInt8 := (Blake2b.hash256 ⟨pre4.toArray⟩).toList
+/-- ro: "k" at 0, "J" at 1, the preimage at 2, a hash to yield at 32. -/
+def juniorCode : List UInt8 :=
+  svcProgram [.set 7 none64, .set 8 roBase, .set 9 1, .set 10 (roBase + 1), .set 11 1, .call 5,
+           .set 7 none64, .set 8 (roBase + 2), .set 9 4, .call 28,
+           .set 7 (roBase + 32), .call 27]
+    ("kJ".toUTF8.toList ++ pre4 ++ List.replicate 26 0 ++ constHash)
+/-- 30 writes "U" under 31's key "k". -/
+def supCode : List UInt8 :=
+  svcProgram [.set 7 31, .set 8 roBase, .set 9 1, .set 10 (roBase + 1), .set 11 1, .call 5] "kU".toUTF8.toList
+def junior31 : ServiceAccount := (svc (some juniorCode) 30 0).requestSet hPre4 4 []
+def nRes (sup : Option (List UInt8)) := accAt (psOf [(30, svc sup), (31, junior31)] [30, 31])
+def acctIn (r : AccResult) (s : Nat) : ServiceAccount := r.state.pstate.accounts.getD s default
+-- both write: 31's run is discarded
+#guard (acctIn (nRes (some supCode)) 31).storageGet "k".toUTF8.toList == some "U".toUTF8.toList
+#guard (nRes (some supCode)).outputs == []
+#guard ((nRes (some supCode)).stats.lookup 31).elim 0 (·.2.2) > 0
+#guard (acctIn (nRes (some supCode)) 31).requestGet hPre4 4 == some [10]
+#guard (acctIn (nRes (some supCode)) 31).preimages.get? hPre4 == some pre4
+-- the supervisor does nothing: 31's run stands
+#guard (acctIn (nRes none) 31).storageGet "k".toUTF8.toList == some "J".toUTF8.toList
+#guard (nRes none).outputs == [(31, constHash)]
+
+/-! T over rounds: 40 sends 7 to junior 42 and then 7 to its effective supervisor 41 (neither has
+code). Round 2 takes the transfer to 42; the one to 41 waits for round 3 (T's second disjunct), so
+**u** lists 42 before 41 although 41 < 42. -/
+def payBoth : List UInt8 :=
+  svcProgram [.set 7 none64, .set 8 42, .set 9 0, .set 10 7, .set 11 0, .set 12 roBase, .call 22,
+           .set 7 none64, .set 8 41, .set 9 0, .set 10 7, .set 11 0, .set 12 roBase, .call 22]
+    (List.replicate 128 0)
+def tPs := psOf [(40, svc (some payBoth)), (41, svc none), (42, svc none 41 0)] [40]
+def tSeq := accSeq .tiny (List.replicate 32 0) 10 20 2000000 [] [] tPs tPs.alwaysAcc
+#guard tSeq.2.2.2.1.map (·.1) == [40, 42, 41]
+#guard tSeq.2.2.2.2.map (·.dest) == [42, 41]
+#guard (tSeq.2.1.accounts.getD 41 default).balance == rich.balance + 7 &&
+  (tSeq.2.1.accounts.getD 42 default).balance == rich.balance + 7
+#guard ((accAt tPs).stats.lookup 41).map (·.2.1) == some 1 &&
+  ((accAt tPs).stats.lookup 42).map (·.2.1) == some 1
+#guard (acctIn (accAt tPs) 41).lastAcc == 10 && (acctIn (accAt tPs) 42).lastAcc == 10
+
+/-! Ψ_A: a transfer flagged for the destination's supervisor balance credits b', marks the service
+modified and, with no code, uses no gas (GP v0.8.1 eq. `accinvocation`). -/
+def supXfer : DeferredTransfer :=
+  { source := 1, dest := 43, destSupervisor := true, amount := 5, memo := ⟨#[]⟩, gas := 0 }
+def psiSup := psiA .tiny (List.replicate 32 0) (psOf [(43, svc none)] []) 10 43 0 [.transfer supXfer]
+#guard (psiSup.state.accounts.getD 43 default).supervisorBalance == rich.supervisorBalance + 5 &&
+  (psiSup.state.accounts.getD 43 default).balance == rich.balance &&
+  psiSup.modified.contains 43 && psiSup.gasUsed == 0
+
+/-! R: manager 50 and delegator 51 both bless the delegator role in one round, 50 to 60 and 51 to
+61: the manager's choice wins (GP v0.8.1 eq. `accpar`, R); with a manager that does nothing, 51's. -/
+def blessV (v : Nat) : List UInt8 :=
+  svcProgram [.set 7 none64, .set 8 none64, .set 9 v, .set 10 none64, .set 11 none64, .set 12 0,
+           .call 16] []
+#guard (accAt (psOf [(50, svc (some (blessV 60))), (51, svc (some (blessV 61)))] [50, 51] 50 51)).state.pstate.delegator == 60
+#guard (accAt (psOf [(50, svc none), (51, svc (some (blessV 61)))] [50, 51] 50 51)).state.pstate.delegator == 61
+
 /-! ### the preimages extrinsic bounds (GP v0.8.1 eq. `xtpreimages`, `maxxtpreimagesdatasize`) -/
 
 def pErr (xs : List (Nat × List UInt8)) : Option PreimageError :=

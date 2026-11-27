@@ -111,7 +111,7 @@ State on 15 Nov 2026. Everything below is merged; nothing is in flight.
 - **The CI split** (#202). The first main run after it (dd373c2):
   - `model` passed in 15 min and saved `lake-model-…` (627 MB, without Services);
   - the proofs ran as `attempt-1`, as they always do on main.
-- **Fast Ψ_H** (`PVM/FastHost.lean`, #201 inside #204). It parses and prepares the blob once per
+- **Fast Ψ_H** (`PVM/FastHost.lean`, now `PVM/Fast/Host.lean`; #201 inside #204). It parses and prepares the blob once per
   Ψ_H instead of at every host call. `@[csimp]` swaps it in for `psiHStar`, `psiH` and `psiM` in
   compiled code. Locally, the storage_light trace went from 300 s to 64 s.
 - **Profiling**: the data are on `claude/profiling-data` and the proposal is #203.

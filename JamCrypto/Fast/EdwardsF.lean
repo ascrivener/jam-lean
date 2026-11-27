@@ -47,6 +47,12 @@ theorem guard {c c' : Prop} [Decidable c] [Decidable c'] {x : Option γ} {y : Op
   · have hc' : ¬c' := fun h' => hc (h.mpr h')
     simp [_root_.guard, hc, hc', OR, failure]
 
+theorem ite {c : Prop} [Decidable c] {x y : Option α} {x' y' : Option β} (h1 : c → OR R x x')
+    (h2 : ¬c → OR R y y') : OR R (if c then x else y) (if c then x' else y') := by
+  by_cases hc : c
+  · rw [if_pos hc, if_pos hc]; exact h1 hc
+  · rw [if_neg hc, if_neg hc]; exact h2 hc
+
 /-- Step through a `have` on the left: it becomes a variable with its defining equation. -/
 theorem letL {x : Option α} {y : Option β} {ε : Type} {v : ε} {f : ε → Option α} (h : ∀ e, e = v → OR R (f e) y) :
     OR R (letFun v f) y := h v rfl

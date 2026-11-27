@@ -1,175 +1,154 @@
 import JamCrypto.Fast.Fp25519
+import JamCrypto.Fast.EdwardsF
 import JamCrypto.Ed25519
 
 /-!
-# Ed25519 verification on fixed-limb field arithmetic
+# Ed25519 verification on fixed-limb field arithmetic, proved equal to the reference
 
-The same function as `JamCrypto.Ed25519.verifyWith` (the reference implementation, which stays as
-it is), computed over `Fast.Fp25519` instead of `Nat`, with a joint (Straus) scalar
-multiplication.
-
-**Status: tested, not proved.** `FastTest` compares it with the reference on every published
-vector and on randomized valid, mutated and garbage inputs, under all three `Rules`.
-
-Why the results agree, in outline: edwards25519's `add-2008-hwcd` formula is complete (a = −1 a
-square, d a non-square), so every point either implementation computes is given by the group law,
-whatever the order of the additions; decoding follows the reference step for step (square roots
-are normalised by parity), and results are compared only through `eq` and `isZero`.
+`verifyWith` performs the same sequence of operations as `JamCrypto.Ed25519.verifyWith` (the
+reference implementation, unchanged), on `Fast.Fp25519` instead of `Nat` mod p, and is proved
+equal to it (`verifyWith_eq`) from the field laws of `Fast.Fp25519` and the curve lemmas of
+`Fast.EdwardsF`.
 -/
 
 namespace JamCrypto.Fast.Ed25519
 
 open JamCrypto.Fast
-open JamCrypto.Modular (leToNat)
+open JamCrypto.Modular (leToNat subMod invMod powMod)
+
+attribute [local irreducible] JamCrypto.Modular.powMod JamCrypto.Modular.invMod
+attribute [local irreducible] Fp25519.mul Fp25519.sq Fp25519.add Fp25519.sub Fp25519.ofNat Fp25519.toNat
+  Fp25519.isZero Fp25519.beq JamCrypto.Fast.powF
 
 abbrev F := Fp25519.Elem
 
-/-- A point in extended coordinates. -/
-structure Pt where
-  X : F
-  Y : F
-  Z : F
-  T : F
-deriving Inhabited
+local notation "p" => Field.p F
 
-def zero : Pt := ⟨Fp25519.zero, Fp25519.one, Fp25519.one, Fp25519.zero⟩
-def invalid : Pt := ⟨Fp25519.zero, Fp25519.zero, Fp25519.zero, Fp25519.zero⟩
+theorem curve_p : JamCrypto.Ed25519.curve.p = p := rfl
+theorem p_eq : JamCrypto.Ed25519.p = p := rfl
 
-def dC : F := Fp25519.ofNat JamCrypto.Ed25519.d
-def sqrtM1 : F := Fp25519.ofNat JamCrypto.Ed25519.sqrtM1
+/-- The curve constants a = −1 and d. -/
+@[irreducible] def C : CurveF F := ⟨Field.ofNat JamCrypto.Ed25519.curve.a, Field.ofNat JamCrypto.Ed25519.curve.d⟩
 
-@[inline] def valid (P : Pt) : Bool := !P.Z.isZero
+theorem hC : C.Rel JamCrypto.Ed25519.curve := by
+  unfold C; exact ⟨VRel.ofNat _, VRel.ofNat _, curve_p⟩
 
-def ofAffine (x y : F) : Pt := ⟨x, y, Fp25519.one, x * y⟩
+theorem vofNat (x : Nat) : VRel (Field.ofNat x : F) x := VRel.ofNat x
+theorem vone : VRel (Field.one : F) 1 := VRel.one
+theorem vzero : VRel (Field.zero : F) 0 := VRel.zero
+theorem vmod {a : F} {n : Nat} (h : VRel a n) : VRel a (n % p) := VRel.mod.mpr h
+theorem ltp (n : Nat) : n % p < p := lt_of_mod (F := F)
 
-/-- P + Q (`add-2008-hwcd` with a = −1, as `Curve.add`). -/
-def add (P Q : Pt) : Pt :=
-  let A := P.X * Q.X
-  let B := P.Y * Q.Y
-  let C := dC * (P.T * Q.T)
-  let D := P.Z * Q.Z
-  let E := (P.X + P.Y) * (Q.X + Q.Y) - (A + B)
-  let F := D - C
-  let G := D + C
-  let H := B + A
-  let Z3 := F * G
-  if Z3.isZero then invalid else ⟨E * F, G * H, Z3, E * H⟩
+abbrev OP : Option (Pt F) → Option JamCrypto.Point → Prop := OR PRel
 
-/-- 2P (`dbl-2008-hwcd` with a = −1). -/
-def dbl (P : Pt) : Pt :=
-  let A := P.X.sq
-  let B := P.Y.sq
-  let C := Fp25519.dbl P.Z.sq
-  let D := Fp25519.neg A
-  let E := (P.X + P.Y).sq - A - B
-  let G := D + B
-  let F := G - C
-  let H := D - B
-  let Z3 := F * G
-  if Z3.isZero then invalid else ⟨E * F, G * H, Z3, E * H⟩
-
-def neg (P : Pt) : Pt := ⟨Fp25519.neg P.X, P.Y, P.Z, Fp25519.neg P.T⟩
-
-def eq (P Q : Pt) : Bool :=
-  valid P && valid Q && P.X * Q.Z == Q.X * P.Z && P.Y * Q.Z == Q.Y * P.Z
-
-def isZero (P : Pt) : Bool := eq P zero
-
-/-- The 4-bit digits of k mod 2^256, least significant first. -/
-def nibbles (k : Nat) : Array UInt8 := Id.run do
-  let mut out : Array UInt8 := Array.mkEmpty 64
-  for w in [0:4] do
-    let v := (k >>> (64 * w)).toUInt64
-    for i in [0:16] do
-      out := out.push ((v >>> (4 * i).toUInt64) &&& 15).toUInt8
-  return out
-
-def table (P : Pt) : Array Pt := Id.run do
-  let mut t : Array Pt := Array.mkEmpty 16
-  t := t.push zero
-  t := t.push P
-  for i in [2:16] do
-    t := t.push (if i % 2 == 0 then dbl t[i / 2]! else add t[i - 1]! P)
-  return t
-
-def topDigit (ds : Array UInt8) : Nat := Id.run do
-  let mut n := 0
-  for i in [0:ds.size] do
-    if ds[i]! != 0 then n := i + 1
-  return n
-
-/-- [k₁]P₁ + [k₂]P₂ for k₁, k₂ < 2^256 (Straus, 4-bit windows). -/
-def smul2 (k1 : Nat) (P1 : Pt) (k2 : Nat) (P2 : Pt) : Pt := Id.run do
-  let d1 := nibbles k1
-  let d2 := nibbles k2
-  let t1 := table P1
-  let t2 := table P2
-  let n := max (topDigit d1) (topDigit d2)
-  let mut acc := zero
-  for j in [0:n] do
-    let i := n - 1 - j
-    acc := dbl (dbl (dbl (dbl acc)))
-    let a := d1[i]!
-    if a != 0 then acc := add acc t1[a.toNat]!
-    let b := d2[i]!
-    if b != 0 then acc := add acc t2[b.toNat]!
-  return acc
-
-/-- (p − 5)/8. -/
-def expBits : Array Bool := Fp25519.bitsMsb ((JamCrypto.Ed25519.p - 5) / 8)
-
-/-- Decode a 32-octet point encoding (as `Ed25519.decode`). -/
-def decode (rules : JamCrypto.Ed25519.Rules) (bs : List UInt8) : Option Pt := do
+/-- As `Ed25519.decode`. -/
+def decode (rules : JamCrypto.Ed25519.Rules) (bs : List UInt8) : Option (Pt F) := do
   guard (bs.length == 32)
   let n := leToNat bs
   let sign := n / 2 ^ 255
   let yy := n % 2 ^ 255
   if rules.canonicalPoints && yy ≥ JamCrypto.Ed25519.p then none
-  let y := Fp25519.ofNat yy
-  let y2 := y.sq
-  let u := y2 - Fp25519.one
-  let v := dC * y2 + Fp25519.one
-  -- w = u/v and x0 = w^((p+3)/8) = u·v³·(u·v⁷)^((p−5)/8) (RFC 8032 §5.1.3; v ≠ 0 since −1/d is
-  -- not a square), without the inversion
-  let v3 := v.sq * v
-  let x0 := u * v3 * Fp25519.powBits (u * v3 * v3 * v) expBits
-  -- x0² = w ⟺ v·x0² = u, and x0² = −w ⟺ v·x0² = −u
-  let vx2 := v * x0.sq
-  let x ← if vx2 == u then some x0
-    else if vx2 == Fp25519.neg u then some (x0 * sqrtM1)
+  let y : F := Field.ofNat yy
+  let y2 := Field.mul y y
+  let u := Field.sub y2 Field.one
+  let v := Field.add (Field.mul (Field.ofNat JamCrypto.Ed25519.d) y2) Field.one
+  let w := Field.mul u (invF v)
+  let x0 := powF w ((JamCrypto.Ed25519.p + 3) / 8)
+  let x ← if Field.beq (Field.mul x0 x0) w then some x0
+    else if Field.beq (Field.mul x0 x0) (Field.sub Field.zero w) then
+      some (Field.mul x0 (Field.ofNat JamCrypto.Ed25519.sqrtM1))
     else none
-  if x.isZero && sign == 1 && rules.canonicalPoints then none
-  let x := if (if Fp25519.isOdd x then 1 else 0) != sign then Fp25519.neg x else x
-  return ofAffine x y
+  if Field.toNat x == 0 && sign == 1 && rules.canonicalPoints then none
+  let x := if Field.toNat x % 2 != sign then Field.sub Field.zero x else x
+  return ofAffineF x y
+
+theorem decode_rel (rules : JamCrypto.Ed25519.Rules) (bs : List UInt8) :
+    OP (decode rules bs) (JamCrypto.Ed25519.decode rules bs) := by
+  unfold decode JamCrypto.Ed25519.decode
+  rw [p_eq]
+  refine OR.guard Iff.rfl fun _ => ?_
+  extract_lets n sign yy y y2 u v w x0 k kU y' y2' u' v' w' x0' k' kU'
+  refine OR.ite (fun _ => trivial) fun _ => ?_
+  have vy : VRel y y' := vmod (vofNat yy)
+  have vy2 : VRel y2 y2' := vmod (vy.mul vy)
+  have vu : VRel u u' := vy2.sub vone
+  have vv : VRel v v' := vmod (((vofNat _).mul vy2).add vone)
+  have vw : VRel w w' := vmod (vu.mul (invF_rel vv))
+  have hw : w' < p := ltp _
+  have vx0 : VRel x0 x0' := (powF_rel' vw _).1
+  have hx0 : x0' < p := powMod_lt (F := F) _ _
+  -- the continuation after x
+  have hk : ∀ a b, VRel a b ∧ b < p → OP (k a) (k' b) := by
+    rintro a b ⟨va, hb⟩
+    simp only [k, k']
+    rw [va.toNat, Nat.mod_eq_of_lt hb]
+    refine OR.ite (fun _ => trivial) fun _ => ?_
+    refine ofAffine_rel curve_p ?_ vy
+    split
+    · exact vzero.sub va
+    · exact va
+  simp only [kU, kU']
+  rw [(vmod (vx0.mul vx0)).beq_lt vw (ltp _) hw,
+    (vmod (vx0.mul vx0)).beq_lt (vzero.sub vw) (ltp _) (by unfold subMod; exact ltp _)]
+  refine OR.ite (fun _ => OR.bind (R := fun a x => VRel a x ∧ x < p) ⟨vx0, hx0⟩ hk) fun _ => ?_
+  refine OR.ite (fun _ => OR.bind (R := fun a x => VRel a x ∧ x < p) ⟨vmod (vx0.mul (vofNat _)), ltp _⟩ hk)
+    fun _ => trivial
 
 /-- The base point. -/
-def B : Pt := ⟨Fp25519.ofNat JamCrypto.Ed25519.B.X, Fp25519.ofNat JamCrypto.Ed25519.B.Y,
-  Fp25519.ofNat JamCrypto.Ed25519.B.Z, Fp25519.ofNat JamCrypto.Ed25519.B.T⟩
+@[irreducible] def B : Pt F :=
+  ofAffineF (Field.ofNat 15112221349535400772501151409588531511454012693041857206046113283949847762202)
+    (Field.ofNat 46316835694926478169428394003475163141307993866256225615783033603165251855960)
 
-/-- `Ed25519.verifyWith rules` with a decoded key (`decode rules key = some A`). -/
-def verifyDecoded (rules : JamCrypto.Ed25519.Rules) (A : Pt) (key msg sig : List UInt8) : Bool := Id.run do
+theorem B_rel : PRel B JamCrypto.Ed25519.B := by
+  unfold B; exact ofAffine_rel curve_p (vofNat _) (vofNat _)
+
+/-- As `Ed25519.verifyWith`. -/
+def verifyWith (rules : JamCrypto.Ed25519.Rules) (key msg sig : List UInt8) : Bool := Id.run do
   if key.length != 32 || sig.length != 64 then return false
   let Rb := sig.take 32
   let S := leToNat (sig.drop 32)
   if S ≥ JamCrypto.Ed25519.L then return false
+  let some A := decode rules key | return false
   let some R := decode rules Rb | return false
   let k := leToNat (JAM.Sha512.hash (Rb ++ key ++ msg)) % JamCrypto.Ed25519.L
-  -- [S]B − [k]A, then − R
-  let P := smul2 S B k (neg A)
   if rules.cofactored then
-    return isZero (dbl (dbl (dbl (add P (neg R)))))
+    return CurveF.isZero (C.smul 8 (C.sub (C.sub (C.smul S B) R) (C.smul k A)))
   else
-    return eq P R
+    return CurveF.eq (C.smul S B) (C.add R (C.smul k A))
 
-/-- The same function as `Ed25519.verifyWith rules`. -/
-def verifyWith (rules : JamCrypto.Ed25519.Rules) (key msg sig : List UInt8) : Bool := Id.run do
-  if key.length != 32 || sig.length != 64 then return false
-  let S := leToNat (sig.drop 32)
-  if S ≥ JamCrypto.Ed25519.L then return false
-  let some A := decode rules key | return false
-  return verifyDecoded rules A key msg sig
+theorem verifyWith_eq (rules : JamCrypto.Ed25519.Rules) (key msg sig : List UInt8) :
+    verifyWith rules key msg sig = JamCrypto.Ed25519.verifyWith rules key msg sig := by
+  unfold verifyWith JamCrypto.Ed25519.verifyWith
+  rw [Id.run, Id.run]
+  by_cases h1 : (key.length != 32 || sig.length != 64) = true
+  · rw [if_pos h1, if_pos h1]
+  rw [if_neg h1, if_neg h1]
+  have hA := decode_rel rules key
+  have hR := decode_rel rules (sig.take 32)
+  generalize decode rules key = a at hA ⊢
+  generalize JamCrypto.Ed25519.decode rules key = a' at hA ⊢
+  extract_lets Rb S k E
+  generalize decode rules Rb = b at hR ⊢
+  generalize JamCrypto.Ed25519.decode rules Rb = b' at hR ⊢
+  by_cases h2 : S ≥ JamCrypto.Ed25519.L
+  · rw [if_pos h2, if_pos h2]
+  rw [if_neg h2, if_neg h2]
+  cases a <;> cases a' <;> simp only [OR] at hA
+  all_goals cases b <;> cases b' <;> simp only [OR] at hR
+  all_goals dsimp (config := {zeta := false}) only
+  rename_i A A' R R'
+  have hp : E.p = p := curve_p
+  by_cases h3 : rules.cofactored = true
+  · rw [if_pos h3, if_pos h3]
+    exact congrArg _ (isZero_eq hp (smul_rel hC 8 (sub_rel hC (sub_rel hC (smul_rel hC S B_rel) hR)
+      (smul_rel hC k hA))))
+  · rw [if_neg h3, if_neg h3]
+    exact congrArg _ (eq_eq hp (smul_rel hC S B_rel) (add_rel hC hR (smul_rel hC k hA)))
 
-/-- The same function as `Ed25519.verify` (ZIP 215). -/
+/-- As `Ed25519.verify` (ZIP 215). -/
 def verify (key msg sig : List UInt8) : Bool := verifyWith JamCrypto.Ed25519.zip215 key msg sig
+
+theorem verify_eq (key msg sig : List UInt8) : verify key msg sig = JamCrypto.Ed25519.verify key msg sig :=
+  verifyWith_eq _ key msg sig
 
 end JamCrypto.Fast.Ed25519

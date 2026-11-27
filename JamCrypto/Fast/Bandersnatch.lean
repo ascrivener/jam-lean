@@ -249,4 +249,156 @@ theorem vrfOutput_eq (sig : List UInt8) : vrfOutput sig = JamCrypto.Bandersnatch
   dsimp only
   rw [encode_eq h]
 
+/-! ## Thin VRF (GP v0.8.1) -/
+
+namespace Thin
+
+open JamCrypto.Bandersnatch.Thin (Transcript tagThinVrf tagDelinearize tagChallenge tagPointToHash
+  challengeLen enc64 decScalarMod)
+
+/-- As `Bandersnatch.Thin.hashToCurve` (the reference's, see "Hash to curve" above). -/
+def hashToCurve (data : List UInt8) (rd : Reading) : Option (Pt F) :=
+  (JamCrypto.Bandersnatch.Thin.hashToCurve data rd).map ofPoint
+
+theorem hashToCurve_rel (data : List UInt8) (rd : Reading) :
+    OP (hashToCurve data rd) (JamCrypto.Bandersnatch.Thin.hashToCurve data rd) :=
+  OR.map_ofPoint (thinHashToCurve_selfRed data rd)
+
+/-- As `Bandersnatch.Thin.output`. -/
+def output (O : Pt F) (n : Nat := 32) : List UInt8 :=
+  (Transcript.new.absorb ([tagPointToHash] ++ encode O)).squeeze n
+
+theorem output_eq {O : Pt F} {O' : JamCrypto.Point} (h : PRel O O') (n : Nat) :
+    output O n = JamCrypto.Bandersnatch.Thin.output O' n := by
+  unfold output JamCrypto.Bandersnatch.Thin.output
+  rw [encode_eq h]
+
+/-- As `Bandersnatch.Thin.vrfTranscript`. -/
+def vrfTranscript (Y I O : Pt F) (ad : List UInt8) : Transcript × Pt F × Pt F :=
+  let t := Transcript.new.absorb
+    ([tagThinVrf] ++ enc64 2 ++ encode G ++ encode Y ++ encode I ++ encode O ++ enc64 ad.length ++ ad)
+  let z := decScalarMod ((t.absorb [tagDelinearize]).squeeze challengeLen)
+  (t, C.add G (C.smul z I), C.add Y (C.smul z O))
+
+/-- The transcripts agree and the merged pairs are related. -/
+def TRel (a : Transcript × Pt F × Pt F) (b : Transcript × JamCrypto.Point × JamCrypto.Point) : Prop :=
+  a.1 = b.1 ∧ PRel a.2.1 b.2.1 ∧ PRel a.2.2 b.2.2
+
+theorem vrfTranscript_rel {Y I O : Pt F} {Y' I' O' : JamCrypto.Point} (hY : PRel Y Y') (hI : PRel I I')
+    (hO : PRel O O') (ad : List UInt8) :
+    TRel (vrfTranscript Y I O ad) (JamCrypto.Bandersnatch.Thin.vrfTranscript Y' I' O' ad) := by
+  unfold vrfTranscript JamCrypto.Bandersnatch.Thin.vrfTranscript
+  rw [encode_eq G_rel, encode_eq hY, encode_eq hI, encode_eq hO]
+  exact ⟨rfl, add_rel hC G_rel (smul_rel hC _ hI), add_rel hC hY (smul_rel hC _ hO)⟩
+
+/-- As `Bandersnatch.Thin.challenge`. -/
+def challenge (R : Pt F) (t : Transcript) : Nat :=
+  decScalarMod ((t.absorb ([tagChallenge] ++ encode R)).squeeze challengeLen)
+
+theorem challenge_eq {R : Pt F} {R' : JamCrypto.Point} (h : PRel R R') (t : Transcript) :
+    challenge R t = JamCrypto.Bandersnatch.Thin.challenge R' t := by
+  unfold challenge JamCrypto.Bandersnatch.Thin.challenge
+  rw [encode_eq h]
+
+/-- As `Bandersnatch.Thin.thinDecode`. -/
+def thinDecode (sig : List UInt8) : Option (Pt F × Pt F × Nat) := do
+  guard (sig.length == 96)
+  let O ← decode (sig.take 32)
+  let R ← decode (slice sig 32 32)
+  let s := leToNat (slice sig 64 32)
+  guard (s < JamCrypto.Bandersnatch.r)
+  return (O, R, s)
+
+/-- Decoded signatures agree. -/
+def DRel (a : Pt F × Pt F × Nat) (b : JamCrypto.Point × JamCrypto.Point × Nat) : Prop :=
+  PRel a.1 b.1 ∧ PRel a.2.1 b.2.1 ∧ a.2.2 = b.2.2
+
+theorem thinDecode_rel (sig : List UInt8) :
+    OR DRel (thinDecode sig) (JamCrypto.Bandersnatch.Thin.thinDecode sig) := by
+  unfold thinDecode JamCrypto.Bandersnatch.Thin.thinDecode
+  refine OR.guard Iff.rfl fun _ => ?_
+  refine OR.bind (decode_rel _) fun O O' hO => ?_
+  refine OR.bind (decode_rel _) fun R R' hR => ?_
+  exact OR.guard Iff.rfl fun _ => ⟨hO, hR, rfl⟩
+
+/-- As `Bandersnatch.Thin.verify`. -/
+def verify (key ctx msg sig : List UInt8) (rd : Reading := .prose) : Bool := Id.run do
+  if key.length != 32 then return false
+  let some Y := decode key | return false
+  let some (O, R, s) := thinDecode sig | return false
+  let some I := hashToCurve ctx rd | return false
+  if CurveF.isZero Y || CurveF.isZero I || CurveF.isZero O then return false
+  let (t, Im, Om) := vrfTranscript Y I O msg
+  let c := challenge R t
+  let lhs := C.smul s Im
+  let rhs := C.add R (C.smul c Om)
+  return CurveF.valid lhs && CurveF.valid rhs && CurveF.eq lhs rhs
+
+theorem verify_eq (key ctx msg sig : List UInt8) (rd : Reading) :
+    verify key ctx msg sig rd = JamCrypto.Bandersnatch.Thin.verify key ctx msg sig rd := by
+  unfold verify JamCrypto.Bandersnatch.Thin.verify
+  rw [Id.run, Id.run]
+  by_cases h1 : (key.length != 32) = true
+  · rw [if_pos h1, if_pos h1]
+  rw [if_neg h1, if_neg h1]
+  have hY := decode_rel key
+  have hD := thinDecode_rel sig
+  have hI := hashToCurve_rel ctx rd
+  generalize decode key = a at hY ⊢
+  generalize JamCrypto.Bandersnatch.decode key = a' at hY ⊢
+  generalize thinDecode sig = d at hD ⊢
+  generalize JamCrypto.Bandersnatch.Thin.thinDecode sig = d' at hD ⊢
+  generalize hashToCurve ctx rd = i at hI ⊢
+  generalize JamCrypto.Bandersnatch.Thin.hashToCurve ctx rd = i' at hI ⊢
+  cases a <;> cases a' <;> simp only [OR] at hY
+  all_goals cases d <;> cases d' <;> simp only [OR] at hD
+  all_goals cases i <;> cases i' <;> simp only [OR] at hI
+  all_goals dsimp (config := {zeta := false}) only
+  rename_i Y Y' D D' I I'
+  obtain ⟨O, R, s⟩ := D
+  obtain ⟨O', R', s'⟩ := D'
+  obtain ⟨hO, hR, hs⟩ := hD
+  dsimp only at hs
+  subst hs
+  dsimp (config := {zeta := false}) only
+  rw [isZero_eq curve_p hY, isZero_eq curve_p hI, isZero_eq curve_p hO]
+  by_cases h2 : (JamCrypto.Bandersnatch.curve.isZero Y' || JamCrypto.Bandersnatch.curve.isZero I' ||
+      JamCrypto.Bandersnatch.curve.isZero O') = true
+  · rw [if_pos h2, if_pos h2]
+  rw [if_neg h2, if_neg h2]
+  have hT := vrfTranscript_rel hY hI hO msg
+  generalize vrfTranscript Y I O msg = tr at hT ⊢
+  generalize JamCrypto.Bandersnatch.Thin.vrfTranscript Y' I' O' msg = tr' at hT ⊢
+  obtain ⟨t, Im, Om⟩ := tr
+  obtain ⟨t', Im', Om'⟩ := tr'
+  obtain ⟨ht, hIm, hOm⟩ := hT
+  dsimp only at ht hIm hOm
+  subst ht
+  dsimp (config := {zeta := false}) only
+  extract_lets c lhs rhs c' lhs' rhs'
+  have hl : PRel lhs lhs' := smul_rel hC s hIm
+  have hr : PRel rhs rhs' := by
+    show PRel (C.add R (C.smul c Om)) (JamCrypto.Bandersnatch.curve.add R' (JamCrypto.Bandersnatch.curve.smul c' Om'))
+    rw [show c = c' from challenge_eq hR t]
+    exact add_rel hC hR (smul_rel hC _ hOm)
+  rw [valid_eq curve_p hl, valid_eq curve_p hr, eq_eq curve_p hl hr]
+
+/-- As `Bandersnatch.Thin.vrfOutput`. -/
+def vrfOutput (sig : List UInt8) : List UInt8 :=
+  match decodeOnCurve (sig.take 32) with
+  | some O => output O
+  | none => (Transcript.new.absorb ([tagPointToHash] ++ sig.take 32)).squeeze 32
+
+theorem vrfOutput_eq (sig : List UInt8) :
+    vrfOutput sig = JamCrypto.Bandersnatch.Thin.vrfOutput sig := by
+  unfold vrfOutput JamCrypto.Bandersnatch.Thin.vrfOutput
+  have h := decodeOnCurve_rel (sig.take 32)
+  generalize decodeOnCurve (sig.take 32) = a at h ⊢
+  generalize JamCrypto.Bandersnatch.decodeOnCurve (sig.take 32) = a' at h ⊢
+  cases a <;> cases a' <;> simp only [OR] at h <;> try rfl
+  dsimp only
+  rw [output_eq h]
+
+end Thin
+
 end JamCrypto.Fast.Bandersnatch

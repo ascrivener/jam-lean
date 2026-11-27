@@ -1,12 +1,11 @@
 import JamCrypto
-import JamCrypto.Fast.Fq
 import JamCrypto.Fast.Fp25519
 
 /-!
 # Differential tests of `JamCrypto.Fast` against the reference implementations
 
-The fast implementations are tested, not proved, to compute the same functions as the reference
-ones. `runFast` compares them on randomized inputs (a fixed-seed generator, so runs are
+The fast implementations are proved equal to the reference ones (`Fast.withSignatures_eq` and the
+theorems it rests on); these tests are an extra check of the same equalities. `runFast` compares them on randomized inputs (a fixed-seed generator, so runs are
 reproducible): field arithmetic against `Nat` arithmetic mod p, and each verifier and output
 function against its reference on valid signatures, mutated signatures and random octets.
 Published vectors are compared by the callers (`cryptotest`, `ringtest`) as they read them.
@@ -68,12 +67,6 @@ def fieldOps : List FieldOps :=
       roundTrip := fun a => (Fast.Fr.ofNat a).toNat
       eq := fun a b => Fast.Fr.ofNat a == Fast.Fr.ofNat b
       isSquare := fun a => Fast.Fr.isSquare (Fast.Fr.ofNat a) },
-    { name := "Fq", p := Fast.Fq.p,
-      ops := fun a b => let (x, y) := (Fast.Fq.ofNat a, Fast.Fq.ofNat b)
-        ((x * y).toNat, (x + y).toNat, (x - y).toNat, (-x).toNat, x.inv.toNat, x.sq.toNat)
-      roundTrip := fun a => (Fast.Fq.ofNat a).toNat
-      eq := fun a b => Fast.Fq.ofNat a == Fast.Fq.ofNat b
-      isSquare := fun a => Fast.Fq.isSquare (Fast.Fq.ofNat a) },
     { name := "Fp25519", p := Fast.Fp25519.p,
       ops := fun a b => let (x, y) := (Fast.Fp25519.ofNat a, Fast.Fp25519.ofNat b)
         ((x * y).toNat, (x + y).toNat, (x - y).toNat, (-x).toNat, x.inv.toNat, x.sq.toNat)
@@ -158,7 +151,7 @@ def bsDecodeTests (n : Nat) (log : String → IO Unit) : IO Nat := do
     let ok := r1 == f1 && r2 == f2 && Bandersnatch.vrfOutput (bs ++ bs ++ bs) == Fast.Bandersnatch.vrfOutput (bs ++ bs ++ bs)
       && Bandersnatch.Thin.vrfOutput (bs ++ bs ++ bs) == Fast.Bandersnatch.Thin.vrfOutput (bs ++ bs ++ bs)
       && (Bandersnatch.hashToCurve bs).map Bandersnatch.encode
-        == (Fast.Bandersnatch.hashToCurveOf (Bandersnatch.expandMessage bs)).map Fast.Bandersnatch.encode
+        == (Fast.Bandersnatch.hashToCurve bs).map Fast.Bandersnatch.encode
     unless ok do
       log s!"bandersnatch decode/output mismatch on {bs}"
       bad := bad + 1

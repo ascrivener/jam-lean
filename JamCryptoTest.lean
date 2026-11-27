@@ -157,10 +157,10 @@ def main (args : List String) : IO UInt32 := do
       let c080 := withSignatures { edVerify := fun _ _ _ => false }
       check s!"thin {tag} selected by GpVersion.v081 and Reading.vectors"
         (c081.bsVerify pk alpha ad sig && c081.bsOut sig == beta && !c080.bsVerify pk alpha ad sig) failures
-      let c081r := withSignatures { edVerify := fun _ _ _ => false } (gp := .v081) (rd := .vectors) (fast := false)
-      let c080r := withSignatures { edVerify := fun _ _ _ => false } (fast := false)
-      check s!"thin {tag} selected by GpVersion.v081 and Reading.vectors (reference implementations)"
-        (c081r.bsVerify pk alpha ad sig && c081r.bsOut sig == beta && !c080r.bsVerify pk alpha ad sig) failures
+      let c081f := Fast.withSignatures { edVerify := fun _ _ _ => false } (gp := .v081) (rd := .vectors)
+      let c080f := Fast.withSignatures { edVerify := fun _ _ _ => false }
+      check s!"thin {tag} selected by GpVersion.v081 and Reading.vectors (fast implementations)"
+        (c081f.bsVerify pk alpha ad sig && c081f.bsOut sig == beta && !c080f.bsVerify pk alpha ad sig) failures
       -- the prose reading (the default) hashes the input differently, so the vector's signature
       -- does not verify under it, and its own signature does
       let cProse := withSignatures { edVerify := fun _ _ _ => false } (gp := .v081)

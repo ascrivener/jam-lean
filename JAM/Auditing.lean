@@ -32,7 +32,7 @@ Equations covered (labels of `auditing.tex` where it has them):
   from its observed judgments (`formVerdict`); the chain-disregard condition of the best-block
   paragraph (`disregarded`).
 
-## Readings of the paper (also in `docs/upstream-candidates.md`)
+## Readings of the paper (also in [`docs/upstream-candidates.md`](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues))
 
 1. **U's ∃n is unbounded.** Read literally, `∃ n : A_n(w) ⊆ J_⊤(w)` holds as soon as some tranche
    has A_n(w) = ∅, and eq. `latertranches` makes A_n(w) = ∅ for every n after a tranche with no

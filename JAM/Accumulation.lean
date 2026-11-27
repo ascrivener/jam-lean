@@ -103,7 +103,7 @@ def integrateProvisions (d : Accounts) (p : Provisions) : Accounts :=
     of the service's execution", its footnote excepting only provided preimages). Reading it as
     **o**'s post-state would keep a discarded run's new accounts and privilege, staging and queue
     changes while M(s) drops its own account change. Adam's decision (2026-11-25); the paper gap is
-    `docs/upstream-candidates.md` v0.8.1-A1, raised as graypaper#592. -/
+    [`docs/upstream-candidates.md`](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues) v0.8.1-A1, raised as graypaper#592. -/
 def discardIfBoth (e : PartialState) (s u : Nat) (os ou : AccOut) : AccOut :=
   if os.modified.contains s ∧ u ≠ s ∧ ou.modified.contains s then
     ⟨e, ∅, [], none, os.gasUsed, os.provisions⟩

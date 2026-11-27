@@ -27,7 +27,7 @@ justification "allows verification that each segment's hash is included in the r
 root". We define it as the inverse of T: `foldPath` recomputes a root from a value at the bottom of a
 path and the path T gives (top to bottom); `verifySegment` checks one segment with its J_0
 justification and `verifyPage` checks one page of L_x with its J_x path. The readings are recorded
-on each definition and in `docs/upstream-candidates.md`.
+on each definition and in [`docs/upstream-candidates.md`](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues).
 
 The main results are `verifySegment_justify` (every segment verifies against ℳ with its J_0
 justification), `verifyPage_page_justify` (every page of L_x verifies with its J_x path),

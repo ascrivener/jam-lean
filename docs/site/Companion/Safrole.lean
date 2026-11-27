@@ -136,7 +136,7 @@ tag := "safrole-readings"
 
 The paper leaves several points of §6.7 open, and the model decides each one. They are recorded as
 note 31 of the model's
-[upstream candidates](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md):
+[notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues):
 
 * *The order on identifiers.* Tickets are ordered by their identifier $`y \in \mathbb{H}`, but no order on $`\mathbb{H}` is
   defined. The model compares octet sequences lexicographically ({api}`JAM.octetLt`), the evident

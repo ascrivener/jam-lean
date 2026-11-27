@@ -48,7 +48,7 @@ import JAM.Theorems.CheckedIndex.Erasure
 import JAM.Theorems.BestChain
 
 /-!
-# Gray Paper v0.8.0, Appendix B and the protocol terms it needs
+# Gray Paper v0.8.1, Appendix B and the protocol terms it needs
 
 Built on `PVM` (Appendix A).
 

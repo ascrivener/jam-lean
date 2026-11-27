@@ -9,7 +9,7 @@ import PVM.Logic.FastCheck
 `psiM_of_freeRunH` lifts a gas-free run to Ψ_M (GP §A.8) when the run's contract *pins down* the
 real handler: every non-∞ outcome the handler can produce is the one the contract allows. A host
 call that reports the gas left in ω₇ cannot be pinned down that way. Examples are Ψ_A's
-`checkpoint` (Ω_C, GP v0.8.0 eq. `accinvocation`) and `gas` (Ω_G). A program that overwrites ω₇
+`checkpoint` (Ω_C, GP v0.8.1 eq. `accinvocation`) and `gas` (Ω_G). A program that overwrites ω₇
 before reading it does not see the difference.
 
 This file lifts such runs.

@@ -1,5 +1,5 @@
 /-!
-# Blake2b (RFC 7693), as used by the Gray Paper's ℋ (GP v0.8.0 §3.8: ℋ is Blake2b-256)
+# Blake2b (RFC 7693), as used by the Gray Paper's ℋ (GP v0.8.1 §3.8: ℋ is Blake2b-256)
 
 Unkeyed Blake2b with a configurable digest length, in pure Lean: total, no `extern` code, so it
 can be evaluated by the kernel.

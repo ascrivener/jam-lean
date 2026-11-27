@@ -1,7 +1,7 @@
 import JAM.Blake2b
 
 /-!
-# Keccak-256 (GP v0.8.0 §3.8: ℋ_K, used for the accumulation output root and BEEFY)
+# Keccak-256 (GP v0.8.1 §3.8: ℋ_K, used for the accumulation output root and BEEFY)
 
 The Keccak-f[1600] permutation and sponge (FIPS 202 §3, §4), in pure Lean. `keccak256` uses the
 original Keccak padding (domain byte 0x01) that the Gray Paper's ℋ_K means; `sha3_256` uses the

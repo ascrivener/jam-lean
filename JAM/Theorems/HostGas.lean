@@ -5,7 +5,7 @@ import PVM.Theorems.Termination
 /-!
 # The host-call dispatchers never add gas
 
-Every host function of GP v0.8.0 Appendix B returns ϱ' ≤ ϱ: the common rules charge g ≥ 0, and
+Every host function of GP v0.8.1 Appendix B returns ϱ' ≤ ϱ: the common rules charge g ≥ 0, and
 the one function that hands gas back, `invoke` (Ω_K), returns only what is left of the g_R it
 charged (`PVM.psi_gas_le`). So the dispatchers of Ψ_A, Ψ_R and Ψ_I are `HostFn.GasNonIncreasing`,
 and `PVM.psiHStar_eq` applies: for these invocations `psiHStar`'s fuel never runs out, and it is the

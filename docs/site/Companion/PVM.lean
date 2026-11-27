@@ -121,7 +121,7 @@ tag := "pvm-readings"
 %%%
 
 These points are recorded in the model's
-[upstream candidates](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md):
+[notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues) (note 5 is under [paper and vectors](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#paper-and-vectors)):
 
 * *Note 3, §A.4.* The prose says that a RAM index below $`2^{16}` always panics, "regardless of the
   apparent (in)accessibility". The formula for $`\varepsilon^\mu` considers only inaccessible indices. The model

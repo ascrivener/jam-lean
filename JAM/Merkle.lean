@@ -2,7 +2,7 @@ import JAM.Blake2b
 import JAM.Keccak
 
 /-!
-# Binary Merkle trees (GP v0.8.0 Appendix E, "Binary Merkle Trees")
+# Binary Merkle trees (GP v0.8.1 Appendix E, "Binary Merkle Trees")
 
 The node function N (eq. `merklenode`) and the well-balanced root ℳ_B (eq. `simplemerkleroot`),
 parameterized by the hash function H.

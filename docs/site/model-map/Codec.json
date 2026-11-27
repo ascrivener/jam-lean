@@ -1,0 +1,29 @@
+{
+  "equations": {
+    "C.1": { "kind": "notation", "reason": "an absent term contributes no octets; the model's encoders simply omit such terms (optional fields that are encoded use ¿x, eq. C.9, `JAM.Codec.opt`)" },
+    "C.2": { "kind": "def", "name": "JAM.Codec.blob" },
+    "C.3": { "kind": "def", "name": "JAM.encodeBool" },
+    "C.4": { "kind": "notation", "reason": "a tuple encodes as the concatenation of its components' encodings; every composite encoder in the model (e.g. `JAM.Header.encodeUnsigned`) is written as `++` of its components" },
+    "C.5": { "kind": "notation", "reason": "E(a, b, …) is shorthand for E((a, b, …)), eq. C.4" },
+    "C.6": { "kind": "def", "name": "PVM.Blob.encodeNat",
+             "note": "`JAM.Codec.nat` is this encoding, shared with deblob" },
+    "C.13": { "kind": "def", "name": "PVM.Num.encodeLE",
+              "note": "`JAM.Codec.fixed` is this encoding" },
+    "C.7": { "kind": "def", "name": "JAM.Codec.seq" },
+    "C.8": { "kind": "def", "name": "JAM.Codec.var",
+             "note": "for an octet sequence; `JAM.Codec.varSeq` for a sequence of terms" },
+    "C.9": { "kind": "def", "name": "JAM.Codec.opt" },
+    "C.10": { "kind": "def", "name": "JAM.encodeBits" },
+    "C.11": { "kind": "def", "name": "JAM.Codec.varHashDict",
+              "note": "for dictionaries of octet sequences, the only ones the model encodes generically" },
+    "C.12": { "kind": "def", "name": "JAM.Codec.varHashSet",
+              "note": "the elements in ascending order are this equation; the model's set encoder adds the ↕ length prefix, as the encoded sets carry one" },
+    "C.17": { "kind": "def", "name": "JAM.Block.encode" },
+    "C.23": { "kind": "def", "name": "JAM.Header.encode" },
+    "C.24": { "kind": "def", "name": "JAM.Header.encodeUnsigned" },
+    "C.25": { "kind": "def", "name": "JAM.encodeEpochMark" },
+    "C.26": { "kind": "def", "name": "JAM.encodeEpochMark" },
+    "C.38": { "kind": "def", "name": "JAM.WorkResult.encode" },
+    "C.39": { "kind": "def", "name": "JAM.encodeImport" }
+  }
+}

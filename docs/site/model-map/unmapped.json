@@ -4,16 +4,9 @@
     "Accounts",
     "Accumulation",
     "Auditing",
-    "Bandersnatch",
     "BestChain",
-    "Codec",
     "Disputes",
-    "Erasure",
-    "Invocations",
-    "Merkle",
     "Reports",
-    "Shuffle",
-    "StateMerkle",
     "Statistics",
     "Work"
   ]

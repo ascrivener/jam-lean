@@ -7,7 +7,11 @@ binaries. The model moved from v0.8.0 to v0.8.1 on 2026-11-25 (#261); the last v
 `gp-v0.8.0` (commit `5055102`). What changed, hunk by hunk, is in
 [`docs/gp-v0.8.1-migration.md`](docs/gp-v0.8.1-migration.md).
 
-**Documentation site:** the [API reference](https://ascrivener.github.io/jam-lean/api/) (doc-gen4, every definition and theorem of `PVM`, `JAM` and `JamCrypto`) and [*A Companion to the Gray Paper*](https://ascrivener.github.io/jam-lean/book/) (the paper's equations next to the Lean definitions and theorems), built from [`docs/site/`](docs/site/README.md).
+**Documentation:** [ascrivener.github.io/jam-lean](https://ascrivener.github.io/jam-lean/): the
+[API reference](https://ascrivener.github.io/jam-lean/api/) for `PVM`, `JAM` and `JamCrypto`, and
+[*A Companion to the Gray Paper*](https://ascrivener.github.io/jam-lean/book/), a pilot that sets
+the paper's equations next to the model's highlighted source and its theorems (built from
+[`docs/site/`](docs/site/README.md)).
 
 * **The protocol.** All of Appendix A (the Polkadot Virtual Machine, its host-call machinery and its
   gas model; library `PVM`), and the protocol built on it (library `JAM`): the codec, hashes, the
@@ -27,9 +31,8 @@ binaries. The model moved from v0.8.0 to v0.8.1 on 2026-11-25 (#261); the last v
   service and Parity's bootstrap service, including the picoalloc heap allocator the JAM SDK links
   into every service. These proofs were last kernel-checked at commit `c22c197`, against the
   v0.8.0 model. They have not been rebuilt against the v0.8.1 model and do not build against it
-  until proof work resumes (see [`docs/whats-proven.md`](docs/whats-proven.md)). Along the way they
-  found disagreements between the binary and the paper, listed in
-  [`docs/upstream-candidates.md`](docs/upstream-candidates.md).
+  until proof work resumes. Along the way they found disagreements between the binary and the
+  paper; both are in [`docs/whats-proven.md`](docs/whats-proven.md).
 * **Proved about the model.** Theorems in `PVM` and `JAM`, checked on every CI run: Ψ and Ψ_H are
   the paper's recursive definitions, the gas simulation always finishes, and results on Safrole,
   confinement, segments, §14 refinement, auditing and the best-chain rule ([Theorems](#theorems)). In a separate
@@ -47,8 +50,10 @@ assumptions, the trust base, the model/binary disagreements found, and how to re
 
 It is meant for proofs as well as evaluation: everything is total, decoding is kept separate from
 execution, memory is an extensional finite map, and the theorems use only `propext`,
-`Classical.choice` and `Quot.sound`. The model depends only on Lean core and `Std` (toolchain
-`v4.36.0-rc1`).
+`Classical.choice` and `Quot.sound`. The spec uses no unchecked indexing (`a[i]!`, `get!`): each
+access is proved in bounds or reads through a default its invariant makes unreachable, and every
+definition this changed is proved equal to its earlier form (`JAM/Theorems/CheckedIndex*.lean`;
+#291, #294). The model depends only on Lean core and `Std` (toolchain `v4.36.0-rc1`).
 
 ## Scope
 
@@ -80,7 +85,7 @@ Two libraries, each bounded by the Gray Paper (v0.8.1):
   - the best-chain rule (§19, `JAM/BestChain.lean`): 𝐀 over a store of known blocks, (19.1)–(19.3)
     with §17.3's disregard rule, the metric m of (19.4) and the best heads 𝐁^♭. The finalized
     block, 𝐔 and the disregard flags are inputs; GRANDPA is not modelled. Readings
-    v0.8.1-A21–A25 in [`docs/upstream-candidates.md`](docs/upstream-candidates.md): (19.2)'s formula
+    v0.8.1-A21–A25 in the [notes on the paper](docs/upstream-candidates.md#gray-paper-issues): (19.2)'s formula
     audits only the head while the prose audits the chain (both readings are offered), §19 omits
     §17.3's disregard rule, (19.3) leaves H^B unconstrained, there is no tie-break, and m sums back
     to genesis while nodes keep 24 h of headers.
@@ -211,8 +216,9 @@ fails the build. `lake exe pvmtrace <vector.json> [steps]` prints a step-by-step
 | `JAM/Segments.lean` | constant-depth Merkle ℳ, T, J_x, L_x, C, 𝒫_n, paged proofs P, verifiers, and their theorems | App. E, §14 |
 | `JAM/Auditing.lean`, `JAM/Theorems/Auditing.lean` | audit selection, tranches, announcements, judgments, U, **U**, disregard rule, verdicts | §17 |
 | `JAM/BestChain.lean`, `JAM/Theorems/BestChain.lean` | the best-chain rule: 𝐀, acceptability, m, 𝐁^♭ | §19, §5 |
-| `JAM/Theorems/*.lean` | theorems about the protocol (host gas, confinement, Safrole, auditing, best chain, …) | |
+| `JAM/Theorems/*.lean` | theorems about the protocol (host gas, confinement, Safrole, auditing, best chain, …), and `CheckedIndex*` (each checked-indexing rewrite equals its earlier form) | |
 | `proofs/` | a separate Lake package with Mathlib: erasure-code recovery | App. H |
+| `docs/site/` | a separate Lake package (doc-gen4, Verso) for the documentation site: the API pages and the companion book, deployed by `docs.yml` | |
 | `Tests/` | vector runner, gas checker, tracer, kernel-checked invocation examples | |
 | `scripts/gen_tables.py` | LaTeX → `PVM/Tables.lean` | |
 
@@ -521,7 +527,8 @@ What is replaced:
   became provable after a purely structural edit of the references `elligator2` and `ell2Map`
   (#287, Adam's decision of 2026-11-27): each binds its condition once and selects each component
   with its own `if`, so no value changes, and every vector passes unchanged. The ring's BLS12-381
-  part (G1 and the pairing on 𝔽_q) still runs the reference code.
+  part runs on 𝔽_q in fourteen limbs, with G1 (including multi-scalar multiplication and
+  decompression) and the pairing proved to perform the reference's operations (#295).
 
 Headline speed-ups. These are quoted from the PR bodies, each measured on that PR's development
 container (wall clock unless stated); they were not re-measured for this README.
@@ -540,11 +547,8 @@ container (wall clock unless stated); they were not re-measured for this README.
 | Ed25519, per valid signature | 1.82 ms | 0.60 ms | #286, #287 |
 | Bandersnatch IETF VRF verify | about 13 ms | 3.7 ms | #286, #287 |
 | Bandersnatch Thin VRF verify | 12–17 ms | 3.8 ms | #286, #287 |
-| Ring proof verify (valid, mean) | 124 ms | 103 ms | #287 |
-| Ring root, 1023 keys | 2151 ms | 1117 ms | #287 |
-
-CI's `ringtest` log on main (run 942, commit `b226ec0`) agrees with the last two rows: about
-106–108 ms per valid ring proof and 1125–1137 ms per 1023-key root.
+| Ring proof verify (valid, mean) | 124 ms | 46 ms on the v0.8.0 path, 116 ms on the v0.8.1 path | #287, #295 |
+| Ring root, 1023 keys | 2.15 s | 0.70 s | #287, #295 |
 
 ## Mathlib proofs (`proofs/`)
 
@@ -809,8 +813,9 @@ noted here and in a comment at the definition. Most notes were written against v
 re-read against v0.8.1: a note that still applies is stated for v0.8.1, and one that v0.8.1
 resolved, or that describes a check now suspended, is marked as such.
 
-1. **𝔓_S compares ω_A = ω_D** (§A.10), which read literally compares register *values*; the gas
-   model has no values, so we compare the register indices r_A = r_D. The equal-register case
+1. **𝔓_S compares φ_A = φ_D** (§A.10; the paper writes the registers φ), which read literally
+   compares register *values*; the gas model has no values, so we compare the register indices
+   r_A = r_D. The equal-register case
    occurs 226 times in the vectors' blocks and every cost matches.
 2. **𝔟 at a negative branch target.** 𝔟 reads ζ at ı_target, and ı_target = ı + 𝒵(…) can be
    negative, where ζ is undefined. We read it as 0 (`trap`), like indices past the end of **c**.

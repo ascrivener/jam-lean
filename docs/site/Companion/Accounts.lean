@@ -46,10 +46,13 @@ creation slot $`r`, the slot of the most recent accumulation $`a`, and the paren
 
 $$`\mathbb{A} \equiv \left(\begin{aligned} &\mathbf{s} \in \langle \mathbb{B} \to \mathbb{B} \rangle,\ \mathbf{p} \in \langle \mathbb{H} \to \mathbb{B} \rangle, \\ &\mathbf{l} \in \langle (\mathbb{H}, \mathbb{N}_P) \to \llbracket \mathbb{N}_T \rrbracket_{:3} \rangle,\ f \in \mathbb{N}_B,\ c \in \mathbb{H}, \\ &b \in \mathbb{N}_B,\ u \in \mathbb{N}_S,\ d \in \mathbb{N}_T,\ x \in \mathbb{N}_B, \\ &g \in \mathbb{N}_G,\ m \in \mathbb{N}_G,\ r \in \mathbb{N}_T,\ a \in \mathbb{N}_T,\ p \in \mathbb{N}_S \end{aligned}\right) \qquad \text{(9.3)}`
 
-The model's record, {api}`JAM.ServiceAccount`, keeps the same fields, with one difference of form:
+The model's record, {api}`JAM.ServiceAccount`, keeps the same fields, with two differences of form:
 $`\mathbf{s}` and $`\mathbf{l}` share one dictionary, `entries`, and the footprint terms $`a_i` and
 $`a_o` of §9.3 are stored fields, `items` and `octets`. Why, and what that costs, is explained
-{ref "accounts-entries"}[below].
+{ref "accounts-entries"}[below]. The field types are also wider than the paper's: the numeric fields
+are unbounded natural numbers rather than $`\mathbb{N}_B`, $`\mathbb{N}_S`, $`\mathbb{N}_T` or
+$`\mathbb{N}_G`, and the code hash is an octet list of any length rather than $`\mathbb{H}` (see
+{ref "accounts-readings"}[the readings]).
 
 {leanSource JAM.ServiceAccount}
 
@@ -104,8 +107,8 @@ tag := "accounts-entries"
 
 Appendix D (eq. (D.2)) serializes each storage item under the state key
 $`C(s, \mathcal{E}_4(2^{32}-1) \frown \mathbf{k})` and each request under
-$`C(s, \mathcal{E}_4(z) \frown h)`, where $`C` (eq. (D.1)) keeps the first 27 octets of the hash of its
-argument. The paper adds that storage keys cannot be inspected or enumerated, so "implementations
+$`C(s, \mathcal{E}_4(z) \frown h)`, where $`C(s, h)` (eq. (D.1)) interleaves $`\mathcal{E}_4(s)` with the
+first 27 octets of $`\mathcal{H}(h)`. The paper adds that storage keys cannot be inspected or enumerated, so "implementations
 are free to use this fact in order to avoid storing the keys themselves" (§D.1). The model does
 this: it keys $`\mathbf{s}` and $`\mathbf{l}` by those 27 octets, in one dictionary, exactly as
 $`T(\sigma)` holds them.
@@ -135,8 +138,10 @@ inverts the encoding on histories of at most three slots that each fit in 4 octe
 
 {mathdoc JAM.ServiceAccount.decodeSlots_encodeSlots}
 
-What the model proves about the accessors: a write reads back, and it leaves every key with a
-different state key unchanged.
+What the model proves about the accessors: a write reads back, and it leaves the other keys of the
+same kind unchanged (a storage write every other storage key, a request write every other request),
+where "other" means a different state key. A request write or erase also leaves every storage key
+with a different state key unchanged.
 
 {leanSource JAM.ServiceAccount.storageGet_write_same}
 
@@ -154,7 +159,8 @@ different state key unchanged.
 
 {leanSource JAM.ServiceAccount.storageGet_requestErase}
 
-A storage write changes nothing in the account but $`\mathbf{s}`, $`a_i` and $`a_o`:
+A storage write leaves the preimages $`\mathbf{p}`, $`f`, $`c`, $`b`, $`g`, $`m`, $`r`, $`a` and
+the parent $`p` unchanged (the theorem does not cover $`u`, $`d`, $`x` or $`\mathbf{l}`):
 
 {mathdoc JAM.ServiceAccount.storageWrite_frame}
 
@@ -180,7 +186,7 @@ $`\max(0, \dots)`.
 
 The paper defines $`a_i` and $`a_o` from $`\mathbf{s}` and $`\mathbf{l}`. Since the model does not
 keep the storage keys $`\mathbf{k}`, it cannot recompute $`|\mathbf{k}|` in $`a_o`; it carries
-$`a_i` and $`a_o` as fields instead, and each accessor that changes $`\mathbf{s}` or $`\mathbf{l}`
+$`a_i` and $`a_o` as fields instead, and each accessor that writes $`\mathbf{s}` or $`\mathbf{l}`
 ({api}`JAM.ServiceAccount.storageWrite`, {api}`JAM.ServiceAccount.requestSet`,
 {api}`JAM.ServiceAccount.requestErase`) changes them by exactly the amount it adds to or removes
 from the paper's sums. Appendix D serializes $`a_i` and $`a_o` explicitly, so a loaded state brings
@@ -194,7 +200,7 @@ tag := "accounts-privileges"
 
 Five kinds of privilege are held in $`\chi`: the manager $`m`, the delegator $`v` (who sets
 $`\iota`), the registrar $`r` (who creates services in the protected range), one assigner per core
-$`\mathbf{a}` (who alter $`\varphi`), and the always-accumulate services $`\mathbf{z}` with their gas:
+$`\mathbf{a}` (who alter $`\phi`), and the always-accumulate services $`\mathbf{z}` with their gas:
 
 $$`\mathbb{X} \equiv \left(m \in \mathbb{N}_S,\ v \in \mathbb{N}_S,\ r \in \mathbb{N}_S,\ \mathbf{a} \in \llbracket \mathbb{N}_S \rrbracket_\mathsf{C},\ \mathbf{z} \in \langle \mathbb{N}_S \to \mathbb{N}_G \rangle\right) \qquad \chi \in \mathbb{X} \qquad \text{(9.9, 9.10)}`
 
@@ -215,6 +221,9 @@ ejected supervisor's identifier from inheriting its power. The effective supervi
 $$`\forall \mathbf{d} \in \langle \mathbb{N}_S \to \mathbb{A} \rangle, s \in \mathcal{K}(\mathbf{d}) : \mathbf{d}[s]_e \equiv \begin{cases} u & \text{if } u \in \mathcal{K}(\mathbf{d}) \wedge \mathbf{d}[u]_r = d \\ s & \text{otherwise} \end{cases} \quad \text{where } u = \mathbf{d}[s]_u,\ d = \mathbf{d}[s]_d \qquad \text{(9.11)}`
 
 {leanSource JAM.effectiveSupervisor}
+
+When the effective supervisor of $`k` is some other service $`s`, $`k` names $`s` as its supervisor
+and records $`s`'s creation slot:
 
 {mathdoc JAM.effectiveSupervisor_eq}
 
@@ -237,6 +246,10 @@ tag := "accounts-readings"
   {api}`JAM.ServiceAccount.requestErase` treat it the same way. The paper does not cover such states.
 * *Footprint carried.* $`a_i` and $`a_o` are fields updated by every accessor, rather than recomputed
   from $`\mathbf{s}` and $`\mathbf{l}` (see {ref "accounts-footprint"}[§9.3]).
+* *Wider types.* The paper types balances as $`\mathbb{N}_B`, identifiers as $`\mathbb{N}_S`,
+  slots as $`\mathbb{N}_T`, gas as $`\mathbb{N}_G` and the code hash as $`\mathbb{H}`. The model's
+  fields are unbounded natural numbers and an octet list of any length, so the types do not
+  enforce these bounds.
 * *Totality.* $`I` is given for histories of length 0 to 3, the type $`\llbracket \mathbb{N}_T \rrbracket_{:3}`;
   {api}`JAM.ServiceAccount.availableAt` returns false for longer lists. $`\mathbf{d}[s]_e` is
   defined for $`s \in \mathcal{K}(\mathbf{d})`; {api}`JAM.effectiveSupervisor` returns $`s` for any

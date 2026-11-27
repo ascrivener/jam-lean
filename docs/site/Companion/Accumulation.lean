@@ -34,7 +34,7 @@ functions, which $`\Delta_1` calls, belong to Appendix B and are in `JAM/Accumul
 [Accumulate](https://ascrivener.github.io/jam-lean/api/JAM/Accumulate.html).
 
 The notation follows the paper: $`\mathbf{R}` is the sequence of newly available reports,
-$`\delta` the accounts, $`\chi` the privileges, $`\iota` the staging keys, $`\varphi` the
+$`\delta` the accounts, $`\chi` the privileges, $`\iota` the staging keys, $`\phi` the
 authorizer queue, $`\tau` and $`\tau'` the prior and posterior timeslots. $`x \mathrel{\mathrlap{<}{-}} \mathbf{x}`
 draws $`x` from the sequence $`\mathbf{x}` in order.
 
@@ -255,7 +255,7 @@ $$`Y \colon \left\{ \begin{aligned} &\left( \langle \mathbb{N}_S \to \mathbb{A} 
 
 {api}`JAM.integrateProvisions` applies the provisions one at a time and tests $`Y` against the
 accounts as updated so far, while the paper tests every provision against the input $`\mathbf{d}`.
-The two agree: a provision changes only the request $`(\mathcal{H}(\mathbf{i}), |\mathbf{i}|)` of its own
+The two agree (an argument, not a theorem of the model): a provision changes only the request $`(\mathcal{H}(\mathbf{i}), |\mathbf{i}|)` of its own
 service, from $`[]` to $`[\tau']`, and a second provision of the same service and data is the same
 element of the set $`\mathbf{p}`. (Two different blobs with the same hash and length would
 interact, which the paper's hash assumption excludes.) Requests are read and written with the
@@ -286,16 +286,16 @@ tag := "accumulation-final"
 %%%
 
 $`\Delta_+` is called once per block, with the block's gas, no transfers, the reports
-$`\mathbf{R}^*`, the partial state made from $`\delta`, $`\iota`, $`\varphi`, $`\chi`, and the
+$`\mathbf{R}^*`, the partial state made from $`\delta`, $`\iota`, $`\phi`, $`\chi`, and the
 always-accumulate services $`\chi_\mathbf{z}` as free gas:
 
-$$`\begin{aligned} \text{let } g &= \max\left(\mathsf{G}_T, \mathsf{G}_A \cdot \mathsf{C} + \textstyle\sum_{x \in \mathcal{V}(\chi_\mathbf{z})} (x)\right) \\ \text{and } \mathbf{e} &= (\mathbf{d} : \delta, \mathbf{i} : \iota, \mathbf{q} : \varphi, \mathbf{x} : \chi) \end{aligned}`
+$$`\begin{aligned} \text{let } g &= \max\left(\mathsf{G}_T, \mathsf{G}_A \cdot \mathsf{C} + \textstyle\sum_{x \in \mathcal{V}(\chi_\mathbf{z})} (x)\right) \\ \text{and } \mathbf{e} &= (\mathbf{d} : \delta, \mathbf{i} : \iota, \mathbf{q} : \phi, \mathbf{x} : \chi) \end{aligned}`
 
 $$`(n, \mathbf{e}', \mathbf{b}, \mathbf{u}, \mathbf{t}) \equiv \Delta_+(g, [], \mathbf{R}^*, \mathbf{e}, \chi_\mathbf{z}) \qquad \text{(12.25)}`
 
 $$`\theta' \equiv [(s, h) \in \mathbf{b}] \qquad \text{(12.26)}`
 
-$$`(\mathbf{d} : \delta^\dagger, \mathbf{i} : \iota', \mathbf{q} : \varphi', \mathbf{x} : \chi') \equiv \mathbf{e}' \qquad \text{(12.27)}`
+$$`(\mathbf{d} : \delta^\dagger, \mathbf{i} : \iota', \mathbf{q} : \phi', \mathbf{x} : \chi') \equiv \mathbf{e}' \qquad \text{(12.27)}`
 
 The accumulation statistics count, for each service, the digests accumulated, the transfers
 processed and the gas used, and keep the services where any of these is non-zero:

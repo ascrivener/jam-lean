@@ -20,6 +20,25 @@ file := "reports"
 
 *In the paper:* {gpchapter}`sec:reporting`.
 
+*In brief:* this chapter is the on-chain part of bringing the result of in-core work into the
+chain. A work-report enters a block in a *guarantee*: two or three of the validators assigned to
+its core sign that it is correct, and if it is not, they can be named as culprits ({ref "disputes"}[§10]).
+The report then waits on its core, which holds at most one pending report, while the data needed
+to check it is erasure-coded and one piece sent to each validator; each validator then signs an
+*assurance* that it holds its piece. Once more than two thirds of the validators have assured it,
+the report is *available* and goes on to accumulation ({ref "accumulation"}[§12]); if that has not
+happened five timeslots after it was reported, it times out and the core is free for a new report.
+Before accepting a guarantee the chain checks it against its context: the right guarantors, an
+authorizer from the core's pool ({ref "authorization"}[§8]), a recent anchor block
+({ref "history"}[§7]), and no work-package that was already reported, is waiting in the pipeline or was recently
+accumulated.
+
+Key terms:
+
+* $`\availassignments`, each core's availability assignment: the pending report, if any, and when it was reported;
+* $`\guarantorassignments`, the core each validator guarantees for;
+* $`\justbecameavailable`, the reports that became available in this block.
+
 A work-report enters the chain in a *guarantee*, signed by two or three validators assigned to its
 core. It waits on that core, as the core's *availability assignment*, until more than two thirds of
 the validators *assure* that its data is available, or until it times out. Within a block the paper

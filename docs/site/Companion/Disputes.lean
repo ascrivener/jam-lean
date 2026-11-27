@@ -20,6 +20,24 @@ file := "disputes"
 
 *In the paper:* {gpchapter}`sec:disputes`.
 
+*In brief:* disputes are JAM's backstop against an invalid work-report. Validators auditing a
+report ({ref "auditing"}[§17]) normally confirm it; if one judges it invalid, all validators audit it,
+and their signed judgments, gathered into a *verdict*, go on chain here. The verdict is recorded
+permanently, the report marked as good, bad, or impossible to judge ("wonky"), so that the question
+is settled; and if the report is still waiting on its core ({ref "reports"}[§11]), a verdict that is
+not good cancels its accumulation. Validators shown to have guaranteed a bad report (*culprits*) or
+to have judged against a verdict (*faults*) become offenders: their keys are recorded on chain and
+named in the block header, and at a later epoch change an incoming validator key that belongs to an
+offender is replaced with a null key ({ref "safrole"}[§6]). For a report that has already been
+accumulated, the paper expects the chain to have been reverted to a point before its accumulation;
+how nodes choose the chain is the subject of {ref "bestchain"}[§19].
+
+Key terms:
+
+* $`\disputes`, the disputes state;
+* $`\goodset`, $`\badset` and $`\wonkyset`, the hashes of reports judged good, bad and wonky;
+* $`\offenders`, the offenders' keys.
+
 The disputes system records *verdicts*, collections of judgments by validators on whether a
 work-report is valid, and *offences*: guarantees or judgments that contradict an established
 verdict. A verdict that is not positive also removes the report from the pipeline before it is

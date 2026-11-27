@@ -20,6 +20,31 @@ file := "safrole"
 
 *In the paper:* {gpchapter}`sec:blockproduction`.
 
+*In brief:* Safrole decides who may author each block. Time is cut into six-second timeslots,
+grouped into epochs of 600, and each slot has exactly one key that may seal a block in it; this
+keeps the rate of blocks steady and makes forks, competing blocks with the same number of ancestors, rare.
+Normally the slots are assigned by anonymous *tickets*: in the first 500 slots of an epoch, the
+validators of the next epoch submit tickets that each prove the sender is one of them without saying
+which one, and the best-scoring tickets become the next epoch's slots, so only a slot's owner
+knows in advance that it is theirs and an attacker cannot tell whom to target. If too few tickets
+arrive, a fallback assigns the slots to keys chosen with on-chain randomness, which keeps the chain
+going but is not anonymous.
+
+Safrole also keeps that randomness, the entropy pool, which guarantor
+assignments ({ref "reports"}[§11]) and services use, and at each epoch change it rotates the
+validator key sets, replacing an incoming key that belongs to an offender found by the disputes
+system ({ref "disputes"}[§10]) with a null key. The header fields it relies on are in
+{ref "overview"}[§5], and the ring signatures behind the tickets in {ref "bandersnatch"}[Appendix G].
+
+Key terms:
+
+* $`\thetime`, the most recent block's timeslot;
+* $`\entropy`, the entropy pool;
+* $`\sealtickets`, the current epoch's slot-sealer sequence, and $`\ticketaccumulator`, the tickets
+  collected so far for the next epoch;
+* $`\activeset`, the active validators; $`\previousset`, the previous epoch's; $`\pendingset`, the
+  next epoch's; $`\stagingset`, the keys queued behind them.
+
 Safrole fixes which validator may seal each timeslot of an epoch. Validators submit anonymous
 tickets during an epoch, and the best tickets become the next epoch's slot sealers. If there are
 not enough tickets, a fallback sequence of keys drawn with on-chain entropy is used instead. In

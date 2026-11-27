@@ -99,6 +99,63 @@ the paper's symbol by construction, and a later paper version changes it in one 
 example 𝕏 for the refinement context, ρ^‡‡, ω for registers or lowercase header fields. A genuine
 use goes in a doc comment preceded by `-- notation-ok: <id> <reason>`.
 
+## Model maps: every displayed equation has a model-map entry
+
+**Rule: every equation the book displays has a model-map entry.** Each `{gpeq}` display and each
+`{transcribed}` hand display is followed by a generated line, "*In the model:* …", saying how the
+model handles the equation. The lines come from one file per chapter,
+`model-map/<Chapter>.json` (`<Chapter>` is the chapter's file name in `Companion/`), so chapters
+can be mapped in parallel without conflicts. Each file maps the paper's equation numbers to one
+entry:
+
+```json
+{
+  "equations": {
+    "6.24": { "kind": "inline", "name": "JAM.safrole", "at": "-- Entropy (§6.4)", "note": "…" },
+    "6.27": { "kind": "def", "name": "JAM.outsideIn" },
+    "A.40": { "kind": "type", "name": "PVM.HostFn" },
+    "X.YY": { "kind": "theorem", "name": "JAM.some_theorem" },
+    "X.ZZ": { "kind": "notModelled", "reason": "…" },
+    "A.12": { "kind": "notation", "reason": "…" }
+  }
+}
+```
+
+| Kind | Fields | Meaning | The line shows |
+| --- | --- | --- | --- |
+| `def` | `name` | the declaration that computes the equation | "computed by N", its API page and lines on GitHub, and either "quoted in this chapter" (a link to the chapter's `{leanSource N}`) or a "code" toggle that opens the declaration |
+| `inline` | `name`, `at` | computed inside a larger declaration, at the line containing the text `at` | "inside N, at `at`", the located lines on GitHub, and a "code" toggle with those lines |
+| `type` | `name` | a type, structure or constant | as `def`, "the type N" |
+| `theorem` | `name` | only if the equation is a property the model *proves* rather than computes | as `def`, "proved as N" |
+| `notModelled` | `reason` | the model has no counterpart | "not modelled: reason" |
+| `notation` | `reason` | pure notation or convention, nothing to implement | "notation: reason" |
+
+Every entry may add `note`, a short remark shown at the end of the line. Names are full names.
+An `at` locator is a comment marker (`-- Entropy (§6.4)`) or a binding (`let acc' :=`), never a
+line number: it must occur exactly once in the declaration's source, and the build finds the
+lines from the live source (for a comment, the lines under it up to a blank line or the next
+comment at its indentation; otherwise the line and the more-indented lines after it), so the
+links stay current as the code moves. Equations of one display that share an entry get one line.
+
+Checks:
+
+* the book's build (`Companion/ModelMap.lean`, from `{gpeq}` and `{transcribed}`) fails when a
+  displayed equation of a mapped chapter has no entry, a kind is unknown or lacks its fields, a
+  `name` is not a declaration the chapter imports, or an `at` does not occur exactly once inside
+  the declaration. Lake tracks `model-map/` (`input_dir modelMap` in `lakefile.lean`), so editing
+  a map re-elaborates the chapters;
+* `scripts/check-model-map.py` (CI's `model` job, no build needed) checks the same structure,
+  rejects entries for equations the chapter does not display, and checks names and locators
+  against the model's sources textually (`--counts` prints the entries per kind).
+
+`model-map/unmapped.json` lists the chapters not mapped yet. A listed chapter may have a partial
+map (its entries are shown); the list only shrinks: the check fails when a listed chapter's map is
+complete, so remove the chapter from the list in the PR that completes it. When the list is
+empty, every displayed equation is explained.
+
+A PR that changes a modelled function updates its model-map entries (a renamed declaration or a
+moved marker fails the book's build).
+
 ## Keeping the book in step with the model
 
 * `chapter-map.json` maps each model module to the chapters that discuss it (seeded from the

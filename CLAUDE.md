@@ -38,6 +38,7 @@ rebuilds only what changed since then instead of building cold for 4.5–5 h.
   - PR bodies end with "🤖 Generated with [Claude Code](https://claude.com/claude-code)".
   - Don't name the model in commits or PRs.
 - A PR that changes the behaviour of a modelled function updates its companion chapter in the same PR.
+- A PR that changes a modelled function updates its model-map entries.
 - **Findings.** Report disagreements between the paper and the test vectors, or between the model
   and the binary, in the PR body, and add them to `docs/upstream-candidates.md`.
 - **Build pitfalls.**

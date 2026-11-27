@@ -3,17 +3,10 @@
   "unmapped": [
     "Assurance",
     "Authorization",
-    "Bandersnatch",
     "Beefy",
-    "Codec",
-    "Erasure",
     "Guaranteeing",
     "History",
-    "Invocations",
-    "Merkle",
     "Overview",
-    "Primitives",
-    "Shuffle",
-    "StateMerkle"
+    "Primitives"
   ]
 }

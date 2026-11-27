@@ -1,0 +1,23 @@
+{
+  "equations": {
+    "H.1": { "kind": "def", "name": "JAM.Erasure.originalShards" },
+    "H.2": { "kind": "inline", "name": "JAM.Erasure.encodeWith", "at": "let pieces :=",
+             "note": "split is not materialised: word p of chunk j is read in place as `word data (2 * k * j + 2 * p)`" },
+    "H.3": { "kind": "inline", "name": "JAM.Erasure.encodeWith", "at": "some ((List.range m.size)",
+             "note": "join^#: the result's chunk i joins word i of every piece (`wordOctets`); `JAM.Erasure.recover` joins the same way" },
+    "H.4": { "kind": "inline", "name": "JAM.Erasure.encodeWith", "at": "let pieces :=",
+             "note": "transposition is done by indexing: piece p takes word p of every chunk, and the result's chunk i takes word i of every piece" },
+    "H.5": { "kind": "def", "name": "JAM.Erasure.encode",
+             "note": "the work is in `JAM.Erasure.encodeWith`" },
+    "H.6": { "kind": "def", "name": "JAM.Erasure.recover",
+             "note": "that recovery inverts encoding is proved for v ≤ 2^15 validators as `recover_encode` (with `recover_encode_full` / `_tiny`) in the separate Mathlib package `proofs/ErasureProofs`, which the book cannot import" },
+    "H.8": { "kind": "def", "name": "JAM.Erasure.GF.mul",
+             "note": "elements are naturals below 2^16 in the polynomial basis; the modulus is `JAM.Erasure.GF.poly`, addition is `JAM.Erasure.GF.add` (XOR)" },
+    "H.10": { "kind": "inline", "name": "JAM.Erasure.encodeWeights", "at": "lagrange (List.range (paddedShards d))",
+              "note": "the target indices g(0), …, g(v − 1) are exactly I" },
+    "H.11": { "kind": "def", "name": "JAM.Erasure.codeIndex",
+              "note": "computes the inverse of f (the code index validator j receives); f itself is not built" },
+    "H.13": { "kind": "inline", "name": "JAM.Erasure.encodeWith", "at": "if j < d then word data (2 * k * j + 2 * p) else 0",
+              "note": "p is never built: its values at the code indices are interpolated from these d′ points (`JAM.Erasure.lagrange`, `JAM.Erasure.interpolate`)" }
+  }
+}

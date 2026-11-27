@@ -128,7 +128,7 @@ theorem decode_isSome_of_deblob {p : ByteArray} {i : Nat} {P : Program}
       exact decode_isSome (vInst_isValidOpcode hv.2)
     · cases h
 
-/-- Ψ₁'s fallback `trap` is never used at a step Ψ takes: the instruction it executes is the
+/-- $\Psi_1$'s fallback `trap` is never used at a step $\Psi$ takes: the instruction it executes is the
     decoded one. -/
 theorem step_decode {p : ByteArray} {i : Nat} {P : Program} (h : deblob p i = some P) :
     ∃ ins, P.decode i = some ins ∧ (P.decode i).getD (.noArgs .trap) = ins := by

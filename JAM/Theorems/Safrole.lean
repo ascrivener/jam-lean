@@ -91,12 +91,12 @@ theorem outsideIn_eq {α : Type} (s : List α) :
   rw [List.filterMap_map]; unfold outsideIn outsideInIdx
   congr 1; funext i; simp only [Function.comp]; split <;> rfl
 
-/-- Z is a permutation of its input (GP §6.5). -/
+/-- $Z$ is a permutation of its input (GP §6.5). -/
 theorem outsideIn_perm {α : Type} (s : List α) : (outsideIn s).Perm s := by
   rw [outsideIn_eq]
   exact ((range_map_outsideInIdx_perm _).filterMap _).trans (by rw [filterMap_getElem?_range s])
 
-/-- Z keeps length. -/
+/-- $Z$ keeps length. -/
 @[simp] theorem length_outsideIn {α : Type} (s : List α) : (outsideIn s).length = s.length :=
   (outsideIn_perm s).length_eq
 
@@ -268,8 +268,8 @@ theorem safrole_ok {params : Params} {c : Crypto} {s s' : SafroleState} {i : Saf
 
 /-! ## The ticket accumulator γ_A' -/
 
-/-- γ_A' has at most 𝖤 tickets (GP eq. `ticketaccumulatorsealticketsspec`, (6.5): γ_A ∈ ⟦T⟧_{:𝖤};
-    γ_A' keeps the 𝖤 lowest of the merge, eq. (6.36)). -/
+/-- $\gamma'_A$ has at most $\mathsf{E}$ tickets (GP eq. (6.5), `ticketaccumulatorsealticketsspec`:
+    $\gamma_A \in [\![ T ]\!]_{:\mathsf{E}}$; $\gamma'_A$ keeps the $\mathsf{E}$ lowest of the merge, eq. (6.36)). -/
 theorem safrole_accumulator_length {params : Params} {c : Crypto} {s s' : SafroleState}
     {i : SafroleInput} {o : SafroleOutput} (h : safrole params c s i = .ok (s', o)) :
     s'.accumulator.length ≤ params.epochLen := by
@@ -293,9 +293,9 @@ private theorem ticketLe_total (a b : Ticket) :
   · rfl
   · simp [octetLt_asymm h]
 
-/-- If the prior γ_A has unique identifiers, γ_A' is strictly sorted by identifier and has unique
-    identifiers (GP §6.7, eq. (6.36): γ_A' is sorted by y; eq. (6.35): **n** is disjoint
-    from γ_A). On an epoch change γ_A is discarded and the hypothesis is not used; otherwise it is
+/-- If the prior $\gamma_A$ has unique identifiers, $\gamma'_A$ is strictly sorted by identifier and has
+    unique identifiers (GP §6.7, eq. (6.36): $\gamma'_A$ is sorted by $y$; eq. (6.35): $\mathbf{n}$ is
+    disjoint from $\gamma_A$). On an epoch change $\gamma_A$ is discarded and the hypothesis is not used; otherwise it is
     the conclusion of this theorem for the previous block, so these properties are invariant. -/
 theorem safrole_accumulator_sorted {params : Params} {c : Crypto} {s s' : SafroleState}
     {i : SafroleInput} {o : SafroleOutput} (h : safrole params c s i = .ok (s', o))
@@ -351,9 +351,9 @@ def SealKeys.length : SealKeys → Nat
     (fallbackKeys params r k).length = params.epochLen := by
   simp [fallbackKeys]
 
-/-- γ_S' has 𝖤 entries whenever it is recomputed, in the ticket case Z(γ_A) and the fallback case
-    F(η_2', κ') alike (GP eqs. `slotkeysequence`, `fallbackkeysequence`); within an epoch it is γ_S,
-    so a γ_S of 𝖤 entries stays one. -/
+/-- $\gamma'_S$ has $\mathsf{E}$ entries whenever it is recomputed, in the ticket case $Z(\gamma_A)$ and the
+    fallback case $F(\eta'_2, \kappa')$ alike (GP eqs. (6.26), (6.28)); within an epoch it is $\gamma_S$, so a
+    $\gamma_S$ of $\mathsf{E}$ entries stays one. -/
 theorem safrole_sealKeys_length {params : Params} {c : Crypto} {s s' : SafroleState}
     {i : SafroleInput} {o : SafroleOutput} (h : safrole params c s i = .ok (s', o)) :
     (i.slot / params.epochLen ≠ s.tau / params.epochLen →
@@ -373,7 +373,7 @@ theorem safrole_sealKeys_length {params : Params} {c : Crypto} {s s' : SafroleSt
       · exact hS
       · simp [SealKeys.length]
 
-/-- H_W, when present, is Z(γ_A) with 𝖤 tickets (GP eq. `winningticketsmarker`). -/
+/-- $\mathbf{H}_W$, when present, is $Z(\gamma_A)$ with $\mathsf{E}$ tickets (GP eq. (6.30), `winningticketsmarker`). -/
 theorem safrole_ticketsMark_length {params : Params} {c : Crypto} {s s' : SafroleState}
     {i : SafroleInput} {o : SafroleOutput} (h : safrole params c s i = .ok (s', o))
     {w : List Ticket} (hw : o.ticketsMark = some w) :
@@ -389,8 +389,8 @@ theorem safrole_ticketsMark_length {params : Params} {c : Crypto} {s s' : Safrol
 @[simp] theorem maxAttempts_nil (params : Params) : maxAttempts params [] = 0 := by
   simp [maxAttempts]
 
-/-- For non-empty γ_P', n = ⌈2𝖤/|γ_P'|⌉: the least n with 2𝖤 ≤ n⋅|γ_P'|
-    (GP eq. `ticketsextrinsic`). -/
+/-- For non-empty $\gamma'_P$, $n = \lceil 2\mathsf{E}/|\gamma'_P| \rceil$: the least $n$ with
+    $2\mathsf{E} \le n \cdot |\gamma'_P|$ (GP eq. (6.31), `ticketsextrinsic`). -/
 theorem maxAttempts_spec (params : Params) {p : List ValidatorKey} (hp : 0 < p.length) :
     2 * params.epochLen ≤ maxAttempts params p * p.length ∧
     ∀ m, 2 * params.epochLen ≤ m * p.length → maxAttempts params p ≤ m := by
@@ -431,7 +431,7 @@ theorem maxAttempts_le_256 (params : Params) {p : List ValidatorKey} (hp : 0 < p
   (maxAttempts_spec params hp).2 256 h
 
 /-- The entry index fits the one octet `ticketContext` appends: on a successful transition with
-    2𝖤 ≤ 256⋅|γ_P'|, every e of E_T is below 256, so `UInt8.ofNat e` does not truncate. -/
+    $2\mathsf{E} \le 256 \cdot |\gamma'_P|$, every $e$ of $\mathbf{E}_T$ is below 256, so `UInt8.ofNat e` does not truncate. -/
 theorem safrole_attempt_fits {params : Params} {c : Crypto} {s s' : SafroleState}
     {i : SafroleInput} {o : SafroleOutput} (h : safrole params c s i = .ok (s', o))
     (hp : 2 * params.epochLen ≤ 256 * s'.pending.length) :
@@ -446,8 +446,8 @@ theorem safrole_attempt_fits {params : Params} {c : Crypto} {s s' : SafroleState
   refine ⟨by omega, ?_⟩
   rw [UInt8.toNat_ofNat']; exact Nat.mod_eq_of_lt (by omega)
 
-/-- With the paper's |γ_P'| ≥ 6 (eq. `valcount`), the condition holds for 𝖤 ≤ 768, so for both
-    the full chain (𝖤 = 600) and the tiny one (𝖤 = 12). -/
+/-- With the paper's $|\gamma'_P| \ge 6$ (eq. `valcount`), the condition holds for $\mathsf{E} \le 768$, so for
+    both the full chain ($\mathsf{E} = 600$) and the tiny one ($\mathsf{E} = 12$). -/
 theorem attempt_fits_of_six (params : Params) {p : List ValidatorKey} (h6 : 6 ≤ p.length)
     (hE : params.epochLen ≤ 768) : 2 * params.epochLen ≤ 256 * p.length := by
   omega

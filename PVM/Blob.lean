@@ -10,8 +10,8 @@ GP v0.8.1 §A.1 (deblob, eq. `deblob`; 𝔳_blob, 𝔳_inst), §A.2 (`sec:progra
 
 namespace PVM
 
-/-- The components of a program blob (GP §A.1–A.2): the instruction data **c**, the opcode
-    bitmask **k** and the dynamic jump table **j**. -/
+/-- The components of a program blob (GP §A.1–A.2): the instruction data $\mathbf{c}$, the opcode
+    bitmask $\mathbf{k}$ and the dynamic jump table $\mathbf{j}$. -/
 structure Program where
   /-- **c**, the instruction data. -/
   code : ByteArray

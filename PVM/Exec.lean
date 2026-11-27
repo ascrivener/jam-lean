@@ -216,8 +216,8 @@ open Num Exec
 def sjump (P : Program) (i : Nat) (b : Int) : Status × Nat :=
   if P.isBlockStartInt b then (.cont, b.toNat) else (.panic, i)
 
-/-- branch(b, C) (GP §A.4): (☇, ı) if b ∉ ϖ ∨ ı + 1 + skip(ı) ∉ ϖ; (▸, ı + 1 + skip(ı)) if ¬C;
-    otherwise (▸, b). -/
+/-- $\text{branch}(b, C)$ (GP §A.4): (☇, $\imath$) if $b \notin \varpi \vee \imath + 1 + \text{skip}(\imath) \notin \varpi$;
+    $(\blacktriangleright, \imath + 1 + \text{skip}(\imath))$ if $\neg C$; otherwise $(\blacktriangleright, b)$. -/
 def branch (P : Program) (i : Nat) (b : Int) (c : Bool) : Status × Nat :=
   if !P.isBlockStartInt b || !P.isBlockStart (P.next i) then (.panic, i)
   else if !c then (.cont, P.next i)
@@ -233,8 +233,8 @@ def djump (P : Program) (i : Nat) (a : Nat) : Status × Nat :=
     let t := P.jumpTable.getD (a / 2 - 1) 0
     if P.isBlockStart t then (.cont, t) else (.panic, i)
 
-/-- The regular execution of instruction `ins` at `ı` (GP §A.4–A.5): (ε, ı', ω', μ') and the
-    index sets **r** and **w**. -/
+/-- The regular execution of instruction `ins` at `ı` (GP §A.4–A.5): $(\varepsilon, \imath', \varphi', \mu')$ and the
+    index sets $\mathbf{r}$ and $\mathbf{w}$. -/
 def exec (P : Program) (i : Nat) (ins : Instr) (ω : Regs) (μ : Memory) : Mutation :=
   let r (k : RegIdx) : Nat := (ω.get k).toNat
   let set (k : RegIdx) (v : Nat) : Regs := ω.set k (UInt64.ofNat v)

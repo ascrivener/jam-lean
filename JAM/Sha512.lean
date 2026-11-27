@@ -11,7 +11,8 @@ first 32 octets of both an IETF signature and a ring proof (`vrfOutput`). The mo
 
 namespace JAM.Sha512
 
-def K : Array UInt64 := #[
+/-- The 80 round constants K₀ … K₇₉ (FIPS 180-4 §4.2.3). -/
+def K : Vector UInt64 80 := #v[
   0x428a2f98d728ae22, 0x7137449123ef65cd, 0xb5c0fbcfec4d3b2f, 0xe9b5dba58189dbbc, 0x3956c25bf348b538,
   0x59f111f1b605d019, 0x923f82a4af194f9b, 0xab1c5ed5da6d8118, 0xd807aa98a3030242, 0x12835b0145706fbe,
   0x243185be4ee4b28c, 0x550c7dc3d5ffb4e2, 0x72be5d74f27b896f, 0x80deb1fe3b1696b1, 0x9bdc06a725c71235,
@@ -29,35 +30,42 @@ def K : Array UInt64 := #[
   0x113f9804bef90dae, 0x1b710b35131c471b, 0x28db77f523047d84, 0x32caab7b40c72493, 0x3c9ebe0a15c9bebc,
   0x431d67c49c100d4c, 0x4cc5d4becb3e42b6, 0x597f299cfc657e2a, 0x5fcb6fab3ad6faec, 0x6c44198c4a475817]
 
-def H0 : Array UInt64 := #[
+/-- The initial hash value H⁽⁰⁾ (FIPS 180-4 §5.3.5). -/
+def H0 : Vector UInt64 8 := #v[
   0x6a09e667f3bcc908, 0xbb67ae8584caa73b, 0x3c6ef372fe94f82b, 0xa54ff53a5f1d36f1,
   0x510e527fade682d1, 0x9b05688c2b3e6c1f, 0x1f83d9abfb41bd6b, 0x5be0cd19137e2179]
 
 def rotr (x : UInt64) (n : UInt64) : UInt64 := (x >>> n) ||| (x <<< (64 - n))
 
-/-- The compression function on one 128-octet block starting at `off` (FIPS 180-4 §6.4.2). -/
-def compress (h : Array UInt64) (m : ByteArray) (off : Nat) : Array UInt64 := Id.run do
-  let mut w : Array UInt64 := Array.replicate 80 0
-  for t in [0:16] do
+/-- The compression function on one 128-octet block starting at `off` (FIPS 180-4 §6.4.2), for a
+    block that lies inside `m` (`hoff`): the message schedule W₀ … W₇₉, the 80 rounds on the working
+    variables a … h, and the new hash value H⁽ⁱ⁾ = H⁽ⁱ⁻¹⁾ + (a, …, h). -/
+def compress (h : Vector UInt64 8) (m : ByteArray) (off : Nat) (hoff : off + 128 ≤ m.size) :
+    Vector UInt64 8 := Id.run do
+  let mut w : Vector UInt64 80 := Vector.replicate 80 0
+  for ht : t in [0:16] do
     let mut x : UInt64 := 0
-    for j in [0:8] do
-      x := (x <<< 8) ||| (m.get! (off + 8 * t + j)).toUInt64
-    w := w.set! t x
-  for t in [16:80] do
-    let s0 := rotr w[t-15]! 1 ^^^ rotr w[t-15]! 8 ^^^ (w[t-15]! >>> 7)
-    let s1 := rotr w[t-2]! 19 ^^^ rotr w[t-2]! 61 ^^^ (w[t-2]! >>> 6)
-    w := w.set! t (w[t-16]! + s0 + w[t-7]! + s1)
-  let mut a := h[0]!; let mut b := h[1]!; let mut c := h[2]!; let mut d := h[3]!
-  let mut e := h[4]!; let mut f := h[5]!; let mut g := h[6]!; let mut hh := h[7]!
-  for t in [0:80] do
+    for hj : j in [0:8] do
+      x := (x <<< 8) ||| (m[off + 8 * t + j]'(by
+        have := ht.upper; have := hj.upper; simp at *; omega)).toUInt64
+    w := w.set t x (by have := ht.upper; simp at *; omega)
+  for ht : t in [16:80] do
+    have ht' : t < 80 := ht.upper
+    let s0 := rotr w[t-15] 1 ^^^ rotr w[t-15] 8 ^^^ (w[t-15] >>> 7)
+    let s1 := rotr w[t-2] 19 ^^^ rotr w[t-2] 61 ^^^ (w[t-2] >>> 6)
+    w := w.set t (w[t-16] + s0 + w[t-7] + s1) ht'
+  let mut a := h[0]; let mut b := h[1]; let mut c := h[2]; let mut d := h[3]
+  let mut e := h[4]; let mut f := h[5]; let mut g := h[6]; let mut hh := h[7]
+  for ht : t in [0:80] do
+    have ht' : t < 80 := ht.upper
     let S1 := rotr e 14 ^^^ rotr e 18 ^^^ rotr e 41
     let ch := (e &&& f) ^^^ (~~~e &&& g)
-    let t1 := hh + S1 + ch + K[t]! + w[t]!
+    let t1 := hh + S1 + ch + K[t] + w[t]
     let S0 := rotr a 28 ^^^ rotr a 34 ^^^ rotr a 39
     let maj := (a &&& b) ^^^ (a &&& c) ^^^ (b &&& c)
     let t2 := S0 + maj
     hh := g; g := f; f := e; e := d + t1; d := c; c := b; b := a; a := t1 + t2
-  return #[h[0]! + a, h[1]! + b, h[2]! + c, h[3]! + d, h[4]! + e, h[5]! + f, h[6]! + g, h[7]! + hh]
+  return #v[h[0] + a, h[1] + b, h[2] + c, h[3] + d, h[4] + e, h[5] + f, h[6] + g, h[7] + hh]
 
 /-- SHA-512 of an octet sequence, padded as in FIPS 180-4 §5.1.2. -/
 def hash (msg : List UInt8) : List UInt8 := Id.run do
@@ -66,8 +74,8 @@ def hash (msg : List UInt8) : List UInt8 := Id.run do
   let lenBytes := (List.range 16).map fun i => UInt8.ofNat ((8 * len) / 2 ^ (8 * (15 - i)) % 256)
   let m : ByteArray := ⟨(msg ++ [0x80] ++ List.replicate padLen 0 ++ lenBytes).toArray⟩
   let mut h := H0
-  for i in [0:m.size / 128] do
-    h := compress h m (128 * i)
+  for hi : i in [0:m.size / 128] do
+    h := compress h m (128 * i) (by have := hi.upper; simp at this; omega)
   return h.toList.flatMap fun x => (List.range 8).map fun j => (x >>> (8 * (7 - j)).toUInt64).toUInt8
 
 /-- Y of a Bandersnatch IETF VRF signature or ring proof whose first 32 octets encode the output

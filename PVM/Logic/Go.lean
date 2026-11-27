@@ -35,12 +35,14 @@ elab "pvm_go" "[" hs:Lean.Parser.Tactic.simpLemma,* "]" : tactic => do
     let args := t.getAppArgs
     unless t.getAppFn.constName? == some ``PVM.FreeStepsH && args.size ≥ 12 do
       throwError "pvm_go: not a FreeStepsH goal"
-    let cur ← instantiateMVars args[3]!
-    let tgt ← instantiateMVars args[7]!
+    let some pc := args[3]? | throwError "pvm_go: not a FreeStepsH goal"
+    let some pc' := args[7]? | throwError "pvm_go: not a FreeStepsH goal"
+    let cur ← instantiateMVars pc
+    let tgt ← instantiateMVars pc'
     if cur == tgt then
       evalTactic (← `(tactic| first | exact PVM.FreeStepsH.refl | exact PVM.FreeStepsH.refl.mono (by omega)))
       return
-    let some i := (← whnfR args[3]!).nat? | throwError "pvm_go: symbolic pc {args[3]!}"
+    let some i := (← whnfR pc).nat? | throwError "pvm_go: symbolic pc {pc}"
     let j? := tgt.nat?
     if j? == some i then
       evalTactic (← `(tactic| first | exact PVM.FreeStepsH.refl | exact PVM.FreeStepsH.refl.mono (by omega)))

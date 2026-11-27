@@ -21,26 +21,41 @@ def zeroHash : List UInt8 := List.replicate 32 0
 /-- ℰ_4 of a service index, as four octets. -/
 def n4 (s : Nat) : List UInt8 := PVM.Num.encodeLE 4 s
 
+theorem length_n4 (s : Nat) : (n4 s).length = 4 := by simp [n4, PVM.Num.encodeLE]
+
 /-- C(i) for i ∈ ℕ_{2^8}: [i, 0, 0, …] (GP §D.1). -/
 def keyOfIndex (i : Nat) : List UInt8 := UInt8.ofNat i :: List.replicate 30 0
 
 /-- C(i, s): [i, n₀, 0, n₁, 0, n₂, 0, n₃, 0, 0, …] where n = ℰ_4(s) (GP §D.1). -/
 def keyOfService (i s : Nat) : List UInt8 :=
   let n := n4 s
-  [UInt8.ofNat i, n[0]!, 0, n[1]!, 0, n[2]!, 0, n[3]!] ++ List.replicate 23 0
-
-/-- C(s, h): [n₀, a₀, n₁, a₁, n₂, a₂, n₃, a₃, a₄, a₅, …, a₂₆] where n = ℰ_4(s) and a = ℋ(h)
-    (GP §D.1). -/
-def keyOfServiceData (s : Nat) (h : List UInt8) : List UInt8 :=
-  let n := n4 s
-  let a := (Blake2b.hash256 ⟨h.toArray⟩).toList
-  [n[0]!, a[0]!, n[1]!, a[1]!, n[2]!, a[2]!, n[3]!, a[3]!] ++ (a.drop 4).take 23
+  have hn : n.length = 4 := length_n4 s
+  [UInt8.ofNat i, n[0], 0, n[1], 0, n[2], 0, n[3]] ++ List.replicate 23 0
 
 /-- C(s, **x**) from the 27 octets of ℋ(**x**) it keeps (merklization eq. C), the form in which
-    service accounts hold their storage and request keys (`ServiceAccount.entries`). -/
+    service accounts hold their storage and request keys (`ServiceAccount.entries`):
+    [n₀, a₀, n₁, a₁, n₂, a₂, n₃, a₃, a₄, a₅, …, a₂₆] where n = ℰ_4(s). The octets a₀ … a₃ are
+    read with `getD`, which never uses its default: the keys are 27 octets (`keyOfServiceHash_eq`). -/
 def keyOfServiceHash (s : Nat) (a : List UInt8) : List UInt8 :=
   let n := n4 s
-  [n[0]!, a[0]!, n[1]!, a[1]!, n[2]!, a[2]!, n[3]!, a[3]!] ++ (a.drop 4).take 23
+  have hn : n.length = 4 := length_n4 s
+  [n[0], a.getD 0 0, n[1], a.getD 1 0, n[2], a.getD 2 0, n[3], a.getD 3 0] ++ (a.drop 4).take 23
+
+/-- On a key of at least four octets (`ServiceAccount.entries` holds 27), `keyOfServiceHash`
+    reads a₀ … a₃ in bounds. -/
+theorem keyOfServiceHash_eq (s : Nat) (a : List UInt8) (ha : 4 ≤ a.length) :
+    keyOfServiceHash s a =
+      [(n4 s)[0]'(by simp [length_n4]), a[0], (n4 s)[1]'(by simp [length_n4]), a[1],
+        (n4 s)[2]'(by simp [length_n4]), a[2], (n4 s)[3]'(by simp [length_n4]), a[3]]
+        ++ (a.drop 4).take 23 := by
+  simp [keyOfServiceHash, List.getD_eq_getElem?_getD, List.getElem?_eq_getElem (show 0 < a.length by omega),
+    List.getElem?_eq_getElem (show 1 < a.length by omega), List.getElem?_eq_getElem (show 2 < a.length by omega),
+    List.getElem?_eq_getElem (show 3 < a.length by omega)]
+
+/-- C(s, h): [n₀, a₀, n₁, a₁, n₂, a₂, n₃, a₃, a₄, a₅, …, a₂₆] where n = ℰ_4(s) and a = ℋ(h)
+    (GP §D.1), i.e. `keyOfServiceHash` of ℋ(h). -/
+def keyOfServiceData (s : Nat) (h : List UInt8) : List UInt8 :=
+  keyOfServiceHash s (Blake2b.hash256 ⟨h.toArray⟩).toList
 
 /-- B(l, r) = [0] ⌢ bits(l)_{1…} ⌢ bits(r) (GP §D.2), as 64 octets: the first bit of l is
     replaced by the branch marker 0. -/

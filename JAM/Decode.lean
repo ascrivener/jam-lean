@@ -42,8 +42,12 @@ def bytes (n : Nat) : Decoder ByteArray := do
 
 /-- One octet. -/
 def byte : Decoder UInt8 := do
-  let b ← bytes 1
-  return b.get! 0
+  let bs ← read
+  let pos ← get
+  if h : pos + 1 ≤ bs.size then
+    set (pos + 1)
+    return bs[pos]
+  else fail s!"need {1} octets, {bs.size - pos} left"
 
 /-- ℰ_l⁻¹: an `l`-octet little-endian natural (GP (C) "Fixed-length Integer Encoding"). Every
     `l`-octet sequence is ℰ_l of exactly one x < 2^{8l}. -/

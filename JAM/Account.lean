@@ -29,7 +29,7 @@ instance : Ord (List UInt8 × Nat) := lexOrd
   $\mathcal{H}(\mathbf{x})$ that the state key $C(s, \mathbf{x})$ keeps: storage value $\mathbf{v}$ under $\mathbf{k}$ is held raw under
   `storageKey k` ($\mathbf{x} = \mathcal{E}_4(2^{32}-1) \frown \mathbf{k}$), and request history $\mathbf{t}$ of $(h, z)$ is held as
   $\mathcal{E}(\updownarrow[\mathcal{E}_4(x) \mid x \leftarrow \mathbf{t}])$ under `requestKey h z` ($\mathbf{x} = \mathcal{E}_4(z) \frown h$), exactly as $T(\sigma)$ holds them.
-  The paper licenses this (merklization.tex:116: storage keys cannot be inspected or enumerated,
+  The paper licenses this (§D.1: storage keys cannot be inspected or enumerated,
   so implementations need not store them) and it is faithful to $\sigma$ given that $C$ has no collision
   on the keys that occur, the paper's own assumption (merklization.tex:19); see
   `docs/storage-key-design.md`.
@@ -266,7 +266,7 @@ theorem requestGet_erase_other (a : ServiceAccount) (h h' : List UInt8) (z z' : 
   · simp [requestGet, Std.ExtTreeMap.get?_eq_getElem?, Std.ExtTreeMap.getElem?_erase, hk]
   · rfl
 
-/-- $\Omega_W$ changes only $\mathbf{s}$, $a_o$ and $a_i$. -/
+/-- $\Omega_W$ leaves $\mathbf{p}$, $f$, $c$, $b$, $g$, $m$, $r$, $a$ and the parent unchanged (the theorem says nothing about the other fields). -/
 theorem storageWrite_frame (a : ServiceAccount) (k v : List UInt8) :
     let a' := a.storageWrite k v
     a'.preimages = a.preimages ∧ a'.gratis = a.gratis ∧

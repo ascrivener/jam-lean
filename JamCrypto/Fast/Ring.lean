@@ -1,12 +1,15 @@
 import JamCrypto.Ring
 import JamCrypto.Fast.RingCurve
+import JamCrypto.Fast.Pairing
 
 /-!
 # The ring VRF entry points, restated so that their compiled code uses the fast paths
 
 The reference ring functions (`JamCrypto/RingRoot.lean`, `RingVerify.lean`, `RingVerify081.lean`,
 `Ring.lean`) are compiled in their spec modules, before the `@[csimp]` replacements of
-`Curve.decode`, `Curve.smulW` and `Ring.hashToCurve` (`JamCrypto/Fast/RingCurve.lean`) exist.
+`Curve.decode`, `Curve.smulW` and `Ring.hashToCurve` (`JamCrypto/Fast/RingCurve.lean`), `G1.smul`,
+`G1.msm`, `G1.decompress` (`JamCrypto/Fast/G1.lean`) and `Pairing.pairingCheck`
+(`JamCrypto/Fast/Pairing.lean`) exist.
 The definitions below are their
 text, unchanged (`verify081` and `crypto`: their elaborated terms); each is equal to its
 reference (by `rfl`, or by rewriting with the equalities of the ones it calls), and compiled here

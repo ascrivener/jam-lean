@@ -124,22 +124,29 @@ def gen_mul(n, p, n0, square):
     ms, r, acc = [], [], None
     for k in range(2 * n - 1):
         cprev = acc
-        code, nat = column_code(g, k, n, P, ms, acc, square)
+        code, _ = column_code(g, k, n, P, ms, acc, square)
         _, natnc = column_code(g, k, n, P, ms, None, square)
-        s = g.bind("s", code, nat)
+        # the sum as carry + (products): the form `mont_col'`/`split_col` take
+        s = g.bind("s", code, f"{N(cprev) if cprev else '0'} + ({natnc})")
         if k < n:
             m = g.bind("m", f"({s} * {n0}) &&& {M}", f"({N(s)} * {n0}) % 2^{W}")
             ms.append(m)
             s2 = g.bind("s", f"{s} + {m} * {P[0]}", f"{N(s)} + {N(m)} * {P[0]}")
             acc = g.bind("c", f"{s2} >>> {W}", f"{N(s2)} / 2^{W}")
+            # the column equation and bounds by the generic `mont_col'` (omega would have to
+            # rediscover the modular identity 1 + n0·p0 ≡ 0 with 58-bit coefficients, slowly)
+            proof = (f"mont_col' (B := 2^{W}) (C := 2^37) h_{s} h_{m} h_{s2} h_{acc} (by decide) "
+                     f"(Nat.lt_of_lt_of_le l_{s2} (by decide))")
             g.eqn("mul", f"{natnc} + {N(m)} * {P[0]}", N(cprev) if cprev else "0", "0", N(acc),
-                  (f"{N(m)} < 2^{W}", True), f"{N(acc)} < 2^37")
+                  (f"{N(m)} < 2^{W}", True), f"{N(acc)} < 2^37", proof=proof)
         else:
             rk = g.bind("r", f"{s} &&& {M}", f"{N(s)} % 2^{W}")
             r.append(rk)
             acc = g.bind("c", f"{s} >>> {W}", f"{N(s)} / 2^{W}")
+            proof = (f"split_col (B := 2^{W}) (C := 2^37) h_{s} h_{rk} h_{acc} "
+                     f"(Nat.lt_of_lt_of_le l_{s} (by decide))")
             g.eqn("mul", natnc, N(cprev), N(rk), N(acc),
-                  (f"{N(rk)} < 2^{W}", True), (f"{N(acc)} < 2^37", k == 2 * n - 2))
+                  (f"{N(rk)} < 2^{W}", True), (f"{N(acc)} < 2^37", k == 2 * n - 2), proof=proof)
     r.append(acc)
     if square:
         expn = " + ".join((f"a.l{i}.toNat * a.l{i}.toNat * 2^{2 * W * i}" if i == j else
@@ -207,7 +214,7 @@ def emit_code(L, g, cond, d, t):
         L.append(f"  let {name} := {code}")
     L.append(f"  if {cond} then ⟨{', '.join(d)}⟩ else ⟨{', '.join(t)}⟩")
 
-def emit_facts(L, g, ind="  ", drop=(), mid=None):
+def emit_facts(L, g, ind="  ", drop=(), mid=None, pre=None):
     """One `have` per binding (its Nat value, below 2^64); after each group, its clean linear
     facts, its step of its carry chain (the generic lemma `chain`), and then the raw facts and
     the chain's previous step are cleared, so no `omega` call sees more than a few facts with
@@ -224,6 +231,10 @@ def emit_facts(L, g, ind="  ", drop=(), mid=None):
     for idx, (name, code, nat) in enumerate(g.binds):
         grp_vars.append(name)
         if name not in g.skip:
+            if pre is not None:
+                for line, hyp in pre(nat):
+                    L.append(f"{ind}{line}")
+                    pending.append(hyp)
             L.append(f"{ind}have h_{name} : {name}.toNat = {nat} := by simp only [{name}, {SIMP}] <;> omega")
             L.append(f"{ind}have l_{name} := UInt64.toNat_lt {name}")
             pending += [f"h_{name}", f"l_{name}"]
@@ -332,6 +343,110 @@ def finish(L, g, last, n, base_hyps, eqs, bounded, fin, res1, res2, ind="  "):
     L.append(f"{ind}· have h := ({call}).2 hc")
     L.append(f"{ind}  exact ⟨⟨{lim(res2)}, h.1⟩, h.2⟩")
 
+
+import re as _re_p
+_ATOM = _re_p.compile(r"\b([a-z]+[0-9]+)\.toNat|\b([ab])\.l([0-9]+)\.toNat")
+
+def _atoms(text):
+    out = set()
+    for m in _ATOM.finditer(text):
+        out.add(m.group(1) if m.group(1) else f"{m.group(2)}.l{m.group(3)}")
+    return out
+
+def prune(text):
+    """Before each `omega` that proves one binding's Nat value or one clean fact, clear the
+    hypotheses it does not need: it gets the facts that mention the atoms of its statement,
+    transitively (but never the big-coefficient facts `hav`, `hbv`, `hABlt`, the hidden chains or
+    other proofs' local facts). omega reads every hypothesis in context, and with all the limb
+    bounds of a 14-limb product present it spends most of its time on irrelevant ones."""
+    lines = text.split("\n")
+    # powers of two as literals: elaborating thousands of `2^k` (an `HPow` instance problem each)
+    # was most of the time of a 14-limb proof
+    pw = _re_p.compile(r"\b2\^([0-9]+)\b")
+    lit = lambda ln: pw.sub(lambda m_: str(2 ** int(m_.group(1))), ln)
+    out = []
+    live = {}  # hypothesis name -> statement text (None: never needed)
+    intheorem = False
+    for ln in lines:
+        if ln.startswith("theorem ") and ("_spec" in ln):
+            intheorem = True
+            live = {}
+            out.append(ln)
+            continue
+        if intheorem and ln and not ln.startswith(" "):
+            intheorem = False
+        if not intheorem or not ln.startswith("  ") or ln.startswith("   "):
+            out.append(ln)
+            continue
+        t = ln[2:]
+        m = _re_p.match(r"obtain ⟨(.*)⟩ := h([ab])$", t)
+        if m:
+            for nm in m.group(1).split(", "):
+                j = nm[len("h" + m.group(2)):]
+                live[nm] = None if j == "v" else f"{m.group(2)}.l{j}.toNat < 2^29"
+            out.append(ln); continue
+        m = _re_p.match(r"have (hp([0-9]+)_([0-9]+)) := mul_lt29 ha([0-9]+) h([ab])([0-9]+)", t)
+        if m:
+            live[m.group(1)] = f"a.l{m.group(4)}.toNat * {m.group(5)}.l{m.group(6)}.toNat < 2^58"
+            out.append(ln); continue
+        m = _re_p.match(r"have (l_[a-z]+[0-9]+) := UInt64.toNat_lt ([a-z]+[0-9]+)$", t)
+        if m:
+            live[m.group(1)] = f"{m.group(2)}.toNat < 2^64"
+            out.append(ln); continue
+        m = _re_p.match(r"obtain ⟨(.*)⟩ : (.*) := ", t)
+        if m:
+            names = m.group(1).split(", ")
+            texts = m.group(2).split(" ∧ ")
+            for nm, tx in zip(names, texts):
+                live[nm] = tx
+            out.append(ln); continue
+        m = _re_p.match(r"clear (.*)$", t)
+        if m:
+            for nm in m.group(1).split():
+                live.pop(nm, None)
+            out.append(ln); continue
+        m = _re_p.match(r"have ([A-Za-z_0-9]+) : (.*) := by (simp only \[.*\] <;> omega|omega)$", t)
+        if m:
+            name, stmt, tac = m.group(1), m.group(2), m.group(3)
+            need, atoms = set(), _atoms(stmt)
+            changed = True
+            while changed:
+                changed = False
+                for nm, tx in live.items():
+                    if tx is None or nm in need:
+                        continue
+                    if _atoms(tx) & atoms:
+                        need.add(nm)
+                        atoms |= _atoms(tx)
+                        changed = True
+            drop = [nm for nm in live if nm not in need]
+            if drop:
+                out.append(f"  have {name} : {stmt} := by clear {' '.join(drop)}; {tac}")
+            else:
+                out.append(ln)
+            live[name] = stmt
+            continue
+        m = _re_p.match(r"have ([A-Za-z_0-9]+) : (.*) := ", t)
+        if m:
+            live[m.group(1)] = None if m.group(2).startswith("Hide") else m.group(2)
+            out.append(ln); continue
+        m = _re_p.match(r"have ([A-Za-z_0-9]+)( :|) ", t)
+        if m:
+            live[m.group(1)] = None
+        m = _re_p.match(r"generalize ([A-Za-z_0-9]+) : ", t)
+        if m:
+            live[m.group(1)] = None
+        out.append(ln)
+    res = []
+    inth = False
+    for ln in out:
+        if ln.startswith("theorem ") and "_spec" in ln:
+            inth = True
+        elif inth and ln and not ln.startswith(" "):
+            inth = False
+        res.append(lit(ln) if inth else ln)
+    return "\n".join(res)
+
 def gen_module(name, doc, p):
     n = (p.bit_length() + 2 + W - 1) // W
     R = 1 << (W * n)
@@ -429,10 +544,6 @@ def gen_module(name, doc, p):
         w(f"  generalize hE0 : {g.expansion} = E at hABlt ⊢")
         w(f"  have hE : Hide ({g.expansion} = E) := hE0")
         w(f"  clear hE0")
-        for i in range(n):
-            for j in range(n):
-                if sq and j < i: continue
-                w(f"  have hp{i}_{j} := mul_lt29 ha{i} h{bs}{j}")
         w(f"  simp only [R, p]")
         w(f"  unfold {fname}")
         w("  extract_lets " + " ".join(nm for nm, _, _ in g.binds))
@@ -444,7 +555,6 @@ def gen_module(name, doc, p):
             # T·R = a·b + M·p, M < R and a·b < p² give T < 2p, hence the last carry is a limb
             ps = last.pop("mul")
             L.append(f"{ind}unfold Hide at {ps}")
-            L.append(f"{ind}clear {' '.join(hps)}")
             kept = [k for k, _ in g.kept]
             L.append(f"{ind}have e1 : ({lsum(rl)}) * 2^{W * n} = E + ({lsum(ms)}) * {p} := by")
             L.append(f"{ind}  clear {' '.join(b for b in base if b != 'hE')} {' '.join(kept)}")
@@ -461,7 +571,15 @@ def gen_module(name, doc, p):
             g.factname[f"{N(acc)} < 2^{W}"] = "hacc"
             g.kept.append(("e1", "e1"))
             g.kept.append((bm, "bm"))
-        last = emit_facts(L, g, mid=(g.mid_index, mid))
+        import re as _re
+        def pre(nat, bs=bs):
+            # the bounds of the products in this binding only, cleared with its group, so that no
+            # `omega` call sees the bounds of every product
+            out = []
+            for i, j in sorted(set(_re.findall(r"a\.l(\d+)\.toNat \* " + bs + r"\.l(\d+)\.toNat", nat))):
+                out.append((f"have hp{i}_{j} := mul_lt29 ha{i} h{bs}{j}", f"hp{i}_{j}"))
+            return out
+        last = emit_facts(L, g, mid=(g.mid_index, mid), pre=pre)
         finish(L, g, last, n, [b for b in base if b != "hE"],
                [("e2", f"({lsum(d)}) + {p} = ({lsum(rl)}) + 2^{W * n} * {N(g.fsw)}")],
                [d],
@@ -539,7 +657,7 @@ def gen_module(name, doc, p):
         t = t.replace(k, v)
     L.append(t)
     w(f"end JamCrypto.Fast.{name}")
-    return "\n".join(L) + "\n"
+    return prune("\n".join(L)) + "\n"
 
 TMPL = r'''
 /-! ## Derived operations and their values -/
@@ -771,9 +889,7 @@ instance : LawfulField Elem where
 def main():
     root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
     import sys
-    # Fq (14 limbs) is not generated by default yet: its proofs exceed the memory of the build
-    # machines; generate it explicitly with `field.py Fq` (work in progress for the ring).
-    only = sys.argv[1:] or ["Fr", "Fp25519"]
+    only = sys.argv[1:] or ["Fr", "Fp25519", "Fq"]
     for name, doc, p in FIELDS:
         if name in only:
             with open(os.path.join(root, f"{name}.lean"), "w") as f:

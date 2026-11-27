@@ -50,6 +50,9 @@ inductive BlockError where
   | assurances (e : AssurancesError)
   | reports (e : ReportsError)
   | preimages (e : PreimageError)
+  /-- Accumulation makes the block invalid (GP v0.8.1 §12.2): two services created the same new
+      service index in one round. -/
+  | accumulation (e : AccumulationError)
   deriving BEq, Repr
 
 /-- The headers an importer retains besides $\sigma$: the ancestors of the block being imported,
@@ -167,7 +170,7 @@ def importBlock (params : Params) (c : Crypto) (chain : Chain) (σ : State) (B :
   let accPre : AccState :=
     { slot := σ.tau, entropy := saf'.eta.getD 0 [], ready := σ.ready,
       accumulated := σ.accumulated, pstate := σ.partialState }
-  let acc := accumulate params accPre slot avail
+  let acc ← (accumulate params accPre slot avail).mapError .accumulation
   let ps := acc.state.pstate
   -- §7: recent history.
   let recent' := recentHistory params { σ.recent with history := σ.recent.history }

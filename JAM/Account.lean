@@ -1,3 +1,4 @@
+import JAM.Fast.Blake2b
 import Std.Data.ExtTreeMap
 import JAM.Codec
 import JAM.Constants

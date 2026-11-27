@@ -1,3 +1,4 @@
+import JAM.Fast
 import JAM.Codec
 import JAM.Constants
 import JAM.Account
@@ -13,6 +14,7 @@ import JAM.Erasure
 import JAM.Params
 import JAM.Host.General
 import JAM.Merkle
+import JAM.Segments
 import JAM.Accumulate
 import JAM.Accumulation
 import JAM.History
@@ -28,6 +30,7 @@ import JAM.State
 import JAM.StateDecode
 import JAM.BlockImport
 import JAM.Refine
+import JAM.Auditing
 import JAM.Theorems.HostGas
 import JAM.Theorems.Confinement
 import JAM.Theorems.RefineContract
@@ -35,6 +38,7 @@ import JAM.Theorems.KeepRO
 import JAM.Theorems.KeepROAcc
 import JAM.Theorems.GrowHeap
 import JAM.Theorems.Safrole
+import JAM.Theorems.Auditing
 
 /-!
 # Gray Paper v0.8.0, Appendix B and the protocol terms it needs
@@ -54,6 +58,7 @@ Built on `PVM` (Appendix A).
 * `JAM.Shuffle` — the Fisher–Yates shuffle ℱ and 𝒬_l (Appendix F)
 * `JAM.Erasure` — Reed–Solomon erasure coding ℰ_C and recovery ℛ over GF(2¹⁶) (Appendix H)
 * `JAM.History` — recent history β and the accumulation-output belt (§7, Appendix E MMB)
+* `JAM.Segments` — constant-depth Merkle trees ℳ, J_x, L_x and the paged proofs P, with their verifiers (Appendix E, §14)
 * `JAM.Authorization` — the authorizer pool α (§8)
 * `JAM.Statistics` — validator, core and service activity statistics (§13)
 * `JAM.Preimages` — the preimages extrinsic and its integration (§12.4)
@@ -66,6 +71,8 @@ Built on `PVM` (Appendix A).
 * `JAM.StateDecode` — σ from its key-values, the inverse of T (Appendix D)
 * `JAM.BlockImport` — the block-level transition Υ(σ, B) with the header's validity conditions (§4, §5)
 * `JAM.Refine` — the refine and is-authorized invocations Ψ_R and Ψ_I, with the refine host functions
+* `JAM.Auditing` — auditing and judging: the reports to audit, tranche-0 and later-tranche selection, announcements, judgments and the audited condition U (§17)
 * `JAM.Theorems.HostGas` — the dispatchers of Ψ_A, Ψ_R and Ψ_I never add gas
 * `JAM.Theorems.Safrole` — Safrole invariants: γ_A' sorted, unique and bounded by 𝖤; Z a permutation; |γ_S'| = 𝖤; η' and key well-formedness
+* `JAM.Theorems.Auditing` — auditing invariants: ℱ a permutation, tranche 0 draws at most ten distinct cores, no no-shows no escalation, U monotone in J_⊤ and the §10 verdict link
 -/

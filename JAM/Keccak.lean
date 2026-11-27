@@ -1,3 +1,5 @@
+import JAM.Blake2b
+
 /-!
 # Keccak-256 (GP v0.8.0 §3.8: ℋ_K, used for the accumulation output root and BEEFY)
 

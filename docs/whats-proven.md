@@ -87,13 +87,28 @@ pinned commit do not cover these layers.
 section):
 - `psi_eq` (`PVM/Theorems/Termination.lean`): the executable `psi` satisfies the paper's
   recursive definition of Ψ, and its fuel never runs out.
+- `Sim.run_fuel_eq`, `Program.blockCost?_isSome_of_deblob` and `Program.blockCost_eq_of_deblob`
+  (`PVM/Theorems/GasFuel.lean`): the gas simulation 𝔛 (§A.9) always finishes within its fuel
+  (more fuel never changes the result), and for every block Ψ charges it meets only opcodes in U,
+  so ϱ^Δ is the simulated cost and `blockCost`'s default `1` is unreachable. The proof uses
+  bounds on the §A.10 cost table that `decide` checks over all 256 octets.
+- `Program.step_decode`, `Exec.twoRegImmAlu_eq_none_iff` and `Program.exec_loadIndI`
+  (`PVM/Theorems/ExecForms.lean`): Ψ₁'s `trap` default for an undecodable octet and `exec`'s
+  `.getD 0` are never used. The paper writes the signed loads two ways, as 𝒳_n in §A.5.6 and as
+  𝒵⁻¹_8 ∘ 𝒵_n in §A.5.10, and the two agree.
 - `psiHStar_eq` (`PVM/Theorems/Invocation.lean`): `psiHStar` is the paper's Ψ_H* for any handler
   that never adds gas.
 - `accHostFn_gasNonIncreasing`, `refineHostFn_gasNonIncreasing` and
   `isAuthHostFn_gasNonIncreasing` (`JAM/Theorems/HostGas.lean`): the protocol's dispatchers never
   add gas.
-- `psi_eq_psiFast` (`PVM/Fast.lean`, registered with `@[csimp]`): the fast interpreter that the
-  tests run is equal to the paper-literal `psi`.
+- `psi_eq_psiFast` (`PVM/Fast/Basic.lean`, registered with `@[csimp]`): the fast interpreter that the
+  tests run is equal to the paper-literal `psi`. Every fast compiled form of the model (the rest of
+  the Ψ chain, the ALU, the blob parsers and Y, the gas simulation, ℋ, ℋ_K, M and `grow_heap`) is
+  likewise proved equal to its spec definition and registered with `@[csimp]`. They live in fast
+  modules (`PVM/Fast/`, `JAM/Fast/`); `docs/fast-paths.md` lists every pair with its theorem. The
+  kernel and every theorem still see the paper-literal definitions. Since #274, `Program.prepare`
+  builds a lazy `info` table and its `costs` table is a `Thunk`: a stale Services proof that unfolds
+  `Program.prepare` or `Prepared.cost` directly needs its unfolding adjusted when proof work resumes.
 - `psiA_confined` and `psiR_noExports` (`JAM/Theorems/Confinement.lean`): code that never names
   certain host calls cannot touch other accounts or export segments. Since GP v0.8.1 (supervisors,
   #539) `psiA_confined` also assumes `NoSupervisee e.accounts s`: in the initial state no other
@@ -119,6 +134,18 @@ section):
   stay 336 octets if they were). Typed views `ValidatorKey.View` (k_b, k_e, k_l, k_m as fixed-length
   vectors) and `etaView` (η as four `Vector UInt8 32`) with inverse conversions, keeping the public
   `List UInt8` representation.
+- Auditing (`JAM/Theorems/Auditing.lean`, GP v0.8.1 §17, off-chain): `shuffle_perm` (ℱ is a
+  permutation) and `shuffle_map`; tranche 0 draws at most ten reports (`tranche0_length_le`), each
+  core at most once (`tranche0Indexed_nodup_cores`), each from **q** (`tranche0Indexed_mem`); no
+  no-shows means no later-tranche selection (`laterSelected_zero`, `laterTranche_eq_nil`), and
+  selection is monotone in the no-show count (`laterSelected_mono`); `audited_iff` (the Boolean
+  decides U), U monotone in J_⊤ and in the current tranche (`audited_mono_positive`,
+  `audited_mono_current`) but revoked by one negative judgment below the supermajority
+  (`audited_false_of_negative`); the literal U collapses (`auditedLiteral_degenerate`, upstream
+  candidate v0.8.1-A8); U's supermajority is §10's good-verdict count
+  (`supermajority_iff_verdictGood`); `formVerdict_sound` (a formed verdict has §10's count, order and
+  a defined outcome, each vote backed by an observed judgment) and `formVerdict_good_complete`.
+  Scenario tests in `Tests/AuditingTest.lean` (no vectors exist for §17).
 
 **Provenance.** The model was written from the Gray Paper and the test vectors only. No other PVM
 or JAM implementation was consulted.
@@ -1334,6 +1361,20 @@ below stay with their lines; the blob's side of them is checked (`Vendored/Field
     and the model's exp/log and Cantor-basis tables agree with it.
   - No hypotheses beyond v ≤ 2¹⁵ (it keeps code indices below 2¹⁶). Details: `proofs/README.md`.
 
+- **Constant-depth Merkle trees and segment justifications** (`JAM/Segments.lean`, GP v0.8.1
+  Appendix E and §14): C, ℳ, T, J_x, L_x, 𝒫 and the paged proofs P, executable, with a verifier for
+  one segment and for one page (the paper gives no verifier; reading v0.8.1-A13 in
+  `docs/upstream-candidates.md`). Proved, with axioms propext, Classical.choice and Quot.sound only
+  and no hypotheses beyond the index being in range:
+  - `verifySegment_justify`: every segment verifies against ℳ(**v**) with its J_0 justification;
+  - `verifyPage_page_justify`: every page L_x(**v**, i) verifies against ℳ(**v**) with J_x(**v**, i);
+  - `pagedProofs_verify`, `length_pagedProofs`: P(**s**) has ⌈\|**s**\|/64⌉ segments, each the padded
+    encoding of a page and path that verify;
+  - `justify_zero_eq_page`: J_0(**v**, n) is J_x(**v**, ⌊n/2^x⌋) followed by the trace within that page.
+
+  Tested in `Tests/SegmentsTest.lean` (hand-computed cases, Blake2b values from an independent
+  Python reading, and the statements checked exhaustively on small sizes). No vector carries
+  segments with their root.
 - **The field formatters of refine's 6159 `Debug` line** (PRs #189, #213, #219, #220, #221;
   `Services/Bootstrap/Fmt/Field*.lean`, `N56*.lean`), frame-only summaries in the style of the Fmt
   ones: `write_char` (59743), `pad_wp` and `pad_z2` (`pad_integral` with `{:02x}`'s options), `u8hex_ok` (60209), `fmt_write_spec` (an

@@ -381,7 +381,7 @@ the build of the semantics rather than drifting silently.
   (`CodeCheck.hostIds_ok`), so `Confined.accumulate_confined` and `Confined.refine_noExports` have no
   hypothesis about the code and depend on propext, Classical.choice and Quot.sound only
   (`lake build witnesscheck` remains as a compiled cross-check).
-* **A fast Ψ that is the paper's Ψ** (`PVM/Fast.lean`). `psi` re-deblobs the program on every step
+* **A fast Ψ that is the paper's Ψ** (`PVM/Fast/`, listed in `docs/fast-paths.md`). `psi` re-deblobs the program on every step
   and re-simulates gas on every block charge, as the paper writes it. `psiFast` parses once and
   memoizes block costs. `psi_eq_psiFast : psi = psiFast` is registered with `@[csimp]`, so compiled
   code (including every test runner) executes `psiFast`, while the kernel and every theorem see

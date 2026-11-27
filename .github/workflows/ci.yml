@@ -58,6 +58,9 @@ jobs:
       - name: Generated tables and constants match the pinned paper
         run: scripts/check-tables.sh
 
+      - name: Spec modules import no fast module outside the allowlist (docs/fast-paths.md)
+        run: python3 scripts/check-fast-imports.py
+
       - name: No forbidden constructs
         run: |
           if grep -rnE '\bsorry\b|partial def|implemented_by|native_decide|bv_decide' PVM JAM Services Tests PVM.lean JAM.lean Services.lean JamCrypto JamCrypto.lean JamCryptoTest.lean RingTest.lean; then
@@ -115,6 +118,12 @@ jobs:
 
       - name: Refine host functions, Ψ_R and Ψ_I (hand-written; no vectors exist)
         run: lake build Tests.RefineTest
+
+      - name: Auditing scenarios, §17 (hand-built; no vectors exist)
+        run: lake build Tests.AuditingTest
+
+      - name: Constant-depth Merkle trees, J_x, L_x and paged proofs (hand-written; no vectors exist)
+        run: lake build Tests.SegmentsTest
 
       - name: The real witness binary rejects malformed payloads (a test, not a proof)
         run: lake build witnessrun

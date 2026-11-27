@@ -1,3 +1,4 @@
+import JAM.Fast.Keccak
 import JAM.Merkle
 import JAM.Codec
 import JAM.Params

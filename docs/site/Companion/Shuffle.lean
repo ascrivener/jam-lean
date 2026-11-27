@@ -17,9 +17,9 @@ shortTitle := "F. Shuffling"
 file := "shuffle"
 %%%
 
-The paper uses a Fisher–Yates shuffle $`\mathcal{F}` wherever validators are assigned at random: the
-guarantor assignments of §11.3 ({ref "reports-assignments"}[chapter]) and the selection of
-reports to audit in §17. §3.7.5 introduces it: it takes a sequence and some entropy, and returns
+The paper uses a Fisher–Yates shuffle $`\mathcal{F}` wherever it needs a random order: for the
+guarantor assignments of §11.3 ({ref "reports-assignments"}[chapter]) it shuffles validators, and
+for the selection of reports to audit in §17 it shuffles reports. §3.7.5 introduces it: it takes a sequence and some entropy, and returns
 the same elements in an order fixed by the entropy. Appendix F of GP v0.8.1 defines it, first for
 entropy given as a sequence of naturals, then for entropy given as a hash.
 
@@ -31,7 +31,7 @@ The module is `JAM/Shuffle.lean`; its full API is on the
 tag := "shuffle-seq"
 %%%
 
-$$`\forall T, l \in \mathbb{N} : \mathcal{F} \colon \begin{cases} \left( \llbracket T \rrbracket_l, \llbracket \mathbb{N} \rrbracket_{l:} \right) \to \llbracket T \rrbracket_l \\ (\mathbf{s}, \mathbf{r}) \mapsto \begin{cases} [\mathbf{s}_{\mathbf{r}_0 \bmod l}] \frown \mathcal{F}(\mathbf{s}'_{\dots l-1}, \mathbf{r}_{1\dots}) & \text{if } \mathbf{s} \ne [] \\ [] & \text{otherwise} \end{cases} \\ \qquad \text{where } \mathbf{s}' = \mathbf{s} \text{ except } \mathbf{s}'_{\mathbf{r}_0 \bmod l} = \mathbf{s}_{l-1} \end{cases} \qquad \text{(F.1)}`
+$$`\forall T, l \in \mathbb{N} : \mathcal{F} \colon \begin{cases} \left\lgroup \llbracket T \rrbracket_l, \llbracket \mathbb{N} \rrbracket_{l:} \right\rgroup \to \llbracket T \rrbracket_l \\ (\mathbf{s}, \mathbf{r}) \mapsto \begin{cases} [\mathbf{s}_{\mathbf{r}_0 \bmod l}] \frown \mathcal{F}(\mathbf{s}'_{\dots l-1}, \mathbf{r}_{1\dots}) & \text{if } \mathbf{s} \ne [] \\ [] & \text{otherwise} \end{cases} \\ \qquad \text{where } \mathbf{s}' = \mathbf{s} \text{ except } \mathbf{s}'_{\mathbf{r}_0 \bmod l} = \mathbf{s}_{l-1} \end{cases} \qquad \text{(F.1)}`
 
 (The paper writes the "where" clause inside the first case, on the same line.) Each step takes the element at $`\mathbf{r}_0 \bmod l`, moves the last element into its place, drops the last
 position, and continues with the rest of $`\mathbf{r}`. The model's {api}`JAM.Shuffle.shuffle` does
@@ -50,7 +50,7 @@ $`\mathcal{Q}_l` of it:
 
 $$`\forall l \in \mathbb{N} :\ \mathcal{Q}_l \colon \begin{cases} \mathbb{H} \to \llbracket \mathbb{N}_{2^{32}} \rrbracket_l \\ h \mapsto \left[ \mathcal{E}^{-1}_4\left( \mathcal{H}\left( h \frown \mathcal{E}_4(\lfloor i/8 \rfloor) \right)_{4i \bmod 32 \dots +4} \right) \;\middle|\; i \mathrel{<\!\!\!-} \mathbb{N}_l \right] \end{cases} \qquad \text{(F.2)}`
 
-$$`\forall T, l \in \mathbb{N} :\ \mathcal{F} \colon \begin{cases} \left( \llbracket T \rrbracket_l, \mathbb{H} \right) \to \llbracket T \rrbracket_l \\ (\mathbf{s}, h) \mapsto \mathcal{F}(\mathbf{s}, \mathcal{Q}_l(h)) \end{cases} \qquad \text{(F.3)}`
+$$`\forall T, l \in \mathbb{N} :\ \mathcal{F} \colon \begin{cases} \left\lgroup \llbracket T \rrbracket_l, \mathbb{H} \right\rgroup \to \llbracket T \rrbracket_l \\ (\mathbf{s}, h) \mapsto \mathcal{F}(\mathbf{s}, \mathcal{Q}_l(h)) \end{cases} \qquad \text{(F.3)}`
 
 {leanSource JAM.Shuffle.seqFromHash}
 

@@ -9,7 +9,7 @@ open Verso.Genre.Manual.InlineLean
 
 set_option pp.rawOnError true
 
-#doc (Manual) "§11 Reporting and assurance" =>
+#doc (Manual) "§11 Reporting and Assurance" =>
 %%%
 tag := "reports"
 shortTitle := "§11 Reports"
@@ -39,7 +39,7 @@ $`k` and without duplicates" (§3.7).
 tag := "reports-state"
 %%%
 
-$$`\rho \in \llbracket \left( \mathbf{g} \in \mathbb{G}, t \in \mathbb{N}_T \right)? \rrbracket_{\mathsf{C}} \qquad \text{(11.1)}`
+$$`\rho \in \llbracket \left\lgroup \mathbf{g} \in \mathbb{G}, t \in \mathbb{N}_T \right\rgroup? \rrbracket_{\mathsf{C}} \qquad \text{(11.1)}`
 
 An entry is a guarantee and the timeslot at which it was reported. The model's entry is
 {api}`JAM.AvailAssignment`, and $`\rho` is {api}`JAM.AvailAssignments`.
@@ -73,7 +73,7 @@ tag := "reports-assurances"
 Each assurance is a bitstring with one bit per core, the assuring validator's index and its
 signature. Assurances are ordered by validator index, without duplicates:
 
-$$`\mathbf{E}_A \in \llbracket \left( f \in \text{𝕓}_{\mathsf{C}},\, v \in \mathbb{N}_{|\kappa|},\, s \in \bar{\mathbb{V}} \right) \rrbracket \qquad \text{(11.11)}`
+$$`\mathbf{E}_A \in \llbracket \left\lgroup f \in \text{𝕓}_{\mathsf{C}},\, v \in \mathbb{N}_{|\kappa|},\, s \in \bar{\mathbb{V}} \right\rgroup \rrbracket \qquad \text{(11.11)}`
 
 $$`\mathbf{E}_A = [a \in \mathbf{E}_A \wr\wr a_v] \qquad \text{(11.12)}`
 
@@ -116,7 +116,7 @@ tag := "reports-assignments"
 Of the $`\mathsf{C} = 341` cores, only the first $`|\kappa'|/3` are active, and each active core has three validators
 assigned to it. $`\mathbf{M}` gives each validator's core and key:
 
-$$`\mathbf{M} \in \left( \llbracket \mathbb{N}_{\mathsf{C}} \rrbracket_{|\kappa'|}, \llbracket \mathbb{K} \rrbracket_{|\kappa'|} \right) \qquad \text{(11.18)}`
+$$`\mathbf{M} \in \left\lgroup \llbracket \mathbb{N}_{\mathsf{C}} \rrbracket_{|\kappa'|}, \llbracket \mathbb{K} \rrbracket_{|\kappa'|} \right\rgroup \qquad \text{(11.18)}`
 
 The cores come from a shuffle with the epochal entropy $`\eta'_2`, rotated every $`\mathsf{R}` slots:
 
@@ -154,7 +154,7 @@ tag := "reports-guarantees"
 A guarantee is a work-report, the timeslot at which it was guaranteed and a credential of two or
 three signatures. The extrinsic holds at most one guarantee per core, in core order:
 
-$$`\mathbb{G} \equiv \left( \mathbf{r} \in \mathbb{R}, t \in \mathbb{N}_T, a \in \llbracket (\mathbb{N}, \bar{\mathbb{V}}) \rrbracket_{2:3} \right) \qquad \text{(11.23)}`
+$$`\mathbb{G} \equiv \left\lgroup \mathbf{r} \in \mathbb{R}, t \in \mathbb{N}_T, a \in \llbracket \left\lgroup \mathbb{N}, \bar{\mathbb{V}} \right\rgroup \rrbracket_{2:3} \right\rgroup \qquad \text{(11.23)}`
 
 $$`\mathbf{E}_G \in \llbracket \mathbb{G} \rrbracket_{:\mathsf{C}} \qquad \text{(11.24)} \qquad \mathbf{E}_G = [\mathbf{g} \in \mathbf{E}_G \wr\wr (\mathbf{g}_\mathbf{r})_c] \qquad \text{(11.25)}`
 

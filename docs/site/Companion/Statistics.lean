@@ -36,7 +36,7 @@ $`\pi_V` accumulates the current epoch's records and $`\pi_L` holds the last com
 
 $$`\pi \equiv (\pi_V, \pi_L, \pi_C, \pi_S) \qquad \text{(13.1)}`
 
-$$`(\pi_V, \pi_L) \in \llbracket \left( b \in \mathbb{N}, t \in \mathbb{N}, p \in \mathbb{N}, d \in \mathbb{N}, g \in \mathbb{N}, a \in \mathbb{N} \right) \rrbracket^2 \qquad \text{(13.2)}`
+$$`(\pi_V, \pi_L) \in \llbracket \left\lgroup b \in \mathbb{N}, t \in \mathbb{N}, p \in \mathbb{N}, d \in \mathbb{N}, g \in \mathbb{N}, a \in \mathbb{N} \right\rgroup \rrbracket^2 \qquad \text{(13.2)}`
 
 $$`|\pi_V| = |\kappa| \ , \qquad |\pi_L| = |\lambda| \qquad \text{(13.3)}`
 
@@ -71,9 +71,9 @@ tag := "statistics-cores"
 
 The core and service records are kept for the current block only:
 
-$$`\pi_C \in \llbracket \begin{pmatrix} d \in \mathbb{N}, p \in \mathbb{N}, i \in \mathbb{N}, x \in \mathbb{N}, \\ z \in \mathbb{N}, e \in \mathbb{N}, l \in \mathbb{N}, u \in \mathbb{N}_G \end{pmatrix} \rrbracket_{\mathsf{C}} \qquad \text{(13.7)}`
+$$`\pi_C \in \llbracket \left\lgroup \begin{matrix} d \in \mathbb{N}, p \in \mathbb{N}, i \in \mathbb{N}, x \in \mathbb{N}, \\ z \in \mathbb{N}, e \in \mathbb{N}, l \in \mathbb{N}, u \in \mathbb{N}_G \end{matrix} \right\rgroup \rrbracket_{\mathsf{C}} \qquad \text{(13.7)}`
 
-$$`\pi_S \in \left\langle \mathbb{N}_S \to \begin{pmatrix} p \in (\mathbb{N}, \mathbb{N}), \quad r \in (\mathbb{N}, \mathbb{N}_G), \\ i \in \mathbb{N}, x \in \mathbb{N}, z \in \mathbb{N}, e \in \mathbb{N}, \\ a \in (\mathbb{N}, \mathbb{N}, \mathbb{N}_G) \end{pmatrix} \right\rangle \qquad \text{(13.8)}`
+$$`\pi_S \in \left\langle \mathbb{N}_S \to \left\lgroup \begin{matrix} p \in (\mathbb{N}, \mathbb{N}), \quad r \in (\mathbb{N}, \mathbb{N}_G), \\ i \in \mathbb{N}, x \in \mathbb{N}, z \in \mathbb{N}, e \in \mathbb{N}, \\ a \in (\mathbb{N}, \mathbb{N}, \mathbb{N}_G) \end{matrix} \right\rgroup \right\rangle \qquad \text{(13.8)}`
 
 The model's records are {api}`JAM.CoreRecord` and {api}`JAM.ServiceRecord`.
 

@@ -29,7 +29,8 @@ The module is `JAM/Disputes.lean`; its full API is on the
 [doc-gen4 page](https://ascrivener.github.io/jam-lean/api/JAM/Disputes.html).
 
 Below, $`[x \in \mathbf{s} \wr\wr k]` stands for the paper's "$`\mathbf{s}`, ordered by $`k` and without duplicates"
-(§3.7), and $`\mathbf{a} \mathbin{\downharpoonleft} \mathbf{b}` for "disjoint from".
+(§3.7), and $`\mathbf{a} \mathbin{\downharpoonleft} \mathbf{b}` for "disjoint from" (the paper's sign, `\downspoon`, has no KaTeX
+equivalent). As in the paper, $`\left\lgroup\dots\right\rgroup` encloses the members of a tuple type and $`(\dots)` a tuple of values.
 
 # The state (§10.1)
 %%%
@@ -52,7 +53,7 @@ tag := "disputes-extrinsic"
 The disputes extrinsic has three parts: verdicts $`\mathbf{E}_V`, culprits $`\mathbf{E}_C` (guarantors of a report
 found invalid) and faults $`\mathbf{E}_F` (judges who contradicted a verdict):
 
-$$`\begin{aligned} \mathbf{E}_D &\equiv (\mathbf{E}_V, \mathbf{E}_C, \mathbf{E}_F) \\ \text{where } \mathbf{E}_V &\in \llbracket\left(\mathbb{H}, \left\lfloor\frac{\tau}{\mathsf{E}}\right\rfloor - \mathbb{N}_2, \llbracket\left(\{\top, \bot\}, \mathbb{N}, \bar{\mathbb{V}}\right)\rrbracket\right)\rrbracket_{:\mathsf{N}_V} \\ \text{and } \mathbf{E}_C &\in \llbracket\left(\mathbb{H}, \bar{\mathbb{H}}, \bar{\mathbb{V}}\right)\rrbracket_{:\mathsf{N}_O} \\ \text{and } \mathbf{E}_F &\in \llbracket\left(\mathbb{H}, \{\top, \bot\}, \bar{\mathbb{H}}, \bar{\mathbb{V}}\right)\rrbracket_{:\mathsf{N}_O} \end{aligned} \qquad \text{(10.2)}`
+$$`\begin{aligned} \mathbf{E}_D &\equiv \left\lgroup \mathbf{E}_V, \mathbf{E}_C, \mathbf{E}_F \right\rgroup \\ \text{where } \mathbf{E}_V &\in \llbracket\left\lgroup\mathbb{H}, \left\lfloor\frac{\tau}{\mathsf{E}}\right\rfloor - \mathbb{N}_2, \llbracket\left\lgroup\{\top, \bot\}, \mathbb{N}, \bar{\mathbb{V}}\right\rgroup\rrbracket\right\rgroup\rrbracket_{:\mathsf{N}_V} \\ \text{and } \mathbf{E}_C &\in \llbracket\left\lgroup\mathbb{H}, \bar{\mathbb{H}}, \bar{\mathbb{V}}\right\rgroup\rrbracket_{:\mathsf{N}_O} \\ \text{and } \mathbf{E}_F &\in \llbracket\left\lgroup\mathbb{H}, \{\top, \bot\}, \bar{\mathbb{H}}, \bar{\mathbb{V}}\right\rgroup\rrbracket_{:\mathsf{N}_O} \end{aligned} \qquad \text{(10.2)}`
 
 The model's types are {api}`JAM.Disputes`, {api}`JAM.Verdict` (with its judgments,
 {api}`JAM.Judgment`), {api}`JAM.Culprit` and {api}`JAM.Fault`. The length bounds
@@ -106,9 +107,10 @@ $`V` is {api}`JAM.verdictOutcome`. It returns `none` where the paper's $`V` is u
 
 {leanSource JAM.verdictOutcome}
 
-The good-verdict count is the supermajority that §17's auditing uses: of $`n` validators, more than two
-thirds ($`3t > 2n`) is the same as at least $`\lfloor 2n/3 \rfloor + 1`. (The theorem calls the count `V`; it is
-not the function $`V` above.)
+The good-verdict count is the supermajority that §17's auditing uses: of `V` validators, `t` positive
+judgments are more than two thirds ($`3t > 2V`) exactly when there are at least $`\lfloor 2V/3 \rfloor + 1` of them.
+In the theorem `V` is the validator count and `t` the number of positive judgments; `V` is not the
+function $`V` of (10.12).
 
 {mathdoc JAM.Auditing.supermajority_iff_verdictGood}
 
@@ -198,13 +200,19 @@ The first two points are note 29 of the model's
   with $`v = \top` on a report with a good verdict. The model reads a chain.
 * *Errors and their order.* The paper names no errors for an invalid disputes extrinsic and gives
   no order between its conditions. The model uses the test vectors' error names
-  ({api}`JAM.DisputesError`) and checks the conditions in the order §10 states them. A key
-  outside $`\mathbf{k}` is reported as already an offender when it is in $`\psi_O`, and as an
-  unknown guarantor or auditor otherwise.
+  ({api}`JAM.DisputesError`). It checks each part's order before the conditions on its
+  elements: the order of the verdicts (10.8); then, for each verdict, its epoch index (the type
+  $`\lfloor \tau/\mathsf{E} \rfloor - \mathbb{N}_2` of (10.2)), the order of its judgments (10.11), their number and
+  each judge's index and signature (10.4), that its report is not already judged (10.10), and that
+  $`V` is defined (10.12); then the order of the culprits (10.9) and, for each culprit, the
+  conditions of (10.6); then the order of the faults (10.9) and, for each fault, the conditions of
+  (10.7); and last (10.13). A key outside $`\mathbf{k}` is reported as already an offender when it is
+  in $`\psi_O`, and as an unknown guarantor or auditor otherwise.
 * *Overlapping cases of V.* When $`|\mathbf{k}| < 3`, $`\lfloor 1/3 |\mathbf{k}| \rfloor = 0`, so the cases $`\bot` and
   $`\emptyset` of (10.12) both apply at $`t = 0`. {api}`JAM.verdictOutcome` takes $`\bot`. The full and tiny
   chains have $`|\mathbf{k}| = 1023` and $`6`, where the cases do not overlap.
 * *Note v0.8.1-A7, context strings.* The paper's wording leaves open whether the `$` of
-  `$jam_valid`, `$jam_invalid` and `$jam_guarantee` is an octet of the signed message. Every
-  v0.8.0 test-vector signature verifies only without it, and the model drops it
-  ({api}`JAM.contextString`).
+  `$jam_valid`, `$jam_invalid` and `$jam_guarantee` is an octet of the signed message. The note
+  records that every signature in the v0.8.0 test vectors verifies only without it. That was
+  checked outside the disputes test runs, which replace signature checks by an oracle (see
+  {ref "disputes-transition"}[above]). The model drops the `$` ({api}`JAM.contextString`).

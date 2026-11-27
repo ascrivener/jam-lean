@@ -56,7 +56,8 @@ lean_lib Tests where
     .one `Tests.StfRunner, .one `Tests.ReportsJson, .one `Tests.TraceState, .one `Tests.Sha512Test,
     .one `Tests.V080, .one `Tests.AuditingTest, .one `Tests.SegmentsTest,
     .one `Tests.GuaranteeTest, .one `Tests.BestChainTest,
-    .one `Tests.SafroleHarness, .one `Tests.AccumulateHarness, .one `Tests.PvmHarness]
+    .one `Tests.SafroleHarness, .one `Tests.AccumulateHarness, .one `Tests.PvmHarness,
+    .submodules `Tests.Examples]
 
 lean_exe «pvmtest-exe» where
   root := `Tests.PvmTest

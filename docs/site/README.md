@@ -82,8 +82,8 @@ against the vector. A box whose table has more than sixteen rows starts collapse
 `Companion/Example.lean`.
 
 The numbers are never typed by hand. Each box is `docs/site/examples/<name>.json`, written by
-`Tests/Examples.lean`. That file runs the model's functions on the vectors through the same
-harnesses the vector tests use (`Tests/SafroleHarness.lean`, `Tests/AccumulateHarness.lean`,
+`Tests/Examples.lean` (the pilot's generators are in `Tests/Examples/Pilot.lean`). It runs the
+model's functions on the vectors through the same harnesses the vector tests use (`Tests/SafroleHarness.lean`, `Tests/AccumulateHarness.lean`,
 `Tests/PvmHarness.lean`), and stops with an error unless the vector's expected output matches.
 CI's `model` job runs `scripts/check-examples.sh`, which regenerates the files and fails on any
 difference, so a model change that changes an example fails CI until the files are regenerated:
@@ -102,7 +102,8 @@ always-accumulate run.
 
 To add an example:
 
-1. In `Tests/Examples.lean`, write a function returning an `Example`: run the model on the vector
+1. In a topic module `Tests/Examples/<Topic>.lean` (importing `Tests.Examples.Basic`, which holds
+   the `Example` type and the formatting helpers), write a function returning an `Example`: run the model on the vector
    and check the result against the vector with the suite's own comparison (as `safroleExample`,
    `runAcc` and `pvmExample` do), then fill in the fields from the model's result, never from the
    vector. Keep a box readable: a dozen rows of plain-English labels with the paper's symbols,
@@ -110,7 +111,8 @@ To add an example:
    use `$…$` (inline math with the paper's macros) and `` `…` `` (code). `model` lists full
    declaration names the chapter imports; `equations` lists the paper's equation numbers. Name a
    vector that the suite passes: a vector the model fails cannot be an example.
-2. Add the function to `examples`, run the generator, and commit the new JSON file.
+2. List it in the module's examples list. A new module also adds its import and its list to
+   `examples` in `Tests/Examples.lean`. Run the generator and commit the new JSON file.
 3. In the chapter, at the section the example illustrates, write a lead-in sentence and
    `{example "<name>"}`. Write the prose so it reads on its own without the box.
 

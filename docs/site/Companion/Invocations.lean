@@ -105,8 +105,10 @@ tag := "invocations-refine"
 %%%
 
 $`\Psi_R` refines one work item. It can make a historical lookup, export segments, and create and
-run inner PVM instances. The expunge period, after which a historical lookup may no longer be
-answered, is set so that the lookup gives the same result whenever auditing may happen:
+run inner PVM instances. The historical lookup $`\Omega_H` is meant to give the same result whatever the state of the chain,
+at any time when auditing may occur (less than two epochs after accumulation). The lookup anchor may
+be up to $`\mathsf{L}` timeslots before the recent history, so the expunge period $`\mathsf{D}` adds a safety
+margin of eight hours:
 
 $$`\mathsf{D} \equiv \mathsf{L} + 4{,}800 = 19{,}200 \qquad \text{(B.3)}`
 
@@ -128,7 +130,7 @@ $`\varsigma`. It draws implicitly on a recent account state $`\delta`:
 
 $$`\Psi_R \colon \left\lgroup \mathbb{N}_{\mathsf{C}}, \mathbb{N}, \mathbb{P}, \mathbb{B}, \llbracket\llbracket\mathbb{J}\rrbracket\rrbracket, \mathbb{N} \right\rgroup \to \left\lgroup \mathbb{B} \cup \mathbb{E}, \llbracket\mathbb{J}\rrbracket, \mathbb{N}_G \right\rgroup \qquad \text{(B.5)}`
 
-$$`(c, i, p, \mathbf{r}, \overline{\mathbf{i}}, \varsigma) \mapsto \begin{cases} (\texttt{BAD}, [], 0) & \text{if } w_s \notin \mathcal{K}(\delta) \vee \mathfrak{j} = \emptyset \\ (\texttt{BIG}, [], 0) & \text{otherwise if } |\mathfrak{j}| > \mathsf{W}_C \\ (\mathbf{o}, [], u) & \text{otherwise, if } \mathbf{o} \in \{\infty, \text{☇}\} \\ (\mathbf{o}, \mathbf{e}, u) & \text{otherwise} \end{cases}`
+$$`(c, i, p, \mathbf{r}, \overline{\mathbf{i}}, \varsigma) \mapsto \begin{cases} (\texttt{BAD}, [], 0) & \text{if } w_s \notin \mathcal{K}(\delta) \vee \mathfrak{j} = \emptyset \\ (\texttt{BIG}, [], 0) & \text{otherwise if } |\mathfrak{j}| > \mathsf{W}_C \\ (\mathbf{o}, [], u) & \text{otherwise if } \mathbf{o} \in \{\infty, \text{☇}\} \\ (\mathbf{o}, \mathbf{e}, u) & \text{otherwise} \end{cases}`
 
 $$`\begin{aligned} \text{where } & w = p_\mathbf{w}[i],\quad \mathfrak{j} = \Lambda(\delta[w_s], (p_\mathbf{c})_t, w_c),\quad \mathbf{a} = \mathcal{E}(c, i, w_s, {\updownarrow} w_\mathbf{y}, \mathcal{H}(p)) \\ \text{and } & (u, \mathbf{o}, (\mathbf{m}, \mathbf{c}, \mathbf{e})) = \Psi_M(\mathfrak{j}, 0, w_g, \mathbf{a}, F, (\emptyset, \emptyset, [])) \end{aligned}`
 
@@ -167,7 +169,7 @@ $$`\forall \mathbf{x} \in \mathbb{L} \colon \mathbf{x}_\mathbf{s} \equiv (\mathb
 $`\Psi_A` first credits the service with the incoming deferred transfers, then runs its code with
 entry point 5:
 
-$$`\Psi_A \colon (\mathbf{e}, t, s, g, \mathbf{i}) \mapsto \begin{cases} (\mathbf{e}, \mathbf{w} \mathrel{\vdots} \{\}, \mathbf{t} \mathrel{\vdots} [], y \mathrel{\vdots} \emptyset, u \mathrel{\vdots} 0, \mathbf{p} \mathrel{\vdots} []) & \text{if } s \notin \mathcal{K}(\mathbf{e}_\mathbf{d}) \\ (\mathbf{e} \mathrel{\vdots} \mathbf{s}, \mathbf{w}, \mathbf{t} \mathrel{\vdots} [], y \mathrel{\vdots} \emptyset, u \mathrel{\vdots} 0, \mathbf{p} \mathrel{\vdots} []) & \text{otherwise if } \mathfrak{j} = \emptyset \vee |\mathfrak{j}| > \mathsf{W}_C \\ C(\Psi_M(\mathfrak{j}, 5, g, \mathcal{E}(t, s, |\mathbf{i}|), F, I(\mathbf{s}, \mathbf{w}, s)^2)) & \text{otherwise} \end{cases} \qquad \text{(B.9)}`
+$$`\Psi_A \colon (\mathbf{e}, t, s, g, \mathbf{i}) \mapsto \begin{cases} (\mathbf{e}, \mathbf{w} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \{\}, \mathbf{t} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} [], y \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \emptyset, u \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} 0, \mathbf{p} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} []) & \text{if } s \notin \mathcal{K}(\mathbf{e}_\mathbf{d}) \\ (\mathbf{e} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathbf{s}, \mathbf{w}, \mathbf{t} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} [], y \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \emptyset, u \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} 0, \mathbf{p} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} []) & \text{otherwise if } \mathfrak{j} = \emptyset \vee |\mathfrak{j}| > \mathsf{W}_C \\ C(\Psi_M(\mathfrak{j}, 5, g, \mathcal{E}(t, s, |\mathbf{i}|), F, I(\mathbf{s}, \mathbf{w}, s)^2)) & \text{otherwise} \end{cases} \qquad \text{(B.9)}`
 
 $$`\begin{aligned} \text{where } & \mathfrak{j} = \mathbf{e}_\mathbf{d}[s]_\mathbf{c} \\ \text{and } & \mathbf{s} = \mathbf{e} \text{ except } \mathbf{s}_\mathbf{d}[s]_b = \mathbf{e}_\mathbf{d}[s]_b + \textstyle\sum_{r \in \mathbf{x}, r_u = \bot} r_a,\; \mathbf{s}_\mathbf{d}[s]_x = \mathbf{e}_\mathbf{d}[s]_x + \textstyle\sum_{r \in \mathbf{x}, r_u = \top} r_a \\ \text{and } & \mathbf{w} = \{ s \mid r \in \mathbf{x} \},\quad \mathbf{x} = [ i \mid i \mathrel{<\!\!-} \mathbf{i}, i \in \text{𝕥} ] \end{aligned}`
 
@@ -182,7 +184,7 @@ $`\mathbf{w}`, and {api}`JAM.psiARun` does the rest:
 The initial implications, and `check`, which finds the first identifier in a sequence that is not
 already a service:
 
-$$`I \colon (\mathbf{e}, \mathbf{w}, s) \mapsto (s, \mathbf{e}, \mathbf{w}, i, \mathbf{t} \mathrel{\vdots} [], y \mathrel{\vdots} \emptyset, \mathbf{p} \mathrel{\vdots} []) \quad \text{where } i = \text{check}\left(\left(\mathcal{E}_4^{-1}\left(\mathcal{H}(\mathcal{E}(s, \eta'_0, \mathbf{H}_T))\right) \bmod (2^{32} - \mathsf{S} - 2^8)\right) + \mathsf{S}\right) \qquad \text{(B.10)}`
+$$`I \colon (\mathbf{e}, \mathbf{w}, s) \mapsto (s, \mathbf{e}, \mathbf{w}, i, \mathbf{t} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} [], y \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \emptyset, \mathbf{p} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} []) \quad \text{where } i = \text{check}\left(\left(\mathcal{E}_4^{-1}\left(\mathcal{H}(\mathcal{E}(s, \eta'_0, \mathbf{H}_T))\right) \bmod (2^{32} - \mathsf{S} - 2^8)\right) + \mathsf{S}\right) \qquad \text{(B.10)}`
 
 $$`\text{check}(i \in \mathbb{N}_S) \equiv \begin{cases} i & \text{if } i \notin \mathcal{K}(\mathbf{e}_\mathbf{d}) \\ \text{check}((i - \mathsf{S} + 1) \bmod (2^{32} - 2^8 - \mathsf{S}) + \mathsf{S}) & \text{otherwise} \end{cases} \qquad \text{(B.13)}`
 
@@ -203,7 +205,7 @@ The collapse $`C` (eq. (B.12)) keeps the exceptional dimension $`\mathbf{y}` whe
 of gas or panicked. Otherwise it keeps $`\mathbf{x}`, and an output $`\mathbf{o} \in \mathbb{H}` (32 octets)
 becomes the yield:
 
-$$`C \colon (u, \mathbf{o}, (\mathbf{x}, \mathbf{y})) \mapsto \begin{cases} (\mathbf{e} \mathrel{\vdots} \mathbf{y}_\mathbf{e}, \mathbf{w} \mathrel{\vdots} \mathbf{y}_\mathbf{w}, \mathbf{t} \mathrel{\vdots} \mathbf{y}_\mathbf{t}, y \mathrel{\vdots} \mathbf{y}_y, u, \mathbf{p} \mathrel{\vdots} \mathbf{y}_\mathbf{p}) & \text{if } \mathbf{o} \in \{\infty, \text{☇}\} \\ (\mathbf{e} \mathrel{\vdots} \mathbf{x}_\mathbf{e}, \mathbf{w} \mathrel{\vdots} \mathbf{x}_\mathbf{w}, \mathbf{t} \mathrel{\vdots} \mathbf{x}_\mathbf{t}, y \mathrel{\vdots} \mathbf{o}, u, \mathbf{p} \mathrel{\vdots} \mathbf{x}_\mathbf{p}) & \text{otherwise if } \mathbf{o} \in \mathbb{H} \\ (\mathbf{e} \mathrel{\vdots} \mathbf{x}_\mathbf{e}, \mathbf{w} \mathrel{\vdots} \mathbf{x}_\mathbf{w}, \mathbf{t} \mathrel{\vdots} \mathbf{x}_\mathbf{t}, y \mathrel{\vdots} \mathbf{x}_y, u, \mathbf{p} \mathrel{\vdots} \mathbf{x}_\mathbf{p}) & \text{otherwise} \end{cases} \qquad \text{(B.12)}`
+$$`C \colon (u, \mathbf{o}, (\mathbf{x}, \mathbf{y})) \mapsto \begin{cases} (\mathbf{e} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathbf{y}_\mathbf{e}, \mathbf{w} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathbf{y}_\mathbf{w}, \mathbf{t} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathbf{y}_\mathbf{t}, y \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathbf{y}_y, u, \mathbf{p} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathbf{y}_\mathbf{p}) & \text{if } \mathbf{o} \in \{\infty, \text{☇}\} \\ (\mathbf{e} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathbf{x}_\mathbf{e}, \mathbf{w} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathbf{x}_\mathbf{w}, \mathbf{t} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathbf{x}_\mathbf{t}, y \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathbf{o}, u, \mathbf{p} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathbf{x}_\mathbf{p}) & \text{otherwise if } \mathbf{o} \in \mathbb{H} \\ (\mathbf{e} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathbf{x}_\mathbf{e}, \mathbf{w} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathbf{x}_\mathbf{w}, \mathbf{t} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathbf{x}_\mathbf{t}, y \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathbf{x}_y, u, \mathbf{p} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathbf{x}_\mathbf{p}) & \text{otherwise} \end{cases} \qquad \text{(B.12)}`
 
 In the model, $`C` is the final `match o with` of {api}`JAM.psiARun`.
 
@@ -257,7 +259,8 @@ each of those functions passes its own $`o`, $`f_0` and $`z`:
 
 In the entries below, "in" names the registers a function reads, "out" what it sets, and the outcomes
 are listed in the paper's order: the first that applies is the result. Where a function names a
-service by a register, the value $`2^{64} - 1` means the caller's own service.
+service by a register, the value $`2^{64} - 1` means the caller's own service, except in `eject`, where
+$`d = \varphi_7` as given.
 
 ## General functions (§B.5.1)
 %%%
@@ -333,7 +336,7 @@ for $`m = 1` it is the part $`\mathbf{h}_{f^* \dots+ l^*}` of the historical loo
 hash at $`p`, in service $`\mathbf{d}[s]` ($`i = 2^{64} - 1`) or $`\mathbf{d}[i]`. Let $`\mathbf{H}`
 be the handles in use (the keys of $`\mathbf{c}` and the handles of the instances in $`\mathbf{m}`).
 Outcomes: $`\mathtt{FULL}` if $`|\mathbf{H}| \ge 128`; ☇ if the source is not readable;
-$`\mathtt{NONE}` if $`m = 1` and there is no preimage; $`\mathtt{HUH}` if there is no blob or
+$`\mathtt{NONE}` if $`m = 1` and there is no such service or no preimage; $`\mathtt{HUH}` if there is no blob or
 $`\text{deblob}(\mathbf{p}, 0) = \nabla`; otherwise the blob is stored under the least handle
 $`k \notin \mathbf{H}`, and $`\varphi'_7 = k`. $`g \equiv \mathsf{M}_{\Gamma,\mathrm{m},c} + \mathcal{G}(\mathsf{M}_{\Gamma,\mathrm{m},\ell}, l)`
 for $`m = 0`, $`\mathsf{M}_{\Gamma,\mathrm{d},c} + \mathcal{G}(\mathsf{M}_{\Gamma,\mathrm{d},\ell}, l)` for
@@ -588,8 +591,7 @@ $`g \equiv \mathsf{M}_{\text{♈},c} + \mathcal{G}(\mathsf{M}_{\text{♈},\ell},
 
 GP v0.8.1 defines no logging host function. A program that makes a host call with an identifier
 outside the tables above gets the dispatcher's last case: it is charged $`\mathsf{M}_\emptyset` and
-$`\varphi'_7 = \mathtt{WHAT}`, and nothing else changes. The text of log messages is never specified by the
-model.
+$`\varphi'_7 = \mathtt{WHAT}`, and nothing else changes.
 
 # What is proved
 %%%

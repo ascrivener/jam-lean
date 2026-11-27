@@ -6,8 +6,8 @@ Usage:  python3 -I scripts/gen_gp_labels.py <path/to/graypaper> <out.json>
 
 Sections are numbered as LaTeX numbers them: `graypaper.tex`'s `\\input` files in order, counting
 `\\section`, `\\subsection` and `\\subsubsection` (starred forms are unnumbered), with letters after
-`\\appendix`. A `\\label{…}` that follows a heading (before the next heading or paragraph of text)
-names it. The version and commit are those of the pinned paper (`scripts/fetch-paper.sh`).
+`\\appendix`. A `\\label{sec:…}` that follows a heading (before the next heading or paragraph of
+text) names it. The version and commit are those of the pinned paper (`scripts/fetch-paper.sh`).
 
 The book's `Companion/Paper.lean` reads this table (``{gpsec}`sec:epochmarker` `` renders "§6.6",
 ``{gpchapter}`…` `` a chapter's section with its title); an unknown label fails the build. Moving to a
@@ -70,7 +70,7 @@ def main():
             after = src[j:end]
             para = re.search(r"\n\s*\n", after)
             window = after[:para.start()] if para else after
-            for lab in re.findall(r"\\label\{([^}]*)\}", window[:400]):
+            for lab in re.findall(r"\\label\{(sec:[^}]*)\}", window[:400]):
                 if lab in labels:
                     sys.exit(f"gen_gp_labels: label {lab} defined twice")
                 labels[lab] = number

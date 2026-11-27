@@ -2,10 +2,6 @@
  "commit": "b7044ad",
  "generator": "scripts/gen_gp_labels.py",
  "sections": {
-  "eq:availableworkreports": "11.2.2",
-  "eq:precedes": "3.2",
-  "eq:simplemerkleroot": "E.1.1",
-  "eq:workdigest": "11.1.4",
   "sec:accounts": "9",
   "sec:accumulatefunctions": "B.5.3",
   "sec:accumulateinvocation": "B.4",

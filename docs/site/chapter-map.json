@@ -30,11 +30,13 @@
  ],
  "JAM.Block": [
   "docs/site/Companion/Codec.lean",
+  "docs/site/Companion/Glossary.lean",
   "docs/site/Companion/Overview.lean"
  ],
  "JAM.BlockImport": [
   "docs/site/Companion/Authorization.lean",
-  "docs/site/Companion/Overview.lean"
+  "docs/site/Companion/Overview.lean",
+  "docs/site/Companion/PlainEnglish.lean"
  ],
  "JAM.Codec": [
   "docs/site/Companion/Codec.lean"
@@ -112,6 +114,7 @@
  ],
  "JAM.State": [
   "docs/site/Companion/Accounts.lean",
+  "docs/site/Companion/Glossary.lean",
   "docs/site/Companion/Merkle.lean",
   "docs/site/Companion/Overview.lean",
   "docs/site/Companion/StateMerkle.lean"

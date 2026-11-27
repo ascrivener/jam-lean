@@ -1,6 +1,7 @@
 import VersoManual
 import Companion.Source
 import Companion.Paper
+import Companion.PlainEnglish
 import Companion.Primitives
 import Companion.Overview
 import Companion.Safrole
@@ -25,6 +26,7 @@ import Companion.Merkle
 import Companion.Shuffle
 import Companion.Bandersnatch
 import Companion.Erasure
+import Companion.Glossary
 
 open Verso.Genre Manual
 open Companion
@@ -85,6 +87,11 @@ tag := "roadmap"
 file := "roadmap"
 %%%
 
+New to JAM? Start with *JAM in plain English* ({ref "plain-english"}[chapter]), which follows one
+block through the state transition with a link to each step's chapter. The *Glossary*
+({ref "glossary"}[chapter]), at the end, lists the symbols with their plain meaning and the model's
+names.
+
 Chapters follow the order of the paper's sections. Each lists the model modules that implement
 it; the parts of the paper that are not modelled are listed too.
 
@@ -112,6 +119,8 @@ it; the parts of the paper that are not modelled are listed too.
 * *Appendix F, shuffling* ({ref "shuffle"}[chapter]): `JAM/Shuffle.lean`
 * *Appendix G, the Bandersnatch VRF* ({ref "bandersnatch"}[chapter]): `JAM/Crypto.lean` (the interface) and `JamCrypto/` (an implementation)
 * *Appendix H, erasure coding* ({ref "erasure"}[chapter]): `JAM/Erasure.lean`
+
+{include 1 Companion.PlainEnglish}
 
 {include 1 Companion.Primitives}
 
@@ -160,3 +169,5 @@ it; the parts of the paper that are not modelled are listed too.
 {include 1 Companion.Bandersnatch}
 
 {include 1 Companion.Erasure}
+
+{include 1 Companion.Glossary}

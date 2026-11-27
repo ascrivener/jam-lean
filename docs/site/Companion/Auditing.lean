@@ -4,6 +4,7 @@ import Companion.Docstring
 import JAM.Auditing
 import JAM.Guarantee
 import JAM.Theorems.Auditing
+import JAM.BestChain
 
 open Verso.Genre Manual
 open Companion
@@ -32,7 +33,7 @@ its own re-refinement. Signatures are checked through the model's crypto paramet
 [JAM.Theorems.Auditing](https://ascrivener.github.io/jam-lean/api/JAM/Theorems/Auditing.html).
 
 §17.2, "Data Fetching", describes the checks on a bundle rebuilt from erasure-coded chunks. The
-model implements them with the rest of §14; see {ref "work-checks"}[Checking a bundle].
+model implements them in `JAM/Guarantee.lean`, next to its §14 code; see {ref "work-checks"}[Checking a bundle].
 
 # The reports to audit (§17.3)
 %%%
@@ -55,8 +56,8 @@ their encoding:
 tag := "auditing-tranche0"
 %%%
 
-The first tranche is drawn with a VRF output $`s_0`, signed with the validator's Bandersnatch key
-$`\kappa[v]_b` over the block's entropy source $`\mathcal{Y}(\mathbf{H}_V)`:
+The first tranche is drawn with $`s_0`, a VRF signature under the validator's Bandersnatch key $`\kappa[v]_b` with
+an empty message and a context made from the block's entropy source $`\mathcal{Y}(\mathbf{H}_V)`:
 
 $$`s_0 \in \overset{\backsim}{\mathbb{V}}{}^{[]}_{\kappa[v]_b}\left\langle \mathsf{X}_U \frown \mathcal{Y}(\mathbf{H}_V) \right\rangle \qquad \text{(17.3)} \qquad\qquad \mathsf{X}_U = \texttt{\$jam\_audit} \qquad \text{(17.4)}`
 
@@ -138,7 +139,7 @@ tag := "auditing-later"
 %%%
 
 In a later tranche, a validator may have to audit a report because some validators announced for
-it in the previous tranche and have not been seen to judge it (the *no-shows*). A fresh VRF output
+it in the previous tranche and have not been seen to judge it valid (the *no-shows*, $`A_{n-1}(\mathbf{r}) \setminus J_\top(\mathbf{r})`). A fresh VRF output
 for each report decides, with probability growing with the number of no-shows:
 
 $$`\begin{aligned} &\forall n > 0: \\ &\quad s_n(\mathbf{r}) \in \overset{\backsim}{\mathbb{V}}{}^{[]}_{\kappa[v]_b}\left\langle \mathsf{X}_U \frown \mathcal{Y}(\mathbf{H}_V) \frown \mathcal{H}(\mathbf{r}) \mathbin{+\!\!+} n \right\rangle && \text{(17.13)} \\ &\quad a_n(\mathbf{r}) \equiv \tfrac{|\kappa|}{65536\mathsf{F}}\, \mathcal{E}_2^{-1}\left(\mathcal{Y}(s_n(\mathbf{r}))_{0\dots+2}\right) < \left|A_{n-1}(\mathbf{r}) \setminus J_\top(\mathbf{r})\right| && \text{(17.14)} \\ &\quad \mathbf{a}_n \equiv \left\{ \mathbf{r} \;\middle|\; \mathbf{r} \in \mathbf{q},\ \mathbf{r} \ne \emptyset,\ a_n(\mathbf{r}) \right\} && \text{(17.15)} \end{aligned}`
@@ -189,14 +190,15 @@ The validator then signs a judgment on each report:
 
 $$`\mathbf{j}_n = \left\{ \bar{\mathcal{S}}_{\kappa[v]_e}\left(\mathsf{X}_{e_n(\mathbf{r})} \frown \mathcal{H}(\mathbf{r})\right) \;\middle|\; \mathbf{r} \in \mathbf{a}_n \right\} \qquad \text{(17.17)}`
 
-$`\mathsf{X}_\top` is `$jam_valid` and $`\mathsf{X}_\bot` is `$jam_invalid`. The signed message is the one §10 checks for a
-vote in a verdict, so a judgment can serve as a vote:
+$`\mathsf{X}_\top` is `$jam_valid` and $`\mathsf{X}_\bot` is `$jam_invalid`:
 
 {leanSource JAM.Auditing.judgmentMessage}
 
 {leanSource JAM.Auditing.judgmentValid}
 
-{mathdoc JAM.Auditing.judgmentMessage_eq}
+By inspection, this is the message §10 checks for a vote in a verdict: `checkVerdict`
+(`JAM/Disputes.lean`) verifies each vote against `Xvalidif j.valid ++ r`, the same message. No
+theorem connects the two definitions yet.
 
 # The audited conditions (§17.3)
 %%%
@@ -235,8 +237,8 @@ unaudited, but one negative judgment does, below the two-thirds count:
 
 {mathdoc JAM.Auditing.audited_false_of_negative}
 
-The two theorems behind the reading of $`\exists n`: read literally, the first clause of $`U` collapses to
-$`J_\bot(\mathbf{r}) = \emptyset`; and even bounded, a tranche in which nobody announced for $`\mathbf{r}` satisfies it.
+The two theorems behind the reading of $`\exists n`: read literally, once some tranche has no announcements for $`\mathbf{r}`, the first
+clause of $`U` collapses to $`J_\bot(\mathbf{r}) = \emptyset`; and even bounded, a tranche in which nobody announced for $`\mathbf{r}` satisfies it.
 
 {leanSource JAM.Auditing.AuditedLiteral}
 
@@ -249,12 +251,14 @@ $`J_\bot(\mathbf{r}) = \emptyset`; and even bounded, a tranche in which nobody a
 tag := "auditing-verdicts"
 %%%
 
-"We pointedly disregard chains which include the accumulation of a report which we know at least
+"Furthermore, we pointedly disregard chains which include the accumulation of a report which we know at least
 $`\tfrac{1}{3}` of validators judge as being invalid." The model's test for one report is:
 
 {leanSource JAM.Auditing.disregarded}
 
-§19's best-chain rule uses it ({ref "bestchain"}[§19 chapter]).
+§19's best-chain rule takes a disregarded flag for each block, which
+{api}`JAM.BestChain.disregardedBlock` computes from this test over the reports the block accumulates
+({ref "bestchain"}[§19 chapter]).
 
 A block author that has seen enough judgments on a report, at least one of them negative, may put a
 verdict on it in the disputes extrinsic (§10). The paper does not say which verdict to form when

@@ -106,7 +106,8 @@ def elligator2 (u : Nat) : Option Point := do
   let g := fun (x : Nat) => (x * x % q * x + j * (x * x % q) + x * oneOverB2) % q
   let gx1 := g x1
   let x2 := subMod (subMod 0 x1 q) j q
-  let (x, odd) := if isSquare gx1 q then (x1, true) else (x2, false)
+  let odd := isSquare gx1 q
+  let x := if odd then x1 else x2
   let y0 ← sqrt (g x)
   let y := if (y0 % 2 == 1) != odd then subMod 0 y0 q else y0
   let s := x * k % q

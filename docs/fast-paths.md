@@ -102,7 +102,8 @@ Supporting equalities, not registered with `@[csimp]`:
 its own `JamCrypto/Fast/` directory; the aggregator `JamCrypto.Fast` is imported by the root
 `JamCrypto`. The same script checks it. The fast functions perform the reference's own sequence of
 field operations on fixed-limb fields (`JamCrypto/Fast/Fr.lean`, `Fp25519.lean`, with generated
-proofs); see docs/jamcrypto.md. The replacements are in `JamCrypto/Fast/Crypto.lean`.
+proofs); see docs/jamcrypto.md. The replacements are in `JamCrypto/Fast/Crypto.lean`,
+`RingCurve.lean` and `Ring.lean`.
 
 | spec | fast | theorem | file |
 |---|---|---|---|
@@ -112,3 +113,11 @@ proofs); see docs/jamcrypto.md. The replacements are in `JamCrypto/Fast/Crypto.l
 | `Bandersnatch.Thin.verify` | `Fast.Bandersnatch.Thin.verify` | `Fast.Bandersnatch.Thin.verify_eq` | `JamCrypto/Fast/Bandersnatch.lean` |
 | `Bandersnatch.Thin.vrfOutput` | `Fast.Bandersnatch.Thin.vrfOutput` | `Fast.Bandersnatch.Thin.vrfOutput_eq` | `JamCrypto/Fast/Bandersnatch.lean` |
 | `withSignatures` | `Fast.withSignatures` (restated) | `Fast.withSignatures_eq` | `JamCrypto/Fast/Crypto.lean` |
+| `Ring.Curve.decode` | `Fast.RingCurveFr.decode` | `Fast.RingCurveFr.decode_eq` | `JamCrypto/Fast/RingCurve.lean` |
+| `Ring.Curve.smulW` | `Fast.RingCurveFr.smulW` | `Fast.RingCurveFr.smulW_eq` | `JamCrypto/Fast/RingCurve.lean` |
+| `Ring.hashToCurve` | `Fast.RingCurveFr.hashToCurve` | `Fast.RingCurveFr.hashToCurve_eq` | `JamCrypto/Fast/RingCurve.lean` |
+| `Ring.root` | `Ring.Fast.root` (restated) | `Ring.Fast.root_eq` | `JamCrypto/Fast/Ring.lean` |
+| `Ring.withSelectors` | `Ring.Fast.withSelectors` (restated) | `Ring.Fast.withSelectors_eq` | `JamCrypto/Fast/Ring.lean` |
+| `Ring.verify` | `Ring.Fast.verify` (restated) | `Ring.Fast.verify_eq` | `JamCrypto/Fast/Ring.lean` |
+| `Ring.verify081` | `Ring.Fast.verify081` (restated) | `Ring.Fast.verify081_eq` | `JamCrypto/Fast/Ring.lean` |
+| `Ring.crypto` | `Ring.Fast.crypto` (restated) | `Ring.Fast.crypto_eq` | `JamCrypto/Fast/Ring.lean` |

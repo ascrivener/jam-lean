@@ -67,8 +67,9 @@ def ell2Map (e : Nat) : Curve.Aff :=
   let g (x : Nat) := add (add (mul (sq x) x) (mul jk (sq x))) (mul x ksqInv)
   let gx1 := g x1
   let x2 := sub (Fr.neg x1) jk
-  let (x, y0, sgn0) :=
-    if isQR gx1 then (x1, (sqrt? gx1).getD 0, true) else (x2, (sqrt? (g x2)).getD 0, false)
+  let sgn0 := isQR gx1
+  let x := if sgn0 then x1 else x2
+  let y0 := if sgn0 then (sqrt? gx1).getD 0 else (sqrt? (g x2)).getD 0
   let y := if (y0 % 2 == 1) != sgn0 then Fr.neg y0 else y0
   let s := mul x k
   let t := mul y k

@@ -59,17 +59,41 @@ import Fast modules).
   sequence of field operations as `JamCrypto.Curve`/`Modular` and proved to correspond: `add`,
   `neg`, `sub`, `smul` (double-and-add), `eq`, `isZero`, `valid`, `toAffine`, `powMod`, `invMod`,
   `isSquare`, `sqrtTS`.
-* `Fast/Bandersnatch.lean`: `ietfVerify_eq`, `vrfOutput_eq`, `Thin.verify_eq`, `Thin.vrfOutput_eq`.
+* `Fast/Bandersnatch.lean`: `elligator2_rel`, `hashToCurve_rel`, `ietfVerify_eq`, `vrfOutput_eq`,
+  `Thin.hashToCurve_rel`, `Thin.verify_eq`, `Thin.vrfOutput_eq`.
+* `Fast/RingCurveF.lean`: the ring's Bandersnatch curve (`JamCrypto.Ring.Curve`, extended
+  coordinates over 𝔽_r) over any lawful fast field with modulus r (`IsFr`), each operation the same
+  sequence of field operations as the reference and proved to correspond: `addE`, `dblE`, `smulW`
+  (the 4-bit window table), `isZero`, `eq`, `toAff`, `onCurve`, `inSubgroup`, `Fr.sqrt?`
+  (Tonelli–Shanks), `decodeUnchecked`, `decode`, `ell2Map`, `hashToCurve`. An inversion is the
+  reference `Fr.inv` on the value.
+* `Fast/RingCurve.lean`: these on `Fast.Fr`, swapped in for `Ring.Curve.decode`,
+  `Ring.Curve.smulW` and `Ring.hashToCurve` by `@[csimp]` (a reference extended point is converted
+  when its coordinates are reduced, as every point the reference decodes or computes is; otherwise
+  the reference runs).
+* `Fast/Ring.lean`: the ring entry points (`Ring.root`, `withSelectors`, `verify`, `verify081`,
+  `crypto` and the functions between them) restated so that their compiled code uses the
+  replacements; each is equal to its reference (`rfl`, or rewriting), and `@[csimp]` swaps it in.
+  `verify081` and `crypto` are restated as their elaborated terms (with the reference's own match
+  auxiliaries): restated from source text, the kernel's comparison of the two definitions' matchers
+  times out.
 * `Fast/Ed25519.lean`: `verifyWith_eq` (all three `Rules`), `verify_eq`.
 * `Fast/Crypto.lean`: `Fast.withSignatures` and `withSignatures_eq : Fast.withSignatures … =
   JamCrypto.withSignatures …` — what executables use in place of `withSignatures`.
 
-**Hash to curve stays on the reference.** `Bandersnatch.elligator2` destructures a pair from an
-`if` (`let (x, odd) := if isSquare … then … else …`); the kernel cannot check any unfolding of its
-body (it reduces `isSquare` on symbolic arguments and runs out of memory; even the equation lemma
-`elligator2.eq_def` does), so the fast verifiers call the reference `hashToCurve` and convert its
-point (exact: its coordinates are reduced, `red_smul`). Changing the reference to two plain `let`s
-would remove this limit; that is Adam's decision (pending).
+**Hash to curve, and two structural edits of the reference (Adam, 2026-11-27).** The reference
+`Bandersnatch.elligator2` destructured a pair out of an `if`
+(`let (x, odd) := if isSquare gx1 q then (x1, true) else (x2, false)`), and `Ring.ell2Map` a triple
+(`let (x, y0, sgn0) := if isQR gx1 then (x1, (sqrt? gx1).getD 0, true) else (x2, …, false)`). The
+kernel could not check any unfolding of such a body: it reduced `isSquare` on symbolic arguments and
+ran out of memory. Both definitions now bind the condition once and select each component with its
+own `if`:
+`let odd := isSquare gx1 q; let x := if odd then x1 else x2`, and
+`let sgn0 := isQR gx1; let x := if sgn0 then x1 else x2; let y0 := if sgn0 then (sqrt? gx1).getD 0
+else (sqrt? (g x2)).getD 0`. The change is purely structural: each component is the same expression
+under the same condition, and every vector passes unchanged. The fast `elligator2`,
+`Bandersnatch.hashToCurve`, `Thin.hashToCurve`, `Ring.ell2Map` and `Ring.hashToCurve` are proved
+equal to them, and the fast verifiers use them.
 
 Proof-engineering notes for further work in these files: the kernel reduces matches on non-constructor
 discriminants and `if`s through their `Decidable` instances when a cast compares differently shaped
@@ -80,8 +104,10 @@ match discriminant before touching `let`s; prefer `rw`, `extract_lets` and lemma
 `JamCryptoTest/Fast.lean` (run by `cryptotest`) still compares fast and reference functions on all
 vectors and randomized inputs, as an extra check.
 
-Timings (cryptotest, per valid signature, this container): Ed25519 1.83 ms → 0.29 ms, IETF VRF
-12.7 ms → 1.7 ms, Thin VRF 12–17 ms → 2.0 ms.
+Timings (this container; reference → fast): per valid signature (cryptotest), Ed25519 1.82 ms →
+0.60 ms, IETF VRF about 13 ms → 3.7 ms, Thin VRF 12–17 ms → 3.8 ms; ring (ringtest, mean over the
+vectors) proof verification 124 ms → 103 ms, ring root for 1023 keys 2.15 s → 1.12 s. The ring's
+BLS12-381 part (G1, the pairing) still runs on the reference.
 
 ## Derivation
 

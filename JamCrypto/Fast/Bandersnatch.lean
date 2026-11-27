@@ -122,52 +122,90 @@ theorem decode_rel (bs : List UInt8) : OP (decode bs) (JamCrypto.Bandersnatch.de
   refine OR.bind (decodeOnCurve_rel bs) fun P P' h => ?_
   exact OR.guard (by rw [inSubgroup_eq h]) fun _ => h
 
-/-! ### Hash to curve
+/-! ### Hash to curve -/
 
-The reference's `Bandersnatch.elligator2` destructures a pair out of an `if`
-(`let (x, odd) := if isSquare … then … else …`); the kernel cannot check any unfolding of its body
-(it evaluates `isSquare` on symbolic arguments and runs out of memory), so its equality with a
-fast map cannot be proved without changing the reference. Hash to curve is therefore the
-reference's own, converted to a fast point; its result has reduced coordinates (`red_smul`), so
-the conversion is exact. -/
+/-- As `Bandersnatch.elligator2`. -/
+def elligator2 (u : Nat) : Option (Pt F) := do
+  let k : F := Field.ofNat JamCrypto.Bandersnatch.montB
+  let j : F := Field.ofNat JamCrypto.Bandersnatch.montAoverB
+  let uF : F := Field.ofNat u
+  let den1 := Field.add Field.one (Field.mul (Field.ofNat 5) (Field.mul uF uF))
+  let x1 := Field.sub Field.zero (Field.mul j (invF (if Field.isZero den1 then Field.one else den1)))
+  let g := fun (x : F) => Field.add (Field.add (Field.mul (Field.mul x x) x) (Field.mul j (Field.mul x x)))
+    (Field.mul x (Field.ofNat JamCrypto.Bandersnatch.oneOverB2))
+  let gx1 := g x1
+  let x2 := Field.sub (Field.sub Field.zero x1) j
+  let odd := isSquareF gx1
+  let x := if odd then x1 else x2
+  let y0 ← sqrt (g x)
+  let y := if (Field.toNat y0 % 2 == 1) != odd then Field.sub Field.zero y0 else y0
+  let s := Field.mul x k
+  let t := Field.mul y k
+  let tv1 := Field.add s Field.one
+  let tv2 := Field.mul tv1 t
+  if Field.isZero tv2 then return ofAffineF Field.zero Field.one
+  let inv := invF tv2
+  return ofAffineF (Field.mul (Field.mul inv tv1) s) (Field.mul (Field.mul inv t) (Field.sub s Field.one))
 
-theorem one_lt_q : 1 < JamCrypto.Bandersnatch.curve.p := by decide
-
-/-- Points of the option relate to themselves and have reduced coordinates. -/
-def SelfRed (P Q : JamCrypto.Point) : Prop := P = Q ∧ Red JamCrypto.Bandersnatch.curve P
-
-theorem OR.refl {α : Type} (m : Option α) : OR (fun a b => a = b) m m := by
-  cases m <;> simp [OR]
-
-theorem hashToCurve_selfRed (data : List UInt8) :
-    OR SelfRed (JamCrypto.Bandersnatch.hashToCurve data) (JamCrypto.Bandersnatch.hashToCurve data) := by
-  unfold JamCrypto.Bandersnatch.hashToCurve
-  refine OR.bind (OR.refl _) fun P0 _ h0 => ?_
-  subst h0
-  refine OR.bind (OR.refl _) fun P1 _ h1 => ?_
-  subst h1
-  exact OR.guard Iff.rfl fun _ => ⟨rfl, red_smul one_lt_q _ _⟩
-
-theorem thinHashToCurve_selfRed (data : List UInt8) (rd : Reading) :
-    OR SelfRed (JamCrypto.Bandersnatch.Thin.hashToCurve data rd)
-      (JamCrypto.Bandersnatch.Thin.hashToCurve data rd) := by
-  unfold JamCrypto.Bandersnatch.Thin.hashToCurve
-  refine OR.bind (OR.refl _) fun P0 _ h0 => ?_
-  subst h0
-  refine OR.bind (OR.refl _) fun P1 _ h1 => ?_
-  subst h1
-  exact OR.guard Iff.rfl fun _ => ⟨rfl, red_smul one_lt_q _ _⟩
-
-theorem OR.map_ofPoint {m : Option JamCrypto.Point} (h : OR SelfRed m m) : OP (m.map ofPoint) m := by
-  cases m with
-  | none => trivial
-  | some P => exact ofPoint_rel curve_p h.2
+theorem elligator2_rel (u : Nat) : OP (elligator2 u) (JamCrypto.Bandersnatch.elligator2 u) := by
+  unfold elligator2 JamCrypto.Bandersnatch.elligator2
+  extract_lets k j uF den1 x1 g gx1 x2 odd x s tv1 k' j' den1' x1' g' gx1' x2' odd' x' s' tv1'
+  have vk : VRel k k' := vofNat _
+  have vj : VRel j j' := vofNat _
+  have vu : VRel uF u := vofNat _
+  have vden1 : VRel den1 den1' := vmod (vone.add ((vofNat 5).mul (vmod (vu.mul vu))))
+  have hlt : ∀ n, n % JamCrypto.Bandersnatch.q < p := fun n => lt_of_mod (F := F) (n := n)
+  have hden1 : den1' < p := hlt _
+  have hd0 : Field.isZero den1 = (den1' == 0) := by rw [vden1.isZero, Nat.mod_eq_of_lt hden1]
+  have vsel : VRel (if Field.isZero den1 = true then Field.one else den1)
+      (if (den1' == 0) = true then 1 else den1') := by
+    rw [hd0]; split
+    · exact vone
+    · exact vden1
+  have vx1 : VRel x1 x1' := vzero.sub (vmod (vj.mul (invF_rel vsel)))
+  have hg : ∀ {a : F} {a' : Nat}, VRel a a' → VRel (g a) (g' a') := fun ha =>
+    vmod ((((vmod (ha.mul ha)).mul ha).add (vj.mul (vmod (ha.mul ha)))).add (ha.mul (vofNat _)))
+  have vgx1 : VRel gx1 gx1' := hg vx1
+  have vx2 : VRel x2 x2' := (vzero.sub vx1).sub vj
+  have hodd : odd = odd' := isSquareF_eq vgx1 (hlt _)
+  have vx : VRel x x' := by
+    show VRel (if odd = true then x1 else x2) (if odd' = true then x1' else x2')
+    rw [hodd]; split
+    · exact vx1
+    · exact vx2
+  have vs : VRel s s' := vmod (vx.mul vk)
+  have vtv1 : VRel tv1 tv1' := vmod (vs.add vone)
+  refine OR.bind (sqrt_rel (hg vx)) ?_
+  rintro y0 y0' ⟨hy0, hy0'⟩
+  extract_lets y t tv2 inv y' t' tv2' inv'
+  have vy : VRel y y' := by
+    show VRel (if ((Field.toNat y0 % 2 == 1) != odd) = true then Field.sub Field.zero y0 else y0)
+      (if ((y0' % 2 == 1) != odd') = true then subMod 0 y0' JamCrypto.Bandersnatch.q else y0')
+    rw [hy0.toNat, Nat.mod_eq_of_lt hy0', hodd]; split
+    · exact vzero.sub hy0
+    · exact hy0
+  have vt : VRel t t' := vmod (vy.mul vk)
+  have vtv2 : VRel tv2 tv2' := vmod (vtv1.mul vt)
+  have htv2 : tv2' < p := hlt _
+  rw [vtv2.isZero, Nat.mod_eq_of_lt htv2]
+  refine OR.ite (fun _ => ofAffine_rel curve_p vzero vone) fun _ => ?_
+  exact ofAffine_rel curve_p (vmod ((vmod ((invF_rel vtv2).mul vtv1)).mul vs))
+    (vmod ((vmod ((invF_rel vtv2).mul vt)).mul (vs.sub vone)))
 
 /-- As `Bandersnatch.hashToCurve`. -/
-def hashToCurve (data : List UInt8) : Option (Pt F) := (JamCrypto.Bandersnatch.hashToCurve data).map ofPoint
+def hashToCurve (data : List UInt8) : Option (Pt F) := do
+  let u := JamCrypto.Bandersnatch.expandMessage data
+  let P0 ← elligator2 (beToNat (u.take 48) % JamCrypto.Bandersnatch.q)
+  let P1 ← elligator2 (beToNat (u.drop 48) % JamCrypto.Bandersnatch.q)
+  let P := C.smul 4 (C.add P0 P1)
+  guard (CurveF.valid P)
+  return P
 
-theorem hashToCurve_rel (data : List UInt8) : OP (hashToCurve data) (JamCrypto.Bandersnatch.hashToCurve data) :=
-  OR.map_ofPoint (hashToCurve_selfRed data)
+theorem hashToCurve_rel (data : List UInt8) : OP (hashToCurve data) (JamCrypto.Bandersnatch.hashToCurve data) := by
+  unfold hashToCurve JamCrypto.Bandersnatch.hashToCurve
+  refine OR.bind (elligator2_rel _) fun P0 P0' h0 => OR.bind (elligator2_rel _) fun P1 P1' h1 => ?_
+  have hP := smul_rel hC 4 (add_rel hC h0 h1)
+  exact OR.guard (by rw [valid_eq curve_p hP]) fun _ => hP
 
 /-! ### IETF VRF -/
 
@@ -256,13 +294,21 @@ namespace Thin
 open JamCrypto.Bandersnatch.Thin (Transcript tagThinVrf tagDelinearize tagChallenge tagPointToHash
   challengeLen enc64 decScalarMod)
 
-/-- As `Bandersnatch.Thin.hashToCurve` (the reference's, see "Hash to curve" above). -/
-def hashToCurve (data : List UInt8) (rd : Reading) : Option (Pt F) :=
-  (JamCrypto.Bandersnatch.Thin.hashToCurve data rd).map ofPoint
+/-- As `Bandersnatch.Thin.hashToCurve`. -/
+def hashToCurve (data : List UInt8) (rd : Reading) : Option (Pt F) := do
+  let u := JamCrypto.Bandersnatch.Thin.expandMessage data rd
+  let P0 ← elligator2 (beToNat (u.take 48) % JamCrypto.Bandersnatch.q)
+  let P1 ← elligator2 (beToNat (u.drop 48) % JamCrypto.Bandersnatch.q)
+  let P := C.smul 4 (C.add P0 P1)
+  guard (CurveF.valid P)
+  return P
 
 theorem hashToCurve_rel (data : List UInt8) (rd : Reading) :
-    OP (hashToCurve data rd) (JamCrypto.Bandersnatch.Thin.hashToCurve data rd) :=
-  OR.map_ofPoint (thinHashToCurve_selfRed data rd)
+    OP (hashToCurve data rd) (JamCrypto.Bandersnatch.Thin.hashToCurve data rd) := by
+  unfold hashToCurve JamCrypto.Bandersnatch.Thin.hashToCurve
+  refine OR.bind (elligator2_rel _) fun P0 P0' h0 => OR.bind (elligator2_rel _) fun P1 P1' h1 => ?_
+  have hP := smul_rel hC 4 (add_rel hC h0 h1)
+  exact OR.guard (by rw [valid_eq curve_p hP]) fun _ => hP
 
 /-- As `Bandersnatch.Thin.output`. -/
 def output (O : Pt F) (n : Nat := 32) : List UInt8 :=

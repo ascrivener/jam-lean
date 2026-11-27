@@ -4,35 +4,36 @@ import JAM.Sha512
 /-!
 # Bandersnatch IETF VRF (GP v0.8.0 Appendix G)
 
-𝔹̄_k⟨c⟩⟨m⟩ is the IETF VRF of the Bandersnatch VRF-AD specification (Hosseini–Galassi, the draft GP
-cites), suite `Bandersnatch_SHA-512_ELL2`, with VRF input data c and additional data m; Y is its
-output. The 96-octet signature is the output point O, then the proof (c, s), 32 octets each.
+$\bar{\mathbb{B}}_k\langle c\rangle\langle m\rangle$ is the IETF VRF of the Bandersnatch VRF-AD
+specification (Hosseini–Galassi, the draft GP cites), suite `Bandersnatch_SHA-512_ELL2`, with VRF
+input data $c$ and additional data $m$; $\mathcal{Y}$ is its output. The 96-octet signature is the
+output point $O$, then the proof $(c, s)$, 32 octets each.
 
 Choices the spec's prose leaves open or states differently from its own test vectors follow those
 vectors and ark-vrf 0.1.0, which produce them:
 
 * the challenge is the first 32 octets of the SHA-512 transcript hash read **big-endian**, reduced
-  mod r, and stored little-endian (the prose says cLen = 16 and little-endian, which would not fit
-  GP's 96-octet signatures);
-* hash-to-curve is RFC 9380 `expand_message_xmd` (SHA-512) with a zero prefix Z_pad of 48 octets
-  (arkworks 0.5; RFC 9380 uses the hash block size, 128), field elements read big-endian mod q,
-  and the arkworks Elligator 2 map, whose sign choice is "y odd for the first candidate";
-* points: y little-endian (must be < q), the top bit of the last octet set iff x > (q−1)/2 (the
-  top bit is ignored when x = 0); decoded points must lie in the prime-order subgroup;
-* c is reduced mod r; s must be below r.
+  $\bmod r$, and stored little-endian (the prose says cLen = 16 and little-endian, which would not
+  fit GP's 96-octet signatures);
+* hash-to-curve is RFC 9380 `expand_message_xmd` (SHA-512) with a zero prefix $Z_{\text{pad}}$ of 48
+  octets (arkworks 0.5; RFC 9380 uses the hash block size, 128), field elements read big-endian
+  $\bmod q$, and the arkworks Elligator 2 map, whose sign choice is "y odd for the first candidate";
+* points: $y$ little-endian (must be $< q$), the top bit of the last octet set iff $x > (q - 1)/2$
+  (the top bit is ignored when $x = 0$); decoded points must lie in the prime-order subgroup;
+* $c$ is reduced $\bmod r$; $s$ must be below $r$.
 -/
 
 namespace JamCrypto.Bandersnatch
 
 open JamCrypto.Modular
 
-/-- The base field order q (the BLS12-381 scalar field). -/
+/-- The base field order $q$ (the BLS12-381 scalar field). -/
 def q : Nat := 0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001
 
-/-- The prime subgroup order r. -/
+/-- The prime subgroup order $r$. -/
 def r : Nat := 0x1cfb69d4ca675f520cce760202687600ff8f87007419047174fd06b52876e7e1
 
-/-- Bandersnatch in twisted Edwards form: a = −5. -/
+/-- Bandersnatch in twisted Edwards form: $a = -5$. -/
 def curve : Curve :=
   { p := q, a := q - 5,
     d := 45022363124591815672509500913686876175488063829319466900776701791074614335719 }
@@ -42,7 +43,7 @@ def G : Point :=
   curve.ofAffine 18886178867200960497001835917649091219057080094937609519140440539760939937304
     19188667384257783945677642223292697773471335439753913231509108946878080696678
 
-/-- √n in 𝔽_q: q − 1 = 2^32·t, and 7 is a non-residue. -/
+/-- $\sqrt{n}$ in $\mathbb{F}_q$: $q - 1 = 2^{32} \cdot t$, and 7 is a non-residue. -/
 def sqrt (n : Nat) : Option Nat :=
   sqrtTS q 32 12208678567578594777604504606729831043093128246378069236549469339647 7 n
 
@@ -66,7 +67,7 @@ def decodeOnCurve (bs : List UInt8) : Option Point := do
   let large := max x (subMod 0 x q)
   return curve.ofAffine (if negative then large else small) y
 
-/-- A point of the prime-order subgroup: [r]P = 0, checked as [r − 1]P = −P so that no step of the
+/-- A point of the prime-order subgroup: $[r]P = 0$, checked as $[r - 1]P = -P$ so that no step of the
     multiplication is exceptional. -/
 def inSubgroup (P : Point) : Bool := curve.eq (curve.smul (r - 1) P) (curve.neg P)
 
@@ -79,7 +80,8 @@ def decode (bs : List UInt8) : Option Point := do
 /-- The suite string. -/
 def suiteString : List UInt8 := "Bandersnatch_SHA-512_ELL2".toUTF8.toList
 
-/-- The hash-to-curve domain separation tag: "ECVRF_" ⌢ h2c suite id ⌢ suite string. -/
+/-- The hash-to-curve domain separation tag:
+    $\text{"ECVRF}\_\text{"} \frown \text{h2c suite id} \frown \text{suite string}$. -/
 def dst : List UInt8 :=
   "ECVRF_".toUTF8.toList ++ "Bandersnatch_XMD:SHA-512_ELL2_RO_".toUTF8.toList ++ suiteString
 
@@ -97,7 +99,7 @@ def montB : Nat := 2546576056608194642241244502770922718857956474710159299172283
 def montAoverB : Nat := 22511181562295907836254750456843438087744031914659733450388350895537307167857
 def oneOverB2 : Nat := 35484827650731063748396669747216844996598387089274032563585525486049249153249
 
-/-- The arkworks 0.5 Elligator 2 map 𝔽_q → curve (Z = 5). -/
+/-- The arkworks 0.5 Elligator 2 map $\mathbb{F}_q \to \text{curve}$ ($Z = 5$). -/
 def elligator2 (u : Nat) : Option Point := do
   let k := montB
   let j := montAoverB
@@ -132,8 +134,9 @@ def challenge (pts : List Point) (ad : List UInt8) : Nat :=
   let h := JAM.Sha512.hash (suiteString ++ [2] ++ pts.flatMap encode ++ ad ++ [0])
   beToNat (h.take 32) % r
 
-/-- x ∈ 𝔹̄_k⟨c⟩⟨m⟩: the IETF VRF signature `sig` = O ⌢ c ⌢ s is valid under the public key `key`
-    for VRF input data `ctx` and additional data `msg` (spec §2.3). -/
+/-- $x \in \bar{\mathbb{B}}_k\langle c\rangle\langle m\rangle$: the IETF VRF signature `sig`
+    $= O \frown c \frown s$ is valid under the public key `key` for VRF input data `ctx` and
+    additional data `msg` (spec §2.3). -/
 def ietfVerify (key ctx msg sig : List UInt8) : Bool := Id.run do
   if key.length != 32 || sig.length != 96 then return false
   let s := leToNat (slice sig 64 32)
@@ -148,13 +151,14 @@ def ietfVerify (key ctx msg sig : List UInt8) : Bool := Id.run do
   if !(E.valid U && E.valid V) then return false
   return challenge [Y, I, O, U, V] msg == c
 
-/-- The output hash of an output point: SHA-512(suite ⌢ 3 ⌢ point ⌢ 0) (RFC 9381 §5.2). -/
+/-- The output hash of an output point:
+    $\text{SHA-512}(\text{suite} \frown 3 \frown \text{point} \frown 0)$ (RFC 9381 §5.2). -/
 def pointToHash (O : Point) : List UInt8 :=
   JAM.Sha512.hash (suiteString ++ [3] ++ encode O ++ [0])
 
-/-- Y(sig) (GP Appendix G): the first 32 octets of the output hash of the output point O, the
-    first 32 octets of the signature. For an encoding that does not decode (no valid signature
-    has one) it hashes the octets as given, like `JAM.Sha512.vrfOutput`. -/
+/-- $\mathcal{Y}(\mathit{sig})$ (GP Appendix G): the first 32 octets of the output hash of the
+    output point $O$, the first 32 octets of the signature. For an encoding that does not decode (no
+    valid signature has one) it hashes the octets as given, like `JAM.Sha512.vrfOutput`. -/
 def vrfOutput (sig : List UInt8) : List UInt8 :=
   match decodeOnCurve (sig.take 32) with
   | some O => (pointToHash O).take 32

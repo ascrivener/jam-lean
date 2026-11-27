@@ -4,12 +4,12 @@ import JamCrypto.Fast.G1F
 /-!
 # The BLS12-381 pairing over a fast field, proved to compute what `JamCrypto.Pairing` computes
 
-The towers 𝔽_q2, 𝔽_q6 and 𝔽_q12, the Miller loop and the final exponentiation of
-`JamCrypto/Bls12381Pairing.lean` (unchanged), each performing the same sequence of field
-operations on a `Fast.Field` whose modulus is the BLS12-381 base field modulus (`G1F.IsFq`). The
-relations `V2`, `V6`, `V12` relate a fast element to the reference element whose coordinates are
-its (reduced) values; every operation preserves them. An 𝔽_q inversion is the reference one,
-`Fq.inv`, on the value.
+The towers $\mathbb{F}_{q^2}$, $\mathbb{F}_{q^6}$ and $\mathbb{F}_{q^{12}}$, the Miller loop and the
+final exponentiation of `JamCrypto/Bls12381Pairing.lean` (unchanged), each performing the same
+sequence of field operations on a `Fast.Field` whose modulus is the BLS12-381 base field modulus
+(`G1F.IsFq`). The relations `V2`, `V6`, `V12` relate a fast element to the reference element whose
+coordinates are its (reduced) values; every operation preserves them. An $\mathbb{F}_q$ inversion is
+the reference one, `Fq.inv`, on the value.
 -/
 
 namespace JamCrypto.Fast.PairingF
@@ -21,7 +21,7 @@ set_option linter.unusedSectionVars false
 
 variable {F : Type} [Field F] [LawfulField F] [IsFq F]
 
-/-! ## 𝔽_q2 -/
+/-! ## $\mathbb{F}_{q^2}$ -/
 
 structure E2 (F : Type) where
   a : F
@@ -113,7 +113,7 @@ theorem isZero {x : E2 F} {x' : Fq2} (hx : V2 x x') :
 
 end V2
 
-/-! ## 𝔽_q6 -/
+/-! ## $\mathbb{F}_{q^6}$ -/
 
 structure E6 (F : Type) where
   c0 : E2 F
@@ -192,7 +192,7 @@ theorem inv {x : E6 F} {x' : Fq6} (hx : V6 x x') : V6 x.inv x'.inv := by
 
 end V6
 
-/-! ## 𝔽_q12 -/
+/-! ## $\mathbb{F}_{q^{12}}$ -/
 
 structure E12 (F : Type) where
   d0 : E6 F

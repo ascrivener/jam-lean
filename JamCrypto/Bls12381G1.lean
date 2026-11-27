@@ -3,12 +3,12 @@ import JamCrypto.Bls12381Field
 /-!
 # The group G1 of BLS12-381
 
-G1 is the curve y² = x³ + 4 over 𝔽_q (its prime-order subgroup). Points are affine (`Aff`) or
-Jacobian (`Jac`, (X : Y : Z) standing for (X/Z², Y/Z³), Z = 0 the identity).
+G1 is the curve $y^2 = x^3 + 4$ over $\mathbb{F}_q$ (its prime-order subgroup). Points are affine
+(`Aff`) or Jacobian (`Jac`, $(X : Y : Z)$ standing for $(X/Z^2, Y/Z^3)$, $Z = 0$ the identity).
 
 Octet encodings are the zcash BLS12-381 ones used by arkworks (`ark-bls12-381`): a coordinate is 48
 big-endian octets; the three high bits of the first octet are the flags *compressed*, *infinity*
-and *y is the lexicographically largest of ±y* (compressed form only).
+and *y is the lexicographically largest of $\pm y$* (compressed form only).
 
 Multi-scalar multiplication is Pippenger's bucket method (`msm`).
 -/
@@ -17,14 +17,14 @@ namespace JamCrypto.G1
 
 open JamCrypto.Fq
 
-/-- An affine point; `inf` is the identity (then x, y are 0). -/
+/-- An affine point; `inf` is the identity (then $x, y$ are 0). -/
 structure Aff where
   x : Nat
   y : Nat
   inf : Bool := false
   deriving Inhabited, BEq, Repr
 
-/-- A Jacobian point; z = 0 is the identity. -/
+/-- A Jacobian point; $z = 0$ is the identity. -/
 structure Jac where
   x : Nat
   y : Nat
@@ -37,7 +37,7 @@ def Aff.toJac (p : Aff) : Jac := if p.inf then Jac.zero else ⟨p.x, p.y, 1⟩
 
 def onCurve (p : Aff) : Bool := p.inf || sq p.y == add (mul (sq p.x) p.x) 4
 
-/-- Doubling (dbl-2009-l, a = 0). -/
+/-- Doubling (dbl-2009-l, $a = 0$). -/
 def dbl (p : Jac) : Jac :=
   if p.z == 0 || p.y == 0 then Jac.zero else
   let a := sq p.x
@@ -53,7 +53,7 @@ def dbl (p : Jac) : Jac :=
   let z3 := mul (add p.y p.y) p.z
   ⟨x3, y3, z3⟩
 
-/-- Mixed addition p + q with q affine (madd-2007-bl). -/
+/-- Mixed addition $p + q$ with $q$ affine (madd-2007-bl). -/
 def addMixed (p : Jac) (q : Aff) : Jac :=
   if q.inf then p else
   if p.z == 0 then q.toJac else
@@ -111,10 +111,10 @@ def smul (p : Jac) (k : Nat) : Jac := Id.run do
     if (k >>> (n - 1 - i)) % 2 == 1 then acc := addJ acc p
   return acc
 
-/-- Bits of the scalars in `msm`: scalars are below 2^255 (elements of 𝔽_r). -/
+/-- Bits of the scalars in `msm`: scalars are below $2^{255}$ (elements of $\mathbb{F}_r$). -/
 def scalarBits : Nat := 255
 
-/-- The window width minimising ⌈b/c⌉·(n + 2^(c+1)) additions. -/
+/-- The window width minimising $\lceil b/c \rceil \cdot (n + 2^{c+1})$ additions. -/
 def window (n : Nat) : Nat := Id.run do
   let mut best := 1
   let mut bestCost := (scalarBits + 0) * (n + 4)
@@ -123,8 +123,8 @@ def window (n : Nat) : Nat := Id.run do
     if cost < bestCost then best := c; bestCost := cost
   return best
 
-/-- Σ kᵢ·Pᵢ (Pippenger's bucket method). Scalars must be below 2^255; extra points or scalars are
-    ignored. -/
+/-- $\sum_i k_i \cdot P_i$ (Pippenger's bucket method). Scalars must be below $2^{255}$; extra
+    points or scalars are ignored. -/
 def msm (points : Array Aff) (scalars : Array Nat) : Jac := Id.run do
   let n := min points.size scalars.size
   let c := window n
@@ -182,7 +182,7 @@ def decodeUncompressed (bs : ByteArray) (off : Nat) : Option Aff := Id.run do
 def encodeUncompressed (p : Aff) : List UInt8 :=
   if p.inf then 0x40 :: List.replicate 95 0 else Field.toBE 48 p.x ++ Field.toBE 48 p.y
 
-/-- In the prime-order subgroup: [r]P is the identity. -/
+/-- In the prime-order subgroup: $[r]P$ is the identity. -/
 def inSubgroup (p : Aff) : Bool := p.inf || (smul p.toJac Fr.R).z == 0
 
 /-- The compressed 48-octet zcash encoding, decoded and checked to be in G1 (as arkworks'

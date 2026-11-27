@@ -26,6 +26,8 @@ binaries. The model moved from v0.8.0 to v0.8.1 on 2026-11-25 (#261); the last v
   until proof work resumes (see [`docs/whats-proven.md`](docs/whats-proven.md)). Along the way they
   found disagreements between the binary and the paper, listed in
   [`docs/upstream-candidates.md`](docs/upstream-candidates.md).
+* **Proved about the model, with Mathlib.** Machine-checked: the erasure code recovers the data
+  from any 342 of 1023 pieces (GP v0.8.1 Appendix H; [`proofs/`](proofs/README.md), using Mathlib).
 
 **What's proven:** [`docs/whats-proven.md`](docs/whats-proven.md) summarises the theorems about real
 service binaries (witness, and Parity's bootstrap service with its picoalloc heap allocator; last
@@ -115,6 +117,7 @@ over the traces, are in that tag's README.
 | `JAM` state trie M (Appendix D) vs. GP v0.8.0 trie vectors (keys cut to 31 octets, note 27); state-key constructor C, hand-written | **11 / 11** roots match; **4 / 4** |
 | `JAM` Fisher–Yates shuffle ℱ with 𝒬_l (Appendix F) vs. GP v0.8.0 shuffle vectors | **8 / 8** match |
 | `JAM` erasure coding ℰ_C / ℛ over GF(2¹⁶) (Appendix H, GP v0.8.1 §H.3) vs. GP v0.8.0 erasure vectors | **12 / 12** match shard for shard (6 tiny, 6 full; v0.8.1 #580 adopted the vectors' layout, note 28); ℛ recovers the data in all 12 |
+| `ErasureProofs` (`proofs/`, Mathlib): ℛ inverts ℰ_C for any R(v) distinct chunks, v ≤ 2¹⁵ (full chain: any 342 of 1023; tiny: any 3 of 6), [`proofs/README.md`](proofs/README.md) | **proved**; axioms propext, Classical.choice, Quot.sound |
 | Accumulation STF (§12) vs. GP v0.8.0 accumulate vectors (tiny) | **suspended** until v0.8.1 vectors exist (15 / 63 pass under v0.8.1; see above) |
 | Recent-history STF (§7: β_H, the accumulation-output belt β_B) vs. `stf/history` (`lake build historytest`) | **4 / 4** tiny, **4 / 4** full |
 | Authorization STF (§8: the pool α from the queue φ') vs. `stf/authorizations` (`lake build authtest`) | **3 / 3** tiny, **3 / 3** full |

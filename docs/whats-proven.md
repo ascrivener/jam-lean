@@ -1347,6 +1347,20 @@ below stay with their lines; the blob's side of them is checked (`Vendored/Field
 
 ### On `main`, not yet folded into the sections above
 
+- **Erasure-code recovery (GP v0.8.1 Appendix H, §H.3 as amended by #580)** (PR #280,
+  `proofs/ErasureProofs/`, a separate Lake package that uses Mathlib; jam-lean#272). Against
+  `JAM/Erasure.lean` unchanged, with axioms propext, Classical.choice and Quot.sound only:
+  - `recover_encode`: for v ≤ 2¹⁵, if `encode v data = some chunks`, then any R(v) distinct
+    validator indices below v, in any order, with their chunks, give `recover … = some data`.
+    `recover_encode_full` (v = 1023, any 342) and `recover_encode_tiny` (v = 6, any 3);
+    `erasure_recovery` and `encode_isSome_iff` (encoding succeeds iff the size is a multiple of
+    2·R(v)).
+  - MDS: each coded word is the piece's polynomial (degree < d') at g(i)~ (`encode_word`,
+    `msgPoly_degree_lt`); the model's `lagrange`/`interpolate` is Mathlib's Lagrange interpolation
+    (`interpolate_lagrange`); GF(2¹⁶) = 𝔽₂[x]/(x¹⁶+x⁵+x³+x²+1) is a field (α has order 2¹⁶ − 1),
+    and the model's exp/log and Cantor-basis tables agree with it.
+  - No hypotheses beyond v ≤ 2¹⁵ (it keeps code indices below 2¹⁶). Details: `proofs/README.md`.
+
 - **Constant-depth Merkle trees and segment justifications** (`JAM/Segments.lean`, GP v0.8.1
   Appendix E and §14): C, ℳ, T, J_x, L_x, 𝒫 and the paged proofs P, executable, with a verifier for
   one segment and for one page (the paper gives no verifier; reading v0.8.1-A13 in

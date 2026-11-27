@@ -20,6 +20,9 @@ jam-lean parent session is archived.
   crypto prose default (v0.8.1 path only); proofs CI on demand only; Services proofs not migrated
   (option 2, last kernel-checked `c22c197`); jam-lean-target stays a separate repository, with the
   pin-bump rule in `CLAUDE.md`.
+- **Mathlib proofs (2026-11-26, jam-lean#272):** Mathlib is allowed only in the separate Lake
+  package `proofs/` (CI job `mathlib-proofs`, not in the required gate). Erasure-code recovery is
+  proved there (PR #280); see `proofs/README.md`.
 - **Open:** davxy's answers on the VRF ring label, Z_pad and "push R" (asked privately); v0.8.1
   test vectors and the 0.8.1 fuzzer (restore suspended checks then); graypaper#592; proof work
   (restate Services through the accessors, then a manual proofs run on main).

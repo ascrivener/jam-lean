@@ -142,8 +142,7 @@ their line of the graph lists:
 * *The timeslot.* The model sets $`\tau' = \mathbf{H}_T` directly. The check that $`\mathbf{H}_T` is after $`\tau` is made by
   {api}`JAM.safrole` (its `badSlot` error).
 
-The whole of {api}`JAM.importBlock` (about 90 lines, each step marked with its section) is on its API page,
-which links to the source.
+{leanSource JAM.importBlock}
 
 # The header (§5)
 %%%

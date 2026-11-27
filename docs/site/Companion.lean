@@ -12,7 +12,10 @@ import Companion.Reports
 import Companion.Accumulation
 import Companion.Statistics
 import Companion.Work
+import Companion.Guaranteeing
+import Companion.Assurance
 import Companion.Auditing
+import Companion.Beefy
 import Companion.BestChain
 import Companion.PVM
 import Companion.Invocations
@@ -58,7 +61,8 @@ model.
 
 * *Complete for what is modelled.* Every part of the paper the model implements has a chapter:
   §3–§14, §17 and §19, and Appendices A–H. The {ref "roadmap"}[roadmap] lists them with the model
-  code behind each, and the parts that are not modelled (§15, §16, §18).
+  code behind each. §15, §16 and §18 describe node behaviour that is not modelled; each has a short
+  chapter that maps its deterministic parts to the chapters that implement them.
 * *What the model is tested against.* The model follows GP v0.8.1, but no test vectors for v0.8.1
   are published yet, so it runs the GP v0.8.0 vectors (changed only where a v0.8.1 paper change
   requires it). Two checks are suspended until v0.8.1 vectors exist: the accumulate vectors and
@@ -95,10 +99,10 @@ it; the parts of the paper that are not modelled are listed too.
 * *§12 Accumulation and preimages* ({ref "accumulation"}[chapter]): `JAM/Accumulate.lean`, `JAM/Accumulation.lean`, `JAM/Preimages.lean`
 * *§13 Statistics* ({ref "statistics"}[chapter]): `JAM/Statistics.lean`
 * *§14 Work packages and work reports* ({ref "work"}[chapter]): `JAM/Work.lean`, `JAM/Refine.lean`, `JAM/Guarantee.lean`
-* §15 Guaranteeing and §16 Availability assurance: not modelled beyond the refinement of §14
-  (the networking and distribution they describe is out of scope)
+* *§15 Guaranteeing* ({ref "guaranteeing"}[chapter]): a map to the §11 and §14 code it uses (the networking and distribution it describes are not modelled)
+* *§16 Availability assurance* ({ref "assurance"}[chapter]): a map to the §11, §14 and Appendix H code it uses (shard distribution is not modelled)
 * *§17 Auditing and judging* ({ref "auditing"}[chapter]): `JAM/Auditing.lean`
-* §18 Beefy distribution: not modelled
+* *§18 Beefy distribution* ({ref "beefy"}[chapter]): a map to the §7 and Appendix E code it uses (the signed commitment itself is not modelled)
 * *§19 Grandpa and the best chain* ({ref "bestchain"}[chapter]): `JAM/BestChain.lean` (the best-chain rule; Grandpa itself is not modelled)
 * *Appendix A, the PVM* ({ref "pvm"}[chapter]): `PVM/Blob.lean`, `PVM/Machine.lean`, `PVM/Instr.lean`, `PVM/Exec.lean`, `PVM/Memory.lean`, `PVM/Invocation.lean`, `PVM/Gas.lean`
 * *Appendix B, PVM invocations and host calls* ({ref "invocations"}[chapter]): `JAM/Host/General.lean`, `JAM/Refine.lean`, `JAM/Accumulate.lean` (the host-call loop, the standard initialization and the argument invocation, which v0.8.1 defines in §A.6–§A.8, are in the Appendix A chapter)
@@ -131,7 +135,13 @@ it; the parts of the paper that are not modelled are listed too.
 
 {include 1 Companion.Work}
 
+{include 1 Companion.Guaranteeing}
+
+{include 1 Companion.Assurance}
+
 {include 1 Companion.Auditing}
+
+{include 1 Companion.Beefy}
 
 {include 1 Companion.BestChain}
 

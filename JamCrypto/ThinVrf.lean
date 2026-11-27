@@ -29,7 +29,7 @@ file follows that draft; section numbers below are its own. The v0.8.0 IETF VRF
   \cdot I, Y + z \cdot O)$; the proof $(R, s)$ satisfies $s \cdot I_m = R + c \cdot O_m$ with $c =
   \text{challenge}([R], T)$ (§1.6.7).
 
-**Signature encoding (our reading of GP v0.8.1 and Draft 35; Adam, 2026-11-25).** GP gives
+**Signature encoding (our reading of GP v0.8.1 and Draft 35).** GP gives
 $\overset{\backsim}{\mathbb{V}}$ as 96-octet strings and reads $\mathcal{Y}$ from the signature alone, but the
 draft encodes only the proof $(R, s)$, 64 octets. We take the 96-octet signature to be
 $\text{enc}\_\text{point}(O) \frown \text{enc}\_\text{point}(R) \frown \text{enc}\_\text{scalar}(s)$, the output point

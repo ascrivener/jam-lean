@@ -34,7 +34,7 @@ Appendix G; the interface $\overset{\backsim}{\mathbb{V}}{}_k^{m}\langle c \rang
 The paper states the extrinsic's conditions but names no errors and gives no order between them.
 The errors here are the test vectors' names. They are checked in this order: the timeslot (§5,
 eq. `timeslotindex`'s $\mathbf{H}_T > P(\mathbf{H})_T$ of the header), the extrinsic's length (eq.
-`enforceticketlimit`), each ticket's entry index and then its proof (eq. `ticketsextrinsic`), the
+`enforceticketlimit`), every ticket's entry index, then every ticket's proof (eq. `ticketsextrinsic`), the
 ordering of $\mathbf{n}$, its disjointness from $\gamma_A$, and $\mathbf{n} \subseteq \gamma'_A$.
 -/
 

@@ -142,8 +142,8 @@ def requestLenBound : Nat := 2 ^ 32 - 2
 
 /-- $\mathbf{l}[h, z]$: the request history of $(h, z)$, if any. The keys of $\mathbf{l}$ are $(\mathbb{H}, \mathbb{N}_P)$
     (`requestLenBound`, GP v0.8.1 eq. `serviceaccount`), so $z \notin \mathbb{N}_P$ has none. A stored value that does not
-    decode as $[\![ \mathbb{N}_T ]\!]_{:3}$ (only a state not built by the model can hold one) reads as none: Adam's
-    decision of 2026-11-15 (`docs/storage-key-design.md`). -/
+    decode as $[\![ \mathbb{N}_T ]\!]_{:3}$ (only a state not built by the model can hold one) reads as none, by
+    design (`docs/storage-key-design.md`). -/
 def requestGet (a : ServiceAccount) (h : List UInt8) (z : Nat) : Option (List Nat) :=
   if z < requestLenBound then (a.entries.get? (requestKey h z)).bind decodeSlots else none
 

@@ -61,8 +61,8 @@ def nat : Decoder Nat := do
   | some (x, pos') => set pos'; return x
   | none => fail "not a canonical ℰ-encoded natural"
 
-/-- A natural whose $\mathcal{E}$-encoding must be 0 or 1, read as a Boolean. The paper does not spell out
-    $\mathcal{E}$ on $\{\top, \bot\}$; $\bot \mapsto 0$ and $\top \mapsto 1$ is $\mathcal{E}$ of the indicator, the reading the vectors use. -/
+/-- A Boolean: one octet, $\mathcal{E}(\bot) = [0]$ and $\mathcal{E}(\top) = [1]$ (GP v0.8.1 eq. C.3);
+    any other octet fails. -/
 def bool : Decoder Bool := do
   match ← byte with
   | 0 => return false

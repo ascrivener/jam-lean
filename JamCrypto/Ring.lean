@@ -20,8 +20,7 @@ let srs := JamCrypto.Ring.withSelectors (← JamCrypto.Ring.Srs.load "JamCryptoT
 namespace JamCrypto.Ring
 
 /-- The ring domain of GP v0.8.1: fixed at 2048 by the VRF spec's Draft 35 §5, which GP v0.8.1
-    cites (Adam, 2026-11-25: the reading of the cited spec, to be confirmed by 0.8.1 vectors or
-    fuzzer blocks). -/
+    cites (our reading of the cited spec, to be confirmed by 0.8.1 vectors or fuzzer blocks). -/
 def domain081 : Nat := 2048
 
 /-- `c` with the ring VRF primitives for a chain of `validators` = $V$ validators: `bsRingRoot` :=

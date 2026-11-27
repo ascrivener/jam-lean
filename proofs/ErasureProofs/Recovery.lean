@@ -3,7 +3,7 @@ import ErasureProofs.Interp
 /-!
 # Recovery inverts encoding (GP v0.8.1 Appendix H, §H.3 as amended by GP #580)
 
-For v validators, d = R(v) and d' = 2^⌈log₂ d⌉ (`originalShards`, `paddedShards`), `encode v`
+For v validators, d = 𝒟(v) and d' = 2^⌈log₂ d⌉ (`originalShards`, `paddedShards`), `encode v`
 splits the data into pieces of d message words, takes for each piece the polynomial p of degree
 < d' through the message words at 0̃, …, (d−1)~ and zeroes at d̃, …, (d'−1)~, and gives validator
 i the word p(g(i)~) (`codeIndex`). `recover v` takes any d of the chunks with their validator
@@ -12,7 +12,7 @@ indices, adds the d' − d known zeroes, and interpolates back.
 * `encode_word`: every word of every chunk is an evaluation of the piece's polynomial
   `msgPoly`, of degree < d' (`msgPoly_degree_lt`). Any d' distinct points therefore determine it
   (Mathlib's `Lagrange.eq_interpolate_of_eval_eq`): the code is MDS.
-* `recover_encode`: for v ≤ 2¹⁵ (so all code indices are distinct field points), any R(v)
+* `recover_encode`: for v ≤ 2¹⁵ (so all code indices are distinct field points), any 𝒟(v)
   distinct validator indices below v, in any order, with their chunks from `encode v data`,
   recover `data`. `recover_encode_full` (v = 1023, R = 342) and `recover_encode_tiny` (v = 6,
   R = 3) are the two chains of the test vectors.
@@ -88,7 +88,7 @@ theorem eraseDups_of_nodup {L : List ℕ} (h : L.Nodup) : L.eraseDups = L := by
       simp [this]
     rw [this, ih h.2]
 
-/-! ## The parameters R(v), d' and g -/
+/-! ## The parameters 𝒟(v), d' and g -/
 
 theorem foldl_max_ge (l : List ℕ) (a x : ℕ) (hx : x ∈ l ∨ x ≤ a) : x ≤ l.foldl max a := by
   induction l generalizing a with
@@ -288,7 +288,7 @@ theorem chunk_size {v : ℕ} {data : ByteArray} {k i : ℕ} :
 
 /-- **Recovery inverts encoding** (GP v0.8.1 eqs. `erasurecoding`, `erasurecodinginv`, §H.3 as
     amended by GP #580). For v ≤ 2¹⁵ validators, if `encode v data = some chunks`, then any
-    R(v) distinct validator indices below v, in any order, with their chunks, give back `data`. -/
+    𝒟(v) distinct validator indices below v, in any order, with their chunks, give back `data`. -/
 theorem recover_encode {v : ℕ} (hv : v ≤ 32768) {data : ByteArray} {chunks : List ByteArray}
     (henc : encode v data = some chunks) {J : List ℕ} (hJ : J.Nodup)
     (hlen : J.length = originalShards v) (hJv : ∀ j ∈ J, j < v) :
@@ -488,7 +488,7 @@ theorem recover_encode {v : ℕ} (hv : v ≤ 32768) {data : ByteArray} {chunks :
     show data.data[o]! = data.data[o]
     exact getElem!_pos data.data o h2
 
-/-- `encode v` succeeds exactly on data whose size is a multiple of 2·R(v), and then gives one
+/-- `encode v` succeeds exactly on data whose size is a multiple of 2·𝒟(v), and then gives one
     chunk per validator. -/
 theorem encode_isSome_iff (v : ℕ) (data : ByteArray) :
     (encode v data).isSome ↔ data.size % (2 * originalShards v) = 0 := by
@@ -509,7 +509,7 @@ theorem encode_length {v : ℕ} {data : ByteArray} {chunks : List ByteArray}
   rw [(encode_eq henc).2]; simp
 
 /-- **Erasure-code recovery** (GP v0.8.1 Appendix H): for v ≤ 2¹⁵ validators and data whose size
-    is a multiple of 2·R(v), `encode v` gives v chunks, and any R(v) of them, at distinct
+    is a multiple of 2·𝒟(v), `encode v` gives v chunks, and any 𝒟(v) of them, at distinct
     validator indices in any order, recover the data. -/
 theorem erasure_recovery {v : ℕ} (hv : v ≤ 32768) (data : ByteArray)
     (hsize : data.size % (2 * originalShards v) = 0) :

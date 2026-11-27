@@ -148,7 +148,7 @@ def serviceRecord (r : ServiceRecord) : List UInt8 :=
   [r.provided.1, r.provided.2, r.refinement.1, r.refinement.2, r.imports, r.xtCount, r.xtSize,
     r.exports, an, atr, ag].flatMap nat
 
-/-- $C(13)$: $\mathcal{E}(\updownarrow[\mathcal{E}_4(v) \mid v \in \pi_V], \updownarrow[\mathcal{E}_4(v) \mid v \in \pi_L], \pi_C, \pi_S)$. -/
+/-- $C(13)$: $\mathcal{E}(\updownarrow\pi_V, \updownarrow\pi_L, \pi_C, \updownarrow[(\mathcal{E}_4(s), \mathcal{E}(\pi_S[s])) \mid s \in \mathcal{K}(\pi_S)])$, the service entries in ascending order of $s$ (GP v0.8.1 eq. `serialization`). -/
 def stats (s : State) : List UInt8 :=
   varSeq valRecord s.valStats ++ varSeq valRecord s.valStatsLast ++ seq coreRecord s.coreStats ++
     varSeq (fun (k, r) => fixed 4 k ++ serviceRecord r) s.serviceStats.toList

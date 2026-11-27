@@ -80,7 +80,7 @@ structure ReportsInput where
   /-- The work-package hashes already in the pipeline (`knownPackages`). -/
   known : OctetSet
   /-- The ancestor-set condition on a lookup anchor (GP §11.4.1: $\exists h, h' \in \mathbf{A}$ with
-      $h_T = x_t$, $\mathcal{H}(h) = x_l$, $h'_P = \mathcal{H}(h)$ and $h'_R = x_s$). -/
+      $h_T = x_t$, $\mathcal{H}(h) = x_l$, $h'_P = \mathcal{H}(h)$ and $h'_R = x_r$; GP v0.8.1 eq. 11.38). -/
   lookupAnchorKnown : RefineContext → Bool
 
 /-- $\mathbf{M} = (P(|\kappa'|, \eta'_2, \tau'), \Phi(\kappa'))$ (GP §11.3). -/

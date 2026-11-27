@@ -8,7 +8,7 @@ import JAM.Constants
 The constant-depth binary Merkle function and its page functions, from GP v0.8.1 Appendix E
 ("Constant-Depth Tree", `merklization.tex`):
 
-* the constancy preprocessor $C$ (the unnumbered equation after `constantdepthsubtreemerkleleafpage`)
+* the constancy preprocessor $C$ (eq. E.7)
   — `constancy`;
 * $\mathcal{M}(\mathbf{v}, H) = N(C(\mathbf{v}, H), H)$ (eq. `constantdepthmerkleroot`) — `cdRoot`;
 * $\mathcal{J}_x(\mathbf{v}, i, H)$ (eq. `constantdepthsubtreemerklejust`) — `justify`;
@@ -23,7 +23,7 @@ built on the node function $N$ (eq. `merklenode`, `JAM.Merkle.node`) and the tra
   $X$, $L_{\mathbf{r}}$, $S_{\mathbf{r}}$ and $J_{\mathbf{r}}$ in §14.4) use $\mathcal{J}_0$ —
   `justify 0`.
 
-The paper does not state the verification side. §14 and §17 (`auditing.tex`) only say that a
+The paper does not state the verification side. §17.2 (`auditing.tex`) only says that a
 justification "allows verification that each segment's hash is included in the referencing Merkle
 root". We define it as the inverse of $T$: `foldPath` recomputes a root from a value at the bottom of a
 path and the path $T$ gives (top to bottom); `verifySegment` checks one segment with its
@@ -153,7 +153,7 @@ def foldPath (H : ByteArray → ByteArray) (leaf : Blob) (i : Nat) : List Blob �
     $n < 2^{|\mathbf{j}|}$ and the path folds the leaf hash $H(\mathtt{\$leaf} \frown \mathit{seg})$
     to $r$.
 
-    Reading: the paper says only that justifications allow this check (GP §14.3, §17). The depth of
+    Reading: the paper says only that justifications allow this check (GP §17.2). The depth of
     the tree is taken from the length of $\mathbf{j}$. -/
 def verifySegment (H : ByteArray → ByteArray) (r : Blob) (n : Nat) (seg : Blob)
     (j : List Blob) : Bool :=

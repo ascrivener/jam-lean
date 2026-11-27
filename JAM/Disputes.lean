@@ -10,14 +10,18 @@ The disputes state $\psi = (\psi_G, \psi_B, \psi_W, \psi_O)$ (eq. `disputesspec`
 disputes extrinsic $\mathbf{E}_D = (\mathbf{E}_V, \mathbf{E}_C, \mathbf{E}_F)$ (eq. `disputesextrinsics`): the validity conditions on
 verdicts, culprits and faults, the verdict sequence $\mathbf{v}$ (eq. `verdicts`), the cleared availability
 assignments $\rho^\dagger$ (eq. `removenonpositive`), $\psi'$ (eqs. `goodsetdef`–`offendersdef`) and the offenders
-marker $\mathbf{H}_O$ (§10.4).
+marker $\mathbf{H}_O$ (§10.3).
 
 Signatures are checked with `Crypto.edVerify`. The validator sets $\kappa$ and $\lambda$ enter only through their
 Ed25519 keys.
 
 The paper states the conditions but names no errors and gives no order between them. The errors
-here are the test vectors' names; the order is the one in which the conditions appear in §10,
-with each verdict's or offence's conditions checked together.
+here are the test vectors' names. The order is not §10's: each list's ordering is checked before its
+elements. First the verdicts are strictly ordered by report hash; then, verdict by verdict: its age,
+the ordering of its judgments, the vote count, each judgment's validator index and signature, that
+the report is not already judged, and the vote split. Then the culprits' ordering and each
+culprit's conditions (its verdict is bad, it is not already an offender, the key is a guarantor
+key, the signature), then the same for the faults, and last that every good verdict has a fault.
 -/
 
 namespace JAM

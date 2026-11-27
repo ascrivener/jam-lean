@@ -1,5 +1,6 @@
 import VersoManual
 import Companion.Source
+import Companion.Paper
 import Companion.Docstring
 import JAM.Account
 import JAM.Accumulate
@@ -18,6 +19,8 @@ tag := "accounts"
 shortTitle := "§9 Service accounts"
 file := "accounts"
 %%%
+
+*In the paper:* {gpchapter}`sec:accounts`.
 
 A service in JAM has code, storage and a balance, much like a smart contract. GP v0.8.1 §9 defines
 the account record, the preimage lookups that make data available to in-core code, the deposit an

@@ -1,5 +1,6 @@
 import VersoManual
 import Companion.Source
+import Companion.Paper
 import Companion.Docstring
 import PVM.Machine
 import PVM.Invocation
@@ -24,9 +25,11 @@ set_option pp.rawOnError true
 #doc (Manual) "Appendix A: the Polkadot Virtual Machine" =>
 %%%
 tag := "pvm"
-shortTitle := "A. PVM"
-file := "pvm-step"
+shortTitle := "A. The PVM"
+file := "pvm"
 %%%
+
+*In the paper:* {gpchapter}`sec:virtualmachine`.
 
 Appendix A of GP v0.8.1 defines the Polkadot Virtual Machine (PVM), the machine on which JAM runs
 the code of services and authorizers. The appendix has ten sections, and this chapter follows them in order:

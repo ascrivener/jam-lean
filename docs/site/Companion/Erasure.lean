@@ -1,5 +1,6 @@
 import VersoManual
 import Companion.Source
+import Companion.Paper
 import Companion.Docstring
 import JAM.Erasure
 
@@ -15,6 +16,8 @@ tag := "erasure"
 shortTitle := "H. Erasure coding"
 file := "erasure-coding"
 %%%
+
+*In the paper:* {gpchapter}`sec:erasurecoding`.
 
 Appendix H of GP v0.8.1 defines the erasure code behind JAM's data availability: a systematic
 Reed–Solomon code over $`\mathrm{GF}(2^{16})`. Data is cut into words of two octets and coded so that each of

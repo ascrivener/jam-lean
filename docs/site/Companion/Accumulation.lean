@@ -1,5 +1,6 @@
 import VersoManual
 import Companion.Source
+import Companion.Paper
 import Companion.Docstring
 import JAM.Accumulation
 import JAM.Preimages
@@ -18,6 +19,8 @@ tag := "accumulation"
 shortTitle := "§12 Accumulation"
 file := "accumulation"
 %%%
+
+*In the paper:* {gpchapter}`sec:accumulation`.
 
 Accumulation runs the on-chain _Accumulate_ code of the services that have work to do in this
 block: those with digests in the newly available reports or in queued reports whose dependencies

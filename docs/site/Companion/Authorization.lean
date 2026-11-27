@@ -1,5 +1,6 @@
 import VersoManual
 import Companion.Source
+import Companion.Paper
 import Companion.Docstring
 import JAM.Authorization
 import JAM.BlockImport
@@ -16,6 +17,8 @@ tag := "authorization"
 shortTitle := "§8 Authorization"
 file := "authorization"
 %%%
+
+*In the paper:* {gpchapter}`sec:authorization`.
 
 A work package may use a core only if one of the core's current *authorizers* allows it. An
 authorizer is identified by a hash: the hash of its PVM code hash concatenated with its

@@ -1,5 +1,6 @@
 import VersoManual
 import Companion.Source
+import Companion.Paper
 import Companion.Docstring
 import JAM.Shuffle
 import JAM.Theorems.Auditing
@@ -16,6 +17,8 @@ tag := "shuffle"
 shortTitle := "F. Shuffling"
 file := "shuffle"
 %%%
+
+*In the paper:* {gpchapter}`sec:shuffle`.
 
 The paper uses a Fisher–Yates shuffle $`\mathcal{F}` wherever it needs a random order: for the
 guarantor assignments of §11.3 ({ref "reports-assignments"}[chapter]) it shuffles validators, and

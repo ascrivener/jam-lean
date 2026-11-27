@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Regenerate PVM/Tables.lean and JAM/Constants.lean from the pinned Gray Paper; fail on any difference.
+# Regenerate PVM/Tables.lean, JAM/Constants.lean and the book's paper table (docs/site/gp-labels.json)
+# from the pinned Gray Paper; fail on any difference.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 "$ROOT/scripts/fetch-paper.sh"
@@ -17,6 +18,13 @@ if diff -u "$ROOT/JAM/Constants.lean" "$OUT"; then
   echo "JAM/Constants.lean matches the paper"
 else
   echo "JAM/Constants.lean differs from the constants generated from the paper" >&2
+  status=1
+fi
+python3 -I "$ROOT/scripts/gen_gp_labels.py" "$ROOT/vendor/graypaper" "$OUT"
+if diff -u "$ROOT/docs/site/gp-labels.json" "$OUT"; then
+  echo "docs/site/gp-labels.json matches the paper"
+else
+  echo "docs/site/gp-labels.json differs from the section table generated from the paper" >&2
   status=1
 fi
 exit $status

@@ -1,5 +1,6 @@
 import VersoManual
 import Companion.Source
+import Companion.Paper
 import Companion.Docstring
 import JAM.Blake2b
 import JAM.Keccak
@@ -22,6 +23,8 @@ tag := "primitives"
 shortTitle := "§3 Primitives"
 file := "primitives"
 %%%
+
+*In the paper:* {gpchapter}`sec:notation`.
 
 GP v0.8.1 §3 fixes the notation the rest of the paper uses. Most of it (sets, sequences,
 dictionaries) maps directly onto Lean's own types. This chapter covers the part of §3 that the model has to

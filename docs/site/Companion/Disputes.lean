@@ -1,5 +1,6 @@
 import VersoManual
 import Companion.Source
+import Companion.Paper
 import Companion.Docstring
 import JAM.Disputes
 import JAM.Theorems.Auditing
@@ -16,6 +17,8 @@ tag := "disputes"
 shortTitle := "§10 Disputes"
 file := "disputes"
 %%%
+
+*In the paper:* {gpchapter}`sec:disputes`.
 
 The disputes system records *verdicts*, collections of judgments by validators on whether a
 work-report is valid, and *offences*: guarantees or judgments that contradict an established

@@ -1,5 +1,6 @@
 import VersoManual
 import Companion.Source
+import Companion.Paper
 import Companion.Docstring
 import JAM.BestChain
 import JAM.Theorems.BestChain
@@ -16,6 +17,8 @@ tag := "bestchain"
 shortTitle := "§19 Best chain"
 file := "best-chain"
 %%%
+
+*In the paper:* {gpchapter}`sec:bestchain`.
 
 Nodes finalize blocks with the Grandpa protocol, and between finalizations each node must decide
 which block to build on and vote for: the best block $`\mathbf{B}^\flat`. §19 of GP v0.8.1 gives the rule. A block

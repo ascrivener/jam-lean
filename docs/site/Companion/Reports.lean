@@ -1,5 +1,6 @@
 import VersoManual
 import Companion.Source
+import Companion.Paper
 import Companion.Docstring
 import JAM.Reports
 
@@ -15,6 +16,8 @@ tag := "reports"
 shortTitle := "§11 Reports"
 file := "reports"
 %%%
+
+*In the paper:* {gpchapter}`sec:reporting`.
 
 A work-report enters the chain in a *guarantee*, signed by two or three validators assigned to its
 core. It waits on that core, as the core's *availability assignment*, until more than two thirds of

@@ -1,5 +1,6 @@
 import VersoManual
 import Companion.Source
+import Companion.Paper
 import Companion.Docstring
 import JAM.Merkle
 import JAM.Segments
@@ -18,6 +19,8 @@ tag := "merkle"
 shortTitle := "E. General Merklization"
 file := "general-merklization"
 %%%
+
+*In the paper:* {gpchapter}`sec:merklization`.
 
 Appendix E of GP v0.8.1 defines the Merkle structures the protocol uses outside the state trie:
 binary Merkle trees, well-balanced (§E.1.1) and of constant depth (§E.1.2), with the functions

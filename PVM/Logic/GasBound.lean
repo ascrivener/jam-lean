@@ -68,7 +68,7 @@ theorem psi_next_of_gas {p : ByteArray} {i : Nat} {ω : Regs} {μ : Memory} {i' 
   dsimp only
   rw [hpc, hr, hm]
 
-/-- **A host call, with at least M gas**: Ψ stops there with h̵ × h, the state before the call,
+/-- **A host call, with at least M gas**: Ψ stops there with ħ × h, the state before the call,
     and at most M gas less. -/
 theorem psi_host_of_gas {p : ByteArray} {i : Nat} {ω : Regs} {μ : Memory} {P : Program} {h : UInt64}
     {j : Nat} {ω₁ : Regs} {μ₁ : Memory} {M : Nat} (hP : deblob p i = some P)

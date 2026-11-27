@@ -61,7 +61,7 @@ def logTable : Array Nat := Id.run do
 /-- Whether α generates the multiplicative group, so `mul` and `inv` are right: given the tables
     `exp := expTable` and `log := logTable`, every nonzero element has a distinct logarithm and no
     power of α is 0. Takes the tables as arguments so that it is a function, not a closed term the
-    compiler would evaluate when an executable starts (`Tests/ErasureTest.lean` runs it). -/
+    compiler would evaluate when an executable starts ([`Tests/ErasureTest.lean`](https://github.com/ascrivener/jam-lean/blob/main/Tests/ErasureTest.lean) runs it). -/
 def primitive (exp log : Array Nat) : Bool := (log.toList.drop 1).eraseDups.length == 65535 &&
   exp.all (· ≠ 0)
 

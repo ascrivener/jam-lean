@@ -3,12 +3,17 @@ import Companion
 
 open Verso.Genre Manual
 
-/-- Layout fixes: long code lines wrap (no hidden horizontal scrolling), display math scrolls inside
-    its own box on narrow screens, and the header title keeps clear of the search box (which Verso
-    places over the header): the title wrapper reserves the search bar's width, the search bar is
-    narrower below 1200 px, and the title wraps and shrinks on narrow screens. -/
+/-- Layout fixes: code blocks keep their layout and scroll sideways with a visible scrollbar; display
+    math scrolls inside its own box on narrow screens; and the header title keeps clear of the
+    search box (which Verso places over the header): the title wrapper reserves the search bar's
+    width, the search bar is narrower below 1200 px, and the title wraps and shrinks on narrow
+    screens. -/
 def narrowCss : Verso.Genre.Manual.CSS := ⟨"
-.semantics, pre, code.hl.lean.block { max-width: 100%; white-space: pre-wrap; overflow-wrap: anywhere; }
+.semantics, pre, code.hl.lean.block { max-width: 100%; overflow-x: auto; white-space: pre;
+  scrollbar-width: thin; scrollbar-color: #b0b0b0 transparent; }
+.semantics::-webkit-scrollbar, pre::-webkit-scrollbar, code.hl.lean.block::-webkit-scrollbar { height: 8px; }
+.semantics::-webkit-scrollbar-thumb, pre::-webkit-scrollbar-thumb, code.hl.lean.block::-webkit-scrollbar-thumb {
+  background: #b0b0b0; border-radius: 4px; }
 .katex-display { max-width: 100%; overflow-x: auto; overflow-y: hidden; }
 .header-title-wrapper { box-sizing: border-box; min-width: 0;
   padding-right: calc(var(--search-bar-width, 24rem) + 1.5rem); }

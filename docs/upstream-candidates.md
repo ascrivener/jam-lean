@@ -17,7 +17,7 @@ Inconsistencies, where the paper contradicts itself:
 
 | Note | Section | Finding |
 |---|---|---|
-| 1 | §A.10 | 𝔓_S compares ω_A = ω_D, which read literally compares register values. The gas model has no values, so it must mean the indices r_A = r_D. |
+| 1 | §A.10 | 𝔓_S compares φ_A = φ_D (the paper writes the registers φ), which read literally compares register values. The gas model has no values, so it must mean the indices r_A = r_D. |
 | 3 | §A.4 | The prose says RAM below 2^16 always panics, but the formula for ε^μ only considers inaccessible indices. |
 
 Gaps, where the paper leaves behaviour undefined:

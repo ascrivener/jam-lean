@@ -124,7 +124,7 @@ def Xentropy : List UInt8 := contextString "$jam_entropy"
 
 /-- The context of a ticket's ring proof, and of a ticket-sealed block's seal:
     $jam_ticket_seal ⌢ η ⧺ e (GP eq. `ticketsextrinsic` appends e as an element), the entry index
-    as one octet. The paper does not define the encoding (`docs/upstream-candidates.md`, 31).
+    as one octet. The paper does not define the encoding ([`docs/upstream-candidates.md`](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues), 31).
     e < n = ⌈2𝖤/|γ_P'|⌉, and one octet holds every such e exactly when n ≤ 256, i.e. when
     2𝖤 ≤ 256⋅|γ_P'|; this holds for the paper's |γ_P'| ≥ 6 (eq. `valcount`) whenever 𝖤 ≤ 768, so
     for the full (𝖤 = 600) and tiny (𝖤 = 12) chains (`safrole_attempt_fits`, `attempt_fits_of_six`

@@ -11,7 +11,7 @@ without changing them.
 * **The order on identifiers** (`octetLt`) is a strict total order (`octetLt_irrefl`,
   `octetLt_trans`, `octetLt_trichotomy`), and `strictlyOrdered` is the pairwise form of it
   (`strictlyOrdered_iff`).
-* **The ticket accumulator γ_A'** (§6.7, eq. `enforceticketlimit`): after a successful transition
+* **The ticket accumulator γ_A'** (§6.7, eqs. (6.5), (6.36)): after a successful transition
   it has at most 𝖤 tickets (`safrole_accumulator_length`); if the prior γ_A has unique identifiers
   (which γ_A' then has again, so this is an invariant), γ_A' is strictly sorted by identifier and
   its identifiers are unique (`safrole_accumulator_sorted`).
@@ -268,7 +268,8 @@ theorem safrole_ok {params : Params} {c : Crypto} {s s' : SafroleState} {i : Saf
 
 /-! ## The ticket accumulator γ_A' -/
 
-/-- γ_A' has at most 𝖤 tickets (GP eq. `enforceticketlimit`). -/
+/-- γ_A' has at most 𝖤 tickets (GP eq. `ticketaccumulatorsealticketsspec`, (6.5): γ_A ∈ ⟦T⟧_{:𝖤};
+    γ_A' keeps the 𝖤 lowest of the merge, eq. (6.36)). -/
 theorem safrole_accumulator_length {params : Params} {c : Crypto} {s s' : SafroleState}
     {i : SafroleInput} {o : SafroleOutput} (h : safrole params c s i = .ok (s', o)) :
     s'.accumulator.length ≤ params.epochLen := by
@@ -293,7 +294,7 @@ private theorem ticketLe_total (a b : Ticket) :
   · simp [octetLt_asymm h]
 
 /-- If the prior γ_A has unique identifiers, γ_A' is strictly sorted by identifier and has unique
-    identifiers (GP §6.7, eq. `enforceticketlimit`: γ_A' is sorted by y, and **n** is disjoint
+    identifiers (GP §6.7, eq. (6.36): γ_A' is sorted by y; eq. (6.35): **n** is disjoint
     from γ_A). On an epoch change γ_A is discarded and the hypothesis is not used; otherwise it is
     the conclusion of this theorem for the previous block, so these properties are invariant. -/
 theorem safrole_accumulator_sorted {params : Params} {c : Crypto} {s s' : SafroleState}

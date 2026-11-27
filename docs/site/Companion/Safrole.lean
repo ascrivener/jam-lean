@@ -19,7 +19,7 @@ file := "safrole"
 Safrole fixes which validator may seal each timeslot of an epoch. Validators submit anonymous
 tickets during an epoch, and the best tickets become the next epoch's slot sealers. If there are
 not enough tickets, a fallback sequence of keys drawn with on-chain entropy is used instead. In
-the model, the whole transition of GP v0.8.1 §6 is one function, {name}`JAM.safrole`. This chapter
+the model, the whole transition of GP v0.8.1 §6 is one function, {api}`JAM.safrole`. This chapter
 goes through it in the paper's order: the entropy accumulator (§6.4), the slot-sealer sequence with
 $`Z` and $`F` (§6.5), and the ticket accumulator (§6.7).
 
@@ -28,7 +28,7 @@ covers. Its full API is on the [doc-gen4 page](https://ascrivener.github.io/jam-
 
 # The state
 
-The paper's Safrole state is $`\gamma = (\gamma_P, \gamma_Z, \gamma_S, \gamma_A)` (eq. `consensusstatecomposition`), together
+The paper's Safrole state is $`\gamma = (\gamma_P, \gamma_Z, \gamma_S, \gamma_A)` (eq. (6.3), `consensusstatecomposition`), together
 with $`\tau`, $`\eta` and the key sets $`\kappa`, $`\lambda` and $`\iota`. The model keeps them in one structure:
 
 {docstring JAM.SafroleState}
@@ -38,19 +38,19 @@ with $`\tau`, $`\eta` and the key sets $`\kappa`, $`\lambda` and $`\iota`. The m
 tag := "safrole-entropy"
 %%%
 
-$`\eta \in \llbracket\mathbb{H}\rrbracket_4` (eq. `entropycomposition`). Every block folds the VRF output of its entropy source into
+$`\eta \in \llbracket\mathbb{H}\rrbracket_4` (eq. (6.23), `entropycomposition`). Every block folds the VRF output of its entropy source into
 $`\eta_0`, and an epoch change rotates $`\eta_0, \eta_1, \eta_2` into $`\eta_1, \eta_2, \eta_3`:
 
-$$`\eta'_0 \equiv \mathcal{H}\left(\eta_0 \frown \mathcal{Y}(\mathbf{H}_V)\right) \qquad \left(\eta'_1, \eta'_2, \eta'_3\right) \equiv \begin{cases} (\eta_0, \eta_1, \eta_2) & \text{when } e' > e \\ (\eta_1, \eta_2, \eta_3) & \text{otherwise} \end{cases}`
+$$`\eta'_0 \equiv \mathcal{H}\left(\eta_0 \frown \mathcal{Y}(\mathbf{H}_V)\right) \qquad \left(\eta'_1, \eta'_2, \eta'_3\right) \equiv \begin{cases} (\eta_0, \eta_1, \eta_2) & \text{when } e' > e \\ (\eta_1, \eta_2, \eta_3) & \text{otherwise} \end{cases} \qquad \text{(6.24, 6.25)}`
 
-Two readings appear in the model:
+One reading appears in the model:
 
 * $`\mathcal{Y}(\mathbf{H}_V)`, the VRF output of the header's entropy-source signature, is an input to the transition
-  (`SafroleInput.entropy`). The header condition it comes from, eq. `vrfsigcheck`, is checked
-  separately by {name}`JAM.sealValid`.
-* $`\mathcal{H}` is Blake2b-256 ({name}`JAM.blake`).
+  (`SafroleInput.entropy`). The header condition it comes from, eq. (6.19), `vrfsigcheck`, is checked
+  separately by {api}`JAM.sealValid`.
 
-In {name}`JAM.safrole` these are the lines under `-- Entropy (§6.4)`: `eta0'` and the triple
+$`\mathcal{H}` is Blake2b-256, the paper's hash function (§3.8), here {api}`JAM.blake`.
+In {api}`JAM.safrole` these are the lines under `-- Entropy (§6.4)`: `eta0'` and the triple
 `(eta1', eta2', eta3')`.
 
 {leanSource JAM.blake}
@@ -60,18 +60,18 @@ In {name}`JAM.safrole` these are the lines under `-- Entropy (§6.4)`: `eta0'` a
 tag := "safrole-sealers"
 %%%
 
-The posterior sealer sequence $`\gamma'_S` (eq. `slotkeysequence`) is the outside-in ordering of the ticket
+The posterior sealer sequence $`\gamma'_S` (eq. (6.26), `slotkeysequence`) is the outside-in ordering of the ticket
 accumulator when that accumulator is full at the end of the previous epoch. Otherwise it is the
 fallback keys:
 
-$$`\gamma'_S \equiv \begin{cases} Z(\gamma_A) & \text{when } e' = e + 1 \wedge m \geq \mathsf{Y} \wedge |\gamma_A| = \mathsf{E} \\ \gamma_S & \text{when } e' = e \\ F(\eta'_2, \kappa') & \text{otherwise} \end{cases}`
+$$`\gamma'_S \equiv \begin{cases} Z(\gamma_A) & \text{when } e' = e + 1 \wedge m \geq \mathsf{Y} \wedge |\gamma_A| = \mathsf{E} \\ \gamma_S & \text{when } e' = e \\ F(\eta'_2, \kappa') & \text{otherwise} \end{cases} \qquad \text{(6.26)}`
 
-In the model this is the `sealKeys'` binding of {name}`JAM.safrole`, with the three cases in the
+In the model this is the `sealKeys'` binding of {api}`JAM.safrole`, with the three cases in the
 paper's order.
 
 ## Z, the outside-in sequencer
 
-$$`Z \colon \mathbf{s} \mapsto \left[\mathbf{s}_0, \mathbf{s}_{|\mathbf{s}|-1}, \mathbf{s}_1, \mathbf{s}_{|\mathbf{s}|-2}, \dots\right]`
+$$`Z \colon \mathbf{s} \mapsto \left[\mathbf{s}_0, \mathbf{s}_{|\mathbf{s}|-1}, \mathbf{s}_1, \mathbf{s}_{|\mathbf{s}|-2}, \dots\right] \qquad \text{(6.27)}`
 
 {leanSource JAM.outsideIn}
 
@@ -85,7 +85,7 @@ permutation, as the paper's typing $`\llbracket T\rrbracket_{\mathsf{E}} \to \ll
 
 ## F, the fallback key sequence
 
-$$`F \colon (r, \mathbf{k}) \mapsto \left[\, \left(\mathbf{k}^{\circlearrowleft}_{\mathcal{E}_4^{-1}\left(\mathcal{H}(r \frown \mathcal{E}_4(i))_{\dots 4}\right)}\right)_b \;\middle|\; i \in \mathbb{N}_{\mathsf{E}} \right]`
+$$`F \colon (r, \mathbf{k}) \mapsto \left[\, \left(\mathbf{k}^{\circlearrowleft}_{\mathcal{E}_4^{-1}\left(\mathcal{H}(r \frown \mathcal{E}_4(i))_{\dots 4}\right)}\right)_b \;\middle|\; i \in \mathbb{N}_{\mathsf{E}} \right] \qquad \text{(6.28)}`
 
 {leanSource JAM.fallbackKeys}
 
@@ -100,10 +100,10 @@ tag := "safrole-tickets"
 %%%
 
 A ticket carries an entry index below $`n` and a Ring VRF proof over the context
-$`\mathsf{X}_T \frown \eta'_2 \mathbin{+\!\!+} e` (eq. `ticketsextrinsic`; $`\mathsf{X}_T` is `$jam_ticket_seal`). The extrinsic is bounded by $`\mathsf{K}` before the
-epoch's tail and by 0 within it (eq. `enforceticketlimit`):
+$`\mathsf{X}_T \frown \eta'_2 \mathbin{+\!\!+} e` (eq. (6.31), `ticketsextrinsic`; $`\mathsf{X}_T` is `$jam_ticket_seal`). The extrinsic is bounded by $`\mathsf{K}` before the
+epoch's tail and by 0 within it (eq. (6.32), `enforceticketlimit`):
 
-$$`\mathbf{E}_T \in \left\lbrack\left(e \in \mathbb{N}_n,\; p \in \mathring{\mathbb{V}}^{[]}_{\gamma'_Z}\langle X_T \frown \eta'_2 \mathbin{+\!\!+} e \rangle\right)\right\rbrack \quad \text{where } n = \left\lceil \frac{2\mathsf{E}}{|\gamma'_P|} \right\rceil \qquad |\mathbf{E}_T| \le \begin{cases} \mathsf{K} & \text{when } m' < \mathsf{Y} \\ 0 & \text{otherwise} \end{cases}`
+$$`\mathbf{E}_T \in \left\lbrack\left(e \in \mathbb{N}_n,\; p \in \mathring{\mathbb{V}}^{[]}_{\gamma'_Z}\langle X_T \frown \eta'_2 \mathbin{+\!\!+} e \rangle\right)\right\rbrack \quad \text{where } n = \left\lceil \frac{2\mathsf{E}}{|\gamma'_P|} \right\rceil \qquad |\mathbf{E}_T| \le \begin{cases} \mathsf{K} & \text{when } m' < \mathsf{Y} \\ 0 & \text{otherwise} \end{cases} \qquad \text{(6.31, 6.32)}`
 
 {leanSource JAM.maxAttempts}
 
@@ -114,10 +114,10 @@ $$`\mathbf{E}_T \in \left\lbrack\left(e \in \mathbb{N}_n,\; p \in \mathring{\mat
 The new accumulator keeps the $`\mathsf{E}` lowest identifiers of the union of the new tickets $`\mathbf{n}` with the old
 accumulator, or with nothing at an epoch change. Every submitted ticket must survive:
 
-$$`\gamma'_A \equiv \overrightarrow{\left[x \in \mathbf{n} \cup \begin{cases} \emptyset & \text{when } e' > e \\ \gamma_A & \text{otherwise} \end{cases} \;\wr\; x_y \right]}^{\mathsf{E}} \qquad \mathbf{n} \subseteq \gamma'_A`
+$$`\gamma'_A \equiv \overrightarrow{\left[x \in \mathbf{n} \cup \begin{cases} \emptyset & \text{when } e' > e \\ \gamma_A & \text{otherwise} \end{cases} \;\wr\; x_y \right]}^{\mathsf{E}} \qquad \mathbf{n} \subseteq \gamma'_A \qquad \text{(6.36, 6.37)}`
 
-In {name}`JAM.safrole` this is the `acc'` binding: a merge sort by identifier, then `take E`, and
-the `uselessTicket` check for $`\mathbf{n} \subseteq \gamma'_A`. The order on identifiers is {name}`JAM.octetLt`:
+In {api}`JAM.safrole` this is the `acc'` binding: a merge sort by identifier, then `take E`, and
+the `uselessTicket` check for $`\mathbf{n} \subseteq \gamma'_A`. The order on identifiers is {api}`JAM.octetLt`:
 
 {leanSource JAM.octetLt}
 
@@ -136,13 +136,13 @@ tag := "safrole-readings"
 
 The paper leaves several points of §6.7 open, and the model decides each one. They are recorded as
 note 31 of the model's
-[upstream candidates](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md):
+[notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues):
 
 * *The order on identifiers.* Tickets are ordered by their identifier $`y \in \mathbb{H}`, but no order on $`\mathbb{H}` is
-  defined. The model compares octet sequences lexicographically ({name}`JAM.octetLt`), the evident
+  defined. The model compares octet sequences lexicographically ({api}`JAM.octetLt`), the evident
   reading and the one the test vectors use.
 * *The entry index in the context.* $`\mathsf{X}_T \frown \eta'_2 \mathbin{+\!\!+} e` appends a natural number to an
-  octet sequence without saying how it is encoded. The model appends one octet ({name}`JAM.ticketContext`), and
+  octet sequence without saying how it is encoded. The model appends one octet ({api}`JAM.ticketContext`), and
   proves that one octet holds every allowed $`e` for the full and tiny chains:
 
 {docstring JAM.safrole_attempt_fits}

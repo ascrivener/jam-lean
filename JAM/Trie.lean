@@ -2,7 +2,7 @@ import JAM.Blake2b
 import JAM.Codec
 
 /-!
-# State Merklization (GP v0.8.0 Appendix D)
+# State Merklization (GP v0.8.1 Appendix D)
 
 The state-key constructor C (§D.1), the node encodings B and L, and the binary Patricia Merkle
 trie root M (§D.2). Nodes are 64 octets; bit strings are read most significant bit first

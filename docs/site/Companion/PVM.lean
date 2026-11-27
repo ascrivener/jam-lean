@@ -644,7 +644,7 @@ Most of these points are recorded in the model's
   runs out.
 * *Note 17, §A.7.* $`Y` takes arguments $`\mathbf{a} \in \mathbb{B}_{:\mathsf{Z}_I}`, and the paper does not say what happens to a longer
   argument. The model returns $`\emptyset` ({api}`PVM.validJamBlob?`), so $`\Psi_M` panics.
-* *§A.8.* $`\Psi_H` returns seven components, including the flag $`\tilde\varrho`, while $`R` in eq. (A.48) takes six. The
+* *Note v0.8.1-A26, §A.8.* $`\Psi_H` returns seven components, including the flag $`\tilde\varrho`, while $`R` in eq. (A.48) takes six. The
   model reads $`R` as ignoring the flag ({api}`PVM.invocationResult`).
 * *`neg_add_imm_32`, §A.5.10.* $`\varphi'_A = \mathcal{X}_4((\nu_X + 2^{32} - \varphi_B) \bmod 2^{32})` is computed over $`\mathbb{Z}`: $`\varphi_B` may exceed
   $`2^{32}`, making the intermediate value negative, and the model takes the mathematical (non-negative)

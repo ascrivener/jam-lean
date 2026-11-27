@@ -65,6 +65,8 @@ Gaps, where the paper leaves behaviour undefined:
 | v0.8.1-A23 | §19, (19.3) | "Two valid blocks at the same timeslot": H^B is unconstrained (any block seen, on any fork, finalized or not; no same-author condition, though one slot has one sealer key under Safrole), and only H^A must be unfinalized. So any two seen blocks at one unfinalized slot rule out every chain through either. The model reads it literally, with H^B over the store (`JAM/BestChain.lean`, `equivocates`). |
 | v0.8.1-A24 | §19, (19.4) | No tie-break is given among acceptable blocks of equal m, and every acceptable block is a candidate, not only leaves: a fallback-sealed child ties with its parent. The model returns every maximiser (`bestHeads`); `bestHead?` takes the first in store order (`JAM/BestChain.lean`). |
 | v0.8.1-A25 | §19, (19.4) and §5 | m sums 𝐓 over all of 𝐀^♭ back to genesis, while §5 lets nodes keep only the last 𝖫 = 24 hours of headers. The model counts the ancestors in the given store; every acceptable block passes through H^♮, so the ancestors shared through H^♮ add the same amount to every candidate when the store holds H^♮'s ancestry consistently (`JAM/BestChain.lean`, `metric`). |
+| v0.8.1-A26 | Ψ_M, §A.8 | R takes (ϱ, (ε, ı', ϱ', φ', μ', 𝔵')), six components, but Ψ_H returns seven, including the gas-charged flag ϱ̃. The model reads R as ignoring the flag (`PVM/Invocation.lean`, `invocationResult`). |
+| v0.8.1-A27 | Ψ_R, eq. `refinvocation` | w = p_**w**[i] is read without saying what happens when the package has no item i. The model answers (BAD, [], 0), as for a missing service (`JAM/Refine.lean`, `psiR`). |
 
 ## Resolved in GP v0.8.1
 

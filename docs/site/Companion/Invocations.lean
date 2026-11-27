@@ -654,7 +654,5 @@ These points are recorded in the model's
   also changes $`\mathbf{d}'[s]`'s balance, which conflict. The model tests $`\mathtt{CASH}` on $`s`'s
   own balances, then answers $`\mathtt{FULL}`.
 
-One more point is the model's own choice:
-
-* *A missing work item.* $`\Psi_R` reads $`w = p_\mathbf{w}[i]` without saying what happens when the
+* *Note v0.8.1-A27, a missing work item.* $`\Psi_R` reads $`w = p_\mathbf{w}[i]` without saying what happens when the
   package has no item $`i`. The model answers $`(\texttt{BAD}, [], 0)`, as for a missing service.

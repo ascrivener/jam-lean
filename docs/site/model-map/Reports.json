@@ -49,6 +49,8 @@
                "note": "𝐩 is the key set of the dictionary `p` (eq. 11.43); 𝐱 is read as `r.context` for each report" },
     "11.36": { "kind": "def", "name": "JAM.checkAnchor", "note": "applied to each report by `JAM.guarantees`; β†_H is `recent`" },
     "11.37": { "kind": "inline", "name": "JAM.guarantees", "at": "unless r.context.lookupAnchorSlot + params.maxLookupAnchorAge ≥ i.slot" },
+    "11.38": { "kind": "def", "name": "JAM.lookupAnchorKnown",
+               "note": "checked in `JAM.guarantees` through `ReportsInput.lookupAnchorKnown`" },
     "11.39": { "kind": "inline", "name": "JAM.knownPackages", "at": "ready.map (·.spec.packageHash.toList)",
                "note": "`ready` is the reports of ⁀ω, flattened by the caller" },
     "11.40": { "kind": "inline", "name": "JAM.knownPackages", "at": "ρ.filterMap" },

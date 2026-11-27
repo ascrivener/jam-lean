@@ -1,5 +1,7 @@
 {
   "equations": {
+    "13.1":  { "kind": "type", "name": "JAM.State",
+               "note": "no separate record: π is the fields `valStats`, `valStatsLast`, `coreStats` and `serviceStats`" },
     "13.2":  { "kind": "type", "name": "JAM.ValidatorRecord", "note": "π_V and π_L are lists of these" },
     "13.3":  { "kind": "inline", "name": "JAM.validatorStats", "at": "let curr' :=",
                "note": "not enforced by the types; `validatorStats` gives π'_V the length |κ'|, and π'_L is π†_V, of length |π_V|" },

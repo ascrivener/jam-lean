@@ -3,6 +3,7 @@ import Companion.Source
 import Companion.Paper
 import Companion.Docstring
 import JAM.Reports
+import JAM.BlockImport
 
 open Verso.Genre Manual
 open Companion
@@ -234,8 +235,9 @@ slots old and in the ancestor set $`\mathbf{A}` of the last $`\mathsf{L}` header
 
 {leanSource JAM.checkAnchor}
 
-The ancestor set is not part of the state, so the model takes the condition of {eq}`11.38` as an input,
-`lookupAnchorKnown` of {api}`JAM.ReportsInput`.
+The ancestor set is not part of the state, so {api}`JAM.guarantees` takes the condition of {eq}`11.38` as an
+input, `lookupAnchorKnown` of {api}`JAM.ReportsInput`; block import computes it with
+{api}`JAM.lookupAnchorKnown`, from the retained headers and the block's own header.
 
 A package already in the pipeline may not be reported again: not one reported in recent history
 $`\beta_H`, accumulated in $`\xi`, waiting in the ready queue $`\omega`, or assigned in $`\rho`:

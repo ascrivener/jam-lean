@@ -225,13 +225,19 @@ How the code maps to the equation:
   effective supervisors, and at the privileged services $`m`, $`v`, $`r` and $`\mathbf{a}_c`. The
   model runs $`\Delta_1` once for each service in that list (`needed`) and reuses the result.
 * `M`, `m`, `n` and `merged` are $`M(s)`, $`\mathbf{m}`, $`\mathbf{n}` and $`\mathbf{m} \cup \mathbf{n}`;
-  `accounts` is $`\mathbf{d}'`.
+  `accounts` is $`\mathbf{d}'`. The function returns an `Except`, for the conflict described below.
 * `eStar` is $`\Delta(m)_\mathbf{e}`, so `eStar.manager` and `eStar.alwaysAcc` are
   $`X(m)_{(m, \mathbf{z})}`.
 
-The paper requires that two services never create the same new index in one round, and makes a
-block where this happens invalid. The model does not reject such a block: in `n`, the account from
-the later service in `ss` replaces the earlier one.
+The paper adds, after the definitions of $`I` and $`Y`, that different services may not contribute
+the same index for a new service to $`\mathbf{n}`, and that a block where this happens must be
+considered invalid. The model collects $`\mathbf{n}` with {api}`JAM.collectNew`, which returns an
+error on such a conflict. {api}`JAM.accPar`, {api}`JAM.accSeq` and {api}`JAM.accumulate` pass the error on,
+and block import rejects the block (`BlockError.accumulation`):
+
+{leanSource JAM.AccumulationError}
+
+{leanSource JAM.collectNew}
 
 ## I and Y, preimage integration
 
@@ -310,7 +316,7 @@ $$`\xi'_{\mathsf{E}-1} = P(\mathbf{R}^*_{\dots n}) \qquad \forall i \in \mathbb{
 $$`\forall i \in \mathbb{N}_\mathsf{E} : {\omega'}^{\circlearrowleft}_{m-i} \equiv \begin{cases} E(\mathbf{R}^Q, \xi'_{\mathsf{E}-1}) & \text{if } i = 0 \\ [] & \text{if } 1 \le i < \tau' - \tau \\ E(\omega^{\circlearrowleft}_{m-i}, \xi'_{\mathsf{E}-1}) & \text{if } i \ge \tau' - \tau \end{cases} \qquad \text{(12.34)}`
 
 All of §12.1–§12.3 is one function in the model, returning the posterior state, the output root and
-the statistics:
+the statistics, or the error that makes the block invalid:
 
 {leanSource JAM.AccResult}
 
@@ -406,6 +412,10 @@ theorems. Among them:
 * *Self-transfers* (`transfer`, Appendix B). An immediate transfer from a service to itself counts
   the credit when the balance is checked against the threshold, and a deferred one does not.
 * *The bounds of $`\mathbf{E}_P`.* One pair too many, or one octet too many, is rejected.
+* *New-index conflicts.* {api}`JAM.collectNew` collects distinct new indices from two services'
+  post-states, ignores indices already in $`\mathbf{d}`, and returns the conflict error when two
+  services create the same index, even with identical accounts. (These run on hand-built account
+  maps, not through $`\Psi_A`.)
 
 The published accumulate test vectors are for GP v0.8.0; running them against this v0.8.1 model is
 suspended until v0.8.1 vectors exist.
@@ -434,9 +444,6 @@ Notes are in the model's
   $`s \in \mathcal{K}(\mathbf{d})`, but $`\mathbf{s}` can contain a service with no account (a digest or
   transfer for it). The model takes $`s` itself ({api}`JAM.effectiveSupervisor`), so
   $`\Delta(s) = \Delta_1(\ldots, s)`, which for a missing account changes nothing.
-* *New-index conflicts.* The paper makes a block invalid if two services create the same new index
-  in one round; the model keeps the account created by the later service (see
-  {ref "accumulation-execution"}[Δ\*]).
 * *Termination of $`\Delta_+` and $`Q`.* The paper gives no argument that the recursions end. The model
   gives each a bound on the number of rounds: $`|\mathbf{q}| + 1` for $`Q`, and
   $`|\mathbf{R}^*| + \lfloor g / \mathsf{M}_T \rfloor + 2` for $`\Delta_+`, where $`\mathsf{M}_T`

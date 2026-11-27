@@ -10,4 +10,4 @@ import JamCrypto.BandersnatchSign
 import JamCrypto.ThinVrf
 import JamCrypto.PedersenVrf
 import JamCrypto.DevKeys
-import JamCrypto.Fast.Crypto
+import JamCrypto.Fast

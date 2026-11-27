@@ -171,4 +171,57 @@ theorem limb_inj {x y X Y : Nat} (hx : x < 2 ^ 29) (hy : y < 2 ^ 29)
 theorem mod29_mod64 (n : Nat) : n % 2 ^ 29 % 2 ^ 64 = n % 2 ^ 29 :=
   Nat.mod_eq_of_lt (Nat.lt_trans (Nat.mod_lt _ (by decide)) (by decide))
 
+/-! ## The conclusions of the generated proofs
+
+From the summed carry chains of an operation, the result (one of the two candidate limb vectors,
+chosen by the final borrow) is reduced and has the right value. Stated for arbitrary p and R, so
+that the generated proofs only instantiate them. -/
+
+theorem add_fin {A B T D c w p R : Nat} (e1 : T + R * c = A + B) (e2 : D + p = T + R * w)
+    (hA : A < p) (hB : B < p) (hD : D < R) (hc : c ≤ 1) (hw : w ≤ 1) (hpR : 2 * p ≤ R) :
+    ((¬c = 0 ∨ w = 0) → D < p ∧ D = (A + B) % p) ∧ (¬(¬c = 0 ∨ w = 0) → T < p ∧ T = (A + B) % p) := by
+  have hc' : c = 0 ∨ c = 1 := by omega
+  have hw' : w = 0 ∨ w = 1 := by omega
+  rcases hc' with rfl | rfl <;> rcases hw' with rfl | rfl <;> simp only [Nat.mul_zero, Nat.mul_one] at e1 e2
+  · refine ⟨fun _ => ?_, fun h => absurd (Or.inr rfl) h⟩
+    have : p ≤ A + B := by omega
+    rw [Nat.mod_eq_sub_mod this, Nat.mod_eq_of_lt (by omega)]; omega
+  · refine ⟨fun h => by omega, fun _ => ?_⟩
+    rw [Nat.mod_eq_of_lt (by omega)]; omega
+  · omega
+  · omega
+
+theorem sub_fin {A B D E w c p R : Nat} (e1 : D + B = A + R * w) (e2 : E + R * c = D + p)
+    (hA : A < p) (hB : B < p) (hD : D < R) (hE : E < R) (hw : w ≤ 1) (hc : c ≤ 1) (hpR : 2 * p ≤ R) :
+    (w = 0 → D < p ∧ D = (A + p - B) % p) ∧ (¬w = 0 → E < p ∧ E = (A + p - B) % p) := by
+  have hc' : c = 0 ∨ c = 1 := by omega
+  have hw' : w = 0 ∨ w = 1 := by omega
+  rcases hc' with rfl | rfl <;> rcases hw' with rfl | rfl <;> simp only [Nat.mul_zero, Nat.mul_one] at e1 e2
+  · refine ⟨fun _ => ?_, fun h => absurd rfl h⟩
+    have e : A + p - B = (A - B) + p := by omega
+    rw [e, Nat.add_mod_right, Nat.mod_eq_of_lt (by omega)]; omega
+  · omega
+  · refine ⟨fun _ => ?_, fun h => absurd rfl h⟩
+    have e : A + p - B = (A - B) + p := by omega
+    rw [e, Nat.add_mod_right, Nat.mod_eq_of_lt (by omega)]; omega
+  · refine ⟨fun h => absurd h (by omega), fun _ => ?_⟩
+    rw [Nat.mod_eq_of_lt (by omega)]; omega
+
+theorem mul_fin {T D E M w p R : Nat} (e1 : T * R = E + M * p) (e2 : D + p = T + R * w)
+    (hE : E < p * p) (hM : M < R) (hD : D < R) (hw : w ≤ 1) (hpR : p ≤ R) :
+    (w = 0 → D < p ∧ D * R % p = E % p) ∧ (¬w = 0 → T < p ∧ T * R % p = E % p) := by
+  have h1 : M * p ≤ R * p := Nat.mul_le_mul_right p (Nat.le_of_lt hM)
+  have h2 : p * p ≤ R * p := Nat.mul_le_mul_right p hpR
+  have h3 : T * R < (2 * p) * R := by
+    rw [e1, Nat.mul_comm (2 * p) R, Nat.mul_comm 2 p, ← Nat.mul_assoc, Nat.mul_two, Nat.mul_comm R p]
+    rw [Nat.mul_comm R p] at h1 h2
+    omega
+  have hT : T < 2 * p := Nat.lt_of_mul_lt_mul_right h3
+  have hw' : w = 0 ∨ w = 1 := by omega
+  rcases hw' with rfl | rfl <;> simp only [Nat.mul_zero, Nat.mul_one, Nat.add_zero] at e2
+  · refine ⟨fun _ => ⟨by omega, mod_of_eq (k := R) (M := M) ?_⟩, fun h => absurd rfl h⟩
+    rw [← e1, ← e2, Nat.add_mul, Nat.mul_comm p R]
+  · refine ⟨fun h => absurd h (by omega), fun _ => ⟨by omega, mod_of_eq (k := 0) (M := M) ?_⟩⟩
+    rw [Nat.zero_mul, Nat.add_zero, e1]
+
 end JamCrypto.Fast

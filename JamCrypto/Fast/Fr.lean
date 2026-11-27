@@ -562,12 +562,11 @@ theorem mul_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   clear bd0_7
   split <;> rename_i hc <;>
     simp only [bne_iff_ne, ne_eq, Bool.or_eq_true, beq_iff_eq, ← UInt64.toNat_inj, UInt64.reduceToNat, Bool.not_eq_true'] at hc <;>
-    simp only [Elem.Ok, Elem.val, p] <;>
-    generalize r38.toNat * 2^0 + r41.toNat * 2^29 + r44.toNat * 2^58 + r47.toNat * 2^87 + r50.toNat * 2^116 + r53.toNat * 2^145 + r56.toNat * 2^174 + r59.toNat * 2^203 + c60.toNat * 2^232 = V0 at * <;>
-    generalize d62.toNat * 2^0 + d65.toNat * 2^29 + d68.toNat * 2^58 + d71.toNat * 2^87 + d74.toNat * 2^116 + d77.toNat * 2^145 + d80.toNat * 2^174 + d83.toNat * 2^203 + d86.toNat * 2^232 = V1 at * <;>
-    generalize m2.toNat * 2^0 + m6.toNat * 2^29 + m10.toNat * 2^58 + m14.toNat * 2^87 + m18.toNat * 2^116 + m22.toNat * 2^145 + m26.toNat * 2^174 + m30.toNat * 2^203 + m34.toNat * 2^232 = V2 at *
-  · exact ⟨by grind, mod_of_eq (k := 2^261) (M := V2) (by grind)⟩
-  · exact ⟨by grind, mod_of_eq (k := 0) (M := V2) (by grind)⟩
+    simp only [Elem.Ok, Elem.val, p]
+  · have h := (mul_fin e1 e2 hABlt bm_8 bd0_8 k78 (by decide)).1 hc
+    exact ⟨⟨k53, k56, k59, k62, k65, k68, k71, k74, k77, h.1⟩, h.2⟩
+  · have h := (mul_fin e1 e2 hABlt bm_8 bd0_8 k78 (by decide)).2 hc
+    exact ⟨⟨k29, k32, k35, k38, k41, k44, k47, k50, hacc, h.1⟩, h.2⟩
 
 /-- The Montgomery square a²·R⁻¹ mod p. -/
 def sq (a : Elem) : Elem :=
@@ -1025,12 +1024,11 @@ theorem sq_spec (a : Elem) (ha : a.Ok) :
   clear bd0_7
   split <;> rename_i hc <;>
     simp only [bne_iff_ne, ne_eq, Bool.or_eq_true, beq_iff_eq, ← UInt64.toNat_inj, UInt64.reduceToNat, Bool.not_eq_true'] at hc <;>
-    simp only [Elem.Ok, Elem.val, p] <;>
-    generalize r38.toNat * 2^0 + r41.toNat * 2^29 + r44.toNat * 2^58 + r47.toNat * 2^87 + r50.toNat * 2^116 + r53.toNat * 2^145 + r56.toNat * 2^174 + r59.toNat * 2^203 + c60.toNat * 2^232 = V0 at * <;>
-    generalize d62.toNat * 2^0 + d65.toNat * 2^29 + d68.toNat * 2^58 + d71.toNat * 2^87 + d74.toNat * 2^116 + d77.toNat * 2^145 + d80.toNat * 2^174 + d83.toNat * 2^203 + d86.toNat * 2^232 = V1 at * <;>
-    generalize m2.toNat * 2^0 + m6.toNat * 2^29 + m10.toNat * 2^58 + m14.toNat * 2^87 + m18.toNat * 2^116 + m22.toNat * 2^145 + m26.toNat * 2^174 + m30.toNat * 2^203 + m34.toNat * 2^232 = V2 at *
-  · exact ⟨by grind, mod_of_eq (k := 2^261) (M := V2) (by grind)⟩
-  · exact ⟨by grind, mod_of_eq (k := 0) (M := V2) (by grind)⟩
+    simp only [Elem.Ok, Elem.val, p]
+  · have h := (mul_fin e1 e2 hABlt bm_8 bd0_8 k78 (by decide)).1 hc
+    exact ⟨⟨k53, k56, k59, k62, k65, k68, k71, k74, k77, h.1⟩, h.2⟩
+  · have h := (mul_fin e1 e2 hABlt bm_8 bd0_8 k78 (by decide)).2 hc
+    exact ⟨⟨k29, k32, k35, k38, k41, k44, k47, k50, hacc, h.1⟩, h.2⟩
 
 /-- a + b. -/
 def add (a b : Elem) : Elem :=
@@ -1261,31 +1259,13 @@ theorem add_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   clear bd0_6
   have bd0_8 : d29.toNat * 2^0 + d32.toNat * 2^29 + d35.toNat * 2^58 + d38.toNat * 2^87 + d41.toNat * 2^116 + d44.toNat * 2^145 + d47.toNat * 2^174 + d50.toNat * 2^203 + d53.toNat * 2^232 < 2^261 := bstep bd0_7 k53 (by decide)
   clear bd0_7
-  have bd1_0 : t2.toNat * 2^0 < 2^29 := bfirst k2
-  have bd1_1 : t2.toNat * 2^0 + t5.toNat * 2^29 < 2^58 := bstep bd1_0 k5 (by decide)
-  clear bd1_0
-  have bd1_2 : t2.toNat * 2^0 + t5.toNat * 2^29 + t8.toNat * 2^58 < 2^87 := bstep bd1_1 k8 (by decide)
-  clear bd1_1
-  have bd1_3 : t2.toNat * 2^0 + t5.toNat * 2^29 + t8.toNat * 2^58 + t11.toNat * 2^87 < 2^116 := bstep bd1_2 k11 (by decide)
-  clear bd1_2
-  have bd1_4 : t2.toNat * 2^0 + t5.toNat * 2^29 + t8.toNat * 2^58 + t11.toNat * 2^87 + t14.toNat * 2^116 < 2^145 := bstep bd1_3 k14 (by decide)
-  clear bd1_3
-  have bd1_5 : t2.toNat * 2^0 + t5.toNat * 2^29 + t8.toNat * 2^58 + t11.toNat * 2^87 + t14.toNat * 2^116 + t17.toNat * 2^145 < 2^174 := bstep bd1_4 k17 (by decide)
-  clear bd1_4
-  have bd1_6 : t2.toNat * 2^0 + t5.toNat * 2^29 + t8.toNat * 2^58 + t11.toNat * 2^87 + t14.toNat * 2^116 + t17.toNat * 2^145 + t20.toNat * 2^174 < 2^203 := bstep bd1_5 k20 (by decide)
-  clear bd1_5
-  have bd1_7 : t2.toNat * 2^0 + t5.toNat * 2^29 + t8.toNat * 2^58 + t11.toNat * 2^87 + t14.toNat * 2^116 + t17.toNat * 2^145 + t20.toNat * 2^174 + t23.toNat * 2^203 < 2^232 := bstep bd1_6 k23 (by decide)
-  clear bd1_6
-  have bd1_8 : t2.toNat * 2^0 + t5.toNat * 2^29 + t8.toNat * 2^58 + t11.toNat * 2^87 + t14.toNat * 2^116 + t17.toNat * 2^145 + t20.toNat * 2^174 + t23.toNat * 2^203 + t26.toNat * 2^232 < 2^261 := bstep bd1_7 k26 (by decide)
-  clear bd1_7
   split <;> rename_i hc <;>
     simp only [bne_iff_ne, ne_eq, Bool.or_eq_true, beq_iff_eq, ← UInt64.toNat_inj, UInt64.reduceToNat, Bool.not_eq_true'] at hc <;>
-    simp only [Elem.Ok, Elem.val, p] <;>
-    generalize t2.toNat * 2^0 + t5.toNat * 2^29 + t8.toNat * 2^58 + t11.toNat * 2^87 + t14.toNat * 2^116 + t17.toNat * 2^145 + t20.toNat * 2^174 + t23.toNat * 2^203 + t26.toNat * 2^232 = V0 at * <;>
-    generalize d29.toNat * 2^0 + d32.toNat * 2^29 + d35.toNat * 2^58 + d38.toNat * 2^87 + d41.toNat * 2^116 + d44.toNat * 2^145 + d47.toNat * 2^174 + d50.toNat * 2^203 + d53.toNat * 2^232 = V1 at * <;>
-    generalize a.l0.toNat * 2^0 + a.l1.toNat * 2^29 + a.l2.toNat * 2^58 + a.l3.toNat * 2^87 + a.l4.toNat * 2^116 + a.l5.toNat * 2^145 + a.l6.toNat * 2^174 + a.l7.toNat * 2^203 + a.l8.toNat * 2^232 = V2 at * <;>
-    generalize b.l0.toNat * 2^0 + b.l1.toNat * 2^29 + b.l2.toNat * 2^58 + b.l3.toNat * 2^87 + b.l4.toNat * 2^116 + b.l5.toNat * 2^145 + b.l6.toNat * 2^174 + b.l7.toNat * 2^203 + b.l8.toNat * 2^232 = V3 at * <;>
-    omega
+    simp only [Elem.Ok, Elem.val, p]
+  · have h := (add_fin e1 e2 hav hbv bd0_8 k27 k54 (by decide)).1 hc
+    exact ⟨⟨k29, k32, k35, k38, k41, k44, k47, k50, k53, h.1⟩, h.2⟩
+  · have h := (add_fin e1 e2 hav hbv bd0_8 k27 k54 (by decide)).2 hc
+    exact ⟨⟨k2, k5, k8, k11, k14, k17, k20, k23, k26, h.1⟩, h.2⟩
 
 /-- a − b. -/
 def sub (a b : Elem) : Elem :=
@@ -1535,12 +1515,11 @@ theorem sub_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   clear bd1_7
   split <;> rename_i hc <;>
     simp only [bne_iff_ne, ne_eq, Bool.or_eq_true, beq_iff_eq, ← UInt64.toNat_inj, UInt64.reduceToNat, Bool.not_eq_true'] at hc <;>
-    simp only [Elem.Ok, Elem.val, p] <;>
-    generalize t29.toNat * 2^0 + t32.toNat * 2^29 + t35.toNat * 2^58 + t38.toNat * 2^87 + t41.toNat * 2^116 + t44.toNat * 2^145 + t47.toNat * 2^174 + t50.toNat * 2^203 + t53.toNat * 2^232 = V0 at * <;>
-    generalize d2.toNat * 2^0 + d5.toNat * 2^29 + d8.toNat * 2^58 + d11.toNat * 2^87 + d14.toNat * 2^116 + d17.toNat * 2^145 + d20.toNat * 2^174 + d23.toNat * 2^203 + d26.toNat * 2^232 = V1 at * <;>
-    generalize a.l0.toNat * 2^0 + a.l1.toNat * 2^29 + a.l2.toNat * 2^58 + a.l3.toNat * 2^87 + a.l4.toNat * 2^116 + a.l5.toNat * 2^145 + a.l6.toNat * 2^174 + a.l7.toNat * 2^203 + a.l8.toNat * 2^232 = V2 at * <;>
-    generalize b.l0.toNat * 2^0 + b.l1.toNat * 2^29 + b.l2.toNat * 2^58 + b.l3.toNat * 2^87 + b.l4.toNat * 2^116 + b.l5.toNat * 2^145 + b.l6.toNat * 2^174 + b.l7.toNat * 2^203 + b.l8.toNat * 2^232 = V3 at * <;>
-    omega
+    simp only [Elem.Ok, Elem.val, p]
+  · have h := (sub_fin e1 e2 hav hbv bd0_8 bd1_8 k27 k54 (by decide)).1 hc
+    exact ⟨⟨k2, k5, k8, k11, k14, k17, k20, k23, k26, h.1⟩, h.2⟩
+  · have h := (sub_fin e1 e2 hav hbv bd0_8 bd1_8 k27 k54 (by decide)).2 hc
+    exact ⟨⟨k29, k32, k35, k38, k41, k44, k47, k50, k53, h.1⟩, h.2⟩
 
 
 /-! ## Derived operations and their values -/

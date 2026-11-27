@@ -27,6 +27,7 @@ which code the compiler emits. They are the only spec→fast imports allowed:
 |---|---|---|
 | `PVM` (root) | `PVM.Fast` | the aggregator |
 | `JAM` (root) | `JAM.Fast` | the aggregator |
+| `JamCrypto` (root) | `JamCrypto.Fast` | the aggregator |
 | `PVM.Invocation` | `PVM.Fast.Basic` | its Ψ_H/Ψ_M code calls Ψ |
 | `JAM.Refine`, `JAM.Accumulate` | `PVM.Fast.Host`, `JAM.Fast.HostGeneral`, `JAM.Fast.Blake2b` | they call Ψ, Ψ_M, `hostGrowHeap` and ℋ |
 | `JAM.Host.General` | `PVM.Fast.Parse` | `heapBounds` parses the blob at every `grow_heap` |
@@ -98,4 +99,16 @@ Supporting equalities, not registered with `@[csimp]`:
 ### JamCrypto
 
 `JamCrypto` (the crypto parameter in plain Lean, not imported by the model) keeps its fast code in
-its own `JamCrypto/Fast/` directory. The same script checks it.
+its own `JamCrypto/Fast/` directory; the aggregator `JamCrypto.Fast` is imported by the root
+`JamCrypto`. The same script checks it. The fast functions perform the reference's own sequence of
+field operations on fixed-limb fields (`JamCrypto/Fast/Fr.lean`, `Fp25519.lean`, with generated
+proofs); see docs/jamcrypto.md. The replacements are in `JamCrypto/Fast/Crypto.lean`.
+
+| spec | fast | theorem | file |
+|---|---|---|---|
+| `Ed25519.verifyWith` | `Fast.Ed25519.verifyWith` | `Fast.Ed25519.verifyWith_eq` | `JamCrypto/Fast/Ed25519.lean` |
+| `Bandersnatch.ietfVerify` | `Fast.Bandersnatch.ietfVerify` | `Fast.Bandersnatch.ietfVerify_eq` | `JamCrypto/Fast/Bandersnatch.lean` |
+| `Bandersnatch.vrfOutput` | `Fast.Bandersnatch.vrfOutput` | `Fast.Bandersnatch.vrfOutput_eq` | `JamCrypto/Fast/Bandersnatch.lean` |
+| `Bandersnatch.Thin.verify` | `Fast.Bandersnatch.Thin.verify` | `Fast.Bandersnatch.Thin.verify_eq` | `JamCrypto/Fast/Bandersnatch.lean` |
+| `Bandersnatch.Thin.vrfOutput` | `Fast.Bandersnatch.Thin.vrfOutput` | `Fast.Bandersnatch.Thin.vrfOutput_eq` | `JamCrypto/Fast/Bandersnatch.lean` |
+| `withSignatures` | `Fast.withSignatures` (restated) | `Fast.withSignatures_eq` | `JamCrypto/Fast/Crypto.lean` |

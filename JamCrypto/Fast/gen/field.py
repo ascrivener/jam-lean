@@ -299,13 +299,14 @@ def emit_bound(L, g, nm, limbs_, ind="  "):
         prev = f"{nm}_{j}"
     return prev
 
-def finish(L, g, last, n, base_hyps, eqs, bounded, sums, ind="  ", mont=None):
+def finish(L, g, last, n, base_hyps, eqs, bounded, fin, res1, res2, ind="  "):
     """The conclusion, from the last step of each carry chain:
-    * `eqs`: (name, statement) sum identities, each proved by `omega` from the chain steps alone
-      (everything else cleared: with the limb bounds in sight `omega` explodes);
-    * `bounded`: lists of limbs whose sums are bounded by R through `bfirst`/`bstep`;
-    * `sums`: the limb-sum expressions then generalized to single variables, so that the final
-      `omega` (split on the final comparison) sees a handful of variables."""
+    * `eqs`: (name, statement) sum identities, each proved by `grind` from the chain steps alone
+      (everything else cleared);
+    * `bounded`: lists of limbs whose sums are bounded by R through `bfirst`/`bstep`, named bd0, bd1, …;
+    * `fin`: the final lemma (`add_fin`, `sub_fin`, `mul_fin`) applied to these, with `{bdK}` for the
+      bound names and `{F:text}` for the name of the kept fact `text`;
+    * `res1`, `res2`: the limbs of the result in the two branches of the final comparison."""
     bnames = [nm for nm, _ in g.kept]
     allh = list(base_hyps) + bnames
     chains = list(last.values())
@@ -314,20 +315,22 @@ def finish(L, g, last, n, base_hyps, eqs, bounded, sums, ind="  ", mont=None):
         L.append(f"{ind}  clear {' '.join(allh)}")
         L.append(f"{ind}  grind")
     L.append(f"{ind}clear {' '.join(chains)}")
+    bds = []
     for bi, limbs_ in enumerate(bounded):
-        emit_bound(L, g, f"bd{bi}", limbs_, ind)
+        bds.append(emit_bound(L, g, f"bd{bi}", limbs_, ind))
+    import re as _re
+    call = fin
+    for bi, nm in enumerate(bds):
+        call = call.replace("{bd%d}" % bi, nm)
+    call = _re.sub(r"\{F:([^}]*)\}", lambda m_: g.factname[m_.group(1)], call)
+    lim = lambda rs: ", ".join(g.factname[f"{N(x)} < 2^{W}"] for x in rs)
     L.append(f"{ind}split <;> rename_i hc <;>")
     L.append(f"{ind}  simp only [bne_iff_ne, ne_eq, Bool.or_eq_true, beq_iff_eq, ← UInt64.toNat_inj, UInt64.reduceToNat, Bool.not_eq_true'] at hc <;>")
-    L.append(f"{ind}  simp only [Elem.Ok, Elem.val, p] <;>")
-    for k, sm in enumerate(sums):
-        L.append(f"{ind}  generalize {sm} = V{k} at * <;>")
-    if mont is None:
-        L.append(f"{ind}  omega")
-    else:
-        # Montgomery: the residue part through `mod_of_eq` (k = R when p was subtracted)
-        L[-1] = L[-1][:-len(" <;>")] if L[-1].endswith(" <;>") else L[-1]
-        L.append(f"{ind}· exact ⟨by grind, mod_of_eq (k := {mont}) (M := V2) (by grind)⟩")
-        L.append(f"{ind}· exact ⟨by grind, mod_of_eq (k := 0) (M := V2) (by grind)⟩")
+    L.append(f"{ind}  simp only [Elem.Ok, Elem.val, p]")
+    L.append(f"{ind}· have h := ({call}).1 hc")
+    L.append(f"{ind}  exact ⟨⟨{lim(res1)}, h.1⟩, h.2⟩")
+    L.append(f"{ind}· have h := ({call}).2 hc")
+    L.append(f"{ind}  exact ⟨⟨{lim(res2)}, h.1⟩, h.2⟩")
 
 def gen_module(name, doc, p):
     n = (p.bit_length() + 2 + W - 1) // W
@@ -462,7 +465,8 @@ def gen_module(name, doc, p):
         finish(L, g, last, n, [b for b in base if b != "hE"],
                [("e2", f"({lsum(d)}) + {p} = ({lsum(rl)}) + 2^{W * n} * {N(g.fsw)}")],
                [d],
-               [lsum(rl), lsum(d), lsum(ms)], mont=f"2^{W * n}")
+               "mul_fin e1 e2 hABlt bm_%d {bd0} {F:%s} (by decide)" % (n - 1, f"{N(g.fsw)} ≤ 1"),
+               d, rl)
         w("")
     g, cond, d, t = gen_add(n, p)
     w("/-- a + b. -/")
@@ -480,8 +484,9 @@ def gen_module(name, doc, p):
     finish(L, g, last, n, base,
            [("e1", f"({lsum(t)}) + 2^{W * n} * {N(g.top)} = ({val_expr('a', n)}) + ({val_expr('b', n)})"),
             ("e2", f"({lsum(d)}) + {p} = ({lsum(t)}) + 2^{W * n} * {N(g.fsw)}")],
-           [d, t],
-           [lsum(t), lsum(d), val_expr('a', n), val_expr('b', n)])
+           [d],
+           "add_fin e1 e2 hav hbv {bd0} {F:%s} {F:%s} (by decide)" % (f"{N(g.top)} ≤ 1", f"{N(g.fsw)} ≤ 1"),
+           d, t)
     w("")
     g, cond, d, t = gen_sub(n, p)
     w("/-- a − b. -/")
@@ -500,7 +505,8 @@ def gen_module(name, doc, p):
            [("e1", f"({lsum(d)}) + ({val_expr('b', n)}) = ({val_expr('a', n)}) + 2^{W * n} * {N(g.sbw)}"),
             ("e2", f"({lsum(t)}) + 2^{W * n} * {N(g.top)} = ({lsum(d)}) + {p}")],
            [d, t],
-           [lsum(t), lsum(d), val_expr('a', n), val_expr('b', n)])
+           "sub_fin e1 e2 hav hbv {bd0} {bd1} {F:%s} {F:%s} (by decide)" % (f"{N(g.sbw)} ≤ 1", f"{N(g.top)} ≤ 1"),
+           d, t)
     w("")
     t = TMPL
     horner = "a.l0.toNat"

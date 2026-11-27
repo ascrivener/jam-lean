@@ -43,6 +43,15 @@ it *quotes* it with `{leanSource N}` (the header "N — file · GitHub · API" c
 `proofs/` package, which `{leanSource}` cannot reach, is quoted as its statement in a code block.
 `{api}` and `{name}` references in running prose to something quoted elsewhere are fine.
 
+Every page with Lean code has a "Show all Lean / Hide all Lean" switch under its title
+(`collapseJs` in `CompanionMain.lean`). "Show all" opens every collapsed definition; "Hide all"
+hides each quoted definition (header, docstring and code, the `lean-source` box `{leanSource}`
+emits) and every other Lean code block, leaving the prose and the paper's equations; pressing the
+active button again returns to the default. The choice is kept in `localStorage`
+(`jam-lean-book.lean`) for every page; if the browser blocks storage the switch still works on the
+page. So write the prose to read on its own when the code is hidden: don't let a sentence depend
+on the reader seeing the quoted block.
+
 The readings the model chose should link to `docs/upstream-candidates.md` by note number.
 
 ## Notation: the paper's macros

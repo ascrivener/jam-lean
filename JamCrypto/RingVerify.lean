@@ -6,18 +6,20 @@ import JamCrypto.Bls12381Pairing
 /-!
 # Ring VRF verification (GP v0.8.0 Appendix G)
 
-x ∈ 𝔹̄°_r⟨c⟩⟨m⟩ for a ring root r, context c and message m: the 784-octet x is the VRF output
-point O (32 octets) followed by a ring VRF proof (Bandersnatch VRF spec, ring VRF; as ark-vrf
-0.1.0 serializes it), which is a Pedersen VRF proof (160 octets) and a ring proof (592 octets,
-eprint 2023/002 as implemented by w3f ring-proof 0.0.2). The VRF input is I = H2C(c) and m is the
-additional data.
+$x \in \bar{\mathbb{B}}^{\circ}_r\langle c\rangle\langle m\rangle$ for a ring root $r$, context $c$
+and message $m$: the 784-octet $x$ is the VRF output point $O$ (32 octets) followed by a ring VRF
+proof (Bandersnatch VRF spec, ring VRF; as ark-vrf 0.1.0 serializes it), which is a Pedersen VRF
+proof (160 octets) and a ring proof (592 octets, eprint 2023/002 as implemented by w3f ring-proof
+0.0.2). The VRF input is $I = \text{H2C}(c)$ and $m$ is the additional data.
 
 Verification:
-1. Pedersen VRF (Bandersnatch VRF spec §4): the proof (Y_b, R, O_k, s, s_b) satisfies
-   O_k + c·O = s·I and R + c·Y_b = s·G + s_b·B, with c = challenge(Y_b, I, O, R, O_k, m).
-2. Ring proof: the key commitment Y_b is the blinded key of a ring member. The verifier replays
-   the Fiat–Shamir transcript (`Transcript`), evaluates the seven PIOP constraints at the
-   challenge point ζ, and checks the two KZG openings (at ζ and ζω) with one pairing product.
+1. Pedersen VRF (Bandersnatch VRF spec §4): the proof $(Y_b, R, O_k, s, s_b)$ satisfies
+   $O_k + c \cdot O = s \cdot I$ and $R + c \cdot Y_b = s \cdot G + s_b \cdot B$, with
+   $c = \text{challenge}(Y_b, I, O, R, O_k, m)$.
+2. Ring proof: the key commitment $Y_b$ is the blinded key of a ring member. The verifier replays
+   the Fiat–Shamir transcript (`Transcript`), evaluates the seven PIOP constraints at the challenge
+   point $\zeta$, and checks the two KZG openings (at $\zeta$ and $\zeta\omega$) with one pairing
+   product.
 
 Hash to curve: RFC 9380 hash_to_curve with expand_message_xmd(SHA-512) and the Elligator 2 map
 of the curve's Montgomery form, as arkworks 0.5 implements it (suite
@@ -37,10 +39,11 @@ def sha512 (bs : List UInt8) : List UInt8 := JAM.Sha512.hash bs
 
 /-! ## Hash to curve -/
 
-/-- The Montgomery form B·v² = u³ + A·u² + u of Bandersnatch (arkworks `MontCurveConfig`). -/
+/-- The Montgomery form $B \cdot v^2 = u^3 + A \cdot u^2 + u$ of Bandersnatch (arkworks
+    `MontCurveConfig`). -/
 def montA : Nat := 29978822694968839326280996386011761570173833766074948509196803838190355340952
 def montB : Nat := 25465760566081946422412445027709227188579564747101592991722834452325077642517
-/-- The non-square Z of the Elligator 2 map. -/
+/-- The non-square $Z$ of the Elligator 2 map. -/
 def ell2Z : Nat := 5
 
 /-- expand_message_xmd(SHA-512) to 96 octets, then two field elements (48 octets each, big
@@ -54,7 +57,7 @@ def hashToField (msg : List UInt8) : Nat × Nat :=
   let u := b1 ++ b2
   (Field.ofBE (u.take 48) % R, Field.ofBE ((u.drop 48).take 48) % R)
 
-/-- a is a non-zero square. -/
+/-- $a$ is a non-zero square. -/
 def isQR (a : Nat) : Bool := a % R != 0 && pow a ((R - 1) / 2) == 1
 
 /-- The Elligator 2 map to the twisted Edwards curve (arkworks `Elligator2Map`). -/
@@ -87,13 +90,14 @@ def hashToCurve (data : List UInt8) : Curve.Aff :=
 
 /-! ## Pedersen VRF -/
 
-/-- The Bandersnatch generator G. -/
+/-- The Bandersnatch generator $G$. -/
 def generator : Curve.Aff :=
   ⟨18886178867200960497001835917649091219057080094937609519140440539760939937304,
    19188667384257783945677642223292697773471335439753913231509108946878080696678⟩
 
-/-- challenge(P₁ … Pₙ, ad): SHA-512(suite ⌢ 2 ⌢ points ⌢ ad ⌢ 0), first 32 octets as a big-endian
-    number mod the subgroup order. -/
+/-- $\text{challenge}(P_1, \dots, P_n, \mathit{ad})$:
+    $\text{SHA-512}(\text{suite} \frown 2 \frown \text{points} \frown \mathit{ad} \frown 0)$, first 32
+    octets as a big-endian number mod the subgroup order. -/
 def challenge (pts : List Curve.Aff) (ad : List UInt8) : Nat :=
   let h := sha512 (suiteId ++ [2] ++ (pts.map Curve.encode).flatten ++ ad ++ [0])
   Field.ofBE (h.take 32) % Curve.N
@@ -103,7 +107,7 @@ def decodeScalar (bs : List UInt8) : Option Nat :=
   let v := Field.ofLE bs
   if bs.length == 32 && v < Curve.N then some v else none
 
-/-- An element of 𝔽_r (BLS12-381 scalar): 32 octets little endian, below r. -/
+/-- An element of $\mathbb{F}_r$ (BLS12-381 scalar): 32 octets little endian, below $r$. -/
 def decodeFr (bs : List UInt8) : Option Nat :=
   let v := Field.ofLE bs
   if bs.length == 32 && v < R then some v else none
@@ -121,12 +125,13 @@ def pedersenOk (input output pkCom r ok : Curve.Aff) (s sb : Nat) (ad : List UIn
 
 /-- The ring proof (w3f ring-proof `RingProof`, in serialization order). -/
 structure RingProof where
-  /-- Commitments to the bits, inner-product accumulator, and accumulator x, y columns. -/
+  /-- Commitments to the bits, inner-product accumulator, and accumulator $x$, $y$ columns. -/
   cBits : G1.Aff
   cIpa : G1.Aff
   cAx : G1.Aff
   cAy : G1.Aff
-  /-- Evaluations at ζ: points x, y, selector, bits, inner-product accumulator, accumulator x, y. -/
+  /-- Evaluations at $\zeta$: points $x$, $y$, selector, bits, inner-product accumulator,
+      accumulator $x$, $y$. -/
   evals : Array Nat
   cQuot : G1.Aff
   linAtZetaOmega : Nat
@@ -148,14 +153,14 @@ def decodeRingProof (bs : List UInt8) : Option RingProof := do
   let p2 ← g 544
   some ⟨cBits, cIpa, cAx, cAy, evals.toArray, cQuot, lin, p1, p2⟩
 
-/-- Σ kᵢ·Pᵢ for a few points. -/
+/-- $\sum_i k_i \cdot P_i$ for a few points. -/
 def combine (pts : List G1.Aff) (ks : List Nat) : G1.Jac :=
   (pts.zip ks).foldl (fun acc (p, k) => G1.addJ acc (G1.smul p.toJac k)) G1.Jac.zero
 
-/-- 32 little-endian octets of an 𝔽_r element. -/
+/-- 32 little-endian octets of an $\mathbb{F}_r$ element. -/
 def frLE (x : Nat) : List UInt8 := Field.toLE 32 x
 
-/-- A challenge in 𝔽_r: 48 XOF octets as a big-endian number, reduced. -/
+/-- A challenge in $\mathbb{F}_r$: 48 XOF octets as a big-endian number, reduced. -/
 def frChallenge (t : Transcript) (l : String) : Nat × Transcript :=
   let (bs, t) := t.challenge l.toUTF8.toList 48
   (Field.ofBE bs % R, t)
@@ -169,8 +174,8 @@ def frChallenges (t : Transcript) (l : String) (n : Nat) : List Nat × Transcrip
     t := t'
   return (out.toList, t)
 
-/-- The ring proof verifier: the ring with commitment (cx, cy, csel) over domain size N holds a
-    key k with k + b·H = `result` for some b. -/
+/-- The ring proof verifier: the ring with commitment $(cx, cy, csel)$ over domain size $N$ holds
+    a key $k$ with $k + b \cdot H$ = `result` for some $b$. -/
 def ringProofOk (srs : Srs) (dom : Nat) (cx cy csel : G1.Aff) (result : Curve.Aff)
     (p : RingProof) (k : Consts := .v080) : Bool := Id.run do
   let some g2 := srs.g2Raw[0]? |>.bind Pairing.G2.decode | return false
@@ -238,7 +243,8 @@ def ringProofOk (srs : Srs) (dom : Nat) (cx cy csel : G1.Aff) (result : Curve.Af
   let accP := G1.addJ p.proofZeta.toJac (G1.smul p.proofZetaOmega.toJac rnd)
   return Pairing.pairingCheck [(accA.toAff, g2), (accP.toAff, tg2)]
 
-/-- x ∈ 𝔹̄°_r⟨c⟩⟨m⟩ (GP Appendix G) for rings of up to `ringSize` keys (JAM: V). -/
+/-- $x \in \bar{\mathbb{B}}^{\circ}_r\langle c\rangle\langle m\rangle$ (GP Appendix G) for rings of up to
+    `ringSize` keys (JAM: $V$). -/
 def verify (srs : Srs) (ringSize : Nat) (root ctx msg proof : List UInt8) : Bool := Id.run do
   if root.length != 144 || proof.length != 784 then return false
   let some cx := G1.decompress (root.take 48) | return false
@@ -258,8 +264,8 @@ def verify (srs : Srs) (ringSize : Nat) (root ctx msg proof : List UInt8) : Bool
   if srs.g1.size < dom then return false
   return ringProofOk srs dom cx cy csel pkCom rp
 
-/-- Y(x) (GP Appendix G): the 32-octet VRF output of a ring VRF signature, the hash of its output
-    point: SHA-512(suite ⌢ 3 ⌢ O ⌢ 0), first 32 octets. -/
+/-- $\mathcal{Y}(x)$ (GP Appendix G): the 32-octet VRF output of a ring VRF signature, the hash of
+    its output point: $\text{SHA-512}(\text{suite} \frown 3 \frown O \frown 0)$, first 32 octets. -/
 def output (proof : List UInt8) : List UInt8 :=
   (sha512 (suiteId ++ [3] ++ proof.take 32 ++ [0])).take 32
 

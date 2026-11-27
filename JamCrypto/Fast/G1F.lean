@@ -27,7 +27,7 @@ class IsFq (F : Type) [Field F] : Prop where
 
 variable {F : Type} [Field F] [LawfulField F] [IsFq F]
 
-/-- `a` stands for the reduced value x. -/
+/-- `a` stands for the reduced value $x$. -/
 def V (a : F) (x : Nat) : Prop := VRel a x ∧ x < P
 
 namespace V

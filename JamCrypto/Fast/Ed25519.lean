@@ -6,7 +6,7 @@ import JamCrypto.Ed25519
 # Ed25519 verification on fixed-limb field arithmetic, proved equal to the reference
 
 `verifyWith` performs the same sequence of operations as `JamCrypto.Ed25519.verifyWith` (the
-reference implementation, unchanged), on `Fast.Fp25519` instead of `Nat` mod p, and is proved
+reference implementation, unchanged), on `Fast.Fp25519` instead of `Nat` mod $p$, and is proved
 equal to it (`verifyWith_eq`) from the field laws of `Fast.Fp25519` and the curve lemmas of
 `Fast.EdwardsF`.
 -/
@@ -27,7 +27,7 @@ local notation "p" => Field.p F
 theorem curve_p : JamCrypto.Ed25519.curve.p = p := rfl
 theorem p_eq : JamCrypto.Ed25519.p = p := rfl
 
-/-- The curve constants a = −1 and d. -/
+/-- The curve constants $a = -1$ and $d$. -/
 @[irreducible] def C : CurveF F := ⟨Field.ofNat JamCrypto.Ed25519.curve.a, Field.ofNat JamCrypto.Ed25519.curve.d⟩
 
 theorem hC : C.Rel JamCrypto.Ed25519.curve := by

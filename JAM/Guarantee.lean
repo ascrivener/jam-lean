@@ -562,7 +562,7 @@ theorem importData_check (H : ByteArray → ByteArray) (src : DataSource) (l : O
 
 /-- The bundle checks accept the bundle built from genuine data (GP v0.8.1 §14.4, §17.2): if
     every item's $(X(w), S_l(w), J_l(w))$ comes from the data source (`packageData`), every
-    exported segment it holds is $\mathsf{W}_G$ octets, and $\mathcal{K}(l)$ is the set of imported package hashes, then
+    segment the data source holds (the segments this package imports, `hseg`) is $\mathsf{W}_G$ octets, and $\mathcal{K}(l)$ is the set of imported package hashes, then
     `checkBundle` accepts the package with that data. -/
 theorem checkBundle_packageData (H : ByteArray → ByteArray) (src : DataSource) (l : OctetDict)
     (p : WorkPackage) (data : List ItemData)

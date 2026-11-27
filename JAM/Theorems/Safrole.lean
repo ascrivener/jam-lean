@@ -376,7 +376,7 @@ theorem safrole_sealKeys_length {params : Params} {c : Crypto} {s s' : SafroleSt
       · exact hS
       · simp [SealKeys.length]
 
-/-- $\mathbf{H}_W$, when present, is $Z(\gamma_A)$ with $\mathsf{E}$ tickets (GP eq. (6.30), `winningticketsmarker`). -/
+/-- $\mathbf{H}_W$, when present, has $\mathsf{E}$ tickets and is a permutation of $\gamma_A$ (GP eq. (6.30), `winningticketsmarker`, gives it as $Z(\gamma_A)$; this theorem does not state the order). -/
 theorem safrole_ticketsMark_length {params : Params} {c : Crypto} {s s' : SafroleState}
     {i : SafroleInput} {o : SafroleOutput} (h : safrole params c s i = .ok (s', o))
     {w : List Ticket} (hw : o.ticketsMark = some w) :

@@ -16,8 +16,9 @@ Signatures are checked with `Crypto.edVerify`. The validator sets $\kappa$ and $
 Ed25519 keys.
 
 The paper states the conditions but names no errors and gives no order between them. The errors
-here are the test vectors' names. The order is not §10's: each list's ordering is checked before its
-elements. First the verdicts are strictly ordered by report hash; then, verdict by verdict: its age,
+here are the test vectors' names. The order is not §10's: first the length bounds of eq. (10.2) on
+$\mathbf{E}_V$, $\mathbf{E}_C$ and $\mathbf{E}_F$; then each list's ordering is checked before its
+elements. The verdicts are strictly ordered by report hash; then, verdict by verdict: its age,
 the ordering of its judgments, the vote count, each judgment's validator index and signature, that
 the report is not already judged, and the vote split. Then the culprits' ordering and each
 culprit's conditions (its verdict is bad, it is not already an offender, the key is a guarantor

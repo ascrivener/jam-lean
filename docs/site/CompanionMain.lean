@@ -11,20 +11,23 @@ open Verso.Genre Manual
     screens. The sidebar lists sections only: the entry Verso adds for each quoted declaration
     (`{mathdoc}`, `{docstring}`) is hidden. -/
 def narrowCss : Verso.Genre.Manual.CSS := ⟨"
+:root { --jl-bg: #fff; --jl-bg-clear: rgba(255,255,255,0); --jl-edge-shadow: rgba(0,0,0,.22);
+  --jl-scroll: #b0b0b0; --jl-button-bg: #f6f6f6; --jl-button-border: #b0b0b0; --jl-pressed-bg: #dde7f3;
+  --jl-pressed-border: #5a7fa8; --jl-focus: #2a6ebb; --jl-muted: #666; }
 .semantics, pre, code.hl.lean.block { max-width: 100%; overflow-x: auto; white-space: pre;
-  scrollbar-width: thin; scrollbar-color: #b0b0b0 transparent; }
+  scrollbar-width: thin; scrollbar-color: var(--jl-scroll) transparent; }
 main table { display: block; max-width: 100%; width: max-content; overflow-x: auto;
-  scrollbar-width: thin; scrollbar-color: #b0b0b0 transparent; }
+  scrollbar-width: thin; scrollbar-color: var(--jl-scroll) transparent; }
 .semantics::-webkit-scrollbar, pre::-webkit-scrollbar, code.hl.lean.block::-webkit-scrollbar,
 main table::-webkit-scrollbar { height: 8px; }
 .semantics::-webkit-scrollbar-thumb, pre::-webkit-scrollbar-thumb, code.hl.lean.block::-webkit-scrollbar-thumb,
-main table::-webkit-scrollbar-thumb { background: #b0b0b0; border-radius: 4px; }
+main table::-webkit-scrollbar-thumb { background: var(--jl-scroll); border-radius: 4px; }
 code.hl.lean.block, .semantics, main table {
   background:
-    linear-gradient(to right, #fff 30%, rgba(255,255,255,0)) left / 2em 100% no-repeat local,
-    linear-gradient(to left, #fff 30%, rgba(255,255,255,0)) right / 2em 100% no-repeat local,
-    radial-gradient(farthest-side at 0 50%, rgba(0,0,0,.22), transparent) left / 12px 100% no-repeat scroll,
-    radial-gradient(farthest-side at 100% 50%, rgba(0,0,0,.22), transparent) right / 12px 100% no-repeat scroll; }
+    linear-gradient(to right, var(--jl-bg) 30%, var(--jl-bg-clear)) left / 2em 100% no-repeat local,
+    linear-gradient(to left, var(--jl-bg) 30%, var(--jl-bg-clear)) right / 2em 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, var(--jl-edge-shadow), transparent) left / 12px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, var(--jl-edge-shadow), transparent) right / 12px 100% no-repeat scroll; }
 .katex-display { max-width: 100%; overflow-x: auto; overflow-y: hidden; }
 .header-title-wrapper { box-sizing: border-box; min-width: 0;
   padding-right: calc(var(--search-bar-width, 24rem) + 1.5rem); }
@@ -45,18 +48,114 @@ code.hl.lean.block.collapsed-code { display: block; max-height: 18em; overflow-y
   -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent);
   mask-image: linear-gradient(to bottom, #000 70%, transparent); }
 button.show-code { display: block; margin: 0.25em 0 1em; padding: 0.3em 0.8em; font-family: system-ui, sans-serif;
-  font-size: 0.9em; cursor: pointer; border: 1px solid #b0b0b0; border-radius: 4px; background: #f6f6f6; }
-.lean-toggle { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5em; margin: 0.5em 0 1em;
+  font-size: 0.9em; cursor: pointer; border: 1px solid var(--jl-button-border); border-radius: 4px; background: var(--jl-button-bg);
+  color: inherit; }
+.page-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5em 1.5em; margin: 0.5em 0 1em;
   font-family: system-ui, sans-serif; font-size: 0.9em; }
+.lean-toggle { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5em; }
+.theme-switch { display: flex; align-items: center; gap: 0.4em; margin-left: auto; }
+.theme-switch select { min-height: 2.4em; padding: 0.2em 0.5em; font: inherit; color: inherit;
+  background: var(--jl-button-bg); border: 1px solid var(--jl-button-border); border-radius: 4px; }
+.theme-switch select:focus-visible { outline: 2px solid var(--jl-focus); outline-offset: 2px; }
 .lean-toggle button { min-height: 2.4em; padding: 0.3em 0.9em; font: inherit; cursor: pointer;
-  border: 1px solid #b0b0b0; border-radius: 4px; background: #f6f6f6; color: inherit; }
-.lean-toggle button[aria-pressed='true'] { background: #dde7f3; border-color: #5a7fa8; font-weight: 600; }
-.lean-toggle button:focus-visible, button.show-code:focus-visible { outline: 2px solid #2a6ebb; outline-offset: 2px; }
-.lean-toggle .lean-toggle-note { color: #666; }
+  border: 1px solid var(--jl-button-border); border-radius: 4px; background: var(--jl-button-bg); color: inherit; }
+.lean-toggle button[aria-pressed='true'] { background: var(--jl-pressed-bg); border-color: var(--jl-pressed-border); font-weight: 600; }
+.lean-toggle button:focus-visible, button.show-code:focus-visible { outline: 2px solid var(--jl-focus); outline-offset: 2px; }
+.lean-toggle .lean-toggle-note { color: var(--jl-muted); }
 body.lean-hidden .lean-source, body.lean-hidden code.hl.lean.block,
 body.lean-hidden button.show-code { display: none; }
 .split-toc li:has(> a[href*='/#JAM___']), .split-toc li:has(> a[href*='/#PVM___']),
 .split-toc li:has(> a[href*='/#JamCrypto___']) { display: none; }
+"⟩
+
+/-- Dark mode: the book follows the reader's system setting (`prefers-color-scheme`), and the
+    theme switch under each page's title (Auto / Light / Dark, remembered in `localStorage`) can
+    override it by setting `data-theme` on the root element. One palette, applied in both cases:
+    Verso's colour variables (text, tooltips and hovers, messages, the sidebar, search), the colours
+    Verso's own styles hard-code (header, sidebar links, docstring boxes), this book's own
+    variables, links, and KaTeX (which draws in the text colour). -/
+def darkRules (root : String) : String := s!"
+{root} \{ color-scheme: dark;
+  --verso-text-color: #e2e4e8; --verso-code-color: #e2e4e8; --verso-structure-color: #e2e4e8;
+  --verso-background-color: #16181d; --verso-surface-color: #22262d; --verso-border-color: #3d434c;
+  --verso-muted-color: #a3a9b3; --verso-selected-color: #2b3d57; --selected-color: #2b3d57;
+  --verso-link-color: #8ab4f8;
+  --verso-tooltip-color: #e2e4e8; --verso-tooltip-bg-color: #2a2e36; --verso-tooltip-border-color: #6b7380;
+  --verso-tooltip-separator-color: #444b55;
+  --verso-code-hover-bg-color: #2f3540; --verso-code-info-hover-bg-color: #2d4a8a;
+  --verso-code-warning-hover-bg-color: #6b5214; --verso-code-error-hover-bg-color: #6e2a2a;
+  --verso-message-error-color: #ff8a80; --verso-tooltip-warning-border-color: #b08a2e;
+  --verso-tooltip-error-border-color: #a85656;
+  --verso-tactic-state-color: #e2e4e8; --verso-tactic-state-bg-color: #1d2026;
+  --verso-tactic-state-border-color: #5a616c; --verso-tactic-toggle-color: #5a616c;
+  --verso-tactic-toggle-checked-color: #7d8591;
+  --verso-toc-text-color: #c9cdd3; --verso-toc-background-color: #1b1e24; --verso-toc-border-color: #3d434c;
+  --verso-toc-resize-handle-color: #6b7380;
+  --verso-burger-toc-visible-color: #e2e4e8; --verso-burger-toc-hidden-color: #e2e4e8;
+  --jl-bg: #16181d; --jl-bg-clear: rgba(22,24,29,0); --jl-edge-shadow: rgba(0,0,0,.6);
+  --jl-scroll: #5a616c; --jl-button-bg: #262a31; --jl-button-border: #5a616c; --jl-pressed-bg: #2b3d57;
+  --jl-pressed-border: #7ea6d8; --jl-focus: #8ab4f8; --jl-muted: #a3a9b3; }
+{root} body \{ background: #16181d; color: #e2e4e8; }
+{root} header \{ background: #1b1e24; box-shadow: 0 0 6px #000; }
+{root} .header-title, {root} .prev-next-buttons > *, {root} #toc a:hover \{ color: #e2e4e8; }
+{root} #toc a \{ color: #c9cdd3; }
+{root} #toc .split-toc label.toggle-split-toc::before \{ background-color: #c9cdd3; }
+{root} body:has(#toggle-toc:checked) .toc-backdrop \{ background-color: #000a; }
+{root} a:link, {root} a:visited \{ color: #8ab4f8; }
+{root} .hl.lean a:link, {root} .hl.lean a:visited \{ color: inherit; }
+{root} a.header-title:link, {root} a.header-title:visited, {root} .prev-next-buttons a:link,
+{root} .prev-next-buttons a:visited \{ color: #e2e4e8; }
+{root} #search-wrapper, {root} #search-wrapper .combobox .cb_edit \{ background-color: #1b1e24; }
+{root} .namedocs, {root} .namedocs .text \{ border-color: #4f5a66; }
+{root} .namedocs .label \{ background: #22262d; border-color: #4f5a66; color: #a3a9b3; }
+{root} #search-wrapper .cb_edit:empty:before, {root} #search-wrapper .more-results \{ color: #8d939c; }
+"
+
+def darkCss : Verso.Genre.Manual.CSS := ⟨darkRules ":root[data-theme='dark']" ++
+  "@media (prefers-color-scheme: dark) {" ++ darkRules ":root:not([data-theme='light'])" ++ "}"⟩
+
+/-- The theme switch. Runs in the page head, so a remembered choice applies before the page is
+    drawn; then adds "Theme: Auto / Light / Dark" to the page's tool bar (`companionTools`). -/
+def themeJs : Verso.Genre.Manual.JS := ⟨"
+(() => {
+  const KEY = 'jam-lean-book.theme';
+  const load = () => { try { return localStorage.getItem(KEY); } catch (e) { return null; } };
+  const save = (v) => { try { v === 'auto' ? localStorage.removeItem(KEY) : localStorage.setItem(KEY, v); } catch (e) {} };
+  const set = (v) => { if (v === 'light' || v === 'dark') document.documentElement.dataset.theme = v;
+                       else delete document.documentElement.dataset.theme; };
+  set(load());
+  document.addEventListener('DOMContentLoaded', () => {
+    const tools = companionTools();
+    if (!tools) return;
+    const label = document.createElement('label');
+    label.className = 'theme-switch';
+    label.append('Theme');
+    const sel = document.createElement('select');
+    for (const [v, t] of [['auto', 'Auto'], ['light', 'Light'], ['dark', 'Dark']]) {
+      const o = document.createElement('option'); o.value = v; o.textContent = t; sel.appendChild(o);
+    }
+    const cur = load();
+    sel.value = cur === 'light' || cur === 'dark' ? cur : 'auto';
+    sel.addEventListener('change', () => { save(sel.value); set(sel.value); });
+    label.appendChild(sel);
+    tools.appendChild(label);
+  });
+})();
+"⟩
+
+/-- The bar of page tools under the page's title (the theme switch, and on pages with Lean code
+    the Lean switch), made by whichever script asks first. -/
+def toolsJs : Verso.Genre.Manual.JS := ⟨"
+function companionTools() {
+  let bar = document.querySelector('.page-tools');
+  if (bar) return bar;
+  const heading = document.querySelector('main section h1');
+  if (!heading) return null;
+  bar = document.createElement('div');
+  bar.className = 'page-tools';
+  heading.insertAdjacentElement('afterend', bar);
+  return bar;
+}
 "⟩
 
 /-- Long quoted definitions (`{leanSource}` blocks of more than 30 lines) start collapsed to their
@@ -82,11 +181,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // The page-level switch: show every quoted definition in full, or hide them all. The choice
   // is remembered (per browser) for every page of the book.
   const blocks = document.querySelectorAll('code.hl.lean.block');
-  const heading = document.querySelector('main section h1');
-  if (!blocks.length || !heading) return;
+  if (!blocks.length) return;
   const KEY = 'jam-lean-book.lean';
   const load = () => { try { return localStorage.getItem(KEY); } catch (e) { return null; } };
   const save = (v) => { try { v ? localStorage.setItem(KEY, v) : localStorage.removeItem(KEY); } catch (e) {} };
+  const tools = companionTools();
+  if (!tools) return;
   const bar = document.createElement('div');
   bar.className = 'lean-toggle';
   bar.setAttribute('role', 'group');
@@ -126,7 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     save(mode); apply(mode);
   });
-  heading.insertAdjacentElement('afterend', bar);
+  tools.prepend(bar);
   const saved = load();
   if (saved === 'all' || saved === 'none') apply(saved);
 });
@@ -192,8 +292,8 @@ def docMathJs : Verso.Genre.Manual.JS := ⟨"
 
 /-- HTML only, one page per chapter. -/
 def config : Config where
-  extraCss := ({} : Std.HashSet Verso.Genre.Manual.CSS).insert narrowCss
-  extraJs := (({} : Std.HashSet Verso.Genre.Manual.JS).insert docMathJs).insert collapseJs
+  extraCss := (({} : Std.HashSet Verso.Genre.Manual.CSS).insert narrowCss).insert darkCss
+  extraJs := (((({} : Std.HashSet Verso.Genre.Manual.JS).insert toolsJs).insert themeJs).insert docMathJs).insert collapseJs
   emitTeX := false
   emitHtmlSingle := .no
   emitHtmlMulti := .immediately

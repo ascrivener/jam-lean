@@ -9,6 +9,7 @@ jam-lean parent session is archived.
 ## 2026-11-26/27: review, speedups, new modelling, Mathlib proofs (read first)
 
 - **Ownership:** unchanged (parent session_01FAPLsdKXq86WuSpB5fCYVg). Up to 7 parallel children (decision 5).
+- **Docs site (2026-11-27, #290):** https://ascrivener.github.io/jam-lean/ — `/api/` (doc-gen4) and `/book/` (Verso companion, pilot chapters §6 Safrole and Appendix A), built by the separate package `docs/site/` (see its README) and deployed by `docs.yml` on every push to main (~11 min cold).
 - **Merged:**
   - Proofs/types: #268 Safrole theorems, #269 Safrole vectors also run with JamCrypto's real ring VRF,
     #270 PVM gas model proved total (fallbacks unreachable), #280 `proofs/` Mathlib package +

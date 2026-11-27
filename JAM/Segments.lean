@@ -52,7 +52,7 @@ def hashL (H : ByteArray → ByteArray) (b : Blob) : Blob := (H ⟨b.toArray⟩)
 /-- The prefix `$leaf` (GP Appendix E, the constancy preprocessor $C$). -/
 def leafPrefix : Blob := "leaf".toUTF8.toList
 
-/-- The zero hash $\mathbb{H}_0$ (32 zero octets). -/
+/-- The zero hash $\zerohash$ (32 zero octets). -/
 def zeroHash : Blob := List.replicate 32 0
 
 /-- $H(\mathtt{\$leaf} \frown l)$: the hash of one data item in $C$ and $\mathcal{L}_x$ (GP

@@ -15,7 +15,7 @@ values.
 
 namespace JAM.Trie
 
-/-- The zero hash $\mathbb{H}_0$. -/
+/-- The zero hash $\zerohash$. -/
 def zeroHash : List UInt8 := List.replicate 32 0
 
 /-- $\mathcal{E}_4$ of a service index, as four octets. -/
@@ -84,14 +84,14 @@ def hashNode (n : List UInt8) : List UInt8 := (Blake2b.hash256 ⟨n.toArray⟩).
 def bit (k : List UInt8) (i : Nat) : Bool :=
   (k.getD (i / 8) 0).toNat.testBit (7 - i % 8)
 
-/-- $M$ at bit depth `depth` (GP §D.2): $\mathbb{H}_0$ for no entries, $\mathcal{H}(L(k, v))$ for
+/-- $M$ at bit depth `depth` (GP §D.2): $\zerohash$ for no entries, $\mathcal{H}(L(k, v))$ for
     one, and otherwise $\mathcal{H}(B(M(l), M(r)))$ where $l$ and $r$ hold the entries whose next bit
     is 0 and 1.
 
     The paper's $M$ strips one bit per level from the dictionary's bit-string keys; here the keys
     stay whole and `depth` counts the bits stripped. `fuel` bounds the depth: distinct 31-octet
     keys separate within 248 bits, so with `fuel = 248` it never runs out on a dictionary of them
-    (`root`); on longer keys that agree in their first 248 bits it gives $\mathbb{H}_0$ there. -/
+    (`root`); on longer keys that agree in their first 248 bits it gives $\zerohash$ there. -/
 def merkle : Nat → Nat → List (List UInt8 × List UInt8) → List UInt8
   | _, _, [] => zeroHash
   | _, _, [(k, v)] => hashNode (leaf k v)

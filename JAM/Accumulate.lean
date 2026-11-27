@@ -416,7 +416,7 @@ def eject (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : Ho
                                modified := (x.modified.insert dId).insert x.id }) OK
 
 /-- $\Omega_Q$, `query` = 24 (GP v0.8.1): the request $(h, z)$ of service $\varphi_7$ ($x_s$ for
-    $2^{64} - 1$), with $h$ at $\varphi_8$ and $z = \varphi_9$. HUH if $z \notin \mathbb{N}_P$; WHO if
+    $2^{64} - 1$), with $h$ at $\varphi_8$ and $z = \varphi_9$. HUH if $z \notin \preimagelen$; WHO if
     $\varphi_7$ names no service. -/
 def query (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
   let o := reg ω 8; let z := reg ω 9
@@ -439,7 +439,7 @@ def query (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
           | some _ => set78 NONE 0
 
 /-- $\Omega_S$, `solicit` = 25 (GP v0.8.1): solicit $(h, z)$ for service $d = \varphi_7$ ($x_s$ for
-    $2^{64} - 1$), $h$ at $\varphi_8$, $z = \varphi_9$. HUH if $z \notin \mathbb{N}_P$; WHO if $d$ is
+    $2^{64} - 1$), $h$ at $\varphi_8$, $z = \varphi_9$. HUH if $z \notin \preimagelen$; WHO if $d$ is
     not a service; HUH unless $x_s \in \{d, E(\mathbf{d}, d)\}$ or if the request cannot be
     (re-)solicited; FULL if the result is `overFull` (GP #581). -/
 def solicit (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
@@ -467,7 +467,7 @@ def solicit (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : 
             else r7 (updX out (putAcct x d a')) OK
 
 /-- $\Omega_F$, `forget` = 26 (GP v0.8.1): forget $(h, z)$ for service $d = \varphi_7$ ($x_s$ for
-    $2^{64} - 1$), $h$ at $\varphi_8$, $z = \varphi_9$. HUH if $z \notin \mathbb{N}_P$; WHO if $d$ is
+    $2^{64} - 1$), $h$ at $\varphi_8$, $z = \varphi_9$. HUH if $z \notin \preimagelen$; WHO if $d$ is
     not a service; HUH unless $x_s \in \{d, E(\mathbf{d}, d)\}$ or if the request cannot be forgotten
     now. -/
 def forget (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
@@ -502,7 +502,7 @@ def yield (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
     | none => panic out
     | some h => r7 (updX out { c.1 with yield := some h }) OK
 
-/-- $\Omega_{\text{♈}}$, `provide` = 28 (GP v0.8.1): HUH first if $z \notin \mathbb{N}_P$. -/
+/-- $\Omega_{\text{♈}}$, `provide` = 28 (GP v0.8.1): HUH first if $z \notin \preimagelen$. -/
 def provide (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
   let o := reg ω 8; let z := reg ω 9
   charge (Constants.CgasAriesconst + memGas Constants.CgasArieslinear z) gas ω μ c fun out =>
@@ -519,7 +519,7 @@ def provide (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx 
           else if x.provisions.contains (s, i) then r7 out HUH
           else r7 (updX out { x with provisions := x.provisions.insert (s, i) }) OK
 
-/-- $F \in \Omega\langle \mathbb{L}^2 \rangle$ (GP v0.8.1 eq. `accinvocation`): dispatch on the host-call
+/-- $F \in \contextmutator{\mathbb{L}^2}$ (GP v0.8.1 eq. `accinvocation`): dispatch on the host-call
     id. An unknown id charges $\mathsf{M}_\emptyset$ and sets $\varphi'_7 = \text{WHAT}$; with
     $\varrho < \mathsf{M}_\emptyset$ it is $\infty$ with $\varrho^{\ast} = 0$. -/
 def dispatch (env : AccEnv) (n gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=

@@ -14,7 +14,7 @@ Equations covered (labels of `auditing.tex` where it has them):
 
 * $\mathbf{q}$ (eq. `auditselection`): the reports that just became available, by core (`auditReports`).
 * $s_0$ (eq. `initialaudit`): the tranche-0 VRF,
-  $\overset{\backsim}{\mathbb{V}}{}^{[]}_{\kappa_v, b}\langle \mathsf{X}_U \frown \mathcal{Y}(\mathbf{H}_V) \rangle$, checked
+  $\bssignaturebase{}^{[]}_{\kappa_v, b}\langle \mathsf{X}_U \frown \mathcal{Y}(\mathbf{H}_V) \rangle$, checked
   through the `Crypto` parameter (`initialSeedValid`); $\mathsf{X}_U$ = `$jam_audit` (`Xaudit`).
 * $\mathbf{a}_0$: the non-empty items among the first ten of
   $\mathcal{F}(\mathbf{q}, \mathcal{Y}(s_0))$ (`tranche0`, and its core-indexed form
@@ -131,7 +131,7 @@ end VSet
 
 /-! ## The reports to audit (§17.3) -/
 
-/-- $\mathbf{q} \in [\![ \mathbb{R}? ]\!]_{|\kappa|/3}$ (GP §17.3 eq. `auditselection`): for each
+/-- $\mathbf{q} \in [\![ \workreport? ]\!]_{|\kappa|/3}$ (GP §17.3 eq. `auditselection`): for each
     active core $c$, the report of $\rho[c]$ when it is in $\mathbf{R}$ (the reports that just became
     available, compared by encoding), $\emptyset$ otherwise. -/
 def auditReports (V : Nat) (ρ : AvailAssignments) (R : List WorkReport) : List (Option WorkReport) :=
@@ -146,7 +146,7 @@ def auditReports (V : Nat) (ρ : AvailAssignments) (R : List WorkReport) : List 
 def initialContext (crypto : Crypto) (vrfSig : List UInt8) : List UInt8 :=
   Xaudit ++ crypto.bsOut vrfSig
 
-/-- $s_0 \in \overset{\backsim}{\mathbb{V}}{}^{[]}_{\kappa_v, b}\langle \mathsf{X}_U \frown \mathcal{Y}(\mathbf{H}_V) \rangle$
+/-- $s_0 \in \bssignaturebase{}^{[]}_{\kappa_v, b}\langle \mathsf{X}_U \frown \mathcal{Y}(\mathbf{H}_V) \rangle$
     (GP §17.3 eq. `initialaudit`; the context is $\mathsf{X}_U \frown \mathcal{Y}(\mathbf{H}_V)$ and
     the message is empty, per `\bssignature{key}{context}{message}`): $v$'s tranche-0 evidence
     verifies under its Bandersnatch key. -/
@@ -188,7 +188,7 @@ def announcementItems (a : List WorkReport) : List UInt8 :=
 def announcementMessage (n : Nat) (a : List WorkReport) (headerHash : List UInt8) : List UInt8 :=
   Xannounce ++ nat n ++ announcementItems a ++ headerHash
 
-/-- $S \equiv \bar{\mathbb{V}}_{\kappa_v, e}\langle \mathsf{X}_I \mathbin{+\!\!+} n \frown \mathbf{x}_n \frown \mathcal{H}(\mathbf{H}) \rangle$
+/-- $S \equiv \edsignaturebase_{\kappa_v, e}\langle \mathsf{X}_I \mathbin{+\!\!+} n \frown \mathbf{x}_n \frown \mathcal{H}(\mathbf{H}) \rangle$
     (GP §17.3 eq. `announcement`): an announcement signature verifies under $v$'s Ed25519 key. -/
 def announcementValid (crypto : Crypto) (edKey : List UInt8) (n : Nat) (a : List WorkReport)
     (headerHash sig : List UInt8) : Bool :=
@@ -216,7 +216,7 @@ structure View where
 def laterContext (crypto : Crypto) (vrfSig : List UInt8) (w : WorkReport) (n : Nat) : List UInt8 :=
   Xaudit ++ crypto.bsOut vrfSig ++ reportHash w ++ nat n
 
-/-- $s_n(w) \in \overset{\backsim}{\mathbb{V}}{}^{[]}_{\kappa_v, b}\langle \mathsf{X}_U \frown \mathcal{Y}(\mathbf{H}_V) \frown \mathcal{H}(w) \mathbin{+\!\!+} n \rangle$
+/-- $s_n(w) \in \bssignaturebase{}^{[]}_{\kappa_v, b}\langle \mathsf{X}_U \frown \mathcal{Y}(\mathbf{H}_V) \frown \mathcal{H}(w) \mathbin{+\!\!+} n \rangle$
     (GP §17.3 eq. `latertranches`). -/
 def laterSeedValid (crypto : Crypto) (bsKey vrfSig : List UInt8) (w : WorkReport) (n : Nat)
     (s : List UInt8) : Bool :=

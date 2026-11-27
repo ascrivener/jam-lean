@@ -13,7 +13,7 @@ namespace PVM
 
 /-! ## Host-call handlers and $\Psi_H$ (GP §A.6) -/
 
-/-- The exit reasons a host-call handler may give: $\{\blacktriangleright, \text{☇}, \infty\}$ (GP v0.8.1 §A.6, $\Omega\langle X \rangle$). Since
+/-- The exit reasons a host-call handler may give: $\{\blacktriangleright, \text{☇}, \infty\}$ (GP v0.8.1 §A.6, $\contextmutator{X}$). Since
     v0.8.1 (#533) a handler can no longer halt the machine. -/
 inductive HostStatus where
   | cont
@@ -35,7 +35,7 @@ structure HostResult (X : Type) where
   mem : Memory
   ctx : X
 
-/-- $\Omega\langle X \rangle \equiv (\mathbb{N}, \mathbb{N}_G, [\![ \mathbb{N}_R ]\!]_{13}, \mathbb{M}, X) \to$
+/-- $\contextmutator{X} \equiv (\mathbb{N}, \mathbb{N}_G, [\![ \mathbb{N}_R ]\!]_{13}, \mathbb{M}, X) \to$
     $(\{\blacktriangleright, \text{☇}, \infty\}, \mathbb{N}_G, [\![ \mathbb{N}_R ]\!]_{13}, \mathbb{M}, X)$ (GP v0.8.1 §A.6).
 
     Gas is in $\mathbb{N}_G$ throughout: since v0.8.1 (#533) $\Psi_H$'s result gas is $\mathbb{N}_G$ too, and host functions

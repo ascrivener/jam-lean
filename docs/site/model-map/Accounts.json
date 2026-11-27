@@ -1,0 +1,21 @@
+{
+  "equations": {
+    "9.1": { "kind": "type", "name": "JAM.ServiceId",
+             "note": "an unbounded `Nat`, not ℕ₃₂ (note v0.8.1-A44); the account fields use `Nat` directly" },
+    "9.2": { "kind": "type", "name": "JAM.Accounts" },
+    "9.3": { "kind": "type", "name": "JAM.ServiceAccount",
+             "note": "𝐬 and 𝐥 share `entries`, keyed by state-key hashes; a_i and a_o are the carried fields `items` and `octets`" },
+    "9.4": { "kind": "def", "name": "JAM.ServiceAccount.code" },
+    "9.6": { "kind": "notModelled",
+             "reason": "the invariant is not a property of `JAM.ServiceAccount`, and no theorem yet states that the transitions changing 𝐩 and 𝐥 preserve it" },
+    "9.7": { "kind": "def", "name": "JAM.ServiceAccount.historicalLookup",
+             "note": "I is `JAM.ServiceAccount.availableAt`; 𝐥 is read through `requestGet`" },
+    "9.8": { "kind": "def", "name": "JAM.ServiceAccount.minBalance",
+             "note": "a_i and a_o are the carried fields `items` and `octets`, updated by `storageWrite`, `requestSet` and `requestErase`; that they equal the paper's sums is not yet a theorem" },
+    "9.9": { "kind": "type", "name": "JAM.State",
+             "note": "no separate record: χ is the fields `manager`, `delegator`, `registrar`, `assigners` and `alwaysAcc` (also of `JAM.PartialState`)" },
+    "9.10": { "kind": "type", "name": "JAM.State",
+             "note": "no separate record: χ is the fields `manager`, `delegator`, `registrar`, `assigners` and `alwaysAcc` (also of `JAM.PartialState`)" },
+    "9.11": { "kind": "def", "name": "JAM.effectiveSupervisor" }
+  }
+}

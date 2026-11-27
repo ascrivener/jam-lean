@@ -112,6 +112,7 @@ details.worked-example table.we-table th, details.worked-example table.we-table 
   min-width: 3em; max-width: 22em; overflow-wrap: break-word; }
 details.worked-example table.we-table thead th { border-bottom: 2px solid var(--jl-example-border); white-space: nowrap; }
 details.worked-example table.we-table tbody th { font-weight: 500; }
+details.worked-example table.we-table td.we-nowrap { white-space: nowrap; max-width: none; }
 details.worked-example table.we-table p { margin: 0; }
 details.worked-example code { font-size: 0.92em; }
 @media (max-width: 600px) {

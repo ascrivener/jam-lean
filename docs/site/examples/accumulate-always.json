@@ -12,12 +12,13 @@
   {"label": "Service 1729: last accumulation $a_a$", "cells": ["0", "43"]},
   {"label": "Service 1729: balance $a_b$", "cells": ["119250", "119250"]},
   {"label": "Service 1729: storage items $a_i$, octets $a_o$", "cells": ["2, 19130", "2, 19130"]},
-  {"label": "Statistics for service 1729", "cells": ["", "$N$ = 0, $T$ = 0, $G$ = 16417"]},
+  {"label": "Statistics for service 1729", "cells": ["", "$N$ = 0, $X$ = 0, $G$ = 16417"]},
   {"label": "Accumulation outputs $\\theta'$", "cells": ["", "0 outputs; root `0x00000000…`"]}],
  "params":
  "the tiny chain the v0.8.0 vectors were made with ($\\mathsf{E}$ = 12 slots per epoch, $\\mathsf{Y}$ = 10, $\\mathsf{C}$ = 2 cores, 6 validators)",
+ "nowrapColumns": [],
  "notes":
- ["$G$ is the gas the service's accumulation used, out of the 100000 that $\\chi_Z$ grants it; $N$ = 0 because it accumulated no report. A service with statistics gets $a'_a = \\tau'$."],
+ ["$N$ counts the work digests it accumulated (none here), $X$ the transfers it received, and $G$ the gas it used, out of the 100000 that $\\chi_Z$ grants it. A service with statistics gets $a'_a = \\tau'$."],
  "name": "accumulate-always",
  "model": ["JAM.accumulate", "JAM.accSeq"],
  "inputs":

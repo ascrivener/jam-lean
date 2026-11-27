@@ -72,7 +72,7 @@ def safroleExample (name file : String) (title summary : String) (notes : List S
   let sealAfter := match post.sealKeys with
     | .tickets t =>
       if t.map (·.id) == (outsideIn pre.accumulator).map (·.id) then
-        sealDesc post.sealKeys ++ ", in the order $Z(\\gamma_A)$ of the accumulator before"
+        sealDesc post.sealKeys ++ ", in outside-in order $Z(\\gamma_A)$ of the accumulator before: first, last, second, second-to-last, …"
       else sealDesc post.sealKeys
     | .keys _ => sealDesc post.sealKeys
   let mark := match out.epochMark with
@@ -106,7 +106,7 @@ def safroleExample (name file : String) (title summary : String) (notes : List S
       { label := "Epoch marker $\\mathbf{H}_E$", cells := ["", mark] },
       { label := "Tickets marker $\\mathbf{H}_W$", cells := ["", wmark] }],
     notes,
-    model := ["JAM.safrole", "JAM.outsideIn"],
+    model := ["JAM.safrole", match post.sealKeys with | .tickets _ => "JAM.outsideIn" | .keys _ => "JAM.fallbackKeys"],
     equations := ["6.15", "6.24", "6.25", "6.26", "6.29", "6.36"],
     check := "The model's posterior state and markers equal the vector's expected output: \
       `lake build safroletest` makes this comparison on every Safrole vector, and the generator \
@@ -149,7 +149,7 @@ def accAlways : IO Example := do
   let some a' := post.pstate.accounts.get? s | throw <| IO.userError "examples: no account after"
   let stat := res.stats.lookup s
   let statS := match stat with
-    | some (n, t, g) => s!"$N$ = {n}, $T$ = {t}, $G$ = {g}"
+    | some (n, t, g) => s!"$N$ = {n}, $X$ = {t}, $G$ = {g}"
     | none => "none"
   let qlen (q : List (List ReadyEntry)) := (q.map List.length).sum
   return {
@@ -172,8 +172,8 @@ def accAlways : IO Example := do
       { label := s!"Service {s}: storage items $a_i$, octets $a_o$", cells := [s!"{a.items}, {a.octets}", s!"{a'.items}, {a'.octets}"] },
       { label := s!"Statistics for service {s}", cells := ["", statS] },
       { label := "Accumulation outputs $\\theta'$", cells := ["", s!"{count res.outputs.length "output" "outputs"}; root {abbr res.root}"] }],
-    notes := [s!"$G$ is the gas the service's accumulation used, out of the {gas} that $\\chi_Z$ grants it; \
-      $N$ = 0 because it accumulated no report. A service with statistics gets $a'_a = \\tau'$."],
+    notes := [s!"$N$ counts the work digests it accumulated (none here), $X$ the transfers it received, and $G$ \
+      the gas it used, out of the {gas} that $\\chi_Z$ grants it. A service with statistics gets $a'_a = \\tau'$."],
     model := ["JAM.accumulate", "JAM.accSeq"],
     equations := ["12.25", "12.29", "12.30", "12.31"],
     check := accCheck }
@@ -190,7 +190,7 @@ def accQueue : IO Example := do
   let queued : List (List UInt8) := pre.ready.flatten.map (·.1.pkg)
   let name (h : List UInt8) := (match known.find? (·.2 == h) with
     | some (s, _) => s
-    | none => abbr h) ++ (if queued.contains h then " (itself in the queue)" else "")
+    | none => abbr h) ++ (if queued.contains h then " (already queued)" else "")
   let reportRow (w : WorkReport) : Row :=
     let pre : List (List UInt8) := w.context.prerequisites.toList
     let waiting := pre.filter fun h => !accAll.contains h
@@ -215,7 +215,7 @@ def accQueue : IO Example := do
       { label := "Reports already queued", value := toString (qlen pre.ready) }],
     columns := ["", "Prerequisites", "Unmet", "Outcome"],
     rows := reports.map reportRow ++ [
-      { label := "Ready queue $\\omega$, all slots", cells := [s!"before: {qlen pre.ready}", "", s!"after: {qlen post.ready}"] },
+      { label := "Ready queue $\\omega$, all slots", cells := ["", "", s!"{qlen pre.ready} → {qlen post.ready} reports"] },
       { label := "Accumulated this block $\\xi'_{\\mathsf{E}-1}$", cells := ["", "", count (post.accumulated.getLastD ∅).toList.length "package" "packages"] }],
     notes := ["A report with no prerequisites and no segment-root lookups is accumulatable at once ($\\mathbf{R}^!$); \
       the others go to the queue with their dependencies minus what is already accumulated, and leave it \
@@ -292,8 +292,9 @@ def pvmExample (file : String) (summary : String) (notes : List String) : IO Exa
         break
     let ins := (P.decode i).getD (.noArgs .trap)
     let r := P.step i gas charged regs mem
-    let gasCell := s!"{gas} → {r.gas}" ++ (if r.gas != gas then s!" (block cost {gas - r.gas})" else "")
-    let cells := [toString i, showInstr ins, gasCell, regChanges regs r.regs, statusDesc r.status]
+    let gasCell := s!"{gas} → {r.gas}"
+    let costCell := if r.gas != gas then toString (gas - r.gas) else "—"
+    let cells := [toString i, showInstr ins, gasCell, costCell, regChanges regs r.regs, statusDesc r.status]
     let row : Row := ⟨toString (n + 1), cells⟩
     rows := rows.push row
     gas := r.gas
@@ -321,7 +322,8 @@ def pvmExample (file : String) (summary : String) (notes : List String) : IO Exa
       { label := "Gas $\\varrho$", value := toString gas0 },
       { label := "Registers $\\varphi$",
         value := if nz.isEmpty then "all 0" else ", ".intercalate (nz.map fun k => s!"$\\varphi_\{{k}}$ = {imm regs0[k]!}") ++ ", the rest 0" }],
-    columns := ["Step", "$\\imath$", "Instruction", "Gas $\\varrho$", "Registers changed", "Status $\\varepsilon$"],
+    columns := ["Step", "$\\imath$", "Instruction", "Gas $\\varrho$", "Block cost", "Registers changed", "Status $\\varepsilon$"],
+    nowrapColumns := [2, 3],
     rows := rows.toList,
     notes,
     model := ["PVM.Program.step", "PVM.psi", "PVM.Program.chargeGas"],

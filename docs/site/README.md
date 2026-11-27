@@ -105,8 +105,8 @@ To add an example:
 1. In a topic module `Tests/Examples/<Topic>.lean` (importing `Tests.Examples.Basic`, which holds
    the `Example` type and the formatting helpers), write a function returning an `Example`: run the model on the vector
    and check the result against the vector with the suite's own comparison (as `safroleExample`,
-   `runAcc` and `pvmExample` do), then fill in the fields from the model's result, never from the
-   vector. Keep a box readable: a dozen rows of plain-English labels with the paper's symbols,
+   `runAcc` and `pvmExample` do), then fill in the fields: every computed (after) value from the
+   model's result, before and input values from the vector. Keep a box readable: a dozen rows of plain-English labels with the paper's symbols,
    hashes abbreviated (`abbr`), long lists given as counts or the first few entries. Text fields may
    use `$…$` (inline math with the paper's macros) and `` `…` `` (code). `model` lists full
    declaration names the chapter imports; `equations` lists the paper's equation numbers. Name a

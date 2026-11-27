@@ -19,7 +19,7 @@
   {"label": "Sealer sequence $\\gamma_S$",
    "cells":
    ["fallback: 12 Bandersnatch keys",
-    "tickets: 12 tickets, in the order $Z(\\gamma_A)$ of the accumulator before"]},
+    "tickets: 12 tickets, in outside-in order $Z(\\gamma_A)$ of the accumulator before: first, last, second, second-to-last, …"]},
   {"label": "First sealers",
    "cells":
    ["`0x21056509…`, `0xff71c6c0…`, `0x0746846d…`, …",
@@ -41,6 +41,7 @@
   {"label": "Tickets marker $\\mathbf{H}_W$", "cells": ["", "none"]}],
  "params":
  "the tiny chain the v0.8.0 vectors were made with ($\\mathsf{E}$ = 12 slots per epoch, $\\mathsf{Y}$ = 10, $\\mathsf{C}$ = 2 cores, 6 validators)",
+ "nowrapColumns": [],
  "notes":
  ["Each rotated value is the one named in parentheses: $\\eta'_1 = \\eta_0$, $\\kappa' = \\gamma_P$, $\\lambda' = \\kappa$, and $\\gamma'_P = \\Phi(\\iota)$, which is $\\iota$ itself because there are no offenders."],
  "name": "safrole-epoch-change",

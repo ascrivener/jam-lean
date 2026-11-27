@@ -46,6 +46,8 @@ structure Example where
   inputs : List Item
   /-- The column headings, the first over the row labels. -/
   columns : List String
+  /-- Columns (0 = the label column) whose cells never wrap; the table scrolls instead. -/
+  nowrapColumns : List Nat := []
   rows : List Row
   notes : List String := []
   /-- The model functions that computed the values (full names; the book links them). -/

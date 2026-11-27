@@ -39,9 +39,10 @@
   {"label": "Tickets marker $\\mathbf{H}_W$", "cells": ["", "none"]}],
  "params":
  "the tiny chain the v0.8.0 vectors were made with ($\\mathsf{E}$ = 12 slots per epoch, $\\mathsf{Y}$ = 10, $\\mathsf{C}$ = 2 cores, 6 validators)",
+ "nowrapColumns": [],
  "notes": [],
  "name": "safrole-epoch-change-fallback",
- "model": ["JAM.safrole", "JAM.outsideIn"],
+ "model": ["JAM.safrole", "JAM.fallbackKeys"],
  "inputs":
  [{"value": "15 (epoch 1, slot 3)", "label": "Slot $\\mathbf{H}_T$"},
   {"value": "`0x92e69aed…`", "label": "VRF output $\\mathcal{Y}(\\mathbf{H}_V)$"},

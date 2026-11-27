@@ -18,7 +18,8 @@ vector's expected output matches. CI regenerates them and fails on any differenc
 
 Text fields may contain `$…$` (inline math, with the paper's macros) and `` `…` `` (code). A
 `model` name must be a declaration the chapter imports, and an `equations` entry must be an
-equation of the paper (`gp-equations.json`): either mistake fails the build. A box whose table has
+equation of the paper (`gp-equations.json`): either mistake fails the build. `nowrapColumns` lists
+columns (0 = the label column) whose cells never wrap. A box whose table has
 more than sixteen rows starts collapsed.
 -/
 
@@ -44,6 +45,7 @@ block_extension Block.workedExample (cfg : String) where
       let before := num "before"
       let cols := num "cols"
       let rows := num "rows"
+      let nowrap : List Nat := (data.getObjValAs? (List Nat) "nowrap").toOption.getD []
       let intro ← (content.extract 0 before).mapM go
       let heads ← (content.extract before (before + cols)).mapM go
       let start := before + cols
@@ -51,7 +53,8 @@ block_extension Block.workedExample (cfg : String) where
       for r in [0:rows] do
         let label ← go content[start + r * cols]!
         let cells ← ((content.extract (start + r * cols + 1) (start + (r + 1) * cols)).mapM go)
-        let tds := cells.map fun c => html%{<td>{c}</td>}
+        let tds := cells.mapIdx fun k c =>
+          if nowrap.contains (k + 1) then html%{<td class="we-nowrap">{c}</td>} else html%{<td>{c}</td>}
         body := body.push html%{<tr><th scope="row">{label}</th>{tds}</tr>}
       let after ← (content.extract (start + rows * cols) content.size).mapM go
       let ths := heads.map fun h => html%{<th scope="col">{h}</th>}
@@ -172,7 +175,9 @@ def «example» : BlockCommandOf ExampleArgs
     let check ← examplePara (#[← ``(Verso.Doc.Inline.bold #[Verso.Doc.Inline.text "Checked:"]),
       ← ``(Verso.Doc.Inline.text " ")] ++ (← exampleInlines (← str "check")))
     let after := notes ++ #[← examplePara modelInls, check]
+    let nowrap : List Nat := (j.getObjValAs? (List Nat) "nowrapColumns").toOption.getD []
     let cfg := Json.compress <| Json.mkObj [("title", title), ("open", Json.bool (rows.size ≤ 16)),
+      ("nowrap", toJson nowrap),
       ("before", before.size), ("cols", cols.length), ("rows", rows.size)]
     ``(Verso.Doc.Block.other (Companion.Block.workedExample $(quote cfg)) #[$(before ++ heads ++ cells ++ after),*])
 

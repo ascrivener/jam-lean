@@ -9,15 +9,16 @@
  "rows":
  [{"label": "Report for package `0x6af0ea4c…`",
    "cells":
-   ["`0x774935b6…` (itself in the queue)",
+   ["`0x774935b6…` (already queued)",
     "1 of 1",
-    "queued in $\\omega'_8$, waiting on `0x774935b6…` (itself in the queue)"]},
+    "queued in $\\omega'_8$, waiting on `0x774935b6…` (already queued)"]},
   {"label": "Report for package `0xf5983aaa…`",
    "cells": ["`0xa7a66c16…`", "1 of 1", "queued in $\\omega'_8$, waiting on `0xa7a66c16…`"]},
-  {"label": "Ready queue $\\omega$, all slots", "cells": ["before: 2", "", "after: 4"]},
+  {"label": "Ready queue $\\omega$, all slots", "cells": ["", "", "2 → 4 reports"]},
   {"label": "Accumulated this block $\\xi'_{\\mathsf{E}-1}$", "cells": ["", "", "0 packages"]}],
  "params":
  "the tiny chain the v0.8.0 vectors were made with ($\\mathsf{E}$ = 12 slots per epoch, $\\mathsf{Y}$ = 10, $\\mathsf{C}$ = 2 cores, 6 validators)",
+ "nowrapColumns": [],
  "notes":
  ["A report with no prerequisites and no segment-root lookups is accumulatable at once ($\\mathbf{R}^!$); the others go to the queue with their dependencies minus what is already accumulated, and leave it when the last dependency is accumulated."],
  "name": "accumulate-queue",

@@ -8,8 +8,8 @@ import Tests.Examples.Pilot
 Runs selected model functions on chosen test vectors and writes what they compute, as JSON, to
 `docs/site/examples/<name>.json`. The book's `{example "<name>"}` block (`docs/site/Companion/Example.lean`)
 renders each file as a box: which vector and parameters, the inputs, and a table of values before →
-after. Every number in a box is the model's own result, never copied from the vector, and the
-generator fails unless the vector's expected output matches. It uses the comparison the vector's
+after. Every computed (after) value is the model's own result; before and input values are read
+from the vector. The generator fails unless the vector's expected output matches. It uses the comparison the vector's
 test suite uses (the harnesses in `Tests.SafroleHarness`, `Tests.AccumulateHarness` and `Tests.PvmHarness`).
 
 ```

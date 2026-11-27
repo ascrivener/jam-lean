@@ -19,6 +19,21 @@ file := "erasure-coding"
 
 *In the paper:* {gpchapter}`sec:erasurecoding`.
 
+*In brief.* JAM keeps data available without asking every validator to store all of it. Appendix H
+defines the erasure code that makes this possible: data is coded into one chunk per validator, and a
+fixed number of the chunks, together with their positions, is enough to rebuild it. With 1023
+validators any 342 chunks suffice: an exported segment of 4104 octets becomes 1023 chunks of 12
+octets each, and any 342 of them give the segment back. Guarantors code a work-package bundle and
+its exported segments this way ({ref "work"}[§14], {ref "guaranteeing"}[§15]), validators assure
+that they hold their chunks ({ref "assurance"}[§16]), and auditors rebuild a bundle from chunks they
+collect ({ref "auditing"}[§17]). The code is a Reed–Solomon code over a field of 2¹⁶ elements,
+working on two-octet words.
+
+*Key terms:*
+
+* $`\fnecoriginalshards(v)`, the number of chunks needed to rebuild data coded for $`v` validators.
+* $`\fnerasurecode{v}{k}`, the encoding, and $`\fnecrecover{v}{k}`, the recovery.
+
 Appendix H of GP v0.8.1 defines the erasure code behind JAM's data availability: a systematic
 Reed–Solomon code over $`\mathrm{GF}(2^{16})`. Data is cut into words of two octets and coded so that each of
 the $`v` validators holds one chunk, and any $`\mathcal{D}(v)` of the chunks, together with their indices, give the

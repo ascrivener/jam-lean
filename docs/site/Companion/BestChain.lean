@@ -20,6 +20,16 @@ file := "best-chain"
 
 *In the paper:* {gpchapter}`sec:bestchain`.
 
+*In brief.* Different nodes can see different forks of the chain for a while, so until the Grandpa
+finality protocol settles which blocks are final, each node needs a rule for which block to build on
+and vote for. §19 gives that rule. A candidate block must have the latest finalized block among its
+ancestors, be audited in the node's own view ({ref "auditing"}[§17]), and have no unfinalized
+ancestor at a timeslot for which the node has seen two different valid blocks (an equivocation).
+Among those candidates the best is one with the most ancestors sealed with a Safrole ticket rather
+than a fallback key ({ref "safrole"}[§6]), so a fork with more ticket-sealed blocks is preferred
+even over a longer one with fewer. Like auditing, this is each node's own choice, not part of the
+state transition.
+
 Nodes finalize blocks with the Grandpa protocol, and between finalizations each node must decide
 which block to build on and vote for: the best block $`\mathbf{B}^\flat`. §19 of GP v0.8.1 gives the rule. A block
 is *acceptable* when it extends the latest finalized block $`\mathbf{B}^\natural`, is audited, and has no

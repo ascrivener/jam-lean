@@ -31,6 +31,23 @@ file := "pvm"
 
 *In the paper:* {gpchapter}`sec:virtualmachine`.
 
+*In brief.* The code of services and authorizers must run on every node that executes it with
+exactly the same result, including how much gas it uses. The PVM is the machine that runs it: a
+simple register machine based on the RISC-V instruction set (its rv64em variant), with 13 registers
+of 64 bits, a RAM with 32-bit addresses whose pages of 4096 octets are each inaccessible, read-only
+or writable, and a gas counter. A program runs until it halts, panics, runs out of gas, accesses
+memory it may not, or makes a *host call*: a request to the protocol, such as reading storage, which
+the invocations of {ref "invocations"}[Appendix B] answer before letting it continue. Gas is charged
+for each basic block of instructions, at a cost the paper fixes by modelling how many cycles a
+simple CPU would need to run it, so the same code on the same inputs costs the same on every node.
+
+*Key terms:*
+
+* $`\Psi`, the machine, and $`\Psi_1`, a single step of it.
+* $`\registers`, the registers; $`\memory`, the RAM; $`\gascounter`, the gas remaining.
+* $`\Psi_H`, the machine with its host calls handled, and $`\Psi_M`, the argument invocation built
+  on it.
+
 Appendix A of GP v0.8.1 defines the Polkadot Virtual Machine (PVM), the machine on which JAM runs
 the code of services and authorizers. The appendix has ten sections, and this chapter follows them in order:
 

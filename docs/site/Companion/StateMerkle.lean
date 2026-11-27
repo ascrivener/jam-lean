@@ -22,6 +22,16 @@ file := "state-merklization"
 
 *In the paper:* {gpchapter}`sec:statemerklization`.
 
+*In brief.* Every block header carries the root of the state its block builds on, so the whole
+state, including every service's storage, must be committed to in one 32-octet hash. Appendix D does
+this in two steps: it lays the state out as a dictionary from 31-octet keys to octet sequences
+(serialization), then hashes that dictionary into the root of a binary Merkle trie (Merklization). A
+trie, rather than a single hash of everything, is what lets, in the paper's words, "arbitrary
+information within state" be "provided as being authentic in a concise and swift fashion": one value
+can be shown to be in the state with the hashes along one path of the trie. The values are encoded
+with {ref "codec"}[Appendix C]. For example, a service's storage item is found under a key made from
+the service's index and a hash derived from the item's key ({ref "accounts"}[§9]).
+
 Appendix D of GP v0.8.1 commits to the whole state $`\sigma` with one 32-octet hash, the state root
 $`\mathcal{M}_\sigma(\sigma)`, which headers carry as $`\mathbf{H}_R`. It does this in two stages:
 

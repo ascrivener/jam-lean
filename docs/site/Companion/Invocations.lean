@@ -29,6 +29,24 @@ file := "invocations"
 
 *In the paper:* {gpchapter}`sec:virtualmachineinvocations`.
 
+*In brief.* The protocol runs service code at three points, and this appendix defines each:
+Is-Authorized, which runs a work-package's authorization code to decide whether the package may use
+a core ({ref "authorization"}[§8], {ref "work"}[§14]); Refine, which does a work-item's computation
+in-core ({ref "work"}[§14]); and Accumulate, which lets a service fold refined results into its
+on-chain state ({ref "accumulation"}[§12]). Each one starts a PVM ({ref "pvm"}[Appendix A]) with its
+arguments and answers its host calls. The host functions are the program's only way to reach
+anything beyond its own registers and memory: reading and writing storage, fetching its inputs,
+exporting segments, creating services, transferring funds, and more. Each has a gas cost and reports
+its outcome in a register, often as one of a few result codes. For example, when a service's code
+calls read for a storage item, the host function copies the value into the program's memory and
+returns its length, or the code NONE if there is no such item.
+
+*Key terms:*
+
+* $`\Psi_I`, $`\Psi_R` and $`\Psi_A`, the Is-Authorized, Refine and Accumulate invocations.
+* $`\Psi_M`, the argument invocation that each of them uses ({ref "pvm"}[Appendix A]).
+* $`\Omega_\square`, the host functions, one for each host-call identifier.
+
 Appendix B of GP v0.8.1 defines the three places where the protocol runs a PVM program: the
 Is-Authorized invocation $`\Psi_I` (§B.2), the Refine invocation $`\Psi_R` (§B.3) and the Accumulate
 invocation $`\Psi_A` (§B.4). Each one runs a standard program blob with $`\Psi_M`, the argument

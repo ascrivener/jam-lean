@@ -22,6 +22,21 @@ file := "auditing"
 
 *In the paper:* {gpchapter}`sec:auditing`.
 
+*In brief.* Before a report goes on chain only its core's guarantors have run the work-package, and
+a few validators could collude to sign a wrong report. Auditing is the check against this: once a
+report becomes available ({ref "assurance"}[§16]), other validators rebuild the work-package from
+its erasure-coded chunks, compute its work-report again, and publish a judgment on whether the
+report is correct.
+Who audits what is random but verifiable: each validator shuffles the cores
+({ref "shuffle"}[Appendix F]) with the output of its own VRF signature
+({ref "bandersnatch"}[Appendix G]) and audits the reports that just became available on the first
+ten. Every eight seconds a new *tranche* begins, in which more auditors may be drawn for a report
+whose announced auditors have not delivered, and in which every validator must judge a report that
+has received a negative judgment. A report is *audited* once every announced audit is matched by a
+positive judgment, and a block once all its newly available reports are; the best-chain rule of
+{ref "bestchain"}[§19] accepts only audited blocks, and a negative judgment can lead to the disputes
+of {ref "disputes"}[§10].
+
 Once a work-report becomes available, validators audit it: each one refines the work-package again
 and publishes a judgment on whether the report is correct. §17 of GP v0.8.1 says which reports a
 validator must audit, in tranches that grow when announced auditors do not deliver, what it signs,

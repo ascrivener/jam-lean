@@ -52,6 +52,29 @@ jam-lean parent session is archived.
   `Ring.Fast.cryptoW`). Effort ~3–5 sessions; CI +10–25 min in `mathlib-proofs`. **First step if
   resumed: the primality certificate alone, as a feasibility check.**
 
+- **More merged (2026-11-27):** #288 best-chain rule §19 (`JAM/BestChain.lean`), #289/#300 README,
+  #291/#294 checked indexing in the spec (no `!` in JAM/ or PVM/ outside Fast/Theorems except two
+  proof-internal sites in `PVM/Logic/ChunkBlob.lean`; old = new theorems in `JAM/Theorems/CheckedIndex*`),
+  #290/#292/#293/#297/#298 docs site (SubVerso-highlighted source with hovers, inline names link to
+  the API, status block, printed equation numbers, roadmap §4–§19 + App. A–H), #296 HANDOFF (crypto),
+  #299/#301 docstring math as `$…$` LaTeX (rendered by KaTeX in the book, MathJax in /api/).
+  Target pin: jam-lean-target #51 (58d50d9), #52 (0539451).
+- **Docs site announcement (2026-11-27):** an independent review (archived child) found the site ready
+  after fixes, all done. Adam will post to the JAM Matrix channel himself (draft was given in chat:
+  what it is, preview/pilot, v0.8.0 vectors, proved fast paths, not a node / not audited, issues link;
+  no "verified", no other implementation named).
+- **Adam's decisions (2026-11-27, later):** defer the BLS12-381 Mathlib phase (above); disclosure option
+  (b): the site, docstrings and README link only to the paper-readings sections of
+  `docs/upstream-candidates.md` (`#gray-paper-issues`, `#paper-and-vectors`), never the whole file or
+  its "Bootstrap service binary" section; the Parity mentions already in `docs/whats-proven.md`
+  (Findings) and `docs/bootstrap-target.md` (Quirks) stay as they are ("no"); names in the book link
+  to the API; docstring math is `$…$` LaTeX repo-wide (portability: `[\![…]\!]` not `\llbracket`,
+  `\ast` not `*`); no Lean renaming to paper symbols.
+- **In flight:** docs child session_01FAPLsaPzPTn9T3iJgCH8tS: docstring-math pass step 2 (PVM done #301;
+  JAM next, then JamCrypto + site prose). One jam-lean-target pin bump when the pass finishes (text-only).
+  Superseded crypto branches left on origin (jamcrypto-ring/-h2c/-bls/-fast-field, handoff-bls-deferred):
+  delete only with Adam's OK.
+
 
 ## 2026-11-25: GP v0.8.1 (read first)
 

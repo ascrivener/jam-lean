@@ -66,7 +66,7 @@ $$`\mathcal{E}\colon \left\{\begin{aligned} \mathbb{N}_{2^{64}} &\to \mathbb{B}_
 
 The model searches $`l \in \mathbb{N}_8` in increasing order. The ranges $`[2^{7l}, 2^{7(l+1)})` are disjoint, so
 at most one $`l` qualifies and the order of the search does not matter. The theorem below states the
-middle case for $`l < 5`, the case that covers every $`x < 2^{35}`, and the next one bounds the length for
+middle case for $`l < 5`, the case that covers every nonzero $`x < 2^{35}`, and the next one bounds the length for
 32-bit values:
 
 {mathdoc PVM.encodeNat_of_lt}
@@ -132,7 +132,8 @@ $$`\mathcal{E}(b \in \mathbb{b}) \equiv \begin{cases} [\,] & \text{if } b = [\,]
 
 The model builds the $`\lceil |b| / 8 \rceil` octets directly instead of recursing; a bit past the end of $`b`
 counts as 0, so the high bits of a short last octet are zero, as the sum in eq. (C.10) leaves them.
-The assurances extrinsic (eq. (C.21)) is where the model uses it.
+The model uses it in the assurances extrinsic (eq. (C.21)) and to build the message an assurance signs
+(§11.2).
 
 # Dictionaries and sets (§C.1.5, §C.1.6)
 %%%
@@ -144,7 +145,7 @@ $$`\forall K, V\colon \mathcal{E}(d \in \langle K \to V \rangle) \equiv \mathcal
 $$`\mathcal{E}(\{a, b, c, \dots\}) \equiv \mathcal{E}(a) \frown \mathcal{E}(b) \frown \mathcal{E}(c) \frown \dots \quad \text{where } a < b < c < \dots \qquad \text{(C.12)}`
 
 A dictionary is encoded as its pairs in key order, with a length; a set as its elements in order.
-Where the paper uses a set of hashes $`\llbracket\mathbb{H}\rrbracket` or a dictionary $`\mathbb{H} \to \mathbb{H}`, the model holds it as
+Where the paper uses a set of hashes $`\left\{\mkern-5mu\left[\,\mathbb{H}\,\right]\mkern-5mu\right\}` or a dictionary $`\langle \mathbb{H} \to \mathbb{H} \rangle`, the model holds it as
 {api}`JAM.OctetSet` or {api}`JAM.OctetDict`. Both are extensional search trees over octet lists, so
 iterating over one already gives the elements in ascending order, and no sort is needed:
 
@@ -152,9 +153,14 @@ iterating over one already gives the elements in ascending order, and no sort is
 
 {leanSource JAM.Codec.varHashDict}
 
-The sets that appear in the paper's terms, such as the prerequisites $`\mathbf{p}` of a refinement context,
-carry a length discriminator, so the model's set encoder is $`\mathcal{E}(\updownarrow[\dots])` of the ordered
-elements.
+The sets in the terms of blocks, work packages and the state, such as the prerequisites $`\mathbf{p}` of a
+refinement context, are written with a length discriminator, so the model's set encoder for them is
+$`\mathcal{E}(\updownarrow[\dots])` of the ordered elements. Not every set in the paper is: the set §17.3 encodes for an
+audit announcement has none (see the {ref "auditing"}[auditing chapter]).
+
+Dictionaries need care. Eq. (C.11) already gives a dictionary its length, and eq. (C.30) writes the
+work report's segment-root lookup as $`\updownarrow\mathbf{r}_\mathbf{l}`, which read literally would put a second length before it.
+The model writes one length ({api}`JAM.Codec.varHashDict`); see {ref "codec-readings"}[Readings chosen].
 
 # Decoding
 %%%
@@ -192,7 +198,7 @@ The model proves the round trip for $`\mathcal{E}_l`, above. It does not yet pro
 natural's decoder or the composite decoders are inverse to their encoders. Instead, the codec test
 (`Tests/CodecTest.lean`) runs the GP v0.8.0 codec vectors, with the assurance encoding changed as
 v0.8.1 requires: for each vector, encoding its term gives its octets, decoding its octets and encoding
-the result again gives them back, and the decoder rejects the octets with one octet dropped or added.
+the result again gives them back, and the decoder rejects the octets with their last octet dropped or with a zero octet appended.
 
 # Blocks and the work-package family (§C.2)
 %%%
@@ -265,15 +271,26 @@ above, field by field in the same order.
 tag := "codec-readings"
 %%%
 
-* *Naturals of $`2^{64}` and more.* $`\mathcal{E}` is defined on $`\mathbb{N}_{2^{64}}` and $`\mathcal{E}_l` on
-  $`\mathbb{N}_{2^{8l}}`. The model's functions take any natural, so that they are total. Outside the paper's
-  domain they encode $`x \bmod 2^{64}` and $`x \bmod 2^{8l}` (`Num.decodeLE_encodeLE` above); the
-  paper never encodes such a value.
+* *Values outside the domain.* $`\mathcal{E}` is defined on $`\mathbb{N}_{2^{64}}` and $`\mathcal{E}_l` on $`\mathbb{N}_{2^{8l}}`. The model's functions
+  take any natural, so that they are total. Outside the paper's domain, $`\mathcal{E}_l` encodes $`x \bmod 2^{8l}`
+  (`Num.decodeLE_encodeLE` above), and $`\mathcal{E}` gives $`[2^8 - 1] \frown \mathcal{E}_8(x \bmod 2^{64})`: the last case of eq. (C.6),
+  applied whatever its condition. So $`\mathcal{E}(2^{64} + 5) = [255, 5, 0, \dots, 0]`, not $`\mathcal{E}(5) = [5]`. Likewise
+  {api}`JAM.encodeImport` accepts an index $`i \geq 2^{15}`, outside eq. (C.39)'s $`\mathbb{N}_{2^{15}}`: $`\mathcal{E}_2` keeps only the low 16
+  bits, of $`i` for a segment root and of $`i + 2^{15}` for a work-package hash, and a segment root whose kept
+  index is $`2^{15}` or more decodes as a work-package hash.
+  The paper never encodes such values.
 * *The order of a set.* Eq. (C.12) orders a set's elements by $`<` but does not define $`<` on octet
-  sequences. The model uses the lexicographic order ({api}`JAM.Codec.bytesLt`, and the order of
-  {api}`JAM.OctetSet`), which for the 32-octet hashes it is used on is the order of the hashes read as
-  big-endian numbers.
+  sequences. The model uses the lexicographic order of octet lists (Lean's `<` and `Ord` on
+  `List UInt8`), which {api}`JAM.OctetSet` and {api}`JAM.OctetDict` keep and the set and dictionary decoders
+  check. For the 32-octet hashes it is used on, this is the order of the hashes read as big-endian
+  numbers.
 * *What $`\mathcal{E}^{-1}` rejects.* "The inverse of $`\mathcal{E}`" accepts only octet sequences that are
-  encodings. The model's decoders therefore reject non-canonical naturals, discriminators other than
-  0 and 1, nonzero padding bits, sets and dictionaries out of order, lengths beyond the end of the
+  encodings. The model's decoders therefore reject non-canonical naturals, discriminators outside
+  their range (an optional value's other than 0 and 1, a work result's above 6, and the epoch
+  marker's other than 0 and 1), nonzero padding bits, sets and dictionaries out of order, lengths beyond the end of the
   input, and octets left over at the end.
+* *A dictionary's length (note v0.8.1-A60).* Eq. (C.11) encodes a dictionary with its length, and
+  eq. (C.30) writes $`\updownarrow\mathbf{r}_\mathbf{l}` for the work report's segment-root lookup, which read literally gives two
+  length prefixes. The model writes one ({api}`JAM.Codec.varHashDict`, used by {api}`JAM.WorkReport.encode`).
+  This is recorded in the model's
+  [notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues).

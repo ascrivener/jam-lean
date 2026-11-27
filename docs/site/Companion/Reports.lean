@@ -251,7 +251,7 @@ tag := "reports-posterior"
 Each core with a new guarantee takes it, stamped with the current time; the others keep their
 entry in $`\rho^\ddagger`:
 
-$$`\forall c \in \mathbb{N}_{\mathsf{C}} : \rho'[c] \equiv \begin{cases} (\mathbf{g},\, t \mathrel{\scriptstyle\blacktriangleright} \tau') & \text{if } \exists \mathbf{g} \in \mathbf{E}_G, (\mathbf{g}_\mathbf{r})_c = c \\ \rho^\ddagger[c] & \text{otherwise} \end{cases} \qquad \text{(11.46)}`
+$$`\forall c \in \mathbb{N}_{\mathsf{C}} : \rho'[c] \equiv \begin{cases} (\mathbf{g},\, t \mathrel{\substack{\scriptscriptstyle\blacktriangleright \\ \scriptscriptstyle\blacktriangleright}} \tau') & \text{if } \exists \mathbf{g} \in \mathbf{E}_G, (\mathbf{g}_\mathbf{r})_c = c \\ \rho^\ddagger[c] & \text{otherwise} \end{cases} \qquad \text{(11.46)}`
 
 This is the `ρ'` binding at the end of {api}`JAM.guarantees`, which also carries out every check
 of §11.4, in the order given in its docstring:

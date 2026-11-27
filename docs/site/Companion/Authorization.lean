@@ -19,8 +19,8 @@ file := "authorization"
 
 A work package may use a core only if one of the core's current *authorizers* allows it. An
 authorizer is identified by a hash: the hash of its PVM code hash concatenated with its
-configuration blob. Running an authorizer happens in-core, in the Is-Authorized invocation (§14.3), which is separate
-from Refine. On chain,
+configuration blob. Running an authorizer happens in-core, in the Is-Authorized invocation $`\Psi_I` (defined in
+Appendix B.2 and used in §14.4), which is separate from Refine. On chain,
 the state only has to say which authorizers each core accepts, and keep that set up to date. That
 is §8 of GP v0.8.1, and in the model it is `JAM/Authorization.lean`
 ([API page](https://ascrivener.github.io/jam-lean/api/JAM/Authorization.html)).

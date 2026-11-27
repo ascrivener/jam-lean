@@ -118,7 +118,7 @@ binding or function, what it computes, and the equations and section:
 * `assurances`: $`\rho^\ddagger`, $`\mathbf{R}^*`; (4.13), (4.15) (§11).
 * `guarantees`: $`\rho'`; (4.14) (§11).
 * `accumulate`: $`\omega'`, $`\xi'`, $`\delta^\ddagger`, $`\chi'`, $`\iota'`, $`\phi'`, $`\theta'`, $`\mathbf{S}`; (4.16) (§12).
-* `recentHistory`: $`\beta'` (both $`\beta'_H`, eq. (4.17), and $`\beta'_B`, eq. (7.7)); ({ref "history"}[§7]).
+* `recentHistory`: $`\beta'` (both $`\beta'_H`, eq. (4.17), and $`\beta'_B`, eq. (7.7)) ({ref "history"}[§7]).
 * `preimages`: $`\delta'`; (4.18) (§12).
 * `authorizations`: $`\alpha'`; (4.19) ({ref "authorization"}[§8]).
 * `validatorStats`, `coreStats`, `serviceStats`: $`\pi'`; (4.20) (§13).
@@ -134,7 +134,8 @@ their line of the graph lists:
   data must have been solicited but not yet provided in the prior state.
 * *Other steps.* Disputes read $`\kappa`, $`\lambda` and $`\tau`. Assurances read $`\kappa`, $`|\kappa'|`, $`\mathbf{H}_P` and $`\mathbf{H}_T`. The guarantee
   step also reads the prior $`\beta_H`, $`\xi`, $`\omega` and $`\rho` (to find packages already known) and the ancestor set $`\mathbf{A}`.
-  Accumulation reads $`\eta'_0` and $`\mathbf{H}_T`. The core statistics read the newly available reports $`\mathbf{R}`.
+  Accumulation reads $`\eta'_0` and $`\mathbf{H}_T`. The core statistics read the newly available reports $`\mathbf{R}`, and the validator statistics read
+  the reporters $`\mathbf{G}` of the guarantees, which come from the assignments $`M` and $`M^*` (so from $`\lambda'`, $`\eta'_2`, $`\eta'_3` and $`\psi'_O`).
 * *The timeslot.* The model sets $`\tau' = \mathbf{H}_T` directly. The check that $`\mathbf{H}_T` is after $`\tau` is made by
   {api}`JAM.safrole` (its `badSlot` error).
 
@@ -159,7 +160,7 @@ $$`\mathbf{H}_E \in \left\lgroup \mathbb{H}, \mathbb{H}, \llbracket \left\lgroup
 $`\tilde{\mathbb{H}}` and $`\bar{\mathbb{H}}` are Bandersnatch and Ed25519 keys (§3.8.2). The model's {api}`JAM.EpochMark` and the option
 types hold them, and the types do not fix their lengths. The decoder ({api}`JAM.Header.decode`) fixes the
 winning-tickets marker's $`\mathsf{E}`. The epoch marker's key list is length-prefixed (its encoding is $`\updownarrow\mathbf{k}`); its
-length is enforced at import, because $`\mathbf{H}_E` must equal the marker Safrole produces.
+length is enforced at import, because $`\mathbf{H}_E` must match the marker Safrole produces.
 
 ## The header's conditions
 

@@ -18,7 +18,7 @@ file := "shuffle"
 %%%
 
 The paper uses a Fisher–Yates shuffle $`\mathcal{F}` wherever it needs a random order: for the
-guarantor assignments of §11.3 ({ref "reports-assignments"}[chapter]) it shuffles validators, and
+guarantor assignments of §11.3 ({ref "reports-assignments"}[chapter]) it shuffles the core indices $`[\lfloor i/3 \rfloor \mid i \mathrel{\mathrlap{<}{-}} \mathbb{N}_v]`, one per validator, and
 for the selection of reports to audit in §17 it shuffles reports. §3.7.5 introduces it: it takes a sequence and some entropy, and returns
 the same elements in an order fixed by the entropy. Appendix F of GP v0.8.1 defines it, first for
 entropy given as a sequence of naturals, then for entropy given as a hash.

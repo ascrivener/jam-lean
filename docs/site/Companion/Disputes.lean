@@ -90,8 +90,9 @@ verdict's outcome:
 
 {leanSource JAM.checkVerdict}
 
-{api}`JAM.Xvalidif` gives $`\mathsf{X}_v`. The order of (10.8) is checked first in
-{api}`JAM.disputesTransition`, by {api}`JAM.orderedUniqBy`.
+{api}`JAM.Xvalidif` gives $`\mathsf{X}_v`. In {api}`JAM.disputesTransition` the order of (10.8) is
+checked by {api}`JAM.orderedUniqBy`, after the length bounds of (10.2) and before any verdict's own
+conditions.
 
 ## The verdict sequence v (eq. 10.12)
 %%%
@@ -200,8 +201,8 @@ The first two points are note 29, and the others the notes they name, in the mod
   equivalences or as $`((r \in \psi'_B \Leftrightarrow r \notin \psi'_G) \Leftrightarrow v)`. The second reading would accept a fault
   with $`v = \top` on a report with a good verdict. The model reads a chain.
 * *Errors and their order.* The paper names no errors for an invalid disputes extrinsic and gives
-  no order between its conditions. The model uses the test vectors' error names
-  ({api}`JAM.DisputesError`). It checks the length bounds of (10.2) first, then each part's order
+  no order between its conditions. The model uses the test vectors' error names where they
+  exist ({api}`JAM.DisputesError`). It checks the length bounds of (10.2) first, then each part's order
   before the conditions on its elements: the order of the verdicts (10.8); then, for each verdict, its epoch index (the type
   $`\lfloor \tau/\mathsf{E} \rfloor - \mathbb{N}_2` of (10.2)), the order of its judgments (10.11), their number and
   each judge's index and signature (10.4), that its report is not already judged (10.10), and that

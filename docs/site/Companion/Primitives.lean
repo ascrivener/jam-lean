@@ -187,13 +187,13 @@ The tiny values are test configuration, not part of the paper. They come from th
 README, except $`\mathsf{L}`, which the README does not list; the tiny vectors use 24
 ([paper and vectors](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#paper-and-vectors), note 32).
 
-The test vectors the model runs were made for GP v0.8.0, before v0.8.1 changed five of these
+The test vectors the model runs were made for GP v0.8.0, before v0.8.1 changed five of the paper's
 constants ($`\mathsf{G}_A`, $`\mathsf{G}_I`, $`\mathsf{G}_R`, $`\mathsf{G}_T` and $`\mathsf{W}_A`). The test harnesses therefore run them with two further chains,
 `full080` and `tiny080`, which carry the v0.8.0 values
 ([`Tests/V080.lean`](https://github.com/ascrivener/jam-lean/blob/main/Tests/V080.lean)). For the tiny chain these are
 $`\mathsf{G}_A = 10\,000\,000`, $`\mathsf{G}_I = 50\,000\,000` and $`\mathsf{W}_A = 64\,000`. {api}`JAM.Params.tiny` itself pairs the tiny values with v0.8.1's
 $`\mathsf{G}_A = 47\,000\,000`, so it does not meet the paper's guidance that $`\mathsf{G}_T` be no smaller than
-$`\mathsf{G}_A \cdot \mathsf{C} + \sum_{g \in \mathcal{V}(\chi_Z)} g`: with $`\mathsf{C} = 2`, $`\mathsf{G}_A \cdot \mathsf{C} = 94\,000\,000 > \mathsf{G}_T = 20\,000\,000`.
+$`\mathsf{G}_A \cdot \mathsf{C} + \sum_{g \in \mathcal{V}(\chi_\mathbf{z})} g`: with $`\mathsf{C} = 2`, $`\mathsf{G}_A \cdot \mathsf{C} = 94\,000\,000 > \mathsf{G}_T = 20\,000\,000`.
 
 # Readings chosen
 %%%

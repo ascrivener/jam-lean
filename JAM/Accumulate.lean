@@ -328,14 +328,25 @@ def transferPs (x : Implications) (src mode : Nat) : Bool :=
 def transferPd (x : Implications) (src dst mode o : Nat) : Bool :=
   o ≠ 0 || (mayModify x dst && ((mode = 1 ∨ mode = 2) || src ≠ dst))
 
-/-- The result code c of Ω_T (GP v0.8.1) once the memo is readable: WHO, HUH, LOW, CASH or OK. -/
+/-- The result code c of Ω_T (GP v0.8.1) once the memo is readable: WHO, HUH, LOW, CASH or OK.
+
+    CASH tests **d'**[s] (GP v0.8.1 pvm_invocations.tex:1001–1006 and 1021), and **d'** applies the
+    debit and, for o = 0, the credit together. So for an immediate transfer to the same service
+    (s = d, x ∈ {1, 2}, the only modes p_d allows then) the credit counts: moving funds between
+    one's own balance and supervisor balance never lowers b + b'. -/
 def transferCode (x : Implications) (src dst mode amount l o : Nat) : Nat :=
   let d := x.state.accounts
-  -- the debited balances, as integers (the source's other balance is unchanged)
+  -- **d'**[s]'s balances, as integers: the debit, plus the immediate credit when d = s
   let (sb, ssb, smin) : Int × Int × Nat := match d.get? src with
     | some sa =>
-      if mode = 0 ∨ mode = 2 then ((sa.balance : Int) - amount, sa.supervisorBalance, sa.minBalance)
-      else (sa.balance, (sa.supervisorBalance : Int) - amount, sa.minBalance)
+      let cr : Int := if o = 0 ∧ dst = src then amount else 0
+      let toSup : Bool := mode == 2 || mode == 3
+      if mode = 0 ∨ mode = 2 then
+        ((sa.balance : Int) - amount + (if toSup then 0 else cr),
+         (sa.supervisorBalance : Int) + (if toSup then cr else 0), sa.minBalance)
+      else
+        ((sa.balance : Int) + (if toSup then 0 else cr),
+         (sa.supervisorBalance : Int) - amount + (if toSup then cr else 0), sa.minBalance)
     | none => (0, 0, 0)
   if !d.contains src || !d.contains dst then WHO
   else if mode > 3 || !transferPs x src mode || !transferPd x src dst mode o then HUH

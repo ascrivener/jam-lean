@@ -446,7 +446,7 @@ theorem psiARun_confined (params : Params) (entropy : List UInt8) (e st : Partia
     other account, the staging set, the authorizer queue and the privileged services as they were
     in $\mathbf{e}$, and provides nothing.
 
-    The `NoSupervisee` hypothesis is new with GP v0.8.1 (Adam, 2026-11-25): a service may change
+    The `NoSupervisee` hypothesis is new with GP v0.8.1: a service may change
     any service it effectively supervises through `write`, `upgrade`, `solicit`, `forget`,
     `transfer` and `supervisor`. -/
 theorem psiA_confined (params : Params) (entropy : List UInt8) (e : PartialState) (t s g : Nat)

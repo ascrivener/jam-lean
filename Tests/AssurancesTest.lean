@@ -11,7 +11,7 @@ davxy/jam-test-vectors `v0.8.0` `stf/assurances/{tiny,full}`, and compares:
   compare the vectors' names);
 * ρ after assurances (on an error, the state is unchanged).
 
-The pre-state's assignments are ρ^‡, after the disputes transition. Ed25519 verification uses the
+The pre-state's assignments are ρ^†, after the disputes transition. Ed25519 verification uses the
 signature oracle of README note 29: every signature is rejected exactly when the vector expects
 `bad_signature`.
 

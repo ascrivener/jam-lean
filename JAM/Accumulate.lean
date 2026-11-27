@@ -49,7 +49,7 @@ structure Implications where
   xfers : List DeferredTransfer := []
   yield : Option (List UInt8) := none
   provisions : Provisions := ∅
-  /-- $x_m$: the services whose accounts this accumulation modified (GP v0.8.1 eq. `implications`) -/
+  /-- $x_\mathbf{w}$: the services whose accounts this accumulation modified (GP v0.8.1 eq. `implications`) -/
   modified : Std.ExtTreeSet Nat := ∅
 
 namespace Implications
@@ -108,7 +108,7 @@ def tgt (w s : Nat) : Nat := if w = 2 ^ 64 - 1 then s else w
 def mayModify (x : Implications) (d : Nat) : Bool :=
   x.id == d || x.id == effectiveSupervisor x.state.accounts d
 
-/-- $x$ with $\mathbf{d}[d]$ set to `a` and $d$ added to the modified set $x_m$ (GP v0.8.1). -/
+/-- $x$ with $\mathbf{d}[d]$ set to `a` and $d$ added to the modified set $x_\mathbf{w}$ (GP v0.8.1). -/
 def putAcct (x : Implications) (d : Nat) (a : ServiceAccount) : Implications :=
   { x with state := { x.state with accounts := x.state.accounts.insert d a },
            modified := x.modified.insert d }
@@ -124,7 +124,7 @@ def overFull (a : ServiceAccount) : Bool :=
     $\varphi_8$ (length $\varphi_9$) to the octets at $\varphi_{10}$ (length $\varphi_{11}$). WHO if
     $d$ is not a service; HUH unless $x_s \in \{d, E(\mathbf{d}, d)\}$; FULL if the result is
     `overFull`; otherwise $\varphi'_7$ is the previous value's length (NONE if none) and $d$ joins
-    $x_m$.
+    $x_\mathbf{w}$.
     $g = \mathsf{M}_{W,c} + \mathfrak{G}(\mathsf{M}_{W,k,\ell}, k_Z) + \mathfrak{G}(\mathsf{M}_{W,v,\ell}, v_Z)$. -/
 def write (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
   let kO := reg ω 8; let kZ := reg ω 9; let vO := reg ω 10; let vZ := reg ω 11
@@ -416,7 +416,7 @@ def eject (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : Ho
                                modified := (x.modified.insert dId).insert x.id }) OK
 
 /-- $\Omega_Q$, `query` = 24 (GP v0.8.1): the request $(h, z)$ of service $\varphi_7$ ($x_s$ for
-    $2^{64} - 1$), with $h$ at $\varphi_8$ and $z = \varphi_9$. HUH if $z \notin \mathbb{N}_L$; WHO if
+    $2^{64} - 1$), with $h$ at $\varphi_8$ and $z = \varphi_9$. HUH if $z \notin \mathbb{N}_P$; WHO if
     $\varphi_7$ names no service. -/
 def query (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
   let o := reg ω 8; let z := reg ω 9
@@ -439,7 +439,7 @@ def query (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
           | some _ => set78 NONE 0
 
 /-- $\Omega_S$, `solicit` = 25 (GP v0.8.1): solicit $(h, z)$ for service $d = \varphi_7$ ($x_s$ for
-    $2^{64} - 1$), $h$ at $\varphi_8$, $z = \varphi_9$. HUH if $z \notin \mathbb{N}_L$; WHO if $d$ is
+    $2^{64} - 1$), $h$ at $\varphi_8$, $z = \varphi_9$. HUH if $z \notin \mathbb{N}_P$; WHO if $d$ is
     not a service; HUH unless $x_s \in \{d, E(\mathbf{d}, d)\}$ or if the request cannot be
     (re-)solicited; FULL if the result is `overFull` (GP #581). -/
 def solicit (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
@@ -467,7 +467,7 @@ def solicit (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : 
             else r7 (updX out (putAcct x d a')) OK
 
 /-- $\Omega_F$, `forget` = 26 (GP v0.8.1): forget $(h, z)$ for service $d = \varphi_7$ ($x_s$ for
-    $2^{64} - 1$), $h$ at $\varphi_8$, $z = \varphi_9$. HUH if $z \notin \mathbb{N}_L$; WHO if $d$ is
+    $2^{64} - 1$), $h$ at $\varphi_8$, $z = \varphi_9$. HUH if $z \notin \mathbb{N}_P$; WHO if $d$ is
     not a service; HUH unless $x_s \in \{d, E(\mathbf{d}, d)\}$ or if the request cannot be forgotten
     now. -/
 def forget (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
@@ -502,7 +502,7 @@ def yield (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
     | none => panic out
     | some h => r7 (updX out { c.1 with yield := some h }) OK
 
-/-- $\Omega_{\text{♈}}$, `provide` = 28 (GP v0.8.1): HUH first if $z \notin \mathbb{N}_L$. -/
+/-- $\Omega_{\text{♈}}$, `provide` = 28 (GP v0.8.1): HUH first if $z \notin \mathbb{N}_P$. -/
 def provide (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
   let o := reg ω 8; let z := reg ω 9
   charge (Constants.CgasAriesconst + memGas Constants.CgasArieslinear z) gas ω μ c fun out =>
@@ -519,7 +519,7 @@ def provide (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx 
           else if x.provisions.contains (s, i) then r7 out HUH
           else r7 (updX out { x with provisions := x.provisions.insert (s, i) }) OK
 
-/-- $F \in \mathfrak{F}_{\mathbb{L}^2}$ (GP v0.8.1 eq. `accinvocation`): dispatch on the host-call
+/-- $F \in \Omega\langle \mathbb{L}^2 \rangle$ (GP v0.8.1 eq. `accinvocation`): dispatch on the host-call
     id. An unknown id charges $\mathsf{M}_\emptyset$ and sets $\varphi'_7 = \text{WHAT}$; with
     $\varrho < \mathsf{M}_\emptyset$ it is $\infty$ with $\varrho^{\ast} = 0$. -/
 def dispatch (env : AccEnv) (n gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
@@ -554,8 +554,8 @@ def dispatch (env : AccEnv) (n gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx)
 
 end AccHost
 
-/-- $F$ as a host-call handler for $\Psi_H$ (`PVM.HostFn`): $\mathbb{Z}_G$ gas is clamped at 0,
-    which only happens together with $\infty$ (see the note on $\mathfrak{F}_X$ in the README). -/
+/-- $F$ as a host-call handler for $\Psi_H$ (`PVM.HostFn`): the incoming gas is read in
+    $\mathbb{N}_G$, as v0.8.1 types all gas (#533; README "Notes on the paper and the vectors", note 12). -/
 def accHostFn (env : AccEnv) : HostFn AccCtx := fun n gas ω μ c =>
   let o := AccHost.dispatch env n gas.toNat ω μ c
   ⟨o.status, UInt64.ofNat o.gas, o.regs, o.mem, o.ctx⟩

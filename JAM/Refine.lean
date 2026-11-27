@@ -32,7 +32,7 @@ structure InnerPvm where
   charged : Bool
   handle : Nat
 
-/-- The refine context $(\mathbf{m}, \mathbf{P}, \mathbf{e}) \in (\langle \mathbb{N} \to \text{instance} \rangle, \langle \mathbb{N} \to \mathbb{B} \rangle, [\![ \mathbb{J} ]\!])$ (GP v0.8.1
+/-- The refine context $(\mathbf{m}, \mathbf{c}, \mathbf{e}) \in (\langle \mathbb{N} \to \text{instance} \rangle, \langle \mathbb{N} \to \mathbb{B} \rangle, [\![ \mathbb{J} ]\!])$ (GP v0.8.1
     eq. `refinemutator`): the PVM instances, the compiled program modules (blobs, by handle) and the
     exported segments. All start empty. -/
 abbrev RefineCtx := Std.ExtTreeMap Nat InnerPvm × Std.ExtTreeMap Nat ByteArray × List (List UInt8)
@@ -70,7 +70,7 @@ def historicalLookup {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (s : Nat) 
 
 /-! ## $\Omega_E$, `export` = 8 -/
 
-/-- $\Omega_E(\varrho, \varphi, \mu, (\mathbf{m}, \mathbf{P}, \mathbf{e}), \varsigma)$, $g = \mathsf{M}_E$: append the octets at $\varphi_7$ (length $\min(\varphi_8, \mathsf{W}_G)$), zero-padded
+/-- $\Omega_E(\varrho, \varphi, \mu, (\mathbf{m}, \mathbf{c}, \mathbf{e}), \varsigma)$, $g = \mathsf{M}_E$: append the octets at $\varphi_7$ (length $\min(\varphi_8, \mathsf{W}_G)$), zero-padded
     to $\mathsf{W}_G$, to the exports; $\varphi'_7$ is the new segment's index $\varsigma + |\mathbf{e}|$. -/
 def exportSeg (gas : Nat) (ω : Regs) (μ : Memory) (off : Nat) (c : RefineCtx) : HostOut RefineCtx :=
   charged Constants.CgasE gas ω μ c fun out =>
@@ -89,7 +89,7 @@ def exportSeg (gas : Nat) (ω : Regs) (μ : Memory) (off : Nat) (c : RefineCtx) 
 def freeIn (mem : Nat → Bool) (bound : Nat) : Nat :=
   ((List.range (bound + 1)).find? (!mem ·)).getD bound
 
-/-- $\mathbf{H} = \mathcal{K}(\mathbf{P}) \cup \{\mathbf{m}[n]_h : n \in \mathcal{K}(\mathbf{m})\}$, the handles in use (GP v0.8.1 $\Omega_\Gamma$), as a list
+/-- $\mathbf{H} = \mathcal{K}(\mathbf{c}) \cup \{\mathbf{m}[n]_h : n \in \mathcal{K}(\mathbf{m})\}$, the handles in use (GP v0.8.1 $\Omega_\Gamma$), as a list
     (possibly with repeats). -/
 def handlesInUse (c : RefineCtx) : List Nat :=
   c.2.1.keys ++ c.1.values.map (·.handle)
@@ -118,7 +118,7 @@ def compileGas (m l : Nat) : Nat :=
   else if m = 1 then Constants.CgasGammadbconst + memGas Constants.CgasGammadblinear l
   else Constants.CgasGammamemconst
 
-/-- $\Omega_\Gamma(\varrho, \varphi, \mu, (\mathbf{m}, \mathbf{P}, \mathbf{e}), s, \mathbf{d}, t)$ (GP v0.8.1 Appendix B, #530), with
+/-- $\Omega_\Gamma(\varrho, \varphi, \mu, (\mathbf{m}, \mathbf{c}, \mathbf{e}), s, \mathbf{d}, t)$ (GP v0.8.1 Appendix B, #530), with
     $[m, p, l, f, i] = \varphi_{7\dots+5}$: compile a program module from our RAM ($m = 0$) or from the preimage
     of the hash at $p$ in service $\mathbf{a} = \mathbf{d}[s]$ ($i = 2^{64} - 1$) or $\mathbf{d}[i]$ ($m = 1$). FULL if 128
     handles are in use; ☇ if the source is unreadable; NONE if the preimage is not available; HUH if
@@ -147,7 +147,7 @@ def compile (gas : Nat) (ω : Regs) (μ : Memory) (s : Nat) (d : Accounts) (t : 
 def freeId (m : Std.ExtTreeMap Nat InnerPvm) : Nat :=
   ((List.range (m.size + 1)).find? (!m.contains ·)).getD m.size
 
-/-- $\Omega_M(\varrho, \varphi, \mu, (\mathbf{m}, \mathbf{P}, \mathbf{e}))$, $g = \mathsf{M}_M$ (GP v0.8.1 Appendix B, #530): with $[h, i] = \varphi_{7\dots+2}$,
+/-- $\Omega_M(\varrho, \varphi, \mu, (\mathbf{m}, \mathbf{c}, \mathbf{e}))$, $g = \mathsf{M}_M$ (GP v0.8.1 Appendix B, #530): with $[h, i] = \varphi_{7\dots+2}$,
     instantiate program module $h$, starting at $i$, with empty RAM. FULL if there are already 63
     instances; WHO if there is no module $h$; HUH if its blob does not deblob at $i$. (v0.8.0 read the
     program blob from RAM.) -/
@@ -270,7 +270,7 @@ def invoke (gas : Nat) (ω : Regs) (μ : Memory) (c : RefineCtx) : HostOut Refin
 
 /-! ## $\Omega_X$, `expunge` = 15 -/
 
-/-- $\Omega_X(\varrho, \varphi, \mu, (\mathbf{m}, \mathbf{P}, \mathbf{e}))$, $g = \mathsf{M}_X$ (GP v0.8.1, #530), with $[m, n] = \varphi_{7, 8}$: for
+/-- $\Omega_X(\varrho, \varphi, \mu, (\mathbf{m}, \mathbf{c}, \mathbf{e}))$, $g = \mathsf{M}_X$ (GP v0.8.1, #530), with $[m, n] = \varphi_{7, 8}$: for
     $m = 0$ remove instance $n$, returning its instruction counter; for $m = 1$ remove program module $n$,
     returning OK; WHO if there is no such instance or module; HUH for any other $m$. -/
 def expunge (gas : Nat) (ω : Regs) (μ : Memory) (c : RefineCtx) : HostOut RefineCtx :=
@@ -307,7 +307,7 @@ def unknown {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (x : X) : HostOut X
   if gas < Constants.Cgasunknown then ⟨.oog, 0, setR7 ω WHAT, μ, x⟩
   else ⟨.cont, gas - Constants.Cgasunknown, setR7 ω WHAT, μ, x⟩
 
-/-- $F \in \mathfrak{F}_{(\langle \mathbb{N} \to \text{instance} \rangle, \langle \mathbb{N} \to \text{module} \rangle, [\![ \mathbb{J} ]\!])}$ (GP v0.8.1 eq. `refinemutator`): dispatch on the
+/-- $F \in \Omega\langle (\langle \mathbb{N} \to \text{instance} \rangle, \langle \mathbb{N} \to \mathbb{B} \rangle, [\![ \mathbb{J} ]\!]) \rangle$ (GP v0.8.1 eq. `refinemutator`): dispatch on the
     host-call id. v0.8.1 inserts `compile` = 9 and renumbers `machine` … `expunge` to 10 … 15 (#530). -/
 def dispatch (env : Env) (n gas : Nat) (ω : Regs) (μ : Memory) (c : RefineCtx) : HostOut RefineCtx :=
   match n with

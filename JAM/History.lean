@@ -84,7 +84,7 @@ structure HistoryInput where
   accRoot : List UInt8
   /-- $\mathbf{H}_T$. -/
   slot : Nat
-  /-- $(((g_w)_s)_h, ((g_w)_s)_e)$ for each $g \in \mathbf{E}_G$. -/
+  /-- $(((g_\mathbf{r})_\mathbf{s})_p, ((g_\mathbf{r})_\mathbf{s})_e)$ for each $g \in \mathbf{E}_G$. -/
   reported : List (List UInt8 × List UInt8)
 
 /-- $\beta_H^\dagger$ (GP eq. `correctlaststateroot`): $\beta_H$ with its last entry's state root set to $\mathbf{H}_R$. -/

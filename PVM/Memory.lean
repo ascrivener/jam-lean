@@ -167,7 +167,7 @@ end Memory
 
     The prose of §A.4 says an index below $2^{16}$ always panics "regardless of the apparent
     (in)accessibility"; the formula, which we follow, only considers inaccessible indices
-    (README, note 3). -/
+    (note 3 in `docs/upstream-candidates.md#gray-paper-issues`). -/
 def memoryException (μ : Memory) (r w : List Nat) : Option (Option Nat) :=
   let x := r.filter (fun i => !μ.readable (i % two32)) ++ w.filter (fun i => !μ.writable (i % two32))
   match x.min? with

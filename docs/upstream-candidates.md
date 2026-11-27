@@ -138,7 +138,7 @@ should cite a later draft.
   paper or the vectors. The model rounded the data unit from the heap base; the binary rounds it
   in the address space. Fixed in `Services/Picoalloc/Model.lean`.
 - **The lookup anchor's state root in `lookupAnchorKnown`.** A bug in this repository's own
-  model, found by the jam-lean-target fuzzing work. §11.4.1 (GP eq. 11.36) requires the lookup
+  model, found by the jam-lean-target fuzzing work. §11.4.1 (GP v0.8.1 eq. 11.38) requires the lookup
   anchor's child to have h'_R = x_lookupanchorpoststate; the model compared it with the anchor's
   x_stateroot, rejecting valid blocks whose lookup anchor differs from their anchor. Fixed in
   `JAM/BlockImport.lean`, with a regression test in `Tests/TraceTest.lean`.

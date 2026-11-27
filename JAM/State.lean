@@ -10,7 +10,7 @@ import JAM.Trie
 # The state $\sigma$ and its serialization $T(\sigma)$ (GP v0.8.1 §4.2, Appendix D)
 
 $\sigma \equiv (\alpha, \beta, \theta, \gamma, \delta, \eta, \iota, \kappa, \lambda, \rho, \tau, \phi, \chi, \psi, \pi, \omega, \xi)$ (GP eq. `statecomposition`), with
-$\gamma \equiv (\gamma_P, \gamma_Z, \gamma_S, \gamma_A)$ (eq. `gammaspec`), $\chi \equiv (\chi_M, \chi_A, \chi_V, \chi_R, \chi_Z)$ (eq. `privilegesspec`)
+$\gamma \equiv (\gamma_P, \gamma_Z, \gamma_S, \gamma_A)$ (eq. `gammaspec`), $\chi \equiv (\chi_m, \chi_v, \chi_r, \chi_\mathbf{a}, \chi_\mathbf{z})$ (eq. `privilegesspec`)
 and $\pi \equiv (\pi_V, \pi_L, \pi_C, \pi_S)$ (§13).
 
 The components are stored in the types the state-transition functions already use; `State` adds
@@ -52,15 +52,15 @@ structure State where
   avail : AvailAssignments
   /-- $\tau$, the most recent block's timeslot. -/
   tau : Nat
-  /-- $\chi_M$, the manager service. -/
+  /-- $\chi_m$, the manager service. -/
   manager : Nat
-  /-- $\chi_A$, the assigner of each core. -/
+  /-- $\chi_\mathbf{a}$, the assigner of each core. -/
   assigners : List Nat
-  /-- $\chi_V$, the delegator service. -/
+  /-- $\chi_v$, the delegator service. -/
   delegator : Nat
-  /-- $\chi_R$, the registrar service. -/
+  /-- $\chi_r$, the registrar service. -/
   registrar : Nat
-  /-- $\chi_Z$, the always-accumulate services and their gas. -/
+  /-- $\chi_\mathbf{z}$, the always-accumulate services and their gas. -/
   alwaysAcc : Std.ExtTreeMap Nat Nat
   /-- $\psi$, the disputes state. -/
   disputes : DisputesState

@@ -117,7 +117,7 @@ structure Preimage where
   requester : ServiceId
   blob : Blob
 
-/-- A guarantee $\mathbb{G} = (r, t, a)$ (GP eq. `guarantee`): a work report, a timeslot and a credential of
+/-- A guarantee $\mathbb{G} = (\mathbf{r}, t, a)$ (GP eq. `guarantee`): a work report, a timeslot and a credential of
     (validator index, Ed25519 signature) pairs. -/
 structure Guarantee where
   report : WorkReport
@@ -183,12 +183,12 @@ def encodeTickets (xs : List TicketProof) : List UInt8 :=
 def encodePreimages (xs : List Preimage) : List UInt8 :=
   varSeq (fun p => fixed 4 p.requester ++ var p.blob) xs
 
-/-- $O(a) = \mathcal{E}(\updownarrow[(\mathcal{E}_2(v), s) \mid (v, s) \leftarrow a])$, the credential
-    encoding (GP v0.8.1 Appendix C, #560). -/
+/-- $\mathcal{E}_C(a) = \mathcal{E}(\updownarrow[(\mathcal{E}_2(v), s) \mid (v, s) \leftarrow a])$, the credential
+    encoding (GP v0.8.1 eq. 5.7 and Appendix C; #560 introduced it). -/
 def encodeCredential (a : List (Nat × Blob)) : List UInt8 :=
   varSeq (fun (v, s) => fixed 2 v ++ blob s) a
 
-/-- $\mathcal{E}(g \in \mathbb{G}) = \mathcal{E}(r, \mathcal{E}_4(t), O(a))$ (GP v0.8.1 Appendix C). -/
+/-- $\mathcal{E}(g \in \mathbb{G}) = \mathcal{E}(\mathbf{r}, \mathcal{E}_4(t), \mathcal{E}_C(a))$ (GP v0.8.1 Appendix C). -/
 def Guarantee.encode (g : Guarantee) : List UInt8 :=
   g.report.encode ++ fixed 4 g.slot ++ encodeCredential g.credential
 

@@ -51,7 +51,7 @@ One reading appears in the model:
   (`SafroleInput.entropy`). The header condition it comes from, eq. (6.19), `vrfsigcheck`, is checked
   separately by {api}`JAM.sealValid`.
 
-$`\mathcal{H}` is Blake2b-256, the paper's hash function (§3.8), here {api}`JAM.blake`.
+$`\mathcal{H}` is Blake2b-256, the paper's hash function ({ref "primitives"}[§3.8]), here {api}`JAM.blake`.
 In {api}`JAM.safrole` these are the lines under `-- Entropy (§6.4)`: `eta0'` and the triple
 `(eta1', eta2', eta3')`.
 

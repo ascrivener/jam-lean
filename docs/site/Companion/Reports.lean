@@ -22,7 +22,7 @@ the validators *assure* that its data is available, or until it times out. Withi
 processes assurances first and guarantees second, so §11 of GP v0.8.1 gives two transitions on the
 assignments $`\rho`:
 
-* assurances (§11.2) take $`\rho^\dagger`, left by the disputes of §10, to $`\rho^\ddagger`, and give the newly
+* assurances (§11.2) take $`\rho^\dagger`, left by the disputes of {ref "disputes"}[§10], to $`\rho^\ddagger`, and give the newly
   available reports $`\mathbf{R}`. In the model this is {api}`JAM.assurances`;
 * guarantees (§11.3–§11.5) take $`\rho^\ddagger` to $`\rho'`, and give the reporters set $`\mathbf{G}`. In the model
   this is {api}`JAM.guarantees`.
@@ -162,7 +162,7 @@ $$`\forall g \in \mathbf{E}_G : g_a = [(v, s) \in g_a \wr\wr v] \qquad \text{(11
 
 Each signer must be assigned to the report's core, under $`\mathbf{M}` if $`t` is in the current rotation and under
 $`\mathbf{M}^*` if it is in the previous one, and the core must be active now. The signers' Ed25519 keys form
-the reporters set $`\mathbf{G}`, which the validator statistics of §13 read:
+the reporters set $`\mathbf{G}`, which the validator statistics of {ref "statistics"}[§13] read:
 
 $$`\begin{aligned} &\forall (\mathbf{r}, t, a) \in \mathbf{E}_G, \forall (v, s) \in a : \begin{cases} v < |\mathbf{k}| \wedge \mathbf{c}_v = \mathbf{r}_c < \dfrac{|\kappa'|}{3} \\ s \in \bar{\mathbb{V}}_{(\mathbf{k}_v)_e}\langle \mathsf{X}_G \frown \mathcal{H}(\mathbf{r}) \rangle \\ \mathsf{R}(\lfloor \tau'/\mathsf{R} \rfloor - 1) \le t \le \tau' \end{cases} \\ &k \in \mathbf{G} \Leftrightarrow \exists (\mathbf{r}, t, a) \in \mathbf{E}_G, \exists (v, s) \in a : k = (\mathbf{k}_v)_e \\ &\quad \text{where } (\mathbf{c}, \mathbf{k}) = \begin{cases} \mathbf{M} & \text{if } \left\lfloor \dfrac{\tau'}{\mathsf{R}} \right\rfloor = \left\lfloor \dfrac{t}{\mathsf{R}} \right\rfloor \\ \mathbf{M}^* & \text{otherwise} \end{cases} \end{aligned} \qquad \text{(11.27)}`
 
@@ -264,11 +264,14 @@ No theorems about the assurances or guarantees transitions are proved yet. The f
 against test vectors:
 
 * the assurances vectors of davxy/jam-test-vectors v0.8.0. v0.8.1 drops the assurance's anchor
-  (GP #562), so `assurance_with_bad_attestation_parent`, whose only fault is its anchor, is listed
-  as an expected deviation: the model accepts it;
+  (GP #562), so the one vector whose only fault is its anchor is listed as an expected deviation:
+  the model accepts it (its name is given below);
 * the reports vectors of davxy/jam-test-vectors master at commit 5e8d2a2, later than v0.8.0, which
   adds vectors for (11.33). They carry no ancestor set, so the runs take `lookupAnchorKnown` to hold
   for every context, and the ancestry condition of (11.38) is not exercised.
+
+The assurances vector listed as an expected deviation is
+`assurance_with_bad_attestation_parent`.
 
 Ed25519 verification is a parameter of the model; in those runs it is
 replaced by an oracle that rejects every signature exactly when a vector expects a bad signature,

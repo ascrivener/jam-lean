@@ -22,7 +22,7 @@ shortTitle := "G. Bandersnatch VRF"
 file := "bandersnatch"
 %%%
 
-Appendix G of GP v0.8.1 defines the two Bandersnatch primitives that Safrole (§6) uses: VRF
+Appendix G of GP v0.8.1 defines the two Bandersnatch primitives that Safrole ({ref "safrole"}[§6]) uses: VRF
 signatures, which seal blocks and yield their entropy, and Ring VRF proofs, with which validators
 submit anonymous tickets. The appendix does not define the cryptography itself. It names the
 curve and refers to the specifications that define the schemes, and it fixes only the sets the rest

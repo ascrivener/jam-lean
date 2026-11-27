@@ -33,7 +33,7 @@ its own re-refinement. Signatures are checked through the model's crypto paramet
 [JAM.Theorems.Auditing](https://ascrivener.github.io/jam-lean/api/JAM/Theorems/Auditing.html).
 
 §17.2, "Data Fetching", describes the checks on a bundle rebuilt from erasure-coded chunks. The
-model implements them in `JAM/Guarantee.lean`, next to its §14 code; see {ref "work-checks"}[Checking a bundle].
+model implements them in `JAM/Guarantee.lean`, next to its {ref "work"}[§14] code; see {ref "work-checks"}[Checking a bundle].
 
 # The reports to audit (§17.3)
 %%%
@@ -46,7 +46,7 @@ $$`\mathbf{q} \in \llbracket \mathbb{R}\boldsymbol{?} \rrbracket_{|\kappa|/3} \q
 
 $$`\mathbf{q} \equiv \left[ \begin{rcases} (\rho[c]_\mathbf{g})_\mathbf{r} & \text{if } (\rho[c]_\mathbf{g})_\mathbf{r} \in \mathbf{R} \\ \emptyset & \text{otherwise} \end{rcases} \;\middle|\; c \mathrel{\mathrlap{<}{-}} \mathbb{N}_{|\kappa|/3} \right] \qquad \text{(17.2)}`
 
-$`\mathbf{R}` is the set of reports that became available in the block (§11). The model compares reports by
+$`\mathbf{R}` is the set of reports that became available in the block ({ref "reports"}[§11]). The model compares reports by
 their encoding:
 
 {leanSource JAM.Auditing.auditReports}
@@ -64,7 +64,7 @@ $$`s_0 \in \overset{\backsim}{\mathbb{V}}{}^{[]}_{\kappa[v]_b}\left\langle \math
 {leanSource JAM.Auditing.initialSeedValid}
 
 The validator audits the non-empty reports among the first ten entries of $`\mathbf{q}` shuffled with
-$`\mathcal{Y}(s_0)` ($`\mathcal{F}` is the shuffle of Appendix F):
+$`\mathcal{Y}(s_0)` ($`\mathcal{F}` is the shuffle of {ref "shuffle"}[Appendix F]):
 
 $$`\mathbf{a}_0 = \left\{ \mathbf{r} \;\middle|\; \mathbf{r} \in \mathcal{F}\left(\mathbf{q}, \mathcal{Y}(s_0)\right)_{\dots+10},\ \mathbf{r} \ne \emptyset \right\} \qquad \text{(17.5)}`
 
@@ -177,7 +177,7 @@ tag := "auditing-judgments"
 %%%
 
 For each report it must audit, the validator rebuilds a candidate bundle $`C(\mathbf{r})` and evaluates the
-report by computing it again with $`\Xi` (§14):
+report by computing it again with $`\Xi` ({ref "work"}[§14]):
 
 $$`\begin{aligned} &\forall \mathbf{r} \in \mathbf{a}_n: \\ &e_n(\mathbf{r}) \Leftrightarrow \begin{cases} M(\mathbf{r}, \mathbf{p}) & \text{if } \exists \mathbf{p} \in \mathbb{P}: B(\mathbf{p}, \mathbf{r}_\mathbf{l}) = C(\mathbf{r}) \\ \bot & \text{otherwise} \end{cases} \\ &\text{where } M(\mathbf{r}, \mathbf{p}) \equiv \mathbf{r} = \Xi(\mathbf{p}, \mathbf{r}_c, \mathbf{r}_\mathbf{l}, (\mathbf{r}_\mathbf{s})_v) \end{aligned} \qquad \text{(17.16)}`
 
@@ -196,7 +196,7 @@ $`\mathsf{X}_\top` is `$jam_valid` and $`\mathsf{X}_\bot` is `$jam_invalid`:
 
 {leanSource JAM.Auditing.judgmentValid}
 
-By inspection, this is the message §10 checks for a vote in a verdict: `checkVerdict`
+By inspection, this is the message {ref "disputes"}[§10] checks for a vote in a verdict: `checkVerdict`
 (`JAM/Disputes.lean`) verifies each vote against `Xvalidif j.valid ++ r`, the same message. No
 theorem connects the two definitions yet.
 
@@ -256,14 +256,14 @@ $`\tfrac{1}{3}` of validators judge as being invalid." The model's test for one 
 
 {leanSource JAM.Auditing.disregarded}
 
-§19's best-chain rule takes a disregarded flag for each block, which
+{ref "bestchain"}[§19]'s best-chain rule takes a disregarded flag for each block, which
 {api}`JAM.BestChain.disregardedBlock` computes from this test over the reports the block accumulates
 ({ref "bestchain"}[§19 chapter]).
 
 A block author that has seen enough judgments on a report, at least one of them negative, may put a
-verdict on it in the disputes extrinsic (§10). The paper does not say which verdict to form when
+verdict on it in the disputes extrinsic ({ref "disputes"}[§10]). The paper does not say which verdict to form when
 several are possible. {api}`JAM.Auditing.formVerdict` tries good, then bad, then wonky. The theorems
-show that what it returns has the count, order and outcome that §10 checks, with every vote backed
+show that what it returns has the count, order and outcome that {ref "disputes"}[§10] checks, with every vote backed
 by a judgment the author has seen (the signatures are supplied by the caller and are not checked
 here), and that it finds a good verdict whenever enough positive judgments are known. The
 supermajority clause of $`U` is exactly the count a good verdict needs.

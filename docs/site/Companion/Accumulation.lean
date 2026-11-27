@@ -30,7 +30,7 @@ $`\Delta_1` (§12.2); the posterior state (§12.3); and the integration of the p
 
 In the model, §12.1–§12.3 are `JAM/Accumulation.lean` (the transition is {api}`JAM.accumulate`) and
 §12.4 is `JAM/Preimages.lean` ({api}`JAM.preimages`). The accumulate invocation $`\Psi_A` and its host
-functions, which $`\Delta_1` calls, belong to Appendix B and are in `JAM/Accumulate.lean`. API pages:
+functions, which $`\Delta_1` calls, belong to {ref "invocations"}[Appendix B] and are in `JAM/Accumulate.lean`. API pages:
 [Accumulation](https://ascrivener.github.io/jam-lean/api/JAM/Accumulation.html),
 [Preimages](https://ascrivener.github.io/jam-lean/api/JAM/Preimages.html),
 [Accumulate](https://ascrivener.github.io/jam-lean/api/JAM/Accumulate.html).
@@ -340,7 +340,7 @@ How the code maps to the equations:
   $`{\omega'}^{\circlearrowleft}_{m-i}` with $`i = (m - \mathit{idx}) \bmod \mathsf{E}`, and the three branches
   are the cases of (12.34).
 * `theta` is $`\theta'`, and `root` is $`\mathcal{M}_B(\mathbf{s}, \mathcal{H}_K)`, the Keccak Merkle root over
-  $`\mathbf{s} = [\mathcal{E}_4(s) \frown \mathcal{E}(h) \mid (s, h) \mathrel{\mathrlap{<}{-}} \theta']` that §7 appends to the
+  $`\mathbf{s} = [\mathcal{E}_4(s) \frown \mathcal{E}(h) \mid (s, h) \mathrel{\mathrlap{<}{-}} \theta']` that {ref "history"}[§7] appends to the
   accumulation-output log (eqs. (7.6, 7.7)); $`\mathcal{E}(h)` of a hash is the hash itself.
 
 # Preimage integration (§12.4)
@@ -415,7 +415,7 @@ theorems. Among them:
   service without code, uses no gas.
 * *$`R`.* The manager and the delegator both change the delegator in the same round; the manager's
   choice is kept. When the manager does nothing, the delegator's own choice is kept.
-* *Self-transfers* (`transfer`, Appendix B). An immediate transfer from a service to itself counts
+* *Self-transfers* (`transfer`, {ref "invocations"}[Appendix B]). An immediate transfer from a service to itself counts
   the credit when the balance is checked against the threshold, and a deferred one does not.
 * *The bounds of $`\mathbf{E}_P`.* One pair too many, or one octet too many, is rejected.
 * *New-index conflicts.* {api}`JAM.collectNew` collects distinct new indices from two services'

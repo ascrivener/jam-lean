@@ -110,7 +110,7 @@ $$`\text{and } \mathbf{s}^P = \{ s \mid \exists x : (s, x) \in \mathbf{E}_P \} \
 
 $$`\text{and } R(s \in \mathbb{N}_S) \equiv \sum_{\mathbf{d} \in \mathbf{r}_\mathbf{d}, \mathbf{r} \in \mathbf{I}, \mathbf{d}_s = s} (n \mathrel{\substack{\scriptscriptstyle\blacktriangleright \\ \scriptscriptstyle\blacktriangleright}} 1, \mathbf{d}_u, \mathbf{d}_i, \mathbf{d}_x, \mathbf{d}_z, \mathbf{d}_e) \qquad \text{(13.17)}`
 
-$`\mathbf{S}` is the accumulation statistics of §12 (eq. (12.29)), and $`\mathcal{U}(x, y)` is $`x` unless $`x` is $`\emptyset`, in which case it
+$`\mathbf{S}` is the accumulation statistics of {ref "accumulation"}[§12] (eq. (12.29)), and $`\mathcal{U}(x, y)` is $`x` unless $`x` is $`\emptyset`, in which case it
 is $`y`. v0.8.1 states the provision sum's filter $`\mathbf{p}_s = s` explicitly (GP #567). In {api}`JAM.serviceStats`,
 `active` is $`\mathbf{s}`, and `(acc.lookup s).getD (0, 0, 0)` is $`\mathcal{U}(\mathbf{S}[s], (0, 0, 0))`:
 
@@ -134,6 +134,6 @@ tag := "statistics-readings"
   $`[(0, \dots), \dots]`, with no stated length. $`|\pi'_V| = |\kappa'|` (13.3) implies it, and the model uses $`|\kappa'|`
   ({api}`JAM.validatorStats`). This is recorded in the model's
   [notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues).
-* *The reporters set as an input.* $`\mathbf{G}` is defined in §11.4 from the guarantor assignments, where the
+* *The reporters set as an input.* $`\mathbf{G}` is defined in {ref "reports"}[§11.4] from the guarantor assignments, where the
   signatures are checked. The model computes it there ({api}`JAM.guarantees`) and passes it to
   {api}`JAM.validatorStats`.

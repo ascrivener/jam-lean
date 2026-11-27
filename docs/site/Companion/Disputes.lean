@@ -109,7 +109,7 @@ $`V` is {api}`JAM.verdictOutcome`. It returns `none` where the paper's $`V` is u
 
 {leanSource JAM.verdictOutcome}
 
-The good-verdict count is the supermajority that §17's auditing uses: of `V` validators, `t` positive
+The good-verdict count is the supermajority that {ref "auditing"}[§17]'s auditing uses: of `V` validators, `t` positive
 judgments are more than two thirds ($`3t > 2V`) exactly when there are at least $`\lfloor 2V/3 \rfloor + 1` of them.
 In the theorem `V` is the validator count and `t` the number of positive judgments; `V` is not the
 function $`V` of (10.12).
@@ -150,7 +150,7 @@ accumulated:
 
 $$`\forall c \in \mathbb{N}_{\mathsf{C}} : \rho^\dagger[c] = \begin{cases} \emptyset & \text{if } \left(\mathcal{H}\left((\rho[c]_{\mathbf{g}})_{\mathbf{r}}\right), v\right) \in \mathbf{v}, v \in \{\bot, \emptyset\} \\ \rho[c] & \text{otherwise} \end{cases} \qquad \text{(10.14)}`
 
-The report is hashed through its encoding, as $`\mathcal{H}` applies to the codec's output (§3.8):
+The report is hashed through its encoding, as $`\mathcal{H}` applies to the codec's output ({ref "primitives"}[§3.8]):
 
 {leanSource JAM.clearNonPositive}
 

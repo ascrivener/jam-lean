@@ -45,18 +45,31 @@ class Gen:
         self.binds = []  # (name, code, natRHS)
         self.groups = []  # (index into binds after which to emit, [clean facts])
         self.dropped = []  # clean equalities, cleared before the final omega
-        self.summary = []  # facts proved from all clean facts, before the final omega
-    def clean(self, *facts):
-        """Linear facts implied by the bindings so far; the raw facts are cleared after them."""
-        self.groups.append((len(self.binds), list(facts)))
-    def bind(self, base, code, nat):
+        self.kept = []  # (name, text) of the bounds kept to the end
+        self.skip = set()
+        self.factname = {}  # bindings whose facts come from a group's lemma instead
+    def clean(self, *facts, chain=None, proof=None):
+        """Linear facts implied by the bindings so far; the raw facts are cleared after them. With
+        `chain`, the first fact is an equation u + c = t + 2^W·c' that extends that carry chain.
+        With `proof`, the facts are obtained at once from that term (a generic lemma)."""
+        self.groups.append((len(self.binds), list(facts), chain, proof))
+    def bnd(self, v, one):
+        return f"@B[{N(v)} ≤ 1]"
+    def eqn(self, chain, u, cprev, t, cnext, *bounds, proof=None):
+        self.clean(f"{u} + {cprev} = {t} + 2^{W} * {cnext}", *bounds, chain=chain, proof=proof)
+    def bind(self, base, code, nat, skip=False):
         self.k += 1
         name = f"{base}{self.k}"
         self.binds.append((name, code, nat))
+        if skip:
+            self.skip.add(name)
         return name
 
 def lsum(names):
     return " + ".join(f"{N(x)} * 2^{W * j}" for j, x in enumerate(names))
+
+def P_(x):
+    return f"({x})"
 
 def N(v):
     """Nat value of an operand (a let name or a limb projection)."""
@@ -92,14 +105,17 @@ def final_sub(g, n, P, t, top):
     for j in range(n):
         code = f"{t[j]} - {P[j]}" + (f" - {bw}" if bw else "")
         nat = f"({N(t[j])} + 2^65 - {P[j]}" + (f" - {N(bw)}" if bw else "") + ") % 2^64"
-        x = g.bind("x", code, nat)
-        dj = g.bind("d", f"{x} &&& {M}", f"{N(x)} % 2^{W}")
-        w = g.bind("w", f"{x} >>> 63", f"{N(x)} / 2^63")
-        g.clean(f"{N(dj)} + {P[j]}" + (f" + {N(bw)}" if bw else "") + f" = {N(t[j])} + 2^{W} * {N(w)}",
-                (f"{N(dj)} < 2^{W}", True), (f"{N(w)} ≤ 1", j == n - 1))
+        x = g.bind("x", code, nat, skip=True)
+        dj = g.bind("d", f"{x} &&& {M}", f"{N(x)} % 2^{W}", skip=True)
+        w = g.bind("w", f"{x} >>> 63", f"{N(x)} / 2^63", skip=True)
+        ht = f"@B[{N(t[j])} < 2^{W}]"
+        proof = (f"sub_limb_b {t[j]} {P[j]} {bw} {ht} (by decide) {g.bnd(bw, 1)}" if bw
+                 else f"sub_limb {t[j]} {P[j]} {ht} (by decide)")
+        g.eqn("fs", f"{N(dj)} + {P[j]}", N(bw) if bw else "0", N(t[j]), N(w),
+              (f"{N(dj)} < 2^{W}", True), (f"{N(w)} ≤ 1", j == n - 1), proof=proof)
         d.append(dj); bw = w
     cond = f"{bw} == 0" if top is None else f"{top} != 0 || {bw} == 0"
-    g.summary.append(f"{lsum(d)} + {sum(P[j] << (W * j) for j in range(n))} = {lsum(t)} + 2^{W * n} * {N(bw)}")
+    g.fsw = bw
     return cond, d, t
 
 def gen_mul(n, p, n0, square):
@@ -107,19 +123,23 @@ def gen_mul(n, p, n0, square):
     P = limbs(p, n)
     ms, r, acc = [], [], None
     for k in range(2 * n - 1):
+        cprev = acc
         code, nat = column_code(g, k, n, P, ms, acc, square)
+        _, natnc = column_code(g, k, n, P, ms, None, square)
         s = g.bind("s", code, nat)
         if k < n:
             m = g.bind("m", f"({s} * {n0}) &&& {M}", f"({N(s)} * {n0}) % 2^{W}")
             ms.append(m)
             s2 = g.bind("s", f"{s} + {m} * {P[0]}", f"{N(s)} + {N(m)} * {P[0]}")
             acc = g.bind("c", f"{s2} >>> {W}", f"{N(s2)} / 2^{W}")
-            g.clean(f"{nat} + {N(m)} * {P[0]} = 2^{W} * {N(acc)}", (f"{N(m)} < 2^{W}", True), f"{N(acc)} < 2^37")
+            g.eqn("mul", f"{natnc} + {N(m)} * {P[0]}", N(cprev) if cprev else "0", "0", N(acc),
+                  (f"{N(m)} < 2^{W}", True), f"{N(acc)} < 2^37")
         else:
             rk = g.bind("r", f"{s} &&& {M}", f"{N(s)} % 2^{W}")
             r.append(rk)
             acc = g.bind("c", f"{s} >>> {W}", f"{N(s)} / 2^{W}")
-            g.clean(f"{nat} = {N(rk)} + 2^{W} * {N(acc)}", (f"{N(rk)} < 2^{W}", True), (f"{N(acc)} < 2^37", k == 2 * n - 2))
+            g.eqn("mul", natnc, N(cprev), N(rk), N(acc),
+                  (f"{N(rk)} < 2^{W}", True), (f"{N(acc)} < 2^37", k == 2 * n - 2))
     r.append(acc)
     if square:
         expn = " + ".join((f"a.l{i}.toNat * a.l{i}.toNat * 2^{2 * W * i}" if i == j else
@@ -127,8 +147,9 @@ def gen_mul(n, p, n0, square):
                          for i in range(n) for j in range(i, n))
     else:
         expn = " + ".join(f"a.l{i}.toNat * b.l{j}.toNat * 2^{W * (i + j)}" for i in range(n) for j in range(n))
-    g.summary.append(f"({lsum(r)}) * 2^{W * n} = {expn} + ({lsum(ms)}) * {p}")
     g.expansion = expn
+    g.rlimbs = r
+    g.mid_index = len(g.binds)
     cond, d, t = final_sub(g, n, P, r, None)
     return g, cond, d, t, ms
 
@@ -137,14 +158,16 @@ def gen_add(n, p):
     P = limbs(p, n)
     c, t = None, []
     for j in range(n):
+        cp = c
         code = f"a.l{j} + b.l{j}" + (f" + {c}" if c else "")
         nat = f"a.l{j}.toNat + b.l{j}.toNat" + (f" + {N(c)}" if c else "")
         s = g.bind("s", code, nat)
         tj = g.bind("t", f"{s} &&& {M}", f"{N(s)} % 2^{W}")
         t.append(tj)
         c = g.bind("c", f"{s} >>> {W}", f"{N(s)} / 2^{W}")
-        g.clean(f"{nat} = {N(tj)} + 2^{W} * {N(c)}", (f"{N(tj)} < 2^{W}", True), (f"{N(c)} ≤ 1", j == n - 1))
-    g.summary.append(f"{lsum(t)} + 2^{W * n} * {N(c)} = {val_expr('a', n)} + {val_expr('b', n)}")
+        g.eqn("add", f"a.l{j}.toNat + b.l{j}.toNat", N(cp) if cp else "0", N(tj), N(c),
+              (f"{N(tj)} < 2^{W}", True), (f"{N(c)} ≤ 1", j == n - 1))
+    g.top = c
     cond, d, tt = final_sub(g, n, P, t, c)
     return g, cond, d, tt
 
@@ -155,24 +178,28 @@ def gen_sub(n, p):
     for j in range(n):
         code = f"a.l{j} - b.l{j}" + (f" - {bw}" if bw else "")
         nat = f"(a.l{j}.toNat + 2^65 - b.l{j}.toNat" + (f" - {N(bw)}" if bw else "") + ") % 2^64"
-        x = g.bind("x", code, nat)
-        dj = g.bind("d", f"{x} &&& {M}", f"{N(x)} % 2^{W}")
+        x = g.bind("x", code, nat, skip=True)
+        dj = g.bind("d", f"{x} &&& {M}", f"{N(x)} % 2^{W}", skip=True)
         d.append(dj)
-        w = g.bind("w", f"{x} >>> 63", f"{N(x)} / 2^63")
-        g.clean(f"{N(dj)} + b.l{j}.toNat" + (f" + {N(bw)}" if bw else "") + f" = a.l{j}.toNat + 2^{W} * {N(w)}",
-                (f"{N(dj)} < 2^{W}", True), (f"{N(w)} ≤ 1", j == n - 1))
+        w = g.bind("w", f"{x} >>> 63", f"{N(x)} / 2^63", skip=True)
+        proof = (f"sub_limb_b a.l{j} b.l{j} {bw} ha{j} hb{j} {g.bnd(bw, 1)}" if bw
+                 else f"sub_limb a.l{j} b.l{j} ha{j} hb{j}")
+        g.eqn("sub", f"{N(dj)} + b.l{j}.toNat", N(bw) if bw else "0", f"a.l{j}.toNat", N(w),
+              (f"{N(dj)} < 2^{W}", True), (f"{N(w)} ≤ 1", True), proof=proof)
         bw = w
     c, e = None, []
     for j in range(n):
+        cp = c
         code = f"{d[j]} + {P[j]}" + (f" + {c}" if c else "")
         nat = f"{N(d[j])} + {P[j]}" + (f" + {N(c)}" if c else "")
         s = g.bind("s", code, nat)
         tj = g.bind("t", f"{s} &&& {M}", f"{N(s)} % 2^{W}")
         e.append(tj)
         c = g.bind("c", f"{s} >>> {W}", f"{N(s)} / 2^{W}")
-        g.clean(f"{nat} = {N(tj)} + 2^{W} * {N(c)}", (f"{N(tj)} < 2^{W}", True), (f"{N(c)} ≤ 1", j == n - 1))
-    g.summary.append(f"{lsum(d)} + {val_expr('b', n)} = {val_expr('a', n)} + 2^{W * n} * {N(bw)}")
-    g.summary.append(f"{lsum(e)} + 2^{W * n} * {N(c)} = {lsum(d)} + {p}")
+        g.eqn("addp", f"{N(d[j])} + {P[j]}", N(cp) if cp else "0", N(tj), N(c),
+              (f"{N(tj)} < 2^{W}", True), (f"{N(c)} ≤ 1", j == n - 1))
+    g.sbw = bw
+    g.top = c
     return g, f"{bw} == 0", d, e
 
 def emit_code(L, g, cond, d, t):
@@ -180,30 +207,70 @@ def emit_code(L, g, cond, d, t):
         L.append(f"  let {name} := {code}")
     L.append(f"  if {cond} then ⟨{', '.join(d)}⟩ else ⟨{', '.join(t)}⟩")
 
-def emit_facts(L, g, ind="  "):
-    """One `have` per binding (its Nat value, below 2^64); after each group, its clean linear facts,
-    then the raw facts of the group are cleared (so no `omega` call sees their truncated
-    subtractions and remainders)."""
+def emit_facts(L, g, ind="  ", drop=(), mid=None):
+    """One `have` per binding (its Nat value, below 2^64); after each group, its clean linear
+    facts, its step of its carry chain (the generic lemma `chain`), and then the raw facts and
+    the chain's previous step are cleared, so no `omega` call sees more than a few facts with
+    truncated subtractions or remainders. At the end, everything but the bounds the conclusion
+    needs and the last step of each chain is cleared."""
     gi = 0
     pending = []
     cnt = 0
+    last = {}
+    steps = {}
+    factname = g.factname
+    grp_vars = []
+    pscnt = 0
     for idx, (name, code, nat) in enumerate(g.binds):
-        L.append(f"{ind}have h_{name} : {name}.toNat = {nat} := by simp only [{name}, {SIMP}] <;> omega")
-        L.append(f"{ind}have l_{name} := UInt64.toNat_lt {name}")
-        pending += [f"h_{name}", f"l_{name}"]
+        grp_vars.append(name)
+        if name not in g.skip:
+            L.append(f"{ind}have h_{name} : {name}.toNat = {nat} := by simp only [{name}, {SIMP}] <;> omega")
+            L.append(f"{ind}have l_{name} := UInt64.toNat_lt {name}")
+            pending += [f"h_{name}", f"l_{name}"]
         while gi < len(g.groups) and g.groups[gi][0] == idx + 1:
-            for fact in g.groups[gi][1]:
+            _, facts, ch, proof = g.groups[gi]
+            eqname = None
+            if proof is not None:
+                import re as _re
+                proof = _re.sub(r"@B\[([^\]]*)\]", lambda m_: factname[m_.group(1)], proof)
+                names = [f"k{cnt + 1 + i}" for i in range(len(facts))]
+                texts = [f[0] if isinstance(f, tuple) else f for f in facts]
+                L.append(f"{ind}obtain ⟨{', '.join(names)}⟩ : {' ∧ '.join(texts)} := {proof}")
+            for fi, fact in enumerate(facts):
                 cnt += 1
                 text, keep = fact if isinstance(fact, tuple) else (fact, False)
-                L.append(f"{ind}have k{cnt} : {text} := by omega")
-                if not keep:
+                factname[text] = f"k{cnt}"
+                if proof is None:
+                    L.append(f"{ind}have k{cnt} : {text} := by omega")
+                if ch is not None and fi == 0:
+                    eqname = f"k{cnt}"
+                elif not keep:
                     g.dropped.append(f"k{cnt}")
-            L.append(f"{ind}clear {' '.join(pending)}")
+                else:
+                    g.kept.append((f"k{cnt}", text))
+            if pending:
+                L.append(f"{ind}clear {' '.join(pending)}")
             pending = []
+
+            if ch is not None:
+                pscnt += 1
+                prev = last.get(ch)
+                h1 = prev if prev else "(I := 0) (O := 0) (c := 0) (B := 1) rfl"
+                step = steps.get(ch, 0) + 1
+                steps[ch] = step
+                L.append(f"{ind}have ps{pscnt} := chain (B' := 2^{W * step}) {h1} {eqname} (by decide)")
+                L.append(f"{ind}clear {eqname}" + (f" {prev}" if prev else ""))
+                last[ch] = f"ps{pscnt}"
             gi += 1
-    for i, fact in enumerate(g.summary):
-        L.append(f"{ind}have sum{i} : {fact} := by omega")
-    L.append(f"{ind}clear {' '.join(g.dropped)}")
+        if mid is not None and mid[0] == idx + 1:
+            mid[1](L, ind, last)
+    L.append(f"{ind}clear_value {' '.join(nm for nm, _, _ in g.binds)}")
+    dr = list(g.dropped) + list(drop)
+    if dr:
+        L.append(f"{ind}clear {' '.join(dr)}")
+    if last:
+        L.append(f"{ind}unfold Hide at {' '.join(last.values())}")
+    return last
 def val_expr(prefix, n):
     return " + ".join(f"{prefix}.l{j}.toNat * 2^{W * j}" for j in range(n))
 
@@ -217,11 +284,50 @@ def emit_cond_split(L, cond_kind, n, ind="  "):
         L.append(f"{ind}· {'' if True else ''}")
     return
 
-def finish(L, cond_top, ind="  "):
-    """Split on the final comparison and close both branches with omega."""
+def emit_bound(L, g, nm, limbs_, ind="  "):
+    """`nm_{n-1} : Σ limbs < 2^(Wn)` from the limb bounds, through `bfirst`/`bstep`."""
+    bound_of = {text: k for k, text in g.kept}
+    prev = None
+    for j, x in enumerate(limbs_):
+        hb = bound_of[f"{N(x)} < 2^{W}"]
+        if j == 0:
+            L.append(f"{ind}have {nm}_0 : {N(x)} * 2^0 < 2^{W} := bfirst {hb}")
+        else:
+            part = lsum(limbs_[:j + 1])
+            L.append(f"{ind}have {nm}_{j} : {part} < 2^{W * (j + 1)} := bstep {nm}_{j - 1} {hb} (by decide)")
+        if prev: L.append(f"{ind}clear {prev}")
+        prev = f"{nm}_{j}"
+    return prev
+
+def finish(L, g, last, n, base_hyps, eqs, bounded, sums, ind="  ", mont=None):
+    """The conclusion, from the last step of each carry chain:
+    * `eqs`: (name, statement) sum identities, each proved by `omega` from the chain steps alone
+      (everything else cleared: with the limb bounds in sight `omega` explodes);
+    * `bounded`: lists of limbs whose sums are bounded by R through `bfirst`/`bstep`;
+    * `sums`: the limb-sum expressions then generalized to single variables, so that the final
+      `omega` (split on the final comparison) sees a handful of variables."""
+    bnames = [nm for nm, _ in g.kept]
+    allh = list(base_hyps) + bnames
+    chains = list(last.values())
+    for nm, st in eqs:
+        L.append(f"{ind}have {nm} : {st} := by")
+        L.append(f"{ind}  clear {' '.join(allh)}")
+        L.append(f"{ind}  grind")
+    L.append(f"{ind}clear {' '.join(chains)}")
+    for bi, limbs_ in enumerate(bounded):
+        emit_bound(L, g, f"bd{bi}", limbs_, ind)
     L.append(f"{ind}split <;> rename_i hc <;>")
     L.append(f"{ind}  simp only [bne_iff_ne, ne_eq, Bool.or_eq_true, beq_iff_eq, ← UInt64.toNat_inj, UInt64.reduceToNat, Bool.not_eq_true'] at hc <;>")
-    L.append(f"{ind}  simp only [Elem.Ok, Elem.val, p] <;> omega")
+    L.append(f"{ind}  simp only [Elem.Ok, Elem.val, p] <;>")
+    for k, sm in enumerate(sums):
+        L.append(f"{ind}  generalize {sm} = V{k} at * <;>")
+    if mont is None:
+        L.append(f"{ind}  omega")
+    else:
+        # Montgomery: the residue part through `mod_of_eq` (k = R when p was subtracted)
+        L[-1] = L[-1][:-len(" <;>")] if L[-1].endswith(" <;>") else L[-1]
+        L.append(f"{ind}· exact ⟨by grind, mod_of_eq (k := {mont}) (M := V2) (by grind)⟩")
+        L.append(f"{ind}· exact ⟨by grind, mod_of_eq (k := 0) (M := V2) (by grind)⟩")
 
 def gen_module(name, doc, p):
     n = (p.bit_length() + 2 + W - 1) // W
@@ -316,6 +422,9 @@ def gen_module(name, doc, p):
         w(f"  have hABlt := Nat.mul_lt_mul'' hav {'hav' if sq else 'hbv'}")
         w(f"  rw [{fname}_expand] at hABlt ⊢")
         w(f"  simp only [Elem.val, p] at hav{'' if sq else ' hbv'} hABlt")
+        w(f"  generalize hE0 : {g.expansion} = E at hABlt ⊢")
+        w(f"  have hE : Hide ({g.expansion} = E) := hE0")
+        w(f"  clear hE0")
         for i in range(n):
             for j in range(n):
                 if sq and j < i: continue
@@ -323,8 +432,36 @@ def gen_module(name, doc, p):
         w(f"  simp only [R, p]")
         w(f"  unfold {fname}")
         w("  extract_lets " + " ".join(nm for nm, _, _ in g.binds))
-        emit_facts(L, g)
-        finish(L, None)
+        hps = [f"hp{i}_{j}" for i in range(n) for j in range(n) if not (sq and j < i)]
+        base = [f"ha{j}" for j in range(n)] + ["hav", "hABlt", "hE"] + ([] if sq else [f"hb{j}" for j in range(n)] + ["hbv"])
+        rl = g.rlimbs
+        acc = rl[-1]
+        def mid(L, ind, last, g=g, rl=rl, acc=acc, ms=ms, hps=hps, base=base):
+            # T·R = a·b + M·p, M < R and a·b < p² give T < 2p, hence the last carry is a limb
+            ps = last.pop("mul")
+            L.append(f"{ind}unfold Hide at {ps}")
+            L.append(f"{ind}clear {' '.join(hps)}")
+            kept = [k for k, _ in g.kept]
+            L.append(f"{ind}have e1 : ({lsum(rl)}) * 2^{W * n} = E + ({lsum(ms)}) * {p} := by")
+            L.append(f"{ind}  clear {' '.join(b for b in base if b != 'hE')} {' '.join(kept)}")
+            L.append(f"{ind}  unfold Hide at hE")
+            L.append(f"{ind}  omega")
+            L.append(f"{ind}clear {ps} hE")
+            L.append(f"{ind}have e3 : {N(acc)} * 2^{W * (n - 1)} ≤ ({lsum(rl)}) := by")
+            L.append(f"{ind}  clear {' '.join(b for b in base if b != 'hE')} {' '.join(kept)} e1")
+            L.append(f"{ind}  omega")
+            bm = emit_bound(L, g, "bm", ms, ind)
+            L.append(f"{ind}have hacc : {N(acc)} < 2^{W} := carry_lt e1 e3 hABlt {bm} (by decide) (by decide)")
+            L.append(f"{ind}clear e3")
+            g.kept.append(("hacc", f"{N(acc)} < 2^{W}"))
+            g.factname[f"{N(acc)} < 2^{W}"] = "hacc"
+            g.kept.append(("e1", "e1"))
+            g.kept.append((bm, "bm"))
+        last = emit_facts(L, g, mid=(g.mid_index, mid))
+        finish(L, g, last, n, [b for b in base if b != "hE"],
+               [("e2", f"({lsum(d)}) + {p} = ({lsum(rl)}) + 2^{W * n} * {N(g.fsw)}")],
+               [d],
+               [lsum(rl), lsum(d), lsum(ms)], mont=f"2^{W * n}")
         w("")
     g, cond, d, t = gen_add(n, p)
     w("/-- a + b. -/")
@@ -337,8 +474,13 @@ def gen_module(name, doc, p):
     w("  simp only [Elem.val, p]")
     w("  unfold add")
     w("  extract_lets " + " ".join(nm for nm, _, _ in g.binds))
-    emit_facts(L, g)
-    finish(L, True)
+    last = emit_facts(L, g)
+    base = [f"ha{j}" for j in range(n)] + ["hav"] + [f"hb{j}" for j in range(n)] + ["hbv"]
+    finish(L, g, last, n, base,
+           [("e1", f"({lsum(t)}) + 2^{W * n} * {N(g.top)} = ({val_expr('a', n)}) + ({val_expr('b', n)})"),
+            ("e2", f"({lsum(d)}) + {p} = ({lsum(t)}) + 2^{W * n} * {N(g.fsw)}")],
+           [d, t],
+           [lsum(t), lsum(d), val_expr('a', n), val_expr('b', n)])
     w("")
     g, cond, d, t = gen_sub(n, p)
     w("/-- a − b. -/")
@@ -351,8 +493,13 @@ def gen_module(name, doc, p):
     w("  simp only [Elem.val, p]")
     w("  unfold sub")
     w("  extract_lets " + " ".join(nm for nm, _, _ in g.binds))
-    emit_facts(L, g)
-    finish(L, None)
+    last = emit_facts(L, g)
+    base = [f"ha{j}" for j in range(n)] + ["hav"] + [f"hb{j}" for j in range(n)] + ["hbv"]
+    finish(L, g, last, n, base,
+           [("e1", f"({lsum(d)}) + ({val_expr('b', n)}) = ({val_expr('a', n)}) + 2^{W * n} * {N(g.sbw)}"),
+            ("e2", f"({lsum(t)}) + 2^{W * n} * {N(g.top)} = ({lsum(d)}) + {p}")],
+           [d, t],
+           [lsum(t), lsum(d), val_expr('a', n), val_expr('b', n)])
     w("")
     w(f"end JamCrypto.Fast.{name}")
     return "\n".join(L) + "\n"

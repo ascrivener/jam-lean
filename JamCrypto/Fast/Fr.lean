@@ -170,6 +170,9 @@ theorem mul_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have hABlt := Nat.mul_lt_mul'' hav hbv
   rw [mul_expand] at hABlt ⊢
   simp only [Elem.val, p] at hav hbv hABlt
+  generalize hE0 : a.l0.toNat * b.l0.toNat * 2^0 + a.l0.toNat * b.l1.toNat * 2^29 + a.l0.toNat * b.l2.toNat * 2^58 + a.l0.toNat * b.l3.toNat * 2^87 + a.l0.toNat * b.l4.toNat * 2^116 + a.l0.toNat * b.l5.toNat * 2^145 + a.l0.toNat * b.l6.toNat * 2^174 + a.l0.toNat * b.l7.toNat * 2^203 + a.l0.toNat * b.l8.toNat * 2^232 + a.l1.toNat * b.l0.toNat * 2^29 + a.l1.toNat * b.l1.toNat * 2^58 + a.l1.toNat * b.l2.toNat * 2^87 + a.l1.toNat * b.l3.toNat * 2^116 + a.l1.toNat * b.l4.toNat * 2^145 + a.l1.toNat * b.l5.toNat * 2^174 + a.l1.toNat * b.l6.toNat * 2^203 + a.l1.toNat * b.l7.toNat * 2^232 + a.l1.toNat * b.l8.toNat * 2^261 + a.l2.toNat * b.l0.toNat * 2^58 + a.l2.toNat * b.l1.toNat * 2^87 + a.l2.toNat * b.l2.toNat * 2^116 + a.l2.toNat * b.l3.toNat * 2^145 + a.l2.toNat * b.l4.toNat * 2^174 + a.l2.toNat * b.l5.toNat * 2^203 + a.l2.toNat * b.l6.toNat * 2^232 + a.l2.toNat * b.l7.toNat * 2^261 + a.l2.toNat * b.l8.toNat * 2^290 + a.l3.toNat * b.l0.toNat * 2^87 + a.l3.toNat * b.l1.toNat * 2^116 + a.l3.toNat * b.l2.toNat * 2^145 + a.l3.toNat * b.l3.toNat * 2^174 + a.l3.toNat * b.l4.toNat * 2^203 + a.l3.toNat * b.l5.toNat * 2^232 + a.l3.toNat * b.l6.toNat * 2^261 + a.l3.toNat * b.l7.toNat * 2^290 + a.l3.toNat * b.l8.toNat * 2^319 + a.l4.toNat * b.l0.toNat * 2^116 + a.l4.toNat * b.l1.toNat * 2^145 + a.l4.toNat * b.l2.toNat * 2^174 + a.l4.toNat * b.l3.toNat * 2^203 + a.l4.toNat * b.l4.toNat * 2^232 + a.l4.toNat * b.l5.toNat * 2^261 + a.l4.toNat * b.l6.toNat * 2^290 + a.l4.toNat * b.l7.toNat * 2^319 + a.l4.toNat * b.l8.toNat * 2^348 + a.l5.toNat * b.l0.toNat * 2^145 + a.l5.toNat * b.l1.toNat * 2^174 + a.l5.toNat * b.l2.toNat * 2^203 + a.l5.toNat * b.l3.toNat * 2^232 + a.l5.toNat * b.l4.toNat * 2^261 + a.l5.toNat * b.l5.toNat * 2^290 + a.l5.toNat * b.l6.toNat * 2^319 + a.l5.toNat * b.l7.toNat * 2^348 + a.l5.toNat * b.l8.toNat * 2^377 + a.l6.toNat * b.l0.toNat * 2^174 + a.l6.toNat * b.l1.toNat * 2^203 + a.l6.toNat * b.l2.toNat * 2^232 + a.l6.toNat * b.l3.toNat * 2^261 + a.l6.toNat * b.l4.toNat * 2^290 + a.l6.toNat * b.l5.toNat * 2^319 + a.l6.toNat * b.l6.toNat * 2^348 + a.l6.toNat * b.l7.toNat * 2^377 + a.l6.toNat * b.l8.toNat * 2^406 + a.l7.toNat * b.l0.toNat * 2^203 + a.l7.toNat * b.l1.toNat * 2^232 + a.l7.toNat * b.l2.toNat * 2^261 + a.l7.toNat * b.l3.toNat * 2^290 + a.l7.toNat * b.l4.toNat * 2^319 + a.l7.toNat * b.l5.toNat * 2^348 + a.l7.toNat * b.l6.toNat * 2^377 + a.l7.toNat * b.l7.toNat * 2^406 + a.l7.toNat * b.l8.toNat * 2^435 + a.l8.toNat * b.l0.toNat * 2^232 + a.l8.toNat * b.l1.toNat * 2^261 + a.l8.toNat * b.l2.toNat * 2^290 + a.l8.toNat * b.l3.toNat * 2^319 + a.l8.toNat * b.l4.toNat * 2^348 + a.l8.toNat * b.l5.toNat * 2^377 + a.l8.toNat * b.l6.toNat * 2^406 + a.l8.toNat * b.l7.toNat * 2^435 + a.l8.toNat * b.l8.toNat * 2^464 = E at hABlt ⊢
+  have hE : Hide (a.l0.toNat * b.l0.toNat * 2^0 + a.l0.toNat * b.l1.toNat * 2^29 + a.l0.toNat * b.l2.toNat * 2^58 + a.l0.toNat * b.l3.toNat * 2^87 + a.l0.toNat * b.l4.toNat * 2^116 + a.l0.toNat * b.l5.toNat * 2^145 + a.l0.toNat * b.l6.toNat * 2^174 + a.l0.toNat * b.l7.toNat * 2^203 + a.l0.toNat * b.l8.toNat * 2^232 + a.l1.toNat * b.l0.toNat * 2^29 + a.l1.toNat * b.l1.toNat * 2^58 + a.l1.toNat * b.l2.toNat * 2^87 + a.l1.toNat * b.l3.toNat * 2^116 + a.l1.toNat * b.l4.toNat * 2^145 + a.l1.toNat * b.l5.toNat * 2^174 + a.l1.toNat * b.l6.toNat * 2^203 + a.l1.toNat * b.l7.toNat * 2^232 + a.l1.toNat * b.l8.toNat * 2^261 + a.l2.toNat * b.l0.toNat * 2^58 + a.l2.toNat * b.l1.toNat * 2^87 + a.l2.toNat * b.l2.toNat * 2^116 + a.l2.toNat * b.l3.toNat * 2^145 + a.l2.toNat * b.l4.toNat * 2^174 + a.l2.toNat * b.l5.toNat * 2^203 + a.l2.toNat * b.l6.toNat * 2^232 + a.l2.toNat * b.l7.toNat * 2^261 + a.l2.toNat * b.l8.toNat * 2^290 + a.l3.toNat * b.l0.toNat * 2^87 + a.l3.toNat * b.l1.toNat * 2^116 + a.l3.toNat * b.l2.toNat * 2^145 + a.l3.toNat * b.l3.toNat * 2^174 + a.l3.toNat * b.l4.toNat * 2^203 + a.l3.toNat * b.l5.toNat * 2^232 + a.l3.toNat * b.l6.toNat * 2^261 + a.l3.toNat * b.l7.toNat * 2^290 + a.l3.toNat * b.l8.toNat * 2^319 + a.l4.toNat * b.l0.toNat * 2^116 + a.l4.toNat * b.l1.toNat * 2^145 + a.l4.toNat * b.l2.toNat * 2^174 + a.l4.toNat * b.l3.toNat * 2^203 + a.l4.toNat * b.l4.toNat * 2^232 + a.l4.toNat * b.l5.toNat * 2^261 + a.l4.toNat * b.l6.toNat * 2^290 + a.l4.toNat * b.l7.toNat * 2^319 + a.l4.toNat * b.l8.toNat * 2^348 + a.l5.toNat * b.l0.toNat * 2^145 + a.l5.toNat * b.l1.toNat * 2^174 + a.l5.toNat * b.l2.toNat * 2^203 + a.l5.toNat * b.l3.toNat * 2^232 + a.l5.toNat * b.l4.toNat * 2^261 + a.l5.toNat * b.l5.toNat * 2^290 + a.l5.toNat * b.l6.toNat * 2^319 + a.l5.toNat * b.l7.toNat * 2^348 + a.l5.toNat * b.l8.toNat * 2^377 + a.l6.toNat * b.l0.toNat * 2^174 + a.l6.toNat * b.l1.toNat * 2^203 + a.l6.toNat * b.l2.toNat * 2^232 + a.l6.toNat * b.l3.toNat * 2^261 + a.l6.toNat * b.l4.toNat * 2^290 + a.l6.toNat * b.l5.toNat * 2^319 + a.l6.toNat * b.l6.toNat * 2^348 + a.l6.toNat * b.l7.toNat * 2^377 + a.l6.toNat * b.l8.toNat * 2^406 + a.l7.toNat * b.l0.toNat * 2^203 + a.l7.toNat * b.l1.toNat * 2^232 + a.l7.toNat * b.l2.toNat * 2^261 + a.l7.toNat * b.l3.toNat * 2^290 + a.l7.toNat * b.l4.toNat * 2^319 + a.l7.toNat * b.l5.toNat * 2^348 + a.l7.toNat * b.l6.toNat * 2^377 + a.l7.toNat * b.l7.toNat * 2^406 + a.l7.toNat * b.l8.toNat * 2^435 + a.l8.toNat * b.l0.toNat * 2^232 + a.l8.toNat * b.l1.toNat * 2^261 + a.l8.toNat * b.l2.toNat * 2^290 + a.l8.toNat * b.l3.toNat * 2^319 + a.l8.toNat * b.l4.toNat * 2^348 + a.l8.toNat * b.l5.toNat * 2^377 + a.l8.toNat * b.l6.toNat * 2^406 + a.l8.toNat * b.l7.toNat * 2^435 + a.l8.toNat * b.l8.toNat * 2^464 = E) := hE0
+  clear hE0
   have hp0_0 := mul_lt29 ha0 hb0
   have hp0_1 := mul_lt29 ha0 hb1
   have hp0_2 := mul_lt29 ha0 hb2
@@ -262,10 +265,12 @@ theorem mul_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have l_s3 := UInt64.toNat_lt s3
   have h_c4 : c4.toNat = s3.toNat / 2^29 := by simp only [c4, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c4 := UInt64.toNat_lt c4
-  have k1 : (a.l0.toNat * b.l0.toNat) + m2.toNat * 1 = 2^29 * c4.toNat := by omega
+  have k1 : (a.l0.toNat * b.l0.toNat) + m2.toNat * 1 + 0 = 0 + 2^29 * c4.toNat := by omega
   have k2 : m2.toNat < 2^29 := by omega
   have k3 : c4.toNat < 2^37 := by omega
   clear h_s1 l_s1 h_m2 l_m2 h_s3 l_s3 h_c4 l_c4
+  have ps1 := chain (B' := 2^29) (I := 0) (O := 0) (c := 0) (B := 1) rfl k1 (by decide)
+  clear k1
   have h_s5 : s5.toNat = (c4.toNat) + (a.l0.toNat * b.l1.toNat) + (a.l1.toNat * b.l0.toNat) + (m2.toNat * 536870904) := by simp only [s5, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s5 := UInt64.toNat_lt s5
   have h_m6 : m6.toNat = (s5.toNat * 536870911) % 2^29 := by simp only [m6, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
@@ -274,10 +279,12 @@ theorem mul_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have l_s7 := UInt64.toNat_lt s7
   have h_c8 : c8.toNat = s7.toNat / 2^29 := by simp only [c8, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c8 := UInt64.toNat_lt c8
-  have k4 : (c4.toNat) + (a.l0.toNat * b.l1.toNat) + (a.l1.toNat * b.l0.toNat) + (m2.toNat * 536870904) + m6.toNat * 1 = 2^29 * c8.toNat := by omega
+  have k4 : (a.l0.toNat * b.l1.toNat) + (a.l1.toNat * b.l0.toNat) + (m2.toNat * 536870904) + m6.toNat * 1 + c4.toNat = 0 + 2^29 * c8.toNat := by omega
   have k5 : m6.toNat < 2^29 := by omega
   have k6 : c8.toNat < 2^37 := by omega
   clear h_s5 l_s5 h_m6 l_m6 h_s7 l_s7 h_c8 l_c8
+  have ps2 := chain (B' := 2^58) ps1 k4 (by decide)
+  clear k4 ps1
   have h_s9 : s9.toNat = (c8.toNat) + (a.l0.toNat * b.l2.toNat) + (a.l1.toNat * b.l1.toNat) + (a.l2.toNat * b.l0.toNat) + (m2.toNat * 529989567) + (m6.toNat * 536870904) := by simp only [s9, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s9 := UInt64.toNat_lt s9
   have h_m10 : m10.toNat = (s9.toNat * 536870911) % 2^29 := by simp only [m10, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
@@ -286,10 +293,12 @@ theorem mul_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have l_s11 := UInt64.toNat_lt s11
   have h_c12 : c12.toNat = s11.toNat / 2^29 := by simp only [c12, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c12 := UInt64.toNat_lt c12
-  have k7 : (c8.toNat) + (a.l0.toNat * b.l2.toNat) + (a.l1.toNat * b.l1.toNat) + (a.l2.toNat * b.l0.toNat) + (m2.toNat * 529989567) + (m6.toNat * 536870904) + m10.toNat * 1 = 2^29 * c12.toNat := by omega
+  have k7 : (a.l0.toNat * b.l2.toNat) + (a.l1.toNat * b.l1.toNat) + (a.l2.toNat * b.l0.toNat) + (m2.toNat * 529989567) + (m6.toNat * 536870904) + m10.toNat * 1 + c8.toNat = 0 + 2^29 * c12.toNat := by omega
   have k8 : m10.toNat < 2^29 := by omega
   have k9 : c12.toNat < 2^37 := by omega
   clear h_s9 l_s9 h_m10 l_m10 h_s11 l_s11 h_c12 l_c12
+  have ps3 := chain (B' := 2^87) ps2 k7 (by decide)
+  clear k7 ps2
   have h_s13 : s13.toNat = (c12.toNat) + (a.l0.toNat * b.l3.toNat) + (a.l1.toNat * b.l2.toNat) + (a.l2.toNat * b.l1.toNat) + (a.l3.toNat * b.l0.toNat) + (m2.toNat * 457704959) + (m6.toNat * 529989567) + (m10.toNat * 536870904) := by simp only [s13, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s13 := UInt64.toNat_lt s13
   have h_m14 : m14.toNat = (s13.toNat * 536870911) % 2^29 := by simp only [m14, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
@@ -298,10 +307,12 @@ theorem mul_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have l_s15 := UInt64.toNat_lt s15
   have h_c16 : c16.toNat = s15.toNat / 2^29 := by simp only [c16, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c16 := UInt64.toNat_lt c16
-  have k10 : (c12.toNat) + (a.l0.toNat * b.l3.toNat) + (a.l1.toNat * b.l2.toNat) + (a.l2.toNat * b.l1.toNat) + (a.l3.toNat * b.l0.toNat) + (m2.toNat * 457704959) + (m6.toNat * 529989567) + (m10.toNat * 536870904) + m14.toNat * 1 = 2^29 * c16.toNat := by omega
+  have k10 : (a.l0.toNat * b.l3.toNat) + (a.l1.toNat * b.l2.toNat) + (a.l2.toNat * b.l1.toNat) + (a.l3.toNat * b.l0.toNat) + (m2.toNat * 457704959) + (m6.toNat * 529989567) + (m10.toNat * 536870904) + m14.toNat * 1 + c12.toNat = 0 + 2^29 * c16.toNat := by omega
   have k11 : m14.toNat < 2^29 := by omega
   have k12 : c16.toNat < 2^37 := by omega
   clear h_s13 l_s13 h_m14 l_m14 h_s15 l_s15 h_c16 l_c16
+  have ps4 := chain (B' := 2^116) ps3 k10 (by decide)
+  clear k10 ps3
   have h_s17 : s17.toNat = (c16.toNat) + (a.l0.toNat * b.l4.toNat) + (a.l1.toNat * b.l3.toNat) + (a.l2.toNat * b.l2.toNat) + (a.l3.toNat * b.l1.toNat) + (a.l4.toNat * b.l0.toNat) + (m2.toNat * 494949691) + (m6.toNat * 457704959) + (m10.toNat * 529989567) + (m14.toNat * 536870904) := by simp only [s17, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s17 := UInt64.toNat_lt s17
   have h_m18 : m18.toNat = (s17.toNat * 536870911) % 2^29 := by simp only [m18, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
@@ -310,10 +321,12 @@ theorem mul_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have l_s19 := UInt64.toNat_lt s19
   have h_c20 : c20.toNat = s19.toNat / 2^29 := by simp only [c20, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c20 := UInt64.toNat_lt c20
-  have k13 : (c16.toNat) + (a.l0.toNat * b.l4.toNat) + (a.l1.toNat * b.l3.toNat) + (a.l2.toNat * b.l2.toNat) + (a.l3.toNat * b.l1.toNat) + (a.l4.toNat * b.l0.toNat) + (m2.toNat * 494949691) + (m6.toNat * 457704959) + (m10.toNat * 529989567) + (m14.toNat * 536870904) + m18.toNat * 1 = 2^29 * c20.toNat := by omega
+  have k13 : (a.l0.toNat * b.l4.toNat) + (a.l1.toNat * b.l3.toNat) + (a.l2.toNat * b.l2.toNat) + (a.l3.toNat * b.l1.toNat) + (a.l4.toNat * b.l0.toNat) + (m2.toNat * 494949691) + (m6.toNat * 457704959) + (m10.toNat * 529989567) + (m14.toNat * 536870904) + m18.toNat * 1 + c16.toNat = 0 + 2^29 * c20.toNat := by omega
   have k14 : m18.toNat < 2^29 := by omega
   have k15 : c20.toNat < 2^37 := by omega
   clear h_s17 l_s17 h_m18 l_m18 h_s19 l_s19 h_c20 l_c20
+  have ps5 := chain (B' := 2^145) ps4 k13 (by decide)
+  clear k13 ps4
   have h_s21 : s21.toNat = (c20.toNat) + (a.l0.toNat * b.l5.toNat) + (a.l1.toNat * b.l4.toNat) + (a.l2.toNat * b.l3.toNat) + (a.l3.toNat * b.l2.toNat) + (a.l4.toNat * b.l1.toNat) + (a.l5.toNat * b.l0.toNat) + (m2.toNat * 201589968) + (m6.toNat * 494949691) + (m10.toNat * 457704959) + (m14.toNat * 529989567) + (m18.toNat * 536870904) := by simp only [s21, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s21 := UInt64.toNat_lt s21
   have h_m22 : m22.toNat = (s21.toNat * 536870911) % 2^29 := by simp only [m22, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
@@ -322,10 +335,12 @@ theorem mul_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have l_s23 := UInt64.toNat_lt s23
   have h_c24 : c24.toNat = s23.toNat / 2^29 := by simp only [c24, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c24 := UInt64.toNat_lt c24
-  have k16 : (c20.toNat) + (a.l0.toNat * b.l5.toNat) + (a.l1.toNat * b.l4.toNat) + (a.l2.toNat * b.l3.toNat) + (a.l3.toNat * b.l2.toNat) + (a.l4.toNat * b.l1.toNat) + (a.l5.toNat * b.l0.toNat) + (m2.toNat * 201589968) + (m6.toNat * 494949691) + (m10.toNat * 457704959) + (m14.toNat * 529989567) + (m18.toNat * 536870904) + m22.toNat * 1 = 2^29 * c24.toNat := by omega
+  have k16 : (a.l0.toNat * b.l5.toNat) + (a.l1.toNat * b.l4.toNat) + (a.l2.toNat * b.l3.toNat) + (a.l3.toNat * b.l2.toNat) + (a.l4.toNat * b.l1.toNat) + (a.l5.toNat * b.l0.toNat) + (m2.toNat * 201589968) + (m6.toNat * 494949691) + (m10.toNat * 457704959) + (m14.toNat * 529989567) + (m18.toNat * 536870904) + m22.toNat * 1 + c20.toNat = 0 + 2^29 * c24.toNat := by omega
   have k17 : m22.toNat < 2^29 := by omega
   have k18 : c24.toNat < 2^37 := by omega
   clear h_s21 l_s21 h_m22 l_m22 h_s23 l_s23 h_c24 l_c24
+  have ps6 := chain (B' := 2^174) ps5 k16 (by decide)
+  clear k16 ps5
   have h_s25 : s25.toNat = (c24.toNat) + (a.l0.toNat * b.l6.toNat) + (a.l1.toNat * b.l5.toNat) + (a.l2.toNat * b.l4.toNat) + (a.l3.toNat * b.l3.toNat) + (a.l4.toNat * b.l2.toNat) + (a.l5.toNat * b.l1.toNat) + (a.l6.toNat * b.l0.toNat) + (m2.toNat * 354471143) + (m6.toNat * 201589968) + (m10.toNat * 494949691) + (m14.toNat * 457704959) + (m18.toNat * 529989567) + (m22.toNat * 536870904) := by simp only [s25, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s25 := UInt64.toNat_lt s25
   have h_m26 : m26.toNat = (s25.toNat * 536870911) % 2^29 := by simp only [m26, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
@@ -334,10 +349,12 @@ theorem mul_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have l_s27 := UInt64.toNat_lt s27
   have h_c28 : c28.toNat = s27.toNat / 2^29 := by simp only [c28, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c28 := UInt64.toNat_lt c28
-  have k19 : (c24.toNat) + (a.l0.toNat * b.l6.toNat) + (a.l1.toNat * b.l5.toNat) + (a.l2.toNat * b.l4.toNat) + (a.l3.toNat * b.l3.toNat) + (a.l4.toNat * b.l2.toNat) + (a.l5.toNat * b.l1.toNat) + (a.l6.toNat * b.l0.toNat) + (m2.toNat * 354471143) + (m6.toNat * 201589968) + (m10.toNat * 494949691) + (m14.toNat * 457704959) + (m18.toNat * 529989567) + (m22.toNat * 536870904) + m26.toNat * 1 = 2^29 * c28.toNat := by omega
+  have k19 : (a.l0.toNat * b.l6.toNat) + (a.l1.toNat * b.l5.toNat) + (a.l2.toNat * b.l4.toNat) + (a.l3.toNat * b.l3.toNat) + (a.l4.toNat * b.l2.toNat) + (a.l5.toNat * b.l1.toNat) + (a.l6.toNat * b.l0.toNat) + (m2.toNat * 354471143) + (m6.toNat * 201589968) + (m10.toNat * 494949691) + (m14.toNat * 457704959) + (m18.toNat * 529989567) + (m22.toNat * 536870904) + m26.toNat * 1 + c24.toNat = 0 + 2^29 * c28.toNat := by omega
   have k20 : m26.toNat < 2^29 := by omega
   have k21 : c28.toNat < 2^37 := by omega
   clear h_s25 l_s25 h_m26 l_m26 h_s27 l_s27 h_c28 l_c28
+  have ps7 := chain (B' := 2^203) ps6 k19 (by decide)
+  clear k19 ps6
   have h_s29 : s29.toNat = (c28.toNat) + (a.l0.toNat * b.l7.toNat) + (a.l1.toNat * b.l6.toNat) + (a.l2.toNat * b.l5.toNat) + (a.l3.toNat * b.l4.toNat) + (a.l4.toNat * b.l3.toNat) + (a.l5.toNat * b.l2.toNat) + (a.l6.toNat * b.l1.toNat) + (a.l7.toNat * b.l0.toNat) + (m2.toNat * 174404527) + (m6.toNat * 354471143) + (m10.toNat * 201589968) + (m14.toNat * 494949691) + (m18.toNat * 457704959) + (m22.toNat * 529989567) + (m26.toNat * 536870904) := by simp only [s29, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s29 := UInt64.toNat_lt s29
   have h_m30 : m30.toNat = (s29.toNat * 536870911) % 2^29 := by simp only [m30, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
@@ -346,10 +363,12 @@ theorem mul_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have l_s31 := UInt64.toNat_lt s31
   have h_c32 : c32.toNat = s31.toNat / 2^29 := by simp only [c32, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c32 := UInt64.toNat_lt c32
-  have k22 : (c28.toNat) + (a.l0.toNat * b.l7.toNat) + (a.l1.toNat * b.l6.toNat) + (a.l2.toNat * b.l5.toNat) + (a.l3.toNat * b.l4.toNat) + (a.l4.toNat * b.l3.toNat) + (a.l5.toNat * b.l2.toNat) + (a.l6.toNat * b.l1.toNat) + (a.l7.toNat * b.l0.toNat) + (m2.toNat * 174404527) + (m6.toNat * 354471143) + (m10.toNat * 201589968) + (m14.toNat * 494949691) + (m18.toNat * 457704959) + (m22.toNat * 529989567) + (m26.toNat * 536870904) + m30.toNat * 1 = 2^29 * c32.toNat := by omega
+  have k22 : (a.l0.toNat * b.l7.toNat) + (a.l1.toNat * b.l6.toNat) + (a.l2.toNat * b.l5.toNat) + (a.l3.toNat * b.l4.toNat) + (a.l4.toNat * b.l3.toNat) + (a.l5.toNat * b.l2.toNat) + (a.l6.toNat * b.l1.toNat) + (a.l7.toNat * b.l0.toNat) + (m2.toNat * 174404527) + (m6.toNat * 354471143) + (m10.toNat * 201589968) + (m14.toNat * 494949691) + (m18.toNat * 457704959) + (m22.toNat * 529989567) + (m26.toNat * 536870904) + m30.toNat * 1 + c28.toNat = 0 + 2^29 * c32.toNat := by omega
   have k23 : m30.toNat < 2^29 := by omega
   have k24 : c32.toNat < 2^37 := by omega
   clear h_s29 l_s29 h_m30 l_m30 h_s31 l_s31 h_c32 l_c32
+  have ps8 := chain (B' := 2^232) ps7 k22 (by decide)
+  clear k22 ps7
   have h_s33 : s33.toNat = (c32.toNat) + (a.l0.toNat * b.l8.toNat) + (a.l1.toNat * b.l7.toNat) + (a.l2.toNat * b.l6.toNat) + (a.l3.toNat * b.l5.toNat) + (a.l4.toNat * b.l4.toNat) + (a.l5.toNat * b.l3.toNat) + (a.l6.toNat * b.l2.toNat) + (a.l7.toNat * b.l1.toNat) + (a.l8.toNat * b.l0.toNat) + (m2.toNat * 7597479) + (m6.toNat * 174404527) + (m10.toNat * 354471143) + (m14.toNat * 201589968) + (m18.toNat * 494949691) + (m22.toNat * 457704959) + (m26.toNat * 529989567) + (m30.toNat * 536870904) := by simp only [s33, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s33 := UInt64.toNat_lt s33
   have h_m34 : m34.toNat = (s33.toNat * 536870911) % 2^29 := by simp only [m34, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
@@ -358,186 +377,196 @@ theorem mul_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have l_s35 := UInt64.toNat_lt s35
   have h_c36 : c36.toNat = s35.toNat / 2^29 := by simp only [c36, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c36 := UInt64.toNat_lt c36
-  have k25 : (c32.toNat) + (a.l0.toNat * b.l8.toNat) + (a.l1.toNat * b.l7.toNat) + (a.l2.toNat * b.l6.toNat) + (a.l3.toNat * b.l5.toNat) + (a.l4.toNat * b.l4.toNat) + (a.l5.toNat * b.l3.toNat) + (a.l6.toNat * b.l2.toNat) + (a.l7.toNat * b.l1.toNat) + (a.l8.toNat * b.l0.toNat) + (m2.toNat * 7597479) + (m6.toNat * 174404527) + (m10.toNat * 354471143) + (m14.toNat * 201589968) + (m18.toNat * 494949691) + (m22.toNat * 457704959) + (m26.toNat * 529989567) + (m30.toNat * 536870904) + m34.toNat * 1 = 2^29 * c36.toNat := by omega
+  have k25 : (a.l0.toNat * b.l8.toNat) + (a.l1.toNat * b.l7.toNat) + (a.l2.toNat * b.l6.toNat) + (a.l3.toNat * b.l5.toNat) + (a.l4.toNat * b.l4.toNat) + (a.l5.toNat * b.l3.toNat) + (a.l6.toNat * b.l2.toNat) + (a.l7.toNat * b.l1.toNat) + (a.l8.toNat * b.l0.toNat) + (m2.toNat * 7597479) + (m6.toNat * 174404527) + (m10.toNat * 354471143) + (m14.toNat * 201589968) + (m18.toNat * 494949691) + (m22.toNat * 457704959) + (m26.toNat * 529989567) + (m30.toNat * 536870904) + m34.toNat * 1 + c32.toNat = 0 + 2^29 * c36.toNat := by omega
   have k26 : m34.toNat < 2^29 := by omega
   have k27 : c36.toNat < 2^37 := by omega
   clear h_s33 l_s33 h_m34 l_m34 h_s35 l_s35 h_c36 l_c36
+  have ps9 := chain (B' := 2^261) ps8 k25 (by decide)
+  clear k25 ps8
   have h_s37 : s37.toNat = (c36.toNat) + (a.l1.toNat * b.l8.toNat) + (a.l2.toNat * b.l7.toNat) + (a.l3.toNat * b.l6.toNat) + (a.l4.toNat * b.l5.toNat) + (a.l5.toNat * b.l4.toNat) + (a.l6.toNat * b.l3.toNat) + (a.l7.toNat * b.l2.toNat) + (a.l8.toNat * b.l1.toNat) + (m6.toNat * 7597479) + (m10.toNat * 174404527) + (m14.toNat * 354471143) + (m18.toNat * 201589968) + (m22.toNat * 494949691) + (m26.toNat * 457704959) + (m30.toNat * 529989567) + (m34.toNat * 536870904) := by simp only [s37, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s37 := UInt64.toNat_lt s37
   have h_r38 : r38.toNat = s37.toNat % 2^29 := by simp only [r38, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_r38 := UInt64.toNat_lt r38
   have h_c39 : c39.toNat = s37.toNat / 2^29 := by simp only [c39, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c39 := UInt64.toNat_lt c39
-  have k28 : (c36.toNat) + (a.l1.toNat * b.l8.toNat) + (a.l2.toNat * b.l7.toNat) + (a.l3.toNat * b.l6.toNat) + (a.l4.toNat * b.l5.toNat) + (a.l5.toNat * b.l4.toNat) + (a.l6.toNat * b.l3.toNat) + (a.l7.toNat * b.l2.toNat) + (a.l8.toNat * b.l1.toNat) + (m6.toNat * 7597479) + (m10.toNat * 174404527) + (m14.toNat * 354471143) + (m18.toNat * 201589968) + (m22.toNat * 494949691) + (m26.toNat * 457704959) + (m30.toNat * 529989567) + (m34.toNat * 536870904) = r38.toNat + 2^29 * c39.toNat := by omega
+  have k28 : (a.l1.toNat * b.l8.toNat) + (a.l2.toNat * b.l7.toNat) + (a.l3.toNat * b.l6.toNat) + (a.l4.toNat * b.l5.toNat) + (a.l5.toNat * b.l4.toNat) + (a.l6.toNat * b.l3.toNat) + (a.l7.toNat * b.l2.toNat) + (a.l8.toNat * b.l1.toNat) + (m6.toNat * 7597479) + (m10.toNat * 174404527) + (m14.toNat * 354471143) + (m18.toNat * 201589968) + (m22.toNat * 494949691) + (m26.toNat * 457704959) + (m30.toNat * 529989567) + (m34.toNat * 536870904) + c36.toNat = r38.toNat + 2^29 * c39.toNat := by omega
   have k29 : r38.toNat < 2^29 := by omega
   have k30 : c39.toNat < 2^37 := by omega
   clear h_s37 l_s37 h_r38 l_r38 h_c39 l_c39
+  have ps10 := chain (B' := 2^290) ps9 k28 (by decide)
+  clear k28 ps9
   have h_s40 : s40.toNat = (c39.toNat) + (a.l2.toNat * b.l8.toNat) + (a.l3.toNat * b.l7.toNat) + (a.l4.toNat * b.l6.toNat) + (a.l5.toNat * b.l5.toNat) + (a.l6.toNat * b.l4.toNat) + (a.l7.toNat * b.l3.toNat) + (a.l8.toNat * b.l2.toNat) + (m10.toNat * 7597479) + (m14.toNat * 174404527) + (m18.toNat * 354471143) + (m22.toNat * 201589968) + (m26.toNat * 494949691) + (m30.toNat * 457704959) + (m34.toNat * 529989567) := by simp only [s40, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s40 := UInt64.toNat_lt s40
   have h_r41 : r41.toNat = s40.toNat % 2^29 := by simp only [r41, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_r41 := UInt64.toNat_lt r41
   have h_c42 : c42.toNat = s40.toNat / 2^29 := by simp only [c42, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c42 := UInt64.toNat_lt c42
-  have k31 : (c39.toNat) + (a.l2.toNat * b.l8.toNat) + (a.l3.toNat * b.l7.toNat) + (a.l4.toNat * b.l6.toNat) + (a.l5.toNat * b.l5.toNat) + (a.l6.toNat * b.l4.toNat) + (a.l7.toNat * b.l3.toNat) + (a.l8.toNat * b.l2.toNat) + (m10.toNat * 7597479) + (m14.toNat * 174404527) + (m18.toNat * 354471143) + (m22.toNat * 201589968) + (m26.toNat * 494949691) + (m30.toNat * 457704959) + (m34.toNat * 529989567) = r41.toNat + 2^29 * c42.toNat := by omega
+  have k31 : (a.l2.toNat * b.l8.toNat) + (a.l3.toNat * b.l7.toNat) + (a.l4.toNat * b.l6.toNat) + (a.l5.toNat * b.l5.toNat) + (a.l6.toNat * b.l4.toNat) + (a.l7.toNat * b.l3.toNat) + (a.l8.toNat * b.l2.toNat) + (m10.toNat * 7597479) + (m14.toNat * 174404527) + (m18.toNat * 354471143) + (m22.toNat * 201589968) + (m26.toNat * 494949691) + (m30.toNat * 457704959) + (m34.toNat * 529989567) + c39.toNat = r41.toNat + 2^29 * c42.toNat := by omega
   have k32 : r41.toNat < 2^29 := by omega
   have k33 : c42.toNat < 2^37 := by omega
   clear h_s40 l_s40 h_r41 l_r41 h_c42 l_c42
+  have ps11 := chain (B' := 2^319) ps10 k31 (by decide)
+  clear k31 ps10
   have h_s43 : s43.toNat = (c42.toNat) + (a.l3.toNat * b.l8.toNat) + (a.l4.toNat * b.l7.toNat) + (a.l5.toNat * b.l6.toNat) + (a.l6.toNat * b.l5.toNat) + (a.l7.toNat * b.l4.toNat) + (a.l8.toNat * b.l3.toNat) + (m14.toNat * 7597479) + (m18.toNat * 174404527) + (m22.toNat * 354471143) + (m26.toNat * 201589968) + (m30.toNat * 494949691) + (m34.toNat * 457704959) := by simp only [s43, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s43 := UInt64.toNat_lt s43
   have h_r44 : r44.toNat = s43.toNat % 2^29 := by simp only [r44, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_r44 := UInt64.toNat_lt r44
   have h_c45 : c45.toNat = s43.toNat / 2^29 := by simp only [c45, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c45 := UInt64.toNat_lt c45
-  have k34 : (c42.toNat) + (a.l3.toNat * b.l8.toNat) + (a.l4.toNat * b.l7.toNat) + (a.l5.toNat * b.l6.toNat) + (a.l6.toNat * b.l5.toNat) + (a.l7.toNat * b.l4.toNat) + (a.l8.toNat * b.l3.toNat) + (m14.toNat * 7597479) + (m18.toNat * 174404527) + (m22.toNat * 354471143) + (m26.toNat * 201589968) + (m30.toNat * 494949691) + (m34.toNat * 457704959) = r44.toNat + 2^29 * c45.toNat := by omega
+  have k34 : (a.l3.toNat * b.l8.toNat) + (a.l4.toNat * b.l7.toNat) + (a.l5.toNat * b.l6.toNat) + (a.l6.toNat * b.l5.toNat) + (a.l7.toNat * b.l4.toNat) + (a.l8.toNat * b.l3.toNat) + (m14.toNat * 7597479) + (m18.toNat * 174404527) + (m22.toNat * 354471143) + (m26.toNat * 201589968) + (m30.toNat * 494949691) + (m34.toNat * 457704959) + c42.toNat = r44.toNat + 2^29 * c45.toNat := by omega
   have k35 : r44.toNat < 2^29 := by omega
   have k36 : c45.toNat < 2^37 := by omega
   clear h_s43 l_s43 h_r44 l_r44 h_c45 l_c45
+  have ps12 := chain (B' := 2^348) ps11 k34 (by decide)
+  clear k34 ps11
   have h_s46 : s46.toNat = (c45.toNat) + (a.l4.toNat * b.l8.toNat) + (a.l5.toNat * b.l7.toNat) + (a.l6.toNat * b.l6.toNat) + (a.l7.toNat * b.l5.toNat) + (a.l8.toNat * b.l4.toNat) + (m18.toNat * 7597479) + (m22.toNat * 174404527) + (m26.toNat * 354471143) + (m30.toNat * 201589968) + (m34.toNat * 494949691) := by simp only [s46, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s46 := UInt64.toNat_lt s46
   have h_r47 : r47.toNat = s46.toNat % 2^29 := by simp only [r47, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_r47 := UInt64.toNat_lt r47
   have h_c48 : c48.toNat = s46.toNat / 2^29 := by simp only [c48, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c48 := UInt64.toNat_lt c48
-  have k37 : (c45.toNat) + (a.l4.toNat * b.l8.toNat) + (a.l5.toNat * b.l7.toNat) + (a.l6.toNat * b.l6.toNat) + (a.l7.toNat * b.l5.toNat) + (a.l8.toNat * b.l4.toNat) + (m18.toNat * 7597479) + (m22.toNat * 174404527) + (m26.toNat * 354471143) + (m30.toNat * 201589968) + (m34.toNat * 494949691) = r47.toNat + 2^29 * c48.toNat := by omega
+  have k37 : (a.l4.toNat * b.l8.toNat) + (a.l5.toNat * b.l7.toNat) + (a.l6.toNat * b.l6.toNat) + (a.l7.toNat * b.l5.toNat) + (a.l8.toNat * b.l4.toNat) + (m18.toNat * 7597479) + (m22.toNat * 174404527) + (m26.toNat * 354471143) + (m30.toNat * 201589968) + (m34.toNat * 494949691) + c45.toNat = r47.toNat + 2^29 * c48.toNat := by omega
   have k38 : r47.toNat < 2^29 := by omega
   have k39 : c48.toNat < 2^37 := by omega
   clear h_s46 l_s46 h_r47 l_r47 h_c48 l_c48
+  have ps13 := chain (B' := 2^377) ps12 k37 (by decide)
+  clear k37 ps12
   have h_s49 : s49.toNat = (c48.toNat) + (a.l5.toNat * b.l8.toNat) + (a.l6.toNat * b.l7.toNat) + (a.l7.toNat * b.l6.toNat) + (a.l8.toNat * b.l5.toNat) + (m22.toNat * 7597479) + (m26.toNat * 174404527) + (m30.toNat * 354471143) + (m34.toNat * 201589968) := by simp only [s49, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s49 := UInt64.toNat_lt s49
   have h_r50 : r50.toNat = s49.toNat % 2^29 := by simp only [r50, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_r50 := UInt64.toNat_lt r50
   have h_c51 : c51.toNat = s49.toNat / 2^29 := by simp only [c51, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c51 := UInt64.toNat_lt c51
-  have k40 : (c48.toNat) + (a.l5.toNat * b.l8.toNat) + (a.l6.toNat * b.l7.toNat) + (a.l7.toNat * b.l6.toNat) + (a.l8.toNat * b.l5.toNat) + (m22.toNat * 7597479) + (m26.toNat * 174404527) + (m30.toNat * 354471143) + (m34.toNat * 201589968) = r50.toNat + 2^29 * c51.toNat := by omega
+  have k40 : (a.l5.toNat * b.l8.toNat) + (a.l6.toNat * b.l7.toNat) + (a.l7.toNat * b.l6.toNat) + (a.l8.toNat * b.l5.toNat) + (m22.toNat * 7597479) + (m26.toNat * 174404527) + (m30.toNat * 354471143) + (m34.toNat * 201589968) + c48.toNat = r50.toNat + 2^29 * c51.toNat := by omega
   have k41 : r50.toNat < 2^29 := by omega
   have k42 : c51.toNat < 2^37 := by omega
   clear h_s49 l_s49 h_r50 l_r50 h_c51 l_c51
+  have ps14 := chain (B' := 2^406) ps13 k40 (by decide)
+  clear k40 ps13
   have h_s52 : s52.toNat = (c51.toNat) + (a.l6.toNat * b.l8.toNat) + (a.l7.toNat * b.l7.toNat) + (a.l8.toNat * b.l6.toNat) + (m26.toNat * 7597479) + (m30.toNat * 174404527) + (m34.toNat * 354471143) := by simp only [s52, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s52 := UInt64.toNat_lt s52
   have h_r53 : r53.toNat = s52.toNat % 2^29 := by simp only [r53, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_r53 := UInt64.toNat_lt r53
   have h_c54 : c54.toNat = s52.toNat / 2^29 := by simp only [c54, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c54 := UInt64.toNat_lt c54
-  have k43 : (c51.toNat) + (a.l6.toNat * b.l8.toNat) + (a.l7.toNat * b.l7.toNat) + (a.l8.toNat * b.l6.toNat) + (m26.toNat * 7597479) + (m30.toNat * 174404527) + (m34.toNat * 354471143) = r53.toNat + 2^29 * c54.toNat := by omega
+  have k43 : (a.l6.toNat * b.l8.toNat) + (a.l7.toNat * b.l7.toNat) + (a.l8.toNat * b.l6.toNat) + (m26.toNat * 7597479) + (m30.toNat * 174404527) + (m34.toNat * 354471143) + c51.toNat = r53.toNat + 2^29 * c54.toNat := by omega
   have k44 : r53.toNat < 2^29 := by omega
   have k45 : c54.toNat < 2^37 := by omega
   clear h_s52 l_s52 h_r53 l_r53 h_c54 l_c54
+  have ps15 := chain (B' := 2^435) ps14 k43 (by decide)
+  clear k43 ps14
   have h_s55 : s55.toNat = (c54.toNat) + (a.l7.toNat * b.l8.toNat) + (a.l8.toNat * b.l7.toNat) + (m30.toNat * 7597479) + (m34.toNat * 174404527) := by simp only [s55, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s55 := UInt64.toNat_lt s55
   have h_r56 : r56.toNat = s55.toNat % 2^29 := by simp only [r56, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_r56 := UInt64.toNat_lt r56
   have h_c57 : c57.toNat = s55.toNat / 2^29 := by simp only [c57, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c57 := UInt64.toNat_lt c57
-  have k46 : (c54.toNat) + (a.l7.toNat * b.l8.toNat) + (a.l8.toNat * b.l7.toNat) + (m30.toNat * 7597479) + (m34.toNat * 174404527) = r56.toNat + 2^29 * c57.toNat := by omega
+  have k46 : (a.l7.toNat * b.l8.toNat) + (a.l8.toNat * b.l7.toNat) + (m30.toNat * 7597479) + (m34.toNat * 174404527) + c54.toNat = r56.toNat + 2^29 * c57.toNat := by omega
   have k47 : r56.toNat < 2^29 := by omega
   have k48 : c57.toNat < 2^37 := by omega
   clear h_s55 l_s55 h_r56 l_r56 h_c57 l_c57
+  have ps16 := chain (B' := 2^464) ps15 k46 (by decide)
+  clear k46 ps15
   have h_s58 : s58.toNat = (c57.toNat) + (a.l8.toNat * b.l8.toNat) + (m34.toNat * 7597479) := by simp only [s58, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s58 := UInt64.toNat_lt s58
   have h_r59 : r59.toNat = s58.toNat % 2^29 := by simp only [r59, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_r59 := UInt64.toNat_lt r59
   have h_c60 : c60.toNat = s58.toNat / 2^29 := by simp only [c60, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c60 := UInt64.toNat_lt c60
-  have k49 : (c57.toNat) + (a.l8.toNat * b.l8.toNat) + (m34.toNat * 7597479) = r59.toNat + 2^29 * c60.toNat := by omega
+  have k49 : (a.l8.toNat * b.l8.toNat) + (m34.toNat * 7597479) + c57.toNat = r59.toNat + 2^29 * c60.toNat := by omega
   have k50 : r59.toNat < 2^29 := by omega
   have k51 : c60.toNat < 2^37 := by omega
   clear h_s58 l_s58 h_r59 l_r59 h_c60 l_c60
-  have h_x61 : x61.toNat = (r38.toNat + 2^65 - 1) % 2^64 := by simp only [x61, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x61 := UInt64.toNat_lt x61
-  have h_d62 : d62.toNat = x61.toNat % 2^29 := by simp only [d62, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d62 := UInt64.toNat_lt d62
-  have h_w63 : w63.toNat = x61.toNat / 2^63 := by simp only [w63, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w63 := UInt64.toNat_lt w63
-  have k52 : d62.toNat + 1 = r38.toNat + 2^29 * w63.toNat := by omega
-  have k53 : d62.toNat < 2^29 := by omega
-  have k54 : w63.toNat ≤ 1 := by omega
-  clear h_x61 l_x61 h_d62 l_d62 h_w63 l_w63
-  have h_x64 : x64.toNat = (r41.toNat + 2^65 - 536870904 - w63.toNat) % 2^64 := by simp only [x64, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x64 := UInt64.toNat_lt x64
-  have h_d65 : d65.toNat = x64.toNat % 2^29 := by simp only [d65, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d65 := UInt64.toNat_lt d65
-  have h_w66 : w66.toNat = x64.toNat / 2^63 := by simp only [w66, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w66 := UInt64.toNat_lt w66
-  have k55 : d65.toNat + 536870904 + w63.toNat = r41.toNat + 2^29 * w66.toNat := by omega
-  have k56 : d65.toNat < 2^29 := by omega
-  have k57 : w66.toNat ≤ 1 := by omega
-  clear h_x64 l_x64 h_d65 l_d65 h_w66 l_w66
-  have h_x67 : x67.toNat = (r44.toNat + 2^65 - 529989567 - w66.toNat) % 2^64 := by simp only [x67, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x67 := UInt64.toNat_lt x67
-  have h_d68 : d68.toNat = x67.toNat % 2^29 := by simp only [d68, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d68 := UInt64.toNat_lt d68
-  have h_w69 : w69.toNat = x67.toNat / 2^63 := by simp only [w69, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w69 := UInt64.toNat_lt w69
-  have k58 : d68.toNat + 529989567 + w66.toNat = r44.toNat + 2^29 * w69.toNat := by omega
-  have k59 : d68.toNat < 2^29 := by omega
-  have k60 : w69.toNat ≤ 1 := by omega
-  clear h_x67 l_x67 h_d68 l_d68 h_w69 l_w69
-  have h_x70 : x70.toNat = (r47.toNat + 2^65 - 457704959 - w69.toNat) % 2^64 := by simp only [x70, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x70 := UInt64.toNat_lt x70
-  have h_d71 : d71.toNat = x70.toNat % 2^29 := by simp only [d71, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d71 := UInt64.toNat_lt d71
-  have h_w72 : w72.toNat = x70.toNat / 2^63 := by simp only [w72, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w72 := UInt64.toNat_lt w72
-  have k61 : d71.toNat + 457704959 + w69.toNat = r47.toNat + 2^29 * w72.toNat := by omega
-  have k62 : d71.toNat < 2^29 := by omega
-  have k63 : w72.toNat ≤ 1 := by omega
-  clear h_x70 l_x70 h_d71 l_d71 h_w72 l_w72
-  have h_x73 : x73.toNat = (r50.toNat + 2^65 - 494949691 - w72.toNat) % 2^64 := by simp only [x73, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x73 := UInt64.toNat_lt x73
-  have h_d74 : d74.toNat = x73.toNat % 2^29 := by simp only [d74, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d74 := UInt64.toNat_lt d74
-  have h_w75 : w75.toNat = x73.toNat / 2^63 := by simp only [w75, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w75 := UInt64.toNat_lt w75
-  have k64 : d74.toNat + 494949691 + w72.toNat = r50.toNat + 2^29 * w75.toNat := by omega
-  have k65 : d74.toNat < 2^29 := by omega
-  have k66 : w75.toNat ≤ 1 := by omega
-  clear h_x73 l_x73 h_d74 l_d74 h_w75 l_w75
-  have h_x76 : x76.toNat = (r53.toNat + 2^65 - 201589968 - w75.toNat) % 2^64 := by simp only [x76, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x76 := UInt64.toNat_lt x76
-  have h_d77 : d77.toNat = x76.toNat % 2^29 := by simp only [d77, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d77 := UInt64.toNat_lt d77
-  have h_w78 : w78.toNat = x76.toNat / 2^63 := by simp only [w78, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w78 := UInt64.toNat_lt w78
-  have k67 : d77.toNat + 201589968 + w75.toNat = r53.toNat + 2^29 * w78.toNat := by omega
-  have k68 : d77.toNat < 2^29 := by omega
-  have k69 : w78.toNat ≤ 1 := by omega
-  clear h_x76 l_x76 h_d77 l_d77 h_w78 l_w78
-  have h_x79 : x79.toNat = (r56.toNat + 2^65 - 354471143 - w78.toNat) % 2^64 := by simp only [x79, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x79 := UInt64.toNat_lt x79
-  have h_d80 : d80.toNat = x79.toNat % 2^29 := by simp only [d80, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d80 := UInt64.toNat_lt d80
-  have h_w81 : w81.toNat = x79.toNat / 2^63 := by simp only [w81, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w81 := UInt64.toNat_lt w81
-  have k70 : d80.toNat + 354471143 + w78.toNat = r56.toNat + 2^29 * w81.toNat := by omega
-  have k71 : d80.toNat < 2^29 := by omega
-  have k72 : w81.toNat ≤ 1 := by omega
-  clear h_x79 l_x79 h_d80 l_d80 h_w81 l_w81
-  have h_x82 : x82.toNat = (r59.toNat + 2^65 - 174404527 - w81.toNat) % 2^64 := by simp only [x82, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x82 := UInt64.toNat_lt x82
-  have h_d83 : d83.toNat = x82.toNat % 2^29 := by simp only [d83, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d83 := UInt64.toNat_lt d83
-  have h_w84 : w84.toNat = x82.toNat / 2^63 := by simp only [w84, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w84 := UInt64.toNat_lt w84
-  have k73 : d83.toNat + 174404527 + w81.toNat = r59.toNat + 2^29 * w84.toNat := by omega
-  have k74 : d83.toNat < 2^29 := by omega
-  have k75 : w84.toNat ≤ 1 := by omega
-  clear h_x82 l_x82 h_d83 l_d83 h_w84 l_w84
-  have h_x85 : x85.toNat = (c60.toNat + 2^65 - 7597479 - w84.toNat) % 2^64 := by simp only [x85, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x85 := UInt64.toNat_lt x85
-  have h_d86 : d86.toNat = x85.toNat % 2^29 := by simp only [d86, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d86 := UInt64.toNat_lt d86
-  have h_w87 : w87.toNat = x85.toNat / 2^63 := by simp only [w87, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w87 := UInt64.toNat_lt w87
-  have k76 : d86.toNat + 7597479 + w84.toNat = c60.toNat + 2^29 * w87.toNat := by omega
-  have k77 : d86.toNat < 2^29 := by omega
-  have k78 : w87.toNat ≤ 1 := by omega
-  clear h_x85 l_x85 h_d86 l_d86 h_w87 l_w87
-  have sum0 : (r38.toNat * 2^0 + r41.toNat * 2^29 + r44.toNat * 2^58 + r47.toNat * 2^87 + r50.toNat * 2^116 + r53.toNat * 2^145 + r56.toNat * 2^174 + r59.toNat * 2^203 + c60.toNat * 2^232) * 2^261 = a.l0.toNat * b.l0.toNat * 2^0 + a.l0.toNat * b.l1.toNat * 2^29 + a.l0.toNat * b.l2.toNat * 2^58 + a.l0.toNat * b.l3.toNat * 2^87 + a.l0.toNat * b.l4.toNat * 2^116 + a.l0.toNat * b.l5.toNat * 2^145 + a.l0.toNat * b.l6.toNat * 2^174 + a.l0.toNat * b.l7.toNat * 2^203 + a.l0.toNat * b.l8.toNat * 2^232 + a.l1.toNat * b.l0.toNat * 2^29 + a.l1.toNat * b.l1.toNat * 2^58 + a.l1.toNat * b.l2.toNat * 2^87 + a.l1.toNat * b.l3.toNat * 2^116 + a.l1.toNat * b.l4.toNat * 2^145 + a.l1.toNat * b.l5.toNat * 2^174 + a.l1.toNat * b.l6.toNat * 2^203 + a.l1.toNat * b.l7.toNat * 2^232 + a.l1.toNat * b.l8.toNat * 2^261 + a.l2.toNat * b.l0.toNat * 2^58 + a.l2.toNat * b.l1.toNat * 2^87 + a.l2.toNat * b.l2.toNat * 2^116 + a.l2.toNat * b.l3.toNat * 2^145 + a.l2.toNat * b.l4.toNat * 2^174 + a.l2.toNat * b.l5.toNat * 2^203 + a.l2.toNat * b.l6.toNat * 2^232 + a.l2.toNat * b.l7.toNat * 2^261 + a.l2.toNat * b.l8.toNat * 2^290 + a.l3.toNat * b.l0.toNat * 2^87 + a.l3.toNat * b.l1.toNat * 2^116 + a.l3.toNat * b.l2.toNat * 2^145 + a.l3.toNat * b.l3.toNat * 2^174 + a.l3.toNat * b.l4.toNat * 2^203 + a.l3.toNat * b.l5.toNat * 2^232 + a.l3.toNat * b.l6.toNat * 2^261 + a.l3.toNat * b.l7.toNat * 2^290 + a.l3.toNat * b.l8.toNat * 2^319 + a.l4.toNat * b.l0.toNat * 2^116 + a.l4.toNat * b.l1.toNat * 2^145 + a.l4.toNat * b.l2.toNat * 2^174 + a.l4.toNat * b.l3.toNat * 2^203 + a.l4.toNat * b.l4.toNat * 2^232 + a.l4.toNat * b.l5.toNat * 2^261 + a.l4.toNat * b.l6.toNat * 2^290 + a.l4.toNat * b.l7.toNat * 2^319 + a.l4.toNat * b.l8.toNat * 2^348 + a.l5.toNat * b.l0.toNat * 2^145 + a.l5.toNat * b.l1.toNat * 2^174 + a.l5.toNat * b.l2.toNat * 2^203 + a.l5.toNat * b.l3.toNat * 2^232 + a.l5.toNat * b.l4.toNat * 2^261 + a.l5.toNat * b.l5.toNat * 2^290 + a.l5.toNat * b.l6.toNat * 2^319 + a.l5.toNat * b.l7.toNat * 2^348 + a.l5.toNat * b.l8.toNat * 2^377 + a.l6.toNat * b.l0.toNat * 2^174 + a.l6.toNat * b.l1.toNat * 2^203 + a.l6.toNat * b.l2.toNat * 2^232 + a.l6.toNat * b.l3.toNat * 2^261 + a.l6.toNat * b.l4.toNat * 2^290 + a.l6.toNat * b.l5.toNat * 2^319 + a.l6.toNat * b.l6.toNat * 2^348 + a.l6.toNat * b.l7.toNat * 2^377 + a.l6.toNat * b.l8.toNat * 2^406 + a.l7.toNat * b.l0.toNat * 2^203 + a.l7.toNat * b.l1.toNat * 2^232 + a.l7.toNat * b.l2.toNat * 2^261 + a.l7.toNat * b.l3.toNat * 2^290 + a.l7.toNat * b.l4.toNat * 2^319 + a.l7.toNat * b.l5.toNat * 2^348 + a.l7.toNat * b.l6.toNat * 2^377 + a.l7.toNat * b.l7.toNat * 2^406 + a.l7.toNat * b.l8.toNat * 2^435 + a.l8.toNat * b.l0.toNat * 2^232 + a.l8.toNat * b.l1.toNat * 2^261 + a.l8.toNat * b.l2.toNat * 2^290 + a.l8.toNat * b.l3.toNat * 2^319 + a.l8.toNat * b.l4.toNat * 2^348 + a.l8.toNat * b.l5.toNat * 2^377 + a.l8.toNat * b.l6.toNat * 2^406 + a.l8.toNat * b.l7.toNat * 2^435 + a.l8.toNat * b.l8.toNat * 2^464 + (m2.toNat * 2^0 + m6.toNat * 2^29 + m10.toNat * 2^58 + m14.toNat * 2^87 + m18.toNat * 2^116 + m22.toNat * 2^145 + m26.toNat * 2^174 + m30.toNat * 2^203 + m34.toNat * 2^232) * 52435875175126190479447740508185965837690552500527637822603658699938581184513 := by omega
-  have sum1 : d62.toNat * 2^0 + d65.toNat * 2^29 + d68.toNat * 2^58 + d71.toNat * 2^87 + d74.toNat * 2^116 + d77.toNat * 2^145 + d80.toNat * 2^174 + d83.toNat * 2^203 + d86.toNat * 2^232 + 52435875175126190479447740508185965837690552500527637822603658699938581184513 = r38.toNat * 2^0 + r41.toNat * 2^29 + r44.toNat * 2^58 + r47.toNat * 2^87 + r50.toNat * 2^116 + r53.toNat * 2^145 + r56.toNat * 2^174 + r59.toNat * 2^203 + c60.toNat * 2^232 + 2^261 * w87.toNat := by omega
-  clear k1 k3 k4 k6 k7 k9 k10 k12 k13 k15 k16 k18 k19 k21 k22 k24 k25 k27 k28 k30 k31 k33 k34 k36 k37 k39 k40 k42 k43 k45 k46 k48 k49 k52 k54 k55 k57 k58 k60 k61 k63 k64 k66 k67 k69 k70 k72 k73 k75 k76
+  have ps17 := chain (B' := 2^493) ps16 k49 (by decide)
+  clear k49 ps16
+  unfold Hide at ps17
+  clear hp0_0 hp0_1 hp0_2 hp0_3 hp0_4 hp0_5 hp0_6 hp0_7 hp0_8 hp1_0 hp1_1 hp1_2 hp1_3 hp1_4 hp1_5 hp1_6 hp1_7 hp1_8 hp2_0 hp2_1 hp2_2 hp2_3 hp2_4 hp2_5 hp2_6 hp2_7 hp2_8 hp3_0 hp3_1 hp3_2 hp3_3 hp3_4 hp3_5 hp3_6 hp3_7 hp3_8 hp4_0 hp4_1 hp4_2 hp4_3 hp4_4 hp4_5 hp4_6 hp4_7 hp4_8 hp5_0 hp5_1 hp5_2 hp5_3 hp5_4 hp5_5 hp5_6 hp5_7 hp5_8 hp6_0 hp6_1 hp6_2 hp6_3 hp6_4 hp6_5 hp6_6 hp6_7 hp6_8 hp7_0 hp7_1 hp7_2 hp7_3 hp7_4 hp7_5 hp7_6 hp7_7 hp7_8 hp8_0 hp8_1 hp8_2 hp8_3 hp8_4 hp8_5 hp8_6 hp8_7 hp8_8
+  have e1 : (r38.toNat * 2^0 + r41.toNat * 2^29 + r44.toNat * 2^58 + r47.toNat * 2^87 + r50.toNat * 2^116 + r53.toNat * 2^145 + r56.toNat * 2^174 + r59.toNat * 2^203 + c60.toNat * 2^232) * 2^261 = E + (m2.toNat * 2^0 + m6.toNat * 2^29 + m10.toNat * 2^58 + m14.toNat * 2^87 + m18.toNat * 2^116 + m22.toNat * 2^145 + m26.toNat * 2^174 + m30.toNat * 2^203 + m34.toNat * 2^232) * 52435875175126190479447740508185965837690552500527637822603658699938581184513 := by
+    clear ha0 ha1 ha2 ha3 ha4 ha5 ha6 ha7 ha8 hav hABlt hb0 hb1 hb2 hb3 hb4 hb5 hb6 hb7 hb8 hbv k2 k5 k8 k11 k14 k17 k20 k23 k26 k29 k32 k35 k38 k41 k44 k47 k50 k51
+    unfold Hide at hE
+    omega
+  clear ps17 hE
+  have e3 : c60.toNat * 2^232 ≤ (r38.toNat * 2^0 + r41.toNat * 2^29 + r44.toNat * 2^58 + r47.toNat * 2^87 + r50.toNat * 2^116 + r53.toNat * 2^145 + r56.toNat * 2^174 + r59.toNat * 2^203 + c60.toNat * 2^232) := by
+    clear ha0 ha1 ha2 ha3 ha4 ha5 ha6 ha7 ha8 hav hABlt hb0 hb1 hb2 hb3 hb4 hb5 hb6 hb7 hb8 hbv k2 k5 k8 k11 k14 k17 k20 k23 k26 k29 k32 k35 k38 k41 k44 k47 k50 k51 e1
+    omega
+  have bm_0 : m2.toNat * 2^0 < 2^29 := bfirst k2
+  have bm_1 : m2.toNat * 2^0 + m6.toNat * 2^29 < 2^58 := bstep bm_0 k5 (by decide)
+  clear bm_0
+  have bm_2 : m2.toNat * 2^0 + m6.toNat * 2^29 + m10.toNat * 2^58 < 2^87 := bstep bm_1 k8 (by decide)
+  clear bm_1
+  have bm_3 : m2.toNat * 2^0 + m6.toNat * 2^29 + m10.toNat * 2^58 + m14.toNat * 2^87 < 2^116 := bstep bm_2 k11 (by decide)
+  clear bm_2
+  have bm_4 : m2.toNat * 2^0 + m6.toNat * 2^29 + m10.toNat * 2^58 + m14.toNat * 2^87 + m18.toNat * 2^116 < 2^145 := bstep bm_3 k14 (by decide)
+  clear bm_3
+  have bm_5 : m2.toNat * 2^0 + m6.toNat * 2^29 + m10.toNat * 2^58 + m14.toNat * 2^87 + m18.toNat * 2^116 + m22.toNat * 2^145 < 2^174 := bstep bm_4 k17 (by decide)
+  clear bm_4
+  have bm_6 : m2.toNat * 2^0 + m6.toNat * 2^29 + m10.toNat * 2^58 + m14.toNat * 2^87 + m18.toNat * 2^116 + m22.toNat * 2^145 + m26.toNat * 2^174 < 2^203 := bstep bm_5 k20 (by decide)
+  clear bm_5
+  have bm_7 : m2.toNat * 2^0 + m6.toNat * 2^29 + m10.toNat * 2^58 + m14.toNat * 2^87 + m18.toNat * 2^116 + m22.toNat * 2^145 + m26.toNat * 2^174 + m30.toNat * 2^203 < 2^232 := bstep bm_6 k23 (by decide)
+  clear bm_6
+  have bm_8 : m2.toNat * 2^0 + m6.toNat * 2^29 + m10.toNat * 2^58 + m14.toNat * 2^87 + m18.toNat * 2^116 + m22.toNat * 2^145 + m26.toNat * 2^174 + m30.toNat * 2^203 + m34.toNat * 2^232 < 2^261 := bstep bm_7 k26 (by decide)
+  clear bm_7
+  have hacc : c60.toNat < 2^29 := carry_lt e1 e3 hABlt bm_8 (by decide) (by decide)
+  clear e3
+  obtain ⟨k52, k53, k54⟩ : d62.toNat + 1 + 0 = r38.toNat + 2^29 * w63.toNat ∧ d62.toNat < 2^29 ∧ w63.toNat ≤ 1 := sub_limb r38 1 k29 (by decide)
+  have ps18 := chain (B' := 2^29) (I := 0) (O := 0) (c := 0) (B := 1) rfl k52 (by decide)
+  clear k52
+  obtain ⟨k55, k56, k57⟩ : d65.toNat + 536870904 + w63.toNat = r41.toNat + 2^29 * w66.toNat ∧ d65.toNat < 2^29 ∧ w66.toNat ≤ 1 := sub_limb_b r41 536870904 w63 k32 (by decide) k54
+  have ps19 := chain (B' := 2^58) ps18 k55 (by decide)
+  clear k55 ps18
+  obtain ⟨k58, k59, k60⟩ : d68.toNat + 529989567 + w66.toNat = r44.toNat + 2^29 * w69.toNat ∧ d68.toNat < 2^29 ∧ w69.toNat ≤ 1 := sub_limb_b r44 529989567 w66 k35 (by decide) k57
+  have ps20 := chain (B' := 2^87) ps19 k58 (by decide)
+  clear k58 ps19
+  obtain ⟨k61, k62, k63⟩ : d71.toNat + 457704959 + w69.toNat = r47.toNat + 2^29 * w72.toNat ∧ d71.toNat < 2^29 ∧ w72.toNat ≤ 1 := sub_limb_b r47 457704959 w69 k38 (by decide) k60
+  have ps21 := chain (B' := 2^116) ps20 k61 (by decide)
+  clear k61 ps20
+  obtain ⟨k64, k65, k66⟩ : d74.toNat + 494949691 + w72.toNat = r50.toNat + 2^29 * w75.toNat ∧ d74.toNat < 2^29 ∧ w75.toNat ≤ 1 := sub_limb_b r50 494949691 w72 k41 (by decide) k63
+  have ps22 := chain (B' := 2^145) ps21 k64 (by decide)
+  clear k64 ps21
+  obtain ⟨k67, k68, k69⟩ : d77.toNat + 201589968 + w75.toNat = r53.toNat + 2^29 * w78.toNat ∧ d77.toNat < 2^29 ∧ w78.toNat ≤ 1 := sub_limb_b r53 201589968 w75 k44 (by decide) k66
+  have ps23 := chain (B' := 2^174) ps22 k67 (by decide)
+  clear k67 ps22
+  obtain ⟨k70, k71, k72⟩ : d80.toNat + 354471143 + w78.toNat = r56.toNat + 2^29 * w81.toNat ∧ d80.toNat < 2^29 ∧ w81.toNat ≤ 1 := sub_limb_b r56 354471143 w78 k47 (by decide) k69
+  have ps24 := chain (B' := 2^203) ps23 k70 (by decide)
+  clear k70 ps23
+  obtain ⟨k73, k74, k75⟩ : d83.toNat + 174404527 + w81.toNat = r59.toNat + 2^29 * w84.toNat ∧ d83.toNat < 2^29 ∧ w84.toNat ≤ 1 := sub_limb_b r59 174404527 w81 k50 (by decide) k72
+  have ps25 := chain (B' := 2^232) ps24 k73 (by decide)
+  clear k73 ps24
+  obtain ⟨k76, k77, k78⟩ : d86.toNat + 7597479 + w84.toNat = c60.toNat + 2^29 * w87.toNat ∧ d86.toNat < 2^29 ∧ w87.toNat ≤ 1 := sub_limb_b c60 7597479 w84 hacc (by decide) k75
+  have ps26 := chain (B' := 2^261) ps25 k76 (by decide)
+  clear k76 ps25
+  clear_value s1 m2 s3 c4 s5 m6 s7 c8 s9 m10 s11 c12 s13 m14 s15 c16 s17 m18 s19 c20 s21 m22 s23 c24 s25 m26 s27 c28 s29 m30 s31 c32 s33 m34 s35 c36 s37 r38 c39 s40 r41 c42 s43 r44 c45 s46 r47 c48 s49 r50 c51 s52 r53 c54 s55 r56 c57 s58 r59 c60 x61 d62 w63 x64 d65 w66 x67 d68 w69 x70 d71 w72 x73 d74 w75 x76 d77 w78 x79 d80 w81 x82 d83 w84 x85 d86 w87
+  clear k3 k6 k9 k12 k15 k18 k21 k24 k27 k30 k33 k36 k39 k42 k45 k48 k54 k57 k60 k63 k66 k69 k72 k75
+  unfold Hide at ps26
+  have e2 : (d62.toNat * 2^0 + d65.toNat * 2^29 + d68.toNat * 2^58 + d71.toNat * 2^87 + d74.toNat * 2^116 + d77.toNat * 2^145 + d80.toNat * 2^174 + d83.toNat * 2^203 + d86.toNat * 2^232) + 52435875175126190479447740508185965837690552500527637822603658699938581184513 = (r38.toNat * 2^0 + r41.toNat * 2^29 + r44.toNat * 2^58 + r47.toNat * 2^87 + r50.toNat * 2^116 + r53.toNat * 2^145 + r56.toNat * 2^174 + r59.toNat * 2^203 + c60.toNat * 2^232) + 2^261 * w87.toNat := by
+    clear ha0 ha1 ha2 ha3 ha4 ha5 ha6 ha7 ha8 hav hABlt hb0 hb1 hb2 hb3 hb4 hb5 hb6 hb7 hb8 hbv k2 k5 k8 k11 k14 k17 k20 k23 k26 k29 k32 k35 k38 k41 k44 k47 k50 k51 hacc e1 bm_8 k53 k56 k59 k62 k65 k68 k71 k74 k77 k78
+    grind
+  clear ps26
+  have bd0_0 : d62.toNat * 2^0 < 2^29 := bfirst k53
+  have bd0_1 : d62.toNat * 2^0 + d65.toNat * 2^29 < 2^58 := bstep bd0_0 k56 (by decide)
+  clear bd0_0
+  have bd0_2 : d62.toNat * 2^0 + d65.toNat * 2^29 + d68.toNat * 2^58 < 2^87 := bstep bd0_1 k59 (by decide)
+  clear bd0_1
+  have bd0_3 : d62.toNat * 2^0 + d65.toNat * 2^29 + d68.toNat * 2^58 + d71.toNat * 2^87 < 2^116 := bstep bd0_2 k62 (by decide)
+  clear bd0_2
+  have bd0_4 : d62.toNat * 2^0 + d65.toNat * 2^29 + d68.toNat * 2^58 + d71.toNat * 2^87 + d74.toNat * 2^116 < 2^145 := bstep bd0_3 k65 (by decide)
+  clear bd0_3
+  have bd0_5 : d62.toNat * 2^0 + d65.toNat * 2^29 + d68.toNat * 2^58 + d71.toNat * 2^87 + d74.toNat * 2^116 + d77.toNat * 2^145 < 2^174 := bstep bd0_4 k68 (by decide)
+  clear bd0_4
+  have bd0_6 : d62.toNat * 2^0 + d65.toNat * 2^29 + d68.toNat * 2^58 + d71.toNat * 2^87 + d74.toNat * 2^116 + d77.toNat * 2^145 + d80.toNat * 2^174 < 2^203 := bstep bd0_5 k71 (by decide)
+  clear bd0_5
+  have bd0_7 : d62.toNat * 2^0 + d65.toNat * 2^29 + d68.toNat * 2^58 + d71.toNat * 2^87 + d74.toNat * 2^116 + d77.toNat * 2^145 + d80.toNat * 2^174 + d83.toNat * 2^203 < 2^232 := bstep bd0_6 k74 (by decide)
+  clear bd0_6
+  have bd0_8 : d62.toNat * 2^0 + d65.toNat * 2^29 + d68.toNat * 2^58 + d71.toNat * 2^87 + d74.toNat * 2^116 + d77.toNat * 2^145 + d80.toNat * 2^174 + d83.toNat * 2^203 + d86.toNat * 2^232 < 2^261 := bstep bd0_7 k77 (by decide)
+  clear bd0_7
   split <;> rename_i hc <;>
     simp only [bne_iff_ne, ne_eq, Bool.or_eq_true, beq_iff_eq, ← UInt64.toNat_inj, UInt64.reduceToNat, Bool.not_eq_true'] at hc <;>
-    simp only [Elem.Ok, Elem.val, p] <;> omega
+    simp only [Elem.Ok, Elem.val, p] <;>
+    generalize r38.toNat * 2^0 + r41.toNat * 2^29 + r44.toNat * 2^58 + r47.toNat * 2^87 + r50.toNat * 2^116 + r53.toNat * 2^145 + r56.toNat * 2^174 + r59.toNat * 2^203 + c60.toNat * 2^232 = V0 at * <;>
+    generalize d62.toNat * 2^0 + d65.toNat * 2^29 + d68.toNat * 2^58 + d71.toNat * 2^87 + d74.toNat * 2^116 + d77.toNat * 2^145 + d80.toNat * 2^174 + d83.toNat * 2^203 + d86.toNat * 2^232 = V1 at * <;>
+    generalize m2.toNat * 2^0 + m6.toNat * 2^29 + m10.toNat * 2^58 + m14.toNat * 2^87 + m18.toNat * 2^116 + m22.toNat * 2^145 + m26.toNat * 2^174 + m30.toNat * 2^203 + m34.toNat * 2^232 = V2 at *
+  · exact ⟨by grind, mod_of_eq (k := 2^261) (M := V2) (by grind)⟩
+  · exact ⟨by grind, mod_of_eq (k := 0) (M := V2) (by grind)⟩
 
 /-- The Montgomery square a²·R⁻¹ mod p. -/
 def sq (a : Elem) : Elem :=
@@ -640,6 +669,9 @@ theorem sq_spec (a : Elem) (ha : a.Ok) :
   have hABlt := Nat.mul_lt_mul'' hav hav
   rw [sq_expand] at hABlt ⊢
   simp only [Elem.val, p] at hav hABlt
+  generalize hE0 : a.l0.toNat * a.l0.toNat * 2^0 + a.l0.toNat * a.l1.toNat * 2 * 2^29 + a.l0.toNat * a.l2.toNat * 2 * 2^58 + a.l0.toNat * a.l3.toNat * 2 * 2^87 + a.l0.toNat * a.l4.toNat * 2 * 2^116 + a.l0.toNat * a.l5.toNat * 2 * 2^145 + a.l0.toNat * a.l6.toNat * 2 * 2^174 + a.l0.toNat * a.l7.toNat * 2 * 2^203 + a.l0.toNat * a.l8.toNat * 2 * 2^232 + a.l1.toNat * a.l1.toNat * 2^58 + a.l1.toNat * a.l2.toNat * 2 * 2^87 + a.l1.toNat * a.l3.toNat * 2 * 2^116 + a.l1.toNat * a.l4.toNat * 2 * 2^145 + a.l1.toNat * a.l5.toNat * 2 * 2^174 + a.l1.toNat * a.l6.toNat * 2 * 2^203 + a.l1.toNat * a.l7.toNat * 2 * 2^232 + a.l1.toNat * a.l8.toNat * 2 * 2^261 + a.l2.toNat * a.l2.toNat * 2^116 + a.l2.toNat * a.l3.toNat * 2 * 2^145 + a.l2.toNat * a.l4.toNat * 2 * 2^174 + a.l2.toNat * a.l5.toNat * 2 * 2^203 + a.l2.toNat * a.l6.toNat * 2 * 2^232 + a.l2.toNat * a.l7.toNat * 2 * 2^261 + a.l2.toNat * a.l8.toNat * 2 * 2^290 + a.l3.toNat * a.l3.toNat * 2^174 + a.l3.toNat * a.l4.toNat * 2 * 2^203 + a.l3.toNat * a.l5.toNat * 2 * 2^232 + a.l3.toNat * a.l6.toNat * 2 * 2^261 + a.l3.toNat * a.l7.toNat * 2 * 2^290 + a.l3.toNat * a.l8.toNat * 2 * 2^319 + a.l4.toNat * a.l4.toNat * 2^232 + a.l4.toNat * a.l5.toNat * 2 * 2^261 + a.l4.toNat * a.l6.toNat * 2 * 2^290 + a.l4.toNat * a.l7.toNat * 2 * 2^319 + a.l4.toNat * a.l8.toNat * 2 * 2^348 + a.l5.toNat * a.l5.toNat * 2^290 + a.l5.toNat * a.l6.toNat * 2 * 2^319 + a.l5.toNat * a.l7.toNat * 2 * 2^348 + a.l5.toNat * a.l8.toNat * 2 * 2^377 + a.l6.toNat * a.l6.toNat * 2^348 + a.l6.toNat * a.l7.toNat * 2 * 2^377 + a.l6.toNat * a.l8.toNat * 2 * 2^406 + a.l7.toNat * a.l7.toNat * 2^406 + a.l7.toNat * a.l8.toNat * 2 * 2^435 + a.l8.toNat * a.l8.toNat * 2^464 = E at hABlt ⊢
+  have hE : Hide (a.l0.toNat * a.l0.toNat * 2^0 + a.l0.toNat * a.l1.toNat * 2 * 2^29 + a.l0.toNat * a.l2.toNat * 2 * 2^58 + a.l0.toNat * a.l3.toNat * 2 * 2^87 + a.l0.toNat * a.l4.toNat * 2 * 2^116 + a.l0.toNat * a.l5.toNat * 2 * 2^145 + a.l0.toNat * a.l6.toNat * 2 * 2^174 + a.l0.toNat * a.l7.toNat * 2 * 2^203 + a.l0.toNat * a.l8.toNat * 2 * 2^232 + a.l1.toNat * a.l1.toNat * 2^58 + a.l1.toNat * a.l2.toNat * 2 * 2^87 + a.l1.toNat * a.l3.toNat * 2 * 2^116 + a.l1.toNat * a.l4.toNat * 2 * 2^145 + a.l1.toNat * a.l5.toNat * 2 * 2^174 + a.l1.toNat * a.l6.toNat * 2 * 2^203 + a.l1.toNat * a.l7.toNat * 2 * 2^232 + a.l1.toNat * a.l8.toNat * 2 * 2^261 + a.l2.toNat * a.l2.toNat * 2^116 + a.l2.toNat * a.l3.toNat * 2 * 2^145 + a.l2.toNat * a.l4.toNat * 2 * 2^174 + a.l2.toNat * a.l5.toNat * 2 * 2^203 + a.l2.toNat * a.l6.toNat * 2 * 2^232 + a.l2.toNat * a.l7.toNat * 2 * 2^261 + a.l2.toNat * a.l8.toNat * 2 * 2^290 + a.l3.toNat * a.l3.toNat * 2^174 + a.l3.toNat * a.l4.toNat * 2 * 2^203 + a.l3.toNat * a.l5.toNat * 2 * 2^232 + a.l3.toNat * a.l6.toNat * 2 * 2^261 + a.l3.toNat * a.l7.toNat * 2 * 2^290 + a.l3.toNat * a.l8.toNat * 2 * 2^319 + a.l4.toNat * a.l4.toNat * 2^232 + a.l4.toNat * a.l5.toNat * 2 * 2^261 + a.l4.toNat * a.l6.toNat * 2 * 2^290 + a.l4.toNat * a.l7.toNat * 2 * 2^319 + a.l4.toNat * a.l8.toNat * 2 * 2^348 + a.l5.toNat * a.l5.toNat * 2^290 + a.l5.toNat * a.l6.toNat * 2 * 2^319 + a.l5.toNat * a.l7.toNat * 2 * 2^348 + a.l5.toNat * a.l8.toNat * 2 * 2^377 + a.l6.toNat * a.l6.toNat * 2^348 + a.l6.toNat * a.l7.toNat * 2 * 2^377 + a.l6.toNat * a.l8.toNat * 2 * 2^406 + a.l7.toNat * a.l7.toNat * 2^406 + a.l7.toNat * a.l8.toNat * 2 * 2^435 + a.l8.toNat * a.l8.toNat * 2^464 = E) := hE0
+  clear hE0
   have hp0_0 := mul_lt29 ha0 ha0
   have hp0_1 := mul_lt29 ha0 ha1
   have hp0_2 := mul_lt29 ha0 ha2
@@ -696,10 +728,12 @@ theorem sq_spec (a : Elem) (ha : a.Ok) :
   have l_s3 := UInt64.toNat_lt s3
   have h_c4 : c4.toNat = s3.toNat / 2^29 := by simp only [c4, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c4 := UInt64.toNat_lt c4
-  have k1 : (a.l0.toNat * a.l0.toNat) + m2.toNat * 1 = 2^29 * c4.toNat := by omega
+  have k1 : (a.l0.toNat * a.l0.toNat) + m2.toNat * 1 + 0 = 0 + 2^29 * c4.toNat := by omega
   have k2 : m2.toNat < 2^29 := by omega
   have k3 : c4.toNat < 2^37 := by omega
   clear h_s1 l_s1 h_m2 l_m2 h_s3 l_s3 h_c4 l_c4
+  have ps1 := chain (B' := 2^29) (I := 0) (O := 0) (c := 0) (B := 1) rfl k1 (by decide)
+  clear k1
   have h_s5 : s5.toNat = (c4.toNat) + (a.l0.toNat * a.l1.toNat * 2) + (m2.toNat * 536870904) := by simp only [s5, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s5 := UInt64.toNat_lt s5
   have h_m6 : m6.toNat = (s5.toNat * 536870911) % 2^29 := by simp only [m6, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
@@ -708,10 +742,12 @@ theorem sq_spec (a : Elem) (ha : a.Ok) :
   have l_s7 := UInt64.toNat_lt s7
   have h_c8 : c8.toNat = s7.toNat / 2^29 := by simp only [c8, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c8 := UInt64.toNat_lt c8
-  have k4 : (c4.toNat) + (a.l0.toNat * a.l1.toNat * 2) + (m2.toNat * 536870904) + m6.toNat * 1 = 2^29 * c8.toNat := by omega
+  have k4 : (a.l0.toNat * a.l1.toNat * 2) + (m2.toNat * 536870904) + m6.toNat * 1 + c4.toNat = 0 + 2^29 * c8.toNat := by omega
   have k5 : m6.toNat < 2^29 := by omega
   have k6 : c8.toNat < 2^37 := by omega
   clear h_s5 l_s5 h_m6 l_m6 h_s7 l_s7 h_c8 l_c8
+  have ps2 := chain (B' := 2^58) ps1 k4 (by decide)
+  clear k4 ps1
   have h_s9 : s9.toNat = (c8.toNat) + (a.l0.toNat * a.l2.toNat * 2) + (a.l1.toNat * a.l1.toNat) + (m2.toNat * 529989567) + (m6.toNat * 536870904) := by simp only [s9, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s9 := UInt64.toNat_lt s9
   have h_m10 : m10.toNat = (s9.toNat * 536870911) % 2^29 := by simp only [m10, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
@@ -720,10 +756,12 @@ theorem sq_spec (a : Elem) (ha : a.Ok) :
   have l_s11 := UInt64.toNat_lt s11
   have h_c12 : c12.toNat = s11.toNat / 2^29 := by simp only [c12, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c12 := UInt64.toNat_lt c12
-  have k7 : (c8.toNat) + (a.l0.toNat * a.l2.toNat * 2) + (a.l1.toNat * a.l1.toNat) + (m2.toNat * 529989567) + (m6.toNat * 536870904) + m10.toNat * 1 = 2^29 * c12.toNat := by omega
+  have k7 : (a.l0.toNat * a.l2.toNat * 2) + (a.l1.toNat * a.l1.toNat) + (m2.toNat * 529989567) + (m6.toNat * 536870904) + m10.toNat * 1 + c8.toNat = 0 + 2^29 * c12.toNat := by omega
   have k8 : m10.toNat < 2^29 := by omega
   have k9 : c12.toNat < 2^37 := by omega
   clear h_s9 l_s9 h_m10 l_m10 h_s11 l_s11 h_c12 l_c12
+  have ps3 := chain (B' := 2^87) ps2 k7 (by decide)
+  clear k7 ps2
   have h_s13 : s13.toNat = (c12.toNat) + (a.l0.toNat * a.l3.toNat * 2) + (a.l1.toNat * a.l2.toNat * 2) + (m2.toNat * 457704959) + (m6.toNat * 529989567) + (m10.toNat * 536870904) := by simp only [s13, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s13 := UInt64.toNat_lt s13
   have h_m14 : m14.toNat = (s13.toNat * 536870911) % 2^29 := by simp only [m14, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
@@ -732,10 +770,12 @@ theorem sq_spec (a : Elem) (ha : a.Ok) :
   have l_s15 := UInt64.toNat_lt s15
   have h_c16 : c16.toNat = s15.toNat / 2^29 := by simp only [c16, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c16 := UInt64.toNat_lt c16
-  have k10 : (c12.toNat) + (a.l0.toNat * a.l3.toNat * 2) + (a.l1.toNat * a.l2.toNat * 2) + (m2.toNat * 457704959) + (m6.toNat * 529989567) + (m10.toNat * 536870904) + m14.toNat * 1 = 2^29 * c16.toNat := by omega
+  have k10 : (a.l0.toNat * a.l3.toNat * 2) + (a.l1.toNat * a.l2.toNat * 2) + (m2.toNat * 457704959) + (m6.toNat * 529989567) + (m10.toNat * 536870904) + m14.toNat * 1 + c12.toNat = 0 + 2^29 * c16.toNat := by omega
   have k11 : m14.toNat < 2^29 := by omega
   have k12 : c16.toNat < 2^37 := by omega
   clear h_s13 l_s13 h_m14 l_m14 h_s15 l_s15 h_c16 l_c16
+  have ps4 := chain (B' := 2^116) ps3 k10 (by decide)
+  clear k10 ps3
   have h_s17 : s17.toNat = (c16.toNat) + (a.l0.toNat * a.l4.toNat * 2) + (a.l1.toNat * a.l3.toNat * 2) + (a.l2.toNat * a.l2.toNat) + (m2.toNat * 494949691) + (m6.toNat * 457704959) + (m10.toNat * 529989567) + (m14.toNat * 536870904) := by simp only [s17, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s17 := UInt64.toNat_lt s17
   have h_m18 : m18.toNat = (s17.toNat * 536870911) % 2^29 := by simp only [m18, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
@@ -744,10 +784,12 @@ theorem sq_spec (a : Elem) (ha : a.Ok) :
   have l_s19 := UInt64.toNat_lt s19
   have h_c20 : c20.toNat = s19.toNat / 2^29 := by simp only [c20, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c20 := UInt64.toNat_lt c20
-  have k13 : (c16.toNat) + (a.l0.toNat * a.l4.toNat * 2) + (a.l1.toNat * a.l3.toNat * 2) + (a.l2.toNat * a.l2.toNat) + (m2.toNat * 494949691) + (m6.toNat * 457704959) + (m10.toNat * 529989567) + (m14.toNat * 536870904) + m18.toNat * 1 = 2^29 * c20.toNat := by omega
+  have k13 : (a.l0.toNat * a.l4.toNat * 2) + (a.l1.toNat * a.l3.toNat * 2) + (a.l2.toNat * a.l2.toNat) + (m2.toNat * 494949691) + (m6.toNat * 457704959) + (m10.toNat * 529989567) + (m14.toNat * 536870904) + m18.toNat * 1 + c16.toNat = 0 + 2^29 * c20.toNat := by omega
   have k14 : m18.toNat < 2^29 := by omega
   have k15 : c20.toNat < 2^37 := by omega
   clear h_s17 l_s17 h_m18 l_m18 h_s19 l_s19 h_c20 l_c20
+  have ps5 := chain (B' := 2^145) ps4 k13 (by decide)
+  clear k13 ps4
   have h_s21 : s21.toNat = (c20.toNat) + (a.l0.toNat * a.l5.toNat * 2) + (a.l1.toNat * a.l4.toNat * 2) + (a.l2.toNat * a.l3.toNat * 2) + (m2.toNat * 201589968) + (m6.toNat * 494949691) + (m10.toNat * 457704959) + (m14.toNat * 529989567) + (m18.toNat * 536870904) := by simp only [s21, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s21 := UInt64.toNat_lt s21
   have h_m22 : m22.toNat = (s21.toNat * 536870911) % 2^29 := by simp only [m22, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
@@ -756,10 +798,12 @@ theorem sq_spec (a : Elem) (ha : a.Ok) :
   have l_s23 := UInt64.toNat_lt s23
   have h_c24 : c24.toNat = s23.toNat / 2^29 := by simp only [c24, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c24 := UInt64.toNat_lt c24
-  have k16 : (c20.toNat) + (a.l0.toNat * a.l5.toNat * 2) + (a.l1.toNat * a.l4.toNat * 2) + (a.l2.toNat * a.l3.toNat * 2) + (m2.toNat * 201589968) + (m6.toNat * 494949691) + (m10.toNat * 457704959) + (m14.toNat * 529989567) + (m18.toNat * 536870904) + m22.toNat * 1 = 2^29 * c24.toNat := by omega
+  have k16 : (a.l0.toNat * a.l5.toNat * 2) + (a.l1.toNat * a.l4.toNat * 2) + (a.l2.toNat * a.l3.toNat * 2) + (m2.toNat * 201589968) + (m6.toNat * 494949691) + (m10.toNat * 457704959) + (m14.toNat * 529989567) + (m18.toNat * 536870904) + m22.toNat * 1 + c20.toNat = 0 + 2^29 * c24.toNat := by omega
   have k17 : m22.toNat < 2^29 := by omega
   have k18 : c24.toNat < 2^37 := by omega
   clear h_s21 l_s21 h_m22 l_m22 h_s23 l_s23 h_c24 l_c24
+  have ps6 := chain (B' := 2^174) ps5 k16 (by decide)
+  clear k16 ps5
   have h_s25 : s25.toNat = (c24.toNat) + (a.l0.toNat * a.l6.toNat * 2) + (a.l1.toNat * a.l5.toNat * 2) + (a.l2.toNat * a.l4.toNat * 2) + (a.l3.toNat * a.l3.toNat) + (m2.toNat * 354471143) + (m6.toNat * 201589968) + (m10.toNat * 494949691) + (m14.toNat * 457704959) + (m18.toNat * 529989567) + (m22.toNat * 536870904) := by simp only [s25, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s25 := UInt64.toNat_lt s25
   have h_m26 : m26.toNat = (s25.toNat * 536870911) % 2^29 := by simp only [m26, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
@@ -768,10 +812,12 @@ theorem sq_spec (a : Elem) (ha : a.Ok) :
   have l_s27 := UInt64.toNat_lt s27
   have h_c28 : c28.toNat = s27.toNat / 2^29 := by simp only [c28, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c28 := UInt64.toNat_lt c28
-  have k19 : (c24.toNat) + (a.l0.toNat * a.l6.toNat * 2) + (a.l1.toNat * a.l5.toNat * 2) + (a.l2.toNat * a.l4.toNat * 2) + (a.l3.toNat * a.l3.toNat) + (m2.toNat * 354471143) + (m6.toNat * 201589968) + (m10.toNat * 494949691) + (m14.toNat * 457704959) + (m18.toNat * 529989567) + (m22.toNat * 536870904) + m26.toNat * 1 = 2^29 * c28.toNat := by omega
+  have k19 : (a.l0.toNat * a.l6.toNat * 2) + (a.l1.toNat * a.l5.toNat * 2) + (a.l2.toNat * a.l4.toNat * 2) + (a.l3.toNat * a.l3.toNat) + (m2.toNat * 354471143) + (m6.toNat * 201589968) + (m10.toNat * 494949691) + (m14.toNat * 457704959) + (m18.toNat * 529989567) + (m22.toNat * 536870904) + m26.toNat * 1 + c24.toNat = 0 + 2^29 * c28.toNat := by omega
   have k20 : m26.toNat < 2^29 := by omega
   have k21 : c28.toNat < 2^37 := by omega
   clear h_s25 l_s25 h_m26 l_m26 h_s27 l_s27 h_c28 l_c28
+  have ps7 := chain (B' := 2^203) ps6 k19 (by decide)
+  clear k19 ps6
   have h_s29 : s29.toNat = (c28.toNat) + (a.l0.toNat * a.l7.toNat * 2) + (a.l1.toNat * a.l6.toNat * 2) + (a.l2.toNat * a.l5.toNat * 2) + (a.l3.toNat * a.l4.toNat * 2) + (m2.toNat * 174404527) + (m6.toNat * 354471143) + (m10.toNat * 201589968) + (m14.toNat * 494949691) + (m18.toNat * 457704959) + (m22.toNat * 529989567) + (m26.toNat * 536870904) := by simp only [s29, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s29 := UInt64.toNat_lt s29
   have h_m30 : m30.toNat = (s29.toNat * 536870911) % 2^29 := by simp only [m30, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
@@ -780,10 +826,12 @@ theorem sq_spec (a : Elem) (ha : a.Ok) :
   have l_s31 := UInt64.toNat_lt s31
   have h_c32 : c32.toNat = s31.toNat / 2^29 := by simp only [c32, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c32 := UInt64.toNat_lt c32
-  have k22 : (c28.toNat) + (a.l0.toNat * a.l7.toNat * 2) + (a.l1.toNat * a.l6.toNat * 2) + (a.l2.toNat * a.l5.toNat * 2) + (a.l3.toNat * a.l4.toNat * 2) + (m2.toNat * 174404527) + (m6.toNat * 354471143) + (m10.toNat * 201589968) + (m14.toNat * 494949691) + (m18.toNat * 457704959) + (m22.toNat * 529989567) + (m26.toNat * 536870904) + m30.toNat * 1 = 2^29 * c32.toNat := by omega
+  have k22 : (a.l0.toNat * a.l7.toNat * 2) + (a.l1.toNat * a.l6.toNat * 2) + (a.l2.toNat * a.l5.toNat * 2) + (a.l3.toNat * a.l4.toNat * 2) + (m2.toNat * 174404527) + (m6.toNat * 354471143) + (m10.toNat * 201589968) + (m14.toNat * 494949691) + (m18.toNat * 457704959) + (m22.toNat * 529989567) + (m26.toNat * 536870904) + m30.toNat * 1 + c28.toNat = 0 + 2^29 * c32.toNat := by omega
   have k23 : m30.toNat < 2^29 := by omega
   have k24 : c32.toNat < 2^37 := by omega
   clear h_s29 l_s29 h_m30 l_m30 h_s31 l_s31 h_c32 l_c32
+  have ps8 := chain (B' := 2^232) ps7 k22 (by decide)
+  clear k22 ps7
   have h_s33 : s33.toNat = (c32.toNat) + (a.l0.toNat * a.l8.toNat * 2) + (a.l1.toNat * a.l7.toNat * 2) + (a.l2.toNat * a.l6.toNat * 2) + (a.l3.toNat * a.l5.toNat * 2) + (a.l4.toNat * a.l4.toNat) + (m2.toNat * 7597479) + (m6.toNat * 174404527) + (m10.toNat * 354471143) + (m14.toNat * 201589968) + (m18.toNat * 494949691) + (m22.toNat * 457704959) + (m26.toNat * 529989567) + (m30.toNat * 536870904) := by simp only [s33, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s33 := UInt64.toNat_lt s33
   have h_m34 : m34.toNat = (s33.toNat * 536870911) % 2^29 := by simp only [m34, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
@@ -792,186 +840,196 @@ theorem sq_spec (a : Elem) (ha : a.Ok) :
   have l_s35 := UInt64.toNat_lt s35
   have h_c36 : c36.toNat = s35.toNat / 2^29 := by simp only [c36, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c36 := UInt64.toNat_lt c36
-  have k25 : (c32.toNat) + (a.l0.toNat * a.l8.toNat * 2) + (a.l1.toNat * a.l7.toNat * 2) + (a.l2.toNat * a.l6.toNat * 2) + (a.l3.toNat * a.l5.toNat * 2) + (a.l4.toNat * a.l4.toNat) + (m2.toNat * 7597479) + (m6.toNat * 174404527) + (m10.toNat * 354471143) + (m14.toNat * 201589968) + (m18.toNat * 494949691) + (m22.toNat * 457704959) + (m26.toNat * 529989567) + (m30.toNat * 536870904) + m34.toNat * 1 = 2^29 * c36.toNat := by omega
+  have k25 : (a.l0.toNat * a.l8.toNat * 2) + (a.l1.toNat * a.l7.toNat * 2) + (a.l2.toNat * a.l6.toNat * 2) + (a.l3.toNat * a.l5.toNat * 2) + (a.l4.toNat * a.l4.toNat) + (m2.toNat * 7597479) + (m6.toNat * 174404527) + (m10.toNat * 354471143) + (m14.toNat * 201589968) + (m18.toNat * 494949691) + (m22.toNat * 457704959) + (m26.toNat * 529989567) + (m30.toNat * 536870904) + m34.toNat * 1 + c32.toNat = 0 + 2^29 * c36.toNat := by omega
   have k26 : m34.toNat < 2^29 := by omega
   have k27 : c36.toNat < 2^37 := by omega
   clear h_s33 l_s33 h_m34 l_m34 h_s35 l_s35 h_c36 l_c36
+  have ps9 := chain (B' := 2^261) ps8 k25 (by decide)
+  clear k25 ps8
   have h_s37 : s37.toNat = (c36.toNat) + (a.l1.toNat * a.l8.toNat * 2) + (a.l2.toNat * a.l7.toNat * 2) + (a.l3.toNat * a.l6.toNat * 2) + (a.l4.toNat * a.l5.toNat * 2) + (m6.toNat * 7597479) + (m10.toNat * 174404527) + (m14.toNat * 354471143) + (m18.toNat * 201589968) + (m22.toNat * 494949691) + (m26.toNat * 457704959) + (m30.toNat * 529989567) + (m34.toNat * 536870904) := by simp only [s37, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s37 := UInt64.toNat_lt s37
   have h_r38 : r38.toNat = s37.toNat % 2^29 := by simp only [r38, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_r38 := UInt64.toNat_lt r38
   have h_c39 : c39.toNat = s37.toNat / 2^29 := by simp only [c39, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c39 := UInt64.toNat_lt c39
-  have k28 : (c36.toNat) + (a.l1.toNat * a.l8.toNat * 2) + (a.l2.toNat * a.l7.toNat * 2) + (a.l3.toNat * a.l6.toNat * 2) + (a.l4.toNat * a.l5.toNat * 2) + (m6.toNat * 7597479) + (m10.toNat * 174404527) + (m14.toNat * 354471143) + (m18.toNat * 201589968) + (m22.toNat * 494949691) + (m26.toNat * 457704959) + (m30.toNat * 529989567) + (m34.toNat * 536870904) = r38.toNat + 2^29 * c39.toNat := by omega
+  have k28 : (a.l1.toNat * a.l8.toNat * 2) + (a.l2.toNat * a.l7.toNat * 2) + (a.l3.toNat * a.l6.toNat * 2) + (a.l4.toNat * a.l5.toNat * 2) + (m6.toNat * 7597479) + (m10.toNat * 174404527) + (m14.toNat * 354471143) + (m18.toNat * 201589968) + (m22.toNat * 494949691) + (m26.toNat * 457704959) + (m30.toNat * 529989567) + (m34.toNat * 536870904) + c36.toNat = r38.toNat + 2^29 * c39.toNat := by omega
   have k29 : r38.toNat < 2^29 := by omega
   have k30 : c39.toNat < 2^37 := by omega
   clear h_s37 l_s37 h_r38 l_r38 h_c39 l_c39
+  have ps10 := chain (B' := 2^290) ps9 k28 (by decide)
+  clear k28 ps9
   have h_s40 : s40.toNat = (c39.toNat) + (a.l2.toNat * a.l8.toNat * 2) + (a.l3.toNat * a.l7.toNat * 2) + (a.l4.toNat * a.l6.toNat * 2) + (a.l5.toNat * a.l5.toNat) + (m10.toNat * 7597479) + (m14.toNat * 174404527) + (m18.toNat * 354471143) + (m22.toNat * 201589968) + (m26.toNat * 494949691) + (m30.toNat * 457704959) + (m34.toNat * 529989567) := by simp only [s40, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s40 := UInt64.toNat_lt s40
   have h_r41 : r41.toNat = s40.toNat % 2^29 := by simp only [r41, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_r41 := UInt64.toNat_lt r41
   have h_c42 : c42.toNat = s40.toNat / 2^29 := by simp only [c42, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c42 := UInt64.toNat_lt c42
-  have k31 : (c39.toNat) + (a.l2.toNat * a.l8.toNat * 2) + (a.l3.toNat * a.l7.toNat * 2) + (a.l4.toNat * a.l6.toNat * 2) + (a.l5.toNat * a.l5.toNat) + (m10.toNat * 7597479) + (m14.toNat * 174404527) + (m18.toNat * 354471143) + (m22.toNat * 201589968) + (m26.toNat * 494949691) + (m30.toNat * 457704959) + (m34.toNat * 529989567) = r41.toNat + 2^29 * c42.toNat := by omega
+  have k31 : (a.l2.toNat * a.l8.toNat * 2) + (a.l3.toNat * a.l7.toNat * 2) + (a.l4.toNat * a.l6.toNat * 2) + (a.l5.toNat * a.l5.toNat) + (m10.toNat * 7597479) + (m14.toNat * 174404527) + (m18.toNat * 354471143) + (m22.toNat * 201589968) + (m26.toNat * 494949691) + (m30.toNat * 457704959) + (m34.toNat * 529989567) + c39.toNat = r41.toNat + 2^29 * c42.toNat := by omega
   have k32 : r41.toNat < 2^29 := by omega
   have k33 : c42.toNat < 2^37 := by omega
   clear h_s40 l_s40 h_r41 l_r41 h_c42 l_c42
+  have ps11 := chain (B' := 2^319) ps10 k31 (by decide)
+  clear k31 ps10
   have h_s43 : s43.toNat = (c42.toNat) + (a.l3.toNat * a.l8.toNat * 2) + (a.l4.toNat * a.l7.toNat * 2) + (a.l5.toNat * a.l6.toNat * 2) + (m14.toNat * 7597479) + (m18.toNat * 174404527) + (m22.toNat * 354471143) + (m26.toNat * 201589968) + (m30.toNat * 494949691) + (m34.toNat * 457704959) := by simp only [s43, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s43 := UInt64.toNat_lt s43
   have h_r44 : r44.toNat = s43.toNat % 2^29 := by simp only [r44, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_r44 := UInt64.toNat_lt r44
   have h_c45 : c45.toNat = s43.toNat / 2^29 := by simp only [c45, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c45 := UInt64.toNat_lt c45
-  have k34 : (c42.toNat) + (a.l3.toNat * a.l8.toNat * 2) + (a.l4.toNat * a.l7.toNat * 2) + (a.l5.toNat * a.l6.toNat * 2) + (m14.toNat * 7597479) + (m18.toNat * 174404527) + (m22.toNat * 354471143) + (m26.toNat * 201589968) + (m30.toNat * 494949691) + (m34.toNat * 457704959) = r44.toNat + 2^29 * c45.toNat := by omega
+  have k34 : (a.l3.toNat * a.l8.toNat * 2) + (a.l4.toNat * a.l7.toNat * 2) + (a.l5.toNat * a.l6.toNat * 2) + (m14.toNat * 7597479) + (m18.toNat * 174404527) + (m22.toNat * 354471143) + (m26.toNat * 201589968) + (m30.toNat * 494949691) + (m34.toNat * 457704959) + c42.toNat = r44.toNat + 2^29 * c45.toNat := by omega
   have k35 : r44.toNat < 2^29 := by omega
   have k36 : c45.toNat < 2^37 := by omega
   clear h_s43 l_s43 h_r44 l_r44 h_c45 l_c45
+  have ps12 := chain (B' := 2^348) ps11 k34 (by decide)
+  clear k34 ps11
   have h_s46 : s46.toNat = (c45.toNat) + (a.l4.toNat * a.l8.toNat * 2) + (a.l5.toNat * a.l7.toNat * 2) + (a.l6.toNat * a.l6.toNat) + (m18.toNat * 7597479) + (m22.toNat * 174404527) + (m26.toNat * 354471143) + (m30.toNat * 201589968) + (m34.toNat * 494949691) := by simp only [s46, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s46 := UInt64.toNat_lt s46
   have h_r47 : r47.toNat = s46.toNat % 2^29 := by simp only [r47, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_r47 := UInt64.toNat_lt r47
   have h_c48 : c48.toNat = s46.toNat / 2^29 := by simp only [c48, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c48 := UInt64.toNat_lt c48
-  have k37 : (c45.toNat) + (a.l4.toNat * a.l8.toNat * 2) + (a.l5.toNat * a.l7.toNat * 2) + (a.l6.toNat * a.l6.toNat) + (m18.toNat * 7597479) + (m22.toNat * 174404527) + (m26.toNat * 354471143) + (m30.toNat * 201589968) + (m34.toNat * 494949691) = r47.toNat + 2^29 * c48.toNat := by omega
+  have k37 : (a.l4.toNat * a.l8.toNat * 2) + (a.l5.toNat * a.l7.toNat * 2) + (a.l6.toNat * a.l6.toNat) + (m18.toNat * 7597479) + (m22.toNat * 174404527) + (m26.toNat * 354471143) + (m30.toNat * 201589968) + (m34.toNat * 494949691) + c45.toNat = r47.toNat + 2^29 * c48.toNat := by omega
   have k38 : r47.toNat < 2^29 := by omega
   have k39 : c48.toNat < 2^37 := by omega
   clear h_s46 l_s46 h_r47 l_r47 h_c48 l_c48
+  have ps13 := chain (B' := 2^377) ps12 k37 (by decide)
+  clear k37 ps12
   have h_s49 : s49.toNat = (c48.toNat) + (a.l5.toNat * a.l8.toNat * 2) + (a.l6.toNat * a.l7.toNat * 2) + (m22.toNat * 7597479) + (m26.toNat * 174404527) + (m30.toNat * 354471143) + (m34.toNat * 201589968) := by simp only [s49, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s49 := UInt64.toNat_lt s49
   have h_r50 : r50.toNat = s49.toNat % 2^29 := by simp only [r50, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_r50 := UInt64.toNat_lt r50
   have h_c51 : c51.toNat = s49.toNat / 2^29 := by simp only [c51, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c51 := UInt64.toNat_lt c51
-  have k40 : (c48.toNat) + (a.l5.toNat * a.l8.toNat * 2) + (a.l6.toNat * a.l7.toNat * 2) + (m22.toNat * 7597479) + (m26.toNat * 174404527) + (m30.toNat * 354471143) + (m34.toNat * 201589968) = r50.toNat + 2^29 * c51.toNat := by omega
+  have k40 : (a.l5.toNat * a.l8.toNat * 2) + (a.l6.toNat * a.l7.toNat * 2) + (m22.toNat * 7597479) + (m26.toNat * 174404527) + (m30.toNat * 354471143) + (m34.toNat * 201589968) + c48.toNat = r50.toNat + 2^29 * c51.toNat := by omega
   have k41 : r50.toNat < 2^29 := by omega
   have k42 : c51.toNat < 2^37 := by omega
   clear h_s49 l_s49 h_r50 l_r50 h_c51 l_c51
+  have ps14 := chain (B' := 2^406) ps13 k40 (by decide)
+  clear k40 ps13
   have h_s52 : s52.toNat = (c51.toNat) + (a.l6.toNat * a.l8.toNat * 2) + (a.l7.toNat * a.l7.toNat) + (m26.toNat * 7597479) + (m30.toNat * 174404527) + (m34.toNat * 354471143) := by simp only [s52, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s52 := UInt64.toNat_lt s52
   have h_r53 : r53.toNat = s52.toNat % 2^29 := by simp only [r53, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_r53 := UInt64.toNat_lt r53
   have h_c54 : c54.toNat = s52.toNat / 2^29 := by simp only [c54, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c54 := UInt64.toNat_lt c54
-  have k43 : (c51.toNat) + (a.l6.toNat * a.l8.toNat * 2) + (a.l7.toNat * a.l7.toNat) + (m26.toNat * 7597479) + (m30.toNat * 174404527) + (m34.toNat * 354471143) = r53.toNat + 2^29 * c54.toNat := by omega
+  have k43 : (a.l6.toNat * a.l8.toNat * 2) + (a.l7.toNat * a.l7.toNat) + (m26.toNat * 7597479) + (m30.toNat * 174404527) + (m34.toNat * 354471143) + c51.toNat = r53.toNat + 2^29 * c54.toNat := by omega
   have k44 : r53.toNat < 2^29 := by omega
   have k45 : c54.toNat < 2^37 := by omega
   clear h_s52 l_s52 h_r53 l_r53 h_c54 l_c54
+  have ps15 := chain (B' := 2^435) ps14 k43 (by decide)
+  clear k43 ps14
   have h_s55 : s55.toNat = (c54.toNat) + (a.l7.toNat * a.l8.toNat * 2) + (m30.toNat * 7597479) + (m34.toNat * 174404527) := by simp only [s55, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s55 := UInt64.toNat_lt s55
   have h_r56 : r56.toNat = s55.toNat % 2^29 := by simp only [r56, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_r56 := UInt64.toNat_lt r56
   have h_c57 : c57.toNat = s55.toNat / 2^29 := by simp only [c57, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c57 := UInt64.toNat_lt c57
-  have k46 : (c54.toNat) + (a.l7.toNat * a.l8.toNat * 2) + (m30.toNat * 7597479) + (m34.toNat * 174404527) = r56.toNat + 2^29 * c57.toNat := by omega
+  have k46 : (a.l7.toNat * a.l8.toNat * 2) + (m30.toNat * 7597479) + (m34.toNat * 174404527) + c54.toNat = r56.toNat + 2^29 * c57.toNat := by omega
   have k47 : r56.toNat < 2^29 := by omega
   have k48 : c57.toNat < 2^37 := by omega
   clear h_s55 l_s55 h_r56 l_r56 h_c57 l_c57
+  have ps16 := chain (B' := 2^464) ps15 k46 (by decide)
+  clear k46 ps15
   have h_s58 : s58.toNat = (c57.toNat) + (a.l8.toNat * a.l8.toNat) + (m34.toNat * 7597479) := by simp only [s58, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s58 := UInt64.toNat_lt s58
   have h_r59 : r59.toNat = s58.toNat % 2^29 := by simp only [r59, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_r59 := UInt64.toNat_lt r59
   have h_c60 : c60.toNat = s58.toNat / 2^29 := by simp only [c60, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c60 := UInt64.toNat_lt c60
-  have k49 : (c57.toNat) + (a.l8.toNat * a.l8.toNat) + (m34.toNat * 7597479) = r59.toNat + 2^29 * c60.toNat := by omega
+  have k49 : (a.l8.toNat * a.l8.toNat) + (m34.toNat * 7597479) + c57.toNat = r59.toNat + 2^29 * c60.toNat := by omega
   have k50 : r59.toNat < 2^29 := by omega
   have k51 : c60.toNat < 2^37 := by omega
   clear h_s58 l_s58 h_r59 l_r59 h_c60 l_c60
-  have h_x61 : x61.toNat = (r38.toNat + 2^65 - 1) % 2^64 := by simp only [x61, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x61 := UInt64.toNat_lt x61
-  have h_d62 : d62.toNat = x61.toNat % 2^29 := by simp only [d62, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d62 := UInt64.toNat_lt d62
-  have h_w63 : w63.toNat = x61.toNat / 2^63 := by simp only [w63, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w63 := UInt64.toNat_lt w63
-  have k52 : d62.toNat + 1 = r38.toNat + 2^29 * w63.toNat := by omega
-  have k53 : d62.toNat < 2^29 := by omega
-  have k54 : w63.toNat ≤ 1 := by omega
-  clear h_x61 l_x61 h_d62 l_d62 h_w63 l_w63
-  have h_x64 : x64.toNat = (r41.toNat + 2^65 - 536870904 - w63.toNat) % 2^64 := by simp only [x64, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x64 := UInt64.toNat_lt x64
-  have h_d65 : d65.toNat = x64.toNat % 2^29 := by simp only [d65, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d65 := UInt64.toNat_lt d65
-  have h_w66 : w66.toNat = x64.toNat / 2^63 := by simp only [w66, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w66 := UInt64.toNat_lt w66
-  have k55 : d65.toNat + 536870904 + w63.toNat = r41.toNat + 2^29 * w66.toNat := by omega
-  have k56 : d65.toNat < 2^29 := by omega
-  have k57 : w66.toNat ≤ 1 := by omega
-  clear h_x64 l_x64 h_d65 l_d65 h_w66 l_w66
-  have h_x67 : x67.toNat = (r44.toNat + 2^65 - 529989567 - w66.toNat) % 2^64 := by simp only [x67, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x67 := UInt64.toNat_lt x67
-  have h_d68 : d68.toNat = x67.toNat % 2^29 := by simp only [d68, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d68 := UInt64.toNat_lt d68
-  have h_w69 : w69.toNat = x67.toNat / 2^63 := by simp only [w69, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w69 := UInt64.toNat_lt w69
-  have k58 : d68.toNat + 529989567 + w66.toNat = r44.toNat + 2^29 * w69.toNat := by omega
-  have k59 : d68.toNat < 2^29 := by omega
-  have k60 : w69.toNat ≤ 1 := by omega
-  clear h_x67 l_x67 h_d68 l_d68 h_w69 l_w69
-  have h_x70 : x70.toNat = (r47.toNat + 2^65 - 457704959 - w69.toNat) % 2^64 := by simp only [x70, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x70 := UInt64.toNat_lt x70
-  have h_d71 : d71.toNat = x70.toNat % 2^29 := by simp only [d71, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d71 := UInt64.toNat_lt d71
-  have h_w72 : w72.toNat = x70.toNat / 2^63 := by simp only [w72, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w72 := UInt64.toNat_lt w72
-  have k61 : d71.toNat + 457704959 + w69.toNat = r47.toNat + 2^29 * w72.toNat := by omega
-  have k62 : d71.toNat < 2^29 := by omega
-  have k63 : w72.toNat ≤ 1 := by omega
-  clear h_x70 l_x70 h_d71 l_d71 h_w72 l_w72
-  have h_x73 : x73.toNat = (r50.toNat + 2^65 - 494949691 - w72.toNat) % 2^64 := by simp only [x73, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x73 := UInt64.toNat_lt x73
-  have h_d74 : d74.toNat = x73.toNat % 2^29 := by simp only [d74, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d74 := UInt64.toNat_lt d74
-  have h_w75 : w75.toNat = x73.toNat / 2^63 := by simp only [w75, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w75 := UInt64.toNat_lt w75
-  have k64 : d74.toNat + 494949691 + w72.toNat = r50.toNat + 2^29 * w75.toNat := by omega
-  have k65 : d74.toNat < 2^29 := by omega
-  have k66 : w75.toNat ≤ 1 := by omega
-  clear h_x73 l_x73 h_d74 l_d74 h_w75 l_w75
-  have h_x76 : x76.toNat = (r53.toNat + 2^65 - 201589968 - w75.toNat) % 2^64 := by simp only [x76, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x76 := UInt64.toNat_lt x76
-  have h_d77 : d77.toNat = x76.toNat % 2^29 := by simp only [d77, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d77 := UInt64.toNat_lt d77
-  have h_w78 : w78.toNat = x76.toNat / 2^63 := by simp only [w78, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w78 := UInt64.toNat_lt w78
-  have k67 : d77.toNat + 201589968 + w75.toNat = r53.toNat + 2^29 * w78.toNat := by omega
-  have k68 : d77.toNat < 2^29 := by omega
-  have k69 : w78.toNat ≤ 1 := by omega
-  clear h_x76 l_x76 h_d77 l_d77 h_w78 l_w78
-  have h_x79 : x79.toNat = (r56.toNat + 2^65 - 354471143 - w78.toNat) % 2^64 := by simp only [x79, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x79 := UInt64.toNat_lt x79
-  have h_d80 : d80.toNat = x79.toNat % 2^29 := by simp only [d80, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d80 := UInt64.toNat_lt d80
-  have h_w81 : w81.toNat = x79.toNat / 2^63 := by simp only [w81, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w81 := UInt64.toNat_lt w81
-  have k70 : d80.toNat + 354471143 + w78.toNat = r56.toNat + 2^29 * w81.toNat := by omega
-  have k71 : d80.toNat < 2^29 := by omega
-  have k72 : w81.toNat ≤ 1 := by omega
-  clear h_x79 l_x79 h_d80 l_d80 h_w81 l_w81
-  have h_x82 : x82.toNat = (r59.toNat + 2^65 - 174404527 - w81.toNat) % 2^64 := by simp only [x82, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x82 := UInt64.toNat_lt x82
-  have h_d83 : d83.toNat = x82.toNat % 2^29 := by simp only [d83, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d83 := UInt64.toNat_lt d83
-  have h_w84 : w84.toNat = x82.toNat / 2^63 := by simp only [w84, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w84 := UInt64.toNat_lt w84
-  have k73 : d83.toNat + 174404527 + w81.toNat = r59.toNat + 2^29 * w84.toNat := by omega
-  have k74 : d83.toNat < 2^29 := by omega
-  have k75 : w84.toNat ≤ 1 := by omega
-  clear h_x82 l_x82 h_d83 l_d83 h_w84 l_w84
-  have h_x85 : x85.toNat = (c60.toNat + 2^65 - 7597479 - w84.toNat) % 2^64 := by simp only [x85, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x85 := UInt64.toNat_lt x85
-  have h_d86 : d86.toNat = x85.toNat % 2^29 := by simp only [d86, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d86 := UInt64.toNat_lt d86
-  have h_w87 : w87.toNat = x85.toNat / 2^63 := by simp only [w87, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w87 := UInt64.toNat_lt w87
-  have k76 : d86.toNat + 7597479 + w84.toNat = c60.toNat + 2^29 * w87.toNat := by omega
-  have k77 : d86.toNat < 2^29 := by omega
-  have k78 : w87.toNat ≤ 1 := by omega
-  clear h_x85 l_x85 h_d86 l_d86 h_w87 l_w87
-  have sum0 : (r38.toNat * 2^0 + r41.toNat * 2^29 + r44.toNat * 2^58 + r47.toNat * 2^87 + r50.toNat * 2^116 + r53.toNat * 2^145 + r56.toNat * 2^174 + r59.toNat * 2^203 + c60.toNat * 2^232) * 2^261 = a.l0.toNat * a.l0.toNat * 2^0 + a.l0.toNat * a.l1.toNat * 2 * 2^29 + a.l0.toNat * a.l2.toNat * 2 * 2^58 + a.l0.toNat * a.l3.toNat * 2 * 2^87 + a.l0.toNat * a.l4.toNat * 2 * 2^116 + a.l0.toNat * a.l5.toNat * 2 * 2^145 + a.l0.toNat * a.l6.toNat * 2 * 2^174 + a.l0.toNat * a.l7.toNat * 2 * 2^203 + a.l0.toNat * a.l8.toNat * 2 * 2^232 + a.l1.toNat * a.l1.toNat * 2^58 + a.l1.toNat * a.l2.toNat * 2 * 2^87 + a.l1.toNat * a.l3.toNat * 2 * 2^116 + a.l1.toNat * a.l4.toNat * 2 * 2^145 + a.l1.toNat * a.l5.toNat * 2 * 2^174 + a.l1.toNat * a.l6.toNat * 2 * 2^203 + a.l1.toNat * a.l7.toNat * 2 * 2^232 + a.l1.toNat * a.l8.toNat * 2 * 2^261 + a.l2.toNat * a.l2.toNat * 2^116 + a.l2.toNat * a.l3.toNat * 2 * 2^145 + a.l2.toNat * a.l4.toNat * 2 * 2^174 + a.l2.toNat * a.l5.toNat * 2 * 2^203 + a.l2.toNat * a.l6.toNat * 2 * 2^232 + a.l2.toNat * a.l7.toNat * 2 * 2^261 + a.l2.toNat * a.l8.toNat * 2 * 2^290 + a.l3.toNat * a.l3.toNat * 2^174 + a.l3.toNat * a.l4.toNat * 2 * 2^203 + a.l3.toNat * a.l5.toNat * 2 * 2^232 + a.l3.toNat * a.l6.toNat * 2 * 2^261 + a.l3.toNat * a.l7.toNat * 2 * 2^290 + a.l3.toNat * a.l8.toNat * 2 * 2^319 + a.l4.toNat * a.l4.toNat * 2^232 + a.l4.toNat * a.l5.toNat * 2 * 2^261 + a.l4.toNat * a.l6.toNat * 2 * 2^290 + a.l4.toNat * a.l7.toNat * 2 * 2^319 + a.l4.toNat * a.l8.toNat * 2 * 2^348 + a.l5.toNat * a.l5.toNat * 2^290 + a.l5.toNat * a.l6.toNat * 2 * 2^319 + a.l5.toNat * a.l7.toNat * 2 * 2^348 + a.l5.toNat * a.l8.toNat * 2 * 2^377 + a.l6.toNat * a.l6.toNat * 2^348 + a.l6.toNat * a.l7.toNat * 2 * 2^377 + a.l6.toNat * a.l8.toNat * 2 * 2^406 + a.l7.toNat * a.l7.toNat * 2^406 + a.l7.toNat * a.l8.toNat * 2 * 2^435 + a.l8.toNat * a.l8.toNat * 2^464 + (m2.toNat * 2^0 + m6.toNat * 2^29 + m10.toNat * 2^58 + m14.toNat * 2^87 + m18.toNat * 2^116 + m22.toNat * 2^145 + m26.toNat * 2^174 + m30.toNat * 2^203 + m34.toNat * 2^232) * 52435875175126190479447740508185965837690552500527637822603658699938581184513 := by omega
-  have sum1 : d62.toNat * 2^0 + d65.toNat * 2^29 + d68.toNat * 2^58 + d71.toNat * 2^87 + d74.toNat * 2^116 + d77.toNat * 2^145 + d80.toNat * 2^174 + d83.toNat * 2^203 + d86.toNat * 2^232 + 52435875175126190479447740508185965837690552500527637822603658699938581184513 = r38.toNat * 2^0 + r41.toNat * 2^29 + r44.toNat * 2^58 + r47.toNat * 2^87 + r50.toNat * 2^116 + r53.toNat * 2^145 + r56.toNat * 2^174 + r59.toNat * 2^203 + c60.toNat * 2^232 + 2^261 * w87.toNat := by omega
-  clear k1 k3 k4 k6 k7 k9 k10 k12 k13 k15 k16 k18 k19 k21 k22 k24 k25 k27 k28 k30 k31 k33 k34 k36 k37 k39 k40 k42 k43 k45 k46 k48 k49 k52 k54 k55 k57 k58 k60 k61 k63 k64 k66 k67 k69 k70 k72 k73 k75 k76
+  have ps17 := chain (B' := 2^493) ps16 k49 (by decide)
+  clear k49 ps16
+  unfold Hide at ps17
+  clear hp0_0 hp0_1 hp0_2 hp0_3 hp0_4 hp0_5 hp0_6 hp0_7 hp0_8 hp1_1 hp1_2 hp1_3 hp1_4 hp1_5 hp1_6 hp1_7 hp1_8 hp2_2 hp2_3 hp2_4 hp2_5 hp2_6 hp2_7 hp2_8 hp3_3 hp3_4 hp3_5 hp3_6 hp3_7 hp3_8 hp4_4 hp4_5 hp4_6 hp4_7 hp4_8 hp5_5 hp5_6 hp5_7 hp5_8 hp6_6 hp6_7 hp6_8 hp7_7 hp7_8 hp8_8
+  have e1 : (r38.toNat * 2^0 + r41.toNat * 2^29 + r44.toNat * 2^58 + r47.toNat * 2^87 + r50.toNat * 2^116 + r53.toNat * 2^145 + r56.toNat * 2^174 + r59.toNat * 2^203 + c60.toNat * 2^232) * 2^261 = E + (m2.toNat * 2^0 + m6.toNat * 2^29 + m10.toNat * 2^58 + m14.toNat * 2^87 + m18.toNat * 2^116 + m22.toNat * 2^145 + m26.toNat * 2^174 + m30.toNat * 2^203 + m34.toNat * 2^232) * 52435875175126190479447740508185965837690552500527637822603658699938581184513 := by
+    clear ha0 ha1 ha2 ha3 ha4 ha5 ha6 ha7 ha8 hav hABlt k2 k5 k8 k11 k14 k17 k20 k23 k26 k29 k32 k35 k38 k41 k44 k47 k50 k51
+    unfold Hide at hE
+    omega
+  clear ps17 hE
+  have e3 : c60.toNat * 2^232 ≤ (r38.toNat * 2^0 + r41.toNat * 2^29 + r44.toNat * 2^58 + r47.toNat * 2^87 + r50.toNat * 2^116 + r53.toNat * 2^145 + r56.toNat * 2^174 + r59.toNat * 2^203 + c60.toNat * 2^232) := by
+    clear ha0 ha1 ha2 ha3 ha4 ha5 ha6 ha7 ha8 hav hABlt k2 k5 k8 k11 k14 k17 k20 k23 k26 k29 k32 k35 k38 k41 k44 k47 k50 k51 e1
+    omega
+  have bm_0 : m2.toNat * 2^0 < 2^29 := bfirst k2
+  have bm_1 : m2.toNat * 2^0 + m6.toNat * 2^29 < 2^58 := bstep bm_0 k5 (by decide)
+  clear bm_0
+  have bm_2 : m2.toNat * 2^0 + m6.toNat * 2^29 + m10.toNat * 2^58 < 2^87 := bstep bm_1 k8 (by decide)
+  clear bm_1
+  have bm_3 : m2.toNat * 2^0 + m6.toNat * 2^29 + m10.toNat * 2^58 + m14.toNat * 2^87 < 2^116 := bstep bm_2 k11 (by decide)
+  clear bm_2
+  have bm_4 : m2.toNat * 2^0 + m6.toNat * 2^29 + m10.toNat * 2^58 + m14.toNat * 2^87 + m18.toNat * 2^116 < 2^145 := bstep bm_3 k14 (by decide)
+  clear bm_3
+  have bm_5 : m2.toNat * 2^0 + m6.toNat * 2^29 + m10.toNat * 2^58 + m14.toNat * 2^87 + m18.toNat * 2^116 + m22.toNat * 2^145 < 2^174 := bstep bm_4 k17 (by decide)
+  clear bm_4
+  have bm_6 : m2.toNat * 2^0 + m6.toNat * 2^29 + m10.toNat * 2^58 + m14.toNat * 2^87 + m18.toNat * 2^116 + m22.toNat * 2^145 + m26.toNat * 2^174 < 2^203 := bstep bm_5 k20 (by decide)
+  clear bm_5
+  have bm_7 : m2.toNat * 2^0 + m6.toNat * 2^29 + m10.toNat * 2^58 + m14.toNat * 2^87 + m18.toNat * 2^116 + m22.toNat * 2^145 + m26.toNat * 2^174 + m30.toNat * 2^203 < 2^232 := bstep bm_6 k23 (by decide)
+  clear bm_6
+  have bm_8 : m2.toNat * 2^0 + m6.toNat * 2^29 + m10.toNat * 2^58 + m14.toNat * 2^87 + m18.toNat * 2^116 + m22.toNat * 2^145 + m26.toNat * 2^174 + m30.toNat * 2^203 + m34.toNat * 2^232 < 2^261 := bstep bm_7 k26 (by decide)
+  clear bm_7
+  have hacc : c60.toNat < 2^29 := carry_lt e1 e3 hABlt bm_8 (by decide) (by decide)
+  clear e3
+  obtain ⟨k52, k53, k54⟩ : d62.toNat + 1 + 0 = r38.toNat + 2^29 * w63.toNat ∧ d62.toNat < 2^29 ∧ w63.toNat ≤ 1 := sub_limb r38 1 k29 (by decide)
+  have ps18 := chain (B' := 2^29) (I := 0) (O := 0) (c := 0) (B := 1) rfl k52 (by decide)
+  clear k52
+  obtain ⟨k55, k56, k57⟩ : d65.toNat + 536870904 + w63.toNat = r41.toNat + 2^29 * w66.toNat ∧ d65.toNat < 2^29 ∧ w66.toNat ≤ 1 := sub_limb_b r41 536870904 w63 k32 (by decide) k54
+  have ps19 := chain (B' := 2^58) ps18 k55 (by decide)
+  clear k55 ps18
+  obtain ⟨k58, k59, k60⟩ : d68.toNat + 529989567 + w66.toNat = r44.toNat + 2^29 * w69.toNat ∧ d68.toNat < 2^29 ∧ w69.toNat ≤ 1 := sub_limb_b r44 529989567 w66 k35 (by decide) k57
+  have ps20 := chain (B' := 2^87) ps19 k58 (by decide)
+  clear k58 ps19
+  obtain ⟨k61, k62, k63⟩ : d71.toNat + 457704959 + w69.toNat = r47.toNat + 2^29 * w72.toNat ∧ d71.toNat < 2^29 ∧ w72.toNat ≤ 1 := sub_limb_b r47 457704959 w69 k38 (by decide) k60
+  have ps21 := chain (B' := 2^116) ps20 k61 (by decide)
+  clear k61 ps20
+  obtain ⟨k64, k65, k66⟩ : d74.toNat + 494949691 + w72.toNat = r50.toNat + 2^29 * w75.toNat ∧ d74.toNat < 2^29 ∧ w75.toNat ≤ 1 := sub_limb_b r50 494949691 w72 k41 (by decide) k63
+  have ps22 := chain (B' := 2^145) ps21 k64 (by decide)
+  clear k64 ps21
+  obtain ⟨k67, k68, k69⟩ : d77.toNat + 201589968 + w75.toNat = r53.toNat + 2^29 * w78.toNat ∧ d77.toNat < 2^29 ∧ w78.toNat ≤ 1 := sub_limb_b r53 201589968 w75 k44 (by decide) k66
+  have ps23 := chain (B' := 2^174) ps22 k67 (by decide)
+  clear k67 ps22
+  obtain ⟨k70, k71, k72⟩ : d80.toNat + 354471143 + w78.toNat = r56.toNat + 2^29 * w81.toNat ∧ d80.toNat < 2^29 ∧ w81.toNat ≤ 1 := sub_limb_b r56 354471143 w78 k47 (by decide) k69
+  have ps24 := chain (B' := 2^203) ps23 k70 (by decide)
+  clear k70 ps23
+  obtain ⟨k73, k74, k75⟩ : d83.toNat + 174404527 + w81.toNat = r59.toNat + 2^29 * w84.toNat ∧ d83.toNat < 2^29 ∧ w84.toNat ≤ 1 := sub_limb_b r59 174404527 w81 k50 (by decide) k72
+  have ps25 := chain (B' := 2^232) ps24 k73 (by decide)
+  clear k73 ps24
+  obtain ⟨k76, k77, k78⟩ : d86.toNat + 7597479 + w84.toNat = c60.toNat + 2^29 * w87.toNat ∧ d86.toNat < 2^29 ∧ w87.toNat ≤ 1 := sub_limb_b c60 7597479 w84 hacc (by decide) k75
+  have ps26 := chain (B' := 2^261) ps25 k76 (by decide)
+  clear k76 ps25
+  clear_value s1 m2 s3 c4 s5 m6 s7 c8 s9 m10 s11 c12 s13 m14 s15 c16 s17 m18 s19 c20 s21 m22 s23 c24 s25 m26 s27 c28 s29 m30 s31 c32 s33 m34 s35 c36 s37 r38 c39 s40 r41 c42 s43 r44 c45 s46 r47 c48 s49 r50 c51 s52 r53 c54 s55 r56 c57 s58 r59 c60 x61 d62 w63 x64 d65 w66 x67 d68 w69 x70 d71 w72 x73 d74 w75 x76 d77 w78 x79 d80 w81 x82 d83 w84 x85 d86 w87
+  clear k3 k6 k9 k12 k15 k18 k21 k24 k27 k30 k33 k36 k39 k42 k45 k48 k54 k57 k60 k63 k66 k69 k72 k75
+  unfold Hide at ps26
+  have e2 : (d62.toNat * 2^0 + d65.toNat * 2^29 + d68.toNat * 2^58 + d71.toNat * 2^87 + d74.toNat * 2^116 + d77.toNat * 2^145 + d80.toNat * 2^174 + d83.toNat * 2^203 + d86.toNat * 2^232) + 52435875175126190479447740508185965837690552500527637822603658699938581184513 = (r38.toNat * 2^0 + r41.toNat * 2^29 + r44.toNat * 2^58 + r47.toNat * 2^87 + r50.toNat * 2^116 + r53.toNat * 2^145 + r56.toNat * 2^174 + r59.toNat * 2^203 + c60.toNat * 2^232) + 2^261 * w87.toNat := by
+    clear ha0 ha1 ha2 ha3 ha4 ha5 ha6 ha7 ha8 hav hABlt k2 k5 k8 k11 k14 k17 k20 k23 k26 k29 k32 k35 k38 k41 k44 k47 k50 k51 hacc e1 bm_8 k53 k56 k59 k62 k65 k68 k71 k74 k77 k78
+    grind
+  clear ps26
+  have bd0_0 : d62.toNat * 2^0 < 2^29 := bfirst k53
+  have bd0_1 : d62.toNat * 2^0 + d65.toNat * 2^29 < 2^58 := bstep bd0_0 k56 (by decide)
+  clear bd0_0
+  have bd0_2 : d62.toNat * 2^0 + d65.toNat * 2^29 + d68.toNat * 2^58 < 2^87 := bstep bd0_1 k59 (by decide)
+  clear bd0_1
+  have bd0_3 : d62.toNat * 2^0 + d65.toNat * 2^29 + d68.toNat * 2^58 + d71.toNat * 2^87 < 2^116 := bstep bd0_2 k62 (by decide)
+  clear bd0_2
+  have bd0_4 : d62.toNat * 2^0 + d65.toNat * 2^29 + d68.toNat * 2^58 + d71.toNat * 2^87 + d74.toNat * 2^116 < 2^145 := bstep bd0_3 k65 (by decide)
+  clear bd0_3
+  have bd0_5 : d62.toNat * 2^0 + d65.toNat * 2^29 + d68.toNat * 2^58 + d71.toNat * 2^87 + d74.toNat * 2^116 + d77.toNat * 2^145 < 2^174 := bstep bd0_4 k68 (by decide)
+  clear bd0_4
+  have bd0_6 : d62.toNat * 2^0 + d65.toNat * 2^29 + d68.toNat * 2^58 + d71.toNat * 2^87 + d74.toNat * 2^116 + d77.toNat * 2^145 + d80.toNat * 2^174 < 2^203 := bstep bd0_5 k71 (by decide)
+  clear bd0_5
+  have bd0_7 : d62.toNat * 2^0 + d65.toNat * 2^29 + d68.toNat * 2^58 + d71.toNat * 2^87 + d74.toNat * 2^116 + d77.toNat * 2^145 + d80.toNat * 2^174 + d83.toNat * 2^203 < 2^232 := bstep bd0_6 k74 (by decide)
+  clear bd0_6
+  have bd0_8 : d62.toNat * 2^0 + d65.toNat * 2^29 + d68.toNat * 2^58 + d71.toNat * 2^87 + d74.toNat * 2^116 + d77.toNat * 2^145 + d80.toNat * 2^174 + d83.toNat * 2^203 + d86.toNat * 2^232 < 2^261 := bstep bd0_7 k77 (by decide)
+  clear bd0_7
   split <;> rename_i hc <;>
     simp only [bne_iff_ne, ne_eq, Bool.or_eq_true, beq_iff_eq, ← UInt64.toNat_inj, UInt64.reduceToNat, Bool.not_eq_true'] at hc <;>
-    simp only [Elem.Ok, Elem.val, p] <;> omega
+    simp only [Elem.Ok, Elem.val, p] <;>
+    generalize r38.toNat * 2^0 + r41.toNat * 2^29 + r44.toNat * 2^58 + r47.toNat * 2^87 + r50.toNat * 2^116 + r53.toNat * 2^145 + r56.toNat * 2^174 + r59.toNat * 2^203 + c60.toNat * 2^232 = V0 at * <;>
+    generalize d62.toNat * 2^0 + d65.toNat * 2^29 + d68.toNat * 2^58 + d71.toNat * 2^87 + d74.toNat * 2^116 + d77.toNat * 2^145 + d80.toNat * 2^174 + d83.toNat * 2^203 + d86.toNat * 2^232 = V1 at * <;>
+    generalize m2.toNat * 2^0 + m6.toNat * 2^29 + m10.toNat * 2^58 + m14.toNat * 2^87 + m18.toNat * 2^116 + m22.toNat * 2^145 + m26.toNat * 2^174 + m30.toNat * 2^203 + m34.toNat * 2^232 = V2 at *
+  · exact ⟨by grind, mod_of_eq (k := 2^261) (M := V2) (by grind)⟩
+  · exact ⟨by grind, mod_of_eq (k := 0) (M := V2) (by grind)⟩
 
 /-- a + b. -/
 def add (a b : Elem) : Elem :=
@@ -1046,10 +1104,12 @@ theorem add_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have l_t2 := UInt64.toNat_lt t2
   have h_c3 : c3.toNat = s1.toNat / 2^29 := by simp only [c3, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c3 := UInt64.toNat_lt c3
-  have k1 : a.l0.toNat + b.l0.toNat = t2.toNat + 2^29 * c3.toNat := by omega
+  have k1 : a.l0.toNat + b.l0.toNat + 0 = t2.toNat + 2^29 * c3.toNat := by omega
   have k2 : t2.toNat < 2^29 := by omega
   have k3 : c3.toNat ≤ 1 := by omega
   clear h_s1 l_s1 h_t2 l_t2 h_c3 l_c3
+  have ps1 := chain (B' := 2^29) (I := 0) (O := 0) (c := 0) (B := 1) rfl k1 (by decide)
+  clear k1
   have h_s4 : s4.toNat = a.l1.toNat + b.l1.toNat + c3.toNat := by simp only [s4, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s4 := UInt64.toNat_lt s4
   have h_t5 : t5.toNat = s4.toNat % 2^29 := by simp only [t5, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
@@ -1060,6 +1120,8 @@ theorem add_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have k5 : t5.toNat < 2^29 := by omega
   have k6 : c6.toNat ≤ 1 := by omega
   clear h_s4 l_s4 h_t5 l_t5 h_c6 l_c6
+  have ps2 := chain (B' := 2^58) ps1 k4 (by decide)
+  clear k4 ps1
   have h_s7 : s7.toNat = a.l2.toNat + b.l2.toNat + c6.toNat := by simp only [s7, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s7 := UInt64.toNat_lt s7
   have h_t8 : t8.toNat = s7.toNat % 2^29 := by simp only [t8, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
@@ -1070,6 +1132,8 @@ theorem add_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have k8 : t8.toNat < 2^29 := by omega
   have k9 : c9.toNat ≤ 1 := by omega
   clear h_s7 l_s7 h_t8 l_t8 h_c9 l_c9
+  have ps3 := chain (B' := 2^87) ps2 k7 (by decide)
+  clear k7 ps2
   have h_s10 : s10.toNat = a.l3.toNat + b.l3.toNat + c9.toNat := by simp only [s10, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s10 := UInt64.toNat_lt s10
   have h_t11 : t11.toNat = s10.toNat % 2^29 := by simp only [t11, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
@@ -1080,6 +1144,8 @@ theorem add_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have k11 : t11.toNat < 2^29 := by omega
   have k12 : c12.toNat ≤ 1 := by omega
   clear h_s10 l_s10 h_t11 l_t11 h_c12 l_c12
+  have ps4 := chain (B' := 2^116) ps3 k10 (by decide)
+  clear k10 ps3
   have h_s13 : s13.toNat = a.l4.toNat + b.l4.toNat + c12.toNat := by simp only [s13, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s13 := UInt64.toNat_lt s13
   have h_t14 : t14.toNat = s13.toNat % 2^29 := by simp only [t14, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
@@ -1090,6 +1156,8 @@ theorem add_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have k14 : t14.toNat < 2^29 := by omega
   have k15 : c15.toNat ≤ 1 := by omega
   clear h_s13 l_s13 h_t14 l_t14 h_c15 l_c15
+  have ps5 := chain (B' := 2^145) ps4 k13 (by decide)
+  clear k13 ps4
   have h_s16 : s16.toNat = a.l5.toNat + b.l5.toNat + c15.toNat := by simp only [s16, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s16 := UInt64.toNat_lt s16
   have h_t17 : t17.toNat = s16.toNat % 2^29 := by simp only [t17, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
@@ -1100,6 +1168,8 @@ theorem add_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have k17 : t17.toNat < 2^29 := by omega
   have k18 : c18.toNat ≤ 1 := by omega
   clear h_s16 l_s16 h_t17 l_t17 h_c18 l_c18
+  have ps6 := chain (B' := 2^174) ps5 k16 (by decide)
+  clear k16 ps5
   have h_s19 : s19.toNat = a.l6.toNat + b.l6.toNat + c18.toNat := by simp only [s19, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s19 := UInt64.toNat_lt s19
   have h_t20 : t20.toNat = s19.toNat % 2^29 := by simp only [t20, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
@@ -1110,6 +1180,8 @@ theorem add_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have k20 : t20.toNat < 2^29 := by omega
   have k21 : c21.toNat ≤ 1 := by omega
   clear h_s19 l_s19 h_t20 l_t20 h_c21 l_c21
+  have ps7 := chain (B' := 2^203) ps6 k19 (by decide)
+  clear k19 ps6
   have h_s22 : s22.toNat = a.l7.toNat + b.l7.toNat + c21.toNat := by simp only [s22, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s22 := UInt64.toNat_lt s22
   have h_t23 : t23.toNat = s22.toNat % 2^29 := by simp only [t23, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
@@ -1120,6 +1192,8 @@ theorem add_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have k23 : t23.toNat < 2^29 := by omega
   have k24 : c24.toNat ≤ 1 := by omega
   clear h_s22 l_s22 h_t23 l_t23 h_c24 l_c24
+  have ps8 := chain (B' := 2^232) ps7 k22 (by decide)
+  clear k22 ps7
   have h_s25 : s25.toNat = a.l8.toNat + b.l8.toNat + c24.toNat := by simp only [s25, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s25 := UInt64.toNat_lt s25
   have h_t26 : t26.toNat = s25.toNat % 2^29 := by simp only [t26, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
@@ -1130,102 +1204,87 @@ theorem add_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have k26 : t26.toNat < 2^29 := by omega
   have k27 : c27.toNat ≤ 1 := by omega
   clear h_s25 l_s25 h_t26 l_t26 h_c27 l_c27
-  have h_x28 : x28.toNat = (t2.toNat + 2^65 - 1) % 2^64 := by simp only [x28, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x28 := UInt64.toNat_lt x28
-  have h_d29 : d29.toNat = x28.toNat % 2^29 := by simp only [d29, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d29 := UInt64.toNat_lt d29
-  have h_w30 : w30.toNat = x28.toNat / 2^63 := by simp only [w30, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w30 := UInt64.toNat_lt w30
-  have k28 : d29.toNat + 1 = t2.toNat + 2^29 * w30.toNat := by omega
-  have k29 : d29.toNat < 2^29 := by omega
-  have k30 : w30.toNat ≤ 1 := by omega
-  clear h_x28 l_x28 h_d29 l_d29 h_w30 l_w30
-  have h_x31 : x31.toNat = (t5.toNat + 2^65 - 536870904 - w30.toNat) % 2^64 := by simp only [x31, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x31 := UInt64.toNat_lt x31
-  have h_d32 : d32.toNat = x31.toNat % 2^29 := by simp only [d32, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d32 := UInt64.toNat_lt d32
-  have h_w33 : w33.toNat = x31.toNat / 2^63 := by simp only [w33, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w33 := UInt64.toNat_lt w33
-  have k31 : d32.toNat + 536870904 + w30.toNat = t5.toNat + 2^29 * w33.toNat := by omega
-  have k32 : d32.toNat < 2^29 := by omega
-  have k33 : w33.toNat ≤ 1 := by omega
-  clear h_x31 l_x31 h_d32 l_d32 h_w33 l_w33
-  have h_x34 : x34.toNat = (t8.toNat + 2^65 - 529989567 - w33.toNat) % 2^64 := by simp only [x34, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x34 := UInt64.toNat_lt x34
-  have h_d35 : d35.toNat = x34.toNat % 2^29 := by simp only [d35, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d35 := UInt64.toNat_lt d35
-  have h_w36 : w36.toNat = x34.toNat / 2^63 := by simp only [w36, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w36 := UInt64.toNat_lt w36
-  have k34 : d35.toNat + 529989567 + w33.toNat = t8.toNat + 2^29 * w36.toNat := by omega
-  have k35 : d35.toNat < 2^29 := by omega
-  have k36 : w36.toNat ≤ 1 := by omega
-  clear h_x34 l_x34 h_d35 l_d35 h_w36 l_w36
-  have h_x37 : x37.toNat = (t11.toNat + 2^65 - 457704959 - w36.toNat) % 2^64 := by simp only [x37, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x37 := UInt64.toNat_lt x37
-  have h_d38 : d38.toNat = x37.toNat % 2^29 := by simp only [d38, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d38 := UInt64.toNat_lt d38
-  have h_w39 : w39.toNat = x37.toNat / 2^63 := by simp only [w39, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w39 := UInt64.toNat_lt w39
-  have k37 : d38.toNat + 457704959 + w36.toNat = t11.toNat + 2^29 * w39.toNat := by omega
-  have k38 : d38.toNat < 2^29 := by omega
-  have k39 : w39.toNat ≤ 1 := by omega
-  clear h_x37 l_x37 h_d38 l_d38 h_w39 l_w39
-  have h_x40 : x40.toNat = (t14.toNat + 2^65 - 494949691 - w39.toNat) % 2^64 := by simp only [x40, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x40 := UInt64.toNat_lt x40
-  have h_d41 : d41.toNat = x40.toNat % 2^29 := by simp only [d41, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d41 := UInt64.toNat_lt d41
-  have h_w42 : w42.toNat = x40.toNat / 2^63 := by simp only [w42, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w42 := UInt64.toNat_lt w42
-  have k40 : d41.toNat + 494949691 + w39.toNat = t14.toNat + 2^29 * w42.toNat := by omega
-  have k41 : d41.toNat < 2^29 := by omega
-  have k42 : w42.toNat ≤ 1 := by omega
-  clear h_x40 l_x40 h_d41 l_d41 h_w42 l_w42
-  have h_x43 : x43.toNat = (t17.toNat + 2^65 - 201589968 - w42.toNat) % 2^64 := by simp only [x43, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x43 := UInt64.toNat_lt x43
-  have h_d44 : d44.toNat = x43.toNat % 2^29 := by simp only [d44, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d44 := UInt64.toNat_lt d44
-  have h_w45 : w45.toNat = x43.toNat / 2^63 := by simp only [w45, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w45 := UInt64.toNat_lt w45
-  have k43 : d44.toNat + 201589968 + w42.toNat = t17.toNat + 2^29 * w45.toNat := by omega
-  have k44 : d44.toNat < 2^29 := by omega
-  have k45 : w45.toNat ≤ 1 := by omega
-  clear h_x43 l_x43 h_d44 l_d44 h_w45 l_w45
-  have h_x46 : x46.toNat = (t20.toNat + 2^65 - 354471143 - w45.toNat) % 2^64 := by simp only [x46, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x46 := UInt64.toNat_lt x46
-  have h_d47 : d47.toNat = x46.toNat % 2^29 := by simp only [d47, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d47 := UInt64.toNat_lt d47
-  have h_w48 : w48.toNat = x46.toNat / 2^63 := by simp only [w48, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w48 := UInt64.toNat_lt w48
-  have k46 : d47.toNat + 354471143 + w45.toNat = t20.toNat + 2^29 * w48.toNat := by omega
-  have k47 : d47.toNat < 2^29 := by omega
-  have k48 : w48.toNat ≤ 1 := by omega
-  clear h_x46 l_x46 h_d47 l_d47 h_w48 l_w48
-  have h_x49 : x49.toNat = (t23.toNat + 2^65 - 174404527 - w48.toNat) % 2^64 := by simp only [x49, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x49 := UInt64.toNat_lt x49
-  have h_d50 : d50.toNat = x49.toNat % 2^29 := by simp only [d50, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d50 := UInt64.toNat_lt d50
-  have h_w51 : w51.toNat = x49.toNat / 2^63 := by simp only [w51, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w51 := UInt64.toNat_lt w51
-  have k49 : d50.toNat + 174404527 + w48.toNat = t23.toNat + 2^29 * w51.toNat := by omega
-  have k50 : d50.toNat < 2^29 := by omega
-  have k51 : w51.toNat ≤ 1 := by omega
-  clear h_x49 l_x49 h_d50 l_d50 h_w51 l_w51
-  have h_x52 : x52.toNat = (t26.toNat + 2^65 - 7597479 - w51.toNat) % 2^64 := by simp only [x52, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x52 := UInt64.toNat_lt x52
-  have h_d53 : d53.toNat = x52.toNat % 2^29 := by simp only [d53, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d53 := UInt64.toNat_lt d53
-  have h_w54 : w54.toNat = x52.toNat / 2^63 := by simp only [w54, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w54 := UInt64.toNat_lt w54
-  have k52 : d53.toNat + 7597479 + w51.toNat = t26.toNat + 2^29 * w54.toNat := by omega
-  have k53 : d53.toNat < 2^29 := by omega
-  have k54 : w54.toNat ≤ 1 := by omega
-  clear h_x52 l_x52 h_d53 l_d53 h_w54 l_w54
-  have sum0 : t2.toNat * 2^0 + t5.toNat * 2^29 + t8.toNat * 2^58 + t11.toNat * 2^87 + t14.toNat * 2^116 + t17.toNat * 2^145 + t20.toNat * 2^174 + t23.toNat * 2^203 + t26.toNat * 2^232 + 2^261 * c27.toNat = a.l0.toNat * 2^0 + a.l1.toNat * 2^29 + a.l2.toNat * 2^58 + a.l3.toNat * 2^87 + a.l4.toNat * 2^116 + a.l5.toNat * 2^145 + a.l6.toNat * 2^174 + a.l7.toNat * 2^203 + a.l8.toNat * 2^232 + b.l0.toNat * 2^0 + b.l1.toNat * 2^29 + b.l2.toNat * 2^58 + b.l3.toNat * 2^87 + b.l4.toNat * 2^116 + b.l5.toNat * 2^145 + b.l6.toNat * 2^174 + b.l7.toNat * 2^203 + b.l8.toNat * 2^232 := by omega
-  have sum1 : d29.toNat * 2^0 + d32.toNat * 2^29 + d35.toNat * 2^58 + d38.toNat * 2^87 + d41.toNat * 2^116 + d44.toNat * 2^145 + d47.toNat * 2^174 + d50.toNat * 2^203 + d53.toNat * 2^232 + 52435875175126190479447740508185965837690552500527637822603658699938581184513 = t2.toNat * 2^0 + t5.toNat * 2^29 + t8.toNat * 2^58 + t11.toNat * 2^87 + t14.toNat * 2^116 + t17.toNat * 2^145 + t20.toNat * 2^174 + t23.toNat * 2^203 + t26.toNat * 2^232 + 2^261 * w54.toNat := by omega
-  clear k1 k3 k4 k6 k7 k9 k10 k12 k13 k15 k16 k18 k19 k21 k22 k24 k25 k28 k30 k31 k33 k34 k36 k37 k39 k40 k42 k43 k45 k46 k48 k49 k51 k52
+  have ps9 := chain (B' := 2^261) ps8 k25 (by decide)
+  clear k25 ps8
+  obtain ⟨k28, k29, k30⟩ : d29.toNat + 1 + 0 = t2.toNat + 2^29 * w30.toNat ∧ d29.toNat < 2^29 ∧ w30.toNat ≤ 1 := sub_limb t2 1 k2 (by decide)
+  have ps10 := chain (B' := 2^29) (I := 0) (O := 0) (c := 0) (B := 1) rfl k28 (by decide)
+  clear k28
+  obtain ⟨k31, k32, k33⟩ : d32.toNat + 536870904 + w30.toNat = t5.toNat + 2^29 * w33.toNat ∧ d32.toNat < 2^29 ∧ w33.toNat ≤ 1 := sub_limb_b t5 536870904 w30 k5 (by decide) k30
+  have ps11 := chain (B' := 2^58) ps10 k31 (by decide)
+  clear k31 ps10
+  obtain ⟨k34, k35, k36⟩ : d35.toNat + 529989567 + w33.toNat = t8.toNat + 2^29 * w36.toNat ∧ d35.toNat < 2^29 ∧ w36.toNat ≤ 1 := sub_limb_b t8 529989567 w33 k8 (by decide) k33
+  have ps12 := chain (B' := 2^87) ps11 k34 (by decide)
+  clear k34 ps11
+  obtain ⟨k37, k38, k39⟩ : d38.toNat + 457704959 + w36.toNat = t11.toNat + 2^29 * w39.toNat ∧ d38.toNat < 2^29 ∧ w39.toNat ≤ 1 := sub_limb_b t11 457704959 w36 k11 (by decide) k36
+  have ps13 := chain (B' := 2^116) ps12 k37 (by decide)
+  clear k37 ps12
+  obtain ⟨k40, k41, k42⟩ : d41.toNat + 494949691 + w39.toNat = t14.toNat + 2^29 * w42.toNat ∧ d41.toNat < 2^29 ∧ w42.toNat ≤ 1 := sub_limb_b t14 494949691 w39 k14 (by decide) k39
+  have ps14 := chain (B' := 2^145) ps13 k40 (by decide)
+  clear k40 ps13
+  obtain ⟨k43, k44, k45⟩ : d44.toNat + 201589968 + w42.toNat = t17.toNat + 2^29 * w45.toNat ∧ d44.toNat < 2^29 ∧ w45.toNat ≤ 1 := sub_limb_b t17 201589968 w42 k17 (by decide) k42
+  have ps15 := chain (B' := 2^174) ps14 k43 (by decide)
+  clear k43 ps14
+  obtain ⟨k46, k47, k48⟩ : d47.toNat + 354471143 + w45.toNat = t20.toNat + 2^29 * w48.toNat ∧ d47.toNat < 2^29 ∧ w48.toNat ≤ 1 := sub_limb_b t20 354471143 w45 k20 (by decide) k45
+  have ps16 := chain (B' := 2^203) ps15 k46 (by decide)
+  clear k46 ps15
+  obtain ⟨k49, k50, k51⟩ : d50.toNat + 174404527 + w48.toNat = t23.toNat + 2^29 * w51.toNat ∧ d50.toNat < 2^29 ∧ w51.toNat ≤ 1 := sub_limb_b t23 174404527 w48 k23 (by decide) k48
+  have ps17 := chain (B' := 2^232) ps16 k49 (by decide)
+  clear k49 ps16
+  obtain ⟨k52, k53, k54⟩ : d53.toNat + 7597479 + w51.toNat = t26.toNat + 2^29 * w54.toNat ∧ d53.toNat < 2^29 ∧ w54.toNat ≤ 1 := sub_limb_b t26 7597479 w51 k26 (by decide) k51
+  have ps18 := chain (B' := 2^261) ps17 k52 (by decide)
+  clear k52 ps17
+  clear_value s1 t2 c3 s4 t5 c6 s7 t8 c9 s10 t11 c12 s13 t14 c15 s16 t17 c18 s19 t20 c21 s22 t23 c24 s25 t26 c27 x28 d29 w30 x31 d32 w33 x34 d35 w36 x37 d38 w39 x40 d41 w42 x43 d44 w45 x46 d47 w48 x49 d50 w51 x52 d53 w54
+  clear k3 k6 k9 k12 k15 k18 k21 k24 k30 k33 k36 k39 k42 k45 k48 k51
+  unfold Hide at ps9 ps18
+  have e1 : (t2.toNat * 2^0 + t5.toNat * 2^29 + t8.toNat * 2^58 + t11.toNat * 2^87 + t14.toNat * 2^116 + t17.toNat * 2^145 + t20.toNat * 2^174 + t23.toNat * 2^203 + t26.toNat * 2^232) + 2^261 * c27.toNat = (a.l0.toNat * 2^0 + a.l1.toNat * 2^29 + a.l2.toNat * 2^58 + a.l3.toNat * 2^87 + a.l4.toNat * 2^116 + a.l5.toNat * 2^145 + a.l6.toNat * 2^174 + a.l7.toNat * 2^203 + a.l8.toNat * 2^232) + (b.l0.toNat * 2^0 + b.l1.toNat * 2^29 + b.l2.toNat * 2^58 + b.l3.toNat * 2^87 + b.l4.toNat * 2^116 + b.l5.toNat * 2^145 + b.l6.toNat * 2^174 + b.l7.toNat * 2^203 + b.l8.toNat * 2^232) := by
+    clear ha0 ha1 ha2 ha3 ha4 ha5 ha6 ha7 ha8 hav hb0 hb1 hb2 hb3 hb4 hb5 hb6 hb7 hb8 hbv k2 k5 k8 k11 k14 k17 k20 k23 k26 k27 k29 k32 k35 k38 k41 k44 k47 k50 k53 k54
+    grind
+  have e2 : (d29.toNat * 2^0 + d32.toNat * 2^29 + d35.toNat * 2^58 + d38.toNat * 2^87 + d41.toNat * 2^116 + d44.toNat * 2^145 + d47.toNat * 2^174 + d50.toNat * 2^203 + d53.toNat * 2^232) + 52435875175126190479447740508185965837690552500527637822603658699938581184513 = (t2.toNat * 2^0 + t5.toNat * 2^29 + t8.toNat * 2^58 + t11.toNat * 2^87 + t14.toNat * 2^116 + t17.toNat * 2^145 + t20.toNat * 2^174 + t23.toNat * 2^203 + t26.toNat * 2^232) + 2^261 * w54.toNat := by
+    clear ha0 ha1 ha2 ha3 ha4 ha5 ha6 ha7 ha8 hav hb0 hb1 hb2 hb3 hb4 hb5 hb6 hb7 hb8 hbv k2 k5 k8 k11 k14 k17 k20 k23 k26 k27 k29 k32 k35 k38 k41 k44 k47 k50 k53 k54
+    grind
+  clear ps9 ps18
+  have bd0_0 : d29.toNat * 2^0 < 2^29 := bfirst k29
+  have bd0_1 : d29.toNat * 2^0 + d32.toNat * 2^29 < 2^58 := bstep bd0_0 k32 (by decide)
+  clear bd0_0
+  have bd0_2 : d29.toNat * 2^0 + d32.toNat * 2^29 + d35.toNat * 2^58 < 2^87 := bstep bd0_1 k35 (by decide)
+  clear bd0_1
+  have bd0_3 : d29.toNat * 2^0 + d32.toNat * 2^29 + d35.toNat * 2^58 + d38.toNat * 2^87 < 2^116 := bstep bd0_2 k38 (by decide)
+  clear bd0_2
+  have bd0_4 : d29.toNat * 2^0 + d32.toNat * 2^29 + d35.toNat * 2^58 + d38.toNat * 2^87 + d41.toNat * 2^116 < 2^145 := bstep bd0_3 k41 (by decide)
+  clear bd0_3
+  have bd0_5 : d29.toNat * 2^0 + d32.toNat * 2^29 + d35.toNat * 2^58 + d38.toNat * 2^87 + d41.toNat * 2^116 + d44.toNat * 2^145 < 2^174 := bstep bd0_4 k44 (by decide)
+  clear bd0_4
+  have bd0_6 : d29.toNat * 2^0 + d32.toNat * 2^29 + d35.toNat * 2^58 + d38.toNat * 2^87 + d41.toNat * 2^116 + d44.toNat * 2^145 + d47.toNat * 2^174 < 2^203 := bstep bd0_5 k47 (by decide)
+  clear bd0_5
+  have bd0_7 : d29.toNat * 2^0 + d32.toNat * 2^29 + d35.toNat * 2^58 + d38.toNat * 2^87 + d41.toNat * 2^116 + d44.toNat * 2^145 + d47.toNat * 2^174 + d50.toNat * 2^203 < 2^232 := bstep bd0_6 k50 (by decide)
+  clear bd0_6
+  have bd0_8 : d29.toNat * 2^0 + d32.toNat * 2^29 + d35.toNat * 2^58 + d38.toNat * 2^87 + d41.toNat * 2^116 + d44.toNat * 2^145 + d47.toNat * 2^174 + d50.toNat * 2^203 + d53.toNat * 2^232 < 2^261 := bstep bd0_7 k53 (by decide)
+  clear bd0_7
+  have bd1_0 : t2.toNat * 2^0 < 2^29 := bfirst k2
+  have bd1_1 : t2.toNat * 2^0 + t5.toNat * 2^29 < 2^58 := bstep bd1_0 k5 (by decide)
+  clear bd1_0
+  have bd1_2 : t2.toNat * 2^0 + t5.toNat * 2^29 + t8.toNat * 2^58 < 2^87 := bstep bd1_1 k8 (by decide)
+  clear bd1_1
+  have bd1_3 : t2.toNat * 2^0 + t5.toNat * 2^29 + t8.toNat * 2^58 + t11.toNat * 2^87 < 2^116 := bstep bd1_2 k11 (by decide)
+  clear bd1_2
+  have bd1_4 : t2.toNat * 2^0 + t5.toNat * 2^29 + t8.toNat * 2^58 + t11.toNat * 2^87 + t14.toNat * 2^116 < 2^145 := bstep bd1_3 k14 (by decide)
+  clear bd1_3
+  have bd1_5 : t2.toNat * 2^0 + t5.toNat * 2^29 + t8.toNat * 2^58 + t11.toNat * 2^87 + t14.toNat * 2^116 + t17.toNat * 2^145 < 2^174 := bstep bd1_4 k17 (by decide)
+  clear bd1_4
+  have bd1_6 : t2.toNat * 2^0 + t5.toNat * 2^29 + t8.toNat * 2^58 + t11.toNat * 2^87 + t14.toNat * 2^116 + t17.toNat * 2^145 + t20.toNat * 2^174 < 2^203 := bstep bd1_5 k20 (by decide)
+  clear bd1_5
+  have bd1_7 : t2.toNat * 2^0 + t5.toNat * 2^29 + t8.toNat * 2^58 + t11.toNat * 2^87 + t14.toNat * 2^116 + t17.toNat * 2^145 + t20.toNat * 2^174 + t23.toNat * 2^203 < 2^232 := bstep bd1_6 k23 (by decide)
+  clear bd1_6
+  have bd1_8 : t2.toNat * 2^0 + t5.toNat * 2^29 + t8.toNat * 2^58 + t11.toNat * 2^87 + t14.toNat * 2^116 + t17.toNat * 2^145 + t20.toNat * 2^174 + t23.toNat * 2^203 + t26.toNat * 2^232 < 2^261 := bstep bd1_7 k26 (by decide)
+  clear bd1_7
   split <;> rename_i hc <;>
     simp only [bne_iff_ne, ne_eq, Bool.or_eq_true, beq_iff_eq, ← UInt64.toNat_inj, UInt64.reduceToNat, Bool.not_eq_true'] at hc <;>
-    simp only [Elem.Ok, Elem.val, p] <;> omega
+    simp only [Elem.Ok, Elem.val, p] <;>
+    generalize t2.toNat * 2^0 + t5.toNat * 2^29 + t8.toNat * 2^58 + t11.toNat * 2^87 + t14.toNat * 2^116 + t17.toNat * 2^145 + t20.toNat * 2^174 + t23.toNat * 2^203 + t26.toNat * 2^232 = V0 at * <;>
+    generalize d29.toNat * 2^0 + d32.toNat * 2^29 + d35.toNat * 2^58 + d38.toNat * 2^87 + d41.toNat * 2^116 + d44.toNat * 2^145 + d47.toNat * 2^174 + d50.toNat * 2^203 + d53.toNat * 2^232 = V1 at * <;>
+    generalize a.l0.toNat * 2^0 + a.l1.toNat * 2^29 + a.l2.toNat * 2^58 + a.l3.toNat * 2^87 + a.l4.toNat * 2^116 + a.l5.toNat * 2^145 + a.l6.toNat * 2^174 + a.l7.toNat * 2^203 + a.l8.toNat * 2^232 = V2 at * <;>
+    generalize b.l0.toNat * 2^0 + b.l1.toNat * 2^29 + b.l2.toNat * 2^58 + b.l3.toNat * 2^87 + b.l4.toNat * 2^116 + b.l5.toNat * 2^145 + b.l6.toNat * 2^174 + b.l7.toNat * 2^203 + b.l8.toNat * 2^232 = V3 at * <;>
+    omega
 
 /-- a − b. -/
 def sub (a b : Elem) : Elem :=
@@ -1294,106 +1353,45 @@ theorem sub_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   simp only [Elem.val, p]
   unfold sub
   extract_lets x1 d2 w3 x4 d5 w6 x7 d8 w9 x10 d11 w12 x13 d14 w15 x16 d17 w18 x19 d20 w21 x22 d23 w24 x25 d26 w27 s28 t29 c30 s31 t32 c33 s34 t35 c36 s37 t38 c39 s40 t41 c42 s43 t44 c45 s46 t47 c48 s49 t50 c51 s52 t53 c54
-  have h_x1 : x1.toNat = (a.l0.toNat + 2^65 - b.l0.toNat) % 2^64 := by simp only [x1, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x1 := UInt64.toNat_lt x1
-  have h_d2 : d2.toNat = x1.toNat % 2^29 := by simp only [d2, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d2 := UInt64.toNat_lt d2
-  have h_w3 : w3.toNat = x1.toNat / 2^63 := by simp only [w3, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w3 := UInt64.toNat_lt w3
-  have k1 : d2.toNat + b.l0.toNat = a.l0.toNat + 2^29 * w3.toNat := by omega
-  have k2 : d2.toNat < 2^29 := by omega
-  have k3 : w3.toNat ≤ 1 := by omega
-  clear h_x1 l_x1 h_d2 l_d2 h_w3 l_w3
-  have h_x4 : x4.toNat = (a.l1.toNat + 2^65 - b.l1.toNat - w3.toNat) % 2^64 := by simp only [x4, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x4 := UInt64.toNat_lt x4
-  have h_d5 : d5.toNat = x4.toNat % 2^29 := by simp only [d5, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d5 := UInt64.toNat_lt d5
-  have h_w6 : w6.toNat = x4.toNat / 2^63 := by simp only [w6, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w6 := UInt64.toNat_lt w6
-  have k4 : d5.toNat + b.l1.toNat + w3.toNat = a.l1.toNat + 2^29 * w6.toNat := by omega
-  have k5 : d5.toNat < 2^29 := by omega
-  have k6 : w6.toNat ≤ 1 := by omega
-  clear h_x4 l_x4 h_d5 l_d5 h_w6 l_w6
-  have h_x7 : x7.toNat = (a.l2.toNat + 2^65 - b.l2.toNat - w6.toNat) % 2^64 := by simp only [x7, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x7 := UInt64.toNat_lt x7
-  have h_d8 : d8.toNat = x7.toNat % 2^29 := by simp only [d8, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d8 := UInt64.toNat_lt d8
-  have h_w9 : w9.toNat = x7.toNat / 2^63 := by simp only [w9, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w9 := UInt64.toNat_lt w9
-  have k7 : d8.toNat + b.l2.toNat + w6.toNat = a.l2.toNat + 2^29 * w9.toNat := by omega
-  have k8 : d8.toNat < 2^29 := by omega
-  have k9 : w9.toNat ≤ 1 := by omega
-  clear h_x7 l_x7 h_d8 l_d8 h_w9 l_w9
-  have h_x10 : x10.toNat = (a.l3.toNat + 2^65 - b.l3.toNat - w9.toNat) % 2^64 := by simp only [x10, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x10 := UInt64.toNat_lt x10
-  have h_d11 : d11.toNat = x10.toNat % 2^29 := by simp only [d11, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d11 := UInt64.toNat_lt d11
-  have h_w12 : w12.toNat = x10.toNat / 2^63 := by simp only [w12, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w12 := UInt64.toNat_lt w12
-  have k10 : d11.toNat + b.l3.toNat + w9.toNat = a.l3.toNat + 2^29 * w12.toNat := by omega
-  have k11 : d11.toNat < 2^29 := by omega
-  have k12 : w12.toNat ≤ 1 := by omega
-  clear h_x10 l_x10 h_d11 l_d11 h_w12 l_w12
-  have h_x13 : x13.toNat = (a.l4.toNat + 2^65 - b.l4.toNat - w12.toNat) % 2^64 := by simp only [x13, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x13 := UInt64.toNat_lt x13
-  have h_d14 : d14.toNat = x13.toNat % 2^29 := by simp only [d14, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d14 := UInt64.toNat_lt d14
-  have h_w15 : w15.toNat = x13.toNat / 2^63 := by simp only [w15, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w15 := UInt64.toNat_lt w15
-  have k13 : d14.toNat + b.l4.toNat + w12.toNat = a.l4.toNat + 2^29 * w15.toNat := by omega
-  have k14 : d14.toNat < 2^29 := by omega
-  have k15 : w15.toNat ≤ 1 := by omega
-  clear h_x13 l_x13 h_d14 l_d14 h_w15 l_w15
-  have h_x16 : x16.toNat = (a.l5.toNat + 2^65 - b.l5.toNat - w15.toNat) % 2^64 := by simp only [x16, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x16 := UInt64.toNat_lt x16
-  have h_d17 : d17.toNat = x16.toNat % 2^29 := by simp only [d17, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d17 := UInt64.toNat_lt d17
-  have h_w18 : w18.toNat = x16.toNat / 2^63 := by simp only [w18, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w18 := UInt64.toNat_lt w18
-  have k16 : d17.toNat + b.l5.toNat + w15.toNat = a.l5.toNat + 2^29 * w18.toNat := by omega
-  have k17 : d17.toNat < 2^29 := by omega
-  have k18 : w18.toNat ≤ 1 := by omega
-  clear h_x16 l_x16 h_d17 l_d17 h_w18 l_w18
-  have h_x19 : x19.toNat = (a.l6.toNat + 2^65 - b.l6.toNat - w18.toNat) % 2^64 := by simp only [x19, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x19 := UInt64.toNat_lt x19
-  have h_d20 : d20.toNat = x19.toNat % 2^29 := by simp only [d20, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d20 := UInt64.toNat_lt d20
-  have h_w21 : w21.toNat = x19.toNat / 2^63 := by simp only [w21, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w21 := UInt64.toNat_lt w21
-  have k19 : d20.toNat + b.l6.toNat + w18.toNat = a.l6.toNat + 2^29 * w21.toNat := by omega
-  have k20 : d20.toNat < 2^29 := by omega
-  have k21 : w21.toNat ≤ 1 := by omega
-  clear h_x19 l_x19 h_d20 l_d20 h_w21 l_w21
-  have h_x22 : x22.toNat = (a.l7.toNat + 2^65 - b.l7.toNat - w21.toNat) % 2^64 := by simp only [x22, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x22 := UInt64.toNat_lt x22
-  have h_d23 : d23.toNat = x22.toNat % 2^29 := by simp only [d23, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d23 := UInt64.toNat_lt d23
-  have h_w24 : w24.toNat = x22.toNat / 2^63 := by simp only [w24, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w24 := UInt64.toNat_lt w24
-  have k22 : d23.toNat + b.l7.toNat + w21.toNat = a.l7.toNat + 2^29 * w24.toNat := by omega
-  have k23 : d23.toNat < 2^29 := by omega
-  have k24 : w24.toNat ≤ 1 := by omega
-  clear h_x22 l_x22 h_d23 l_d23 h_w24 l_w24
-  have h_x25 : x25.toNat = (a.l8.toNat + 2^65 - b.l8.toNat - w24.toNat) % 2^64 := by simp only [x25, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_x25 := UInt64.toNat_lt x25
-  have h_d26 : d26.toNat = x25.toNat % 2^29 := by simp only [d26, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_d26 := UInt64.toNat_lt d26
-  have h_w27 : w27.toNat = x25.toNat / 2^63 := by simp only [w27, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
-  have l_w27 := UInt64.toNat_lt w27
-  have k25 : d26.toNat + b.l8.toNat + w24.toNat = a.l8.toNat + 2^29 * w27.toNat := by omega
-  have k26 : d26.toNat < 2^29 := by omega
-  have k27 : w27.toNat ≤ 1 := by omega
-  clear h_x25 l_x25 h_d26 l_d26 h_w27 l_w27
+  obtain ⟨k1, k2, k3⟩ : d2.toNat + b.l0.toNat + 0 = a.l0.toNat + 2^29 * w3.toNat ∧ d2.toNat < 2^29 ∧ w3.toNat ≤ 1 := sub_limb a.l0 b.l0 ha0 hb0
+  have ps1 := chain (B' := 2^29) (I := 0) (O := 0) (c := 0) (B := 1) rfl k1 (by decide)
+  clear k1
+  obtain ⟨k4, k5, k6⟩ : d5.toNat + b.l1.toNat + w3.toNat = a.l1.toNat + 2^29 * w6.toNat ∧ d5.toNat < 2^29 ∧ w6.toNat ≤ 1 := sub_limb_b a.l1 b.l1 w3 ha1 hb1 k3
+  have ps2 := chain (B' := 2^58) ps1 k4 (by decide)
+  clear k4 ps1
+  obtain ⟨k7, k8, k9⟩ : d8.toNat + b.l2.toNat + w6.toNat = a.l2.toNat + 2^29 * w9.toNat ∧ d8.toNat < 2^29 ∧ w9.toNat ≤ 1 := sub_limb_b a.l2 b.l2 w6 ha2 hb2 k6
+  have ps3 := chain (B' := 2^87) ps2 k7 (by decide)
+  clear k7 ps2
+  obtain ⟨k10, k11, k12⟩ : d11.toNat + b.l3.toNat + w9.toNat = a.l3.toNat + 2^29 * w12.toNat ∧ d11.toNat < 2^29 ∧ w12.toNat ≤ 1 := sub_limb_b a.l3 b.l3 w9 ha3 hb3 k9
+  have ps4 := chain (B' := 2^116) ps3 k10 (by decide)
+  clear k10 ps3
+  obtain ⟨k13, k14, k15⟩ : d14.toNat + b.l4.toNat + w12.toNat = a.l4.toNat + 2^29 * w15.toNat ∧ d14.toNat < 2^29 ∧ w15.toNat ≤ 1 := sub_limb_b a.l4 b.l4 w12 ha4 hb4 k12
+  have ps5 := chain (B' := 2^145) ps4 k13 (by decide)
+  clear k13 ps4
+  obtain ⟨k16, k17, k18⟩ : d17.toNat + b.l5.toNat + w15.toNat = a.l5.toNat + 2^29 * w18.toNat ∧ d17.toNat < 2^29 ∧ w18.toNat ≤ 1 := sub_limb_b a.l5 b.l5 w15 ha5 hb5 k15
+  have ps6 := chain (B' := 2^174) ps5 k16 (by decide)
+  clear k16 ps5
+  obtain ⟨k19, k20, k21⟩ : d20.toNat + b.l6.toNat + w18.toNat = a.l6.toNat + 2^29 * w21.toNat ∧ d20.toNat < 2^29 ∧ w21.toNat ≤ 1 := sub_limb_b a.l6 b.l6 w18 ha6 hb6 k18
+  have ps7 := chain (B' := 2^203) ps6 k19 (by decide)
+  clear k19 ps6
+  obtain ⟨k22, k23, k24⟩ : d23.toNat + b.l7.toNat + w21.toNat = a.l7.toNat + 2^29 * w24.toNat ∧ d23.toNat < 2^29 ∧ w24.toNat ≤ 1 := sub_limb_b a.l7 b.l7 w21 ha7 hb7 k21
+  have ps8 := chain (B' := 2^232) ps7 k22 (by decide)
+  clear k22 ps7
+  obtain ⟨k25, k26, k27⟩ : d26.toNat + b.l8.toNat + w24.toNat = a.l8.toNat + 2^29 * w27.toNat ∧ d26.toNat < 2^29 ∧ w27.toNat ≤ 1 := sub_limb_b a.l8 b.l8 w24 ha8 hb8 k24
+  have ps9 := chain (B' := 2^261) ps8 k25 (by decide)
+  clear k25 ps8
   have h_s28 : s28.toNat = d2.toNat + 1 := by simp only [s28, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s28 := UInt64.toNat_lt s28
   have h_t29 : t29.toNat = s28.toNat % 2^29 := by simp only [t29, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_t29 := UInt64.toNat_lt t29
   have h_c30 : c30.toNat = s28.toNat / 2^29 := by simp only [c30, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_c30 := UInt64.toNat_lt c30
-  have k28 : d2.toNat + 1 = t29.toNat + 2^29 * c30.toNat := by omega
+  have k28 : d2.toNat + 1 + 0 = t29.toNat + 2^29 * c30.toNat := by omega
   have k29 : t29.toNat < 2^29 := by omega
   have k30 : c30.toNat ≤ 1 := by omega
   clear h_s28 l_s28 h_t29 l_t29 h_c30 l_c30
+  have ps10 := chain (B' := 2^29) (I := 0) (O := 0) (c := 0) (B := 1) rfl k28 (by decide)
+  clear k28
   have h_s31 : s31.toNat = d5.toNat + 536870904 + c30.toNat := by simp only [s31, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s31 := UInt64.toNat_lt s31
   have h_t32 : t32.toNat = s31.toNat % 2^29 := by simp only [t32, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
@@ -1404,6 +1402,8 @@ theorem sub_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have k32 : t32.toNat < 2^29 := by omega
   have k33 : c33.toNat ≤ 1 := by omega
   clear h_s31 l_s31 h_t32 l_t32 h_c33 l_c33
+  have ps11 := chain (B' := 2^58) ps10 k31 (by decide)
+  clear k31 ps10
   have h_s34 : s34.toNat = d8.toNat + 529989567 + c33.toNat := by simp only [s34, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s34 := UInt64.toNat_lt s34
   have h_t35 : t35.toNat = s34.toNat % 2^29 := by simp only [t35, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
@@ -1414,6 +1414,8 @@ theorem sub_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have k35 : t35.toNat < 2^29 := by omega
   have k36 : c36.toNat ≤ 1 := by omega
   clear h_s34 l_s34 h_t35 l_t35 h_c36 l_c36
+  have ps12 := chain (B' := 2^87) ps11 k34 (by decide)
+  clear k34 ps11
   have h_s37 : s37.toNat = d11.toNat + 457704959 + c36.toNat := by simp only [s37, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s37 := UInt64.toNat_lt s37
   have h_t38 : t38.toNat = s37.toNat % 2^29 := by simp only [t38, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
@@ -1424,6 +1426,8 @@ theorem sub_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have k38 : t38.toNat < 2^29 := by omega
   have k39 : c39.toNat ≤ 1 := by omega
   clear h_s37 l_s37 h_t38 l_t38 h_c39 l_c39
+  have ps13 := chain (B' := 2^116) ps12 k37 (by decide)
+  clear k37 ps12
   have h_s40 : s40.toNat = d14.toNat + 494949691 + c39.toNat := by simp only [s40, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s40 := UInt64.toNat_lt s40
   have h_t41 : t41.toNat = s40.toNat % 2^29 := by simp only [t41, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
@@ -1434,6 +1438,8 @@ theorem sub_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have k41 : t41.toNat < 2^29 := by omega
   have k42 : c42.toNat ≤ 1 := by omega
   clear h_s40 l_s40 h_t41 l_t41 h_c42 l_c42
+  have ps14 := chain (B' := 2^145) ps13 k40 (by decide)
+  clear k40 ps13
   have h_s43 : s43.toNat = d17.toNat + 201589968 + c42.toNat := by simp only [s43, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s43 := UInt64.toNat_lt s43
   have h_t44 : t44.toNat = s43.toNat % 2^29 := by simp only [t44, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
@@ -1444,6 +1450,8 @@ theorem sub_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have k44 : t44.toNat < 2^29 := by omega
   have k45 : c45.toNat ≤ 1 := by omega
   clear h_s43 l_s43 h_t44 l_t44 h_c45 l_c45
+  have ps15 := chain (B' := 2^174) ps14 k43 (by decide)
+  clear k43 ps14
   have h_s46 : s46.toNat = d20.toNat + 354471143 + c45.toNat := by simp only [s46, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s46 := UInt64.toNat_lt s46
   have h_t47 : t47.toNat = s46.toNat % 2^29 := by simp only [t47, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
@@ -1454,6 +1462,8 @@ theorem sub_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have k47 : t47.toNat < 2^29 := by omega
   have k48 : c48.toNat ≤ 1 := by omega
   clear h_s46 l_s46 h_t47 l_t47 h_c48 l_c48
+  have ps16 := chain (B' := 2^203) ps15 k46 (by decide)
+  clear k46 ps15
   have h_s49 : s49.toNat = d23.toNat + 174404527 + c48.toNat := by simp only [s49, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s49 := UInt64.toNat_lt s49
   have h_t50 : t50.toNat = s49.toNat % 2^29 := by simp only [t50, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
@@ -1464,6 +1474,8 @@ theorem sub_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have k50 : t50.toNat < 2^29 := by omega
   have k51 : c51.toNat ≤ 1 := by omega
   clear h_s49 l_s49 h_t50 l_t50 h_c51 l_c51
+  have ps17 := chain (B' := 2^232) ps16 k49 (by decide)
+  clear k49 ps16
   have h_s52 : s52.toNat = d26.toNat + 7597479 + c51.toNat := by simp only [s52, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
   have l_s52 := UInt64.toNat_lt s52
   have h_t53 : t53.toNat = s52.toNat % 2^29 := by simp only [t53, UInt64.toNat_add, UInt64.toNat_mul, UInt64.toNat_sub, UInt64.reduceToNat, land_mask, shr29, shr63] <;> omega
@@ -1474,11 +1486,59 @@ theorem sub_spec (a b : Elem) (ha : a.Ok) (hb : b.Ok) :
   have k53 : t53.toNat < 2^29 := by omega
   have k54 : c54.toNat ≤ 1 := by omega
   clear h_s52 l_s52 h_t53 l_t53 h_c54 l_c54
-  have sum0 : d2.toNat * 2^0 + d5.toNat * 2^29 + d8.toNat * 2^58 + d11.toNat * 2^87 + d14.toNat * 2^116 + d17.toNat * 2^145 + d20.toNat * 2^174 + d23.toNat * 2^203 + d26.toNat * 2^232 + b.l0.toNat * 2^0 + b.l1.toNat * 2^29 + b.l2.toNat * 2^58 + b.l3.toNat * 2^87 + b.l4.toNat * 2^116 + b.l5.toNat * 2^145 + b.l6.toNat * 2^174 + b.l7.toNat * 2^203 + b.l8.toNat * 2^232 = a.l0.toNat * 2^0 + a.l1.toNat * 2^29 + a.l2.toNat * 2^58 + a.l3.toNat * 2^87 + a.l4.toNat * 2^116 + a.l5.toNat * 2^145 + a.l6.toNat * 2^174 + a.l7.toNat * 2^203 + a.l8.toNat * 2^232 + 2^261 * w27.toNat := by omega
-  have sum1 : t29.toNat * 2^0 + t32.toNat * 2^29 + t35.toNat * 2^58 + t38.toNat * 2^87 + t41.toNat * 2^116 + t44.toNat * 2^145 + t47.toNat * 2^174 + t50.toNat * 2^203 + t53.toNat * 2^232 + 2^261 * c54.toNat = d2.toNat * 2^0 + d5.toNat * 2^29 + d8.toNat * 2^58 + d11.toNat * 2^87 + d14.toNat * 2^116 + d17.toNat * 2^145 + d20.toNat * 2^174 + d23.toNat * 2^203 + d26.toNat * 2^232 + 52435875175126190479447740508185965837690552500527637822603658699938581184513 := by omega
-  clear k1 k3 k4 k6 k7 k9 k10 k12 k13 k15 k16 k18 k19 k21 k22 k24 k25 k28 k30 k31 k33 k34 k36 k37 k39 k40 k42 k43 k45 k46 k48 k49 k51 k52
+  have ps18 := chain (B' := 2^261) ps17 k52 (by decide)
+  clear k52 ps17
+  clear_value x1 d2 w3 x4 d5 w6 x7 d8 w9 x10 d11 w12 x13 d14 w15 x16 d17 w18 x19 d20 w21 x22 d23 w24 x25 d26 w27 s28 t29 c30 s31 t32 c33 s34 t35 c36 s37 t38 c39 s40 t41 c42 s43 t44 c45 s46 t47 c48 s49 t50 c51 s52 t53 c54
+  clear k30 k33 k36 k39 k42 k45 k48 k51
+  unfold Hide at ps9 ps18
+  have e1 : (d2.toNat * 2^0 + d5.toNat * 2^29 + d8.toNat * 2^58 + d11.toNat * 2^87 + d14.toNat * 2^116 + d17.toNat * 2^145 + d20.toNat * 2^174 + d23.toNat * 2^203 + d26.toNat * 2^232) + (b.l0.toNat * 2^0 + b.l1.toNat * 2^29 + b.l2.toNat * 2^58 + b.l3.toNat * 2^87 + b.l4.toNat * 2^116 + b.l5.toNat * 2^145 + b.l6.toNat * 2^174 + b.l7.toNat * 2^203 + b.l8.toNat * 2^232) = (a.l0.toNat * 2^0 + a.l1.toNat * 2^29 + a.l2.toNat * 2^58 + a.l3.toNat * 2^87 + a.l4.toNat * 2^116 + a.l5.toNat * 2^145 + a.l6.toNat * 2^174 + a.l7.toNat * 2^203 + a.l8.toNat * 2^232) + 2^261 * w27.toNat := by
+    clear ha0 ha1 ha2 ha3 ha4 ha5 ha6 ha7 ha8 hav hb0 hb1 hb2 hb3 hb4 hb5 hb6 hb7 hb8 hbv k2 k3 k5 k6 k8 k9 k11 k12 k14 k15 k17 k18 k20 k21 k23 k24 k26 k27 k29 k32 k35 k38 k41 k44 k47 k50 k53 k54
+    grind
+  have e2 : (t29.toNat * 2^0 + t32.toNat * 2^29 + t35.toNat * 2^58 + t38.toNat * 2^87 + t41.toNat * 2^116 + t44.toNat * 2^145 + t47.toNat * 2^174 + t50.toNat * 2^203 + t53.toNat * 2^232) + 2^261 * c54.toNat = (d2.toNat * 2^0 + d5.toNat * 2^29 + d8.toNat * 2^58 + d11.toNat * 2^87 + d14.toNat * 2^116 + d17.toNat * 2^145 + d20.toNat * 2^174 + d23.toNat * 2^203 + d26.toNat * 2^232) + 52435875175126190479447740508185965837690552500527637822603658699938581184513 := by
+    clear ha0 ha1 ha2 ha3 ha4 ha5 ha6 ha7 ha8 hav hb0 hb1 hb2 hb3 hb4 hb5 hb6 hb7 hb8 hbv k2 k3 k5 k6 k8 k9 k11 k12 k14 k15 k17 k18 k20 k21 k23 k24 k26 k27 k29 k32 k35 k38 k41 k44 k47 k50 k53 k54
+    grind
+  clear ps9 ps18
+  have bd0_0 : d2.toNat * 2^0 < 2^29 := bfirst k2
+  have bd0_1 : d2.toNat * 2^0 + d5.toNat * 2^29 < 2^58 := bstep bd0_0 k5 (by decide)
+  clear bd0_0
+  have bd0_2 : d2.toNat * 2^0 + d5.toNat * 2^29 + d8.toNat * 2^58 < 2^87 := bstep bd0_1 k8 (by decide)
+  clear bd0_1
+  have bd0_3 : d2.toNat * 2^0 + d5.toNat * 2^29 + d8.toNat * 2^58 + d11.toNat * 2^87 < 2^116 := bstep bd0_2 k11 (by decide)
+  clear bd0_2
+  have bd0_4 : d2.toNat * 2^0 + d5.toNat * 2^29 + d8.toNat * 2^58 + d11.toNat * 2^87 + d14.toNat * 2^116 < 2^145 := bstep bd0_3 k14 (by decide)
+  clear bd0_3
+  have bd0_5 : d2.toNat * 2^0 + d5.toNat * 2^29 + d8.toNat * 2^58 + d11.toNat * 2^87 + d14.toNat * 2^116 + d17.toNat * 2^145 < 2^174 := bstep bd0_4 k17 (by decide)
+  clear bd0_4
+  have bd0_6 : d2.toNat * 2^0 + d5.toNat * 2^29 + d8.toNat * 2^58 + d11.toNat * 2^87 + d14.toNat * 2^116 + d17.toNat * 2^145 + d20.toNat * 2^174 < 2^203 := bstep bd0_5 k20 (by decide)
+  clear bd0_5
+  have bd0_7 : d2.toNat * 2^0 + d5.toNat * 2^29 + d8.toNat * 2^58 + d11.toNat * 2^87 + d14.toNat * 2^116 + d17.toNat * 2^145 + d20.toNat * 2^174 + d23.toNat * 2^203 < 2^232 := bstep bd0_6 k23 (by decide)
+  clear bd0_6
+  have bd0_8 : d2.toNat * 2^0 + d5.toNat * 2^29 + d8.toNat * 2^58 + d11.toNat * 2^87 + d14.toNat * 2^116 + d17.toNat * 2^145 + d20.toNat * 2^174 + d23.toNat * 2^203 + d26.toNat * 2^232 < 2^261 := bstep bd0_7 k26 (by decide)
+  clear bd0_7
+  have bd1_0 : t29.toNat * 2^0 < 2^29 := bfirst k29
+  have bd1_1 : t29.toNat * 2^0 + t32.toNat * 2^29 < 2^58 := bstep bd1_0 k32 (by decide)
+  clear bd1_0
+  have bd1_2 : t29.toNat * 2^0 + t32.toNat * 2^29 + t35.toNat * 2^58 < 2^87 := bstep bd1_1 k35 (by decide)
+  clear bd1_1
+  have bd1_3 : t29.toNat * 2^0 + t32.toNat * 2^29 + t35.toNat * 2^58 + t38.toNat * 2^87 < 2^116 := bstep bd1_2 k38 (by decide)
+  clear bd1_2
+  have bd1_4 : t29.toNat * 2^0 + t32.toNat * 2^29 + t35.toNat * 2^58 + t38.toNat * 2^87 + t41.toNat * 2^116 < 2^145 := bstep bd1_3 k41 (by decide)
+  clear bd1_3
+  have bd1_5 : t29.toNat * 2^0 + t32.toNat * 2^29 + t35.toNat * 2^58 + t38.toNat * 2^87 + t41.toNat * 2^116 + t44.toNat * 2^145 < 2^174 := bstep bd1_4 k44 (by decide)
+  clear bd1_4
+  have bd1_6 : t29.toNat * 2^0 + t32.toNat * 2^29 + t35.toNat * 2^58 + t38.toNat * 2^87 + t41.toNat * 2^116 + t44.toNat * 2^145 + t47.toNat * 2^174 < 2^203 := bstep bd1_5 k47 (by decide)
+  clear bd1_5
+  have bd1_7 : t29.toNat * 2^0 + t32.toNat * 2^29 + t35.toNat * 2^58 + t38.toNat * 2^87 + t41.toNat * 2^116 + t44.toNat * 2^145 + t47.toNat * 2^174 + t50.toNat * 2^203 < 2^232 := bstep bd1_6 k50 (by decide)
+  clear bd1_6
+  have bd1_8 : t29.toNat * 2^0 + t32.toNat * 2^29 + t35.toNat * 2^58 + t38.toNat * 2^87 + t41.toNat * 2^116 + t44.toNat * 2^145 + t47.toNat * 2^174 + t50.toNat * 2^203 + t53.toNat * 2^232 < 2^261 := bstep bd1_7 k53 (by decide)
+  clear bd1_7
   split <;> rename_i hc <;>
     simp only [bne_iff_ne, ne_eq, Bool.or_eq_true, beq_iff_eq, ← UInt64.toNat_inj, UInt64.reduceToNat, Bool.not_eq_true'] at hc <;>
-    simp only [Elem.Ok, Elem.val, p] <;> omega
+    simp only [Elem.Ok, Elem.val, p] <;>
+    generalize t29.toNat * 2^0 + t32.toNat * 2^29 + t35.toNat * 2^58 + t38.toNat * 2^87 + t41.toNat * 2^116 + t44.toNat * 2^145 + t47.toNat * 2^174 + t50.toNat * 2^203 + t53.toNat * 2^232 = V0 at * <;>
+    generalize d2.toNat * 2^0 + d5.toNat * 2^29 + d8.toNat * 2^58 + d11.toNat * 2^87 + d14.toNat * 2^116 + d17.toNat * 2^145 + d20.toNat * 2^174 + d23.toNat * 2^203 + d26.toNat * 2^232 = V1 at * <;>
+    generalize a.l0.toNat * 2^0 + a.l1.toNat * 2^29 + a.l2.toNat * 2^58 + a.l3.toNat * 2^87 + a.l4.toNat * 2^116 + a.l5.toNat * 2^145 + a.l6.toNat * 2^174 + a.l7.toNat * 2^203 + a.l8.toNat * 2^232 = V2 at * <;>
+    generalize b.l0.toNat * 2^0 + b.l1.toNat * 2^29 + b.l2.toNat * 2^58 + b.l3.toNat * 2^87 + b.l4.toNat * 2^116 + b.l5.toNat * 2^145 + b.l6.toNat * 2^174 + b.l7.toNat * 2^203 + b.l8.toNat * 2^232 = V3 at * <;>
+    omega
 
 end JamCrypto.Fast.Fr

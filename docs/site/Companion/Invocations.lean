@@ -171,7 +171,7 @@ entry point 5:
 
 $$`\Psi_A \colon (\mathbf{e}, t, s, g, \mathbf{i}) \mapsto \begin{cases} (\mathbf{e}, \mathbf{w} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \{\}, \mathbf{t} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} [], y \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \emptyset, u \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} 0, \mathbf{p} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} []) & \text{if } s \notin \mathcal{K}(\mathbf{e}_\mathbf{d}) \\ (\mathbf{e} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \mathbf{s}, \mathbf{w}, \mathbf{t} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} [], y \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} \emptyset, u \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} 0, \mathbf{p} \mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}} []) & \text{otherwise if } \mathfrak{j} = \emptyset \vee |\mathfrak{j}| > \mathsf{W}_C \\ C(\Psi_M(\mathfrak{j}, 5, g, \mathcal{E}(t, s, |\mathbf{i}|), F, I(\mathbf{s}, \mathbf{w}, s)^2)) & \text{otherwise} \end{cases} \qquad \text{(B.9)}`
 
-$$`\begin{aligned} \text{where } & \mathfrak{j} = \mathbf{e}_\mathbf{d}[s]_\mathbf{c} \\ \text{and } & \mathbf{s} = \mathbf{e} \text{ except } \mathbf{s}_\mathbf{d}[s]_b = \mathbf{e}_\mathbf{d}[s]_b + \textstyle\sum_{r \in \mathbf{x}, r_u = \bot} r_a,\; \mathbf{s}_\mathbf{d}[s]_x = \mathbf{e}_\mathbf{d}[s]_x + \textstyle\sum_{r \in \mathbf{x}, r_u = \top} r_a \\ \text{and } & \mathbf{w} = \{ s \mid r \in \mathbf{x} \},\quad \mathbf{x} = [ i \mid i \mathrel{<\!\!-} \mathbf{i}, i \in \text{𝕥} ] \end{aligned}`
+$$`\begin{aligned} \text{where } & \mathfrak{j} = \mathbf{e}_\mathbf{d}[s]_\mathbf{c} \\ \text{and } & \mathbf{s} = \mathbf{e} \text{ except } \mathbf{s}_\mathbf{d}[s]_b = \mathbf{e}_\mathbf{d}[s]_b + \textstyle\sum_{r \in \mathbf{x}, r_u = \bot} r_a,\; \mathbf{s}_\mathbf{d}[s]_x = \mathbf{e}_\mathbf{d}[s]_x + \textstyle\sum_{r \in \mathbf{x}, r_u = \top} r_a \\ \text{and } & \mathbf{w} = \{ s \mid r \in \mathbf{x} \},\quad \mathbf{x} = [ i \mid i \mathrel{\mathrlap{<}{-}} \mathbf{i}, i \in \text{𝕥} ] \end{aligned}`
 
 Here $`b` is the balance and $`x` the supervisor balance of an account, and $`r_u` says whether a
 transfer goes to the supervisor balance. In the model, {api}`JAM.psiA` forms $`\mathbf{s}` and
@@ -656,5 +656,5 @@ These points are recorded in the model's
   also changes $`\mathbf{d}'[s]`'s balance, which conflict. The model tests $`\mathtt{CASH}` on $`s`'s
   own balances, then answers $`\mathtt{FULL}`.
 
-* *Note v0.8.1-A27, a missing work item.* $`\Psi_R` reads $`w = p_\mathbf{w}[i]` without saying what happens when the
+* *Note v0.8.1-A36, a missing work item.* $`\Psi_R` reads $`w = p_\mathbf{w}[i]` without saying what happens when the
   package has no item $`i`. The model answers $`(\texttt{BAD}, [], 0)`, as for a missing service.

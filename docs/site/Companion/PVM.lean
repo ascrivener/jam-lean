@@ -81,7 +81,7 @@ The following theorem states that `psi` satisfies the paper's recursive equation
 
 {mathdoc PVM.psi_eq}
 
-Two direct consequences: $`\Psi` never returns $`\blacktriangleright`, and it never returns more gas than it was given.
+Two consequences, each proved separately: $`\Psi` never returns $`\blacktriangleright`, and it never returns more gas than it was given.
 
 {mathdoc PVM.psi_status_ne_cont}
 
@@ -180,7 +180,8 @@ $$`\Psi_1 \colon (\mathfrak{p}, \mathbf{k}, \mathbf{j}, \imath, \varrho, \tilde\
 
 The result is {api}`PVM.StepResult`, and the function is {api}`PVM.Program.step`. A
 {api}`PVM.Program` holds the code $`\mathbf{c}`, the bitmask $`\mathbf{k}` and the jump table $`\mathbf{j}`, so they need not be passed
-separately.
+separately. The left side of (A.7) names the first argument $`\mathfrak{p}`, but the type of $`\Psi_1`, its call in (A.1)
+and the gas stage (A.8) all use the instruction data $`\mathbf{c}`; the model takes $`\mathbf{c}`.
 
 {leanSource PVM.Program.step}
 
@@ -361,8 +362,7 @@ The arithmetic of the ALU formats is in separate functions, one per format, each
 of its table: {api}`PVM.Exec.twoRegAlu` (§A.5.9), {api}`PVM.Exec.twoRegImmAlu` (§A.5.10) and
 {api}`PVM.Exec.threeRegAlu` (§A.5.13); the branch conditions are {api}`PVM.Exec.regImmBranchCond` (§A.5.8)
 and {api}`PVM.Exec.twoRegBranchCond` (§A.5.11). The model computes over $`\mathbb{N}` and $`\mathbb{Z}` as the paper does,
-reading a register with `toNat` and writing the result back (every result is already in
-$`\mathbb{N}_{2^{64}}`). Some rows of §A.5.13, for example:
+reading a register with `toNat` and writing the result back with `UInt64.ofNat`. Some rows of §A.5.13, for example:
 
 $$`\texttt{add\_32}\colon\ \varphi'_D = \mathcal{X}_4((\varphi_A + \varphi_B) \bmod 2^{32})`
 
@@ -451,14 +451,15 @@ $$`\text{let } P(x \in \mathbb{N}) \equiv \mathsf{Z}_P \left\lceil \frac{x}{\mat
 
 $$`5\mathsf{Z}_Z + Z(|\mathbf{o}|) + Z(|\mathbf{w}| + z\mathsf{Z}_P) + Z(s) + \mathsf{Z}_I \le 2^{32} \qquad \text{(A.45)}`
 
-The RAM has four sections, each starting on a zone of $`\mathsf{Z}_Z` octets and separated by at least one
-unmapped zone; everything else is inaccessible:
+The RAM has four sections. The read-only data, the read-write data with the heap, and the arguments each
+start on a zone boundary (a multiple of $`\mathsf{Z}_Z`); the stack ends on one. Between sections at least one
+zone is left unmapped, and everything outside the sections is inaccessible:
 
 $$`\forall i \in \mathbb{N}_{2^{32}} : ((\mu_{\mathbf{v}})_i, (\mu_{\mathbf{a}})_{\lfloor i / \mathsf{Z}_P \rfloor}) = \begin{cases} (\mathbf{o}_{i - \mathsf{Z}_Z}, R) & \text{if } \mathsf{Z}_Z \le i < \mathsf{Z}_Z + |\mathbf{o}| \\ (0, R) & \text{if } \mathsf{Z}_Z + |\mathbf{o}| \le i < \mathsf{Z}_Z + P(|\mathbf{o}|) \\ (\mathbf{w}_{i - (2\mathsf{Z}_Z + Z(|\mathbf{o}|))}, W) & \text{if } 2\mathsf{Z}_Z + Z(|\mathbf{o}|) \le i < 2\mathsf{Z}_Z + Z(|\mathbf{o}|) + |\mathbf{w}| \\ (0, W) & \text{if } 2\mathsf{Z}_Z + Z(|\mathbf{o}|) + |\mathbf{w}| \le i < 2\mathsf{Z}_Z + Z(|\mathbf{o}|) + P(|\mathbf{w}|) + z\mathsf{Z}_P \\ (0, W) & \text{if } 2^{32} - 2\mathsf{Z}_Z - \mathsf{Z}_I - P(s) \le i < 2^{32} - 2\mathsf{Z}_Z - \mathsf{Z}_I \\ (\mathbf{a}_{i - (2^{32} - \mathsf{Z}_Z - \mathsf{Z}_I)}, R) & \text{if } 2^{32} - \mathsf{Z}_Z - \mathsf{Z}_I \le i < 2^{32} - \mathsf{Z}_Z - \mathsf{Z}_I + |\mathbf{a}| \\ (0, R) & \text{if } 2^{32} - \mathsf{Z}_Z - \mathsf{Z}_I + |\mathbf{a}| \le i < 2^{32} - \mathsf{Z}_Z - \mathsf{Z}_I + P(|\mathbf{a}|) \\ (0, \emptyset) & \text{otherwise} \end{cases} \qquad \text{(A.46)}`
 
 $$`\forall i \in \mathbb{N}_{13} : \varphi_i = \begin{cases} 2^{32} - 2^{16} & \text{if } i = 0 \\ 2^{32} - 2\mathsf{Z}_Z - \mathsf{Z}_I & \text{if } i = 1 \\ 2^{32} - \mathsf{Z}_Z - \mathsf{Z}_I & \text{if } i = 7 \\ |\mathbf{a}| & \text{if } i = 8 \\ 0 & \text{otherwise} \end{cases} \qquad \text{(A.47)}`
 
-So $`\varphi_1` is the top of the stack, $`\varphi_7` and $`\varphi_8` point at the arguments, and $`\varphi_0` is the return address
+So $`\varphi_1` is the top of the stack, $`\varphi_7` points at the arguments and $`\varphi_8` is their length, and $`\varphi_0` is the return address
 that halts (eq. (A.22)). In the model's code the paper's $`P` and $`Z` are {api}`PVM.roundPage` and {api}`PVM.roundZone`.
 
 {leanSource PVM.standardInit}
@@ -470,7 +471,10 @@ that halts (eq. (A.22)). In the model's code the paper's $`P` and $`Z` are {api}
 {leanSource PVM.initialRegs}
 
 The model sets page access first and then writes the three data sections. The two theorems below
-read the result back, page by page and octet by octet, in the shape of eq. (A.46):
+read the result back. The first gives each page's access mode from the four page assignments, a later one
+taking precedence where two would overlap. The second gives each octet, for a blob whose three data
+sections end below $`2^{32}` (its hypotheses `hro`, `hrw` and `harg`). Neither states that the result equals
+eq. (A.46) as a whole:
 
 {mathdoc PVM.initialMemory_pages}
 
@@ -534,14 +538,14 @@ nothing is left, else advances a cycle:
 
 $$`\mathfrak{X}(\mathbf{c}, \mathbf{k}, \mathbf{x}) = \begin{cases} \mathfrak{X}(\mathbf{c}, \mathbf{k}, \mathfrak{X}'(\mathbf{c}, \mathbf{k}, \mathbf{x})) & \text{if } \mathbf{x}_{\imath} \ne \emptyset \wedge \check{d}(\mathbf{c}, \mathbf{k}, \mathbf{x}_{\imath}) \le \mathbf{x}_d \wedge l < 32 \\ \mathfrak{X}(\mathbf{c}, \mathbf{k}, \mathfrak{X}''(\mathbf{x})) & \text{otherwise if } \mathfrak{S}(\mathbf{x}) \ne \emptyset \wedge \mathbf{x}_e > 0 \\ \mathbf{x} & \text{otherwise if } \mathbf{x}_{\imath} = \emptyset \wedge l = 0 \\ \mathfrak{X}(\mathbf{c}, \mathbf{k}, \mathfrak{X}'''(\mathbf{x})) & \text{otherwise} \end{cases}`
 
-$$`\text{where } l = |[r \mid r \mathrel{\hat\in} \mathbf{x}_{\mathbf{r}}, r_s \ne \emptyset]| \qquad \text{(A.55)}`
+$$`\text{where } l = |[r \mid r \mathrel{\mathrlap{<}{-}} \mathbf{x}_{\mathbf{r}}, r_s \ne \emptyset]| \qquad \text{(A.55)}`
 
 {leanSource PVM.Sim.transition}
 
 The four steps:
 
-* $`\mathfrak{X}'` (eq. (A.56)) sends `move_reg` to $`\mathfrak{X}^{\text{mov}}` (eq. (A.57)), which only renames registers in the
-  reorder buffer, and every other instruction to $`\mathfrak{X}^{\text{dec}}` (eq. (A.58)), which appends a DEC entry
+* $`\mathfrak{X}'` (eq. (A.56)) sends `move_reg` to $`\mathfrak{X}^{\text{mov}}` (eq. (A.57)), which advances $`\imath`, uses one decode slot
+  and renames registers in the reorder buffer without adding an entry, and every other instruction to $`\mathfrak{X}^{\text{dec}}` (eq. (A.58)), which appends a DEC entry
   whose dependencies are the entries that clobber one of its source registers. After a terminator,
   $`\mathbf{x}_{\imath}` becomes $`\emptyset`.
 * $`\mathfrak{X}''` (eq. (A.59)) starts the entry $`\mathfrak{S}(\mathbf{x})`: it becomes EXE and takes its execution units.
@@ -584,7 +588,7 @@ tag := "pvm-gastables"
 %%%
 
 §A.10 gives, for every instruction, the cycles $`\check{c}` it needs, the decode slots $`\check{d}` and the execution
-units $`\check{x} = (\check{x}_A, \check{x}_L, \check{x}_S, \check{x}_M, \check{x}_D)`. Most cells are numbers; four are functions. $`\mathfrak{P}` depends
+units $`\check{x} = (\check{x}_A, \check{x}_L, \check{x}_S, \check{x}_M, \check{x}_D)`. Most cells are numbers; three are functions and one is a named constant. $`\mathfrak{P}` depends
 on whether the destination overlaps a source register, $`\mathfrak{P}_S` (for the non-immediate shifts and
 rotates) only on the first source register, $`\mathfrak{m}` is the cost of memory accesses (used by the loads), and $`\mathfrak{b}` the cost of a branch:
 
@@ -642,11 +646,13 @@ Most of these points are recorded in the model's
 * *Note 13, §A.6.* $`\Psi_H^*` need not terminate: a handler that returns more gas than it was given can
   make it recurse forever. The model proves termination for handlers that never add gas, which
   covers the handlers of all three invocations of Appendix B; for any other handler, `psiHStar` returns ☇ when its fuel
-  runs out.
+  runs out. Likewise $`\Psi_M`'s gas used, $`u = \varrho - \varrho'`, is computed with truncated subtraction
+  ({api}`PVM.invocationResult`), which differs from the paper only if $`\varrho' > \varrho`; that needs a handler
+  that adds gas, and the three handlers of Appendix B are proved not to.
 * *Note 17, §A.7.* $`Y` takes arguments $`\mathbf{a} \in \mathbb{B}_{:\mathsf{Z}_I}`, and the paper does not say what happens to a longer
   argument. The model returns $`\emptyset` ({api}`PVM.validJamBlob?`), so $`\Psi_M` panics.
-* *Note v0.8.1-A26, §A.8.* $`\Psi_H` returns seven components, including the flag $`\tilde\varrho`, while $`R` in eq. (A.48) takes six. The
+* *Note v0.8.1-A35, §A.8.* $`\Psi_H` returns seven components, including the flag $`\tilde\varrho`, while $`R` in eq. (A.48) takes six. The
   model reads $`R` as ignoring the flag ({api}`PVM.invocationResult`).
-* *`neg_add_imm_32`, §A.5.10.* $`\varphi'_A = \mathcal{X}_4((\nu_X + 2^{32} - \varphi_B) \bmod 2^{32})` is computed over $`\mathbb{Z}`: $`\varphi_B` may exceed
-  $`2^{32}`, making the intermediate value negative, and the model takes the mathematical (non-negative)
+* *`neg_add_imm_32`, §A.5.10.* $`\varphi'_A = \mathcal{X}_4((\nu_X + 2^{32} - \varphi_B) \bmod 2^{32})` is computed over $`\mathbb{Z}`: the intermediate value is negative when
+  $`\varphi_B > \nu_X + 2^{32}`, and the model takes the mathematical (non-negative)
   remainder ({api}`PVM.Exec.twoRegImmAlu`).

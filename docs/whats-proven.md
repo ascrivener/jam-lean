@@ -1392,6 +1392,27 @@ below stay with their lines; the blob's side of them is checked (`Vendored/Field
     dropped below 𝖫.
 
   Tested in `Tests/GuaranteeTest.lean` (hand-built; no vector ties a package to its report).
+- **The gas simulation's fuel suffices** (PR #270, `PVM/Theorems/GasFuel.lean`, GP v0.8.1 §A.9):
+  `Sim.run_fuel_eq` (any fuel ≥ `Sim.fuel P s` gives the same result), so the out-of-fuel case is
+  never returned; `Program.blockCost?_isSome_of_deblob`, `Program.blockCost_eq_of_deblob` and
+  `Program.step_decode`: at every step Ψ takes, the block's simulation finishes, meets only opcodes
+  in U, and the instruction decodes, so the totality fallbacks are unreachable.
+- **Safrole** (PR #268, `JAM/Theorems/Safrole.lean`, GP v0.8.1 §6), for every successful
+  transition: `safrole_accumulator_length`, `safrole_accumulator_sorted` (unique identifiers stay
+  unique and γ_A' is strictly sorted), `outsideIn_perm`, `safrole_sealKeys_length`,
+  `safrole_ticketsMark_length`, `maxAttempts_spec`, `safrole_attempt_fits`, `safrole_shape`,
+  `safrole_eta_wf`, `safrole_wf`. No hypotheses beyond the transition succeeding (and unique
+  identifiers in γ_A for the sortedness invariant).
+- **Auditing** (PR #275, `JAM/Auditing.lean`, `JAM/Theorems/Auditing.lean`, GP v0.8.1 §17):
+  tranche 0 (`tranche0_length_le`, `tranche0Indexed_nodup_cores`, `tranche0Indexed_mem`), later
+  tranches (`laterTranche_eq_nil`, `laterSelected_mono`, `laterTranche_sublist`), U
+  (`audited_iff`, `audited_mono_positive`, `audited_mono_current`, `audited_false_of_negative`,
+  `blockAudited_iff`) and verdicts (`formVerdict_sound`, `formVerdict_good_complete`). Readings
+  v0.8.1-A8–A12 in `docs/upstream-candidates.md`. Tested in `Tests/AuditingTest.lean`.
+- **Proved fast paths** (PRs #274, #276, #278, #281, #282, #286, #287; `PVM/Fast/`, `JAM/Fast/`,
+  `JamCrypto/Fast/`): compiled code runs faster implementations, each proved equal to its spec
+  definition and swapped in by `@[csimp]`; theorems see only the spec definitions. The list is in
+  [`docs/fast-paths.md`](fast-paths.md).
 - **The field formatters of refine's 6159 `Debug` line** (PRs #189, #213, #219, #220, #221;
   `Services/Bootstrap/Fmt/Field*.lean`, `N56*.lean`), frame-only summaries in the style of the Fmt
   ones: `write_char` (59743), `pad_wp` and `pad_z2` (`pad_integral` with `{:02x}`'s options), `u8hex_ok` (60209), `fmt_write_spec` (an

@@ -20,7 +20,7 @@ file := "safrole"
 
 *In the paper:* {gpchapter}`sec:blockproduction`.
 
-*In brief:* Safrole decides who may author each block. Time is cut into six-second timeslots,
+*In brief.* Safrole decides who may author each block. Time is cut into six-second timeslots,
 grouped into epochs of 600, and each slot has exactly one key that may seal a block in it; this
 keeps the rate of blocks steady and makes forks, competing blocks with the same number of ancestors, rare.
 Normally the slots are assigned by anonymous *tickets*: in the first 500 slots of an epoch, the
@@ -36,7 +36,7 @@ validator key sets, replacing an incoming key that belongs to an offender found 
 system ({ref "disputes"}[§10]) with a null key. The header fields it relies on are in
 {ref "overview"}[§5], and the ring signatures behind the tickets in {ref "bandersnatch"}[Appendix G].
 
-Key terms:
+*Key terms:*
 
 * $`\thetime`, the most recent block's timeslot;
 * $`\entropy`, the entropy pool;

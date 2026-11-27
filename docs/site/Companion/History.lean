@@ -20,7 +20,7 @@ file := "history"
 
 *In the paper:* {gpchapter}`sec:recenthistory`.
 
-*In brief:* the chain keeps a short memory of its last eight blocks, so that later checks can
+*In brief.* the chain keeps a short memory of its last eight blocks, so that later checks can
 refer to them. When a guarantee arrives ({ref "reports"}[§11]), its work-report names a recent
 block, the *anchor*, as the context the work was done in; the anchor must be found here with a
 matching state root, output-log commitment and timeslot, and a work-package already reported in one of these
@@ -30,7 +30,7 @@ commitment, built with Keccak, to the outputs that services yield in accumulatio
 {ref "beefy"}[§18]. One detail: a block's own state root is not known until the next block, so each
 new entry records a zero placeholder, which the next block corrects.
 
-Key terms:
+*Key terms:*
 
 * $`\recenthistory`, the recent blocks, at most $`\Crecenthistorylen = 8`;
 * $`\accoutbelt`, the Accumulation Output Log, a Merkle mountain belt ({ref "merkle"}[Appendix E]);

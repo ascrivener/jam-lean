@@ -22,7 +22,7 @@ file := "accumulation"
 
 *In the paper:* {gpchapter}`sec:accumulation`.
 
-*In brief:* accumulation is where finished work changes the chain's state. For each service with
+*In brief.* accumulation is where finished work changes the chain's state. For each service with
 results in the newly available reports ({ref "reports"}[§11]), and for the services set to
 accumulate in every block, the chain runs the service's
 Accumulate code on chain, within a gas limit, and lets it update its storage, create services, send
@@ -34,7 +34,7 @@ in the next, within the same block. At the end, the outputs that services yield 
 Output Log ({ref "history"}[§7]), and the preimages supplied in the block are stored for the services
 that asked for them ({ref "accounts"}[§9]).
 
-Key terms:
+*Key terms:*
 
 * $`\justbecameavailable`, the reports that became available in this block;
 * $`\ready`, the reports waiting for their dependencies, and $`\accumulated`, the work-packages

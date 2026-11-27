@@ -20,7 +20,7 @@ file := "reports"
 
 *In the paper:* {gpchapter}`sec:reporting`.
 
-*In brief:* this chapter is the on-chain part of bringing the result of in-core work into the
+*In brief.* this chapter is the on-chain part of bringing the result of in-core work into the
 chain. A work-report enters a block in a *guarantee*: two or three of the validators assigned to
 its core sign that it is correct, and if it is not, they can be named as culprits ({ref "disputes"}[§10]).
 The report then waits on its core, which holds at most one pending report, while the data needed
@@ -33,7 +33,7 @@ authorizer from the core's pool ({ref "authorization"}[§8]), a recent anchor bl
 ({ref "history"}[§7]), and no work-package that was already reported, is waiting in the pipeline or was recently
 accumulated.
 
-Key terms:
+*Key terms:*
 
 * $`\availassignments`, each core's availability assignment: the pending report, if any, and when it was reported;
 * $`\guarantorassignments`, the core each validator guarantees for;

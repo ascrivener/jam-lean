@@ -1367,6 +1367,23 @@ below stay with their lines; the blob's side of them is checked (`Vendored/Field
   Tested in `Tests/SegmentsTest.lean` (hand-computed cases, Blake2b values from an independent
   Python reading, and the statements checked exhaustively on small sizes). No vector carries
   segments with their root.
+- **Work-package refinement** (`JAM/Guarantee.lean`, GP v0.8.1 §14.3–§14.4.1, §17.1, §11.4.1):
+  p_a, C, X/S_l/J_l from a data source, the bundle B (and its decoder), I with the error order of
+  GP #568, Ξ, the sized transpose ᵀ_m of GP #583 and the availability specifier A, the bundle
+  checks of §17.1 and `Chain.extend` (the last 𝖫 headers). Readings v0.8.1-A16–A18 in
+  `docs/upstream-candidates.md`. Proved, with axioms propext, Classical.choice and Quot.sound only:
+  - `length_segmentsClub`: \|**s**♣\| = v; `segmentsClub_nil`: with no exports every item of **s**♣ is 𝟬;
+  - `availabilitySpec_segmentRoot`: A's segment root is ℳ(**s**), its count \|**s**\|;
+  - `length_exports_itemResult`, `refineItems_exports`, `length_flatMap_exports`: I exports exactly
+    w_e segments on every branch, so Ξ exports Σ w_e;
+  - `computeReport_noExports`: if Ψ_I gives a trace within 𝖶_R, K(l) is the set of imported
+    package hashes and every w_e = 0, Ξ succeeds with A(ℋ(p), B(p, l), [], v);
+  - `checkBundle_packageData`: the bundle checks accept the data built from a data source whose
+    exported segments are 𝖶_G octets, given K(l) correct;
+  - `Chain.extend_spec`: at most 𝖫 headers, a suffix of the old ones plus the new header, nothing
+    dropped below 𝖫.
+
+  Tested in `Tests/GuaranteeTest.lean` (hand-built; no vector ties a package to its report).
 - **The field formatters of refine's 6159 `Debug` line** (PRs #189, #213, #219, #220, #221;
   `Services/Bootstrap/Fmt/Field*.lean`, `N56*.lean`), frame-only summaries in the style of the Fmt
   ones: `write_char` (59743), `pad_wp` and `pad_z2` (`pad_integral` with `{:02x}`'s options), `u8hex_ok` (60209), `fmt_write_spec` (an

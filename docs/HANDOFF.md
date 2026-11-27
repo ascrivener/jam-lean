@@ -59,10 +59,18 @@ jam-lean parent session is archived.
   the API, status block, printed equation numbers, roadmap §4–§19 + App. A–H), #296 HANDOFF (crypto),
   #299/#301 docstring math as `$…$` LaTeX (rendered by KaTeX in the book, MathJax in /api/).
   Target pin: jam-lean-target #51 (58d50d9), #52 (0539451).
-- **Docs site announcement (2026-11-27):** an independent review (archived child) found the site ready
-  after fixes, all done. Adam will post to the JAM Matrix channel himself (draft was given in chat:
-  what it is, preview/pilot, v0.8.0 vectors, proved fast paths, not a node / not audited, issues link;
-  no "verified", no other implementation named).
+- **Docs site announcement (2026-11-27):** an independent review (archived child) passed the 2-chapter
+  pilot, but Adam wants the book COMPLETE first: a chapter for everything modelled. Six writer
+  children (tag jam-lean) are writing them, each owning only docs/site/Companion/<Name>.lean plus its
+  include/roadmap lines: §3+§4–5+§7+§8 (session_01FAPLscZUCC1mbJ2HNugP9R); §9+§12
+  (session_01FAPLseHhUpiPuMxoV2BZn6, also fixing the model: a new-service index collision in Δ_*
+  makes the block invalid, GP v0.8.1 §12.2, Adam agreed); §10+§11+§13+App F
+  (session_01FAPLsayU29dVSvb32QyK2m); §14+§17+§19 (session_01FAPLsaZkX128CkuJfQXRko); App A (owns
+  Companion/PVM.lean) + App B (session_01FAPLsb9BRWF3Bn4MZsGEun); App C+D+E+G+H
+  (session_01FAPLseAg44xScxbxwHaDc1). Then: docs child updates status blocks/intro/README line and does
+  a full-site pass; an independent accuracy review of all chapters; then Adam posts to the JAM Matrix
+  channel himself (draft in chat: what it is, v0.8.0 vectors, proved fast paths, not a node / not
+  audited, issues link; no "verified", no other implementation named).
 - **Adam's decisions (2026-11-27, later):** defer the BLS12-381 Mathlib phase (above); disclosure option
   (b): the site, docstrings and README link only to the paper-readings sections of
   `docs/upstream-candidates.md` (`#gray-paper-issues`, `#paper-and-vectors`), never the whole file or
@@ -70,8 +78,9 @@ jam-lean parent session is archived.
   (Findings) and `docs/bootstrap-target.md` (Quirks) stay as they are ("no"); names in the book link
   to the API; docstring math is `$…$` LaTeX repo-wide (portability: `[\![…]\!]` not `\llbracket`,
   `\ast` not `*`); no Lean renaming to paper symbols.
-- **In flight:** docs child session_01FAPLsaPzPTn9T3iJgCH8tS: docstring-math pass step 2 (PVM done #301;
-  JAM next, then JamCrypto + site prose). One jam-lean-target pin bump when the pass finishes (text-only).
+- **In flight:** docs child session_01FAPLsaPzPTn9T3iJgCH8tS (owns site infrastructure): docstring-math
+  pass step 2 (PVM #301 merged, JAM #303, then JamCrypto + site prose), a gen_constants.py macro-expansion
+  fix, and a v0.8.1 notation-alignment pass over docstrings (ρ^†/ρ^‡, ℂ/𝕎/𝔼/ℝ, H_T/H_I, §17.2, …). One jam-lean-target pin bump when the pass finishes (text-only).
   Superseded crypto branches left on origin (jamcrypto-ring/-h2c/-bls/-fast-field, handoff-bls-deferred):
   delete only with Adam's OK.
 

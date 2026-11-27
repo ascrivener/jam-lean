@@ -51,15 +51,33 @@ import Fast modules).
   proofs: `mul_spec`, `sq_spec`, `add_spec`, `sub_spec` (each keeps the limbs reduced and computes the
   `Nat` operation mod p on Montgomery values), then the value lemmas (`value_mul`, …, `value_ofNat`,
   `toNat_eq`, `beq_eq`, `isZero_eq`) and a `LawfulField` instance. Generic lemmas are in
-  `Fast/Limbs.lean`; the interface is `Fast/FieldClass.lean`. Each field module takes about
-  3.5 min and 3.8 GB to check. (`Fq`, BLS12-381's base field on 14 limbs, is not generated yet: its
-  proofs need more memory; it is for the ring.)
+  `Fast/Limbs.lean`; the interface is `Fast/FieldClass.lean`. `Fast/Fq.lean` is BLS12-381's base
+  field 𝔽_q on fourteen limbs, generated the same way. Each column of a multiplication proof sees
+  only the bounds of its own limb products (introduced and cleared with the column), so that no
+  `omega` call sees all n² of them. Fr and Fp25519 take a few minutes each to check; Fq takes FQTIME.
 * `Fast/Sim.lean`: loops run on related states stay related (`forIn_range_rel`).
 * `Fast/EdwardsF.lean`: twisted Edwards curves over any lawful fast field, each operation the same
   sequence of field operations as `JamCrypto.Curve`/`Modular` and proved to correspond: `add`,
   `neg`, `sub`, `smul` (double-and-add), `eq`, `isZero`, `valid`, `toAffine`, `powMod`, `invMod`,
   `isSquare`, `sqrtTS`.
 * `Fast/Bandersnatch.lean`: `ietfVerify_eq`, `vrfOutput_eq`, `Thin.verify_eq`, `Thin.vrfOutput_eq`.
+* `Fast/G1F.lean`: BLS12-381's G1 over any lawful fast field with modulus q (`IsFq`), each operation
+  the same sequence of field operations as `JamCrypto.G1` and proved to correspond: `dbl`,
+  `addMixed`, `addJ`, `negJ`, `toAff` (its inversion is the reference `Fq.inv` on the value),
+  `smul`, `msm` (the reference's Pippenger bucket method, step for step), `onCurve`, `inSubgroup`,
+  `decompress`.
+* `Fast/PairingF.lean`: 𝔽_q2, 𝔽_q6, 𝔽_q12 and the pairing of `JamCrypto.Pairing` (lines, Miller
+  loop, Frobenius, final exponentiation), likewise.
+* `Fast/G1.lean`, `Fast/Pairing.lean`: these on `Fast.Fq`, swapped in for `G1.smul`, `G1.msm`,
+  `G1.decompress` and `Pairing.pairingCheck` by `@[csimp]` (a reference point is converted when its
+  coordinates are reduced, as every point the reference decodes or computes is; otherwise the
+  reference runs).
+* `Fast/Ring.lean`: the ring entry points (`Ring.root`, `withSelectors`, `verify`, `verify081`,
+  `crypto` and the functions between them and G1) restated so that their compiled code uses the
+  replacements; each is equal to its reference (`rfl`, or rewriting), and `@[csimp]` swaps it in.
+  `verify081` and `crypto` are restated as their elaborated terms (with the reference's own match
+  auxiliaries): restated from source text, the kernel's comparison of the two definitions' matchers
+  times out.
 * `Fast/Ed25519.lean`: `verifyWith_eq` (all three `Rules`), `verify_eq`.
 * `Fast/Crypto.lean`: `Fast.withSignatures` and `withSignatures_eq : Fast.withSignatures … =
   JamCrypto.withSignatures …` — what executables use in place of `withSignatures`.
@@ -80,8 +98,10 @@ match discriminant before touching `let`s; prefer `rw`, `extract_lets` and lemma
 `JamCryptoTest/Fast.lean` (run by `cryptotest`) still compares fast and reference functions on all
 vectors and randomized inputs, as an extra check.
 
-Timings (cryptotest, per valid signature, this container): Ed25519 1.83 ms → 0.29 ms, IETF VRF
-12.7 ms → 1.7 ms, Thin VRF 12–17 ms → 2.0 ms.
+Timings (this container; reference → fast): per valid signature (cryptotest), Ed25519 1.82 ms →
+0.62 ms, IETF VRF about 13 ms → 4.3 ms, Thin VRF 12–17 ms → 4.9 ms; ring VRF proof verification
+(ringtest, mean over the vectors) 104 ms → 59 ms, ring root (ring size 1023, 1023 keys) 2.15 s → 1.60 s (most of what remains is decoding the keys on
+the reference Bandersnatch curve, next).
 
 ## Derivation
 

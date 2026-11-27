@@ -1,4 +1,5 @@
 import JamCrypto.Ring
+import JamCrypto.Fast
 
 /-! Ring vectors (`lake exe ringtest [FILE…]`, run from the repository root). Each line of a vector
     file is `root RINGSIZE ROOT KEY…` (hex; a key may be any octet string),

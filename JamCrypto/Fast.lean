@@ -1,4 +1,5 @@
 import JamCrypto.Fast.Crypto
+import JamCrypto.Fast.Ring
 
 /-!
 # The fast paths of JamCrypto (aggregator)

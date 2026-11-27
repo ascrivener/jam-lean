@@ -30,7 +30,7 @@
     "A.36": { "kind": "def", "name": "PVM.Num.smod" },
     "A.37": { "kind": "def", "name": "PVM.Num.divRtz" },
     "A.38": { "kind": "def", "name": "PVM.psiHStar",
-              "note": "run with fuel (`PVM.psiHFuel`), enough for handlers that never return more gas than given" },
+              "note": "run with fuel (`PVM.psiHFuel`), enough for handlers that never return more gas than given; otherwise ☇ after the fuel" },
     "A.39": { "kind": "def", "name": "PVM.psiH" },
     "A.40": { "kind": "type", "name": "PVM.HostFn" },
     "A.41": { "kind": "def", "name": "PVM.standardInit" },

@@ -117,13 +117,13 @@
       "kind": "inline",
       "name": "JAM.importBlock",
       "at": "| some p => hdr (H.parent.toList == p.hash)",
-      "note": "P(𝐇) is the last retained header of the `Chain`; the hash is `JAM.Header.hash`"
+      "note": "P(𝐇) is the last retained header of the `Chain`; the hash is `JAM.Header.hash`; with no retained headers, 𝐇_P is not checked"
     },
     "5.3": {
       "kind": "inline",
       "name": "JAM.importBlock",
       "at": "let anc := chain.ancestors ++ [H]",
-      "note": "𝐀 is the retained headers with 𝐇 itself; it is used only by `JAM.lookupAnchorKnown`"
+      "note": "𝐀 is the retained headers with 𝐇 itself; the model assumes, without checking, that the retained headers form a parent chain; it is used only by `JAM.lookupAnchorKnown`"
     },
     "5.4": {
       "kind": "def",

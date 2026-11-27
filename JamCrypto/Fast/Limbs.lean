@@ -24,9 +24,9 @@ theorem mul_lt29 {x y : Nat} (hx : x < 2 ^ 29) (hy : y < 2 ^ 29) : x * y < 2 ^ 5
     needed: the carry chains of the generated proofs. -/
 def Hide (p : Prop) : Prop := p
 
-/-- One step of a carry chain: if the inputs so far equal the outputs so far plus the carry c at
-    weight B, and the next digit satisfies u + c = t + K·c', then the inputs including u equal the
-    outputs including t plus the new carry c' at weight B·K. -/
+/-- One step of a carry chain: if the inputs so far equal the outputs so far plus the carry $c$ at
+    weight $B$, and the next digit satisfies $u + c = t + K \cdot c'$, then the inputs including $u$
+    equal the outputs including $t$ plus the new carry $c'$ at weight $B \cdot K$. -/
 theorem chain {I O c u t c' B K B' : Nat} (h1 : Hide (I = O + B * c)) (h2 : u + c = t + K * c')
     (hB : B * K = B') : Hide (I + B * u = (O + B * t) + B' * c') := by
   unfold Hide at *
@@ -36,10 +36,10 @@ theorem chain {I O c u t c' B K B' : Nat} (h1 : Hide (I = O + B * c)) (h2 : u + 
   rw [Nat.mul_assoc]
   omega
 
-/-- The first limb of a limb sum is below 2^29. -/
+/-- The first limb of a limb sum is below $2^{29}$. -/
 theorem bfirst {x : Nat} (hx : x < 2 ^ 29) : x * 2 ^ 0 < 2 ^ 29 := by simpa using hx
 
-/-- A limb sum below B, extended by a limb below 2^29 at weight B, is below B·2^29. -/
+/-- A limb sum below $B$, extended by a limb below $2^{29}$ at weight $B$, is below $B \cdot 2^{29}$. -/
 theorem bstep {S x B C : Nat} (hS : S < B) (hx : x < 2 ^ 29) (hC : B * 2 ^ 29 = C) :
     S + x * B < C := by
   subst hC
@@ -48,8 +48,9 @@ theorem bstep {S x B C : Nat} (hS : S < B) (hx : x < 2 ^ 29) (hC : B * 2 ^ 29 = 
     rw [Nat.sub_one_mul, Nat.mul_comm B]; have : B ≤ 2 ^ 29 * B := Nat.le_mul_of_pos_left B (by decide); omega
   omega
 
-/-- The last carry of a Montgomery product is a limb: if V0·R = V1 + V2·p with V1 < p², V2 < R and
-    p ≤ R, then V0 < 2p, so a carry c with c·K ≤ V0 is below 2^29 when 2p ≤ K·2^29. -/
+/-- The last carry of a Montgomery product is a limb: if $V0 \cdot R = V1 + V2 \cdot p$ with $V1 < p^2$,
+    $V2 < R$ and $p \le R$, then $V0 < 2p$, so a carry $c$ with $c \cdot K \le V0$ is below $2^{29}$
+    when $2p \le K \cdot 2^{29}$. -/
 theorem carry_lt {V0 V1 V2 c K R p : Nat} (e1 : V0 * R = V1 + V2 * p) (e3 : c * K ≤ V0)
     (h : V1 < p * p) (b : V2 < R) (hK : 2 * p ≤ K * 2 ^ 29) (hp : p ≤ R) : c < 2 ^ 29 := by
   have h1 : V2 * p ≤ R * p := Nat.mul_le_mul_right p (Nat.le_of_lt b)
@@ -62,8 +63,8 @@ theorem carry_lt {V0 V1 V2 c K R p : Nat} (e1 : V0 * R = V1 + V2 * p) (e3 : c * 
   have h5 : c * K < 2 ^ 29 * K := by rw [Nat.mul_comm (2 ^ 29) K]; omega
   exact Nat.lt_of_mul_lt_mul_right h5
 
-/-- A limb subtraction with borrow out: the low 29 bits d and the borrow w of t − P satisfy
-    d + P = t + 2^29·w (t, P limbs). -/
+/-- A limb subtraction with borrow out: the low 29 bits $d$ and the borrow $w$ of $t - P$ satisfy
+    $d + P = t + 2^{29} \cdot w$ ($t$, $P$ limbs). -/
 theorem sub_limb (t P : UInt64) (ht : t.toNat < 2 ^ 29) (hP : P.toNat < 2 ^ 29) :
     ((t - P) &&& 536870911).toNat + P.toNat + 0 = t.toNat + 2 ^ 29 * ((t - P) >>> 63).toNat ∧
       ((t - P) &&& 536870911).toNat < 2 ^ 29 ∧ ((t - P) >>> 63).toNat ≤ 1 := by
@@ -75,7 +76,8 @@ theorem sub_limb (t P : UInt64) (ht : t.toNat < 2 ^ 29) (hP : P.toNat < 2 ^ 29) 
   · have e : (2 ^ 64 - P.toNat + t.toNat) % 2 ^ 64 = t.toNat - P.toNat := by omega
     rw [e]; omega
 
-/-- A limb subtraction with borrow in and out: d + P + bw = t + 2^29·w for t − P − bw. -/
+/-- A limb subtraction with borrow in and out: $d + P + bw = t + 2^{29} \cdot w$ for
+    $t - P - bw$. -/
 theorem sub_limb_b (t P bw : UInt64) (ht : t.toNat < 2 ^ 29) (hP : P.toNat < 2 ^ 29) (hb : bw.toNat ≤ 1) :
     ((t - P - bw) &&& 536870911).toNat + P.toNat + bw.toNat = t.toNat + 2 ^ 29 * ((t - P - bw) >>> 63).toNat ∧
       ((t - P - bw) &&& 536870911).toNat < 2 ^ 29 ∧ ((t - P - bw) >>> 63).toNat ≤ 1 := by
@@ -84,15 +86,16 @@ theorem sub_limb_b (t P bw : UInt64) (ht : t.toNat < 2 ^ 29) (hP : P.toNat < 2 ^
       = 2 ^ 64 - P.toNat + t.toNat := by split <;> omega
   split at e1 <;> omega
 
-/-- The conclusion of a Montgomery product: X·R + k·p = E + M·p gives X·R ≡ E (mod p). -/
+/-- The conclusion of a Montgomery product: $X \cdot R + k \cdot p = E + M \cdot p$ gives
+    $X \cdot R \equiv E \pmod{p}$. -/
 theorem mod_of_eq {X R k p E M : Nat} (h : X * R + k * p = E + M * p) : X * R % p = E % p := by
   have := congrArg (· % p) h
   simpa [Nat.add_mul_mod_self_right] using this
 
 /-! ## Montgomery values
 
-An element with limb value x stands for x·R⁻¹ mod p. With R·R⁻¹ ≡ 1 (mod p), the operations on
-limb values give the field operations on these. -/
+An element with limb value $x$ stands for $x \cdot R^{-1} \bmod p$. With
+$R \cdot R^{-1} \equiv 1 \pmod{p}$, the operations on limb values give the field operations on these. -/
 
 section Mont
 variable {p R rInv : Nat}
@@ -111,7 +114,7 @@ theorem mont_add_value {x a b : Nat} (h : x = (a + b) % p) :
     x * rInv % p = (a * rInv % p + b * rInv % p) % p := by
   rw [h, Nat.mod_mul_mod, Nat.add_mul, Nat.add_mod]
 
-/-- (y + c) mod p = a with y, c < p determines y = (a + p − c) mod p. -/
+/-- $(y + c) \bmod p = a$ with $y, c < p$ determines $y = (a + p - c) \bmod p$. -/
 theorem sub_unique {y c a : Nat} (hy : y < p) (hc : c < p) (h : (y + c) % p = a) :
     y = (a + p - c) % p := by
   subst h
@@ -145,7 +148,7 @@ theorem mont_inj (hR : R * rInv % p = 1) {a b : Nat} (ha : a < p) (hb : b < p)
   rw [e, e, Nat.mod_eq_of_lt ha, Nat.mod_eq_of_lt hb] at h2
   exact h2
 
-/-- A reduced x with x·R ≡ a (mod p) is a·R⁻¹ mod p. -/
+/-- A reduced $x$ with $x \cdot R \equiv a \pmod{p}$ is $a \cdot R^{-1} \bmod p$. -/
 theorem mont_of_mul (hR : R * rInv % p = 1) {x a : Nat} (hx : x < p) (h : x * R % p = a % p) :
     x = a * rInv % p := by
   have : x * R * rInv % p = a * rInv % p := by rw [← Nat.mod_mul_mod, h, Nat.mod_mul_mod]
@@ -154,7 +157,7 @@ theorem mont_of_mul (hR : R * rInv % p = 1) {x a : Nat} (hx : x < p) (h : x * R 
 
 end Mont
 
-/-- The sum of the first n base-2^29 digits of y is y mod 2^(29n). -/
+/-- The sum of the first $n$ base-$2^{29}$ digits of $y$ is $y \bmod 2^{29n}$. -/
 def digitSum (y : Nat) : Nat → Nat
   | 0 => 0
   | n + 1 => digitSum y n + (y / (2 ^ 29) ^ n % 2 ^ 29) * (2 ^ 29) ^ n
@@ -164,7 +167,7 @@ theorem digitSum_eq (y n : Nat) : digitSum y n = y % (2 ^ 29) ^ n := by
   | zero => simp [digitSum, Nat.mod_one]
   | succ n ih => rw [digitSum, ih, @Nat.mod_pow_succ y (2 ^ 29) n, Nat.mul_comm ((2 ^ 29) ^ n)]
 
-/-- Equal limb sums with limbs below 2^29 have equal low limbs and equal rests. -/
+/-- Equal limb sums with limbs below $2^{29}$ have equal low limbs and equal rests. -/
 theorem limb_inj {x y X Y : Nat} (hx : x < 2 ^ 29) (hy : y < 2 ^ 29)
     (h : x + 2 ^ 29 * X = y + 2 ^ 29 * Y) : x = y ∧ X = Y := by omega
 
@@ -174,7 +177,7 @@ theorem mod29_mod64 (n : Nat) : n % 2 ^ 29 % 2 ^ 64 = n % 2 ^ 29 :=
 /-! ## The conclusions of the generated proofs
 
 From the summed carry chains of an operation, the result (one of the two candidate limb vectors,
-chosen by the final borrow) is reduced and has the right value. Stated for arbitrary p and R, so
+chosen by the final borrow) is reduced and has the right value. Stated for arbitrary $p$ and $R$, so
 that the generated proofs only instantiate them. -/
 
 theorem add_fin {A B T D c w p R : Nat} (e1 : T + R * c = A + B) (e2 : D + p = T + R * w)
@@ -224,8 +227,9 @@ theorem mul_fin {T D E M w p R : Nat} (e1 : T * R = E + M * p) (e2 : D + p = T +
   · refine ⟨fun h => absurd h (by omega), fun _ => ⟨by omega, mod_of_eq (k := 0) (M := M) ?_⟩⟩
     rw [Nat.zero_mul, Nat.add_zero, e1]
 
-/-- One column of Montgomery reduction: with m = s·n0 mod B and 1 + n0·p0 ≡ 0 (mod B), s + m·p0 is
-    divisible by B, so it is B times its carry c; and m, c are bounded. -/
+/-- One column of Montgomery reduction: with $m = s \cdot n0 \bmod B$ and
+    $1 + n0 \cdot p0 \equiv 0 \pmod{B}$, $s + m \cdot p0$ is divisible by $B$, so it is $B$ times its
+    carry $c$; and $m$, $c$ are bounded. -/
 theorem mont_col {sN mN s2N cN n0 p0 B C : Nat} (hm : mN = sN * n0 % B) (hs2 : s2N = sN + mN * p0)
     (hc : cN = s2N / B) (hk : (1 + n0 * p0) % B = 0) (hb : s2N < B * C) :
     sN + mN * p0 = 0 + B * cN ∧ mN < B ∧ cN < C := by
@@ -252,7 +256,7 @@ theorem mont_col' {sN U Cp mN s2N cN n0 p0 B C : Nat} (hs : sN = Cp + U) (hm : m
   refine ⟨?_, h1, h2⟩
   rw [← e, hs, Nat.add_comm Cp U, Nat.add_right_comm]
 
-/-- A column above the reduction: its sum is its low limb plus B times its carry. -/
+/-- A column above the reduction: its sum is its low limb plus $B$ times its carry. -/
 theorem split_col {sN U Cp rN cN B C : Nat} (hs : sN = Cp + U) (hr : rN = sN % B) (hc : cN = sN / B)
     (hb : sN < B * C) : U + Cp = rN + B * cN ∧ rN < B ∧ cN < C := by
   have hB : 0 < B := by

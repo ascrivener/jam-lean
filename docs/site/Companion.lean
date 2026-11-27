@@ -4,6 +4,9 @@ import Companion.Safrole
 import Companion.Disputes
 import Companion.Reports
 import Companion.Statistics
+import Companion.Work
+import Companion.Auditing
+import Companion.BestChain
 import Companion.PVM
 import Companion.Shuffle
 
@@ -75,12 +78,12 @@ with the model modules that implement them.
 * *§11 Reports and assurances* ({ref "reports"}[written]): `JAM/Reports.lean`, `JAM/Assurances.lean`
 * §12 Accumulation and preimages: `JAM/Accumulate.lean`, `JAM/Accumulation.lean`, `JAM/Preimages.lean`
 * *§13 Statistics* ({ref "statistics"}[written]): `JAM/Statistics.lean`
-* §14 Work packages and refinement: `JAM/Work.lean`, `JAM/Refine.lean`, `JAM/Guarantee.lean`
+* *§14 Work packages and work reports* ({ref "work"}[written]): `JAM/Work.lean`, `JAM/Refine.lean`, `JAM/Guarantee.lean`
 * §15 Guaranteeing and §16 Availability assurance: not modelled beyond the refinement of §14
   (the networking and distribution they describe is out of scope)
-* §17 Auditing: `JAM/Auditing.lean`
+* *§17 Auditing and judging* ({ref "auditing"}[written]): `JAM/Auditing.lean`
 * §18 Beefy distribution: not modelled
-* §19 Grandpa and the best chain: `JAM/BestChain.lean` (the best-chain rule; Grandpa itself is not modelled)
+* *§19 Grandpa and the best chain* ({ref "bestchain"}[written]): `JAM/BestChain.lean` (the best-chain rule; Grandpa itself is not modelled)
 * *Appendix A, the PVM* ({ref "pvm"}[written]): `PVM/Machine.lean`, `PVM/Exec.lean`, `PVM/Gas.lean`, `PVM/Memory.lean`
 * Appendix B, PVM invocations: `PVM/Invocation.lean`, `JAM/Host/`
 * Appendix C, the serialization codec: `JAM/Codec.lean`, `JAM/Decode.lean`
@@ -97,6 +100,12 @@ with the model modules that implement them.
 {include 1 Companion.Reports}
 
 {include 1 Companion.Statistics}
+
+{include 1 Companion.Work}
+
+{include 1 Companion.Auditing}
+
+{include 1 Companion.BestChain}
 
 {include 1 Companion.PVM}
 

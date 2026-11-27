@@ -70,7 +70,7 @@ Built on `PVM` (Appendix A).
 * `JAM.Statistics` — validator, core and service activity statistics (§13)
 * `JAM.Preimages` — the preimages extrinsic and its integration (§12.4)
 * `JAM.Crypto` — the cryptographic primitives (Ed25519 verification; Bandersnatch VRF, Ring VRF and ring root) as parameters (§3.8, Appendix G)
-* `JAM.Disputes` — verdicts, culprits and faults, $\psi'$ and the cleared assignments $\rho^\ddagger$ (§10)
+* `JAM.Disputes` — verdicts, culprits and faults, $\psi'$ and the cleared assignments $\rho^\dagger$ (§10)
 * `JAM.Assurances` — the assurances extrinsic, the newly available reports $\mathbf{R}$ and $\rho$ after assurances (§11.2)
 * `JAM.Reports` — guarantor assignments $\mathbf{M}$ and $\mathbf{M}^{\ast}$, the guarantees extrinsic, $\rho'$ and the reporters $\mathbf{G}$ (§11.3–§11.5)
 * `JAM.Safrole` — Safrole: timekeeping, key rotation, entropy, the slot-sealer sequence, the markers and the tickets (§6)

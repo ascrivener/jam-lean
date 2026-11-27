@@ -68,8 +68,8 @@ def Params.full : Params :=
     start 10, 3 tickets per extrinsic, rotation period 4, $\mathsf{G}_T = 20{,}000{,}000$ and
     $\mathsf{G}_R = 1{,}000{,}000{,}000$ (the vectors' README), and a lookup-anchor age
     $\mathsf{L} = 24$. The paper defines only the full chain, so these are test configuration. The
-    README does not list $\mathsf{L}$; 24 is the fuzzer protocol's tiny value, and the reports vector
-    `lookup_anchor_not_recent` (master after v0.8.0) uses it (an anchor 25 slots old is "one slot
+    README does not list $\mathsf{L}$; the tiny vectors use 24: the reports vector
+    `lookup_anchor_not_recent` (master after v0.8.0) relies on it (an anchor 25 slots old is "one slot
     older than L"). -/
 def Params.tiny : Params :=
   { Params.full with coreCount := 2, expungePeriod := 32, epochLen := 12, epochTailStart := 10,

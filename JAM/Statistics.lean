@@ -56,9 +56,9 @@ structure ServiceRecord where
 structure ValidatorStatsInput where
   /-- $\tau$, the prior timeslot. -/
   priorSlot : Nat
-  /-- $\tau' = \mathbf{H}_t$. -/
+  /-- $\tau' = \mathbf{H}_T$. -/
   slot : Nat
-  /-- $\mathbf{H}_i$, the block author's index. -/
+  /-- $\mathbf{H}_I$, the block author's index. -/
   author : Nat
   /-- $|\mathbf{E}_T|$. -/
   ticketCount : Nat

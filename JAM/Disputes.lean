@@ -9,15 +9,19 @@ import JAM.Crypto
 The disputes state $\psi = (\psi_G, \psi_B, \psi_W, \psi_O)$ (eq. `disputesspec`) and its transition under the
 disputes extrinsic $\mathbf{E}_D = (\mathbf{E}_V, \mathbf{E}_C, \mathbf{E}_F)$ (eq. `disputesextrinsics`): the validity conditions on
 verdicts, culprits and faults, the verdict sequence $\mathbf{v}$ (eq. `verdicts`), the cleared availability
-assignments $\rho^\ddagger$ (eq. `removenonpositive`), $\psi'$ (eqs. `goodsetdef`–`offendersdef`) and the offenders
-marker $\mathbf{H}_O$ (§10.4).
+assignments $\rho^\dagger$ (eq. `removenonpositive`), $\psi'$ (eqs. `goodsetdef`–`offendersdef`) and the offenders
+marker $\mathbf{H}_O$ (§10.3).
 
 Signatures are checked with `Crypto.edVerify`. The validator sets $\kappa$ and $\lambda$ enter only through their
 Ed25519 keys.
 
 The paper states the conditions but names no errors and gives no order between them. The errors
-here are the test vectors' names; the order is the one in which the conditions appear in §10,
-with each verdict's or offence's conditions checked together.
+here are the test vectors' names. The order is not §10's: each list's ordering is checked before its
+elements. First the verdicts are strictly ordered by report hash; then, verdict by verdict: its age,
+the ordering of its judgments, the vote count, each judgment's validator index and signature, that
+the report is not already judged, and the vote split. Then the culprits' ordering and each
+culprit's conditions (its verdict is bad, it is not already an offender, the key is a guarantor
+key, the signature), then the same for the faults, and last that every good verdict has a fault.
 -/
 
 namespace JAM
@@ -97,7 +101,7 @@ structure DisputesInput where
   /-- $(\lambda_v)_e$, the previous epoch's Ed25519 keys. -/
   previousEd : List (List UInt8)
 
-/-- The posterior of the disputes transition: $\psi'$, $\rho^\ddagger$ and the offenders marker $\mathbf{H}_O$. -/
+/-- The posterior of the disputes transition: $\psi'$, $\rho^\dagger$ and the offenders marker $\mathbf{H}_O$. -/
 structure DisputesOutput where
   state : DisputesState
   assignments : AvailAssignments
@@ -144,7 +148,7 @@ def assimilate (ψ : DisputesState) (verdicts : List (List UInt8 × Outcome)) : 
     | .bad => { s with bad := s.bad.insert r }
     | .wonky => { s with wonky := s.wonky.insert r }
 
-/-- $\rho^\ddagger$ (GP eq. `removenonpositive`): clear each core whose assigned report's hash
+/-- $\rho^\dagger$ (GP eq. `removenonpositive`): clear each core whose assigned report's hash
     $\mathcal{H}((\rho[c]_g)_r)$ has a bad or wonky verdict. -/
 def clearNonPositive (ρ : AvailAssignments) (verdicts : List (List UInt8 × Outcome)) :
     AvailAssignments :=
@@ -154,7 +158,7 @@ def clearNonPositive (ρ : AvailAssignments) (verdicts : List (List UInt8 × Out
       let h := (Blake2b.hash256 ⟨a.guarantee.report.encode.toArray⟩).toList
       if verdicts.any fun (r, o) => r == h && (o == .bad || o == .wonky) then none else some a
 
-/-- The disputes transition (GP §10): check $\mathbf{E}_D$ against $\tau$, $\kappa$, $\lambda$ and $\psi$, and give $\psi'$, $\rho^\ddagger$ and $\mathbf{H}_O$.
+/-- The disputes transition (GP §10): check $\mathbf{E}_D$ against $\tau$, $\kappa$, $\lambda$ and $\psi$, and give $\psi'$, $\rho^\dagger$ and $\mathbf{H}_O$.
 
     * Verdicts are ordered and unique by report hash, and each satisfies `checkVerdict`.
     * Culprits are ordered and unique by key; each $(r, f, s)$ has $r \in \psi'_B$, $f \in \mathbf{k}$ and

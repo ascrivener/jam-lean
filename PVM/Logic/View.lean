@@ -186,7 +186,7 @@ def evalCost (V : CodeView) (i : Nat) (ins : Instr) : CostExpr → Nat
   | .overlap a b => if ins.src.meets ins.dst then a else b
   | .overlapShift a b =>
     -- The paper writes ω_A = ω_D; the gas model has no register values, so we compare the
-    -- register indices r_A = r_D (README, note 1).
+    -- register indices r_A = r_D (note 1 in docs/upstream-candidates.md#gray-paper-issues).
     match ins.regsAD? with
     | some (ra, rd) => if ra = rd then a else b
     | none => b

@@ -6,7 +6,7 @@ import JAM.Theorems.LoopRel
 /-!
 # Checked indexing in the spec: the new definitions equal the old ones
 
-On 2026-11-27 the spec definitions stopped using unchecked indexing (`a[i]!`, `ByteArray.get!`):
+The spec definitions no longer use unchecked indexing (`a[i]!`, `ByteArray.get!`):
 each access is now proved in bounds, or reads through `getD` where the definition's own invariant
 makes the default unreachable. This file keeps each changed definition's earlier form verbatim
 (namespace `JAM.Theorems.CheckedIndex.Old`) and proves it equal to the current one, so the change

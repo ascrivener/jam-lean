@@ -246,5 +246,6 @@ These are recorded in the model's
   segments". By the equation, the page is $`\mathcal{L}_6`, the hashes $`H(\$\text{leaf} \frown \mathbf{s}_i)` of the segments rather than
   $`\mathcal{H}(\mathbf{s}_i)`, and the last page holds only $`|\mathbf{s}| \bmod 64` of them when 64 does not divide $`|\mathbf{s}|`. The model follows the equation.
 
+{api}`JAM.Segments.pageRoot`, which note v0.8.1-A13 above refers to:
 
 {leanSource JAM.Segments.pageRoot}

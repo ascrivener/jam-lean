@@ -180,7 +180,7 @@ that `interpolate (lagrange src tgt)` evaluates Lagrange interpolation through t
 
 On that basis it proves that every coded word is an evaluation of the polynomial of eq. {eq}`H.13`
 ([`encode_word`](https://github.com/ascrivener/jam-lean/blob/1f8496f83ca22f3b8b8121f875906313402aab56/proofs/ErasureProofs/Recovery.lean#L248-L254)).
-For $`v \le 2^{15}`, $`p < k` and $`i < v`, word $`i` of coded piece $`p` is the value at $`\widetilde{g(i)}` (with $`g` = `codeIndex`) of the
+For $`v \le 2^{15}`, $`p < k` and $`i < v`, word $`i` of coded piece $`p` is a 16-bit number (`W`), and it is the value at $`\widetilde{g(i)}` (with $`g` = `codeIndex`) of the
 polynomial of degree less than $`d'` that takes the piece's message words at $`\tilde{0}, \dots, \widetilde{d-1}` and zero at
 $`\tilde{d}, \dots, \widetilde{d'-1}`. The theorem is stated about the package's own definitions of the coded pieces
 (`encPieces`) and of that polynomial (`msgPoly`). Two further theorems connect it to the model's chunks:

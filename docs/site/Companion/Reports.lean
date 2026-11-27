@@ -55,7 +55,7 @@ An entry is a guarantee and the timeslot at which it was reported. The model's e
 refinement context $`\mathbb{C}` (eq. {eq}`11.4`), the availability specification $`\mathbb{Y}` (eq. {eq}`11.5`), the
 work-digest $`\mathbb{D}` (eq. {eq}`11.6`) and the work errors $`\mathbb{E}` (eq. {eq}`11.7`). The model's types are
 {api}`JAM.WorkReport`, {api}`JAM.RefineContext`, {api}`JAM.AvailabilitySpec`,
-{api}`JAM.WorkDigest` and {api}`JAM.WorkError`. It also bounds a report's dependencies and size:
+{api}`JAM.WorkDigest` and {api}`JAM.WorkError`.
 
 {leanSource JAM.WorkReport}
 
@@ -64,6 +64,10 @@ work-digest $`\mathbb{D}` (eq. {eq}`11.6`) and the work errors $`\mathbb{E}` (eq
 {leanSource JAM.AvailabilitySpec}
 
 {leanSource JAM.WorkDigest}
+
+{leanSource JAM.WorkError}
+
+The paper also bounds a report's dependencies and size:
 
 {gpeq "11.3"}
 

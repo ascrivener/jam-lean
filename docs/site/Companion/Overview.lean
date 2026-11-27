@@ -167,6 +167,8 @@ types hold them, and the types do not fix their lengths. The decoder ({api}`JAM.
 winning-tickets marker's $`\mathsf{E}`. The epoch marker's key list is length-prefixed (its encoding is $`\updownarrow\mathbf{k}`); its
 length is enforced at import, because $`\mathbf{H}_E` must match the marker Safrole produces.
 
+{leanSource JAM.EpochMark}
+
 {leanSource JAM.Header.decode}
 
 ## The header's conditions

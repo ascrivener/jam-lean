@@ -42,6 +42,11 @@ it *quotes* it with `{leanSource N}` (the header "N — file · GitHub · API" c
 30 lines start collapsed). A bare GitHub or API link never stands in for the code. A theorem in the
 `proofs/` package, which `{leanSource}` cannot reach, is quoted as its statement in a code block.
 `{api}` and `{name}` references in running prose to something quoted elsewhere are fine.
+Named in passing, and only linked: constants and context strings (`JAM.Xvalidif`, `JAM.nullEdKey`,
+`Constants.*`), abbreviations, configuration, error, input, output and trace types, and theorems
+mentioned without being discussed. `PVM.costRow?` (the generated 140-row cost table) is the one
+definition the book cannot quote (its quotation exceeds Lean's code-generator recursion depth); it
+stays a link.
 
 The readings the model chose should link to `docs/upstream-candidates.md` by note number.
 

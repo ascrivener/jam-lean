@@ -195,7 +195,7 @@ The other primitives are {api}`JAM.Decoder.fixed`, {api}`JAM.Decoder.bytes`,
 {api}`JAM.Decoder.varSeq`, {api}`JAM.Decoder.var`, {api}`JAM.Decoder.opt` (which accepts only the
 discriminators 0 and 1), {api}`JAM.Decoder.bits` (which rejects nonzero padding bits),
 {api}`JAM.Decoder.bool`, and {api}`JAM.Decoder.varHashSet` and {api}`JAM.Decoder.varHashDict`
-(which reject elements or keys out of ascending order, or repeated). For example:
+(which reject elements or keys out of ascending order, or repeated):
 
 {leanSource JAM.Decoder.fixed}
 
@@ -311,7 +311,7 @@ The other equations of §C.2 are implemented field by field, in the paper's orde
 
 {leanSource JAM.OperandTuple.encode}
 
-For example, the work item of eq. {eq}`C.34`:
+The work item, eq. {eq}`C.34`:
 
 {leanSource JAM.WorkItem.encode}
 

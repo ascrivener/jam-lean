@@ -26,7 +26,7 @@ file := "primitives"
 
 *In the paper:* {gpchapter}`sec:notation`.
 
-*In brief.* this chapter is the toolbox. Before the paper can say anything about blocks or
+*In brief.* This chapter is the toolbox. Before the paper can say anything about blocks or
 validators it fixes a common vocabulary (how it writes sets, sequences and dictionaries) and a few
 ingredients that everything else is built from. The most used are two hash functions, which turn any
 data into a short fixed-size fingerprint: Blake2b, the paper's default, which identifies blocks, code

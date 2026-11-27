@@ -20,7 +20,7 @@ file := "authorization"
 
 *In the paper:* {gpchapter}`sec:authorization`.
 
-*In brief.* a core's time is a resource, and authorization decides which work may use it. The
+*In brief.* A core's time is a resource, and authorization decides which work may use it. The
 paper separates assigning a core's time from deciding what work runs on it, so the party that
 arranges for a core's time need not be the one that submits the work. Each core keeps a short pool of
 *authorizers*: pieces of PVM code, identified by hash, that decide whether a work-package (with the
@@ -33,8 +33,8 @@ privileged service ({ref "accumulation"}[§12]).
 
 *Key terms:*
 
-* $`\authpool`, the authorizer pool of each core, at most $`\mathsf{O} = 8` hashes;
-* $`\authqueue`, the authorizer queue of each core, $`\mathsf{Q} = 80` hashes, from which the pool is refilled;
+* $`\authpool`, the authorizer pool of each core, at most $`\Cauthpoolsize = 8` hashes;
+* $`\authqueue`, the authorizer queue of each core, $`\Cauthqueuesize = 80` hashes, from which the pool is refilled;
 * $`\xtguarantees`, the guarantees extrinsic: the authorizer of each guaranteed report leaves its core's pool.
 
 A work package may use a core only if one of the core's current *authorizers* allows it. An

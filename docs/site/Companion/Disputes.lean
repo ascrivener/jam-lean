@@ -20,7 +20,7 @@ file := "disputes"
 
 *In the paper:* {gpchapter}`sec:disputes`.
 
-*In brief.* disputes are JAM's backstop against an invalid work-report. Validators auditing a
+*In brief.* Disputes are JAM's backstop against an invalid work-report. Validators auditing a
 report ({ref "auditing"}[§17]) normally confirm it; if one judges it invalid, all validators audit it,
 and their signed judgments, gathered into a *verdict*, go on chain here. The verdict is recorded
 permanently, the report marked as good, bad, or impossible to judge ("wonky"), so that the question

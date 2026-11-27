@@ -22,7 +22,7 @@ file := "accounts"
 
 *In the paper:* {gpchapter}`sec:accounts`.
 
-*In brief.* services are JAM's programs, and this chapter defines the record the chain keeps for
+*In brief.* Services are JAM's programs, and this chapter defines the record the chain keeps for
 each one. Like a smart contract, a service has code, storage and a balance, but its code has two
 entry points: Refine, which runs in-core on a work-package and is essentially stateless, and
 Accumulate, which runs on chain and may change the state ({ref "accumulation"}[§12]). Data that code
@@ -32,7 +32,7 @@ and once supplied it cannot simply be deleted but is marked unavailable and remo
 waiting period, so that in-core lookups ({ref "work"}[§14]) give the same answer on every validator.
 
 Storage is not free: the more a service stores, counting storage items and requested preimages, the
-higher the minimum balance it must hold. The chapter ends with the privileged services, which may
+higher the minimum balance it must hold (less any gratis allowance the service was given). The chapter ends with the privileged services, which may
 change protocol-level settings such as the queued validator keys and the authorizer queues, and with
 supervisors, new in v0.8.1: each service has a supervisor, possibly itself, that may make any
 non-privileged change to it.

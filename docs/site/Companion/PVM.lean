@@ -33,13 +33,15 @@ file := "pvm"
 
 *In brief.* The code of services and authorizers must run on every node that executes it with
 exactly the same result, including how much gas it uses. The PVM is the machine that runs it: a
-simple register machine based on the RISC-V instruction set (its rv64em variant), with 13 registers
-of 64 bits, a RAM with 32-bit addresses whose pages of 4096 octets are each inaccessible, read-only
-or writable, and a gas counter. A program runs until it halts, panics, runs out of gas, accesses
-memory it may not, or makes a *host call*: a request to the protocol, such as reading storage, which
-the invocations of {ref "invocations"}[Appendix B] answer before letting it continue. Gas is charged
-for each basic block of instructions, at a cost the paper fixes by modelling how many cycles a
-simple CPU would need to run it, so the same code on the same inputs costs the same on every node.
+simple register machine based on the RISC-V instruction set (its rv64em variant: 64-bit, with a
+reduced register set and with multiplication and division), with 13 registers of 64 bits, a RAM with
+32-bit addresses whose pages of 4096 octets are each inaccessible, read-only or writable, and a gas
+counter. A program runs until it halts, panics, runs out of gas, accesses memory it may not, or
+makes a *host call*: a request to the protocol, such as reading storage, which the invocations of
+{ref "invocations"}[Appendix B] answer before letting it continue. Gas is charged for each basic
+block of instructions, at a cost the paper fixes with a simplified model of a modern CPU, counting
+the cycles it would need to run the block, so the same code on the same inputs costs the same on
+every node.
 
 *Key terms:*
 

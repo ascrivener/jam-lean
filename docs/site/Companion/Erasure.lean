@@ -32,7 +32,8 @@ working on two-octet words.
 *Key terms:*
 
 * $`\fnecoriginalshards(v)`, the number of chunks needed to rebuild data coded for $`v` validators.
-* $`\fnerasurecode{v}{k}`, the encoding, and $`\fnecrecover{v}{k}`, the recovery.
+* $`\fnerasurecode{v}{k}`, the encoding, and $`\fnecrecover{v}{k}`, the recovery, where the data is
+  split into $`k` pieces of $`\fnecoriginalshards(v)` two-octet words.
 
 Appendix H of GP v0.8.1 defines the erasure code behind JAM's data availability: a systematic
 Reed–Solomon code over $`\mathrm{GF}(2^{16})`. Data is cut into words of two octets and coded so that each of

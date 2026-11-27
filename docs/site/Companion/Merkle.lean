@@ -23,13 +23,14 @@ file := "general-merklization"
 *In the paper:* {gpchapter}`sec:merklization`.
 
 *In brief.* Besides the state trie of {ref "statemerkle"}[Appendix D], the protocol commits to lists
-of items with one hash in three more ways, each of which also lets one item be shown to be in the
-list. A *well-balanced* binary tree takes a list of any length; a report's erasure root, for
+of items with one hash in three more ways, each of which supports short proofs that an item is in
+the list. A *well-balanced* binary tree takes a list of any length; a report's erasure root, for
 example, is the root of such a tree with one entry per validator, built from that validator's chunks
 ({ref "work"}[§14]). A *constant-depth* tree first pads the list to a power of two, so that every
 path has the same length; it commits to a work-package's exported segments, and its pages give the
 proofs with which a later work-package imports one segment. A *Merkle mountain range* grows one item
-at a time while keeping only a few peaks; the Accumulation Output Log in the recent history uses one
+at a time while keeping only a few peaks, and one hash over all the peaks, the *super-peak*, commits
+to the whole range; the Accumulation Output Log in the recent history uses one
 ({ref "history"}[§7]), and its super-peak is what validators sign for {ref "beefy"}[Beefy].
 
 Appendix E of GP v0.8.1 defines the Merkle structures the protocol uses outside the state trie:

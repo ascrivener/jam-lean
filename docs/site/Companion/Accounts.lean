@@ -22,6 +22,27 @@ file := "accounts"
 
 *In the paper:* {gpchapter}`sec:accounts`.
 
+*In brief.* Services are JAM's programs, and this chapter defines the record the chain keeps for
+each one. Like a smart contract, a service has code, storage and a balance, but its code has two
+entry points: Refine, which runs in-core on a work-package and is essentially stateless, and
+Accumulate, which runs on chain and may change the state ({ref "accumulation"}[§12]). Data that code
+running in-core may need, the service's code among it, is held as *preimages*: the service asks for
+the data with a given hash and length, the data is then supplied in a block's preimages extrinsic,
+and once supplied it cannot simply be deleted but is marked unavailable and removed only after a
+waiting period, so that in-core lookups ({ref "work"}[§14]) give the same answer on every validator.
+
+Storage is not free: the more a service stores, counting storage items and requested preimages, the
+higher the minimum balance it must hold (less any gratis allowance the service was given). The chapter ends with the privileged services, which may
+change protocol-level settings such as the queued validator keys and the authorizer queues, and with
+supervisors, new in v0.8.1: each service has a supervisor, possibly itself, that may make any
+non-privileged change to it.
+
+*Key terms:*
+
+* $`\accounts`, the service accounts, a dictionary from service identifiers to account records;
+* $`\privileges`, the privileged services;
+* $`\xtpreimages`, the preimages extrinsic, in which requested preimages are supplied.
+
 A service in JAM has code, storage and a balance, much like a smart contract. GP v0.8.1 §9 defines
 the account record, the preimage lookups that make data available to in-core code, the deposit an
 account must hold for what it stores, the privileged services and, new in v0.8.1, supervisors. This

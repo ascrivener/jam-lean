@@ -21,6 +21,24 @@ file := "overview"
 
 *In the paper:* {gpchapter}`sec:overview` and {gpchapter}`sec:header`.
 
+*In brief.* JAM, like any blockchain, is a state and a rule for updating it. The state is
+everything the chain remembers (the services and their balances, the validators, the work waiting
+on each core), and each block is a bundle of inputs, a header plus the *extrinsic* data (tickets,
+preimages, guarantees, assurances and disputes), from which the rule computes the next state. The
+paper splits the state into named components and the rule into steps, each defined in its own
+section, so most chapters of this book cover one step: who may author a block ({ref "safrole"}[§6]), the record
+of recent blocks ({ref "history"}[§7]), and the pipeline that takes work from the cores into the
+services' accounts ({ref "reports"}[§11], {ref "accumulation"}[§12]). This chapter is the map: it
+shows the whole state, the block, the order in which the steps run and what each depends on, and
+the header (§5), which names the parent block by its hash, gives the block's timeslot and its
+author's index, and carries the author's seal.
+
+*Key terms:*
+
+* $`\thestate`, the state, and $`\thestate'`, the state after the block;
+* $`\block`, the block: the header $`\header` and the extrinsic $`\extrinsic`;
+* $`\transitionstate`, the block transition, which computes $`\thestate'` from $`\thestate` and $`\block`.
+
 This chapter is the book's map. GP v0.8.1 §4 defines a blockchain by its state $`\sigma`, its blocks $`\mathbf{B}` and
 one function, the block-level state transition $`\Upsilon`. It splits $`\sigma` into components and $`\Upsilon` into
 section-level transitions, and orders them in a dependency graph. §5 defines the header and the

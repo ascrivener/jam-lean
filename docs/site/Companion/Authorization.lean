@@ -20,6 +20,23 @@ file := "authorization"
 
 *In the paper:* {gpchapter}`sec:authorization`.
 
+*In brief.* A core's time is a resource, and authorization decides which work may use it. The
+paper separates assigning a core's time from deciding what work runs on it, so the party that
+arranges for a core's time need not be the one that submits the work. Each core keeps a short pool of
+*authorizers*: pieces of PVM code, identified by hash, that decide whether a work-package (with the
+opaque token it carries) may run on that core. Running an authorizer happens in-core, in the
+Is-Authorized invocation ({ref "work"}[§14]); on chain, guarantees ({ref "reports"}[§11]) check that a
+report's authorizer is in its core's pool. This chapter keeps the pools up to date: each block, an
+authorizer used by a guaranteed report is taken out of its core's pool and the entry of the core's
+queue for the current timeslot is added, while the queue itself is set during accumulation by a
+privileged service ({ref "accumulation"}[§12]).
+
+*Key terms:*
+
+* $`\authpool`, the authorizer pool of each core, at most $`\Cauthpoolsize = 8` hashes;
+* $`\authqueue`, the authorizer queue of each core, $`\Cauthqueuesize = 80` hashes, from which the pool is refilled;
+* $`\xtguarantees`, the guarantees extrinsic: the authorizer of each guaranteed report leaves its core's pool.
+
 A work package may use a core only if one of the core's current *authorizers* allows it. An
 authorizer is identified by a hash: the hash of its PVM code hash concatenated with its
 configuration blob. Running an authorizer happens in-core, in the Is-Authorized invocation $`\Psi_I` (defined in

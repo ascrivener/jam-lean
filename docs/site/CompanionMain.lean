@@ -3,19 +3,23 @@ import Companion
 
 open Verso.Genre Manual
 
-/-- Layout fixes: code blocks keep their layout and scroll sideways with a visible scrollbar and a
-    shadow at the edge that has more to see; display
+/-- Layout fixes: code blocks and the chapters' tables keep their layout and scroll sideways inside
+    their own box, with a visible scrollbar and a shadow at the edge that has more to see; display
     math scrolls inside its own box on narrow screens; and the header title keeps clear of the
     search box (which Verso places over the header): the title wrapper reserves the search bar's
     width, the search bar is narrower below 1200 px, and the title wraps and shrinks on narrow
-    screens. -/
+    screens. The sidebar lists sections only: the entry Verso adds for each quoted declaration
+    (`{mathdoc}`, `{docstring}`) is hidden. -/
 def narrowCss : Verso.Genre.Manual.CSS := ⟨"
 .semantics, pre, code.hl.lean.block { max-width: 100%; overflow-x: auto; white-space: pre;
   scrollbar-width: thin; scrollbar-color: #b0b0b0 transparent; }
-.semantics::-webkit-scrollbar, pre::-webkit-scrollbar, code.hl.lean.block::-webkit-scrollbar { height: 8px; }
-.semantics::-webkit-scrollbar-thumb, pre::-webkit-scrollbar-thumb, code.hl.lean.block::-webkit-scrollbar-thumb {
-  background: #b0b0b0; border-radius: 4px; }
-code.hl.lean.block, .semantics {
+main table { display: block; max-width: 100%; width: max-content; overflow-x: auto;
+  scrollbar-width: thin; scrollbar-color: #b0b0b0 transparent; }
+.semantics::-webkit-scrollbar, pre::-webkit-scrollbar, code.hl.lean.block::-webkit-scrollbar,
+main table::-webkit-scrollbar { height: 8px; }
+.semantics::-webkit-scrollbar-thumb, pre::-webkit-scrollbar-thumb, code.hl.lean.block::-webkit-scrollbar-thumb,
+main table::-webkit-scrollbar-thumb { background: #b0b0b0; border-radius: 4px; }
+code.hl.lean.block, .semantics, main table {
   background:
     linear-gradient(to right, #fff 30%, rgba(255,255,255,0)) left / 2em 100% no-repeat local,
     linear-gradient(to left, #fff 30%, rgba(255,255,255,0)) right / 2em 100% no-repeat local,
@@ -37,6 +41,8 @@ code.hl.lean.block, .semantics {
   :root { --search-bar-width: 8rem !important; }
 }
 html, body { overflow-x: clip; }
+.split-toc li:has(> a[href*='/#JAM___']), .split-toc li:has(> a[href*='/#PVM___']),
+.split-toc li:has(> a[href*='/#JamCrypto___']) { display: none; }
 "⟩
 
 /-- Math in docstrings: `$…$` and `$$…$$` in the text of docstrings (the `.docs` blocks of

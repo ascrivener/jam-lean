@@ -40,7 +40,7 @@ tag := "beefy-map"
   append $`\mathcal{A}` (eqs. (7.6), (7.7)); the new recent-history entry records its super-peak, $`b = \mathcal{M}_R(\recent'_B)` (eq. (7.8)). This is
   {api}`JAM.recentHistory`, in the {ref "history-belt"}[§7 chapter], with the mountain-range functions
   {api}`JAM.MMR.append` and {api}`JAM.MMR.superPeak` of {ref "merkle-mmr"}[Appendix E.2]; the field is `accRoot`
-  of {api}`JAM.RecentBlock`. Keccak-256, $`\fnkeccak`, is in plain Lean ({ref "primitives-hashing"}[§3.8]).
+  of {api}`JAM.RecentBlock`. Keccak-256, $`\fnkeccak`, is in plain Lean ({ref "primitives-hashing"}[§3.8.1]).
 * *The key, $`k_\vk¬bls`.* A validator key is 336 octets, and its BLS component is
   $`k_\vk¬bls = k_{64\dots+144}` (eq. (6.12)). The model keeps keys as octet sequences ({api}`JAM.ValidatorKey`) and carries
   the BLS component through the state unchanged; only the theorems' view {api}`JAM.ValidatorKey.View`

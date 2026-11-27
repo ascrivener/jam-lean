@@ -12,7 +12,8 @@
   "docs/site/Companion/History.lean"
  ],
  "JAM.Assurances": [
-  "docs/site/Companion/Assurance.lean"
+  "docs/site/Companion/Assurance.lean",
+  "docs/site/Companion/Reports.lean"
  ],
  "JAM.Auditing": [
   "docs/site/Companion/Auditing.lean"

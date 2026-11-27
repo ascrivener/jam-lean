@@ -46,7 +46,7 @@ key on
 $$`l = \Xguarantee \concat \blake{\encode{\mathbf{r}}} \qquad \text{(15.2)}`
 
 This is the message that eq. (11.27) checks for each signer of a guarantee, with $`\Xguarantee = \token{\$jam\_guarantee}`
-(eq. (11.28)).
+(eq. (11.28)); there it is written $`\Xguarantee \concat \blake{\mathbf{r}}`, without the explicit encoding $`\mathcal{E}`.
 
 # Where the model implements it
 %%%

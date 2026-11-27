@@ -63,5 +63,6 @@ behaves. So it does not model:
 * when a validator decides to issue an assurance, or produces its signature (the model checks
   assurances; it holds no secret keys).
 
-The model computes the erasure root, but it has no function that builds or checks the proof that a
-shard is included under it.
+The model computes the erasure root, but nothing in it builds or checks the proof that a shard is
+included under it (the path check of {ref "merkle-verify"}[Checking a justification] is only for the
+perfect trees of constant-depth Merklization).

@@ -45,9 +45,9 @@ tag := "auditing-q"
 
 $`\mathbf{q}` maps each active core to the report that just became available on it, or to $`\emptyset`:
 
-$$`\mathbf{q} \in \llbracket \mathbb{R}\boldsymbol{?} \rrbracket_{|\kappa|/3} \qquad \text{(17.1)}`
+{gpeq "17.1"}
 
-$$`\mathbf{q} \equiv \left[ \begin{rcases} (\rho[c]_\mathbf{g})_\mathbf{r} & \text{if } (\rho[c]_\mathbf{g})_\mathbf{r} \in \mathbf{R} \\ \emptyset & \text{otherwise} \end{rcases} \;\middle|\; c \mathrel{\mathrlap{<}{-}} \mathbb{N}_{|\kappa|/3} \right] \qquad \text{(17.2)}`
+{gpeq "17.2"}
 
 $`\mathbf{R}` is the set of reports that became available in the block ({ref "reports"}[§11]). The model compares reports by
 their encoding:
@@ -62,6 +62,8 @@ tag := "auditing-tranche0"
 The first tranche is drawn with $`s_0`, a VRF signature under the validator's Bandersnatch key $`\kappa[v]_b` with
 an empty message and a context made from the block's entropy source $`\mathcal{Y}(\mathbf{H}_V)`:
 
+{transcribed "17.4" "79e5b2d6fd"}
+
 $$`s_0 \in \overset{\backsim}{\mathbb{V}}{}^{[]}_{\kappa[v]_b}\left\langle \mathsf{X}_U \frown \mathcal{Y}(\mathbf{H}_V) \right\rangle \qquad \text{(17.3)} \qquad\qquad \mathsf{X}_U = \texttt{\$jam\_audit} \qquad \text{(17.4)}`
 
 {leanSource JAM.Auditing.initialSeedValid}
@@ -69,7 +71,7 @@ $$`s_0 \in \overset{\backsim}{\mathbb{V}}{}^{[]}_{\kappa[v]_b}\left\langle \math
 The validator audits the non-empty reports among the first ten entries of $`\mathbf{q}` shuffled with
 $`\mathcal{Y}(s_0)` ($`\mathcal{F}` is the shuffle of {ref "shuffle"}[Appendix F]):
 
-$$`\mathbf{a}_0 = \left\{ \mathbf{r} \;\middle|\; \mathbf{r} \in \mathcal{F}\left(\mathbf{q}, \mathcal{Y}(s_0)\right)_{\dots+10},\ \mathbf{r} \ne \emptyset \right\} \qquad \text{(17.5)}`
+{gpeq "17.5"}
 
 {leanSource JAM.Auditing.tranche0}
 
@@ -92,7 +94,7 @@ tag := "auditing-n"
 
 A new tranche starts every $`\mathsf{A} = 8` seconds after the start of the block's timeslot:
 
-$$`\text{let } n = \left\lfloor \frac{\mathcal{T} - \mathsf{P}\cdot\mathbf{H}_T}{\mathsf{A}} \right\rfloor \qquad \text{(17.6)}`
+{gpeq "17.6"}
 
 {leanSource JAM.Auditing.currentTranche}
 
@@ -104,11 +106,11 @@ tag := "auditing-announce"
 Before auditing, a validator announces which reports it will audit in tranche $`n`, signing with its
 Ed25519 key $`\kappa[v]_e`:
 
-$$`S \equiv \bar{\mathbb{V}}_{\kappa[v]_e}\left\langle \mathsf{X}_I \mathbin{+\!\!+} n \frown \mathbf{x}_n \frown \mathcal{H}(\mathbf{H}) \right\rangle \qquad \text{(17.7)}`
+{gpeq "17.7"}
 
-$$`\text{where } \mathbf{x}_n = \mathcal{E}\left(\left\{ \mathcal{E}_2(\mathbf{r}_c) \frown \mathcal{H}(\mathbf{r}) \;\middle|\; \mathbf{r} \in \mathbf{a}_n \right\}\right) \qquad \text{(17.8)}`
+{gpeq "17.8"}
 
-$$`\mathsf{X}_I = \texttt{\$jam\_announce} \qquad \text{(17.9)}`
+{gpeq "17.9"}
 
 {leanSource JAM.Auditing.announcementItems}
 
@@ -124,6 +126,8 @@ tag := "auditing-view"
 $`A_n(\mathbf{r})` is the validator's perception of which validators must audit $`\mathbf{r}` in tranche $`n`, from their
 announcements; $`J_\top(\mathbf{r})` and $`J_\bot(\mathbf{r})` are the validators it knows to have judged $`\mathbf{r}` valid and invalid, in
 any tranche:
+
+{transcribed "17.12" "447a159839"}
 
 $$`A_n\colon \mathbb{R} \to \left\{\!\left[\, \mathbb{N}_{|\kappa|} \,\right]\!\right\} \qquad \text{(17.10)} \qquad\qquad J_{\{\bot, \top\}}\colon \mathbb{R} \to \left\{\!\left[\, \mathbb{N}_{|\kappa|} \,\right]\!\right\} \qquad \text{(17.12)}`
 
@@ -182,7 +186,7 @@ tag := "auditing-judgments"
 For each report it must audit, the validator rebuilds a candidate bundle $`C(\mathbf{r})` and evaluates the
 report by computing it again with $`\Xi` ({ref "work"}[§14]):
 
-$$`\begin{aligned} &\forall \mathbf{r} \in \mathbf{a}_n: \\ &e_n(\mathbf{r}) \Leftrightarrow \begin{cases} M(\mathbf{r}, \mathbf{p}) & \text{if } \exists \mathbf{p} \in \mathbb{P}: B(\mathbf{p}, \mathbf{r}_\mathbf{l}) = C(\mathbf{r}) \\ \bot & \text{otherwise} \end{cases} \\ &\text{where } M(\mathbf{r}, \mathbf{p}) \equiv \mathbf{r} = \Xi(\mathbf{p}, \mathbf{r}_c, \mathbf{r}_\mathbf{l}, (\mathbf{r}_\mathbf{s})_v) \end{aligned} \qquad \text{(17.16)}`
+{gpeq "17.16"}
 
 The model does not define $`e_n` as one function: the evaluation is an input to the judgment below. Its
 parts are in `JAM/Guarantee.lean`: decoding and checking the bundle
@@ -191,7 +195,7 @@ parts are in `JAM/Guarantee.lean`: decoding and checking the bundle
 
 The validator then signs a judgment on each report:
 
-$$`\mathbf{j}_n = \left\{ \bar{\mathcal{S}}_{\kappa[v]_e}\left(\mathsf{X}_{e_n(\mathbf{r})} \frown \mathcal{H}(\mathbf{r})\right) \;\middle|\; \mathbf{r} \in \mathbf{a}_n \right\} \qquad \text{(17.17)}`
+{gpeq "17.17"}
 
 $`\mathsf{X}_\top` is `$jam_valid` and $`\mathsf{X}_\bot` is `$jam_invalid`:
 
@@ -212,7 +216,7 @@ A report is audited when it has no negative judgment and, in some tranche, every
 to audit it has judged it valid; or when more than two thirds of the validators have judged it
 valid:
 
-$$`U(\mathbf{r}) \Leftrightarrow \bigvee \left\{ \begin{aligned} &J_\bot(\mathbf{r}) = \emptyset \wedge \exists n : A_n(\mathbf{r}) \subseteq J_\top(\mathbf{r}) \\ &|J_\top(\mathbf{r})| > \tfrac{2}{3}|\kappa| \end{aligned} \right. \qquad \text{(17.18)}`
+{gpeq "17.18"}
 
 The model bounds $`n` in $`\exists n` by the current tranche (see {ref "auditing-readings"}[Readings chosen]).
 `h` is $`\mathcal{H}(\mathbf{r})` and `current` the current tranche:
@@ -225,7 +229,7 @@ The model bounds $`n` in $`\exists n` by the current tranche (see {ref "auditing
 
 A block is audited when every report that became available in it is:
 
-$$`\mathbf{U} \Leftrightarrow \forall \mathbf{r} \in \mathbf{R} : U(\mathbf{r}) \qquad \text{(17.19)}`
+{gpeq "17.19"}
 
 {leanSource JAM.Auditing.blockAudited}
 

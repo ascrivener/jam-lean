@@ -46,7 +46,7 @@ tag := "safrole-entropy"
 $`\eta \in \llbracket\mathbb{H}\rrbracket_4` (eq. (6.23), `entropycomposition`). Every block folds the VRF output of its entropy source into
 $`\eta_0`, and an epoch change rotates $`\eta_0, \eta_1, \eta_2` into $`\eta_1, \eta_2, \eta_3`:
 
-$$`\eta'_0 \equiv \mathcal{H}\left(\eta_0 \frown \mathcal{Y}(\mathbf{H}_V)\right) \qquad \left(\eta'_1, \eta'_2, \eta'_3\right) \equiv \begin{cases} (\eta_0, \eta_1, \eta_2) & \text{if } e' > e \\ (\eta_1, \eta_2, \eta_3) & \text{otherwise} \end{cases} \qquad \text{(6.24, 6.25)}`
+{gpeq "6.24, 6.25"}
 
 One reading appears in the model:
 
@@ -69,12 +69,14 @@ The posterior sealer sequence $`\gamma'_S` (eq. (6.26), `slotkeysequence`) is th
 ticket accumulator when the block opens the next epoch, the previous block was in the closing
 period ($`m \geq \mathsf{Y}`) and $`\gamma_A` is full. Within an epoch it is unchanged. Otherwise it is the fallback keys:
 
-$$`\gamma'_S \equiv \begin{cases} Z(\gamma_A) & \text{if } e' = e + 1 \wedge m \geq \mathsf{Y} \wedge |\gamma_A| = \mathsf{E} \\ \gamma_S & \text{if } e' = e \\ F(\eta'_2, \kappa') & \text{otherwise} \end{cases} \qquad \text{(6.26)}`
+{gpeq "6.26"}
 
 In the model this is the `sealKeys'` binding of {api}`JAM.safrole`, with the three cases in the
 paper's order.
 
 ## Z, the outside-in sequencer
+
+{transcribed "6.27" "562b74cb04"}
 
 $$`Z \colon \mathbf{s} \mapsto \left[\mathbf{s}_0, \mathbf{s}_{|\mathbf{s}|-1}, \mathbf{s}_1, \mathbf{s}_{|\mathbf{s}|-2}, \dots\right] \qquad \text{(6.27)}`
 
@@ -89,6 +91,8 @@ that the length is preserved; the theorems below show that, and also that this r
 {mathdoc JAM.length_outsideIn}
 
 ## F, the fallback key sequence
+
+{transcribed "6.28" "23e8046198"}
 
 $$`F \colon (r, \mathbf{k}) \mapsto \left[\, \left(\mathbf{k}^{\circlearrowleft}_{\mathcal{E}_4^{-1}\left(\mathcal{H}(r \frown \mathcal{E}_4(i))_{\dots 4}\right)}\right)_b \;\middle|\; i \in \mathbb{N}_{\mathsf{E}} \right] \qquad \text{(6.28)}`
 
@@ -108,7 +112,7 @@ A ticket carries an entry index below $`n` and a Ring VRF proof over the context
 $`\mathsf{X}_T \frown \eta'_2 \mathbin{+\!\!+} e` (eq. (6.31), `ticketsextrinsic`; $`\mathsf{X}_T` is `$jam_ticket_seal`). The extrinsic is bounded by $`\mathsf{K}` before the
 epoch's tail and by 0 within it (eq. (6.32), `enforceticketlimit`):
 
-$$`\mathbf{E}_T \in \llbracket\left(e \in \mathbb{N}_n,\; p \in \mathring{\mathbb{V}}^{[]}_{\gamma'_Z}\langle \mathsf{X}_T \frown \eta'_2 \mathbin{+\!\!+} e \rangle\right)\rrbracket \quad \text{where } n = \left\lceil \frac{2\mathsf{E}}{|\gamma'_P|} \right\rceil \qquad |\mathbf{E}_T| \le \begin{cases} \mathsf{K} & \text{if } m' < \mathsf{Y} \\ 0 & \text{otherwise} \end{cases} \qquad \text{(6.31, 6.32)}`
+{gpeq "6.31, 6.32"}
 
 {leanSource JAM.maxAttempts}
 
@@ -119,7 +123,7 @@ $$`\mathbf{E}_T \in \llbracket\left(e \in \mathbb{N}_n,\; p \in \mathring{\mathb
 The new accumulator keeps the $`\mathsf{E}` lowest identifiers of the union of the new tickets $`\mathbf{n}` with the old
 accumulator, or with nothing at an epoch change. Every submitted ticket must survive:
 
-$$`\gamma'_A \equiv \overrightarrow{\left[x \in \mathbf{n} \cup \begin{cases} \emptyset & \text{if } e' > e \\ \gamma_A & \text{otherwise} \end{cases} \;\wr\; x_y \right]}^{\mathsf{E}} \qquad \mathbf{n} \subseteq \gamma'_A \qquad \text{(6.36, 6.37)}`
+{gpeq "6.36, 6.37"}
 
 In {api}`JAM.safrole` this is the `acc'` binding: a merge sort by identifier, then `take E`, and
 the `uselessTicket` check for $`\mathbf{n} \subseteq \gamma'_A`. The order on identifiers is {api}`JAM.octetLt`:

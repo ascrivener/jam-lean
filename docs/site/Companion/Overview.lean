@@ -33,7 +33,7 @@ covered in this book.
 tag := "overview-upsilon"
 %%%
 
-$$`\sigma' \equiv \Upsilon(\sigma, \mathbf{B}) \qquad \text{(4.1)}`
+{gpeq "4.1"}
 
 The paper defines JAM by $`\Upsilon` together with a genesis state $`\sigma^0`. In the model, $`\Upsilon` is
 {api}`JAM.importBlock`. It returns the posterior state together with an {api}`JAM.ImportTrace` (the newly
@@ -53,6 +53,8 @@ Besides $`\sigma` and $`\mathbf{B}`, it takes three arguments the paper leaves i
 tag := "overview-block"
 %%%
 
+{transcribed "4.3" "c2875a26b1"}
+
 $$`\mathbf{B} \equiv (\mathbf{H}, \mathbf{E}) \qquad \text{(4.2)} \qquad\qquad \mathbf{E} \equiv (\mathbf{E}_T, \mathbf{E}_P, \mathbf{E}_G, \mathbf{E}_A, \mathbf{E}_D) \qquad \text{(4.3)}`
 
 The extrinsic $`\mathbf{E}` has five parts: tickets $`\mathbf{E}_T` ({ref "safrole"}[§6]), preimages $`\mathbf{E}_P` ({ref "accumulation"}[§12]), guarantees of work reports
@@ -67,7 +69,7 @@ $`\mathbf{E}_G` ({ref "reports"}[§11]), availability assurances $`\mathbf{E}_A`
 tag := "overview-state"
 %%%
 
-$$`\sigma \equiv (\alpha, \beta, \theta, \gamma, \delta, \eta, \iota, \kappa, \lambda, \rho, \tau, \phi, \chi, \psi, \pi, \omega, \xi) \qquad \text{(4.4)}`
+{gpeq "4.4"}
 
 The model's {api}`JAM.State` has one field per component. It flattens the components that are
 tuples: $`\gamma = (\gamma_P, \gamma_Z, \gamma_S, \gamma_A)`, the privileges $`\chi` and the statistics $`\pi` each become several
@@ -150,7 +152,7 @@ which links to the source.
 tag := "overview-header"
 %%%
 
-$$`\mathbf{H} \equiv (\mathbf{H}_P, \mathbf{H}_R, \mathbf{H}_X, \mathbf{H}_T, \mathbf{H}_E, \mathbf{H}_W, \mathbf{H}_O, \mathbf{H}_I, \mathbf{H}_V, \mathbf{H}_S) \qquad \text{(5.1)}`
+{gpeq "5.1"}
 
 The parent hash, the prior state root, the extrinsic hash, the timeslot, the epoch, winning-tickets
 and offenders markers, the author's index, the entropy-yielding VRF signature and the seal:
@@ -159,7 +161,7 @@ and offenders markers, the author's index, the entropy-yielding VRF signature an
 
 The markers' types:
 
-$$`\mathbf{H}_E \in \left\lgroup \mathbb{H}, \mathbb{H}, \llbracket \left\lgroup \tilde{\mathbb{H}}, \bar{\mathbb{H}} \right\rgroup \rrbracket_{\mathbb{V}} \right\rgroup\boldsymbol{?}, \qquad \mathbf{H}_W \in \llbracket \mathbb{T} \rrbracket_{\mathsf{E}}\boldsymbol{?}, \qquad \mathbf{H}_O \in \llbracket \bar{\mathbb{H}} \rrbracket \qquad \text{(5.11)}`
+{gpeq "5.11"}
 
 $`\tilde{\mathbb{H}}` and $`\bar{\mathbb{H}}` are Bandersnatch and Ed25519 keys (§3.8.2). The model's {api}`JAM.EpochMark` and the option
 types hold them, and the types do not fix their lengths. The decoder ({api}`JAM.Header.decode`) fixes the
@@ -168,15 +170,15 @@ length is enforced at import, because $`\mathbf{H}_E` must match the marker Safr
 
 ## The header's conditions
 
-$$`\mathbf{H}_P \in \mathbb{H}, \quad \mathbf{H}_P \equiv \mathcal{H}(\mathcal{E}(P(\mathbf{H}))) \qquad \text{(5.2)}`
+{gpeq "5.2"}
 
-$$`h \in \mathbf{A} \Leftrightarrow h = \mathbf{H} \vee (\exists i \in \mathbf{A} : h = P(i)) \qquad \text{(5.3)}`
+{gpeq "5.3"}
 
-$$`\mathbf{H}_T \in \mathbb{N}_T, \quad P(\mathbf{H})_T < \mathbf{H}_T \wedge \mathbf{H}_T \cdot \mathsf{P} \leq \mathcal{T} \qquad \text{(5.8)}`
+{gpeq "5.8"}
 
-$$`\mathbf{H}_R \in \mathbb{H}, \quad \mathbf{H}_R \equiv \mathcal{M}_\sigma(\sigma) \qquad \text{(5.9)}`
+{gpeq "5.9"}
 
-$$`\mathbf{H}_I \in \mathbb{N}_{|\kappa'|}, \quad \mathbf{H}_A \equiv \kappa'[\mathbf{H}_I]_b \qquad \text{(5.10)}`
+{gpeq "5.10"}
 
 $`P(\mathbf{H})` is the parent header and $`\mathcal{T}` the wall clock. A header's hash is $`\mathcal{H}(\mathcal{E}(\mathbf{H}))`, {api}`JAM.Header.hash`:
 

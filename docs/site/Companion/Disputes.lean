@@ -40,7 +40,7 @@ equivalent). As in the paper, $`\left\lgroup\dots\right\rgroup` encloses the mem
 tag := "disputes-state"
 %%%
 
-$$`\psi \equiv (\psi_G, \psi_B, \psi_W, \psi_O) \qquad \text{(10.1)}`
+{gpeq "10.1"}
 
 The good-set $`\psi_G`, the bad-set $`\psi_B` and the wonky-set $`\psi_W` hold the hashes of
 work-reports judged correct, incorrect, or impossible to judge. The punish-set $`\psi_O` holds the
@@ -56,7 +56,7 @@ tag := "disputes-extrinsic"
 The disputes extrinsic has three parts: verdicts $`\mathbf{E}_V`, culprits $`\mathbf{E}_C` (guarantors of a report
 found invalid) and faults $`\mathbf{E}_F` (judges who contradicted a verdict):
 
-$$`\begin{aligned} \mathbf{E}_D &\equiv \left\lgroup \mathbf{E}_V, \mathbf{E}_C, \mathbf{E}_F \right\rgroup \\ \text{where } \mathbf{E}_V &\in \llbracket\left\lgroup\mathbb{H}, \left\lfloor\frac{\tau}{\mathsf{E}}\right\rfloor - \mathbb{N}_2, \llbracket\left\lgroup\{\top, \bot\}, \mathbb{N}, \bar{\mathbb{V}}\right\rgroup\rrbracket\right\rgroup\rrbracket_{:\mathsf{N}_V} \\ \text{and } \mathbf{E}_C &\in \llbracket\left\lgroup\mathbb{H}, \bar{\mathbb{H}}, \bar{\mathbb{V}}\right\rgroup\rrbracket_{:\mathsf{N}_O} \\ \text{and } \mathbf{E}_F &\in \llbracket\left\lgroup\mathbb{H}, \{\top, \bot\}, \bar{\mathbb{H}}, \bar{\mathbb{V}}\right\rgroup\rrbracket_{:\mathsf{N}_O} \end{aligned} \qquad \text{(10.2)}`
+{gpeq "10.2"}
 
 The model's types are {api}`JAM.Disputes`, {api}`JAM.Verdict` (with its judgments,
 {api}`JAM.Judgment`), {api}`JAM.Culprit` and {api}`JAM.Fault`. {api}`JAM.disputesTransition` checks
@@ -69,20 +69,20 @@ Each verdict names the epoch whose validator set judged it: the current one ($`\
 previous one ($`\lambda`). It must carry exactly $`\lfloor 2/3 |\mathbf{k}| \rfloor + 1` judgments, each signed by the
 judge it names:
 
-$$`K(a) \equiv \begin{cases} \kappa & \text{if } a = \left\lfloor \dfrac{\tau}{\mathsf{E}} \right\rfloor \\ \lambda & \text{otherwise} \end{cases} \qquad \text{(10.3)}`
+{gpeq "10.3"}
 
-$$`\forall (r, a, \mathbf{j}) \in \mathbf{E}_V : \bigwedge \begin{cases} |\mathbf{j}| = \lfloor 2/3 |\mathbf{k}| \rfloor + 1 \,, \\ \forall (v, i, s) \in \mathbf{j} : \\ \quad i < |\mathbf{k}| \wedge s \in \bar{\mathbb{V}}_{\mathbf{k}[i]_e}\langle \mathsf{X}_v \frown r \rangle \end{cases} \quad \text{where } \mathbf{k} = K(a) \qquad \text{(10.4)}`
+{gpeq "10.4"}
 
-$$`\mathsf{X}_\top \equiv \texttt{\$jam\_valid} \,,\ \mathsf{X}_\bot \equiv \texttt{\$jam\_invalid} \qquad \text{(10.5)}`
+{gpeq "10.5"}
 
 Verdicts are ordered by report hash, judgments by validator index, without duplicates, and no
 verdict may be about a report already judged:
 
-$$`\mathbf{E}_V = [(r, a, \mathbf{j}) \in \mathbf{E}_V \wr\wr r] \qquad \text{(10.8)}`
+{gpeq "10.8"}
 
-$$`\{ r \mid (r, a, \mathbf{j}) \in \mathbf{E}_V \} \mathbin{\downharpoonleft} \psi_G \cup \psi_B \cup \psi_W \qquad \text{(10.10)}`
+{gpeq "10.10"}
 
-$$`\forall (r, a, \mathbf{j}) \in \mathbf{E}_V : \mathbf{j} = [(v, i, s) \in \mathbf{j} \wr\wr i] \qquad \text{(10.11)}`
+{gpeq "10.11"}
 
 In the model, $`K` is {api}`JAM.judgeKeys`, with $`\kappa` and $`\lambda` entering only through their Ed25519
 keys. The type $`\lfloor \tau/\mathsf{E} \rfloor - \mathbb{N}_2` of $`a` becomes the condition $`a = e \vee a + 1 = e`. The other conditions of
@@ -105,7 +105,7 @@ tag := "disputes-verdicts"
 Each verdict's outcome is fixed by its number of positive judgments $`t`: exactly two-thirds plus one
 is good, zero is bad, and one third is wonky. No other count is allowed:
 
-$$`\begin{aligned} \mathbf{v} &\in \llbracket (\mathbb{H}, \{\top, \bot, \emptyset\}) \rrbracket \\ \mathbf{v} &\equiv [(r, V(a, \mathbf{j})) \mid (r, a, \mathbf{j}) \mathrel{<\!\!\!-} \mathbf{E}_V] \\ V(a, \mathbf{j}) &\equiv \begin{cases} \top & \text{if } t = \lfloor 2/3 |\mathbf{k}| \rfloor + 1 \\ \bot & \text{if } t = 0 \\ \emptyset & \text{if } t = \lfloor 1/3 |\mathbf{k}| \rfloor \end{cases} \\ \text{where } t &= \sum_{(v, i, s) \in \mathbf{j}} v \\ \text{and } \mathbf{k} &= K(a) \end{aligned} \qquad \text{(10.12)}`
+{gpeq "10.12"}
 
 $`V` is {api}`JAM.verdictOutcome`. It returns `none` where the paper's $`V` is undefined, and
 {api}`JAM.checkVerdict` rejects such a verdict:
@@ -127,17 +127,17 @@ tag := "disputes-offences"
 A culprit is a guarantor of a report now in the bad-set; a fault is a judgment whose validity
 contradicts the verdict. Neither may name a key already punished:
 
-$$`\forall (r, f, s) \in \mathbf{E}_C : \bigwedge \begin{cases} r \in \psi'_B \,, \\ f \in \mathbf{k} \,, \\ s \in \bar{\mathbb{V}}_f\langle \mathsf{X}_G \frown r \rangle \end{cases} \qquad \text{(10.6)}`
+{gpeq "10.6"}
 
-$$`\forall (r, v, f, s) \in \mathbf{E}_F : \bigwedge \begin{cases} r \in \psi'_B \Leftrightarrow r \notin \psi'_G \Leftrightarrow v \,, \\ f \in \mathbf{k} \,, \\ s \in \bar{\mathbb{V}}_f\langle \mathsf{X}_v \frown r \rangle \end{cases} \qquad \text{(10.7)}`
+{gpeq "10.7"}
 
 $$`\text{where } \mathbf{k} = \{ i_e \mid i \in \lambda \cup \kappa \} \setminus \psi_O`
 
-$$`\mathbf{E}_C = [(r, f, s) \in \mathbf{E}_C \wr\wr f] \,,\ \mathbf{E}_F = [(r, v, f, s) \in \mathbf{E}_F \wr\wr f] \qquad \text{(10.9)}`
+{gpeq "10.9"}
 
 Every good verdict must come with at least one fault for its report:
 
-$$`\forall (r, \top) \in \mathbf{v} : \exists (r, \dots) \in \mathbf{E}_F \qquad \text{(10.13)}`
+{gpeq "10.13"}
 
 These checks are the culprit, fault and good-verdict loops of {api}`JAM.disputesTransition`,
 shown in full {ref "disputes-transition"}[below]. $`\mathsf{X}_G` (`$jam_guarantee`, eq. (11.28)) is
@@ -151,7 +151,7 @@ tag := "disputes-clear"
 A core whose pending report has a bad or wonky verdict is cleared, so the report is not
 accumulated:
 
-$$`\forall c \in \mathbb{N}_{\mathsf{C}} : \rho^\dagger[c] = \begin{cases} \emptyset & \text{if } \left(\mathcal{H}\left((\rho[c]_{\mathbf{g}})_{\mathbf{r}}\right), v\right) \in \mathbf{v}, v \in \{\bot, \emptyset\} \\ \rho[c] & \text{otherwise} \end{cases} \qquad \text{(10.14)}`
+{gpeq "10.14"}
 
 The report is hashed through its encoding, as $`\mathcal{H}` applies to the codec's output ({ref "primitives"}[§3.8]):
 
@@ -175,7 +175,7 @@ $`\psi'_O` is built at the end of {api}`JAM.disputesTransition`, from the same k
 tag := "disputes-header"
 %%%
 
-$$`\mathbf{H}_O \equiv [f \mid (f, \dots) \mathrel{<\!\!\!-} \mathbf{E}_C] \frown [f \mid (f, \dots) \mathrel{<\!\!\!-} \mathbf{E}_F] \qquad \text{(10.19)}`
+{gpeq "10.19"}
 
 This is `mark` in {api}`JAM.disputesTransition`, returned as `offendersMark`
 ({api}`JAM.DisputesOutput`).

@@ -31,9 +31,11 @@ the whole transition of GP v0.8.1 §7 is one function, {api}`JAM.recentHistory`,
 tag := "history-state"
 %%%
 
-$$`\beta \equiv (\beta_H, \beta_B) \qquad \text{(7.1)}`
+{gpeq "7.1"}
 
-$$`\beta_H \in \llbracket \left\lgroup h \in \mathbb{H},\; s \in \mathbb{H},\; b \in \mathbb{H},\; t \in \mathbb{N}_T,\; \mathbf{p} \in \langle\!|\, \mathbb{H} \to \mathbb{H} \,|\!\rangle \right\rgroup \rrbracket_{:\mathsf{H}} \qquad \text{(7.2)}`
+{gpeq "7.2"}
+
+{transcribed "7.4" "d70f6821a5"}
 
 $$`\beta_B \in \llbracket \mathbb{H}\boldsymbol{?} \rrbracket \qquad \text{(7.3)} \qquad\qquad \theta \in \llbracket (\mathbb{N}_S, \mathbb{H}) \rrbracket \qquad \text{(7.4)}`
 
@@ -64,7 +66,7 @@ tag := "history-dagger"
 A block's entry is added before its posterior state root is known, so it is first recorded with
 the zero hash $`\mathbb{H}_0`. The next block's header carries that root as $`\mathbf{H}_R`, and the transition puts it in place:
 
-$$`\beta^\dagger_H \equiv \beta_H \quad\text{except}\quad \beta^\dagger_H\left[|\beta_H| - 1\right]_s = \mathbf{H}_R \qquad \text{(7.5)}`
+{gpeq "7.5"}
 
 {leanSource JAM.Recent.withParentRoot}
 
@@ -79,9 +81,9 @@ tag := "history-belt"
 The block's accumulation outputs $`\theta'` are encoded, Merklized with Keccak, and the root is appended to
 the log:
 
-$$`\text{let } \mathbf{s} = \left[\, \mathcal{E}_4(s) \frown \mathcal{E}(h) \;\middle|\; (s, h) \mathrel{\mathrlap{<}{-}} \theta' \,\right] \qquad \text{(7.6)}`
+{gpeq "7.6"}
 
-$$`\beta'_B \equiv \mathcal{A}\left(\beta_B,\, \mathcal{M}_B(\mathbf{s}, \mathcal{H}_K),\, \mathcal{H}_K\right) \qquad \text{(7.7)}`
+{gpeq "7.7"}
 
 In the model, accumulation computes the root $`\mathcal{M}_B(\mathbf{s}, \mathcal{H}_K)` (it is `AccResult.root`, returned by
 {api}`JAM.accumulate`) and passes it to {api}`JAM.recentHistory` as `HistoryInput.accRoot`. Everything
@@ -115,7 +117,7 @@ tag := "history-entry"
 
 The posterior $`\beta_H` appends an entry for the new block and keeps the last $`\mathsf{H}`:
 
-$$`\begin{aligned} \beta'_H &\equiv \overleftarrow{\beta^\dagger_H \mathbin{+\!\!+} \left( h \mathrel{\substack{\scriptscriptstyle\blacktriangleright \\ \scriptscriptstyle\blacktriangleright}} \mathcal{H}(\mathbf{H}),\; s \mathrel{\substack{\scriptscriptstyle\blacktriangleright \\ \scriptscriptstyle\blacktriangleright}} \mathbb{H}_0,\; b \mathrel{\substack{\scriptscriptstyle\blacktriangleright \\ \scriptscriptstyle\blacktriangleright}} \mathcal{M}_R(\beta'_B),\; t \mathrel{\substack{\scriptscriptstyle\blacktriangleright \\ \scriptscriptstyle\blacktriangleright}} \mathbf{H}_T,\; \mathbf{p} \right)}^{\mathsf{H}} \\ \text{where } \mathbf{p} &= \left\{ \left((g_\mathbf{r})_\mathbf{s}\right)_p \mapsto \left((g_\mathbf{r})_\mathbf{s}\right)_e \;\middle|\; g \in \mathbf{E}_G \right\} \end{aligned} \qquad \text{(7.8)}`
+{gpeq "7.8"}
 
 $`\overleftarrow{\mathbf{s}}^n` is the last $`n` elements of $`\mathbf{s}` (§3.7), and $`\mathbf{p}` maps the package hash of each guaranteed report's
 availability specification to its segment root. The new state root is $`\mathbb{H}_0`. The paper notes that this is

@@ -42,7 +42,7 @@ $`k` and without duplicates" (§3.7).
 tag := "reports-state"
 %%%
 
-$$`\rho \in \llbracket \left\lgroup \mathbf{g} \in \mathbb{G}, t \in \mathbb{N}_T \right\rgroup? \rrbracket_{\mathsf{C}} \qquad \text{(11.1)}`
+{gpeq "11.1"}
 
 An entry is a guarantee and the timeslot at which it was reported. The model's entry is
 {api}`JAM.AvailAssignment`, and $`\rho` is {api}`JAM.AvailAssignments`.
@@ -53,9 +53,11 @@ work-digest $`\mathbb{D}` (eq. (11.6)) and the work errors $`\mathbb{E}` (eq. (1
 {api}`JAM.WorkReport`, {api}`JAM.RefineContext`, {api}`JAM.AvailabilitySpec`,
 {api}`JAM.WorkDigest` and {api}`JAM.WorkError`. It also bounds a report's dependencies and size:
 
-$$`\forall \mathbf{r} \in \mathbb{R} : |\mathbf{r}_\mathbf{l}| + |(\mathbf{r}_\mathbf{c})_\mathbf{p}| \le \mathsf{J} \qquad \text{(11.3)}`
+{gpeq "11.3"}
 
-$$`\forall \mathbf{r} \in \mathbb{R} : |\mathbf{r}_\mathbf{t}| + \sum_{i=0}^{i<|\mathbf{r}_\mathbf{d}|} L(\mathbf{r}_\mathbf{d}[i]_\mathbf{l}) \le \mathsf{W}_R \qquad \text{(11.8)}`
+{gpeq "11.8"}
+
+{transcribed "11.10" "77c24302d4"}
 
 $$`L(\mathbf{l} \in \mathbb{B} \cup \mathbb{E}) \equiv \begin{cases} |\mathbf{l}| & \text{if } \mathbf{l} \in \mathbb{B} \\ 0 & \text{otherwise} \end{cases} \qquad \text{(11.9)} \qquad \mathsf{W}_R \equiv 48 \cdot 2^{10} \qquad \text{(11.10)}`
 
@@ -76,18 +78,18 @@ tag := "reports-assurances"
 Each assurance is a bitstring with one bit per core, the assuring validator's index and its
 signature. Assurances are ordered by validator index, without duplicates:
 
-$$`\mathbf{E}_A \in \llbracket \left\lgroup f \in \text{𝕓}_{\mathsf{C}},\, v \in \mathbb{N}_{|\kappa|},\, s \in \bar{\mathbb{V}} \right\rgroup \rrbracket \qquad \text{(11.11)}`
+{gpeq "11.11"}
 
-$$`\mathbf{E}_A = [a \in \mathbf{E}_A \wr\wr a_v] \qquad \text{(11.12)}`
+{gpeq "11.12"}
 
 The signature covers the parent header hash and the bitstring, and a bit may be set only on a core
 with an assignment:
 
-$$`\forall a \in \mathbf{E}_A : a_s \in \bar{\mathbb{V}}_{\kappa[a_v]_e}\langle \mathsf{X}_A \frown \mathcal{H}(\mathcal{E}(\mathbf{H}_P, a_f)) \rangle \qquad \text{(11.13)}`
+{gpeq "11.13"}
 
-$$`\mathsf{X}_A \equiv \texttt{\$jam\_available} \qquad \text{(11.14)}`
+{gpeq "11.14"}
 
-$$`\forall a \in \mathbf{E}_A, c \in \mathbb{N}_{\mathsf{C}} : \quad a_f[c] \Rightarrow \rho^\dagger[c] \ne \emptyset \qquad \text{(11.15)}`
+{gpeq "11.15"}
 
 The model's assurance is {api}`JAM.Assurance`. {api}`JAM.checkAssurance` checks one assurance
 against the index of the one before it:
@@ -102,9 +104,9 @@ A report becomes available when more than two thirds of the validators set its c
 $`\rho^\ddagger` is $`\rho^\dagger` with the cores of available reports cleared, together with those that timed out, and all
 of them when the size of the validator set changes:
 
-$$`\mathbf{R} \equiv \left[ (\rho^\dagger[c]_\mathbf{g})_\mathbf{r} \;\middle|\; c \mathrel{<\!\!\!-} \mathbb{N}_{\mathsf{C}},\; \sum_{a \in \mathbf{E}_A} a_f[c] > \tfrac{2}{3} |\kappa| \right] \qquad \text{(11.16)}`
+{gpeq "11.16"}
 
-$$`\forall c \in \mathbb{N}_{\mathsf{C}} : \rho^\ddagger[c] \equiv \begin{cases} \emptyset & \text{if } p = \emptyset \vee (p_\mathbf{g})_\mathbf{r} \in \mathbf{R} \vee {} \\ & \phantom{\text{if }} \mathbf{H}_T \ge p_t + \mathsf{U} \vee |\kappa| \ne |\kappa'| \\ p & \text{otherwise} \end{cases} \quad \text{where } p = \rho^\dagger[c] \qquad \text{(11.17)}`
+{gpeq "11.17"}
 
 Both are in {api}`JAM.assurances`: `available` is the threshold of (11.16), written
 $`3 \cdot \text{count} > 2|\kappa|`, and `ρ'` is $`\rho^\ddagger`:
@@ -119,15 +121,15 @@ tag := "reports-assignments"
 Of the $`\mathsf{C} = 341` cores, only the first $`|\kappa'|/3` are active, and each active core has three validators
 assigned to it. $`\mathbf{M}` gives each validator's core and key:
 
-$$`\mathbf{M} \in \left\lgroup \llbracket \mathbb{N}_{\mathsf{C}} \rrbracket_{|\kappa'|}, \llbracket \mathbb{K} \rrbracket_{|\kappa'|} \right\rgroup \qquad \text{(11.18)}`
+{gpeq "11.18"}
 
 The cores come from a shuffle with the epochal entropy $`\eta'_2`, rotated every $`\mathsf{R}` slots:
 
-$$`R(\mathbf{c}, n) \equiv \left[ (x + n) \bmod \frac{|\mathbf{c}|}{3} \;\middle|\; x \mathrel{<\!\!\!-} \mathbf{c} \right] \qquad \text{(11.19)}`
+{gpeq "11.19"}
 
-$$`P(v, e, t) \equiv R\left( \mathcal{F}\left( \left[ \left\lfloor \frac{i}{3} \right\rfloor \;\middle|\; i \mathrel{<\!\!\!-} \mathbb{N}_v \right], e \right), \left\lfloor \frac{t \bmod \mathsf{E}}{\mathsf{R}} \right\rfloor \right) \qquad \text{(11.20)}`
+{gpeq "11.20"}
 
-$$`\mathbf{M} \equiv \left( P(|\kappa'|, \eta'_2, \tau'), \Phi(\kappa') \right) \qquad \text{(11.21)}`
+{gpeq "11.21"}
 
 $`\mathcal{F}` is the shuffle of Appendix F ({ref "shuffle"}[chapter]). $`\Phi` (eq. (6.16)) replaces
 the key of each validator in the punish-set $`\psi'_O` by the null key $`\mathbb{K}_0` (eq. (6.14)), whose
@@ -145,7 +147,7 @@ Ed25519 part is $`[2, 0, 0, \dots]`. In the model, which reads only the Ed25519 
 $`\mathbf{M}^*` is $`\mathbf{M}` as it was under the previous rotation, with the previous epoch's keys and entropy if
 that rotation was in the previous epoch:
 
-$$`\begin{aligned} \text{let } (\mathbf{k}, e) &= \begin{cases} (\kappa', \eta'_2) & \text{if } \left\lfloor \dfrac{\tau' - \mathsf{R}}{\mathsf{E}} \right\rfloor = \left\lfloor \dfrac{\tau'}{\mathsf{E}} \right\rfloor \\ (\lambda', \eta'_3) & \text{otherwise} \end{cases} \\ \mathbf{M}^* &\equiv \left( P(|\mathbf{k}|, e, \tau' - \mathsf{R}), \Phi(\mathbf{k}) \right) \end{aligned} \qquad \text{(11.22)}`
+{gpeq "11.22"}
 
 {leanSource JAM.priorAssignments}
 
@@ -157,19 +159,21 @@ tag := "reports-guarantees"
 A guarantee is a work-report, the timeslot at which it was guaranteed and a credential of two or
 three signatures. The extrinsic holds at most one guarantee per core, in core order:
 
-$$`\mathbb{G} \equiv \left\lgroup \mathbf{r} \in \mathbb{R}, t \in \mathbb{N}_T, a \in \llbracket \left\lgroup \mathbb{N}, \bar{\mathbb{V}} \right\rgroup \rrbracket_{2:3} \right\rgroup \qquad \text{(11.23)}`
+{gpeq "11.23"}
+
+{transcribed "11.25" "0d04532899"}
 
 $$`\mathbf{E}_G \in \llbracket \mathbb{G} \rrbracket_{:\mathsf{C}} \qquad \text{(11.24)} \qquad \mathbf{E}_G = [\mathbf{g} \in \mathbf{E}_G \wr\wr (\mathbf{g}_\mathbf{r})_c] \qquad \text{(11.25)}`
 
-$$`\forall g \in \mathbf{E}_G : g_a = [(v, s) \in g_a \wr\wr v] \qquad \text{(11.26)}`
+{gpeq "11.26"}
 
 Each signer must be assigned to the report's core, under $`\mathbf{M}` if $`t` is in the current rotation and under
 $`\mathbf{M}^*` if it is in the previous one, and the core must be active now. The signers' Ed25519 keys form
 the reporters set $`\mathbf{G}`, which the validator statistics of {ref "statistics"}[§13] read:
 
-$$`\begin{aligned} &\forall (\mathbf{r}, t, a) \in \mathbf{E}_G, \forall (v, s) \in a : \begin{cases} v < |\mathbf{k}| \wedge \mathbf{c}_v = \mathbf{r}_c < \dfrac{|\kappa'|}{3} \\ s \in \bar{\mathbb{V}}_{(\mathbf{k}_v)_e}\langle \mathsf{X}_G \frown \mathcal{H}(\mathbf{r}) \rangle \\ \mathsf{R}(\lfloor \tau'/\mathsf{R} \rfloor - 1) \le t \le \tau' \end{cases} \\ &k \in \mathbf{G} \Leftrightarrow \exists (\mathbf{r}, t, a) \in \mathbf{E}_G, \exists (v, s) \in a : k = (\mathbf{k}_v)_e \\ &\quad \text{where } (\mathbf{c}, \mathbf{k}) = \begin{cases} \mathbf{M} & \text{if } \left\lfloor \dfrac{\tau'}{\mathsf{R}} \right\rfloor = \left\lfloor \dfrac{t}{\mathsf{R}} \right\rfloor \\ \mathbf{M}^* & \text{otherwise} \end{cases} \end{aligned} \qquad \text{(11.27)}`
+{gpeq "11.27"}
 
-$$`\mathsf{X}_G \equiv \texttt{\$jam\_guarantee} \qquad \text{(11.28)}`
+{gpeq "11.28"}
 
 {api}`JAM.checkGuarantee` checks one guarantee and returns its signers' keys, from which
 {api}`JAM.guarantees` builds $`\mathbf{G}`. A signer whose key $`\Phi` replaced by the null key is rejected before its
@@ -180,18 +184,18 @@ signature is checked, since no signature is valid under that key:
 The incoming reports $`\mathbf{I}` must give the right number of erasure-coded chunks, land on a core with no
 assignment in $`\rho^\ddagger`, be authorized by the core's pool $`\alpha`, and respect the gas limits:
 
-$$`\text{let } \mathbf{I} = \{ \mathbf{g}_\mathbf{r} \mid \mathbf{g} \in \mathbf{E}_G \} \qquad \text{(11.29)}`
+{gpeq "11.29"}
 
-$$`\forall \mathbf{r} \in \mathbf{I} : (\mathbf{r}_\mathbf{s})_v = |\kappa'| \qquad \text{(11.30)}`
+{gpeq "11.30"}
 
-$$`\forall \mathbf{r} \in \mathbf{I} : \rho^\ddagger[\mathbf{r}_c] = \emptyset \wedge \mathbf{r}_a \in \alpha[\mathbf{r}_c] \qquad \text{(11.31)}`
+{gpeq "11.31"}
 
-$$`\forall \mathbf{r} \in \mathbf{I} : \sum_{\mathbf{d} \in \mathbf{r}_\mathbf{d}} (\mathbf{d}_g) \le \mathsf{G}_A \ \wedge\ \forall \mathbf{d} \in \mathbf{r}_\mathbf{d} : \mathbf{d}_g \ge \delta[\mathbf{d}_s]_g \qquad \text{(11.32)}`
+{gpeq "11.32"}
 
 Each report must also stay within the limits applied to every work-package. v0.8.1 adds these
 conditions (GP #563):
 
-$$`\forall \mathbf{r} \in \mathbf{I} : \bigwedge \begin{cases} \sum_{\mathbf{d} \in \mathbf{r}_\mathbf{d}} (\mathbf{d}_u) \le \mathsf{G}_R \\ \sum_{\mathbf{d} \in \mathbf{r}_\mathbf{d}} (\mathbf{d}_i) \le \mathsf{W}_M \\ (\mathbf{r}_\mathbf{s})_n = \sum_{\mathbf{d} \in \mathbf{r}_\mathbf{d}} (\mathbf{d}_e) \le \mathsf{W}_X \\ \sum_{\mathbf{d} \in \mathbf{r}_\mathbf{d}} (\mathbf{d}_x) \le \mathsf{T} \\ \sum_{\mathbf{d} \in \mathbf{r}_\mathbf{d}} (\mathbf{d}_z + \mathbf{d}_i \cdot \mathsf{W}_F) \le \mathsf{W}_I \\ (\mathbf{r}_\mathbf{s})_l \le \mathsf{W}_B \\ \mathbf{r}_g \le \mathsf{G}_I \end{cases} \qquad \text{(11.33)}`
+{gpeq "11.33"}
 
 {leanSource JAM.checkReportLoad}
 
@@ -203,16 +207,18 @@ tag := "reports-context"
 $`\mathbf{x}` and $`\mathbf{p}` are the contexts and the work-package hashes of the incoming reports. No package may be
 reported twice:
 
+{transcribed "11.35" "82a71f018f"}
+
 $$`\text{let } \mathbf{x} \equiv \{ \mathbf{r}_\mathbf{c} \mid \mathbf{r} \in \mathbf{I} \} ,\quad \mathbf{p} \equiv \{ (\mathbf{r}_\mathbf{s})_p \mid \mathbf{r} \in \mathbf{I} \} \qquad \text{(11.34)} \qquad |\mathbf{p}| = |\mathbf{I}| \qquad \text{(11.35)}`
 
 Each anchor must be a recent block, with matching details; each lookup-anchor must be at most $`\mathsf{L}`
 slots old and in the ancestor set $`\mathbf{A}` of the last $`\mathsf{L}` headers:
 
-$$`\forall x \in \mathbf{x} : \exists y \in \beta^\dagger_H : x_a = y_h \wedge x_s = y_s \wedge x_b = y_b \wedge x_n = y_t \qquad \text{(11.36)}`
+{gpeq "11.36"}
 
-$$`\forall x \in \mathbf{x} :\ x_t \ge \mathbf{H}_T - \mathsf{L} \qquad \text{(11.37)}`
+{gpeq "11.37"}
 
-$$`\forall x \in \mathbf{x} : \exists h, h' \in \mathbf{A} : \bigwedge \begin{cases} h_T = x_t \\ \mathcal{H}(h) = x_l \\ h'_P = \mathcal{H}(h) \\ h'_R = x_r \end{cases} \qquad \text{(11.38)}`
+{gpeq "11.38"}
 
 {leanSource JAM.checkAnchor}
 
@@ -222,11 +228,11 @@ The ancestor set is not part of the state, so the model takes the condition of (
 A package already in the pipeline may not be reported again: not one reported in recent history
 $`\beta_H`, accumulated in $`\xi`, waiting in the ready queue $`\omega`, or assigned in $`\rho`:
 
-$$`\text{let } \mathbf{q} = \{ (\mathbf{r}_\mathbf{s})_p \mid (\mathbf{r}, \mathbf{d}) \in \overgroup{\omega} \} \qquad \text{(11.39)}`
+{gpeq "11.39"}
 
-$$`\text{let } \mathbf{a} = \{ (((\mathbf{a}_\mathbf{g})_\mathbf{r})_\mathbf{s})_p \mid \mathbf{a} \in \rho, \mathbf{a} \ne \emptyset \} \qquad \text{(11.40)}`
+{gpeq "11.40"}
 
-$$`\forall p \in \mathbf{p}, p \notin \bigcup_{x \in \beta_H} \mathcal{K}(x_\mathbf{p}) \cup \bigcup_{x \in \xi} x \cup \mathbf{q} \cup \mathbf{a} \qquad \text{(11.41)}`
+{gpeq "11.41"}
 
 These sets are also not in the state {api}`JAM.guarantees` reads. Their union is computed by
 {api}`JAM.knownPackages` and passed in as `known`:
@@ -236,15 +242,15 @@ These sets are also not in the state {api}`JAM.guarantees` reads. Their union is
 Prerequisites and segment-root lookups must name packages in the extrinsic or in recent history,
 with the right segment roots:
 
-$$`\begin{aligned} &\forall \mathbf{r} \in \mathbf{I}, \forall p \in (\mathbf{r}_\mathbf{c})_\mathbf{p} \cup \mathcal{K}(\mathbf{r}_\mathbf{l}) : \\ &\quad p \in \mathbf{p} \cup \{ x \mid x \in \mathcal{K}(b_\mathbf{p}),\, b \in \beta_H \} \end{aligned} \qquad \text{(11.42)}`
+{gpeq "11.42"}
 
-$$`\text{let } \mathbf{p} = \{ (((g_\mathbf{r})_\mathbf{s})_p \mapsto ((g_\mathbf{r})_\mathbf{s})_e) \mid g \in \mathbf{E}_G \} \qquad \text{(11.43)}`
+{gpeq "11.43"}
 
-$$`\forall \mathbf{r} \in \mathbf{I} : \mathbf{r}_\mathbf{l} \subseteq \mathbf{p} \cup \bigcup_{b \in \beta_H} b_\mathbf{p} \qquad \text{(11.44)}`
+{gpeq "11.44"}
 
 Finally, each digest must name its service's current code hash:
 
-$$`\forall \mathbf{r} \in \mathbf{I}, \forall \mathbf{d} \in \mathbf{r}_\mathbf{d} : \mathbf{d}_c = \delta[\mathbf{d}_s]_c \qquad \text{(11.45)}`
+{gpeq "11.45"}
 
 # The posterior assignments (§11.5)
 %%%
@@ -254,7 +260,7 @@ tag := "reports-posterior"
 Each core with a new guarantee takes it, stamped with the current time; the others keep their
 entry in $`\rho^\ddagger`:
 
-$$`\forall c \in \mathbb{N}_{\mathsf{C}} : \rho'[c] \equiv \begin{cases} (\mathbf{g},\, t \mathrel{\substack{\scriptscriptstyle\blacktriangleright \\ \scriptscriptstyle\blacktriangleright}} \tau') & \text{if } \exists \mathbf{g} \in \mathbf{E}_G, (\mathbf{g}_\mathbf{r})_c = c \\ \rho^\ddagger[c] & \text{otherwise} \end{cases} \qquad \text{(11.46)}`
+{gpeq "11.46"}
 
 This is the `ρ'` binding at the end of {api}`JAM.guarantees`, which also carries out every check
 of §11.4, in the order given in its docstring:

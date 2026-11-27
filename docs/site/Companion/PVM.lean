@@ -64,6 +64,8 @@ instruction counter that is not a valid instruction panics:
 
 $$`\Psi \colon (\mathfrak{p}, \imath, \varrho, \tilde\varrho, \varphi, \mu) \mapsto \begin{cases} \Psi(\mathfrak{p}, \imath', \varrho', \tilde\varrho', \varphi', \mu') & \text{if } \varepsilon = \blacktriangleright \\ (\varepsilon, 0, \varrho', \bot, \varphi', \mu') & \text{if } \varepsilon \in \{\text{☇}, \blacksquare\} \\ (\varepsilon, \imath, \varrho', \tilde\varrho', \varphi, \mu) & \text{otherwise} \end{cases}`
 
+{transcribed "A.1" "1bb89f12ad"}
+
 $$`\text{where } (\varepsilon, \imath', \varrho', \tilde\varrho', \varphi', \mu') = \begin{cases} \Psi_1(\mathbf{c}, \mathbf{k}, \mathbf{j}, \imath, \varrho, \tilde\varrho, \varphi, \mu) & \text{if } (\mathbf{c}, \mathbf{k}, \mathbf{j}) = \text{deblob}(\mathfrak{p}, \imath) \\ (\text{☇}, \imath, \varrho, \tilde\varrho, \varphi, \mu) & \text{otherwise} \end{cases} \qquad \text{(A.1)}`
 
 Its type is
@@ -103,6 +105,8 @@ $$`\text{deblob}(\mathfrak{p}, \imath) = \begin{cases} (\mathbf{c}, \mathbf{k}, 
 
 $$`\mathfrak{v}_{\text{blob}}(\mathbf{c}, \mathbf{k}, \imath) = \begin{cases} \top & \text{if } \imath > 0 \wedge \imath = |\mathbf{k}| \\ \bot & \text{otherwise if } \imath + 1 + \text{skip}(\imath) = |\mathbf{k}| \wedge \mathbf{c}_{\imath} \notin T \\ \mathfrak{v}_{\text{blob}}(\mathbf{c}, \mathbf{k}, \imath + 1 + \text{skip}(\imath)) & \text{otherwise if } \mathfrak{v}_{\text{inst}}(\mathbf{c}, \mathbf{k}, \imath) \\ \bot & \text{otherwise} \end{cases}`
 
+{transcribed "A.2" "3b479349e6"}
+
 $$`\mathfrak{v}_{\text{inst}}(\mathbf{c}, \mathbf{k}, \imath) = |\mathbf{k}| = |\mathbf{c}| \wedge \imath < |\mathbf{k}| \wedge \mathbf{k}_{\imath} = 1 \wedge \mathbf{c}_{\imath} \in U \qquad \text{(A.2)}`
 
 So $`\mathfrak{v}_{\text{blob}}` walks the program from index 0, one instruction at a time, and accepts it only if
@@ -136,9 +140,9 @@ Instructions have variable length, and the bitmask $`\mathbf{k}` marks the octet
 instruction. $`\text{skip}(i)` is the number of octets, minus one, to the next instruction's opcode, and
 $`\zeta` is $`\mathbf{c}` padded with zeroes, so reading past the end of the code reads 0 (the opcode of `trap`):
 
-$$`\text{skip} \colon \mathbb{N} \to \mathbb{N},\quad i \mapsto \min(24,\ j \in \mathbb{N} : (\mathbf{k} \frown [1, 1, \dots])_{i + 1 + j} = 1) \qquad \text{(A.3)}`
+{gpeq "A.3"}
 
-$$`\zeta \equiv \mathbf{c} \frown [0, 0, \dots] \qquad \text{(A.4)}`
+{gpeq "A.4"}
 
 {leanSource PVM.Program.skip}
 
@@ -151,9 +155,9 @@ branches (22 opcodes); $`U` is the set of all valid opcodes (139 of them). The b
 0 and after every terminator, provided an instruction starts there, and $`\mathfrak{L}(\imath)` is the start of the
 block containing $`\imath`:
 
-$$`\varpi \equiv \left(\{0\} \cup \{n + 1 + \text{skip}(n) \mid n \in \mathbb{N}_{|\mathbf{c}|} \wedge \mathbf{k}_n = 1 \wedge \mathbf{c}_n \in T\}\right) \cap \{n \mid \mathbf{k}_n = 1 \wedge \mathbf{c}_n \in U\} \qquad \text{(A.5)}`
+{gpeq "A.5"}
 
-$$`\mathfrak{L} \colon \mathbb{N}_R \to \mathbb{N}_R,\quad \imath \mapsto \max(j \in \varpi : j \le \imath) \qquad \text{(A.6)}`
+{gpeq "A.6"}
 
 The model's $`T` and $`U` ({api}`PVM.terminatorOpcodes`, {api}`PVM.validOpcodes`) are in `PVM/Tables.lean`,
 which is generated from the paper's LaTeX source by a script; CI regenerates it from the pinned
@@ -179,6 +183,8 @@ $`\Psi_1`, the single-step transition, does three things, in this order:
 * it checks the memory the instruction reads and writes ($`\varepsilon^\mu`);
 * it applies the instruction's regular execution, given by the instruction tables of §A.5.
 
+{transcribed "A.7" "91668387f8"}
+
 $$`\Psi_1 \colon (\mathfrak{p}, \mathbf{k}, \mathbf{j}, \imath, \varrho, \tilde\varrho, \varphi, \mu) \mapsto (\varepsilon^*, \imath^*, \varrho^*, \tilde\varrho^*, \varphi^*, \mu^*) \qquad \text{(A.7)}`
 
 The result is {api}`PVM.StepResult`, and the function is {api}`PVM.Program.step`. A
@@ -201,7 +207,7 @@ tag := "pvm-gas"
 Gas for a whole basic block is charged before the block's first instruction runs. $`\tilde\varrho` records that
 the current block has been paid for:
 
-$$`\left(\varepsilon^{\varrho}, \varrho^*, \tilde\varrho'\right) = \begin{cases} (\blacktriangleright, \varrho, \top) & \text{if } \tilde\varrho = \top \\ (\blacktriangleright, \varrho - \varrho^{\Delta}(\mathbf{c}, \mathbf{k}, \mathfrak{L}(\imath)), \top) & \text{otherwise if } \varrho \ge \varrho^{\Delta}(\mathbf{c}, \mathbf{k}, \mathfrak{L}(\imath)) \\ (\infty, \varrho, \bot) & \text{otherwise} \end{cases} \qquad \text{(A.8)}`
+{gpeq "A.8"}
 
 {leanSource PVM.Program.chargeGas}
 
@@ -227,6 +233,8 @@ the following:
 
 $$`\varepsilon^{\mu} = \begin{cases} \blacktriangleright & \text{if } \mathbf{x} = \emptyset \\ \text{☇} & \text{if } \min(\mathbf{x}) \bmod 2^{32} < 2^{16} \\ \Finv \times \mathsf{Z}_P \left\lfloor \min(\mathbf{x}) \bmod 2^{32} \div \mathsf{Z}_P \right\rfloor & \text{otherwise} \end{cases}`
 
+{transcribed "A.9" "23613ae6be"}
+
 $$`\text{where } \mathbf{x} = \left\{ x \;\middle|\; x \in \mathbf{r} \wedge x \bmod 2^{32} \notin \mathbb{V}_\mu \;\vee\; x \in \mathbf{w} \wedge x \bmod 2^{32} \notin \mathbb{V}^*_\mu \right\} \qquad \text{(A.9)}`
 
 {leanSource PVM.memoryException}
@@ -239,9 +247,9 @@ in {api}`PVM.Program.exec` returns the indices it reads and writes (`Mutation.re
 tag := "pvm-final"
 %%%
 
-$$`\left(\varepsilon^*, \imath^*, \varphi^*, \mu^*\right) = \begin{cases} (\varepsilon^{\varrho}, \imath, \varphi, \mu) & \text{if } \varepsilon^{\varrho} \ne \blacktriangleright \\ (\varepsilon^{\mu}, \imath, \varphi, \mu) & \text{otherwise if } \varepsilon^{\mu} \ne \blacktriangleright \\ (\varepsilon, \imath', \varphi', \mu') & \text{otherwise} \end{cases} \qquad \text{(A.10)}`
+{gpeq "A.10"}
 
-$$`\tilde\varrho^* = \begin{cases} \bot & \text{if } \tilde\varrho' = \bot \vee \left(\mathbf{c}_{\imath} \in T \wedge \varepsilon^* \in \{\blacktriangleright\} \cup \{\hbar\} \times \mathbb{N}_R\right) \\ \top & \text{otherwise} \end{cases} \qquad \text{(A.11)}`
+{gpeq "A.11"}
 
 {leanSource PVM.Program.finalState}
 
@@ -251,7 +259,7 @@ host call, clears the flag, so the next block is charged when it starts.
 Unless an instruction says otherwise, its regular execution continues at the next instruction and
 changes nothing:
 
-$$`\varepsilon = \blacktriangleright,\quad \imath' = \imath + 1 + \text{skip}(\imath),\quad \varphi' = \varphi,\quad \mu' = \mu \qquad \text{except as indicated} \qquad \text{(A.12)}`
+{gpeq "A.12"}
 
 This is `dflt` in {api}`PVM.Program.exec`, below.
 
@@ -260,15 +268,15 @@ This is `dflt` in {api}`PVM.Program.exec`, below.
 The instruction tables use a few conversions between $`n`-octet naturals and integers or bit
 strings. $`\mathcal{Z}_n` reads an $`n`-octet natural as a signed integer and $`\mathcal{Z}_n^{-1}` goes back:
 
-$$`\mathcal{Z}_{n \in \mathbb{N}} \colon \mathbb{N}_{2^{8n}} \to \mathbb{Z}_{-2^{8n-1} \dots 2^{8n-1}},\quad a \mapsto \begin{cases} a & \text{if } a < 2^{8n-1} \\ a - 2^{8n} & \text{otherwise} \end{cases} \qquad \text{(A.13)}`
+{gpeq "A.13"}
 
-$$`\mathcal{Z}^{-1}_{n \in \mathbb{N}} \colon \mathbb{Z}_{-2^{8n-1} \dots 2^{8n-1}} \to \mathbb{N}_{2^{8n}},\quad a \mapsto (2^{8n} + a) \bmod 2^{8n} \qquad \text{(A.14)}`
+{gpeq "A.14"}
 
 $`\mathcal{B}_n` and $`\overleftarrow{\mathcal{B}}_n` (eqs. (A.15)–(A.18)) give the bits of a natural, least or most significant
 first, with their inverses. The model works with single bits, {api}`PVM.Num.bit` and {api}`PVM.Num.ofBits`.
 Immediates are stored in as few octets as possible and sign-extended to 64 bits by $`\mathcal{X}_n`:
 
-$$`\mathcal{X}_{n \in \{0, 1, 2, 3, 4, 8\}} \colon \mathbb{N}_{2^{8n}} \to \mathbb{N}_R,\quad x \mapsto x + \left\lfloor \frac{x}{2^{8n-1}} \right\rfloor (2^{64} - 2^{8n}) \qquad \text{(A.19)}`
+{gpeq "A.19"}
 
 {leanSource PVM.Num.signed}
 
@@ -282,11 +290,11 @@ A static jump must land on the start of a basic block, a conditional branch must
 targets on block starts (whether or not it is taken), and a dynamic jump goes through the jump table,
 with addresses that are the table index plus one, times $`\mathsf{Z}_A = 2`:
 
-$$`\text{sjump}(b) \implies (\varepsilon, \imath') = \begin{cases} (\text{☇}, \imath) & \text{if } b \notin \varpi \\ (\blacktriangleright, b) & \text{otherwise} \end{cases} \qquad \text{(A.20)}`
+{gpeq "A.20"}
 
-$$`\text{branch}(b, C) \implies (\varepsilon, \imath') = \begin{cases} (\text{☇}, \imath) & \text{if } b \notin \varpi \vee \imath + 1 + \text{skip}(\imath) \notin \varpi \\ (\blacktriangleright, \imath + 1 + \text{skip}(\imath)) & \text{otherwise if } \neg C \\ (\blacktriangleright, b) & \text{otherwise} \end{cases} \qquad \text{(A.21)}`
+{gpeq "A.21"}
 
-$$`\text{djump}(a) \implies (\varepsilon, \imath') = \begin{cases} (\blacksquare, \imath) & \text{if } a = 2^{32} - 2^{16} \\ (\text{☇}, \imath) & \text{otherwise if } a = 0 \vee a > |\mathbf{j}| \cdot \mathsf{Z}_A \vee a \bmod \mathsf{Z}_A \ne 0 \vee \mathbf{j}_{(a / \mathsf{Z}_A) - 1} \notin \varpi \\ (\blacktriangleright, \mathbf{j}_{(a / \mathsf{Z}_A) - 1}) & \text{otherwise} \end{cases} \qquad \text{(A.22)}`
+{gpeq "A.22"}
 
 A dynamic jump to $`2^{32} - 2^{16}` halts the machine. That is the value $`Y` puts in $`\varphi_0` (eq. (A.47)), so a
 dynamic jump to the initial value of $`\varphi_0` halts.
@@ -307,16 +315,18 @@ an equation that says how the operands are decoded from the octets after the opc
 gives an opcode $`\zeta_{\imath}`, a name and the instruction's mutations (its exceptions to eq. (A.12)).
 The skip length is
 
-$$`\ell \equiv \text{skip}(\imath) \qquad \text{(A.23)}`
+{gpeq "A.23"}
 
 and register operands are read from the low and high nibbles of the octets after the opcode, capped
 at 12. For example, instructions with two registers and one immediate (§A.5.10) decode as
+
+{transcribed "A.32" "0ef65bbb07"}
 
 $$`r_A = \min(12, (\zeta_{\imath+1}) \bmod 16),\quad r_B = \min\left(12, \left\lfloor \frac{\zeta_{\imath+1}}{16} \right\rfloor\right),\quad l_X = \min(4, \max(0, \ell - 1)),\quad \nu_X \equiv \mathcal{X}_{l_X}\left(\mathcal{E}^{-1}_{l_X}(\zeta_{\imath+2 \dots+ l_X})\right) \qquad \text{(A.32)}`
 
 with $`\varphi_A \equiv \varphi_{r_A}`, $`\varphi'_A \equiv \varphi'_{r_A}`, and likewise for $`B`. Offsets are relative to $`\imath`; for one offset (§A.5.5)
 
-$$`l_X = \min(4, \ell),\quad \nu_X \equiv \imath + \mathcal{Z}_{l_X}\left(\mathcal{E}^{-1}_{l_X}(\zeta_{\imath+1 \dots+ l_X})\right) \qquad \text{(A.27)}`
+{gpeq "A.27"}
 
 The model keeps decoding and execution apart. {api}`PVM.Instr` has one constructor per format, carrying
 the opcode and the decoded operands; {api}`PVM.Program.decode` follows the format equations, and
@@ -377,9 +387,9 @@ $$`\texttt{rem\_s\_64}\colon\ \varphi'_D = \begin{cases} 0 & \text{if } \mathcal
 
 Signed division rounds towards zero, and the signed remainder takes the sign of the numerator:
 
-$$`\text{smod} \colon (\mathbb{Z}, \mathbb{Z}) \to \mathbb{Z},\quad (a, b) \mapsto \begin{cases} a & \text{if } b = 0 \\ \text{sgn}(a) \cdot (|a| \bmod |b|) & \text{otherwise} \end{cases} \qquad \text{(A.36)}`
+{gpeq "A.36"}
 
-$$`\text{rtz} \colon \mathbb{Z} \to \mathbb{Z},\quad x \mapsto \begin{cases} \lceil x \rceil & \text{if } x < 0 \\ \lfloor x \rfloor & \text{otherwise} \end{cases} \qquad \text{(A.37)}`
+{gpeq "A.37"}
 
 {leanSource PVM.Num.smod}
 
@@ -400,11 +410,13 @@ after the `ecalli` if the handler continues:
 
 $$`\Psi_H^* \colon (\mathfrak{p}, \imath, \varrho, \tilde\varrho, \varphi, \mu, f, \mathfrak{x}) \mapsto \begin{cases} (\varepsilon', \imath', \varrho', \tilde\varrho', \varphi', \mu', \mathfrak{x}) & \text{if } \varepsilon' \in \{\blacksquare, \text{☇}, \infty\} \cup \{\Finv\} \times \mathbb{N}_R \\ \Psi_H^*(\mathfrak{p}, \imath'', \varrho'', \tilde\varrho', \varphi'', \mu'', f, \mathfrak{x}'') \text{ where } \imath'' = \imath' + 1 + \text{skip}(\imath') & \text{if } \varepsilon' = \hbar \times h \wedge (\blacktriangleright, \varrho'', \varphi'', \mu'', \mathfrak{x}'') = f(h, \varrho', \varphi', \mu', \mathfrak{x}) \\ (\varepsilon'', \imath', \varrho'', \tilde\varrho', \varphi'', \mu'', \mathfrak{x}'') & \text{if } \varepsilon' = \hbar \times h \wedge (\varepsilon'', \varrho'', \varphi'', \mu'', \mathfrak{x}'') = f(h, \varrho', \varphi', \mu', \mathfrak{x}) \wedge \varepsilon'' \in \{\text{☇}, \infty\} \end{cases}`
 
+{transcribed "A.38" "063e9d9942"}
+
 $$`\text{let } (\varepsilon', \imath', \varrho', \tilde\varrho', \varphi', \mu') = \Psi(\mathfrak{p}, \imath, \varrho, \tilde\varrho, \varphi, \mu) \qquad \text{(A.38)}`
 
-$$`\Psi_H(\mathfrak{p}, \imath, \varrho, \varphi, \mu, f, \mathfrak{x}) \equiv \Psi_H^*(\mathfrak{p}, \imath, \varrho, \bot, \varphi, \mu, f, \mathfrak{x}) \qquad \text{(A.39)}`
+{gpeq "A.39"}
 
-$$`\Omega\langle X \rangle \equiv (\mathbb{N}, \mathbb{N}_G, \llbracket\mathbb{N}_R\rrbracket_{13}, \mathbb{M}, X) \to (\{\blacktriangleright, \text{☇}, \infty\}, \mathbb{N}_G, \llbracket\mathbb{N}_R\rrbracket_{13}, \mathbb{M}, X) \qquad \text{(A.40)}`
+{gpeq "A.40"}
 
 A handler of type $`\Omega\langle X \rangle` is the model's {api}`PVM.HostFn`; its context $`X` is whatever the invocation needs
 ({ref "invocations"}[Appendix B], {ref "invocations"}[the next chapter]). Since v0.8.1 a handler can only continue, panic
@@ -444,23 +456,23 @@ A JAM program blob $`\mathfrak{j}` holds a PVM blob $`\mathfrak{p}` together wit
 data $`\mathbf{o}`, read-write data $`\mathbf{w}`, a number $`z` of extra heap pages and a stack size $`s`, after an opaque
 metadata section $`\mathbf{m}`. $`Y` decodes it and lays out the RAM and the registers for argument data $`\mathbf{a}`:
 
-$$`Y \colon (\mathbb{B}, \mathbb{B}_{:\mathsf{Z}_I}) \to (\mathbb{B}, \llbracket\mathbb{N}_R\rrbracket_{13}, \mathbb{M})?,\quad (\mathfrak{j}, \mathbf{a}) \mapsto \begin{cases} (\mathfrak{p}, \varphi, \mu) & \text{if } \exists!\, (\mathfrak{p}, \mathbf{o}, \mathbf{w}, z, s) \text{ which satisfy equations (A.42) and (A.45)} \\ \emptyset & \text{otherwise} \end{cases} \qquad \text{(A.41)}`
+{gpeq "A.41"}
 
-$$`\text{let } \mathcal{E}(\updownarrow\mathbf{m}) \frown \mathcal{E}_3(|\mathbf{o}|) \frown \mathcal{E}_3(|\mathbf{w}|) \frown \mathcal{E}_2(z) \frown \mathcal{E}_3(s) \frown \mathbf{o} \frown \mathbf{w} \frown \mathcal{E}_4(|\mathfrak{p}|) \frown \mathfrak{p} = \mathfrak{j} \qquad \text{(A.42)}`
+{gpeq "A.42"}
 
-$$`\mathsf{Z}_Z = 2^{16},\quad \mathsf{Z}_I = 2^{24} \qquad \text{(A.43)}`
+{gpeq "A.43"}
 
-$$`\text{let } P(x \in \mathbb{N}) \equiv \mathsf{Z}_P \left\lceil \frac{x}{\mathsf{Z}_P} \right\rceil,\quad Z(x \in \mathbb{N}) \equiv \mathsf{Z}_Z \left\lceil \frac{x}{\mathsf{Z}_Z} \right\rceil \qquad \text{(A.44)}`
+{gpeq "A.44"}
 
-$$`5\mathsf{Z}_Z + Z(|\mathbf{o}|) + Z(|\mathbf{w}| + z\mathsf{Z}_P) + Z(s) + \mathsf{Z}_I \le 2^{32} \qquad \text{(A.45)}`
+{gpeq "A.45"}
 
 The RAM has four sections. The read-only data, the read-write data with the heap, and the arguments each
 start on a zone boundary (a multiple of $`\mathsf{Z}_Z`); the stack ends on one. Between sections at least one
 zone is left unmapped, and everything outside the sections is inaccessible:
 
-$$`\forall i \in \mathbb{N}_{2^{32}} : ((\mu_{\mathbf{v}})_i, (\mu_{\mathbf{a}})_{\lfloor i / \mathsf{Z}_P \rfloor}) = \begin{cases} (\mathbf{o}_{i - \mathsf{Z}_Z}, R) & \text{if } \mathsf{Z}_Z \le i < \mathsf{Z}_Z + |\mathbf{o}| \\ (0, R) & \text{if } \mathsf{Z}_Z + |\mathbf{o}| \le i < \mathsf{Z}_Z + P(|\mathbf{o}|) \\ (\mathbf{w}_{i - (2\mathsf{Z}_Z + Z(|\mathbf{o}|))}, W) & \text{if } 2\mathsf{Z}_Z + Z(|\mathbf{o}|) \le i < 2\mathsf{Z}_Z + Z(|\mathbf{o}|) + |\mathbf{w}| \\ (0, W) & \text{if } 2\mathsf{Z}_Z + Z(|\mathbf{o}|) + |\mathbf{w}| \le i < 2\mathsf{Z}_Z + Z(|\mathbf{o}|) + P(|\mathbf{w}|) + z\mathsf{Z}_P \\ (0, W) & \text{if } 2^{32} - 2\mathsf{Z}_Z - \mathsf{Z}_I - P(s) \le i < 2^{32} - 2\mathsf{Z}_Z - \mathsf{Z}_I \\ (\mathbf{a}_{i - (2^{32} - \mathsf{Z}_Z - \mathsf{Z}_I)}, R) & \text{if } 2^{32} - \mathsf{Z}_Z - \mathsf{Z}_I \le i < 2^{32} - \mathsf{Z}_Z - \mathsf{Z}_I + |\mathbf{a}| \\ (0, R) & \text{if } 2^{32} - \mathsf{Z}_Z - \mathsf{Z}_I + |\mathbf{a}| \le i < 2^{32} - \mathsf{Z}_Z - \mathsf{Z}_I + P(|\mathbf{a}|) \\ (0, \emptyset) & \text{otherwise} \end{cases} \qquad \text{(A.46)}`
+{gpeq "A.46"}
 
-$$`\forall i \in \mathbb{N}_{13} : \varphi_i = \begin{cases} 2^{32} - 2^{16} & \text{if } i = 0 \\ 2^{32} - 2\mathsf{Z}_Z - \mathsf{Z}_I & \text{if } i = 1 \\ 2^{32} - \mathsf{Z}_Z - \mathsf{Z}_I & \text{if } i = 7 \\ |\mathbf{a}| & \text{if } i = 8 \\ 0 & \text{otherwise} \end{cases} \qquad \text{(A.47)}`
+{gpeq "A.47"}
 
 So $`\varphi_1` is the top of the stack, $`\varphi_7` points at the arguments and $`\varphi_8` is their length, and $`\varphi_0` is the return address
 that halts (eq. (A.22)). In the model's code the paper's $`P` and $`Z` are {api}`PVM.roundPage` and {api}`PVM.roundZone`.
@@ -494,6 +506,8 @@ output from the RAM range that $`\varphi_7` and $`\varphi_8` name when the progr
 $$`\Psi_M \colon (\mathbb{B}, \mathbb{N}_R, \mathbb{N}_G, \mathbb{B}_{:\mathsf{Z}_I}, \Omega\langle X \rangle, X) \to (\mathbb{N}_G, \mathbb{B} \cup \{\text{☇}, \infty\}, X)`
 
 $$`(\mathfrak{j}, \imath, \varrho, \mathbf{a}, f, \mathfrak{x}) \mapsto \begin{cases} (0, \text{☇}, \mathfrak{x}) & \text{if } Y(\mathfrak{j}, \mathbf{a}) = \emptyset \\ R(\varrho, \Psi_H(\mathfrak{p}, \imath, \varrho, \varphi, \mu, f, \mathfrak{x})) & \text{if } Y(\mathfrak{j}, \mathbf{a}) = (\mathfrak{p}, \varphi, \mu) \end{cases}`
+
+{transcribed "A.48" "141fd33b7f"}
 
 $$`\text{where } R \colon (\varrho, (\varepsilon, \imath', \varrho', \varphi', \mu', \mathfrak{x}')) \mapsto \begin{cases} (u, \infty, \mathfrak{x}') & \text{if } \varepsilon = \infty \\ (u, \mu'_{\varphi'_7 \dots+ \varphi'_8}, \mathfrak{x}') & \text{if } \varepsilon = \blacksquare \wedge \mathbb{N}_{\varphi'_7 \dots+ \varphi'_8} \subseteq \mathbb{V}_{\mu'} \\ (u, [], \mathfrak{x}') & \text{if } \varepsilon = \blacksquare \wedge \mathbb{N}_{\varphi'_7 \dots+ \varphi'_8} \not\subseteq \mathbb{V}_{\mu'} \\ (u, \text{☇}, \mathfrak{x}') & \text{otherwise} \end{cases} \quad \text{where } u = \varrho - \varrho' \qquad \text{(A.48)}`
 
@@ -532,6 +546,8 @@ The block cost runs the simulation $`\mathfrak{X}` from an initial state and tak
 
 $$`\varrho^{\Delta}(\mathbf{c}, \mathbf{k}, \imath) = \max\left(\mathbf{x}^{\text{final}}_{c} - 3,\, 1\right)`
 
+{transcribed "A.54" "ed9df8f2c8"}
+
 $$`\text{where } \mathbf{x}^{\text{final}} = \mathfrak{X}(\mathbf{c}, \mathbf{k}, \mathbf{x}^{\text{init}}),\; \mathbf{x}^{\text{init}} = \left(\imath, 0, 4, 5, (4, 4, 4, 1, 1), []\right) \qquad \text{(A.54)}`
 
 {leanSource PVM.Program.blockCost?}
@@ -540,6 +556,8 @@ Each transition of $`\mathfrak{X}` decodes an instruction if it can, else starts
 nothing is left, else advances a cycle:
 
 $$`\mathfrak{X}(\mathbf{c}, \mathbf{k}, \mathbf{x}) = \begin{cases} \mathfrak{X}(\mathbf{c}, \mathbf{k}, \mathfrak{X}'(\mathbf{c}, \mathbf{k}, \mathbf{x})) & \text{if } \mathbf{x}_{\imath} \ne \emptyset \wedge \check{d}(\mathbf{c}, \mathbf{k}, \mathbf{x}_{\imath}) \le \mathbf{x}_d \wedge l < 32 \\ \mathfrak{X}(\mathbf{c}, \mathbf{k}, \mathfrak{X}''(\mathbf{x})) & \text{otherwise if } \mathfrak{S}(\mathbf{x}) \ne \emptyset \wedge \mathbf{x}_e > 0 \\ \mathbf{x} & \text{otherwise if } \mathbf{x}_{\imath} = \emptyset \wedge l = 0 \\ \mathfrak{X}(\mathbf{c}, \mathbf{k}, \mathfrak{X}'''(\mathbf{x})) & \text{otherwise} \end{cases}`
+
+{transcribed "A.55" "bc723cf71a"}
 
 $$`\text{where } l = |[r \mid r \mathrel{\mathrlap{<}{-}} \mathbf{x}_{\mathbf{r}}, r_s \ne \emptyset]| \qquad \text{(A.55)}`
 
@@ -555,7 +573,7 @@ The four steps:
 * $`\mathfrak{S}` (eq. (A.60)) picks the first WAIT entry whose units are free and whose dependencies have no
   cycles left:
 
-$$`\mathfrak{S}(\mathbf{x}) = \begin{cases} \emptyset & \text{if } s = \emptyset \\ \min(s) & \text{otherwise} \end{cases} \quad \text{where } s = \left\{ j \in \mathbb{N}_{|\mathbf{x}_{\mathbf{r}}|} \;\middle|\; \mathbf{x}_{\mathbf{r}}[j]_s = \text{WAIT} \wedge \mathbf{x}_{\mathbf{r}}[j]_t \le \mathbf{x}_t \wedge (\forall k \in \mathbf{x}_{\mathbf{r}}[j]_p : \mathbf{x}_{\mathbf{r}}[k]_c = 0) \right\} \qquad \text{(A.60)}`
+{gpeq "A.60"}
 
 * $`\mathfrak{X}'''` (eq. (A.61)) advances one cycle: it resets the decode and start slots, frees the units of
   entries finishing this cycle, retires every leading entry that is FIN or $`\emptyset`, moves DEC to WAIT and
@@ -595,11 +613,17 @@ units $`\check{x} = (\check{x}_A, \check{x}_L, \check{x}_S, \check{x}_M, \check{
 on whether the destination overlaps a source register, $`\mathfrak{P}_S` (for the non-immediate shifts and
 rotates) only on the first source register, $`\mathfrak{m}` is the cost of memory accesses (used by the loads), and $`\mathfrak{b}` the cost of a branch:
 
+{transcribed "A.62" "5887054a2c"}
+
 $$`\mathfrak{P}(a, b, \mathbf{c}, \mathbf{k}, \imath) = \begin{cases} a & \text{if } \check{s}(\mathbf{c}, \mathbf{k}, \imath) \cap \check{r}(\mathbf{c}, \mathbf{k}, \imath) \ne \emptyset \\ b & \text{otherwise} \end{cases} \qquad \text{(A.62)}`
+
+{transcribed "A.63" "0df4824285"}
 
 $$`\mathfrak{P}_S(a, b, \mathbf{c}, \mathbf{k}, \imath) = \begin{cases} a & \text{if } \varphi_A = \varphi_D \\ b & \text{otherwise} \end{cases} \qquad \text{(A.63)}`
 
-$$`\mathfrak{m} \equiv 25 \qquad \text{(A.64)}`
+{gpeq "A.64"}
+
+{transcribed "A.65" "6d026742c3"}
 
 $$`\mathfrak{b}(\mathbf{c}, \imath) = \begin{cases} 1 & \text{if } \{\zeta_{\imath + 1 + \text{skip}(\imath)}, \zeta_{\imath_{\text{target}}}\} \cap \{\texttt{unlikely}, \texttt{trap}\} \ne \emptyset \\ 20 & \text{otherwise} \end{cases} \qquad \text{(A.65)}`
 

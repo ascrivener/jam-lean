@@ -36,7 +36,7 @@ tag := "authorization-state"
 Each core $`c` has an *authorizer pool* $`\alpha[c]`, the authorizers it accepts now, and an *authorizer queue* $`\phi[c]`,
 from which the pool is refilled:
 
-$$`\alpha \in \llbracket \llbracket \mathbb{H} \rrbracket_{:\mathsf{O}} \rrbracket_{\mathsf{C}}, \qquad \phi \in \llbracket \llbracket \mathbb{H} \rrbracket_{\mathsf{Q}} \rrbracket_{\mathsf{C}} \qquad \text{(8.1)}`
+{gpeq "8.1"}
 
 So each of the $`\mathsf{C} = 341` pools holds at most $`\mathsf{O} = 8` hashes, and each queue exactly $`\mathsf{Q} = 80`. Only accumulation changes
 $`\phi`, through a call from a privileged service ({ref "accumulation"}[§12]). In the model's state these are the fields
@@ -53,9 +53,9 @@ Each block, every core drops the authorizer that a guarantee on that core used, 
 and takes the next authorizer from its posterior queue. The queue is indexed by the block's
 timeslot, cyclically:
 
-$$`\forall c \in \mathbb{N}_{\mathsf{C}} : \alpha'[c] \equiv \overleftarrow{F(c) \mathbin{+\!\!+} \phi'[c][\mathbf{H}_T]^{\circlearrowleft}}^{\mathsf{O}} \qquad \text{(8.2)}`
+{gpeq "8.2"}
 
-$$`F(c) \equiv \begin{cases} \alpha[c] \ominus \{(g_\mathbf{r})_a\} & \text{if } \exists g \in \mathbf{E}_G : (g_\mathbf{r})_c = c \\ \alpha[c] & \text{otherwise} \end{cases} \qquad \text{(8.3)}`
+{gpeq "8.3"}
 
 The notation is from §3.7: $`\mathbf{s}[i]^{\circlearrowleft}` is $`\mathbf{s}[i \bmod |\mathbf{s}|]`; $`\overleftarrow{\mathbf{s}}^n` is the last $`n` elements of $`\mathbf{s}`; $`x \mathbin{+\!\!+} i` appends one element; and
 $`\mathbf{s} \ominus \{v\}` is $`\mathbf{s}` without its left-most element equal to $`v`. (The paper draws this operator with its

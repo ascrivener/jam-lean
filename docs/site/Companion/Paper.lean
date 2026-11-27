@@ -123,6 +123,7 @@ An unknown number or label fails the build. -/
 /-- Equation number ↦ (labels, TeX body, environment); label ↦ number. -/
 structure GpEquations where
   bodies : Std.HashMap String String
+  hashes : Std.HashMap String String
   envs : Std.HashMap String String
   labels : Std.HashMap String String
 
@@ -131,15 +132,17 @@ def loadGpEquations : IO GpEquations := do
   let json ← IO.ofExcept <| Json.parse (← IO.FS.readFile (root / "docs" / "site" / "gp-equations.json"))
   let eqs ← IO.ofExcept <| json.getObjVal? "equations"
   let some kvs := eqs.getObj?.toOption | throw <| IO.userError "gp-equations.json: equations"
-  let (bodies, envs) ← kvs.foldlM (init := (({} : Std.HashMap String String), ({} : Std.HashMap String String)))
-    fun (b, e) n v => do
+  let (bodies, envs, hashes) ← kvs.foldlM
+    (init := (({} : Std.HashMap String String), ({} : Std.HashMap String String), ({} : Std.HashMap String String)))
+    fun (b, e, h) n v => do
       let body ← IO.ofExcept <| v.getObjValAs? String "body"
       let env ← IO.ofExcept <| v.getObjValAs? String "env"
-      return (b.insert n body, e.insert n env)
+      let hash ← IO.ofExcept <| v.getObjValAs? String "hash"
+      return (b.insert n body, e.insert n env, h.insert n hash)
   let labs ← IO.ofExcept <| json.getObjVal? "labels"
   let some lkvs := labs.getObj?.toOption | throw <| IO.userError "gp-equations.json: labels"
   let labels ← lkvs.foldlM (init := {}) fun m k v => do return m.insert k (← IO.ofExcept v.getStr?)
-  return { bodies, envs, labels }
+  return { bodies, envs, hashes, labels }
 
 /-- The equation numbers named by `spec` ("6.24", "9.1, 9.2", "eq:label"), or the first unknown one. -/
 def GpEquations.resolve (t : GpEquations) (spec : String) : Except String (List String) :=
@@ -182,5 +185,33 @@ def gpeq : BlockCommandOf EqArgs
       else inner
     let tex := s!"{shown} \\qquad \\text\{(" ++ ", ".intercalate ns ++ ")}"
     ``(Verso.Doc.Block.para #[Verso.Doc.Inline.math Lean.Doc.MathMode.display $(quote tex)])
+
+structure TranscribedArgs where
+  spec : String
+  hashes : String
+
+instance : FromArgs TranscribedArgs DocElabM :=
+  ⟨TranscribedArgs.mk <$> .positional `spec (ValDesc.string.as "equation numbers (string literal)")
+    <*> .positional `hashes (ValDesc.string.as "their fingerprints (string literal)")⟩
+
+/-- `{transcribed "13.9" "9f4fa6c4de"}`, a paragraph of its own just before a hand-written display:
+    the display is the book's own rendering of (part of) the paper's equation 13.9, made when the
+    equation had that fingerprint (`docs/site/gp-equations.json`). It renders nothing. The build fails
+    when the paper's equation changes (a new version: re-check the display, then update the
+    fingerprint) or the number does not exist. Used where `{gpeq}` does not fit: a part of an
+    equation, a single case, or a layout the renderers cannot draw. -/
+@[block_command]
+def transcribed : BlockCommandOf TranscribedArgs
+  | ⟨spec, hashes⟩ => do
+    let t ← loadGpEquations
+    let ns ← match t.resolve spec with
+      | .error k => throwError m!"transcribed: no equation {k} in the paper (docs/site/gp-equations.json)"
+      | .ok ns => pure ns
+    let now := ",".intercalate (ns.map fun n => (t.hashes.get? n).getD "")
+    unless now == hashes do
+      throwError m!"transcribed: the paper's equation {spec} changed (fingerprint {now}, the display \
+        was written against {hashes}); re-check the hand-written display against the paper, then \
+        update the fingerprint"
+    ``(Verso.Doc.Block.concat #[])
 
 end Companion

@@ -41,9 +41,13 @@ the protocol use the same definitions. The decoders are in `JAM/Decode.lean`.
 tag := "codec-trivial"
 %%%
 
+{transcribed "C.2" "8948aa8429"}
+
 $$`\mathcal{E}(\emptyset) \equiv [\,] \qquad \text{(C.1)} \qquad\qquad \mathcal{E}(x \in \mathbb{B}) \equiv x \qquad \text{(C.2)}`
 
-$$`\mathcal{E}(\bot) \equiv [0], \qquad \mathcal{E}(\top) \equiv [1] \qquad \text{(C.3)}`
+{gpeq "C.3"}
+
+{transcribed "C.5" "9073d55956"}
 
 $$`\mathcal{E}((a, b, \dots)) \equiv \mathcal{E}(a) \frown \mathcal{E}(b) \frown \dots \qquad \text{(C.4)} \qquad\qquad \mathcal{E}(a, b, \dots) \equiv \mathcal{E}((a, b, \dots)) \qquad \text{(C.5)}`
 
@@ -63,7 +67,7 @@ tag := "codec-naturals"
 The general encoding of a natural below $`2^{64}` takes one to nine octets. The number of leading one
 bits of the first octet says how many octets follow:
 
-$$`\mathcal{E}\colon \left\{\begin{aligned} \mathbb{N}_{2^{64}} &\to \mathbb{B}_{1:9} \\ x &\mapsto \begin{cases} [0] & \text{if } x = 0 \\ \left[2^8 - 2^{8-l} + \left\lfloor \frac{x}{2^{8l}} \right\rfloor\right] \frown \mathcal{E}_l(x \bmod 2^{8l}) & \text{if } \exists l \in \mathbb{N}_8 : 2^{7l} \le x < 2^{7(l+1)} \\ [2^8 - 1] \frown \mathcal{E}_8(x) & \text{otherwise if } x < 2^{64} \end{cases} \end{aligned}\right. \quad \text{(C.6)}`
+{gpeq "C.6"}
 
 {leanSource PVM.Blob.encodeNat}
 
@@ -78,7 +82,7 @@ middle case for $`l < 5`, the case that covers every nonzero $`x < 2^{35}`, and 
 
 The fixed-length encoding $`\mathcal{E}_l` (eq. (C.13)) is little-endian, in exactly $`l` octets:
 
-$$`\mathcal{E}_{l \in \mathbb{N}}\colon \left\{\begin{aligned} \mathbb{N}_{2^{8l}} &\to \mathbb{B}_l \\ x &\mapsto \begin{cases} [\,] & \text{if } l = 0 \\ [x \bmod 256] \frown \mathcal{E}_{l-1}\left(\left\lfloor \frac{x}{256} \right\rfloor\right) & \text{otherwise} \end{cases} \end{aligned}\right. \qquad \text{(C.13)}`
+{gpeq "C.13"}
 
 {leanSource PVM.Num.encodeLE}
 
@@ -102,11 +106,11 @@ decoded value:
 tag := "codec-sequences"
 %%%
 
-$$`\mathcal{E}([\mathbf{i}_0, \mathbf{i}_1, \dots]) \equiv \mathcal{E}(\mathbf{i}_0) \frown \mathcal{E}(\mathbf{i}_1) \frown \dots \qquad \text{(C.7)}`
+{gpeq "C.7"}
 
-$$`\updownarrow x \equiv (|x|, x) \quad \text{thus} \quad \mathcal{E}(\updownarrow x) \equiv \mathcal{E}(|x|) \frown \mathcal{E}(x) \qquad \text{(C.8)}`
+{gpeq "C.8"}
 
-$$`\text{¿}x \equiv \begin{cases} 0 & \text{if } x = \emptyset \\ (1, x) & \text{otherwise} \end{cases} \qquad \text{(C.9)}`
+{gpeq "C.9"}
 
 A sequence is the concatenation of its elements' encodings, with no length. A term of variable size
 is written $`\updownarrow x` and carries its length, encoded with the general $`\mathcal{E}`. An optional term $`\text{¿}x` is
@@ -129,7 +133,7 @@ tag := "codec-bits"
 
 Bits are packed eight to an octet, least significant first:
 
-$$`\mathcal{E}(b \in \mathbb{b}) \equiv \begin{cases} [\,] & \text{if } b = [\,] \\ \left[\sum_{i=0}^{i < \min(8, |b|)} b_i \cdot 2^i\right] \frown \mathcal{E}(b_{8\dots}) & \text{otherwise} \end{cases} \qquad \text{(C.10)}`
+{gpeq "C.10"}
 
 {leanSource JAM.encodeBits}
 
@@ -143,9 +147,9 @@ The model uses it in the assurances extrinsic (eq. (C.21)) and to build the mess
 tag := "codec-dicts"
 %%%
 
-$$`\forall K, V\colon \mathcal{E}(d \in \langle\!|\, K \to V \,|\!\rangle) \equiv \mathcal{E}\left(\updownarrow\left[\, (\mathcal{E}(k), \mathcal{E}(d[k])) \;\middle|\; k \in \mathcal{K}(d) \wr k \,\right]\right) \qquad \text{(C.11)}`
+{gpeq "C.11"}
 
-$$`\mathcal{E}(\{a, b, c, \dots\}) \equiv \mathcal{E}(a) \frown \mathcal{E}(b) \frown \mathcal{E}(c) \frown \dots \quad \text{where } a < b < c < \dots \qquad \text{(C.12)}`
+{gpeq "C.12"}
 
 A dictionary is encoded as its pairs in key order, with a length; a set as its elements in order.
 Where the paper uses a set of hashes $`\left\{\mkern-5mu\left[\,\mathbb{H}\,\right]\mkern-5mu\right\}` or a dictionary $`\langle\!|\, \mathbb{H} \to \mathbb{H} \,|\!\rangle`, the model holds it as
@@ -211,7 +215,7 @@ tag := "codec-block"
 A block is serialized as its header followed by its extrinsics, each of them a tuple of its
 elements in order, with the encodings of §C.1:
 
-$$`\mathcal{E}(\mathbf{B}) = \mathcal{E}\left(\mathbf{H}, \mathcal{E}_T(\mathbf{E}_T), \mathcal{E}_P(\mathbf{E}_P), \mathcal{E}_G(\mathbf{E}_G), \mathcal{E}_A(\mathbf{E}_A), \mathcal{E}_D(\mathbf{E}_D)\right) \qquad \text{(C.17)}`
+{gpeq "C.17"}
 
 {leanSource JAM.Block.encode}
 
@@ -219,9 +223,11 @@ $$`\mathcal{E}(\mathbf{B}) = \mathcal{E}\left(\mathbf{H}, \mathcal{E}_T(\mathbf{
 
 The header has a regular encoding and an unsigned one, $`\mathcal{E}_U`, without the seal $`\mathbf{H}_S`:
 
-$$`\mathcal{E}(\mathbf{H}) = \mathcal{E}(\mathcal{E}_U(\mathbf{H}), \mathbf{H}_S) \qquad \text{(C.23)}`
+{gpeq "C.23"}
 
-$$`\mathcal{E}_U(\mathbf{H}) = \mathcal{E}\left(\mathbf{H}_P, \mathbf{H}_R, \mathbf{H}_X, \mathcal{E}_4(\mathbf{H}_T), \mathcal{E}_E(\mathbf{H}_E), \text{¿}\mathbf{H}_W, \mathcal{E}_2(\mathbf{H}_I), \mathbf{H}_V, \updownarrow\mathbf{H}_O\right) \qquad \text{(C.24)}`
+{gpeq "C.24"}
+
+{transcribed "C.26" "8dbb38bc30"}
 
 $$`\mathcal{E}_E(\emptyset) = \mathcal{E}(0) \qquad \text{(C.25)} \qquad\qquad \mathcal{E}_E((\eta_0, \eta_1, \mathbf{k})) = \mathcal{E}(1, \eta_0, \eta_1, \updownarrow\mathbf{k}) \qquad \text{(C.26)}`
 
@@ -232,14 +238,14 @@ $$`\mathcal{E}_E(\emptyset) = \mathcal{E}(0) \qquad \text{(C.25)} \qquad\qquad \
 A work result is encoded by $`O`, which puts a discriminator before an output blob and gives each of
 the six work errors its own number:
 
-$$`O(o \in \mathbb{E} \cup \mathbb{B}) \equiv \begin{cases} (0, \updownarrow o) & \text{if } o \in \mathbb{B} \\ 1 & \text{if } o = \infty \\ 2 & \text{if } o = \text{☇} \\ 3 & \text{if } o = \circledcirc \\ 4 & \text{if } o = \ominus \\ 5 & \text{if } o = \texttt{BAD} \\ 6 & \text{if } o = \texttt{BIG} \end{cases} \qquad \text{(C.38)}`
+{gpeq "C.38"}
 
 {leanSource JAM.WorkResult.encode}
 
 An imported segment is named by a segment root or by a work-package hash $`r^\boxplus`; the two are told apart by
 adding $`2^{15}` to the index:
 
-$$`I((h \in \mathbb{H} \cup \mathbb{H}^\boxplus, i \in \mathbb{N}_{2^{15}})) \equiv \begin{cases} (h, \mathcal{E}_2(i)) & \text{if } h \in \mathbb{H} \\ (r, \mathcal{E}_2(i + 2^{15})) & \text{if } \exists r \in \mathbb{H}, h = r^\boxplus \end{cases} \qquad \text{(C.39)}`
+{gpeq "C.39"}
 
 {leanSource JAM.encodeImport}
 

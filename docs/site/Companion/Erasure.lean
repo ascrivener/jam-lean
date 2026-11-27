@@ -34,7 +34,7 @@ data is proved, with Mathlib, in a separate package of proofs; see {ref "erasure
 tag := "erasure-rate"
 %%%
 
-$$`\mathcal{D}(v \in \mathbb{V}) \equiv \max\left(\left\{\, d \;\middle|\; d \in \mathbb{N}_{v/3+2}, \mathsf{W}_G \mathbin{\%} 2d = 0 \,\right\}\right) \qquad \text{(H.1)}`
+{gpeq "H.1"}
 
 $`\mathcal{D}(v)` is the number of chunks needed to recover the data, so the code's rate is $`\mathcal{D}(v):v`. With
 $`\mathsf{W}_G = 4104` octets, $`\mathcal{D}(1023) = 342` and $`\mathcal{D}(6) = 3`.
@@ -54,13 +54,13 @@ paper uses the word, is word $`p` of every run: there are $`k` pieces of $`\math
 into $`v` words, and validator $`i`'s chunk is word $`i` of every coded piece, $`k` words in all. The paper writes this with a
 split, a join and a transposition:
 
-$$`\forall n \in \mathbb{N}, k \in \mathbb{N}\colon \text{split}_n(\mathbf{d} \in \mathbb{B}_{kn}) \in \llbracket\mathbb{B}_n\rrbracket_k \equiv \left[\mathbf{d}_{0\dots+n}, \mathbf{d}_{n\dots+n}, \cdots, \mathbf{d}_{(k-1)n\dots+n}\right] \qquad \text{(H.2)}`
+{gpeq "H.2"}
 
-$$`\forall n \in \mathbb{N}, k \in \mathbb{N}\colon \text{join}(\mathbf{c} \in \llbracket\mathbb{B}_n\rrbracket_k) \in \mathbb{B}_{kn} \equiv \mathbf{c}_0 \frown \mathbf{c}_1 \frown \dots \qquad \text{(H.3)}`
+{gpeq "H.3"}
 
-$$`{}^{\text{T}}\left[[\mathbf{x}_{0,0}, \mathbf{x}_{0,1}, \mathbf{x}_{0,2}, \dots], [\mathbf{x}_{1,0}, \mathbf{x}_{1,1}, \dots], \dots\right] \equiv \left[[\mathbf{x}_{0,0}, \mathbf{x}_{1,0}, \mathbf{x}_{2,0}, \dots], [\mathbf{x}_{0,1}, \mathbf{x}_{1,1}, \dots], \dots\right] \quad \text{(H.4)}`
+{gpeq "H.4"}
 
-$$`\mathcal{C}^{v \in \mathbb{V}}_{k \in \mathbb{N}}\colon \left\{\begin{aligned} \mathbb{B}_{2k \cdot \mathcal{D}(v)} &\to \llbracket\mathbb{B}_{2k}\rrbracket_v \\ \mathbf{d} &\mapsto \text{join}^\#\left({}^{\text{T}}\left[\mathcal{C}^v(\mathbf{p}) \;\middle|\; \mathbf{p} \mathrel{<\mkern-7mu-} {}^{\text{T}}\text{split}_2^\#(\text{split}_{2k}(\mathbf{d}))\right]\right) \end{aligned}\right. \qquad \text{(H.5)}`
+{gpeq "H.5"}
 
 The model indexes the words directly instead of building the intermediate sequences: word $`j` of
 piece $`p` is at octet $`2k \cdot j + 2p`, and chunk $`i` of the result is word $`i` of every coded piece.
@@ -76,7 +76,7 @@ piece $`p` is at octet $`2k \cdot j + 2p`, and chunk $`i` of the result is word 
 Recovery takes $`\mathcal{D}(v)` chunks with distinct indices. If they are the first $`\mathcal{D}(v)` chunks, the data is their
 concatenation in index order; in general each piece is recovered with $`\mathcal{R}^v` and the results are joined:
 
-$$`\mathcal{R}^{v \in \mathbb{V}}_{k \in \mathbb{N}}\colon \left\{\begin{array}{l} \left\{\!\left[\left\lgroup\mathbb{B}_{2k}, \mathbb{N}_v\right\rgroup\right]\!\right\}_{\mathcal{D}(v)} \to \mathbb{B}_{2k \cdot \mathcal{D}(v)} \\ \mathbf{c} \mapsto \begin{cases} \mathcal{E}\left(\left[\mathbf{x} \;\middle|\; (\mathbf{x}, i) \mathrel{<\mkern-7mu-} [(\mathbf{x}, i) \in \mathbf{c} \wr i]\right]\right) & \text{if } \{i \mid (\mathbf{x}, i) \in \mathbf{c}\} = \mathbb{N}_{\mathcal{D}(v)} \\ \begin{aligned} &\text{join}\Big(\text{join}^\#\Big({}^{\text{T}}\Big[\mathcal{R}^v\big( \\ &\quad \{(\text{split}_2(\mathbf{x})_p, i) \mid (\mathbf{x}, i) \in \mathbf{c}\}\big) \;\Big|\; p \in \mathbb{N}_k\Big]\Big)\Big) \end{aligned} & \text{always} \end{cases} \end{array}\right. \quad \text{(H.6)}`
+{gpeq "H.6"}
 
 {leanSource JAM.Erasure.recover}
 
@@ -96,7 +96,7 @@ tag := "erasure-field"
 
 The field is built from the polynomial $`x^{16} + x^5 + x^3 + x^2 + 1` (eq. (H.7)):
 
-$$`\mathbb{F}_{2^{16}} \equiv \frac{\mathbb{F}_2[x]}{x^{16} + x^5 + x^3 + x^2 + 1} \qquad \text{(H.8)}`
+{gpeq "H.8"}
 
 and $`\alpha` is a root of it. A word is not read in the standard basis $`\{1, \alpha, \dots, \alpha^{15}\}`, but in the following Cantor
 basis: bit $`j` of the word (least significant first, eq. (H.9)) selects $`v_j`, so word $`m_i` stands for
@@ -132,10 +132,14 @@ tag := "erasure-polynomial"
 Let $`d = \mathcal{D}(v)`, $`d' = 2^{\lceil \log_2 d \rceil}` and $`v' = v + d' - d`. The code words are indexed by $`I`, and the word at
 index $`i` goes to validator $`f(i)`:
 
+{transcribed "H.11" "62b035d90c"}
+
 $$`I \equiv \mathbb{Z}_{0\dots d} \cup \mathbb{Z}_{d'\dots v'} \qquad \text{(H.10)} \qquad\qquad f(i) \equiv \begin{cases} i & i < d \\ i - (d' - d) & i \ge d' \end{cases} \qquad \text{(H.11)}`
 
 Each index $`i` stands for the field element $`\tilde{\imath} = \sum_{j=0}^{15} i_j v_j` (eq. (H.12)), where $`i_{15} \dots i_0` are the bits of $`i`. The
 message words are interpolated by the polynomial $`p` of degree at most $`d' - 1` with
+
+{transcribed "H.13" "a6a071a8db"}
 
 $$`p(\tilde{0}) = \tilde{m}_0, \quad p(\tilde{1}) = \tilde{m}_1, \quad \dots, \quad p(\widetilde{d-1}) = \tilde{m}_{d-1}, \quad p(\tilde{\imath}) = 0 \;\; \forall i \in \mathbb{Z}_{d\dots d'} \qquad \text{(H.13)}`
 

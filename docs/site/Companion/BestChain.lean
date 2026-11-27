@@ -61,11 +61,11 @@ tag := "bestchain-ancestors"
 $`P` maps a header to its parent's header, and the ancestors of $`\mathbf{H}` are $`\mathbf{H}` and, recursively, their
 parents:
 
-$$`h \in \mathbf{A} \Leftrightarrow h = \mathbf{H} \vee \left(\exists i \in \mathbf{A} : h = P(i)\right) \qquad \text{(5.3)}`
+{gpeq "5.3"}
 
 A valid block's timeslot is strictly greater than its parent's, and not in the future:
 
-$$`\mathbf{H}_T \in \mathbb{N}_T, \quad P(\mathbf{H})_T < \mathbf{H}_T \ \wedge\ \mathbf{H}_T \cdot \mathsf{P} \le \mathcal{T} \qquad \text{(5.8)}`
+{gpeq "5.8"}
 
 In the model, $`P` looks the parent up in the store, and $`\mathbf{A}` follows parent links while the parent is
 known and has a smaller timeslot. The result lists $`\mathbf{H}` first, then its ancestors, youngest first. The
@@ -86,11 +86,11 @@ check the wall-clock bound $`\mathbf{H}_T \cdot \mathsf{P} \le \mathcal{T}`, sin
 tag := "bestchain-acceptable"
 %%%
 
-$$`\mathbf{A}(\mathbf{H}^\flat) \ni \mathbf{H}^\natural \qquad \text{(19.1)}`
+{gpeq "19.1"}
 
-$$`\mathbf{U}^\flat \equiv \top \qquad \text{(19.2)}`
+{gpeq "19.2"}
 
-$$`\not\exists \mathbf{H}^A, \mathbf{H}^B : \bigwedge \left\{ \begin{aligned} \mathbf{H}^A &\ne \mathbf{H}^B \\ \mathbf{H}^A_T &= \mathbf{H}^B_T \\ \mathbf{H}^A &\in \mathbf{A}(\mathbf{H}^\flat) \\ \mathbf{H}^A &\not\in \mathbf{A}(\mathbf{H}^\natural) \end{aligned} \right. \qquad \text{(19.3)}`
+{gpeq "19.3"}
 
 (19.1): the best block has the finalized block as an ancestor. (19.2): it is audited. (19.3): none
 of its unfinalized ancestors shares its timeslot with another block the node has seen (an
@@ -122,7 +122,7 @@ tag := "bestchain-best"
 
 Of the acceptable blocks, the best is the one whose chain has the most ticket-sealed blocks:
 
-$$`m = \sum_{\mathbf{H}^A \in \mathbf{A}^\flat} \mathbf{T}^A \qquad \text{(19.4)}`
+{gpeq "19.4"}
 
 {leanSource JAM.BestChain.metric}
 

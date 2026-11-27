@@ -34,6 +34,8 @@ The module is `JAM/Shuffle.lean`; its full API is on the
 tag := "shuffle-seq"
 %%%
 
+{transcribed "F.1" "0a1e35509f"}
+
 $$`\forall T, l \in \mathbb{N} : \mathcal{F} \colon \begin{cases} \left\lgroup \llbracket T \rrbracket_l, \llbracket \mathbb{N} \rrbracket_{l:} \right\rgroup \to \llbracket T \rrbracket_l \\ (\mathbf{s}, \mathbf{r}) \mapsto \begin{cases} [\mathbf{s}_{\mathbf{r}_0 \bmod l}] \frown \mathcal{F}(\mathbf{s}'_{\dots l-1}, \mathbf{r}_{1\dots}) & \text{if } \mathbf{s} \ne [] \\ [] & \text{otherwise} \end{cases} \\ \qquad \text{where } \mathbf{s}' = \mathbf{s} \text{ except } \mathbf{s}'_{\mathbf{r}_0 \bmod l} = \mathbf{s}_{l-1} \end{cases} \qquad \text{(F.1)}`
 
 (The paper writes the "where" clause inside the first case, on the same line.) Each step takes the element at $`\mathbf{r}_0 \bmod l`, moves the last element into its place, drops the last
@@ -51,9 +53,9 @@ $`\mathcal{Q}_l` stretches a 32-octet hash into $`l` naturals below $`2^{32}`: e
 four octets of $`\mathcal{H}(h \frown \mathcal{E}_4(\lfloor i/8 \rfloor))`, so each hash gives eight entries. $`\mathcal{F}` given a hash shuffles with
 $`\mathcal{Q}_l` of it:
 
-$$`\forall l \in \mathbb{N} :\ \mathcal{Q}_l \colon \begin{cases} \mathbb{H} \to \llbracket \mathbb{N}_{2^{32}} \rrbracket_l \\ h \mapsto \left[ \mathcal{E}^{-1}_4\left( \mathcal{H}\left( h \frown \mathcal{E}_4(\lfloor i/8 \rfloor) \right)_{4i \bmod 32 \dots +4} \right) \;\middle|\; i \mathrel{<\!\!\!-} \mathbb{N}_l \right] \end{cases} \qquad \text{(F.2)}`
+{gpeq "F.2"}
 
-$$`\forall T, l \in \mathbb{N} :\ \mathcal{F} \colon \begin{cases} \left\lgroup \llbracket T \rrbracket_l, \mathbb{H} \right\rgroup \to \llbracket T \rrbracket_l \\ (\mathbf{s}, h) \mapsto \mathcal{F}(\mathbf{s}, \mathcal{Q}_l(h)) \end{cases} \qquad \text{(F.3)}`
+{gpeq "F.3"}
 
 {leanSource JAM.Shuffle.seqFromHash}
 

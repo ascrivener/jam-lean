@@ -5,8 +5,10 @@ import Companion.Overview
 import Companion.Safrole
 import Companion.History
 import Companion.Authorization
+import Companion.Accounts
 import Companion.Disputes
 import Companion.Reports
+import Companion.Accumulation
 import Companion.Statistics
 import Companion.Work
 import Companion.Auditing
@@ -84,10 +86,10 @@ with the model modules that implement them.
 * *§6 Safrole* ({ref "safrole"}[written]): `JAM/Safrole.lean`
 * *§7 Recent history* ({ref "history"}[written]): `JAM/History.lean`
 * *§8 Authorization* ({ref "authorization"}[written]): `JAM/Authorization.lean`
-* §9 Service accounts: `JAM/Account.lean`
+* *§9 Service accounts* ({ref "accounts"}[written]): `JAM/Account.lean`
 * *§10 Disputes* ({ref "disputes"}[written]): `JAM/Disputes.lean`
 * *§11 Reports and assurances* ({ref "reports"}[written]): `JAM/Reports.lean`, `JAM/Assurances.lean`
-* §12 Accumulation and preimages: `JAM/Accumulate.lean`, `JAM/Accumulation.lean`, `JAM/Preimages.lean`
+* *§12 Accumulation and preimages* ({ref "accumulation"}[written]): `JAM/Accumulate.lean`, `JAM/Accumulation.lean`, `JAM/Preimages.lean`
 * *§13 Statistics* ({ref "statistics"}[written]): `JAM/Statistics.lean`
 * *§14 Work packages and work reports* ({ref "work"}[written]): `JAM/Work.lean`, `JAM/Refine.lean`, `JAM/Guarantee.lean`
 * §15 Guaranteeing and §16 Availability assurance: not modelled beyond the refinement of §14
@@ -114,9 +116,13 @@ with the model modules that implement them.
 
 {include 1 Companion.Authorization}
 
+{include 1 Companion.Accounts}
+
 {include 1 Companion.Disputes}
 
 {include 1 Companion.Reports}
+
+{include 1 Companion.Accumulation}
 
 {include 1 Companion.Statistics}
 

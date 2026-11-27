@@ -19,7 +19,7 @@ vector's expected output matches. CI regenerates them and fails on any differenc
 Text fields may contain `$…$` (inline math, with the paper's macros) and `` `…` `` (code). A
 `model` name must be a declaration the chapter imports, and an `equations` entry must be an
 equation of the paper (`gp-equations.json`): either mistake fails the build. A box whose table has
-more than ten rows starts collapsed.
+more than sixteen rows starts collapsed.
 -/
 
 open Lean Elab
@@ -28,11 +28,11 @@ open Verso.Genre Manual
 
 namespace Companion
 
-/-- The box. `data` holds the title, whether it starts open, and the number of blocks in each part
-    of `content`: the blocks before the table, the column headings, the rows (each a label and
-    `cols - 1` cells), then the blocks after the table. Each heading and cell is one paragraph. -/
-block_extension Block.workedExample (cfg : Json) where
-  data := cfg
+-- The box. `cfg` (JSON) holds the title, whether it starts open, and the number of blocks in each
+-- part of `content`: the blocks before the table, the column headings, the rows (each a label and
+-- `cols - 1` cells), then the blocks after the table. Each heading and cell is one paragraph.
+block_extension Block.workedExample (cfg : String) where
+  data := (Json.parse cfg).toOption.getD Json.null
   traverse := fun _ _ _ => pure none
   toTeX := none
   toHtml :=
@@ -51,10 +51,12 @@ block_extension Block.workedExample (cfg : Json) where
       for r in [0:rows] do
         let label ← go content[start + r * cols]!
         let cells ← ((content.extract (start + r * cols + 1) (start + (r + 1) * cols)).mapM go)
-        body := body.push html%{<tr><th scope="row">{label}</th>{cells.map fun c => html%{<td>{c}</td>}}</tr>}
+        let tds := cells.map fun c => html%{<td>{c}</td>}
+        body := body.push html%{<tr><th scope="row">{label}</th>{tds}</tr>}
       let after ← (content.extract (start + rows * cols) content.size).mapM go
+      let ths := heads.map fun h => html%{<th scope="col">{h}</th>}
       let table := html%{<div class="we-table-wrap"><table class="we-table">
-          <thead><tr>{heads.map fun h => html%{<th scope="col">{h}</th>}}</tr></thead>
+          <thead><tr>{ths}</tr></thead>
           <tbody>{body}</tbody></table></div>}
       let summary := html%{<summary><span class="we-tag">{Html.text "Worked example"}</span>{Html.text title}</summary>}
       let inner := html%{<div class="we-body">{intro}{table}{after}</div>}
@@ -131,7 +133,7 @@ def «example» : BlockCommandOf ExampleArgs
     let inputs ← IO.ofExcept <| j.getObjValAs? (Array Json) "inputs"
     let mut inputInls : Array Term := #[← ``(Verso.Doc.Inline.emph #[Verso.Doc.Inline.text "Inputs:"]),
       ← ``(Verso.Doc.Inline.text " ")]
-    for (i, it) in inputs.toList.zipIdx do
+    for (it, i) in inputs.toList.zipIdx do
       let l ← IO.ofExcept <| it.getObjValAs? String "label"
       let v ← IO.ofExcept <| it.getObjValAs? String "value"
       if i > 0 then inputInls := inputInls.push (← ``(Verso.Doc.Inline.text "; "))
@@ -153,7 +155,7 @@ def «example» : BlockCommandOf ExampleArgs
     let notes ← (← strs "notes").toArray.mapM fun n => do examplePara (← exampleInlines n)
     let mut modelInls : Array Term := #[← ``(Verso.Doc.Inline.emph #[Verso.Doc.Inline.text "Computed by"]),
       ← ``(Verso.Doc.Inline.text " ")]
-    for (i, n) in (← strs "model").zipIdx do
+    for (n, i) in (← strs "model").zipIdx do
       let site ← declSite n.toName
       let apiUrl := s!"{apiRoot}/{modulePath site.mod}.html#{n}"
       if i > 0 then modelInls := modelInls.push (← ``(Verso.Doc.Inline.text ", "))
@@ -170,7 +172,7 @@ def «example» : BlockCommandOf ExampleArgs
     let check ← examplePara (#[← ``(Verso.Doc.Inline.bold #[Verso.Doc.Inline.text "Checked:"]),
       ← ``(Verso.Doc.Inline.text " ")] ++ (← exampleInlines (← str "check")))
     let after := notes ++ #[← examplePara modelInls, check]
-    let cfg := Json.mkObj [("title", title), ("open", Json.bool (rows.size ≤ 10)),
+    let cfg := Json.compress <| Json.mkObj [("title", title), ("open", Json.bool (rows.size ≤ 16)),
       ("before", before.size), ("cols", cols.length), ("rows", rows.size)]
     ``(Verso.Doc.Block.other (Companion.Block.workedExample $(quote cfg)) #[$(before ++ heads ++ cells ++ after),*])
 

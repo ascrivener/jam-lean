@@ -427,7 +427,7 @@ def examples : List (IO Example) := [
     "A Safrole epoch change that switches to tickets"
     "The block at slot 12 opens epoch 1. The ticket accumulator filled up during epoch 0, so the new \
      epoch's sealers are tickets rather than fallback keys; the entropy and the validator key sets rotate."
-    ["Each rotated value is the one named in brackets: $\\eta'_1 = \\eta_0$, $\\kappa' = \\gamma_P$, $\\lambda' = \\kappa$, \
+    ["Each rotated value is the one named in parentheses: $\\eta'_1 = \\eta_0$, $\\kappa' = \\gamma_P$, $\\lambda' = \\kappa$, \
       and $\\gamma'_P = \\Phi(\\iota)$, which is $\\iota$ itself because there are no offenders."],
   safroleExample "safrole-epoch-change-fallback" "enact-epoch-change-with-no-tickets-4.json"
     "A Safrole epoch change with fallback sealers"

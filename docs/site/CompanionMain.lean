@@ -9,7 +9,8 @@ open Verso.Genre Manual
     search box (which Verso places over the header): the title wrapper reserves the search bar's
     width, the search bar is narrower below 1200 px, and the title wraps and shrinks on narrow
     screens. The sidebar lists sections only: the entry Verso adds for each quoted declaration
-    (`{mathdoc}`, `{docstring}`) is hidden. -/
+    (`{mathdoc}`, `{docstring}`) is hidden. The worked-example boxes (`{example}`,
+    `Companion/Example.lean`) are styled here too; their tables scroll inside the box. -/
 def narrowCss : Verso.Genre.Manual.CSS := ⟨"
 :root { --jl-bg: #fff; --jl-bg-clear: rgba(255,255,255,0); --jl-edge-shadow: rgba(0,0,0,.22);
   --jl-scroll: #b0b0b0; --jl-button-bg: #f6f6f6; --jl-button-border: #b0b0b0; --jl-pressed-bg: #dde7f3;
@@ -93,19 +94,29 @@ details.worked-example > summary:focus-visible { outline: 2px solid var(--jl-foc
 details.worked-example .we-tag { display: inline-block; margin-right: 0.6em; padding: 0 0.45em; border-radius: 3px;
   background: var(--jl-example-accent); color: var(--jl-bg); font-size: 0.8em; font-weight: 600;
   text-transform: uppercase; letter-spacing: 0.04em; vertical-align: 0.1em; }
-details.worked-example .we-body { padding: 0 0.8em 0.6em; overflow-wrap: anywhere; }
+details.worked-example .we-body { padding: 0 0.8em 0.6em; overflow-wrap: break-word; }
 details.worked-example .we-body > p { margin: 0.45em 0; }
-details.worked-example .we-table-wrap { overflow-x: auto; margin: 0.6em 0; }
-details.worked-example table.we-table { border-collapse: collapse; width: 100%; font-size: 0.95em; }
+details.worked-example .we-table-wrap { position: relative; max-width: 100%; overflow-x: auto; margin: 0.6em 0;
+  scrollbar-width: thin; scrollbar-color: var(--jl-scroll) transparent;
+  background:
+    linear-gradient(to right, var(--jl-example-bg) 30%, transparent) left / 2em 100% no-repeat local,
+    linear-gradient(to left, var(--jl-example-bg) 30%, transparent) right / 2em 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, var(--jl-edge-shadow), transparent) left / 12px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, var(--jl-edge-shadow), transparent) right / 12px 100% no-repeat scroll; }
+details.worked-example .we-table-wrap::-webkit-scrollbar { height: 8px; }
+details.worked-example .we-table-wrap::-webkit-scrollbar-thumb { background: var(--jl-scroll); border-radius: 4px; }
+main details.worked-example table.we-table { display: table; width: 100%; max-width: none; overflow: visible;
+  background: none; border-collapse: collapse; font-size: 0.95em; }
 details.worked-example table.we-table th, details.worked-example table.we-table td { text-align: left;
-  vertical-align: top; padding: 0.3em 0.55em; border-bottom: 1px solid var(--jl-example-rule); min-width: 6em; }
-details.worked-example table.we-table thead th { border-bottom: 2px solid var(--jl-example-border); }
+  vertical-align: top; padding: 0.3em 0.55em; border-bottom: 1px solid var(--jl-example-rule);
+  min-width: 3em; max-width: 22em; overflow-wrap: break-word; }
+details.worked-example table.we-table thead th { border-bottom: 2px solid var(--jl-example-border); white-space: nowrap; }
 details.worked-example table.we-table tbody th { font-weight: 500; }
 details.worked-example table.we-table p { margin: 0; }
-details.worked-example code { font-size: 0.92em; overflow-wrap: anywhere; }
+details.worked-example code { font-size: 0.92em; }
 @media (max-width: 600px) {
   details.worked-example .we-body { padding: 0 0.5em 0.5em; }
-  details.worked-example table.we-table th, details.worked-example table.we-table td { padding: 0.25em 0.35em; min-width: 4.5em; }
+  details.worked-example table.we-table th, details.worked-example table.we-table td { padding: 0.25em 0.35em; max-width: 14em; }
 }
 "⟩
 

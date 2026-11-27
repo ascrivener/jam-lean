@@ -42,7 +42,7 @@
  "params":
  "the tiny chain the v0.8.0 vectors were made with ($\\mathsf{E}$ = 12 slots per epoch, $\\mathsf{Y}$ = 10, $\\mathsf{C}$ = 2 cores, 6 validators)",
  "notes":
- ["Each rotated value is the one named in brackets: $\\eta'_1 = \\eta_0$, $\\kappa' = \\gamma_P$, $\\lambda' = \\kappa$, and $\\gamma'_P = \\Phi(\\iota)$, which is $\\iota$ itself because there are no offenders."],
+ ["Each rotated value is the one named in parentheses: $\\eta'_1 = \\eta_0$, $\\kappa' = \\gamma_P$, $\\lambda' = \\kappa$, and $\\gamma'_P = \\Phi(\\iota)$, which is $\\iota$ itself because there are no offenders."],
  "name": "safrole-epoch-change",
  "model": ["JAM.safrole", "JAM.outsideIn"],
  "inputs":

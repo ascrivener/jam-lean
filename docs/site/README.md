@@ -78,7 +78,7 @@ The readings the model chose should link to `docs/upstream-candidates.md` by not
 vector. The box says which vector and parameters were used, lists the inputs, and shows a table of
 values (usually before → after). It ends with notes, the model functions that computed the values
 (linked to their API pages), the paper's equations it illustrates, and how the result was checked
-against the vector. A box whose table has more than ten rows starts collapsed. The block is
+against the vector. A box whose table has more than sixteen rows starts collapsed. The block is
 `Companion/Example.lean`.
 
 The numbers are never typed by hand. Each box is `docs/site/examples/<name>.json`, written by

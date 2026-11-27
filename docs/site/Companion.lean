@@ -1,7 +1,11 @@
 import VersoManual
 import Companion.Source
 import Companion.Safrole
+import Companion.Disputes
+import Companion.Reports
+import Companion.Statistics
 import Companion.PVM
+import Companion.Shuffle
 
 open Verso.Genre Manual
 open Companion
@@ -67,10 +71,10 @@ with the model modules that implement them.
 * §7 Recent history: `JAM/History.lean`
 * §8 Authorization: `JAM/Authorization.lean`
 * §9 Service accounts: `JAM/Account.lean`
-* §10 Disputes: `JAM/Disputes.lean`
-* §11 Reports and assurances: `JAM/Reports.lean`, `JAM/Assurances.lean`
+* *§10 Disputes* ({ref "disputes"}[written]): `JAM/Disputes.lean`
+* *§11 Reports and assurances* ({ref "reports"}[written]): `JAM/Reports.lean`, `JAM/Assurances.lean`
 * §12 Accumulation and preimages: `JAM/Accumulate.lean`, `JAM/Accumulation.lean`, `JAM/Preimages.lean`
-* §13 Statistics: `JAM/Statistics.lean`
+* *§13 Statistics* ({ref "statistics"}[written]): `JAM/Statistics.lean`
 * §14 Work packages and refinement: `JAM/Work.lean`, `JAM/Refine.lean`, `JAM/Guarantee.lean`
 * §15 Guaranteeing and §16 Availability assurance: not modelled beyond the refinement of §14
   (the networking and distribution they describe is out of scope)
@@ -82,10 +86,18 @@ with the model modules that implement them.
 * Appendix C, the serialization codec: `JAM/Codec.lean`, `JAM/Decode.lean`
 * Appendix D, state Merklization: `JAM/Trie.lean`, `JAM/State.lean`, `JAM/StateDecode.lean`
 * Appendix E, general Merklization: `JAM/Merkle.lean`, `JAM/Segments.lean`
-* Appendix F, shuffling: `JAM/Shuffle.lean`
+* *Appendix F, shuffling* ({ref "shuffle"}[written]): `JAM/Shuffle.lean`
 * Appendix G, the Bandersnatch VRF: `JAM/Crypto.lean` (the interface) and `JamCrypto/` (an implementation)
 * Appendix H, erasure coding: `JAM/Erasure.lean`
 
 {include 1 Companion.Safrole}
 
+{include 1 Companion.Disputes}
+
+{include 1 Companion.Reports}
+
+{include 1 Companion.Statistics}
+
 {include 1 Companion.PVM}
+
+{include 1 Companion.Shuffle}

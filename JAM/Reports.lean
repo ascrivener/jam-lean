@@ -7,17 +7,20 @@ import JAM.Account
 /-!
 # Guarantor assignments and work-report guarantees (GP v0.8.1 §11.3–§11.5)
 
-The guarantor assignments M and M* (eq. `priorassignments`), the validity conditions on the
-guarantees extrinsic 𝔼_G (eqs. `guaranteesextrinsic`–`reportcodesarecorrect`), the reporters set
-G (eq. `guarantorsig`) and the posterior assignments ρ' (§11.5), from ρ after assurances
+The guarantor assignments $\mathbf{M}$ and $\mathbf{M}^{\ast}$ (eq. `priorassignments`), the validity
+conditions on the guarantees extrinsic $\mathbf{E}_G$ (eqs. `guaranteesextrinsic`–`reportcodesarecorrect`),
+the reporters set $\mathbf{G}$ (eq. `guarantorsig`) and the posterior assignments $\rho'$ (§11.5),
+from $\rho$ after assurances
 (`JAM.assurances`).
 
 Signatures are checked with `Crypto.edVerify`.
 
 Two inputs of the paper are not in the state the transition reads, and are arguments:
 * the set of work-package hashes already in the pipeline,
-  ⋃_{x ∈ β_H} K(x_p) ∪ ⋃_{x ∈ ξ} x ∪ **q** ∪ **a** (§11.4.1), computed by `knownPackages`;
-* the ancestor-set condition on lookup anchors (h, h' ∈ A), which needs the last 𝖫 headers.
+  $\bigcup_{x \in \beta_H} \mathcal{K}(x_p) \cup \bigcup_{x \in \xi} x \cup \mathbf{q} \cup \mathbf{a}$
+  (§11.4.1), computed by `knownPackages`;
+* the ancestor-set condition on lookup anchors ($h, h' \in \mathbf{A}$), which needs the last
+  $\mathsf{L}$ headers.
 
 The paper names no errors and gives no order between the conditions. The errors are the test
 vectors' names; the order is described at `guarantees`.
@@ -25,11 +28,13 @@ vectors' names; the order is described at `guarantees`.
 
 namespace JAM
 
-/-- A validator's keys k ∈ 𝕂 as the reports transition reads them: its Ed25519 key k_e. -/
+/-- A validator's keys $k \in \mathbb{K}$ as the reports transition reads them: its Ed25519 key
+    $k_e$. -/
 abbrev EdKey := List UInt8
 
-/-- Φ(**k**) (GP v0.8.1 eq. `blacklistfilter`): the keys of offenders in ψ'_O replaced by the null
-    key 𝕂^∅ (eq. `nullvalkey`). Only the Ed25519 part is kept here: `nullEdKey` = [2, 0, …]. -/
+/-- $\Phi(\mathbf{k})$ (GP v0.8.1 eq. `blacklistfilter`): the keys of offenders in $\psi'_O$
+    replaced by the null key $\mathbb{K}^{\emptyset}$ (eq. `nullvalkey`). Only the Ed25519 part is
+    kept here: `nullEdKey` = [2, 0, …]. -/
 def blacklist (offenders : OctetSet) (k : List EdKey) : List EdKey :=
   k.map fun e => if offenders.contains e then nullEdKey else e
 
@@ -37,12 +42,13 @@ def blacklist (offenders : OctetSet) (k : List EdKey) : List EdKey :=
 #guard blacklist (Std.ExtTreeSet.ofList [List.replicate 32 (7 : UInt8)])
     [List.replicate 32 7, List.replicate 32 1] = [2 :: List.replicate 31 0, List.replicate 32 1]
 
-/-- R(**c**, n) (GP §11.3): each core index rotated by n, modulo |**c**|/3. -/
+/-- $R(\mathbf{c}, n)$ (GP §11.3): each core index rotated by $n$, modulo $|\mathbf{c}|/3$. -/
 def rotate (c : List Nat) (n : Nat) : List Nat :=
   c.map fun x => (x + n) % (c.length / 3)
 
-/-- P(v, e, t) (GP §11.3): the core of each of v validators, ℱ([⌊i/3⌋ | i ← ℕ_v], e) rotated by
-    ⌊(t mod 𝖤)/𝖱⌋. -/
+/-- $P(v, e, t)$ (GP §11.3): the core of each of $v$ validators,
+    $\mathcal{F}([\lfloor i/3 \rfloor \mid i \leftarrow \mathbb{N}_v], e)$ rotated by
+    $\lfloor (t \bmod \mathsf{E}) / \mathsf{R} \rfloor$. -/
 def permute (params : Params) (v : Nat) (e : Hash) (t : Nat) : List Nat :=
   rotate (Shuffle.shuffleHash ((List.range v).map (· / 3)) e)
     ((t % params.epochLen) / params.rotationPeriod)
@@ -52,47 +58,48 @@ structure Assignments where
   cores : List Nat
   keys : List EdKey
 
-/-- What the guarantees transition reads besides ρ, 𝔼_G and the accounts. -/
+/-- What the guarantees transition reads besides $\rho$, $\mathbf{E}_G$ and the accounts. -/
 structure ReportsInput where
-  /-- τ' = H_T. -/
+  /-- $\tau' = \mathbf{H}_T$. -/
   slot : Nat
-  /-- (κ'_v)_e. -/
+  /-- $(\kappa'_v)_e$. -/
   activeEd : List EdKey
-  /-- (λ'_v)_e. -/
+  /-- $(\lambda'_v)_e$. -/
   previousEd : List EdKey
-  /-- η'_2. -/
+  /-- $\eta'_2$. -/
   entropy2 : Hash
-  /-- η'_3. -/
+  /-- $\eta'_3$. -/
   entropy3 : Hash
-  /-- ψ'_O. -/
+  /-- $\psi'_O$. -/
   offenders : OctetSet
-  /-- β_H^†, the recent blocks with the parent's state root corrected (GP eq.
-      `correctlaststateroot`). Its reported packages are those of β_H. -/
+  /-- $\beta_H^\dagger$, the recent blocks with the parent's state root corrected (GP eq.
+      `correctlaststateroot`). Its reported packages are those of $\beta_H$. -/
   recent : List RecentBlock
-  /-- α, the authorizer pools. -/
+  /-- $\alpha$, the authorizer pools. -/
   authPools : List (List (List UInt8))
   /-- The work-package hashes already in the pipeline (`knownPackages`). -/
   known : OctetSet
-  /-- The ancestor-set condition on a lookup anchor (GP §11.4.1: ∃ h, h' ∈ A with h_T = x_t,
-      ℋ(h) = x_l, h'_P = ℋ(h) and h'_R = x_s). -/
+  /-- The ancestor-set condition on a lookup anchor (GP §11.4.1: $\exists h, h' \in \mathbf{A}$ with
+      $h_T = x_t$, $\mathcal{H}(h) = x_l$, $h'_P = \mathcal{H}(h)$ and $h'_R = x_s$). -/
   lookupAnchorKnown : RefineContext → Bool
 
-/-- M = (P(|κ'|, η'_2, τ'), Φ(κ')) (GP §11.3). -/
+/-- $\mathbf{M} = (P(|\kappa'|, \eta'_2, \tau'), \Phi(\kappa'))$ (GP §11.3). -/
 def assignments (params : Params) (i : ReportsInput) : Assignments :=
   { cores := permute params i.activeEd.length i.entropy2 i.slot,
     keys := blacklist i.offenders i.activeEd }
 
-/-- M* (GP eq. `priorassignments`): M under the previous rotation, with (κ', η'_2) when τ' − 𝖱 is
-    in the same epoch as τ', and (λ', η'_3) otherwise. τ' − 𝖱 is truncated at 0. -/
+/-- $\mathbf{M}^{\ast}$ (GP eq. `priorassignments`): $\mathbf{M}$ under the previous rotation, with
+    $(\kappa', \eta'_2)$ when $\tau' - \mathsf{R}$ is in the same epoch as $\tau'$, and
+    $(\lambda', \eta'_3)$ otherwise. $\tau' - \mathsf{R}$ is truncated at 0. -/
 def priorAssignments (params : Params) (i : ReportsInput) : Assignments :=
   let t := i.slot - params.rotationPeriod
   let (k, e) := if t / params.epochLen = i.slot / params.epochLen then (i.activeEd, i.entropy2)
     else (i.previousEd, i.entropy3)
   { cores := permute params k.length e t, keys := blacklist i.offenders k }
 
-/-- The work-package hashes already in the pipeline (GP §11.4.1): those reported in β_H, those
-    accumulated in ξ, those of the ready queue's reports (**q**) and those of the prior assignments
-    ρ (**a**). -/
+/-- The work-package hashes already in the pipeline (GP §11.4.1): those reported in $\beta_H$, those
+    accumulated in $\xi$, those of the ready queue's reports ($\mathbf{q}$) and those of the prior
+    assignments $\rho$ ($\mathbf{a}$). -/
 def knownPackages (recent : List RecentBlock) (accumulated : List OctetSet)
     (ready : List WorkReport) (ρ : AvailAssignments) : OctetSet :=
   let hs := recent.flatMap (·.reported.keys) ++ accumulated.flatMap (·.toList) ++
@@ -136,21 +143,21 @@ inductive ReportsError where
   | authGasTooHigh
   deriving BEq, Repr
 
-/-- The posterior of the guarantees transition: ρ', the reporters G, and the reported packages
-    {(r_s)_p ↦ (r_s)_e | r ∈ **I**} that recent history records (GP §7). -/
+/-- The posterior of the guarantees transition: $\rho'$, the reporters $\mathbf{G}$, and the reported
+    packages $\{ (r_s)_p \mapsto (r_s)_e \mid r \in \mathbf{I} \}$ that recent history records (GP §7). -/
 structure ReportsOutput where
   assignments : AvailAssignments
   reporters : OctetSet
   reported : OctetDict
 
-/-- L(d_l) (GP eq. `limitworkreportsize`): the length of a successful output, 0 for an error. -/
+/-- $L(d_l)$ (GP eq. `limitworkreportsize`): the length of a successful output, 0 for an error. -/
 def resultSize : WorkResult → Nat
   | .ok b => b.size
   | .err _ => 0
 
-/-- The conditions on a work report alone (GP §11.1): 1 ≤ |r_d| ≤ 𝖨 (eq. `workreport`),
-    |r_l| + |(r_c)_p| ≤ 𝖩 (eq. `limitreportdeps`) and |r_t| + ∑ L(d_l) ≤ 𝖶_R
-    (eq. `limitworkreportsize`). -/
+/-- The conditions on a work report alone (GP §11.1): $1 \leq |r_d| \leq \mathsf{I}$ (eq.
+    `workreport`), $|r_l| + |(r_c)_p| \leq \mathsf{J}$ (eq. `limitreportdeps`) and
+    $|r_t| + \sum L(d_l) \leq \mathsf{W}_R$ (eq. `limitworkreportsize`). -/
 def checkReportShape (params : Params) (r : WorkReport) : Except ReportsError Unit := do
   unless 1 ≤ r.digests.length ∧ r.digests.length ≤ params.maxPackageItems do throw .missingWorkResults
   unless r.segmentRootLookup.size + r.context.prerequisites.size ≤ params.maxReportDeps do
@@ -159,12 +166,14 @@ def checkReportShape (params : Params) (r : WorkReport) : Except ReportsError Un
     throw .workReportTooBig
 
 /-- The work-package limits on a work report (GP v0.8.1 eq. `reportrefineload`, #563): over the
-    digests, ∑ u ≤ 𝖦_R, ∑ i ≤ 𝖶_M, (r_s)_n = ∑ e ≤ 𝖶_X, ∑ x ≤ 𝖳 and ∑ (z + i·𝖶_F) ≤ 𝖶_I; then
-    (r_s)_l ≤ 𝖶_B and r_g ≤ 𝖦_I. The paper names no errors and gives no order; the errors are the
-    vectors' (davxy/jam-test-vectors after v0.8.0, errors 28–31): `badExportsCount` when the
-    segment count is not the sum of the export counts, `refineLoadTooHigh` for any sum over its
-    limit, `bundleTooBig` and `authGasTooHigh`. The rows are checked in the paper's order. 𝖶_B is
-    `Constants.Cmaxbundlesize`, as `fetch` does not report it. -/
+    digests, $\sum u \leq \mathsf{G}_R$, $\sum i \leq \mathsf{W}_M$, $(r_s)_n = \sum e \leq \mathsf{W}_X$,
+    $\sum x \leq \mathsf{T}$ and $\sum (z + i \cdot \mathsf{W}_F) \leq \mathsf{W}_I$; then
+    $(r_s)_l \leq \mathsf{W}_B$ and $r_g \leq \mathsf{G}_I$. The paper names no errors and gives no
+    order; the errors are the vectors' (davxy/jam-test-vectors after v0.8.0, errors 28–31):
+    `badExportsCount` when the segment count is not the sum of the export counts,
+    `refineLoadTooHigh` for any sum over its limit, `bundleTooBig` and `authGasTooHigh`. The rows
+    are checked in the paper's order. $\mathsf{W}_B$ is `Constants.Cmaxbundlesize`, as `fetch` does
+    not report it. -/
 def checkReportLoad (params : Params) (r : WorkReport) : Except ReportsError Unit := do
   let ds := r.digests
   let sum (f : WorkDigest → Nat) := (ds.map f).sum
@@ -178,11 +187,13 @@ def checkReportLoad (params : Params) (r : WorkReport) : Except ReportsError Uni
   unless r.spec.bundleLength ≤ Constants.Cmaxbundlesize do throw .bundleTooBig
   unless r.authGasUsed ≤ params.packageAuthGas do throw .authGasTooHigh
 
-/-- The conditions on one guarantee (r, t, **a**) (GP eq. `guarantorsig` and §11.4): the core index
-    below 𝖢; 2 ≤ |**a**| ≤ 3 and ordered by validator index; t no later than τ' and no earlier
-    than the previous rotation; for each (v, s): v < |**k**|, **c**_v = r_c, r_c < |κ'|/3, the key
-    not nulled by Φ, and s ∈ 𝕍̄_{(**k**_v)_e}⟨X_G ⌢ ℋ(r)⟩. (**c**, **k**) is M when t is in τ''s
-    rotation and M* otherwise. Returns the signers' keys. -/
+/-- The conditions on one guarantee $(r, t, \mathbf{a})$ (GP eq. `guarantorsig` and §11.4): the core
+    index below $\mathsf{C}$; $2 \leq |\mathbf{a}| \leq 3$ and ordered by validator index; $t$ no later
+    than $\tau'$ and no earlier than the previous rotation; for each $(v, s)$: $v < |\mathbf{k}|$,
+    $\mathbf{c}_v = r_c$, $r_c < |\kappa'|/3$, the key not nulled by $\Phi$, and
+    $s \in \bar{\mathbb{V}}_{(\mathbf{k}_v)_e}\langle \mathsf{X}_G \frown \mathcal{H}(r) \rangle$.
+    $(\mathbf{c}, \mathbf{k})$ is $\mathbf{M}$ when $t$ is in $\tau'$'s rotation and
+    $\mathbf{M}^{\ast}$ otherwise. Returns the signers' keys. -/
 def checkGuarantee (params : Params) (crypto : Crypto) (i : ReportsInput) (g : Guarantee) :
     Except ReportsError (List EdKey) := do
   let r := g.report
@@ -204,7 +215,7 @@ def checkGuarantee (params : Params) (crypto : Crypto) (i : ReportsInput) (g : G
     unless crypto.edVerify k (Xguarantee ++ h) s.toList do throw .badSignature
     return k
 
-/-- The anchor condition (GP §11.4.1): some y ∈ β_H^† has the anchor's header hash, state root,
+/-- The anchor condition (GP §11.4.1): some $y \in \beta_H^\dagger$ has the anchor's header hash, state root,
     accumulation-output super-peak and timeslot. A context whose anchor hash is in no entry is
     not recent; one whose hash is found but whose other fields differ names the first that does. -/
 def checkAnchor (recent : List RecentBlock) (x : RefineContext) : Except ReportsError Unit := do
@@ -216,15 +227,17 @@ def checkAnchor (recent : List RecentBlock) (x : RefineContext) : Except Reports
       y.accRoot == x.anchorAccOutLog.toList && y.slot == x.anchorSlot do throw .badAnchorSlot
 
 /-- The guarantees transition (GP §11.4–§11.5). Conditions are checked in this order:
-    1. 𝔼_G ordered and unique by core (eq. `guaranteesextrinsic`);
+    1. $\mathbf{E}_G$ ordered and unique by core (eq. `guaranteesextrinsic`);
     2. for each guarantee in turn: `checkGuarantee`, `checkReportShape`, the erasure-shard count
-       |κ'|, the core free in ρ (eq. `reportcoresareunused`), the authorizer in α[r_c], and each
-       digest's service: present in δ, d_g ≥ its minimum gas, then ∑ d_g ≤ 𝖦_A, then the
+       $|\kappa'|$, the core free in $\rho$ (eq. `reportcoresareunused`), the authorizer in
+       $\alpha[r_c]$, and each digest's service: present in $\delta$, $d_g \geq$ its minimum gas,
+       then $\sum d_g \leq \mathsf{G}_A$, then the
        work-package limits (`checkReportLoad`, GP v0.8.1 eq. `reportrefineload`);
     3. no two reports of one package;
-    4. for each report: its anchor (`checkAnchor`), the lookup anchor's age (x_t ≥ τ' − 𝖫) and
+    4. for each report: its anchor (`checkAnchor`), the lookup anchor's age
+       ($x_t \geq \tau' - \mathsf{L}$) and
        ancestry, the package not already known, the segment-root lookup within the extrinsic's
-       and β's reported packages, the prerequisites present, and each digest's code hash.
+       and $\beta$'s reported packages, the prerequisites present, and each digest's code hash.
 
     The segment-root lookup is checked before the prerequisites, so a lookup entry missing from
     both is reported as an invalid lookup rather than a missing dependency. -/

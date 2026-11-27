@@ -5,25 +5,25 @@ import JAM.BestChain
 
 Facts about `JAM.BestChain`, stated against its definitions.
 
-* **Best heads** (§19): h is a best head iff it is the hash of a known acceptable block whose m is
+* **Best heads** (§19): $h$ is a best head iff it is the hash of a known acceptable block whose $m$ is
   at least that of every acceptable block (`mem_bestHeads_iff`); so a best head is acceptable
   (`bestHead?_acceptable`), extends the finalized block, (19.1) (`bestHead?_extends_finalized`), and
   maximises (19.4) (`bestHead?_maximal`).
-* **Order independence**: with unique hashes, reordering the store changes neither P (`lookup_perm`),
-  𝐀 (`ancestry_congr`), acceptability (`acceptable_perm`), m (`metric_perm`), nor the set of best
+* **Order independence**: with unique hashes, reordering the store changes neither $P$ (`lookup_perm`),
+  $\mathbf{A}$ (`ancestry_congr`), acceptability (`acceptable_perm`), $m$ (`metric_perm`), nor the set of best
   heads (`mem_bestHeads_perm`).
 * **Existence**: the finalized block is acceptable under either audit reading when it is audited
   and none of its ancestors is disregarded (`finalized_acceptable`), and then a best head exists
   (`bestHeads_ne_nil`).
 * **Readings**: the `chain` reading of (19.2) is stricter than `head` (`acceptable_head_of_chain`).
-* **m** (19.4): a child adds its own 𝐓 to its parent's m (`metric_child`).
+* **$m$** (19.4): a child adds its own $\mathbf{T}$ to its parent's $m$ (`metric_child`).
 -/
 
 namespace JAM.BestChain
 
 variable {H : Type} [DecidableEq H]
 
-/-! ## 𝐀 and P -/
+/-! ## $\mathbf{A}$ and $P$ -/
 
 theorem ancestry_eq (bs : List (BlockInfo H)) (b : BlockInfo H) :
     ancestry bs b = b :: match lookup bs b.parent with
@@ -34,7 +34,7 @@ theorem ancestry_eq (bs : List (BlockInfo H)) (b : BlockInfo H) :
 theorem head_mem_ancestry (bs : List (BlockInfo H)) (b : BlockInfo H) : b ∈ ancestry bs b := by
   rw [ancestry_eq]; exact List.mem_cons_self
 
-/-- (19.4) along one parent link: m(H) = m(P(H)) + 𝐓(H). -/
+/-- (19.4) along one parent link: $m(H) = m(P(H)) + \mathbf{T}(H)$. -/
 theorem metric_child (bs : List (BlockInfo H)) (b p : BlockInfo H)
     (hp : lookup bs b.parent = some p) (hlt : p.slot < b.slot) :
     metric bs b = metric bs p + (if b.ticketed then 1 else 0) := by
@@ -74,7 +74,7 @@ theorem lookup_perm {bs bs' : List (BlockInfo H)} (hp : bs.Perm bs')
   intro b
   rw [lookup_eq_some_iff hnd, lookup_eq_some_iff hnd', hp.mem_iff]
 
-/-- 𝐀 depends on the store only through P. -/
+/-- $\mathbf{A}$ depends on the store only through $P$. -/
 theorem ancestry_congr {bs bs' : List (BlockInfo H)} (hl : ∀ h, lookup bs h = lookup bs' h)
     (b : BlockInfo H) : ancestry bs b = ancestry bs' b := by
   rw [ancestry_eq bs b, ancestry_eq bs' b, hl]
@@ -131,7 +131,7 @@ theorem foldl_max_cases (l : List Nat) (a : Nat) : l.foldl max a = a ∨ l.foldl
       · exact Or.inl (Nat.max_eq_left hay)
     · exact Or.inr (List.mem_cons_of_mem _ h)
 
-/-- The best heads (GP §19): exactly the hashes of known acceptable blocks whose m (19.4) is at
+/-- The best heads (GP §19): exactly the hashes of known acceptable blocks whose $m$ (19.4) is at
     least that of every acceptable block. -/
 theorem mem_bestHeads_iff (r : AuditReading) (bs : List (BlockInfo H)) (fin h : H) :
     h ∈ bestHeads r bs fin ↔
@@ -193,7 +193,7 @@ theorem bestHead?_extends_finalized {r : AuditReading} {bs : List (BlockInfo H)}
   obtain ⟨b, hbs, hh, hacc⟩ := bestHead?_acceptable hb
   exact ⟨b, hbs, hh, acceptable_extends_finalized hacc⟩
 
-/-- (19.4) for a best head: no acceptable block has a larger m. -/
+/-- (19.4) for a best head: no acceptable block has a larger $m$. -/
 theorem bestHead?_maximal {r : AuditReading} {bs : List (BlockInfo H)} {fin h : H}
     (hb : bestHead? r bs fin = some h) :
     ∃ b ∈ bs, b.hash = h ∧

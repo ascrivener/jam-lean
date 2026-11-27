@@ -3,9 +3,9 @@ import JAM.Theorems.RefineContract
 /-!
 # `grow_heap` in gas-free runs
 
-Ω_♊ counts the writable pages in ℕ_{a…b} to find the heap's top h. In a symbolic run the memory
+$\Omega_{\text{♊}}$ counts the writable pages in $\mathbb{N}_{a\dots b}$ to find the heap's top $h$. In a symbolic run the memory
 is not a concrete page map, so we describe its heap pages instead: `HeapPages μ a b h` says the
-writable pages in ℕ_{a…b} are exactly those below h. From it `growHeapCore_eq` gives Ω_♊'s top
+writable pages in $\mathbb{N}_{a\dots b}$ are exactly those below $h$. From it `growHeapCore_eq` gives $\Omega_{\text{♊}}$'s top
 without counting, and `FreeStepsH.growHeapK` takes a whole `grow_heap` step under
 `refineContractK cap`, for a call whose cost fits in `cap` (`FreeStepsH.growHeap`: under
 `refineContract`).
@@ -15,7 +15,7 @@ namespace JAM
 
 open PVM
 
-/-- In ℕ_{a…b}, the writable pages of μ are exactly those below h. -/
+/-- In $\mathbb{N}_{a\dots b}$, the writable pages of $\mu$ are exactly those below $h$. -/
 def HeapPages (μ : Memory) (a b h : Nat) : Prop :=
   ∀ p, a ≤ p → p < b → (μ.pages.get? p == some .write) = decide (p < h)
 
@@ -50,12 +50,12 @@ theorem growHeapCore_eq (ω : Regs) (μ : Memory) (jam : ByteArray) {a b h : Nat
   simp only [Prod.mk.injEq, and_true, true_and]
   omega
 
-/-- The new top Ω_♊ sets: h if ω_7 ≤ h or ω_7 > b, else ω_7. -/
+/-- The new top $\Omega_{\text{♊}}$ sets: $h$ if $\varphi_7 \le h$ or $\varphi_7 > b$, else $\varphi_7$. -/
 def growTop (w h b : Nat) : Nat := if w ≤ h ∨ w > b then h else w
 
 /-- **A `grow_heap` step**, under `refineContractK cap`: from a memory whose heap is described by
-    `HeapPages`, the call continues with ω'_7 = the new top `t` and pages a … t made writable,
-    provided its cost 275 + 121 (t − h) fits in `cap`. The new top is named by `t` so that the
+    `HeapPages`, the call continues with $\varphi'_7$ = the new top `t` and pages $a \dots t$ made writable,
+    provided its cost $275 + 121 (t - h)$ fits in `cap`. The new top is named by `t` so that the
     memory term stays concrete. -/
 theorem FreeStepsH.growHeapK (cap : Nat) (hcap : cap < 2 ^ 64) (env : RefineHost.Env)
     {p : ByteArray} {P : Program} {i n : Nat}

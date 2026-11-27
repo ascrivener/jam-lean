@@ -4,7 +4,7 @@ import JAM.Erasure
 # Checked indexing in the erasure code: the new definitions equal the old ones
 
 `JAM.Erasure` reads its tables and arrays with `getD … 0` instead of `a[i]!`: every index is a
-field element below 2¹⁶, an octet offset or a position inside an array of known size, but its type
+field element below $2^{16}$, an octet offset or a position inside an array of known size, but its type
 is `ℕ`. The reads that never use the default are proved in bounds in `ErasureProofs.Interp`
 (section "Reads in bounds"). Each changed definition is stated equal here to its earlier body,
 written out verbatim.

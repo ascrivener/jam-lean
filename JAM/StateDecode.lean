@@ -3,19 +3,19 @@ import JAM.State
 import JAM.Block
 
 /-!
-# σ from its key-values: the inverse of T (GP v0.8.1 §D.1)
+# $\sigma$ from its key-values: the inverse of $T$ (GP v0.8.1 §D.1)
 
-T (GP §D.1, eq. D.2) maps σ to key-value pairs: the components keyed by C(i), i ∈ 1 … 16, each
-service account's fields under C(255, s), and its data under C(s, ·) (eq. D.1). `decodeState`
-inverts T on a state's key-values. The components keyed by C(i) are decoded with the decoders of
+$T$ (GP §D.1, eq. D.2) maps $\sigma$ to key-value pairs: the components keyed by $C(i)$, $i \in 1 \dots 16$, each
+service account's fields under $C(255, s)$, and its data under $C(s, \cdot)$ (eq. D.1). `decodeState`
+inverts $T$ on a state's key-values. The components keyed by $C(i)$ are decoded with the decoders of
 Appendix C, each the inverse of the encoder of the same component in eq. D.2, and each service
-account is built in the form the model holds it (`JAM.ServiceAccount`): a_o and a_i come from
-C(255, s); an entry under C(s, ℰ_4(2³²−2) ⌢ ℋ(**p**)) for its own value **p** is a preimage; every
-other entry of s (storage, or a request) goes into `entries` under the 27 hash octets of its key.
-The decoding is total on states whose service entries all belong to an account with a C(255, s)
+account is built in the form the model holds it (`JAM.ServiceAccount`): $a_o$ and $a_i$ come from
+$C(255, s)$; an entry under $C(s, \mathcal{E}_4(2^{32}-2) \frown \mathcal{H}(\mathbf{p}))$ for its own value $\mathbf{p}$ is a preimage; every
+other entry of $s$ (storage, or a request) goes into `entries` under the 27 hash octets of its key.
+The decoding is total on states whose service entries all belong to an account with a $C(255, s)$
 entry.
 
-[`Tests/TraceTest.lean`](https://github.com/ascrivener/jam-lean/blob/main/Tests/TraceTest.lean) checks the round trip T(decodeState(T(σ))) = T(σ), key by key, and the
+[`Tests/TraceTest.lean`](https://github.com/ascrivener/jam-lean/blob/main/Tests/TraceTest.lean) checks the round trip $T(\text{decodeState}(T(\sigma))) = T(\sigma)$, key by key, and the
 state root, on every state of the block-import traces.
 -/
 
@@ -27,7 +27,7 @@ def hash32 : Decoder (List UInt8) := do return (← bytes 32).toList
 def vkey : Decoder ValidatorKey := do return (← bytes 336).toList
 def ticket : Decoder Ticket := Ticket.decode
 
-/-- A validator record of C(13): six variable-length naturals (GP v0.8.1 eq. `serialization`,
+/-- A validator record of $C(13)$: six variable-length naturals (GP v0.8.1 eq. `serialization`,
     GP #564). -/
 def valRecord : Decoder ValidatorRecord := do
   return { blocks := ← nat, tickets := ← nat, preimages := ← nat,
@@ -64,18 +64,18 @@ def gamma (E : Nat) : Decoder (List ValidatorKey × List UInt8 × SealKeys × Li
   let acc ← varSeq ticket
   return (pk, z.toList, sk, acc)
 
-/-- An availability assignment (g, t). -/
+/-- An availability assignment $(g, t)$. -/
 def availEntry : Decoder AvailAssignment := do
   let g ← Guarantee.decode
   let t ← fixed 4
   return { guarantee := g, time := t }
 
-/-- Whether a 31-octet key is C(255, s) for some s (GP eq. `serialization`). -/
+/-- Whether a 31-octet key is $C(255, s)$ for some $s$ (GP eq. `serialization`). -/
 def isInfoKey (k : List UInt8) : Bool :=
   k.headD 0 == 255 && k.length == 31 &&
     (List.range 31).all fun j => j ∈ [0, 1, 3, 5, 7] || k.getD j 0 == 0
 
-/-- The service-account fields of C(255, s), without the storage, preimages and requests. -/
+/-- The service-account fields of $C(255, s)$, without the storage, preimages and requests. -/
 def accountInfo : Decoder ServiceAccount := do
   let v ← nat
   if v ≠ 0 then fail s!"account version {v}"
@@ -99,7 +99,7 @@ def dec {α : Type} (kvs : List (List UInt8 × List UInt8)) (i : Nat) (d : Decod
   | .ok x => .ok x
   | .error e => .error s!"C({i}): {e}"
 
-/-- Decode a raw state into σ (see the module note for what can be decoded). -/
+/-- Decode a raw state into $\sigma$ (see the module note for what can be decoded). -/
 def decodeState (p : Params) (kvs : List (List UInt8 × List UInt8)) : Except String State := do
   let C := p.coreCount
   let E := p.epochLen

@@ -119,8 +119,9 @@ def runVector (params : Params) (j : Json) : Except String (List String) := do
   let pre ← state params (← field j "pre_state")
   let input ← field j "input"
   let reports ← (← arrF input "reports").mapM workReport
-  let res := accumulate params pre (← natField input "slot") reports.toList
-  compare params j res
+  match accumulate params pre (← natField input "slot") reports.toList with
+  | .ok res => compare params j res
+  | .error e => return [s!"accumulation failed: {repr e}"]
 
 /-- Vectors that follow behaviour the vectors' CHANGELOG lists as departing from GP v0.8.0. The
     model follows the paper, so these are expected to fail, and the runner fails if any other

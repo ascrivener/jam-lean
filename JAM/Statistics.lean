@@ -4,18 +4,19 @@ import JAM.Accumulation
 /-!
 # Statistics (GP v0.8.1 §13, `sec:bookkeeping`)
 
-The activity statistics π = (π_V, π_L, π_C, π_S) (eq. `activityspec`): per-validator records for
+The activity statistics $\pi = (\pi_V, \pi_L, \pi_C, \pi_S)$ (eq. `activityspec`): per-validator records for
 the current and the last epoch, per-core records and per-service records for the current block.
 
-The validator update reads the reporters set G of eq. `guarantorsig`, the Ed25519 keys of the
-validators whose signatures are in E_G's credentials. Computing it needs the guarantor
-assignments M or M* (signatures are verified there, not here), so it is an argument.
+The validator update reads the reporters set $\mathbf{G}$ of eq. `guarantorsig`, the Ed25519 keys of the
+validators whose signatures are in $\mathbf{E}_G$'s credentials. Computing it needs the guarantor
+assignments $\mathbf{M}$ or $\mathbf{M}^{\ast}$ (signatures are verified there, not here), so it is
+an argument.
 -/
 
 namespace JAM
 
-/-- A validator's record (GP eq. `activityspec`): blocks b, tickets t, preimages p, preimage
-    octets d, guarantees g and assurances a. -/
+/-- A validator's record (GP eq. `activityspec`): blocks $b$, tickets $t$, preimages $p$, preimage
+    octets $d$, guarantees $g$ and assurances $a$. -/
 structure ValidatorRecord where
   blocks : Nat := 0
   tickets : Nat := 0
@@ -25,8 +26,8 @@ structure ValidatorRecord where
   assurances : Nat := 0
   deriving BEq, Repr, Inhabited
 
-/-- A core's record (GP §13.2): DA load d, popularity p, imports i, extrinsic count x, extrinsic
-    size z, exports e, bundle length l and refine gas u. -/
+/-- A core's record (GP §13.2): DA load $d$, popularity $p$, imports $i$, extrinsic count $x$,
+    extrinsic size $z$, exports $e$, bundle length $l$ and refine gas $u$. -/
 structure CoreRecord where
   daLoad : Nat := 0
   popularity : Nat := 0
@@ -38,9 +39,9 @@ structure CoreRecord where
   gasUsed : Nat := 0
   deriving BEq, Repr, Inhabited
 
-/-- A service's record (GP §13.2): provision p = (count, size), refinement r = (count, gas),
-    imports i, extrinsic count x, extrinsic size z, exports e, and accumulation
-    a = (count, transfers, gas). -/
+/-- A service's record (GP §13.2): provision $p = (\text{count}, \text{size})$, refinement
+    $r = (\text{count}, \text{gas})$, imports $i$, extrinsic count $x$, extrinsic size $z$, exports
+    $e$, and accumulation $a = (\text{count}, \text{transfers}, \text{gas})$. -/
 structure ServiceRecord where
   provided : Nat × Nat := (0, 0)
   refinement : Nat × Nat := (0, 0)
@@ -53,29 +54,30 @@ structure ServiceRecord where
 
 /-- What the validator update reads from the block. -/
 structure ValidatorStatsInput where
-  /-- τ, the prior timeslot. -/
+  /-- $\tau$, the prior timeslot. -/
   priorSlot : Nat
-  /-- τ' = H_t. -/
+  /-- $\tau' = \mathbf{H}_t$. -/
   slot : Nat
-  /-- H_i, the block author's index. -/
+  /-- $\mathbf{H}_i$, the block author's index. -/
   author : Nat
-  /-- |E_T|. -/
+  /-- $|\mathbf{E}_T|$. -/
   ticketCount : Nat
-  /-- E_P, the preimages extrinsic (s, **d**). -/
+  /-- $\mathbf{E}_P$, the preimages extrinsic $(s, \mathbf{d})$. -/
   preimages : List (Nat × List UInt8)
-  /-- a_v for each a ∈ E_A. -/
+  /-- $a_v$ for each $a \in \mathbf{E}_A$. -/
   assurers : List Nat
-  /-- (κ'_v)_e, the posterior active set's Ed25519 keys. -/
+  /-- $(\kappa'_v)_e$, the posterior active set's Ed25519 keys. -/
   activeEd : List (List UInt8)
-  /-- G, the reporters set (GP eq. `guarantorsig`). -/
+  /-- $\mathbf{G}$, the reporters set (GP eq. `guarantorsig`). -/
   reporters : OctetSet
 
-/-- The validator update (π_V, π_L) ↦ (π_V', π_L') (GP §13.1). π_V^† credits assurances over
-    N_{|κ|}, which is |π_V| (eq. `activityspec`). On an epoch change π_L' = π_V^† and the new
-    accumulator starts at zero; its length is |κ'|, as |π_V'| = |κ'| requires. Then the author
-    is credited its block, tickets, preimages and preimage octets ∑_{**p** ∈ E_P} |**p**_d|, and each
-    v with (κ'_v)_e ∈ G a guarantee. v0.8.1 writes both as the model reads them (GP #565; v0.8.0
-    wrote ∑_{d ∈ E_P} |d| and κ'_v ∈ G). -/
+/-- The validator update $(\pi_V, \pi_L) \mapsto (\pi'_V, \pi'_L)$ (GP §13.1). $\pi_V^\dagger$
+    credits assurances over $\mathbb{N}_{|\kappa|}$, which is $|\pi_V|$ (eq. `activityspec`). On an
+    epoch change $\pi'_L = \pi_V^\dagger$ and the new accumulator starts at zero; its length is
+    $|\kappa'|$, as $|\pi'_V| = |\kappa'|$ requires. Then the author is credited its block, tickets,
+    preimages and preimage octets $\sum_{\mathbf{p} \in \mathbf{E}_P} |\mathbf{p}_d|$, and each $v$
+    with $(\kappa'_v)_e \in \mathbf{G}$ a guarantee. v0.8.1 writes both as the model reads them
+    (GP #565; v0.8.0 wrote $\sum_{d \in \mathbf{E}_P} |d|$ and $\kappa'_v \in \mathbf{G}$). -/
 def validatorStats (params : Params) (curr last : List ValidatorRecord) (i : ValidatorStatsInput) :
     List ValidatorRecord × List ValidatorRecord :=
   let dagger := curr.mapIdx fun v r =>
@@ -94,8 +96,9 @@ def validatorStats (params : Params) (curr last : List ValidatorRecord) (i : Val
       guarantees := r.guarantees + if i.reporters.contains (i.activeEd.getD v []) then 1 else 0 }
   (curr', last')
 
-/-- π_C' (GP §13.2) from the incoming reports **I** (eq. `incomingworkreports`), the newly
-    available reports **R** (eq. `availableworkreports`) and the assurances' bitfields a_f. -/
+/-- $\pi'_C$ (GP §13.2) from the incoming reports $\mathbf{I}$ (eq. `incomingworkreports`), the
+    newly available reports $\mathbf{R}$ (eq. `availableworkreports`) and the assurances' bitfields
+    $a_f$. -/
 def coreStats (params : Params) (incoming available : List WorkReport) (bitfields : List (List Bool)) :
     List CoreRecord :=
   (List.range params.coreCount).map fun c =>
@@ -110,10 +113,11 @@ def coreStats (params : Params) (incoming available : List WorkReport) (bitfield
         r.spec.bundleLength + Constants.Csegmentsize * ((r.spec.segmentCount * 65 + 63) / 64)).sum,
       popularity := (bitfields.map fun f => if f.getD c false then 1 else 0).sum }
 
-/-- π_S' (GP v0.8.1 §13.2) for **s** = **s**^R ∪ **s**^P ∪ K(S), from the incoming reports **I**,
-    the preimages extrinsic E_P and the accumulation statistics S. Services outside **s** have no
-    record. The provision is ∑_{**p** ∈ E_P, **p**_s = s} (1, |**p**_d|) (v0.8.1 states the filter
-    on s, which v0.8.0 left implicit). -/
+/-- $\pi'_S$ (GP v0.8.1 §13.2) for $\mathbf{s} = \mathbf{s}^R \cup \mathbf{s}^P \cup \mathcal{K}(\mathbf{S})$,
+    from the incoming reports $\mathbf{I}$, the preimages extrinsic $\mathbf{E}_P$ and the
+    accumulation statistics $\mathbf{S}$. Services outside $\mathbf{s}$ have no record. The
+    provision is $\sum_{\mathbf{p} \in \mathbf{E}_P, \mathbf{p}_s = s} (1, |\mathbf{p}_d|)$ (v0.8.1
+    states the filter on $s$, which v0.8.0 left implicit). -/
 def serviceStats (incoming : List WorkReport) (preimages : List (Nat × List UInt8))
     (acc : List (Nat × AccStat)) : Std.ExtTreeMap Nat ServiceRecord :=
   let digests := incoming.flatMap (·.digests)

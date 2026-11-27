@@ -3,101 +3,103 @@ import JAM.Codec
 /-!
 # Work packages, work items and work reports (GP v0.8.1 §11, §14) and their encodings (Appendix C)
 
-Not yet modelled: the deferred-transfer field u of GP v0.8.1 #539 (junior services, phase 2).
+Not yet modelled: the deferred-transfer field $u$ of GP v0.8.1 #539 (junior services, phase 2).
 
-The terms that refine and is-authorized take as input and produce as output, with ℰ as Appendix C
-defines it for each.
+The terms that refine and is-authorized take as input and produce as output, with $\mathcal{E}$ as
+Appendix C defines it for each.
 -/
 
 namespace JAM
 
 open Codec
 
-/-- A service identifier ℕ_S = ℕ_{2^32}. -/
+/-- A service identifier $\mathbb{N}_S = \mathbb{N}_{2^{32}}$. -/
 abbrev ServiceId := Nat
 
-/-- The refinement context 𝕏 (GP eq. `workcontext`). -/
+/-- The refinement context $\mathbb{X}$ (GP eq. `workcontext`). -/
 structure RefineContext where
-  /-- a, the anchor header hash -/
+  /-- $a$, the anchor header hash -/
   anchorHash : Hash
-  /-- t, the anchor timeslot -/
+  /-- $t$, the anchor timeslot -/
   anchorSlot : Nat
-  /-- s, the anchor posterior state root -/
+  /-- $s$, the anchor posterior state root -/
   anchorStateRoot : Hash
-  /-- b, the anchor accumulation-output-log super-peak -/
+  /-- $b$, the anchor accumulation-output-log super-peak -/
   anchorAccOutLog : Hash
-  /-- l, the lookup-anchor header hash -/
+  /-- $l$, the lookup-anchor header hash -/
   lookupAnchorHash : Hash
-  /-- t, the lookup-anchor timeslot -/
+  /-- $t$, the lookup-anchor timeslot -/
   lookupAnchorSlot : Nat
-  /-- s, the lookup-anchor posterior state root -/
+  /-- $s$, the lookup-anchor posterior state root -/
   lookupAnchorStateRoot : Hash
-  /-- p, the prerequisite work-package hashes, a set ⟦ℍ⟧ -/
+  /-- $p$, the prerequisite work-package hashes, a set $[\![ \mathbb{H} ]\!]$ -/
   prerequisites : OctetSet := ∅
 
-/-- ℰ(x ∈ 𝕏) (GP Appendix C). -/
+/-- $\mathcal{E}(x \in \mathbb{X})$ (GP Appendix C). -/
 def RefineContext.encode (x : RefineContext) : List UInt8 :=
   blob x.anchorHash ++ fixed 4 x.anchorSlot ++ blob x.anchorStateRoot ++ blob x.anchorAccOutLog ++
     blob x.lookupAnchorHash ++ fixed 4 x.lookupAnchorSlot ++ blob x.lookupAnchorStateRoot ++
     varHashSet x.prerequisites
 
-/-- An imported segment's identifier: a segment root h ∈ ℍ, or a work-package hash h^⊞ ∈ ℍ^⊞
-    (GP eq. `workitem`). -/
+/-- An imported segment's identifier: a segment root $h \in \mathbb{H}$, or a work-package hash
+    $h^\boxplus \in \mathbb{H}^\boxplus$ (GP eq. `workitem`). -/
 inductive SegmentRoot where
   | root (h : Hash)
   | package (h : Hash)
 
-/-- I((h, i)): ℰ(h) ⌢ ℰ_2(i) for a segment root, ℰ(r) ⌢ ℰ_2(i + 2^15) for r^⊞ (GP Appendix C). -/
+/-- $I((h, i))$: $\mathcal{E}(h) \frown \mathcal{E}_2(i)$ for a segment root,
+    $\mathcal{E}(r) \frown \mathcal{E}_2(i + 2^{15})$ for $r^\boxplus$ (GP Appendix C). -/
 def encodeImport : SegmentRoot × Nat → List UInt8
   | (.root h, i) => blob h ++ fixed 2 i
   | (.package r, i) => blob r ++ fixed 2 (i + 2 ^ 15)
 
-/-- A work item 𝕀 (GP eq. `workitem`). -/
+/-- A work item $\mathbb{I}$ (GP eq. `workitem`). -/
 structure WorkItem where
-  /-- s, the service -/
+  /-- $s$, the service -/
   service : ServiceId
-  /-- c, the service's code hash -/
+  /-- $c$, the service's code hash -/
   codeHash : Hash
-  /-- y, the payload -/
+  /-- $y$, the payload -/
   payload : Blob
-  /-- g, the refine gas limit -/
+  /-- $g$, the refine gas limit -/
   refineGasLimit : Nat
-  /-- a, the accumulate gas limit -/
+  /-- $a$, the accumulate gas limit -/
   accumulateGasLimit : Nat
-  /-- e, the number of exported segments -/
+  /-- $e$, the number of exported segments -/
   exportCount : Nat
-  /-- i, the imported segments -/
+  /-- $i$, the imported segments -/
   importSegments : List (SegmentRoot × Nat)
-  /-- x, the extrinsics (hash, length) -/
+  /-- $x$, the extrinsics (hash, length) -/
   extrinsics : List (Hash × Nat)
 
-/-- ℰ(w ∈ 𝕀) (GP Appendix C). -/
+/-- $\mathcal{E}(w \in \mathbb{I})$ (GP Appendix C). -/
 def WorkItem.encode (w : WorkItem) : List UInt8 :=
   fixed 4 w.service ++ blob w.codeHash ++ fixed 8 w.refineGasLimit ++ fixed 8 w.accumulateGasLimit ++
     fixed 2 w.exportCount ++ var w.payload ++ varSeq encodeImport w.importSegments ++
     varSeq (fun (h, i) => blob h ++ fixed 4 i) w.extrinsics
 
-/-- A work package ℙ (GP eq. `workpackage`). -/
+/-- A work package $\mathbb{P}$ (GP eq. `workpackage`). -/
 structure WorkPackage where
-  /-- j, the authorization token -/
+  /-- $j$, the authorization token -/
   authToken : Blob
-  /-- h, the service hosting the authorization code -/
+  /-- $h$, the service hosting the authorization code -/
   authCodeHost : ServiceId
-  /-- u, the authorization code hash -/
+  /-- $u$, the authorization code hash -/
   authCodeHash : Hash
-  /-- f, the authorizer configuration -/
+  /-- $f$, the authorizer configuration -/
   authConfig : Blob
-  /-- c, the refinement context -/
+  /-- $c$, the refinement context -/
   context : RefineContext
-  /-- w, the work items -/
+  /-- $w$, the work items -/
   items : List WorkItem
 
-/-- ℰ(p ∈ ℙ) (GP Appendix C). -/
+/-- $\mathcal{E}(p \in \mathbb{P})$ (GP Appendix C). -/
 def WorkPackage.encode (p : WorkPackage) : List UInt8 :=
   fixed 4 p.authCodeHost ++ blob p.authCodeHash ++ p.context.encode ++ var p.authToken ++
     var p.authConfig ++ varSeq WorkItem.encode p.items
 
-/-- The work errors 𝕁 (GP eq. `workerror`): ∞, ☇, ⊚, ⊖, BAD, BIG. -/
+/-- The work errors $\mathbb{J}$ (GP eq. `workerror`): $\infty$, ☇, $\circledcirc$, $\circleddash$,
+    BAD, BIG. -/
 inductive WorkError where
   | outOfGas
   | panic
@@ -112,7 +114,7 @@ inductive WorkResult where
   | ok (o : Blob)
   | err (e : WorkError)
 
-/-- O(o) (GP Appendix C): (0, ↕o) for a blob, 1–6 for the errors. -/
+/-- $O(o)$ (GP Appendix C): $(0, \updownarrow o)$ for a blob, 1–6 for the errors. -/
 def WorkResult.encode : WorkResult → List UInt8
   | .ok o => 0 :: var o
   | .err .outOfGas => [1]
@@ -122,36 +124,37 @@ def WorkResult.encode : WorkResult → List UInt8
   | .err .bad => [5]
   | .err .big => [6]
 
-/-- A work digest 𝔻 (GP eq. `workdigest`). -/
+/-- A work digest $\mathbb{D}$ (GP eq. `workdigest`). -/
 structure WorkDigest where
-  /-- s -/
+  /-- $s$ -/
   service : ServiceId
-  /-- c -/
+  /-- $c$ -/
   codeHash : Hash
-  /-- y, the payload hash -/
+  /-- $y$, the payload hash -/
   payloadHash : Hash
-  /-- g, the accumulate gas limit -/
+  /-- $g$, the accumulate gas limit -/
   gasLimit : Nat
-  /-- l, the result -/
+  /-- $l$, the result -/
   result : WorkResult
-  /-- u, gas used in refine -/
+  /-- $u$, gas used in refine -/
   gasUsed : Nat
-  /-- i, segments imported -/
+  /-- $i$, segments imported -/
   importCount : Nat
-  /-- x, extrinsics used -/
+  /-- $x$, extrinsics used -/
   extrinsicCount : Nat
-  /-- z, total extrinsic size -/
+  /-- $z$, total extrinsic size -/
   extrinsicSize : Nat
-  /-- e, segments exported -/
+  /-- $e$, segments exported -/
   exportCount : Nat
 
-/-- ℰ(d ∈ 𝔻) (GP Appendix C). The five load figures use the variable-length ℰ. -/
+/-- $\mathcal{E}(d \in \mathbb{D})$ (GP Appendix C). The five load figures use the variable-length
+    $\mathcal{E}$. -/
 def WorkDigest.encode (d : WorkDigest) : List UInt8 :=
   fixed 4 d.service ++ blob d.codeHash ++ blob d.payloadHash ++ fixed 8 d.gasLimit ++
     d.result.encode ++ nat d.gasUsed ++ nat d.importCount ++ nat d.extrinsicCount ++
     nat d.extrinsicSize ++ nat d.exportCount
 
-/-- An availability specification 𝕐 (GP eq. `avspec`). -/
+/-- An availability specification $\mathbb{Y}$ (GP eq. `avspec`). -/
 structure AvailabilitySpec where
   packageHash : Hash
   bundleLength : Nat
@@ -160,32 +163,32 @@ structure AvailabilitySpec where
   segmentRoot : Hash
   segmentCount : Nat
 
-/-- ℰ(s ∈ 𝕐) (GP Appendix C). -/
+/-- $\mathcal{E}(s \in \mathbb{Y})$ (GP Appendix C). -/
 def AvailabilitySpec.encode (s : AvailabilitySpec) : List UInt8 :=
   blob s.packageHash ++ fixed 4 s.bundleLength ++ blob s.erasureRoot ++ fixed 2 s.erasureShards ++
     blob s.segmentRoot ++ fixed 2 s.segmentCount
 
-/-- A work report ℝ = (s, c, c, a, g, t, l, d) (GP v0.8.1 eq. `workreport`; #537 moved g to fifth
-    place, matching Appendix C, where v0.8.0's tuple had it last). -/
+/-- A work report $\mathbb{R} = (s, c, c, a, g, t, l, d)$ (GP v0.8.1 eq. `workreport`; #537 moved
+    $g$ to fifth place, matching Appendix C, where v0.8.0's tuple had it last). -/
 structure WorkReport where
-  /-- s -/
+  /-- $s$ -/
   spec : AvailabilitySpec
-  /-- c -/
+  /-- $c$ -/
   context : RefineContext
-  /-- c, the core index -/
+  /-- $c$, the core index -/
   core : Nat
-  /-- a, the authorizer hash -/
+  /-- $a$, the authorizer hash -/
   authorizerHash : Hash
-  /-- g, gas used by is-authorized -/
+  /-- $g$, gas used by is-authorized -/
   authGasUsed : Nat
-  /-- t, the authorizer trace -/
+  /-- $t$, the authorizer trace -/
   authTrace : Blob
-  /-- l, the segment-root lookup dictionary ℍ → ℍ -/
+  /-- $l$, the segment-root lookup dictionary $\mathbb{H} \to \mathbb{H}$ -/
   segmentRootLookup : OctetDict := ∅
-  /-- d, the work digests -/
+  /-- $d$, the work digests -/
   digests : List WorkDigest
 
-/-- ℰ(r ∈ ℝ) (GP Appendix C). -/
+/-- $\mathcal{E}(r \in \mathbb{R})$ (GP Appendix C). -/
 def WorkReport.encode (r : WorkReport) : List UInt8 :=
   r.spec.encode ++ r.context.encode ++ nat r.core ++ blob r.authorizerHash ++ nat r.authGasUsed ++
     var r.authTrace ++ varHashDict r.segmentRootLookup ++ varSeq WorkDigest.encode r.digests
@@ -196,29 +199,30 @@ namespace JAM
 
 open Codec
 
-/-- An operand tuple 𝕌, the accumulation input from one work item (GP eq. `operandtuple`). -/
+/-- An operand tuple $\mathbb{U}$, the accumulation input from one work item (GP eq. `operandtuple`). -/
 structure OperandTuple where
-  /-- p, the work-package hash -/
+  /-- $p$, the work-package hash -/
   packageHash : Hash
-  /-- e, the segment root -/
+  /-- $e$, the segment root -/
   segmentRoot : Hash
-  /-- a, the authorizer hash -/
+  /-- $a$, the authorizer hash -/
   authorizer : Hash
-  /-- y, the payload hash -/
+  /-- $y$, the payload hash -/
   payloadHash : Hash
-  /-- g, the accumulate gas limit -/
+  /-- $g$, the accumulate gas limit -/
   gasLimit : Nat
-  /-- t, the authorizer trace -/
+  /-- $t$, the authorizer trace -/
   authTrace : Blob
-  /-- l, the work result -/
+  /-- $l$, the work result -/
   result : WorkResult
 
-/-- ℰ(o ∈ 𝕌) = ℰ(0, p, e, a, y, g, O(l), ↕t) (GP Appendix C). -/
+/-- $\mathcal{E}(o \in \mathbb{U}) = \mathcal{E}(0, p, e, a, y, g, O(l), \updownarrow t)$
+    (GP Appendix C). -/
 def OperandTuple.encode (o : OperandTuple) : List UInt8 :=
   nat 0 ++ blob o.packageHash ++ blob o.segmentRoot ++ blob o.authorizer ++ blob o.payloadHash ++
     nat o.gasLimit ++ o.result.encode ++ var o.authTrace
 
-/-- A deferred transfer 𝕏 (GP eq. `defxfer`). -/
+/-- A deferred transfer $\mathbb{X}$ (GP eq. `defxfer`). -/
 structure DeferredTransfer where
   source : ServiceId
   dest : ServiceId
@@ -226,22 +230,24 @@ structure DeferredTransfer where
       (GP v0.8.1 eq. `defxfer`, GP #539) -/
   destSupervisor : Bool := false
   amount : Nat
-  /-- the 𝖶_T-octet memo -/
+  /-- the $\mathsf{W}_T$-octet memo -/
   memo : Blob
   gas : Nat
 
-/-- ℰ(x ∈ 𝕏) = ℰ(1, ℰ_4(s), ℰ_4(d), x_u, ℰ_8(a), m, ℰ_8(g)) with x_u the destination-supervisor
-    flag (GP v0.8.1 Appendix C, GP #539). -/
+/-- $\mathcal{E}(x \in \mathbb{X}) = \mathcal{E}(1, \mathcal{E}_4(s), \mathcal{E}_4(d), x_u,
+    \mathcal{E}_8(a), m, \mathcal{E}_8(g))$ with $x_u$ the destination-supervisor flag (GP v0.8.1
+    Appendix C, GP #539). -/
 def DeferredTransfer.encode (x : DeferredTransfer) : List UInt8 :=
   nat 1 ++ fixed 4 x.source ++ fixed 4 x.dest ++ nat (if x.destSupervisor then 1 else 0) ++
     fixed 8 x.amount ++ blob x.memo ++ fixed 8 x.gas
 
-/-- An accumulation input: an operand tuple or a deferred transfer (GP §12, the union 𝕌 ∪ 𝕏). -/
+/-- An accumulation input: an operand tuple or a deferred transfer (GP §12, the union $\mathbb{U}
+    \cup \mathbb{X}$). -/
 inductive AccumulateInput where
   | operand (o : OperandTuple)
   | transfer (x : DeferredTransfer)
 
-/-- ℰ of an accumulation input. -/
+/-- $\mathcal{E}$ of an accumulation input. -/
 def AccumulateInput.encode : AccumulateInput → List UInt8
   | .operand o => o.encode
   | .transfer x => x.encode

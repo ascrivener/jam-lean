@@ -4,8 +4,8 @@ import JAM.Theorems.LoopRel
 /-!
 # Checked indexing in Blake2b: the new definitions equal the old ones
 
-`JAM.Blake2b` keeps its state in `Vector`s (the chaining value h of 8 words, the working vector v of
-16, the message schedule σ of `Fin 16` indices) and indexes them in bounds. This file keeps the
+`JAM.Blake2b` keeps its state in `Vector`s (the chaining value $h$ of 8 words, the working vector $v$ of
+16, the message schedule $\sigma$ of `Fin 16` indices) and indexes them in bounds. This file keeps the
 earlier `Array` form with `a[i]!` verbatim (`JAM.Theorems.CheckedIndex.Old.Blake2b`) and proves each
 function equal to its new form; `blake2b_hash_eq_old` is the digest. `JAM.Fast.Blake2b` proves its
 fast forms equal to the old ones and goes through these.
@@ -22,7 +22,7 @@ def iv : Array UInt64 := #[
   0x6a09e667f3bcc908, 0xbb67ae8584caa73b, 0x3c6ef372fe94f82b, 0xa54ff53a5f1d36f1,
   0x510e527fade682d1, 0x9b05688c2b3e6c1f, 0x1f83d9abfb41bd6b, 0x5be0cd19137e2179]
 
-/-- The message schedule σ (RFC 7693 §2.7); rounds 10 and 11 reuse rows 0 and 1. -/
+/-- The message schedule $\sigma$ (RFC 7693 §2.7); rounds 10 and 11 reuse rows 0 and 1. -/
 def sigma : Array (Array Nat) := #[
   #[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
   #[14, 10, 4, 8, 9, 15, 13, 6, 1, 12, 0, 2, 11, 7, 5, 3],
@@ -38,7 +38,7 @@ def sigma : Array (Array Nat) := #[
 /-- Rotate right. -/
 @[inline] def rotr (x : UInt64) (n : UInt64) : UInt64 := (x >>> n) ||| (x <<< (64 - n))
 
-/-- The mixing function G (RFC 7693 §3.1). -/
+/-- The mixing function $G$ (RFC 7693 §3.1). -/
 def mix (v : Array UInt64) (a b c d : Nat) (x y : UInt64) : Array UInt64 := Id.run do
   let mut v := v
   v := v.set! a (v[a]! + v[b]! + x)
@@ -56,7 +56,7 @@ def words (block : List UInt8) : Array UInt64 :=
   (List.range 16).toArray.map fun i =>
     (List.range 8).foldr (fun k acc => (acc <<< 8) ||| (block.getD (8 * i + k) 0).toUInt64) 0
 
-/-- The compression function F (RFC 7693 §3.2), with byte counter `t` and final-block flag `last`. -/
+/-- The compression function $F$ (RFC 7693 §3.2), with byte counter `t` and final-block flag `last`. -/
 def compress (h : Array UInt64) (block : List UInt8) (t : Nat) (last : Bool) : Array UInt64 := Id.run do
   let m := words block
   let mut v := h ++ iv
@@ -84,7 +84,7 @@ def blocks (h : Array UInt64) (msg : ByteArray) : Array UInt64 :=
   let h := (List.range (nb - 1)).foldl (fun h k => compress h (block k) (128 * (k + 1)) false) h
   compress h (block (nb - 1)) len true
 
-/-- Blake2b with an `n`-octet digest (1 ≤ n ≤ 64), unkeyed (RFC 7693 §3.3). -/
+/-- Blake2b with an `n`-octet digest ($1 \le n \le 64$), unkeyed (RFC 7693 §3.3). -/
 def hash (n : Nat) (msg : ByteArray) : ByteArray :=
   let h := iv.set! 0 (iv[0]! ^^^ 0x01010000 ^^^ UInt64.ofNat n)
   let h := blocks h msg

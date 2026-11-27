@@ -5,34 +5,37 @@ import JAM.Auditing
 
 Facts about `JAM.Auditing`, stated against its definitions.
 
-* **ℱ** (Appendix F) commutes with `map` (`shuffle_map`) and is a permutation (`shuffle_perm`).
-* **Tranche 0** (§17.3): **a**₀ is the report half of its core-indexed form (`tranche0_eq_map_snd`),
-  has at most ten items (`tranche0_length_le`), names each core at most once
-  (`tranche0Indexed_nodup_cores`), and every (c, w) it selects has **q**[c] = w
+* **$\mathcal{F}$** (Appendix F) commutes with `map` (`shuffle_map`) and is a permutation
+  (`shuffle_perm`).
+* **Tranche 0** (§17.3): $\mathbf{a}_0$ is the report half of its core-indexed form
+  (`tranche0_eq_map_snd`), has at most ten items (`tranche0_length_le`), names each core at most
+  once (`tranche0Indexed_nodup_cores`), and every $(c, w)$ it selects has $\mathbf{q}[c] = w$
   (`tranche0Indexed_mem`).
 * **Later tranches** (eq. `latertranches`): no no-shows, no selection (`laterSelected_zero`,
-  `laterTranche_eq_nil`); selection is monotone in the no-show count (`laterSelected_mono`); **a**_n
-  draws only from **q** (`laterTranche_sublist`) and the prose negative-judgment rule only adds
-  reports (`laterTranche_subset_withNegatives`).
-* **U** (§17.3): `audited` decides `Audited` (`audited_iff`); it is monotone in J_⊤
-  (`audited_mono_positive`) and in the current tranche (`audited_mono_current`), but not in J_⊥: one
-  negative judgment revokes it below the supermajority (`audited_false_of_negative`). The literal
-  reading with n unbounded collapses (`auditedLiteral_degenerate`), and the bounded one accepts a
-  report nobody announced in some tranche (`audited_of_empty_tranche`).
-* **§10 link**: |J_⊤| > ⅔|κ| is exactly the good-verdict count ⌊⅔|κ|⌋ + 1
-  (`supermajority_iff_verdictGood`); `formVerdict` returns only votes §10 accepts the count, order
-  and outcome of, each backed by an observed judgment (`formVerdict_sound`), and finds a good
-  verdict whenever enough positive judgments are known (`formVerdict_good_complete`); an auditing
-  judgment signs the message a verdict vote is checked against (`judgmentMessage_eq`).
+  `laterTranche_eq_nil`); selection is monotone in the no-show count (`laterSelected_mono`);
+  $\mathbf{a}_n$ draws only from $\mathbf{q}$ (`laterTranche_sublist`) and the prose
+  negative-judgment rule only adds reports (`laterTranche_subset_withNegatives`).
+* **$\mathbf{U}$** (§17.3): `audited` decides `Audited` (`audited_iff`); it is monotone in
+  $J_\top$ (`audited_mono_positive`) and in the current tranche (`audited_mono_current`), but not in
+  $J_\bot$: one negative judgment revokes it below the supermajority (`audited_false_of_negative`).
+  The literal reading with $n$ unbounded collapses (`auditedLiteral_degenerate`), and the bounded
+  one accepts a report nobody announced in some tranche (`audited_of_empty_tranche`).
+* **§10 link**: $|J_\top| > \frac{2}{3}|\kappa|$ is exactly the good-verdict count
+  $\lfloor \frac{2}{3}|\kappa| \rfloor + 1$ (`supermajority_iff_verdictGood`); `formVerdict` returns
+  only votes §10 accepts the count, order and outcome of, each backed by an observed judgment
+  (`formVerdict_sound`), and finds a good verdict whenever enough positive judgments are known
+  (`formVerdict_good_complete`); an auditing judgment signs the message a verdict vote is checked
+  against (`judgmentMessage_eq`).
 -/
 
 namespace JAM.Auditing
 
 open Shuffle
 
-/-! ## ℱ -/
+/-! ## $\mathcal{F}$ -/
 
-/-- ℱ(map f **s**, **r**) = map f ℱ(**s**, **r**): the shuffle's draws do not depend on the values. -/
+/-- $\mathcal{F}(\text{map } f\, \mathbf{s}, \mathbf{r}) = \text{map } f\, \mathcal{F}(\mathbf{s},
+    \mathbf{r})$: the shuffle's draws do not depend on the values. -/
 theorem shuffle_map {α β : Type} (f : α → β) (s : List α) (r : List Nat) :
     shuffle (s.map f) r = (shuffle s r).map f := by
   fun_induction shuffle s r with
@@ -54,8 +57,8 @@ theorem shuffle_map {α β : Type} (f : α → β) (s : List α) (r : List Nat) 
     rw [← List.map_cons, List.getElem?_map]
     cases (x :: xs)[r.headD 0 % (xs.length + 1)]? <;> rfl
 
-/-- One step of ℱ (GP eq. `suffle`) permutes: **s** ~ **s**_i :: (**s** with **s**_i replaced by the
-    last element, cut to l − 1). -/
+/-- One step of $\mathcal{F}$ (GP eq. `suffle`) permutes: $\mathbf{s} \sim \mathbf{s}_i ::
+    (\mathbf{s} \text{ with } \mathbf{s}_i \text{ replaced by the last element, cut to } l - 1)$. -/
 theorem perm_swap_step {α : Type} (l : List α) (h : l ≠ []) (i : Nat) (hi : i < l.length) :
     l.Perm (l[i] :: (l.set i (l.getLast h)).take (l.length - 1)) := by
   obtain ⟨d, a, hl⟩ := List.eq_nil_or_concat l |>.resolve_left h
@@ -84,7 +87,7 @@ theorem perm_swap_step {α : Type} (l : List α) (h : l ≠ []) (i : Nat) (hi : 
       List.set_cons_zero, List.take_left']
     exact List.perm_append_singleton a d
 
-/-- ℱ(**s**, **r**) is a permutation of **s** (GP Appendix F). -/
+/-- $\mathcal{F}(\mathbf{s}, \mathbf{r})$ is a permutation of $\mathbf{s}$ (GP Appendix F). -/
 theorem shuffle_perm {α : Type} (s : List α) (r : List Nat) : (shuffle s r).Perm s := by
   fun_induction shuffle s r with
   | case1 r => simp
@@ -106,11 +109,11 @@ private theorem filterMap_indexed_snd {α : Type} (l : List (Nat × Option α)) 
     obtain ⟨c, w⟩ := p
     cases w <;> simp_all
 
-/-- The indexed **q**, (c, **q**_c) for each core c. -/
+/-- The indexed $\mathbf{q}$, $(c, \mathbf{q}_c)$ for each core $c$. -/
 private abbrev indexedQ (q : List (Option WorkReport)) : List (Nat × Option WorkReport) :=
   q.zipIdx.map fun (w, c) => (c, w)
 
-/-- **a**₀ is the report half of its core-indexed form. -/
+/-- $\mathbf{a}_0$ is the report half of its core-indexed form. -/
 theorem tranche0_eq_map_snd (q : List (Option WorkReport)) (y : List UInt8) :
     tranche0 q y = (tranche0Indexed q y).map Prod.snd := by
   unfold tranche0 tranche0Indexed shuffleHash
@@ -120,7 +123,7 @@ theorem tranche0_eq_map_snd (q : List (Option WorkReport)) (y : List UInt8) :
   rw [h1]
   simp
 
-/-- |**a**₀| ≤ 10. -/
+/-- $|\mathbf{a}_0| \le 10$. -/
 theorem tranche0Indexed_length_le (q : List (Option WorkReport)) (y : List UInt8) :
     (tranche0Indexed q y).length ≤ 10 := by
   unfold tranche0Indexed
@@ -128,7 +131,7 @@ theorem tranche0Indexed_length_le (q : List (Option WorkReport)) (y : List UInt8
   simp only [List.length_take, tranche0Size]
   exact Nat.min_le_left _ _
 
-/-- |**a**₀| ≤ 10 (GP §17.3, "a verifiably random selection of ten cores"). -/
+/-- $|\mathbf{a}_0| \le 10$ (GP §17.3, "a verifiably random selection of ten cores"). -/
 theorem tranche0_length_le (q : List (Option WorkReport)) (y : List UInt8) :
     (tranche0 q y).length ≤ 10 := by
   rw [tranche0_eq_map_snd, List.length_map]; exact tranche0Indexed_length_le q y
@@ -157,7 +160,7 @@ theorem tranche0Indexed_nodup_cores (q : List (Option WorkReport)) (y : List UIn
   rw [List.map_take]
   exact hS.sublist (List.take_sublist _ _)
 
-/-- Every (c, w) tranche 0 selects has **q**[c] = w. -/
+/-- Every $(c, w)$ tranche 0 selects has $\mathbf{q}[c] = w$. -/
 theorem tranche0Indexed_mem (q : List (Option WorkReport)) (y : List UInt8) (c : Nat)
     (w : WorkReport) (h : (c, w) ∈ tranche0Indexed q y) : q[c]? = some (some w) := by
   unfold tranche0Indexed shuffleHash at h
@@ -175,17 +178,17 @@ theorem tranche0Indexed_mem (q : List (Option WorkReport)) (y : List UInt8) (c :
 
 /-! ## Later tranches -/
 
-/-- With no no-shows a_n(w) is false. -/
+/-- With no no-shows $a_n(w)$ is false. -/
 theorem laterSelected_zero (V : Nat) (y : List UInt8) : laterSelected V y 0 = false := by
   simp [laterSelected]
 
-/-- a_n(w) is monotone in the no-show count. -/
+/-- $a_n(w)$ is monotone in the no-show count. -/
 theorem laterSelected_mono (V : Nat) (y : List UInt8) {m m' : Nat} (hm : m ≤ m')
     (h : laterSelected V y m = true) : laterSelected V y m' = true := by
   simp only [laterSelected, decide_eq_true_eq] at *
   exact Nat.lt_of_lt_of_le h (Nat.mul_le_mul_left _ hm)
 
-/-- No no-shows in tranche n − 1 for any report of **q**: **a**_n is empty. -/
+/-- No no-shows in tranche $n - 1$ for any report of $\mathbf{q}$: $\mathbf{a}_n$ is empty. -/
 theorem laterTranche_eq_nil (V : Nat) (view : View) (n : Nat) (q : List (Option WorkReport))
     (y : WorkReport → List UInt8) (h : ∀ w ∈ q.filterMap id, noShows V view n w = 0) :
     laterTranche V view n q y = [] := by
@@ -194,12 +197,12 @@ theorem laterTranche_eq_nil (V : Nat) (view : View) (n : Nat) (q : List (Option 
   intro w hw
   rw [h w hw, laterSelected_zero]; simp
 
-/-- **a**_n draws only from **q**. -/
+/-- $\mathbf{a}_n$ draws only from $\mathbf{q}$. -/
 theorem laterTranche_sublist (V : Nat) (view : View) (n : Nat) (q : List (Option WorkReport))
     (y : WorkReport → List UInt8) : (laterTranche V view n q y).Sublist (q.filterMap id) :=
   List.filter_sublist
 
-/-- The prose negative-judgment rule only adds reports to **a**_n. -/
+/-- The prose negative-judgment rule only adds reports to $\mathbf{a}_n$. -/
 theorem laterTranche_subset_withNegatives (V : Nat) (view : View) (n : Nat)
     (q : List (Option WorkReport)) (y : WorkReport → List UInt8) :
     ∀ w ∈ laterTranche V view n q y, w ∈ laterTrancheWithNegatives V view n q y := by
@@ -232,7 +235,7 @@ private theorem filter_sublist_of_imp {α : Type} (p q : α → Bool) :
       · exact ih.cons _
       · exact ih
 
-/-- |s| ≤ |t| when s ⊆ t within ℕ_V. -/
+/-- $|s| \le |t|$ when $s \subseteq t$ within $\mathbb{N}_V$. -/
 theorem VSet.card_mono (V : Nat) {s t : VSet} (h : VSet.Subset V s t) :
     VSet.card V s ≤ VSet.card V t := by
   unfold VSet.card VSet.members
@@ -244,7 +247,7 @@ theorem VSet.Subset.trans {V : Nat} {s t u : VSet} (h1 : VSet.Subset V s t)
 
 /-! ## The audited conditions -/
 
-/-- `audited` decides U(w). -/
+/-- `audited` decides $U(w)$. -/
 theorem audited_iff (V : Nat) (view : View) (current : Nat) (h : List UInt8) :
     audited V view current h = true ↔ Audited V view current h := by
   simp only [audited, Audited, Bool.or_eq_true, Bool.and_eq_true, List.any_eq_true,
@@ -257,7 +260,7 @@ theorem audited_iff (V : Nat) (view : View) (current : Nat) (h : List UInt8) :
     · exact Or.inl ⟨hn, n, by omega, hs⟩
     · exact Or.inr hc
 
-/-- U(w) is monotone in J_⊤(w): more positive judgments never un-audit a report. -/
+/-- $U(w)$ is monotone in $J_\top(w)$: more positive judgments never un-audit a report. -/
 theorem audited_mono_positive (V : Nat) (view view' : View) (current : Nat) (h : List UInt8)
     (hA : view'.announced = view.announced) (hN : view'.negative h = view.negative h)
     (hP : VSet.Subset V (view.positive h) (view'.positive h))
@@ -267,7 +270,7 @@ theorem audited_mono_positive (V : Nat) (view view' : View) (current : Nat) (h :
   · exact Or.inl ⟨hN ▸ hn, n, hn', hA ▸ hs.trans hP⟩
   · exact Or.inr (Nat.lt_of_lt_of_le hc (Nat.mul_le_mul_left _ (VSet.card_mono V hP)))
 
-/-- U(w) stays true as tranches pass. -/
+/-- $U(w)$ stays true as tranches pass. -/
 theorem audited_mono_current (V : Nat) (view : View) {c c' : Nat} (h : List UInt8)
     (hc : c ≤ c') (hU : audited V view c h = true) : audited V view c' h = true := by
   rw [audited_iff] at *
@@ -275,8 +278,8 @@ theorem audited_mono_current (V : Nat) (view : View) {c c' : Nat} (h : List UInt
   · exact Or.inl ⟨hn, n, Nat.le_trans hn' hc, hs⟩
   · exact Or.inr hs
 
-/-- U(w) is not monotone in J_⊥(w): below the supermajority, one negative judgment makes a report
-    unaudited, whatever the announcements. -/
+/-- $U(w)$ is not monotone in $J_\bot(w)$: below the supermajority, one negative judgment makes a
+    report unaudited, whatever the announcements. -/
 theorem audited_false_of_negative (V : Nat) (view : View) (current : Nat) (h : List UInt8)
     (i : Nat) (hi : i < V) (hneg : view.negative h i = true)
     (hc : 3 * VSet.card V (view.positive h) ≤ 2 * V) : audited V view current h = false := by
@@ -288,8 +291,9 @@ theorem audited_false_of_negative (V : Nat) (view : View) (current : Nat) (h : L
   · rfl
   · exact absurd ((audited_iff V view current h).mp hU) this
 
-/-- The literal U(w), with n unbounded: once some tranche m has A_m(w) = ∅ (as every tranche after
-    one without no-shows has, by eq. `latertranches`), its first clause is just J_⊥(w) = ∅. -/
+/-- The literal $U(w)$, with $n$ unbounded: once some tranche $m$ has $A_m(w) = \emptyset$ (as every
+    tranche after one without no-shows has, by eq. `latertranches`), its first clause is just
+    $J_\bot(w) = \emptyset$. -/
 theorem auditedLiteral_degenerate (V : Nat) (view : View) (h : List UInt8)
     (hm : ∃ m, VSet.isEmptyB V (view.announced m h) = true) :
     AuditedLiteral V view h ↔
@@ -306,7 +310,7 @@ theorem auditedLiteral_degenerate (V : Nat) (view : View) (h : List UInt8)
     · exact Or.inl ⟨hn, m, hsub⟩
     · exact Or.inr hc
 
-/-- The bounded U(w) still holds for a report with no negative judgment that nobody announced in
+/-- The bounded $U(w)$ still holds for a report with no negative judgment that nobody announced in
     some tranche up to the current one, with no positive judgment at all. -/
 theorem audited_of_empty_tranche (V : Nat) (view : View) (current n : Nat) (h : List UInt8)
     (hn : n ≤ current) (hA : VSet.isEmptyB V (view.announced n h) = true)
@@ -315,27 +319,29 @@ theorem audited_of_empty_tranche (V : Nat) (view : View) (current n : Nat) (h : 
   refine Or.inl ⟨hN, n, hn, fun i hi hs => ?_⟩
   have := (VSet.isEmptyB_iff V _).mp hA i hi; simp_all
 
-/-- **U** ⇔ ∀ w ∈ **R** : U(w). -/
+/-- $\mathbf{U} \Leftrightarrow \forall w \in \mathbf{R} : U(w)$. -/
 theorem blockAudited_iff (V : Nat) (view : View) (current : Nat) (R : List WorkReport) :
     blockAudited V view current R = true ↔ ∀ w ∈ R, Audited V view current (reportHash w) := by
   simp [blockAudited, List.all_eq_true, audited_iff]
 
 /-! ## The link to §10 -/
 
-/-- |J_⊤(w)| > ⅔|κ| (U's second clause) is exactly the count of positive votes a good verdict needs,
-    ⌊⅔|κ|⌋ + 1 (GP §10.2 eq. `verdicts`, `JAM.verdictOutcome`). -/
+/-- $|J_\top(w)| > \frac{2}{3}|\kappa|$ ($U$'s second clause) is exactly the count of positive votes
+    a good verdict needs, $\lfloor \frac{2}{3}|\kappa| \rfloor + 1$ (GP §10.2 eq. `verdicts`,
+    `JAM.verdictOutcome`). -/
 theorem supermajority_iff_verdictGood (V t : Nat) : 3 * t > 2 * V ↔ 2 * V / 3 + 1 ≤ t := by
   omega
 
-/-- An auditing judgment on w signs X_{e} ⌢ ℋ(w), the message `JAM.checkVerdict` checks a verdict
-    vote on target ℋ(w) against. -/
+/-- An auditing judgment on $w$ signs $\mathsf{X}_{e} \frown \mathcal{H}(w)$, the message
+    `JAM.checkVerdict` checks a verdict vote on target $\mathcal{H}(w)$ against. -/
 theorem judgmentMessage_eq (valid : Bool) (w : WorkReport) :
     judgmentMessage valid w = Xvalidif valid ++ reportHash w := rfl
 
-/-- What `formVerdict` returns is a vote set §10 accepts the shape of: ⌊⅔|κ|⌋ + 1 votes, strictly
-    ascending by validator index, with V(a, **j**) defined and equal to the claimed outcome; and each
-    vote is a judgment the author has seen (positive votes from J_⊤, negative from J_⊥, indices
-    below |κ|). Signatures are whatever `sig` supplies; their checks are not claimed. -/
+/-- What `formVerdict` returns is a vote set §10 accepts the shape of:
+    $\lfloor \frac{2}{3}|\kappa| \rfloor + 1$ votes, strictly ascending by validator index, with
+    $V(a, \mathbf{j})$ defined and equal to the claimed outcome; and each vote is a judgment the
+    author has seen (positive votes from $J_\top$, negative from $J_\bot$, indices below
+    $|\kappa|$). Signatures are whatever `sig` supplies; their checks are not claimed. -/
 theorem formVerdict_sound (V : Nat) (pos neg : VSet) (sig : Nat → Bool → Blob) (o : Outcome)
     (js : List Judgment) (h : formVerdict V pos neg sig = some (o, js)) :
     js.length = 2 * V / 3 + 1 ∧ orderedUniqByNat (·.index) js = true ∧
@@ -393,7 +399,8 @@ private theorem orderedUniqByNat_of_pairwise {α : Type} (key : α → Nat) :
     simp only [List.map_cons, List.pairwise_cons]
     exact h.2
 
-/-- With at least ⌊⅔|κ|⌋ + 1 positive judgments known, `formVerdict` gives a good verdict. -/
+/-- With at least $\lfloor \frac{2}{3}|\kappa| \rfloor + 1$ positive judgments known, `formVerdict`
+    gives a good verdict. -/
 theorem formVerdict_good_complete (V : Nat) (pos neg : VSet) (sig : Nat → Bool → Blob)
     (h : 2 * V / 3 + 1 ≤ VSet.card V pos) : ∃ js, formVerdict V pos neg sig = some (.good, js) := by
   unfold formVerdict

@@ -6,13 +6,13 @@ import JAM.Crypto
 /-!
 # Disputes, verdicts and judgments (GP v0.8.1 §10, `sec:disputes`)
 
-The disputes state ψ = (ψ_G, ψ_B, ψ_W, ψ_O) (eq. `disputesspec`) and its transition under the
-disputes extrinsic 𝔼_D = (𝔼_V, 𝔼_C, 𝔼_F) (eq. `disputesextrinsics`): the validity conditions on
-verdicts, culprits and faults, the verdict sequence **v** (eq. `verdicts`), the cleared availability
-assignments ρ^‡ (eq. `removenonpositive`), ψ' (eqs. `goodsetdef`–`offendersdef`) and the offenders
-marker H_O (§10.4).
+The disputes state $\psi = (\psi_G, \psi_B, \psi_W, \psi_O)$ (eq. `disputesspec`) and its transition under the
+disputes extrinsic $\mathbf{E}_D = (\mathbf{E}_V, \mathbf{E}_C, \mathbf{E}_F)$ (eq. `disputesextrinsics`): the validity conditions on
+verdicts, culprits and faults, the verdict sequence $\mathbf{v}$ (eq. `verdicts`), the cleared availability
+assignments $\rho^\ddagger$ (eq. `removenonpositive`), $\psi'$ (eqs. `goodsetdef`–`offendersdef`) and the offenders
+marker $\mathbf{H}_O$ (§10.4).
 
-Signatures are checked with `Crypto.edVerify`. The validator sets κ and λ enter only through their
+Signatures are checked with `Crypto.edVerify`. The validator sets $\kappa$ and $\lambda$ enter only through their
 Ed25519 keys.
 
 The paper states the conditions but names no errors and gives no order between them. The errors
@@ -22,7 +22,7 @@ with each verdict's or offence's conditions checked together.
 
 namespace JAM
 
-/-- The disputes state ψ = (ψ_G, ψ_B, ψ_W, ψ_O) (GP eq. `disputesspec`): the good, bad and wonky
+/-- The disputes state $\psi = (\psi_G, \psi_B, \psi_W, \psi_O)$ (GP eq. `disputesspec`): the good, bad and wonky
     report hashes, and the punished Ed25519 keys. -/
 structure DisputesState where
   good : OctetSet := ∅
@@ -30,13 +30,13 @@ structure DisputesState where
   wonky : OctetSet := ∅
   offenders : OctetSet := ∅
 
-/-- An availability assignment (g, t) (GP eq. `reportingstate`): a guarantee and the timeslot at
+/-- An availability assignment $(g, t)$ (GP eq. `reportingstate`): a guarantee and the timeslot at
     which it was reported. -/
 structure AvailAssignment where
   guarantee : Guarantee
   time : Nat
 
-/-- ρ ∈ ⟦(𝔾, ℕ_T)?⟧_𝖢. -/
+/-- $\rho \in [\![ (\mathbb{G}, \mathbb{N}_T)? ]\!]_{\mathsf{C}}$. -/
 abbrev AvailAssignments := List (Option AvailAssignment)
 
 /-- Why a disputes extrinsic is invalid. The paper names no errors; these are the vectors'. -/
@@ -59,18 +59,18 @@ inductive DisputesError where
   | badVotesCount
   deriving BEq, Repr
 
-/-- X_V = `$jam_valid`, X_I = `$jam_invalid` (GP §10.2). -/
+/-- $\mathsf{X}_V$ = `$jam_valid`, $\mathsf{X}_I$ = `$jam_invalid` (GP §10.2). -/
 def Xvalid : List UInt8 := contextString "$jam_valid"
 def Xinvalid : List UInt8 := contextString "$jam_invalid"
-/-- X_G = `$jam_guarantee` (GP eq. `guarantorsig`). -/
+/-- $\mathsf{X}_G$ = `$jam_guarantee` (GP eq. `guarantorsig`). -/
 def Xguarantee : List UInt8 := contextString "$jam_guarantee"
 
 #guard Xguarantee = "jam_guarantee".toUTF8.toList
 
-/-- X_v: X_V for ⊤ and X_I for ⊥. -/
+/-- $\mathsf{X}_v$: $\mathsf{X}_V$ for $\top$ and $\mathsf{X}_I$ for $\bot$. -/
 def Xvalidif (v : Bool) : List UInt8 := if v then Xvalid else Xinvalid
 
-/-- A sequence is strictly ascending under a key: [x ∈ **s**]-ordered-unique by that key
+/-- A sequence is strictly ascending under a key: $[x \in \mathbf{s}]$-ordered-unique by that key
     (GP §3.7, `sqorderuniqby`). -/
 def orderedUniqBy {α : Type} (key : α → List UInt8) : List α → Bool
   | a :: b :: rest => decide (key a < key b) && orderedUniqBy key (b :: rest)
@@ -81,7 +81,7 @@ def orderedUniqByNat {α : Type} (key : α → Nat) : List α → Bool
   | a :: b :: rest => key a < key b && orderedUniqByNat key (b :: rest)
   | _ => true
 
-/-- A verdict's outcome: good (⊤), bad (⊥) or wonky (∅) (GP eq. `verdicts`). -/
+/-- A verdict's outcome: good ($\top$), bad ($\bot$) or wonky ($\varnothing$) (GP eq. `verdicts`). -/
 inductive Outcome where
   | good
   | bad
@@ -90,25 +90,25 @@ inductive Outcome where
 
 /-- What the disputes transition reads from the prior state. -/
 structure DisputesInput where
-  /-- τ, the prior timeslot. -/
+  /-- $\tau$, the prior timeslot. -/
   slot : Nat
-  /-- (κ_v)_e, the active set's Ed25519 keys. -/
+  /-- $(\kappa_v)_e$, the active set's Ed25519 keys. -/
   activeEd : List (List UInt8)
-  /-- (λ_v)_e, the previous epoch's Ed25519 keys. -/
+  /-- $(\lambda_v)_e$, the previous epoch's Ed25519 keys. -/
   previousEd : List (List UInt8)
 
-/-- The posterior of the disputes transition: ψ', ρ^‡ and the offenders marker H_O. -/
+/-- The posterior of the disputes transition: $\psi'$, $\rho^\ddagger$ and the offenders marker $\mathbf{H}_O$. -/
 structure DisputesOutput where
   state : DisputesState
   assignments : AvailAssignments
   offendersMark : List (List UInt8)
 
-/-- K(a) (GP §10.2): κ when a = ⌊τ/𝖤⌋, λ otherwise. -/
+/-- $K(a)$ (GP §10.2): $\kappa$ when $a = \lfloor \tau/\mathsf{E} \rfloor$, $\lambda$ otherwise. -/
 def judgeKeys (params : Params) (i : DisputesInput) (a : Nat) : List (List UInt8) :=
   if a = i.slot / params.epochLen then i.activeEd else i.previousEd
 
-/-- V(a, **j**) (GP eq. `verdicts`): ⊤ when the positive judgments number ⌊2/3·|**k**|⌋ + 1, ⊥ when
-    they are none, ∅ when they number ⌊1/3·|**k**|⌋, and undefined otherwise. -/
+/-- $V(a, \mathbf{j})$ (GP eq. `verdicts`): $\top$ when the positive judgments number $\lfloor 2/3 \cdot |\mathbf{k}| \rfloor + 1$, $\bot$ when
+    they are none, $\varnothing$ when they number $\lfloor 1/3 \cdot |\mathbf{k}| \rfloor$, and undefined otherwise. -/
 def verdictOutcome (k : Nat) (votes : List Judgment) : Option Outcome :=
   let t := (votes.filter (·.valid)).length
   if t = 2 * k / 3 + 1 then some .good
@@ -116,9 +116,9 @@ def verdictOutcome (k : Nat) (votes : List Judgment) : Option Outcome :=
   else if t = k / 3 then some .wonky
   else none
 
-/-- The conditions on one verdict (r, a, **j**) (GP §10.2): a ∈ ⌊τ/𝖤⌋ − ℕ_2, **j** ordered and
-    unique by judge index, |**j**| = ⌊2/3·|**k**|⌋ + 1, every judge index below |**k**| and every
-    signature valid, r not already judged, and V(a, **j**) defined. Returns (r, V(a, **j**)). -/
+/-- The conditions on one verdict $(r, a, \mathbf{j})$ (GP §10.2): $a \in \lfloor \tau/\mathsf{E} \rfloor - \mathbb{N}_2$, $\mathbf{j}$ ordered and
+    unique by judge index, $|\mathbf{j}| = \lfloor 2/3 \cdot |\mathbf{k}| \rfloor + 1$, every judge index below $|\mathbf{k}|$ and every
+    signature valid, $r$ not already judged, and $V(a, \mathbf{j})$ defined. Returns $(r, V(a, \mathbf{j}))$. -/
 def checkVerdict (params : Params) (crypto : Crypto) (i : DisputesInput) (ψ : DisputesState)
     (v : Verdict) : Except DisputesError (List UInt8 × Outcome) := do
   let e := i.slot / params.epochLen
@@ -135,7 +135,7 @@ def checkVerdict (params : Params) (crypto : Crypto) (i : DisputesInput) (ψ : D
   let some o := verdictOutcome k.length v.votes | throw .badVoteSplit
   return (r, o)
 
-/-- ψ_G', ψ_B', ψ_W' (GP eqs. `goodsetdef`–`wonkysetdef`): each set assimilates the report
+/-- $\psi'_G$, $\psi'_B$, $\psi'_W$ (GP eqs. `goodsetdef`–`wonkysetdef`): each set assimilates the report
     hashes of its verdicts. -/
 def assimilate (ψ : DisputesState) (verdicts : List (List UInt8 × Outcome)) : DisputesState :=
   verdicts.foldl (init := ψ) fun s (r, o) =>
@@ -144,8 +144,8 @@ def assimilate (ψ : DisputesState) (verdicts : List (List UInt8 × Outcome)) : 
     | .bad => { s with bad := s.bad.insert r }
     | .wonky => { s with wonky := s.wonky.insert r }
 
-/-- ρ^‡ (GP eq. `removenonpositive`): clear each core whose assigned report's hash
-    ℋ((ρ[c]_g)_r) has a bad or wonky verdict. -/
+/-- $\rho^\ddagger$ (GP eq. `removenonpositive`): clear each core whose assigned report's hash
+    $\mathcal{H}((\rho[c]_g)_r)$ has a bad or wonky verdict. -/
 def clearNonPositive (ρ : AvailAssignments) (verdicts : List (List UInt8 × Outcome)) :
     AvailAssignments :=
   ρ.map fun
@@ -154,17 +154,17 @@ def clearNonPositive (ρ : AvailAssignments) (verdicts : List (List UInt8 × Out
       let h := (Blake2b.hash256 ⟨a.guarantee.report.encode.toArray⟩).toList
       if verdicts.any fun (r, o) => r == h && (o == .bad || o == .wonky) then none else some a
 
-/-- The disputes transition (GP §10): check 𝔼_D against τ, κ, λ and ψ, and give ψ', ρ^‡ and H_O.
+/-- The disputes transition (GP §10): check $\mathbf{E}_D$ against $\tau$, $\kappa$, $\lambda$ and $\psi$, and give $\psi'$, $\rho^\ddagger$ and $\mathbf{H}_O$.
 
     * Verdicts are ordered and unique by report hash, and each satisfies `checkVerdict`.
-    * Culprits are ordered and unique by key; each (r, f, s) has r ∈ ψ_B', f ∈ **k** and
-      s ∈ 𝕍̄_f⟨X_G ⌢ r⟩.
-    * Faults are ordered and unique by key; each (r, v, f, s) has r ∈ ψ_B' ⇔ r ∉ ψ_G' ⇔ v (read as
-      a chain of two equivalences), f ∈ **k** and s ∈ 𝕍̄_f⟨X_v ⌢ r⟩.
+    * Culprits are ordered and unique by key; each $(r, f, s)$ has $r \in \psi'_B$, $f \in \mathbf{k}$ and
+      $s \in \bar{\mathbb{V}}_f\langle \mathsf{X}_G \frown r \rangle$.
+    * Faults are ordered and unique by key; each $(r, v, f, s)$ has $r \in \psi'_B \Leftrightarrow r \notin \psi'_G \Leftrightarrow v$ (read as
+      a chain of two equivalences), $f \in \mathbf{k}$ and $s \in \bar{\mathbb{V}}_f\langle \mathsf{X}_v \frown r \rangle$.
     * Every good verdict has a fault for its report.
 
-    **k** = {i_e | i ∈ λ ∪ κ} ∖ ψ_O. A key outside it is reported as already an offender when it is
-    in ψ_O, and as an unknown guarantor or auditor otherwise. -/
+    $\mathbf{k} = \{i_e \mid i \in \lambda \cup \kappa\} \setminus \psi_O$. A key outside it is reported as already an offender when it is
+    in $\psi_O$, and as an unknown guarantor or auditor otherwise. -/
 def disputesTransition (params : Params) (crypto : Crypto) (i : DisputesInput) (ψ : DisputesState)
     (ρ : AvailAssignments) (x : Disputes) : Except DisputesError DisputesOutput := do
   unless orderedUniqBy (·.target.toList) x.verdicts do throw .verdictsNotSortedUnique

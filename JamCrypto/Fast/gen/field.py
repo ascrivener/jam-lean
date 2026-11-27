@@ -124,26 +124,29 @@ def gen_mul(n, p, n0, square):
     ms, r, acc = [], [], None
     for k in range(2 * n - 1):
         cprev = acc
-        code, nat = column_code(g, k, n, P, ms, acc, square)
+        code, _ = column_code(g, k, n, P, ms, acc, square)
         _, natnc = column_code(g, k, n, P, ms, None, square)
-        s = g.bind("s", code, nat)
+        # the sum as carry + (products): the form `mont_col'`/`split_col` take
+        s = g.bind("s", code, f"{N(cprev) if cprev else '0'} + ({natnc})")
         if k < n:
             m = g.bind("m", f"({s} * {n0}) &&& {M}", f"({N(s)} * {n0}) % 2^{W}")
             ms.append(m)
             s2 = g.bind("s", f"{s} + {m} * {P[0]}", f"{N(s)} + {N(m)} * {P[0]}")
             acc = g.bind("c", f"{s2} >>> {W}", f"{N(s2)} / 2^{W}")
-            # the Montgomery step by the generic `mont_col` (omega would have to rediscover the
-            # modular identity 1 + n0·p0 ≡ 0 with 58-bit coefficients, slowly)
-            proof = (f"(by obtain ⟨e, hm, hc⟩ := mont_col (B := 2^{W}) (C := 2^37) h_{m} h_{s2} h_{acc} "
-                     f"(by decide) (Nat.lt_of_lt_of_le l_{s2} (by decide)); exact ⟨by omega, hm, hc⟩)")
+            # the column equation and bounds by the generic `mont_col'` (omega would have to
+            # rediscover the modular identity 1 + n0·p0 ≡ 0 with 58-bit coefficients, slowly)
+            proof = (f"mont_col' (B := 2^{W}) (C := 2^37) h_{s} h_{m} h_{s2} h_{acc} (by decide) "
+                     f"(Nat.lt_of_lt_of_le l_{s2} (by decide))")
             g.eqn("mul", f"{natnc} + {N(m)} * {P[0]}", N(cprev) if cprev else "0", "0", N(acc),
                   (f"{N(m)} < 2^{W}", True), f"{N(acc)} < 2^37", proof=proof)
         else:
             rk = g.bind("r", f"{s} &&& {M}", f"{N(s)} % 2^{W}")
             r.append(rk)
             acc = g.bind("c", f"{s} >>> {W}", f"{N(s)} / 2^{W}")
+            proof = (f"split_col (B := 2^{W}) (C := 2^37) h_{s} h_{rk} h_{acc} "
+                     f"(Nat.lt_of_lt_of_le l_{s} (by decide))")
             g.eqn("mul", natnc, N(cprev), N(rk), N(acc),
-                  (f"{N(rk)} < 2^{W}", True), (f"{N(acc)} < 2^37", k == 2 * n - 2))
+                  (f"{N(rk)} < 2^{W}", True), (f"{N(acc)} < 2^37", k == 2 * n - 2), proof=proof)
     r.append(acc)
     if square:
         expn = " + ".join((f"a.l{i}.toNat * a.l{i}.toNat * 2^{2 * W * i}" if i == j else

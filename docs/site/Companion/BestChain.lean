@@ -24,7 +24,8 @@ unfinalized ancestor at a timeslot where two valid blocks were seen; among the a
 best is one with the most ticket-sealed ancestors.
 
 The model implements this rule in `JAM/BestChain.lean`. Grandpa itself is not modelled: the latest
-finalized block is an input. Nor is the data voted on in Grandpa (the best block's header with its
+finalized block $`\mathbf{B}^\natural` is an input, and it must be in the node's store: a block is acceptable only if
+$`\mathbf{B}^\natural` is among its ancestors found in the store, so if $`\mathbf{B}^\natural` is missing, no block is acceptable. Nor is the data voted on in Grandpa (the best block's header with its
 posterior state root). Like auditing, this is off-chain logic, not part of the state transition. The
 API page is [JAM.BestChain](https://ascrivener.github.io/jam-lean/api/JAM/BestChain.html), and the
 theorems are in [JAM.Theorems.BestChain](https://ascrivener.github.io/jam-lean/api/JAM/Theorems/BestChain.html).
@@ -41,7 +42,7 @@ whether each is audited (§17). The model makes this data explicit. A node knows
 {leanSource JAM.BestChain.BlockInfo}
 
 $`\mathbf{T}` records whether the block was sealed with a ticket: it is 1 when the posterior slot-sealer
-sequence $`\gamma'_S` is a sequence of tickets and 0 when it is fallback keys (eqs. (6.15) and (6.16)):
+sequence $`\gamma'_S` is a sequence of tickets and 0 when it is fallback keys (eqs. (6.17) and (6.18)):
 
 {leanSource JAM.BestChain.ticketedOf}
 
@@ -72,6 +73,9 @@ timeslot condition is what makes the recursion terminate (the measure is the tim
 {leanSource JAM.BestChain.ancestry}
 
 {leanSource JAM.BestChain.slotTimely}
+
+{api}`JAM.BestChain.slotTimely` states (5.8)'s rule for the caller. The best-chain functions do not apply it,
+since the store is taken to hold only valid blocks.
 
 # Acceptable blocks (§19)
 %%%
@@ -130,7 +134,8 @@ returns all of them, in store order:
 {leanSource JAM.BestChain.bestHead?}
 
 What the model proves. The best heads are exactly the known acceptable blocks with the largest $`m`;
-with unique hashes the result does not depend on the order of the store; and when the finalized
+with unique hashes, the set of best heads does not depend on the order of the store (the single head
+{api}`JAM.BestChain.bestHead?` picks does); and when the finalized
 block is known, audited, and has no disregarded ancestor, a best head exists:
 
 {mathdoc JAM.BestChain.mem_bestHeads_iff}
@@ -155,7 +160,7 @@ model's [notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/do
 
 * *Audited: the head, or the chain (note v0.8.1-A21).* (19.2) asks only that the best block itself
   be audited, while the list above it says the best block "is considered audited" and §17.3 asks a
-  block to be audited before it is finalized. A chain whose head is audited can contain an unaudited
+  block to be audited before voting to finalize it. A chain whose head is audited can contain an unaudited
   unfinalized block. The model offers both readings: `AuditReading.head` is the formula, and
   `AuditReading.chain` also asks every unfinalized ancestor to be audited.
 * *The disregard rule (note v0.8.1-A22).* §17.3's rule is not among §19's formulas, and §4 words it

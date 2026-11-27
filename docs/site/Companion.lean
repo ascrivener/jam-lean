@@ -6,7 +6,10 @@ import Companion.Safrole
 import Companion.History
 import Companion.Authorization
 import Companion.Accounts
+import Companion.Disputes
+import Companion.Reports
 import Companion.Accumulation
+import Companion.Statistics
 import Companion.Work
 import Companion.Auditing
 import Companion.BestChain
@@ -14,6 +17,7 @@ import Companion.PVM
 import Companion.Codec
 import Companion.StateMerkle
 import Companion.Merkle
+import Companion.Shuffle
 import Companion.Bandersnatch
 import Companion.Erasure
 
@@ -82,10 +86,10 @@ with the model modules that implement them.
 * *§7 Recent history* ({ref "history"}[written]): `JAM/History.lean`
 * *§8 Authorization* ({ref "authorization"}[written]): `JAM/Authorization.lean`
 * *§9 Service accounts* ({ref "accounts"}[written]): `JAM/Account.lean`
-* §10 Disputes: `JAM/Disputes.lean`
-* §11 Reports and assurances: `JAM/Reports.lean`, `JAM/Assurances.lean`
+* *§10 Disputes* ({ref "disputes"}[written]): `JAM/Disputes.lean`
+* *§11 Reports and assurances* ({ref "reports"}[written]): `JAM/Reports.lean`, `JAM/Assurances.lean`
 * *§12 Accumulation and preimages* ({ref "accumulation"}[written]): `JAM/Accumulate.lean`, `JAM/Accumulation.lean`, `JAM/Preimages.lean`
-* §13 Statistics: `JAM/Statistics.lean`
+* *§13 Statistics* ({ref "statistics"}[written]): `JAM/Statistics.lean`
 * *§14 Work packages and work reports* ({ref "work"}[written]): `JAM/Work.lean`, `JAM/Refine.lean`, `JAM/Guarantee.lean`
 * §15 Guaranteeing and §16 Availability assurance: not modelled beyond the refinement of §14
   (the networking and distribution they describe is out of scope)
@@ -97,7 +101,7 @@ with the model modules that implement them.
 * *Appendix C, the serialization codec* ({ref "codec"}[written]): `JAM/Codec.lean`, `JAM/Decode.lean`
 * *Appendix D, state Merklization* ({ref "statemerkle"}[written]): `JAM/Trie.lean`, `JAM/State.lean`, `JAM/StateDecode.lean`
 * *Appendix E, general Merklization* ({ref "merkle"}[written]): `JAM/Merkle.lean`, `JAM/Segments.lean`, `JAM/History.lean` (mountain ranges)
-* Appendix F, shuffling: `JAM/Shuffle.lean`
+* *Appendix F, shuffling* ({ref "shuffle"}[written]): `JAM/Shuffle.lean`
 * *Appendix G, the Bandersnatch VRF* ({ref "bandersnatch"}[written]): `JAM/Crypto.lean` (the interface) and `JamCrypto/` (an implementation)
 * *Appendix H, erasure coding* ({ref "erasure"}[written]): `JAM/Erasure.lean`
 
@@ -113,7 +117,13 @@ with the model modules that implement them.
 
 {include 1 Companion.Accounts}
 
+{include 1 Companion.Disputes}
+
+{include 1 Companion.Reports}
+
 {include 1 Companion.Accumulation}
+
+{include 1 Companion.Statistics}
 
 {include 1 Companion.Work}
 
@@ -128,6 +138,8 @@ with the model modules that implement them.
 {include 1 Companion.StateMerkle}
 
 {include 1 Companion.Merkle}
+
+{include 1 Companion.Shuffle}
 
 {include 1 Companion.Bandersnatch}
 

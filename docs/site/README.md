@@ -142,7 +142,7 @@ Checks:
 * the book's build (`Companion/ModelMap.lean`, from `{gpeq}` and `{transcribed}`) fails when a
   displayed equation of a mapped chapter has no entry, a kind is unknown or lacks its fields, a
   `name` is not a declaration the chapter imports, or an `at` does not occur exactly once inside
-  the declaration. Lake tracks `model-map/` (`input_dir modelMap` in `lakefile.lean`), so editing
+  the declaration. Lake tracks `model-map/` (the `bookInputs` target in `lakefile.lean`), so editing
   a map re-elaborates the chapters;
 * `scripts/check-model-map.py` (CI's `model` job, no build needed) checks the same structure,
   rejects entries for equations the chapter does not display, and checks names and locators
@@ -175,4 +175,6 @@ moved marker fails the book's build).
   without its marker, a hand-typed "(6.24)" or "(14.6–14.8)" in prose (write
   ``{eq}`14.6`–{eq}`14.8` ``), and a heading that cites an equation the paper does not have. After regenerating the table for a new
   paper version, `scripts/check-equations.py --changed OLD.json` lists the equations whose TeX
-  changed or which moved, and the chapters that use them: re-read those passages.
+  changed or which moved, and the chapters that use them: re-read those passages. Lake tracks
+  `gp-equations.json` and `gp-labels.json` (the `bookInputs` target in `lakefile.lean`), so a change
+  to either re-elaborates every chapter, even in a cached build.

@@ -5,18 +5,18 @@ import PVM.Theorems.HostIds
 /-!
 # Confinement: what a service's host calls can reach
 
-Which host calls a service can make is fixed by its code: Ψ only ever stops for the ids of its
-own `ecalli` instructions (`PVM.psi_hostId_mem`), and Ψ_M's final context satisfies any invariant
+Which host calls a service can make is fixed by its code: $\Psi$ only ever stops for the ids of its
+own `ecalli` instructions (`PVM.psi_hostId_mem`), and $\Psi_M$'s final context satisfies any invariant
 that those calls preserve (`PVM.psiM_ctx_inv`). From the host functions of GP v0.8.1 Appendix B:
 
 * **Accumulate** (`psiA_confined`). If a service's code names none of `bless`, `assign`,
   `designate`, `new`, `eject` and `provide` (ids 16, 17, 18, 20, 23, 28), and no other service has
-  it as effective supervisor (`NoSupervisee`, new with GP v0.8.1's supervisors), then Ψ_A for it
+  it as effective supervisor (`NoSupervisee`, new with GP v0.8.1's supervisors), then $\Psi_A$ for it
   changes only its own account: every other account, the staging set, the authorizer queue and the
   privileged services are as they were, and it provides nothing. Its only effects on other
   services are the deferred transfers it returns.
-* **Refine** (`psiR_noExports`). If a service's code does not name `export` (id 8), Ψ_R returns no
-  exported segments. Since GP v0.8.1 (#582) the code is the whole preimage and Y skips its
+* **Refine** (`psiR_noExports`). If a service's code does not name `export` (id 8), $\Psi_R$ returns no
+  exported segments. Since GP v0.8.1 (#582) the code is the whole preimage and $Y$ skips its
   metadata, so the hypothesis names `jamHostCallIdsOf` of the preimage itself.
 
 Both depend only on the set of host-call ids in the blob, which is read off the code without
@@ -30,7 +30,7 @@ open PVM
 /-! ## Shared lemmas -/
 
 
-/-- Inserting at s leaves every other key alone. -/
+/-- Inserting at $s$ leaves every other key alone. -/
 theorem get?_insert_ne {α : Type} (m : Std.ExtTreeMap Nat α) {s k : Nat} (a : α) (h : k ≠ s) :
     (m.insert s a).get? k = m.get? k := by
   have hne : ¬ compare s k = .eq := fun hc => h (Nat.compare_eq_eq.1 hc).symm
@@ -41,7 +41,7 @@ theorem get?_insert_same {α : Type} (m : Std.ExtTreeMap Nat α) (s : Nat) (a : 
   simp only [Std.ExtTreeMap.get?_eq_getElem?, Std.ExtTreeMap.getElem?_insert_self]
 
 /-- The common rules and their body: if the body keeps a confined context confined, so does the
-    charged function (on ∞ the context is unchanged). -/
+    charged function (on $\infty$ the context is unchanged). -/
 theorem charged_ctx {X : Type} (P : X → Prop) (g gas : Nat) (ω : Regs) (μ : Memory) (x : X)
     (body : HostOut X → HostOut X) (hx : P x)
     (hb : P (body ⟨.cont, gas - g, ω, μ, x⟩).ctx) :
@@ -66,12 +66,12 @@ theorem writeValue_ctx {X : Type} (out : HostOut X) (v : Except Unit (Option (Li
     `eject`, `provide`. -/
 def reachingIds : List Nat := [16, 17, 18, 20, 23, 28]
 
-/-- No service other than s has s as its effective supervisor in **d** (GP v0.8.1
+/-- No service other than $s$ has $s$ as its effective supervisor in $\mathbf{d}$ (GP v0.8.1
     eq. `effectivesupervisor`). -/
 def NoSupervisee (d : Accounts) (s : Nat) : Prop := ∀ k, k ≠ s → effectiveSupervisor d k ≠ s
 
-/-- Implications x of service s that leave everything outside s's own account as in **e**, and
-    keep s's creation slot (so that E(·, k) for k ≠ s is as in **e**). -/
+/-- Implications $x$ of service $s$ that leave everything outside $s$'s own account as in $\mathbf{e}$, and
+    keep $s$'s creation slot (so that $E(\cdot, k)$ for $k \ne s$ is as in $\mathbf{e}$). -/
 def Confined (e : PartialState) (s : Nat) (x : Implications) : Prop :=
   x.id = s ∧ (∀ k, k ≠ s → x.state.accounts.get? k = e.accounts.get? k) ∧
     x.state.staging = e.staging ∧ x.state.authQueue = e.authQueue ∧ x.state.manager = e.manager ∧
@@ -83,7 +83,7 @@ def Confined (e : PartialState) (s : Nat) (x : Implications) : Prop :=
 def ConfinedCtx (e : PartialState) (s : Nat) (c : AccCtx) : Prop :=
   Confined e s c.1 ∧ Confined e s c.2
 
-/-- If k's effective supervisor is s ≠ k, k names s as supervisor, recorded with s's creation slot. -/
+/-- If $k$'s effective supervisor is $s \ne k$, $k$ names $s$ as supervisor, recorded with $s$'s creation slot. -/
 theorem effectiveSupervisor_eq {d : Accounts} {k s : Nat} (h : effectiveSupervisor d k = s)
     (hks : k ≠ s) : ∃ a b, d.get? k = some a ∧ a.supervisor = s ∧ d.get? s = some b ∧
       b.created = a.supervisorCreated := by
@@ -98,7 +98,7 @@ theorem effectiveSupervisor_eq {d : Accounts} {k s : Nat} (h : effectiveSupervis
       · exact absurd h hks
     · exact absurd h hks
 
-/-- A confined context keeps every other service from having s as its effective supervisor. -/
+/-- A confined context keeps every other service from having $s$ as its effective supervisor. -/
 theorem Confined.noSupervisee {e : PartialState} {s : Nat} {x : Implications}
     (hx : Confined e s x) (hn : NoSupervisee e.accounts s) : NoSupervisee x.state.accounts s := by
   intro k hks hk
@@ -127,7 +127,7 @@ theorem Confined.mayModify_eq {e : PartialState} {s : Nat} {x : Implications}
     · exact hds
     · exact absurd (h ▸ hid) (hx.noSupervisee hn d hds)
 
-/-- Replacing s's account by one with the same creation slot keeps a context confined. -/
+/-- Replacing $s$'s account by one with the same creation slot keeps a context confined. -/
 theorem Confined.insertSelf {e : PartialState} {s : Nat} {x : Implications}
     (hx : Confined e s x) (a b : ServiceAccount) (hb : x.state.accounts.get? s = some b)
     (hc : a.created = b.created) :
@@ -139,7 +139,7 @@ theorem Confined.insertSelf {e : PartialState} {s : Nat} {x : Implications}
     obtain ⟨b', hb', hcr⟩ := hcs b hb
     exact ⟨b', hb', by rw [hcr, ← ha', hc]⟩
 
-/-- `putAcct` on s with the same creation slot keeps a context confined. -/
+/-- `putAcct` on $s$ with the same creation slot keeps a context confined. -/
 theorem Confined.putSelf {e : PartialState} {s : Nat} {x : Implications}
     (hx : Confined e s x) (a b : ServiceAccount) (hb : x.state.accounts.get? s = some b)
     (hc : a.created = b.created) : Confined e s (AccHost.putAcct x s a) :=
@@ -177,8 +177,8 @@ theorem yield_confined (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx)
   · obtain ⟨⟨hid, hk, h1, h2, h3, h4, h5, h6, h7, h8, hcs⟩, h2'⟩ := hc
     exact ⟨⟨hid, hk, h1, h2, h3, h4, h5, h6, h7, h8, hcs⟩, h2'⟩
 
-/-- The common shape of `write`, `upgrade`, `solicit`, `forget`: the account of d is replaced,
-    with its creation slot, only when x_s may modify d. -/
+/-- The common shape of `write`, `upgrade`, `solicit`, `forget`: the account of $d$ is replaced,
+    with its creation slot, only when $x_s$ may modify $d$. -/
 theorem put_of_mayModify (hn : NoSupervisee e.accounts s) {c : AccCtx} (hc : ConfinedCtx e s c)
     {d : Nat} {a a' : ServiceAccount} (hm : mayModify c.1 d = true)
     (ha : c.1.state.accounts.get? d = some a) (hcr : a'.created = a.created) :
@@ -188,7 +188,7 @@ theorem put_of_mayModify (hn : NoSupervisee e.accounts s) {c : AccCtx} (hc : Con
   exact ⟨hc.1.putSelf a' a ha hcr, hc.2⟩
 
 /-- Close a goal `ConfinedCtx e s (f … c).ctx` for `write`, `upgrade`, `solicit`, `forget`: every
-    branch leaves the context alone or replaces d's account under `mayModify`. -/
+    branch leaves the context alone or replaces $d$'s account under `mayModify`. -/
 macro "put_tac" hn:term "," hc:term : tactic =>
   `(tactic| (
     apply charged_ctx _ _ _ _ _ _ _ $hc
@@ -391,7 +391,7 @@ theorem dispatch_confined (hn : NoSupervisee e.accounts s) (env : AccEnv) (n gas
 
 end AccHost
 
-/-- A partial state that agrees with **e** everywhere except possibly s's own account. -/
+/-- A partial state that agrees with $\mathbf{e}$ everywhere except possibly $s$'s own account. -/
 def Outside (e : PartialState) (s : Nat) (st : PartialState) : Prop :=
   (∀ k, k ≠ s → st.accounts.get? k = e.accounts.get? k) ∧ st.staging = e.staging ∧
     st.authQueue = e.authQueue ∧ st.manager = e.manager ∧ st.assigners = e.assigners ∧
@@ -404,8 +404,8 @@ theorem Confined.outside {e st : PartialState} {s : Nat} {x : Implications}
   exact ⟨⟨fun k hks => (hk k hks).trans (hk0 k hks), h1.trans g1, h2.trans g2, h3.trans g3,
     h4.trans g4, h5.trans g5, h6.trans g6, h7.trans g7⟩, h8⟩
 
-/-- Ψ_A's run, from a starting state that differs from **e** at most in s's account, in which no
-    other service has s as effective supervisor. -/
+/-- $\Psi_A$'s run, from a starting state that differs from $\mathbf{e}$ at most in $s$'s account, in which no
+    other service has $s$ as effective supervisor. -/
 theorem psiARun_confined (params : Params) (entropy : List UInt8) (e st : PartialState)
     (t s g : Nat) (inputs : List AccumulateInput) (m : Std.ExtTreeSet Nat) (code : ByteArray)
     (hst : Outside e s st) (hn : NoSupervisee st.accounts s)
@@ -440,11 +440,11 @@ theorem psiARun_confined (params : Params) (entropy : List UInt8) (e st : Partia
       · exact Confined.outside hst hinv.1
       · exact Confined.outside hst hinv.1
 
-/-- **Accumulate confinement** (GP v0.8.1). If service s's code names none of `bless`, `assign`,
-    `designate`, `new`, `eject`, `provide`, and in **e** no other service has s as its effective
-    supervisor (`NoSupervisee`, GP v0.8.1 eq. `effectivesupervisor`), then Ψ_A for s leaves every
+/-- **Accumulate confinement** (GP v0.8.1). If service $s$'s code names none of `bless`, `assign`,
+    `designate`, `new`, `eject`, `provide`, and in $\mathbf{e}$ no other service has $s$ as its effective
+    supervisor (`NoSupervisee`, GP v0.8.1 eq. `effectivesupervisor`), then $\Psi_A$ for $s$ leaves every
     other account, the staging set, the authorizer queue and the privileged services as they were
-    in **e**, and provides nothing.
+    in $\mathbf{e}$, and provides nothing.
 
     The `NoSupervisee` hypothesis is new with GP v0.8.1 (Adam, 2026-11-25): a service may change
     any service it effectively supervises through `write`, `upgrade`, `solicit`, `forget`,
@@ -527,7 +527,7 @@ theorem dispatch_exports (env : Env) (n gas : Nat) (ω : Regs) (μ : Memory) (c 
 
 end RefineHost
 
-/-- Ψ_M under the refine dispatcher, for code that does not name `export`, exports nothing. -/
+/-- $\Psi_M$ under the refine dispatcher, for code that does not name `export`, exports nothing. -/
 theorem refine_psiM_noExports (env : RefineHost.Env) (code : ByteArray) (gas : UInt64)
     (a : ByteArray) (h8 : 8 ∉ jamHostCallIdsOf code) :
     (psiM code 0 gas a (toHostFn (RefineHost.dispatch env)) ((∅, ∅, []) : RefineCtx)).2.2.2.2 = [] :=
@@ -539,7 +539,7 @@ theorem refine_psiM_noExports (env : RefineHost.Env) (code : ByteArray) (gas : U
       exact RefineHost.dispatch_exports _ h g.toNat ω μ x hne hx) rfl
 
 /-- **Refine exports nothing without `export`.** If the code of the service a work item names does
-    not name `export`, Ψ_R returns no exported segments. -/
+    not name `export`, $\Psi_R$ returns no exported segments. -/
 theorem psiR_noExports (params : Params) (d : Accounts) (c i : Nat) (p : WorkPackage)
     (r : List UInt8) (imports extrinsics : List (List (List UInt8))) (off : Nat)
     (hids : ∀ w ∈ p.items[i]?, ∀ a ∈ d.get? w.service, ∀ l ∈ a.historicalLookup p.context.lookupAnchorSlot w.codeHash.toList,

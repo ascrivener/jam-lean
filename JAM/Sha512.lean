@@ -2,7 +2,7 @@
 # SHA-512 (FIPS 180-4 §5.1.2, §5.3.5, §6.4)
 
 Not a primitive the Gray Paper names. GP Appendix G defers the Bandersnatch VRF to its
-specification, in which the VRF output Y of a signature or ring proof is the first 32 octets of
+specification, in which the VRF output $\mathcal{Y}$ of a signature or ring proof is the first 32 octets of
 SHA-512 over the suite string, 0x03, the encoded output point and 0x00; the output point is the
 first 32 octets of both an IETF signature and a ring proof (`vrfOutput`). The model's
 `JAM.Crypto` stays a parameter: only the block-import trace runner supplies `bsOut` and
@@ -11,7 +11,7 @@ first 32 octets of both an IETF signature and a ring proof (`vrfOutput`). The mo
 
 namespace JAM.Sha512
 
-/-- The 80 round constants K₀ … K₇₉ (FIPS 180-4 §4.2.3). -/
+/-- The 80 round constants $K_0 \ldots K_{79}$ (FIPS 180-4 §4.2.3). -/
 def K : Vector UInt64 80 := #v[
   0x428a2f98d728ae22, 0x7137449123ef65cd, 0xb5c0fbcfec4d3b2f, 0xe9b5dba58189dbbc, 0x3956c25bf348b538,
   0x59f111f1b605d019, 0x923f82a4af194f9b, 0xab1c5ed5da6d8118, 0xd807aa98a3030242, 0x12835b0145706fbe,
@@ -30,7 +30,7 @@ def K : Vector UInt64 80 := #v[
   0x113f9804bef90dae, 0x1b710b35131c471b, 0x28db77f523047d84, 0x32caab7b40c72493, 0x3c9ebe0a15c9bebc,
   0x431d67c49c100d4c, 0x4cc5d4becb3e42b6, 0x597f299cfc657e2a, 0x5fcb6fab3ad6faec, 0x6c44198c4a475817]
 
-/-- The initial hash value H⁽⁰⁾ (FIPS 180-4 §5.3.5). -/
+/-- The initial hash value $H^{(0)}$ (FIPS 180-4 §5.3.5). -/
 def H0 : Vector UInt64 8 := #v[
   0x6a09e667f3bcc908, 0xbb67ae8584caa73b, 0x3c6ef372fe94f82b, 0xa54ff53a5f1d36f1,
   0x510e527fade682d1, 0x9b05688c2b3e6c1f, 0x1f83d9abfb41bd6b, 0x5be0cd19137e2179]
@@ -38,8 +38,8 @@ def H0 : Vector UInt64 8 := #v[
 def rotr (x : UInt64) (n : UInt64) : UInt64 := (x >>> n) ||| (x <<< (64 - n))
 
 /-- The compression function on one 128-octet block starting at `off` (FIPS 180-4 §6.4.2), for a
-    block that lies inside `m` (`hoff`): the message schedule W₀ … W₇₉, the 80 rounds on the working
-    variables a … h, and the new hash value H⁽ⁱ⁾ = H⁽ⁱ⁻¹⁾ + (a, …, h). -/
+    block that lies inside `m` (`hoff`): the message schedule $W_0 \ldots W_{79}$, the 80 rounds on the
+    working variables $a \ldots h$, and the new hash value $H^{(i)} = H^{(i-1)} + (a, \ldots, h)$. -/
 def compress (h : Vector UInt64 8) (m : ByteArray) (off : Nat) (hoff : off + 128 ≤ m.size) :
     Vector UInt64 8 := Id.run do
   let mut w : Vector UInt64 80 := Vector.replicate 80 0
@@ -78,8 +78,10 @@ def hash (msg : List UInt8) : List UInt8 := Id.run do
     h := compress h m (128 * i) (by have := hi.upper; simp at this; omega)
   return h.toList.flatMap fun x => (List.range 8).map fun j => (x >>> (8 * (7 - j)).toUInt64).toUInt8
 
-/-- Y of a Bandersnatch IETF VRF signature or ring proof whose first 32 octets encode the output
-    point: SHA-512("Bandersnatch_SHA-512_ELL2" ⌢ [3] ⌢ point ⌢ [0]), first 32 octets. -/
+/-- $\mathcal{Y}$ of a Bandersnatch IETF VRF signature or ring proof whose first 32 octets encode
+    the output point:
+    $\text{SHA-512}(\mathtt{Bandersnatch\_SHA\text{-}512\_ELL2} \frown [3] \frown \text{point} \frown [0])$,
+    first 32 octets. -/
 def vrfOutput (sig : List UInt8) : List UInt8 :=
   (hash ("Bandersnatch_SHA-512_ELL2".toUTF8.toList ++ [3] ++ sig.take 32 ++ [0])).take 32
 

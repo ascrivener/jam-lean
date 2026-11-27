@@ -4,13 +4,14 @@ import JAM.Theorems.HostGas
 /-!
 # Gas-free runs keep what is not writable, for any contract; the accumulate host calls
 
-`KeepsRO R lo hi`: every continuing host step of R changes no page outside lo … hi and no octet that
-is not writable. `FreeStepsH.keepRO_of`: a gas-free run under such an R keeps every page outside
-lo … hi and every octet on such a page that is not writable (GP §A.4: a step that continues writes
-only indices in 𝕍*_μ). This is the contract-generic form of `FreeStepsH.keepRO` (refine).
-
+`KeepsRO R lo hi`: every continuing host step of $R$ changes no page outside
+$\mathit{lo} \dots \mathit{hi}$ and no octet that is not writable. `FreeStepsH.keepRO_of`: a
+gas-free run under such an $R$ keeps every page outside $\mathit{lo} \dots \mathit{hi}$ and every
+octet on such a page that is not writable (GP §A.4: a step that continues writes only indices in
+$\mathbb{V}^{\ast}_\mu$). This is the contract-generic form of `FreeStepsH.keepRO` (refine).
 `accHostFn_keep`: every accumulate host call that continues (GP v0.8.1 Appendix B) keeps them, with
-the heap's 48 … pb: `grow_heap` changes only heap pages; `fetch`, `lookup`, `read` and `info` write
+the heap's $48 \dots \mathit{pb}$: `grow_heap` changes only heap pages; `fetch`, `lookup`, `read`
+and `info` write
 through `writeValue`, which checks writability; the others leave the memory (`*_mem`).
 -/
 
@@ -121,8 +122,9 @@ theorem charged_wv_keep {X : Type} (g gas : Nat) (ω : Regs) (μ : Memory) (x : 
     exact writeValue_keep' _ v o f z hs
 
 /-- **An accumulate host call that continues keeps what is not writable**: no page outside the heap's
-    48 … pb changes (`grow_heap` changes only heap pages), and no octet that is not writable changes
-    (the reads write through `writeValue`, which checks writability; the others leave the memory). -/
+    $48 \dots \mathit{pb}$ changes (`grow_heap` changes only heap pages), and no octet that is not
+    writable changes (the reads write through `writeValue`, which checks writability; the others
+    leave the memory). -/
 theorem accHostFn_keep (env : AccEnv) {pb : Nat} (hbd : heapBounds env.code = (48, pb)) (h : Nat) (g : UInt64)
     (ω : Regs) (μ : Memory) (c : AccCtx) (hs : (accHostFn env h g ω μ c).status = .cont) :
     (∀ q, (q < 48 ∨ pb ≤ q) → (accHostFn env h g ω μ c).mem.pages.get? q = μ.pages.get? q) ∧
@@ -175,16 +177,17 @@ theorem accHostFn_keep (env : AccEnv) {pb : Nat} (hbd : heapBounds env.code = (4
   · exact same _ (AccHost.supervisor_mem _ _ _ _)
   · exact same _ (by dsimp only; split <;> rfl)
 
-/-- **A contract keeps what is not writable off [lo, hi)**: every continuing host step changes no page
-    outside lo … hi and no octet that is not writable. -/
+/-- **A contract keeps what is not writable off $[\mathit{lo}, \mathit{hi})$**: every continuing
+    host step changes no page outside $\mathit{lo} \dots \mathit{hi}$ and no octet that is not
+    writable. -/
 def KeepsRO {X : Type} (R : HostRel X) (lo hi : Nat) : Prop :=
   ∀ h ω μ x ω' μ' x', R h ω μ x .cont ω' μ' x' →
     (∀ q, (q < lo ∨ hi ≤ q) → μ'.pages.get? q = μ.pages.get? q) ∧
       ∀ b, b < two32 → μ.writable b = false → μ'.read b = μ.read b
 
 /-- **A gas-free run under a contract that keeps what is not writable keeps it**: every page outside
-    lo … hi keeps its access, and every octet on such a page that is not writable keeps its value
-    (contract-generic; `FreeStepsH.keepRO` is the refine instance). -/
+    $\mathit{lo} \dots \mathit{hi}$ keeps its access, and every octet on such a page that is not
+    writable keeps its value (contract-generic; `FreeStepsH.keepRO` is the refine instance). -/
 theorem FreeStepsH.keepRO_of {X : Type} {p : ByteArray} {R : HostRel X} {lo hi : Nat} (hR : KeepsRO R lo hi)
     {i i' n : Nat} {ω ω' : Regs} {μ μ' : Memory} {x x' : X}
     (run : FreeStepsH p R i ω μ x i' ω' μ' x' n) :

@@ -5,12 +5,12 @@ import PVM.Fast.Host
 import JAM.Fast.HostGeneral
 
 /-!
-# The accumulate invocation Ψ_A and its host functions (GP v0.8.1 Appendix B)
+# The accumulate invocation $\Psi_A$ and its host functions (GP v0.8.1 Appendix B)
 
-* the partial state 𝕊 (eq. `partialstate`) and the implications 𝕃 (eq. `implications`);
+* the partial state $\mathbb{S}$ (eq. `partialstate`) and the implications $\mathbb{L}$ (eq. `implications`);
 * the accumulate host functions `bless`, `assign`, `designate`, `checkpoint`, `new`, `upgrade`,
   `transfer`, `eject`, `query`, `solicit`, `forget`, `yield`, `provide` (`sec:accumulatefunctions`);
-* the mutator F, the wrapper G, the initializer I, the collapse C and Ψ_A itself
+* the mutator $F$, the wrapper $G$, the initializer $I$, the collapse $C$ and $\Psi_A$ itself
   (eq. `accinvocation`).
 -/
 
@@ -20,8 +20,9 @@ open PVM
 
 instance : Inhabited ServiceAccount := ⟨{ codeHash := [], balance := 0, minAccGas := 0, minMemoGas := 0 }⟩
 
-/-- The partial state 𝕊 (GP eq. `partialstate`): accounts **d**, staging keys **i**, authorizer
-    queue **q**, manager m, assigners **a**, delegator v, registrar r, always-accumulate **z**. -/
+/-- The partial state $\mathbb{S}$ (GP eq. `partialstate`): accounts $\mathbf{d}$, staging keys
+    $\mathbf{i}$, authorizer queue $\mathbf{q}$, manager $m$, assigners $\mathbf{a}$, delegator $v$,
+    registrar $r$, always-accumulate $\mathbf{z}$. -/
 structure PartialState where
   accounts : Accounts
   staging : List (List UInt8)
@@ -35,12 +36,12 @@ structure PartialState where
 /-- (service, blob) pairs, ordered lexicographically. -/
 instance : Ord (Nat × List UInt8) := lexOrd
 
-/-- A set of provisions ⟦(ℕ_S, 𝔹)⟧ (GP eq. `implications`). Extensional, so the order in which
-    `provide` calls are made is unobservable. -/
+/-- A set of provisions $[\![ (\mathbb{N}_S, \mathbb{B}) ]\!]$ (GP eq. `implications`). Extensional,
+    so the order in which `provide` calls are made is unobservable. -/
 abbrev Provisions := Std.ExtTreeSet (Nat × List UInt8)
 
-/-- The implications 𝕃 (GP eq. `implications`): service s, state **e**, next free id i, transfers
-    **t**, yield y and provisions **p**. -/
+/-- The implications $\mathbb{L}$ (GP eq. `implications`): service $s$, state $\mathbf{e}$, next free
+    id $i$, transfers $\mathbf{t}$, yield $y$ and provisions $\mathbf{p}$. -/
 structure Implications where
   id : Nat
   state : PartialState
@@ -48,22 +49,22 @@ structure Implications where
   xfers : List DeferredTransfer := []
   yield : Option (List UInt8) := none
   provisions : Provisions := ∅
-  /-- x_m: the services whose accounts this accumulation modified (GP v0.8.1 eq. `implications`) -/
+  /-- $x_m$: the services whose accounts this accumulation modified (GP v0.8.1 eq. `implications`) -/
   modified : Std.ExtTreeSet Nat := ∅
 
 namespace Implications
-/-- x_s ≡ (x_e)_d[x_s], the accumulating service's account. -/
+/-- $x_s \equiv (x_e)_d[x_s]$, the accumulating service's account. -/
 def self (x : Implications) : ServiceAccount := x.state.accounts.getD x.id default
-/-- x with x_s replaced. -/
+/-- $x$ with $x_s$ replaced. -/
 def setSelf (x : Implications) (a : ServiceAccount) : Implications :=
   { x with state := { x.state with accounts := x.state.accounts.insert x.id a } }
 end Implications
 
-/-- The accumulation context: the regular and exceptional dimensions (x, y) ∈ 𝕃². -/
+/-- The accumulation context: the regular and exceptional dimensions $(x, y) \in \mathbb{L}^2$. -/
 abbrev AccCtx := Implications × Implications
 
-/-- The fixed part of an accumulate invocation's environment: chain parameters, the timeslot H_t,
-    the entropy η'_0, the inputs **i** and the service code (for `grow_heap`). -/
+/-- The fixed part of an accumulate invocation's environment: chain parameters, the timeslot $\mathbf{H}_t$,
+    the entropy $\eta'_0$, the inputs $\mathbf{i}$ and the service code (for `grow_heap`). -/
 structure AccEnv where
   params : Params
   slot : Nat
@@ -71,8 +72,8 @@ structure AccEnv where
   inputs : List AccumulateInput
   code : ByteArray
 
-/-- check(i) (GP eq. `newserviceindex`): the first index in the sequence from i that is not an
-    account. `fuel` bounds the search; |**d**| + 1 steps always suffice. -/
+/-- $\text{check}(i)$ (GP eq. `newserviceindex`): the first index in the sequence from $i$ that is
+    not an account. `fuel` bounds the search; $|\mathbf{d}| + 1$ steps always suffice. -/
 def checkId (d : Accounts) : Nat → Nat → Nat
   | 0, i => i
   | fuel + 1, i =>
@@ -83,7 +84,7 @@ namespace AccHost
 
 open Result
 
-/-- μ_{o…+n} if readable. -/
+/-- $\mu_{o\ldots+n}$ if readable. -/
 def readMem (μ : Memory) (o n : Nat) : Option (List UInt8) :=
   if μ.rangeReadable o n then some (μ.readN o n) else none
 
@@ -91,7 +92,7 @@ def readMem (μ : Memory) (o n : Nat) : Option (List UInt8) :=
 def chunks (k : Nat) (xs : List UInt8) (n : Nat) : List (List UInt8) :=
   (List.range n).map fun i => (xs.drop (k * i)).take k
 
-/-- Charge g and run the body on the regular dimension x (the common rules). -/
+/-- Charge $g$ and run the body on the regular dimension $x$ (the common rules). -/
 def charge (g gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx)
     (body : HostOut AccCtx → HostOut AccCtx) : HostOut AccCtx := charged g gas ω μ c body
 
@@ -99,29 +100,32 @@ def r7 (out : HostOut AccCtx) (v : Nat) : HostOut AccCtx := { out with regs := s
 def panic (out : HostOut AccCtx) : HostOut AccCtx := { out with status := .panic }
 def updX (out : HostOut AccCtx) (x : Implications) : HostOut AccCtx := { out with ctx := (x, out.ctx.2) }
 
-/-- s for ω = 2^64 − 1, otherwise ω (the "own service" sentinel of GP v0.8.1 Appendix B). -/
+/-- $s$ for $\varphi = 2^{64} - 1$, otherwise $\varphi$ (the "own service" sentinel of GP v0.8.1 Appendix B). -/
 def tgt (w s : Nat) : Nat := if w = 2 ^ 64 - 1 then s else w
 
-/-- x_s ∈ {d, E(**d**, d)}: the accumulating service may make non-privileged changes to d
+/-- $x_s \in \{d, E(\mathbf{d}, d)\}$: the accumulating service may make non-privileged changes to $d$
     (GP v0.8.1 §9 "Supervisors"). -/
 def mayModify (x : Implications) (d : Nat) : Bool :=
   x.id == d || x.id == effectiveSupervisor x.state.accounts d
 
-/-- x with **d**[d] set to `a` and d added to the modified set x_m (GP v0.8.1). -/
+/-- $x$ with $\mathbf{d}[d]$ set to `a` and $d$ added to the modified set $x_m$ (GP v0.8.1). -/
 def putAcct (x : Implications) (d : Nat) (a : ServiceAccount) : Implications :=
   { x with state := { x.state with accounts := x.state.accounts.insert d a },
            modified := x.modified.insert d }
 
-/-- The account would exceed GP v0.8.1's footprint bounds: a_t > a_b + a_b', a_i ∉ ℕ_{2^32} or
-    a_o ∉ ℕ_{2^64} (Ω_W and Ω_S, GP #581). -/
+/-- The account would exceed GP v0.8.1's footprint bounds: $a_t > a_b + a_{b'}$,
+    $a_i \notin \mathbb{N}_{2^{32}}$ or $a_o \notin \mathbb{N}_{2^{64}}$ ($\Omega_W$ and $\Omega_S$,
+    GP #581). -/
 def overFull (a : ServiceAccount) : Bool :=
   a.minBalance > a.balance + a.supervisorBalance || a.items ≥ 2 ^ 32 || a.octets ≥ 2 ^ 64
 
-/-- Ω_W(ϱ, ω, μ, (x, y)), `write` = 5 (GP v0.8.1): set (or, for v_Z = 0, delete) the storage value
-    of service d = ω_7 (x_s for 2^64 − 1) under the key at ω_8 (length ω_9) to the octets at ω_10
-    (length ω_11). WHO if d is not a service; HUH unless x_s ∈ {d, E(**d**, d)}; FULL if the result
-    is `overFull`; otherwise ω'_7 is the previous value's length (NONE if none) and d joins x_m.
-    g = 𝖬_{W,c} + 𝔊(𝖬_{W,k,ℓ}, k_Z) + 𝔊(𝖬_{W,v,ℓ}, v_Z). -/
+/-- $\Omega_W(\varrho, \varphi, \mu, (x, y))$, `write` = 5 (GP v0.8.1): set (or, for $v_Z = 0$,
+    delete) the storage value of service $d = \varphi_7$ ($x_s$ for $2^{64} - 1$) under the key at
+    $\varphi_8$ (length $\varphi_9$) to the octets at $\varphi_{10}$ (length $\varphi_{11}$). WHO if
+    $d$ is not a service; HUH unless $x_s \in \{d, E(\mathbf{d}, d)\}$; FULL if the result is
+    `overFull`; otherwise $\varphi'_7$ is the previous value's length (NONE if none) and $d$ joins
+    $x_m$.
+    $g = \mathsf{M}_{W,c} + \mathfrak{G}(\mathsf{M}_{W,k,\ell}, k_Z) + \mathfrak{G}(\mathsf{M}_{W,v,\ell}, v_Z)$. -/
 def write (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
   let kO := reg ω 8; let kZ := reg ω 9; let vO := reg ω 10; let vZ := reg ω 11
   let g := Constants.CgasWconst + memGas Constants.CgasWkeylinear kZ +
@@ -145,9 +149,10 @@ def write (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
             r7 (updX out (putAcct x d a')) l
     | _, _ => panic out
 
-/-- Ω_B, `bless` = 16 (GP v0.8.1, GP #558): set the privileges. Each of m, v, r is kept for
-    2^64 − 1; **a** is kept for a = 2^64 − 1 and each of its entries for 2^32 − 1; **z** is kept for
-    o = 2^64 − 1. The manager may set anything; another service only hands over the roles it holds
+/-- $\Omega_B$, `bless` = 16 (GP v0.8.1, GP #558): set the privileges. Each of $m$, $v$, $r$ is kept
+    for $2^{64} - 1$; $\mathbf{a}$ is kept for $a = 2^{64} - 1$ and each of its entries for
+    $2^{32} - 1$; $\mathbf{z}$ is kept for $o = 2^{64} - 1$. The manager may set anything; another
+    service only hands over the roles it holds
     (delegator, registrar, the assigner of a core) and changes nothing else. -/
 def bless (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
   let m := reg ω 7; let a := reg ω 8; let v := reg ω 9; let r := reg ω 10; let o := reg ω 11
@@ -183,7 +188,7 @@ def bless (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : Ho
         r7 (updX out { x with state := st }) OK
     | _, _ => panic out
 
-/-- Ω_A, `assign` = 17 (GP v0.8.1; unchanged apart from its number). -/
+/-- $\Omega_A$, `assign` = 17 (GP v0.8.1; unchanged apart from its number). -/
 def assign (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
   let core := reg ω 7; let o := reg ω 8; let a := reg ω 9
   let Q := env.params.authQueueSize
@@ -200,10 +205,10 @@ def assign (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : H
                                  assigners := x.state.assigners.set core a }
         r7 (updX out { x with state := st }) OK
 
-/-- 𝕍 = {3c | c ∈ ℕ_{2…C+1}}, the valid validator key-set sizes (GP eq. `valcount`). -/
+/-- $\mathbb{V} = \{ 3c \mid c \in \mathbb{N}_{2\ldots C+1} \}$, the valid validator key-set sizes (GP eq. `valcount`). -/
 def validKeyCount (C z : Nat) : Bool := z % 3 == 0 && 2 ≤ z / 3 && z / 3 ≤ C
 
-/-- Ω_D, `designate` = 18 (GP v0.8.1; unchanged apart from its number). -/
+/-- $\Omega_D$, `designate` = 18 (GP v0.8.1; unchanged apart from its number). -/
 def designate (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
   let o := reg ω 7; let z := reg ω 8
   charge (Constants.CgasDconst + z * Constants.CgasDlinear) gas ω μ c fun out =>
@@ -214,17 +219,18 @@ def designate (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) 
       if !validKeyCount env.params.coreCount z || x.id ≠ x.state.delegator then r7 out HUH
       else r7 (updX out { x with state := { x.state with staging := chunks 336 v z } }) OK
 
-/-- Ω_C, `checkpoint` = 19: y' ≡ x, ω'_7 ≡ ϱ*. -/
+/-- $\Omega_C$, `checkpoint` = 19: $y' \equiv x$, $\varphi'_7 \equiv \varrho^{\ast}$. -/
 def checkpoint (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
   charge Constants.CgasC gas ω μ c fun out =>
     { out with ctx := (c.1, c.1), regs := setR7 ω out.gas }
 
-/-- Ω_N, `new` = 20 (GP v0.8.1, junior services GP #539). Service s = ω_7 (x_s for 2^64 − 1)
-    funds a new account whose code hash c, request length l, gas limits g, m and gratis offset f are
-    the 60 octets at ω_10, with the desired id i = ω_8 and the mode x = ω_9:
-    the new account's threshold a_t is paid from s's balance (x ∈ {0, 2}) or supervisor balance
-    (x ∈ {1, 3}) and lands in the new account's balance (x ∈ {0, 1}) or supervisor balance
-    (x ∈ {2, 3}). The new account's supervisor is x_s, recorded with x_s's creation slot. -/
+/-- $\Omega_N$, `new` = 20 (GP v0.8.1, junior services GP #539). Service $s = \varphi_7$ ($x_s$ for
+    $2^{64} - 1$) funds a new account whose code hash $c$, request length $l$, gas limits $g$, $m$ and
+    gratis offset $f$ are the 60 octets at $\varphi_{10}$, with the desired id $i = \varphi_8$ and the
+    mode $x = \varphi_9$: the new account's threshold $a_t$ is paid from $s$'s balance
+    ($x \in \{0, 2\}$) or supervisor balance ($x \in \{1, 3\}$) and lands in the new account's
+    balance ($x \in \{0, 1\}$) or supervisor balance ($x \in \{2, 3\}$). The new account's supervisor
+    is $x_s$, recorded with $x_s$'s creation slot. -/
 def new (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
   let i := reg ω 8; let mode := reg ω 9; let o := reg ω 10
   let S := Constants.Cminpublicindex
@@ -270,9 +276,9 @@ def new (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : Host
                                         nextFree := iStar } s sa'
             r7 (updX out x') i'
 
-/-- Ω_V, `supervisor` = 29 (GP v0.8.1, GP #539): service d = ω_7's supervisor becomes u = ω_8
-    (each x_s for 2^64 − 1), recorded with u's creation slot. WHO unless both are services; HUH
-    unless x_s = E(**d**, d). -/
+/-- $\Omega_V$, `supervisor` = 29 (GP v0.8.1, GP #539): service $d = \varphi_7$'s supervisor becomes
+    $u = \varphi_8$ (each $x_s$ for $2^{64} - 1$), recorded with $u$'s creation slot. WHO unless both
+    are services; HUH unless $x_s = E(\mathbf{d}, d)$. -/
 def supervisor (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
   charge Constants.CgasV gas ω μ c fun out =>
     let x := c.1
@@ -285,8 +291,9 @@ def supervisor (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccC
       else r7 (updX out (putAcct x dd { a with supervisor := u, supervisorCreated := ua.created })) OK
     | _, _ => r7 out WHO
 
-/-- Ω_U, `upgrade` = 21 (GP v0.8.1): set service d = ω_7's code hash (at ω_8) and gas limits
-    (ω_9, ω_10). WHO if d is not a service; HUH unless x_s ∈ {d, E(**d**, d)}. -/
+/-- $\Omega_U$, `upgrade` = 21 (GP v0.8.1): set service $d = \varphi_7$'s code hash (at $\varphi_8$)
+    and gas limits ($\varphi_9$, $\varphi_{10}$). WHO if $d$ is not a service; HUH unless
+    $x_s \in \{d, E(\mathbf{d}, d)\}$. -/
 def upgrade (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
   let o := reg ω 8; let g := reg ω 9; let m := reg ω 10
   charge Constants.CgasU gas ω μ c fun out =>
@@ -301,8 +308,8 @@ def upgrade (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx 
         if !mayModify x d then r7 out HUH
         else r7 (updX out (putAcct x d { a with codeHash := h, minAccGas := g, minMemoGas := m })) OK
 
-/-- Ω_T's debit (GP v0.8.1): mode x ∈ {0, 2} takes `amount` from src's balance, {1, 3} from its
-    supervisor balance. -/
+/-- $\Omega_T$'s debit (GP v0.8.1): mode $x \in \{0, 2\}$ takes `amount` from src's balance,
+    $\{1, 3\}$ from its supervisor balance. -/
 def transferDebit (d : Accounts) (src mode amount : Nat) : Accounts :=
   match d.get? src with
   | some sa => d.insert src
@@ -310,8 +317,8 @@ def transferDebit (d : Accounts) (src mode amount : Nat) : Accounts :=
        else { sa with supervisorBalance := sa.supervisorBalance - amount })
   | none => d
 
-/-- Ω_T's immediate credit for o = 0 (GP v0.8.1): mode x ∈ {0, 1} adds `amount` to dst's balance,
-    {2, 3} to its supervisor balance. With o ≠ 0 the accounts are unchanged. -/
+/-- $\Omega_T$'s immediate credit for $o = 0$ (GP v0.8.1): mode $x \in \{0, 1\}$ adds `amount` to
+    dst's balance, $\{2, 3\}$ to its supervisor balance. With $o \neq 0$ the accounts are unchanged. -/
 def transferCredit (d : Accounts) (dst mode amount o : Nat) : Accounts :=
   if o ≠ 0 then d else match d.get? dst with
     | some da => d.insert dst
@@ -319,21 +326,24 @@ def transferCredit (d : Accounts) (dst mode amount o : Nat) : Accounts :=
          else { da with balance := da.balance + amount })
     | none => d
 
-/-- p_s of Ω_T (GP v0.8.1): x_s ∈ {s, E(**d**, s)} for x ∈ {0, 2}, x_s = E(**d**, s) otherwise. -/
+/-- $p_s$ of $\Omega_T$ (GP v0.8.1): $x_s \in \{s, E(\mathbf{d}, s)\}$ for $x \in \{0, 2\}$,
+    $x_s = E(\mathbf{d}, s)$ otherwise. -/
 def transferPs (x : Implications) (src mode : Nat) : Bool :=
   if mode = 0 ∨ mode = 2 then mayModify x src
   else x.id == effectiveSupervisor x.state.accounts src
 
-/-- p_d of Ω_T (GP v0.8.1): o ≠ 0, or x_s ∈ {d, E(**d**, d)} and (x ∈ {1, 2} or s ≠ d). -/
+/-- $p_d$ of $\Omega_T$ (GP v0.8.1): $o \neq 0$, or $x_s \in \{d, E(\mathbf{d}, d)\}$ and
+    ($x \in \{1, 2\}$ or $s \neq d$). -/
 def transferPd (x : Implications) (src dst mode o : Nat) : Bool :=
   o ≠ 0 || (mayModify x dst && ((mode = 1 ∨ mode = 2) || src ≠ dst))
 
-/-- The result code c of Ω_T (GP v0.8.1) once the memo is readable: WHO, HUH, LOW, CASH or OK.
+/-- The result code $c$ of $\Omega_T$ (GP v0.8.1) once the memo is readable: WHO, HUH, LOW, CASH or OK.
 
-    CASH tests **d'**[s] (GP v0.8.1 pvm_invocations.tex:1001–1006 and 1021), and **d'** applies the
-    debit and, for o = 0, the credit together. So for an immediate transfer to the same service
-    (s = d, x ∈ {1, 2}, the only modes p_d allows then) the credit counts: moving funds between
-    one's own balance and supervisor balance never lowers b + b'. -/
+    CASH tests $\mathbf{d}'[s]$ (GP v0.8.1 pvm_invocations.tex:1001–1006 and 1021), and
+    $\mathbf{d}'$ applies the debit and, for $o = 0$, the credit together. So for an immediate
+    transfer to the same service ($s = d$, $x \in \{1, 2\}$, the only modes $p_d$ allows then) the
+    credit counts: moving funds between one's own balance and supervisor balance never lowers
+    $b + b'$. -/
 def transferCode (x : Implications) (src dst mode amount l o : Nat) : Nat :=
   let d := x.state.accounts
   -- **d'**[s]'s balances, as integers: the debit, plus the immediate credit when d = s
@@ -354,11 +364,13 @@ def transferCode (x : Implications) (src dst mode amount l o : Nat) : Nat :=
   else if sb < 0 ∨ ssb < 0 ∨ sb + ssb < smin then CASH
   else OK
 
-/-- Ω_T, `transfer` = 22 (GP v0.8.1, GP #539), with g = 𝖬_T + t where t = l for a deferred transfer
-    that succeeds and 0 otherwise. Source s = ω_7 and destination d = ω_8 (each x_s for 2^64 − 1),
-    mode x = ω_9, amount ω_10, gas limit l = ω_11, memo at o = ω_12: x ∈ {0, 2} debits s's balance
-    and {1, 3} its supervisor balance; x ∈ {0, 1} credits d's balance and {2, 3} its supervisor
-    balance. With o = 0 the credit is immediate; otherwise a deferred transfer carries it. -/
+/-- $\Omega_T$, `transfer` = 22 (GP v0.8.1, GP #539), with $g = \mathsf{M}_T + t$ where $t = l$ for a
+    deferred transfer that succeeds and 0 otherwise. Source $s = \varphi_7$ and destination
+    $d = \varphi_8$ (each $x_s$ for $2^{64} - 1$), mode $x = \varphi_9$, amount $\varphi_{10}$, gas
+    limit $l = \varphi_{11}$, memo at $o = \varphi_{12}$: $x \in \{0, 2\}$ debits $s$'s balance and
+    $\{1, 3\}$ its supervisor balance; $x \in \{0, 1\}$ credits $d$'s balance and $\{2, 3\}$ its
+    supervisor balance. With $o = 0$ the credit is immediate; otherwise a deferred transfer carries
+    it. -/
 def transfer (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
   let mode := reg ω 9; let amount := reg ω 10; let l := reg ω 11; let o := reg ω 12
   let x := c.1
@@ -384,9 +396,9 @@ def transfer (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
         r7 (updX out x') OK
     | some c', none => r7 out c'
 
-/-- Ω_J, `eject` = 23 (GP v0.8.1): remove service d = ω_7 and credit its balance and supervisor
-    balance to x_s. WHO if d is not a service; HUH if d = x_s, x_s ≠ E(**d**, d), d was created in
-    this slot, or d still has items. -/
+/-- $\Omega_J$, `eject` = 23 (GP v0.8.1): remove service $d = \varphi_7$ and credit its balance and
+    supervisor balance to $x_s$. WHO if $d$ is not a service; HUH if $d = x_s$,
+    $x_s \neq E(\mathbf{d}, d)$, $d$ was created in this slot, or $d$ still has items. -/
 def eject (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
   let dId := reg ω 7
   charge Constants.CgasJ gas ω μ c fun out =>
@@ -403,8 +415,9 @@ def eject (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : Ho
         r7 (updX out { x with state := { x.state with accounts := d' },
                                modified := (x.modified.insert dId).insert x.id }) OK
 
-/-- Ω_Q, `query` = 24 (GP v0.8.1): the request (h, z) of service ω_7 (x_s for 2^64 − 1), with h
-    at ω_8 and z = ω_9. HUH if z ∉ ℕ_L; WHO if ω_7 names no service. -/
+/-- $\Omega_Q$, `query` = 24 (GP v0.8.1): the request $(h, z)$ of service $\varphi_7$ ($x_s$ for
+    $2^{64} - 1$), with $h$ at $\varphi_8$ and $z = \varphi_9$. HUH if $z \notin \mathbb{N}_L$; WHO if
+    $\varphi_7$ names no service. -/
 def query (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
   let o := reg ω 8; let z := reg ω 9
   charge Constants.CgasQ gas ω μ c fun out =>
@@ -425,9 +438,10 @@ def query (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
           | some [x, y, w] => set78 (3 + 2 ^ 32 * x) (y + 2 ^ 32 * w)
           | some _ => set78 NONE 0
 
-/-- Ω_S, `solicit` = 25 (GP v0.8.1): solicit (h, z) for service d = ω_7 (x_s for 2^64 − 1), h at
-    ω_8, z = ω_9. HUH if z ∉ ℕ_L; WHO if d is not a service; HUH unless x_s ∈ {d, E(**d**, d)} or
-    if the request cannot be (re-)solicited; FULL if the result is `overFull` (GP #581). -/
+/-- $\Omega_S$, `solicit` = 25 (GP v0.8.1): solicit $(h, z)$ for service $d = \varphi_7$ ($x_s$ for
+    $2^{64} - 1$), $h$ at $\varphi_8$, $z = \varphi_9$. HUH if $z \notin \mathbb{N}_L$; WHO if $d$ is
+    not a service; HUH unless $x_s \in \{d, E(\mathbf{d}, d)\}$ or if the request cannot be
+    (re-)solicited; FULL if the result is `overFull` (GP #581). -/
 def solicit (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
   let o := reg ω 8; let z := reg ω 9
   charge Constants.CgasS gas ω μ c fun out =>
@@ -452,9 +466,10 @@ def solicit (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : 
             else if overFull a' then r7 out FULL
             else r7 (updX out (putAcct x d a')) OK
 
-/-- Ω_F, `forget` = 26 (GP v0.8.1): forget (h, z) for service d = ω_7 (x_s for 2^64 − 1), h at
-    ω_8, z = ω_9. HUH if z ∉ ℕ_L; WHO if d is not a service; HUH unless x_s ∈ {d, E(**d**, d)} or
-    if the request cannot be forgotten now. -/
+/-- $\Omega_F$, `forget` = 26 (GP v0.8.1): forget $(h, z)$ for service $d = \varphi_7$ ($x_s$ for
+    $2^{64} - 1$), $h$ at $\varphi_8$, $z = \varphi_9$. HUH if $z \notin \mathbb{N}_L$; WHO if $d$ is
+    not a service; HUH unless $x_s \in \{d, E(\mathbf{d}, d)\}$ or if the request cannot be forgotten
+    now. -/
 def forget (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
   let o := reg ω 8; let z := reg ω 9
   charge Constants.CgasF gas ω μ c fun out =>
@@ -480,14 +495,14 @@ def forget (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : H
           | some a' => if !mayModify x d then r7 out HUH else r7 (updX out (putAcct x d a')) OK
           | none => r7 out HUH
 
-/-- Ω_♉, `yield` = 27. -/
+/-- $\Omega_{\text{♉}}$, `yield` = 27. -/
 def yield (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
   charge Constants.CgasTaurus gas ω μ c fun out =>
     match readMem μ (reg ω 7) 32 with
     | none => panic out
     | some h => r7 (updX out { c.1 with yield := some h }) OK
 
-/-- Ω_♈, `provide` = 28 (GP v0.8.1): HUH first if z ∉ ℕ_L. -/
+/-- $\Omega_{\text{♈}}$, `provide` = 28 (GP v0.8.1): HUH first if $z \notin \mathbb{N}_L$. -/
 def provide (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
   let o := reg ω 8; let z := reg ω 9
   charge (Constants.CgasAriesconst + memGas Constants.CgasArieslinear z) gas ω μ c fun out =>
@@ -504,8 +519,9 @@ def provide (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx 
           else if x.provisions.contains (s, i) then r7 out HUH
           else r7 (updX out { x with provisions := x.provisions.insert (s, i) }) OK
 
-/-- F ∈ 𝔉_{𝕃²} (GP v0.8.1 eq. `accinvocation`): dispatch on the host-call id. An unknown id
-    charges 𝖬_∅ and sets ω'_7 = WHAT; with ϱ < 𝖬_∅ it is ∞ with ϱ* = 0. -/
+/-- $F \in \mathfrak{F}_{\mathbb{L}^2}$ (GP v0.8.1 eq. `accinvocation`): dispatch on the host-call
+    id. An unknown id charges $\mathsf{M}_\emptyset$ and sets $\varphi'_7 = \text{WHAT}$; with
+    $\varrho < \mathsf{M}_\emptyset$ it is $\infty$ with $\varrho^{\ast} = 0$. -/
 def dispatch (env : AccEnv) (n gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
   let x := c.1
   let d := x.state.accounts
@@ -538,18 +554,18 @@ def dispatch (env : AccEnv) (n gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx)
 
 end AccHost
 
-/-- F as a host-call handler for Ψ_H (`PVM.HostFn`): ℤ_G gas is clamped at 0, which only happens
-    together with ∞ (see the note on 𝔉_X in the README). -/
+/-- $F$ as a host-call handler for $\Psi_H$ (`PVM.HostFn`): $\mathbb{Z}_G$ gas is clamped at 0,
+    which only happens together with $\infty$ (see the note on $\mathfrak{F}_X$ in the README). -/
 def accHostFn (env : AccEnv) : HostFn AccCtx := fun n gas ω μ c =>
   let o := AccHost.dispatch env n gas.toNat ω μ c
   ⟨o.status, UInt64.ofNat o.gas, o.regs, o.mem, o.ctx⟩
 
-/-- The code of a service account, a_c ≡ a_p[a_c] (GP v0.8.1 §9 "Code and Gas", GP #582): the
-    whole preimage, metadata included; Y skips the metadata (`PVM.skipMetadata?`). -/
+/-- The code of a service account, $a_c \equiv a_p[a_c]$ (GP v0.8.1 §9 "Code and Gas", GP #582):
+    the whole preimage, metadata included; $Y$ skips the metadata (`PVM.skipMetadata?`). -/
 def ServiceAccount.code (a : ServiceAccount) : Option ByteArray :=
   (a.preimages.get? a.codeHash).map fun p => ⟨p.toArray⟩
 
-/-- The result of Ψ_A / Δ_1 (GP v0.8.1 eq. `acconeout`): post-state, the modified services, transfers,
+/-- The result of $\Psi_A$ / $\Delta_1$ (GP v0.8.1 eq. `acconeout`): post-state, the modified services, transfers,
     yield, gas used, provisions. -/
 structure AccOut where
   state : PartialState
@@ -560,8 +576,9 @@ structure AccOut where
   gasUsed : Nat
   provisions : Provisions
 
-/-- I(**e**, **m**, s) (GP v0.8.1 eq. `accinvocation`): the initial implications, with the
-    modified set **m** and the next free id check((ℰ_4⁻¹(ℋ(ℰ(s, η'_0, H_t))) mod (2^32 − 𝖲 − 2^8)) + 𝖲). -/
+/-- $I(\mathbf{e}, \mathbf{m}, s)$ (GP v0.8.1 eq. `accinvocation`): the initial implications, with
+    the modified set $\mathbf{m}$ and the next free id
+    $\text{check}((\mathcal{E}_4^{-1}(\mathcal{H}(\mathcal{E}(s, \eta'_0, \mathbf{H}_t))) \bmod (2^{32} - \mathsf{S} - 2^8)) + \mathsf{S})$. -/
 def initImplications (e : PartialState) (s slot : Nat) (entropy : List UInt8)
     (m : Std.ExtTreeSet Nat := ∅) : Implications :=
   let S := Constants.Cminpublicindex
@@ -569,9 +586,9 @@ def initImplications (e : PartialState) (s slot : Nat) (entropy : List UInt8)
   let i := Num.decodeLE (h.toList.take 4) % (2 ^ 32 - S - 2 ^ 8) + S
   { id := s, state := e, nextFree := checkId e.accounts (e.accounts.size + 1) i, modified := m }
 
-/-- Ψ_A from the state **e**' with the incoming transfers already credited and the modified set
-    **m**: look up s's code and run it (GP v0.8.1 eq. `accinvocation`, the cases after **e**' is
-    formed). -/
+/-- $\Psi_A$ from the state $\mathbf{e}'$ with the incoming transfers already credited and the
+    modified set $\mathbf{m}$: look up $s$'s code and run it (GP v0.8.1 eq. `accinvocation`, the
+    cases after $\mathbf{e}'$ is formed). -/
 def psiARun (params : Params) (entropy : List UInt8) (st : PartialState) (t s g : Nat)
     (inputs : List AccumulateInput) (m : Std.ExtTreeSet Nat := ∅) : AccOut :=
   let code := (st.accounts.get? s).bind (·.code)
@@ -590,10 +607,10 @@ def psiARun (params : Params) (entropy : List UInt8) (st : PartialState) (t s g 
         if out.size = 32 then ⟨x.state, x.modified, x.xfers, some out.toList, u, x.provisions⟩
         else ⟨x.state, x.modified, x.xfers, x.yield, u, x.provisions⟩
 
-/-- Ψ_A(**e**, t, s, g, **i**) (GP v0.8.1 eq. `accinvocation`): nothing if s is not a service;
-    otherwise credit the incoming transfers to s's balance or, for those with the destination-
-    supervisor flag, its supervisor balance, mark s modified if any transfer came in, then run s's
-    code (`psiARun`). -/
+/-- $\Psi_A(\mathbf{e}, t, s, g, \mathbf{i})$ (GP v0.8.1 eq. `accinvocation`): nothing if $s$ is not
+    a service; otherwise credit the incoming transfers to $s$'s balance or, for those with the
+    destination-supervisor flag, its supervisor balance, mark $s$ modified if any transfer came in,
+    then run $s$'s code (`psiARun`). -/
 def psiA (params : Params) (entropy : List UInt8) (e : PartialState) (t s g : Nat)
     (inputs : List AccumulateInput) : AccOut :=
   match e.accounts.get? s with

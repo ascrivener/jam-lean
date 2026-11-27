@@ -5,11 +5,12 @@ import PVM.Theorems.Termination
 /-!
 # The host-call dispatchers never add gas
 
-Every host function of GP v0.8.1 Appendix B returns ϱ' ≤ ϱ: the common rules charge g ≥ 0, and
-the one function that hands gas back, `invoke` (Ω_K), returns only what is left of the g_R it
-charged (`PVM.psi_gas_le`). So the dispatchers of Ψ_A, Ψ_R and Ψ_I are `HostFn.GasNonIncreasing`,
+Every host function of GP v0.8.1 Appendix B returns $\varrho' \leq \varrho$: the common rules charge
+$g \geq 0$, and the one function that hands gas back, `invoke` ($\Omega_K$), returns only what is
+left of the $g_R$ it charged (`PVM.psi_gas_le`). So the dispatchers of $\Psi_A$, $\Psi_R$ and
+$\Psi_I$ are `HostFn.GasNonIncreasing`,
 and `PVM.psiHStar_eq` applies: for these invocations `psiHStar`'s fuel never runs out, and it is the
-paper's Ψ_H exactly.
+paper's $\Psi_H$ exactly.
 -/
 
 namespace JAM
@@ -28,7 +29,8 @@ theorem writeValue_gas {X : Type} (out : HostOut X) (v : Except Unit (Option (Li
   repeat' split
   all_goals rfl
 
-/-- The common rules (GP v0.8.1): with a body that leaves ϱ alone, ϱ* ∈ {0, ϱ − g}, so ϱ* ≤ ϱ. -/
+/-- The common rules (GP v0.8.1): with a body that leaves $\varrho$ alone,
+    $\varrho^{\ast} \in \{0, \varrho - g\}$, so $\varrho^{\ast} \leq \varrho$. -/
 theorem charged_gas_le {X : Type} (g gas : Nat) (ω : Regs) (μ : Memory) (x : X)
     (body : HostOut X → HostOut X) (hb : ∀ o, (body o).gas = o.gas) :
     (charged g gas ω μ x body).gas ≤ gas := by
@@ -167,7 +169,7 @@ theorem dispatch_gas (env : AccEnv) (n gas : Nat) (ω : Regs) (μ : Memory) (c :
 
 end AccHost
 
-/-- **F of Ψ_A never adds gas.** -/
+/-- **$F$ of $\Psi_A$ never adds gas.** -/
 theorem accHostFn_gasNonIncreasing (env : AccEnv) : (accHostFn env).GasNonIncreasing := by
   intro h g ω μ x
   have := AccHost.dispatch_gas env h g.toNat ω μ x
@@ -282,12 +284,12 @@ theorem toHostFn_gasNonIncreasing {X : Type} (f : Nat → Nat → Regs → Memor
   rw [UInt64.toNat_ofNat_of_lt' (by simp only [UInt64.size] at hg ⊢; omega)]
   omega
 
-/-- **F of Ψ_R never adds gas.** -/
+/-- **$F$ of $\Psi_R$ never adds gas.** -/
 theorem refineHostFn_gasNonIncreasing (env : RefineHost.Env) :
     (toHostFn (RefineHost.dispatch env)).GasNonIncreasing :=
   toHostFn_gasNonIncreasing _ (RefineHost.dispatch_gas env)
 
-/-- **F of Ψ_I never adds gas.** -/
+/-- **$F$ of $\Psi_I$ never adds gas.** -/
 theorem isAuthHostFn_gasNonIncreasing (params : Params) (p : WorkPackage) (code : ByteArray) :
     (toHostFn (RefineHost.dispatchI params p code)).GasNonIncreasing :=
   toHostFn_gasNonIncreasing _ (RefineHost.dispatchI_gas params p code)

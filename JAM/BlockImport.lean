@@ -6,30 +6,37 @@ import JAM.Preimages
 import JAM.Authorization
 
 /-!
-# The block-level state transition Υ(σ, B) = σ' (GP v0.8.1 §4, §5)
+# The block-level state transition $\Upsilon(\sigma, B) = \sigma'$ (GP v0.8.1 §4, §5)
 
-Υ is the composition of the section-level transitions along the dependency graph of GP eq.
+$\Upsilon$ is the composition of the section-level transitions along the dependency graph of GP eq.
 `transitionfunctioncomposition`:
 
-1. τ' = H_T (eq. `timeslotindex`) and β_H^† (eq. `betadagger`).
-2. ψ' and ρ^† from 𝔼_D and ψ, ρ (§10).
-3. γ', η', κ', λ' from H, τ, 𝔼_T, γ, ι, η and ψ'_O (§6).
-4. ρ^‡ and the newly available reports **R** from 𝔼_A and ρ^† (§11.2).
-5. ρ' from 𝔼_G, ρ^‡, κ', λ', η', ψ'_O and τ' (§11.3–§11.5).
-6. ω', ξ', δ^‡, χ', ι', φ', θ' and the accumulation statistics from **R** (§12).
-7. β' from H, 𝔼_G, β_H^† and θ' (§7).
-8. δ' from 𝔼_P, δ^‡ and τ' (§12.4); the preimages are checked against the prior δ.
-9. α' from H, 𝔼_G, φ' and α (§8).
-10. π' from 𝔼_G, 𝔼_P, 𝔼_A, 𝔼_T, τ, κ', π, H and the accumulation statistics (§13).
+1. $\tau' = \mathbf{H}_T$ (eq. `timeslotindex`) and $\beta_H^\dagger$ (eq. `betadagger`).
+2. $\psi'$ and $\rho^\dagger$ from $\mathbf{E}_D$ and $\psi$, $\rho$ (§10).
+3. $\gamma'$, $\eta'$, $\kappa'$, $\lambda'$ from $\mathbf{H}$, $\tau$, $\mathbf{E}_T$, $\gamma$,
+   $\iota$, $\eta$ and $\psi'_O$ (§6).
+4. $\rho^\ddagger$ and the newly available reports $\mathbf{R}$ from $\mathbf{E}_A$ and $\rho^\dagger$
+   (§11.2).
+5. $\rho'$ from $\mathbf{E}_G$, $\rho^\ddagger$, $\kappa'$, $\lambda'$, $\eta'$, $\psi'_O$ and $\tau'$
+   (§11.3–§11.5).
+6. $\omega'$, $\xi'$, $\delta^\ddagger$, $\chi'$, $\iota'$, $\phi'$, $\theta'$ and the accumulation
+   statistics from $\mathbf{R}$ (§12).
+7. $\beta'$ from $\mathbf{H}$, $\mathbf{E}_G$, $\beta_H^\dagger$ and $\theta'$ (§7).
+8. $\delta'$ from $\mathbf{E}_P$, $\delta^\ddagger$ and $\tau'$ (§12.4); the preimages are checked
+   against the prior $\delta$.
+9. $\alpha'$ from $\mathbf{H}$, $\mathbf{E}_G$, $\phi'$ and $\alpha$ (§8).
+10. $\pi'$ from $\mathbf{E}_G$, $\mathbf{E}_P$, $\mathbf{E}_A$, $\mathbf{E}_T$, $\tau$, $\kappa'$,
+    $\pi$, $\mathbf{H}$ and the accumulation statistics (§13).
 
 The block is valid only if every transition accepts its extrinsic and the header satisfies §5:
-H_P is the hash of the parent header, H_R = M_σ(σ), H_X commits to the extrinsic
-(eq. `extrinsichash`), H_I indexes κ', the markers H_E, H_W and H_O are those the transitions
-produce, and the seal and entropy source are valid (§6.4, `JAM.sealValid`). The wall-clock bound
-H_T·𝖯 ≤ 𝒯 is not checked: Υ has no clock.
+$\mathbf{H}_P$ is the hash of the parent header, $\mathbf{H}_R = \mathcal{M}_\sigma(\sigma)$,
+$\mathbf{H}_X$ commits to the extrinsic (eq. `extrinsichash`), $\mathbf{H}_I$ indexes $\kappa'$, the
+markers $\mathbf{H}_E$, $\mathbf{H}_W$ and $\mathbf{H}_O$ are those the transitions produce, and the
+seal and entropy source are valid (§6.4, `JAM.sealValid`). The wall-clock bound
+$\mathbf{H}_T \cdot \mathsf{P} \le \mathcal{T}$ is not checked: $\Upsilon$ has no clock.
 
-Cryptography enters through `JAM.Crypto`. The ancestor set 𝒜 of §11.4.1 is not part of σ; the
-caller supplies the headers it retains (`Chain`).
+Cryptography enters through `JAM.Crypto`. The ancestor set $\mathbf{A}$ of §11.4.1 is not part of
+$\sigma$; the caller supplies the headers it retains (`Chain`).
 -/
 
 namespace JAM
@@ -45,51 +52,58 @@ inductive BlockError where
   | preimages (e : PreimageError)
   deriving BEq, Repr
 
-/-- The headers an importer retains besides σ: the ancestors of the block being imported, oldest
-    first, ending with its parent. They give H_P's check and the ancestor set 𝒜 of §11.4.1. -/
+/-- The headers an importer retains besides $\sigma$: the ancestors of the block being imported,
+    oldest first, ending with its parent. They give $\mathbf{H}_P$'s check and the ancestor set
+    $\mathbf{A}$ of §11.4.1. -/
 structure Chain where
   ancestors : List Header
 
-/-- ℋ on octet lists (Blake2b-256). -/
+/-- $\mathcal{H}$ on octet lists (Blake2b-256). -/
 def hashL (m : List UInt8) : List UInt8 := (Blake2b.hash256 ⟨m.toArray⟩).toList
 
-/-- ℋ(ℰ(H)), a header's hash. -/
+/-- $\mathcal{H}(\mathcal{E}(\mathbf{H}))$, a header's hash. -/
 def Header.hash (h : Header) : List UInt8 := hashL h.encode
 
 open Codec in
-/-- **a** = [ℰ_T(𝔼_T), **p**, **g**, ℰ_A(𝔼_A), ℰ_D(𝔼_D)] of GP eq. `extrinsichash`, with
-    **p** = ℰ(↕[(ℰ_4(s), ℋ(**d**)) | (s, **d**) ← 𝔼_P]) and
-    **g** = ℰ(↕[(ℋ(r), ℰ_4(t), O(a)) | (r, t, a) ← 𝔼_G]), where O(a) = ℰ(↕[(ℰ_2(v), s) | (v, s) ← a])
-    is the credential encoding of Appendix C (GP v0.8.1 #560 writes O(a) in eq. `extrinsichash`
-    where v0.8.0 wrote ↕a; the model already encoded v with ℰ_2). -/
+/-- $\mathbf{a} = [\mathcal{E}_T(\mathbf{E}_T), \mathbf{p}, \mathbf{g}, \mathcal{E}_A(\mathbf{E}_A),
+    \mathcal{E}_D(\mathbf{E}_D)]$ of GP eq. `extrinsichash`, with
+    $\mathbf{p} = \mathcal{E}(\updownarrow[(\mathcal{E}_4(s), \mathcal{H}(\mathbf{d})) \mid
+    (s, \mathbf{d}) \leftarrow \mathbf{E}_P])$ and
+    $\mathbf{g} = \mathcal{E}(\updownarrow[(\mathcal{H}(r), \mathcal{E}_4(t), O(a)) \mid
+    (r, t, a) \leftarrow \mathbf{E}_G])$, where
+    $O(a) = \mathcal{E}(\updownarrow[(\mathcal{E}_2(v), s) \mid (v, s) \leftarrow a])$ is the
+    credential encoding of Appendix C (GP v0.8.1 #560 writes $O(a)$ in eq. `extrinsichash` where
+    v0.8.0 wrote $\updownarrow a$; the model already encoded $v$ with $\mathcal{E}_2$). -/
 def Extrinsic.hashParts (x : Extrinsic) : List (List UInt8) :=
   let p := varSeq (fun (q : Preimage) => fixed 4 q.requester ++ hashL q.blob.toList) x.preimages
   let g := varSeq (fun (g : Guarantee) => hashL g.report.encode ++ fixed 4 g.slot ++
     encodeCredential g.credential) x.guarantees
   [encodeTickets x.tickets, p, g, encodeAssurances x.assurances, x.disputes.encode]
 
-/-- H_X = ℋ(ℰ(ℋ#(**a**))) (GP v0.8.1 eq. `extrinsichash`), **a** = `Extrinsic.hashParts`. -/
+/-- $\mathbf{H}_X = \mathcal{H}(\mathcal{E}(\mathcal{H}^\#(\mathbf{a})))$ (GP v0.8.1 eq.
+    `extrinsichash`), $\mathbf{a}$ = `Extrinsic.hashParts`. -/
 def Extrinsic.hash (x : Extrinsic) : List UInt8 :=
   hashL (x.hashParts.flatMap hashL)
 
-/-- The ancestor-set condition of §11.4.1 (GP eq. 11.36) for a refinement context x: some
-    h, h' ∈ 𝒜 with h_T = x_lookupanchortime, ℋ(h) = x_lookupanchor, h'_P = ℋ(h) and
-    h'_R = x_lookupanchorpoststate: the lookup anchor's posterior state root, the prior state root
-    of its child (not the anchor's x_stateroot). 𝒜 is the retained headers together with the block's
-    own header, so that the parent can be a lookup anchor. -/
+/-- The ancestor-set condition of §11.4.1 (GP eq. 11.36) for a refinement context $x$: some
+    $h, h' \in \mathbf{A}$ with $h_T = x_{\text{lookupanchortime}}$,
+    $\mathcal{H}(h) = x_{\text{lookupanchor}}$, $h'_P = \mathcal{H}(h)$ and
+    $h'_R = x_{\text{lookupanchorpoststate}}$: the lookup anchor's posterior state root, the prior
+    state root of its child (not the anchor's $x_{\text{stateroot}}$). $\mathbf{A}$ is the retained
+    headers together with the block's own header, so that the parent can be a lookup anchor. -/
 def lookupAnchorKnown (anc : List Header) (x : RefineContext) : Bool :=
   anc.any fun h =>
     h.slot == x.lookupAnchorSlot && h.hash == x.lookupAnchorHash.toList &&
       anc.any fun h' => h'.parent.toList == h.hash && h'.priorStateRoot == x.lookupAnchorStateRoot
 
-/-- The intermediate values of Υ that are not part of σ', for inspection. -/
+/-- The intermediate values of $\Upsilon$ that are not part of $\sigma'$, for inspection. -/
 structure ImportTrace where
-  /-- **R**, the newly available reports. -/
+  /-- $\mathbf{R}$, the newly available reports. -/
   available : List WorkReport
   /-- The accumulation output root. -/
   accRoot : List UInt8
 
-/-- Υ(σ, B) (GP eq. `transitionfunctioncomposition`), with the block's validity conditions. -/
+/-- $\Upsilon(\sigma, B)$ (GP eq. `transitionfunctioncomposition`), with the block's validity conditions. -/
 def importBlock (params : Params) (c : Crypto) (chain : Chain) (σ : State) (B : Block) :
     Except BlockError (State × ImportTrace) := do
   let H := B.header

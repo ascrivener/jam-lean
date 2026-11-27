@@ -6,10 +6,10 @@ import JAM.Merkle
 /-!
 # Accumulation (GP v0.8.1 §12, `sec:accumulation`)
 
-The accumulation state transition: the queue functions E, Q and P (§12.1), the single, parallel
-and outer accumulation functions Δ_1, Δ_* and Δ_+ (eqs. `accone`, `accpar`, `accseq`), and the
-final state integration (§12.3), together with the accumulation output root of §7
-(eq. `accoutbeltdef`: ℳ_B over ℰ_4(s) ⌢ h with Keccak).
+The accumulation state transition: the queue functions $E$, $Q$ and $P$ (§12.1), the single,
+parallel and outer accumulation functions $\Delta_1$, $\Delta_{\ast}$ and $\Delta_+$ (eqs. `accone`,
+`accpar`, `accseq`), and the final state integration (§12.3), together with the accumulation output
+root of §7 (eq. `accoutbeltdef`: $\mathcal{M}_B$ over $\mathcal{E}_4(s) \frown h$ with Keccak).
 -/
 
 namespace JAM
@@ -23,27 +23,27 @@ def WorkReport.pkg (r : WorkReport) : PkgHash := r.spec.packageHash.toList
 /-- A ready-queue entry: a report and the set of its unaccumulated dependencies. -/
 abbrev ReadyEntry := WorkReport × OctetSet
 
-/-- E(**r**, **x**) (GP §12.1): drop entries whose package is in **x**, and remove **x** from the
-    remaining dependencies. -/
+/-- $E(\mathbf{r}, \mathbf{x})$ (GP §12.1): drop entries whose package is in $\mathbf{x}$, and remove
+    $\mathbf{x}$ from the remaining dependencies. -/
 def editQueue (r : List ReadyEntry) (x : OctetSet) : List ReadyEntry :=
   (r.filter fun (w, _) => !x.contains w.pkg).map fun (w, d) => (w, d.diff x)
 
-/-- P(**r**): the set of package hashes of a set of reports. -/
+/-- $P(\mathbf{r})$: the set of package hashes of a set of reports. -/
 def pkgs (r : List WorkReport) : OctetSet := .ofList (r.map (·.pkg))
 
-/-- Q(**r**) (GP §12.1): reports whose dependencies are all met, repeatedly. Each round removes at
-    least one entry, so |**r**| + 1 rounds suffice. -/
+/-- $Q(\mathbf{r})$ (GP §12.1): reports whose dependencies are all met, repeatedly. Each round
+    removes at least one entry, so $|\mathbf{r}| + 1$ rounds suffice. -/
 def readyOrder : Nat → List ReadyEntry → List WorkReport
   | 0, _ => []
   | fuel + 1, r =>
     let g := r.filterMap fun (w, d) => if d.isEmpty then some w else none
     if g.isEmpty then [] else g ++ readyOrder fuel (editQueue r (pkgs g))
 
-/-- D(r) = (r, {prerequisites} ∪ K(segment-root lookup)). -/
+/-- $D(r) = (r, \{\text{prerequisites}\} \cup \mathcal{K}(\text{segment-root lookup}))$. -/
 def deps (r : WorkReport) : ReadyEntry :=
   (r, r.context.prerequisites.insertMany r.segmentRootLookup.keys)
 
-/-- The accumulation statistics of one service: (N, T, G). -/
+/-- The accumulation statistics of one service: $(N, T, G)$. -/
 abbrev AccStat := Nat × Nat × Nat
 
 /-- The parts of state accumulation reads and writes (the accumulate STF's state). -/
@@ -59,15 +59,15 @@ structure AccResult where
   state : AccState
   root : List UInt8
   stats : List (Nat × AccStat)
-  /-- θ' = [(s, h) ∈ **b**] (GP v0.8.1 eq. `finalstateaccumulation`, accumulation.tex:401): the set
-      **b** without repeats, ordered by service and then hash; `root` is the Merkle root of its
-      encoding. -/
+  /-- $\theta' = [(s, h) \in \mathbf{b}]$ (GP v0.8.1 eq. `finalstateaccumulation`,
+      accumulation.tex:401): the set $\mathbf{b}$ without repeats, ordered by service and then hash;
+      `root` is the Merkle root of its encoding. -/
   outputs : List (Nat × List UInt8) := []
 
 section
 variable (params : Params) (entropy : List UInt8) (slot : Nat)
 
-/-- Δ_1(**e**, **t**, **r**, **f**, s) (GP eq. `accone`). -/
+/-- $\Delta_1(\mathbf{e}, \mathbf{t}, \mathbf{r}, \mathbf{f}, s)$ (GP eq. `accone`). -/
 def accOne (e : PartialState) (t : List DeferredTransfer) (r : List WorkReport)
     (f : Std.ExtTreeMap Nat Nat) (s : Nat) : AccOut :=
   let iT := (t.filter (·.dest == s)).map AccumulateInput.transfer
@@ -80,10 +80,10 @@ def accOne (e : PartialState) (t : List DeferredTransfer) (r : List WorkReport)
     (r.flatMap fun w => (w.digests.filter (·.service == s)).map (·.gasLimit)).sum
   psiA params entropy e slot s g (iT ++ iU)
 
-/-- R(o, a, b): b if a = o, otherwise a. -/
+/-- $R(o, a, b)$: $b$ if $a = o$, otherwise $a$. -/
 def pick (o a b : Nat) : Nat := if a = o then b else a
 
-/-- I(**d**, **p**) (GP §12.2): integrate the provisions whose request is still `[]`. -/
+/-- $I(\mathbf{d}, \mathbf{p})$ (GP §12.2): integrate the provisions whose request is still `[]`. -/
 def integrateProvisions (d : Accounts) (p : Provisions) : Accounts :=
   p.foldl (fun d (s, i) =>
     let h := (Blake2b.hash256 ⟨i.toArray⟩).toList
@@ -94,34 +94,35 @@ def integrateProvisions (d : Accounts) (p : Provisions) : Accounts :=
       else d
     | none => d) d
 
-/-- N (GP v0.8.1 eq. `accpar`): service s's Δ_1 outcome `os`, discarded (keeping only its gas use and
-    provisions) when both s and its effective supervisor u = E(**d**, s) ≠ s modified s, given u's
-    outcome `ou`.
+/-- $N$ (GP v0.8.1 eq. `accpar`): service $s$'s $\Delta_1$ outcome `os`, discarded (keeping only its
+    gas use and provisions) when both $s$ and its effective supervisor $u = E(\mathbf{d}, s) \ne s$
+    modified $s$, given $u$'s outcome `ou`.
 
-    GP v0.8.1 leaves N(**o**)'s post-state without a value (every other field has one). It is taken
-    to be the round's input state **e**, as the prose before eq. `accseq` says ("discard all results
-    of the service's execution", its footnote excepting only provided preimages). Reading it as
-    **o**'s post-state would keep a discarded run's new accounts and privilege, staging and queue
-    changes while M(s) drops its own account change. Adam's decision (2026-11-25); the paper gap is
+    GP v0.8.1 leaves $N(\mathbf{o})$'s post-state without a value (every other field has one). It is
+    taken to be the round's input state $\mathbf{e}$, as the prose before eq. `accseq` says
+    ("discard all results of the service's execution", its footnote excepting only provided
+    preimages). Reading it as $\mathbf{o}$'s post-state would keep a discarded run's new accounts
+    and privilege, staging and queue changes while $M(s)$ drops its own account change. Adam's
+    decision (2026-11-25); the paper gap is
     [`docs/upstream-candidates.md`](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues) v0.8.1-A1, raised as graypaper#592. -/
 def discardIfBoth (e : PartialState) (s u : Nat) (os ou : AccOut) : AccOut :=
   if os.modified.contains s ∧ u ≠ s ∧ ou.modified.contains s then
     ⟨e, ∅, [], none, os.gasUsed, os.provisions⟩
   else os
 
-/-- Δ_*(**e**, **t**, **r**, **f**) (GP v0.8.1 eq. `accpar`): accumulate every service with work,
-    free gas or incoming transfers, and merge the results.
+/-- $\Delta_{\ast}(\mathbf{e}, \mathbf{t}, \mathbf{r}, \mathbf{f})$ (GP v0.8.1 eq. `accpar`):
+    accumulate every service with work, free gas or incoming transfers, and merge the results.
 
-* A service's results are discarded, keeping only its gas use and provisions (N), when both it and
-  its effective supervisor E(**d**, s) ≠ s modified s's account in this round.
+* A service's results are discarded, keeping only its gas use and provisions ($N$), when both it
+  and its effective supervisor $E(\mathbf{d}, s) \ne s$ modified $s$'s account in this round.
 * Each existing account is taken from the run of the service itself if it modified it, and
-  otherwise from the run of its effective supervisor (M); new accounts come from their creators
-  (**n**); a removed account is one whose M is none.
-* Privileges, staging set and authorizer queue through X(s) and R (unchanged from GP v0.8.0).
+  otherwise from the run of its effective supervisor ($M$); new accounts come from their creators
+  ($\mathbf{n}$); a removed account is one whose $M$ is none.
+* Privileges, staging set and authorizer queue through $X(s)$ and $R$ (unchanged from GP v0.8.0).
 
 A service that is neither accumulated nor needed for the privileges has no inputs and no gas; its
-Δ_1 is the unchanged state with nothing modified (Ψ_A with g = 0 runs out of gas at once, or has no
-code), which `acc` returns for it without running Ψ_A. -/
+$\Delta_1$ is the unchanged state with nothing modified ($\Psi_A$ with $g = 0$ runs out of gas at
+once, or has no code), which `acc` returns for it without running $\Psi_A$. -/
 def accPar (e : PartialState) (t : List DeferredTransfer) (r : List WorkReport)
     (f : Std.ExtTreeMap Nat Nat) :
     PartialState × List DeferredTransfer × List (Nat × List UInt8) × List (Nat × Nat) :=
@@ -163,11 +164,12 @@ def accPar (e : PartialState) (t : List DeferredTransfer) (r : List WorkReport)
       alwaysAcc := eStar.alwaysAcc }
   (st, t', b, u)
 
-/-- T(**t**, **s**, **d**) (GP v0.8.1 eq. `accseq`'s partition T): split the deferred transfers into
-    those accumulated in this round (**t**^!) and those deferred to a later one (**t**^Q). A transfer
-    waits if its destination's effective supervisor is accumulated (in **s**) or already receives
-    a transfer this round (in **i**), or if it is itself the effective supervisor of a service in
-    **i**; otherwise its destination joins **i**. -/
+/-- $T(\mathbf{t}, \mathbf{s}, \mathbf{d})$ (GP v0.8.1 eq. `accseq`'s partition $T$): split the
+    deferred transfers into those accumulated in this round ($\mathbf{t}^!$) and those deferred to a
+    later one ($\mathbf{t}^Q$). A transfer waits if its destination's effective supervisor is
+    accumulated (in $\mathbf{s}$) or already receives a transfer this round (in $\mathbf{i}$), or if
+    it is itself the effective supervisor of a service in $\mathbf{i}$; otherwise its destination
+    joins $\mathbf{i}$. -/
 def partitionXfers (s : List Nat) (d : Accounts) :
     List DeferredTransfer → List Nat → List DeferredTransfer × List DeferredTransfer
   | [], _ => ([], [])
@@ -180,9 +182,9 @@ def partitionXfers (s : List Nat) (d : Accounts) :
     let (bang, wait) := partitionXfers s d ts i'
     if q then (bang, t :: wait) else (t :: bang, wait)
 
-/-- Δ_+(g, **t**, **r**, **e**, **f**) (GP v0.8.1 eq. `accseq`): accumulate as many reports as fit in
-    the gas, with the transfers `partitionXfers` lets through, then recurse with the deferred ones and
-    those this round produced. `fuel` bounds the rounds. -/
+/-- $\Delta_+(g, \mathbf{t}, \mathbf{r}, \mathbf{e}, \mathbf{f})$ (GP v0.8.1 eq. `accseq`):
+    accumulate as many reports as fit in the gas, with the transfers `partitionXfers` lets through,
+    then recurse with the deferred ones and those this round produced. `fuel` bounds the rounds. -/
 def accSeq : Nat → Int → List DeferredTransfer → List WorkReport → PartialState →
     Std.ExtTreeMap Nat Nat →
     Nat × PartialState × List (Nat × List UInt8) × List (Nat × Nat) × List DeferredTransfer
@@ -204,7 +206,7 @@ def accSeq : Nat → Int → List DeferredTransfer → List WorkReport → Parti
 end
 
 /-- The accumulation state transition (GP §12) for the block with timeslot `slot` and newly
-    available reports **R**, with the accumulation output root (GP eq. `accoutbeltdef`). -/
+    available reports $\mathbf{R}$, with the accumulation output root (GP eq. `accoutbeltdef`). -/
 def accumulate (params : Params) (pre : AccState) (slot : Nat) (reports : List WorkReport) : AccResult :=
   let E := params.epochLen
   let m := slot % E

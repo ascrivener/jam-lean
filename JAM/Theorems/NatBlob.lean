@@ -4,13 +4,13 @@ import PVM.Logic.ChunkBlob
 /-!
 # A code preimage given as a number
 
-`splitMetadata` (the paper's ℰ(↕**m**, **c**) split of a code preimage) on the octets of a
+`splitMetadata` (the paper's $\mathcal{E}(\updownarrow \mathbf{m}, \mathbf{c})$ split of a code preimage) on the octets of a
 `NatBlob`: the code is the octets after the metadata.
 -/
 
 namespace PVM.NatBlob
 
-/-- The code after the metadata ↕**m**, whose length prefix the kernel decides on a few octets. -/
+/-- The code after the metadata $\updownarrow \mathbf{m}$, whose length prefix the kernel decides on a few octets. -/
 theorem splitMetadata_bytes (N o n : Nat) {mLen pos : Nat}
     (h : Blob.decodeNat? (ba N o n) 0 = some (mLen, pos)) (hle : pos + mLen ≤ n) :
     JAM.splitMetadata (bytes N o n) = some (ba N (o + pos + mLen) (n - pos - mLen)) := by

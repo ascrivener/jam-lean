@@ -4,8 +4,8 @@ import JAM.Theorems.Confinement
 /-!
 # Gas-free runs keep what is not writable
 
-A step that continues writes only octets it may write (GP §A.4: ε^μ is ▸ only if every index
-written is in 𝕍*_μ), and of the refine host calls a gas-free run can make, `grow_heap` changes only
+A step that continues writes only octets it may write (GP §A.4: $\varepsilon^\mu$ is $\blacktriangleright$ only if every index
+written is in $\mathbb{V}^{\ast}_\mu$), and of the refine host calls a gas-free run can make, `grow_heap` changes only
 heap pages' access and `fetch` writes only a writable range. So a gas-free run under
 `refineContractK` changes no octet that is not writable, on a page below the heap or above its
 bound (`FreeStepsH.keepRO`): read-only data, for one, is never touched.
@@ -84,7 +84,7 @@ theorem Memory.setPages_get_off (μ : Memory) (f c : Nat) (a : Access) (q : Nat)
     rw [JAM.get?_insert_ne _ _ (Ne.symm hne)]
     exact ih (by omega) m
 
-/-- A writable range's octets are writable, and below 2^32. -/
+/-- A writable range's octets are writable, and below $2^{32}$. -/
 theorem Memory.rangeWritable_at (μ : Memory) {o l : Nat} (h : μ.rangeWritable o l = true) (j : Nat)
     (hj : j < l) : μ.writable (o + j) = true ∧ o + j < two32 := by
   unfold Memory.rangeWritable at h
@@ -131,7 +131,7 @@ theorem writeValue_keep {X : Type} (out : HostOut X) (v : Option (List UInt8)) (
     simp [hw] at hs
 
 /-- **A refine host call keeps what is not writable**: under `refineContractK`, a continuing call
-    (`grow_heap`, `fetch` or an unknown id) changes no page outside the heap's 48 … pb and no octet
+    (`grow_heap`, `fetch` or an unknown id) changes no page outside the heap's $48 \dots \mathit{pb}$ and no octet
     that is not writable. -/
 theorem refineContractK_keep {cap : Nat} {env : RefineHost.Env} {pb : Nat}
     (hbd : heapBounds env.code = (48, pb)) {h : Nat} {ω ω' : Regs} {μ μ' : Memory} {x x' : RefineCtx}
@@ -192,7 +192,7 @@ theorem refineContractK_keep {cap : Nat} {env : RefineHost.Env} {pb : Nat}
     rw [e]; unfold RefineHost.unknown
     split <;> exact ⟨fun _ _ => rfl, fun _ _ _ => rfl⟩
 
-/-- **A gas-free refine run keeps what is not writable**: every page outside the heap's 48 … pb keeps
+/-- **A gas-free refine run keeps what is not writable**: every page outside the heap's $48 \dots \mathit{pb}$ keeps
     its access, and every octet on such a page that is not writable keeps its value. Read-only data,
     for one, is never touched. -/
 theorem FreeStepsH.keepRO {p : ByteArray} {cap : Nat} {env : RefineHost.Env} {pb : Nat}

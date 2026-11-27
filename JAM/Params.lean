@@ -15,7 +15,7 @@ namespace JAM
 
 open Constants
 
-/-- The parameters `fetch` case 0 encodes, in its order (GP Appendix B, Ω_Y). -/
+/-- The parameters `fetch` case 0 encodes, in its order (GP Appendix B, $\Omega_Y$). -/
 structure Params where
   itemDeposit : Nat        -- 𝖡_I
   byteDeposit : Nat        -- 𝖡_L
@@ -64,18 +64,19 @@ def Params.full : Params :=
     memoSize := Cmemosize, maxPackageExports := Cmaxpackageexports,
     epochTailStart := Cepochtailstart }
 
-/-- The test vectors' tiny chain: 2 cores, an expunge period of 32 and epochs of 12 slots,
-    tail start 10, 3 tickets per extrinsic, rotation period 4, 𝖦_T = 20,000,000 and
-    𝖦_R = 1,000,000,000 (the vectors' README), and a lookup-anchor age 𝖫 = 24. The paper
-    defines only the full chain, so these are test configuration. The README does not list 𝖫;
-    24 is the fuzzer protocol's tiny value, and the reports vector `lookup_anchor_not_recent`
-    (master after v0.8.0) uses it (an anchor 25 slots old is "one slot older than L"). -/
+/-- The test vectors' tiny chain: 2 cores, an expunge period of 32 and epochs of 12 slots, tail
+    start 10, 3 tickets per extrinsic, rotation period 4, $\mathsf{G}_T = 20{,}000{,}000$ and
+    $\mathsf{G}_R = 1{,}000{,}000{,}000$ (the vectors' README), and a lookup-anchor age
+    $\mathsf{L} = 24$. The paper defines only the full chain, so these are test configuration. The
+    README does not list $\mathsf{L}$; 24 is the fuzzer protocol's tiny value, and the reports vector
+    `lookup_anchor_not_recent` (master after v0.8.0) uses it (an anchor 25 slots old is "one slot
+    older than L"). -/
 def Params.tiny : Params :=
   { Params.full with coreCount := 2, expungePeriod := 32, epochLen := 12, epochTailStart := 10,
                      maxBlockTickets := 3, rotationPeriod := 4, blockAccGas := 20000000,
                      packageRefGas := 1000000000, maxLookupAnchorAge := 24 }
 
-/-- ℰ of the parameters as `fetch` case 0 returns them (GP Appendix B, Ω_Y). -/
+/-- $\mathcal{E}$ of the parameters as `fetch` case 0 returns them (GP Appendix B, $\Omega_Y$). -/
 def Params.encode (c : Params) : List UInt8 :=
   let e := Codec.fixed
   e 8 c.itemDeposit ++ e 8 c.byteDeposit ++ e 8 c.baseDeposit ++ e 2 c.coreCount ++

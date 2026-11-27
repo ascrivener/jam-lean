@@ -112,4 +112,28 @@ def leanSource : BlockCommandOf SourceConfig
         Verso.Doc.Block.other (Verso.Genre.Manual.Block.lean $(quote hl) $(quote cfg))
           #[Verso.Doc.Block.code $(quote text)]])
 
+/-- `{api}`N``: an inline reference to declaration `N` (checked to exist), shown with its hover
+    like Verso's `{name}`, and linked to its doc-gen4 page. -/
+@[role]
+def api : RoleExpanderOf Unit
+  | (), #[arg] => do
+    let some { content := s, .. } := Lean.Doc.CodeView.of arg
+      | throwErrorAt arg "api: expected a code literal with a declaration name"
+    let str := s.getVersoCode
+    let identStx := mkIdentFrom arg str.toName (canonical := true)
+    let n ← realizeGlobalConstNoOverloadWithInfo identStx
+    let env ← getEnv
+    let some idx := env.getModuleIdxFor? n
+      | throwErrorAt arg m!"api: {n} is not defined in an imported module"
+    let some mod := env.header.moduleNames[idx.toNat]?
+      | throwErrorAt arg m!"api: no module for {n}"
+    let url := s!"{apiRoot}/{modulePath mod}.html#{n}"
+    let hl ← Verso.Genre.Manual.InlineLean.constTok n str
+    `(Verso.Doc.Inline.link
+        #[Verso.Doc.Inline.other
+          {Verso.Genre.Manual.InlineLean.Inline.name with data := Lean.ToJson.toJson $(quote hl)}
+          #[Verso.Doc.Inline.code $(quote str)]]
+        $(quote url))
+  | _, _ => throwError "api: expected exactly one code literal"
+
 end Companion

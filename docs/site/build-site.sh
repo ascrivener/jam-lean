@@ -18,6 +18,16 @@ rm -rf _site
 mkdir -p _site
 cp -r .lake/build/doc _site/api
 cp -r _book/html-multi _site/book
+# An introduction on the API index page, in place of doc-gen4's generic heading.
+python3 - _site/api/index.html landing/api-intro.html <<'EOF'
+import sys
+page, intro = sys.argv[1], open(sys.argv[2], encoding="utf-8").read()
+s = open(page, encoding="utf-8").read()
+head = "<h1> Welcome to the documentation page </h1>"
+if head not in s:
+    sys.exit("build-site.sh: doc-gen4's index heading changed; update the API intro injection")
+open(page, "w", encoding="utf-8").write(s.replace(head, intro, 1))
+EOF
 cp landing/index.html _site/index.html
 touch _site/.nojekyll
 echo "site: $(du -sh _site | cut -f1) in $(pwd)/_site"

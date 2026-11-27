@@ -17,7 +17,7 @@ All arithmetic follows the paper's formulas over ℕ and ℤ; register values ar
 namespace PVM
 
 /-- Exit reasons and the continuation marker ▸ (GP §A.1, §A.4):
-    ▸ (`cont`), ∎ (`halt`), ☇ (`panic`), ∞ (`oog`), F × a (`fault a`), h̵ × h (`host h`). -/
+    ▸ (`cont`), ∎ (`halt`), ☇ (`panic`), ∞ (`oog`), F × a (`fault a`), ħ × h (`host h`). -/
 inductive Status where
   | cont
   | halt

@@ -15,7 +15,7 @@ other entry of s (storage, or a request) goes into `entries` under the 27 hash o
 The decoding is total on states whose service entries all belong to an account with a C(255, s)
 entry.
 
-`Tests/TraceTest.lean` checks the round trip T(decodeState(T(σ))) = T(σ), key by key, and the
+[`Tests/TraceTest.lean`](https://github.com/ascrivener/jam-lean/blob/main/Tests/TraceTest.lean) checks the round trip T(decodeState(T(σ))) = T(σ), key by key, and the
 state root, on every state of the block-import traces.
 -/
 

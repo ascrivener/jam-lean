@@ -15,7 +15,10 @@
   h1 { font-size: 1.9rem; margin: 0 0 .25rem; }
   p.sub { color: var(--muted); margin: 0 0 2rem; }
   a { color: var(--link); }
+  h2 { font-size: 1.15rem; margin: 2rem 0 .5rem; }
   ul { list-style: none; padding: 0; }
+  ul.status { list-style: disc; padding-left: 1.25rem; }
+  ul.status li { border: 0; padding: .2rem 0; }
   li { border-top: 1px solid var(--rule); padding: 1rem 0; }
   li a { font-weight: 600; font-size: 1.1rem; }
   li p { margin: .25rem 0 0; color: var(--muted); }
@@ -26,6 +29,25 @@
   <h1>jam-lean</h1>
   <p class="sub">A Lean 4 model of JAM from the Gray Paper v0.8.1, used to prove theorems about real
   compiled service binaries.</p>
+  <h2>Where to start</h2>
+  <p>New to the model? Read the <a href="book/">companion</a>'s status and one pilot chapter, then
+  follow its links into the API reference. In the API reference, start at the library roots:
+  <a href="api/JAM.html"><code>JAM</code></a> (the protocol, Appendix B and §4–§19),
+  <a href="api/PVM.html"><code>PVM</code></a> (Appendix A) and
+  <a href="api/JamCrypto.html"><code>JamCrypto</code></a> (the cryptography, in plain Lean).</p>
+
+  <h2>Status</h2>
+  <ul class="status">
+    <li>The companion is a pilot: two chapters are written, and the rest of the paper is a roadmap.</li>
+    <li>The model follows GP v0.8.1 but runs the GP v0.8.0 test vectors (no v0.8.1 vectors are
+      published yet); the accumulate vectors and block import over traces are suspended until they are.</li>
+    <li>Proofs about real service binaries were last checked against the v0.8.0 model.</li>
+    <li>jam-lean is a specification model for proofs: not a node, and not audited.</li>
+    <li>To build and test it, see the <a href="https://github.com/ascrivener/jam-lean#building-and-running">README</a>;
+      report errors as <a href="https://github.com/ascrivener/jam-lean/issues">GitHub issues</a>.</li>
+  </ul>
+
+  <h2>Contents</h2>
   <ul>
     <li><a href="book/">A Companion to the Gray Paper</a>
       <p>The paper's equations next to the Lean definitions that implement them (read from the

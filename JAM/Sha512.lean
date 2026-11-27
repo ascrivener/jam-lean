@@ -6,7 +6,7 @@ specification, in which the VRF output Y of a signature or ring proof is the fir
 SHA-512 over the suite string, 0x03, the encoded output point and 0x00; the output point is the
 first 32 octets of both an IETF signature and a ring proof (`vrfOutput`). The model's
 `JAM.Crypto` stays a parameter: only the block-import trace runner supplies `bsOut` and
-`bsRingOut` with `vrfOutput`. Tested in `Tests/Sha512Test.lean`.
+`bsRingOut` with `vrfOutput`. Tested in [`Tests/Sha512Test.lean`](https://github.com/ascrivener/jam-lean/blob/main/Tests/Sha512Test.lean).
 -/
 
 namespace JAM.Sha512

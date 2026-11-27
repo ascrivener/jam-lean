@@ -59,7 +59,7 @@ structure HostRunResult (X : Type) where
   ctx : X
 
 /-- ı + 1 + skip(ı) for the program of blob `p` (ı itself if `p` does not parse; Ψ only reports
-    h̵ for blobs that do). -/
+    ħ for blobs that do). -/
 def blobNext (p : ByteArray) (i : Nat) : Nat :=
   match Blob.parse? p with
   | some P => P.next i

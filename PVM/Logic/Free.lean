@@ -42,7 +42,7 @@ theorem step_eq_freeStep {P : Program} {i : Nat} {gas : UInt64} {ch : Bool} {ω 
 end Program
 
 /-- How a gas-free run ends at index `i`, mirroring Ψ's exit cases (GP §A.1): a deblob failure
-    (☇ with the state unchanged), or a step whose ε* ≠ ▸ (∎ and ☇ keep ω*, μ*; F and h̵ keep the
+    (☇ with the state unchanged), or a step whose ε* ≠ ▸ (∎ and ☇ keep ω*, μ*; F and ħ keep the
     state before the step). -/
 inductive FreeExit (p : ByteArray) : Nat → Regs → Memory → Status → Regs → Memory → Prop where
   | invalid {i ω μ} : deblob p i = none → FreeExit p i ω μ .panic ω μ

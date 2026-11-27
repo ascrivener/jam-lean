@@ -32,7 +32,7 @@ def chargeGas (P : Program) (i : Nat) (gas : UInt64) (charged : Bool) : Status �
     let cost := P.blockCost (P.blockStartOf i)
     if gas.toNat ≥ cost then (.cont, UInt64.ofNat (gas.toNat - cost), true) else (.oog, gas, false)
 
-/-- ε* ∈ {▸} ∪ {h̵} × ℕ_R, the condition under which a terminator clears the charged flag. -/
+/-- ε* ∈ {▸} ∪ {ħ} × ℕ_R, the condition under which a terminator clears the charged flag. -/
 def Status.continuesOrHost : Status → Bool
   | .cont | .host _ => true
   | _ => false
@@ -60,14 +60,14 @@ def step (P : Program) (i : Nat) (gas : UInt64) (charged : Bool) (ω : Regs) (μ
   let m := P.exec i ((P.decode i).getD (.noArgs .trap)) ω μ
   let out := finalState g.1 i ω μ m (memoryException μ m.reads m.writes)
   { status := out.1, pc := out.2.1, gas := g.2.1, regs := out.2.2.1, mem := out.2.2.2
-    -- ϱ̃* = ⊥ if ϱ̃' = ⊥ ∨ (**c**_ı ∈ T ∧ ε* ∈ {▸} ∪ {h̵} × ℕ_R), otherwise ⊤.
+    -- ϱ̃* = ⊥ if ϱ̃' = ⊥ ∨ (**c**_ı ∈ T ∧ ε* ∈ {▸} ∪ {ħ} × ℕ_R), otherwise ⊤.
     charged := !(!g.2.2 || (isTerminator (P.zeta i) && Status.continuesOrHost out.1)) }
 
 end Program
 
 /-- The result of Ψ (GP §A.1): (ε, ı, ϱ, ϱ̃, ω, μ). -/
 structure Result where
-  /-- ε ∈ {∎, ☇, ∞} ∪ {F, h̵} × ℕ_R -/
+  /-- ε ∈ {∎, ☇, ∞} ∪ {F, ħ} × ℕ_R -/
   status : Status
   /-- ı: 0 on ∎ and ☇, otherwise the instruction that caused the exit. -/
   pc : Nat

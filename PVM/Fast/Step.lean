@@ -257,7 +257,7 @@ def FResult.abs (r : FResult) : Result :=
     mem := r.mem.toMemory }
 
 /-- `Prepared.run` with the tables and a `FastMem`. On an exit that leaves the state unchanged
-    (F, ∞, h̵) it returns the step's registers and memory, which are the pre-step ones
+    (F, ∞, ħ) it returns the step's registers and memory, which are the pre-step ones
     (`fstep_keep`), so that the memory is never shared during a step. -/
 def frun (Q : Prepared) : Nat → Nat → UInt64 → Bool → Regs → FastMem → Option FResult
   | 0, _, _, _, _, _ => none
@@ -408,7 +408,7 @@ theorem not_ctl {s : Status} (h1 : s = .cont ∨ s = .halt ∨ s = .panic)
     (h2 : s ≠ .cont ∧ s ≠ .halt ∧ s ≠ .panic) : False := by
   rcases h1 with h1 | h1 | h1 <;> simp_all
 
-/-- An exit other than ▸, ∎ and ☇ (that is F, ∞ or h̵) leaves the registers and the memory as
+/-- An exit other than ▸, ∎ and ☇ (that is F, ∞ or ħ) leaves the registers and the memory as
     they were. -/
 theorem fexec_keep (Q : Prepared) (i : Nat) (ins : Instr) (ω : Regs) (F : FastMem)
     (h : (Q.fexec i ins ω F).status ≠ .cont ∧ (Q.fexec i ins ω F).status ≠ .halt ∧

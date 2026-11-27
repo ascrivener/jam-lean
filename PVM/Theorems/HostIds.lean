@@ -7,7 +7,7 @@ import PVM.Theorems.Termination
 
 `hostCallIdsOf p` scans a blob for `ecalli` instructions without running it. We prove:
 
-* `psi_hostId_mem`: every h̵ × h that Ψ returns has h among them;
+* `psi_hostId_mem`: every ħ × h that Ψ returns has h among them;
 * `psiHStar_congr`, `psiM_congr`: running a program under two host handlers that agree on those
   ids gives the same result. A program's behaviour cannot depend on what a handler does for any
   other id, so in particular it can never make any other host call.

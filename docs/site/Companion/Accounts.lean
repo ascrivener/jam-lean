@@ -247,7 +247,7 @@ These are recorded as notes v0.8.1-A40 to A45 of the model's
   4-octet slots can only come from a state the model did not build (a loaded state). The model
   reads it as no request, and {api}`JAM.ServiceAccount.requestSet` and
   {api}`JAM.ServiceAccount.requestErase` treat it the same way. The paper does not cover such states.
-* *Note v0.8.1-A43, footprint carried.* $`a_i` and $`a_o` are fields updated by every accessor, rather than recomputed
+* *Note v0.8.1-A43, footprint carried.* $`a_i` and $`a_o` are fields updated by every accessor that writes, rather than recomputed
   from $`\mathbf{s}` and $`\mathbf{l}` (see {ref "accounts-footprint"}[§9.3]).
 * *Note v0.8.1-A44, wider types.* The paper types balances as $`\mathbb{N}_B`, identifiers as $`\mathbb{N}_S`,
   slots as $`\mathbb{N}_T`, gas as $`\mathbb{N}_G` and the code hash as $`\mathbb{H}`. The model's

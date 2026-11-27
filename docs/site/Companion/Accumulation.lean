@@ -223,10 +223,10 @@ How the code maps to the equation:
 
 * `ss` is $`\mathbf{s}`, sorted (a set in the paper, so any order is allowed; $`\mathbf{u}` and
   $`\mathbf{t}'` are built in ascending order of service).
-* `acc s` is $`\Delta(s)`. The paper evaluates $`\Delta_1` at every service in $`\mathbf{s}`, at
-  their effective supervisors, at the effective supervisor of every account in $`\mathcal{K}(\mathbf{d})`
-  (through $`M`), and at the privileged services $`m`, $`v`, $`r` and $`\mathbf{a}_c`. The model
-  runs $`\Delta_1` once for each service in that list (`needed`) and reuses the result. Any other
+* `acc s` is $`\Delta(s)`. The paper evaluates $`\Delta` at every service in $`\mathbf{s}`, at every
+  account in $`\mathcal{K}(\mathbf{d})` (through $`M`) and at $`m`, $`v`, $`r` and $`\mathbf{a}_c`,
+  and each $`\Delta(x)` evaluates $`\Delta_1` at $`x` and at its effective supervisor. The model runs
+  $`\Delta_1` only for the services in `needed` and reuses the result. Any other
   service gets the unchanged outcome (input state, nothing modified, no gas) without running
   $`\Psi_A`; that this equals $`\Delta_1` for a service with no inputs and no gas is argued in the
   docstring of {api}`JAM.accPar`, not proved.
@@ -379,7 +379,7 @@ tag := "accumulation-checked"
 
 *Theorems.* No theorem is yet stated about $`\Delta_+`, $`\Delta_*`, $`T`, $`Q` or $`I`
 themselves. One theorem bounds what a single run of $`\Psi_A`, and so of $`\Delta_1`, can change.
-Let $`s` be a service whose code contains none of the host calls `bless`, `assign`, `designate`,
+Let $`s` be a service with an account whose code is present and contains none of the host calls `bless`, `assign`, `designate`,
 `new`, `eject` and `provide` (the list `reachingIds`), and suppose no other service has $`s` as
 its effective supervisor (`NoSupervisee`). Then $`\Psi_A` for $`s` leaves every other account, the
 staging keys, the authorizer queue and the privileges as they were in $`\mathbf{e}` (`Outside`), and

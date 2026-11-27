@@ -1,0 +1,13 @@
+{
+  "equations": {
+    "D.1": { "kind": "def", "name": "JAM.Trie.keyOfServiceData",
+             "note": "the third case; the first two are `JAM.Trie.keyOfIndex` and `JAM.Trie.keyOfService`, and account entries already hashed use `JAM.Trie.keyOfServiceHash`" },
+    "D.2": { "kind": "def", "name": "JAM.State.serializeList",
+             "note": "as a dictionary: `JAM.State.serialize`; the service entries come from `JAM.Serialize.account`" },
+    "D.3": { "kind": "def", "name": "JAM.Trie.branch" },
+    "D.4": { "kind": "def", "name": "JAM.Trie.leaf" },
+    "D.5": { "kind": "def", "name": "JAM.State.root" },
+    "D.6": { "kind": "def", "name": "JAM.Trie.merkle",
+             "note": "keys stay whole and `depth` counts the bits stripped; `JAM.Trie.root` calls it with fuel 248, enough for distinct 31-octet keys" }
+  }
+}

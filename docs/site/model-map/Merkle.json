@@ -1,0 +1,21 @@
+{
+  "equations": {
+    "E.1": { "kind": "def", "name": "JAM.Merkle.node",
+             "note": "`fuel` bounds the recursion; `|v|` suffices" },
+    "E.2": { "kind": "def", "name": "JAM.Segments.trace" },
+    "E.3": { "kind": "def", "name": "JAM.Merkle.root" },
+    "E.7": { "kind": "def", "name": "JAM.Segments.constancy" },
+    "E.4": { "kind": "def", "name": "JAM.Segments.cdRoot" },
+    "E.5": { "kind": "def", "name": "JAM.Segments.justify" },
+    "E.6": { "kind": "def", "name": "JAM.Segments.page" },
+    "14.13": { "kind": "def", "name": "JAM.Segments.pagedProofs",
+               "note": "H is a parameter here (Blake2b in the paper)" },
+    "14.20": { "kind": "def", "name": "JAM.Segments.zeroPad" },
+    "E.8": { "kind": "def", "name": "JAM.MMR.append",
+             "note": "P is `JAM.MMR.place`" },
+    "E.9": { "kind": "inline", "name": "JAM.Serialize.recent", "at": "varSeq (opt id) r.belt",
+             "note": "the model encodes an MMR only here, the accumulation-output belt in the state" },
+    "E.10": { "kind": "def", "name": "JAM.MMR.superPeak",
+              "note": "the recursion is `JAM.MMR.superPeakRev` on the present peaks, last first" }
+  }
+}

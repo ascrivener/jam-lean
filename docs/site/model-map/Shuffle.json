@@ -1,0 +1,8 @@
+{
+  "equations": {
+    "F.1": { "kind": "def", "name": "JAM.Shuffle.shuffle",
+             "note": "recursion on |s|; entries of r beyond its length are read as 0" },
+    "F.2": { "kind": "def", "name": "JAM.Shuffle.seqFromHash" },
+    "F.3": { "kind": "def", "name": "JAM.Shuffle.shuffleHash" }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "equations": {
+    "B.1": { "kind": "def", "name": "JAM.psiI",
+             "note": "over accounts d; the authorization code is `JAM.WorkPackage.authCode`" },
+    "B.2": { "kind": "def", "name": "JAM.RefineHost.dispatchI" },
+    "B.3": { "kind": "type", "name": "JAM.Constants.Cexpungeperiod",
+             "note": "the literal 19,200; chain parameters carry it as `Params.expungePeriod`" },
+    "B.4": { "kind": "type", "name": "JAM.InnerPvm" },
+    "B.5": { "kind": "def", "name": "JAM.psiR",
+             "note": "the extrinsic data x̄ is an argument here, since the paper builds it from preimages it does not pass to Ψ_R" },
+    "B.7": { "kind": "type", "name": "JAM.Implications" },
+    "B.8": { "kind": "def", "name": "JAM.Implications.self" },
+    "B.9": { "kind": "def", "name": "JAM.psiA",
+             "note": "the cases after e′ is formed are `JAM.psiARun`" },
+    "B.10": { "kind": "def", "name": "JAM.initImplications" },
+    "B.13": { "kind": "def", "name": "JAM.checkId",
+              "note": "`fuel` bounds the search; |d| + 1 steps suffice" },
+    "B.12": { "kind": "inline", "name": "JAM.psiARun", "at": "match o with" },
+    "B.14": { "kind": "def", "name": "JAM.charged",
+              "note": "the body starts from ϱ − g, which is max(ϱ − g, 0) since ϱ ≥ g on that branch" },
+    "B.15": { "kind": "def", "name": "JAM.charged" },
+    "B.17": { "kind": "def", "name": "JAM.charged",
+              "note": "the default (▸, ϱ − g, φ, μ, x) passed to each host function's body" },
+    "B.16": { "kind": "def", "name": "JAM.memGas" },
+    "B.18": { "kind": "type", "name": "JAM.RefineCtx" },
+    "B.19": { "kind": "type", "name": "JAM.AccCtx" }
+  }
+}

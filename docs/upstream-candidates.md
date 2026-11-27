@@ -71,7 +71,6 @@ Gaps, where the paper leaves behaviour undefined:
 | v0.8.1-A31 | §5, (5.2)–(5.3) | **A** and P(H) come from headers outside σ. The model takes the retained headers as an argument (`Chain`); with none retained, the H_P check is skipped (`JAM/BlockImport.lean`, `importBlock`). |
 | v0.8.1-A32 | §4, (4.1) | No errors are named for an invalid block and no order is given between the sections' validity conditions. The model reports the first failing check in the order of `importBlock` (header checks, disputes, Safrole and the markers, seal, assurances, guarantees, accumulation, preimages; `BlockError`). |
 | v0.8.1-A33 | §3.8.1 | ℋ_K is "Keccak 256-bit … proposed by Bertoni et al. and utilized by" the Yellow Paper; the FIPS 202 SHA3-256 padding differs. The model uses the original Keccak padding (domain octet 0x01), as Ethereum does (`JAM/Keccak.lean`, `keccak256`). |
-| v0.8.1-A34 | Appendix H, eq. (H.1) | **Withdrawn (2026-11-27), not for upstream:** 𝒟 is typed on v ∈ 𝕍 = {3c ∣ c ∈ ℕ_{2…𝖢+1}} (eq. (6.8)), so v/3 is exact and v = 1021, 1022 are not in its domain. `originalShards`' integer division agrees on 𝕍. (Was: "v/3 integer or real division when 3 ∤ v".) |
 | v0.8.1-A36 | Ψ_R, eq. (B.5) | w = p_**w**[i] is read without saying what happens when the package has no item i. The model answers (BAD, [], 0), as for a missing service (`JAM/Refine.lean`, `psiR`). |
 | v0.8.1-A50 | §10.2, eq. `verdicts` | When \|**k**\| < 3, ⌊⅓\|**k**\|⌋ = 0, so V(a, **j**)'s cases ⊥ (t = 0) and ∅ (t = ⌊⅓\|**k**\|⌋) both hold at t = 0. The model takes ⊥ (`JAM/Disputes.lean`, `verdictOutcome`). Validator counts are in 𝕍 (eq. `valcount`), so \|**k**\| ≥ 6 and the paper never reaches it. |
 | v0.8.1-A51 | §11.2, eq. `availassignmentspostassurancesdef` | (p_**g**)_**r** ∈ **R** tests whether a work-report is in **R** without saying how reports are compared. The model compares their encodings ℰ(**r**) (`JAM/Assurances.lean`, `assurances`). |
@@ -160,6 +159,10 @@ should cite a later draft.
 
 ## Not for upstream
 
+- **Note v0.8.1-A34, withdrawn (2026-11-27).** Appendix H, eq. (H.1): the note asked whether v/3 in
+  𝒟(v) is integer or real division when 3 ∤ v. But 𝒟 is typed on v ∈ 𝕍 = {3c ∣ c ∈ ℕ_{2…𝖢+1}} (eq. (6.8)),
+  so v/3 is exact and v = 1021, 1022 are outside its domain; `originalShards`' integer division agrees
+  on 𝕍. The ID is not reused.
 - **The picoalloc model's alignment rounding.** A bug in this repository's own model, not in the
   paper or the vectors. The model rounded the data unit from the heap base; the binary rounds it
   in the address space. Fixed in `Services/Picoalloc/Model.lean`.

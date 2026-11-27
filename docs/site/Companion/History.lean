@@ -30,14 +30,14 @@ tag := "history-state"
 
 $$`\beta \equiv (\beta_H, \beta_B) \qquad \text{(7.1)}`
 
-$$`\beta_H \in \llbracket \left\lgroup h \in \mathbb{H},\; s \in \mathbb{H},\; b \in \mathbb{H},\; t \in \mathbb{N}_T,\; \mathbf{p} \in \langle \mathbb{H} \to \mathbb{H} \rangle \right\rgroup \rrbracket_{:\mathsf{H}} \qquad \text{(7.2)}`
+$$`\beta_H \in \llbracket \left\lgroup h \in \mathbb{H},\; s \in \mathbb{H},\; b \in \mathbb{H},\; t \in \mathbb{N}_T,\; \mathbf{p} \in \langle\!|\, \mathbb{H} \to \mathbb{H} \,|\!\rangle \right\rgroup \rrbracket_{:\mathsf{H}} \qquad \text{(7.2)}`
 
 $$`\beta_B \in \llbracket \mathbb{H}\boldsymbol{?} \rrbracket \qquad \text{(7.3)} \qquad\qquad \theta \in \llbracket (\mathbb{N}_S, \mathbb{H}) \rrbracket \qquad \text{(7.4)}`
 
 Each entry of $`\beta_H` holds a block's header hash $`h`, its state root $`s`, the super-peak $`b` of the
 Accumulation Output Log after that block, its timeslot $`t`, and the work packages reported in it:
 $`\mathbf{p}` maps each package hash to its segment root. $`\beta_B` is the log itself, a sequence of optional peaks.
-$`\langle K \to V \rangle` is the paper's notation for dictionaries from $`K` to $`V` (§3.5; the paper draws the angle brackets
+$`\langle\!|\, K \to V \,|\!\rangle` is the paper's notation for dictionaries from $`K` to $`V` (§3.5; the paper draws the angle brackets
 with a bar). $`\theta` is the sequence of accumulation outputs, (service, hash) pairs; it is produced by accumulation
 ({ref "accumulation"}[§12]) and kept in the state as a separate component.
 

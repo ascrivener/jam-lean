@@ -90,6 +90,8 @@ rebuilds only what changed since then instead of building cold for 4.5–5 h.
     macros changed;
   - jam-lean-target's pin, image and release;
   - an independent review of the companion book against the new paper (equations, readings, claims);
+  - the book's paper table: update `VERSION`/`COMMIT` in `scripts/gen_gp_labels.py` and regenerate
+    `docs/site/gp-labels.json`;
   - finally, read both repositories' front pages as a visitor would.
 - **Crypto** stays a parameter. SHA-512 is in plain Lean.
 - **JamCrypto** (moved from jam-lean-target, 2026-11-25) implements the crypto parameter in plain

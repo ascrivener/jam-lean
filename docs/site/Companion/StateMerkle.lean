@@ -1,5 +1,6 @@
 import VersoManual
 import Companion.Source
+import Companion.Paper
 import Companion.Docstring
 import JAM.Trie
 import JAM.State
@@ -18,6 +19,8 @@ tag := "statemerkle"
 shortTitle := "D. State Merklization"
 file := "state-merklization"
 %%%
+
+*In the paper:* {gpchapter}`sec:statemerklization`.
 
 Appendix D of GP v0.8.1 commits to the whole state $`\sigma` with one 32-octet hash, the state root
 $`\mathcal{M}_\sigma(\sigma)`, which headers carry as $`\mathbf{H}_R`. It does this in two stages:

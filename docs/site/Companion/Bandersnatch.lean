@@ -1,5 +1,6 @@
 import VersoManual
 import Companion.Source
+import Companion.Paper
 import Companion.Docstring
 import JAM.Crypto
 import JamCrypto.Crypto
@@ -21,6 +22,8 @@ tag := "bandersnatch"
 shortTitle := "G. Bandersnatch VRF"
 file := "bandersnatch"
 %%%
+
+*In the paper:* {gpchapter}`sec:bandersnatch`.
 
 Appendix G of GP v0.8.1 defines the two Bandersnatch primitives that Safrole ({ref "safrole"}[§6]) uses: VRF
 signatures, which seal blocks and yield their entropy, and Ring VRF proofs, with which validators

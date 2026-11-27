@@ -1,5 +1,6 @@
 import VersoManual
 import Companion.Source
+import Companion.Paper
 import Companion.Primitives
 import Companion.Overview
 import Companion.Safrole
@@ -33,10 +34,10 @@ authors := ["The jam-lean project"]
 shortTitle := "jam-lean: a companion to the Gray Paper"
 %%%
 
-This book reads the [Gray Paper](https://graypaper.com), version 0.8.1 (tag
-[`v0.8.1`](https://github.com/gavofyork/graypaper/releases/tag/v0.8.1) of gavofyork/graypaper),
-alongside [jam-lean](https://github.com/ascrivener/jam-lean), a Lean 4 model of JAM. For each part
-of the paper it shows:
+This book reads the [Gray Paper](https://graypaper.com), version 0.8.1 ({gptag}[release `v0.8.1`] of
+gavofyork/graypaper), alongside [jam-lean](https://github.com/ascrivener/jam-lean), a Lean 4 model
+of JAM. *The paper is the authority*; this book is a companion to it. Each chapter opens by naming
+its part of the paper (v0.8.1). For each part of the paper the book shows:
 
 * the paper's equations, as they are written in the paper, with the paper's equation numbers;
 * the Lean definitions that implement them, read from the model's source when the book is built
@@ -55,8 +56,9 @@ model.
 
 *Status.*
 
-* *A pilot.* Two chapters are written: §6 Safrole and Appendix A's single step. The rest of the
-  paper is listed in the {ref "roadmap"}[roadmap] with the model code that implements it.
+* *Complete for what is modelled.* Every part of the paper the model implements has a chapter:
+  §3–§14, §17 and §19, and Appendices A–H. The {ref "roadmap"}[roadmap] lists them with the model
+  code behind each, and the parts that are not modelled (§15, §16, §18).
 * *What the model is tested against.* The model follows GP v0.8.1, but no test vectors for v0.8.1
   are published yet, so it runs the GP v0.8.0 vectors (changed only where a v0.8.1 paper change
   requires it). Two checks are suspended until v0.8.1 vectors exist: the accumulate vectors and
@@ -76,35 +78,36 @@ model.
 # Roadmap
 %%%
 tag := "roadmap"
+file := "roadmap"
 %%%
 
-Chapters follow the order of the paper's sections. Two are written so far; the others are listed
-with the model modules that implement them.
+Chapters follow the order of the paper's sections. Each lists the model modules that implement
+it; the parts of the paper that are not modelled are listed too.
 
-* *§3 Primitives* ({ref "primitives"}[written]): `JAM/Blake2b.lean`, `JAM/Keccak.lean`, `JAM/Sha512.lean`, `JAM/Constants.lean`, `JAM/Params.lean`
-* *§4–§5 The state, the header and the block* ({ref "overview"}[written]): `JAM/State.lean`, `JAM/Block.lean`, `JAM/BlockImport.lean`
-* *§6 Safrole* ({ref "safrole"}[written]): `JAM/Safrole.lean`
-* *§7 Recent history* ({ref "history"}[written]): `JAM/History.lean`
-* *§8 Authorization* ({ref "authorization"}[written]): `JAM/Authorization.lean`
-* *§9 Service accounts* ({ref "accounts"}[written]): `JAM/Account.lean`
-* *§10 Disputes* ({ref "disputes"}[written]): `JAM/Disputes.lean`
-* *§11 Reports and assurances* ({ref "reports"}[written]): `JAM/Reports.lean`, `JAM/Assurances.lean`
-* *§12 Accumulation and preimages* ({ref "accumulation"}[written]): `JAM/Accumulate.lean`, `JAM/Accumulation.lean`, `JAM/Preimages.lean`
-* *§13 Statistics* ({ref "statistics"}[written]): `JAM/Statistics.lean`
-* *§14 Work packages and work reports* ({ref "work"}[written]): `JAM/Work.lean`, `JAM/Refine.lean`, `JAM/Guarantee.lean`
+* *§3 Primitives* ({ref "primitives"}[chapter]): `JAM/Blake2b.lean`, `JAM/Keccak.lean`, `JAM/Sha512.lean`, `JAM/Constants.lean`, `JAM/Params.lean`
+* *§4–§5 The state, the header and the block* ({ref "overview"}[chapter]): `JAM/State.lean`, `JAM/Block.lean`, `JAM/BlockImport.lean`
+* *§6 Safrole* ({ref "safrole"}[chapter]): `JAM/Safrole.lean`
+* *§7 Recent history* ({ref "history"}[chapter]): `JAM/History.lean`
+* *§8 Authorization* ({ref "authorization"}[chapter]): `JAM/Authorization.lean`
+* *§9 Service accounts* ({ref "accounts"}[chapter]): `JAM/Account.lean`
+* *§10 Disputes* ({ref "disputes"}[chapter]): `JAM/Disputes.lean`
+* *§11 Reports and assurances* ({ref "reports"}[chapter]): `JAM/Reports.lean`, `JAM/Assurances.lean`
+* *§12 Accumulation and preimages* ({ref "accumulation"}[chapter]): `JAM/Accumulate.lean`, `JAM/Accumulation.lean`, `JAM/Preimages.lean`
+* *§13 Statistics* ({ref "statistics"}[chapter]): `JAM/Statistics.lean`
+* *§14 Work packages and work reports* ({ref "work"}[chapter]): `JAM/Work.lean`, `JAM/Refine.lean`, `JAM/Guarantee.lean`
 * §15 Guaranteeing and §16 Availability assurance: not modelled beyond the refinement of §14
   (the networking and distribution they describe is out of scope)
-* *§17 Auditing and judging* ({ref "auditing"}[written]): `JAM/Auditing.lean`
+* *§17 Auditing and judging* ({ref "auditing"}[chapter]): `JAM/Auditing.lean`
 * §18 Beefy distribution: not modelled
-* *§19 Grandpa and the best chain* ({ref "bestchain"}[written]): `JAM/BestChain.lean` (the best-chain rule; Grandpa itself is not modelled)
-* *Appendix A, the PVM* ({ref "pvm"}[written]): `PVM/Blob.lean`, `PVM/Machine.lean`, `PVM/Instr.lean`, `PVM/Exec.lean`, `PVM/Memory.lean`, `PVM/Invocation.lean`, `PVM/Gas.lean`
-* *Appendix B, PVM invocations and host calls* ({ref "invocations"}[written]): `JAM/Host/General.lean`, `JAM/Refine.lean`, `JAM/Accumulate.lean` (the host-call loop, the standard initialization and the argument invocation, which v0.8.1 defines in §A.6–§A.8, are in the Appendix A chapter)
-* *Appendix C, the serialization codec* ({ref "codec"}[written]): `JAM/Codec.lean`, `JAM/Decode.lean`
-* *Appendix D, state Merklization* ({ref "statemerkle"}[written]): `JAM/Trie.lean`, `JAM/State.lean`, `JAM/StateDecode.lean`
-* *Appendix E, general Merklization* ({ref "merkle"}[written]): `JAM/Merkle.lean`, `JAM/Segments.lean`, `JAM/History.lean` (mountain ranges)
-* *Appendix F, shuffling* ({ref "shuffle"}[written]): `JAM/Shuffle.lean`
-* *Appendix G, the Bandersnatch VRF* ({ref "bandersnatch"}[written]): `JAM/Crypto.lean` (the interface) and `JamCrypto/` (an implementation)
-* *Appendix H, erasure coding* ({ref "erasure"}[written]): `JAM/Erasure.lean`
+* *§19 Grandpa and the best chain* ({ref "bestchain"}[chapter]): `JAM/BestChain.lean` (the best-chain rule; Grandpa itself is not modelled)
+* *Appendix A, the PVM* ({ref "pvm"}[chapter]): `PVM/Blob.lean`, `PVM/Machine.lean`, `PVM/Instr.lean`, `PVM/Exec.lean`, `PVM/Memory.lean`, `PVM/Invocation.lean`, `PVM/Gas.lean`
+* *Appendix B, PVM invocations and host calls* ({ref "invocations"}[chapter]): `JAM/Host/General.lean`, `JAM/Refine.lean`, `JAM/Accumulate.lean` (the host-call loop, the standard initialization and the argument invocation, which v0.8.1 defines in §A.6–§A.8, are in the Appendix A chapter)
+* *Appendix C, the serialization codec* ({ref "codec"}[chapter]): `JAM/Codec.lean`, `JAM/Decode.lean`
+* *Appendix D, state Merklization* ({ref "statemerkle"}[chapter]): `JAM/Trie.lean`, `JAM/State.lean`, `JAM/StateDecode.lean`
+* *Appendix E, general Merklization* ({ref "merkle"}[chapter]): `JAM/Merkle.lean`, `JAM/Segments.lean`, `JAM/History.lean` (mountain ranges)
+* *Appendix F, shuffling* ({ref "shuffle"}[chapter]): `JAM/Shuffle.lean`
+* *Appendix G, the Bandersnatch VRF* ({ref "bandersnatch"}[chapter]): `JAM/Crypto.lean` (the interface) and `JamCrypto/` (an implementation)
+* *Appendix H, erasure coding* ({ref "erasure"}[chapter]): `JAM/Erasure.lean`
 
 {include 1 Companion.Primitives}
 

@@ -1,5 +1,6 @@
 import VersoManual
 import Companion.Source
+import Companion.Paper
 import Companion.Docstring
 import JAM.Host.General
 import JAM.Refine
@@ -25,6 +26,8 @@ tag := "invocations"
 shortTitle := "B. Invocations"
 file := "invocations"
 %%%
+
+*In the paper:* {gpchapter}`sec:virtualmachineinvocations`.
 
 Appendix B of GP v0.8.1 defines the three places where the protocol runs a PVM program: the
 Is-Authorized invocation $`\Psi_I` (§B.2), the Refine invocation $`\Psi_R` (§B.3) and the Accumulate

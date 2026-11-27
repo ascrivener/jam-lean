@@ -41,8 +41,34 @@ code.hl.lean.block, .semantics, main table {
   :root { --search-bar-width: 8rem !important; }
 }
 html, body { overflow-x: clip; }
+code.hl.lean.block.collapsed-code { display: block; max-height: 18em; overflow-y: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent);
+  mask-image: linear-gradient(to bottom, #000 70%, transparent); }
+button.show-code { display: block; margin: 0.25em 0 1em; padding: 0.3em 0.8em; font-family: system-ui, sans-serif;
+  font-size: 0.9em; cursor: pointer; border: 1px solid #b0b0b0; border-radius: 4px; background: #f6f6f6; }
 .split-toc li:has(> a[href*='/#JAM___']), .split-toc li:has(> a[href*='/#PVM___']),
 .split-toc li:has(> a[href*='/#JamCrypto___']) { display: none; }
+"⟩
+
+/-- Long quoted definitions (`{leanSource}` blocks of more than 30 lines) start collapsed to their
+    first 12 lines, with a button to show the whole definition; short ones stay open. -/
+def collapseJs : Verso.Genre.Manual.JS := ⟨"
+document.addEventListener('DOMContentLoaded', () => {
+  for (const code of document.querySelectorAll('code.hl.lean.block')) {
+    const lines = code.textContent.split('\\n').length;
+    if (lines <= 30) continue;
+    code.classList.add('collapsed-code');
+    const btn = document.createElement('button');
+    btn.className = 'show-code';
+    btn.type = 'button';
+    btn.textContent = 'Show the full definition (' + lines + ' lines)';
+    btn.addEventListener('click', () => {
+      const open = code.classList.toggle('collapsed-code');
+      btn.textContent = open ? 'Show the full definition (' + lines + ' lines)' : 'Show less';
+    });
+    code.insertAdjacentElement('afterend', btn);
+  }
+});
 "⟩
 
 /-- Math in docstrings: `$…$` and `$$…$$` in the text of docstrings (the `.docs` blocks of
@@ -106,7 +132,7 @@ def docMathJs : Verso.Genre.Manual.JS := ⟨"
 /-- HTML only, one page per chapter. -/
 def config : Config where
   extraCss := ({} : Std.HashSet Verso.Genre.Manual.CSS).insert narrowCss
-  extraJs := ({} : Std.HashSet Verso.Genre.Manual.JS).insert docMathJs
+  extraJs := (({} : Std.HashSet Verso.Genre.Manual.JS).insert docMathJs).insert collapseJs
   emitTeX := false
   emitHtmlSingle := .no
   emitHtmlMulti := .immediately

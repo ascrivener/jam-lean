@@ -1,5 +1,6 @@
 import VersoManual
 import Companion.Source
+import Companion.Paper
 import Companion.Docstring
 import JAM.Statistics
 import JAM.Reports
@@ -16,6 +17,8 @@ tag := "statistics"
 shortTitle := "§13 Statistics"
 file := "statistics"
 %%%
+
+*In the paper:* {gpchapter}`sec:bookkeeping`.
 
 The chain does not pay rewards itself, but it records what each validator did, so that a staking
 system built on top can act on it. §13 of GP v0.8.1 keeps four records in $`\pi`: per-validator

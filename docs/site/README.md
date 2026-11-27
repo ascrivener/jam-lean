@@ -37,6 +37,12 @@ from `Companion.lean`. A chapter imports the model modules it discusses. It can 
 * `{docstring N}` for a definition or theorem's signature and docstring.
 * `{name}`N`` for an inline reference to `N`.
 
+One rule for code: wherever the book names the definition that implements an equation or a step,
+it *quotes* it with `{leanSource N}` (the header "N — file · GitHub · API" comes with it; blocks over
+30 lines start collapsed). A bare GitHub or API link never stands in for the code. A theorem in the
+`proofs/` package, which `{leanSource}` cannot reach, is quoted as its statement in a code block.
+`{api}` and `{name}` references in running prose to something quoted elsewhere are fine.
+
 The readings the model chose should link to `docs/upstream-candidates.md` by note number.
 
 ## Notation: the paper's macros

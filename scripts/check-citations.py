@@ -12,6 +12,13 @@ Scanned: the book's chapters (`docs/site/Companion.lean`, `docs/site/Companion/*
 "notes <n>, <m> and <k>". A line that mentions the README is skipped: the README's own list of notes
 on the paper (section "Notes on the paper and the vectors") has a few entries of its own.
 Each citation must name an existing, not withdrawn, note.
+
+Paper URLs: the book (`docs/site/Companion.lean`, `docs/site/Companion/`) holds no hand-written
+link to the Gray Paper's text. Its version and section numbers come from one table
+(`docs/site/gp-labels.json`, read by `Companion/Paper.lean`), so a version move changes one place.
+Rejected: any link to a third-party reader (fluffylabs), and links into gavofyork/graypaper other
+than its issues and pull requests, outside `Companion/Paper.lean`. Allowed: the paper's home page
+(graypaper.com).
 """
 
 import glob
@@ -42,6 +49,9 @@ def citations(line):
             yield n
 
 
+PAPER_URL = re.compile(r"https?://(?:[\w.-]*fluffylabs[\w.-]*|github\.com/gavofyork/graypaper(?!/(?:issues|pull)/))[^\s)\"]*")
+
+
 def main():
     ids, withdrawn = notes()
     files = [os.path.join(ROOT, "docs", "site", "Companion.lean")]
@@ -58,7 +68,17 @@ def main():
                 if why:
                     bad += 1
                     print(f"{os.path.relpath(f, ROOT)}:{k}: note {c}: {why} in docs/upstream-candidates.md")
-    print(f"check-citations: {len(ids)} notes, {bad} bad citation(s)")
+    book = [os.path.join(ROOT, "docs", "site", "Companion.lean")]
+    book += sorted(glob.glob(os.path.join(ROOT, "docs", "site", "Companion", "*.lean")))
+    for f in book:
+        if os.path.basename(f) == "Paper.lean":
+            continue
+        for k, line in enumerate(open(f, encoding="utf-8"), 1):
+            for m in PAPER_URL.finditer(line):
+                bad += 1
+                print(f"{os.path.relpath(f, ROOT)}:{k}: hand-written paper URL {m.group(0)} "
+                      "(use Companion/Paper.lean's roles, which read docs/site/gp-labels.json)")
+    print(f"check-citations: {len(ids)} notes, {bad} bad citation(s) or paper URL(s)")
     sys.exit(1 if bad else 0)
 
 

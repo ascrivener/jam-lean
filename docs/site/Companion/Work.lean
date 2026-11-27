@@ -1,5 +1,6 @@
 import VersoManual
 import Companion.Source
+import Companion.Paper
 import Companion.Docstring
 import JAM.Work
 import JAM.Refine
@@ -18,6 +19,8 @@ tag := "work"
 shortTitle := "§14 Work packages"
 file := "work"
 %%%
+
+*In the paper:* {gpchapter}`sec:workpackagesandworkreports`.
 
 A work-package is what a service's users submit to a core: an authorization, a context, and a
 sequence of work-items, each naming a service and carrying a payload. §14 of GP v0.8.1 defines

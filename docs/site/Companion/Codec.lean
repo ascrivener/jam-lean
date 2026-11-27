@@ -1,5 +1,6 @@
 import VersoManual
 import Companion.Source
+import Companion.Paper
 import Companion.Docstring
 import PVM.Blob
 import PVM.Logic.Steps
@@ -21,6 +22,8 @@ tag := "codec"
 shortTitle := "C. Codec"
 file := "codec"
 %%%
+
+*In the paper:* {gpchapter}`sec:serialization`.
 
 Appendix C of GP v0.8.1 defines $`\mathcal{E}`, the function that turns a term into a sequence of
 octets, and its inverse $`\mathcal{E}^{-1}`. The paper uses $`\mathcal{E}` wherever a term is hashed,

@@ -1,5 +1,6 @@
 import VersoManual
 import Companion.Source
+import Companion.Paper
 import Companion.Docstring
 import JAM.Auditing
 import JAM.Guarantee
@@ -18,6 +19,8 @@ tag := "auditing"
 shortTitle := "§17 Auditing"
 file := "auditing"
 %%%
+
+*In the paper:* {gpchapter}`sec:auditing`.
 
 Once a work-report becomes available, validators audit it: each one refines the work-package again
 and publishes a judgment on whether the report is correct. §17 of GP v0.8.1 says which reports a

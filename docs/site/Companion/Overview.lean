@@ -1,5 +1,6 @@
 import VersoManual
 import Companion.Source
+import Companion.Paper
 import Companion.Docstring
 import JAM.State
 import JAM.Block
@@ -17,6 +18,8 @@ tag := "overview"
 shortTitle := "§4–§5 State and block"
 file := "overview"
 %%%
+
+*In the paper:* {gpchapter}`sec:overview` and {gpchapter}`sec:header`.
 
 This chapter is the book's map. GP v0.8.1 §4 defines a blockchain by its state $`\sigma`, its blocks $`\mathbf{B}` and
 one function, the block-level state transition $`\Upsilon`. It splits $`\sigma` into components and $`\Upsilon` into

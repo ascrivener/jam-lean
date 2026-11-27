@@ -1,5 +1,6 @@
 import VersoManual
 import Companion.Source
+import Companion.Paper
 import Companion.Docstring
 import JAM.History
 import JAM.Accumulation
@@ -16,6 +17,8 @@ tag := "history"
 shortTitle := "§7 Recent history"
 file := "history"
 %%%
+
+*In the paper:* {gpchapter}`sec:recenthistory`.
 
 The state keeps a short record of the most recent $`\mathsf{H}` blocks ($`\mathsf{H} = 8`). Guarantees use it ({ref "reports"}[§11]) to reject work
 reports that are duplicates or whose context is out of date. It also holds the Accumulation Output

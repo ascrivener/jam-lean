@@ -1,5 +1,6 @@
 import VersoManual
 import Companion.Source
+import Companion.Paper
 import Companion.Docstring
 import JAM.Safrole
 import JAM.Theorems.Safrole
@@ -16,6 +17,8 @@ tag := "safrole"
 shortTitle := "§6 Safrole"
 file := "safrole"
 %%%
+
+*In the paper:* {gpchapter}`sec:blockproduction`.
 
 Safrole fixes which validator may seal each timeslot of an epoch. Validators submit anonymous
 tickets during an epoch, and the best tickets become the next epoch's slot sealers. If there are

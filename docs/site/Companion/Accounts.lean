@@ -232,25 +232,28 @@ and records $`s`'s creation slot:
 tag := "accounts-readings"
 %%%
 
-* *Storage and requests by state key.* The model stores $`\mathbf{s}` and $`\mathbf{l}` under the
+These are recorded as notes v0.8.1-A40 to A45 of the model's
+[notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues):
+
+* *Note v0.8.1-A40, storage and requests by state key.* The model stores $`\mathbf{s}` and $`\mathbf{l}` under the
   27-octet hashes that the state keys keep, as §D.1 permits, and so assumes, as the paper does,
   that $`C` has no collisions on the keys that occur. The accessor theorems above carry that
   assumption as a hypothesis.
-* *Request lengths outside $`\mathbb{N}_P`.* The keys of $`\mathbf{l}` are $`(\mathbb{H}, \mathbb{N}_P)`
+* *Note v0.8.1-A41, request lengths outside $`\mathbb{N}_P`.* The keys of $`\mathbf{l}` are $`(\mathbb{H}, \mathbb{N}_P)`
   with $`\mathbb{N}_P = \mathbb{N}_{2^{32}-2}` (GP v0.8.1, Definitions). A length outside it has no
   request: {api}`JAM.ServiceAccount.requestGet` returns `none` for it
   ({api}`JAM.ServiceAccount.requestLenBound`).
-* *Stored octets that are not a history.* A request value that does not decode as at most three
+* *Note v0.8.1-A42, stored octets that are not a history.* A request value that does not decode as at most three
   4-octet slots can only come from a state the model did not build (a loaded state). The model
   reads it as no request, and {api}`JAM.ServiceAccount.requestSet` and
   {api}`JAM.ServiceAccount.requestErase` treat it the same way. The paper does not cover such states.
-* *Footprint carried.* $`a_i` and $`a_o` are fields updated by every accessor, rather than recomputed
+* *Note v0.8.1-A43, footprint carried.* $`a_i` and $`a_o` are fields updated by every accessor, rather than recomputed
   from $`\mathbf{s}` and $`\mathbf{l}` (see {ref "accounts-footprint"}[§9.3]).
-* *Wider types.* The paper types balances as $`\mathbb{N}_B`, identifiers as $`\mathbb{N}_S`,
+* *Note v0.8.1-A44, wider types.* The paper types balances as $`\mathbb{N}_B`, identifiers as $`\mathbb{N}_S`,
   slots as $`\mathbb{N}_T`, gas as $`\mathbb{N}_G` and the code hash as $`\mathbb{H}`. The model's
   fields are unbounded natural numbers and an octet list of any length, so the types do not
   enforce these bounds.
-* *Totality.* $`I` is given for histories of length 0 to 3, the type $`\llbracket \mathbb{N}_T \rrbracket_{:3}`;
+* *Note v0.8.1-A45, totality.* $`I` is given for histories of length 0 to 3, the type $`\llbracket \mathbb{N}_T \rrbracket_{:3}`;
   {api}`JAM.ServiceAccount.availableAt` returns false for longer lists. $`\mathbf{d}[s]_e` is
   defined for $`s \in \mathcal{K}(\mathbf{d})`; {api}`JAM.effectiveSupervisor` returns $`s` for any
   other $`s`, which §12 relies on when a service without an account appears in a round.

@@ -1326,7 +1326,7 @@ Disagreements between the model and the binary, found by the refinement proofs a
 PRs #58–#67 report no other model/binary disagreements.
 
 Findings about the Gray Paper and the test vectors themselves are triaged in
-[`docs/upstream-candidates.md`](upstream-candidates.md), with the full notes in the README's
+[`docs/upstream-candidates.md`](upstream-candidates.md#gray-paper-issues), with the full notes in the README's
 [Notes on the paper and the vectors](../README.md#notes-on-the-paper-and-the-vectors). Examples
 are an inconsistency in 𝔓_S, Ψ_H's gas types, the non-termination of Ψ_H* for handlers that add
 gas, and cases the vectors do not cover.

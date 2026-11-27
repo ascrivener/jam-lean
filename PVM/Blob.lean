@@ -150,7 +150,7 @@ def decodeBits? (bs : List UInt8) (n : Nat) : Option (Array Bool) :=
     let bits := (List.range (8 * bs.length)).map fun i => Num.bit (ba.getD (i / 8) 0).toNat (i % 8)
     if (bits.drop n).all (· == false) then some (bits.take n).toArray else none
 
-/-- The unique $(\mathbf{c}, \mathbf{k}, \mathbf{j}) \in (\mathbb{B}_{:\mathsf{Z}_C}, \mathbb{b}, [\![ \mathbb{N}_R ]\!]_{:\mathsf{Z}_J})$ with
+/-- The unique $(\mathbf{c}, \mathbf{k}, \mathbf{j}) \in (\mathbb{B}_{:\mathsf{Z}_C}, \text{𝕓}, [\![ \mathbb{N}_R ]\!]_{:\mathsf{Z}_J})$ with
     $p = \mathcal{E}(|\mathbf{j}|) \frown \mathcal{E}_1(z) \frown \mathcal{E}(|\mathbf{c}|) \frown \mathcal{E}_z(\mathbf{j}) \frown \mathcal{E}(\mathbf{c}) \frown \mathcal{E}(\mathbf{k})$, $z \le 4$ and
     $|\mathbf{k}| = |\mathbf{c}|$ (GP v0.8.1 eq. `deblob`, the encoding condition; the bounds on $|\mathbf{c}|$, $|\mathbf{j}|$
     and $z$ are new in v0.8.1, #559). -/

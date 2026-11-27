@@ -24,8 +24,9 @@ Facts about `JAM.Auditing`, stated against its definitions.
   $\lfloor \frac{2}{3}|\kappa| \rfloor + 1$ (`supermajority_iff_verdictGood`); `formVerdict` returns
   only votes §10 accepts the count, order and outcome of, each backed by an observed judgment
   (`formVerdict_sound`), and finds a good verdict whenever enough positive judgments are known
-  (`formVerdict_good_complete`); an auditing judgment signs the message a verdict vote is checked
-  against (`judgmentMessage_eq`).
+  (`formVerdict_good_complete`); an auditing judgment signs $\mathsf{X}_{e} \frown \mathcal{H}(w)$
+  (`judgmentMessage_eq`, by definition), which is the message `JAM.checkVerdict` checks a vote on
+  target $\mathcal{H}(w)$ against (by inspection of `JAM/Disputes.lean`; no lemma connects them yet).
 -/
 
 namespace JAM.Auditing
@@ -332,8 +333,9 @@ theorem blockAudited_iff (V : Nat) (view : View) (current : Nat) (R : List WorkR
 theorem supermajority_iff_verdictGood (V t : Nat) : 3 * t > 2 * V ↔ 2 * V / 3 + 1 ≤ t := by
   omega
 
-/-- An auditing judgment on $w$ signs $\mathsf{X}_{e} \frown \mathcal{H}(w)$, the message
-    `JAM.checkVerdict` checks a verdict vote on target $\mathcal{H}(w)$ against. -/
+/-- An auditing judgment on $w$ signs $\mathsf{X}_{e} \frown \mathcal{H}(w)$ (by definition).
+    `JAM.checkVerdict` checks a verdict vote on target $\mathcal{H}(w)$ against the same message
+    (`Xvalidif j.valid ++ r` in `JAM/Disputes.lean`); this theorem does not state that link. -/
 theorem judgmentMessage_eq (valid : Bool) (w : WorkReport) :
     judgmentMessage valid w = Xvalidif valid ++ reportHash w := rfl
 

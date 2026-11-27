@@ -22,9 +22,9 @@ namespace JAM
 
 open Codec
 
-/-- Sizes of the fixed-length terms, in octets (GP §3.8: $\mathbb{H}$, $\mathbb{K}_B$ and
-    $\mathbb{K}_E$ keys, Ed25519 signatures $\bar{\mathbb{V}}$, Bandersnatch signatures
-    $\tilde{\mathbb{V}}$ and ring proofs $\mathring{\mathbb{V}}$). -/
+/-- Sizes of the fixed-length terms, in octets (GP §3.8: $\mathbb{H}$, $\overset{\backsim}{\mathbb{H}}$ and
+    $\bar{\mathbb{H}}$ keys, Ed25519 signatures $\bar{\mathbb{V}}$, Bandersnatch signatures
+    $\overset{\backsim}{\mathbb{V}}$ and ring proofs $\mathring{\mathbb{V}}$). -/
 def hashSize : Nat := 32
 def keySize : Nat := 32
 def edSigSize : Nat := 64
@@ -117,7 +117,7 @@ structure Preimage where
   requester : ServiceId
   blob : Blob
 
-/-- A guarantee $\mathbb{G} = (r, t, a)$ (GP eq. `guarantee`): a work report, a timeslot and a credential of
+/-- A guarantee $\mathbb{G} = (\mathbf{r}, t, a)$ (GP eq. `guarantee`): a work report, a timeslot and a credential of
     (validator index, Ed25519 signature) pairs. -/
 structure Guarantee where
   report : WorkReport
@@ -125,7 +125,7 @@ structure Guarantee where
   credential : List (Nat × Blob)
 
 /-- An assurance in $\mathbf{E}_A$ (GP v0.8.1 eq. `xtassurances`): the availability bit field
-    $f \in \mathbb{b}_{\mathsf{C}}$, the assurer's validator index $v$ and its signature $s$. v0.8.1
+    $f \in \text{𝕓}_{\mathsf{C}}$, the assurer's validator index $v$ and its signature $s$. v0.8.1
     drops v0.8.0's anchor $a$, which had to equal $\mathbf{H}_P$ (GP #562). -/
 structure Assurance where
   bitfield : List Bool
@@ -183,12 +183,12 @@ def encodeTickets (xs : List TicketProof) : List UInt8 :=
 def encodePreimages (xs : List Preimage) : List UInt8 :=
   varSeq (fun p => fixed 4 p.requester ++ var p.blob) xs
 
-/-- $O(a) = \mathcal{E}(\updownarrow[(\mathcal{E}_2(v), s) \mid (v, s) \leftarrow a])$, the credential
-    encoding (GP v0.8.1 Appendix C, #560). -/
+/-- $\mathcal{E}_C(a) = \mathcal{E}(\updownarrow[(\mathcal{E}_2(v), s) \mid (v, s) \leftarrow a])$, the credential
+    encoding (GP v0.8.1 eq. 5.7 and Appendix C; #560 introduced it). -/
 def encodeCredential (a : List (Nat × Blob)) : List UInt8 :=
   varSeq (fun (v, s) => fixed 2 v ++ blob s) a
 
-/-- $\mathcal{E}(g \in \mathbb{G}) = \mathcal{E}(r, \mathcal{E}_4(t), O(a))$ (GP v0.8.1 Appendix C). -/
+/-- $\mathcal{E}(g \in \mathbb{G}) = \mathcal{E}(\mathbf{r}, \mathcal{E}_4(t), \mathcal{E}_C(a))$ (GP v0.8.1 Appendix C). -/
 def Guarantee.encode (g : Guarantee) : List UInt8 :=
   g.report.encode ++ fixed 4 g.slot ++ encodeCredential g.credential
 

@@ -9,7 +9,7 @@ Runs the disputes transition of GP v0.8.0 §10 (`JAM.disputesTransition`) on eve
 davxy/jam-test-vectors `v0.8.0` `stf/disputes/{tiny,full}`, and compares:
 * the output: the offenders marker H_O, or the error (the paper names no errors; we compare the
   vectors' names);
-* ψ' and ρ^‡ (on an error, the state is unchanged).
+* ψ' and ρ^† (on an error, the state is unchanged).
 
 Ed25519 verification is a parameter of the model (`JAM.Crypto`). The oracle here is read from the
 vector's expected output: when it is `bad_signature`, every signature is rejected; otherwise every
@@ -51,6 +51,10 @@ def errName : DisputesError → String
   | .badGuarantorKey => "bad_guarantor_key"
   | .badAuditorKey => "bad_auditor_key"
   | .badVotesCount => "bad_votes_count"
+  -- The model's own names (GP v0.8.1 eq. (10.2)); no vector names these errors.
+  | .tooManyVerdicts => "too_many_verdicts (GP v0.8.1, unnamed)"
+  | .tooManyCulprits => "too_many_culprits (GP v0.8.1, unnamed)"
+  | .tooManyFaults => "too_many_faults (GP v0.8.1, unnamed)"
 
 def check (params : Params) (j : Json) : Except String (List String) := do
   let pre ← field j "pre_state"
@@ -82,6 +86,35 @@ def check (params : Params) (j : Json) : Except String (List String) := do
   for k in ["tau", "kappa", "lambda"] do
     if (← field pre k) != (← field post k) then diffs := diffs ++ [s!"{k} changed"]
   return diffs
+
+/-! ### The length bounds of $\mathbf{E}_D$ (GP v0.8.1 eq. (10.2)): $|\mathbf{E}_V| \le \mathsf{N}_V$, $|\mathbf{E}_C|, |\mathbf{E}_F| \le \mathsf{N}_O$
+
+At the bound, the bound check passes and the next check (order and uniqueness) fails on the
+repeated items; one over, the bound check fails first. -/
+
+private def zeros (n : Nat) : ByteArray := ⟨(List.replicate n (0 : UInt8)).toArray⟩
+private def aVerdict : Verdict := { target := zeros 32, age := 0, votes := [] }
+private def aCulprit : Culprit := { target := zeros 32, key := zeros 32, signature := zeros 64 }
+private def aFault : Fault := { target := zeros 32, valid := true, key := zeros 32, signature := zeros 64 }
+
+private def dErr (x : Disputes) : Option DisputesError :=
+  match JAM.disputesTransition .tiny (sigOracle none) { slot := 0, activeEd := [], previousEd := [] } {} [] x with
+  | .ok _ => none
+  | .error e => some e
+
+#guard dErr { verdicts := [], culprits := [], faults := [] } == none
+#guard dErr { verdicts := List.replicate Constants.Cmaxextrinsicverdicts aVerdict, culprits := [], faults := [] }
+  == some .verdictsNotSortedUnique
+#guard dErr { verdicts := List.replicate (Constants.Cmaxextrinsicverdicts + 1) aVerdict, culprits := [], faults := [] }
+  == some .tooManyVerdicts
+#guard dErr { verdicts := [], culprits := List.replicate Constants.Cmaxextrinsicoffenses aCulprit, faults := [] }
+  == some .culpritsNotSortedUnique
+#guard dErr { verdicts := [], culprits := List.replicate (Constants.Cmaxextrinsicoffenses + 1) aCulprit, faults := [] }
+  == some .tooManyCulprits
+#guard dErr { verdicts := [], culprits := [], faults := List.replicate Constants.Cmaxextrinsicoffenses aFault }
+  == some .faultsNotSortedUnique
+#guard dErr { verdicts := [], culprits := [], faults := List.replicate (Constants.Cmaxextrinsicoffenses + 1) aFault }
+  == some .tooManyFaults
 
 end JAM.Tests.Disputes
 

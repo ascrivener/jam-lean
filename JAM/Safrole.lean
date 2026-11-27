@@ -28,13 +28,13 @@ $\mathcal{Y}(\mathbf{H}_V)$, the entropy source's VRF output, as an input.
 
 Cryptography enters through `JAM.Crypto`: the ring root $O$, Ring VRF verification and output for
 tickets, and singly-contextualized VRF verification and output for the seal (Thin VRF in GP v0.8.1
-Appendix G; the interface $\bar{\mathbb{B}}_k\langle c \rangle\langle m \rangle \subset
+Appendix G; the interface $\overset{\backsim}{\mathbb{V}}{}_k^{m}\langle c \rangle \subset
 \mathbb{B}_{96}$ is unchanged from v0.8.0).
 
 The paper states the extrinsic's conditions but names no errors and gives no order between them.
 The errors here are the test vectors' names. They are checked in this order: the timeslot (§5,
 eq. `timeslotindex`'s $\mathbf{H}_T > P(\mathbf{H})_T$ of the header), the extrinsic's length (eq.
-`enforceticketlimit`), each ticket's entry index and then its proof (eq. `ticketsextrinsic`), the
+`enforceticketlimit`), every ticket's entry index, then every ticket's proof (eq. `ticketsextrinsic`), the
 ordering of $\mathbf{n}$, its disjointness from $\gamma_A$, and $\mathbf{n} \subseteq \gamma'_A$.
 -/
 
@@ -48,12 +48,12 @@ namespace ValidatorKey
 def bs (k : ValidatorKey) : List UInt8 := k.take 32
 /-- $k_e = k_{32 \cdots +32}$, the Ed25519 key. -/
 def ed (k : ValidatorKey) : List UInt8 := (k.drop 32).take 32
-/-- The null key $\mathbb{K}^{\emptyset}$ of $\Phi$ (GP v0.8.1 eq. `nullvalkey`): zero except for
+/-- The null key $\mathbb{K}_0$ of $\Phi$ (GP v0.8.1 eq. `nullvalkey`): zero except for
     its Ed25519 component $[2, 0, \dots]$. -/
 def null : ValidatorKey := nullValidatorKey
 end ValidatorKey
 
-/-- $\gamma_S \in [\![ \mathbb{T} ]\!]_{\mathsf{E}} \cup [\![ \mathbb{H}_B ]\!]_{\mathsf{E}}$
+/-- $\gamma_S \in [\![ \mathbb{T} ]\!]_{\mathsf{E}} \cup [\![ \overset{\backsim}{\mathbb{H}} ]\!]_{\mathsf{E}}$
     (GP eq. `ticketaccumulatorsealticketsspec`): a full complement of tickets, or the fallback
     Bandersnatch keys. -/
 inductive SealKeys where
@@ -108,8 +108,8 @@ inductive SafroleError where
   /-- $\mathbf{n}$ is not ordered by identifier without duplicates. -/
   | badTicketOrder
   /-- A proof is not in
-      $\bar{\mathbb{B}}^{\circ}_{\gamma'_Z}\langle \mathsf{X}_T \frown \eta'_2 \mathbin{+\!\!+} e
-      \rangle\langle [] \rangle$, with $\mathsf{X}_T$ = `$jam_ticket_seal`. -/
+      $\mathring{\mathbb{V}}{}^{[]}_{\gamma'_Z}\langle \mathsf{X}_T \frown \eta'_2 \mathbin{+\!\!+} e
+      \rangle$, with $\mathsf{X}_T$ = `$jam_ticket_seal`. -/
   | badTicketProof
   /-- An entry index is not in $\mathbb{N}_n$. -/
   | badTicketAttempt
@@ -151,7 +151,7 @@ def octetLt : List UInt8 → List UInt8 → Bool
   | a :: as, b :: bs => a < b || (a == b && octetLt as bs)
 
 /-- $\Phi(\mathbf{k})$ (GP v0.8.1 eq. `blacklistfilter`): keys whose Ed25519 component is an
-    offender become the null key $\mathbb{K}^{\emptyset}$ (eq. `nullvalkey`). -/
+    offender become the null key $\mathbb{K}_0$ (eq. `nullvalkey`). -/
 def offendersFilter (offenders : List (List UInt8)) (k : List ValidatorKey) : List ValidatorKey :=
   k.map fun v => if offenders.contains v.ed then ValidatorKey.null else v
 

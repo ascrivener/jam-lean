@@ -64,8 +64,8 @@ Most of the model works on `List UInt8`, so it calls $`\mathcal{H}` through a li
 ## Keccak-256
 
 $`\mathcal{H}_K` is Keccak-256.
-The paper uses $`\mathcal{H}_K` in recent history (§7), for the Accumulation Output Log and the Merkle root of
-the accumulation outputs, and in the super-peak function $`\mathcal{M}_R` of Appendix E.2. Keccak-256 and SHA3-256 share the Keccak-f\[1600\]
+The paper uses $`\mathcal{H}_K` in recent history ({ref "history"}[§7]), for the Accumulation Output Log and the Merkle root of
+the accumulation outputs, and in the super-peak function $`\mathcal{M}_R` of {ref "merkle"}[Appendix E.2]. Keccak-256 and SHA3-256 share the Keccak-f\[1600\]
 permutation and differ only in their padding. The paper means the original Keccak, so
 {api}`JAM.Keccak.keccak256` pads with the domain octet `0x01`. {api}`JAM.Keccak.sha3_256` pads with
 `0x06` (FIPS 202) and exists only so that the permutation can be tested against standard SHA3
@@ -95,7 +95,7 @@ against its published values for the empty string and `"abc"`
 ## SHA-512, used below the paper
 
 SHA-512 is not one of the paper's functions. The paper defers its signature schemes to their
-specifications (§3.8.2 and Appendix G), and two of those use SHA-512: Ed25519 (RFC 8032) and the
+specifications (§3.8.2 and {ref "bandersnatch"}[Appendix G]), and two of those use SHA-512: Ed25519 (RFC 8032) and the
 Bandersnatch VRF, whose output $`\mathcal{Y}` is the first 32 octets of a SHA-512 hash. The model keeps all
 signature verification behind a parameter (`JAM.Crypto`), so the model itself never calls SHA-512.
 `JamCrypto`, the plain-Lean implementation of that parameter, does, through {api}`JAM.Sha512.hash`
@@ -130,7 +130,7 @@ $`\mathsf{C}`. The whole list is on the module's
 The paper defines one chain. The published test vectors also use a smaller one, the *tiny* chain,
 which changes a few constants so that tests run quickly. So the transitions that depend on these
 constants take them as an argument, a {api}`JAM.Params` record. Its fields are the constants that
-the `fetch` host call reports (case 0, Appendix B), in that order:
+the `fetch` host call reports (case 0, {ref "invocations"}[Appendix B]), in that order:
 
 {leanSource JAM.Params}
 
